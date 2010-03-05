@@ -1119,20 +1119,20 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
    }
 
    switch (usage) {
-      case GL_STREAM_DRAW_ARB:
-      case GL_STREAM_READ_ARB:
-      case GL_STREAM_COPY_ARB:
-      case GL_STATIC_DRAW_ARB:
-      case GL_STATIC_READ_ARB:
-      case GL_STATIC_COPY_ARB:
-      case GL_DYNAMIC_DRAW_ARB:
-      case GL_DYNAMIC_READ_ARB:
-      case GL_DYNAMIC_COPY_ARB:
-         /* OK */
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glBufferDataARB(usage)");
-         return;
+   case GL_STREAM_DRAW_ARB:
+   case GL_STREAM_READ_ARB:
+   case GL_STREAM_COPY_ARB:
+   case GL_STATIC_DRAW_ARB:
+   case GL_STATIC_READ_ARB:
+   case GL_STATIC_COPY_ARB:
+   case GL_DYNAMIC_DRAW_ARB:
+   case GL_DYNAMIC_READ_ARB:
+   case GL_DYNAMIC_COPY_ARB:
+      /* OK */
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBufferDataARB(usage)");
+      return;
    }
 
    bufObj = get_buffer(ctx, target);
@@ -1225,18 +1225,18 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
 
    switch (access) {
-      case GL_READ_ONLY_ARB:
-         accessFlags = GL_MAP_READ_BIT;
-         break;
-      case GL_WRITE_ONLY_ARB:
-         accessFlags = GL_MAP_WRITE_BIT;
-         break;
-      case GL_READ_WRITE_ARB:
-         accessFlags = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glMapBufferARB(access)");
-         return NULL;
+   case GL_READ_ONLY_ARB:
+      accessFlags = GL_MAP_READ_BIT;
+      break;
+   case GL_WRITE_ONLY_ARB:
+      accessFlags = GL_MAP_WRITE_BIT;
+      break;
+   case GL_READ_WRITE_ARB:
+      accessFlags = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glMapBufferARB(access)");
+      return NULL;
    }
 
    bufObj = get_buffer(ctx, target);
@@ -1385,21 +1385,21 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
    }
 
    switch (pname) {
-      case GL_BUFFER_SIZE_ARB:
-         *params = (GLint) bufObj->Size;
-         break;
-      case GL_BUFFER_USAGE_ARB:
-         *params = bufObj->Usage;
-         break;
-      case GL_BUFFER_ACCESS_ARB:
-         *params = simplified_access_mode(bufObj->AccessFlags);
-         break;
-      case GL_BUFFER_MAPPED_ARB:
-         *params = _mesa_bufferobj_mapped(bufObj);
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameterivARB(pname)");
-         return;
+   case GL_BUFFER_SIZE_ARB:
+      *params = (GLint) bufObj->Size;
+      break;
+   case GL_BUFFER_USAGE_ARB:
+      *params = bufObj->Usage;
+      break;
+   case GL_BUFFER_ACCESS_ARB:
+      *params = simplified_access_mode(bufObj->AccessFlags);
+      break;
+   case GL_BUFFER_MAPPED_ARB:
+      *params = _mesa_bufferobj_mapped(bufObj);
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameterivARB(pname)");
+      return;
    }
 }
 
@@ -1427,21 +1427,21 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
    }
 
    switch (pname) {
-      case GL_BUFFER_SIZE_ARB:
-         *params = bufObj->Size;
-         break;
-      case GL_BUFFER_USAGE_ARB:
-         *params = bufObj->Usage;
-         break;
-      case GL_BUFFER_ACCESS_ARB:
-         *params = simplified_access_mode(bufObj->AccessFlags);
-         break;
-      case GL_BUFFER_MAPPED_ARB:
-         *params = _mesa_bufferobj_mapped(bufObj);
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameteri64v(pname)");
-         return;
+   case GL_BUFFER_SIZE_ARB:
+      *params = bufObj->Size;
+      break;
+   case GL_BUFFER_USAGE_ARB:
+      *params = bufObj->Usage;
+      break;
+   case GL_BUFFER_ACCESS_ARB:
+      *params = simplified_access_mode(bufObj->AccessFlags);
+      break;
+   case GL_BUFFER_MAPPED_ARB:
+      *params = _mesa_bufferobj_mapped(bufObj);
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameteri64v(pname)");
+      return;
    }
 }
 
@@ -1713,6 +1713,7 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
       ctx->Driver.FlushMappedBufferRange(ctx, target, offset, length, bufObj);
 }
 
+
 #if FEATURE_APPLE_object_purgeable
 static GLenum
 _mesa_BufferObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
@@ -1746,6 +1747,7 @@ _mesa_BufferObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
    return retval;
 }
 
+
 static GLenum
 _mesa_RenderObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
 {
@@ -1773,6 +1775,7 @@ _mesa_RenderObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    return retval;
 }
+
 
 static GLenum
 _mesa_TextureObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
@@ -1802,6 +1805,7 @@ _mesa_TextureObjectPurgeable(GLcontext *ctx, GLuint name, GLenum option)
    return retval;
 }
 
+
 GLenum GLAPIENTRY
 _mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
 {
@@ -1817,11 +1821,12 @@ _mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
    switch (option) {
    case GL_VOLATILE_APPLE:
    case GL_RELEASED_APPLE:
+      /* legal */
       break;
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glObjectPurgeable(name = 0x%x) invalid option: %d", name, option);
+                  "glObjectPurgeable(name = 0x%x) invalid option: %d",
+                  name, option);
       return 0;
    }
 
@@ -1832,13 +1837,14 @@ _mesa_ObjectPurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
       return _mesa_RenderObjectPurgeable (ctx, name, option);
    case GL_BUFFER_OBJECT_APPLE:
       return _mesa_BufferObjectPurgeable (ctx, name, option);
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glObjectPurgeable(name = 0x%x) invalid type: %d", name, objectType);
+                  "glObjectPurgeable(name = 0x%x) invalid type: %d",
+                  name, objectType);
       return 0;
    }
 }
+
 
 static GLenum
 _mesa_BufferObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
@@ -1855,7 +1861,8 @@ _mesa_BufferObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    if (! bufObj->Purgeable) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glObjectUnpurgeable(name = 0x%x) object is already \"unpurged\"", name);
+                  "glObjectUnpurgeable(name = 0x%x) object is "
+                  " already \"unpurged\"", name);
       return 0;
    }
 
@@ -1867,6 +1874,7 @@ _mesa_BufferObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    return retval;
 }
+
 
 static GLenum
 _mesa_RenderObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
@@ -1883,7 +1891,8 @@ _mesa_RenderObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    if (! bufObj->Purgeable) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glObjectUnpurgeable(name = 0x%x) object is already \"unpurged\"", name);
+                  "glObjectUnpurgeable(name = 0x%x) object is "
+                  " already \"unpurged\"", name);
       return 0;
    }
 
@@ -1895,6 +1904,7 @@ _mesa_RenderObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    return retval;
 }
+
 
 static GLenum
 _mesa_TextureObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
@@ -1911,7 +1921,8 @@ _mesa_TextureObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    if (! bufObj->Purgeable) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glObjectUnpurgeable(name = 0x%x) object is already \"unpurged\"", name);
+                  "glObjectUnpurgeable(name = 0x%x) object is"
+                  " already \"unpurged\"", name);
       return 0;
    }
 
@@ -1923,6 +1934,7 @@ _mesa_TextureObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    return retval;
 }
+
 
 GLenum GLAPIENTRY
 _mesa_ObjectUnpurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
@@ -1939,33 +1951,34 @@ _mesa_ObjectUnpurgeableAPPLE(GLenum objectType, GLuint name, GLenum option)
    switch (option) {
    case GL_RETAINED_APPLE:
    case GL_UNDEFINED_APPLE:
+      /* legal */
       break;
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glObjectUnpurgeable(name = 0x%x) invalid option: %d", name, option);
+                  "glObjectUnpurgeable(name = 0x%x) invalid option: %d",
+                  name, option);
       return 0;
    }
 
    switch (objectType) {
    case GL_BUFFER_OBJECT_APPLE:
       return _mesa_BufferObjectUnpurgeable(ctx, name, option);
-
    case GL_TEXTURE:
       return _mesa_TextureObjectUnpurgeable(ctx, name, option);
-
    case GL_RENDERBUFFER_EXT:
       return _mesa_RenderObjectUnpurgeable(ctx, name, option);
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glObjectUnpurgeable(name = 0x%x) invalid type: %d", name, objectType);
+                  "glObjectUnpurgeable(name = 0x%x) invalid type: %d",
+                  name, objectType);
       return 0;
    }
 }
 
+
 static void
-_mesa_GetBufferObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname, GLint* params)
+_mesa_GetBufferObjectParameterivAPPLE(GLcontext *ctx, GLuint name,
+                                      GLenum pname, GLint* params)
 {
    struct gl_buffer_object *bufObj;
 
@@ -1980,16 +1993,18 @@ _mesa_GetBufferObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname,
    case GL_PURGEABLE_APPLE:
       *params = bufObj->Purgeable;
       break;
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d", name, pname);
+                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d",
+                  name, pname);
       break;
    }
 }
 
+
 static void
-_mesa_GetRenderObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname, GLint* params)
+_mesa_GetRenderObjectParameterivAPPLE(GLcontext *ctx, GLuint name,
+                                      GLenum pname, GLint* params)
 {
    struct gl_renderbuffer *bufObj;
 
@@ -2004,16 +2019,18 @@ _mesa_GetRenderObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname,
    case GL_PURGEABLE_APPLE:
       *params = bufObj->Purgeable;
       break;
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d", name, pname);
+                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d",
+                  name, pname);
       break;
    }
 }
 
+
 static void
-_mesa_GetTextureObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname, GLint* params)
+_mesa_GetTextureObjectParameterivAPPLE(GLcontext *ctx, GLuint name,
+                                       GLenum pname, GLint* params)
 {
    struct gl_texture_object *bufObj;
 
@@ -2028,16 +2045,18 @@ _mesa_GetTextureObjectParameterivAPPLE(GLcontext *ctx, GLuint name, GLenum pname
    case GL_PURGEABLE_APPLE:
       *params = bufObj->Purgeable;
       break;
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d", name, pname);
+                  "glGetObjectParameteriv(name = 0x%x) invalid enum: %d",
+                  name, pname);
       break;
    }
 }
 
+
 void GLAPIENTRY
-_mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname, GLint* params)
+_mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname,
+                                GLint* params)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -2051,18 +2070,17 @@ _mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname, GL
    case GL_TEXTURE:
       _mesa_GetTextureObjectParameterivAPPLE (ctx, name, pname, params);
       break;
-
    case GL_BUFFER_OBJECT_APPLE:
       _mesa_GetBufferObjectParameterivAPPLE (ctx, name, pname, params);
       break;
-
    case GL_RENDERBUFFER_EXT:
       _mesa_GetRenderObjectParameterivAPPLE (ctx, name, pname, params);
       break;
-
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetObjectParameteriv(name = 0x%x) invalid type: %d", name, objectType);
+                  "glGetObjectParameteriv(name = 0x%x) invalid type: %d",
+                  name, objectType);
    }
 }
-#endif
+
+#endif /* FEATURE_APPLE_object_purgeable */
