@@ -100,6 +100,18 @@ struct lp_sampler_dynamic_state
               LLVMBuilderRef builder,
               unsigned unit);
 
+   /** Obtain the base texture depth. */
+   LLVMValueRef
+   (*depth)( struct lp_sampler_dynamic_state *state,
+             LLVMBuilderRef builder,
+             unsigned unit);
+
+   /** Obtain the number of mipmap levels (minus one). */
+   LLVMValueRef
+   (*last_level)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
+
    LLVMValueRef
    (*stride)( struct lp_sampler_dynamic_state *state,
               LLVMBuilderRef builder,
