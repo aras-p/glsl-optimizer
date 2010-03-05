@@ -34,6 +34,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
+#include "native_modeset.h"
+
 /**
  * Only color buffers are listed.  The others are allocated privately through,
  * for example, st_renderbuffer_alloc_storage().
@@ -122,18 +124,6 @@ struct native_config {
    boolean scanout_bit;
 };
 
-struct native_connector {
-   int dummy;
-};
-
-struct native_mode {
-   const char *desc;
-   int width, height;
-   int refresh_rate;
-};
-
-struct native_display_modeset;
-
 /**
  * A pipe winsys abstracts the OS.  A pipe screen abstracts the graphcis
  * hardware.  A native display consists of a pipe winsys, a pipe screen, and
@@ -203,49 +193,6 @@ struct native_display {
                                                     uint width, uint height);
 
    const struct native_display_modeset *modeset;
-};
-
-/**
- * Mode setting interface of the native display.  It exposes the mode setting
- * capabilities of the underlying graphics hardware.
- */
-struct native_display_modeset {
-   /**
-    * Get the available physical connectors and the number of CRTCs.
-    */
-   const struct native_connector **(*get_connectors)(struct native_display *ndpy,
-                                                     int *num_connectors,
-                                                     int *num_crtcs);
-
-   /**
-    * Get the current supported modes of a connector.  The returned modes may
-    * change every time this function is called and those from previous calls
-    * might become invalid.
-    */
-   const struct native_mode **(*get_modes)(struct native_display *ndpy,
-                                           const struct native_connector *nconn,
-                                           int *num_modes);
-
-   /**
-    * Create a scan-out surface.  Required unless no config has
-    * GLX_SCREEN_BIT_MESA set.
-    */
-   struct native_surface *(*create_scanout_surface)(struct native_display *ndpy,
-                                                    const struct native_config *nconf,
-                                                    uint width, uint height);
-
-   /**
-    * Program the CRTC to output the surface to the given connectors with the
-    * given mode.  When surface is not given, the CRTC is disabled.
-    *
-    * This interface does not export a way to query capabilities of the CRTCs.
-    * The native display usually needs to dynamically map the index to a CRTC
-    * that supports the given connectors.
-    */
-   boolean (*program)(struct native_display *ndpy, int crtc_idx,
-                      struct native_surface *nsurf, uint x, uint y,
-                      const struct native_connector **nconns, int num_nconns,
-                      const struct native_mode *nmode);
 };
 
 /**
