@@ -32,6 +32,25 @@
 #include "main/macros.h"
 #include "intel_batchbuffer.h"
 
+static uint32_t
+get_attr_override(struct brw_context *brw, int attr)
+{
+   uint32_t attr_override;
+   int attr_index = 0, i;
+
+   /* Find the source index (0 = first attribute after the 4D position)
+    * for this output attribute.  attr is currently a VERT_RESULT_* but should
+    * be FRAG_ATTRIB_*.
+    */
+   for (i = 0; i < attr; i++) {
+      if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(i))
+	 attr_index++;
+   }
+   attr_override = attr_index;
+
+   return attr_index;
+}
+
 static void
 upload_sf_state(struct brw_context *brw)
 {
@@ -45,6 +64,7 @@ upload_sf_state(struct brw_context *brw)
    int i;
    /* _NEW_BUFFER */
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+   int attr = 0;
 
    dw1 =
       num_outputs << GEN6_SF_NUM_OUTPUTS_SHIFT |
@@ -122,8 +142,27 @@ upload_sf_state(struct brw_context *brw)
    OUT_BATCH_F(ctx->Polygon.OffsetFactor); /* scale */
    OUT_BATCH_F(0.0); /* XXX: global depth offset clamp */
    for (i = 0; i < 8; i++) {
-      /* attribute overrides */
-      OUT_BATCH(0);
+      uint32_t attr_overrides = 0;
+
+      /* These should be generating FS inputs read instead of VS
+       * outputs written
+       */
+      for (; attr < 64; attr++) {
+	 if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(attr)) {
+	    attr_overrides |= get_attr_override(brw, attr);
+	    attr++;
+	    break;
+	 }
+      }
+
+      for (; attr < 64; attr++) {
+	 if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(attr)) {
+	    attr_overrides |= get_attr_override(brw, attr) << 16;
+	    attr++;
+	    break;
+	 }
+      }
+      OUT_BATCH(attr_overrides);
    }
    OUT_BATCH(0); /* point sprite texcoord bitmask */
    OUT_BATCH(0); /* constant interp bitmask */
