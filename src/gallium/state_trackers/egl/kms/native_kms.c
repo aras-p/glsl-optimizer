@@ -665,6 +665,21 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
    return configs;
 }
 
+static int
+kms_display_get_param(struct native_display *ndpy,
+                      enum native_param_type param)
+{
+   int val;
+
+   switch (param) {
+   default:
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
 static void
 kms_display_destroy(struct native_display *ndpy)
 {
@@ -811,6 +826,7 @@ kms_create_display(EGLNativeDisplayType dpy,
    }
 
    kdpy->base.destroy = kms_display_destroy;
+   kdpy->base.get_param = kms_display_get_param;
    kdpy->base.get_configs = kms_display_get_configs;
    kdpy->base.create_pbuffer_surface = kms_display_create_pbuffer_surface;
 

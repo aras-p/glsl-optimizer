@@ -49,6 +49,14 @@ enum native_attachment {
    NUM_NATIVE_ATTACHMENTS
 };
 
+enum native_param_type {
+   /*
+    * Return TRUE if window/pixmap surfaces use the buffers of the native
+    * types.
+    */
+   NATIVE_PARAM_USE_NATIVE_BUFFER
+};
+
 /**
  * Enumerations for probe results.
  */
@@ -144,6 +152,14 @@ struct native_display {
    void *user_data;
 
    void (*destroy)(struct native_display *ndpy);
+
+   /**
+    * Query the parameters of the native display.
+    *
+    * The return value is defined by the parameter.
+    */
+   int (*get_param)(struct native_display *ndpy,
+                    enum native_param_type param);
 
    /**
     * Get the supported configs.  The configs are owned by the display, but

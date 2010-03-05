@@ -699,6 +699,25 @@ ximage_display_is_pixmap_supported(struct native_display *ndpy,
    return (fmt == nconf->color_format);
 }
 
+static int
+ximage_display_get_param(struct native_display *ndpy,
+                         enum native_param_type param)
+{
+   int val;
+
+   switch (param) {
+   case NATIVE_PARAM_USE_NATIVE_BUFFER:
+      /* private buffers are allocated */
+      val = FALSE;
+      break;
+   default:
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
 static void
 ximage_display_destroy(struct native_display *ndpy)
 {
@@ -753,6 +772,7 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
    xdpy->base.screen = softpipe_create_screen(xdpy->winsys);
 
    xdpy->base.destroy = ximage_display_destroy;
+   xdpy->base.get_param = ximage_display_get_param;
 
    xdpy->base.get_configs = ximage_display_get_configs;
    xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;

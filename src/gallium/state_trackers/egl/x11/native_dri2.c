@@ -707,6 +707,25 @@ dri2_display_is_pixmap_supported(struct native_display *ndpy,
    return (depth == nconf_depth || (depth == 24 && depth + 8 == nconf_depth));
 }
 
+static int
+dri2_display_get_param(struct native_display *ndpy,
+                       enum native_param_type param)
+{
+   int val;
+
+   switch (param) {
+   case NATIVE_PARAM_USE_NATIVE_BUFFER:
+      /* DRI2GetBuffers use the native buffers */
+      val = TRUE;
+      break;
+   default:
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
 static void
 dri2_display_destroy(struct native_display *ndpy)
 {
@@ -850,6 +869,7 @@ x11_create_dri2_display(EGLNativeDisplayType dpy,
    }
 
    dri2dpy->base.destroy = dri2_display_destroy;
+   dri2dpy->base.get_param = dri2_display_get_param;
    dri2dpy->base.get_configs = dri2_display_get_configs;
    dri2dpy->base.is_pixmap_supported = dri2_display_is_pixmap_supported;
    dri2dpy->base.create_window_surface = dri2_display_create_window_surface;
