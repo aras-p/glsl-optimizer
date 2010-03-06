@@ -76,6 +76,7 @@ def generate(env):
             mo = llvm_version_re.match(line)
             if mo:
                 llvm_version = mo.group(1)
+                llvm_version = distutils.version.LooseVersion(llvm_version)
                 break
         if llvm_version is None:
             print 'scons: could not determine the LLVM version from %s' % llvm_config
@@ -130,6 +131,7 @@ def generate(env):
                 env.Append(LINKFLAGS = ['/nodefaultlib:LIBCMT'])
     elif env.Detect('llvm-config'):
         llvm_version = env.backtick('llvm-config --version').rstrip()
+        llvm_version = distutils.version.LooseVersion(llvm_version)
 
         try:
             env.ParseConfig('llvm-config --cppflags')
@@ -145,7 +147,6 @@ def generate(env):
     assert llvm_version is not None
 
     print 'scons: Found LLVM version %s' % llvm_version
-    llvm_version = distutils.version.LooseVersion(llvm_version)
     env['LLVM_VERSION'] = llvm_version
 
     # Define HAVE_LLVM macro with the major/minor version number (e.g., 0x0206 for 2.6)
