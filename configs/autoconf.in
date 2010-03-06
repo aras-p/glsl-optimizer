@@ -83,7 +83,6 @@ PROGRAM_DIRS = @PROGRAM_DIRS@
 
 # Driver specific build vars
 DRI_DIRS = @DRI_DIRS@ 
-WINDOW_SYSTEM = @WINDOW_SYSTEM@
 EGL_DISPLAYS = @EGL_DISPLAYS@
 
 # Dependencies
