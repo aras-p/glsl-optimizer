@@ -586,6 +586,17 @@ emit_instruction(
    if (indirect_temp_reference(inst))
       return FALSE;
 
+   /*
+    * Stores and write masks are handled in a general fashion after the long
+    * instruction opcode switch statement.
+    *
+    * Although not stricitly necessary, we avoid generating instructions for
+    * channels which won't be stored, in cases where's that easy. For some
+    * complex instructions, like texture sampling, it is more convenient to
+    * assume a full writemask and then let LLVM optimization passes eliminate
+    * redundant code.
+    */
+
    assert(info->num_dst <= 1);
    if(info->num_dst) {
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
@@ -1131,7 +1142,6 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      /* XXX what about dst0 writemask? */
       emit_tex( bld, inst, FALSE, FALSE, dst0 );
       break;
 
