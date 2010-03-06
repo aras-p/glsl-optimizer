@@ -519,9 +519,6 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    if (psp == NULL)
       return NULL;
 
-   /* Initialize per screen dynamic client GLX extensions */
-   psc->ext_list_first_time = GL_TRUE;
-
    if (!DRI2Connect(psc->dpy, RootWindow(psc->dpy, screen),
 		    &driverName, &deviceName)) {
       XFree(psp);
