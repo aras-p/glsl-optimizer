@@ -199,6 +199,45 @@ static struct _glapi_function ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 
 
+static GLint
+get_extension_proc_offset(const char *funcName)
+{
+   GLuint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
+         return ExtEntryTable[i].dispatch_offset;
+      }
+   }
+   return -1;
+}
+
+
+static _glapi_proc
+get_extension_proc_address(const char *funcName)
+{
+   GLuint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
+         return ExtEntryTable[i].dispatch_stub;
+      }
+   }
+   return NULL;
+}
+
+
+static const char *
+get_extension_proc_name(GLuint offset)
+{
+   GLuint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (ExtEntryTable[i].dispatch_offset == offset) {
+         return ExtEntryTable[i].name;
+      }
+   }
+   return NULL;
+}
+
+
 /**
  * strdup() is actually not a standard ANSI C or POSIX routine.
  * Irix will not define it if ANSI mode is in effect.
@@ -399,13 +438,13 @@ _glapi_add_dispatch( const char * const * function_names,
 PUBLIC GLint
 _glapi_get_proc_offset(const char *funcName)
 {
+   GLint offset;
+
    /* search extension functions first */
-   GLuint i;
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
-         return ExtEntryTable[i].dispatch_offset;
-      }
-   }
+   offset = get_extension_proc_offset(funcName);
+   if (offset >= 0)
+      return offset;
+
    /* search static functions */
    return get_static_proc_offset(funcName);
 }
@@ -420,8 +459,8 @@ _glapi_get_proc_offset(const char *funcName)
 PUBLIC _glapi_proc
 _glapi_get_proc_address(const char *funcName)
 {
+   _glapi_proc func;
    struct _glapi_function * entry;
-   GLuint i;
 
 #ifdef MANGLE
    /* skip the prefix on the name */
@@ -433,11 +472,9 @@ _glapi_get_proc_address(const char *funcName)
 #endif
 
    /* search extension functions first */
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
-         return ExtEntryTable[i].dispatch_stub;
-      }
-   }
+   func = get_extension_proc_address(funcName);
+   if (func)
+      return func;
 
 #if !defined( XFree86Server )
    /* search static functions */
@@ -461,7 +498,6 @@ _glapi_get_proc_address(const char *funcName)
 const char *
 _glapi_get_proc_name(GLuint offset)
 {
-   GLuint i;
    const char * n;
 
    /* search built-in functions */
@@ -471,12 +507,7 @@ _glapi_get_proc_name(GLuint offset)
    }
 
    /* search added extension functions */
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (ExtEntryTable[i].dispatch_offset == offset) {
-         return ExtEntryTable[i].name;
-      }
-   }
-   return NULL;
+   return get_extension_proc_name(offset);
 }
 
 
