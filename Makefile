@@ -215,7 +215,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/glx_mangle.h				\
 	$(DIRECTORY)/include/GL/glfbdev.h				\
 	$(DIRECTORY)/include/GL/mesa_wgl.h				\
-	$(DIRECTORY)/include/GL/mglmesa.h				\
 	$(DIRECTORY)/include/GL/osmesa.h				\
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
