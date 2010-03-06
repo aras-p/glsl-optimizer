@@ -794,12 +794,14 @@ static void r300PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 		R300_STATECHANGE(r300, ga_point_minmax);
 		r300->hw.ga_point_minmax.cmd[1] &= ~R300_GA_POINT_MINMAX_MIN_MASK;
 		r300->hw.ga_point_minmax.cmd[1] |= (GLuint)(ctx->Point.MinSize * 6.0);
+		r300PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_SIZE_MAX:
 		R300_STATECHANGE(r300, ga_point_minmax);
 		r300->hw.ga_point_minmax.cmd[1] &= ~R300_GA_POINT_MINMAX_MAX_MASK;
 		r300->hw.ga_point_minmax.cmd[1] |= (GLuint)(ctx->Point.MaxSize * 6.0)
 			<< R300_GA_POINT_MINMAX_MAX_SHIFT;
+		r300PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_DISTANCE_ATTENUATION:
 		break;
