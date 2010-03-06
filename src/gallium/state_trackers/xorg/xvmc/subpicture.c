@@ -47,6 +47,8 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    struct pipe_texture template;
    struct pipe_texture *tex;
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Creating subpicture %p.\n", subpicture);
+
    assert(dpy);
 
    if (!context)
@@ -58,6 +60,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    if (!subpicture)
       return XvMCBadSubpicture;
 
+   /* TODO: Check against surface max width, height */
    if (width > 2048 || height > 2048)
       return BadValue;
 
@@ -109,6 +112,8 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 
    SyncHandle();
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p created.\n", subpicture);
+
    return Success;
 }
 
@@ -155,6 +160,8 @@ Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
 {
    XvMCSubPicturePrivate *subpicture_priv;
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Destroying subpicture %p.\n", subpicture);
+
    assert(dpy);
 
    if (!subpicture)
@@ -163,6 +170,8 @@ Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
    subpicture_priv = subpicture->privData;
    pipe_surface_reference(&subpicture_priv->sfc, NULL);
    FREE(subpicture_priv);
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p destroyed.\n", subpicture);
 
    return Success;
 }

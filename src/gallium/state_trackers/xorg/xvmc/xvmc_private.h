@@ -30,6 +30,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMClib.h>
+#include <util/u_debug.h>
 
 #define BLOCK_SIZE_SAMPLES 64
 #define BLOCK_SIZE_BYTES (BLOCK_SIZE_SAMPLES * 2)
@@ -62,5 +63,27 @@ typedef struct
 	   so we keep track of which context each subpicture belongs to. */
 	XvMCContext *context;
 } XvMCSubPicturePrivate;
+
+#define XVMC_OUT   0
+#define XVMC_ERR   1
+#define XVMC_WARN  2
+#define XVMC_TRACE 3
+static INLINE void XVMC_MSG(unsigned int level, const char *fmt, ...)
+{
+   static boolean check_dbg_level = TRUE;
+   static unsigned int debug_level;
+
+   if (check_dbg_level) {
+      debug_level = debug_get_num_option("XVMC_DEBUG", 0);
+      check_dbg_level = FALSE;
+   }
+
+   if (level <= debug_level) {
+      va_list ap;
+      va_start(ap, fmt);
+      _debug_vprintf(fmt, ap);
+      va_end(ap);
+   }
+}
 
 #endif /* xvmc_private_h */

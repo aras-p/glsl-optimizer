@@ -48,6 +48,8 @@ static enum pipe_mpeg12_macroblock_type TypeToPipe(int xvmc_mb_type)
 
    assert(0);
 
+   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized mb type 0x%08X.\n", xvmc_mb_type);
+
    return -1;
 }
 
@@ -64,6 +66,8 @@ static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
          assert(0);
    }
 
+   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized picture type 0x%08X.\n", xvmc_pic);
+
    return -1;
 }
 
@@ -71,8 +75,11 @@ static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, int xvmc_
 {
    switch (xvmc_motion_type) {
       case XVMC_PREDICTION_FRAME:
-         return xvmc_dct_type == XVMC_DCT_TYPE_FIELD ?
-            PIPE_MPEG12_MOTION_TYPE_16x8 : PIPE_MPEG12_MOTION_TYPE_FRAME;
+         if (xvmc_dct_type == XVMC_DCT_TYPE_FIELD)
+            return PIPE_MPEG12_MOTION_TYPE_16x8;
+         else if (xvmc_dct_type == XVMC_DCT_TYPE_FRAME)
+            return PIPE_MPEG12_MOTION_TYPE_FRAME;
+         break;
       case XVMC_PREDICTION_FIELD:
          return PIPE_MPEG12_MOTION_TYPE_FIELD;
       case XVMC_PREDICTION_DUAL_PRIME:
@@ -80,6 +87,8 @@ static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, int xvmc_
       default:
          assert(0);
    }
+
+   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized motion type 0x%08X (with DCT type 0x%08X).\n", xvmc_motion_type, xvmc_dct_type);
 
    return -1;
 }
@@ -183,6 +192,8 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    XvMCSurfacePrivate *surface_priv;
    struct pipe_video_surface *vsfc;
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Creating surface %p.\n", surface);
+
    assert(dpy);
 
    if (!context)
@@ -197,6 +208,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    if (!surface_priv)
       return BadAlloc;
 
+   assert(vpipe->screen->video_surface_create);
    vsfc = vpipe->screen->video_surface_create(vpipe->screen, vpipe->chroma_format,
                                               vpipe->width, vpipe->height);
    if (!vsfc) {
@@ -215,6 +227,8 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    surface->privData = surface_priv;
 
    SyncHandle();
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p created.\n", surface);
 
    return Success;
 }
@@ -235,6 +249,8 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    XvMCSurfacePrivate *future_surface_priv;
    struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
    unsigned int i;
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Rendering to surface %p.\n", target_surface);
 
    assert(dpy);
 
@@ -288,6 +304,8 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    for (i = 0; i < num_macroblocks; ++i)
       vpipe->screen->buffer_destroy(pipe_macroblocks[i].blocks);
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for rendering.\n", target_surface);
+
    return Success;
 }
 
@@ -328,6 +346,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    struct pipe_video_rect src_rect = {srcx, srcy, srcw, srch};
    struct pipe_video_rect dst_rect = {destx, desty, destw, desth};
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Displaying surface %p.\n", surface);
+
    assert(dpy);
 
    if (!surface || !surface->privData)
@@ -363,13 +383,15 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
                          context_priv->backbuffer, &dst_rect, surface_priv->disp_fence);
 
    vl_video_bind_drawable(context_priv->vctx, drawable);
-	
+
    vpipe->screen->flush_frontbuffer
    (
       vpipe->screen,
       context_priv->backbuffer,
       vpipe->priv
    );
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display.\n", surface);
 
    return Success;
 }
@@ -392,6 +414,8 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
 {
    XvMCSurfacePrivate *surface_priv;
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Destroying surface %p.\n", surface);
+
    assert(dpy);
 
    if (!surface || !surface->privData)
@@ -401,6 +425,8 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
    pipe_video_surface_reference(&surface_priv->pipe_vsfc, NULL);
    FREE(surface_priv);
    surface->privData = NULL;
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p destroyed.\n", surface);
 
    return Success;
 }

@@ -34,7 +34,6 @@
 #include <pipe/p_state.h>
 #include <vl_winsys.h>
 #include <util/u_memory.h>
-#include <util/u_debug.h>
 #include <vl/vl_csc.h>
 #include "xvmc_private.h"
 
@@ -90,6 +89,15 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
                *mc_type = surface_info[l].mc_type;
                *surface_flags = surface_info[l].flags;
                *screen = i;
+
+               XVMC_MSG(XVMC_TRACE, "[XvMC] Found suitable context surface format.\n" \
+                                    "[XvMC]   screen=%u, port=%u\n" \
+                                    "[XvMC]   id: 0x%08X\n" \
+                                    "[XvMC]   max width=%u, max height=%u\n" \
+                                    "[XvMC]   chroma format=0x%08X\n" \
+                                    "[XvMC]   acceleration level=0x%08X\n" \
+                                    "[XvMC]   flags=0x%08X\n",
+                                    i, port, surface_type_id, max_width, max_height, *chroma_format, *mc_type, *surface_flags);
             }
 
             XFree(surface_info);
@@ -99,14 +107,23 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
       XvFreeAdaptorInfo(adaptor_info);
    }
 
-   if (!*found_port)
+   if (!*found_port) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Could not find a suitable port.\n");
       return XvBadPort;
-   if (!found_surface)
+   }
+   if (!found_surface) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Could not find a suitable surface.\n");
       return BadMatch;
-   if (width > max_width || height > max_height)
+   }
+   if (width > max_width || height > max_height) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Requested context dimensions (w=%u,h=%u) too large (max w=%u,h=%u).\n",
+               width, height, max_width, max_height);
       return BadValue;
-   if (flags != XVMC_DIRECT && flags != 0)
+   }
+   if (flags != XVMC_DIRECT && flags != 0) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Invalid context flags 0x%08X.\n", flags);
       return BadValue;
+   }
 
    return Success;
 }
@@ -124,6 +141,8 @@ static enum pipe_video_profile ProfileToPipe(int xvmc_profile)
 
    assert(0);
 
+   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized profile 0x%08X.\n", xvmc_profile);
+
    return -1;
 }
 
@@ -139,6 +158,8 @@ static enum pipe_video_chroma_format FormatToPipe(int xvmc_format)
       default:
          assert(0);
    }
+
+   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized format 0x%08X.\n", xvmc_format);
 
    return -1;
 }
@@ -157,6 +178,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    XvMCContextPrivate *context_priv;
    float csc[16];
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Creating context %p.\n", context);
+
    assert(dpy);
 
    if (!context)
@@ -171,15 +194,15 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
 
    /* XXX: Current limits */
    if (chroma_format != XVMC_CHROMA_FORMAT_420) {
-      debug_printf("[XvMCg3dvl] Cannot decode requested surface type. Unsupported chroma format.\n");
+      XVMC_MSG(XVMC_ERR, "[XvMC] Cannot decode requested surface type. Unsupported chroma format.\n");
       return BadImplementation;
    }
    if (mc_type != (XVMC_MOCOMP | XVMC_MPEG_2)) {
-      debug_printf("[XvMCg3dvl] Cannot decode requested surface type. Non-MPEG2/Mocomp acceleration unsupported.\n");
+      XVMC_MSG(XVMC_ERR, "[XvMC] Cannot decode requested surface type. Non-MPEG2/Mocomp acceleration unsupported.\n");
       return BadImplementation;
    }
    if (!(surface_flags & XVMC_INTRA_UNSIGNED)) {
-      debug_printf("[XvMCg3dvl] Cannot decode requested surface type. Signed intra unsupported.\n");
+      XVMC_MSG(XVMC_ERR, "[XvMC] Cannot decode requested surface type. Signed intra unsupported.\n");
       return BadImplementation;
    }
 
@@ -191,6 +214,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    vscreen = vl_screen_create(dpy, scrn);
 
    if (!vscreen) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL screen.\n");
       FREE(context_priv);
       return BadAlloc;
    }
@@ -199,6 +223,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
                           FormatToPipe(chroma_format), width, height);
 
    if (!vctx) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL context.\n");
       vl_screen_destroy(vscreen);
       FREE(context_priv);
       return BadAlloc;
@@ -225,6 +250,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
 
    SyncHandle();
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Context %p created.\n", context);
+
    return Success;
 }
 
@@ -233,6 +260,8 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
    struct vl_screen *vscreen;
    struct vl_context *vctx;
    XvMCContextPrivate *context_priv;
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Destroying context %p.\n", context);
 
    assert(dpy);
 
@@ -247,6 +276,8 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
    vl_screen_destroy(vscreen);
    FREE(context_priv);
    context->privData = NULL;
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Context %p destroyed.\n", context);
 
    return Success;
 }
