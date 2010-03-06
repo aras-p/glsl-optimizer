@@ -62,6 +62,18 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    if(!sampler)
       return;
 
+   /*
+    * We don't copy sampler state over unless it is actually enabled, to avoid
+    * spurious recompiles, as the sampler static state is part of the shader
+    * key.
+    *
+    * Ideally the state tracker or cso_cache module would make all state
+    * canonical, but until that happens it's better to be safe than sorry here.
+    *
+    * XXX: Actually there's much more than can be done here, especially
+    * regarding 1D/2D/3D/CUBE textures, wrap modes, etc.
+    */
+
    state->format            = texture->format;
    state->target            = texture->target;
    state->pot_width         = util_is_pot(texture->width0);
@@ -74,8 +86,12 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->min_img_filter    = sampler->min_img_filter;
    state->min_mip_filter    = sampler->min_mip_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
+
    state->compare_mode      = sampler->compare_mode;
-   state->compare_func      = sampler->compare_func;
+   if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
+      state->compare_func   = sampler->compare_func;
+   }
+
    state->normalized_coords = sampler->normalized_coords;
    state->lod_bias          = sampler->lod_bias;
    state->min_lod           = sampler->min_lod;
