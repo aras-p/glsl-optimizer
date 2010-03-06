@@ -82,6 +82,11 @@ def generate(env):
             print 'scons: could not determine the LLVM version from %s' % llvm_config
             return
 
+        if llvm_version >= distutils.version.LooseVersion('2.7'):
+            print 'scons: Ignoring unsupported LLVM version %s' % llvm_version
+            print 'scons: See http://www.llvm.org/bugs/show_bug.cgi?id=6429'
+            return
+
         env.Prepend(CPPPATH = [os.path.join(llvm_dir, 'include')])
         env.AppendUnique(CPPDEFINES = [
             '__STDC_LIMIT_MACROS', 
@@ -132,6 +137,11 @@ def generate(env):
     elif env.Detect('llvm-config'):
         llvm_version = env.backtick('llvm-config --version').rstrip()
         llvm_version = distutils.version.LooseVersion(llvm_version)
+
+        if llvm_version >= distutils.version.LooseVersion('2.7'):
+            print 'scons: Ignoring unsupported LLVM version %s' % llvm_version
+            print 'scons: See http://www.llvm.org/bugs/show_bug.cgi?id=6429'
+            return
 
         try:
             env.ParseConfig('llvm-config --cppflags')
