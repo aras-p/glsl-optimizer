@@ -1241,6 +1241,22 @@ if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nv04 nv10 nv20 nv30 nv40 nv50"
 fi
 
+dnl
+dnl Gallium G3DVL configuration
+dnl
+AC_ARG_ENABLE([gallium-g3dvl],
+    [AS_HELP_STRING([--enable-gallium-g3dvl],
+        [build gallium g3dvl @<:@default=disabled@:>@])],
+    [enable_gallium_g3dvl="$enableval"],
+    [enable_gallium_g3dvl=no])
+if test "x$enable_gallium_g3dvl" = xyes; then
+    vl_winsys_dirs=""
+    for dir in $GALLIUM_WINSYS_DIRS; do
+        vl_winsys_dirs="$vl_winsys_dirs g3dvl/$dir"
+    done
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $vl_winsys_dirs"
+fi
+
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
