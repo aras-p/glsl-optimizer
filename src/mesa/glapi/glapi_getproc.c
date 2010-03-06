@@ -44,11 +44,14 @@
 #include "glapi/glapioffsets.h"
 
 
+/**********************************************************************
+ * Static function management.
+ */
+
+
 #if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server)
 # define NEED_FUNCTION_POINTER
 #endif
-
-/* The code in this file is auto-generated with Python */
 #include "glapi/glprocs.h"
 
 
@@ -57,7 +60,7 @@
  * and return the corresponding glprocs_table_t entry.
  */
 static const glprocs_table_t *
-find_entry( const char * n )
+get_static_proc( const char * n )
 {
    GLuint i;
    for (i = 0; static_functions[i].Name_offset >= 0; i++) {
@@ -83,11 +86,12 @@ find_entry( const char * n )
 static GLint
 get_static_proc_offset(const char *funcName)
 {
-   const glprocs_table_t * const f = find_entry( funcName );
-   if (f) {
-      return f->Offset;
+   const glprocs_table_t * const f = get_static_proc( funcName );
+   if (f == NULL) {
+      return -1;
    }
-   return -1;
+
+   return f->Offset;
 }
 
 
@@ -100,25 +104,32 @@ get_static_proc_offset(const char *funcName)
 static _glapi_proc
 get_static_proc_address(const char *funcName)
 {
-   const glprocs_table_t * const f = find_entry( funcName );
-   if (f) {
-#if defined(DISPATCH_FUNCTION_SIZE) && defined(GLX_INDIRECT_RENDERING)
-      return (f->Address == NULL)
-	 ? get_entrypoint_address(f->Offset)
-         : f->Address;
-#elif defined(DISPATCH_FUNCTION_SIZE)
-      return get_entrypoint_address(f->Offset);
-#else
-      return f->Address;
-#endif
-   }
-   else {
+   const glprocs_table_t * const f = get_static_proc( funcName );
+   if (f == NULL) {
       return NULL;
    }
+
+#if defined(DISPATCH_FUNCTION_SIZE) && defined(GLX_INDIRECT_RENDERING)
+   return (f->Address == NULL)
+      ? get_entrypoint_address(f->Offset)
+      : f->Address;
+#elif defined(DISPATCH_FUNCTION_SIZE)
+   return get_entrypoint_address(f->Offset);
+#else
+   return f->Address;
+#endif
+}
+
+#else
+
+static _glapi_proc
+get_static_proc_address(const char *funcName)
+{
+   (void) funcName;
+   return NULL;
 }
 
 #endif /* !defined(XFree86Server) */
-
 
 
 /**
@@ -487,14 +498,10 @@ _glapi_get_proc_address(const char *funcName)
    if (func)
       return func;
 
-#if !defined( XFree86Server )
    /* search static functions */
-   {
-      const _glapi_proc func = get_static_proc_address(funcName);
-      if (func)
-         return func;
-   }
-#endif /* !defined( XFree86Server ) */
+   func = get_static_proc_address(funcName);
+   if (func)
+      return func;
 
    entry = add_function_name(funcName);
    return (entry == NULL) ? NULL : entry->dispatch_stub;
