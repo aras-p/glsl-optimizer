@@ -1985,23 +1985,6 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	if (rmesa->options.hw_tcl_enabled) {
 		struct r300_vertex_program *vp;
 
-		if (rmesa->radeon.NewGLState) {
-			int i;
-			for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-				rmesa->temp_attrib[i] =
-				    TNL_CONTEXT(ctx)->vb.AttribPtr[i];
-				TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-				    &rmesa->dummy_attrib[i];
-			}
-
-			_tnl_UpdateFixedFunctionProgram(ctx);
-
-			for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-				TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-				    rmesa->temp_attrib[i];
-			}
-		}
-
 		vp = r300SelectAndTranslateVertexShader(ctx);
 
 		r300SwitchFallback(ctx, R300_FALLBACK_VERTEX_PROGRAM, vp->error);
