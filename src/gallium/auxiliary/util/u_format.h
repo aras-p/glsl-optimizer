@@ -120,7 +120,13 @@ struct util_format_channel_description
 struct util_format_description
 {
    enum pipe_format format;
+
    const char *name;
+
+   /**
+    * Short name, striped of the prefix, lower case.
+    */
+   const char *short_name;
 
    /**
     * Pixel block dimensions.

@@ -90,6 +90,7 @@ def write_format_table(formats):
     print 'util_format_none_description = {'
     print "   PIPE_FORMAT_NONE,"
     print "   \"PIPE_FORMAT_NONE\","
+    print "   \"none\","
     print "   {0, 0, 0},"
     print "   0,"
     print "   0,"
@@ -105,6 +106,7 @@ def write_format_table(formats):
         print 'util_format_%s_description = {' % (format.short_name(),)
         print "   %s," % (format.name,)
         print "   \"%s\"," % (format.name,)
+        print "   \"%s\"," % (format.short_name(),)
         print "   {%u, %u, %u},\t/* block */" % (format.block_width, format.block_height, format.block_size())
         print "   %s," % (layout_map(format.layout),)
         print "   %u,\t/* nr_channels */" % (format.nr_channels(),)
