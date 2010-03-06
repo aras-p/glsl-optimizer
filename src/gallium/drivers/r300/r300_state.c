@@ -716,8 +716,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->vap_control_status = R300_VC_32BIT_SWAP;
 #endif
 
-    /* If bypassing TCL, or if no TCL engine is present, turn off the HW TCL.
-     * Else, enable HW TCL and force Draw's TCL off. */
+    /* If no TCL engine is present, turn off the HW TCL. */
     if (!r300screen->caps->has_tcl) {
         rs->vap_control_status |= R300_VAP_TCL_BYPASS;
     }
@@ -1121,7 +1120,6 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 
         r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
         r300->vap_output_state.dirty = TRUE;
-        r300->vertex_stream_state.dirty = TRUE; /* XXX needed for TCL bypass */
         r300->pvs_flush.dirty = TRUE;
 
         if (r300->fs) {
