@@ -146,6 +146,30 @@ install-libgl: default gl.pc install-headers
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
+install-headers-es1:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GLES
+	$(INSTALL) -m 644 $(TOP)/include/GLES/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/GLES
+
+install-es1: default glesv1_cm.pc install-headers-es1
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLESv1_CM_LIB_GLOB) \
+		$(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -m 644 glesv1_cm.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+
+install-headers-es2:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GLES2
+	$(INSTALL) -m 644 $(TOP)/include/GLES2/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/GLES2
+
+install-es2: default glesv2.pc install-headers-es2
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLESv2_LIB_GLOB) \
+		$(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -m 644 glesv2.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+
 install-osmesa: default osmesa.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
