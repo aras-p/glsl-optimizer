@@ -146,6 +146,7 @@ crtc_gamma_set(xf86CrtcPtr crtc, CARD16 * red, CARD16 * green, CARD16 * blue,
     /* XXX: hockup */
 }
 
+#if 0 /* Implement and enable to enable rotation and reflection. */
 static void *
 crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 {
@@ -167,6 +168,8 @@ crtc_shadow_destroy(xf86CrtcPtr crtc, PixmapPtr rotate_pixmap, void *data)
 {
     /* ScrnInfoPtr pScrn = crtc->scrn; */
 }
+
+#endif
 
 /*
  * Cursor functions
@@ -362,9 +365,9 @@ static const xf86CrtcFuncsRec crtc_funcs = {
     .hide_cursor = crtc_hide_cursor,
     .load_cursor_argb = crtc_load_cursor_argb,
 
-    .shadow_create = crtc_shadow_create,
-    .shadow_allocate = crtc_shadow_allocate,
-    .shadow_destroy = crtc_shadow_destroy,
+    .shadow_create = NULL,
+    .shadow_allocate = NULL,
+    .shadow_destroy = NULL,
 
     .gamma_set = crtc_gamma_set,
     .destroy = crtc_destroy,
