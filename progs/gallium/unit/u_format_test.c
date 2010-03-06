@@ -626,13 +626,27 @@ test_format_pack_4f(const struct util_format_test_case *test)
 }
 
 
-static void
+static boolean
 convert_4f_to_4ub(uint8_t *dst, const double *src)
 {
    unsigned i;
+   boolean accurate = TRUE;
 
-   for (i = 0; i < 4; ++i)
-      dst[i] = CLAMP(src[i], 0.0, 1.0) * 255.0;
+   for (i = 0; i < 4; ++i) {
+      if (src[i] < 0.0) {
+         accurate = FALSE;
+         dst[i] = 0;
+      }
+      else if (src[i] > 1.0) {
+         accurate = FALSE;
+         dst[i] = 255;
+      }
+      else {
+         dst[i] = src[i] * 255.0;
+      }
+   }
+
+   return accurate;
 }
 
 
@@ -670,7 +684,12 @@ test_format_pack_4ub(const struct util_format_test_case *test)
    unsigned i;
    boolean success;
 
-   convert_4f_to_4ub(unpacked, test->unpacked);
+   if (!convert_4f_to_4ub(unpacked, test->unpacked)) {
+      /*
+       * Skip test cases which cannot be represented by four unorm bytes.
+       */
+      return TRUE;
+   }
 
    memset(packed, 0, sizeof packed);
 
