@@ -107,6 +107,7 @@ C_SOURCES = \
 	util/u_draw_quad.c \
 	util/u_format_access.c \
 	util/u_format_table.c \
+	util/u_format_tests.c \
 	util/u_gen_mipmap.c \
 	util/u_handle_table.c \
 	util/u_hash_table.c \
