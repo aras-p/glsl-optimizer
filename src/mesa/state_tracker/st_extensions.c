@@ -199,6 +199,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
+   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
 
 #if FEATURE_OES_draw_texture
    ctx->Extensions.OES_draw_texture = GL_TRUE;
@@ -236,7 +237,6 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
       ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
-      ctx->Extensions.NV_texture_rectangle = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS) > 1) {
