@@ -78,7 +78,7 @@ class Channel:
         if self.type == UNSIGNED:
             return (1 << self.size) - 1
         if self.type == SIGNED:
-            return self.size - 1
+            return (1 << (self.size - 1)) - 1
         assert False
     
     def min(self):
