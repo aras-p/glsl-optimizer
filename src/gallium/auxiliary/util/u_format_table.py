@@ -96,6 +96,7 @@ def write_format_table(formats):
     print "   0,"
     print "   0,"
     print "   0,"
+    print "   0,"
     print "   {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
     print "   {0, 0, 0, 0},"
     print "   0"
@@ -111,6 +112,7 @@ def write_format_table(formats):
         print "   %s," % (layout_map(format.layout),)
         print "   %u,\t/* nr_channels */" % (format.nr_channels(),)
         print "   %s,\t/* is_array */" % (bool_map(format.is_array()),)
+        print "   %s,\t/* is_bitmask */" % (bool_map(format.is_bitmask()),)
         print "   %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),)
         print "   {"
         for i in range(4):

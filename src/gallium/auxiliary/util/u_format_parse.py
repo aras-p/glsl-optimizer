@@ -166,16 +166,10 @@ class Format:
         return True
 
     def is_bitmask(self):
-        if self.block_size() > 32:
-            return False
-        if not self.is_pot():
+        if self.block_size() not in (8, 16, 32):
             return False
         for channel in self.channels:
-            if not is_pot(channel.size):
-                return True
             if channel.type not in (VOID, UNSIGNED, SIGNED):
-                return False
-            if channel.size >= 32:
                 return False
         return True
 

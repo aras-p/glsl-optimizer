@@ -146,6 +146,15 @@ struct util_format_description
    unsigned is_array:1;
 
    /**
+    * Whether the pixel format can be described as a bitfield structure.
+    *
+    * In particular:
+    * - pixel depth must be 8, 16, or 32 bits;
+    * - all channels must be unsigned, signed, or void
+    */
+   unsigned is_bitmask:1;
+
+   /**
     * Whether channels have mixed types (ignoring UTIL_FORMAT_TYPE_VOID).
     */
    unsigned is_mixed:1;
