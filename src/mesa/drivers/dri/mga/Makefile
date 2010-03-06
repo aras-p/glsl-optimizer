@@ -5,8 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = mga_dri.so
 
-MINIGLX_SOURCES = server/mga_dri.c 
-
 DRIVER_SOURCES = \
 	mgadd.c \
 	mgaioctl.c \

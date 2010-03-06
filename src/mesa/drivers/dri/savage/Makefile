@@ -5,9 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = savage_dri.so
 
-# Doesn't exist yet.
-#MINIGLX_SOURCES = server/savage_dri.c 
-
 DRIVER_SOURCES = \
 	savage_xmesa.c \
 	savagedd.c \

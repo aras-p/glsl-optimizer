@@ -8,8 +8,6 @@ DRI_LIB_DEPS += $(shell pkg-config libdrm_nouveau --libs)
 
 LIBNAME = nouveau_vieux_dri.so
 
-MINIGLX_SOURCES =
-
 DRIVER_SOURCES = \
 	nouveau_screen.c \
 	nouveau_context.c \
