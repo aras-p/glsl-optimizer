@@ -714,7 +714,7 @@ test_one(test_func_t func, const char *suffix)
       if (test_cases[i].format != last_format) {
          const struct util_format_description *format_desc;
          format_desc = util_format_description(test_cases[i].format);
-         printf("Testing %s.%s ...\n", format_desc->name, suffix);
+         printf("Testing util_format_%s_%s ...\n", format_desc->short_name, suffix);
          last_format = test_cases[i].format;
       }
 
