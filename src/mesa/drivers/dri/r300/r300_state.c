@@ -1762,8 +1762,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 	if (RADEON_DEBUG & RADEON_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	radeon_firevertices(&r300->radeon);
-
 	r300ColorMask(ctx,
 		      ctx->Color.ColorMask[0][RCOMP],
 		      ctx->Color.ColorMask[0][GCOMP],
