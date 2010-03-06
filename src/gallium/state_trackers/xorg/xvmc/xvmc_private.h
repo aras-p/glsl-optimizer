@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #ifndef xvmc_private_h
@@ -41,28 +41,39 @@ struct pipe_fence_handle;
 
 typedef struct
 {
-	struct vl_context *vctx;
-	struct pipe_surface *backbuffer;
+   struct vl_context *vctx;
+   struct pipe_surface *backbuffer;
 } XvMCContextPrivate;
 
 typedef struct
 {
-	struct pipe_video_surface *pipe_vsfc;
-	struct pipe_fence_handle *render_fence;
-	struct pipe_fence_handle *disp_fence;
-	
-	/* Some XvMC functions take a surface but not a context,
-	   so we keep track of which context each surface belongs to. */
-	XvMCContext *context;
+   struct pipe_video_surface *pipe_vsfc;
+   struct pipe_fence_handle *render_fence;
+   struct pipe_fence_handle *disp_fence;
+
+   /* The subpicture associated with this surface, if any. */
+   XvMCSubpicture *subpicture;
+   short subx, suby;
+   unsigned short subw, subh;
+   short surfx, surfy;
+   unsigned short surfw, surfh;
+
+   /* Some XvMC functions take a surface but not a context,
+      so we keep track of which context each surface belongs to. */
+   XvMCContext *context;
 } XvMCSurfacePrivate;
 
 typedef struct
 {
-	struct pipe_surface *sfc;
-	/* Some XvMC functions take a subpicture but not a context,
-	   so we keep track of which context each subpicture belongs to. */
-	XvMCContext *context;
-} XvMCSubPicturePrivate;
+   struct pipe_surface *sfc;
+
+   /* The surface this subpicture is currently associated with, if any. */
+   XvMCSurface *surface;
+
+   /* Some XvMC functions take a subpicture but not a context,
+      so we keep track of which context each subpicture belongs to. */
+   XvMCContext *context;
+} XvMCSubpicturePrivate;
 
 #define XVMC_OUT   0
 #define XVMC_ERR   1

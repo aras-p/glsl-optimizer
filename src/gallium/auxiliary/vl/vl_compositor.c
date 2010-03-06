@@ -349,7 +349,7 @@ static void gen_rect_verts(unsigned pos,
    assert(pos < VL_COMPOSITOR_MAX_LAYERS + 2);
    assert(src_rect);
    assert(src_inv_size);
-   assert((dst_rect && dst_inv_size) || (!dst_rect && !dst_inv_size));
+   assert((dst_rect && dst_inv_size) /*|| (!dst_rect && !dst_inv_size)*/);
    assert(vb);
 
    vb[pos * 6 + 0].x = dst_rect->x * dst_inv_size->x;
@@ -383,39 +383,52 @@ static void gen_rect_verts(unsigned pos,
    vb[pos * 6 + 5].w = (src_rect->y + src_rect->h) * src_inv_size->y;
 }
 
-static unsigned gen_verts(struct vl_compositor *c,
-                          struct pipe_video_rect *src_rect,
-                          struct vertex2f *src_inv_size,
-                          struct pipe_video_rect *dst_rect)
+static unsigned gen_data(struct vl_compositor *c,
+                         struct pipe_texture *src_surface,
+                         struct pipe_video_rect *src_rect,
+                         struct pipe_video_rect *dst_rect,
+                         struct pipe_texture **textures)
 {
    void *vb;
    unsigned num_rects = 0;
    unsigned i;
 
    assert(c);
+   assert(src_surface);
    assert(src_rect);
-   assert(src_inv_size);
    assert(dst_rect);
+   assert(textures);
 
    vb = pipe_buffer_map(c->pipe->screen, c->vertex_buf.buffer,
                         PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD);
 
+   if (!vb)
+      return 0;
+
    if (c->dirty_bg) {
       struct vertex2f bg_inv_size = {1.0f / c->bg->width0, 1.0f / c->bg->height0};
-      gen_rect_verts(num_rects++, &c->bg_src_rect, &bg_inv_size, NULL, NULL, vb);
+      gen_rect_verts(num_rects, &c->bg_src_rect, &bg_inv_size, NULL, NULL, vb);
+      textures[num_rects] = c->bg;
+      ++num_rects;
       c->dirty_bg = false;
    }
 
-   gen_rect_verts(num_rects++, src_rect, src_inv_size, dst_rect, &c->fb_inv_size, vb);
-
-   for (i = 0; c->dirty_layers > 0; i++)
    {
+      struct vertex2f src_inv_size = { 1.0f / src_surface->width0, 1.0f / src_surface->height0};
+      gen_rect_verts(num_rects, src_rect, &src_inv_size, dst_rect, &c->fb_inv_size, vb);
+      textures[num_rects] = src_surface;
+      ++num_rects;
+   }
+
+   for (i = 0; c->dirty_layers > 0; i++) {
       assert(i < VL_COMPOSITOR_MAX_LAYERS);
 
       if (c->dirty_layers & (1 << i)) {
          struct vertex2f layer_inv_size = {1.0f / c->layers[i]->width0, 1.0f / c->layers[i]->height0};
-         gen_rect_verts(num_rects++, &c->layer_src_rects[i], &layer_inv_size,
+         gen_rect_verts(num_rects, &c->layer_src_rects[i], &layer_inv_size,
                         &c->layer_dst_rects[i], &c->fb_inv_size, vb);
+         textures[num_rects] = c->layers[i];
+         ++num_rects;
          c->dirty_layers &= ~(1 << i);
       }
    }
@@ -423,6 +436,28 @@ static unsigned gen_verts(struct vl_compositor *c,
    pipe_buffer_unmap(c->pipe->screen, c->vertex_buf.buffer);
 
    return num_rects;
+}
+
+static void draw_layers(struct vl_compositor *c,
+                        struct pipe_texture *src_surface,
+                        struct pipe_video_rect *src_rect,
+                        struct pipe_video_rect *dst_rect)
+{
+   unsigned num_rects;
+   struct pipe_texture *textures[VL_COMPOSITOR_MAX_LAYERS + 2];
+   unsigned i;
+
+   assert(c);
+   assert(src_surface);
+   assert(src_rect);
+   assert(dst_rect);
+
+   num_rects = gen_data(c, src_surface, src_rect, dst_rect, textures);
+
+   for (i = 0; i < num_rects; ++i) {
+      c->pipe->set_fragment_sampler_textures(c->pipe, 1, &textures[i]);
+      c->pipe->draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
+   }
 }
 
 void vl_compositor_render(struct vl_compositor          *compositor,
@@ -437,8 +472,6 @@ void vl_compositor_render(struct vl_compositor          *compositor,
                           struct pipe_video_rect        *dst_area,
                           struct pipe_fence_handle      **fence)
 {
-   unsigned num_rects;
-
    assert(compositor);
    assert(src_surface);
    assert(src_area);
@@ -459,7 +492,7 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    (
       compositor->pipe->screen,
       dst_surface,
-      0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE
+      0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ_WRITE
    );
 
    compositor->viewport.scale[0] = compositor->fb_state.width;
@@ -474,22 +507,15 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->pipe->set_framebuffer_state(compositor->pipe, &compositor->fb_state);
    compositor->pipe->set_viewport_state(compositor->pipe, &compositor->viewport);
    compositor->pipe->bind_fragment_sampler_states(compositor->pipe, 1, &compositor->sampler);
-   compositor->pipe->set_fragment_sampler_textures(compositor->pipe, 1, &src_surface);
    compositor->pipe->bind_vs_state(compositor->pipe, compositor->vertex_shader);
    compositor->pipe->bind_fs_state(compositor->pipe, compositor->fragment_shader);
    compositor->pipe->set_vertex_buffers(compositor->pipe, 1, &compositor->vertex_buf);
    compositor->pipe->set_vertex_elements(compositor->pipe, 2, compositor->vertex_elems);
    compositor->pipe->set_constant_buffer(compositor->pipe, PIPE_SHADER_FRAGMENT, 0, &compositor->fs_const_buf);
 
-   {
-      struct vertex2f src_inv_size = {1.0f / src_surface->width0, 1.0f / src_surface->height0};
-      num_rects = gen_verts(compositor, src_area, &src_inv_size, dst_area);
-   }
+   draw_layers(compositor, src_surface, src_area, dst_area);
 
    assert(!compositor->dirty_bg && !compositor->dirty_layers);
-   assert(num_rects > 0);
-
-   compositor->pipe->draw_arrays(compositor->pipe, PIPE_PRIM_TRIANGLES, 0, num_rects * 6);
    compositor->pipe->flush(compositor->pipe, PIPE_FLUSH_RENDER_CACHE, fence);
 
    pipe_surface_reference(&compositor->fb_state.cbufs[0], NULL);
@@ -501,7 +527,8 @@ void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float 
 
    memcpy
    (
-      pipe_buffer_map(compositor->pipe->screen, compositor->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+      pipe_buffer_map(compositor->pipe->screen, compositor->fs_const_buf.buffer,
+                      PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD),
       mat,
       sizeof(struct fragment_shader_consts)
    );

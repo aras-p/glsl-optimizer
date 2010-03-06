@@ -342,6 +342,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
    XvMCContextPrivate *context_priv;
+   XvMCSubpicturePrivate *subpicture_priv;
    XvMCContext *context;
    struct pipe_video_rect src_rect = {srcx, srcy, srcw, srch};
    struct pipe_video_rect dst_rect = {destx, desty, destw, desth};
@@ -374,13 +375,33 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    surface_priv = surface->privData;
    context = surface_priv->context;
    context_priv = context->privData;
+   subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
    vpipe = context_priv->vctx->vpipe;
 
    if (!CreateOrResizeBackBuffer(context_priv->vctx, width, height, &context_priv->backbuffer))
       return BadAlloc;
 
+   if (subpicture_priv) {
+      struct pipe_video_rect src_rect = {surface_priv->subx, surface_priv->suby, surface_priv->subw, surface_priv->subh};
+      struct pipe_video_rect dst_rect = {surface_priv->surfx, surface_priv->surfy, surface_priv->surfw, surface_priv->surfh};
+      struct pipe_video_rect *src_rects[1] = {&src_rect};
+      struct pipe_video_rect *dst_rects[1] = {&dst_rect};
+
+      XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p has subpicture %p.\n", surface, surface_priv->subpicture);
+
+      assert(subpicture_priv->surface == surface);
+      vpipe->set_picture_layers(vpipe, &subpicture_priv->sfc->texture, &src_rects, &dst_rects, 1);
+
+      surface_priv->subpicture = NULL;
+      subpicture_priv->surface = NULL;
+   }
+   else
+      vpipe->set_picture_layers(vpipe, NULL, NULL, NULL, 0);
+
    vpipe->render_picture(vpipe, surface_priv->pipe_vsfc, PictureToPipe(flags), &src_rect,
                          context_priv->backbuffer, &dst_rect, surface_priv->disp_fence);
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 
    vl_video_bind_drawable(context_priv->vctx, drawable);
 
@@ -391,7 +412,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       vpipe->priv
    );
 
-   XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display.\n", surface);
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Pushed surface %p to front buffer.\n", surface);
 
    return Success;
 }

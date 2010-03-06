@@ -109,6 +109,16 @@ struct pipe_video_context
     * Parameter-like states (or properties)
     */
    /*@{*/
+   void (*set_picture_background)(struct pipe_video_context *vpipe,
+                                  struct pipe_texture *bg,
+                                  struct pipe_video_rect *bg_src_rect);
+
+   void (*set_picture_layers)(struct pipe_video_context *vpipe,
+                              struct pipe_texture *layers[],
+                              struct pipe_video_rect *src_rects[],
+                              struct pipe_video_rect *dst_rects[],
+                              unsigned num_layers);
+
    void (*set_picture_desc)(struct pipe_video_context *vpipe,
                             const struct pipe_picture_desc *desc);
 

@@ -39,7 +39,7 @@ sp_mpeg12_destroy(struct pipe_video_context *vpipe)
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
 
    assert(vpipe);
-	
+
    /* Asserted in softpipe_delete_fs_state() for some reason */
    ctx->pipe->bind_vs_state(ctx->pipe, NULL);
    ctx->pipe->bind_fs_state(ctx->pipe, NULL);
@@ -119,8 +119,6 @@ sp_mpeg12_surface_copy(struct pipe_video_context *vpipe,
 
 static void
 sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
-                         /*struct pipe_surface         *backround,
-                         struct pipe_video_rect        *backround_area,*/
                          struct pipe_video_surface     *src_surface,
                          enum pipe_mpeg12_picture_type picture_type,
                          /*unsigned                    num_past_surfaces,
@@ -130,22 +128,48 @@ sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
                          struct pipe_video_rect        *src_area,
                          struct pipe_surface           *dst_surface,
                          struct pipe_video_rect        *dst_area,
-                         /*unsigned                      num_layers,
-                         struct pipe_surface           *layers,
-                         struct pipe_video_rect        *layer_src_areas,
-                         struct pipe_video_rect        *layer_dst_areas*/
                          struct pipe_fence_handle      **fence)
 {
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
-	
+
    assert(vpipe);
    assert(src_surface);
    assert(src_area);
    assert(dst_surface);
    assert(dst_area);
-	
+
    vl_compositor_render(&ctx->compositor, softpipe_video_surface(src_surface)->tex,
                         picture_type, src_area, dst_surface->texture, dst_area, fence);
+}
+
+static void
+sp_mpeg12_set_picture_background(struct pipe_video_context *vpipe,
+                                  struct pipe_texture *bg,
+                                  struct pipe_video_rect *bg_src_rect)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(bg);
+   assert(bg_src_rect);
+
+   vl_compositor_set_background(&ctx->compositor, bg, bg_src_rect);
+}
+
+static void
+sp_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
+                             struct pipe_texture *layers[],
+                             struct pipe_video_rect *src_rects[],
+                             struct pipe_video_rect *dst_rects[],
+                             unsigned num_layers)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert((layers && src_rects && dst_rects) ||
+          (!layers && !src_rects && !dst_rects));
+
+   vl_compositor_set_layers(&ctx->compositor, layers, src_rects, dst_rects, num_layers);
 }
 
 static void
@@ -179,7 +203,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    unsigned i;
 
    assert(ctx);
-	
+
    rast.flatshade = 1;
    rast.flatshade_first = 0;
    rast.light_twoside = 0;
@@ -244,7 +268,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    dsa.alpha.ref_value = 0;
    ctx->dsa = ctx->pipe->create_depth_stencil_alpha_state(ctx->pipe, &dsa);
    ctx->pipe->bind_depth_stencil_alpha_state(ctx->pipe, ctx->dsa);
-	
+
    return true;
 }
 
@@ -276,6 +300,8 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->base.render_picture = sp_mpeg12_render_picture;
    ctx->base.surface_fill = sp_mpeg12_surface_fill;
    ctx->base.surface_copy = sp_mpeg12_surface_copy;
+   ctx->base.set_picture_background = sp_mpeg12_set_picture_background;
+   ctx->base.set_picture_layers = sp_mpeg12_set_picture_layers;
    ctx->base.set_decode_target = sp_mpeg12_set_decode_target;
    ctx->base.set_csc_matrix = sp_mpeg12_set_csc_matrix;
 
@@ -288,14 +314,14 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
       FREE(ctx);
       return NULL;
    }
-	
+
    if (!vl_compositor_init(&ctx->compositor, ctx->pipe)) {
       vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
    }
-	
+
    if (!init_pipe_state(ctx)) {
       vl_compositor_cleanup(&ctx->compositor);
       vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);

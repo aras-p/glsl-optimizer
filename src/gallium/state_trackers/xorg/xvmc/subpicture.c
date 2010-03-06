@@ -42,7 +42,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
                             unsigned short width, unsigned short height, int xvimage_id)
 {
    XvMCContextPrivate *context_priv;
-   XvMCSubPicturePrivate *subpicture_priv;
+   XvMCSubpicturePrivate *subpicture_priv;
    struct pipe_video_context *vpipe;
    struct pipe_texture template;
    struct pipe_texture *tex;
@@ -67,7 +67,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    if (xvimage_id != FOURCC_RGB)
       return BadMatch;
 
-   subpicture_priv = CALLOC(1, sizeof(XvMCSubPicturePrivate));
+   subpicture_priv = CALLOC(1, sizeof(XvMCSubpicturePrivate));
    if (!subpicture_priv)
       return BadAlloc;
 
@@ -84,12 +84,13 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
       template.height0 = util_next_power_of_two(height);
    }
    template.depth0 = 1;
-   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
    subpicture_priv->context = context;
    tex = vpipe->screen->texture_create(vpipe->screen, &template);
    subpicture_priv->sfc = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
-                                                         PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+                                                         PIPE_BUFFER_USAGE_CPU_WRITE |
+                                                         PIPE_BUFFER_USAGE_GPU_READ);
    pipe_texture_reference(&tex, NULL);
    if (!subpicture_priv->sfc)
    {
@@ -120,8 +121,9 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, short y,
                            unsigned short width, unsigned short height, unsigned int color)
 {
-   XvMCSubPicturePrivate *subpicture_priv;
+   XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
+
    assert(dpy);
 
    if (!subpicture)
@@ -141,6 +143,15 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
                                short srcx, short srcy, unsigned short width, unsigned short height,
                                short dstx, short dsty)
 {
+   XvMCSubpicturePrivate *subpicture_priv;
+   XvMCContextPrivate *context_priv;
+   struct pipe_screen *screen;
+   struct pipe_transfer *xfer;
+   unsigned char *src, *dst;
+   unsigned x, y;
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Compositing subpicture %p.\n", subpicture);
+
    assert(dpy);
 
    if (!subpicture)
@@ -151,14 +162,56 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    if (subpicture->xvimage_id != image->id)
       return BadMatch;
 
+   /* No planar support for now */
+   if (image->num_planes != 1)
+      return BadMatch;
+
+   subpicture_priv = subpicture->privData;
+   context_priv = subpicture_priv->context->privData;
+   screen = context_priv->vctx->vpipe->screen;
+
    /* TODO: Assert rects are within bounds? Or clip? */
+
+   xfer = screen->get_tex_transfer(screen, subpicture_priv->sfc->texture, 0, 0, 0,
+                                   PIPE_TRANSFER_WRITE, dstx, dsty, width, height);
+   if (!xfer)
+      return BadAlloc;
+
+   src = image->data;
+   dst = screen->transfer_map(screen, xfer);
+   if (!dst) {
+      screen->tex_transfer_destroy(xfer);
+      return BadAlloc;
+   }
+
+   switch (image->id)
+   {
+      case FOURCC_RGB:
+         assert(subpicture_priv->sfc->format == PIPE_FORMAT_X8R8G8B8_UNORM);
+         for (y = 0; y < height; ++y) {
+            for (x = 0; x < width; ++x, src += 3, dst += 4) {
+               /* TODO: Confirm or fix */
+               dst[0] = src[0];
+               dst[1] = src[1];
+               dst[2] = src[2];
+            }
+         }
+         break;
+      default:
+         assert(false);
+   }
+
+   screen->transfer_unmap(screen, xfer);
+   screen->tex_transfer_destroy(xfer);
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p composited.\n", subpicture);
 
    return Success;
 }
 
 Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
 {
-   XvMCSubPicturePrivate *subpicture_priv;
+   XvMCSubpicturePrivate *subpicture_priv;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Destroying subpicture %p.\n", subpicture);
 
@@ -193,6 +246,11 @@ Status XvMCBlendSubpicture(Display *dpy, XvMCSurface *target_surface, XvMCSubpic
                            short subx, short suby, unsigned short subw, unsigned short subh,
                            short surfx, short surfy, unsigned short surfw, unsigned short surfh)
 {
+   XvMCSurfacePrivate *surface_priv;
+   XvMCSubpicturePrivate *subpicture_priv;
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Associating subpicture %p with surface %p.\n", subpicture, target_surface);
+
    assert(dpy);
 
    if (!target_surface)
@@ -204,7 +262,24 @@ Status XvMCBlendSubpicture(Display *dpy, XvMCSurface *target_surface, XvMCSubpic
    if (target_surface->context_id != subpicture->context_id)
       return BadMatch;
 
+   /* TODO: Verify against subpicture independent scaling */
+
+   surface_priv = target_surface->privData;
+   subpicture_priv = subpicture->privData;
+
    /* TODO: Assert rects are within bounds? Or clip? */
+
+   surface_priv->subpicture = subpicture;
+   surface_priv->subx = subx;
+   surface_priv->suby = suby;
+   surface_priv->subw = subw;
+   surface_priv->subh = subh;
+   surface_priv->surfx = surfx;
+   surface_priv->surfy = surfy;
+   surface_priv->surfw = surfw;
+   surface_priv->surfh = surfh;
+   subpicture_priv->surface = target_surface;
+
    return Success;
 }
 
@@ -227,6 +302,7 @@ Status XvMCBlendSubpicture2(Display *dpy, XvMCSurface *source_surface, XvMCSurfa
       return BadMatch;
 
    /* TODO: Assert rects are within bounds? Or clip? */
+
    return Success;
 }
 
