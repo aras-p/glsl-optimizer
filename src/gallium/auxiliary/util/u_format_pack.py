@@ -252,9 +252,6 @@ def conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=True
     if src_channel.type == FLOAT and dst_channel.type == FLOAT:
         return '(%s)%s' % (dst_native_type, value)
     
-    if not src_channel.norm and not dst_channel.norm:
-        return '(%s)%s' % (dst_native_type, value)
-
     if clamp:
         value = clamp_expr(src_channel, dst_channel, dst_native_type, value)
 
@@ -280,15 +277,15 @@ def conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=True
             value = '(%s * %s)' % (value, scale)
         return '(%s)%s' % (dst_native_type, value)
 
-    if not src_channel.norm and not dst_channel.norm:
-        # neither is normalized -- just cast
-        return '(%s)%s' % (dst_native_type, value)
-
     if src_channel.type in (SIGNED, UNSIGNED) and dst_channel.type in (SIGNED, UNSIGNED):
+        if not src_channel.norm and not dst_channel.norm:
+            # neither is normalized -- just cast
+            return '(%s)%s' % (dst_native_type, value)
+
         src_one = get_one(src_channel)
         dst_one = get_one(dst_channel)
 
-        if src_one > dst_one and src_channel.norm:
+        if src_one > dst_one and src_channel.norm and dst_channel.norm:
             # We can just bitshift
             src_shift = get_one_shift(src_channel)
             dst_shift = get_one_shift(dst_channel)
@@ -296,7 +293,7 @@ def conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=True
         else:
             # We need to rescale using an intermediate type big enough to hold the multiplication of both
             tmp_native_type = intermediate_native_type(src_channel.size + dst_channel.size, src_channel.sign and dst_channel.sign)
-            value = '(%s)%s' % (tmp_native_type, value)
+            value = '((%s)%s)' % (tmp_native_type, value)
             value = '(%s * 0x%x / 0x%x)' % (value, dst_one, src_one)
         value = '(%s)%s' % (dst_native_type, value)
         return value
