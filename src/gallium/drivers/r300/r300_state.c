@@ -1087,67 +1087,71 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
+    struct r300_vertex_shader* vs = CALLOC_STRUCT(r300_vertex_shader);
+    r300_vertex_shader_common_init(vs, shader);
+
     if (r300_screen(pipe->screen)->caps->has_tcl) {
-        struct r300_vertex_shader* vs = CALLOC_STRUCT(r300_vertex_shader);
-        /* Copy state directly into shader. */
-        vs->state = *shader;
-        vs->state.tokens = tgsi_dup_tokens(shader->tokens);
-
-        tgsi_scan_shader(shader->tokens, &vs->info);
-
-        return (void*)vs;
+        r300_translate_vertex_shader(r300, vs);
     } else {
-        return draw_create_vertex_shader(r300->draw, shader);
+        vs->draw_vs = draw_create_vertex_shader(r300->draw, shader);
     }
+
+    return vs;
 }
 
 static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
+
+    if (vs == NULL) {
+        r300->vs_state.state = NULL;
+        return;
+    }
+    if (vs == r300->vs_state.state) {
+        return;
+    }
+    r300->vs_state.state = vs;
+
+    // VS output mapping for HWTCL or stream mapping for SWTCL to the RS block
+    if (r300->fs) {
+        r300_vertex_shader_setup_wpos(r300);
+    }
+    memcpy(r300->vap_output_state.state, &vs->vap_out,
+           sizeof(struct r300_vap_output_state));
+    r300->vap_output_state.dirty = TRUE;
+
+    /* The majority of the RS block bits is dependent on the vertex shader. */
+    r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
 
     if (r300_screen(pipe->screen)->caps->has_tcl) {
-        struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
-
-        if (vs == NULL) {
-            r300->vs_state.state = NULL;
-            return;
-        } else if (!vs->translated) {
-            r300_translate_vertex_shader(r300, vs);
-        }
-
-        UPDATE_STATE(shader, r300->vs_state);
+        r300->vs_state.dirty = TRUE;
         r300->vs_state.size = vs->code.length + 9;
 
-        r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
-        r300->vap_output_state.dirty = TRUE;
         r300->pvs_flush.dirty = TRUE;
-
-        if (r300->fs) {
-            r300_vertex_shader_setup_wpos(r300);
-        }
 
         r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
     } else {
         draw_flush(r300->draw);
         draw_bind_vertex_shader(r300->draw,
-                (struct draw_vertex_shader*)shader);
+                (struct draw_vertex_shader*)vs->draw_vs);
     }
 }
 
 static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
 
     if (r300_screen(pipe->screen)->caps->has_tcl) {
-        struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
-
         rc_constants_destroy(&vs->code.constants);
-        FREE((void*)vs->state.tokens);
-        FREE(shader);
     } else {
         draw_delete_vertex_shader(r300->draw,
-                (struct draw_vertex_shader*)shader);
+                (struct draw_vertex_shader*)vs->draw_vs);
     }
+
+    FREE((void*)vs->state.tokens);
+    FREE(shader);
 }
 
 static void r300_set_constant_buffer(struct pipe_context *pipe,
