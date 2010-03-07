@@ -1006,3 +1006,19 @@ void radeonTexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 	radeon_texsubimage(ctx, 3, target, level, xoffset, yoffset, zoffset, width, height, depth, 0,
 		format, type, pixels, packing, texObj, texImage, 0);
 }
+
+unsigned radeonIsFormatRenderable(gl_format mesa_format)
+{
+	if (mesa_format == _dri_texformat_argb8888 || mesa_format == _dri_texformat_rgb565 ||
+		mesa_format == _dri_texformat_argb1555 || mesa_format == _dri_texformat_argb4444)
+		return 1;
+
+	switch (mesa_format)
+	{
+		case MESA_FORMAT_Z16:
+		case MESA_FORMAT_S8_Z24:
+			return 1;
+		default:
+			return 0;
+	}
+}

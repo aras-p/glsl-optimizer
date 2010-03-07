@@ -239,6 +239,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
 	radeon->vtbl.check_blit = r600_check_blit;
 	radeon->vtbl.blit = r600_blit;
+	radeon->vtbl.is_format_renderable = radeonIsFormatRenderable;
 }
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
