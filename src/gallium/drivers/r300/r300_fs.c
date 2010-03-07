@@ -207,6 +207,7 @@ static void r300_translate_fragment_shader(
         DBG(r300, DBG_FP, "r300: Error compiling fragment program: %s\n",
             compiler.Base.ErrorMsg);
         assert(0);
+        abort();
     }
 
     /* And, finally... */
