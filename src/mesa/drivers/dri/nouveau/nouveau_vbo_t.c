@@ -281,14 +281,13 @@ vbo_maybe_split(GLcontext *ctx, const struct gl_client_array **arrays,
 	int stride;
 
 	/* Try to keep client buffers smaller than the scratch BOs. */
-	if (!ib && render->mode == VBO &&
+	if (render->mode == VBO &&
 	    (stride = get_max_client_stride(ctx)))
 		    vert_avail = MIN2(vert_avail,
 				      RENDER_SCRATCH_SIZE / stride);
 
-
-	if ((ib && ib->count > idx_avail) ||
-	    (!ib && max_index - min_index > vert_avail)) {
+	if (max_index - min_index > vert_avail ||
+	    (ib && ib->count > idx_avail)) {
 		struct split_limits limits = {
 			.max_verts = vert_avail,
 			.max_indices = idx_avail,
