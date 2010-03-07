@@ -368,7 +368,6 @@ _glapi_add_dispatch( const char * const * function_names,
    struct _glapi_function * entry[8];
    GLboolean is_static[8];
    unsigned i;
-   unsigned j;
    int offset = ~0;
    int new_offset;
 
@@ -403,28 +402,25 @@ _glapi_add_dispatch( const char * const * function_names,
       }
    
    
-      for ( j = 0 ; j < NumExtEntryPoints ; j++ ) {
-	 if (strcmp(ExtEntryTable[j].name, function_names[i]) == 0) {
+      entry[i] = get_extension_proc(function_names[i]);
+
+      if (entry[i] != NULL) {
+
 	    /* The offset may be ~0 if the function name was added by
 	     * glXGetProcAddress but never filled in by the driver.
 	     */
 
-	    if (ExtEntryTable[j].dispatch_offset != ~0) {
-	       if (strcmp(real_sig, ExtEntryTable[j].parameter_signature) 
-		   != 0) {
+	    if (entry[i]->dispatch_offset != ~0) {
+	       if (strcmp(real_sig, entry[i]->parameter_signature) != 0) {
 		  return -1;
 	       }
 
-	       if ( (offset != ~0) && (ExtEntryTable[j].dispatch_offset != offset) ) {
+	       if ( (offset != ~0) && (entry[i]->dispatch_offset != offset) ) {
 		  return -1;
 	       }
 
-	       offset = ExtEntryTable[j].dispatch_offset;
+	       offset = entry[i]->dispatch_offset;
 	    }
-	    
-	    entry[i] = & ExtEntryTable[j];
-	    break;
-	 }
       }
    }
 
