@@ -468,12 +468,9 @@ static void migrate_image_to_miptree(radeon_mipmap_tree *mt,
 
 		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel];
 
-		/* TODO: bring back these assertions once the FBOs are fixed */
-#if 0
 		assert(image->mtlevel == level);
 		assert(srclvl->size == dstlvl->size);
 		assert(srclvl->rowstride == dstlvl->rowstride);
-#endif
 
 		radeon_bo_map(image->mt->bo, GL_FALSE);
 
