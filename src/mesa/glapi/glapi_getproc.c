@@ -472,20 +472,21 @@ _glapi_add_dispatch( const char * const * function_names,
    }
 
    for ( i = 0 ; function_names[i] != NULL ; i++ ) {
-      if (! is_static[i] ) {
-	 if (entry[i] == NULL) {
-	    entry[i] = add_function_name( function_names[i] );
-	    if (entry[i] == NULL) {
-	       /* FIXME: Possible memory leak here.
-		*/
-	       return -1;
-	    }
-	 }
-
-	 set_entry_info( entry[i], real_sig, offset );
+      if (is_static[i]) {
+	 continue;
       }
+
+      if (entry[i] == NULL) {
+	 entry[i] = add_function_name( function_names[i] );
+	 if (entry[i] == NULL) {
+	    /* FIXME: Possible memory leak here. */
+	    return -1;
+	 }
+      }
+
+      set_entry_info( entry[i], real_sig, offset );
    }
-   
+
    return offset;
 }
 
