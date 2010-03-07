@@ -332,36 +332,37 @@ void r300_emit_cb_setup(struct r300_context *r300,
     assert(offset % 32 == 0);
 
     switch (format) {
-        case MESA_FORMAT_RGB565:
-            assert(_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_RGB565;
+        case MESA_FORMAT_SL8:
+        case MESA_FORMAT_A8:
+        case MESA_FORMAT_L8:
+        case MESA_FORMAT_I8:
+            cbpitch |= R300_COLOR_FORMAT_I8;
             break;
+        case MESA_FORMAT_RGB565:
         case MESA_FORMAT_RGB565_REV:
-            assert(!_mesa_little_endian());
             cbpitch |= R300_COLOR_FORMAT_RGB565;
             break;
         case MESA_FORMAT_ARGB4444:
-            assert(_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_ARGB4444;
-            break;
         case MESA_FORMAT_ARGB4444_REV:
-            assert(!_mesa_little_endian());
             cbpitch |= R300_COLOR_FORMAT_ARGB4444;
             break;
+        case MESA_FORMAT_RGBA5551:
         case MESA_FORMAT_ARGB1555:
-            assert(_mesa_little_endian());
+        case MESA_FORMAT_ARGB1555_REV:
             cbpitch |= R300_COLOR_FORMAT_ARGB1555;
             break;
-        case MESA_FORMAT_ARGB1555_REV:
-            assert(!_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_ARGB1555;
+        case MESA_FORMAT_RGBA8888:
+        case MESA_FORMAT_RGBA8888_REV:
+        case MESA_FORMAT_XRGB8888:
+        case MESA_FORMAT_ARGB8888:
+        case MESA_FORMAT_XRGB8888_REV:
+        case MESA_FORMAT_ARGB8888_REV:
+        case MESA_FORMAT_SRGBA8:
+        case MESA_FORMAT_SARGB8:
+            cbpitch |= R300_COLOR_FORMAT_ARGB8888;
             break;
         default:
-            if (cpp == 4) {
-                cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-            } else {
-                _mesa_problem(r300->radeon.glCtx, "unexpected format in emit_cb_offset()");;
-            }
+            _mesa_problem(r300->radeon.glCtx, "unexpected format in emit_cb_offset()");
             break;
     }
 

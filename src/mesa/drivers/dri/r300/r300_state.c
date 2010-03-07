@@ -2238,6 +2238,63 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	}
 }
 
+#define EASY_US_OUT_FMT(comps, c0, c1, c2, c3) \
+	(R500_OUT_FMT_##comps | R500_C0_SEL_##c0 | R500_C1_SEL_##c1 | \
+	 R500_C2_SEL_##c2 | R500_C3_SEL_##c3)
+static void r300SetupUsOutputFormat(GLcontext *ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	uint32_t hw_format;
+
+	switch (radeon_get_colorbuffer(&rmesa->radeon)->base.Format)
+	{
+		case MESA_FORMAT_RGBA5551:
+		case MESA_FORMAT_RGBA8888:
+			hw_format = EASY_US_OUT_FMT(C4_8, A, B, G, R);
+			break;
+		case MESA_FORMAT_RGB565_REV:
+		case MESA_FORMAT_RGBA8888_REV:
+			hw_format = EASY_US_OUT_FMT(C4_8, R, G, B, A);
+			break;
+		case MESA_FORMAT_RGB565:
+		case MESA_FORMAT_ARGB4444:
+		case MESA_FORMAT_ARGB1555:
+		case MESA_FORMAT_XRGB8888:
+		case MESA_FORMAT_ARGB8888:
+			hw_format = EASY_US_OUT_FMT(C4_8, B, G, R, A);
+			break;
+		case MESA_FORMAT_ARGB4444_REV:
+		case MESA_FORMAT_ARGB1555_REV:
+		case MESA_FORMAT_XRGB8888_REV:
+		case MESA_FORMAT_ARGB8888_REV:
+			hw_format = EASY_US_OUT_FMT(C4_8, A, R, G, B);
+			break;
+		case MESA_FORMAT_SRGBA8:
+			hw_format = EASY_US_OUT_FMT(C4_10_GAMMA, A, B, G, R);
+			break;
+		case MESA_FORMAT_SARGB8:
+			hw_format = EASY_US_OUT_FMT(C4_10_GAMMA, B, G, R, A);
+			break;
+		case MESA_FORMAT_SL8:
+			hw_format = EASY_US_OUT_FMT(C4_10_GAMMA, A, A, R, A);
+			break;
+		case MESA_FORMAT_A8:
+			hw_format = EASY_US_OUT_FMT(C4_8, A, A, A, A);
+			break;
+		case MESA_FORMAT_L8:
+		case MESA_FORMAT_I8:
+			hw_format = EASY_US_OUT_FMT(C4_8, A, A, R, A);
+			break;
+		default:
+			assert(!"Unsupported format");
+			break;
+	}
+
+	R300_STATECHANGE(rmesa, us_out_fmt);
+	rmesa->hw.us_out_fmt.cmd[1] = hw_format;
+}
+#undef EASY_US_OUT_FMT
+
 /**
  * Called by Mesa after an internal state update.
  */
@@ -2265,6 +2322,10 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 			r300->hw.shade2.cmd[1] |= R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
 		else
 			r300->hw.shade2.cmd[1] &= ~R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
+	}
+
+	if (new_state & _NEW_BUFFERS) {
+		r300SetupUsOutputFormat(ctx);
 	}
 
 	r300->radeon.NewGLState |= new_state;
