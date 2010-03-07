@@ -369,58 +369,65 @@ _glapi_add_dispatch( const char * const * function_names,
    GLboolean is_static[8];
    unsigned i;
    int offset = ~0;
-   int new_offset;
 
 
    (void) memset( is_static, 0, sizeof( is_static ) );
    (void) memset( entry, 0, sizeof( entry ) );
 
    for ( i = 0 ; function_names[i] != NULL ; i++ ) {
-      /* Do some trivial validation on the name of the function.
-       */
+      const char * funcName = function_names[i];
+      int static_offset;
+      int extension_offset;
 
-      if (!function_names[i] || function_names[i][0] != 'g' || function_names[i][1] != 'l')
+      if (funcName[0] != 'g' || funcName[1] != 'l')
          return -1;
-   
+
       /* Determine if the named function already exists.  If the function does
        * exist, it must have the same parameter signature as the function
        * being added.
        */
 
-      new_offset = get_static_proc_offset(function_names[i]);
-      if (new_offset >= 0) {
+      /* search built-in functions */
+      static_offset = get_static_proc_offset(funcName);
+
+      if (static_offset >= 0) {
+
+	 is_static[i] = GL_TRUE;
+
 	 /* FIXME: Make sure the parameter signatures match!  How do we get
 	  * FIXME: the parameter signature for static functions?
 	  */
 
-	 if ( (offset != ~0) && (new_offset != offset) ) {
+	 if ( (offset != ~0) && (static_offset != offset) ) {
 	    return -1;
 	 }
 
-	 is_static[i] = GL_TRUE;
-	 offset = new_offset;
+	 offset = static_offset;
       }
-   
-   
-      entry[i] = get_extension_proc(function_names[i]);
+
+      /* search added extension functions */
+      entry[i] = get_extension_proc(funcName);
 
       if (entry[i] != NULL) {
+	 extension_offset = entry[i]->dispatch_offset;
 
-	    /* The offset may be ~0 if the function name was added by
-	     * glXGetProcAddress but never filled in by the driver.
-	     */
+	 /* The offset may be ~0 if the function name was added by
+	  * glXGetProcAddress but never filled in by the driver.
+	  */
 
-	    if (entry[i]->dispatch_offset != ~0) {
-	       if (strcmp(real_sig, entry[i]->parameter_signature) != 0) {
-		  return -1;
-	       }
+	 if (extension_offset == ~0) {
+	    continue;
+	 }
 
-	       if ( (offset != ~0) && (entry[i]->dispatch_offset != offset) ) {
-		  return -1;
-	       }
+	 if (strcmp(real_sig, entry[i]->parameter_signature) != 0) {
+	    return -1;
+	 }
 
-	       offset = entry[i]->dispatch_offset;
-	    }
+	 if ( (offset != ~0) && (extension_offset != offset) ) {
+	    return -1;
+	 }
+
+	 offset = extension_offset;
       }
    }
 
