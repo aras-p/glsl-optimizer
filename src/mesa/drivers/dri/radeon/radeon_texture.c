@@ -664,6 +664,7 @@ static void radeon_store_teximage(GLcontext* ctx, int dims,
 		struct gl_texture_image *texImage,
 		int compressed)
 {
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
@@ -678,8 +679,7 @@ static void radeon_store_teximage(GLcontext* ctx, int dims,
 		dstRowStride = image->mt->levels[image->mtlevel].rowstride;
 	} else if (t->bo) {
 		/* TFP case */
-		/* TODO */
-		assert(0);
+		dstRowStride = get_texture_image_row_stride(rmesa, texImage->TexFormat, width, 0);
 	} else {
 		dstRowStride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
 	}
