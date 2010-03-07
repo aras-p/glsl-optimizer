@@ -23,7 +23,7 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 
@@ -31,8 +31,6 @@
 #include "svga_state.h"
 #include "svga_cmd.h"
 #include "svga_debug.h"
-
-#include "svga_hw_reg.h"
 
 
 /***********************************************************************
@@ -72,7 +70,7 @@ static int emit_framebuffer( struct svga_context *svga,
          return ret;
 
       if (curr->zsbuf &&
-          curr->zsbuf->format == PIPE_FORMAT_Z24S8_UNORM) {
+          curr->zsbuf->format == PIPE_FORMAT_S8Z24_UNORM) {
          ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_STENCIL, curr->zsbuf);
          if (ret != PIPE_OK)
             return ret;
@@ -122,174 +120,153 @@ static int emit_viewport( struct svga_context *svga,
    float fb_width = svga->curr.framebuffer.width;
    float fb_height = svga->curr.framebuffer.height;
 
+   float fx =        viewport->scale[0] * -1.0 + viewport->translate[0];
+   float fy = flip * viewport->scale[1] * -1.0 + viewport->translate[1];
+   float fw =        viewport->scale[0] * 2; 
+   float fh = flip * viewport->scale[1] * 2; 
+
    memset( &prescale, 0, sizeof(prescale) );
 
-   if (svga->curr.rast->templ.bypass_vs_clip_and_viewport) {
+   /* Examine gallium viewport transformation and produce a screen
+    * rectangle and possibly vertex shader pre-transformation to
+    * get the same results.
+    */
 
-      /* Avoid POSITIONT as it has a non trivial implementation outside the D3D
-       * API. Always generate a vertex shader.
-       */
-      rect.x = 0;
-      rect.y = 0;
-      rect.w = svga->curr.framebuffer.width;
-      rect.h = svga->curr.framebuffer.height;
+   SVGA_DBG(DEBUG_VIEWPORT,
+            "\ninitial %f,%f %fx%f\n",
+            fx,
+            fy,
+            fw,
+            fh);
 
-      prescale.scale[0] = 2.0 / (float)rect.w;
-      prescale.scale[1] = - 2.0 / (float)rect.h;
-      prescale.scale[2] = 1.0;
-      prescale.scale[3] = 1.0;
-      prescale.translate[0] = -1.0f;
-      prescale.translate[1] = 1.0f;
-      prescale.translate[2] = 0;
-      prescale.translate[3] = 0;
-      prescale.enabled = TRUE;
-   } else {
-
-      /* Examine gallium viewport transformation and produce a screen
-       * rectangle and possibly vertex shader pre-transformation to
-       * get the same results.
-       */
-      float fx =        viewport->scale[0] * -1.0 + viewport->translate[0];
-      float fy = flip * viewport->scale[1] * -1.0 + viewport->translate[1];
-      float fw =        viewport->scale[0] * 2; 
-      float fh = flip * viewport->scale[1] * 2; 
-
-      SVGA_DBG(DEBUG_VIEWPORT,
-               "\ninitial %f,%f %fx%f\n",
-               fx,
-               fy,
-               fw,
-               fh);
-
-      prescale.scale[0] = 1.0;
-      prescale.scale[1] = 1.0;
-      prescale.scale[2] = 1.0;
-      prescale.scale[3] = 1.0;
-      prescale.translate[0] = 0;
-      prescale.translate[1] = 0;
-      prescale.translate[2] = 0;
-      prescale.translate[3] = 0;
-      prescale.enabled = TRUE;
+   prescale.scale[0] = 1.0;
+   prescale.scale[1] = 1.0;
+   prescale.scale[2] = 1.0;
+   prescale.scale[3] = 1.0;
+   prescale.translate[0] = 0;
+   prescale.translate[1] = 0;
+   prescale.translate[2] = 0;
+   prescale.translate[3] = 0;
+   prescale.enabled = TRUE;
 
 
 
-      if (fw < 0) {
-         prescale.scale[0] *= -1.0;
-         prescale.translate[0] += -fw;
-         fw = -fw;
-         fx =        viewport->scale[0] * 1.0 + viewport->translate[0];
-      }
+   if (fw < 0) {
+      prescale.scale[0] *= -1.0;
+      prescale.translate[0] += -fw;
+      fw = -fw;
+      fx =        viewport->scale[0] * 1.0 + viewport->translate[0];
+   }
 
-      if (fh < 0) {
-         prescale.scale[1] *= -1.0;
-         prescale.translate[1] += -fh;
-         fh = -fh;
-         fy = flip * viewport->scale[1] * 1.0 + viewport->translate[1];
-      }
+   if (fh < 0) {
+      prescale.scale[1] *= -1.0;
+      prescale.translate[1] += -fh;
+      fh = -fh;
+      fy = flip * viewport->scale[1] * 1.0 + viewport->translate[1];
+   }
 
-      if (fx < 0) {
-         prescale.translate[0] += fx;
-         prescale.scale[0] *= fw / (fw + fx); 
-         fw += fx;
-         fx = 0;
-      }
+   if (fx < 0) {
+      prescale.translate[0] += fx;
+      prescale.scale[0] *= fw / (fw + fx); 
+      fw += fx;
+      fx = 0;
+   }
 
-      if (fy < 0) {
-         prescale.translate[1] += fy;
-         prescale.scale[1] *= fh / (fh + fy); 
-         fh += fy;
-         fy = 0;
-      }
+   if (fy < 0) {
+      prescale.translate[1] += fy;
+      prescale.scale[1] *= fh / (fh + fy); 
+      fh += fy;
+      fy = 0;
+   }
 
-      if (fx + fw > fb_width) {
-         prescale.scale[0] *= fw / (fb_width - fx); 
-         prescale.translate[0] -= fx * (fw / (fb_width - fx));
-         prescale.translate[0] += fx;
-         fw = fb_width - fx;
-         
-      }
-
-      if (fy + fh > fb_height) {
-         prescale.scale[1] *= fh / (fb_height - fy);
-         prescale.translate[1] -= fy * (fh / (fb_height - fy));
-         prescale.translate[1] += fy;
-         fh = fb_height - fy;
-      }
-
-      if (fw < 0 || fh < 0) {
-         fw = fh = fx = fy = 0;
-         degenerate = TRUE;
-         goto out;
-      }
-
-
-      /* D3D viewport is integer space.  Convert fx,fy,etc. to
-       * integers.
-       *
-       * TODO: adjust pretranslate correct for any subpixel error
-       * introduced converting to integers.
-       */
-      rect.x = fx;
-      rect.y = fy;
-      rect.w = fw;
-      rect.h = fh;
-
-      SVGA_DBG(DEBUG_VIEWPORT,
-               "viewport error %f,%f %fx%f\n",
-               fabs((float)rect.x - fx),
-               fabs((float)rect.y - fy),
-               fabs((float)rect.w - fw),
-               fabs((float)rect.h - fh));
-
-      SVGA_DBG(DEBUG_VIEWPORT,
-               "viewport %d,%d %dx%d\n",
-               rect.x,
-               rect.y,
-               rect.w,
-               rect.h);
+   if (fx + fw > fb_width) {
+      prescale.scale[0] *= fw / (fb_width - fx); 
+      prescale.translate[0] -= fx * (fw / (fb_width - fx));
+      prescale.translate[0] += fx;
+      fw = fb_width - fx;
       
+   }
 
-      /* Finally, to get GL rasterization rules, need to tweak the
-       * screen-space coordinates slightly relative to D3D which is
-       * what hardware implements natively.
-       */
-      if (svga->curr.rast->templ.gl_rasterization_rules) {
-         float adjust_x = 0.0;
-         float adjust_y = 0.0;
+   if (fy + fh > fb_height) {
+      prescale.scale[1] *= fh / (fb_height - fy);
+      prescale.translate[1] -= fy * (fh / (fb_height - fy));
+      prescale.translate[1] += fy;
+      fh = fb_height - fy;
+   }
 
-         switch (svga->curr.reduced_prim) {
-         case PIPE_PRIM_LINES:
-            adjust_x = -0.5;
-            adjust_y = 0;
-            break;
-         case PIPE_PRIM_POINTS:
-         case PIPE_PRIM_TRIANGLES:
-            adjust_x = -0.375;
-            adjust_y = -0.5;
-            break;
-         }
+   if (fw < 0 || fh < 0) {
+      fw = fh = fx = fy = 0;
+      degenerate = TRUE;
+      goto out;
+   }
 
-         prescale.translate[0] += adjust_x;
-         prescale.translate[1] += adjust_y;
-         prescale.translate[2] = 0.5; /* D3D clip space */
-         prescale.scale[2]     = 0.5; /* D3D clip space */
+
+   /* D3D viewport is integer space.  Convert fx,fy,etc. to
+    * integers.
+    *
+    * TODO: adjust pretranslate correct for any subpixel error
+    * introduced converting to integers.
+    */
+   rect.x = fx;
+   rect.y = fy;
+   rect.w = fw;
+   rect.h = fh;
+
+   SVGA_DBG(DEBUG_VIEWPORT,
+            "viewport error %f,%f %fx%f\n",
+            fabs((float)rect.x - fx),
+            fabs((float)rect.y - fy),
+            fabs((float)rect.w - fw),
+            fabs((float)rect.h - fh));
+
+   SVGA_DBG(DEBUG_VIEWPORT,
+            "viewport %d,%d %dx%d\n",
+            rect.x,
+            rect.y,
+            rect.w,
+            rect.h);
+
+
+   /* Finally, to get GL rasterization rules, need to tweak the
+    * screen-space coordinates slightly relative to D3D which is
+    * what hardware implements natively.
+    */
+   if (svga->curr.rast->templ.gl_rasterization_rules) {
+      float adjust_x = 0.0;
+      float adjust_y = 0.0;
+
+      switch (svga->curr.reduced_prim) {
+      case PIPE_PRIM_LINES:
+         adjust_x = -0.5;
+         adjust_y = 0;
+         break;
+      case PIPE_PRIM_POINTS:
+      case PIPE_PRIM_TRIANGLES:
+         adjust_x = -0.375;
+         adjust_y = -0.5;
+         break;
       }
 
+      prescale.translate[0] += adjust_x;
+      prescale.translate[1] += adjust_y;
+      prescale.translate[2] = 0.5; /* D3D clip space */
+      prescale.scale[2]     = 0.5; /* D3D clip space */
+   }
 
-      range_min = viewport->scale[2] * -1.0 + viewport->translate[2];
-      range_max = viewport->scale[2] *  1.0 + viewport->translate[2];
 
-      /* D3D (and by implication SVGA) doesn't like dealing with zmax
-       * less than zmin.  Detect that case, flip the depth range and
-       * invert our z-scale factor to achieve the same effect.
-       */
-      if (range_min > range_max) {
-         float range_tmp;
-         range_tmp = range_min; 
-         range_min = range_max; 
-         range_max = range_tmp;
-         prescale.scale[2]     = -prescale.scale[2];
-      }
+   range_min = viewport->scale[2] * -1.0 + viewport->translate[2];
+   range_max = viewport->scale[2] *  1.0 + viewport->translate[2];
+
+   /* D3D (and by implication SVGA) doesn't like dealing with zmax
+    * less than zmin.  Detect that case, flip the depth range and
+    * invert our z-scale factor to achieve the same effect.
+    */
+   if (range_min > range_max) {
+      float range_tmp;
+      range_tmp = range_min; 
+      range_min = range_max; 
+      range_max = range_tmp;
+      prescale.scale[2]     = -prescale.scale[2];
    }
 
    if (prescale.enabled) {

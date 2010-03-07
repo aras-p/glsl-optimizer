@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 #include "cell/common.h"
@@ -59,9 +59,9 @@ cell_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
 
    if (buffers & PIPE_CLEAR_COLOR) {
       uint surfIndex = 0;
-      uint clearValue;
+      union util_color uc;
 
-      util_pack_color(rgba, cell->framebuffer.cbufs[0]->format, &clearValue);
+      util_pack_color(rgba, cell->framebuffer.cbufs[0]->format, &uc);
 
       /* Build a CLEAR command and place it in the current batch buffer */
       STATIC_ASSERT(sizeof(struct cell_command_clear_surface) % 16 == 0);
@@ -70,7 +70,7 @@ cell_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
          cell_batch_alloc16(cell, sizeof(*clr));
       clr->opcode[0] = CELL_CMD_CLEAR_SURFACE;
       clr->surface = surfIndex;
-      clr->value = clearValue;
+      clr->value = uc.ui;
    }
 
    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {

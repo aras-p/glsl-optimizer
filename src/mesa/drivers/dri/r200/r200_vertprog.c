@@ -437,7 +437,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
       (1 << VERT_RESULT_TEX2) | (1 << VERT_RESULT_TEX3) | (1 << VERT_RESULT_TEX4) |
       (1 << VERT_RESULT_TEX5) | (1 << VERT_RESULT_PSIZ))) != 0) {
       if (R200_DEBUG & RADEON_FALLBACKS) {
-	 fprintf(stderr, "can't handle vert prog outputs 0x%x\n",
+	 fprintf(stderr, "can't handle vert prog outputs 0x%llx\n",
 	    mesa_vp->Base.OutputsWritten);
       }
       return GL_FALSE;
@@ -1218,7 +1218,7 @@ r200DeleteProgram(GLcontext *ctx, struct gl_program *prog)
    _mesa_delete_program(ctx, prog);
 }
 
-static void
+static GLboolean
 r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
    struct r200_vertex_program *vp = (void *)prog;
@@ -1237,7 +1237,10 @@ r200ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
       break;
    }
    /* need this for tcl fallbacks */
-   _tnl_program_string(ctx, target, prog);
+   (void) _tnl_program_string(ctx, target, prog);
+
+   /* XXX check if program is legal, within limits */
+   return GL_TRUE;
 }
 
 static GLboolean

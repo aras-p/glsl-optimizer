@@ -1,9 +1,11 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 
 #include "nv30_context.h"
+#include "../nouveau/nv04_surface_2d.h"
 
 static void
 nv30_miptree_layout(struct nv30_miptree *nv30mt)
@@ -29,9 +31,9 @@ nv30_miptree_layout(struct nv30_miptree *nv30mt)
 
 	for (l = 0; l <= pt->last_level; l++) {
 		if (wide_pitch && (pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
-			nv30mt->level[l].pitch = align(pf_get_stride(pt->format, pt->width0), 64);
+			nv30mt->level[l].pitch = align(util_format_get_stride(pt->format, pt->width0), 64);
 		else
-			nv30mt->level[l].pitch = pf_get_stride(pt->format, width);
+			nv30mt->level[l].pitch = util_format_get_stride(pt->format, width);
 
 		nv30mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
@@ -86,11 +88,11 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	else {
 		switch (pt->format) {
 		/* TODO: Figure out which formats can be swizzled */
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM:
-		case PIPE_FORMAT_A8L8_UNORM:
+		case PIPE_FORMAT_B5G6R5_UNORM:
+		case PIPE_FORMAT_L8A8_UNORM:
 		case PIPE_FORMAT_A8_UNORM:
 		case PIPE_FORMAT_L8_UNORM:
 		case PIPE_FORMAT_I8_UNORM:
@@ -106,6 +108,12 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
 		buf_usage |= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+
+	/* apparently we can't render to swizzled surfaces smaller than 64 bytes, so make them linear.
+	 * If the user did not ask for a render target, they can still render to it, but it will cost them an extra copy.
+	 * This also happens for small mipmaps of large textures. */
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET && util_format_get_stride(pt->format, pt->width0) < 64)
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 
 	nv30_miptree_layout(mt);
 
@@ -195,12 +203,27 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		ns->base.offset = nv30mt->level[level].image_offset[0];
 	}
 
+	/* create a linear temporary that we can render into if necessary.
+	 * Note that ns->pitch is always a multiple of 64 for linear surfaces and swizzled surfaces are POT, so
+	 * ns->pitch & 63 is equivalent to (ns->pitch < 64 && swizzled)*/
+	if((ns->pitch & 63) && (ns->base.usage & (PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER)) == PIPE_BUFFER_USAGE_GPU_WRITE)
+		return &nv04_surface_wrap_for_render(pscreen, ((struct nv30_screen*)pscreen)->eng2d, ns)->base;
+
 	return &ns->base;
 }
 
 static void
 nv30_miptree_surface_del(struct pipe_surface *ps)
 {
+	struct nv04_surface* ns = (struct nv04_surface*)ps;
+	if(ns->backing)
+	{
+		struct nv30_screen* screen = (struct nv30_screen*)ps->texture->screen;
+		if(ns->backing->base.usage & PIPE_BUFFER_USAGE_GPU_WRITE)
+			screen->eng2d->copy(screen->eng2d, &ns->backing->base, 0, 0, ps, 0, 0, ns->base.width, ns->base.height);
+		nv30_miptree_surface_del(&ns->backing->base);
+	}
+
 	pipe_texture_reference(&ps->texture, NULL);
 	FREE(ps);
 }

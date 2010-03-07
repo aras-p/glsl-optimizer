@@ -39,7 +39,7 @@
 struct radeon_compiler;
 
 struct rc_src_register {
-	rc_register_file File:3;
+	unsigned int File:3;
 
 	/** Negative values may be used for relative addressing. */
 	signed int Index:(RC_REGISTER_INDEX_BITS+1);
@@ -55,7 +55,7 @@ struct rc_src_register {
 };
 
 struct rc_dst_register {
-	rc_register_file File:3;
+	unsigned int File:3;
 
 	/** Negative values may be used for relative addressing. */
 	signed int Index:(RC_REGISTER_INDEX_BITS+1);
@@ -79,20 +79,20 @@ struct rc_sub_instruction {
 	/**
 	 * Opcode of this instruction, according to \ref rc_opcode enums.
 	 */
-	rc_opcode Opcode:8;
+	unsigned int Opcode:8;
 
 	/**
 	 * Saturate each value of the result to the range [0,1] or [-1,1],
 	 * according to \ref rc_saturate_mode enums.
 	 */
-	rc_saturate_mode SaturateMode:2;
+	unsigned int SaturateMode:2;
 
 	/**
 	 * Writing to the special register RC_SPECIAL_ALU_RESULT
 	 */
 	/*@{*/
-	rc_write_aluresult WriteALUResult:2;
-	rc_compare_func ALUResultCompare:3;
+	unsigned int WriteALUResult:2;
+	unsigned int ALUResultCompare:3;
 	/*@}*/
 
 	/**
@@ -103,7 +103,7 @@ struct rc_sub_instruction {
 	unsigned int TexSrcUnit:5;
 
 	/** Source texture target, one of the \ref rc_texture_target enums */
-	rc_texture_target TexSrcTarget:3;
+	unsigned int TexSrcTarget:3;
 
 	/** True if tex instruction should do shadow comparison */
 	unsigned int TexShadow:1;

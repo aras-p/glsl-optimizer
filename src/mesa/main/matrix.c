@@ -726,10 +726,10 @@ void _mesa_init_matrix( GLcontext * ctx )
                      _NEW_PROJECTION);
    init_matrix_stack(&ctx->ColorMatrixStack, MAX_COLOR_STACK_DEPTH,
                      _NEW_COLOR_MATRIX);
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+   for (i = 0; i < Elements(ctx->TextureMatrixStack); i++)
       init_matrix_stack(&ctx->TextureMatrixStack[i], MAX_TEXTURE_STACK_DEPTH,
                         _NEW_TEXTURE_MATRIX);
-   for (i = 0; i < MAX_PROGRAM_MATRICES; i++)
+   for (i = 0; i < Elements(ctx->ProgramMatrixStack); i++)
       init_matrix_stack(&ctx->ProgramMatrixStack[i], 
 		        MAX_PROGRAM_MATRIX_STACK_DEPTH, _NEW_TRACK_MATRIX);
    ctx->CurrentStack = &ctx->ModelviewMatrixStack;
@@ -754,9 +754,9 @@ void _mesa_free_matrix_data( GLcontext *ctx )
    free_matrix_stack(&ctx->ModelviewMatrixStack);
    free_matrix_stack(&ctx->ProjectionMatrixStack);
    free_matrix_stack(&ctx->ColorMatrixStack);
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+   for (i = 0; i < Elements(ctx->TextureMatrixStack); i++)
       free_matrix_stack(&ctx->TextureMatrixStack[i]);
-   for (i = 0; i < MAX_PROGRAM_MATRICES; i++)
+   for (i = 0; i < Elements(ctx->ProgramMatrixStack); i++)
       free_matrix_stack(&ctx->ProgramMatrixStack[i]);
    /* combined Modelview*Projection matrix */
    _math_matrix_dtr( &ctx->_ModelProjectMatrix );

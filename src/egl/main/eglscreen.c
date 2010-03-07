@@ -17,21 +17,27 @@
 
 #include "egldisplay.h"
 #include "eglglobals.h"
+#include "eglcurrent.h"
 #include "eglmode.h"
 #include "eglconfig.h"
 #include "eglsurface.h"
 #include "eglscreen.h"
+#include "eglmutex.h"
 
 
 /**
  * Return a new screen handle/ID.
  * NOTE: we never reuse these!
  */
-EGLScreenMESA
+static EGLScreenMESA
 _eglAllocScreenHandle(void)
 {
-   EGLScreenMESA s = _eglGlobal.FreeScreenHandle;
-   _eglGlobal.FreeScreenHandle++;
+   EGLScreenMESA s;
+   
+   _eglLockMutex(_eglGlobal.Mutex);
+   s = _eglGlobal.FreeScreenHandle++;
+   _eglUnlockMutex(_eglGlobal.Mutex);
+
    return s;
 }
 
@@ -110,27 +116,12 @@ _eglGetScreensMESA(_EGLDriver *drv, _EGLDisplay *display, EGLScreenMESA *screens
 
 
 /**
- * Example function - drivers should do a proper implementation.
+ * Drivers should do a proper implementation.
  */
 _EGLSurface *
 _eglCreateScreenSurfaceMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
                             const EGLint *attrib_list)
 {
-#if 0 /* THIS IS JUST EXAMPLE CODE */
-   _EGLSurface *surf;
-
-   surf = (_EGLSurface *) calloc(1, sizeof(_EGLSurface));
-   if (!surf)
-      return NULL;
-
-   if (!_eglInitSurface(drv, surf, EGL_SCREEN_BIT_MESA,
-                        conf, attrib_list)) {
-      free(surf);
-      return NULL;
-   }
-
-   return surf;
-#endif
    return NULL;
 }
 

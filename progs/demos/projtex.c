@@ -248,6 +248,7 @@ loadImageTextures(void)
 
      free(texData3);
      free(texData4);
+     free(image);
   }
 }
 
@@ -997,17 +998,16 @@ menu(int selection)
 int
 main(int argc, char **argv)
 {
+  glutInitWindowSize(500,500);
   glutInit(&argc, argv);
+  glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
+  (void) glutCreateWindow("projtex");
+  glewInit();
 
   if (argc > 1) {
      NumTextures = atoi(argv[1]);
   }
   assert(NumTextures <= MAX_TEX);
-
-  glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-  glutInitWindowSize(500,500);
-  (void) glutCreateWindow("projtex");
-  glewInit();
 
   loadTexture = loadImageTextures;
   drawObject = drawCube;

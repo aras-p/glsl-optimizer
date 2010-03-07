@@ -21,7 +21,7 @@
  */
 
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "nv50_context.h"
 
@@ -48,7 +48,7 @@ nv50_query_create(struct pipe_context *pipe, unsigned type)
 	assert (q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 	q->type = type;
 
-	ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM | NOUVEAU_BO_MAP, 256,
+	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 256,
 			     16, &q->bo);
 	if (ret) {
 		FREE(q);
@@ -77,9 +77,9 @@ nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_query *q = nv50_query(pq);
 
-	BEGIN_RING(chan, tesla, 0x1530, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_SAMPLECNT_RESET, 1);
 	OUT_RING  (chan, 1);
-	BEGIN_RING(chan, tesla, 0x1514, 1);
+	BEGIN_RING(chan, tesla, NV50TCL_SAMPLECNT_ENABLE, 1);
 	OUT_RING  (chan, 1);
 
 	q->ready = FALSE;
@@ -93,13 +93,15 @@ nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_query *q = nv50_query(pq);
 
-	WAIT_RING (chan, 5);
+	MARK_RING (chan, 5, 2); /* flush on lack of space or relocs */
 	BEGIN_RING(chan, tesla, NV50TCL_QUERY_ADDRESS_HIGH, 4);
-	OUT_RELOCh(chan, q->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, q->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCh(chan, q->bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, q->bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
 	OUT_RING  (chan, 0x00000000);
 	OUT_RING  (chan, 0x0100f002);
-	FIRE_RING (chan);
+
+	BEGIN_RING(chan, tesla, NV50TCL_SAMPLECNT_ENABLE, 1);
+	OUT_RING  (chan, 0);
 }
 
 static boolean
@@ -111,7 +113,7 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 
 	if (!q->ready) {
 		ret = nouveau_bo_map(q->bo, NOUVEAU_BO_RD |
-				     wait ? 0 : NOUVEAU_BO_NOWAIT);
+				     (wait ? 0 : NOUVEAU_BO_NOWAIT));
 		if (ret)
 			return false;
 		q->result = ((uint32_t *)q->bo->map)[1];
@@ -123,6 +125,35 @@ nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 	return q->ready;
 }
 
+static void
+nv50_render_condition(struct pipe_context *pipe,
+		      struct pipe_query *pq, uint mode)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nouveau_channel *chan = nv50->screen->base.channel;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct nv50_query *q;
+
+	if (!pq) {
+		BEGIN_RING(chan, tesla, NV50TCL_COND_MODE, 1);
+		OUT_RING  (chan, NV50TCL_COND_MODE_ALWAYS);
+		return;
+	}
+	q = nv50_query(pq);
+
+	if (mode == PIPE_RENDER_COND_WAIT ||
+	    mode == PIPE_RENDER_COND_BY_REGION_WAIT) {
+		/* XXX: big fence, FIFO semaphore might be better */
+		BEGIN_RING(chan, tesla, 0x0110, 1);
+		OUT_RING  (chan, 0);
+	}
+
+	BEGIN_RING(chan, tesla, NV50TCL_COND_ADDRESS_HIGH, 3);
+	OUT_RELOCh(chan, q->bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	OUT_RELOCl(chan, q->bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	OUT_RING  (chan, NV50TCL_COND_MODE_RES);
+}
+
 void
 nv50_init_query_functions(struct nv50_context *nv50)
 {
@@ -131,4 +162,5 @@ nv50_init_query_functions(struct nv50_context *nv50)
 	nv50->pipe.begin_query = nv50_query_begin;
 	nv50->pipe.end_query = nv50_query_end;
 	nv50->pipe.get_query_result = nv50_query_result;
+	nv50->pipe.render_condition = nv50_render_condition;
 }

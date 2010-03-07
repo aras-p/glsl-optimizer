@@ -53,7 +53,7 @@
 #define NUM_COLORS 32
 #define RAMPSTART 16
 
-void
+static void
 myinit(void)
 {
   int i;
@@ -77,7 +77,7 @@ myinit(void)
 
 /*  display() renders 3 cones at different z positions.
  */
-void
+static void
 display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -104,7 +104,7 @@ display(void)
   glFlush();
 }
 
-void
+static void
 myReshape(int w, int h)
 {
   glViewport(0, 0, w, h);

@@ -18,11 +18,10 @@ include sources.mak
 
 
 
-
-# Default: build dependencies, then asm_subdirs, then convenience
-# libs (.a) and finally the device drivers:
-default: depend asm_subdirs libmesa.a libmesagallium.a libglapi.a \
-	driver_subdirs
+# Default: build dependencies, then asm_subdirs, GLSL built-in lib,
+# then convenience libs (.a) and finally the device drivers:
+default: depend asm_subdirs glsl_builtin libmesa.a libmesagallium.a \
+	libglapi.a driver_subdirs
 
 
 
@@ -30,20 +29,20 @@ default: depend asm_subdirs libmesa.a libmesagallium.a libglapi.a \
 # Helper libraries used by many drivers:
 
 # Make archive of core mesa object files
-libmesa.a: $(MESA_OBJECTS)
-	@ $(MKLIB) -o mesa -static $(MESA_OBJECTS)
+libmesa.a: $(MESA_OBJECTS) $(GLSL_LIBS)
+	@ $(MKLIB) -o mesa -static $(MESA_OBJECTS) $(GLSL_LIBS)
 
 # Make archive of subset of core mesa object files for gallium
-libmesagallium.a: $(MESA_GALLIUM_OBJECTS)
-	@ $(MKLIB) -o mesagallium -static $(MESA_GALLIUM_OBJECTS)
+libmesagallium.a: $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
+	@ $(MKLIB) -o mesagallium -static $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
-	$(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
+	@ $(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
 
 ######################################################################
 # Device drivers
-driver_subdirs: libmesa.a libglapi.a
+driver_subdirs: libmesa.a libglapi.a libmesagallium.a
 	@ (cd drivers && $(MAKE))
 
 
@@ -57,6 +56,12 @@ asm_subdirs:
 		(cd x86 && $(MAKE)) || exit 1 ; \
 		(cd x86-64 && $(MAKE)) || exit 1 ; \
 	fi
+
+
+######################################################################
+# GLSL built-in library
+glsl_builtin:
+	(cd shader/slang/library && $(MAKE)) || exit 1 ;
 
 
 ######################################################################
@@ -149,9 +154,10 @@ tags:
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
-	-rm -f depend depend.bak libmesa.a libglapi.a
+	-rm -f depend depend.bak libmesa.a libglapi.a libmesagallium.a
 	-rm -f drivers/*/*.o
 	-rm -f *.pc
+	-rm -f shader/slang/library/*_gc.h
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/x11 && $(MAKE) clean
 	-@cd drivers/osmesa && $(MAKE) clean

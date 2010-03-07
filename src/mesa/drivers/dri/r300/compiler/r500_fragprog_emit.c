@@ -121,8 +121,19 @@ static unsigned int translate_alpha_op(struct r300_fragment_program_compiler *c,
 
 static unsigned int fix_hw_swizzle(unsigned int swz)
 {
-	if (swz == 5) swz = 6;
-	if (swz == RC_SWIZZLE_UNUSED) swz = 4;
+    switch (swz) {
+        case RC_SWIZZLE_ZERO:
+        case RC_SWIZZLE_UNUSED:
+            swz = 4;
+            break;
+        case RC_SWIZZLE_HALF:
+            swz = 5;
+            break;
+        case RC_SWIZZLE_ONE:
+            swz = 6;
+            break;
+    }
+
 	return swz;
 }
 
@@ -240,6 +251,9 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	code->inst[ip].inst4 |= translate_arg_alpha(inst, 0) << R500_ALPHA_SEL_A_SHIFT;
 	code->inst[ip].inst4 |= translate_arg_alpha(inst, 1) << R500_ALPHA_SEL_B_SHIFT;
 	code->inst[ip].inst5 |= translate_arg_alpha(inst, 2) << R500_ALU_RGBA_ALPHA_SEL_C_SHIFT;
+
+    code->inst[ip].inst3 |= R500_ALU_RGB_TARGET(inst->RGB.Target);
+    code->inst[ip].inst4 |= R500_ALPHA_TARGET(inst->Alpha.Target);
 
 	if (inst->WriteALUResult) {
 		code->inst[ip].inst3 |= R500_ALU_RGB_WMASK;
@@ -454,6 +468,8 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 
 	if (compiler->Base.Error)
 		return;
+
+	assert(code->inst_end >= 0);
 
 	if ((code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {
 		/* This may happen when dead-code elimination is disabled or

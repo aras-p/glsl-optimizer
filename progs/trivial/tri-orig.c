@@ -51,7 +51,7 @@ static void Reshape(int width, int height)
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-/*     glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0); */
+    glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -74,11 +74,11 @@ static void Draw(void)
 
    glBegin(GL_TRIANGLES);
    glColor3f(0,0,.7); 
-   glVertex3f( 0.9, -0.9, -0.0);
+   glVertex3f( 0.9, -0.9, -30.0);
    glColor3f(.8,0,0); 
-   glVertex3f( 0.9,  0.9, -0.0);
+   glVertex3f( 0.9,  0.9, -30.0);
    glColor3f(0,.9,0); 
-   glVertex3f(-0.9,  0.0, -0.0);
+   glVertex3f(-0.9,  0.0, -30.0);
    glEnd();
 
    glFlush();
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 
     glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
 
-    type = GLUT_RGB | GLUT_ALPHA;
+    type = GLUT_RGB;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 

@@ -108,6 +108,7 @@ typedef struct StreamDesc
 	GLint   size;   //number of data element
 	GLenum  type;  //data element type
 	GLsizei stride;
+	GLenum  format; // GL_RGBA,GLBGRA 
 
 	struct radeon_bo *bo;
 	GLint  bo_offset;
@@ -147,13 +148,15 @@ struct r600_context {
 	GLint      nNumActiveAos;
 	StreamDesc stream_desc[VERT_ATTRIB_MAX];
     struct r700_index_buffer ind_buf;
+	struct radeon_bo *blit_bo;
+	GLboolean blit_bo_loaded;
 };
 
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
 #define GL_CONTEXT(context)     ((GLcontext *)(context->radeon.glCtx))
 
 extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
-				   __DRIcontextPrivate * driContextPriv,
+				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 
 #define R700_CONTEXT_STATES(context) ((R700_CHIP_CONTEXT *)(&context->hw))
@@ -176,6 +179,8 @@ extern GLboolean r700SyncSurf(context_t *context,
 			      uint32_t read_domain,
 			      uint32_t write_domain,
 			      uint32_t sync_type);
+
+extern void r700WaitForIdleClean(context_t *context);
 
 extern void r700Start3D(context_t *context);
 extern void r600InitAtoms(context_t *context);

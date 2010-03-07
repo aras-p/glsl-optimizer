@@ -46,7 +46,7 @@ typedef enum
 	RBUG_BLOCK_BEFORE = 1,
 	RBUG_BLOCK_AFTER = 2,
 	RBUG_BLOCK_RULE = 4,
-	RBUG_BLOCK_MASK = 7,
+	RBUG_BLOCK_MASK = 7
 } rbug_block_t;
 
 struct rbug_proto_context_list

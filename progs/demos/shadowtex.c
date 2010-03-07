@@ -38,7 +38,6 @@
 #include <math.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include "showbuffer.h"
 
 #define DEG_TO_RAD (3.14159 / 180.0)
 
@@ -1022,9 +1021,8 @@ PrintHelp(void)
 int
 main(int argc, char *argv[])
 {
-   glutInit(&argc, argv);
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(WindowWidth, WindowHeight);
+   glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);
    glutCreateWindow(argv[0]);
    glewInit();

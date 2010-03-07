@@ -32,6 +32,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
+#include "util/u_format.h"
 #include "util/u_debug.h"
 
 #include "stw_icd.h"
@@ -73,17 +74,17 @@ struct stw_pf_depth_info
 static const struct stw_pf_color_info
 stw_pf_color[] = {
    /* no-alpha */
-   { PIPE_FORMAT_X8R8G8B8_UNORM,    { 8,  8,  8,  0}, {16,  8,  0,  0} },
-   { PIPE_FORMAT_B8G8R8X8_UNORM,    { 8,  8,  8,  0}, { 8, 16, 24,  0} },
-   { PIPE_FORMAT_R5G6B5_UNORM,      { 5,  6,  5,  0}, {11,  5,  0,  0} },
+   { PIPE_FORMAT_B8G8R8X8_UNORM,    { 8,  8,  8,  0}, {16,  8,  0,  0} },
+   { PIPE_FORMAT_X8R8G8B8_UNORM,    { 8,  8,  8,  0}, { 8, 16, 24,  0} },
+   { PIPE_FORMAT_B5G6R5_UNORM,      { 5,  6,  5,  0}, {11,  5,  0,  0} },
    /* alpha */
-   { PIPE_FORMAT_A8R8G8B8_UNORM,    { 8,  8,  8,  8}, {16,  8,  0, 24} },
-   { PIPE_FORMAT_B8G8R8A8_UNORM,    { 8,  8,  8,  8}, { 8, 16, 24,  0} },
+   { PIPE_FORMAT_B8G8R8A8_UNORM,    { 8,  8,  8,  8}, {16,  8,  0, 24} },
+   { PIPE_FORMAT_A8R8G8B8_UNORM,    { 8,  8,  8,  8}, { 8, 16, 24,  0} },
 #if 0
-   { PIPE_FORMAT_A2B10G10R10_UNORM, {10, 10, 10,  2}, { 0, 10, 20, 30} },
+   { PIPE_FORMAT_R10G10B10A2_UNORM, {10, 10, 10,  2}, { 0, 10, 20, 30} },
 #endif
-   { PIPE_FORMAT_A1R5G5B5_UNORM,    { 5,  5,  5,  1}, {10,  5,  0, 15} },
-   { PIPE_FORMAT_A4R4G4B4_UNORM,    { 4,  4,  4,  4}, {16,  4,  0, 12} }
+   { PIPE_FORMAT_B5G5R5A1_UNORM,    { 5,  5,  5,  1}, {10,  5,  0, 15} },
+   { PIPE_FORMAT_B4G4R4A4_UNORM,    { 4,  4,  4,  4}, {16,  4,  0, 12} }
 };
 
 
@@ -91,14 +92,12 @@ static const struct stw_pf_depth_info
 stw_pf_depth_stencil[] = {
    /* pure depth */
    { PIPE_FORMAT_Z32_UNORM,   {32, 0} },
-   { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
    { PIPE_FORMAT_X8Z24_UNORM, {24, 0} },
+   { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
    { PIPE_FORMAT_Z16_UNORM,   {16, 0} },
-   /* pure stencil */
-   { PIPE_FORMAT_S8_UNORM,    { 0, 8} },
    /* combined depth-stencil */
-   { PIPE_FORMAT_S8Z24_UNORM, {24, 8} },
-   { PIPE_FORMAT_Z24S8_UNORM, {24, 8} }
+   { PIPE_FORMAT_Z24S8_UNORM, {24, 8} },
+   { PIPE_FORMAT_S8Z24_UNORM, {24, 8} }
 };
 
 
@@ -132,14 +131,12 @@ stw_pixelformat_add(
    if(stw_dev->pixelformat_extended_count >= STW_MAX_PIXELFORMATS)
       return;
 
-   assert(pf_layout( color->format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
-   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_R ) == color->bits.red );
-   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_G ) == color->bits.green );
-   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_B ) == color->bits.blue );
-   assert(pf_get_component_bits( color->format, PIPE_FORMAT_COMP_A ) == color->bits.alpha );
-   assert(pf_layout( depth->format ) == PIPE_FORMAT_LAYOUT_RGBAZS );
-   assert(pf_get_component_bits( depth->format, PIPE_FORMAT_COMP_Z ) == depth->bits.depth );
-   assert(pf_get_component_bits( depth->format, PIPE_FORMAT_COMP_S ) == depth->bits.stencil );
+   assert(util_format_get_component_bits(color->format, UTIL_FORMAT_COLORSPACE_RGB, 0) == color->bits.red);
+   assert(util_format_get_component_bits(color->format, UTIL_FORMAT_COLORSPACE_RGB, 1) == color->bits.green);
+   assert(util_format_get_component_bits(color->format, UTIL_FORMAT_COLORSPACE_RGB, 2) == color->bits.blue);
+   assert(util_format_get_component_bits(color->format, UTIL_FORMAT_COLORSPACE_RGB, 3) == color->bits.alpha);
+   assert(util_format_get_component_bits(depth->format, UTIL_FORMAT_COLORSPACE_ZS, 0) == depth->bits.depth);
+   assert(util_format_get_component_bits(depth->format, UTIL_FORMAT_COLORSPACE_ZS, 1) == depth->bits.stencil);
    
    pfi = &stw_dev->pixelformats[stw_dev->pixelformat_extended_count];
    
@@ -221,7 +218,8 @@ stw_pixelformat_init( void )
          const struct stw_pf_color_info *color = &stw_pf_color[j];
          
          if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D, 
-                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
+                                         PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                         PIPE_TEXTURE_USAGE_DISPLAY_TARGET, 0))
             continue;
          
          for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
@@ -273,14 +271,12 @@ stw_pixelformat_visual(GLvisual *visual,
    memset(visual, 0, sizeof *visual);
    _mesa_initialize_visual(
       visual,
-      (pfi->pfd.iPixelType == PFD_TYPE_RGBA) ? GL_TRUE : GL_FALSE,
       (pfi->pfd.dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
       (pfi->pfd.dwFlags & PFD_STEREO) ? GL_TRUE : GL_FALSE,
       pfi->pfd.cRedBits,
       pfi->pfd.cGreenBits,
       pfi->pfd.cBlueBits,
       pfi->pfd.cAlphaBits,
-      (pfi->pfd.iPixelType == PFD_TYPE_COLORINDEX) ? pfi->pfd.cColorBits : 0,
       pfi->pfd.cDepthBits,
       pfi->pfd.cStencilBits,
       pfi->pfd.cAccumRedBits,
@@ -303,6 +299,9 @@ DrvDescribePixelFormat(
    const struct stw_pixelformat_info *pfi;
 
    (void) hdc;
+
+   if (!stw_dev)
+      return 0;
 
    count = stw_pixelformat_get_extended_count();
    index = (uint) iPixelFormat - 1;

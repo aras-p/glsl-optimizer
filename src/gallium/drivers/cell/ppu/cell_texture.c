@@ -33,8 +33,10 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_inlines.h"
+#include "util/u_simple_screen.h"
+
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -65,11 +67,11 @@ cell_texture_layout(struct cell_texture *ct)
       w_tile = align(width, TILE_SIZE);
       h_tile = align(height, TILE_SIZE);
 
-      ct->stride[level] = pf_get_stride(pt->format, w_tile);
+      ct->stride[level] = util_format_get_stride(pt->format, w_tile);
 
       ct->level_offset[level] = ct->buffer_size;
 
-      size = ct->stride[level] * pf_get_nblocksy(pt->format, h_tile);
+      size = ct->stride[level] * util_format_get_nblocksy(pt->format, h_tile);
       if (pt->target == PIPE_TEXTURE_CUBE)
          size *= 6;
       else
@@ -281,11 +283,11 @@ cell_get_tex_surface(struct pipe_screen *screen,
 
       if (pt->target == PIPE_TEXTURE_CUBE) {
          unsigned h_tile = align(ps->height, TILE_SIZE);
-         ps->offset += face * pf_get_nblocksy(ps->format, h_tile) * ct->stride[level];
+         ps->offset += face * util_format_get_nblocksy(ps->format, h_tile) * ct->stride[level];
       }
       else if (pt->target == PIPE_TEXTURE_3D) {
          unsigned h_tile = align(ps->height, TILE_SIZE);
-         ps->offset += zslice * pf_get_nblocksy(ps->format, h_tile) * ct->stride[level];
+         ps->offset += zslice * util_format_get_nblocksy(ps->format, h_tile) * ct->stride[level];
       }
       else {
          assert(face == 0);
@@ -340,11 +342,11 @@ cell_get_tex_transfer(struct pipe_screen *screen,
 
       if (texture->target == PIPE_TEXTURE_CUBE) {
          unsigned h_tile = align(u_minify(texture->height0, level), TILE_SIZE);
-         ctrans->offset += face * pf_get_nblocksy(texture->format, h_tile) * pt->stride;
+         ctrans->offset += face * util_format_get_nblocksy(texture->format, h_tile) * pt->stride;
       }
       else if (texture->target == PIPE_TEXTURE_3D) {
          unsigned h_tile = align(u_minify(texture->height0, level), TILE_SIZE);
-         ctrans->offset += zslice * pf_get_nblocksy(texture->format, h_tile) * pt->stride;
+         ctrans->offset += zslice * util_format_get_nblocksy(texture->format, h_tile) * pt->stride;
       }
       else {
          assert(face == 0);
@@ -397,8 +399,8 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
     * Create a buffer of ordinary memory for the linear texture.
     * This is the memory that the user will read/write.
     */
-   size = pf_get_stride(pt->format, align(texWidth, TILE_SIZE)) *
-          pf_get_nblocksy(pt->format, align(texHeight, TILE_SIZE));
+   size = util_format_get_stride(pt->format, align(texWidth, TILE_SIZE)) *
+          util_format_get_nblocksy(pt->format, align(texHeight, TILE_SIZE));
 
    ctrans->map = align_malloc(size, 16);
    if (!ctrans->map)
@@ -406,7 +408,7 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
 
    if (transfer->usage & PIPE_TRANSFER_READ) {
       /* need to untwiddle the texture to make a linear version */
-      const uint bpp = pf_get_blocksize(ct->base.format);
+      const uint bpp = util_format_get_blocksize(ct->base.format);
       if (bpp == 4) {
          const uint *src = (uint *) (ct->mapped + ctrans->offset);
          uint *dst = ctrans->map;
@@ -449,7 +451,7 @@ cell_transfer_unmap(struct pipe_screen *screen,
       /* The user wrote new texture data into the mapped buffer.
        * We need to convert the new linear data into the twiddled/tiled format.
        */
-      const uint bpp = pf_get_blocksize(ct->base.format);
+      const uint bpp = util_format_get_blocksize(ct->base.format);
       if (bpp == 4) {
          const uint *src = ctrans->map;
          uint *dst = (uint *) (ct->mapped + ctrans->offset);

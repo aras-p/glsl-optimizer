@@ -478,7 +478,8 @@ SVGA3D_BufferDMA(struct svga_winsys_context *swc,
                  struct svga_winsys_surface *host,
                  SVGA3dTransferType transfer,      // IN
                  uint32 size,                      // IN
-                 uint32 offset,                    // IN
+                 uint32 guest_offset,              // IN
+                 uint32 host_offset,               // IN
                  SVGA3dSurfaceDMAFlags flags)      // IN
 {
    SVGA3dCmdSurfaceDMA *cmd;
@@ -517,19 +518,19 @@ SVGA3D_BufferDMA(struct svga_winsys_context *swc,
    cmd->transfer = transfer;
 
    box = (SVGA3dCopyBox *)&cmd[1];
-   box->x = offset;
+   box->x = host_offset;
    box->y = 0;
    box->z = 0;
    box->w = size;
    box->h = 1;
    box->d = 1;
-   box->srcx = offset;
+   box->srcx = guest_offset;
    box->srcy = 0;
    box->srcz = 0;
    
    pSuffix = (SVGA3dCmdSurfaceDMASuffix *)((uint8_t*)cmd + sizeof *cmd + sizeof *box);
    pSuffix->suffixSize = sizeof *pSuffix;
-   pSuffix->maximumOffset = offset + size;
+   pSuffix->maximumOffset = guest_offset + size;
    pSuffix->flags = flags;
 
    swc->commit(swc);

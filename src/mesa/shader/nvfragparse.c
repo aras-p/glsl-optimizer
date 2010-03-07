@@ -171,7 +171,7 @@ record_error(struct parse_state *parseState, const char *msg, int lineNo)
    _mesa_debug(parseState->ctx,
                "nvfragparse.c(%d): line %d, column %d:%s (%s)\n",
                lineNo, line, column, (char *) lineStr, msg);
-   _mesa_free((void *) lineStr);
+   free((void *) lineStr);
 #else
    (void) lineNo;
 #endif
@@ -200,7 +200,7 @@ do {									\
 #define RETURN_ERROR2(msg1, msg2)					\
 do {									\
    char err[1000];							\
-   _mesa_sprintf(err, "%s %s", msg1, msg2);				\
+   sprintf(err, "%s %s", msg1, msg2);				\
    record_error(parseState, err, __LINE__);				\
    return GL_FALSE;							\
 } while(0)
@@ -217,8 +217,14 @@ MatchInstruction(const GLubyte *token)
    const struct instruction_pattern *inst;
    struct instruction_pattern result;
 
+   result.name = NULL;
+   result.opcode = MAX_OPCODE; /* i.e. invalid instruction */
+   result.inputs = 0;
+   result.outputs = 0;
+   result.suffixes = 0;
+
    for (inst = Instructions; inst->name; inst++) {
-      if (_mesa_strncmp((const char *) token, inst->name, 3) == 0) {
+      if (strncmp((const char *) token, inst->name, 3) == 0) {
          /* matched! */
          int i = 3;
          result = *inst;
@@ -247,7 +253,7 @@ MatchInstruction(const GLubyte *token)
          return result;
       }
    }
-   result.opcode = MAX_OPCODE; /* i.e. invalid instruction */
+
    return result;
 }
 
@@ -372,7 +378,7 @@ Peek_Token(struct parse_state *parseState, GLubyte *token)
       parseState->pos += (-i);
       return GL_FALSE;
    }
-   len = (GLint)_mesa_strlen((const char *) token);
+   len = (GLint) strlen((const char *) token);
    parseState->pos += (i - len);
    return GL_TRUE;
 }
@@ -574,7 +580,7 @@ Parse_TextureImageId(struct parse_state *parseState,
        imageSrc[2] != 'X') {
       RETURN_ERROR1("Expected TEX# source");
    }
-   unit = _mesa_atoi((const char *) imageSrc + 3);
+   unit = atoi((const char *) imageSrc + 3);
    if ((unit < 0 || unit > MAX_TEXTURE_IMAGE_UNITS) ||
        (unit == 0 && (imageSrc[3] != '0' || imageSrc[4] != 0))) {
       RETURN_ERROR1("Invalied TEX# source index");
@@ -636,7 +642,7 @@ Parse_SwizzleSuffix(const GLubyte *token, GLuint swizzle[4])
    else {
       /* 4-component swizzle (vector) */
       GLint k;
-      for (k = 0; token[k] && k < 4; k++) {
+      for (k = 0; k < 4 && token[k]; k++) {
          if (token[k] == 'x')
             swizzle[k] = 0;
          else if (token[k] == 'y')
@@ -711,7 +717,7 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
       RETURN_ERROR1("Expected R## or H##");
 
    if (IsDigit(token[1])) {
-      GLint reg = _mesa_atoi((const char *) (token + 1));
+      GLint reg = atoi((const char *) (token + 1));
       if (token[0] == 'H')
          reg += 32;
       if (reg >= MAX_NV_FRAGMENT_PROGRAM_TEMPS)
@@ -762,7 +768,7 @@ Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
 
    if (IsDigit(token[0])) {
       /* a numbered program parameter register */
-      GLint reg = _mesa_atoi((const char *) token);
+      GLint reg = atoi((const char *) token);
       if (reg >= MAX_NV_FRAGMENT_PROGRAM_PARAMS)
          RETURN_ERROR1("Invalid constant program number");
       *regNum = reg;
@@ -796,7 +802,7 @@ Parse_FragReg(struct parse_state *parseState, GLint *tempRegNum)
       RETURN_ERROR;
    }
    for (j = 0; InputRegisters[j]; j++) {
-      if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
+      if (strcmp((const char *) token, InputRegisters[j]) == 0) {
          *tempRegNum = j;
          parseState->inputsRead |= (1 << j);
          break;
@@ -829,13 +835,13 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
       RETURN_ERROR;
 
    /* try to match an output register name */
-   if (_mesa_strcmp((char *) token, "COLR") == 0 ||
-       _mesa_strcmp((char *) token, "COLH") == 0) {
+   if (strcmp((char *) token, "COLR") == 0 ||
+       strcmp((char *) token, "COLH") == 0) {
       /* note that we don't distinguish between COLR and COLH */
       *outputRegNum = FRAG_RESULT_COLOR;
       parseState->outputsWritten |= (1 << FRAG_RESULT_COLOR);
    }
-   else if (_mesa_strcmp((char *) token, "DEPR") == 0) {
+   else if (strcmp((char *) token, "DEPR") == 0) {
       *outputRegNum = FRAG_RESULT_DEPTH;
       parseState->outputsWritten |= (1 << FRAG_RESULT_DEPTH);
    }
@@ -862,8 +868,8 @@ Parse_MaskedDstReg(struct parse_state *parseState,
    if (!Peek_Token(parseState, token))
       RETURN_ERROR;
 
-   if (_mesa_strcmp((const char *) token, "RC") == 0 ||
-       _mesa_strcmp((const char *) token, "HC") == 0) {
+   if (strcmp((const char *) token, "RC") == 0 ||
+       strcmp((const char *) token, "HC") == 0) {
       /* a write-only register */
       dstReg->File = PROGRAM_WRITE_ONLY;
       if (!Parse_DummyReg(parseState, &idx))
@@ -1225,9 +1231,9 @@ Parse_PrintInstruction(struct parse_state *parseState,
    for (len = 0; str[len] != '\''; len++) /* find closing quote */
       ;
    parseState->pos += len + 1;
-   msg = (GLubyte*) _mesa_malloc(len + 1);
+   msg = (GLubyte*) malloc(len + 1);
 
-   _mesa_memcpy(msg, str, len);
+   memcpy(msg, str, len);
    msg[len] = 0;
    inst->Data = msg;
 
@@ -1473,11 +1479,11 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
       return;
    }
-   MEMCPY(programString, str, len);
+   memcpy(programString, str, len);
    programString[len] = 0;
 
    /* Get ready to parse */
-   _mesa_bzero(&parseState, sizeof(struct parse_state));
+   memset(&parseState, 0, sizeof(struct parse_state));
    parseState.ctx = ctx;
    parseState.start = programString;
    parseState.program = program;
@@ -1489,11 +1495,11 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
    _mesa_set_program_error(ctx, -1, NULL);
 
    /* check the program header */
-   if (_mesa_strncmp((const char *) programString, "!!FP1.0", 7) == 0) {
+   if (strncmp((const char *) programString, "!!FP1.0", 7) == 0) {
       target = GL_FRAGMENT_PROGRAM_NV;
       parseState.pos = programString + 7;
    }
-   else if (_mesa_strncmp((const char *) programString, "!!FCP1.0", 8) == 0) {
+   else if (strncmp((const char *) programString, "!!FCP1.0", 8) == 0) {
       /* fragment / register combiner program - not supported */
       _mesa_set_program_error(ctx, 0, "Invalid fragment program header");
       _mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(bad header)");
@@ -1542,7 +1548,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       program->Base.String = programString;
       program->Base.Format = GL_PROGRAM_FORMAT_ASCII_ARB;
       if (program->Base.Instructions) {
-         _mesa_free(program->Base.Instructions);
+         free(program->Base.Instructions);
       }
       program->Base.Instructions = newInst;
       program->Base.NumInstructions = parseState.numInst;
@@ -1560,9 +1566,9 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 #endif
 
 #ifdef DEBUG_foo
-      _mesa_printf("--- glLoadProgramNV(%d) result ---\n", program->Base.Id);
+      printf("--- glLoadProgramNV(%d) result ---\n", program->Base.Id);
       _mesa_fprint_program_opt(stdout, &program->Base, PROG_PRINT_NV, 0);
-      _mesa_printf("----------------------------------\n");
+      printf("----------------------------------\n");
 #endif
    }
    else {

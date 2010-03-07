@@ -207,7 +207,7 @@ void sampleBotRightWithGridLine(Real* botVertex,
     return;
   }
 
-  Int segIndexMono, segIndexPass;
+  Int segIndexMono = 0, segIndexPass;
   findBotRightSegment(rightChain,
 		      rightEnd,
 		      rightCorner,
@@ -293,7 +293,7 @@ void sampleBotLeftWithGridLine(Real* botVertex,
     return;
   }
 
-  Int segIndexPass, segIndexMono;
+  Int segIndexPass, segIndexMono = 0;
   findBotLeftSegment(leftChain, leftEnd, leftCorner, grid->get_u_value(leftU), segIndexMono, segIndexPass);
 
   sampleBotLeftWithGridLinePost(botVertex,

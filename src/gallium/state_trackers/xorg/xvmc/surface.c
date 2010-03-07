@@ -31,7 +31,7 @@
 #include <pipe/p_video_context.h>
 #include <pipe/p_video_state.h>
 #include <pipe/p_state.h>
-#include <pipe/p_inlines.h>
+#include <util/u_inlines.h>
 #include <util/u_memory.h>
 #include "xvmc_private.h"
 

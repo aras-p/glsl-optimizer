@@ -32,7 +32,7 @@ struct tgsi_token;
 enum trace_shader_type {
    TRACE_SHADER_FRAGMENT = 0,
    TRACE_SHADER_VERTEX   = 1,
-   TRACE_SHADER_GEOMETRY = 2,
+   TRACE_SHADER_GEOMETRY = 2
 };
 
 struct trace_shader

@@ -23,19 +23,17 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_bitmask.h"
 #include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_text.h"
 
 #include "svga_screen.h"
 #include "svga_context.h"
-#include "svga_state.h"
 #include "svga_tgsi.h"
 #include "svga_hw_reg.h"
 #include "svga_cmd.h"
-#include "svga_draw.h"
 #include "svga_debug.h"
 
 
@@ -107,7 +105,16 @@ void svga_delete_fs_state(struct pipe_context *pipe, void *shader)
          assert(ret == PIPE_OK);
       }
 
+      util_bitmask_clear( svga->fs_bm, result->id );
+
       svga_destroy_shader_result( result );
+
+      /*
+       * Remove stale references to this result to ensure a new result on the
+       * same address will be detected as a change.
+       */
+      if(result == svga->state.hw_draw.fs)
+         svga->state.hw_draw.fs = NULL;
    }
 
    FREE((void *)fs->base.tokens);

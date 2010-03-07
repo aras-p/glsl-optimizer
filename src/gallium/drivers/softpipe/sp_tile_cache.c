@@ -32,7 +32,8 @@
  *    Brian Paul
  */
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_tile.h"
 #include "sp_tile_cache.h"
@@ -161,10 +162,10 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                                               PIPE_TRANSFER_READ_WRITE,
                                               0, 0, ps->width, ps->height);
 
-      tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_Z24S8_UNORM ||
+      tc->depth_stencil = (ps->format == PIPE_FORMAT_Z24S8_UNORM ||
                            ps->format == PIPE_FORMAT_Z24X8_UNORM ||
+                           ps->format == PIPE_FORMAT_S8Z24_UNORM ||
+                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
                            ps->format == PIPE_FORMAT_Z16_UNORM ||
                            ps->format == PIPE_FORMAT_Z32_UNORM ||
                            ps->format == PIPE_FORMAT_S8_UNORM);
@@ -238,7 +239,7 @@ clear_tile(struct softpipe_cached_tile *tile,
 {
    uint i, j;
 
-   switch (pf_get_blocksize(format)) {
+   switch (util_format_get_blocksize(format)) {
    case 1:
       memset(tile->data.any, clear_value, TILE_SIZE * TILE_SIZE);
       break;

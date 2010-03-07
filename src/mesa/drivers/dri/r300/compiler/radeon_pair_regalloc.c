@@ -49,7 +49,7 @@ struct register_info {
 
 	unsigned int Used:1;
 	unsigned int Allocated:1;
-	rc_register_file File:3;
+	unsigned int File:3;
 	unsigned int Index:RC_REGISTER_INDEX_BITS;
 };
 

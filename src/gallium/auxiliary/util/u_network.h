@@ -6,7 +6,7 @@
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  define PIPE_HAVE_SOCKETS
-#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_BSD)
+#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_APPLE)
 #  define PIPE_HAVE_SOCKETS
 #endif
 

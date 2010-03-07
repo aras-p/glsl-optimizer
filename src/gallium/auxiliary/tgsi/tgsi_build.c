@@ -103,10 +103,11 @@ tgsi_default_declaration( void )
    declaration.File = TGSI_FILE_NULL;
    declaration.UsageMask = TGSI_WRITEMASK_XYZW;
    declaration.Interpolate = TGSI_INTERPOLATE_CONSTANT;
+   declaration.Dimension = 0;
    declaration.Semantic = 0;
    declaration.Centroid = 0;
    declaration.Invariant = 0;
-   declaration.Padding = 0;
+   declaration.CylindricalWrap = 0;
 
    return declaration;
 }
@@ -116,9 +117,11 @@ tgsi_build_declaration(
    unsigned file,
    unsigned usage_mask,
    unsigned interpolate,
+   unsigned dimension,
    unsigned semantic,
    unsigned centroid,
    unsigned invariant,
+   unsigned cylindrical_wrap,
    struct tgsi_header *header )
 {
    struct tgsi_declaration declaration;
@@ -130,9 +133,11 @@ tgsi_build_declaration(
    declaration.File = file;
    declaration.UsageMask = usage_mask;
    declaration.Interpolate = interpolate;
+   declaration.Dimension = dimension;
    declaration.Semantic = semantic;
    declaration.Centroid = centroid;
    declaration.Invariant = invariant;
+   declaration.CylindricalWrap = cylindrical_wrap;
 
    header_bodysize_grow( header );
 
@@ -183,9 +188,11 @@ tgsi_build_full_declaration(
       full_decl->Declaration.File,
       full_decl->Declaration.UsageMask,
       full_decl->Declaration.Interpolate,
+      full_decl->Declaration.Dimension,
       full_decl->Declaration.Semantic,
       full_decl->Declaration.Centroid,
       full_decl->Declaration.Invariant,
+      full_decl->Declaration.CylindricalWrap,
       header );
 
    if (maxsize <= size)
@@ -198,6 +205,20 @@ tgsi_build_full_declaration(
       full_decl->Range.Last,
       declaration,
       header );
+
+   if (full_decl->Declaration.Dimension) {
+      struct tgsi_declaration_dimension *dd;
+
+      if (maxsize <= size) {
+         return 0;
+      }
+      dd = (struct tgsi_declaration_dimension *)&tokens[size];
+      size++;
+
+      *dd = tgsi_build_declaration_dimension(full_decl->Dim.Index2D,
+                                             declaration,
+                                             header);
+   }
 
    if( full_decl->Declaration.Semantic ) {
       struct tgsi_declaration_semantic *ds;
@@ -247,6 +268,34 @@ tgsi_build_declaration_range(
    declaration_grow( declaration, header );
 
    return declaration_range;
+}
+
+struct tgsi_declaration_dimension
+tgsi_default_declaration_dimension(void)
+{
+   struct tgsi_declaration_dimension dd;
+
+   dd.Index2D = 0;
+   dd.Padding = 0;
+
+   return dd;
+}
+
+struct tgsi_declaration_dimension
+tgsi_build_declaration_dimension(unsigned index_2d,
+                                 struct tgsi_declaration *declaration,
+                                 struct tgsi_header *header)
+{
+   struct tgsi_declaration_dimension dd;
+
+   assert(index_2d <= 0xFFFF);
+
+   dd = tgsi_default_declaration_dimension();
+   dd.Index2D = index_2d;
+
+   declaration_grow(declaration, header);
+
+   return dd;
 }
 
 struct tgsi_declaration_semantic
@@ -399,7 +448,7 @@ tgsi_default_instruction( void )
    struct tgsi_instruction instruction;
 
    instruction.Type = TGSI_TOKEN_TYPE_INSTRUCTION;
-   instruction.NrTokens = 1;
+   instruction.NrTokens = 0;
    instruction.Opcode = TGSI_OPCODE_MOV;
    instruction.Saturate = TGSI_SAT_NONE;
    instruction.Predicate = 0;
@@ -942,3 +991,107 @@ tgsi_default_full_dst_register( void )
    return full_dst_register;
 }
 
+struct tgsi_property
+tgsi_default_property( void )
+{
+   struct tgsi_property property;
+
+   property.Type = TGSI_TOKEN_TYPE_PROPERTY;
+   property.NrTokens = 1;
+   property.PropertyName = TGSI_PROPERTY_GS_INPUT_PRIM;
+   property.Padding = 0;
+
+   return property;
+}
+
+struct tgsi_property
+tgsi_build_property(unsigned property_name,
+                    struct tgsi_header *header)
+{
+   struct tgsi_property property;
+
+   property = tgsi_default_property();
+   property.PropertyName = property_name;
+
+   header_bodysize_grow( header );
+
+   return property;
+}
+
+
+struct tgsi_full_property
+tgsi_default_full_property( void )
+{
+   struct tgsi_full_property  full_property;
+
+   full_property.Property  = tgsi_default_property();
+   memset(full_property.u, 0,
+          sizeof(struct tgsi_property_data) * 8);
+
+   return full_property;
+}
+
+static void
+property_grow(
+   struct tgsi_property *property,
+   struct tgsi_header *header )
+{
+   assert( property->NrTokens < 0xFF );
+
+   property->NrTokens++;
+
+   header_bodysize_grow( header );
+}
+
+struct tgsi_property_data
+tgsi_build_property_data(
+   unsigned value,
+   struct tgsi_property *property,
+   struct tgsi_header *header )
+{
+   struct tgsi_property_data property_data;
+
+   property_data.Data = value;
+
+   property_grow( property, header );
+
+   return property_data;
+}
+
+unsigned
+tgsi_build_full_property(
+   const struct tgsi_full_property *full_prop,
+   struct tgsi_token *tokens,
+   struct tgsi_header *header,
+   unsigned maxsize )
+{
+   unsigned size = 0, i;
+   struct tgsi_property *property;
+
+   if( maxsize <= size )
+      return 0;
+   property = (struct tgsi_property *) &tokens[size];
+   size++;
+
+   *property = tgsi_build_property(
+      full_prop->Property.PropertyName,
+      header );
+
+   assert( full_prop->Property.NrTokens <= 8 + 1 );
+
+   for( i = 0; i < full_prop->Property.NrTokens - 1; i++ ) {
+      struct tgsi_property_data *data;
+
+      if( maxsize <= size )
+         return  0;
+      data = (struct tgsi_property_data *) &tokens[size];
+      size++;
+
+      *data = tgsi_build_property_data(
+         full_prop->u[i].Data,
+         property,
+         header );
+   }
+
+   return size;
+}

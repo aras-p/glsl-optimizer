@@ -25,6 +25,7 @@
 
 struct r300_context;
 
-void r300_emit_invariant_state(struct r300_context* r300);
+void r300_emit_invariant_state(struct r300_context* r300,
+                               unsigned size, void* state);
 
 #endif /* R300_STATE_INVARIANT_H */

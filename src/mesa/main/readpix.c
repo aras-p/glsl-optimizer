@@ -77,14 +77,7 @@ _mesa_error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
    case GL_RGBA:
    case GL_BGRA:
    case GL_ABGR_EXT:
-      if (drawing) {
-         if (!ctx->DrawBuffer->Visual.rgbMode) {
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                   "glDrawPixels(drawing RGB pixels into color index buffer)");
-            return GL_TRUE;
-         }
-      }
-      else {
+      if (!drawing) {
          /* reading */
          if (!_mesa_source_buffer_exists(ctx, GL_COLOR)) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -95,10 +88,9 @@ _mesa_error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
       break;
    case GL_COLOR_INDEX:
       if (drawing) {
-         if (ctx->DrawBuffer->Visual.rgbMode &&
-             (ctx->PixelMaps.ItoR.Size == 0 ||
-              ctx->PixelMaps.ItoG.Size == 0 ||
-              ctx->PixelMaps.ItoB.Size == 0)) {
+         if (ctx->PixelMaps.ItoR.Size == 0 ||
+	     ctx->PixelMaps.ItoG.Size == 0 ||
+	     ctx->PixelMaps.ItoB.Size == 0) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                    "glDrawPixels(drawing color index pixels into RGB buffer)");
             return GL_TRUE;

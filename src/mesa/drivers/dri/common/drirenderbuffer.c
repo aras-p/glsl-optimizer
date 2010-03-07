@@ -1,7 +1,6 @@
 
 #include "main/mtypes.h"
 #include "main/formats.h"
-#include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/imports.h"
 #include "drirenderbuffer.h"
@@ -33,7 +32,7 @@ driDeleteRenderbuffer(struct gl_renderbuffer *rb)
    /* don't free rb->Data  Chances are it's a memory mapped region for
     * the dri drivers.
     */
-   _mesa_free(rb);
+   free(rb);
 }
 
 
@@ -56,22 +55,14 @@ driDeleteRenderbuffer(struct gl_renderbuffer *rb)
 driRenderbuffer *
 driNewRenderbuffer(gl_format format, GLvoid *addr,
                    GLint cpp, GLint offset, GLint pitch,
-                   __DRIdrawablePrivate *dPriv)
+                   __DRIdrawable *dPriv)
 {
    driRenderbuffer *drb;
-
-   assert(format == GL_RGBA ||
-          format == GL_RGB5 ||
-          format == GL_RGBA8 ||
-          format == GL_DEPTH_COMPONENT16 ||
-          format == GL_DEPTH_COMPONENT24 ||
-          format == GL_DEPTH_COMPONENT32 ||
-          format == GL_STENCIL_INDEX8_EXT);
 
    assert(cpp > 0);
    assert(pitch > 0);
 
-   drb = _mesa_calloc(sizeof(driRenderbuffer));
+   drb = calloc(1, sizeof(driRenderbuffer));
    if (drb) {
       const GLuint name = 0;
 
@@ -196,7 +187,7 @@ driFlipRenderbuffers(struct gl_framebuffer *fb, GLboolean flipped)
  * gl_framebuffer object.
  */
 void
-driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
+driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawable *dPriv)
 {
    struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
    if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {

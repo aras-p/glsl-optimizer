@@ -35,7 +35,8 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 
 struct vg_mask_layer {
@@ -216,7 +217,7 @@ static void setup_mask_framebuffer(struct pipe_surface *surf,
 static void setup_mask_operation(VGMaskOperation operation)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_constant_buffer *cbuf = &ctx->mask.cbuf;
+   struct pipe_buffer **cbuf = &ctx->mask.cbuf;
    const VGint param_bytes = 4 * sizeof(VGfloat);
    const VGfloat ones[4] = {1.f, 1.f, 1.f, 1.f};
    void *shader = 0;
@@ -224,17 +225,17 @@ static void setup_mask_operation(VGMaskOperation operation)
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization.
     */
-   pipe_buffer_reference(&cbuf->buffer, NULL);
+   pipe_buffer_reference(cbuf, NULL);
 
-   cbuf->buffer = pipe_buffer_create(ctx->pipe->screen, 1,
-                                     PIPE_BUFFER_USAGE_CONSTANT,
-                                     param_bytes);
-   if (cbuf->buffer) {
-      st_no_flush_pipe_buffer_write(ctx, cbuf->buffer,
+   *cbuf = pipe_buffer_create(ctx->pipe->screen, 1,
+                              PIPE_BUFFER_USAGE_CONSTANT,
+                              param_bytes);
+   if (*cbuf) {
+      st_no_flush_pipe_buffer_write(ctx, *cbuf,
                                     0, param_bytes, ones);
    }
 
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
    switch (operation) {
    case VG_UNION_MASK: {
       if (!ctx->mask.union_fs) {
@@ -319,22 +320,22 @@ static void setup_mask_samplers(struct pipe_texture *umask)
 static void setup_mask_fill(const VGfloat color[4])
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_constant_buffer *cbuf = &ctx->mask.cbuf;
+   struct pipe_buffer **cbuf = &ctx->mask.cbuf;
    const VGint param_bytes = 4 * sizeof(VGfloat);
 
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization.
     */
-   pipe_buffer_reference(&cbuf->buffer, NULL);
+   pipe_buffer_reference(cbuf, NULL);
 
-   cbuf->buffer = pipe_buffer_create(ctx->pipe->screen, 1,
-                                     PIPE_BUFFER_USAGE_CONSTANT,
-                                     param_bytes);
-   if (cbuf->buffer) {
-      st_no_flush_pipe_buffer_write(ctx, cbuf->buffer, 0, param_bytes, color);
+   *cbuf = pipe_buffer_create(ctx->pipe->screen, 1,
+                              PIPE_BUFFER_USAGE_CONSTANT,
+                              param_bytes);
+   if (*cbuf) {
+      st_no_flush_pipe_buffer_write(ctx, *cbuf, 0, param_bytes, color);
    }
 
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
    cso_set_fragment_shader_handle(ctx->cso_context,
                                   shaders_cache_fill(ctx->sc,
                                                      VEGA_SOLID_FILL_SHADER));
@@ -353,15 +354,12 @@ static void setup_mask_blend()
    struct pipe_blend_state blend;
 
    memset(&blend, 0, sizeof(struct pipe_blend_state));
-   blend.blend_enable = 1;
-   blend.colormask |= PIPE_MASK_R;
-   blend.colormask |= PIPE_MASK_G;
-   blend.colormask |= PIPE_MASK_B;
-   blend.colormask |= PIPE_MASK_A;
-   blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].blend_enable = 0;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
 
    cso_set_blend(ctx->cso_context, &blend);
 }
@@ -490,7 +488,7 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
 
       memset(&pt, 0, sizeof(pt));
       pt.target = PIPE_TEXTURE_2D;
-      pt.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      pt.format = PIPE_FORMAT_B8G8R8A8_UNORM;
       pt.last_level = 0;
       pt.width0 = width;
       pt.height0 = height;

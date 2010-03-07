@@ -80,7 +80,7 @@ GLubyte letters[][13] = {
 
 GLuint fontOffset;
 
-void makeRasterFont(void)
+static void makeRasterFont(void)
 {
    GLuint i, j;
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -96,13 +96,13 @@ void makeRasterFont(void)
    glEndList();
 }
 
-void init(void)
+static void init(void)
 {
    glShadeModel (GL_FLAT);
    makeRasterFont();
 }
 
-void printString(char *s)
+static void printString(char *s)
 {
    glPushAttrib (GL_LIST_BIT);
    glListBase(fontOffset);
@@ -115,7 +115,7 @@ void printString(char *s)
  * to call makeRasterFont() before you start making 
  * calls to printString().
  */
-void display(void)
+static void display(void)
 {
    GLfloat white[3] = { 1.0, 1.0, 1.0 };
 
@@ -129,7 +129,7 @@ void display(void)
    glFlush ();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -139,7 +139,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

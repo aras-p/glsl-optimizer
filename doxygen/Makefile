@@ -22,8 +22,7 @@ full: $(FULL:.doxy=.tag)
 
 SUBSET = \
 	main.doxy \
-	math.doxy \
-	miniglx.doxy
+	math.doxy
 
 subset: $(SUBSET:.doxy=.tag)
 	$(foreach FILE,$(SUBSET),doxygen $(FILE);)

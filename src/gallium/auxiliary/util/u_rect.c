@@ -34,13 +34,14 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
+#include "util/u_format.h"
 #include "util/u_rect.h"
 
 
 /**
  * Copy 2D rect from one place to another.
  * Position and sizes are in pixels.
- * src_pitch may be negative to do vertical flip of pixels from source.
+ * src_stride may be negative to do vertical flip of pixels from source.
  */
 void
 util_copy_rect(ubyte * dst,
@@ -53,21 +54,17 @@ util_copy_rect(ubyte * dst,
                const ubyte * src,
                int src_stride,
                unsigned src_x, 
-               int src_y)
+               unsigned src_y)
 {
    unsigned i;
    int src_stride_pos = src_stride < 0 ? -src_stride : src_stride;
-   int blocksize = pf_get_blocksize(format);
-   int blockwidth = pf_get_blockwidth(format);
-   int blockheight = pf_get_blockheight(format);
+   int blocksize = util_format_get_blocksize(format);
+   int blockwidth = util_format_get_blockwidth(format);
+   int blockheight = util_format_get_blockheight(format);
 
    assert(blocksize > 0);
    assert(blockwidth > 0);
    assert(blockheight > 0);
-   assert(src_x >= 0);
-   assert(src_y >= 0);
-   assert(dst_x >= 0);
-   assert(dst_y >= 0);
 
    dst_x /= blockwidth;
    dst_y /= blockheight;
@@ -105,15 +102,13 @@ util_fill_rect(ubyte * dst,
 {
    unsigned i, j;
    unsigned width_size;
-   int blocksize = pf_get_blocksize(format);
-   int blockwidth = pf_get_blockwidth(format);
-   int blockheight = pf_get_blockheight(format);
+   int blocksize = util_format_get_blocksize(format);
+   int blockwidth = util_format_get_blockwidth(format);
+   int blockheight = util_format_get_blockheight(format);
 
    assert(blocksize > 0);
    assert(blockwidth > 0);
    assert(blockheight > 0);
-   assert(dst_x >= 0);
-   assert(dst_y >= 0);
 
    dst_x /= blockwidth;
    dst_y /= blockheight;
@@ -203,9 +198,9 @@ util_surface_copy(struct pipe_context *pipe,
                                         PIPE_TRANSFER_WRITE,
                                         dst_x, dst_y, w, h);
 
-   assert(pf_get_blocksize(dst_format) == pf_get_blocksize(src_format));
-   assert(pf_get_blockwidth(dst_format) == pf_get_blockwidth(src_format));
-   assert(pf_get_blockheight(dst_format) == pf_get_blockheight(src_format));
+   assert(util_format_get_blocksize(dst_format) == util_format_get_blocksize(src_format));
+   assert(util_format_get_blockwidth(dst_format) == util_format_get_blockwidth(src_format));
+   assert(util_format_get_blockheight(dst_format) == util_format_get_blockheight(src_format));
 
    src_map = pipe->screen->transfer_map(screen, src_trans);
    dst_map = pipe->screen->transfer_map(screen, dst_trans);
@@ -270,7 +265,7 @@ util_surface_fill(struct pipe_context *pipe,
    if (dst_map) {
       assert(dst_trans->stride > 0);
 
-      switch (pf_get_blocksize(dst_trans->texture->format)) {
+      switch (util_format_get_blocksize(dst_trans->texture->format)) {
       case 1:
       case 2:
       case 4:

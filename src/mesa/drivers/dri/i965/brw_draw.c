@@ -39,10 +39,8 @@
 #include "brw_defines.h"
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_fallback.h"
 
 #include "intel_batchbuffer.h"
-#include "intel_buffer_objects.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BATCH
 
@@ -84,7 +82,7 @@ static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
    GLcontext *ctx = &brw->intel.ctx;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
-      _mesa_printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim));
+      printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim));
    
    /* Slight optimization to avoid the GS program when not needed:
     */
@@ -127,7 +125,7 @@ static void brw_emit_prim(struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
-      _mesa_printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
+      printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
 		   prim->start, prim->count);
 
    prim_packet.header.opcode = CMD_3D_PRIM;
@@ -157,7 +155,7 @@ static void brw_emit_prim(struct brw_context *brw,
    }
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
-			      sizeof(prim_packet), LOOP_CLIPRECTS);
+			      sizeof(prim_packet));
    }
    if (intel->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(intel->batch);
@@ -339,12 +337,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
     * so can't access it earlier.
     */
 
-   LOCK_HARDWARE(intel);
-
-   if (!intel->constant_cliprect && intel->driDrawable->numClipRects == 0) {
-      UNLOCK_HARDWARE(intel);
-      return GL_TRUE;
-   }
+   intel_prepare_render(intel);
 
    for (i = 0; i < nr_prims; i++) {
       uint32_t hw_prim;
@@ -356,8 +349,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
        * an upper bound of how much we might emit in a single
        * brw_try_draw_prims().
        */
-      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
-				      LOOP_CLIPRECTS);
+      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4);
 
       hw_prim = brw_set_prim(brw, prim[i].mode);
 
@@ -404,7 +396,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    if (intel->always_flush_batch)
       intel_batchbuffer_flush(intel->batch);
  out:
-   UNLOCK_HARDWARE(intel);
 
    brw_state_cache_check_size(brw);
 

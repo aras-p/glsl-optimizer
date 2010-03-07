@@ -44,9 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_context.h"
 #include "radeon_mipmap_tree.h"
-#include "radeon_state.h"
 #include "radeon_ioctl.h"
-#include "radeon_swtcl.h"
 #include "radeon_tex.h"
 
 #include "xmlpool.h"
@@ -341,7 +339,7 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      radeonSetTexBorderColor( t, texObj->BorderColor );
+      radeonSetTexBorderColor( t, texObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -428,13 +426,13 @@ radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
    radeonSetTexWrap( t, t->base.WrapS, t->base.WrapT );
    radeonSetTexMaxAnisotropy( t, t->base.MaxAnisotropy );
    radeonSetTexFilter( t, t->base.MinFilter, t->base.MagFilter );
-   radeonSetTexBorderColor( t, t->base.BorderColor );
+   radeonSetTexBorderColor( t, t->base.BorderColor.f );
    return &t->base;
 }
 
 
 
-void radeonInitTextureFuncs( struct dd_function_table *functions )
+void radeonInitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *functions )
 {
    functions->ChooseTextureFormat	= radeonChooseTextureFormat_mesa;
    functions->TexImage1D		= radeonTexImage1D;
@@ -454,6 +452,11 @@ void radeonInitTextureFuncs( struct dd_function_table *functions )
 
    functions->CompressedTexImage2D	= radeonCompressedTexImage2D;
    functions->CompressedTexSubImage2D	= radeonCompressedTexSubImage2D;
+
+   if (radeon->radeonScreen->kernel_mm) {
+      functions->CopyTexImage2D = radeonCopyTexImage2D;
+      functions->CopyTexSubImage2D = radeonCopyTexSubImage2D;
+   }
 
    functions->GenerateMipmap = radeonGenerateMipmap;
 

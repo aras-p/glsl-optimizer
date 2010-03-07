@@ -34,6 +34,45 @@
 #include "r700_shaderinst.h"
 #include "r700_shader.h"
 
+typedef enum LOADABLE_SCRIPT_SIGNITURE
+{
+    GLSL_NOISE1 = 0x10000001,
+    GLSL_NOISE2 = 0x10000002,
+    GLSL_NOISE3 = 0x10000003,
+    GLSL_NOISE4 = 0x10000004
+}LOADABLE_SCRIPT_SIGNITURE;
+
+typedef struct COMPILED_SUB
+{
+    struct  prog_instruction *Instructions;
+    GLuint  NumInstructions;
+    GLuint  NumTemporaries;
+    GLuint  NumParameters;
+    GLuint  MinRegIndex;
+    GLfloat (*ParameterValues)[4];
+    GLbyte  outputSwizzleX; 
+    GLbyte  outputSwizzleY;
+    GLbyte  outputSwizzleZ;
+    GLbyte  outputSwizzleW;
+    GLshort srcRegIndex[3];
+    GLushort dstRegIndex;
+}COMPILED_SUB;
+
+typedef struct PRESUB_DESCtag 
+{
+    LOADABLE_SCRIPT_SIGNITURE sptSigniture;
+    GLint  subIL_Shift;
+    struct prog_src_register InReg[3];
+    struct prog_dst_register OutReg;
+
+    GLushort maxStartReg;
+    GLushort number_used_registers;
+
+    GLuint   unConstantsStart;
+
+    COMPILED_SUB * pCompiledSub;
+} PRESUB_DESC;
+
 typedef enum SHADER_PIPE_TYPE 
 {
     SPT_VP = 0,
@@ -114,20 +153,22 @@ typedef struct PVSDSTtag
 
 typedef struct PVSINSTtag
 {
-    BITS literal      :2; 
+    BITS literal_slots      :2; 
     BITS SaturateMode :2; 
+    BITS index_mode   :3;
 } PVSINST;
 
 typedef struct PVSSRCtag 
 {
-	BITS rtype:4;            
+	BITS rtype:3;            
 	BITS addrmode0:1;        
-	BITS reg:10;      //15     (8)
+	BITS reg:10;      //14     (8)
 	BITS swizzlex:3;
 	BITS swizzley:3;
 	BITS swizzlez:3;
-	BITS swizzlew:3;  //27        
+	BITS swizzlew:3;  //26        
 
+	BITS abs:1;
 	BITS negx:1;
 	BITS negy:1;
 	BITS negz:1;
@@ -294,6 +335,7 @@ typedef struct SUB_OFFSET
     GLint  subIL_Offset;
     GLuint unCFoffset;
     GLuint unStackDepthMax;
+    PRESUB_DESC *   pPresubDesc;
     TypedShaderList lstCFInstructions_local;
 } SUB_OFFSET;
 
@@ -302,6 +344,9 @@ typedef struct CALLER_POINTER
     GLint  subIL_Offset;
     GLint  subDescIndex;
     R700ControlFlowGenericClause* cf_ptr;
+
+    R700ControlFlowGenericClause* prelude_cf_ptr;
+    R700ControlFlowGenericClause* finale_cf_ptr;
 } CALLER_POINTER;
 
 #define SQ_MAX_CALL_DEPTH 0x00000020
@@ -343,8 +388,10 @@ typedef struct r700_AssemblerBase
 	PVSDWORD D;
     PVSDWORD D2;
 	PVSDWORD S[3];
+        PVSDWORD C[4];
 
 	unsigned int uLastPosUpdate;
+	unsigned int last_cond_register;
 
 	OUT_FRAGMENT_FMT_0     fp_stOutFmt0;
 
@@ -415,6 +462,7 @@ typedef struct r700_AssemblerBase
     SHADER_PIPE_TYPE currentShaderType;
     struct prog_instruction * pILInst;
     GLuint             uiCurInst;
+    GLubyte SamplerUnits[MAX_SAMPLERS];
     GLboolean   bR6xx;
     /* helper to decide which type of instruction to assemble */
     GLboolean is_tex;
@@ -431,6 +479,15 @@ typedef struct r700_AssemblerBase
     CALL_LEVEL       CALLSTACK[SQ_MAX_CALL_DEPTH];
 
     GLuint unCFflags;
+
+    PRESUB_DESC * presubs;
+    GLuint        unPresubArraySize;
+    GLuint        unNumPresub;
+    GLuint        unCurNumILInsts;
+
+    GLuint    unVetTexBits;
+
+    GLuint    shadow_regs[R700_MAX_TEXTURE_UNITS];
 
 } r700_AssemblerBase;
 
@@ -453,7 +510,7 @@ BITS is_depth_component_exported(OUT_FRAGMENT_FMT_0* pFPOutFmt) ;
 GLboolean is_reduction_opcode(PVSDWORD * dest);
 GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size);
 
-unsigned int r700GetNumOperands(r700_AssemblerBase* pAsm);
+unsigned int r700GetNumOperands(GLuint opcode, GLuint nIsOp3);
 
 GLboolean IsTex(gl_inst_opcode Opcode);
 GLboolean IsAlu(gl_inst_opcode Opcode);
@@ -476,6 +533,7 @@ GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
                                        GLubyte             element,
                                        GLuint              _signed,
                                        GLboolean           normalize,
+                                       GLenum              format,
                                        VTX_FETCH_METHOD  * pFetchMethod);
 GLboolean cleanup_vfetch_instructions(r700_AssemblerBase* pAsm);
 GLuint gethelpr(r700_AssemblerBase* pAsm);
@@ -526,13 +584,6 @@ GLboolean check_vector(r700_AssemblerBase* pAsm,
 GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm);
 GLboolean next_ins(r700_AssemblerBase *pAsm);
 
-GLboolean next_ins2(r700_AssemblerBase *pAsm);
-GLboolean assemble_alu_instruction2(r700_AssemblerBase *pAsm);
-
-/* TODO : merge next_ins/2/literal, assemble_alu_instruction/2/literal */
-GLboolean next_ins_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral);
-GLboolean assemble_alu_instruction_literal(r700_AssemblerBase *pAsm, GLfloat * pLiteral);
-
 GLboolean pops(r700_AssemblerBase *pAsm, GLuint pops);
 GLboolean jumpToOffest(r700_AssemblerBase *pAsm, GLuint pops, GLint offset);
 GLboolean setRetInLoopFlag(r700_AssemblerBase *pAsm, GLuint flagValue);
@@ -546,7 +597,6 @@ GLboolean assemble_ADD(r700_AssemblerBase *pAsm);
 GLboolean assemble_ARL(r700_AssemblerBase *pAsm);
 GLboolean assemble_BAD(char *opcode_str);
 GLboolean assemble_CMP(r700_AssemblerBase *pAsm);
-GLboolean assemble_COS(r700_AssemblerBase *pAsm);
 GLboolean assemble_DOT(r700_AssemblerBase *pAsm);
 GLboolean assemble_DST(r700_AssemblerBase *pAsm);
 GLboolean assemble_EX2(r700_AssemblerBase *pAsm);
@@ -567,12 +617,13 @@ GLboolean assemble_MUL(r700_AssemblerBase *pAsm);
 GLboolean assemble_POW(r700_AssemblerBase *pAsm);
 GLboolean assemble_RCP(r700_AssemblerBase *pAsm);
 GLboolean assemble_RSQ(r700_AssemblerBase *pAsm);
-GLboolean assemble_SIN(r700_AssemblerBase *pAsm);
 GLboolean assemble_SCS(r700_AssemblerBase *pAsm);
 GLboolean assemble_SGE(r700_AssemblerBase *pAsm);
+GLboolean assemble_CONT(r700_AssemblerBase *pAsm);
 
 GLboolean assemble_LOGIC(r700_AssemblerBase *pAsm, BITS opcode);
 GLboolean assemble_LOGIC_PRED(r700_AssemblerBase *pAsm, BITS opcode); 
+GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode);
 
 GLboolean assemble_SLT(r700_AssemblerBase *pAsm);
 GLboolean assemble_STP(r700_AssemblerBase *pAsm);
@@ -588,13 +639,15 @@ GLboolean assemble_BRK(r700_AssemblerBase *pAsm);
 GLboolean assemble_COND(r700_AssemblerBase *pAsm);
 GLboolean assemble_ENDLOOP(r700_AssemblerBase *pAsm);
 
-GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex);
+GLboolean assemble_BGNSUB(r700_AssemblerBase *pAsm, GLint nILindex, GLuint uiIL_Shift);
 GLboolean assemble_ENDSUB(r700_AssemblerBase *pAsm);
 GLboolean assemble_RET(r700_AssemblerBase *pAsm);
 GLboolean assemble_CAL(r700_AssemblerBase *pAsm, 
                        GLint nILindex,
+                       GLuint uiIL_Offest,
                        GLuint uiNumberInsts,
-                       struct prog_instruction *pILInst);
+                       struct prog_instruction *pILInst,
+                       PRESUB_DESC * pPresubDesc);
 
 GLboolean Process_Export(r700_AssemblerBase* pAsm,
                          GLuint type, 
@@ -605,16 +658,23 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
 GLboolean Move_Depth_Exports_To_Correct_Channels(r700_AssemblerBase *pAsm, 
                                                  BITS depth_channel_select);
 
+GLboolean callPreSub(r700_AssemblerBase* pAsm, 
+                     LOADABLE_SCRIPT_SIGNITURE scriptSigniture,
+                     /* struct prog_instruction ** pILInstParent, */
+                     COMPILED_SUB * pCompiledSub,                                            
+                     GLshort uOutReg,
+                     GLshort uNumValidSrc);
 
 //Interface
 GLboolean AssembleInstr(GLuint uiFirstInst,
+                        GLuint uiIL_Shift,
                         GLuint uiNumberInsts,
                         struct prog_instruction *pILInst, 
 						r700_AssemblerBase *pR700AsmCode);
 GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode, GLbitfield OutputsWritten);  
 GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode, GLbitfield OutputsWritten);
 
-GLboolean RelocProgram(r700_AssemblerBase * pAsm);
+GLboolean RelocProgram(r700_AssemblerBase * pAsm, struct gl_program * pILProg);
 GLboolean InitShaderProgram(r700_AssemblerBase * pAsm);
 
 int       Init_r700_AssemblerBase(SHADER_PIPE_TYPE spt, r700_AssemblerBase* pAsm, R700_Shader* pShader);

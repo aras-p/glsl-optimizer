@@ -23,19 +23,14 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
-#include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_screen.h"
 #include "svga_screen_buffer.h"
 #include "svga_context.h"
-#include "svga_state.h"
-#include "svga_winsys.h"
-
-#include "svga_hw_reg.h"
 
 
 static void svga_set_vertex_buffers(struct pipe_context *pipe,
@@ -54,7 +49,7 @@ static void svga_set_vertex_buffers(struct pipe_context *pipe,
    /* Adjust refcounts */
    for (i = 0; i < count; i++) {
       pipe_buffer_reference(&svga->curr.vb[i].buffer, buffers[i].buffer);
-      if (svga_buffer(buffers[i].buffer)->user)
+      if (svga_buffer_is_user_buffer(buffers[i].buffer))
          any_user_buffer = TRUE;
    }
 
@@ -84,18 +79,6 @@ static void svga_set_vertex_elements(struct pipe_context *pipe,
 }
 
 
-static void svga_set_edgeflags(struct pipe_context *pipe,
-                               const unsigned *bitfield)
-{
-   struct svga_context *svga = svga_context(pipe);
-
-   if (bitfield != NULL || svga->curr.edgeflags != NULL) {
-      svga->curr.edgeflags = bitfield;
-      svga->dirty |= SVGA_NEW_EDGEFLAGS;
-   }
-}
-
-
 void svga_cleanup_vertex_state( struct svga_context *svga )
 {
    unsigned i;
@@ -109,7 +92,6 @@ void svga_init_vertex_functions( struct svga_context *svga )
 {
    svga->pipe.set_vertex_buffers = svga_set_vertex_buffers;
    svga->pipe.set_vertex_elements = svga_set_vertex_elements;
-   svga->pipe.set_edgeflags = svga_set_edgeflags;
 }
 
 

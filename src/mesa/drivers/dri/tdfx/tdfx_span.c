@@ -47,7 +47,7 @@
 
 #define LOCAL_VARS							\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
-   __DRIdrawablePrivate *const dPriv = drb->dPriv;			\
+   __DRIdrawable *const dPriv = drb->dPriv;			\
    GLuint pitch = drb->backBuffer ? info.strideInBytes			\
      : (drb->pitch * drb->cpp);						\
    const GLuint bottom = dPriv->h - 1;					\
@@ -104,7 +104,7 @@
 
 #define HW_READ_CLIPLOOP()						\
       do {								\
-         const __DRIdrawablePrivate *dPriv = fxMesa->driDrawable;	\
+         const __DRIdrawable *dPriv = fxMesa->driDrawable;	\
          drm_clip_rect_t *rect = dPriv->pClipRects;			\
          int _nc = dPriv->numClipRects;					\
          while (_nc--) {						\
@@ -264,7 +264,7 @@ generate_vismask(const tdfxContextPtr fxMesa, GLint x, GLint y, GLint n,
    GLint i, j;
 
    /* Ensure we clear the visual mask */
-   MEMSET(vismask, 0, n);
+   memset(vismask, 0, n);
 
    /* turn on flags for all visible pixels */
    for (i = 0; i < fxMesa->numClipRects; i++) {
@@ -273,14 +273,14 @@ generate_vismask(const tdfxContextPtr fxMesa, GLint x, GLint y, GLint n,
       if (y >= rect->y1 && y < rect->y2) {
 	 if (x >= rect->x1 && x + n <= rect->x2) {
 	    /* common case, whole span inside cliprect */
-	    MEMSET(vismask, 1, n);
+	    memset(vismask, 1, n);
 	    return;
 	 }
 	 if (x < rect->x2 && x + n >= rect->x1) {
 	    /* some of the span is inside the rect */
 	    GLint start, end;
 	    if (!initialized) {
-	       MEMSET(vismask, 0, n);
+	       memset(vismask, 0, n);
 	       initialized = GL_TRUE;
 	    }
 	    if (x < rect->x1)

@@ -1,0 +1,744 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
+
+<!-- OpenGL and OpenGL ES 1.x APIs
+     This file defines the base categories that can be shared by all APIs.
+     They are defined in an incremental fashion.
+-->
+
+<OpenGLAPI>
+
+<!-- base subset of OpenGL 1.0 -->
+<category name="base1.0">
+    <enum name="FALSE"                                    value="0x0"/>
+    <enum name="TRUE"                                     value="0x1"/>
+    <enum name="ZERO"                                     value="0x0"/>
+    <enum name="ONE"                                      value="0x1"/>
+    <enum name="NO_ERROR"                                 value="0x0"/>
+
+    <enum name="POINTS"                                   value="0x0000"/>
+    <enum name="LINES"                                    value="0x0001"/>
+    <enum name="LINE_LOOP"                                value="0x0002"/>
+    <enum name="LINE_STRIP"                               value="0x0003"/>
+    <enum name="TRIANGLES"                                value="0x0004"/>
+    <enum name="TRIANGLE_STRIP"                           value="0x0005"/>
+    <enum name="TRIANGLE_FAN"                             value="0x0006"/>
+    <enum name="NEVER"                                    value="0x0200"/>
+    <enum name="LESS"                                     value="0x0201"/>
+    <enum name="EQUAL"                                    value="0x0202"/>
+    <enum name="LEQUAL"                                   value="0x0203"/>
+    <enum name="GREATER"                                  value="0x0204"/>
+    <enum name="NOTEQUAL"                                 value="0x0205"/>
+    <enum name="GEQUAL"                                   value="0x0206"/>
+    <enum name="ALWAYS"                                   value="0x0207"/>
+    <enum name="SRC_COLOR"                                value="0x0300"/>
+    <enum name="ONE_MINUS_SRC_COLOR"                      value="0x0301"/>
+    <enum name="SRC_ALPHA"                                value="0x0302"/>
+    <enum name="ONE_MINUS_SRC_ALPHA"                      value="0x0303"/>
+    <enum name="DST_ALPHA"                                value="0x0304"/>
+    <enum name="ONE_MINUS_DST_ALPHA"                      value="0x0305"/>
+    <enum name="DST_COLOR"                                value="0x0306"/>
+    <enum name="ONE_MINUS_DST_COLOR"                      value="0x0307"/>
+    <enum name="SRC_ALPHA_SATURATE"                       value="0x0308"/>
+    <enum name="FRONT"                                    value="0x0404"/>
+    <enum name="BACK"                                     value="0x0405"/>
+    <enum name="FRONT_AND_BACK"                           value="0x0408"/>
+    <enum name="INVALID_ENUM"                             value="0x0500"/>
+    <enum name="INVALID_VALUE"                            value="0x0501"/>
+    <enum name="INVALID_OPERATION"                        value="0x0502"/>
+    <enum name="OUT_OF_MEMORY"                            value="0x0505"/>
+    <enum name="CW"                                       value="0x0900"/>
+    <enum name="CCW"                                      value="0x0901"/>
+    <enum name="CULL_FACE"                     count="1"  value="0x0B44">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_TEST"                    count="1"  value="0x0B71">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_TEST"                  count="1"  value="0x0B90">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DITHER"                        count="1"  value="0x0BD0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND"                         count="1"  value="0x0BE2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SCISSOR_TEST"                  count="1"  value="0x0C11">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="UNPACK_ALIGNMENT"              count="1"  value="0x0CF5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PACK_ALIGNMENT"                count="1"  value="0x0D05">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_SIZE"              count="1"  value="0x0D33">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_VIEWPORT_DIMS"             count="2"  value="0x0D3A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SUBPIXEL_BITS"                 count="1"  value="0x0D50">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="RED_BITS"                      count="1"  value="0x0D52">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="GREEN_BITS"                    count="1"  value="0x0D53">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLUE_BITS"                     count="1"  value="0x0D54">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALPHA_BITS"                    count="1"  value="0x0D55">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_BITS"                    count="1"  value="0x0D56">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_BITS"                  count="1"  value="0x0D57">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_2D"                    count="1"  value="0x0DE1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DONT_CARE"                                value="0x1100"/>
+    <enum name="FASTEST"                                  value="0x1101"/>
+    <enum name="NICEST"                                   value="0x1102"/>
+    <enum name="BYTE"                          count="1"  value="0x1400">
+        <size name="CallLists"/>
+    </enum>
+    <enum name="UNSIGNED_BYTE"                 count="1"  value="0x1401">
+        <size name="CallLists"/>
+    </enum>
+    <enum name="SHORT"                         count="2"  value="0x1402">
+        <size name="CallLists"/>
+    </enum>
+    <enum name="UNSIGNED_SHORT"                count="2"  value="0x1403">
+        <size name="CallLists"/>
+    </enum>
+    <enum name="FLOAT"                         count="4"  value="0x1406">
+        <size name="CallLists"/>
+    </enum>
+    <enum name="INVERT"                                   value="0x150A"/>
+    <enum name="TEXTURE"                                  value="0x1702"/>
+    <enum name="ALPHA"                                    value="0x1906"/>
+    <enum name="RGB"                                      value="0x1907"/>
+    <enum name="RGBA"                                     value="0x1908"/>
+    <enum name="LUMINANCE"                                value="0x1909"/>
+    <enum name="LUMINANCE_ALPHA"                          value="0x190A"/>
+    <enum name="KEEP"                                     value="0x1E00"/>
+    <enum name="REPLACE"                                  value="0x1E01"/>
+    <enum name="INCR"                                     value="0x1E02"/>
+    <enum name="DECR"                                     value="0x1E03"/>
+    <enum name="VENDOR"                                   value="0x1F00"/>
+    <enum name="RENDERER"                                 value="0x1F01"/>
+    <enum name="VERSION"                                  value="0x1F02"/>
+    <enum name="EXTENSIONS"                               value="0x1F03"/>
+    <enum name="NEAREST"                                  value="0x2600"/>
+    <enum name="LINEAR"                                   value="0x2601"/>
+    <enum name="NEAREST_MIPMAP_NEAREST"                   value="0x2700"/>
+    <enum name="LINEAR_MIPMAP_NEAREST"                    value="0x2701"/>
+    <enum name="NEAREST_MIPMAP_LINEAR"                    value="0x2702"/>
+    <enum name="LINEAR_MIPMAP_LINEAR"                     value="0x2703"/>
+    <enum name="TEXTURE_MAG_FILTER"            count="1"  value="0x2800">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_MIN_FILTER"            count="1"  value="0x2801">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_WRAP_S"                count="1"  value="0x2802">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_WRAP_T"                count="1"  value="0x2803">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
+    </enum>
+    <enum name="REPEAT"                                   value="0x2901"/>
+
+    <enum name="DEPTH_BUFFER_BIT"                         value="0x00000100"/>
+    <enum name="STENCIL_BUFFER_BIT"                       value="0x00000400"/>
+    <enum name="COLOR_BUFFER_BIT"                         value="0x00004000"/>
+
+    <type name="float"   size="4"  float="true"    glx_name="FLOAT32"/>
+    <type name="clampf"  size="4"  float="true"    glx_name="FLOAT32"/>
+
+    <type name="int"     size="4"                  glx_name="CARD32"/>
+    <type name="uint"    size="4"  unsigned="true" glx_name="CARD32"/>
+    <type name="sizei"   size="4"                  glx_name="CARD32"/>
+    <type name="enum"    size="4"  unsigned="true" glx_name="ENUM"/>
+    <type name="bitfield" size="4" unsigned="true" glx_name="CARD32"/>
+
+    <type name="short"   size="2"                  glx_name="CARD16"/>
+    <type name="ushort"  size="2"  unsigned="true" glx_name="CARD16"/>
+
+    <type name="byte"    size="1"                  glx_name="CARD8"/>
+    <type name="ubyte"   size="1"  unsigned="true" glx_name="CARD8"/>
+    <type name="boolean" size="1"  unsigned="true" glx_name="CARD8"/>
+
+    <type name="void"    size="1"/>
+
+    <function name="BlendFunc" offset="241">
+        <param name="sfactor" type="GLenum"/>
+        <param name="dfactor" type="GLenum"/>
+        <glx rop="160"/>
+    </function>
+
+    <function name="Clear" offset="203">
+        <param name="mask" type="GLbitfield"/>
+        <glx rop="127"/>
+    </function>
+
+    <function name="ClearColor" offset="206">
+        <param name="red" type="GLclampf"/>
+        <param name="green" type="GLclampf"/>
+        <param name="blue" type="GLclampf"/>
+        <param name="alpha" type="GLclampf"/>
+        <glx rop="130"/>
+    </function>
+
+    <function name="ClearStencil" offset="207">
+        <param name="s" type="GLint"/>
+        <glx rop="131"/>
+    </function>
+
+    <function name="ColorMask" offset="210">
+        <param name="red" type="GLboolean"/>
+        <param name="green" type="GLboolean"/>
+        <param name="blue" type="GLboolean"/>
+        <param name="alpha" type="GLboolean"/>
+        <glx rop="134"/>
+    </function>
+
+    <function name="CullFace" offset="152">
+        <param name="mode" type="GLenum"/>
+        <glx rop="79"/>
+    </function>
+
+    <function name="DepthFunc" offset="245">
+        <param name="func" type="GLenum"/>
+        <glx rop="164"/>
+    </function>
+
+    <function name="DepthMask" offset="211">
+        <param name="flag" type="GLboolean"/>
+        <glx rop="135"/>
+    </function>
+
+    <function name="Disable" offset="214">
+        <param name="cap" type="GLenum"/>
+        <glx rop="138" handcode="client"/>
+    </function>
+
+    <function name="Enable" offset="215">
+        <param name="cap" type="GLenum"/>
+        <glx rop="139" handcode="client"/>
+    </function>
+
+    <function name="Finish" offset="216">
+        <glx sop="108" handcode="true"/>
+    </function>
+
+    <function name="Flush" offset="217">
+        <glx sop="142" handcode="true"/>
+    </function>
+
+    <function name="FrontFace" offset="157">
+        <param name="mode" type="GLenum"/>
+        <glx rop="84"/>
+    </function>
+
+    <function name="GetError" offset="261">
+        <return type="GLenum"/>
+        <glx sop="115" handcode="client"/>
+    </function>
+
+    <function name="GetIntegerv" offset="263">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx sop="117" handcode="client"/>
+    </function>
+
+    <function name="GetString" offset="275">
+        <param name="name" type="GLenum"/>
+        <return type="const GLubyte *"/>
+        <glx sop="129" handcode="true"/>
+    </function>
+
+    <function name="Hint" offset="158">
+        <param name="target" type="GLenum"/>
+        <param name="mode" type="GLenum"/>
+        <glx rop="85"/>
+    </function>
+
+    <function name="LineWidth" offset="168">
+        <param name="width" type="GLfloat"/>
+        <glx rop="95"/>
+    </function>
+
+    <function name="PixelStorei" offset="250">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLint"/>
+        <glx sop="110" handcode="client"/>
+    </function>
+
+    <function name="ReadPixels" offset="256">
+        <param name="x" type="GLint"/>
+        <param name="y" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="pixels" type="GLvoid *" output="true"  img_width="width" img_height="height" img_format="format" img_type="type" img_target="0"/>
+        <glx sop="111"/>
+    </function>
+
+    <function name="Scissor" offset="176">
+        <param name="x" type="GLint"/>
+        <param name="y" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <glx rop="103"/>
+    </function>
+
+    <function name="StencilFunc" offset="243">
+        <param name="func" type="GLenum"/>
+        <param name="ref" type="GLint"/>
+        <param name="mask" type="GLuint"/>
+        <glx rop="162"/>
+    </function>
+
+    <function name="StencilMask" offset="209">
+        <param name="mask" type="GLuint"/>
+        <glx rop="133"/>
+    </function>
+
+    <function name="StencilOp" offset="244">
+        <param name="fail" type="GLenum"/>
+        <param name="zfail" type="GLenum"/>
+        <param name="zpass" type="GLenum"/>
+        <glx rop="163"/>
+    </function>
+
+    <function name="TexParameterf" offset="178">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="105"/>
+    </function>
+
+    <function name="Viewport" offset="305">
+        <param name="x" type="GLint"/>
+        <param name="y" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <glx rop="191"/>
+    </function>
+
+    <!-- these are not in OpenGL ES 1.0 -->
+    <enum name="LINE_WIDTH"                    count="1"  value="0x0B21">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CULL_FACE_MODE"                count="1"  value="0x0B45">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FRONT_FACE"                    count="1"  value="0x0B46">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_RANGE"                   count="2"  value="0x0B70">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_WRITEMASK"               count="1"  value="0x0B72">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_CLEAR_VALUE"             count="1"  value="0x0B73">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_FUNC"                    count="1"  value="0x0B74">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_CLEAR_VALUE"           count="1"  value="0x0B91">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_FUNC"                  count="1"  value="0x0B92">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_VALUE_MASK"            count="1"  value="0x0B93">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_FAIL"                  count="1"  value="0x0B94">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_PASS_DEPTH_FAIL"       count="1"  value="0x0B95">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_PASS_DEPTH_PASS"       count="1"  value="0x0B96">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_REF"                   count="1"  value="0x0B97">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_WRITEMASK"             count="1"  value="0x0B98">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VIEWPORT"                      count="4"  value="0x0BA2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SCISSOR_BOX"                   count="4"  value="0x0C10">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_CLEAR_VALUE"             count="4"  value="0x0C22">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_WRITEMASK"               count="4"  value="0x0C23">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <function name="TexParameterfv" offset="179">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="106"/>
+    </function>
+
+    <function name="TexParameteri" offset="180">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLint"/>
+        <glx rop="107"/>
+    </function>
+
+    <function name="TexParameteriv" offset="181">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLint *" variable_param="pname"/>
+        <glx rop="108"/>
+    </function>
+
+    <function name="GetBooleanv" offset="258">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLboolean *" output="true" variable_param="pname"/>
+        <glx sop="112" handcode="client"/>
+    </function>
+
+    <function name="GetFloatv" offset="262">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="116" handcode="client"/>
+    </function>
+
+    <function name="GetTexParameterfv" offset="282">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="136"/>
+    </function>
+
+    <function name="GetTexParameteriv" offset="283">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx sop="137"/>
+    </function>
+
+    <function name="IsEnabled" offset="286">
+        <param name="cap" type="GLenum"/>
+        <return type="GLboolean"/>
+        <glx sop="140" handcode="client"/>
+    </function>
+</category>
+
+<!-- base subset of OpenGL 1.1 -->
+<category name="base1.1">
+    <enum name="POLYGON_OFFSET_FILL"                      value="0x8037"/>
+
+    <function name="BindTexture" offset="307">
+        <param name="target" type="GLenum"/>
+        <param name="texture" type="GLuint"/>
+        <glx rop="4117"/>
+    </function>
+
+    <function name="CopyTexImage2D" offset="324">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="internalformat" type="GLenum"/>
+        <param name="x" type="GLint"/>
+        <param name="y" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="border" type="GLint"/>
+        <glx rop="4120"/>
+    </function>
+
+    <function name="CopyTexSubImage2D" offset="326">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="x" type="GLint"/>
+        <param name="y" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <glx rop="4122"/>
+    </function>
+
+    <function name="DeleteTextures" offset="327">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="textures" type="const GLuint *" count="n"/>
+        <glx sop="144"/>
+    </function>
+
+    <function name="DrawArrays" offset="310">
+        <param name="mode" type="GLenum"/>
+        <param name="first" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <glx rop="193" handcode="true"/>
+    </function>
+
+    <function name="DrawElements" offset="311">
+        <param name="mode" type="GLenum"/>
+        <param name="count" type="GLsizei"/>
+        <param name="type" type="GLenum"/>
+        <param name="indices" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="GenTextures" offset="328">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="textures" type="GLuint *" output="true" count="n"/>
+        <glx sop="145" always_array="true"/>
+    </function>
+
+    <function name="PolygonOffset" offset="319">
+        <param name="factor" type="GLfloat"/>
+        <param name="units" type="GLfloat"/>
+        <glx rop="192"/>
+    </function>
+
+    <function name="TexSubImage2D" offset="333">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_xoff="xoffset" img_yoff="yoffset" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
+        <glx rop="4100" large="true"/>
+    </function>
+
+    <!-- these are not in OpenGL ES 1.0 -->
+    <enum name="POLYGON_OFFSET_UNITS"          count="1"  value="0x2A00">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POLYGON_OFFSET_FACTOR"         count="1"  value="0x8038">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BINDING_2D"            count="1"  value="0x8069">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <function name="IsTexture" offset="330">
+        <param name="texture" type="GLuint"/>
+        <return type="GLboolean"/>
+        <glx sop="146"/>
+    </function>
+</category>
+
+<!-- base subset of OpenGL 1.2 -->
+<category name="base1.2">
+    <enum name="UNSIGNED_SHORT_4_4_4_4"                   value="0x8033"/>
+    <enum name="UNSIGNED_SHORT_5_5_5_1"                   value="0x8034"/>
+    <enum name="CLAMP_TO_EDGE"                            value="0x812F"/>
+    <enum name="UNSIGNED_SHORT_5_6_5"                     value="0x8363"/>
+    <enum name="ALIASED_POINT_SIZE_RANGE"      count="2"  value="0x846D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALIASED_LINE_WIDTH_RANGE"      count="2"  value="0x846E">
+        <size name="Get" mode="get"/>
+    </enum>
+</category>
+
+<!-- base subset of OpenGL 1.3 -->
+<category name="base1.3">
+    <enum name="SAMPLE_ALPHA_TO_COVERAGE"      count="1"  value="0x809E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE"               count="1"  value="0x80A0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE0"                                 value="0x84C0"/>
+    <enum name="TEXTURE1"                                 value="0x84C1"/>
+    <enum name="TEXTURE2"                                 value="0x84C2"/>
+    <enum name="TEXTURE3"                                 value="0x84C3"/>
+    <enum name="TEXTURE4"                                 value="0x84C4"/>
+    <enum name="TEXTURE5"                                 value="0x84C5"/>
+    <enum name="TEXTURE6"                                 value="0x84C6"/>
+    <enum name="TEXTURE7"                                 value="0x84C7"/>
+    <enum name="TEXTURE8"                                 value="0x84C8"/>
+    <enum name="TEXTURE9"                                 value="0x84C9"/>
+    <enum name="TEXTURE10"                                value="0x84CA"/>
+    <enum name="TEXTURE11"                                value="0x84CB"/>
+    <enum name="TEXTURE12"                                value="0x84CC"/>
+    <enum name="TEXTURE13"                                value="0x84CD"/>
+    <enum name="TEXTURE14"                                value="0x84CE"/>
+    <enum name="TEXTURE15"                                value="0x84CF"/>
+    <enum name="TEXTURE16"                                value="0x84D0"/>
+    <enum name="TEXTURE17"                                value="0x84D1"/>
+    <enum name="TEXTURE18"                                value="0x84D2"/>
+    <enum name="TEXTURE19"                                value="0x84D3"/>
+    <enum name="TEXTURE20"                                value="0x84D4"/>
+    <enum name="TEXTURE21"                                value="0x84D5"/>
+    <enum name="TEXTURE22"                                value="0x84D6"/>
+    <enum name="TEXTURE23"                                value="0x84D7"/>
+    <enum name="TEXTURE24"                                value="0x84D8"/>
+    <enum name="TEXTURE25"                                value="0x84D9"/>
+    <enum name="TEXTURE26"                                value="0x84DA"/>
+    <enum name="TEXTURE27"                                value="0x84DB"/>
+    <enum name="TEXTURE28"                                value="0x84DC"/>
+    <enum name="TEXTURE29"                                value="0x84DD"/>
+    <enum name="TEXTURE30"                                value="0x84DE"/>
+    <enum name="TEXTURE31"                                value="0x84DF"/>
+    <enum name="NUM_COMPRESSED_TEXTURE_FORMATS" count="1" value="0x86A2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COMPRESSED_TEXTURE_FORMATS"    count="-1"  value="0x86A3">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <function name="ActiveTexture" offset="374">
+        <param name="texture" type="GLenum"/>
+        <glx rop="197"/>
+    </function>
+
+    <function name="CompressedTexImage2D" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="internalformat" type="GLenum"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="border" type="GLint"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
+        <glx rop="215" handcode="client"/>
+    </function>
+
+    <function name="CompressedTexSubImage2D" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="format" type="GLenum"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
+        <glx rop="218" handcode="client"/>
+    </function>
+
+    <function name="SampleCoverage" offset="assign">
+        <param name="value" type="GLclampf"/>
+        <param name="invert" type="GLboolean"/>
+        <glx rop="229"/>
+    </function>
+
+    <!-- these are not in OpenGL ES 1.0 -->
+    <enum name="SAMPLE_BUFFERS"                count="1"  value="0x80A8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLES"                       count="1"  value="0x80A9">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE_VALUE"         count="1"  value="0x80AA">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_COVERAGE_INVERT"        count="1"  value="0x80AB">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ACTIVE_TEXTURE"                count="1"  value="0x84E0">
+        <size name="Get" mode="get"/>
+    </enum>
+</category>
+
+<!-- base subset of OpenGL 1.4 -->
+<category name="base1.4">
+    <enum name="GENERATE_MIPMAP_HINT"                     value="0x8192"/>
+</category>
+
+<!-- base subset of OpenGL 1.5 -->
+<category name="base1.5">
+    <enum name="BUFFER_SIZE"                              value="0x8764"/>
+    <enum name="BUFFER_USAGE"                             value="0x8765"/>
+    <enum name="ARRAY_BUFFER"                             value="0x8892"/>
+    <enum name="ELEMENT_ARRAY_BUFFER"                     value="0x8893"/>
+    <enum name="ARRAY_BUFFER_BINDING"                     value="0x8894"/>
+    <enum name="ELEMENT_ARRAY_BUFFER_BINDING"             value="0x8895"/>
+    <enum name="STATIC_DRAW"                              value="0x88E4"/>
+    <enum name="DYNAMIC_DRAW"                             value="0x88E8"/>
+
+    <type name="intptr"   size="4"                  glx_name="CARD32"/>
+    <type name="sizeiptr" size="4"                  glx_name="CARD32"/>
+
+    <function name="BindBuffer" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="buffer" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="BufferData" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="size" type="GLsizeiptr" counter="true"/>
+        <param name="data" type="const GLvoid *" count="size" img_null_flag="true"/>
+        <param name="usage" type="GLenum"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="BufferSubData" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="offset" type="GLintptr"/>
+        <param name="size" type="GLsizeiptr" counter="true"/>
+        <param name="data" type="const GLvoid *" count="size"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DeleteBuffers" offset="assign">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="buffer" type="const GLuint *" count="n"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GenBuffers" offset="assign">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="buffer" type="GLuint *" output="true" count="n"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetBufferParameteriv" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="IsBuffer" offset="assign">
+        <param name="buffer" type="GLuint"/>
+        <return type="GLboolean"/>
+        <glx ignore="true"/>
+    </function>
+</category>
+
+</OpenGLAPI>

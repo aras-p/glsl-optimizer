@@ -571,7 +571,7 @@ i915LineWidth(GLcontext * ctx, GLfloat widthf)
    DBG("%s\n", __FUNCTION__);
    
    width = (int) (widthf * 2);
-   CLAMP_SELF(width, 1, 0xf);
+   width = CLAMP(width, 1, 0xf);
    lis4 |= width << S4_LINE_WIDTH_SHIFT;
 
    if (lis4 != i915->state.Ctx[I915_CTXREG_LIS4]) {
@@ -589,7 +589,7 @@ i915PointSize(GLcontext * ctx, GLfloat size)
 
    DBG("%s\n", __FUNCTION__);
    
-   CLAMP_SELF(point_size, 1, 255);
+   point_size = CLAMP(point_size, 1, 255);
    lis4 |= point_size << S4_POINT_WIDTH_SHIFT;
 
    if (lis4 != i915->state.Ctx[I915_CTXREG_LIS4]) {
@@ -1157,7 +1157,4 @@ i915InitState(struct i915_context *i915)
    i915_init_packets(i915);
 
    _mesa_init_driver_state(ctx);
-
-   memcpy(&i915->initial, &i915->state, sizeof(i915->state));
-   i915->current = &i915->state;
 }

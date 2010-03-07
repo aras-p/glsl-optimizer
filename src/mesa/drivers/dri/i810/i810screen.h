@@ -71,7 +71,7 @@ typedef struct {
    int textureSize;
    int logTextureGranularity;
 
-   __DRIscreenPrivate *driScrnPriv;
+   __DRIscreen *driScrnPriv;
    drmBufMapPtr  bufs;
    unsigned int sarea_priv_offset;
 } i810ScreenPrivate;
@@ -79,21 +79,21 @@ typedef struct {
 
 extern GLboolean
 i810CreateContext( const __GLcontextModes *mesaVis,
-                   __DRIcontextPrivate *driContextPriv,
+                   __DRIcontext *driContextPriv,
                    void *sharedContextPrivate );
 
 extern void
-i810DestroyContext(__DRIcontextPrivate *driContextPriv);
+i810DestroyContext(__DRIcontext *driContextPriv);
 
 extern GLboolean
-i810UnbindContext(__DRIcontextPrivate *driContextPriv);
+i810UnbindContext(__DRIcontext *driContextPriv);
 
 extern GLboolean
-i810MakeCurrent(__DRIcontextPrivate *driContextPriv,
-                __DRIdrawablePrivate *driDrawPriv,
-                __DRIdrawablePrivate *driReadPriv);
+i810MakeCurrent(__DRIcontext *driContextPriv,
+                __DRIdrawable *driDrawPriv,
+                __DRIdrawable *driReadPriv);
 
 extern void
-i810SwapBuffers(__DRIdrawablePrivate *driDrawPriv);
+i810SwapBuffers(__DRIdrawable *driDrawPriv);
 
 #endif

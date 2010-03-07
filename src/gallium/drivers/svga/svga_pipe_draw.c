@@ -25,7 +25,7 @@
 
 #include "svga_cmd.h"
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_prim.h"
 #include "util/u_time.h"
 #include "indices/u_indices.h"
@@ -33,7 +33,6 @@
 #include "svga_hw_reg.h"
 #include "svga_context.h"
 #include "svga_screen.h"
-#include "svga_winsys.h"
 #include "svga_draw.h"
 #include "svga_state.h"
 #include "svga_swtnl.h"
@@ -149,7 +148,7 @@ retry:
 
 
 
-static boolean
+static void
 svga_draw_range_elements( struct pipe_context *pipe,
                           struct pipe_buffer *index_buffer,
                           unsigned index_size,
@@ -162,7 +161,7 @@ svga_draw_range_elements( struct pipe_context *pipe,
    enum pipe_error ret = 0;
 
    if (!u_trim_pipe_prim( prim, &count ))
-      return TRUE;
+      return;
 
    /*
     * Mark currently bound target surfaces as dirty
@@ -183,7 +182,7 @@ svga_draw_range_elements( struct pipe_context *pipe,
 #ifdef DEBUG
    if (svga->curr.vs->base.id == svga->debug.disable_shader ||
        svga->curr.fs->base.id == svga->debug.disable_shader)
-      return 0;
+      return;
 #endif
 
    if (svga->state.sw.need_swtnl)
@@ -217,39 +216,32 @@ svga_draw_range_elements( struct pipe_context *pipe,
    }
 
    if (SVGA_DEBUG & DEBUG_FLUSH) {
-      static unsigned id;
-      debug_printf("%s %d\n", __FUNCTION__, id++);
-      if (id > 1300)
-         util_time_sleep( 2000 );
-
       svga_hwtnl_flush_retry( svga );
       svga_context_flush(svga, NULL);
    }
-
-   return ret == PIPE_OK;
 }
 
 
-static boolean 
+static void
 svga_draw_elements( struct pipe_context *pipe,
                     struct pipe_buffer *index_buffer,
                     unsigned index_size,
                     unsigned prim, unsigned start, unsigned count)
 {
-   return svga_draw_range_elements( pipe, index_buffer,
-                                    index_size,
-                                    0, 0xffffffff,
-                                    prim, start, count );
+   svga_draw_range_elements( pipe, index_buffer,
+                             index_size,
+                             0, 0xffffffff,
+                             prim, start, count );
 }
 
-static boolean 
+static void
 svga_draw_arrays( struct pipe_context *pipe,
                   unsigned prim, unsigned start, unsigned count)
 {
-   return svga_draw_range_elements(pipe, NULL, 0, 
-                                   start, start + count - 1, 
-                                   prim, 
-                                   start, count);
+   svga_draw_range_elements(pipe, NULL, 0, 
+                            start, start + count - 1, 
+                            prim, 
+                            start, count);
 }
 
 

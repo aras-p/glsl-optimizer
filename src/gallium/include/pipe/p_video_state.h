@@ -30,8 +30,9 @@
 
 #include <pipe/p_defines.h>
 #include <pipe/p_format.h>
-#include <pipe/p_refcnt.h>
+#include <pipe/p_state.h>
 #include <pipe/p_screen.h>
+#include <util/u_inlines.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,8 +53,9 @@ pipe_video_surface_reference(struct pipe_video_surface **ptr, struct pipe_video_
 {
    struct pipe_video_surface *old_surf = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &surf->reference))
+   if (pipe_reference(&(*ptr)->reference, &surf->reference))
       old_surf->screen->video_surface_destroy(old_surf);
+   *ptr = surf;
 }
 
 struct pipe_video_rect
@@ -74,7 +76,7 @@ enum pipe_mpeg12_macroblock_type
    PIPE_MPEG12_MACROBLOCK_TYPE_FWD,
    PIPE_MPEG12_MACROBLOCK_TYPE_BKWD,
    PIPE_MPEG12_MACROBLOCK_TYPE_BI,
-	
+
    PIPE_MPEG12_MACROBLOCK_NUM_TYPES
 };
 

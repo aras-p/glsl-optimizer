@@ -34,11 +34,6 @@
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 
-#ifdef DEBUG
-#include "trace/tr_screen.h"
-#include "trace/tr_context.h"
-#endif
-
 #include "stw_icd.h"
 #include "stw_device.h"
 #include "stw_winsys.h"
@@ -80,6 +75,9 @@ DrvCopyContext(
    struct stw_context *dst;
    BOOL ret = FALSE;
 
+   if (!stw_dev)
+      return FALSE;
+
    pipe_mutex_lock( stw_dev->ctx_mutex );
    
    src = stw_lookup_context_locked( dhrcSource );
@@ -107,13 +105,15 @@ DrvShareLists(
    struct stw_context *ctx2;
    BOOL ret = FALSE;
 
+   if (!stw_dev)
+      return FALSE;
+
    pipe_mutex_lock( stw_dev->ctx_mutex );
    
    ctx1 = stw_lookup_context_locked( dhglrc1 );
    ctx2 = stw_lookup_context_locked( dhglrc2 );
 
-   if (ctx1 && ctx2 &&
-       ctx1->iPixelFormat == ctx2->iPixelFormat) { 
+   if (ctx1 && ctx2) {
       ret = _mesa_share_state(ctx2->st->ctx, ctx1->st->ctx);
    }
 
@@ -152,7 +152,6 @@ DrvCreateLayerContext(
    const struct stw_pixelformat_info *pfi;
    GLvisual visual;
    struct stw_context *ctx = NULL;
-   struct pipe_screen *screen = NULL;
    struct pipe_context *pipe = NULL;
    
    if(!stw_dev)
@@ -175,27 +174,11 @@ DrvCreateLayerContext(
    ctx->hdc = hdc;
    ctx->iPixelFormat = iPixelFormat;
 
-   screen = stw_dev->screen;
-
-#ifdef DEBUG
-   /* Unwrap screen */
-   if(stw_dev->trace_running)
-      screen = trace_screen(screen)->screen;
-#endif
-
-   pipe = stw_dev->stw_winsys->create_context( screen );
+   /* priv == hdc, pass to stw_flush_frontbuffer as context_private
+    */
+   pipe = stw_dev->screen->context_create( stw_dev->screen, hdc );
    if (pipe == NULL) 
       goto no_pipe;
-
-#ifdef DEBUG
-   /* Wrap context */
-   if(stw_dev->trace_running)
-      pipe = trace_context_create(stw_dev->screen, pipe);
-#endif
-
-   /* pass to stw_flush_frontbuffer as context_private */
-   assert(!pipe->priv);
-   pipe->priv = hdc;
 
    ctx->st = st_create_context( pipe, &visual, NULL );
    if (ctx->st == NULL) 

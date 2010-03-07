@@ -1,0 +1,533 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
+
+<!-- OpenGL and OpenGL ES 2.x APIs -->
+
+<OpenGLAPI>
+
+<xi:include href="base1_API.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- base subset of OpenGL 2.0 -->
+<category name="base2.0">
+    <enum name="BLEND_EQUATION_RGB"            count="1"  value="0x8009"> <!-- same as BLEND_EQUATION -->
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_ENABLED"   count="1"  value="0x8622">
+        <size name="GetVertexAttribdv" mode="get"/>
+        <size name="GetVertexAttribfv" mode="get"/>
+        <size name="GetVertexAttribiv" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_SIZE"      count="1"  value="0x8623">
+        <size name="GetVertexAttribdv" mode="get"/>
+        <size name="GetVertexAttribfv" mode="get"/>
+        <size name="GetVertexAttribiv" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_STRIDE"     count="1" value="0x8624">
+        <size name="GetVertexAttribdv" mode="get"/>
+        <size name="GetVertexAttribfv" mode="get"/>
+        <size name="GetVertexAttribiv" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_TYPE"      count="1"  value="0x8625">
+        <size name="GetVertexAttribdv" mode="get"/>
+        <size name="GetVertexAttribfv" mode="get"/>
+        <size name="GetVertexAttribiv" mode="get"/>
+    </enum>
+    <enum name="CURRENT_VERTEX_ATTRIB"         count="1"  value="0x8626">
+        <size name="GetVertexAttribdv" mode="get"/>
+        <size name="GetVertexAttribfv" mode="get"/>
+        <size name="GetVertexAttribiv" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_POINTER"              value="0x8645"/>
+    <enum name="STENCIL_BACK_FUNC"             count="1"  value="0x8800">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_BACK_FAIL"             count="1"  value="0x8801">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_BACK_PASS_DEPTH_FAIL"  count="1"  value="0x8802">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_BACK_PASS_DEPTH_PASS"  count="1"  value="0x8803">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_EQUATION_ALPHA"          count="1"  value="0x883D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_VERTEX_ATTRIBS"            count="1"  value="0x8869">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_NORMALIZED"           value="0x886A"/>
+    <enum name="MAX_TEXTURE_IMAGE_UNITS"       count="1"  value="0x8872">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FRAGMENT_SHADER"                          value="0x8B30"/>
+    <enum name="VERTEX_SHADER"                            value="0x8B31"/>
+    <enum name="MAX_VERTEX_TEXTURE_IMAGE_UNITS"           value="0x8B4C"/>
+    <enum name="MAX_COMBINED_TEXTURE_IMAGE_UNITS"         value="0x8B4D"/>
+    <enum name="SHADER_TYPE"                              value="0x8B4F"/>
+    <enum name="FLOAT_VEC2"                               value="0x8B50"/>
+    <enum name="FLOAT_VEC3"                               value="0x8B51"/>
+    <enum name="FLOAT_VEC4"                               value="0x8B52"/>
+    <enum name="INT_VEC2"                                 value="0x8B53"/>
+    <enum name="INT_VEC3"                                 value="0x8B54"/>
+    <enum name="INT_VEC4"                                 value="0x8B55"/>
+    <enum name="BOOL"                                     value="0x8B56"/>
+    <enum name="BOOL_VEC2"                                value="0x8B57"/>
+    <enum name="BOOL_VEC3"                                value="0x8B58"/>
+    <enum name="BOOL_VEC4"                                value="0x8B59"/>
+    <enum name="FLOAT_MAT2"                               value="0x8B5A"/>
+    <enum name="FLOAT_MAT3"                               value="0x8B5B"/>
+    <enum name="FLOAT_MAT4"                               value="0x8B5C"/>
+    <enum name="SAMPLER_2D"                               value="0x8B5E"/>
+    <enum name="SAMPLER_CUBE"                             value="0x8B60"/>
+    <enum name="DELETE_STATUS"                            value="0x8B80"/>
+    <enum name="COMPILE_STATUS"                           value="0x8B81"/>
+    <enum name="LINK_STATUS"                              value="0x8B82"/>
+    <enum name="VALIDATE_STATUS"                          value="0x8B83"/>
+    <enum name="INFO_LOG_LENGTH"                          value="0x8B84"/>
+    <enum name="ATTACHED_SHADERS"                         value="0x8B85"/>
+    <enum name="ACTIVE_UNIFORMS"                          value="0x8B86"/>
+    <enum name="ACTIVE_UNIFORM_MAX_LENGTH"                value="0x8B87"/>
+    <enum name="SHADER_SOURCE_LENGTH"                     value="0x8B88"/>
+    <enum name="ACTIVE_ATTRIBUTES"                        value="0x8B89"/>
+    <enum name="ACTIVE_ATTRIBUTE_MAX_LENGTH"              value="0x8B8A"/>
+    <enum name="SHADING_LANGUAGE_VERSION"                 value="0x8B8C"/>
+    <enum name="CURRENT_PROGRAM"                          value="0x8B8D"/>
+    <enum name="STENCIL_BACK_REF"                         value="0x8CA3"/>
+    <enum name="STENCIL_BACK_VALUE_MASK"                  value="0x8CA4"/>
+    <enum name="STENCIL_BACK_WRITEMASK"                   value="0x8CA5"/>
+
+    <type name="char"    size="1"                  glx_name="CARD8"/>
+
+    <function name="AttachShader" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="shader" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="BindAttribLocation" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="index" type="GLuint"/>
+        <param name="name" type="const GLchar *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="BlendEquationSeparate" offset="assign">
+        <param name="modeRGB" type="GLenum"/>
+        <param name="modeA" type="GLenum"/>
+        <glx rop="4228"/>
+    </function>
+
+    <function name="CompileShader" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="CreateProgram" offset="assign">
+        <return type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="CreateShader" offset="assign">
+        <param name="type" type="GLenum"/>
+        <return type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DeleteProgram" offset="assign">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DeleteShader" offset="assign">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DetachShader" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="shader" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="DisableVertexAttribArray" offset="assign">
+        <param name="index" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="EnableVertexAttribArray" offset="assign">
+        <param name="index" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetActiveAttrib" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="index" type="GLuint"/>
+        <param name="bufSize" type="GLsizei "/>
+        <param name="length" type="GLsizei *" output="true"/>
+        <param name="size" type="GLint *" output="true"/>
+        <param name="type" type="GLenum *" output="true"/>
+        <param name="name" type="GLchar *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetActiveUniform" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="index" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *" output="true"/>
+        <param name="size" type="GLint *" output="true"/>
+        <param name="type" type="GLenum *" output="true"/>
+        <param name="name" type="GLchar *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetAttachedShaders" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="maxCount" type="GLsizei"/>
+        <param name="count" type="GLsizei *" output="true"/>
+        <param name="obj" type="GLuint *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetAttribLocation" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="name" type="const GLchar *"/>
+        <return type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetProgramiv" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetProgramInfoLog" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *"/>
+        <param name="infoLog" type="GLchar *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetShaderiv" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetShaderInfoLog" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *"/>
+        <param name="infoLog" type="GLchar *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetShaderSource" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *" output="true"/>
+        <param name="source" type="GLchar *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetUniformfv" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="location" type="GLint"/>
+        <param name="params" type="GLfloat *" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetUniformiv" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="location" type="GLint"/>
+        <param name="params" type="GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetUniformLocation" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="name" type="const GLchar *"/>
+        <return type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetVertexAttribfv" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetVertexAttribiv" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="GetVertexAttribPointerv" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="pointer" type="GLvoid **" output="true"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="IsProgram" offset="assign">
+        <param name="program" type="GLuint"/>
+        <return type="GLboolean"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="IsShader" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <return type="GLboolean"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="LinkProgram" offset="assign">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="ShaderSource" offset="assign">
+        <param name="shader" type="GLuint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="string" type="const GLchar **"/>
+        <param name="length" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="StencilFuncSeparate" offset="assign">
+        <param name="face" type="GLenum"/>
+        <param name="func" type="GLenum"/>
+        <param name="ref" type="GLint"/>
+        <param name="mask" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="StencilOpSeparate" offset="assign">
+        <param name="face" type="GLenum"/>
+        <param name="sfail" type="GLenum"/>
+        <param name="zfail" type="GLenum"/>
+        <param name="zpass" type="GLenum"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="StencilMaskSeparate" offset="assign">
+        <param name="face" type="GLenum"/>
+        <param name="mask" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform1f" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLfloat"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform1fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform1i" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform1iv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform2f" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLfloat"/>
+        <param name="v1" type="GLfloat"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform2fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform2i" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLint"/>
+        <param name="v1" type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform2iv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform3f" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLfloat"/>
+        <param name="v1" type="GLfloat"/>
+        <param name="v2" type="GLfloat"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform3fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform3i" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLint"/>
+        <param name="v1" type="GLint"/>
+        <param name="v2" type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform3iv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform4f" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLfloat"/>
+        <param name="v1" type="GLfloat"/>
+        <param name="v2" type="GLfloat"/>
+        <param name="v3" type="GLfloat"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform4fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform4i" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="v0" type="GLint"/>
+        <param name="v1" type="GLint"/>
+        <param name="v2" type="GLint"/>
+        <param name="v3" type="GLint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="Uniform4iv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="value" type="const GLint *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="UniformMatrix2fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="UniformMatrix3fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="UniformMatrix4fv" offset="assign">
+        <param name="location" type="GLint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="transpose" type="GLboolean"/>
+        <param name="value" type="const GLfloat *"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="UseProgram" offset="assign">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="ValidateProgram" offset="assign">
+        <param name="program" type="GLuint"/>
+        <glx ignore="true"/>
+    </function>
+
+    <function name="VertexAttrib1f" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib1fv" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+
+    <function name="VertexAttrib2f" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib2fv" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+
+    <function name="VertexAttrib3f" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib3fv" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+
+    <function name="VertexAttrib4f" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <param name="w" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib4fv" offset="assign">
+	<param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+
+    <function name="VertexAttribPointer" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="normalized" type="GLboolean"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+    </function>
+</category>
+
+</OpenGLAPI>

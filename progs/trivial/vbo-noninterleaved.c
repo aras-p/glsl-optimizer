@@ -87,8 +87,8 @@ static void Display( void )
 
    glEnable(GL_VERTEX_PROGRAM_ARB);
 
-//   glDrawArrays( GL_TRIANGLES, 0, 3 );
-//   glDrawArrays( GL_TRIANGLES, 1, 3 );
+   /* glDrawArrays( GL_TRIANGLES, 0, 3 ); */
+   /* glDrawArrays( GL_TRIANGLES, 1, 3 ); */
    glDrawArrays( GL_QUADS, 0, 4 );
 
    glFlush(); 

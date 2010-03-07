@@ -49,7 +49,7 @@
  *  blending, hint, and line width.  Print out implementation
  *  specific info on line width granularity and width.
  */
-void myinit(void)
+static void myinit(void)
 {
     GLfloat values[2];
     glGetFloatv (GL_LINE_WIDTH_GRANULARITY, values);
@@ -73,7 +73,7 @@ void myinit(void)
 
 /*  display() draws an icosahedron with a large alpha value, 1.0.
  */
-void display(void)
+static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor4f (1.0, 1.0, 1.0, 1.0);
@@ -81,7 +81,7 @@ void display(void)
     glFlush();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);

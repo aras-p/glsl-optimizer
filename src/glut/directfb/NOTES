@@ -1,9 +1,0 @@
-DirectFB GLUT Implementation NOTES
-----------------------------------
-
-* To have high performance rendering, it's really important to
-  use glutEnterGameMode() instead of glutCreateWindow()/glutFullScreen().
-  You can also force a windowed application to game mode by setting
-  the environment variable "__GLUT_GAME_MODE".
-
-

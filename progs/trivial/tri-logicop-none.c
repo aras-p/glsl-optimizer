@@ -101,7 +101,7 @@ static void Draw(void)
    glVertex3f( 0.5, -0.5, -30.0);
    glEnd();
 
-//   glLineWidth(12.0);
+   /* glLineWidth(12.0); */
 
    /* Redraw parts of the lines:
     */

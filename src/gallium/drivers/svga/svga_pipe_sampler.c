@@ -23,18 +23,14 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_pack_color.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_context.h"
 #include "svga_screen_texture.h"
-#include "svga_state.h"
-
-#include "svga_hw_reg.h"
 
 #include "svga_debug.h"
 
@@ -76,7 +72,6 @@ static INLINE unsigned translate_img_filter( unsigned filter )
    switch (filter) {
    case PIPE_TEX_FILTER_NEAREST: return SVGA3D_TEX_FILTER_NEAREST;
    case PIPE_TEX_FILTER_LINEAR:  return SVGA3D_TEX_FILTER_LINEAR;
-   case PIPE_TEX_FILTER_ANISO:   return SVGA3D_TEX_FILTER_ANISOTROPIC;
    default:
       assert(0);
       return SVGA3D_TEX_FILTER_NEAREST;
@@ -105,7 +100,9 @@ svga_create_sampler_state(struct pipe_context *pipe,
    cso->mipfilter = translate_mip_filter(sampler->min_mip_filter);
    cso->magfilter = translate_img_filter( sampler->mag_img_filter );
    cso->minfilter = translate_img_filter( sampler->min_img_filter );
-   cso->aniso_level = MAX2( (unsigned) sampler->max_anisotropy, 1 );
+   cso->aniso_level = MAX2( sampler->max_anisotropy, 1 );
+   if(sampler->max_anisotropy)
+      cso->magfilter = cso->minfilter = SVGA3D_TEX_FILTER_ANISOTROPIC;
    cso->lod_bias = sampler->lod_bias;
    cso->addressu = translate_wrap_mode(sampler->wrap_s);
    cso->addressv = translate_wrap_mode(sampler->wrap_t);
@@ -115,14 +112,12 @@ svga_create_sampler_state(struct pipe_context *pipe,
    cso->compare_func = sampler->compare_func;
 
    {
-      ubyte r = float_to_ubyte(sampler->border_color[0]);
-      ubyte g = float_to_ubyte(sampler->border_color[1]);
-      ubyte b = float_to_ubyte(sampler->border_color[2]);
-      ubyte a = float_to_ubyte(sampler->border_color[3]);
+      uint32 r = float_to_ubyte(sampler->border_color[0]);
+      uint32 g = float_to_ubyte(sampler->border_color[1]);
+      uint32 b = float_to_ubyte(sampler->border_color[2]);
+      uint32 a = float_to_ubyte(sampler->border_color[3]);
 
-      util_pack_color_ub( r, g, b, a,
-                          PIPE_FORMAT_B8G8R8A8_UNORM,
-                          &cso->bordercolor );
+      cso->bordercolor = (a << 24) | (r << 16) | (g << 8) | b;
    }
 
    /* No SVGA3D support for:
@@ -206,7 +201,7 @@ static void svga_set_sampler_textures(struct pipe_context *pipe,
       if (!texture[i])
          continue;
 
-      if (texture[i]->format == PIPE_FORMAT_A8R8G8B8_SRGB)
+      if (texture[i]->format == PIPE_FORMAT_B8G8R8A8_SRGB)
          flag_srgb |= 1 << i;
 
       if (texture[i]->target == PIPE_TEXTURE_1D)

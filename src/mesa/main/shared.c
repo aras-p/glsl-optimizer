@@ -93,12 +93,8 @@ _mesa_alloc_shared_state(GLcontext *ctx)
    shared->BufferObjects = _mesa_NewHashTable();
 #endif
 
-   /* Allocate the default buffer object and set refcount so high that
-    * it never gets deleted.
-    * XXX with recent/improved refcounting this may not longer be needed.
-    */
+   /* Allocate the default buffer object */
    shared->NullBufferObj = ctx->Driver.NewBufferObject(ctx, 0, 0);
-   shared->NullBufferObj->RefCount = 1000 * 1000 * 1000;
 
    /* Create default texture objects */
    for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {
@@ -202,7 +198,7 @@ delete_bufferobj_cb(GLuint id, void *data, void *userData)
       ctx->Driver.UnmapBuffer(ctx, 0, bufObj);
       bufObj->Pointer = NULL;
    }
-   ctx->Driver.DeleteBuffer(ctx, bufObj);
+   _mesa_reference_buffer_object(ctx, &bufObj, NULL);
 }
 
 
@@ -288,8 +284,8 @@ delete_renderbuffer_cb(GLuint id, void *data, void *userData)
  *
  * \sa alloc_shared_state().
  */
-void
-_mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
+static void
+free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 {
    GLuint i;
 
@@ -335,7 +331,7 @@ _mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object
-   ctx->Driver.DeleteBuffer(ctx, shared->NullBufferObj);
+   _mesa_reference_buffer_object(ctx, &shared->NullBufferObj, NULL);
 #endif
 
 #if FEATURE_ARB_sync
@@ -366,5 +362,32 @@ _mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
    _glthread_DESTROY_MUTEX(shared->Mutex);
    _glthread_DESTROY_MUTEX(shared->TexMutex);
 
-   _mesa_free(shared);
+   free(shared);
+}
+
+
+/**
+ * Decrement shared state object reference count and potentially free it
+ * and all children structures.
+ *
+ * \param ctx GL context.
+ * \param shared shared state pointer.
+ *
+ * \sa free_shared_state().
+ */
+void
+_mesa_release_shared_state(GLcontext *ctx, struct gl_shared_state *shared)
+{
+   GLint RefCount;
+
+   _glthread_LOCK_MUTEX(shared->Mutex);
+   RefCount = --shared->RefCount;
+   _glthread_UNLOCK_MUTEX(shared->Mutex);
+
+   assert(RefCount >= 0);
+
+   if (RefCount == 0) {
+      /* free shared state */
+      free_shared_state( ctx, shared );
+   }
 }

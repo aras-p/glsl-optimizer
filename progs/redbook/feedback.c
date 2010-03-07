@@ -48,7 +48,7 @@
 
 /*  Initialize lighting.
  */
-void init(void)
+static void init(void)
 {
    glEnable(GL_LIGHTING);
    glEnable(GL_LIGHT0);
@@ -58,7 +58,7 @@ void init(void)
  * be clipped.  If in feedback mode, a passthrough token 
  * is issued between the each primitive.
  */
-void drawGeometry (GLenum mode)
+static void drawGeometry (GLenum mode)
 {
    glBegin (GL_LINE_STRIP);
    glNormal3f (0.0, 0.0, 1.0);
@@ -80,8 +80,8 @@ void drawGeometry (GLenum mode)
 }
 
 /* Write contents of one vertex to stdout.	*/
-void print3DcolorVertex (GLint size, GLint *count, 
-                         GLfloat *buffer)
+static void print3DcolorVertex (GLint size, GLint *count, 
+                                GLfloat *buffer)
 {
    int i;
 
@@ -94,7 +94,7 @@ void print3DcolorVertex (GLint size, GLint *count,
 }
 
 /*  Write contents of entire buffer.  (Parse tokens!)	*/
-void printBuffer(GLint size, GLfloat *buffer)
+static void printBuffer(GLint size, GLfloat *buffer)
 {
    GLint count;
    GLfloat token;
@@ -124,7 +124,7 @@ void printBuffer(GLint size, GLfloat *buffer)
    }
 }
 
-void display(void)
+static void display(void)
 {
    GLfloat feedBuffer[1024];
    GLint size;
@@ -148,7 +148,7 @@ void display(void)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

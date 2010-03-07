@@ -22,15 +22,20 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <stdio.h>
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_debug.h"
+#include "util/u_format.h"
 #include "util/u_network.h"
+#include "util/u_string.h"
 #include "util/u_tile.h"
 
-static uint8_t* read(const char *filename, unsigned size);
+static uint8_t* rbug_read(const char *filename, unsigned size);
 static void dump(unsigned src_width, unsigned src_height,
                  unsigned src_stride, enum pipe_format src_format,
                  uint8_t *data, unsigned src_size);
@@ -43,9 +48,9 @@ int main(int argc, char** argv)
    unsigned stride = width * 4;
    unsigned size = stride * height;
    const char *filename = "mybin.bin";
-   enum pipe_format format = PIPE_FORMAT_A8R8G8B8_UNORM;
+   enum pipe_format format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
-   dump(width, height, stride, format, read(filename, size), size);
+   dump(width, height, stride, format, rbug_read(filename, size), size);
 
    return 0;
 }
@@ -54,10 +59,7 @@ static void dump(unsigned width, unsigned height,
                  unsigned src_stride, enum pipe_format src_format,
                  uint8_t *data, unsigned src_size)
 {
-   struct pipe_format_block src_block;
-
    enum pipe_format dst_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   struct pipe_format_block dst_block;
    unsigned dst_stride;
    unsigned dst_size;
    float *rgba;
@@ -65,20 +67,17 @@ static void dump(unsigned width, unsigned height,
    char filename[512];
 
    {
-      pf_get_block(src_format, &src_block);
-      assert(src_stride >= pf_get_stride(&src_block, width));
-      assert(src_size >= pf_get_2d_size(&src_block, src_stride, width));
+      assert(src_stride >= util_format_get_stride(src_format, width));
    }
    {
-      pf_get_block(dst_format, &dst_block);
-      dst_stride = pf_get_stride(&dst_block, width);
-      dst_size = pf_get_2d_size(&dst_block, dst_stride, width);
+      dst_stride = util_format_get_stride(dst_format, width);
+      dst_size = util_format_get_2d_size(dst_format, dst_stride, width);
       rgba = MALLOC(dst_size);
    }
 
-   util_snprintf(filename, 512, "%s.bmp", pf_name(src_format));
+   util_snprintf(filename, 512, "%s.bmp", util_format_name(src_format));
 
-   if (pf_is_compressed(src_format)) {
+   if (util_format_is_compressed(src_format)) {
       debug_printf("skipping: %s\n", filename);
       return;
    }
@@ -96,7 +95,7 @@ static void dump(unsigned width, unsigned height,
    FREE(rgba);
 }
 
-static uint8_t* read(const char *filename, unsigned size)
+static uint8_t* rbug_read(const char *filename, unsigned size)
 {
    uint8_t *data;
    FILE *file = fopen(filename, "rb");

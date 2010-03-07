@@ -8,7 +8,7 @@
 
 <body bgcolor="#eeeeee">
 
-<H1>Mesa 7.6.1 Release Notes, (date tbd)</H1>
+<H1>Mesa 7.6.1 Release Notes, 21 December 2009</H1>
 
 <p>
 Mesa 7.6.1 is a bug-fix release fixing issues since version 7.6.
@@ -26,7 +26,15 @@ for DRI hardware acceleration.
 
 <h2>MD5 checksums</h2>
 <pre>
-tbd
+e80fabad2e3eb7990adae773d6aeacba  MesaLib-7.6.1.tar.gz
+7db4617e9e10ad3aca1b64339fd71b7d  MesaLib-7.6.1.tar.bz2
+dd3275dbf9833480d2e92d0c69b22abd  MesaLib-7.6.1.zip
+f7fdcfe3c0f363e571c60f02f74368fb  MesaDemos-7.6.1.tar.gz
+a4226f06732a02556fcf6be290b86dff  MesaDemos-7.6.1.tar.bz2
+849425f356bd940726cebedfa79de176  MesaDemos-7.6.1.zip
+d40cc7c5e337a85b674e27a8e494f52f  MesaGLUT-7.6.1.tar.gz
+ca9aecb91f05b1da9fd7d5eeb19d47d7  MesaGLUT-7.6.1.tar.bz2
+23fad8398004c977a1d8953079b72ca6  MesaGLUT-7.6.1.zip
 </pre>
 
 
@@ -56,6 +64,10 @@ tbd
 <li>Fixed clipping / provoking vertex bugs in i965 driver.
 <li>Assorted build fixes for AIX.
 <li>Endianness fixes for the DRI swrast driver (bug 22767).</li>
+<li>Point sprite fixes for i915/945 driver.
+<li>Fixed assorted memory leaks (usually on error paths)
+<li>Fixed some GLSL compiler bugs (ex: 25579)
+<li>Assorted build fixes for BlueGene
 </ul>
 
 <h2>Changes</h2>

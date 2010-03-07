@@ -51,9 +51,10 @@
 #define FO_NEW_VERTEX          0x2000
 #define FO_NEW_VERTEX_SHADER   0x4000
 #define FO_NEW_BLEND_COLOR     0x8000
-#define FO_NEW_CLEAR_COLOR     0x10000
-#define FO_NEW_VERTEX_BUFFER   0x20000
-#define FO_NEW_VERTEX_ELEMENT  0x40000
+#define FO_NEW_STENCIL_REF     0x10000
+#define FO_NEW_CLEAR_COLOR     0x20000
+#define FO_NEW_VERTEX_BUFFER   0x40000
+#define FO_NEW_VERTEX_ELEMENT  0x80000
 
 
 
@@ -79,6 +80,7 @@ struct failover_context {
    const struct fo_state     *vertex_shader;
 
    struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
@@ -125,7 +127,7 @@ failover_context( struct pipe_context *pipe )
 void
 failover_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             const struct pipe_constant_buffer *buf);
+                             struct pipe_buffer *buf);
 
 
 #endif /* FO_CONTEXT_H */

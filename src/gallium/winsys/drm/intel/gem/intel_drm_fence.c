@@ -1,7 +1,8 @@
 
 #include "intel_drm_winsys.h"
 #include "util/u_memory.h"
-#include "pipe/p_refcnt.h"
+#include "util/u_atomic.h"
+#include "util/u_inlines.h"
 
 /**
  * Because gem does not have fence's we have to create our own fences.
@@ -39,11 +40,12 @@ intel_drm_fence_reference(struct intel_winsys *iws,
    struct intel_drm_fence *old = (struct intel_drm_fence *)*ptr;
    struct intel_drm_fence *f = (struct intel_drm_fence *)fence;
 
-   if (pipe_reference((struct pipe_reference**)ptr, &f->reference)) {
+   if (pipe_reference(&((struct intel_drm_fence *)(*ptr))->reference, &f->reference)) {
       if (old->bo)
          drm_intel_bo_unreference(old->bo);
       FREE(old);
    }
+   *ptr = fence;
 }
 
 static int

@@ -46,7 +46,6 @@
 #include "texfetch.h"
 #include "teximage.h"
 #include "texstate.h"
-#include "texstore.h"
 #include "mtypes.h"
 
 
@@ -489,8 +488,8 @@ _mesa_delete_texture_image( GLcontext *ctx, struct gl_texture_image *texImage )
 
    ASSERT(texImage->Data == NULL);
    if (texImage->ImageOffsets)
-      _mesa_free(texImage->ImageOffsets);
-   _mesa_free(texImage);
+      free(texImage->ImageOffsets);
+   free(texImage);
 }
 
 
@@ -844,7 +843,7 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->Depth = 0;
    img->RowStride = 0;
    if (img->ImageOffsets) {
-      _mesa_free(img->ImageOffsets);
+      free(img->ImageOffsets);
       img->ImageOffsets = NULL;
    }
    img->Width2 = 0;
@@ -933,8 +932,8 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
     * case code in the texstore routines.
     */
    if (img->ImageOffsets)
-      _mesa_free(img->ImageOffsets);
-   img->ImageOffsets = (GLuint *) _mesa_malloc(depth * sizeof(GLuint));
+      free(img->ImageOffsets);
+   img->ImageOffsets = (GLuint *) malloc(depth * sizeof(GLuint));
    for (i = 0; i < depth; i++) {
       img->ImageOffsets[i] = i * width * height;
    }
@@ -1308,7 +1307,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
       if (type != GL_UNSIGNED_SHORT_8_8_MESA &&
           type != GL_UNSIGNED_SHORT_8_8_REV_MESA) {
          char message[100];
-         _mesa_sprintf(message,
+         sprintf(message,
                  "glTexImage%d(format/type YCBCR mismatch", dimensions);
          _mesa_error(ctx, GL_INVALID_ENUM, message);
          return GL_TRUE; /* error */
@@ -1324,7 +1323,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
       if (border != 0) {
          if (!isProxy) {
             char message[100];
-            _mesa_sprintf(message,
+            sprintf(message,
                     "glTexImage%d(format=GL_YCBCR_MESA and border=%d)",
                     dimensions, border);
             _mesa_error(ctx, GL_INVALID_VALUE, message);
@@ -2449,6 +2448,47 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
 }
 
 
+#if FEATURE_OES_EGL_image
+void GLAPIENTRY
+_mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
+{
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (target != GL_TEXTURE_2D) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+		  "glEGLImageTargetTexture2D(target=%d)", target);
+      return;
+   }
+
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
+      _mesa_update_state(ctx);
+
+   texObj = _mesa_get_current_tex_object(ctx, target);
+   _mesa_lock_texture(ctx, texObj);
+
+   texImage = _mesa_get_tex_image(ctx, texObj, target, 0);
+   if (!texImage) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glEGLImageTargetTexture2D");
+   } else {
+      if (texImage->Data)
+	 ctx->Driver.FreeTexImageData( ctx, texImage );
+
+      ASSERT(texImage->Data == NULL);
+      ctx->Driver.EGLImageTargetTexture2D(ctx, target,
+					  texObj, texImage, image);
+
+      /* state update */
+      texObj->_Complete = GL_FALSE;
+      ctx->NewState |= _NEW_TEXTURE;
+   }
+   _mesa_unlock_texture(ctx, texObj);
+
+}
+#endif
+
 
 void GLAPIENTRY
 _mesa_TexSubImage1D( GLenum target, GLint level,
@@ -3225,8 +3265,8 @@ compressed_subtexture_error_check2(GLcontext *ctx, GLuint dims,
    }
 
    if (((width == 1 || width == 2) &&
-        (GLuint) width != texImage->Width) ||
-       (width > texImage->Width)) {
+        width != (GLsizei) texImage->Width) ||
+       (width > (GLsizei) texImage->Width)) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCompressedTexSubImage%uD(width=%d)", dims, width);
       return GL_TRUE;
@@ -3234,8 +3274,8 @@ compressed_subtexture_error_check2(GLcontext *ctx, GLuint dims,
 
    if (dims >= 2) {
       if (((height == 1 || height == 2) &&
-           (GLuint) height != texImage->Height) ||
-          (height > texImage->Height)) {
+           height != (GLsizei) texImage->Height) ||
+          (height > (GLsizei) texImage->Height)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCompressedTexSubImage%uD(height=%d)", dims, height);
          return GL_TRUE;
@@ -3244,8 +3284,8 @@ compressed_subtexture_error_check2(GLcontext *ctx, GLuint dims,
 
    if (dims >= 3) {
       if (((depth == 1 || depth == 2) &&
-           (GLuint) depth != texImage->Depth) ||
-          (depth > texImage->Depth)) {
+           depth != (GLsizei) texImage->Depth) ||
+          (depth > (GLsizei) texImage->Depth)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glCompressedTexSubImage%uD(depth=%d)", dims, depth);
          return GL_TRUE;

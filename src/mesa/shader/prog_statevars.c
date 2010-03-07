@@ -31,7 +31,6 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
-#include "main/hash.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
@@ -303,9 +302,11 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             matrix = &ctx->_ModelProjectMatrix;
          }
          else if (mat == STATE_TEXTURE_MATRIX) {
+            ASSERT(index < Elements(ctx->TextureMatrixStack));
             matrix = ctx->TextureMatrixStack[index].Top;
          }
          else if (mat == STATE_PROGRAM_MATRIX) {
+            ASSERT(index < Elements(ctx->ProgramMatrixStack));
             matrix = ctx->ProgramMatrixStack[index].Top;
          }
          else if (mat == STATE_COLOR_MATRIX) {
@@ -444,6 +445,61 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          value[3] = (GLfloat)(ctx->Fog.Density * ONE_DIV_SQRT_LN2);
          return;
 
+      case STATE_POINT_SIZE_CLAMPED:
+         {
+           /* this includes implementation dependent limits, to avoid
+            * another potentially necessary clamp.
+            * Note: for sprites, point smooth (point AA) is ignored
+            * and we'll clamp to MinPointSizeAA and MaxPointSize, because we
+            * expect drivers will want to say their minimum for AA size is 0.0
+            * but for non-AA it's 1.0 (because normal points with size below 1.0
+            * need to get rounded up to 1.0, hence never disappear). GL does
+            * not specify max clamp size for sprites, other than it needs to be
+            * at least as large as max AA size, hence use non-AA size there.
+            */
+            GLfloat minImplSize;
+            GLfloat maxImplSize;
+            if (ctx->Point.PointSprite) {
+               minImplSize = ctx->Const.MinPointSizeAA;
+               maxImplSize = ctx->Const.MaxPointSize;
+            }
+            else if (ctx->Point.SmoothFlag || ctx->Multisample._Enabled) {
+               minImplSize = ctx->Const.MinPointSizeAA;
+               maxImplSize = ctx->Const.MaxPointSizeAA;
+            }
+            else {
+               minImplSize = ctx->Const.MinPointSize;
+               maxImplSize = ctx->Const.MaxPointSize;
+            }
+            value[0] = ctx->Point.Size;
+            value[1] = ctx->Point.MinSize >= minImplSize ? ctx->Point.MinSize : minImplSize;
+            value[2] = ctx->Point.MaxSize <= maxImplSize ? ctx->Point.MaxSize : maxImplSize;
+            value[3] = ctx->Point.Threshold;
+         }
+         return;
+      case STATE_POINT_SIZE_IMPL_CLAMP:
+         {
+           /* for implementation clamp only in vs */
+            GLfloat minImplSize;
+            GLfloat maxImplSize;
+            if (ctx->Point.PointSprite) {
+               minImplSize = ctx->Const.MinPointSizeAA;
+               maxImplSize = ctx->Const.MaxPointSize;
+            }
+            else if (ctx->Point.SmoothFlag || ctx->Multisample._Enabled) {
+               minImplSize = ctx->Const.MinPointSizeAA;
+               maxImplSize = ctx->Const.MaxPointSizeAA;
+            }
+            else {
+               minImplSize = ctx->Const.MinPointSize;
+               maxImplSize = ctx->Const.MaxPointSize;
+            }
+            value[0] = ctx->Point.Size;
+            value[1] = minImplSize;
+            value[2] = maxImplSize;
+            value[3] = ctx->Point.Threshold;
+         }
+         return;
       case STATE_LIGHT_SPOT_DIR_NORMALIZED:
          {
             /* here, state[2] is the light number */
@@ -639,6 +695,9 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
 	 return _NEW_TEXTURE;
       case STATE_FOG_PARAMS_OPTIMIZED:
 	 return _NEW_FOG;
+      case STATE_POINT_SIZE_CLAMPED:
+      case STATE_POINT_SIZE_IMPL_CLAMP:
+         return _NEW_POINT | _NEW_MULTISAMPLE;
       case STATE_LIGHT_SPOT_DIR_NORMALIZED:
       case STATE_LIGHT_POSITION:
       case STATE_LIGHT_POSITION_NORMALIZED:
@@ -830,6 +889,12 @@ append_token(char *dst, gl_state_index k)
    case STATE_FOG_PARAMS_OPTIMIZED:
       append(dst, "fogParamsOptimized");
       break;
+   case STATE_POINT_SIZE_CLAMPED:
+      append(dst, "pointSizeClamped");
+      break;
+   case STATE_POINT_SIZE_IMPL_CLAMP:
+      append(dst, "pointSizeImplClamp");
+      break;
    case STATE_LIGHT_SPOT_DIR_NORMALIZED:
       append(dst, "lightSpotDirNormalized");
       break;
@@ -885,14 +950,14 @@ static void
 append_index(char *dst, GLint index)
 {
    char s[20];
-   _mesa_sprintf(s, "[%d]", index);
+   sprintf(s, "[%d]", index);
    append(dst, s);
 }
 
 /**
  * Make a string from the given state vector.
  * For example, return "state.matrix.texture[2].inverse".
- * Use _mesa_free() to deallocate the string.
+ * Use free() to deallocate the string.
  */
 char *
 _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
@@ -964,9 +1029,9 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
          if (modifier)
             append_token(str, modifier);
          if (firstRow == lastRow)
-            _mesa_sprintf(tmp, ".row[%d]", firstRow);
+            sprintf(tmp, ".row[%d]", firstRow);
          else
-            _mesa_sprintf(tmp, ".row[%d..%d]", firstRow, lastRow);
+            sprintf(tmp, ".row[%d..%d]", firstRow, lastRow);
          append(str, tmp);
       }
       break;
@@ -1052,7 +1117,7 @@ static void
 load_transpose_matrix(GLfloat registers[][4], GLuint pos,
                       const GLfloat mat[16])
 {
-   MEMCPY(registers[pos], mat, 16 * sizeof(GLfloat));
+   memcpy(registers[pos], mat, 16 * sizeof(GLfloat));
 }
 
 
@@ -1076,7 +1141,9 @@ _mesa_load_tracked_matrices(GLcontext *ctx)
          mat = ctx->ProjectionMatrixStack.Top;
       }
       else if (ctx->VertexProgram.TrackMatrix[i] == GL_TEXTURE) {
-         mat = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top;
+         GLuint unit = MIN2(ctx->Texture.CurrentUnit,
+                            Elements(ctx->TextureMatrixStack) - 1);
+         mat = ctx->TextureMatrixStack[unit].Top;
       }
       else if (ctx->VertexProgram.TrackMatrix[i] == GL_COLOR) {
          mat = ctx->ColorMatrixStack.Top;
@@ -1088,7 +1155,7 @@ _mesa_load_tracked_matrices(GLcontext *ctx)
       else if (ctx->VertexProgram.TrackMatrix[i] >= GL_MATRIX0_NV &&
                ctx->VertexProgram.TrackMatrix[i] <= GL_MATRIX7_NV) {
          GLuint n = ctx->VertexProgram.TrackMatrix[i] - GL_MATRIX0_NV;
-         ASSERT(n < MAX_PROGRAM_MATRICES);
+         ASSERT(n < Elements(ctx->ProgramMatrixStack));
          mat = ctx->ProgramMatrixStack[n].Top;
       }
       else {

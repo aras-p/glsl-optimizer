@@ -33,8 +33,6 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
-#include "pipe/internal/p_winsys_screen.h"
-#include "pipe/p_inlines.h"
 #include "util/u_prim.h"
 
 #include "lp_buffer.h"
@@ -45,11 +43,11 @@
 
 
 
-boolean
+void
 llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
-   return llvmpipe_draw_elements(pipe, NULL, 0, mode, start, count);
+   llvmpipe_draw_elements(pipe, NULL, 0, mode, start, count);
 }
 
 
@@ -58,7 +56,7 @@ llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
  * Basically, map the vertex buffers (and drawing surfaces), then hand off
  * the drawing to the 'draw' module.
  */
-boolean
+void
 llvmpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_buffer *indexBuffer,
                              unsigned indexSize,
@@ -70,12 +68,8 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
    struct draw_context *draw = lp->draw;
    unsigned i;
 
-   lp->reduced_api_prim = u_reduced_prim(mode);
-
    if (lp->dirty)
       llvmpipe_update_derived( lp );
-
-   llvmpipe_map_transfers(lp);
 
    /*
     * Map vertex buffers
@@ -103,7 +97,7 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
    draw_arrays(draw, mode, start, count);
 
    /*
-    * unmap vertex/index buffers - will cause draw module to flush
+    * unmap vertex/index buffers
     */
    for (i = 0; i < lp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
@@ -112,31 +106,24 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
-
-   /* Note: leave drawing surfaces mapped */
-
-   lp->dirty_render_cache = TRUE;
-   
-   return TRUE;
+   /*
+    * TODO: Flush only when a user vertex/index buffer is present
+    * (or even better, modify draw module to do this
+    * internally when this condition is seen?)
+    */
+   draw_flush(draw);
 }
 
 
-boolean
+void
 llvmpipe_draw_elements(struct pipe_context *pipe,
                        struct pipe_buffer *indexBuffer,
                        unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count)
 {
-   return llvmpipe_draw_range_elements( pipe, indexBuffer,
-                                        indexSize,
-                                        0, 0xffffffff,
-                                        mode, start, count );
+   llvmpipe_draw_range_elements( pipe, indexBuffer,
+                                 indexSize,
+                                 0, 0xffffffff,
+                                 mode, start, count );
 }
 
-
-void
-llvmpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags)
-{
-   struct llvmpipe_context *lp = llvmpipe_context(pipe);
-   draw_set_edgeflags(lp->draw, edgeflags);
-}

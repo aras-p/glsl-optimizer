@@ -51,9 +51,9 @@
 #include "pipe/p_state.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
-#include "util/u_debug_dump.h"
+#include "util/u_dump.h"
 
-#include "lp_bld_type.h"
+#include "gallivm/lp_bld_type.h"
 
 
 #define LP_TEST_NUM_SAMPLES 32

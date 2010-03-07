@@ -1,0 +1,4 @@
+!!ARBfp1.0
+PARAM Diffuse = state.material.diffuse; 
+MOV result.color, Diffuse;
+END

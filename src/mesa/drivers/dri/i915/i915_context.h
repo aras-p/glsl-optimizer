@@ -40,6 +40,7 @@
 #define I915_FALLBACK_POLYGON_SMOOTH	 0x40000
 #define I915_FALLBACK_POINT_SMOOTH	 0x80000
 #define I915_FALLBACK_POINT_SPRITE_COORD_ORIGIN	 0x100000
+#define I915_FALLBACK_DRAW_OFFSET	 0x200000
 
 #define I915_UPLOAD_CTX              0x1
 #define I915_UPLOAD_BUFFERS          0x2
@@ -259,7 +260,7 @@ struct i915_context
 
    struct i915_fragment_program *current_program;
 
-   struct i915_hw_state meta, initial, state, *current;
+   struct i915_hw_state state;
 };
 
 
@@ -318,7 +319,7 @@ do {									\
  * i915_context.c
  */
 extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
-                                   __DRIcontextPrivate * driContextPriv,
+                                   __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
 
@@ -344,12 +345,6 @@ extern void i915_update_provoking_vertex(GLcontext *ctx);
  */
 extern void i915UpdateTextureState(struct intel_context *intel);
 extern void i915InitTextureFuncs(struct dd_function_table *functions);
-
-/*======================================================================
- * i915_metaops.c
- */
-void i915InitMetaFuncs(struct i915_context *i915);
-
 
 /*======================================================================
  * i915_fragprog.c

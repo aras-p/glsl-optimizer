@@ -36,7 +36,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/matrix.h"
 #include "main/extensions.h"
 
 #include "swrast/swrast.h"
@@ -101,11 +100,11 @@ static const struct dri_debug_control debug_control[] =
 /* Create the device specific context.
  */
 GLboolean r128CreateContext( const __GLcontextModes *glVisual,
-			     __DRIcontextPrivate *driContextPriv,
+			     __DRIcontext *driContextPriv,
                              void *sharedContextPrivate )
 {
    GLcontext *ctx, *shareCtx;
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct dd_function_table functions;
    r128ContextPtr rmesa;
    r128ScreenPtr r128scrn;
@@ -274,7 +273,7 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
 
 /* Destroy the device specific context.
  */
-void r128DestroyContext( __DRIcontextPrivate *driContextPriv  )
+void r128DestroyContext( __DRIcontext *driContextPriv  )
 {
    r128ContextPtr rmesa = (r128ContextPtr) driContextPriv->driverPrivate;
 
@@ -325,9 +324,9 @@ void r128DestroyContext( __DRIcontextPrivate *driContextPriv  )
  * buffer `b'.
  */
 GLboolean
-r128MakeCurrent( __DRIcontextPrivate *driContextPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
-                 __DRIdrawablePrivate *driReadPriv )
+r128MakeCurrent( __DRIcontext *driContextPriv,
+                 __DRIdrawable *driDrawPriv,
+                 __DRIdrawable *driReadPriv )
 {
    if ( driContextPriv ) {
       GET_CURRENT_CONTEXT(ctx);
@@ -364,7 +363,7 @@ r128MakeCurrent( __DRIcontextPrivate *driContextPriv,
 /* Force the context `c' to be unbound from its buffer.
  */
 GLboolean
-r128UnbindContext( __DRIcontextPrivate *driContextPriv )
+r128UnbindContext( __DRIcontext *driContextPriv )
 {
    return GL_TRUE;
 }

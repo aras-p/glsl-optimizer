@@ -1768,6 +1768,7 @@ static const BitmapCharRec * const chars[] = {
 &ch255,
 };
 
+GLUTAPI const BitmapFontRec glutBitmapTimesRoman10;
 const BitmapFontRec glutBitmapTimesRoman10 = {
 "-adobe-times-medium-r-normal--10-100-75-75-p-54-iso8859-1",
 224,

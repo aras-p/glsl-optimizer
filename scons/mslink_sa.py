@@ -7,7 +7,7 @@ Based on SCons.Tool.mslink, without the MSVS detection.
 """
 
 #
-# Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 The SCons Foundation
+# Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 The SCons Foundation
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -45,9 +45,9 @@ def pdbGenerator(env, target, source, for_signature):
     except (AttributeError, IndexError):
         return None
 
-def windowsShlinkTargets(target, source, env, for_signature):
+def _dllTargets(target, source, env, for_signature, paramtp):
     listCmd = []
-    dll = env.FindIxes(target, 'SHLIBPREFIX', 'SHLIBSUFFIX')
+    dll = env.FindIxes(target, '%sPREFIX' % paramtp, '%sSUFFIX' % paramtp)
     if dll: listCmd.append("/out:%s"%dll.get_string(for_signature))
 
     implib = env.FindIxes(target, 'LIBPREFIX', 'LIBSUFFIX')
@@ -55,12 +55,15 @@ def windowsShlinkTargets(target, source, env, for_signature):
 
     return listCmd
 
-def windowsShlinkSources(target, source, env, for_signature):
+def _dllSources(target, source, env, for_signature, paramtp):
     listCmd = []
 
     deffile = env.FindIxes(source, "WINDOWSDEFPREFIX", "WINDOWSDEFSUFFIX")
     for src in source:
-        if src == deffile:
+        # Check explicitly for a non-None deffile so that the __cmp__
+        # method of the base SCons.Util.Proxy class used for some Node
+        # proxies doesn't try to use a non-existent __dict__ attribute.
+        if deffile and src == deffile:
             # Treat this source as a .def file.
             listCmd.append("/def:%s" % src.get_string(for_signature))
         else:
@@ -68,17 +71,32 @@ def windowsShlinkSources(target, source, env, for_signature):
             listCmd.append(src)
     return listCmd
 
-def windowsLibEmitter(target, source, env):
+def windowsShlinkTargets(target, source, env, for_signature):
+    return _dllTargets(target, source, env, for_signature, 'SHLIB')
+
+def windowsShlinkSources(target, source, env, for_signature):
+    return _dllSources(target, source, env, for_signature, 'SHLIB')
+
+def _windowsLdmodTargets(target, source, env, for_signature):
+    """Get targets for loadable modules."""
+    return _dllTargets(target, source, env, for_signature, 'LDMODULE')
+
+def _windowsLdmodSources(target, source, env, for_signature):
+    """Get sources for loadable modules."""
+    return _dllSources(target, source, env, for_signature, 'LDMODULE')
+
+def _dllEmitter(target, source, env, paramtp):
+    """Common implementation of dll emitter."""
     SCons.Tool.msvc.validate_vars(env)
 
     extratargets = []
     extrasources = []
 
-    dll = env.FindIxes(target, "SHLIBPREFIX", "SHLIBSUFFIX")
+    dll = env.FindIxes(target, '%sPREFIX' % paramtp, '%sSUFFIX' % paramtp)
     no_import_lib = env.get('no_import_lib', 0)
 
     if not dll:
-        raise SCons.Errors.UserError, "A shared library should have exactly one target with the suffix: %s" % env.subst("$SHLIBSUFFIX")
+        raise SCons.Errors.UserError, 'A shared library should have exactly one target with the suffix: %s' % env.subst('$%sSUFFIX' % paramtp)
 
     insert_def = env.subst("$WINDOWS_INSERT_DEF")
     if not insert_def in ['', '0', 0] and \
@@ -87,7 +105,7 @@ def windowsLibEmitter(target, source, env):
         # append a def file to the list of sources
         extrasources.append(
             env.ReplaceIxes(dll,
-                            "SHLIBPREFIX", "SHLIBSUFFIX",
+                            '%sPREFIX' % paramtp, '%sSUFFIX' % paramtp,
                             "WINDOWSDEFPREFIX", "WINDOWSDEFSUFFIX"))
 
     if env.has_key('PDB') and env['PDB']:
@@ -100,15 +118,26 @@ def windowsLibEmitter(target, source, env):
         # Append an import library to the list of targets.
         extratargets.append(
             env.ReplaceIxes(dll,
-                            "SHLIBPREFIX", "SHLIBSUFFIX",
+                            '%sPREFIX' % paramtp, '%sSUFFIX' % paramtp,
                             "LIBPREFIX", "LIBSUFFIX"))
         # and .exp file is created if there are exports from a DLL
         extratargets.append(
             env.ReplaceIxes(dll,
-                            "SHLIBPREFIX", "SHLIBSUFFIX",
+                            '%sPREFIX' % paramtp, '%sSUFFIX' % paramtp,
                             "WINDOWSEXPPREFIX", "WINDOWSEXPSUFFIX"))
 
     return (target+extratargets, source+extrasources)
+
+def windowsLibEmitter(target, source, env):
+    return _dllEmitter(target, source, env, 'SHLIB')
+
+def ldmodEmitter(target, source, env):
+    """Emitter for loadable modules.
+    
+    Loadable modules are identical to shared libraries on Windows, but building
+    them is subject to different parameters (LDMODULE*).
+    """
+    return _dllEmitter(target, source, env, 'LDMODULE')
 
 def prog_emitter(target, source, env):
     SCons.Tool.msvc.validate_vars(env)
@@ -138,8 +167,10 @@ def RegServerFunc(target, source, env):
 
 regServerAction = SCons.Action.Action("$REGSVRCOM", "$REGSVRCOMSTR")
 regServerCheck = SCons.Action.Action(RegServerFunc, None)
-shlibLinkAction = SCons.Action.Action('${TEMPFILE("$SHLINK $SHLINKFLAGS $_SHLINK_TARGETS $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $_SHLINK_SOURCES")}')
-compositeLinkAction = shlibLinkAction + regServerCheck
+shlibLinkAction = SCons.Action.Action('${TEMPFILE("$SHLINK $SHLINKFLAGS $_SHLINK_TARGETS $_LIBDIRFLAGS $_LIBFLAGS $_PDB $_SHLINK_SOURCES")}')
+compositeShLinkAction = shlibLinkAction + regServerCheck
+ldmodLinkAction = SCons.Action.Action('${TEMPFILE("$LDMODULE $LDMODULEFLAGS $_LDMODULE_TARGETS $_LIBDIRFLAGS $_LIBFLAGS $_PDB $_LDMODULE_SOURCES")}')
+compositeLdmodAction = ldmodLinkAction + regServerCheck
 
 def generate(env):
     """Add Builders and construction variables for ar to an Environment."""
@@ -150,12 +181,12 @@ def generate(env):
     env['SHLINKFLAGS'] = SCons.Util.CLVar('$LINKFLAGS /dll')
     env['_SHLINK_TARGETS'] = windowsShlinkTargets
     env['_SHLINK_SOURCES'] = windowsShlinkSources
-    env['SHLINKCOM']   =  compositeLinkAction
+    env['SHLINKCOM']   =  compositeShLinkAction
     env.Append(SHLIBEMITTER = [windowsLibEmitter])
     env['LINK']        = 'link'
     env['LINKFLAGS']   = SCons.Util.CLVar('/nologo')
     env['_PDB'] = pdbGenerator
-    env['LINKCOM'] = '${TEMPFILE("$LINK $LINKFLAGS /OUT:$TARGET.windows $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $SOURCES.windows")}'
+    env['LINKCOM'] = '${TEMPFILE("$LINK $LINKFLAGS /OUT:$TARGET.windows $_LIBDIRFLAGS $_LIBFLAGS $_PDB $SOURCES.windows")}'
     env.Append(PROGEMITTER = [prog_emitter])
     env['LIBDIRPREFIX']='/LIBPATH:'
     env['LIBDIRSUFFIX']=''
@@ -184,19 +215,19 @@ def generate(env):
     env['REGSVRFLAGS'] = '/s '
     env['REGSVRCOM'] = '$REGSVR $REGSVRFLAGS ${TARGET.windows}'
 
-    # For most platforms, a loadable module is the same as a shared
-    # library.  Platforms which are different can override these, but
-    # setting them the same means that LoadableModule works everywhere.
+    # Loadable modules are on Windows the same as shared libraries, but they
+    # are subject to different build parameters (LDMODULE* variables).
+    # Therefore LDMODULE* variables correspond as much as possible to
+    # SHLINK*/SHLIB* ones.
     SCons.Tool.createLoadableModuleBuilder(env)
     env['LDMODULE'] = '$SHLINK'
     env['LDMODULEPREFIX'] = '$SHLIBPREFIX'
     env['LDMODULESUFFIX'] = '$SHLIBSUFFIX'
     env['LDMODULEFLAGS'] = '$SHLINKFLAGS'
-    # We can't use '$SHLINKCOM' here because that will stringify the
-    # action list on expansion, and will then try to execute expanded
-    # strings, with the upshot that it would try to execute RegServerFunc
-    # as a command.
-    env['LDMODULECOM'] = compositeLinkAction
+    env['_LDMODULE_TARGETS'] = _windowsLdmodTargets
+    env['_LDMODULE_SOURCES'] = _windowsLdmodSources
+    env['LDMODULEEMITTER'] = [ldmodEmitter]
+    env['LDMODULECOM'] = compositeLdmodAction
 
 def exists(env):
     platform = env.get('PLATFORM', '')
@@ -208,4 +239,8 @@ def exists(env):
         return env.Detect('link')
     return None
 
-# vim:set ts=4 sw=4 et:
+# Local Variables:
+# tab-width:4
+# indent-tabs-mode:nil
+# End:
+# vim: set expandtab tabstop=4 shiftwidth=4:

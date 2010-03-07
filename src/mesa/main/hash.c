@@ -108,13 +108,13 @@ _mesa_DeleteHashTable(struct _mesa_HashTable *table)
             _mesa_problem(NULL,
                           "In _mesa_DeleteHashTable, found non-freed data");
          }
-	 _mesa_free(entry);
+	 free(entry);
 	 entry = next;
       }
    }
    _glthread_DESTROY_MUTEX(table->Mutex);
    _glthread_DESTROY_MUTEX(table->WalkMutex);
-   _mesa_free(table);
+   free(table);
 }
 
 
@@ -128,7 +128,7 @@ _mesa_DeleteHashTable(struct _mesa_HashTable *table)
  * \return pointer to user's data or NULL if key not in table
  */
 void *
-_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
+_mesa_HashLookup(struct _mesa_HashTable *table, GLuint key)
 {
    GLuint pos;
    const struct HashEntry *entry;
@@ -137,13 +137,16 @@ _mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
    assert(key);
 
    pos = HASH_FUNC(key);
+   _glthread_LOCK_MUTEX(table->Mutex);
    entry = table->Table[pos];
    while (entry) {
       if (entry->Key == key) {
-	 return entry->Data;
+         _glthread_UNLOCK_MUTEX(table->Mutex);
+         return entry->Data;
       }
       entry = entry->Next;
    }
+   _glthread_UNLOCK_MUTEX(table->Mutex);
    return NULL;
 }
 
@@ -191,10 +194,12 @@ _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
 
    /* alloc and insert new table entry */
    entry = MALLOC_STRUCT(HashEntry);
-   entry->Key = key;
-   entry->Data = data;
-   entry->Next = table->Table[pos];
-   table->Table[pos] = entry;
+   if (entry) {
+      entry->Key = key;
+      entry->Data = data;
+      entry->Next = table->Table[pos];
+      table->Table[pos] = entry;
+   }
 
    _glthread_UNLOCK_MUTEX(table->Mutex);
 }
@@ -240,7 +245,7 @@ _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
          else {
             table->Table[pos] = entry->Next;
          }
-         _mesa_free(entry);
+         free(entry);
          _glthread_UNLOCK_MUTEX(table->Mutex);
 	 return;
       }
@@ -277,7 +282,7 @@ _mesa_HashDeleteAll(struct _mesa_HashTable *table,
       for (entry = table->Table[pos]; entry; entry = next) {
          callback(entry->Key, entry->Data, userData);
          next = entry->Next;
-         _mesa_free(entry);
+         free(entry);
       }
       table->Table[pos] = NULL;
    }

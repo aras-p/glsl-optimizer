@@ -38,10 +38,8 @@
 #include "sp_setup.h"
 #include "sp_state.h"
 #include "draw/draw_context.h"
-#include "draw/draw_private.h"
 #include "draw/draw_vertex.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -213,11 +211,11 @@ static void flush_spans( struct setup_context *setup )
    const int xright1 = setup->span.right[1];
    struct quad_stage *pipe = setup->softpipe->quad.first;
 
-
-   int minleft = block_x(MIN2(xleft0, xleft1));
-   int maxright = MAX2(xright0, xright1);
+   const int minleft = block_x(MIN2(xleft0, xleft1));
+   const int maxright = MAX2(xright0, xright1);
    int x;
 
+   /* process quads in horizontal chunks of 16 */
    for (x = minleft; x < maxright; x += step) {
       unsigned skip_left0 = CLAMP(xleft0 - x, 0, step);
       unsigned skip_left1 = CLAMP(xleft1 - x, 0, step);
@@ -395,6 +393,52 @@ static boolean setup_sort_vertices( struct setup_context *setup,
 }
 
 
+/* Apply cylindrical wrapping to v0, v1, v2 coordinates, if enabled.
+ * Input coordinates must be in [0, 1] range, otherwise results are undefined.
+ * Some combinations of coordinates produce invalid results,
+ * but this behaviour is acceptable.
+ */
+static void
+tri_apply_cylindrical_wrap(float v0,
+                           float v1,
+                           float v2,
+                           uint cylindrical_wrap,
+                           float output[3])
+{
+   if (cylindrical_wrap) {
+      float delta;
+
+      delta = v1 - v0;
+      if (delta > 0.5f) {
+         v0 += 1.0f;
+      }
+      else if (delta < -0.5f) {
+         v1 += 1.0f;
+      }
+
+      delta = v2 - v1;
+      if (delta > 0.5f) {
+         v1 += 1.0f;
+      }
+      else if (delta < -0.5f) {
+         v2 += 1.0f;
+      }
+
+      delta = v0 - v2;
+      if (delta > 0.5f) {
+         v2 += 1.0f;
+      }
+      else if (delta < -0.5f) {
+         v0 += 1.0f;
+      }
+   }
+
+   output[0] = v0;
+   output[1] = v1;
+   output[2] = v2;
+}
+
+
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
  * The value value comes from vertex[slot][i].
@@ -420,13 +464,16 @@ static void const_coeff( struct setup_context *setup,
 /**
  * Compute a0, dadx and dady for a linearly interpolated coefficient,
  * for a triangle.
+ * v[0], v[1] and v[2] are vmin, vmid and vmax, respectively.
  */
-static void tri_linear_coeff( struct setup_context *setup,
-                              struct tgsi_interp_coef *coef,
-                              uint vertSlot, uint i)
+static void
+tri_linear_coeff(struct setup_context *setup,
+                 struct tgsi_interp_coef *coef,
+                 uint i,
+                 const float v[3])
 {
-   float botda = setup->vmid[vertSlot][i] - setup->vmin[vertSlot][i];
-   float majda = setup->vmax[vertSlot][i] - setup->vmin[vertSlot][i];
+   float botda = v[1] - v[0];
+   float majda = v[2] - v[0];
    float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
    float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
    float dadx = a * setup->oneoverarea;
@@ -449,7 +496,7 @@ static void tri_linear_coeff( struct setup_context *setup,
     * to define a0 as the sample at a pixel center somewhere near vmin
     * instead - i'll switch to this later.
     */
-   coef->a0[i] = (setup->vmin[vertSlot][i] -
+   coef->a0[i] = (v[0] -
                   (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
                    dady * (setup->vmin[0][1] - setup->pixel_offset)));
 
@@ -470,16 +517,19 @@ static void tri_linear_coeff( struct setup_context *setup,
  * the plane coefficients (a0, dadx, dady).
  * Later, when we compute the value at a particular fragment position we'll
  * divide the interpolated value by the interpolated W at that fragment.
+ * v[0], v[1] and v[2] are vmin, vmid and vmax, respectively.
  */
-static void tri_persp_coeff( struct setup_context *setup,
-                             struct tgsi_interp_coef *coef,
-                             uint vertSlot, uint i)
+static void
+tri_persp_coeff(struct setup_context *setup,
+                struct tgsi_interp_coef *coef,
+                uint i,
+                const float v[3])
 {
    /* premultiply by 1/w  (v[0][3] is always W):
     */
-   float mina = setup->vmin[vertSlot][i] * setup->vmin[0][3];
-   float mida = setup->vmid[vertSlot][i] * setup->vmid[0][3];
-   float maxa = setup->vmax[vertSlot][i] * setup->vmax[0][3];
+   float mina = v[0] * setup->vmin[0][3];
+   float mida = v[1] * setup->vmid[0][3];
+   float maxa = v[2] * setup->vmax[0][3];
    float botda = mida - mina;
    float majda = maxa - mina;
    float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
@@ -506,21 +556,24 @@ static void tri_persp_coeff( struct setup_context *setup,
 
 /**
  * Special coefficient setup for gl_FragCoord.
- * X and Y are trivial, though Y has to be inverted for OpenGL.
+ * X and Y are trivial, though Y may have to be inverted for OpenGL.
  * Z and W are copied from posCoef which should have already been computed.
  * We could do a bit less work if we'd examine gl_FragCoord's swizzle mask.
  */
 static void
 setup_fragcoord_coeff(struct setup_context *setup, uint slot)
 {
+   struct sp_fragment_shader* spfs = setup->softpipe->fs;
    /*X*/
-   setup->coef[slot].a0[0] = 0;
+   setup->coef[slot].a0[0] = spfs->pixel_center_integer ? 0.0 : 0.5;
    setup->coef[slot].dadx[0] = 1.0;
    setup->coef[slot].dady[0] = 0.0;
    /*Y*/
-   setup->coef[slot].a0[1] = 0.0;
+   setup->coef[slot].a0[1] =
+		   (spfs->origin_lower_left ? setup->softpipe->framebuffer.height : 0)
+		   + (spfs->pixel_center_integer ? 0.0 : 0.5);
    setup->coef[slot].dadx[1] = 0.0;
-   setup->coef[slot].dady[1] = 1.0;
+   setup->coef[slot].dady[1] = spfs->origin_lower_left ? -1.0 : 1.0;
    /*Z*/
    setup->coef[slot].a0[2] = setup->posCoef.a0[2];
    setup->coef[slot].dadx[2] = setup->posCoef.dadx[2];
@@ -543,11 +596,19 @@ static void setup_tri_coefficients( struct setup_context *setup )
    const struct sp_fragment_shader *spfs = softpipe->fs;
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
+   float v[3];
 
    /* z and w are done by linear interpolation:
     */
-   tri_linear_coeff(setup, &setup->posCoef, 0, 2);
-   tri_linear_coeff(setup, &setup->posCoef, 0, 3);
+   v[0] = setup->vmin[0][2];
+   v[1] = setup->vmid[0][2];
+   v[2] = setup->vmax[0][2];
+   tri_linear_coeff(setup, &setup->posCoef, 2, v);
+
+   v[0] = setup->vmin[0][3];
+   v[1] = setup->vmid[0][3];
+   v[2] = setup->vmax[0][3];
+   tri_linear_coeff(setup, &setup->posCoef, 3, v);
 
    /* setup interpolation for all the remaining attributes:
     */
@@ -561,12 +622,24 @@ static void setup_tri_coefficients( struct setup_context *setup )
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
          break;
       case INTERP_LINEAR:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            tri_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         for (j = 0; j < NUM_CHANNELS; j++) {
+            tri_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
+                                       setup->vmid[vertSlot][j],
+                                       setup->vmax[vertSlot][j],
+                                       spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j),
+                                       v);
+            tri_linear_coeff(setup, &setup->coef[fragSlot], j, v);
+         }
          break;
       case INTERP_PERSPECTIVE:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            tri_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         for (j = 0; j < NUM_CHANNELS; j++) {
+            tri_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
+                                       setup->vmid[vertSlot][j],
+                                       setup->vmax[vertSlot][j],
+                                       spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j),
+                                       v);
+            tri_persp_coeff(setup, &setup->coef[fragSlot], j, v);
+         }
          break;
       case INTERP_POS:
          setup_fragcoord_coeff(setup, fragSlot);
@@ -776,22 +849,49 @@ void sp_setup_tri( struct setup_context *setup,
 }
 
 
+/* Apply cylindrical wrapping to v0, v1 coordinates, if enabled.
+ * Input coordinates must be in [0, 1] range, otherwise results are undefined.
+ */
+static void
+line_apply_cylindrical_wrap(float v0,
+                            float v1,
+                            uint cylindrical_wrap,
+                            float output[2])
+{
+   if (cylindrical_wrap) {
+      float delta;
+
+      delta = v1 - v0;
+      if (delta > 0.5f) {
+         v0 += 1.0f;
+      }
+      else if (delta < -0.5f) {
+         v1 += 1.0f;
+      }
+   }
+
+   output[0] = v0;
+   output[1] = v1;
+}
+
 
 /**
  * Compute a0, dadx and dady for a linearly interpolated coefficient,
  * for a line.
+ * v[0] and v[1] are vmin and vmax, respectively.
  */
 static void
 line_linear_coeff(const struct setup_context *setup,
                   struct tgsi_interp_coef *coef,
-                  uint vertSlot, uint i)
+                  uint i,
+                  const float v[2])
 {
-   const float da = setup->vmax[vertSlot][i] - setup->vmin[vertSlot][i];
+   const float da = v[1] - v[0];
    const float dadx = da * setup->emaj.dx * setup->oneoverarea;
    const float dady = da * setup->emaj.dy * setup->oneoverarea;
    coef->dadx[i] = dadx;
    coef->dady[i] = dady;
-   coef->a0[i] = (setup->vmin[vertSlot][i] -
+   coef->a0[i] = (v[0] -
                   (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
                    dady * (setup->vmin[0][1] - setup->pixel_offset)));
 }
@@ -800,21 +900,22 @@ line_linear_coeff(const struct setup_context *setup,
 /**
  * Compute a0, dadx and dady for a perspective-corrected interpolant,
  * for a line.
+ * v[0] and v[1] are vmin and vmax, respectively.
  */
 static void
 line_persp_coeff(const struct setup_context *setup,
                  struct tgsi_interp_coef *coef,
-                 uint vertSlot, uint i)
+                 uint i,
+                 const float v[2])
 {
-   /* XXX double-check/verify this arithmetic */
-   const float a0 = setup->vmin[vertSlot][i] * setup->vmin[0][3];
-   const float a1 = setup->vmax[vertSlot][i] * setup->vmax[0][3];
+   const float a0 = v[0] * setup->vmin[0][3];
+   const float a1 = v[1] * setup->vmax[0][3];
    const float da = a1 - a0;
    const float dadx = da * setup->emaj.dx * setup->oneoverarea;
    const float dady = da * setup->emaj.dy * setup->oneoverarea;
    coef->dadx[i] = dadx;
    coef->dady[i] = dady;
-   coef->a0[i] = (setup->vmin[vertSlot][i] -
+   coef->a0[i] = (a0 -
                   (dadx * (setup->vmin[0][0] - setup->pixel_offset) +
                    dady * (setup->vmin[0][1] - setup->pixel_offset)));
 }
@@ -834,6 +935,7 @@ setup_line_coefficients(struct setup_context *setup,
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
    float area;
+   float v[2];
 
    /* use setup->vmin, vmax to point to vertices */
    if (softpipe->rasterizer->flatshade_first)
@@ -854,8 +956,13 @@ setup_line_coefficients(struct setup_context *setup,
 
    /* z and w are done by linear interpolation:
     */
-   line_linear_coeff(setup, &setup->posCoef, 0, 2);
-   line_linear_coeff(setup, &setup->posCoef, 0, 3);
+   v[0] = setup->vmin[0][2];
+   v[1] = setup->vmax[0][2];
+   line_linear_coeff(setup, &setup->posCoef, 2, v);
+
+   v[0] = setup->vmin[0][3];
+   v[1] = setup->vmax[0][3];
+   line_linear_coeff(setup, &setup->posCoef, 3, v);
 
    /* setup interpolation for all the remaining attributes:
     */
@@ -869,12 +976,22 @@ setup_line_coefficients(struct setup_context *setup,
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
          break;
       case INTERP_LINEAR:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            line_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         for (j = 0; j < NUM_CHANNELS; j++) {
+            line_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
+                                        setup->vmax[vertSlot][j],
+                                        spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j),
+                                        v);
+            line_linear_coeff(setup, &setup->coef[fragSlot], j, v);
+         }
          break;
       case INTERP_PERSPECTIVE:
-         for (j = 0; j < NUM_CHANNELS; j++)
-            line_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         for (j = 0; j < NUM_CHANNELS; j++) {
+            line_apply_cylindrical_wrap(setup->vmin[vertSlot][j],
+                                        setup->vmax[vertSlot][j],
+                                        spfs->info.input_cylindrical_wrap[fragSlot] & (1 << j),
+                                        v);
+            line_persp_coeff(setup, &setup->coef[fragSlot], j, v);
+         }
          break;
       case INTERP_POS:
          setup_fragcoord_coeff(setup, fragSlot);
@@ -1268,7 +1385,7 @@ void sp_setup_prepare( struct setup_context *setup )
    }
 
    /* Note: nr_attrs is only used for debugging (vertex printing) */
-   setup->nr_vertex_attrs = draw_num_vs_outputs(sp->draw);
+   setup->nr_vertex_attrs = draw_num_shader_outputs(sp->draw);
 
    sp->quad.first->begin( sp->quad.first );
 

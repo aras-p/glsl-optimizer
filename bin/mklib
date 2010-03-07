@@ -25,6 +25,109 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+# Clear CDPATH as the 'cd' command will echo stuff
+# to stdout if it is set
+unset CDPATH
+
+# Given a list of files, look for .a archives and unpack them.
+# Return the original list of files minus the .a files plus the unpacked files.
+# first param:  name of a temp directory (to be deleted when finished)
+# remaining params:  list of .o and .a files
+expand_archives() {
+    DIR=$1
+    shift
+    FILES=$@
+    NEWFILES=""
+    ORIG_DIR=`pwd`
+    mkdir -p "$DIR"
+    cd "$DIR"
+    for FILE in $FILES ; do
+        case $FILE in
+            *.a)
+                # extract the .o files from this .a archive
+                case $FILE in
+                    /*) ;;
+                    *)  FILE="$ORIG_DIR/$FILE" ;;
+                esac
+                MEMBERS=`ar t $FILE`
+                ar x $FILE
+                for MEMBER in $MEMBERS ; do
+                    NEWFILES="$NEWFILES $DIR/$MEMBER"
+                done
+                ;;
+            *)
+                # other file type, just add to list
+                NEWFILES="$NEWFILES $FILE"
+                ;;
+        esac
+    done
+    cd "$ORIG_DIR"
+    echo $NEWFILES
+}
+
+
+# Make static library with 'ar'
+# params:
+#    options to ar
+#    1 or 0 to indicate if ranlib should be run
+#    libname to make
+#    list of object files
+# Return name of library we made
+# Example: "make_ar_static_lib -ru 1 libfoo.a foo.o bar.o"
+make_ar_static_lib() {
+    OPTS=$1
+    shift;
+    RANLIB=$1
+    shift;
+    LIBNAME=$1
+    shift;
+    OBJECTS=$@
+
+    # remove existing lib, if present
+    rm -f ${LIBNAME}
+
+    # make static lib
+    ar ${OPTS} ${LIBNAME} ${OBJECTS}
+
+    # run ranlib
+    if [ ${RANLIB} = 1 ] ; then
+        ranlib ${LIBNAME}
+    fi
+
+    echo ${LIBNAME}
+}
+
+
+# Print usage info.
+usage() {
+    echo 'Usage: mklib [options] objects'
+    echo 'Create a shared library from object files.'
+    echo '  -o LIBRARY    specifies the name of the resulting library, without'
+    echo '                the leading "lib" or any suffix.'
+    echo '                (eg: "-o GL" might result in "libGL.so" being made)'
+    echo '  -major N      specifies major version number (default is 1)'
+    echo '  -minor N      specifies minor version number (default is 0)'
+    echo '  -patch N      specifies patch version number (default is 0)'
+    echo '  -lLIBRARY     specifies a dependency on LIBRARY'
+    echo '  -LDIR         search in DIR for library dependencies at build time'
+    echo '  -RDIR         search in DIR for library dependencies at run time'
+    echo '  -linker L     explicity specify the linker program to use (eg: gcc, g++)'
+    echo '                Not observed on all systems at this time.'
+    echo '  -ldflags OPT  specify any additional linker flags in OPT'
+    echo '  -cplusplus    link with C++ runtime'
+    echo '  -static       make a static library (default is dynamic/shared)'
+    echo '  -dlopen       make a shared library suitable for dynamic loading'
+    echo '  -install DIR  put resulting library file(s) in DIR'
+    echo '  -arch ARCH    override using `uname` to determine host system'
+    echo '  -archopt OPT  specify an extra achitecture-specific option OPT'
+    echo '  -altopts OPTS alternate options to override all others'
+    echo "  -noprefix     don't prefix library name with 'lib' nor add any suffix"
+    echo '  -exports FILE only export the symbols listed in FILE'
+    echo '  -id NAME      Sets the id of the dylib (Darwin)'
+    echo '  -h, --help    display this information and exit'
+}
+
+
 #
 # Option defaults
 #
@@ -52,31 +155,7 @@ while true
 do
     case $1 in
 	'-h' | '--help')
-	    echo 'Usage: mklib [options] objects'
-	    echo 'Create a shared library from object files.'
-	    echo '  -o LIBRARY    specifies the name of the resulting library, without'
-	    echo '                the leading "lib" or any suffix.'
-	    echo '                (eg: "-o GL" might result in "libGL.so" being made)'
-	    echo '  -major N      specifies major version number (default is 1)'
-	    echo '  -minor N      specifies minor version number (default is 0)'
-	    echo '  -patch N      specifies patch version number (default is 0)'
-	    echo '  -lLIBRARY     specifies a dependency on LIBRARY'
-	    echo '  -LDIR         search in DIR for library dependencies at build time'
-	    echo '  -RDIR         search in DIR for library dependencies at run time'
-	    echo '  -linker L     explicity specify the linker program to use (eg: gcc, g++)'
-	    echo '                Not observed on all systems at this time.'
-	    echo '  -ldflags OPT  specify any additional linker flags in OPT'
-	    echo '  -cplusplus    link with C++ runtime'
-	    echo '  -static       make a static library (default is dynamic/shared)'
-	    echo '  -dlopen       make a shared library suitable for dynamic loading'
-	    echo '  -install DIR  put resulting library file(s) in DIR'
-	    echo '  -arch ARCH    override using `uname` to determine host system'
-	    echo '  -archopt OPT  specify an extra achitecture-specific option OPT'
-	    echo '  -altopts OPTS alternate options to override all others'
-	    echo "  -noprefix     don't prefix library name with 'lib' nor add any suffix"
-	    echo '  -exports FILE only export the symbols listed in FILE'
-	    echo '  -id NAME      Sets the id of the dylib (Darwin)'
-	    echo '  -h, --help    display this information and exit'
+	    usage
 	    exit 1
 	    ;;
 	'-o')
@@ -197,11 +276,11 @@ fi
 # Error checking
 #
 if [ "x${LIBNAME}" = "x" ] ; then
-    echo "mklib: Error: no library name specified"
+    echo "mklib: Error: no library name specified (-h for help)"
     exit 1
 fi
 if [ "x${OBJECTS}" = "x" ] ; then
-    echo "mklib: Error: no object files specified"
+    echo "mklib: Error: no object files specified (-h for help)"
     exit 1
 fi
 
@@ -269,45 +348,24 @@ case $ARCH in
             # finish up
             FINAL_LIBS="${LIBNAME}"
         elif [ $STATIC = 1 ] ; then
+	    # make a static .a library
             LIBNAME="lib${LIBNAME}.a"     # prefix with "lib", suffix with ".a"
             echo "mklib: Making" $ARCH "static library: " ${LIBNAME}
-            LINK="ar"
             OPTS="-ru"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            rm -f ${LIBNAME}
 
-	    # expand any .a objects into constituent .o files.
-	    NEWOBJECTS=""
-	    DELETIA=""
-	    for OBJ in $OBJECTS ; do
-		case $OBJ in
-		    *.a)
-			# extract the .o files from this .a archive
-			FILES=`ar t $OBJ`
-			ar x $OBJ
-			NEWOBJECTS="$NEWOBJECTS $FILES"
-			# keep track of temporary .o files and delete them below
-			DELETIA="$DELETIA $FILES"
-			;;
-		    *)
-			# ordinary .o file
-			NEWOBJECTS="$NEWOBJECTS $OBJ"
-			;;
-		esac
-	    done
+	    # expand .a into .o files
+	    NEW_OBJECTS=`expand_archives ${LIBNAME}.obj $OBJECTS`
 
-            # make lib
-            ${LINK} ${OPTS} ${LIBNAME} ${NEWOBJECTS}
-            ranlib ${LIBNAME}
+            # make static lib
+	    FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
 
 	    # remove temporary extracted .o files
-	    rm -f ${DELETIA}
-
-            # finish up
-            FINAL_LIBS=${LIBNAME}
+	    rm -rf ${LIBNAME}.obj
         else
+	    # make dynamic library
 	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 	    case $ARCH in 'Linux' | 'GNU' | GNU/*)
 		OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
@@ -368,9 +426,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making SunOS static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar -ruv ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+	    FINAL_LIBS=`make_ar_static_lib -ruc 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    if [ $NOPREFIX = 0 ] ; then
 		LIBNAME="lib${LIBNAME}.so"
@@ -489,13 +545,19 @@ case $ARCH in
 	    ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	    FINAL_LIBS=${LIBNAME}
         elif [ $STATIC = 1 ] ; then
+	    # make a static .a library
 	    STLIB="lib${LIBNAME}.a"
 	    echo "mklib: Making FreeBSD static library: " ${STLIB}
-	    rm -f ${STLIB}
-	    ar cq ${STLIB} ${OBJECTS}
-	    ranlib ${STLIB}
-	    FINAL_LIBS=${STLIB}
+
+	    # expand .a into .o files
+	    NEW_OBJECTS=`expand_archives ${STLIB}.obj $OBJECTS`
+
+	    FINAL_LIBS=`make_ar_static_lib cq 1 ${STLIB} ${NEW_OBJECTS}`
+
+	    # remove temporary extracted .o files
+	    rm -rf ${STLIB}.obj
 	else
+	    # make dynamic library
 	    SHLIB="lib${LIBNAME}.so.${MAJOR}"
 	    OPTS="-shared -Wl,-soname,${SHLIB}"
             if [ "${ALTOPTS}" ] ; then
@@ -513,10 +575,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}_pic.a"
 	    echo "mklib: Making NetBSD PIC static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar cq ${LIBNAME} ${OBJECTS}
-	    ranlib ${LIBNAME}
-	    FINAL_LIBS=${LIBNAME}
+	    FINAL_LIBS=`make_ar_static_lib cq 1 ${LIBNAME} ${OBJECTS}`
 	else
 	    LIBNAME="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
 	    echo "mklib: Making NetBSD PIC shared library: " ${LIBNAME}
@@ -529,9 +588,7 @@ case $ARCH in
     'IRIX' | 'IRIX64')
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
-	    rm -f ${LIBNAME}
-	    ar rc ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+	    FINAL_LIBS=`make_ar_static_lib rc 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
 
@@ -582,9 +639,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making HP-UX static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar -ruv ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+    	    FINAL_LIBS=`make_ar_static_lib -ruv 0 ${LIBNAME} ${OBJECTS}`
 	else
             # HP uses a .2 for their current GL/GLU libraries
 	    if [ ${LIBNAME} = "GL" -o ${LIBNAME} = "GLU" ] ; then
@@ -614,8 +669,7 @@ case $ARCH in
 	if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making AIX static library: " ${LIBNAME}
-	    ar -ruv ${X64} ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+    	    FINAL_LIBS=`make_ar_static_lib -ruv 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    EXPFILE="lib${LIBNAME}.exp"
 	    LIBNAME="lib${LIBNAME}.a"  # shared objects are still stored in the .a libraries
@@ -666,9 +720,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making OSF/1 static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar -ruv ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+    	    FINAL_LIBS=`make_ar_static_lib -ruv 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    VERSION="${MAJOR}.${MINOR}"
 	    LIBNAME="lib${LIBNAME}.so"
@@ -691,12 +743,20 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
             LIBNAME="lib${LIBNAME}.a"
             echo "mklib: Making Darwin static library: " ${LIBNAME}
-            LINK="ar"
             OPTS="-ruvs"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
+
+            # expand .a into .o files
+            NEW_OBJECTS=`expand_archives ${LIBNAME}.obj $OBJECTS`
+
+            # make static lib
+            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
+
+            # remove temporary extracted .o files
+            rm -rf ${LIBNAME}.obj
+
             FINAL_LIBS=${LIBNAME}
         else
             # On Darwin a .bundle is used for a library that you want to dlopen
@@ -724,22 +784,10 @@ case $ARCH in
 
 	    # examine first object to determine ABI
     	    set ${OBJECTS}
-            ABI_PPC=`file $1 | grep ' ppc'`
-            ABI_I386=`file $1 | grep ' i386'`
-            ABI_PPC64=`file $1 | grep ' ppc64'`
-            ABI_X86_64=`file $1 | grep ' x86_64'`
-            if [ "${ABI_PPC}" ] ; then
-                OPTS="${OPTS} -arch ppc"
-            fi
-            if [ "${ABI_I386}" ] ; then
-                OPTS="${OPTS} -arch i386"
-            fi
-            if [ "${ABI_PPC64}" ] ; then
-                OPTS="${OPTS} -arch ppc64"
-            fi
-            if [ "${ABI_X86_64}" ] ; then
-                OPTS="${OPTS} -arch x86_64"
-            fi
+            ABIS=`lipo -info $1 | sed s/.*://`
+            for ABI in $ABIS; do
+                OPTS="${OPTS} -arch ${ABI}"
+            done
 
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
@@ -767,16 +815,14 @@ case $ARCH in
     'LynxOS')
 	LIBNAME="lib${LIBNAME}.a"
 	echo "mklib: Making LynxOS static library: " ${LIBNAME}
-	rm -f ${LIBNAME}
-	ar ru ${LIBNAME} ${OBJECTS}
-	FINAL_LIBS=${LIBNAME}
+        FINAL_LIBS=`make_ar_static_lib -ru 0 ${LIBNAME} ${OBJECTS}`
 	;;
 
     'BeOS')
         if [ $STATIC = 1 ] ; then
             LIBNAME="lib${LIBNAME}.a"
             echo "mklib: Making BeOS static library: " ${LIBNAME}
-            ar -cru "${LIBNAME}" ${OBJECTS}
+            FINAL_LIBS=`make_ar_static_lib -cru 0 ${LIBNAME} ${OBJECTS}`
         else
 	    LIBNAME="lib${LIBNAME}.so"
 	    echo "mklib: Making BeOS shared library: " ${LIBNAME}
@@ -855,9 +901,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making AIX GCC static library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar ru ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
+            FINAL_LIBS=`make_ar_static_lib ru 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
 	    echo "mklib: Making AIX GCC shared library: " ${LIBNAME}
@@ -878,9 +922,7 @@ case $ARCH in
 	fi
 	LIBNAME="lib${LIBNAME}.a"
 	echo "mklib: Making static library for Ultrix: " ${LIBNAME}
-	rm -f ${LIBNAME}
-	ar ru ${LIBNAME} ${OBJECTS}
-	FINAL_LIBS="${LIBNAME}"
+        FINAL_LIBS=`make_ar_static_lib ru 0 ${LIBNAME} ${OBJECTS}`
 	;;
 
      CYGWIN*)
@@ -900,17 +942,20 @@ case $ARCH in
 	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 
         if [ $STATIC = 1 ] ; then
-            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}.a
-            LINK="ar"
+	    LIBNAME=${LIBNAME}.a
+            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}
             OPTS="-ru"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            # make lib
-            ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
-	    ranlib ${LIBNAME}.a
-            # finish up
-            FINAL_LIBS=${LIBNAME}.a
+
+            # expand .a into .o files
+            NEW_OBJECTS=`expand_archives ${LIBNAME}.obj $OBJECTS`
+
+            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
+
+            # remove temporary extracted .o files
+            rm -rf ${LIBNAME}.obj
         else
 	    OPTS="-shared -Wl,--enable-auto-image-base -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
             if [ "${ALTOPTS}" ] ; then
@@ -932,6 +977,11 @@ case $ARCH in
 
             # make lib
             ${LINK} ${OPTS} ${LDFLAGS} -o ${CYGNAME}-${MAJOR}.dll ${OBJECTS} ${DEPS}
+            # make build fail if link failed
+            es=$?
+            if [ "$es" -ne "0" ]; then
+                exit $es
+            fi
             # make usual symlinks
             ln -s ${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a
             # finish up
@@ -948,9 +998,7 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
 	    echo "mklib: Making static library for example arch: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ar rv ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS="${LIBNAME}"
+            FINAL_LIBS=`make_ar_static_lib rv 0 ${LIBNAME} ${OBJECTS}`
 	else
 	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
 	    echo "mklib: Making shared library for example arch: " ${LIBNAME}

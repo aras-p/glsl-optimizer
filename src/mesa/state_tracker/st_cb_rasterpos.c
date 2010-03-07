@@ -47,7 +47,6 @@
 #include "st_draw.h"
 #include "draw/draw_context.h"
 #include "draw/draw_pipe.h"
-#include "shader/prog_instruction.h"
 #include "vbo/vbo.h"
 
 
@@ -102,7 +101,7 @@ rastpos_line( struct draw_stage *stage, struct prim_header *prim )
 static void
 rastpos_destroy(struct draw_stage *stage)
 {
-   _mesa_free(stage);
+   free(stage);
 }
 
 
@@ -252,6 +251,14 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
 
    /* draw the point */
    st_feedback_draw_vbo(ctx, rs->arrays, &rs->prim, 1, NULL, GL_TRUE, 0, 1);
+
+   /* restore draw's rasterization stage depending on rendermode */
+   if (ctx->RenderMode == GL_FEEDBACK) {
+      draw_set_rasterize_stage(draw, st->feedback_stage);
+   }
+   else if (ctx->RenderMode == GL_SELECT) {
+      draw_set_rasterize_stage(draw, st->selection_stage);
+   }
 }
 
 

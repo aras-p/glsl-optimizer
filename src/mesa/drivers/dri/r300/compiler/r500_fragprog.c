@@ -295,7 +295,7 @@ static char *toswiz(int swiz_val) {
   case 2: return "B";
   case 3: return "A";
   case 4: return "0";
-  case 5: return "1/2";
+  case 5: return "H";
   case 6: return "1";
   case 7: return "U";
   }

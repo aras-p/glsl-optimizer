@@ -60,6 +60,9 @@ extern void
 _mesa_init_buffer_objects( GLcontext *ctx );
 
 extern void
+_mesa_free_buffer_objects( GLcontext *ctx );
+
+extern void
 _mesa_update_default_objects_buffer_objects(GLcontext *ctx);
 
 
@@ -153,6 +156,9 @@ _mesa_UnmapBufferARB(GLenum target);
 
 extern void GLAPIENTRY
 _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params);
+
+extern void GLAPIENTRY
+_mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params);
 
 extern void GLAPIENTRY
 _mesa_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params);

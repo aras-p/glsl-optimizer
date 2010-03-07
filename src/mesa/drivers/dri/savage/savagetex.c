@@ -33,8 +33,6 @@
 #include "main/simple_list.h"
 #include "main/enums.h"
 
-#include "swrast/swrast.h"
-
 #include "savagecontext.h"
 #include "savagetex.h"
 #include "savagetris.h"
@@ -507,7 +505,7 @@ savageAllocTexObj( struct gl_texture_object *texObj )
 
       savageSetTexWrapping(t,texObj->WrapS,texObj->WrapT);
       savageSetTexFilter(t,texObj->MinFilter,texObj->MagFilter);
-      savageSetTexBorderColor(t,texObj->BorderColor);
+      savageSetTexBorderColor(t,texObj->BorderColor.f);
    }
 
    return t;
@@ -605,7 +603,7 @@ _savage_texstore_a1114444(TEXSTORE_PARAMS)
             dstRow += dstRowStride;
 	}
     }
-    _mesa_free((void *) tempImage);
+    free((void *) tempImage);
 
     return GL_TRUE;
 }
@@ -645,7 +643,7 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
             dstRow += dstRowStride;
 	}
     }
-    _mesa_free((void *) tempImage);
+    free((void *) tempImage);
 
     return GL_TRUE;
 }
@@ -1023,6 +1021,7 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
 	  return;
       }
 
+      assert(t->base.memBlock);
       ofs = t->base.memBlock->ofs;
       t->setup.physAddr = imesa->savageScreen->textureOffset[heap] + ofs;
       t->bufAddr = (GLubyte *)imesa->savageScreen->texVirtual[heap] + ofs;
@@ -2044,7 +2043,7 @@ static void savageTexParameter( GLcontext *ctx, GLenum target,
       break;
   
    case GL_TEXTURE_BORDER_COLOR:
-      savageSetTexBorderColor(t,tObj->BorderColor);
+      savageSetTexBorderColor(t,tObj->BorderColor.f);
       break;
 
    default:

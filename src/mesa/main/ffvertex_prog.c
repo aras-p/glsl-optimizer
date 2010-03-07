@@ -357,7 +357,7 @@ static struct ureg get_temp( struct tnl_program *p )
    int bit = _mesa_ffs( ~p->temp_in_use );
    if (!bit) {
       _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
-      _mesa_exit(1);
+      exit(1);
    }
 
    if ((GLuint) bit > p->program->Base.NumTemporaries)
@@ -536,10 +536,10 @@ static void debug_insn( struct prog_instruction *inst, const char *fn,
 
       if (fn != last_fn) {
 	 last_fn = fn;
-	 _mesa_printf("%s:\n", fn);
+	 printf("%s:\n", fn);
       }
 
-      _mesa_printf("%d:\t", line);
+      printf("%d:\t", line);
       _mesa_print_instruction(inst);
    }
 }
@@ -1496,7 +1496,7 @@ static void build_texture_transform( struct tnl_program *p )
 static void build_atten_pointsize( struct tnl_program *p )
 {
    struct ureg eye = get_eye_position_z(p);
-   struct ureg state_size = register_param1(p, STATE_POINT_SIZE);
+   struct ureg state_size = register_param2(p, STATE_INTERNAL, STATE_POINT_SIZE_CLAMPED);
    struct ureg state_attenuation = register_param1(p, STATE_POINT_ATTENUATION);
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
    struct ureg ut = get_temp(p);
@@ -1577,7 +1577,7 @@ static void build_tnl_program( struct tnl_program *p )
    /* Disassemble:
     */
    if (DISASSEM) {
-      _mesa_printf ("\n");
+      printf ("\n");
    }
 }
 
@@ -1590,7 +1590,7 @@ create_new_program( const struct state_key *key,
 {
    struct tnl_program p;
 
-   _mesa_memset(&p, 0, sizeof(p));
+   memset(&p, 0, sizeof(p));
    p.state = key;
    p.program = program;
    p.eye_position = undef;
@@ -1647,7 +1647,7 @@ _mesa_get_fixed_func_vertex_program(GLcontext *ctx)
    if (!prog) {
       /* OK, we'll have to build a new one */
       if (0)
-         _mesa_printf("Build new TNL program\n");
+         printf("Build new TNL program\n");
 
       prog = (struct gl_vertex_program *)
          ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);

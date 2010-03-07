@@ -38,7 +38,6 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_vs.h"
 #include "translate/translate.h"
-#include "translate/translate_cache.h"
 
 /* A first pass at incorporating vertex fetch/emit functionality into 
  */
@@ -142,16 +141,18 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
    vsvg->fetch->run_elts( vsvg->fetch, 
                           elts,
                           count,
+                          vsvg->draw->instance_id,
                           temp_buffer );
 
    vsvg->base.vs->run_linear( vsvg->base.vs, 
                               temp_buffer,
                               temp_buffer,
-                              (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
+                             vsvg->base.vs->draw->pt.user.vs_constants,
                               count,
                               temp_vertex_stride, 
                               temp_vertex_stride);
 
+   /* FIXME: geometry shading? */
 
    if (vsvg->base.key.clip) {
       /* not really handling clipping, just do the rhw so we can
@@ -180,6 +181,7 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
 
    vsvg->emit->run( vsvg->emit,
                     0, count,
+                    vsvg->draw->instance_id,
                     output_buffer );
 
    FREE(temp_buffer);
@@ -202,12 +204,13 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
    vsvg->fetch->run( vsvg->fetch, 
                      start,
                      count,
+                     vsvg->draw->instance_id,
                      temp_buffer );
 
    vsvg->base.vs->run_linear( vsvg->base.vs, 
                               temp_buffer,
                               temp_buffer,
-                              (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
+                             vsvg->base.vs->draw->pt.user.vs_constants,
                               count,
                               temp_vertex_stride, 
                               temp_vertex_stride);
@@ -238,6 +241,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
    
    vsvg->emit->run( vsvg->emit,
                     0, count,
+                    vsvg->draw->instance_id,
                     output_buffer );
 
    FREE(temp_buffer);
@@ -280,9 +284,11 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    fetch.nr_elements = key->nr_inputs;
    fetch.output_stride = vsvg->temp_vertex_stride;
    for (i = 0; i < key->nr_inputs; i++) {
+      fetch.element[i].type = TRANSLATE_ELEMENT_NORMAL;
       fetch.element[i].input_format = key->element[i].in.format;
       fetch.element[i].input_buffer = key->element[i].in.buffer;
       fetch.element[i].input_offset = key->element[i].in.offset;
+      fetch.element[i].instance_divisor = 0;
       fetch.element[i].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       fetch.element[i].output_offset = i * 4 * sizeof(float);
       assert(fetch.element[i].output_offset < fetch.output_stride);
@@ -294,17 +300,21 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    for (i = 0; i < key->nr_outputs; i++) {
       if (key->element[i].out.format != EMIT_1F_PSIZE)
       {      
+         emit.element[i].type = TRANSLATE_ELEMENT_NORMAL;
          emit.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
          emit.element[i].input_buffer = 0;
          emit.element[i].input_offset = key->element[i].out.vs_output * 4 * sizeof(float);
+         emit.element[i].instance_divisor = 0;
          emit.element[i].output_format = draw_translate_vinfo_format(key->element[i].out.format);
          emit.element[i].output_offset = key->element[i].out.offset;
          assert(emit.element[i].input_offset <= fetch.output_stride);
       }
       else {
+         emit.element[i].type = TRANSLATE_ELEMENT_NORMAL;
          emit.element[i].input_format = PIPE_FORMAT_R32_FLOAT;
          emit.element[i].input_buffer = 1;
          emit.element[i].input_offset = 0;
+         emit.element[i].instance_divisor = 0;
          emit.element[i].output_format = PIPE_FORMAT_R32_FLOAT;
          emit.element[i].output_offset = key->element[i].out.offset;
       }

@@ -34,6 +34,8 @@
 
 #include "glapi/glapi.h"
 #include "stw_ext_gallium.h"
+#include "stw_device.h"
+#include "stw_icd.h"
 
 struct stw_extension_entry
 {
@@ -72,6 +74,9 @@ DrvGetProcAddress(
    LPCSTR lpszProc )
 {
    const struct stw_extension_entry *entry;
+
+   if (!stw_dev)
+      return NULL;
 
    if (lpszProc[0] == 'w' && lpszProc[1] == 'g' && lpszProc[2] == 'l')
       for (entry = stw_extension_entries; entry->name; entry++)

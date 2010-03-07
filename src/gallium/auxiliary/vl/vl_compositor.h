@@ -50,7 +50,7 @@ struct vl_compositor
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buf;
    struct pipe_vertex_element vertex_elems[2];
-   struct pipe_constant_buffer fs_const_buf;
+   struct pipe_buffer *fs_const_buf;
 
    struct pipe_texture *bg;
    struct pipe_video_rect bg_src_rect;

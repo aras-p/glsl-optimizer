@@ -1,0 +1,1100 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
+
+<!-- OpenGL ES 1.x API -->
+
+<OpenGLAPI>
+
+<xi:include href="base1_API.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- core subset of OpenGL 1.3 defined in OpenGL ES 1.0 -->
+<category name="core1.0">
+    <!-- addition to base1.0 -->
+    <enum name="ADD"                                      value="0x0104"/>
+    <enum name="STACK_OVERFLOW"                           value="0x0503"/>
+    <enum name="STACK_UNDERFLOW"                          value="0x0504"/>
+    <enum name="EXP"                                      value="0x0800"/>
+    <enum name="EXP2"                                     value="0x0801"/>
+    <enum name="POINT_SMOOTH"                  count="1"  value="0x0B10">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_SMOOTH"                   count="1"  value="0x0B20">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHTING"                      count="1"  value="0x0B50">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT_MODEL_TWO_SIDE"          count="1"  value="0x0B52">
+        <size name="LightModelfv"/>
+        <size name="LightModeliv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT_MODEL_AMBIENT"           count="4"  value="0x0B53">
+        <size name="LightModelfv"/>
+        <size name="LightModeliv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_MATERIAL"                count="1"  value="0x0B57">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG"                           count="1"  value="0x0B60">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_DENSITY"                   count="1"  value="0x0B62">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_START"                     count="1"  value="0x0B63">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_END"                       count="1"  value="0x0B64">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_MODE"                      count="1"  value="0x0B65">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_COLOR"                     count="4"  value="0x0B66">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMALIZE"                     count="1"  value="0x0BA1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALPHA_TEST"                    count="1"  value="0x0BC0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PERSPECTIVE_CORRECTION_HINT"   count="1"  value="0x0C50">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_SMOOTH_HINT"             count="1"  value="0x0C51">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LINE_SMOOTH_HINT"              count="1"  value="0x0C52">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POLYGON_SMOOTH_HINT"           count="1"  value="0x0C53">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_HINT"                      count="1"  value="0x0C54">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_LIGHTS"                    count="1"  value="0x0D31">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_MODELVIEW_STACK_DEPTH"     count="1"  value="0x0D36">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_PROJECTION_STACK_DEPTH"    count="1"  value="0x0D38">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_STACK_DEPTH"       count="1"  value="0x0D39">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="AMBIENT"                       count="4"  value="0x1200">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="DIFFUSE"                       count="4"  value="0x1201">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="SPECULAR"                      count="4"  value="0x1202">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="POSITION"                      count="4"  value="0x1203">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="SPOT_DIRECTION"                count="3"  value="0x1204">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="SPOT_EXPONENT"                 count="1"  value="0x1205">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="SPOT_CUTOFF"                   count="1"  value="0x1206">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="CONSTANT_ATTENUATION"          count="1"  value="0x1207">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="LINEAR_ATTENUATION"            count="1"  value="0x1208">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="QUADRATIC_ATTENUATION"         count="1"  value="0x1209">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
+        <size name="GetLightfv" mode="get"/>
+        <size name="GetLightiv" mode="get"/>
+    </enum>
+    <enum name="CLEAR"                                    value="0x1500"/>
+    <enum name="AND"                                      value="0x1501"/>
+    <enum name="AND_REVERSE"                              value="0x1502"/>
+    <enum name="COPY"                                     value="0x1503"/>
+    <enum name="AND_INVERTED"                             value="0x1504"/>
+    <enum name="NOOP"                                     value="0x1505"/>
+    <enum name="XOR"                                      value="0x1506"/>
+    <enum name="OR"                                       value="0x1507"/>
+    <enum name="NOR"                                      value="0x1508"/>
+    <enum name="EQUIV"                                    value="0x1509"/>
+    <enum name="OR_REVERSE"                               value="0x150B"/>
+    <enum name="COPY_INVERTED"                            value="0x150C"/>
+    <enum name="OR_INVERTED"                              value="0x150D"/>
+    <enum name="NAND"                                     value="0x150E"/>
+    <enum name="SET"                                      value="0x150F"/>
+    <enum name="EMISSION"                      count="4"  value="0x1600">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+    </enum>
+    <enum name="SHININESS"                     count="1"  value="0x1601">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+    </enum>
+    <enum name="AMBIENT_AND_DIFFUSE"           count="4"  value="0x1602">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="GetMaterialfv" mode="get"/>
+        <size name="GetMaterialiv" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW"                                value="0x1700"/>
+    <enum name="PROJECTION"                               value="0x1701"/>
+    <enum name="FLAT"                                     value="0x1D00"/>
+    <enum name="SMOOTH"                                   value="0x1D01"/>
+    <enum name="MODULATE"                                 value="0x2100"/>
+    <enum name="DECAL"                                    value="0x2101"/>
+    <enum name="TEXTURE_ENV_MODE"              count="1"  value="0x2200">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_ENV_COLOR"             count="4"  value="0x2201">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_ENV"                              value="0x2300"/>
+    <enum name="LIGHT0"                        count="1"  value="0x4000">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT1"                        count="1"  value="0x4001">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT2"                        count="1"  value="0x4002">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT3"                        count="1"  value="0x4003">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT4"                        count="1"  value="0x4004">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT5"                        count="1"  value="0x4005">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT6"                        count="1"  value="0x4006">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LIGHT7"                        count="1"  value="0x4007">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <function name="AlphaFunc" offset="240">
+        <param name="func" type="GLenum"/>
+        <param name="ref" type="GLclampf"/>
+        <glx rop="159"/>
+    </function>
+
+    <function name="Color4f" offset="29" vectorequiv="Color4fv">
+        <param name="red" type="GLfloat"/>
+        <param name="green" type="GLfloat"/>
+        <param name="blue" type="GLfloat"/>
+        <param name="alpha" type="GLfloat"/>
+    </function>
+
+    <function name="Fogf" offset="153">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="80"/>
+    </function>
+
+    <function name="Fogfv" offset="154">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="81"/>
+    </function>
+
+    <function name="Lightf" offset="159">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="86"/>
+    </function>
+
+    <function name="Lightfv" offset="160">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="87"/>
+    </function>
+
+    <function name="LightModelf" offset="163">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="90"/>
+    </function>
+
+    <function name="LightModelfv" offset="164">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="91"/>
+    </function>
+
+    <function name="LoadIdentity" offset="290">
+        <glx rop="176"/>
+    </function>
+
+    <function name="LoadMatrixf" offset="291">
+        <param name="m" type="const GLfloat *" count="16"/>
+        <glx rop="177"/>
+    </function>
+
+    <function name="LogicOp" offset="242">
+        <param name="opcode" type="GLenum"/>
+        <glx rop="161"/>
+    </function>
+
+    <function name="Materialf" offset="169">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="96"/>
+    </function>
+
+    <function name="Materialfv" offset="170">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="97"/>
+    </function>
+
+    <function name="MatrixMode" offset="293">
+        <param name="mode" type="GLenum"/>
+        <glx rop="179"/>
+    </function>
+
+    <function name="MultMatrixf" offset="294">
+        <param name="m" type="const GLfloat *" count="16"/>
+        <glx rop="180"/>
+    </function>
+
+    <function name="Normal3f" offset="56" vectorequiv="Normal3fv">
+        <param name="nx" type="GLfloat"/>
+        <param name="ny" type="GLfloat"/>
+        <param name="nz" type="GLfloat"/>
+    </function>
+
+    <function name="PointSize" offset="173">
+        <param name="size" type="GLfloat"/>
+        <glx rop="100"/>
+    </function>
+
+    <function name="PopMatrix" offset="297">
+        <glx rop="183"/>
+    </function>
+
+    <function name="PushMatrix" offset="298">
+        <glx rop="184"/>
+    </function>
+
+    <function name="Rotatef" offset="300">
+        <param name="angle" type="GLfloat"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <glx rop="186"/>
+    </function>
+
+    <function name="Scalef" offset="302">
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <glx rop="188"/>
+    </function>
+
+    <function name="ShadeModel" offset="177">
+        <param name="mode" type="GLenum"/>
+        <glx rop="104"/>
+    </function>
+
+    <function name="TexEnvf" offset="184">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="111"/>
+    </function>
+
+    <function name="TexEnvfv" offset="185">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="112"/>
+    </function>
+
+    <function name="TexImage2D" offset="183">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="internalformat" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="border" type="GLint"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_format="format" img_type="type" img_target="target" img_send_null="true" img_pad_dimensions="true"/>
+        <glx rop="110" large="true"/>
+    </function>
+
+    <function name="Translatef" offset="304">
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <glx rop="190"/>
+    </function>
+
+    <!-- addition to base1.1 -->
+    <enum name="COLOR_LOGIC_OP"                           value="0x0BF2"/>
+    <enum name="VERTEX_ARRAY"                  count="1"  value="0x8074">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMAL_ARRAY"                  count="1"  value="0x8075">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY"                   count="1"  value="0x8076">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY"           count="1"  value="0x8078">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <function name="ColorPointer" offset="308">
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="DisableClientState" offset="309">
+        <param name="array" type="GLenum"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="EnableClientState" offset="313">
+        <param name="array" type="GLenum"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="NormalPointer" offset="318">
+        <param name="type" type="GLenum"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="TexCoordPointer" offset="320">
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="VertexPointer" offset="321">
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <!-- addition to base1.2 -->
+    <enum name="SMOOTH_POINT_SIZE_RANGE"       count="2"  value="0x0B12">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SMOOTH_LINE_WIDTH_RANGE"       count="2"  value="0x0B22">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="RESCALE_NORMAL"                count="1"  value="0x803A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_ELEMENTS_VERTICES"         count="1"  value="0x80E8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_ELEMENTS_INDICES"          count="1"  value="0x80E9">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <!-- addition to base1.3 -->
+    <enum name="MULTISAMPLE"                   count="1"  value="0x809D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SAMPLE_ALPHA_TO_ONE"           count="1"  value="0x809F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_TEXTURE_UNITS"             count="1"  value="0x84E2">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <function name="ClientActiveTexture" offset="375">
+        <param name="texture" type="GLenum"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="MultiTexCoord4f" offset="402" vectorequiv="MultiTexCoord4fv">
+        <param name="target" type="GLenum"/>
+        <param name="s" type="GLfloat"/>
+        <param name="t" type="GLfloat"/>
+        <param name="r" type="GLfloat"/>
+        <param name="q" type="GLfloat"/>
+    </function>
+</category>
+
+<!-- core subset of OpenGL 1.5 defined in OpenGL ES 1.1 -->
+<category name="core1.1">
+    <!-- addition to base1.0 -->
+    <enum name="CURRENT_COLOR"                 count="4"  value="0x0B00">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_NORMAL"                count="3"  value="0x0B02">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CURRENT_TEXTURE_COORDS"        count="4"  value="0x0B03">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_SIZE"                    count="1"  value="0x0B11">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SHADE_MODEL"                   count="1"  value="0x0B54">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MATRIX_MODE"                   count="1"  value="0x0BA0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW_STACK_DEPTH"         count="1"  value="0x0BA3">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PROJECTION_STACK_DEPTH"        count="1"  value="0x0BA4">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_STACK_DEPTH"           count="1"  value="0x0BA5">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MODELVIEW_MATRIX"              count="16" value="0x0BA6">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="PROJECTION_MATRIX"             count="16" value="0x0BA7">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_MATRIX"                count="16" value="0x0BA8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALPHA_TEST_FUNC"               count="1"  value="0x0BC1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALPHA_TEST_REF"                count="1"  value="0x0BC2">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_DST"                     count="1"  value="0x0BE0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_SRC"                     count="1"  value="0x0BE1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="LOGIC_OP_MODE"                 count="1"  value="0x0BF0">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ALPHA_SCALE"                   count="1"  value="0x0D1C">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_CLIP_PLANES"               count="1"  value="0x0D32">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE0"                   count="1"  value="0x3000">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE1"                   count="1"  value="0x3001">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE2"                   count="1"  value="0x3002">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE3"                   count="1"  value="0x3003">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE4"                   count="1"  value="0x3004">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="CLIP_PLANE5"                   count="1"  value="0x3005">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <function name="Color4ub" offset="35" vectorequiv="Color4ubv">
+        <param name="red" type="GLubyte"/>
+        <param name="green" type="GLubyte"/>
+        <param name="blue" type="GLubyte"/>
+        <param name="alpha" type="GLubyte"/>
+    </function>
+
+    <function name="GetLightfv" offset="264">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="118"/>
+    </function>
+
+    <function name="GetMaterialfv" offset="269">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="123"/>
+    </function>
+
+    <function name="GetTexEnvfv" offset="276">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="130"/>
+    </function>
+
+    <function name="GetTexEnviv" offset="277">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx sop="131"/>
+    </function>
+
+    <function name="TexEnvi" offset="186">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLint"/>
+        <glx rop="113"/>
+    </function>
+
+    <function name="TexEnviv" offset="187">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLint *" variable_param="pname"/>
+        <glx rop="114"/>
+    </function>
+
+    <!-- addition to base1.1 -->
+    <enum name="VERTEX_ARRAY_SIZE"             count="1"  value="0x807A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ARRAY_TYPE"             count="1"  value="0x807B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ARRAY_STRIDE"           count="1"  value="0x807C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMAL_ARRAY_TYPE"             count="1"  value="0x807E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMAL_ARRAY_STRIDE"           count="1"  value="0x807F">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY_SIZE"              count="1"  value="0x8081">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY_TYPE"              count="1"  value="0x8082">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY_STRIDE"            count="1"  value="0x8083">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY_SIZE"      count="1"  value="0x8088">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY_TYPE"      count="1"  value="0x8089">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY_STRIDE"    count="1"  value="0x808A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ARRAY_POINTER"                     value="0x808E"/>
+    <enum name="NORMAL_ARRAY_POINTER"                     value="0x808F"/>
+    <enum name="COLOR_ARRAY_POINTER"                      value="0x8090"/>
+    <enum name="TEXTURE_COORD_ARRAY_POINTER"              value="0x8092"/>
+
+    <function name="GetPointerv" offset="329">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLvoid **" output="true"/>
+        <glx handcode="true"/>
+    </function>
+
+    <!-- addition to base1.2 -->
+
+    <!-- addition to base1.3 -->
+    <enum name="CLIENT_ACTIVE_TEXTURE"         count="1"  value="0x84E1">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SUBTRACT"                                 value="0x84E7"/>
+    <enum name="COMBINE"                                  value="0x8570"/>
+    <enum name="COMBINE_RGB"                   count="1"  value="0x8571">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="COMBINE_ALPHA"                 count="1"  value="0x8572">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="RGB_SCALE"                     count="1"  value="0x8573">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="ADD_SIGNED"                               value="0x8574"/>
+    <enum name="INTERPOLATE"                              value="0x8575"/>
+    <enum name="CONSTANT"                                 value="0x8576"/>
+    <enum name="PRIMARY_COLOR"                            value="0x8577"/>
+    <enum name="PREVIOUS"                                 value="0x8578"/>
+    <enum name="OPERAND0_RGB"                  count="1"  value="0x8590">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="OPERAND1_RGB"                  count="1"  value="0x8591">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="OPERAND2_RGB"                  count="1"  value="0x8592">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="OPERAND0_ALPHA"                count="1"  value="0x8598">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="OPERAND1_ALPHA"                count="1"  value="0x8599">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="OPERAND2_ALPHA"                count="1"  value="0x859A">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="GetTexEnvfv" mode="get"/>
+        <size name="GetTexEnviv" mode="get"/>
+    </enum>
+    <enum name="DOT3_RGB"                                 value="0x86AE"/>
+    <enum name="DOT3_RGBA"                                value="0x86AF"/>
+
+    <!-- addition to base1.4 -->
+    <enum name="POINT_SIZE_MIN"                count="1"  value="0x8126">
+        <size name="PointParameterfv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_SIZE_MAX"                count="1"  value="0x8127">
+        <size name="PointParameterfv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_FADE_THRESHOLD_SIZE"     count="1"  value="0x8128">
+        <size name="PointParameterfv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="POINT_DISTANCE_ATTENUATION"    count="3"  value="0x8129">
+        <size name="PointParameterfv"/>
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="GENERATE_MIPMAP"               count="1"  value="0x8191">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
+        <size name="GetTexParameterfv" mode="get"/>
+        <size name="GetTexParameteriv" mode="get"/>
+    </enum>
+
+    <function name="PointParameterf" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="2065"/>
+    </function>
+
+    <function name="PointParameterfv" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="2066"/>
+    </function>
+
+    <!-- addition to base1.5 -->
+    <enum name="SRC0_RGB"                                 value="0x8580"/>
+    <enum name="SRC1_RGB"                                 value="0x8581"/>
+    <enum name="SRC2_RGB"                                 value="0x8582"/>
+    <enum name="SRC0_ALPHA"                               value="0x8588"/>
+    <enum name="SRC1_ALPHA"                               value="0x8589"/>
+    <enum name="SRC2_ALPHA"                               value="0x858A"/>
+    <enum name="VERTEX_ARRAY_BUFFER_BINDING"   count="1"  value="0x8896">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMAL_ARRAY_BUFFER_BINDING"   count="1"  value="0x8897">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY_BUFFER_BINDING"    count="1"  value="0x8898">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY_BUFFER_BINDING" count="1" value="0x889A">
+        <size name="Get" mode="get"/>
+    </enum>
+</category>
+
+<!-- OpenGL ES 1.0 -->
+<category name="es1.0">
+    <!-- addition to core1.0 -->
+
+    <!-- from GL_OES_fixed_point -->
+    <enum name="FIXED"                                    value="0x140C"/>
+
+    <type name="fixed"   size="4"                                    />
+    <type name="clampx"  size="4"                                    />
+
+    <function name="AlphaFuncx" offset="assign">
+        <param name="func" type="GLenum"/>
+        <param name="ref" type="GLclampx"/>
+    </function>
+
+    <function name="ClearColorx" offset="assign">
+        <param name="red" type="GLclampx"/>
+        <param name="green" type="GLclampx"/>
+        <param name="blue" type="GLclampx"/>
+        <param name="alpha" type="GLclampx"/>
+    </function>
+
+    <function name="ClearDepthx" offset="assign">
+        <param name="depth" type="GLclampx"/>
+    </function>
+
+    <function name="Color4x" offset="assign">
+        <param name="red" type="GLfixed"/>
+        <param name="green" type="GLfixed"/>
+        <param name="blue" type="GLfixed"/>
+        <param name="alpha" type="GLfixed"/>
+    </function>
+
+    <function name="DepthRangex" offset="assign">
+        <param name="zNear" type="GLclampx"/>
+        <param name="zFar" type="GLclampx"/>
+    </function>
+
+    <function name="Fogx" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfixed"/>
+    </function>
+
+    <function name="Fogxv" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfixed *" variable_param="pname"/>
+    </function>
+
+    <function name="Frustumx" offset="assign">
+        <param name="left" type="GLfixed"/>
+        <param name="right" type="GLfixed"/>
+        <param name="bottom" type="GLfixed"/>
+        <param name="top" type="GLfixed"/>
+        <param name="zNear" type="GLfixed"/>
+        <param name="zFar" type="GLfixed"/>
+    </function>
+
+    <function name="LightModelx" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfixed"/>
+    </function>
+
+    <function name="LightModelxv" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfixed *" variable_param="pname"/>
+    </function>
+
+    <function name="Lightx" offset="assign">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfixed"/>
+    </function>
+
+    <function name="Lightxv" offset="assign">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfixed *" variable_param="pname"/>
+    </function>
+
+    <function name="LineWidthx" offset="assign">
+        <param name="width" type="GLfixed"/>
+    </function>
+
+    <function name="LoadMatrixx" offset="assign">
+        <param name="m" type="const GLfixed *" count="16"/>
+    </function>
+
+    <function name="Materialx" offset="assign">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfixed"/>
+    </function>
+
+    <function name="Materialxv" offset="assign">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfixed *" variable_param="pname"/>
+    </function>
+
+    <function name="MultMatrixx" offset="assign">
+        <param name="m" type="const GLfixed *" count="16"/>
+    </function>
+
+    <function name="MultiTexCoord4x" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="s" type="GLfixed"/>
+        <param name="t" type="GLfixed"/>
+        <param name="r" type="GLfixed"/>
+        <param name="q" type="GLfixed"/>
+    </function>
+
+    <function name="Normal3x" offset="assign">
+        <param name="nx" type="GLfixed"/>
+        <param name="ny" type="GLfixed"/>
+        <param name="nz" type="GLfixed"/>
+    </function>
+
+    <function name="Orthox" offset="assign">
+        <param name="left" type="GLfixed"/>
+        <param name="right" type="GLfixed"/>
+        <param name="bottom" type="GLfixed"/>
+        <param name="top" type="GLfixed"/>
+        <param name="zNear" type="GLfixed"/>
+        <param name="zFar" type="GLfixed"/>
+    </function>
+
+    <function name="PointSizex" offset="assign">
+        <param name="size" type="GLfixed"/>
+    </function>
+
+    <function name="PolygonOffsetx" offset="assign">
+        <param name="factor" type="GLfixed"/>
+        <param name="units" type="GLfixed"/>
+    </function>
+
+    <function name="Rotatex" offset="assign">
+        <param name="angle" type="GLfixed"/>
+        <param name="x" type="GLfixed"/>
+        <param name="y" type="GLfixed"/>
+        <param name="z" type="GLfixed"/>
+    </function>
+
+    <function name="SampleCoveragex" offset="assign">
+        <param name="value" type="GLclampx"/>
+        <param name="invert" type="GLboolean"/>
+    </function>
+
+    <function name="Scalex" offset="assign">
+        <param name="x" type="GLfixed"/>
+        <param name="y" type="GLfixed"/>
+        <param name="z" type="GLfixed"/>
+    </function>
+
+    <function name="TexEnvx" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfixed"/>
+    </function>
+
+    <function name="TexEnvxv" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfixed *" variable_param="pname"/>
+    </function>
+
+    <function name="TexParameterx" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfixed"/>
+    </function>
+
+    <function name="Translatex" offset="assign">
+        <param name="x" type="GLfixed"/>
+        <param name="y" type="GLfixed"/>
+        <param name="z" type="GLfixed"/>
+    </function>
+
+    <!-- from GL_OES_single_precision -->
+    <function name="ClearDepthf" offset="assign">
+        <param name="depth" type="GLclampf"/>
+    </function>
+
+    <function name="DepthRangef" offset="assign">
+        <param name="zNear" type="GLclampf"/>
+        <param name="zFar" type="GLclampf"/>
+    </function>
+
+    <function name="Frustumf" offset="assign">
+        <param name="left" type="GLfloat"/>
+        <param name="right" type="GLfloat"/>
+        <param name="bottom" type="GLfloat"/>
+        <param name="top" type="GLfloat"/>
+        <param name="zNear" type="GLfloat"/>
+        <param name="zFar" type="GLfloat"/>
+    </function>
+
+    <function name="Orthof" offset="assign">
+        <param name="left" type="GLfloat"/>
+        <param name="right" type="GLfloat"/>
+        <param name="bottom" type="GLfloat"/>
+        <param name="top" type="GLfloat"/>
+        <param name="zNear" type="GLfloat"/>
+        <param name="zFar" type="GLfloat"/>
+    </function>
+</category>
+
+<!-- OpenGL ES 1.1 -->
+<category name="es1.1">
+    <!-- addition to core1.1 -->
+
+    <!-- from GL_OES_fixed_point -->
+    <function name="ClipPlanex" offset="assign">
+        <param name="plane" type="GLenum"/>
+        <param name="equation" type="const GLfixed *" count="4"/>
+    </function>
+
+    <function name="GetClipPlanex" offset="assign">
+        <param name="plane" type="GLenum"/>
+        <param name="equation" type="GLfixed *" output="true" count="4"/>
+    </function>
+
+    <function name="GetFixedv" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
+    </function>
+
+    <function name="GetLightxv" offset="assign">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
+    </function>
+
+    <function name="GetMaterialxv" offset="assign">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
+    </function>
+
+    <function name="GetTexEnvxv" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
+    </function>
+
+    <function name="GetTexParameterxv" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
+    </function>
+
+    <function name="PointParameterx" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfixed"/>
+    </function>
+
+    <function name="PointParameterxv" offset="assign">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfixed *"/>
+    </function>
+
+    <function name="TexParameterxv" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfixed *" variable_param="pname"/>
+    </function>
+
+    <!-- from GL_OES_matrix_get -->
+    <enum name="MODELVIEW_MATRIX_FLOAT_AS_INT_BITS_OES"   value="0x898D"/>
+    <enum name="PROJECTION_MATRIX_FLOAT_AS_INT_BITS_OES"  value="0x898E"/>
+    <enum name="TEXTURE_MATRIX_FLOAT_AS_INT_BITS_OES"	  value="0x898F"/>
+
+    <!-- from GL_OES_single_precision -->
+    <function name="ClipPlanef" offset="assign">
+        <param name="plane" type="GLenum"/>
+        <param name="equation" type="const GLfloat *" count="4"/>
+    </function>
+
+    <function name="GetClipPlanef" offset="assign">
+        <param name="plane" type="GLenum"/>
+        <param name="equation" type="GLfloat *" output="true" count="4"/>
+    </function>
+</category>
+
+<xi:include href="es1_EXT.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="es1_COMPAT.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+</OpenGLAPI>

@@ -20,7 +20,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <X11/keysym.h>
 #include <unistd.h>
 #include "ipc.h"
@@ -187,7 +186,7 @@ redraw(Display *dpy)
        * Without this glClear(), depth buffer for the second process
        * is pretty much broken.
        */
-      /*glClear(GL_DEPTH_BUFFER_BIT);*/
+      /* glClear(GL_DEPTH_BUFFER_BIT); */
 
       glPushMatrix();
       glTranslatef(1, 0, 0);

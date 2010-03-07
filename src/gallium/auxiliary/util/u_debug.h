@@ -39,31 +39,13 @@
 #define U_DEBUG_H_
 
 
-#include <stdarg.h>
-
-#include "pipe/p_compiler.h"
+#include "os/os_misc.h"
 
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-
-#if defined(DBG) || defined(DEBUG)
-#ifndef DEBUG
-#define DEBUG 1
-#endif
-#else
-#ifndef NDEBUG
-#define NDEBUG 1
-#endif
-#endif
-
-   
-/* MSVC bebore VC7 does not have the __FUNCTION__ macro */
-#if defined(_MSC_VER) && _MSC_VER < 1300
-#define __FUNCTION__ "???"
-#endif
 
 #if defined(__GNUC__)
 #define _util_printf_format(fmt, list) __attribute__ ((format (printf, fmt, list)))
@@ -155,13 +137,7 @@ void debug_print_format(const char *msg, unsigned fmt );
  * Hard-coded breakpoint.
  */
 #ifdef DEBUG
-#if (defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)) && defined(PIPE_CC_GCC)
-#define debug_break() __asm("int3")
-#elif defined(PIPE_CC_MSVC)
-#define debug_break()  __debugbreak()
-#else
-void debug_break(void);
-#endif
+#define debug_break() os_break()
 #else /* !DEBUG */
 #define debug_break() ((void)0)
 #endif /* !DEBUG */
@@ -188,7 +164,7 @@ void _debug_assert_fail(const char *expr,
 #ifdef DEBUG
 #define debug_assert(expr) ((expr) ? (void)0 : _debug_assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
 #else
-#define debug_assert(expr) ((void)0)
+#define debug_assert(expr) do { } while (0 && (expr))
 #endif
 
 
@@ -328,22 +304,6 @@ debug_get_flags_option(const char *name,
                        unsigned long dfault);
 
 
-void *
-debug_malloc(const char *file, unsigned line, const char *function,
-             size_t size);
-
-void
-debug_free(const char *file, unsigned line, const char *function,
-           void *ptr);
-
-void *
-debug_calloc(const char *file, unsigned line, const char *function,
-             size_t count, size_t size );
-
-void *
-debug_realloc(const char *file, unsigned line, const char *function,
-              void *old_ptr, size_t old_size, size_t new_size );
-
 unsigned long
 debug_memory_begin(void);
 
@@ -354,6 +314,8 @@ debug_memory_end(unsigned long beginning);
 #ifdef DEBUG
 struct pipe_surface;
 struct pipe_transfer;
+struct pipe_texture;
+
 void debug_dump_image(const char *prefix,
                       unsigned format, unsigned cpp,
                       unsigned width, unsigned height,
@@ -361,6 +323,8 @@ void debug_dump_image(const char *prefix,
                       const void *data);
 void debug_dump_surface(const char *prefix,
                         struct pipe_surface *surface);   
+void debug_dump_texture(const char *prefix,
+                        struct pipe_texture *texture);
 void debug_dump_surface_bmp(const char *filename,
                             struct pipe_surface *surface);
 void debug_dump_transfer_bmp(const char *filename,
@@ -373,7 +337,7 @@ void debug_dump_float_rgba_bmp(const char *filename,
 #define debug_dump_surface(prefix, surface) ((void)0)
 #define debug_dump_surface_bmp(filename, surface) ((void)0)
 #define debug_dump_transfer_bmp(filename, transfer) ((void)0)
-#define debug_dump_rgba_float_bmp(filename, width, height, rgba, stride) ((void)0)
+#define debug_dump_float_rgba_bmp(filename, width, height, rgba, stride) ((void)0)
 #endif
 
 

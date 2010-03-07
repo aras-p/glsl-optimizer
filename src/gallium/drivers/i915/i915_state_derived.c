@@ -33,7 +33,6 @@
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_reg.h"
-#include "i915_fpc.h"
 
 
 
@@ -84,7 +83,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
 
    
    /* pos */
-   src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_POSITION, 0);
+   src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_POSITION, 0);
    if (needW) {
       draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src);
       vinfo.hwfmt[0] |= S4_VFMT_XYZW;
@@ -101,21 +100,21 @@ static void calculate_vertex_layout( struct i915_context *i915 )
 
    /* primary color */
    if (colors[0]) {
-      src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_COLOR, 0);
+      src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_COLOR, 0);
       draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src);
       vinfo.hwfmt[0] |= S4_VFMT_COLOR;
    }
 
    /* secondary color */
    if (colors[1]) {
-      src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_COLOR, 1);
+      src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_COLOR, 1);
       draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src);
       vinfo.hwfmt[0] |= S4_VFMT_SPEC_FOG;
    }
 
    /* fog coord, not fog blend factor */
    if (fog) {
-      src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_FOG, 0);
+      src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_FOG, 0);
       draw_emit_vertex_attr(&vinfo, EMIT_1F, INTERP_PERSPECTIVE, src);
       vinfo.hwfmt[0] |= S4_VFMT_FOG_PARAM;
    }
@@ -125,7 +124,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
       uint hwtc;
       if (texCoords[i]) {
          hwtc = TEXCOORDFMT_4D;
-         src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_GENERIC, i);
+         src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_GENERIC, i);
          draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
       }
       else {

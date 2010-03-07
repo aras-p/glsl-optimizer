@@ -44,13 +44,15 @@
 
 #include "st_debug.h"
 #include "st_context.h"
-#include "st_atom.h"
 #include "st_program.h"
 #include "st_mesa_to_tgsi.h"
 #include "cso_cache/cso_context.h"
 
-   /* Clean out any old compilations:
-    */
+
+
+/**
+ * Clean out any old compilations:
+ */
 void
 st_vp_release_varients( struct st_context *st,
                         struct st_vertex_program *stvp )
@@ -66,8 +68,8 @@ st_vp_release_varients( struct st_context *st,
       if (vpv->draw_shader)
          draw_delete_vertex_shader( st->draw, vpv->draw_shader );
       
-      if (vpv->state.tokens)
-         st_free_tokens(vpv->state.tokens);
+      if (vpv->tgsi.tokens)
+         st_free_tokens(vpv->tgsi.tokens);
       
       FREE( vpv );
 
@@ -99,6 +101,8 @@ st_prepare_vertex_program(struct st_context *st,
    if (stvp->Base.IsPositionInvariant)
       _mesa_insert_mvp_code(st->ctx, &stvp->Base);
 
+   assert(stvp->Base.Base.NumInstructions > 1);
+
    /*
     * Determine number of inputs, the mappings between VERT_ATTRIB_x
     * and TGSI generic input indexes, plus input attrib semantic info.
@@ -110,6 +114,9 @@ st_prepare_vertex_program(struct st_context *st,
          stvp->num_inputs++;
       }
    }
+   /* bit of a hack, presetup potentially unused edgeflag input */
+   stvp->input_to_index[VERT_ATTRIB_EDGEFLAG] = stvp->num_inputs;
+   stvp->index_to_input[stvp->num_inputs] = VERT_ATTRIB_EDGEFLAG;
 
    /* Compute mapping of vertex program outputs to slots.
     */
@@ -179,6 +186,10 @@ st_prepare_vertex_program(struct st_context *st,
          }
       }
    }
+   /* similar hack to above, presetup potentially unused edgeflag output */
+   stvp->result_to_output[VERT_RESULT_EDGE] = stvp->num_outputs;
+   stvp->output_semantic_name[stvp->num_outputs] = TGSI_SEMANTIC_EDGEFLAG;
+   stvp->output_semantic_index[stvp->num_outputs] = 0;
 }
 
 
@@ -189,24 +200,51 @@ st_translate_vertex_program(struct st_context *st,
 {
    struct st_vp_varient *vpv = CALLOC_STRUCT(st_vp_varient);
    struct pipe_context *pipe = st->pipe;
+   struct ureg_program *ureg;
+   enum pipe_error error;
+   unsigned num_outputs;
 
-   vpv->state.tokens = 
+   ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
+   if (ureg == NULL) {
+      FREE(vpv);
+      return NULL;
+   }
+
+   vpv->num_inputs = stvp->num_inputs;
+   num_outputs = stvp->num_outputs;
+   if (key->passthrough_edgeflags) {
+      vpv->num_inputs++;
+      num_outputs++;
+   }
+
+   error = 
       st_translate_mesa_program(st->ctx,
                                 TGSI_PROCESSOR_VERTEX,
+                                ureg,
                                 &stvp->Base.Base,
                                 /* inputs */
-                                stvp->num_inputs,
+                                vpv->num_inputs,
                                 stvp->input_to_index,
                                 NULL, /* input semantic name */
                                 NULL, /* input semantic index */
                                 NULL,
                                 /* outputs */
-                                stvp->num_outputs,
+                                num_outputs,
                                 stvp->result_to_output,
                                 stvp->output_semantic_name,
-                                stvp->output_semantic_index );
+                                stvp->output_semantic_index,
+                                key->passthrough_edgeflags );
 
-   vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->state);
+   if (error)
+      goto fail;
+
+   vpv->tgsi.tokens = ureg_get_tokens( ureg, NULL );
+   if (!vpv->tgsi.tokens)
+      goto fail;
+
+   ureg_destroy( ureg );
+
+   vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->tgsi);
 
    if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
       _mesa_print_program(&stvp->Base.Base);
@@ -214,84 +252,92 @@ st_translate_vertex_program(struct st_context *st,
    }
 
    if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump( vpv->state.tokens, 0 );
+      tgsi_dump( vpv->tgsi.tokens, 0 );
       debug_printf("\n");
    }
 
    return vpv;
+
+fail:
+   debug_printf("%s: failed to translate Mesa program:\n", __FUNCTION__);
+   _mesa_print_program(&stvp->Base.Base);
+   debug_assert(0);
+
+   ureg_destroy( ureg );
+   return NULL;
 }
 
 
 
 /**
  * Translate a Mesa fragment shader into a TGSI shader.
- * \param inputMapping  to map fragment program input registers to TGSI
- *                      input slots
  * \return  pointer to cached pipe_shader object.
  */
 void
 st_translate_fragment_program(struct st_context *st,
-                              struct st_fragment_program *stfp,
-                              const GLuint inputMapping[])
+                              struct st_fragment_program *stfp )
 {
    struct pipe_context *pipe = st->pipe;
    GLuint outputMapping[FRAG_RESULT_MAX];
-   GLuint defaultInputMapping[FRAG_ATTRIB_MAX];
-   GLuint interpMode[16];  /* XXX size? */
+   GLuint inputMapping[FRAG_ATTRIB_MAX];
+   GLuint interpMode[PIPE_MAX_SHADER_INPUTS];  /* XXX size? */
    GLuint attr;
+   enum pipe_error error;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
-   GLuint vslot = 0;
+   struct ureg_program *ureg;
 
+   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
+   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
    uint fs_num_inputs = 0;
 
    ubyte fs_output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
    ubyte fs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint fs_num_outputs = 0;
 
-   /* which vertex output goes to the first fragment input: */
-   if (inputsRead & FRAG_BIT_WPOS)
-      vslot = 0;
-   else
-      vslot = 1;
-
    /*
     * Convert Mesa program inputs to TGSI input register semantics.
     */
    for (attr = 0; attr < FRAG_ATTRIB_MAX; attr++) {
       if (inputsRead & (1 << attr)) {
-         const GLuint slot = fs_num_inputs;
+         const GLuint slot = fs_num_inputs++;
 
-         defaultInputMapping[attr] = slot;
-
-         stfp->input_map[slot] = vslot++;
-
-         fs_num_inputs++;
+         inputMapping[attr] = slot;
 
          switch (attr) {
          case FRAG_ATTRIB_WPOS:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_COL0:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_COL1:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
-            stfp->input_semantic_index[slot] = 1;
+            input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            input_semantic_index[slot] = 1;
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_FOGC:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_FACE:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FACE;
-            stfp->input_semantic_index[slot] = 0;
+            input_semantic_name[slot] = TGSI_SEMANTIC_FACE;
+            input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
+            break;
+         case FRAG_ATTRIB_PNTC:
+            /* This is a hack.  We really need a new semantic label for
+             * point coord.  The draw module needs to know which fragment
+             * shader input is the point coord attribute so that it can set
+             * up the right vertex attribute values.
+             */
+            input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            input_semantic_index[slot] = 0;
+            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
 
             /* In most cases, there is nothing special about these
@@ -317,18 +363,20 @@ st_translate_fragment_program(struct st_context *st,
          case FRAG_ATTRIB_TEX5:
          case FRAG_ATTRIB_TEX6:
          case FRAG_ATTRIB_TEX7:
-         case FRAG_ATTRIB_PNTC:
          case FRAG_ATTRIB_VAR0:
          default:
             /* Actually, let's try and zero-base this just for
              * readability of the generated TGSI.
              */
             assert(attr >= FRAG_ATTRIB_TEX0);
-            stfp->input_semantic_index[slot] = (attr - FRAG_ATTRIB_TEX0);
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            input_semantic_index[slot] = (attr - FRAG_ATTRIB_TEX0);
+            input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          }
+      }
+      else {
+	 inputMapping[attr] = -1;
       }
    }
 
@@ -371,26 +419,31 @@ st_translate_fragment_program(struct st_context *st,
       }
    }
 
-   if (!inputMapping)
-      inputMapping = defaultInputMapping;
+   ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
+   if (ureg == NULL)
+      return;
 
-   stfp->state.tokens = 
+
+   error = 
       st_translate_mesa_program(st->ctx,
                                 TGSI_PROCESSOR_FRAGMENT,
+                                ureg,
                                 &stfp->Base.Base,
                                 /* inputs */
                                 fs_num_inputs,
                                 inputMapping,
-                                stfp->input_semantic_name,
-                                stfp->input_semantic_index,
+                                input_semantic_name,
+                                input_semantic_index,
                                 interpMode,
                                 /* outputs */
                                 fs_num_outputs,
                                 outputMapping,
                                 fs_output_semantic_name,
-                                fs_output_semantic_index );
+                                fs_output_semantic_index, FALSE );
 
-   stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->state);
+   stfp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
+   ureg_destroy( ureg );
+   stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->tgsi);
 
    if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
       _mesa_print_program(&stfp->Base.Base);
@@ -398,7 +451,7 @@ st_translate_fragment_program(struct st_context *st,
    }
 
    if (ST_DEBUG & DEBUG_TGSI) {
-      tgsi_dump( stfp->state.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
+      tgsi_dump( stfp->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
       debug_printf("\n");
    }
 }

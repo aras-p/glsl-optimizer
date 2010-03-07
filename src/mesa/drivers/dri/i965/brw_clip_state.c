@@ -32,7 +32,6 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "main/macros.h"
 
 struct brw_clip_unit_key {
    unsigned int total_grf;
@@ -74,6 +73,7 @@ static dri_bo *
 clip_unit_create_from_key(struct brw_context *brw,
 			  struct brw_clip_unit_key *key)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_clip_unit_state clip;
    dri_bo *bo;
 
@@ -105,7 +105,7 @@ clip_unit_create_from_key(struct brw_context *brw,
       /* Although up to 16 concurrent Clip threads are allowed on IGDNG, 
        * only 2 threads can output VUEs at a time.
        */
-      if (BRW_IS_IGDNG(brw))
+      if (intel->is_ironlake)
          clip.thread4.max_threads = 16 - 1;        
       else
          clip.thread4.max_threads = 2 - 1;
@@ -130,7 +130,7 @@ clip_unit_create_from_key(struct brw_context *brw,
    clip.clip5.api_mode = BRW_CLIP_API_OGL;
    clip.clip5.clip_mode = key->clip_mode;
 
-   if (BRW_IS_G4X(brw))
+   if (intel->is_g4x)
       clip.clip5.negative_w_clip_test = 1;
 
    clip.clip6.clipper_viewport_state_ptr = 0;
@@ -142,8 +142,7 @@ clip_unit_create_from_key(struct brw_context *brw,
    bo = brw_upload_cache(&brw->cache, BRW_CLIP_UNIT,
 			 key, sizeof(*key),
 			 &brw->clip.prog_bo, 1,
-			 &clip, sizeof(clip),
-			 NULL, NULL);
+			 &clip, sizeof(clip));
 
    /* Emit clip program relocation */
    assert(brw->clip.prog_bo);

@@ -1,11 +1,4 @@
-Import('env')
-
-if not env['GLUT']:
-    Return()
-
-env = env.Clone()
-
-env.Prepend(LIBS = ['$GLUT_LIB'])
+Import('*')
 
 progs = [
       'copytex',
@@ -21,7 +14,7 @@ progs = [
 ]
 
 for prog in progs:
-    env.Program(
+    progs_env.Program(
         target = prog,
         source = [
             prog + '.c',

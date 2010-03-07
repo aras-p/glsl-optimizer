@@ -22,7 +22,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm1000 "
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang,../../../../src/mesa/shader/grammar"
+				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang"
 				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,_DLL,BUILD_GL32,MESA_MINWARN"
 				StringPooling="TRUE"
 				RuntimeLibrary="4"
@@ -74,7 +74,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm1000 "
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang,../../../../src/mesa/shader/grammar"
+				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang"
 				PreprocessorDefinitions="_DEBUG,WIN32,_LIB,_DLL,BUILD_GL32,MESA_MINWARN"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="5"
@@ -182,9 +182,6 @@
 				RelativePath="..\..\..\..\src\mesa\main\depthstencil.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\dispatch.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\main\dlist.c">
 			</File>
 			<File
@@ -227,34 +224,10 @@
 				RelativePath="..\..\..\..\src\mesa\glapi\glapi.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\glapi\glapi_dispatch.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glthread.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar.c">
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_crt.c">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_mesa.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\hash.c">
@@ -808,18 +781,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glthread.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_crt.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_mesa.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_syn.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\hash.h">

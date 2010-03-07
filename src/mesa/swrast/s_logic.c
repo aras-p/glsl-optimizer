@@ -182,33 +182,6 @@ logicop_uint4(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
 
 
 
-/*
- * Apply the current logic operator to a span of CI pixels.  This is only
- * used if the device driver can't do logic ops.
- */
-void
-_swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                        SWspan *span)
-{
-   GLuint dest[MAX_WIDTH];
-   GLuint *index = span->array->index;
-
-   ASSERT(span->end < MAX_WIDTH);
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
-
-   /* Read dest values from frame buffer */
-   if (span->arrayMask & SPAN_XY) {
-      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
-                         dest, sizeof(GLuint));
-   }
-   else {
-      rb->GetRow(ctx, rb, span->end, span->x, span->y, dest);
-   }
-
-   logicop_uint1(ctx, span->end, index, dest, span->array->mask);
-}
-
-
 /**
  * Apply the current logic operator to a span of RGBA pixels.
  * We can handle horizontal runs of pixels (spans) or arrays of x/y

@@ -1,3 +1,5 @@
+#include "util/u_format.h"
+
 #include "nv30_context.h"
 #include "nouveau/nouveau_util.h"
 
@@ -21,17 +23,17 @@ struct nv30_texture_format {
 
 static struct nv30_texture_format
 nv30_texture_formats[] = {
-	_(X8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,  ONE, X, Y, Z, W),
-	_(A8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(A1R5G5B5_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(A4R4G4B4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(R5G6B5_UNORM  , R5G6B5  ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
+	_(B8G8R8X8_UNORM, A8R8G8B8,   S1,   S1,   S1,  ONE, X, Y, Z, W),
+	_(B8G8R8A8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(B5G5R5A1_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(B4G4R4A4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(B5G6R5_UNORM  , R5G6B5  ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
 	_(L8_UNORM      , L8      ,   S1,   S1,   S1,  ONE, X, X, X, X),
 	_(A8_UNORM      , L8      , ZERO, ZERO, ZERO,   S1, X, X, X, X),
 	_(I8_UNORM      , L8      ,   S1,   S1,   S1,   S1, X, X, X, X),
-	_(A8L8_UNORM    , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y),
+	_(L8A8_UNORM    , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y),
 	_(Z16_UNORM     , R5G6B5  ,   S1,   S1,   S1,  ONE, X, X, X, X),
-	_(Z24S8_UNORM   , A8R8G8B8,   S1,   S1,   S1,  ONE, X, X, X, X),
+	_(S8Z24_UNORM   , A8R8G8B8,   S1,   S1,   S1,  ONE, X, X, X, X),
 	_(DXT1_RGB      , DXT1    ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
 	_(DXT1_RGBA     , DXT1    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	_(DXT3_RGBA     , DXT3    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
@@ -43,7 +45,6 @@ static struct nv30_texture_format *
 nv30_fragtex_format(uint pipe_format)
 {
 	struct nv30_texture_format *tf = nv30_texture_formats;
-	char fs[128];
 
 	while (tf->defined) {
 		if (tf->pipe == pipe_format)
@@ -51,7 +52,7 @@ nv30_fragtex_format(uint pipe_format)
 		tf++;
 	}
 
-	NOUVEAU_ERR("unknown texture format %s\n", pf_name(pipe_format));
+	NOUVEAU_ERR("unknown texture format %s\n", util_format_name(pipe_format));
 	return NULL;
 }
 
@@ -65,7 +66,7 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	struct nouveau_bo *bo = nouveau_bo(nv30mt->buffer);
 	struct nv30_texture_format *tf;
 	struct nouveau_stateobj *so;
-	uint32_t txf, txs , txp;
+	uint32_t txf, txs;
 	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
 	tf = nv30_fragtex_format(pt->format);
@@ -97,16 +98,9 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 		return NULL;
 	}
 
-	if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
-		txp = 0;
-	} else {
-		txp  = nv30mt->level[0].pitch;
-		txf |= (1<<13) /*FIXME: NV34TCL_TX_FORMAT_LINEAR ? */;
-	}
-
 	txs = tf->swizzle;
 
-	so = so_new(16, 2);
+	so = so_new(1, 8, 2);
 	so_method(so, nv30->screen->rankine, NV34TCL_TX_OFFSET(unit), 8);
 	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
 	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
@@ -135,7 +129,7 @@ nv30_fragtex_validate(struct nv30_context *nv30)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		so = so_new(2, 0);
+		so = so_new(1, 1, 0);
 		so_method(so, nv30->screen->rankine, NV34TCL_TX_ENABLE(unit), 1);
 		so_data  (so, 0);
 		so_ref(so, &nv30->state.hw[NV30_STATE_FRAGTEX0 + unit]);

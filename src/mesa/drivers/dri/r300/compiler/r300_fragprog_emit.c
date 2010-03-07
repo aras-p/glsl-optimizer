@@ -176,7 +176,9 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 			(inst->RGB.WriteMask << R300_ALU_DSTC_REG_MASK_SHIFT);
 	}
 	if (inst->RGB.OutputWriteMask) {
-		code->alu.inst[ip].rgb_addr |= (inst->RGB.OutputWriteMask << R300_ALU_DSTC_OUTPUT_MASK_SHIFT);
+		code->alu.inst[ip].rgb_addr |=
+            (inst->RGB.OutputWriteMask << R300_ALU_DSTC_OUTPUT_MASK_SHIFT) |
+            R300_RGB_TARGET(inst->RGB.Target);
 		emit->node_flags |= R300_RGBA_OUT;
 	}
 
@@ -187,7 +189,8 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 			R300_ALU_DSTA_REG;
 	}
 	if (inst->Alpha.OutputWriteMask) {
-		code->alu.inst[ip].alpha_addr |= R300_ALU_DSTA_OUTPUT;
+		code->alu.inst[ip].alpha_addr |= R300_ALU_DSTA_OUTPUT |
+            R300_ALPHA_TARGET(inst->Alpha.Target);
 		emit->node_flags |= R300_RGBA_OUT;
 	}
 	if (inst->Alpha.DepthWriteMask) {

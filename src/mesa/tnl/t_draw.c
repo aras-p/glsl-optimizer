@@ -26,17 +26,14 @@
  */
 
 #include "main/glheader.h"
+#include "main/condrender.h"
 #include "main/context.h"
 #include "main/imports.h"
-#include "main/state.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/enums.h"
 
 #include "t_context.h"
-#include "t_pipeline.h"
-#include "t_vp_build.h"
-#include "t_vertex.h"
 #include "tnl.h"
 
 
@@ -44,7 +41,7 @@
 static GLubyte *get_space(GLcontext *ctx, GLuint bytes)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLubyte *space = _mesa_malloc(bytes);
+   GLubyte *space = malloc(bytes);
    
    tnl->block[tnl->nr_blocks++] = space;
    return space;
@@ -56,7 +53,7 @@ static void free_space(GLcontext *ctx)
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint i;
    for (i = 0; i < tnl->nr_blocks; i++)
-      _mesa_free(tnl->block[i]);
+      free(tnl->block[i]);
    tnl->nr_blocks = 0;
 }
 
@@ -111,6 +108,22 @@ convert_bgra_to_float(const struct gl_client_array *input,
    }
 }
 
+static void
+convert_half_to_float(const struct gl_client_array *input,
+		      const GLubyte *ptr, GLfloat *fptr,
+		      GLuint count, GLuint sz)
+{
+   GLuint i, j;
+
+   for (i = 0; i < count; i++) {
+      GLhalfARB *in = (GLhalfARB *)ptr;
+
+      for (j = 0; j < sz; j++) {
+	 *fptr++ = _mesa_half_to_float(in[j]);
+      }
+      ptr += input->StrideB;
+   }
+}
 
 /* Adjust pointer to point at first requested element, convert to
  * floating point, populate VB->AttribPtr[].
@@ -157,6 +170,9 @@ static void _tnl_import_array( GLcontext *ctx,
 	 break;
       case GL_DOUBLE: 
 	 CONVERT(GLdouble, (GLfloat)); 
+	 break;
+      case GL_HALF_FLOAT:
+	 convert_half_to_float(input, ptr, fptr, count, sz);
 	 break;
       default:
 	 assert(0);
@@ -383,20 +399,26 @@ void _tnl_draw_prims( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    const GLuint TEST_SPLIT = 0;
    const GLint max = TEST_SPLIT ? 8 : tnl->vb.Size - MAX_CLIPPED_VERTICES;
-   GLuint max_basevertex = prim->basevertex;
+   GLint max_basevertex = prim->basevertex;
    GLuint i;
+
+   /* Mesa core state should have been validated already */
+   assert(ctx->NewState == 0x0);
+
+   if (!_mesa_check_conditional_render(ctx))
+      return; /* don't draw */
 
    for (i = 1; i < nr_prims; i++)
       max_basevertex = MAX2(max_basevertex, prim[i].basevertex);
 
    if (0)
    {
-      _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
+      printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
       for (i = 0; i < nr_prims; i++)
-	 _mesa_printf("prim %d: %s start %d count %d\n", i, 
-		      _mesa_lookup_enum_by_nr(prim[i].mode),
-		      prim[i].start,
-		      prim[i].count);
+	 printf("prim %d: %s start %d count %d\n", i, 
+		_mesa_lookup_enum_by_nr(prim[i].mode),
+		prim[i].start,
+		prim[i].count);
    }
 
    if (min_index) {
@@ -407,7 +429,7 @@ void _tnl_draw_prims( GLcontext *ctx,
 			_tnl_vbo_draw_prims );
       return;
    }
-   else if (max_index + max_basevertex > max) {
+   else if ((GLint)max_index + max_basevertex > max) {
       /* The software TNL pipeline has a fixed amount of storage for
        * vertices and it is necessary to split incoming drawing commands
        * if they exceed that limit.

@@ -97,7 +97,7 @@ driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
  * 
  * \internal
  * This function calls __DriverAPIRec::UnbindContext, and then decrements
- * __DRIdrawablePrivateRec::refcount which must be non-zero for a successful
+ * __DRIdrawableRec::refcount which must be non-zero for a successful
  * return.
  * 
  * While casting the opaque private pointers associated with the parameters
@@ -127,6 +127,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     /* Let driver unbind drawable from context */
     (*psp->DriverAPI.UnbindContext)(pcp);
 
+    assert(pdp);
     if (pdp->refcount == 0) {
 	/* ERROR!!! */
 	return GL_FALSE;
@@ -167,7 +168,7 @@ static int driBindContext(__DRIcontext *pcp,
 			  __DRIdrawable *pdp,
 			  __DRIdrawable *prp)
 {
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp = NULL;
 
     /* Bind the drawable to the context */
 
@@ -189,6 +190,7 @@ static int driBindContext(__DRIcontext *pcp,
     ** initialize the drawable information if has not been done before.
     */
 
+    assert(psp);
     if (!psp->dri2.enabled) {
 	if (pdp && !pdp->pStamp) {
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
@@ -220,7 +222,7 @@ static int driBindContext(__DRIcontext *pcp,
  *
  * \param pdp pointer to the private drawable information to update.
  * 
- * This function basically updates the __DRIdrawablePrivate struct's
+ * This function basically updates the __DRIdrawable struct's
  * cliprect information by calling \c __DRIinterfaceMethods::getDrawableInfo.
  * This is usually called by the DRI_VALIDATE_DRAWABLE_INFO macro which
  * compares the __DRIdrwablePrivate pStamp and lastStamp values.  If
@@ -228,10 +230,10 @@ static int driBindContext(__DRIcontext *pcp,
  * info.
  */
 void
-__driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
+__driUtilUpdateDrawableInfo(__DRIdrawable *pdp)
 {
-    __DRIscreenPrivate *psp = pdp->driScreenPriv;
-    __DRIcontextPrivate *pcp = pdp->driContextPriv;
+    __DRIscreen *psp = pdp->driScreenPriv;
+    __DRIcontext *pcp = pdp->driContextPriv;
     
     if (!pcp 
 	|| ((pdp != pcp->driDrawablePriv) && (pdp != pcp->driReadablePriv))) {
@@ -242,12 +244,12 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
     }
 
     if (pdp->pClipRects) {
-	_mesa_free(pdp->pClipRects); 
+	free(pdp->pClipRects); 
 	pdp->pClipRects = NULL;
     }
 
     if (pdp->pBackClipRects) {
-	_mesa_free(pdp->pBackClipRects); 
+	free(pdp->pBackClipRects); 
 	pdp->pBackClipRects = NULL;
     }
 
@@ -309,7 +311,7 @@ static void driReportDamage(__DRIdrawable *pdp,
  * \param drawablePrivate opaque pointer to the per-drawable private info.
  * 
  * \internal
- * This function calls __DRIdrawablePrivate::swapBuffers.
+ * This function calls __DRIdrawable::swapBuffers.
  * 
  * Is called directly from glXSwapBuffers().
  */
@@ -324,7 +326,7 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
     if (!dPriv->numClipRects)
         return;
 
-    rects = _mesa_malloc(sizeof(*rects) * dPriv->numClipRects);
+    rects = malloc(sizeof(*rects) * dPriv->numClipRects);
 
     if (!rects)
         return;
@@ -337,7 +339,7 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
     }
 
     driReportDamage(dPriv, rects, dPriv->numClipRects);
-    _mesa_free(rects);
+    free(rects);
 }
 
 static int driDrawableGetMSC( __DRIscreen *sPriv, __DRIdrawable *dPriv,
@@ -430,7 +432,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
      */
     (void) attrs;
 
-    pdp = _mesa_malloc(sizeof *pdp);
+    pdp = malloc(sizeof *pdp);
     if (!pdp) {
 	return NULL;
     }
@@ -457,7 +459,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
 
     if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, &config->modes,
 					renderType == GLX_PIXMAP_BIT)) {
-       _mesa_free(pdp);
+       free(pdp);
        return NULL;
     }
 
@@ -484,8 +486,11 @@ dri2CreateNewDrawable(__DRIscreen *screen,
     if (!pdraw)
     	return NULL;
 
-    pdraw->pClipRects = _mesa_malloc(sizeof *pdraw->pBackClipRects);
-    pdraw->pBackClipRects = _mesa_malloc(sizeof *pdraw->pBackClipRects);
+    pdraw->pClipRects = &pdraw->dri2.clipRect;
+    pdraw->pBackClipRects = &pdraw->dri2.clipRect;
+
+    pdraw->pStamp = &pdraw->dri2.stamp;
+    *pdraw->pStamp = pdraw->lastStamp + 1;
 
     return pdraw;
 }
@@ -497,7 +502,7 @@ static void dri_get_drawable(__DRIdrawable *pdp)
 	
 static void dri_put_drawable(__DRIdrawable *pdp)
 {
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp;
 
     if (pdp) {
 	pdp->refcount--;
@@ -506,15 +511,15 @@ static void dri_put_drawable(__DRIdrawable *pdp)
 
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
-	if (pdp->pClipRects) {
-	    _mesa_free(pdp->pClipRects);
+	if (pdp->pClipRects && pdp->pClipRects != &pdp->dri2.clipRect) {
+	    free(pdp->pClipRects);
 	    pdp->pClipRects = NULL;
 	}
-	if (pdp->pBackClipRects) {
-	    _mesa_free(pdp->pBackClipRects);
+	if (pdp->pBackClipRects && pdp->pClipRects != &pdp->dri2.clipRect) {
+	    free(pdp->pBackClipRects);
 	    pdp->pBackClipRects = NULL;
 	}
-	_mesa_free(pdp);
+	free(pdp);
     }
 }
 
@@ -544,7 +549,7 @@ driDestroyContext(__DRIcontext *pcp)
 {
     if (pcp) {
 	(*pcp->driScreenPriv->DriverAPI.DestroyContext)(pcp);
-	_mesa_free(pcp);
+	free(pcp);
     }
 }
 
@@ -560,7 +565,7 @@ driDestroyContext(__DRIcontext *pcp)
  *          success, or \c NULL on failure.
  * 
  * \internal
- * This function allocates and fills a __DRIcontextPrivateRec structure.  It
+ * This function allocates and fills a __DRIcontextRec structure.  It
  * performs some device independent initialization and passes all the
  * relevent information to __DriverAPIRec::CreateContext to create the
  * context.
@@ -574,13 +579,16 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     __DRIcontext *pcp;
     void * const shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
 
-    pcp = _mesa_malloc(sizeof *pcp);
+    pcp = malloc(sizeof *pcp);
     if (!pcp)
 	return NULL;
 
     pcp->driScreenPriv = psp;
     pcp->driDrawablePriv = NULL;
-
+    pcp->loaderPrivate = data;
+    
+    pcp->dri2.draw_stamp = 0;
+    pcp->dri2.read_stamp = 0;
     /* When the first context is created for a screen, initialize a "dummy"
      * context.
      */
@@ -596,7 +604,7 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     pcp->hHWContext = hwContext;
 
     if ( !(*psp->DriverAPI.CreateContext)(&config->modes, pcp, shareCtx) ) {
-        _mesa_free(pcp);
+        free(pcp);
         return NULL;
     }
 
@@ -650,7 +658,7 @@ static void driDestroyScreen(__DRIscreen *psp)
 	   (void)drmCloseOnce(psp->fd);
 	}
 
-	_mesa_free(psp);
+	free(psp);
     }
 }
 
@@ -669,6 +677,8 @@ setupLoaderExtensions(__DRIscreen *psp,
 	    psp->systemTime = (__DRIsystemTimeExtension *) extensions[i];
 	if (strcmp(extensions[i]->name, __DRI_DRI2_LOADER) == 0)
 	    psp->dri2.loader = (__DRIdri2LoaderExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_IMAGE_LOOKUP) == 0)
+	    psp->dri2.image = (__DRIimageLookupExtension *) extensions[i];
     }
 }
 
@@ -712,7 +722,7 @@ driCreateNewScreen(int scrn,
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
 
-    psp = _mesa_calloc(sizeof *psp);
+    psp = calloc(1, sizeof *psp);
     if (!psp)
 	return NULL;
 
@@ -757,7 +767,7 @@ driCreateNewScreen(int scrn,
 
     *driver_modes = driDriverAPI.InitScreen(psp);
     if (*driver_modes == NULL) {
-	_mesa_free(psp);
+	free(psp);
 	return NULL;
     }
 
@@ -779,7 +789,7 @@ dri2CreateNewScreen(int scrn, int fd,
     if (driDriverAPI.InitScreen2 == NULL)
         return NULL;
 
-    psp = _mesa_calloc(sizeof(*psp));
+    psp = calloc(1, sizeof(*psp));
     if (!psp)
 	return NULL;
 
@@ -801,7 +811,7 @@ dri2CreateNewScreen(int scrn, int fd,
     psp->DriverAPI = driDriverAPI;
     *driver_configs = driDriverAPI.InitScreen2(psp);
     if (*driver_configs == NULL) {
-	_mesa_free(psp);
+	free(psp);
 	return NULL;
     }
 
@@ -841,20 +851,12 @@ const __DRIlegacyExtension driLegacyExtension = {
     driCreateNewContext,
 };
 
-/** Legacy DRI interface */
+/** DRI2 interface */
 const __DRIdri2Extension driDRI2Extension = {
     { __DRI_DRI2, __DRI_DRI2_VERSION },
     dri2CreateNewScreen,
     dri2CreateNewDrawable,
     dri2CreateNewContext,
-};
-
-/* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
-    &driCoreExtension.base,
-    &driLegacyExtension.base,
-    &driDRI2Extension.base,
-    NULL
 };
 
 static int
@@ -871,7 +873,7 @@ driQueryFrameTracking(__DRIdrawable *dpriv,
    __DRIswapInfo   sInfo;
    int             status;
    int64_t         ust;
-   __DRIscreenPrivate *psp = dpriv->driScreenPriv;
+   __DRIscreen *psp = dpriv->driScreenPriv;
 
    status = dpriv->driScreenPriv->DriverAPI.GetSwapInfo( dpriv, & sInfo );
    if ( status == 0 ) {
@@ -921,14 +923,14 @@ const __DRIframeTrackingExtension driFrameTrackingExtension = {
  *       be possible to cache the sync rate?
  */
 float
-driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
+driCalculateSwapUsage( __DRIdrawable *dPriv, int64_t last_swap_ust,
 		       int64_t current_ust )
 {
    int32_t   n;
    int32_t   d;
    int       interval;
    float     usage = 1.0;
-   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
+   __DRIscreen *psp = dPriv->driScreenPriv;
 
    if ( (*psp->systemTime->getMSCRate)(dPriv, &n, &d, dPriv->loaderPrivate) ) {
       interval = (dPriv->swap_interval != 0) ? dPriv->swap_interval : 1;
@@ -953,6 +955,12 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
    }
    
    return usage;
+}
+
+void
+dri2InvalidateDrawable(__DRIdrawable *drawable)
+{
+    drawable->dri2.stamp++;
 }
 
 /*@}*/

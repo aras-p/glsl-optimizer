@@ -36,7 +36,6 @@
 
 #include "intel_screen.h"
 #include "intel_context.h"
-#include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
@@ -109,14 +108,12 @@ do_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   //   intelFlush(ctx);
-   LOCK_HARDWARE(intel);
+   /* intelFlush(ctx); */
+   intel_prepare_render(intel);
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
 						 intelImage->mt->region,
 						 INTEL_WRITE_PART);
-      const GLint orig_x = x;
-      const GLint orig_y = y;
       GLuint image_x, image_y;
       GLshort src_pitch;
 
@@ -126,19 +123,15 @@ do_copy_texsubimage(struct intel_context *intel,
 				     intelImage->face,
 				     0,
 				     &image_x, &image_y);
-      /* Update dst for clipped src.  Need to also clip the source rect. */
-      dstx += x - orig_x;
-      dsty += y - orig_y;
 
       /* Can't blit to tiled buffers with non-tile-aligned offset. */
       if (intelImage->mt->region->tiling == I915_TILING_Y) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
 
       if (ctx->ReadBuffer->Name == 0) {
 	 /* reading from a window, adjust x, y */
-	 const __DRIdrawablePrivate *dPriv = intel->driReadDrawable;
+	 const __DRIdrawable *dPriv = intel->driReadDrawable;
 	 y = dPriv->y + (dPriv->h - (y + height));
 	 x += dPriv->x;
 
@@ -160,21 +153,19 @@ do_copy_texsubimage(struct intel_context *intel,
 			     intelImage->mt->cpp,
 			     src_pitch,
 			     src->buffer,
-			     src->draw_offset,
+			     0,
 			     src->tiling,
 			     intelImage->mt->pitch,
 			     dst_bo,
 			     0,
 			     intelImage->mt->region->tiling,
-			     x, y, image_x + dstx, image_y + dsty,
+			     src->draw_x + x, src->draw_y + y,
+			     image_x + dstx, image_y + dsty,
 			     width, height,
 			     GL_COPY)) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
    }
-
-   UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
 }

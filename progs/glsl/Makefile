@@ -69,6 +69,9 @@ $(PROG_OBJS): $(UTIL_HEADERS)
 
 $(PROGS): $(UTIL_OBJS)
 
+.o:
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
 clean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~

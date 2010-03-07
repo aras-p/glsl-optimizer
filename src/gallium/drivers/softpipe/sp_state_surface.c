@@ -30,10 +30,12 @@
 
 #include "sp_context.h"
 #include "sp_state.h"
-#include "sp_surface.h"
 #include "sp_tile_cache.h"
 
 #include "draw/draw_context.h"
+
+#include "util/u_format.h"
+#include "util/u_inlines.h"
 
 
 /**
@@ -48,6 +50,8 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    uint i;
+
+   draw_flush(sp->draw);
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       /* check if changing cbuf */
@@ -80,8 +84,9 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       if (sp->framebuffer.zsbuf) {
          int depth_bits;
          double mrd;
-         depth_bits = pf_get_component_bits(sp->framebuffer.zsbuf->format,
-                                            PIPE_FORMAT_COMP_Z);
+         depth_bits = util_format_get_component_bits(sp->framebuffer.zsbuf->format,
+                                                     UTIL_FORMAT_COLORSPACE_ZS,
+                                                     0);
          if (depth_bits > 16) {
             mrd = 0.0000001;
          }

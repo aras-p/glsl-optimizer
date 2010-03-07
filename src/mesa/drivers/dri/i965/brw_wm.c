@@ -30,7 +30,6 @@
   */
              
 #include "brw_context.h"
-#include "brw_util.h"
 #include "brw_wm.h"
 #include "brw_state.h"
 
@@ -152,11 +151,11 @@ static void do_wm_prog( struct brw_context *brw,
           */
          return;
       }
-      c->instruction = _mesa_calloc(BRW_WM_MAX_INSN * sizeof(*c->instruction));
-      c->prog_instructions = _mesa_calloc(BRW_WM_MAX_INSN *
+      c->instruction = calloc(1, BRW_WM_MAX_INSN * sizeof(*c->instruction));
+      c->prog_instructions = calloc(1, BRW_WM_MAX_INSN *
 					  sizeof(*c->prog_instructions));
-      c->vreg = _mesa_calloc(BRW_WM_MAX_VREG * sizeof(*c->vreg));
-      c->refs = _mesa_calloc(BRW_WM_MAX_REF * sizeof(*c->refs));
+      c->vreg = calloc(1, BRW_WM_MAX_VREG * sizeof(*c->vreg));
+      c->refs = calloc(1, BRW_WM_MAX_REF * sizeof(*c->refs));
    } else {
       void *instruction = c->instruction;
       void *prog_instructions = c->prog_instructions;
@@ -199,12 +198,13 @@ static void do_wm_prog( struct brw_context *brw,
    program = brw_get_program(&c->func, &program_size);
 
    dri_bo_unreference(brw->wm.prog_bo);
-   brw->wm.prog_bo = brw_upload_cache( &brw->cache, BRW_WM_PROG,
-				       &c->key, sizeof(c->key),
-				       NULL, 0,
-				       program, program_size,
-				       &c->prog_data,
-				       &brw->wm.prog_data );
+   brw->wm.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_WM_PROG,
+						   &c->key, sizeof(c->key),
+						   NULL, 0,
+						   program, program_size,
+						   &c->prog_data,
+						   sizeof(c->prog_data),
+						   &brw->wm.prog_data);
 }
 
 
@@ -336,11 +336,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
     * drawable height in order to invert the Y axis.
     */
    if (fp->program.Base.InputsRead & FRAG_BIT_WPOS) {
-      if (brw->intel.driDrawable != NULL) {
-         key->origin_x = brw->intel.driDrawable->x;
-         key->origin_y = brw->intel.driDrawable->y;
-         key->drawable_height = brw->intel.driDrawable->h;
-      }
+      key->drawable_height = ctx->DrawBuffer->Height;
    }
 
    key->nr_color_regions = brw->state.nr_color_regions;

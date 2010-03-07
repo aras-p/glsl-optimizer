@@ -37,10 +37,9 @@
  */
 
 
-#include "lp_bld_type.h"
-#include "lp_bld_arit.h"
-#include "lp_bld_blend.h"
-#include "lp_bld_debug.h"
+#include "gallivm/lp_bld_type.h"
+#include "gallivm/lp_bld_blend.h"
+#include "gallivm/lp_bld_debug.h"
 #include "lp_test.h"
 
 
@@ -104,18 +103,18 @@ write_tsv_row(FILE *fp,
 
    fprintf(fp,
            "%s\t%s\t%s\t",
-           blend->rgb_func != blend->alpha_func ? "true" : "false",
-           blend->rgb_src_factor != blend->alpha_src_factor ? "true" : "false",
-           blend->rgb_dst_factor != blend->alpha_dst_factor ? "true" : "false");
+           blend->rt[0].rgb_func != blend->rt[0].alpha_func ? "true" : "false",
+           blend->rt[0].rgb_src_factor != blend->rt[0].alpha_src_factor ? "true" : "false",
+           blend->rt[0].rgb_dst_factor != blend->rt[0].alpha_dst_factor ? "true" : "false");
 
    fprintf(fp,
            "%s\t%s\t%s\t%s\t%s\t%s\n",
-           debug_dump_blend_func(blend->rgb_func, TRUE),
-           debug_dump_blend_factor(blend->rgb_src_factor, TRUE),
-           debug_dump_blend_factor(blend->rgb_dst_factor, TRUE),
-           debug_dump_blend_func(blend->alpha_func, TRUE),
-           debug_dump_blend_factor(blend->alpha_src_factor, TRUE),
-           debug_dump_blend_factor(blend->alpha_dst_factor, TRUE));
+           util_dump_blend_func(blend->rt[0].rgb_func, TRUE),
+           util_dump_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
+           util_dump_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
+           util_dump_blend_func(blend->rt[0].alpha_func, TRUE),
+           util_dump_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
+           util_dump_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
 
    fflush(fp);
 }
@@ -137,12 +136,12 @@ dump_blend_type(FILE *fp,
 
    fprintf(fp,
            " %s=%s %s=%s %s=%s %s=%s %s=%s %s=%s",
-           "rgb_func",         debug_dump_blend_func(blend->rgb_func, TRUE),
-           "rgb_src_factor",   debug_dump_blend_factor(blend->rgb_src_factor, TRUE),
-           "rgb_dst_factor",   debug_dump_blend_factor(blend->rgb_dst_factor, TRUE),
-           "alpha_func",       debug_dump_blend_func(blend->alpha_func, TRUE),
-           "alpha_src_factor", debug_dump_blend_factor(blend->alpha_src_factor, TRUE),
-           "alpha_dst_factor", debug_dump_blend_factor(blend->alpha_dst_factor, TRUE));
+           "rgb_func",         util_dump_blend_func(blend->rt[0].rgb_func, TRUE),
+           "rgb_src_factor",   util_dump_blend_factor(blend->rt[0].rgb_src_factor, TRUE),
+           "rgb_dst_factor",   util_dump_blend_factor(blend->rt[0].rgb_dst_factor, TRUE),
+           "alpha_func",       util_dump_blend_func(blend->rt[0].alpha_func, TRUE),
+           "alpha_src_factor", util_dump_blend_factor(blend->rt[0].alpha_src_factor, TRUE),
+           "alpha_dst_factor", util_dump_blend_factor(blend->rt[0].alpha_dst_factor, TRUE));
 
    fprintf(fp, " ...\n");
    fflush(fp);
@@ -401,13 +400,15 @@ compute_blend_ref(const struct pipe_blend_state *blend,
    double src_term[4];
    double dst_term[4];
 
-   compute_blend_ref_term(blend->rgb_src_factor, blend->alpha_src_factor, src, src, dst, con, src_term);
-   compute_blend_ref_term(blend->rgb_dst_factor, blend->alpha_dst_factor, dst, src, dst, con, dst_term);
+   compute_blend_ref_term(blend->rt[0].rgb_src_factor, blend->rt[0].alpha_src_factor,
+                          src, src, dst, con, src_term);
+   compute_blend_ref_term(blend->rt[0].rgb_dst_factor, blend->rt[0].alpha_dst_factor,
+                          dst, src, dst, con, dst_term);
 
    /*
     * Combine RGB terms
     */
-   switch (blend->rgb_func) {
+   switch (blend->rt[0].rgb_func) {
    case PIPE_BLEND_ADD:
       ADD_SAT(res[0], src_term[0], dst_term[0]); /* R */
       ADD_SAT(res[1], src_term[1], dst_term[1]); /* G */
@@ -440,7 +441,7 @@ compute_blend_ref(const struct pipe_blend_state *blend,
    /*
     * Combine A terms
     */
-   switch (blend->alpha_func) {
+   switch (blend->rt[0].alpha_func) {
    case PIPE_BLEND_ADD:
       ADD_SAT(res[3], src_term[3], dst_term[3]); /* A */
       break;
@@ -462,7 +463,7 @@ compute_blend_ref(const struct pipe_blend_state *blend,
 }
 
 
-ALIGN_STACK
+PIPE_ALIGN_STACK
 static boolean
 test_one(unsigned verbose,
          FILE *fp,
@@ -531,11 +532,11 @@ test_one(unsigned verbose,
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
       if(mode == AoS) {
-         ALIGN16_ATTRIB uint8_t src[LP_NATIVE_VECTOR_WIDTH/8];
-         ALIGN16_ATTRIB uint8_t dst[LP_NATIVE_VECTOR_WIDTH/8];
-         ALIGN16_ATTRIB uint8_t con[LP_NATIVE_VECTOR_WIDTH/8];
-         ALIGN16_ATTRIB uint8_t res[LP_NATIVE_VECTOR_WIDTH/8];
-         ALIGN16_ATTRIB uint8_t ref[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t src[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t dst[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t con[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t res[LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t ref[LP_NATIVE_VECTOR_WIDTH/8];
          int64_t start_counter = 0;
          int64_t end_counter = 0;
 
@@ -596,11 +597,11 @@ test_one(unsigned verbose,
 
       if(mode == SoA) {
          const unsigned stride = type.length*type.width/8;
-         ALIGN16_ATTRIB uint8_t src[4*LP_NATIVE_VECTOR_WIDTH/8];
-         ALIGN16_ATTRIB uint8_t dst[4*LP_NATIVE_VECTOR_WIDTH/8];
-         ALIGN16_ATTRIB uint8_t con[4*LP_NATIVE_VECTOR_WIDTH/8];
-         ALIGN16_ATTRIB uint8_t res[4*LP_NATIVE_VECTOR_WIDTH/8];
-         ALIGN16_ATTRIB uint8_t ref[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t src[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t dst[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t con[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t res[4*LP_NATIVE_VECTOR_WIDTH/8];
+         PIPE_ALIGN_VAR(16) uint8_t ref[4*LP_NATIVE_VECTOR_WIDTH/8];
          int64_t start_counter = 0;
          int64_t end_counter = 0;
          boolean mismatch;
@@ -806,14 +807,14 @@ test_all(unsigned verbose, FILE *fp)
                               continue;
 
                            memset(&blend, 0, sizeof blend);
-                           blend.blend_enable      = 1;
-                           blend.rgb_func          = *rgb_func;
-                           blend.rgb_src_factor    = *rgb_src_factor;
-                           blend.rgb_dst_factor    = *rgb_dst_factor;
-                           blend.alpha_func        = *alpha_func;
-                           blend.alpha_src_factor  = *alpha_src_factor;
-                           blend.alpha_dst_factor  = *alpha_dst_factor;
-                           blend.colormask         = PIPE_MASK_RGBA;
+                           blend.rt[0].blend_enable      = 1;
+                           blend.rt[0].rgb_func          = *rgb_func;
+                           blend.rt[0].rgb_src_factor    = *rgb_src_factor;
+                           blend.rt[0].rgb_dst_factor    = *rgb_dst_factor;
+                           blend.rt[0].alpha_func        = *alpha_func;
+                           blend.rt[0].alpha_src_factor  = *alpha_src_factor;
+                           blend.rt[0].alpha_dst_factor  = *alpha_dst_factor;
+                           blend.rt[0].colormask         = PIPE_MASK_RGBA;
 
                            if(!test_one(verbose, fp, &blend, mode, *type))
                              success = FALSE;
@@ -865,14 +866,14 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
       type = &blend_types[rand() % num_types];
 
       memset(&blend, 0, sizeof blend);
-      blend.blend_enable      = 1;
-      blend.rgb_func          = *rgb_func;
-      blend.rgb_src_factor    = *rgb_src_factor;
-      blend.rgb_dst_factor    = *rgb_dst_factor;
-      blend.alpha_func        = *alpha_func;
-      blend.alpha_src_factor  = *alpha_src_factor;
-      blend.alpha_dst_factor  = *alpha_dst_factor;
-      blend.colormask         = PIPE_MASK_RGBA;
+      blend.rt[0].blend_enable      = 1;
+      blend.rt[0].rgb_func          = *rgb_func;
+      blend.rt[0].rgb_src_factor    = *rgb_src_factor;
+      blend.rt[0].rgb_dst_factor    = *rgb_dst_factor;
+      blend.rt[0].alpha_func        = *alpha_func;
+      blend.rt[0].alpha_src_factor  = *alpha_src_factor;
+      blend.rt[0].alpha_dst_factor  = *alpha_dst_factor;
+      blend.rt[0].colormask         = PIPE_MASK_RGBA;
 
       if(!test_one(verbose, fp, &blend, mode, *type))
         success = FALSE;

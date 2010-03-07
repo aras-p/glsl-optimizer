@@ -273,7 +273,7 @@ Draw(void)
    glTranslatef(2, (i + 1) * (h + 2), 0);
    glRasterPos2i(8, 6);
    sprintf(s, "Internal Texture Format [f/F]: %s (%d of %lu)",
-           IntFormats[CurFormat].name, CurFormat + 1, NUM_INT_FORMATS);
+           IntFormats[CurFormat].name, CurFormat + 1, (unsigned long) NUM_INT_FORMATS);
    PrintString(s);
    glPopMatrix();
 

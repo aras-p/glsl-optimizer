@@ -51,6 +51,7 @@
 #include "clear.h"
 #include "clip.h"
 #include "colortab.h"
+#include "condrender.h"
 #include "context.h"
 #include "convolve.h"
 #include "depth.h"
@@ -65,14 +66,12 @@
 #if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
 #endif
-#include "ffvertex_prog.h"
 #include "framebuffer.h"
 #include "hint.h"
 #include "histogram.h"
 #include "imports.h"
 #include "light.h"
 #include "lines.h"
-#include "macros.h"
 #include "matrix.h"
 #include "multisample.h"
 #include "pixel.h"
@@ -82,7 +81,6 @@
 #include "queryobj.h"
 #include "readpix.h"
 #include "scissor.h"
-#include "state.h"
 #include "stencil.h"
 #include "texenv.h"
 #include "texgetimage.h"
@@ -99,8 +97,6 @@
 #endif
 #if FEATURE_NV_fragment_program
 #include "shader/nvprogram.h"
-#include "shader/program.h"
-#include "texenvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
 #include "shaders.h"
@@ -108,8 +104,7 @@
 #if FEATURE_ARB_sync
 #include "syncobj.h"
 #endif
-#include "debug.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 
@@ -746,4 +741,21 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* GL_ARB_vertex_array_object */
    SET_BindVertexArray(exec, _mesa_BindVertexArray);
    SET_GenVertexArrays(exec, _mesa_GenVertexArrays);
+
+   /* GL_EXT_draw_buffers2 */
+   SET_ColorMaskIndexedEXT(exec, _mesa_ColorMaskIndexed);
+   SET_GetBooleanIndexedvEXT(exec, _mesa_GetBooleanIndexedv);
+   SET_GetIntegerIndexedvEXT(exec, _mesa_GetIntegerIndexedv);
+   SET_EnableIndexedEXT(exec, _mesa_EnableIndexed);
+   SET_DisableIndexedEXT(exec, _mesa_DisableIndexed);
+   SET_IsEnabledIndexedEXT(exec, _mesa_IsEnabledIndexed);
+
+   /* GL_NV_conditional_render */
+   SET_BeginConditionalRenderNV(exec, _mesa_BeginConditionalRender);
+   SET_EndConditionalRenderNV(exec, _mesa_EndConditionalRender);
+
+#if FEATURE_OES_EGL_image
+   SET_EGLImageTargetTexture2DOES(exec, _mesa_EGLImageTargetTexture2DOES);
+   SET_EGLImageTargetRenderbufferStorageOES(exec, _mesa_EGLImageTargetRenderbufferStorageOES);
+#endif
 }

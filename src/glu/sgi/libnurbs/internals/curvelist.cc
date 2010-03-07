@@ -43,7 +43,6 @@
 #include "quilt.h"
 #include "curvelist.h"
 #include "curve.h"
-#include "nurbsconsts.h"
 #include "types.h"
 
 Curvelist::Curvelist( Quilt *quilts, REAL pta, REAL ptb )
@@ -54,20 +53,23 @@ Curvelist::Curvelist( Quilt *quilts, REAL pta, REAL ptb )
     range[0] = pta;
     range[1] = ptb;
     range[2] = ptb - pta;
+    needsSubdivision = 0;
+    stepsize = 0;
 }
 
 Curvelist::Curvelist( Curvelist &upper, REAL value )
 {
-    Curvelist &lower = *this;
     curve = 0;
     for( Curve *c = upper.curve; c; c = c->next )
 	curve = new Curve( *c, value, curve );
 
-    lower.range[0] = upper.range[0];
-    lower.range[1] = value;
-    lower.range[2] = value - upper.range[0];
+    range[0] = upper.range[0];
+    range[1] = value;
+    range[2] = value - upper.range[0];
     upper.range[0] = value;
     upper.range[2] = upper.range[1] - value;
+    needsSubdivision = 0;
+    stepsize = 0;
 }
 
 Curvelist::~Curvelist()

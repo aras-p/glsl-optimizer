@@ -135,7 +135,7 @@ fs_sse_run( const struct sp_fragment_shader *base,
    tgsi_set_exec_mask(machine, 1, 1, 1, 1);
 
    shader->func( machine,
-		 machine->Consts,
+                 (const float (*)[4])machine->Consts[0],
                  (const float (*)[4])shader->immediates,
 		 machine->InterpCoefs
 		 /*, &machine->QuadPos*/

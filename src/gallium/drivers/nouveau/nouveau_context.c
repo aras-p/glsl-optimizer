@@ -1,5 +1,5 @@
-#include <pipe/p_defines.h>
-#include <pipe/p_context.h>
+#include "pipe/p_defines.h"
+#include "pipe/p_context.h"
 
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nouveau_context.h"

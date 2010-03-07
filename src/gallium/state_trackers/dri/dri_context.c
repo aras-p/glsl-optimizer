@@ -44,9 +44,9 @@
 
 GLboolean
 dri_create_context(const __GLcontextModes * visual,
-		   __DRIcontextPrivate * cPriv, void *sharedContextPrivate)
+		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
-   __DRIscreenPrivate *sPriv = cPriv->driScreenPriv;
+   __DRIscreen *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
    struct dri_context *ctx = NULL;
    struct st_context *st_share = NULL;
@@ -69,13 +69,11 @@ dri_create_context(const __GLcontextModes * visual,
    driParseConfigFiles(&ctx->optionCache,
 		       &screen->optionCache, sPriv->myNum, "dri");
 
-   ctx->pipe = screen->api->create_context(screen->api, screen->pipe_screen);
+   ctx->pipe = screen->pipe_screen->context_create( screen->pipe_screen,
+						    ctx );
 
    if (ctx->pipe == NULL)
       goto fail;
-
-   /* used in dri_flush_frontbuffer */
-   ctx->pipe->priv = ctx;
 
    ctx->st = st_create_context(ctx->pipe, visual, st_share);
    if (ctx->st == NULL)
@@ -97,9 +95,15 @@ dri_create_context(const __GLcontextModes * visual,
 }
 
 void
-dri_destroy_context(__DRIcontextPrivate * cPriv)
+dri_destroy_context(__DRIcontext * cPriv)
 {
    struct dri_context *ctx = dri_context(cPriv);
+
+   /* note: we are freeing values and nothing more because
+    * driParseConfigFiles allocated values only - the rest
+    * is owned by screen optionCache.
+    */
+   FREE(ctx->optionCache.values);
 
    /* No particular reason to wait for command completion before
     * destroying a context, but it is probably worthwhile flushing it
@@ -116,7 +120,7 @@ dri_destroy_context(__DRIcontextPrivate * cPriv)
 }
 
 GLboolean
-dri_unbind_context(__DRIcontextPrivate * cPriv)
+dri_unbind_context(__DRIcontext * cPriv)
 {
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
@@ -133,9 +137,9 @@ dri_unbind_context(__DRIcontextPrivate * cPriv)
 }
 
 GLboolean
-dri_make_current(__DRIcontextPrivate * cPriv,
-		 __DRIdrawablePrivate * driDrawPriv,
-		 __DRIdrawablePrivate * driReadPriv)
+dri_make_current(__DRIcontext * cPriv,
+		 __DRIdrawable * driDrawPriv,
+		 __DRIdrawable * driReadPriv)
 {
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
@@ -162,10 +166,8 @@ dri_make_current(__DRIcontextPrivate * cPriv,
       if (__dri1_api_hooks) {
 	 dri1_update_drawables(ctx, draw, read);
       } else {
-	 if (driDrawPriv)
-	    dri_get_buffers(driDrawPriv);
-	 if (driDrawPriv != driReadPriv && driReadPriv)
-	    dri_get_buffers(driReadPriv);
+	 dri_update_buffer(ctx->pipe->screen,
+			   ctx->pipe->priv);
       }
    } else {
       st_make_current(NULL, NULL, NULL);

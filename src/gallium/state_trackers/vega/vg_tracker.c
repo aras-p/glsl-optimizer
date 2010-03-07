@@ -29,11 +29,15 @@
 #include "mask.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_screen.h"
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_rect.h"
+
+/* advertise OpenVG support */
+PUBLIC const int st_api_OpenVG = 1;
 
 static struct pipe_texture *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
@@ -47,7 +51,7 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
       templ.format = format;
    }
    else {
-      templ.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
    }
 
    templ.target = PIPE_TEXTURE_2D;
@@ -56,7 +60,7 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
    templ.depth0 = 1;
    templ.last_level = 0;
 
-   if (pf_get_component_bits(format, PIPE_FORMAT_COMP_S)) {
+   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
       templ.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
    } else {
       templ.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
@@ -182,15 +186,15 @@ struct st_framebuffer * st_create_framebuffer(const void *visual,
       if (stencilFormat == depthFormat)
          stfb->dsrb = st_new_renderbuffer_fb(stencilFormat);
       else
-         stfb->dsrb = st_new_renderbuffer_fb(PIPE_FORMAT_S8Z24_UNORM);
+         stfb->dsrb = st_new_renderbuffer_fb(PIPE_FORMAT_Z24S8_UNORM);
 
       /*### currently we always allocate it but it's possible it's
         not necessary if EGL_ALPHA_MASK_SIZE was 0
       */
       stfb->alpha_mask = 0;
 
-      stfb->init_width = width;
-      stfb->init_height = height;
+      stfb->width = width;
+      stfb->height = height;
       stfb->privateData = privateData;
    }
 
@@ -205,12 +209,12 @@ static void setup_new_alpha_mask(struct vg_context *ctx,
    struct pipe_texture *old_texture = stfb->alpha_mask;
 
    /*
-     we use PIPE_FORMAT_A8R8G8B8_UNORM because we want to render to
+     we use PIPE_FORMAT_B8G8R8A8_UNORM because we want to render to
      this texture and use it as a sampler, so while this wastes some
      space it makes both of those a lot simpler
    */
    stfb->alpha_mask =
-      create_texture(pipe, PIPE_FORMAT_A8R8G8B8_UNORM, width, height);
+      create_texture(pipe, PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
 
    if (!stfb->alpha_mask) {
       if (old_texture)
@@ -278,10 +282,13 @@ void st_resize_framebuffer(struct st_framebuffer *stfb,
 
    /* If this is a noop, exit early and don't do the clear, etc below.
     */
-   if (strb->width == width &&
-       strb->height == height &&
+   if (stfb->width == width &&
+       stfb->height == height &&
        state->zsbuf)
       return;
+
+   stfb->width = width;
+   stfb->height = height;
 
    if (strb->width != width || strb->height != height)
       st_renderbuffer_alloc_storage(ctx, strb,
@@ -320,7 +327,7 @@ void st_resize_framebuffer(struct st_framebuffer *stfb,
    setup_new_alpha_mask(ctx, stfb, width, height);
 
    pipe_texture_reference( &stfb->blend_texture, NULL );
-   stfb->blend_texture = create_texture(ctx->pipe, PIPE_FORMAT_A8R8G8B8_UNORM,
+   stfb->blend_texture = create_texture(ctx->pipe, PIPE_FORMAT_B8G8R8A8_UNORM,
                                         width, height);
 }
 
@@ -367,14 +374,15 @@ void st_unreference_framebuffer(struct st_framebuffer *stfb)
    /* FIXME */
 }
 
-void st_make_current(struct vg_context *st,
-                     struct st_framebuffer *draw,
-                     struct st_framebuffer *read)
+boolean st_make_current(struct vg_context *st,
+                        struct st_framebuffer *draw,
+                        struct st_framebuffer *read)
 {
    vg_set_current_context(st);
    if (st) {
       st->draw_buffer = draw;
    }
+   return VG_TRUE;
 }
 
 struct vg_context *st_get_current(void)
@@ -423,4 +431,9 @@ int st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
 int st_unbind_texture_surface(struct pipe_surface *ps, int target, int level)
 {
    return 0;
+}
+
+st_proc st_get_proc_address(const char *procname)
+{
+   return NULL;
 }

@@ -21,6 +21,7 @@ if 'python' in env['statetrackers']:
             'gdi32',
             'user32',
             'kernel32',
+            'ws2_32',
         ])
     else:
         env.Append(LIBS = [
@@ -28,20 +29,35 @@ if 'python' in env['statetrackers']:
             'X11',
         ])
 
+    sources = [
+        'gallium.i',
+        'st_device.c',
+        'st_sample.c',
+    ]
+
+    drivers = [
+        trace
+    ]
+
+    if 'llvmpipe' in env['drivers']:
+        env.Tool('llvm')
+        sources += ['st_llvmpipe_winsys.c']
+        drivers += [llvmpipe]
+    else:
+        sources += ['st_softpipe_winsys.c']
+        drivers += [softpipe]
+
     pyst = env.ConvenienceLibrary(
         target = 'pyst',
-        source = [
-            'gallium.i',
-            'st_device.c',
-            'st_sample.c',
-            'st_softpipe_winsys.c',
-        ],
+        source = sources,
     )
+
+    env['no_import_lib'] = 1
 
     env.SharedLibrary(
         target = '_gallium',
         source = [
             'st_hardpipe_winsys.c',
         ],
-        LIBS = [pyst, softpipe, trace] + auxiliaries + env['LIBS'],
+        LIBS = [pyst] + drivers + gallium + env['LIBS'],
     )

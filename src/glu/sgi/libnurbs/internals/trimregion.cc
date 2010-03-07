@@ -41,7 +41,6 @@
 #include "myassert.h"
 #include "mystdio.h"
 #include "trimregion.h"
-#include "backend.h"
 
 TrimRegion::TrimRegion( void )
 {

@@ -37,7 +37,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 
 #include "util/u_draw_quad.h"
@@ -248,12 +248,12 @@ VGboolean polygon_is_closed(struct polygon *p)
 static void set_blend_for_fill(struct pipe_blend_state *blend)
 {
    memset(blend, 0, sizeof(struct pipe_blend_state));
-   blend->colormask = 0; /*disable colorwrites*/
+   blend->rt[0].colormask = 0; /*disable colorwrites*/
 
-   blend->rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend->alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend->rgb_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-   blend->alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+   blend->rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend->rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+   blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
 }
 
 static void draw_polygon(struct vg_context *ctx,
@@ -293,6 +293,7 @@ static void draw_polygon(struct vg_context *ctx,
 
    /* tell pipe about the vertex attributes */
    velement.src_offset = 0;
+   velement.instance_divisor = 0;
    velement.vertex_buffer_index = 0;
    velement.src_format = PIPE_FORMAT_R32G32_FLOAT;
    velement.nr_components = COMPONENTS;
@@ -306,6 +307,7 @@ static void draw_polygon(struct vg_context *ctx,
 void polygon_fill(struct polygon *poly, struct vg_context *ctx)
 {
    struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_stencil_ref sr;
    struct pipe_blend_state blend;
    VGfloat bounds[4];
    VGfloat min_x, min_y, max_x, max_y;
@@ -324,6 +326,9 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
    set_blend_for_fill(&blend);
 
    memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
+   memset(&sr, 0, sizeof(struct pipe_stencil_ref));
+   /* only need a fixed 0. Rely on default or move it out at least? */
+   cso_set_stencil_ref(ctx->cso_context, &sr);
 
    cso_save_blend(ctx->cso_context);
    cso_save_depth_stencil_alpha(ctx->cso_context);
@@ -335,7 +340,6 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
       dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
       dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_INVERT;
       dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-      dsa.stencil[0].ref_value = 0;
       dsa.stencil[0].valuemask = ~0;
 
       cso_set_blend(ctx->cso_context, &blend);
@@ -351,7 +355,6 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
          dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_INCR_WRAP;
          dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-         dsa.stencil[0].ref_value = 0;
          dsa.stencil[0].valuemask = ~0;
 
          /* back */
@@ -361,7 +364,6 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
          dsa.stencil[1].zfail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[1].zpass_op = PIPE_STENCIL_OP_DECR_WRAP;
          dsa.stencil[1].func = PIPE_FUNC_ALWAYS;
-         dsa.stencil[1].ref_value = 0;
          dsa.stencil[1].valuemask = ~0;
 
          cso_set_blend(ctx->cso_context, &blend);
@@ -374,7 +376,6 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
 
          cso_save_rasterizer(ctx->cso_context);
          dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-         dsa.stencil[0].ref_value = 0;
          dsa.stencil[0].valuemask = ~0;
 
          raster.cull_mode = raster.front_winding ^ PIPE_WINDING_BOTH;
@@ -406,7 +407,6 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
    dsa.stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
    dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
    dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
-   dsa.stencil[0].ref_value = 0;
    dsa.stencil[0].valuemask = dsa.stencil[0].writemask;
    dsa.stencil[1].enabled = 0;
    memcpy(&dsa.depth, &ctx->state.g3d.dsa.depth,
@@ -424,6 +424,7 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
 {
    struct array *polys = polyarray->array;
    struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_stencil_ref sr;
    struct pipe_blend_state blend;
    VGfloat min_x = polyarray->min_x;
    VGfloat min_y = polyarray->min_y;
@@ -441,6 +442,9 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
    set_blend_for_fill(&blend);
 
    memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
+   memset(&sr, 0, sizeof(struct pipe_stencil_ref));
+   /* only need a fixed 0. Rely on default or move it out at least? */
+   cso_set_stencil_ref(ctx->cso_context, &sr);
 
    cso_save_blend(ctx->cso_context);
    cso_save_depth_stencil_alpha(ctx->cso_context);
@@ -452,7 +456,6 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
       dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
       dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_INVERT;
       dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-      dsa.stencil[0].ref_value = 0;
       dsa.stencil[0].valuemask = ~0;
 
       cso_set_blend(ctx->cso_context, &blend);
@@ -471,7 +474,6 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
          dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_INCR_WRAP;
          dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-         dsa.stencil[0].ref_value = 0;
          dsa.stencil[0].valuemask = ~0;
 
          /* back */
@@ -481,7 +483,6 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
          dsa.stencil[1].zfail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[1].zpass_op = PIPE_STENCIL_OP_DECR_WRAP;
          dsa.stencil[1].func = PIPE_FUNC_ALWAYS;
-         dsa.stencil[1].ref_value = 0;
          dsa.stencil[1].valuemask = ~0;
 
          cso_set_blend(ctx->cso_context, &blend);
@@ -497,7 +498,6 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
 
          cso_save_rasterizer(ctx->cso_context);
          dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
-         dsa.stencil[0].ref_value = 0;
          dsa.stencil[0].valuemask = ~0;
 
          raster.cull_mode = raster.front_winding ^ PIPE_WINDING_BOTH;
@@ -535,7 +535,6 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
    dsa.stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
    dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
    dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
-   dsa.stencil[0].ref_value = 0;
    dsa.stencil[0].valuemask = dsa.stencil[0].writemask;
    dsa.stencil[1].enabled = 0;
    memcpy(&dsa.depth, &ctx->state.g3d.dsa.depth,

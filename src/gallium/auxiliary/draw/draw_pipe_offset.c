@@ -63,7 +63,7 @@ static INLINE struct offset_stage *offset_stage( struct draw_stage *stage )
 static void do_offset_tri( struct draw_stage *stage,
 			   struct prim_header *header )
 {
-   const unsigned pos = stage->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(stage->draw);
    struct offset_stage *offset = offset_stage(stage);   
    float inv_det = 1.0f / header->det;
 
@@ -161,7 +161,7 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
 {
    struct offset_stage *offset = CALLOC_STRUCT(offset_stage);
    if (offset == NULL)
-      goto fail;
+      return NULL;
 
    draw_alloc_temp_verts( &offset->stage, 3 );
 
@@ -176,10 +176,4 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
    offset->stage.destroy = offset_destroy;
 
    return &offset->stage;
-
- fail:
-   if (offset)
-      offset->stage.destroy( &offset->stage );
-
-   return NULL;
 }

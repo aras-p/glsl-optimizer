@@ -269,7 +269,7 @@ void gld_Clear_DX8(
 	D3DRECT		d3dClearRect;
 
 	// TODO: Colourmask
-	const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
+	const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask[0];
 
 	if (!gld->pDev)
 		return;
@@ -426,10 +426,10 @@ void gld_NEW_COLOR(
 	_GLD_DX8_DEV(SetRenderState(gld->pDev, D3DRS_DESTBLEND, dest));
 
 	// Color mask
-	if (ctx->Color.ColorMask[0]) dwFlags |= D3DCOLORWRITEENABLE_RED;
-	if (ctx->Color.ColorMask[1]) dwFlags |= D3DCOLORWRITEENABLE_GREEN;
-	if (ctx->Color.ColorMask[2]) dwFlags |= D3DCOLORWRITEENABLE_BLUE;
-	if (ctx->Color.ColorMask[3]) dwFlags |= D3DCOLORWRITEENABLE_ALPHA;
+	if (ctx->Color.ColorMask[0][0]) dwFlags |= D3DCOLORWRITEENABLE_RED;
+	if (ctx->Color.ColorMask[0][1]) dwFlags |= D3DCOLORWRITEENABLE_GREEN;
+	if (ctx->Color.ColorMask[0][2]) dwFlags |= D3DCOLORWRITEENABLE_BLUE;
+	if (ctx->Color.ColorMask[0][3]) dwFlags |= D3DCOLORWRITEENABLE_ALPHA;
 	_GLD_DX8_DEV(SetRenderState(gld->pDev, D3DRS_COLORWRITEENABLE, dwFlags));
 }
 

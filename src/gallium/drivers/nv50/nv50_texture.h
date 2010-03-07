@@ -82,6 +82,7 @@
 #define NV50TIC_0_0_FMT_RGTC1                                     0x00000027
 #define NV50TIC_0_0_FMT_RGTC2                                     0x00000028
 #define NV50TIC_0_0_FMT_24_8                                      0x00000029
+#define NV50TIC_0_0_FMT_8_24                                      0x0000002a
 #define NV50TIC_0_0_FMT_32_DEPTH                                  0x0000002f
 #define NV50TIC_0_0_FMT_32_8                                      0x00000030
 

@@ -35,7 +35,6 @@
 
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_defines.h"
 
 /* Creates a new VS constant buffer reflecting the current VS program's
  * constants, if needed by the VS program.
@@ -68,13 +67,13 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
     */
    _mesa_load_state_parameters(&brw->intel.ctx, vp->program.Base.Parameters);
 
-   intel_bo_map_gtt_preferred(intel, const_buffer, GL_TRUE);
+   drm_intel_gem_bo_map_gtt(const_buffer);
    for (i = 0; i < params->NumParameters; i++) {
       memcpy(const_buffer->virtual + i * 4 * sizeof(float),
 	     params->ParameterValues[i],
 	     4 * sizeof(float));
    }
-   intel_bo_unmap_gtt_preferred(intel, const_buffer);
+   drm_intel_gem_bo_unmap_gtt(const_buffer);
 
    return const_buffer;
 }
@@ -156,7 +155,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
 
    if (bind_bo == NULL) {
       GLuint data_size = BRW_VS_MAX_SURF * sizeof(GLuint);
-      uint32_t *data = malloc(data_size);
+      uint32_t data[BRW_VS_MAX_SURF];
       int i;
 
       for (i = 0; i < BRW_VS_MAX_SURF; i++)
@@ -168,8 +167,7 @@ brw_vs_get_binding_table(struct brw_context *brw)
       bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
 				  NULL, 0,
 				  brw->vs.surf_bo, BRW_VS_MAX_SURF,
-				  data, data_size,
-				  NULL, NULL);
+				  data, data_size);
 
       /* Emit binding table relocations to surface state */
       for (i = 0; i < BRW_VS_MAX_SURF; i++) {
@@ -182,8 +180,6 @@ brw_vs_get_binding_table(struct brw_context *brw)
 				    I915_GEM_DOMAIN_INSTRUCTION, 0);
 	 }
       }
-
-      free(data);
    }
 
    return bind_bo;

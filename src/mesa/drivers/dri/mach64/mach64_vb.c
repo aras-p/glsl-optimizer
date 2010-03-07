@@ -42,7 +42,6 @@
 #include "mach64_vb.h"
 #include "mach64_ioctl.h"
 #include "mach64_tris.h"
-#include "mach64_state.h"
 
 
 #define MACH64_TEX1_BIT       0x1
@@ -620,7 +619,7 @@ void mach64InitVB( GLcontext *ctx )
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   mmesa->verts = (GLubyte *)ALIGN_MALLOC(size * 4 * 16, 32);
+   mmesa->verts = (GLubyte *)_mesa_align_malloc(size * 4 * 16, 32);
 
    {
       static int firsttime = 1;
@@ -636,7 +635,7 @@ void mach64FreeVB( GLcontext *ctx )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
    if (mmesa->verts) {
-      ALIGN_FREE(mmesa->verts);
+      _mesa_align_free(mmesa->verts);
       mmesa->verts = 0;
    }
 }

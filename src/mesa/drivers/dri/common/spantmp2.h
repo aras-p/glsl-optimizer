@@ -356,6 +356,63 @@
      } while (0)
 # endif
 
+#elif (SPANTMP_PIXEL_FMT == GL_BGR) && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
+
+/**
+ ** GL_BGR, GL_UNSIGNED_INT_8_8_8_8_REV
+ **
+ ** This is really for MESA_FORMAT_XRGB8888.  The spantmp code needs to be
+ ** kicked to the curb, and we need to just code-gen this.
+ **/
+
+#ifndef GET_VALUE
+#ifndef GET_PTR
+#define GET_PTR(_x, _y) (     buf + (_x) * 4 + (_y) * pitch)
+#endif
+
+#define GET_VALUE(_x, _y) *(volatile GLuint *)(GET_PTR(_x, _y))
+#define PUT_VALUE(_x, _y, _v) *(volatile GLuint *)(GET_PTR(_x, _y)) = (_v)
+#endif /* GET_VALUE */
+
+# define INIT_MONO_PIXEL(p, color)                       \
+     p = PACK_COLOR_8888(0xff, color[0], color[1], color[2])
+
+# define WRITE_RGBA(_x, _y, r, g, b, a)					\
+   PUT_VALUE(_x, _y, ((r << 16) |					\
+		      (g << 8) |					\
+		      (b << 0) |					\
+		      (0xff << 24)))
+
+#define WRITE_PIXEL(_x, _y, p) PUT_VALUE(_x, _y, p)
+
+# if defined( USE_X86_ASM )
+#  define READ_RGBA(rgba, _x, _y)                                       \
+    do {                                                                \
+       GLuint p = GET_VALUE(_x, _y);					\
+       __asm__ __volatile__( "bswap	%0; rorl $8, %0"                \
+				: "=r" (p) : "0" (p) );                 \
+       ((GLuint *)rgba)[0] = p | 0xff000000;				\
+    } while (0)
+# elif defined( MESA_BIG_ENDIAN )
+    /* On PowerPC with GCC 3.4.2 the shift madness below becomes a single
+     * rotlwi instruction.  It also produces good code on SPARC.
+     */
+#  define READ_RGBA( rgba, _x, _y )				        \
+     do {								\
+        GLuint p = GET_VALUE(_x, _y);					\
+        *((uint32_t *) rgba) = (p << 8) | 0xff;				\
+     } while (0)
+# else
+#  define READ_RGBA( rgba, _x, _y )				        \
+     do {								\
+        GLuint p = GET_VALUE(_x, _y);					\
+	rgba[0] = (p >> 16) & 0xff;					\
+	rgba[1] = (p >>  8) & 0xff;					\
+	rgba[2] = (p >>  0) & 0xff;					\
+	rgba[3] = 0xff;							\
+     } while (0)
+# endif
+
 #else
 #error SPANTMP_PIXEL_FMT must be set to a valid value!
 #endif
@@ -748,7 +805,6 @@ static void TAG(ReadRGBAPixels)( GLcontext *ctx,
    HW_READ_LOCK()
       {
          GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
-         GLubyte *mask = NULL; /* remove someday */
 	 GLint i;
 	 LOCAL_VARS;
 
@@ -756,23 +812,11 @@ static void TAG(ReadRGBAPixels)( GLcontext *ctx,
 
 	 HW_READ_CLIPLOOP()
 	    {
-	       if (mask)
-	       {
-		  for (i=0;i<n;i++)
-		     if (mask[i]) {
-			int fy = Y_FLIP( y[i] );
-			if (CLIPPIXEL( x[i], fy ))
-			   READ_RGBA( rgba[i], x[i], fy );
-		     }
-	       }
-	       else
-	       {
-		  for (i=0;i<n;i++) {
-		     int fy = Y_FLIP( y[i] );
-		     if (CLIPPIXEL( x[i], fy ))
-			READ_RGBA( rgba[i], x[i], fy );
-		  }
-	       }
+               for (i=0;i<n;i++) {
+                  int fy = Y_FLIP( y[i] );
+                     if (CLIPPIXEL( x[i], fy ))
+                        READ_RGBA( rgba[i], x[i], fy );
+               }
 	    }
 	 HW_ENDCLIPLOOP();
       }

@@ -2,6 +2,7 @@
  * 
  * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009-2010 VMware, Inc.  All rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -1288,6 +1289,7 @@ emit_fetch(
          break;
 
       case TGSI_FILE_INPUT:
+      case TGSI_FILE_SYSTEM_VALUE:
          emit_inputf(
             func,
             xmm,
@@ -1417,13 +1419,13 @@ fetch_texel( struct tgsi_sampler **sampler,
                 sampler, *sampler,
                 store );
 
-   debug_printf("lodbias %f\n", store[12]);
-
    for (j = 0; j < 4; j++)
-      debug_printf("sample %d texcoord %f %f\n", 
+      debug_printf("sample %d texcoord %f %f %f lodbias %f\n",
                    j, 
                    store[0+j],
-                   store[4+j]);
+                   store[4+j],
+                   store[8 + j],
+                   store[12 + j]);
 #endif
 
    {
@@ -1432,7 +1434,8 @@ fetch_texel( struct tgsi_sampler **sampler,
                               &store[0],  /* s */
                               &store[4],  /* t */
                               &store[8],  /* r */
-                              store[12],  /* lodbias */
+                              &store[12], /* lodbias */
+                              tgsi_sampler_lod_bias,
                               rgba);      /* results */
 
       memcpy( store, rgba, 16 * sizeof(float));
@@ -2143,40 +2146,50 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_XPD:
+      /* Note: we do all stores after all operands have been fetched
+       * to avoid src/dst register aliasing issues for an instruction
+       * such as:  XPD TEMP[2].xyz, TEMP[0], TEMP[2];
+       */
       if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
-         FETCH( func, *inst, 1, 1, CHAN_Z );
-         FETCH( func, *inst, 3, 0, CHAN_Z );
+         FETCH( func, *inst, 1, 1, CHAN_Z ); /* xmm[1] = src[1].z */
+         FETCH( func, *inst, 3, 0, CHAN_Z ); /* xmm[3] = src[0].z */
       }
       if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
-         FETCH( func, *inst, 0, 0, CHAN_Y );
-         FETCH( func, *inst, 4, 1, CHAN_Y );
+         FETCH( func, *inst, 0, 0, CHAN_Y ); /* xmm[0] = src[0].y */
+         FETCH( func, *inst, 4, 1, CHAN_Y ); /* xmm[4] = src[1].y */
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) {
-         emit_MOV( func, 2, 0 );
-         emit_mul( func, 2, 1 );
-         emit_MOV( func, 5, 3 );
-         emit_mul( func, 5, 4 );
-         emit_sub( func, 2, 5 );
-         STORE( func, *inst, 2, 0, CHAN_X );
+         emit_MOV( func, 7, 0 );  /* xmm[7] = xmm[0] */
+         emit_mul( func, 7, 1 );  /* xmm[7] = xmm[2] * xmm[1] */
+         emit_MOV( func, 5, 3 );  /* xmm[5] = xmm[3] */
+         emit_mul( func, 5, 4 );  /* xmm[5] = xmm[5] * xmm[4] */
+         emit_sub( func, 7, 5 );  /* xmm[7] = xmm[2] - xmm[5] */
+         /* store xmm[7] in dst.x below */
       }
       if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ||
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
-         FETCH( func, *inst, 2, 1, CHAN_X );
-         FETCH( func, *inst, 5, 0, CHAN_X );
+         FETCH( func, *inst, 2, 1, CHAN_X ); /* xmm[2] = src[1].x */
+         FETCH( func, *inst, 5, 0, CHAN_X ); /* xmm[5] = src[0].x */
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) {
-         emit_mul( func, 3, 2 );
-         emit_mul( func, 1, 5 );
-         emit_sub( func, 3, 1 );
-         STORE( func, *inst, 3, 0, CHAN_Y );
+         emit_mul( func, 3, 2 );  /* xmm[3] = xmm[3] * xmm[2] */
+         emit_mul( func, 1, 5 );  /* xmm[1] = xmm[1] * xmm[5] */
+         emit_sub( func, 3, 1 );  /* xmm[3] = xmm[3] - xmm[1] */
+         /* store xmm[3] in dst.y below */
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) {
-         emit_mul( func, 5, 4 );
-         emit_mul( func, 0, 2 );
-         emit_sub( func, 5, 0 );
-         STORE( func, *inst, 5, 0, CHAN_Z );
+         emit_mul( func, 5, 4 );  /* xmm[5] = xmm[5] * xmm[4] */
+         emit_mul( func, 0, 2 );  /* xmm[0] = xmm[0] * xmm[2] */
+         emit_sub( func, 5, 0 );  /* xmm[5] = xmm[5] - xmm[0] */
+         STORE( func, *inst, 5, 0, CHAN_Z ); /* dst.z = xmm[5] */
+      }
+      IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) {
+         STORE( func, *inst, 7, 0, CHAN_X ); /* dst.x = xmm[7] */
+      }
+      IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) {
+         STORE( func, *inst, 3, 0, CHAN_Y ); /* dst.y = xmm[3] */
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) {
 	 emit_tempf(
@@ -2505,7 +2518,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      emit_tex( func, inst, TRUE, FALSE );
+      return 0;
       break;
 
    case TGSI_OPCODE_TXP:
@@ -2577,7 +2590,7 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       return 0;
       break;
 
@@ -2633,7 +2646,8 @@ emit_declaration(
    struct x86_function *func,
    struct tgsi_full_declaration *decl )
 {
-   if( decl->Declaration.File == TGSI_FILE_INPUT ) {
+   if( decl->Declaration.File == TGSI_FILE_INPUT ||
+       decl->Declaration.File == TGSI_FILE_SYSTEM_VALUE ) {
       unsigned first, last, mask;
       unsigned i, j;
 
@@ -2951,6 +2965,9 @@ tgsi_emit_sse2(
 #endif
             num_immediates++;
          }
+         break;
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         /* we just ignore them for now */
          break;
 
       default:

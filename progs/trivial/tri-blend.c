@@ -81,7 +81,7 @@ static void drawRightTriangle(void)
    glDisable (GL_BLEND);
 }
 
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT);
 
@@ -97,7 +97,7 @@ void display(void)
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -109,7 +109,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 't':

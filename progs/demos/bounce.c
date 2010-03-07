@@ -192,10 +192,8 @@ visible(int vis)
 
 int main(int argc, char *argv[])
 {
-  glutInit(&argc, argv);
-  glutInitWindowPosition(0, 0);
   glutInitWindowSize(600, 450);
-
+  glutInit(&argc, argv);
 
   IndexMode = argc > 1 && strcmp(argv[1], "-ci") == 0;
   if (IndexMode)

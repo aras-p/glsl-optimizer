@@ -1,7 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -55,6 +55,7 @@ struct tgsi_processor
 #define TGSI_TOKEN_TYPE_DECLARATION    0
 #define TGSI_TOKEN_TYPE_IMMEDIATE      1
 #define TGSI_TOKEN_TYPE_INSTRUCTION    2
+#define TGSI_TOKEN_TYPE_PROPERTY       3
 
 struct tgsi_token
 {
@@ -64,16 +65,17 @@ struct tgsi_token
 };
 
 enum tgsi_file_type {
-   TGSI_FILE_NULL        =0,
-   TGSI_FILE_CONSTANT    =1,
-   TGSI_FILE_INPUT       =2,
-   TGSI_FILE_OUTPUT      =3,
-   TGSI_FILE_TEMPORARY   =4,
-   TGSI_FILE_SAMPLER     =5,
-   TGSI_FILE_ADDRESS     =6,
-   TGSI_FILE_IMMEDIATE   =7,
-   TGSI_FILE_LOOP        =8,
-   TGSI_FILE_PREDICATE   =9,
+   TGSI_FILE_NULL         =0,
+   TGSI_FILE_CONSTANT     =1,
+   TGSI_FILE_INPUT        =2,
+   TGSI_FILE_OUTPUT       =3,
+   TGSI_FILE_TEMPORARY    =4,
+   TGSI_FILE_SAMPLER      =5,
+   TGSI_FILE_ADDRESS      =6,
+   TGSI_FILE_IMMEDIATE    =7,
+   TGSI_FILE_LOOP         =8,
+   TGSI_FILE_PREDICATE    =9,
+   TGSI_FILE_SYSTEM_VALUE =10,
    TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
 };
 
@@ -100,6 +102,11 @@ enum tgsi_file_type {
 #define TGSI_INTERPOLATE_PERSPECTIVE   2
 #define TGSI_INTERPOLATE_COUNT         3
 
+#define TGSI_CYLINDRICAL_WRAP_X (1 << 0)
+#define TGSI_CYLINDRICAL_WRAP_Y (1 << 1)
+#define TGSI_CYLINDRICAL_WRAP_Z (1 << 2)
+#define TGSI_CYLINDRICAL_WRAP_W (1 << 3)
+
 struct tgsi_declaration
 {
    unsigned Type        : 4;  /**< TGSI_TOKEN_TYPE_DECLARATION */
@@ -107,10 +114,11 @@ struct tgsi_declaration
    unsigned File        : 4;  /**< one of TGSI_FILE_x */
    unsigned UsageMask   : 4;  /**< bitmask of TGSI_WRITEMASK_x flags */
    unsigned Interpolate : 4;  /**< one of TGSI_INTERPOLATE_x */
+   unsigned Dimension   : 1;  /**< any extra dimension info? */
    unsigned Semantic    : 1;  /**< BOOL, any semantic info? */
    unsigned Centroid    : 1;  /**< centroid sampling? */
    unsigned Invariant   : 1;  /**< invariant optimization? */
-   unsigned Padding     : 5;
+   unsigned CylindricalWrap:4;   /**< TGSI_CYLINDRICAL_WRAP_x flags */
 };
 
 struct tgsi_declaration_range
@@ -119,15 +127,24 @@ struct tgsi_declaration_range
    unsigned Last    : 16; /**< UINT */
 };
 
-#define TGSI_SEMANTIC_POSITION 0
-#define TGSI_SEMANTIC_COLOR    1
-#define TGSI_SEMANTIC_BCOLOR   2 /**< back-face color */
-#define TGSI_SEMANTIC_FOG      3
-#define TGSI_SEMANTIC_PSIZE    4
-#define TGSI_SEMANTIC_GENERIC  5
-#define TGSI_SEMANTIC_NORMAL   6
-#define TGSI_SEMANTIC_FACE     7
-#define TGSI_SEMANTIC_COUNT    8 /**< number of semantic values */
+struct tgsi_declaration_dimension
+{
+   unsigned Index2D:16; /**< UINT */
+   unsigned Padding:16;
+};
+
+#define TGSI_SEMANTIC_POSITION   0
+#define TGSI_SEMANTIC_COLOR      1
+#define TGSI_SEMANTIC_BCOLOR     2  /**< back-face color */
+#define TGSI_SEMANTIC_FOG        3
+#define TGSI_SEMANTIC_PSIZE      4
+#define TGSI_SEMANTIC_GENERIC    5
+#define TGSI_SEMANTIC_NORMAL     6
+#define TGSI_SEMANTIC_FACE       7
+#define TGSI_SEMANTIC_EDGEFLAG   8
+#define TGSI_SEMANTIC_PRIMID     9
+#define TGSI_SEMANTIC_INSTANCEID 10
+#define TGSI_SEMANTIC_COUNT      11 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {
@@ -137,6 +154,8 @@ struct tgsi_declaration_semantic
 };
 
 #define TGSI_IMM_FLOAT32   0
+#define TGSI_IMM_UINT32    1
+#define TGSI_IMM_INT32     2
 
 struct tgsi_immediate
 {
@@ -149,6 +168,32 @@ struct tgsi_immediate
 union tgsi_immediate_data
 {
    float Float;
+   unsigned Uint;
+   int Int;
+};
+
+#define TGSI_PROPERTY_GS_INPUT_PRIM          0
+#define TGSI_PROPERTY_GS_OUTPUT_PRIM         1
+#define TGSI_PROPERTY_GS_MAX_VERTICES        2
+#define TGSI_PROPERTY_FS_COORD_ORIGIN        3
+#define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
+#define TGSI_PROPERTY_COUNT                  5
+
+struct tgsi_property {
+   unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */
+   unsigned NrTokens     : 8;  /**< UINT */
+   unsigned PropertyName : 8;  /**< one of TGSI_PROPERTY */
+   unsigned Padding      : 12;
+};
+
+#define TGSI_FS_COORD_ORIGIN_UPPER_LEFT 0
+#define TGSI_FS_COORD_ORIGIN_LOWER_LEFT 1
+
+#define TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER 0
+#define TGSI_FS_COORD_PIXEL_CENTER_INTEGER 1
+
+struct tgsi_property_data {
+   unsigned Data;
 };
 
 /* TGSI opcodes.  
@@ -244,7 +289,7 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_NOT                 85
 #define TGSI_OPCODE_TRUNC               86
 #define TGSI_OPCODE_SHL                 87
-#define TGSI_OPCODE_SHR                 88
+                                /* gap */
 #define TGSI_OPCODE_AND                 89
 #define TGSI_OPCODE_OR                  90
 #define TGSI_OPCODE_MOD                 91
@@ -269,7 +314,33 @@ union tgsi_immediate_data
 #define TGSI_OPCODE_KIL                 116  /* conditional kill */
 #define TGSI_OPCODE_END                 117  /* aka HALT */
                                 /* gap */
-#define TGSI_OPCODE_LAST                119
+#define TGSI_OPCODE_F2I                 119
+#define TGSI_OPCODE_IDIV                120
+#define TGSI_OPCODE_IMAX                121
+#define TGSI_OPCODE_IMIN                122
+#define TGSI_OPCODE_INEG                123
+#define TGSI_OPCODE_ISGE                124
+#define TGSI_OPCODE_ISHR                125
+#define TGSI_OPCODE_ISLT                126
+#define TGSI_OPCODE_F2U                 127
+#define TGSI_OPCODE_U2F                 128
+#define TGSI_OPCODE_UADD                129
+#define TGSI_OPCODE_UDIV                130
+#define TGSI_OPCODE_UMAD                131
+#define TGSI_OPCODE_UMAX                132
+#define TGSI_OPCODE_UMIN                133
+#define TGSI_OPCODE_UMOD                134
+#define TGSI_OPCODE_UMUL                135
+#define TGSI_OPCODE_USEQ                136
+#define TGSI_OPCODE_USGE                137
+#define TGSI_OPCODE_USHR                138
+#define TGSI_OPCODE_USLT                139
+#define TGSI_OPCODE_USNE                140
+#define TGSI_OPCODE_SWITCH              141
+#define TGSI_OPCODE_CASE                142
+#define TGSI_OPCODE_DEFAULT             143
+#define TGSI_OPCODE_ENDSWITCH           144
+#define TGSI_OPCODE_LAST                145
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

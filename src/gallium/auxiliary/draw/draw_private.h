@@ -48,8 +48,6 @@
 
 
 struct pipe_context;
-struct gallivm_prog;
-struct gallivm_cpu_engine;
 struct draw_vertex_shader;
 struct draw_context;
 struct draw_stage;
@@ -142,8 +140,6 @@ struct draw_context
 
       /* user-space vertex data, buffers */
       struct {
-         const unsigned *edgeflag;
-
          /** vertex element/index buffer (ex: glDrawElements) */
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
@@ -154,8 +150,9 @@ struct draw_context
          /** vertex arrays */
          const void *vbuffer[PIPE_MAX_ATTRIBS];
          
-         /** constant buffer (for vertex shader) */
-         const void *constants;
+         /** constant buffer (for vertex/geometry shader) */
+         const void *vs_constants[PIPE_MAX_CONSTANT_BUFFERS];
+         const void *gs_constants[PIPE_MAX_CONSTANT_BUFFERS];
       } user;
 
       boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
@@ -173,6 +170,8 @@ struct draw_context
 
    boolean force_passthrough; /**< never clip or shade */
 
+   boolean dump_vs;
+
    double mrd;  /**< minimum resolvable depth value, for polygon offset */
 
    /* pipe state that we need: */
@@ -184,6 +183,7 @@ struct draw_context
       struct draw_vertex_shader *vertex_shader;
       uint num_vs_outputs;  /**< convenience, from vertex_shader */
       uint position_output;
+      uint edgeflag_output;
 
       /** TGSI program interpreter runtime state */
       struct tgsi_exec_machine *machine;
@@ -191,19 +191,15 @@ struct draw_context
       uint num_samplers;
       struct tgsi_sampler **samplers;
 
-      /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
-       */
-      struct gallivm_cpu_engine *engine;   
-
       /* Here's another one:
        */
       struct aos_machine *aos_machine; 
 
 
-      const float (*aligned_constants)[4];
+      const void *aligned_constants[PIPE_MAX_CONSTANT_BUFFERS];
 
-      const float (*aligned_constant_storage)[4];
-      unsigned const_storage_size;
+      const void *aligned_constant_storage[PIPE_MAX_CONSTANT_BUFFERS];
+      unsigned const_storage_size[PIPE_MAX_CONSTANT_BUFFERS];
 
 
       struct translate *fetch;
@@ -211,6 +207,18 @@ struct draw_context
       struct translate *emit;
       struct translate_cache *emit_cache;
    } vs;
+
+   struct {
+      struct draw_geometry_shader *geometry_shader;
+      uint num_gs_outputs;  /**< convenience, from geometry_shader */
+      uint position_output;
+
+      /** TGSI program interpreter runtime state */
+      struct tgsi_exec_machine *machine;
+
+      uint num_samplers;
+      struct tgsi_sampler **samplers;
+   } gs;
 
    /* Clip derived state:
     */
@@ -223,9 +231,11 @@ struct draw_context
       uint semantic_name;
       uint semantic_index;
       int slot;
-   } extra_vp_outputs;
+   } extra_shader_outputs;
 
    unsigned reduced_prim;
+
+   unsigned instance_id;
 
    void *driver_private;
 };
@@ -240,12 +250,32 @@ void draw_vs_destroy( struct draw_context *draw );
 void draw_vs_set_viewport( struct draw_context *, 
                            const struct pipe_viewport_state * );
 
-void draw_vs_set_constants( struct draw_context *,
-                            const float (*constants)[4],
-                            unsigned size );
+void
+draw_vs_set_constants(struct draw_context *,
+                      unsigned slot,
+                      const void *constants,
+                      unsigned size);
 
 
 
+/*******************************************************************************
+ * Geometry shading code:
+ */
+boolean draw_gs_init( struct draw_context *draw );
+
+void
+draw_gs_set_constants(struct draw_context *,
+                      unsigned slot,
+                      const void *constants,
+                      unsigned size);
+
+void draw_gs_destroy( struct draw_context *draw );
+
+/*******************************************************************************
+ * Common shading code:
+ */
+uint draw_current_shader_outputs(const struct draw_context *draw);
+uint draw_current_shader_position_output(const struct draw_context *draw);
 
 /*******************************************************************************
  * Vertex processing (was passthrough) code:

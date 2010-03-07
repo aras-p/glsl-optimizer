@@ -71,12 +71,14 @@ static void refill_pool(struct memory_pool * pool)
 void * memory_pool_malloc(struct memory_pool * pool, unsigned int bytes)
 {
 	if (bytes < POOL_LARGE_ALLOC) {
+		void * ptr;
+
 		if (pool->head + bytes > pool->end)
 			refill_pool(pool);
 
 		assert(pool->head + bytes <= pool->end);
 
-		void * ptr = pool->head;
+		ptr = pool->head;
 
 		pool->head += bytes;
 		pool->head = (unsigned char*)(((unsigned long)pool->head + POOL_ALIGN - 1) & ~(POOL_ALIGN - 1));

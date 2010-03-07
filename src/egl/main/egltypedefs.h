@@ -20,16 +20,16 @@ typedef struct _egl_driver _EGLDriver;
 
 typedef struct _egl_extensions _EGLExtensions;
 
+typedef struct _egl_image _EGLImage;
+
 typedef struct _egl_mode _EGLMode;
+
+typedef struct _egl_resource _EGLResource;
 
 typedef struct _egl_screen _EGLScreen;
 
 typedef struct _egl_surface _EGLSurface;
 
 typedef struct _egl_thread_info _EGLThreadInfo;
-
-
-typedef _EGLDriver *(*_EGLMain_t)(const char *args);
-
 
 #endif /* EGLTYPEDEFS_INCLUDED */

@@ -35,17 +35,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_state.h"
 #include "sis_tris.h"
 #include "sis_lock.h"
-#include "sis_tex.h"
 
 #include "main/context.h"
-#include "main/enums.h"
-#include "main/colormac.h"
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
 
-#include "tnl/t_pipeline.h"
 
 /* =============================================================
  * Alpha blending

@@ -56,10 +56,7 @@ translate_texture_format(GLuint mesa_format, GLuint internal_format)
    case MESA_FORMAT_ARGB4444:
       return MAPSURF_16BIT | MT_16BIT_ARGB4444;
    case MESA_FORMAT_ARGB8888:
-      if (internal_format == GL_RGB)
-	 return MAPSURF_32BIT | MT_32BIT_XRGB8888;
-      else
-	 return MAPSURF_32BIT | MT_32BIT_ARGB8888;
+      return MAPSURF_32BIT | MT_32BIT_ARGB8888;
    case MESA_FORMAT_XRGB8888:
       return MAPSURF_32BIT | MT_32BIT_XRGB8888;
    case MESA_FORMAT_YCBCR_REV:
@@ -307,10 +304,10 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    }
 
    /* convert border color from float to ubyte */
-   CLAMPED_FLOAT_TO_UBYTE(border[0], tObj->BorderColor[0]);
-   CLAMPED_FLOAT_TO_UBYTE(border[1], tObj->BorderColor[1]);
-   CLAMPED_FLOAT_TO_UBYTE(border[2], tObj->BorderColor[2]);
-   CLAMPED_FLOAT_TO_UBYTE(border[3], tObj->BorderColor[3]);
+   CLAMPED_FLOAT_TO_UBYTE(border[0], tObj->BorderColor.f[0]);
+   CLAMPED_FLOAT_TO_UBYTE(border[1], tObj->BorderColor.f[1]);
+   CLAMPED_FLOAT_TO_UBYTE(border[2], tObj->BorderColor.f[2]);
+   CLAMPED_FLOAT_TO_UBYTE(border[3], tObj->BorderColor.f[3]);
 
    state[I830_TEXREG_TM0S4] = PACK_COLOR_8888(border[3],
 					      border[0],

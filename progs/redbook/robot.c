@@ -47,13 +47,13 @@
 
 static int shoulder = 0, elbow = 0;
 
-void init(void) 
+static void init(void) 
 {
   glClearColor (0.0, 0.0, 0.0, 0.0);
   glShadeModel (GL_FLAT);
 }
 
-void display(void)
+static void display(void)
 {
    glClear (GL_COLOR_BUFFER_BIT);
    glPushMatrix();
@@ -77,7 +77,7 @@ void display(void)
    glutSwapBuffers();
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h); 
    glMatrixMode (GL_PROJECTION);
@@ -89,7 +89,7 @@ void reshape (int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard (unsigned char key, int x, int y)
+static void keyboard (unsigned char key, int x, int y)
 {
    switch (key) {
       case 's':

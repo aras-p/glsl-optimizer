@@ -37,6 +37,7 @@ struct pipe_screen;
 struct llvmpipe_context;
 struct llvmpipe_displaytarget;
 
+
 struct llvmpipe_texture
 {
    struct pipe_texture base;
@@ -58,6 +59,7 @@ struct llvmpipe_texture
    unsigned timestamp;
 };
 
+
 struct llvmpipe_transfer
 {
    struct pipe_transfer base;
@@ -73,6 +75,14 @@ llvmpipe_texture(struct pipe_texture *pt)
    return (struct llvmpipe_texture *) pt;
 }
 
+
+static INLINE const struct llvmpipe_texture *
+llvmpipe_texture_const(const struct pipe_texture *pt)
+{
+   return (const struct llvmpipe_texture *) pt;
+}
+
+
 static INLINE struct llvmpipe_transfer *
 llvmpipe_transfer(struct pipe_transfer *pt)
 {
@@ -81,10 +91,7 @@ llvmpipe_transfer(struct pipe_transfer *pt)
 
 
 extern void
-llvmpipe_init_texture_funcs( struct llvmpipe_context *llvmpipe );
-
-extern void
 llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 
 
-#endif /* LP_TEXTURE */
+#endif /* LP_TEXTURE_H */

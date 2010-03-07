@@ -79,6 +79,19 @@ emit_immediate(struct tgsi_transform_context *ctx,
 }
 
 
+static void
+emit_property(struct tgsi_transform_context *ctx,
+              const struct tgsi_full_property *prop)
+{
+   uint ti = ctx->ti;
+
+   ti += tgsi_build_full_property(prop,
+                                  ctx->tokens_out + ti,
+                                  ctx->header,
+                                  ctx->max_tokens_out - ti);
+   ctx->ti = ti;
+}
+
 
 /**
  * Apply user-defined transformations to the input shader to produce
@@ -110,6 +123,7 @@ tgsi_transform_shader(const struct tgsi_token *tokens_in,
    ctx->emit_instruction = emit_instruction;
    ctx->emit_declaration = emit_declaration;
    ctx->emit_immediate = emit_immediate;
+   ctx->emit_property = emit_property;
    ctx->tokens_out = tokens_out;
    ctx->max_tokens_out = max_tokens_out;
 
@@ -180,6 +194,17 @@ tgsi_transform_shader(const struct tgsi_token *tokens_in,
                ctx->transform_immediate(ctx, fullimm);
             else
                ctx->emit_immediate(ctx, fullimm);
+         }
+         break;
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         {
+            struct tgsi_full_property *fullprop
+               = &parse.FullToken.FullProperty;
+
+            if (ctx->transform_property)
+               ctx->transform_property(ctx, fullprop);
+            else
+               ctx->emit_property(ctx, fullprop);
          }
          break;
 

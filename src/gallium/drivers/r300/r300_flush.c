@@ -29,7 +29,6 @@
 #include "r300_cs.h"
 #include "r300_emit.h"
 #include "r300_flush.h"
-#include "r300_state_invariant.h"
 
 static void r300_flush(struct pipe_context* pipe,
                        unsigned flags,
@@ -37,8 +36,10 @@ static void r300_flush(struct pipe_context* pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_query *query;
+    struct r300_atom *atom;
 
     CS_LOCALS(r300);
+    (void) cs_count;
     /* We probably need to flush Draw, but we may have been called from
      * within Draw. This feels kludgy, but it might be the best thing.
      *
@@ -51,10 +52,17 @@ static void r300_flush(struct pipe_context* pipe,
 
     if (r300->dirty_hw) {
         FLUSH_CS;
-        r300_emit_invariant_state(r300);
         r300->dirty_state = R300_NEW_KITCHEN_SINK;
         r300->dirty_hw = 0;
+
+        /* New kitchen sink, baby. */
+        foreach(atom, &r300->atom_list) {
+            if (atom->state) {
+                atom->dirty = TRUE;
+            }
+        }
     }
+
     /* reset flushed query */
     foreach(query, &r300->query_list) {
         query->flushed = TRUE;

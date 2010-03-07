@@ -38,7 +38,6 @@
 #include "mgaioctl.h"
 #include "mgatris.h"
 #include "mgavb.h"
-#include "mgastate.h"
 
 
 static void mgaRenderPrimitive( GLcontext *ctx, GLenum prim );
@@ -348,7 +347,6 @@ static struct {
 #define DO_POINTS    1
 #define DO_FULL_QUAD 1
 
-#define HAVE_RGBA         1
 #define HAVE_BACK_COLORS  0
 #define HAVE_SPEC         1
 #define HAVE_HW_FLATSHADE 0
@@ -397,7 +395,8 @@ do {						\
 
 #define LOCAL_VARS(n)					\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);		\
-   GLuint color[n], spec[n];				\
+   GLuint color[n] = { 0 };				\
+   GLuint spec[n] = { 0 };				\
    (void) color; (void) spec;
 
 

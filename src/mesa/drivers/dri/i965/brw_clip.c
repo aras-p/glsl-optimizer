@@ -50,6 +50,7 @@
 static void compile_clip_prog( struct brw_context *brw,
 			     struct brw_clip_prog_key *key )
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_clip_compile c;
    const GLuint *program;
    GLuint program_size;
@@ -65,14 +66,13 @@ static void compile_clip_prog( struct brw_context *brw,
    c.func.single_program_flow = 1;
 
    c.key = *key;
-   c.need_ff_sync = BRW_IS_IGDNG(brw);
 
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
    c.header_position_offset = ATTR_SIZE;
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
        delta = 3 * REG_SIZE;
    else
        delta = REG_SIZE;
@@ -85,7 +85,7 @@ static void compile_clip_prog( struct brw_context *brw,
 
    c.nr_attrs = brw_count_bits(c.key.attrs);
    
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
        c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
@@ -130,20 +130,22 @@ static void compile_clip_prog( struct brw_context *brw,
    /* Upload
     */
    dri_bo_unreference(brw->clip.prog_bo);
-   brw->clip.prog_bo = brw_upload_cache( &brw->cache,
-					 BRW_CLIP_PROG,
-					 &c.key, sizeof(c.key),
-					 NULL, 0,
-					 program, program_size,
-					 &c.prog_data,
-					 &brw->clip.prog_data );
+   brw->clip.prog_bo = brw_upload_cache_with_auxdata(&brw->cache,
+						     BRW_CLIP_PROG,
+						     &c.key, sizeof(c.key),
+						     NULL, 0,
+						     program, program_size,
+						     &c.prog_data,
+						     sizeof(c.prog_data),
+						     &brw->clip.prog_data);
 }
 
 /* Calculate interpolants for triangle and line rasterization.
  */
 static void upload_clip_prog(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+   GLcontext *ctx = &intel->ctx;
    struct brw_clip_prog_key key;
 
    memset(&key, 0, sizeof(key));
@@ -160,7 +162,7 @@ static void upload_clip_prog(struct brw_context *brw)
    /* _NEW_TRANSFORM */
    key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
        key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;
    else
        key.clip_mode = BRW_CLIPMODE_NORMAL;

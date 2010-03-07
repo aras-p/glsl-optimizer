@@ -37,7 +37,6 @@
 #define __gluarcsorter_h_
 
 #include "sorter.h"
-#include "arcsorter.h"
 
 class Arc;
 class Subdivider;

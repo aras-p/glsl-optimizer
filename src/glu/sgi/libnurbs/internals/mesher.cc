@@ -58,6 +58,9 @@ Mesher::Mesher( Backend& b )
 {
     stacksize = 0;
     vdata = 0;
+    last[0] = 0;
+    last[1] = 0;
+    itop = 0;
     lastedge = 0; //needed to prevent purify UMR 
 }
 

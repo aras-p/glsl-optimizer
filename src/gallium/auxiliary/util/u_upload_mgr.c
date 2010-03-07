@@ -30,7 +30,7 @@
  */
 
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
@@ -85,7 +85,9 @@ my_buffer_write(struct pipe_screen *screen,
 
    map = pipe_buffer_map_range(screen, buf, offset, size, 
                                PIPE_BUFFER_USAGE_CPU_WRITE |
-                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT);
+                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT |
+                               PIPE_BUFFER_USAGE_DISCARD |
+                               PIPE_BUFFER_USAGE_UNSYNCHRONIZED);
    if (map == NULL) 
       return PIPE_ERROR_OUT_OF_MEMORY;
 

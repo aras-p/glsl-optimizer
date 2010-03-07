@@ -32,7 +32,7 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 #include "util/u_memory.h"
 
 #include "rtasm_execmem.h"
@@ -41,6 +41,12 @@
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
+#if defined(PIPE_OS_WINDOWS)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN 1
+#endif
+#include <windows.h>
+#endif
 
 #if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
 
@@ -52,7 +58,7 @@
 
 #include <unistd.h>
 #include <sys/mman.h>
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 #include "util/u_mm.h"
 
 #define EXEC_HEAP_SIZE (10*1024*1024)
@@ -118,7 +124,29 @@ rtasm_exec_free(void *addr)
 }
 
 
-#else /* PIPE_OS_LINUX || PIPE_OS_BSD || PIPE_OS_SOLARIS */
+#elif defined(PIPE_OS_WINDOWS)
+
+
+/*
+ * Avoid Data Execution Prevention.
+ */
+
+void *
+rtasm_exec_malloc(size_t size)
+{
+   return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+}
+
+
+void
+rtasm_exec_free(void *addr)
+{
+   VirtualFree(addr, 0, MEM_RELEASE);
+}
+
+
+#else
+
 
 /*
  * Just use regular memory.
@@ -138,4 +166,4 @@ rtasm_exec_free(void *addr)
 }
 
 
-#endif /* PIPE_OS_LINUX || PIPE_OS_BSD || PIPE_OS_SOLARIS */
+#endif

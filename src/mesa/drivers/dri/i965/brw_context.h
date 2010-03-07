@@ -131,7 +131,6 @@ struct brw_context;
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_WM_SURFACES		0x1000
-#define BRW_NEW_FENCE                   0x2000
 #define BRW_NEW_INDICES			0x4000
 #define BRW_NEW_VERTICES		0x8000
 /**
@@ -283,6 +282,9 @@ struct brw_vs_ouput_sizes {
 
 
 enum brw_cache_id {
+   BRW_BLEND_STATE,
+   BRW_DEPTH_STENCIL_STATE,
+   BRW_COLOR_CALC_STATE,
    BRW_CC_VP,
    BRW_CC_UNIT,
    BRW_WM_PROG,
@@ -291,7 +293,7 @@ enum brw_cache_id {
    BRW_WM_UNIT,
    BRW_SF_PROG,
    BRW_SF_VP,
-   BRW_SF_UNIT,
+   BRW_SF_UNIT, /* scissor state on gen6 */
    BRW_VS_UNIT,
    BRW_VS_PROG,
    BRW_GS_UNIT,
@@ -332,7 +334,6 @@ struct brw_cache {
    struct brw_cache_item **items;
    GLuint size, n_items;
 
-   GLuint aux_size[BRW_MAX_CACHE];
    char *name[BRW_MAX_CACHE];
 
    /* Record of the last BOs chosen for each cache_id.  Used to set
@@ -356,6 +357,9 @@ struct brw_tracked_state {
 
 /* Flags for brw->state.cache.
  */
+#define CACHE_NEW_BLEND_STATE            (1<<BRW_BLEND_STATE)
+#define CACHE_NEW_DEPTH_STENCIL_STATE    (1<<BRW_DEPTH_STENCIL_STATE)
+#define CACHE_NEW_COLOR_CALC_STATE       (1<<BRW_COLOR_CALC_STATE)
 #define CACHE_NEW_CC_VP                  (1<<BRW_CC_VP)
 #define CACHE_NEW_CC_UNIT                (1<<BRW_CC_UNIT)
 #define CACHE_NEW_WM_PROG                (1<<BRW_WM_PROG)
@@ -438,7 +442,11 @@ struct brw_context
    GLuint primitive;
 
    GLboolean emit_state_always;
-
+   GLboolean has_surface_tile_offset;
+   GLboolean has_compr4;
+   GLboolean has_negative_rhw_bug;
+   GLboolean has_aa_line_parameters;
+;
    struct {
       struct brw_state_flags dirty;
 
@@ -514,6 +522,12 @@ struct brw_context
     */
    GLuint next_free_page;
 
+   /* hw-dependent 3DSTATE_VF_STATISTICS opcode */
+   uint32_t CMD_VF_STATISTICS;
+   /* hw-dependent 3DSTATE_PIPELINE_SELECT opcode */
+   uint32_t CMD_PIPELINE_SELECT;
+   int vs_max_threads;
+   int wm_max_threads;
 
    /* BRW_NEW_URB_ALLOCATIONS:
     */
@@ -530,7 +544,8 @@ struct brw_context
       GLuint nr_sf_entries;
       GLuint nr_cs_entries;
 
-/*       GLuint vs_size; */
+      /* gen6 */
+      GLuint vs_size;
 /*       GLuint gs_size; */
 /*       GLuint clip_size; */
 /*       GLuint sf_size; */
@@ -541,6 +556,7 @@ struct brw_context
       GLuint clip_start;
       GLuint sf_start;
       GLuint cs_start;
+      GLuint size; /* Hardware URB size, in KB. */
    } urb;
 
    
@@ -563,15 +579,11 @@ struct brw_context
 
       GLfloat *last_buf;
       GLuint last_bufsz;
-      /**
-       *  Whether we should create a new bo instead of reusing the old one
-       * (if we just dispatch the batch pointing at the old one.
-       */
-      GLboolean need_new_bo;
    } curbe;
 
    struct {
       struct brw_vs_prog_data *prog_data;
+      int8_t *constant_map; /* variable array following prog_data */
 
       dri_bo *prog_bo;
       dri_bo *state_bo;
@@ -638,9 +650,16 @@ struct brw_context
 
 
    struct {
+      /* gen4 */
       dri_bo *prog_bo;
-      dri_bo *state_bo;
       dri_bo *vp_bo;
+
+      /* gen6 */
+      dri_bo *blend_state_bo;
+      dri_bo *depth_stencil_state_bo;
+      dri_bo *color_calc_state_bo;
+
+      dri_bo *state_bo;
    } cc;
 
    struct {
@@ -668,7 +687,7 @@ void brwInitVtbl( struct brw_context *brw );
  * brw_context.c
  */
 GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
-			    __DRIcontextPrivate *driContextPriv,
+			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate);
 
 /*======================================================================

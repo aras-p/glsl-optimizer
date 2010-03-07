@@ -1,0 +1,294 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
+
+<!-- OpenGL ES 2.x API -->
+
+<OpenGLAPI>
+
+<xi:include href="base2_API.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- core subset of OpenGL 2.0 defined in OpenGL ES 2.0 -->
+<category name="core2.0">
+    <!-- addition to base1.0 -->
+    <enum name="NONE"                                     value="0x0"/>
+    <enum name="INT"                           count="4"  value="0x1404">
+        <size name="CallLists"/>
+    </enum>
+    <enum name="UNSIGNED_INT"                  count="4"  value="0x1405">
+        <size name="CallLists"/>
+    </enum>
+    <enum name="STENCIL_INDEX"                            value="0x1901"/>
+    <enum name="DEPTH_COMPONENT"                          value="0x1902"/>
+
+    <function name="TexImage2D" offset="183">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="internalformat" type="GLint"/> <!-- XXX the actual type is GLenum... -->
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="border" type="GLint"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_format="format" img_type="type" img_target="target" img_send_null="true" img_pad_dimensions="true"/>
+        <glx rop="110" large="true"/>
+    </function>
+
+    <!-- addition to base1.1 -->
+    <enum name="RGBA4"                                    value="0x8056"/>
+    <enum name="RGB5_A1"                                  value="0x8057"/>
+
+    <!-- addition to base1.2 -->
+    <enum name="CONSTANT_COLOR"                           value="0x8001"/>
+    <enum name="ONE_MINUS_CONSTANT_COLOR"                 value="0x8002"/>
+    <enum name="CONSTANT_ALPHA"                           value="0x8003"/>
+    <enum name="ONE_MINUS_CONSTANT_ALPHA"                 value="0x8004"/>
+    <enum name="BLEND_COLOR"                   count="4"  value="0x8005">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FUNC_ADD"                                 value="0x8006"/>
+    <enum name="BLEND_EQUATION"                count="1"  value="0x8009">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FUNC_SUBTRACT"                            value="0x800A"/>
+    <enum name="FUNC_REVERSE_SUBTRACT"                    value="0x800B"/>
+
+    <function name="BlendColor" offset="336">
+        <param name="red" type="GLclampf"/>
+        <param name="green" type="GLclampf"/>
+        <param name="blue" type="GLclampf"/>
+        <param name="alpha" type="GLclampf"/>
+        <glx rop="4096"/>
+    </function>
+
+    <function name="BlendEquation" offset="337">
+        <param name="mode" type="GLenum"/>
+        <glx rop="4097"/>
+    </function>
+
+    <!-- addition to base1.3 -->
+    <enum name="TEXTURE_CUBE_MAP"              count="1"  value="0x8513">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_BINDING_CUBE_MAP"      count="1"  value="0x8514">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_CUBE_MAP_POSITIVE_X"              value="0x8515"/>
+    <enum name="TEXTURE_CUBE_MAP_NEGATIVE_X"              value="0x8516"/>
+    <enum name="TEXTURE_CUBE_MAP_POSITIVE_Y"              value="0x8517"/>
+    <enum name="TEXTURE_CUBE_MAP_NEGATIVE_Y"              value="0x8518"/>
+    <enum name="TEXTURE_CUBE_MAP_POSITIVE_Z"              value="0x8519"/>
+    <enum name="TEXTURE_CUBE_MAP_NEGATIVE_Z"              value="0x851A"/>
+    <enum name="MAX_CUBE_MAP_TEXTURE_SIZE"     count="1"  value="0x851C">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <!-- addition to base1.4 -->
+    <enum name="BLEND_DST_RGB"                 count="1"  value="0x80C8">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_SRC_RGB"                 count="1"  value="0x80C9">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_DST_ALPHA"               count="1"  value="0x80CA">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="BLEND_SRC_ALPHA"               count="1"  value="0x80CB">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="DEPTH_COMPONENT16"                        value="0x81A5"/>
+    <enum name="MIRRORED_REPEAT"                          value="0x8370"/>
+    <enum name="INCR_WRAP"                                value="0x8507"/>
+    <enum name="DECR_WRAP"                                value="0x8508"/>
+
+    <function name="BlendFuncSeparate" offset="assign">
+        <param name="sfactorRGB" type="GLenum"/>
+        <param name="dfactorRGB" type="GLenum"/>
+        <param name="sfactorAlpha" type="GLenum"/>
+        <param name="dfactorAlpha" type="GLenum"/>
+        <glx rop="4134"/>
+    </function>
+
+    <!-- addition to base1.5 -->
+    <enum name="VERTEX_ATTRIB_ARRAY_BUFFER_BINDING" count="1" value="0x889F">
+        <size name="GetVertexAttribdv" mode="get"/>
+        <size name="GetVertexAttribfv" mode="get"/>
+        <size name="GetVertexAttribiv" mode="get"/>
+    </enum>
+    <enum name="STREAM_DRAW"                              value="0x88E0"/>
+
+    <!-- addition to base2.0 -->
+    <!-- base2.0 should have everything defined -->
+</category>
+
+<!-- OpenGL ES 2.0 -->
+<category name="es2.0">
+    <!-- addition to core2.0 -->
+    <enum name="LOW_FLOAT"                                    value="0x8DF0"/>
+    <enum name="MEDIUM_FLOAT"                                 value="0x8DF1"/>
+    <enum name="HIGH_FLOAT"                                   value="0x8DF2"/>
+    <enum name="LOW_INT"                                      value="0x8DF3"/>
+    <enum name="MEDIUM_INT"                                   value="0x8DF4"/>
+    <enum name="HIGH_INT"                                     value="0x8DF5"/>
+    <enum name="SHADER_BINARY_FORMATS"                        value="0x8DF8"/>
+    <enum name="NUM_SHADER_BINARY_FORMATS"                    value="0x8DF9"/>
+    <enum name="SHADER_COMPILER"                              value="0x8DFA"/>
+    <enum name="MAX_VERTEX_UNIFORM_VECTORS"                   value="0x8DFB"/>
+    <enum name="MAX_VARYING_VECTORS"                          value="0x8DFC"/>
+    <enum name="MAX_FRAGMENT_UNIFORM_VECTORS"                 value="0x8DFD"/>
+
+    <function name="GetShaderPrecisionFormat" offset="assign">
+        <param name="shadertype" type="GLenum"/>
+        <param name="precisiontype" type="GLenum"/>
+        <param name="range" type="GLint *"/>
+        <param name="precision" type="GLint *"/>
+    </function>
+
+    <function name="ReleaseShaderCompiler" offset="assign">
+    </function>
+
+    <function name="ShaderBinary" offset="assign">
+        <param name="n" type="GLsizei"/>
+        <param name="shaders" type="const GLuint *"/>
+        <param name="binaryformat" type="GLenum"/>
+        <param name="binary" type="const GLvoid *"/>
+        <param name="length" type="GLsizei"/>
+    </function>
+
+    <!-- from GL_OES_fixed_point -->
+    <enum name="FIXED"                                    value="0x140C"/>
+    <type name="fixed"   size="4"                                    />
+
+    <!-- from GL_OES_framebuffer_object -->
+    <enum name="INVALID_FRAMEBUFFER_OPERATION"                value="0x0506"/>
+    <enum name="MAX_RENDERBUFFER_SIZE"                        value="0x84E8"/>
+    <enum name="FRAMEBUFFER_BINDING"                          value="0x8CA6"/>
+    <enum name="RENDERBUFFER_BINDING"                         value="0x8CA7"/>
+    <enum name="FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE"           value="0x8CD0"/>
+    <enum name="FRAMEBUFFER_ATTACHMENT_OBJECT_NAME"           value="0x8CD1"/>
+    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL"         value="0x8CD2"/>
+    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE" value="0x8CD3"/>
+    <enum name="FRAMEBUFFER_COMPLETE"                         value="0x8CD5"/>
+    <enum name="FRAMEBUFFER_INCOMPLETE_ATTACHMENT"            value="0x8CD6"/>
+    <enum name="FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"    value="0x8CD7"/>
+    <enum name="FRAMEBUFFER_INCOMPLETE_DIMENSIONS"            value="0x8CD9"/>
+    <enum name="FRAMEBUFFER_UNSUPPORTED"                      value="0x8CDD"/>
+    <enum name="COLOR_ATTACHMENT0"                            value="0x8CE0"/>
+    <enum name="DEPTH_ATTACHMENT"                             value="0x8D00"/>
+    <enum name="STENCIL_ATTACHMENT"                           value="0x8D20"/>
+    <enum name="FRAMEBUFFER"                                  value="0x8D40"/>
+    <enum name="RENDERBUFFER"                                 value="0x8D41"/>
+    <enum name="RENDERBUFFER_WIDTH"                           value="0x8D42"/>
+    <enum name="RENDERBUFFER_HEIGHT"                          value="0x8D43"/>
+    <enum name="RENDERBUFFER_INTERNAL_FORMAT"                 value="0x8D44"/>
+    <enum name="STENCIL_INDEX8"                               value="0x8D48"/>
+    <enum name="RENDERBUFFER_RED_SIZE"                        value="0x8D50"/>
+    <enum name="RENDERBUFFER_GREEN_SIZE"                      value="0x8D51"/>
+    <enum name="RENDERBUFFER_BLUE_SIZE"                       value="0x8D52"/>
+    <enum name="RENDERBUFFER_ALPHA_SIZE"                      value="0x8D53"/>
+    <enum name="RENDERBUFFER_DEPTH_SIZE"                      value="0x8D54"/>
+    <enum name="RENDERBUFFER_STENCIL_SIZE"                    value="0x8D55"/>
+    <enum name="RGB565"                                       value="0x8D62"/>
+
+    <function name="BindFramebuffer" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="framebuffer" type="GLuint"/>
+    </function>
+
+    <function name="BindRenderbuffer" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="renderbuffer" type="GLuint"/>
+    </function>
+
+    <function name="CheckFramebufferStatus" offset="assign">
+        <param name="target" type="GLenum"/>
+	<return type="GLenum"/>
+    </function>
+
+    <function name="DeleteFramebuffers" offset="assign">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="framebuffers" type="const GLuint *" count="n"/>
+    </function>
+
+    <function name="DeleteRenderbuffers" offset="assign">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="renderbuffers" type="const GLuint *" count="n"/>
+    </function>
+
+    <function name="FramebufferRenderbuffer" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="attachment" type="GLenum"/>
+        <param name="renderbuffertarget" type="GLenum"/>
+        <param name="renderbuffer" type="GLuint"/>
+    </function>
+
+    <function name="FramebufferTexture2D" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="attachment" type="GLenum"/>
+        <param name="textarget" type="GLenum"/>
+        <param name="texture" type="GLuint"/>
+        <param name="level" type="GLint"/>
+    </function>
+
+    <function name="GenerateMipmap" offset="assign">
+        <param name="target" type="GLenum"/>
+    </function>
+
+    <function name="GenFramebuffers" offset="assign">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="framebuffers" type="GLuint *" count="n" output="true"/>
+    </function>
+
+    <function name="GenRenderbuffers" offset="assign">
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="renderbuffers" type="GLuint *" count="n" output="true"/>
+    </function>
+
+    <function name="GetFramebufferAttachmentParameteriv" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="attachment" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true"/>
+    </function>
+
+    <function name="GetRenderbufferParameteriv" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true"/>
+    </function>
+
+    <function name="IsFramebuffer" offset="assign">
+        <param name="framebuffer" type="GLuint"/>
+	<return type="GLboolean"/>
+    </function>
+
+    <function name="IsRenderbuffer" offset="assign">
+        <param name="renderbuffer" type="GLuint"/>
+	<return type="GLboolean"/>
+    </function>
+
+    <function name="RenderbufferStorage" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="internalformat" type="GLenum"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+    </function>
+
+    <!-- from GL_OES_read_format -->
+    <enum name="IMPLEMENTATION_COLOR_READ_TYPE"           value="0x8B9A"/>
+    <enum name="IMPLEMENTATION_COLOR_READ_FORMAT"         value="0x8B9B"/>
+
+    <!-- from GL_OES_single_precision -->
+    <function name="ClearDepthf" offset="assign">
+        <param name="depth" type="GLclampf"/>
+    </function>
+
+    <function name="DepthRangef" offset="assign">
+        <param name="zNear" type="GLclampf"/>
+        <param name="zFar" type="GLclampf"/>
+    </function>
+</category>
+
+<xi:include href="es2_EXT.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="es2_COMPAT.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+</OpenGLAPI>

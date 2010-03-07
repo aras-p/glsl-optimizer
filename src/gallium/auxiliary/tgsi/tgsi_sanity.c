@@ -26,31 +26,111 @@
  **************************************************************************/
 
 #include "util/u_debug.h"
+#include "util/u_memory.h"
+#include "util/u_prim.h"
+#include "cso_cache/cso_hash.h"
 #include "tgsi_sanity.h"
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"
 
-typedef uint reg_flag;
-
-#define BITS_IN_REG_FLAG (sizeof( reg_flag ) * 8)
-
-#define MAX_REGISTERS 1024
-#define MAX_REG_FLAGS ((MAX_REGISTERS + BITS_IN_REG_FLAG - 1) / BITS_IN_REG_FLAG)
+typedef struct {
+   uint file : 28;
+   /* max 2 dimensions */
+   uint dimensions : 4;
+   uint indices[2];
+} scan_register;
 
 struct sanity_check_ctx
 {
    struct tgsi_iterate_context iter;
+   struct cso_hash *regs_decl;
+   struct cso_hash *regs_used;
+   struct cso_hash *regs_ind_used;
 
-   reg_flag regs_decl[TGSI_FILE_COUNT][MAX_REG_FLAGS];
-   reg_flag regs_used[TGSI_FILE_COUNT][MAX_REG_FLAGS];
-   boolean regs_ind_used[TGSI_FILE_COUNT];
    uint num_imms;
    uint num_instructions;
    uint index_of_END;
 
    uint errors;
    uint warnings;
+   uint implied_array_size;
 };
+
+static INLINE unsigned
+scan_register_key(const scan_register *reg)
+{
+   unsigned key = reg->file;
+   key |= (reg->indices[0] << 4);
+   key |= (reg->indices[1] << 18);
+
+   return key;
+}
+
+static void
+fill_scan_register1d(scan_register *reg,
+                     uint file, uint index)
+{
+   reg->file = file;
+   reg->dimensions = 1;
+   reg->indices[0] = index;
+   reg->indices[1] = 0;
+}
+
+static void
+fill_scan_register2d(scan_register *reg,
+                     uint file, uint index1, uint index2)
+{
+   reg->file = file;
+   reg->dimensions = 2;
+   reg->indices[0] = index1;
+   reg->indices[1] = index2;
+}
+
+static void
+scan_register_dst(scan_register *reg,
+                  struct tgsi_full_dst_register *dst)
+{
+   fill_scan_register1d(reg,
+                        dst->Register.File,
+                        dst->Register.Index);
+}
+
+static void
+scan_register_src(scan_register *reg,
+                  struct tgsi_full_src_register *src)
+{
+   if (src->Register.Dimension) {
+      /*FIXME: right now we don't support indirect
+       * multidimensional addressing */
+      debug_assert(!src->Dimension.Indirect);
+      fill_scan_register2d(reg,
+                           src->Register.File,
+                           src->Register.Index,
+                           src->Dimension.Index);
+   } else {
+      fill_scan_register1d(reg,
+                           src->Register.File,
+                           src->Register.Index);
+   }
+}
+
+static scan_register *
+create_scan_register_src(struct tgsi_full_src_register *src)
+{
+   scan_register *reg = MALLOC(sizeof(scan_register));
+   scan_register_src(reg, src);
+
+   return reg;
+}
+
+static scan_register *
+create_scan_register_dst(struct tgsi_full_dst_register *dst)
+{
+   scan_register *reg = MALLOC(sizeof(scan_register));
+   scan_register_dst(reg, dst);
+
+   return reg;
+}
 
 static void
 report_error(
@@ -99,12 +179,12 @@ check_file_name(
 static boolean
 is_register_declared(
    struct sanity_check_ctx *ctx,
-   uint file,
-   int index )
+   const scan_register *reg)
 {
-   assert( index >= 0 && index < MAX_REGISTERS );
-
-   return (ctx->regs_decl[file][index / BITS_IN_REG_FLAG] & (1 << (index % BITS_IN_REG_FLAG))) ? TRUE : FALSE;
+   void *data = cso_hash_find_data_from_template(
+      ctx->regs_decl, scan_register_key(reg),
+      (void*)reg, sizeof(scan_register));
+   return  data ? TRUE : FALSE;
 }
 
 static boolean
@@ -112,23 +192,37 @@ is_any_register_declared(
    struct sanity_check_ctx *ctx,
    uint file )
 {
-   uint i;
+   struct cso_hash_iter iter =
+      cso_hash_first_node(ctx->regs_decl);
 
-   for (i = 0; i < MAX_REG_FLAGS; i++)
-      if (ctx->regs_decl[file][i])
+   while (!cso_hash_iter_is_null(iter)) {
+      scan_register *reg = (scan_register *)cso_hash_iter_data(iter);
+      if (reg->file == file)
          return TRUE;
+      iter = cso_hash_iter_next(iter);
+   }
+
    return FALSE;
 }
 
 static boolean
 is_register_used(
    struct sanity_check_ctx *ctx,
-   uint file,
-   int index )
+   scan_register *reg)
 {
-   assert( index < MAX_REGISTERS );
+   void *data = cso_hash_find_data_from_template(
+      ctx->regs_used, scan_register_key(reg),
+      reg, sizeof(scan_register));
+   return  data ? TRUE : FALSE;
+}
 
-   return (ctx->regs_used[file][index / BITS_IN_REG_FLAG] & (1 << (index % BITS_IN_REG_FLAG))) ? TRUE : FALSE;
+
+static boolean
+is_ind_register_used(
+   struct sanity_check_ctx *ctx,
+   scan_register *reg)
+{
+   return cso_hash_contains(ctx->regs_ind_used, reg->file);
 }
 
 static const char *file_names[TGSI_FILE_COUNT] =
@@ -148,31 +242,42 @@ static const char *file_names[TGSI_FILE_COUNT] =
 static boolean
 check_register_usage(
    struct sanity_check_ctx *ctx,
-   uint file,
-   int index,
+   scan_register *reg,
    const char *name,
    boolean indirect_access )
 {
-   if (!check_file_name( ctx, file ))
+   if (!check_file_name( ctx, reg->file )) {
+      FREE(reg);
       return FALSE;
+   }
 
    if (indirect_access) {
       /* Note that 'index' is an offset relative to the value of the
-       * address register.  No range checking done here.
-       */
-      if (!is_any_register_declared( ctx, file ))
-         report_error( ctx, "%s: Undeclared %s register", file_names[file], name );
-      ctx->regs_ind_used[file] = TRUE;
+       * address register.  No range checking done here.*/
+      reg->indices[0] = 0;
+      reg->indices[1] = 0;
+      if (!is_any_register_declared( ctx, reg->file ))
+         report_error( ctx, "%s: Undeclared %s register", file_names[reg->file], name );
+      if (!is_ind_register_used(ctx, reg))
+         cso_hash_insert(ctx->regs_ind_used, reg->file, reg);
+      else
+         FREE(reg);
    }
    else {
-      if (index < 0 || index >= MAX_REGISTERS) {
-         report_error( ctx, "%s[%d]: Invalid %s index", file_names[file], index, name );
-         return FALSE;
+      if (!is_register_declared( ctx, reg )) {
+         if (reg->dimensions == 2) {
+            report_error( ctx, "%s[%d][%d]: Undeclared %s register", file_names[reg->file],
+                          reg->indices[0], reg->indices[1], name );
+         }
+         else {
+            report_error( ctx, "%s[%d]: Undeclared %s register", file_names[reg->file],
+                          reg->indices[0], name );
+         }
       }
-
-      if (!is_register_declared( ctx, file, index ))
-         report_error( ctx, "%s[%d]: Undeclared %s register", file_names[file], index, name );
-      ctx->regs_used[file][index / BITS_IN_REG_FLAG] |= (1 << (index % BITS_IN_REG_FLAG));
+      if (!is_register_used( ctx, reg ))
+         cso_hash_insert(ctx->regs_used, scan_register_key(reg), reg);
+      else
+         FREE(reg);
    }
    return TRUE;
 }
@@ -210,35 +315,34 @@ iter_instruction(
     * Mark the registers as used.
     */
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
+      scan_register *reg = create_scan_register_dst(&inst->Dst[i]);
       check_register_usage(
          ctx,
-         inst->Dst[i].Register.File,
-         inst->Dst[i].Register.Index,
+         reg,
          "destination",
          FALSE );
+      if (!inst->Dst[i].Register.WriteMask) {
+         report_error(ctx, "Destination register has empty writemask");
+      }
    }
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
+      scan_register *reg = create_scan_register_src(&inst->Src[i]);
       check_register_usage(
          ctx,
-         inst->Src[i].Register.File,
-         inst->Src[i].Register.Index,
+         reg,
          "source",
          (boolean)inst->Src[i].Register.Indirect );
       if (inst->Src[i].Register.Indirect) {
-         uint file;
-         int index;
+         scan_register *ind_reg = MALLOC(sizeof(scan_register));
 
-         file = inst->Src[i].Indirect.File;
-         index = inst->Src[i].Indirect.Index;
+         fill_scan_register1d(ind_reg,
+                              inst->Src[i].Indirect.File,
+                              inst->Src[i].Indirect.Index);
          check_register_usage(
             ctx,
-            file,
-            index,
+            ind_reg,
             "indirect",
             FALSE );
-         if (!(file == TGSI_FILE_ADDRESS || file == TGSI_FILE_LOOP) || index != 0) {
-            report_warning(ctx, "Indirect register neither ADDR[0] nor LOOP[0]");
-         }
       }
    }
 
@@ -266,6 +370,19 @@ iter_instruction(
    return TRUE;
 }
 
+static void
+check_and_declare(struct sanity_check_ctx *ctx,
+                  scan_register *reg)
+{
+   if (is_register_declared( ctx, reg))
+      report_error( ctx, "%s[%u]: The same register declared more than once",
+                    file_names[reg->file], reg->indices[0] );
+   cso_hash_insert(ctx->regs_decl,
+                   scan_register_key(reg),
+                   reg);
+}
+
+
 static boolean
 iter_declaration(
    struct tgsi_iterate_context *iter,
@@ -287,9 +404,25 @@ iter_declaration(
    if (!check_file_name( ctx, file ))
       return TRUE;
    for (i = decl->Range.First; i <= decl->Range.Last; i++) {
-      if (is_register_declared( ctx, file, i ))
-         report_error( ctx, "%s[%u]: The same register declared more than once", file_names[file], i );
-      ctx->regs_decl[file][i / BITS_IN_REG_FLAG] |= (1 << (i % BITS_IN_REG_FLAG));
+      /* declared TGSI_FILE_INPUT's for geometry processor
+       * have an implied second dimension */
+      if (file == TGSI_FILE_INPUT &&
+          ctx->iter.processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
+         uint vert;
+         for (vert = 0; vert < ctx->implied_array_size; ++vert) {
+            scan_register *reg = MALLOC(sizeof(scan_register));
+            fill_scan_register2d(reg, file, i, vert);
+            check_and_declare(ctx, reg);
+         }
+      } else {
+         scan_register *reg = MALLOC(sizeof(scan_register));
+         if (decl->Declaration.Dimension) {
+            fill_scan_register2d(reg, file, i, decl->Dim.Index2D);
+         } else {
+            fill_scan_register1d(reg, file, i);
+         }
+         check_and_declare(ctx, reg);
+      }
    }
 
    return TRUE;
@@ -301,8 +434,7 @@ iter_immediate(
    struct tgsi_full_immediate *imm )
 {
    struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
-
-   assert( ctx->num_imms < MAX_REGISTERS );
+   scan_register *reg;
 
    /* No immediates allowed after the first instruction.
     */
@@ -311,16 +443,35 @@ iter_immediate(
 
    /* Mark the register as declared.
     */
-   ctx->regs_decl[TGSI_FILE_IMMEDIATE][ctx->num_imms / BITS_IN_REG_FLAG] |= (1 << (ctx->num_imms % BITS_IN_REG_FLAG));
+   reg = MALLOC(sizeof(scan_register));
+   fill_scan_register1d(reg, TGSI_FILE_IMMEDIATE, ctx->num_imms);
+   cso_hash_insert(ctx->regs_decl, scan_register_key(reg), reg);
    ctx->num_imms++;
 
    /* Check data type validity.
     */
-   if (imm->Immediate.DataType != TGSI_IMM_FLOAT32) {
+   if (imm->Immediate.DataType != TGSI_IMM_FLOAT32 &&
+       imm->Immediate.DataType != TGSI_IMM_UINT32 &&
+       imm->Immediate.DataType != TGSI_IMM_INT32) {
       report_error( ctx, "(%u): Invalid immediate data type", imm->Immediate.DataType );
       return TRUE;
    }
 
+   return TRUE;
+}
+
+
+static boolean
+iter_property(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_property *prop )
+{
+   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
+
+   if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY &&
+       prop->Property.PropertyName == TGSI_PROPERTY_GS_INPUT_PRIM) {
+      ctx->implied_array_size = u_vertices_per_prim(prop->u[0].Data);
+   }
    return TRUE;
 }
 
@@ -329,7 +480,6 @@ epilog(
    struct tgsi_iterate_context *iter )
 {
    struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
-   uint file;
 
    /* There must be an END instruction somewhere.
     */
@@ -339,13 +489,17 @@ epilog(
 
    /* Check if all declared registers were used.
     */
-   for (file = TGSI_FILE_NULL; file < TGSI_FILE_COUNT; file++) {
-      uint i;
+   {
+      struct cso_hash_iter iter =
+         cso_hash_first_node(ctx->regs_decl);
 
-      for (i = 0; i < MAX_REGISTERS; i++) {
-         if (is_register_declared( ctx, file, i ) && !is_register_used( ctx, file, i ) && !ctx->regs_ind_used[file]) {
-            report_warning( ctx, "%s[%u]: Register never used", file_names[file], i );
+      while (!cso_hash_iter_is_null(iter)) {
+         scan_register *reg = (scan_register *)cso_hash_iter_data(iter);
+         if (!is_register_used(ctx, reg) && !is_ind_register_used(ctx, reg)) {
+            report_warning( ctx, "%s[%u]: Register never used",
+                            file_names[reg->file], reg->indices[0] );
          }
+         iter = cso_hash_iter_next(iter);
       }
    }
 
@@ -355,6 +509,19 @@ epilog(
       debug_printf( "%u errors, %u warnings\n", ctx->errors, ctx->warnings );
 
    return TRUE;
+}
+
+static void
+regs_hash_destroy(struct cso_hash *hash)
+{
+   struct cso_hash_iter iter = cso_hash_first_node(hash);
+   while (!cso_hash_iter_is_null(iter)) {
+      scan_register *reg = (scan_register *)cso_hash_iter_data(iter);
+      iter = cso_hash_erase(hash, iter);
+      assert(reg->file < TGSI_FILE_COUNT);
+      FREE(reg);
+   }
+   cso_hash_delete(hash);
 }
 
 boolean
@@ -367,20 +534,26 @@ tgsi_sanity_check(
    ctx.iter.iterate_instruction = iter_instruction;
    ctx.iter.iterate_declaration = iter_declaration;
    ctx.iter.iterate_immediate = iter_immediate;
+   ctx.iter.iterate_property = iter_property;
    ctx.iter.epilog = epilog;
 
-   memset( ctx.regs_decl, 0, sizeof( ctx.regs_decl ) );
-   memset( ctx.regs_used, 0, sizeof( ctx.regs_used ) );
-   memset( ctx.regs_ind_used, 0, sizeof( ctx.regs_ind_used ) );
+   ctx.regs_decl = cso_hash_create();
+   ctx.regs_used = cso_hash_create();
+   ctx.regs_ind_used = cso_hash_create();
+
    ctx.num_imms = 0;
    ctx.num_instructions = 0;
    ctx.index_of_END = ~0;
 
    ctx.errors = 0;
    ctx.warnings = 0;
+   ctx.implied_array_size = 0;
 
    if (!tgsi_iterate_shader( tokens, &ctx.iter ))
       return FALSE;
 
+   regs_hash_destroy(ctx.regs_decl);
+   regs_hash_destroy(ctx.regs_used);
+   regs_hash_destroy(ctx.regs_ind_used);
    return ctx.errors == 0;
 }

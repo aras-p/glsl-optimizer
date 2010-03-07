@@ -41,15 +41,13 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/local/lib -lGL -lXt -lX11
 
 
 # Directories
-SRC_DIRS = glx/x11 gallium mesa glu glut/glx glew glw
+SRC_DIRS = glx gallium mesa glu glut/glx glew glw
 DRIVER_DIRS = dri
 PROGRAM_DIRS = 
 WINDOW_SYSTEM=dri
 
 DRM_SOURCE_PATH=$(TOP)/../drm
 
-# ffb and gamma are missing because they have not been converted to use the new
-# interface.
 DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon tdfx \
 	   unichrome savage sis
 

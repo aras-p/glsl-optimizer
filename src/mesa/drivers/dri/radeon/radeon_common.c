@@ -137,7 +137,7 @@ void radeon_get_cliprects(radeonContextPtr radeon,
 			  unsigned int *num_cliprects,
 			  int *x_off, int *y_off)
 {
-	__DRIdrawablePrivate *dPriv = radeon_get_drawable(radeon);
+	__DRIdrawable *dPriv = radeon_get_drawable(radeon);
 	struct radeon_framebuffer *rfb = dPriv->driverPrivate;
 
 	if (radeon->constant_cliprect) {
@@ -169,8 +169,8 @@ void radeon_get_cliprects(radeonContextPtr radeon,
  */
 void radeonSetCliprects(radeonContextPtr radeon)
 {
-	__DRIdrawablePrivate *const drawable = radeon_get_drawable(radeon);
-	__DRIdrawablePrivate *const readable = radeon_get_readable(radeon);
+	__DRIdrawable *const drawable = radeon_get_drawable(radeon);
+	__DRIdrawable *const readable = radeon_get_readable(radeon);
 	struct radeon_framebuffer *const draw_rfb = drawable->driverPrivate;
 	struct radeon_framebuffer *const read_rfb = readable->driverPrivate;
 	int x_off, y_off;
@@ -229,7 +229,7 @@ void radeonUpdateScissor( GLcontext *ctx )
 	}
 	if (!rmesa->radeonScreen->kernel_mm) {
 	   /* Fix scissors for dri 1 */
-	   __DRIdrawablePrivate *dPriv = radeon_get_drawable(rmesa);
+	   __DRIdrawable *dPriv = radeon_get_drawable(rmesa);
 	   x1 += dPriv->x;
 	   x2 += dPriv->x + 1;
 	   min_x += dPriv->x;
@@ -261,29 +261,6 @@ void radeonScissor(GLcontext* ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 		radeonUpdateScissor(ctx);
 	}
 }
-
-void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask )
-{
-   radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-   GLuint i;
-   drm_radeon_stipple_t stipple;
-
-   /* Must flip pattern upside down.
-   */
-   for ( i = 0 ; i < 32 ; i++ ) {
-      stipple.mask[31 - i] = ((GLuint *) mask)[i];
-   }
-
-   /* TODO: push this into cmd mechanism
-   */
-   radeon_firevertices(radeon);
-   LOCK_HARDWARE( radeon );
-
-   drmCommandWrite( radeon->dri.fd, DRM_RADEON_STIPPLE,
-	 &stipple, sizeof(stipple) );
-   UNLOCK_HARDWARE( radeon );
-}
-
 
 /* ================================================================
  * SwapBuffers with client-side throttling
@@ -451,7 +428,7 @@ static void radeon_flip_renderbuffers(struct radeon_framebuffer *rfb)
 
 /* Copy the back color buffer to the front color buffer.
  */
-void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
+void radeonCopyBuffer( __DRIdrawable *dPriv,
 		       const drm_clip_rect_t	  *rect)
 {
 	radeonContextPtr rmesa;
@@ -519,7 +496,7 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 	UNLOCK_HARDWARE( rmesa );
 }
 
-static int radeonScheduleSwap(__DRIdrawablePrivate *dPriv, GLboolean *missed_target)
+static int radeonScheduleSwap(__DRIdrawable *dPriv, GLboolean *missed_target)
 {
 	radeonContextPtr rmesa;
 
@@ -542,11 +519,11 @@ static int radeonScheduleSwap(__DRIdrawablePrivate *dPriv, GLboolean *missed_tar
 	return 0;
 }
 
-static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
+static GLboolean radeonPageFlip( __DRIdrawable *dPriv )
 {
 	radeonContextPtr radeon;
 	GLint ret;
-	__DRIscreenPrivate *psp;
+	__DRIscreen *psp;
 	struct radeon_renderbuffer *rrb;
 	struct radeon_framebuffer *rfb;
 
@@ -594,10 +571,10 @@ static GLboolean radeonPageFlip( __DRIdrawablePrivate *dPriv )
 /**
  * Swap front and back buffer.
  */
-void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
+void radeonSwapBuffers(__DRIdrawable * dPriv)
 {
 	int64_t ust;
-	__DRIscreenPrivate *psp;
+	__DRIscreen *psp;
 
 	if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
 		radeonContextPtr radeon;
@@ -638,7 +615,7 @@ void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
 	}
 }
 
-void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
+void radeonCopySubBuffer(__DRIdrawable * dPriv,
 			 int x, int y, int w, int h )
 {
 	if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
@@ -663,6 +640,27 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 			      __FUNCTION__);
 	}
 }
+
+/**
+ * Check if we're about to draw into the front color buffer.
+ * If so, set the intel->front_buffer_dirty field to true.
+ */
+void
+radeon_check_front_buffer_rendering(GLcontext *ctx)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	const struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+	if (fb->Name == 0) {
+		/* drawing to window system buffer */
+		if (fb->_NumColorDrawBuffers > 0) {
+			if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
+				radeon->front_buffer_dirty = GL_TRUE;
+			}
+		}
+	}
+}
+
 
 void radeon_draw_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
@@ -1038,10 +1036,11 @@ static INLINE void radeon_emit_atom(radeonContextPtr radeon, struct radeon_state
 			OUT_BATCH_TABLE(atom->cmd, dwords);
 			END_BATCH();
 		}
+		atom->dirty = GL_FALSE;
+
 	} else {
 		radeon_print(RADEON_STATE, RADEON_VERBOSE, "  skip state %s\n", atom->name);
 	}
-	atom->dirty = GL_FALSE;
 
 }
 
@@ -1118,7 +1117,7 @@ void radeonFlush(GLcontext *ctx)
 	   then no point flushing anything at all.
 	*/
 	if (!radeon->dma.flush && !radeon->cmdbuf.cs->cdw && is_empty_list(&radeon->dma.reserved))
-		return;
+		goto flush_front;
 
 	if (radeon->dma.flush)
 		radeon->dma.flush( ctx );
@@ -1126,12 +1125,13 @@ void radeonFlush(GLcontext *ctx)
 	if (radeon->cmdbuf.cs->cdw)
 		rcommonFlushCmdBuf(radeon, __FUNCTION__);
 
+flush_front:
 	if ((ctx->DrawBuffer->Name == 0) && radeon->front_buffer_dirty) {
 		__DRIscreen *const screen = radeon->radeonScreen->driScreen;
 
 		if (screen->dri2.loader && (screen->dri2.loader->base.version >= 2)
 			&& (screen->dri2.loader->flushFrontBuffer != NULL)) {
-			__DRIdrawablePrivate * drawable = radeon_get_drawable(radeon);
+			__DRIdrawable * drawable = radeon_get_drawable(radeon);
 			(*screen->dri2.loader->flushFrontBuffer)(drawable, drawable->loaderPrivate);
 
 			/* Only clear the dirty bit if front-buffer rendering is no longer
@@ -1231,7 +1231,7 @@ int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
 		fprintf(stderr, "drmRadeonCmdBuffer: %d. Kernel failed to "
 				"parse or rejected command stream. See dmesg "
 				"for more info.\n", ret);
-		_mesa_exit(ret);
+		exit(ret);
 	}
 
 	return ret;

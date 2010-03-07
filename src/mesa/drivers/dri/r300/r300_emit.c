@@ -39,19 +39,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/colormac.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "main/image.h"
 
 #include "swrast_setup/swrast_setup.h"
-#include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
 #include "r300_context.h"
-#include "r300_state.h"
 #include "r300_emit.h"
-#include "r300_ioctl.h"
-#include "r300_render.h"
-#include "r300_swtcl.h"
+
 
 GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
 {
@@ -118,7 +113,7 @@ GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint vp_writes)
 
 	if (first_free_texcoord > 8) {
 		fprintf(stderr, "\tout of free texcoords\n");
-		_mesa_exit(-1);
+		exit(-1);
 	}
 
 	return ret;

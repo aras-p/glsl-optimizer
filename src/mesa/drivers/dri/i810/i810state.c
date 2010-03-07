@@ -20,8 +20,6 @@
 #include "i810context.h"
 #include "i810state.h"
 #include "i810tex.h"
-#include "i810vb.h"
-#include "i810tris.h"
 #include "i810ioctl.h"
 
 
@@ -641,7 +639,7 @@ static void i810Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 
 void i810EmitDrawingRectangle( i810ContextPtr imesa )
 {
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
+   __DRIdrawable *dPriv = imesa->driDrawable;
    i810ScreenPrivate *i810Screen = imesa->i810Screen;
    int x0 = imesa->drawX;
    int y0 = imesa->drawY;

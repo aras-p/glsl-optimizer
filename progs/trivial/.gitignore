@@ -80,6 +80,8 @@ quadstrip-flat
 readtex.c
 readtex.h
 readpixels
+sub-tex
+tex-quads
 tri
 tri-alpha
 tri-alpha-tex
@@ -111,6 +113,7 @@ tri-logicop-xor
 tri-mask-tri
 tri-multitex-vbo
 tri-orig
+tri-point-line-clipped
 tri-query
 tri-repeat
 tri-scissor-tri
@@ -147,7 +150,9 @@ vbo-drawarrays
 vbo-drawelements
 vbo-drawrange
 vbo-noninterleaved
+vbo-tri
 vp-array
+vp-array-hf
 vp-array-int
 vp-clip
 vp-line-clip

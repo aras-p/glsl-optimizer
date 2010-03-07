@@ -149,11 +149,6 @@ struct draw_pt_middle_end *draw_pt_middle_fse( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *draw);
 
 
-/* More helpers:
- */
-boolean draw_pt_get_edgeflag( struct draw_context *draw,
-                              unsigned idx );
-
 
 /*******************************************************************************
  * HW vertex emit:
@@ -188,7 +183,8 @@ struct pt_emit *draw_pt_emit_create( struct draw_context *draw );
 struct pt_fetch;
 void draw_pt_fetch_prepare( struct pt_fetch *fetch,
                             unsigned vertex_input_count,
-			    unsigned vertex_size );
+                            unsigned vertex_size,
+                            unsigned instance_id_index );
 
 void draw_pt_fetch_run( struct pt_fetch *fetch,
 			const unsigned *elts,
@@ -217,7 +213,8 @@ boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean bypass_clipping,
 			      boolean bypass_viewport,
-			      boolean opengl );
+			      boolean opengl,
+			      boolean need_edgeflags );
 
 struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw );
 

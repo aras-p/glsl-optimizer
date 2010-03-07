@@ -271,10 +271,10 @@ struct savage_context_t {
     drm_hw_lock_t *driHwLock;
     GLuint driFd;
 
-    __DRIdrawablePrivate *driDrawable;
-    __DRIdrawablePrivate *driReadable;
+    __DRIdrawable *driDrawable;
+    __DRIdrawable *driReadable;
 
-    __DRIscreenPrivate *driScreen;
+    __DRIscreen *driScreen;
     savageScreenPrivate *savageScreen; 
     drm_savage_sarea_t *sarea;
 

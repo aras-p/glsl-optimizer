@@ -2422,6 +2422,30 @@
 #define CALL_FramebufferTextureLayerEXT(disp, parameters) (*((disp)->FramebufferTextureLayerEXT)) parameters
 #define GET_FramebufferTextureLayerEXT(disp) ((disp)->FramebufferTextureLayerEXT)
 #define SET_FramebufferTextureLayerEXT(disp, fn) ((disp)->FramebufferTextureLayerEXT = fn)
+#define CALL_ColorMaskIndexedEXT(disp, parameters) (*((disp)->ColorMaskIndexedEXT)) parameters
+#define GET_ColorMaskIndexedEXT(disp) ((disp)->ColorMaskIndexedEXT)
+#define SET_ColorMaskIndexedEXT(disp, fn) ((disp)->ColorMaskIndexedEXT = fn)
+#define CALL_DisableIndexedEXT(disp, parameters) (*((disp)->DisableIndexedEXT)) parameters
+#define GET_DisableIndexedEXT(disp) ((disp)->DisableIndexedEXT)
+#define SET_DisableIndexedEXT(disp, fn) ((disp)->DisableIndexedEXT = fn)
+#define CALL_EnableIndexedEXT(disp, parameters) (*((disp)->EnableIndexedEXT)) parameters
+#define GET_EnableIndexedEXT(disp) ((disp)->EnableIndexedEXT)
+#define SET_EnableIndexedEXT(disp, fn) ((disp)->EnableIndexedEXT = fn)
+#define CALL_GetBooleanIndexedvEXT(disp, parameters) (*((disp)->GetBooleanIndexedvEXT)) parameters
+#define GET_GetBooleanIndexedvEXT(disp) ((disp)->GetBooleanIndexedvEXT)
+#define SET_GetBooleanIndexedvEXT(disp, fn) ((disp)->GetBooleanIndexedvEXT = fn)
+#define CALL_GetIntegerIndexedvEXT(disp, parameters) (*((disp)->GetIntegerIndexedvEXT)) parameters
+#define GET_GetIntegerIndexedvEXT(disp) ((disp)->GetIntegerIndexedvEXT)
+#define SET_GetIntegerIndexedvEXT(disp, fn) ((disp)->GetIntegerIndexedvEXT = fn)
+#define CALL_IsEnabledIndexedEXT(disp, parameters) (*((disp)->IsEnabledIndexedEXT)) parameters
+#define GET_IsEnabledIndexedEXT(disp) ((disp)->IsEnabledIndexedEXT)
+#define SET_IsEnabledIndexedEXT(disp, fn) ((disp)->IsEnabledIndexedEXT = fn)
+#define CALL_BeginConditionalRenderNV(disp, parameters) (*((disp)->BeginConditionalRenderNV)) parameters
+#define GET_BeginConditionalRenderNV(disp) ((disp)->BeginConditionalRenderNV)
+#define SET_BeginConditionalRenderNV(disp, fn) ((disp)->BeginConditionalRenderNV = fn)
+#define CALL_EndConditionalRenderNV(disp, parameters) (*((disp)->EndConditionalRenderNV)) parameters
+#define GET_EndConditionalRenderNV(disp) ((disp)->EndConditionalRenderNV)
+#define SET_EndConditionalRenderNV(disp, fn) ((disp)->EndConditionalRenderNV = fn)
 #define CALL_ProvokingVertexEXT(disp, parameters) (*((disp)->ProvokingVertexEXT)) parameters
 #define GET_ProvokingVertexEXT(disp) ((disp)->ProvokingVertexEXT)
 #define SET_ProvokingVertexEXT(disp, fn) ((disp)->ProvokingVertexEXT = fn)
@@ -2446,10 +2470,16 @@
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) (*((disp)->GetQueryObjectui64vEXT)) parameters
 #define GET_GetQueryObjectui64vEXT(disp) ((disp)->GetQueryObjectui64vEXT)
 #define SET_GetQueryObjectui64vEXT(disp, fn) ((disp)->GetQueryObjectui64vEXT = fn)
+#define CALL_EGLImageTargetRenderbufferStorageOES(disp, parameters) (*((disp)->EGLImageTargetRenderbufferStorageOES)) parameters
+#define GET_EGLImageTargetRenderbufferStorageOES(disp) ((disp)->EGLImageTargetRenderbufferStorageOES)
+#define SET_EGLImageTargetRenderbufferStorageOES(disp, fn) ((disp)->EGLImageTargetRenderbufferStorageOES = fn)
+#define CALL_EGLImageTargetTexture2DOES(disp, parameters) (*((disp)->EGLImageTargetTexture2DOES)) parameters
+#define GET_EGLImageTargetTexture2DOES(disp) ((disp)->EGLImageTargetTexture2DOES)
+#define SET_EGLImageTargetTexture2DOES(disp, fn) ((disp)->EGLImageTargetTexture2DOES = fn)
 
 #else
 
-#define driDispatchRemapTable_size 387
+#define driDispatchRemapTable_size 397
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2831,14 +2861,24 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define BufferParameteriAPPLE_remap_index 376
 #define FlushMappedBufferRangeAPPLE_remap_index 377
 #define FramebufferTextureLayerEXT_remap_index 378
-#define ProvokingVertexEXT_remap_index 379
-#define GetTexParameterPointervAPPLE_remap_index 380
-#define TextureRangeAPPLE_remap_index 381
-#define StencilFuncSeparateATI_remap_index 382
-#define ProgramEnvParameters4fvEXT_remap_index 383
-#define ProgramLocalParameters4fvEXT_remap_index 384
-#define GetQueryObjecti64vEXT_remap_index 385
-#define GetQueryObjectui64vEXT_remap_index 386
+#define ColorMaskIndexedEXT_remap_index 379
+#define DisableIndexedEXT_remap_index 380
+#define EnableIndexedEXT_remap_index 381
+#define GetBooleanIndexedvEXT_remap_index 382
+#define GetIntegerIndexedvEXT_remap_index 383
+#define IsEnabledIndexedEXT_remap_index 384
+#define BeginConditionalRenderNV_remap_index 385
+#define EndConditionalRenderNV_remap_index 386
+#define ProvokingVertexEXT_remap_index 387
+#define GetTexParameterPointervAPPLE_remap_index 388
+#define TextureRangeAPPLE_remap_index 389
+#define StencilFuncSeparateATI_remap_index 390
+#define ProgramEnvParameters4fvEXT_remap_index 391
+#define ProgramLocalParameters4fvEXT_remap_index 392
+#define GetQueryObjecti64vEXT_remap_index 393
+#define GetQueryObjectui64vEXT_remap_index 394
+#define EGLImageTargetRenderbufferStorageOES_remap_index 395
+#define EGLImageTargetTexture2DOES_remap_index 396
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -3977,6 +4017,30 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_FramebufferTextureLayerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint, GLint, GLint)), driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index], parameters)
 #define GET_FramebufferTextureLayerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index])
 #define SET_FramebufferTextureLayerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index], fn)
+#define CALL_ColorMaskIndexedEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLboolean, GLboolean, GLboolean, GLboolean)), driDispatchRemapTable[ColorMaskIndexedEXT_remap_index], parameters)
+#define GET_ColorMaskIndexedEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ColorMaskIndexedEXT_remap_index])
+#define SET_ColorMaskIndexedEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ColorMaskIndexedEXT_remap_index], fn)
+#define CALL_DisableIndexedEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[DisableIndexedEXT_remap_index], parameters)
+#define GET_DisableIndexedEXT(disp) GET_by_offset(disp, driDispatchRemapTable[DisableIndexedEXT_remap_index])
+#define SET_DisableIndexedEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[DisableIndexedEXT_remap_index], fn)
+#define CALL_EnableIndexedEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[EnableIndexedEXT_remap_index], parameters)
+#define GET_EnableIndexedEXT(disp) GET_by_offset(disp, driDispatchRemapTable[EnableIndexedEXT_remap_index])
+#define SET_EnableIndexedEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EnableIndexedEXT_remap_index], fn)
+#define CALL_GetBooleanIndexedvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLboolean *)), driDispatchRemapTable[GetBooleanIndexedvEXT_remap_index], parameters)
+#define GET_GetBooleanIndexedvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetBooleanIndexedvEXT_remap_index])
+#define SET_GetBooleanIndexedvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetBooleanIndexedvEXT_remap_index], fn)
+#define CALL_GetIntegerIndexedvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLint *)), driDispatchRemapTable[GetIntegerIndexedvEXT_remap_index], parameters)
+#define GET_GetIntegerIndexedvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetIntegerIndexedvEXT_remap_index])
+#define SET_GetIntegerIndexedvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetIntegerIndexedvEXT_remap_index], fn)
+#define CALL_IsEnabledIndexedEXT(disp, parameters) CALL_by_offset(disp, (GLboolean (GLAPIENTRYP)(GLenum, GLuint)), driDispatchRemapTable[IsEnabledIndexedEXT_remap_index], parameters)
+#define GET_IsEnabledIndexedEXT(disp) GET_by_offset(disp, driDispatchRemapTable[IsEnabledIndexedEXT_remap_index])
+#define SET_IsEnabledIndexedEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[IsEnabledIndexedEXT_remap_index], fn)
+#define CALL_BeginConditionalRenderNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum)), driDispatchRemapTable[BeginConditionalRenderNV_remap_index], parameters)
+#define GET_BeginConditionalRenderNV(disp) GET_by_offset(disp, driDispatchRemapTable[BeginConditionalRenderNV_remap_index])
+#define SET_BeginConditionalRenderNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BeginConditionalRenderNV_remap_index], fn)
+#define CALL_EndConditionalRenderNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[EndConditionalRenderNV_remap_index], parameters)
+#define GET_EndConditionalRenderNV(disp) GET_by_offset(disp, driDispatchRemapTable[EndConditionalRenderNV_remap_index])
+#define SET_EndConditionalRenderNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EndConditionalRenderNV_remap_index], fn)
 #define CALL_ProvokingVertexEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[ProvokingVertexEXT_remap_index], parameters)
 #define GET_ProvokingVertexEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProvokingVertexEXT_remap_index])
 #define SET_ProvokingVertexEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProvokingVertexEXT_remap_index], fn)
@@ -4001,6 +4065,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], parameters)
 #define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
 #define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
+#define CALL_EGLImageTargetRenderbufferStorageOES(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid *)), driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index], parameters)
+#define GET_EGLImageTargetRenderbufferStorageOES(disp) GET_by_offset(disp, driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index])
+#define SET_EGLImageTargetRenderbufferStorageOES(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index], fn)
+#define CALL_EGLImageTargetTexture2DOES(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid *)), driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index], parameters)
+#define GET_EGLImageTargetTexture2DOES(disp) GET_by_offset(disp, driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index])
+#define SET_EGLImageTargetTexture2DOES(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index], fn)
 
 #endif /* !defined(_GLAPI_USE_REMAP_TABLE) */
 

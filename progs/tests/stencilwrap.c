@@ -257,7 +257,7 @@ static void Init( void )
     * part of GL 1.4.
     */
 
-   ver_str = glGetString( GL_VERSION );
+   ver_str = (char *) glGetString( GL_VERSION );
    version = (ver_str == NULL) ? 1.0 : atof( ver_str );
 
    wrapping = (glutExtensionSupported("GL_EXT_stencil_wrap") || (version >= 1.4));

@@ -42,7 +42,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_VARS							\
    sisContextPtr smesa = SIS_CONTEXT(ctx);				\
-   __DRIdrawablePrivate *dPriv = smesa->driDrawable;			\
+   __DRIdrawable *dPriv = smesa->driDrawable;			\
    struct sis_renderbuffer *srb = (struct sis_renderbuffer *) rb;	\
    GLuint pitch = srb->pitch;						\
    char *buf = srb->map;						\
@@ -52,7 +52,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_DEPTH_VARS						\
    sisContextPtr smesa = SIS_CONTEXT(ctx);				\
-   __DRIdrawablePrivate *dPriv = smesa->driDrawable;			\
+   __DRIdrawable *dPriv = smesa->driDrawable;			\
    struct sis_renderbuffer *srb = (struct sis_renderbuffer *) rb;	\
    char *buf = srb->map;
 

@@ -156,6 +156,8 @@ primStream::primStream(Int sizeLengths, Int sizeVertices)
   index_vertices = 0;
   size_lengths = sizeLengths;
   size_vertices = sizeVertices; 
+
+  counter = 0; 
 }
 
 primStream::~primStream()

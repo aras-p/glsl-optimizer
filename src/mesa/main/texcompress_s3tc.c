@@ -213,7 +213,7 @@ _mesa_texstore_rgb_dxt1(TEXSTORE_PARAMS)
    }
 
    if (tempImage)
-      _mesa_free((void *) tempImage);
+      free((void *) tempImage);
 
    return GL_TRUE;
 }
@@ -275,7 +275,7 @@ _mesa_texstore_rgba_dxt1(TEXSTORE_PARAMS)
    }
 
    if (tempImage)
-      _mesa_free((void*) tempImage);
+      free((void*) tempImage);
 
    return GL_TRUE;
 }
@@ -336,7 +336,7 @@ _mesa_texstore_rgba_dxt3(TEXSTORE_PARAMS)
    }
 
    if (tempImage)
-      _mesa_free((void *) tempImage);
+      free((void *) tempImage);
 
    return GL_TRUE;
 }
@@ -397,7 +397,7 @@ _mesa_texstore_rgba_dxt5(TEXSTORE_PARAMS)
    }
 
    if (tempImage)
-      _mesa_free((void *) tempImage);
+      free((void *) tempImage);
 
    return GL_TRUE;
 }

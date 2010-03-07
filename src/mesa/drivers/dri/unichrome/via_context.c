@@ -33,10 +33,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/formats.h"
-#include "main/matrix.h"
-#include "main/state.h"
 #include "main/simple_list.h"
-#include "main/extensions.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 
@@ -148,7 +145,7 @@ viaRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 static void
 viaInitRenderbuffer(struct via_renderbuffer *vrb, GLenum format,
-		    __DRIdrawablePrivate *dPriv)
+		    __DRIdrawable *dPriv)
 {
    const GLuint name = 0;
    struct gl_renderbuffer *rb = & vrb->Base;
@@ -207,7 +204,7 @@ viaInitRenderbuffer(struct via_renderbuffer *vrb, GLenum format,
 static GLboolean
 calculate_buffer_parameters(struct via_context *vmesa,
 			    struct gl_framebuffer *fb,
-			    __DRIdrawablePrivate *dPriv)
+			    __DRIdrawable *dPriv)
 {
    const unsigned shift = vmesa->viaScreen->bitsPerPixel / 16;
    const unsigned extra = 32;
@@ -460,12 +457,12 @@ FreeBuffer(struct via_context *vmesa)
 
 GLboolean
 viaCreateContext(const __GLcontextModes *visual,
-                 __DRIcontextPrivate *driContextPriv,
+                 __DRIcontext *driContextPriv,
                  void *sharedContextPrivate)
 {
     GLcontext *ctx, *shareCtx;
     struct via_context *vmesa;
-    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
     viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
     drm_via_sarea_t *saPriv = (drm_via_sarea_t *)
         (((GLubyte *)sPriv->pSAREA) + viaScreen->sareaPrivOffset);
@@ -679,7 +676,7 @@ viaCreateContext(const __GLcontextModes *visual,
 }
 
 void
-viaDestroyContext(__DRIcontextPrivate *driContextPriv)
+viaDestroyContext(__DRIcontext *driContextPriv)
 {
     GET_CURRENT_CONTEXT(ctx);
     struct via_context *vmesa =
@@ -729,8 +726,8 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 
 void viaXMesaWindowMoved(struct via_context *vmesa)
 {
-   __DRIdrawablePrivate *const drawable = vmesa->driDrawable;
-   __DRIdrawablePrivate *const readable = vmesa->driReadable;
+   __DRIdrawable *const drawable = vmesa->driDrawable;
+   __DRIdrawable *const readable = vmesa->driReadable;
    struct via_renderbuffer * draw_buffer;
    struct via_renderbuffer * read_buffer;
    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
@@ -813,15 +810,15 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 }
 
 GLboolean
-viaUnbindContext(__DRIcontextPrivate *driContextPriv)
+viaUnbindContext(__DRIcontext *driContextPriv)
 {
     return GL_TRUE;
 }
 
 GLboolean
-viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
-               __DRIdrawablePrivate *driDrawPriv,
-               __DRIdrawablePrivate *driReadPriv)
+viaMakeCurrent(__DRIcontext *driContextPriv,
+               __DRIdrawable *driDrawPriv,
+               __DRIdrawable *driReadPriv)
 {
     if (VIA_DEBUG & DEBUG_DRI) {
 	fprintf(stderr, "driContextPriv = %016lx\n", (unsigned long)driContextPriv);
@@ -897,8 +894,8 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 void viaGetLock(struct via_context *vmesa, GLuint flags)
 {
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-    __DRIscreenPrivate *sPriv = vmesa->driScreen;
+    __DRIdrawable *dPriv = vmesa->driDrawable;
+    __DRIscreen *sPriv = vmesa->driScreen;
 
     drmGetLock(vmesa->driFd, vmesa->hHWContext, flags);
 
@@ -928,9 +925,9 @@ void viaGetLock(struct via_context *vmesa, GLuint flags)
 
 
 void
-viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
+viaSwapBuffers(__DRIdrawable *drawablePrivate)
 {
-    __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *)drawablePrivate;
+    __DRIdrawable *dPriv = (__DRIdrawable *)drawablePrivate;
 
     if (dPriv && 
 	dPriv->driContextPriv && 

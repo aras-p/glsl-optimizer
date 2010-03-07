@@ -246,7 +246,7 @@ static GLboolean init_vertex_stage( GLcontext *ctx,
    _mesa_vector4f_alloc( &store->clip, 0, size, 32 );
    _mesa_vector4f_alloc( &store->proj, 0, size, 32 );
 
-   store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
+   store->clipmask = (GLubyte *) _mesa_align_malloc(sizeof(GLubyte)*size, 32 );
 
    if (!store->clipmask ||
        !store->eye.data ||
@@ -265,7 +265,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
       _mesa_vector4f_free( &store->eye );
       _mesa_vector4f_free( &store->clip );
       _mesa_vector4f_free( &store->proj );
-      ALIGN_FREE( store->clipmask );
+      _mesa_align_free( store->clipmask );
       FREE(store);
       stage->privatePtr = NULL;
       stage->run = init_vertex_stage;

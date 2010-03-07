@@ -1,0 +1,368 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
+
+<OpenGLAPI>
+
+<!-- This file defines the functions that are needed by Mesa.  It
+     makes sure the generated glapi headers are compatible with Mesa.
+     It mainly consists of missing functions and aliases in OpenGL ES.
+-->
+
+<xi:include href="es_COMPAT.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- except for those defined by es_COMPAT.xml, these are also needed -->
+<category name="compat">
+    <!-- OpenGL 1.0 -->
+    <function name="Color4f" offset="29" vectorequiv="Color4fv" static_dispatch="false">
+        <param name="red" type="GLfloat"/>
+        <param name="green" type="GLfloat"/>
+        <param name="blue" type="GLfloat"/>
+        <param name="alpha" type="GLfloat"/>
+    </function>
+
+    <function name="Color4ub" offset="35" vectorequiv="Color4ubv" static_dispatch="false">
+        <param name="red" type="GLubyte"/>
+        <param name="green" type="GLubyte"/>
+        <param name="blue" type="GLubyte"/>
+        <param name="alpha" type="GLubyte"/>
+    </function>
+
+    <function name="Normal3f" offset="56" vectorequiv="Normal3fv" static_dispatch="false">
+        <param name="nx" type="GLfloat"/>
+        <param name="ny" type="GLfloat"/>
+        <param name="nz" type="GLfloat"/>
+    </function>
+
+    <function name="Fogf" offset="153" static_dispatch="false">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="80"/>
+    </function>
+
+    <function name="Fogfv" offset="154" static_dispatch="false">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="81"/>
+    </function>
+
+    <function name="Lightf" offset="159" static_dispatch="false">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="86"/>
+    </function>
+
+    <function name="Lightfv" offset="160" static_dispatch="false">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="87"/>
+    </function>
+
+    <function name="LightModelf" offset="163" static_dispatch="false">
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="90"/>
+    </function>
+
+    <function name="LightModelfv" offset="164" static_dispatch="false">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="91"/>
+    </function>
+
+    <function name="Materialf" offset="169" static_dispatch="false">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="96"/>
+    </function>
+
+    <function name="Materialfv" offset="170" static_dispatch="false">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="97"/>
+    </function>
+
+    <function name="PointSize" offset="173" static_dispatch="false">
+        <param name="size" type="GLfloat"/>
+        <glx rop="100"/>
+    </function>
+
+    <function name="ShadeModel" offset="177" static_dispatch="false">
+        <param name="mode" type="GLenum"/>
+        <glx rop="104"/>
+    </function>
+
+    <function name="TexEnvf" offset="184" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="111"/>
+    </function>
+
+    <function name="TexEnvfv" offset="185" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="112"/>
+    </function>
+
+    <function name="TexEnvi" offset="186" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLint"/>
+        <glx rop="113"/>
+    </function>
+
+    <function name="TexEnviv" offset="187" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLint *" variable_param="pname"/>
+        <glx rop="114"/>
+    </function>
+
+    <function name="TexGenf" offset="190" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="117"/>
+    </function>
+
+    <function name="TexGenfv" offset="191" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="118"/>
+    </function>
+
+    <function name="TexGeni" offset="192" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLint"/>
+        <glx rop="119"/>
+    </function>
+
+    <function name="TexGeniv" offset="193" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLint *" variable_param="pname"/>
+        <glx rop="120"/>
+    </function>
+
+    <function name="AlphaFunc" offset="240" static_dispatch="false">
+        <param name="func" type="GLenum"/>
+        <param name="ref" type="GLclampf"/>
+        <glx rop="159"/>
+    </function>
+
+    <function name="LogicOp" offset="242" static_dispatch="false">
+        <param name="opcode" type="GLenum"/>
+        <glx rop="161"/>
+    </function>
+
+    <function name="GetLightfv" offset="264" static_dispatch="false">
+        <param name="light" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="118"/>
+    </function>
+
+    <function name="GetMaterialfv" offset="269" static_dispatch="false">
+        <param name="face" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="123"/>
+    </function>
+
+    <function name="GetTexEnvfv" offset="276" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="130"/>
+    </function>
+
+    <function name="GetTexEnviv" offset="277" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx sop="131"/>
+    </function>
+
+    <function name="GetTexGenfv" offset="279" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="133"/>
+    </function>
+
+    <function name="GetTexGeniv" offset="280" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx sop="134"/>
+    </function>
+
+    <function name="LoadIdentity" offset="290" static_dispatch="false">
+        <glx rop="176"/>
+    </function>
+
+    <function name="LoadMatrixf" offset="291" static_dispatch="false">
+        <param name="m" type="const GLfloat *" count="16"/>
+        <glx rop="177"/>
+    </function>
+
+    <function name="MatrixMode" offset="293" static_dispatch="false">
+        <param name="mode" type="GLenum"/>
+        <glx rop="179"/>
+    </function>
+
+    <function name="MultMatrixf" offset="294" static_dispatch="false">
+        <param name="m" type="const GLfloat *" count="16"/>
+        <glx rop="180"/>
+    </function>
+
+    <function name="PopMatrix" offset="297" static_dispatch="false">
+        <glx rop="183"/>
+    </function>
+
+    <function name="PushMatrix" offset="298" static_dispatch="false">
+        <glx rop="184"/>
+    </function>
+
+    <function name="Rotatef" offset="300" static_dispatch="false">
+        <param name="angle" type="GLfloat"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <glx rop="186"/>
+    </function>
+
+    <function name="Scalef" offset="302" static_dispatch="false">
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <glx rop="188"/>
+    </function>
+
+    <function name="Translatef" offset="304" static_dispatch="false">
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <glx rop="190"/>
+    </function>
+
+    <!-- OpenGL 1.1 -->
+    <function name="ColorPointer" offset="308" static_dispatch="false">
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="DisableClientState" offset="309" static_dispatch="false">
+        <param name="array" type="GLenum"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="EnableClientState" offset="313" static_dispatch="false">
+        <param name="array" type="GLenum"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="NormalPointer" offset="318" static_dispatch="false">
+        <param name="type" type="GLenum"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="TexCoordPointer" offset="320" static_dispatch="false">
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="VertexPointer" offset="321" static_dispatch="false">
+        <param name="size" type="GLint"/>
+        <param name="type" type="GLenum"/>
+        <param name="stride" type="GLsizei"/>
+        <param name="pointer" type="const GLvoid *"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="GetPointerv" offset="329" static_dispatch="false">
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLvoid **" output="true"/>
+        <glx handcode="true"/>
+    </function>
+
+    <!-- OpenGL 1.2 -->
+    <function name="TexImage3D" alias="TexImage3DOES" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="internalformat" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="depth" type="GLsizei"/>
+        <param name="border" type="GLint"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <glx rop="4114" large="true"/>
+    </function>
+
+    <function name="TexSubImage3D" alias="TexSubImage3DOES" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="zoffset" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="depth" type="GLsizei"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
+        <glx rop="4115" large="true"/>
+    </function>
+
+    <function name="CopyTexSubImage3D" alias="CopyTexSubImage3DOES" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="zoffset" type="GLint"/>
+        <param name="x" type="GLint"/>
+        <param name="y" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <glx rop="4123"/>
+    </function>
+
+    <!-- GL_ARB_multitexture -->
+    <function name="ActiveTextureARB" alias="ActiveTexture" static_dispatch="false">
+        <param name="texture" type="GLenum"/>
+        <glx rop="197"/>
+    </function>
+
+    <function name="ClientActiveTextureARB" offset="375" static_dispatch="false">
+        <param name="texture" type="GLenum"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="MultiTexCoord4fARB" offset="402" vectorequiv="MultiTexCoord4fvARB" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="s" type="GLfloat"/>
+        <param name="t" type="GLfloat"/>
+        <param name="r" type="GLfloat"/>
+        <param name="q" type="GLfloat"/>
+    </function>
+</category>
+
+</OpenGLAPI>

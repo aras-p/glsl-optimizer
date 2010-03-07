@@ -58,11 +58,13 @@ struct softpipe_context {
    struct pipe_rasterizer_state *rasterizer;
    struct sp_fragment_shader *fs;
    struct sp_vertex_shader *vs;
+   struct sp_geometry_shader *gs;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
-   struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
+   struct pipe_buffer *constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
@@ -91,7 +93,7 @@ struct softpipe_context {
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
 
    /** Mapped constant buffers */
-   void *mapped_constants[PIPE_SHADER_TYPES];
+   void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
 
    /** Vertex format */
    struct vertex_info vertex_info;
@@ -114,6 +116,10 @@ struct softpipe_context {
    struct pipe_scissor_state cliprect;
 
    unsigned line_stipple_counter;
+
+   /** Conditional query object and mode */
+   struct pipe_query *render_cond_query;
+   uint render_cond_mode;
 
    /** Software quad rendering pipeline */
    struct {
@@ -147,6 +153,7 @@ struct softpipe_context {
 
    unsigned use_sse : 1;
    unsigned dump_fs : 1;
+   unsigned dump_gs : 1;
    unsigned no_rast : 1;
 };
 
@@ -159,6 +166,9 @@ softpipe_context( struct pipe_context *pipe )
 
 void
 softpipe_reset_sampler_varients(struct softpipe_context *softpipe);
+
+struct pipe_context *
+softpipe_create_context( struct pipe_screen *, void *priv );
 
 
 #endif /* SP_CONTEXT_H */

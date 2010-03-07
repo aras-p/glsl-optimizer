@@ -27,7 +27,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "util/u_memory.h"
 
 #include "i915_state_inlines.h"
 #include "i915_context.h"
@@ -88,8 +87,8 @@ static void update_sampler(struct i915_context *i915,
    state[1] = sampler->state[1];
    state[2] = sampler->state[2];
 
-   if (pt->format == PIPE_FORMAT_YCBCR ||
-       pt->format == PIPE_FORMAT_YCBCR_REV)
+   if (pt->format == PIPE_FORMAT_UYVY ||
+       pt->format == PIPE_FORMAT_YUYV)
       state[0] |= SS2_COLORSPACE_CONVERSION;
 
    /* 3D textures don't seem to respect the border color.
@@ -181,19 +180,19 @@ translate_texture_format(enum pipe_format pipeFormat)
       return MAPSURF_8BIT | MT_8BIT_I8;
    case PIPE_FORMAT_A8_UNORM:
       return MAPSURF_8BIT | MT_8BIT_A8;
-   case PIPE_FORMAT_A8L8_UNORM:
+   case PIPE_FORMAT_L8A8_UNORM:
       return MAPSURF_16BIT | MT_16BIT_AY88;
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       return MAPSURF_16BIT | MT_16BIT_RGB565;
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
       return MAPSURF_16BIT | MT_16BIT_ARGB1555;
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
       return MAPSURF_16BIT | MT_16BIT_ARGB4444;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return MAPSURF_32BIT | MT_32BIT_ARGB8888;
-   case PIPE_FORMAT_YCBCR_REV:
+   case PIPE_FORMAT_YUYV:
       return (MAPSURF_422 | MT_422_YCRCB_NORMAL);
-   case PIPE_FORMAT_YCBCR:
+   case PIPE_FORMAT_UYVY:
       return (MAPSURF_422 | MT_422_YCRCB_SWAPY);
 #if 0
    case PIPE_FORMAT_RGB_FXT1:
@@ -211,7 +210,7 @@ translate_texture_format(enum pipe_format pipeFormat)
    case PIPE_FORMAT_RGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
 #endif
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
       return (MAPSURF_32BIT | MT_32BIT_xI824);
    default:
       debug_printf("i915: translate_texture_format() bad image format %x\n",

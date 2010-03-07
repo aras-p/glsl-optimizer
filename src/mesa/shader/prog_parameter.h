@@ -43,6 +43,7 @@
 #define PROG_PARAM_BIT_INVARIANT  0x2  /**< for varying vars (GLSL 1.20) */
 #define PROG_PARAM_BIT_FLAT       0x4  /**< for varying vars (GLSL 1.30) */
 #define PROG_PARAM_BIT_LINEAR     0x8  /**< for varying vars (GLSL 1.30) */
+#define PROG_PARAM_BIT_CYL_WRAP  0x10  /**< XXX gallium debug */
 /*@}*/
 
 

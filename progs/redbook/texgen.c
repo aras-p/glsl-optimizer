@@ -60,7 +60,7 @@ GLubyte stripeImage[4*stripeImageWidth];
 static GLuint texName;
 #endif
 
-void makeStripeImage(void)
+static void makeStripeImage(void)
 {
    int j;
     
@@ -79,7 +79,7 @@ static GLfloat *currentCoeff;
 static GLenum currentPlane;
 static GLint currentGenMode;
 
-void init(void)
+static void init(void)
 {
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glEnable(GL_DEPTH_TEST);
@@ -122,7 +122,7 @@ void init(void)
    glMaterialf (GL_FRONT, GL_SHININESS, 64.0);
 }
 
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -136,7 +136,7 @@ void display(void)
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -152,7 +152,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard (unsigned char key, int x, int y)
+static void keyboard (unsigned char key, int x, int y)
 {
    switch (key) {
       case 'e':

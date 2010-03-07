@@ -33,7 +33,6 @@
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
-#include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
 #include "util/u_math.h"
 #include "util/u_prim.h"
@@ -88,9 +87,7 @@ draw_pt_arrays(struct draw_context *draw,
          opt |= PT_CLIPTEST;
       }
       
-      if (!draw->rasterizer->bypass_vs_clip_and_viewport) {
-         opt |= PT_SHADE;
-      }
+      opt |= PT_SHADE;
    }
       
    if (opt == 0) 
@@ -280,25 +277,38 @@ void
 draw_arrays(struct draw_context *draw, unsigned prim,
             unsigned start, unsigned count)
 {
-   unsigned reduced_prim = u_reduced_prim(prim);
+   draw_arrays_instanced(draw, prim, start, count, 0, 1);
+}
+
+void
+draw_arrays_instanced(struct draw_context *draw,
+                      unsigned mode,
+                      unsigned start,
+                      unsigned count,
+                      unsigned startInstance,
+                      unsigned instanceCount)
+{
+   unsigned reduced_prim = u_reduced_prim(mode);
+   unsigned instance;
+
    if (reduced_prim != draw->reduced_prim) {
-      draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+      draw_do_flush(draw, DRAW_FLUSH_STATE_CHANGE);
       draw->reduced_prim = reduced_prim;
    }
 
    if (0)
-      draw_print_arrays(draw, prim, start, MIN2(count, 20));
+      draw_print_arrays(draw, mode, start, MIN2(count, 20));
 
 #if 0
    {
       int i;
-      debug_printf("draw_arrays(prim=%u start=%u count=%u):\n",
-                   prim, start, count);
+      debug_printf("draw_arrays(mode=%u start=%u count=%u):\n",
+                   mode, start, count);
       tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
       debug_printf("Elements:\n");
       for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
          debug_printf("  format=%s comps=%u\n",
-                      pf_name(draw->pt.vertex_element[i].src_format),
+                      util_format_name(draw->pt.vertex_element[i].src_format),
                       draw->pt.vertex_element[i].nr_components);
       }
       debug_printf("Buffers:\n");
@@ -311,15 +321,8 @@ draw_arrays(struct draw_context *draw, unsigned prim,
    }
 #endif
 
-   /* drawing done here: */
-   draw_pt_arrays(draw, prim, start, count);
-}
-
-boolean draw_pt_get_edgeflag( struct draw_context *draw,
-                              unsigned idx )
-{
-   if (draw->pt.user.edgeflag)
-      return (draw->pt.user.edgeflag[idx/32] & (1 << (idx%32))) != 0;
-   else
-      return 1;
+   for (instance = 0; instance < instanceCount; instance++) {
+      draw->instance_id = instance + startInstance;
+      draw_pt_arrays(draw, mode, start, count);
+   }
 }

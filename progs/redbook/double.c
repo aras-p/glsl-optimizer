@@ -47,7 +47,7 @@
 static GLfloat spin = 0.0;
 static GLdouble t0 = 0.;
 
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT);
    glPushMatrix();
@@ -59,12 +59,12 @@ void display(void)
    glutSwapBuffers();
 }
 
-GLdouble gettime(void)
+static GLdouble gettime(void)
 {
     return (GLdouble)(glutGet(GLUT_ELAPSED_TIME)) / 1000.;
 }
 
-void spinDisplay(void)
+static void spinDisplay(void)
 {
    GLdouble t, dt;
    t = gettime();
@@ -76,13 +76,13 @@ void spinDisplay(void)
    glutPostRedisplay();
 }
 
-void init(void)
+static void init(void)
 {
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel (GL_FLAT);
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -93,7 +93,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED2 */
-void mouse(int button, int state, int x, int y)
+static void mouse(int button, int state, int x, int y)
 {
    switch (button) {
       case GLUT_LEFT_BUTTON:

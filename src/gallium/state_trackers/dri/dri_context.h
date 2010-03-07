@@ -44,10 +44,10 @@ struct dri_drawable;
 struct dri_context
 {
    /* dri */
-   __DRIscreenPrivate *sPriv;
-   __DRIcontextPrivate *cPriv;
-   __DRIdrawablePrivate *dPriv;
-   __DRIdrawablePrivate *rPriv;
+   __DRIscreen *sPriv;
+   __DRIcontext *cPriv;
+   __DRIdrawable *dPriv;
+   __DRIdrawable *rPriv;
 
    driOptionCache optionCache;
 
@@ -67,7 +67,7 @@ struct dri_context
 };
 
 static INLINE struct dri_context *
-dri_context(__DRIcontextPrivate * driContextPriv)
+dri_context(__DRIcontext * driContextPriv)
 {
    return (struct dri_context *)driContextPriv->driverPrivate;
 }
@@ -99,18 +99,18 @@ dri_unlock(struct dri_context *ctx)
  */
 extern struct dri1_api_lock_funcs dri1_lf;
 
-void dri_destroy_context(__DRIcontextPrivate * driContextPriv);
+void dri_destroy_context(__DRIcontext * driContextPriv);
 
-boolean dri_unbind_context(__DRIcontextPrivate * driContextPriv);
+boolean dri_unbind_context(__DRIcontext * driContextPriv);
 
 boolean
-dri_make_current(__DRIcontextPrivate * driContextPriv,
-		 __DRIdrawablePrivate * driDrawPriv,
-		 __DRIdrawablePrivate * driReadPriv);
+dri_make_current(__DRIcontext * driContextPriv,
+		 __DRIdrawable * driDrawPriv,
+		 __DRIdrawable * driReadPriv);
 
 boolean
 dri_create_context(const __GLcontextModes * visual,
-		   __DRIcontextPrivate * driContextPriv,
+		   __DRIcontext * driContextPriv,
 		   void *sharedContextPrivate);
 
 /***********************************************************************

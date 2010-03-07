@@ -25,6 +25,7 @@
  *
  **************************************************************************/
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
@@ -32,9 +33,10 @@
 #include "tr_dump.h"
 #include "tr_dump_state.h"
 #include "tr_texture.h"
+#include "tr_context.h"
 #include "tr_screen.h"
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_format.h"
 
 
@@ -153,6 +155,29 @@ trace_screen_is_format_supported(struct pipe_screen *_screen,
    trace_dump_ret(bool, result);
 
    trace_dump_call_end();
+
+   return result;
+}
+
+
+static struct pipe_context *
+trace_screen_context_create(struct pipe_screen *_screen, void *priv)
+{
+   struct trace_screen *tr_scr = trace_screen(_screen);
+   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_context *result;
+
+   trace_dump_call_begin("pipe_screen", "context_create");
+
+   trace_dump_arg(ptr, screen);
+
+   result = screen->context_create(screen, priv);
+
+   trace_dump_ret(ptr, result);
+
+   trace_dump_call_end();
+
+   result = trace_context_create(tr_scr, result);
 
    return result;
 }
@@ -425,7 +450,7 @@ trace_screen_transfer_unmap(struct pipe_screen *_screen,
    struct pipe_transfer *transfer = tr_trans->transfer;
 
    if(tr_trans->map) {
-      size_t size = pf_get_nblocksy(transfer->texture->format, transfer->width) * transfer->stride;
+      size_t size = util_format_get_nblocksy(transfer->texture->format, transfer->height) * transfer->stride;
 
       trace_dump_call_begin("pipe_screen", "transfer_write");
 
@@ -903,6 +928,8 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.get_param = trace_screen_get_param;
    tr_scr->base.get_paramf = trace_screen_get_paramf;
    tr_scr->base.is_format_supported = trace_screen_is_format_supported;
+   assert(screen->context_create);
+   tr_scr->base.context_create = trace_screen_context_create;
    tr_scr->base.texture_create = trace_screen_texture_create;
    tr_scr->base.texture_blanket = trace_screen_texture_blanket;
    tr_scr->base.texture_destroy = trace_screen_texture_destroy;

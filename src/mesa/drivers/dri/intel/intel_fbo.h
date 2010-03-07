@@ -34,40 +34,12 @@
 struct intel_context;
 
 /**
- * Intel framebuffer, derived from gl_framebuffer.
- */
-struct intel_framebuffer
-{
-   struct gl_framebuffer Base;
-
-   struct intel_renderbuffer *color_rb[2];
-
-   /* VBI
-    */
-   GLuint vbl_waited;
-
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
-};
-
-
-/**
  * Intel renderbuffer, derived from gl_renderbuffer.
  */
 struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct intel_region *region;
-
-   gl_format texformat;
-
-   GLuint vbl_pending;   /**< vblank sequence number of pending flip */
-
-   uint8_t *span_cache;
-   unsigned long span_cache_offset;
 };
 
 
@@ -123,7 +95,7 @@ intel_fbo_init(struct intel_context *intel);
 
 
 extern void
-intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
+intel_flip_renderbuffers(struct gl_framebuffer *fb);
 
 
 static INLINE struct intel_region *

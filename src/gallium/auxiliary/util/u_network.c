@@ -6,7 +6,7 @@
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 #  include <winsock2.h>
 #  include <windows.h>
-#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_BSD)
+#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_APPLE)
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <unistd.h>
@@ -54,7 +54,7 @@ u_socket_close(int s)
    if (s < 0)
       return;
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_BSD)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_APPLE)
    shutdown(s, SHUT_RDWR);
    close(s);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
@@ -117,7 +117,7 @@ u_socket_connect(const char *hostname, uint16_t port)
    if (!host)
       return -1;
 
-   memcpy((char *)&sa.sin_addr,host->h_addr,host->h_length);
+   memcpy((char *)&sa.sin_addr,host->h_addr_list[0],host->h_length);
    sa.sin_family= host->h_addrtype;
    sa.sin_port = htons(port);
 
@@ -169,7 +169,7 @@ u_socket_listen_on_port(uint16_t portnum)
 void
 u_socket_block(int s, boolean block)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_BSD)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_APPLE)
    int old = fcntl(s, F_GETFL, 0);
    if (old == -1)
       return;

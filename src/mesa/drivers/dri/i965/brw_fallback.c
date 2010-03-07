@@ -36,18 +36,13 @@
 #include "swrast/swrast.h"
 #include "tnl/tnl.h"
 #include "brw_context.h"
-#include "brw_fallback.h"
-#include "intel_chipset.h"
 #include "intel_fbo.h"
 #include "intel_regions.h"
-
-#include "glapi/glapi.h"
 
 #define FILE_DEBUG_FLAG DEBUG_FALLBACKS
 
 static GLboolean do_check_fallback(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
 
@@ -86,8 +81,7 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    }
 
    /* _NEW_BUFFERS */
-   if (IS_965(intel->intelScreen->deviceID) &&
-       !IS_G4X(intel->intelScreen->deviceID)) {
+   if (!brw->has_surface_tile_offset) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
 	 struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
 	 struct intel_renderbuffer *irb = intel_renderbuffer(rb);

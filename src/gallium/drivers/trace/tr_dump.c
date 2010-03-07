@@ -40,16 +40,16 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
 #include <stdlib.h>
 #endif
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
+#include "os/os_stream.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
-#include "util/u_stream.h"
 
 #include "tr_dump.h"
 #include "tr_screen.h"
@@ -57,7 +57,7 @@
 #include "tr_buffer.h"
 
 
-static struct util_stream *stream = NULL;
+static struct os_stream *stream = NULL;
 static unsigned refcount = 0;
 static pipe_mutex call_mutex;
 static long unsigned call_no = 0;
@@ -69,7 +69,7 @@ static INLINE void
 trace_dump_write(const char *buf, size_t size)
 {
    if(stream)
-      util_stream_write(stream, buf, size);
+      os_stream_write(stream, buf, size);
 }
 
 
@@ -220,7 +220,7 @@ trace_dump_trace_close(void)
 {
    if(stream) {
       trace_dump_writes("</trace>\n");
-      util_stream_close(stream);
+      os_stream_close(stream);
       stream = NULL;
       refcount = 0;
       call_no = 0;
@@ -250,7 +250,7 @@ boolean trace_dump_trace_begin()
 
    if(!stream) {
 
-      stream = util_stream_create(filename, 0);
+      stream = os_file_stream_create(filename);
       if(!stream)
          return FALSE;
 
@@ -258,7 +258,7 @@ boolean trace_dump_trace_begin()
       trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
       trace_dump_writes("<trace version='0.1'>\n");
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE)
       /* Linux applications rarely cleanup GL / Gallium resources so catch
        * application exit here */
       atexit(trace_dump_trace_close);
@@ -367,7 +367,7 @@ void trace_dump_call_end_locked(void)
    trace_dump_indent(1);
    trace_dump_tag_end("call");
    trace_dump_newline();
-   util_stream_flush(stream);
+   os_stream_flush(stream);
 }
 
 void trace_dump_call_begin(const char *klass, const char *method)

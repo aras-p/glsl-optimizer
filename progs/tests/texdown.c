@@ -162,7 +162,7 @@ MeasureDownloadRate(void)
    const int image_bytes = align(w * h * BytesPerTexel(Format), ALIGN);
    const int bytes = image_bytes * NR_TEXOBJ;
    GLubyte *orig_texImage, *orig_getImage;
-   GLubyte *texImage, *getImage;
+   GLubyte *texImage;
    GLdouble t0, t1, time;
    int count;
    int i;
@@ -184,7 +184,6 @@ MeasureDownloadRate(void)
    printf("alloc %p %p\n", orig_texImage, orig_getImage);
 
    texImage = (GLubyte *)align((unsigned long)orig_texImage, ALIGN);
-   getImage = (GLubyte *)align((unsigned long)orig_getImage, ALIGN);   
 
    for (i = 1; !(((unsigned long)texImage) & i); i<<=1)
       ;

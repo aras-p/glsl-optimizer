@@ -50,7 +50,7 @@ intel_new_sync_object(GLcontext *ctx, GLuint id)
 {
    struct intel_sync_object *sync;
 
-   sync = _mesa_calloc(sizeof(struct intel_sync_object));
+   sync = calloc(1, sizeof(struct intel_sync_object));
 
    return &sync->Base;
 }
@@ -61,7 +61,7 @@ intel_delete_sync_object(GLcontext *ctx, struct gl_sync_object *s)
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 
    drm_intel_bo_unreference(sync->bo);
-   _mesa_free(sync);
+   free(sync);
 }
 
 static void

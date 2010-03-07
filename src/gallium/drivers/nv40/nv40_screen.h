@@ -2,14 +2,14 @@
 #define __NV40_SCREEN_H__
 
 #include "nouveau/nouveau_screen.h"
-#include "nv04/nv04_surface_2d.h"
+#include "nouveau/nv04_surface_2d.h"
 
 struct nv40_screen {
 	struct nouveau_screen base;
 
 	struct nouveau_winsys *nvws;
 
-	unsigned cur_pctx;
+	struct nv40_context *cur_ctx;
 
 	/* HW graphics objects */
 	struct nv04_surface_2d *eng2d;

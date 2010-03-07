@@ -38,10 +38,13 @@ if env['platform'] == 'linux':
 		st_xorg,
 		svgadrm,
 		svga,
-                auxiliaries,
+                gallium,
 	])
 
 	sources = [
+		'vmw_ioctl.c',
+		'vmw_screen.c',
+		'vmw_video.c',
 		'vmw_xorg.c',
 	]
 

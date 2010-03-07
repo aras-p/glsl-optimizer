@@ -52,7 +52,7 @@ struct intel_buffer_object;
  */
 struct intel_region
 {
-   dri_bo *buffer;  /**< buffer manager's buffer */
+   drm_intel_bo *buffer;  /**< buffer manager's buffer */
    GLuint refcount; /**< Reference count for region */
    GLuint cpp;      /**< bytes per pixel */
    GLuint width;    /**< in pixels */
@@ -66,8 +66,10 @@ struct intel_region
 
    uint32_t tiling; /**< Which tiling mode the region is in */
    uint32_t bit_6_swizzle; /**< GEM flag for address swizzling requirement */
-   drmAddress classic_map; /**< drmMap of the region when not in GEM mode */
    struct intel_buffer_object *pbo;     /* zero-copy uploads */
+
+   uint32_t name; /**< Global name for the bo */
+   struct intel_screen *screen;
 };
 
 
@@ -145,5 +147,13 @@ void _mesa_copy_rect(GLubyte * dst,
                 GLuint height,
                 const GLubyte * src,
                 GLuint src_pitch, GLuint src_x, GLuint src_y);
+
+struct __DRIimageRec {
+   struct intel_region *region;
+   GLenum internal_format;
+   GLuint format;
+   GLenum data_type;
+   void *data;
+};
 
 #endif

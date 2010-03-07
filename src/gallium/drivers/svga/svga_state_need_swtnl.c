@@ -23,7 +23,7 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_state.h"
 
 
@@ -43,7 +43,7 @@ svga_translate_vertex_format(enum pipe_format format)
    case PIPE_FORMAT_R32G32_FLOAT:         return SVGA3D_DECLTYPE_FLOAT2;
    case PIPE_FORMAT_R32G32B32_FLOAT:      return SVGA3D_DECLTYPE_FLOAT3;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:   return SVGA3D_DECLTYPE_FLOAT4;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:       return SVGA3D_DECLTYPE_D3DCOLOR;
+   case PIPE_FORMAT_A8R8G8B8_UNORM:       return SVGA3D_DECLTYPE_D3DCOLOR;
    case PIPE_FORMAT_R8G8B8A8_USCALED:     return SVGA3D_DECLTYPE_UBYTE4;
    case PIPE_FORMAT_R16G16_SSCALED:       return SVGA3D_DECLTYPE_SHORT2;
    case PIPE_FORMAT_R16G16B16A16_SSCALED: return SVGA3D_DECLTYPE_SHORT4;
@@ -108,6 +108,7 @@ static int update_need_pipeline( struct svga_context *svga,
 {
    
    boolean need_pipeline = FALSE;
+   struct svga_vertex_shader *vs = svga->curr.vs;
 
    /* SVGA_NEW_RAST, SVGA_NEW_REDUCED_PRIMITIVE
     */
@@ -119,19 +120,16 @@ static int update_need_pipeline( struct svga_context *svga,
       need_pipeline = TRUE;
    }
 
-   /* SVGA_NEW_EDGEFLAGS
+   /* EDGEFLAGS
     */
-   if (svga->curr.rast->hw_unfilled != PIPE_POLYGON_MODE_FILL &&
-       svga->curr.reduced_prim == PIPE_PRIM_TRIANGLES && 
-       svga->curr.edgeflags != NULL) {
+    if (vs->base.info.writes_edgeflag) {
       SVGA_DBG(DEBUG_SWTNL, "%s: edgeflags\n", __FUNCTION__);
       need_pipeline = TRUE;
    }
 
    /* SVGA_NEW_CLIP 
     */
-   if (!svga->curr.rast->templ.bypass_vs_clip_and_viewport &&
-       svga->curr.clip.nr) {
+   if (svga->curr.clip.nr) {
       SVGA_DBG(DEBUG_SWTNL, "%s: userclip\n", __FUNCTION__);
       need_pipeline = TRUE;
    }
@@ -150,6 +148,7 @@ struct svga_tracked_state svga_update_need_pipeline =
    "need pipeline",
    (SVGA_NEW_RAST |
     SVGA_NEW_CLIP |
+    SVGA_NEW_VS |
     SVGA_NEW_REDUCED_PRIMITIVE),
    update_need_pipeline
 };

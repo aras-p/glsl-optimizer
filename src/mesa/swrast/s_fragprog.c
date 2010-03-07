@@ -25,7 +25,6 @@
 #include "main/glheader.h"
 #include "main/colormac.h"
 #include "main/context.h"
-#include "main/texstate.h"
 #include "shader/prog_instruction.h"
 
 #include "s_fragprog.h"
@@ -145,10 +144,19 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
              const struct gl_fragment_program *program,
              const SWspan *span, GLuint col)
 {
+   GLfloat *wpos = span->array->attribs[FRAG_ATTRIB_WPOS][col];
+
    if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
       /* Clear temporary registers (undefined for ARB_f_p) */
-      _mesa_bzero(machine->Temporaries,
-                  MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+      memset(machine->Temporaries, 0, MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+   }
+
+   /* ARB_fragment_coord_conventions */
+   if (program->OriginUpperLeft)
+      wpos[1] = ctx->DrawBuffer->Height - 1 - wpos[1];
+   if (!program->PixelCenterInteger) {
+      wpos[0] += 0.5F;
+      wpos[1] += 0.5F;
    }
 
    /* Setup pointer to input attributes */
@@ -163,7 +171,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    /* if running a GLSL program (not ARB_fragment_program) */
    if (ctx->Shader.CurrentProgram) {
       /* Store front/back facing value */
-      machine->Attribs[FRAG_ATTRIB_FACE][col][0] = 1.0 - span->facing;
+      machine->Attribs[FRAG_ATTRIB_FACE][col][0] = 1.0F - span->facing;
    }
 
    machine->CurElement = col;

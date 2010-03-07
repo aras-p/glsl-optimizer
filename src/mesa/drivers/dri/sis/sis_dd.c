@@ -40,9 +40,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_state.h"
 #include "sis_tris.h"
 
-#include "swrast/swrast.h"
 #include "main/formats.h"
-#include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 
 #include "utils.h"

@@ -113,10 +113,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 	/* index size - when not set the indices are assumed to be 16 bit */
 #	define	R300_VAP_VF_CNTL__INDEX_SIZE_32bit              (1<<11)
+#       define R500_VAP_VF_CNTL__USE_ALT_NUM_VERTS          (1<<14)
 	/* number of vertices */
 #	define	R300_VAP_VF_CNTL__NUM_VERTICES__SHIFT           16
 
 #define R500_VAP_INDEX_OFFSET		    0x208c
+
+#define R500_VAP_ALT_NUM_VERTICES                           0x2088
 
 #define R300_VAP_OUTPUT_VTX_FMT_0           0x2090
 #       define R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT     (1<<0)
@@ -244,6 +247,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_DATA_TYPE_SHORT_4                   7
 #       define R300_DATA_TYPE_VECTOR_3_TTT              8
 #       define R300_DATA_TYPE_VECTOR_3_EET              9
+#       define R300_DATA_TYPE_FLOAT_8                   10
+#       define R300_DATA_TYPE_FLT16_2                   11
+#       define R300_DATA_TYPE_FLT16_4                   12
 #       define R300_SKIP_DWORDS_SHIFT                   4
 #       define R300_DST_VEC_LOC_SHIFT                   8
 #       define R300_LAST_VEC                            (1 << 13)
@@ -1619,18 +1625,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_TX_OFFSET_5                    0x4554
 #define R300_TX_OFFSET_6                    0x4558
 #define R300_TX_OFFSET_7                    0x455C
-	/* BEGIN: Guess from R200 */
+
 #       define R300_TXO_ENDIAN_NO_SWAP           (0 << 0)
 #       define R300_TXO_ENDIAN_BYTE_SWAP         (1 << 0)
 #       define R300_TXO_ENDIAN_WORD_SWAP         (2 << 0)
 #       define R300_TXO_ENDIAN_HALFDW_SWAP       (3 << 0)
-#       define R300_TXO_MACRO_TILE               (1 << 2)
+#       define R300_TXO_MACRO_TILE_LINEAR        (0 << 2)
+#       define R300_TXO_MACRO_TILE_TILED         (1 << 2)
+#       define R300_TXO_MACRO_TILE(x)            ((x) << 2)
 #       define R300_TXO_MICRO_TILE_LINEAR        (0 << 3)
-#       define R300_TXO_MICRO_TILE               (1 << 3)
-#       define R300_TXO_MICRO_TILE_SQUARE        (2 << 3)
+#       define R300_TXO_MICRO_TILE_TILED         (1 << 3)
+#       define R300_TXO_MICRO_TILE_TILED_SQUARE  (2 << 3)
+#       define R300_TXO_MICRO_TILE(x)            ((x) << 3)
 #       define R300_TXO_OFFSET_MASK              0xffffffe0
 #       define R300_TXO_OFFSET_SHIFT             5
-	/* END: Guess from R200 */
 
 /* 32 bit chroma key */
 #define R300_TX_CHROMA_KEY_0                      0x4580
@@ -2145,6 +2153,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Unpipelined. */
 #define R300_RB3D_CCTL                      0x4e00
+#	define R300_RB3D_CCTL_NUM_MULTIWRITES(x)       (MAX2(((x)-1), 0) << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_1_BUFFER                (0 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_2_BUFFERS               (1 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_3_BUFFERS               (2 << 5)
@@ -2185,6 +2194,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1     (4 << 3)
 #       define R300_DISCARD_SRC_PIXELS_SRC_COLOR_1     (5 << 3)
 #       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1     (6 << 3)
+#       define R500_SRC_ALPHA_0_NO_READ                (1 << 30)
+#       define R500_SRC_ALPHA_1_NO_READ                (1 << 31)
 
 /* the following are shared between CBLEND and ABLEND */
 #       define R300_FCN_MASK                         (3  << 12)
@@ -2280,9 +2291,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_COLORPITCH_MASK              0x00003FFE
 #       define R300_COLOR_TILE_DISABLE            (0 << 16)
 #       define R300_COLOR_TILE_ENABLE             (1 << 16)
+#       define R300_COLOR_TILE(x)                 ((x) << 16)
 #       define R300_COLOR_MICROTILE_DISABLE       (0 << 17)
 #       define R300_COLOR_MICROTILE_ENABLE        (1 << 17)
 #       define R300_COLOR_MICROTILE_ENABLE_SQUARE (2 << 17) /* Only available in 16-bit */
+#       define R300_COLOR_MICROTILE(x)            ((x) << 17)
 #       define R300_COLOR_ENDIAN_NO_SWAP          (0 << 19)
 #       define R300_COLOR_ENDIAN_WORD_SWAP        (1 << 19)
 #       define R300_COLOR_ENDIAN_DWORD_SWAP       (2 << 19)
@@ -2541,9 +2554,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_DEPTHPITCH_MASK              0x00003FFC
 #       define R300_DEPTHMACROTILE_DISABLE      (0 << 16)
 #       define R300_DEPTHMACROTILE_ENABLE       (1 << 16)
+#       define R300_DEPTHMACROTILE(x)           ((x) << 16)
 #       define R300_DEPTHMICROTILE_LINEAR       (0 << 17)
 #       define R300_DEPTHMICROTILE_TILED        (1 << 17)
 #       define R300_DEPTHMICROTILE_TILED_SQUARE (2 << 17)
+#       define R300_DEPTHMICROTILE(x)           ((x) << 17)
 #       define R300_DEPTHENDIAN_NO_SWAP         (0 << 18)
 #       define R300_DEPTHENDIAN_WORD_SWAP       (1 << 18)
 #       define R300_DEPTHENDIAN_DWORD_SWAP      (2 << 18)
@@ -2637,7 +2652,7 @@ enum {
 	VE_COND_MUX_GTE			= 25,
 	VE_SET_GREATER_THAN		= 26,
 	VE_SET_EQUAL			= 27,
-	VE_SET_NOT_EQUAL		= 28,
+	VE_SET_NOT_EQUAL		= 28
 };
 
 enum {
@@ -2671,20 +2686,20 @@ enum {
 	ME_PRED_SET_CLR			= 25,
 	ME_PRED_SET_INV			= 26,
 	ME_PRED_SET_POP			= 27,
-	ME_PRED_SET_RESTORE		= 28,
+	ME_PRED_SET_RESTORE		= 28
 };
 
 enum {
 	/* R3XX */
 	PVS_MACRO_OP_2CLK_MADD		= 0,
-	PVS_MACRO_OP_2CLK_M2X_ADD	= 1,
+	PVS_MACRO_OP_2CLK_M2X_ADD	= 1
 };
 
 enum {
 	PVS_SRC_REG_TEMPORARY		= 0,	/* Intermediate Storage */
 	PVS_SRC_REG_INPUT		= 1,	/* Input Vertex Storage */
 	PVS_SRC_REG_CONSTANT		= 2,	/* Constant State Storage */
-	PVS_SRC_REG_ALT_TEMPORARY	= 3,	/* Alternate Intermediate Storage */
+	PVS_SRC_REG_ALT_TEMPORARY	= 3	/* Alternate Intermediate Storage */
 };
 
 enum {
@@ -2693,7 +2708,7 @@ enum {
 	PVS_DST_REG_OUT			= 2,	/* Output Memory. Used for all outputs */
 	PVS_DST_REG_OUT_REPL_X		= 3,	/* Output Memory & Replicate X to all channels */
 	PVS_DST_REG_ALT_TEMPORARY	= 4,	/* Alternate Intermediate Storage */
-	PVS_DST_REG_INPUT		= 5,	/* Output Memory & Replicate X to all channels */
+	PVS_DST_REG_INPUT		= 5	/* Output Memory & Replicate X to all channels */
 };
 
 enum {
@@ -2702,7 +2717,7 @@ enum {
 	PVS_SRC_SELECT_Z		= 2,	/* Select Z Component */
 	PVS_SRC_SELECT_W		= 3,	/* Select W Component */
 	PVS_SRC_SELECT_FORCE_0		= 4,	/* Force Component to 0.0 */
-	PVS_SRC_SELECT_FORCE_1		= 5,	/* Force Component to 1.0 */
+	PVS_SRC_SELECT_FORCE_1		= 5	/* Force Component to 1.0 */
 };
 
 /* PVS Opcode & Destination Operand Description */
@@ -2741,7 +2756,7 @@ enum {
 	PVS_DST_ADDR_SEL_MASK		= 0x3,
 	PVS_DST_ADDR_SEL_SHIFT		= 29,
 	PVS_DST_ADDR_MODE_0_MASK	= 0x1,
-	PVS_DST_ADDR_MODE_0_SHIFT	= 31,
+	PVS_DST_ADDR_MODE_0_SHIFT	= 31
 };
 
 /* PVS Source Operand Description */
@@ -2776,7 +2791,7 @@ enum {
 	PVS_SRC_ADDR_SEL_MASK		= 0x3,
 	PVS_SRC_ADDR_SEL_SHIFT		= 29,
 	PVS_SRC_ADDR_MODE_1_MASK	= 0x0,
-	PVS_SRC_ADDR_MODE_1_SHIFT	= 32,
+	PVS_SRC_ADDR_MODE_1_SHIFT	= 32
 };
 
 /*\}*/
@@ -3292,6 +3307,11 @@ enum {
  * the last block is omitted.
  */
 #define R300_PACKET3_3D_LOAD_VBPNTR         0x00002F00
+
+#   define R300_VBPNTR_SIZE0(x)    ((x) >> 2)
+#   define R300_VBPNTR_STRIDE0(x)  (((x) >> 2) << 8)
+#   define R300_VBPNTR_SIZE1(x)    (((x) >> 2) << 16)
+#   define R300_VBPNTR_STRIDE1(x)  (((x) >> 2) << 24)
 
 #define R300_PACKET3_INDX_BUFFER            0x00003300
 #    define R300_INDX_BUFFER_DST_SHIFT          0

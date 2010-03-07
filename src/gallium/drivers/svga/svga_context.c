@@ -26,9 +26,10 @@
 #include "svga_cmd.h"
 
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
+#include "util/u_bitmask.h"
 #include "util/u_upload_mgr.h"
 
 #include "svga_context.h"
@@ -60,6 +61,9 @@ static void svga_destroy( struct pipe_context *pipe )
 
    u_upload_destroy( svga->upload_vb );
    u_upload_destroy( svga->upload_ib );
+
+   util_bitmask_destroy( svga->vs_bm );
+   util_bitmask_destroy( svga->fs_bm );
 
    for(shader = 0; shader < PIPE_SHADER_TYPES; ++shader)
       pipe_buffer_reference( &svga->curr.cb[shader], NULL );
@@ -122,7 +126,8 @@ svga_is_buffer_referenced( struct pipe_context *pipe,
 }
 
 
-struct pipe_context *svga_context_create( struct pipe_screen *screen )
+struct pipe_context *svga_context_create( struct pipe_screen *screen,
+					  void *priv )
 {
    struct svga_screen *svgascreen = svga_screen(screen);
    struct svga_context *svga = NULL;
@@ -130,10 +135,11 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen )
 
    svga = CALLOC_STRUCT(svga_context);
    if (svga == NULL)
-      goto error1;
+      goto no_svga;
 
    svga->pipe.winsys = screen->winsys;
    svga->pipe.screen = screen;
+   svga->pipe.priv = priv;
    svga->pipe.destroy = svga_destroy;
    svga->pipe.clear = svga_clear;
 
@@ -142,7 +148,7 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen )
 
    svga->swc = svgascreen->sws->context_create(svgascreen->sws);
    if(!svga->swc)
-      goto error2;
+      goto no_swc;
 
    svga_init_blend_functions(svga);
    svga_init_blit_functions(svga);
@@ -165,32 +171,40 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen )
    svga->debug.disable_shader = debug_get_num_option("SVGA_DISABLE_SHADER", ~0);
 
    if (!svga_init_swtnl(svga))
-      goto error3;
+      goto no_swtnl;
+
+   svga->fs_bm = util_bitmask_create();
+   if (svga->fs_bm == NULL)
+      goto no_fs_bm;
+
+   svga->vs_bm = util_bitmask_create();
+   if (svga->vs_bm == NULL)
+      goto no_vs_bm;
 
    svga->upload_ib = u_upload_create( svga->pipe.screen,
                                       32 * 1024,
                                       16,
                                       PIPE_BUFFER_USAGE_INDEX );
    if (svga->upload_ib == NULL)
-      goto error4;
+      goto no_upload_ib;
 
    svga->upload_vb = u_upload_create( svga->pipe.screen,
                                       128 * 1024,
                                       16,
                                       PIPE_BUFFER_USAGE_VERTEX );
    if (svga->upload_vb == NULL)
-      goto error5;
+      goto no_upload_vb;
 
    svga->hwtnl = svga_hwtnl_create( svga,
                                     svga->upload_ib,
                                     svga->swc );
    if (svga->hwtnl == NULL)
-      goto error6;
+      goto no_hwtnl;
 
 
    ret = svga_emit_initial_state( svga );
    if (ret)
-      goto error7;
+      goto no_state;
    
    /* Avoid shortcircuiting state with initial value of zero.
     */
@@ -203,25 +217,28 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen )
    svga->state.hw_draw.num_views = 0;
 
    svga->dirty = ~0;
-   svga->state.white_fs_id = SVGA3D_INVALID_ID;
 
    LIST_INITHEAD(&svga->dirty_buffers);
 
    return &svga->pipe;
 
-error7:
+no_state:
    svga_hwtnl_destroy( svga->hwtnl );
-error6:
+no_hwtnl:
    u_upload_destroy( svga->upload_vb );
-error5:
+no_upload_vb:
    u_upload_destroy( svga->upload_ib );
-error4:
+no_upload_ib:
+   util_bitmask_destroy( svga->vs_bm );
+no_vs_bm:
+   util_bitmask_destroy( svga->fs_bm );
+no_fs_bm:
    svga_destroy_swtnl(svga);
-error3:
+no_swtnl:
    svga->swc->destroy(svga->swc);
-error2:
+no_swc:
    FREE(svga);
-error1:
+no_svga:
    return NULL;
 }
 

@@ -169,7 +169,7 @@ void
 cmd_render(const struct cell_command_render *render, uint *pos_incr)
 {
    /* we'll DMA into these buffers */
-   ubyte vertex_data[CELL_BUFFER_SIZE] ALIGN16_ATTRIB;
+   PIPE_ALIGN_VAR(16) ubyte vertex_data[CELL_BUFFER_SIZE];
    const uint vertex_size = render->vertex_size; /* in bytes */
    /*const*/ uint total_vertex_bytes = render->num_verts * vertex_size;
    uint index_bytes;

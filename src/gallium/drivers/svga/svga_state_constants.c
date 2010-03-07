@@ -23,7 +23,7 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 
 #include "svga_context.h"
@@ -231,7 +231,8 @@ static int emit_vs_consts( struct svga_context *svga,
 struct svga_tracked_state svga_hw_vs_parameters = 
 {
    "hw vs params",
-   (SVGA_NEW_VS_CONST_BUFFER |
+   (SVGA_NEW_PRESCALE |
+    SVGA_NEW_VS_CONST_BUFFER |
     SVGA_NEW_ZERO_STRIDE |
     SVGA_NEW_VS_RESULT),
    emit_vs_consts

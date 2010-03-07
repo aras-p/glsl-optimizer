@@ -45,7 +45,6 @@
 #include "backend.h"
 #include "quilt.h"
 #include "curvelist.h"
-#include "curve.h"
 #include "nurbsconsts.h"
 
 /*--------------------------------------------------------------------------

@@ -33,8 +33,13 @@ struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
 
+    struct radeon_winsys* radeon_winsys;
+
     /* Chipset capabilities */
     struct r300_capabilities* caps;
+
+    /** Combination of DBG_xxx flags */
+    unsigned debug;
 };
 
 struct r300_transfer {
@@ -57,7 +62,44 @@ r300_transfer(struct pipe_transfer* transfer)
     return (struct r300_transfer*)transfer;
 }
 
-/* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
+/* Debug functionality. */
+
+/**
+ * Debug flags to disable/enable certain groups of debugging outputs.
+ *
+ * \note These may be rather coarse, and the grouping may be impractical.
+ * If you find, while debugging the driver, that a different grouping
+ * of these flags would be beneficial, just feel free to change them
+ * but make sure to update the documentation in r300_debug.c to reflect
+ * those changes.
+ */
+/*@{*/
+#define DBG_HELP    0x0000001
+#define DBG_FP      0x0000002
+#define DBG_VP      0x0000004
+#define DBG_CS      0x0000008
+#define DBG_DRAW    0x0000010
+#define DBG_TEX     0x0000020
+#define DBG_FALL    0x0000040
+/*@}*/
+
+static INLINE boolean SCREEN_DBG_ON(struct r300_screen * screen, unsigned flags)
+{
+    return (screen->debug & flags) ? TRUE : FALSE;
+}
+
+static INLINE void SCREEN_DBG(struct r300_screen * screen, unsigned flags,
+                              const char * fmt, ...)
+{
+    if (SCREEN_DBG_ON(screen, flags)) {
+        va_list va;
+        va_start(va, fmt);
+        debug_vprintf(fmt, va);
+        va_end(va);
+    }
+}
+
+void r300_init_debug(struct r300_screen* ctx);
 
 #endif /* R300_SCREEN_H */
+

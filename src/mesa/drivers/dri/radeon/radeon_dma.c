@@ -184,6 +184,8 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	radeon_print(RADEON_DMA, RADEON_NORMAL, "%s size %d minimum_size %d\n",
 			__FUNCTION__, size, rmesa->dma.minimum_size);
 
+	if (!is_empty_list(&rmesa->dma.reserved))
+		radeon_bo_unmap(first_elem(&rmesa->dma.reserved)->bo);
 
 	if (is_empty_list(&rmesa->dma.free)
 	      || last_elem(&rmesa->dma.free)->bo->size < size) {
@@ -205,14 +207,13 @@ again_alloc:
 		   counter on unused buffers for later freeing them from
 		   begin of list */
 		dma_bo = last_elem(&rmesa->dma.free);
-		assert(dma_bo->bo->cref == 1);
 		remove_from_list(dma_bo);
 		insert_at_head(&rmesa->dma.reserved, dma_bo);
 	}
 
 	rmesa->dma.current_used = 0;
 	rmesa->dma.current_vertexptr = 0;
-	
+
 	if (radeon_cs_space_check_with_bo(rmesa->cmdbuf.cs,
 					  first_elem(&rmesa->dma.reserved)->bo,
 					  RADEON_GEM_DOMAIN_GTT, 0))
@@ -222,6 +223,7 @@ again_alloc:
         /* Cmd buff have been flushed in radeon_revalidate_bos */
 		goto again_alloc;
 	}
+	radeon_bo_map(first_elem(&rmesa->dma.reserved)->bo, 1);
 }
 
 /* Allocates a region from rmesa->dma.current.  If there isn't enough
@@ -333,6 +335,10 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 		/* request updated cs processing information from kernel */
 		legacy_track_pending(rmesa->radeonScreen->bom, 0);
 	}
+
+	if (!is_empty_list(&rmesa->dma.reserved))
+		radeon_bo_unmap(first_elem(&rmesa->dma.reserved)->bo);
+
 	/* move waiting bos to free list.
 	   wait list provides gpu time to handle data before reuse */
 	foreach_s(dma_bo, temp, &rmesa->dma.wait) {
@@ -350,8 +356,11 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 		   FREE(dma_bo);
 		   continue;
 		}
-		if (!radeon_bo_is_idle(dma_bo->bo))
+		if (!radeon_bo_is_idle(dma_bo->bo)) {
+			if (rmesa->radeonScreen->driScreen->dri2.enabled)
+				break;
 			continue;
+		}
 		remove_from_list(dma_bo);
 		dma_bo->expire_counter = expire_at;
 		insert_at_tail(&rmesa->dma.free, dma_bo);
@@ -389,7 +398,7 @@ void rcommon_flush_last_swtcl_prim( GLcontext *ctx  )
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	struct radeon_dma *dma = &rmesa->dma;
-		
+
 	if (RADEON_DEBUG & RADEON_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	dma->flush = NULL;

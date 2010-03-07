@@ -1,84 +1,67 @@
 Import('*')
 
-if not env['GLUT']:
-    Return()
-
-env = env.Clone()
-
-env.Prepend(CPPPATH = [
-	'../util',
-])
-
-env.Prepend(LIBS = [
-	util,
-	'$GLUT_LIB'
-])
-
-if env['platform'] == 'windows':
-    env.Append(CPPDEFINES = ['NOMINMAX'])
-    env.Prepend(LIBS = ['winmm'])
-
 progs = [
-	'arbfplight',
-	'arbfslight',
-	'arbocclude',
-	'bounce',
-	'clearspd',
-	'copypix',
-	'cubemap',
-	'drawpix',
-	'engine',
-	'fbo_firecube',
-	'fire',
-	'fogcoord',
-	'fplight',
-	'fslight',
-	'gamma',
-	'gearbox',
-	'gears',
-	'geartrain',
-	'glinfo',
-	'gloss',
-	'gltestperf',
-	'ipers',
-	'isosurf',
-	'lodbias',
-	'morph3d',
-	'multiarb',
-	'paltex',
-	'pointblast',
-	'ray',
-	'readpix',
-	'reflect',
-	'renormal',
-	'shadowtex',
-	'singlebuffer',
-	'spectex',
-	'spriteblast',
-	'stex3d',
-	'teapot',
-	'terrain',
-	'tessdemo',
-	'texcyl',
-	'texenv',
-	'textures',
-	'trispd',
-	'tunnel',
-	'tunnel2',
-	'vao_demo',
-	'winpos',
-        'dinoshade',
-        'fbotexture',
-        'projtex',
+    'arbfplight',
+    'arbfslight',
+    'arbocclude',
+    'bounce',
+    'clearspd',
+    'copypix',
+    'cubemap',
+    'dinoshade',
+    'dissolve',
+    'drawpix',
+    'engine',
+    'fbo_firecube',
+    'fbotexture',
+    'fire',
+    'fogcoord',
+    'fplight',
+    'fslight',
+    'gamma',
+    'gearbox',
+    'gears',
+    'geartrain',
+    'glinfo',
+    'gloss',
+    'gltestperf',
+    'ipers',
+    'isosurf',
+    'lodbias',
+    'morph3d',
+    'multiarb',
+    'paltex',
+    'pointblast',
+    'projtex',
+    'ray',
+    'readpix',
+    'reflect',
+    'renormal',
+    'shadowtex',
+    'singlebuffer',
+    'spectex',
+    'spriteblast',
+    'stex3d',
+    'teapot',
+    'terrain',
+    'tessdemo',
+    'texcyl',
+    'texenv',
+    'textures',
+    'trispd',
+    'tunnel',
+    'tunnel2',
+    'vao_demo',
+    'winpos',
 ]
 
 for prog in progs:
-    env.Program(
+    progs_env.Program(
         target = prog,
         source = prog + '.c',
     )
     
-env.Program(
+progs_env.Program(
     target = 'rain',
     source = [
         'rain.cxx',

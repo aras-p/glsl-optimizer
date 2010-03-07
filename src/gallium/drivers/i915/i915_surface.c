@@ -27,13 +27,8 @@
 
 #include "i915_context.h"
 #include "i915_blit.h"
-#include "i915_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
-#include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
-#include "util/u_tile.h"
-#include "util/u_rect.h"
+#include "util/u_format.h"
 
 
 /* Assumes all values are within bounds -- no checking at this level -
@@ -52,15 +47,15 @@ i915_surface_copy(struct pipe_context *pipe,
    struct pipe_texture *spt = &src_tex->base;
 
    assert( dst != src );
-   assert( pf_get_blocksize(dpt->format) == pf_get_blocksize(spt->format) );
-   assert( pf_get_blockwidth(dpt->format) == pf_get_blockwidth(spt->format) );
-   assert( pf_get_blockheight(dpt->format) == pf_get_blockheight(spt->format) );
-   assert( pf_get_blockwidth(dpt->format) == 1 );
-   assert( pf_get_blockheight(dpt->format) == 1 );
+   assert( util_format_get_blocksize(dpt->format) == util_format_get_blocksize(spt->format) );
+   assert( util_format_get_blockwidth(dpt->format) == util_format_get_blockwidth(spt->format) );
+   assert( util_format_get_blockheight(dpt->format) == util_format_get_blockheight(spt->format) );
+   assert( util_format_get_blockwidth(dpt->format) == 1 );
+   assert( util_format_get_blockheight(dpt->format) == 1 );
 
    i915_copy_blit( i915_context(pipe),
                    FALSE,
-                   pf_get_blocksize(dpt->format),
+                   util_format_get_blocksize(dpt->format),
                    (unsigned short) src_tex->stride, src_tex->buffer, src->offset,
                    (unsigned short) dst_tex->stride, dst_tex->buffer, dst->offset,
                    (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
@@ -76,11 +71,11 @@ i915_surface_fill(struct pipe_context *pipe,
    struct i915_texture *tex = (struct i915_texture *)dst->texture;
    struct pipe_texture *pt = &tex->base;
 
-   assert(pf_get_blockwidth(pt->format) == 1);
-   assert(pf_get_blockheight(pt->format) == 1);
+   assert(util_format_get_blockwidth(pt->format) == 1);
+   assert(util_format_get_blockheight(pt->format) == 1);
 
    i915_fill_blit( i915_context(pipe),
-                   pf_get_blocksize(pt->format),
+                   util_format_get_blocksize(pt->format),
                    (unsigned short) tex->stride,
                    tex->buffer, dst->offset,
                    (short) dstx, (short) dsty,

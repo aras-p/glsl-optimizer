@@ -33,23 +33,12 @@
 #include "vbo.h"
 #include "vbo_context.h"
 
-#if 0
-/* Reach out and grab this to use as the default:
- */
-extern void _tnl_draw_prims( GLcontext *ctx,
-			     const struct gl_client_array *arrays[],
-			     const struct _mesa_prim *prims,
-			     GLuint nr_prims,
-			     const struct _mesa_index_buffer *ib,
-			     GLuint min_index,
-			     GLuint max_index );
-#endif
-
 
 
 #define NR_LEGACY_ATTRIBS 16
 #define NR_GENERIC_ATTRIBS 16
 #define NR_MAT_ATTRIBS 12
+
 
 static GLuint check_size( const GLfloat *attr )
 {
@@ -58,6 +47,7 @@ static GLuint check_size( const GLfloat *attr )
    if (attr[1] != 0.0) return 2;
    return 1;		
 }
+
 
 static void init_legacy_currval(GLcontext *ctx)
 {
@@ -158,23 +148,6 @@ static void init_mat_currval(GLcontext *ctx)
    }
 }
 
-#if 0
-
-static void vbo_exec_current_init( struct vbo_exec_context *exec ) 
-{
-   GLcontext *ctx = exec->ctx;
-   GLint i;
-
-   /* setup the pointers for the typical 16 vertex attributes */
-   for (i = 0; i < VBO_ATTRIB_FIRST_MATERIAL; i++) 
-      exec->vtx.current[i] = ctx->Current.Attrib[i];
-
-   /* setup pointers for the 12 material attributes */
-   for (i = 0; i < MAT_ATTRIB_MAX; i++)
-      exec->vtx.current[VBO_ATTRIB_FIRST_MATERIAL + i] = 
-	 ctx->Light.Material.Attrib[i];
-}
-#endif
 
 GLboolean _vbo_CreateContext( GLcontext *ctx )
 {
@@ -220,12 +193,6 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
    }
 
 
-   /* By default: 
-    */
-#if 0 /* dead - see vbo_set_draw_func() */
-   vbo->draw_prims = _tnl_draw_prims;
-#endif
-
    /* Hook our functions into exec and compile dispatch tables.  These
     * will pretty much be permanently installed, which means that the
     * vtxfmt mechanism can be removed now.
@@ -240,6 +207,7 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
    return GL_TRUE;
 }
 
+
 void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    _ae_invalidate_state(ctx, new_state);
@@ -249,17 +217,25 @@ void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state )
 
 void _vbo_DestroyContext( GLcontext *ctx )
 {
+   struct vbo_context *vbo = vbo_context(ctx);
+
    if (ctx->aelt_context) {
       _ae_destroy_context( ctx );
       ctx->aelt_context = NULL;
    }
 
-   if (vbo_context(ctx)) {
+   if (vbo) {
+      GLuint i;
+
+      for (i = 0; i < VBO_ATTRIB_MAX; i++) {
+         _mesa_reference_buffer_object(ctx, &vbo->currval[i].BufferObj, NULL);
+      }
+
       vbo_exec_destroy(ctx);
 #if FEATURE_dlist
       vbo_save_destroy(ctx);
 #endif
-      FREE(vbo_context(ctx));
+      FREE(vbo);
       ctx->swtnl_im = NULL;
    }
 }

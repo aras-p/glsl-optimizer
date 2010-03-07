@@ -38,6 +38,8 @@ struct sh_opcode_info
    const char *mnemonic;
    unsigned num_dst:8;
    unsigned num_src:8;
+   unsigned pre_dedent:1;
+   unsigned post_indent:1;
    unsigned svga_opcode:16;
 };
 

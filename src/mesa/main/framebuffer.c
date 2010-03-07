@@ -88,7 +88,7 @@ _mesa_create_framebuffer(const GLvisual *visual)
    struct gl_framebuffer *fb = CALLOC_STRUCT(gl_framebuffer);
    assert(visual);
    if (fb) {
-      _mesa_initialize_framebuffer(fb, visual);
+      _mesa_initialize_window_framebuffer(fb, visual);
    }
    return fb;
 }
@@ -109,15 +109,7 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
    assert(name != 0);
    fb = CALLOC_STRUCT(gl_framebuffer);
    if (fb) {
-      fb->Name = name;
-      fb->RefCount = 1;
-      fb->_NumColorDrawBuffers = 1;
-      fb->ColorDrawBuffer[0] = GL_COLOR_ATTACHMENT0_EXT;
-      fb->_ColorDrawBufferIndexes[0] = BUFFER_COLOR0;
-      fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
-      fb->_ColorReadBufferIndex = BUFFER_COLOR0;
-      fb->Delete = _mesa_destroy_framebuffer;
-      _glthread_INIT_MUTEX(fb->Mutex);
+      _mesa_initialize_user_framebuffer(fb, name);
    }
    return fb;
 }
@@ -126,15 +118,16 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
 /**
  * Initialize a gl_framebuffer object.  Typically used to initialize
  * window system-created framebuffers, not user-created framebuffers.
- * \sa _mesa_create_framebuffer
+ * \sa _mesa_initialize_user_framebuffer
  */
 void
-_mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
+_mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
+				     const GLvisual *visual)
 {
    assert(fb);
    assert(visual);
 
-   _mesa_bzero(fb, sizeof(struct gl_framebuffer));
+   memset(fb, 0, sizeof(struct gl_framebuffer));
 
    _glthread_INIT_MUTEX(fb->Mutex);
 
@@ -167,6 +160,30 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
 
 
 /**
+ * Initialize a user-created gl_framebuffer object.
+ * \sa _mesa_initialize_window_framebuffer
+ */
+void
+_mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name)
+{
+   assert(fb);
+   assert(name);
+
+   memset(fb, 0, sizeof(struct gl_framebuffer));
+
+   fb->Name = name;
+   fb->RefCount = 1;
+   fb->_NumColorDrawBuffers = 1;
+   fb->ColorDrawBuffer[0] = GL_COLOR_ATTACHMENT0_EXT;
+   fb->_ColorDrawBufferIndexes[0] = BUFFER_COLOR0;
+   fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
+   fb->_ColorReadBufferIndex = BUFFER_COLOR0;
+   fb->Delete = _mesa_destroy_framebuffer;
+   _glthread_INIT_MUTEX(fb->Mutex);
+}
+
+
+/**
  * Deallocate buffer and everything attached to it.
  * Typically called via the gl_framebuffer->Delete() method.
  */
@@ -175,7 +192,7 @@ _mesa_destroy_framebuffer(struct gl_framebuffer *fb)
 {
    if (fb) {
       _mesa_free_framebuffer_data(fb);
-      _mesa_free(fb);
+      free(fb);
    }
 }
 
@@ -509,7 +526,7 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
 {
    GLuint i;
 
-   _mesa_bzero(&fb->Visual, sizeof(fb->Visual));
+   memset(&fb->Visual, 0, sizeof(fb->Visual));
    fb->Visual.rgbMode = GL_TRUE; /* assume this */
 
 #if 0 /* this _might_ be needed */
@@ -519,7 +536,7 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
    }
 #endif
 
-   /* find first RGB or CI renderbuffer */
+   /* find first RGB renderbuffer */
    for (i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Renderbuffer) {
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
@@ -535,11 +552,6 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
                + fb->Visual.greenBits + fb->Visual.blueBits;
             fb->Visual.floatMode = GL_FALSE;
             fb->Visual.samples = rb->NumSamples;
-            break;
-         }
-         else if (baseFormat == GL_COLOR_INDEX) {
-            fb->Visual.indexBits = _mesa_get_format_bits(fmt, GL_INDEX_BITS);
-            fb->Visual.rgbMode = GL_FALSE;
             break;
          }
       }
@@ -812,8 +824,12 @@ update_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 void
 _mesa_update_framebuffer(GLcontext *ctx)
 {
-   struct gl_framebuffer *drawFb = ctx->DrawBuffer;
-   struct gl_framebuffer *readFb = ctx->ReadBuffer;
+   struct gl_framebuffer *drawFb;
+   struct gl_framebuffer *readFb;
+
+   assert(ctx);
+   drawFb = ctx->DrawBuffer;
+   readFb = ctx->ReadBuffer;
 
    update_framebuffer(ctx, drawFb);
    if (readFb != drawFb)
@@ -968,4 +984,30 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
 
    /* OK */
    return GL_TRUE;
+}
+
+GLenum
+_mesa_get_color_read_format(GLcontext *ctx)
+{
+   switch (ctx->ReadBuffer->_ColorReadBuffer->Format) {
+   case MESA_FORMAT_ARGB8888:
+      return GL_BGRA;
+   case MESA_FORMAT_RGB565:
+      return GL_BGR;
+   default:
+      return GL_RGBA;
+   }
+}
+
+GLenum
+_mesa_get_color_read_type(GLcontext *ctx)
+{
+   switch (ctx->ReadBuffer->_ColorReadBuffer->Format) {
+   case MESA_FORMAT_ARGB8888:
+      return GL_UNSIGNED_BYTE;
+   case MESA_FORMAT_RGB565:
+      return GL_UNSIGNED_SHORT_5_6_5_REV;
+   default:
+      return GL_UNSIGNED_BYTE;
+   }
 }

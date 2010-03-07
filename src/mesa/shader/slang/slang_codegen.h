@@ -42,6 +42,7 @@ typedef struct slang_assemble_ctx_
    struct gl_sl_pragmas *pragmas;
    slang_var_table *vartable;
    slang_info_log *log;
+   GLboolean allow_uniform_initializers;
 
    /* current loop stack */
    const slang_operation *LoopOperStack[MAX_LOOP_DEPTH];

@@ -29,12 +29,6 @@
 
 #include "swrast.h"
 
-
-extern void
-_swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                        SWspan *span);
-
-
 extern void
 _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
                           SWspan *span);

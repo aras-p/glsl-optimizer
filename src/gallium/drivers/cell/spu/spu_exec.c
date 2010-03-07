@@ -1681,7 +1681,7 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_SHR:
+   case TGSI_OPCODE_ISHR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
@@ -1839,10 +1839,11 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
    /* execute declarations (interpolants) */
    if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
       for (i = 0; i < mach->NumDeclarations; i++) {
+         PIPE_ALIGN_VAR(16)
          union {
             struct tgsi_full_declaration decl;
             qword buffer[ROUNDUP16(sizeof(struct tgsi_full_declaration)) / 16];
-         } d ALIGN16_ATTRIB;
+         } d;
          unsigned ea = (unsigned) (mach->Declarations + pc);
 
          spu_dcache_fetch_unaligned(d.buffer, ea, sizeof(d.decl));
@@ -1853,10 +1854,11 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
 
    /* execute instructions, until pc is set to -1 */
    while (pc != -1) {
+      PIPE_ALIGN_VAR(16)
       union {
          struct tgsi_full_instruction inst;
          qword buffer[ROUNDUP16(sizeof(struct tgsi_full_instruction)) / 16];
-      } i ALIGN16_ATTRIB;
+      } i;
       unsigned ea = (unsigned) (mach->Instructions + pc);
 
       spu_dcache_fetch_unaligned(i.buffer, ea, sizeof(i.inst));

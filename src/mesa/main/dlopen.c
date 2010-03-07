@@ -31,7 +31,7 @@
 #include "compiler.h"
 #include "dlopen.h"
 
-#if defined(_GNU_SOURCE) && !defined(__MINGW32__)
+#if defined(_GNU_SOURCE) && !defined(__MINGW32__) && !defined(__blrts)
 #include <dlfcn.h>
 #endif
 #if defined(_WIN32)
@@ -46,7 +46,9 @@
 void *
 _mesa_dlopen(const char *libname, int flags)
 {
-#if defined(_GNU_SOURCE)
+#if defined(__blrts)
+   return NULL;
+#elif defined(_GNU_SOURCE)
    flags = RTLD_LAZY | RTLD_GLOBAL; /* Overriding flags at this time */
    return dlopen(libname, flags);
 #elif defined(__MINGW32__)
@@ -65,11 +67,13 @@ _mesa_dlopen(const char *libname, int flags)
 GenericFunc
 _mesa_dlsym(void *handle, const char *fname)
 {
-#if defined(__DJGPP__)
+#if defined(__blrts)
+   return (GenericFunc) NULL;
+#elif defined(__DJGPP__)
    /* need '_' prefix on symbol names */
    char fname2[1000];
    fname2[0] = '_';
-   _mesa_strncpy(fname2 + 1, fname, 998);
+   strncpy(fname2 + 1, fname, 998);
    fname2[999] = 0;
    return (GenericFunc) dlsym(handle, fname2);
 #elif defined(_GNU_SOURCE)
@@ -88,7 +92,9 @@ _mesa_dlsym(void *handle, const char *fname)
 void
 _mesa_dlclose(void *handle)
 {
-#if defined(_GNU_SOURCE)
+#if defined(__blrts)
+   (void) handle;
+#elif defined(_GNU_SOURCE)
    dlclose(handle);
 #elif defined(__MINGW32__)
    FreeLibrary(handle);

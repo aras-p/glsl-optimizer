@@ -24,7 +24,7 @@
  **********************************************************/
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
@@ -164,7 +164,8 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
       }
 
       SVGA_DBG(DEBUG_DMA, "draw to sid %p, %d prims\n",
-               svga_surface(svga->curr.framebuffer.cbufs[0])->handle,
+               svga->curr.framebuffer.cbufs[0] ?
+               svga_surface(svga->curr.framebuffer.cbufs[0])->handle : NULL,
                hwtnl->cmd.prim_count);
 
       ret = SVGA3D_BeginDrawPrimitives(swc, 
@@ -252,7 +253,9 @@ enum pipe_error svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
          assert(index_bias >= 0);
          assert(min_index <= max_index);
          assert(offset + index_bias*stride < size);
-         assert(offset + (index_bias + min_index)*stride < size);
+         if (min_index != ~0) {
+            assert(offset + (index_bias + min_index) * stride < size);
+         }
 
          switch (hwtnl->cmd.vdecl[i].identity.type) {
          case SVGA3D_DECLTYPE_FLOAT1:
@@ -313,7 +316,9 @@ enum pipe_error svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
          }
 
          assert(!stride || width <= stride);
-         assert(offset + (index_bias + max_index)*stride + width <= size);
+         if (max_index != ~0) {
+            assert(offset + (index_bias + max_index) * stride + width <= size);
+         }
       }
 
       assert(range->indexWidth == range->indexArray.stride);

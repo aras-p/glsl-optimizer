@@ -52,16 +52,7 @@ struct st_fragment_program
    struct gl_fragment_program Base;
    GLuint serialNo;
 
-   GLuint input_to_slot[FRAG_ATTRIB_MAX];  /**< Maps FRAG_ATTRIB_x to slot */
-   GLuint num_input_slots;
-
-   /** map FP input back to VP output */
-   GLuint input_map[PIPE_MAX_SHADER_INPUTS];
-
-   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
-
-   struct pipe_shader_state state;
+   struct pipe_shader_state tgsi;
    void *driver_shader;
 
    /** Program prefixed with glBitmap prologue */
@@ -73,7 +64,7 @@ struct st_fragment_program
 
 struct st_vp_varient_key
 {
-   char dummy;                  /* currently unused */
+   boolean passthrough_edgeflags;
 };
 
 
@@ -88,9 +79,11 @@ struct st_vp_varient
     */
    struct st_vp_varient_key key;
 
-   /** TGSI tokens -- why?
+   /**
+    * TGSI tokens (to later generate a 'draw' module shader for
+    * selection/feedback/rasterpos)
     */
-   struct pipe_shader_state state;
+   struct pipe_shader_state tgsi;
 
    /** Driver's compiled shader */
    void *driver_shader;
@@ -100,6 +93,9 @@ struct st_vp_varient
 
    /** Next in linked list */
    struct st_vp_varient *next;  
+
+   /** similar to that in st_vertex_program, but with information about edgeflags too */
+   GLuint num_inputs;
 };
 
 
@@ -168,8 +164,7 @@ st_reference_fragprog(struct st_context *st,
 
 extern void
 st_translate_fragment_program(struct st_context *st,
-                              struct st_fragment_program *fp,
-                              const GLuint inputMapping[]);
+                              struct st_fragment_program *fp);
 
 
 /* Called after program string change, discard all previous

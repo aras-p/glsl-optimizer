@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
+
+<!-- OpenGL ES 2.x extensions -->
+
+<OpenGLAPI>
+
+<xi:include href="es_EXT.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<category name="GL_OES_texture_3D" number="34">
+    <enum name="TEXTURE_BINDING_3D_OES"                   value="0x806A"/>
+    <enum name="TEXTURE_3D_OES"                           value="0x806F"/>
+    <enum name="TEXTURE_WRAP_R_OES"                       value="0x8072"/>
+    <enum name="MAX_3D_TEXTURE_SIZE_OES"                  value="0x8073"/>
+    <enum name="SAMPLER_3D_OES"                           value="0x8B5F"/>
+    <enum name="FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_OES" value="0x8CD4"/>
+
+    <function name="CompressedTexImage3DOES" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="internalformat" type="GLenum"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="depth" type="GLsizei"/>
+        <param name="border" type="GLint"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
+        <glx rop="216" handcode="client"/>
+    </function>
+
+    <function name="CompressedTexSubImage3DOES" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="zoffset" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="depth" type="GLsizei"/>
+        <param name="format" type="GLenum"/>
+        <param name="imageSize" type="GLsizei" counter="true"/>
+        <param name="data" type="const GLvoid *" count="imageSize"/>
+        <glx rop="219" handcode="client"/>
+    </function>
+
+    <function name="CopyTexSubImage3DOES" offset="373">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="zoffset" type="GLint"/>
+        <param name="x" type="GLint"/>
+        <param name="y" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <glx rop="4123"/>
+    </function>
+
+    <function name="FramebufferTexture3DOES" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="attachment" type="GLenum"/>
+        <param name="textarget" type="GLenum"/>
+        <param name="texture" type="GLuint"/>
+        <param name="level" type="GLint"/>
+        <param name="zoffset" type="GLint"/>
+        <glx rop="4323"/>
+    </function>
+
+    <function name="TexImage3DOES" offset="371">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="internalformat" type="GLenum"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="depth" type="GLsizei"/>
+        <param name="border" type="GLint"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <glx rop="4114" large="true"/>
+    </function>
+
+    <function name="TexSubImage3DOES" offset="372">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="zoffset" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="depth" type="GLsizei"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
+        <glx rop="4115" large="true"/>
+    </function>
+</category>
+
+<!-- the other name is OES_texture_float_linear -->
+<category name="OES_texture_half_float_linear" number="35">
+    <!-- No new functions, types, enums. -->
+</category>
+
+<!-- the other name is OES_texture_float -->
+<category name="OES_texture_half_float" number="36">
+    <enum name="HALF_FLOAT_OES"                           value="0x8D61"/>
+</category>
+
+<category name="GL_OES_texture_npot" number="37">
+    <!-- No new functions, types, enums. -->
+</category>
+
+<category name="GL_OES_vertex_half_float" number="38">
+    <enum name="HALF_FLOAT_OES"                           value="0x8D61"/>
+</category>
+
+<category name="GL_EXT_texture_type_2_10_10_10_REV" number="42">
+    <enum name="UNSIGNED_INT_2_10_10_10_REV_EXT"          value="0x8368"/>
+</category>
+
+<category name="GL_OES_packed_depth_stencil" number="43">
+    <enum name="DEPTH_STENCIL_OES"                        value="0x84F9"/>
+    <enum name="UNSIGNED_INT_24_8_OES"                    value="0x84FA"/>
+    <enum name="DEPTH24_STENCIL8_OES"                     value="0x88F0"/>
+</category>
+
+<category name="GL_OES_depth_texture" number="44">
+    <!-- No new functions, types, enums. -->
+</category>
+
+<category name="GL_OES_standard_derivatives" number="45">
+    <enum name="FRAGMENT_SHADER_DERIVATIVE_HINT_OES"      value="0x8B8B"/>
+</category>
+
+<category name="GL_OES_vertex_type_10_10_10_2" number="46">
+    <enum name="UNSIGNED_INT_10_10_10_2_OES"              value="0x8DF6"/>
+    <enum name="INT_10_10_10_2_OES"                       value="0x8DF7"/>
+</category>
+
+<category name="GL_OES_get_program_binary" number="47">
+    <enum name="PROGRAM_BINARY_LENGTH_OES"                value="0x8741"/>
+    <enum name="NUM_PROGRAM_BINARY_FORMATS_OES"           value="0x87FE"/>
+    <enum name="PROGRAM_BINARY_FORMATS_OES"               value="0x87FF"/>
+
+    <function name="GetProgramBinaryOES" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="bufSize" type="GLsizei"/>
+        <param name="length" type="GLsizei *"/>
+        <param name="binaryFormat" type="GLenum *"/>
+        <param name="binary" type="GLvoid *"/>
+    </function>
+
+    <function name="ProgramBinaryOES" offset="assign">
+        <param name="program" type="GLuint"/>
+        <param name="binaryFormat" type="GLenum"/>
+        <param name="binary" type="const GLvoid *"/>
+        <param name="length" type="GLint"/>
+    </function>
+</category>
+
+</OpenGLAPI>

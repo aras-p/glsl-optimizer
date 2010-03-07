@@ -1,0 +1,69 @@
+import common
+
+Import('*')
+
+env = env.Clone()
+
+sources = [
+    'pp/sl_pp_context.c',
+    'pp/sl_pp_define.c',
+    'pp/sl_pp_dict.c',
+    'pp/sl_pp_error.c',
+    'pp/sl_pp_expression.c',
+    'pp/sl_pp_extension.c',
+    'pp/sl_pp_if.c',
+    'pp/sl_pp_line.c',
+    'pp/sl_pp_macro.c',
+    'pp/sl_pp_pragma.c',
+    'pp/sl_pp_process.c',
+    'pp/sl_pp_purify.c',
+    'pp/sl_pp_token.c',
+    'pp/sl_pp_token_util.c',
+    'pp/sl_pp_version.c',
+    'cl/sl_cl_parse.c',
+]
+
+glsl = env.ConvenienceLibrary(
+    target = 'glsl',
+    source = sources,
+)
+
+Export('glsl')
+
+env = env.Clone()
+
+if env['platform'] == 'windows':
+    env.PrependUnique(LIBS = [
+        'user32',
+    ])
+
+env.Prepend(LIBS = [glsl])
+
+env.Program(
+    target = 'purify',
+    source = ['apps/purify.c'],
+)
+
+env.Program(
+    target = 'tokenise',
+    source = ['apps/tokenise.c'],
+)
+
+env.Program(
+    target = 'version',
+    source = ['apps/version.c'],
+)
+
+env.Program(
+    target = 'process',
+    source = ['apps/process.c'],
+)
+
+glsl_compile = env.Program(
+    target = 'compile',
+    source = ['apps/compile.c'],
+)
+
+if env['platform'] == common.default_platform:
+    # Only export the GLSL compiler when building for the host platform
+    Export('glsl_compile')

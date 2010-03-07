@@ -105,7 +105,7 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
 				     dri_bo *sdc_bo,
 				     struct brw_sampler_state *sampler)
 {
-   _mesa_memset(sampler, 0, sizeof(*sampler));
+   memset(sampler, 0, sizeof(*sampler));
 
    switch (key->minfilter) {
    case GL_NEAREST:
@@ -262,10 +262,10 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
 	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 	    float bordercolor[4] = {
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0],
-	       texObj->BorderColor[0]
+	       texObj->BorderColor.f[0],
+	       texObj->BorderColor.f[0],
+	       texObj->BorderColor.f[0],
+	       texObj->BorderColor.f[0]
 	    };
 	    /* GL specs that border color for depth textures is taken from the
 	     * R channel, while the hardware uses A.  Spam R into all the
@@ -274,7 +274,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	    brw->wm.sdc_bo[unit] = upload_default_color(brw, bordercolor);
 	 } else {
 	    brw->wm.sdc_bo[unit] = upload_default_color(brw,
-							texObj->BorderColor);
+							texObj->BorderColor.f);
 	 }
 	 key->sampler_count = unit + 1;
       }
@@ -326,8 +326,7 @@ static void upload_wm_samplers( struct brw_context *brw )
       brw->wm.sampler_bo = brw_upload_cache(&brw->cache, BRW_SAMPLER,
 					    &key, sizeof(key),
 					    brw->wm.sdc_bo, key.sampler_count,
-					    &sampler, sizeof(sampler),
-					    NULL, NULL);
+					    &sampler, sizeof(sampler));
 
       /* Emit SDC relocations */
       for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {

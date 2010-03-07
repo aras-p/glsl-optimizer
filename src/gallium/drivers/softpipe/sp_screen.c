@@ -28,13 +28,14 @@
 
 #include "util/u_memory.h"
 #include "util/u_simple_screen.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
 #include "sp_texture.h"
 #include "sp_winsys.h"
 #include "sp_screen.h"
+#include "sp_context.h"
 
 
 static const char *
@@ -91,6 +92,19 @@ softpipe_get_param(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
       return 1;
+   case PIPE_CAP_MAX_CONST_BUFFERS:
+      return PIPE_MAX_CONSTANT_BUFFERS;
+   case PIPE_CAP_MAX_CONST_BUFFER_SIZE:
+      return 4096 * 4 * sizeof(float);
+   case PIPE_CAP_INDEP_BLEND_ENABLE:
+      return 1;
+   case PIPE_CAP_INDEP_BLEND_FUNC:
+      return 1;
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+      return 1;
    default:
       return 0;
    }
@@ -138,17 +152,17 @@ softpipe_is_format_supported( struct pipe_screen *screen,
 
    switch(format) {
    case PIPE_FORMAT_L16_UNORM:
-   case PIPE_FORMAT_YCBCR_REV:
-   case PIPE_FORMAT_YCBCR:
+   case PIPE_FORMAT_YUYV:
+   case PIPE_FORMAT_UYVY:
    case PIPE_FORMAT_DXT1_RGB:
    case PIPE_FORMAT_DXT1_RGBA:
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
    case PIPE_FORMAT_Z32_FLOAT:
    case PIPE_FORMAT_R8G8_SNORM:
-   case PIPE_FORMAT_B6UG5SR5S_NORM:
-   case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
-   case PIPE_FORMAT_A8B8G8R8_SNORM:
+   case PIPE_FORMAT_R5SG5SB6U_NORM:
+   case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
+   case PIPE_FORMAT_R8G8B8A8_SNORM:
    case PIPE_FORMAT_NONE:
       return FALSE;
    default:
@@ -191,6 +205,7 @@ softpipe_create_screen(struct pipe_winsys *winsys)
    screen->base.get_param = softpipe_get_param;
    screen->base.get_paramf = softpipe_get_paramf;
    screen->base.is_format_supported = softpipe_is_format_supported;
+   screen->base.context_create = softpipe_create_context;
 
    softpipe_init_screen_texture_funcs(&screen->base);
    u_simple_screen_init(&screen->base);

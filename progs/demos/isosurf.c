@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -132,9 +131,11 @@ static void read_surface( char *filename )
 
    numverts = 0;
    while (!feof(f) && numverts<maxverts) {
-      fscanf( f, "%f %f %f  %f %f %f",
-	      &data[numverts][0], &data[numverts][1], &data[numverts][2],
-	      &data[numverts][3], &data[numverts][4], &data[numverts][5] );
+      int result;
+      result = fscanf( f, "%f %f %f  %f %f %f",
+	               &data[numverts][0], &data[numverts][1], &data[numverts][2],
+	               &data[numverts][3], &data[numverts][4], &data[numverts][5] );
+      (void) result;
       numverts++;
    }
    numverts--;
@@ -1061,9 +1062,8 @@ int main(int argc, char **argv)
 
    read_surface( "isosurf.dat" );
 
-   glutInit( &argc, argv);
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(400, 400);
+   glutInit( &argc, argv);
 
    type = GLUT_DEPTH;
    type |= GLUT_RGB;

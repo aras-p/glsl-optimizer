@@ -34,7 +34,6 @@
 #include "context.h"
 #include "image.h"
 #include "enums.h"
-#include "macros.h"
 #include "polygon.h"
 #include "mtypes.h"
 
@@ -316,7 +315,7 @@ void _mesa_init_polygon( GLcontext * ctx )
 
 
    /* Polygon Stipple group */
-   MEMSET( ctx->PolygonStipple, 0xff, 32*sizeof(GLuint) );
+   memset( ctx->PolygonStipple, 0xff, 32*sizeof(GLuint) );
 }
 
 /*@}*/

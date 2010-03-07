@@ -76,8 +76,8 @@ static void tdfxClear( GLcontext *ctx, GLbitfield mask )
 
    if (fxMesa->glCtx->Visual.redBits != 8) {
       /* can only do color masking if running in 24/32bpp on Napalm */
-      if (ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP] ||
-          ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP]) {
+      if (ctx->Color.ColorMask[0][RCOMP] != ctx->Color.ColorMask[0][GCOMP] ||
+          ctx->Color.ColorMask[0][GCOMP] != ctx->Color.ColorMask[0][BCOMP]) {
          softwareMask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
          mask &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT);
       }
@@ -556,7 +556,7 @@ static void uploadTextureImages( tdfxContextPtr fxMesa )
  */
 void tdfxUploadClipping( tdfxContextPtr fxMesa )
 {
-   __DRIdrawablePrivate *dPriv = fxMesa->driDrawable;
+   __DRIdrawable *dPriv = fxMesa->driDrawable;
 
    assert(dPriv);
 
@@ -721,7 +721,7 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
 	 fxMesa->Glide.grColorMask( fxMesa->Color.ColorMask[RCOMP] ||
                                     fxMesa->Color.ColorMask[GCOMP] ||
                                     fxMesa->Color.ColorMask[BCOMP],
-                                    /*fxMesa->Color.ColorMask[ACOMP]*/GL_FALSE/*[dBorca] no-no*/ );
+                                    /*fxMesa->Color.ColorMask[0][ACOMP]*/GL_FALSE/*[dBorca] no-no*/ );
       }
       fxMesa->dirty &= ~TDFX_UPLOAD_COLOR_MASK;
    }

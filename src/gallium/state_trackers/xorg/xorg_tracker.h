@@ -47,6 +47,8 @@
 #endif
 
 #include "pipe/p_screen.h"
+#include "util/u_inlines.h"
+#include "util/u_debug.h"
 #include "state_tracker/drm_api.h"
 
 #define DRV_ERROR(msg)	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, msg);
@@ -64,6 +66,14 @@ typedef struct
 } EntRec, *EntPtr;
 
 #define XORG_NR_FENCES 3
+
+typedef struct _CustomizerRec
+{
+    Bool (*winsys_screen_init)(struct _CustomizerRec *cust, int fd);
+    Bool (*winsys_screen_close)(struct _CustomizerRec *cust);
+    Bool (*winsys_enter_vt)(struct _CustomizerRec *cust);
+    Bool (*winsys_leave_vt)(struct _CustomizerRec *cust);
+} CustomizerRec, *CustomizerPtr;
 
 typedef struct _modesettingRec
 {
@@ -112,12 +122,10 @@ typedef struct _modesettingRec
     /* exa */
     struct exa_context *exa;
     Bool noEvict;
+    Bool accelerate_2d;
     Bool debug_fallback;
 
-    /* winsys hocks */
-    Bool (*winsys_screen_init)(ScrnInfoPtr pScr);
-    Bool (*winsys_screen_close)(ScrnInfoPtr pScr);
-    void *winsys_priv;
+    CustomizerPtr cust;
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
     DamagePtr damage;
@@ -126,15 +134,15 @@ typedef struct _modesettingRec
 
 #define modesettingPTR(p) ((modesettingPtr)((p)->driverPrivate))
 
+CustomizerPtr xorg_customizer(ScrnInfoPtr pScrn);
+
+Bool xorg_has_gallium(ScrnInfoPtr pScrn);
 
 /***********************************************************************
  * xorg_exa.c
  */
 struct pipe_texture *
 xorg_exa_get_texture(PixmapPtr pPixmap);
-
-unsigned
-xorg_exa_get_pixmap_handle(PixmapPtr pPixmap, unsigned *stride);
 
 int
 xorg_exa_set_displayed_usage(PixmapPtr pPixmap);

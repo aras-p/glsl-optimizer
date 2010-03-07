@@ -434,7 +434,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
     * This array holds offsets of where the appropriate string ends, thus the
     * last element will be set to the total length of the source code.
     */
-   offsets = (GLint *) _mesa_malloc(count * sizeof(GLint));
+   offsets = (GLint *) malloc(count * sizeof(GLint));
    if (offsets == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
@@ -442,12 +442,12 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
 
    for (i = 0; i < count; i++) {
       if (string[i] == NULL) {
-         _mesa_free((GLvoid *) offsets);
+         free((GLvoid *) offsets);
          _mesa_error(ctx, GL_INVALID_OPERATION, "glShaderSourceARB(null string)");
          return;
       }
       if (length == NULL || length[i] < 0)
-         offsets[i] = _mesa_strlen(string[i]);
+         offsets[i] = strlen(string[i]);
       else
          offsets[i] = length[i];
       /* accumulate string lengths */
@@ -460,17 +460,17 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
     * valgrind warnings in the parser/grammer code.
     */
    totalLength = offsets[count - 1] + 2;
-   source = (GLcharARB *) _mesa_malloc(totalLength * sizeof(GLcharARB));
+   source = (GLcharARB *) malloc(totalLength * sizeof(GLcharARB));
    if (source == NULL) {
-      _mesa_free((GLvoid *) offsets);
+      free((GLvoid *) offsets);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
       return;
    }
 
    for (i = 0; i < count; i++) {
       GLint start = (i > 0) ? offsets[i - 1] : 0;
-      _mesa_memcpy(source + start, string[i],
-                   (offsets[i] - start) * sizeof(GLcharARB));
+      memcpy(source + start, string[i],
+             (offsets[i] - start) * sizeof(GLcharARB));
    }
    source[totalLength - 1] = '\0';
    source[totalLength - 2] = '\0';
@@ -489,9 +489,9 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
 
       newSource = _mesa_read_shader(filename);
       if (newSource) {
-         _mesa_fprintf(stderr, "Mesa: Replacing shader %u chksum=%d with %s\n",
+         fprintf(stderr, "Mesa: Replacing shader %u chksum=%d with %s\n",
                        shaderObj, checksum, filename);
-         _mesa_free(source);
+         free(source);
          source = newSource;
       }
    }      
@@ -504,7 +504,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
          sh->SourceChecksum = checksum; /* save original checksum */
    }
 
-   _mesa_free(offsets);
+   free(offsets);
 }
 
 

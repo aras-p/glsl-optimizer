@@ -122,7 +122,7 @@ setup_vertex_format(GLcontext *ctx)
                            swsetup->last_index_bitset)) {
       DECLARE_RENDERINPUTS(index_bitset);
       struct tnl_attr_map map[_TNL_ATTRIB_MAX];
-      int i, e = 0;
+      unsigned int i, e = 0;
 
       swsetup->intColors = intColors;
 
@@ -139,11 +139,6 @@ setup_vertex_format(GLcontext *ctx)
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
          EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4F, attrib[FRAG_ATTRIB_COL1]);
-      }
-
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR_INDEX )) {
-         EMIT_ATTR( _TNL_ATTRIB_COLOR_INDEX, EMIT_1F,
-                    attrib[FRAG_ATTRIB_CI][0] );
       }
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
@@ -294,18 +289,12 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
       _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_GENERIC0 + i,
                      dest->attrib[FRAG_ATTRIB_VAR0 + i] );
 
-   if (ctx->Visual.rgbMode) {
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0,
-                     dest->attrib[FRAG_ATTRIB_COL0] );
-      UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0,
+                  dest->attrib[FRAG_ATTRIB_COL0] );
+   UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
 
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1,
-                     dest->attrib[FRAG_ATTRIB_COL1]);
-   }
-   else {
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR_INDEX, tmp );
-      dest->attrib[FRAG_ATTRIB_CI][0] = tmp[0];
-   }
+   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1,
+                  dest->attrib[FRAG_ATTRIB_COL1]);
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_FOG, tmp );
    dest->attrib[FRAG_ATTRIB_FOGC][0] = tmp[0];

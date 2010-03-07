@@ -47,6 +47,7 @@
 static void compile_gs_prog( struct brw_context *brw,
 			     struct brw_gs_prog_key *key )
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_gs_compile c;
    const GLuint *program;
    GLuint program_size;
@@ -54,13 +55,12 @@ static void compile_gs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
-   c.need_ff_sync = BRW_IS_IGDNG(brw);
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
    c.nr_attrs = brw_count_bits(c.key.attrs);
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
        c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
@@ -125,12 +125,13 @@ static void compile_gs_prog( struct brw_context *brw,
    /* Upload
     */
    dri_bo_unreference(brw->gs.prog_bo);
-   brw->gs.prog_bo = brw_upload_cache( &brw->cache, BRW_GS_PROG,
-				       &c.key, sizeof(c.key),
-				       NULL, 0,
-				       program, program_size,
-				       &c.prog_data,
-				       &brw->gs.prog_data );
+   brw->gs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_GS_PROG,
+						   &c.key, sizeof(c.key),
+						   NULL, 0,
+						   program, program_size,
+						   &c.prog_data,
+						   sizeof(c.prog_data),
+						   &brw->gs.prog_data);
 }
 
 static const GLenum gs_prim[GL_POLYGON+1] = {  

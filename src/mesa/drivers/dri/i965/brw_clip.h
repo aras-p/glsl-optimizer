@@ -118,7 +118,6 @@ struct brw_clip_compile {
 
    GLuint header_position_offset;
    GLuint offset[VERT_ATTRIB_MAX];
-   GLboolean need_ff_sync;
 };
 
 #define ATTR_SIZE  (4*4)

@@ -29,8 +29,10 @@ PROGS = \
 	glxsnoop \
 	glxswapcontrol \
 	manywin \
+	msctest \
 	multictx \
 	offset \
+	omlsync \
 	overlay \
 	pbinfo \
 	pbdemo \

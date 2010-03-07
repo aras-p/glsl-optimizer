@@ -636,14 +636,16 @@ struct r200_context {
 #define R200_CONTEXT(ctx)		((r200ContextPtr)(ctx->DriverCtx))
 
 
-extern void r200DestroyContext( __DRIcontextPrivate *driContextPriv );
+extern void r200DestroyContext( __DRIcontext *driContextPriv );
 extern GLboolean r200CreateContext( const __GLcontextModes *glVisual,
-				    __DRIcontextPrivate *driContextPriv,
+				    __DRIcontext *driContextPriv,
 				    void *sharedContextPrivate);
-extern GLboolean r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
-				  __DRIdrawablePrivate *driDrawPriv,
-				  __DRIdrawablePrivate *driReadPriv );
-extern GLboolean r200UnbindContext( __DRIcontextPrivate *driContextPriv );
+extern GLboolean r200MakeCurrent( __DRIcontext *driContextPriv,
+				  __DRIdrawable *driDrawPriv,
+				  __DRIdrawable *driReadPriv );
+extern GLboolean r200UnbindContext( __DRIcontext *driContextPriv );
+
+extern void r200_init_texcopy_functions(struct dd_function_table *table);
 
 /* ================================================================
  * Debugging:

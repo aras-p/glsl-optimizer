@@ -57,6 +57,7 @@ static void Key( unsigned char key, int x, int y )
 
 static void Init( void )
 {
+#if 0
    static const char *prog0 =
       "!!FP1.0\n"
       "MUL   o[COLR], R0, f[WPOS]; \n"
@@ -73,6 +74,7 @@ static void Init( void )
       "MOV   HC, H2; \n"
       "END \n"
       ;
+#endif
 
    /* masked updates, defines, declarations */
    static const char *prog1 =

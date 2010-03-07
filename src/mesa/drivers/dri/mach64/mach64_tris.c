@@ -1248,7 +1248,6 @@ static struct {
 #define DO_POINTS    1
 #define DO_FULL_QUAD 1
 
-#define HAVE_RGBA   1
 #define HAVE_SPEC   1
 #define HAVE_BACK_COLORS  0
 #define HAVE_HW_FLATSHADE 1
@@ -1297,7 +1296,8 @@ do {						\
 
 #define LOCAL_VARS(n)						\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);		\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint vertex_size = mmesa->vertex_size;			\
    const GLuint xyoffset = 9;					\
    const GLuint coloroffset = 8;				\

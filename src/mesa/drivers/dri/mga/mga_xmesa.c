@@ -35,7 +35,6 @@
 #include "mga_drm.h"
 #include "mga_xmesa.h"
 #include "main/context.h"
-#include "main/matrix.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
 #include "main/framebuffer.h"
@@ -64,7 +63,6 @@
 #include "utils.h"
 #include "vblank.h"
 
-#include "main/extensions.h"
 #include "drirenderbuffer.h"
 
 #include "GL/internal/dri_interface.h"
@@ -108,7 +106,7 @@ int MGA_DEBUG = 0;
 #endif
 
 static const __DRIconfig **
-mgaFillInModes( __DRIscreenPrivate *psp,
+mgaFillInModes( __DRIscreen *psp,
 		unsigned pixel_bits, unsigned depth_bits,
 		unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -162,7 +160,7 @@ mgaFillInModes( __DRIscreenPrivate *psp,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor,
 			       back_buffer_modes, back_buffer_factor,
-                               msaa_samples_array, 1);
+                               msaa_samples_array, 1, GL_TRUE);
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
@@ -190,7 +188,7 @@ const __DRIextension *mgaScreenExtensions[] = {
 };
 
 static GLboolean
-mgaInitDriver(__DRIscreenPrivate *sPriv)
+mgaInitDriver(__DRIscreen *sPriv)
 {
    mgaScreenPrivate *mgaScreen;
    MGADRIPtr         serverInfo = (MGADRIPtr)sPriv->pDevPriv;
@@ -332,7 +330,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 
 
 static void
-mgaDestroyScreen(__DRIscreenPrivate *sPriv)
+mgaDestroyScreen(__DRIscreen *sPriv)
 {
    mgaScreenPrivate *mgaScreen = (mgaScreenPrivate *) sPriv->private;
 
@@ -426,14 +424,14 @@ static const struct dri_debug_control debug_control[] =
 
 static GLboolean
 mgaCreateContext( const __GLcontextModes *mesaVis,
-                  __DRIcontextPrivate *driContextPriv,
+                  __DRIcontext *driContextPriv,
                   void *sharedContextPrivate )
 {
    int i;
    unsigned   maxlevels;
    GLcontext *ctx, *shareCtx;
    mgaContextPtr mmesa;
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    mgaScreenPrivate *mgaScreen = (mgaScreenPrivate *)sPriv->private;
    drm_mga_sarea_t *saPriv = (drm_mga_sarea_t *)(((char*)sPriv->pSAREA)+
 					      mgaScreen->sarea_priv_offset);
@@ -645,7 +643,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 }
 
 static void
-mgaDestroyContext(__DRIcontextPrivate *driContextPriv)
+mgaDestroyContext(__DRIcontext *driContextPriv)
 {
    mgaContextPtr mmesa = (mgaContextPtr) driContextPriv->driverPrivate;
 
@@ -697,8 +695,8 @@ mgaDestroyContext(__DRIcontextPrivate *driContextPriv)
 
 
 static GLboolean
-mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
+mgaCreateBuffer( __DRIscreen *driScrnPriv,
+                 __DRIdrawable *driDrawPriv,
                  const __GLcontextModes *mesaVis,
                  GLboolean isPixmap )
 {
@@ -814,13 +812,13 @@ mgaCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-mgaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+mgaDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static void
-mgaSwapBuffers(__DRIdrawablePrivate *dPriv)
+mgaSwapBuffers(__DRIdrawable *dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       mgaContextPtr mmesa;
@@ -839,7 +837,7 @@ mgaSwapBuffers(__DRIdrawablePrivate *dPriv)
 }
 
 static GLboolean
-mgaUnbindContext(__DRIcontextPrivate *driContextPriv)
+mgaUnbindContext(__DRIcontext *driContextPriv)
 {
    mgaContextPtr mmesa = (mgaContextPtr) driContextPriv->driverPrivate;
    if (mmesa)
@@ -855,9 +853,9 @@ mgaUnbindContext(__DRIcontextPrivate *driContextPriv)
  * But why are we doing context initialization here???
  */
 static GLboolean
-mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
-               __DRIdrawablePrivate *driDrawPriv,
-               __DRIdrawablePrivate *driReadPriv)
+mgaMakeCurrent(__DRIcontext *driContextPriv,
+               __DRIdrawable *driDrawPriv,
+               __DRIdrawable *driReadPriv)
 {
    if (driContextPriv) {
       mgaContextPtr mmesa = (mgaContextPtr) driContextPriv->driverPrivate;
@@ -892,7 +890,7 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
+   __DRIdrawable *dPriv = mmesa->driDrawable;
    drm_mga_sarea_t *sarea = mmesa->sarea;
    int me = mmesa->hHWContext;
    int i;
@@ -960,7 +958,7 @@ static const __DRIconfig **mgaInitScreen(__DRIscreen *psp)
  * Get information about previous buffer swaps.
  */
 static int
-getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
+getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo )
 {
    mgaContextPtr  mmesa;
 
@@ -997,4 +995,11 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
+};
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
 };

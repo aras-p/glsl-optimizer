@@ -50,7 +50,7 @@ struct st_renderbuffer {
 };
 
 struct st_framebuffer {
-   VGint init_width, init_height;
+   VGint width, height;
    struct st_renderbuffer *strb;
    struct st_renderbuffer *dsrb;
 
@@ -113,7 +113,7 @@ struct vg_context
    } clear;
 
    struct {
-      struct pipe_constant_buffer cbuf;
+      struct pipe_buffer *cbuf;
       struct pipe_sampler_state sampler;
 
       struct vg_shader *union_fs;
@@ -135,7 +135,7 @@ struct vg_context
 
    struct pipe_sampler_state blend_sampler;
    struct {
-      struct pipe_constant_buffer buffer;
+      struct pipe_buffer *buffer;
       void *color_matrix_fs;
    } filter;
    struct vg_paint *default_paint;
@@ -145,7 +145,7 @@ struct vg_context
    struct vg_shader *plain_vs;
    struct vg_shader *clear_vs;
    struct vg_shader *texture_vs;
-   struct pipe_constant_buffer vs_const_buffer;
+   struct pipe_buffer *vs_const_buffer;
 };
 
 struct vg_object {

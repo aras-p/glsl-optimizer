@@ -22,8 +22,6 @@
 
 #include "r300_context.h"
 
-#include <ctype.h>
-
 
 struct debug_option {
     const char * name;
@@ -46,7 +44,7 @@ static struct debug_option debug_options[] = {
     { 0, 0, 0 }
 };
 
-void r300_init_debug(struct r300_context * ctx)
+void r300_init_debug(struct r300_screen * screen)
 {
     const char * options = debug_get_option("RADEON_DEBUG", 0);
     boolean printhint = FALSE;
@@ -64,7 +62,7 @@ void r300_init_debug(struct r300_context * ctx)
 
             for(opt = debug_options; opt->name; ++opt) {
                 if (!strncmp(options, opt->name, length)) {
-                    ctx->debug |= opt->flag;
+                    screen->debug |= opt->flag;
                     break;
                 }
             }
@@ -77,11 +75,11 @@ void r300_init_debug(struct r300_context * ctx)
             options += length;
         }
 
-        if (!ctx->debug)
+        if (!screen->debug)
             printhint = TRUE;
     }
 
-    if (printhint || ctx->debug & DBG_HELP) {
+    if (printhint || screen->debug & DBG_HELP) {
         debug_printf("You can enable debug output by setting the RADEON_DEBUG environment variable\n"
                      "to a comma-separated list of debug options. Available options are:\n");
         for(opt = debug_options; opt->name; ++opt) {

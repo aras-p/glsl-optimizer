@@ -47,7 +47,7 @@
 
 /*  Initialize light source and lighting.
  */
-void myinit(void)
+static void myinit(void)
 {
     GLfloat light_ambient[] = { 0.0, 0.0, 1.0, 1.0 };
     GLfloat light_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -66,7 +66,7 @@ void myinit(void)
     glEnable(GL_DEPTH_TEST);
 }
 
-void display(void)
+static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -94,7 +94,7 @@ void display(void)
     glFlush();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);

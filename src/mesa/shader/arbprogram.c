@@ -180,23 +180,24 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
          }
          else if (prog) {
             /* Unbind program if necessary */
-            if (prog->Target == GL_VERTEX_PROGRAM_ARB || /* == GL_VERTEX_PROGRAM_NV */
-                prog->Target == GL_VERTEX_STATE_PROGRAM_NV) {
+            switch (prog->Target) {
+            case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
+            case GL_VERTEX_STATE_PROGRAM_NV:
                if (ctx->VertexProgram.Current &&
                    ctx->VertexProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */
                   _mesa_BindProgram(prog->Target, 0);
                }
-            }
-            else if (prog->Target == GL_FRAGMENT_PROGRAM_NV ||
-                     prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
+               break;
+            case GL_FRAGMENT_PROGRAM_NV:
+            case GL_FRAGMENT_PROGRAM_ARB:
                if (ctx->FragmentProgram.Current &&
                    ctx->FragmentProgram.Current->Base.Id == ids[i]) {
                   /* unbind this currently bound program */
                   _mesa_BindProgram(prog->Target, 0);
                }
-            }
-            else {
+               break;
+            default:
                _mesa_problem(ctx, "bad target in glDeleteProgramsNV");
                return;
             }
@@ -488,8 +489,13 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       return;
    }
 
-   if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
-      ctx->Driver.ProgramStringNotify( ctx, target, base );
+   if (ctx->Program.ErrorPos == -1) {
+      /* finally, give the program to the driver for translation/checking */
+      if (!ctx->Driver.ProgramStringNotify(ctx, target, base)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glProgramStringARB(rejected by driver");
+      }
+   }
 }
 
 
@@ -561,6 +567,8 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
    }
 }
 
+
+
 /**
  * Set a program env parameter register.
  * \note Called from the GL API dispatcher.
@@ -569,10 +577,35 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
  */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
-                                   const GLfloat *params)
+                                const GLfloat *params)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, params[0], params[1],
-                                  params[2], params[3]);
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
+
+   if (target == GL_FRAGMENT_PROGRAM_ARB
+       && ctx->Extensions.ARB_fragment_program) {
+      if (index >= ctx->Const.FragmentProgram.MaxEnvParams) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter4fv(index)");
+         return;
+      }
+      memcpy(ctx->FragmentProgram.Parameters[index], params,
+             4 * sizeof(GLfloat));
+   }
+   else if (target == GL_VERTEX_PROGRAM_ARB /* == GL_VERTEX_PROGRAM_NV */
+       && (ctx->Extensions.ARB_vertex_program || ctx->Extensions.NV_vertex_program)) {
+      if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter4fv(index)");
+         return;
+      }
+      memcpy(ctx->VertexProgram.Parameters[index], params,
+             4 * sizeof(GLfloat));
+   }
+   else {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramEnvParameter4fv(target)");
+      return;
+   }
 }
 
 
@@ -581,7 +614,6 @@ _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 				 const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint i;
    GLfloat * dest;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -612,11 +644,7 @@ _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
       return;
    }
 
-   for ( i = 0 ; i < count ; i++ ) {
-      COPY_4V(dest, params);
-      params += 4;
-      dest += 4;
-   }
+   memcpy(dest, params, count * 4 * sizeof(GLfloat));
 }
 
 
@@ -729,8 +757,7 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 				   const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct gl_program *prog;
-   GLint i;
+   GLfloat *dest;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
@@ -745,7 +772,7 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fvEXT(index + count)");
          return;
       }
-      prog = &(ctx->FragmentProgram.Current->Base);
+      dest = ctx->FragmentProgram.Current->Base.LocalParams[index];
    }
    else if (target == GL_VERTEX_PROGRAM_ARB
             && ctx->Extensions.ARB_vertex_program) {
@@ -753,18 +780,14 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fvEXT(index + count)");
          return;
       }
-      prog = &(ctx->VertexProgram.Current->Base);
+      dest = ctx->VertexProgram.Current->Base.LocalParams[index];
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameters4fvEXT(target)");
       return;
    }
 
-   for (i = 0; i < count; i++) {
-      ASSERT((index + i) < MAX_PROGRAM_LOCAL_PARAMS);
-      COPY_4V(prog->LocalParams[index + i], params);
-      params += 4;
-   }
+   memcpy(dest, params, count * 4 * sizeof(GLfloat));
 }
 
 
@@ -887,7 +910,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
    switch (pname) {
       case GL_PROGRAM_LENGTH_ARB:
          *params
-            = prog->String ? (GLint) _mesa_strlen((char *) prog->String) : 0;
+            = prog->String ? (GLint) strlen((char *) prog->String) : 0;
          return;
       case GL_PROGRAM_FORMAT_ARB:
          *params = prog->Format;
@@ -1068,7 +1091,7 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
    }
 
    if (prog->String)
-      _mesa_memcpy(dst, prog->String, _mesa_strlen((char *) prog->String));
+      memcpy(dst, prog->String, strlen((char *) prog->String));
    else
       *dst = '\0';
 }

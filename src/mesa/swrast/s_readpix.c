@@ -33,49 +33,12 @@
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "main/pixel.h"
 #include "main/state.h"
 
 #include "s_context.h"
 #include "s_depth.h"
 #include "s_span.h"
 #include "s_stencil.h"
-
-
-/*
- * Read a block of color index pixels.
- */
-static void
-read_index_pixels( GLcontext *ctx,
-                   GLint x, GLint y,
-                   GLsizei width, GLsizei height,
-                   GLenum type, GLvoid *pixels,
-                   const struct gl_pixelstore_attrib *packing )
-{
-   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-   GLint i;
-
-   if (!rb)
-      return;
-
-   /* width should never be > MAX_WIDTH since we did clipping earlier */
-   ASSERT(width <= MAX_WIDTH);
-
-   /* process image row by row */
-   for (i = 0; i < height; i++) {
-      GLuint index[MAX_WIDTH];
-      GLvoid *dest;
-      ASSERT(rb->DataType == GL_UNSIGNED_INT);
-      rb->GetRow(ctx, rb, width, x, y + i, index);
-
-      dest = _mesa_image_address2d(packing, pixels, width, height,
-                                   GL_COLOR_INDEX, type, i, 0);
-
-      _mesa_pack_index_span(ctx, width, type, dest, index,
-                            &ctx->Pack, ctx->_ImageTransferState);
-   }
-}
-
 
 
 /**
@@ -359,14 +322,14 @@ read_rgba_pixels( GLcontext *ctx,
       GLfloat *dest, *src, *tmpImage, *convImage;
       GLint row;
 
-      tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+      tmpImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
       if (!tmpImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
          return;
       }
-      convImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+      convImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
       if (!convImage) {
-         _mesa_free(tmpImage);
+         free(tmpImage);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
          return;
       }
@@ -374,18 +337,7 @@ read_rgba_pixels( GLcontext *ctx,
       /* read full RGBA, FLOAT image */
       dest = tmpImage;
       for (row = 0; row < height; row++, y++) {
-         if (fb->Visual.rgbMode) {
-            _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, dest);
-         }
-         else {
-            GLuint index[MAX_WIDTH];
-            ASSERT(rb->DataType == GL_UNSIGNED_INT);
-            rb->GetRow(ctx, rb, width, x, y, index);
-            _mesa_apply_ci_transfer_ops(ctx,
-                                        transferOps & IMAGE_SHIFT_OFFSET_BIT,
-                                        width, index);
-            _mesa_map_ci_to_rgba(ctx, width, index, (GLfloat (*)[4]) dest);
-         }
+         _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, dest);
          _mesa_apply_rgba_transfer_ops(ctx, 
                                       transferOps & IMAGE_PRE_CONVOLUTION_BITS,
                                       width, (GLfloat (*)[4]) dest);
@@ -400,7 +352,7 @@ read_rgba_pixels( GLcontext *ctx,
          ASSERT(ctx->Pixel.Separable2DEnabled);
          _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
       }
-      _mesa_free(tmpImage);
+      free(tmpImage);
 
       /* finish transfer ops and pack the resulting image */
       src = convImage;
@@ -413,7 +365,7 @@ read_rgba_pixels( GLcontext *ctx,
                                     transferOps & IMAGE_POST_CONVOLUTION_BITS);
          src += width * 4;
       }
-      _mesa_free(convImage);
+      free(convImage);
    }
    else {
       /* no convolution */
@@ -432,19 +384,7 @@ read_rgba_pixels( GLcontext *ctx,
       for (row = 0; row < height; row++, y++) {
 
          /* Get float rgba pixels */
-         if (fb->Visual.rgbMode) {
-            _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, rgba);
-         }
-         else {
-            /* read CI and convert to RGBA */
-            GLuint index[MAX_WIDTH];
-            ASSERT(rb->DataType == GL_UNSIGNED_INT);
-            rb->GetRow(ctx, rb, width, x, y, index);
-            _mesa_apply_ci_transfer_ops(ctx,
-                                        transferOps & IMAGE_SHIFT_OFFSET_BIT,
-                                        width, index);
-            _mesa_map_ci_to_rgba(ctx, width, index, rgba);
-         }
+         _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, rgba);
 
          /* apply fudge factor for shallow color buffers */
          if (fb->Visual.redBits < 8 ||
@@ -593,10 +533,6 @@ _swrast_ReadPixels( GLcontext *ctx,
       return;
   
    switch (format) {
-      case GL_COLOR_INDEX:
-         read_index_pixels(ctx, x, y, width, height, type, pixels,
-                           &clippedPacking);
-	 break;
       case GL_STENCIL_INDEX:
 	 read_stencil_pixels(ctx, x, y, width, height, type, pixels,
                              &clippedPacking);

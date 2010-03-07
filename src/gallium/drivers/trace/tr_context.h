@@ -40,6 +40,8 @@ extern "C" {
 #endif
 
 
+struct trace_screen;
+   
 struct trace_context
 {
    struct pipe_context base;
@@ -95,9 +97,8 @@ trace_context(struct pipe_context *pipe)
 }
 
 
-
 struct pipe_context *
-trace_context_create(struct pipe_screen *screen,
+trace_context_create(struct trace_screen *tr_scr,
                      struct pipe_context *pipe);
 
 void

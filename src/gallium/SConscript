@@ -2,37 +2,16 @@ import os
 
 Import('*')
 
-env = env.Clone()
-
-auxiliaries = []
-
-Export('auxiliaries')
-
-
-if llvm:
-	SConscript(['auxiliary/gallivm/SConscript'])
-
-SConscript([
-	# NOTE: order matters!
-	'auxiliary/util/SConscript',
-	'auxiliary/rtasm/SConscript',
-	'auxiliary/tgsi/SConscript',
-	'auxiliary/cso_cache/SConscript',
-	'auxiliary/translate/SConscript',
-	'auxiliary/draw/SConscript',
-	'auxiliary/pipebuffer/SConscript',
-	'auxiliary/indices/SConscript',
-	'auxiliary/rbug/SConscript',
-	'auxiliary/vl/SConscript',
-])
+SConscript('auxiliary/SConscript')
 
 for driver in env['drivers']:
 	SConscript(os.path.join('drivers', driver, 'SConscript'))
 
 SConscript('state_trackers/python/SConscript')
-SConscript('state_trackers/glx/xlib/SConscript')
-SConscript('state_trackers/dri/SConscript')
-SConscript('state_trackers/xorg/SConscript')
+if platform != 'embedded':
+	SConscript('state_trackers/glx/xlib/SConscript')
+	SConscript('state_trackers/dri/SConscript')
+	SConscript('state_trackers/xorg/SConscript')
 
 if platform == 'windows':
 	SConscript('state_trackers/wgl/SConscript')

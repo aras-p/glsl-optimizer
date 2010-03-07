@@ -48,6 +48,7 @@
 #define need_GL_EXT_blend_func_separate
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_cull_vertex
+#define need_GL_EXT_draw_buffers2
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_framebuffer_blit
@@ -150,16 +151,19 @@ static const struct dri_extension i915_extensions[] = {
 static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_depth_clamp",                NULL },
    { "GL_ARB_depth_texture",              NULL },
+   { "GL_ARB_fragment_coord_conventions", NULL },
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_fragment_program_shadow",    NULL },
    { "GL_ARB_fragment_shader",            NULL },
    { "GL_ARB_framebuffer_object",         GL_ARB_framebuffer_object_functions},
+   { "GL_ARB_half_float_vertex",          NULL },
    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { "GL_ARB_point_sprite", 		  NULL },
    { "GL_ARB_seamless_cube_map",          NULL },
    { "GL_ARB_shadow",                     NULL },
    { "GL_MESA_texture_signed_rgba",       NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
+   { "GL_EXT_draw_buffers2",              GL_EXT_draw_buffers2_functions },
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
    { "GL_EXT_texture_sRGB",		  NULL },
@@ -196,11 +200,10 @@ intelInitExtensions(GLcontext *ctx)
     */
    driInitExtensions(ctx, card_extensions, GL_FALSE);
 
-   if (IS_965(intel->intelScreen->deviceID))
+   if (intel->gen >= 4)
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
 
-   if (IS_915(intel->intelScreen->deviceID)
-       || IS_945(intel->intelScreen->deviceID)) {
+   if (intel->gen == 3) {
       driInitExtensions(ctx, i915_extensions, GL_FALSE);
 
       if (driQueryOptionb(&intel->optionCache, "fragment_shader"))

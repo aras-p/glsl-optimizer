@@ -27,8 +27,8 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_inlines.h"
+#include "util/u_simple_screen.h"
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_parse.h"
 
@@ -183,7 +183,7 @@ cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 static void
 cell_set_constant_buffer(struct pipe_context *pipe,
                          uint shader, uint index,
-                         const struct pipe_constant_buffer *buf)
+                         struct pipe_buffer *buf)
 {
    struct cell_context *cell = cell_context(pipe);
 
@@ -193,7 +193,7 @@ cell_set_constant_buffer(struct pipe_context *pipe,
    draw_flush(cell->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&cell->constants[shader].buffer, buf->buffer);
+   pipe_buffer_reference(&cell->constants[shader], buf);
 
    if (shader == PIPE_SHADER_VERTEX)
       cell->dirty |= CELL_NEW_VS_CONSTANTS;

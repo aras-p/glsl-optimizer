@@ -29,14 +29,7 @@
 #include "main/state.h"
 #include "main/bufferobj.h"
 #include "main/context.h"
-#include "main/enable.h"
-#include "main/matrix.h"
-#include "main/texstate.h"
-#include "main/varray.h"
-#include "main/viewport.h"
 #include "swrast/swrast.h"
-#include "shader/arbprogram.h"
-#include "shader/program.h"
 
 #include "intel_context.h"
 #include "intel_pixel.h"
@@ -88,10 +81,10 @@ intel_check_blit_fragment_ops(GLcontext * ctx, GLboolean src_alpha_is_one)
       return GL_FALSE;
    }
 
-   if (!(ctx->Color.ColorMask[0] &&
-	 ctx->Color.ColorMask[1] &&
-	 ctx->Color.ColorMask[2] &&
-	 ctx->Color.ColorMask[3])) {
+   if (!(ctx->Color.ColorMask[0][0] &&
+	 ctx->Color.ColorMask[0][1] &&
+	 ctx->Color.ColorMask[0][2] &&
+	 ctx->Color.ColorMask[0][3])) {
       DBG("fallback due to color masking\n");
       return GL_FALSE;
    }

@@ -48,7 +48,7 @@ extern int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint 
 
 extern void r200DestroyTexObj( r200ContextPtr rmesa, radeonTexObjPtr t );
 
-extern void r200InitTextureFuncs( struct dd_function_table *functions );
+extern void r200InitTextureFuncs( radeonContextPtr radeon, struct dd_function_table *functions );
 
 extern void r200UpdateFragmentShader( GLcontext *ctx );
 

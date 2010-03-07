@@ -60,7 +60,7 @@ and create a window, you must do the following to use the X/Mesa interface:
 #include "main/mtypes.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 
 
 # include <X11/Xlib.h>
@@ -365,6 +365,9 @@ xmesa_buffer(GLframebuffer *fb)
    return (XMesaBuffer) st_framebuffer_private(stfb);
 }
 
+
+extern void
+xmesa_init(void);
 
 extern void
 xmesa_delete_framebuffer(struct gl_framebuffer *fb);

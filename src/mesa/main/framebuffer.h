@@ -34,7 +34,11 @@ extern struct gl_framebuffer *
 _mesa_new_framebuffer(GLcontext *ctx, GLuint name);
 
 extern void
-_mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual);
+_mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
+				     const GLvisual *visual);
+
+extern void
+_mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name);
 
 extern void
 _mesa_destroy_framebuffer(struct gl_framebuffer *buffer);
@@ -81,5 +85,10 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format);
 extern GLboolean
 _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format);
 
+extern GLenum
+_mesa_get_color_read_type(GLcontext *ctx);
+
+extern GLenum
+_mesa_get_color_read_format(GLcontext *ctx);
 
 #endif /* FRAMEBUFFER_H */

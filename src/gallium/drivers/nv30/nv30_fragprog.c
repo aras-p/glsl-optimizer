@@ -1,7 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_dump.h"
@@ -435,10 +435,11 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, sat, ADD, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_CMP:
-		tmp = temp(fpc);
-		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
+		tmp = nv30_sr(NV30SR_NONE, 0);
 		tmp.cc_update = 1;
 		arith(fpc, 0, MOV, tmp, 0xf, src[0], none, none);
+		dst.cc_test = NV30_VP_INST_COND_GE;
+		arith(fpc, sat, MOV, dst, mask, src[2], none, none);
 		dst.cc_test = NV30_VP_INST_COND_LT;
 		arith(fpc, sat, MOV, dst, mask, src[1], none, none);
 		break;
@@ -517,13 +518,28 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, sat, RSQ, dst, mask, abs(swz(src[0], X, X, X, X)), none, none);
 		break;
 	case TGSI_OPCODE_SCS:
-		if (mask & MASK_X) {
-			arith(fpc, sat, COS, dst, MASK_X,
-			      swz(src[0], X, X, X, X), none, none);
+		/* avoid overwriting the source */
+		if(src[0].swz[SWZ_X] != SWZ_X)
+		{
+			if (mask & MASK_X) {
+				arith(fpc, sat, COS, dst, MASK_X,
+				      swz(src[0], X, X, X, X), none, none);
+			}
+			if (mask & MASK_Y) {
+				arith(fpc, sat, SIN, dst, MASK_Y,
+				      swz(src[0], X, X, X, X), none, none);
+			}
 		}
-		if (mask & MASK_Y) {
-			arith(fpc, sat, SIN, dst, MASK_Y,
-			      swz(src[0], X, X, X, X), none, none);
+		else
+		{
+			if (mask & MASK_Y) {
+				arith(fpc, sat, SIN, dst, MASK_Y,
+				      swz(src[0], X, X, X, X), none, none);
+			}
+			if (mask & MASK_X) {
+				arith(fpc, sat, COS, dst, MASK_X,
+				      swz(src[0], X, X, X, X), none, none);
+			}
 		}
 		break;
 	case TGSI_OPCODE_SIN:
@@ -821,7 +837,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	fp->buffer = pscreen->buffer_create(pscreen, 0x100, 0, fp->insn_len * 4);
 	nv30_fragprog_upload(nv30, fp);
 
-	so = so_new(8, 1);
+	so = so_new(4, 4, 1);
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_ACTIVE_PROGRAM, 1);
 	so_reloc (so, nouveau_bo(fp->buffer), 0, NOUVEAU_BO_VRAM |
 		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
@@ -870,6 +886,12 @@ void
 nv30_fragprog_destroy(struct nv30_context *nv30,
 		      struct nv30_fragment_program *fp)
 {
+	if (fp->buffer)
+		pipe_buffer_reference(&fp->buffer, NULL);
+
+	if (fp->so)
+		so_ref(NULL, &fp->so);
+
 	if (fp->insn_len)
 		FREE(fp->insn);
 }

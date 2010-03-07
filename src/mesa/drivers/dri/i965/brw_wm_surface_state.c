@@ -94,20 +94,14 @@ static GLuint translate_tex_format( gl_format mesa_format,
       return BRW_SURFACEFORMAT_R8G8B8_UNORM;      
 
    case MESA_FORMAT_ARGB8888:
-      if (internal_format == GL_RGB)
-	 return BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
-      else
-	 return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
    case MESA_FORMAT_XRGB8888:
       return BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
 
    case MESA_FORMAT_RGBA8888_REV:
       _mesa_problem(NULL, "unexpected format in i965:translate_tex_format()");
-      if (internal_format == GL_RGB)
-	 return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
-      else
-	 return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
+      return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
 
    case MESA_FORMAT_RGB565:
       return BRW_SURFACEFORMAT_B5G6R5_UNORM;
@@ -262,8 +256,7 @@ brw_create_texture_surface( struct brw_context *brw,
    bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
 			 &key->bo, key->bo ? 1 : 0,
-			 &surf, sizeof(surf),
-			 NULL, NULL);
+			 &surf, sizeof(surf));
 
    if (key->bo) {
       /* Emit relocation to surface contents */
@@ -357,8 +350,7 @@ brw_create_constant_surface( struct brw_context *brw,
    bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
 			 &key->bo, key->bo ? 1 : 0,
-			 &surf, sizeof(surf),
-			 NULL, NULL);
+			 &surf, sizeof(surf));
 
    if (key->bo) {
       /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
@@ -517,7 +509,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				struct gl_renderbuffer *rb,
 				unsigned int unit)
 {
-   GLcontext *ctx = &brw->intel.ctx;
+   struct intel_context *intel = &brw->intel;
+   GLcontext *ctx = &intel->ctx;
    dri_bo *region_bo = NULL;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb ? irb->region : NULL;
@@ -528,7 +521,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       GLubyte color_mask[4];
       GLboolean color_blend;
       uint32_t tiling;
-      uint32_t draw_offset;
+      uint32_t draw_x;
+      uint32_t draw_y;
    } key;
 
    memset(&key, 0, sizeof(key));
@@ -537,12 +531,16 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       region_bo = region->buffer;
 
       key.surface_type = BRW_SURFACE_2D;
-      switch (irb->texformat) {
+      switch (irb->Base.Format) {
+      /* XRGB and ARGB are treated the same here because the chips in this
+       * family cannot render to XRGB targets.  This means that we have to
+       * mask writes to alpha (ala glColorMask) and reconfigure the alpha
+       * blending hardware to use GL_ONE (or GL_ZERO) for cases where
+       * GL_DST_ALPHA (or GL_ONE_MINUS_DST_ALPHA) is used.
+       */
       case MESA_FORMAT_ARGB8888:
-	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-	 break;
       case MESA_FORMAT_XRGB8888:
-	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
       case MESA_FORMAT_RGB565:
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
@@ -554,7 +552,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 	 break;
       default:
-	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->texformat);
+	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->Base.Format);
       }
       key.tiling = region->tiling;
       if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {
@@ -566,7 +564,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       }
       key.pitch = region->pitch;
       key.cpp = region->cpp;
-      key.draw_offset = region->draw_offset; /* cur 3d or cube face offset */
+      key.draw_x = region->draw_x;
+      key.draw_y = region->draw_y;
    } else {
       key.surface_type = BRW_SURFACE_NULL;
       key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
@@ -574,13 +573,24 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.width = 1;
       key.height = 1;
       key.cpp = 4;
-      key.draw_offset = 0;
+      key.draw_x = 0;
+      key.draw_y = 0;
    }
-   /* _NEW_COLOR */
-   memcpy(key.color_mask, ctx->Color.ColorMask,
-	  sizeof(key.color_mask));
-   key.color_blend = (!ctx->Color._LogicOpEnabled &&
-		      ctx->Color.BlendEnabled);
+
+   if (intel->gen < 6) {
+      /* _NEW_COLOR */
+      memcpy(key.color_mask, ctx->Color.ColorMask[unit],
+	     sizeof(key.color_mask));
+
+      /* As mentioned above, disable writes to the alpha component when the
+       * renderbuffer is XRGB.
+       */
+      if (ctx->DrawBuffer->Visual.alphaBits == 0)
+	 key.color_mask[3] = GL_FALSE;
+
+      key.color_blend = (!ctx->Color._LogicOpEnabled &&
+			 (ctx->Color.BlendEnabled & (1 << unit)));
+   }
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
@@ -597,25 +607,32 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       surf.ss0.surface_format = key.surface_format;
       surf.ss0.surface_type = key.surface_type;
       if (key.tiling == I915_TILING_NONE) {
-	 surf.ss1.base_addr = key.draw_offset;
+	 surf.ss1.base_addr = (key.draw_x + key.draw_y * key.pitch) * key.cpp;
       } else {
-	 uint32_t tile_offset = key.draw_offset % 4096;
+	 uint32_t tile_base, tile_x, tile_y;
+	 uint32_t pitch = key.pitch * key.cpp;
 
-	 surf.ss1.base_addr = key.draw_offset - tile_offset;
-
-	 assert(BRW_IS_G4X(brw) || tile_offset == 0);
-	 if (BRW_IS_G4X(brw)) {
-	    if (key.tiling == I915_TILING_X) {
-	       /* Note that the low bits of these fields are missing, so
-		* there's the possibility of getting in trouble.
-		*/
-	       surf.ss5.x_offset = (tile_offset % 512) / key.cpp / 4;
-	       surf.ss5.y_offset = tile_offset / 512 / 2;
-	    } else {
-	       surf.ss5.x_offset = (tile_offset % 128) / key.cpp / 4;
-	       surf.ss5.y_offset = tile_offset / 128 / 2;
-	    }
+	 if (key.tiling == I915_TILING_X) {
+	    tile_x = key.draw_x % (512 / key.cpp);
+	    tile_y = key.draw_y % 8;
+	    tile_base = ((key.draw_y / 8) * (8 * pitch));
+	    tile_base += (key.draw_x - tile_x) / (512 / key.cpp) * 4096;
+	 } else {
+	    /* Y */
+	    tile_x = key.draw_x % (128 / key.cpp);
+	    tile_y = key.draw_y % 32;
+	    tile_base = ((key.draw_y / 32) * (32 * pitch));
+	    tile_base += (key.draw_x - tile_x) / (128 / key.cpp) * 4096;
 	 }
+	 assert(intel->is_g4x || (tile_x == 0 && tile_y == 0));
+	 assert(tile_x % 4 == 0);
+	 assert(tile_y % 2 == 0);
+	 /* Note that the low bits of these fields are missing, so
+	  * there's the possibility of getting in trouble.
+	  */
+	 surf.ss1.base_addr = tile_base;
+	 surf.ss5.x_offset = tile_x / 4;
+	 surf.ss5.y_offset = tile_y / 2;
       }
       if (region_bo != NULL)
 	 surf.ss1.base_addr += region_bo->offset; /* reloc */
@@ -625,20 +642,21 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       brw_set_surface_tiling(&surf, key.tiling);
       surf.ss3.pitch = (key.pitch * key.cpp) - 1;
 
-      /* _NEW_COLOR */
-      surf.ss0.color_blend = key.color_blend;
-      surf.ss0.writedisable_red =   !key.color_mask[0];
-      surf.ss0.writedisable_green = !key.color_mask[1];
-      surf.ss0.writedisable_blue =  !key.color_mask[2];
-      surf.ss0.writedisable_alpha = !key.color_mask[3];
+      if (intel->gen < 6) {
+	 /* _NEW_COLOR */
+	 surf.ss0.color_blend = key.color_blend;
+	 surf.ss0.writedisable_red =   !key.color_mask[0];
+	 surf.ss0.writedisable_green = !key.color_mask[1];
+	 surf.ss0.writedisable_blue =  !key.color_mask[2];
+	 surf.ss0.writedisable_alpha = !key.color_mask[3];
+      }
 
       /* Key size will never match key size for textures, so we're safe. */
       brw->wm.surf_bo[unit] = brw_upload_cache(&brw->surface_cache,
                                                BRW_SS_SURFACE,
                                                &key, sizeof(key),
 					       &region_bo, 1,
-					       &surf, sizeof(surf),
-					       NULL, NULL);
+					       &surf, sizeof(surf));
       if (region_bo != NULL) {
 	 /* We might sample from it, and we might render to it, so flag
 	  * them both.  We might be able to figure out from other state
@@ -685,8 +703,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
       bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
 				  NULL, 0,
 				  brw->wm.surf_bo, brw->wm.nr_surfaces,
-				  data, data_size,
-				  NULL, NULL);
+				  data, data_size);
 
       /* Emit binding table relocations to surface state */
       for (i = 0; i < BRW_WM_MAX_SURF; i++) {

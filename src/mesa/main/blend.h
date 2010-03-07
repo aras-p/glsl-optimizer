@@ -72,6 +72,10 @@ extern void GLAPIENTRY
 _mesa_ColorMask( GLboolean red, GLboolean green,
                  GLboolean blue, GLboolean alpha );
 
+extern void GLAPIENTRY
+_mesa_ColorMaskIndexed( GLuint buf, GLboolean red, GLboolean green,
+                        GLboolean blue, GLboolean alpha );
+
 
 extern void GLAPIENTRY
 _mesa_ClampColorARB(GLenum target, GLenum clamp);

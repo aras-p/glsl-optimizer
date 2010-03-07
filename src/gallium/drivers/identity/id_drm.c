@@ -28,11 +28,11 @@
 #include "state_tracker/drm_api.h"
 
 #include "util/u_memory.h"
-#include "identity/id_drm.h"
-#include "identity/id_screen.h"
-#include "identity/id_public.h"
-#include "identity/id_screen.h"
-#include "identity/id_objects.h"
+#include "id_drm.h"
+#include "id_screen.h"
+#include "id_public.h"
+#include "id_screen.h"
+#include "id_objects.h"
 
 struct identity_drm_api
 {
@@ -63,22 +63,6 @@ identity_drm_create_screen(struct drm_api *_api, int fd,
    return identity_screen_create(screen);
 }
 
-static struct pipe_context *
-identity_drm_create_context(struct drm_api *_api,
-                            struct pipe_screen *_screen)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_drm_api *id_api = identity_drm_api(_api);
-   struct pipe_screen *screen = id_screen->screen;
-   struct drm_api *api = id_api->api;
-   struct pipe_context *pipe;
-
-   pipe = api->create_context(api, screen);
-
-   pipe = identity_context_create(_screen, pipe);
-
-   return pipe;
-}
 
 static struct pipe_texture *
 identity_drm_texture_from_shared_handle(struct drm_api *_api,
@@ -158,8 +142,9 @@ identity_drm_create(struct drm_api *api)
    if (!id_api)
       goto error;
 
+   id_api->base.name = api->name;
+   id_api->base.driver_name = api->driver_name;
    id_api->base.create_screen = identity_drm_create_screen;
-   id_api->base.create_context = identity_drm_create_context;
    id_api->base.texture_from_shared_handle = identity_drm_texture_from_shared_handle;
    id_api->base.shared_handle_from_texture = identity_drm_shared_handle_from_texture;
    id_api->base.local_handle_from_texture = identity_drm_local_handle_from_texture;

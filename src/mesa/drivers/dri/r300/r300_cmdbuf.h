@@ -44,14 +44,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define FIREAOS_BUFSZ          (3)
 #define SCISSORS_BUFSZ         (3)
 
-extern void r300InitCmdBuf(r300ContextPtr r300);
+void r300InitCmdBuf(r300ContextPtr r300);
 void r300_emit_scissor(GLcontext *ctx);
 
-void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom);
-int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom);
+void r300_emit_vpu(struct r300_context *ctx,
+                   uint32_t *data,
+                   unsigned len,
+                   uint32_t addr);
 
-void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom);
-int check_r500fp(GLcontext *ctx, struct radeon_state_atom *atom);
-int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom);
+void r500_emit_fp(struct r300_context *r300,
+                  uint32_t *data,
+                  unsigned len,
+                  uint32_t addr,
+                  unsigned type,
+                  unsigned clamp);
 
-#endif				/* __R300_CMDBUF_H__ */
+void r300_emit_cb_setup(struct r300_context *r300,
+                        struct radeon_bo *bo,
+                        uint32_t offset,
+                        GLuint format,
+                        unsigned cpp,
+                        unsigned pitch);
+
+#endif /* __R300_CMDBUF_H__ */

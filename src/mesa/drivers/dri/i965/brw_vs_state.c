@@ -82,9 +82,9 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 static dri_bo *
 vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_vs_unit_state vs;
    dri_bo *bo;
-   int chipset_max_threads;
 
    memset(&vs, 0, sizeof(vs));
 
@@ -98,7 +98,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     */
    vs.thread1.single_program_flow = 0;
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
       vs.thread1.binding_table_entry_count = 0; /* hardware requirement */
    else
       vs.thread1.binding_table_entry_count = key->nr_surfaces;
@@ -109,7 +109,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    vs.thread3.urb_entry_read_offset = 0;
    vs.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
       switch (key->nr_urb_entries) {
       case 8:
       case 12:
@@ -135,7 +135,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
       case 32:
 	 break;
       case 64:
-	 assert(BRW_IS_G4X(brw));
+	 assert(intel->is_g4x);
 	 break;
       default:
 	 assert(0);
@@ -145,17 +145,8 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 
    vs.thread4.urb_entry_allocation_size = key->urb_size - 1;
 
-   if (BRW_IS_IGDNG(brw))
-      chipset_max_threads = 72;
-   else if (BRW_IS_G4X(brw))
-      chipset_max_threads = 32;
-   else
-      chipset_max_threads = 16;
    vs.thread4.max_threads = CLAMP(key->nr_urb_entries / 2,
-				  1, chipset_max_threads) - 1;
-
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
-      vs.thread4.max_threads = 0;
+				  1, brw->vs_max_threads) - 1;
 
    /* No samplers for ARB_vp programs:
     */
@@ -173,8 +164,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    bo = brw_upload_cache(&brw->cache, BRW_VS_UNIT,
 			 key, sizeof(*key),
 			 &brw->vs.prog_bo, 1,
-			 &vs, sizeof(vs),
-			 NULL, NULL);
+			 &vs, sizeof(vs));
 
    /* Emit VS program relocation */
    dri_bo_emit_reloc(bo,

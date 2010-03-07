@@ -37,12 +37,10 @@
 
 #include "savagecontext.h"
 #include "savageioctl.h"
-#include "savage_bci.h"
 #include "savagestate.h"
 #include "savagespan.h"
 
 #include "drm.h"
-#include <sys/ioctl.h>
 #include <sys/timeb.h>
 
 #define DEPTH_SCALE_16 ((1<<16)-1)
@@ -337,6 +335,8 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask )
    GLint ch = ctx->DrawBuffer->_Ymax - cy;
 
    /* XXX FIX ME: the cx,cy,cw,ch vars are currently ignored! */
+   (void) ch;
+   (void) cw;
 
    if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
        fprintf (stderr, "%s\n", __FUNCTION__);
@@ -358,15 +358,15 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask )
    depthMask = 0;
    switch (imesa->savageScreen->cpp) {
    case 2:
-       colorMask = PACK_COLOR_565(ctx->Color.ColorMask[0],
-				  ctx->Color.ColorMask[1],
-				  ctx->Color.ColorMask[2]);
+       colorMask = PACK_COLOR_565(ctx->Color.ColorMask[0][0],
+				  ctx->Color.ColorMask[0][1],
+				  ctx->Color.ColorMask[0][2]);
        break;
    case 4:
-       colorMask = PACK_COLOR_8888(ctx->Color.ColorMask[3],
-				   ctx->Color.ColorMask[2],
-				   ctx->Color.ColorMask[1],
-				   ctx->Color.ColorMask[0]);
+       colorMask = PACK_COLOR_8888(ctx->Color.ColorMask[0][3],
+				   ctx->Color.ColorMask[0][2],
+				   ctx->Color.ColorMask[0][1],
+				   ctx->Color.ColorMask[0][0]);
        break;
    }
 
@@ -431,7 +431,7 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask )
 /*
  * Copy the back buffer to the front buffer. 
  */
-void savageSwapBuffers( __DRIdrawablePrivate *dPriv )
+void savageSwapBuffers( __DRIdrawable *dPriv )
 {
    savageContextPtr imesa;
 
@@ -535,7 +535,7 @@ void savageFlushVertices( savageContextPtr imesa )
 
 void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard )
 {
-    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
+    __DRIdrawable *dPriv = imesa->driDrawable;
 
     if (!imesa->dmaVtxBuf.total)
 	discard = GL_FALSE;

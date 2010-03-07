@@ -31,7 +31,7 @@ _mesa_alloc_shared_state(GLcontext *ctx);
 
 
 void
-_mesa_free_shared_state(GLcontext *ctx, struct gl_shared_state *shared);
+_mesa_release_shared_state(GLcontext *ctx, struct gl_shared_state *shared);
 
 
 #endif

@@ -43,8 +43,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_alloc.h"
 
 #include "main/imports.h"
-#include "main/matrix.h"
-#include "main/extensions.h"
 #include "utils.h"
 #include "main/framebuffer.h"
 
@@ -55,7 +53,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbo/vbo.h"
 
 #include "tnl/tnl.h"
-#include "tnl/t_pipeline.h"
 
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
@@ -83,6 +80,7 @@ static struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
+#if 0
 static struct dri_extension card_extensions_6326[] =
 {
     /*{ "GL_ARB_texture_border_clamp",       NULL },*/
@@ -90,6 +88,7 @@ static struct dri_extension card_extensions_6326[] =
     /*{ "GL_MESA_ycbcr_texture",             NULL },*/
     { NULL,                                NULL }
 };
+#endif
 
 static const struct dri_debug_control debug_control[] =
 {
@@ -160,11 +159,11 @@ void sisReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
 
 GLboolean
 sisCreateContext( const __GLcontextModes *glVisual,
-		  __DRIcontextPrivate *driContextPriv,
+		  __DRIcontext *driContextPriv,
                   void *sharedContextPrivate )
 {
    GLcontext *ctx, *shareCtx;
-   __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    sisContextPtr smesa;
    sisScreenPtr sisScreen;
    int i;
@@ -337,7 +336,7 @@ sisCreateContext( const __GLcontextModes *glVisual,
 }
 
 void
-sisDestroyContext ( __DRIcontextPrivate *driContextPriv )
+sisDestroyContext ( __DRIcontext *driContextPriv )
 {
    sisContextPtr smesa = (sisContextPtr)driContextPriv->driverPrivate;
 
@@ -365,9 +364,9 @@ sisDestroyContext ( __DRIcontextPrivate *driContextPriv )
 }
 
 GLboolean
-sisMakeCurrent( __DRIcontextPrivate *driContextPriv,
-                __DRIdrawablePrivate *driDrawPriv,
-                __DRIdrawablePrivate *driReadPriv )
+sisMakeCurrent( __DRIcontext *driContextPriv,
+                __DRIdrawable *driDrawPriv,
+                __DRIdrawable *driReadPriv )
 {
    if ( driContextPriv ) {
       GET_CURRENT_CONTEXT(ctx);
@@ -396,7 +395,7 @@ sisMakeCurrent( __DRIcontextPrivate *driContextPriv,
 }
 
 GLboolean
-sisUnbindContext( __DRIcontextPrivate *driContextPriv )
+sisUnbindContext( __DRIcontext *driContextPriv )
 {
    return GL_TRUE;
 }

@@ -27,6 +27,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include "glmain.h"
 #include "common.h"
 
@@ -53,6 +54,11 @@ static const struct vertex vertices[1] = {
 void
 PerfInit(void)
 {
+   if (!PerfExtensionSupported("GL_ARB_framebuffer_object")) {
+      printf("Sorry, this test requires GL_ARB_framebuffer_object\n");
+      exit(1);
+   }
+
    /* setup VBO w/ vertex data */
    glGenBuffersARB(1, &VBO);
    glBindBufferARB(GL_ARRAY_BUFFER_ARB, VBO);

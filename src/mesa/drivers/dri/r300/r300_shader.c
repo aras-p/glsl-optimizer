@@ -39,7 +39,7 @@ static void freeFragProgCache(GLcontext *ctx, struct r300_fragment_program_cont 
 	while (fp) {
 		tmp = fp->next;
 		rc_constants_destroy(&fp->code.constants);
-		_mesa_free(fp);
+		free(fp);
 		fp = tmp;
 	}
 }
@@ -52,7 +52,7 @@ static void freeVertProgCache(GLcontext *ctx, struct r300_vertex_program_cont *c
 		tmp = vp->next;
 		rc_constants_destroy(&vp->code.constants);
 		_mesa_reference_vertprog(ctx, &vp->Base, NULL);
-		_mesa_free(vp);
+		free(vp);
 		vp = tmp;
 	}
 }
@@ -98,7 +98,7 @@ static void r300DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 	_mesa_delete_program(ctx, prog);
 }
 
-static void
+static GLboolean
 r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	struct r300_vertex_program_cont *vp = (struct r300_vertex_program_cont *)prog;
@@ -116,7 +116,10 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 	}
 
 	/* need this for tcl fallbacks */
-	_tnl_program_string(ctx, target, prog);
+	(void) _tnl_program_string(ctx, target, prog);
+
+	/* XXX check if program is legal, within limits */
+	return GL_TRUE;
 }
 
 static GLboolean

@@ -29,6 +29,27 @@
 #define ST_CB_QUERYOBJ_H
 
 
+/**
+ * Subclass of gl_query_object
+ */
+struct st_query_object
+{
+   struct gl_query_object base;
+   struct pipe_query *pq;
+};
+
+
+/**
+ * Cast wrapper
+ */
+static INLINE struct st_query_object *
+st_query_object(struct gl_query_object *q)
+{
+   return (struct st_query_object *) q;
+}
+
+
+
 extern void
 st_init_query_functions(struct dd_function_table *functions);
 

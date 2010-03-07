@@ -810,9 +810,12 @@ static void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 	if (rrb == NULL || !rrb->bo)
 		return;
 
+	radeon_print(RADEON_MEMORY, RADEON_TRACE,
+		"%s( rb %p, flag %s )\n",
+		__func__, rb, flag ? "true":"false");
+
 	if (flag) {
-		if (rrb->bo->bom->funcs->bo_wait)
-			radeon_bo_wait(rrb->bo);
+	        radeon_bo_wait(rrb->bo);
 		r = radeon_bo_map(rrb->bo, 1);
 		if (r) {
 			fprintf(stderr, "(%s) error(%d) mapping buffer.\n",
@@ -828,18 +831,25 @@ static void map_unmap_rb(struct gl_renderbuffer *rb, int flag)
 }
 
 static void
-radeon_map_unmap_buffers(GLcontext *ctx, GLboolean map)
+radeon_map_unmap_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+			     GLboolean map)
 {
 	GLuint i, j;
 
+	radeon_print(RADEON_MEMORY, RADEON_TRACE,
+		"%s( %p , fb %p, map %s )\n",
+		__func__, ctx, fb, map ? "true":"false");
+
 	/* color draw buffers */
 	for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers; j++)
-		map_unmap_rb(ctx->DrawBuffer->_ColorDrawBuffers[j], map);
+		map_unmap_rb(fb->_ColorDrawBuffers[j], map);
+
+	map_unmap_rb(fb->_ColorReadBuffer, map);
 
 	/* check for render to textures */
 	for (i = 0; i < BUFFER_COUNT; i++) {
 		struct gl_renderbuffer_attachment *att =
-			ctx->DrawBuffer->Attachment + i;
+			fb->Attachment + i;
 		struct gl_texture_object *tex = att->Texture;
 		if (tex) {
 			/* Render to texture. Note that a mipmapped texture need not
@@ -855,15 +865,15 @@ radeon_map_unmap_buffers(GLcontext *ctx, GLboolean map)
 				radeon_teximage_unmap(image);
 		}
 	}
-
-	map_unmap_rb(ctx->ReadBuffer->_ColorReadBuffer, map);
-
+	
 	/* depth buffer (Note wrapper!) */
-	if (ctx->DrawBuffer->_DepthBuffer)
-		map_unmap_rb(ctx->DrawBuffer->_DepthBuffer->Wrapped, map);
+	if (fb->_DepthBuffer)
+		map_unmap_rb(fb->_DepthBuffer->Wrapped, map);
 
-	if (ctx->DrawBuffer->_StencilBuffer)
-		map_unmap_rb(ctx->DrawBuffer->_StencilBuffer->Wrapped, map);
+	if (fb->_StencilBuffer)
+		map_unmap_rb(fb->_StencilBuffer->Wrapped, map);
+
+	radeon_check_front_buffer_rendering(ctx);
 }
 
 static void radeonSpanRenderStart(GLcontext * ctx)
@@ -888,23 +898,30 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 			ctx->Driver.MapTexture(ctx, ctx->Texture.Unit[i]._Current);
 	}
 
-	radeon_map_unmap_buffers(ctx, 1);
+	radeon_map_unmap_framebuffer(ctx, ctx->DrawBuffer, GL_TRUE);
+	if (ctx->ReadBuffer != ctx->DrawBuffer)
+		radeon_map_unmap_framebuffer(ctx, ctx->ReadBuffer, GL_TRUE);
 }
 
 static void radeonSpanRenderFinish(GLcontext * ctx)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 	int i;
+
 	_swrast_flush(ctx);
-	if (!rmesa->radeonScreen->driScreen->dri2.enabled) {
-		UNLOCK_HARDWARE(rmesa);
-	}
+
 	for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
 		if (ctx->Texture.Unit[i]._ReallyEnabled)
 			ctx->Driver.UnmapTexture(ctx, ctx->Texture.Unit[i]._Current);
 	}
 
-	radeon_map_unmap_buffers(ctx, 0);
+	radeon_map_unmap_framebuffer(ctx, ctx->DrawBuffer, GL_FALSE);
+	if (ctx->ReadBuffer != ctx->DrawBuffer)
+		radeon_map_unmap_framebuffer(ctx, ctx->ReadBuffer, GL_FALSE);
+
+	if (!rmesa->radeonScreen->driScreen->dri2.enabled) {
+		UNLOCK_HARDWARE(rmesa);
+	}
 }
 
 void radeonInitSpanFuncs(GLcontext * ctx)

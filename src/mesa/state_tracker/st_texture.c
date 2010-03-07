@@ -35,14 +35,14 @@
 #include "main/texfetch.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
-#include "main/texstore.h"
 
 #undef Elements  /* fix re-defined macro warning */
 
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "util/u_rect.h"
 #include "util/u_math.h"
 
@@ -405,7 +405,7 @@ st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
    }
 
    /* map pipe format to base format for now */
-   if (pf_get_component_bits(format, PIPE_FORMAT_COMP_A) > 0)
+   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
       internalFormat = GL_RGBA;
    else
       internalFormat = GL_RGB;

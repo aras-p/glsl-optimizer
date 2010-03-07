@@ -36,10 +36,13 @@
 
 
 struct pipe_context;
+struct failover_context;
 
 
 struct pipe_context *failover_create( struct pipe_context *hw,
 				      struct pipe_context *sw );
 
+
+void failover_fail_over( struct failover_context *failover );
 
 #endif /* FO_WINSYS_H */

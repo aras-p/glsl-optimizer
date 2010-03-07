@@ -21,6 +21,9 @@ struct _egl_config
 };
 
 
+/**
+ * Macros for source level compatibility.
+ */
 #define SET_CONFIG_ATTRIB(CONF, ATTR, VAL) _eglSetConfigKey(CONF, ATTR, VAL)
 #define GET_CONFIG_ATTRIB(CONF, ATTR) _eglGetConfigKey(CONF, ATTR)
 
@@ -55,6 +58,10 @@ _eglResetConfigKeys(_EGLConfig *conf, EGLint val)
 
 /**
  * Update a config for a given key.
+ *
+ * Note that a valid key is not necessarily a valid attribute.  There are gaps
+ * in the attribute enums.  The separation is to catch application errors.
+ * Drivers should never set a key that is an invalid attribute.
  */
 static INLINE void
 _eglSetConfigKey(_EGLConfig *conf, EGLint key, EGLint val)
@@ -77,47 +84,16 @@ _eglGetConfigKey(const _EGLConfig *conf, EGLint key)
 }
 
 
-/**
- * Set a given attribute.
- *
- * Because _eglGetConfigAttrib is already used as a fallback driver
- * function, this function is not considered to have a good name.
- * SET_CONFIG_ATTRIB is preferred over this function.
- */
-static INLINE void
-_eglSetConfigAttrib(_EGLConfig *conf, EGLint attr, EGLint val)
-{
-   SET_CONFIG_ATTRIB(conf, attr, val);
-}
+PUBLIC void
+_eglInitConfig(_EGLConfig *config, _EGLDisplay *dpy, EGLint id);
 
 
-extern void
-_eglInitConfig(_EGLConfig *config, EGLint id);
-
-
-extern EGLConfig
+PUBLIC EGLConfig
 _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf);
-
-
-#ifndef _EGL_SKIP_HANDLE_CHECK
 
 
 extern EGLBoolean
 _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy);
-
-
-#else
-
-
-static INLINE EGLBoolean
-_eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
-{
-   _EGLConfig *conf = (_EGLConfig *) config;
-   return (dpy && conf && conf->Display == dpy);
-}
-
-
-#endif /* _EGL_SKIP_HANDLE_CHECK */
 
 
 /**
@@ -144,24 +120,24 @@ _eglGetConfigHandle(_EGLConfig *conf)
 }
 
 
-extern EGLBoolean
+PUBLIC EGLBoolean
 _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching);
 
 
-extern EGLBoolean
+PUBLIC EGLBoolean
 _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria);
 
 
-extern EGLBoolean
+PUBLIC EGLBoolean
 _eglParseConfigAttribList(_EGLConfig *conf, const EGLint *attrib_list);
 
 
-extern EGLint
+PUBLIC EGLint
 _eglCompareConfigs(const _EGLConfig *conf1, const _EGLConfig *conf2,
                    const _EGLConfig *criteria, EGLBoolean compare_id);
 
 
-extern void
+PUBLIC void
 _eglSortConfigs(const _EGLConfig **configs, EGLint count,
                 EGLint (*compare)(const _EGLConfig *, const _EGLConfig *,
                                   void *),

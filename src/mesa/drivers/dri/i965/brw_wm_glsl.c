@@ -743,7 +743,7 @@ static void emit_kil(struct brw_wm_compile *c)
     struct brw_reg depth = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
     brw_push_insn_state(p);
     brw_set_mask_control(p, BRW_MASK_DISABLE);
-    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); //IMASK
+    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
     brw_AND(p, depth, c->emit_mask_reg, depth);
     brw_pop_insn_state(p);
 }
@@ -1826,6 +1826,7 @@ get_argument_regs(struct brw_wm_compile *c,
 
 static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 {
+   struct intel_context *intel = &brw->intel;
 #define MAX_IF_DEPTH 32
 #define MAX_LOOP_DEPTH 32
     struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH];
@@ -1848,7 +1849,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
         c->cur_inst = i;
 
 #if 0
-        _mesa_printf("Inst %d: ", i);
+        printf("Inst %d: ", i);
         _mesa_print_instruction(inst);
 #endif
 
@@ -1875,10 +1876,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
 	else
 	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
-
-	dst_flags = inst->DstReg.WriteMask;
-	if (inst->SaturateMode == SATURATE_ZERO_ONE)
-	    dst_flags |= SATURATE;
 
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
@@ -2043,6 +2040,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		if_inst[if_depth++] = brw_IF(p, BRW_EXECUTE_8);
 		break;
 	    case OPCODE_ELSE:
+		assert(if_depth > 0);
 		if_inst[if_depth-1]  = brw_ELSE(p, if_inst[if_depth-1]);
 		break;
 	    case OPCODE_ENDIF:
@@ -2096,9 +2094,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                   struct brw_instruction *inst0, *inst1;
                   GLuint br = 1;
 
-                  if (BRW_IS_IGDNG(brw))
+                  if (intel->is_ironlake)
                      br = 2;
- 
+
+		  assert(loop_depth > 0);
                   loop_depth--;
                   inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
                   /* patch all the BREAK/CONT instructions from last BGNLOOP */
@@ -2116,7 +2115,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                }
                break;
 	    default:
-		_mesa_printf("unsupported IR in fragment shader %d\n",
+		printf("unsupported IR in fragment shader %d\n",
 			inst->Opcode);
 	}
 
@@ -2128,10 +2127,10 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     post_wm_emit(c);
 
     if (INTEL_DEBUG & DEBUG_WM) {
-      _mesa_printf("wm-native:\n");
+      printf("wm-native:\n");
       for (i = 0; i < p->nr_insn; i++)
 	 brw_disasm(stderr, &p->store[i]);
-      _mesa_printf("\n");
+      printf("\n");
     }
 }
 
@@ -2142,7 +2141,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
     if (INTEL_DEBUG & DEBUG_WM) {
-        _mesa_printf("brw_wm_glsl_emit:\n");
+        printf("brw_wm_glsl_emit:\n");
     }
 
     /* initial instruction translation/simplification */

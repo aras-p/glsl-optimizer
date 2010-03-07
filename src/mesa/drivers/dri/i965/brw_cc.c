@@ -35,7 +35,6 @@
 #include "brw_defines.h"
 #include "brw_util.h"
 #include "main/macros.h"
-#include "main/enums.h"
 
 static void prepare_cc_vp( struct brw_context *brw )
 {
@@ -89,6 +88,28 @@ struct brw_cc_unit_key {
    GLenum depth_func;
 };
 
+/**
+ * Modify blend function to force destination alpha to 1.0
+ *
+ * If \c function specifies a blend function that uses destination alpha,
+ * replace it with a function that hard-wires destination alpha to 1.0.  This
+ * is used when rendering to xRGB targets.
+ */
+static GLenum
+fix_xRGB_alpha(GLenum function)
+{
+   switch (function) {
+   case GL_DST_ALPHA:
+      return GL_ONE;
+
+   case GL_ONE_MINUS_DST_ALPHA:
+   case GL_SRC_ALPHA_SATURATE:
+      return GL_ZERO;
+   }
+
+   return function;
+}
+
 static void
 cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 {
@@ -132,6 +153,17 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
       key->blend_dst_rgb = ctx->Color.BlendDstRGB;
       key->blend_src_a = ctx->Color.BlendSrcA;
       key->blend_dst_a = ctx->Color.BlendDstA;
+
+      /* If the renderbuffer is XRGB, we have to frob the blend function to
+       * force the destination alpha to 1.0.  This means replacing GL_DST_ALPHA
+       * with GL_ONE and GL_ONE_MINUS_DST_ALPHA with GL_ZERO.
+       */
+      if (ctx->DrawBuffer->Visual.alphaBits == 0) {
+	 key->blend_src_rgb = fix_xRGB_alpha(key->blend_src_rgb);
+	 key->blend_src_a   = fix_xRGB_alpha(key->blend_src_a);
+	 key->blend_dst_rgb = fix_xRGB_alpha(key->blend_dst_rgb);
+	 key->blend_dst_a   = fix_xRGB_alpha(key->blend_dst_a);
+      }
    }
 
    key->alpha_enabled = ctx->Color.AlphaEnabled;
@@ -261,8 +293,7 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    bo = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
 			 key, sizeof(*key),
 			 &brw->cc.vp_bo, 1,
-			 &cc, sizeof(cc),
-			 NULL, NULL);
+			 &cc, sizeof(cc));
 
    /* Emit CC viewport relocation */
    dri_bo_emit_reloc(bo,

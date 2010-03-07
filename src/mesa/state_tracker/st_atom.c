@@ -35,7 +35,8 @@
 #include "st_cb_bitmap.h"
 #include "st_program.h"
 
-       
+#include "pipe/p_context.h"
+
 
 /**
  * This is used to initialize st->atoms[].
@@ -135,10 +136,14 @@ void st_validate_state( struct st_context *st )
 
    check_program_state( st );
 
+   if (st->pipe->screen->update_buffer)
+      st->pipe->screen->update_buffer(st->pipe->screen,
+				      st->pipe->priv);
+
    if (state->st == 0)
       return;
 
-   /*_mesa_printf("%s %x/%x\n", __FUNCTION__, state->mesa, state->st);*/
+   /*printf("%s %x/%x\n", __FUNCTION__, state->mesa, state->st);*/
 
    if (1) {
       /* Debug version which enforces various sanity checks on the
@@ -153,17 +158,17 @@ void st_validate_state( struct st_context *st )
 	 const struct st_tracked_state *atom = atoms[i];
 	 struct st_state_flags generated;
 	 
-	 /*_mesa_printf("atom %s %x/%x\n", atom->name, atom->dirty.mesa, atom->dirty.st);*/
+	 /*printf("atom %s %x/%x\n", atom->name, atom->dirty.mesa, atom->dirty.st);*/
 
 	 if (!(atom->dirty.mesa || atom->dirty.st) ||
 	     !atom->update) {
-	    _mesa_printf("malformed atom %s\n", atom->name);
+	    printf("malformed atom %s\n", atom->name);
 	    assert(0);
 	 }
 
 	 if (check_state(state, &atom->dirty)) {
 	    atoms[i]->update( st );
-	    /*_mesa_printf("after: %x\n", atom->dirty.mesa);*/
+	    /*printf("after: %x\n", atom->dirty.mesa);*/
 	 }
 
 	 accumulate_state(&examined, &atom->dirty);
@@ -176,7 +181,7 @@ void st_validate_state( struct st_context *st )
 	 assert(!check_state(&examined, &generated));
 	 prev = *state;
       }
-      /*_mesa_printf("\n");*/
+      /*printf("\n");*/
 
    }
    else {

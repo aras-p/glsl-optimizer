@@ -10,7 +10,7 @@ LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(T
 LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLEW_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
 
 PROGS = accum bitmap1 bitmap2 blendeq blendxor copy cursor depth eval fog \
-	font line logo nurb olympic overlay point prim quad select \
+	font line logo nurb olympic overlay point prim rgbtoppm quad select \
 	shape sphere star stencil stretch texture tri wave
 
 

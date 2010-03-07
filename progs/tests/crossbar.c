@@ -174,7 +174,7 @@ static void Init( void )
       exit(1);
    }
 
-   printf("\nAll %u squares should be the same color.\n", NUM_TESTS + 1);
+   printf("\nAll %lu squares should be the same color.\n", (unsigned long) NUM_TESTS + 1);
    
    (void) memset( temp, 0x00, sizeof( temp ) );
    glBindTexture( GL_TEXTURE_2D, 1 );

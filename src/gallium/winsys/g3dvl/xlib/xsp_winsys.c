@@ -27,9 +27,10 @@
 
 #include <vl_winsys.h>
 #include <X11/Xutil.h>
-#include <pipe/internal/p_winsys_screen.h>
+#include <util/u_simple_screen.h>
 #include <pipe/p_state.h>
-#include <pipe/p_inlines.h>
+#include <util/u_inlines.h>
+#include <util/u_format.h>
 #include <util/u_memory.h>
 #include <util/u_math.h>
 #include <softpipe/sp_winsys.h>
@@ -40,7 +41,7 @@
 static enum pipe_format VisualToPipe(Visual *visual)
 {
    assert(visual);
-   return PIPE_FORMAT_X8R8G8B8_UNORM;
+   return PIPE_FORMAT_B8G8R8X8_UNORM;
 }
 
 struct xsp_pipe_winsys
@@ -145,8 +146,8 @@ static struct pipe_buffer* xsp_surface_buffer_create
    const unsigned int ALIGNMENT = 1;
    unsigned nblocksy;
 
-   nblocksy = pf_get_nblocksy(format, height);
-   *stride = align(pf_get_stride(format, width), ALIGNMENT);
+   nblocksy = util_format_get_nblocksy(format, height);
+   *stride = align(util_format_get_stride(format, width), ALIGNMENT);
 
    return pws->buffer_create(pws, ALIGNMENT, usage,
                              *stride * nblocksy);

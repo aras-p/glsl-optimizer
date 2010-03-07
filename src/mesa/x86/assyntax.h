@@ -1735,9 +1735,9 @@ SECTION _DATA public align=16 class=DATA use32 flat
  * If we build with gcc's -fvisibility=hidden flag, we'll need to change
  * the symbol visibility mode to 'default'.
  */
-#if defined(GNU_ASSEMBLER) && !defined(__DJGPP__) && !defined(__MINGW32__)
+#if defined(GNU_ASSEMBLER) && !defined(__DJGPP__) && !defined(__MINGW32__) && !defined(__APPLE__)
 #  define HIDDEN(x) .hidden x
-#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303 && !defined(__DJGPP__) && !defined(__MINGW32__)
+#elif defined(__GNUC__) && !defined(__DJGPP__) && !defined(__MINGW32__) && !defined(__APPLE__)
 #  pragma GCC visibility push(default)
 #  define HIDDEN(x) .hidden x
 #else

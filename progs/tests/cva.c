@@ -17,7 +17,6 @@
 #define GL_GLEXT_LEGACY
 #include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
 
 GLfloat verts[][4] = {
    { -0.5, -0.5, -2.0, 0.0 },
@@ -39,7 +38,7 @@ GLboolean compiled = GL_TRUE;
 GLboolean doubleBuffer = GL_TRUE;
 
 
-void init( void )
+static void init( void )
 {
    glClearColor( 0.0, 0.0, 0.0, 0.0 );
    glShadeModel( GL_SMOOTH );
@@ -69,7 +68,7 @@ void init( void )
 #endif
 }
 
-void display( void )
+static void display( void )
 {
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -81,7 +80,7 @@ void display( void )
    }
 }
 
-void keyboard( unsigned char key, int x, int y )
+static void keyboard( unsigned char key, int x, int y )
 {
    switch ( key ) {
       case 27:
@@ -92,7 +91,7 @@ void keyboard( unsigned char key, int x, int y )
    glutPostRedisplay();
 }
 
-GLboolean args( int argc, char **argv )
+static GLboolean args( int argc, char **argv )
 {
     GLint i;
 

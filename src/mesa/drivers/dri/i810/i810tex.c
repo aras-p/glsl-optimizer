@@ -33,7 +33,6 @@
 #include "main/colormac.h"
 #include "main/texobj.h"
 #include "main/mm.h"
-#include "swrast/swrast.h"
 
 #include "texmem.h"
 
@@ -42,7 +41,6 @@
 
 #include "i810context.h"
 #include "i810tex.h"
-#include "i810state.h"
 #include "i810ioctl.h"
 
 
@@ -210,7 +208,7 @@ i810AllocTexObj( GLcontext *ctx, struct gl_texture_object *texObj )
       i810SetTexWrapping( t, texObj->WrapS, texObj->WrapT );
       /*i830SetTexMaxAnisotropy( t, texObj->MaxAnisotropy );*/
       i810SetTexFilter( imesa, t, texObj->MinFilter, texObj->MagFilter, bias );
-      i810SetTexBorderColor( t, texObj->BorderColor );
+      i810SetTexBorderColor( t, texObj->BorderColor.f );
    }
 
    return t;
@@ -251,7 +249,7 @@ static void i810TexParameter( GLcontext *ctx, GLenum target,
       break;
   
    case GL_TEXTURE_BORDER_COLOR:
-      i810SetTexBorderColor( t, tObj->BorderColor );
+      i810SetTexBorderColor( t, tObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

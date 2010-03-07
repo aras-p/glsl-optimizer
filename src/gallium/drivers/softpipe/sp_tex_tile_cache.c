@@ -32,12 +32,11 @@
  *    Brian Paul
  */
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_tile.h"
 #include "util/u_math.h"
 #include "sp_context.h"
-#include "sp_surface.h"
 #include "sp_texture.h"
 #include "sp_tex_tile_cache.h"
 

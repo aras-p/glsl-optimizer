@@ -39,7 +39,7 @@ extern struct _mesa_HashTable *_mesa_NewHashTable(void);
 
 extern void _mesa_DeleteHashTable(struct _mesa_HashTable *table);
 
-extern void *_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key);
+extern void *_mesa_HashLookup(struct _mesa_HashTable *table, GLuint key);
 
 extern void _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data);
 

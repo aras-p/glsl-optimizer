@@ -45,14 +45,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT);
    glFlush();
 }
 
 /* Change these values for a different transformation  */
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -62,7 +62,7 @@ void reshape(int w, int h)
    glLoadIdentity();
 }
 
-void mouse(int button, int state, int x, int y) 
+static void mouse(int button, int state, int x, int y) 
 {
    GLint viewport[4];
    GLdouble mvmatrix[16], projmatrix[16];
@@ -98,7 +98,7 @@ void mouse(int button, int state, int x, int y)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

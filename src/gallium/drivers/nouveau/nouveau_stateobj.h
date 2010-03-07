@@ -3,41 +3,95 @@
 
 #include "util/u_debug.h"
 
+#ifdef DEBUG
+#define DEBUG_NOUVEAU_STATEOBJ
+#endif /* DEBUG */
+
 struct nouveau_stateobj_reloc {
 	struct nouveau_bo *bo;
 
-	unsigned offset;
-	unsigned packet;
+	struct nouveau_grobj *gr;
+	uint32_t push_offset;
+	uint32_t mthd;
 
-	unsigned data;
+	uint32_t data;
 	unsigned flags;
 	unsigned vor;
 	unsigned tor;
 };
 
+struct nouveau_stateobj_start {
+	struct nouveau_grobj *gr;
+	uint32_t mthd;
+	uint32_t size;
+	unsigned offset;
+};
+
 struct nouveau_stateobj {
 	struct pipe_reference reference;
 
-	unsigned *push;
+	struct nouveau_stateobj_start *start;
 	struct nouveau_stateobj_reloc *reloc;
 
-	unsigned *cur;
-	unsigned cur_packet;
+	/* Common memory pool for data. */
+	uint32_t *pool;
+	unsigned pool_cur;
+
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	unsigned start_alloc;
+	unsigned reloc_alloc;
+	unsigned pool_alloc;
+#endif  /* DEBUG_NOUVEAU_STATEOBJ */
+
+	unsigned total; /* includes begin_ring */
+	unsigned cur; /* excludes begin_ring, offset from "cur_start" */
+	unsigned cur_start;
 	unsigned cur_reloc;
 };
 
+static INLINE void
+so_dump(struct nouveau_stateobj *so)
+{
+	unsigned i, nr, total = 0;
+
+	for (i = 0; i < so->cur_start; i++) {
+		if (so->start[i].gr->subc > -1)
+			debug_printf("+0x%04x: 0x%08x\n", total++,
+				(so->start[i].size << 18) | (so->start[i].gr->subc << 13)
+				| so->start[i].mthd);
+		else
+			debug_printf("+0x%04x: 0x%08x\n", total++,
+				(so->start[i].size << 18) | so->start[i].mthd);
+		for (nr = 0; nr < so->start[i].size; nr++, total++)
+			debug_printf("+0x%04x: 0x%08x\n", total,
+				so->pool[so->start[i].offset + nr]);
+	}
+}
+
 static INLINE struct nouveau_stateobj *
-so_new(unsigned push, unsigned reloc)
+so_new(unsigned start, unsigned push, unsigned reloc)
 {
 	struct nouveau_stateobj *so;
 
 	so = MALLOC(sizeof(struct nouveau_stateobj));
 	pipe_reference_init(&so->reference, 1);
-	so->push = MALLOC(sizeof(unsigned) * push);
-	so->reloc = MALLOC(sizeof(struct nouveau_stateobj_reloc) * reloc);
+	so->total = so->cur = so->cur_start = so->cur_reloc = 0;
 
-	so->cur = so->push;
-	so->cur_reloc = so->cur_packet = 0;
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	so->start_alloc = start;
+	so->reloc_alloc = reloc;
+	so->pool_alloc = push;
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
+
+	so->start = MALLOC(start * sizeof(struct nouveau_stateobj_start));
+	so->reloc = MALLOC(reloc * sizeof(struct nouveau_stateobj_reloc));
+	so->pool = MALLOC(push * sizeof(uint32_t));
+	so->pool_cur = 0;
+
+	if (!so->start || !so->reloc || !so->pool) {
+		debug_printf("malloc failed\n");
+		assert(0);
+	}
 
 	return so;
 }
@@ -48,111 +102,220 @@ so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
 	struct nouveau_stateobj *so = *pso;
 	int i;
 
-        if (pipe_reference((struct pipe_reference**)pso, &ref->reference)) {
-		free(so->push);
+	if (pipe_reference(&(*pso)->reference, &ref->reference)) {
+		FREE(so->start);
 		for (i = 0; i < so->cur_reloc; i++)
 			nouveau_bo_ref(NULL, &so->reloc[i].bo);
-		free(so->reloc);
-		free(so);
+		FREE(so->reloc);
+		FREE(so->pool);
+		FREE(so);
 	}
+	*pso = ref;
 }
 
 static INLINE void
-so_data(struct nouveau_stateobj *so, unsigned data)
+so_data(struct nouveau_stateobj *so, uint32_t data)
 {
-	(*so->cur++) = (data);
-	so->cur_packet += 4;
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	if (so->cur >= so->start[so->cur_start - 1].size) {
+		debug_printf("exceeding specified size\n");
+		assert(0);
+	}
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
+
+	so->pool[so->start[so->cur_start - 1].offset + so->cur++] = data;
 }
 
 static INLINE void
-so_datap(struct nouveau_stateobj *so, unsigned *data, unsigned size)
+so_datap(struct nouveau_stateobj *so, uint32_t *data, unsigned size)
 {
-	so->cur_packet += (4 * size);
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	if ((so->cur + size) > so->start[so->cur_start - 1].size) {
+		debug_printf("exceeding specified size\n");
+		assert(0);
+	}
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
+
 	while (size--)
-		(*so->cur++) = (*data++);
+		so->pool[so->start[so->cur_start - 1].offset + so->cur++] =
+			*data++;
 }
 
 static INLINE void
 so_method(struct nouveau_stateobj *so, struct nouveau_grobj *gr,
 	  unsigned mthd, unsigned size)
 {
-	so->cur_packet = (gr->subc << 13) | (1 << 18) | (mthd - 4);
-	so_data(so, (gr->subc << 13) | (size << 18) | mthd);
+	struct nouveau_stateobj_start *start;
+
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	if (so->start_alloc <= so->cur_start) {
+		debug_printf("exceeding num_start size\n");
+		assert(0);
+	} else
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
+		start = so->start;
+
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	if (so->cur_start > 0 && start[so->cur_start - 1].size > so->cur) {
+		debug_printf("previous so_method was not filled\n");
+		assert(0);
+	}
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
+
+	so->start = start;
+	start[so->cur_start].gr = gr;
+	start[so->cur_start].mthd = mthd;
+	start[so->cur_start].size = size;
+
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	if (so->pool_alloc < (size + so->pool_cur)) {
+		debug_printf("exceeding num_pool size\n");
+		assert(0);
+	}
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
+
+	start[so->cur_start].offset = so->pool_cur;
+	so->pool_cur += size;
+
+	so->cur_start++;
+	/* The 1 is for *this* begin_ring. */
+	so->total += so->cur + 1;
+	so->cur = 0;
 }
 
 static INLINE void
 so_reloc(struct nouveau_stateobj *so, struct nouveau_bo *bo,
 	 unsigned data, unsigned flags, unsigned vor, unsigned tor)
 {
-	struct nouveau_stateobj_reloc *r = &so->reloc[so->cur_reloc++];
-	
-	r->bo = NULL;
-	nouveau_bo_ref(bo, &r->bo);
-	r->offset = so->cur - so->push;
-	r->packet = so->cur_packet;
-	r->data = data;
-	r->flags = flags;
-	r->vor = vor;
-	r->tor = tor;
+	struct nouveau_stateobj_reloc *r;
+
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	if (so->reloc_alloc <= so->cur_reloc) {
+		debug_printf("exceeding num_reloc size\n");
+		assert(0);
+	} else
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
+		r = so->reloc;
+
+	so->reloc = r;
+	r[so->cur_reloc].bo = NULL;
+	nouveau_bo_ref(bo, &(r[so->cur_reloc].bo));
+	r[so->cur_reloc].gr = so->start[so->cur_start-1].gr;
+	r[so->cur_reloc].push_offset = so->total + so->cur;
+	r[so->cur_reloc].data = data;
+	r[so->cur_reloc].flags = flags;
+	r[so->cur_reloc].mthd = so->start[so->cur_start-1].mthd +
+							(so->cur << 2);
+	r[so->cur_reloc].vor = vor;
+	r[so->cur_reloc].tor = tor;
+
 	so_data(so, data);
+	so->cur_reloc++;
 }
 
-static INLINE void
-so_dump(struct nouveau_stateobj *so)
+/* Determine if this buffer object is referenced by this state object. */
+static INLINE boolean
+so_bo_is_reloc(struct nouveau_stateobj *so, struct nouveau_bo *bo)
 {
-	unsigned i, nr = so->cur - so->push;
+	int i;
 
-	for (i = 0; i < nr; i++)
-		debug_printf("+0x%04x: 0x%08x\n", i, so->push[i]);
+	for (i = 0; i < so->cur_reloc; i++)
+		if (so->reloc[i].bo == bo)
+			return true;
+
+	return false;
 }
 
 static INLINE void
 so_emit(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_pushbuf *pb = chan->pushbuf;
 	unsigned nr, i;
+	int ret = 0;
 
-	nr = so->cur - so->push;
-	if (pb->remaining < nr)
-		nouveau_pushbuf_flush(chan, nr);
-	pb->remaining -= nr;
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+	if (so->start[so->cur_start - 1].size > so->cur) {
+		debug_printf("emit: previous so_method was not filled\n");
+		assert(0);
+	}
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
 
-	memcpy(pb->cur, so->push, nr * 4);
+	/* We cannot update total in case we so_emit again. */
+	nr = so->total + so->cur;
+
+	/* This will flush if we need space.
+	 * We don't actually need the marker.
+	 */
+	if ((ret = nouveau_pushbuf_marker_emit(chan, nr, so->cur_reloc))) {
+		debug_printf("so_emit failed marker emit with error %d\n", ret);
+		assert(0);
+	}
+
+	/* Submit data. This will ensure proper binding of objects. */
+	for (i = 0; i < so->cur_start; i++) {
+		BEGIN_RING(chan, so->start[i].gr, so->start[i].mthd, so->start[i].size);
+		OUT_RINGp(chan, &(so->pool[so->start[i].offset]), so->start[i].size);
+	}
+
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nouveau_pushbuf_emit_reloc(chan, pb->cur + r->offset,
-					   r->bo, r->data, 0, r->flags,
-					   r->vor, r->tor);
+		if ((ret = nouveau_pushbuf_emit_reloc(chan, chan->cur - nr +
+						r->push_offset, r->bo, r->data,
+						0, r->flags, r->vor, r->tor))) {
+			debug_printf("so_emit failed reloc with error %d\n", ret);
+			assert(0);
+		}
 	}
-	pb->cur += nr;
 }
 
 static INLINE void
 so_emit_reloc_markers(struct nouveau_channel *chan, struct nouveau_stateobj *so)
 {
-	struct nouveau_pushbuf *pb = chan->pushbuf;
+	struct nouveau_grobj *gr = NULL;
 	unsigned i;
+	int ret = 0;
 
 	if (!so)
 		return;
 
-	i = so->cur_reloc << 1;
-	if (pb->remaining < i)
-		nouveau_pushbuf_flush(chan, i);
-	pb->remaining -= i;
-
+	/* If we need to flush in flush notify, then we have a problem anyway. */
 	for (i = 0; i < so->cur_reloc; i++) {
 		struct nouveau_stateobj_reloc *r = &so->reloc[i];
 
-		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->packet, 0,
-					   (r->flags & (NOUVEAU_BO_VRAM |
-							NOUVEAU_BO_GART |
-							NOUVEAU_BO_RDWR)) |
-					   NOUVEAU_BO_DUMMY, 0, 0);
-		nouveau_pushbuf_emit_reloc(chan, pb->cur++, r->bo, r->data, 0,
-					   r->flags | NOUVEAU_BO_DUMMY,
-					   r->vor, r->tor);
+#ifdef DEBUG_NOUVEAU_STATEOBJ
+		if (r->mthd & 0x40000000) {
+			debug_printf("error: NI mthd 0x%08X\n", r->mthd);
+			continue;
+		}
+#endif /* DEBUG_NOUVEAU_STATEOBJ */
+
+		/* The object needs to be bound and the system must know the
+		 * subchannel is being used. Otherwise it will discard it.
+		 */
+		if (gr != r->gr) {
+			BEGIN_RING(chan, r->gr, 0x100, 1);
+			OUT_RING(chan, 0);
+			gr = r->gr;
+		}
+
+		/* Some relocs really don't like to be hammered,
+		 * NOUVEAU_BO_DUMMY makes sure it only
+		 * happens when needed.
+		 */
+		ret = OUT_RELOC(chan, r->bo, (r->gr->subc << 13) | (1<< 18) |
+			r->mthd, (r->flags & (NOUVEAU_BO_VRAM | NOUVEAU_BO_GART
+				| NOUVEAU_BO_RDWR)) | NOUVEAU_BO_DUMMY, 0, 0);
+		if (ret) {
+			debug_printf("OUT_RELOC failed %d\n", ret);
+			assert(0);
+		}
+
+		ret = OUT_RELOC(chan, r->bo, r->data, r->flags |
+			NOUVEAU_BO_DUMMY, r->vor, r->tor);
+		if (ret) {
+			debug_printf("OUT_RELOC failed %d\n", ret);
+			assert(0);
+		}
 	}
 }
 

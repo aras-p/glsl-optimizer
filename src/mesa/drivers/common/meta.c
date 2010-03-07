@@ -56,7 +56,6 @@
 #include "main/stencil.h"
 #include "main/texobj.h"
 #include "main/texenv.h"
-#include "main/texformat.h"
 #include "main/teximage.h"
 #include "main/texparam.h"
 #include "main/texstate.h"
@@ -107,11 +106,11 @@ struct save_state
    GLboolean AlphaEnabled;
 
    /** META_BLEND */
-   GLboolean BlendEnabled;
+   GLbitfield BlendEnabled;
    GLboolean ColorLogicOpEnabled;
 
    /** META_COLOR_MASK */
-   GLubyte ColorMask[4];
+   GLubyte ColorMask[MAX_DRAW_BUFFERS][4];
 
    /** META_DEPTH_TEST */
    struct gl_depthbuffer_attrib Depth;
@@ -308,7 +307,7 @@ _mesa_meta_free(GLcontext *ctx)
     * freed by the normal context destruction code.  But this would be
     * the place to free other meta data someday.
     */
-   _mesa_free(ctx->Meta);
+   free(ctx->Meta);
    ctx->Meta = NULL;
 }
 
@@ -335,19 +334,29 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
 
    if (state & META_BLEND) {
       save->BlendEnabled = ctx->Color.BlendEnabled;
-      if (ctx->Color.BlendEnabled)
-         _mesa_set_enable(ctx, GL_BLEND, GL_FALSE);
+      if (ctx->Color.BlendEnabled) {
+         if (ctx->Extensions.EXT_draw_buffers2) {
+            GLuint i;
+            for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+               _mesa_set_enablei(ctx, GL_BLEND, i, GL_FALSE);
+            }
+         }
+         else {
+            _mesa_set_enable(ctx, GL_BLEND, GL_FALSE);
+         }
+      }
       save->ColorLogicOpEnabled = ctx->Color.ColorLogicOpEnabled;
       if (ctx->Color.ColorLogicOpEnabled)
          _mesa_set_enable(ctx, GL_COLOR_LOGIC_OP, GL_FALSE);
    }
 
    if (state & META_COLOR_MASK) {
-      COPY_4V(save->ColorMask, ctx->Color.ColorMask);
-      if (!ctx->Color.ColorMask[0] ||
-          !ctx->Color.ColorMask[1] ||
-          !ctx->Color.ColorMask[2] ||
-          !ctx->Color.ColorMask[3])
+      memcpy(save->ColorMask, ctx->Color.ColorMask,
+             sizeof(ctx->Color.ColorMask));
+      if (!ctx->Color.ColorMask[0][0] ||
+          !ctx->Color.ColorMask[0][1] ||
+          !ctx->Color.ColorMask[0][2] ||
+          !ctx->Color.ColorMask[0][3])
          _mesa_ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
    }
 
@@ -484,12 +493,12 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
 
    if (state & META_TRANSFORM) {
       GLuint activeTexture = ctx->Texture.CurrentUnit;
-      _mesa_memcpy(save->ModelviewMatrix, ctx->ModelviewMatrixStack.Top->m,
-                   16 * sizeof(GLfloat));
-      _mesa_memcpy(save->ProjectionMatrix, ctx->ProjectionMatrixStack.Top->m,
-                   16 * sizeof(GLfloat));
-      _mesa_memcpy(save->TextureMatrix, ctx->TextureMatrixStack[0].Top->m,
-                   16 * sizeof(GLfloat));
+      memcpy(save->ModelviewMatrix, ctx->ModelviewMatrixStack.Top->m,
+             16 * sizeof(GLfloat));
+      memcpy(save->ProjectionMatrix, ctx->ProjectionMatrixStack.Top->m,
+             16 * sizeof(GLfloat));
+      memcpy(save->TextureMatrix, ctx->TextureMatrixStack[0].Top->m,
+             16 * sizeof(GLfloat));
       save->MatrixMode = ctx->Transform.MatrixMode;
       /* set 1:1 vertex:pixel coordinate transform */
       _mesa_ActiveTextureARB(GL_TEXTURE0);
@@ -500,9 +509,9 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
       _mesa_LoadIdentity();
       _mesa_MatrixMode(GL_PROJECTION);
       _mesa_LoadIdentity();
-      _mesa_Ortho(0.0F, ctx->DrawBuffer->Width,
-                  0.0F, ctx->DrawBuffer->Height,
-                  -1.0F, 1.0F);
+      _mesa_Ortho(0.0, ctx->DrawBuffer->Width,
+                  0.0, ctx->DrawBuffer->Height,
+                  -1.0, 1.0);
       save->ClipPlanesEnabled = ctx->Transform.ClipPlanesEnabled;
       if (ctx->Transform.ClipPlanesEnabled) {
          GLuint i;
@@ -566,16 +575,38 @@ _mesa_meta_end(GLcontext *ctx)
    }
 
    if (state & META_BLEND) {
-      if (ctx->Color.BlendEnabled != save->BlendEnabled)
-         _mesa_set_enable(ctx, GL_BLEND, save->BlendEnabled);
+      if (ctx->Color.BlendEnabled != save->BlendEnabled) {
+         if (ctx->Extensions.EXT_draw_buffers2) {
+            GLuint i;
+            for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+               _mesa_set_enablei(ctx, GL_BLEND, i, (save->BlendEnabled >> i) & 1);
+            }
+         }
+         else {
+            _mesa_set_enable(ctx, GL_BLEND, (save->BlendEnabled & 1));
+         }
+      }
       if (ctx->Color.ColorLogicOpEnabled != save->ColorLogicOpEnabled)
          _mesa_set_enable(ctx, GL_COLOR_LOGIC_OP, save->ColorLogicOpEnabled);
    }
 
    if (state & META_COLOR_MASK) {
-      if (!TEST_EQ_4V(ctx->Color.ColorMask, save->ColorMask))
-         _mesa_ColorMask(save->ColorMask[0], save->ColorMask[1],
-                         save->ColorMask[2], save->ColorMask[3]);
+      GLuint i;
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+         if (!TEST_EQ_4V(ctx->Color.ColorMask[i], save->ColorMask[i])) {
+            if (i == 0) {
+               _mesa_ColorMask(save->ColorMask[i][0], save->ColorMask[i][1],
+                               save->ColorMask[i][2], save->ColorMask[i][3]);
+            }
+            else {
+               _mesa_ColorMaskIndexed(i,
+                                      save->ColorMask[i][0],
+                                      save->ColorMask[i][1],
+                                      save->ColorMask[i][2],
+                                      save->ColorMask[i][3]);
+            }
+         }
+      }
    }
 
    if (state & META_DEPTH_TEST) {
@@ -1273,7 +1304,7 @@ _mesa_meta_BlitFramebuffer(GLcontext *ctx,
    }
 
    if (mask & GL_DEPTH_BUFFER_BIT) {
-      GLuint *tmp = (GLuint *) _mesa_malloc(srcW * srcH * sizeof(GLuint));
+      GLuint *tmp = (GLuint *) malloc(srcW * srcH * sizeof(GLuint));
       if (tmp) {
          if (!blit->DepthFP)
             init_blit_depth_pixels(ctx);
@@ -1297,7 +1328,7 @@ _mesa_meta_BlitFramebuffer(GLcontext *ctx,
          _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
          mask &= ~GL_DEPTH_BUFFER_BIT;
 
-         _mesa_free(tmp);
+         free(tmp);
       }
    }
 
@@ -2034,7 +2065,7 @@ _mesa_meta_Bitmap(GLcontext *ctx,
    if (!bitmap1)
       return;
 
-   bitmap8 = (GLubyte *) _mesa_calloc(width * height);
+   bitmap8 = (GLubyte *) calloc(1, width * height);
    if (bitmap8) {
       _mesa_expand_bitmap(width, height, &unpackSave, bitmap1,
                           bitmap8, width, 0xff);
@@ -2051,7 +2082,7 @@ _mesa_meta_Bitmap(GLcontext *ctx,
 
       _mesa_set_enable(ctx, tex->Target, GL_FALSE);
 
-      _mesa_free(bitmap8);
+      free(bitmap8);
    }
 
    _mesa_unmap_pbo_source(ctx, &unpackSave);
@@ -2100,12 +2131,15 @@ _mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
                                     GL_COLOR_ATTACHMENT0_EXT,
                                     target, texObj->Name, srcLevel);
    }
+#if 0
+   /* other work is needed to enable 3D mipmap generation */
    else if (target == GL_TEXTURE_3D) {
       GLint zoffset = 0;
       _mesa_FramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT,
                                     GL_COLOR_ATTACHMENT0_EXT,
                                     target, texObj->Name, srcLevel, zoffset);
    }
+#endif
    else {
       /* 2D / cube */
       _mesa_FramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
@@ -2149,6 +2183,7 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
    const GLenum wrapTSave = texObj->WrapT;
    const GLenum wrapRSave = texObj->WrapR;
    const GLuint fboSave = ctx->DrawBuffer->Name;
+   const GLuint original_active_unit = ctx->Texture.CurrentUnit;
    GLenum faceTarget;
    GLuint dstLevel;
    GLuint border = 0;
@@ -2168,6 +2203,9 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
    }
 
    _mesa_meta_begin(ctx, META_ALL);
+
+   if (original_active_unit != 0)
+      _mesa_BindTexture(target, texObj->Name);
 
    if (mipmap->ArrayObj == 0) {
       /* one-time setup */
@@ -2285,6 +2323,26 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
 
    _mesa_set_enable(ctx, target, GL_TRUE);
 
+   /* setup vertex positions */
+   {
+      verts[0].x = 0.0F;
+      verts[0].y = 0.0F;
+      verts[1].x = 1.0F;
+      verts[1].y = 0.0F;
+      verts[2].x = 1.0F;
+      verts[2].y = 1.0F;
+      verts[3].x = 0.0F;
+      verts[3].y = 1.0F;
+      
+      /* upload new vertex data */
+      _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+   }
+
+   /* setup projection matrix */
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_LoadIdentity();
+   _mesa_Ortho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+
    /* texture is already locked, unlock now */
    _mesa_unlock_texture(ctx, texObj);
 
@@ -2351,21 +2409,6 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
          }
       }
 
-      /* setup vertex positions */
-      {
-         verts[0].x = 0.0F;
-         verts[0].y = 0.0F;
-         verts[1].x = (GLfloat) dstWidth;
-         verts[1].y = 0.0F;
-         verts[2].x = (GLfloat) dstWidth;
-         verts[2].y = (GLfloat) dstHeight;
-         verts[3].x = 0.0F;
-         verts[3].y = (GLfloat) dstHeight;
-
-         /* upload new vertex data */
-         _mesa_BufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
-      }
-
       /* limit sampling to src level */
       _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
@@ -2403,6 +2446,12 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
          abort();
          break;
       }
+
+      assert(dstWidth == ctx->DrawBuffer->Width);
+      assert(dstHeight == ctx->DrawBuffer->Height);
+
+      /* setup viewport */
+      _mesa_set_viewport(ctx, 0, 0, dstWidth, dstHeight);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
@@ -2485,7 +2534,7 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    /*
     * Alloc image buffer (XXX could use a PBO)
     */
-   buf = _mesa_malloc(width * height * bpp);
+   buf = malloc(width * height * bpp);
    if (!buf) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage%uD", dims);
       return;
@@ -2546,7 +2595,7 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
 
    _mesa_lock_texture(ctx, texObj); /* re-lock */
 
-   _mesa_free(buf);
+   free(buf);
 }
 
 
@@ -2601,7 +2650,7 @@ copy_tex_sub_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    /*
     * Alloc image buffer (XXX could use a PBO)
     */
-   buf = _mesa_malloc(width * height * bpp);
+   buf = malloc(width * height * bpp);
    if (!buf) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage%uD", dims);
       return;
@@ -2642,7 +2691,7 @@ copy_tex_sub_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
 
    _mesa_lock_texture(ctx, texObj); /* re-lock */
 
-   _mesa_free(buf);
+   free(buf);
 }
 
 
@@ -2685,7 +2734,7 @@ _mesa_meta_CopyColorTable(GLcontext *ctx,
 {
    GLfloat *buf;
 
-   buf = (GLfloat *) _mesa_malloc(width * 4 * sizeof(GLfloat));
+   buf = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
    if (!buf) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyColorTable");
       return;
@@ -2702,7 +2751,7 @@ _mesa_meta_CopyColorTable(GLcontext *ctx,
 
    _mesa_meta_end(ctx);
 
-   _mesa_free(buf);
+   free(buf);
 }
 
 
@@ -2712,7 +2761,7 @@ _mesa_meta_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
 {
    GLfloat *buf;
 
-   buf = (GLfloat *) _mesa_malloc(width * 4 * sizeof(GLfloat));
+   buf = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
    if (!buf) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyColorSubTable");
       return;
@@ -2729,7 +2778,7 @@ _mesa_meta_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
 
    _mesa_meta_end(ctx);
 
-   _mesa_free(buf);
+   free(buf);
 }
 
 
@@ -2740,7 +2789,7 @@ _mesa_meta_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
 {
    GLfloat *buf;
 
-   buf = (GLfloat *) _mesa_malloc(width * 4 * sizeof(GLfloat));
+   buf = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
    if (!buf) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyConvolutionFilter2D");
       return;
@@ -2759,7 +2808,7 @@ _mesa_meta_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
 
    _mesa_meta_end(ctx);
 
-   _mesa_free(buf);
+   free(buf);
 }
 
 
@@ -2770,7 +2819,7 @@ _mesa_meta_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
 {
    GLfloat *buf;
 
-   buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+   buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
    if (!buf) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyConvolutionFilter2D");
       return;
@@ -2790,5 +2839,5 @@ _mesa_meta_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
 
    _mesa_meta_end(ctx);
 
-   _mesa_free(buf);
+   free(buf);
 }

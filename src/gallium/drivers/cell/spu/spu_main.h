@@ -93,50 +93,64 @@ typedef vector unsigned int (*spu_fragment_program_func)(vector float *inputs,
                                                          vector float *constants);
 
 
+PIPE_ALIGN_TYPE(16,
 struct spu_framebuffer
 {
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
    enum pipe_format color_format;
    enum pipe_format depth_format;
-   uint width, height;             /**< size in pixels */
-   uint width_tiles, height_tiles; /**< width and height in tiles */
+   uint width;                     /**< width in pixels */
+   uint height;                    /**< height in pixels */
+   uint width_tiles;               /**< width in tiles */
+   uint height_tiles;              /**< width in tiles */
 
    uint color_clear_value;
    uint depth_clear_value;
 
    uint zsize;                     /**< 0, 2 or 4 bytes per Z */
    float zscale;                   /**< 65535.0, 2^24-1 or 2^32-1 */
-} ALIGN16_ATTRIB;
+});
 
 
 /** per-texture level info */
+PIPE_ALIGN_TYPE(16,
 struct spu_texture_level
 {
    void *start;
-   ushort width, height, depth;
+   ushort width;
+   ushort height;
+   ushort depth;
    ushort tiles_per_row;
    uint bytes_per_image;
    /** texcoord scale factors */
-   vector float scale_s, scale_t, scale_r;
+   vector float scale_s;
+   vector float scale_t;
+   vector float scale_r;
    /** texcoord masks (if REPEAT then size-1, else ~0) */
-   vector signed int mask_s, mask_t, mask_r;
+   vector signed int mask_s;
+   vector signed int mask_t;
+   vector signed int mask_r;
    /** texcoord clamp limits */
-   vector signed int max_s, max_t, max_r;
-} ALIGN16_ATTRIB;
+   vector signed int max_s;
+   vector signed int max_t;
+   vector signed int max_r;
+});
 
 
+PIPE_ALIGN_TYPE(16,
 struct spu_texture
 {
    struct spu_texture_level level[CELL_MAX_TEXTURE_LEVELS];
    uint max_level;
    uint target;  /**< PIPE_TEXTURE_x */
-} ALIGN16_ATTRIB;
+});
 
 
 /**
  * All SPU global/context state will be in a singleton object of this type:
  */
+PIPE_ALIGN_TYPE(16,
 struct spu_global
 {
    /** One-time init/constant info */
@@ -155,18 +169,19 @@ struct spu_global
    struct vertex_info vertex_info;
 
    /** Current color and Z tiles */
-   tile_t ctile ALIGN16_ATTRIB;
-   tile_t ztile ALIGN16_ATTRIB;
+   PIPE_ALIGN_VAR(16) tile_t ctile;
+   PIPE_ALIGN_VAR(16) tile_t ztile;
 
    /** Read depth/stencil tiles? */
    boolean read_depth_stencil;
 
    /** Current tiles' status */
-   ubyte cur_ctile_status, cur_ztile_status;
+   ubyte cur_ctile_status;
+   ubyte cur_ztile_status;
 
    /** Status of all tiles in framebuffer */
-   ubyte ctile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-   ubyte ztile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+   PIPE_ALIGN_VAR(16) ubyte ctile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE];
+   PIPE_ALIGN_VAR(16) ubyte ztile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE];
 
    /** Current fragment ops machine code, at 8-byte boundary */
    uint *fragment_ops_code;
@@ -175,7 +190,7 @@ struct spu_global
    spu_fragment_ops_func fragment_ops[2];
 
    /** Current fragment program machine code, at 8-byte boundary */
-   uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS] ALIGN8_ATTRIB;
+   PIPE_ALIGN_VAR(8) uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS];
    /** Current fragment ops function */
    spu_fragment_program_func fragment_program;
 
@@ -187,7 +202,7 @@ struct spu_global
    /** Fragment program constants */
    vector float constants[4 * CELL_MAX_CONSTANTS];
 
-} ALIGN16_ATTRIB;
+});
 
 
 extern struct spu_global spu;

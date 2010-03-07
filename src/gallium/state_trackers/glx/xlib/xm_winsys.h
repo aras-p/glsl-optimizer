@@ -39,13 +39,6 @@ struct xm_driver {
 
    struct pipe_screen *(*create_pipe_screen)( void );
 
-   /* The context_private argument needs to go away.  Is currently used
-    * in a round-about way to associate a display-target surface with its
-    * Xlib window.
-    */
-   struct pipe_context *(*create_pipe_context)( struct pipe_screen *,
-                                                void *context_private );
-
    void (*display_surface)( struct xmesa_buffer *, 
                             struct pipe_surface * );
 

@@ -31,8 +31,6 @@
  * The following macros may be defined to indicate what auxillary information
  * must be interplated along the line:
  *    INTERP_Z        - if defined, interpolate Z values
- *    INTERP_RGBA     - if defined, interpolate RGBA values
- *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_ATTRIBS  - if defined, interpolate attribs (texcoords, varying, etc)
  *
  * When one can directly address pixels in the color buffer the following
@@ -223,7 +221,6 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    /*
     * Span setup: compute start and step values for all interpolated values.
     */
-#ifdef INTERP_RGBA
    interpFlags |= SPAN_RGBA;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       span.red   = ChanToFixed(vert0->color[0]);
@@ -245,19 +242,6 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       span.blueStep  = 0;
       span.alphaStep = 0;
    }
-#endif
-#ifdef INTERP_INDEX
-   interpFlags |= SPAN_INDEX;
-   if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      span.index = FloatToFixed(vert0->attrib[FRAG_ATTRIB_CI][0]);
-      span.indexStep = FloatToFixed(  vert1->attrib[FRAG_ATTRIB_CI][0]
-                                    - vert0->attrib[FRAG_ATTRIB_CI][0]) / numPixels;
-   }
-   else {
-      span.index = FloatToFixed(vert1->attrib[FRAG_ATTRIB_CI][0]);
-      span.indexStep = 0;
-   }
-#endif
 #if defined(INTERP_Z) || defined(DEPTH_TYPE)
    interpFlags |= SPAN_Z;
    {
@@ -407,9 +391,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 
 #undef NAME
 #undef INTERP_Z
-#undef INTERP_RGBA
 #undef INTERP_ATTRIBS
-#undef INTERP_INDEX
 #undef PIXEL_ADDRESS
 #undef PIXEL_TYPE
 #undef DEPTH_TYPE

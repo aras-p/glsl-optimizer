@@ -50,16 +50,17 @@ struct st_surface
 struct st_context {
    struct st_device *st_dev;
    
-   struct pipe_context *real_pipe;
    struct pipe_context *pipe;
    
    struct cso_context *cso;
    
    void *vs;
    void *fs;
+   void *gs;
 
    struct pipe_texture *default_texture;
-   struct pipe_texture *sampler_textures[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *fragment_sampler_textures[PIPE_MAX_SAMPLERS];
+   struct pipe_texture *vertex_sampler_textures[PIPE_MAX_VERTEX_SAMPLERS];
    
    unsigned num_vertex_buffers;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];

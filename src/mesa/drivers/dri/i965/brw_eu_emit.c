@@ -102,8 +102,6 @@ static void brw_set_dest( struct brw_instruction *insn,
 static void brw_set_src0( struct brw_instruction *insn,
                           struct brw_reg reg )
 {
-   assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
-
    if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
       assert(reg.nr < 128);
 
@@ -199,7 +197,7 @@ void brw_set_src1( struct brw_instruction *insn,
        * in the future:
        */
       assert (reg.address_mode == BRW_ADDRESS_DIRECT);
-      //assert (reg.file == BRW_GENERAL_REGISTER_FILE);
+      /* assert (reg.file == BRW_GENERAL_REGISTER_FILE); */
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits3.da1.src1_subreg_nr = reg.subnr;
@@ -252,9 +250,10 @@ static void brw_set_math_message( struct brw_context *brw,
 				  GLboolean saturate,
 				  GLuint dataType )
 {
+   struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
        insn->bits3.math_igdng.function = function;
        insn->bits3.math_igdng.int_type = integer_type;
        insn->bits3.math_igdng.precision = low_precision;
@@ -319,9 +318,10 @@ static void brw_set_urb_message( struct brw_context *brw,
 				 GLuint offset,
 				 GLuint swizzle_control )
 {
+    struct intel_context *intel = &brw->intel;
     brw_set_src1(insn, brw_imm_d(0));
 
-    if (BRW_IS_IGDNG(brw)) {
+    if (intel->is_ironlake || intel->gen >= 6) {
         insn->bits3.urb_igdng.opcode = 0;	/* ? */
         insn->bits3.urb_igdng.offset = offset;
         insn->bits3.urb_igdng.swizzle_control = swizzle_control;
@@ -332,8 +332,16 @@ static void brw_set_urb_message( struct brw_context *brw,
         insn->bits3.urb_igdng.response_length = response_length;
         insn->bits3.urb_igdng.msg_length = msg_length;
         insn->bits3.urb_igdng.end_of_thread = end_of_thread;
-        insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_URB;
-        insn->bits2.send_igdng.end_of_thread = end_of_thread;
+	if (intel->gen >= 6) {
+	   /* For SNB, the SFID bits moved to the condmod bits, and
+	    * EOT stayed in bits3 above.  Does the EOT bit setting
+	    * below on Ironlake even do anything?
+	    */
+	   insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_URB;
+	} else {
+	   insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_URB;
+	   insn->bits2.send_igdng.end_of_thread = end_of_thread;
+	}
     } else {
         insn->bits3.urb.opcode = 0;	/* ? */
         insn->bits3.urb.offset = offset;
@@ -358,9 +366,10 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 				      GLuint response_length,
 				      GLuint end_of_thread )
 {
+   struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
        insn->bits3.dp_write_igdng.binding_table_index = binding_table_index;
        insn->bits3.dp_write_igdng.msg_control = msg_control;
        insn->bits3.dp_write_igdng.pixel_scoreboard_clear = pixel_scoreboard_clear;
@@ -395,9 +404,10 @@ static void brw_set_dp_read_message( struct brw_context *brw,
 				      GLuint response_length,
 				      GLuint end_of_thread )
 {
+   struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
        insn->bits3.dp_read_igdng.binding_table_index = binding_table_index;
        insn->bits3.dp_read_igdng.msg_control = msg_control;
        insn->bits3.dp_read_igdng.msg_type = msg_type;
@@ -433,10 +443,11 @@ static void brw_set_sampler_message(struct brw_context *brw,
                                     GLuint header_present,
                                     GLuint simd_mode)
 {
+   struct intel_context *intel = &brw->intel;
    assert(eot == 0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (intel->is_ironlake) {
       insn->bits3.sampler_igdng.binding_table_index = binding_table_index;
       insn->bits3.sampler_igdng.sampler = sampler;
       insn->bits3.sampler_igdng.msg_type = msg_type;
@@ -447,7 +458,7 @@ static void brw_set_sampler_message(struct brw_context *brw,
       insn->bits3.sampler_igdng.end_of_thread = eot;
       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_SAMPLER;
       insn->bits2.send_igdng.end_of_thread = eot;
-   } else if (BRW_IS_G4X(brw)) {
+   } else if (intel->is_g4x) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
       insn->bits3.sampler_g4x.sampler = sampler;
       insn->bits3.sampler_g4x.msg_type = msg_type;
@@ -648,10 +659,11 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 struct brw_instruction *brw_ELSE(struct brw_compile *p, 
 				 struct brw_instruction *if_insn)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
       br = 2;
 
    if (p->single_program_flow) {
@@ -690,9 +702,10 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
 void brw_ENDIF(struct brw_compile *p, 
 	       struct brw_instruction *patch_insn)
 {
+   struct intel_context *intel = &p->brw->intel;
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
       br = 2; 
  
    if (p->single_program_flow) {
@@ -803,10 +816,11 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 struct brw_instruction *brw_WHILE(struct brw_compile *p, 
                                   struct brw_instruction *do_insn)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
       br = 2;
 
    if (p->single_program_flow)
@@ -846,14 +860,15 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
 void brw_land_fwd_jump(struct brw_compile *p, 
 		       struct brw_instruction *jmp_insn)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *landing = &p->store[p->nr_insn];
    GLuint jmpi = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (intel->is_ironlake)
        jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
-   assert(jmp_insn->bits1.da1.src1_reg_file = BRW_IMMEDIATE_VALUE);
+   assert(jmp_insn->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE);
 
    jmp_insn->bits3.ud = jmpi * ((landing - jmp_insn) - 1);
 }
@@ -908,26 +923,40 @@ void brw_math( struct brw_compile *p,
 	       GLuint data_type,
 	       GLuint precision )
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   GLuint msg_length = (function == BRW_MATH_FUNCTION_POW) ? 2 : 1; 
-   GLuint response_length = (function == BRW_MATH_FUNCTION_SINCOS) ? 2 : 1; 
+   struct intel_context *intel = &p->brw->intel;
 
-   /* Example code doesn't set predicate_control for send
-    * instructions.
-    */
-   insn->header.predicate_control = 0; 
-   insn->header.destreg__conditionalmod = msg_reg_nr;
+   if (intel->gen >= 6) {
+      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
-   brw_set_dest(insn, dest);
-   brw_set_src0(insn, src);
-   brw_set_math_message(p->brw,
-			insn, 
-			msg_length, response_length, 
-			function,
-			BRW_MATH_INTEGER_UNSIGNED,
-			precision,
-			saturate,
-			data_type);
+      /* Math is the same ISA format as other opcodes, except that CondModifier
+       * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
+       */
+      insn->header.destreg__conditionalmod = function;
+
+      brw_set_dest(insn, dest);
+      brw_set_src0(insn, src);
+      brw_set_src1(insn, brw_null_reg());
+   } else {
+      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+      GLuint msg_length = (function == BRW_MATH_FUNCTION_POW) ? 2 : 1;
+      GLuint response_length = (function == BRW_MATH_FUNCTION_SINCOS) ? 2 : 1;
+      /* Example code doesn't set predicate_control for send
+       * instructions.
+       */
+      insn->header.predicate_control = 0;
+      insn->header.destreg__conditionalmod = msg_reg_nr;
+
+      brw_set_dest(insn, dest);
+      brw_set_src0(insn, src);
+      brw_set_math_message(p->brw,
+			   insn,
+			   msg_length, response_length,
+			   function,
+			   BRW_MATH_INTEGER_UNSIGNED,
+			   precision,
+			   saturate,
+			   data_type);
+   }
 }
 
 /**
@@ -1263,7 +1292,7 @@ void brw_SAMPLE(struct brw_compile *p,
    GLboolean need_stall = 0;
    
    if (writemask == 0) {
-      /*_mesa_printf("%s: zero writemask??\n", __FUNCTION__); */
+      /*printf("%s: zero writemask??\n", __FUNCTION__); */
       return;
    }
    
@@ -1295,7 +1324,7 @@ void brw_SAMPLE(struct brw_compile *p,
 
       if (newmask != writemask) {
 	 need_stall = 1;
-         /* _mesa_printf("need stall %x %x\n", newmask , writemask); */
+         /* printf("need stall %x %x\n", newmask , writemask); */
       }
       else {
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
@@ -1368,7 +1397,18 @@ void brw_urb_WRITE(struct brw_compile *p,
 		   GLuint offset,
 		   GLuint swizzle)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *insn;
+
+   /* Sandybridge doesn't have the implied move for SENDs,
+    * and the first message register index comes from src0.
+    */
+   if (intel->gen >= 6) {
+      brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+      src0 = brw_message_reg(msg_reg_nr);
+   }
+
+   insn = next_insn(p, BRW_OPCODE_SEND);
 
    assert(msg_length < BRW_MAX_MRF);
 
@@ -1376,7 +1416,8 @@ void brw_urb_WRITE(struct brw_compile *p,
    brw_set_src0(insn, src0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->header.destreg__conditionalmod = msg_reg_nr;
+   if (intel->gen < 6)
+      insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_urb_message(p->brw,
 		       insn,

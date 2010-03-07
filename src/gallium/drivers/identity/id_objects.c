@@ -25,9 +25,9 @@
  *
  **************************************************************************/
 
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 
-#include "id_public.h"
 #include "id_screen.h"
 #include "id_objects.h"
 

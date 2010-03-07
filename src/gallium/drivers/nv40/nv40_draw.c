@@ -1,5 +1,5 @@
 #include "pipe/p_shader_tokens.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "util/u_pack_color.h"
 
@@ -31,6 +31,9 @@ nv40_render_stage(struct draw_stage *stage)
 static INLINE void
 nv40_render_vertex(struct nv40_context *nv40, const struct vertex_header *v)
 {
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 	unsigned i;
 
 	for (i = 0; i < nv40->swtnl.nr_attribs; i++) {
@@ -41,30 +44,30 @@ nv40_render_vertex(struct nv40_context *nv40, const struct vertex_header *v)
 		case EMIT_OMIT:
 			break;
 		case EMIT_1F:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_1F(hw), 1);
-			OUT_RING  (fui(v->data[idx][0]));
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_1F(hw), 1);
+			OUT_RING  (chan, fui(v->data[idx][0]));
 			break;
 		case EMIT_2F:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_2F_X(hw), 2);
-			OUT_RING  (fui(v->data[idx][0]));
-			OUT_RING  (fui(v->data[idx][1]));
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_2F_X(hw), 2);
+			OUT_RING  (chan, fui(v->data[idx][0]));
+			OUT_RING  (chan, fui(v->data[idx][1]));
 			break;
 		case EMIT_3F:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_3F_X(hw), 3);
-			OUT_RING  (fui(v->data[idx][0]));
-			OUT_RING  (fui(v->data[idx][1]));
-			OUT_RING  (fui(v->data[idx][2]));
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_3F_X(hw), 3);
+			OUT_RING  (chan, fui(v->data[idx][0]));
+			OUT_RING  (chan, fui(v->data[idx][1]));
+			OUT_RING  (chan, fui(v->data[idx][2]));
 			break;
 		case EMIT_4F:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_4F_X(hw), 4);
-			OUT_RING  (fui(v->data[idx][0]));
-			OUT_RING  (fui(v->data[idx][1]));
-			OUT_RING  (fui(v->data[idx][2]));
-			OUT_RING  (fui(v->data[idx][3]));
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_4F_X(hw), 4);
+			OUT_RING  (chan, fui(v->data[idx][0]));
+			OUT_RING  (chan, fui(v->data[idx][1]));
+			OUT_RING  (chan, fui(v->data[idx][2]));
+			OUT_RING  (chan, fui(v->data[idx][3]));
 			break;
 		case EMIT_4UB:
-			BEGIN_RING(curie, NV40TCL_VTX_ATTR_4UB(hw), 1);
-			OUT_RING  (pack_ub4(float_to_ubyte(v->data[idx][0]),
+			BEGIN_RING(chan, curie, NV40TCL_VTX_ATTR_4UB(hw), 1);
+			OUT_RING  (chan, pack_ub4(float_to_ubyte(v->data[idx][0]),
 					    float_to_ubyte(v->data[idx][1]),
 					    float_to_ubyte(v->data[idx][2]),
 					    float_to_ubyte(v->data[idx][3])));
@@ -82,28 +85,31 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 {
 	struct nv40_render_stage *rs = nv40_render_stage(stage);
 	struct nv40_context *nv40 = rs->nv40;
-	struct nouveau_pushbuf *pb = nv40->screen->base.channel->pushbuf;
+
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 	unsigned i;
 
 	/* Ensure there's room for 4xfloat32 + potentially 3 begin/end */
-	if (pb->remaining < ((count * 20) + 6)) {
+	if (AVAIL_RING(chan) < ((count * 20) + 6)) {
 		if (rs->prim != NV40TCL_BEGIN_END_STOP) {
 			NOUVEAU_ERR("AIII, missed flush\n");
 			assert(0);
 		}
-		FIRE_RING(NULL);
+		FIRE_RING(chan);
 		nv40_state_emit(nv40);
 	}
 
 	/* Switch primitive modes if necessary */
 	if (rs->prim != mode) {
 		if (rs->prim != NV40TCL_BEGIN_END_STOP) {
-			BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-			OUT_RING  (NV40TCL_BEGIN_END_STOP);	
+			BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+			OUT_RING  (chan, NV40TCL_BEGIN_END_STOP);
 		}
 
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (mode);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, mode);
 		rs->prim = mode;
 	}
 
@@ -114,9 +120,9 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 	/* If it's likely we'll need to empty the push buffer soon, finish
 	 * off the primitive now.
 	 */
-	if (pb->remaining < ((count * 20) + 6)) {
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (NV40TCL_BEGIN_END_STOP);
+	if (AVAIL_RING(chan) < ((count * 20) + 6)) {
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, NV40TCL_BEGIN_END_STOP);
 		rs->prim = NV40TCL_BEGIN_END_STOP;
 	}
 }
@@ -144,10 +150,13 @@ nv40_render_flush(struct draw_stage *draw, unsigned flags)
 {
 	struct nv40_render_stage *rs = nv40_render_stage(draw);
 	struct nv40_context *nv40 = rs->nv40;
+	struct nv40_screen *screen = nv40->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *curie = screen->curie;
 
 	if (rs->prim != NV40TCL_BEGIN_END_STOP) {
-		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-		OUT_RING  (NV40TCL_BEGIN_END_STOP);
+		BEGIN_RING(chan, curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (chan, NV40TCL_BEGIN_END_STOP);
 		rs->prim = NV40TCL_BEGIN_END_STOP;
 	}
 }
@@ -226,7 +235,7 @@ nv40_draw_render_stage(struct nv40_context *nv40)
 	return &render->stage;
 }
 
-boolean
+void
 nv40_draw_elements_swtnl(struct pipe_context *pipe,
 			 struct pipe_buffer *idxbuf, unsigned idxbuf_size,
 			 unsigned mode, unsigned start, unsigned count)
@@ -237,7 +246,7 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 	void *map;
 
 	if (!nv40_state_validate_swtnl(nv40))
-		return FALSE;
+		return;
 	nv40->state.dirty &= ~(1ULL << NV40_STATE_VTXBUF);
 	nv40_state_emit(nv40);
 
@@ -261,7 +270,8 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 		map = pipe_buffer_map(pscreen,
 				      nv40->constbuf[PIPE_SHADER_VERTEX],
 				      PIPE_BUFFER_USAGE_CPU_READ);
-		draw_set_mapped_constant_buffer(nv40->draw, map, nr);
+		draw_set_mapped_constant_buffer(nv40->draw, PIPE_SHADER_VERTEX, 0,
+                                                map, nr);
 	}
 
 	draw_arrays(nv40->draw, mode, start, count);
@@ -277,15 +287,13 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 
 	draw_flush(nv40->draw);
 	pipe->flush(pipe, 0, NULL);
-
-	return TRUE;
 }
 
 static INLINE void
 emit_attrib(struct nv40_context *nv40, unsigned hw, unsigned emit,
 	    unsigned semantic, unsigned index)
 {
-	unsigned draw_out = draw_find_vs_output(nv40->draw, semantic, index);
+	unsigned draw_out = draw_find_shader_output(nv40->draw, semantic, index);
 	unsigned a = nv40->swtnl.nr_attribs++;
 
 	nv40->swtnl.hw[a] = hw;

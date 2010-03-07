@@ -32,8 +32,9 @@
 #include "st_inlines.h"
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
@@ -76,7 +77,8 @@ struct vg_paint {
       struct pipe_sampler_state sampler;
    } pattern;
 
-   struct pipe_constant_buffer cbuf;
+   /* XXX next 3 all unneded? */
+   struct pipe_buffer *cbuf;
    struct pipe_shader_state fs_state;
    void *fs;
 };
@@ -149,7 +151,7 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_1D;
-   templ.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+   templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
    templ.last_level = 0;
    templ.width0 = 1024;
    templ.height0 = 1;

@@ -29,7 +29,7 @@
 #include "imports.h"
 #include "queryobj.h"
 #include "mtypes.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_queryobj
@@ -114,17 +114,8 @@ _mesa_check_query(GLcontext *ctx, struct gl_query_object *q)
 static void
 _mesa_delete_query(GLcontext *ctx, struct gl_query_object *q)
 {
-   _mesa_free(q);
+   free(q);
 }
-
-
-static struct gl_query_object *
-lookup_query_object(GLcontext *ctx, GLuint id)
-{
-   return (struct gl_query_object *)
-      _mesa_HashLookup(ctx->Query.QueryObjects, id);
-}
-
 
 
 void
@@ -196,7 +187,7 @@ _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
 
    for (i = 0; i < n; i++) {
       if (ids[i] > 0) {
-         struct gl_query_object *q = lookup_query_object(ctx, ids[i]);
+         struct gl_query_object *q = _mesa_lookup_query_object(ctx, ids[i]);
          if (q) {
             ASSERT(!q->Active); /* should be caught earlier */
             _mesa_HashRemove(ctx->Query.QueryObjects, ids[i]);
@@ -213,7 +204,7 @@ _mesa_IsQueryARB(GLuint id)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (id && lookup_query_object(ctx, id))
+   if (id && _mesa_lookup_query_object(ctx, id))
       return GL_TRUE;
    else
       return GL_FALSE;
@@ -260,7 +251,7 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
       return;
    }
 
-   q = lookup_query_object(ctx, id);
+   q = _mesa_lookup_query_object(ctx, id);
    if (!q) {
       /* create new object */
       q = ctx->Driver.NewQueryObject(ctx, id);
@@ -386,7 +377,7 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (id)
-      q = lookup_query_object(ctx, id);
+      q = _mesa_lookup_query_object(ctx, id);
 
    if (!q || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -426,7 +417,7 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (id)
-      q = lookup_query_object(ctx, id);
+      q = _mesa_lookup_query_object(ctx, id);
 
    if (!q || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -469,7 +460,7 @@ _mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (id)
-      q = lookup_query_object(ctx, id);
+      q = _mesa_lookup_query_object(ctx, id);
 
    if (!q || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -506,7 +497,7 @@ _mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (id)
-      q = lookup_query_object(ctx, id);
+      q = _mesa_lookup_query_object(ctx, id);
 
    if (!q || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,

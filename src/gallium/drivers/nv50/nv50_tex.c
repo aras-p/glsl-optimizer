@@ -25,6 +25,8 @@
 
 #include "nouveau/nouveau_stateobj.h"
 
+#include "util/u_format.h"
+
 #define _MIXED(pf, t0, t1, t2, t3, cr, cg, cb, ca, f)		\
 {                                                       	\
 	PIPE_FORMAT_##pf,					\
@@ -47,27 +49,28 @@ struct nv50_texture_format {
 
 static const struct nv50_texture_format nv50_tex_format_list[] =
 {
-	_(A8R8G8B8_UNORM, UNORM, C2, C1, C0, C3,  8_8_8_8),
-	_(A8R8G8B8_SRGB,  UNORM, C2, C1, C0, C3,  8_8_8_8),
-	_(X8R8G8B8_UNORM, UNORM, C2, C1, C0, ONE, 8_8_8_8),
-	_(X8R8G8B8_SRGB,  UNORM, C2, C1, C0, ONE, 8_8_8_8),
-	_(A1R5G5B5_UNORM, UNORM, C2, C1, C0, C3,  1_5_5_5),
-	_(A4R4G4B4_UNORM, UNORM, C2, C1, C0, C3,  4_4_4_4),
+	_(B8G8R8A8_UNORM, UNORM, C2, C1, C0, C3,  8_8_8_8),
+	_(B8G8R8A8_SRGB,  UNORM, C2, C1, C0, C3,  8_8_8_8),
+	_(B8G8R8X8_UNORM, UNORM, C2, C1, C0, ONE, 8_8_8_8),
+	_(B8G8R8X8_SRGB,  UNORM, C2, C1, C0, ONE, 8_8_8_8),
+	_(B5G5R5A1_UNORM, UNORM, C2, C1, C0, C3,  1_5_5_5),
+	_(B4G4R4A4_UNORM, UNORM, C2, C1, C0, C3,  4_4_4_4),
 
-	_(R5G6B5_UNORM, UNORM, C2, C1, C0, ONE, 5_6_5),
+	_(B5G6R5_UNORM, UNORM, C2, C1, C0, ONE, 5_6_5),
 
 	_(L8_UNORM, UNORM, C0, C0, C0, ONE, 8),
 	_(A8_UNORM, UNORM, ZERO, ZERO, ZERO, C0, 8),
 	_(I8_UNORM, UNORM, C0, C0, C0, C0, 8),
 
-	_(A8L8_UNORM, UNORM, C0, C0, C0, C1, 8_8),
+	_(L8A8_UNORM, UNORM, C0, C0, C0, C1, 8_8),
 
 	_(DXT1_RGB, UNORM, C0, C1, C2, ONE, DXT1),
 	_(DXT1_RGBA, UNORM, C0, C1, C2, C3, DXT1),
 	_(DXT3_RGBA, UNORM, C0, C1, C2, C3, DXT3),
 	_(DXT5_RGBA, UNORM, C0, C1, C2, C3, DXT5),
 
-	_MIXED(Z24S8_UNORM, UINT, UNORM, UINT, UINT, C1, C1, C1, ONE, 24_8),
+	_MIXED(S8Z24_UNORM, UINT, UNORM, UINT, UINT, C1, C1, C1, ONE, 24_8),
+	_MIXED(Z24S8_UNORM, UNORM, UINT, UINT, UINT, C0, C0, C0, ONE, 8_24),
 
 	_(R16G16B16A16_SNORM, UNORM, C0, C1, C2, C3, 16_16_16_16),
 	_(R16G16B16A16_UNORM, SNORM, C0, C1, C2, C3, 16_16_16_16),
@@ -85,10 +88,11 @@ static const struct nv50_texture_format nv50_tex_format_list[] =
 
 static int
 nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
-		   struct nv50_miptree *mt, int unit)
+		   struct nv50_miptree *mt, int unit, unsigned p)
 {
 	unsigned i;
 	uint32_t mode;
+	const struct util_format_description *desc;
 
 	for (i = 0; i < NV50_TEX_FORMAT_LIST_SIZE; i++)
 		if (nv50_tex_format_list[i].pf == mt->base.base.format)
@@ -96,7 +100,7 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	if (i == NV50_TEX_FORMAT_LIST_SIZE)
                 return 1;
 
-	if (nv50->sampler[unit]->normalized)
+	if (nv50->sampler[p][unit]->normalized)
 		mode = 0x50001000 | (1 << 31);
 	else {
 		mode = 0x50001000 | (7 << 14);
@@ -106,7 +110,10 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	mode |= ((mt->base.bo->tile_mode & 0x0f) << 22) |
 		((mt->base.bo->tile_mode & 0xf0) << 21);
 
-	if (pf_type(mt->base.base.format) == PIPE_FORMAT_TYPE_SRGB)
+	desc = util_format_description(mt->base.base.format);
+	assert(desc);
+
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		mode |= 0x0400;
 
 	switch (mt->base.base.target) {
@@ -140,55 +147,82 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	return 0;
 }
 
+#ifndef NV50TCL_BIND_TIC
+#define NV50TCL_BIND_TIC(n) (0x1448 + 8 * n)
+#endif
+
+static boolean
+nv50_validate_textures(struct nv50_context *nv50, struct nouveau_stateobj *so,
+		       unsigned p)
+{
+	static const unsigned p_remap[PIPE_SHADER_TYPES] = { 0, 2, 1 };
+
+	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	unsigned unit, j, p_hw = p_remap[p];
+
+	nv50_so_init_sifc(nv50, so, nv50->screen->tic, NOUVEAU_BO_VRAM,
+			  p * (32 * 8 * 4), nv50->miptree_nr[p] * 8 * 4);
+
+	for (unit = 0; unit < nv50->miptree_nr[p]; ++unit) {
+		struct nv50_miptree *mt = nv50->miptree[p][unit];
+
+		so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), 8);
+		if (mt) {
+			if (nv50_tex_construct(nv50, so, mt, unit, p))
+				return FALSE;
+			/* Set TEX insn $t src binding $unit in program type p
+			 * to TIC, TSC entry (32 * p + unit), mark valid (1).
+			 */
+			so_method(so, tesla, NV50TCL_BIND_TIC(p_hw), 1);
+			so_data  (so, ((32 * p + unit) << 9) | (unit << 1) | 1);
+		} else {
+			for (j = 0; j < 8; ++j)
+				so_data(so, 0);
+			so_method(so, tesla, NV50TCL_BIND_TIC(p_hw), 1);
+			so_data  (so, (unit << 1) | 0);
+		}
+	}
+
+	for (; unit < nv50->state.miptree_nr[p]; unit++) {
+		/* Make other bindings invalid. */
+		so_method(so, tesla, NV50TCL_BIND_TIC(p_hw), 1);
+		so_data  (so, (unit << 1) | 0);
+	}
+
+	nv50->state.miptree_nr[p] = nv50->miptree_nr[p];
+	return TRUE;
+}
+
 void
 nv50_tex_validate(struct nv50_context *nv50)
 {
-	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so;
-	unsigned i, unit, push;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	unsigned p, start, push, nrlc;
 
-	push = MAX2(nv50->miptree_nr, nv50->state.miptree_nr) * 2 + 23 + 6;
-	so = so_new(nv50->miptree_nr * 9 + push, nv50->miptree_nr * 2 + 2);
+	for (nrlc = 0, start = 0, push = 0, p = 0; p < PIPE_SHADER_TYPES; ++p) {
+		start += MAX2(nv50->miptree_nr[p], nv50->state.miptree_nr[p]);
+		push += MAX2(nv50->miptree_nr[p], nv50->state.miptree_nr[p]);
+		nrlc += nv50->miptree_nr[p];
+	}
+	start = start * 2 + 4 * PIPE_SHADER_TYPES + 2;
+	push = push * 9 + 19 * PIPE_SHADER_TYPES + 2;
+	nrlc = nrlc * 2 + 2 * PIPE_SHADER_TYPES;
 
-	nv50_so_init_sifc(nv50, so, nv50->screen->tic, NOUVEAU_BO_VRAM,
-			  nv50->miptree_nr * 8 * 4);
+	so = so_new(start, push, nrlc);
 
-	for (i = 0, unit = 0; unit < nv50->miptree_nr; ++unit) {
-		struct nv50_miptree *mt = nv50->miptree[unit];
+	if (nv50_validate_textures(nv50, so, PIPE_SHADER_VERTEX) == FALSE ||
+	    nv50_validate_textures(nv50, so, PIPE_SHADER_FRAGMENT) == FALSE) {
+		so_ref(NULL, &so);
 
-		if (!mt)
-			continue;
-
-		so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), 8);
-		if (nv50_tex_construct(nv50, so, mt, unit)) {
-			NOUVEAU_ERR("failed tex validate\n");
-			so_ref(NULL, &so);
-			return;
-		}
-
-		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
-		so_data  (so, (i++ << NV50TCL_SET_SAMPLER_TEX_TIC_SHIFT) |
-			  (unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) |
-			  NV50TCL_SET_SAMPLER_TEX_VALID);
+		NOUVEAU_ERR("failed tex validate\n");
+		return;
 	}
 
-	for (; unit < nv50->state.miptree_nr; unit++) {
-		so_method(so, tesla, NV50TCL_SET_SAMPLER_TEX, 1);
-		so_data  (so,
-			  (unit << NV50TCL_SET_SAMPLER_TEX_SAMPLER_SHIFT) | 0);
-	}
-
-	/* not sure if the following really do what I think: */
-	so_method(so, tesla, 0x1440, 1); /* sync SIFC */
-	so_data  (so, 0);
 	so_method(so, tesla, 0x1330, 1); /* flush TIC */
 	so_data  (so, 0);
-	so_method(so, tesla, 0x1338, 1); /* flush texture caches */
-	so_data  (so, 0x20);
 
 	so_ref(so, &nv50->state.tic_upload);
 	so_ref(NULL, &so);
-	nv50->state.miptree_nr = nv50->miptree_nr;
 }
-

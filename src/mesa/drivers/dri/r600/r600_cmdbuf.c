@@ -39,7 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/macros.h"
 #include "main/context.h"
 #include "main/simple_list.h"
-#include "swrast/swrast.h"
 
 #include "drm.h"
 #include "radeon_drm.h"
@@ -49,32 +48,51 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_cmdbuf.h"
 #include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
-#include "radeon_mipmap_tree.h"
 #include "radeon_reg.h"
 
+#ifdef HAVE_LIBDRM_RADEON
+#include "radeon_cs_int.h"
+#else
+#include "radeon_cs_int_drm.h"
+#endif
 
-
-static struct radeon_cs * r600_cs_create(struct radeon_cs_manager *csm,
-                                   uint32_t ndw)
+struct r600_cs_manager_legacy
 {
-    struct radeon_cs *cs;
+    struct radeon_cs_manager    base;
+    struct radeon_context       *ctx;
+    /* hack for scratch stuff */
+    uint32_t                    pending_age;
+    uint32_t                    pending_count;
+};
 
-    cs = (struct radeon_cs*)calloc(1, sizeof(struct radeon_cs));
-    if (cs == NULL) {
+struct r600_cs_reloc_legacy {
+    struct radeon_cs_reloc  base;
+    uint32_t                cindices;
+    uint32_t                *indices;
+    uint32_t                *reloc_indices;
+};
+
+static struct radeon_cs_int *r600_cs_create(struct radeon_cs_manager *csm,
+					    uint32_t ndw)
+{
+    struct radeon_cs_int *csi;
+
+    csi = (struct radeon_cs_int*)calloc(1, sizeof(struct radeon_cs_int));
+    if (csi == NULL) {
         return NULL;
     }
-    cs->csm = csm;
-    cs->ndw = (ndw + 0x3FF) & (~0x3FF);
-    cs->packets = (uint32_t*)malloc(4*cs->ndw);
-    if (cs->packets == NULL) {
-        free(cs);
+    csi->csm = csm;
+    csi->ndw = (ndw + 0x3FF) & (~0x3FF);
+    csi->packets = (uint32_t*)malloc(4*csi->ndw);
+    if (csi->packets == NULL) {
+        free(csi);
         return NULL;
     }
-    cs->relocs_total_size = 0;
-    return cs;
+    csi->relocs_total_size = 0;
+    return csi;
 }
 
-static int r600_cs_write_reloc(struct radeon_cs *cs,
+static int r600_cs_write_reloc(struct radeon_cs_int *csi,
 			       struct radeon_bo *bo,
 			       uint32_t read_domain,
 			       uint32_t write_domain,
@@ -83,7 +101,7 @@ static int r600_cs_write_reloc(struct radeon_cs *cs,
     struct r600_cs_reloc_legacy *relocs;
     int i;
 
-    relocs = (struct r600_cs_reloc_legacy *)cs->relocs;
+    relocs = (struct r600_cs_reloc_legacy *)csi->relocs;
     /* check domains */
     if ((read_domain && write_domain) || (!read_domain && !write_domain)) {
         /* in one CS a bo can only be in read or write domain but not
@@ -98,7 +116,7 @@ static int r600_cs_write_reloc(struct radeon_cs *cs,
         return -EINVAL;
     }
     /* check if bo is already referenced */
-    for(i = 0; i < cs->crelocs; i++) {
+    for(i = 0; i < csi->crelocs; i++) {
         uint32_t *indices;
         uint32_t *reloc_indices;
 
@@ -129,109 +147,108 @@ static int r600_cs_write_reloc(struct radeon_cs *cs,
             }
             relocs[i].indices = indices;
             relocs[i].reloc_indices = reloc_indices;
-            relocs[i].indices[relocs[i].cindices - 1] = cs->cdw;
-            relocs[i].reloc_indices[relocs[i].cindices - 1] = cs->cdw;
-            cs->section_cdw += 2;
-	    cs->cdw += 2;
+            relocs[i].indices[relocs[i].cindices - 1] = csi->cdw;
+            relocs[i].reloc_indices[relocs[i].cindices - 1] = csi->cdw;
+            csi->section_cdw += 2;
+	    csi->cdw += 2;
 
             return 0;
         }
     }
     /* add bo to reloc */
     relocs = (struct r600_cs_reloc_legacy*)
-             realloc(cs->relocs,
-                     sizeof(struct r600_cs_reloc_legacy) * (cs->crelocs + 1));
+             realloc(csi->relocs,
+                     sizeof(struct r600_cs_reloc_legacy) * (csi->crelocs + 1));
     if (relocs == NULL) {
         return -ENOMEM;
     }
-    cs->relocs = relocs;
-    relocs[cs->crelocs].base.bo = bo;
-    relocs[cs->crelocs].base.read_domain = read_domain;
-    relocs[cs->crelocs].base.write_domain = write_domain;
-    relocs[cs->crelocs].base.flags = flags;
-    relocs[cs->crelocs].indices = (uint32_t*)malloc(4);
-    relocs[cs->crelocs].reloc_indices = (uint32_t*)malloc(4);
-    if ( (relocs[cs->crelocs].indices == NULL) || (relocs[cs->crelocs].reloc_indices == NULL) )
+    csi->relocs = relocs;
+    relocs[csi->crelocs].base.bo = bo;
+    relocs[csi->crelocs].base.read_domain = read_domain;
+    relocs[csi->crelocs].base.write_domain = write_domain;
+    relocs[csi->crelocs].base.flags = flags;
+    relocs[csi->crelocs].indices = (uint32_t*)malloc(4);
+    relocs[csi->crelocs].reloc_indices = (uint32_t*)malloc(4);
+    if ( (relocs[csi->crelocs].indices == NULL) || (relocs[csi->crelocs].reloc_indices == NULL) )
     {
         return -ENOMEM;
     }
 
-    relocs[cs->crelocs].indices[0] = cs->cdw;
-    relocs[cs->crelocs].reloc_indices[0] = cs->cdw;
-    cs->section_cdw += 2;
-    cs->cdw += 2;
-    relocs[cs->crelocs].cindices = 1;
-    cs->relocs_total_size += radeon_bo_legacy_relocs_size(bo);
-    cs->crelocs++;
+    relocs[csi->crelocs].indices[0] = csi->cdw;
+    relocs[csi->crelocs].reloc_indices[0] = csi->cdw;
+    csi->section_cdw += 2;
+    csi->cdw += 2;
+    relocs[csi->crelocs].cindices = 1;
+    csi->relocs_total_size += radeon_bo_legacy_relocs_size(bo);
+    csi->crelocs++;
 
     radeon_bo_ref(bo);
 
     return 0;
 }
 
-static int r600_cs_begin(struct radeon_cs *cs,
+static int r600_cs_begin(struct radeon_cs_int *csi,
                     uint32_t ndw,
                     const char *file,
                     const char *func,
                     int line)
 {
-    if (cs->section) {
+    if (csi->section_ndw) {
         fprintf(stderr, "CS already in a section(%s,%s,%d)\n",
-                cs->section_file, cs->section_func, cs->section_line);
+                csi->section_file, csi->section_func, csi->section_line);
         fprintf(stderr, "CS can't start section(%s,%s,%d)\n",
                 file, func, line);
         return -EPIPE;
     }
 
-    cs->section = 1;
-    cs->section_ndw = ndw;
-    cs->section_cdw = 0;
-    cs->section_file = file;
-    cs->section_func = func;
-    cs->section_line = line;
+    csi->section_ndw = ndw;
+    csi->section_cdw = 0;
+    csi->section_file = file;
+    csi->section_func = func;
+    csi->section_line = line;
 
-    if (cs->cdw + ndw > cs->ndw) {
+    if (csi->cdw + ndw > csi->ndw) {
         uint32_t tmp, *ptr;
 	int num = (ndw > 0x400) ? ndw : 0x400;
 
-        tmp = (cs->cdw + num + 0x3FF) & (~0x3FF);
-        ptr = (uint32_t*)realloc(cs->packets, 4 * tmp);
+        tmp = (csi->cdw + num + 0x3FF) & (~0x3FF);
+        ptr = (uint32_t*)realloc(csi->packets, 4 * tmp);
         if (ptr == NULL) {
             return -ENOMEM;
         }
-        cs->packets = ptr;
-        cs->ndw = tmp;
+        csi->packets = ptr;
+        csi->ndw = tmp;
     }
 
     return 0;
 }
 
-static int r600_cs_end(struct radeon_cs *cs,
+static int r600_cs_end(struct radeon_cs_int *csi,
                   const char *file,
                   const char *func,
                   int line)
 
 {
-    if (!cs->section) {
+    if (!csi->section_ndw) {
         fprintf(stderr, "CS no section to end at (%s,%s,%d)\n",
                 file, func, line);
         return -EPIPE;
     }
-    cs->section = 0;
 
-    if ( cs->section_ndw != cs->section_cdw ) {
+    if ( csi->section_ndw != csi->section_cdw ) {
         fprintf(stderr, "CS section size missmatch start at (%s,%s,%d) %d vs %d\n",
-                cs->section_file, cs->section_func, cs->section_line, cs->section_ndw, cs->section_cdw);
-        fprintf(stderr, "cs->section_ndw = %d, cs->cdw = %d, cs->section_cdw = %d \n",
-                cs->section_ndw, cs->cdw, cs->section_cdw);
+                csi->section_file, csi->section_func, csi->section_line, csi->section_ndw, csi->section_cdw);
+        fprintf(stderr, "csi->section_ndw = %d, csi->cdw = %d, csi->section_cdw = %d \n",
+                csi->section_ndw, csi->cdw, csi->section_cdw);
         fprintf(stderr, "CS section end at (%s,%s,%d)\n",
                 file, func, line);
         return -EPIPE;
     }
+    csi->section_ndw = 0;
 
-    if (cs->cdw > cs->ndw) {
+    if (csi->cdw > csi->ndw) {
 	    fprintf(stderr, "CS section overflow at (%s,%s,%d) cdw %d ndw %d\n",
-		    cs->section_file, cs->section_func, cs->section_line,cs->cdw,cs->ndw);
+		    csi->section_file, csi->section_func, csi->section_line,csi->cdw,csi->ndw);
 	    fprintf(stderr, "CS section end at (%s,%s,%d)\n",
 		    file, func, line);
 	    assert(0);
@@ -240,20 +257,20 @@ static int r600_cs_end(struct radeon_cs *cs,
     return 0;
 }
 
-static int r600_cs_process_relocs(struct radeon_cs *cs, 
+static int r600_cs_process_relocs(struct radeon_cs_int *csi, 
                                   uint32_t * reloc_chunk,
                                   uint32_t * length_dw_reloc_chunk) 
 {
-    struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)cs->csm;
+    struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)csi->csm;
     struct r600_cs_reloc_legacy *relocs;
     int i, j, r;
 
     uint32_t offset_dw = 0;
 
-    csm = (struct r600_cs_manager_legacy*)cs->csm;
-    relocs = (struct r600_cs_reloc_legacy *)cs->relocs;
+    csm = (struct r600_cs_manager_legacy*)csi->csm;
+    relocs = (struct r600_cs_reloc_legacy *)csi->relocs;
 restart:
-    for (i = 0; i < cs->crelocs; i++) {
+    for (i = 0; i < csi->crelocs; i++) {
             uint32_t soffset, eoffset;
 
             r = radeon_bo_legacy_validate(relocs[i].base.bo,
@@ -269,9 +286,9 @@ restart:
 
 	    for (j = 0; j < relocs[i].cindices; j++) {
 		    /* pkt3 nop header in ib chunk */
-		    cs->packets[relocs[i].reloc_indices[j]] = 0xC0001000;
+		    csi->packets[relocs[i].reloc_indices[j]] = 0xC0001000;
 		    /* reloc index in ib chunk */
-		    cs->packets[relocs[i].reloc_indices[j] + 1] = offset_dw;
+		    csi->packets[relocs[i].reloc_indices[j] + 1] = offset_dw;
 	    }
 
 	    /* asic offset in reloc chunk */ /* see alex drm r600_nomm_relocate */
@@ -286,14 +303,14 @@ restart:
     return 0;
 }
 
-static int r600_cs_set_age(struct radeon_cs *cs) /* -------------- */
+static int r600_cs_set_age(struct radeon_cs_int *csi) /* -------------- */
 {
-    struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)cs->csm;
+    struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)csi->csm;
     struct r600_cs_reloc_legacy *relocs;
     int i;
 
-    relocs = (struct r600_cs_reloc_legacy *)cs->relocs;
-    for (i = 0; i < cs->crelocs; i++) {
+    relocs = (struct r600_cs_reloc_legacy *)csi->relocs;
+    for (i = 0; i < csi->crelocs; i++) {
         radeon_bo_legacy_pending(relocs[i].base.bo, csm->pending_age);
         radeon_bo_unref(relocs[i].base.bo);
     }
@@ -301,21 +318,21 @@ static int r600_cs_set_age(struct radeon_cs *cs) /* -------------- */
 }
 
 #if 0
-static void dump_cmdbuf(struct radeon_cs *cs)
+static void dump_cmdbuf(struct radeon_cs_int *csi)
 {
 	int i;
 	fprintf(stderr,"--start--\n");
-	for (i = 0; i < cs->cdw; i++){
-		fprintf(stderr,"0x%08x\n", cs->packets[i]);
+	for (i = 0; i < csi->cdw; i++){
+		fprintf(stderr,"0x%08x\n", csi->packets[i]);
 	}
 	fprintf(stderr,"--end--\n");
 
 }
 #endif
 
-static int r600_cs_emit(struct radeon_cs *cs)
+static int r600_cs_emit(struct radeon_cs_int *csi)
 {
-    struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)cs->csm;
+    struct r600_cs_manager_legacy *csm = (struct r600_cs_manager_legacy*)csi->csm;
     struct drm_radeon_cs       cs_cmd;
     struct drm_radeon_cs_chunk cs_chunk[2];
     uint32_t length_dw_reloc_chunk;
@@ -329,9 +346,9 @@ static int r600_cs_emit(struct radeon_cs *cs)
 
     csm->pending_count = 1;
 
-    reloc_chunk = (uint32_t*)calloc(1, cs->crelocs * 4 * 4);
+    reloc_chunk = (uint32_t*)calloc(1, csi->crelocs * 4 * 4);
 
-    r = r600_cs_process_relocs(cs, reloc_chunk, &length_dw_reloc_chunk);
+    r = r600_cs_process_relocs(csi, reloc_chunk, &length_dw_reloc_chunk);
     if (r) {
 	free(reloc_chunk);
         return 0;
@@ -339,8 +356,8 @@ static int r600_cs_emit(struct radeon_cs *cs)
 
     /* raw ib chunk */
     cs_chunk[0].chunk_id   = RADEON_CHUNK_ID_IB;
-    cs_chunk[0].length_dw  = cs->cdw;
-    cs_chunk[0].chunk_data = (unsigned long)(cs->packets);
+    cs_chunk[0].length_dw  = csi->cdw;
+    cs_chunk[0].chunk_data = (unsigned long)(csi->packets);
 
     /* reloc chaunk */
     cs_chunk[1].chunk_id   = RADEON_CHUNK_ID_RELOCS;
@@ -358,7 +375,7 @@ static int r600_cs_emit(struct radeon_cs *cs)
 
     do 
     {
-        r = drmCommandWriteRead(cs->csm->fd, DRM_RADEON_CS, &cs_cmd, sizeof(cs_cmd));
+        r = drmCommandWriteRead(csi->csm->fd, DRM_RADEON_CS, &cs_cmd, sizeof(cs_cmd));
         retry++;
     } while (r == -EAGAIN && retry < 1000);
 
@@ -369,11 +386,11 @@ static int r600_cs_emit(struct radeon_cs *cs)
 
     csm->pending_age = cs_cmd.cs_id;
 
-    r600_cs_set_age(cs);
+    r600_cs_set_age(csi);
 
-    cs->csm->read_used = 0;
-    cs->csm->vram_write_used = 0;
-    cs->csm->gart_write_used = 0;
+    csi->csm->read_used = 0;
+    csi->csm->vram_write_used = 0;
+    csi->csm->gart_write_used = 0;
 
     free(reloc_chunk);
 
@@ -393,35 +410,34 @@ static void inline r600_cs_free_reloc(void *relocs_p, int crelocs)
     }
 }
 
-static int r600_cs_destroy(struct radeon_cs *cs)
+static int r600_cs_destroy(struct radeon_cs_int *csi)
 {
-    r600_cs_free_reloc(cs->relocs, cs->crelocs);
-    free(cs->relocs);
-    free(cs->packets);
-    free(cs);
+    r600_cs_free_reloc(csi->relocs, csi->crelocs);
+    free(csi->relocs);
+    free(csi->packets);
+    free(csi);
     return 0;
 }
 
-static int r600_cs_erase(struct radeon_cs *cs)
+static int r600_cs_erase(struct radeon_cs_int *csi)
 {
-    r600_cs_free_reloc(cs->relocs, cs->crelocs);
-    free(cs->relocs);
-    cs->relocs_total_size = 0;
-    cs->relocs = NULL;
-    cs->crelocs = 0;
-    cs->cdw = 0;
-    cs->section = 0;
+    r600_cs_free_reloc(csi->relocs, csi->crelocs);
+    free(csi->relocs);
+    csi->relocs_total_size = 0;
+    csi->relocs = NULL;
+    csi->crelocs = 0;
+    csi->cdw = 0;
     return 0;
 }
 
-static int r600_cs_need_flush(struct radeon_cs *cs)
+static int r600_cs_need_flush(struct radeon_cs_int *csi)
 {
     /* this function used to flush when the BO usage got to
      * a certain size, now the higher levels handle this better */
     return 0;
 }
 
-static void r600_cs_print(struct radeon_cs *cs, FILE *file)
+static void r600_cs_print(struct radeon_cs_int *csi, FILE *file)
 {
 }
 

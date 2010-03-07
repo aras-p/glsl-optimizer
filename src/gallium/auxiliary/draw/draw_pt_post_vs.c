@@ -30,7 +30,6 @@
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vbuf.h"
-#include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 
 struct pt_post_vs {
@@ -100,7 +99,7 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    struct vertex_header *out = vertices;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
-   const unsigned pos = pvs->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(pvs->draw);
    unsigned clipped = 0;
    unsigned j;
 
@@ -147,6 +146,39 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
 
 
 
+/* As above plus edgeflags
+ */
+static boolean 
+post_vs_cliptest_viewport_gl_edgeflag(struct pt_post_vs *pvs,
+                                      struct vertex_header *vertices,
+                                      unsigned count,
+                                      unsigned stride )
+{
+   unsigned j;
+   boolean needpipe;
+
+   needpipe = post_vs_cliptest_viewport_gl( pvs, vertices, count, stride);
+
+   /* If present, copy edgeflag VS output into vertex header.
+    * Otherwise, leave header as is.
+    */
+   if (pvs->draw->vs.edgeflag_output) {
+      struct vertex_header *out = vertices;
+      int ef = pvs->draw->vs.edgeflag_output;
+
+      for (j = 0; j < count; j++) {
+         const float *edgeflag = out->data[ef];
+         out->edgeflag = !(edgeflag[0] != 1.0f);
+         needpipe |= !out->edgeflag;
+         out = (struct vertex_header *)( (char *)out + stride );
+      }
+   }
+   return needpipe;
+}
+
+
+
+
 /* If bypass_clipping is set, skip cliptest and rhw divide.
  */
 static boolean post_vs_viewport( struct pt_post_vs *pvs,
@@ -157,7 +189,7 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
    struct vertex_header *out = vertices;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
-   const unsigned pos = pvs->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(pvs->draw);
    unsigned j;
 
    if (0) debug_printf("%s\n", __FUNCTION__);
@@ -201,17 +233,29 @@ boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean bypass_clipping,
 			      boolean bypass_viewport,
-			      boolean opengl )
+			      boolean opengl,
+			      boolean need_edgeflags )
 {
-   if (bypass_clipping) {
-      if (bypass_viewport)
-	 pvs->run = post_vs_none;
-      else
-	 pvs->run = post_vs_viewport;
+   if (!need_edgeflags) {
+      if (bypass_clipping) {
+         if (bypass_viewport)
+            pvs->run = post_vs_none;
+         else
+            pvs->run = post_vs_viewport;
+      }
+      else {
+         /* if (opengl) */
+         pvs->run = post_vs_cliptest_viewport_gl;
+      }
    }
    else {
-      /* if (opengl) */
-      pvs->run = post_vs_cliptest_viewport_gl;
+      /* If we need to copy edgeflags to the vertex header, it should
+       * mean we're running the primitive pipeline.  Hence the bypass
+       * flags should be false.
+       */
+      assert(!bypass_clipping);
+      assert(!bypass_viewport);
+      pvs->run = post_vs_cliptest_viewport_gl_edgeflag;
    }
 }
 

@@ -297,7 +297,7 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 			if (flags[0] != 0) {
 				sprintf(tmp, "o%i.%s",
 					(code->alu.inst[i].
-					 rgb_addr >> R300_ALU_DSTC_SHIFT) & 31,
+					 rgb_addr >> 29) & 3,
 					flags);
 				strcat(dstc, tmp);
 			}
@@ -311,7 +311,7 @@ void r300FragmentProgramDump(struct rX00_fragment_program_code *c)
 			if (code->alu.inst[i].alpha_addr & R300_ALU_DSTA_OUTPUT) {
 				sprintf(tmp, "o%i.w ",
 					(code->alu.inst[i].
-					 alpha_addr >> R300_ALU_DSTA_SHIFT) & 31);
+					 alpha_addr >> 25) & 3);
 				strcat(dsta, tmp);
 			}
 			if (code->alu.inst[i].alpha_addr & R300_ALU_DSTA_DEPTH) {

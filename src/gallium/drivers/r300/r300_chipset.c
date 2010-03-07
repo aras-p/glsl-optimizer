@@ -33,6 +33,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
     /* Reasonable defaults */
     caps->num_vert_fpus = 4;
     caps->has_tcl = debug_get_bool_option("RADEON_NO_TCL", FALSE) ? FALSE : TRUE;
+    caps->is_r400 = FALSE;
     caps->is_r500 = FALSE;
     caps->high_second_pipe = FALSE;
 
@@ -123,6 +124,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x4A54:
             caps->family = CHIP_FAMILY_R420;
             caps->num_vert_fpus = 6;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x5548:
@@ -136,6 +138,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5D57:
             caps->family = CHIP_FAMILY_R423;
             caps->num_vert_fpus = 6;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x554C:
@@ -147,6 +150,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5D4A:
             caps->family = CHIP_FAMILY_R430;
             caps->num_vert_fpus = 6;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x5D4C:
@@ -157,6 +161,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5D52:
             caps->family = CHIP_FAMILY_R480;
             caps->num_vert_fpus = 6;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x4B48:
@@ -166,6 +171,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x4B4C:
             caps->family = CHIP_FAMILY_R481;
             caps->num_vert_fpus = 6;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x5E4C:
@@ -182,6 +188,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5E4D:
             caps->family = CHIP_FAMILY_RV410;
             caps->num_vert_fpus = 6;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x5954:
@@ -212,6 +219,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x791F:
             caps->family = CHIP_FAMILY_RS690;
             caps->has_tcl = FALSE;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x793F:
@@ -219,6 +227,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x7942:
             caps->family = CHIP_FAMILY_RS600;
             caps->has_tcl = FALSE;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x796C:
@@ -227,6 +236,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x796F:
             caps->family = CHIP_FAMILY_RS740;
             caps->has_tcl = FALSE;
+            caps->is_r400 = TRUE;
             break;
 
         case 0x7100:

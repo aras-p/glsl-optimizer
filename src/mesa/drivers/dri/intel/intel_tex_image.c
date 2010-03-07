@@ -7,7 +7,6 @@
 #include "main/convolve.h"
 #include "main/context.h"
 #include "main/formats.h"
-#include "main/image.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"
 #include "main/texgetimage.h"
@@ -178,6 +177,7 @@ check_pbo_format(GLint internalFormat,
    switch (internalFormat) {
    case 4:
    case GL_RGBA:
+   case GL_RGBA8:
       return (format == GL_BGRA &&
               (type == GL_UNSIGNED_BYTE ||
                type == GL_UNSIGNED_INT_8_8_8_8_REV) &&
@@ -187,6 +187,11 @@ check_pbo_format(GLint internalFormat,
       return (format == GL_RGB &&
               type == GL_UNSIGNED_SHORT_5_6_5 &&
               mesa_format == MESA_FORMAT_RGB565);
+   case 1:
+   case GL_LUMINANCE:
+      return (format == GL_LUMINANCE &&
+	      type == GL_UNSIGNED_BYTE &&
+	      mesa_format == MESA_FORMAT_L8);
    case GL_YCBCR_MESA:
       return (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE);
    default:
@@ -235,21 +240,20 @@ try_pbo_upload(struct intel_context *intel,
 
    if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
       intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
+   intel_prepare_render(intel);
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
 
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_stride, src_buffer, src_offset, GL_FALSE,
-			     dst_stride, dst_buffer, 0, GL_FALSE,
+			     dst_stride, dst_buffer, 0,
+			     intelImage->mt->region->tiling,
 			     0, 0, dst_x, dst_y, width, height,
 			     GL_COPY)) {
-	 UNLOCK_HARDWARE(intel);
 	 return GL_FALSE;
       }
    }
-   UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
 }
@@ -469,7 +473,7 @@ intelTexImage(GLcontext * ctx,
 					   pixels, unpack, "glTexImage");
    }
 
-   LOCK_HARDWARE(intel);
+   intel_prepare_render(intel);
 
    if (intelImage->mt) {
       if (pixels != NULL) {
@@ -551,8 +555,6 @@ intelTexImage(GLcontext * ctx,
          intel_miptree_image_unmap(intel, intelImage->mt);
       texImage->Data = NULL;
    }
-
-   UNLOCK_HARDWARE(intel);
 }
 
 
@@ -729,10 +731,10 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 
 void
 intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
-		   GLint glx_texture_format,
+		   GLint texture_format,
 		   __DRIdrawable *dPriv)
 {
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   struct gl_framebuffer *fb = dPriv->driverPrivate;
    struct intel_context *intel = pDRICtx->driverPrivate;
    GLcontext *ctx = &intel->ctx;
    struct intel_texture_object *intelObj;
@@ -749,16 +751,17 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (!intelObj)
       return;
 
-   intel_update_renderbuffers(pDRICtx, dPriv);
+   if (dPriv->lastStamp != dPriv->dri2.stamp)
+      intel_update_renderbuffers(pDRICtx, dPriv);
 
-   rb = intel_fb->color_rb[0];
+   rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
    /* If the region isn't set, then intel_update_renderbuffers was unable
     * to get the buffers for the drawable.
     */
    if (rb->region == NULL)
       return;
 
-   if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+   if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
       internalFormat = GL_RGB;
    else
       internalFormat = GL_RGBA;
@@ -788,7 +791,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
    intelImage->face = target_to_face(target);
    intelImage->level = level;
-   if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+   if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
       texImage->TexFormat = MESA_FORMAT_XRGB8888;
    else
       texImage->TexFormat = MESA_FORMAT_ARGB8888;
@@ -808,9 +811,57 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    /* The old interface didn't have the format argument, so copy our
     * implementation's behavior at the time.
     */
-   intelSetTexBuffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
+   intelSetTexBuffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
 }
 
+#if FEATURE_OES_EGL_image
+static void
+intel_image_target_texture_2d(GLcontext *ctx, GLenum target,
+			      struct gl_texture_object *texObj,
+			      struct gl_texture_image *texImage,
+			      GLeglImageOES image_handle)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_object *intelObj = intel_texture_object(texObj);
+   struct intel_texture_image *intelImage = intel_texture_image(texImage);
+   struct intel_mipmap_tree *mt;
+   __DRIscreen *screen;
+   __DRIimage *image;
+
+   screen = intel->intelScreen->driScrnPriv;
+   image = screen->dri2.image->lookupEGLImage(intel->driContext, image_handle,
+					      intel->driContext->loaderPrivate);
+   if (image == NULL)
+      return;
+
+   mt = intel_miptree_create_for_region(intel, target,
+					image->internal_format,
+					0, 0, image->region, 1, 0);
+   if (mt == NULL)
+       return;
+
+   if (intelImage->mt) {
+      intel_miptree_release(intel, &intelImage->mt);
+      assert(!texImage->Data);
+   }
+   if (intelObj->mt)
+      intel_miptree_release(intel, &intelObj->mt);
+
+   intelObj->mt = mt;
+   _mesa_init_teximage_fields(&intel->ctx, target, texImage,
+			      image->region->width, image->region->height, 1,
+			      0, image->internal_format);
+
+   intelImage->face = target_to_face(target);
+   intelImage->level = 0;
+   texImage->TexFormat = image->format;
+   texImage->RowStride = image->region->pitch;
+   intel_miptree_reference(&intelImage->mt, intelObj->mt);
+
+   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base))
+      fprintf(stderr, "miptree doesn't match image\n");
+}
+#endif
 
 void
 intelInitTextureImageFuncs(struct dd_function_table *functions)
@@ -822,4 +873,8 @@ intelInitTextureImageFuncs(struct dd_function_table *functions)
 
    functions->CompressedTexImage2D = intelCompressedTexImage2D;
    functions->GetCompressedTexImage = intelGetCompressedTexImage;
+
+#if FEATURE_OES_EGL_image
+   functions->EGLImageTargetTexture2D = intel_image_target_texture_2d;
+#endif
 }

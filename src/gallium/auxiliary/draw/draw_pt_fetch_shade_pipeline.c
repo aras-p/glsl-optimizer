@@ -32,7 +32,7 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 #include "draw/draw_vs.h"
-#include "translate/translate.h"
+#include "draw/draw_gs.h"
 
 
 struct fetch_pipeline_middle_end {
@@ -58,12 +58,23 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
+   unsigned i;
+   unsigned instance_id_index = ~0;
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
     */
    unsigned nr = MAX2( vs->info.num_inputs,
 		       vs->info.num_outputs + 1 );
+
+   /* Scan for instanceID system value.
+    */
+   for (i = 0; i < vs->info.num_inputs; i++) {
+      if (vs->info.input_semantic_name[i] == TGSI_SEMANTIC_INSTANCEID) {
+         instance_id_index = i;
+         break;
+      }
+   }
 
    fpme->prim = prim;
    fpme->opt = opt;
@@ -78,16 +89,16 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 
    draw_pt_fetch_prepare( fpme->fetch, 
                           vs->info.num_inputs,
-			  fpme->vertex_size );
+                          fpme->vertex_size,
+                          instance_id_index );
    /* XXX: it's not really gl rasterization rules we care about here,
     * but gl vs dx9 clip spaces.
     */
    draw_pt_post_vs_prepare( fpme->post_vs,
 			    (boolean)draw->bypass_clipping,
-			    (boolean)(draw->identity_viewport ||
-                                      draw->rasterizer->bypass_vs_clip_and_viewport),
-			    (boolean)draw->rasterizer->gl_rasterization_rules );
-			    
+			    (boolean)draw->identity_viewport,
+			    (boolean)draw->rasterizer->gl_rasterization_rules,
+			    (draw->vs.edgeflag_output ? true : false) );    
 
    if (!(opt & PT_PIPELINE)) {
       draw_pt_emit_prepare( fpme->emit, 
@@ -119,7 +130,8 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *shader = draw->vs.vertex_shader;
+   struct draw_vertex_shader *vshader = draw->vs.vertex_shader;
+   struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align( fetch_count, 4 );
 
@@ -141,19 +153,25 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 		      (char *)pipeline_verts );
 
    /* Run the shader, note that this overwrites the data[] parts of
-    * the pipeline verts.  If there is no shader, eg if
-    * bypass_vs_clip_and_viewport, then the inputs == outputs, and are
-    * already in the correct place.
+    * the pipeline verts.
     */
    if (opt & PT_SHADE)
    {
-      shader->run_linear(shader, 
-			 (const float (*)[4])pipeline_verts->data,
-			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->pt.user.constants,
-			 fetch_count,
-			 fpme->vertex_size,
-			 fpme->vertex_size);
+      vshader->run_linear(vshader,
+                          (const float (*)[4])pipeline_verts->data,
+                          (      float (*)[4])pipeline_verts->data,
+                          draw->pt.user.vs_constants,
+                          fetch_count,
+                          fpme->vertex_size,
+                          fpme->vertex_size);
+      if (gshader)
+         draw_geometry_shader_run(gshader,
+                                  (const float (*)[4])pipeline_verts->data,
+                                  (      float (*)[4])pipeline_verts->data,
+                                  draw->pt.user.gs_constants,
+                                  fetch_count,
+                                  fpme->vertex_size,
+                                  fpme->vertex_size);
    }
 
    if (draw_pt_post_vs_run( fpme->post_vs,
@@ -196,6 +214,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
+   struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align( count, 4 );
 
@@ -217,19 +236,26 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
                              (char *)pipeline_verts );
 
    /* Run the shader, note that this overwrites the data[] parts of
-    * the pipeline verts.  If there is no shader, ie if
-    * bypass_vs_clip_and_viewport, then the inputs == outputs, and are
-    * already in the correct place.
+    * the pipeline verts.
     */
    if (opt & PT_SHADE)
    {
       shader->run_linear(shader,
 			 (const float (*)[4])pipeline_verts->data,
 			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->pt.user.constants,
+                         draw->pt.user.vs_constants,
 			 count,
 			 fpme->vertex_size,
 			 fpme->vertex_size);
+
+      if (geometry_shader)
+         draw_geometry_shader_run(geometry_shader,
+                                  (const float (*)[4])pipeline_verts->data,
+                                  (      float (*)[4])pipeline_verts->data,
+                                  draw->pt.user.gs_constants,
+                                  count,
+                                  fpme->vertex_size,
+                                  fpme->vertex_size);
    }
 
    if (draw_pt_post_vs_run( fpme->post_vs,
@@ -270,6 +296,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
+   struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align( count, 4 );
 
@@ -287,19 +314,26 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
                              (char *)pipeline_verts );
 
    /* Run the shader, note that this overwrites the data[] parts of
-    * the pipeline verts.  If there is no shader, ie if
-    * bypass_vs_clip_and_viewport, then the inputs == outputs, and are
-    * already in the correct place.
+    * the pipeline verts.
     */
    if (opt & PT_SHADE)
    {
       shader->run_linear(shader,
 			 (const float (*)[4])pipeline_verts->data,
 			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->pt.user.constants,
+                         draw->pt.user.vs_constants,
 			 count,
 			 fpme->vertex_size,
 			 fpme->vertex_size);
+
+      if (geometry_shader)
+         draw_geometry_shader_run(geometry_shader,
+                                  (const float (*)[4])pipeline_verts->data,
+                                  (      float (*)[4])pipeline_verts->data,
+                                  draw->pt.user.gs_constants,
+                                  count,
+                                  fpme->vertex_size,
+                                  fpme->vertex_size);
    }
 
    if (draw_pt_post_vs_run( fpme->post_vs,

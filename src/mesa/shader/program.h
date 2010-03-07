@@ -108,6 +108,22 @@ _mesa_reference_fragprog(GLcontext *ctx,
 extern struct gl_program *
 _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog);
 
+static INLINE struct gl_vertex_program *
+_mesa_clone_vertex_program(GLcontext *ctx,
+                           const struct gl_vertex_program *prog)
+{
+   return (struct gl_vertex_program *) _mesa_clone_program(ctx, &prog->Base);
+}
+
+
+static INLINE struct gl_fragment_program *
+_mesa_clone_fragment_program(GLcontext *ctx,
+                             const struct gl_fragment_program *prog)
+{
+   return (struct gl_fragment_program *) _mesa_clone_program(ctx, &prog->Base);
+}
+
+
 extern  GLboolean
 _mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count);
 
@@ -119,8 +135,14 @@ _mesa_combine_programs(GLcontext *ctx,
                        const struct gl_program *progA,
                        const struct gl_program *progB);
 
+extern void
+_mesa_find_used_registers(const struct gl_program *prog,
+                          gl_register_file file,
+                          GLboolean used[], GLuint usedSize);
+
 extern GLint
-_mesa_find_free_register(const struct gl_program *prog, GLuint regFile);
+_mesa_find_free_register(const GLboolean used[],
+                         GLuint maxRegs, GLuint firstReg);
 
 extern void
 _mesa_postprocess_program(GLcontext *ctx, struct gl_program *prog);

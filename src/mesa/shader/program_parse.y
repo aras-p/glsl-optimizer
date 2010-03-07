@@ -27,14 +27,14 @@
 
 #include "main/mtypes.h"
 #include "main/imports.h"
-#include "program.h"
-#include "prog_parameter.h"
-#include "prog_parameter_layout.h"
-#include "prog_statevars.h"
-#include "prog_instruction.h"
+#include "shader/program.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_parameter_layout.h"
+#include "shader/prog_statevars.h"
+#include "shader/prog_instruction.h"
 
-#include "symbol_table.h"
-#include "program_parser.h"
+#include "shader/symbol_table.h"
+#include "shader/program_parser.h"
 
 extern void *yy_scan_string(char *);
 extern void yy_delete_buffer(void *);
@@ -52,7 +52,8 @@ static int initialize_symbol_from_param(struct gl_program *prog,
     struct asm_symbol *param_var, const gl_state_index tokens[STATE_LENGTH]);
 
 static int initialize_symbol_from_const(struct gl_program *prog,
-    struct asm_symbol *param_var, const struct asm_vector *vec);
+    struct asm_symbol *param_var, const struct asm_vector *vec,
+    GLboolean allowSwizzle);
 
 static int yyparse(struct asm_parser_state *state);
 
@@ -73,6 +74,9 @@ static void init_src_reg(struct asm_src_register *r);
 
 static void set_src_reg(struct asm_src_register *r,
                         gl_register_file file, GLint index);
+
+static void set_src_reg_swz(struct asm_src_register *r,
+                            gl_register_file file, GLint index, GLuint swizzle);
 
 static void asm_instruction_set_operands(struct asm_instruction *inst,
     const struct prog_dst_register *dst, const struct asm_src_register *src0,
@@ -586,9 +590,11 @@ scalarUse:  srcReg scalarSuffix
 
 	   memset(& temp_sym, 0, sizeof(temp_sym));
 	   temp_sym.param_binding_begin = ~0;
-	   initialize_symbol_from_const(state->prog, & temp_sym, & $1);
+	   initialize_symbol_from_const(state->prog, & temp_sym, & $1, GL_TRUE);
 
-	   set_src_reg(& $$, PROGRAM_CONSTANT, temp_sym.param_binding_begin);
+	   set_src_reg_swz(& $$, PROGRAM_CONSTANT,
+                           temp_sym.param_binding_begin,
+                           temp_sym.param_binding_swizzle);
 	}
 	;
 
@@ -790,7 +796,9 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	      set_src_reg(& $$, PROGRAM_TEMPORARY, s->temp_binding);
 	      break;
 	   case at_param:
-	      set_src_reg(& $$, s->param_binding_type, s->param_binding_begin);
+              set_src_reg_swz(& $$, s->param_binding_type,
+                              s->param_binding_begin,
+                              s->param_binding_swizzle);
 	      break;
 	   case at_attrib:
 	      set_src_reg(& $$, PROGRAM_INPUT, s->attrib_binding);
@@ -841,7 +849,8 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
            gl_register_file file = ($1.name != NULL) 
 	      ? $1.param_binding_type
 	      : PROGRAM_CONSTANT;
-	   set_src_reg(& $$, file, $1.param_binding_begin);
+           set_src_reg_swz(& $$, file, $1.param_binding_begin,
+                           $1.param_binding_swizzle);
 	}
 	;
 
@@ -1047,7 +1056,7 @@ ccMaskRule: IDENTIFIER
 		      ? err_str : "invalid condition code");
 
 	      if (err_str != NULL) {
-		 _mesa_free(err_str);
+		 free(err_str);
 	      }
 
 	      YYERROR;
@@ -1070,7 +1079,7 @@ ccMaskRule2: USED_IDENTIFIER
 		      ? err_str : "invalid condition code");
 
 	      if (err_str != NULL) {
-		 _mesa_free(err_str);
+		 free(err_str);
 	      }
 
 	      YYERROR;
@@ -1210,6 +1219,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 	      s->param_binding_type = $3.param_binding_type;
 	      s->param_binding_begin = $3.param_binding_begin;
 	      s->param_binding_length = $3.param_binding_length;
+              s->param_binding_swizzle = SWIZZLE_XYZW;
 	      s->param_is_array = 0;
 	   }
 	}
@@ -1233,6 +1243,7 @@ PARAM_multipleStmt: PARAM IDENTIFIER '[' optArraySize ']' paramMultipleInit
 		 s->param_binding_type = $6.param_binding_type;
 		 s->param_binding_begin = $6.param_binding_begin;
 		 s->param_binding_length = $6.param_binding_length;
+                 s->param_binding_swizzle = SWIZZLE_XYZW;
 		 s->param_is_array = 1;
 	      }
 	   }
@@ -1290,7 +1301,7 @@ paramSingleItemDecl: stateSingleItem
 	{
 	   memset(& $$, 0, sizeof($$));
 	   $$.param_binding_begin = ~0;
-	   initialize_symbol_from_const(state->prog, & $$, & $1);
+	   initialize_symbol_from_const(state->prog, & $$, & $1, GL_TRUE);
 	}
 	;
 
@@ -1310,7 +1321,7 @@ paramSingleItemUse: stateSingleItem
 	{
 	   memset(& $$, 0, sizeof($$));
 	   $$.param_binding_begin = ~0;
-	   initialize_symbol_from_const(state->prog, & $$, & $1);
+	   initialize_symbol_from_const(state->prog, & $$, & $1, GL_TRUE);
 	}
 	;
 
@@ -1330,7 +1341,7 @@ paramMultipleItem: stateMultipleItem
 	{
 	   memset(& $$, 0, sizeof($$));
 	   $$.param_binding_begin = ~0;
-	   initialize_symbol_from_const(state->prog, & $$, & $1);
+	   initialize_symbol_from_const(state->prog, & $$, & $1, GL_FALSE);
 	}
 	;
 
@@ -1945,7 +1956,7 @@ optVarSize: string
 		      ? err_str : "invalid storage size specifier");
 
 	      if (err_str != NULL) {
-		 _mesa_free(err_str);
+		 free(err_str);
 	      }
 
 	      YYERROR;
@@ -2287,7 +2298,9 @@ set_dst_reg(struct prog_dst_register *r, gl_register_file file, GLint index)
    const GLint maxIndex = 1 << INST_INDEX_BITS;
    const GLint minIndex = 0;
    ASSERT(index >= minIndex);
+   (void) minIndex;
    ASSERT(index <= maxIndex);
+   (void) maxIndex;
    ASSERT(file == PROGRAM_TEMPORARY ||
 	  file == PROGRAM_ADDRESS ||
 	  file == PROGRAM_OUTPUT);
@@ -2310,19 +2323,31 @@ init_src_reg(struct asm_src_register *r)
 }
 
 
-/** Like init_src_reg() but set the File and Index fields. */
+/** Like init_src_reg() but set the File and Index fields.
+ * \return GL_TRUE if a valid src register, GL_FALSE otherwise
+ */
 void
 set_src_reg(struct asm_src_register *r, gl_register_file file, GLint index)
 {
+   set_src_reg_swz(r, file, index, SWIZZLE_XYZW);
+}
+
+
+void
+set_src_reg_swz(struct asm_src_register *r, gl_register_file file, GLint index,
+                GLuint swizzle)
+{
    const GLint maxIndex = (1 << INST_INDEX_BITS) - 1;
    const GLint minIndex = -(1 << INST_INDEX_BITS);
-   ASSERT(index >= minIndex);
-   ASSERT(index <= maxIndex);
    ASSERT(file < PROGRAM_FILE_MAX);
+   ASSERT(index >= minIndex);
+   (void) minIndex;
+   ASSERT(index <= maxIndex);
+   (void) maxIndex;
    memset(r, 0, sizeof(*r));
    r->Base.File = file;
    r->Base.Index = index;
-   r->Base.Swizzle = SWIZZLE_NOOP;
+   r->Base.Swizzle = swizzle;
    r->Symbol = NULL;
 }
 
@@ -2417,7 +2442,7 @@ int add_state_reference(struct gl_program_parameter_list *param_list,
    param_list->StateFlags |= _mesa_program_state_flags(tokens);
 
    /* free name string here since we duplicated it in add_parameter() */
-   _mesa_free(name);
+   free(name);
 
    return index;
 }
@@ -2454,15 +2479,20 @@ initialize_symbol_from_state(struct gl_program *prog,
 	 state_tokens[2] = state_tokens[3] = row;
 
 	 idx = add_state_reference(prog->Parameters, state_tokens);
-	 if (param_var->param_binding_begin == ~0U)
+	 if (param_var->param_binding_begin == ~0U) {
 	    param_var->param_binding_begin = idx;
+            param_var->param_binding_swizzle = SWIZZLE_XYZW;
+         }
+
 	 param_var->param_binding_length++;
       }
    }
    else {
       idx = add_state_reference(prog->Parameters, state_tokens);
-      if (param_var->param_binding_begin == ~0U)
+      if (param_var->param_binding_begin == ~0U) {
 	 param_var->param_binding_begin = idx;
+         param_var->param_binding_swizzle = SWIZZLE_XYZW;
+      }
       param_var->param_binding_length++;
    }
 
@@ -2486,9 +2516,12 @@ initialize_symbol_from_param(struct gl_program *prog,
    assert((state_tokens[1] == STATE_ENV)
 	  || (state_tokens[1] == STATE_LOCAL));
 
+   /*
+    * The param type is STATE_VAR.  The program parameter entry will
+    * effectively be a pointer into the LOCAL or ENV parameter array.
+    */
    param_var->type = at_param;
-   param_var->param_binding_type = (state_tokens[1] == STATE_ENV)
-     ? PROGRAM_ENV_PARAM : PROGRAM_LOCAL_PARAM;
+   param_var->param_binding_type = PROGRAM_STATE_VAR;
 
    /* If we are adding a STATE_ENV or STATE_LOCAL that has multiple elements,
     * we need to unroll it and call add_state_reference() for each row
@@ -2502,15 +2535,19 @@ initialize_symbol_from_param(struct gl_program *prog,
 	 state_tokens[2] = state_tokens[3] = row;
 
 	 idx = add_state_reference(prog->Parameters, state_tokens);
-	 if (param_var->param_binding_begin == ~0U)
+	 if (param_var->param_binding_begin == ~0U) {
 	    param_var->param_binding_begin = idx;
+            param_var->param_binding_swizzle = SWIZZLE_XYZW;
+         }
 	 param_var->param_binding_length++;
       }
    }
    else {
       idx = add_state_reference(prog->Parameters, state_tokens);
-      if (param_var->param_binding_begin == ~0U)
+      if (param_var->param_binding_begin == ~0U) {
 	 param_var->param_binding_begin = idx;
+         param_var->param_binding_swizzle = SWIZZLE_XYZW;
+      }
       param_var->param_binding_length++;
    }
 
@@ -2518,20 +2555,34 @@ initialize_symbol_from_param(struct gl_program *prog,
 }
 
 
+/**
+ * Put a float/vector constant/literal into the parameter list.
+ * \param param_var  returns info about the parameter/constant's location,
+ *                   binding, type, etc.
+ * \param vec  the vector/constant to add
+ * \param allowSwizzle  if true, try to consolidate constants which only differ
+ *                      by a swizzle.  We don't want to do this when building
+ *                      arrays of constants that may be indexed indirectly.
+ * \return index of the constant in the parameter list.
+ */
 int
 initialize_symbol_from_const(struct gl_program *prog,
 			     struct asm_symbol *param_var, 
-			     const struct asm_vector *vec)
+			     const struct asm_vector *vec,
+                             GLboolean allowSwizzle)
 {
-   const int idx = _mesa_add_parameter(prog->Parameters, PROGRAM_CONSTANT,
-				       NULL, vec->count, GL_NONE, vec->data,
-				       NULL, 0x0);
+   unsigned swizzle;
+   const int idx = _mesa_add_unnamed_constant(prog->Parameters,
+                                              vec->data, vec->count,
+                                              allowSwizzle ? &swizzle : NULL);
 
    param_var->type = at_param;
    param_var->param_binding_type = PROGRAM_CONSTANT;
 
-   if (param_var->param_binding_begin == ~0U)
+   if (param_var->param_binding_begin == ~0U) {
       param_var->param_binding_begin = idx;
+      param_var->param_binding_swizzle = allowSwizzle ? swizzle : SWIZZLE_XYZW;
+   }
    param_var->param_binding_length++;
 
    return idx;
@@ -2548,7 +2599,7 @@ make_error_string(const char *fmt, ...)
    va_start(args, fmt);
 
    /* Call vsnprintf once to determine how large the final string is.  Call it
-    * again to do the actual formatting.  from the vsnprintf manual page:
+    * again to do the actual formatting.  from the v_mesa_snprintf manual page:
     *
     *    Upon successful return, these functions return the number of
     *    characters printed  (not including the trailing '\0' used to end
@@ -2556,7 +2607,7 @@ make_error_string(const char *fmt, ...)
     */
    length = 1 + vsnprintf(NULL, 0, fmt, args);
 
-   str = _mesa_malloc(length);
+   str = malloc(length);
    if (str) {
       vsnprintf(str, length, fmt, args);
    }
@@ -2576,7 +2627,7 @@ yyerror(YYLTYPE *locp, struct asm_parser_state *state, const char *s)
    err_str = make_error_string("glProgramStringARB(%s)\n", s);
    if (err_str) {
       _mesa_error(state->ctx, GL_INVALID_OPERATION, err_str);
-      _mesa_free(err_str);
+      free(err_str);
    }
 
    err_str = make_error_string("line %u, char %u: error: %s\n",
@@ -2584,7 +2635,7 @@ yyerror(YYLTYPE *locp, struct asm_parser_state *state, const char *s)
    _mesa_set_program_error(state->ctx, locp->position, err_str);
 
    if (err_str) {
-      _mesa_free(err_str);
+      free(err_str);
    }
 }
 
@@ -2606,12 +2657,12 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
 
    /* Make a copy of the program string and force it to be NUL-terminated.
     */
-   strz = (GLubyte *) _mesa_malloc(len + 1);
+   strz = (GLubyte *) malloc(len + 1);
    if (strz == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
       return GL_FALSE;
    }
-   _mesa_memcpy (strz, str, len);
+   memcpy (strz, str, len);
    strz[len] = '\0';
 
    state->prog->String = strz;
@@ -2694,7 +2745,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
 error:
    for (inst = state->inst_head; inst != NULL; inst = temp) {
       temp = inst->next;
-      _mesa_free(inst);
+      free(inst);
    }
 
    state->inst_head = NULL;
@@ -2703,8 +2754,8 @@ error:
    for (sym = state->sym; sym != NULL; sym = temp) {
       temp = sym->next;
 
-      _mesa_free((void *) sym->name);
-      _mesa_free(sym);
+      free((void *) sym->name);
+      free(sym);
    }
    state->sym = NULL;
 

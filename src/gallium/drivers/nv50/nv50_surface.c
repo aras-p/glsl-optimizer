@@ -25,8 +25,7 @@
 #include "nouveau/nouveau_pushbuf.h"
 #include "nv50_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "util/u_tile.h"
 
@@ -34,11 +33,11 @@ static INLINE int
 nv50_format(enum pipe_format format)
 {
 	switch (format) {
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case PIPE_FORMAT_B8G8R8A8_UNORM:
 		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
-	case PIPE_FORMAT_X8R8G8B8_UNORM:
+	case PIPE_FORMAT_B8G8R8X8_UNORM:
 		return NV50_2D_DST_FORMAT_X8R8G8B8_UNORM;
-	case PIPE_FORMAT_R5G6B5_UNORM:
+	case PIPE_FORMAT_B5G6R5_UNORM:
 		return NV50_2D_DST_FORMAT_R5G6B5_UNORM;
 	case PIPE_FORMAT_A8_UNORM:
 		return NV50_2D_DST_FORMAT_R8_UNORM;
@@ -62,6 +61,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		return 1;
 
  	if (!bo->tile_flags) {
+		MARK_RING (chan, 9, 2); /* flush on lack of space or relocs */
  		BEGIN_RING(chan, eng2d, mthd, 2);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 1);
@@ -72,6 +72,7 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		OUT_RELOCh(chan, bo, ps->offset, flags);
  		OUT_RELOCl(chan, bo, ps->offset, flags);
  	} else {
+		MARK_RING (chan, 11, 2); /* flush on lack of space or relocs */
  		BEGIN_RING(chan, eng2d, mthd, 5);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 0);
@@ -174,11 +175,11 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 	if (ret)
 		return;
 
-	BEGIN_RING(chan, eng2d, 0x0580, 3);
-	OUT_RING  (chan, 4);
+	BEGIN_RING(chan, eng2d, NV50_2D_DRAW_SHAPE, 3);
+	OUT_RING  (chan, NV50_2D_DRAW_SHAPE_RECTANGLES);
 	OUT_RING  (chan, format);
 	OUT_RING  (chan, value);
-	BEGIN_RING(chan, eng2d, NV50_2D_RECT_X1, 4);
+	BEGIN_RING(chan, eng2d, NV50_2D_DRAW_POINT32_X(0), 4);
 	OUT_RING  (chan, destx);
 	OUT_RING  (chan, desty);
 	OUT_RING  (chan, width);

@@ -55,6 +55,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLbitfield rasterMask = 0;
+   GLuint i;
 
    if (ctx->Color.AlphaEnabled)           rasterMask |= ALPHATEST_BIT;
    if (ctx->Color.BlendEnabled)           rasterMask |= BLEND_BIT;
@@ -62,17 +63,17 @@ _swrast_update_rasterflags( GLcontext *ctx )
    if (swrast->_FogEnabled)               rasterMask |= FOG_BIT;
    if (ctx->Scissor.Enabled)              rasterMask |= CLIP_BIT;
    if (ctx->Stencil._Enabled)             rasterMask |= STENCIL_BIT;
-   if (ctx->Visual.rgbMode) {
-      const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
-      if (colorMask != 0xffffffff)        rasterMask |= MASKING_BIT;
-      if (ctx->Color._LogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
-      if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+      if (!ctx->Color.ColorMask[i][0] ||
+          !ctx->Color.ColorMask[i][1] ||
+          !ctx->Color.ColorMask[i][2] ||
+          !ctx->Color.ColorMask[i][3]) {
+         rasterMask |= MASKING_BIT;
+         break;
+      }
    }
-   else {
-      if (ctx->Color.IndexMask != 0xffffffff) rasterMask |= MASKING_BIT;
-      if (ctx->Color.IndexLogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
-   }
-
+   if (ctx->Color._LogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
+   if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
    if (   ctx->Viewport.X < 0
        || ctx->Viewport.X + ctx->Viewport.Width > (GLint) ctx->DrawBuffer->Width
        || ctx->Viewport.Y < 0
@@ -92,12 +93,17 @@ _swrast_update_rasterflags( GLcontext *ctx )
       /* more than one color buffer designated for writing (or zero buffers) */
       rasterMask |= MULTI_DRAW_BIT;
    }
-   else if (ctx->Visual.rgbMode && *((GLuint *) ctx->Color.ColorMask) == 0) {
-      rasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
+
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+      if (ctx->Color.ColorMask[i][0] +
+          ctx->Color.ColorMask[i][1] +
+          ctx->Color.ColorMask[i][2] +
+          ctx->Color.ColorMask[i][3] == 0) {
+         rasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
+         break;
+      }
    }
-   else if (!ctx->Visual.rgbMode && ctx->Color.IndexMask==0) {
-      rasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
-   }
+
 
    if (ctx->FragmentProgram._Current) {
       rasterMask |= FRAGPROG_BIT;
@@ -131,26 +137,26 @@ _swrast_update_polygon( GLcontext *ctx )
    if (ctx->Polygon.CullFlag) {
       switch (ctx->Polygon.CullFaceMode) {
       case GL_BACK:
-         backface_sign = -1.0;
+         backface_sign = -1.0F;
 	 break;
       case GL_FRONT:
-         backface_sign = 1.0;
+         backface_sign = 1.0F;
 	 break;
       case GL_FRONT_AND_BACK:
          /* fallthrough */
       default:
-	 backface_sign = 0.0;
+	 backface_sign = 0.0F;
       }
    }
    else {
-      backface_sign = 0.0;
+      backface_sign = 0.0F;
    }
 
    SWRAST_CONTEXT(ctx)->_BackfaceCullSign = backface_sign;
 
    /* This is for front/back-face determination, but not for culling */
    SWRAST_CONTEXT(ctx)->_BackfaceSign
-      = (ctx->Polygon.FrontFace == GL_CW) ? -1.0 : 1.0;
+      = (ctx->Polygon.FrontFace == GL_CW) ? -1.0F : 1.0F;
 }
 
 
@@ -874,12 +880,7 @@ _swrast_flush( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    /* flush any pending fragments from rendering points */
    if (swrast->PointSpan.end > 0) {
-      if (ctx->Visual.rgbMode) {
-         _swrast_write_rgba_span(ctx, &(swrast->PointSpan));
-      }
-      else {
-         _swrast_write_index_span(ctx, &(swrast->PointSpan));
-      }
+      _swrast_write_rgba_span(ctx, &(swrast->PointSpan));
       swrast->PointSpan.end = 0;
    }
 }

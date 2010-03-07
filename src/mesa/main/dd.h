@@ -182,7 +182,7 @@ struct dd_function_table {
     * 
     * This is called by the \c _mesa_store_tex[sub]image[123]d() fallback
     * functions.  The driver should examine \p internalFormat and return a
-    * pointer to an appropriate gl_texture_format.
+    * gl_format value.
     */
    GLuint (*ChooseTextureFormat)( GLcontext *ctx, GLint internalFormat,
                                      GLenum srcFormat, GLenum srcType );
@@ -538,11 +538,6 @@ struct dd_function_table {
                                    struct gl_texture_object *t );
 
    /**
-    * Called by glActiveTextureARB() to set current texture unit.
-    */
-   void (*ActiveTexture)( GLcontext *ctx, GLuint texUnitNumber );
-
-   /**
     * Called when the texture's color lookup table is changed.
     * 
     * If \p tObj is NULL then the shared texture palette
@@ -586,9 +581,13 @@ struct dd_function_table {
    struct gl_program * (*NewProgram)(GLcontext *ctx, GLenum target, GLuint id);
    /** Delete a program */
    void (*DeleteProgram)(GLcontext *ctx, struct gl_program *prog);   
-   /** Notify driver that a program string has been specified. */
-   void (*ProgramStringNotify)(GLcontext *ctx, GLenum target, 
-			       struct gl_program *prog);
+   /**
+    * Notify driver that a program string (and GPU code) has been specified
+    * or modified.  Return GL_TRUE or GL_FALSE to indicate if the program is
+    * supported by the driver.
+    */
+   GLboolean (*ProgramStringNotify)(GLcontext *ctx, GLenum target, 
+                                    struct gl_program *prog);
 
    /** Query if program can be loaded onto hardware */
    GLboolean (*IsProgramNative)(GLcontext *ctx, GLenum target, 
@@ -621,8 +620,6 @@ struct dd_function_table {
    void (*ClearColor)(GLcontext *ctx, const GLfloat color[4]);
    /** Specify the clear value for the depth buffer */
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
-   /** Specify the clear value for the color index buffers */
-   void (*ClearIndex)(GLcontext *ctx, GLuint index);
    /** Specify the clear value for the stencil buffer */
    void (*ClearStencil)(GLcontext *ctx, GLint s);
    /** Specify a plane against which all geometry is clipped */
@@ -630,6 +627,8 @@ struct dd_function_table {
    /** Enable and disable writing of frame buffer color components */
    void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
                      GLboolean bmask, GLboolean amask );
+   void (*ColorMaskIndexed)(GLcontext *ctx, GLuint buf, GLboolean rmask,
+                            GLboolean gmask, GLboolean bmask, GLboolean amask);
    /** Cause a material color to track the current color */
    void (*ColorMaterial)(GLcontext *ctx, GLenum face, GLenum mode);
    /** Specify whether front- or back-facing facets can be culled */
@@ -652,8 +651,6 @@ struct dd_function_table {
    void (*Fogfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
    /** Specify implementation-specific hints */
    void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
-   /** Control the writing of individual bits in the color index buffers */
-   void (*IndexMask)(GLcontext *ctx, GLuint mask);
    /** Set light source parameters.
     * Note: for GL_POSITION and GL_SPOT_DIRECTION, params will have already
     * been transformed to eye-space.
@@ -766,13 +763,13 @@ struct dd_function_table {
 
    /* May return NULL if MESA_MAP_NOWAIT_BIT is set in access:
     */
-   void * (*MapBufferRange)( GLcontext *ctx, GLenum target,
-                             GLintptr offset, GLsizeiptr length, GLbitfield access,
+   void * (*MapBufferRange)( GLcontext *ctx, GLenum target, GLintptr offset,
+                             GLsizeiptr length, GLbitfield access,
                              struct gl_buffer_object *obj);
 
-   void (*FlushMappedBufferRange) (GLcontext *ctx, GLenum target, 
-                                   GLintptr offset, GLsizeiptr length,
-                                   struct gl_buffer_object *obj);
+   void (*FlushMappedBufferRange)(GLcontext *ctx, GLenum target, 
+                                  GLintptr offset, GLsizeiptr length,
+                                  struct gl_buffer_object *obj);
 
    GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
 			     struct gl_buffer_object *obj );
@@ -787,7 +784,8 @@ struct dd_function_table {
    struct gl_framebuffer * (*NewFramebuffer)(GLcontext *ctx, GLuint name);
    struct gl_renderbuffer * (*NewRenderbuffer)(GLcontext *ctx, GLuint name);
    void (*BindFramebuffer)(GLcontext *ctx, GLenum target,
-                           struct gl_framebuffer *fb, struct gl_framebuffer *fbread);
+                           struct gl_framebuffer *drawFb,
+                           struct gl_framebuffer *readFb);
    void (*FramebufferRenderbuffer)(GLcontext *ctx, 
                                    struct gl_framebuffer *fb,
                                    GLenum attachment,
@@ -1018,6 +1016,32 @@ struct dd_function_table {
 			  GLbitfield, GLuint64);
    /*@}*/
 #endif
+
+   /** GL_NV_conditional_render */
+   void (*BeginConditionalRender)(GLcontext *ctx, struct gl_query_object *q,
+                                  GLenum mode);
+   void (*EndConditionalRender)(GLcontext *ctx, struct gl_query_object *q);
+
+#if FEATURE_OES_draw_texture
+   /**
+    * \name GL_OES_draw_texture interface
+    */
+   /*@{*/
+   void (*DrawTex)(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
+                   GLfloat width, GLfloat height);
+   /*@}*/
+#endif
+
+#if FEATURE_OES_EGL_image
+   void (*EGLImageTargetTexture2D)(GLcontext *ctx, GLenum target,
+				   struct gl_texture_object *texObj,
+				   struct gl_texture_image *texImage,
+				   GLeglImageOES image_handle);
+   void (*EGLImageTargetRenderbufferStorage)(GLcontext *ctx,
+					     struct gl_renderbuffer *rb,
+					     void *image_handle);
+#endif
+
 };
 
 

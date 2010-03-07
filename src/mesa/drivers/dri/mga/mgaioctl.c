@@ -42,10 +42,7 @@
 #include "mgacontext.h"
 #include "mgadd.h"
 #include "mgastate.h"
-#include "mgatex.h"
-#include "mgavb.h"
 #include "mgaioctl.h"
-#include "mgatris.h"
 
 #include "vblank.h"
 
@@ -207,7 +204,7 @@ static void
 mgaClear( GLcontext *ctx, GLbitfield mask )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
+   __DRIdrawable *dPriv = mmesa->driDrawable;
    GLuint flags = 0;
    GLuint clear_color = mmesa->ClearColor;
    GLuint clear_depth = 0;
@@ -409,7 +406,7 @@ static void mgaWaitForFrameCompletion( mgaContextPtr mmesa )
 /*
  * Copy the back buffer to the front buffer.
  */
-void mgaCopyBuffer( __DRIdrawablePrivate *dPriv )
+void mgaCopyBuffer( __DRIdrawable *dPriv )
 {
    mgaContextPtr mmesa;
    drm_clip_rect_t *pbox;
@@ -417,7 +414,7 @@ void mgaCopyBuffer( __DRIdrawablePrivate *dPriv )
    GLint ret;
    GLint i;
    GLboolean   missed_target;
-   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
+   __DRIscreen *psp = dPriv->driScreenPriv;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);

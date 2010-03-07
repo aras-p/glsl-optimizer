@@ -30,6 +30,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_debug.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,13 +48,15 @@ struct ureg_src
    unsigned SwizzleY    : 2;  /* TGSI_SWIZZLE_ */
    unsigned SwizzleZ    : 2;  /* TGSI_SWIZZLE_ */
    unsigned SwizzleW    : 2;  /* TGSI_SWIZZLE_ */
-   unsigned Pad         : 1;  /* BOOL */
    unsigned Indirect    : 1;  /* BOOL */
+   unsigned Dimension   : 1;  /* BOOL */
    unsigned Absolute    : 1;  /* BOOL */
-   int      Index       : 16; /* SINT */
    unsigned Negate      : 1;  /* BOOL */
+   int      Index       : 16; /* SINT */
+   unsigned IndirectFile    : 4;  /* TGSI_FILE_ */
    int      IndirectIndex   : 16; /* SINT */
-   int      IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
+   unsigned IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
+   int      DimensionIndex  : 16; /* SINT */
 };
 
 /* Very similar to a tgsi_dst_register, removing unsupported fields
@@ -118,20 +121,69 @@ ureg_create_shader_and_destroy( struct ureg_program *p,
 }
 
 
+/***********************************************************************
+ * Build shader properties:
+ */
+
+void
+ureg_property_gs_input_prim(struct ureg_program *ureg,
+                            unsigned input_prim);
+
+void
+ureg_property_gs_output_prim(struct ureg_program *ureg,
+                             unsigned output_prim);
+
+void
+ureg_property_gs_max_vertices(struct ureg_program *ureg,
+                              unsigned max_vertices);
+
+void
+ureg_property_fs_coord_origin(struct ureg_program *ureg,
+                            unsigned fs_coord_origin);
+
+void
+ureg_property_fs_coord_pixel_center(struct ureg_program *ureg,
+                            unsigned fs_coord_pixel_center);
 
 /***********************************************************************
  * Build shader declarations:
  */
 
 struct ureg_src
-ureg_DECL_fs_input( struct ureg_program *,
-                    unsigned semantic_name,
-                    unsigned semantic_index,
-                    unsigned interp_mode );
+ureg_DECL_fs_input_cyl(struct ureg_program *,
+                       unsigned semantic_name,
+                       unsigned semantic_index,
+                       unsigned interp_mode,
+                       unsigned cylindrical_wrap);
+
+static INLINE struct ureg_src
+ureg_DECL_fs_input(struct ureg_program *ureg,
+                   unsigned semantic_name,
+                   unsigned semantic_index,
+                   unsigned interp_mode)
+{
+   return ureg_DECL_fs_input_cyl(ureg,
+                                 semantic_name,
+                                 semantic_index,
+                                 interp_mode,
+                                 0);
+}
 
 struct ureg_src
 ureg_DECL_vs_input( struct ureg_program *,
                     unsigned index );
+
+struct ureg_src
+ureg_DECL_gs_input(struct ureg_program *,
+                   unsigned index,
+                   unsigned semantic_name,
+                   unsigned semantic_index);
+
+struct ureg_src
+ureg_DECL_system_value(struct ureg_program *,
+                       unsigned index,
+                       unsigned semantic_name,
+                       unsigned semantic_index);
 
 struct ureg_dst
 ureg_DECL_output( struct ureg_program *,
@@ -142,6 +194,27 @@ struct ureg_src
 ureg_DECL_immediate( struct ureg_program *,
                      const float *v,
                      unsigned nr );
+
+struct ureg_src
+ureg_DECL_immediate_uint( struct ureg_program *,
+                          const unsigned *v,
+                          unsigned nr );
+
+struct ureg_src
+ureg_DECL_immediate_block_uint( struct ureg_program *,
+                                const unsigned *v,
+                                unsigned nr );
+
+struct ureg_src
+ureg_DECL_immediate_int( struct ureg_program *,
+                         const int *v,
+                         unsigned nr );
+
+void
+ureg_DECL_constant2D(struct ureg_program *ureg,
+                     unsigned first,
+                     unsigned last,
+                     unsigned index2D);
 
 struct ureg_src
 ureg_DECL_constant( struct ureg_program *,
@@ -215,6 +288,90 @@ ureg_imm1f( struct ureg_program *ureg,
    float v[1];
    v[0] = a;
    return ureg_DECL_immediate( ureg, v, 1 );
+}
+
+static INLINE struct ureg_src
+ureg_imm4u( struct ureg_program *ureg,
+            unsigned a, unsigned b,
+            unsigned c, unsigned d)
+{
+   unsigned v[4];
+   v[0] = a;
+   v[1] = b;
+   v[2] = c;
+   v[3] = d;
+   return ureg_DECL_immediate_uint( ureg, v, 4 );
+}
+
+static INLINE struct ureg_src
+ureg_imm3u( struct ureg_program *ureg,
+            unsigned a, unsigned b,
+            unsigned c)
+{
+   unsigned v[3];
+   v[0] = a;
+   v[1] = b;
+   v[2] = c;
+   return ureg_DECL_immediate_uint( ureg, v, 3 );
+}
+
+static INLINE struct ureg_src
+ureg_imm2u( struct ureg_program *ureg,
+            unsigned a, unsigned b)
+{
+   unsigned v[2];
+   v[0] = a;
+   v[1] = b;
+   return ureg_DECL_immediate_uint( ureg, v, 2 );
+}
+
+static INLINE struct ureg_src
+ureg_imm1u( struct ureg_program *ureg,
+            unsigned a)
+{
+   return ureg_DECL_immediate_uint( ureg, &a, 1 );
+}
+
+static INLINE struct ureg_src
+ureg_imm4i( struct ureg_program *ureg,
+            int a, int b,
+            int c, int d)
+{
+   int v[4];
+   v[0] = a;
+   v[1] = b;
+   v[2] = c;
+   v[3] = d;
+   return ureg_DECL_immediate_int( ureg, v, 4 );
+}
+
+static INLINE struct ureg_src
+ureg_imm3i( struct ureg_program *ureg,
+            int a, int b,
+            int c)
+{
+   int v[3];
+   v[0] = a;
+   v[1] = b;
+   v[2] = c;
+   return ureg_DECL_immediate_int( ureg, v, 3 );
+}
+
+static INLINE struct ureg_src
+ureg_imm2i( struct ureg_program *ureg,
+            int a, int b)
+{
+   int v[2];
+   v[0] = a;
+   v[1] = b;
+   return ureg_DECL_immediate_int( ureg, v, 2 );
+}
+
+static INLINE struct ureg_src
+ureg_imm1i( struct ureg_program *ureg,
+            int a)
+{
+   return ureg_DECL_immediate_int( ureg, &a, 1 );
 }
 
 /***********************************************************************
@@ -655,10 +812,20 @@ static INLINE struct ureg_src
 ureg_src_indirect( struct ureg_src reg, struct ureg_src addr )
 {
    assert(reg.File != TGSI_FILE_NULL);
-   assert(addr.File == TGSI_FILE_ADDRESS);
+   assert(addr.File == TGSI_FILE_ADDRESS || addr.File == TGSI_FILE_TEMPORARY);
    reg.Indirect = 1;
+   reg.IndirectFile = addr.File;
    reg.IndirectIndex = addr.Index;
    reg.IndirectSwizzle = addr.SwizzleX;
+   return reg;
+}
+
+static INLINE struct ureg_src 
+ureg_src_dimension( struct ureg_src reg, int index )
+{
+   assert(reg.File != TGSI_FILE_NULL);
+   reg.Dimension = 1;
+   reg.DimensionIndex = index;
    return reg;
 }
 
@@ -666,6 +833,8 @@ static INLINE struct ureg_dst
 ureg_dst( struct ureg_src src )
 {
    struct ureg_dst dst;
+
+   assert(!src.Indirect || src.IndirectFile == TGSI_FILE_ADDRESS);
 
    dst.File      = src.File;
    dst.WriteMask = TGSI_WRITEMASK_XYZW;
@@ -685,6 +854,30 @@ ureg_dst( struct ureg_src src )
 }
 
 static INLINE struct ureg_src
+ureg_src_register(unsigned file,
+                  unsigned index)
+{
+   struct ureg_src src;
+
+   src.File = file;
+   src.SwizzleX = TGSI_SWIZZLE_X;
+   src.SwizzleY = TGSI_SWIZZLE_Y;
+   src.SwizzleZ = TGSI_SWIZZLE_Z;
+   src.SwizzleW = TGSI_SWIZZLE_W;
+   src.Indirect = 0;
+   src.IndirectFile = TGSI_FILE_NULL;
+   src.IndirectIndex = 0;
+   src.IndirectSwizzle = 0;
+   src.Absolute = 0;
+   src.Index = index;
+   src.Negate = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
+
+   return src;
+}
+
+static INLINE struct ureg_src
 ureg_src( struct ureg_dst dst )
 {
    struct ureg_src src;
@@ -694,13 +887,15 @@ ureg_src( struct ureg_dst dst )
    src.SwizzleY  = TGSI_SWIZZLE_Y;
    src.SwizzleZ  = TGSI_SWIZZLE_Z;
    src.SwizzleW  = TGSI_SWIZZLE_W;
-   src.Pad       = 0;
    src.Indirect  = dst.Indirect;
+   src.IndirectFile = TGSI_FILE_ADDRESS;
    src.IndirectIndex = dst.IndirectIndex;
    src.IndirectSwizzle = dst.IndirectSwizzle;
    src.Absolute  = 0;
    src.Index     = dst.Index;
    src.Negate    = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
 
    return src;
 }
@@ -739,13 +934,15 @@ ureg_src_undef( void )
    src.SwizzleY  = 0;
    src.SwizzleZ  = 0;
    src.SwizzleW  = 0;
-   src.Pad       = 0;
    src.Indirect  = 0;
+   src.IndirectFile = TGSI_FILE_NULL;
    src.IndirectIndex = 0;
    src.IndirectSwizzle = 0;
    src.Absolute  = 0;
    src.Index     = 0;
    src.Negate    = 0;
+   src.Dimension = 0;
+   src.DimensionIndex = 0;
    
    return src;
 }

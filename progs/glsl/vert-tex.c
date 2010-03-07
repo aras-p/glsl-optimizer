@@ -40,15 +40,6 @@ static GLboolean Anim = GL_TRUE;
 static GLboolean WireFrame = GL_TRUE;
 static GLfloat xRot = -70.0f, yRot = 0.0f, zRot = 0.0f;
 
-
-/* value[0] = tex unit */
-static struct uniform_info Uniforms[] = {
-   { "tex1",  1, GL_SAMPLER_2D, { 0, 0, 0, 0 }, -1 },
-   END_OF_UNIFORMS
-};
-
-
-
 static void
 Idle(void)
 {

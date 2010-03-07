@@ -36,9 +36,7 @@
 #include "tdfx_dri.h"
 #include "tdfx_context.h"
 #include "tdfx_lock.h"
-#include "tdfx_vb.h"
 #include "tdfx_span.h"
-#include "tdfx_tris.h"
 
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
@@ -70,7 +68,7 @@ static const __DRIextension *tdfxExtensions[] = {
 static const GLuint __driNConfigOptions = 1;
 
 static GLboolean
-tdfxCreateScreen( __DRIscreenPrivate *sPriv )
+tdfxCreateScreen( __DRIscreen *sPriv )
 {
    tdfxScreenPrivate *fxScreen;
    TDFXDRIPtr fxDRIPriv = (TDFXDRIPtr) sPriv->pDevPriv;
@@ -121,7 +119,7 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
 
 
 static void
-tdfxDestroyScreen( __DRIscreenPrivate *sPriv )
+tdfxDestroyScreen( __DRIscreen *sPriv )
 {
    tdfxScreenPrivate *fxScreen = (tdfxScreenPrivate *) sPriv->private;
 
@@ -139,7 +137,7 @@ tdfxDestroyScreen( __DRIscreenPrivate *sPriv )
 
 
 static GLboolean
-tdfxInitDriver( __DRIscreenPrivate *sPriv )
+tdfxInitDriver( __DRIscreen *sPriv )
 {
    if ( TDFX_DEBUG & DEBUG_VERBOSE_DRI ) {
       fprintf( stderr, "%s( %p )\n", __FUNCTION__, (void *)sPriv );
@@ -155,8 +153,8 @@ tdfxInitDriver( __DRIscreenPrivate *sPriv )
 
 
 static GLboolean
-tdfxCreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                  __DRIdrawablePrivate *driDrawPriv,
+tdfxCreateBuffer( __DRIscreen *driScrnPriv,
+                  __DRIdrawable *driDrawPriv,
                   const __GLcontextModes *mesaVis,
                   GLboolean isPixmap )
 {
@@ -227,14 +225,14 @@ tdfxCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
 
 static void
-tdfxDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+tdfxDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
    _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 
 static void
-tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
+tdfxSwapBuffers( __DRIdrawable *driDrawPriv )
 
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -253,7 +251,7 @@ tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
     * we have to do a glFinish (per the GLX spec).
     */
    if ( ctx ) {
-      __DRIdrawablePrivate *curDrawPriv;
+      __DRIdrawable *curDrawPriv;
       fxMesa = TDFX_CONTEXT(ctx);
       curDrawPriv = fxMesa->driContext->driDrawablePriv;
 
@@ -296,6 +294,8 @@ tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
       }
    }
 #endif
+
+   assert(fxMesa);
 
    if (fxMesa->scissoredClipRects) {
       /* restore clip rects without scissor box */
@@ -341,7 +341,7 @@ tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
 }
 
 static const __DRIconfig **
-tdfxFillInModes(__DRIscreenPrivate *psp,
+tdfxFillInModes(__DRIscreen *psp,
 		unsigned pixel_bits,
 		unsigned depth_bits,
 		unsigned stencil_bits,
@@ -385,7 +385,8 @@ tdfxFillInModes(__DRIscreenPrivate *psp,
 			    stencil_bits_array,
 			    deep ? 2 : 4,
 			    db_modes, 2,
-			    msaa_samples_array, 1);
+			    msaa_samples_array, 1,
+			    GL_TRUE);
 }
 
 /**
@@ -439,4 +440,11 @@ const struct __DriverAPIRec driDriverAPI = {
    .WaitForMSC      = NULL,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
+};
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
 };

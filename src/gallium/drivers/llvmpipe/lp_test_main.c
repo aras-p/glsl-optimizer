@@ -36,8 +36,8 @@
 
 #include "util/u_cpu_detect.h"
 
-#include "lp_bld_const.h"
-#include "lp_bld_misc.h"
+#include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_init.h"
 #include "lp_test.h"
 
 
@@ -380,8 +380,7 @@ int main(int argc, char **argv)
          n = atoi(argv[i]);
    }
 
-   LLVMLinkInJIT();
-   LLVMInitializeNativeTarget();
+   lp_build_init();
 
    util_cpu_detect();
 

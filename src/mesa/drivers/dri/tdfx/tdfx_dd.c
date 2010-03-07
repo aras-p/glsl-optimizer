@@ -35,17 +35,10 @@
 #include "tdfx_context.h"
 #include "tdfx_dd.h"
 #include "tdfx_lock.h"
-#include "tdfx_vb.h"
 #include "tdfx_pixels.h"
 
 #include "utils.h"
 #include "main/context.h"
-#include "main/enums.h"
-#include "main/framebuffer.h"
-#include "swrast/swrast.h"
-#if defined(USE_X86_ASM)
-#include "x86/common_x86_asm.h"
-#endif
 
 
 #define DRIVER_DATE	"20061113"
@@ -91,7 +84,7 @@ static const GLubyte *tdfxDDGetString( GLcontext *ctx, GLenum name )
       else {
 	 /* unexpected result: replace spaces with hyphens */
 	 int i;
-	 for (i = 0; hardware[i] && (i < sizeof(hardware)); i++) {
+	 for (i = 0; i < sizeof(hardware) && hardware[i]; i++) {
 	    if (hardware[i] == ' ' || hardware[i] == '\t') {
 	       hardware[i] = '-';
 	    }

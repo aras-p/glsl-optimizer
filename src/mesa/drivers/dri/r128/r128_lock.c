@@ -33,8 +33,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r128_context.h"
 #include "r128_lock.h"
-#include "r128_tex.h"
-#include "r128_state.h"
 
 #include "drirenderbuffer.h"
 
@@ -68,8 +66,8 @@ r128UpdatePageFlipping( r128ContextPtr rmesa )
  */
 void r128GetLock( r128ContextPtr rmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;
-   __DRIscreenPrivate *sPriv = rmesa->driScreen;
+   __DRIdrawable *dPriv = rmesa->driDrawable;
+   __DRIscreen *sPriv = rmesa->driScreen;
    drm_r128_sarea_t *sarea = rmesa->sarea;
    int i;
 

@@ -1,0 +1,7 @@
+Import('*')
+
+SConscript(['gem/SConscript',])
+
+if 'mesa' in env['statetrackers']:
+
+    SConscript(['dri/SConscript'])

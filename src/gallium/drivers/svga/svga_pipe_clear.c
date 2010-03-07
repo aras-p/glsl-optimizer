@@ -46,7 +46,7 @@ try_clear(struct svga_context *svga,
    boolean restore_viewport = FALSE;
    SVGA3dClearFlag flags = 0;
    struct pipe_framebuffer_state *fb = &svga->curr.framebuffer;
-   unsigned color = 0;
+   union util_color uc;
 
    ret = svga_update_state(svga, SVGA_STATE_HW_CLEAR);
    if (ret)
@@ -54,7 +54,7 @@ try_clear(struct svga_context *svga,
 
    if ((buffers & PIPE_CLEAR_COLOR) && fb->cbufs[0]) {
       flags |= SVGA3D_CLEAR_COLOR;
-      util_pack_color(rgba, PIPE_FORMAT_A8R8G8B8_UNORM, &color);
+      util_pack_color(rgba, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 
       rect.w = fb->cbufs[0]->width;
       rect.h = fb->cbufs[0]->height;
@@ -63,7 +63,7 @@ try_clear(struct svga_context *svga,
    if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && fb->zsbuf) {
       flags |= SVGA3D_CLEAR_DEPTH;
 
-      if (svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_Z24S8_UNORM)
+      if (svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_S8Z24_UNORM)
          flags |= SVGA3D_CLEAR_STENCIL;
 
       rect.w = MAX2(rect.w, fb->zsbuf->width);
@@ -77,7 +77,7 @@ try_clear(struct svga_context *svga,
          return ret;
    }
 
-   ret = SVGA3D_ClearRect(svga->swc, flags, color, depth, stencil,
+   ret = SVGA3D_ClearRect(svga->swc, flags, uc.ui, depth, stencil,
                           rect.x, rect.y, rect.w, rect.h);
    if (ret != PIPE_OK)
       return ret;

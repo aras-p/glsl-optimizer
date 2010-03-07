@@ -36,33 +36,28 @@
 #include "main/macros.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
-#include "main/state.h"
 #include "shader/program.h"
-#include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 
 #include "st_debug.h"
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
-#include "st_draw.h"
 #include "st_program.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
-#include "st_cb_texture.h"
-#include "st_draw.h"
 #include "st_format.h"
-#include "st_mesa_to_tgsi.h"
 #include "st_texture.h"
 #include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "tgsi/tgsi_ureg.h"
 #include "util/u_tile.h"
 #include "util/u_draw_quad.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_rect.h"
 #include "shader/prog_instruction.h"
@@ -98,8 +93,9 @@ is_passthrough_program(const struct gl_fragment_program *prog)
 /**
  * Make fragment shader for glDraw/CopyPixels.  This shader is made
  * by combining the pixel transfer shader with the user-defined shader.
+ * \return pointer to Gallium driver fragment shader
  */
-static struct st_fragment_program *
+static void *
 combined_drawpix_fragment_program(GLcontext *ctx)
 {
    struct st_context *st = st_context(ctx);
@@ -118,7 +114,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
        */
       if (is_passthrough_program(&st->fp->Base)) {
          stfp = (struct st_fragment_program *)
-            _mesa_clone_program(ctx, &st->pixel_xfer.program->Base.Base);
+            _mesa_clone_fragment_program(ctx, &st->pixel_xfer.program->Base);
       }
       else {
 #if 0
@@ -145,7 +141,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
 #endif
 
       /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp, NULL);
+      st_translate_fragment_program(st, stfp);
 
       /* save new program, update serial numbers */
       st->pixel_xfer.xfer_prog_sn = st->pixel_xfer.program->serialNo;
@@ -161,7 +157,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
     */
    st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
 
-   return stfp;
+   return stfp->driver_shader;
 }
 
 
@@ -169,8 +165,9 @@ combined_drawpix_fragment_program(GLcontext *ctx)
  * Create fragment shader that does a TEX() instruction to get a Z
  * value, then writes to FRAG_RESULT_DEPTH.
  * Pass fragment color through as-is.
+ * \return pointer to the Gallium driver fragment shader
  */
-static struct st_fragment_program *
+static void *
 make_fragment_shader_z(struct st_context *st)
 {
    GLcontext *ctx = st->ctx;
@@ -178,7 +175,7 @@ make_fragment_shader_z(struct st_context *st)
    GLuint ic = 0;
 
    if (st->drawpix.z_shader) {
-      return st->drawpix.z_shader;
+      return st->drawpix.z_shader->driver_shader;
    }
 
    /*
@@ -226,9 +223,9 @@ make_fragment_shader_z(struct st_context *st)
    p->SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
    st->drawpix.z_shader = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, st->drawpix.z_shader, NULL);
+   st_translate_fragment_program(st, st->drawpix.z_shader);
 
-   return st->drawpix.z_shader;
+   return st->drawpix.z_shader->driver_shader;
 }
 
 
@@ -238,8 +235,8 @@ make_fragment_shader_z(struct st_context *st)
  * vertex position and texcoord (and optionally, color).
  */
 static void *
-st_make_passthrough_vertex_shader(struct st_context *st, 
-                                  GLboolean passColor)
+make_passthrough_vertex_shader(struct st_context *st, 
+                               GLboolean passColor)
 {
    if (!st->drawpix.vert_shaders[passColor]) {
       struct ureg_program *ureg = 
@@ -275,8 +272,12 @@ st_make_passthrough_vertex_shader(struct st_context *st,
 }
 
 
+/**
+ * Return a texture internalFormat for drawing/copying an image
+ * of the given type.
+ */
 static GLenum
-_mesa_base_format(GLenum format)
+base_format(GLenum format)
 {
    switch (format) {
    case GL_DEPTH_COMPONENT:
@@ -311,14 +312,14 @@ make_texture(struct st_context *st,
    GLenum baseFormat;
    int ptw, pth;
 
-   baseFormat = _mesa_base_format(format);
+   baseFormat = base_format(format);
 
    mformat = st_ChooseTextureFormat(ctx, baseFormat, format, type);
    assert(mformat);
 
    pipeFormat = st_mesa_format_to_pipe_format(mformat);
    assert(pipeFormat);
-   cpp = st_sizeof_format(pipeFormat);
+   cpp = util_format_get_blocksize(pipeFormat);
 
    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
    if (!pixels)
@@ -571,11 +572,11 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5f * w;
       vp.scale[1] = -0.5f * h;
-      vp.scale[2] = 1.0f;
+      vp.scale[2] = 0.5f;
       vp.scale[3] = 1.0f;
       vp.translate[0] = 0.5f * w;
       vp.translate[1] = 0.5f * h;
-      vp.translate[2] = 0.0f;
+      vp.translate[2] = 0.5f;
       vp.translate[3] = 0.0f;
       cso_set_viewport(cso, &vp);
    }
@@ -599,6 +600,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    x1 = x + width * ctx->Pixel.ZoomX;
    y0 = (GLfloat) y;
    y1 = y + height * ctx->Pixel.ZoomY;
+
+   /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
+   z = z * 2.0 - 1.0;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
 	     (GLfloat) width / pt->width0,
@@ -647,7 +651,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    if(format != GL_DEPTH_STENCIL && 
-      pf_get_component_bits( strb->format, PIPE_FORMAT_COMP_Z ) != 0)
+      util_format_get_component_bits(strb->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
@@ -709,7 +713,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                   memcpy(dest, sValues, spanWidth);
                }
                break;
-            case PIPE_FORMAT_S8Z24_UNORM:
+            case PIPE_FORMAT_Z24S8_UNORM:
                if (format == GL_DEPTH_STENCIL) {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
@@ -727,7 +731,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                   }
                }
                break;
-            case PIPE_FORMAT_Z24S8_UNORM:
+            case PIPE_FORMAT_S8Z24_UNORM:
                if (format == GL_DEPTH_STENCIL) {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
@@ -769,10 +773,8 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLenum format, GLenum type,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
-   struct st_fragment_program *stfp;
-   void *driver_vp;
+   void *driver_vp, *driver_fp;
    struct st_context *st = st_context(ctx);
-   struct pipe_surface *ps;
    const GLfloat *color;
 
    if (format == GL_STENCIL_INDEX ||
@@ -788,15 +790,13 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    st_validate_state(st);
 
    if (format == GL_DEPTH_COMPONENT) {
-      ps = st->state.framebuffer.zsbuf;
-      stfp = make_fragment_shader_z(st);
-      driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
+      driver_fp = make_fragment_shader_z(st);
+      driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else {
-      ps = st->state.framebuffer.cbufs[0];
-      stfp = combined_drawpix_fragment_program(ctx);
-      driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+      driver_fp = combined_drawpix_fragment_program(ctx);
+      driver_vp = make_passthrough_vertex_shader(st, GL_FALSE);
       color = NULL;
    }
 
@@ -809,7 +809,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                             pt, 
                             driver_vp, 
-                            stfp->driver_shader,
+                            driver_fp,
                             color, GL_FALSE);
          pipe_texture_reference(&pt, NULL);
       }
@@ -831,7 +831,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    ubyte *buffer;
    int i;
 
-   buffer = _mesa_malloc(width * height * sizeof(ubyte));
+   buffer = malloc(width * height * sizeof(ubyte));
    if (!buffer) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels(stencil)");
       return;
@@ -842,7 +842,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                           GL_STENCIL_INDEX, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
 
-   if(pf_get_component_bits( rbDraw->format, PIPE_FORMAT_COMP_Z ) != 0)
+   if(util_format_get_component_bits(rbDraw->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0)
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
@@ -856,8 +856,8 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 					   usage, dstx, dsty,
 					   width, height);
 
-   assert(pf_get_blockwidth(ptDraw->texture->format) == 1);
-   assert(pf_get_blockheight(ptDraw->texture->format) == 1);
+   assert(util_format_get_blockwidth(ptDraw->texture->format) == 1);
+   assert(util_format_get_blockheight(ptDraw->texture->format) == 1);
 
    /* map the stencil buffer */
    drawMap = screen->transfer_map(screen, ptDraw);
@@ -879,7 +879,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       src = buffer + i * width;
 
       switch (ptDraw->texture->format) {
-      case PIPE_FORMAT_S8Z24_UNORM:
+      case PIPE_FORMAT_Z24S8_UNORM:
          {
             uint *dst4 = (uint *) dst;
             int j;
@@ -890,7 +890,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             }
          }
          break;
-      case PIPE_FORMAT_Z24S8_UNORM:
+      case PIPE_FORMAT_S8Z24_UNORM:
          {
             uint *dst4 = (uint *) dst;
             int j;
@@ -910,7 +910,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
-   _mesa_free(buffer);
+   free(buffer);
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, ptDraw);
@@ -927,8 +927,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *rbRead;
-   void *driver_vp;
-   struct st_fragment_program *stfp;
+   void *driver_vp, *driver_fp;
    struct pipe_texture *pt;
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
@@ -975,15 +974,15 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (type == GL_COLOR) {
       rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
-      stfp = combined_drawpix_fragment_program(ctx);
-      driver_vp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+      driver_fp = combined_drawpix_fragment_program(ctx);
+      driver_vp = make_passthrough_vertex_shader(st, GL_FALSE);
    }
    else {
       assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-      stfp = make_fragment_shader_z(st);
-      driver_vp = st_make_passthrough_vertex_shader(st, GL_TRUE);
+      driver_fp = make_fragment_shader_z(st);
+      driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
    srcFormat = rbRead->texture->format;
@@ -1083,7 +1082,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       if (ST_DEBUG & DEBUG_FALLBACK)
          debug_printf("%s: fallback processing\n", __FUNCTION__);
 
-      if (type == GL_DEPTH && pf_is_depth_and_stencil(pt->format))
+      if (type == GL_DEPTH && util_format_is_depth_and_stencil(pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
@@ -1093,19 +1092,19 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */
-         GLfloat *buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+         GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
          pipe_get_tile_rgba(ptRead, 0, 0, width, height, buf);
          pipe_put_tile_rgba(ptTex, 0, 0, width, height, buf);
 
-         _mesa_free(buf);
+         free(buf);
       }
       else {
          /* GL_DEPTH */
-         GLuint *buf = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
+         GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
          pipe_get_tile_z(ptRead, 0, 0, width, height, buf);
          pipe_put_tile_z(ptTex, 0, 0, width, height, buf);
-         _mesa_free(buf);
+         free(buf);
       }
 
       screen->tex_transfer_destroy(ptRead);
@@ -1117,7 +1116,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                       pt, 
                       driver_vp, 
-                      stfp->driver_shader,
+                      driver_fp,
                       color, GL_TRUE);
 
    pipe_texture_reference(&pt, NULL);
@@ -1137,6 +1136,8 @@ st_destroy_drawpix(struct st_context *st)
 {
    st_reference_fragprog(st, &st->drawpix.z_shader, NULL);
    st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
-   st_reference_vertprog(st, &st->drawpix.vert_shaders[0], NULL);
-   st_reference_vertprog(st, &st->drawpix.vert_shaders[1], NULL);
+   if (st->drawpix.vert_shaders[0])
+      free(st->drawpix.vert_shaders[0]);
+   if (st->drawpix.vert_shaders[1])
+      free(st->drawpix.vert_shaders[1]);
 }

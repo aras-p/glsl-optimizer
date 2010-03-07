@@ -29,13 +29,10 @@
 #include "i915_state.h"
 #include "i915_screen.h"
 #include "i915_batch.h"
-#include "i915_texture.h"
-#include "i915_reg.h"
 
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "pipe/p_screen.h"
 
@@ -45,7 +42,7 @@
  */
 
 
-static boolean
+static void
 i915_draw_range_elements(struct pipe_context *pipe,
                          struct pipe_buffer *indexBuffer,
                          unsigned indexSize,
@@ -84,7 +81,7 @@ i915_draw_range_elements(struct pipe_context *pipe,
    }
 
 
-   draw_set_mapped_constant_buffer(draw,
+   draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
                                    i915->current.constants[PIPE_SHADER_VERTEX],
                                    (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
                                       4 * sizeof(float)));
@@ -106,27 +103,25 @@ i915_draw_range_elements(struct pipe_context *pipe,
       pipe_buffer_unmap(pipe->screen, indexBuffer);
       draw_set_mapped_element_buffer_range(draw, 0, start, start + count - 1, NULL);
    }
-
-   return TRUE;
 }
 
-static boolean
+static void
 i915_draw_elements(struct pipe_context *pipe,
                    struct pipe_buffer *indexBuffer,
                    unsigned indexSize,
                    unsigned prim, unsigned start, unsigned count)
 {
-   return i915_draw_range_elements(pipe, indexBuffer,
-                                   indexSize,
-                                   0, 0xffffffff,
-                                   prim, start, count);
+   i915_draw_range_elements(pipe, indexBuffer,
+                            indexSize,
+                            0, 0xffffffff,
+                            prim, start, count);
 }
 
-static boolean
+static void
 i915_draw_arrays(struct pipe_context *pipe,
                  unsigned prim, unsigned start, unsigned count)
 {
-   return i915_draw_elements(pipe, NULL, 0, prim, start, count);
+   i915_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 
@@ -188,7 +183,7 @@ static void i915_destroy(struct pipe_context *pipe)
 }
 
 struct pipe_context *
-i915_create_context(struct pipe_screen *screen)
+i915_create_context(struct pipe_screen *screen, void *priv)
 {
    struct i915_context *i915;
 
@@ -199,6 +194,7 @@ i915_create_context(struct pipe_screen *screen)
    i915->iws = i915_screen(screen)->iws;
    i915->base.winsys = NULL;
    i915->base.screen = screen;
+   i915->base.priv = priv;
 
    i915->base.destroy = i915_destroy;
 

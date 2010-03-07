@@ -47,7 +47,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_state.h"
 #include "sis_lock.h"
 #include "sis_span.h"
-#include "sis_alloc.h"
 #include "sis_tex.h"
 
 /* 6326 and 300-series shared */
@@ -376,7 +375,6 @@ static struct {
 #define DO_POINTS    1
 #define DO_FULL_QUAD 1
 
-#define HAVE_RGBA   1
 #define HAVE_SPEC   1
 #define HAVE_BACK_COLORS  0
 #define HAVE_HW_FLATSHADE 1
@@ -430,7 +428,8 @@ do {								\
 
 #define LOCAL_VARS(n)						\
    sisContextPtr smesa = SIS_CONTEXT(ctx);			\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint coloroffset = smesa->coloroffset;			\
    GLuint specoffset = smesa->specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
@@ -994,6 +993,7 @@ sisFlushPrimsLocked(sisContextPtr smesa)
 	 MMIO(REG_3D_PrimitiveSet, smesa->dwPrimitiveSet);
       }
       while (smesa->vb_last < smesa->vb_cur) {
+	 assert(sis_emit_func);
 	 sis_emit_func(smesa, (char *)smesa->vb_last);
 	 smesa->vb_last += incr;
       }

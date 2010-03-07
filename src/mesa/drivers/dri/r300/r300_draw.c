@@ -29,7 +29,6 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/state.h"
-#include "main/api_validate.h"
 #include "main/enums.h"
 #include "main/simple_list.h"
 
@@ -47,8 +46,6 @@
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
 #include "vbo/vbo_context.h"
-#include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
 
 
 static int getTypeSize(GLenum type)
@@ -56,6 +53,8 @@ static int getTypeSize(GLenum type)
 	switch (type) {
 		case GL_DOUBLE:
 			return sizeof(GLdouble);
+		case GL_HALF_FLOAT:
+			return sizeof(GLhalfARB);
 		case GL_FLOAT:
 			return sizeof(GLfloat);
 		case GL_INT:
@@ -178,7 +177,7 @@ static void r300SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 		radeon_bo_map(r300->ind_buf.bo, 1);
 		assert(r300->ind_buf.bo->ptr != NULL);
 		dst_ptr = ADD_POINTERS(r300->ind_buf.bo->ptr, r300->ind_buf.bo_offset);
-		_mesa_memcpy(dst_ptr, src_ptr, size);
+		memcpy(dst_ptr, src_ptr, size);
 
 		radeon_bo_unmap(r300->ind_buf.bo);
 		r300->ind_buf.is_32bit = (mesa_ind_buf->type == GL_UNSIGNED_INT);
@@ -315,7 +314,7 @@ static void r300AlignDataToDword(GLcontext *ctx, const struct gl_client_array *i
 		int i;
 
 		for (i = 0; i < count; ++i) {
-			_mesa_memcpy(dst_ptr, src_ptr, input->StrideB);
+			memcpy(dst_ptr, src_ptr, input->StrideB);
 			src_ptr += input->StrideB;
 			dst_ptr += dst_stride;
 		}
@@ -333,7 +332,7 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
-	struct vertex_attribute r300_attr;
+	struct vertex_attribute r300_attr = { 0 };
 	GLenum type;
 	GLuint stride;
 
@@ -384,6 +383,18 @@ static void r300TranslateAttrib(GLcontext *ctx, GLuint attr, int count, const st
 			}
 			r300_attr._signed = 0;
 			r300_attr.normalize = 0;
+			break;
+		case GL_HALF_FLOAT:
+			switch (input->Size) {
+				case 1:
+				case 2:
+					r300_attr.data_type = R300_DATA_TYPE_FLT16_2;
+					break;
+				case 3:
+				case 4:
+					r300_attr.data_type = R300_DATA_TYPE_FLT16_4;
+					break;
+			}
 			break;
 		case GL_SHORT:
 			r300_attr._signed = 1;
@@ -594,13 +605,23 @@ static void r300FreeData(GLcontext *ctx)
 	}
 }
 
-static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx, GLuint nr_prims)
+static GLuint r300PredictTryDrawPrimsSize(GLcontext *ctx,
+		GLuint nr_prims, const struct _mesa_prim *prim)
 {
 	struct r300_context *r300 = R300_CONTEXT(ctx);
 	struct r300_vertex_buffer *vbuf = &r300->vbuf;
 	GLboolean flushed;
 	GLuint dwords;
 	GLuint state_size;
+	int i;
+	GLuint extra_prims = 0;
+
+	/* Check for primitive splitting. */
+	for (i = 0; i < nr_prims; ++i) {
+		const GLuint num_verts =  r300NumVerts(r300, prim[i].count, prim[i].mode);
+		extra_prims += num_verts/(65535 - 32);
+	}
+	nr_prims += extra_prims;
 
 	dwords = 2*CACHE_FLUSH_BUFSZ;
 	dwords += PRE_EMIT_STATE_BUFSZ;
@@ -656,7 +677,7 @@ static GLboolean r300TryDrawPrims(GLcontext *ctx,
 
 	/* ensure we have the cmd buf space in advance to cover
 	 * the state + DMA AOS pointers */
-	GLuint emit_end = r300PredictTryDrawPrimsSize(ctx, nr_prims)
+	GLuint emit_end = r300PredictTryDrawPrimsSize(ctx, nr_prims, prim)
 		+ r300->radeon.cmdbuf.cs->cdw;
 
 	r300SetupIndexBuffer(ctx, ib);

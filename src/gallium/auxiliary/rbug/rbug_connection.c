@@ -87,6 +87,7 @@ rbug_get_message(struct rbug_connection *c, uint32_t *serial)
    if (!data) {
       return NULL;
    }
+   data->opcode = 0;
 
    do {
       uint8_t *ptr = ((uint8_t*)data) + read;

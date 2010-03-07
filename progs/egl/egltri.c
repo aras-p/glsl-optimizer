@@ -208,6 +208,7 @@ int main(int argc, char *argv[])
 	}
 	printf("egltri: Using screen mode/size %d: %d x %d\n", chosenMode, width, height);
 
+	eglBindAPI(EGL_OPENGL_API);
 	ctx = eglCreateContext(d, configs[0], EGL_NO_CONTEXT, NULL);
 	if (ctx == EGL_NO_CONTEXT) {
 		printf("egltri: failed to create context\n");

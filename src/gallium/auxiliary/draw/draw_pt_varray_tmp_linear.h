@@ -36,6 +36,10 @@ static void FUNC(struct draw_pt_front_end *frontend,
    case PIPE_PRIM_TRIANGLE_STRIP:
    case PIPE_PRIM_QUADS:
    case PIPE_PRIM_QUAD_STRIP:
+   case PIPE_PRIM_LINES_ADJACENCY:
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
       for (j = 0; j < count;) {
          unsigned remaining = count - j;
          unsigned nr = trim( MIN2(varray->driver_fetch_max, remaining), first, incr );

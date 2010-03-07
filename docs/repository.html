@@ -1,6 +1,6 @@
 <HTML>
 
-<TITLE>Cocd Repository</TITLE>
+<TITLE>Code Repository</TITLE>
 
 <link rel="stylesheet" type="text/css" href="mesa.css"></head>
 
@@ -9,11 +9,8 @@
 <h1>Code Repository</h1>
 
 <p>
-As of December 5, 2006, Mesa is using
-<a href="http://git.or.cz/"target="_parent">git</a>
+Mesa uses <a href="http://git.or.cz/"target="_parent">git</a>
 as its source code management system.
-CVS was used previously.
-The old CVS repository should no longer be used.
 </p>
 
 The master git repository is hosted on
@@ -125,6 +122,83 @@ Questions about branch status/activity should be posted to the
 mesa3d-dev mailing list.
 </p>
 
+<H2>Developer Git Tips</H2>
+
+<ol>
+<li>Setting up to edit the master branch
+<p>
+If you try to do a pull by just saying<code> git pull </code>
+and git complains that you have not specified a
+branch, try:
+<pre>
+    git config branch.master.remote origin
+    git config branch.master.merge master
+</pre>
+Otherwise, you have to say<code> git pull origin master </code>
+each time you do a pull.
+</p>
+<li>Small changes to master
+<p>
+If you are an experienced git user working on substancial modifications,
+you are probably
+working on a separate branch and would rebase your branch prior to
+merging with master.
+But for small changes to the master branch itself,
+you also need to use the rebase feature in order to avoid an
+unnecessary and distracting branch in master.
+</p>
+<p>
+If it has been awhile since you've done the initial clone, try
+<pre>
+    git pull
+</pre>
+to get the latest files before you start working.
+</p>
+<p>
+Make your changes and use
+<pre>
+    git add &lt;files to commit&gt;
+    git commit
+</pre>
+to get your changes ready to push back into the fd.o repository.
+</p>
+<p>
+It is possible (and likely) that someone has changed master since
+you did your last pull.  Even if your changes do not conflict with
+their changes, git will make a fast-forward 
+merge branch, branching from the point in time
+where you did your last pull and merging it to a point after the other changes.
+</p>
+<p>
+To avoid this, 
+<pre>
+    git pull --rebase
+    git push
+</pre>
+If you are familiar with CVS or similar system, this is similar to doing a
+<code> cvs update </code> in order to update your source tree to
+the current repository state, instead of the time you did the last update.
+(CVS doesn't work like git in this respect, but this is easiest way
+to explain it.)
+</br>
+In any case, your repository now looks like you made your changes after
+all the other changes.
+</p>
+<p>
+If the rebase resulted in conflicts or changes that could affect
+the proper operation of your changes, you'll need to investigate
+those before doing the push.
+</p>
+<p>
+If you want the rebase action to be the default action, then
+<pre>
+    git config branch.master.rebase true
+    git config --global branch.autosetuprebase=always
+</pre>
+<p>
+See <a href="http://www.eecs.harvard.edu/~cduan/technical/git/" target="_parent">Understanding Git Conceptually</a> for a fairly clear explanation about all of this.
+</p>
+</ol>
 
 </body>
 </html>

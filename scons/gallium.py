@@ -30,123 +30,15 @@ Frontend-tool for Gallium3D architecture.
 #
 
 
+import distutils.version
 import os
 import os.path
 import re
+import subprocess
 
 import SCons.Action
 import SCons.Builder
 import SCons.Scanner
-
-import fixes
-
-
-def quietCommandLines(env):
-    # Quiet command lines
-    # See also http://www.scons.org/wiki/HidingCommandLinesInOutput
-    env['ASCOMSTR'] = "  Assembling $SOURCE ..."
-    env['ASPPCOMSTR'] = "  Assembling $SOURCE ..."
-    env['CCCOMSTR'] = "  Compiling $SOURCE ..."
-    env['SHCCCOMSTR'] = "  Compiling $SOURCE ..."
-    env['CXXCOMSTR'] = "  Compiling $SOURCE ..."
-    env['SHCXXCOMSTR'] = "  Compiling $SOURCE ..."
-    env['ARCOMSTR'] = "  Archiving $TARGET ..."
-    env['RANLIBCOMSTR'] = "  Indexing $TARGET ..."
-    env['LINKCOMSTR'] = "  Linking $TARGET ..."
-    env['SHLINKCOMSTR'] = "  Linking $TARGET ..."
-    env['LDMODULECOMSTR'] = "  Linking $TARGET ..."
-    env['SWIGCOMSTR'] = "  Generating $TARGET ..."
-
-
-def createConvenienceLibBuilder(env):
-    """This is a utility function that creates the ConvenienceLibrary
-    Builder in an Environment if it is not there already.
-
-    If it is already there, we return the existing one.
-
-    Based on the stock StaticLibrary and SharedLibrary builders.
-    """
-
-    try:
-        convenience_lib = env['BUILDERS']['ConvenienceLibrary']
-    except KeyError:
-        action_list = [ SCons.Action.Action("$ARCOM", "$ARCOMSTR") ]
-        if env.Detect('ranlib'):
-            ranlib_action = SCons.Action.Action("$RANLIBCOM", "$RANLIBCOMSTR")
-            action_list.append(ranlib_action)
-
-        convenience_lib = SCons.Builder.Builder(action = action_list,
-                                  emitter = '$LIBEMITTER',
-                                  prefix = '$LIBPREFIX',
-                                  suffix = '$LIBSUFFIX',
-                                  src_suffix = '$SHOBJSUFFIX',
-                                  src_builder = 'SharedObject')
-        env['BUILDERS']['ConvenienceLibrary'] = convenience_lib
-
-    return convenience_lib
-
-
-# TODO: handle import statements with multiple modules
-# TODO: handle from import statements
-import_re = re.compile(r'^import\s+(\S+)$', re.M)
-
-def python_scan(node, env, path):
-    # http://www.scons.org/doc/0.98.5/HTML/scons-user/c2781.html#AEN2789
-    contents = node.get_contents()
-    source_dir = node.get_dir()
-    imports = import_re.findall(contents)
-    results = []
-    for imp in imports:
-        for dir in path:
-            file = os.path.join(str(dir), imp.replace('.', os.sep) + '.py')
-            if os.path.exists(file):
-                results.append(env.File(file))
-                break
-            file = os.path.join(str(dir), imp.replace('.', os.sep), '__init__.py')
-            if os.path.exists(file):
-                results.append(env.File(file))
-                break
-    return results
-
-python_scanner = SCons.Scanner.Scanner(function = python_scan, skeys = ['.py'])
-
-
-def code_generate(env, script, target, source, command):
-    """Method to simplify code generation via python scripts.
-
-    http://www.scons.org/wiki/UsingCodeGenerators
-    http://www.scons.org/doc/0.98.5/HTML/scons-user/c2768.html
-    """
-
-    # We're generating code using Python scripts, so we have to be
-    # careful with our scons elements.  This entry represents
-    # the generator file *in the source directory*.
-    script_src = env.File(script).srcnode()
-
-    # This command creates generated code *in the build directory*.
-    command = command.replace('$SCRIPT', script_src.path)
-    code = env.Command(target, source, command)
-
-    # Explicitly mark that the generated code depends on the generator,
-    # and on implicitly imported python modules
-    path = (script_src.get_dir(),)
-    deps = [script_src]
-    deps += script_src.get_implicit_deps(env, python_scanner, path)
-    env.Depends(code, deps)
-
-    # Running the Python script causes .pyc files to be generated in the
-    # source directory.  When we clean up, they should go too. So add side
-    # effects for .pyc files
-    for dep in deps:
-        pyc = env.File(str(dep) + 'c')
-        env.SideEffect(pyc, code)
-
-    return code
-
-
-def createCodeGenerateMethod(env):
-    env.Append(SCANNERS = python_scanner)
-    env.AddMethod(code_generate, 'CodeGenerate')
 
 
 def symlink(target, source, env):
@@ -156,19 +48,34 @@ def symlink(target, source, env):
         os.remove(target)
     os.symlink(os.path.basename(source), target)
 
-def install_shared_library(env, source, version = ()):
-    source = str(source[0])
+def install(env, source, subdir):
+    target_dir = os.path.join(env.Dir('#.').srcnode().abspath, env['build'], subdir)
+    env.Install(target_dir, source)
+
+def install_program(env, source):
+    install(env, source, 'bin')
+
+def install_shared_library(env, sources, version = ()):
+    install_dir = os.path.join(env.Dir('#.').srcnode().abspath, env['build'])
     version = tuple(map(str, version))
-    target_dir =  os.path.join(env.Dir('#.').srcnode().abspath, env['build'], 'lib')
-    target_name = '.'.join((str(source),) + version)
-    last = env.InstallAs(os.path.join(target_dir, target_name), source)
-    while len(version):
-        version = version[:-1]
-        target_name = '.'.join((str(source),) + version)
-        action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
-        last = env.Command(os.path.join(target_dir, target_name), last, action) 
+    if env['SHLIBSUFFIX'] == '.dll':
+        dlls = env.FindIxes(sources, 'SHLIBPREFIX', 'SHLIBSUFFIX')
+        install(env, dlls, 'bin')
+        libs = env.FindIxes(sources, 'LIBPREFIX', 'LIBSUFFIX')
+        install(env, libs, 'lib')
+    else:
+        for source in sources:
+            target_dir =  os.path.join(install_dir, 'lib')
+            target_name = '.'.join((str(source),) + version)
+            last = env.InstallAs(os.path.join(target_dir, target_name), source)
+            while len(version):
+                version = version[:-1]
+                target_name = '.'.join((str(source),) + version)
+                action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
+                last = env.Command(os.path.join(target_dir, target_name), last, action) 
 
 def createInstallMethods(env):
+    env.AddMethod(install_program, 'InstallProgram')
     env.AddMethod(install_shared_library, 'InstallSharedLibrary')
 
 
@@ -194,9 +101,6 @@ def num_jobs():
 def generate(env):
     """Common environment generation code"""
 
-    if env.get('quiet', True):
-        quietCommandLines(env)
-
     # Toolchain
     platform = env['platform']
     if env['toolchain'] == 'default':
@@ -205,6 +109,22 @@ def generate(env):
         elif platform == 'wince':
             env['toolchain'] = 'wcesdk'
     env.Tool(env['toolchain'])
+
+    if env['platform'] == 'embedded':
+        # Allow overriding compiler from environment
+        if os.environ.has_key('CC'):
+            env['CC'] = os.environ['CC']
+            # Update CCVERSION to match
+            pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
+                                         stdin = 'devnull',
+                                         stderr = 'devnull',
+                                         stdout = subprocess.PIPE)
+            if pipe.wait() == 0:
+                line = pipe.stdout.readline()
+                match = re.search(r'[0-9]+(\.[0-9]+)+', line)
+                if match:
+                    env['CCVERSION'] = match.group(0)
+            
 
     env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
@@ -235,7 +155,11 @@ def generate(env):
     # different scons versions building the same source file
     env['build'] = build_dir
     env.SConsignFile(os.path.join(build_dir, '.sconsign'))
-    env.CacheDir('build/cache')
+    if 'SCONS_CACHE_DIR' in os.environ:
+        print 'scons: Using build cache in %s.' % (os.environ['SCONS_CACHE_DIR'],)
+        env.CacheDir(os.environ['SCONS_CACHE_DIR'])
+    env['CONFIGUREDIR'] = os.path.join(build_dir, 'conf')
+    env['CONFIGURELOG'] = os.path.join(os.path.abspath(build_dir), 'config.log')
 
     # Parallel build
     if env.GetOption('num_jobs') <= 1:
@@ -255,10 +179,9 @@ def generate(env):
             '_WINDOWS',
             #'_UNICODE',
             #'UNICODE',
-            ('_WIN32_WINNT', '0x0501'), # minimum required OS version
-            ('WINVER', '0x0501'),
-            # http://msdn2.microsoft.com/en-us/library/6dwk3a1z.aspx,
-            'WIN32_LEAN_AND_MEAN',
+            # http://msdn.microsoft.com/en-us/library/aa383745.aspx
+            ('_WIN32_WINNT', '0x0601'),
+            ('WINVER', '0x0601'),
         ]
         if msvc and env['toolchain'] != 'winddk':
             cppdefines += [
@@ -322,6 +245,8 @@ def generate(env):
     if platform == 'wince':
         cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE']
         cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE_OGL']
+    if platform == 'embedded':
+        cppdefines += ['PIPE_OS_EMBEDDED']
     env.Append(CPPDEFINES = cppdefines)
 
     # C compiler options
@@ -329,9 +254,10 @@ def generate(env):
     cxxflags = [] # C++
     ccflags = [] # C & C++
     if gcc:
+        ccversion = env['CCVERSION']
         if debug:
             ccflags += ['-O0', '-g3']
-        elif env['CCVERSION'].startswith('4.2.'):
+        elif ccversion.startswith('4.2.'):
             # gcc 4.2.x optimizer is broken
             print "warning: gcc 4.2.x optimizer is broken -- disabling optimizations"
             ccflags += ['-O0', '-g3']
@@ -357,6 +283,9 @@ def generate(env):
                 # instead.
                 ccflags += [
                     '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
+                ]
+            if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+                ccflags += [
                     '-mstackrealign', # ensure stack is aligned
                 ]
         if env['machine'] == 'x86_64':
@@ -366,16 +295,21 @@ def generate(env):
         ccflags += [
             '-Wall',
             '-Wmissing-field-initializers',
-            '-Werror=pointer-arith',
             '-Wno-long-long',
             '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
         ]
         cflags += [
-            '-Werror=declaration-after-statement',
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
+        if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+            ccflags += [
+                '-Werror=pointer-arith',
+            ]
+            cflags += [
+                '-Werror=declaration-after-statement',
+            ]
     if msvc:
         # See also:
         # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
@@ -390,15 +324,15 @@ def generate(env):
         else:
             ccflags += [
                 '/O2', # optimize for speed
-                #'/fp:fast', # fast floating point 
+                '/GL', # enable whole program optimization
             ]
         ccflags += [
+            '/fp:fast', # fast floating point 
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
         ]
         if env['machine'] == 'x86':
             ccflags += [
-                #'/QIfist', # Suppress _ftol
                 #'/arch:SSE2', # use the SSE2 instructions
             ]
         if platform == 'windows':
@@ -471,11 +405,20 @@ def generate(env):
             linkflags += ['-m32']
         if env['machine'] == 'x86_64':
             linkflags += ['-m64']
-        shlinkflags += [
-            '-Wl,-Bsymbolic',
-        ]
+        if env['platform'] not in ('darwin'):
+            shlinkflags += [
+                '-Wl,-Bsymbolic',
+            ]
         # Handle circular dependencies in the libraries
-        env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
+        if env['platform'] in ('darwin'):
+            pass
+        else:
+            env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
+    if msvc:
+        if not env['debug']:
+            # enable Link-time Code Generation
+            linkflags += ['/LTCG']
+            env.Append(ARFLAGS = ['/LTCG'])
     if platform == 'windows' and msvc:
         # See also:
         # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
@@ -529,8 +472,7 @@ def generate(env):
     env.Append(LIBS = [])
 
     # Custom builders and methods
-    createConvenienceLibBuilder(env)
-    createCodeGenerateMethod(env)
+    env.Tool('custom')
     createInstallMethods(env)
 
     # for debugging

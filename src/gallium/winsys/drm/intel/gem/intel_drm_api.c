@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 #include "state_tracker/drm_api.h"
 
@@ -32,6 +33,7 @@ intel_drm_get_device_id(unsigned int *device_id)
    }
 
    shutup_gcc = fgets(path, sizeof(path), file);
+   (void) shutup_gcc;
    sscanf(path, "%x", device_id);
    fclose(file);
 }
@@ -174,16 +176,9 @@ intel_drm_create_screen(struct drm_api *api, int drmFD,
    idws->pools.gem = drm_intel_bufmgr_gem_init(idws->fd, idws->max_batch_size);
    drm_intel_bufmgr_gem_enable_reuse(idws->pools.gem);
 
-   idws->softpipe = FALSE;
    idws->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
 
    return i915_create_screen(&idws->base, deviceID);
-}
-
-static struct pipe_context *
-intel_drm_create_context(struct drm_api *api, struct pipe_screen *screen)
-{
-   return i915_create_context(screen);
 }
 
 static void
@@ -194,7 +189,8 @@ destroy(struct drm_api *api)
 
 struct drm_api intel_drm_api =
 {
-   .create_context = intel_drm_create_context,
+   .name = "i915",
+   .driver_name = "i915",
    .create_screen = intel_drm_create_screen,
    .texture_from_shared_handle = intel_drm_texture_from_shared_handle,
    .shared_handle_from_texture = intel_drm_shared_handle_from_texture,

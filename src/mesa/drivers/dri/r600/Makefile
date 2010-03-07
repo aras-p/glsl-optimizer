@@ -9,12 +9,8 @@ LIBNAME = r600_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c
 
-ifeq ($(USING_EGL), 1)
-EGL_SOURCES = server/radeon_egl.c
-endif
-
 ifeq ($(RADEON_LDFLAGS),)
-CS_SOURCES = radeon_cs_space_drm.c
+CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
 endif
 
 COMMON_SOURCES = \
@@ -39,7 +35,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_mipmap_tree.c \
 	radeon_span.c \
 	radeon_texture.c \
-	radeon_queryobj.c
+	radeon_queryobj.c \
+	radeon_tex_copy.c
 
 DRIVER_SOURCES = \
 		 radeon_screen.c \
@@ -59,6 +56,7 @@ DRIVER_SOURCES = \
 		 r700_render.c   \
 		 r600_tex.c      \
 		 r600_texstate.c      \
+		 r600_blit.c     \
 		 r700_debug.c    \
 		 $(RADEON_COMMON_SOURCES) \
 		 $(EGL_SOURCES) \
@@ -66,9 +64,8 @@ DRIVER_SOURCES = \
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
-DRIVER_DEFINES = -DRADEON_R600 \
+DRIVER_DEFINES = -DRADEON_R600
 #	-DRADEON_BO_TRACK \
-	-Wall
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 

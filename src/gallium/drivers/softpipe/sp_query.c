@@ -99,6 +99,32 @@ softpipe_get_query_result(struct pipe_context *pipe,
 }
 
 
+/**
+ * Called by rendering function to check rendering is conditional.
+ * \return TRUE if we should render, FALSE if we should skip rendering
+ */
+boolean
+softpipe_check_render_cond(struct softpipe_context *sp)
+{
+   struct pipe_context *pipe = &sp->pipe;
+   boolean b, wait;
+   uint64_t result;
+
+   if (!sp->render_cond_query) {
+      return TRUE;  /* no query predicate, draw normally */
+   }
+
+   wait = (sp->render_cond_mode == PIPE_RENDER_COND_WAIT ||
+           sp->render_cond_mode == PIPE_RENDER_COND_BY_REGION_WAIT);
+
+   b = pipe->get_query_result(pipe, sp->render_cond_query, wait, &result);
+   if (b)
+      return result > 0;
+   else
+      return TRUE;
+}
+
+
 void softpipe_init_query_funcs(struct softpipe_context *softpipe )
 {
    softpipe->pipe.create_query = softpipe_create_query;

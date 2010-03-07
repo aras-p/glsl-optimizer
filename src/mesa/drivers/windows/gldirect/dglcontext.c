@@ -1377,14 +1377,12 @@ SkipPrimaryCreate:
 
 #ifdef _USE_GLD3_WGL
 	lpCtx->glVis = _mesa_create_visual(
-		GL_TRUE,		// RGB mode
 		bDouble,    /* double buffer */
 		GL_FALSE,			// stereo
 		lpPFD->cRedBits,
 		lpPFD->cGreenBits,
 		lpPFD->cBlueBits,
 		dwAlphaBits,
-		0,				// index bits
 		dwDepthBits,
 		dwStencilBits,
 		lpPFD->cAccumRedBits,	// accum bits

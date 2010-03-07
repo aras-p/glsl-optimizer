@@ -24,6 +24,7 @@
 
 #include "main/glheader.h"
 #include "main/colormac.h"
+#include "main/condrender.h"
 #include "main/formats.h"
 #include "main/macros.h"
 #include "main/imports.h"
@@ -40,7 +41,8 @@
  * Clear the color buffer when glColorMask is in effect.
  */
 static void
-clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
+clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb,
+                               GLuint buf)
 {
    const GLint x = ctx->DrawBuffer->_Xmin;
    const GLint y = ctx->DrawBuffer->_Ymin;
@@ -49,7 +51,6 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    SWspan span;
    GLint i;
 
-   ASSERT(ctx->Visual.rgbMode);
    ASSERT(rb->PutRow);
 
    /* Initialize color span with clear color */
@@ -75,7 +76,7 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
       UNCLAMPED_FLOAT_TO_USHORT(clearColor[BCOMP], ctx->Color.ClearColor[2]);
       UNCLAMPED_FLOAT_TO_USHORT(clearColor[ACOMP], ctx->Color.ClearColor[3]);
       for (i = 0; i < width; i++) {
-         COPY_4V(span.array->rgba[i], clearColor);
+         COPY_4V_CAST(span.array->rgba[i], clearColor, GLchan);
       }
    }
    else {
@@ -95,48 +96,9 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    for (i = 0; i < height; i++) {
       span.x = x;
       span.y = y + i;
-      _swrast_mask_rgba_span(ctx, rb, &span);
+      _swrast_mask_rgba_span(ctx, rb, &span, buf);
       /* write masked row */
       rb->PutRow(ctx, rb, width, x, y + i, span.array->rgba, NULL);
-   }
-}
-
-
-/**
- * Clear color index buffer with masking.
- */
-static void
-clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
-{
-   const GLint x = ctx->DrawBuffer->_Xmin;
-   const GLint y = ctx->DrawBuffer->_Ymin;
-   const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-   const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   SWspan span;
-   GLint i;
-
-   ASSERT(!ctx->Visual.rgbMode);
-   ASSERT(rb->PutRow);
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
-
-   /* Initialize index span with clear index */
-   INIT_SPAN(span, GL_BITMAP);
-   span.end = width;
-   span.arrayMask = SPAN_INDEX;
-   for (i = 0; i < width;i++) {
-      span.array->index[i] = ctx->Color.ClearIndex;
-   }
-
-   /* Note that masking will change the color indexes, but only the
-    * bits for which the write mask is GL_FALSE.  The bits
-    * which are write-enabled won't get modified.
-    */
-   for (i = 0; i < height;i++) {
-      span.x = x;
-      span.y = y + i;
-      _swrast_mask_ci_span(ctx, rb, &span);
-      /* write masked row */
-      rb->PutRow(ctx, rb, width, x, y + i, span.array->index, NULL);
    }
 }
 
@@ -145,7 +107,7 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
  * Clear an rgba color buffer without channel masking.
  */
 static void
-clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint buf)
 {
    const GLint x = ctx->DrawBuffer->_Xmin;
    const GLint y = ctx->DrawBuffer->_Ymin;
@@ -156,12 +118,10 @@ clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    GLvoid *clearVal;
    GLint i;
 
-   ASSERT(ctx->Visual.rgbMode);
-
-   ASSERT(ctx->Color.ColorMask[0] &&
-          ctx->Color.ColorMask[1] &&
-          ctx->Color.ColorMask[2] &&
-          ctx->Color.ColorMask[3]);             
+   ASSERT(ctx->Color.ColorMask[buf][0] &&
+          ctx->Color.ColorMask[buf][1] &&
+          ctx->Color.ColorMask[buf][2] &&
+          ctx->Color.ColorMask[buf][3]);             
 
    ASSERT(rb->PutMonoRow);
 
@@ -195,50 +155,6 @@ clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
 
 /**
- * Clear color index buffer without masking.
- */
-static void
-clear_ci_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
-{
-   const GLint x = ctx->DrawBuffer->_Xmin;
-   const GLint y = ctx->DrawBuffer->_Ymin;
-   const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-   const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   GLubyte clear8;
-   GLushort clear16;
-   GLuint clear32;
-   GLvoid *clearVal;
-   GLint i;
-
-   ASSERT(!ctx->Visual.rgbMode);
-
-   ASSERT(rb->PutMonoRow);
-
-   /* setup clear value */
-   switch (rb->DataType) {
-      case GL_UNSIGNED_BYTE:
-         clear8 = (GLubyte) ctx->Color.ClearIndex;
-         clearVal = &clear8;
-         break;
-      case GL_UNSIGNED_SHORT:
-         clear16 = (GLushort) ctx->Color.ClearIndex;
-         clearVal = &clear16;
-         break;
-      case GL_UNSIGNED_INT:
-         clear32 = ctx->Color.ClearIndex;
-         clearVal = &clear32;
-         break;
-      default:
-         _mesa_problem(ctx, "Bad rb DataType in clear_color_buffer");
-         return;
-   }
-
-   for (i = 0; i < height; i++)
-      rb->PutMonoRow(ctx, rb, width, x, y + i, clearVal, NULL);
-}
-
-
-/**
  * Clear the front/back/left/right/aux color buffers.
  * This function is usually only called if the device driver can't
  * clear its own color buffers for some reason (such as with masking).
@@ -246,48 +162,18 @@ clear_ci_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_color_buffers(GLcontext *ctx)
 {
-   GLboolean masking;
    GLuint buf;
-
-   if (ctx->Visual.rgbMode) {
-      if (ctx->Color.ColorMask[0] && 
-          ctx->Color.ColorMask[1] && 
-          ctx->Color.ColorMask[2] && 
-          ctx->Color.ColorMask[3]) {
-         masking = GL_FALSE;
-      }
-      else {
-         masking = GL_TRUE;
-      }
-   }
-   else {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
-      const GLuint indexMask = (1 << _mesa_get_format_bits(rb->Format, GL_INDEX_BITS)) - 1;
-      if ((ctx->Color.IndexMask & indexMask) == indexMask) {
-         masking = GL_FALSE;
-      }
-      else {
-         masking = GL_TRUE;
-      }
-   }
 
    for (buf = 0; buf < ctx->DrawBuffer->_NumColorDrawBuffers; buf++) {
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[buf];
-      if (ctx->Visual.rgbMode) {
-         if (masking) {
-            clear_rgba_buffer_with_masking(ctx, rb);
-         }
-         else {
-            clear_rgba_buffer(ctx, rb);
-         }
+      if (ctx->Color.ColorMask[buf][0] == 0 ||
+          ctx->Color.ColorMask[buf][1] == 0 ||
+          ctx->Color.ColorMask[buf][2] == 0 ||
+          ctx->Color.ColorMask[buf][3] == 0) {
+         clear_rgba_buffer_with_masking(ctx, rb, buf);
       }
       else {
-         if (masking) {
-            clear_ci_buffer_with_masking(ctx, rb);
-         }
-         else {
-            clear_ci_buffer(ctx, rb);
-         }
+         clear_rgba_buffer(ctx, rb, buf);
       }
    }
 }
@@ -317,6 +203,9 @@ _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
       assert((buffers & (~legalBits)) == 0);
    }
 #endif
+
+   if (!_mesa_check_conditional_render(ctx))
+      return; /* don't clear */
 
    swrast_render_start(ctx);
 

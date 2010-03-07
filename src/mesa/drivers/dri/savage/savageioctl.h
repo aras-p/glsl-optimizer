@@ -39,7 +39,7 @@ void savageFlushCmdBuf( savageContextPtr imesa, GLboolean discard );
 
 void savageDDInitIoctlFuncs( GLcontext *ctx );
 
-void savageSwapBuffers( __DRIdrawablePrivate *dPriv );
+void savageSwapBuffers( __DRIdrawable *dPriv );
 
 #define WAIT_IDLE_EMPTY(imesa) do { \
     if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG) \

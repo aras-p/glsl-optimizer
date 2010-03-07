@@ -134,10 +134,10 @@ check_color_per_fragment_ops( const GLcontext *ctx )
 		    ctx->Fog.Enabled ||
 		    ctx->Scissor.Enabled ||
 		    ctx->Stencil._Enabled ||
-		    !ctx->Color.ColorMask[0] ||
-		    !ctx->Color.ColorMask[1] ||
-		    !ctx->Color.ColorMask[2] ||
-		    !ctx->Color.ColorMask[3] ||
+		    !ctx->Color.ColorMask[0][0] ||
+		    !ctx->Color.ColorMask[0][1] ||
+		    !ctx->Color.ColorMask[0][2] ||
+		    !ctx->Color.ColorMask[0][3] ||
 		    ctx->Color.ColorLogicOpEnabled ||
 		    ctx->Texture._EnabledUnits
            ) &&
@@ -150,10 +150,10 @@ static GLboolean
 check_depth_per_fragment_ops( const GLcontext *ctx )
 {
    return ( ctx->Current.RasterPosValid &&
-	    ctx->Color.ColorMask[RCOMP] == 0 &&
-	    ctx->Color.ColorMask[BCOMP] == 0 &&
-	    ctx->Color.ColorMask[GCOMP] == 0 &&
-	    ctx->Color.ColorMask[ACOMP] == 0 &&
+	    ctx->Color.ColorMask[0][RCOMP] == 0 &&
+	    ctx->Color.ColorMask[0][BCOMP] == 0 &&
+	    ctx->Color.ColorMask[0][GCOMP] == 0 &&
+	    ctx->Color.ColorMask[0][ACOMP] == 0 &&
 	    ctx->Pixel.ZoomX == 1.0F &&
 	    ( ctx->Pixel.ZoomY == 1.0F || ctx->Pixel.ZoomY == -1.0F ) );
 }
@@ -299,7 +299,7 @@ mgaTryReadPixels( GLcontext *ctx,
 
 #if 0
    {
-      __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
+      __DRIdrawable *dPriv = mmesa->driDrawable;
       int nbox, retcode, i;
 
       UPDATE_LOCK( mmesa, DRM_LOCK_FLUSH | DRM_LOCK_QUIESCENT );
@@ -399,7 +399,7 @@ static void do_draw_pix( GLcontext *ctx,
 #if 0
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    drmMGABlit blit;
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
+   __DRIdrawable *dPriv = mmesa->driDrawable;
    drm_clip_rect_t pbox = dPriv->pClipRects;
    int nbox = dPriv->numClipRects;
    int retcode, i;
@@ -525,10 +525,10 @@ mgaTryDrawPixels( GLcontext *ctx,
 	      mmesa->mgaScreen->backOffset);
 
       planemask = mgaPackColor(cpp,
-			       ctx->Color.ColorMask[RCOMP],
-			       ctx->Color.ColorMask[GCOMP],
-			       ctx->Color.ColorMask[BCOMP],
-			       ctx->Color.ColorMask[ACOMP]);
+			       ctx->Color.ColorMask[0][RCOMP],
+			       ctx->Color.ColorMask[0][GCOMP],
+			       ctx->Color.ColorMask[0][BCOMP],
+			       ctx->Color.ColorMask[0][ACOMP]);
 
       if (cpp == 2)
 	 planemask |= planemask << 16;
@@ -600,7 +600,7 @@ mgaTryDrawPixels( GLcontext *ctx,
 	    }
 	 }
 #else
-	 MEMCPY( address, pixels, rows*bufferpitch );
+	 memcpy( address, pixels, rows*bufferpitch );
 #endif
 
 	 do_draw_pix( ctx, x, y, width, rows,

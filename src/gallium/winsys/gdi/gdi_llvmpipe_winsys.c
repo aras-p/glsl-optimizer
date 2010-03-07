@@ -38,7 +38,8 @@
 
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "llvmpipe/lp_winsys.h"
@@ -74,8 +75,8 @@ gdi_llvmpipe_is_displaytarget_format_supported( struct llvmpipe_winsys *ws,
                                                 enum pipe_format format )
 {
    switch(format) {
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return TRUE;
 
    /* TODO: Support other formats possible with BMPs, as described in 
@@ -136,8 +137,8 @@ gdi_llvmpipe_displaytarget_create(struct llvmpipe_winsys *winsys,
    gdt->width = width;
    gdt->height = height;
 
-   bpp = pf_get_blocksizebits(format);
-   cpp = pf_get_blocksize(format);
+   bpp = util_format_get_blocksizebits(format);
+   cpp = util_format_get_blocksize(format);
    
    gdt->stride = align(width * cpp, alignment);
    gdt->size = gdt->stride * height;
@@ -215,11 +216,6 @@ no_winsys:
 }
 
 
-static struct pipe_context *
-gdi_llvmpipe_context_create(struct pipe_screen *screen)
-{
-   return llvmpipe_create(screen);
-}
 
 
 static void
@@ -242,7 +238,6 @@ gdi_llvmpipe_present(struct pipe_screen *screen,
 
 static const struct stw_winsys stw_winsys = {
    &gdi_llvmpipe_screen_create,
-   &gdi_llvmpipe_context_create,
    &gdi_llvmpipe_present,
    NULL, /* get_adapter_luid */
    NULL, /* shared_surface_open */
@@ -256,13 +251,13 @@ DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
    switch (fdwReason) {
    case DLL_PROCESS_ATTACH:
-      if (!stw_init(&stw_winsys)) {
-         return FALSE;
-      }
-      return stw_init_thread();
+      stw_init(&stw_winsys);
+      stw_init_thread();
+      break;
 
    case DLL_THREAD_ATTACH:
-      return stw_init_thread();
+      stw_init_thread();
+      break;
 
    case DLL_THREAD_DETACH:
       stw_cleanup_thread();

@@ -57,7 +57,7 @@ Idle(void)
 {
    Xrot = glutGet(GLUT_ELAPSED_TIME) * 0.02;
    Yrot = glutGet(GLUT_ELAPSED_TIME) * 0.04;
-   /*Zrot += 2.0;*/
+   /* Zrot += 2.0; */
    glutPostRedisplay();
 }
 
@@ -356,9 +356,8 @@ Usage(void)
 int
 main(int argc, char *argv[])
 {
-   glutInit(&argc, argv);
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(700, 700);
+   glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    Win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);

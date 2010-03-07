@@ -23,13 +23,12 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
 #include "svga_context.h"
-#include "svga_state.h"
 
 #include "svga_hw_reg.h"
 
@@ -93,6 +92,7 @@ svga_create_blend_state(struct pipe_context *pipe,
       if (templ->logicop_enable) {
          switch (templ->logicop_func) {
          case PIPE_LOGICOP_XOR:
+         case PIPE_LOGICOP_INVERT:
             blend->need_white_fragments = TRUE;
             blend->rt[i].blend_enable = TRUE;
             blend->rt[i].srcblend       = SVGA3D_BLENDOP_ONE;
@@ -125,12 +125,6 @@ svga_create_blend_state(struct pipe_context *pipe,
             blend->rt[i].srcblend       = SVGA3D_BLENDOP_ONE;
             blend->rt[i].dstblend       = SVGA3D_BLENDOP_ONE;
             blend->rt[i].blendeq        = SVGA3D_BLENDEQ_MAXIMUM;
-            break;
-         case PIPE_LOGICOP_INVERT:
-            blend->rt[i].blend_enable = TRUE;
-            blend->rt[i].srcblend       = SVGA3D_BLENDOP_INVSRCCOLOR;
-            blend->rt[i].dstblend       = SVGA3D_BLENDOP_ZERO;
-            blend->rt[i].blendeq        = SVGA3D_BLENDEQ_ADD;
             break;
          case PIPE_LOGICOP_AND:
             /* Approximate with minimum - works for the 0 & anything case: */
@@ -182,15 +176,15 @@ svga_create_blend_state(struct pipe_context *pipe,
          }
       }
       else {
-         blend->rt[i].blend_enable   = templ->blend_enable;
+         blend->rt[i].blend_enable   = templ->rt[0].blend_enable;
 
-         if (templ->blend_enable) {
-            blend->rt[i].srcblend       = svga_translate_blend_factor(templ->rgb_src_factor);
-            blend->rt[i].dstblend       = svga_translate_blend_factor(templ->rgb_dst_factor);
-            blend->rt[i].blendeq        = svga_translate_blend_func(templ->rgb_func);
-            blend->rt[i].srcblend_alpha = svga_translate_blend_factor(templ->alpha_src_factor);
-            blend->rt[i].dstblend_alpha = svga_translate_blend_factor(templ->alpha_dst_factor);
-            blend->rt[i].blendeq_alpha  = svga_translate_blend_func(templ->alpha_func);
+         if (templ->rt[0].blend_enable) {
+            blend->rt[i].srcblend       = svga_translate_blend_factor(templ->rt[0].rgb_src_factor);
+            blend->rt[i].dstblend       = svga_translate_blend_factor(templ->rt[0].rgb_dst_factor);
+            blend->rt[i].blendeq        = svga_translate_blend_func(templ->rt[0].rgb_func);
+            blend->rt[i].srcblend_alpha = svga_translate_blend_factor(templ->rt[0].alpha_src_factor);
+            blend->rt[i].dstblend_alpha = svga_translate_blend_factor(templ->rt[0].alpha_dst_factor);
+            blend->rt[i].blendeq_alpha  = svga_translate_blend_func(templ->rt[0].alpha_func);
 
             if (blend->rt[i].srcblend_alpha != blend->rt[i].srcblend ||
                 blend->rt[i].dstblend_alpha != blend->rt[i].dstblend ||
@@ -201,7 +195,7 @@ svga_create_blend_state(struct pipe_context *pipe,
          }
       }
 
-      blend->rt[i].writemask = templ->colormask;
+      blend->rt[i].writemask = templ->rt[0].colormask;
    }
 
    return blend;
@@ -229,7 +223,7 @@ static void svga_set_blend_color( struct pipe_context *pipe,
 
    svga->curr.blend_color = *blend_color;
 
-   svga->dirty |= SVGA_NEW_BLEND;
+   svga->dirty |= SVGA_NEW_BLEND_COLOR;
 }
 
 

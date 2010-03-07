@@ -38,7 +38,6 @@
 
 #include "main/imports.h"
 #include "main/context.h"
-#include "main/macros.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
@@ -242,7 +241,7 @@ alloc_local_temp(slang_emit_info *emitInfo, slang_ir_storage *temp, GLint size)
 {
    assert(size >= 1);
    assert(size <= 4);
-   _mesa_bzero(temp, sizeof(*temp));
+   memset(temp, 0, sizeof(*temp));
    temp->Size = size;
    temp->File = PROGRAM_TEMPORARY;
    temp->Index = -1;
@@ -755,7 +754,7 @@ instruction_annotation(gl_inst_opcode opcode, char *dstAnnot,
    s = (char *) malloc(len);
    sprintf(s, "%s = %s %s %s %s", dstAnnot,
            srcAnnot0, operator, srcAnnot1, srcAnnot2);
-   assert(_mesa_strlen(s) < len);
+   assert(strlen(s) < len);
 
    free(dstAnnot);
    free(srcAnnot0);
@@ -1123,6 +1122,8 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
          return inst;
       }
    }
+#else
+   (void) inst;
 #endif
 
    if (!alloc_node_storage(emitInfo, n, n->Children[0]->Store->Size))
@@ -1135,7 +1136,7 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
     * dest for this clamp() is an output reg, we can't use that reg for
     * the intermediate result.  Use a temp register instead.
     */
-   _mesa_bzero(&tmpNode, sizeof(tmpNode));
+   memset(&tmpNode, 0, sizeof(tmpNode));
    if (!alloc_node_storage(emitInfo, &tmpNode, n->Store->Size)) {
       return NULL;
    }
@@ -1728,6 +1729,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
          if (!inst) {
             return NULL;
          }
+         prog->Instructions[ifInstLoc].BranchTarget = prog->NumInstructions - 1;
       }
       else {
          /* jump to endif instruction */
@@ -1737,8 +1739,8 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
          }
          inst_comment(inst, "else");
          inst->DstReg.CondMask = COND_TR;  /* always branch */
+         prog->Instructions[ifInstLoc].BranchTarget = prog->NumInstructions;
       }
-      prog->Instructions[ifInstLoc].BranchTarget = prog->NumInstructions;
       emit(emitInfo, n->Children[2]);
    }
    else {
@@ -1753,8 +1755,14 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
       }
    }
 
-   if (n->Children[2]) {
-      prog->Instructions[elseInstLoc].BranchTarget = prog->NumInstructions;
+   if (elseInstLoc) {
+      /* point ELSE instruction BranchTarget at ENDIF */
+      if (emitInfo->EmitHighLevelInstructions) {
+         prog->Instructions[elseInstLoc].BranchTarget = prog->NumInstructions - 1;
+      }
+      else {
+         prog->Instructions[elseInstLoc].BranchTarget = prog->NumInstructions;
+      }
    }
    return NULL;
 }
@@ -1814,7 +1822,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* Done emitting loop code.  Now walk over the loop's linked list of
     * BREAK and CONT nodes, filling in their BranchTarget fields (which
-    * will point to the ENDLOOP+1 or BGNLOOP instructions, respectively).
+    * will point to the corresponding ENDLOOP instruction.
     */
    for (ir = n->List; ir; ir = ir->List) {
       struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
@@ -1823,8 +1831,13 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
           ir->Opcode == IR_BREAK_IF_TRUE) {
          assert(inst->Opcode == OPCODE_BRK ||
                 inst->Opcode == OPCODE_BRA);
-         /* go to instruction after end of loop */
-         inst->BranchTarget = endInstLoc + 1;
+         /* go to instruction at end of loop */
+         if (emitInfo->EmitHighLevelInstructions) {
+            inst->BranchTarget = endInstLoc;
+         }
+         else {
+            inst->BranchTarget = endInstLoc + 1;
+         }
       }
       else {
          assert(ir->Opcode == IR_CONT ||
@@ -1942,7 +1955,7 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
          }
 
          emitInfo->prog->Instructions[ifInstLoc].BranchTarget
-            = emitInfo->prog->NumInstructions;
+            = emitInfo->prog->NumInstructions - 1;
          return inst;
       }
    }
@@ -2291,7 +2304,7 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
          char s[100];
          /* XXX isn't this really an out of memory/resources error? */
          _mesa_snprintf(s, sizeof(s), "Undefined variable '%s'",
-                        (char *) n->Var->a_name);
+		  (char *) n->Var->a_name);
          slang_info_log_error(emitInfo->log, s);
          return NULL;
       }
@@ -2515,7 +2528,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
    GLuint *subroutineLoc, i, total;
 
    subroutineLoc
-      = (GLuint *) _mesa_malloc(emitInfo->NumSubroutines * sizeof(GLuint));
+      = (GLuint *) malloc(emitInfo->NumSubroutines * sizeof(GLuint));
 
    /* total number of instructions */
    total = mainP->NumInstructions;
@@ -2553,7 +2566,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
 
    /* free subroutine list */
    if (emitInfo->Subroutines) {
-      _mesa_free(emitInfo->Subroutines);
+      free(emitInfo->Subroutines);
       emitInfo->Subroutines = NULL;
    }
    emitInfo->NumSubroutines = 0;
@@ -2572,7 +2585,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
       }
    }
 
-   _mesa_free(subroutineLoc);
+   free(subroutineLoc);
 }
 
 

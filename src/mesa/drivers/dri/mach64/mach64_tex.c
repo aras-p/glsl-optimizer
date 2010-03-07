@@ -31,13 +31,8 @@
 
 #include "mach64_context.h"
 #include "mach64_ioctl.h"
-#include "mach64_state.h"
-#include "mach64_vb.h"
-#include "mach64_tris.h"
 #include "mach64_tex.h"
 
-#include "main/context.h"
-#include "main/macros.h"
 #include "main/simple_list.h"
 #include "main/enums.h"
 #include "main/texstore.h"
@@ -130,7 +125,7 @@ mach64AllocTexObj( struct gl_texture_object *texObj )
 
    mach64SetTexWrap( t, texObj->WrapS, texObj->WrapT );
    mach64SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
-   mach64SetTexBorderColor( t, texObj->BorderColor );
+   mach64SetTexBorderColor( t, texObj->BorderColor.f );
 
    return t;
 }
@@ -470,7 +465,7 @@ static void mach64DDTexParameter( GLcontext *ctx, GLenum target,
 
    case GL_TEXTURE_BORDER_COLOR:
       if ( t->base.bound ) FLUSH_BATCH( mmesa );
-      mach64SetTexBorderColor( t, tObj->BorderColor );
+      mach64SetTexBorderColor( t, tObj->BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -565,7 +560,6 @@ void mach64InitTextureFuncs( struct dd_function_table *functions )
    functions->IsTextureResident		= driIsTextureResident;
 
    functions->UpdateTexturePalette	= NULL;
-   functions->ActiveTexture		= NULL;
 
    driInitTextureFormats();
 }

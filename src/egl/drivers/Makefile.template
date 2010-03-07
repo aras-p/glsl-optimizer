@@ -1,0 +1,51 @@
+# src/egl/drivers/Makefile.template
+#
+# Drivers should define
+#
+# EGL_DRIVER, the driver name
+# EGL_SOURCES, the driver sources
+# EGL_INCLUDES, the include pathes
+# EGL_CFLAGS, additional CFLAGS
+# EGL_LIBS, additional LIBS
+#
+# before including this template.
+#
+
+
+EGL_DRIVER_PATH = $(TOP)/$(LIB_DIR)/$(EGL_DRIVER)
+EGL_OBJECTS = $(EGL_SOURCES:.c=.o)
+
+
+default: depend $(EGL_DRIVER_PATH)
+
+$(EGL_DRIVER_PATH): $(EGL_DRIVER)
+	$(INSTALL) $< $(TOP)/$(LIB_DIR)
+
+$(EGL_DRIVER): $(EGL_OBJECTS) Makefile $(TOP)/src/egl/drivers/Makefile.template
+	@$(MKLIB) -o $(EGL_DRIVER) -noprefix \
+		-linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-L$(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		$(EGL_OBJECTS) $(EGL_LIBS)
+
+.c.o:
+	$(CC) -c $(EGL_INCLUDES) $(CFLAGS) $(EGL_CFLAGS) $< -o $@
+
+
+install: $(EGL_DRIVER_PATH)
+	$(INSTALL) -d $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR)
+	$(MINSTALL) $(EGL_DRIVER_PATH) $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR)
+
+clean:
+	rm -f $(EGL_DRIVER)
+	rm -f $(EGL_OBJECTS)
+	rm -f depend depend.bak
+
+depend: $(EGL_SOURCES)
+	@ echo "running $(MKDEP)"
+	@ rm -f depend
+	@ touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(EGL_INCLUDES) $(EGL_SOURCES) \
+		>/dev/null 2>/dev/null
+
+sinclude depend
+# DO NOT DELETE

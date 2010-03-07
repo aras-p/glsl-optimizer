@@ -30,10 +30,18 @@
  *      Jérôme Glisse <glisse@freedesktop.org>
  */
 #include <errno.h>
+#include <unistd.h>
+#include <stdint.h>
+#include "drm.h"
+#include "radeon_drm.h"
 
 #include "radeon_bocs_wrapper.h"
 #include "radeon_common.h"
-
+#ifdef HAVE_LIBDRM_RADEON
+#include "radeon_cs_int.h"
+#else
+#include "radeon_cs_int_drm.h"
+#endif
 struct cs_manager_legacy {
     struct radeon_cs_manager    base;
     struct radeon_context       *ctx;
@@ -51,27 +59,27 @@ struct cs_reloc_legacy {
 };
 
 
-static struct radeon_cs *cs_create(struct radeon_cs_manager *csm,
-                                   uint32_t ndw)
+static struct radeon_cs_int *cs_create(struct radeon_cs_manager *csm,
+				       uint32_t ndw)
 {
-    struct radeon_cs *cs;
+    struct radeon_cs_int *csi;
 
-    cs = (struct radeon_cs*)calloc(1, sizeof(struct radeon_cs));
-    if (cs == NULL) {
+    csi = (struct radeon_cs_int*)calloc(1, sizeof(struct radeon_cs_int));
+    if (csi == NULL) {
         return NULL;
     }
-    cs->csm = csm;
-    cs->ndw = (ndw + 0x3FF) & (~0x3FF);
-    cs->packets = (uint32_t*)malloc(4*cs->ndw);
-    if (cs->packets == NULL) {
-        free(cs);
+    csi->csm = csm;
+    csi->ndw = (ndw + 0x3FF) & (~0x3FF);
+    csi->packets = (uint32_t*)malloc(4*csi->ndw);
+    if (csi->packets == NULL) {
+        free(csi);
         return NULL;
     }
-    cs->relocs_total_size = 0;
-    return cs;
+    csi->relocs_total_size = 0;
+    return csi;
 }
 
-static int cs_write_reloc(struct radeon_cs *cs,
+static int cs_write_reloc(struct radeon_cs_int *cs,
                           struct radeon_bo *bo,
                           uint32_t read_domain,
                           uint32_t write_domain,
@@ -150,20 +158,19 @@ static int cs_write_reloc(struct radeon_cs *cs,
     return 0;
 }
 
-static int cs_begin(struct radeon_cs *cs,
+static int cs_begin(struct radeon_cs_int *cs,
                     uint32_t ndw,
                     const char *file,
                     const char *func,
                     int line)
 {
-    if (cs->section) {
+    if (cs->section_ndw) {
         fprintf(stderr, "CS already in a section(%s,%s,%d)\n",
                 cs->section_file, cs->section_func, cs->section_line);
         fprintf(stderr, "CS can't start section(%s,%s,%d)\n",
                 file, func, line);
         return -EPIPE;
     }
-    cs->section = 1;
     cs->section_ndw = ndw;
     cs->section_cdw = 0;
     cs->section_file = file;
@@ -173,9 +180,8 @@ static int cs_begin(struct radeon_cs *cs,
 
     if (cs->cdw + ndw > cs->ndw) {
         uint32_t tmp, *ptr;
-	int num = (ndw > 0x3FF) ? ndw : 0x3FF;
 
-        tmp = (cs->cdw + 1 + num) & (~num);
+        tmp = (cs->cdw + ndw + 0x3ff) & (~0x3ff);
         ptr = (uint32_t*)realloc(cs->packets, 4 * tmp);
         if (ptr == NULL) {
             return -ENOMEM;
@@ -187,18 +193,17 @@ static int cs_begin(struct radeon_cs *cs,
     return 0;
 }
 
-static int cs_end(struct radeon_cs *cs,
+static int cs_end(struct radeon_cs_int *cs,
                   const char *file,
                   const char *func,
                   int line)
 
 {
-    if (!cs->section) {
+    if (!cs->section_ndw) {
         fprintf(stderr, "CS no section to end at (%s,%s,%d)\n",
                 file, func, line);
         return -EPIPE;
     }
-    cs->section = 0;
     if (cs->section_ndw != cs->section_cdw) {
         fprintf(stderr, "CS section size missmatch start at (%s,%s,%d) %d vs %d\n",
                 cs->section_file, cs->section_func, cs->section_line, cs->section_ndw, cs->section_cdw);
@@ -206,10 +211,12 @@ static int cs_end(struct radeon_cs *cs,
                 file, func, line);
         return -EPIPE;
     }
+    cs->section_ndw = 0;
+
     return 0;
 }
 
-static int cs_process_relocs(struct radeon_cs *cs)
+static int cs_process_relocs(struct radeon_cs_int *cs)
 {
     struct cs_manager_legacy *csm = (struct cs_manager_legacy*)cs->csm;
     struct cs_reloc_legacy *relocs;
@@ -254,7 +261,7 @@ restart:
     return 0;
 }
 
-static int cs_set_age(struct radeon_cs *cs)
+static int cs_set_age(struct radeon_cs_int *cs)
 {
     struct cs_manager_legacy *csm = (struct cs_manager_legacy*)cs->csm;
     struct cs_reloc_legacy *relocs;
@@ -268,7 +275,7 @@ static int cs_set_age(struct radeon_cs *cs)
     return 0;
 }
 
-static int cs_emit(struct radeon_cs *cs)
+static int cs_emit(struct radeon_cs_int *cs)
 {
     struct cs_manager_legacy *csm = (struct cs_manager_legacy*)cs->csm;
     drm_radeon_cmd_buffer_t cmd;
@@ -276,7 +283,7 @@ static int cs_emit(struct radeon_cs *cs)
     uint64_t ull;
     int r;
 
-    csm->ctx->vtbl.emit_cs_header(cs, csm->ctx);
+    csm->ctx->vtbl.emit_cs_header((struct radeon_cs *)cs, csm->ctx);
 
     /* append buffer age */
     if ( IS_R300_CLASS(csm->ctx->radeonScreen) )
@@ -289,9 +296,9 @@ static int cs_emit(struct radeon_cs *cs)
       age.scratch.reg = 2;
       age.scratch.n_bufs = 1;
       age.scratch.flags = 0;
-      radeon_cs_write_dword(cs, age.u);
-      radeon_cs_write_qword(cs, ull);
-      radeon_cs_write_dword(cs, 0);
+      radeon_cs_write_dword((struct radeon_cs *)cs, age.u);
+      radeon_cs_write_qword((struct radeon_cs *)cs, ull);
+      radeon_cs_write_dword((struct radeon_cs *)cs, 0);
     }
 
     r = cs_process_relocs(cs);
@@ -342,7 +349,7 @@ static void inline cs_free_reloc(void *relocs_p, int crelocs)
       free(relocs[i].indices);
 }
 
-static int cs_destroy(struct radeon_cs *cs)
+static int cs_destroy(struct radeon_cs_int *cs)
 {
     cs_free_reloc(cs->relocs, cs->crelocs);
     free(cs->relocs);
@@ -351,7 +358,7 @@ static int cs_destroy(struct radeon_cs *cs)
     return 0;
 }
 
-static int cs_erase(struct radeon_cs *cs)
+static int cs_erase(struct radeon_cs_int *cs)
 {
     cs_free_reloc(cs->relocs, cs->crelocs);
     free(cs->relocs);
@@ -359,18 +366,18 @@ static int cs_erase(struct radeon_cs *cs)
     cs->relocs = NULL;
     cs->crelocs = 0;
     cs->cdw = 0;
-    cs->section = 0;
+    cs->section_ndw = 0;
     return 0;
 }
 
-static int cs_need_flush(struct radeon_cs *cs)
+static int cs_need_flush(struct radeon_cs_int *cs)
 {
     /* this function used to flush when the BO usage got to
      * a certain size, now the higher levels handle this better */
     return 0;
 }
 
-static void cs_print(struct radeon_cs *cs, FILE *file)
+static void cs_print(struct radeon_cs_int *cs, FILE *file)
 {
 }
 

@@ -37,7 +37,6 @@
 #include "r600_context.h"
 
 #include "r700_shaderinst.h"
-#include "r600_emit.h"
 #include "r700_clear.h"
 
 static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
@@ -49,13 +48,17 @@ static GLboolean r700ClearFast(context_t *context, GLbitfield mask)
 void r700Clear(GLcontext * ctx, GLbitfield mask)
 {
     context_t *context = R700_CONTEXT(ctx);
-    __DRIdrawablePrivate *dPriv = radeon_get_drawable(&context->radeon);
-    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
+    __DRIdrawable *dPriv = radeon_get_drawable(&context->radeon);
+    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask[0]);
     GLbitfield swrast_mask = 0, tri_mask = 0;
     int i;
     struct gl_framebuffer *fb = ctx->DrawBuffer;
 
     radeon_print(RADEON_RENDER, RADEON_VERBOSE, "%s %x\n", __func__, mask);
+
+    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
+        context->radeon.front_buffer_dirty = GL_TRUE;
+    }
 
     if( GL_TRUE == r700ClearFast(context, mask) )
     {

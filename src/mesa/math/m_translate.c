@@ -556,13 +556,13 @@ static void trans_4_GLubyte_4ub_raw(GLubyte (*t)[4],
 
 static void init_translate_raw(void)
 {
-   MEMSET( TAB(_1ui), 0, sizeof(TAB(_1ui)) );
-   MEMSET( TAB(_1ub), 0, sizeof(TAB(_1ub)) );
-   MEMSET( TAB(_3fn),  0, sizeof(TAB(_3fn)) );
-   MEMSET( TAB(_4ub), 0, sizeof(TAB(_4ub)) );
-   MEMSET( TAB(_4us), 0, sizeof(TAB(_4us)) );
-   MEMSET( TAB(_4f),  0, sizeof(TAB(_4f)) );
-   MEMSET( TAB(_4fn),  0, sizeof(TAB(_4fn)) );
+   memset( TAB(_1ui), 0, sizeof(TAB(_1ui)) );
+   memset( TAB(_1ub), 0, sizeof(TAB(_1ub)) );
+   memset( TAB(_3fn),  0, sizeof(TAB(_3fn)) );
+   memset( TAB(_4ub), 0, sizeof(TAB(_4ub)) );
+   memset( TAB(_4us), 0, sizeof(TAB(_4us)) );
+   memset( TAB(_4f),  0, sizeof(TAB(_4f)) );
+   memset( TAB(_4fn),  0, sizeof(TAB(_4fn)) );
 
    init_trans_4_GLbyte_raw();
    init_trans_3_GLbyte_raw();

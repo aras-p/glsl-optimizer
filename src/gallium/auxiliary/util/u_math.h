@@ -532,6 +532,17 @@ util_bswap32(uint32_t n)
 
 
 /**
+ * Reverse byte order of a 16 bit word.
+ */
+static INLINE uint16_t
+util_bswap16(uint16_t n)
+{
+   return (n >> 8) |
+          (n << 8);
+}
+
+
+/**
  * Clamp X to [MIN, MAX].
  * This is a macro to allow float, int, uint, etc. types.
  */
@@ -581,6 +592,18 @@ do {                                     \
    (DST)[3] = (V3);                      \
 } while (0)
 #endif
+
+
+static INLINE uint32_t util_unsigned_fixed(float value, unsigned frac_bits)
+{
+   return value < 0 ? 0 : (uint32_t)(value * (1<<frac_bits));
+}
+
+static INLINE int32_t util_signed_fixed(float value, unsigned frac_bits)
+{
+   return (int32_t)(value * (1<<frac_bits));
+}
+
 
 
 #ifdef __cplusplus

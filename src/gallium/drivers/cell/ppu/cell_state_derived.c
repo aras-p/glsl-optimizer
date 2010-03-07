@@ -66,7 +66,7 @@ calculate_vertex_layout( struct cell_context *cell )
    vinfo->num_attribs = 0;
 
    /* we always want to emit vertex pos */
-   src = draw_find_vs_output(cell->draw, TGSI_SEMANTIC_POSITION, 0);
+   src = draw_find_shader_output(cell->draw, TGSI_SEMANTIC_POSITION, 0);
    assert(src >= 0);
    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
 
@@ -82,14 +82,14 @@ calculate_vertex_layout( struct cell_context *cell )
          break;
 
       case TGSI_SEMANTIC_COLOR:
-         src = draw_find_vs_output(cell->draw, TGSI_SEMANTIC_COLOR, 
+         src = draw_find_shader_output(cell->draw, TGSI_SEMANTIC_COLOR, 
                                    fs->info.input_semantic_index[i]);
          assert(src >= 0);
          draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
          break;
 
       case TGSI_SEMANTIC_FOG:
-         src = draw_find_vs_output(cell->draw, TGSI_SEMANTIC_FOG, 0);
+         src = draw_find_shader_output(cell->draw, TGSI_SEMANTIC_FOG, 0);
 #if 1
          if (src < 0) /* XXX temp hack, try demos/fogcoord.c with this */
             src = 0;
@@ -100,7 +100,7 @@ calculate_vertex_layout( struct cell_context *cell )
 
       case TGSI_SEMANTIC_GENERIC:
          /* this includes texcoords and varying vars */
-         src = draw_find_vs_output(cell->draw, TGSI_SEMANTIC_GENERIC,
+         src = draw_find_shader_output(cell->draw, TGSI_SEMANTIC_GENERIC,
                               fs->info.input_semantic_index[i]);
          assert(src >= 0);
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);

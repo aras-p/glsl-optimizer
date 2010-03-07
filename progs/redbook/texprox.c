@@ -53,7 +53,7 @@
 #define GL_TEXTURE_INTERNAL_FORMAT GL_TEXTURE_COMPONENTS
 #endif
 
-void init(void) 
+static void init(void) 
 {
    GLint proxyComponents;
 
@@ -84,12 +84,12 @@ void init(void)
    putchar('\n');
 }
 
-void display(void)
+static void display(void)
 {
    exit(0);
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h); 
    glMatrixMode (GL_PROJECTION);

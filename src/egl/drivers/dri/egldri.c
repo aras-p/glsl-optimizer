@@ -675,13 +675,13 @@ __eglCreateContextWithConfig(__DRInativeDisplay* ndpy, int screen,
                              drm_context_t * hHWContext)
 {
     __DRIscreen *pDRIScreen;
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp;
 
     pDRIScreen = __eglFindDRIScreen(ndpy, screen);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
         return GL_FALSE;
     }
-    psp = (__DRIscreenPrivate *) pDRIScreen->private;
+    psp = (__DRIscreen *) pDRIScreen->private;
     if (psp->fd) {
         if (drmCreateContext(psp->fd, hHWContext)) {
             _eglLog(_EGL_WARNING, "drmCreateContext failed.");
@@ -691,14 +691,14 @@ __eglCreateContextWithConfig(__DRInativeDisplay* ndpy, int screen,
     }
 #if 0
     __DRIscreen *pDRIScreen;
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp;
 
     pDRIScreen = __glXFindDRIScreen(dpy, screen);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
         return GL_FALSE;
     }
 
-    psp = (__DRIscreenPrivate *) pDRIScreen->private;
+    psp = (__DRIscreen *) pDRIScreen->private;
 
     if (psp->fd) {
         if (drmCreateContext(psp->fd, hHWContext)) {
@@ -716,13 +716,13 @@ static GLboolean
 __eglDestroyContext( __DRInativeDisplay * ndpy, int screen,  __DRIid context )
 {
     __DRIscreen *pDRIScreen;
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp;
 
     pDRIScreen = __eglFindDRIScreen(ndpy, screen);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
         return GL_FALSE;
     }
-    psp = (__DRIscreenPrivate *) pDRIScreen->private;
+    psp = (__DRIscreen *) pDRIScreen->private;
     if (psp->fd)
       drmDestroyContext(psp->fd, context);
 
@@ -735,13 +735,13 @@ __eglCreateDrawable(__DRInativeDisplay * ndpy, int screen,
                     __DRIid drawable, drm_drawable_t * hHWDrawable)
 {
     __DRIscreen *pDRIScreen;
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp;
 
     pDRIScreen = __eglFindDRIScreen(ndpy, screen);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
         return GL_FALSE;
     }
-    psp = (__DRIscreenPrivate *) pDRIScreen->private;
+    psp = (__DRIscreen *) pDRIScreen->private;
     if (psp->fd) {
         if (drmCreateDrawable(psp->fd, hHWDrawable)) {
             _eglLog(_EGL_WARNING, "drmCreateDrawable failed.");
@@ -756,13 +756,13 @@ static GLboolean
 __eglDestroyDrawable( __DRInativeDisplay * ndpy, int screen, __DRIid drawable )
 {
     __DRIscreen *pDRIScreen;
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp;
 
     pDRIScreen = __eglFindDRIScreen(ndpy, screen);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
         return GL_FALSE;
     }
-    psp = (__DRIscreenPrivate *) pDRIScreen->private;
+    psp = (__DRIscreen *) pDRIScreen->private;
     if (psp->fd)
       drmDestroyDrawable(psp->fd, drawable);
 
@@ -778,7 +778,7 @@ __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
                      int* numBackClipRects, drm_clip_rect_t ** pBackClipRects )
 {
     __DRIscreen *pDRIScreen;
-    __DRIscreenPrivate *psp;
+    __DRIscreen *psp;
     driSurface *surf = Lookup_driSurface((EGLSurface) drawable);
 
    pDRIScreen = __eglFindDRIScreen(ndpy, screen);
@@ -786,7 +786,7 @@ __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
    if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
        return GL_FALSE;
    }
-   psp = (__DRIscreenPrivate *) pDRIScreen->private;
+   psp = (__DRIscreen *) pDRIScreen->private;
    *X = 0;
    *Y = 0;
    *W = surf->Base.Width;
@@ -807,12 +807,12 @@ __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
     GLXDrawable drawable = (GLXDrawable) draw;
     drm_clip_rect_t * cliprect;
     Display* display = (Display*)dpy;
-    __DRIcontextPrivate *pcp = (__DRIcontextPrivate *)CurrentContext->driContext.private;
+    __DRIcontext *pcp = (__DRIcontext *)CurrentContext->driContext.private;
     if (drawable == 0) {
         return GL_FALSE;
     }
 
-    cliprect = (drm_clip_rect_t*) _mesa_malloc(sizeof(drm_clip_rect_t));
+    cliprect = (drm_clip_rect_t*) malloc(sizeof(drm_clip_rect_t));
     cliprect->x1 = drawable->x;
     cliprect->y1 = drawable->y;
     cliprect->x2 = drawable->x + drawable->w;

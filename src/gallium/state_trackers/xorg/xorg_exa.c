@@ -41,11 +41,11 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
 
 #include "util/u_rect.h"
 #include "util/u_math.h"
 #include "util/u_debug.h"
+#include "util/u_format.h"
 
 #define DEBUG_PRINT 0
 #define ROUND_UP_TEXTURES 1
@@ -118,22 +118,22 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp, int *picture_
 {
     switch (depth) {
     case 32:
-	*format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	*format = PIPE_FORMAT_B8G8R8A8_UNORM;
 	*picture_format = PICT_a8r8g8b8;
 	assert(*bbp == 32);
 	break;
     case 24:
-	*format = PIPE_FORMAT_X8R8G8B8_UNORM;
+	*format = PIPE_FORMAT_B8G8R8X8_UNORM;
 	*picture_format = PICT_x8r8g8b8;
 	assert(*bbp == 32);
 	break;
     case 16:
-	*format = PIPE_FORMAT_R5G6B5_UNORM;
+	*format = PIPE_FORMAT_B5G6R5_UNORM;
 	*picture_format = PICT_r5g6b5;
 	assert(*bbp == 16);
 	break;
     case 15:
-	*format = PIPE_FORMAT_A1R5G5B5_UNORM;
+	*format = PIPE_FORMAT_B5G5R5A1_UNORM;
 	*picture_format = PICT_x1r5g5b5;
 	assert(*bbp == 16);
 	break;
@@ -144,7 +144,7 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp, int *picture_
 	break;
     case 4:
     case 1:
-	*format = PIPE_FORMAT_A8R8G8B8_UNORM; /* bad bad bad */
+	*format = PIPE_FORMAT_B8G8R8A8_UNORM; /* bad bad bad */
 	break;
     default:
 	assert(0);
@@ -343,6 +343,9 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 #if DEBUG_PRINT
     debug_printf("ExaPrepareSolid(0x%x)\n", fg);
 #endif
+    if (!exa->accel)
+	return FALSE;
+
     if (!exa->pipe)
 	XORG_FALLBACK("accle not enabled");
 
@@ -358,10 +361,10 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
     if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                         priv->tex->target,
                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
-	XORG_FALLBACK("format %s", pf_name(priv->tex->format));
+	XORG_FALLBACK("format %s", util_format_name(priv->tex->format));
     }
 
-    return exa->accel && xorg_solid_bind_state(exa, priv, fg);
+    return xorg_solid_bind_state(exa, priv, fg);
 }
 
 static void
@@ -417,6 +420,10 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
 #if DEBUG_PRINT
     debug_printf("ExaPrepareCopy\n");
 #endif
+
+    if (!exa->accel)
+	return FALSE;
+
     if (!exa->pipe)
 	XORG_FALLBACK("accle not enabled");
 
@@ -435,12 +442,12 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                         priv->tex->target,
                                         PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
-	XORG_FALLBACK("pDst format %s", pf_name(priv->tex->format));
+	XORG_FALLBACK("pDst format %s", util_format_name(priv->tex->format));
 
     if (!exa->scrn->is_format_supported(exa->scrn, src_priv->tex->format,
                                         src_priv->tex->target,
                                         PIPE_TEXTURE_USAGE_SAMPLER, 0))
-	XORG_FALLBACK("pSrc format %s", pf_name(src_priv->tex->format));
+	XORG_FALLBACK("pSrc format %s", util_format_name(src_priv->tex->format));
 
     exa->copy.src = src_priv;
     exa->copy.dst = priv;
@@ -490,7 +497,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
     }
 
 
-    return exa->accel;
+    return TRUE;
 }
 
 static void
@@ -508,6 +515,7 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 #endif
 
    debug_assert(priv == exa->copy.dst);
+   (void) priv;
 
    if (exa->copy.use_surface_copy) {
       /* XXX: consider exposing >1 box in surface_copy interface.
@@ -598,15 +606,19 @@ ExaCheckComposite(int op,
    ScrnInfoPtr pScrn = xf86Screens[pDstPicture->pDrawable->pScreen->myNum];
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
-   boolean accelerated = xorg_composite_accelerated(op,
-                                                    pSrcPicture,
-                                                    pMaskPicture,
-                                                    pDstPicture);
+
 #if DEBUG_PRINT
    debug_printf("ExaCheckComposite(%d, %p, %p, %p) = %d\n",
                 op, pSrcPicture, pMaskPicture, pDstPicture, accelerated);
 #endif
-   return exa->accel && accelerated;
+
+   if (!exa->accel)
+       return FALSE;
+
+   return xorg_composite_accelerated(op,
+				     pSrcPicture,
+				     pMaskPicture,
+				     pDstPicture);
 }
 
 
@@ -619,6 +631,9 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
    struct exa_pixmap_priv *priv;
+
+   if (!exa->accel)
+       return FALSE;
 
 #if DEBUG_PRINT
    debug_printf("ExaPrepareComposite(%d, src=0x%p, mask=0x%p, dst=0x%p)\n",
@@ -638,7 +653,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
    if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                        priv->tex->target,
                                        PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))
-      XORG_FALLBACK("pDst format: %s", pf_name(priv->tex->format));
+      XORG_FALLBACK("pDst format: %s", util_format_name(priv->tex->format));
 
    if (priv->picture_format != pDstPicture->format)
       XORG_FALLBACK("pDst pic_format: %s != %s",
@@ -653,7 +668,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
       if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                           priv->tex->target,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
-         XORG_FALLBACK("pSrc format: %s", pf_name(priv->tex->format));
+         XORG_FALLBACK("pSrc format: %s", util_format_name(priv->tex->format));
 
       if (!picture_check_formats(priv, pSrcPicture))
          XORG_FALLBACK("pSrc pic_format: %s != %s",
@@ -670,7 +685,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
       if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                           priv->tex->target,
                                           PIPE_TEXTURE_USAGE_SAMPLER, 0))
-         XORG_FALLBACK("pMask format: %s", pf_name(priv->tex->format));
+         XORG_FALLBACK("pMask format: %s", util_format_name(priv->tex->format));
 
       if (!picture_check_formats(priv, pMaskPicture))
          XORG_FALLBACK("pMask pic_format: %s != %s",
@@ -678,8 +693,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
                        render_format_name(pMaskPicture->format));
    }
 
-   return exa->accel &&
-          xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
+   return xorg_composite_bind_state(exa, op, pSrcPicture, pMaskPicture,
                                     pDstPicture,
                                     pSrc ? exaGetPixmapDriverPrivate(pSrc) : NULL,
                                     pMask ? exaGetPixmapDriverPrivate(pMask) : NULL,
@@ -796,34 +810,7 @@ xorg_exa_set_shared_usage(PixmapPtr pPixmap)
     return 0;
 }
 
-unsigned
-xorg_exa_get_pixmap_handle(PixmapPtr pPixmap, unsigned *stride_out)
-{
-    ScreenPtr pScreen = pPixmap->drawable.pScreen;
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    modesettingPtr ms = modesettingPTR(pScrn);
-    struct exa_pixmap_priv *priv;
-    unsigned handle;
-    unsigned stride;
 
-    if (!ms->exa) {
-	FatalError("NO MS->EXA\n");
-	return 0;
-    }
-
-    priv = exaGetPixmapDriverPrivate(pPixmap);
-
-    if (!priv) {
-	FatalError("NO PIXMAP PRIVATE\n");
-	return 0;
-    }
-
-    ms->api->local_handle_from_texture(ms->api, ms->screen, priv->tex, &stride, &handle);
-    if (stride_out)
-	*stride_out = stride;
-
-    return handle;
-}
 
 static Bool
 size_match( int width, int tex_width )
@@ -1005,6 +992,9 @@ xorg_exa_close(ScrnInfoPtr pScrn)
 
    if (exa->pipe)
       exa->pipe->destroy(exa->pipe);
+   exa->pipe = NULL;
+   /* Since this was shared be proper with the pointer */
+   ms->ctx = NULL;
 
    exaDriverFini(pScrn->pScreen);
    xfree(exa);
@@ -1072,7 +1062,10 @@ xorg_exa_init(ScrnInfoPtr pScrn, Bool accel)
    }
 
    exa->scrn = ms->screen;
-   exa->pipe = ms->api->create_context(ms->api, exa->scrn);
+   exa->pipe = exa->scrn->context_create(exa->scrn, NULL);
+   if (exa->pipe == NULL)
+      goto out_err;
+
    /* Share context with DRI */
    ms->ctx = exa->pipe;
 

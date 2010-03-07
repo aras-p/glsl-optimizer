@@ -34,10 +34,11 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_shader_tokens.h"
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 
 
@@ -66,7 +67,7 @@ static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_1D;
-   templ.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+   templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
    templ.last_level = 0;
    templ.width0 = color_data_len;
    templ.height0 = 1;
@@ -126,19 +127,19 @@ static void setup_blend()
    struct vg_context *ctx = vg_current_context();
    struct pipe_blend_state blend;
    memset(&blend, 0, sizeof(blend));
-   blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
    if (ctx->state.vg.filter_channel_mask & VG_RED)
-      blend.colormask |= PIPE_MASK_R;
+      blend.rt[0].colormask |= PIPE_MASK_R;
    if (ctx->state.vg.filter_channel_mask & VG_GREEN)
-      blend.colormask |= PIPE_MASK_G;
+      blend.rt[0].colormask |= PIPE_MASK_G;
    if (ctx->state.vg.filter_channel_mask & VG_BLUE)
-      blend.colormask |= PIPE_MASK_B;
+      blend.rt[0].colormask |= PIPE_MASK_B;
    if (ctx->state.vg.filter_channel_mask & VG_ALPHA)
-      blend.colormask |= PIPE_MASK_A;
-   blend.blend_enable = 1;
+      blend.rt[0].colormask |= PIPE_MASK_A;
+   blend.rt[0].blend_enable = 0;
    cso_set_blend(ctx->cso_context, &blend);
 }
 
@@ -146,22 +147,22 @@ static void setup_constant_buffer(struct vg_context *ctx, const void *buffer,
                                   VGint param_bytes)
 {
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_constant_buffer *cbuf = &ctx->filter.buffer;
+   struct pipe_buffer **cbuf = &ctx->filter.buffer;
 
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization. */
-   pipe_buffer_reference(&cbuf->buffer, NULL);
+   pipe_buffer_reference(cbuf, NULL);
 
-   cbuf->buffer = pipe_buffer_create(pipe->screen, 16,
-                                     PIPE_BUFFER_USAGE_CONSTANT,
-                                     param_bytes);
+   *cbuf = pipe_buffer_create(pipe->screen, 16,
+                              PIPE_BUFFER_USAGE_CONSTANT,
+                              param_bytes);
 
-   if (cbuf->buffer) {
-      st_no_flush_pipe_buffer_write(ctx, cbuf->buffer,
+   if (*cbuf) {
+      st_no_flush_pipe_buffer_write(ctx, *cbuf,
                                     0, param_bytes, buffer);
    }
 
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
 }
 
 static void setup_samplers(struct vg_context *ctx, struct filter_info *info)

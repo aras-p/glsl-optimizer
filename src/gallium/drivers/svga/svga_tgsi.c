@@ -31,6 +31,7 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_scan.h"
 #include "util/u_memory.h"
+#include "util/u_bitmask.h"
 
 #include "svgadump/svga_shader_dump.h"
 
@@ -221,6 +222,7 @@ svga_tgsi_translate( const struct svga_shader *shader,
    result->tokens = (const unsigned *)emit.buf;
    result->nr_tokens = (emit.ptr - emit.buf) / sizeof(unsigned);
    memcpy(&result->key, &key, sizeof key);
+   result->id = UTIL_BITMASK_INVALID_INDEX;
 
    if (SVGA_DEBUG & DEBUG_TGSI) 
    {

@@ -160,7 +160,7 @@ struct cso_hash_iter cso_find_state(struct cso_cache *sc,
                                     unsigned hash_key, enum cso_cache_type type);
 struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
                                              unsigned hash_key, enum cso_cache_type type,
-                                             void *templ);
+                                             void *templ, unsigned size);
 void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
                         cso_state_callback func, void *user_data);
 void * cso_take_state(struct cso_cache *sc, unsigned hash_key,

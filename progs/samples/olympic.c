@@ -74,7 +74,7 @@ int iters[RINGS];
 GLuint theTorus;
 
 
-void FillTorus(float rc, int numc, float rt, int numt)
+static void FillTorus(float rc, int numc, float rt, int numt)
 {
     int i, j, k;
     double s, t;
@@ -106,7 +106,7 @@ void FillTorus(float rc, int numc, float rt, int numt)
     }
 }
 
-float Clamp(int iters_left, float t)
+static float Clamp(int iters_left, float t)
 {
     if (iters_left < 3) {
 	return 0.0;
@@ -114,7 +114,7 @@ float Clamp(int iters_left, float t)
     return (iters_left-2)*t/iters_left;
 }
 
-void DrawScene(void)
+static void DrawScene(void)
 {
     int i, j;
     GLboolean goIdle;
@@ -172,7 +172,7 @@ void DrawScene(void)
     }
 }
 
-float MyRand(void)
+static float MyRand(void)
 {
    return 10.0 * ( (float) rand() / (float) RAND_MAX - 0.5 );
 }
@@ -181,12 +181,12 @@ float MyRand(void)
 #define GLUTCALLBACK
 #endif
 
-void GLUTCALLBACK glut_post_redisplay_p(void)
+static void GLUTCALLBACK glut_post_redisplay_p(void)
 {
       glutPostRedisplay();
 }
 
-void ReInit(void)
+static void ReInit(void)
 {
     int i;
     float deviation;
@@ -206,7 +206,7 @@ void ReInit(void)
     glutIdleFunc(glut_post_redisplay_p);
 }
 
-void Init(void)
+static void Init(void)
 {
     float base, height;
     float aspect, x, y;
@@ -312,13 +312,13 @@ void Init(void)
     glMatrixMode(GL_MODELVIEW);
 }
 
-void Reshape(int width, int height)
+static void Reshape(int width, int height)
 {
 
     glViewport(0, 0, width, height);
 }
 
-void Key(unsigned char key, int x, int y)
+static void Key(unsigned char key, int x, int y)
 {
 
     switch (key) {
@@ -330,7 +330,7 @@ void Key(unsigned char key, int x, int y)
     }
 }
 
-GLenum Args(int argc, char **argv)
+static GLenum Args(int argc, char **argv)
 {
     GLint i;
 

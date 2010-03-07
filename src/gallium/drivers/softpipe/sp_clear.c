@@ -36,6 +36,7 @@
 #include "util/u_pack_color.h"
 #include "sp_clear.h"
 #include "sp_context.h"
+#include "sp_query.h"
 #include "sp_tile_cache.h"
 
 
@@ -48,10 +49,14 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
                double depth, unsigned stencil)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   union util_color uc;
    unsigned cv;
    uint i;
 
    if (softpipe->no_rast)
+      return;
+
+   if (!softpipe_check_render_cond(softpipe))
       return;
 
 #if 0
@@ -62,12 +67,12 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
          struct pipe_surface *ps = softpipe->framebuffer.cbufs[i];
 
-         util_pack_color(rgba, ps->format, &cv);
-         sp_tile_cache_clear(softpipe->cbuf_cache[i], rgba, cv);
+         util_pack_color(rgba, ps->format, &uc);
+         sp_tile_cache_clear(softpipe->cbuf_cache[i], rgba, uc.ui);
 
 #if !TILE_CLEAR_OPTIMIZATION
          /* non-cached surface */
-         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, cv);
+         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, uc.ui);
 #endif
       }
    }

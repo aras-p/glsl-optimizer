@@ -35,7 +35,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "main/macros.h"
-#include "intel_fbo.h"
 
 static void upload_sf_vp(struct brw_context *brw)
 {
@@ -70,9 +69,9 @@ static void upload_sf_vp(struct brw_context *brw)
     * for DrawBuffer->_[XY]{min,max}
     */
 
-   /* The scissor only needs to handle the intersection of drawable and
-    * scissor rect.  Clipping to the boundaries of static shared buffers
-    * for front/back/depth is covered by looping over cliprects in brw_draw.c.
+   /* The scissor only needs to handle the intersection of drawable
+    * and scissor rect, since there are no longer cliprects for shared
+    * buffers with DRI2.
     *
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
@@ -165,6 +164,7 @@ static dri_bo *
 sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 			dri_bo **reloc_bufs)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_sf_unit_state sf;
    dri_bo *bo;
    int chipset_max_threads;
@@ -177,7 +177,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    sf.thread3.dispatch_grf_start_reg = 3;
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
        sf.thread3.urb_entry_read_offset = 3;
    else
        sf.thread3.urb_entry_read_offset = 1;
@@ -187,10 +187,10 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    sf.thread4.nr_urb_entries = key->nr_urb_entries;
    sf.thread4.urb_entry_allocation_size = key->sfsize - 1;
 
-   /* Each SF thread produces 1 PUE, and there can be up to 24(Pre-IGDNG) or 
-    * 48(IGDNG) threads 
+   /* Each SF thread produces 1 PUE, and there can be up to 24 (Pre-Ironlake) or
+    * 48 (Ironlake) threads.
     */
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
       chipset_max_threads = 48;
    else
       chipset_max_threads = 24;
@@ -308,8 +308,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    bo = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
 			 key, sizeof(*key),
 			 reloc_bufs, 2,
-			 &sf, sizeof(sf),
-			 NULL, NULL);
+			 &sf, sizeof(sf));
 
    /* STATE_PREFETCH command description describes this state as being
     * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.

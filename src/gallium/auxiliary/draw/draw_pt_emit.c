@@ -112,7 +112,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 	 src_offset = 0;
 	 break;
       case EMIT_4UB:
-	 output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+	 output_format = PIPE_FORMAT_A8R8G8B8_UNORM;
 	 emit_sz = 4 * sizeof(ubyte);
          break;
       default:
@@ -121,10 +121,12 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 	 emit_sz = 0;
 	 break;
       }
-      
+
+      hw_key.element[i].type = TRANSLATE_ELEMENT_NORMAL;
       hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       hw_key.element[i].input_buffer = src_buffer;
       hw_key.element[i].input_offset = src_offset;
+      hw_key.element[i].instance_divisor = 0;
       hw_key.element[i].output_format = output_format;
       hw_key.element[i].output_offset = dst_offset;
 
@@ -204,6 +206,7 @@ void draw_pt_emit( struct pt_emit *emit,
    translate->run( translate,
 		   0, 
 		   vertex_count,
+                   draw->instance_id,
 		   hw_verts );
 
    render->unmap_vertices( render, 
@@ -263,6 +266,7 @@ void draw_pt_emit_linear(struct pt_emit *emit,
    translate->run(translate,
                   0,
                   count,
+                  draw->instance_id,
                   hw_verts);
 
    if (0) {

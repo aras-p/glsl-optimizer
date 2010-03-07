@@ -51,5 +51,28 @@ See the <A HREF="xlibdriver.html">Xlib software driver page</A> for details.
 </ul>
 
 
+<p>
+These environment variables are for the Intel i945/i965 drivers:
+</p>
+<ul>
+<li>INTEL_STRICT_CONFORMANCE - if set to 1, enable sw fallbacks to improve
+    OpenGL conformance.  If set to 2, always use software rendering.
+<li>INTEL_NO_BLIT - if set, disable hardware-accelerated glBitmap,
+    glCopyPixels, glDrawPixels.
+</ul>
+
+
+<p>
+These environment variables are for the Radeon R300 driver:
+</p>
+<ul>
+<li>R300_NO_TCL - if set, disable hardware-accelerated Transform/Clip/Lighting.
+</ul>
+
+<p>
+Mesa EGL supports different sets of environment variables.  See the
+<a href="egl.html">Mesa EGL</a> page for the details.
+</p>
+
 </BODY>
 </HTML>

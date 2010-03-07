@@ -2,6 +2,9 @@
 #define EGLSCREEN_INCLUDED
 
 
+#include "egltypedefs.h"
+
+
 /**
  * Per-screen information.
  * Note that an EGL screen doesn't have a size.  A screen may be set to
@@ -26,11 +29,7 @@ struct _egl_screen
 };
 
 
-extern EGLScreenMESA
-_eglAllocScreenHandle(void);
-
-
-extern void
+PUBLIC void
 _eglInitScreen(_EGLScreen *screen);
 
 
@@ -38,7 +37,7 @@ extern _EGLScreen *
 _eglLookupScreen(EGLScreenMESA screen, _EGLDisplay *dpy);
 
 
-extern void
+PUBLIC void
 _eglAddScreen(_EGLDisplay *display, _EGLScreen *screen);
 
 
@@ -83,7 +82,7 @@ extern void
 _eglDestroyScreenModes(_EGLScreen *scrn);
 
 
-extern void
+PUBLIC void
 _eglDestroyScreen(_EGLScreen *scrn);
 
 

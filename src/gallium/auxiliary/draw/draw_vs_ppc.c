@@ -85,7 +85,7 @@ static void
 vs_ppc_run_linear( struct draw_vertex_shader *base,
 		   const float (*input)[4],
 		   float (*output)[4],
-		   const float (*constants)[4],
+                  const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
 		   unsigned count,
 		   unsigned input_stride,
 		   unsigned output_stride )
@@ -98,9 +98,9 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
    /* loop over verts */
    for (i = 0; i < count; i += MAX_VERTICES) {
       const uint max_vertices = MIN2(MAX_VERTICES, count - i);
-      float inputs_soa[PIPE_MAX_SHADER_INPUTS][4][4] ALIGN16_ATTRIB;
-      float outputs_soa[PIPE_MAX_SHADER_OUTPUTS][4][4] ALIGN16_ATTRIB;
-      float temps_soa[TGSI_EXEC_NUM_TEMPS][4][4] ALIGN16_ATTRIB;
+      PIPE_ALIGN_VAR(16) float inputs_soa[PIPE_MAX_SHADER_INPUTS][4][4];
+      PIPE_ALIGN_VAR(16) float outputs_soa[PIPE_MAX_SHADER_OUTPUTS][4][4];
+      PIPE_ALIGN_VAR(16) float temps_soa[TGSI_EXEC_NUM_TEMPS][4][4];
       uint attr;
 
       /* convert (up to) four input verts to SoA format */
@@ -125,7 +125,7 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
        */
       shader->func(inputs_soa, outputs_soa, temps_soa,
 		   (float (*)[4]) shader->base.immediates,
-		   (float (*)[4]) constants,
+                   (const float (*)[4])constants[0],
                    ppc_builtin_constants);
 
       /* convert (up to) four output verts from SoA back to AoS format */

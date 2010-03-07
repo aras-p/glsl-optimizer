@@ -32,12 +32,10 @@
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
-#include "r700_state.h"
 #include "r600_tex.h"
 #include "r700_oglprog.h"
 #include "r700_fragprog.h"
 #include "r700_vertprog.h"
-#include "r700_ioctl.h"
 
 #include "radeon_mipmap_tree.h"
 
@@ -45,6 +43,9 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t         *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    struct r700_vertex_program *vp = context->selected_vp;
+
 	struct radeon_bo *bo = NULL;
 	unsigned int i;
 	BATCH_LOCALS(&context->radeon);
@@ -52,16 +53,13 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {            
 			radeonTexObj *t = r700->textures[i];
-			uint32_t offset;
 			if (t) {
 				if (!t->image_override) {
 					bo = t->mt->bo;
-					offset = get_base_teximage_offset(t);
 				} else {
 					bo = t->bo;
-					offset = 0;
 				}
 				if (bo) {
 
@@ -71,7 +69,16 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 
 					BEGIN_BATCH_NO_AUTOSTATE(9 + 4);
 					R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
-					R600_OUT_BATCH(i * 7);
+
+                    if( (1<<i) & vp->r700AsmCode.unVetTexBits )                    
+                    {   /* vs texture */                                     
+                        R600_OUT_BATCH((i + VERT_ATTRIB_MAX + SQ_FETCH_RESOURCE_VS_OFFSET) * FETCH_RESOURCE_STRIDE);
+                    }
+                    else
+                    {
+					    R600_OUT_BATCH(i * 7);
+                    }
+
 					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE0);
 					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE1);
 					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE2);
@@ -81,7 +88,7 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 					R600_OUT_BATCH(r700->textures[i]->SQ_TEX_RESOURCE6);
 					R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE2,
 							     bo,
-							     offset,
+							     r700->textures[i]->SQ_TEX_RESOURCE2,
 							     RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 					R600_OUT_BATCH_RELOC(r700->textures[i]->SQ_TEX_RESOURCE3,
 							     bo,
@@ -95,21 +102,35 @@ static void r700SendTexState(GLcontext *ctx, struct radeon_state_atom *atom)
 	}
 }
 
+#define SAMPLER_STRIDE                 3
+
 static void r700SendTexSamplerState(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	context_t         *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 	unsigned int i;
+
+    struct r700_vertex_program *vp = context->selected_vp;
+
 	BATCH_LOCALS(&context->radeon);
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
 	for (i = 0; i < R700_TEXTURE_NUMBERUNITS; i++) {
-		if (ctx->Texture.Unit[i]._ReallyEnabled) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {            
 			radeonTexObj *t = r700->textures[i];
 			if (t) {
 				BEGIN_BATCH_NO_AUTOSTATE(5);
 				R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_SAMPLER, 3));
-				R600_OUT_BATCH(i * 3);
+
+                if( (1<<i) & vp->r700AsmCode.unVetTexBits )                    
+                {   /* vs texture */
+                    R600_OUT_BATCH((i+SQ_TEX_SAMPLER_VS_OFFSET) * SAMPLER_STRIDE); //work 1
+                }
+                else
+                {
+				    R600_OUT_BATCH(i * 3);
+                }
+
 				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER0);
 				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER1);
 				R600_OUT_BATCH(r700->textures[i]->SQ_TEX_SAMPLER2);
@@ -179,7 +200,8 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
     }
     else
     {
-        nVBsize = paos->count * pStreamDesc->stride;
+        nVBsize = (paos->count - 1) * pStreamDesc->stride
+                  + pStreamDesc->size * getTypeSize(pStreamDesc->type);
     }
 
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
@@ -197,11 +219,11 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
         SETfield(uSQ_VTX_CONSTANT_WORD2_0, SQ_NUM_FORMAT_NORM,
 	             SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_shift, SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_mask);
     }
-    //else
-    //{
-    //    SETfield(uSQ_VTX_CONSTANT_WORD2_0, SQ_NUM_FORMAT_INT,
-	//             SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_shift, SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_mask);
-    //}
+    else
+    {
+        SETfield(uSQ_VTX_CONSTANT_WORD2_0, SQ_NUM_FORMAT_SCALED,
+	             SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_shift, SQ_VTX_CONSTANT_WORD2_0__NUM_FORMAT_ALL_mask);
+    }
 
     if(1 == pStreamDesc->_signed)
     {
@@ -280,14 +302,13 @@ static void r700SetRenderTarget(context_t *context, int id)
     R600_STATECHANGE(context, cb_target);
 
     /* color buffer */
-    r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset;
+    r700->render_target[id].CB_COLOR0_BASE.u32All = context->radeon.state.color.draw_offset / 256;
 
     nPitchInPixel = rrb->pitch/rrb->cpp;
     SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, (nPitchInPixel/8)-1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
     SETfield(r700->render_target[id].CB_COLOR0_SIZE.u32All, ( (nPitchInPixel * context->radeon.radeonScreen->driScreen->fbHeight)/64 )-1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
-    r700->render_target[id].CB_COLOR0_BASE.u32All = 0;
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
     SETfield(r700->render_target[id].CB_COLOR0_INFO.u32All, ARRAY_LINEAR_GENERAL,
              CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
@@ -430,13 +451,31 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 		R600_OUT_BATCH((2 << id));
 		END_BATCH();
 	}
+	/* Set CMASK & TILE buffer to the offset of color buffer as
+	 * we don't use those this shouldn't cause any issue and we
+	 * then have a valid cmd stream
+	 */
+	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	R600_OUT_BATCH_REGSEQ(CB_COLOR0_TILE + (4 * id), 1);
+	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_TILE.u32All);
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     rrb->bo,
+			     r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+	END_BATCH();
+	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	R600_OUT_BATCH_REGSEQ(CB_COLOR0_FRAG + (4 * id), 1);
+	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_FRAG.u32All);
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     rrb->bo,
+			     r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+        END_BATCH();
 
-        BEGIN_BATCH_NO_AUTOSTATE(18);
+        BEGIN_BATCH_NO_AUTOSTATE(12);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_SIZE + (4 * id), r700->render_target[id].CB_COLOR0_SIZE.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_VIEW + (4 * id), r700->render_target[id].CB_COLOR0_VIEW.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), r700->render_target[id].CB_COLOR0_INFO.u32All);
-	R600_OUT_BATCH_REGVAL(CB_COLOR0_TILE + (4 * id), r700->render_target[id].CB_COLOR0_TILE.u32All);
-	R600_OUT_BATCH_REGVAL(CB_COLOR0_FRAG + (4 * id), r700->render_target[id].CB_COLOR0_FRAG.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), r700->render_target[id].CB_COLOR0_MASK.u32All);
         END_BATCH();
 
@@ -1163,7 +1202,11 @@ static int check_blnd(GLcontext *ctx, struct radeon_state_atom *atom)
 		count += 3;
 
 	if (context->radeon.radeonScreen->chip_family > CHIP_FAMILY_R600) {
-		for (ui = 0; ui < R700_MAX_RENDER_TARGETS; ui++) {
+		/* targets are enabled in r700SetRenderTarget but state
+		   size is calculated before that. Until MRT's are done
+		   hardcode target0 as enabled. */
+		count += 3;
+		for (ui = 1; ui < R700_MAX_RENDER_TARGETS; ui++) {
                         if (r700->render_target[ui].enabled)
 				count += 3;
 		}
@@ -1306,9 +1349,9 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(poly, always, 10, r700SendPolyState);
 	ALLOC_STATE(cb, cb, 18, r700SendCBState);
 	ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
+	ALLOC_STATE(cb_target, always, 29, r700SendRenderTargetState);
 	ALLOC_STATE(blnd, blnd, (6 + (R700_MAX_RENDER_TARGETS * 3)), r700SendCBBlendState);
 	ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
-	ALLOC_STATE(cb_target, always, 25, r700SendRenderTargetState);
 	ALLOC_STATE(sx, always, 9, r700SendSXState);
 	ALLOC_STATE(vgt, always, 41, r700SendVGTState);
 	ALLOC_STATE(spi, always, (59 + R700_MAX_SHADER_EXPORTS), r700SendSPIState);

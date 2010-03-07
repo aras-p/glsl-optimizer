@@ -97,12 +97,12 @@ util_bitmask_resize(struct util_bitmask *bm,
    if(!minimum_size)
       return FALSE;
       
-   if(bm->size > minimum_size)
+   if(bm->size >= minimum_size)
       return TRUE;
 
    assert(bm->size % UTIL_BITMASK_BITS_PER_WORD == 0);
    new_size = bm->size;
-   while(!(new_size > minimum_size)) {
+   while(new_size < minimum_size) {
       new_size *= 2;
       /* Check integer overflow */
       if(new_size < bm->size)
@@ -136,7 +136,7 @@ util_bitmask_filled_set(struct util_bitmask *bm,
                         unsigned index)
 {
    assert(bm->filled <= bm->size);
-   assert(index <= bm->size);
+   assert(index < bm->size);
    
    if(index == bm->filled) {
       ++bm->filled;
@@ -149,7 +149,7 @@ util_bitmask_filled_unset(struct util_bitmask *bm,
                           unsigned index)
 {
    assert(bm->filled <= bm->size);
-   assert(index <= bm->size);
+   assert(index < bm->size);
    
    if(index < bm->filled)
       bm->filled = index;
@@ -182,7 +182,7 @@ util_bitmask_add(struct util_bitmask *bm)
       mask = 1;
    }
 found:
-   
+
    /* grow the bitmask if necessary */
    if(!util_bitmask_resize(bm, bm->filled))
       return UTIL_BITMASK_INVALID_INDEX;
@@ -198,15 +198,19 @@ unsigned
 util_bitmask_set(struct util_bitmask *bm, 
                  unsigned index)
 {
-   unsigned word = index / UTIL_BITMASK_BITS_PER_WORD;
-   unsigned bit  = index % UTIL_BITMASK_BITS_PER_WORD;
-   util_bitmask_word mask = 1 << bit;
+   unsigned word;
+   unsigned bit;
+   util_bitmask_word mask;
    
    assert(bm);
    
    /* grow the bitmask if necessary */
    if(!util_bitmask_resize(bm, index))
       return UTIL_BITMASK_INVALID_INDEX;
+
+   word = index / UTIL_BITMASK_BITS_PER_WORD;
+   bit  = index % UTIL_BITMASK_BITS_PER_WORD;
+   mask = 1 << bit;
 
    bm->words[word] |= mask;
 
@@ -220,14 +224,18 @@ void
 util_bitmask_clear(struct util_bitmask *bm, 
                    unsigned index)
 {
-   unsigned word = index / UTIL_BITMASK_BITS_PER_WORD;
-   unsigned bit  = index % UTIL_BITMASK_BITS_PER_WORD;
-   util_bitmask_word mask = 1 << bit;
+   unsigned word;
+   unsigned bit;
+   util_bitmask_word mask;
    
    assert(bm);
    
    if(index >= bm->size)
       return;
+
+   word = index / UTIL_BITMASK_BITS_PER_WORD;
+   bit  = index % UTIL_BITMASK_BITS_PER_WORD;
+   mask = 1 << bit;
 
    bm->words[word] &= ~mask;
    
@@ -250,7 +258,7 @@ util_bitmask_get(struct util_bitmask *bm,
       return TRUE;
    }
 
-   if(index > bm->size)
+   if(index >= bm->size)
       return FALSE;
 
    if(bm->words[word] & mask) {

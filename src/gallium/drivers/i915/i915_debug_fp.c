@@ -28,8 +28,8 @@
 
 #include "i915_reg.h"
 #include "i915_debug.h"
-#include "pipe/internal/p_winsys_screen.h"
-#include "util/u_memory.h"
+#include "util/u_simple_screen.h"
+#include "util/u_debug.h"
 
 
 static void

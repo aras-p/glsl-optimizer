@@ -1,0 +1,15 @@
+Import('*')
+
+env = drienv.Clone()
+
+i965drm_sources = [
+    'i965_drm_api.c',
+    'i965_drm_buffer.c',
+]
+
+i965drm = env.ConvenienceLibrary(
+    target ='i965drm',
+    source = i965drm_sources,
+)
+
+Export('i965drm')

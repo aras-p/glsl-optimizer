@@ -35,7 +35,7 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
-#include "pipe/p_thread.h"
+#include "os/os_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_double_list.h"
@@ -179,7 +179,9 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
 {
    uint8_t *map;
    
-   map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+   map = pb_map(buf->buffer,
+                PIPE_BUFFER_USAGE_CPU_READ |
+                PIPE_BUFFER_USAGE_UNSYNCHRONIZED);
    assert(map);
    if(map) {
       boolean underflow, overflow;
@@ -349,7 +351,7 @@ pb_debug_manager_dump(struct pb_debug_manager *mgr)
    while(curr != &mgr->list) {
       buf = LIST_ENTRY(struct pb_debug_buffer, curr, head);
 
-      debug_printf("buffer = %p\n", buf);
+      debug_printf("buffer = %p\n", (void *) buf);
       debug_printf("    .size = 0x%x\n", buf->base.base.size);
       debug_backtrace_dump(buf->create_backtrace, PB_DEBUG_CREATE_BACKTRACE);
       
@@ -371,6 +373,9 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    struct pb_desc real_desc;
    pb_size real_size;
    
+   assert(size);
+   assert(desc->alignment);
+
    buf = CALLOC_STRUCT(pb_debug_buffer);
    if(!buf)
       return NULL;

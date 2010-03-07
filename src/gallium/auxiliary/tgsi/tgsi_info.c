@@ -119,7 +119,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 1, 0, 0, 0, 0, "NOT", TGSI_OPCODE_NOT },
    { 1, 1, 0, 0, 0, 0, "TRUNC", TGSI_OPCODE_TRUNC },
    { 1, 2, 0, 0, 0, 0, "SHL", TGSI_OPCODE_SHL },
-   { 1, 2, 0, 0, 0, 0, "SHR", TGSI_OPCODE_SHR },
+   { 0, 0, 0, 0, 0, 0, "", 88 },      /* removed */
    { 1, 2, 0, 0, 0, 0, "AND", TGSI_OPCODE_AND },
    { 1, 2, 0, 0, 0, 0, "OR", TGSI_OPCODE_OR },
    { 1, 2, 0, 0, 0, 0, "MOD", TGSI_OPCODE_MOD },
@@ -149,7 +149,33 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 1, 0, 0, 0, 0, "BREAKC", TGSI_OPCODE_BREAKC },
    { 0, 1, 0, 0, 0, 0, "KIL", TGSI_OPCODE_KIL },
    { 0, 0, 0, 0, 0, 0, "END", TGSI_OPCODE_END },
-   { 0, 0, 0, 0, 0, 0, "", 118 }      /* removed */
+   { 0, 0, 0, 0, 0, 0, "", 118 },     /* removed */
+   { 1, 1, 0, 0, 0, 0, "F2I", TGSI_OPCODE_F2I },
+   { 1, 2, 0, 0, 0, 0, "IDIV", TGSI_OPCODE_IDIV },
+   { 1, 2, 0, 0, 0, 0, "IMAX", TGSI_OPCODE_IMAX },
+   { 1, 2, 0, 0, 0, 0, "IMIN", TGSI_OPCODE_IMIN },
+   { 1, 1, 0, 0, 0, 0, "INEG", TGSI_OPCODE_INEG },
+   { 1, 2, 0, 0, 0, 0, "ISGE", TGSI_OPCODE_ISGE },
+   { 1, 2, 0, 0, 0, 0, "ISHR", TGSI_OPCODE_ISHR },
+   { 1, 2, 0, 0, 0, 0, "ISLT", TGSI_OPCODE_ISLT },
+   { 1, 1, 0, 0, 0, 0, "F2U", TGSI_OPCODE_F2U },
+   { 1, 1, 0, 0, 0, 0, "U2F", TGSI_OPCODE_U2F },
+   { 1, 2, 0, 0, 0, 0, "UADD", TGSI_OPCODE_UADD },
+   { 1, 2, 0, 0, 0, 0, "UDIV", TGSI_OPCODE_UDIV },
+   { 1, 3, 0, 0, 0, 0, "UMAD", TGSI_OPCODE_UMAD },
+   { 1, 2, 0, 0, 0, 0, "UMAX", TGSI_OPCODE_UMAX },
+   { 1, 2, 0, 0, 0, 0, "UMIN", TGSI_OPCODE_UMIN },
+   { 1, 2, 0, 0, 0, 0, "UMOD", TGSI_OPCODE_UMOD },
+   { 1, 2, 0, 0, 0, 0, "UMUL", TGSI_OPCODE_UMUL },
+   { 1, 2, 0, 0, 0, 0, "USEQ", TGSI_OPCODE_USEQ },
+   { 1, 2, 0, 0, 0, 0, "USGE", TGSI_OPCODE_USGE },
+   { 1, 2, 0, 0, 0, 0, "USHR", TGSI_OPCODE_USHR },
+   { 1, 2, 0, 0, 0, 0, "USLT", TGSI_OPCODE_USLT },
+   { 1, 2, 0, 0, 0, 0, "USNE", TGSI_OPCODE_USNE },
+   { 0, 1, 0, 0, 0, 0, "SWITCH", TGSI_OPCODE_SWITCH },
+   { 0, 1, 0, 0, 0, 0, "CASE", TGSI_OPCODE_CASE },
+   { 0, 0, 0, 0, 0, 0, "DEFAULT", TGSI_OPCODE_DEFAULT },
+   { 0, 0, 0, 0, 0, 0, "ENDSWITCH", TGSI_OPCODE_ENDSWITCH }
 };
 
 const struct tgsi_opcode_info *

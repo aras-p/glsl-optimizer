@@ -36,6 +36,7 @@
 #include <string.h>
 #include "drm.h"
 #include "radeon_drm.h"
+#include "radeon_bo_drm.h"
 
 struct radeon_cs_reloc {
     struct radeon_bo    *bo;
@@ -49,173 +50,41 @@ struct radeon_cs_reloc {
 #define RADEON_CS_SPACE_OP_TO_BIG 1
 #define RADEON_CS_SPACE_FLUSH 2
 
-struct radeon_cs_space_check {
-    struct radeon_bo *bo;
-    uint32_t read_domains;
-    uint32_t write_domain;
-    uint32_t new_accounted;
+struct radeon_cs {
+    uint32_t *packets;
+    unsigned cdw;
+    unsigned ndw;
+    unsigned                    section_ndw;
+    unsigned                    section_cdw;
 };
 
 #define MAX_SPACE_BOS (32)
 
 struct radeon_cs_manager;
 
-struct radeon_cs {
-    struct radeon_cs_manager    *csm;
-    void                        *relocs;
-    uint32_t                    *packets;
-    unsigned                    crelocs;
-    unsigned                    relocs_total_size;
-    unsigned                    cdw;
-    unsigned                    ndw;
-    int                         section;
-    unsigned                    section_ndw;
-    unsigned                    section_cdw;
-    const char                  *section_file;
-    const char                  *section_func;
-    int                         section_line;
-    struct radeon_cs_space_check bos[MAX_SPACE_BOS];
-    int                         bo_count;
-    void                        (*space_flush_fn)(void *);
-    void                        *space_flush_data;
-};
+extern struct radeon_cs *radeon_cs_create(struct radeon_cs_manager *csm,
+					  uint32_t ndw);
 
-/* cs functions */
-struct radeon_cs_funcs {
-    struct radeon_cs *(*cs_create)(struct radeon_cs_manager *csm,
-                                   uint32_t ndw);
-    int (*cs_write_reloc)(struct radeon_cs *cs,
-                          struct radeon_bo *bo,
-                          uint32_t read_domain,
-                          uint32_t write_domain,
-                          uint32_t flags);
-    int (*cs_begin)(struct radeon_cs *cs,
-                    uint32_t ndw,
-                    const char *file,
-                    const char *func,
-                    int line);
-    int (*cs_end)(struct radeon_cs *cs,
-                  const char *file,
-                  const char *func,
-                  int line);
-    int (*cs_emit)(struct radeon_cs *cs);
-    int (*cs_destroy)(struct radeon_cs *cs);
-    int (*cs_erase)(struct radeon_cs *cs);
-    int (*cs_need_flush)(struct radeon_cs *cs);
-    void (*cs_print)(struct radeon_cs *cs, FILE *file);
-};
-
-struct radeon_cs_manager {
-    struct radeon_cs_funcs  *funcs;
-    int                     fd;
-    int32_t vram_limit, gart_limit;
-    int32_t vram_write_used, gart_write_used;
-    int32_t read_used;
-};
-
-static inline struct radeon_cs *radeon_cs_create(struct radeon_cs_manager *csm,
-                                                 uint32_t ndw)
-{
-    return csm->funcs->cs_create(csm, ndw);
-}
-
-static inline int radeon_cs_write_reloc(struct radeon_cs *cs,
-                                        struct radeon_bo *bo,
-                                        uint32_t read_domain,
-                                        uint32_t write_domain,
-                                        uint32_t flags)
-{
-    return cs->csm->funcs->cs_write_reloc(cs,
-                                          bo,
-                                          read_domain,
-                                          write_domain,
-                                          flags);
-}
-
-static inline int radeon_cs_begin(struct radeon_cs *cs,
-                                  uint32_t ndw,
-                                  const char *file,
-                                  const char *func,
-                                  int line)
-{
-    return cs->csm->funcs->cs_begin(cs, ndw, file, func, line);
-}
-
-static inline int radeon_cs_end(struct radeon_cs *cs,
-                                const char *file,
-                                const char *func,
-                                int line)
-{
-    return cs->csm->funcs->cs_end(cs, file, func, line);
-}
-
-static inline int radeon_cs_emit(struct radeon_cs *cs)
-{
-    return cs->csm->funcs->cs_emit(cs);
-}
-
-static inline int radeon_cs_destroy(struct radeon_cs *cs)
-{
-    return cs->csm->funcs->cs_destroy(cs);
-}
-
-static inline int radeon_cs_erase(struct radeon_cs *cs)
-{
-    return cs->csm->funcs->cs_erase(cs);
-}
-
-static inline int radeon_cs_need_flush(struct radeon_cs *cs)
-{
-    return cs->csm->funcs->cs_need_flush(cs);
-}
-
-static inline void radeon_cs_print(struct radeon_cs *cs, FILE *file)
-{
-    cs->csm->funcs->cs_print(cs, file);
-}
-
-static inline void radeon_cs_set_limit(struct radeon_cs *cs, uint32_t domain, uint32_t limit)
-{
-    
-    if (domain == RADEON_GEM_DOMAIN_VRAM)
-	cs->csm->vram_limit = limit;
-    else
-	cs->csm->gart_limit = limit;
-}
-
-static inline void radeon_cs_write_dword(struct radeon_cs *cs, uint32_t dword)
-{
-    cs->packets[cs->cdw++] = dword;
-    if (cs->section) {
-        cs->section_cdw++;
-    }
-}
-
-static inline void radeon_cs_write_qword(struct radeon_cs *cs, uint64_t qword)
-{
-
-    memcpy(cs->packets + cs->cdw, &qword, sizeof(qword));
-    cs->cdw+=2;
-    if (cs->section) {
-        cs->section_cdw+=2;
-    }
-}
-
-static inline void radeon_cs_write_table(struct radeon_cs *cs, void *data, uint32_t size)
-{
-    memcpy(cs->packets + cs->cdw, data, size * 4);
-    cs->cdw += size;
-    if (cs->section) {
-	    cs->section_cdw += size;
-    }
-}
-
-static inline void radeon_cs_space_set_flush(struct radeon_cs *cs, void (*fn)(void *), void *data)
-{
-    cs->space_flush_fn = fn;
-    cs->space_flush_data = data;
-}
-
+extern int radeon_cs_begin(struct radeon_cs *cs,
+			   uint32_t ndw,
+			   const char *file,
+			   const char *func, int line);
+extern int radeon_cs_end(struct radeon_cs *cs,
+			 const char *file,
+			 const char *func,
+			 int line);
+extern int radeon_cs_emit(struct radeon_cs *cs);
+extern int radeon_cs_destroy(struct radeon_cs *cs);
+extern int radeon_cs_erase(struct radeon_cs *cs);
+extern int radeon_cs_need_flush(struct radeon_cs *cs);
+extern void radeon_cs_print(struct radeon_cs *cs, FILE *file);
+extern void radeon_cs_set_limit(struct radeon_cs *cs, uint32_t domain, uint32_t limit);
+extern void radeon_cs_space_set_flush(struct radeon_cs *cs, void (*fn)(void *), void *data);
+extern int radeon_cs_write_reloc(struct radeon_cs *cs,
+				 struct radeon_bo *bo,
+				 uint32_t read_domain,
+				 uint32_t write_domain,
+				 uint32_t flags);
 
 /*
  * add a persistent BO to the list
@@ -243,4 +112,30 @@ int radeon_cs_space_check_with_bo(struct radeon_cs *cs,
 				  uint32_t read_domains,
 				  uint32_t write_domain);
 
+static inline void radeon_cs_write_dword(struct radeon_cs *cs, uint32_t dword)
+{
+    cs->packets[cs->cdw++] = dword;
+    if (cs->section_ndw) {
+        cs->section_cdw++;
+    }
+}
+
+static inline void radeon_cs_write_qword(struct radeon_cs *cs, uint64_t qword)
+{
+    memcpy(cs->packets + cs->cdw, &qword, sizeof(uint64_t));
+    cs->cdw += 2;
+    if (cs->section_ndw) {
+        cs->section_cdw += 2;
+    }
+}
+
+static inline void radeon_cs_write_table(struct radeon_cs *cs,
+					 void *data, uint32_t size)
+{
+    memcpy(cs->packets + cs->cdw, data, size * 4);
+    cs->cdw += size;
+    if (cs->section_ndw) {
+	cs->section_cdw += size;
+    }
+}
 #endif

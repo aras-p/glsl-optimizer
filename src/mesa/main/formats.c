@@ -27,7 +27,6 @@
 #include "imports.h"
 #include "formats.h"
 #include "config.h"
-#include "texstore.h"
 
 
 /**
@@ -910,6 +909,7 @@ _mesa_test_formats(void)
             GLuint t = info->RedBits + info->GreenBits
                + info->BlueBits + info->AlphaBits;
             assert(t / 8 == info->BytesPerBlock);
+            (void) t;
          }
       }
 

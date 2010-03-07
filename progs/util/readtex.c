@@ -9,6 +9,7 @@
 
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
@@ -89,6 +90,7 @@ static rawImageRec *RawImageOpen(const char *fileName)
    rawImageRec *raw;
    GLenum swapFlag;
    int x;
+   size_t result;
 
    endianTest.testWord = 1;
    if (endianTest.testByte[0] == 1) {
@@ -114,10 +116,16 @@ static rawImageRec *RawImageOpen(const char *fileName)
       }
    }
 
-   fread(raw, 1, 12, raw->file);
+   result = fread(raw, 1, 12, raw->file);
+   assert(result == 12);
 
    if (swapFlag) {
-      ConvertShort(&raw->imagic, 6);
+      ConvertShort(&raw->imagic, 1);
+      ConvertShort(&raw->type, 1);
+      ConvertShort(&raw->dim, 1);
+      ConvertShort(&raw->sizeX, 1);
+      ConvertShort(&raw->sizeY, 1);
+      ConvertShort(&raw->sizeZ, 1);
    }
 
    raw->tmp = (unsigned char *)malloc(raw->sizeX*256);
@@ -157,8 +165,10 @@ static rawImageRec *RawImageOpen(const char *fileName)
       }
       raw->rleEnd = 512 + (2 * x);
       fseek(raw->file, 512, SEEK_SET);
-      fread(raw->rowStart, 1, x, raw->file);
-      fread(raw->rowSize, 1, x, raw->file);
+      result = fread(raw->rowStart, 1, x, raw->file);
+      assert(result == x);
+      result = fread(raw->rowSize, 1, x, raw->file);
+      assert(result == x);
       if (swapFlag) {
          ConvertLong(raw->rowStart, (long) (x/sizeof(GLuint)));
          ConvertLong((GLuint *)raw->rowSize, (long) (x/sizeof(GLint)));
@@ -188,11 +198,13 @@ static void RawImageGetRow(rawImageRec *raw, unsigned char *buf, int y, int z)
 {
    unsigned char *iPtr, *oPtr, pixel;
    int count, done = 0;
+   size_t result;
 
    if ((raw->type & 0xFF00) == 0x0100) {
       fseek(raw->file, (long) raw->rowStart[y+z*raw->sizeY], SEEK_SET);
-      fread(raw->tmp, 1, (unsigned int)raw->rowSize[y+z*raw->sizeY],
-            raw->file);
+      result = fread(raw->tmp, 1, (unsigned int)raw->rowSize[y+z*raw->sizeY],
+                     raw->file);
+      assert(result == (unsigned int)raw->rowSize[y+z*raw->sizeY]);
       
       iPtr = raw->tmp;
       oPtr = buf;
@@ -217,7 +229,8 @@ static void RawImageGetRow(rawImageRec *raw, unsigned char *buf, int y, int z)
    } else {
       fseek(raw->file, 512+(y*raw->sizeX)+(z*raw->sizeX*raw->sizeY),
             SEEK_SET);
-      fread(buf, 1, raw->sizeX, raw->file);
+      result = fread(buf, 1, raw->sizeX, raw->file);
+      assert(result == raw->sizeX);
    }
 }
 

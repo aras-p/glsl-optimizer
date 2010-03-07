@@ -38,18 +38,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <errno.h>
 
 #include "main/attrib.h"
-#include "main/enable.h"
-#include "main/blend.h"
 #include "main/bufferobj.h"
-#include "main/buffers.h"
-#include "main/depth.h"
-#include "main/shaders.h"
-#include "main/texstate.h"
-#include "main/varray.h"
-#include "glapi/dispatch.h"
 #include "swrast/swrast.h"
-#include "main/stencil.h"
-#include "main/matrix.h"
 
 #include "main/glheader.h"
 #include "main/imports.h"
@@ -58,15 +48,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_context.h"
 #include "radeon_common.h"
-#include "radeon_state.h"
 #include "radeon_ioctl.h"
-#include "radeon_tcl.h"
-#include "radeon_sanity.h"
 
 #define STANDALONE_MMIO
-#include "radeon_macros.h"  /* for INREG() */
 
-#include "drirenderbuffer.h"
 #include "vblank.h"
 
 #define RADEON_TIMEOUT             512
@@ -107,6 +92,8 @@ void radeonSetUpAtomList( r100ContextPtr rmesa )
       insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.lit[i]);
    for (i = 0; i < 6; ++i)
       insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.ucp[i]);
+   if (rmesa->radeon.radeonScreen->kernel_mm)
+      insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.stp);
    insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.eye);
    insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.grd);
    insert_at_tail(&rmesa->radeon.hw.atomlist, &rmesa->hw.fog);
@@ -449,11 +436,13 @@ void radeonEmitAOS( r100ContextPtr rmesa,
 static void radeonKernelClear(GLcontext *ctx, GLuint flags)
 {
      r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
    uint32_t clear;
    GLint ret, i;
    GLint cx, cy, cw, ch;
+
+   radeonEmitState(&rmesa->radeon);
 
    LOCK_HARDWARE( &rmesa->radeon );
 
@@ -570,10 +559,14 @@ static void radeonKernelClear(GLcontext *ctx, GLuint flags)
 static void radeonClear( GLcontext *ctx, GLbitfield mask )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLuint flags = 0;
    GLuint color_mask = 0;
    GLuint orig_mask = mask;
+
+   if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
+      rmesa->radeon.front_buffer_dirty = GL_TRUE;
+   }
 
    if ( RADEON_DEBUG & RADEON_IOCTL ) {
       fprintf( stderr, "radeonClear\n");

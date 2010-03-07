@@ -30,33 +30,16 @@
 #ifndef RADEON_DRM_H
 #define RADEON_DRM_H
 
-#include <sys/ioctl.h>
-
-#include "xf86drm.h"
-
-#include "pipe/p_screen.h"
-
-#include "trace/tr_drm.h"
-#include "util/u_debug.h"
-#include "util/u_memory.h"
-
 #include "state_tracker/drm_api.h"
 
-#include "radeon_buffer.h"
-#include "radeon_r300.h"
-#include "radeon_winsys_softpipe.h"
-
-/* XXX */
-#include "r300_screen.h"
 
 struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
 					 struct drm_create_screen_arg *arg);
 
-struct pipe_context* radeon_create_context(struct drm_api* api,
-                                           struct pipe_screen* screen);
 
 boolean radeon_buffer_from_texture(struct drm_api* api,
+                                   struct pipe_screen* screen,
                                    struct pipe_texture* texture,
                                    struct pipe_buffer** buffer,
                                    unsigned* stride);
@@ -77,4 +60,13 @@ boolean radeon_global_handle_from_buffer(struct drm_api* api,
                                          unsigned* handle);
 
 void radeon_destroy_drm_api(struct drm_api* api);
+
+/* Guess at whether this chipset should use r300g.
+ *
+ * I believe that this check is valid, but I haven't been exhaustive. */
+static INLINE boolean is_r3xx(int pciid)
+{
+    return (pciid > 0x3150) && (pciid < 0x796f);
+}
+
 #endif

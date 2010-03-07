@@ -49,7 +49,7 @@
  * Initialize depth buffer, projection matrix, light source, and lighting
  * model.  Do not specify a material property here.
  */
-void
+static void
 myinit(void)
 {
   GLfloat ambient[] =
@@ -83,7 +83,7 @@ myinit(void)
  * Move object into position.  Use 3rd through 12th parameters to specify the
  * material property.  Draw a teapot.
  */
-void
+static void
 renderTeapot(GLfloat x, GLfloat y,
   GLfloat ambr, GLfloat ambg, GLfloat ambb,
   GLfloat difr, GLfloat difg, GLfloat difb,
@@ -117,7 +117,7 @@ renderTeapot(GLfloat x, GLfloat y,
  *  3rd column:  black, cyan, green, red, white, yellow plastic
  *  4th column:  black, cyan, green, red, white, yellow rubber
  */
-void
+static void
 display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -173,7 +173,7 @@ display(void)
   glFlush();
 }
 
-void
+static void
 myReshape(int w, int h)
 {
   glViewport(0, 0, w, h);

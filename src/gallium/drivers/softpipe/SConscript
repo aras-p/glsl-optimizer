@@ -34,6 +34,7 @@ softpipe = env.ConvenienceLibrary(
 		'sp_texture.c',
 		'sp_tile_cache.c',
 		'sp_video_context.c',
+		'sp_winsys.c'
 	])
 
 Export('softpipe')

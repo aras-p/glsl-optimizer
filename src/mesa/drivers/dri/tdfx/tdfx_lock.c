@@ -38,17 +38,16 @@
 #include "tdfx_state.h"
 #include "tdfx_render.h"
 #include "tdfx_texman.h"
-#include "tdfx_tris.h"
 
 #include "drirenderbuffer.h"
 
 
 void tdfxGetLock( tdfxContextPtr fxMesa )
 {
-    __DRIcontextPrivate *cPriv = fxMesa->driContext;
-    __DRIdrawablePrivate *const drawable = cPriv->driDrawablePriv;
-    __DRIdrawablePrivate *const readable = cPriv->driReadablePriv;
-    __DRIscreenPrivate *sPriv = drawable->driScreenPriv;
+    __DRIcontext *cPriv = fxMesa->driContext;
+    __DRIdrawable *const drawable = cPriv->driDrawablePriv;
+    __DRIdrawable *const readable = cPriv->driReadablePriv;
+    __DRIscreen *sPriv = drawable->driScreenPriv;
     TDFXSAREAPriv *saPriv = (TDFXSAREAPriv *) (((char *) sPriv->pSAREA) +
 					fxMesa->fxScreen->sarea_priv_offset);
     unsigned int stamp = drawable->lastStamp;

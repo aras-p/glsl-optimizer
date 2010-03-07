@@ -57,8 +57,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_swtcl.h"
 #include "r200_vertprog.h"
 
-#include "drirenderbuffer.h"
-
 
 /* =============================================================
  * Alpha blending
@@ -597,6 +595,13 @@ static void r200PointSize( GLcontext *ctx, GLfloat size )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLfloat *fcmd = (GLfloat *)rmesa->hw.ptp.cmd;
 
+   radeon_print(RADEON_STATE, RADEON_TRACE,
+       "%s(%p) size: %f, fixed point result: %d.%d (%d/16)\n",
+       __func__, ctx, size,
+       ((GLuint)(ctx->Point.Size * 16.0))/16,
+       (((GLuint)(ctx->Point.Size * 16.0))&15)*100/16,
+       ((GLuint)(ctx->Point.Size * 16.0))&15);
+
    R200_STATECHANGE( rmesa, cst );
    R200_STATECHANGE( rmesa, ptp );
    rmesa->hw.cst.cmd[CST_RE_POINTSIZE] &= ~0xffff;
@@ -721,10 +726,10 @@ static void r200ColorMask( GLcontext *ctx,
    if (!rrb)
      return;
    mask = radeonPackColor( rrb->cpp,
-			   ctx->Color.ColorMask[RCOMP],
-			   ctx->Color.ColorMask[GCOMP],
-			   ctx->Color.ColorMask[BCOMP],
-			   ctx->Color.ColorMask[ACOMP] );
+			   ctx->Color.ColorMask[0][RCOMP],
+			   ctx->Color.ColorMask[0][GCOMP],
+			   ctx->Color.ColorMask[0][BCOMP],
+			   ctx->Color.ColorMask[0][ACOMP] );
 
 
    if (!(r && g && b && a))
@@ -1585,7 +1590,7 @@ static void r200ClearStencil( GLcontext *ctx, GLint s )
 void r200UpdateWindow( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
    GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1665,7 +1670,7 @@ static void r200DepthRange( GLcontext *ctx, GLclampd nearval,
 void r200UpdateViewportOffset( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = (GLfloat)dPriv->x;
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -2466,6 +2471,12 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
 
    radeon_firevertices(&r200->radeon);
 
+   radeon_print(RADEON_STATE, RADEON_TRACE,
+		   "%s(%p) first 32 bits are %x.\n",
+		   __func__,
+		   ctx,
+		   *(uint32_t*)mask);
+
    R200_STATECHANGE(r200, stp);
 
    /* Must flip pattern upside down.
@@ -2490,7 +2501,6 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->BlendFuncSeparate		= r200BlendFuncSeparate;
    functions->ClearColor		= r200ClearColor;
    functions->ClearDepth		= r200ClearDepth;
-   functions->ClearIndex		= NULL;
    functions->ClearStencil		= r200ClearStencil;
    functions->ClipPlane			= r200ClipPlane;
    functions->ColorMask			= r200ColorMask;
@@ -2502,7 +2512,6 @@ void r200InitStateFuncs( struct dd_function_table *functions )
    functions->Fogfv			= r200Fogfv;
    functions->FrontFace			= r200FrontFace;
    functions->Hint			= NULL;
-   functions->IndexMask			= NULL;
    functions->LightModelfv		= r200LightModelfv;
    functions->Lightfv			= r200Lightfv;
    functions->LineStipple		= r200LineStipple;

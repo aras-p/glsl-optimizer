@@ -23,6 +23,8 @@
 #ifndef RADEON_COMPILER_H
 #define RADEON_COMPILER_H
 
+#include "../../../../main/compiler.h"
+
 #include "memory_pool.h"
 #include "radeon_code.h"
 #include "radeon_program.h"
@@ -73,15 +75,18 @@ void rc_calculate_inputs_outputs(struct radeon_compiler * c);
 void rc_move_input(struct radeon_compiler * c, unsigned input, struct rc_src_register new_input);
 void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_output, unsigned writemask);
 void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_output);
-void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input);
+void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input,
+                                int full_vtransform);
 
 struct r300_fragment_program_compiler {
 	struct radeon_compiler Base;
 	struct rX00_fragment_program_code *code;
 	struct r300_fragment_program_external_state state;
 	unsigned is_r500;
+    /* Register corresponding to the depthbuffer. */
 	unsigned OutputDepth;
-	unsigned OutputColor;
+    /* Registers corresponding to the four colorbuffers. */
+	unsigned OutputColor[4];
 
 	void * UserData;
 	void (*AllocateHwInputs)(

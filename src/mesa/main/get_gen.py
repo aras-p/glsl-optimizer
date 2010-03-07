@@ -27,6 +27,7 @@
 
 
 import string
+import sys
 
 
 GLint = 1
@@ -82,7 +83,7 @@ StateVars = [
 	( "GL_AUTO_NORMAL", GLboolean, ["ctx->Eval.AutoNormal"], "", None ),
 	( "GL_AUX_BUFFERS", GLint, ["ctx->DrawBuffer->Visual.numAuxBuffers"],
 	  "", None ),
-	( "GL_BLEND", GLboolean, ["ctx->Color.BlendEnabled"], "", None ),
+	( "GL_BLEND", GLboolean, ["(ctx->Color.BlendEnabled & 1)"], "", None ),
 	( "GL_BLEND_DST", GLenum, ["ctx->Color.BlendDstRGB"], "", None ),
 	( "GL_BLEND_SRC", GLenum, ["ctx->Color.BlendSrcRGB"], "", None ),
 	( "GL_BLEND_SRC_RGB_EXT", GLenum, ["ctx->Color.BlendSrcRGB"], "", None ),
@@ -126,10 +127,10 @@ StateVars = [
 	( "GL_COLOR_MATERIAL_PARAMETER", GLenum,
 	  ["ctx->Light.ColorMaterialMode"], "", None ),
 	( "GL_COLOR_WRITEMASK", GLint,
-	  [ "ctx->Color.ColorMask[RCOMP] ? 1 : 0",
-		"ctx->Color.ColorMask[GCOMP] ? 1 : 0",
-		"ctx->Color.ColorMask[BCOMP] ? 1 : 0",
-		"ctx->Color.ColorMask[ACOMP] ? 1 : 0" ], "", None ),
+	  [ "ctx->Color.ColorMask[0][RCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[0][GCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[0][BCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[0][ACOMP] ? 1 : 0" ], "", None ),
 	( "GL_CULL_FACE", GLboolean, ["ctx->Polygon.CullFlag"], "", None ),
 	( "GL_CULL_FACE_MODE", GLenum, ["ctx->Polygon.CullFaceMode"], "", None ),
 	( "GL_CURRENT_COLOR", GLfloatN,
@@ -154,7 +155,7 @@ StateVars = [
 	( "GL_CURRENT_RASTER_DISTANCE", GLfloat,
 	  ["ctx->Current.RasterDistance"], "", None ),
 	( "GL_CURRENT_RASTER_INDEX", GLfloat,
-	  ["ctx->Current.RasterIndex"], "", None ),
+	  ["1.0"], "", None ),
 	( "GL_CURRENT_RASTER_POSITION", GLfloat,
 	  ["ctx->Current.RasterPos[0]",
 	   "ctx->Current.RasterPos[1]",
@@ -166,20 +167,32 @@ StateVars = [
 	   "ctx->Current.RasterSecondaryColor[2]",
 	   "ctx->Current.RasterSecondaryColor[3]"], "", None ),
 	( "GL_CURRENT_RASTER_TEXTURE_COORDS", GLfloat,
-	  ["ctx->Current.RasterTexCoords[texUnit][0]",
-	   "ctx->Current.RasterTexCoords[texUnit][1]",
-	   "ctx->Current.RasterTexCoords[texUnit][2]",
-	   "ctx->Current.RasterTexCoords[texUnit][3]"],
-	  "const GLuint texUnit = ctx->Texture.CurrentUnit;", None ),
+	  ["ctx->Current.RasterTexCoords[unit][0]",
+	   "ctx->Current.RasterTexCoords[unit][1]",
+	   "ctx->Current.RasterTexCoords[unit][2]",
+	   "ctx->Current.RasterTexCoords[unit][3]"],
+	  """const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGet(raster tex coords, unit %u)", unit);
+            return;
+         }""",
+	  None ),
 	( "GL_CURRENT_RASTER_POSITION_VALID", GLboolean,
 	  ["ctx->Current.RasterPosValid"], "", None ),
 	( "GL_CURRENT_TEXTURE_COORDS", GLfloat,
-	  ["ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][0]",
-	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][1]",
-	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][2]",
-	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texUnit][3]"],
-	  """const GLuint texUnit = ctx->Texture.CurrentUnit;
-         FLUSH_CURRENT(ctx, 0);""", None ),
+	  ["ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][0]",
+	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][1]",
+	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][2]",
+	   "ctx->Current.Attrib[VERT_ATTRIB_TEX0 + unit][3]"],
+	  """const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGet(current tex coords, unit %u)", unit);
+            return;
+         }
+         FLUSH_CURRENT(ctx, 0);""",
+	  None ),
 	( "GL_DEPTH_BIAS", GLfloat, ["ctx->Pixel.DepthBias"], "", None ),
 	( "GL_DEPTH_BITS", GLint, ["ctx->DrawBuffer->Visual.depthBits"],
 	  "", None ),
@@ -218,7 +231,7 @@ StateVars = [
 	( "GL_INDEX_BITS", GLint, ["ctx->DrawBuffer->Visual.indexBits"],
 	  "", None ),
 	( "GL_INDEX_CLEAR_VALUE", GLint, ["ctx->Color.ClearIndex"], "", None ),
-	( "GL_INDEX_MODE", GLboolean, ["!ctx->DrawBuffer->Visual.rgbMode"],
+	( "GL_INDEX_MODE", GLboolean, ["GL_FALSE"],
 	  "", None ),
 	( "GL_INDEX_OFFSET", GLint, ["ctx->Pixel.IndexOffset"], "", None ),
 	( "GL_INDEX_SHIFT", GLint, ["ctx->Pixel.IndexShift"], "", None ),
@@ -397,7 +410,7 @@ StateVars = [
 	( "GL_RENDER_MODE", GLenum, ["ctx->RenderMode"], "", None ),
 	( "GL_RESCALE_NORMAL", GLboolean,
 	  ["ctx->Transform.RescaleNormals"], "", None ),
-	( "GL_RGBA_MODE", GLboolean, ["ctx->DrawBuffer->Visual.rgbMode"],
+	( "GL_RGBA_MODE", GLboolean, ["GL_TRUE"],
 	  "", None ),
 	( "GL_SCISSOR_BOX", GLint,
 	  ["ctx->Scissor.X",
@@ -457,9 +470,24 @@ StateVars = [
 	   "matrix[4]", "matrix[5]", "matrix[6]", "matrix[7]",
 	   "matrix[8]", "matrix[9]", "matrix[10]", "matrix[11]",
 	   "matrix[12]", "matrix[13]", "matrix[14]", "matrix[15]" ],
-	  "const GLfloat *matrix = ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Top->m;", None ),
+	  """const GLfloat *matrix;
+         const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glGet(texture matrix %u)",
+                        unit);
+            return;
+         }
+         matrix = ctx->TextureMatrixStack[unit].Top->m;""",
+	  None ),
 	( "GL_TEXTURE_STACK_DEPTH", GLint,
-	  ["ctx->TextureMatrixStack[ctx->Texture.CurrentUnit].Depth + 1"], "", None ),
+	  ["ctx->TextureMatrixStack[unit].Depth + 1"],
+	  """const GLuint unit = ctx->Texture.CurrentUnit;
+         if (unit >= ctx->Const.MaxTextureCoordUnits) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGet(texture stack depth, unit %u)", unit);
+            return;
+         }""",
+	  None ),
 	( "GL_UNPACK_ALIGNMENT", GLint, ["ctx->Unpack.Alignment"], "", None ),
 	( "GL_UNPACK_LSB_FIRST", GLboolean, ["ctx->Unpack.LsbFirst"], "", None ),
 	( "GL_UNPACK_ROW_LENGTH", GLint, ["ctx->Unpack.RowLength"], "", None ),
@@ -942,9 +970,9 @@ StateVars = [
 
 	# GL_OES_read_format
 	( "GL_IMPLEMENTATION_COLOR_READ_TYPE_OES", GLint,
-	  ["ctx->Const.ColorReadType"], "", ["OES_read_format"] ),
+	  ["_mesa_get_color_read_type(ctx)"], "", ["OES_read_format"] ),
 	( "GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES", GLint,
-	  ["ctx->Const.ColorReadFormat"], "", ["OES_read_format"] ),
+	  ["_mesa_get_color_read_format(ctx)"], "", ["OES_read_format"] ),
 
 	# GL_ATI_fragment_shader
 	( "GL_NUM_FRAGMENT_REGISTERS_ATI", GLint, ["6"], "", ["ATI_fragment_shader"] ),
@@ -1030,7 +1058,27 @@ StateVars = [
 	# GL_ARB_sync
 	( "GL_MAX_SERVER_WAIT_TIMEOUT", GLint64, ["ctx->Const.MaxServerWaitTimeout"], "",
 	  ["ARB_sync"] ),
+
+	# GL3
+	( "GL_NUM_EXTENSIONS", GLint, ["_mesa_get_extension_count(ctx)"], "", None ),
+	( "GL_MAJOR_VERSION", GLint, ["ctx->VersionMajor"], "", None ),
+	( "GL_MINOR_VERSION", GLint, ["ctx->VersionMinor"], "", None )
 ]
+
+
+# These are queried via glGetIntegetIndexdvEXT() or glGetIntegeri_v()
+IndexedStateVars = [
+	( "GL_BLEND", GLint, ["((ctx->Color.BlendEnabled >> index) & 1)"],
+	  "ctx->Const.MaxDrawBuffers", ["EXT_draw_buffers2"] ),
+	( "GL_COLOR_WRITEMASK", GLint,
+	  [ "ctx->Color.ColorMask[index][RCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[index][GCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[index][BCOMP] ? 1 : 0",
+		"ctx->Color.ColorMask[index][ACOMP] ? 1 : 0" ],
+	  "ctx->Const.MaxDrawBuffers", ["EXT_draw_buffers2"] ),
+	# XXX more to come...
+]
+
 
 
 def ConversionFunc(fromType, toType):
@@ -1059,7 +1107,7 @@ def ConversionFunc(fromType, toType):
 		return fromStr + "_TO_" + toStr
 
 
-def EmitGetFunction(stateVars, returnType):
+def EmitGetFunction(stateVars, returnType, indexed):
 	"""Emit the code to implement glGetBooleanv, glGetIntegerv or glGetFloatv."""
 	assert (returnType == GLboolean or
 			returnType == GLint or
@@ -1068,22 +1116,35 @@ def EmitGetFunction(stateVars, returnType):
 
 	strType = TypeStrings[returnType]
 	# Capitalize first letter of return type
-	if returnType == GLint:
-		function = "GetIntegerv"
-	elif returnType == GLboolean:
-		function = "GetBooleanv"
-	elif returnType == GLfloat:
-		function = "GetFloatv"
-	elif returnType == GLint64:
-		function = "GetInteger64v"
+	if indexed:
+		if returnType == GLint:
+			function = "GetIntegerIndexedv"
+		elif returnType == GLboolean:
+			function = "GetBooleanIndexedv"
+		elif returnType == GLint64:
+			function = "GetInteger64Indexedv"
+		else:
+			function = "Foo"
 	else:
-		abort()
+		if returnType == GLint:
+			function = "GetIntegerv"
+		elif returnType == GLboolean:
+			function = "GetBooleanv"
+		elif returnType == GLfloat:
+			function = "GetFloatv"
+		elif returnType == GLint64:
+			function = "GetInteger64v"
+		else:
+			sys.exit(1)
 
 	if returnType == GLint64:
 		print "#if FEATURE_ARB_sync"
 
 	print "void GLAPIENTRY"
-	print "_mesa_%s( GLenum pname, %s *params )" % (function, strType)
+	if indexed:
+		print "_mesa_%s( GLenum pname, GLuint index, %s *params )" % (function, strType)
+	else:
+		print "_mesa_%s( GLenum pname, %s *params )" % (function, strType)
 	print "{"
 	print "   GET_CURRENT_CONTEXT(ctx);"
 	print "   ASSERT_OUTSIDE_BEGIN_END(ctx);"
@@ -1094,13 +1155,20 @@ def EmitGetFunction(stateVars, returnType):
 	print "   if (ctx->NewState)"
 	print "      _mesa_update_state(ctx);"
 	print ""
-	print "   if (ctx->Driver.%s &&" % function
-	print "       ctx->Driver.%s(ctx, pname, params))" % function
-	print "      return;"
-	print ""
+	if indexed == 0:
+		print "   if (ctx->Driver.%s &&" % function
+		print "       ctx->Driver.%s(ctx, pname, params))" % function
+		print "      return;"
+		print ""
 	print "   switch (pname) {"
 
-	for (name, varType, state, optionalCode, extensions) in stateVars:
+	for state in stateVars:
+		if indexed:
+			(name, varType, state, indexMax, extensions) = state
+			optionalCode = 0
+		else:
+			(name, varType, state, optionalCode, extensions) = state
+			indexMax = 0
 		print "      case " + name + ":"
 		if extensions:
 			if len(extensions) == 1:
@@ -1116,6 +1184,11 @@ def EmitGetFunction(stateVars, returnType):
 				assert len(extensions) == 4
 				print ('         CHECK_EXT4(%s, %s, %s, %s, "%s");' %
 					   (extensions[0], extensions[1], extensions[2], extensions[3], function))
+		if indexMax:
+			print ('         if (index >= %s) {' % indexMax)
+			print ('            _mesa_error(ctx, GL_INVALID_VALUE, "gl%s(index=%%u), index", pname);' % function)
+			print ('         }')
+
 		conversion = ConversionFunc(varType, returnType)
 		if optionalCode:
 			optionalCode = string.replace(optionalCode, "CONVERSION", conversion);	
@@ -1153,12 +1226,12 @@ def EmitHeader():
 #include "context.h"
 #include "enable.h"
 #include "extensions.h"
-#include "fbobject.h"
 #include "get.h"
 #include "macros.h"
 #include "mtypes.h"
 #include "state.h"
 #include "texcompress.h"
+#include "framebuffer.h"
 
 
 #define FLOAT_TO_BOOLEAN(X)   ( (X) ? GL_TRUE : GL_FALSE )
@@ -1248,9 +1321,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
 EmitHeader()
 # XXX Maybe sort the StateVars list
-EmitGetFunction(StateVars, GLboolean)
-EmitGetFunction(StateVars, GLfloat)
-EmitGetFunction(StateVars, GLint)
-EmitGetFunction(StateVars, GLint64)
+EmitGetFunction(StateVars, GLboolean, 0)
+EmitGetFunction(StateVars, GLfloat, 0)
+EmitGetFunction(StateVars, GLint, 0)
+EmitGetFunction(StateVars, GLint64, 0)
 EmitGetDoublev()
+
+EmitGetFunction(IndexedStateVars, GLboolean, 1)
+EmitGetFunction(IndexedStateVars, GLint, 1)
+EmitGetFunction(IndexedStateVars, GLint64, 1)
 

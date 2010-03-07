@@ -36,7 +36,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_state.h"
 
 #include "st_context.h"
@@ -123,6 +123,16 @@ st_no_flush_pipe_buffer_write(struct st_context *st,
 			      const void * data)
 {
    pipe_buffer_write(st->pipe->screen, buf, offset, size, data);
+}
+
+static INLINE void
+st_no_flush_pipe_buffer_write_nooverlap(struct st_context *st,
+                                        struct pipe_buffer *buf,
+                                        unsigned int offset,
+                                        unsigned int size,
+                                        const void * data)
+{
+   pipe_buffer_write_nooverlap(st->pipe->screen, buf, offset, size, data);
 }
 
 static INLINE void

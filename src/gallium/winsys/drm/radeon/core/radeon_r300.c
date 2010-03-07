@@ -21,11 +21,16 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "radeon_r300.h"
+#include "radeon_buffer.h"
+
+#include "radeon_cs_gem.h"
 
 static void radeon_set_flush_cb(struct radeon_winsys *winsys,
                                 void (*flush_cb)(void *),
                                 void *data)
 {
+    winsys->priv->flush_cb = flush_cb;
+    winsys->priv->flush_data = data;
     radeon_cs_space_set_flush(winsys->priv->cs, flush_cb, data);
 }
 
@@ -79,9 +84,13 @@ static void radeon_write_cs_reloc(struct radeon_winsys* winsys,
                                   uint32_t flags)
 {
     int retval = 0;
+    struct radeon_pipe_buffer* radeon_buffer =
+        (struct radeon_pipe_buffer*)pbuffer;
 
-    retval = radeon_cs_write_reloc(winsys->priv->cs,
-            ((struct radeon_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
+    assert(!radeon_buffer->pb);
+
+    retval = radeon_cs_write_reloc(winsys->priv->cs, radeon_buffer->bo,
+                                   rd, wd, flags);
 
     if (retval) {
         debug_printf("radeon: Relocation of %p (%d, %d, %d) failed!\n",
@@ -105,6 +114,11 @@ static void radeon_end_cs(struct radeon_winsys* winsys,
 static void radeon_flush_cs(struct radeon_winsys* winsys)
 {
     int retval;
+
+    /* Don't flush a zero-sized CS. */
+    if (!winsys->priv->cs->cdw) {
+        return;
+    }
 
     /* Emit the CS. */
     retval = radeon_cs_emit(winsys->priv->cs);

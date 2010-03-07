@@ -47,8 +47,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
 
-#include "tnl/t_pipeline.h"
-
 #include "drirenderbuffer.h"
 
 
@@ -572,7 +570,7 @@ static void r128UpdateClipping( GLcontext *ctx )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    if ( rmesa->driDrawable ) {
-      __DRIdrawablePrivate *drawable = rmesa->driDrawable;
+      __DRIdrawable *drawable = rmesa->driDrawable;
       int x1 = 0;
       int y1 = 0;
       int x2 = drawable->w - 1;
@@ -702,10 +700,10 @@ static void r128UpdateMasks( GLcontext *ctx )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    GLuint mask = r128PackColor( rmesa->r128Screen->cpp,
-				ctx->Color.ColorMask[RCOMP],
-				ctx->Color.ColorMask[GCOMP],
-				ctx->Color.ColorMask[BCOMP],
-				ctx->Color.ColorMask[ACOMP] );
+				ctx->Color.ColorMask[0][RCOMP],
+				ctx->Color.ColorMask[0][GCOMP],
+				ctx->Color.ColorMask[0][BCOMP],
+				ctx->Color.ColorMask[0][ACOMP] );
 
    if ( rmesa->setup.plane_3d_mask_c != mask ) {
       rmesa->setup.plane_3d_mask_c = mask;
@@ -1409,13 +1407,11 @@ void r128DDInitStateFuncs( GLcontext *ctx )
 {
    ctx->Driver.UpdateState		= r128DDInvalidateState;
 
-   ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearColor		= r128DDClearColor;
    ctx->Driver.ClearStencil		= r128DDClearStencil;
    ctx->Driver.DrawBuffer		= r128DDDrawBuffer;
    ctx->Driver.ReadBuffer		= r128DDReadBuffer;
 
-   ctx->Driver.IndexMask		= NULL;
    ctx->Driver.ColorMask		= r128DDColorMask;
    ctx->Driver.AlphaFunc		= r128DDAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= r128DDBlendEquationSeparate;

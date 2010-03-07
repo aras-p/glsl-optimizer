@@ -177,14 +177,40 @@ AddHead(const char *displayName, const char *name)
    /* save the info for this head */
    {
       struct head *h = &Heads[NumHeads];
+      const char * tmp;
+
+      if (strlen(name) + 1 > sizeof(h->DisplayName)) {
+         Error(displayName, "name string overflow");
+         return NULL;
+      }
       strcpy(h->DisplayName, name);
+
       h->Dpy = dpy;
       h->Win = win;
       h->Context = ctx;
       h->Angle = 0.0;
-      strcpy(h->Version, (char *) glGetString(GL_VERSION));
-      strcpy(h->Vendor, (char *) glGetString(GL_VENDOR));
-      strcpy(h->Renderer, (char *) glGetString(GL_RENDERER));
+
+      tmp = (char *) glGetString(GL_VERSION);
+      if (strlen(tmp) + 1 > sizeof(h->Version)) {
+         Error(displayName, "GL_VERSION string overflow");
+         return NULL;
+      }
+      strcpy(h->Version, tmp);
+
+      tmp = (char *) glGetString(GL_VENDOR);
+      if (strlen(tmp) + 1 > sizeof(h->Vendor)) {
+         Error(displayName, "GL_VENDOR string overflow");
+         return NULL;
+      }
+      strcpy(h->Vendor, tmp);
+
+      tmp = (char *) glGetString(GL_RENDERER);
+      if (strlen(tmp) + 1 > sizeof(h->Renderer)) {
+         Error(displayName, "GL_RENDERER string overflow");
+         return NULL;
+      }
+      strcpy(h->Renderer, tmp);
+
       NumHeads++;
       return &Heads[NumHeads-1];
    }
@@ -374,6 +400,8 @@ main(int argc, char *argv[])
       }
       if (n < 1)
          n = 1;
+      if (n > MAX_HEADS)
+         n = MAX_HEADS;
 
       printf("%d windows\n", n);
       for (i = 0; i < n; i++) {

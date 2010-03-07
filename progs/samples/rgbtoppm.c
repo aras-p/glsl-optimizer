@@ -3,6 +3,7 @@
 
 /* texload is a simplistic routine for reading an SGI .rgb image file. */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
@@ -25,7 +26,7 @@ typedef struct _ImageRec {
     int *rowSize;
 } ImageRec;
 
-void
+static void
 rgbtorgb(unsigned char *r,unsigned char *g,unsigned char *b,unsigned char *l,int n) {
     while(n--) {
         l[0] = r[0];
@@ -72,6 +73,7 @@ static ImageRec *ImageOpen(char *fileName)
     ImageRec *image;
     int swapFlag;
     int x;
+    int result;
 
     endianTest.testWord = 1;
     if (endianTest.testByte[0] == 1) {
@@ -86,13 +88,20 @@ static ImageRec *ImageOpen(char *fileName)
         exit(1);
     }
     if ((image->file = fopen(fileName, "rb")) == NULL) {
-	return NULL;
+        free(image);
+        return NULL;
     }
 
-    fread(image, 1, 12, image->file);
+    result = fread(image, 1, 12, image->file);
+    assert(result == 12);
 
     if (swapFlag) {
-        ConvertShort(&image->imagic, 6);
+        ConvertShort(&image->imagic, 1);
+        ConvertShort(&image->type, 1);
+        ConvertShort(&image->dim, 1);
+        ConvertShort(&image->xsize, 1);
+        ConvertShort(&image->ysize, 1);
+        ConvertShort(&image->zsize, 1);
     }
 
     image->tmp = (unsigned char *)malloc(image->xsize*256);
@@ -111,8 +120,10 @@ static ImageRec *ImageOpen(char *fileName)
         }
         image->rleEnd = 512 + (2 * x);
         fseek(image->file, 512, SEEK_SET);
-        fread(image->rowStart, 1, x, image->file);
-        fread(image->rowSize, 1, x, image->file);
+        result = fread(image->rowStart, 1, x, image->file);
+        assert(result == x);
+        result = fread(image->rowSize, 1, x, image->file);
+        assert(result == x);
         if (swapFlag) {
             ConvertUint(image->rowStart, x/(int) sizeof(unsigned));
             ConvertUint((unsigned *)image->rowSize, x/(int) sizeof(int));
@@ -132,11 +143,13 @@ static void
 ImageGetRow(ImageRec *image, unsigned char *buf, int y, int z) {
     unsigned char *iPtr, *oPtr, pixel;
     int count;
+    int result;
 
     if ((image->type & 0xFF00) == 0x0100) {
         fseek(image->file, (long) image->rowStart[y+z*image->ysize], SEEK_SET);
-        fread(image->tmp, 1, (unsigned int)image->rowSize[y+z*image->ysize],
-              image->file);
+        result = fread(image->tmp, 1, (unsigned int)image->rowSize[y+z*image->ysize],
+                       image->file);
+        assert(result == (unsigned int)image->rowSize[y+z*image->ysize]);
 
         iPtr = image->tmp;
         oPtr = buf;
@@ -160,11 +173,13 @@ ImageGetRow(ImageRec *image, unsigned char *buf, int y, int z) {
     } else {
         fseek(image->file, 512+(y*image->xsize)+(z*image->xsize*image->ysize),
               SEEK_SET);
-        fread(buf, 1, image->xsize, image->file);
+        result = fread(buf, 1, image->xsize, image->file);
+        assert(result == image->xsize);
     }
 }
 
-GLubyte *
+#if 0
+static GLubyte *
 read_alpha_texture(char *name, int *width, int *height)
 {
     unsigned char *base, *lptr;
@@ -193,8 +208,9 @@ read_alpha_texture(char *name, int *width, int *height)
 
     return (unsigned char *) base;
 }
+#endif
 
-GLubyte *
+static GLubyte *
 read_rgb_texture(char *name, int *width, int *height)
 {
     unsigned char *base, *ptr;
@@ -224,6 +240,7 @@ read_rgb_texture(char *name, int *width, int *height)
       if (gbuf) free(gbuf);
       if (bbuf) free(bbuf);
       if (abuf) free(abuf);
+      ImageClose(image); 
       return NULL;
     }
     ptr = base;
@@ -254,7 +271,8 @@ read_rgb_texture(char *name, int *width, int *height)
 
 int main(int argc, char **argv)
 {
-	int width, height;
+	int width = 0;
+	int height = 0;
 	GLubyte *data;
         char buff[32];
         int n;

@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
+
+<OpenGLAPI>
+
+<!-- This file defines the functions that are needed by Mesa.  It
+     makes sure the generated glapi headers are compatible with Mesa.
+     It mainly consists of missing functions and aliases in OpenGL ES.
+-->
+
+<xi:include href="es_COMPAT.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- except for those defined by es_COMPAT.xml, these are also needed -->
+<category name="compat">
+    <!-- OpenGL 1.0 -->
+    <function name="TexGenf" alias="TexGenfOES" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLfloat"/>
+        <glx rop="117"/>
+    </function>
+
+    <function name="TexGenfv" alias="TexGenfvOES" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLfloat *" variable_param="pname"/>
+        <glx rop="118"/>
+    </function>
+
+    <function name="TexGeni" alias="TexGeniOES" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="param" type="GLint"/>
+        <glx rop="119"/>
+    </function>
+
+    <function name="TexGeniv" alias="TexGenivOES" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="const GLint *" variable_param="pname"/>
+        <glx rop="120"/>
+    </function>
+
+    <function name="GetTexGenfv" alias="GetTexGenfvOES" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *" output="true" variable_param="pname"/>
+        <glx sop="133"/>
+    </function>
+
+    <function name="GetTexGeniv" alias="GetTexGenivOES" static_dispatch="false">
+        <param name="coord" type="GLenum"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx sop="134"/>
+    </function>
+
+    <!-- OpenGL 1.2 -->
+    <function name="BlendColor" offset="336" static_dispatch="false">
+        <param name="red" type="GLclampf"/>
+        <param name="green" type="GLclampf"/>
+        <param name="blue" type="GLclampf"/>
+        <param name="alpha" type="GLclampf"/>
+        <glx rop="4096"/>
+    </function>
+
+    <function name="BlendEquation" alias="BlendEquationOES" static_dispatch="false">
+        <param name="mode" type="GLenum"/>
+        <glx rop="4097"/>
+    </function>
+
+    <function name="TexImage3D" offset="371" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="internalformat" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="depth" type="GLsizei"/>
+        <param name="border" type="GLint"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <glx rop="4114" large="true"/>
+    </function>
+
+    <function name="TexSubImage3D" offset="372" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="zoffset" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <param name="depth" type="GLsizei"/>
+        <param name="format" type="GLenum"/>
+        <param name="type" type="GLenum"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
+        <glx rop="4115" large="true"/>
+    </function>
+
+    <function name="CopyTexSubImage3D" offset="373" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="level" type="GLint"/>
+        <param name="xoffset" type="GLint"/>
+        <param name="yoffset" type="GLint"/>
+        <param name="zoffset" type="GLint"/>
+        <param name="x" type="GLint"/>
+        <param name="y" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+        <glx rop="4123"/>
+    </function>
+
+    <!-- GL_ARB_multitexture -->
+    <function name="ActiveTextureARB" alias="ActiveTexture" static_dispatch="false">
+        <param name="texture" type="GLenum"/>
+        <glx rop="197"/>
+    </function>
+
+    <function name="ClientActiveTextureARB" alias="ClientActiveTexture" static_dispatch="false">
+        <param name="texture" type="GLenum"/>
+        <glx handcode="true"/>
+    </function>
+
+    <function name="MultiTexCoord4fARB" alias="MultiTexCoord4f" vectorequiv="MultiTexCoord4fvARB" static_dispatch="false">
+        <param name="target" type="GLenum"/>
+        <param name="s" type="GLfloat"/>
+        <param name="t" type="GLfloat"/>
+        <param name="r" type="GLfloat"/>
+        <param name="q" type="GLfloat"/>
+    </function>
+</category>
+
+</OpenGLAPI>

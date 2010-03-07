@@ -101,7 +101,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "ADDR",
    "IMM",
    "LOOP",
-   "PRED"
+   "PRED",
+   "SV"
 };
 
 static const char *interpolate_names[] =
@@ -120,12 +121,17 @@ static const char *semantic_names[] =
    "PSIZE",
    "GENERIC",
    "NORMAL",
-   "FACE"
+   "FACE",
+   "EDGEFLAG",
+   "PRIM_ID",
+   "INSTANCEID"
 };
 
 static const char *immediate_type_names[] =
 {
-   "FLT32"
+   "FLT32",
+   "UINT32",
+   "INT32"
 };
 
 static const char *swizzle_names[] =
@@ -149,22 +155,85 @@ static const char *texture_names[] =
    "SHADOWRECT"
 };
 
+static const char *property_names[] =
+{
+   "GS_INPUT_PRIMITIVE",
+   "GS_OUTPUT_PRIMITIVE",
+   "GS_MAX_OUTPUT_VERTICES",
+   "FS_COORD_ORIGIN",
+   "FS_COORD_PIXEL_CENTER"
+};
+
+static const char *primitive_names[] =
+{
+   "POINTS",
+   "LINES",
+   "LINE_LOOP",
+   "LINE_STRIP",
+   "TRIANGLES",
+   "TRIANGLE_STRIP",
+   "TRIANGLE_FAN",
+   "QUADS",
+   "QUAD_STRIP",
+   "POLYGON"
+};
+
+static const char *fs_coord_origin_names[] =
+{
+   "UPPER_LEFT",
+   "LOWER_LEFT"
+};
+
+static const char *fs_coord_pixel_center_names[] =
+{
+   "HALF_INTEGER",
+   "INTEGER"
+};
+
 
 static void
-_dump_register(
+_dump_register_dst(
    struct dump_ctx *ctx,
    uint file,
-   int first,
-   int last )
+   int index)
 {
    ENM( file, file_names );
+
    CHR( '[' );
-   SID( first );
-   if (first != last) {
-      TXT( ".." );
-      SID( last );
-   }
+   SID( index );
    CHR( ']' );
+}
+
+
+static void
+_dump_register_src(
+   struct dump_ctx *ctx,
+   const struct tgsi_full_src_register *src )
+{
+   ENM(src->Register.File, file_names);
+   if (src->Register.Dimension) {
+      CHR('[');
+      SID(src->Dimension.Index);
+      CHR(']');
+   }
+   if (src->Register.Indirect) {
+      CHR( '[' );
+      ENM( src->Indirect.File, file_names );
+      CHR( '[' );
+      SID( src->Indirect.Index );
+      TXT( "]." );
+      ENM( src->Indirect.SwizzleX, swizzle_names );
+      if (src->Register.Index != 0) {
+         if (src->Register.Index > 0)
+            CHR( '+' );
+         SID( src->Register.Index );
+      }
+      CHR( ']' );
+   } else {
+      CHR( '[' );
+      SID( src->Register.Index );
+      CHR( ']' );
+   }
 }
 
 static void
@@ -221,11 +290,28 @@ iter_declaration(
 
    TXT( "DCL " );
 
-   _dump_register(
-      ctx,
-      decl->Declaration.File,
-      decl->Range.First,
-      decl->Range.Last );
+   ENM(decl->Declaration.File, file_names);
+
+   /* all geometry shader inputs are two dimensional */
+   if (decl->Declaration.File == TGSI_FILE_INPUT &&
+       iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
+      TXT("[]");
+   }
+
+   if (decl->Declaration.Dimension) {
+      CHR('[');
+      SID(decl->Dim.Index2D);
+      CHR(']');
+   }
+
+   CHR('[');
+   SID(decl->Range.First);
+   if (decl->Range.First != decl->Range.Last) {
+      TXT("..");
+      SID(decl->Range.Last);
+   }
+   CHR(']');
+
    _dump_writemask(
       ctx,
       decl->Declaration.UsageMask );
@@ -256,6 +342,22 @@ iter_declaration(
       TXT( ", INVARIANT" );
    }
 
+   if (decl->Declaration.CylindricalWrap) {
+      TXT(", CYLWRAP_");
+      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_X) {
+         CHR('X');
+      }
+      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Y) {
+         CHR('Y');
+      }
+      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_Z) {
+         CHR('Z');
+      }
+      if (decl->Declaration.CylindricalWrap & TGSI_CYLINDRICAL_WRAP_W) {
+         CHR('W');
+      }
+   }
+
    EOL();
 
    return TRUE;
@@ -270,6 +372,56 @@ tgsi_dump_declaration(
    ctx.printf = dump_ctx_printf;
 
    iter_declaration( &ctx.iter, (struct tgsi_full_declaration *)decl );
+}
+
+static boolean
+iter_property(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_property *prop )
+{
+   int i;
+   struct dump_ctx *ctx = (struct dump_ctx *)iter;
+
+   assert(Elements(property_names) == TGSI_PROPERTY_COUNT);
+
+   TXT( "PROPERTY " );
+   ENM(prop->Property.PropertyName, property_names);
+
+   if (prop->Property.NrTokens > 1)
+      TXT(" ");
+
+   for (i = 0; i < prop->Property.NrTokens - 1; ++i) {
+      switch (prop->Property.PropertyName) {
+      case TGSI_PROPERTY_GS_INPUT_PRIM:
+      case TGSI_PROPERTY_GS_OUTPUT_PRIM:
+         ENM(prop->u[i].Data, primitive_names);
+         break;
+      case TGSI_PROPERTY_FS_COORD_ORIGIN:
+         ENM(prop->u[i].Data, fs_coord_origin_names);
+         break;
+      case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
+         ENM(prop->u[i].Data, fs_coord_pixel_center_names);
+         break;
+      default:
+         SID( prop->u[i].Data );
+         break;
+      }
+      if (i < prop->Property.NrTokens - 2)
+         TXT( ", " );
+   }
+   EOL();
+
+   return TRUE;
+}
+
+void tgsi_dump_property(
+   const struct tgsi_full_property *prop )
+{
+   struct dump_ctx ctx;
+
+   ctx.printf = dump_ctx_printf;
+
+   iter_property( &ctx.iter, (struct tgsi_full_property *)prop );
 }
 
 static boolean
@@ -291,6 +443,12 @@ iter_immediate(
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
          FLT( imm->u[i].Float );
+         break;
+      case TGSI_IMM_UINT32:
+         UID(imm->u[i].Uint);
+         break;
+      case TGSI_IMM_INT32:
+         SID(imm->u[i].Int);
          break;
       default:
          assert( 0 );
@@ -368,10 +526,9 @@ iter_instruction(
             dst->Indirect.SwizzleX );
       }
       else {
-         _dump_register(
+         _dump_register_dst(
             ctx,
             dst->Register.File,
-            dst->Register.Index,
             dst->Register.Index );
       }
       _dump_writemask( ctx, dst->Register.WriteMask );
@@ -387,26 +544,11 @@ iter_instruction(
       CHR( ' ' );
 
       if (src->Register.Negate)
-         TXT( "-(" );
+         CHR( '-' );
       if (src->Register.Absolute)
          CHR( '|' );
 
-      if (src->Register.Indirect) {
-         _dump_register_ind(
-            ctx,
-            src->Register.File,
-            src->Register.Index,
-            src->Indirect.File,
-            src->Indirect.Index,
-            src->Indirect.SwizzleX );
-      }
-      else {
-         _dump_register(
-            ctx,
-            src->Register.File,
-            src->Register.Index,
-            src->Register.Index );
-      }
+      _dump_register_src(ctx, src);
 
       if (src->Register.SwizzleX != TGSI_SWIZZLE_X ||
           src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
@@ -421,8 +563,6 @@ iter_instruction(
 
       if (src->Register.Absolute)
          CHR( '|' );
-      if (src->Register.Negate)
-         CHR( ')' );
 
       first_reg = FALSE;
    }
@@ -492,6 +632,7 @@ tgsi_dump(
    ctx.iter.iterate_instruction = iter_instruction;
    ctx.iter.iterate_declaration = iter_declaration;
    ctx.iter.iterate_immediate = iter_immediate;
+   ctx.iter.iterate_property = iter_property;
    ctx.iter.epilog = NULL;
 
    ctx.instno = 0;
@@ -546,6 +687,7 @@ tgsi_dump_str(
    ctx.base.iter.iterate_instruction = iter_instruction;
    ctx.base.iter.iterate_declaration = iter_declaration;
    ctx.base.iter.iterate_immediate = iter_immediate;
+   ctx.base.iter.iterate_property = iter_property;
    ctx.base.iter.epilog = NULL;
 
    ctx.base.instno = 0;

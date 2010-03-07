@@ -52,7 +52,7 @@
 
 GLint fogMode;
 
-void
+static void
 selectFog(int mode)
 {
     switch(mode) {
@@ -73,7 +73,7 @@ selectFog(int mode)
 /*  Initialize z-buffer, projection matrix, light source,
  *  and lighting model.  Do not specify a material property here.
  */
-void
+static void
 myinit(void)
 {
     GLfloat position[] =
@@ -106,7 +106,7 @@ myinit(void)
     }
 }
 
-void
+static void
 renderRedTeapot(GLfloat x, GLfloat y, GLfloat z)
 {
     float mat[4];
@@ -133,7 +133,7 @@ renderRedTeapot(GLfloat x, GLfloat y, GLfloat z)
 
 /*  display() draws 5 teapots at different z positions.
  */
-void
+static void
 display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -145,7 +145,7 @@ display(void)
     glFlush();
 }
 
-void
+static void
 myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);

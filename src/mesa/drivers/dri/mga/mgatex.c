@@ -40,10 +40,7 @@
 #include "mgacontext.h"
 #include "mgatex.h"
 #include "mgaregs.h"
-#include "mgatris.h"
 #include "mgaioctl.h"
-
-#include "swrast/swrast.h"
 
 #include "xmlpool.h"
 
@@ -332,7 +329,7 @@ mgaAllocTexObj( struct gl_texture_object *tObj )
 
       mgaSetTexWrapping( t, tObj->WrapS, tObj->WrapT );
       mgaSetTexFilter( t, tObj->MinFilter, tObj->MagFilter );
-      mgaSetTexBorderColor( t, tObj->BorderColor );
+      mgaSetTexBorderColor( t, tObj->BorderColor.f );
    }
 
    return( t );
@@ -461,7 +458,7 @@ mgaTexParameter( GLcontext *ctx, GLenum target,
 
    case GL_TEXTURE_BORDER_COLOR:
       FLUSH_BATCH(mmesa);
-      mgaSetTexBorderColor(t, tObj->BorderColor);
+      mgaSetTexBorderColor(t, tObj->BorderColor.f);
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

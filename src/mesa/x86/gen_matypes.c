@@ -61,21 +61,11 @@ do {									\
    printf( "\n" );							\
 } while (0)
 
-#if defined(__BEOS__) || defined(__HAIKU__) || defined(_LP64)
 #define OFFSET( s, t, m )						\
-   printf( "#define %s\t%ld\n", s, offsetof( t, m ) );
-#else
-#define OFFSET( s, t, m )						\
-   printf( "#define %s\t%d\n", s, offsetof( t, m ) );
-#endif
+   printf( "#define %s\t%lu\n", s, (unsigned long) offsetof( t, m ) );
 
-#if defined(__BEOS__) || defined(__HAIKU__) || defined(_LP64)
 #define SIZEOF( s, t )							\
-   printf( "#define %s\t%ld\n", s, sizeof(t) );
-#else
-#define SIZEOF( s, t )							\
-   printf( "#define %s\t%d\n", s, sizeof(t) );
-#endif
+   printf( "#define %s\t%lu\n", s, (unsigned long) sizeof(t) );
 
 #define DEFINE( s, d )							\
    printf( "#define %s\t0x%x\n", s, d );

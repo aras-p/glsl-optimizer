@@ -51,6 +51,7 @@ struct brw_vs_compile {
    struct brw_compile func;
    struct brw_vs_prog_key key;
    struct brw_vs_prog_data prog_data;
+   int8_t constant_map[1024];
 
    struct brw_vertex_program *vp;
 
@@ -81,6 +82,8 @@ struct brw_vs_compile {
       GLint index;
       struct brw_reg reg;
    } current_const[3];
+
+   GLboolean needs_stack;
 };
 
 void brw_vs_emit( struct brw_vs_compile *c );

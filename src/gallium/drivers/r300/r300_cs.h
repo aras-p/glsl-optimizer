@@ -52,7 +52,7 @@
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
     struct radeon_winsys* cs_winsys = cs_context_copy->winsys; \
-    int cs_count = 0;
+    int cs_count = 0; (void) cs_count;
 
 #define CHECK_CS(size) \
     assert(cs_winsys->check_cs(cs_winsys, (size)))
@@ -113,6 +113,15 @@
     cs_winsys->write_cs_dword(cs_winsys, offset); \
     cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
     cs_count -= 3; \
+} while (0)
+
+#define OUT_CS_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
+    DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, " \
+            "domains (%d, %d, %d)\n", \
+        bo, rd, wd, flags); \
+    assert(bo); \
+    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
+    cs_count -= 2; \
 } while (0)
 
 #define END_CS do { \

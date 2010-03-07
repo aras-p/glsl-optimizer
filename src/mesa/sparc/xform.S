@@ -17,7 +17,7 @@
 
 #include "sparc_matrix.h"
 
-#if defined(SVR4) || defined(__SVR4) || defined(__svr4__)
+#if defined(SVR4) || defined(__SVR4) || defined(__svr4__) || defined(__arch64__)
 	/* Solaris requires this for 64-bit. */
         .register %g2, #scratch
         .register %g3, #scratch

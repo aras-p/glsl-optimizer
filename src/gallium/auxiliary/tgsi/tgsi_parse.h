@@ -58,6 +58,7 @@ struct tgsi_full_declaration
 {
    struct tgsi_declaration Declaration;
    struct tgsi_declaration_range Range;
+   struct tgsi_declaration_dimension Dim;
    struct tgsi_declaration_semantic Semantic;
 };
 
@@ -65,6 +66,12 @@ struct tgsi_full_immediate
 {
    struct tgsi_immediate   Immediate;
    union tgsi_immediate_data u[4];
+};
+
+struct tgsi_full_property
+{
+   struct tgsi_property   Property;
+   struct tgsi_property_data u[8];
 };
 
 #define TGSI_FULL_MAX_DST_REGISTERS 2
@@ -86,6 +93,7 @@ union tgsi_full_token
    struct tgsi_full_declaration  FullDeclaration;
    struct tgsi_full_immediate    FullImmediate;
    struct tgsi_full_instruction  FullInstruction;
+   struct tgsi_full_property     FullProperty;
 };
 
 struct tgsi_parse_context
@@ -121,6 +129,10 @@ tgsi_num_tokens(const struct tgsi_token *tokens);
 
 struct tgsi_token *
 tgsi_dup_tokens(const struct tgsi_token *tokens);
+
+struct tgsi_token *
+tgsi_alloc_tokens(unsigned num_tokens);
+
 
 #if defined __cplusplus
 }

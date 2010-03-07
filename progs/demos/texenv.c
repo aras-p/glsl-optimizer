@@ -765,6 +765,7 @@ int main( int argc, char *argv[] )
    GLboolean info = GL_FALSE;
    int i;
 
+   glutInitWindowSize( winWidth, winHeight );
    glutInit( &argc, argv );
 
    for ( i = 1 ; i < argc ; i++ ) {
@@ -786,8 +787,6 @@ int main( int argc, char *argv[] )
       glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE );
    }
 
-   glutInitWindowSize( winWidth, winHeight );
-   glutInitWindowPosition( 0, 0 );
    Win = glutCreateWindow( "Texture Environment Test" );
 
    initialize();

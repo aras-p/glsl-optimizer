@@ -23,6 +23,7 @@
 import os
 import os.path
 import sys
+import SCons.Util
 
 import common
 
@@ -32,11 +33,14 @@ import common
 default_statetrackers = 'mesa'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_drivers = 'softpipe,failover,svga,i915,trace,identity,llvmpipe'
+	default_drivers = 'softpipe,failover,svga,i915,i965,trace,identity,llvmpipe'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
-	default_drivers = 'softpipe,svga,i915,trace,identity'
+	default_drivers = 'softpipe,svga,i915,i965,trace,identity'
 	default_winsys = 'all'
+elif common.default_platform in ('embedded',):
+	default_drivers = 'softpipe,llvmpipe'
+	default_winsys = 'xlib'
 else:
 	default_drivers = 'all'
 	default_winsys = 'all'
@@ -46,9 +50,9 @@ common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa', 'python', 'xorg']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'svga', 'i915', 'cell', 'trace', 'r300', 'identity', 'llvmpipe']))
+                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
-                     ['xlib', 'vmware', 'intel', 'gdi', 'radeon']))
+                     ['xlib', 'vmware', 'intel', 'i965', 'gdi', 'radeon']))
 
 opts.Add(EnumVariable('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
 
@@ -59,19 +63,36 @@ env = Environment(
 	ENV = os.environ,
 )
 
+if os.environ.has_key('CC'):
+	env['CC'] = os.environ['CC']
+if os.environ.has_key('CFLAGS'):
+	env['CCFLAGS'] += SCons.Util.CLVar(os.environ['CFLAGS'])
+if os.environ.has_key('CXX'):
+	env['CXX'] = os.environ['CXX']
+if os.environ.has_key('CXXFLAGS'):
+	env['CXXFLAGS'] += SCons.Util.CLVar(os.environ['CXXFLAGS'])
+if os.environ.has_key('LDFLAGS'):
+	env['LINKFLAGS'] += SCons.Util.CLVar(os.environ['LDFLAGS'])
+
 Help(opts.GenerateHelpText(env))
 
 # replicate options values in local variables
 debug = env['debug']
 dri = env['dri']
-llvm = env['llvm']
 machine = env['machine']
 platform = env['platform']
+drawllvm = 'llvmpipe' in env['drivers']
+
+# LLVM support in the Draw module
+if drawllvm:
+        env.Tool('llvm')
+        if not env.has_key('LLVM_VERSION'):
+           drawllvm = False
 
 # derived options
 x86 = machine == 'x86'
 ppc = machine == 'ppc'
-gcc = platform in ('linux', 'freebsd', 'darwin')
+gcc = platform in ('linux', 'freebsd', 'darwin', 'embedded')
 msvc = platform in ('windows', 'winddk')
 
 Export([
@@ -79,7 +100,7 @@ Export([
 	'x86', 
 	'ppc', 
 	'dri', 
-	'llvm',
+	'drawllvm',
 	'platform',
 	'gcc',
 	'msvc',
@@ -89,6 +110,10 @@ Export([
 #######################################################################
 # Environment setup
 
+# Always build trace driver
+if 'trace' not in env['drivers']:
+    env['drivers'].append('trace')
+
 # Includes
 env.Append(CPPPATH = [
 	'#/include',
@@ -97,6 +122,25 @@ env.Append(CPPPATH = [
 	'#/src/gallium/drivers',
 ])
 
+if env['msvc']:
+    env.Append(CPPPATH = ['#include/c99'])
+
+# Embedded
+if platform == 'embedded':
+	env.Append(CPPDEFINES = [
+		'_POSIX_SOURCE',
+		('_POSIX_C_SOURCE', '199309L'), 
+		'_SVID_SOURCE',
+		'_BSD_SOURCE', 
+		'_GNU_SOURCE',
+		
+		'PTHREADS',
+	])
+	env.Append(LIBS = [
+		'm',
+		'pthread',
+		'dl',
+	])
 
 # Posix
 if platform in ('posix', 'linux', 'freebsd', 'darwin'):
@@ -110,6 +154,8 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'PTHREADS',
 		'HAVE_POSIX_MEMALIGN',
 	])
+	if platform == 'darwin':
+		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	env.Append(CPPPATH = ['/usr/X11R6/include'])
 	env.Append(LIBPATH = ['/usr/X11R6/lib'])
 	env.Append(LIBS = [
@@ -118,7 +164,6 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'expat',
 		'dl',
 	])
-
 
 # DRI
 if dri:
@@ -130,13 +175,9 @@ if dri:
 		'GLX_INDIRECT_RENDERING',
 	])
 
-# LLVM
-if llvm:
-	# See also http://www.scons.org/wiki/UsingPkgConfig
-	env.ParseConfig('llvm-config --cflags --ldflags --libs backend bitreader engine instrumentation interpreter ipo')
-	env.Append(CPPDEFINES = ['MESA_LLVM'])
-        # Force C++ linkage
-	env['LINK'] = env['CXX']
+# LLVM support in the Draw module
+if drawllvm:
+    env.Append(CPPDEFINES = ['DRAW_LLVM'])
 
 # libGL
 if platform in ('linux', 'freebsd', 'darwin'):
@@ -160,8 +201,38 @@ Export('env')
 # TODO: Build several variants at the same time?
 # http://www.scons.org/wiki/SimultaneousVariantBuilds
 
+if env['platform'] != common.default_platform:
+    # GLSL code has to be built twice -- one for the host OS, another for the target OS...
+
+    host_env = Environment(
+        # options are ignored
+        # default tool is used
+        tools = ['default', 'custom'],
+        toolpath = ['#scons'],	
+        ENV = os.environ,
+    )
+
+    host_env['platform'] = common.default_platform
+    host_env['machine'] = common.default_machine
+    host_env['debug'] = env['debug']
+
+    SConscript(
+        'src/glsl/SConscript',
+        variant_dir = os.path.join(env['build'], 'host'),
+        duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+        exports={'env':host_env},
+    )
+
 SConscript(
 	'src/SConscript',
 	variant_dir = env['build'],
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+)
+
+env.Default('src')
+
+SConscript(
+    'progs/SConscript',
+    variant_dir = os.path.join('progs', env['build']),
+    duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )

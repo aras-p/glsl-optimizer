@@ -9,12 +9,8 @@ LIBNAME = r200_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
 
-ifeq ($(USING_EGL), 1)
-EGL_SOURCES = server/radeon_egl.c
-endif
-
 ifeq ($(RADEON_LDFLAGS),)
-CS_SOURCES = radeon_cs_space_drm.c
+CS_SOURCES = radeon_cs_space_drm.c radeon_bo.c radeon_cs.c
 endif
 
 RADEON_COMMON_SOURCES = \
@@ -29,8 +25,8 @@ RADEON_COMMON_SOURCES = \
 	radeon_mipmap_tree.c \
 	radeon_queryobj.c \
 	radeon_span.c \
-	radeon_texture.c
-
+	radeon_texture.c \
+	radeon_tex_copy.c
 
 DRIVER_SOURCES = r200_context.c \
 		 r200_ioctl.c \
@@ -46,6 +42,7 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_sanity.c \
 		 r200_fragshader.c \
 		 r200_vertprog.c \
+		 r200_blit.c \
 		 radeon_screen.c \
 		 $(EGL_SOURCES) \
 		 $(RADEON_COMMON_SOURCES) \
@@ -55,7 +52,7 @@ C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
 X86_SOURCES = 
 
-DRIVER_DEFINES = -DRADEON_R200 -Wall
+DRIVER_DEFINES = -DRADEON_R200
 
 DRI_LIB_DEPS += $(RADEON_LDFLAGS)
 

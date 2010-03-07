@@ -26,12 +26,12 @@
  **************************************************************************/
 
 
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
 #include "lp_winsys.h"
 #include "lp_screen.h"
-#include "lp_texture.h"
 #include "lp_buffer.h"
 
 
@@ -108,32 +108,6 @@ llvmpipe_user_buffer_create(struct pipe_screen *screen,
 }
 
 
-static void
-llvmpipe_fence_reference(struct pipe_screen *screen,
-                         struct pipe_fence_handle **ptr,
-                         struct pipe_fence_handle *fence)
-{
-}
-
-
-static int
-llvmpipe_fence_signalled(struct pipe_screen *screen,
-                         struct pipe_fence_handle *fence,
-                         unsigned flag)
-{
-   return 0;
-}
-
-
-static int
-llvmpipe_fence_finish(struct pipe_screen *screen,
-                      struct pipe_fence_handle *fence,
-                      unsigned flag)
-{
-   return 0;
-}
-
-
 void
 llvmpipe_init_screen_buffer_funcs(struct pipe_screen *screen)
 {
@@ -142,9 +116,4 @@ llvmpipe_init_screen_buffer_funcs(struct pipe_screen *screen)
    screen->buffer_map = llvmpipe_buffer_map;
    screen->buffer_unmap = llvmpipe_buffer_unmap;
    screen->buffer_destroy = llvmpipe_buffer_destroy;
-
-   screen->fence_reference = llvmpipe_fence_reference;
-   screen->fence_signalled = llvmpipe_fence_signalled;
-   screen->fence_finish = llvmpipe_fence_finish;
-
 }

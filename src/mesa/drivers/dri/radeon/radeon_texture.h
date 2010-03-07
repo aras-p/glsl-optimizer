@@ -44,7 +44,6 @@ void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
 void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
 void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj);
 int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *texObj);
-GLuint radeon_face_for_target(GLenum target);
 
 gl_format radeonChooseTextureFormat_mesa(GLcontext * ctx,
                                          GLint internalFormat,
@@ -125,5 +124,15 @@ void radeonGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 				 GLvoid *pixels,
 				 struct gl_texture_object *texObj,
 				 struct gl_texture_image *texImage);
+
+void radeonCopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
+			GLenum internalFormat,
+			GLint x, GLint y, GLsizei width, GLsizei height,
+			GLint border);
+
+void radeonCopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
+			GLint xoffset, GLint yoffset,
+			GLint x, GLint y,
+			GLsizei width, GLsizei height);
 
 #endif

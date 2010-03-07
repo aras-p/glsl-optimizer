@@ -36,7 +36,6 @@
 #include "intel_tex_layout.h"
 #include "intel_context.h"
 #include "main/macros.h"
-#include "intel_chipset.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -49,7 +48,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
-      if (IS_IGDNG(intel->intelScreen->deviceID)) {
+      if (intel->is_ironlake) {
           GLuint align_h = 2, align_w = 4;
           GLuint level;
           GLuint x = 0;

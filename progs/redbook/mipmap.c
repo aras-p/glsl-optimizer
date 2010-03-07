@@ -54,7 +54,7 @@ GLubyte mipmapImage4[4][4][3];
 GLubyte mipmapImage2[2][2][3];
 GLubyte mipmapImage1[1][1][3];
 
-void makeImages(void)
+static void makeImages(void)
 {
     int i, j;
 
@@ -98,7 +98,7 @@ void makeImages(void)
     mipmapImage1[0][0][2] = 255;
 }
 
-void myinit(void)
+static void myinit(void)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -128,7 +128,7 @@ void myinit(void)
     glEnable(GL_TEXTURE_2D);
 }
 
-void display(void)
+static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBegin(GL_QUADS);
@@ -140,7 +140,7 @@ void display(void)
     glFlush();
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);

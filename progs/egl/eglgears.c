@@ -374,7 +374,8 @@ main(int argc, char *argv[])
 	EGLint screenAttribs[10];
 	EGLModeMESA mode[MAX_MODES];
 	EGLScreenMESA screen;
-	EGLint count, chosenMode;
+	EGLint count;
+	EGLint chosenMode = 0;
 	GLboolean printInfo = GL_FALSE;
 	EGLint width = 0, height = 0;
 	
@@ -425,6 +426,7 @@ main(int argc, char *argv[])
 	}
 	printf("eglgears: Using screen mode/size %d: %d x %d\n", chosenMode, width, height);
 
+	eglBindAPI(EGL_OPENGL_API);
 	ctx = eglCreateContext(d, configs[0], EGL_NO_CONTEXT, NULL);
 	if (ctx == EGL_NO_CONTEXT) {
 		printf("eglgears: failed to create context\n");

@@ -98,20 +98,32 @@ struct sh_defi
 #define PS_TEXTURETYPE_CUBE      SVGA3DSAMP_CUBE
 #define PS_TEXTURETYPE_VOLUME    SVGA3DSAMP_VOLUME
 
-struct ps_sampleinfo
+struct sh_sampleinfo
 {
    unsigned unused:27;
    unsigned texture_type:4;
    unsigned is_reg:1;
 };
 
-struct vs_semantic
+struct sh_semantic
 {
-   unsigned usage:5;
-   unsigned unused1:11;
+   unsigned usage:4;
+   unsigned unused1:12;
    unsigned usage_index:4;
-   unsigned unused2:12;
+   unsigned unused2:11;
+   unsigned is_reg:1;
 };
+
+#define SH_WRITEMASK_0              0x1
+#define SH_WRITEMASK_1              0x2
+#define SH_WRITEMASK_2              0x4
+#define SH_WRITEMASK_3              0x8
+#define SH_WRITEMASK_ALL            0xf
+
+#define SH_DSTMOD_NONE              0x0
+#define SH_DSTMOD_SATURATE          0x1
+#define SH_DSTMOD_PARTIALPRECISION  0x2
+#define SH_DSTMOD_MSAMPCENTROID     0x4
 
 struct sh_dstreg
 {
@@ -136,16 +148,11 @@ struct sh_dcl
 {
    struct sh_op op;
    union {
-      struct {
-         struct ps_sampleinfo sampleinfo;
-      } ps;
-      struct {
-         struct vs_semantic semantic;
-      } vs;
+      struct sh_sampleinfo sampleinfo;
+      struct sh_semantic semantic;
    } u;
    struct sh_dstreg reg;
 };
-
 
 struct sh_srcreg
 {

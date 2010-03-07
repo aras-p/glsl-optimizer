@@ -51,7 +51,7 @@ static float rotAngle = 0.;
  *  blending, hint, and line width.  Print out implementation
  *  specific info on line width granularity and width.
  */
-void init(void)
+static void init(void)
 {
    GLfloat values[2];
    glGetFloatv (GL_LINE_WIDTH_GRANULARITY, values);
@@ -72,7 +72,7 @@ void init(void)
 
 /* Draw 2 diagonal lines to form an X
  */
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT);
 
@@ -97,7 +97,7 @@ void display(void)
    glFlush();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, w, h);
    glMatrixMode(GL_PROJECTION);
@@ -113,7 +113,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 'r':

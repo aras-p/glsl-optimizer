@@ -1,15 +1,4 @@
-Import('env')
-
-if not env['GLUT']:
-    Return()
-
-env = env.Clone()
-
-env.Prepend(CPPPATH = [
-	'../util',
-])
-
-env.Prepend(LIBS = ['$GLUT_LIB'])
+Import('*')
 
 progs = [
     'fp-tri',
@@ -17,14 +6,13 @@ progs = [
     'tri-depth2',
     'tri-depthwrite',
     'tri-depthwrite2',
-    'tri-inv',
     'tri-param',
     'tri-tex',
     'point-position',
 ]
 
 for prog in progs:
-    env.Program(
+    progs_env.Program(
         target = prog,
         source = [prog + '.c'],
     )

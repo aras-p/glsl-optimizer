@@ -32,7 +32,7 @@
 #include "paint.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_draw_quad.h"
 
 VGPath vgCreatePath(VGint pathFormat,
@@ -164,8 +164,7 @@ void vgAppendPathData(VGPath dstPath,
       return;
    }
    for (i = 0; i < numSegments; ++i) {
-      if (pathSegments[i] < VG_CLOSE_PATH ||
-          pathSegments[i] > VG_LCWARC_TO_REL) {
+      if (pathSegments[i] > VG_LCWARC_TO_REL) {
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
          return;
       }

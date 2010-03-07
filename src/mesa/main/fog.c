@@ -34,15 +34,20 @@
 void GLAPIENTRY
 _mesa_Fogf(GLenum pname, GLfloat param)
 {
-   _mesa_Fogfv(pname, &param);
+   GLfloat fparam[4];
+   fparam[0] = param;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
+   _mesa_Fogfv(pname, fparam);
 }
 
 
 void GLAPIENTRY
 _mesa_Fogi(GLenum pname, GLint param )
 {
-   GLfloat fparam = (GLfloat) param;
-   _mesa_Fogfv(pname, &fparam);
+   GLfloat fparam[4];
+   fparam[0] = (GLfloat) param;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
+   _mesa_Fogfv(pname, fparam);
 }
 
 

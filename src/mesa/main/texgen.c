@@ -37,7 +37,7 @@
 #include "main/texgen.h"
 #include "main/texstate.h"
 #include "math/m_matrix.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_texgen
@@ -186,8 +186,10 @@ _mesa_TexGeniv(GLenum coord, GLenum pname, const GLint *params )
 static void GLAPIENTRY
 _mesa_TexGend(GLenum coord, GLenum pname, GLdouble param )
 {
-   GLfloat p = (GLfloat) param;
-   _mesa_TexGenfv( coord, pname, &p );
+   GLfloat p[4];
+   p[0] = (GLfloat) param;
+   p[1] = p[2] = p[3] = 0.0F;
+   _mesa_TexGenfv( coord, pname, p );
 }
 
 
@@ -208,7 +210,7 @@ _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params )
 }
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param )
 {
    GLfloat p[4];
@@ -267,7 +269,7 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 
 
 
-static void GLAPIENTRY
+void GLAPIENTRY
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
    struct gl_texture_unit *texUnit;

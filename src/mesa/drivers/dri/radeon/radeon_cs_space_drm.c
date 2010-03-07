@@ -29,6 +29,8 @@
 #include <errno.h>
 #include <stdlib.h>
 #include "radeon_bocs_wrapper.h"
+#include "radeon_bo_int_drm.h"
+#include "radeon_cs_int_drm.h"
 
 struct rad_sizes {
     int32_t op_read;
@@ -39,7 +41,7 @@ struct rad_sizes {
 static inline int radeon_cs_setup_bo(struct radeon_cs_space_check *sc, struct rad_sizes *sizes)
 {
     uint32_t read_domains, write_domain;
-    struct radeon_bo *bo;
+    struct radeon_bo_int *bo;
 
     bo = sc->bo;
     sc->new_accounted = 0;
@@ -47,7 +49,7 @@ static inline int radeon_cs_setup_bo(struct radeon_cs_space_check *sc, struct ra
     write_domain = sc->write_domain;
 
     /* legacy needs a static check */
-    if (radeon_bo_is_static(bo)) {
+    if (radeon_bo_is_static((struct radeon_bo *)sc->bo)) {
 	bo->space_accounted = sc->new_accounted = (read_domains << 16) | write_domain;
 	return 0;
     }
@@ -100,11 +102,11 @@ static inline int radeon_cs_setup_bo(struct radeon_cs_space_check *sc, struct ra
     return 0;
 }
 
-static int radeon_cs_do_space_check(struct radeon_cs *cs, struct radeon_cs_space_check *new_tmp)
+static int radeon_cs_do_space_check(struct radeon_cs_int *cs, struct radeon_cs_space_check *new_tmp)
 {
     struct radeon_cs_manager *csm = cs->csm;
     int i;
-    struct radeon_bo *bo;
+    struct radeon_bo_int *bo;
     struct rad_sizes sizes;
     int ret;
 
@@ -158,25 +160,28 @@ static int radeon_cs_do_space_check(struct radeon_cs *cs, struct radeon_cs_space
 
 void radeon_cs_space_add_persistent_bo(struct radeon_cs *cs, struct radeon_bo *bo, uint32_t read_domains, uint32_t write_domain)
 {
+    struct radeon_cs_int *csi = (struct radeon_cs_int *)cs;
+    struct radeon_bo_int *boi = (struct radeon_bo_int *)bo;
     int i;
-    for (i = 0; i < cs->bo_count; i++) {
-	if (cs->bos[i].bo == bo &&
-	    cs->bos[i].read_domains == read_domains &&
-	    cs->bos[i].write_domain == write_domain)
+    for (i = 0; i < csi->bo_count; i++) {
+	if (csi->bos[i].bo == boi &&
+	    csi->bos[i].read_domains == read_domains &&
+	    csi->bos[i].write_domain == write_domain)
 	    return;
     }
     radeon_bo_ref(bo);
-    i = cs->bo_count;
-    cs->bos[i].bo = bo;
-    cs->bos[i].read_domains = read_domains;
-    cs->bos[i].write_domain = write_domain;
-    cs->bos[i].new_accounted = 0;
-    cs->bo_count++;
+    i = csi->bo_count;
+    csi->bos[i].bo = boi;
+    csi->bos[i].read_domains = read_domains;
+    csi->bos[i].write_domain = write_domain;
+    csi->bos[i].new_accounted = 0;
+    csi->bo_count++;
 
-    assert(cs->bo_count < MAX_SPACE_BOS);
+    assert(csi->bo_count < MAX_SPACE_BOS);
 }
 
-static int radeon_cs_check_space_internal(struct radeon_cs *cs, struct radeon_cs_space_check *tmp_bo)
+static int radeon_cs_check_space_internal(struct radeon_cs_int *cs,
+					  struct radeon_cs_space_check *tmp_bo)
 {
     int ret;
     int flushed = 0;
@@ -198,37 +203,42 @@ again:
 int radeon_cs_space_check_with_bo(struct radeon_cs *cs,
 				  struct radeon_bo *bo,
 				  uint32_t read_domains, uint32_t write_domain)
-{									
+{
+    struct radeon_cs_int *csi = (struct radeon_cs_int *)cs;
+    struct radeon_bo_int *boi = (struct radeon_bo_int *)bo;
     struct radeon_cs_space_check temp_bo;
+    
     int ret = 0;
 
     if (bo) {
-	temp_bo.bo = bo;
+	temp_bo.bo = boi;
 	temp_bo.read_domains = read_domains;
 	temp_bo.write_domain = write_domain;
 	temp_bo.new_accounted = 0;
     }
 
-    ret = radeon_cs_check_space_internal(cs, bo ? &temp_bo : NULL);
+    ret = radeon_cs_check_space_internal(csi, bo ? &temp_bo : NULL);
     return ret;
 }
 
 int radeon_cs_space_check(struct radeon_cs *cs)
 {
-    return radeon_cs_check_space_internal(cs, NULL);
+    struct radeon_cs_int *csi = (struct radeon_cs_int *)cs;
+    return radeon_cs_check_space_internal(csi, NULL);
 }
 
 void radeon_cs_space_reset_bos(struct radeon_cs *cs)
 {
+    struct radeon_cs_int *csi = (struct radeon_cs_int *)cs;
     int i;
-    for (i = 0; i < cs->bo_count; i++) {
-	radeon_bo_unref(cs->bos[i].bo);
-	cs->bos[i].bo = NULL;
-	cs->bos[i].read_domains = 0;
-	cs->bos[i].write_domain = 0;
-	cs->bos[i].new_accounted = 0;
+    for (i = 0; i < csi->bo_count; i++) {
+	radeon_bo_unref((struct radeon_bo *)csi->bos[i].bo);
+	csi->bos[i].bo = NULL;
+	csi->bos[i].read_domains = 0;
+	csi->bos[i].write_domain = 0;
+	csi->bos[i].new_accounted = 0;
     }
-    cs->bo_count = 0;
+    csi->bo_count = 0;
 }
 
 

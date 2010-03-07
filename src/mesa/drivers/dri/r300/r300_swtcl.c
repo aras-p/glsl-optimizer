@@ -215,7 +215,7 @@ void r300ChooseSwtclVertexFormat(GLcontext *ctx, GLuint *_InputsRead,  GLuint *_
 
 	if (first_free_tex >= ctx->Const.MaxTextureUnits) {
 		fprintf(stderr, "\tout of free texcoords to write fog coordinate\n");
-		_mesa_exit(-1);
+		exit(-1);
 	}
 
 	R300_NEWPRIM(rmesa);
@@ -364,7 +364,6 @@ static struct {
 #define DO_POINTS    1
 #define DO_FULL_QUAD 1
 
-#define HAVE_RGBA   1
 #define HAVE_SPEC   1
 #define HAVE_BACK_COLORS  0
 #define HAVE_HW_FLATSHADE 1

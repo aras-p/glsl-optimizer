@@ -49,18 +49,28 @@
 typedef void (PIPE_CDECL *run_func)( struct translate *translate,
                                      unsigned start,
                                      unsigned count,
-                                     void *output_buffer );
+                                     unsigned instance_id,
+                                     void *output_buffer);
 
 typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
                                           const unsigned *elts,
                                           unsigned count,
-                                          void *output_buffer );
+                                          unsigned instance_id,
+                                          void *output_buffer);
 
 struct translate_buffer {
    const void *base_ptr;
    unsigned stride;
-   void *ptr;                   /* updated per vertex */
 };
+
+struct translate_buffer_varient {
+   unsigned buffer_index;
+   unsigned instance_divisor;
+   void *ptr;                    /* updated either per vertex or per instance */
+};
+
+
+#define ELEMENT_BUFFER_INSTANCE_ID  1001
 
 
 struct translate_sse {
@@ -80,6 +90,16 @@ struct translate_sse {
 
    struct translate_buffer buffer[PIPE_MAX_ATTRIBS];
    unsigned nr_buffers;
+
+   /* Multiple buffer varients can map to a single buffer. */
+   struct translate_buffer_varient buffer_varient[PIPE_MAX_ATTRIBS];
+   unsigned nr_buffer_varients;
+
+   /* Multiple elements can map to a single buffer varient. */
+   unsigned element_to_buffer_varient[PIPE_MAX_ATTRIBS];
+
+   boolean use_instancing;
+   unsigned instance_id;
 
    run_func      gen_run;
    run_elts_func gen_run_elts;
@@ -316,7 +336,7 @@ static boolean translate_attr( struct translate_sse *p,
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       emit_load_R32G32B32A32(p, dataXMM, srcECX);
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       emit_load_R8G8B8A8_UNORM(p, dataXMM, srcECX);
       emit_swizzle(p, dataXMM, dataXMM, SHUF(Z,Y,X,W));
       break;
@@ -340,7 +360,7 @@ static boolean translate_attr( struct translate_sse *p,
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       emit_store_R32G32B32A32(p, dstEAX, dataXMM);
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       emit_swizzle(p, dataXMM, dataXMM, SHUF(Z,Y,X,W));
       emit_store_R8G8B8A8_UNORM(p, dstEAX, dataXMM);
       break;
@@ -359,32 +379,61 @@ static boolean init_inputs( struct translate_sse *p,
                             boolean linear )
 {
    unsigned i;
-   if (linear) {
-      for (i = 0; i < p->nr_buffers; i++) {
-         struct x86_reg buf_stride   = x86_make_disp(p->machine_EDX,
-                                                     get_offset(p, &p->buffer[i].stride));
-         struct x86_reg buf_ptr      = x86_make_disp(p->machine_EDX,
-                                                     get_offset(p, &p->buffer[i].ptr));
-         struct x86_reg buf_base_ptr = x86_make_disp(p->machine_EDX,
-                                                     get_offset(p, &p->buffer[i].base_ptr));
-         struct x86_reg elt = p->idx_EBX;
-         struct x86_reg tmp = p->tmp_EAX;
+   struct x86_reg instance_id = x86_make_disp(p->machine_EDX,
+                                              get_offset(p, &p->instance_id));
 
+   for (i = 0; i < p->nr_buffer_varients; i++) {
+      struct translate_buffer_varient *varient = &p->buffer_varient[i];
+      struct translate_buffer *buffer = &p->buffer[varient->buffer_index];
+
+      if (linear || varient->instance_divisor) {
+         struct x86_reg buf_stride   = x86_make_disp(p->machine_EDX,
+                                                     get_offset(p, &buffer->stride));
+         struct x86_reg buf_ptr      = x86_make_disp(p->machine_EDX,
+                                                     get_offset(p, &varient->ptr));
+         struct x86_reg buf_base_ptr = x86_make_disp(p->machine_EDX,
+                                                     get_offset(p, &buffer->base_ptr));
+         struct x86_reg elt = p->idx_EBX;
+         struct x86_reg tmp_EAX = p->tmp_EAX;
 
          /* Calculate pointer to first attrib:
+          *   base_ptr + stride * index, where index depends on instance divisor
           */
-         x86_mov(p->func, tmp, buf_stride);
-         x86_imul(p->func, tmp, elt);
-         x86_add(p->func, tmp, buf_base_ptr);
+         if (varient->instance_divisor) {
+            /* Our index is instance ID divided by instance divisor.
+             */
+            x86_mov(p->func, tmp_EAX, instance_id);
+
+            if (varient->instance_divisor != 1) {
+               struct x86_reg tmp_EDX = p->machine_EDX;
+               struct x86_reg tmp_ECX = p->outbuf_ECX;
+
+               /* TODO: Add x86_shr() to rtasm and use it whenever
+                *       instance divisor is power of two.
+                */
+
+               x86_push(p->func, tmp_EDX);
+               x86_push(p->func, tmp_ECX);
+               x86_xor(p->func, tmp_EDX, tmp_EDX);
+               x86_mov_reg_imm(p->func, tmp_ECX, varient->instance_divisor);
+               x86_div(p->func, tmp_ECX);    /* EAX = EDX:EAX / ECX */
+               x86_pop(p->func, tmp_ECX);
+               x86_pop(p->func, tmp_EDX);
+            }
+         } else {
+            x86_mov(p->func, tmp_EAX, elt);
+         }
+         x86_imul(p->func, tmp_EAX, buf_stride);
+         x86_add(p->func, tmp_EAX, buf_base_ptr);
 
 
          /* In the linear case, keep the buffer pointer instead of the
           * index number.
           */
-         if (p->nr_buffers == 1) 
-            x86_mov( p->func, elt, tmp );
+         if (linear && p->nr_buffer_varients == 1)
+            x86_mov(p->func, elt, tmp_EAX);
          else
-            x86_mov( p->func, buf_ptr, tmp );
+            x86_mov(p->func, buf_ptr, tmp_EAX);
       }
    }
 
@@ -394,31 +443,36 @@ static boolean init_inputs( struct translate_sse *p,
 
 static struct x86_reg get_buffer_ptr( struct translate_sse *p,
                                       boolean linear,
-                                      unsigned buf_idx,
+                                      unsigned var_idx,
                                       struct x86_reg elt )
 {
-   if (linear && p->nr_buffers == 1) {
+   if (var_idx == ELEMENT_BUFFER_INSTANCE_ID) {
+      return x86_make_disp(p->machine_EDX,
+                           get_offset(p, &p->instance_id));
+   }
+   if (linear && p->nr_buffer_varients == 1) {
       return p->idx_EBX;
    }
-   else if (linear) {
+   else if (linear || p->buffer_varient[var_idx].instance_divisor) {
       struct x86_reg ptr = p->tmp_EAX;
       struct x86_reg buf_ptr = 
          x86_make_disp(p->machine_EDX, 
-                       get_offset(p, &p->buffer[buf_idx].ptr));
+                       get_offset(p, &p->buffer_varient[var_idx].ptr));
       
       x86_mov(p->func, ptr, buf_ptr);
       return ptr;
    }
    else {
       struct x86_reg ptr = p->tmp_EAX;
+      const struct translate_buffer_varient *varient = &p->buffer_varient[var_idx];
 
       struct x86_reg buf_stride = 
          x86_make_disp(p->machine_EDX, 
-                       get_offset(p, &p->buffer[buf_idx].stride));
+                       get_offset(p, &p->buffer[varient->buffer_index].stride));
 
       struct x86_reg buf_base_ptr = 
          x86_make_disp(p->machine_EDX, 
-                       get_offset(p, &p->buffer[buf_idx].base_ptr));
+                       get_offset(p, &p->buffer[varient->buffer_index].base_ptr));
 
 
 
@@ -436,28 +490,33 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
 static boolean incr_inputs( struct translate_sse *p, 
                             boolean linear )
 {
-   if (linear && p->nr_buffers == 1) {
+   if (linear && p->nr_buffer_varients == 1) {
       struct x86_reg stride = x86_make_disp(p->machine_EDX,
                                             get_offset(p, &p->buffer[0].stride));
 
-      x86_add(p->func, p->idx_EBX, stride);
-      sse_prefetchnta(p->func, x86_make_disp(p->idx_EBX, 192));
+      if (p->buffer_varient[0].instance_divisor == 0) {
+         x86_add(p->func, p->idx_EBX, stride);
+         sse_prefetchnta(p->func, x86_make_disp(p->idx_EBX, 192));
+      }
    }
    else if (linear) {
       unsigned i;
 
       /* Is this worthwhile??
        */
-      for (i = 0; i < p->nr_buffers; i++) {
+      for (i = 0; i < p->nr_buffer_varients; i++) {
+         struct translate_buffer_varient *varient = &p->buffer_varient[i];
          struct x86_reg buf_ptr = x86_make_disp(p->machine_EDX,
-                                                get_offset(p, &p->buffer[i].ptr));
+                                                get_offset(p, &varient->ptr));
          struct x86_reg buf_stride = x86_make_disp(p->machine_EDX,
-                                                   get_offset(p, &p->buffer[i].stride));
+                                                   get_offset(p, &p->buffer[varient->buffer_index].stride));
 
-         x86_mov(p->func, p->tmp_EAX, buf_ptr);
-         x86_add(p->func, p->tmp_EAX, buf_stride);
-         if (i == 0) sse_prefetchnta(p->func, x86_make_disp(p->tmp_EAX, 192));
-         x86_mov(p->func, buf_ptr, p->tmp_EAX);
+         if (varient->instance_divisor == 0) {
+            x86_mov(p->func, p->tmp_EAX, buf_ptr);
+            x86_add(p->func, p->tmp_EAX, buf_stride);
+            if (i == 0) sse_prefetchnta(p->func, x86_make_disp(p->tmp_EAX, 192));
+            x86_mov(p->func, buf_ptr, p->tmp_EAX);
+         }
       }
    } 
    else {
@@ -514,7 +573,18 @@ static boolean build_vertex_emit( struct translate_sse *p,
    x86_mov(p->func, p->machine_EDX, x86_fn_arg(p->func, 1));
    x86_mov(p->func, p->idx_EBX, x86_fn_arg(p->func, 2));
    x86_mov(p->func, p->count_ESI, x86_fn_arg(p->func, 3));
-   x86_mov(p->func, p->outbuf_ECX, x86_fn_arg(p->func, 4));
+   x86_mov(p->func, p->outbuf_ECX, x86_fn_arg(p->func, 5));
+
+   /* Load instance ID.
+    */
+   if (p->use_instancing) {
+      x86_mov(p->func,
+              p->tmp_EAX,
+              x86_fn_arg(p->func, 4));
+      x86_mov(p->func,
+              x86_make_disp(p->machine_EDX, get_offset(p, &p->instance_id)),
+              p->tmp_EAX);
+   }
 
    /* Get vertex count, compare to zero
     */
@@ -531,17 +601,18 @@ static boolean build_vertex_emit( struct translate_sse *p,
    label = x86_get_label(p->func);
    {
       struct x86_reg elt = linear ? p->idx_EBX : x86_deref(p->idx_EBX);
-      int last_vb = -1;
+      int last_varient = -1;
       struct x86_reg vb;
 
       for (j = 0; j < p->translate.key.nr_elements; j++) {
          const struct translate_element *a = &p->translate.key.element[j];
+         unsigned varient = p->element_to_buffer_varient[j];
 
          /* Figure out source pointer address:
           */
-         if (a->input_buffer != last_vb) {
-            last_vb = a->input_buffer;
-            vb = get_buffer_ptr(p, linear, a->input_buffer, elt);
+         if (varient != last_varient) {
+            last_varient = varient;
+            vb = get_buffer_ptr(p, linear, varient, elt);
          }
          
          if (!translate_attr( p, a, 
@@ -624,6 +695,7 @@ static void translate_sse_release( struct translate *translate )
 static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
 			      const unsigned *elts,
 			      unsigned count,
+                              unsigned instance_id,
 			      void *output_buffer )
 {
    struct translate_sse *p = (struct translate_sse *)translate;
@@ -631,12 +703,14 @@ static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
    p->gen_run_elts( translate,
 		    elts,
 		    count,
-		    output_buffer );
+                    instance_id,
+                    output_buffer);
 }
 
 static void PIPE_CDECL translate_sse_run( struct translate *translate,
 			 unsigned start,
 			 unsigned count,
+                         unsigned instance_id,
 			 void *output_buffer )
 {
    struct translate_sse *p = (struct translate_sse *)translate;
@@ -644,7 +718,8 @@ static void PIPE_CDECL translate_sse_run( struct translate *translate,
    p->gen_run( translate,
 	       start,
 	       count,
-	       output_buffer );
+               instance_id,
+               output_buffer);
 }
 
 
@@ -666,8 +741,37 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    p->translate.run_elts = translate_sse_run_elts;
    p->translate.run = translate_sse_run;
 
-   for (i = 0; i < key->nr_elements; i++) 
-      p->nr_buffers = MAX2( p->nr_buffers, key->element[i].input_buffer + 1 );
+   for (i = 0; i < key->nr_elements; i++) {
+      if (key->element[i].type == TRANSLATE_ELEMENT_NORMAL) {
+         unsigned j;
+
+         p->nr_buffers = MAX2(p->nr_buffers, key->element[i].input_buffer + 1);
+
+         if (key->element[i].instance_divisor) {
+            p->use_instancing = TRUE;
+         }
+
+         /*
+          * Map vertex element to vertex buffer varient.
+          */
+         for (j = 0; j < p->nr_buffer_varients; j++) {
+            if (p->buffer_varient[j].buffer_index == key->element[i].input_buffer &&
+                p->buffer_varient[j].instance_divisor == key->element[i].instance_divisor) {
+               break;
+            }
+         }
+         if (j == p->nr_buffer_varients) {
+            p->buffer_varient[j].buffer_index = key->element[i].input_buffer;
+            p->buffer_varient[j].instance_divisor = key->element[i].instance_divisor;
+            p->nr_buffer_varients++;
+         }
+         p->element_to_buffer_varient[i] = j;
+      } else {
+         assert(key->element[i].type == TRANSLATE_ELEMENT_INSTANCE_ID);
+
+         p->element_to_buffer_varient[i] = ELEMENT_BUFFER_INSTANCE_ID;
+      }
+   }
 
    if (0) debug_printf("nr_buffers: %d\n", p->nr_buffers);
 

@@ -1,8 +1,14 @@
-# src/mesa/Makefile
+# src/gallium/state_trackers/vega/Makefile
 
 TOP = ../../../..
 include $(TOP)/configs/current
-GALLIUM = $(TOP)
+
+VG_LIB = OpenVG
+VG_LIB_NAME = lib$(VG_LIB).so
+
+VG_MAJOR = 1
+VG_MINOR = 0
+VG_TINY = 0
 
 ### Lists of source files, included by Makefiles
 
@@ -34,95 +40,54 @@ VG_SOURCES = \
            shader.c \
            shaders_cache.c
 
+VG_OBJECTS = $(VG_SOURCES:.c=.o)
 
-### All the core C sources
-
-ALL_SOURCES = \
-        $(VG_SOURCES)
-
-
-### Object files
-VG_OBJECTS = \
-	$(VG_SOURCES:.c=.o)
+VG_LIBS = $(GALLIUM_AUXILIARIES) -lm
 
 ### Include directories
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
-	-I$(GALLIUM)/include \
-	-I$(GALLIUM)/src/gallium/include \
-	-I$(GALLIUM)/src/gallium/auxiliary
+	-I$(TOP)/src/gallium/include \
+	-I$(TOP)/src/gallium/auxiliary
 
-VG_LIB = OpenVG
-VG_LIB_NAME = lib$(VG_LIB).so
-
-VG_MAJOR = 1
-VG_MINOR = 0
-VG_TINY = 0
-
-GALLIUM_LIBS = \
-	$(GALLIUM)/src/gallium/auxiliary/pipebuffer/libpipebuffer.a \
-	$(GALLIUM)/src/gallium/auxiliary/sct/libsct.a \
-	$(GALLIUM)/src/gallium/auxiliary/draw/libdraw.a \
-	$(GALLIUM)/src/gallium/auxiliary/rtasm/librtasm.a \
-	$(GALLIUM)/src/gallium/auxiliary/translate/libtranslate.a \
-	$(GALLIUM)/src/gallium/auxiliary/cso_cache/libcso_cache.a \
-	$(GALLIUM)/src/gallium/auxiliary/util/libutil.a \
-	$(GALLIUM)/src/gallium/auxiliary/tgsi/libtgsi.a
-
-.SUFFIXES : .cpp
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(DEFINES) $(CFLAGS) $< -o $@
 
-.cpp.o:
-	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
-
-.S.o:
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
-
-
-default: depend subdirs $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME)
+default: depend $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME)
 
 # Make the OpenVG library
-$(TOP)/$(LIB_DIR)/$(VG_LIB_NAME): $(VG_OBJECTS) $(GALLIUM_LIBS)
-	$(TOP)/bin/mklib -o $(VG_LIB) \
+$(TOP)/$(LIB_DIR)/$(VG_LIB_NAME): $(VG_OBJECTS) $(VG_LIBS)
+	$(MKLIB) -o $(VG_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(VG_MAJOR) \
 		-minor $(VG_MINOR) \
 		-patch $(VG_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
-		$(VG_OBJECTS) $(GALLIUM_LIBS) \
-		-Wl,--whole-archive $(LIBS) -Wl,--no-whole-archive $(SYS_LIBS)
+		$(VG_OBJECTS) $(VG_LIBS)
 
 ######################################################################
 # Generic stuff
 
-depend: $(ALL_SOURCES)
+depend: $(VG_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ rm -f depend  # workaround oops on gutsy?!?
 	@ touch depend
-	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(VG_SOURCES) \
 		> /dev/null 2>/dev/null
 
-
-subdirs:
-
 install: default
-	$(INSTALL) -d $(INSTALL_DIR)/include/VG
-	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 $(TOP)/include/VG/*.h $(INSTALL_DIR)/include/VG
-	@if [ -e $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libOpenVG* $(INSTALL_DIR)/$(LIB_DIR); \
-	fi
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/VG
+	$(INSTALL) -m 644 $(TOP)/include/VG/*.h $(DESTDIR)$(INSTALL_DIR)/include/VG
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/libOpenVG* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 
 # Emacs tags
 tags:
 	etags `find . -name \*.[ch]` $(TOP)/include/VG/*.h
 
 clean:
-	-rm -f *.o
-	-rm -f */*.o
-	-rm -f */*/*.o
-	-rm -f depend depend.bak
+	rm -f $(VG_OBJECTS)
+	rm -f depend depend.bak
 
-include depend
+sinclude depend

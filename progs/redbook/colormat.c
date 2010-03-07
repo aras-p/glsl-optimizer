@@ -49,7 +49,7 @@ GLfloat diffuseMaterial[4] = { 0.5, 0.5, 0.5, 1.0 };
 /*  Initialize material property, light source, lighting model,
  *  and depth buffer.
  */
-void init(void) 
+static void init(void) 
 {
    GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
    GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
@@ -68,14 +68,14 @@ void init(void)
    glEnable(GL_COLOR_MATERIAL);
 }
 
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glutSolidSphere(1.0, 20, 16);
    glFlush ();
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode (GL_PROJECTION);
@@ -91,7 +91,7 @@ void reshape (int w, int h)
 }
 
 /* ARGSUSED2 */
-void mouse(int button, int state, int x, int y)
+static void mouse(int button, int state, int x, int y)
 {
    switch (button) {
       case GLUT_LEFT_BUTTON:
@@ -127,7 +127,7 @@ void mouse(int button, int state, int x, int y)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

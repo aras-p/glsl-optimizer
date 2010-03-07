@@ -23,17 +23,30 @@
 #ifndef R300_TGSI_TO_RC_H
 #define R300_TGSI_TO_RC_H
 
+#include "pipe/p_compiler.h"
+
 struct radeon_compiler;
 
 struct tgsi_full_declaration;
 struct tgsi_shader_info;
 struct tgsi_token;
 
+struct swizzled_imms {
+    unsigned index;
+    unsigned swizzle;
+};
+
 struct tgsi_to_rc {
     struct radeon_compiler * compiler;
     const struct tgsi_shader_info * info;
 
     int immediate_offset;
+    struct swizzled_imms * imms_to_swizzle;
+    unsigned imms_to_swizzle_count;
+
+    /* Vertex shaders have no half swizzles, and no way to handle them, so
+     * until rc grows proper support, indicate if they're safe to use. */
+    boolean use_half_swizzles;
 };
 
 void r300_tgsi_to_rc(struct tgsi_to_rc * ttr, const struct tgsi_token * tokens);

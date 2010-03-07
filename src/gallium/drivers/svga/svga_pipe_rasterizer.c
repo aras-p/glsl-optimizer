@@ -24,13 +24,12 @@
  **********************************************************/
 
 #include "draw/draw_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
 #include "svga_context.h"
-#include "svga_state.h"
 
 #include "svga_hw_reg.h"
 
@@ -71,7 +70,8 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    /* light_twoside          - XXX: need fragment shader varient */
    /* poly_smooth            - XXX: no fallback available */
    /* poly_stipple_enable    - draw module */
-   /* point_sprite           - ? */
+   /* sprite_coord_enable    - ? */
+   /* point_quad_rasterization - ? */
    /* point_size_per_vertex  - ? */
    /* sprite_coord_mode      - ??? */
    /* bypass_vs_viewport_and_clip        - handled by viewport setup */
@@ -88,8 +88,6 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    rast->antialiasedlineenable = templ->line_smooth;
    rast->lastpixel = templ->line_last_pixel;
    rast->pointsize = templ->point_size;
-   rast->pointsize_min = templ->point_size_min;
-   rast->pointsize_max = templ->point_size_max;
    rast->hw_unfilled = PIPE_POLYGON_MODE_FILL;
 
    /* Use swtnl + decomposition implement these:

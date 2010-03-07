@@ -48,7 +48,7 @@
 #endif
 #include "arrayobj.h"
 #include "macros.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**
@@ -95,6 +95,10 @@ unbind_array_object_vbos(GLcontext *ctx, struct gl_array_object *obj)
 
    for (i = 0; i < Elements(obj->VertexAttrib); i++)
       _mesa_reference_buffer_object(ctx, &obj->VertexAttrib[i].BufferObj,NULL);
+
+#if FEATURE_point_size_array
+   _mesa_reference_buffer_object(ctx, &obj->PointSize.BufferObj, NULL);
+#endif
 }
 
 
@@ -126,7 +130,7 @@ _mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj )
    (void) ctx;
    unbind_array_object_vbos(ctx, obj);
    _glthread_DESTROY_MUTEX(obj->Mutex);
-   _mesa_free(obj);
+   free(obj);
 }
 
 
@@ -291,11 +295,11 @@ compute_max_element(struct gl_client_array *array)
                             - (GLsizeiptrARB) array->Ptr + array->StrideB
                             - array->_ElementSize) / array->StrideB;
       if (0)
-         _mesa_printf("%s Object %u  Size %u  MaxElement %u\n",
-                      __FUNCTION__,
-                      array->BufferObj->Name,
-                      (GLuint) array->BufferObj->Size,
-                      array->_MaxElement);
+         printf("%s Object %u  Size %u  MaxElement %u\n",
+		__FUNCTION__,
+		array->BufferObj->Name,
+		(GLuint) array->BufferObj->Size,
+		array->_MaxElement);
    }
    else {
       /* user-space array, no idea how big it is */

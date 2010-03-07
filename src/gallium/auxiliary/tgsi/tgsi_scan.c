@@ -97,15 +97,14 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
                   const struct tgsi_full_src_register *src =
                      &fullinst->Src[i];
-                  if (src->Register.File == TGSI_FILE_INPUT) {
+                  if (src->Register.File == TGSI_FILE_INPUT ||
+                      src->Register.File == TGSI_FILE_SYSTEM_VALUE) {
                      const int ind = src->Register.Index;
                      if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FOG) {
-                        if (src->Register.SwizzleX == TGSI_SWIZZLE_X) {
-                           info->uses_fogcoord = TRUE;
-                        }
-                        else if (src->Register.SwizzleX == TGSI_SWIZZLE_Y) {
-                           info->uses_frontfacing = TRUE;
-                        }
+                        info->uses_fogcoord = TRUE;
+                     }
+                     else if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FACE) {
+                        info->uses_frontfacing = TRUE;
                      }
                   }
                }
@@ -128,25 +127,30 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                info->file_count[file]++;
                info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
-               if (file == TGSI_FILE_INPUT) {
+               if (file == TGSI_FILE_INPUT || file == TGSI_FILE_SYSTEM_VALUE) {
                   info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
                   info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
                   info->input_interpolate[reg] = (ubyte)fulldecl->Declaration.Interpolate;
+                  info->input_cylindrical_wrap[reg] = (ubyte)fulldecl->Declaration.CylindricalWrap;
                   info->num_inputs++;
                }
                else if (file == TGSI_FILE_OUTPUT) {
                   info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
                   info->output_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
                   info->num_outputs++;
+
+                  /* extra info for special outputs */
+                  if (procType == TGSI_PROCESSOR_FRAGMENT &&
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
+                     info->writes_z = TRUE;
+                  }
+                  if (procType == TGSI_PROCESSOR_VERTEX &&
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_EDGEFLAG) {
+                     info->writes_edgeflag = TRUE;
+                  }
                }
 
-               /* special case */
-               if (procType == TGSI_PROCESSOR_FRAGMENT &&
-                   file == TGSI_FILE_OUTPUT &&
-                   fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION) {
-                  info->writes_z = TRUE;
-               }
-            }
+             }
          }
          break;
 
@@ -160,6 +164,19 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             info->file_max[file] = MAX2(info->file_max[file], (int)reg);
          }
          break;
+      case TGSI_TOKEN_TYPE_PROPERTY:
+      {
+         const struct tgsi_full_property *fullprop
+            = &parse.FullToken.FullProperty;
+
+         info->properties[info->num_properties].name =
+            fullprop->Property.PropertyName;
+         memcpy(info->properties[info->num_properties].data,
+                fullprop->u, 8 * sizeof(unsigned));;
+
+         ++info->num_properties;
+      }
+      break;
 
       default:
          assert( 0 );
@@ -211,7 +228,8 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
 
             /* Do a whole bunch of checks for a simple move */
             if (fullinst->Instruction.Opcode != TGSI_OPCODE_MOV ||
-                src->Register.File != TGSI_FILE_INPUT ||
+                (src->Register.File != TGSI_FILE_INPUT &&
+                 src->Register.File != TGSI_FILE_SYSTEM_VALUE) ||
                 dst->Register.File != TGSI_FILE_OUTPUT ||
                 src->Register.Index != dst->Register.Index ||
 
@@ -234,6 +252,8 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
       case TGSI_TOKEN_TYPE_DECLARATION:
          /* fall-through */
       case TGSI_TOKEN_TYPE_IMMEDIATE:
+         /* fall-through */
+      case TGSI_TOKEN_TYPE_PROPERTY:
          /* fall-through */
       default:
          ; /* no-op */

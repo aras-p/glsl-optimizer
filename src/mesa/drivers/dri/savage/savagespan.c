@@ -26,7 +26,6 @@
 #include "savagedd.h"
 #include "savagespan.h"
 #include "savageioctl.h"
-#include "savage_bci.h"
 #include "savage_3d_reg.h"
 #include "swrast/swrast.h"
 
@@ -34,7 +33,7 @@
 
 #define LOCAL_VARS						\
    driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   __DRIdrawablePrivate *const dPriv = drb->dPriv;		\
+   __DRIdrawable *const dPriv = drb->dPriv;		\
    GLuint cpp   = drb->cpp;					\
    GLuint pitch = drb->pitch;					\
    GLuint height = dPriv->h;					\
@@ -44,7 +43,7 @@
 
 #define LOCAL_DEPTH_VARS					\
    driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   __DRIdrawablePrivate *const dPriv = drb->dPriv;		\
+   __DRIdrawable *const dPriv = drb->dPriv;		\
    GLuint zpp   = drb->cpp;					\
    GLuint pitch = drb->pitch;					\
    GLuint height = dPriv->h;					\

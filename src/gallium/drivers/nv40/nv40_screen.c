@@ -52,6 +52,18 @@ nv40_screen_get_param(struct pipe_screen *pscreen, int param)
 		if (screen->curie->grclass == NV40TCL)
 			return 1;
 		return 0;
+	case PIPE_CAP_INDEP_BLEND_ENABLE:
+		return 0;
+	case PIPE_CAP_INDEP_BLEND_FUNC:
+		return 0;
+	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+		return 1;
+	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+		return 0;
+	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+		return 16;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
@@ -86,8 +98,8 @@ nv40_screen_surface_format_supported(struct pipe_screen *pscreen,
 {
 	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
 		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B5G6R5_UNORM: 
 			return TRUE;
 		default:
 			break;
@@ -95,8 +107,8 @@ nv40_screen_surface_format_supported(struct pipe_screen *pscreen,
 	} else
 	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
 		switch (format) {
-		case PIPE_FORMAT_Z24S8_UNORM:
-		case PIPE_FORMAT_Z24X8_UNORM:
+		case PIPE_FORMAT_S8Z24_UNORM:
+		case PIPE_FORMAT_X8Z24_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
 			return TRUE;
 		default:
@@ -104,17 +116,17 @@ nv40_screen_surface_format_supported(struct pipe_screen *pscreen,
 		}
 	} else {
 		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_A1R5G5B5_UNORM:
-		case PIPE_FORMAT_A4R4G4B4_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM:
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B5G5R5A1_UNORM:
+		case PIPE_FORMAT_B4G4R4A4_UNORM:
+		case PIPE_FORMAT_B5G6R5_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
 		case PIPE_FORMAT_L8_UNORM:
 		case PIPE_FORMAT_A8_UNORM:
 		case PIPE_FORMAT_I8_UNORM:
-		case PIPE_FORMAT_A8L8_UNORM:
+		case PIPE_FORMAT_L8A8_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
-		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_S8Z24_UNORM:
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
 		case PIPE_FORMAT_DXT3_RGBA:
@@ -140,13 +152,20 @@ static void
 nv40_screen_destroy(struct pipe_screen *pscreen)
 {
 	struct nv40_screen *screen = nv40_screen(pscreen);
+	unsigned i;
 
-	nouveau_resource_free(&screen->vp_exec_heap);
-	nouveau_resource_free(&screen->vp_data_heap);
-	nouveau_resource_free(&screen->query_heap);
+	for (i = 0; i < NV40_STATE_MAX; i++) {
+		if (screen->state[i])
+			so_ref(NULL, &screen->state[i]);
+	}
+
+	nouveau_resource_destroy(&screen->vp_exec_heap);
+	nouveau_resource_destroy(&screen->vp_data_heap);
+	nouveau_resource_destroy(&screen->query_heap);
 	nouveau_notifier_free(&screen->query);
 	nouveau_notifier_free(&screen->sync);
 	nouveau_grobj_free(&screen->curie);
+	nv04_surface_2d_takedown(&screen->eng2d);
 
 	nouveau_screen_fini(&screen->base);
 
@@ -179,6 +198,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_param = nv40_screen_get_param;
 	pscreen->get_paramf = nv40_screen_get_paramf;
 	pscreen->is_format_supported = nv40_screen_surface_format_supported;
+	pscreen->context_create = nv40_create;
 
 	nv40_screen_init_miptree_functions(pscreen);
 	nv40_screen_init_transfer_functions(pscreen);
@@ -208,7 +228,6 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
-	BIND_RING(chan, screen->curie, 7);
 
 	/* 2D engine setup */
 	screen->eng2d = nv04_surface_2d_init(&screen->base);
@@ -245,7 +264,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	/* Static curie initialisation */
-	so = so_new(128, 0);
+	so = so_new(16, 25, 0);
 	so_method(so, screen->curie, NV40TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
 	so_method(so, screen->curie, NV40TCL_DMA_TEXTURE0, 2);

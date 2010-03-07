@@ -32,7 +32,7 @@
 #include "mgacontext.h"
 #include "mga_xmesa.h"
 
-void mgaCopyBuffer( __DRIdrawablePrivate *dPriv );
+void mgaCopyBuffer( __DRIdrawable *dPriv );
 void mgaWaitForVBlank( mgaContextPtr mmesa );
 
 void mgaGetILoadBufferLocked( mgaContextPtr mmesa );

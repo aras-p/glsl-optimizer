@@ -38,6 +38,7 @@ if env['platform'] != 'winddk':
 		'main/clear.c',
 		'main/clip.c',
 		'main/colortab.c',
+		'main/condrender.c',
 		'main/context.c',
 		'main/convolve.c',
 		'main/cpuinfo.c',
@@ -103,6 +104,7 @@ if env['platform'] != 'winddk':
 		'main/texstate.c',
 		'main/texstore.c',
 		'main/varray.c',
+		'main/version.c',
 		'main/viewport.c',
 		'main/vtxfmt.c',
 	]
@@ -161,10 +163,10 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_cb_blit.c',
 		'state_tracker/st_cb_bufferobjects.c',
 		'state_tracker/st_cb_clear.c',
+		'state_tracker/st_cb_condrender.c',
 		'state_tracker/st_cb_flush.c',
 		'state_tracker/st_cb_drawpixels.c',
 		'state_tracker/st_cb_fbo.c',
-		'state_tracker/st_cb_get.c',
 		'state_tracker/st_cb_feedback.c',
 		'state_tracker/st_cb_program.c',
 		'state_tracker/st_cb_queryobj.c',
@@ -172,7 +174,6 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_cb_readpixels.c',
 		'state_tracker/st_cb_strings.c',
 		'state_tracker/st_cb_texture.c',
-		'state_tracker/st_cb_viewport.c',
 		'state_tracker/st_context.c',
 		'state_tracker/st_debug.c',
 		'state_tracker/st_draw.c',
@@ -190,7 +191,6 @@ if env['platform'] != 'winddk':
 		'shader/arbprogparse.c',
 		'shader/arbprogram.c',
 		'shader/atifragshader.c',
-		'shader/grammar/grammar_mesa.c',
 		'shader/hash_table.c',
 		'shader/lex.yy.c',
 		'shader/nvfragparse.c',
@@ -228,7 +228,6 @@ if env['platform'] != 'winddk':
 		'shader/slang/slang_link.c',
 		'shader/slang/slang_log.c',
 		'shader/slang/slang_mem.c',
-		'shader/slang/slang_preprocess.c',
 		'shader/slang/slang_print.c',
 		'shader/slang/slang_simplify.c',
 		'shader/slang/slang_storage.c',
@@ -248,9 +247,10 @@ if env['platform'] != 'winddk':
 	)
 
 	glapi_sources = [
-		'main/dispatch.c',
 		'glapi/glapi.c',
+		'glapi/glapi_dispatch.c',
 		'glapi/glapi_getproc.c',
+		'glapi/glapi_nop.c',
 		'glapi/glthread.c',
 	]
 	
@@ -339,7 +339,9 @@ if env['platform'] != 'winddk':
 		# Add the dir containing the generated header (somewhere inside  the
 		# build dir) to the include path  
 		env.Append(CPPPATH = [matypes[0].dir])
-	
+
+	SConscript('shader/slang/library/SConscript')
+
 	#
 	# Libraries
 	# 

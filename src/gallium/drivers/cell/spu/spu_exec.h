@@ -98,9 +98,9 @@ struct spu_exec_machine
     * 4  internal temporaries
     * 1  address
     */
+   PIPE_ALIGN_VAR(16)
    struct spu_exec_vector       Temps[TGSI_EXEC_NUM_TEMPS 
-                                      + TGSI_EXEC_NUM_TEMP_EXTRAS + 1]
-       ALIGN16_ATTRIB;
+                                      + TGSI_EXEC_NUM_TEMP_EXTRAS + 1];
 
    struct spu_exec_vector       *Addrs;
 

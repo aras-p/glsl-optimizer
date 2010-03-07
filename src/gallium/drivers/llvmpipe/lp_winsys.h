@@ -35,7 +35,7 @@
 #define LP_WINSYS_H
 
 
-#include "pipe/p_compiler.h" // for boolean
+#include "pipe/p_compiler.h" /* for boolean */
 #include "pipe/p_format.h"
 
 
@@ -112,9 +112,6 @@ struct llvmpipe_winsys
                              struct llvmpipe_displaytarget *dt );
 };
 
-
-struct pipe_context *
-llvmpipe_create( struct pipe_screen * );
 
 
 struct pipe_screen *

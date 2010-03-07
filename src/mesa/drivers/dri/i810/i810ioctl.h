@@ -14,8 +14,8 @@ void i810WaitAge( i810ContextPtr imesa, int age );
 void i810DmaFinish( i810ContextPtr imesa );
 void i810RegetLockQuiescent( i810ContextPtr imesa );
 void i810InitIoctlFuncs( struct dd_function_table *functions );
-void i810CopyBuffer( const __DRIdrawablePrivate *dpriv );
-void i810PageFlip( const __DRIdrawablePrivate *dpriv );
+void i810CopyBuffer( const __DRIdrawable *dpriv );
+void i810PageFlip( const __DRIdrawable *dpriv );
 int i810_check_copy(int fd);
 
 #define I810_STATECHANGE(imesa, flag)				\

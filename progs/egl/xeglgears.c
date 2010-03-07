@@ -32,6 +32,9 @@
  */
 
 
+#define GL_GLEXT_PROTOTYPES
+#define EGL_EGLEXT_PROTOTYPES
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,6 +44,8 @@
 #include <X11/keysym.h>
 #include <GL/gl.h>
 #include <EGL/egl.h>
+
+#include <EGL/eglext.h>
 
 
 #define BENCHMARK
@@ -237,6 +242,7 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 static void
 draw(void)
 {
+   glClearColor(0.2, 0.2, 0.2, 0.2);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
    glPushMatrix();
@@ -319,8 +325,6 @@ init(void)
    glEndList();
 
    glEnable(GL_NORMALIZE);
-
-   glClearColor(0.2, 0.2, 0.2, 0.0);
 }
 
 
@@ -336,9 +340,13 @@ struct egl_manager {
    EGLSurface win;
    EGLSurface pix;
    EGLSurface pbuf;
+   EGLImageKHR image;
 
    EGLBoolean verbose;
    EGLint major, minor;
+
+   GC gc;
+   GLuint fbo;
 };
 
 static struct egl_manager *
@@ -470,6 +478,8 @@ egl_manager_create_window(struct egl_manager *eman, const char *name,
       }
    }
 
+   eman->gc = XCreateGC(eman->xdpy, eman->xwin, 0, NULL);
+
    XMapWindow(eman->xdpy, eman->xwin);
 
    return EGL_TRUE;
@@ -526,14 +536,79 @@ egl_manager_destroy(struct egl_manager *eman)
    if (eman->xpix != None)
       XFreePixmap(eman->xdpy, eman->xpix);
 
+   XFreeGC(eman->xdpy, eman->gc);
+
    free(eman);
+}
+
+enum {
+   GEARS_WINDOW,
+   GEARS_PIXMAP,
+   GEARS_PIXMAP_TEXTURE,
+   GEARS_PBUFFER,
+   GEARS_PBUFFER_TEXTURE,
+   GEARS_RENDERBUFFER
+};
+
+static void
+texture_gears(struct egl_manager *eman, int surface_type)
+{
+   static const GLint verts[12] =
+      { -5, -6, -10,  5, -6, -10,  -5, 4, 10,  5, 4, 10 };
+   static const GLint tex_coords[8] = { 0, 0,  1, 0,  0, 1,  1, 1 };
+
+   eglMakeCurrent(eman->dpy, eman->win, eman->win, eman->ctx);
+
+   glClearColor(0, 0, 0, 0);
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+   glEnable(GL_TEXTURE_2D);
+   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   
+   glEnableClientState(GL_VERTEX_ARRAY);
+   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+   glVertexPointer(3, GL_INT, 0, verts);
+   glTexCoordPointer(2, GL_INT, 0, tex_coords);
+
+   if (surface_type == GEARS_PBUFFER_TEXTURE)
+      eglBindTexImage(eman->dpy, eman->pbuf, EGL_BACK_BUFFER);
+
+   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+   glDisableClientState(GL_VERTEX_ARRAY);
+   glDisableClientState(GL_COLOR_ARRAY);
+   glDisable(GL_TEXTURE_2D);
+
+   if (surface_type == GEARS_PBUFFER_TEXTURE)
+      eglReleaseTexImage(eman->dpy, eman->pbuf, EGL_BACK_BUFFER);
+
+   eglSwapBuffers(eman->dpy, eman->win); 
+}
+
+static void
+copy_gears(struct egl_manager *eman,
+	   EGLint tile_w, EGLint tile_h, EGLint w, EGLint h)
+{
+   int x, y;
+
+   eglWaitClient();
+
+   for (x = 0; x < w; x += tile_w) {
+      for (y = 0; y < h; y += tile_h) {
+
+	 XCopyArea(eman->xdpy, eman->xpix, eman->xwin, eman->gc,
+		   0, 0, tile_w, tile_h, x, y);
+      }
+   }
 }
 
 static void
 event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
 {
-   GC gc = XCreateGC(eman->xdpy, eman->xwin, 0, NULL);
-   EGLint orig_w = w, orig_h = h;
+   int window_w = w, window_h = h;
 
    if (surface_type == EGL_PBUFFER_BIT)
       printf("there will be no screen update if "
@@ -548,10 +623,10 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
             /* we'll redraw below */
             break;
          case ConfigureNotify:
-            w = event.xconfigure.width;
-            h = event.xconfigure.height;
+            window_w = event.xconfigure.width;
+            window_h = event.xconfigure.height;
             if (surface_type == EGL_WINDOW_BIT)
-               reshape(w, h);
+               reshape(window_w, window_h);
             break;
          case KeyPress:
             {
@@ -586,7 +661,6 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
          static int frames = 0;
          static double tRot0 = -1.0, tRate0 = -1.0;
          double dt, t = current_time();
-         int x, y;
          if (tRot0 < 0.0)
             tRot0 = t;
          dt = t - tRot0;
@@ -597,26 +671,43 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
          if (angle > 3600.0)
              angle -= 3600.0;
 
-         draw();
          switch (surface_type) {
-         case EGL_WINDOW_BIT:
+         case GEARS_WINDOW:
+	    draw();
             eglSwapBuffers(eman->dpy, eman->win);
             break;
-         case EGL_PBUFFER_BIT:
-            eglWaitClient();
-            if (!eglCopyBuffers(eman->xdpy, eman->pbuf, eman->xpix))
-               break;
-            /* fall through */
-         case EGL_PIXMAP_BIT:
-            eglWaitClient();
-            for (x = 0; x < w; x += orig_w) {
-               for (y = 0; y < h; y += orig_h) {
-                  XCopyArea(eman->xdpy, eman->xpix, eman->xwin, gc,
-                            0, 0, orig_w, orig_h, x, y);
-               }
-            }
-            break;
-         }
+
+	 case GEARS_PBUFFER:
+	    draw();
+	    if (!eglCopyBuffers(eman->dpy, eman->pbuf, eman->xpix))
+	       break;
+	    copy_gears(eman, w, h, window_w, window_h);
+	    break;
+
+	 case GEARS_PBUFFER_TEXTURE:
+            eglMakeCurrent(eman->dpy, eman->pbuf, eman->pbuf, eman->ctx);
+	    draw();
+	    texture_gears(eman, surface_type);
+	    break;
+
+	 case GEARS_PIXMAP:
+	    draw();
+	    copy_gears(eman, w, h, window_w, window_h);
+	    break;
+
+	 case GEARS_PIXMAP_TEXTURE:
+            eglMakeCurrent(eman->dpy, eman->pix, eman->pix, eman->ctx);
+	    draw();
+	    texture_gears(eman, surface_type);
+	    break;
+
+	 case GEARS_RENDERBUFFER:
+	    glBindFramebuffer(GL_FRAMEBUFFER_EXT, eman->fbo);
+	    draw();
+	    glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
+	    texture_gears(eman, surface_type);
+	    break;
+	 }
 
          frames++;
 
@@ -632,8 +723,6 @@ event_loop(struct egl_manager *eman, EGLint surface_type, EGLint w, EGLint h)
          }
       }
    }
-
-   XFreeGC(eman->xdpy, gc);
 }
 
 
@@ -645,9 +734,20 @@ usage(void)
    printf("  -fullscreen             run in fullscreen mode\n");
    printf("  -info                   display OpenGL renderer info\n");
    printf("  -pixmap                 use pixmap surface\n");
-   printf("  -pbuffer                use pbuffer surface\n");
+   printf("  -pixmap-texture         use pixmap surface and texture using EGLImage\n");
+   printf("  -pbuffer                use pbuffer surface and eglCopyBuffers\n");
+   printf("  -pbuffer-texture        use pbuffer surface and eglBindTexImage\n");
+   printf("  -renderbuffer           renderbuffer as EGLImage and bind as texture from\n");
 }
  
+static const char *names[] = {
+   "window",
+   "pixmap",
+   "pixmap_texture",
+   "pbuffer",
+   "pbuffer_texture",
+   "renderbuffer"
+};
 
 int
 main(int argc, char *argv[])
@@ -657,7 +757,7 @@ main(int argc, char *argv[])
    char *dpyName = NULL;
    struct egl_manager *eman;
    EGLint attribs[] = {
-      EGL_SURFACE_TYPE, 0, /* filled later */
+      EGL_SURFACE_TYPE, EGL_WINDOW_BIT, /* may be changed later */
       EGL_RED_SIZE, 1,
       EGL_GREEN_SIZE, 1,
       EGL_BLUE_SIZE, 1,
@@ -666,10 +766,11 @@ main(int argc, char *argv[])
       EGL_NONE
    };
    char win_title[] = "xeglgears (window/pixmap/pbuffer)";
-   EGLint surface_type = EGL_WINDOW_BIT;
+   EGLint surface_type = GEARS_WINDOW;
    GLboolean printInfo = GL_FALSE;
    GLboolean fullscreen = GL_FALSE;
    EGLBoolean ret;
+   GLuint texture, color_rb, depth_rb;
    int i;
 
    for (i = 1; i < argc; i++) {
@@ -684,19 +785,29 @@ main(int argc, char *argv[])
          fullscreen = GL_TRUE;
       }
       else if (strcmp(argv[i], "-pixmap") == 0) {
-         surface_type = EGL_PIXMAP_BIT;
+         surface_type = GEARS_PIXMAP;
+	 attribs[1] = EGL_PIXMAP_BIT;
+      }
+      else if (strcmp(argv[i], "-pixmap-texture") == 0) {
+         surface_type = GEARS_PIXMAP_TEXTURE;
+	 attribs[1] = EGL_PIXMAP_BIT;
       }
       else if (strcmp(argv[i], "-pbuffer") == 0) {
-         surface_type = EGL_PBUFFER_BIT;
+         surface_type = GEARS_PBUFFER;
+	 attribs[1] = EGL_PBUFFER_BIT;
+      }
+      else if (strcmp(argv[i], "-pbuffer-texture") == 0) {
+         surface_type = GEARS_PBUFFER_TEXTURE;
+	 attribs[1] = EGL_PBUFFER_BIT;
+      }
+      else if (strcmp(argv[i], "-renderbuffer") == 0) {
+         surface_type = GEARS_RENDERBUFFER;
       }
       else {
          usage();
          return -1;
       }
    }
-
-   /* set surface type */
-   attribs[1] = surface_type;
 
    x_dpy = XOpenDisplay(dpyName);
    if (!x_dpy) {
@@ -713,45 +824,101 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   snprintf(win_title, sizeof(win_title), "xeglgears (%s)",
-            (surface_type == EGL_WINDOW_BIT) ? "window" :
-            (surface_type == EGL_PIXMAP_BIT) ? "pixmap" : "pbuffer");
+   snprintf(win_title, sizeof(win_title),
+	    "xeglgears (%s)", names[surface_type]);
+
+   ret = egl_manager_create_window(eman, win_title, winWidth, winHeight,
+				   EGL_TRUE, fullscreen, NULL);
+   if (!ret)
+      return -1;
 
    /* create surface(s) */
    switch (surface_type) {
-   case EGL_WINDOW_BIT:
-      ret = egl_manager_create_window(eman, win_title, winWidth, winHeight,
-                                      EGL_TRUE, fullscreen, NULL);
+   case GEARS_WINDOW:
       if (ret)
          ret = eglMakeCurrent(eman->dpy, eman->win, eman->win, eman->ctx);
       break;
-   case EGL_PIXMAP_BIT:
-      ret = (egl_manager_create_window(eman, win_title, winWidth, winHeight,
-                                       EGL_FALSE, fullscreen, NULL) &&
-             egl_manager_create_pixmap(eman, eman->xwin,
-                                       EGL_TRUE, NULL));
+   case GEARS_PIXMAP:
+   case GEARS_PIXMAP_TEXTURE:
+      ret = egl_manager_create_pixmap(eman, eman->xwin, EGL_TRUE, NULL);
+      if (surface_type == GEARS_PIXMAP_TEXTURE)
+	 eman->image = eglCreateImageKHR (eman->dpy, eman->ctx,
+					  EGL_NATIVE_PIXMAP_KHR,
+					  (EGLClientBuffer) eman->xpix, NULL);
       if (ret)
          ret = eglMakeCurrent(eman->dpy, eman->pix, eman->pix, eman->ctx);
       break;
-   case EGL_PBUFFER_BIT:
+   case GEARS_PBUFFER:
+   case GEARS_PBUFFER_TEXTURE:
       {
          EGLint pbuf_attribs[] = {
             EGL_WIDTH, winWidth,
             EGL_HEIGHT, winHeight,
+	    EGL_TEXTURE_FORMAT, EGL_TEXTURE_RGB,
+	    EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
             EGL_NONE
          };
-         ret = (egl_manager_create_window(eman, win_title, winWidth, winHeight,
-                                          EGL_FALSE, fullscreen, NULL) &&
-                egl_manager_create_pixmap(eman, eman->xwin,
-                                          EGL_FALSE, NULL) &&
+         ret = (egl_manager_create_pixmap(eman, eman->xwin,
+					  EGL_TRUE, NULL) &&
                 egl_manager_create_pbuffer(eman, pbuf_attribs));
          if (ret)
             ret = eglMakeCurrent(eman->dpy, eman->pbuf, eman->pbuf, eman->ctx);
       }
       break;
+
+
+   case GEARS_RENDERBUFFER:
+      ret = eglMakeCurrent(eman->dpy, eman->win, eman->win, eman->ctx);
+      if (ret == EGL_FALSE)
+	 printf("failed to make context current\n");
+
+      glGenFramebuffers(1, &eman->fbo);
+      glBindFramebuffer(GL_FRAMEBUFFER_EXT, eman->fbo);
+      
+      glGenRenderbuffers(1, &color_rb);
+      glBindRenderbuffer(GL_RENDERBUFFER_EXT, color_rb);
+      glRenderbufferStorage(GL_RENDERBUFFER_EXT, GL_RGBA, winWidth, winHeight);
+      glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+				   GL_COLOR_ATTACHMENT0_EXT,
+				   GL_RENDERBUFFER_EXT,
+				   color_rb);
+
+      eman->image = eglCreateImageKHR(eman->dpy, eman->ctx,
+				      EGL_GL_RENDERBUFFER_KHR,
+				      (EGLClientBuffer) color_rb, NULL);
+
+      glGenRenderbuffers(1, &depth_rb);
+      glBindRenderbuffer(GL_RENDERBUFFER_EXT, depth_rb);
+      glRenderbufferStorage(GL_RENDERBUFFER_EXT,
+			    GL_DEPTH_COMPONENT, winWidth, winHeight);
+      glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+				   GL_DEPTH_ATTACHMENT_EXT,
+				   GL_RENDERBUFFER_EXT,
+				   depth_rb);
+
+      if (glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE) {
+	 printf("framebuffer not complete\n");
+	 exit(1);
+      }
+
+      break;
+
    default:
       ret = EGL_FALSE;
       break;
+   }
+
+   switch (surface_type) {
+   case GEARS_PIXMAP_TEXTURE:
+   case GEARS_RENDERBUFFER:
+	   glGenTextures(1, &texture);
+   	   glBindTexture(GL_TEXTURE_2D, texture);
+	   glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, eman->image);
+	   break;
+   case GEARS_PBUFFER_TEXTURE:
+	   glGenTextures(1, &texture);
+   	   glBindTexture(GL_TEXTURE_2D, texture);
+	   break;
    }
 
    if (!ret) {

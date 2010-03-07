@@ -40,9 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/matrix.h"
 #include "main/extensions.h"
-#include "main/state.h"
 #include "main/bufferobj.h"
 #include "main/texobj.h"
 
@@ -52,7 +50,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_vp_build.h"
 
 #include "drivers/common/driverfuncs.h"
 
@@ -65,16 +62,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_queryobj.h"
+#include "r600_blit.h"
 
 #include "r700_state.h"
 #include "r700_ioctl.h"
 
 
-#include "vblank.h"
 #include "utils.h"
-#include "xmlpool.h"		/* for symbolic values of enum-type options */
 
-//#define R600_ENABLE_GLSL_TEST 1
+#define R600_ENABLE_GLSL_TEST 1
 
 #define need_GL_VERSION_2_0
 #define need_GL_ARB_occlusion_query
@@ -99,6 +95,7 @@ static const struct dri_extension card_extensions[] = {
   {"GL_ARB_depth_clamp",                NULL},
   {"GL_ARB_depth_texture",		NULL},
   {"GL_ARB_fragment_program",		NULL},
+  {"GL_ARB_fragment_program_shadow",	NULL},
   {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
   {"GL_ARB_multitexture",		NULL},
   {"GL_ARB_point_parameters",		GL_ARB_point_parameters_functions},
@@ -163,6 +160,7 @@ static const struct dri_extension gl_20_extension[] = {
 #else
   {"GL_VERSION_2_0",			GL_VERSION_2_0_functions },
 #endif /* R600_ENABLE_GLSL_TEST */
+  {NULL, NULL}
 };
 
 static const struct tnl_pipeline_stage *r600_pipeline[] = {
@@ -238,19 +236,24 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
 	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
+	radeon->vtbl.check_blit = r600_check_blit;
+	radeon->vtbl.blit = r600_blit;
 }
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 {
-	context_t *r600 = R700_CONTEXT(ctx);
-
-	ctx->Const.MaxTextureImageUnits =
-	    driQueryOptioni(&r600->radeon.optionCache, "texture_image_units");
-	ctx->Const.MaxTextureCoordUnits =
-	    driQueryOptioni(&r600->radeon.optionCache, "texture_coord_units");
+	ctx->Const.MaxTextureImageUnits = 16;
+	/* 8 per clause on r6xx, 16 on r7xx
+	 * but I think mesa only supports 8 at the moment
+	 */
+	ctx->Const.MaxTextureCoordUnits = 8;
 	ctx->Const.MaxTextureUnits =
 	    MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
+	ctx->Const.MaxCombinedTextureImageUnits =
+		ctx->Const.MaxVertexTextureImageUnits +
+		ctx->Const.MaxTextureImageUnits;
+
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
 
@@ -268,6 +271,8 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxLineWidthAA = 0xffff / 8.0;
 
 	ctx->Const.MaxDrawBuffers = 1; /* hw supports 8 */
+	ctx->Const.MaxColorAttachments = 1;
+	ctx->Const.MaxRenderbufferSize = 4096;
 
 	/* 256 for reg-based consts, inline consts also supported */
 	ctx->Const.VertexProgram.MaxInstructions = 8192; /* in theory no limit */
@@ -282,9 +287,8 @@ static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 32;
 	ctx->Const.FragmentProgram.MaxNativeParameters = 256;
 	ctx->Const.FragmentProgram.MaxNativeAluInstructions = 8192;
-	/* 8 per clause on r6xx, 16 on rv670/r7xx */
-	if ((screen->chip_family == CHIP_FAMILY_RV670) ||
-	    (screen->chip_family >= CHIP_FAMILY_RV770))
+	/* 8 per clause on r6xx, 16 on r7xx */
+	if (screen->chip_family >= CHIP_FAMILY_RV770)
 		ctx->Const.FragmentProgram.MaxNativeTexInstructions = 16;
 	else
 		ctx->Const.FragmentProgram.MaxNativeTexInstructions = 8;
@@ -317,20 +321,8 @@ static void r600InitGLExtensions(GLcontext *ctx)
 
 #ifdef R600_ENABLE_GLSL_TEST
     driInitExtensions(ctx, gl_20_extension, GL_TRUE);
-    //_mesa_enable_2_0_extensions(ctx);
-    //1.5
-    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
-    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
-    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
-    //2.0
-    ctx->Extensions.ARB_draw_buffers = GL_TRUE;
-    ctx->Extensions.ARB_point_sprite = GL_TRUE;
-    ctx->Extensions.ARB_shader_objects = GL_TRUE;
-    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
-    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
-    ctx->Extensions.EXT_blend_equation_separate = GL_TRUE;
-    ctx->Extensions.ATI_separate_stencil = GL_TRUE;
-
+    _mesa_enable_2_0_extensions(ctx);
+    
     /* glsl compiler has problem if this is not GL_TRUE */
     ctx->Shader.EmitCondCodes = GL_TRUE;
 #endif /* R600_ENABLE_GLSL_TEST */
@@ -349,18 +341,21 @@ static void r600InitGLExtensions(GLcontext *ctx)
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
 
-	/* XXX: RV740 only seems to report results from half of its DBs */
-	if (r600->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV740)
-		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
+	/* RV740 had a broken pipe config prior to drm 1.32 */
+	if (!r600->radeon.radeonScreen->kernel_mm) {
+		if ((r600->radeon.dri.drmMinor < 32) &&
+		    (r600->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV740))
+			_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
+	}
 }
 
 /* Create the device specific rendering context.
  */
 GLboolean r600CreateContext(const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
+			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
 	context_t *r600;
@@ -388,7 +383,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	_mesa_init_driver_functions(&functions);
 
 	r700InitStateFuncs(&functions);
-	r600InitTextureFuncs(&functions);
+	r600InitTextureFuncs(&r600->radeon, &functions);
 	r700InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);
 	r700InitIoctlFuncs(&functions);

@@ -26,10 +26,13 @@
  **************************************************************************/
 
 
+#include "os/os_thread.h"
+#include "util/u_format.h"
 #include "util/u_string.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 #include "util/u_network.h"
+#include "os/os_time.h"
 
 #include "tgsi/tgsi_parse.h"
 
@@ -41,15 +44,6 @@
 #include "rbug/rbug.h"
 
 #include <errno.h>
-
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER)
-#  define sleep Sleep
-#elif defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD)
-void usleep(int);
-#  define sleep usleep
-#else
-#  warning "No socket implementation"
-#endif
 
 #define U642VOID(x) ((void *)(unsigned long)(x))
 #define VOID2U64(x) ((uint64_t)(unsigned long)(x))
@@ -179,7 +173,7 @@ static int
 trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
 {
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex;
+   struct trace_texture *tr_tex = NULL;
    struct rbug_proto_texture_info *gpti = (struct rbug_proto_texture_info *)header;
    struct tr_list *ptr;
    struct pipe_texture *t;
@@ -203,9 +197,9 @@ trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
                                &t->width0, 1,
                                &t->height0, 1,
                                &t->depth0, 1,
-                               pf_get_blockwidth(t->format),
-                               pf_get_blockheight(t->format),
-                               pf_get_blocksize(t->format),
+                               util_format_get_blockwidth(t->format),
+                               util_format_get_blockheight(t->format),
+                               util_format_get_blocksize(t->format),
                                t->last_level,
                                t->nr_samples,
                                t->tex_usage,
@@ -222,7 +216,7 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    struct rbug_proto_texture_read *gptr = (struct rbug_proto_texture_read *)header;
 
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex;
+   struct trace_texture *tr_tex = NULL;
    struct tr_list *ptr;
 
    struct pipe_screen *screen = tr_scr->screen;
@@ -254,11 +248,11 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
 
    rbug_send_texture_read_reply(tr_rbug->con, serial,
                                 t->texture->format,
-                                pf_get_blockwidth(t->texture->format),
-                                pf_get_blockheight(t->texture->format),
-                                pf_get_blocksize(t->texture->format),
+                                util_format_get_blockwidth(t->texture->format),
+                                util_format_get_blockheight(t->texture->format),
+                                util_format_get_blocksize(t->texture->format),
                                 (uint8_t*)map,
-                                t->stride * pf_get_nblocksy(t->texture->format, t->height),
+                                t->stride * util_format_get_nblocksy(t->texture->format, t->height),
                                 t->stride,
                                 NULL);
 
@@ -804,7 +798,7 @@ PIPE_THREAD_ROUTINE(trace_rbug_thread, void_tr_rbug)
    debug_printf("trace_rbug - remote debugging listening on port %u\n", --port);
 
    while(tr_rbug->running) {
-      sleep(1);
+      os_time_sleep(1);
 
       c = u_socket_accept(s);
       if (c < 0)

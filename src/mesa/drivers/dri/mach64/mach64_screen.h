@@ -70,7 +70,7 @@ typedef struct {
 
    drmBufMapPtr buffers;
 
-   __DRIscreenPrivate *driScreen;
+   __DRIscreen *driScreen;
 
    driOptionCache optionCache;
 

@@ -22,7 +22,6 @@
 
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
 
 #include "nv50_context.h"
 #include "nv50_screen.h"
@@ -34,6 +33,11 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nouveau_channel *chan = nv50->screen->base.channel;
 
+	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
+		BEGIN_RING(chan, nv50->screen->tesla, 0x1338, 1);
+		OUT_RING  (chan, 0x20);
+	}
+
 	if (flags & PIPE_FLUSH_FRAME)
 		FIRE_RING(chan);
 }
@@ -43,18 +47,54 @@ nv50_destroy(struct pipe_context *pipe)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
+        if (nv50->state.fb)
+		so_ref(NULL, &nv50->state.fb);
+	if (nv50->state.blend)
+		so_ref(NULL, &nv50->state.blend);
+	if (nv50->state.blend_colour)
+		so_ref(NULL, &nv50->state.blend_colour);
+	if (nv50->state.zsa)
+		so_ref(NULL, &nv50->state.zsa);
+	if (nv50->state.rast)
+		so_ref(NULL, &nv50->state.rast);
+	if (nv50->state.stipple)
+		so_ref(NULL, &nv50->state.stipple);
+	if (nv50->state.scissor)
+		so_ref(NULL, &nv50->state.scissor);
+	if (nv50->state.viewport)
+		so_ref(NULL, &nv50->state.viewport);
+	if (nv50->state.tsc_upload)
+		so_ref(NULL, &nv50->state.tsc_upload);
+	if (nv50->state.tic_upload)
+		so_ref(NULL, &nv50->state.tic_upload);
+	if (nv50->state.vertprog)
+		so_ref(NULL, &nv50->state.vertprog);
+	if (nv50->state.fragprog)
+		so_ref(NULL, &nv50->state.fragprog);
+	if (nv50->state.geomprog)
+		so_ref(NULL, &nv50->state.geomprog);
+	if (nv50->state.fp_linkage)
+		so_ref(NULL, &nv50->state.fp_linkage);
+	if (nv50->state.gp_linkage)
+		so_ref(NULL, &nv50->state.gp_linkage);
+	if (nv50->state.vtxfmt)
+		so_ref(NULL, &nv50->state.vtxfmt);
+	if (nv50->state.vtxbuf)
+		so_ref(NULL, &nv50->state.vtxbuf);
+	if (nv50->state.vtxattr)
+		so_ref(NULL, &nv50->state.vtxattr);
+
 	draw_destroy(nv50->draw);
+
+	if (nv50->screen->cur_ctx == nv50)
+		nv50->screen->cur_ctx = NULL;
+
 	FREE(nv50);
 }
 
 
-static void
-nv50_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
-{
-}
-
 struct pipe_context *
-nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
+nv50_create(struct pipe_screen *pscreen, void *priv)
 {
 	struct pipe_winsys *pipe_winsys = pscreen->winsys;
 	struct nv50_screen *screen = nv50_screen(pscreen);
@@ -64,16 +104,17 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	if (!nv50)
 		return NULL;
 	nv50->screen = screen;
-	nv50->pctx_id = pctx_id;
 
 	nv50->pipe.winsys = pipe_winsys;
 	nv50->pipe.screen = pscreen;
+	nv50->pipe.priv = priv;
 
 	nv50->pipe.destroy = nv50_destroy;
 
-	nv50->pipe.set_edgeflags = nv50_set_edgeflags;
 	nv50->pipe.draw_arrays = nv50_draw_arrays;
+	nv50->pipe.draw_arrays_instanced = nv50_draw_arrays_instanced;
 	nv50->pipe.draw_elements = nv50_draw_elements;
+	nv50->pipe.draw_elements_instanced = nv50_draw_elements_instanced;
 	nv50->pipe.clear = nv50_clear;
 
 	nv50->pipe.flush = nv50_flush;

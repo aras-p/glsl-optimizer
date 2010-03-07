@@ -45,7 +45,6 @@
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 GLboolean polySmooth = GL_TRUE;
 
@@ -59,7 +58,7 @@ static void init(void)
 
 #define NFACE 6
 #define NVERT 8
-void drawCube(GLdouble x0, GLdouble x1, GLdouble y0, GLdouble y1,
+static void drawCube(GLdouble x0, GLdouble x1, GLdouble y0, GLdouble y1,
         GLdouble z0, GLdouble z1)
 {
    static GLfloat v[8][3];
@@ -101,7 +100,7 @@ void drawCube(GLdouble x0, GLdouble x1, GLdouble y0, GLdouble y1,
 /*  Note:  polygons must be drawn from front to back
  *  for proper blending.
  */
-void display(void)
+static void display(void)
 {
    if (polySmooth) {
       glClear (GL_COLOR_BUFFER_BIT);
@@ -126,7 +125,7 @@ void display(void)
    glFlush ();
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -137,7 +136,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 't':

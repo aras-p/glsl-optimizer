@@ -23,6 +23,7 @@
  *
  **************************************************************************/
 
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "i915_screen.h"
 #include "i915_buffer.h"
@@ -111,6 +112,7 @@ i915_buffer_unmap(struct pipe_screen *screen,
 {
    struct i915_buffer *buf = i915_buffer(buffer);
    assert(!buf->ibuf);
+   (void) buf;
 }
 
 static void

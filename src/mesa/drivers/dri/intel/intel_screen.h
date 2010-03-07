@@ -34,73 +34,35 @@
 #include "i915_drm.h"
 #include "xmlconfig.h"
 
-/* XXX: change name or eliminate to avoid conflict with "struct
- * intel_region"!!!
- */
-typedef struct
+struct intel_screen
 {
-   drm_handle_t handle;
-   drmSize size;                /* region size in bytes */
-   char *map;                   /* memory map */
-   int offset;                  /* from start of video mem, in bytes */
-   unsigned int bo_handle;	/* buffer object id if available, or -1 */
-   /**
-    * Flags if the region is tiled.
-    *
-    * Not included is Y versus X tiling.
-    */
-   GLboolean tiled;
-} intelRegion;
-
-typedef struct
-{
-   intelRegion front;
-   intelRegion back;
-   intelRegion depth;
-   intelRegion tex;
-
    int deviceID;
-   int width;
-   int height;
-   int pitch;                   /* common row stride, in pixels */
 
    int logTextureGranularity;
 
-   __DRIscreenPrivate *driScrnPriv;
-
-   volatile drm_i915_sarea_t *sarea;
-
-   int drmMinor;
-
-   int irq_active;
+   __DRIscreen *driScrnPriv;
 
    GLboolean no_hw;
 
    GLboolean no_vbo;
    dri_bufmgr *bufmgr;
-   GLboolean kernel_exec_fencing;
+   struct _mesa_HashTable *named_regions;
 
    /**
    * Configuration cache with default values for all contexts
    */
    driOptionCache optionCache;
-} intelScreenPrivate;
+};
 
+extern GLboolean intelMapScreenRegions(__DRIscreen * sPriv);
 
+extern void intelDestroyContext(__DRIcontext * driContextPriv);
 
-extern GLboolean intelMapScreenRegions(__DRIscreenPrivate * sPriv);
-
-extern void intelUnmapScreenRegions(intelScreenPrivate * intelScreen);
-
-extern void intelDestroyContext(__DRIcontextPrivate * driContextPriv);
-
-extern GLboolean intelUnbindContext(__DRIcontextPrivate * driContextPriv);
+extern GLboolean intelUnbindContext(__DRIcontext * driContextPriv);
 
 extern GLboolean
-intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
-                 __DRIdrawablePrivate * driDrawPriv,
-                 __DRIdrawablePrivate * driReadPriv);
-
-extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
+intelMakeCurrent(__DRIcontext * driContextPriv,
+                 __DRIdrawable * driDrawPriv,
+                 __DRIdrawable * driReadPriv);
 
 #endif

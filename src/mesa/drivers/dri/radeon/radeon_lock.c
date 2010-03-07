@@ -46,7 +46,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_screen.h"
 #include "radeon_common.h"
 #include "radeon_lock.h"
-#include "drirenderbuffer.h"
 
 /* Update the hardware state.  This is called if another context has
  * grabbed the hardware lock, which includes the X server.  This
@@ -58,9 +57,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 {
-	__DRIdrawablePrivate *const drawable = radeon_get_drawable(rmesa);
-	__DRIdrawablePrivate *const readable = radeon_get_readable(rmesa);
-	__DRIscreenPrivate *sPriv = rmesa->dri.screen;
+	__DRIdrawable *const drawable = radeon_get_drawable(rmesa);
+	__DRIdrawable *const readable = radeon_get_readable(rmesa);
+	__DRIscreen *sPriv = rmesa->dri.screen;
 
 	drmGetLock(rmesa->dri.fd, rmesa->dri.hwContext, flags);
 

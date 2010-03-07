@@ -13,6 +13,7 @@ arbvptest3
 arbvptorus
 arbvpwarpmesh
 arraytexture
+auxbuffer
 blendminmax
 blendsquare
 blendxor
@@ -23,10 +24,12 @@ bug_3195
 bug_texstore_i8
 bumpmap
 calibrate_rast
+condrender
 copypixrate
 crossbar
 cva
 drawbuffers
+drawbuffers2
 extfuncs.h
 exactrast
 fbotest1
@@ -101,6 +104,7 @@ vptorus
 vpwarpmesh
 yuvrect
 yuvsquare
+zbitmap
 zcomp
 zdrawpix
 zreaddraw

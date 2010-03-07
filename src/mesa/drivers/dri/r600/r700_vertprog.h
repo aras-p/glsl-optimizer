@@ -39,6 +39,7 @@ typedef struct ArrayDesc //TEMP
 	GLint size;   //number of data element
 	GLenum type;  //data element type
 	GLsizei stride;
+	GLenum format; //GL_RGBA or GL_BGRA
 } ArrayDesc;
 
 struct r700_vertex_program 

@@ -36,7 +36,6 @@
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/program.h"
-#include "shader/programopt.h"
 #include "shader/shader_api.h"
 
 #include "cso_cache/cso_context.h"
@@ -44,7 +43,6 @@
 
 #include "st_context.h"
 #include "st_program.h"
-#include "st_atom_shader.h"
 #include "st_mesa_to_tgsi.h"
 #include "st_cb_program.h"
 
@@ -150,9 +148,9 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
             stfp->driver_shader = NULL;
          }
          
-         if (stfp->state.tokens) {
-            st_free_tokens(stfp->state.tokens);
-            stfp->state.tokens = NULL;
+         if (stfp->tgsi.tokens) {
+            st_free_tokens(stfp->tgsi.tokens);
+            stfp->tgsi.tokens = NULL;
          }
 
          if (stfp->bitmap_program) {
@@ -179,9 +177,9 @@ static GLboolean st_is_program_native( GLcontext *ctx,
 }
 
 
-static void st_program_string_notify( GLcontext *ctx,
-				      GLenum target,
-				      struct gl_program *prog )
+static GLboolean st_program_string_notify( GLcontext *ctx,
+                                           GLenum target,
+                                           struct gl_program *prog )
 {
    struct st_context *st = st_context(ctx);
 
@@ -195,9 +193,9 @@ static void st_program_string_notify( GLcontext *ctx,
          stfp->driver_shader = NULL;
       }
 
-      if (stfp->state.tokens) {
-         st_free_tokens(stfp->state.tokens);
-         stfp->state.tokens = NULL;
+      if (stfp->tgsi.tokens) {
+         st_free_tokens(stfp->tgsi.tokens);
+         stfp->tgsi.tokens = NULL;
       }
 
       if (st->fp == stfp)
@@ -213,6 +211,9 @@ static void st_program_string_notify( GLcontext *ctx,
       if (st->vp == stvp)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
    }
+
+   /* XXX check if program is legal, within limits */
+   return GL_TRUE;
 }
 
 

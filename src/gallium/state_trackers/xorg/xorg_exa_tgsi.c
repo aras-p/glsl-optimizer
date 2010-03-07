@@ -6,11 +6,9 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
 #include "pipe/p_shader_tokens.h"
 
 #include "util/u_memory.h"
-#include "util/u_simple_shaders.h"
 
 #include "tgsi/tgsi_ureg.h"
 
@@ -47,22 +45,22 @@ static void
 print_fs_traits(int fs_traits)
 {
    const char *strings[] = {
-      "FS_COMPOSITE",       /* = 1 << 0 */
-      "FS_MASK",            /* = 1 << 1 */
-      "FS_SOLID_FILL",      /* = 1 << 2 */
-      "FS_LINGRAD_FILL",    /* = 1 << 3 */
-      "FS_RADGRAD_FILL",    /* = 1 << 4 */
-      "FS_CA_FULL",         /* = 1 << 5 - src.rgba * mask.rgba */
-      "FS_CA_SRCALPHA",     /* = 1 << 6 - src.aaaa * mask.rgba */
-      "FS_YUV",             /* = 1 << 7 */
-      "FS_SRC_REPEAT_NONE", /* = 1 << 8 */
-      "FS_MASK_REPEAT_NONE",/* = 1 << 9 */
-      "FS_SRC_SWIZZLE_RGB", /* = 1 << 10 */
-      "FS_MASK_SWIZZLE_RGB",/* = 1 << 11 */
-      "FS_SRC_SET_ALPHA",   /* = 1 << 12 */
-      "FS_MASK_SET_ALPHA",  /* = 1 << 13 */
-      "FS_SRC_LUMINANCE",   /* = 1 << 14 */
-      "FS_MASK_LUMINANCE",  /* = 1 << 15 */
+      "FS_COMPOSITE",       /* = 1 << 0, */
+      "FS_MASK",            /* = 1 << 1, */
+      "FS_SOLID_FILL",      /* = 1 << 2, */
+      "FS_LINGRAD_FILL",    /* = 1 << 3, */
+      "FS_RADGRAD_FILL",    /* = 1 << 4, */
+      "FS_CA_FULL",         /* = 1 << 5, */ /* src.rgba * mask.rgba */
+      "FS_CA_SRCALPHA",     /* = 1 << 6, */ /* src.aaaa * mask.rgba */
+      "FS_YUV",             /* = 1 << 7, */
+      "FS_SRC_REPEAT_NONE", /* = 1 << 8, */
+      "FS_MASK_REPEAT_NONE",/* = 1 << 9, */
+      "FS_SRC_SWIZZLE_RGB", /* = 1 << 10, */
+      "FS_MASK_SWIZZLE_RGB",/* = 1 << 11, */
+      "FS_SRC_SET_ALPHA",   /* = 1 << 12, */
+      "FS_MASK_SET_ALPHA",  /* = 1 << 13, */
+      "FS_SRC_LUMINANCE",   /* = 1 << 14, */
+      "FS_MASK_LUMINANCE",  /* = 1 << 15, */
    };
    int i, k;
    debug_printf("%s: ", __func__);
@@ -492,6 +490,7 @@ create_fs(struct pipe_context *pipe,
 
    /* it has to be either a fill, a composite op or a yuv conversion */
    debug_assert((is_fill ^ is_composite) ^ is_yuv);
+   (void) is_yuv;
 
    out = ureg_DECL_output(ureg,
                           TGSI_SEMANTIC_COLOR,

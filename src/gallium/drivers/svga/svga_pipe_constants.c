@@ -23,16 +23,12 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
-#include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_context.h"
-#include "svga_state.h"
-#include "svga_hw_reg.h"
-#include "svga_cmd.h"
 
 /***********************************************************************
  * Constant buffers 
@@ -49,7 +45,7 @@ struct svga_constbuf
 
 static void svga_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     const struct pipe_constant_buffer *buf)
+                                     struct pipe_buffer *buf)
 {
    struct svga_context *svga = svga_context(pipe);
 
@@ -57,7 +53,7 @@ static void svga_set_constant_buffer(struct pipe_context *pipe,
    assert(index == 0);
 
    pipe_buffer_reference( &svga->curr.cb[shader],
-                          buf->buffer );
+                          buf );
 
    if (shader == PIPE_SHADER_FRAGMENT)
       svga->dirty |= SVGA_NEW_FS_CONST_BUFFER;

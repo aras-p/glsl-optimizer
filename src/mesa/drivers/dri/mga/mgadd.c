@@ -32,11 +32,6 @@
 
 #include "mgacontext.h"
 #include "mgadd.h"
-#include "mgastate.h"
-#include "mgaspan.h"
-#include "mgatex.h"
-#include "mgatris.h"
-#include "mgavb.h"
 #include "mga_xmesa.h"
 #include "utils.h"
 

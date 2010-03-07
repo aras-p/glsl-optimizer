@@ -27,13 +27,7 @@
 #include "svga_screen.h"
 #include "svga_screen_texture.h"
 #include "svga_context.h"
-#include "svga_winsys.h"
-#include "svga_draw.h"
 #include "svga_debug.h"
-
-#include "svga_hw_reg.h"
-
-
 
 
 static void svga_flush( struct pipe_context *pipe,

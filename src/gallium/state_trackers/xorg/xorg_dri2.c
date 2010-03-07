@@ -38,14 +38,17 @@
 #include "dri2.h"
 
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
-#include "util/u_rect.h"
+#include "util/u_format.h"
 
 /* Make all the #if cases in the code esier to read */
-/* XXX can it be set to 1? */
 #ifndef DRI2INFOREC_VERSION
-#define DRI2INFOREC_VERSION 0
+#define DRI2INFOREC_VERSION 1
+#endif
+
+#if DRI2INFOREC_VERSION == 2
+static Bool set_format_in_do_create_buffer;
 #endif
 
 typedef struct {
@@ -92,7 +95,7 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     case 9:
 #endif
 	if (exa_priv->depth_stencil_tex &&
-	    !pf_is_depth_stencil(exa_priv->depth_stencil_tex->format))
+	    !util_format_is_depth_or_stencil(exa_priv->depth_stencil_tex->format))
 	    exa_priv->depth_stencil_tex = NULL;
         /* Fall through */
     case DRI2BufferDepth:
@@ -100,14 +103,26 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
 	    pipe_texture_reference(&tex, exa_priv->depth_stencil_tex);
         else {
 	    struct pipe_texture template;
+            unsigned depthBits = (format != 0) ? format : pDraw->depth;
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
-	    if (buffer->attachment == DRI2BufferDepth)
-		template.format = ms->ds_depth_bits_last ?
-		    PIPE_FORMAT_X8Z24_UNORM : PIPE_FORMAT_Z24X8_UNORM;
-	    else
-		template.format = ms->ds_depth_bits_last ?
-		    PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
+	    if (buffer->attachment == DRI2BufferDepth) {
+               switch(depthBits) {
+               case 16:
+                  template.format = PIPE_FORMAT_Z16_UNORM;
+                  break;
+               case 32:
+                  template.format = PIPE_FORMAT_Z32_UNORM;
+                  break;
+               default:
+                  template.format = ms->ds_depth_bits_last ?
+                                    PIPE_FORMAT_Z24X8_UNORM : PIPE_FORMAT_X8Z24_UNORM;
+                  break;
+               }
+            } else {
+               template.format = ms->ds_depth_bits_last ?
+                                 PIPE_FORMAT_Z24S8_UNORM : PIPE_FORMAT_S8Z24_UNORM;
+            }
 	    template.width0 = pDraw->width;
 	    template.height0 = pDraw->height;
 	    template.depth0 = 1;
@@ -146,7 +161,9 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     buffer->driverPrivate = private;
     buffer->flags = 0; /* not tiled */
 #if DRI2INFOREC_VERSION == 2
-    ((DRI2Buffer2Ptr)buffer)->format = 0;
+    /* ABI forwards/backwards compatibility */
+    if (set_format_in_do_create_buffer)
+	((DRI2Buffer2Ptr)buffer)->format = 0;
 #elif DRI2INFOREC_VERSION >= 3
     buffer->format = 0;
 #endif
@@ -210,7 +227,9 @@ dri2_destroy_buffer(DrawablePtr pDraw, DRI2Buffer2Ptr buffer)
     xfree(buffer);
 }
 
-#else /* DRI2INFOREC_VERSION < 2 */
+#endif /* DRI2INFOREC_VERSION >= 2 */
+
+#if DRI2INFOREC_VERSION <= 2
 
 static DRI2BufferPtr
 dri2_create_buffers(DrawablePtr pDraw, unsigned int *attachments, int count)
@@ -260,7 +279,7 @@ dri2_destroy_buffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
     }
 }
 
-#endif /* DRI2INFOREC_VERSION >= 2 */
+#endif /* DRI2INFOREC_VERSION <= 2 */
 
 static void
 dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
@@ -368,12 +387,19 @@ xorg_dri2_init(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
     DRI2InfoRec dri2info;
-
 #if DRI2INFOREC_VERSION >= 2
-    dri2info.version = DRI2INFOREC_VERSION;
-#else
-    dri2info.version = 1;
+    int major, minor;
+
+    if (xf86LoaderCheckSymbol("DRI2Version")) {
+	DRI2Version(&major, &minor);
+    } else {
+	/* Assume version 1.0 */
+	major = 1;
+	minor = 0;
+    }
 #endif
+
+    dri2info.version = DRI2INFOREC_VERSION;
     dri2info.fd = ms->fd;
 
     dri2info.driverName = pScrn->driverName;
@@ -382,7 +408,22 @@ xorg_dri2_init(ScreenPtr pScreen)
 #if DRI2INFOREC_VERSION >= 2
     dri2info.CreateBuffer = dri2_create_buffer;
     dri2info.DestroyBuffer = dri2_destroy_buffer;
-#else
+#endif
+
+    /* For X servers in the 1.6.x series there where two DRI2 version.
+     * This allows us to build one binary that works on both servers.
+     */
+#if DRI2INFOREC_VERSION == 2
+    if (minor == 0) {
+	set_format_in_do_create_buffer = FALSE;
+	dri2info.CreateBuffers = dri2_create_buffers;
+	dri2info.DestroyBuffers = dri2_destroy_buffers;
+    } else
+	set_format_in_do_create_buffer = FALSE;
+#endif
+
+    /* For version 1 set these unconditionaly. */
+#if DRI2INFOREC_VERSION == 1
     dri2info.CreateBuffers = dri2_create_buffers;
     dri2info.DestroyBuffers = dri2_destroy_buffers;
 #endif
@@ -390,11 +431,11 @@ xorg_dri2_init(ScreenPtr pScreen)
     dri2info.Wait = NULL;
 
     ms->d_depth_bits_last =
-	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_X8Z24_UNORM,
+	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24X8_UNORM,
 					 PIPE_TEXTURE_2D,
 					 PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
     ms->ds_depth_bits_last =
-	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_S8Z24_UNORM,
+	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24S8_UNORM,
 					 PIPE_TEXTURE_2D,
 					 PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
 

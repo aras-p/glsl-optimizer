@@ -25,10 +25,8 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "depth.h"
 #include "lines.h"
 #include "macros.h"
-#include "texstate.h"
 #include "mtypes.h"
 
 

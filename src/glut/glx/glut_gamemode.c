@@ -18,7 +18,6 @@
 
 #ifndef _WIN32
 #include <X11/Xlib.h>
-#include <X11/Xatom.h>
 
 /* SGI optimization introduced in IRIX 6.3 to avoid X server
    round trips for interning common X atoms. */

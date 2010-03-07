@@ -90,6 +90,8 @@ SOURCES = \
 	quadstrip-flat.c \
 	quadstrip.c \
 	readpixels.c \
+	sub-tex.c \
+	tex-quads.c \
 	tri-alpha.c \
 	tri-alpha-tex.c \
 	tri-array-interleaved.c \
@@ -119,6 +121,7 @@ SOURCES = \
 	tri-lit-material.c \
 	tri-mask-tri.c \
 	tri-orig.c \
+	tri-point-line-clipped.c \
 	tri-query.c \
 	tri-repeat.c \
 	tri-scissor-tri.c \
@@ -153,11 +156,13 @@ SOURCES = \
 	tristrip-clip.c \
 	tristrip-flat.c \
 	tristrip.c \
+	vbo-tri.c \
 	vbo-drawarrays.c \
 	vbo-noninterleaved.c \
 	vbo-drawelements.c \
 	vbo-drawrange.c \
 	vp-array.c \
+	vp-array-hf.c \
 	vp-array-int.c \
 	vp-clip.c \
 	vp-line-clip.c \
@@ -200,14 +205,6 @@ default: $(UTIL_FILES) $(PROGS)
 clean:
 	-rm -f $(PROGS)
 	-rm -f *.o
-	-rm -f getproclist.h
-
-
-# auto code generation
-getprocaddress: getprocaddress.c getproclist.h
-
-getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.py
-	python getprocaddress.py > getproclist.h
 
 
 texrect: texrect.o readtex.o

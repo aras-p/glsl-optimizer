@@ -113,26 +113,6 @@ static struct cso_hash *_cso_hash_for_type(struct cso_cache *sc, enum cso_cache_
    return hash;
 }
 
-static int _cso_size_for_type(enum cso_cache_type type)
-{
-   switch(type) {
-   case CSO_BLEND:
-      return sizeof(struct pipe_blend_state);
-   case CSO_SAMPLER:
-      return sizeof(struct pipe_sampler_state);
-   case CSO_DEPTH_STENCIL_ALPHA:
-      return sizeof(struct pipe_depth_stencil_alpha_state);
-   case CSO_RASTERIZER:
-      return sizeof(struct pipe_rasterizer_state);
-   case CSO_FRAGMENT_SHADER:
-      return sizeof(struct pipe_shader_state);
-   case CSO_VERTEX_SHADER:
-      return sizeof(struct pipe_shader_state);
-   }
-   return 0;
-}
-
-
 static void delete_blend_state(void *state, void *data)
 {
    struct cso_blend *cso = (struct cso_blend *)state;
@@ -282,10 +262,9 @@ void *cso_hash_find_data_from_template( struct cso_hash *hash,
 
 struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
                                              unsigned hash_key, enum cso_cache_type type,
-                                             void *templ)
+                                             void *templ, unsigned size)
 {
    struct cso_hash_iter iter = cso_find_state(sc, hash_key, type);
-   int size = _cso_size_for_type(type);
    while (!cso_hash_iter_is_null(iter)) {
       void *iter_data = cso_hash_iter_data(iter);
       if (!memcmp(iter_data, templ, size))

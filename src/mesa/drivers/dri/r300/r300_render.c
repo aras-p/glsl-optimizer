@@ -53,7 +53,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_render.h"
 
 #include "main/glheader.h"
-#include "main/state.h"
 #include "main/imports.h"
 #include "main/enums.h"
 #include "main/macros.h"
@@ -65,15 +64,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"
 #include "vbo/vbo_split.h"
-#include "tnl/tnl.h"
-#include "tnl/t_vp_build.h"
 #include "r300_context.h"
-#include "r300_ioctl.h"
 #include "r300_state.h"
 #include "r300_reg.h"
-#include "r300_tex.h"
 #include "r300_emit.h"
-#include "r300_fragprog_common.h"
 #include "r300_swtcl.h"
 
 /**
@@ -446,7 +440,7 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 	if (mode) {
 		if ((fallback_warn & bit) == 0) {
 			if (RADEON_DEBUG & RADEON_FALLBACKS)
-				_mesa_fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
+				fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
 			fallback_warn |= bit;
 		}
 		rmesa->fallback |= bit;

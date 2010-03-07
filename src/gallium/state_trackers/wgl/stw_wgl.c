@@ -97,6 +97,19 @@ wglSwapBuffers(
 }
 
 
+WINGDIAPI DWORD WINAPI
+wglSwapMultipleBuffers(UINT n,
+                       CONST WGLSWAP *ps)
+{
+   UINT i;
+
+   for (i =0; i < n; ++i)
+      wglSwapBuffers(ps->hdc);
+
+   return 0;
+}
+
+
 WINGDIAPI BOOL APIENTRY
 wglSwapLayerBuffers(
    HDC hdc,

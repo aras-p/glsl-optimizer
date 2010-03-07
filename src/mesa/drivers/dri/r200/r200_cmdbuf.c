@@ -35,15 +35,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/context.h"
-#include "swrast/swrast.h"
 #include "main/simple_list.h"
 
 #include "radeon_common.h"
 #include "r200_context.h"
-#include "r200_state.h"
 #include "r200_ioctl.h"
-#include "r200_tcl.h"
-#include "r200_sanity.h"
 #include "radeon_reg.h"
 
 /* The state atoms will be emitted in the order they appear in the atom list,
@@ -92,6 +88,7 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
        insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.pix[i] );
    insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[0] );
    insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.afs[1] );
+   insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.stp );
    for (i = 0; i < 8; ++i)
        insert_at_tail_if( &rmesa->radeon.hw.atomlist, &rmesa->hw.lit[i] );
    for (i = 0; i < 3 + mtu; ++i)

@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #ifndef vl_mpeg12_mc_renderer_h
@@ -63,20 +63,19 @@ struct vl_mpeg12_mc_renderer
    unsigned macroblocks_per_batch;
 
    struct pipe_viewport_state viewport;
-   struct pipe_scissor_state scissor;
-   struct pipe_constant_buffer vs_const_buf;
+   struct pipe_buffer *vs_const_buf;
    struct pipe_framebuffer_state fb_state;
    struct pipe_vertex_element vertex_elems[8];
-	
+
    union
    {
       void *all[5];
       struct { void *y, *cb, *cr, *ref[2]; } individual;
    } samplers;
-	
+
    void *i_vs, *p_vs[2], *b_vs[2];
    void *i_fs, *p_fs[2], *b_fs[2];
-	
+
    union
    {
       struct pipe_texture *all[5];
@@ -88,7 +87,7 @@ struct vl_mpeg12_mc_renderer
       struct pipe_vertex_buffer all[3];
       struct { struct pipe_vertex_buffer ycbcr, ref[2]; } individual;
    } vertex_bufs;
-	
+
    struct pipe_texture *surface, *past, *future;
    struct pipe_fence_handle **fence;
    unsigned num_macroblocks;

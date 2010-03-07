@@ -1,23 +1,5 @@
 Import('*')
 
-if not env['GLUT']:
-    Return()
-
-env = env.Clone()
-
-env.Prepend(CPPPATH = [
-	'../util',
-])
-
-env.Prepend(LIBS = [
-	util,
-	'$GLUT_LIB'
-])
-
-if env['platform'] == 'windows':
-    env.Append(CPPDEFINES = ['NOMINMAX'])
-    env.Prepend(LIBS = ['winmm'])
-
 linux_progs = [
     'api_speed',
 ]
@@ -59,14 +41,18 @@ progs = [
     'bug_3195',
     'bug_texstore_i8',
     'calibrate_rast',
+    'condrender',
     'copypixrate',
     'crossbar',
     'cva',
+    'cylwrap',
     'drawbuffers',
+    'drawbuffers2',
     'exactrast',
     'ext422square',
     'fbotest1',
     'fbotest2',
+    'fbotest3',
     'fillrate',
     'floattex',
     'fog',
@@ -132,13 +118,14 @@ progs = [
     'vpwarpmesh',
     'yuvrect',
     'yuvsquare',
+    'zbitmap',
     'zcomp',
     'zdrawpix',
     'zreaddraw',
 ]
 
 for prog in progs:
-    env.Program(
+    progs_env.Program(
         target = prog,
         source = prog + '.c',
     )

@@ -60,7 +60,7 @@ tgsi_parse_end_of_tokens(
    struct tgsi_parse_context *ctx )
 {
    return ctx->Position >=
-      1 + ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
+      ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
 }
 
 
@@ -109,6 +109,10 @@ tgsi_parse_token(
 
       next_token( ctx, &decl->Range );
 
+      if (decl->Declaration.Dimension) {
+         next_token(ctx, &decl->Dim);
+      }
+
       if( decl->Declaration.Semantic ) {
          next_token( ctx, &decl->Semantic );
       }
@@ -119,17 +123,29 @@ tgsi_parse_token(
    case TGSI_TOKEN_TYPE_IMMEDIATE:
    {
       struct tgsi_full_immediate *imm = &ctx->FullToken.FullImmediate;
+      uint imm_count;
 
       memset(imm, 0, sizeof *imm);
       copy_token(&imm->Immediate, &token);
 
+      imm_count = imm->Immediate.NrTokens - 1;
+
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
-         {
-            uint imm_count = imm->Immediate.NrTokens - 1;
-            for (i = 0; i < imm_count; i++) {
-               next_token(ctx, &imm->u[i]);
-            }
+         for (i = 0; i < imm_count; i++) {
+            next_token(ctx, &imm->u[i].Float);
+         }
+         break;
+
+      case TGSI_IMM_UINT32:
+         for (i = 0; i < imm_count; i++) {
+            next_token(ctx, &imm->u[i].Uint);
+         }
+         break;
+
+      case TGSI_IMM_INT32:
+         for (i = 0; i < imm_count; i++) {
+            next_token(ctx, &imm->u[i].Int);
          }
          break;
 
@@ -220,6 +236,22 @@ tgsi_parse_token(
       break;
    }
 
+   case TGSI_TOKEN_TYPE_PROPERTY:
+   {
+      struct tgsi_full_property *prop = &ctx->FullToken.FullProperty;
+      uint prop_count;
+
+      memset(prop, 0, sizeof *prop);
+      copy_token(&prop->Property, &token);
+
+      prop_count = prop->Property.NrTokens - 1;
+      for (i = 0; i < prop_count; i++) {
+         next_token(ctx, &prop->u[i]);
+      }
+
+      break;
+   }
+
    default:
       assert( 0 );
    }
@@ -232,8 +264,7 @@ tgsi_num_tokens(const struct tgsi_token *tokens)
    struct tgsi_parse_context ctx;
    if (tgsi_parse_init(&ctx, tokens) == TGSI_PARSE_OK) {
       unsigned len = (ctx.FullHeader.Header.HeaderSize +
-                      ctx.FullHeader.Header.BodySize +
-                      1);
+                      ctx.FullHeader.Header.BodySize);
       return len;
    }
    return 0;
@@ -252,4 +283,15 @@ tgsi_dup_tokens(const struct tgsi_token *tokens)
    if (new_tokens)
       memcpy(new_tokens, tokens, bytes);
    return new_tokens;
+}
+
+
+/**
+ * Allocate memory for num_tokens tokens.
+ */
+struct tgsi_token *
+tgsi_alloc_tokens(unsigned num_tokens)
+{
+   unsigned bytes = num_tokens * sizeof(struct tgsi_token);
+   return (struct tgsi_token *) MALLOC(bytes);
 }

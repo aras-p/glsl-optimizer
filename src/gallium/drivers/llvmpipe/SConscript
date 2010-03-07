@@ -9,6 +9,8 @@ if not env.has_key('LLVM_VERSION'):
 
 env.Tool('udis86')
 
+env.Append(CPPPATH = ['.'])
+
 env.CodeGenerate(
 	target = 'lp_tile_soa.c',
 	script = 'lp_tile_soa.py',
@@ -16,43 +18,35 @@ env.CodeGenerate(
 	command = 'python $SCRIPT $SOURCE > $TARGET'
 )
 
+# XXX: Our dependency scanner only finds depended modules in relative dirs.
+env.Depends('lp_tile_soa.c', [
+    '#src/gallium/auxiliary/util/u_format_parse.py', 
+    '#src/gallium/auxiliary/util/u_format_pack.py', 
+    '#src/gallium/auxiliary/util/u_format_access.py',
+])
+
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
-		'lp_bld_alpha.c',
-		'lp_bld_arit.c',
-		'lp_bld_blend_aos.c',
-		'lp_bld_blend_logicop.c',
-		'lp_bld_blend_soa.c',
-		'lp_bld_const.c',
-		'lp_bld_conv.c',
-		'lp_bld_debug.c',
-		'lp_bld_depth.c',
-		'lp_bld_flow.c',
-		'lp_bld_format_aos.c',
-        'lp_bld_format_query.c',
-		'lp_bld_format_soa.c',
-		'lp_bld_interp.c',
-		'lp_bld_intr.c',
-		'lp_bld_misc.cpp',
-        'lp_bld_pack.c',
-        'lp_bld_sample.c',
-		'lp_bld_sample_soa.c',
-		'lp_bld_struct.c',
-		'lp_bld_logic.c',
-		'lp_bld_swizzle.c',
-		'lp_bld_tgsi_soa.c',		
-		'lp_bld_type.c',
 		'lp_buffer.c',
 		'lp_clear.c',
 		'lp_context.c',
 		'lp_draw_arrays.c',
+		'lp_fence.c',
 		'lp_flush.c',
 		'lp_jit.c',
-		'lp_prim_vbuf.c',
-		'lp_setup.c',
+		'lp_perf.c',
 		'lp_query.c',
+		'lp_rast.c',
+		'lp_rast_tri.c',
+		'lp_scene.c',
+		'lp_scene_queue.c',
 		'lp_screen.c',
+		'lp_setup.c',
+		'lp_setup_line.c',
+		'lp_setup_point.c',
+		'lp_setup_tri.c',
+		'lp_setup_vbuf.c',
 		'lp_state_blend.c',
 		'lp_state_clip.c',
 		'lp_state_derived.c',
@@ -63,32 +57,29 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_state_vertex.c',
 		'lp_state_vs.c',
 		'lp_surface.c',
-		'lp_tex_cache.c',
-		'lp_tex_sample_c.c',
 		'lp_tex_sample_llvm.c',
 		'lp_texture.c',
-		'lp_tile_cache.c',
+		'lp_tile_image.c',
 		'lp_tile_soa.c',
 	])
 
 
-env = env.Clone()
+if env['platform'] != 'embedded':
+    env = env.Clone()
 
-env.Prepend(LIBS = [llvmpipe] + auxiliaries)
+    env.Prepend(LIBS = [llvmpipe] + gallium)
 
-env.Program(
-    target = 'lp_test_format',
-    source = ['lp_test_format.c', 'lp_test_main.c'],
-)
+    tests = [
+        'format',
+        'blend',
+        'conv',
+    ]
 
-env.Program(
-    target = 'lp_test_blend',
-    source = ['lp_test_blend.c', 'lp_test_main.c'],
-)
+    for test in tests:
+        target = env.Program(
+            target = 'lp_test_' + test,
+            source = ['lp_test_' + test + '.c', 'lp_test_main.c'],
+        )
+        env.InstallProgram(target)
 
-env.Program(
-    target = 'lp_test_conv',
-    source = ['lp_test_conv.c', 'lp_test_main.c'],
-)
-
-Export('llvmpipe')
+    Export('llvmpipe')

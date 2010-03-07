@@ -64,9 +64,11 @@ tgsi_build_declaration(
    unsigned file,
    unsigned usage_mask,
    unsigned interpolate,
+   unsigned dimension,
    unsigned semantic,
    unsigned centroid,
    unsigned invariant,
+   unsigned cylindrical_wrap,
    struct tgsi_header *header );
 
 struct tgsi_full_declaration
@@ -88,6 +90,14 @@ tgsi_build_declaration_range(
    unsigned last,
    struct tgsi_declaration *declaration,
    struct tgsi_header *header );
+
+struct tgsi_declaration_dimension
+tgsi_default_declaration_dimension(void);
+
+struct tgsi_declaration_dimension
+tgsi_build_declaration_dimension(unsigned index_2d,
+                                 struct tgsi_declaration *declaration,
+                                 struct tgsi_header *header);
 
 struct tgsi_declaration_semantic
 tgsi_default_declaration_semantic( void );
@@ -122,6 +132,34 @@ tgsi_build_immediate_float32(
 unsigned
 tgsi_build_full_immediate(
    const struct tgsi_full_immediate *full_imm,
+   struct tgsi_token *tokens,
+   struct tgsi_header *header,
+   unsigned maxsize );
+
+/*
+ * properties
+ */
+
+struct tgsi_property
+tgsi_default_property( void );
+
+struct tgsi_property
+tgsi_build_property(
+   unsigned property_name,
+   struct tgsi_header *header );
+
+struct tgsi_full_property
+tgsi_default_full_property( void );
+
+struct tgsi_property_data
+tgsi_build_property_data(
+   unsigned value,
+   struct tgsi_property *property,
+   struct tgsi_header *header );
+
+unsigned
+tgsi_build_full_property(
+   const struct tgsi_full_property *full_prop,
    struct tgsi_token *tokens,
    struct tgsi_header *header,
    unsigned maxsize );

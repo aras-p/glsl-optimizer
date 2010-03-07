@@ -27,7 +27,7 @@
 #ifndef VMW_BUFFER_H_
 #define VMW_BUFFER_H_
 
-
+#include <assert.h>
 #include "pipe/p_compiler.h"
 
 struct SVGAGuestPtr;

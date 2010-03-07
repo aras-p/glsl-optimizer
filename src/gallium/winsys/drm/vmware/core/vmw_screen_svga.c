@@ -36,7 +36,7 @@
 #include "svga_cmd.h"
 #include "svga3d_caps.h"
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "pipebuffer/pb_buffer.h"

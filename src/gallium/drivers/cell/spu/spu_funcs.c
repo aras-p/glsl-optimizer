@@ -144,7 +144,7 @@ export_func(struct cell_spu_function_info *spu_functions,
 void
 return_function_info(void)
 {
-   struct cell_spu_function_info funcs ALIGN16_ATTRIB;
+   PIPE_ALIGN_VAR(16) struct cell_spu_function_info funcs;
    int tag = TAG_MISC;
 
    ASSERT(sizeof(funcs) == 256); /* must be multiple of 16 bytes */

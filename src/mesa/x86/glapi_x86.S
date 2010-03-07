@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 
-#include "assyntax.h"
+#include "x86/assyntax.h"
 #include "glapi/glapioffsets.h"
 
 #if defined(STDCALL_API)
@@ -46,13 +46,13 @@
 
 #define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))
 
-#if defined(GNU_ASSEMBLER) && !defined(__DJGPP__) && !defined(__MINGW32__)
+#if defined(GNU_ASSEMBLER) && !defined(__DJGPP__) && !defined(__MINGW32__) && !defined(__APPLE__)
 #define GLOBL_FN(x) GLOBL x ; .type x, function
 #else
 #define GLOBL_FN(x) GLOBL x
 #endif
 
-#if defined(PTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
+#if defined(PTHREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
 #  define THREADS
 #endif
 
@@ -968,21 +968,31 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB(_dispatch_stub_785, _gloffset_FlushMappedBufferRangeAPPLE, _dispatch_stub_785@12)
 	HIDDEN(GL_PREFIX(_dispatch_stub_785, _dispatch_stub_785@12))
 	GL_STUB(FramebufferTextureLayerEXT, _gloffset_FramebufferTextureLayerEXT, FramebufferTextureLayerEXT@20)
+	GL_STUB(ColorMaskIndexedEXT, _gloffset_ColorMaskIndexedEXT, ColorMaskIndexedEXT@20)
+	GL_STUB(DisableIndexedEXT, _gloffset_DisableIndexedEXT, DisableIndexedEXT@8)
+	GL_STUB(EnableIndexedEXT, _gloffset_EnableIndexedEXT, EnableIndexedEXT@8)
+	GL_STUB(GetBooleanIndexedvEXT, _gloffset_GetBooleanIndexedvEXT, GetBooleanIndexedvEXT@12)
+	GL_STUB(GetIntegerIndexedvEXT, _gloffset_GetIntegerIndexedvEXT, GetIntegerIndexedvEXT@12)
+	GL_STUB(IsEnabledIndexedEXT, _gloffset_IsEnabledIndexedEXT, IsEnabledIndexedEXT@8)
+	GL_STUB(BeginConditionalRenderNV, _gloffset_BeginConditionalRenderNV, BeginConditionalRenderNV@8)
+	GL_STUB(EndConditionalRenderNV, _gloffset_EndConditionalRenderNV, EndConditionalRenderNV@0)
 	GL_STUB(ProvokingVertexEXT, _gloffset_ProvokingVertexEXT, ProvokingVertexEXT@4)
-	GL_STUB(_dispatch_stub_788, _gloffset_GetTexParameterPointervAPPLE, _dispatch_stub_788@12)
-	HIDDEN(GL_PREFIX(_dispatch_stub_788, _dispatch_stub_788@12))
-	GL_STUB(_dispatch_stub_789, _gloffset_TextureRangeAPPLE, _dispatch_stub_789@12)
-	HIDDEN(GL_PREFIX(_dispatch_stub_789, _dispatch_stub_789@12))
-	GL_STUB(_dispatch_stub_790, _gloffset_StencilFuncSeparateATI, _dispatch_stub_790@16)
-	HIDDEN(GL_PREFIX(_dispatch_stub_790, _dispatch_stub_790@16))
-	GL_STUB(_dispatch_stub_791, _gloffset_ProgramEnvParameters4fvEXT, _dispatch_stub_791@16)
-	HIDDEN(GL_PREFIX(_dispatch_stub_791, _dispatch_stub_791@16))
-	GL_STUB(_dispatch_stub_792, _gloffset_ProgramLocalParameters4fvEXT, _dispatch_stub_792@16)
-	HIDDEN(GL_PREFIX(_dispatch_stub_792, _dispatch_stub_792@16))
-	GL_STUB(_dispatch_stub_793, _gloffset_GetQueryObjecti64vEXT, _dispatch_stub_793@12)
-	HIDDEN(GL_PREFIX(_dispatch_stub_793, _dispatch_stub_793@12))
-	GL_STUB(_dispatch_stub_794, _gloffset_GetQueryObjectui64vEXT, _dispatch_stub_794@12)
-	HIDDEN(GL_PREFIX(_dispatch_stub_794, _dispatch_stub_794@12))
+	GL_STUB(_dispatch_stub_796, _gloffset_GetTexParameterPointervAPPLE, _dispatch_stub_796@12)
+	HIDDEN(GL_PREFIX(_dispatch_stub_796, _dispatch_stub_796@12))
+	GL_STUB(_dispatch_stub_797, _gloffset_TextureRangeAPPLE, _dispatch_stub_797@12)
+	HIDDEN(GL_PREFIX(_dispatch_stub_797, _dispatch_stub_797@12))
+	GL_STUB(_dispatch_stub_798, _gloffset_StencilFuncSeparateATI, _dispatch_stub_798@16)
+	HIDDEN(GL_PREFIX(_dispatch_stub_798, _dispatch_stub_798@16))
+	GL_STUB(_dispatch_stub_799, _gloffset_ProgramEnvParameters4fvEXT, _dispatch_stub_799@16)
+	HIDDEN(GL_PREFIX(_dispatch_stub_799, _dispatch_stub_799@16))
+	GL_STUB(_dispatch_stub_800, _gloffset_ProgramLocalParameters4fvEXT, _dispatch_stub_800@16)
+	HIDDEN(GL_PREFIX(_dispatch_stub_800, _dispatch_stub_800@16))
+	GL_STUB(_dispatch_stub_801, _gloffset_GetQueryObjecti64vEXT, _dispatch_stub_801@12)
+	HIDDEN(GL_PREFIX(_dispatch_stub_801, _dispatch_stub_801@12))
+	GL_STUB(_dispatch_stub_802, _gloffset_GetQueryObjectui64vEXT, _dispatch_stub_802@12)
+	HIDDEN(GL_PREFIX(_dispatch_stub_802, _dispatch_stub_802@12))
+	GL_STUB(EGLImageTargetRenderbufferStorageOES, _gloffset_EGLImageTargetRenderbufferStorageOES, EGLImageTargetRenderbufferStorageOES@8)
+	GL_STUB(EGLImageTargetTexture2DOES, _gloffset_EGLImageTargetTexture2DOES, EGLImageTargetTexture2DOES@8)
 	GL_STUB_ALIAS(ArrayElementEXT, _gloffset_ArrayElement, ArrayElementEXT@4, ArrayElement, ArrayElement@4)
 	GL_STUB_ALIAS(BindTextureEXT, _gloffset_BindTexture, BindTextureEXT@8, BindTexture, BindTexture@8)
 	GL_STUB_ALIAS(DrawArraysEXT, _gloffset_DrawArrays, DrawArraysEXT@12, DrawArrays, DrawArrays@12)

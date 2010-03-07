@@ -29,7 +29,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -62,8 +62,9 @@ st_device_reference(struct st_device **ptr, struct st_device *st_dev)
 {
    struct st_device *old_dev = *ptr;
 
-   if (pipe_reference((struct pipe_reference **)ptr, &st_dev->reference))
+   if (pipe_reference(&(*ptr)->reference, &st_dev->reference))
       st_device_really_destroy(old_dev);
+   *ptr = st_dev;
 }
 
 
@@ -79,8 +80,7 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
 {
    struct st_device *st_dev;
    
-   if(!st_ws->screen_create ||
-      !st_ws->context_create)
+   if(!st_ws->screen_create)
       return NULL;
    
    st_dev = CALLOC_STRUCT(st_device);
@@ -134,7 +134,9 @@ st_context_destroy(struct st_context *st_ctx)
          st_ctx->pipe->destroy(st_ctx->pipe);
       
       for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
-         pipe_texture_reference(&st_ctx->sampler_textures[i], NULL);
+         pipe_texture_reference(&st_ctx->fragment_sampler_textures[i], NULL);
+      for(i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+         pipe_texture_reference(&st_ctx->vertex_sampler_textures[i], NULL);
       pipe_texture_reference(&st_ctx->default_texture, NULL);
 
       FREE(st_ctx);
@@ -155,13 +157,7 @@ st_context_create(struct st_device *st_dev)
    
    st_device_reference(&st_ctx->st_dev, st_dev);
    
-   st_ctx->real_pipe = st_dev->st_ws->context_create(st_dev->real_screen);
-   if(!st_ctx->real_pipe) {
-      st_context_destroy(st_ctx);
-      return NULL;
-   }
-   
-   st_ctx->pipe = trace_context_create(st_dev->screen, st_ctx->real_pipe);
+   st_ctx->pipe = st_dev->screen->context_create(st_dev->screen, NULL);
    if(!st_ctx->pipe) {
       st_context_destroy(st_ctx);
       return NULL;
@@ -177,11 +173,11 @@ st_context_create(struct st_device *st_dev)
    {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
-      blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.colormask = PIPE_MASK_RGBA;
+      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].colormask = PIPE_MASK_RGBA;
       cso_set_blend(st_ctx->cso, &blend);
    }
 
@@ -248,7 +244,7 @@ st_context_create(struct st_device *st_dev)
 
       memset( &templat, 0, sizeof( templat ) );
       templat.target = PIPE_TEXTURE_2D;
-      templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      templat.format = PIPE_FORMAT_B8G8R8A8_UNORM;
       templat.width0 = 1;
       templat.height0 = 1;
       templat.depth0 = 1;
@@ -275,9 +271,12 @@ st_context_create(struct st_device *st_dev)
       }
    
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-         pipe_texture_reference(&st_ctx->sampler_textures[i], st_ctx->default_texture);
+         pipe_texture_reference(&st_ctx->fragment_sampler_textures[i], st_ctx->default_texture);
+      for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
+         pipe_texture_reference(&st_ctx->vertex_sampler_textures[i], st_ctx->default_texture);
       
-      cso_set_sampler_textures(st_ctx->cso, PIPE_MAX_SAMPLERS, st_ctx->sampler_textures);
+      cso_set_sampler_textures(st_ctx->cso, PIPE_MAX_SAMPLERS, st_ctx->fragment_sampler_textures);
+      cso_set_vertex_sampler_textures(st_ctx->cso, PIPE_MAX_VERTEX_SAMPLERS, st_ctx->vertex_sampler_textures);
    }
    
    /* vertex shader */

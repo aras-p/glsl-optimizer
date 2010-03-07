@@ -46,9 +46,12 @@ struct translate_generic {
    struct translate translate;
 
    struct {
+      enum translate_element_type type;
+
       fetch_func fetch;
       unsigned buffer;
       unsigned input_offset;
+      unsigned instance_divisor;
 
       emit_func emit;
       unsigned output_offset;
@@ -389,10 +392,10 @@ static fetch_func get_fetch_func( enum pipe_format format )
    case PIPE_FORMAT_R8G8B8A8_SSCALED:
       return &fetch_R8G8B8A8_SSCALED;
 
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return &fetch_A8R8G8B8_UNORM;
 
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return &fetch_B8G8R8A8_UNORM;
 
    case PIPE_FORMAT_R32_FIXED:
@@ -548,10 +551,10 @@ static emit_func get_emit_func( enum pipe_format format )
    case PIPE_FORMAT_R8G8B8A8_SSCALED:
       return &emit_R8G8B8A8_SSCALED;
 
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return &emit_A8R8G8B8_UNORM;
 
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return &emit_B8G8R8A8_UNORM;
 
    default:
@@ -568,6 +571,7 @@ static emit_func get_emit_func( enum pipe_format format )
 static void PIPE_CDECL generic_run_elts( struct translate *translate,
                                          const unsigned *elts,
                                          unsigned count,
+                                         unsigned instance_id,
                                          void *output_buffer )
 {
    struct translate_generic *tg = translate_generic(translate);
@@ -583,12 +587,19 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
-
-	 const char *src = (tg->attrib[attr].input_ptr + 
-			    tg->attrib[attr].input_stride * elt);
+         const char *src;
 
 	 char *dst = (vert + 
 		      tg->attrib[attr].output_offset);
+
+         if (tg->attrib[attr].instance_divisor) {
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride *
+                  (instance_id / tg->attrib[attr].instance_divisor);
+         } else {
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride * elt;
+         }
 
 	 tg->attrib[attr].fetch( src, data );
 
@@ -607,6 +618,7 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 static void PIPE_CDECL generic_run( struct translate *translate,
                                     unsigned start,
                                     unsigned count,
+                                    unsigned instance_id,
                                     void *output_buffer )
 {
    struct translate_generic *tg = translate_generic(translate);
@@ -623,13 +635,25 @@ static void PIPE_CDECL generic_run( struct translate *translate,
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
 
-	 const char *src = (tg->attrib[attr].input_ptr + 
-			    tg->attrib[attr].input_stride * elt);
-
 	 char *dst = (vert + 
 		      tg->attrib[attr].output_offset);
 
-	 tg->attrib[attr].fetch( src, data );
+         if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
+            const char *src;
+
+            if (tg->attrib[attr].instance_divisor) {
+               src = tg->attrib[attr].input_ptr +
+                     tg->attrib[attr].input_stride *
+                     (instance_id / tg->attrib[attr].instance_divisor);
+            } else {
+               src = tg->attrib[attr].input_ptr +
+                     tg->attrib[attr].input_stride * elt;
+            }
+
+            tg->attrib[attr].fetch( src, data );
+         } else {
+            data[0] = (float)instance_id;
+         }
 
          if (0) debug_printf("vert %d attr %d: %f %f %f %f\n",
                              i, attr, data[0], data[1], data[2], data[3]);
@@ -683,10 +707,12 @@ struct translate *translate_generic_create( const struct translate_key *key )
    tg->translate.run = generic_run;
 
    for (i = 0; i < key->nr_elements; i++) {
+      tg->attrib[i].type = key->element[i].type;
 
       tg->attrib[i].fetch = get_fetch_func(key->element[i].input_format);
       tg->attrib[i].buffer = key->element[i].input_buffer;
       tg->attrib[i].input_offset = key->element[i].input_offset;
+      tg->attrib[i].instance_divisor = key->element[i].instance_divisor;
 
       tg->attrib[i].emit = get_emit_func(key->element[i].output_format);
       tg->attrib[i].output_offset = key->element[i].output_offset;

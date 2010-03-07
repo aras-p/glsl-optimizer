@@ -1572,7 +1572,7 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
     tdfxTexInfo *ti;
     tdfxMipMapLevel *mml;
     gl_format mesaFormat;
-    GLuint compressedSize;
+    GLuint compressedSize = 0;
 
     if (TDFX_DEBUG & DEBUG_VERBOSE_DRI) {
         fprintf(stderr, "tdfxCompressedTexImage2D: id=%d int 0x%x  %dx%d\n",
@@ -1660,7 +1660,7 @@ tdfxCompressedTexImage2D (GLcontext *ctx, GLenum target,
                                 texImage->Data);
        ti->padded = GL_TRUE;
     } else {
-       MEMCPY(texImage->Data, data, compressedSize);
+       memcpy(texImage->Data, data, compressedSize);
     }
 
     RevalidateTexture(ctx, texObj);
@@ -1707,7 +1707,7 @@ tdfxCompressedTexSubImage2D( GLcontext *ctx, GLenum target,
     rows = height / 4; /* [dBorca] hardcoded 4, but works for FXT1/DXTC */
 
     for (i = 0; i < rows; i++) {
-       MEMCPY(dest, data, srcRowStride);
+       memcpy(dest, data, srcRowStride);
        dest += destRowStride;
        data = (GLvoid *)((intptr_t)data + (intptr_t)srcRowStride);
     }

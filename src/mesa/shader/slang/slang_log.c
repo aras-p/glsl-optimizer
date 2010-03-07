@@ -24,7 +24,6 @@
  */
 
 #include "main/imports.h"
-#include "main/context.h"
 #include "slang_log.h"
 #include "slang_utility.h"
 
@@ -44,7 +43,7 @@ void
 slang_info_log_destruct(slang_info_log * log)
 {
    if (!log->dont_free_text)
-      _mesa_free(log->text);
+      free(log->text);
 }
 
 static int
@@ -64,7 +63,7 @@ slang_info_log_message(slang_info_log * log, const char *prefix,
 	 _mesa_realloc(log->text, old_len + 1, old_len + size);
    }
    else {
-      log->text = (char *) (_mesa_malloc(size));
+      log->text = (char *) (malloc(size));
       if (log->text != NULL)
          log->text[0] = '\0';
    }
@@ -87,7 +86,7 @@ slang_info_log_print(slang_info_log * log, const char *msg, ...)
    char buf[1024];
 
    va_start(va, msg);
-   _mesa_vsprintf(buf, msg, va);
+   vsprintf(buf, msg, va);
    va_end(va);
    return slang_info_log_message(log, NULL, buf);
 }
@@ -99,7 +98,7 @@ slang_info_log_error(slang_info_log * log, const char *msg, ...)
    char buf[1024];
 
    va_start(va, msg);
-   _mesa_vsprintf(buf, msg, va);
+   vsprintf(buf, msg, va);
    va_end(va);
    log->error_flag = GL_TRUE;
    if (slang_info_log_message(log, "Error", buf))
@@ -115,7 +114,7 @@ slang_info_log_warning(slang_info_log * log, const char *msg, ...)
    char buf[1024];
 
    va_start(va, msg);
-   _mesa_vsprintf(buf, msg, va);
+   vsprintf(buf, msg, va);
    va_end(va);
    if (slang_info_log_message(log, "Warning", buf))
       return 1;

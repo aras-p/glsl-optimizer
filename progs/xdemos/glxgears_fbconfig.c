@@ -46,13 +46,11 @@
 #include <assert.h>
 #include "pbutil.h"
 
-/* I had to use the SGIX versions of these because for some reason glxext.h
- * doesn't define the core versions if GLX_VERSION_1_3 is defined, and glx.h
- * doesn't define them at all.  One or both header files is clearly broken.
- */
-static PFNGLXCHOOSEFBCONFIGSGIXPROC choose_fbconfig = NULL;
-static PFNGLXGETVISUALFROMFBCONFIGSGIXPROC get_visual_from_fbconfig = NULL;
-static PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC create_new_context = NULL;
+static PFNGLXCHOOSEFBCONFIGPROC choose_fbconfig = NULL;
+static PFNGLXGETVISUALFROMFBCONFIGPROC get_visual_from_fbconfig = NULL;
+static PFNGLXCREATENEWCONTEXTPROC create_new_context = NULL;
+static PFNGLXCREATEWINDOWPROC create_window = NULL;
+static PFNGLXDESTROYWINDOWPROC destroy_window = NULL;
 
 #define BENCHMARK
 
@@ -324,6 +322,26 @@ init(void)
 }
 
 
+static GLXWindow
+dummy_create_window(Display *dpy, GLXFBConfig config, Window win,
+                   const int *attrib_list)
+{
+   (void) dpy;
+   (void) config;
+   (void) attrib_list;
+
+   return (GLXWindow) win;
+}
+
+
+static void
+dummy_destroy_window(Display *dpy, GLXWindow win)
+{
+   (void) dpy;
+   (void) win;
+}
+
+
 /**
  * Initialize fbconfig related function pointers.
  */
@@ -359,20 +377,26 @@ init_fbconfig_functions(Display *dpy, int scrnum)
 	   ext_name, (ext_version_supported) ? "" : "not " );
 
    if ( glx_1_3_supported ) {
-      choose_fbconfig = (PFNGLXCHOOSEFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLubyte *) "glXChooseFBConfig");
-      get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLubyte *) "glXGetVisualFromFBConfig");
-      create_new_context = (PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC) glXGetProcAddressARB(
-		(GLubyte *) "glXCreateNewContext");
+      choose_fbconfig = (PFNGLXCHOOSEFBCONFIGPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXChooseFBConfig");
+      get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXGetVisualFromFBConfig");
+      create_new_context = (PFNGLXCREATENEWCONTEXTPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXCreateNewContext");
+      create_window = (PFNGLXCREATEWINDOWPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXCreateWindow");
+      destroy_window = (PFNGLXDESTROYWINDOWPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXDestroyWindow");
    }
    else if ( ext_version_supported ) {
-      choose_fbconfig = (PFNGLXCHOOSEFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLubyte *) "glXChooseFBConfigSGIX");
-      get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLubyte *) "glXGetVisualFromFBConfigSGIX");
-      create_new_context = (PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC) glXGetProcAddressARB(
-		(GLubyte *) "glXCreateContextWithConfigSGIX");
+      choose_fbconfig = (PFNGLXCHOOSEFBCONFIGPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXChooseFBConfigSGIX");
+      get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXGetVisualFromFBConfigSGIX");
+      create_new_context = (PFNGLXCREATENEWCONTEXTPROC)
+	 glXGetProcAddressARB((GLubyte *) "glXCreateContextWithConfigSGIX");
+      create_window = dummy_create_window;
+      destroy_window = dummy_destroy_window;
    }
    else {
       printf( "This demo requires either GLX 1.3 or %s be supported.\n",
@@ -404,7 +428,7 @@ init_fbconfig_functions(Display *dpy, int scrnum)
 static void
 make_window( Display *dpy, const char *name,
              int x, int y, int width, int height,
-             Window *winRet, GLXContext *ctxRet)
+             Window *winRet, GLXWindow *glxWinRet, GLXContext *ctxRet)
 {
    int attrib[] = { GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
 		    GLX_RENDER_TYPE,   GLX_RGBA_BIT,
@@ -422,6 +446,7 @@ make_window( Display *dpy, const char *name,
    unsigned long mask;
    Window root;
    Window win;
+   GLXWindow glxWin;
    GLXContext ctx;
    XVisualInfo *visinfo;
 
@@ -467,6 +492,8 @@ make_window( Display *dpy, const char *name,
                               None, (char **)NULL, 0, &sizehints);
    }
 
+   glxWin = (*create_window)(dpy, fbconfig[0], win, NULL);
+
    ctx = (*create_new_context)(dpy, fbconfig[0], GLX_RGBA_TYPE, NULL, GL_TRUE);
    if (!ctx) {
       printf("Error: glXCreateNewContext failed\n");
@@ -475,13 +502,14 @@ make_window( Display *dpy, const char *name,
 
    XFree(fbconfig);
 
+   *glxWinRet = glxWin;
    *winRet = win;
    *ctxRet = ctx;
 }
 
 
 static void
-event_loop(Display *dpy, Window win)
+event_loop(Display *dpy, GLXWindow win)
 {
    while (1) {
       while (XPending(dpy) > 0) {
@@ -558,6 +586,7 @@ main(int argc, char *argv[])
 {
    Display *dpy;
    Window win;
+   GLXWindow glxWin;
    GLXContext ctx;
    const char *dpyName = NULL;
    GLboolean printInfo = GL_FALSE;
@@ -579,9 +608,9 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   make_window(dpy, "glxgears", 0, 0, 300, 300, &win, &ctx);
+   make_window(dpy, "glxgears", 0, 0, 300, 300, &win, &glxWin, &ctx);
    XMapWindow(dpy, win);
-   glXMakeCurrent(dpy, win, ctx);
+   glXMakeCurrent(dpy, glxWin, ctx);
 
    if (printInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
@@ -592,9 +621,10 @@ main(int argc, char *argv[])
 
    init();
 
-   event_loop(dpy, win);
+   event_loop(dpy, glxWin);
 
    glXDestroyContext(dpy, ctx);
+   destroy_window(dpy, glxWin);
    XDestroyWindow(dpy, win);
    XCloseDisplay(dpy);
 

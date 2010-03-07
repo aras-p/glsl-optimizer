@@ -34,12 +34,12 @@
 #include "vblank.h"
 #include "xmlpool.h"
 
-static unsigned int msc_to_vblank(__DRIdrawablePrivate * dPriv, int64_t msc)
+static unsigned int msc_to_vblank(__DRIdrawable * dPriv, int64_t msc)
 {
    return (unsigned int)(msc - dPriv->msc_base + dPriv->vblank_base);
 }
 
-static int64_t vblank_to_msc(__DRIdrawablePrivate * dPriv, unsigned int vblank)
+static int64_t vblank_to_msc(__DRIdrawable * dPriv, unsigned int vblank)
 {
    return (int64_t)(vblank - dPriv->vblank_base + dPriv->msc_base);
 }
@@ -64,8 +64,8 @@ static int64_t vblank_to_msc(__DRIdrawablePrivate * dPriv, unsigned int vblank)
  * \return       Zero is returned on success.  A negative errno value
  *               is returned on failure.
  */
-int driDrawableGetMSC32( __DRIscreenPrivate * priv,
-			 __DRIdrawablePrivate * dPriv,
+int driDrawableGetMSC32( __DRIscreen * priv,
+			 __DRIdrawable * dPriv,
 			 int64_t * count)
 {
    drmVBlank vbl;
@@ -122,7 +122,7 @@ int driDrawableGetMSC32( __DRIscreenPrivate * priv,
  * \return            Zero on success or \c GLX_BAD_CONTEXT on failure.
  */
 
-int driWaitForMSC32( __DRIdrawablePrivate *priv,
+int driWaitForMSC32( __DRIdrawable *priv,
 		     int64_t target_msc, int64_t divisor, int64_t remainder,
 		     int64_t * msc )
 {
@@ -278,7 +278,7 @@ static int do_wait( drmVBlank * vbl, GLuint * vbl_seq, int fd )
  */
 
 static unsigned
-driGetDefaultVBlankInterval( const  __DRIdrawablePrivate *priv )
+driGetDefaultVBlankInterval( const  __DRIdrawable *priv )
 {
    if ( (priv->vblFlags & (VBLANK_FLAG_THROTTLE | VBLANK_FLAG_SYNC)) != 0 ) {
       return 1;
@@ -295,7 +295,7 @@ driGetDefaultVBlankInterval( const  __DRIdrawablePrivate *priv )
  * direct rendering context.
  */
 
-void driDrawableInitVBlank( __DRIdrawablePrivate *priv )
+void driDrawableInitVBlank( __DRIdrawable *priv )
 {
    if ( priv->swap_interval == (unsigned)-1 &&
 	!( priv->vblFlags & VBLANK_FLAG_NO_IRQ ) ) {
@@ -320,7 +320,7 @@ void driDrawableInitVBlank( __DRIdrawablePrivate *priv )
  */
 
 unsigned
-driGetVBlankInterval( const  __DRIdrawablePrivate *priv )
+driGetVBlankInterval( const  __DRIdrawable *priv )
 {
    if ( (priv->vblFlags & VBLANK_FLAG_INTERVAL) != 0 ) {
       /* this must have been initialized when the drawable was first bound
@@ -340,7 +340,7 @@ driGetVBlankInterval( const  __DRIdrawablePrivate *priv )
  */
 
 void
-driGetCurrentVBlank( __DRIdrawablePrivate *priv )
+driGetCurrentVBlank( __DRIdrawable *priv )
 {
    drmVBlank vbl;
 
@@ -366,7 +366,7 @@ driGetCurrentVBlank( __DRIdrawablePrivate *priv )
  */
 
 int
-driWaitForVBlank( __DRIdrawablePrivate *priv, GLboolean * missed_deadline )
+driWaitForVBlank( __DRIdrawable *priv, GLboolean * missed_deadline )
 {
    drmVBlank vbl;
    unsigned   original_seq;

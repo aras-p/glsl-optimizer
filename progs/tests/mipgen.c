@@ -48,8 +48,6 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 
-#include "readtex.h"
-
 
 static GLfloat LodBias = 6.0;   /* make smallest miplevel visible */
 static GLuint texImage;

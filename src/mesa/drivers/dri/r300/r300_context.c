@@ -40,9 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/matrix.h"
 #include "main/extensions.h"
-#include "main/state.h"
 #include "main/bufferobj.h"
 #include "main/texobj.h"
 
@@ -52,16 +50,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_vp_build.h"
 
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 
 #include "r300_context.h"
-#include "radeon_context.h"
 #include "radeon_span.h"
+#include "r300_blit.h"
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
-#include "r300_ioctl.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
 #include "r300_swtcl.h"
@@ -69,7 +66,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_buffer_objects.h"
 #include "radeon_queryobj.h"
 
-#include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
@@ -91,7 +87,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_NV_vertex_program
 
 #include "main/remap_helper.h"
-
 
 static const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
@@ -324,6 +319,9 @@ static void r300_init_vtbl(radeonContextPtr radeon)
 			radeon->vtbl.emit_query_finish = rv530_emit_query_finish_single_z;
 	} else
 		radeon->vtbl.emit_query_finish = r300_emit_query_finish;
+
+	radeon->vtbl.check_blit = r300_check_blit;
+	radeon->vtbl.blit = r300_blit;
 }
 
 static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
@@ -336,6 +334,10 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	    driQueryOptioni(&r300->radeon.optionCache, "texture_coord_units");
 	ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
+	ctx->Const.MaxCombinedTextureImageUnits =
+		ctx->Const.MaxVertexTextureImageUnits +
+		ctx->Const.MaxTextureImageUnits;
+
 
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
 	ctx->Const.MaxTextureLodBias = 16.0;
@@ -344,11 +346,13 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 		ctx->Const.MaxTextureLevels = 13;
 		ctx->Const.MaxCubeTextureLevels = 13;
 		ctx->Const.MaxTextureRectSize = 4096;
+		ctx->Const.MaxRenderbufferSize = 4096;
 	}
 	else {
 		ctx->Const.MaxTextureLevels = 12;
 		ctx->Const.MaxCubeTextureLevels = 12;
 		ctx->Const.MaxTextureRectSize = 2048;
+		ctx->Const.MaxRenderbufferSize = 2048;
 	}
 
 	ctx->Const.MinPointSize = 1.0;
@@ -362,6 +366,7 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
 
 	ctx->Const.MaxDrawBuffers = 1;
+	ctx->Const.MaxColorAttachments = 1;
 
 	/* currently bogus data */
 	if (r300->options.hw_tcl_enabled) {
@@ -449,15 +454,24 @@ static void r300InitGLExtensions(GLcontext *ctx)
 	if (!r300->radeon.radeonScreen->drmSupportsOcclusionQueries) {
 		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
 	}
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV350)
+  		_mesa_enable_extension(ctx, "GL_ARB_half_float_vertex");
+}
+
+static void r300InitIoctlFuncs(struct dd_function_table *functions)
+{
+	functions->Clear = _mesa_meta_Clear;
+	functions->Finish = radeonFinish;
+	functions->Flush = radeonFlush;
 }
 
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(const __GLcontextModes * glVisual,
-			    __DRIcontextPrivate * driContextPriv,
+			    __DRIcontext * driContextPriv,
 			    void *sharedContextPrivate)
 {
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	__DRIscreen *sPriv = driContextPriv->driScreenPriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	struct dd_function_table functions;
 	r300ContextPtr r300;
@@ -479,7 +493,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_mesa_init_driver_functions(&functions);
 	r300InitIoctlFuncs(&functions);
 	r300InitStateFuncs(&functions);
-	r300InitTextureFuncs(&functions);
+	r300InitTextureFuncs(&r300->radeon, &functions);
 	r300InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);
 	radeonInitBufferObjectFuncs(&functions);
@@ -530,6 +544,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 		r300InitSwtcl(ctx);
 	}
 
+	r300_blit_init(r300);
 	radeon_fbo_init(&r300->radeon);
 	radeonInitSpanFuncs( ctx );
 	r300InitCmdBuf(r300);

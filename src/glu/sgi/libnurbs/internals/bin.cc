@@ -49,6 +49,7 @@
 Bin::Bin()
 {
     head = NULL;
+    current = NULL;
 }
 
 Bin::~Bin()

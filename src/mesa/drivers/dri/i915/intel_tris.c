@@ -52,8 +52,6 @@
 #include "intel_buffers.h"
 #include "intel_reg.h"
 #include "intel_span.h"
-#include "intel_tex.h"
-#include "intel_chipset.h"
 #include "i830_context.h"
 #include "i830_reg.h"
 
@@ -68,7 +66,7 @@ intel_flush_inline_primitive(struct intel_context *intel)
 
    assert(intel->prim.primitive != ~0);
 
-/*    _mesa_printf("/\n"); */
+/*    printf("/\n"); */
 
    if (used < 8)
       goto do_discard;
@@ -89,20 +87,18 @@ intel_flush_inline_primitive(struct intel_context *intel)
 
 static void intel_start_inline(struct intel_context *intel, uint32_t prim)
 {
-   uint32_t batch_flags = LOOP_CLIPRECTS;
    BATCH_LOCALS;
 
    intel->vtbl.emit_state(intel);
 
    intel->no_batch_wrap = GL_TRUE;
 
-   /*_mesa_printf("%s *", __progname);*/
+   /*printf("%s *", __progname);*/
 
    /* Emit a slot which will be filled with the inline primitive
     * command later.
     */
-   BEGIN_BATCH(2, batch_flags);
-   OUT_BATCH(0);
+   BEGIN_BATCH(1);
 
    assert((intel->batch->dirty_state & (1<<1)) == 0);
 
@@ -114,7 +110,7 @@ static void intel_start_inline(struct intel_context *intel, uint32_t prim)
    ADVANCE_BATCH();
 
    intel->no_batch_wrap = GL_FALSE;
-/*    _mesa_printf(">"); */
+/*    printf(">"); */
 }
 
 static void intel_wrap_inline(struct intel_context *intel)
@@ -136,7 +132,7 @@ static GLuint *intel_extend_inline(struct intel_context *intel, GLuint dwords)
    if (intel_batchbuffer_space(intel->batch) < sz)
       intel_wrap_inline(intel);
 
-/*    _mesa_printf("."); */
+/*    printf("."); */
 
    intel->vtbl.assert_not_dirty(intel);
 
@@ -221,7 +217,7 @@ void intel_flush_prim(struct intel_context *intel)
    intel->prim.count = 0;
    offset = intel->prim.start_offset;
    intel->prim.start_offset = intel->prim.current_offset;
-   if (!IS_9XX(intel->intelScreen->deviceID))
+   if (intel->gen < 3)
       intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
    intel->prim.flush = NULL;
 
@@ -251,8 +247,8 @@ void intel_flush_prim(struct intel_context *intel)
 	  intel->vertex_size * 4);
 #endif
 
-   if (IS_9XX(intel->intelScreen->deviceID)) {
-      BEGIN_BATCH(5, LOOP_CLIPRECTS);
+   if (intel->gen >= 3) {
+      BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
       assert((offset & !S0_VB_OFFSET_MASK) == 0);
@@ -270,7 +266,7 @@ void intel_flush_prim(struct intel_context *intel)
    } else {
       struct i830_context *i830 = i830_context(&intel->ctx);
 
-      BEGIN_BATCH(5, LOOP_CLIPRECTS);
+      BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(2) | 1);
       /* S0 */
@@ -607,7 +603,6 @@ static struct
 #define DO_POINTS    1
 #define DO_FULL_QUAD 1
 
-#define HAVE_RGBA         1
 #define HAVE_SPEC         1
 #define HAVE_BACK_COLORS  0
 #define HAVE_HW_FLATSHADE 1
@@ -1181,6 +1176,8 @@ static char *fallbackStrings[] = {
    [17] = "Logic op",
    [18] = "Smooth polygon",
    [19] = "Smooth point",
+   [20] = "point sprite coord origin",
+   [21] = "depth/color drawing offset",
 };
 
 

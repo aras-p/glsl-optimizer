@@ -25,8 +25,9 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_format.h"
 #include "vmw_screen.h"
 
 #include "trace/tr_drm.h"
@@ -48,8 +49,9 @@ static struct dri1_api_version ddx_required = { 0, 1, 0 };
 static struct dri1_api_version ddx_compat = { 0, 0, 0 };
 static struct dri1_api_version dri_required = { 4, 0, 0 };
 static struct dri1_api_version dri_compat = { 4, 0, 0 };
-static struct dri1_api_version drm_required = { 0, 1, 0 };
-static struct dri1_api_version drm_compat = { 0, 0, 0 };
+static struct dri1_api_version drm_required = { 1, 0, 0 };
+static struct dri1_api_version drm_compat = { 1, 0, 0 };
+static struct dri1_api_version drm_scanout = { 0, 9, 0 };
 
 static boolean
 vmw_dri1_check_version(const struct dri1_api_version *cur,
@@ -84,6 +86,29 @@ vmw_drm_create_screen(struct drm_api *drm_api,
    struct vmw_winsys_screen *vws;
    struct pipe_screen *screen;
    struct dri1_create_screen_arg *dri1;
+   boolean use_old_scanout_flag = FALSE;
+
+   if (!arg || arg->mode == DRM_CREATE_NORMAL) {
+      struct dri1_api_version drm_ver;
+      drmVersionPtr ver;
+
+      ver = drmGetVersion(fd);
+      if (ver == NULL)
+	 return NULL;
+
+      drm_ver.major = ver->version_major;
+      drm_ver.minor = ver->version_minor;
+      drm_ver.patch_level = 0; /* ??? */
+
+      drmFreeVersion(ver);
+      if (!vmw_dri1_check_version(&drm_ver, &drm_required,
+				  &drm_compat, "vmwgfx drm driver"))
+	 return NULL;
+
+      if (!vmw_dri1_check_version(&drm_ver, &drm_scanout,
+				  &drm_compat, "use old scanout field (not a error)"))
+         use_old_scanout_flag = TRUE;
+   }
 
    if (arg != NULL) {
       switch (arg->mode) {
@@ -100,6 +125,9 @@ vmw_drm_create_screen(struct drm_api *drm_api,
 	 if (!vmw_dri1_check_version(&dri1->drm_version, &drm_required,
 				     &drm_compat, "vmwgfx drm driver"))
 	    return NULL;
+	 if (!vmw_dri1_check_version(&dri1->drm_version, &drm_scanout,
+				     &drm_compat, "use old scanout field (not a error)"))
+	    use_old_scanout_flag = TRUE;
 	 dri1->api = &dri1_api_hooks;
 	 break;
       default:
@@ -107,7 +135,7 @@ vmw_drm_create_screen(struct drm_api *drm_api,
       }
    }
 
-   vws = vmw_winsys_create( fd );
+   vws = vmw_winsys_create( fd, use_old_scanout_flag );
    if (!vws)
       goto out_no_vws;
 
@@ -220,22 +248,19 @@ vmw_dri1_present_locked(struct pipe_context *locked_pipe,
    vmw_svga_winsys_surface_reference(&vsrf, NULL);
 }
 
-/**
- * FIXME: We'd probably want to cache these buffers in the
- * screen, based on handle.
- */
-
-static struct pipe_buffer *
-vmw_drm_buffer_from_handle(struct drm_api *drm_api,
-                           struct pipe_screen *screen,
-			   const char *name,
-			   unsigned handle)
+static struct pipe_texture *
+vmw_drm_texture_from_handle(struct drm_api *drm_api,
+			    struct pipe_screen *screen,
+			    struct pipe_texture *templat,
+			    const char *name,
+			    unsigned stride,
+			    unsigned handle)
 {
     struct vmw_svga_winsys_surface *vsrf;
     struct svga_winsys_surface *ssrf;
     struct vmw_winsys_screen *vws =
 	vmw_winsys_screen(svga_winsys_screen(screen));
-    struct pipe_buffer *buf;
+    struct pipe_texture *tex;
     union drm_vmw_surface_reference_arg arg;
     struct drm_vmw_surface_arg *req = &arg.req;
     struct drm_vmw_surface_create_req *rep = &arg.rep;
@@ -282,43 +307,28 @@ vmw_drm_buffer_from_handle(struct drm_api *drm_api,
 
     pipe_reference_init(&vsrf->refcnt, 1);
     p_atomic_set(&vsrf->validated, 0);
+    vsrf->screen = vws;
     vsrf->sid = handle;
     ssrf = svga_winsys_surface(vsrf);
-    buf = svga_screen_buffer_wrap_surface(screen, rep->format, ssrf);
-    if (!buf)
+    tex = svga_screen_texture_wrap_surface(screen, templat, rep->format, ssrf);
+    if (!tex)
 	vmw_svga_winsys_surface_reference(&vsrf, NULL);
 
-    return buf;
+    return tex;
   out_mip:
     vmw_ioctl_surface_destroy(vws, handle);
     return NULL;
 }
 
-static struct pipe_texture *
-vmw_drm_texture_from_handle(struct drm_api *drm_api,
-			    struct pipe_screen *screen,
-			    struct pipe_texture *templat,
-			    const char *name,
-			    unsigned stride,
-			    unsigned handle)
-{
-    struct pipe_buffer *buffer;
-    buffer = vmw_drm_buffer_from_handle(drm_api, screen, name, handle);
-
-    if (!buffer)
-	return NULL;
-
-    return screen->texture_blanket(screen, templat, &stride, buffer);
-}
-
 static boolean
-vmw_drm_handle_from_buffer(struct drm_api *drm_api,
+vmw_drm_handle_from_texture(struct drm_api *drm_api,
                            struct pipe_screen *screen,
-			   struct pipe_buffer *buffer,
+			   struct pipe_texture *texture,
+			   unsigned *stride,
 			   unsigned *handle)
 {
     struct svga_winsys_surface *surface =
-	svga_screen_buffer_get_winsys_surface(buffer);
+	svga_screen_texture_get_winsys_surface(texture);
     struct vmw_svga_winsys_surface *vsrf;
 
     if (!surface)
@@ -326,31 +336,13 @@ vmw_drm_handle_from_buffer(struct drm_api *drm_api,
 
     vsrf = vmw_svga_winsys_surface(surface);
     *handle = vsrf->sid;
+    *stride = util_format_get_nblocksx(texture->format, texture->width0) *
+       util_format_get_blocksize(texture->format);
+
     vmw_svga_winsys_surface_reference(&vsrf, NULL);
     return TRUE;
 }
 
-static boolean
-vmw_drm_handle_from_texture(struct drm_api *drm_api,
-			    struct pipe_screen *screen,
-			    struct pipe_texture *texture,
-			    unsigned *stride,
-			    unsigned *handle)
-{
-    struct pipe_buffer *buffer;
-
-    if (!svga_screen_buffer_from_texture(texture, &buffer, stride))
-	return FALSE;
-
-    return vmw_drm_handle_from_buffer(drm_api, screen, buffer, handle);
-}
-
-static struct pipe_context*
-vmw_drm_create_context(struct drm_api *drm_api,
-                       struct pipe_screen *screen)
-{
-   return vmw_svga_context_create(screen);
-}
 
 static struct dri1_api dri1_api_hooks = {
    .front_srf_locked = NULL,
@@ -358,8 +350,9 @@ static struct dri1_api dri1_api_hooks = {
 };
 
 static struct drm_api vmw_drm_api_hooks = {
+   .name = "vmwgfx",
+   .driver_name = "vmwgfx",
    .create_screen = vmw_drm_create_screen,
-   .create_context = vmw_drm_create_context,
    .texture_from_shared_handle = vmw_drm_texture_from_handle,
    .shared_handle_from_texture = vmw_drm_handle_from_texture,
    .local_handle_from_texture = vmw_drm_handle_from_texture,

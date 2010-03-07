@@ -35,6 +35,7 @@
 #include "brw_util.h"
 #include "brw_state.h"
 #include "shader/prog_print.h"
+#include "shader/prog_parameter.h"
 
 
 
@@ -42,9 +43,11 @@ static void do_vs_prog( struct brw_context *brw,
 			struct brw_vertex_program *vp,
 			struct brw_vs_prog_key *key )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    GLuint program_size;
    const GLuint *program;
    struct brw_vs_compile c;
+   int aux_size;
 
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
@@ -73,13 +76,27 @@ static void do_vs_prog( struct brw_context *brw,
     */
    program = brw_get_program(&c.func, &program_size);
 
+   /* We upload from &c.prog_data including the constant_map assuming
+    * they're packed together.  It would be nice to have a
+    * compile-time assert macro here.
+    */
+   assert(c.constant_map == (int8_t *)&c.prog_data +
+	  sizeof(c.prog_data));
+   assert(ctx->Const.VertexProgram.MaxNativeParameters ==
+	  ARRAY_SIZE(c.constant_map));
+
+   aux_size = sizeof(c.prog_data);
+   if (c.vp->use_const_buffer)
+      aux_size += c.vp->program.Base.Parameters->NumParameters;
+
    dri_bo_unreference(brw->vs.prog_bo);
-   brw->vs.prog_bo = brw_upload_cache( &brw->cache, BRW_VS_PROG,
-				       &c.key, sizeof(c.key),
-				       NULL, 0,
-				       program, program_size,
-				       &c.prog_data,
-				       &brw->vs.prog_data );
+   brw->vs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_VS_PROG,
+						   &c.key, sizeof(c.key),
+						   NULL, 0,
+						   program, program_size,
+						   &c.prog_data,
+						   aux_size,
+						   &brw->vs.prog_data);
 }
 
 
@@ -109,6 +126,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 				      &brw->vs.prog_data);
    if (brw->vs.prog_bo == NULL)
       do_vs_prog(brw, vp, &key);
+   brw->vs.constant_map = ((int8_t *)brw->vs.prog_data +
+			   sizeof(*brw->vs.prog_data));
 }
 
 

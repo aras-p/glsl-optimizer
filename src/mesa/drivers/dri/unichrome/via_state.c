@@ -35,7 +35,6 @@
 #include "via_context.h"
 #include "via_state.h"
 #include "via_tex.h"
-#include "via_tris.h"
 #include "via_ioctl.h"
 #include "via_3d_reg.h"
 
@@ -43,8 +42,6 @@
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
-
-#include "tnl/t_pipeline.h"
 
 
 static GLuint ROP[16] = {
@@ -476,7 +473,7 @@ void viaEmitState(struct via_context *vmesa)
     */
    if (ctx->Polygon.StippleFlag) {
       GLuint *stipple = &ctx->PolygonStipple[0];
-      __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+      __DRIdrawable *dPriv = vmesa->driDrawable;
       struct via_renderbuffer *const vrb = 
 	(struct via_renderbuffer *) dPriv->driverPrivate;
       GLint i;
@@ -722,7 +719,7 @@ static void viaColorMask(GLcontext *ctx,
 void viaCalcViewport(GLcontext *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+    __DRIdrawable *dPriv = vmesa->driDrawable;
     struct via_renderbuffer *const vrb = 
       (struct via_renderbuffer *) dPriv->driverPrivate;
     const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -891,10 +888,10 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
             if (texObj->Image[0][texObj->BaseLevel]->Border > 0) {
 	       vmesa->regHTXnTB[0] |= (HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
 	       vmesa->regHTXnTBC[0] = 
-		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor[0]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor[1]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor[2]));
-	       vmesa->regHTXnTRAH[0] = FLOAT_TO_UBYTE(texObj->BorderColor[3]);
+		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor.f[0]),
+				 FLOAT_TO_UBYTE(texObj->BorderColor.f[1]),
+				 FLOAT_TO_UBYTE(texObj->BorderColor.f[2]));
+	       vmesa->regHTXnTRAH[0] = FLOAT_TO_UBYTE(texObj->BorderColor.f[3]);
             }
 
 	    if (texUnit0->LodBias != 0.0f) {
@@ -924,10 +921,10 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
             if (texObj->Image[0][texObj->BaseLevel]->Border > 0) {
 	       vmesa->regHTXnTB[1] |= (HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
 	       vmesa->regHTXnTBC[1] = 
-		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor[0]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor[1]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor[2]));
-	       vmesa->regHTXnTRAH[1] = FLOAT_TO_UBYTE(texObj->BorderColor[3]);
+		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor.f[0]),
+				 FLOAT_TO_UBYTE(texObj->BorderColor.f[1]),
+				 FLOAT_TO_UBYTE(texObj->BorderColor.f[2]));
+	       vmesa->regHTXnTRAH[1] = FLOAT_TO_UBYTE(texObj->BorderColor.f[3]);
             }
 
 
@@ -1238,12 +1235,12 @@ static void viaChooseColorState(GLcontext *ctx)
     else
         vmesa->regHROP = HC_HROP_P;
 
-    vmesa->regHFBBMSKL = PACK_COLOR_888(ctx->Color.ColorMask[0],
-					ctx->Color.ColorMask[1],
-					ctx->Color.ColorMask[2]);
-    vmesa->regHROP |= ctx->Color.ColorMask[3];
+    vmesa->regHFBBMSKL = PACK_COLOR_888(ctx->Color.ColorMask[0][0],
+					ctx->Color.ColorMask[0][1],
+					ctx->Color.ColorMask[0][2]);
+    vmesa->regHROP |= ctx->Color.ColorMask[0][3];
 
-    if (ctx->Color.ColorMask[3])
+    if (ctx->Color.ColorMask[0][3])
         vmesa->regEnable |= HC_HenAW_MASK;
     else
         vmesa->regEnable &= ~HC_HenAW_MASK;

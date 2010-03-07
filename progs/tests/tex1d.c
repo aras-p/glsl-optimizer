@@ -39,11 +39,13 @@ static void draw( void )
 
 
 
+/*
 static void idle( void )
 {
    Angle += 2.0;
    glutPostRedisplay();
 }
+*/
 
 
 

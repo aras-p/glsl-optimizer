@@ -309,6 +309,8 @@ directedLine::directedLine()
   nextPolygon = NULL;
   rootBit = 0;/*important to initilzae to 0 meaning not root yet*/
   rootLink = NULL;
+  direction = INCREASING;
+  sline = NULL;
 }
 
 directedLine::~directedLine()
@@ -791,22 +793,30 @@ directedLine* readAllPolygons(char* filename)
 {
   Int i,j;
   FILE* fp = fopen(filename, "r");
-  assert(fp);
   Int nPolygons;
-  fscanf(fp, "%i", &nPolygons);
+  int result;
+
+  assert(fp);
+  result = fscanf(fp, "%i", &nPolygons);
+  assert(result != EOF);
   directedLine *ret = NULL;
 
   for(i=0; i<nPolygons; i++)
     {
       Int nEdges;
-      fscanf(fp, "%i", &nEdges);
-      Real vert[2][2];
+      result = fscanf(fp, "%i", &nEdges);
+      assert(result != EOF);
+      Real vert[2][2] = { { 0 } };
       Real VV[2][2];
       /*the first two vertices*/
-      fscanf(fp, "%f", &(vert[0][0]));
-      fscanf(fp, "%f", &(vert[0][1]));
-      fscanf(fp, "%f", &(vert[1][0]));
-      fscanf(fp, "%f", &(vert[1][1]));
+      result = fscanf(fp, "%f", &(vert[0][0]));
+      assert(result != EOF);
+      result = fscanf(fp, "%f", &(vert[0][1]));
+      assert(result != EOF);
+      result = fscanf(fp, "%f", &(vert[1][0]));
+      assert(result != EOF);
+      result = fscanf(fp, "%f", &(vert[1][1]));
+      assert(result != EOF);
       VV[1][0] = vert[0][0];
       VV[1][1] = vert[0][1];
       sampledLine *sLine = new sampledLine(2, vert);
@@ -818,8 +828,10 @@ thisPoly->rootLinkSet(NULL);
 	{
 	  vert[0][0]=vert[1][0];
 	  vert[0][1]=vert[1][1];
-	  fscanf(fp, "%f", &(vert[1][0]));
-	  fscanf(fp, "%f", &(vert[1][1]));
+	  result = fscanf(fp, "%f", &(vert[1][0]));
+	  assert(result != EOF);
+	  result = fscanf(fp, "%f", &(vert[1][1]));
+	  assert(result != EOF);
 	  sLine = new sampledLine(2,vert);
 	  dLine = new directedLine(INCREASING, sLine);
 dLine->rootLinkSet(thisPoly);

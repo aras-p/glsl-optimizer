@@ -11,7 +11,6 @@
 #include "cso_cache/cso_context.h"
 
 #include "pipe/p_screen.h"
-#include "pipe/p_inlines.h"
 
 /*XXX get these from pipe's texture limits */
 #define IMAGE_MAX_WIDTH		2048
@@ -212,17 +211,67 @@ check_yuv_textures(struct xorg_xv_port_priv *priv,  int width, int height)
    return Success;
 }
 
+static int
+query_image_attributes(ScrnInfoPtr pScrn,
+                       int id,
+                       unsigned short *w, unsigned short *h,
+                       int *pitches, int *offsets)
+{
+   int size, tmp;
+
+   if (*w > IMAGE_MAX_WIDTH)
+      *w = IMAGE_MAX_WIDTH;
+   if (*h > IMAGE_MAX_HEIGHT)
+      *h = IMAGE_MAX_HEIGHT;
+
+   *w = (*w + 1) & ~1;
+   if (offsets)
+      offsets[0] = 0;
+
+   switch (id) {
+   case FOURCC_YV12:
+      *h = (*h + 1) & ~1;
+      size = (*w + 3) & ~3;
+      if (pitches) {
+         pitches[0] = size;
+      }
+      size *= *h;
+      if (offsets) {
+         offsets[1] = size;
+      }
+      tmp = ((*w >> 1) + 3) & ~3;
+      if (pitches) {
+         pitches[1] = pitches[2] = tmp;
+      }
+      tmp *= (*h >> 1);
+      size += tmp;
+      if (offsets) {
+         offsets[2] = size;
+      }
+      size += tmp;
+      break;
+   case FOURCC_UYVY:
+   case FOURCC_YUY2:
+   default:
+      size = *w << 1;
+      if (pitches)
+	 pitches[0] = size;
+      size *= *h;
+      break;
+   }
+
+   return size;
+}
+
 static void
 copy_packed_data(ScrnInfoPtr pScrn,
                  struct xorg_xv_port_priv *port,
                  int id,
                  unsigned char *buf,
-                 int srcPitch,
                  int left,
                  int top,
-                 int w, int h)
+                 unsigned short w, unsigned short h)
 {
-   unsigned char *src;
    int i, j;
    struct pipe_texture **dst = port->yuv[port->current_set];
    struct pipe_transfer *ytrans, *utrans, *vtrans;
@@ -231,8 +280,6 @@ copy_packed_data(ScrnInfoPtr pScrn,
    unsigned char y1, y2, u, v;
    int yidx, uidx, vidx;
    int y_array_size = w * h;
-
-   src = buf + (top * srcPitch) + (left << 1);
 
    ytrans = screen->get_tex_transfer(screen, dst[0],
                                      0, 0, 0,
@@ -255,15 +302,22 @@ copy_packed_data(ScrnInfoPtr pScrn,
 
    switch (id) {
    case FOURCC_YV12: {
-      for (i = 0; i < w; ++i) {
-         for (j = 0; j < h; ++j) {
-            /*XXX use src? */
-            y1  = buf[j*w + i];
-            u   = buf[(j/2) * (w/2) + i/2 + y_array_size];
-            v   = buf[(j/2) * (w/2) + i/2 + y_array_size + y_array_size/4];
-            ymap[yidx++] = y1;
-            umap[uidx++] = u;
-            vmap[vidx++] = v;
+      int pitches[3], offsets[3];
+      unsigned char *y, *u, *v;
+      query_image_attributes(pScrn, FOURCC_YV12,
+                             &w, &h, pitches, offsets);
+
+      y = buf + offsets[0];
+      v = buf + offsets[1];
+      u = buf + offsets[2];
+      for (i = 0; i < h; ++i) {
+         for (j = 0; j < w; ++j) {
+            int yoffset = (w*i+j);
+            int ii = (i|1), jj = (j|1);
+            int vuoffset = (w/2)*(ii/2) + (jj/2);
+            ymap[yidx++] = y[yoffset];
+            umap[uidx++] = u[vuoffset];
+            vmap[vidx++] = v[vuoffset];
          }
       }
    }
@@ -334,6 +388,9 @@ draw_yuv(struct xorg_xv_port_priv *port,
 {
    struct pipe_texture **textures = port->yuv[port->current_set];
 
+   /*debug_printf("  draw_yuv([%d, %d, %d ,%d], [%d, %d, %d, %d])\n",
+                src_x, src_y, src_w, src_h,
+                dst_x, dst_y, dst_w, dst_h);*/
    renderer_draw_yuv(port->r,
                      src_x, src_y, src_w, src_h,
                      dst_x, dst_y, dst_w, dst_h,
@@ -346,14 +403,14 @@ bind_blend_state(struct xorg_xv_port_priv *port)
    struct pipe_blend_state blend;
 
    memset(&blend, 0, sizeof(struct pipe_blend_state));
-   blend.blend_enable = 1;
-   blend.colormask |= PIPE_MASK_RGBA;
+   blend.rt[0].blend_enable = 0;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* porter&duff src */
-   blend.rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
 
    cso_set_blend(port->r->cso, &blend);
 }
@@ -429,8 +486,14 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    int dxo, dyo;
    Bool hdtv;
    int x, y, w, h;
-   struct exa_pixmap_priv *dst = exaGetPixmapDriverPrivate(pPixmap);
-   struct pipe_surface *dst_surf = xorg_gpu_surface(pPriv->r->pipe->screen, dst);
+   struct exa_pixmap_priv *dst;
+   struct pipe_surface *dst_surf = NULL;
+
+   exaMoveInPixmap(pPixmap);
+   dst = exaGetPixmapDriverPrivate(pPixmap);
+
+   /*debug_printf("display_video([%d, %d, %d, %d], [%d, %d, %d, %d])\n",
+     src_x, src_y, src_w, src_h, dstX, dstY, dst_w, dst_h);*/
 
    if (dst && !dst->tex) {
 	xorg_exa_set_shared_usage(pPixmap);
@@ -440,6 +503,7 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    if (!dst || !dst->tex)
       XORG_FALLBACK("Xv destination %s", !dst ? "!dst" : "!dst->tex");
 
+   dst_surf = xorg_gpu_surface(pPriv->r->pipe->screen, dst);
    hdtv = ((src_w >= RES_720P_X) && (src_h >= RES_720P_Y));
 
    REGION_TRANSLATE(pScrn->pScreen, dstRegion, -pPixmap->screen_x,
@@ -459,7 +523,6 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    bind_samplers(pPriv);
    setup_fs_video_constants(pPriv->r, hdtv);
 
-   exaMoveInPixmap(pPixmap);
    DamageDamageRegion(&pPixmap->drawable, dstRegion);
 
    while (nbox--) {
@@ -482,8 +545,9 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
       offset_w = dst_w - w;
       offset_h = dst_h - h;
 
-      draw_yuv(pPriv, src_x + offset_x*diff_x, src_y + offset_y*diff_y,
-               src_w - offset_w*diff_x, src_h - offset_h*diff_x,
+      draw_yuv(pPriv,
+               src_x + offset_x*diff_x, src_y + offset_y*diff_y,
+               src_w - offset_w*diff_x, src_h - offset_h*diff_y,
                x, y, w, h);
 
       pbox++;
@@ -510,7 +574,6 @@ put_image(ScrnInfoPtr pScrn,
    ScreenPtr pScreen = screenInfo.screens[pScrn->scrnIndex];
    PixmapPtr pPixmap;
    INT32 x1, x2, y1, y2;
-   int srcPitch;
    BoxRec dstBox;
    int ret;
 
@@ -529,21 +592,12 @@ put_image(ScrnInfoPtr pScrn,
 			      width, height))
       return Success;
 
-   switch (id) {
-   case FOURCC_UYVY:
-   case FOURCC_YUY2:
-   case FOURCC_YV12:
-   default:
-      srcPitch = width << 1;
-      break;
-   }
-
    ret = check_yuv_textures(pPriv, width, height);
 
    if (ret)
       return ret;
 
-   copy_packed_data(pScrn, pPriv, id, buf, srcPitch,
+   copy_packed_data(pScrn, pPriv, id, buf,
                     src_x, src_y, width, height);
 
    if (pDraw->type == DRAWABLE_WINDOW) {
@@ -559,38 +613,6 @@ put_image(ScrnInfoPtr pScrn,
 
    pPriv->current_set = (pPriv->current_set + 1) & 1;
    return Success;
-}
-
-static int
-query_image_attributes(ScrnInfoPtr pScrn,
-                       int id,
-                       unsigned short *w, unsigned short *h,
-                       int *pitches, int *offsets)
-{
-   int size;
-
-   if (*w > IMAGE_MAX_WIDTH)
-      *w = IMAGE_MAX_WIDTH;
-   if (*h > IMAGE_MAX_HEIGHT)
-      *h = IMAGE_MAX_HEIGHT;
-
-   *w = (*w + 1) & ~1;
-   if (offsets)
-      offsets[0] = 0;
-
-   switch (id) {
-   case FOURCC_UYVY:
-   case FOURCC_YUY2:
-   case FOURCC_YV12:
-   default:
-      size = *w << 1;
-      if (pitches)
-	 pitches[0] = size;
-      size *= *h;
-      break;
-   }
-
-   return size;
 }
 
 static struct xorg_xv_port_priv *

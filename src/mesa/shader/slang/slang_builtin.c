@@ -36,7 +36,6 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "shader/slang/slang_ir.h"
-#include "shader/slang/slang_emit.h"
 #include "shader/slang/slang_builtin.h"
 
 
@@ -122,6 +121,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
    }
    else if (strcmp(var, "gl_DepthRange") == 0) {
       tokens[0] = STATE_DEPTH_RANGE;
+      assert(field);
       if (strcmp(field, "near") == 0) {
          *swizzleOut = SWIZZLE_XXXX;
       }
@@ -142,6 +142,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       tokens[1] = index1;
    }
    else if (strcmp(var, "gl_Point") == 0) {
+      assert(field);
       if (strcmp(field, "size") == 0) {
          tokens[0] = STATE_POINT_SIZE;
          *swizzleOut = SWIZZLE_XXXX;
@@ -181,6 +182,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
          tokens[1] = 0;
       else
          tokens[1] = 1;
+      assert(field);
       if (strcmp(field, "emission") == 0) {
          tokens[2] = STATE_EMISSION;
       }

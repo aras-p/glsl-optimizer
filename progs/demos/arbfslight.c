@@ -311,9 +311,8 @@ static void Init (void)
 
 int main (int argc, char *argv[])
 {
-	glutInit (&argc, argv);
-	glutInitWindowPosition ( 0, 0);
 	glutInitWindowSize (200, 200);
+	glutInit (&argc, argv);
 	glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow (argv[0]);
 	glutReshapeFunc (Reshape);

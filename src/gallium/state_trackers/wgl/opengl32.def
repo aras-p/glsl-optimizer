@@ -362,7 +362,7 @@ EXPORTS
 	wglShareLists
 	wglSwapBuffers
 	wglSwapLayerBuffers
-;	wglSwapMultipleBuffers
+	wglSwapMultipleBuffers
 	wglUseFontBitmapsA
 	wglUseFontBitmapsW
 	wglUseFontOutlinesA

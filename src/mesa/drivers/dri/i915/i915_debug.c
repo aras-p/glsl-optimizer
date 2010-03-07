@@ -31,27 +31,25 @@
 #include "i915_context.h"
 #include "i915_debug.h"
 
-#define PRINTF( ... ) _mesa_printf( __VA_ARGS__ )
-
 static GLboolean debug( struct debug_stream *stream, const char *name, GLuint len )
 {
    GLuint i;
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    
    if (len == 0) {
-      PRINTF("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
+      printf("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return GL_FALSE;
    }
 
    if (stream->print_addresses)
-      PRINTF("%08x:  ", stream->offset);
+      printf("%08x:  ", stream->offset);
 
 
-   PRINTF("%s (%d dwords):\n", name, len);
+   printf("%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t0x%08x\n",  ptr[i]);   
-   PRINTF("\n");
+      printf("\t0x%08x\n",  ptr[i]);   
+   printf("\n");
 
    stream->offset += len * sizeof(GLuint);
    
@@ -88,17 +86,17 @@ static GLboolean debug_prim( struct debug_stream *stream, const char *name,
    
 
 
-   PRINTF("%s %s (%d dwords):\n", name, prim, len);
-   PRINTF("\t0x%08x\n",  ptr[0]);   
+   printf("%s %s (%d dwords):\n", name, prim, len);
+   printf("\t0x%08x\n",  ptr[0]);   
    for (i = 1; i < len; i++) {
       if (dump_floats)
-	 PRINTF("\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
+	 printf("\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
       else
-	 PRINTF("\t0x%08x\n",  ptr[i]);   
+	 printf("\t0x%08x\n",  ptr[i]);   
    }
 
       
-   PRINTF("\n");
+   printf("\n");
 
    stream->offset += len * sizeof(GLuint);
    
@@ -113,15 +111,15 @@ static GLboolean debug_program( struct debug_stream *stream, const char *name, G
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
 
    if (len == 0) {
-      PRINTF("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
+      printf("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return GL_FALSE;
    }
 
    if (stream->print_addresses)
-      PRINTF("%08x:  ", stream->offset);
+      printf("%08x:  ", stream->offset);
 
-   PRINTF("%s (%d dwords):\n", name, len);
+   printf("%s (%d dwords):\n", name, len);
    i915_disassemble_program( ptr, len );
 
    stream->offset += len * sizeof(GLuint);
@@ -135,17 +133,17 @@ static GLboolean debug_chain( struct debug_stream *stream, const char *name, GLu
    GLuint old_offset = stream->offset + len * sizeof(GLuint);
    GLuint i;
 
-   PRINTF("%s (%d dwords):\n", name, len);
+   printf("%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t0x%08x\n",  ptr[i]);
+      printf("\t0x%08x\n",  ptr[i]);
 
    stream->offset = ptr[1] & ~0x3;
    
    if (stream->offset < old_offset)
-      PRINTF("\n... skipping backwards from 0x%x --> 0x%x ...\n\n", 
+      printf("\n... skipping backwards from 0x%x --> 0x%x ...\n\n", 
 		   old_offset, stream->offset );
    else
-      PRINTF("\n... skipping from 0x%x --> 0x%x ...\n\n", 
+      printf("\n... skipping from 0x%x --> 0x%x ...\n\n", 
 		   old_offset, stream->offset );
 
 
@@ -165,10 +163,10 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
 
    len = 1+(i+2)/2;
 
-   PRINTF("3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
+   printf("3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t0x%08x\n",  ptr[i]);
-   PRINTF("\n");
+      printf("\t0x%08x\n",  ptr[i]);
+   printf("\n");
 
    stream->offset += len * sizeof(GLuint);
    return GL_TRUE;
@@ -178,9 +176,9 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
 #define BITS( dw, hi, lo, ... )				\
 do {							\
    unsigned himask = 0xffffffffU >> (31 - (hi));		\
-   PRINTF("\t\t ");				\
-   PRINTF(__VA_ARGS__);			\
-   PRINTF(": 0x%x\n", ((dw) & himask) >> (lo));	\
+   printf("\t\t ");				\
+   printf(__VA_ARGS__);			\
+   printf(": 0x%x\n", ((dw) & himask) >> (lo));	\
 } while (0)
 
 #define MBZ( dw, hi, lo) do {							\
@@ -194,9 +192,9 @@ do {							\
 #define FLAG( dw, bit, ... )			\
 do {							\
    if (((dw) >> (bit)) & 1) {				\
-      PRINTF("\t\t ");				\
-      PRINTF(__VA_ARGS__);			\
-      PRINTF("\n");				\
+      printf("\t\t ");				\
+      printf(__VA_ARGS__);			\
+      printf("\n");				\
    }							\
 } while (0)
 
@@ -208,17 +206,17 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
    GLuint bits = (ptr[0] >> 4) & 0xff;
    GLuint j = 0;
    
-   PRINTF("%s (%d dwords, flags: %x):\n", name, len, bits);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   printf("%s (%d dwords, flags: %x):\n", name, len, bits);
+   printf("\t0x%08x\n",  ptr[j++]);
 
    if (bits & (1<<0)) {
-      PRINTF("\t  LIS0: 0x%08x\n", ptr[j]);
-      PRINTF("\t vb address: 0x%08x\n", (ptr[j] & ~0x3));
+      printf("\t  LIS0: 0x%08x\n", ptr[j]);
+      printf("\t vb address: 0x%08x\n", (ptr[j] & ~0x3));
       BITS(ptr[j], 0, 0, "vb invalidate disable");
       j++;
    }
    if (bits & (1<<1)) {
-      PRINTF("\t  LIS1: 0x%08x\n", ptr[j]);
+      printf("\t  LIS1: 0x%08x\n", ptr[j]);
       BITS(ptr[j], 29, 24, "vb dword width");
       BITS(ptr[j], 21, 16, "vb dword pitch");
       BITS(ptr[j], 15, 0, "vb max index");
@@ -226,7 +224,7 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
    }
    if (bits & (1<<2)) {
       int i;
-      PRINTF("\t  LIS2: 0x%08x\n", ptr[j]);
+      printf("\t  LIS2: 0x%08x\n", ptr[j]);
       for (i = 0; i < 8; i++) {
 	 unsigned tc = (ptr[j] >> (i * 4)) & 0xf;
 	 if (tc != 0xf)
@@ -235,11 +233,11 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
       j++;
    }
    if (bits & (1<<3)) {
-      PRINTF("\t  LIS3: 0x%08x\n", ptr[j]);
+      printf("\t  LIS3: 0x%08x\n", ptr[j]);
       j++;
    }
    if (bits & (1<<4)) {
-      PRINTF("\t  LIS4: 0x%08x\n", ptr[j]);
+      printf("\t  LIS4: 0x%08x\n", ptr[j]);
       BITS(ptr[j], 31, 23, "point width");
       BITS(ptr[j], 22, 19, "line width");
       FLAG(ptr[j], 18, "alpha flatshade");
@@ -261,7 +259,7 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
       j++;
    }
    if (bits & (1<<5)) {
-      PRINTF("\t  LIS5: 0x%08x\n", ptr[j]);
+      printf("\t  LIS5: 0x%08x\n", ptr[j]);
       BITS(ptr[j], 31, 28, "rgba write disables");
       FLAG(ptr[j], 27,     "force dflt point width");
       FLAG(ptr[j], 26,     "last pixel enable");
@@ -279,7 +277,7 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
       j++;
    }
    if (bits & (1<<6)) {
-      PRINTF("\t  LIS6: 0x%08x\n", ptr[j]);
+      printf("\t  LIS6: 0x%08x\n", ptr[j]);
       FLAG(ptr[j], 31,      "alpha test enable");
       BITS(ptr[j], 30, 28,  "alpha func");
       BITS(ptr[j], 27, 20,  "alpha ref");
@@ -296,7 +294,7 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
    }
 
 
-   PRINTF("\n");
+   printf("\n");
 
    assert(j == len);
 
@@ -315,34 +313,34 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
    GLuint bits = (ptr[0] >> 8) & 0x3f;
    GLuint i, j = 0;
    
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   printf("%s (%d dwords):\n", name, len);
+   printf("\t0x%08x\n",  ptr[j++]);
 
    for (i = 0; i < 6; i++) {
       if (bits & (1<<i)) {
 	 switch (1<<(8+i)) {
 	 case LI0_STATE_STATIC_INDIRECT:
-	    PRINTF("        STATIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    printf("        STATIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    printf("                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_DYNAMIC_INDIRECT:
-	    PRINTF("       DYNAMIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    printf("       DYNAMIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
 	    break;
 	 case LI0_STATE_SAMPLER:
-	    PRINTF("       SAMPLER: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    printf("       SAMPLER: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    printf("                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_MAP:
-	    PRINTF("           MAP: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    printf("           MAP: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    printf("                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_PROGRAM:
-	    PRINTF("       PROGRAM: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    printf("       PROGRAM: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    printf("                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_CONSTANTS:
-	    PRINTF("     CONSTANTS: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    printf("     CONSTANTS: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    printf("                0x%08x\n", ptr[j++]);
 	    break;
 	 default:
 	    assert(0);
@@ -352,10 +350,10 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
    }
 
    if (bits == 0) {
-      PRINTF("\t  DUMMY: 0x%08x\n", ptr[j++]);
+      printf("\t  DUMMY: 0x%08x\n", ptr[j++]);
    }
 
-   PRINTF("\n");
+   printf("\n");
 
 
    assert(j == len);
@@ -368,7 +366,7 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
 static void BR13( struct debug_stream *stream,
 		  GLuint val )
 {
-   PRINTF("\t0x%08x\n",  val);
+   printf("\t0x%08x\n",  val);
    FLAG(val, 30, "clipping enable");
    BITS(val, 25, 24, "color depth (3==32bpp)");
    BITS(val, 23, 16, "raster op");
@@ -384,11 +382,11 @@ static void BR2223( struct debug_stream *stream,
    BR22.val = val22;
    BR23.val = val23;
 
-   PRINTF("\t0x%08x\n",  val22);
+   printf("\t0x%08x\n",  val22);
    BITS(val22, 31, 16, "dest y1");
    BITS(val22, 15, 0,  "dest x1");
 
-   PRINTF("\t0x%08x\n",  val23);
+   printf("\t0x%08x\n",  val23);
    BITS(val23, 31, 16, "dest y2");
    BITS(val23, 15, 0,  "dest x2");
 
@@ -400,13 +398,13 @@ static void BR2223( struct debug_stream *stream,
 static void BR09( struct debug_stream *stream,
 		  GLuint val )
 {
-   PRINTF("\t0x%08x -- dest address\n",  val);
+   printf("\t0x%08x -- dest address\n",  val);
 }
 
 static void BR26( struct debug_stream *stream,
 		  GLuint val )
 {
-   PRINTF("\t0x%08x\n",  val);
+   printf("\t0x%08x\n",  val);
    BITS(val, 31, 16, "src y1");
    BITS(val, 15, 0,  "src x1");
 }
@@ -414,20 +412,20 @@ static void BR26( struct debug_stream *stream,
 static void BR11( struct debug_stream *stream,
 		  GLuint val )
 {
-   PRINTF("\t0x%08x\n",  val);
+   printf("\t0x%08x\n",  val);
    BITS(val, 15, 0,  "src pitch");
 }
 
 static void BR12( struct debug_stream *stream,
 		  GLuint val )
 {
-   PRINTF("\t0x%08x -- src address\n",  val);
+   printf("\t0x%08x -- src address\n",  val);
 }
 
 static void BR16( struct debug_stream *stream,
 		  GLuint val )
 {
-   PRINTF("\t0x%08x -- color\n",  val);
+   printf("\t0x%08x -- color\n",  val);
 }
    
 static GLboolean debug_copy_blit( struct debug_stream *stream,
@@ -437,8 +435,8 @@ static GLboolean debug_copy_blit( struct debug_stream *stream,
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   printf("%s (%d dwords):\n", name, len);
+   printf("\t0x%08x\n",  ptr[j++]);
    
    BR13(stream, ptr[j++]);
    BR2223(stream, ptr[j], ptr[j+1]);
@@ -460,8 +458,8 @@ static GLboolean debug_color_blit( struct debug_stream *stream,
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   printf("%s (%d dwords):\n", name, len);
+   printf("\t0x%08x\n",  ptr[j++]);
 
    BR13(stream, ptr[j++]);
    BR2223(stream, ptr[j], ptr[j+1]);
@@ -481,8 +479,8 @@ static GLboolean debug_modes4( struct debug_stream *stream,
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j]);
+   printf("%s (%d dwords):\n", name, len);
+   printf("\t0x%08x\n",  ptr[j]);
    BITS(ptr[j], 21, 18, "logicop func");
    FLAG(ptr[j], 17, "stencil test mask modify-enable");
    FLAG(ptr[j], 16, "stencil write mask modify-enable");
@@ -502,26 +500,26 @@ static GLboolean debug_map_state( struct debug_stream *stream,
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   printf("%s (%d dwords):\n", name, len);
+   printf("\t0x%08x\n",  ptr[j++]);
    
    {
-      PRINTF("\t0x%08x\n",  ptr[j]);
+      printf("\t0x%08x\n",  ptr[j]);
       BITS(ptr[j], 15, 0,   "map mask");
       j++;
    }
 
    while (j < len) {
       {
-	 PRINTF("\t  TMn.0: 0x%08x\n", ptr[j]);
-	 PRINTF("\t map address: 0x%08x\n", (ptr[j] & ~0x3));
+	 printf("\t  TMn.0: 0x%08x\n", ptr[j]);
+	 printf("\t map address: 0x%08x\n", (ptr[j] & ~0x3));
 	 FLAG(ptr[j], 1, "vertical line stride");
 	 FLAG(ptr[j], 0, "vertical line stride offset");
 	 j++;
       }
 
       {
-	 PRINTF("\t  TMn.1: 0x%08x\n", ptr[j]);
+	 printf("\t  TMn.1: 0x%08x\n", ptr[j]);
 	 BITS(ptr[j], 31, 21, "height");
 	 BITS(ptr[j], 20, 10, "width");
 	 BITS(ptr[j], 9, 7, "surface format");
@@ -532,7 +530,7 @@ static GLboolean debug_map_state( struct debug_stream *stream,
 	 j++;
       }
       {
-	 PRINTF("\t  TMn.2: 0x%08x\n", ptr[j]);
+	 printf("\t  TMn.2: 0x%08x\n", ptr[j]);
 	 BITS(ptr[j], 31, 21, "dword pitch");
 	 BITS(ptr[j], 20, 15, "cube face enables");
 	 BITS(ptr[j], 14, 9, "max lod");
@@ -554,18 +552,18 @@ static GLboolean debug_sampler_state( struct debug_stream *stream,
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   printf("%s (%d dwords):\n", name, len);
+   printf("\t0x%08x\n",  ptr[j++]);
    
    {
-      PRINTF("\t0x%08x\n",  ptr[j]);
+      printf("\t0x%08x\n",  ptr[j]);
       BITS(ptr[j], 15, 0,   "sampler mask");
       j++;
    }
 
    while (j < len) {
       {
-	 PRINTF("\t  TSn.0: 0x%08x\n", ptr[j]);
+	 printf("\t  TSn.0: 0x%08x\n", ptr[j]);
 	 FLAG(ptr[j], 31, "reverse gamma");
 	 FLAG(ptr[j], 30, "planar to packed");
 	 FLAG(ptr[j], 29, "yuv->rgb");
@@ -582,7 +580,7 @@ static GLboolean debug_sampler_state( struct debug_stream *stream,
       }
 
       {
-	 PRINTF("\t  TSn.1: 0x%08x\n", ptr[j]);
+	 printf("\t  TSn.1: 0x%08x\n", ptr[j]);
 	 BITS(ptr[j], 31, 24, "min lod");
 	 MBZ( ptr[j], 23, 18 );
 	 FLAG(ptr[j], 17,     "kill pixel enable");
@@ -597,7 +595,7 @@ static GLboolean debug_sampler_state( struct debug_stream *stream,
 	 j++;
       }
       {
-	 PRINTF("\t  TSn.2: 0x%08x  (default color)\n", ptr[j]);
+	 printf("\t  TSn.2: 0x%08x  (default color)\n", ptr[j]);
 	 j++;
       }
    }
@@ -614,11 +612,11 @@ static GLboolean debug_dest_vars( struct debug_stream *stream,
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   printf("%s (%d dwords):\n", name, len);
+   printf("\t0x%08x\n",  ptr[j++]);
 
    {
-      PRINTF("\t0x%08x\n",  ptr[j]);
+      printf("\t0x%08x\n",  ptr[j]);
       FLAG(ptr[j], 31,     "early classic ztest");
       FLAG(ptr[j], 30,     "opengl tex default color");
       FLAG(ptr[j], 29,     "bypass iz");
@@ -649,11 +647,11 @@ static GLboolean debug_buf_info( struct debug_stream *stream,
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   printf("%s (%d dwords):\n", name, len);
+   printf("\t0x%08x\n",  ptr[j++]);
 
    {
-      PRINTF("\t0x%08x\n",  ptr[j]);
+      printf("\t0x%08x\n",  ptr[j]);
       BITS(ptr[j], 28, 28, "aux buffer id");
       BITS(ptr[j], 27, 24, "buffer id (7=depth, 3=back)");
       FLAG(ptr[j], 23,     "use fence regs");
@@ -665,7 +663,7 @@ static GLboolean debug_buf_info( struct debug_stream *stream,
       j++;
    }
    
-   PRINTF("\t0x%08x -- buffer base address\n",  ptr[j++]);
+   printf("\t0x%08x -- buffer base address\n",  ptr[j++]);
 
    stream->offset += len * sizeof(GLuint);
    assert(j == len);
@@ -806,6 +804,7 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
       default:
 	 return debug(stream, "", 0);
       }
+      break;
    default:
       assert(0);
       return 0;
@@ -825,7 +824,7 @@ i915_dump_batchbuffer( GLuint *start,
    GLuint bytes = (end - start) * 4;
    GLboolean done = GL_FALSE;
 
-   PRINTF("\n\nBATCH: (%d)\n", bytes / 4);
+   printf("\n\nBATCH: (%d)\n", bytes / 4);
 
    stream.offset = 0;
    stream.ptr = (char *)start;
@@ -842,7 +841,7 @@ i915_dump_batchbuffer( GLuint *start,
 	     stream.offset >= 0);
    }
 
-   PRINTF("END-BATCH\n\n\n");
+   printf("END-BATCH\n\n\n");
 }
 
 

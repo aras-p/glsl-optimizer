@@ -35,6 +35,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_inlines.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
@@ -43,8 +44,6 @@
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
 #include "sp_tex_tile_cache.h"
-#include "sp_texture.h"
-#include "sp_winsys.h"
 #include "sp_query.h"
 
 
@@ -112,9 +111,13 @@ softpipe_destroy( struct pipe_context *pipe )
       pipe_texture_reference(&softpipe->vertex_textures[i], NULL);
    }
 
-   for (i = 0; i < Elements(softpipe->constants); i++) {
-      if (softpipe->constants[i].buffer) {
-         pipe_buffer_reference(&softpipe->constants[i].buffer, NULL);
+   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
+      uint j;
+
+      for (j = 0; j < PIPE_MAX_CONSTANT_BUFFERS; j++) {
+         if (softpipe->constants[i][j]) {
+            pipe_buffer_reference(&softpipe->constants[i][j], NULL);
+         }
       }
    }
 
@@ -176,8 +179,22 @@ softpipe_is_buffer_referenced( struct pipe_context *pipe,
 }
 
 
+static void
+softpipe_render_condition( struct pipe_context *pipe,
+                           struct pipe_query *query,
+                           uint mode )
+{
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+
+   softpipe->render_cond_query = query;
+   softpipe->render_cond_mode = mode;
+}
+
+
+
 struct pipe_context *
-softpipe_create( struct pipe_screen *screen )
+softpipe_create_context( struct pipe_screen *screen,
+			 void *priv )
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
@@ -191,10 +208,12 @@ softpipe_create( struct pipe_screen *screen )
 #endif
 
    softpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
+   softpipe->dump_gs = debug_get_bool_option( "SOFTPIPE_DUMP_GS", FALSE );
 
    softpipe->pipe.winsys = screen->winsys;
    softpipe->pipe.screen = screen;
    softpipe->pipe.destroy = softpipe_destroy;
+   softpipe->pipe.priv = priv;
 
    /* state setters */
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;
@@ -222,7 +241,12 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.bind_vs_state   = softpipe_bind_vs_state;
    softpipe->pipe.delete_vs_state = softpipe_delete_vs_state;
 
+   softpipe->pipe.create_gs_state = softpipe_create_gs_state;
+   softpipe->pipe.bind_gs_state   = softpipe_bind_gs_state;
+   softpipe->pipe.delete_gs_state = softpipe_delete_gs_state;
+
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
+   softpipe->pipe.set_stencil_ref = softpipe_set_stencil_ref;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
@@ -238,8 +262,8 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;
    softpipe->pipe.draw_range_elements = softpipe_draw_range_elements;
-   softpipe->pipe.set_edgeflags = softpipe_set_edgeflags;
-
+   softpipe->pipe.draw_arrays_instanced = softpipe_draw_arrays_instanced;
+   softpipe->pipe.draw_elements_instanced = softpipe_draw_elements_instanced;
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
@@ -248,6 +272,8 @@ softpipe_create( struct pipe_screen *screen )
    softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
 
    softpipe_init_query_funcs( softpipe );
+
+   softpipe->pipe.render_condition = softpipe_render_condition;
 
    /*
     * Alloc caches for accessing drawing surfaces and textures.

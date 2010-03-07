@@ -33,41 +33,104 @@
 #include "vmw_hook.h"
 #include "vmw_driver.h"
 
-static Bool
-vmw_screen_init(ScrnInfoPtr pScrn)
-{
-    modesettingPtr ms = modesettingPTR(pScrn);
-    struct vmw_driver *vmw;
+#include "cursorstr.h"
 
-    /* if gallium is used then we don't need to do anything. */
-    if (ms->screen)
+/* modified version of crtc functions */
+xf86CrtcFuncsRec vmw_screen_crtc_funcs;
+
+static void
+vmw_screen_cursor_load_argb(xf86CrtcPtr crtc, CARD32 *image)
+{
+    struct vmw_customizer *vmw =
+	vmw_customizer(xorg_customizer(crtc->scrn));
+    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
+    xf86CrtcFuncsPtr funcs = vmw->cursor_priv;
+    CursorPtr c = config->cursor;
+
+    /* Run the ioctl before uploading the image */
+    vmw_ioctl_cursor_bypass(vmw, c->bits->xhot, c->bits->yhot);
+
+    funcs->load_cursor_argb(crtc, image);
+}
+
+static void
+vmw_screen_cursor_init(struct vmw_customizer *vmw)
+{
+    ScrnInfoPtr pScrn = vmw->pScrn;
+    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
+    int i;
+
+    /* XXX assume that all crtc's have the same function struct */
+
+    /* Save old struct need to call the old functions as well */
+    vmw->cursor_priv = (void*)(config->crtc[0]->funcs);
+    memcpy(&vmw_screen_crtc_funcs, vmw->cursor_priv, sizeof(xf86CrtcFuncsRec));
+    vmw_screen_crtc_funcs.load_cursor_argb = vmw_screen_cursor_load_argb;
+
+    for (i = 0; i < config->num_crtc; i++)
+	config->crtc[i]->funcs = &vmw_screen_crtc_funcs;
+}
+
+static void
+vmw_screen_cursor_close(struct vmw_customizer *vmw)
+{
+    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(vmw->pScrn);
+    int i;
+
+    vmw_ioctl_cursor_bypass(vmw, 0, 0);
+
+    for (i = 0; i < config->num_crtc; i++)
+	config->crtc[i]->funcs = vmw->cursor_priv;
+}
+
+static Bool
+vmw_screen_init(CustomizerPtr cust, int fd)
+{
+    struct vmw_customizer *vmw = vmw_customizer(cust);
+
+    vmw->fd = fd;
+    vmw_screen_cursor_init(vmw);
+
+    /* if gallium is used then we don't need to do anything more. */
+    if (xorg_has_gallium(vmw->pScrn))
 	return TRUE;
 
-    vmw = xnfcalloc(sizeof(*vmw), 1);
-    if (!vmw)
-	return FALSE;
-
-    vmw->fd = ms->fd;
-    ms->winsys_priv = vmw;
-
-    vmw_video_init(pScrn, vmw);
+    vmw_video_init(vmw);
 
     return TRUE;
 }
 
 static Bool
-vmw_screen_close(ScrnInfoPtr pScrn)
+vmw_screen_close(CustomizerPtr cust)
 {
-    modesettingPtr ms = modesettingPTR(pScrn);
-    struct vmw_driver *vmw = vmw_driver(pScrn);
+    struct vmw_customizer *vmw = vmw_customizer(cust);
 
     if (!vmw)
 	return TRUE;
 
-    vmw_video_close(pScrn, vmw);
+    vmw_screen_cursor_close(vmw);
 
-    ms->winsys_priv = NULL;
-    xfree(vmw);
+    vmw_video_close(vmw);
+
+    return TRUE;
+}
+
+static Bool
+vmw_screen_enter_vt(CustomizerPtr cust)
+{
+    debug_printf("%s: enter\n", __func__);
+
+    return TRUE;
+}
+
+static Bool
+vmw_screen_leave_vt(CustomizerPtr cust)
+{
+    struct vmw_customizer *vmw = vmw_customizer(cust);
+
+    debug_printf("%s: enter\n", __func__);
+
+    vmw_video_stop_all(vmw);
 
     return TRUE;
 }
@@ -81,15 +144,26 @@ static Bool (*vmw_screen_pre_init_saved)(ScrnInfoPtr pScrn, int flags) = NULL;
 static Bool
 vmw_screen_pre_init(ScrnInfoPtr pScrn, int flags)
 {
-    modesettingPtr ms;
+    struct vmw_customizer *vmw;
+    CustomizerPtr cust;
+
+    vmw = xnfcalloc(1, sizeof(*vmw));
+    if (!vmw)
+	return FALSE;
+
+    cust = &vmw->base;
+
+    cust->winsys_screen_init = vmw_screen_init;
+    cust->winsys_screen_close = vmw_screen_close;
+    cust->winsys_enter_vt = vmw_screen_enter_vt;
+    cust->winsys_leave_vt = vmw_screen_leave_vt;
+    vmw->pScrn = pScrn;
+
+    pScrn->driverPrivate = cust;
 
     pScrn->PreInit = vmw_screen_pre_init_saved;
     if (!pScrn->PreInit(pScrn, flags))
 	return FALSE;
-
-    ms = modesettingPTR(pScrn);
-    ms->winsys_screen_init = vmw_screen_init;
-    ms->winsys_screen_close = vmw_screen_close;
 
     return TRUE;
 }

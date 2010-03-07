@@ -31,7 +31,6 @@
 
 #include "mach64_context.h"
 #include "mach64_ioctl.h"
-#include "mach64_state.h"
 #include "mach64_span.h"
 
 #include "swrast/swrast.h"
@@ -40,8 +39,8 @@
 
 #define LOCAL_VARS							\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
+   __DRIscreen *sPriv = mmesa->driScreen;			\
+   __DRIdrawable *dPriv = mmesa->driDrawable;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
    GLushort p;								\
@@ -49,8 +48,8 @@
 
 #define LOCAL_DEPTH_VARS						\
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
-   __DRIscreenPrivate *driScreen = mmesa->driScreen;			\
+   __DRIdrawable *dPriv = mmesa->driDrawable;			\
+   __DRIscreen *driScreen = mmesa->driScreen;			\
    driRenderbuffer *drb = (driRenderbuffer *) rb;			\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(driScreen->pFB + drb->offset +			\

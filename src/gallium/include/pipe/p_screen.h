@@ -86,6 +86,9 @@ struct pipe_screen {
     */
    float (*get_paramf)( struct pipe_screen *, int param );
 
+   struct pipe_context * (*context_create)( struct pipe_screen *,
+					    void *priv );
+   
    /**
     * Check if the given pipe_format is supported as a texture or
     * drawing surface.
@@ -118,7 +121,9 @@ struct pipe_screen {
 
    void (*texture_destroy)(struct pipe_texture *pt);
 
-   /** Get a surface which is a "view" into a texture */
+   /** Get a 2D surface which is a "view" into a texture
+    * \param usage  bitmaks of PIPE_BUFFER_USAGE_* read/write flags
+    */
    struct pipe_surface *(*get_tex_surface)(struct pipe_screen *,
                                            struct pipe_texture *texture,
                                            unsigned face, unsigned level,
@@ -266,6 +271,11 @@ struct pipe_screen {
 
    void (*video_surface_destroy)( struct pipe_video_surface *vsfc );
 
+   /**
+    * Do any special operations to ensure buffer size is correct
+    */
+   void (*update_buffer)( struct pipe_screen *ws,
+                          void *context_private );
 
    /**
     * Do any special operations to ensure frontbuffer contents are

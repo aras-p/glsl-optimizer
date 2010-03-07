@@ -35,7 +35,7 @@
 char *
 slang_string_concat (char *dst, const char *src)
 {
-   return _mesa_strcpy (dst + _mesa_strlen (dst), src);
+   return strcpy (dst + strlen (dst), src);
 }
 
 
@@ -54,7 +54,7 @@ GLvoid
 slang_string_free (slang_string *self)
 {
    if (self->data != NULL)
-      _mesa_free (self->data);
+      free(self->data);
 }
 
 GLvoid
@@ -92,7 +92,7 @@ slang_string_push (slang_string *self, const slang_string *str)
       return;
    }
    if (grow (self, self->length + str->length)) {
-      _mesa_memcpy (&self->data[self->length], str->data, str->length);
+      memcpy (&self->data[self->length], str->data, str->length);
       self->length += str->length;
    }
 }
@@ -110,7 +110,7 @@ GLvoid
 slang_string_pushs (slang_string *self, const char *cstr, GLuint len)
 {
    if (grow (self, self->length + len)) {
-      _mesa_memcpy (&self->data[self->length], cstr, len);
+      memcpy (&self->data[self->length], cstr, len);
       self->length += len;
    }
 }
@@ -120,7 +120,7 @@ slang_string_pushi (slang_string *self, GLint i)
 {
    char buffer[12];
 
-   _mesa_sprintf (buffer, "%d", i);
+   sprintf (buffer, "%d", i);
    slang_string_pushs (self, buffer, strlen (buffer));
 }
 

@@ -39,7 +39,6 @@
 #include "main/colormac.h"
 
 #include "tnl/t_context.h"
-#include "swrast_setup/swrast_setup.h"
 #include "swrast/swrast.h"
 
 
@@ -452,7 +451,7 @@ void mgaInitVB( GLcontext *ctx )
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   mmesa->verts = (GLubyte *)ALIGN_MALLOC(size * sizeof(mgaVertex), 32);
+   mmesa->verts = (GLubyte *)_mesa_align_malloc(size * sizeof(mgaVertex), 32);
 
    {
       static int firsttime = 1;
@@ -472,7 +471,7 @@ void mgaFreeVB( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    if (mmesa->verts) {
-      ALIGN_FREE(mmesa->verts);
+      _mesa_align_free(mmesa->verts);
       mmesa->verts = 0;
    }
 }

@@ -173,7 +173,7 @@ extern "C" {
  * We also need to define a USED attribute, so the optimizer doesn't 
  * inline a static function that we later use in an alias. - ajax
  */
-#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #  define PUBLIC __attribute__((visibility("default")))
 #  define USED __attribute__((used))
 #else
@@ -196,7 +196,7 @@ extern "C" {
 /**
  * __builtin_expect macros
  */
-#if (!defined(__GNUC__) || __GNUC__ < 3) && (!defined(__IBMC__) || __IBMC__ < 900)
+#if !defined(__GNUC__)
 #  define __builtin_expect(x, y) x
 #endif
 
@@ -209,7 +209,7 @@ extern "C" {
 #ifndef __FUNCTION__
 # if defined(__VMS)
 #  define __FUNCTION__ "VMS$NL:"
-# elif ((!defined __GNUC__) || (__GNUC__ < 2)) && (!defined __xlC__) && \
+# elif !defined(__GNUC__) && !defined(__xlC__) &&	\
       (!defined(_MSC_VER) || _MSC_VER < 1300)
 #  if (__STDC_VERSION__ >= 199901L) /* C99 */ || \
     (defined(__SUNPRO_C) && defined(__C99FEATURES__))
@@ -222,8 +222,8 @@ extern "C" {
 
 
 /**
- * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN.
- * Do not use them unless absolutely necessary!
+ * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN, and CPU_TO_LE32.
+ * Do not use these unless absolutely necessary!
  * Try to use a runtime test instead.
  * For now, only used by some DRI hardware drivers for color/texel packing.
  */
@@ -234,11 +234,14 @@ extern "C" {
 #elif defined(__APPLE__)
 #include <CoreFoundation/CFByteOrder.h>
 #define CPU_TO_LE32( x )	CFSwapInt32HostToLittle( x )
-#elif defined(_AIX)
-#define CPU_TO_LE32( x )        x = ((x & 0x000000ff) << 24) | \
-                                    ((x & 0x0000ff00) <<  8) | \
-                                    ((x & 0x00ff0000) >>  8) | \
-                                    ((x & 0xff000000) >> 24);
+#elif (defined(_AIX) || defined(__blrts))
+static INLINE GLuint CPU_TO_LE32(GLuint x)
+{
+   return (((x & 0x000000ff) << 24) |
+           ((x & 0x0000ff00) <<  8) |
+           ((x & 0x00ff0000) >>  8) |
+           ((x & 0xff000000) >> 24));
+}
 #else /*__linux__ */
 #include <sys/endian.h>
 #define CPU_TO_LE32( x )	bswap32( x )
@@ -318,8 +321,7 @@ extern "C" {
  * LONGSTRING macro
  * gcc -pedantic warns about long string literals, LONGSTRING silences that.
  */
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
+#if !defined(__GNUC__)
 # define LONGSTRING
 #else
 # define LONGSTRING __extension__

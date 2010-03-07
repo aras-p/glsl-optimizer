@@ -96,7 +96,8 @@ static void Init( void )
       exit(1);
    }
 
-   sz = (GLuint) fread(buf, 1, sizeof(buf), f);
+   sz = (GLuint) fread(buf, 1, sizeof(buf) - 1, f);
+   buf[sizeof(buf) - 1] = '\0';
    if (!feof(f)) {
       fprintf(stderr, "file too long\n");
       fclose(f);

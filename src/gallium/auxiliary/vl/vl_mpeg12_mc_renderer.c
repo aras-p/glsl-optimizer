@@ -28,7 +28,8 @@
 #include "vl_mpeg12_mc_renderer.h"
 #include <assert.h>
 #include <pipe/p_context.h>
-#include <pipe/p_inlines.h>
+#include <util/u_inlines.h>
+#include <util/u_format.h>
 #include <util/u_math.h>
 #include <util/u_memory.h>
 #include <tgsi/tgsi_ureg.h>
@@ -194,11 +195,13 @@ create_frame_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    return true;
 }
 
+#if 0
 static void
 create_field_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
    assert(false);
 }
+#endif
 
 static bool
 create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
@@ -248,11 +251,13 @@ create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    return true;
 }
 
+#if 0
 static void
 create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    assert(false);
 }
+#endif
 
 static bool
 create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
@@ -295,11 +300,13 @@ create_frame_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
    return true;
 }
 
+#if 0
 static void
 create_field_bi_pred_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
    assert(false);
 }
+#endif
 
 static bool
 create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
@@ -355,11 +362,13 @@ create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    return true;
 }
 
+#if 0
 static void
 create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    assert(false);
 }
+#endif
 
 static void
 xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
@@ -413,11 +422,6 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    r->viewport.translate[2] = 0;
    r->viewport.translate[3] = 0;
 
-   r->scissor.maxx = r->pot_buffers ?
-      util_next_power_of_two(r->picture_width) : r->picture_width;
-   r->scissor.maxy = r->pot_buffers ?
-      util_next_power_of_two(r->picture_height) : r->picture_height;
-
    r->fb_state.width = r->pot_buffers ?
       util_next_power_of_two(r->picture_width) : r->picture_width;
    r->fb_state.height = r->pot_buffers ?
@@ -451,7 +455,6 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
       sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
       sampler.compare_func = PIPE_FUNC_ALWAYS;
       sampler.normalized_coords = 1;
-      /*sampler.prefilter = ; */
       /*sampler.shadow_ambient = ; */
       /*sampler.lod_bias = ; */
       sampler.min_lod = 0;
@@ -580,53 +583,61 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
 
    /* Position element */
    r->vertex_elems[0].src_offset = 0;
+   r->vertex_elems[0].instance_divisor = 0;
    r->vertex_elems[0].vertex_buffer_index = 0;
    r->vertex_elems[0].nr_components = 2;
    r->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Luma, texcoord element */
    r->vertex_elems[1].src_offset = sizeof(struct vertex2f);
+   r->vertex_elems[1].instance_divisor = 0;
    r->vertex_elems[1].vertex_buffer_index = 0;
    r->vertex_elems[1].nr_components = 2;
    r->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Chroma Cr texcoord element */
    r->vertex_elems[2].src_offset = sizeof(struct vertex2f) * 2;
+   r->vertex_elems[2].instance_divisor = 0;
    r->vertex_elems[2].vertex_buffer_index = 0;
    r->vertex_elems[2].nr_components = 2;
    r->vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Chroma Cb texcoord element */
    r->vertex_elems[3].src_offset = sizeof(struct vertex2f) * 3;
+   r->vertex_elems[3].instance_divisor = 0;
    r->vertex_elems[3].vertex_buffer_index = 0;
    r->vertex_elems[3].nr_components = 2;
    r->vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface top field texcoord element */
    r->vertex_elems[4].src_offset = 0;
+   r->vertex_elems[4].instance_divisor = 0;
    r->vertex_elems[4].vertex_buffer_index = 1;
    r->vertex_elems[4].nr_components = 2;
    r->vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface bottom field texcoord element */
    r->vertex_elems[5].src_offset = sizeof(struct vertex2f);
+   r->vertex_elems[5].instance_divisor = 0;
    r->vertex_elems[5].vertex_buffer_index = 1;
    r->vertex_elems[5].nr_components = 2;
    r->vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface top field texcoord element */
    r->vertex_elems[6].src_offset = 0;
+   r->vertex_elems[6].instance_divisor = 0;
    r->vertex_elems[6].vertex_buffer_index = 2;
    r->vertex_elems[6].nr_components = 2;
    r->vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface bottom field texcoord element */
    r->vertex_elems[7].src_offset = sizeof(struct vertex2f);
+   r->vertex_elems[7].instance_divisor = 0;
    r->vertex_elems[7].vertex_buffer_index = 2;
    r->vertex_elems[7].nr_components = 2;
    r->vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   r->vs_const_buf.buffer = pipe_buffer_create
+   r->vs_const_buf = pipe_buffer_create
    (
       r->pipe->screen,
       DEFAULT_BUF_ALIGNMENT,
@@ -644,7 +655,7 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
 
    assert(r);
 
-   pipe_buffer_reference(&r->vs_const_buf.buffer, NULL);
+   pipe_buffer_reference(&r->vs_const_buf, NULL);
 
    for (i = 0; i < 3; ++i)
       pipe_buffer_reference(&r->vertex_bufs.all[i].buffer, NULL);
@@ -793,6 +804,9 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
    assert(mb);
    assert(ycbcr_vb);
    assert(pos < r->macroblocks_per_batch);
+
+   mo_vec[1].x = 0;
+   mo_vec[1].y = 0;
 
    switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
@@ -991,21 +1005,20 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
    r->pipe->set_viewport_state(r->pipe, &r->viewport);
-   r->pipe->set_scissor_state(r->pipe, &r->scissor);
 
    vs_consts = pipe_buffer_map
    (
-      r->pipe->screen, r->vs_const_buf.buffer,
+      r->pipe->screen, r->vs_const_buf,
       PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
    );
 
    vs_consts->denorm.x = r->surface->width0;
    vs_consts->denorm.y = r->surface->height0;
 
-   pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf.buffer);
+   pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf);
 
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
-                                &r->vs_const_buf);
+                                r->vs_const_buf);
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);
@@ -1164,7 +1177,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    assert(r);
    assert(blocks);
 
-   tex_pitch = r->tex_transfer[0]->stride / pf_get_blocksize(r->tex_transfer[0]->texture->format);
+   tex_pitch = r->tex_transfer[0]->stride / util_format_get_blocksize(r->tex_transfer[0]->texture->format);
    texels = r->texels[0] + mbpy * tex_pitch + mbpx;
 
    for (y = 0; y < 2; ++y) {
@@ -1203,7 +1216,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    mbpy /= 2;
 
    for (tb = 0; tb < 2; ++tb) {
-      tex_pitch = r->tex_transfer[tb + 1]->stride / pf_get_blocksize(r->tex_transfer[tb + 1]->texture->format);
+      tex_pitch = r->tex_transfer[tb + 1]->stride / util_format_get_blocksize(r->tex_transfer[tb + 1]->texture->format);
       texels = r->texels[tb + 1] + mbpy * tex_pitch + mbpx;
 
       if ((cbp >> (1 - tb)) & 1) {
@@ -1336,7 +1349,7 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
             xfer_buffers_unmap(renderer);
             flush(renderer);
          }
-         
+
          new_surface = true;
       }
 

@@ -46,12 +46,14 @@ slang_operation_construct(slang_operation * oper)
    oper->literal_size = 1;
    oper->array_constructor = GL_FALSE;
    oper->a_id = SLANG_ATOM_NULL;
+   oper->a_obj = SLANG_ATOM_NULL;
    oper->locals = _slang_variable_scope_new(NULL);
    if (oper->locals == NULL)
       return GL_FALSE;
    _slang_variable_scope_ctr(oper->locals);
    oper->fun = NULL;
    oper->var = NULL;
+   oper->label = NULL;
    return GL_TRUE;
 }
 
@@ -267,10 +269,10 @@ slang_operation_insert(GLuint *numElements, slang_operation **array,
       slang_operation *newOp;
       newOp = ops + pos;
       if (pos > 0)
-         _mesa_memcpy(ops, *array, pos * sizeof(slang_operation));
+         memcpy(ops, *array, pos * sizeof(slang_operation));
       if (pos < *numElements)
-         _mesa_memcpy(newOp + 1, (*array) + pos,
-                      (*numElements - pos) * sizeof(slang_operation));
+         memcpy(newOp + 1, (*array) + pos,
+                (*numElements - pos) * sizeof(slang_operation));
 
       if (!slang_operation_construct(newOp)) {
          _slang_free(ops);

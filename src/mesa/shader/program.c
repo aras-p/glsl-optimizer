@@ -127,11 +127,11 @@ _mesa_free_program_data(GLcontext *ctx)
    if (ctx->ATIFragmentShader.Current) {
       ctx->ATIFragmentShader.Current->RefCount--;
       if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
-         _mesa_free(ctx->ATIFragmentShader.Current);
+         free(ctx->ATIFragmentShader.Current);
       }
    }
 #endif
-   _mesa_free((void *) ctx->Program.ErrorString);
+   free((void *) ctx->Program.ErrorString);
 }
 
 
@@ -162,7 +162,7 @@ _mesa_update_default_objects_program(GLcontext *ctx)
    if (ctx->ATIFragmentShader.Current) {
       ctx->ATIFragmentShader.Current->RefCount--;
       if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
-         _mesa_free(ctx->ATIFragmentShader.Current);
+         free(ctx->ATIFragmentShader.Current);
       }
    }
    ctx->ATIFragmentShader.Current = (struct ati_fragment_shader *) ctx->Shared->DefaultFragmentShader;
@@ -180,7 +180,7 @@ void
 _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
 {
    ctx->Program.ErrorPos = pos;
-   _mesa_free((void *) ctx->Program.ErrorString);
+   free((void *) ctx->Program.ErrorString);
    if (!string)
       string = "";
    ctx->Program.ErrorString = _mesa_strdup(string);
@@ -190,7 +190,7 @@ _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
 /**
  * Find the line number and column for 'pos' within 'string'.
  * Return a copy of the line which contains 'pos'.  Free the line with
- * _mesa_free().
+ * free().
  * \param string  the program string
  * \param pos     the position within the string
  * \param line    returns the line number corresponding to 'pos'.
@@ -222,8 +222,8 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
    while (*p != 0 && *p != '\n')
       p++;
    len = p - lineStart;
-   s = (GLubyte *) _mesa_malloc(len + 1);
-   _mesa_memcpy(s, lineStart, len);
+   s = (GLubyte *) malloc(len + 1);
+   memcpy(s, lineStart, len);
    s[len] = 0;
 
    return s;
@@ -240,7 +240,7 @@ _mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
    (void) ctx;
    if (prog) {
       GLuint i;
-      _mesa_bzero(prog, sizeof(*prog));
+      memset(prog, 0, sizeof(*prog));
       prog->Id = id;
       prog->Target = target;
       prog->Resident = GL_TRUE;
@@ -337,7 +337,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
       return;
 
    if (prog->String)
-      _mesa_free(prog->String);
+      free(prog->String);
 
    _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
 
@@ -351,7 +351,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
       _mesa_free_parameter_list(prog->Attributes);
    }
 
-   _mesa_free(prog);
+   free(prog);
 }
 
 
@@ -505,6 +505,8 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
          struct gl_fragment_program *fpc = (struct gl_fragment_program *) clone;
          fpc->FogOption = fp->FogOption;
          fpc->UsesKill = fp->UsesKill;
+         fpc->OriginUpperLeft = fp->OriginUpperLeft;
+         fpc->PixelCenterInteger = fp->PixelCenterInteger;
       }
       break;
    default:
@@ -580,7 +582,7 @@ _mesa_delete_instructions(struct gl_program *prog, GLuint start, GLuint count)
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
       if (inst->BranchTarget > 0) {
-         if (inst->BranchTarget > start) {
+         if (inst->BranchTarget > (GLint) start) {
             inst->BranchTarget -= count;
          }
       }
@@ -677,6 +679,8 @@ _mesa_combine_programs(GLcontext *ctx,
    const GLuint lenB = progB->NumInstructions;
    const GLuint numParamsA = _mesa_num_parameters(progA->Parameters);
    const GLuint newLength = lenA + lenB;
+   GLboolean usedTemps[MAX_PROGRAM_TEMPS];
+   GLuint firstTemp = 0;
    GLbitfield inputsB;
    GLuint i;
 
@@ -697,6 +701,10 @@ _mesa_combine_programs(GLcontext *ctx,
    newProg = ctx->Driver.NewProgram(ctx, progA->Target, 0);
    newProg->Instructions = newInst;
    newProg->NumInstructions = newLength;
+
+   /* find used temp regs (we may need new temps below) */
+   _mesa_find_used_registers(newProg, PROGRAM_TEMPORARY,
+                             usedTemps, MAX_PROGRAM_TEMPS);
 
    if (newProg->Target == GL_FRAGMENT_PROGRAM_ARB) {
       struct gl_fragment_program *fprogA, *fprogB, *newFprog;
@@ -741,12 +749,15 @@ _mesa_combine_programs(GLcontext *ctx,
        */
       if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLOR)) &&
           (progB_inputsRead & FRAG_BIT_COL0)) {
-         GLint tempReg = _mesa_find_free_register(newProg, PROGRAM_TEMPORARY);
+         GLint tempReg = _mesa_find_free_register(usedTemps, MAX_PROGRAM_TEMPS,
+                                                  firstTemp);
          if (tempReg < 0) {
             _mesa_problem(ctx, "No free temp regs found in "
                           "_mesa_combine_programs(), using 31");
             tempReg = 31;
          }
+         firstTemp = tempReg + 1;
+
          /* replace writes to result.color[0] with tempReg */
          replace_registers(newInst, lenA,
                            PROGRAM_OUTPUT, FRAG_RESULT_COLOR,
@@ -784,43 +795,62 @@ _mesa_combine_programs(GLcontext *ctx,
 }
 
 
-
-
 /**
- * Scan the given program to find a free register of the given type.
- * \param regFile - PROGRAM_INPUT, PROGRAM_OUTPUT or PROGRAM_TEMPORARY
+ * Populate the 'used' array with flags indicating which registers (TEMPs,
+ * INPUTs, OUTPUTs, etc, are used by the given program.
+ * \param file  type of register to scan for
+ * \param used  returns true/false flags for in use / free
+ * \param usedSize  size of the 'used' array
  */
-GLint
-_mesa_find_free_register(const struct gl_program *prog, GLuint regFile)
+void
+_mesa_find_used_registers(const struct gl_program *prog,
+                          gl_register_file file,
+                          GLboolean used[], GLuint usedSize)
 {
-   GLboolean used[MAX_PROGRAM_TEMPS];
-   GLuint i, k;
+   GLuint i, j;
 
-   assert(regFile == PROGRAM_INPUT ||
-          regFile == PROGRAM_OUTPUT ||
-          regFile == PROGRAM_TEMPORARY);
-
-   _mesa_memset(used, 0, sizeof(used));
+   memset(used, 0, usedSize);
 
    for (i = 0; i < prog->NumInstructions; i++) {
       const struct prog_instruction *inst = prog->Instructions + i;
       const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
 
-      for (k = 0; k < n; k++) {
-         if (inst->SrcReg[k].File == regFile) {
-            used[inst->SrcReg[k].Index] = GL_TRUE;
+      if (inst->DstReg.File == file) {
+         used[inst->DstReg.Index] = GL_TRUE;
+      }
+
+      for (j = 0; j < n; j++) {
+         if (inst->SrcReg[j].File == file) {
+            used[inst->SrcReg[j].Index] = GL_TRUE;
          }
       }
    }
+}
 
-   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+
+/**
+ * Scan the given 'used' register flag array for the first entry
+ * that's >= firstReg.
+ * \param used  vector of flags indicating registers in use (as returned
+ *              by _mesa_find_used_registers())
+ * \param usedSize  size of the 'used' array
+ * \param firstReg  first register to start searching at
+ * \return index of unused register, or -1 if none.
+ */
+GLint
+_mesa_find_free_register(const GLboolean used[],
+                         GLuint usedSize, GLuint firstReg)
+{
+   GLuint i;
+
+   assert(firstReg < usedSize);
+
+   for (i = firstReg; i < usedSize; i++)
       if (!used[i])
          return i;
-   }
 
    return -1;
 }
-
 
 
 /**

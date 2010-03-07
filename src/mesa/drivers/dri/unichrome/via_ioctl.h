@@ -33,8 +33,8 @@ void viaFlushDma(struct via_context *vmesa);
 void viaFlushDmaLocked(struct via_context *vmesa, GLuint flags);
 
 void viaInitIoctlFuncs(GLcontext *ctx);
-void viaCopyBuffer(__DRIdrawablePrivate *dpriv);
-void viaPageFlip(__DRIdrawablePrivate *dpriv);
+void viaCopyBuffer(__DRIdrawable *dpriv);
+void viaPageFlip(__DRIdrawable *dpriv);
 void viaCheckDma(struct via_context *vmesa, GLuint bytes);
 void viaResetPageFlippingLocked(struct via_context *vmesa);
 void viaWaitIdle(struct via_context *vmesa, GLboolean light);

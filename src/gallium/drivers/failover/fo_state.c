@@ -28,6 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "util/u_inlines.h"
+
 #include "fo_context.h"
 
 
@@ -88,7 +90,7 @@ failover_delete_blend_state( struct pipe_context *pipe,
 
 static void
 failover_set_blend_color( struct pipe_context *pipe,
-			  const struct pipe_blend_color *blend_color )
+                          const struct pipe_blend_color *blend_color )
 {
    struct failover_context *failover = failover_context(pipe);
 
@@ -98,9 +100,21 @@ failover_set_blend_color( struct pipe_context *pipe,
    failover->hw->set_blend_color( failover->hw, blend_color );
 }
 
+static void
+failover_set_stencil_ref( struct pipe_context *pipe,
+                          const struct pipe_stencil_ref *stencil_ref )
+{
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->stencil_ref = *stencil_ref;
+   failover->dirty |= FO_NEW_STENCIL_REF;
+   failover->sw->set_stencil_ref( failover->sw, stencil_ref );
+   failover->hw->set_stencil_ref( failover->hw, stencil_ref );
+}
+
 static void 
 failover_set_clip_state( struct pipe_context *pipe,
-			 const struct pipe_clip_state *clip )
+                         const struct pipe_clip_state *clip )
 {
    struct failover_context *failover = failover_context(pipe);
 
@@ -495,7 +509,7 @@ failover_set_vertex_elements(struct pipe_context *pipe,
 void
 failover_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             const struct pipe_constant_buffer *buf)
+                             struct pipe_buffer *buf)
 {
    struct failover_context *failover = failover_context(pipe);
 
@@ -531,6 +545,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.delete_vs_state = failover_delete_vs_state;
 
    failover->pipe.set_blend_color = failover_set_blend_color;
+   failover->pipe.set_stencil_ref = failover_set_stencil_ref;
    failover->pipe.set_clip_state = failover_set_clip_state;
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;

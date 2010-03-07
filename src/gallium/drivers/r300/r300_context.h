@@ -25,11 +25,34 @@
 
 #include "draw/draw_vertex.h"
 
+#include "util/u_blitter.h"
+
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
+
+#include "r300_screen.h"
+
+struct r300_context;
 
 struct r300_fragment_shader;
 struct r300_vertex_shader;
+
+struct r300_atom {
+    /* List pointers. */
+    struct r300_atom *prev, *next;
+    /* Name, for debugging. */
+    const char* name;
+    /* Opaque state. */
+    void* state;
+    /* Emit the state to the context. */
+    void (*emit)(struct r300_context*, unsigned, void*);
+    /* Upper bound on number of dwords to emit. */
+    unsigned size;
+    /* Whether this atom should be emitted. */
+    boolean dirty;
+    /* Another dirty flag that is never automatically cleared. */
+    boolean always_dirty;
+};
 
 struct r300_blend_state {
     uint32_t blend_control;       /* R300_RB3D_CBLEND: 0x4e04 */
@@ -60,19 +83,14 @@ struct r300_rs_state {
     /* Draw-specific rasterizer state */
     struct pipe_rasterizer_state rs;
 
-    /* Whether or not to enable the VTE. This is referenced at the very
-     * last moment during emission of VTE state, to decide whether or not
-     * the VTE should be used for transformation. */
-    boolean enable_vte;
-
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
+    uint32_t antialiasing_config;   /* R300_GB_AA_CONFIG: 0x4020 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
-    uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
     uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
-    uint32_t depth_scale_front;  /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
-    uint32_t depth_offset_front;/* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
-    uint32_t depth_scale_back;    /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
-    uint32_t depth_offset_back;  /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
+    float depth_scale;            /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
+                                  /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
+    float depth_offset;           /* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
+                                  /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
     uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
     uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
     uint32_t line_stipple_config;   /* R300_GA_LINE_STIPPLE_CONFIG: 0x4328 */
@@ -89,6 +107,8 @@ struct r300_rs_block {
 };
 
 struct r300_sampler_state {
+    struct pipe_sampler_state state;
+
     uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
     uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
     uint32_t border_color; /* R300_TX_BORDER_COLOR: 0x45c0 */
@@ -98,23 +118,54 @@ struct r300_sampler_state {
     unsigned min_lod, max_lod;
 };
 
-struct r300_scissor_regs {
-    uint32_t top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
-    uint32_t bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
-
-    /* Whether everything is culled by scissoring. */
-    boolean empty_area;
-};
-
-struct r300_scissor_state {
-    struct r300_scissor_regs framebuffer;
-    struct r300_scissor_regs scissor;
-};
-
-struct r300_texture_state {
+struct r300_texture_format_state {
     uint32_t format0; /* R300_TX_FORMAT0: 0x4480 */
     uint32_t format1; /* R300_TX_FORMAT1: 0x44c0 */
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
+};
+
+struct r300_texture_fb_state {
+    /* Colorbuffer. */
+    uint32_t colorpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_COLORPITCH[0-3]*/
+    uint32_t us_out_fmt; /* R300_US_OUT_FMT[0-3] */
+
+    /* Zbuffer. */
+    uint32_t depthpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_DEPTHPITCH */
+    uint32_t zb_format; /* R300_ZB_FORMAT */
+};
+
+struct r300_textures_state {
+    /* Textures. */
+    struct r300_texture *textures[8];
+    int texture_count;
+    /* Sampler states. */
+    struct r300_sampler_state *sampler_states[8];
+    int sampler_count;
+
+    /* These is the merge of the texture and sampler states. */
+    unsigned count;
+    uint32_t tx_enable;         /* R300_TX_ENABLE: 0x4101 */
+    struct r300_texture_sampler_state {
+        uint32_t format[3];     /* R300_TX_FORMAT[0-2] */
+        uint32_t filter[2];     /* R300_TX_FILTER[0-1] */
+        uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
+        uint32_t tile_config;   /* R300_TX_OFFSET (subset thereof) */
+    } regs[8];
+};
+
+struct r300_vertex_stream_state {
+    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
+    uint32_t vap_prog_stream_cntl[8];
+    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
+    uint32_t vap_prog_stream_cntl_ext[8];
+
+    unsigned count;
+};
+
+struct r300_vap_output_state {
+    uint32_t vap_vtx_state_cntl;  /* R300_VAP_VTX_STATE_CNTL: 0x2180 */
+    uint32_t vap_vsm_vtx_assm;    /* R300_VAP_VSM_VTX_ASSM: 0x2184 */
+    uint32_t vap_out_vtx_fmt[2];  /* R300_VAP_OUTPUT_VTX_FMT_[0-1]: 0x2090 */
 };
 
 struct r300_viewport_state {
@@ -131,24 +182,9 @@ struct r300_ztop_state {
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
 };
 
-#define R300_NEW_BLEND           0x00000001
-#define R300_NEW_BLEND_COLOR     0x00000002
-#define R300_NEW_CLIP            0x00000004
-#define R300_NEW_DSA             0x00000008
-#define R300_NEW_FRAMEBUFFERS    0x00000010
 #define R300_NEW_FRAGMENT_SHADER 0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
-#define R300_NEW_RASTERIZER      0x00000080
-#define R300_NEW_RS_BLOCK        0x00000100
-#define R300_NEW_SAMPLER         0x00000200
-#define R300_ANY_NEW_SAMPLERS    0x0001fe00
-#define R300_NEW_SCISSOR         0x00020000
-#define R300_NEW_TEXTURE         0x00040000
-#define R300_ANY_NEW_TEXTURES    0x03fc0000
-#define R300_NEW_VERTEX_FORMAT   0x04000000
-#define R300_NEW_VERTEX_SHADER   0x08000000
 #define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
-#define R300_NEW_VIEWPORT        0x20000000
 #define R300_NEW_QUERY           0x40000000
 #define R300_NEW_KITCHEN_SINK    0x7fffffff
 
@@ -157,8 +193,7 @@ struct r300_ztop_state {
 
 struct r300_constant_buffer {
     /* Buffer of constants */
-    /* XXX first number should be raised */
-    float constants[32][4];
+    float constants[256][4];
     /* Total number of constants */
     unsigned count;
 };
@@ -190,6 +225,12 @@ struct r300_query {
     struct r300_query* next;
 };
 
+enum r300_buffer_tiling {
+    R300_BUFFER_LINEAR = 0,
+    R300_BUFFER_TILED,
+    R300_BUFFER_SQUARETILED
+};
+
 struct r300_texture {
     /* Parent class */
     struct pipe_texture tex;
@@ -202,6 +243,9 @@ struct r300_texture {
 
     /* Size of one zslice or face based on the texture target */
     unsigned layer_size[PIPE_MAX_TEXTURE_LEVELS];
+
+    /* Whether the mipmap level is macrotiled. */
+    enum r300_buffer_tiling mip_macrotile[PIPE_MAX_TEXTURE_LEVELS];
 
     /**
      * If non-zero, override the natural texture layout with
@@ -225,17 +269,11 @@ struct r300_texture {
     struct pipe_buffer* buffer;
 
     /* Registers carrying texture format data. */
-    struct r300_texture_state state;
-};
+    struct r300_texture_format_state state;
+    struct r300_texture_fb_state fb_state;
 
-struct r300_vertex_info {
-    /* Parent class */
-    struct vertex_info vinfo;
-
-    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
-    uint32_t vap_prog_stream_cntl[8];
-    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
-    uint32_t vap_prog_stream_cntl_ext[8];
+    /* Buffer tiling */
+    enum r300_buffer_tiling microtile, macrotile;
 };
 
 extern struct pipe_viewport_state r300_viewport_identity;
@@ -248,6 +286,8 @@ struct r300_context {
     struct radeon_winsys* winsys;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
+    /* Accelerated blit support. */
+    struct blitter_context* blitter;
 
     /* Vertex buffer for rendering. */
     struct pipe_buffer* vbo;
@@ -260,60 +300,74 @@ struct r300_context {
     struct r300_query *query_current;
     struct r300_query query_list;
 
-    /* Shader hash table. Used to store vertex formatting information, which
-     * depends on the combination of both currently loaded shaders. */
-    struct util_hash_table* shader_hash_table;
-    /* Vertex formatting information. */
-    struct r300_vertex_info* vertex_info;
-
     /* Various CSO state objects. */
+    /* Beginning of atom list. */
+    struct r300_atom atom_list;
     /* Blend state. */
-    struct r300_blend_state* blend_state;
+    struct r300_atom blend_state;
     /* Blend color state. */
-    struct r300_blend_color_state* blend_color_state;
+    struct r300_atom blend_color_state;
     /* User clip planes. */
-    struct pipe_clip_state clip_state;
+    struct r300_atom clip_state;
     /* Shader constants. */
     struct r300_constant_buffer shader_constants[PIPE_SHADER_TYPES];
     /* Depth, stencil, and alpha state. */
-    struct r300_dsa_state* dsa_state;
+    struct r300_atom dsa_state;
     /* Fragment shader. */
     struct r300_fragment_shader* fs;
-    /* Framebuffer state. We currently don't need our own version of this. */
-    struct pipe_framebuffer_state framebuffer_state;
+    /* Framebuffer state. */
+    struct r300_atom fb_state;
     /* Rasterizer state. */
-    struct r300_rs_state* rs_state;
+    struct r300_atom rs_state;
     /* RS block state. */
-    struct r300_rs_block* rs_block;
-    /* Sampler states. */
-    struct r300_sampler_state* sampler_states[8];
-    int sampler_count;
+    struct r300_atom rs_block_state;
     /* Scissor state. */
-    struct r300_scissor_state* scissor_state;
-    /* Texture states. */
-    struct r300_texture* textures[8];
-    int texture_count;
+    struct r300_atom scissor_state;
+    /* Textures state. */
+    struct r300_atom textures_state;
+    /* Vertex stream formatting state. */
+    struct r300_atom vertex_stream_state;
+    /* VAP (vertex shader) output mapping state. */
+    struct r300_atom vap_output_state;
     /* Vertex shader. */
-    struct r300_vertex_shader* vs;
+    struct r300_atom vs_state;
     /* Viewport state. */
-    struct r300_viewport_state* viewport_state;
+    struct r300_atom viewport_state;
     /* ZTOP state. */
-    struct r300_ztop_state ztop_state;
+    struct r300_atom ztop_state;
+    /* PVS flush. */
+    struct r300_atom pvs_flush;
+    /* Texture cache invalidate. */
+    struct r300_atom texture_cache_inval;
+
+    /* Invariant state. This must be emitted to get the engine started. */
+    struct r300_atom invariant_state;
 
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
+    int vertex_buffer_max_index;
     /* Vertex elements for Gallium. */
     struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
     int vertex_element_count;
+
+    /* Vertex info for Draw. */
+    struct vertex_info vertex_info;
+
+    struct pipe_stencil_ref stencil_ref;
+
+    struct pipe_clip_state clip;
+
+    struct pipe_viewport_state viewport;
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
     uint32_t dirty_hw;
-
-    /** Combination of DBG_xxx flags */
-    unsigned debug;
+    /* Whether polygon offset is enabled. */
+    boolean polygon_offset_enabled;
+    /* Z buffer bit depth. */
+    uint32_t zbuffer_bpp;
 };
 
 /* Convenience cast wrapper. */
@@ -322,40 +376,24 @@ static INLINE struct r300_context* r300_context(struct pipe_context* context)
     return (struct r300_context*)context;
 }
 
+
+struct pipe_context* r300_create_context(struct pipe_screen* screen,
+                                         void *priv);
+
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_surface_functions(struct r300_context* r300);
 
-/* Debug functionality. */
-
-/**
- * Debug flags to disable/enable certain groups of debugging outputs.
- *
- * \note These may be rather coarse, and the grouping may be impractical.
- * If you find, while debugging the driver, that a different grouping
- * of these flags would be beneficial, just feel free to change them
- * but make sure to update the documentation in r300_debug.c to reflect
- * those changes.
- */
-/*@{*/
-#define DBG_HELP    0x0000001
-#define DBG_FP      0x0000002
-#define DBG_VP      0x0000004
-#define DBG_CS      0x0000008
-#define DBG_DRAW    0x0000010
-#define DBG_TEX     0x0000020
-#define DBG_FALL    0x0000040
-/*@}*/
-
-static INLINE boolean DBG_ON(struct r300_context * ctx, unsigned flags)
+static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {
-    return (ctx->debug & flags) ? TRUE : FALSE;
+    return SCREEN_DBG_ON(r300_screen(ctx->context.screen), flags);
 }
 
-static INLINE void DBG(struct r300_context * ctx, unsigned flags, const char * fmt, ...)
+static INLINE void CTX_DBG(struct r300_context * ctx, unsigned flags,
+                       const char * fmt, ...)
 {
-    if (DBG_ON(ctx, flags)) {
+    if (CTX_DBG_ON(ctx, flags)) {
         va_list va;
         va_start(va, fmt);
         debug_vprintf(fmt, va);
@@ -363,6 +401,8 @@ static INLINE void DBG(struct r300_context * ctx, unsigned flags, const char * f
     }
 }
 
-void r300_init_debug(struct r300_context * ctx);
+#define DBG_ON  CTX_DBG_ON
+#define DBG     CTX_DBG
 
 #endif /* R300_CONTEXT_H */
+

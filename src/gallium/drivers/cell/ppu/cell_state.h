@@ -50,7 +50,7 @@
 
 
 extern void
-cell_update_derived( struct cell_context *softpipe );
+cell_update_derived( struct cell_context *cell );
 
 
 extern void

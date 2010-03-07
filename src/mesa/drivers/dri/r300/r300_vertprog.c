@@ -34,7 +34,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "shader/program.h"
 #include "shader/programopt.h"
 #include "shader/prog_instruction.h"
-#include "shader/prog_optimize.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
@@ -80,6 +79,7 @@ static int r300VertexProgUpdateParams(GLcontext * ctx, struct r300_vertex_progra
 			break;
 		}
 
+		assert(src);
 		dst[4*i] = src[0];
 		dst[4*i + 1] = src[1];
 		dst[4*i + 2] = src[2];
@@ -234,9 +234,9 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	struct r300_vertex_program *vp;
 	struct r300_vertex_program_compiler compiler;
 
-	vp = _mesa_calloc(sizeof(*vp));
-	vp->Base = (struct gl_vertex_program *) _mesa_clone_program(ctx, &mesa_vp->Base);
-	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
+	vp = calloc(1, sizeof(*vp));
+	vp->Base = _mesa_clone_vertex_program(ctx, mesa_vp);
+	memcpy(&vp->key, wanted_key, sizeof(vp->key));
 
 	rc_init(&compiler.Base);
 	compiler.Base.Debug = (RADEON_DEBUG & RADEON_VERTS) ? GL_TRUE : GL_FALSE;
@@ -312,13 +312,13 @@ struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 		r300SelectAndTranslateFragmentShader(ctx);
 	}
 
+	assert(r300->selected_fp);
 	wanted_key.FpReads = r300->selected_fp->InputsRead;
 	wanted_key.FogAttr = r300->selected_fp->fog_attr;
 	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
 
 	for (vp = vpc->progs; vp; vp = vp->next) {
-		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))
-		    == 0) {
+		if (memcmp(&vp->key, &wanted_key, sizeof(wanted_key)) == 0) {
 			return r300->selected_vp = vp;
 		}
 	}
@@ -365,7 +365,7 @@ static void r300EmitVertexProgram(r300ContextPtr r300, int dest, struct r300_ver
 			break;
 		default:
 			fprintf(stderr, "%s:%s don't know how to handle dest %04x\n", __FILE__, __FUNCTION__, dest);
-			_mesa_exit(-1);
+			exit(-1);
 	}
 }
 

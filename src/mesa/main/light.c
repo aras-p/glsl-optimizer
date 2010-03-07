@@ -206,7 +206,10 @@ _mesa_light(GLcontext *ctx, GLuint lnum, GLenum pname, const GLfloat *params)
 void GLAPIENTRY
 _mesa_Lightf( GLenum light, GLenum pname, GLfloat param )
 {
-   _mesa_Lightfv( light, pname, &param );
+   GLfloat fparam[4];
+   fparam[0] = param;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
+   _mesa_Lightfv( light, pname, fparam );
 }
 
 
@@ -285,7 +288,10 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 void GLAPIENTRY
 _mesa_Lighti( GLenum light, GLenum pname, GLint param )
 {
-   _mesa_Lightiv( light, pname, &param );
+   GLint iparam[4];
+   iparam[0] = param;
+   iparam[1] = iparam[2] = iparam[3] = 0;
+   _mesa_Lightiv( light, pname, iparam );
 }
 
 
@@ -537,14 +543,20 @@ _mesa_LightModeliv( GLenum pname, const GLint *params )
 void GLAPIENTRY
 _mesa_LightModeli( GLenum pname, GLint param )
 {
-   _mesa_LightModeliv( pname, &param );
+   GLint iparam[4];
+   iparam[0] = param;
+   iparam[1] = iparam[2] = iparam[3] = 0;
+   _mesa_LightModeliv( pname, iparam );
 }
 
 
 void GLAPIENTRY
 _mesa_LightModelf( GLenum pname, GLfloat param )
 {
-   _mesa_LightModelfv( pname, &param );
+   GLfloat fparam[4];
+   fparam[0] = param;
+   fparam[1] = fparam[2] = fparam[3] = 0.0F;
+   _mesa_LightModelfv( pname, fparam );
 }
 
 
@@ -1081,31 +1093,22 @@ _mesa_update_lighting( GLcontext *ctx )
     * FLUSH_UPDATE_CURRENT, as when any outstanding material changes
     * are flushed, they will update the derived state at that time.
     */
-   if (ctx->Visual.rgbMode) {
-      if (ctx->Light.Model.TwoSide)
-	 _mesa_update_material( ctx, 
-				MAT_BIT_FRONT_EMISSION |
-				MAT_BIT_FRONT_AMBIENT |
-				MAT_BIT_FRONT_DIFFUSE | 
-				MAT_BIT_FRONT_SPECULAR |
-				MAT_BIT_BACK_EMISSION |
-				MAT_BIT_BACK_AMBIENT |
-				MAT_BIT_BACK_DIFFUSE | 
-				MAT_BIT_BACK_SPECULAR);
-      else
-	 _mesa_update_material( ctx, 
-				MAT_BIT_FRONT_EMISSION |
-				MAT_BIT_FRONT_AMBIENT |
-				MAT_BIT_FRONT_DIFFUSE | 
-				MAT_BIT_FRONT_SPECULAR);
-   }
-   else {
-      static const GLfloat ci[3] = { .30F, .59F, .11F };
-      foreach(light, &ctx->Light.EnabledList) {
-	 light->_dli = DOT3(ci, light->Diffuse);
-	 light->_sli = DOT3(ci, light->Specular);
-      }
-   }
+   if (ctx->Light.Model.TwoSide)
+      _mesa_update_material(ctx,
+			    MAT_BIT_FRONT_EMISSION |
+			    MAT_BIT_FRONT_AMBIENT |
+			    MAT_BIT_FRONT_DIFFUSE |
+			    MAT_BIT_FRONT_SPECULAR |
+			    MAT_BIT_BACK_EMISSION |
+			    MAT_BIT_BACK_AMBIENT |
+			    MAT_BIT_BACK_DIFFUSE |
+			    MAT_BIT_BACK_SPECULAR);
+   else
+      _mesa_update_material(ctx,
+			    MAT_BIT_FRONT_EMISSION |
+			    MAT_BIT_FRONT_AMBIENT |
+			    MAT_BIT_FRONT_DIFFUSE |
+			    MAT_BIT_FRONT_SPECULAR);
 }
 
 
@@ -1421,7 +1424,7 @@ _mesa_free_lighting_data( GLcontext *ctx )
 
    /* Free lighting shininess exponentiation table */
    foreach_s( s, tmps, ctx->_ShineTabList ) {
-      _mesa_free( s );
+      free( s );
    }
-   _mesa_free( ctx->_ShineTabList );
+   free( ctx->_ShineTabList );
 }

@@ -26,6 +26,8 @@
 /* Target engine speed: */
 const int RPM = 100.0;
 
+static int Win = 0;
+
 
 /**
  * Engine description.
@@ -120,7 +122,11 @@ static Engine Engines[NUM_ENGINES] =
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
       1.5,  /* ConnectingRodLength */
-      0.1   /* ConnectingRodThickness */
+      0.1,  /* ConnectingRodThickness */
+      0,    /* CrankList */
+      0,    /* ConnRodList */
+      0,    /* PistonList */
+      0     /* BlockList */
    },
    {
       "Inline-4",
@@ -136,7 +142,11 @@ static Engine Engines[NUM_ENGINES] =
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
       1.5,  /* ConnectingRodLength */
-      0.1   /* ConnectingRodThickness */
+      0.1,  /* ConnectingRodThickness */
+      0,    /* CrankList */
+      0,    /* ConnRodList */
+      0,    /* PistonList */
+      0     /* BlockList */
    },
    {
       "Boxer-6",
@@ -152,7 +162,11 @@ static Engine Engines[NUM_ENGINES] =
       0.3,  /* CrankJournalRadius */
       0.4,  /* CrankJournalLength */
       1.5,  /* ConnectingRodLength */
-      0.1   /* ConnectingRodThickness */
+      0.1,  /* ConnectingRodThickness */
+      0,    /* CrankList */
+      0,    /* ConnRodList */
+      0,    /* PistonList */
+      0     /* BlockList */
    }
 };
 
@@ -1142,6 +1156,7 @@ OptRotate(void)
 static void
 OptExit(void)
 {
+   glutDestroyWindow(Win);
    exit(0);
 }
 
@@ -1308,10 +1323,10 @@ Init(void)
 int
 main(int argc, char *argv[])
 {
-   glutInit(&argc, argv);
    glutInitWindowSize(WinWidth, WinHeight);
+   glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-   glutCreateWindow("OpenGL Engine Demo");
+   Win = glutCreateWindow("OpenGL Engine Demo");
    glewInit();
    glutReshapeFunc(Reshape);
    glutMouseFunc(Mouse);

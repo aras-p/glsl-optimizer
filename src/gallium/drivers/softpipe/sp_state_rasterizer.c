@@ -41,14 +41,17 @@ softpipe_create_rasterizer_state(struct pipe_context *pipe,
 }
 
 void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
-                                    void *setup)
+                                    void *rasterizer)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   /* pass-through to draw module */
-   draw_set_rasterizer_state(softpipe->draw, setup);
+   if (softpipe->rasterizer == rasterizer)
+      return;
 
-   softpipe->rasterizer = (struct pipe_rasterizer_state *)setup;
+   /* pass-through to draw module */
+   draw_set_rasterizer_state(softpipe->draw, rasterizer);
+
+   softpipe->rasterizer = rasterizer;
 
    softpipe->dirty |= SP_NEW_RASTERIZER;
 }

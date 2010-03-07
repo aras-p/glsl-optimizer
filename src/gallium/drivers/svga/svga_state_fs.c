@@ -23,9 +23,10 @@
  *
  **********************************************************/
 
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
+#include "util/u_bitmask.h"
 
 #include "svga_context.h"
 #include "svga_state.h"
@@ -39,8 +40,13 @@
 static INLINE int compare_fs_keys( const struct svga_fs_compile_key *a,
                                    const struct svga_fs_compile_key *b )
 {
-   unsigned keysize = svga_fs_key_size( a );
-   return memcmp( a, b, keysize );
+   unsigned keysize_a = svga_fs_key_size( a );
+   unsigned keysize_b = svga_fs_key_size( b );
+
+   if (keysize_a != keysize_b) {
+      return (int)(keysize_a - keysize_b);
+   }
+   return memcmp( a, b, keysize_a );
 }
 
 
@@ -66,7 +72,7 @@ static enum pipe_error compile_fs( struct svga_context *svga,
                                    struct svga_shader_result **out_result )
 {
    struct svga_shader_result *result;
-   enum pipe_error ret;
+   enum pipe_error ret = PIPE_ERROR;
 
    result = svga_translate_fragment_program( fs, key );
    if (result == NULL) {
@@ -74,9 +80,14 @@ static enum pipe_error compile_fs( struct svga_context *svga,
       goto fail;
    }
 
+   result->id = util_bitmask_add(svga->fs_bm);
+   if(result->id == UTIL_BITMASK_INVALID_INDEX) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
+      goto fail;
+   }
 
    ret = SVGA3D_DefineShader(svga->swc, 
-                             svga->state.next_fs_id,
+                             result->id,
                              SVGA3D_SHADERTYPE_PS,
                              result->tokens, 
                              result->nr_tokens * sizeof result->tokens[0]);
@@ -84,69 +95,17 @@ static enum pipe_error compile_fs( struct svga_context *svga,
       goto fail;
 
    *out_result = result;
-   result->id = svga->state.next_fs_id++;
    result->next = fs->base.results;
    fs->base.results = result;
    return PIPE_OK;
 
 fail:
-   if (result)
+   if (result) {
+      if (result->id != UTIL_BITMASK_INVALID_INDEX)
+         util_bitmask_clear( svga->fs_bm, result->id );
       svga_destroy_shader_result( result );
+   }
    return ret;
-}
-
-/* The blend workaround for simulating logicop xor behaviour requires
- * that the incoming fragment color be white.  This change achieves
- * that by hooking up a hard-wired fragment shader that just emits
- * color 1,1,1,1
- *   
- * This is a slightly incomplete solution as it assumes that the
- * actual bound shader has no other effects beyond generating a
- * fragment color.  In particular shaders containing TEXKIL and/or
- * depth-write will not have the correct behaviour, nor will those
- * expecting to use alphatest.
- *   
- * These are avoidable issues, but they are not much worse than the
- * unavoidable ones associated with this technique, so it's not clear
- * how much effort should be expended trying to resolve them - the
- * ultimate result will still not be correct in most cases.
- *
- * Shader below was generated with:
- *   SVGA_DEBUG=tgsi ./mesa/progs/fp/fp-tri white.txt
- */
-static int emit_white_fs( struct svga_context *svga )
-{
-   int ret;
-
-   /* ps_3_0
-    * def c0, 1.000000, 0.000000, 0.000000, 1.000000
-    * mov oC0, c0.x
-    * end
-    */
-   static const unsigned white_tokens[] = {
-      0xffff0300,
-      0x05000051,
-      0xa00f0000,
-      0x3f800000,
-      0x00000000,
-      0x00000000,
-      0x3f800000,
-      0x02000001,
-      0x800f0800,
-      0xa0000000,
-      0x0000ffff,
-   };
-
-   ret = SVGA3D_DefineShader(svga->swc, 
-                             svga->state.next_fs_id,
-                             SVGA3D_SHADERTYPE_PS,
-                             white_tokens, 
-                             sizeof(white_tokens));
-   if (ret)
-      return ret;
-
-   svga->state.white_fs_id = svga->state.next_fs_id++;
-   return 0;
 }
 
 
@@ -176,6 +135,23 @@ static int make_fs_key( const struct svga_context *svga,
                        PIPE_WINDING_CW);
    }
 
+   /* The blend workaround for simulating logicop xor behaviour
+    * requires that the incoming fragment color be white.  This change
+    * achieves that by creating a varient of the current fragment
+    * shader that overrides all output colors with 1,1,1,1
+    *   
+    * This will work for most shaders, including those containing
+    * TEXKIL and/or depth-write.  However, it will break on the
+    * combination of xor-logicop plus alphatest.
+    *
+    * Ultimately, we could implement alphatest in the shader using
+    * texkil prior to overriding the outgoing fragment color.
+    *   
+    * SVGA_NEW_BLEND
+    */
+   if (svga->curr.blend->need_white_fragments) {
+      key->white_fragments = 1;
+   }
    
    /* XXX: want to limit this to the textures that the shader actually
     * refers to.
@@ -215,51 +191,39 @@ static int emit_hw_fs( struct svga_context *svga,
    unsigned id = SVGA3D_INVALID_ID;
    int ret = 0;
 
-   /* SVGA_NEW_BLEND
-    */
-   if (svga->curr.blend->need_white_fragments) {
-      if (svga->state.white_fs_id == SVGA3D_INVALID_ID) {
-         ret = emit_white_fs( svga );
-         if (ret)
-            return ret;
-      }
-      id = svga->state.white_fs_id;
-   }
-   else {
-      struct svga_fragment_shader *fs = svga->curr.fs;
-      struct svga_fs_compile_key key;
+   struct svga_fragment_shader *fs = svga->curr.fs;
+   struct svga_fs_compile_key key;
 
-      /* SVGA_NEW_TEXTURE_BINDING
-       * SVGA_NEW_RAST
-       * SVGA_NEW_NEED_SWTNL
-       * SVGA_NEW_SAMPLER
-       */
-      ret = make_fs_key( svga, &key );
+   /* SVGA_NEW_BLEND
+    * SVGA_NEW_TEXTURE_BINDING
+    * SVGA_NEW_RAST
+    * SVGA_NEW_NEED_SWTNL
+    * SVGA_NEW_SAMPLER
+    */
+   ret = make_fs_key( svga, &key );
+   if (ret)
+      return ret;
+
+   result = search_fs_key( fs, &key );
+   if (!result) {
+      ret = compile_fs( svga, fs, &key, &result );
       if (ret)
          return ret;
-
-      result = search_fs_key( fs, &key );
-      if (!result) {
-         ret = compile_fs( svga, fs, &key, &result );
-         if (ret)
-            return ret;
-      }
-
-      assert (result);
-      id = result->id;
    }
+
+   assert (result);
+   id = result->id;
 
    assert(id != SVGA3D_INVALID_ID);
 
-   if (id != svga->state.hw_draw.shader_id[PIPE_SHADER_FRAGMENT]) {
-      ret = SVGA3D_SetShader(svga->swc, 
-                             SVGA3D_SHADERTYPE_PS, 
+   if (result != svga->state.hw_draw.fs) {
+      ret = SVGA3D_SetShader(svga->swc,
+                             SVGA3D_SHADERTYPE_PS,
                              id );
       if (ret)
          return ret;
 
       svga->dirty |= SVGA_NEW_FS_RESULT;
-      svga->state.hw_draw.shader_id[PIPE_SHADER_FRAGMENT] = id;
       svga->state.hw_draw.fs = result;      
    }
 

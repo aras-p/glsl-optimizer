@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
-void display(void)
+static void display(void)
 {
 /* clear all pixels  */
    glClear (GL_COLOR_BUFFER_BIT);
@@ -64,7 +64,7 @@ void display(void)
    glFlush ();
 }
 
-void init (void)
+static void init (void)
 {
 /* select clearing color 	*/
    glClearColor (0.0, 0.0, 0.0, 0.0);

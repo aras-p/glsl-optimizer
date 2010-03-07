@@ -42,18 +42,16 @@
  */
 
 enum mode {
-   MODE_TRACE,
    MODE_CELL,
    MODE_LLVMPIPE,
    MODE_SOFTPIPE
 };
 
+/* advertise OpenGL support */
+PUBLIC const int st_api_OpenGL = 1;
 
 static enum mode get_mode()
 {
-   if (getenv("XMESA_TRACE"))
-      return MODE_TRACE;
-
 #ifdef GALLIUM_CELL
    if (!getenv("GALLIUM_NOCELL")) 
       return MODE_CELL;
@@ -73,11 +71,6 @@ static void _init( void )
    enum mode xlib_mode = get_mode();
 
    switch (xlib_mode) {
-   case MODE_TRACE:
-#if defined(GALLIUM_TRACE) && defined(GALLIUM_SOFTPIPE)
-      xmesa_set_driver( &xlib_trace_driver );
-#endif
-      break;
    case MODE_CELL:
 #if defined(GALLIUM_CELL)
       xmesa_set_driver( &xlib_cell_driver );
@@ -112,3 +105,34 @@ extern void (*linker_foo(const unsigned char *procName))()
 {
    return glXGetProcAddress(procName);
 }
+
+
+/**
+ * When GLX_INDIRECT_RENDERING is defined, some symbols are missing in
+ * libglapi.a.  We need to define them here.
+ */
+#ifdef GLX_INDIRECT_RENDERING
+
+#define GL_GLEXT_PROTOTYPES
+#include "GL/gl.h"
+#include "glapi/glapi.h"
+#include "glapi/glapitable.h"
+#include "glapi/glapidispatch.h"
+
+#if defined(USE_MGL_NAMESPACE)
+#define NAME(func)  mgl##func
+#else
+#define NAME(func)  gl##func
+#endif
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)		\
+   CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
+   return CALL_ ## FUNC(GET_DISPATCH(), ARGS);
+
+/* skip normal ones */
+#define _GLAPI_SKIP_NORMAL_ENTRY_POINTS
+#include "glapi/glapitemp.h"
+
+#endif /* GLX_INDIRECT_RENDERING */

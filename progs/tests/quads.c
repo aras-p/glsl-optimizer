@@ -17,7 +17,10 @@ static GLfloat Xrot = 40, Yrot = 0, Zrot = 0;
 static GLboolean Anim = GL_TRUE;
 static GLuint Vbuffer = 0;
 
+#if 1
+#else
 static GLfloat buf[NUM_QUADS * 6 * 4];
+#endif
 
 static GLboolean doSwapBuffers = GL_TRUE;
 

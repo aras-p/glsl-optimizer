@@ -34,10 +34,10 @@
  */
 
 
-#include "lp_bld_type.h"
-#include "lp_bld_const.h"
-#include "lp_bld_conv.h"
-#include "lp_bld_debug.h"
+#include "gallivm/lp_bld_type.h"
+#include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_conv.h"
+#include "gallivm/lp_bld_debug.h"
 #include "lp_test.h"
 
 
@@ -142,7 +142,7 @@ add_conv_test(LLVMModuleRef module,
 }
 
 
-ALIGN_STACK
+PIPE_ALIGN_STACK
 static boolean
 test_one(unsigned verbose,
          FILE *fp,
@@ -230,8 +230,8 @@ test_one(unsigned verbose,
    for(i = 0; i < n && success; ++i) {
       unsigned src_stride = src_type.length*src_type.width/8;
       unsigned dst_stride = dst_type.length*dst_type.width/8;
-      ALIGN16_ATTRIB uint8_t src[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
-      ALIGN16_ATTRIB uint8_t dst[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
+      PIPE_ALIGN_VAR(16) uint8_t src[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
+      PIPE_ALIGN_VAR(16) uint8_t dst[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
       double fref[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
       uint8_t ref[LP_MAX_VECTOR_LENGTH*LP_MAX_VECTOR_LENGTH];
       int64_t start_counter = 0;
@@ -330,7 +330,7 @@ test_one(unsigned verbose,
          fprintf(stderr, "conv.bc written\n");
          fprintf(stderr, "Invoke as \"llc -o - conv.bc\"\n");
          firsttime = FALSE;
-         //abort();
+         /* abort(); */
       }
    }
 

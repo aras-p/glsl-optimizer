@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
-void display(void)
+static void display(void)
 {
     GLubyte fly[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x03, 0x80, 0x01, 0xC0, 0x06, 0xC0, 0x03, 0x60, 0x04, 0x60, 0x06, 0x20,
@@ -89,7 +89,7 @@ void display(void)
     glFlush ();
 }
 
-void myinit (void)
+static void myinit (void)
 {
 /*  clear background to black	*/
     glClearColor (0.0, 0.0, 0.0, 0.0);

@@ -29,13 +29,8 @@
 #include "main/macros.h"
 #include "main/colormac.h"
 
-#include "math/m_translate.h"
-#include "swrast_setup/swrast_setup.h"
-
 #include "tdfx_context.h"
 #include "tdfx_vb.h"
-#include "tdfx_tris.h"
-#include "tdfx_state.h"
 #include "tdfx_render.h"
 
 static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
@@ -336,7 +331,7 @@ void tdfxInitVB( GLcontext *ctx )
       firsttime = 0;
    }
 
-   fxMesa->verts = ALIGN_MALLOC(size * sizeof(tdfxVertex), 32);
+   fxMesa->verts = _mesa_align_malloc(size * sizeof(tdfxVertex), 32);
    fxMesa->vertexFormat = TDFX_LAYOUT_TINY;
    fxMesa->SetupIndex = TDFX_XYZ_BIT|TDFX_RGBA_BIT;
 }
@@ -346,7 +341,7 @@ void tdfxFreeVB( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    if (fxMesa->verts) {
-      ALIGN_FREE(fxMesa->verts);
+      _mesa_align_free(fxMesa->verts);
       fxMesa->verts = 0;
    }
 }

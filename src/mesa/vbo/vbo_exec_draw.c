@@ -30,7 +30,6 @@
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/state.h"
-#include "main/macros.h"
 
 #include "vbo_context.h"
 
@@ -44,22 +43,22 @@ vbo_exec_debug_verts( struct vbo_exec_context *exec )
    GLuint count = exec->vtx.vert_count;
    GLuint i;
 
-   _mesa_printf("%s: %u vertices %d primitives, %d vertsize\n",
-		__FUNCTION__,
-		count,
-		exec->vtx.prim_count,
-		exec->vtx.vertex_size);
+   printf("%s: %u vertices %d primitives, %d vertsize\n",
+	  __FUNCTION__,
+	  count,
+	  exec->vtx.prim_count,
+	  exec->vtx.vertex_size);
 
    for (i = 0 ; i < exec->vtx.prim_count ; i++) {
       struct _mesa_prim *prim = &exec->vtx.prim[i];
-      _mesa_printf("   prim %d: %s%s %d..%d %s %s\n",
-		   i, 
-		   _mesa_lookup_prim_by_nr(prim->mode),
-		   prim->weak ? " (weak)" : "",
-		   prim->start, 
-		   prim->start + prim->count,
-		   prim->begin ? "BEGIN" : "(wrap)",
-		   prim->end ? "END" : "(wrap)");
+      printf("   prim %d: %s%s %d..%d %s %s\n",
+	     i, 
+	     _mesa_lookup_prim_by_nr(prim->mode),
+	     prim->weak ? " (weak)" : "",
+	     prim->start, 
+	     prim->start + prim->count,
+	     prim->begin ? "BEGIN" : "(wrap)",
+	     prim->end ? "END" : "(wrap)");
    }
 }
 
@@ -86,24 +85,24 @@ vbo_copy_vertices( struct vbo_exec_context *exec )
    case GL_LINES:
       ovf = nr&1;
       for (i = 0 ; i < ovf ; i++)
-	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
+	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_TRIANGLES:
       ovf = nr%3;
       for (i = 0 ; i < ovf ; i++)
-	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
+	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_QUADS:
       ovf = nr&3;
       for (i = 0 ; i < ovf ; i++)
-	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
+	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case GL_LINE_STRIP:
       if (nr == 0) {
 	 return 0;
       }
       else {
-	 _mesa_memcpy( dst, src+(nr-1)*sz, sz * sizeof(GLfloat) );
+	 memcpy( dst, src+(nr-1)*sz, sz * sizeof(GLfloat) );
 	 return 1;
       }
    case GL_LINE_LOOP:
@@ -113,12 +112,12 @@ vbo_copy_vertices( struct vbo_exec_context *exec )
 	 return 0;
       }
       else if (nr == 1) {
-	 _mesa_memcpy( dst, src+0, sz * sizeof(GLfloat) );
+	 memcpy( dst, src+0, sz * sizeof(GLfloat) );
 	 return 1;
       }
       else {
-	 _mesa_memcpy( dst, src+0, sz * sizeof(GLfloat) );
-	 _mesa_memcpy( dst+sz, src+(nr-1)*sz, sz * sizeof(GLfloat) );
+	 memcpy( dst, src+0, sz * sizeof(GLfloat) );
+	 memcpy( dst+sz, src+(nr-1)*sz, sz * sizeof(GLfloat) );
 	 return 2;
       }
    case GL_TRIANGLE_STRIP:
@@ -140,7 +139,7 @@ vbo_copy_vertices( struct vbo_exec_context *exec )
          break;
       }
       for (i = 0 ; i < ovf ; i++)
-	 _mesa_memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
+	 memcpy( dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat) );
       return i;
    case PRIM_OUTSIDE_BEGIN_END:
       return 0;
@@ -344,7 +343,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
    }
 
    if (0)
-      _mesa_printf("map %d..\n", exec->vtx.buffer_used);
+      printf("map %d..\n", exec->vtx.buffer_used);
 }
 
 
@@ -379,8 +378,8 @@ vbo_exec_vtx_flush( struct vbo_exec_context *exec, GLboolean unmap )
          }
 
          if (0)
-            _mesa_printf("%s %d %d\n", __FUNCTION__, exec->vtx.prim_count,
-                         exec->vtx.vert_count);
+            printf("%s %d %d\n", __FUNCTION__, exec->vtx.prim_count,
+		   exec->vtx.vert_count);
 
 	 vbo_context(ctx)->draw_prims( ctx, 
 				       exec->vtx.inputs, 

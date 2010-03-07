@@ -50,31 +50,15 @@ extern "C" {
 /*@{*/
 
 /** Allocate \p BYTES bytes */
-#define MALLOC(BYTES)      _mesa_malloc(BYTES)
+#define MALLOC(BYTES)      malloc(BYTES)
 /** Allocate and zero \p BYTES bytes */
-#define CALLOC(BYTES)      _mesa_calloc(BYTES)
+#define CALLOC(BYTES)      calloc(1, BYTES)
 /** Allocate a structure of type \p T */
-#define MALLOC_STRUCT(T)   (struct T *) _mesa_malloc(sizeof(struct T))
+#define MALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
 /** Allocate and zero a structure of type \p T */
-#define CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
+#define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
 /** Free memory */
-#define FREE(PTR)          _mesa_free(PTR)
-
-/** Allocate \p BYTES aligned at \p N bytes */
-#define ALIGN_MALLOC(BYTES, N)     _mesa_align_malloc(BYTES, N)
-/** Allocate and zero \p BYTES bytes aligned at \p N bytes */
-#define ALIGN_CALLOC(BYTES, N)     _mesa_align_calloc(BYTES, N)
-/** Allocate a structure of type \p T aligned at \p N bytes */
-#define ALIGN_MALLOC_STRUCT(T, N)  (struct T *) _mesa_align_malloc(sizeof(struct T), N)
-/** Allocate and zero a structure of type \p T aligned at \p N bytes */
-#define ALIGN_CALLOC_STRUCT(T, N)  (struct T *) _mesa_align_calloc(sizeof(struct T), N)
-/** Free aligned memory */
-#define ALIGN_FREE(PTR)            _mesa_align_free(PTR)
-
-/** Copy \p BYTES bytes from \p SRC into \p DST */
-#define MEMCPY( DST, SRC, BYTES)   _mesa_memcpy(DST, SRC, BYTES)
-/** Set \p N bytes in \p DST to \p VAL */
-#define MEMSET( DST, VAL, N )      _mesa_memset(DST, VAL, N)
+#define FREE(PTR)          free(PTR)
 
 /*@}*/
 
@@ -256,9 +240,7 @@ static INLINE int GET_FLOAT_BITS( float x )
 /***
  *** IROUND: return (as an integer) float rounded to nearest integer
  ***/
-#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
-			(!(defined(__BEOS__) || defined(__HAIKU__))  || \
-			(__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)))
+#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
 static INLINE int iround(float f)
 {
    int r;
@@ -405,6 +387,60 @@ _mesa_is_pow_two(int x)
    return !(x & (x - 1));
 }
 
+/**
+ * Round given integer to next higer power of two
+ * If X is zero result is undefined.
+ *
+ * Source for the fallback implementation is
+ * Sean Eron Anderson's webpage "Bit Twiddling Hacks"
+ * http://graphics.stanford.edu/~seander/bithacks.html
+ *
+ * When using builtin function have to do some work
+ * for case when passed values 1 to prevent hiting
+ * undefined result from __builtin_clz. Undefined
+ * results would be different depending on optimization
+ * level used for build.
+ */
+static INLINE int32_t
+_mesa_next_pow_two_32(uint32_t x)
+{
+#ifdef __GNUC__
+	uint32_t y = (x != 1);
+	return (1 + y) << ((__builtin_clz(x - y) ^ 31) );
+#else
+	x--;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	x++;
+	return x;
+#endif
+}
+
+static INLINE int64_t
+_mesa_next_pow_two_64(uint64_t x)
+{
+#ifdef __GNUC__
+	uint64_t y = (x != 1);
+	if (sizeof(x) == sizeof(long))
+		return (1 + y) << ((__builtin_clzl(x - y) ^ 63));
+	else
+		return (1 + y) << ((__builtin_clzll(x - y) ^ 63));
+#else
+	x--;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	x |= x >> 32;
+	x++;
+	return x;
+#endif
+}
+
 
 /***
  *** UNCLAMPED_FLOAT_TO_UBYTE: clamp float to [0,1] and map to ubyte in [0,255]
@@ -459,15 +495,6 @@ _mesa_little_endian(void)
  */
 
 extern void *
-_mesa_malloc( size_t bytes );
-
-extern void *
-_mesa_calloc( size_t bytes );
-
-extern void
-_mesa_free( void *ptr );
-
-extern void *
 _mesa_align_malloc( size_t bytes, unsigned long alignment );
 
 extern void *
@@ -489,20 +516,8 @@ _mesa_exec_free( void *addr );
 extern void *
 _mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
 
-extern void *
-_mesa_memcpy( void *dest, const void *src, size_t n );
-
-extern void
-_mesa_memset( void *dst, int val, size_t n );
-
 extern void
 _mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
-
-extern void
-_mesa_bzero( void *dst, size_t n );
-
-extern int
-_mesa_memcmp( const void *s1, const void *s2, size_t n );
 
 extern double
 _mesa_sin(double a);
@@ -558,31 +573,7 @@ extern char *
 _mesa_getenv( const char *var );
 
 extern char *
-_mesa_strstr( const char *haystack, const char *needle );
-
-extern char *
-_mesa_strncat( char *dest, const char *src, size_t n );
-
-extern char *
-_mesa_strcpy( char *dest, const char *src );
-
-extern char *
-_mesa_strncpy( char *dest, const char *src, size_t n );
-
-extern size_t
-_mesa_strlen( const char *s );
-
-extern int
-_mesa_strcmp( const char *s1, const char *s2 );
-
-extern int
-_mesa_strncmp( const char *s1, const char *s2, size_t n );
-
-extern char *
 _mesa_strdup( const char *s );
-
-extern int
-_mesa_atoi( const char *s );
 
 extern double
 _mesa_strtod( const char *s, char **end );
@@ -591,20 +582,7 @@ extern unsigned int
 _mesa_str_checksum(const char *str);
 
 extern int
-_mesa_sprintf( char *str, const char *fmt, ... );
-
-extern int
 _mesa_snprintf( char *str, size_t size, const char *fmt, ... );
-
-extern void
-_mesa_printf( const char *fmtString, ... );
-
-extern void
-_mesa_fprintf( FILE *f, const char *fmtString, ... );
-
-extern int 
-_mesa_vsprintf( char *str, const char *fmt, va_list args );
-
 
 extern void
 _mesa_warning( __GLcontext *gc, const char *fmtString, ... );
@@ -617,10 +595,6 @@ _mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
 
 extern void
 _mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
-
-extern void 
-_mesa_exit( int status );
-
 
 #ifdef __cplusplus
 }

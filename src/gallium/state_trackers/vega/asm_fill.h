@@ -27,166 +27,375 @@
 #ifndef ASM_FILL_H
 #define ASM_FILL_H
 
-static const char solid_fill_asm[] =
-   "MOV %s, CONST[0]\n";
+#include "tgsi/tgsi_ureg.h"
+
+typedef void (* ureg_func)( struct ureg_program *ureg,
+                            struct ureg_dst *out,
+                            struct ureg_src *in,
+                            struct ureg_src *sampler,
+                            struct ureg_dst *temp,
+                            struct ureg_src *constant);
+
+static INLINE void
+solid_fill( struct ureg_program *ureg,
+            struct ureg_dst *out,
+            struct ureg_src *in,
+            struct ureg_src *sampler,
+            struct ureg_dst *temp,
+            struct ureg_src *constant)
+{
+   ureg_MOV(ureg, *out, constant[0]);
+}
+
+static INLINE void
+linear_grad( struct ureg_program *ureg,
+             struct ureg_dst *out,
+             struct ureg_src *in,
+             struct ureg_src *sampler,
+             struct ureg_dst *temp,
+             struct ureg_src *constant)
+{
+
+   ureg_MOV(ureg,
+            ureg_writemask(temp[0], TGSI_WRITEMASK_XY),
+            in[0]);
+   ureg_MOV(ureg,
+            ureg_writemask(temp[0], TGSI_WRITEMASK_Z),
+            ureg_scalar(constant[1], TGSI_SWIZZLE_Y));
+   ureg_DP3(ureg, temp[1], constant[2], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[2], constant[3], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[3], constant[4], ureg_src(temp[0]));
+   ureg_RCP(ureg, temp[3], ureg_src(temp[3]));
+   ureg_MUL(ureg, temp[1], ureg_src(temp[1]), ureg_src(temp[3]));
+   ureg_MUL(ureg, temp[2], ureg_src(temp[2]), ureg_src(temp[3]));
+   ureg_MOV(ureg, ureg_writemask(temp[4], TGSI_WRITEMASK_X), ureg_src(temp[1]));
+   ureg_MOV(ureg, ureg_writemask(temp[4], TGSI_WRITEMASK_Y), ureg_src(temp[2]));
+   ureg_MUL(ureg, temp[0],
+            ureg_scalar(constant[0], TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(temp[4]), TGSI_SWIZZLE_Y));
+   ureg_MAD(ureg, temp[1],
+            ureg_scalar(constant[0], TGSI_SWIZZLE_X),
+            ureg_scalar(ureg_src(temp[4]), TGSI_SWIZZLE_X),
+            ureg_src(temp[0]));
+   ureg_MUL(ureg, temp[2], ureg_src(temp[1]),
+            ureg_scalar(constant[0], TGSI_SWIZZLE_Z));
+   ureg_TEX(ureg, *out, TGSI_TEXTURE_1D, ureg_src(temp[2]), sampler[0]);
+}
+
+static INLINE void
+radial_grad( struct ureg_program *ureg,
+             struct ureg_dst *out,
+             struct ureg_src *in,
+             struct ureg_src *sampler,
+             struct ureg_dst *temp,
+             struct ureg_src *constant)
+{
+
+   ureg_MOV(ureg, ureg_writemask(temp[0], TGSI_WRITEMASK_XY), in[0]);
+   ureg_MOV(ureg,
+            ureg_writemask(temp[0], TGSI_WRITEMASK_Z),
+            ureg_scalar(constant[1], TGSI_SWIZZLE_Y));
+   ureg_DP3(ureg, temp[1], constant[2], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[2], constant[3], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[3], constant[4], ureg_src(temp[0]));
+   ureg_RCP(ureg, temp[3], ureg_src(temp[3]));
+   ureg_MUL(ureg, temp[1], ureg_src(temp[1]), ureg_src(temp[3]));
+   ureg_MUL(ureg, temp[2], ureg_src(temp[2]), ureg_src(temp[3]));
+   ureg_MOV(ureg, ureg_writemask(temp[5], TGSI_WRITEMASK_X), ureg_src(temp[1]));
+   ureg_MOV(ureg, ureg_writemask(temp[5], TGSI_WRITEMASK_Y), ureg_src(temp[2]));
+   ureg_MUL(ureg, temp[0], ureg_scalar(constant[0], TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(temp[5]), TGSI_SWIZZLE_Y));
+   ureg_MAD(ureg, temp[1],
+            ureg_scalar(constant[0], TGSI_SWIZZLE_X),
+            ureg_scalar(ureg_src(temp[5]), TGSI_SWIZZLE_X), ureg_src(temp[0]));
+   ureg_ADD(ureg, temp[1], ureg_src(temp[1]), ureg_src(temp[1]));
+   ureg_MUL(ureg, temp[3],
+            ureg_scalar(ureg_src(temp[5]), TGSI_SWIZZLE_Y),
+            ureg_scalar(ureg_src(temp[5]), TGSI_SWIZZLE_Y));
+   ureg_MAD(ureg, temp[4],
+            ureg_scalar(ureg_src(temp[5]), TGSI_SWIZZLE_X),
+            ureg_scalar(ureg_src(temp[5]), TGSI_SWIZZLE_X),
+            ureg_src(temp[3]));
+   ureg_MOV(ureg, temp[4], ureg_negate(ureg_src(temp[4])));
+   ureg_MUL(ureg, temp[2],
+            ureg_scalar(constant[0], TGSI_SWIZZLE_Z),
+            ureg_src(temp[4]));
+   ureg_MUL(ureg, temp[0],
+            ureg_scalar(constant[1], TGSI_SWIZZLE_W),
+            ureg_src(temp[2]));
+   ureg_MUL(ureg, temp[3], ureg_src(temp[1]), ureg_src(temp[1]));
+
+   ureg_SUB(ureg, temp[2], ureg_src(temp[3]), ureg_src(temp[0]));
+   ureg_RSQ(ureg, temp[2], ureg_abs(ureg_src(temp[2])));
+   ureg_RCP(ureg, temp[2], ureg_src(temp[2]));
+   ureg_SUB(ureg, temp[1], ureg_src(temp[2]), ureg_src(temp[1]));
+   ureg_ADD(ureg, temp[0],
+            ureg_scalar(constant[0], TGSI_SWIZZLE_Z),
+            ureg_scalar(constant[0], TGSI_SWIZZLE_Z));
+   ureg_RCP(ureg, temp[0], ureg_src(temp[0]));
+   ureg_MUL(ureg, temp[2], ureg_src(temp[1]), ureg_src(temp[0]));
+   ureg_TEX(ureg, *out, TGSI_TEXTURE_1D, ureg_src(temp[2]), sampler[0]);
+
+}
 
 
-static const char linear_grad_asm[] =
-   "MOV TEMP[0].xy, IN[0]\n"
-   "MOV TEMP[0].z, CONST[1].yyyy\n"
-   "DP3 TEMP[1], CONST[2], TEMP[0]\n"
-   "DP3 TEMP[2], CONST[3], TEMP[0]\n"
-   "DP3 TEMP[3], CONST[4], TEMP[0]\n"
-   "RCP TEMP[3], TEMP[3]\n"
-   "MUL TEMP[1], TEMP[1], TEMP[3]\n"
-   "MUL TEMP[2], TEMP[2], TEMP[3]\n"
-   "MOV TEMP[4].x, TEMP[1]\n"
-   "MOV TEMP[4].y, TEMP[2]\n"
-   "MUL TEMP[0], CONST[0].yyyy, TEMP[4].yyyy\n"
-   "MAD TEMP[1], CONST[0].xxxx, TEMP[4].xxxx, TEMP[0]\n"
-   "MUL TEMP[2], TEMP[1], CONST[0].zzzz\n"
-   "TEX %s, TEMP[2], SAMP[0], 1D\n";
+static INLINE void
+pattern( struct ureg_program *ureg,
+         struct ureg_dst     *out,
+         struct ureg_src     *in,
+         struct ureg_src     *sampler,
+         struct ureg_dst     *temp,
+         struct ureg_src     *constant)
+{
+   ureg_MOV(ureg,
+            ureg_writemask(temp[0], TGSI_WRITEMASK_XY),
+            in[0]);
+   ureg_MOV(ureg,
+            ureg_writemask(temp[0], TGSI_WRITEMASK_Z),
+            ureg_scalar(constant[1], TGSI_SWIZZLE_Y));
+   ureg_DP3(ureg, temp[1], constant[2], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[2], constant[3], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[3], constant[4], ureg_src(temp[0]));
+   ureg_RCP(ureg, temp[3], ureg_src(temp[3]));
+   ureg_MUL(ureg, temp[1], ureg_src(temp[1]), ureg_src(temp[3]));
+   ureg_MUL(ureg, temp[2], ureg_src(temp[2]), ureg_src(temp[3]));
+   ureg_MOV(ureg, ureg_writemask(temp[4], TGSI_WRITEMASK_X), ureg_src(temp[1]));
+   ureg_MOV(ureg, ureg_writemask(temp[4], TGSI_WRITEMASK_Y), ureg_src(temp[2]));
+   ureg_RCP(ureg, temp[0],
+            ureg_swizzle(constant[1],
+                         TGSI_SWIZZLE_Z,
+                         TGSI_SWIZZLE_W,
+                         TGSI_SWIZZLE_Z,
+                         TGSI_SWIZZLE_W));
+   ureg_MOV(ureg, temp[1], ureg_src(temp[4]));
+   ureg_MUL(ureg,
+            ureg_writemask(temp[1], TGSI_WRITEMASK_X),
+            ureg_src(temp[1]),
+            ureg_src(temp[0]));
+   ureg_MUL(ureg,
+            ureg_writemask(temp[1], TGSI_WRITEMASK_Y),
+            ureg_src(temp[1]),
+            ureg_src(temp[0]));
+   ureg_TEX(ureg, *out, TGSI_TEXTURE_2D, ureg_src(temp[1]), sampler[0]);
+}
 
-static const char radial_grad_asm[] =
-   "MOV TEMP[0].xy, IN[0]\n"
-   "MOV TEMP[0].z, CONST[1].yyyy\n"
-   "DP3 TEMP[1], CONST[2], TEMP[0]\n"
-   "DP3 TEMP[2], CONST[3], TEMP[0]\n"
-   "DP3 TEMP[3], CONST[4], TEMP[0]\n"
-   "RCP TEMP[3], TEMP[3]\n"
-   "MUL TEMP[1], TEMP[1], TEMP[3]\n"
-   "MUL TEMP[2], TEMP[2], TEMP[3]\n"
-   "MOV TEMP[5].x, TEMP[1]\n"
-   "MOV TEMP[5].y, TEMP[2]\n"
-   "MUL TEMP[0], CONST[0].yyyy, TEMP[5].yyyy\n"
-   "MAD TEMP[1], CONST[0].xxxx, TEMP[5].xxxx, TEMP[0]\n"
-   "ADD TEMP[1], TEMP[1], TEMP[1]\n"
-   "MUL TEMP[3], TEMP[5].yyyy, TEMP[5].yyyy\n"
-   "MAD TEMP[4], TEMP[5].xxxx, TEMP[5].xxxx, TEMP[3]\n"
-   "MOV TEMP[4], -TEMP[4]\n"
-   "MUL TEMP[2], CONST[0].zzzz, TEMP[4]\n"
-   "MUL TEMP[0], CONST[1].wwww, TEMP[2]\n"
-   "MUL TEMP[3], TEMP[1], TEMP[1]\n"
-   "SUB TEMP[2], TEMP[3], TEMP[0]\n"
-   "RSQ TEMP[2], |TEMP[2]|\n"
-   "RCP TEMP[2], TEMP[2]\n"
-   "SUB TEMP[1], TEMP[2], TEMP[1]\n"
-   "ADD TEMP[0], CONST[0].zzzz, CONST[0].zzzz\n"
-   "RCP TEMP[0], TEMP[0]\n"
-   "MUL TEMP[2], TEMP[1], TEMP[0]\n"
-   "TEX %s, TEMP[2], SAMP[0], 1D\n";
+static INLINE void
+mask( struct ureg_program *ureg,
+      struct ureg_dst *out,
+      struct ureg_src *in,
+      struct ureg_src *sampler,
+      struct ureg_dst *temp,
+      struct ureg_src *constant)
+{
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[1]);
+   ureg_MUL(ureg, ureg_writemask(temp[0], TGSI_WRITEMASK_W),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
+}
 
-static const char pattern_asm[] =
-   "MOV TEMP[0].xy, IN[0]\n"
-   "MOV TEMP[0].z, CONST[1].yyyy\n"
-   "DP3 TEMP[1], CONST[2], TEMP[0]\n"
-   "DP3 TEMP[2], CONST[3], TEMP[0]\n"
-   "DP3 TEMP[3], CONST[4], TEMP[0]\n"
-   "RCP TEMP[3], TEMP[3]\n"
-   "MUL TEMP[1], TEMP[1], TEMP[3]\n"
-   "MUL TEMP[2], TEMP[2], TEMP[3]\n"
-   "MOV TEMP[4].x, TEMP[1]\n"
-   "MOV TEMP[4].y, TEMP[2]\n"
-   "RCP TEMP[0], CONST[1].zwzw\n"
-   "MOV TEMP[1], TEMP[4]\n"
-   "MUL TEMP[1].x, TEMP[1], TEMP[0]\n"
-   "MUL TEMP[1].y, TEMP[1], TEMP[0]\n"
-   "TEX %s, TEMP[1], SAMP[0], 2D\n";
-
-
-static const char mask_asm[] =
-   "TEX TEMP[1], IN[0], SAMP[1], 2D\n"
-   "MUL TEMP[0].w, TEMP[0].wwww, TEMP[1].wwww\n"
-   "MOV %s, TEMP[0]\n";
+static INLINE void
+image_normal( struct ureg_program *ureg,
+              struct ureg_dst *out,
+              struct ureg_src *in,
+              struct ureg_src *sampler,
+              struct ureg_dst *temp,
+              struct ureg_src *constant)
+{
+   ureg_TEX(ureg, *out, TGSI_TEXTURE_2D, in[1], sampler[3]);
+}
 
 
-static const char image_normal_asm[] =
-   "TEX %s, IN[1], SAMP[3], 2D\n";
-
-static const char image_multiply_asm[] =
-   "TEX TEMP[1], IN[1], SAMP[3], 2D\n"
-   "MUL %s, TEMP[0], TEMP[1]\n";
-
-static const char image_stencil_asm[] =
-   "TEX TEMP[1], IN[1], SAMP[3], 2D\n"
-   "MUL %s, TEMP[0], TEMP[1]\n";
-
-
-#define EXTENDED_BLEND_OVER                     \
-   "SUB TEMP[3], CONST[1].yyyy, TEMP[1].wwww\n" \
-   "SUB TEMP[4], CONST[1].yyyy, TEMP[0].wwww\n" \
-   "MUL TEMP[3], TEMP[0], TEMP[3]\n"            \
-   "MUL TEMP[4], TEMP[1], TEMP[4]\n"            \
-   "ADD TEMP[3], TEMP[3], TEMP[4]\n"
-
-static const char blend_multiply_asm[] =
-   "TEX TEMP[1], IN[0], SAMP[2], 2D\n"
-   EXTENDED_BLEND_OVER
-   "MUL TEMP[4], TEMP[0], TEMP[1]\n"
-   "ADD TEMP[1], TEMP[4], TEMP[3]\n"/*result.rgb*/
-   "MUL TEMP[2], TEMP[0].wwww, TEMP[1].wwww\n"
-   "ADD TEMP[3], TEMP[0].wwww, TEMP[1].wwww\n"
-   "SUB TEMP[1].w, TEMP[3], TEMP[2]\n"
-   "MOV %s, TEMP[1]\n";
-#if 1
-static const char blend_screen_asm[] =
-   "TEX TEMP[1], IN[0], SAMP[2], 2D\n"
-   "ADD TEMP[3], TEMP[0], TEMP[1]\n"
-   "MUL TEMP[2], TEMP[0], TEMP[1]\n"
-   "SUB %s, TEMP[3], TEMP[2]\n";
-#else
-static const char blend_screen_asm[] =
-   "TEX TEMP[1], IN[0], SAMP[2], 2D\n"
-   "MOV %s, TEMP[1]\n";
-#endif
-
-static const char blend_darken_asm[] =
-   "TEX TEMP[1], IN[0], SAMP[2], 2D\n"
-   EXTENDED_BLEND_OVER
-   "MUL TEMP[4], TEMP[0], TEMP[1].wwww\n"
-   "MUL TEMP[5], TEMP[1], TEMP[0].wwww\n"
-   "MIN TEMP[4], TEMP[4], TEMP[5]\n"
-   "ADD TEMP[1], TEMP[3], TEMP[4]\n"
-   "MUL TEMP[2], TEMP[0].wwww, TEMP[1].wwww\n"
-   "ADD TEMP[3], TEMP[0].wwww, TEMP[1].wwww\n"
-   "SUB TEMP[1].w, TEMP[3], TEMP[2]\n"
-   "MOV %s, TEMP[1]\n";
-
-static const char blend_lighten_asm[] =
-   "TEX TEMP[1], IN[0], SAMP[2], 2D\n"
-   EXTENDED_BLEND_OVER
-   "MUL TEMP[4], TEMP[0], TEMP[1].wwww\n"
-   "MUL TEMP[5], TEMP[1], TEMP[0].wwww\n"
-   "MAX TEMP[4], TEMP[4], TEMP[5]\n"
-   "ADD TEMP[1], TEMP[3], TEMP[4]\n"
-   "MUL TEMP[2], TEMP[0].wwww, TEMP[1].wwww\n"
-   "ADD TEMP[3], TEMP[0].wwww, TEMP[1].wwww\n"
-   "SUB TEMP[1].w, TEMP[3], TEMP[2]\n"
-   "MOV %s, TEMP[1]\n";
+static INLINE void
+image_multiply( struct ureg_program *ureg,
+                struct ureg_dst *out,
+                struct ureg_src *in,
+                struct ureg_src *sampler,
+                struct ureg_dst *temp,
+                struct ureg_src *constant)
+{
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[1], sampler[3]);
+   ureg_MUL(ureg, *out, ureg_src(temp[0]), ureg_src(temp[1]));
+}
 
 
-static const char premultiply_asm[] =
-   "MUL TEMP[0].xyz, TEMP[0], TEMP[0].wwww\n";
+static INLINE void
+image_stencil( struct ureg_program *ureg,
+               struct ureg_dst *out,
+               struct ureg_src *in,
+               struct ureg_src *sampler,
+               struct ureg_dst *temp,
+               struct ureg_src *constant)
+{
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[1], sampler[3]);
+   ureg_MUL(ureg, *out, ureg_src(temp[0]), ureg_src(temp[1]));
+}
 
-static const char unpremultiply_asm[] =
-   "TEX TEMP[0], IN[0], SAMP[1], 2D\n";
+#define EXTENDED_BLENDER_OVER_FUNC                                      \
+   ureg_SUB(ureg, temp[3],                                              \
+            ureg_scalar(constant[1], TGSI_SWIZZLE_Y),                   \
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));            \
+   ureg_SUB(ureg, temp[3],                                              \
+            ureg_scalar(constant[1], TGSI_SWIZZLE_Y),                   \
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));            \
+   ureg_MUL(ureg, temp[3], ureg_src(temp[0]), ureg_src(temp[3]));       \
+   ureg_MUL(ureg, temp[4], ureg_src(temp[1]), ureg_src(temp[4]));       \
+   ureg_ADD(ureg, temp[3], ureg_src(temp[3]), ureg_src(temp[4]));
 
 
-static const char color_bw_asm[] =
-   "ADD TEMP[1], CONST[1].yyyy, CONST[1].yyyy\n"
-   "RCP TEMP[2], TEMP[1]\n"
-   "ADD TEMP[1], CONST[1].yyyy, TEMP[2]\n"
-   "ADD TEMP[2].x, TEMP[0].xxxx, TEMP[0].yyyy\n"
-   "ADD TEMP[2].x, TEMP[0].zzzz, TEMP[0].xxxx\n"
-   "SGE TEMP[0].xyz, TEMP[2].xxxx, TEMP[1]\n"
-   "SGE TEMP[0].w, TEMP[0].wwww, TEMP[2].yyyy\n"
-   "MOV %s, TEMP[0]\n";
+static INLINE void
+blend_multiply( struct ureg_program *ureg,
+                struct ureg_dst *out,
+                struct ureg_src *in,
+                struct ureg_src *sampler,
+                struct ureg_dst *temp,
+                struct ureg_src *constant)
+{
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   EXTENDED_BLENDER_OVER_FUNC
+   ureg_MUL(ureg, temp[4], ureg_src(temp[0]), ureg_src(temp[1]));
+   ureg_ADD(ureg, temp[1], ureg_src(temp[4]), ureg_src(temp[3]));
+
+   ureg_MUL(ureg, temp[2], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_ADD(ureg, temp[3], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_SUB(ureg, ureg_writemask(temp[1], TGSI_WRITEMASK_W),
+            ureg_src(temp[3]), ureg_src(temp[2]));
+
+   ureg_MOV(ureg, *out, ureg_src(temp[1]));
+}
+
+static INLINE void
+blend_screen( struct ureg_program *ureg,
+              struct ureg_dst     *out,
+              struct ureg_src     *in,
+              struct ureg_src     *sampler,
+              struct ureg_dst     *temp,
+              struct ureg_src     *constant)
+{
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   ureg_ADD(ureg, temp[3], ureg_src(temp[0]), ureg_src(temp[1]));
+   ureg_MUL(ureg, temp[2], ureg_src(temp[0]), ureg_src(temp[1]));
+   ureg_SUB(ureg, *out, ureg_src(temp[3]), ureg_src(temp[2]));
+}
+
+static INLINE void
+blend_darken( struct ureg_program *ureg,
+              struct ureg_dst     *out,
+              struct ureg_src     *in,
+              struct ureg_src     *sampler,
+              struct ureg_dst     *temp,
+              struct ureg_src     *constant)
+{
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   EXTENDED_BLENDER_OVER_FUNC
+   ureg_MUL(ureg, temp[4], ureg_src(temp[0]),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_MUL(ureg, temp[5], ureg_src(temp[1]),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));
+   ureg_MIN(ureg, temp[4], ureg_src(temp[4]), ureg_src(temp[5]));
+   ureg_ADD(ureg, temp[1], ureg_src(temp[3]), ureg_src(temp[4]));
+
+   ureg_MUL(ureg, temp[2], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_ADD(ureg, temp[3], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_SUB(ureg, ureg_writemask(temp[1], TGSI_WRITEMASK_W),
+            ureg_src(temp[3]), ureg_src(temp[2]));
+
+   ureg_MOV(ureg, *out, ureg_src(temp[1]));
+}
+
+static INLINE void
+blend_lighten( struct ureg_program *ureg,
+               struct ureg_dst     *out,
+               struct ureg_src     *in,
+               struct ureg_src     *sampler,
+               struct ureg_dst *temp,
+               struct ureg_src     *constant)
+{
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   EXTENDED_BLENDER_OVER_FUNC
+   ureg_MUL(ureg, temp[4], ureg_src(temp[0]),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_MUL(ureg, temp[5], ureg_src(temp[1]),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));
+   ureg_MAX(ureg, temp[4], ureg_src(temp[4]), ureg_src(temp[5]));
+   ureg_ADD(ureg, temp[1], ureg_src(temp[3]), ureg_src(temp[4]));
+
+   ureg_MUL(ureg, temp[2], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_ADD(ureg, temp[3], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_SUB(ureg, ureg_writemask(temp[1], TGSI_WRITEMASK_W),
+            ureg_src(temp[3]), ureg_src(temp[2]));
+
+   ureg_MOV(ureg, *out, ureg_src(temp[1]));
+}
+
+static INLINE void
+premultiply( struct ureg_program *ureg,
+                struct ureg_dst *out,
+                struct ureg_src *in,
+                struct ureg_src *sampler,
+                struct ureg_dst *temp,
+                struct ureg_src *constant)
+{
+   ureg_MUL(ureg,
+            ureg_writemask(temp[0], TGSI_WRITEMASK_XYZ),
+            ureg_src(temp[0]),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));
+}
+
+static INLINE void
+unpremultiply( struct ureg_program *ureg,
+                struct ureg_dst *out,
+                struct ureg_src *in,
+                struct ureg_src *sampler,
+                struct ureg_dst *temp,
+                struct ureg_src *constant)
+{
+   ureg_TEX(ureg, temp[0], TGSI_TEXTURE_2D, in[0], sampler[1]);
+}
+
+
+static INLINE void
+color_bw( struct ureg_program *ureg,
+                struct ureg_dst *out,
+                struct ureg_src *in,
+                struct ureg_src *sampler,
+                struct ureg_dst *temp,
+                struct ureg_src *constant)
+{
+   ureg_ADD(ureg, temp[1],
+            ureg_scalar(constant[1], TGSI_SWIZZLE_Y),
+            ureg_scalar(constant[1], TGSI_SWIZZLE_Y));
+   ureg_RCP(ureg, temp[2], ureg_src(temp[1]));
+   ureg_ADD(ureg, temp[1],
+            ureg_scalar(constant[1], TGSI_SWIZZLE_Y),
+            ureg_src(temp[2]));
+   ureg_ADD(ureg, ureg_writemask(temp[2], TGSI_WRITEMASK_X),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_X),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_Y));
+   ureg_ADD(ureg, ureg_writemask(temp[2], TGSI_WRITEMASK_X),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_Z),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_X));
+   ureg_SGE(ureg,
+            ureg_writemask(temp[0], TGSI_WRITEMASK_XYZ),
+            ureg_scalar(ureg_src(temp[2]), TGSI_SWIZZLE_X),
+            ureg_src(temp[1]));
+  ureg_SGE(ureg,
+           ureg_writemask(temp[0], TGSI_WRITEMASK_W),
+           ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+           ureg_scalar(ureg_src(temp[2]), TGSI_SWIZZLE_Y));
+  ureg_MOV(ureg, *out, ureg_src(temp[0]));
+}
 
 
 struct shader_asm_info {
    VGint id;
-   VGint num_tokens;
-   const char * txt;
+   ureg_func func;
 
    VGboolean needs_position;
 
@@ -203,44 +412,44 @@ struct shader_asm_info {
 
 static const struct shader_asm_info shaders_asm[] = {
    /* fills */
-   {VEGA_SOLID_FILL_SHADER,       40,  solid_fill_asm,
+   {VEGA_SOLID_FILL_SHADER, solid_fill,
     VG_FALSE, 0, 1, 0, 0, 0, 0},
-   {VEGA_LINEAR_GRADIENT_SHADER, 200,  linear_grad_asm,
+   {VEGA_LINEAR_GRADIENT_SHADER, linear_grad,
     VG_TRUE,  0, 5, 0, 1, 0, 5},
-   {VEGA_RADIAL_GRADIENT_SHADER, 200,  radial_grad_asm,
+   {VEGA_RADIAL_GRADIENT_SHADER, radial_grad,
     VG_TRUE,  0, 5, 0, 1, 0, 6},
-   {VEGA_PATTERN_SHADER,         100,      pattern_asm,
+   {VEGA_PATTERN_SHADER, pattern,
     VG_TRUE,  1, 4, 0, 1, 0, 5},
 
    /* image draw modes */
-   {VEGA_IMAGE_NORMAL_SHADER,    200, image_normal_asm,
+   {VEGA_IMAGE_NORMAL_SHADER, image_normal,
     VG_TRUE,  0, 0, 3, 1, 0, 0},
-   {VEGA_IMAGE_MULTIPLY_SHADER,  200, image_multiply_asm,
+   {VEGA_IMAGE_MULTIPLY_SHADER, image_multiply,
     VG_TRUE,  0, 0, 3, 1, 0, 2},
-   {VEGA_IMAGE_STENCIL_SHADER,   200, image_stencil_asm,
+   {VEGA_IMAGE_STENCIL_SHADER, image_stencil,
     VG_TRUE,  0, 0, 3, 1, 0, 2},
 
-   {VEGA_MASK_SHADER,            100,         mask_asm,
+   {VEGA_MASK_SHADER, mask,
     VG_TRUE,  0, 0, 1, 1, 0, 2},
 
    /* extra blend modes */
-   {VEGA_BLEND_MULTIPLY_SHADER,  200, blend_multiply_asm,
+   {VEGA_BLEND_MULTIPLY_SHADER, blend_multiply,
     VG_TRUE,  1, 1, 2, 1, 0, 5},
-   {VEGA_BLEND_SCREEN_SHADER,    200, blend_screen_asm,
+   {VEGA_BLEND_SCREEN_SHADER, blend_screen,
     VG_TRUE,  0, 0, 2, 1, 0, 4},
-   {VEGA_BLEND_DARKEN_SHADER,    200, blend_darken_asm,
+   {VEGA_BLEND_DARKEN_SHADER, blend_darken,
     VG_TRUE,  1, 1, 2, 1, 0, 6},
-   {VEGA_BLEND_LIGHTEN_SHADER,   200, blend_lighten_asm,
+   {VEGA_BLEND_LIGHTEN_SHADER, blend_lighten,
     VG_TRUE,  1, 1, 2, 1, 0, 6},
 
    /* premultiply */
-   {VEGA_PREMULTIPLY_SHADER,   100, premultiply_asm,
+   {VEGA_PREMULTIPLY_SHADER, premultiply,
     VG_FALSE,  0, 0, 0, 0, 0, 1},
-   {VEGA_UNPREMULTIPLY_SHADER,   100, unpremultiply_asm,
+   {VEGA_UNPREMULTIPLY_SHADER, unpremultiply,
     VG_FALSE,  0, 0, 0, 0, 0, 1},
 
    /* color transform to black and white */
-   {VEGA_BW_SHADER,   150, color_bw_asm,
+   {VEGA_BW_SHADER, color_bw,
     VG_FALSE,  1, 1, 0, 0, 0, 3},
 };
 #endif

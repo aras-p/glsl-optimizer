@@ -29,9 +29,6 @@
 #include "util/u_memory.h"
 
 #include "svga_tgsi_emit.h"
-#include "svga_context.h"
-
-
 
 
 static boolean ps20_input( struct svga_shader_emitter *emit,

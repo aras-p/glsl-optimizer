@@ -107,6 +107,9 @@ sampledLine::sampledLine(Real pt1[2], Real pt2[2])
 //needs tp call init to setup
 sampledLine::sampledLine()
 {
+  npoints = 0;
+  points = NULL;
+  next = NULL;
 }
 
 //warning: ONLY pointer is copies!!!

@@ -4,7 +4,7 @@
 /**
  * A generic function ptr type
  */
-typedef void (*_EGLProc)();
+typedef void (*_EGLProc)(void);
 
 
 /**
@@ -23,12 +23,13 @@ typedef EGLBoolean (*GetConfigAttrib_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLC
 /* context funcs */
 typedef _EGLContext *(*CreateContext_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, _EGLContext *share_list, const EGLint *attrib_list);
 typedef EGLBoolean (*DestroyContext_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx);
+/* this is the only function (other than Initialize) that may be called with an uninitialized display */
 typedef EGLBoolean (*MakeCurrent_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw, _EGLSurface *read, _EGLContext *ctx);
 typedef EGLBoolean (*QueryContext_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLint attribute, EGLint *value);
 
 /* surface funcs */
-typedef _EGLSurface *(*CreateWindowSurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, NativeWindowType window, const EGLint *attrib_list);
-typedef _EGLSurface *(*CreatePixmapSurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, NativePixmapType pixmap, const EGLint *attrib_list);
+typedef _EGLSurface *(*CreateWindowSurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, EGLNativeWindowType window, const EGLint *attrib_list);
+typedef _EGLSurface *(*CreatePixmapSurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, EGLNativePixmapType pixmap, const EGLint *attrib_list);
 typedef _EGLSurface *(*CreatePbufferSurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *config, const EGLint *attrib_list);
 typedef EGLBoolean (*DestroySurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface);
 typedef EGLBoolean (*QuerySurface_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, EGLint attribute, EGLint *value);
@@ -37,14 +38,15 @@ typedef EGLBoolean (*BindTexImage_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurf
 typedef EGLBoolean (*ReleaseTexImage_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, EGLint buffer);
 typedef EGLBoolean (*SwapInterval_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint interval);
 typedef EGLBoolean (*SwapBuffers_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *draw);
-typedef EGLBoolean (*CopyBuffers_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, NativePixmapType target);
+typedef EGLBoolean (*CopyBuffers_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface, EGLNativePixmapType target);
 
 /* misc funcs */
 typedef const char *(*QueryString_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint name);
 typedef EGLBoolean (*WaitClient_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx);
 typedef EGLBoolean (*WaitNative_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine);
 
-typedef _EGLProc (*GetProcAddress_t)(const char *procname);
+/* this function may be called from multiple threads at the same time */
+typedef _EGLProc (*GetProcAddress_t)(_EGLDriver *drv, const char *procname);
 
 
 
@@ -68,6 +70,11 @@ typedef const char * (*QueryModeStringMESA_t)(_EGLDriver *drv, _EGLDisplay *dpy,
 typedef _EGLSurface *(*CreatePbufferFromClientBuffer_t)(_EGLDriver *drv, _EGLDisplay *dpy, EGLenum buftype, EGLClientBuffer buffer, _EGLConfig *config, const EGLint *attrib_list);
 #endif /* EGL_VERSION_1_2 */
 
+
+#ifdef EGL_KHR_image_base
+typedef _EGLImage *(*CreateImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attr_list);
+typedef EGLBoolean (*DestroyImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image);
+#endif /* EGL_KHR_image_base */
 
 
 /**
@@ -104,7 +111,7 @@ struct _egl_api
    WaitNative_t WaitNative;
    GetProcAddress_t GetProcAddress;
 
-   /* EGL_MESA_screen extension */
+#ifdef EGL_MESA_screen_surface
    ChooseModeMESA_t ChooseModeMESA;
    GetModesMESA_t GetModesMESA;
    GetModeAttribMESA_t GetModeAttribMESA;
@@ -117,10 +124,16 @@ struct _egl_api
    QueryScreenSurfaceMESA_t QueryScreenSurfaceMESA;
    QueryScreenModeMESA_t QueryScreenModeMESA;
    QueryModeStringMESA_t QueryModeStringMESA;
+#endif /* EGL_MESA_screen_surface */
 
 #ifdef EGL_VERSION_1_2
    CreatePbufferFromClientBuffer_t CreatePbufferFromClientBuffer;
 #endif
+
+#ifdef EGL_KHR_image_base
+   CreateImageKHR_t CreateImageKHR;
+   DestroyImageKHR_t DestroyImageKHR;
+#endif /* EGL_KHR_image_base */
 };
 
 #endif /* EGLAPI_INCLUDED */

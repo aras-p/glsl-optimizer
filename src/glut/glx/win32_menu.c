@@ -97,7 +97,7 @@ static void
 mapMenu(GLUTmenu * menu, int x, int y)
 {
   TrackPopupMenu((HMENU) menu->win, TPM_LEFTALIGN |
-    (__glutMenuButton == TPM_RIGHTBUTTON) ? TPM_RIGHTBUTTON : TPM_LEFTBUTTON,
+    ((__glutMenuButton == TPM_RIGHTBUTTON) ? TPM_RIGHTBUTTON : TPM_LEFTBUTTON),
     x, y, 0, __glutCurrentWindow->win, NULL);
 }
 

@@ -70,7 +70,6 @@
 #define PF_B8G8R8A8   2
 #define PF_B5G6R5     3
 #define PF_B5G5R5     4
-#define PF_CI8        5
 
 
 /**
@@ -264,25 +263,6 @@ viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 #include "swrast/s_spantemp.h"
 
 
-/* 8-bit color index */
-#define NAME(PREFIX) PREFIX##_CI8
-#define CI_MODE
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   struct GLFBDevRenderbufferRec *frb = (struct GLFBDevRenderbufferRec *) rb;
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = frb->bottom - (Y) * frb->rowStride + (X)
-#define INC_PIXEL_PTR(P) P += 1
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   *DST = VALUE[0]
-#define FETCH_PIXEL(DST, SRC) \
-   DST = SRC[0]
-
-#include "swrast/s_spantemp.h"
-
-
-
-
 /**********************************************************************/
 /* Public API functions                                               */
 /**********************************************************************/
@@ -330,7 +310,7 @@ glFBDevGetProcAddress( const char *procName )
    };
    const struct name_address *entry;
    for (entry = functions; entry->name; entry++) {
-      if (_mesa_strcmp(entry->name, procName) == 0) {
+      if (strcmp(entry->name, procName) == 0) {
          return entry->func;
       }
    }
@@ -345,9 +325,9 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
 {
    GLFBDevVisualPtr vis;
    const int *attrib;
-   GLboolean rgbFlag = GL_TRUE, dbFlag = GL_FALSE, stereoFlag = GL_FALSE;
+   GLboolean dbFlag = GL_FALSE, stereoFlag = GL_FALSE;
    GLint redBits = 0, greenBits = 0, blueBits = 0, alphaBits = 0;
-   GLint indexBits = 0, depthBits = 0, stencilBits = 0;
+   GLint depthBits = 0, stencilBits = 0;
    GLint accumRedBits = 0, accumGreenBits = 0;
    GLint accumBlueBits = 0, accumAlphaBits = 0;
    GLint numSamples = 0;
@@ -366,9 +346,6 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
       switch (*attrib) {
       case GLFBDEV_DOUBLE_BUFFER:
          dbFlag = GL_TRUE;
-         break;
-      case GLFBDEV_COLOR_INDEX:
-         rgbFlag = GL_FALSE;
          break;
       case GLFBDEV_DEPTH_SIZE:
          depthBits = attrib[1];
@@ -390,74 +367,61 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
          numSamples = attrib[1];
          attrib++;
          break;
+      case GLFBDEV_COLOR_INDEX:
+         /* Mesa no longer supports color-index rendering. */
       default:
          /* unexpected token */
-         _mesa_free(vis);
+         free(vis);
          return NULL;
       }
    }
 
-   if (rgbFlag) {
-      redBits   = varInfo->red.length;
-      greenBits = varInfo->green.length;
-      blueBits  = varInfo->blue.length;
-      alphaBits = varInfo->transp.length;
+   redBits   = varInfo->red.length;
+   greenBits = varInfo->green.length;
+   blueBits  = varInfo->blue.length;
+   alphaBits = varInfo->transp.length;
 
-      if (fixInfo->visual == FB_VISUAL_TRUECOLOR ||
-          fixInfo->visual == FB_VISUAL_DIRECTCOLOR) {
-         if (varInfo->bits_per_pixel == 24
-             && varInfo->red.offset == 16
-             && varInfo->green.offset == 8
-             && varInfo->blue.offset == 0) {
-            vis->pixelFormat = PF_B8G8R8;
-         }
-         else if (varInfo->bits_per_pixel == 32
-                  && varInfo->red.offset == 16
-                  && varInfo->green.offset == 8
-                  && varInfo->blue.offset == 0) {
-            vis->pixelFormat = PF_B8G8R8A8;
-         }
-         else if (varInfo->bits_per_pixel == 16
-                  && varInfo->red.offset == 11
-                  && varInfo->green.offset == 5
-                  && varInfo->blue.offset == 0) {
-            vis->pixelFormat = PF_B5G6R5;
-         }
-         else if (varInfo->bits_per_pixel == 16
-                  && varInfo->red.offset == 10
-                  && varInfo->green.offset == 5
-                  && varInfo->blue.offset == 0) {
-            vis->pixelFormat = PF_B5G5R5;
-         }
-         else {
-            _mesa_problem(NULL, "Unsupported fbdev RGB visual/bitdepth!\n");
-            _mesa_free(vis);
-            return NULL;
-         }
+   if (fixInfo->visual == FB_VISUAL_TRUECOLOR ||
+       fixInfo->visual == FB_VISUAL_DIRECTCOLOR) {
+      if (varInfo->bits_per_pixel == 24
+          && varInfo->red.offset == 16
+          && varInfo->green.offset == 8
+          && varInfo->blue.offset == 0) {
+         vis->pixelFormat = PF_B8G8R8;
       }
-   }
-   else {
-      indexBits = varInfo->bits_per_pixel;
-      if ((fixInfo->visual == FB_VISUAL_PSEUDOCOLOR ||
-           fixInfo->visual == FB_VISUAL_STATIC_PSEUDOCOLOR)
-          && varInfo->bits_per_pixel == 8) {
-         vis->pixelFormat = PF_CI8;
+      else if (varInfo->bits_per_pixel == 32
+               && varInfo->red.offset == 16
+               && varInfo->green.offset == 8
+               && varInfo->blue.offset == 0) {
+         vis->pixelFormat = PF_B8G8R8A8;
+      }
+      else if (varInfo->bits_per_pixel == 16
+               && varInfo->red.offset == 11
+               && varInfo->green.offset == 5
+               && varInfo->blue.offset == 0) {
+         vis->pixelFormat = PF_B5G6R5;
+      }
+      else if (varInfo->bits_per_pixel == 16
+               && varInfo->red.offset == 10
+               && varInfo->green.offset == 5
+               && varInfo->blue.offset == 0) {
+         vis->pixelFormat = PF_B5G5R5;
       }
       else {
-         _mesa_problem(NULL, "Unsupported fbdev CI visual/bitdepth!\n");
-         _mesa_free(vis);
+         _mesa_problem(NULL, "Unsupported fbdev RGB visual/bitdepth!\n");
+         free(vis);
          return NULL;
       }
    }
 
-   if (!_mesa_initialize_visual(&vis->glvisual, rgbFlag, dbFlag, stereoFlag,
+   if (!_mesa_initialize_visual(&vis->glvisual, dbFlag, stereoFlag,
                                 redBits, greenBits, blueBits, alphaBits,
-                                indexBits, depthBits, stencilBits,
+                                depthBits, stencilBits,
                                 accumRedBits, accumGreenBits,
                                 accumBlueBits, accumAlphaBits,
                                 numSamples)) {
       /* something was invalid */
-      _mesa_free(vis);
+      free(vis);
       return NULL;
    }
 
@@ -469,7 +433,7 @@ void
 glFBDevDestroyVisual( GLFBDevVisualPtr visual )
 {
    if (visual)
-      _mesa_free(visual);
+      free(visual);
 }
 
 
@@ -488,9 +452,9 @@ delete_renderbuffer(struct gl_renderbuffer *rb)
 {
    struct GLFBDevRenderbufferRec *frb = (struct GLFBDevRenderbufferRec *) rb;
    if (frb->mallocedBuffer) {
-      _mesa_free(frb->Base.Data);
+      free(frb->Base.Data);
    }
-   _mesa_free(frb);
+   free(frb);
 }
 
 
@@ -554,23 +518,9 @@ new_glfbdev_renderbuffer(void *bufferStart, const GLFBDevVisualPtr visual)
          rb->Base.PutValues = put_values_B5G5R5;
          rb->Base.PutMonoValues = put_mono_values_B5G5R5;
       }
-      else if (pixelFormat == PF_CI8) {
-         rb->Base.GetRow = get_row_CI8;
-         rb->Base.GetValues = get_values_CI8;
-         rb->Base.PutRow = put_row_CI8;
-         rb->Base.PutMonoRow = put_mono_row_CI8;
-         rb->Base.PutValues = put_values_CI8;
-         rb->Base.PutMonoValues = put_mono_values_CI8;
-      }
 
-      if (pixelFormat == PF_CI8) {
-         rb->Base.InternalFormat = GL_COLOR_INDEX8_EXT;
-         rb->Base._BaseFormat = GL_COLOR_INDEX;
-      }
-      else {
-         rb->Base.InternalFormat = GL_RGBA;
-         rb->Base._BaseFormat = GL_RGBA;
-      }
+      rb->Base.InternalFormat = GL_RGBA;
+      rb->Base._BaseFormat = GL_RGBA;
       rb->Base.DataType = GL_UNSIGNED_BYTE;
       rb->Base.Data = bufferStart;
 
@@ -626,7 +576,7 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
       return NULL;
 
    /* basic framebuffer setup */
-   _mesa_initialize_framebuffer(&buf->glframebuffer, &visual->glvisual);
+   _mesa_initialize_window_framebuffer(&buf->glframebuffer, &visual->glvisual);
    /* add front renderbuffer */
    frontrb = new_glfbdev_renderbuffer(frontBuffer, visual);
    _mesa_add_renderbuffer(&buf->glframebuffer, BUFFER_FRONT_LEFT,
@@ -636,10 +586,10 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
       const int malloced = !backBuffer;
       if (malloced) {
          /* malloc a back buffer */
-         backBuffer = _mesa_malloc(size);
+         backBuffer = malloc(size);
          if (!backBuffer) {
             _mesa_free_framebuffer_data(&buf->glframebuffer);
-            _mesa_free(buf);
+            free(buf);
             return NULL;
          }
       }
@@ -742,7 +692,7 @@ glFBDevSwapBuffers( GLFBDevBufferPtr buffer )
 
    ASSERT(frontrb->Base.Data);
    ASSERT(backrb->Base.Data);
-   _mesa_memcpy(frontrb->Base.Data, backrb->Base.Data, buffer->size);
+   memcpy(frontrb->Base.Data, backrb->Base.Data, buffer->size);
 }
 
 
@@ -769,7 +719,7 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
    if (!_mesa_initialize_context(&ctx->glcontext, &visual->glvisual,
                                  share ? &share->glcontext : NULL,
                                  &functions, (void *) ctx)) {
-      _mesa_free(ctx);
+      free(ctx);
       return NULL;
    }
 
@@ -818,7 +768,7 @@ glFBDevDestroyContext( GLFBDevContextPtr context )
          _mesa_make_current(NULL, NULL, NULL);
       }
       _mesa_free_context_data(&context->glcontext);
-      _mesa_free(context);
+      free(context);
    }
 }
 

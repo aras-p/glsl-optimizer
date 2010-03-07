@@ -129,6 +129,8 @@ static void upload_S5( struct i915_context *i915 )
    unsigned LIS5 = 0;
 
    LIS5 |= i915->depth_stencil->stencil_LIS5;
+   /* hope it's safe to set stencil ref value even if stencil test is disabled? */
+   LIS5 |= i915->stencil_ref.ref_value[0] << S5_STENCIL_REF_SHIFT;
 
    LIS5 |= i915->blend->LIS5;
 

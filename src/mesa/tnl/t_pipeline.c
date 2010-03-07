@@ -28,7 +28,6 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/imports.h"
-#include "main/state.h"
 #include "main/mtypes.h"
 
 #include "t_context.h"
@@ -48,7 +47,7 @@ void _tnl_install_pipeline( GLcontext *ctx,
     */
    for (i = 0 ; i < MAX_PIPELINE_STAGES && stages[i] ; i++) {
       struct tnl_pipeline_stage *s = &tnl->pipeline.stages[i];
-      MEMCPY(s, stages[i], sizeof(*s));
+      memcpy(s, stages[i], sizeof(*s));
       if (s->create)
 	 s->create(ctx, s);
    }

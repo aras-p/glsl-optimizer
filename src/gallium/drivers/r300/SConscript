@@ -4,13 +4,18 @@ r300compiler = SConscript('#/src/mesa/drivers/dri/r300/compiler/SConscript')
 
 env = env.Clone()
 # add the paths for r300compiler
-env.Append(CPPPATH = ['#/src/mesa/drivers/dri/r300/compiler', '#/include', '#/src/mesa'])
+env.Append(CPPPATH = [
+    '#/src/mesa/drivers/dri/r300/compiler', 
+    '#/src/gallium/winsys/drm/radeon/core',
+    '#/include', 
+    '#/src/mesa',
+])
 
 r300 = env.ConvenienceLibrary(
     target = 'r300',
     source = [
+        'r300_blit.c',
         'r300_chipset.c',
-        'r300_clear.c',
         'r300_context.c',
         'r300_debug.c',
         'r300_emit.c',

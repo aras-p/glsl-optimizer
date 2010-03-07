@@ -35,7 +35,6 @@
  */
 
 #include "tdfx_context.h"
-#include "tdfx_tex.h"
 #include "tdfx_texman.h"
 #include "main/texobj.h"
 #include "main/hash.h"

@@ -73,7 +73,7 @@ static void Init(void)
 			0,
 			sourceFormat,
 			GL_UNSIGNED_BYTE,
-			//GL_UNSIGNED_INT,
+			/* GL_UNSIGNED_INT, */
 			tex2d);
 
 		glEnable(Target);

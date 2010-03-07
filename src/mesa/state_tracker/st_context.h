@@ -55,6 +55,7 @@ struct bitmap_cache;
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
 #define ST_NEW_VERTEX_PROGRAM          0x4
 #define ST_NEW_FRAMEBUFFER             0x8
+#define ST_NEW_EDGEFLAGS_DATA          0x10
 
 
 struct st_state_flags {
@@ -91,7 +92,7 @@ struct st_context
       struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
       struct pipe_sampler_state             *sampler_list[PIPE_MAX_SAMPLERS];
       struct pipe_clip_state clip;
-      struct pipe_constant_buffer constants[2];
+      struct pipe_buffer *constants[2];
       struct pipe_framebuffer_state framebuffer;
       struct pipe_texture *sampler_texture[PIPE_MAX_SAMPLERS];
       struct pipe_scissor_state scissor;
@@ -120,6 +121,7 @@ struct st_context
    struct st_state_flags dirty;
 
    GLboolean missing_textures;
+   GLboolean vertdata_edgeflags;
 
    /** Mapping from VERT_RESULT_x to post-transformed vertex slot */
    const GLuint *vertex_result_to_slot;
@@ -157,13 +159,14 @@ struct st_context
    /** for glDraw/CopyPixels */
    struct {
       struct st_fragment_program *z_shader;
-      struct st_vertex_program *vert_shaders[2];
+      void *vert_shaders[2];   /**< ureg shaders */
    } drawpix;
 
    /** for glClear */
    struct {
       struct pipe_rasterizer_state raster;
       struct pipe_viewport_state viewport;
+      struct pipe_clip_state clip;
       void *vs;
       void *fs;
       float vertices[4][2][4];  /**< vertex pos + color */
@@ -237,7 +240,7 @@ st_fb_orientation(const struct gl_framebuffer *fb)
 
 
 /** clear-alloc a struct-sized object, with casting */
-#define ST_CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
+#define ST_CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
 
 
 extern int

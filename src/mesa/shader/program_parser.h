@@ -56,6 +56,12 @@ struct asm_symbol {
     */
    unsigned param_binding_begin;
 
+   /**
+    * Constants put into the parameter list may be swizzled.  This
+    * field contain's the symbol's swizzle. (SWIZZLE_X/Y/Z/W)
+    */
+   unsigned param_binding_swizzle;
+
    /* This is how many entries in the the program_parameter_list we take up
     * with our state tokens or constants. Note that this is _not_ the same as
     * the number of param registers we eventually use.
@@ -203,6 +209,8 @@ struct asm_parser_state {
       unsigned TexRect:1;
       unsigned TexArray:1;
       unsigned NV_fragment:1;
+      unsigned OriginUpperLeft:1;
+      unsigned PixelCenterInteger:1;
    } option;
 
    struct {

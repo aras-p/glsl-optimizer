@@ -73,7 +73,8 @@ screen_interp( struct draw_context *draw,
                const struct vertex_header *v1 )
 {
    uint attr;
-   for (attr = 0; attr < draw->vs.num_vs_outputs; attr++) {
+   int num_outputs = draw_current_shader_outputs(draw);
+   for (attr = 0; attr < num_outputs; attr++) {
       const float *val0 = v0->data[attr];
       const float *val1 = v1->data[attr];
       float *newv = dst->data[attr];
@@ -121,7 +122,7 @@ stipple_line(struct draw_stage *stage, struct prim_header *header)
    struct stipple_stage *stipple = stipple_stage(stage);
    struct vertex_header *v0 = header->v[0];
    struct vertex_header *v1 = header->v[1];
-   const unsigned pos = stage->draw->vs.position_output;
+   const unsigned pos = draw_current_shader_position_output(stage->draw);
    const float *pos0 = v0->data[pos];
    const float *pos1 = v1->data[pos];
    float start = 0;

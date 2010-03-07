@@ -134,7 +134,7 @@ static void draw(void)
 
    glDisable(GL_SCISSOR_TEST);
 
-   //glutSwapBuffers();
+   /* glutSwapBuffers(); */
    glFlush();
 }
 
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
    glutInitWindowPosition(100, 0);
    glutInitWindowSize(prog.width, prog.height);
 
-   //type = GLUT_RGB | GLUT_DOUBLE;
+   /* type = GLUT_RGB | GLUT_DOUBLE; */
    type = GLUT_RGB | GLUT_SINGLE;
    glutInitDisplayMode(type);
 

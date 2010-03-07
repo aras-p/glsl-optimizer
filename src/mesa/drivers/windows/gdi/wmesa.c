@@ -35,7 +35,7 @@ wmesa_new_framebuffer(HDC hdc, GLvisual *visual)
     WMesaFramebuffer pwfb
         = (WMesaFramebuffer) malloc(sizeof(struct wmesa_framebuffer));
     if (pwfb) {
-        _mesa_initialize_framebuffer(&pwfb->Base, visual);
+        _mesa_initialize_window_framebuffer(&pwfb->Base, visual);
         pwfb->hDC = hdc;
         /* insert at head of list */
         pwfb->next = FirstFramebuffer;
@@ -301,10 +301,10 @@ static void clear(GLcontext *ctx, GLbitfield mask)
 
     /* Let swrast do all the work if the masks are not set to
      * clear all channels. */
-    if (ctx->Color.ColorMask[0] != 0xff ||
-	ctx->Color.ColorMask[1] != 0xff ||
-	ctx->Color.ColorMask[2] != 0xff ||
-	ctx->Color.ColorMask[3] != 0xff) {
+    if (!ctx->Color.ColorMask[0][0] ||
+	!ctx->Color.ColorMask[0][1] ||
+	!ctx->Color.ColorMask[0][2] ||
+	!ctx->Color.ColorMask[0][3]) {
 	_swrast_Clear(ctx, mask);
 	return;
     }
@@ -1245,7 +1245,7 @@ static void read_rgba_pixels_16(const GLcontext *ctx,
 static void
 wmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-    _mesa_free(rb);
+    free(rb);
 }
 
 
@@ -1286,9 +1286,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	    rb->PutMonoValues = write_mono_rgba_pixels_16;
 	    rb->GetRow = read_rgba_span_16;
 	    rb->GetValues = read_rgba_pixels_16;
-            rb->RedBits = 5;
-            rb->GreenBits = 6;
-            rb->BlueBits = 5;
 	    break;
 	case PF_8R8G8B:
 		if (cColorBits == 24)
@@ -1300,9 +1297,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 		    rb->PutMonoValues = write_mono_rgba_pixels_24;
 		    rb->GetRow = read_rgba_span_24;
 		    rb->GetValues = read_rgba_pixels_24;
-	        rb->RedBits = 8;
-	        rb->GreenBits = 8;
-	        rb->BlueBits = 8;		
 		}
 		else
 		{
@@ -1313,9 +1307,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	        rb->PutMonoValues = write_mono_rgba_pixels_32;
 	        rb->GetRow = read_rgba_span_32;
 	        rb->GetValues = read_rgba_pixels_32;
-            rb->RedBits = 8;
-            rb->GreenBits = 8;
-            rb->BlueBits = 8;
 		}
 	    break;
 	default:
@@ -1331,9 +1322,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	rb->PutMonoValues = write_mono_rgba_pixels_front;
 	rb->GetRow = read_rgba_span_front;
 	rb->GetValues = read_rgba_pixels_front;
-        rb->RedBits = 8; /* XXX fix these (565?) */
-        rb->GreenBits = 8;
-        rb->BlueBits = 8;
     }
 }
 
@@ -1473,12 +1461,10 @@ WMesaContext WMesaCreateContext(HDC hDC,
 	break;
     }
     /* Create visual based on flags */
-    visual = _mesa_create_visual(rgb_flag,
-                                 db_flag,    /* db_flag */
+    visual = _mesa_create_visual(db_flag,    /* db_flag */
                                  GL_FALSE,   /* stereo */
                                  red_bits, green_bits, blue_bits, /* color RGB */
                                  alpha_flag ? alpha_bits : 0, /* color A */
-                                 0,          /* index bits */
                                  DEFAULT_SOFTWARE_DEPTH_BITS, /* depth_bits */
                                  8,          /* stencil_bits */
                                  16,16,16,   /* accum RGB */
@@ -1486,7 +1472,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
                                  1);         /* num samples */
     
     if (!visual) {
-	_mesa_free(c);
+	free(c);
 	return NULL;
     }
 
@@ -1524,7 +1510,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
         !_tnl_CreateContext(ctx) ||
 	!_swsetup_CreateContext(ctx)) {
 	_mesa_free_context_data(ctx);
-	_mesa_free(c);
+	free(c);
 	return NULL;
     }
     _swsetup_Wakeup(ctx);
@@ -1569,7 +1555,7 @@ void WMesaDestroyContext( WMesaContext pwc )
     _swrast_DestroyContext(ctx);
     
     _mesa_free_context_data(ctx);
-    _mesa_free(pwc);
+    free(pwc);
 }
 
 

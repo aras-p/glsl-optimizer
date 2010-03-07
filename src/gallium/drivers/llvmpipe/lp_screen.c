@@ -33,9 +33,33 @@
 
 #include "lp_texture.h"
 #include "lp_buffer.h"
+#include "lp_fence.h"
 #include "lp_winsys.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
+#include "lp_context.h"
+#include "lp_debug.h"
+
+#ifdef DEBUG
+int LP_DEBUG = 0;
+
+static const struct debug_named_value lp_debug_flags[] = {
+   { "pipe",   DEBUG_PIPE },
+   { "tgsi",   DEBUG_TGSI },
+   { "tex",    DEBUG_TEX },
+   { "asm",    DEBUG_ASM },
+   { "setup",  DEBUG_SETUP },
+   { "rast",   DEBUG_RAST },
+   { "query",  DEBUG_QUERY },
+   { "screen", DEBUG_SCREEN },
+   { "jit",    DEBUG_JIT },
+   { "show_tiles",    DEBUG_SHOW_TILES },
+   { "show_subtiles", DEBUG_SHOW_SUBTILES },
+   { "counters", DEBUG_COUNTERS },
+   { "nopt", DEBUG_NO_LLVM_OPT },
+   {NULL, 0}
+};
+#endif
 
 
 static const char *
@@ -59,7 +83,7 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return PIPE_MAX_VERTEX_SAMPLERS;
+      return 0;
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
@@ -92,6 +116,16 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
       return 1;
+   case PIPE_CAP_INDEP_BLEND_ENABLE:
+      return 0;
+   case PIPE_CAP_INDEP_BLEND_FUNC:
+      return 0;
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
+      return 1;
+   case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
+   case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+      return 0;
    default:
       return 0;
    }
@@ -160,9 +194,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          format_desc->block.height != 1)
          return FALSE;
 
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_SCALAR &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
@@ -190,14 +222,15 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          format_desc->block.height != 1)
          return FALSE;
 
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_SCALAR &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
-         format_desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB &&
          format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
+         return FALSE;
+
+      /* not supported yet */
+      if (format == PIPE_FORMAT_Z16_UNORM)
          return FALSE;
    }
 
@@ -259,6 +292,10 @@ llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
 {
    struct llvmpipe_screen *screen = CALLOC_STRUCT(llvmpipe_screen);
 
+#ifdef DEBUG
+   LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
+#endif
+
    if (!screen)
       return NULL;
 
@@ -273,10 +310,12 @@ llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
    screen->base.is_format_supported = llvmpipe_is_format_supported;
 
    screen->base.surface_buffer_create = llvmpipe_surface_buffer_create;
+   screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
 
    llvmpipe_init_screen_texture_funcs(&screen->base);
    llvmpipe_init_screen_buffer_funcs(&screen->base);
+   llvmpipe_init_screen_fence_funcs(&screen->base);
 
    lp_jit_screen_init(screen);
 

@@ -27,7 +27,7 @@
 
 
 #include "pipe/p_defines.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 #include "util/u_memory.h"
 #include "pipe/p_context.h"
 
@@ -44,11 +44,19 @@ static void failover_destroy( struct pipe_context *pipe )
 }
 
 
+void failover_fail_over( struct failover_context *failover )
+{
+   failover->dirty = TRUE;
+   failover->mode = FO_SW;
+}
 
-static boolean failover_draw_elements( struct pipe_context *pipe,
-				       struct pipe_buffer *indexBuffer,
-				       unsigned indexSize,
-				       unsigned prim, unsigned start, unsigned count)
+
+static void failover_draw_elements( struct pipe_context *pipe,
+                                    struct pipe_buffer *indexBuffer,
+                                    unsigned indexSize,
+                                    unsigned prim, 
+                                    unsigned start, 
+                                    unsigned count)
 {
    struct failover_context *failover = failover_context( pipe );
 
@@ -62,24 +70,22 @@ static boolean failover_draw_elements( struct pipe_context *pipe,
    /* Try hardware:
     */
    if (failover->mode == FO_HW) {
-      if (!failover->hw->draw_elements( failover->hw, 
-					indexBuffer, 
-					indexSize, 
-					prim, 
-					start, 
-					count )) {
-
-	 failover->hw->flush( failover->hw, ~0, NULL );
-	 failover->mode = FO_SW;
-      }
+      failover->hw->draw_elements( failover->hw, 
+                                   indexBuffer, 
+                                   indexSize, 
+                                   prim, 
+                                   start, 
+                                   count );
    }
 
    /* Possibly try software:
     */
    if (failover->mode == FO_SW) {
 
-      if (failover->dirty) 
+      if (failover->dirty) {
+         failover->hw->flush( failover->hw, ~0, NULL );
 	 failover_state_emit( failover );
+      }
 
       failover->sw->draw_elements( failover->sw, 
 				   indexBuffer, 
@@ -94,15 +100,13 @@ static boolean failover_draw_elements( struct pipe_context *pipe,
        */
       failover->sw->flush( failover->sw, ~0, NULL );
    }
-
-   return TRUE;
 }
 
 
-static boolean failover_draw_arrays( struct pipe_context *pipe,
+static void failover_draw_arrays( struct pipe_context *pipe,
 				     unsigned prim, unsigned start, unsigned count)
 {
-   return failover_draw_elements(pipe, NULL, 0, prim, start, count);
+   failover_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 static unsigned int

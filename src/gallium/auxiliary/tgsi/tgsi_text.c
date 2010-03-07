@@ -27,6 +27,9 @@
 
 #include "util/u_debug.h"
 #include "util/u_memory.h"
+#include "util/u_prim.h"
+#include "pipe/p_defines.h"
+#include "util/u_inlines.h"
 #include "tgsi_text.h"
 #include "tgsi_build.h"
 #include "tgsi_info.h"
@@ -57,6 +60,23 @@ static boolean uprcase( char c )
    if (c >= 'a' && c <= 'z')
       return c += 'A' - 'a';
    return c;
+}
+
+/*
+ * Ignore case of str1 and assume str1 is already uppercase.
+ * Return TRUE iff str1 and str2 are equal.
+ */
+static int
+streq_nocase_uprcase(const char *str1,
+                     const char *str2)
+{
+   while (*str1 && *str2) {
+      if (*str1 != uprcase(*str2))
+         return FALSE;
+      str1++;
+      str2++;
+   }
+   return TRUE;
 }
 
 static boolean str_match_no_case( const char **pcur, const char *str )
@@ -104,6 +124,20 @@ static boolean parse_uint( const char **pcur, uint *val )
       *val = *cur++ - '0';
       while (is_digit( cur ))
          *val = *val * 10 + *cur++ - '0';
+      *pcur = cur;
+      return TRUE;
+   }
+   return FALSE;
+}
+
+static boolean parse_identifier( const char **pcur, char *ret )
+{
+   const char *cur = *pcur;
+   int i = 0;
+   if (is_alpha_underscore( cur )) {
+      ret[i++] = *cur++;
+      while (is_alpha_underscore( cur ))
+         ret[i++] = *cur++;
       *pcur = cur;
       return TRUE;
    }
@@ -163,11 +197,26 @@ struct translate_ctx
    struct tgsi_token *tokens_cur;
    struct tgsi_token *tokens_end;
    struct tgsi_header *header;
+   unsigned processor : 4;
+   int implied_array_size : 5;
 };
 
 static void report_error( struct translate_ctx *ctx, const char *msg )
 {
-   debug_printf( "\nError: %s", msg );
+   int line = 1;
+   int column = 1;
+   const char *itr = ctx->text;
+
+   while (itr != ctx->cur) {
+      if (*itr == '\n') {
+         column = 1;
+         ++line;
+      }
+      ++column;
+      ++itr;
+   }
+
+   debug_printf( "\nTGSI asm error: %s [%d : %d] \n", msg, line, column );
 }
 
 /* Parse shader header.
@@ -199,6 +248,7 @@ static boolean parse_header( struct translate_ctx *ctx )
    if (ctx->tokens_cur >= ctx->tokens_end)
       return FALSE;
    *(struct tgsi_processor *) ctx->tokens_cur++ = tgsi_build_processor( processor, ctx->header );
+   ctx->processor = processor;
 
    return TRUE;
 }
@@ -229,7 +279,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "ADDR",
    "IMM",
    "LOOP",
-   "PRED"
+   "PRED",
+   "SV"
 };
 
 static boolean
@@ -294,6 +345,125 @@ parse_opt_writemask(
    return TRUE;
 }
 
+static boolean
+parse_register_dst( struct translate_ctx *ctx,
+                    uint *file,
+                    int *index );
+
+struct parsed_src_bracket {
+   int index;
+
+   uint ind_file;
+   int ind_index;
+   uint ind_comp;
+};
+
+
+static boolean
+parse_register_src_bracket(
+   struct translate_ctx *ctx,
+   struct parsed_src_bracket *brackets)
+{
+   const char *cur;
+   uint uindex;
+
+   memset(brackets, 0, sizeof(struct parsed_src_bracket));
+
+   eat_opt_white( &ctx->cur );
+
+   cur = ctx->cur;
+   if (parse_file( &cur, &brackets->ind_file )) {
+      if (!parse_register_dst( ctx, &brackets->ind_file,
+                               &brackets->ind_index ))
+         return FALSE;
+      eat_opt_white( &ctx->cur );
+
+      if (*ctx->cur == '.') {
+         ctx->cur++;
+         eat_opt_white(&ctx->cur);
+
+         switch (uprcase(*ctx->cur)) {
+         case 'X':
+            brackets->ind_comp = TGSI_SWIZZLE_X;
+            break;
+         case 'Y':
+            brackets->ind_comp = TGSI_SWIZZLE_Y;
+            break;
+         case 'Z':
+            brackets->ind_comp = TGSI_SWIZZLE_Z;
+            break;
+         case 'W':
+            brackets->ind_comp = TGSI_SWIZZLE_W;
+            break;
+         default:
+            report_error(ctx, "Expected indirect register swizzle component `x', `y', `z' or `w'");
+            return FALSE;
+         }
+         ctx->cur++;
+         eat_opt_white(&ctx->cur);
+      }
+
+      if (*ctx->cur == '+' || *ctx->cur == '-') {
+         boolean negate;
+
+         negate = *ctx->cur == '-';
+         ctx->cur++;
+         eat_opt_white( &ctx->cur );
+         if (!parse_uint( &ctx->cur, &uindex )) {
+            report_error( ctx, "Expected literal unsigned integer" );
+            return FALSE;
+         }
+         if (negate)
+            brackets->index = -(int) uindex;
+         else
+            brackets->index = (int) uindex;
+      }
+      else {
+         brackets->index = 0;
+      }
+   }
+   else {
+      if (!parse_uint( &ctx->cur, &uindex )) {
+         report_error( ctx, "Expected literal unsigned integer" );
+         return FALSE;
+      }
+      brackets->index = (int) uindex;
+      brackets->ind_file = TGSI_FILE_NULL;
+      brackets->ind_index = 0;
+   }
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != ']') {
+      report_error( ctx, "Expected `]'" );
+      return FALSE;
+   }
+   ctx->cur++;
+   return TRUE;
+}
+
+static boolean
+parse_opt_register_src_bracket(
+   struct translate_ctx *ctx,
+   struct parsed_src_bracket *brackets,
+   int *parsed_brackets)
+{
+   const char *cur = ctx->cur;
+
+   *parsed_brackets = 0;
+
+   eat_opt_white( &cur );
+   if (cur[0] == '[') {
+      ++cur;
+      ctx->cur = cur;
+
+      if (!parse_register_src_bracket(ctx, brackets))
+         return FALSE;
+
+      *parsed_brackets = 1;
+   }
+
+   return TRUE;
+}
+
 /* <register_file_bracket> ::= <file> `['
  */
 static boolean
@@ -335,6 +505,130 @@ parse_register_file_bracket_index(
    return TRUE;
 }
 
+/* Parse source register operand.
+ *    <register_src> ::= <register_file_bracket_index> `]' |
+ *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `]' |
+ *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `+' <uint> `]' |
+ *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `-' <uint> `]'
+ */
+static boolean
+parse_register_src(
+   struct translate_ctx *ctx,
+   uint *file,
+   struct parsed_src_bracket *brackets)
+{
+
+   brackets->ind_comp = TGSI_SWIZZLE_X;
+   if (!parse_register_file_bracket( ctx, file ))
+      return FALSE;
+   if (!parse_register_src_bracket( ctx, brackets ))
+       return FALSE;
+
+   return TRUE;
+}
+
+struct parsed_dcl_bracket {
+   uint first;
+   uint last;
+};
+
+static boolean
+parse_register_dcl_bracket(
+   struct translate_ctx *ctx,
+   struct parsed_dcl_bracket *bracket)
+{
+   uint uindex;
+   memset(bracket, 0, sizeof(struct parsed_dcl_bracket));
+
+   eat_opt_white( &ctx->cur );
+
+   if (!parse_uint( &ctx->cur, &uindex )) {
+      /* it can be an empty bracket [] which means its range
+       * is from 0 to some implied size */
+      if (ctx->cur[0] == ']' && ctx->implied_array_size != 0) {
+         bracket->first = 0;
+         bracket->last = ctx->implied_array_size - 1;
+         goto cleanup;
+      }
+      report_error( ctx, "Expected literal unsigned integer" );
+      return FALSE;
+   }
+   bracket->first = uindex;
+
+   eat_opt_white( &ctx->cur );
+
+   if (ctx->cur[0] == '.' && ctx->cur[1] == '.') {
+      uint uindex;
+
+      ctx->cur += 2;
+      eat_opt_white( &ctx->cur );
+      if (!parse_uint( &ctx->cur, &uindex )) {
+         report_error( ctx, "Expected literal integer" );
+         return FALSE;
+      }
+      bracket->last = (int) uindex;
+      eat_opt_white( &ctx->cur );
+   }
+   else {
+      bracket->last = bracket->first;
+   }
+
+cleanup:
+   if (*ctx->cur != ']') {
+      report_error( ctx, "Expected `]' or `..'" );
+      return FALSE;
+   }
+   ctx->cur++;
+   return TRUE;
+}
+
+/* Parse register declaration.
+ *    <register_dcl> ::= <register_file_bracket_index> `]' |
+ *                       <register_file_bracket_index> `..' <index> `]'
+ */
+static boolean
+parse_register_dcl(
+   struct translate_ctx *ctx,
+   uint *file,
+   struct parsed_dcl_bracket *brackets,
+   int *num_brackets)
+{
+   const char *cur;
+
+   *num_brackets = 0;
+
+   if (!parse_register_file_bracket( ctx, file ))
+      return FALSE;
+   if (!parse_register_dcl_bracket( ctx, &brackets[0] ))
+      return FALSE;
+
+   *num_brackets = 1;
+
+   cur = ctx->cur;
+   eat_opt_white( &cur );
+
+   if (cur[0] == '[') {
+      ++cur;
+      ctx->cur = cur;
+      if (!parse_register_dcl_bracket( ctx, &brackets[1] ))
+         return FALSE;
+      /* for geometry shader we don't really care about
+       * the first brackets it's always the size of the
+       * input primitive. so we want to declare just
+       * the index relevant to the semantics which is in
+       * the second bracket */
+      if (ctx->processor == TGSI_PROCESSOR_GEOMETRY && *file == TGSI_FILE_INPUT) {
+         brackets[0] = brackets[1];
+         *num_brackets = 1;
+      } else {
+         *num_brackets = 2;
+      }
+   }
+
+   return TRUE;
+}
+
+
 /* Parse destination register operand.
  *    <register_dst> ::= <register_file_bracket_index> `]'
  */
@@ -354,134 +648,6 @@ parse_register_dst(
    ctx->cur++;
    return TRUE;
 }
-
-/* Parse source register operand.
- *    <register_src> ::= <register_file_bracket_index> `]' |
- *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `]' |
- *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `+' <uint> `]' |
- *                       <register_file_bracket> <register_dst> [`.' (`x' | `y' | `z' | `w')] `-' <uint> `]'
- */
-static boolean
-parse_register_src(
-   struct translate_ctx *ctx,
-   uint *file,
-   int *index,
-   uint *ind_file,
-   int *ind_index,
-   uint *ind_comp)
-{
-   const char *cur;
-   uint uindex;
-
-   *ind_comp = TGSI_SWIZZLE_X;
-   if (!parse_register_file_bracket( ctx, file ))
-      return FALSE;
-   eat_opt_white( &ctx->cur );
-   cur = ctx->cur;
-   if (parse_file( &cur, ind_file )) {
-      if (!parse_register_dst( ctx, ind_file, ind_index ))
-         return FALSE;
-      eat_opt_white( &ctx->cur );
-
-      if (*ctx->cur == '.') {
-         ctx->cur++;
-         eat_opt_white(&ctx->cur);
-
-         switch (uprcase(*ctx->cur)) {
-         case 'X':
-            *ind_comp = TGSI_SWIZZLE_X;
-            break;
-         case 'Y':
-            *ind_comp = TGSI_SWIZZLE_Y;
-            break;
-         case 'Z':
-            *ind_comp = TGSI_SWIZZLE_Z;
-            break;
-         case 'W':
-            *ind_comp = TGSI_SWIZZLE_W;
-            break;
-         default:
-            report_error(ctx, "Expected indirect register swizzle component `x', `y', `z' or `w'");
-            return FALSE;
-         }
-         ctx->cur++;
-         eat_opt_white(&ctx->cur);
-      }
-
-      if (*ctx->cur == '+' || *ctx->cur == '-') {
-         boolean negate;
-
-         negate = *ctx->cur == '-';
-         ctx->cur++;
-         eat_opt_white( &ctx->cur );
-         if (!parse_uint( &ctx->cur, &uindex )) {
-            report_error( ctx, "Expected literal unsigned integer" );
-            return FALSE;
-         }
-         if (negate)
-            *index = -(int) uindex;
-         else
-            *index = (int) uindex;
-      }
-      else {
-         *index = 0;
-      }
-   }
-   else {
-      if (!parse_uint( &ctx->cur, &uindex )) {
-         report_error( ctx, "Expected literal unsigned integer" );
-         return FALSE;
-      }
-      *index = (int) uindex;
-      *ind_file = TGSI_FILE_NULL;
-      *ind_index = 0;
-   }
-   eat_opt_white( &ctx->cur );
-   if (*ctx->cur != ']') {
-      report_error( ctx, "Expected `]'" );
-      return FALSE;
-   }
-   ctx->cur++;
-   return TRUE;
-}
-
-/* Parse register declaration.
- *    <register_dcl> ::= <register_file_bracket_index> `]' |
- *                       <register_file_bracket_index> `..' <index> `]'
- */
-static boolean
-parse_register_dcl(
-   struct translate_ctx *ctx,
-   uint *file,
-   int *first,
-   int *last )
-{
-   if (!parse_register_file_bracket_index( ctx, file, first ))
-      return FALSE;
-   eat_opt_white( &ctx->cur );
-   if (ctx->cur[0] == '.' && ctx->cur[1] == '.') {
-      uint uindex;
-
-      ctx->cur += 2;
-      eat_opt_white( &ctx->cur );
-      if (!parse_uint( &ctx->cur, &uindex )) {
-         report_error( ctx, "Expected literal integer" );
-         return FALSE;
-      }
-      *last = (int) uindex;
-      eat_opt_white( &ctx->cur );
-   }
-   else {
-      *last = *first;
-   }
-   if (*ctx->cur != ']') {
-      report_error( ctx, "Expected `]' or `..'" );
-      return FALSE;
-   }
-   ctx->cur++;
-   return TRUE;
-}
-
 
 static boolean
 parse_dst_operand(
@@ -551,37 +717,45 @@ parse_src_operand(
    struct tgsi_full_src_register *src )
 {
    uint file;
-   int index;
-   uint ind_file;
-   int ind_index;
-   uint ind_comp;
    uint swizzle[4];
    boolean parsed_swizzle;
+   struct parsed_src_bracket bracket[2];
+   int parsed_opt_brackets;
 
    if (*ctx->cur == '-') {
       ctx->cur++;
       eat_opt_white( &ctx->cur );
       src->Register.Negate = 1;
    }
-   
+
    if (*ctx->cur == '|') {
       ctx->cur++;
       eat_opt_white( &ctx->cur );
       src->Register.Absolute = 1;
    }
 
-   if (!parse_register_src(ctx, &file, &index, &ind_file, &ind_index, &ind_comp))
+   if (!parse_register_src(ctx, &file, &bracket[0]))
       return FALSE;
+   if (!parse_opt_register_src_bracket(ctx, &bracket[1], &parsed_opt_brackets))
+      return FALSE;
+
    src->Register.File = file;
-   src->Register.Index = index;
-   if (ind_file != TGSI_FILE_NULL) {
+   if (parsed_opt_brackets) {
+      src->Register.Dimension = 1;
+      src->Dimension.Indirect = 0;
+      src->Dimension.Dimension = 0;
+      src->Dimension.Index = bracket[0].index;
+      bracket[0] = bracket[1];
+   }
+   src->Register.Index = bracket[0].index;
+   if (bracket[0].ind_file != TGSI_FILE_NULL) {
       src->Register.Indirect = 1;
-      src->Indirect.File = ind_file;
-      src->Indirect.Index = ind_index;
-      src->Indirect.SwizzleX = ind_comp;
-      src->Indirect.SwizzleY = ind_comp;
-      src->Indirect.SwizzleZ = ind_comp;
-      src->Indirect.SwizzleW = ind_comp;
+      src->Indirect.File = bracket[0].ind_file;
+      src->Indirect.Index = bracket[0].ind_index;
+      src->Indirect.SwizzleX = bracket[0].ind_comp;
+      src->Indirect.SwizzleY = bracket[0].ind_comp;
+      src->Indirect.SwizzleZ = bracket[0].ind_comp;
+      src->Indirect.SwizzleW = bracket[0].ind_comp;
    }
 
    /* Parse optional swizzle.
@@ -760,7 +934,10 @@ static const char *semantic_names[TGSI_SEMANTIC_COUNT] =
    "PSIZE",
    "GENERIC",
    "NORMAL",
-   "FACE"
+   "FACE",
+   "EDGEFLAG",
+   "PRIM_ID",
+   "INSTANCEID"
 };
 
 static const char *interpolate_names[TGSI_INTERPOLATE_COUNT] =
@@ -774,8 +951,8 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 {
    struct tgsi_full_declaration decl;
    uint file;
-   int first;
-   int last;
+   struct parsed_dcl_bracket brackets[2];
+   int num_brackets;
    uint writemask;
    const char *cur;
    uint advance;
@@ -787,7 +964,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       report_error( ctx, "Syntax error" );
       return FALSE;
    }
-   if (!parse_register_dcl( ctx, &file, &first, &last ))
+   if (!parse_register_dcl( ctx, &file, brackets, &num_brackets))
       return FALSE;
    if (!parse_opt_writemask( ctx, &writemask ))
       return FALSE;
@@ -795,8 +972,17 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = file;
    decl.Declaration.UsageMask = writemask;
-   decl.Range.First = first;
-   decl.Range.Last = last;
+
+   if (num_brackets == 1) {
+      decl.Range.First = brackets[0].first;
+      decl.Range.Last = brackets[0].last;
+   } else {
+      decl.Range.First = brackets[1].first;
+      decl.Range.Last = brackets[1].last;
+
+      decl.Declaration.Dimension = 1;
+      decl.Dim.Index2D = brackets[0].first;
+   }
 
    cur = ctx->cur;
    eat_opt_white( &cur );
@@ -939,6 +1125,171 @@ static boolean parse_immediate( struct translate_ctx *ctx )
    return TRUE;
 }
 
+static const char *property_names[] =
+{
+   "GS_INPUT_PRIMITIVE",
+   "GS_OUTPUT_PRIMITIVE",
+   "GS_MAX_OUTPUT_VERTICES",
+   "FS_COORD_ORIGIN",
+   "FS_COORD_PIXEL_CENTER"
+};
+
+static const char *primitive_names[] =
+{
+   "POINTS",
+   "LINES",
+   "LINE_LOOP",
+   "LINE_STRIP",
+   "TRIANGLES",
+   "TRIANGLE_STRIP",
+   "TRIANGLE_FAN",
+   "QUADS",
+   "QUAD_STRIP",
+   "POLYGON"
+};
+
+static const char *fs_coord_origin_names[] =
+{
+   "UPPER_LEFT",
+   "LOWER_LEFT"
+};
+
+static const char *fs_coord_pixel_center_names[] =
+{
+   "HALF_INTEGER",
+   "INTEGER"
+};
+
+
+static boolean
+parse_primitive( const char **pcur, uint *primitive )
+{
+   uint i;
+
+   for (i = 0; i < PIPE_PRIM_MAX; i++) {
+      const char *cur = *pcur;
+
+      if (str_match_no_case( &cur, primitive_names[i])) {
+         *primitive = i;
+         *pcur = cur;
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+static boolean
+parse_fs_coord_origin( const char **pcur, uint *fs_coord_origin )
+{
+   uint i;
+
+   for (i = 0; i < sizeof(fs_coord_origin_names) / sizeof(fs_coord_origin_names[0]); i++) {
+      const char *cur = *pcur;
+
+      if (str_match_no_case( &cur, fs_coord_origin_names[i])) {
+         *fs_coord_origin = i;
+         *pcur = cur;
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+static boolean
+parse_fs_coord_pixel_center( const char **pcur, uint *fs_coord_pixel_center )
+{
+   uint i;
+
+   for (i = 0; i < sizeof(fs_coord_pixel_center_names) / sizeof(fs_coord_pixel_center_names[0]); i++) {
+      const char *cur = *pcur;
+
+      if (str_match_no_case( &cur, fs_coord_pixel_center_names[i])) {
+         *fs_coord_pixel_center = i;
+         *pcur = cur;
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+
+static boolean parse_property( struct translate_ctx *ctx )
+{
+   struct tgsi_full_property prop;
+   uint property_name;
+   uint values[8];
+   uint advance;
+   char id[64];
+
+   if (!eat_white( &ctx->cur )) {
+      report_error( ctx, "Syntax error" );
+      return FALSE;
+   }
+   if (!parse_identifier( &ctx->cur, id )) {
+      report_error( ctx, "Syntax error" );
+      return FALSE;
+   }
+   for (property_name = 0; property_name < TGSI_PROPERTY_COUNT;
+        ++property_name) {
+      if (streq_nocase_uprcase(property_names[property_name], id)) {
+         break;
+      }
+   }
+   if (property_name >= TGSI_PROPERTY_COUNT) {
+      debug_printf( "\nError: Unknown property : '%s'", id );
+      return FALSE;
+   }
+
+   eat_opt_white( &ctx->cur );
+   switch(property_name) {
+   case TGSI_PROPERTY_GS_INPUT_PRIM:
+   case TGSI_PROPERTY_GS_OUTPUT_PRIM:
+      if (!parse_primitive(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Unknown primitive name as property!" );
+         return FALSE;
+      }
+      if (property_name == TGSI_PROPERTY_GS_INPUT_PRIM &&
+          ctx->processor == TGSI_PROCESSOR_GEOMETRY) {
+         ctx->implied_array_size = u_vertices_per_prim(values[0]);
+      }
+      break;
+   case TGSI_PROPERTY_FS_COORD_ORIGIN:
+      if (!parse_fs_coord_origin(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Unknown coord origin as property: must be UPPER_LEFT or LOWER_LEFT!" );
+         return FALSE;
+      }
+      break;
+   case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
+      if (!parse_fs_coord_pixel_center(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Unknown coord pixel center as property: must be HALF_INTEGER or INTEGER!" );
+         return FALSE;
+      }
+      break;
+   default:
+      if (!parse_uint(&ctx->cur, &values[0] )) {
+         report_error( ctx, "Expected unsigned integer as property!" );
+         return FALSE;
+      }
+   }
+
+   prop = tgsi_default_full_property();
+   prop.Property.PropertyName = property_name;
+   prop.Property.NrTokens += 1;
+   prop.u[0].Data = values[0];
+
+   advance = tgsi_build_full_property(
+      &prop,
+      ctx->tokens_cur,
+      ctx->header,
+      (uint) (ctx->tokens_end - ctx->tokens_cur) );
+   if (advance == 0)
+      return FALSE;
+   ctx->tokens_cur += advance;
+
+   return TRUE;
+}
+
+
 static boolean translate( struct translate_ctx *ctx )
 {
    eat_opt_white( &ctx->cur );
@@ -947,7 +1298,6 @@ static boolean translate( struct translate_ctx *ctx )
 
    while (*ctx->cur != '\0') {
       uint label_val = 0;
-
       if (!eat_white( &ctx->cur )) {
          report_error( ctx, "Syntax error" );
          return FALSE;
@@ -955,7 +1305,6 @@ static boolean translate( struct translate_ctx *ctx )
 
       if (*ctx->cur == '\0')
          break;
-
       if (parse_label( ctx, &label_val )) {
          if (!parse_instruction( ctx, TRUE ))
             return FALSE;
@@ -966,6 +1315,10 @@ static boolean translate( struct translate_ctx *ctx )
       }
       else if (str_match_no_case( &ctx->cur, "IMM" )) {
          if (!parse_immediate( ctx ))
+            return FALSE;
+      }
+      else if (str_match_no_case( &ctx->cur, "PROPERTY" )) {
+         if (!parse_property( ctx ))
             return FALSE;
       }
       else if (!parse_instruction( ctx, FALSE )) {

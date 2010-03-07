@@ -36,8 +36,8 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_atomic.h"
-#include "pipe/p_refcnt.h"
+#include "util/u_atomic.h"
+#include "util/u_inlines.h"
 
 #define VMW_MAX_PRESENTS 3
 
@@ -45,7 +45,7 @@
 
 struct vmw_svga_winsys_surface
 {
-   struct pipe_atomic validated;
+   int32_t validated; /* atomic */
    struct pipe_reference refcnt;
 
    struct vmw_winsys_screen *screen;

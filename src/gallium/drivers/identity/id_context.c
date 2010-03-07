@@ -29,7 +29,6 @@
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 
-#include "id_public.h"
 #include "id_context.h"
 #include "id_objects.h"
 
@@ -46,17 +45,6 @@ identity_destroy(struct pipe_context *_pipe)
 }
 
 static void
-identity_set_edgeflags(struct pipe_context *_pipe,
-                       const unsigned *bitfield)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct pipe_context *pipe = id_pipe->pipe;
-
-   pipe->set_edgeflags(pipe,
-                       bitfield);
-}
-
-static boolean
 identity_draw_arrays(struct pipe_context *_pipe,
                      unsigned prim,
                      unsigned start,
@@ -65,13 +53,13 @@ identity_draw_arrays(struct pipe_context *_pipe,
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   return pipe->draw_arrays(pipe,
-                            prim,
-                            start,
-                            count);
+   pipe->draw_arrays(pipe,
+                     prim,
+                     start,
+                     count);
 }
 
-static boolean
+static void
 identity_draw_elements(struct pipe_context *_pipe,
                        struct pipe_buffer *_indexBuffer,
                        unsigned indexSize,
@@ -84,15 +72,15 @@ identity_draw_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_buffer *indexBuffer = id_buffer->buffer;
 
-   return pipe->draw_elements(pipe,
-                              indexBuffer,
-                              indexSize,
-                              prim,
-                              start,
-                              count);
+   pipe->draw_elements(pipe,
+                       indexBuffer,
+                       indexSize,
+                       prim,
+                       start,
+                       count);
 }
 
-static boolean
+static void
 identity_draw_range_elements(struct pipe_context *_pipe,
                              struct pipe_buffer *_indexBuffer,
                              unsigned indexSize,
@@ -107,14 +95,14 @@ identity_draw_range_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_buffer *indexBuffer = id_buffer->buffer;
 
-   return pipe->draw_range_elements(pipe,
-                                    indexBuffer,
-                                    indexSize,
-                                    minIndex,
-                                    maxIndex,
-                                    mode,
-                                    start,
-                                    count);
+   pipe->draw_range_elements(pipe,
+                             indexBuffer,
+                             indexSize,
+                             minIndex,
+                             maxIndex,
+                             mode,
+                             start,
+                             count);
 }
 
 static struct pipe_query *
@@ -401,6 +389,17 @@ identity_set_blend_color(struct pipe_context *_pipe,
 }
 
 static void
+identity_set_stencil_ref(struct pipe_context *_pipe,
+                         const struct pipe_stencil_ref *stencil_ref)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+
+   pipe->set_stencil_ref(pipe,
+                         stencil_ref);
+}
+
+static void
 identity_set_clip_state(struct pipe_context *_pipe,
                         const struct pipe_clip_state *clip)
 {
@@ -415,17 +414,17 @@ static void
 identity_set_constant_buffer(struct pipe_context *_pipe,
                              uint shader,
                              uint index,
-                             const struct pipe_constant_buffer *_buffer)
+                             struct pipe_buffer *_buffer)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_constant_buffer unwrapped_buffer;
-   struct pipe_constant_buffer *buffer = NULL;
+   struct pipe_buffer *unwrapped_buffer;
+   struct pipe_buffer *buffer = NULL;
 
-   /* unwrap the input state */
+   /* XXX hmm? unwrap the input state */
    if (_buffer) {
-      unwrapped_buffer.buffer = identity_buffer_unwrap(_buffer->buffer);
-      buffer = &unwrapped_buffer;
+      unwrapped_buffer = identity_buffer_unwrap(_buffer);
+      buffer = unwrapped_buffer;
    }
 
    pipe->set_constant_buffer(pipe,
@@ -703,11 +702,10 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 
    id_pipe->base.winsys = NULL;
    id_pipe->base.screen = _screen;
-   id_pipe->base.priv = pipe->priv;
+   id_pipe->base.priv = pipe->priv; /* expose wrapped data */
    id_pipe->base.draw = NULL;
 
    id_pipe->base.destroy = identity_destroy;
-   id_pipe->base.set_edgeflags = identity_set_edgeflags;
    id_pipe->base.draw_arrays = identity_draw_arrays;
    id_pipe->base.draw_elements = identity_draw_elements;
    id_pipe->base.draw_range_elements = identity_draw_range_elements;
@@ -736,13 +734,14 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.bind_vs_state = identity_bind_vs_state;
    id_pipe->base.delete_vs_state = identity_delete_vs_state;
    id_pipe->base.set_blend_color = identity_set_blend_color;
+   id_pipe->base.set_stencil_ref = identity_set_stencil_ref;
    id_pipe->base.set_clip_state = identity_set_clip_state;
    id_pipe->base.set_constant_buffer = identity_set_constant_buffer;
    id_pipe->base.set_framebuffer_state = identity_set_framebuffer_state;
    id_pipe->base.set_polygon_stipple = identity_set_polygon_stipple;
    id_pipe->base.set_scissor_state = identity_set_scissor_state;
    id_pipe->base.set_viewport_state = identity_set_viewport_state;
-   id_pipe->base.set_fragment_sampler_textures = identity_set_vertex_sampler_textures;
+   id_pipe->base.set_fragment_sampler_textures = identity_set_fragment_sampler_textures;
    id_pipe->base.set_vertex_sampler_textures = identity_set_vertex_sampler_textures;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
    id_pipe->base.set_vertex_elements = identity_set_vertex_elements;

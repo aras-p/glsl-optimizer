@@ -4,7 +4,10 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/mesa/glapi $(X11_INCLUDES)
+EGL_MAJOR = 1
+EGL_MINOR = 0
+
+INCLUDE_DIRS = -I$(TOP)/include
 
 HEADERS = \
 	eglcompiler.h \
@@ -16,6 +19,7 @@ HEADERS = \
 	egldisplay.h \
 	egldriver.h \
 	eglglobals.h \
+	eglimage.h \
 	egllog.h \
 	eglmisc.h \
 	eglmode.h \
@@ -33,6 +37,7 @@ SOURCES = \
 	egldisplay.c \
 	egldriver.c \
 	eglglobals.c \
+	eglimage.c \
 	egllog.c \
 	eglmisc.c \
 	eglmode.c \
@@ -43,9 +48,14 @@ SOURCES = \
 OBJECTS = $(SOURCES:.c=.o)
 
 
-# Undefined for now
-LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
+# use dl*() to load drivers
+LOCAL_CFLAGS = -D_EGL_PLATFORM_POSIX=1
 
+EGL_DEFAULT_DISPLAY = $(word 1, $(EGL_DISPLAYS))
+
+LOCAL_CFLAGS += \
+	-D_EGL_DEFAULT_DISPLAY=\"$(EGL_DEFAULT_DISPLAY)\" \
+	-D_EGL_DRIVER_SEARCH_DIR=\"$(EGL_DRIVER_INSTALL_DIR)\"
 
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $(LOCAL_CFLAGS) $< -o $@
@@ -56,21 +66,29 @@ default: depend library
 
 
 # EGL Library
-library: $(TOP)/$(LIB_DIR)/libEGL.so
+library: $(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME)
 
-$(TOP)/$(LIB_DIR)/libEGL.so: $(OBJECTS)
-	$(MKLIB) -o EGL -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major 1 -minor 0 \
-		-install $(TOP)/$(LIB_DIR) \
+$(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME): $(OBJECTS)
+	$(MKLIB) -o $(EGL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major $(EGL_MAJOR) -minor $(EGL_MINOR) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(EGL_LIB_DEPS) $(OBJECTS)
 
-install: default
+install-headers:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/KHR
+	$(INSTALL) -m 644 $(TOP)/include/KHR/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/KHR
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/EGL
+	$(INSTALL) -m 644 $(TOP)/include/EGL/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/EGL
+
+install: default install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(MINSTALL) $(TOP)/$(LIB_DIR)/libEGL.so* $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(EGL_LIB_GLOB) \
+		$(DESTDIR)$(INSTALL_LIB_DIR)
 
 clean:
-	-rm -f *.o *.so*
-	-rm -f core.*
+	-rm -f *.o
 	-rm -f depend depend.bak
 
 
@@ -82,5 +100,5 @@ depend: $(SOURCES) $(HEADERS)
 		$(SOURCES) $(HEADERS) > /dev/null 2>/dev/null
 
 
-include depend
+-include depend
 # DO NOT DELETE

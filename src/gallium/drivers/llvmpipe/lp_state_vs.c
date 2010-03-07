@@ -70,14 +70,18 @@ fail:
 
 
 void
-llvmpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
+llvmpipe_bind_vs_state(struct pipe_context *pipe, void *_vs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   const struct lp_vertex_shader *vs = (const struct lp_vertex_shader *)_vs;
 
-   llvmpipe->vs = (const struct lp_vertex_shader *)vs;
+   if (llvmpipe->vs == vs)
+      return;
 
-   draw_bind_vertex_shader(llvmpipe->draw,
-                           (llvmpipe->vs ? llvmpipe->vs->draw_data : NULL));
+   draw_bind_vertex_shader(llvmpipe->draw, 
+                           vs ? vs->draw_data : NULL);
+
+   llvmpipe->vs = vs;
 
    llvmpipe->dirty |= LP_NEW_VS;
 }

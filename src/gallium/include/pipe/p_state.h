@@ -43,7 +43,6 @@
 #include "p_compiler.h"
 #include "p_defines.h"
 #include "p_format.h"
-#include "p_refcnt.h"
 #include "p_screen.h"
 
 
@@ -58,7 +57,7 @@ extern "C" {
 #define PIPE_MAX_ATTRIBS          32
 #define PIPE_MAX_CLIP_PLANES       6
 #define PIPE_MAX_COLOR_BUFS        8
-#define PIPE_MAX_CONSTANT         32
+#define PIPE_MAX_CONSTANT_BUFFERS 32
 #define PIPE_MAX_SAMPLERS         16
 #define PIPE_MAX_VERTEX_SAMPLERS  16
 #define PIPE_MAX_SHADER_INPUTS    16
@@ -66,8 +65,10 @@ extern "C" {
 #define PIPE_MAX_TEXTURE_LEVELS   16
 
 
-/* fwd decls */
-struct pipe_surface;
+struct pipe_reference
+{
+   int32_t count; /* atomic */
+};
 
 
 /**
@@ -101,7 +102,9 @@ struct pipe_rasterizer_state
    unsigned poly_smooth:1;
    unsigned poly_stipple_enable:1;
    unsigned point_smooth:1;
-   unsigned point_sprite:1;
+   unsigned sprite_coord_enable:PIPE_MAX_SHADER_OUTPUTS;
+   unsigned sprite_coord_mode:1;     /**< PIPE_SPRITE_COORD_ */
+   unsigned point_quad_rasterization:1; /** points rasterized as quads or points */
    unsigned point_size_per_vertex:1; /**< size computed in vertex shader */
    unsigned multisample:1;         /* XXX maybe more ms state in future */
    unsigned line_smooth:1;
@@ -109,16 +112,6 @@ struct pipe_rasterizer_state
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
    unsigned line_last_pixel:1;
-
-   /** 
-    * Vertex coordinates are pre-transformed to screen space.  Skip
-    * the vertex shader, clipping and viewport processing.  Note that
-    * a vertex shader is still needed though, to indicate the mapping
-    * from vertex elements to fragment shader input semantics.
-    *
-    * XXX: considered for removal.
-    */
-   unsigned bypass_vs_clip_and_viewport:1;
 
    /** 
     * Use the first vertex of a primitive as the provoking vertex for
@@ -141,11 +134,8 @@ struct pipe_rasterizer_state
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
-   float point_size_min;        /* XXX - temporary, will go away */
-   float point_size_max;        /* XXX - temporary, will go away */
    float offset_units;
    float offset_scale;
-   ubyte sprite_coord_mode[PIPE_MAX_SHADER_OUTPUTS]; /**< PIPE_SPRITE_COORD_ */
 };
 
 
@@ -178,15 +168,6 @@ struct pipe_clip_state
 };
 
 
-/**
- * Constants for vertex/fragment shaders
- */
-struct pipe_constant_buffer
-{
-   struct pipe_buffer *buffer;
-};
-
-
 struct pipe_shader_state
 {
    const struct tgsi_token *tokens;
@@ -208,9 +189,8 @@ struct pipe_stencil_state
    unsigned fail_op:3;  /**< PIPE_STENCIL_OP_x */
    unsigned zpass_op:3; /**< PIPE_STENCIL_OP_x */
    unsigned zfail_op:3; /**< PIPE_STENCIL_OP_x */
-   ubyte ref_value;
-   ubyte valuemask;
-   ubyte writemask;
+   unsigned valuemask:8;
+   unsigned writemask:8;
 };
 
 
@@ -230,7 +210,7 @@ struct pipe_depth_stencil_alpha_state
 };
 
 
-struct pipe_blend_state
+struct pipe_rt_blend_state
 {
    unsigned blend_enable:1;
 
@@ -242,11 +222,16 @@ struct pipe_blend_state
    unsigned alpha_src_factor:5;  /**< PIPE_BLENDFACTOR_x */
    unsigned alpha_dst_factor:5;  /**< PIPE_BLENDFACTOR_x */
 
+   unsigned colormask:4;         /**< bitmask of PIPE_MASK_R/G/B/A */
+};
+
+struct pipe_blend_state
+{
+   unsigned independent_blend_enable:1;
    unsigned logicop_enable:1;
    unsigned logicop_func:4;      /**< PIPE_LOGICOP_x */
-
-   unsigned colormask:4;         /**< bitmask of PIPE_MASK_R/G/B/A */
    unsigned dither:1;
+   struct pipe_rt_blend_state rt[PIPE_MAX_COLOR_BUFS];
 };
 
 
@@ -255,6 +240,10 @@ struct pipe_blend_color
    float color[4];
 };
 
+struct pipe_stencil_ref
+{
+   ubyte ref_value[2];
+};
 
 struct pipe_framebuffer_state
 {
@@ -282,11 +271,10 @@ struct pipe_sampler_state
    unsigned compare_mode:1;      /**< PIPE_TEX_COMPARE_x */
    unsigned compare_func:3;      /**< PIPE_FUNC_x */
    unsigned normalized_coords:1; /**< Are coords normalized to [0,1]? */
-   unsigned prefilter:4;         /**< Wierd sampling state exposed by some api's */
+   unsigned max_anisotropy:6;
    float lod_bias;               /**< LOD/lambda bias */
    float min_lod, max_lod;       /**< LOD clamp range, after bias */
    float border_color[4];
-   float max_anisotropy;
 };
 
 
@@ -376,6 +364,11 @@ struct pipe_vertex_element
    /** Offset of this attribute, in bytes, from the start of the vertex */
    unsigned src_offset;
 
+   /** Instance data rate divisor. 0 means this is per-vertex data,
+    *  n means per-instance data used for n consecutive instances (n > 0).
+    */
+   unsigned instance_divisor;
+
    /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
     * this attribute live in?
     */
@@ -384,35 +377,6 @@ struct pipe_vertex_element
  
    enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
 };
-
-
-/* Reference counting helper functions */
-static INLINE void
-pipe_buffer_reference(struct pipe_buffer **ptr, struct pipe_buffer *buf)
-{
-   struct pipe_buffer *old_buf = *ptr;
-
-   if (pipe_reference((struct pipe_reference **)ptr, &buf->reference))
-      old_buf->screen->buffer_destroy(old_buf);
-}
-
-static INLINE void
-pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
-{
-   struct pipe_surface *old_surf = *ptr;
-
-   if (pipe_reference((struct pipe_reference **)ptr, &surf->reference))
-      old_surf->texture->screen->tex_surface_destroy(old_surf);
-}
-
-static INLINE void
-pipe_texture_reference(struct pipe_texture **ptr, struct pipe_texture *tex)
-{
-   struct pipe_texture *old_tex = *ptr;
-
-   if (pipe_reference((struct pipe_reference **)ptr, &tex->reference))
-      old_tex->screen->texture_destroy(old_tex);
-}
 
 
 #ifdef __cplusplus

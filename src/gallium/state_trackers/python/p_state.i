@@ -44,6 +44,53 @@
 %array_class(struct pipe_stencil_state, StencilArray);
 
 
+%extend pipe_rt_blend_state
+{
+   struct pipe_rt_blend_state *
+   __getitem__(int index) 
+   {
+      if(index < 0 || index >= PIPE_MAX_COLOR_BUFS)
+         SWIG_exception(SWIG_ValueError, "index out of bounds");
+      return $self + index;
+   fail:
+      return NULL;
+   };
+};
+
+
+%extend pipe_blend_state
+{
+   pipe_blend_state(void)
+   {
+      return CALLOC_STRUCT(pipe_blend_state);
+   }
+
+   %cstring_input_binary(const char *STRING, unsigned LENGTH);
+   pipe_blend_state(const char *STRING, unsigned LENGTH)
+   {
+      struct pipe_blend_state *state;
+      state = CALLOC_STRUCT(pipe_blend_state);
+      if (state) {
+         LENGTH = MIN2(sizeof *state, LENGTH);
+         memcpy(state, STRING, LENGTH);
+      }
+      return state;
+   }
+
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, os_free(*$1));
+   void __str__(char **STRING, int *LENGTH)
+   {
+      struct os_stream *stream;
+
+      stream = os_str_stream_create(1);
+      util_dump_blend_state(stream, $self);
+
+      *STRING = os_str_stream_get_and_close(stream);
+      *LENGTH = strlen(*STRING);
+   }
+};
+
+
 %extend pipe_framebuffer_state {
    
    pipe_framebuffer_state(void) {

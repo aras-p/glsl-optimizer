@@ -30,10 +30,12 @@
 
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
+#include "glapi/mesa.h"
+#else
+#include "main/compiler.h"
 #endif
 
-#include "main/compiler.h"
-#include "glthread.h"
+#include "glapi/glthread.h"
 
 
 /*
@@ -69,7 +71,7 @@
  */
 #ifdef PTHREADS
 
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    return (unsigned long) pthread_self();
@@ -114,94 +116,18 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 
 
 /*
- * Solaris/Unix International Threads -- Use only if POSIX threads
- *   aren't available on your Unix platform.  Solaris 2.[34] are examples
- *   of platforms where this is the case.  Be sure to use -mt and/or
- *   -D_REENTRANT when compiling.
- */
-#ifdef SOLARIS_THREADS
-#define USE_LOCK_FOR_KEY	/* undef this to try a version without
-				   lock for the global key... */
-
-unsigned long
-_glthread_GetID(void)
-{
-   abort();   /* XXX not implemented yet */
-   return (unsigned long) 0;
-}
-
-
-void
-_glthread_InitTSD(_glthread_TSD *tsd)
-{
-   if ((errno = mutex_init(&tsd->keylock, 0, NULL)) != 0 ||
-      (errno = thr_keycreate(&(tsd->key), free)) != 0) {
-      perror(INIT_TSD_ERROR);
-      exit(-1);
-   }
-   tsd->initMagic = INIT_MAGIC;
-}
-
-
-void *
-_glthread_GetTSD(_glthread_TSD *tsd)
-{
-   void* ret;
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-#ifdef USE_LOCK_FOR_KEY
-   mutex_lock(&tsd->keylock);
-   thr_getspecific(tsd->key, &ret);
-   mutex_unlock(&tsd->keylock);
-#else
-   if ((errno = thr_getspecific(tsd->key, &ret)) != 0) {
-      perror(GET_TSD_ERROR);
-      exit(-1);
-   }
-#endif
-   return ret;
-}
-
-
-void
-_glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
-{
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   if ((errno = thr_setspecific(tsd->key, ptr)) != 0) {
-      perror(SET_TSD_ERROR);
-      exit(-1);
-   }
-}
-
-#undef USE_LOCK_FOR_KEY
-#endif /* SOLARIS_THREADS */
-
-
-
-/*
  * Win32 Threads.  The only available option for Windows 95/NT.
  * Be sure that you compile using the Multithreaded runtime, otherwise
  * bad things will happen.
  */
 #ifdef WIN32_THREADS
 
-void FreeTSD(_glthread_TSD *p)
+static void InsteadOf_exit(int nCode)
 {
-   if (p->initMagic==INIT_MAGIC) {
-      TlsFree(p->key);
-      p->initMagic=0;
-   }
+   DWORD dwErr = GetLastError();
 }
 
-void InsteadOf_exit(int nCode)
-{
-   DWORD dwErr=GetLastError();
-}
-
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    return GetCurrentThreadId();
@@ -213,10 +139,21 @@ _glthread_InitTSD(_glthread_TSD *tsd)
 {
    tsd->key = TlsAlloc();
    if (tsd->key == TLS_OUT_OF_INDEXES) {
-      perror("Mesa:_glthread_InitTSD");
+      perror(INIT_TSD_ERROR);
       InsteadOf_exit(-1);
    }
    tsd->initMagic = INIT_MAGIC;
+}
+
+
+void
+_glthread_DestroyTSD(_glthread_TSD *tsd)
+{
+   if (tsd->initMagic != INIT_MAGIC) {
+      return;
+   }
+   TlsFree(tsd->key);
+   tsd->initMagic = 0x0;
 }
 
 
@@ -239,8 +176,8 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
       _glthread_InitTSD(tsd);
    }
    if (TlsSetValue(tsd->key, ptr) == 0) {
-	  perror("Mesa:_glthread_SetTSD");
-	  InsteadOf_exit(-1);
+      perror(SET_TSD_ERROR);
+      InsteadOf_exit(-1);
    }
 }
 
@@ -251,7 +188,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
  */
 #ifdef BEOS_THREADS
 
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    return (unsigned long) find_thread(NULL);
@@ -293,7 +230,7 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
  * no-op functions
  */
 
-unsigned long
+PUBLIC unsigned long
 _glthread_GetID(void)
 {
    return 0;

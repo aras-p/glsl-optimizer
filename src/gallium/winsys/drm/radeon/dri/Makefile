@@ -2,9 +2,7 @@
 TOP = ../../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = radeon_dri.so
-
-MINIGLX_SOURCES =
+LIBNAME = radeong_dri.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \

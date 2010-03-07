@@ -31,7 +31,7 @@
  */
 
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "draw/draw_context.h"
 #include "cell_context.h"
 #include "cell_flush.h"
@@ -111,6 +111,19 @@ cell_delete_depth_stencil_alpha_state(struct pipe_context *pipe, void *dsa)
    FREE(dsa);
 }
 
+
+static void
+cell_set_stencil_ref(struct pipe_context *pipe,
+                     const struct pipe_stencil_ref *stencil_ref)
+{
+   struct cell_context *cell = cell_context(pipe);
+
+   draw_flush(cell->draw);
+
+   cell->stencil_ref = *stencil_ref;
+
+   cell->dirty |= CELL_NEW_DEPTH_STENCIL;
+}
 
 static void
 cell_set_clip_state(struct pipe_context *pipe,
@@ -397,6 +410,7 @@ cell_init_state_functions(struct cell_context *cell)
    cell->pipe.delete_rasterizer_state = cell_delete_rasterizer_state;
 
    cell->pipe.set_blend_color = cell_set_blend_color;
+   cell->pipe.set_stencil_ref = cell_set_stencil_ref;
    cell->pipe.set_clip_state = cell_set_clip_state;
 
    cell->pipe.set_framebuffer_state = cell_set_framebuffer_state;

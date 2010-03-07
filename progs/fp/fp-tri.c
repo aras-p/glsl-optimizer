@@ -73,7 +73,7 @@ static void Init( void )
    GLuint Texture;
    GLint errno;
    GLuint prognum;
-   char buf[4096];
+   char buf[50000];
    GLuint sz;
    FILE *f;
 
@@ -176,7 +176,19 @@ static void Init( void )
    }
 
 
+   {
+      const float Ambient[4] = { 0.0, 1.0, 0.0, 0.0 };
+      const float Diffuse[4] = { 1.0, 0.0, 0.0, 0.0 };
+      const float Specular[4] = { 0.0, 0.0, 1.0, 0.0 };
+      const float Emission[4] = { 0.0, 0.0, 0.0, 1.0 };
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, Ambient);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Diffuse);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Specular);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, Emission);
+   }
+
    glClearColor(.1, .3, .5, 0);
+   fclose(f);
 }
 
 static void Reshape(int width, int height)

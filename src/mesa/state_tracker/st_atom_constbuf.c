@@ -37,7 +37,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "st_debug.h"
 #include "st_context.h"
@@ -57,7 +57,7 @@ void st_upload_constants( struct st_context *st,
                           unsigned shader_type)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_constant_buffer *cbuf = &st->state.constants[shader_type];
+   struct pipe_buffer **cbuf = &st->state.constants[shader_type];
 
    assert(shader_type == PIPE_SHADER_VERTEX ||
           shader_type == PIPE_SHADER_FRAGMENT);
@@ -71,8 +71,8 @@ void st_upload_constants( struct st_context *st,
       /* We always need to get a new buffer, to keep the drivers simple and
        * avoid gratuitous rendering synchronization.
        */
-      pipe_buffer_reference(&cbuf->buffer, NULL );
-      cbuf->buffer = pipe_buffer_create(pipe->screen, 16,
+      pipe_buffer_reference(cbuf, NULL );
+      *cbuf = pipe_buffer_create(pipe->screen, 16,
                                         PIPE_BUFFER_USAGE_CONSTANT,
 					paramBytes );
 
@@ -84,12 +84,12 @@ void st_upload_constants( struct st_context *st,
       }
 
       /* load Mesa constants into the constant buffer */
-      if (cbuf->buffer)
-         st_no_flush_pipe_buffer_write(st, cbuf->buffer,
+      if (cbuf)
+         st_no_flush_pipe_buffer_write(st, *cbuf,
 				       0, paramBytes,
 				       params->ParameterValues);
 
-      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, cbuf);
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, *cbuf);
    }
    else {
       st->constants.tracked_state[shader_type].dirty.mesa = 0x0;

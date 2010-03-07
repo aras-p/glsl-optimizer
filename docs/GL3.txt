@@ -1,0 +1,69 @@
+
+Status of OpenGL 3.x features in Mesa
+
+
+Note: when an item is marked as "DONE" it means all the core Mesa
+infrastructure is complete but it may be the case that few (if any) drivers
+implement the features.
+
+
+Feature                                               Status
+----------------------------------------------------- ------------------------
+
+GL 3.0:
+
+GLSL changes (GL_EXT_gpu_shader4, etc)                not started
+Conditional rendering (GL_NV_conditional_render)      DONE (swrast & softpipe)
+Map buffer subranges (GL_APPLE_flush_buffer_range)    not started
+Float textures, renderbuffers                         some infrastructure done
+Framebuffer objects (GL_EXT_framebuffer_object)       DONE
+Half-float                                            some infrastructure done
+Multisample blit                                      DONE
+Non-normalized Integer texture/framebuffer formats    not started
+1D/2D Texture arrays                                  core Mesa, swrast done
+Packed depth/stencil formats                          DONE
+Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
+GL_EXT_texture_compression_rgtc                       not started
+Red and red/green texture formats                     Ian?
+Transform feedback (GL_EXT_transform_feedback)        not started
+Vertex array objects (GL_APPLE_vertex_array_object)   DONE
+sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     not started
+glClearBuffer commands                                DONE, except for dispatch
+glGetStringi command                                  DONE, except for dispatch
+glTexParameterI, glGetTexParameterI commands          DONE, except for dispatch
+glVertexAttribI commands                              not started
+glBindFragDataLocation, glGetFragDataLocation cmds    not started
+glBindBufferRange, glBindBufferBase commands          not started
+
+
+GL 3.1:
+
+GLSL 1.30 and 1.40                                    not started
+Instanced drawing (GL_ARB_draw_instanced)             not started
+Buffer copying (GL_ARB_copy_buffer)                   DONE
+Primitive restart (GL_NV_primitive_restart)           not started
+16 vertex texture image units                         not started
+Texture buffer objs (GL_ARB_textur_buffer_object)     not started
+Rectangular textures (GL_ARB_texture_rectangle)       DONE
+Uniform buffer objs (GL_ARB_uniform_buffer_object)    not started
+Signed normalized texture formats                     not started
+
+
+GL 3.2:
+
+Core/compatibility profiles                           not started
+GLSL 1.50                                             not started
+Geometry shaders (GL_ARB_geometry_shader4)            partially done (Zack)
+BGRA vertex order (GL_ARB_vertex_array_bgra)          DONE
+Base vertex offset(GL_ARB_draw_elements_base_vertex)  DONE
+Frag shader coord (GL_ARB_fragment_coord_conventions) not started
+Provoking vertex (GL_ARB_provoking_vertex)            DONE
+Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE, mostly?
+Multisample textures (GL_ARB_texture_multisample)     not started
+Frag depth clamp (GL_ARB_depth_clamp)                 DONE
+Fence objects (GL_ARB_sync)                           DONE
+
+
+
+More info about these features and the work involved can be found at
+http://dri.freedesktop.org/wiki/MissingFunctionality

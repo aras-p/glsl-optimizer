@@ -38,12 +38,9 @@
  */
 struct cell_winsys
 {
-   uint preferredFormat;
+   uint dummy;
 };
 
-
-extern struct cell_winsys *
-cell_get_winsys(uint format);
 
 
 

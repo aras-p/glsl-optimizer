@@ -58,7 +58,7 @@ static GLubyte subImage[subImageHeight][subImageWidth][4];
 
 static GLuint texName;
 
-void makeCheckImages(void)
+static void makeCheckImages(void)
 {
    int i, j, c;
 
@@ -82,7 +82,7 @@ void makeCheckImages(void)
    }
 }
 
-void init(void)
+static void init(void)
 {
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel(GL_FLAT);
@@ -102,7 +102,7 @@ void init(void)
                 0, GL_RGBA, GL_UNSIGNED_BYTE, checkImage);
 }
 
-void display(void)
+static void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glEnable(GL_TEXTURE_2D);
@@ -123,7 +123,7 @@ void display(void)
    glDisable(GL_TEXTURE_2D);
 }
 
-void reshape(int w, int h)
+static void reshape(int w, int h)
 {
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
@@ -135,7 +135,7 @@ void reshape(int w, int h)
 }
 
 /* ARGSUSED1 */
-void keyboard (unsigned char key, int x, int y)
+static void keyboard (unsigned char key, int x, int y)
 {
    switch (key) {
       case 's':

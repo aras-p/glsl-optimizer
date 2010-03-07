@@ -2,6 +2,7 @@
 VERSION 4.1
 
 EXPORTS
+	OSMesaColorClamp
 	OSMesaCreateContext
 	OSMesaCreateContextExt
 	OSMesaDestroyContext
@@ -11,3 +12,4 @@ EXPORTS
 	OSMesaGetIntegerv
 	OSMesaGetDepthBuffer
 	OSMesaGetColorBuffer
+	OSMesaGetProcAddress

@@ -35,7 +35,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 
 #define MAX_CONSTANTS 20
@@ -51,7 +51,7 @@ struct shader {
    VGImageMode image_mode;
 
    float constants[MAX_CONSTANTS];
-   struct pipe_constant_buffer cbuf;
+   struct pipe_buffer *cbuf;
    struct pipe_shader_state fs_state;
    void *fs;
 };
@@ -96,25 +96,25 @@ static void setup_constant_buffer(struct shader *shader)
 {
    struct vg_context *ctx = shader->context;
    struct pipe_context *pipe = shader->context->pipe;
-   struct pipe_constant_buffer *cbuf = &shader->cbuf;
+   struct pipe_buffer **cbuf = &shader->cbuf;
    VGint param_bytes = paint_constant_buffer_size(shader->paint);
    float temp_buf[MAX_CONSTANTS];
 
    assert(param_bytes <= sizeof(temp_buf));
    paint_fill_constant_buffer(shader->paint, temp_buf);
 
-   if (cbuf->buffer == NULL ||
+   if (*cbuf == NULL ||
        memcmp(temp_buf, shader->constants, param_bytes) != 0)
    {
-      pipe_buffer_reference(&cbuf->buffer, NULL);
+      pipe_buffer_reference(cbuf, NULL);
 
       memcpy(shader->constants, temp_buf, param_bytes);
-      cbuf->buffer = pipe_user_buffer_create(pipe->screen,
-                                             &shader->constants,
-                                             sizeof(shader->constants));
+      *cbuf = pipe_user_buffer_create(pipe->screen,
+                                      &shader->constants,
+                                      sizeof(shader->constants));
    }
 
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
 }
 
 static VGint blend_bind_samplers(struct vg_context *ctx,
@@ -135,8 +135,8 @@ static VGint blend_bind_samplers(struct vg_context *ctx,
       textures[2] = stfb->blend_texture;
 
       if (!samplers[0] || !textures[0]) {
-         samplers[1] = samplers[2];
-         textures[1] = textures[2];
+         samplers[0] = samplers[2];
+         textures[0] = textures[2];
       }
       if (!samplers[1] || !textures[1]) {
          samplers[1] = samplers[0];

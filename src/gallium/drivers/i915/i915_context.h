@@ -167,7 +167,7 @@ struct i915_depth_stencil_state {
 };
 
 struct i915_rasterizer_state {
-   int light_twoside : 1;
+   unsigned light_twoside : 1;
    unsigned st;
    enum interp_mode color_interp;
 
@@ -232,8 +232,10 @@ struct i915_context
    struct i915_fragment_shader *fs;
 
    struct pipe_blend_color blend_color;
+   struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
-   struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
+   /* XXX unneded */
+   struct pipe_buffer *constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
@@ -333,6 +335,11 @@ void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );
 
 
+/************************************************************************
+ * i915_context.c
+ */
+struct pipe_context *i915_create_context(struct pipe_screen *screen,
+					 void *priv);
 
 
 /***********************************************************************

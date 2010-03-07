@@ -421,6 +421,7 @@ _glmReadMTL(GLMmodel* model, char* name)
       break;
     }
   }
+  fclose(file);
 }
 
 
@@ -475,6 +476,7 @@ _glmWriteMTL(GLMmodel* model, char* modelpath, char* mtllibname)
     fprintf(file, "Ns %f\n", material->shininess);
     fprintf(file, "\n");
   }
+  fclose(file);
 }
 
 

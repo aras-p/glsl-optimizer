@@ -73,7 +73,7 @@ brw_new_query_object(GLcontext *ctx, GLuint id)
 {
    struct brw_query_object *query;
 
-   query = _mesa_calloc(sizeof(struct brw_query_object));
+   query = calloc(1, sizeof(struct brw_query_object));
 
    query->Base.Id = id;
    query->Base.Result = 0;
@@ -89,7 +89,7 @@ brw_delete_query(GLcontext *ctx, struct gl_query_object *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    dri_bo_unreference(query->bo);
-   _mesa_free(query);
+   free(query);
 }
 
 static void
@@ -188,7 +188,7 @@ brw_emit_query_begin(struct brw_context *brw)
    if (brw->query.active || is_empty_list(&brw->query.active_head))
       return;
 
-   BEGIN_BATCH(4, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL |
 	     PIPE_CONTROL_DEPTH_STALL |
 	     PIPE_CONTROL_WRITE_DEPTH_COUNT);
@@ -227,7 +227,7 @@ brw_emit_query_end(struct brw_context *brw)
    if (!brw->query.active)
       return;
 
-   BEGIN_BATCH(4, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL |
 	     PIPE_CONTROL_DEPTH_STALL |
 	     PIPE_CONTROL_WRITE_DEPTH_COUNT);

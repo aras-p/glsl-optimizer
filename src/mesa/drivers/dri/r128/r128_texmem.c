@@ -33,12 +33,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "r128_context.h"
-#include "r128_state.h"
 #include "r128_ioctl.h"
-#include "r128_tris.h"
 #include "r128_tex.h"
 
-#include "main/context.h"
 #include "main/macros.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
@@ -263,6 +260,7 @@ void r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t )
       }
 
       /* Set the base offset of the texture image */
+      assert(t->base.memBlock);
       t->bufAddr = rmesa->r128Screen->texOffset[heap] 
 	   + t->base.memBlock->ofs;
 

@@ -68,7 +68,7 @@ GLfloat ctrlpoints[4][4][3] =
         {1.5, 1.5, -1.0}}
 };
 
-void
+static void
 initlights(void)
 {
     GLfloat ambient[] =
@@ -93,7 +93,7 @@ initlights(void)
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 }
 
-void
+static void
 display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -104,7 +104,7 @@ display(void)
     glFlush();
 }
 
-void
+static void
 myinit(void)
 {
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -118,7 +118,7 @@ myinit(void)
     initlights();       /* for lighted version only */
 }
 
-void
+static void
 myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);

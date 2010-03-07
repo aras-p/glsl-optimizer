@@ -49,8 +49,6 @@ struct brw_wm_unit_key {
    unsigned int curbe_offset;
    unsigned int urb_size;
 
-   unsigned int max_threads;
-
    unsigned int nr_surfaces, sampler_count;
    GLboolean uses_depth, computes_depth, uses_kill, is_glsl;
    GLboolean polygon_stipple, stats_wm, line_stipple, offset_enable;
@@ -66,18 +64,6 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    struct intel_context *intel = &brw->intel;
 
    memset(key, 0, sizeof(*key));
-
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
-      key->max_threads = 1;
-   else {
-      /* WM maximum threads is number of EUs times number of threads per EU. */
-      if (BRW_IS_IGDNG(brw))
-         key->max_threads = 12 * 6;
-      else if (BRW_IS_G4X(brw))
-	 key->max_threads = 10 * 5;
-      else
-	 key->max_threads = 8 * 4;
-   }
 
    /* CACHE_NEW_WM_PROG */
    key->total_grf = brw->wm.prog_data->total_grf;
@@ -140,6 +126,7 @@ static dri_bo *
 wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			dri_bo **reloc_bufs)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_state wm;
    dri_bo *bo;
 
@@ -150,7 +137,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.thread1.depth_coef_urb_read_offset = 1;
    wm.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
-   if (BRW_IS_IGDNG(brw))
+   if (intel->is_ironlake)
       wm.thread1.binding_table_entry_count = 0; /* hardware requirement */
    else
       wm.thread1.binding_table_entry_count = key->nr_surfaces;
@@ -170,7 +157,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
    wm.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   if (BRW_IS_IGDNG(brw)) 
+   if (intel->is_ironlake)
       wm.wm4.sampler_count = 0; /* hardware requirement */
    else
       wm.wm4.sampler_count = (key->sampler_count + 1) / 4;
@@ -191,7 +178,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    else
       wm.wm5.enable_16_pix = 1;
 
-   wm.wm5.max_threads = key->max_threads - 1;
+   wm.wm5.max_threads = brw->wm_max_threads - 1;
    wm.wm5.thread_dispatch_enable = 1;	/* AKA: color_write */
    wm.wm5.legacy_line_rast = 0;
    wm.wm5.legacy_global_depth_bias = 0;
@@ -223,8 +210,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    bo = brw_upload_cache(&brw->cache, BRW_WM_UNIT,
 			 key, sizeof(*key),
 			 reloc_bufs, 3,
-			 &wm, sizeof(wm),
-			 NULL, NULL);
+			 &wm, sizeof(wm));
 
    /* Emit WM program relocation */
    dri_bo_emit_reloc(bo,
@@ -268,7 +254,7 @@ static void upload_wm_unit( struct brw_context *brw )
     */
    assert(key.total_scratch <= 12 * 1024);
    if (key.total_scratch) {
-      GLuint total = key.total_scratch * key.max_threads;
+      GLuint total = key.total_scratch * brw->wm_max_threads;
 
       if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
 	 dri_bo_unreference(brw->wm.scratch_bo);

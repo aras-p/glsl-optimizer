@@ -26,7 +26,6 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/arrayobj.h"
-#include "main/buffers.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/mipmap.h"
@@ -50,7 +49,6 @@
 #endif
 
 #include "shader/program.h"
-#include "shader/prog_execute.h"
 #include "shader/shader_api.h"
 #include "tnl/tnl.h"
 #include "swrast/swrast.h"
@@ -72,7 +70,7 @@
 void
 _mesa_init_driver_functions(struct dd_function_table *driver)
 {
-   _mesa_bzero(driver, sizeof(*driver));
+   memset(driver, 0, sizeof(*driver));
 
    driver->GetString = NULL;  /* REQUIRED! */
    driver->UpdateState = NULL;  /* REQUIRED! */
@@ -122,9 +120,8 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->FreeTexImageData = _mesa_free_texture_image_data; 
    driver->MapTexture = NULL;
    driver->UnmapTexture = NULL;
-   driver->TextureMemCpy = _mesa_memcpy; 
+   driver->TextureMemCpy = memcpy;
    driver->IsTextureResident = NULL;
-   driver->ActiveTexture = NULL;
    driver->UpdateTexturePalette = NULL;
 
    /* imaging */
@@ -145,7 +142,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->BlendFuncSeparate = NULL;
    driver->ClearColor = NULL;
    driver->ClearDepth = NULL;
-   driver->ClearIndex = NULL;
    driver->ClearStencil = NULL;
    driver->ClipPlane = NULL;
    driver->ColorMask = NULL;
@@ -160,7 +156,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->Enable = NULL;
    driver->Fogfv = NULL;
    driver->Hint = NULL;
-   driver->IndexMask = NULL;
    driver->Lightfv = NULL;
    driver->LightModelfv = NULL;
    driver->LineStipple = NULL;
@@ -265,11 +260,23 @@ _mesa_init_driver_state(GLcontext *ctx)
                                  ctx->Color.BlendDstRGB,
                                  ctx->Color.BlendSrcA, ctx->Color.BlendDstA);
 
-   ctx->Driver.ColorMask(ctx,
-                         ctx->Color.ColorMask[RCOMP],
-                         ctx->Color.ColorMask[GCOMP],
-                         ctx->Color.ColorMask[BCOMP],
-                         ctx->Color.ColorMask[ACOMP]);
+   if (ctx->Driver.ColorMaskIndexed) {
+      GLuint i;
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+         ctx->Driver.ColorMaskIndexed(ctx, i,
+                                      ctx->Color.ColorMask[0][RCOMP],
+                                      ctx->Color.ColorMask[0][GCOMP],
+                                      ctx->Color.ColorMask[0][BCOMP],
+                                      ctx->Color.ColorMask[0][ACOMP]);
+      }
+   }
+   else {
+      ctx->Driver.ColorMask(ctx,
+                            ctx->Color.ColorMask[0][RCOMP],
+                            ctx->Color.ColorMask[0][GCOMP],
+                            ctx->Color.ColorMask[0][BCOMP],
+                            ctx->Color.ColorMask[0][ACOMP]);
+   }
 
    ctx->Driver.CullFace(ctx, ctx->Polygon.CullFaceMode);
    ctx->Driver.DepthFunc(ctx, ctx->Depth.Func);

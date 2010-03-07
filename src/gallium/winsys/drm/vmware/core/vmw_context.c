@@ -41,8 +41,17 @@
 
 #define VMW_COMMAND_SIZE (64*1024)
 #define VMW_SURFACE_RELOCS (1024)
+#define VMW_REGION_RELOCS (512)
 
 #define VMW_MUST_FLUSH_STACK 8
+
+struct vmw_region_relocation
+{
+   struct SVGAGuestPtr *where;
+   struct pb_buffer *buffer;
+   /* TODO: put offset info inside where */
+   uint32 offset;
+};
 
 struct vmw_svga_winsys_context
 {
@@ -69,10 +78,31 @@ struct vmw_svga_winsys_context
       uint32_t staged;
       uint32_t reserved;
    } surface;
+   
+   struct {
+      struct vmw_region_relocation relocs[VMW_REGION_RELOCS];
+      uint32_t size;
+      uint32_t used;
+      uint32_t staged;
+      uint32_t reserved;
+   } region;
 
    struct pb_validate *validate;
 
    uint32_t last_fence;
+
+   /**
+    * The amount of GMR that is referred by the commands currently batched
+    * in the context.
+    */
+   uint32_t seen_regions;
+
+   /**
+    * Whether this context should fail to reserve more commands, not because it
+    * ran out of command space, but because a substantial ammount of GMR was
+    * referred.
+    */
+   boolean preemptive_flush;
 };
 
 
@@ -96,6 +126,19 @@ vmw_swc_flush(struct svga_winsys_context *swc,
    ret = pb_validate_validate(vswc->validate);
    assert(ret == PIPE_OK);
    if(ret == PIPE_OK) {
+   
+      /* Apply relocations */
+      for(i = 0; i < vswc->region.used; ++i) {
+         struct vmw_region_relocation *reloc = &vswc->region.relocs[i];
+         struct SVGAGuestPtr ptr;
+
+         if(!vmw_gmr_bufmgr_region_ptr(reloc->buffer, &ptr))
+            assert(0);
+
+         ptr.offset += reloc->offset;
+
+         *reloc->where = ptr;
+      }
 
       if (vswc->command.used)
          vmw_ioctl_command(vswc->vws,
@@ -121,9 +164,18 @@ vmw_swc_flush(struct svga_winsys_context *swc,
    vswc->surface.used = 0;
    vswc->surface.reserved = 0;
 
+   for(i = 0; i < vswc->region.used + vswc->region.staged; ++i) {
+      pb_reference(&vswc->region.relocs[i].buffer, NULL);
+   }
+
+   vswc->region.used = 0;
+   vswc->region.reserved = 0;
+
 #ifdef DEBUG
    vswc->must_flush = FALSE;
 #endif
+   vswc->preemptive_flush = FALSE;
+   vswc->seen_regions = 0;
 
    if(pfence)
       *pfence = fence;
@@ -151,8 +203,10 @@ vmw_swc_reserve(struct svga_winsys_context *swc,
    if(nr_bytes > vswc->command.size)
       return NULL;
 
-   if(vswc->command.used + nr_bytes > vswc->command.size ||
-      vswc->surface.used + nr_relocs > vswc->surface.size) {
+   if(vswc->preemptive_flush ||
+      vswc->command.used + nr_bytes > vswc->command.size ||
+      vswc->surface.used + nr_relocs > vswc->surface.size ||
+      vswc->region.used + nr_relocs > vswc->region.size) {
 #ifdef DEBUG
       vswc->must_flush = TRUE;
       debug_backtrace_capture(vswc->must_flush_stack, 1,
@@ -163,11 +217,14 @@ vmw_swc_reserve(struct svga_winsys_context *swc,
 
    assert(vswc->command.used + nr_bytes <= vswc->command.size);
    assert(vswc->surface.used + nr_relocs <= vswc->surface.size);
-
+   assert(vswc->region.used + nr_relocs <= vswc->region.size);
+   
    vswc->command.reserved = nr_bytes;
    vswc->surface.reserved = nr_relocs;
    vswc->surface.staged = 0;
-
+   vswc->region.reserved = nr_relocs;
+   vswc->region.staged = 0;
+   
    return vswc->command.buffer + vswc->command.used;
 }
 
@@ -206,20 +263,41 @@ vmw_swc_region_relocation(struct svga_winsys_context *swc,
                           unsigned flags)
 {
    struct vmw_svga_winsys_context *vswc = vmw_svga_winsys_context(swc);
-   struct SVGAGuestPtr ptr;
-   struct pb_buffer *buf = vmw_pb_buffer(buffer);
+   struct vmw_region_relocation *reloc;
    enum pipe_error ret;
+   
+   assert(vswc->region.staged < vswc->region.reserved);
 
-   if(!vmw_gmr_bufmgr_region_ptr(buf, &ptr))
-      assert(0);
+   reloc = &vswc->region.relocs[vswc->region.used + vswc->region.staged];
+   reloc->where = where;
+   pb_reference(&reloc->buffer, vmw_pb_buffer(buffer));
+   reloc->offset = offset;
 
-   ptr.offset += offset;
+   ++vswc->region.staged;
 
-   *where = ptr;
-
-   ret = pb_validate_add_buffer(vswc->validate, buf, flags);
+   ret = pb_validate_add_buffer(vswc->validate, reloc->buffer, flags);
    /* TODO: Update pipebuffer to reserve buffers and not fail here */
    assert(ret == PIPE_OK);
+
+   /*
+    * Flush preemptively the FIFO commands to keep the GMR working set within
+    * the GMR pool size.
+    *
+    * This is necessary for applications like SPECviewperf that generate huge
+    * amounts of immediate vertex data, so that we don't pile up too much of
+    * that vertex data neither in the guest nor in the host.
+    *
+    * Note that in the current implementation if a region is referred twice in
+    * a command stream, it will be accounted twice. We could detect repeated
+    * regions and count only once, but there is no incentive to do that, since
+    * regions are typically short-lived; always referred in a single command;
+    * and at the worst we just flush the commands a bit sooner, which for the
+    * SVGA virtual device it's not a performance issue since flushing commands
+    * to the FIFO won't cause flushing in the host.
+    */
+   vswc->seen_regions += reloc->buffer->base.size;
+   if(vswc->seen_regions >= VMW_GMR_POOL_SIZE/2)
+      vswc->preemptive_flush = TRUE;
 }
 
 
@@ -238,6 +316,12 @@ vmw_swc_commit(struct svga_winsys_context *swc)
    vswc->surface.used += vswc->surface.staged;
    vswc->surface.staged = 0;
    vswc->surface.reserved = 0;
+
+   assert(vswc->region.staged <= vswc->region.reserved);
+   assert(vswc->region.used + vswc->region.staged <= vswc->region.size);
+   vswc->region.used += vswc->region.staged;
+   vswc->region.staged = 0;
+   vswc->region.reserved = 0;
 }
 
 
@@ -246,6 +330,11 @@ vmw_swc_destroy(struct svga_winsys_context *swc)
 {
    struct vmw_svga_winsys_context *vswc = vmw_svga_winsys_context(swc);
    unsigned i;
+
+   for(i = 0; i < vswc->region.used; ++i) {
+      pb_reference(&vswc->region.relocs[i].buffer, NULL);
+   }
+
    for(i = 0; i < vswc->surface.used; ++i) {
       p_atomic_dec(&vswc->surface.handles[i]->validated);
       vmw_svga_winsys_surface_reference(&vswc->surface.handles[i], NULL);
@@ -279,6 +368,7 @@ vmw_svga_winsys_context_create(struct svga_winsys_screen *sws)
 
    vswc->command.size = VMW_COMMAND_SIZE;
    vswc->surface.size = VMW_SURFACE_RELOCS;
+   vswc->region.size = VMW_REGION_RELOCS;
 
    vswc->validate = pb_validate_create();
    if(!vswc->validate) {
@@ -290,8 +380,3 @@ vmw_svga_winsys_context_create(struct svga_winsys_screen *sws)
 }
 
 
-struct pipe_context *
-vmw_svga_context_create(struct pipe_screen *screen)
-{
-   return svga_context_create(screen);
-}

@@ -60,7 +60,7 @@ GLfloat ctrlpoints[4][4][3] = {
 GLfloat texpts[2][2][2] = {{{0.0, 0.0}, {0.0, 1.0}},
 			{{1.0, 0.0}, {1.0, 1.0}}};
 
-void display(void)
+static void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glColor3f(1.0, 1.0, 1.0);
@@ -72,7 +72,7 @@ void display(void)
 #define	imageHeight 64
 GLubyte image[3*imageWidth*imageHeight];
 
-void makeImage(void)
+static void makeImage(void)
 {
     int i, j;
     float ti, tj;
@@ -89,7 +89,7 @@ void makeImage(void)
     }
 }
 
-void myinit(void)
+static void myinit(void)
 {
     glMap2f(GL_MAP2_VERTEX_3, 0, 1, 3, 4,
 	    0, 1, 12, 4, &ctrlpoints[0][0][0]);
@@ -112,7 +112,7 @@ void myinit(void)
     glShadeModel (GL_FLAT);
 }
 
-void myReshape(int w, int h)
+static void myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);

@@ -50,6 +50,7 @@
 #define need_GL_EXT_blend_func_separate
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_cull_vertex
+#define need_GL_EXT_draw_buffers2
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_multi_draw_arrays
@@ -98,6 +99,7 @@ static const struct dri_extension card_extensions[] = {
    {"GL_EXT_blend_minmax", GL_EXT_blend_minmax_functions},
    {"GL_EXT_blend_subtract", NULL},
    {"GL_EXT_cull_vertex", GL_EXT_cull_vertex_functions},
+   {"GL_EXT_draw_buffers2", GL_EXT_draw_buffers2_functions},
    {"GL_EXT_fog_coord", GL_EXT_fog_coord_functions},
    {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
    {"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
@@ -130,6 +132,9 @@ dri_init_extensions(struct dri_context *ctx)
    /* The card_extensions list should be pruned according to the
     * capabilities of the pipe_screen. This is actually something
     * that can/should be done inside st_create_context().
+    * XXX Not pruning is very bogus. Always all these extensions above
+    * will be advertized, regardless what st_init_extensions
+    * (which depends on the pipe cap bits) does.
     */
    driInitExtensions(ctx->st->ctx, card_extensions, GL_TRUE);
 }

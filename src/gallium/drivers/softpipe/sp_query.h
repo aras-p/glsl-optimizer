@@ -32,6 +32,10 @@
 #ifndef SP_QUERY_H
 #define SP_QUERY_H
 
+extern boolean
+softpipe_check_render_cond(struct softpipe_context *sp);
+
+
 struct softpipe_context;
 extern void softpipe_init_query_funcs(struct softpipe_context * );
 

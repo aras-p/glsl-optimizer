@@ -2,11 +2,6 @@ Import('*')
 
 env = env.Clone()
 
-if env['platform'] != 'windows':
-    Return()
-
-target = 'glut32'
-
 env.Replace(CPPDEFINES = [
     'BUILD_GLUT32', 
     'GLUT_BUILDING_LIB', 
@@ -16,14 +11,6 @@ env.Replace(CPPDEFINES = [
 
 env.AppendUnique(CPPPATH = [
     '#/include',
-])
-
-env.PrependUnique(LIBS = [
-    'winmm', 
-    'gdi32', 
-    'user32', 
-    'opengl32', 
-    'glu32',
 ])
 
 sources = [
@@ -61,12 +48,6 @@ sources = [
     'glut_warp.c',
     'glut_win.c',
     'glut_winmisc.c',
-
-    'win32_glx.c',
-    'win32_menu.c',
-    'win32_util.c',
-    'win32_winproc.c',
-    'win32_x11.c',
     
     'glut_8x13.c',
     'glut_9x15.c',
@@ -77,11 +58,54 @@ sources = [
     'glut_roman.c',
     'glut_tr10.c',
     'glut_tr24.c',
-
-    'glut.def',
 ]
 
-env.SharedLibrary(
+if env['platform'] == 'windows':
+    env.PrependUnique(LIBS = [
+        'winmm', 
+        'gdi32', 
+        'user32', 
+        'opengl32', 
+        'glu32',
+    ])
+    target = 'glut32'
+    sources += [
+        'win32_glx.c',
+        'win32_menu.c',
+        'win32_util.c',
+        'win32_winproc.c',
+        'win32_x11.c',
+        'glut.def',
+    ]
+else:
+    env.PrependUnique(LIBS = [
+        'GLU',
+        'GL',
+        'X11',
+        'Xext',
+        'Xmu',
+        'Xi',
+    ])
+    target = 'glut'
+    sources += [
+        'glut_fcb.c',
+        'glut_menu.c',
+        'glut_menu2.c',
+        'glut_glxext.c',
+        'layerutil.c',
+    ]
+
+
+glut = env.SharedLibrary(
     target = target,
     source = sources,
 )
+
+env.InstallSharedLibrary(glut, version=(3, 7, 1))
+
+if env['platform'] == 'windows':
+    glut = env.FindIxes(glut, 'LIBPREFIX', 'LIBSUFFIX')
+else:
+    glut = env.FindIxes(glut, 'SHLIBPREFIX', 'SHLIBSUFFIX')
+
+Export('glut')

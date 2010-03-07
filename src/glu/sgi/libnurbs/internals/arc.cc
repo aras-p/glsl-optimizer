@@ -43,7 +43,6 @@
 #include "myassert.h"
 #include "arc.h"
 #include "bin.h"
-#include "bezierarc.h"
 #include "pwlarc.h"
 #include "simplemath.h"
 

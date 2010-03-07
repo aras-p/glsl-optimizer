@@ -30,11 +30,12 @@
 #define U_BLIT_H
 
 
+#include "pipe/p_defines.h"
+#include "util/u_debug.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "pipe/p_defines.h"
 
 static INLINE boolean u_validate_pipe_prim( unsigned pipe_prim, unsigned nr )
 {
@@ -134,5 +135,40 @@ static INLINE unsigned u_reduced_prim( unsigned pipe_prim )
       return PIPE_PRIM_TRIANGLES;
    }
 }
+
+static INLINE unsigned
+u_vertices_per_prim(int primitive)
+{
+   switch(primitive) {
+   case PIPE_PRIM_POINTS:
+      return 1;
+   case PIPE_PRIM_LINES:
+   case PIPE_PRIM_LINE_LOOP:
+   case PIPE_PRIM_LINE_STRIP:
+      return 2;
+   case PIPE_PRIM_TRIANGLES:
+   case PIPE_PRIM_TRIANGLE_STRIP:
+   case PIPE_PRIM_TRIANGLE_FAN:
+      return 3;
+   case PIPE_PRIM_LINES_ADJACENCY:
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      return 4;
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      return 6;
+
+   /* following primitives should never be used
+    * with geometry shaders abd their size is
+    * undefined */
+   case PIPE_PRIM_POLYGON:
+   case PIPE_PRIM_QUADS:
+   case PIPE_PRIM_QUAD_STRIP:
+   default:
+      debug_printf("Unrecognized geometry shader primitive");
+      return 3;
+   }
+}
+
+const char *u_prim_name( unsigned pipe_prim );
 
 #endif

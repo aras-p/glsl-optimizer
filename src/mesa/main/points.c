@@ -32,7 +32,6 @@
 #include "context.h"
 #include "macros.h"
 #include "points.h"
-#include "texstate.h"
 #include "mtypes.h"
 
 
@@ -69,8 +68,10 @@ _mesa_PointSize( GLfloat size )
 void GLAPIENTRY
 _mesa_PointParameteri( GLenum pname, GLint param )
 {
-   const GLfloat value = (GLfloat) param;
-   _mesa_PointParameterfv(pname, &value);
+   GLfloat p[3];
+   p[0] = (GLfloat) param;
+   p[1] = p[2] = 0.0F;
+   _mesa_PointParameterfv(pname, p);
 }
 
 
@@ -90,7 +91,10 @@ _mesa_PointParameteriv( GLenum pname, const GLint *params )
 void GLAPIENTRY
 _mesa_PointParameterf( GLenum pname, GLfloat param)
 {
-   _mesa_PointParameterfv(pname, &param);
+   GLfloat p[3];
+   p[0] = param;
+   p[1] = p[2] = 0.0F;
+   _mesa_PointParameterfv(pname, p);
 }
 
 
@@ -262,7 +266,7 @@ _mesa_init_point(GLcontext *ctx)
    ctx->Point.PointSprite = GL_FALSE; /* GL_ARB/NV_point_sprite */
    ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite (only!) */
    ctx->Point.SpriteOrigin = GL_UPPER_LEFT; /* GL_ARB_point_sprite */
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
+   for (i = 0; i < Elements(ctx->Point.CoordReplace); i++) {
       ctx->Point.CoordReplace[i] = GL_FALSE; /* GL_ARB/NV_point_sprite */
    }
 }

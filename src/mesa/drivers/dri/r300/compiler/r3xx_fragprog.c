@@ -35,7 +35,10 @@ static void dataflow_outputs_mark_use(void * userdata, void * data,
 		void (*callback)(void *, unsigned int, unsigned int))
 {
 	struct r300_fragment_program_compiler * c = userdata;
-	callback(data, c->OutputColor, RC_MASK_XYZW);
+	callback(data, c->OutputColor[0], RC_MASK_XYZW);
+	callback(data, c->OutputColor[1], RC_MASK_XYZW);
+	callback(data, c->OutputColor[2], RC_MASK_XYZW);
+	callback(data, c->OutputColor[3], RC_MASK_XYZW);
 	callback(data, c->OutputDepth, RC_MASK_W);
 }
 

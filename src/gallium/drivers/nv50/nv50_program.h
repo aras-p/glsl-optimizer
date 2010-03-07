@@ -16,11 +16,13 @@ struct nv50_program_exec {
 };
 
 struct nv50_sreg4 {
-	uint8_t hw;
-	uint8_t id; /* tgsi index, nv50 needs them sorted: flat ones last */
+	uint8_t hw; /* hw index, nv50 wants flat FP inputs last */
+	uint8_t id; /* tgsi index */
 
 	uint8_t mask;
 	boolean linear;
+
+	ubyte sn, si; /* semantic name & index */
 };
 
 struct nv50_program {
@@ -37,7 +39,7 @@ struct nv50_program {
 
 	struct nouveau_bo *bo;
 
-	float *immd;
+	uint32_t *immd;
 	unsigned immd_nr;
 	unsigned param_nr;
 
@@ -49,15 +51,24 @@ struct nv50_program {
 		uint32_t regs[4];
 
 		/* for VPs, io_nr doesn't count 'private' results (PSIZ etc.) */
-		unsigned io_nr;
-		struct nv50_sreg4 io[PIPE_MAX_SHADER_OUTPUTS];
+		unsigned in_nr, out_nr;
+		struct nv50_sreg4 in[PIPE_MAX_SHADER_INPUTS];
+		struct nv50_sreg4 out[PIPE_MAX_SHADER_OUTPUTS];
 
 		/* FP colour inputs, VP/GP back colour outputs */
 		struct nv50_sreg4 two_side[2];
 
-		/* VP only */
+		/* GP only */
+		unsigned vert_count;
+		uint8_t prim_type;
+
+		/* VP & GP only */
 		uint8_t clpd, clpd_nr;
 		uint8_t psiz;
+		uint8_t edgeflag_in;
+
+		/* FP & GP only */
+		uint8_t prim_id;
 	} cfg;
 };
 

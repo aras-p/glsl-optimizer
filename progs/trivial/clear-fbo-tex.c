@@ -102,8 +102,8 @@ static void Draw( void )
 
    /* draw to texture image */
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
-//   glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
-//   glReadBuffer(GL_COLOR_ATTACHMENT1_EXT);
+   /* glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT); */
+   /* glReadBuffer(GL_COLOR_ATTACHMENT1_EXT); */
 
    
    glViewport(0, 0, TexWidth, TexHeight);

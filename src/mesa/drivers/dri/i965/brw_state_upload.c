@@ -35,6 +35,7 @@
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
+#include "intel_chipset.h"
 
 /* This is used to initialize brw->state.atoms[].  We could use this
  * list directly except for a single atom, brw_constant_buffer, which
@@ -42,7 +43,7 @@
  * current fragment and vertex programs, and so cannot be a static
  * value.
  */
-const struct brw_tracked_state *atoms[] =
+static const struct brw_tracked_state *gen4_atoms[] =
 {
    &brw_check_fallback,
 
@@ -101,6 +102,63 @@ const struct brw_tracked_state *atoms[] =
    &brw_constant_buffer
 };
 
+const struct brw_tracked_state *gen6_atoms[] =
+{
+   &brw_check_fallback,
+
+   &brw_wm_input_sizes,
+   &brw_vs_prog,
+   &brw_gs_prog,
+   &brw_wm_prog,
+
+   &gen6_clip_vp,
+   &gen6_sf_vp,
+   &gen6_cc_vp,
+
+   /* Command packets: */
+   &brw_invarient_state,
+
+   &gen6_viewport_state,	/* must do after *_vp stages */
+
+   &gen6_urb,
+   &gen6_blend_state,		/* must do before cc unit */
+   &gen6_color_calc_state,	/* must do before cc unit */
+   &gen6_depth_stencil_state,	/* must do before cc unit */
+   &gen6_cc_state_pointers,
+
+   &brw_vs_surfaces,		/* must do before unit */
+   &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
+   &brw_wm_surfaces,		/* must do before samplers and unit */
+
+   &brw_wm_samplers,
+   &gen6_sampler_state,
+
+   &gen6_vs_state,
+   &gen6_gs_state,
+   &gen6_clip_state,
+   &gen6_sf_state,
+   &gen6_wm_state,
+
+   &gen6_scissor_state,
+
+   &brw_state_base_address,
+
+   &gen6_binding_table_pointers,
+
+   &brw_depthbuffer,
+
+   &brw_polygon_stipple,
+   &brw_polygon_stipple_offset,
+
+   &brw_line_stipple,
+   &brw_aa_line_parameters,
+
+   &brw_drawing_rect,
+
+   &brw_indices,
+   &brw_index_buffer,
+   &brw_vertices,
+};
 
 void brw_init_state( struct brw_context *brw )
 {
@@ -208,7 +266,6 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_CONTEXT),
    DEFINE_BIT(BRW_NEW_WM_INPUT_DIMENSIONS),
    DEFINE_BIT(BRW_NEW_PSP),
-   DEFINE_BIT(BRW_NEW_FENCE),
    DEFINE_BIT(BRW_NEW_INDICES),
    DEFINE_BIT(BRW_NEW_INDEX_BUFFER),
    DEFINE_BIT(BRW_NEW_VERTICES),
@@ -218,6 +275,7 @@ static struct dirty_bit_map brw_bits[] = {
 };
 
 static struct dirty_bit_map cache_bits[] = {
+   DEFINE_BIT(CACHE_NEW_BLEND_STATE),
    DEFINE_BIT(CACHE_NEW_CC_VP),
    DEFINE_BIT(CACHE_NEW_CC_UNIT),
    DEFINE_BIT(CACHE_NEW_WM_PROG),
@@ -277,6 +335,8 @@ void brw_validate_state( struct brw_context *brw )
    struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
    GLuint i;
+   const struct brw_tracked_state **atoms;
+   int num_atoms;
 
    brw_clear_validated_bos(brw);
 
@@ -284,6 +344,14 @@ void brw_validate_state( struct brw_context *brw )
    brw->intel.NewGLState = 0;
 
    brw_add_validated_bo(brw, intel->batch->buf);
+
+   if (IS_GEN6(intel->intelScreen->deviceID)) {
+      atoms = gen6_atoms;
+      num_atoms = ARRAY_SIZE(gen6_atoms);
+   } else {
+      atoms = gen4_atoms;
+      num_atoms = ARRAY_SIZE(gen4_atoms);
+   }
 
    if (brw->emit_state_always) {
       state->mesa |= ~0;
@@ -312,7 +380,7 @@ void brw_validate_state( struct brw_context *brw )
    brw->intel.Fallback = GL_FALSE; /* boolean, not bitfield */
 
    /* do prepare stage for all atoms */
-   for (i = 0; i < Elements(atoms); i++) {
+   for (i = 0; i < num_atoms; i++) {
       const struct brw_tracked_state *atom = atoms[i];
 
       if (brw->intel.Fallback)
@@ -344,9 +412,20 @@ void brw_validate_state( struct brw_context *brw )
 
 void brw_upload_state(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
    int i;
    static int dirty_count = 0;
+   const struct brw_tracked_state **atoms;
+   int num_atoms;
+
+   if (IS_GEN6(intel->intelScreen->deviceID)) {
+      atoms = gen6_atoms;
+      num_atoms = ARRAY_SIZE(gen6_atoms);
+   } else {
+      atoms = gen4_atoms;
+      num_atoms = ARRAY_SIZE(gen4_atoms);
+   }
 
    brw_clear_validated_bos(brw);
 
@@ -356,10 +435,10 @@ void brw_upload_state(struct brw_context *brw)
        * state atoms are ordered correctly in the list.
        */
       struct brw_state_flags examined, prev;      
-      _mesa_memset(&examined, 0, sizeof(examined));
+      memset(&examined, 0, sizeof(examined));
       prev = *state;
 
-      for (i = 0; i < Elements(atoms); i++) {	 
+      for (i = 0; i < num_atoms; i++) {
 	 const struct brw_tracked_state *atom = atoms[i];
 	 struct brw_state_flags generated;
 
@@ -388,7 +467,7 @@ void brw_upload_state(struct brw_context *brw)
       }
    }
    else {
-      for (i = 0; i < Elements(atoms); i++) {	 
+      for (i = 0; i < num_atoms; i++) {
 	 const struct brw_tracked_state *atom = atoms[i];
 
 	 if (brw->intel.Fallback)

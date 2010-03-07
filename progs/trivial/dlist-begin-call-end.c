@@ -49,7 +49,7 @@ static void Init(void)
     */
    first_list = glGenLists(1);
    glNewList(first_list, GL_COMPILE); 
-//   glColor3f(0,1,0);
+   /* glColor3f(0,1,0); */
    glEndList();
 
 

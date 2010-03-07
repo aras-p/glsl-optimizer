@@ -30,10 +30,10 @@
  */
 
 #include "pipe/p_state.h"
-#include "pipe/internal/p_winsys_screen.h"
+#include "util/u_simple_screen.h"
 #include "u_timed_winsys.h"
 #include "util/u_memory.h"
-#include "util/u_time.h"
+#include "os/os_time.h"
 
 
 struct timed_winsys {
@@ -51,12 +51,6 @@ struct timed_winsys {
 static struct timed_winsys *timed_winsys( struct pipe_winsys *winsys )
 {
    return (struct timed_winsys *)winsys;
-}
-
-
-static uint64_t time_start( void )
-{
-   return util_time_micros();
 }
 
 
@@ -90,7 +84,7 @@ static void time_finish( struct pipe_winsys *winsys,
                          const char *name ) 
 {
    struct timed_winsys *tws = timed_winsys(winsys);
-   uint64_t endval = util_time_micros();
+   int64_t endval = os_time_get();
    double elapsed = (endval - startval)/1000.0;
 
    if (endval - startval > 1000LL) 
@@ -120,7 +114,7 @@ timed_buffer_create(struct pipe_winsys *winsys,
                     unsigned size )
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    struct pipe_buffer *buf =
       backend->buffer_create( backend, alignment, usage, size );
@@ -139,7 +133,7 @@ timed_user_buffer_create(struct pipe_winsys *winsys,
                              unsigned bytes) 
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    struct pipe_buffer *buf = backend->user_buffer_create( backend, data, bytes );
 
@@ -155,7 +149,7 @@ timed_buffer_map(struct pipe_winsys *winsys,
                      unsigned flags)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    void *map = backend->buffer_map( backend, buf, flags );
 
@@ -170,7 +164,7 @@ timed_buffer_unmap(struct pipe_winsys *winsys,
                        struct pipe_buffer *buf)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    backend->buffer_unmap( backend, buf );
 
@@ -183,7 +177,7 @@ timed_buffer_destroy(struct pipe_buffer *buf)
 {
    struct pipe_winsys *winsys = buf->screen->winsys;
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    backend->buffer_destroy( buf );
 
@@ -197,7 +191,7 @@ timed_flush_frontbuffer( struct pipe_winsys *winsys,
                          void *context_private)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    backend->flush_frontbuffer( backend, surf, context_private );
 
@@ -216,7 +210,7 @@ timed_surface_buffer_create(struct pipe_winsys *winsys,
                               unsigned *stride)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    struct pipe_buffer *ret = backend->surface_buffer_create( backend, width, height, 
                                                              format, usage, tex_usage, stride );
@@ -231,7 +225,7 @@ static const char *
 timed_get_name( struct pipe_winsys *winsys )
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    const char *ret = backend->get_name( backend );
 
@@ -246,7 +240,7 @@ timed_fence_reference(struct pipe_winsys *winsys,
                     struct pipe_fence_handle *fence)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    backend->fence_reference( backend, ptr, fence );
 
@@ -260,7 +254,7 @@ timed_fence_signalled( struct pipe_winsys *winsys,
                        unsigned flag )
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    int ret = backend->fence_signalled( backend, fence, flag );
 
@@ -275,7 +269,7 @@ timed_fence_finish( struct pipe_winsys *winsys,
                      unsigned flag )
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
+   int64_t start = os_time_get();
 
    int ret = backend->fence_finish( backend, fence, flag );
 

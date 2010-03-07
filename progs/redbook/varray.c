@@ -54,7 +54,7 @@
 int setupMethod = POINTER;
 int derefMethod = DRAWARRAY;
 
-void setupPointers(void)
+static void setupPointers(void)
 {
    static GLint vertices[] = {25, 25,
                        100, 325,
@@ -76,7 +76,7 @@ void setupPointers(void)
    glColorPointer (3, GL_FLOAT, 0, colors);
 }
 
-void setupInterleave(void)
+static void setupInterleave(void)
 {
    static GLfloat intertwined[] =
       {1.0, 0.2, 1.0, 100.0, 100.0, 0.0,
@@ -89,14 +89,14 @@ void setupInterleave(void)
    glInterleavedArrays (GL_C3F_V3F, 0, intertwined);
 }
 
-void init(void) 
+static void init(void) 
 {
    glClearColor (0.0, 0.0, 0.0, 0.0);
    glShadeModel (GL_SMOOTH);
    setupPointers ();
 }
 
-void display(void)
+static void display(void)
 {
    glClear (GL_COLOR_BUFFER_BIT);
 
@@ -117,7 +117,7 @@ void display(void)
    glFlush ();
 }
 
-void reshape (int w, int h)
+static void reshape (int w, int h)
 {
    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode (GL_PROJECTION);
@@ -126,7 +126,7 @@ void reshape (int w, int h)
 }
 
 /* ARGSUSED2 */
-void mouse (int button, int state, int x, int y)
+static void mouse (int button, int state, int x, int y)
 {
    switch (button) {
       case GLUT_LEFT_BUTTON:
@@ -160,7 +160,7 @@ void mouse (int button, int state, int x, int y)
 }
 
 /* ARGSUSED1 */
-void keyboard(unsigned char key, int x, int y)
+static void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
       case 27:

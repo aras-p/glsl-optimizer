@@ -193,23 +193,6 @@ static const GLubyte kernel[16] = {
 #include "swrast/s_spantemp.h"
 
 
-/* 8-bit color index */
-#define NAME(FUNC) FUNC##_CI8
-#define CI_MODE
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch + (X);
-#define INC_PIXEL_PTR(P) P += 1
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   *DST = VALUE[0]
-#define FETCH_PIXEL(DST, SRC) \
-   DST = SRC[0]
-
-#include "swrast/s_spantemp.h"
-
-
 /*
  * Generate code for front-buffer span functions.
  */
@@ -282,23 +265,6 @@ static const GLubyte kernel[16] = {
 #include "swrast_spantemp.h"
 
 
-/* 8-bit color index */
-#define NAME(FUNC) FUNC##_CI8_front
-#define CI_MODE
-#define RB_TYPE GLubyte
-#define SPAN_VARS \
-   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
-#define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)row;
-#define INC_PIXEL_PTR(P) P += 1
-#define STORE_PIXEL(DST, X, Y, VALUE) \
-   *DST = VALUE[0]
-#define FETCH_PIXEL(DST, SRC) \
-   DST = SRC[0]
-
-#include "swrast_spantemp.h"
-
-
 /*
  * Back-buffers are malloced memory and always private.
  *
@@ -345,14 +311,6 @@ swrast_set_span_funcs_back(struct swrast_renderbuffer *xrb,
 	xrb->Base.PutMonoRow = put_mono_row_R3G3B2;
 	xrb->Base.PutValues = put_values_R3G3B2;
 	xrb->Base.PutMonoValues = put_mono_values_R3G3B2;
-	break;
-    case PF_CI8:
-	xrb->Base.GetRow = get_row_CI8;
-	xrb->Base.GetValues = get_values_CI8;
-	xrb->Base.PutRow = put_row_CI8;
-	xrb->Base.PutMonoRow = put_mono_row_CI8;
-	xrb->Base.PutValues = put_values_CI8;
-	xrb->Base.PutMonoValues = put_mono_values_CI8;
 	break;
     default:
 	assert(0);
@@ -409,14 +367,6 @@ swrast_set_span_funcs_front(struct swrast_renderbuffer *xrb,
 	xrb->Base.PutMonoRow = put_mono_row_R3G3B2_front;
 	xrb->Base.PutValues = put_values_R3G3B2_front;
 	xrb->Base.PutMonoValues = put_mono_values_R3G3B2_front;
-	break;
-    case PF_CI8:
-	xrb->Base.GetRow = get_row_CI8_front;
-	xrb->Base.GetValues = get_values_CI8_front;
-	xrb->Base.PutRow = put_row_CI8_front;
-	xrb->Base.PutMonoRow = put_mono_row_CI8_front;
-	xrb->Base.PutValues = put_values_CI8_front;
-	xrb->Base.PutMonoValues = put_mono_values_CI8_front;
 	break;
     default:
 	assert(0);

@@ -1,0 +1,61 @@
+# src/gallium/winsys/drm/Makefile.egl
+
+# The driver Makefile should define
+#
+#   EGL_DRIVER_NAME, the name of the driver
+#   EGL_DRIVER_SOURCES, the sources of the driver
+#   EGL_DRIVER_LIBS, extra libraries needed by the driver
+#   EGL_DRIVER_PIPES, the pipe drivers of the driver
+#
+# before including this file.
+
+EGL_DRIVER_OBJECTS = $(EGL_DRIVER_SOURCES:.c=.o)
+
+common_LIBS = -ldrm -lm -ldl
+
+x11_ST = $(TOP)/src/gallium/state_trackers/egl/libeglx11.a
+x11_LIBS = $(common_LIBS) -lX11 -lXext -lXfixes
+
+kms_ST = $(TOP)/src/gallium/state_trackers/egl/libeglkms.a
+kms_LIBS = $(common_LIBS)
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+
+##### TARGETS #####
+
+EGL_DISPLAY_DRIVERS = $(foreach dpy, $(EGL_DISPLAYS), egl_$(dpy)_$(EGL_DRIVER_NAME).so)
+
+EGL_DISPLAY_LIBS = $(foreach drv, $(EGL_DISPLAY_DRIVERS), $(TOP)/$(LIB_DIR)/$(drv))
+
+default: $(EGL_DISPLAY_LIBS)
+
+$(EGL_DISPLAY_LIBS): $(TOP)/$(LIB_DIR)/%.so: %.so
+	$(INSTALL) $< $(TOP)/$(LIB_DIR)
+
+define mklib-egl
+$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	$(MKLIB_OPTIONS) $(EGL_DRIVER_OBJECTS) $($(1)_ST) \
+	$(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) $($(1)_LIBS) $(EGL_DRIVER_LIBS)
+endef
+
+egl_x11_$(EGL_DRIVER_NAME).so: $(EGL_DRIVER_OBJECTS) $(x11_ST) $(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) Makefile
+	$(call mklib-egl,x11)
+
+egl_kms_$(EGL_DRIVER_NAME).so: $(EGL_DRIVER_OBJECTS) $(kms_ST) $(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) Makefile
+	$(call mklib-egl,kms)
+
+clean:
+	-rm -f $(EGL_DRIVER_OBJECTS)
+	-rm -f $(EGL_DISPLAY_DRIVERS)
+
+install: $(EGL_DISPLAY_LIBS)
+	$(INSTALL) -d $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR)
+	for lib in $(EGL_DISPLAY_LIBS); do \
+		$(MINSTALL) -m 755 "$$lib" $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR); \
+	done
+
+depend:

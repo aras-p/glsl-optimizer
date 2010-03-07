@@ -28,11 +28,11 @@
 #include "state_tracker/drm_api.h"
 
 #include "util/u_memory.h"
-#include "trace/tr_drm.h"
-#include "trace/tr_screen.h"
-#include "trace/tr_context.h"
-#include "trace/tr_buffer.h"
-#include "trace/tr_texture.h"
+#include "tr_drm.h"
+#include "tr_screen.h"
+#include "tr_context.h"
+#include "tr_buffer.h"
+#include "tr_texture.h"
 
 struct trace_drm_api
 {
@@ -65,24 +65,6 @@ trace_drm_create_screen(struct drm_api *_api, int fd,
    return trace_screen_create(screen);
 }
 
-static struct pipe_context *
-trace_drm_create_context(struct drm_api *_api,
-                         struct pipe_screen *_screen)
-{
-   struct trace_screen *tr_screen = trace_screen(_screen);
-   struct trace_drm_api *tr_api = trace_drm_api(_api);
-   struct pipe_screen *screen = tr_screen->screen;
-   struct drm_api *api = tr_api->api;
-   struct pipe_context *pipe;
-
-   /* TODO trace call */
-
-   pipe = api->create_context(api, screen);
-
-   pipe = trace_context_create(_screen, pipe);
-
-   return pipe;
-}
 
 static struct pipe_texture *
 trace_drm_texture_from_shared_handle(struct drm_api *_api,
@@ -173,8 +155,9 @@ trace_drm_create(struct drm_api *api)
    if (!tr_api)
       goto error;
 
+   tr_api->base.name = api->name;
+   tr_api->base.driver_name = api->driver_name;
    tr_api->base.create_screen = trace_drm_create_screen;
-   tr_api->base.create_context = trace_drm_create_context;
    tr_api->base.texture_from_shared_handle = trace_drm_texture_from_shared_handle;
    tr_api->base.shared_handle_from_texture = trace_drm_shared_handle_from_texture;
    tr_api->base.local_handle_from_texture = trace_drm_local_handle_from_texture;

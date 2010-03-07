@@ -23,7 +23,6 @@
 #include "main/colormac.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "shader/program.h"
 #include "shader/atifragshader.h"
 #include "swrast/s_atifragshader.h"
 
@@ -83,10 +82,11 @@ apply_swizzle(GLfloat values[4], GLuint swizzle)
       break;
    case GL_SWIZZLE_STQ_DQ_ATI:
 /* make sure q is not 0 to avoid problems later with infinite values (texture lookup)? */
-      if (q == 0.0F) q = 0.000000001;
+      if (q == 0.0F)
+         q = 0.000000001F;
       values[0] = s / q;
       values[1] = t / q;
-      values[2] = 1 / q;
+      values[2] = 1.0F / q;
       break;
    }
    values[3] = 0.0;
@@ -138,7 +138,7 @@ apply_src_mod(GLint optype, GLuint mod, GLfloat * val)
 	 val[i] = 1 - val[i];
 
       if (mod & GL_BIAS_BIT_ATI)
-	 val[i] = val[i] - 0.5;
+	 val[i] = val[i] - 0.5F;
 
       if (mod & GL_2X_BIT_ATI)
 	 val[i] = 2 * val[i];
@@ -172,27 +172,27 @@ apply_dst_mod(GLuint optype, GLuint mod, GLfloat * val)
 	 val[i] = 8 * val[i];
 	 break;
       case GL_HALF_BIT_ATI:
-	 val[i] = val[i] * 0.5;
+	 val[i] = val[i] * 0.5F;
 	 break;
       case GL_QUARTER_BIT_ATI:
-	 val[i] = val[i] * 0.25;
+	 val[i] = val[i] * 0.25F;
 	 break;
       case GL_EIGHTH_BIT_ATI:
-	 val[i] = val[i] * 0.125;
+	 val[i] = val[i] * 0.125F;
 	 break;
       }
 
       if (has_sat) {
-	 if (val[i] < 0.0)
-	    val[i] = 0;
-	 else if (val[i] > 1.0)
-	    val[i] = 1.0;
+	 if (val[i] < 0.0F)
+	    val[i] = 0.0F;
+	 else if (val[i] > 1.0F)
+	    val[i] = 1.0F;
       }
       else {
-	 if (val[i] < -8.0)
-	    val[i] = -8.0;
-	 else if (val[i] > 8.0)
-	    val[i] = 8.0;
+	 if (val[i] < -8.0F)
+	    val[i] = -8.0F;
+	 else if (val[i] > 8.0F)
+	    val[i] = 8.0F;
       }
    }
 }
@@ -279,7 +279,7 @@ handle_sample_op(GLcontext * ctx, struct atifs_machine *machine,
 /* sample from unit idx using texinst->src as coords */
    GLuint swizzle = texinst->swizzle;
    GLuint coord_source = texinst->src;
-   GLfloat tex_coords[4];
+   GLfloat tex_coords[4] = { 0 };
 
    if (coord_source >= GL_TEXTURE0_ARB && coord_source <= GL_TEXTURE7_ARB) {
       coord_source -= GL_TEXTURE0_ARB;

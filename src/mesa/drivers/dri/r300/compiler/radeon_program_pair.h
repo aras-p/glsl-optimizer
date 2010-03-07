@@ -52,14 +52,15 @@ struct r300_fragment_program_compiler;
 
 struct radeon_pair_instruction_source {
 	unsigned int Used:1;
-	rc_register_file File:3;
+	unsigned int File:3;
 	unsigned int Index:RC_REGISTER_INDEX_BITS;
 };
 
 struct radeon_pair_instruction_rgb {
-	rc_opcode Opcode:8;
+	unsigned int Opcode:8;
 	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
 	unsigned int WriteMask:3;
+    unsigned int Target:2;
 	unsigned int OutputWriteMask:3;
 	unsigned int Saturate:1;
 
@@ -74,9 +75,10 @@ struct radeon_pair_instruction_rgb {
 };
 
 struct radeon_pair_instruction_alpha {
-	rc_opcode Opcode:8;
+	unsigned int Opcode:8;
 	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
 	unsigned int WriteMask:1;
+    unsigned int Target:2;
 	unsigned int OutputWriteMask:1;
 	unsigned int DepthWriteMask:1;
 	unsigned int Saturate:1;
@@ -95,8 +97,8 @@ struct rc_pair_instruction {
 	struct radeon_pair_instruction_rgb RGB;
 	struct radeon_pair_instruction_alpha Alpha;
 
-	rc_write_aluresult WriteALUResult:2;
-	rc_compare_func ALUResultCompare:3;
+	unsigned int WriteALUResult:2;
+	unsigned int ALUResultCompare:3;
 };
 
 

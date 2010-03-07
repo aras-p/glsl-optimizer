@@ -5,6 +5,9 @@ struct nouveau_screen {
 	struct pipe_screen base;
 	struct nouveau_device *device;
 	struct nouveau_channel *channel;
+
+	int (*pre_pipebuffer_map_callback) (struct pipe_screen *pscreen,
+		struct pipe_buffer *pb, unsigned usage);
 };
 
 static inline struct nouveau_screen *

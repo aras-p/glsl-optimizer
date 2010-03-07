@@ -36,7 +36,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
-
+#include <stdio.h>
 
 /** The standard assert macro doesn't seem to work reliably */
 #define ASSERT(x) \
@@ -47,7 +47,6 @@
       *p = 0; \
       exit(1); \
    }
-
 
 
 #define JOIN(x, y) JOIN_AGAIN(x, y)
@@ -231,6 +230,7 @@ struct cell_command_rasterizer
 {
    opcode_t opcode;    /**< CELL_CMD_STATE_RASTERIZER */
    struct pipe_rasterizer_state rasterizer;
+   uint32_t pad[1];
 };
 
 
@@ -327,7 +327,7 @@ struct cell_command_sampler
    opcode_t opcode;         /**< CELL_CMD_STATE_SAMPLER */
    uint unit;
    struct pipe_sampler_state state;
-   uint32_t pad_[2];
+   uint32_t pad_[3];
 };
 
 
@@ -358,6 +358,7 @@ struct cell_spu_function_info
 
 
 /** This is the object passed to spe_create_thread() */
+PIPE_ALIGN_TYPE(16,
 struct cell_init_info
 {
    unsigned id;
@@ -370,7 +371,7 @@ struct cell_init_info
    uint *buffer_status;  /**< points at cell_context->buffer_status */
 
    struct cell_spu_function_info *spu_functions;
-} ALIGN16_ATTRIB;
+});
 
 
 #endif /* CELL_COMMON_H */

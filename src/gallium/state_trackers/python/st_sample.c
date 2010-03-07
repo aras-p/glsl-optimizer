@@ -29,7 +29,8 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "util/u_tile.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -461,7 +462,7 @@ st_sample_dxt_pixel_block(enum pipe_format format,
          for(ch = 0; ch < 4; ++ch)
             rgba[y*rgba_stride + x*4 + ch] = (float)(data[i].rgba[y*4*4 + x*4 + ch])/255.0f;
    
-   memcpy(raw, data[i].raw, pf_get_blocksize(format));
+   memcpy(raw, data[i].raw, util_format_get_blocksize(format));
 }
 
 
@@ -473,7 +474,7 @@ st_sample_generic_pixel_block(enum pipe_format format,
 {
    unsigned i;
    unsigned x, y, ch;
-   int blocksize = pf_get_blocksize(format);
+   int blocksize = util_format_get_blocksize(format);
    
    for(i = 0; i < blocksize; ++i)
       raw[i] = (uint8_t)st_random();
@@ -484,7 +485,7 @@ st_sample_generic_pixel_block(enum pipe_format format,
                          w, h,
                          rgba, rgba_stride);
  
-   if(format == PIPE_FORMAT_YCBCR || format == PIPE_FORMAT_YCBCR_REV) {
+   if(format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV) {
       for(y = 0; y < h; ++y) {
          for(x = 0; x < w; ++x) {
             for(ch = 0; ch < 4; ++ch) {
@@ -548,11 +549,11 @@ st_sample_surface(struct st_surface *surface, float *rgba)
    if (raw) {
       enum pipe_format format = texture->format;
       uint x, y;
-      int nblocksx = pf_get_nblocksx(format, width);
-      int nblocksy = pf_get_nblocksy(format, height);
-      int blockwidth = pf_get_blockwidth(format);
-      int blockheight = pf_get_blockheight(format);
-      int blocksize = pf_get_blocksize(format);
+      int nblocksx = util_format_get_nblocksx(format, width);
+      int nblocksy = util_format_get_nblocksy(format, height);
+      int blockwidth = util_format_get_blockwidth(format);
+      int blockheight = util_format_get_blockheight(format);
+      int blocksize = util_format_get_blocksize(format);
 
 
       for (y = 0; y < nblocksy; ++y) {

@@ -27,7 +27,6 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "main/fbobject.h"
 
 #include "s_accum.h"
 #include "s_context.h"
@@ -38,7 +37,7 @@
 /* XXX this would have to change for accum buffers with more or less
  * than 16 bits per color channel.
  */
-#define ACCUM_SCALE16 32767.0
+#define ACCUM_SCALE16 32767.0F
 
 
 /*
@@ -436,10 +435,6 @@ accum_return(GLcontext *ctx, GLfloat value,
    struct gl_renderbuffer *accumRb = fb->Attachment[BUFFER_ACCUM].Renderbuffer;
    const GLboolean directAccess
       = (accumRb->GetPointer(ctx, accumRb, 0, 0) != NULL);
-   const GLboolean masking = (!ctx->Color.ColorMask[RCOMP] ||
-                              !ctx->Color.ColorMask[GCOMP] ||
-                              !ctx->Color.ColorMask[BCOMP] ||
-                              !ctx->Color.ColorMask[ACOMP]);
 
    static GLchan multTable[32768];
    static GLfloat prevMult = 0.0;
@@ -527,8 +522,12 @@ accum_return(GLcontext *ctx, GLfloat value,
          /* store colors */
          for (buffer = 0; buffer < fb->_NumColorDrawBuffers; buffer++) {
             struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buffer];
+            const GLboolean masking = (!ctx->Color.ColorMask[buffer][RCOMP] ||
+                                       !ctx->Color.ColorMask[buffer][GCOMP] ||
+                                       !ctx->Color.ColorMask[buffer][BCOMP] ||
+                                       !ctx->Color.ColorMask[buffer][ACOMP]);
             if (masking) {
-               _swrast_mask_rgba_span(ctx, rb, &span);
+               _swrast_mask_rgba_span(ctx, rb, &span, buffer);
             }
             rb->PutRow(ctx, rb, width, xpos, ypos + i, span.array->rgba, NULL);
          }

@@ -33,8 +33,6 @@
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/matrix.h"
-#include "main/extensions.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -89,11 +87,11 @@ static const struct dri_extension card_extensions[] =
 /* Create the device specific context.
   */
 GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
-			       __DRIcontextPrivate *driContextPriv,
+			       __DRIcontext *driContextPriv,
                                void *sharedContextPrivate )
 {
    GLcontext *ctx, *shareCtx;
-   __DRIscreenPrivate *driScreen = driContextPriv->driScreenPriv;
+   __DRIscreen *driScreen = driContextPriv->driScreenPriv;
    struct dd_function_table functions;
    mach64ContextPtr mmesa;
    mach64ScreenPtr mach64Screen;
@@ -213,7 +211,7 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
 
    /* Allocate the vertex buffer
     */
-   mmesa->vert_buf = ALIGN_MALLOC(MACH64_BUFFER_SIZE, 32);
+   mmesa->vert_buf = _mesa_align_malloc(MACH64_BUFFER_SIZE, 32);
    if ( !mmesa->vert_buf )
       return GL_FALSE;
    mmesa->vert_used = 0;
@@ -260,7 +258,7 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
 
 /* Destroy the device specific context.
  */
-void mach64DestroyContext( __DRIcontextPrivate *driContextPriv  )
+void mach64DestroyContext( __DRIcontext *driContextPriv  )
 {
    mach64ContextPtr mmesa = (mach64ContextPtr) driContextPriv->driverPrivate;
 
@@ -293,7 +291,7 @@ void mach64DestroyContext( __DRIcontextPrivate *driContextPriv  )
 
       /* Free the vertex buffer */
       if ( mmesa->vert_buf )
-	 ALIGN_FREE( mmesa->vert_buf );
+	 _mesa_align_free( mmesa->vert_buf );
       
       /* free the Mesa context */
       mmesa->glCtx->DriverCtx = NULL;
@@ -307,9 +305,9 @@ void mach64DestroyContext( __DRIcontextPrivate *driContextPriv  )
  * buffer `b'.
  */
 GLboolean
-mach64MakeCurrent( __DRIcontextPrivate *driContextPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
-                 __DRIdrawablePrivate *driReadPriv )
+mach64MakeCurrent( __DRIcontext *driContextPriv,
+                 __DRIdrawable *driDrawPriv,
+                 __DRIdrawable *driReadPriv )
 {
    if ( driContextPriv ) {
       GET_CURRENT_CONTEXT(ctx);
@@ -352,7 +350,7 @@ mach64MakeCurrent( __DRIcontextPrivate *driContextPriv,
 /* Force the context `c' to be unbound from its buffer.
  */
 GLboolean
-mach64UnbindContext( __DRIcontextPrivate *driContextPriv )
+mach64UnbindContext( __DRIcontext *driContextPriv )
 {
    return GL_TRUE;
 }

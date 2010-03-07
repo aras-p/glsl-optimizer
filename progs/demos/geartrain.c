@@ -25,6 +25,7 @@
  */
 
 
+#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <GL/glut.h>
@@ -129,8 +130,10 @@ Clear_Buffers ()
 static void
 LoadTriplet (TDA A)
 {
+    int result;
     Clear_Buffers ();
-    fscanf (mainfile, "%s %s %s %s", Buf1, Buf2, Buf3, Buf4);
+    result = fscanf (mainfile, "%s %s %s %s", Buf1, Buf2, Buf3, Buf4);
+    assert(result != EOF);
     A[0] = atof (Buf2);
     A[1] = atof (Buf3);
     A[2] = atof (Buf4);
@@ -140,8 +143,10 @@ LoadTriplet (TDA A)
 static void
 LoadReal (float *a)
 {
+    int result;
     Clear_Buffers ();
-    fscanf (mainfile, "%s %s", Buf1, Buf2);
+    result = fscanf (mainfile, "%s %s", Buf1, Buf2);
+    assert(result != EOF);
     *a = atof (Buf2);
 }
 
@@ -149,8 +154,10 @@ LoadReal (float *a)
 static void
 LoadInteger (int *a)
 {
+    int result;
     Clear_Buffers ();
-    fscanf (mainfile, "%s %s", Buf1, Buf2);
+    result = fscanf (mainfile, "%s %s", Buf1, Buf2);
+    assert(result != EOF);
     *a = atoi (Buf2);
 }
 
@@ -158,8 +165,10 @@ LoadInteger (int *a)
 static void
 LoadText (char *a)
 {
+    int result;
     Clear_Buffers ();
-    fscanf (mainfile, "%s %s", Buf1, Buf2);
+    result = fscanf (mainfile, "%s %s", Buf1, Buf2);
+    assert(result != EOF);
     strcpy (a, Buf2);
 }
 
@@ -177,8 +186,10 @@ getdata (char filename[])
 
     do
     {
+	int result;
 	Clear_Buffers ();
-	fscanf (mainfile, "%s", Buf1);
+	result = fscanf (mainfile, "%s", Buf1);
+	(void) result;
 	if (ferror (mainfile))
 	{
 	    printf ("\nError opening file !\n");
@@ -1049,18 +1060,17 @@ main (int argc, char *argv[])
 {
     char *file;
 
-    if (argc < 2)
-       file = "geartrain.dat";
-    else
-       file = argv[1];
-
-    glutInit(&argc, argv); 
-    glutInitWindowPosition (0, 0);
     glutInitWindowSize(640,480);
+    glutInit(&argc, argv); 
     glutInitDisplayMode (GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
 
     if (glutCreateWindow ("Gear Train Simulation") == GL_FALSE)
       exit (1);
+
+    if (argc < 2)
+       file = "geartrain.dat";
+    else
+       file = argv[1];
 
     getdata (file);
     process ();

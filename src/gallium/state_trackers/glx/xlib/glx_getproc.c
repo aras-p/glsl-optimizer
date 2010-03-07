@@ -34,6 +34,7 @@
 #include <string.h>
 #include "GL/glx.h"
 #include "glapi/glapi.h"
+#include "pipe/p_compiler.h"
 
 
 struct name_address_pair {
@@ -192,7 +193,7 @@ _glxapi_get_proc_address(const char *funcName)
 }
 
 
-__GLXextFuncPtr
+PUBLIC __GLXextFuncPtr
 glXGetProcAddressARB(const GLubyte *procName)
 {
    __GLXextFuncPtr f;
@@ -208,6 +209,7 @@ glXGetProcAddressARB(const GLubyte *procName)
 
 
 /* GLX 1.4 */
+PUBLIC
 void (*glXGetProcAddress(const GLubyte *procName))()
 {
    return glXGetProcAddressARB(procName);

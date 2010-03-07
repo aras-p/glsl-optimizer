@@ -14,7 +14,6 @@
 
 #if !defined(_WIN32)
 #include <X11/Xlib.h>
-#include <X11/Xatom.h>
 #endif
 
 /* SGI optimization introduced in IRIX 6.3 to avoid X server

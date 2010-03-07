@@ -317,9 +317,8 @@ static void Init( void )
 
 int main( int argc, char *argv[] )
 {
-   glutInit( &argc, argv );
-   glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( Width, Height );
+   glutInit( &argc, argv );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
    Win = glutCreateWindow( "GL_APPLE_vertex_array_object demo" );
    glutReshapeFunc( Reshape );

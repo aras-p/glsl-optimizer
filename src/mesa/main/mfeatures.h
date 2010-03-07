@@ -122,5 +122,7 @@
 #define FEATURE_NV_fragment_program  _HAVE_FULL_GL
 #define FEATURE_NV_vertex_program  _HAVE_FULL_GL
 
+#define FEATURE_OES_EGL_image _HAVE_FULL_GL
+
 
 #endif /* FEATURES_H */

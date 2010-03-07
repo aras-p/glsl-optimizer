@@ -33,13 +33,13 @@
 
 #include "main/glheader.h"
 #include "main/macros.h"
-#include "main/version.h"
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
+#include "util/u_string.h"
 #include "st_context.h"
 #include "st_cb_strings.h"
 
-#define ST_VERSION_STRING "0.3"
+#define ST_VERSION_STRING "0.4"
 
 static const GLubyte *
 st_get_string(GLcontext * ctx, GLenum name)

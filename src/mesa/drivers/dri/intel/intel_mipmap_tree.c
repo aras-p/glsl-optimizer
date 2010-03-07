@@ -29,7 +29,6 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_tex_layout.h"
-#include "intel_chipset.h"
 #ifndef I915
 #include "brw_state.h"
 #endif
@@ -87,7 +86,7 @@ intel_miptree_create_internal(struct intel_context *intel,
    mt->pitch = 0;
 
 #ifdef I915
-   if (IS_945(intel->intelScreen->deviceID))
+   if (intel->is_945)
       ok = i945_miptree_layout(intel, mt, tiling);
    else
       ok = i915_miptree_layout(intel, mt, tiling);
@@ -120,8 +119,7 @@ intel_miptree_create(struct intel_context *intel,
    struct intel_mipmap_tree *mt;
    uint32_t tiling;
 
-   if (intel->use_texture_tiling && compress_byte == 0 &&
-       intel->intelScreen->kernel_exec_fencing) {
+   if (intel->use_texture_tiling && compress_byte == 0) {
       if (intel->gen >= 4 &&
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
@@ -239,11 +237,11 @@ int intel_miptree_pitch_align (struct intel_context *intel,
       pitch = ALIGN(pitch * mt->cpp, pitch_align);
 
 #ifdef I915
-      /* XXX: At least the i915 seems very upset when the pitch is a multiple
-       * of 1024 and sometimes 512 bytes - performance can drop by several
-       * times. Go to the next multiple of the required alignment for now.
+      /* Do a little adjustment to linear allocations so that we avoid
+       * hitting the same channel of memory for 2 different pages when
+       * reading a 2x2 subspan or doing bilinear filtering.
        */
-      if (!(pitch & 511) && 
+      if (tiling == I915_TILING_NONE && !(pitch & 511) &&
 	 (pitch + pitch_align) < (1 << ctx->Const.MaxTextureLevels))
 	 pitch += pitch_align;
 #endif

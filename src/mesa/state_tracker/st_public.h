@@ -34,12 +34,12 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
-
+/** Renderbuffer surfaces (should match Mesa names) */
 #define ST_SURFACE_FRONT_LEFT   0
 #define ST_SURFACE_BACK_LEFT    1
 #define ST_SURFACE_FRONT_RIGHT  2
 #define ST_SURFACE_BACK_RIGHT   3
-#define ST_SURFACE_DEPTH        8
+#define ST_SURFACE_DEPTH        4
 
 #define ST_TEXTURE_2D    0x2
 #define ST_TEXTURE_RECT  0x4
@@ -56,15 +56,19 @@ struct pipe_surface;
 struct pipe_texture;
 
 
+PUBLIC
 struct st_context *st_create_context(struct pipe_context *pipe,
                                      const __GLcontextModes *visual,
                                      struct st_context *share);
 
+PUBLIC
 void st_destroy_context( struct st_context *st );
 
+PUBLIC
 void st_copy_context_state(struct st_context *dst, struct st_context *src,
                            uint mask);
 
+PUBLIC
 struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
                                               enum pipe_format colorFormat,
                                               enum pipe_format depthFormat,
@@ -72,50 +76,67 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
                                               uint width, uint height,
                                               void *privateData);
 
+PUBLIC
 void st_resize_framebuffer( struct st_framebuffer *stfb,
                             uint width, uint height );
 
+PUBLIC
 void st_set_framebuffer_surface(struct st_framebuffer *stfb,
                                 uint surfIndex, struct pipe_surface *surf);
 
+PUBLIC
 void st_get_framebuffer_dimensions( struct st_framebuffer *stfb,
 				    uint *width, uint *height);
 
+PUBLIC
 int st_get_framebuffer_surface(struct st_framebuffer *stfb,
                                uint surfIndex, struct pipe_surface **surface);
 
+PUBLIC
 int st_get_framebuffer_texture(struct st_framebuffer *stfb,
                                uint surfIndex, struct pipe_texture **texture);
 
+PUBLIC
 void *st_framebuffer_private( struct st_framebuffer *stfb );
 
+PUBLIC
 void st_unreference_framebuffer( struct st_framebuffer *stfb );
 
+PUBLIC
 GLboolean st_make_current(struct st_context *st,
                           struct st_framebuffer *draw,
                           struct st_framebuffer *read);
 
+PUBLIC
 struct st_context *st_get_current(void);
 
+PUBLIC
 void st_flush( struct st_context *st, uint pipeFlushFlags,
                struct pipe_fence_handle **fence );
+PUBLIC
 void st_finish( struct st_context *st );
 
+PUBLIC
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
 
+PUBLIC
 void st_swapbuffers(struct st_framebuffer *stfb,
                     struct pipe_surface **front_left,
                     struct pipe_surface **front_right);
 
+PUBLIC
 int st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
                             enum pipe_format format);
+PUBLIC
 int st_unbind_texture_surface(struct pipe_surface *ps, int target, int level);
 
 /** Redirect rendering into stfb's surface to a texture image */
+PUBLIC
 int st_bind_teximage(struct st_framebuffer *stfb, uint surfIndex,
                      int target, int format, int level);
 
 /** Undo surface-to-texture binding */
+PUBLIC
 int st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
                         int target, int format, int level);
 
@@ -123,6 +144,7 @@ int st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
 /** Generic function type */
 typedef void (*st_proc)();
 
+PUBLIC
 st_proc st_get_proc_address(const char *procname);
 
 

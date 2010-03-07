@@ -49,8 +49,6 @@ To do (probably by this order):
 Requirements
 ============
 
- - Linux
- 
  - A x86 or amd64 processor.  64bit mode is preferred.
  
    Support for sse2 is strongly encouraged.  Support for ssse3, and sse4.1 will
@@ -59,27 +57,16 @@ Requirements
    
    See /proc/cpuinfo to know what your CPU supports.
  
- - LLVM 2.5 or greater. LLVM 2.6 is preferred.
+ - LLVM 2.6.
  
-   On Debian based distributions do:
+   For Linux, on a recent Debian based distribution do:
  
      aptitude install llvm-dev
 
-   There is a typo in one of the llvm 2.5 headers, that may cause compilation
-   errors. To fix it apply the change:
+   For Windows download pre-built MSVC 9.0 or MinGW binaries from
+   http://people.freedesktop.org/~jrfonseca/llvm/ and set the LLVM environment
+   variable to the extracted path.
 
-     --- /usr/include/llvm-c/Core.h.orig	2009-08-10 15:38:54.000000000 +0100
-     +++ /usr/include/llvm-c/Core.h	2009-08-10 15:38:25.000000000 +0100
-     @@ -831,7 +831,7 @@
-        template<typename T>
-        inline T **unwrap(LLVMValueRef *Vals, unsigned Length) {
-          #if DEBUG
-     -    for (LLVMValueRef *I = Vals, E = Vals + Length; I != E; ++I)
-     +    for (LLVMValueRef *I = Vals, *E = Vals + Length; I != E; ++I)
-            cast<T>(*I);
-          #endif
-          return reinterpret_cast<T**>(Vals);
- 
  - scons (optional)
 
  - udis86, http://udis86.sourceforge.net/ (optional):
@@ -95,9 +82,9 @@ Requirements
 Building
 ========
 
-To build everything invoke scons as:
+To build everything on Linux invoke scons as:
 
-  scons debug=yes statetrackers=mesa drivers=llvmpipe winsys=xlib dri=false -k
+  scons debug=yes statetrackers=mesa drivers=llvmpipe winsys=xlib dri=false
 
 Alternatively, you can build it with GNU make, if you prefer, by invoking it as
 
@@ -105,12 +92,15 @@ Alternatively, you can build it with GNU make, if you prefer, by invoking it as
 
 but the rest of these instructions assume that scons is used.
 
+For windows is everything the except except the winsys:
+
+  scons debug=yes statetrackers=mesa drivers=llvmpipe winsys=gdi dri=false
 
 Using
 =====
 
-Building will create a drop-in alternative for libGL.so. To use it set the
-environment variables:
+On Linux, building will create a drop-in alternative for libGL.so. To use it
+set the environment variables:
 
   export LD_LIBRARY_PATH=$PWD/build/linux-x86_64-debug/lib:$LD_LIBRARY_PATH
 
@@ -120,6 +110,11 @@ or
 
 For performance evaluation pass debug=no to scons, and use the corresponding
 lib directory without the "-debug" suffix.
+
+On Windows, building will create a drop-in alternative for opengl32.dll. To use
+it put it in the same directory as the application. It can also be used by
+replacing the native ICD driver, but it's quite an advanced usage, so if you
+need to ask, don't even try it.
 
 
 Unit testing

@@ -40,7 +40,7 @@ _mesa_init_instructions(struct prog_instruction *inst, GLuint count)
 {
    GLuint i;
 
-   _mesa_bzero(inst, count * sizeof(struct prog_instruction));
+   memset(inst, 0, count * sizeof(struct prog_instruction));
 
    for (i = 0; i < count; i++) {
       inst[i].SrcReg[0].File = PROGRAM_UNDEFINED;
@@ -70,7 +70,7 @@ struct prog_instruction *
 _mesa_alloc_instructions(GLuint numInst)
 {
    return (struct prog_instruction *)
-      _mesa_calloc(numInst * sizeof(struct prog_instruction));
+      calloc(1, numInst * sizeof(struct prog_instruction));
 }
 
 
@@ -110,7 +110,7 @@ _mesa_copy_instructions(struct prog_instruction *dest,
                         const struct prog_instruction *src, GLuint n)
 {
    GLuint i;
-   _mesa_memcpy(dest, src, n * sizeof(struct prog_instruction));
+   memcpy(dest, src, n * sizeof(struct prog_instruction));
    for (i = 0; i < n; i++) {
       if (src[i].Comment)
          dest[i].Comment = _mesa_strdup(src[i].Comment);
@@ -128,11 +128,11 @@ _mesa_free_instructions(struct prog_instruction *inst, GLuint count)
    GLuint i;
    for (i = 0; i < count; i++) {
       if (inst[i].Data)
-         _mesa_free(inst[i].Data);
+         free(inst[i].Data);
       if (inst[i].Comment)
-         _mesa_free((char *) inst[i].Comment);
+         free((char *) inst[i].Comment);
    }
-   _mesa_free(inst);
+   free(inst);
 }
 
 

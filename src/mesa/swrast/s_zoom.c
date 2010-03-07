@@ -185,15 +185,6 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
       zoomed.arrayAttribs |= FRAG_BIT_COL0;  /* we'll produce these values */
       ASSERT(span->arrayMask & SPAN_RGBA);
    }
-   else if (format == GL_COLOR_INDEX) {
-      /* copy Z info */
-      zoomed.z = span->z;
-      zoomed.zStep = span->zStep;
-      /* we'll generate an array of color indexes */
-      zoomed.interpMask = span->interpMask & ~SPAN_INDEX;
-      zoomed.arrayMask |= SPAN_INDEX;
-      ASSERT(span->arrayMask & SPAN_INDEX);
-   }
    else if (format == GL_DEPTH_COMPONENT) {
       /* Copy color info */
       zoomed.red = span->red;
@@ -288,16 +279,6 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
          }
       }
    }
-   else if (format == GL_COLOR_INDEX) {
-      const GLuint *indexes = (const GLuint *) src;
-      GLint i;
-      for (i = 0; i < zoomedWidth; i++) {
-         GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
-         ASSERT(j >= 0);
-         ASSERT(j < (GLint) span->end);
-         zoomed.array->index[i] = indexes[j];
-      }
-   }
    else if (format == GL_DEPTH_COMPONENT) {
       const GLuint *zValues = (const GLuint *) src;
       GLint i;
@@ -307,8 +288,8 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
          ASSERT(j < (GLint) span->end);
          zoomed.array->z[i] = zValues[j];
       }
-      /* Now, fall into either the RGB or COLOR_INDEX path below */
-      format = ctx->Visual.rgbMode ? GL_RGBA : GL_COLOR_INDEX;
+      /* Now, fall into the RGB path below */
+      format = GL_RGBA;
    }
 
    /* write the span in rows [r0, r1) */
@@ -324,30 +305,14 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
          ((zoomed.array->ChanType == GL_UNSIGNED_SHORT) ? 4 * sizeof(GLushort)
           : 4 * sizeof(GLfloat));
       if (y1 - y0 > 1) {
-         MEMCPY(rgbaSave, zoomed.array->rgba, zoomed.end * pixelSize);
+         memcpy(rgbaSave, zoomed.array->rgba, zoomed.end * pixelSize);
       }
       for (zoomed.y = y0; zoomed.y < y1; zoomed.y++) {
          _swrast_write_rgba_span(ctx, &zoomed);
          zoomed.end = end;  /* restore */
          if (y1 - y0 > 1) {
             /* restore the colors */
-            MEMCPY(zoomed.array->rgba, rgbaSave, zoomed.end * pixelSize);
-         }
-      }
-   }
-   else if (format == GL_COLOR_INDEX) {
-      /* use specular color array for temp storage */
-      GLuint *indexSave = (GLuint *) zoomed.array->attribs[FRAG_ATTRIB_FOGC];
-      const GLint end = zoomed.end; /* save */
-      if (y1 - y0 > 1) {
-         MEMCPY(indexSave, zoomed.array->index, zoomed.end * sizeof(GLuint));
-      }
-      for (zoomed.y = y0; zoomed.y < y1; zoomed.y++) {
-         _swrast_write_index_span(ctx, &zoomed);
-         zoomed.end = end;  /* restore */
-         if (y1 - y0 > 1) {
-            /* restore the colors */
-            MEMCPY(zoomed.array->index, indexSave, zoomed.end * sizeof(GLuint));
+            memcpy(zoomed.array->rgba, rgbaSave, zoomed.end * pixelSize);
          }
       }
    }
@@ -367,15 +332,6 @@ _swrast_write_zoomed_rgb_span(GLcontext *ctx, GLint imgX, GLint imgY,
                               const SWspan *span, const GLvoid *rgb)
 {
    zoom_span(ctx, imgX, imgY, span, rgb, GL_RGB);
-}
-
-
-void
-_swrast_write_zoomed_index_span(GLcontext *ctx, GLint imgX, GLint imgY,
-                                const SWspan *span)
-{
-   zoom_span(ctx, imgX, imgY, span,
-             (const GLvoid *) span->array->index, GL_COLOR_INDEX);
 }
 
 

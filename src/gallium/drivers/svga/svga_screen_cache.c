@@ -277,6 +277,15 @@ svga_screen_surface_create(struct svga_screen *svgascreen,
          while(size < key->size.width)
             size <<= 1;
          key->size.width = size;
+	 /* Since we're reusing buffers we're effectively transforming all
+	  * of them into dynamic buffers.
+	  *
+	  * It would be nice to not cache long lived static buffers. But there
+	  * is no way to detect the long lived from short lived ones yet. A
+	  * good heuristic would be buffer size.
+	  */
+	 key->flags &= ~SVGA3D_SURFACE_HINT_STATIC;
+	 key->flags |= SVGA3D_SURFACE_HINT_DYNAMIC;
       }
 
       handle = svga_screen_cache_lookup(svgascreen, key);

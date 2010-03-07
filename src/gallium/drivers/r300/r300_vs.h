@@ -38,8 +38,13 @@ struct r300_vertex_shader {
 
     struct tgsi_shader_info info;
     struct r300_shader_semantics outputs;
-    int output_stream_loc_swtcl[16];
     uint hwfmt[4];
+
+    /* Stream locations for SWTCL or if TCL is bypassed. */
+    int stream_loc_notcl[16];
+
+    /* Output stream location for WPOS. */
+    int wpos_tex_output;
 
     /* Has this shader been translated yet? */
     boolean translated;
@@ -50,5 +55,8 @@ struct r300_vertex_shader {
 
 void r300_translate_vertex_shader(struct r300_context* r300,
                                   struct r300_vertex_shader* vs);
+
+/* Return TRUE if VAP (hwfmt) needs to be re-emitted. */
+boolean r300_vertex_shader_setup_wpos(struct r300_context* r300);
 
 #endif /* R300_VS_H */

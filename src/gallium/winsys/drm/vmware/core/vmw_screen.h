@@ -40,6 +40,10 @@
 
 #include "svga_winsys.h"
 
+
+#define VMW_GMR_POOL_SIZE (16*1024*1024)
+
+
 struct pb_manager;
 struct vmw_region;
 
@@ -47,6 +51,8 @@ struct vmw_region;
 struct vmw_winsys_screen
 {
    struct svga_winsys_screen base;
+
+   boolean use_old_scanout_flag;
 
    struct {
       volatile uint32_t *fifo_map;
@@ -127,7 +133,7 @@ boolean vmw_winsys_screen_init_svga(struct vmw_winsys_screen *vws);
 void vmw_ioctl_cleanup(struct vmw_winsys_screen *vws);
 void vmw_pools_cleanup(struct vmw_winsys_screen *vws);
 
-struct vmw_winsys_screen *vmw_winsys_create(int fd);
+struct vmw_winsys_screen *vmw_winsys_create(int fd, boolean use_old_scanout_flag);
 void vmw_winsys_destroy(struct vmw_winsys_screen *sws);
 
 

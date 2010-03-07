@@ -52,9 +52,14 @@ struct st_context {
       cso_set_blend($self->cso, state);
    }
    
-   void set_sampler( unsigned index, const struct pipe_sampler_state *state ) {
+   void set_fragment_sampler( unsigned index, const struct pipe_sampler_state *state ) {
       cso_single_sampler($self->cso, index, state);
       cso_single_sampler_done($self->cso);
+   }
+
+   void set_vertex_sampler( unsigned index, const struct pipe_sampler_state *state ) {
+      cso_single_vertex_sampler($self->cso, index, state);
+      cso_single_vertex_sampler_done($self->cso);
    }
 
    void set_rasterizer( const struct pipe_rasterizer_state *state ) {
@@ -103,12 +108,35 @@ struct st_context {
       $self->vs = vs;
    }
 
+   void set_geometry_shader( const struct pipe_shader_state *state ) {
+      void *gs;
+
+      if(!state) {
+         cso_set_geometry_shader_handle($self->cso, NULL);
+         return;
+      }
+
+      gs = $self->pipe->create_gs_state($self->pipe, state);
+      if(!gs)
+         return;
+
+      if(cso_set_geometry_shader_handle($self->cso, gs) != PIPE_OK)
+         return;
+
+      cso_delete_geometry_shader($self->cso, $self->gs);
+      $self->gs = gs;
+   }
+
    /*
     * Parameter-like state (or properties)
     */
-   
+
    void set_blend_color(const struct pipe_blend_color *state ) {
       cso_set_blend_color($self->cso, state);
+   }
+
+   void set_stencil_ref(const struct pipe_stencil_ref *state ) {
+      cso_set_stencil_ref($self->cso, state);
    }
 
    void set_clip(const struct pipe_clip_state *state ) {
@@ -118,10 +146,7 @@ struct st_context {
    void set_constant_buffer(unsigned shader, unsigned index,
                             struct pipe_buffer *buffer ) 
    {
-      struct pipe_constant_buffer state;
-      memset(&state, 0, sizeof(state));
-      state.buffer = buffer;
-      $self->pipe->set_constant_buffer($self->pipe, shader, index, &state);
+      $self->pipe->set_constant_buffer($self->pipe, shader, index, buffer);
    }
 
    void set_framebuffer(const struct pipe_framebuffer_state *state ) 
@@ -142,14 +167,24 @@ struct st_context {
       cso_set_viewport($self->cso, state);
    }
 
-   void set_sampler_texture(unsigned index,
-                            struct pipe_texture *texture) {
+   void set_fragment_sampler_texture(unsigned index,
+                                     struct pipe_texture *texture) {
       if(!texture)
          texture = $self->default_texture;
-      pipe_texture_reference(&$self->sampler_textures[index], texture);
-      $self->pipe->set_fragment_sampler_textures($self->pipe, 
+      pipe_texture_reference(&$self->fragment_sampler_textures[index], texture);
+      $self->pipe->set_fragment_sampler_textures($self->pipe,
                                                  PIPE_MAX_SAMPLERS,
-                                                 $self->sampler_textures);
+                                                 $self->fragment_sampler_textures);
+   }
+
+   void set_vertex_sampler_texture(unsigned index,
+                                   struct pipe_texture *texture) {
+      if(!texture)
+         texture = $self->default_texture;
+      pipe_texture_reference(&$self->vertex_sampler_textures[index], texture);
+      $self->pipe->set_vertex_sampler_textures($self->pipe,
+                                               PIPE_MAX_VERTEX_SAMPLERS,
+                                               $self->vertex_sampler_textures);
    }
 
    void set_vertex_buffer(unsigned index,

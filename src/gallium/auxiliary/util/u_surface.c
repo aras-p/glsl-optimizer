@@ -35,7 +35,9 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
+#include "util/u_inlines.h"
 
+#include "util/u_memory.h"
 #include "util/u_surface.h"
 
 
@@ -52,9 +54,9 @@ util_create_rgba_surface(struct pipe_screen *screen,
                          struct pipe_surface **surfaceOut)
 {
    static const enum pipe_format rgbaFormats[] = {
-      PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
-      PIPE_FORMAT_R8G8B8A8_UNORM,
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_A8B8G8R8_UNORM,
       PIPE_FORMAT_NONE
    };
    const uint target = PIPE_TEXTURE_2D;
@@ -110,3 +112,73 @@ util_destroy_rgba_surface(struct pipe_texture *texture,
    pipe_texture_reference(&texture, NULL);
 }
 
+
+
+/**
+ * Compare pipe_framebuffer_state objects.
+ * \return TRUE if same, FALSE if different
+ */
+boolean
+util_framebuffer_state_equal(const struct pipe_framebuffer_state *dst,
+                             const struct pipe_framebuffer_state *src)
+{
+   unsigned i;
+
+   if (dst->width != src->width ||
+       dst->height != src->height)
+      return FALSE;
+
+   for (i = 0; i < Elements(src->cbufs); i++) {
+      if (dst->cbufs[i] != src->cbufs[i]) {
+         return FALSE;
+      }
+   }
+
+   if (dst->nr_cbufs != src->nr_cbufs) {
+      return FALSE;
+   }
+
+   if (dst->zsbuf != src->zsbuf) {
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
+
+/**
+ * Copy framebuffer state from src to dst, updating refcounts.
+ */
+void
+util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
+                            const struct pipe_framebuffer_state *src)
+{
+   unsigned i;
+
+   dst->width = src->width;
+   dst->height = src->height;
+
+   for (i = 0; i < Elements(src->cbufs); i++) {
+      pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
+   }
+
+   dst->nr_cbufs = src->nr_cbufs;
+
+   pipe_surface_reference(&dst->zsbuf, src->zsbuf);
+}
+
+
+void
+util_unreference_framebuffer_state(struct pipe_framebuffer_state *fb)
+{
+   unsigned i;
+
+   for (i = 0; i < fb->nr_cbufs; i++) {
+      pipe_surface_reference(&fb->cbufs[i], NULL);
+   }
+
+   pipe_surface_reference(&fb->zsbuf, NULL);
+
+   fb->width = fb->height = 0;
+   fb->nr_cbufs = 0;
+}

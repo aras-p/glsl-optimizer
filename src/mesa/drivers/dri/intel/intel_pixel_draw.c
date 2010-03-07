@@ -46,10 +46,6 @@
 #include "drivers/common/meta.h"
 
 #include "intel_context.h"
-#include "intel_batchbuffer.h"
-#include "intel_blit.h"
-#include "intel_buffers.h"
-#include "intel_regions.h"
 #include "intel_pixel.h"
 #include "intel_fbo.h"
 
@@ -69,7 +65,6 @@ intel_stencil_drawpixels(GLcontext * ctx,
    GLfloat vertices[4][2];
    struct intel_renderbuffer *irb;
    struct intel_renderbuffer *depth_irb;
-   struct gl_renderbuffer *rb;
    struct gl_pixelstore_attrib old_unpack;
    GLstencil *stencil_pixels;
    int row, y1, y2;
@@ -152,7 +147,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
 
    /* Unpack the supplied stencil values into a ubyte buffer. */
    assert(sizeof(GLstencil) == sizeof(GLubyte));
-   stencil_pixels = _mesa_malloc(width * height * sizeof(GLstencil));
+   stencil_pixels = malloc(width * height * sizeof(GLstencil));
    for (row = 0; row < height; row++) {
       GLvoid *source = _mesa_image_address2d(unpack, pixels,
 					     width, height,
@@ -170,7 +165,6 @@ intel_stencil_drawpixels(GLcontext * ctx,
     */
    depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
    irb = intel_create_renderbuffer(MESA_FORMAT_ARGB8888);
-   rb = &irb->Base;
    irb->Base.Width = depth_irb->Base.Width;
    irb->Base.Height = depth_irb->Base.Height;
    intel_renderbuffer_set_region(irb, depth_irb->region);
@@ -207,7 +201,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
    _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_INTENSITY, width, height, 0,
 		    GL_RED, GL_UNSIGNED_BYTE, stencil_pixels);
    ctx->Unpack = old_unpack;
-   _mesa_free(stencil_pixels);
+   free(stencil_pixels);
 
    meta_set_passthrough_transform(&intel->meta);
 

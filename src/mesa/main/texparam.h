@@ -44,6 +44,11 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params );
 extern void GLAPIENTRY
 _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params );
 
+extern void GLAPIENTRY
+_mesa_GetTexParameterIiv(GLenum target, GLenum pname, GLint *params);
+
+extern void GLAPIENTRY
+_mesa_GetTexParameterIuiv(GLenum target, GLenum pname, GLuint *params);
 
 
 extern void GLAPIENTRY
@@ -58,6 +63,13 @@ _mesa_TexParameteri( GLenum target, GLenum pname, GLint param );
 
 extern void GLAPIENTRY
 _mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params );
+
+
+extern void GLAPIENTRY
+_mesa_TexParameterIiv(GLenum target, GLenum pname, const GLint *params);
+
+extern void GLAPIENTRY
+_mesa_TexParameterIuiv(GLenum target, GLenum pname, const GLuint *params);
 
 
 #endif /* TEXPARAM_H */

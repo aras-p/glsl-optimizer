@@ -103,7 +103,7 @@ extern "C" {
 #	define GLUTAPI extern
 #endif
 
-#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#elif defined(__GNUC__)
 
 #  define GLUTAPIENTRY
 #  define GLUTAPIENTRYV
@@ -452,8 +452,7 @@ GLUTAPI void GLUTAPIENTRY glutInit(int *argcp, char **argv);
 #if defined(_WIN32) && !defined(GLUT_DISABLE_ATEXIT_HACK)
 GLUTAPI void GLUTAPIENTRY __glutInitWithExit(int *argcp, char **argv, void (__cdecl *exitfunc)(int));
 #ifndef GLUT_BUILDING_LIB
-static void GLUTAPIENTRY glutInit_ATEXIT_HACK(int *argcp, char **argv) { __glutInitWithExit(argcp, argv, exit); }
-#define glutInit glutInit_ATEXIT_HACK
+#define glutInit(__argcp, __argv) __glutInitWithExit(__argcp, __argv, exit)
 #endif
 #endif
 GLUTAPI void GLUTAPIENTRY glutInitDisplayMode(unsigned int mode);
@@ -469,8 +468,7 @@ GLUTAPI int GLUTAPIENTRY glutCreateWindow(const char *title);
 #if defined(_WIN32) && !defined(GLUT_DISABLE_ATEXIT_HACK)
 GLUTAPI int GLUTAPIENTRY __glutCreateWindowWithExit(const char *title, void (__cdecl *exitfunc)(int));
 #ifndef GLUT_BUILDING_LIB
-static int GLUTAPIENTRY glutCreateWindow_ATEXIT_HACK(const char *title) { return __glutCreateWindowWithExit(title, exit); }
-#define glutCreateWindow glutCreateWindow_ATEXIT_HACK
+#define glutCreateWindow(__title) __glutCreateWindowWithExit(__title, exit)
 #endif
 #endif
 GLUTAPI int GLUTAPIENTRY glutCreateSubWindow(int win, int x, int y, int width, int height);
@@ -515,8 +513,7 @@ GLUTAPI int GLUTAPIENTRY glutCreateMenu(void (GLUTCALLBACK *func)(int));
 #if defined(_WIN32) && !defined(GLUT_DISABLE_ATEXIT_HACK)
 GLUTAPI int GLUTAPIENTRY __glutCreateMenuWithExit(void (GLUTCALLBACK *func)(int), void (__cdecl *exitfunc)(int));
 #ifndef GLUT_BUILDING_LIB
-static int GLUTAPIENTRY glutCreateMenu_ATEXIT_HACK(void (GLUTCALLBACK *func)(int)) { return __glutCreateMenuWithExit(func, exit); }
-#define glutCreateMenu glutCreateMenu_ATEXIT_HACK
+#define glutCreateMenu(__func) __glutCreateMenuWithExit(__func, exit)
 #endif
 #endif
 GLUTAPI void GLUTAPIENTRY glutDestroyMenu(int menu);

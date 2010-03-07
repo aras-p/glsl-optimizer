@@ -28,7 +28,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "util/u_draw_quad.h"
 
 
@@ -61,6 +61,7 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
    /* tell pipe about the vertex attributes */
    for (i = 0; i < num_attribs; i++) {
       velements[i].src_offset = i * 4 * sizeof(float);
+      velements[i].instance_divisor = 0;
       velements[i].vertex_buffer_index = 0;
       velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       velements[i].nr_components = 4;

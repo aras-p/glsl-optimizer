@@ -25,7 +25,6 @@
 #include "main/glheader.h"
 #include "main/colormac.h"
 #include "main/context.h"
-#include "main/enums.h"
 #include "main/feedback.h"
 #include "main/macros.h"
 
@@ -47,7 +46,7 @@ feedback_vertex(GLcontext * ctx, const SWvertex * v, const SWvertex * pv)
    win[2] = v->attrib[FRAG_ATTRIB_WPOS][2] / ctx->DrawBuffer->_DepthMaxF;
    win[3] = 1.0F / v->attrib[FRAG_ATTRIB_WPOS][3];
 
-   _mesa_feedback_vertex(ctx, win, color, v->attrib[FRAG_ATTRIB_CI][0], vtc);
+   _mesa_feedback_vertex(ctx, win, color, vtc);
 }
 
 

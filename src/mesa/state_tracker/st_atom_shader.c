@@ -35,11 +35,8 @@
  *   Brian Paul
  */
 
-
-
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "main/macros.h"
 #include "shader/program.h"
 
 #include "pipe/p_context.h"
@@ -52,40 +49,20 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_program.h"
-#include "st_atom_shader.h"
-#include "st_mesa_to_tgsi.h"
 
 
 
-
-
-/*
+/**
  * Translate fragment program if needed.
  */
 static void
 translate_fp(struct st_context *st,
              struct st_fragment_program *stfp)
 {
-   const GLbitfield fragInputsRead = stfp->Base.Base.InputsRead;
+   if (!stfp->tgsi.tokens) {
+      assert(stfp->Base.Base.NumInstructions > 0);
 
-   if (!stfp->state.tokens) {
-      GLuint inAttr, numIn = 0;
-
-      for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
-         if (fragInputsRead & (1 << inAttr)) {
-            stfp->input_to_slot[inAttr] = numIn;
-            numIn++;
-         }
-         else {
-            stfp->input_to_slot[inAttr] = -1;
-         }
-      }
-
-      stfp->num_input_slots = numIn;
-
-      assert(stfp->Base.Base.NumInstructions > 1);
-
-      st_translate_fragment_program(st, stfp, stfp->input_to_slot);
+      st_translate_fragment_program(st, stfp);
    }
 }
 
@@ -106,7 +83,18 @@ find_translated_vp(struct st_context *st,
    /* Nothing in our key yet.  This will change:
     */
    memset(&key, 0, sizeof key);
-   key.dummy = 0;
+
+   /* When this is true, we will add an extra input to the vertex
+    * shader translation (for edgeflags), an extra output with
+    * edgeflag semantics, and extend the vertex shader to pass through
+    * the input to the output.  We'll need to use similar logic to set
+    * up the extra vertex_element input for edgeflags.
+    * _NEW_POLYGON, ST_NEW_EDGEFLAGS_DATA
+    */
+   key.passthrough_edgeflags = (st->vertdata_edgeflags && (
+                                st->ctx->Polygon.FrontMode != GL_FILL ||
+                                st->ctx->Polygon.BackMode != GL_FILL));
+
 
    /* Do we need to throw away old translations after a change in the
     * GL program string?
@@ -144,8 +132,10 @@ find_translated_vp(struct st_context *st,
 }
 
 
-
-
+/**
+ * Return pointer to a pass-through fragment shader.
+ * This shader is used when a texture is missing/incomplete.
+ */
 static void *
 get_passthrough_fs(struct st_context *st)
 {
@@ -157,6 +147,11 @@ get_passthrough_fs(struct st_context *st)
    return st->passthrough_fs;
 }
 
+
+/**
+ * Update fragment program state/atom.  This involves translating the
+ * Mesa fragment program into a gallium fragment program and binding it.
+ */
 static void
 update_fp( struct st_context *st )
 {
@@ -180,6 +175,7 @@ update_fp( struct st_context *st )
    }
 }
 
+
 const struct st_tracked_state st_update_fp = {
    "st_update_fp",					/* name */
    {							/* dirty */
@@ -191,7 +187,10 @@ const struct st_tracked_state st_update_fp = {
 
 
 
-
+/**
+ * Update vertex program state/atom.  This involves translating the
+ * Mesa vertex program into a gallium fragment program and binding it.
+ */
 static void
 update_vp( struct st_context *st )
 {
@@ -218,8 +217,8 @@ update_vp( struct st_context *st )
 const struct st_tracked_state st_update_vp = {
    "st_update_vp",					/* name */
    {							/* dirty */
-      0,						/* mesa */
-      ST_NEW_VERTEX_PROGRAM                             /* st */
+      _NEW_POLYGON,					/* mesa */
+      ST_NEW_VERTEX_PROGRAM | ST_NEW_EDGEFLAGS_DATA	/* st */
    },
    update_vp					/* update */
 };

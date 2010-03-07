@@ -55,6 +55,7 @@ GLUT_LIB = glut
 GLEW_LIB = GLEW
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
+EGL_LIB = EGL
 
 
 # Library names (actual file names)
@@ -64,6 +65,7 @@ GLUT_LIB_NAME = lib$(GLUT_LIB).so
 GLEW_LIB_NAME = lib$(GLEW_LIB).a
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
+EGL_LIB_NAME = lib$(EGL_LIB).so
 
 # globs used to install the lib and all symlinks
 GL_LIB_GLOB = $(GL_LIB_NAME)*
@@ -71,6 +73,7 @@ GLU_LIB_GLOB = $(GLU_LIB_NAME)*
 GLUT_LIB_GLOB = $(GLUT_LIB_NAME)*
 GLW_LIB_GLOB = $(GLW_LIB_NAME)*
 OSMESA_LIB_GLOB = $(OSMESA_LIB_NAME)*
+EGL_LIB_GLOB = $(EGL_LIB_NAME)*
 
 # Optional assembly language optimization files for libGL
 MESA_ASM_SOURCES = 
@@ -83,25 +86,26 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = mesa gallium egl gallium/winsys glu glut/glx glew glw
+SRC_DIRS = glsl mesa gallium egl gallium/winsys glu glut/glx glew glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 # Which subdirs under $(TOP)/progs/ to enter:
 PROGRAM_DIRS = demos redbook samples glsl objviewer xdemos
 
-# EGL directories
-EGL_DRIVERS_DIRS = demo
+# EGL drivers to build
+EGL_DRIVERS_DIRS = glx
 
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
-GALLIUM_AUXILIARY_DIRS = rbug draw translate cso_cache pipebuffer tgsi sct rtasm util indices vl
-GALLIUM_AUXILIARIES = $(foreach DIR,$(GALLIUM_AUXILIARY_DIRS),$(TOP)/src/gallium/auxiliary/$(DIR)/lib$(DIR).a)
-GALLIUM_DRIVERS_DIRS = softpipe failover svga i915 trace identity
+GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a
+GALLIUM_DRIVERS_DIRS = softpipe failover svga i915 i965 r300 trace identity
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
-GALLIUM_WINSYS_DIRS = xlib egl_xlib
-GALLIUM_WINSYS_DRM_DIRS =
-GALLIUM_STATE_TRACKERS_DIRS = glx
+GALLIUM_WINSYS_DIRS = drm xlib
+GALLIUM_WINSYS_DRM_DIRS = swrast
+GALLIUM_STATE_TRACKERS_DIRS = glx vega
 
+# native displays EGL should support
+EGL_DISPLAYS = x11
 
 # Library dependencies
 #EXTRA_LIB_PATH ?=
@@ -125,6 +129,9 @@ DRI_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/dri
 
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
+
+# EGL driver install directory
+EGL_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/egl
 
 # Xorg driver install directory (for xorg state-tracker)
 XORG_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/xorg/modules/drivers

@@ -663,7 +663,7 @@ upload_program(struct i915_fragment_program *p)
 			 A0_MOV,
 			 get_result_vector(p, inst),
 			 get_result_flags(inst), 0,
-			 swizzle(src0, ZERO, ZERO, ZERO, ZERO), 0, 0);
+			 swizzle(tmp, ZERO, ZERO, ZERO, ZERO), 0, 0);
 
       case OPCODE_POW:
          src0 = src_vector(p, &inst->SrcReg[0], program);
@@ -1205,7 +1205,7 @@ i915IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
       return GL_TRUE;
 }
 
-static void
+static GLboolean
 i915ProgramStringNotify(GLcontext * ctx,
                         GLenum target, struct gl_program *prog)
 {
@@ -1223,7 +1223,10 @@ i915ProgramStringNotify(GLcontext * ctx,
       }
    }
 
-   _tnl_program_string(ctx, target, prog);
+   (void) _tnl_program_string(ctx, target, prog);
+
+   /* XXX check if program is legal, within limits */
+   return GL_TRUE;
 }
 
 void

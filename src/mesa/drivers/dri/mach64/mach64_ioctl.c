@@ -279,7 +279,7 @@ static int mach64WaitForFrameCompletion( mach64ContextPtr mmesa )
 
 /* Copy the back color buffer to the front color buffer.
  */
-void mach64CopyBuffer( __DRIdrawablePrivate *dPriv )
+void mach64CopyBuffer( __DRIdrawable *dPriv )
 {
    mach64ContextPtr mmesa;
    GLint nbox, i, ret;
@@ -668,7 +668,7 @@ void mach64PerformanceBoxesLocked( mach64ContextPtr mmesa )
 static void mach64DDClear( GLcontext *ctx, GLbitfield mask )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
+   __DRIdrawable *dPriv = mmesa->driDrawable;
    drm_mach64_clear_t clear;
    GLuint flags = 0;
    GLint i;

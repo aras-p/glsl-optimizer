@@ -15,7 +15,7 @@
 
 #define LOCAL_VARS					\
    i810ContextPtr imesa = I810_CONTEXT(ctx);	        \
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;	\
+   __DRIdrawable *dPriv = imesa->driDrawable;	\
    driRenderbuffer *drb = (driRenderbuffer *) rb;	\
    GLuint pitch = drb->pitch;				\
    GLuint height = dPriv->h;				\
@@ -27,7 +27,7 @@
 
 #define LOCAL_DEPTH_VARS				\
    i810ContextPtr imesa = I810_CONTEXT(ctx);	        \
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;	\
+   __DRIdrawable *dPriv = imesa->driDrawable;	\
    driRenderbuffer *drb = (driRenderbuffer *) rb;	\
    GLuint pitch = drb->pitch;				\
    GLuint height = dPriv->h;				\

@@ -210,7 +210,7 @@ static INLINE void insert_3f_xyw_err( const struct tnl_clipspace_attr *a, GLubyt
 {
    (void) a; (void) v; (void) in;
    DEBUG_INSERT;
-   _mesa_exit(1);
+   exit(1);
 }
 
 static INLINE void insert_3f_3( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
@@ -1074,9 +1074,9 @@ void _tnl_generic_copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
       if (a[j].attrib == VERT_ATTRIB_COLOR0 ||
 	  a[j].attrib == VERT_ATTRIB_COLOR1) {
 
-	 _mesa_memcpy( vdst + a[j].vertoffset,
-                       vsrc + a[j].vertoffset,
-                       a[j].vertattrsize );
+	 memcpy( vdst + a[j].vertoffset,
+                 vsrc + a[j].vertoffset,
+                 a[j].vertattrsize );
       }
    }
 }

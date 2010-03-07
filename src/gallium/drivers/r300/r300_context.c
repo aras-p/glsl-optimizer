@@ -22,40 +22,27 @@
 
 #include "draw/draw_context.h"
 
-#include "tgsi/tgsi_scan.h"
-
-#include "util/u_hash_table.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
-#include "r300_clear.h"
+#include "r300_blit.h"
 #include "r300_context.h"
+#include "r300_emit.h"
 #include "r300_flush.h"
 #include "r300_query.h"
 #include "r300_render.h"
 #include "r300_screen.h"
-#include "r300_state_derived.h"
 #include "r300_state_invariant.h"
 #include "r300_texture.h"
-#include "r300_winsys.h"
 
-static enum pipe_error r300_clear_hash_table(void* key, void* value,
-                                             void* data)
-{
-    FREE(key);
-    FREE(value);
-    return PIPE_OK;
-}
+#include "radeon_winsys.h"
 
 static void r300_destroy_context(struct pipe_context* context)
 {
     struct r300_context* r300 = r300_context(context);
     struct r300_query* query, * temp;
 
-    util_hash_table_foreach(r300->shader_hash_table, r300_clear_hash_table,
-        NULL);
-    util_hash_table_destroy(r300->shader_hash_table);
-
+    util_blitter_destroy(r300->blitter);
     draw_destroy(r300->draw);
 
     /* Free the OQ BO. */
@@ -67,11 +54,16 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(query);
     }
 
-    FREE(r300->blend_color_state);
-    FREE(r300->rs_block);
-    FREE(r300->scissor_state);
-    FREE(r300->vertex_info);
-    FREE(r300->viewport_state);
+    FREE(r300->blend_color_state.state);
+    FREE(r300->clip_state.state);
+    FREE(r300->fb_state.state);
+    FREE(r300->rs_block_state.state);
+    FREE(r300->scissor_state.state);
+    FREE(r300->textures_state.state);
+    FREE(r300->vertex_stream_state.state);
+    FREE(r300->vap_output_state.state);
+    FREE(r300->viewport_state.state);
+    FREE(r300->ztop_state.state);
     FREE(r300);
 }
 
@@ -82,7 +74,7 @@ r300_is_texture_referenced(struct pipe_context *pipe,
 {
     struct pipe_buffer* buf = 0;
 
-    r300_get_texture_buffer(texture, &buf, NULL);
+    r300_get_texture_buffer(pipe->screen, texture, &buf, NULL);
 
     return pipe->is_buffer_referenced(pipe, buf);
 }
@@ -105,11 +97,64 @@ static void r300_flush_cb(void *data)
     cs_context_copy->context.flush(&cs_context_copy->context, 0, NULL);
 }
 
+#define R300_INIT_ATOM(atomname, atomsize) \
+    r300->atomname.name = #atomname; \
+    r300->atomname.state = NULL; \
+    r300->atomname.size = atomsize; \
+    r300->atomname.emit = r300_emit_##atomname; \
+    r300->atomname.dirty = FALSE; \
+    insert_at_tail(&r300->atom_list, &r300->atomname);
+
+static void r300_setup_atoms(struct r300_context* r300)
+{
+    boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
+    boolean has_tcl = r300_screen(r300->context.screen)->caps->has_tcl;
+
+    /* Create the actual atom list.
+     *
+     * Each atom is examined and emitted in the order it appears here, which
+     * can affect performance and conformance if not handled with care.
+     *
+     * Some atoms never change size, others change every emit - those have
+     * the size of 0 here. */
+    make_empty_list(&r300->atom_list);
+    R300_INIT_ATOM(invariant_state, 71);
+    R300_INIT_ATOM(ztop_state, 2);
+    R300_INIT_ATOM(blend_state, 8);
+    R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
+    R300_INIT_ATOM(clip_state, has_tcl ? 5 + (6 * 4) : 2);
+    R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
+    R300_INIT_ATOM(fb_state, 0);
+    R300_INIT_ATOM(rs_state, 0);
+    R300_INIT_ATOM(scissor_state, 3);
+    R300_INIT_ATOM(viewport_state, 9);
+    R300_INIT_ATOM(rs_block_state, 0);
+    R300_INIT_ATOM(vertex_stream_state, 0);
+    R300_INIT_ATOM(vap_output_state, 6);
+    R300_INIT_ATOM(pvs_flush, 2);
+    R300_INIT_ATOM(vs_state, 0);
+    R300_INIT_ATOM(texture_cache_inval, 2);
+    R300_INIT_ATOM(textures_state, 0);
+
+    /* Some non-CSO atoms need explicit space to store the state locally. */
+    r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
+    r300->clip_state.state = CALLOC_STRUCT(pipe_clip_state);
+    r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
+    r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
+    r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
+    r300->textures_state.state = CALLOC_STRUCT(r300_textures_state);
+    r300->vertex_stream_state.state = CALLOC_STRUCT(r300_vertex_stream_state);
+    r300->vap_output_state.state = CALLOC_STRUCT(r300_vap_output_state);
+    r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
+    r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
+}
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct radeon_winsys* radeon_winsys)
+                                         void *priv)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
     struct r300_screen* r300screen = r300_screen(screen);
+    struct radeon_winsys* radeon_winsys = r300screen->radeon_winsys;
 
     if (!r300)
         return NULL;
@@ -118,12 +163,13 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.winsys = (struct pipe_winsys*)radeon_winsys;
     r300->context.screen = screen;
-
-    r300_init_debug(r300);
+    r300->context.priv = priv;
 
     r300->context.destroy = r300_destroy_context;
 
     r300->context.clear = r300_clear;
+    r300->context.surface_copy = r300_surface_copy;
+    r300->context.surface_fill = r300_surface_fill;
 
     if (r300screen->caps->has_tcl) {
         r300->context.draw_arrays = r300_draw_arrays;
@@ -148,14 +194,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.is_texture_referenced = r300_is_texture_referenced;
     r300->context.is_buffer_referenced = r300_is_buffer_referenced;
 
-    r300->shader_hash_table = util_hash_table_create(r300_shader_key_hash,
-        r300_shader_key_compare);
-
-    r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
-    r300->rs_block = CALLOC_STRUCT(r300_rs_block);
-    r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
-    r300->vertex_info = CALLOC_STRUCT(r300_vertex_info);
-    r300->viewport_state = CALLOC_STRUCT(r300_viewport_state);
+    r300_setup_atoms(r300);
 
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,
@@ -170,10 +209,13 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300_init_state_functions(r300);
 
-    r300_emit_invariant_state(r300);
+    r300->invariant_state.dirty = TRUE;
 
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
     r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
+
+    r300->blitter = util_blitter_create(&r300->context);
+
     return &r300->context;
 }

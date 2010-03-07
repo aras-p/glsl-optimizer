@@ -32,7 +32,7 @@
 #include "context.h"
 #include "imports.h"
 #include "macros.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 typedef void (GLAPIENTRY *array_func)( const void * );
 

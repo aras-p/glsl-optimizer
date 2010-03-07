@@ -10,35 +10,6 @@
 #define BATCH_SZ 16384
 #define BATCH_RESERVED 16
 
-enum cliprect_mode {
-   /**
-    * Batchbuffer contents may be looped over per cliprect, but do not
-    * require it.
-    */
-   IGNORE_CLIPRECTS,
-   /**
-    * Batchbuffer contents require looping over per cliprect at batch submit
-    * time.
-    *
-    * This will be upgraded to NO_LOOP_CLIPRECTS when there's a single
-    * constant cliprect, as in DRI2 or FBO rendering.
-    */
-   LOOP_CLIPRECTS,
-   /**
-    * Batchbuffer contents contain drawing that should not be executed multiple
-    * times.
-    */
-   NO_LOOP_CLIPRECTS,
-   /**
-    * Batchbuffer contents contain drawing that already handles cliprects, such
-    * as 2D drawing to front/back/depth that doesn't respect DRAWING_RECTANGLE.
-    *
-    * Equivalent behavior to NO_LOOP_CLIPRECTS, but may not persist in batch
-    * outside of LOCK/UNLOCK.  This is upgraded to just NO_LOOP_CLIPRECTS when
-    * there's a constant cliprect, as in DRI2 or FBO rendering.
-    */
-   REFERENCES_CLIPRECTS
-};
 
 struct intel_batchbuffer
 {
@@ -50,8 +21,6 @@ struct intel_batchbuffer
 
    GLubyte *map;
    GLubyte *ptr;
-
-   enum cliprect_mode cliprect_mode;
 
    GLuint size;
 
@@ -85,8 +54,7 @@ void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
  * intel_buffer_dword() calls.
  */
 void intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                            const void *data, GLuint bytes,
-			    enum cliprect_mode cliprect_mode);
+                            const void *data, GLuint bytes);
 
 void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
                                      GLuint bytes);
@@ -96,6 +64,11 @@ GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 				       uint32_t read_domains,
 				       uint32_t write_domain,
 				       uint32_t offset);
+GLboolean intel_batchbuffer_emit_reloc_fenced(struct intel_batchbuffer *batch,
+					      drm_intel_bo *buffer,
+					      uint32_t read_domains,
+					      uint32_t write_domain,
+					      uint32_t offset);
 void intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch);
 
 /* Inline functions - might actually be better off with these
@@ -121,47 +94,48 @@ intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
 
 static INLINE void
 intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
-                                GLuint sz,
-				enum cliprect_mode cliprect_mode)
+                                GLuint sz)
 {
    assert(sz < batch->size - 8);
    if (intel_batchbuffer_space(batch) < sz)
       intel_batchbuffer_flush(batch);
+}
 
-   if ((cliprect_mode == LOOP_CLIPRECTS ||
-	cliprect_mode == REFERENCES_CLIPRECTS) &&
-       batch->intel->constant_cliprect)
-      cliprect_mode = NO_LOOP_CLIPRECTS;
+static INLINE uint32_t float_as_int(float f)
+{
+   union {
+      float f;
+      uint32_t d;
+   } fi;
 
-   if (cliprect_mode != IGNORE_CLIPRECTS) {
-      if (batch->cliprect_mode == IGNORE_CLIPRECTS) {
-	 batch->cliprect_mode = cliprect_mode;
-      } else {
-	 if (batch->cliprect_mode != cliprect_mode) {
-	    intel_batchbuffer_flush(batch);
-	    batch->cliprect_mode = cliprect_mode;
-	 }
-      }
-   }
+   fi.f = f;
+   return fi.d;
 }
 
 /* Here are the crusty old macros, to be removed:
  */
 #define BATCH_LOCALS
 
-#define BEGIN_BATCH(n, cliprect_mode) do {				\
-   intel_batchbuffer_require_space(intel->batch, (n)*4, cliprect_mode); \
+#define BEGIN_BATCH(n) do {				\
+   intel_batchbuffer_require_space(intel->batch, (n)*4); \
    assert(intel->batch->emit.start_ptr == NULL);			\
    intel->batch->emit.total = (n) * 4;					\
    intel->batch->emit.start_ptr = intel->batch->ptr;			\
 } while (0)
 
 #define OUT_BATCH(d) intel_batchbuffer_emit_dword(intel->batch, d)
+#define OUT_BATCH_F(f) intel_batchbuffer_emit_dword(intel->batch,	\
+						    float_as_int(f))
 
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
    assert((unsigned) (delta) < buf->size);				\
    intel_batchbuffer_emit_reloc(intel->batch, buf,			\
 				read_domains, write_domain, delta);	\
+} while (0)
+#define OUT_RELOC_FENCED(buf, read_domains, write_domain, delta) do {	\
+   assert((unsigned) (delta) < buf->size);				\
+   intel_batchbuffer_emit_reloc_fenced(intel->batch, buf,		\
+				       read_domains, write_domain, delta); \
 } while (0)
 
 #define ADVANCE_BATCH() do {						\

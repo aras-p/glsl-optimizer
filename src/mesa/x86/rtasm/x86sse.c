@@ -7,10 +7,12 @@
 #define DISASSEM 0
 #define X86_TWOB 0x0f
 
+#if 0
 static unsigned char *cptr( void (*label)() )
 {
    return (unsigned char *)(unsigned long)label;
 }
+#endif
 
 
 static void do_realloc( struct x86_function *p )
@@ -1182,7 +1184,7 @@ void x86_release_func( struct x86_function *p )
 void (*x86_get_func( struct x86_function *p ))(void)
 {
    if (DISASSEM && p->store)
-      _mesa_printf("disassemble %p %p\n", p->store, p->csr);
+      printf("disassemble %p %p\n", p->store, p->csr);
    return (void (*)(void)) (unsigned long) p->store;
 }
 

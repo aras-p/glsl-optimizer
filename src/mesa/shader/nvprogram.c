@@ -260,7 +260,7 @@ _mesa_GetProgramivNV(GLuint id, GLenum pname, GLint *params)
          *params = prog->Target;
          return;
       case GL_PROGRAM_LENGTH_NV:
-         *params = prog->String ?(GLint)_mesa_strlen((char *) prog->String) : 0;
+         *params = prog->String ?(GLint) strlen((char *) prog->String) : 0;
          return;
       case GL_PROGRAM_RESIDENT_NV:
          *params = prog->Resident;
@@ -297,7 +297,7 @@ _mesa_GetProgramStringNV(GLuint id, GLenum pname, GLubyte *program)
    }
 
    if (prog->String) {
-      MEMCPY(program, prog->String, _mesa_strlen((char *) prog->String));
+      memcpy(program, prog->String, strlen((char *) prog->String));
    }
    else {
       program[0] = 0;
@@ -515,7 +515,7 @@ _mesa_emit_nv_temp_initialization(GLcontext *ctx,
 				  struct gl_program *program)
 {
    struct prog_instruction *inst;
-   int i;
+   GLuint i;
 
    if (!ctx->Shader.EmitNVTempInitialization)
       return;
@@ -559,7 +559,7 @@ _mesa_emit_nv_temp_initialization(GLcontext *ctx,
 void
 _mesa_setup_nv_temporary_count(GLcontext *ctx, struct gl_program *program)
 {
-   int i;
+   GLuint i;
 
    program->NumTemporaries = 0;
    for (i = 0; i < program->NumInstructions; i++) {
@@ -570,15 +570,15 @@ _mesa_setup_nv_temporary_count(GLcontext *ctx, struct gl_program *program)
 					inst->DstReg.Index + 1);
       }
       if (inst->SrcReg[0].File == PROGRAM_TEMPORARY) {
-	 program->NumTemporaries = MAX2(program->NumTemporaries,
+	 program->NumTemporaries = MAX2((GLint)program->NumTemporaries,
 					inst->SrcReg[0].Index + 1);
       }
       if (inst->SrcReg[1].File == PROGRAM_TEMPORARY) {
-	 program->NumTemporaries = MAX2(program->NumTemporaries,
+	 program->NumTemporaries = MAX2((GLint)program->NumTemporaries,
 					inst->SrcReg[1].Index + 1);
       }
       if (inst->SrcReg[2].File == PROGRAM_TEMPORARY) {
-	 program->NumTemporaries = MAX2(program->NumTemporaries,
+	 program->NumTemporaries = MAX2((GLint)program->NumTemporaries,
 					inst->SrcReg[2].Index + 1);
       }
    }

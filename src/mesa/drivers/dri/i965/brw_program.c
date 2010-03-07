@@ -37,7 +37,6 @@
 #include "tnl/tnl.h"
 
 #include "brw_context.h"
-#include "brw_util.h"
 #include "brw_wm.h"
 
 static void brwBindProgram( GLcontext *ctx,
@@ -112,9 +111,10 @@ static GLboolean brwIsProgramNative( GLcontext *ctx,
    return GL_TRUE;
 }
 
-static void brwProgramStringNotify( GLcontext *ctx,
-				    GLenum target,
-				    struct gl_program *prog )
+
+static GLboolean brwProgramStringNotify( GLcontext *ctx,
+                                         GLenum target,
+                                         struct gl_program *prog )
 {
    struct brw_context *brw = brw_context(ctx);
 
@@ -151,6 +151,9 @@ static void brwProgramStringNotify( GLcontext *ctx,
        */
       _tnl_program_string(ctx, target, prog);
    }
+
+   /* XXX check if program is legal, within limits */
+   return GL_TRUE;
 }
 
 void brwInitFragProgFuncs( struct dd_function_table *functions )

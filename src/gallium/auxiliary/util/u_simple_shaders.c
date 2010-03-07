@@ -2,6 +2,7 @@
  *
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -30,25 +31,29 @@
  * Simple vertex/fragment shader generators.
  *  
  * @author Brian Paul
+           Marek Olšák
  */
 
 
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_debug.h"
 #include "tgsi/tgsi_ureg.h"
 
 
 
 /**
  * Make simple vertex pass-through shader.
+ * \param num_attribs  number of attributes to pass through
+ * \param semantic_names  array of semantic names for each attribute
+ * \param semantic_indexes  array of semantic indexes for each attribute
  */
 void *
 util_make_vertex_passthrough_shader(struct pipe_context *pipe,
                                     uint num_attribs,
                                     const uint *semantic_names,
                                     const uint *semantic_indexes)
-                                    
 {
    struct ureg_program *ureg;
    uint i;
@@ -76,8 +81,6 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 }
 
 
-
-
 /**
  * Make simple fragment texture shader:
  *  IMM {0,0,0,1}                         // (if writemask != 0xf)
@@ -87,6 +90,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
  */
 void *
 util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
+                                        unsigned tex_target,
                                         unsigned writemask )
 {
    struct ureg_program *ureg;
@@ -116,19 +120,70 @@ util_make_fragment_tex_shader_writemask(struct pipe_context *pipe,
 
    ureg_TEX( ureg, 
              ureg_writemask(out, writemask),
-             TGSI_TEXTURE_2D, tex, sampler );
+             tex_target, tex, sampler );
    ureg_END( ureg );
 
    return ureg_create_shader_and_destroy( ureg, pipe );
 }
 
+
+/**
+ * Make a simple fragment shader that sets the output color to a color
+ * taken from a texture.
+ * \param tex_target  one of PIPE_TEXTURE_x
+ */
 void *
-util_make_fragment_tex_shader(struct pipe_context *pipe )
+util_make_fragment_tex_shader(struct pipe_context *pipe, unsigned tex_target )
 {
    return util_make_fragment_tex_shader_writemask( pipe,
+                                                   tex_target,
                                                    TGSI_WRITEMASK_XYZW );
 }
 
+
+/**
+ * Make a simple fragment texture shader which reads an X component from
+ * a texture and writes it as depth.
+ */
+void *
+util_make_fragment_tex_shader_writedepth(struct pipe_context *pipe,
+                                         unsigned tex_target)
+{
+   struct ureg_program *ureg;
+   struct ureg_src sampler;
+   struct ureg_src tex;
+   struct ureg_dst out, depth;
+   struct ureg_src imm;
+
+   ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
+   if (ureg == NULL)
+      return NULL;
+
+   sampler = ureg_DECL_sampler( ureg, 0 );
+
+   tex = ureg_DECL_fs_input( ureg,
+                             TGSI_SEMANTIC_GENERIC, 0,
+                             TGSI_INTERPOLATE_PERSPECTIVE );
+
+   out = ureg_DECL_output( ureg,
+                           TGSI_SEMANTIC_COLOR,
+                           0 );
+
+   depth = ureg_DECL_output( ureg,
+                             TGSI_SEMANTIC_POSITION,
+                             0 );
+
+   imm = ureg_imm4f( ureg, 0, 0, 0, 1 );
+
+   ureg_MOV( ureg, out, imm );
+
+   ureg_TEX( ureg,
+             ureg_writemask(depth, TGSI_WRITEMASK_Z),
+             tex_target, tex, sampler );
+   ureg_END( ureg );
+
+   return ureg_create_shader_and_destroy( ureg, pipe );
+}
 
 
 /**
@@ -137,9 +192,22 @@ util_make_fragment_tex_shader(struct pipe_context *pipe )
 void *
 util_make_fragment_passthrough_shader(struct pipe_context *pipe)
 {
+   return util_make_fragment_clonecolor_shader(pipe, 1);
+}
+
+
+/**
+ * Make a fragment shader that copies the input color to N output colors.
+ */
+void *
+util_make_fragment_clonecolor_shader(struct pipe_context *pipe, int num_cbufs)
+{
    struct ureg_program *ureg;
    struct ureg_src src;
-   struct ureg_dst dst;
+   struct ureg_dst dst[PIPE_MAX_COLOR_BUFS];
+   int i;
+
+   assert(num_cbufs <= PIPE_MAX_COLOR_BUFS);
 
    ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
    if (ureg == NULL)
@@ -148,12 +216,13 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe)
    src = ureg_DECL_fs_input( ureg, TGSI_SEMANTIC_COLOR, 0, 
                              TGSI_INTERPOLATE_PERSPECTIVE );
 
-   dst = ureg_DECL_output( ureg, TGSI_SEMANTIC_COLOR, 0 );
+   for (i = 0; i < num_cbufs; i++)
+      dst[i] = ureg_DECL_output( ureg, TGSI_SEMANTIC_COLOR, i );
 
-   ureg_MOV( ureg, dst, src );
+   for (i = 0; i < num_cbufs; i++)
+      ureg_MOV( ureg, dst[i], src );
+
    ureg_END( ureg );
 
    return ureg_create_shader_and_destroy( ureg, pipe );
 }
-
-

@@ -94,10 +94,11 @@ unsigned int rc_find_free_temporary(struct radeon_compiler * c)
 {
 	char used[RC_REGISTER_MAX_INDEX];
 	unsigned int i;
+	struct rc_instruction * rcinst;
 
 	memset(used, 0, sizeof(used));
 
-	for (struct rc_instruction * rcinst = c->Program.Instructions.Next; rcinst != &c->Program.Instructions; rcinst = rcinst->Next) {
+	for (rcinst = c->Program.Instructions.Next; rcinst != &c->Program.Instructions; rcinst = rcinst->Next) {
 		const struct rc_sub_instruction *inst = &rcinst->U.I;
 		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->Opcode);
 		unsigned int k;
@@ -168,8 +169,9 @@ void rc_remove_instruction(struct rc_instruction * inst)
 unsigned int rc_recompute_ips(struct radeon_compiler * c)
 {
 	unsigned int ip = 0;
+	struct rc_instruction * inst;
 
-	for(struct rc_instruction * inst = c->Program.Instructions.Next;
+	for(inst = c->Program.Instructions.Next;
 	    inst != &c->Program.Instructions;
 	    inst = inst->Next) {
 		inst->IP = ip++;

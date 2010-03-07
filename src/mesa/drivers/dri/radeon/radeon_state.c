@@ -37,7 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/api_arrayelt.h"
 #include "main/enums.h"
 #include "main/light.h"
-#include "main/state.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/simple_list.h"
@@ -54,7 +53,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tcl.h"
 #include "radeon_tex.h"
 #include "radeon_swtcl.h"
-#include "drirenderbuffer.h"
 
 static void radeonUpdateSpecular( GLcontext *ctx );
 
@@ -521,10 +519,10 @@ static void radeonColorMask( GLcontext *ctx,
      return;
 
    mask = radeonPackColor( rrb->cpp,
-			   ctx->Color.ColorMask[RCOMP],
-			   ctx->Color.ColorMask[GCOMP],
-			   ctx->Color.ColorMask[BCOMP],
-			   ctx->Color.ColorMask[ACOMP] );
+			   ctx->Color.ColorMask[0][RCOMP],
+			   ctx->Color.ColorMask[0][GCOMP],
+			   ctx->Color.ColorMask[0][BCOMP],
+			   ctx->Color.ColorMask[0][ACOMP] );
 
    if ( rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK] != mask ) {
       RADEON_STATECHANGE( rmesa, msk );
@@ -548,6 +546,31 @@ static void radeonPolygonOffset( GLcontext *ctx,
    RADEON_STATECHANGE( rmesa, zbs );
    rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_FACTOR]   = factoru.ui32;
    rmesa->hw.zbs.cmd[ZBS_SE_ZBIAS_CONSTANT] = constant.ui32;
+}
+
+static void radeonPolygonStipplePreKMS( GLcontext *ctx, const GLubyte *mask )
+{
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   GLuint i;
+   drm_radeon_stipple_t stipple;
+
+   /* Must flip pattern upside down.
+    */
+   for ( i = 0 ; i < 32 ; i++ ) {
+      rmesa->state.stipple.mask[31 - i] = ((GLuint *) mask)[i];
+   }
+
+   /* TODO: push this into cmd mechanism
+    */
+   radeon_firevertices(&rmesa->radeon);
+   LOCK_HARDWARE( &rmesa->radeon );
+
+   /* FIXME: Use window x,y offsets into stipple RAM.
+    */
+   stipple.mask = rmesa->state.stipple.mask;
+   drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_STIPPLE,
+		    &stipple, sizeof(drm_radeon_stipple_t) );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 }
 
 static void radeonPolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
@@ -1375,7 +1398,7 @@ static void radeonClearStencil( GLcontext *ctx, GLint s )
 void radeonUpdateWindow( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
    GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1430,7 +1453,7 @@ static void radeonDepthRange( GLcontext *ctx, GLclampd nearval,
 void radeonUpdateViewportOffset( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = radeon_get_drawable(&rmesa->radeon);
+   __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = (GLfloat)dPriv->x;
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -2231,7 +2254,6 @@ void radeonInitStateFuncs( GLcontext *ctx , GLboolean dri2 )
    ctx->Driver.BlendFuncSeparate	= radeonBlendFuncSeparate;
    ctx->Driver.ClearColor		= radeonClearColor;
    ctx->Driver.ClearDepth		= radeonClearDepth;
-   ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearStencil		= radeonClearStencil;
    ctx->Driver.ClipPlane		= radeonClipPlane;
    ctx->Driver.ColorMask		= radeonColorMask;
@@ -2243,7 +2265,6 @@ void radeonInitStateFuncs( GLcontext *ctx , GLboolean dri2 )
    ctx->Driver.Fogfv			= radeonFogfv;
    ctx->Driver.FrontFace		= radeonFrontFace;
    ctx->Driver.Hint			= NULL;
-   ctx->Driver.IndexMask		= NULL;
    ctx->Driver.LightModelfv		= radeonLightModelfv;
    ctx->Driver.Lightfv			= radeonLightfv;
    ctx->Driver.LineStipple              = radeonLineStipple;

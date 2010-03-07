@@ -138,14 +138,14 @@ spu_fallback_fragment_ops(uint x, uint y,
 
       if (spu.depth_stencil_alpha.stencil[0].enabled) {
          /* do stencil test */
-         ASSERT(spu.fb.depth_format == PIPE_FORMAT_S8Z24_UNORM);
+         ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z24S8_UNORM);
 
       }
       else if (spu.depth_stencil_alpha.depth.enabled) {
          /* do depth test */
 
-         ASSERT(spu.fb.depth_format == PIPE_FORMAT_S8Z24_UNORM ||
-                spu.fb.depth_format == PIPE_FORMAT_X8Z24_UNORM);
+         ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z24S8_UNORM ||
+                spu.fb.depth_format == PIPE_FORMAT_Z24X8_UNORM);
 
          vector unsigned int ifragZ;
          vector unsigned int zmask;
@@ -207,9 +207,9 @@ spu_fallback_fragment_ops(uint x, uint y,
     * If we'll need the current framebuffer/tile colors for blending
     * or logicop or colormask, fetch them now.
     */
-   if (spu.blend.blend_enable ||
+   if (spu.blend.rt[0].blend_enable ||
        spu.blend.logicop_enable ||
-       spu.blend.colormask != 0xf) {
+       spu.blend.rt[0].colormask != 0xf) {
 
 #if LINEAR_QUAD_LAYOUT /* See comments/diagram below */
       fbc0 = colorTile->ui[y][x*2+0];
@@ -228,7 +228,7 @@ spu_fallback_fragment_ops(uint x, uint y,
    /*
     * Do blending
     */
-   if (spu.blend.blend_enable) {
+   if (spu.blend.rt[0].blend_enable) {
       /* blending terms, misc regs */
       vector float term1r, term1g, term1b, term1a;
       vector float term2r, term2g, term2b, term2a;
@@ -240,13 +240,13 @@ spu_fallback_fragment_ops(uint x, uint y,
       {
          vector float temp[4]; /* float colors in AOS form */
          switch (spu.fb.color_format) {
-         case PIPE_FORMAT_B8G8R8A8_UNORM:
+         case PIPE_FORMAT_A8R8G8B8_UNORM:
             temp[0] = spu_unpack_B8G8R8A8(fbc0);
             temp[1] = spu_unpack_B8G8R8A8(fbc1);
             temp[2] = spu_unpack_B8G8R8A8(fbc2);
             temp[3] = spu_unpack_B8G8R8A8(fbc3);
             break;
-         case PIPE_FORMAT_A8R8G8B8_UNORM:
+         case PIPE_FORMAT_B8G8R8A8_UNORM:
             temp[0] = spu_unpack_A8R8G8B8(fbc0);
             temp[1] = spu_unpack_A8R8G8B8(fbc1);
             temp[2] = spu_unpack_A8R8G8B8(fbc2);
@@ -261,7 +261,7 @@ spu_fallback_fragment_ops(uint x, uint y,
       /*
        * Compute Src RGB terms (fragment color * factor)
        */
-      switch (spu.blend.rgb_src_factor) {
+      switch (spu.blend.rt[0].rgb_src_factor) {
       case PIPE_BLENDFACTOR_ONE:
          term1r = fragR;
          term1g = fragG;
@@ -310,7 +310,7 @@ spu_fallback_fragment_ops(uint x, uint y,
       /*
        * Compute Src Alpha term (fragment alpha * factor)
        */
-      switch (spu.blend.alpha_src_factor) {
+      switch (spu.blend.rt[0].alpha_src_factor) {
       case PIPE_BLENDFACTOR_ONE:
          term1a = fragA;
          break;
@@ -338,7 +338,7 @@ spu_fallback_fragment_ops(uint x, uint y,
       /*
        * Compute Dest RGB terms (framebuffer color * factor)
        */
-      switch (spu.blend.rgb_dst_factor) {
+      switch (spu.blend.rt[0].rgb_dst_factor) {
       case PIPE_BLENDFACTOR_ONE:
          term2r = fbRGBA[0];
          term2g = fbRGBA[1];
@@ -394,7 +394,7 @@ spu_fallback_fragment_ops(uint x, uint y,
       /*
        * Compute Dest Alpha term (framebuffer alpha * factor)
        */
-      switch (spu.blend.alpha_dst_factor) {
+      switch (spu.blend.rt[0].alpha_dst_factor) {
       case PIPE_BLENDFACTOR_ONE:
          term2a = fbRGBA[3];
          break;
@@ -427,7 +427,7 @@ spu_fallback_fragment_ops(uint x, uint y,
       /*
        * Combine Src/Dest RGB terms
        */
-      switch (spu.blend.rgb_func) {
+      switch (spu.blend.rt[0].rgb_func) {
       case PIPE_BLEND_ADD:
          fragR = spu_add(term1r, term2r);
          fragG = spu_add(term1g, term2g);
@@ -460,7 +460,7 @@ spu_fallback_fragment_ops(uint x, uint y,
       /*
        * Combine Src/Dest A term
        */
-      switch (spu.blend.alpha_func) {
+      switch (spu.blend.rt[0].alpha_func) {
       case PIPE_BLEND_ADD:
          fragA = spu_add(term1a, term2a);
          break;
@@ -506,13 +506,13 @@ spu_fallback_fragment_ops(uint x, uint y,
     * Pack fragment float colors into 32-bit RGBA words.
     */
    switch (spu.fb.color_format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       fragc0 = spu_pack_A8R8G8B8(frag_aos[0]);
       fragc1 = spu_pack_A8R8G8B8(frag_aos[1]);
       fragc2 = spu_pack_A8R8G8B8(frag_aos[2]);
       fragc3 = spu_pack_A8R8G8B8(frag_aos[3]);
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       fragc0 = spu_pack_B8G8R8A8(frag_aos[0]);
       fragc1 = spu_pack_B8G8R8A8(frag_aos[1]);
       fragc2 = spu_pack_B8G8R8A8(frag_aos[2]);
@@ -527,29 +527,29 @@ spu_fallback_fragment_ops(uint x, uint y,
    /*
     * Do color masking
     */
-   if (spu.blend.colormask != 0xf) {
+   if (spu.blend.rt[0].colormask != 0xf) {
       uint cmask = 0x0; /* each byte corresponds to a color channel */
 
       /* Form bitmask depending on color buffer format and colormask bits */
       switch (spu.fb.color_format) {
-      case PIPE_FORMAT_A8R8G8B8_UNORM:
-         if (spu.blend.colormask & PIPE_MASK_R)
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+         if (spu.blend.rt[0].colormask & PIPE_MASK_R)
             cmask |= 0x00ff0000; /* red */
-         if (spu.blend.colormask & PIPE_MASK_G)
+         if (spu.blend.rt[0].colormask & PIPE_MASK_G)
             cmask |= 0x0000ff00; /* green */
-         if (spu.blend.colormask & PIPE_MASK_B)
+         if (spu.blend.rt[0].colormask & PIPE_MASK_B)
             cmask |= 0x000000ff; /* blue */
-         if (spu.blend.colormask & PIPE_MASK_A)
+         if (spu.blend.rt[0].colormask & PIPE_MASK_A)
             cmask |= 0xff000000; /* alpha */
          break;
-      case PIPE_FORMAT_B8G8R8A8_UNORM:
-         if (spu.blend.colormask & PIPE_MASK_R)
+      case PIPE_FORMAT_A8R8G8B8_UNORM:
+         if (spu.blend.rt[0].colormask & PIPE_MASK_R)
             cmask |= 0x0000ff00; /* red */
-         if (spu.blend.colormask & PIPE_MASK_G)
+         if (spu.blend.rt[0].colormask & PIPE_MASK_G)
             cmask |= 0x00ff0000; /* green */
-         if (spu.blend.colormask & PIPE_MASK_B)
+         if (spu.blend.rt[0].colormask & PIPE_MASK_B)
             cmask |= 0xff000000; /* blue */
-         if (spu.blend.colormask & PIPE_MASK_A)
+         if (spu.blend.rt[0].colormask & PIPE_MASK_A)
             cmask |= 0x000000ff; /* alpha */
          break;
       default:

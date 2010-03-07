@@ -58,6 +58,11 @@ if env['dri']:
 			'intel/SConscript',
 		])
 
+	if 'i965' in env['winsys']:
+		SConscript([
+			'i965/SConscript',
+		])
+
 	if 'radeon' in env['winsys']:
 		SConscript([
 			'radeon/SConscript',

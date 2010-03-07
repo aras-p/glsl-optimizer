@@ -49,8 +49,6 @@
 #include <X11/extensions/dpms.h>
 #endif
 
-#include "X11/Xatom.h"
-
 #include "xorg_tracker.h"
 
 static char *output_enum_list[] = {

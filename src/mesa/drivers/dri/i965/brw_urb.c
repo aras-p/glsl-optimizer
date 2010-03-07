@@ -105,7 +105,8 @@ static GLboolean check_urb_layout( struct brw_context *brw )
    brw->urb.sf_start = brw->urb.clip_start + brw->urb.nr_clip_entries * brw->urb.vsize;
    brw->urb.cs_start = brw->urb.sf_start + brw->urb.nr_sf_entries * brw->urb.sfsize;
 
-   return brw->urb.cs_start + brw->urb.nr_cs_entries * brw->urb.csize <= URB_SIZES(brw);
+   return brw->urb.cs_start + brw->urb.nr_cs_entries *
+      brw->urb.csize <= brw->urb.size;
 }
 
 /* Most minimal update, forces re-emit of URB fence packet after GS
@@ -113,6 +114,7 @@ static GLboolean check_urb_layout( struct brw_context *brw )
  */
 static void recalculate_urb_fence( struct brw_context *brw )
 {
+   struct intel_context *intel = &brw->intel;
    GLuint csize = brw->curbe.total_size;
    GLuint vsize = brw->vs.prog_data->urb_entry_size;
    GLuint sfsize = brw->sf.prog_data->urb_entry_size;
@@ -146,7 +148,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
 
       brw->urb.constrained = 0;
 
-      if (BRW_IS_IGDNG(brw)) {
+      if (intel->is_ironlake) {
          brw->urb.nr_vs_entries = 128;
          brw->urb.nr_sf_entries = 48;
          if (check_urb_layout(brw)) {
@@ -156,7 +158,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
             brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;
             brw->urb.nr_sf_entries = limits[SF].preferred_nr_entries;
          }
-      } else if (BRW_IS_G4X(brw)) {
+      } else if (intel->is_g4x) {
 	 brw->urb.nr_vs_entries = 64;
 	 if (check_urb_layout(brw)) {
 	    goto done;
@@ -184,23 +186,23 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	     * entries and the values for minimum nr of entries
 	     * provided above.
 	     */
-	    _mesa_printf("couldn't calculate URB layout!\n");
+	    printf("couldn't calculate URB layout!\n");
 	    exit(1);
 	 }
 	 
 	 if (INTEL_DEBUG & (DEBUG_URB|DEBUG_FALLBACKS))
-	    _mesa_printf("URB CONSTRAINED\n");
+	    printf("URB CONSTRAINED\n");
       }
 
 done:
       if (INTEL_DEBUG & DEBUG_URB)
-	 _mesa_printf("URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
+	 printf("URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
 		      brw->urb.vs_start,
 		      brw->urb.gs_start,
 		      brw->urb.clip_start,
 		      brw->urb.sf_start,
 		      brw->urb.cs_start, 
-		      URB_SIZES(brw));
+		      brw->urb.size);
       
       brw->state.dirty.brw |= BRW_NEW_URB_FENCE;
    }
@@ -244,7 +246,7 @@ void brw_upload_urb_fence(struct brw_context *brw)
    uf.bits0.gs_fence  = brw->urb.clip_start; 
    uf.bits0.clp_fence = brw->urb.sf_start; 
    uf.bits1.sf_fence  = brw->urb.cs_start; 
-   uf.bits1.cs_fence  = URB_SIZES(brw);
+   uf.bits1.cs_fence  = brw->urb.size;
 
    BRW_BATCH_STRUCT(brw, &uf);
 }

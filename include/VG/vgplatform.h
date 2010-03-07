@@ -38,6 +38,11 @@
 extern "C" {
 #endif
 
+#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#  define VG_API_CALL __attribute__((visibility("default")))
+#  define VGU_API_CALL __attribute__((visibility("default")))
+#endif
+
 #ifndef VG_API_CALL 
 #if defined(OPENVG_STATIC_LIBRARY)
 #	define VG_API_CALL

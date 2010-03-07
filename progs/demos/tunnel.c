@@ -491,7 +491,6 @@ main(int ac, char **av)
    fprintf(stderr,
 	   "Tunnel V1.5\nWritten by David Bucciarelli (tech.hmw@plus.it)\n");
 
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(WIDTH, HEIGHT);
    glutInit(&ac, av);
 

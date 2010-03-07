@@ -35,7 +35,6 @@
 #include "main/bufferobj.h"
 #include "main/enums.h"
 #include "main/macros.h"
-#include "glapi/dispatch.h"
 
 #include "vbo_context.h"
 
@@ -50,7 +49,7 @@ vbo_get_minmax_index(GLcontext *ctx,
 		     GLuint *min_index, GLuint *max_index)
 {
    GLuint i;
-   GLsizei count = prim->count;
+   GLuint count = prim->count;
    const void *indices;
 
    if (_mesa_is_bufferobj(ib->obj)) {
@@ -133,17 +132,17 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
       case GL_FLOAT:
          {
             GLfloat *f = (GLfloat *) ((GLubyte *) data + array->StrideB * j);
-            GLuint k;
+            GLint k;
             for (k = 0; k < array->Size; k++) {
                if (IS_INF_OR_NAN(f[k]) ||
                    f[k] >= 1.0e20 || f[k] <= -1.0e10) {
-                  _mesa_printf("Bad array data:\n");
-                  _mesa_printf("  Element[%u].%u = %f\n", j, k, f[k]);
-                  _mesa_printf("  Array %u at %p\n", attrib, (void* ) array);
-                  _mesa_printf("  Type 0x%x, Size %d, Stride %d\n",
-                               array->Type, array->Size, array->Stride);
-                  _mesa_printf("  Address/offset %p in Buffer Object %u\n",
-                               array->Ptr, array->BufferObj->Name);
+                  printf("Bad array data:\n");
+                  printf("  Element[%u].%u = %f\n", j, k, f[k]);
+                  printf("  Array %u at %p\n", attrib, (void* ) array);
+                  printf("  Type 0x%x, Size %d, Stride %d\n",
+			 array->Type, array->Size, array->Stride);
+                  printf("  Address/offset %p in Buffer Object %u\n",
+			 array->Ptr, array->BufferObj->Name);
                   f[k] = 1.0; /* XXX replace the bad value! */
                }
                /*assert(!IS_INF_OR_NAN(f[k]));*/
@@ -258,21 +257,21 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
 {
    int i;
 
-   _mesa_printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
-                mode, start, count);
+   printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
+	  mode, start, count);
 
    for (i = 0; i < 32; i++) {
       GLuint bufName = exec->array.inputs[i]->BufferObj->Name;
       GLint stride = exec->array.inputs[i]->Stride;
-      _mesa_printf("attr %2d: size %d stride %d  enabled %d  "
-                   "ptr %p  Bufobj %u\n",
-                   i,
-                   exec->array.inputs[i]->Size,
-                   stride,
-                   /*exec->array.inputs[i]->Enabled,*/
-                   exec->array.legacy_array[i]->Enabled,
-                   exec->array.inputs[i]->Ptr,
-                   bufName);
+      printf("attr %2d: size %d stride %d  enabled %d  "
+	     "ptr %p  Bufobj %u\n",
+	     i,
+	     exec->array.inputs[i]->Size,
+	     stride,
+	     /*exec->array.inputs[i]->Enabled,*/
+	     exec->array.legacy_array[i]->Enabled,
+	     exec->array.inputs[i]->Ptr,
+	     bufName);
 
       if (bufName) {
          struct gl_buffer_object *buf = _mesa_lookup_bufferobj(ctx, bufName);
@@ -285,9 +284,9 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
          int n = (count * stride) / 4;
          if (n > 32)
             n = 32;
-         _mesa_printf("  Data at offset %d:\n", offset);
+         printf("  Data at offset %d:\n", offset);
          for (i = 0; i < n; i++) {
-            _mesa_printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
+            printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
          }
          ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, buf);
       }
@@ -444,6 +443,13 @@ recalculate_input_bindings(GLcontext *ctx)
 }
 
 
+/**
+ * Examine the enabled vertex arrays to set the exec->array.inputs[] values.
+ * These will point to the arrays to actually use for drawing.  Some will
+ * be user-provided arrays, other will be zero-stride const-valued arrays.
+ * Note that this might set the _NEW_ARRAY dirty flag so state validation
+ * must be done after this call.
+ */
 static void
 bind_arrays(GLcontext *ctx)
 {
@@ -485,9 +491,6 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
    FLUSH_CURRENT( ctx, 0 );
 
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-      
    if (!_mesa_valid_to_render(ctx, "glDrawArrays")) {
       return;
    }
@@ -543,37 +546,37 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
    case GL_UNSIGNED_BYTE:
       {
          const GLubyte *us = (const GLubyte *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size; i++) {
-            _mesa_printf("%02x ", us[i]);
+            printf("%02x ", us[i]);
             if (i % 32 == 31)
-               _mesa_printf("\n");
+               printf("\n");
          }
-         _mesa_printf("\n");
+         printf("\n");
       }
       break;
    case GL_UNSIGNED_SHORT:
       {
          const GLushort *us = (const GLushort *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 2; i++) {
-            _mesa_printf("%04x ", us[i]);
+            printf("%04x ", us[i]);
             if (i % 16 == 15)
-               _mesa_printf("\n");
+               printf("\n");
          }
-         _mesa_printf("\n");
+         printf("\n");
       }
       break;
    case GL_UNSIGNED_INT:
       {
          const GLuint *us = (const GLuint *) map;
-         GLuint i;
+         GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 4; i++) {
-            _mesa_printf("%08x ", us[i]);
+            printf("%08x ", us[i]);
             if (i % 8 == 7)
-               _mesa_printf("\n");
+               printf("\n");
          }
-         _mesa_printf("\n");
+         printf("\n");
       }
       break;
    default:
@@ -601,17 +604,15 @@ vbo_validated_drawrangeelements(GLcontext *ctx, GLenum mode,
 
    FLUSH_CURRENT( ctx, 0 );
 
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-
    if (!_mesa_valid_to_render(ctx, "glDraw[Range]Elements")) {
       return;
    }
 
+   bind_arrays( ctx );
+
+   /* check for dirty state again */
    if (ctx->NewState)
       _mesa_update_state( ctx );
-
-   bind_arrays( ctx );
 
    ib.count = count;
    ib.type = type;
@@ -689,6 +690,16 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
     * or we can read/write out of memory in several different places!
     */
 
+   /* Catch/fix some potential user errors */
+   if (type == GL_UNSIGNED_BYTE) {
+      start = MIN2(start, 0xff);
+      end = MIN2(end, 0xff);
+   }
+   else if (type == GL_UNSIGNED_SHORT) {
+      start = MIN2(start, 0xffff);
+      end = MIN2(end, 0xffff);
+   }
+
    if (end >= ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
       warnCount++;
@@ -713,8 +724,7 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
 
 #ifdef DEBUG
       /* 'end' was out of bounds, but now let's check the actual array
-       * indexes to see if any of them are out of bounds.  If so, warn
-       * and skip the draw to avoid potential segfault, etc.
+       * indexes to see if any of them are out of bounds.
        */
       {
          GLuint max = _mesa_max_buffer_index(ctx, count, type, indices,
@@ -731,7 +741,6 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
                              ctx->Array.ElementArrayBufferObj->Name,
                              ctx->Array.ElementArrayBufferObj->Size);
             }
-            return;
          }
          /* XXX we could also find the min index and compare to 'start'
           * to see if start is correct.  But it's more likely to get the
@@ -739,14 +748,18 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
           */
       }
 #endif
+
+      /* Set 'end' to the max possible legal value */
+      assert(ctx->Array.ArrayObj->_MaxElement >= 1);
+      end = ctx->Array.ArrayObj->_MaxElement - 1;
    }
    else if (0) {
-      _mesa_printf("glDraw[Range]Elements{,BaseVertex}"
-                   "(start %u, end %u, type 0x%x, count %d) ElemBuf %u, "
-		   "base %d\n",
-                   start, end, type, count,
-                   ctx->Array.ElementArrayBufferObj->Name,
-		   basevertex);
+      printf("glDraw[Range]Elements{,BaseVertex}"
+	     "(start %u, end %u, type 0x%x, count %d) ElemBuf %u, "
+	     "base %d\n",
+	     start, end, type, count,
+	     ctx->Array.ElementArrayBufferObj->Name,
+	     basevertex);
    }
 
 #if 0
@@ -837,17 +850,11 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
 
    FLUSH_CURRENT( ctx, 0 );
 
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-
    if (!_mesa_valid_to_render(ctx, "glMultiDrawElements")) {
       return;
    }
 
-   if (ctx->NewState)
-      _mesa_update_state( ctx );
-
-   prim = _mesa_calloc(primcount * sizeof(*prim));
+   prim = calloc(1, primcount * sizeof(*prim));
    if (prim == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMultiDrawElements");
       return;
@@ -857,6 +864,10 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
     * same index buffer, or if we have to reset the index pointer per primitive.
     */
    bind_arrays( ctx );
+
+   /* check for dirty state again */
+   if (ctx->NewState)
+      _mesa_update_state( ctx );
 
    switch (type) {
    case GL_UNSIGNED_INT:
@@ -924,12 +935,12 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
       vbo->draw_prims(ctx, exec->array.inputs, prim, primcount, &ib,
 		      GL_FALSE, ~0, ~0);
    } else {
+      /* render one prim at a time */
       for (i = 0; i < primcount; i++) {
 	 ib.count = count[i];
 	 ib.type = type;
 	 ib.obj = ctx->Array.ElementArrayBufferObj;
 	 ib.ptr = indices[i];
-
 
 	 prim[0].begin = 1;
 	 prim[0].end = 1;
@@ -943,12 +954,13 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
 	    prim[0].basevertex = basevertex[i];
 	 else
 	    prim[0].basevertex = 0;
-      }
 
-      vbo->draw_prims(ctx, exec->array.inputs, prim, 1, &ib,
-		      GL_FALSE, ~0, ~0);
+         vbo->draw_prims(ctx, exec->array.inputs, prim, 1, &ib,
+                         GL_FALSE, ~0, ~0);
+      }
    }
-   _mesa_free(prim);
+
+   free(prim);
 }
 
 

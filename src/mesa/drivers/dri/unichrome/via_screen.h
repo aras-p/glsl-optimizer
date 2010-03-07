@@ -61,7 +61,7 @@ typedef struct {
     drmAddress agpLinearStart;
     GLuint agpBase;
 
-    __DRIscreenPrivate *driScrnPriv;
+    __DRIscreen *driScrnPriv;
     drmBufMapPtr bufs;
     unsigned int sareaPrivOffset;
     /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
@@ -77,21 +77,21 @@ typedef struct {
 
 extern GLboolean
 viaCreateContext(const __GLcontextModes *mesaVis,
-                 __DRIcontextPrivate *driContextPriv,
+                 __DRIcontext *driContextPriv,
                  void *sharedContextPrivate);
 
 extern void
-viaDestroyContext(__DRIcontextPrivate *driContextPriv);
+viaDestroyContext(__DRIcontext *driContextPriv);
 
 extern GLboolean
-viaUnbindContext(__DRIcontextPrivate *driContextPriv);
+viaUnbindContext(__DRIcontext *driContextPriv);
 
 extern GLboolean
-viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
-               __DRIdrawablePrivate *driDrawPriv,
-               __DRIdrawablePrivate *driReadPriv);
+viaMakeCurrent(__DRIcontext *driContextPriv,
+               __DRIdrawable *driDrawPriv,
+               __DRIdrawable *driReadPriv);
 
 extern void
-viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate);
+viaSwapBuffers(__DRIdrawable *drawablePrivate);
 
 #endif

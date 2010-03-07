@@ -59,6 +59,7 @@ Dlnode::Dlnode( PFVS _work, void *_arg, PFVS _cleanup )
     work = _work;
     arg = _arg;
     cleanup = _cleanup;
+    next = 0;
 }
 
 class DisplayList {

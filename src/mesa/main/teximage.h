@@ -165,6 +165,8 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalformat,
                      GLint border, GLenum format, GLenum type,
                      const GLvoid *pixels );
 
+extern void GLAPIENTRY
+_mesa_EGLImageTargetTexture2DOES( GLenum target, GLeglImageOES image );
 
 extern void GLAPIENTRY
 _mesa_TexSubImage1D( GLenum target, GLint level, GLint xoffset,

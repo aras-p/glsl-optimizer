@@ -45,19 +45,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/simple_list.h"
 
 #include "r300_context.h"
-#include "r300_state.h"
-#include "r300_ioctl.h"
 #include "radeon_mipmap_tree.h"
 #include "r300_tex.h"
 #include "r300_reg.h"
-
-#define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5			\
-			   || ((f) >= MESA_FORMAT_RGBA_FLOAT32 &&	\
-			       (f) <= MESA_FORMAT_INTENSITY_FLOAT16))	\
-			  && tx_table[f].flag )
-
-#define _ASSIGN(entry, format)				\
-	[ MESA_FORMAT_ ## entry ] = { format, 0, 1}
 
 /*
  * Note that the _REV formats are the same as the non-REV formats.  This is
@@ -68,66 +58,118 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * identically.  -- paulus
  */
 
-static const struct tx_table {
-	GLuint format, filter, flag;
-} tx_table[] = {
-	/* *INDENT-OFF* */
+int32_t r300TranslateTexFormat(gl_format mesaFormat)
+{
+	switch (mesaFormat)
+	{
 #ifdef MESA_LITTLE_ENDIAN
-	_ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
-	_ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
-	_ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
-	_ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
+		case MESA_FORMAT_RGBA8888:
+			return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8);
+		case MESA_FORMAT_RGBA8888_REV:
+			return R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8);
+		case MESA_FORMAT_ARGB8888:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		case MESA_FORMAT_ARGB8888_REV:
+			return R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8);
 #else
-	_ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
-	_ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
-	_ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
-	_ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
+		case MESA_FORMAT_RGBA8888:
+			return R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8);
+		case MESA_FORMAT_RGBA8888_REV:
+			return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8);
+		case MESA_FORMAT_ARGB8888:
+			return R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8);
+		case MESA_FORMAT_ARGB8888_REV:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
 #endif
-	_ASSIGN(XRGB8888, R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8)),
-	_ASSIGN(RGB888, R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8)),
-	_ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
-	_ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
-	_ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
-	_ASSIGN(ARGB4444_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
-	_ASSIGN(ARGB1555, R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5)),
-	_ASSIGN(ARGB1555_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5)),
-	_ASSIGN(AL88, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8)),
-	_ASSIGN(AL88_REV, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8)),
-	_ASSIGN(RGB332, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z3Y3X2)),
-	_ASSIGN(A8, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X8)),
-	_ASSIGN(L8, R300_EASY_TX_FORMAT(X, X, X, ONE, X8)),
-	_ASSIGN(I8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
-	_ASSIGN(CI8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
-	_ASSIGN(YCBCR, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8) | R300_TX_FORMAT_YUV_MODE),
-	_ASSIGN(YCBCR_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8) | R300_TX_FORMAT_YUV_MODE),
-	_ASSIGN(RGB_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1)),
-	_ASSIGN(RGBA_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1)),
-	_ASSIGN(RGBA_DXT3, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3)),
-	_ASSIGN(RGBA_DXT5, R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5)),
-	_ASSIGN(RGBA_FLOAT32, R300_EASY_TX_FORMAT(Z, Y, X, W, FL_R32G32B32A32)),
-	_ASSIGN(RGBA_FLOAT16, R300_EASY_TX_FORMAT(Z, Y, X, W, FL_R16G16B16A16)),
-	_ASSIGN(RGB_FLOAT32, 0xffffffff),
-	_ASSIGN(RGB_FLOAT16, 0xffffffff),
-	_ASSIGN(ALPHA_FLOAT32, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, FL_I32)),
-	_ASSIGN(ALPHA_FLOAT16, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, FL_I16)),
-	_ASSIGN(LUMINANCE_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, ONE, FL_I32)),
-	_ASSIGN(LUMINANCE_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, ONE, FL_I16)),
-	_ASSIGN(LUMINANCE_ALPHA_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, Y, FL_I32A32)),
-	_ASSIGN(LUMINANCE_ALPHA_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, Y, FL_I16A16)),
-	_ASSIGN(INTENSITY_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, X, FL_I32)),
-	_ASSIGN(INTENSITY_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, X, FL_I16)),
-	_ASSIGN(Z16, R300_EASY_TX_FORMAT(X, X, X, X, X16)),
-	_ASSIGN(Z24_S8, R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8)),
-	_ASSIGN(S8_Z24, R300_EASY_TX_FORMAT(Y, Y, Y, Y, X24_Y8)),
-	_ASSIGN(Z32, R300_EASY_TX_FORMAT(X, X, X, X, X32)),
-	/* EXT_texture_sRGB */
-	_ASSIGN(SRGBA8, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8) | R300_TX_FORMAT_GAMMA),
-	_ASSIGN(SLA8, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8) | R300_TX_FORMAT_GAMMA),
-	_ASSIGN(SL8, R300_EASY_TX_FORMAT(X, X, X, ONE, X8) | R300_TX_FORMAT_GAMMA),
-	/* *INDENT-ON* */
+		case MESA_FORMAT_XRGB8888:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		case MESA_FORMAT_RGB888:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		case MESA_FORMAT_RGB565:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
+		case MESA_FORMAT_RGB565_REV:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
+		case MESA_FORMAT_ARGB4444:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4);
+		case MESA_FORMAT_ARGB4444_REV:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4);
+		case MESA_FORMAT_ARGB1555:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5);
+		case MESA_FORMAT_ARGB1555_REV:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5);
+		case MESA_FORMAT_AL88:
+			return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8);
+		case MESA_FORMAT_AL88_REV:
+			return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8);
+		case MESA_FORMAT_RGB332:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z3Y3X2);
+		case MESA_FORMAT_A8:
+			return R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X8);
+		case MESA_FORMAT_L8:
+			return R300_EASY_TX_FORMAT(X, X, X, ONE, X8);
+		case MESA_FORMAT_I8:
+			return R300_EASY_TX_FORMAT(X, X, X, X, X8);
+		case MESA_FORMAT_CI8:
+			return R300_EASY_TX_FORMAT(X, X, X, X, X8);
+		case MESA_FORMAT_YCBCR:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8) | R300_TX_FORMAT_YUV_MODE;
+		case MESA_FORMAT_YCBCR_REV:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8) | R300_TX_FORMAT_YUV_MODE;
+		case MESA_FORMAT_RGB_DXT1:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1);
+		case MESA_FORMAT_RGBA_DXT1:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1);
+		case MESA_FORMAT_RGBA_DXT3:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3);
+		case MESA_FORMAT_RGBA_DXT5:
+			return R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5);
+		case MESA_FORMAT_RGBA_FLOAT32:
+			return R300_EASY_TX_FORMAT(Z, Y, X, W, FL_R32G32B32A32);
+		case MESA_FORMAT_RGBA_FLOAT16:
+			return R300_EASY_TX_FORMAT(Z, Y, X, W, FL_R16G16B16A16);
+		case MESA_FORMAT_ALPHA_FLOAT32:
+			return R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, FL_I32);
+		case MESA_FORMAT_ALPHA_FLOAT16:
+			return R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, FL_I16);
+		case MESA_FORMAT_LUMINANCE_FLOAT32:
+			return R300_EASY_TX_FORMAT(X, X, X, ONE, FL_I32);
+		case MESA_FORMAT_LUMINANCE_FLOAT16:
+			return R300_EASY_TX_FORMAT(X, X, X, ONE, FL_I16);
+		case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+			return R300_EASY_TX_FORMAT(X, X, X, Y, FL_I32A32);
+		case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
+			return R300_EASY_TX_FORMAT(X, X, X, Y, FL_I16A16);
+		case MESA_FORMAT_INTENSITY_FLOAT32:
+			return R300_EASY_TX_FORMAT(X, X, X, X, FL_I32);
+		case MESA_FORMAT_INTENSITY_FLOAT16:
+			return R300_EASY_TX_FORMAT(X, X, X, X, FL_I16);
+		case MESA_FORMAT_Z16:
+			return R300_EASY_TX_FORMAT(X, X, X, X, X16);
+		case MESA_FORMAT_Z24_S8:
+			return R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8);
+		case MESA_FORMAT_S8_Z24:
+			return R300_EASY_TX_FORMAT(Y, Y, Y, Y, X24_Y8);
+		case MESA_FORMAT_Z32:
+			return R300_EASY_TX_FORMAT(X, X, X, X, X32);
+		/* EXT_texture_sRGB */
+		case MESA_FORMAT_SRGBA8:
+			return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8) | R300_TX_FORMAT_GAMMA;
+		case MESA_FORMAT_SLA8:
+			return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8) | R300_TX_FORMAT_GAMMA;
+		case MESA_FORMAT_SL8:
+			return R300_EASY_TX_FORMAT(X, X, X, ONE, X8) | R300_TX_FORMAT_GAMMA;
+		case MESA_FORMAT_SRGB_DXT1:
+			return R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1) | R300_TX_FORMAT_GAMMA;
+		case MESA_FORMAT_SRGBA_DXT1:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1) | R300_TX_FORMAT_GAMMA;
+		case MESA_FORMAT_SRGBA_DXT3:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3) | R300_TX_FORMAT_GAMMA;
+		case MESA_FORMAT_SRGBA_DXT5:
+			return R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5) | R300_TX_FORMAT_GAMMA;
+		default:
+			return -1;
+	}
 };
-
-#undef _ASSIGN
 
 void r300SetDepthTexMode(struct gl_texture_object *tObj)
 {
@@ -138,9 +180,9 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X16),
 		},
 		{
-			R300_EASY_TX_FORMAT(X, X, X, ONE, X24_Y8),
-			R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8),
-			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X24_Y8),
+			R300_EASY_TX_FORMAT(Y, Y, Y, ONE, X24_Y8),
+			R300_EASY_TX_FORMAT(Y, Y, Y, Y, X24_Y8),
+			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, Y, X24_Y8),
 		},
 		{
 			R300_EASY_TX_FORMAT(X, X, X, ONE, X32),
@@ -205,19 +247,18 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 	const struct gl_texture_image *firstImage;
 	firstImage = t->base.Image[0][t->minLod];
 
-	if (!t->image_override
-	    && VALID_FORMAT(firstImage->TexFormat)) {
+	if (!t->image_override) {
 		if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(&t->base);
 		} else {
-			t->pp_txformat = tx_table[firstImage->TexFormat].format;
+			int32_t txformat = r300TranslateTexFormat(firstImage->TexFormat);
+			if (txformat < 0) {
+				_mesa_problem(rmesa->radeon.glCtx, "%s: Invalid format %s",
+							  __FUNCTION__, _mesa_get_format_name(firstImage->TexFormat));
+				exit(1);
+			}
+			t->pp_txformat = (uint32_t) txformat;
 		}
-
-		t->pp_txfilter |= tx_table[firstImage->TexFormat].filter;
-	} else if (!t->image_override) {
-		_mesa_problem(NULL, "unexpected texture format in %s",
-			      __FUNCTION__);
-		return;
 	}
 
 	if (t->image_override && t->bo)
@@ -357,18 +398,15 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	switch (depth) {
 	case 32:
 		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
-		t->pp_txfilter |= tx_table[2].filter;
 		pitch_val /= 4;
 		break;
 	case 24:
 	default:
 		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
-		t->pp_txfilter |= tx_table[4].filter;
 		pitch_val /= 4;
 		break;
 	case 16:
 		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
-		t->pp_txfilter |= tx_table[5].filter;
 		pitch_val /= 2;
 		break;
 	}
@@ -377,7 +415,7 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	t->pp_txpitch |= pitch_val;
 }
 
-void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_format, __DRIdrawable *dPriv)
+void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format, __DRIdrawable *dPriv)
 {
 	struct gl_texture_unit *texUnit;
 	struct gl_texture_object *texObj;
@@ -393,7 +431,7 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 
 	type = GL_BGRA;
 	format = GL_UNSIGNED_BYTE;
-	internalFormat = (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT ? 3 : 4);
+	internalFormat = (texture_format == __DRI_TEXTURE_FORMAT_RGB ? 3 : 4);
 
 	radeon = pDRICtx->driverPrivate;
 	rmesa = pDRICtx->driverPrivate;
@@ -443,22 +481,19 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
-		if (glx_texture_format == GLX_TEXTURE_FORMAT_RGB_EXT)
+		if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
 			t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
 		else
 			t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
-		t->pp_txfilter |= tx_table[2].filter;
 		pitch_val /= 4;
 		break;
 	case 3:
 	default:
 		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
-		t->pp_txfilter |= tx_table[4].filter;
 		pitch_val /= 4;
 		break;
 	case 2:
 		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
-		t->pp_txfilter |= tx_table[5].filter;
 		pitch_val /= 2;
 		break;
 	}
@@ -485,5 +520,5 @@ void r300SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint glx_texture_fo
 
 void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 {
-        r300SetTexBuffer2(pDRICtx, target, GLX_TEXTURE_FORMAT_RGBA_EXT, dPriv);
+        r300SetTexBuffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
 }

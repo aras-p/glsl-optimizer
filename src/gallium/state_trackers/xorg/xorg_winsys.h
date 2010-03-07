@@ -45,5 +45,6 @@
 
 void xorg_tracker_set_functions(ScrnInfoPtr scrn);
 const OptionInfoRec * xorg_tracker_available_options(int chipid, int busid);
+Bool xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device);
 
 #endif

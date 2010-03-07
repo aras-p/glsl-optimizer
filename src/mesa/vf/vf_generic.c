@@ -211,7 +211,7 @@ static INLINE void insert_3f_xyw_4( const struct vf_attr *a, GLubyte *v, const G
 static INLINE void insert_3f_xyw_err( const struct vf_attr *a, GLubyte *v, const GLfloat *in )
 {
    (void) a; (void) v; (void) in;
-   _mesa_exit(1);
+   exit(1);
 }
 
 static INLINE void insert_3f_3( const struct vf_attr *a, GLubyte *v, const GLfloat *in )

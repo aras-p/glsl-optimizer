@@ -186,6 +186,16 @@ typedef XID GLXWindow;
 typedef XID GLXPbuffer;
 
 
+/*
+** Events.
+** __GLX_NUMBER_EVENTS is set to 17 to account for the BufferClobberSGIX
+**  event - this helps initialization if the server supports the pbuffer
+**  extension and the client doesn't.
+*/
+#define GLX_PbufferClobber	0
+#define GLX_BufferSwapComplete	1
+
+#define __GLX_NUMBER_EVENTS 17
 
 extern XVisualInfo* glXChooseVisual( Display *dpy, int screen,
 				     int *attribList );
@@ -507,8 +517,21 @@ typedef struct {
     int count;			/* if nonzero, at least this many more */
 } GLXPbufferClobberEvent;
 
+typedef struct {
+    int type;
+    unsigned long serial;	/* # of last request processed by server */
+    Bool send_event;		/* true if this came from a SendEvent request */
+    Display *display;		/* Display the event was read from */
+    GLXDrawable drawable;	/* drawable on which event was requested in event mask */
+    int event_type;
+    int64_t ust;
+    int64_t msc;
+    int64_t sbc;
+} GLXBufferSwapComplete;
+
 typedef union __GLXEvent {
     GLXPbufferClobberEvent glxpbufferclobber;
+    GLXBufferSwapComplete glxbufferswapcomplete;
     long pad[24];
 } GLXEvent;
 

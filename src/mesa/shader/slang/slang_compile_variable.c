@@ -182,7 +182,7 @@ slang_variable_destruct(slang_variable * var)
    }
 #if 0
    if (var->aux) {
-      _mesa_free(var->aux);
+      free(var->aux);
    }
 #endif
 }

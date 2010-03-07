@@ -48,7 +48,6 @@
 #include "texenvprogram.h"
 #include "texobj.h"
 #include "texstate.h"
-#include "viewport.h"
 
 
 static void
@@ -83,12 +82,6 @@ compute_max_element(struct gl_client_array *array)
       } else {
 	 array->_MaxElement = 0;
       }
-      /* Compute the max element we can access in the VBO without going
-       * out of bounds.
-       */
-      array->_MaxElement = ((GLsizeiptrARB) array->BufferObj->Size
-                            - (GLsizeiptrARB) array->Ptr + array->StrideB
-                            - array->_ElementSize) / array->StrideB;
    }
    else {
       /* user-space array, no idea how big it is */
@@ -689,7 +682,7 @@ _mesa_set_varying_vp_inputs( GLcontext *ctx,
    if (ctx->varying_vp_inputs != varying_inputs) {
       ctx->varying_vp_inputs = varying_inputs;
       ctx->NewState |= _NEW_ARRAY;
-      /*_mesa_printf("%s %x\n", __FUNCTION__, varying_inputs);*/
+      /*printf("%s %x\n", __FUNCTION__, varying_inputs);*/
    }
 }
 

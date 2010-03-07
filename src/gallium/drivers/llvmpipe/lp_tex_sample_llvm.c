@@ -42,12 +42,11 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
-#include "lp_bld_debug.h"
-#include "lp_bld_type.h"
-#include "lp_bld_intr.h"
-#include "lp_bld_sample.h"
-#include "lp_bld_tgsi.h"
-#include "lp_state.h"
+#include "gallivm/lp_bld_debug.h"
+#include "gallivm/lp_bld_type.h"
+#include "gallivm/lp_bld_sample.h"
+#include "gallivm/lp_bld_tgsi.h"
+#include "lp_jit.h"
 #include "lp_tex_sample.h"
 
 
@@ -146,6 +145,10 @@ lp_llvm_sampler_soa_destroy(struct lp_build_sampler_soa *sampler)
 }
 
 
+/**
+ * Fetch filtered values from texture.
+ * The 'texel' parameter returns four vectors corresponding to R, G, B, A.
+ */
 static void
 lp_llvm_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *base,
                                      LLVMBuilderRef builder,

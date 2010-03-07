@@ -331,8 +331,12 @@ struct r100_hw_state {
 	struct radeon_state_atom stp;
 };
 
+struct radeon_stipple_state {
+	GLuint mask[32];
+};
 
 struct r100_state {
+	struct radeon_stipple_state stipple;
 	struct radeon_texture_state texture;
 };
 
@@ -447,9 +451,8 @@ struct r100_context {
 #define RADEON_OLD_PACKETS 1
 
 extern GLboolean r100CreateContext( const __GLcontextModes *glVisual,
-				    __DRIcontextPrivate *driContextPriv,
+				    __DRIcontext *driContextPriv,
 				    void *sharedContextPrivate);
-  
 
 
 #endif				/* __RADEON_CONTEXT_H__ */

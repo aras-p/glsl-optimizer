@@ -29,19 +29,19 @@ struct drm_create_screen_arg {
 
 struct drm_api
 {
+        const char *name;
+
+	/**
+	 * Kernel driver name, as accepted by drmOpenByName.
+	 */
+	const char *driver_name;
+
 	/**
 	 * Special buffer functions
 	 */
 	/*@{*/
 	struct pipe_screen*  (*create_screen)(struct drm_api *api, int drm_fd,
 	                                      struct drm_create_screen_arg *arg);
-	struct pipe_context* (*create_context)(struct drm_api *api,
-	                                       struct pipe_screen *screen);
-        struct pipe_video_context* (*create_video_context)(struct drm_api *api,
-                                                           struct pipe_screen *screen,
-                                                           enum pipe_video_profile profile,
-                                                           enum pipe_video_chroma_format chroma_format,
-                                                           unsigned width, unsigned height);
 	/*@}*/
 
 	/**

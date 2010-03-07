@@ -47,7 +47,7 @@
 
 /*  Initialize light source and lighting model.
  */
-void
+static void
 myinit(void)
 {
     GLfloat light_ambient[] =
@@ -78,7 +78,7 @@ myinit(void)
     glEnable(GL_DEPTH_TEST);
 }
 
-void
+static void
 display(void)
 {
     GLfloat low_ambient[] =
@@ -114,7 +114,7 @@ display(void)
     glFlush();
 }
 
-void
+static void
 myReshape(int w, int h)
 {
     glViewport(0, 0, w, h);

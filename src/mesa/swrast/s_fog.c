@@ -122,38 +122,6 @@ else {										\
    }										\
 }
 
-/* As above, but CI mode (XXX try to merge someday) */
-#define FOG_LOOP_CI(FOG_FUNC)							\
-if (span->arrayAttribs & FRAG_BIT_FOGC) {					\
-   GLuint i;									\
-   for (i = 0; i < span->end; i++) {						\
-      const GLfloat fogCoord = span->array->attribs[FRAG_ATTRIB_FOGC][i][0];	\
-      const GLfloat c = FABSF(fogCoord);					\
-      GLfloat f;								\
-      FOG_FUNC(f, c);								\
-      f = CLAMP(f, 0.0F, 1.0F);							\
-      index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * fogIndex);		\
-   }										\
-}										\
-else {										\
-   const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];		\
-   GLfloat fogCoord = span->attrStart[FRAG_ATTRIB_FOGC][0];			\
-   const GLfloat wStep = span->attrStepX[FRAG_ATTRIB_WPOS][3];  		\
-   GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];				\
-   GLuint i;									\
-   for (i = 0; i < span->end; i++) {						\
-      const GLfloat c = FABSF(fogCoord) / w;					\
-      GLfloat f;								\
-      FOG_FUNC(f, c);								\
-      f = CLAMP(f, 0.0F, 1.0F);							\
-      index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * fogIndex);		\
-      fogCoord += fogStep;							\
-      w += wStep;								\
-   }										\
-}
-
-
-
 /**
  * Apply fog to a span of RGBA pixels.
  * The fog value are either in the span->array->fog array or interpolated from
@@ -172,14 +140,14 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
 
    /* compute (scaled) fog color */
    if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-      rFog = ctx->Fog.Color[RCOMP] * 255.0;
-      gFog = ctx->Fog.Color[GCOMP] * 255.0;
-      bFog = ctx->Fog.Color[BCOMP] * 255.0;
+      rFog = ctx->Fog.Color[RCOMP] * 255.0F;
+      gFog = ctx->Fog.Color[GCOMP] * 255.0F;
+      bFog = ctx->Fog.Color[BCOMP] * 255.0F;
    }
    else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-      rFog = ctx->Fog.Color[RCOMP] * 65535.0;
-      gFog = ctx->Fog.Color[GCOMP] * 65535.0;
-      bFog = ctx->Fog.Color[BCOMP] * 65535.0;
+      rFog = ctx->Fog.Color[RCOMP] * 65535.0F;
+      gFog = ctx->Fog.Color[GCOMP] * 65535.0F;
+      bFog = ctx->Fog.Color[BCOMP] * 65535.0F;
    }
    else {
       rFog = ctx->Fog.Color[RCOMP];
@@ -273,58 +241,5 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
          ASSERT(span->array->ChanType == GL_FLOAT);
          FOG_LOOP(GLfloat, BLEND_FOG);
       }
-   }
-}
-
-
-/**
- * As above, but color index mode.
- */
-void
-_swrast_fog_ci_span( const GLcontext *ctx, SWspan *span )
-{
-   const SWcontext *swrast = CONST_SWRAST_CONTEXT(ctx);
-   const GLuint fogIndex = (GLuint) ctx->Fog.Index;
-   GLuint *index = span->array->index;
-
-   ASSERT(swrast->_FogEnabled);
-   ASSERT(span->arrayMask & SPAN_INDEX);
-
-   /* we need to compute fog blend factors */
-   if (swrast->_PreferPixelFog) {
-      /* The span's fog values are fog coordinates, now compute blend factors
-       * and blend the fragment colors with the fog color.
-       */
-      switch (ctx->Fog.Mode) {
-      case GL_LINEAR:
-         {
-            const GLfloat fogEnd = ctx->Fog.End;
-            const GLfloat fogScale = (ctx->Fog.Start == ctx->Fog.End)
-               ? 1.0F : 1.0F / (ctx->Fog.End - ctx->Fog.Start);
-            FOG_LOOP_CI(LINEAR_FOG);
-         }
-         break;
-      case GL_EXP:
-         {
-            const GLfloat density = -ctx->Fog.Density;
-            FOG_LOOP_CI(EXP_FOG);
-         }
-         break;
-      case GL_EXP2:
-         {
-            const GLfloat negDensitySquared = -ctx->Fog.Density * ctx->Fog.Density;
-            FOG_LOOP_CI(EXP2_FOG);
-         }
-         break;
-      default:
-         _mesa_problem(ctx, "Bad fog mode in _swrast_fog_ci_span");
-         return;
-      }
-   }
-   else {
-      /* The span's fog start/step/array values are blend factors in [0,1].
-       * They were previously computed per-vertex.
-       */
-      FOG_LOOP_CI(BLEND_FOG);
    }
 }

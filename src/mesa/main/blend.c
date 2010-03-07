@@ -35,7 +35,6 @@
 #include "enums.h"
 #include "macros.h"
 #include "mtypes.h"
-#include "glapi/glapitable.h"
 
 
 /**
@@ -457,9 +456,6 @@ _mesa_IndexMask( GLuint mask )
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.IndexMask = mask;
-
-   if (ctx->Driver.IndexMask)
-      ctx->Driver.IndexMask( ctx, mask );
 }
 #endif
 
@@ -484,6 +480,8 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLubyte tmp[4];
+   GLuint i;
+   GLboolean flushed;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
@@ -497,14 +495,58 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
    tmp[BCOMP] = blue   ? 0xff : 0x0;
    tmp[ACOMP] = alpha  ? 0xff : 0x0;
 
-   if (TEST_EQ_4UBV(tmp, ctx->Color.ColorMask))
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_COLOR);
-   COPY_4UBV(ctx->Color.ColorMask, tmp);
+   flushed = GL_FALSE;
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+      if (!TEST_EQ_4V(tmp, ctx->Color.ColorMask[i])) {
+         if (!flushed) {
+            FLUSH_VERTICES(ctx, _NEW_COLOR);
+         }
+         flushed = GL_TRUE;
+         COPY_4UBV(ctx->Color.ColorMask[i], tmp);
+      }
+   }
 
    if (ctx->Driver.ColorMask)
       ctx->Driver.ColorMask( ctx, red, green, blue, alpha );
+}
+
+
+/**
+ * For GL_EXT_draw_buffers2 and GL3
+ */
+void GLAPIENTRY
+_mesa_ColorMaskIndexed( GLuint buf, GLboolean red, GLboolean green,
+                        GLboolean blue, GLboolean alpha )
+{
+   GLubyte tmp[4];
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glColorMaskIndexed %u %d %d %d %d\n",
+                  buf, red, green, blue, alpha);
+
+   if (buf >= ctx->Const.MaxDrawBuffers) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glColorMaskIndexed(buf=%u)", buf);
+      return;
+   }
+
+   /* Shouldn't have any information about channel depth in core mesa
+    * -- should probably store these as the native booleans:
+    */
+   tmp[RCOMP] = red    ? 0xff : 0x0;
+   tmp[GCOMP] = green  ? 0xff : 0x0;
+   tmp[BCOMP] = blue   ? 0xff : 0x0;
+   tmp[ACOMP] = alpha  ? 0xff : 0x0;
+
+   if (TEST_EQ_4V(tmp, ctx->Color.ColorMask[buf]))
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   COPY_4UBV(ctx->Color.ColorMask[buf], tmp);
+
+   if (ctx->Driver.ColorMaskIndexed)
+      ctx->Driver.ColorMaskIndexed(ctx, buf, red, green, blue, alpha);
 }
 
 
@@ -555,16 +597,13 @@ void _mesa_init_color( GLcontext * ctx )
 {
    /* Color buffer group */
    ctx->Color.IndexMask = ~0u;
-   ctx->Color.ColorMask[0] = 0xff;
-   ctx->Color.ColorMask[1] = 0xff;
-   ctx->Color.ColorMask[2] = 0xff;
-   ctx->Color.ColorMask[3] = 0xff;
+   memset(ctx->Color.ColorMask, 0xff, sizeof(ctx->Color.ColorMask));
    ctx->Color.ClearIndex = 0;
    ASSIGN_4V( ctx->Color.ClearColor, 0, 0, 0, 0 );
    ctx->Color.AlphaEnabled = GL_FALSE;
    ctx->Color.AlphaFunc = GL_ALWAYS;
    ctx->Color.AlphaRef = 0;
-   ctx->Color.BlendEnabled = GL_FALSE;
+   ctx->Color.BlendEnabled = 0x0;
    ctx->Color.BlendSrcRGB = GL_ONE;
    ctx->Color.BlendDstRGB = GL_ZERO;
    ctx->Color.BlendSrcA = GL_ONE;

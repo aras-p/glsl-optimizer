@@ -195,14 +195,18 @@ static const type_specifier_type_name type_specifier_type_names[] = {
    {"mat4x2", SLANG_SPEC_MAT42},
    {"mat3x4", SLANG_SPEC_MAT34},
    {"mat4x3", SLANG_SPEC_MAT43},
-   {"sampler1D", SLANG_SPEC_SAMPLER1D},
-   {"sampler2D", SLANG_SPEC_SAMPLER2D},
-   {"sampler3D", SLANG_SPEC_SAMPLER3D},
-   {"samplerCube", SLANG_SPEC_SAMPLERCUBE},
-   {"sampler1DShadow", SLANG_SPEC_SAMPLER1DSHADOW},
-   {"sampler2DShadow", SLANG_SPEC_SAMPLER2DSHADOW},
-   {"sampler2DRect", SLANG_SPEC_SAMPLER2DRECT},
-   {"sampler2DRectShadow", SLANG_SPEC_SAMPLER2DRECTSHADOW},
+   {"sampler1D", SLANG_SPEC_SAMPLER_1D},
+   {"sampler2D", SLANG_SPEC_SAMPLER_2D},
+   {"sampler3D", SLANG_SPEC_SAMPLER_3D},
+   {"samplerCube", SLANG_SPEC_SAMPLER_CUBE},
+   {"sampler1DShadow", SLANG_SPEC_SAMPLER_1D_SHADOW},
+   {"sampler2DShadow", SLANG_SPEC_SAMPLER_2D_SHADOW},
+   {"sampler2DRect", SLANG_SPEC_SAMPLER_RECT},
+   {"sampler2DRectShadow", SLANG_SPEC_SAMPLER_RECT_SHADOW},
+   {"sampler1DArray", SLANG_SPEC_SAMPLER_1D_ARRAY},
+   {"sampler2DArray", SLANG_SPEC_SAMPLER_2D_ARRAY},
+   {"sampler1DArrayShadow", SLANG_SPEC_SAMPLER_1D_ARRAY_SHADOW},
+   {"sampler2DArrayShadow", SLANG_SPEC_SAMPLER_2D_ARRAY_SHADOW},
    {NULL, SLANG_SPEC_VOID}
 };
 
@@ -258,6 +262,7 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
    z.precision = y->precision;
    z.variant = y->variant;
    z.centroid = y->centroid;
+   z.layout = y->layout;
    z.array_len = y->array_len;
    if (!slang_type_specifier_copy(&z.specifier, &y->specifier)) {
       slang_fully_specified_type_destruct(&z);
@@ -268,6 +273,32 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
    return 1;
 }
 
+
+/**
+ * Test if two fully specified types are compatible.  This is a bit
+ * looser than testing for equality.  We don't check the precision,
+ * variant, centroid, etc. information.
+ * XXX this may need some tweaking.
+ */
+GLboolean
+slang_fully_specified_types_compatible(const slang_fully_specified_type * x,
+                                       const slang_fully_specified_type * y)
+{
+   if (!slang_type_specifier_equal(&x->specifier, &y->specifier))
+      return GL_FALSE;
+
+   if (x->qualifier == SLANG_QUAL_FIXEDINPUT &&
+       y->qualifier == SLANG_QUAL_VARYING)
+      ; /* ok */
+   else if (x->qualifier != y->qualifier)
+      return GL_FALSE;
+
+   /* Note: don't compare precision, variant, centroid */
+
+   /* XXX array length? */
+
+   return GL_TRUE;
+}
 
 
 GLvoid
@@ -392,7 +423,7 @@ slang_type_specifier_compatible(const slang_type_specifier * x,
 GLboolean
 slang_typeinfo_construct(slang_typeinfo * ti)
 {
-   _mesa_bzero(ti, sizeof(*ti));
+   memset(ti, 0, sizeof(*ti));
    slang_type_specifier_ctr(&ti->spec);
    ti->array_len = 0;
    return GL_TRUE;
@@ -1111,22 +1142,30 @@ _slang_gltype_from_specifier(const slang_type_specifier *type)
       return GL_FLOAT_MAT3x4;
    case SLANG_SPEC_MAT43:
       return GL_FLOAT_MAT4x3;
-   case SLANG_SPEC_SAMPLER1D:
+   case SLANG_SPEC_SAMPLER_1D:
       return GL_SAMPLER_1D;
-   case SLANG_SPEC_SAMPLER2D:
+   case SLANG_SPEC_SAMPLER_2D:
       return GL_SAMPLER_2D;
-   case SLANG_SPEC_SAMPLER3D:
+   case SLANG_SPEC_SAMPLER_3D:
       return GL_SAMPLER_3D;
-   case SLANG_SPEC_SAMPLERCUBE:
+   case SLANG_SPEC_SAMPLER_CUBE:
       return GL_SAMPLER_CUBE;
-   case SLANG_SPEC_SAMPLER1DSHADOW:
+   case SLANG_SPEC_SAMPLER_1D_SHADOW:
       return GL_SAMPLER_1D_SHADOW;
-   case SLANG_SPEC_SAMPLER2DSHADOW:
+   case SLANG_SPEC_SAMPLER_2D_SHADOW:
       return GL_SAMPLER_2D_SHADOW;
-   case SLANG_SPEC_SAMPLER2DRECT:
+   case SLANG_SPEC_SAMPLER_RECT:
       return GL_SAMPLER_2D_RECT_ARB;
-   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+   case SLANG_SPEC_SAMPLER_RECT_SHADOW:
       return GL_SAMPLER_2D_RECT_SHADOW_ARB;
+   case SLANG_SPEC_SAMPLER_1D_ARRAY:
+      return GL_SAMPLER_1D_ARRAY_EXT;
+   case SLANG_SPEC_SAMPLER_2D_ARRAY:
+      return GL_SAMPLER_2D_ARRAY_EXT;
+   case SLANG_SPEC_SAMPLER_1D_ARRAY_SHADOW:
+      return GL_SAMPLER_1D_ARRAY_SHADOW_EXT;
+   case SLANG_SPEC_SAMPLER_2D_ARRAY_SHADOW:
+      return GL_SAMPLER_2D_ARRAY_SHADOW_EXT;
    case SLANG_SPEC_ARRAY:
       return _slang_gltype_from_specifier(type->_array);
    case SLANG_SPEC_STRUCT:

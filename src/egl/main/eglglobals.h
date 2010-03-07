@@ -1,9 +1,8 @@
 #ifndef EGLGLOBALS_INCLUDED
 #define EGLGLOBALS_INCLUDED
 
+
 #include "egltypedefs.h"
-#include "egldisplay.h"
-#include "eglcurrent.h"
 #include "eglmutex.h"
 
 
@@ -19,6 +18,7 @@ struct _egl_global
 
    EGLScreenMESA FreeScreenHandle;
 
+   /* these never change after preloading */
    EGLint NumDrivers;
    _EGLDriver *Drivers[10];
 

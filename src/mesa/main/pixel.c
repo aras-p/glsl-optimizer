@@ -32,11 +32,10 @@
 #include "bufferobj.h"
 #include "colormac.h"
 #include "context.h"
-#include "image.h"
 #include "macros.h"
 #include "pixel.h"
 #include "mtypes.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_pixel_transfer
@@ -151,13 +150,17 @@ validate_pbo_access(GLcontext *ctx, struct gl_pixelstore_attrib *pack,
    GLboolean ok;
 
    /* Note, need to use DefaultPacking and Unpack's buffer object */
-   ctx->DefaultPacking.BufferObj = pack->BufferObj;
+   _mesa_reference_buffer_object(ctx,
+                                 &ctx->DefaultPacking.BufferObj,
+                                 pack->BufferObj);
 
    ok = _mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
                                   format, type, ptr);
 
    /* restore */
-   ctx->DefaultPacking.BufferObj = ctx->Shared->NullBufferObj;
+   _mesa_reference_buffer_object(ctx,
+                                 &ctx->DefaultPacking.BufferObj,
+                                 ctx->Shared->NullBufferObj);
 
    if (!ok) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -359,7 +362,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
       }
    }
    else {
-      MEMCPY(values, pm->Map, mapsize * sizeof(GLfloat));
+      memcpy(values, pm->Map, mapsize * sizeof(GLfloat));
    }
 
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
@@ -398,7 +401,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 
    if (map == GL_PIXEL_MAP_S_TO_S) {
       /* special case */
-      MEMCPY(values, ctx->PixelMaps.StoS.Map, mapsize * sizeof(GLint));
+      memcpy(values, ctx->PixelMaps.StoS.Map, mapsize * sizeof(GLint));
    }
    else {
       for (i = 0; i < mapsize; i++) {
@@ -424,7 +427,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetPixelMapusv(map)");
       return;
    }
-   mapsize = pm ? pm->Size : 0;
+   mapsize = pm->Size;
 
    if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
                             GL_INTENSITY, GL_UNSIGNED_SHORT, values)) {

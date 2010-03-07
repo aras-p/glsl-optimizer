@@ -30,64 +30,169 @@
 '''
 
 
-import sys
-
-
 VOID, UNSIGNED, SIGNED, FIXED, FLOAT = range(5)
 
 SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W, SWIZZLE_0, SWIZZLE_1, SWIZZLE_NONE, = range(7)
 
-ARITH = 'arith'
-ARRAY = 'array'
+PLAIN = 'plain'
+
+RGB = 'rgb'
+SRGB = 'srgb'
+YUV = 'yuv'
+ZS = 'zs'
 
 
-class Type:
-    '''Describe the type of a color channel.'''
+def is_pot(x):
+   return (x & (x - 1)) == 0;
+
+
+VERY_LARGE = 99999999999999999999999
+
+
+class Channel:
+    '''Describe the channel of a color channel.'''
     
-    def __init__(self, kind, norm, size):
-        self.kind = kind
+    def __init__(self, type, norm, size, name = ''):
+        self.type = type
         self.norm = norm
         self.size = size
-        self.sign = kind in (SIGNED, FIXED, FLOAT)
+        self.sign = type in (SIGNED, FIXED, FLOAT)
+        self.name = name
 
     def __str__(self):
-        s = str(self.kind)
+        s = str(self.type)
         if self.norm:
             s += 'n'
         s += str(self.size)
         return s
 
     def __eq__(self, other):
-        return self.kind == other.kind and self.norm == other.norm and self.size == other.size
+        return self.type == other.type and self.norm == other.norm and self.size == other.size
+
+    def max(self):
+        '''Maximum representable number.'''
+        if self.type == FLOAT:
+            return VERY_LARGE
+        if self.norm:
+            return 1
+        if self.type == UNSIGNED:
+            return (1 << self.size) - 1
+        if self.type == SIGNED:
+            return self.size - 1
+        assert False
+    
+    def min(self):
+        '''Minimum representable number.'''
+        if self.type == FLOAT:
+            return -VERY_LARGE
+        if self.type == UNSIGNED:
+            return 0
+        if self.norm:
+            return -1
+        if self.type == SIGNED:
+            return -(1 << (self.size - 1))
+        assert False
 
 
 class Format:
     '''Describe a pixel format.'''
 
-    def __init__(self, name, layout, block_width, block_height, in_types, out_swizzle, colorspace):
+    def __init__(self, name, layout, block_width, block_height, channels, swizzles, colorspace):
         self.name = name
         self.layout = layout
         self.block_width = block_width
         self.block_height = block_height
-        self.in_types = in_types
-        self.out_swizzle = out_swizzle
+        self.channels = channels
+        self.swizzles = swizzles
         self.name = name
         self.colorspace = colorspace
 
     def __str__(self):
         return self.name
 
+    def short_name(self):
+        '''Make up a short norm for a format, suitable to be used as suffix in
+        function names.'''
+
+        name = self.name
+        if name.startswith('PIPE_FORMAT_'):
+            name = name[len('PIPE_FORMAT_'):]
+        name = name.lower()
+        return name
+
     def block_size(self):
         size = 0
-        for type in self.in_types:
-            size += type.size
+        for channel in self.channels:
+            size += channel.size
         return size
+
+    def nr_channels(self):
+        nr_channels = 0
+        for channel in self.channels:
+            if channel.size:
+                nr_channels += 1
+        return nr_channels
+
+    def is_array(self):
+        ref_channel = self.channels[0]
+        for channel in self.channels[1:]:
+            if channel.size and (channel.size != ref_channel.size or channel.size % 8):
+                return False
+        return True
+
+    def is_mixed(self):
+        ref_channel = self.channels[0]
+        for channel in self.channels[1:]:
+            if channel.type != VOID:
+                if channel.type != ref_channel.type:
+                    return True
+                if channel.norm != ref_channel.norm:
+                    return True
+        return False
+
+    def is_pot(self):
+        return is_pot(self.block_size())
+
+    def is_int(self):
+        for channel in self.channels:
+            if channel.type not in (VOID, UNSIGNED, SIGNED):
+                return False
+        return True
+
+    def is_float(self):
+        for channel in self.channels:
+            if channel.type not in (VOID, FLOAT):
+                return False
+        return True
+
+    def is_bitmask(self):
+        if self.block_size() > 32:
+            return False
+        if not self.is_pot():
+            return False
+        for channel in self.channels:
+            if not is_pot(channel.size):
+                return True
+            if channel.type not in (VOID, UNSIGNED, SIGNED):
+                return False
+            if channel.size >= 32:
+                return False
+        return True
+
+    def inv_swizzles(self):
+        '''Return an array[4] of inverse swizzle terms'''
+        inv_swizzle = [None]*4
+        for i in range(4):
+            swizzle = self.swizzles[i]
+            if swizzle < 4:
+                inv_swizzle[swizzle] = i
+        return inv_swizzle
 
     def stride(self):
         return self.block_size()/8
 
 
-_kind_parse_map = {
+_type_parse_map = {
     '':  VOID,
     'x': VOID,
     'u': UNSIGNED,
@@ -108,20 +213,55 @@ _swizzle_parse_map = {
 
 def parse(filename):
     '''Parse the format descrition in CSV format in terms of the 
-    Type and Format classes above.'''
+    Channel and Format classes above.'''
 
     stream = open(filename)
     formats = []
     for line in stream:
-        line = line.rstrip()
+        try:
+            comment = line.index('#')
+        except ValueError:
+            pass
+        else:
+            line = line[:comment]
+        line = line.strip()
+        if not line:
+            continue
+
         fields = [field.strip() for field in line.split(',')]
+        
         name = fields[0]
         layout = fields[1]
         block_width, block_height = map(int, fields[2:4])
-        in_types = []
-        for field in fields[4:8]:
+
+        swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
+        colorspace = fields[9]
+        
+        if layout == PLAIN:
+            names = ['']*4
+            if colorspace in (RGB, SRGB):
+                for i in range(4):
+                    swizzle = swizzles[i]
+                    if swizzle < 4:
+                        names[swizzle] += 'rgba'[i]
+            elif colorspace == ZS:
+                for i in range(4):
+                    swizzle = swizzles[i]
+                    if swizzle < 4:
+                        names[swizzle] += 'zs'[i]
+            else:
+                assert False
+            for i in range(4):
+                if names[i] == '':
+                    names[i] = 'x'
+        else:
+            names = ['x', 'y', 'z', 'w']
+
+        channels = []
+        for i in range(0, 4):
+            field = fields[4 + i]
             if field:
-                kind = _kind_parse_map[field[0]]
+                type = _type_parse_map[field[0]]
                 if field[1] == 'n':
                     norm = True
                     size = int(field[2:])
@@ -129,13 +269,13 @@ def parse(filename):
                     norm = False
                     size = int(field[1:])
             else:
-                kind = VOID
+                type = VOID
                 norm = False
                 size = 0
-            in_type = Type(kind, norm, size)
-            in_types.append(in_type)
-        out_swizzle = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
-        colorspace = fields[9]
-        formats.append(Format(name, layout, block_width, block_height, in_types, out_swizzle, colorspace))
+            channel = Channel(type, norm, size, names[i])
+            channels.append(channel)
+
+        format = Format(name, layout, block_width, block_height, channels, swizzles, colorspace)
+        formats.append(format)
     return formats
 

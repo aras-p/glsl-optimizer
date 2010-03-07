@@ -32,10 +32,8 @@
 #include "main/macros.h"
 #include "main/context.h"
 #include "main/simple_list.h"
-#include "swrast/swrast.h"
 
 #include "radeon_common.h"
-#include "radeon_lock.h"
 #include "r600_context.h"
 
 #include "r700_ioctl.h"

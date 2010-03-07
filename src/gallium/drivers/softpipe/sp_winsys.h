@@ -34,23 +34,31 @@
 #ifndef SP_WINSYS_H
 #define SP_WINSYS_H
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "pipe/p_defines.h"
 
 struct pipe_screen;
 struct pipe_winsys;
 struct pipe_context;
+struct pipe_texture;
+struct pipe_buffer;
 
 
-struct pipe_context *softpipe_create( struct pipe_screen * );
 
+/**
+ * Create a softpipe screen that uses the
+ * given winsys for allocating buffers.
+ */
+struct pipe_screen *softpipe_create_screen( struct pipe_winsys * );
 
-struct pipe_screen *
-softpipe_create_screen(struct pipe_winsys *);
-
+/**
+ * Create a softpipe screen that uses
+ * regular malloc to create all its buffers.
+ */
+struct pipe_screen *softpipe_create_screen_malloc(void);
 
 boolean
 softpipe_get_texture_buffer( struct pipe_texture *texture,

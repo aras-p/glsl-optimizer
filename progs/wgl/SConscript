@@ -1,15 +1,7 @@
 Import('*')
 
-if env['platform'] != 'windows':
+if progs_env['platform'] != 'windows':
     Return()
-
-env = env.Clone()
-
-env.Append(LIBS = [
-    'kernel32',
-    'user32',
-    'gdi32',
-])
 
 progs = [
     'sharedtex_mt',
@@ -17,9 +9,9 @@ progs = [
 ]
 
 for prog in progs:
-    env.Program(
+    progs_env.Program(
         target = prog,
         source = prog + '/' + prog + '.c',
     )
 
-env.Program('wglinfo', ['wglinfo.c'])
+progs_env.Program('wglinfo', ['wglinfo.c'])

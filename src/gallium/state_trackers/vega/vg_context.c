@@ -34,7 +34,7 @@
 #include "st_inlines.h"
 
 #include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_shader_tokens.h"
 
 #include "cso_cache/cso_context.h"
@@ -122,8 +122,8 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
 
 void vg_destroy_context(struct vg_context *ctx)
 {
-   struct pipe_constant_buffer *cbuf = &ctx->mask.cbuf;
-   struct pipe_constant_buffer *vsbuf = &ctx->vs_const_buffer;
+   struct pipe_buffer **cbuf = &ctx->mask.cbuf;
+   struct pipe_buffer **vsbuf = &ctx->vs_const_buffer;
 
    util_destroy_blit(ctx->blit);
    renderer_destroy(ctx->renderer);
@@ -131,11 +131,11 @@ void vg_destroy_context(struct vg_context *ctx)
    shader_destroy(ctx->shader);
    paint_destroy(ctx->default_paint);
 
-   if (cbuf && cbuf->buffer)
-      pipe_buffer_reference(&cbuf->buffer, NULL);
+   if (*cbuf)
+      pipe_buffer_reference(cbuf, NULL);
 
-   if (vsbuf && vsbuf->buffer)
-      pipe_buffer_reference(&vsbuf->buffer, NULL);
+   if (*vsbuf)
+      pipe_buffer_reference(vsbuf, NULL);
 
    if (ctx->clear.fs) {
       cso_delete_fragment_shader(ctx->cso_context, ctx->clear.fs);
@@ -252,7 +252,7 @@ static void update_clip_state(struct vg_context *ctx)
       ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_DEPTHSTENCIL, NULL, 1.0, 0);
 
       /* disable color writes */
-      blend->colormask = 0; /*disable colorwrites*/
+      blend->rt[0].colormask = 0; /*disable colorwrites*/
       cso_set_blend(ctx->cso_context, blend);
 
       /* enable scissoring */
@@ -286,7 +286,6 @@ static void update_clip_state(struct vg_context *ctx)
          renderer_draw_quad(ctx->renderer, minx, miny, maxx, maxy, 0.0f);
       }
 
-      blend->colormask = 1; /*enable colorwrites*/
       cso_restore_blend(ctx->cso_context);
       cso_restore_fragment_shader(ctx->cso_context);
 
@@ -301,57 +300,56 @@ void vg_validate_state(struct vg_context *ctx)
    if ((ctx->state.dirty & BLEND_DIRTY)) {
       struct pipe_blend_state *blend = &ctx->state.g3d.blend;
       memset(blend, 0, sizeof(struct pipe_blend_state));
-      blend->blend_enable = 1;
-      blend->colormask |= PIPE_MASK_R;
-      blend->colormask |= PIPE_MASK_G;
-      blend->colormask |= PIPE_MASK_B;
-      blend->colormask |= PIPE_MASK_A;
+      blend->rt[0].blend_enable = 1;
+      blend->rt[0].colormask = PIPE_MASK_RGBA;
 
       switch (ctx->state.vg.blend_mode) {
       case VG_BLEND_SRC:
-         blend->rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].blend_enable = 0;
          break;
       case VG_BLEND_SRC_OVER:
-         blend->rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend->alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-         blend->alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
          break;
       case VG_BLEND_DST_OVER:
-         blend->rgb_src_factor   = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend->alpha_src_factor = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend->rgb_dst_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->alpha_dst_factor = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_INV_DST_ALPHA;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_INV_DST_ALPHA;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_DST_ALPHA;
          break;
       case VG_BLEND_SRC_IN:
-         blend->rgb_src_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
          break;
       case VG_BLEND_DST_IN:
-         blend->rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rgb_dst_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend->alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
          break;
       case VG_BLEND_MULTIPLY:
       case VG_BLEND_SCREEN:
       case VG_BLEND_DARKEN:
       case VG_BLEND_LIGHTEN:
-         blend->rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].blend_enable = 0;
          break;
       case VG_BLEND_ADDITIVE:
-         blend->rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
          break;
       default:
          assert(!"not implemented blend mode");
@@ -371,20 +369,20 @@ void vg_validate_state(struct vg_context *ctx)
          2.f/fb->width, 2.f/fb->height, 1, 1,
          -1, -1, 0, 0
       };
-      struct pipe_constant_buffer *cbuf = &ctx->vs_const_buffer;
+      struct pipe_buffer **cbuf = &ctx->vs_const_buffer;
 
       vg_set_viewport(ctx, VEGA_Y0_BOTTOM);
 
-      pipe_buffer_reference(&cbuf->buffer, NULL);
-      cbuf->buffer = pipe_buffer_create(ctx->pipe->screen, 16,
+      pipe_buffer_reference(cbuf, NULL);
+      *cbuf = pipe_buffer_create(ctx->pipe->screen, 16,
                                         PIPE_BUFFER_USAGE_CONSTANT,
                                         param_bytes);
 
-      if (cbuf->buffer) {
-         st_no_flush_pipe_buffer_write(ctx, cbuf->buffer,
+      if (*cbuf) {
+         st_no_flush_pipe_buffer_write(ctx, *cbuf,
                                        0, param_bytes, vs_consts);
       }
-      ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_VERTEX, 0, cbuf);
+      ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_VERTEX, 0, *cbuf);
    }
    if ((ctx->state.dirty & VS_DIRTY)) {
       cso_set_vertex_shader_handle(ctx->cso_context,

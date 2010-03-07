@@ -42,7 +42,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 
 /**
@@ -75,10 +75,12 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
 {
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
+   assert(obj->RefCount == 0);
+
    if (st_obj->buffer) 
       pipe_buffer_reference(&st_obj->buffer, NULL);
 
-   _mesa_free(st_obj);
+   free(st_obj);
 }
 
 
@@ -103,6 +105,17 @@ st_bufferobj_subdata(GLcontext *ctx,
    ASSERT(size >= 0);
    ASSERT(offset + size <= obj->Size);
 
+   if (!size)
+      return;
+
+   /*
+    * According to ARB_vertex_buffer_object specification, if data is null,
+    * then the contents of the buffer object's data store is undefined. We just
+    * ignore, and leave it unchanged.
+    */
+   if (!data)
+      return;
+
    st_cond_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer,
 				   offset, size, data);
 }
@@ -124,6 +137,9 @@ st_bufferobj_get_subdata(GLcontext *ctx,
    ASSERT(offset >= 0);
    ASSERT(size >= 0);
    ASSERT(offset + size <= obj->Size);
+
+   if (!size)
+      return;
 
    st_cond_flush_pipe_buffer_read(st_context(ctx), st_obj->buffer,
 				  offset, size, data);
@@ -170,15 +186,19 @@ st_bufferobj_data(GLcontext *ctx,
 
    pipe_buffer_reference( &st_obj->buffer, NULL );
 
-   st_obj->buffer = pipe_buffer_create( pipe->screen, 32, buffer_usage, size );
+   if (size != 0) {
+      st_obj->buffer = pipe_buffer_create(pipe->screen, 32, buffer_usage, size);
 
-   if (!st_obj->buffer) {
-      return GL_FALSE;
+      if (!st_obj->buffer) {
+         return GL_FALSE;
+      }
+
+      if (data)
+         st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
+				       size, data);
+      return GL_TRUE;
    }
 
-   if (data)
-      st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
-				    size, data);
    return GL_TRUE;
 }
 
@@ -219,6 +239,13 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
 
 
 /**
+ * Dummy data whose's pointer is used for zero length ranges.
+ */
+static long
+st_bufferobj_zero_length_range = 0;
+
+
+/**
  * Called via glMapBufferRange().
  */
 static void *
@@ -253,14 +280,26 @@ st_bufferobj_map_range(GLcontext *ctx, GLenum target,
    assert(offset < obj->Size);
    assert(offset + length <= obj->Size);
 
-   obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
+   /*
+    * We go out of way here to hide the degenerate yet valid case of zero
+    * length range from the pipe driver.
+    */
+   if (!length) {
+      obj->Pointer = &st_bufferobj_zero_length_range;
+   }
+   else {
+      obj->Pointer = pipe_buffer_map_range(pipe->screen, st_obj->buffer, offset, length, flags);
+      if (obj->Pointer) {
+         obj->Pointer = (ubyte *) obj->Pointer + offset;
+      }
+   }
+   
    if (obj->Pointer) {
-      obj->Pointer = (ubyte *) obj->Pointer + offset;
       obj->Offset = offset;
       obj->Length = length;
       obj->AccessFlags = access;
    }
-   
+
    return obj->Pointer;
 }
 
@@ -278,6 +317,9 @@ st_bufferobj_flush_mapped_range(GLcontext *ctx, GLenum target,
    assert(length >= 0);
    assert(offset + length <= obj->Length);
    
+   if (!length)
+      return;
+
    pipe_buffer_flush_mapped_range(pipe->screen, st_obj->buffer, 
                                   obj->Offset + offset, length);
 }
@@ -292,7 +334,9 @@ st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
-   pipe_buffer_unmap(pipe->screen, st_obj->buffer);
+   if(obj->Length)
+      pipe_buffer_unmap(pipe->screen, st_obj->buffer);
+
    obj->Pointer = NULL;
    obj->Offset = 0;
    obj->Length = 0;
@@ -315,6 +359,9 @@ st_copy_buffer_subdata(GLcontext *ctx,
    struct st_buffer_object *dstObj = st_buffer_object(dst);
    ubyte *srcPtr, *dstPtr;
 
+   if(!size)
+      return;
+
    /* buffer should not already be mapped */
    assert(!src->Pointer);
    assert(!dst->Pointer);
@@ -330,7 +377,7 @@ st_copy_buffer_subdata(GLcontext *ctx,
                                             PIPE_BUFFER_USAGE_CPU_WRITE);
 
    if (srcPtr && dstPtr)
-      _mesa_memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
+      memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
 
    pipe_buffer_unmap(pipe->screen, srcObj->buffer);
    pipe_buffer_unmap(pipe->screen, dstObj->buffer);

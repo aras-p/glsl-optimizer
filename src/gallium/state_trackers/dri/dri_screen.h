@@ -42,7 +42,7 @@
 struct dri_screen
 {
    /* dri */
-   __DRIscreenPrivate *sPriv;
+   __DRIscreen *sPriv;
 
    /**
     * Configuration cache with default values for all contexts
@@ -59,11 +59,12 @@ struct dri_screen
    struct pipe_screen *pipe_screen;
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
+   boolean auto_fake_front;
 };
 
 /** cast wrapper */
 static INLINE struct dri_screen *
-dri_screen(__DRIscreenPrivate * sPriv)
+dri_screen(__DRIscreen * sPriv)
 {
    return (struct dri_screen *)sPriv->private;
 }

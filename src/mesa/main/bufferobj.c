@@ -208,13 +208,14 @@ _mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
    (void) ctx;
 
    if (bufObj->Data)
-      _mesa_free(bufObj->Data);
+      free(bufObj->Data);
 
    /* assign strange values here to help w/ debugging */
    bufObj->RefCount = -1000;
    bufObj->Name = ~0;
 
-   _mesa_free(bufObj);
+   _glthread_DESTROY_MUTEX(bufObj->Mutex);
+   free(bufObj);
 }
 
 
@@ -235,7 +236,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_buffer_object *oldObj = *ptr;
 
-      /*_glthread_LOCK_MUTEX(oldObj->Mutex);*/
+      _glthread_LOCK_MUTEX(oldObj->Mutex);
       ASSERT(oldObj->RefCount > 0);
       oldObj->RefCount--;
 #if 0
@@ -243,7 +244,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
              (void *) oldObj, oldObj->Name, oldObj->RefCount);
 #endif
       deleteFlag = (oldObj->RefCount == 0);
-      /*_glthread_UNLOCK_MUTEX(oldObj->Mutex);*/
+      _glthread_UNLOCK_MUTEX(oldObj->Mutex);
 
       if (deleteFlag) {
 
@@ -265,7 +266,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
 
    if (bufObj) {
       /* reference new buffer */
-      /*_glthread_LOCK_MUTEX(tex->Mutex);*/
+      _glthread_LOCK_MUTEX(bufObj->Mutex);
       if (bufObj->RefCount == 0) {
          /* this buffer's being deleted (look just above) */
          /* Not sure this can every really happen.  Warn if it does. */
@@ -280,7 +281,7 @@ _mesa_reference_buffer_object(GLcontext *ctx,
 #endif
          *ptr = bufObj;
       }
-      /*_glthread_UNLOCK_MUTEX(tex->Mutex);*/
+      _glthread_UNLOCK_MUTEX(bufObj->Mutex);
    }
 }
 
@@ -294,7 +295,8 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
 {
    (void) target;
 
-   _mesa_bzero(obj, sizeof(struct gl_buffer_object));
+   memset(obj, 0, sizeof(struct gl_buffer_object));
+   _glthread_INIT_MUTEX(obj->Mutex);
    obj->RefCount = 1;
    obj->Name = name;
    obj->Usage = GL_STATIC_DRAW_ARB;
@@ -337,7 +339,7 @@ _mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
       bufObj->Usage = usage;
 
       if (data) {
-	 _mesa_memcpy( bufObj->Data, data, size );
+	 memcpy( bufObj->Data, data, size );
       }
 
       return GL_TRUE;
@@ -376,7 +378,7 @@ _mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
    ASSERT(size + offset <= bufObj->Size);
 
    if (bufObj->Data) {
-      _mesa_memcpy( (GLubyte *) bufObj->Data + offset, data, size );
+      memcpy( (GLubyte *) bufObj->Data + offset, data, size );
    }
 }
 
@@ -406,7 +408,7 @@ _mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
    (void) ctx; (void) target;
 
    if (bufObj->Data && ((GLsizeiptrARB) (size + offset) <= bufObj->Size)) {
-      _mesa_memcpy( data, (GLubyte *) bufObj->Data + offset, size );
+      memcpy( data, (GLubyte *) bufObj->Data + offset, size );
    }
 }
 
@@ -528,7 +530,7 @@ _mesa_copy_buffer_subdata(GLcontext *ctx,
                                               GL_WRITE_ONLY, dst);
 
    if (srcPtr && dstPtr)
-      _mesa_memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
+      memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
 
    ctx->Driver.UnmapBuffer(ctx, GL_COPY_READ_BUFFER, src);
    ctx->Driver.UnmapBuffer(ctx, GL_COPY_WRITE_BUFFER, dst);
@@ -551,6 +553,17 @@ _mesa_init_buffer_objects( GLcontext *ctx )
                                  ctx->Shared->NullBufferObj);
    _mesa_reference_buffer_object(ctx, &ctx->CopyWriteBuffer,
                                  ctx->Shared->NullBufferObj);
+}
+
+
+void
+_mesa_free_buffer_objects( GLcontext *ctx )
+{
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->Array.ElementArrayBufferObj, NULL);
+
+   _mesa_reference_buffer_object(ctx, &ctx->CopyReadBuffer, NULL);
+   _mesa_reference_buffer_object(ctx, &ctx->CopyWriteBuffer, NULL);
 }
 
 
@@ -1142,7 +1155,7 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
    bufObj->Written = GL_TRUE;
 
 #ifdef VBO_DEBUG
-   _mesa_printf("glBufferDataARB(%u, sz %ld, from %p, usage 0x%x)\n",
+   printf("glBufferDataARB(%u, sz %ld, from %p, usage 0x%x)\n",
                 bufObj->Name, size, data, usage);
 #endif
 
@@ -1259,8 +1272,8 @@ _mesa_MapBufferARB(GLenum target, GLenum access)
       bufObj->Written = GL_TRUE;
 
 #ifdef VBO_DEBUG
-   _mesa_printf("glMapBufferARB(%u, sz %ld, access 0x%x)\n",
-                bufObj->Name, bufObj->Size, access);
+   printf("glMapBufferARB(%u, sz %ld, access 0x%x)\n",
+	  bufObj->Name, bufObj->Size, access);
    if (access == GL_WRITE_ONLY_ARB) {
       GLuint i;
       GLubyte *b = (GLubyte *) bufObj->Pointer;
@@ -1336,7 +1349,7 @@ _mesa_UnmapBufferARB(GLenum target)
          }
       }
       if (unchanged) {
-         _mesa_printf("glUnmapBufferARB(%u): %u of %ld unchanged, starting at %d\n",
+         printf("glUnmapBufferARB(%u): %u of %ld unchanged, starting at %d\n",
                       bufObj->Name, unchanged, bufObj->Size, pos);
       }
    }
@@ -1384,6 +1397,48 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameterivARB(pname)");
+         return;
+   }
+}
+
+
+/**
+ * New in GL 3.2
+ * This is pretty much a duplicate of GetBufferParameteriv() but the
+ * GL_BUFFER_SIZE_ARB attribute will be 64-bits on a 64-bit system.
+ */
+void GLAPIENTRY
+_mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *bufObj;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   bufObj = get_buffer(ctx, target);
+   if (!bufObj) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "GetBufferParameteri64v(target)" );
+      return;
+   }
+   if (!_mesa_is_bufferobj(bufObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "GetBufferParameteri64v" );
+      return;
+   }
+
+   switch (pname) {
+      case GL_BUFFER_SIZE_ARB:
+         *params = bufObj->Size;
+         break;
+      case GL_BUFFER_USAGE_ARB:
+         *params = bufObj->Usage;
+         break;
+      case GL_BUFFER_ACCESS_ARB:
+         *params = simplified_access_mode(bufObj->AccessFlags);
+         break;
+      case GL_BUFFER_MAPPED_ARB:
+         *params = _mesa_bufferobj_mapped(bufObj);
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameteri64v(pname)");
          return;
    }
 }

@@ -36,6 +36,7 @@ prim
 quad
 readtex.c
 readtex.h
+rgbtoppm
 select
 shape
 sphere

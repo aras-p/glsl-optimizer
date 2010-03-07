@@ -8,6 +8,7 @@
  * based on a Mikael SkiZoWalker's (MoDEL) / France (Skizo@Hol.Fr) demo
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -559,12 +560,14 @@ loadpic(void)
    FILE *FilePic;
    int i, tmp;
    GLenum gluerr;
+   size_t result;
 
    if ((FilePic = fopen("terrain.dat", "r")) == NULL) {
       fprintf(stderr, "Error loading terrain.dat\n");
       exit(-1);
    }
-   fread(bufferter, 256 * 256, 1, FilePic);
+   result = fread(bufferter, 256 * 256, 1, FilePic);
+   assert(result == 1);
    fclose(FilePic);
 
    for (i = 0; i < (256 * 256); i++) {
@@ -623,7 +626,6 @@ init(void)
 int
 main(int ac, char **av)
 {
-   glutInitWindowPosition(0, 0);
    glutInitWindowSize(WIDTH, HEIGHT);
    glutInit(&ac, av);
 

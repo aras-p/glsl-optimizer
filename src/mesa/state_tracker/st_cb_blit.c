@@ -33,20 +33,15 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "shader/program.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
 
 #include "st_context.h"
 #include "st_texture.h"
-#include "st_program.h"
 #include "st_cb_blit.h"
 #include "st_cb_fbo.h"
 
 #include "util/u_blit.h"
-
-#include "cso_cache/cso_context.h"
+#include "util/u_inlines.h"
 
 
 void

@@ -33,11 +33,49 @@
 
 #include "vmw_hook.h"
 
+
+/*
+ * Defines and modinfo
+ */
+
+#define VMWGFX_DRIVER_NAME "vmwgfx"
+
+#define VMW_STRING_INNER(s) #s
+#define VMW_STRING(str) VMW_STRING_INNER(str)
+
+#define VMWGFX_VERSION_MAJOR 11
+#define VMWGFX_VERSION_MINOR 0
+#define VMWGFX_VERSION_PATCH 0
+#define VMWGFX_VERSION_STRING_MAJOR VMW_STRING(VMWGFX_VERSION_MAJOR)
+#define VMWGFX_VERSION_STRING_MINOR VMW_STRING(VMWGFX_VERSION_MINOR)
+#define VMWGFX_VERSION_STRING_PATCH VMW_STRING(VMWGFX_VERSION_PATCH)
+
+#define VMWGFX_DRIVER_VERSION \
+   (VMWGFX_VERSION_MAJOR * 65536 + VMWGFX_VERSION_MINOR * 256 + VMWGFX_VERSION_PATCH)
+#define VMWGFX_DRIVER_VERSION_STRING \
+    VMWGFX_VERSION_STRING_MAJOR "." VMWGFX_VERSION_STRING_MINOR \
+    "." VMWGFX_VERSION_STRING_PATCH
+
+/*
+ * Standard four digit version string expected by VMware Tools installer.
+ * As the driver's version is only  {major, minor, patchlevel}, simply append an
+ * extra zero for the fourth digit.
+ */
+#ifdef __GNUC__
+_X_EXPORT const char vmwgfx_drv_modinfo[] __attribute__((section(".modinfo"),unused)) =
+    "version=" VMWGFX_DRIVER_VERSION_STRING ".0";
+#endif
+
 static void vmw_xorg_identify(int flags);
-static Bool vmw_xorg_pci_probe(DriverPtr driver,
-			       int entity_num,
-			       struct pci_device *device,
-			       intptr_t match_data);
+_X_EXPORT Bool vmw_xorg_pci_probe(DriverPtr driver,
+				  int entity_num,
+				  struct pci_device *device,
+				  intptr_t match_data);
+
+
+/*
+ * Tables
+ */
 
 static const struct pci_id_match vmw_xorg_device_match[] = {
     {0x15ad, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
@@ -55,12 +93,12 @@ static PciChipsets vmw_xorg_pci_devices[] = {
 };
 
 static XF86ModuleVersionInfo vmw_xorg_version = {
-    "vmwgfx",
+    VMWGFX_DRIVER_NAME,
     MODULEVENDORSTRING,
     MODINFOSTRING1,
     MODINFOSTRING2,
     XORG_VERSION_CURRENT,
-    0, 1, 0, /* major, minor, patch */
+    VMWGFX_VERSION_MAJOR, VMWGFX_VERSION_MINOR, VMWGFX_VERSION_PATCH,
     ABI_CLASS_VIDEODRV,
     ABI_VIDEODRV_VERSION,
     MOD_CLASS_VIDEODRV,
@@ -73,7 +111,7 @@ static XF86ModuleVersionInfo vmw_xorg_version = {
 
 _X_EXPORT DriverRec vmwgfx = {
     1,
-    "vmwgfx",
+    VMWGFX_DRIVER_NAME,
     vmw_xorg_identify,
     NULL,
     xorg_tracker_available_options,
@@ -91,6 +129,7 @@ _X_EXPORT XF86ModuleData vmwgfxModuleData = {
     vmw_xorg_setup,
     NULL
 };
+
 
 /*
  * Xorg driver functions
@@ -126,7 +165,7 @@ vmw_xorg_identify(int flags)
 		      vmw_xorg_chipsets);
 }
 
-static Bool
+_X_EXPORT Bool
 vmw_xorg_pci_probe(DriverPtr driver,
 	  int entity_num, struct pci_device *device, intptr_t match_data)
 {

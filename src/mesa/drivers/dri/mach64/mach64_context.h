@@ -232,9 +232,9 @@ struct mach64_context {
 
    /* Mirrors of some DRI state
     */
-   __DRIcontextPrivate	*driContext;	/* DRI context */
-   __DRIscreenPrivate	*driScreen;	/* DRI screen */
-   __DRIdrawablePrivate	*driDrawable;	/* DRI drawable bound to this ctx */
+   __DRIcontext	*driContext;	/* DRI context */
+   __DRIscreen	*driScreen;	/* DRI screen */
+   __DRIdrawable	*driDrawable;	/* DRI drawable bound to this ctx */
 
    unsigned int lastStamp;		/* mirror driDrawable->lastStamp */
 
@@ -274,16 +274,16 @@ struct mach64_context {
 
 
 extern GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
-				      __DRIcontextPrivate *driContextPriv,
+				      __DRIcontext *driContextPriv,
                                       void *sharedContextPrivate );
 
-extern void mach64DestroyContext( __DRIcontextPrivate * );
+extern void mach64DestroyContext( __DRIcontext * );
 
-extern GLboolean mach64MakeCurrent( __DRIcontextPrivate *driContextPriv,
-                                    __DRIdrawablePrivate *driDrawPriv,
-                                    __DRIdrawablePrivate *driReadPriv );
+extern GLboolean mach64MakeCurrent( __DRIcontext *driContextPriv,
+                                    __DRIdrawable *driDrawPriv,
+                                    __DRIdrawable *driReadPriv );
 
-extern GLboolean mach64UnbindContext( __DRIcontextPrivate *driContextPriv );
+extern GLboolean mach64UnbindContext( __DRIcontext *driContextPriv );
 
 /* ================================================================
  * Byte ordering

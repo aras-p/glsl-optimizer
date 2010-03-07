@@ -37,6 +37,10 @@
 #define MAX_MODES 1000
 #define MAX_SCREENS 10
 
+/* These are X visual types, so if you're running eglinfo under
+ * something not X, they probably don't make sense. */
+static const char *vnames[] = { "SG", "GS", "SC", "PC", "TC", "DC" };
+
 /**
  * Print table of all available configurations.
  */
@@ -49,16 +53,15 @@ PrintConfigs(EGLDisplay d)
    eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
 
    printf("Configurations:\n");
-   printf("     bf lv d st colorbuffer dp st  ms    vis   supported\n");
-   printf("  id sz  l b ro  r  g  b  a th cl ns b    id   surfaces \n");
-   printf("--------------------------------------------------------\n");
+   printf("     bf lv colorbuffer dp st  ms    vis   cav bi  renderable  supported\n");
+   printf("  id sz  l  r  g  b  a th cl ns b    id   eat nd gl es es2 vg surfaces \n");
+   printf("---------------------------------------------------------------------\n");
    for (i = 0; i < numConfigs; i++) {
       EGLint id, size, level;
       EGLint red, green, blue, alpha;
       EGLint depth, stencil;
-      EGLint surfaces;
-      EGLint doubleBuf = 1, stereo = 0;
-      EGLint vid;
+      EGLint renderable, surfaces;
+      EGLint vid, vtype, caveat, bindRgb, bindRgba;
       EGLint samples, sampleBuffers;
       char surfString[100] = "";
 
@@ -73,6 +76,12 @@ PrintConfigs(EGLDisplay d)
       eglGetConfigAttrib(d, configs[i], EGL_DEPTH_SIZE, &depth);
       eglGetConfigAttrib(d, configs[i], EGL_STENCIL_SIZE, &stencil);
       eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_ID, &vid);
+      eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_TYPE, &vtype);
+
+      eglGetConfigAttrib(d, configs[i], EGL_CONFIG_CAVEAT, &caveat);
+      eglGetConfigAttrib(d, configs[i], EGL_BIND_TO_TEXTURE_RGB, &bindRgb);
+      eglGetConfigAttrib(d, configs[i], EGL_BIND_TO_TEXTURE_RGBA, &bindRgba);
+      eglGetConfigAttrib(d, configs[i], EGL_RENDERABLE_TYPE, &renderable);
       eglGetConfigAttrib(d, configs[i], EGL_SURFACE_TYPE, &surfaces);
 
       eglGetConfigAttrib(d, configs[i], EGL_SAMPLES, &samples);
@@ -91,13 +100,19 @@ PrintConfigs(EGLDisplay d)
       if (strlen(surfString) > 0)
          surfString[strlen(surfString) - 1] = 0;
 
-      printf("0x%02x %2d %2d %c  %c %2d %2d %2d %2d %2d %2d %2d%2d  0x%02x   %-12s\n",
+      printf("0x%02x %2d %2d %2d %2d %2d %2d %2d %2d %2d%2d 0x%02x%s ",
              id, size, level,
-             doubleBuf ? 'y' : '.',
-             stereo ? 'y' : '.',
              red, green, blue, alpha,
              depth, stencil,
-             samples, sampleBuffers, vid, surfString);
+             samples, sampleBuffers, vid, vtype < 6 ? vnames[vtype] : "--");
+      printf("  %c  %c  %c  %c  %c   %c %s\n",
+             (caveat != EGL_NONE) ? 'y' : ' ',
+             (bindRgba) ? 'a' : (bindRgb) ? 'y' : ' ',
+             (renderable & EGL_OPENGL_BIT) ? 'y' : ' ',
+             (renderable & EGL_OPENGL_ES_BIT) ? 'y' : ' ',
+             (renderable & EGL_OPENGL_ES2_BIT) ? 'y' : ' ',
+             (renderable & EGL_OPENVG_BIT) ? 'y' : ' ',
+             surfString);
    }
 }
 
@@ -141,7 +156,42 @@ PrintModes(EGLDisplay d)
 #endif
 }
 
+static void
+PrintExtensions(EGLDisplay d)
+{
+   const char *extensions, *p, *end, *next;
+   int column;
 
+   printf("EGL extensions string:\n");
+
+   extensions = eglQueryString(d, EGL_EXTENSIONS);
+
+   column = 0;
+   end = extensions + strlen(extensions);
+
+   for (p = extensions; p < end; p = next + 1) {
+      next = strchr(p, ' ');
+      if (next == NULL)
+         next = end;
+
+      if (column > 0 && column + next - p + 1 > 70) {
+	 printf("\n");
+	 column = 0;
+      }
+      if (column == 0)
+	 printf("    ");
+      else
+	 printf(" ");
+      column += next - p + 1;
+
+      printf("%.*s", (int) (next - p), p);
+
+      p = next + 1;
+   }
+
+   if (column > 0)
+      printf("\n");
+}
 
 int
 main(int argc, char *argv[])
@@ -160,8 +210,8 @@ main(int argc, char *argv[])
 #ifdef EGL_VERSION_1_2
    printf("EGL client APIs: %s\n", eglQueryString(d, EGL_CLIENT_APIS));
 #endif
-   printf("EGL extensions string:\n");
-   printf("    %s\n", eglQueryString(d, EGL_EXTENSIONS));
+
+   PrintExtensions(d);
 
    PrintConfigs(d);
 

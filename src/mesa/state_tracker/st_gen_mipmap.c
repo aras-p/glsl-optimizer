@@ -36,7 +36,8 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "util/u_gen_mipmap.h"
 #include "util/u_math.h"
 
@@ -45,9 +46,7 @@
 
 #include "st_debug.h"
 #include "st_context.h"
-#include "st_draw.h"
 #include "st_gen_mipmap.h"
-#include "st_program.h"
 #include "st_texture.h"
 #include "st_cb_texture.h"
 #include "st_inlines.h"
@@ -146,8 +145,8 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       srcData = (ubyte *) screen->transfer_map(screen, srcTrans);
       dstData = (ubyte *) screen->transfer_map(screen, dstTrans);
 
-      srcStride = srcTrans->stride / pf_get_blocksize(srcTrans->texture->format);
-      dstStride = dstTrans->stride / pf_get_blocksize(dstTrans->texture->format);
+      srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->texture->format);
+      dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->texture->format);
 
       _mesa_generate_mipmap_level(target, datatype, comps,
                                   0 /*border*/,
@@ -223,6 +222,9 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
 
    /* find expected last mipmap level */
    lastLevel = compute_num_levels(ctx, texObj, target) - 1;
+
+   if (lastLevel == 0)
+      return;
 
    if (pt->last_level < lastLevel) {
       /* The current gallium texture doesn't have space for all the

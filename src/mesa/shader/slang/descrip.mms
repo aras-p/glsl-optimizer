@@ -17,12 +17,12 @@
 
 VPATH = RCS
 
-INCDIR = [----.include],[--.main],[--.glapi],[-.slang],[-.grammar],[-]
+INCDIR = [----.include],[--.main],[--.glapi],[-.slang],[-]
 LIBDIR = [----.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
 SOURCES = \
-	slang_compile.c,slang_preprocess.c
+	slang_compile.c
 
 OBJECTS = slang_builtin.obj,slang_codegen.obj,slang_compile.obj,\
 	slang_compile_function.obj,slang_compile_operation.obj,\
@@ -59,7 +59,6 @@ slang_library_noise.obj : slang_library_noise.c
 slang_link.obj : slang_link.c
 slang_log.obj : slang_log.c
 slang_mem.obj : slang_mem.c
-slang_preprocess.obj : slang_preprocess.c
 slang_print.obj : slang_print.c
 slang_simplify.obj : slang_simplify.c
 slang_storage.obj : slang_storage.c

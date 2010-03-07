@@ -143,7 +143,8 @@ unsigned rc_constants_add_immediate_scalar(struct rc_constant_list * c, float da
 
 	for(index = 0; index < c->Count; ++index) {
 		if (c->Constants[index].Type == RC_CONSTANT_IMMEDIATE) {
-			for(unsigned comp = 0; comp < c->Constants[index].Size; ++comp) {
+			unsigned comp;
+			for(comp = 0; comp < c->Constants[index].Size; ++comp) {
 				if (c->Constants[index].u.Immediate[comp] == data) {
 					*swizzle = RC_MAKE_SWIZZLE(comp, comp, comp, comp);
 					return index;

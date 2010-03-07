@@ -222,6 +222,7 @@ int mgaUploadTexImages( mgaContextPtr mmesa, mgaTextureObjectPtr t )
 	 return -1;
       }
 
+      assert(t->base.memBlock);
       ofs = mmesa->mgaScreen->textureOffset[ heap ]
 	   + t->base.memBlock->ofs;
 

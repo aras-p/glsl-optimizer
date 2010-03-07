@@ -4,13 +4,11 @@
 
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "eglconfig.h"
 #include "egldisplay.h"
-#include "egldriver.h"
-#include "eglglobals.h"
+#include "eglcurrent.h"
 #include "egllog.h"
 
 
@@ -27,9 +25,11 @@
  * IDs are from 1 to N respectively.
  */
 void
-_eglInitConfig(_EGLConfig *config, EGLint id)
+_eglInitConfig(_EGLConfig *config, _EGLDisplay *dpy, EGLint id)
 {
    memset(config, 0, sizeof(*config));
+
+   config->Display = dpy;
 
    /* some attributes take non-zero default values */
    SET_CONFIG_ATTRIB(config, EGL_CONFIG_ID,               id);
@@ -76,9 +76,6 @@ _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 }
 
 
-#ifndef _EGL_SKIP_HANDLE_CHECK
-
-
 EGLBoolean
 _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
 {
@@ -96,9 +93,6 @@ _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
 }
 
 
-#endif /* _EGL_SKIP_HANDLE_CHECK */
-
-
 enum {
    /* types */
    ATTRIB_TYPE_INTEGER,
@@ -112,7 +106,7 @@ enum {
    ATTRIB_CRITERION_ATLEAST,
    ATTRIB_CRITERION_MASK,
    ATTRIB_CRITERION_SPECIAL,
-   ATTRIB_CRITERION_IGNORE,
+   ATTRIB_CRITERION_IGNORE
 };
 
 
@@ -224,7 +218,8 @@ static const struct {
    { EGL_MATCH_NATIVE_PIXMAP,       ATTRIB_TYPE_PSEUDO,
                                     ATTRIB_CRITERION_SPECIAL,
                                     EGL_NONE },
-   { EGL_PRESERVED_RESOURCES,       ATTRIB_TYPE_PSEUDO,
+   /* there is a gap before EGL_SAMPLES */
+   { 0x3030,                        ATTRIB_TYPE_PSEUDO,
                                     ATTRIB_CRITERION_IGNORE,
                                     0 },
    { EGL_NONE,                      ATTRIB_TYPE_PSEUDO,
@@ -328,6 +323,8 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
                    EGL_VG_ALPHA_FORMAT_PRE_BIT |
                    EGL_MULTISAMPLE_RESOLVE_BOX_BIT |
                    EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
+            if (conf->Display->Extensions.MESA_screen_surface)
+               mask |= EGL_SCREEN_BIT_MESA;
             break;
          case EGL_RENDERABLE_TYPE:
          case EGL_CONFORMANT:
@@ -363,8 +360,11 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
          if (_eglValidationTable[i].criterion == ATTRIB_CRITERION_SPECIAL)
             valid = EGL_TRUE;
       }
-      if (!valid)
+      if (!valid) {
+         _eglLog(_EGL_DEBUG,
+               "attribute 0x%04x has an invalid value 0x%x", attr, val);
          break;
+      }
    }
 
    /* any invalid attribute value should have been catched */
@@ -387,10 +387,18 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
          valid = EGL_FALSE;
       break;
    }
+   if (!valid) {
+      _eglLog(_EGL_DEBUG, "conflicting color buffer type and channel sizes");
+      return EGL_FALSE;
+   }
 
    val = GET_CONFIG_ATTRIB(conf, EGL_SAMPLE_BUFFERS);
    if (!val && GET_CONFIG_ATTRIB(conf, EGL_SAMPLES))
       valid = EGL_FALSE;
+   if (!valid) {
+      _eglLog(_EGL_DEBUG, "conflicting samples and sample buffers");
+      return EGL_FALSE;
+   }
 
    val = GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE);
    if (!(val & EGL_WINDOW_BIT)) {
@@ -402,6 +410,10 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
       if (GET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGB) ||
           GET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGBA))
          valid = EGL_FALSE;
+   }
+   if (!valid) {
+      _eglLog(_EGL_DEBUG, "conflicting surface type and native visual/texture binding");
+      return EGL_FALSE;
    }
 
    return valid;
@@ -454,8 +466,14 @@ _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria)
          break;
       }
 
-      if (!matched)
+      if (!matched) {
+#ifdef DEBUG
+         _eglLog(_EGL_DEBUG,
+               "the value (0x%x) of attribute 0x%04x did not meet the criteria (0x%x)",
+               val, attr, cmp);
+#endif
          break;
+      }
    }
 
    return matched;
@@ -730,7 +748,7 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    if (!num_configs)
       return _eglError(EGL_BAD_PARAMETER, "eglChooseConfigs");
 
-   _eglInitConfig(&criteria, 0);
+   _eglInitConfig(&criteria, disp, 0);
    if (!_eglParseConfigAttribList(&criteria, attrib_list))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
@@ -772,7 +790,7 @@ _eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
 
    /* there are some holes in the range */
    switch (attr) {
-   case EGL_PRESERVED_RESOURCES:
+   case 0x3030 /* a gap before EGL_SAMPLES */:
    case EGL_NONE:
 #ifdef EGL_VERSION_1_4
    case EGL_MATCH_NATIVE_PIXMAP:

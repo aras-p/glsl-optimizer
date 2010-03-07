@@ -29,6 +29,7 @@
 #include "util/u_memory.h"
 #include "lp_context.h"
 #include "lp_state.h"
+#include "lp_setup.h"
 #include "draw/draw_context.h"
 
 
@@ -41,14 +42,28 @@ llvmpipe_create_rasterizer_state(struct pipe_context *pipe,
 }
 
 void llvmpipe_bind_rasterizer_state(struct pipe_context *pipe,
-                                    void *setup)
+                                    void *rasterizer)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
-   /* pass-through to draw module */
-   draw_set_rasterizer_state(llvmpipe->draw, setup);
+   if (llvmpipe->rasterizer == rasterizer)
+      return;
 
-   llvmpipe->rasterizer = (struct pipe_rasterizer_state *)setup;
+   /* pass-through to draw module */
+   draw_set_rasterizer_state(llvmpipe->draw, rasterizer);
+
+   llvmpipe->rasterizer = rasterizer;
+
+   /* Note: we can immediately set the triangle state here and
+    * not worry about binning because we handle culling during
+    * triangle setup, not when rasterizing the bins.
+    */
+   if (llvmpipe->rasterizer) {
+      lp_setup_set_triangle_state( llvmpipe->setup,
+                   llvmpipe->rasterizer->cull_mode,
+                   llvmpipe->rasterizer->front_winding == PIPE_WINDING_CCW,
+                   llvmpipe->rasterizer->scissor);
+   }
 
    llvmpipe->dirty |= LP_NEW_RASTERIZER;
 }

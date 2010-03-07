@@ -19,7 +19,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 	struct nv04_surface *rt[4], *zeta;
 	uint32_t rt_enable, rt_format;
 	int i, colour_format = 0, zeta_format = 0;
-	struct nouveau_stateobj *so = so_new(64, 10);
+	struct nouveau_stateobj *so = so_new(18, 24, 10);
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
 	unsigned w = fb->width;
 	unsigned h = fb->height;
@@ -57,14 +57,14 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		rt_format = NV40TCL_RT_FORMAT_TYPE_LINEAR;
 
 	switch (colour_format) {
-	case PIPE_FORMAT_X8R8G8B8_UNORM:
+	case PIPE_FORMAT_B8G8R8X8_UNORM:
 		rt_format |= NV40TCL_RT_FORMAT_COLOR_X8R8G8B8;
 		break;
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case PIPE_FORMAT_B8G8R8A8_UNORM:
 	case 0:
 		rt_format |= NV40TCL_RT_FORMAT_COLOR_A8R8G8B8;
 		break;
-	case PIPE_FORMAT_R5G6B5_UNORM:
+	case PIPE_FORMAT_B5G6R5_UNORM:
 		rt_format |= NV40TCL_RT_FORMAT_COLOR_R5G6B5;
 		break;
 	default:
@@ -75,8 +75,8 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 	case PIPE_FORMAT_Z16_UNORM:
 		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z16;
 		break;
-	case PIPE_FORMAT_Z24S8_UNORM:
-	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_S8Z24_UNORM:
+	case PIPE_FORMAT_X8Z24_UNORM:
 	case 0:
 		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z24S8;
 		break;

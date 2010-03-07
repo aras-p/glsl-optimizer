@@ -1,23 +1,5 @@
 Import('*')
 
-if not env['GLUT']:
-    Return()
-
-env = env.Clone()
-
-env.Prepend(CPPPATH = [
-	'../util',
-])
-
-env.Prepend(LIBS = [
-	util,
-	'$GLUT_LIB'
-])
-
-if env['platform'] == 'windows':
-    env.Append(CPPDEFINES = ['NOMINMAX'])
-    env.Prepend(LIBS = ['winmm'])
-
 progs = [
       'array',
       'bitmap',
@@ -48,7 +30,7 @@ progs = [
 ]
 
 for prog in progs:
-    env.Program(
+    progs_env.Program(
         target = prog,
         source = prog + '.c',
     )

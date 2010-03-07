@@ -53,8 +53,7 @@ struct spu_vs_context draw;
 /**
  * Buffers containing dynamically generated SPU code:
  */
-static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS]
-    ALIGN16_ATTRIB;
+PIPE_ALIGN_VAR(16) static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS];
 
 
 
@@ -338,10 +337,10 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
       spu.fb.zsize = 4;
       spu.fb.zscale = (float) 0xffffffffu;
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_S8Z24_UNORM:
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
       spu.fb.zsize = 4;
       spu.fb.zscale = (float) 0x00ffffffu;
       break;
@@ -405,8 +404,6 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    case PIPE_TEX_FILTER_LINEAR:
       spu.min_sample_texture_2d[unit] = sample_texture_2d_bilinear;
       break;
-   case PIPE_TEX_FILTER_ANISO:
-      /* fall-through, for now */
    case PIPE_TEX_FILTER_NEAREST:
       spu.min_sample_texture_2d[unit] = sample_texture_2d_nearest;
       break;
@@ -418,8 +415,6 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    case PIPE_TEX_FILTER_LINEAR:
       spu.mag_sample_texture_2d[unit] = sample_texture_2d_bilinear;
       break;
-   case PIPE_TEX_FILTER_ANISO:
-      /* fall-through, for now */
    case PIPE_TEX_FILTER_NEAREST:
       spu.mag_sample_texture_2d[unit] = sample_texture_2d_nearest;
       break;
@@ -547,7 +542,7 @@ cmd_batch(uint opcode)
 {
    const uint buf = (opcode >> 8) & 0xff;
    uint size = (opcode >> 16);
-   qword buffer[CELL_BUFFER_SIZE / 16] ALIGN16_ATTRIB;
+   PIPE_ALIGN_VAR(16) qword buffer[CELL_BUFFER_SIZE / 16];
    const unsigned usize = ROUNDUP16(size) / sizeof(buffer[0]);
    uint pos;
 

@@ -37,14 +37,12 @@
 #include "main/mipmap.h"
 #include "main/mm.h"
 #include "main/simple_list.h"
-#include "main/texcompress.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
 
 #include "via_context.h"
 #include "via_fb.h"
 #include "via_tex.h"
-#include "via_state.h"
 #include "via_ioctl.h"
 #include "via_3d_reg.h"
 
@@ -953,11 +951,11 @@ void viaInitTextureFuncs(struct dd_function_table * functions)
     * Note that this function is currently disabled in via_tris.c too.
     */
    if (getenv("VIA_NO_SSE"))
-      functions->TextureMemCpy = _mesa_memcpy;
+      functions->TextureMemCpy = memcpy;
    else
       functions->TextureMemCpy = via_sse_memcpy;
 #else
-   functions->TextureMemCpy = _mesa_memcpy;
+   functions->TextureMemCpy = memcpy;
 #endif
 
    functions->UpdateTexturePalette = 0;

@@ -54,16 +54,16 @@ _mesa_new_parameter_list_sized(unsigned size)
 
       /* alloc arrays */
       p->Parameters = (struct gl_program_parameter *)
-	 _mesa_calloc(size * sizeof(struct gl_program_parameter));
+	 calloc(1, size * sizeof(struct gl_program_parameter));
 
       p->ParameterValues = (GLfloat (*)[4])
          _mesa_align_malloc(size * 4 *sizeof(GLfloat), 16);
 
 
       if ((p->Parameters == NULL) || (p->ParameterValues == NULL)) {
-	 _mesa_free(p->Parameters);
+	 free(p->Parameters);
 	 _mesa_align_free(p->ParameterValues);
-	 _mesa_free(p);
+	 free(p);
 	 p = NULL;
       }
    }
@@ -81,12 +81,12 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
    GLuint i;
    for (i = 0; i < paramList->NumParameters; i++) {
       if (paramList->Parameters[i].Name)
-	 _mesa_free((void *) paramList->Parameters[i].Name);
+	 free((void *) paramList->Parameters[i].Name);
    }
-   _mesa_free(paramList->Parameters);
+   free(paramList->Parameters);
    if (paramList->ParameterValues)
       _mesa_align_free(paramList->ParameterValues);
-   _mesa_free(paramList);
+   free(paramList);
 }
 
 
@@ -146,8 +146,8 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
 
       paramList->NumParameters = oldNum + sz4;
 
-      _mesa_memset(&paramList->Parameters[oldNum], 0, 
-		   sz4 * sizeof(struct gl_program_parameter));
+      memset(&paramList->Parameters[oldNum], 0,
+             sz4 * sizeof(struct gl_program_parameter));
 
       for (i = 0; i < sz4; i++) {
          struct gl_program_parameter *p = paramList->Parameters + oldNum + i;
@@ -209,13 +209,13 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
 {
    /* first check if this is a duplicate constant */
    GLint pos;
-   for (pos = 0; pos < paramList->NumParameters; pos++) {
+   for (pos = 0; pos < (GLint)paramList->NumParameters; pos++) {
       const GLfloat *pvals = paramList->ParameterValues[pos];
       if (pvals[0] == values[0] &&
           pvals[1] == values[1] &&
           pvals[2] == values[2] &&
           pvals[3] == values[3] &&
-          _mesa_strcmp(paramList->Parameters[pos].Name, name) == 0) {
+          strcmp(paramList->Parameters[pos].Name, name) == 0) {
          /* Same name and value is already in the param list - reuse it */
          return pos;
       }
@@ -230,9 +230,8 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
  * Add a new unnamed constant to the parameter list.  This will be used
  * when a fragment/vertex program contains something like this:
  *    MOV r, { 0, 1, 2, 3 };
- * We'll search the parameter list for an existing instance of the
- * constant.  If swizzleOut is non-null, we'll try swizzling when
- * looking for a match.
+ * If swizzleOut is non-null we'll search the parameter list for an
+ * existing instance of the constant which matches with a swizzle.
  *
  * \param paramList  the parameter list
  * \param values  four float values
@@ -248,7 +247,8 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
    ASSERT(size >= 1);
    ASSERT(size <= 4);
 
-   if (_mesa_lookup_parameter_constant(paramList, values,
+   if (swizzleOut &&
+       _mesa_lookup_parameter_constant(paramList, values,
                                        size, &pos, swizzleOut)) {
       return pos;
    }
@@ -325,7 +325,7 @@ _mesa_use_uniform(struct gl_program_parameter_list *paramList,
    for (i = 0; i < paramList->NumParameters; i++) {
       struct gl_program_parameter *p = paramList->Parameters + i;
       if ((p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER) &&
-          _mesa_strcmp(p->Name, name) == 0) {
+          strcmp(p->Name, name) == 0) {
          p->Used = GL_TRUE;
          /* Note that large uniforms may occupy several slots so we're
           * not done searching yet.
@@ -486,7 +486,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
    paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
 
    /* free name string here since we duplicated it in add_parameter() */
-   _mesa_free(name);
+   free(name);
 
    return index;
 }
@@ -500,7 +500,7 @@ GLfloat *
 _mesa_lookup_parameter_value(const struct gl_program_parameter_list *paramList,
                              GLsizei nameLen, const char *name)
 {
-   GLuint i = _mesa_lookup_parameter_index(paramList, nameLen, name);
+   GLint i = _mesa_lookup_parameter_index(paramList, nameLen, name);
    if (i < 0)
       return NULL;
    else
@@ -529,7 +529,7 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
       /* name is null-terminated */
       for (i = 0; i < (GLint) paramList->NumParameters; i++) {
          if (paramList->Parameters[i].Name &&
-	     _mesa_strcmp(paramList->Parameters[i].Name, name) == 0)
+	     strcmp(paramList->Parameters[i].Name, name) == 0)
             return i;
       }
    }
@@ -537,8 +537,8 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
       /* name is not null-terminated, use nameLen */
       for (i = 0; i < (GLint) paramList->NumParameters; i++) {
          if (paramList->Parameters[i].Name &&
-	     _mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
-             && _mesa_strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
+	     strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
+             && strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
             return i;
       }
    }
@@ -723,7 +723,7 @@ _mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
       return 0;
    for (i = 0; i < list->NumParameters; i++) {
       if (list->Parameters[i].Type == type) {
-         GLuint len = _mesa_strlen(list->Parameters[i].Name);
+         GLuint len = strlen(list->Parameters[i].Name);
          if (len > maxLen)
             maxLen = len;
       }

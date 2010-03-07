@@ -116,7 +116,7 @@ print_extension_list(const char *ext)
       return;
 
    width = indent;
-   printf(indentString);
+   printf("%s", indentString);
    i = j = 0;
    while (1) {
       if (ext[j] == ' ' || ext[j] == 0) {
@@ -126,7 +126,7 @@ print_extension_list(const char *ext)
             /* start a new line */
             printf("\n");
             width = indent;
-            printf(indentString);
+            printf("%s", indentString);
          }
          /* print the extension name between ext[i] and ext[j] */
          while (i < j) {
@@ -171,7 +171,7 @@ print_program_limits(GLenum target)
       GLenum token;
       const char *name;
    };
-   static const struct token_name limits[] = {
+   static const struct token_name common_limits[] = {
       { GL_MAX_PROGRAM_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_INSTRUCTIONS_ARB" },
       { GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB" },
       { GL_MAX_PROGRAM_TEMPORARIES_ARB, "GL_MAX_PROGRAM_TEMPORARIES_ARB" },
@@ -184,6 +184,9 @@ print_program_limits(GLenum target)
       { GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB, "GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB" },
       { GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, "GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB" },
       { GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, "GL_MAX_PROGRAM_ENV_PARAMETERS_ARB" },
+      { (GLenum) 0, NULL }
+   };
+   static const struct token_name fragment_limits[] = {
       { GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB" },
       { GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB, "GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB" },
       { GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB, "GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB" },
@@ -192,8 +195,10 @@ print_program_limits(GLenum target)
       { GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB, "GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB" },
       { (GLenum) 0, NULL }
    };
+
    PFNGLGETPROGRAMIVARBPROC GetProgramivARB_func = (PFNGLGETPROGRAMIVARBPROC)
       glXGetProcAddressARB((GLubyte *) "glGetProgramivARB");
+
    GLint max[1];
    int i;
 
@@ -207,10 +212,18 @@ print_program_limits(GLenum target)
       return; /* something's wrong */
    }
 
-   for (i = 0; limits[i].token; i++) {
-      GetProgramivARB_func(target, limits[i].token, max);
+   for (i = 0; common_limits[i].token; i++) {
+      GetProgramivARB_func(target, common_limits[i].token, max);
       if (glGetError() == GL_NO_ERROR) {
-         printf("        %s = %d\n", limits[i].name, max[0]);
+         printf("        %s = %d\n", common_limits[i].name, max[0]);
+      }
+   }
+   if (target == GL_FRAGMENT_PROGRAM_ARB) {
+      for (i = 0; fragment_limits[i].token; i++) {
+         GetProgramivARB_func(target, fragment_limits[i].token, max);
+         if (glGetError() == GL_NO_ERROR) {
+            printf("        %s = %d\n", fragment_limits[i].name, max[0]);
+         }
       }
    }
 #endif /* GL_ARB_vertex_program / GL_ARB_fragment_program */
@@ -401,6 +414,10 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
 
    root = RootWindow(dpy, scrnum);
 
+   /*
+    * Find a basic GLX visual.  We'll then create a rendering context and
+    * query various info strings.
+    */
    visinfo = glXChooseVisual(dpy, scrnum, attribSingle);
    if (!visinfo)
       visinfo = glXChooseVisual(dpy, scrnum, attribDouble);
@@ -409,24 +426,29 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
 
 #ifdef GLX_VERSION_1_3
-   {
+   /* Try glXChooseFBConfig() if glXChooseVisual didn't work.
+    * XXX when would that happen?
+    */
+   if (!visinfo) {
       int fbAttribSingle[] = {
 	 GLX_RENDER_TYPE,   GLX_RGBA_BIT,
 	 GLX_RED_SIZE,      1,
 	 GLX_GREEN_SIZE,    1,
 	 GLX_BLUE_SIZE,     1,
-	 GLX_DOUBLEBUFFER,  GL_TRUE,
+	 GLX_DOUBLEBUFFER,  GL_FALSE,
 	 None };
       int fbAttribDouble[] = {
 	 GLX_RENDER_TYPE,   GLX_RGBA_BIT,
 	 GLX_RED_SIZE,      1,
 	 GLX_GREEN_SIZE,    1,
 	 GLX_BLUE_SIZE,     1,
+	 GLX_DOUBLEBUFFER,  GL_TRUE,
 	 None };
       GLXFBConfig *configs = NULL;
       int nConfigs;
 
-      if (!visinfo)
+      configs = glXChooseFBConfig(dpy, scrnum, fbAttribSingle, &nConfigs);
+      if (!configs)
 	 configs = glXChooseFBConfig(dpy, scrnum, fbAttribDouble, &nConfigs);
 
       if (configs) {
@@ -954,7 +976,7 @@ print_visual_info(Display *dpy, int scrnum, InfoMode mode)
 static void
 print_fbconfig_info(Display *dpy, int scrnum, InfoMode mode)
 {
-   int numFBConfigs;
+   int numFBConfigs = 0;
    struct visual_attribs attribs;
    GLXFBConfig *fbconfigs;
    int i;
@@ -1091,7 +1113,7 @@ usage(void)
    printf("\t-display <dname>: Print GLX visuals on specified server.\n");
    printf("\t-h: This information.\n");
    printf("\t-i: Force an indirect rendering context.\n");
-   printf("\t-b: Find the 'best' visual and print it's number.\n");
+   printf("\t-b: Find the 'best' visual and print its number.\n");
    printf("\t-l: Print interesting OpenGL limits.\n");
 }
 

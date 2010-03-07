@@ -374,13 +374,11 @@ static void mgaDDColorMask(GLcontext *ctx,
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;
-
-
    GLuint mask = mgaPackColor(mgaScreen->cpp,
-			      ctx->Color.ColorMask[RCOMP],
-			      ctx->Color.ColorMask[GCOMP],
-			      ctx->Color.ColorMask[BCOMP],
-			      ctx->Color.ColorMask[ACOMP]);
+			      ctx->Color.ColorMask[0][RCOMP],
+			      ctx->Color.ColorMask[0][GCOMP],
+			      ctx->Color.ColorMask[0][BCOMP],
+			      ctx->Color.ColorMask[0][ACOMP]);
 
    if (mgaScreen->cpp == 2)
       mask = mask | (mask << 16);
@@ -748,7 +746,7 @@ static void mgaDDLogicOp( GLcontext *ctx, GLenum opcode )
 
 static void mga_set_cliprects(mgaContextPtr mmesa)
 {
-   __DRIdrawablePrivate *driDrawable = mmesa->driDrawable;
+   __DRIdrawable *driDrawable = mmesa->driDrawable;
 
    if ((mmesa->draw_buffer != MGA_FRONT)
        || (driDrawable->numBackClipRects == 0)) {
@@ -776,8 +774,8 @@ static void mga_set_cliprects(mgaContextPtr mmesa)
 
 void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 {
-   __DRIdrawablePrivate *const driDrawable = mmesa->driDrawable;
-   __DRIdrawablePrivate *const driReadable = mmesa->driReadable;
+   __DRIdrawable *const driDrawable = mmesa->driDrawable;
+   __DRIdrawable *const driReadable = mmesa->driReadable;
 
    mmesa->dirty_cliprects = 0;	
 
@@ -1194,9 +1192,6 @@ void mgaDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.DepthRange = mgaDepthRange;
    ctx->Driver.Viewport = mgaViewport;
    ctx->Driver.RenderMode = mgaRenderMode;
-
-   ctx->Driver.ClearIndex = 0;
-   ctx->Driver.IndexMask = 0;
 
    TNL_CONTEXT(ctx)->Driver.RunPipeline = mgaRunPipeline;
 }

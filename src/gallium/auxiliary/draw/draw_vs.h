@@ -43,6 +43,7 @@ struct draw_varient_input
    enum pipe_format format;
    unsigned buffer;
    unsigned offset; 
+   unsigned instance_divisor;
 };
 
 struct draw_varient_output
@@ -107,6 +108,7 @@ struct draw_vertex_shader {
 
    struct tgsi_shader_info info;
    unsigned position_output;
+   unsigned edgeflag_output;
 
    /* Extracted from shader:
     */
@@ -130,7 +132,7 @@ struct draw_vertex_shader {
    void (*run_linear)( struct draw_vertex_shader *shader,
 		       const float (*input)[4],
 		       float (*output)[4],
-		       const float (*constants)[4],
+                      const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
 		       unsigned count,
 		       unsigned input_stride,
 		       unsigned output_stride );
@@ -210,8 +212,10 @@ static INLINE int draw_vs_varient_key_compare( const struct draw_vs_varient_key 
 struct aos_machine *draw_vs_aos_machine( void );
 void draw_vs_aos_machine_destroy( struct aos_machine *machine );
 
-void draw_vs_aos_machine_constants( struct aos_machine *machine,
-                                    const float (*constants)[4] );
+void
+draw_vs_aos_machine_constants(struct aos_machine *machine,
+                              unsigned slot,
+                              const void *constants);
 
 void draw_vs_aos_machine_viewport( struct aos_machine *machine,
                                    const struct pipe_viewport_state *viewport );

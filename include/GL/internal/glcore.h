@@ -178,8 +178,4 @@ typedef struct __GLcontextModesRec {
 #define GLX_TEXTURE_2D_BIT_EXT             0x00000002
 #define GLX_TEXTURE_RECTANGLE_BIT_EXT      0x00000004
 
-#define GLX_TEXTURE_FORMAT_NONE_EXT        0x20D8
-#define GLX_TEXTURE_FORMAT_RGB_EXT         0x20D9
-#define GLX_TEXTURE_FORMAT_RGBA_EXT        0x20DA
-
 #endif /* __gl_core_h_ */

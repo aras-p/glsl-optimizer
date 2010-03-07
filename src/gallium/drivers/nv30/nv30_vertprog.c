@@ -1,7 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
@@ -530,6 +530,9 @@ nv30_vertprog_parse_decl_output(struct nv30_vpc *vpc,
 			return FALSE;
 		}
 		break;
+	case TGSI_SEMANTIC_EDGEFLAG:
+		NOUVEAU_ERR("cannot handle edgeflag output\n");
+		return FALSE;
 	default:
 		NOUVEAU_ERR("bad output semantic\n");
 		return FALSE;
@@ -647,7 +650,9 @@ static boolean
 nv30_vertprog_validate(struct nv30_context *nv30)
 { 
 	struct pipe_screen *pscreen = nv30->pipe.screen;
-	struct nouveau_grobj *rankine = nv30->screen->rankine;
+	struct nv30_screen *screen = nv30->screen;
+	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *rankine = screen->rankine;
 	struct nv30_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
@@ -681,7 +686,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				assert(0);
 		}
 
-		so = so_new(2, 0);
+		so = so_new(1, 1, 0);
 		so_method(so, rankine, NV34TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
 		so_ref(so, &vp->so);
@@ -767,9 +772,9 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				       4 * sizeof(float));
 			}
 
-			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
-			OUT_RING  (i + vp->data->start);
-			OUT_RINGp ((uint32_t *)vpd->value, 4);
+			BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
+			OUT_RING  (chan, i + vp->data->start);
+			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
 		}
 
 		if (constbuf)
@@ -785,11 +790,11 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 				vp->insns[i].data[2], vp->insns[i].data[3]);
 		}
 #endif
-		BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
-		OUT_RING  (vp->exec->start);
+		BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
+		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
-			OUT_RINGp (vp->insns[i].data, 4);
+			BEGIN_RING(chan, rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
+			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
 	}
 

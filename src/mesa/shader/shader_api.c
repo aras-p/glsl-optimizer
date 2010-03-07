@@ -39,16 +39,14 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/hash.h"
-#include "main/macros.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
 #include "shader/prog_uniform.h"
 #include "shader/shader_api.h"
 #include "shader/slang/slang_compile.h"
 #include "shader/slang/slang_link.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**
@@ -117,12 +115,12 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    shProg->NumShaders = 0;
 
    if (shProg->Shaders) {
-      _mesa_free(shProg->Shaders);
+      free(shProg->Shaders);
       shProg->Shaders = NULL;
    }
 
    if (shProg->InfoLog) {
-      _mesa_free(shProg->InfoLog);
+      free(shProg->InfoLog);
       shProg->InfoLog = NULL;
    }
 }
@@ -136,7 +134,7 @@ _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
 
-   _mesa_free(shProg);
+   free(shProg);
 }
 
 
@@ -264,11 +262,11 @@ void
 _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
 {
    if (sh->Source)
-      _mesa_free((void *) sh->Source);
+      free((void *) sh->Source);
    if (sh->InfoLog)
-      _mesa_free(sh->InfoLog);
+      free(sh->InfoLog);
    _mesa_reference_program(ctx, &sh->Program, NULL);
-   _mesa_free(sh);
+   free(sh);
 }
 
 
@@ -376,21 +374,21 @@ get_shader_flags(void)
    const char *env = _mesa_getenv("MESA_GLSL");
 
    if (env) {
-      if (_mesa_strstr(env, "dump"))
+      if (strstr(env, "dump"))
          flags |= GLSL_DUMP;
-      if (_mesa_strstr(env, "log"))
+      if (strstr(env, "log"))
          flags |= GLSL_LOG;
-      if (_mesa_strstr(env, "nopvert"))
+      if (strstr(env, "nopvert"))
          flags |= GLSL_NOP_VERT;
-      if (_mesa_strstr(env, "nopfrag"))
+      if (strstr(env, "nopfrag"))
          flags |= GLSL_NOP_FRAG;
-      if (_mesa_strstr(env, "nopt"))
+      if (strstr(env, "nopt"))
          flags |= GLSL_NO_OPT;
-      else if (_mesa_strstr(env, "opt"))
+      else if (strstr(env, "opt"))
          flags |= GLSL_OPT;
-      if (_mesa_strstr(env, "uniform"))
+      if (strstr(env, "uniform"))
          flags |= GLSL_UNIFORMS;
-      if (_mesa_strstr(env, "useprog"))
+      if (strstr(env, "useprog"))
          flags |= GLSL_USE_PROG;
    }
 
@@ -711,7 +709,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 
          /* alloc new, smaller array */
          newList = (struct gl_shader **)
-            _mesa_malloc((n - 1) * sizeof(struct gl_shader *));
+            malloc((n - 1) * sizeof(struct gl_shader *));
          if (!newList) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDetachShader");
             return;
@@ -721,7 +719,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
          }
          while (++i < n)
             newList[j++] = shProg->Shaders[i];
-         _mesa_free(shProg->Shaders);
+         free(shProg->Shaders);
 
          shProg->Shaders = newList;
          shProg->NumShaders = n - 1;
@@ -771,6 +769,8 @@ sizeof_glsl_type(GLenum type)
    case GL_SAMPLER_2D_SHADOW:
    case GL_SAMPLER_2D_RECT_ARB:
    case GL_SAMPLER_2D_RECT_SHADOW_ARB:
+   case GL_SAMPLER_1D_ARRAY_EXT:
+   case GL_SAMPLER_2D_ARRAY_EXT:
    case GL_SAMPLER_1D_ARRAY_SHADOW_EXT:
    case GL_SAMPLER_2D_ARRAY_SHADOW_EXT:
    case GL_SAMPLER_CUBE_SHADOW_EXT:
@@ -850,6 +850,8 @@ is_sampler_type(GLenum type)
    case GL_SAMPLER_2D_RECT_SHADOW_ARB:
    case GL_SAMPLER_1D_ARRAY_EXT:
    case GL_SAMPLER_2D_ARRAY_EXT:
+   case GL_SAMPLER_1D_ARRAY_SHADOW_EXT:
+   case GL_SAMPLER_2D_ARRAY_SHADOW_EXT:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -957,7 +959,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
 
    if (size) {
       GLint typeSize = sizeof_glsl_type(param->DataType);
-      if (param->Size > typeSize) {
+      if ((GLint) param->Size > typeSize) {
          /* This is an array.
           * Array elements are placed on vector[4] boundaries so they're
           * a multiple of four floats.  We round typeSize up to next multiple
@@ -1379,15 +1381,15 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
       if (c) {
          /* truncate name at [ */
          const GLint len = c - name;
-         GLchar *newName = _mesa_malloc(len + 1);
+         GLchar *newName = malloc(len + 1);
          if (!newName)
             return -1; /* out of mem */
-         _mesa_memcpy(newName, name, len);
+         memcpy(newName, name, len);
          newName[len] = 0;
 
          location = _mesa_lookup_uniform(shProg->Uniforms, newName);
          if (location >= 0) {
-            const GLint element = _mesa_atoi(c + 1);
+            const GLint element = atoi(c + 1);
             if (element > 0) {
                /* get type of the uniform array element */
                struct gl_program_parameter *p;
@@ -1402,7 +1404,7 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
             }
          }
 
-         _mesa_free(newName);
+         free(newName);
       }
    }
 
@@ -1433,7 +1435,7 @@ _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 
    /* free old shader source string and install new one */
    if (sh->Source) {
-      _mesa_free((void *) sh->Source);
+      free((void *) sh->Source);
    }
    sh->Source = source;
    sh->CompileStatus = GL_FALSE;
@@ -1485,12 +1487,12 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
    if (0) {
       GLuint i;
 
-      _mesa_printf("Link %u shaders in program %u: %s\n",
+      printf("Link %u shaders in program %u: %s\n",
                    shProg->NumShaders, shProg->Name,
                    shProg->LinkStatus ? "Success" : "Failed");
 
       for (i = 0; i < shProg->NumShaders; i++) {
-         _mesa_printf(" shader %u, type 0x%x\n",
+         printf(" shader %u, type 0x%x\n",
                       shProg->Shaders[i]->Name,
                       shProg->Shaders[i]->Type);
       }
@@ -1506,7 +1508,7 @@ print_shader_info(const struct gl_shader_program *shProg)
 {
    GLuint i;
 
-   _mesa_printf("Mesa: glUseProgram(%u)\n", shProg->Name);
+   printf("Mesa: glUseProgram(%u)\n", shProg->Name);
    for (i = 0; i < shProg->NumShaders; i++) {
       const char *s;
       switch (shProg->Shaders[i]->Type) {
@@ -1522,14 +1524,14 @@ print_shader_info(const struct gl_shader_program *shProg)
       default:
          s = "";
       }
-      _mesa_printf("  %s shader %u, checksum %u\n", s, 
-                   shProg->Shaders[i]->Name,
-                   shProg->Shaders[i]->SourceChecksum);
+      printf("  %s shader %u, checksum %u\n", s, 
+	     shProg->Shaders[i]->Name,
+	     shProg->Shaders[i]->SourceChecksum);
    }
    if (shProg->VertexProgram)
-      _mesa_printf("  vert prog %u\n", shProg->VertexProgram->Base.Id);
+      printf("  vert prog %u\n", shProg->VertexProgram->Base.Id);
    if (shProg->FragmentProgram)
-      _mesa_printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
+      printf("  frag prog %u\n", shProg->FragmentProgram->Base.Id);
 }
 
 
@@ -1699,8 +1701,8 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          /* This maps a sampler to a texture unit: */
          if (sampler < MAX_SAMPLERS) {
 #if 0
-            _mesa_printf("Set program %p sampler %d '%s' to unit %u\n",
-                         program, sampler, param->Name, texUnit);
+            printf("Set program %p sampler %d '%s' to unit %u\n",
+		   program, sampler, param->Name, texUnit);
 #endif
             if (program->SamplerUnits[sampler] != texUnit) {
                program->SamplerUnits[sampler] = texUnit;
@@ -1717,7 +1719,11 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
           */
          FLUSH_VERTICES(ctx, _NEW_TEXTURE | _NEW_PROGRAM);
          _mesa_update_shader_textures_used(program);
-         ctx->Driver.ProgramStringNotify(ctx, program->Target, program);
+         /* Do we need to care about the return value here?
+          * This should not be the first time the driver was notified of
+          * this program.
+          */
+         (void) ctx->Driver.ProgramStringNotify(ctx, program->Target, program);
       }
    }
    else {
@@ -1728,7 +1734,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
       const GLint typeSize = sizeof_glsl_type(param->DataType);
       GLsizei k, i;
 
-      if (param->Size > typeSize) {
+      if ((GLint) param->Size > typeSize) {
          /* an array */
          /* we'll ignore extra data below */
       }
@@ -1859,21 +1865,21 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    if (ctx->Shader.Flags & GLSL_UNIFORMS) {
       GLint i;
-      _mesa_printf("Mesa: set program %u uniform %s (loc %d) to: ",
-                   shProg->Name, uniform->Name, location);
+      printf("Mesa: set program %u uniform %s (loc %d) to: ",
+	     shProg->Name, uniform->Name, location);
       if (basicType == GL_INT) {
          const GLint *v = (const GLint *) values;
          for (i = 0; i < count * elems; i++) {
-            _mesa_printf("%d ", v[i]);
+            printf("%d ", v[i]);
          }
       }
       else {
          const GLfloat *v = (const GLfloat *) values;
          for (i = 0; i < count * elems; i++) {
-            _mesa_printf("%g ", v[i]);
+            printf("%g ", v[i]);
          }
       }
-      _mesa_printf("\n");
+      printf("\n");
    }
 
    /* A uniform var may be used by both a vertex shader and a fragment
@@ -1913,7 +1919,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
    GLuint mat, row, col;
    GLuint src = 0;
    const struct gl_program_parameter * param = &program->Parameters->Parameters[index];
-   const GLint slots = (param->Size + 3) / 4;
+   const GLuint slots = (param->Size + 3) / 4;
    const GLint typeSize = sizeof_glsl_type(param->DataType);
    GLint nr, nc;
 
@@ -1925,7 +1931,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
       return;
    }
 
-   if (param->Size <= typeSize) {
+   if ((GLint) param->Size <= typeSize) {
       /* non-array: count must be at most one; count == 0 is handled by the loop below */
       if (count > 1) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -2075,8 +2081,8 @@ validate_samplers(GLcontext *ctx, const struct gl_program *prog, char *errMsg)
       target = prog->SamplerTargets[sampler];
       if (targetUsed[unit] != -1 && targetUsed[unit] != target) {
          _mesa_snprintf(errMsg, 100,
-                       "Texture unit %d is accessed both as %s and %s",
-                       unit, targetName[targetUsed[unit]], targetName[target]);
+		  "Texture unit %d is accessed both as %s and %s",
+		  unit, targetName[targetUsed[unit]], targetName[target]);
          return GL_FALSE;
       }
       targetUsed[unit] = target;
@@ -2153,7 +2159,7 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
    if (!shProg->Validated) {
       /* update info log */
       if (shProg->InfoLog) {
-         _mesa_free(shProg->InfoLog);
+         free(shProg->InfoLog);
       }
       shProg->InfoLog = _mesa_strdup(errMsg);
    }

@@ -47,7 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_macros.h"
 #include "radeon_screen.h"
 #include "radeon_common.h"
-#include "radeon_span.h"
 #if defined(RADEON_R100)
 #include "radeon_context.h"
 #include "radeon_tex.h"
@@ -66,7 +65,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 #include "vblank.h"
-#include "drirenderbuffer.h"
 
 #include "radeon_bocs_wrapper.h"
 
@@ -214,10 +212,10 @@ static const GLuint __driNConfigOptions = 17;
 
 #endif
 
-static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
+static int getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
 
 static int
-radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
+radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 {
   int ret;
   drm_radeon_getparam_t gp = { 0 };
@@ -249,7 +247,7 @@ radeonGetParam(__DRIscreenPrivate *sPriv, int param, void *value)
 }
 
 static const __DRIconfig **
-radeonFillInModes( __DRIscreenPrivate *psp,
+radeonFillInModes( __DRIscreen *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -295,18 +293,18 @@ radeonFillInModes( __DRIscreenPrivate *psp,
 					  depth_bits_array, stencil_bits_array,
 					  depth_buffer_factor, back_buffer_modes,
 					  back_buffer_factor, msaa_samples_array,
-					  1);
+					  1, GL_TRUE);
 	configs_a8r8g8b8 = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 					    depth_bits_array, stencil_bits_array,
 					    1, back_buffer_modes, 1,
-					    msaa_samples_array, 1);
+					    msaa_samples_array, 1, GL_TRUE);
 	configs = driConcatConfigs(configs_r5g6b5, configs_a8r8g8b8);
    } else
 	configs = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
 				   depth_bits_array, stencil_bits_array,
 				   depth_buffer_factor,
 				   back_buffer_modes, back_buffer_factor,
-				   msaa_samples_array, 1);
+				   msaa_samples_array, 1, GL_TRUE);
 
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
@@ -828,6 +826,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RS880_9712:
    case PCI_CHIP_RS880_9713:
    case PCI_CHIP_RS880_9714:
+   case PCI_CHIP_RS880_9715:
       screen->chip_family = CHIP_FAMILY_RS880;
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
@@ -911,7 +910,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 /* Create the device specific screen private data struct.
  */
 static radeonScreenPtr
-radeonCreateScreen( __DRIscreenPrivate *sPriv )
+radeonCreateScreen( __DRIscreen *sPriv )
 {
    radeonScreenPtr screen;
    RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
@@ -1250,7 +1249,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 }
 
 static radeonScreenPtr
-radeonCreateScreen2(__DRIscreenPrivate *sPriv)
+radeonCreateScreen2(__DRIscreen *sPriv)
 {
    radeonScreenPtr screen;
    int i;
@@ -1401,7 +1400,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
 /* Destroy the device specific screen private data struct.
  */
 static void
-radeonDestroyScreen( __DRIscreenPrivate *sPriv )
+radeonDestroyScreen( __DRIscreen *sPriv )
 {
     radeonScreenPtr screen = (radeonScreenPtr)sPriv->private;
 
@@ -1435,7 +1434,7 @@ radeonDestroyScreen( __DRIscreenPrivate *sPriv )
 /* Initialize the driver specific screen private data.
  */
 static GLboolean
-radeonInitDriver( __DRIscreenPrivate *sPriv )
+radeonInitDriver( __DRIscreen *sPriv )
 {
     if (sPriv->dri2.enabled) {
         sPriv->private = (void *) radeonCreateScreen2( sPriv );
@@ -1459,8 +1458,8 @@ radeonInitDriver( __DRIscreenPrivate *sPriv )
  * pbuffers.
  */
 static GLboolean
-radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
-                    __DRIdrawablePrivate *driDrawPriv,
+radeonCreateBuffer( __DRIscreen *driScrnPriv,
+                    __DRIdrawable *driDrawPriv,
                     const __GLcontextModes *mesaVis,
                     GLboolean isPixmap )
 {
@@ -1481,7 +1480,7 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
     if (!rfb)
       return GL_FALSE;
 
-    _mesa_initialize_framebuffer(&rfb->base, mesaVis);
+    _mesa_initialize_window_framebuffer(&rfb->base, mesaVis);
 
     if (mesaVis->redBits == 5)
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_RGB565 : MESA_FORMAT_RGB565_REV;
@@ -1559,7 +1558,7 @@ static void radeon_cleanup_renderbuffers(struct radeon_framebuffer *rfb)
 }
 
 void
-radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
+radeonDestroyBuffer(__DRIdrawable *driDrawPriv)
 {
     struct radeon_framebuffer *rfb;
     if (!driDrawPriv)
@@ -1581,7 +1580,7 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
  * \return the __GLcontextModes supported by this driver
  */
 static const __DRIconfig **
-radeonInitScreen(__DRIscreenPrivate *psp)
+radeonInitScreen(__DRIscreen *psp)
 {
 #if defined(RADEON_R100)
    static const char *driver_name = "Radeon";
@@ -1631,7 +1630,7 @@ radeonInitScreen(__DRIscreenPrivate *psp)
  * \return the __GLcontextModes supported by this driver
  */
 static const
-__DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
+__DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 {
    GLenum fb_format[3];
    GLenum fb_type[3];
@@ -1678,7 +1677,8 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
 				     back_buffer_modes,
 				     ARRAY_SIZE(back_buffer_modes),
 				     msaa_samples_array,
-				     ARRAY_SIZE(msaa_samples_array));
+				     ARRAY_SIZE(msaa_samples_array),
+				     GL_TRUE);
       if (configs == NULL)
 	 configs = new_configs;
       else
@@ -1698,7 +1698,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
  * Get information about previous buffer swaps.
  */
 static int
-getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
+getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo )
 {
     struct radeon_framebuffer *rfb;
 
@@ -1751,3 +1751,10 @@ const struct __DriverAPIRec driDriverAPI = {
    .InitScreen2     = radeonInitScreen2,
 };
 
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    &driDRI2Extension.base,
+    NULL
+};
