@@ -558,6 +558,15 @@ gl_format radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_COMPRESSED_SLUMINANCE_ALPHA:
 		return MESA_FORMAT_SLA8;
 
+	case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+		return MESA_FORMAT_SRGB_DXT1;
+	case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+		return MESA_FORMAT_SRGBA_DXT1;
+	case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+		return MESA_FORMAT_SRGBA_DXT3;
+	case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+		return MESA_FORMAT_SRGBA_DXT5;
+
 	default:
 		_mesa_problem(ctx,
 			      "unexpected internalFormat 0x%x in %s",
