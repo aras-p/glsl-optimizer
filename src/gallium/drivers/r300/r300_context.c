@@ -212,7 +212,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->invariant_state.dirty = TRUE;
 
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
-    r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
 
     r300->blitter = util_blitter_create(&r300->context);

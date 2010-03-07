@@ -892,7 +892,7 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
-        debug_printf("r300: Implementation error: emit_vertex_shader called,"
+        debug_printf("r300: Implementation error: emit_vs_state called,"
                 " but has_tcl is FALSE!\n");
         return;
     }
@@ -931,7 +931,7 @@ void r300_emit_vs_constant_buffer(struct r300_context* r300,
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
-        debug_printf("r300: Implementation error: emit_vertex_shader called,"
+        debug_printf("r300: Implementation error: emit_vs_constant_buffer called,"
         " but has_tcl is FALSE!\n");
         return;
     }

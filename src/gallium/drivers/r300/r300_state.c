@@ -1203,8 +1203,10 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     pipe_buffer_unmap(pipe->screen, buf);
 
     if (shader == PIPE_SHADER_VERTEX) {
-        r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
-        r300->pvs_flush.dirty = TRUE;
+        if (r300screen->caps->has_tcl) {
+            r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
+            r300->pvs_flush.dirty = TRUE;
+        }
     }
     else if (shader == PIPE_SHADER_FRAGMENT)
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
