@@ -43,19 +43,21 @@
 
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_fog_coord
+#define need_GL_EXT_secondary_color
 
 #include "main/remap_helper.h"
 
 static const struct dri_extension nouveau_extensions[] = {
 	{ "GL_ARB_multitexture",	NULL },
+	{ "GL_ARB_texture_env_add",	NULL },
 	{ "GL_ARB_texture_env_combine",	NULL },
 	{ "GL_ARB_texture_env_dot3",	NULL },
-	{ "GL_ARB_texture_env_add",	NULL },
-	{ "GL_EXT_texture_lod_bias",	NULL },
-	{ "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
 	{ "GL_ARB_texture_mirrored_repeat", NULL },
-	{ "GL_EXT_stencil_wrap",	NULL },
 	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
+	{ "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
+	{ "GL_EXT_secondary_color",	GL_EXT_secondary_color_functions },
+	{ "GL_EXT_stencil_wrap",	NULL },
+	{ "GL_EXT_texture_lod_bias",	NULL },
 	{ "GL_NV_blend_square",         NULL },
 	{ "GL_SGIS_generate_mipmap",	NULL },
 	{ NULL,				NULL }
