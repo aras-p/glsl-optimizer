@@ -293,19 +293,33 @@ static struct _glapi_function *
 add_function_name( const char * funcName )
 {
    struct _glapi_function * entry = NULL;
-   
-   if (NumExtEntryPoints < MAX_EXTENSION_FUNCS) {
-      _glapi_proc entrypoint = generate_entrypoint(~0);
-      if (entrypoint != NULL) {
-	 entry = & ExtEntryTable[NumExtEntryPoints];
+   _glapi_proc entrypoint = NULL;
+   char * name_dup = NULL;
 
-	 ExtEntryTable[NumExtEntryPoints].name = str_dup(funcName);
-	 ExtEntryTable[NumExtEntryPoints].parameter_signature = NULL;
-	 ExtEntryTable[NumExtEntryPoints].dispatch_offset = ~0;
-	 ExtEntryTable[NumExtEntryPoints].dispatch_stub = entrypoint;
-	 NumExtEntryPoints++;
-      }
+   if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS)
+      return NULL;
+
+   if (funcName == NULL)
+      return NULL;
+
+   name_dup = str_dup(funcName);
+   if (name_dup == NULL)
+      return NULL;
+
+   entrypoint = generate_entrypoint(~0);
+
+   if (entrypoint == NULL) {
+      free(name_dup);
+      return NULL;
    }
+
+   entry = & ExtEntryTable[NumExtEntryPoints];
+   NumExtEntryPoints++;
+
+   entry->name = name_dup;
+   entry->parameter_signature = NULL;
+   entry->dispatch_offset = ~0;
+   entry->dispatch_stub = entrypoint;
 
    return entry;
 }
