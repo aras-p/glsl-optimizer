@@ -342,8 +342,6 @@ static void r300EmitVertexProgram(r300ContextPtr r300, int dest, struct r300_ver
 
 	assert((code->length > 0) && (code->length % 4 == 0));
 
-	R300_STATECHANGE( r300, vap_flush );
-
 	switch ((dest >> 8) & 0xf) {
 		case 0:
 			R300_STATECHANGE(r300, vpi);
@@ -381,7 +379,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
 
-	R300_STATECHANGE(rmesa, vap_flush);
+	R300_STATECHANGE(rmesa, vap_cntl);
 	R300_STATECHANGE(rmesa, vpp);
 	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
