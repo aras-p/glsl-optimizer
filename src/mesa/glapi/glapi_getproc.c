@@ -325,6 +325,27 @@ add_function_name( const char * funcName )
 }
 
 
+static struct _glapi_function *
+set_entry_info( struct _glapi_function * entry, const char * signature, unsigned offset )
+{
+   char * sig_dup = NULL;
+
+   if (signature == NULL)
+      return NULL;
+
+   sig_dup = str_dup(signature);
+   if (sig_dup == NULL)
+      return NULL;
+
+   fill_in_entrypoint_offset(entry->dispatch_stub, offset);
+
+   entry->parameter_signature = sig_dup;
+   entry->dispatch_offset = offset;
+
+   return entry;
+}
+
+
 /**
  * Fill-in the dispatch stub for the named function.
  * 
@@ -461,9 +482,7 @@ _glapi_add_dispatch( const char * const * function_names,
 	    }
 	 }
 
-	 entry[i]->parameter_signature = str_dup(real_sig);
-	 fill_in_entrypoint_offset(entry[i]->dispatch_stub, offset);
-	 entry[i]->dispatch_offset = offset;
+	 set_entry_info( entry[i], real_sig, offset );
       }
    }
    
