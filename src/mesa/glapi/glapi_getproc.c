@@ -199,29 +199,40 @@ static struct _glapi_function ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 
 
-static GLint
-get_extension_proc_offset(const char *funcName)
+static struct _glapi_function *
+get_extension_proc(const char *funcName)
 {
    GLuint i;
    for (i = 0; i < NumExtEntryPoints; i++) {
       if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
-         return ExtEntryTable[i].dispatch_offset;
+         return & ExtEntryTable[i];
       }
    }
-   return -1;
+   return NULL;
+}
+
+
+static GLint
+get_extension_proc_offset(const char *funcName)
+{
+   const struct _glapi_function * const f = get_extension_proc( funcName );
+   if (f == NULL) {
+      return -1;
+   }
+
+   return f->dispatch_offset;
 }
 
 
 static _glapi_proc
 get_extension_proc_address(const char *funcName)
 {
-   GLuint i;
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
-         return ExtEntryTable[i].dispatch_stub;
-      }
+   const struct _glapi_function * const f = get_extension_proc( funcName );
+   if (f == NULL) {
+      return NULL;
    }
-   return NULL;
+
+   return f->dispatch_stub;
 }
 
 
