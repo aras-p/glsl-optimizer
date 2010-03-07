@@ -96,15 +96,6 @@ unsigned get_texture_image_size(
 	return rowStride * height * depth;
 }
 
-static unsigned is_pot(unsigned value)
-{
-	unsigned m;
-
-	for (m = 1; m < value; m *= 2) {}
-
-	return value == m;
-}
-
 unsigned get_texture_image_row_stride(radeonContextPtr rmesa, gl_format format, unsigned width, unsigned tiling)
 {
 	if (_mesa_is_format_compressed(format)) {
@@ -112,7 +103,7 @@ unsigned get_texture_image_row_stride(radeonContextPtr rmesa, gl_format format, 
 	} else {
 		unsigned row_align;
 
-		if (!is_pot(width)) {
+		if (!_mesa_is_pow_two(width)) {
 			row_align = rmesa->texture_rect_row_align - 1;
 		} else if (tiling) {
 			unsigned tileWidth, tileHeight;
