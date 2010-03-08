@@ -538,6 +538,9 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
    default:
       assert(0);
+      coord0 = NULL;
+      coord1 = NULL;
+      weight = NULL;
    }
 
    *x0_out = coord0;
@@ -700,6 +703,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 
    default:
       assert(0);
+      icoord = NULL;
    }
 
    return icoord;

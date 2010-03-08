@@ -84,6 +84,14 @@ texture_get_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
          zValues[i] = ((GLuint) (flt * 0xffffff)) << 8;
       }
    }
+   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
+      GLuint *zValues = (GLuint *) values;
+      for (i = 0; i < count; i++) {
+         GLfloat flt;
+         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, &flt);
+         zValues[i] = (GLuint) (flt * 0xffffff);
+      }
+   }
    else {
       _mesa_problem(ctx, "invalid rb->DataType in texture_get_row");
    }
@@ -139,6 +147,15 @@ texture_get_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
          zValues[i] = ((GLuint) (flt * 0xffffff)) << 8;
       }
    }
+   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
+      GLuint *zValues = (GLuint *) values;
+      for (i = 0; i < count; i++) {
+         GLfloat flt;
+         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i] + trb->Yoffset,
+				    z, &flt);
+         zValues[i] = (GLuint) (flt * 0xffffff);
+      }
+   }
    else {
       _mesa_problem(ctx, "invalid rb->DataType in texture_get_values");
    }
@@ -189,6 +206,15 @@ texture_put_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
             GLfloat flt = (GLfloat) ((zValues[i] >> 8) * (1.0 / 0xffffff));
+            trb->Store(trb->TexImage, x + i, y, z, &flt);
+         }
+      }
+   }
+   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
+      const GLuint *zValues = (const GLuint *) values;
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            GLfloat flt = (GLfloat) ((zValues[i] & 0xffffff) * (1.0 / 0xffffff));
             trb->Store(trb->TexImage, x + i, y, z, &flt);
          }
       }
@@ -246,6 +272,15 @@ texture_put_row_rgb(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
          }
       }
    }
+   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
+      const GLuint *zValues = (const GLuint *) values;
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            GLfloat flt = (GLfloat) ((zValues[i] & 0xffffff) * (1.0 / 0xffffff));
+            trb->Store(trb->TexImage, x + i, y, z, &flt);
+         }
+      }
+   }
    else {
       _mesa_problem(ctx, "invalid rb->DataType in texture_put_row");
    }
@@ -290,6 +325,15 @@ texture_put_mono_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
    else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
       const GLuint zValue = *((const GLuint *) value);
       const GLfloat flt = (GLfloat) ((zValue >> 8) * (1.0 / 0xffffff));
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            trb->Store(trb->TexImage, x + i, y, z, &flt);
+         }
+      }
+   }
+   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
+      const GLuint zValue = *((const GLuint *) value);
+      const GLfloat flt = (GLfloat) ((zValue & 0xffffff) * (1.0 / 0xffffff));
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
             trb->Store(trb->TexImage, x + i, y, z, &flt);
@@ -346,6 +390,15 @@ texture_put_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
          }
       }
    }
+   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
+      const GLuint *zValues = (const GLuint *) values;
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            GLfloat flt = (GLfloat) ((zValues[i] & 0xffffff) * (1.0 / 0xffffff));
+            trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &flt);
+         }
+      }
+   }
    else {
       _mesa_problem(ctx, "invalid rb->DataType in texture_put_values");
    }
@@ -389,6 +442,15 @@ texture_put_mono_values(GLcontext *ctx, struct gl_renderbuffer *rb,
    else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
       const GLuint zValue = *((const GLuint *) value);
       const GLfloat flt = (GLfloat) ((zValue >> 8) * (1.0 / 0xffffff));
+      for (i = 0; i < count; i++) {
+         if (!mask || mask[i]) {
+            trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &flt);
+         }
+      }
+   }
+   else if (rb->DataType == GL_UNSIGNED_INT_8_24_REV_MESA) {
+      const GLuint zValue = *((const GLuint *) value);
+      const GLfloat flt = (GLfloat) ((zValue & 0xffffff) * (1.0 / 0xffffff));
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
             trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &flt);
@@ -491,24 +553,35 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    trb->Base.Width = trb->TexImage->Width;
    trb->Base.Height = trb->TexImage->Height;
    trb->Base.InternalFormat = trb->TexImage->InternalFormat;
+   trb->Base.Format = trb->TexImage->TexFormat;
+
    /* XXX may need more special cases here */
-   if (trb->TexImage->TexFormat == MESA_FORMAT_Z24_S8) {
-      trb->Base.Format = MESA_FORMAT_Z24_S8;
+   switch (trb->TexImage->TexFormat) {
+   case MESA_FORMAT_Z24_S8:
       trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
       trb->Base._BaseFormat = GL_DEPTH_STENCIL;
-   }
-   else if (trb->TexImage->TexFormat == MESA_FORMAT_Z16) {
-      trb->Base.Format = MESA_FORMAT_Z16;
-      trb->Base.DataType = GL_UNSIGNED_SHORT;
+      break;
+   case MESA_FORMAT_S8_Z24:
+      trb->Base.DataType = GL_UNSIGNED_INT_8_24_REV_MESA;
       trb->Base._BaseFormat = GL_DEPTH_STENCIL;
-   }
-   else if (trb->TexImage->TexFormat == MESA_FORMAT_Z32) {
-      trb->Base.Format = MESA_FORMAT_Z32;
+      break;
+   case MESA_FORMAT_Z24_X8:
+      trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
+      trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      break;
+   case MESA_FORMAT_X8_Z24:
+      trb->Base.DataType = GL_UNSIGNED_INT_8_24_REV_MESA;
+      trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      break;
+   case MESA_FORMAT_Z16:
+      trb->Base.DataType = GL_UNSIGNED_SHORT;
+      trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      break;
+   case MESA_FORMAT_Z32:
       trb->Base.DataType = GL_UNSIGNED_INT;
       trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-   }
-   else {
-      trb->Base.Format = trb->TexImage->TexFormat;
+      break;
+   default:
       trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
    }

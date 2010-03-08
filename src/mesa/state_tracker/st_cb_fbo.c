@@ -410,16 +410,11 @@ st_finish_render_texture(GLcontext *ctx,
 
    st_flush( ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL );
 
-   if (strb->surface)
-      pipe_surface_reference( &strb->surface, NULL );
-
    strb->rtt = NULL;
 
    /*
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
    */
-
-   _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
 
    /* restore previous framebuffer state */
    st_invalidate_state(ctx, _NEW_BUFFERS);
