@@ -30,7 +30,7 @@
 #include "xlib.h"
 #include "softpipe/sp_texture.h"
 #include "softpipe/sp_screen.h"
-#include "state_tracker/sw_winsys.h"
+#include "state_tracker/xlib_sw_winsys.h"
 #include "util/u_debug.h"
 
 static struct pipe_screen *
@@ -58,7 +58,7 @@ fail:
 
 
 static void
-xlib_softpipe_display_surface(struct xmesa_buffer *xm_buffer,
+xlib_softpipe_display_surface(struct xlib_drawable *xm_buffer,
                               struct pipe_surface *surf)
 {
    struct softpipe_texture *texture = softpipe_texture(surf->texture);
