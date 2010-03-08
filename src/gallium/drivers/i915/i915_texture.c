@@ -96,7 +96,7 @@ i915_miptree_set_level_info(struct i915_texture *tex,
                              unsigned nr_images,
                              unsigned w, unsigned h, unsigned d)
 {
-   assert(level < PIPE_MAX_TEXTURE_LEVELS);
+   assert(level < Elements(tex->nr_images));
 
    tex->nr_images[level] = nr_images;
 
@@ -775,7 +775,7 @@ i915_texture_destroy(struct pipe_texture *pt)
 
    iws->buffer_destroy(iws, tex->buffer);
 
-   for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
+   for (i = 0; i < Elements(tex->image_offset); i++)
       if (tex->image_offset[i])
          FREE(tex->image_offset[i]);
 
