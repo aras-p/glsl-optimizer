@@ -46,6 +46,7 @@
 
 struct brw_sf_prog_key {
    GLbitfield64 attrs;
+   uint8_t point_sprite_coord_replace;
    GLuint primitive:2;
    GLuint do_twoside_color:1;
    GLuint do_flat_shading:1;
@@ -54,10 +55,6 @@ struct brw_sf_prog_key {
    GLuint linear_color:1;  /**< linear interp vs. perspective interp */
    GLuint sprite_origin_lower_left:1;
    GLuint pad:24;
-};
-
-struct brw_sf_point_tex {
-   GLboolean CoordReplace;	
 };
 
 struct brw_sf_compile {
@@ -100,7 +97,6 @@ struct brw_sf_compile {
 
    GLubyte attr_to_idx[VERT_RESULT_MAX];   
    GLubyte idx_to_attr[VERT_RESULT_MAX];   
-   struct brw_sf_point_tex point_attrs[VERT_RESULT_MAX];
 };
 
  
