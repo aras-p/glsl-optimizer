@@ -60,7 +60,6 @@ def AddOptions(opts):
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', default_platform,
 											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded')))
-	opts.Add(EnumOption('toolchain', 'compiler toolchain', 'default',
-											 allowed_values=('default', 'crossmingw', 'winsdk', 'winddk')))
+	opts.Add('toolchain', 'compiler toolchain', 'default')
 	opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
 	opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))
