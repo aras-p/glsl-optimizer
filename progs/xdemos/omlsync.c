@@ -249,11 +249,13 @@ int main(int argc, char *argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glRectf(0, 0, width, height);
 
-		glXSwapBuffersMscOML(disp, winGL, 0, divisor, remainder);
-
-		if (wait_interval) {
+		if (!wait_interval)
+			glXSwapBuffersMscOML(disp, winGL, 0, divisor,
+					     remainder);
+		else {
 			glXWaitForMscOML(disp, winGL, msc + wait_interval,
-					 0, 0, &ust, &msc, &sbc);
+					 divisor, remainder, &ust, &msc, &sbc);
+			glXSwapBuffersMscOML(disp, winGL, 0, 0, 0);
 		}
 	}
 
