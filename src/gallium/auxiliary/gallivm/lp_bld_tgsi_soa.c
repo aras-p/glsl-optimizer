@@ -152,8 +152,7 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
 static void lp_exec_mask_update(struct lp_exec_mask *mask)
 {
    mask->exec_mask = mask->cond_mask;
-   if (mask->cond_stack_size > 0)
-      mask->has_mask = TRUE;
+   mask->has_mask = (mask->cond_stack_size > 0);
 }
 
 static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
