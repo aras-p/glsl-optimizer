@@ -93,6 +93,10 @@ do_copy_texsubimage(GLcontext *ctx,
     src_bpp = _mesa_get_format_bytes(src_mesaformat);
     dst_bpp = _mesa_get_format_bytes(dst_mesaformat);
     if (!radeon->vtbl.check_blit(dst_mesaformat)) {
+	    /* depth formats tend to be special */
+	    if (_mesa_get_format_bits(dst_mesaformat, GL_DEPTH_BITS) > 0)
+		    return GL_FALSE;
+
 	    if (src_bpp != dst_bpp)
 		    return GL_FALSE;
 
