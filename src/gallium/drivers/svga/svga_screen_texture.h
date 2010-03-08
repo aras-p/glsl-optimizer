@@ -78,7 +78,7 @@ struct svga_texture
 {
    struct pipe_texture base;
 
-   boolean defined[6][PIPE_MAX_TEXTURE_LEVELS];
+   boolean defined[6][SVGA_MAX_TEXTURE_LEVELS];
    
    struct svga_sampler_view *cached_view;
 
