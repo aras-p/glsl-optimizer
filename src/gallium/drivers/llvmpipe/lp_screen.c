@@ -107,11 +107,11 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 13; /* max 4Kx4K */
+      return LP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 9;  /* max 256x256x256 */
+      return LP_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 13; /* max 4Kx4K */
+      return LP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_TGSI_CONT_SUPPORTED:
       return 1;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
