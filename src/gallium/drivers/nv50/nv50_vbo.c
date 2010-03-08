@@ -220,6 +220,13 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 	if (!nv50_state_validate(nv50, 10 + 16*3))
 		return;
 
+	if (nv50->vbo_fifo) {
+		nv50_push_elements_instanced(pipe, NULL, 0, mode, start,
+					     count, startInstance,
+					     instanceCount);
+		return;
+	}
+
 	BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 2);
 	OUT_RING  (chan, NV50_CB_AUX | (24 << 8));
 	OUT_RING  (chan, startInstance);
@@ -422,17 +429,22 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 	struct instance a[16];
 	unsigned prim = nv50_prim(mode);
 
-	if (!(indexBuffer->usage & PIPE_BUFFER_USAGE_INDEX) ||
-	    indexSize == 1) {
+	instance_init(nv50, a, startInstance);
+	if (!nv50_state_validate(nv50, 13 + 16*3))
+		return;
+
+	if (nv50->vbo_fifo) {
+		nv50_push_elements_instanced(pipe, indexBuffer, indexSize,
+					     mode, start, count, startInstance,
+					     instanceCount);
+		return;
+	} else
+	if (!(indexBuffer->usage & PIPE_BUFFER_USAGE_INDEX) || indexSize == 1) {
 		nv50_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count, startInstance,
 					  instanceCount);
 		return;
 	}
-
-	instance_init(nv50, a, startInstance);
-	if (!nv50_state_validate(nv50, 13 + 16*3))
-		return;
 
 	BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 2);
 	OUT_RING  (chan, NV50_CB_AUX | (24 << 8));
@@ -570,7 +582,9 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	if (nv50->vtxbuf_nr == 0)
 		return NULL;
 
-	assert(!NV50_USING_LOATHED_EDGEFLAG(nv50));
+	if (NV50_USING_LOATHED_EDGEFLAG(nv50))
+		nv50->vbo_fifo = 0xffff;
+	nv50->vbo_fifo = 0xffff;
 
 	n_ve = MAX2(nv50->vtxelt->num_elements, nv50->state.vtxelt_nr);
 
@@ -590,6 +604,16 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		    nv50_vbo_static_attrib(nv50, i, &vtxattr, ve, vb)) {
 			so_data(vtxfmt, hw | (1 << 4));
 
+			so_method(vtxbuf, tesla,
+				  NV50TCL_VERTEX_ARRAY_FORMAT(i), 1);
+			so_data  (vtxbuf, 0);
+
+			nv50->vbo_fifo &= ~(1 << i);
+			continue;
+		}
+
+		if (nv50->vbo_fifo) {
+			so_data  (vtxfmt, hw | (ve->instance_divisor ? (1 << 4) : i));
 			so_method(vtxbuf, tesla,
 				  NV50TCL_VERTEX_ARRAY_FORMAT(i), 1);
 			so_data  (vtxbuf, 0);

@@ -163,6 +163,8 @@ struct nv50_context {
 	unsigned sampler_nr[PIPE_SHADER_TYPES];
 	struct nv50_miptree *miptree[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
 	unsigned miptree_nr[PIPE_SHADER_TYPES];
+
+	unsigned vbo_fifo;
 };
 
 static INLINE struct nv50_context *
@@ -206,6 +208,13 @@ extern void nv50_draw_elements_instanced(struct pipe_context *pipe,
 					 unsigned instanceCount);
 extern void nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso);
 extern struct nouveau_stateobj *nv50_vbo_validate(struct nv50_context *nv50);
+
+/* nv50_push.c */
+extern void
+nv50_push_elements_instanced(struct pipe_context *, struct pipe_buffer *,
+			     unsigned idxsize, unsigned mode, unsigned start,
+			     unsigned count, unsigned i_start,
+			     unsigned i_count);
 
 /* nv50_clear.c */
 extern void nv50_clear(struct pipe_context *pipe, unsigned buffers,
