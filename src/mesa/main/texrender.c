@@ -497,6 +497,11 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
       trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
       trb->Base._BaseFormat = GL_DEPTH_STENCIL;
    }
+   else if (trb->TexImage->TexFormat == MESA_FORMAT_S8_Z24) {
+      trb->Base.Format = MESA_FORMAT_S8_Z24;
+      trb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT; /* not 8_24 */
+      trb->Base._BaseFormat = GL_DEPTH_STENCIL;
+   }
    else if (trb->TexImage->TexFormat == MESA_FORMAT_Z16) {
       trb->Base.Format = MESA_FORMAT_Z16;
       trb->Base.DataType = GL_UNSIGNED_SHORT;
