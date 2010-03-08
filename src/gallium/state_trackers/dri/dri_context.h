@@ -51,9 +51,6 @@ struct dri_context
 
    driOptionCache optionCache;
 
-   unsigned int d_stamp;
-   unsigned int r_stamp;
-
    drmLock *lock;
    boolean isLocked;
    boolean stLostLock;
@@ -62,8 +59,7 @@ struct dri_context
    unsigned int bind_count;
 
    /* gallium */
-   struct st_context *st;
-   struct pipe_context *pipe;
+   struct st_context_iface *st;
 };
 
 static INLINE struct dri_context *
@@ -83,6 +79,9 @@ boolean
 dri_make_current(__DRIcontext * driContextPriv,
 		 __DRIdrawable * driDrawPriv,
 		 __DRIdrawable * driReadPriv);
+
+struct dri_context *
+dri_get_current(void);
 
 boolean
 dri_create_context(const __GLcontextModes * visual,

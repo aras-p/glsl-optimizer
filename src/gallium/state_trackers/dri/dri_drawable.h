@@ -46,19 +46,14 @@ struct dri_drawable
    __DRIdrawable *dPriv;
    __DRIscreen *sPriv;
 
-   unsigned attachments[8];
-   unsigned num_attachments;
-
-   boolean is_pixmap;
+   /* gallium */
+   struct st_framebuffer_iface *stfb;
+   struct st_visual stvis;
 
    __DRIbuffer old[8];
    unsigned old_num;
    unsigned old_w;
    unsigned old_h;
-
-   /* gallium */
-   struct st_framebuffer *stfb;
-   struct st_visual stvis;
 
    struct pipe_texture *textures[ST_ATTACHMENT_COUNT];
    unsigned int texture_mask, texture_stamp;
@@ -69,8 +64,8 @@ struct dri_drawable
    unsigned int desired_fences;
    unsigned int cur_fences;
 
-   enum pipe_format color_format;
-   enum pipe_format depth_stencil_format;
+   /* used only by DRI1 */
+   struct pipe_surface *dri1_surface;
 };
 
 static INLINE struct dri_drawable *
@@ -86,15 +81,6 @@ boolean
 dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
 		  const __GLcontextModes * visual, boolean isPixmap);
-
-void
-dri_update_buffer(struct pipe_screen *screen, void *context_private);
-
-void
-dri_flush_frontbuffer(struct pipe_screen *screen,
-		      struct pipe_surface *surf, void *context_private);
-
-void dri_get_buffers(__DRIdrawable * dPriv);
 
 void dri_destroy_buffer(__DRIdrawable * dPriv);
 

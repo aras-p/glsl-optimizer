@@ -34,6 +34,8 @@
 
 #include "dri_context.h"
 #include "dri_drawable.h"
+
+#include "state_tracker/st_api.h"
 #include "dri_util.h"
 
 extern struct dri1_api *__dri1_api_hooks;
@@ -42,12 +44,13 @@ const __DRIconfig **
 dri1_init_screen(__DRIscreen * sPriv);
 
 void
-dri1_update_drawables(struct dri_context *ctx,
-		      struct dri_drawable *draw, struct dri_drawable *read);
+dri1_flush_frontbuffer(struct dri_drawable *drawable,
+                       struct pipe_texture *ptex);
 
 void
-dri1_flush_frontbuffer(struct pipe_screen *screen,
-		       struct pipe_surface *surf, void *context_private);
+dri1_allocate_textures(struct dri_drawable *drawable,
+                       unsigned width, unsigned height,
+                       unsigned mask);
 
 void dri1_swap_buffers(__DRIdrawable * dPriv);
 

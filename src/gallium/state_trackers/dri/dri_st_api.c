@@ -274,8 +274,8 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    if (drawable->texture_stamp != drawable->dPriv->lastStamp ||
        (statt_mask & ~drawable->texture_mask)) {
       if (__dri1_api_hooks) {
-         /* TODO */
-         return FALSE;
+         dri1_allocate_textures(drawable,
+               drawable->dPriv->w, drawable->dPriv->h, statt_mask);
       }
       else {
          __DRIbuffer *buffers;
@@ -309,9 +309,12 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
    struct __DRIdri2LoaderExtensionRec *loader =
       drawable->sPriv->dri2.loader;
 
-   /* TODO */
-   if (__dri1_api_hooks)
-      return FALSE;
+   if (__dri1_api_hooks) {
+      struct pipe_texture *ptex = drawable->textures[statt];
+      if (ptex)
+         dri1_flush_frontbuffer(drawable, ptex);
+      return TRUE;
+   }
 
    if (statt == ST_ATTACHMENT_FRONT_LEFT && loader->flushFrontBuffer) {
       loader->flushFrontBuffer(drawable->dPriv,

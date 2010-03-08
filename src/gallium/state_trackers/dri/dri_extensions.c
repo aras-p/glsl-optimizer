@@ -38,9 +38,11 @@
 void
 dri_init_extensions(struct dri_context *ctx)
 {
+   struct st_context *st = (struct st_context *) ctx->st;
+
    /* New extensions should be added in mesa/state_tracker/st_extensions.c
     * and not in this file. */
-   driInitExtensions(ctx->st->ctx, NULL, GL_FALSE);
+   driInitExtensions(st->ctx, NULL, GL_FALSE);
 }
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

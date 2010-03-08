@@ -36,6 +36,9 @@
 #include "xmlconfig.h"
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_context.h"
+#include "pipe/p_state.h"
+#include "state_tracker/st_api.h"
 
 struct dri_screen
 {
@@ -58,6 +61,11 @@ struct dri_screen
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
+
+   struct st_manager *smapi;
+
+   /* used only by DRI1 */
+   struct pipe_context *dri1_pipe;
 };
 
 /** cast wrapper */
@@ -71,6 +79,10 @@ extern const uint __driNConfigOptions;
 
 const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen, unsigned pixel_bits);
+
+void
+dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
+                   const __GLcontextModes *mode);
 
 #endif
 

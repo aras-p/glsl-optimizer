@@ -29,16 +29,18 @@
  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
+/* XXX DRI1 is untested after the switch to st_api.h */
+
 #include "util/u_memory.h"
 #include "util/u_rect.h"
+#include "util/u_inlines.h"
 #include "pipe/p_context.h"
-#include "state_tracker/st_context.h"
-#include "state_tracker/st_public.h"
 #include "state_tracker/dri1_api.h"
 
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
+#include "dri_st_api.h"
 #include "dri1.h"
 
 static INLINE void
@@ -125,50 +127,27 @@ dri1_update_drawables_locked(struct dri_context *ctx,
 /**
  * This ensures all contexts which bind to a drawable pick up the
  * drawable change and signal new buffer state.
- * Calling st_resize_framebuffer for each context may seem like overkill,
- * but no new buffers will actually be allocated if the dimensions don't
- * change.
  */
-
 static void
 dri1_propagate_drawable_change(struct dri_context *ctx)
 {
    __DRIdrawable *dPriv = ctx->dPriv;
    __DRIdrawable *rPriv = ctx->rPriv;
+   struct dri_drawable *draw = dri_drawable(dPriv);
+   struct dri_drawable *read = dri_drawable(rPriv);
    boolean flushed = FALSE;
 
-   if (dPriv && ctx->d_stamp != dPriv->lastStamp) {
-
-      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   if (dPriv && draw->texture_stamp != dPriv->lastStamp) {
+      ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       flushed = TRUE;
-      ctx->d_stamp = dPriv->lastStamp;
-      st_resize_framebuffer(dri_drawable(dPriv)->stfb, dPriv->w, dPriv->h);
-
+      ctx->st->notify_invalid_framebuffer(ctx->st, draw->stfb);
    }
 
-   if (rPriv && dPriv != rPriv && ctx->r_stamp != rPriv->lastStamp) {
-
+   if (rPriv && dPriv != rPriv && read->texture_stamp != rPriv->lastStamp) {
       if (!flushed)
-	 st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-      ctx->r_stamp = rPriv->lastStamp;
-      st_resize_framebuffer(dri_drawable(rPriv)->stfb, rPriv->w, rPriv->h);
-
-   } else if (rPriv && dPriv == rPriv) {
-
-      ctx->r_stamp = ctx->d_stamp;
-
+	 ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      ctx->st->notify_invalid_framebuffer(ctx->st, read->stfb);
    }
-}
-
-void
-dri1_update_drawables(struct dri_context *ctx,
-		      struct dri_drawable *draw, struct dri_drawable *read)
-{
-   dri1_lock(ctx);
-   dri1_update_drawables_locked(ctx, draw->dPriv, read->dPriv);
-   dri1_unlock(ctx);
-
-   dri1_propagate_drawable_change(ctx);
 }
 
 static INLINE boolean
@@ -204,12 +183,11 @@ dri1_intersect_src_bbox(struct drm_clip_rect *dst,
 }
 
 static void
-dri1_swap_copy(struct dri_context *ctx,
+dri1_swap_copy(struct pipe_context *pipe,
 	       struct pipe_surface *dst,
 	       struct pipe_surface *src,
 	       __DRIdrawable * dPriv, const struct drm_clip_rect *bbox)
 {
-   struct pipe_context *pipe = ctx->pipe;
    struct drm_clip_rect clip;
    struct drm_clip_rect *cur;
    int i;
@@ -235,52 +213,96 @@ dri1_swap_copy(struct dri_context *ctx,
    }
 }
 
-static void
-dri1_copy_to_front(struct dri_context *ctx,
-		   struct pipe_surface *surf,
-		   __DRIdrawable * dPriv,
-		   const struct drm_clip_rect *sub_box,
-		   struct pipe_fence_handle **fence)
+static struct pipe_surface *
+dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_texture *ptex)
 {
-   struct pipe_context *pipe = ctx->pipe;
-   boolean save_lost_lock;
-   uint cur_w;
-   uint cur_h;
+   struct pipe_screen *pipe_screen = dri_screen(drawable->sPriv)->pipe_screen;
+   struct pipe_surface *psurf = drawable->dri1_surface;
+
+   if (!psurf || psurf->texture != ptex) {
+      pipe_surface_reference(&drawable->dri1_surface, NULL);
+
+      drawable->dri1_surface = pipe_screen->get_tex_surface(pipe_screen,
+            ptex, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
+
+      psurf = drawable->dri1_surface;
+   }
+
+   return psurf;
+}
+
+static struct pipe_context *
+dri1_get_pipe_context(struct dri_drawable *drawable)
+{
+   struct dri_screen *screen = dri_screen(drawable->sPriv);
+   struct pipe_context *pipe = screen->dri1_pipe;
+
+   if (!pipe) {
+      screen->dri1_pipe =
+         screen->pipe_screen->context_create(screen->pipe_screen, NULL);
+      pipe = screen->dri1_pipe;
+   }
+
+   return pipe;
+}
+
+static void
+dri1_present_texture_locked(__DRIdrawable * dPriv,
+                            struct pipe_texture *ptex,
+                            const struct drm_clip_rect *sub_box,
+                            struct pipe_fence_handle **fence)
+{
+   struct dri_drawable *drawable = dri_drawable(dPriv);
+   struct pipe_context *pipe;
+   struct pipe_surface *psurf;
    struct drm_clip_rect bbox;
    boolean visible = TRUE;
 
    *fence = NULL;
 
-   dri1_lock(ctx);
-   save_lost_lock = ctx->stLostLock;
-   dri1_update_drawables_locked(ctx, dPriv, dPriv);
-   st_get_framebuffer_dimensions(dri_drawable(dPriv)->stfb, &cur_w, &cur_h);
-
    bbox.x1 = 0;
-   bbox.x2 = cur_w;
+   bbox.x2 = ptex->width0;
    bbox.y1 = 0;
-   bbox.y2 = cur_h;
+   bbox.y2 = ptex->height0;
 
    if (sub_box)
       visible = dri1_intersect_src_bbox(&bbox, 0, 0, &bbox, sub_box);
+   if (!visible)
+      return;
 
-   if (visible && __dri1_api_hooks->present_locked) {
+   pipe = dri1_get_pipe_context(drawable);
+   psurf = dri1_get_pipe_surface(drawable, ptex);
+   if (!pipe || !psurf)
+      return;
 
-      __dri1_api_hooks->present_locked(pipe,
-				       surf,
-				       dPriv->pClipRects,
-				       dPriv->numClipRects,
-				       dPriv->x, dPriv->y, &bbox, fence);
-
-   } else if (visible && __dri1_api_hooks->front_srf_locked) {
-
+   if (__dri1_api_hooks->present_locked) {
+      __dri1_api_hooks->present_locked(pipe, psurf,
+                                       dPriv->pClipRects, dPriv->numClipRects,
+                                       dPriv->x, dPriv->y, &bbox, fence);
+   } else if (__dri1_api_hooks->front_srf_locked) {
       struct pipe_surface *front = __dri1_api_hooks->front_srf_locked(pipe);
 
       if (front)
-	 dri1_swap_copy(ctx, front, surf, dPriv, &bbox);
+         dri1_swap_copy(pipe, front, psurf, dPriv, &bbox);
 
-      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, fence);
+      pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, fence);
    }
+}
+
+static void
+dri1_copy_to_front(struct dri_context *ctx,
+		   struct pipe_texture *ptex,
+		   __DRIdrawable * dPriv,
+		   const struct drm_clip_rect *sub_box,
+		   struct pipe_fence_handle **fence)
+{
+   boolean save_lost_lock;
+
+   dri1_lock(ctx);
+   save_lost_lock = ctx->stLostLock;
+   dri1_update_drawables_locked(ctx, dPriv, dPriv);
+
+   dri1_present_texture_locked(dPriv, ptex, sub_box, fence);
 
    ctx->stLostLock = save_lost_lock;
 
@@ -296,14 +318,23 @@ dri1_copy_to_front(struct dri_context *ctx,
 }
 
 void
-dri1_flush_frontbuffer(struct pipe_screen *screen,
-		       struct pipe_surface *surf, void *context_private)
+dri1_flush_frontbuffer(struct dri_drawable *drawable,
+                       struct pipe_texture *ptex)
 {
-   struct dri_context *ctx = (struct dri_context *)context_private;
+   struct st_api *stapi = dri_get_st_api();
+   struct dri_screen *screen = dri_screen(drawable->sPriv);
+   struct pipe_screen *pipe_screen = screen->pipe_screen;
+   struct dri_context *ctx;
    struct pipe_fence_handle *dummy_fence;
+   struct st_context_iface *st = stapi->get_current(stapi);
 
-   dri1_copy_to_front(ctx, surf, ctx->dPriv, NULL, &dummy_fence);
-   screen->fence_reference(screen, &dummy_fence, NULL);
+   if (!st)
+      return;
+
+   ctx = (struct dri_context *) st->st_manager_private;
+
+   dri1_copy_to_front(ctx, ptex, ctx->dPriv, NULL, &dummy_fence);
+   pipe_screen->fence_reference(pipe_screen, &dummy_fence, NULL);
 
    /**
     * FIXME: Do we need swap throttling here?
@@ -313,64 +344,125 @@ dri1_flush_frontbuffer(struct pipe_screen *screen,
 void
 dri1_swap_buffers(__DRIdrawable * dPriv)
 {
-   struct dri_context *ctx;
-   struct pipe_surface *back_surf;
+   struct dri_context *ctx = dri_get_current();
    struct dri_drawable *draw = dri_drawable(dPriv);
-   struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
+   struct dri_screen *screen = dri_screen(draw->sPriv);
+   struct pipe_screen *pipe_screen = screen->pipe_screen;
    struct pipe_fence_handle *fence;
-   struct st_context *st = st_get_current();
+   struct pipe_texture *ptex;
 
    assert(__dri1_api_hooks != NULL);
 
-   if (!st)
+   if (!ctx)
       return;			       /* For now */
 
-   ctx = (struct dri_context *)st->pipe->priv;
-
-   st_get_framebuffer_surface(draw->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
-   if (back_surf) {
-      st_notify_swapbuffers(draw->stfb);
-      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   ptex = draw->textures[ST_ATTACHMENT_BACK_LEFT];
+   if (ptex) {
+      ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       fence = dri_swap_fences_pop_front(draw);
       if (fence) {
-	 (void)screen->fence_finish(screen, fence, 0);
-	 screen->fence_reference(screen, &fence, NULL);
+	 (void)pipe_screen->fence_finish(pipe_screen, fence, 0);
+	 pipe_screen->fence_reference(pipe_screen, &fence, NULL);
       }
-      dri1_copy_to_front(ctx, back_surf, dPriv, NULL, &fence);
+      dri1_copy_to_front(ctx, ptex, dPriv, NULL, &fence);
       dri_swap_fences_push_back(draw, fence);
-      screen->fence_reference(screen, &fence, NULL);
+      pipe_screen->fence_reference(pipe_screen, &fence, NULL);
    }
 }
 
 void
 dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
 {
-   struct pipe_screen *screen = dri_screen(dPriv->driScreenPriv)->pipe_screen;
+   struct dri_context *ctx = dri_get_current();
+   struct dri_screen *screen = dri_screen(dPriv->driScreenPriv);
+   struct pipe_screen *pipe_screen = screen->pipe_screen;
    struct drm_clip_rect sub_bbox;
-   struct dri_context *ctx;
-   struct pipe_surface *back_surf;
    struct dri_drawable *draw = dri_drawable(dPriv);
    struct pipe_fence_handle *dummy_fence;
-   struct st_context *st = st_get_current();
+   struct pipe_texture *ptex;
 
    assert(__dri1_api_hooks != NULL);
 
-   if (!st)
+   if (!ctx)
       return;
-
-   ctx = (struct dri_context *)st->pipe->priv;
 
    sub_bbox.x1 = x;
    sub_bbox.x2 = x + w;
    sub_bbox.y1 = y;
    sub_bbox.y2 = y + h;
 
-   st_get_framebuffer_surface(draw->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
-   if (back_surf) {
-      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-      dri1_copy_to_front(ctx, back_surf, dPriv, &sub_bbox, &dummy_fence);
-      screen->fence_reference(screen, &dummy_fence, NULL);
+   ptex = draw->textures[ST_ATTACHMENT_BACK_LEFT];
+   if (ptex) {
+      ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      dri1_copy_to_front(ctx, ptex, dPriv, &sub_bbox, &dummy_fence);
+      pipe_screen->fence_reference(pipe_screen, &dummy_fence, NULL);
    }
+}
+
+void
+dri1_allocate_textures(struct dri_drawable *drawable,
+                       unsigned width, unsigned height,
+                       unsigned mask)
+{
+   struct dri_screen *screen = dri_screen(drawable->sPriv);
+   struct pipe_texture templ;
+   int i;
+
+   /* remove outdated textures */
+   if (drawable->old_w != width || drawable->old_h != height) {
+      for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
+         pipe_texture_reference(&drawable->textures[i], NULL);
+   }
+
+   memset(&templ, 0, sizeof(templ));
+   templ.target = PIPE_TEXTURE_2D;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
+   templ.last_level = 0;
+
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+      enum pipe_format format;
+      unsigned tex_usage;
+
+      /* the texture already exists or not requested */
+      if (drawable->textures[i] || !(mask & (1 << i))) {
+         /* remember the texture */
+         if (drawable->textures[i])
+            mask |= (1 << i);
+         continue;
+      }
+
+      switch (i) {
+      case ST_ATTACHMENT_FRONT_LEFT:
+      case ST_ATTACHMENT_BACK_LEFT:
+      case ST_ATTACHMENT_FRONT_RIGHT:
+      case ST_ATTACHMENT_BACK_RIGHT:
+         format = drawable->stvis.color_format;
+         tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                     PIPE_TEXTURE_USAGE_RENDER_TARGET;
+         break;
+      case ST_ATTACHMENT_DEPTH_STENCIL:
+         format = drawable->stvis.depth_stencil_format;
+         tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+         break;
+      default:
+         format = PIPE_FORMAT_NONE;
+         break;
+      }
+
+      if (templ.format != PIPE_FORMAT_NONE) {
+         templ.format = format;
+         templ.tex_usage = tex_usage;
+
+         drawable->textures[i] =
+            screen->pipe_screen->texture_create(screen->pipe_screen, &templ);
+      }
+   }
+
+   drawable->old_w = width;
+   drawable->old_h = height;
+   drawable->texture_mask = mask;
 }
 
 static void
@@ -469,7 +561,6 @@ dri1_init_screen(__DRIscreen * sPriv)
 
    __dri1_api_hooks = arg.api;
 
-   screen->pipe_screen->flush_frontbuffer = dri1_flush_frontbuffer;
    driParseOptionInfo(&screen->optionCache,
 		      __driConfigOptions, __driNConfigOptions);
 

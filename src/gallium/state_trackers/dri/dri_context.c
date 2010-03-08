@@ -32,9 +32,9 @@
 #include "dri_screen.h"
 #include "dri_drawable.h"
 #include "dri_context.h"
+#include "dri_st_api.h"
 #include "dri1.h"
 
-#include "state_tracker/st_public.h"
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 
@@ -42,10 +42,12 @@ GLboolean
 dri_create_context(const __GLcontextModes * visual,
 		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
+   struct st_api *stapi = dri_get_st_api();
    __DRIscreen *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
    struct dri_context *ctx = NULL;
-   struct st_context *st_share = NULL;
+   struct st_context_iface *st_share = NULL;
+   struct st_visual stvis;
 
    if (sharedContextPrivate) {
       st_share = ((struct dri_context *)sharedContextPrivate)->st;
@@ -59,21 +61,15 @@ dri_create_context(const __GLcontextModes * visual,
    ctx->cPriv = cPriv;
    ctx->sPriv = sPriv;
    ctx->lock = screen->drmLock;
-   ctx->d_stamp = -1;
-   ctx->r_stamp = -1;
 
    driParseConfigFiles(&ctx->optionCache,
 		       &screen->optionCache, sPriv->myNum, "dri");
 
-   ctx->pipe = screen->pipe_screen->context_create( screen->pipe_screen,
-						    ctx );
-
-   if (ctx->pipe == NULL)
-      goto fail;
-
-   ctx->st = st_create_context(ctx->pipe, visual, st_share);
+   dri_fill_st_visual(&stvis, screen, visual);
+   ctx->st = stapi->create_context(stapi, screen->smapi, &stvis, st_share);
    if (ctx->st == NULL)
       goto fail;
+   ctx->st->st_manager_private = (void *) ctx;
 
    dri_init_extensions(ctx);
 
@@ -81,10 +77,7 @@ dri_create_context(const __GLcontextModes * visual,
 
  fail:
    if (ctx && ctx->st)
-      st_destroy_context(ctx->st);
-
-   if (ctx && ctx->pipe)
-      ctx->pipe->destroy(ctx->pipe);
+      ctx->st->destroy(ctx->st);
 
    FREE(ctx);
    return FALSE;
@@ -106,11 +99,8 @@ dri_destroy_context(__DRIcontext * cPriv)
     * to avoid having to add code elsewhere to cope with flushing a
     * partially destroyed context.
     */
-   st_flush(ctx->st, 0, NULL);
-
-   /* Also frees ctx->pipe?
-    */
-   st_destroy_context(ctx->st);
+   ctx->st->flush(ctx->st, 0, NULL);
+   ctx->st->destroy(ctx->st);
 
    FREE(ctx);
 }
@@ -118,14 +108,16 @@ dri_destroy_context(__DRIcontext * cPriv)
 GLboolean
 dri_unbind_context(__DRIcontext * cPriv)
 {
+   struct st_api *stapi = dri_get_st_api();
+
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
 
       if (--ctx->bind_count == 0) {
-	 if (ctx->st && ctx->st == st_get_current()) {
-	    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-	    st_make_current(NULL, NULL, NULL, NULL);
-	 }
+         if (ctx->st == stapi->get_current(stapi)) {
+            ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+            stapi->make_current(stapi, NULL, NULL, NULL);
+         }
       }
    }
 
@@ -137,45 +129,47 @@ dri_make_current(__DRIcontext * cPriv,
 		 __DRIdrawable * driDrawPriv,
 		 __DRIdrawable * driReadPriv)
 {
+   struct st_api *stapi = dri_get_st_api();
+
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
       struct dri_drawable *draw = dri_drawable(driDrawPriv);
       struct dri_drawable *read = dri_drawable(driReadPriv);
-      struct st_context *old_st = st_get_current();
+      struct st_context_iface *old_st;
 
+      old_st = stapi->get_current(stapi);
       if (old_st && old_st != ctx->st)
-	 st_flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
+	 ctx->st->flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
       ++ctx->bind_count;
 
       if (ctx->dPriv != driDrawPriv) {
 	 ctx->dPriv = driDrawPriv;
-	 ctx->d_stamp = driDrawPriv->lastStamp - 1;
+         draw->texture_stamp = driDrawPriv->lastStamp - 1;
       }
       if (ctx->rPriv != driReadPriv) {
 	 ctx->rPriv = driReadPriv;
-	 ctx->r_stamp = driReadPriv->lastStamp - 1;
+         draw->texture_stamp = driReadPriv->lastStamp - 1;
       }
 
-      /* DRI co-state tracker currently overrides flush_frontbuffer.
-       * When this is fixed, will need to pass the drawable in the
-       * fourth parameter here so that when Mesa calls
-       * flush_frontbuffer directly (in front-buffer rendering), it
-       * will have access to the drawable argument:
-       */
-      st_make_current(ctx->st, draw->stfb, read->stfb, ctx);
-
-      if (__dri1_api_hooks) {
-	 dri1_update_drawables(ctx, draw, read);
-      } else {
-	 dri_update_buffer(ctx->pipe->screen,
-			   ctx->pipe->priv);
-      }
-   } else {
-      st_make_current(NULL, NULL, NULL, NULL);
+      stapi->make_current(stapi, ctx->st, draw->stfb, read->stfb);
+   }
+   else {
+      stapi->make_current(stapi, NULL, NULL, NULL);
    }
 
    return GL_TRUE;
+}
+
+struct dri_context *
+dri_get_current(void)
+{
+   struct st_api *stapi = dri_get_st_api();
+   struct st_context_iface *st;
+
+   st = stapi->get_current(stapi);
+
+   return (struct dri_context *) (st) ? st->st_manager_private : NULL;
 }
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
