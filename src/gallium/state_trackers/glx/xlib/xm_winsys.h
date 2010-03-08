@@ -34,17 +34,6 @@ struct pipe_screen;
 struct pipe_surface;
 struct xlib_drawable;
 
-#include <X11/Xlib.h>
-
-struct xm_driver {
-
-   struct pipe_screen *(*create_pipe_screen)( Display *display );
-
-   void (*display_surface)( struct xlib_drawable *, 
-                            struct pipe_surface * );
-
-};
-
 
 extern void
 xmesa_set_driver( const struct xm_driver *driver );

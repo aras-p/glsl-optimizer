@@ -34,7 +34,6 @@
 
 
 
-#include "xm_api.h"
 
 #undef ASSERT
 #undef Elements

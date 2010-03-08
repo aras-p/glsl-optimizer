@@ -86,7 +86,7 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = glsl mesa gallium egl gallium/winsys glu glut/glx glew glw
+SRC_DIRS = glsl mesa gallium egl gallium/winsys gallium/targets glu glut/glx glew glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 # Which subdirs under $(TOP)/progs/ to enter:
@@ -101,6 +101,7 @@ GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a
 GALLIUM_DRIVERS_DIRS = softpipe failover svga i915 i965 r300 trace identity
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
 GALLIUM_WINSYS_DIRS = drm xlib
+GALLIUM_TARGET_DIRS = libgl-xlib
 GALLIUM_WINSYS_DRM_DIRS = swrast
 GALLIUM_STATE_TRACKERS_DIRS = glx vega
 
