@@ -299,13 +299,14 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
                               x, y, TILE_SIZE, TILE_SIZE,
                               tc->tile.data.color32, 0/*STRIDE*/);
 
-            /* do this? */
-            clear_clear_flag(tc->clear_flags, addr);
-
             numCleared++;
          }
       }
    }
+
+   /* reset all clear flags to zero */
+   memset(tc->clear_flags, 0, sizeof(tc->clear_flags));
+
 #if 0
    debug_printf("num cleared: %u\n", numCleared);
 #endif
