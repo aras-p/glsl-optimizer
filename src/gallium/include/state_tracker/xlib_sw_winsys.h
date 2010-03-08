@@ -22,9 +22,6 @@ struct xlib_drawable {
 
 struct xm_driver {
    struct pipe_screen *(*create_pipe_screen)( Display *display );
-
-   void (*display_surface)( struct xlib_drawable *, 
-                            struct pipe_surface * );
 };
 
 /* Called by the libgl-xlib target code to build the rendering stack.

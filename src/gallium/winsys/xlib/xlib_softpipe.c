@@ -57,22 +57,11 @@ fail:
 }
 
 
-static void
-xlib_softpipe_display_surface(struct xlib_drawable *xm_buffer,
-                              struct pipe_surface *surf)
-{
-   struct softpipe_texture *texture = softpipe_texture(surf->texture);
-
-   assert(texture->dt);
-   if (texture->dt)
-      xlib_sw_display(xm_buffer, texture->dt);
-}
 
 
 struct xm_driver xlib_softpipe_driver = 
 {
    .create_pipe_screen = xlib_create_softpipe_screen,
-   .display_surface = xlib_softpipe_display_surface
 };
 
 

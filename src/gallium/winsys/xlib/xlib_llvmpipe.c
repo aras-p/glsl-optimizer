@@ -69,22 +69,9 @@ fail:
 }
 
 
-static void
-xlib_llvmpipe_display_surface(struct xlib_drawable *xm_buffer,
-                              struct pipe_surface *surf)
-{
-   struct llvmpipe_texture *texture = llvmpipe_texture(surf->texture);
-
-   assert(texture->dt);
-   if (texture->dt)
-      xlib_sw_display(xm_buffer, texture->dt);
-}
-
-
 struct xm_driver xlib_llvmpipe_driver = 
 {
    .create_pipe_screen = xlib_create_llvmpipe_screen,
-   .display_surface = xlib_llvmpipe_display_surface
 };
 
 

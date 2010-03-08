@@ -1092,13 +1092,9 @@ void XMesaSwapBuffers( XMesaBuffer b )
    st_swapbuffers(b->stfb, &frontLeftSurf, NULL);
 
    if (frontLeftSurf) {
-      if (_screen != screen) {
-         struct trace_surface *tr_surf = trace_surface( frontLeftSurf );
-         struct pipe_surface *surf = tr_surf->surface;
-         frontLeftSurf = surf;
-      }
-
-      driver.display_surface(&b->ws, frontLeftSurf);
+      screen->flush_frontbuffer( screen,
+                                 frontLeftSurf, 
+                                 &b->ws );
    }
 
    xmesa_check_and_update_buffer_size(NULL, b);
