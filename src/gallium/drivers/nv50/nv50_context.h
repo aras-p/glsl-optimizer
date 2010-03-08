@@ -90,10 +90,12 @@ struct nv50_miptree_level {
 	unsigned tile_mode;
 };
 
+#define NV50_MAX_TEXTURE_LEVELS 16
+
 struct nv50_miptree {
 	struct nouveau_miptree base;
 
-	struct nv50_miptree_level level[PIPE_MAX_TEXTURE_LEVELS];
+	struct nv50_miptree_level level[NV50_MAX_TEXTURE_LEVELS];
 	int image_nr;
 	int total_size;
 };
