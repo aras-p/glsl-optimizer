@@ -614,13 +614,12 @@ static void
         r300->scissor_state.dirty = TRUE;
     }
 
+    r300_fb_update_tiling_flags(r300, r300->fb_state.state, state);
+
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
     r300->fb_state.size = (10 * state->nr_cbufs) + (2 * (4 - state->nr_cbufs)) +
                           (state->zsbuf ? 10 : 0) + 8;
-
-    r300_fb_update_tiling_flags(r300, r300->fb_state.state, state);
-
 
     /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {
