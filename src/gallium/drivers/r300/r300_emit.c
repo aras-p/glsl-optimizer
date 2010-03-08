@@ -675,7 +675,7 @@ void r300_emit_scissor_state(struct r300_context* r300,
     maxx = fb->width;
     maxy = fb->height;
 
-    if (((struct r300_rs_state*)r300->rs_state.state)->rs.scissor) {
+    if (r300->scissor_enabled) {
         minx = MAX2(minx, scissor->minx);
         miny = MAX2(miny, scissor->miny);
         maxx = MIN2(maxx, scissor->maxx);

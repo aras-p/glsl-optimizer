@@ -368,6 +368,8 @@ struct r300_context {
     boolean polygon_offset_enabled;
     /* Z buffer bit depth. */
     uint32_t zbuffer_bpp;
+    /* Whether scissor is enabled. */
+    boolean scissor_enabled;
 };
 
 /* Convenience cast wrapper. */

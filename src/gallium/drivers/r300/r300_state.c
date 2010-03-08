@@ -571,6 +571,7 @@ static void
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_screen* r300screen = r300_screen(pipe->screen);
+    struct pipe_framebuffer_state *old_state = r300->fb_state.state;
     unsigned max_width, max_height;
     uint32_t zbuffer_bpp = 0;
 
@@ -595,9 +596,22 @@ static void
         return;
     }
 
-
     if (r300->draw) {
         draw_flush(r300->draw);
+    }
+
+    r300->fb_state.dirty = TRUE;
+
+    /* If nr_cbufs is changed from zero to non-zero or vice versa... */
+    if (!!old_state->nr_cbufs != !!state->nr_cbufs) {
+        r300->blend_state.dirty = TRUE;
+    }
+    /* If zsbuf is set from NULL to non-NULL or vice versa.. */
+    if (!!old_state->zsbuf != !!state->zsbuf) {
+        r300->dsa_state.dirty = TRUE;
+    }
+    if (!r300->scissor_enabled) {
+        r300->scissor_state.dirty = TRUE;
     }
 
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
@@ -607,11 +621,6 @@ static void
 
     r300_fb_update_tiling_flags(r300, r300->fb_state.state, state);
 
-    /* XXX wait what */
-    r300->blend_state.dirty = TRUE;
-    r300->dsa_state.dirty = TRUE;
-    r300->fb_state.dirty = TRUE;
-    r300->scissor_state.dirty = TRUE;
 
     /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {
@@ -806,6 +815,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
+    boolean scissor_was_enabled = r300->scissor_enabled;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -814,20 +824,17 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     if (rs) {
         r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
+        r300->scissor_enabled = rs->rs.scissor;
     } else {
         r300->polygon_offset_enabled = FALSE;
+        r300->scissor_enabled = FALSE;
     }
 
     UPDATE_STATE(state, r300->rs_state);
     r300->rs_state.size = 17 + (r300->polygon_offset_enabled ? 5 : 0);
 
-    /* XXX Why is this still needed, dammit!? */
-    r300->scissor_state.dirty = TRUE;
-    r300->viewport_state.dirty = TRUE;
-
-    /* XXX Clean these up when we move to atom emits */
-    if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
-        r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+    if (scissor_was_enabled != r300->scissor_enabled) {
+        r300->scissor_state.dirty = TRUE;
     }
 }
 
@@ -972,7 +979,9 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
     memcpy(r300->scissor_state.state, state,
         sizeof(struct pipe_scissor_state));
 
-    r300->scissor_state.dirty = TRUE;
+    if (r300->scissor_enabled) {
+        r300->scissor_state.dirty = TRUE;
+    }
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,
