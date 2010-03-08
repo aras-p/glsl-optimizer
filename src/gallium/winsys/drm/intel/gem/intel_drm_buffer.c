@@ -1,4 +1,5 @@
 
+#include "state_tracker/drm_api.h"
 #include "intel_drm_winsys.h"
 #include "util/u_memory.h"
 
@@ -50,6 +51,66 @@ err:
    assert(0);
    FREE(buf);
    return NULL;
+}
+
+static struct intel_buffer *
+intel_drm_buffer_from_handle(struct intel_winsys *iws,
+                             struct winsys_handle *whandle,
+                             unsigned *stride)
+{
+   struct intel_drm_winsys *idws = intel_drm_winsys(iws);
+   struct intel_drm_buffer *buf = CALLOC_STRUCT(intel_drm_buffer);
+   uint32_t tile = 0, swizzle = 0;
+
+   if (!buf)
+      return NULL;
+
+   buf->magic = 0xDEAD1337;
+   buf->bo = drm_intel_bo_gem_create_from_name(idws->pools.gem, "gallium3d_from_handle", whandle->handle);
+   buf->flinked = TRUE;
+   buf->flink = whandle->handle;
+
+   if (!buf->bo)
+      goto err;
+
+   drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
+   if (tile != INTEL_TILE_NONE)
+      buf->map_gtt = TRUE;
+
+   *stride = whandle->stride;
+
+   return (struct intel_buffer *)buf;
+
+err:
+   FREE(buf);
+   return NULL;
+}
+
+static boolean
+intel_drm_buffer_get_handle(struct intel_winsys *iws,
+                            struct intel_buffer *buffer,
+                            struct winsys_handle *whandle,
+                            unsigned stride)
+{
+   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
+
+   if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
+      if (!buf->flinked) {
+         if (drm_intel_bo_flink(buf->bo, &buf->flink))
+            return FALSE;
+         buf->flinked = TRUE;
+      }
+
+      whandle->handle = buf->flink;
+   } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+      whandle->handle = buf->bo->handle;
+   } else {
+      assert(!"unknown usage");
+      return FALSE;
+   }
+
+   whandle->stride = stride;
+   return TRUE;
 }
 
 static int
@@ -146,6 +207,8 @@ void
 intel_drm_winsys_init_buffer_functions(struct intel_drm_winsys *idws)
 {
    idws->base.buffer_create = intel_drm_buffer_create;
+   idws->base.buffer_from_handle = intel_drm_buffer_from_handle;
+   idws->base.buffer_get_handle = intel_drm_buffer_get_handle;
    idws->base.buffer_set_fence_reg = intel_drm_buffer_set_fence_reg;
    idws->base.buffer_map = intel_drm_buffer_map;
    idws->base.buffer_unmap = intel_drm_buffer_unmap;

@@ -114,6 +114,7 @@ dri2_surface_process_drawable_buffers(struct native_surface *nsurf,
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
    struct pipe_texture templ;
+   struct winsys_handle whandle;
    uint valid_mask;
    int i;
 
@@ -171,9 +172,11 @@ dri2_surface_process_drawable_buffers(struct native_surface *nsurf,
          continue;
       }
 
-      dri2surf->textures[natt] =
-         dri2dpy->api->texture_from_shared_handle(dri2dpy->api,
-               dri2dpy->base.screen, &templ, desc, xbuf->pitch, xbuf->name);
+      memset(&whandle, 0, sizeof(whandle));
+      whandle.stride = xbuf->pitch;
+      whandle.handle = xbuf->name;
+      dri2surf->textures[natt] = dri2dpy->base.screen->texture_from_handle(
+         dri2dpy->base.screen, &templ, &whandle);
       if (dri2surf->textures[natt])
          valid_mask |= 1 << natt;
    }

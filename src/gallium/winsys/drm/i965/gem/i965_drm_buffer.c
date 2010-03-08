@@ -1,4 +1,5 @@
 
+#include "state_tracker/drm_api.h"
 #include "i965_drm_winsys.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
@@ -120,6 +121,78 @@ err:
    assert(0);
    FREE(buf);
    return PIPE_ERROR_OUT_OF_MEMORY;
+}
+
+static enum pipe_error
+i965_libdrm_bo_from_handle(struct brw_winsys_screen *sws,
+                           struct winsys_handle *whandle,
+                           unsigned *stride,
+                           unsigned *tile,
+                           struct brw_winsys_buffer **bo_out)
+{
+   struct i965_libdrm_winsys *idws = i965_libdrm_winsys(sws);
+   struct i965_libdrm_buffer *buf = CALLOC_STRUCT(i965_libdrm_buffer);
+   uint32_t swizzle = 0;
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
+   if (!buf)
+      return PIPE_ERROR_OUT_OF_MEMORY;
+
+   pipe_reference_init(&buf->base.reference, 1);
+   buf->bo = drm_intel_bo_gem_create_from_name(idws->gem, "FROM_HANDLE", whandle->handle);
+   buf->base.size = buf->bo->size;
+   buf->base.sws = &idws->base;
+   buf->flinked = TRUE;
+   buf->flink = whandle->handle;
+
+
+   if (!buf->bo)
+      goto err;
+
+   drm_intel_bo_get_tiling(buf->bo, &buf->tiling, &swizzle);
+   if (buf->tiling != 0)
+      buf->map_gtt = TRUE;
+
+   *tile = buf->tiling;
+   *stride = whandle->stride;
+
+   *bo_out = &buf->base;
+   return PIPE_OK;
+
+err:
+   FREE(buf);
+   return PIPE_ERROR_OUT_OF_MEMORY;
+}
+
+static enum pipe_error
+i965_libdrm_bo_get_handle(struct brw_winsys_buffer *buffer,
+                          struct winsys_handle *whandle,
+                          unsigned stride)
+{
+   struct i965_libdrm_buffer *buf = i965_libdrm_buffer(buffer);
+
+   if (BRW_DUMP)
+      debug_printf("%s\n", __FUNCTION__);
+
+   if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
+      if (!buf->flinked) {
+         if (drm_intel_bo_flink(buf->bo, &buf->flink))
+            return PIPE_ERROR_BAD_INPUT;
+         buf->flinked = TRUE;
+      }
+
+      whandle->handle = buf->flink;
+   } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+      whandle->handle = buf->bo->handle;
+   } else {
+      assert(!"unknown usage");
+      return PIPE_ERROR_BAD_INPUT;
+   }
+
+   whandle->stride = stride;
+   return PIPE_OK;
 }
 
 static void 
@@ -415,6 +488,8 @@ void
 i965_libdrm_winsys_init_buffer_functions(struct i965_libdrm_winsys *idws)
 {
    idws->base.bo_alloc             = i965_libdrm_bo_alloc;
+   idws->base.bo_from_handle       = i965_libdrm_bo_from_handle;
+   idws->base.bo_get_handle        = i965_libdrm_bo_get_handle;
    idws->base.bo_destroy           = i965_libdrm_bo_destroy;
    idws->base.bo_emit_reloc        = i965_libdrm_bo_emit_reloc;
    idws->base.bo_exec              = i965_libdrm_bo_exec;

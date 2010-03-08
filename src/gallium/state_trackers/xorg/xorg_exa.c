@@ -789,7 +789,7 @@ xorg_exa_set_displayed_usage(PixmapPtr pPixmap)
 	return 0;
     }
 
-    priv->flags |= PIPE_TEXTURE_USAGE_PRIMARY;
+    priv->flags |= PIPE_TEXTURE_USAGE_SCANOUT;
 
     return 0;
 }
@@ -805,7 +805,7 @@ xorg_exa_set_shared_usage(PixmapPtr pPixmap)
 	return 0;
     }
 
-    priv->flags |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+    priv->flags |= PIPE_TEXTURE_USAGE_SHARED;
 
     return 0;
 }
@@ -943,7 +943,7 @@ xorg_exa_set_texture(PixmapPtr pPixmap, struct  pipe_texture *tex)
 {
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
 
-    int mask = PIPE_TEXTURE_USAGE_PRIMARY | PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+    int mask = PIPE_TEXTURE_USAGE_SHARED | PIPE_TEXTURE_USAGE_SCANOUT;
 
     if (!priv)
 	return FALSE;
@@ -976,8 +976,8 @@ xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
     template.depth0 = 1;
     template.last_level = 0;
     template.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
-    template.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
-    template.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+    template.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
+    template.tex_usage |= PIPE_TEXTURE_USAGE_SHARED;
 
     return exa->scrn->texture_create(exa->scrn, &template);
 }

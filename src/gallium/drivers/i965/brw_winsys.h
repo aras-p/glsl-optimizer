@@ -162,6 +162,16 @@ struct brw_winsys_screen {
                                unsigned alignment,
                                struct brw_winsys_buffer **bo_out);
 
+   enum pipe_error (*bo_from_handle)(struct brw_winsys_screen *sws,
+                                     struct winsys_handle *whandle,
+                                     unsigned *stride,
+                                     unsigned *tiling,
+                                     struct brw_winsys_buffer **bo_out);
+
+   enum pipe_error (*bo_get_handle)(struct brw_winsys_buffer *buffer,
+                                    struct winsys_handle *whandle,
+                                    unsigned stride);
+
    /* Destroy a buffer when our refcount goes to zero:
     */
    void (*bo_destroy)(struct brw_winsys_buffer *buffer);

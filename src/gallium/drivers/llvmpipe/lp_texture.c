@@ -125,7 +125,8 @@ llvmpipe_texture_create(struct pipe_screen *_screen,
    lpt->base.screen = &screen->base;
 
    if (lpt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                              PIPE_TEXTURE_USAGE_PRIMARY)) {
+                              PIPE_TEXTURE_USAGE_SCANOUT |
+                              PIPE_TEXTURE_USAGE_SHARED)) {
       if (!llvmpipe_displaytarget_layout(screen, lpt))
          goto fail;
    }

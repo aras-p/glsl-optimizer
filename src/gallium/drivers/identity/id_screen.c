@@ -135,6 +135,39 @@ identity_screen_texture_create(struct pipe_screen *_screen,
 }
 
 static struct pipe_texture *
+identity_screen_texture_from_handle(struct pipe_screen *_screen,
+                                    const struct pipe_texture *templ,
+                                    struct winsys_handle *handle)
+{
+   struct identity_screen *id_screen = identity_screen(_screen);
+   struct pipe_screen *screen = id_screen->screen;
+   struct pipe_texture *result;
+
+   /* TODO trace call */
+
+   result = screen->texture_from_handle(screen, templ, handle);
+
+   result = identity_texture_create(identity_screen(_screen), result);
+
+   return result;
+}
+
+static boolean
+identity_screen_texture_get_handle(struct pipe_screen *_screen,
+                                   struct pipe_texture *_texture,
+                                   struct winsys_handle *handle)
+{
+   struct identity_screen *id_screen = identity_screen(_screen);
+   struct identity_texture *id_texture = identity_texture(_texture);
+   struct pipe_screen *screen = id_screen->screen;
+   struct pipe_texture *texture = id_texture->texture;
+
+   /* TODO trace call */
+
+   return screen->texture_get_handle(screen, texture, handle);
+}
+
+static struct pipe_texture *
 identity_screen_texture_blanket(struct pipe_screen *_screen,
                                 const struct pipe_texture *templat,
                                 const unsigned *stride,
@@ -495,6 +528,8 @@ identity_screen_create(struct pipe_screen *screen)
    id_screen->base.is_format_supported = identity_screen_is_format_supported;
    id_screen->base.context_create = identity_screen_context_create;
    id_screen->base.texture_create = identity_screen_texture_create;
+   id_screen->base.texture_from_handle = identity_screen_texture_from_handle;
+   id_screen->base.texture_get_handle = identity_screen_texture_get_handle;
    id_screen->base.texture_blanket = identity_screen_texture_blanket;
    id_screen->base.texture_destroy = identity_screen_texture_destroy;
    id_screen->base.get_tex_surface = identity_screen_get_tex_surface;

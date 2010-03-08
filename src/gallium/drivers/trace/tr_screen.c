@@ -236,6 +236,38 @@ trace_screen_texture_create(struct pipe_screen *_screen,
    return result;
 }
 
+static struct pipe_texture *
+trace_screen_texture_from_handle(struct pipe_screen *_screen,
+                                 const struct pipe_texture *templ,
+                                 struct winsys_handle *handle)
+{
+   struct trace_screen *tr_screen = trace_screen(_screen);
+   struct pipe_screen *screen = tr_screen->screen;
+   struct pipe_texture *result;
+
+   /* TODO trace call */
+
+   result = screen->texture_from_handle(screen, templ, handle);
+
+   result = trace_texture_create(trace_screen(_screen), result);
+
+   return result;
+}
+
+static boolean
+trace_screen_texture_get_handle(struct pipe_screen *_screen,
+                                struct pipe_texture *_texture,
+                                struct winsys_handle *handle)
+{
+   struct trace_screen *tr_screen = trace_screen(_screen);
+   struct trace_texture *tr_texture = trace_texture(_texture);
+   struct pipe_screen *screen = tr_screen->screen;
+   struct pipe_texture *texture = tr_texture->texture;
+
+   /* TODO trace call */
+
+   return screen->texture_get_handle(screen, texture, handle);
+}
 
 static struct pipe_texture *
 trace_screen_texture_blanket(struct pipe_screen *_screen,
@@ -931,6 +963,8 @@ trace_screen_create(struct pipe_screen *screen)
    assert(screen->context_create);
    tr_scr->base.context_create = trace_screen_context_create;
    tr_scr->base.texture_create = trace_screen_texture_create;
+   tr_scr->base.texture_from_handle = trace_screen_texture_from_handle;
+   tr_scr->base.texture_get_handle = trace_screen_texture_get_handle;
    tr_scr->base.texture_blanket = trace_screen_texture_blanket;
    tr_scr->base.texture_destroy = trace_screen_texture_destroy;
    tr_scr->base.get_tex_surface = trace_screen_get_tex_surface;

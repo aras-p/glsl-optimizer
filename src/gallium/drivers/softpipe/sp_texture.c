@@ -123,7 +123,8 @@ softpipe_texture_create(struct pipe_screen *screen,
                util_is_power_of_two(template->depth0));
 
    if (spt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                              PIPE_TEXTURE_USAGE_PRIMARY)) {
+                              PIPE_TEXTURE_USAGE_SCANOUT |
+                              PIPE_TEXTURE_USAGE_SHARED)) {
       if (!softpipe_displaytarget_layout(screen, spt))
          goto fail;
    }
@@ -474,24 +475,4 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 }
 
 
-/**
- * Return pipe_buffer handle and stride for given texture object.
- * XXX used for???
- */
-boolean
-softpipe_get_texture_buffer( struct pipe_texture *texture,
-                             struct pipe_buffer **buf,
-                             unsigned *stride )
-{
-   struct softpipe_texture *tex = (struct softpipe_texture *) texture;
 
-   if (!tex)
-      return FALSE;
-
-   pipe_buffer_reference(buf, tex->buffer);
-
-   if (stride)
-      *stride = tex->stride[0];
-
-   return TRUE;
-}

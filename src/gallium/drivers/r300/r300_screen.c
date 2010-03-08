@@ -231,14 +231,16 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     /* Check colorbuffer format support. */
     if ((usage & (PIPE_TEXTURE_USAGE_RENDER_TARGET |
                   PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                  PIPE_TEXTURE_USAGE_PRIMARY)) &&
+                  PIPE_TEXTURE_USAGE_SCANOUT |
+                  PIPE_TEXTURE_USAGE_SHARED)) &&
         /* 2101010 cannot be rendered to on non-r5xx. */
         (is_r500 || !is_color2101010) &&
         r300_is_colorbuffer_format_supported(format)) {
         retval |= usage &
             (PIPE_TEXTURE_USAGE_RENDER_TARGET |
              PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-             PIPE_TEXTURE_USAGE_PRIMARY);
+             PIPE_TEXTURE_USAGE_SCANOUT |
+             PIPE_TEXTURE_USAGE_SHARED);
     }
 
     /* Check depth-stencil format support. */

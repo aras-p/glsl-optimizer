@@ -56,6 +56,18 @@ struct radeon_winsys {
     /* VRAM size. */
     uint32_t vram_size;
 
+    /* Create a buffer from a winsys handle. */
+    struct pipe_buffer *(*buffer_from_handle)(struct radeon_winsys *winsys,
+                                              struct pipe_screen *screen,
+                                              struct winsys_handle *whandle,
+                                              unsigned *stride);
+
+    /* Get the handle from a buffer. */
+    boolean (*buffer_get_handle)(struct radeon_winsys *winsys,
+                                 struct pipe_buffer *buffer,
+                                 unsigned stride,
+                                 struct winsys_handle *whandle);
+
     /* Add a pipe_buffer to the list of buffer objects to validate. */
     boolean (*add_buffer)(struct radeon_winsys* winsys,
                           struct pipe_buffer* pbuffer,
