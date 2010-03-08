@@ -409,6 +409,10 @@ _glapi_add_dispatch( const char * const * function_names,
    (void) memset( is_static, 0, sizeof( is_static ) );
    (void) memset( entry, 0, sizeof( entry ) );
 
+   /* Find the _single_ dispatch offset for all function names that already
+    * exist (and have a dispatch offset).
+    */
+
    for ( i = 0 ; function_names[i] != NULL ; i++ ) {
       const char * funcName = function_names[i];
       int static_offset;
@@ -416,11 +420,6 @@ _glapi_add_dispatch( const char * const * function_names,
 
       if (funcName[0] != 'g' || funcName[1] != 'l')
          return -1;
-
-      /* Determine if the named function already exists.  If the function does
-       * exist, it must have the same parameter signature as the function
-       * being added.
-       */
 
       /* search built-in functions */
       static_offset = get_static_proc_offset(funcName);
@@ -466,16 +465,25 @@ _glapi_add_dispatch( const char * const * function_names,
       }
    }
 
+   /* If all function names are either new (or with no dispatch offset),
+    * allocate a new dispatch offset.
+    */
+
    if (offset == ~0) {
       offset = next_dynamic_offset;
       next_dynamic_offset++;
    }
+
+   /* Fill in the dispatch offset for the new function names (and those with
+    * no dispatch offset).
+    */
 
    for ( i = 0 ; function_names[i] != NULL ; i++ ) {
       if (is_static[i]) {
 	 continue;
       }
 
+      /* generate entrypoints for new function names */
       if (entry[i] == NULL) {
 	 entry[i] = add_function_name( function_names[i] );
 	 if (entry[i] == NULL) {
@@ -540,8 +548,12 @@ _glapi_get_proc_address(const char *funcName)
    if (func)
       return func;
 
+   /* generate entrypoint, dispatch offset must be filled in by the driver */
    entry = add_function_name(funcName);
-   return (entry == NULL) ? NULL : entry->dispatch_stub;
+   if (entry == NULL)
+      return NULL;
+
+   return entry->dispatch_stub;
 }
 
 
