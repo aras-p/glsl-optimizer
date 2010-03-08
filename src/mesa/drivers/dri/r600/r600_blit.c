@@ -1533,6 +1533,8 @@ static GLboolean validate_buffers(context_t *rmesa,
 {
     int ret;
 
+    radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
+
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
 					src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
     if (ret)
