@@ -1536,24 +1536,18 @@ static GLboolean validate_buffers(context_t *rmesa,
     radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
 
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
-					src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
+					src_bo, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
     if (ret)
         return GL_FALSE;
 
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
-                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM);
+                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT);
     if (ret)
         return GL_FALSE;
 
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
 					rmesa->blit_bo,
 					RADEON_GEM_DOMAIN_GTT, 0);
-    if (ret)
-        return GL_FALSE;
-
-    ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
-                                        first_elem(&rmesa->radeon.dma.reserved)->bo,
-                                        RADEON_GEM_DOMAIN_GTT, 0);
     if (ret)
         return GL_FALSE;
 
