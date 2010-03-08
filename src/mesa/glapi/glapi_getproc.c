@@ -437,6 +437,8 @@ _glapi_add_dispatch( const char * const * function_names,
 	 }
 
 	 offset = static_offset;
+
+	 continue;
       }
 
       /* search added extension functions */
@@ -492,7 +494,9 @@ _glapi_add_dispatch( const char * const * function_names,
 	 }
       }
 
-      set_entry_info( entry[i], real_sig, offset );
+      if (entry[i]->dispatch_offset == ~0) {
+	 set_entry_info( entry[i], real_sig, offset );
+      }
    }
 
    return offset;
