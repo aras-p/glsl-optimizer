@@ -508,20 +508,6 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
 }
 
 /**
- * Flush the front buffer of the context's draw surface.
- */
-static void
-egl_g3d_flush_frontbuffer(struct pipe_screen *screen,
-                          struct pipe_surface *surf, void *context_private)
-{
-   struct egl_g3d_context *gctx = egl_g3d_context(context_private);
-   struct egl_g3d_surface *gsurf = egl_g3d_surface(gctx->base.DrawSurface);
-
-   if (gsurf)
-      gsurf->native->flush_frontbuffer(gsurf->native);
-}
-
-/**
  * Re-validate the context.
  */
 static void
@@ -581,7 +567,6 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
       goto fail;
    }
 
-   gdpy->native->screen->flush_frontbuffer = egl_g3d_flush_frontbuffer;
    gdpy->native->screen->update_buffer = egl_g3d_update_buffer;
 
    egl_g3d_init_st(&gdrv->base);

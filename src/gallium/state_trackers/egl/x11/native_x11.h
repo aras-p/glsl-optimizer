@@ -29,7 +29,7 @@
 #include "common/native.h"
 
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm);
+x11_create_ximage_display(EGLNativeDisplayType dpy);
 
 struct native_display *
 x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api);

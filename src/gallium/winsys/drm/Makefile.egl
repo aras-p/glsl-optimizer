@@ -13,7 +13,8 @@ EGL_DRIVER_OBJECTS = $(EGL_DRIVER_SOURCES:.c=.o)
 
 common_LIBS = -ldrm -lm -ldl
 
-x11_ST = $(TOP)/src/gallium/state_trackers/egl/libeglx11.a
+x11_ST = $(TOP)/src/gallium/state_trackers/egl/libeglx11.a \
+	 $(TOP)/src/gallium/winsys/xlib/libws_xlib.a
 x11_LIBS = $(common_LIBS) -lX11 -lXext -lXfixes
 
 kms_ST = $(TOP)/src/gallium/state_trackers/egl/libeglkms.a

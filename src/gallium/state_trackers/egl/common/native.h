@@ -137,9 +137,6 @@ struct native_display_modeset;
 struct native_display {
    /**
     * The pipe screen of the native display.
-    *
-    * Note that the "flush_frontbuffer" and "update_buffer" callbacks will be
-    * overridden.
     */
    struct pipe_screen *screen;
 

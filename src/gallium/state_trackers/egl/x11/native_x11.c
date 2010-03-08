@@ -141,16 +141,9 @@ native_create_display(EGLNativeDisplayType dpy)
 
    if (!ndpy) {
       EGLint level = (force_sw) ? _EGL_INFO : _EGL_WARNING;
-      boolean use_shm;
 
-      /*
-       * XXX st/mesa calls pipe_screen::update_buffer in st_validate_state.
-       * When SHM is used, there is a good chance that the shared memory
-       * segment is detached before the softpipe tile cache is flushed.
-       */
-      use_shm = FALSE;
-      _eglLog(level, "use software%s fallback", (use_shm) ? " (SHM)" : "");
-      ndpy = x11_create_ximage_display(dpy, use_shm);
+      _eglLog(level, "use software fallback");
+      ndpy = x11_create_ximage_display(dpy);
    }
 
    return ndpy;
