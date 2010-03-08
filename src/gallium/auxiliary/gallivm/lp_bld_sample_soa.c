@@ -124,13 +124,14 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                           LLVMValueRef x,
                           LLVMValueRef y,
                           LLVMValueRef y_stride,
-                          LLVMValueRef data_ptr,
+                          LLVMValueRef data_array,
                           LLVMValueRef *texel)
 {
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef offset;
    LLVMValueRef packed;
    LLVMValueRef use_border = NULL;
+   LLVMValueRef data_ptr;
 
    /* use_border = x < 0 || x >= width || y < 0 || y >= height */
    if (wrap_mode_uses_border_color(bld->static_state->wrap_s)) {
@@ -153,6 +154,16 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
       }
    }
 
+   /* XXX always use mipmap level 0 for now */
+   {
+      const int level = 0;
+      LLVMValueRef indexes[2];
+      indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+      indexes[1] = LLVMConstInt(LLVMInt32Type(), level, 0);
+      data_ptr = LLVMBuildGEP(bld->builder, data_array, indexes, 2, "");
+      data_ptr = LLVMBuildLoad(bld->builder, data_ptr, "");
+   }
+
    /*
     * Note: if we find an app which frequently samples the texture border
     * we might want to implement a true conditional here to avoid sampling
@@ -171,8 +182,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
    /* convert x,y coords to linear offset from start of texture, in bytes */
    offset = lp_build_sample_offset(&bld->uint_coord_bld,
                                    bld->format_desc,
-                                   x, y, y_stride,
-                                   data_ptr);
+                                   x, y, y_stride);
 
    assert(bld->format_desc->block.width == 1);
    assert(bld->format_desc->block.height == 1);
@@ -210,18 +220,30 @@ lp_build_sample_packed(struct lp_build_sample_context *bld,
                        LLVMValueRef x,
                        LLVMValueRef y,
                        LLVMValueRef y_stride,
-                       LLVMValueRef data_ptr)
+                       LLVMValueRef data_array)
 {
    LLVMValueRef offset;
+   LLVMValueRef data_ptr;
 
    offset = lp_build_sample_offset(&bld->uint_coord_bld,
                                    bld->format_desc,
-                                   x, y, y_stride,
-                                   data_ptr);
+                                   x, y, y_stride);
 
    assert(bld->format_desc->block.width == 1);
    assert(bld->format_desc->block.height == 1);
    assert(bld->format_desc->block.bits <= bld->texel_type.width);
+
+   /* XXX always use mipmap level 0 for now */
+   {
+      const int level = 0;
+      LLVMValueRef indexes[2];
+      /* get data_ptr[level] */
+      indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+      indexes[1] = LLVMConstInt(LLVMInt32Type(), level, 0);
+      data_ptr = LLVMBuildGEP(bld->builder, data_array, indexes, 2, "");
+      /* load texture base address */
+      data_ptr = LLVMBuildLoad(bld->builder, data_ptr, "");
+   }
 
    return lp_build_gather(bld->builder,
                           bld->texel_type.length,
@@ -720,7 +742,7 @@ lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
                                LLVMValueRef width,
                                LLVMValueRef height,
                                LLVMValueRef stride,
-                               LLVMValueRef data_ptr,
+                               LLVMValueRef data_array,
                                LLVMValueRef *texel)
 {
    LLVMValueRef x, y;
@@ -735,7 +757,7 @@ lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
    lp_build_name(x, "tex.x.wrapped");
    lp_build_name(y, "tex.y.wrapped");
 
-   lp_build_sample_texel_soa(bld, width, height, x, y, stride, data_ptr, texel);
+   lp_build_sample_texel_soa(bld, width, height, x, y, stride, data_array, texel);
 }
 
 
@@ -749,7 +771,7 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
                               LLVMValueRef width,
                               LLVMValueRef height,
                               LLVMValueRef stride,
-                              LLVMValueRef data_ptr,
+                              LLVMValueRef data_array,
                               LLVMValueRef *texel)
 {
    LLVMValueRef s_fpart;
@@ -764,10 +786,10 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
    lp_build_sample_wrap_linear(bld, t, height, bld->static_state->pot_height,
                                bld->static_state->wrap_t, &y0, &y1, &t_fpart);
 
-   lp_build_sample_texel_soa(bld, width, height, x0, y0, stride, data_ptr, neighbors[0][0]);
-   lp_build_sample_texel_soa(bld, width, height, x1, y0, stride, data_ptr, neighbors[0][1]);
-   lp_build_sample_texel_soa(bld, width, height, x0, y1, stride, data_ptr, neighbors[1][0]);
-   lp_build_sample_texel_soa(bld, width, height, x1, y1, stride, data_ptr, neighbors[1][1]);
+   lp_build_sample_texel_soa(bld, width, height, x0, y0, stride, data_array, neighbors[0][0]);
+   lp_build_sample_texel_soa(bld, width, height, x1, y0, stride, data_array, neighbors[0][1]);
+   lp_build_sample_texel_soa(bld, width, height, x0, y1, stride, data_array, neighbors[1][0]);
+   lp_build_sample_texel_soa(bld, width, height, x1, y1, stride, data_array, neighbors[1][1]);
 
    /* TODO: Don't interpolate missing channels */
    for(chan = 0; chan < 4; ++chan) {
@@ -818,7 +840,7 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
                               LLVMValueRef width,
                               LLVMValueRef height,
                               LLVMValueRef stride,
-                              LLVMValueRef data_ptr,
+                              LLVMValueRef data_array,
                               LLVMValueRef *texel)
 {
    LLVMBuilderRef builder = bld->builder;
@@ -958,10 +980,10 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
     * The higher 8 bits of the resulting elements will be zero.
     */
 
-   neighbors[0][0] = lp_build_sample_packed(bld, x0, y0, stride, data_ptr);
-   neighbors[0][1] = lp_build_sample_packed(bld, x1, y0, stride, data_ptr);
-   neighbors[1][0] = lp_build_sample_packed(bld, x0, y1, stride, data_ptr);
-   neighbors[1][1] = lp_build_sample_packed(bld, x1, y1, stride, data_ptr);
+   neighbors[0][0] = lp_build_sample_packed(bld, x0, y0, stride, data_array);
+   neighbors[0][1] = lp_build_sample_packed(bld, x1, y0, stride, data_array);
+   neighbors[1][0] = lp_build_sample_packed(bld, x0, y1, stride, data_array);
+   neighbors[1][1] = lp_build_sample_packed(bld, x1, y1, stride, data_array);
 
    neighbors[0][0] = LLVMBuildBitCast(builder, neighbors[0][0], u8n_vec_type, "");
    neighbors[0][1] = LLVMBuildBitCast(builder, neighbors[0][1], u8n_vec_type, "");
@@ -1248,7 +1270,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    LLVMValueRef width;
    LLVMValueRef height;
    LLVMValueRef stride;
-   LLVMValueRef data_ptr;
+   LLVMValueRef data_array;
    LLVMValueRef s;
    LLVMValueRef t;
    LLVMValueRef r;
@@ -1276,7 +1298,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    width = dynamic_state->width(dynamic_state, builder, unit);
    height = dynamic_state->height(dynamic_state, builder, unit);
    stride = dynamic_state->stride(dynamic_state, builder, unit);
-   data_ptr = dynamic_state->data_ptr(dynamic_state, builder, unit);
+   data_array = dynamic_state->data_ptr(dynamic_state, builder, unit);
+   /* Note that data_array is an array[level] of pointers to texture images */
 
    s = coords[0];
    t = coords[1];
@@ -1292,17 +1315,17 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    switch (static_state->min_img_filter) {
    case PIPE_TEX_FILTER_NEAREST:
       lp_build_sample_2d_nearest_soa(&bld, s, t, width, height,
-                                     stride, data_ptr, texel);
+                                     stride, data_array, texel);
       break;
    case PIPE_TEX_FILTER_LINEAR:
       if(lp_format_is_rgba8(bld.format_desc) &&
          is_simple_wrap_mode(static_state->wrap_s) &&
          is_simple_wrap_mode(static_state->wrap_t))
          lp_build_sample_2d_linear_aos(&bld, s, t, width, height,
-                                       stride, data_ptr, texel);
+                                       stride, data_array, texel);
       else
          lp_build_sample_2d_linear_soa(&bld, s, t, width, height,
-                                       stride, data_ptr, texel);
+                                       stride, data_array, texel);
       break;
    default:
       assert(0);

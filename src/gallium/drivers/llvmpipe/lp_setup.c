@@ -472,19 +472,25 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
          jit_tex->depth = tex->depth0;
          jit_tex->last_level = tex->last_level;
          jit_tex->stride = lp_tex->stride[0];
-         if(!lp_tex->dt) {
-            jit_tex->data = lp_tex->data;
+         if (!lp_tex->dt) {
+            /* regular texture - setup array of mipmap level pointers */
+            int j;
+            for (j = 0; j < LP_MAX_TEXTURE_2D_LEVELS; j++) {
+               jit_tex->data[j] =
+                  (ubyte *) lp_tex->data + lp_tex->level_offset[j];
+            }
          }
          else {
+            /* display target texture/surface */
             /*
              * XXX: Where should this be unmapped?
              */
 
             struct llvmpipe_screen *screen = llvmpipe_screen(tex->screen);
             struct llvmpipe_winsys *winsys = screen->winsys;
-            jit_tex->data = winsys->displaytarget_map(winsys, lp_tex->dt,
-                                                      PIPE_BUFFER_USAGE_CPU_READ);
-            assert(jit_tex->data);
+            jit_tex->data[0] = winsys->displaytarget_map(winsys, lp_tex->dt,
+                                                 PIPE_BUFFER_USAGE_CPU_READ);
+            assert(jit_tex->data[0]);
          }
 
          /* the scene references this texture */

@@ -39,6 +39,7 @@
 #include "gallivm/lp_bld_struct.h"
 
 #include "pipe/p_state.h"
+#include "lp_texture.h"
 
 
 struct llvmpipe_screen;
@@ -51,7 +52,7 @@ struct lp_jit_texture
    uint32_t depth;
    uint32_t last_level;
    uint32_t stride;
-   const void *data;
+   const void *data[LP_MAX_TEXTURE_2D_LEVELS];
 };
 
 

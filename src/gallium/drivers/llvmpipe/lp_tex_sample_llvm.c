@@ -80,6 +80,9 @@ struct lp_llvm_sampler_soa
 
 /**
  * Fetch the specified member of the lp_jit_texture structure.
+ * \param emit_load  if TRUE, emit the LLVM load instruction to actually
+ *                   fetch the field's value.  Otherwise, just emit the
+ *                   GEP code to address the field.
  *
  * @sa http://llvm.org/docs/GetElementPtr.html
  */
@@ -88,7 +91,8 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
                        LLVMBuilderRef builder,
                        unsigned unit,
                        unsigned member_index,
-                       const char *member_name)
+                       const char *member_name,
+                       boolean emit_load)
 {
    struct llvmpipe_sampler_dynamic_state *state =
       (struct llvmpipe_sampler_dynamic_state *)base;
@@ -109,7 +113,10 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
 
    ptr = LLVMBuildGEP(builder, state->context_ptr, indices, Elements(indices), "");
 
-   res = LLVMBuildLoad(builder, ptr, "");
+   if (emit_load)
+      res = LLVMBuildLoad(builder, ptr, "");
+   else
+      res = ptr;
 
    lp_build_name(res, "context.texture%u.%s", unit, member_name);
 
@@ -126,22 +133,22 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
  * sampler code generator a reusable module without dependencies to
  * llvmpipe internals.
  */
-#define LP_LLVM_TEXTURE_MEMBER(_name, _index) \
+#define LP_LLVM_TEXTURE_MEMBER(_name, _index, _emit_load)  \
    static LLVMValueRef \
    lp_llvm_texture_##_name( struct lp_sampler_dynamic_state *base, \
                             LLVMBuilderRef builder, \
                             unsigned unit) \
    { \
-      return lp_llvm_texture_member(base, builder, unit, _index, #_name ); \
+      return lp_llvm_texture_member(base, builder, unit, _index, #_name, _emit_load ); \
    }
 
 
-LP_LLVM_TEXTURE_MEMBER(width,      LP_JIT_TEXTURE_WIDTH)
-LP_LLVM_TEXTURE_MEMBER(height,     LP_JIT_TEXTURE_HEIGHT)
-LP_LLVM_TEXTURE_MEMBER(depth,      LP_JIT_TEXTURE_DEPTH)
-LP_LLVM_TEXTURE_MEMBER(last_level, LP_JIT_TEXTURE_LAST_LEVEL)
-LP_LLVM_TEXTURE_MEMBER(stride,     LP_JIT_TEXTURE_STRIDE)
-LP_LLVM_TEXTURE_MEMBER(data_ptr,   LP_JIT_TEXTURE_DATA)
+LP_LLVM_TEXTURE_MEMBER(width,      LP_JIT_TEXTURE_WIDTH, TRUE)
+LP_LLVM_TEXTURE_MEMBER(height,     LP_JIT_TEXTURE_HEIGHT, TRUE)
+LP_LLVM_TEXTURE_MEMBER(depth,      LP_JIT_TEXTURE_DEPTH, TRUE)
+LP_LLVM_TEXTURE_MEMBER(last_level, LP_JIT_TEXTURE_LAST_LEVEL, TRUE)
+LP_LLVM_TEXTURE_MEMBER(stride,     LP_JIT_TEXTURE_STRIDE, TRUE)
+LP_LLVM_TEXTURE_MEMBER(data_ptr,   LP_JIT_TEXTURE_DATA, FALSE)
 
 
 static void
