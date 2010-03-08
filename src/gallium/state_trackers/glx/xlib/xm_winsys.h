@@ -32,14 +32,15 @@
 struct pipe_context;
 struct pipe_screen;
 struct pipe_surface;
-struct xmesa_buffer;
+struct xlib_drawable;
 
+#include <X11/Xlib.h>
 
 struct xm_driver {
 
-   struct pipe_screen *(*create_pipe_screen)( void );
+   struct pipe_screen *(*create_pipe_screen)( Display *display );
 
-   void (*display_surface)( struct xmesa_buffer *, 
+   void (*display_surface)( struct xlib_drawable *, 
                             struct pipe_surface * );
 
 };

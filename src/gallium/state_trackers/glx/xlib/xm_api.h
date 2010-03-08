@@ -62,15 +62,11 @@ and create a window, you must do the following to use the X/Mesa interface:
 #include "state_tracker/st_public.h"
 #include "os/os_thread.h"
 
+#include "state_tracker/xlib_sw_winsys.h"
 
 # include <X11/Xlib.h>
 # include <X11/Xlibint.h>
 # include <X11/Xutil.h>
-# ifdef USE_XSHM  /* was SHM */
-#  include <sys/ipc.h>
-#  include <sys/shm.h>
-#  include <X11/extensions/XShm.h>
-# endif
 
 typedef struct xmesa_buffer *XMesaBuffer;
 typedef struct xmesa_context *XMesaContext;
@@ -316,6 +312,7 @@ typedef enum {
  */
 struct xmesa_buffer {
    struct st_framebuffer *stfb;
+   struct xlib_drawable ws;
 
    GLboolean wasCurrent;	/* was ever the current buffer? */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
@@ -329,13 +326,6 @@ struct xmesa_buffer {
    XImage *tempImage;
    unsigned long selectedEvents;/* for pbuffers only */
 
-   GLuint shm;			/* X Shared Memory extension status:	*/
-				/*    0 = not available			*/
-				/*    1 = XImage support available	*/
-				/*    2 = Pixmap support available too	*/
-#if defined(USE_XSHM)
-   XShmSegmentInfo shminfo;
-#endif
 
    GC gc;			/* scratch GC for span, line, tri drawing */
 
@@ -367,7 +357,7 @@ xmesa_buffer(GLframebuffer *fb)
 
 
 extern void
-xmesa_init(void);
+xmesa_init(Display *dpy);
 
 extern void
 xmesa_delete_framebuffer(struct gl_framebuffer *fb);
@@ -397,8 +387,6 @@ xmesa_buffer_height(XMesaBuffer b)
    return b->stfb->Base.Height;
 }
 
-extern int
-xmesa_check_for_xshm(Display *display);
 
 
 #endif

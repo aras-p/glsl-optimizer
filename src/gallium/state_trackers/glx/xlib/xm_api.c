@@ -35,10 +35,6 @@
  * corner of the window.  Therefore, most drawing functions in this
  * file have to flip Y coordinates.
  *
- * Define USE_XSHM in the Makefile with -DUSE_XSHM if you want to compile
- * in support for the MIT Shared Memory extension.  If enabled, when you
- * use an Ximage for the back buffer in double buffered mode, the "swap"
- * operation will be faster.  You must also link with -lXext.
  *
  * Byte swapping:  If the Mesa host and the X display use a different
  * byte order then there's some trickiness to be aware of when using
@@ -111,41 +107,6 @@ static int host_byte_order( void )
 }
 
 
-/**
- * Check if the X Shared Memory extension is available.
- * Return:  0 = not available
- *          1 = shared XImage support available
- *          2 = shared Pixmap support available also
- */
-int xmesa_check_for_xshm( Display *display )
-{
-#if defined(USE_XSHM)
-   int major, minor, ignore;
-   Bool pixmaps;
-
-   if (getenv("SP_NO_RAST")) 
-      return 0;
-
-   if (getenv("MESA_NOSHM")) {
-      return 0;
-   }
-
-   if (XQueryExtension( display, "MIT-SHM", &ignore, &ignore, &ignore )) {
-      if (XShmQueryVersion( display, &major, &minor, &pixmaps )==True) {
-	 return (pixmaps==True) ? 2 : 1;
-      }
-      else {
-	 return 0;
-      }
-   }
-   else {
-      return 0;
-   }
-#else
-   /* No  XSHM support */
-   return 0;
-#endif
-}
 
 
 /**
@@ -242,7 +203,7 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
 
    pipe_mutex_lock(_xmesa_lock);
    XSync(b->xm_visual->display, 0); /* added for Chromium */
-   stat = get_drawable_size(dpy, b->drawable, width, height);
+   stat = get_drawable_size(dpy, b->ws.drawable, width, height);
    pipe_mutex_unlock(_xmesa_lock);
 
    if (!stat) {
@@ -397,7 +358,9 @@ create_xmesa_buffer(Drawable d, BufferType type,
    if (!b)
       return NULL;
 
-   b->drawable = d;
+   b->ws.drawable = d;
+   b->ws.visual = vis->visinfo->visual;
+   b->ws.depth = vis->visinfo->depth;
 
    b->xm_visual = vis;
    b->type = type;
@@ -421,18 +384,6 @@ create_xmesa_buffer(Drawable d, BufferType type,
                                    width, height,
                                    (void *) b);
    fb = &b->stfb->Base;
-
-   /*
-    * Create scratch XImage for xmesa_display_surface()
-    */
-   b->tempImage = XCreateImage(vis->display,
-                               vis->visinfo->visual,
-                               vis->visinfo->depth,
-                               ZPixmap, 0,   /* format, offset */
-                               NULL,         /* data */
-                               0, 0,         /* size */
-                               32,           /* bitmap_pad */
-                               0);           /* bytes_per_line */
 
    /* GLX_EXT_texture_from_pixmap */
    b->TextureTarget = 0;
@@ -490,15 +441,12 @@ xmesa_free_buffer(XMesaBuffer buffer)
          /* Since the X window for the XMesaBuffer is going away, we don't
           * want to dereference this pointer in the future.
           */
-         b->drawable = 0;
-
-         buffer->tempImage->data = NULL;
-         XDestroyImage(buffer->tempImage);
+         b->ws.drawable = 0;
 
          /* Unreference.  If count = zero we'll really delete the buffer */
          _mesa_reference_framebuffer(&fb, NULL);
 
-         XFreeGC(b->xm_visual->display, b->gc);
+         XFreeGC(b->xm_visual->display, b->ws.gc);
 
          free(buffer);
 
@@ -578,17 +526,12 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
 
    if (b && window) {
       /* these should have been set in create_xmesa_buffer */
-      ASSERT(b->drawable == window);
+      ASSERT(b->ws.drawable == window);
 
-      /* Setup for single/double buffering */
-      if (v->mesa_visual.doubleBufferMode) {
-         /* Double buffered */
-         b->shm = xmesa_check_for_xshm( v->display );
-      }
 
       /* X11 graphics context */
-      b->gc = XCreateGC( v->display, window, 0, NULL );
-      XSetFunction( v->display, b->gc, GXcopy );
+      b->ws.gc = XCreateGC( v->display, window, 0, NULL );
+      XSetFunction( v->display, b->ws.gc, GXcopy );
    }
 
    return GL_TRUE;
@@ -673,7 +616,7 @@ XMesaVisual XMesaCreateVisual( Display *display,
    XMesaVisual v;
    GLint red_bits, green_bits, blue_bits, alpha_bits;
 
-   xmesa_init();
+   xmesa_init( display );
 
    /* For debugging only */
    if (_mesa_getenv("MESA_XSYNC")) {
@@ -773,12 +716,12 @@ void XMesaDestroyVisual( XMesaVisual v )
  * Do one-time initializations.
  */
 void
-xmesa_init(void)
+xmesa_init( Display *display )
 {
    static GLboolean firstTime = GL_TRUE;
    if (firstTime) {
       pipe_mutex_init(_xmesa_lock);
-      _screen = driver.create_pipe_screen();
+      _screen = driver.create_pipe_screen( display );
       screen = trace_screen_create( _screen );
       firstTime = GL_FALSE;
    }
@@ -800,7 +743,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    GLcontext *mesaCtx;
    uint pf;
 
-   xmesa_init();
+   xmesa_init( v->display );
 
    /* Note: the XMesaContext contains a Mesa GLcontext struct (inheritance) */
    c = (XMesaContext) CALLOC_STRUCT(xmesa_context);
@@ -1155,7 +1098,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
          frontLeftSurf = surf;
       }
 
-      driver.display_surface(b, frontLeftSurf);
+      driver.display_surface(&b->ws, frontLeftSurf);
    }
 
    xmesa_check_and_update_buffer_size(NULL, b);
@@ -1203,7 +1146,7 @@ XMesaBuffer XMesaFindBuffer( Display *dpy, Drawable d )
 {
    XMesaBuffer b;
    for (b = XMesaBufferList; b; b = b->Next) {
-      if (b->drawable == d && b->xm_visual->display == dpy) {
+      if (b->ws.drawable == d && b->xm_visual->display == dpy) {
          return b;
       }
    }
@@ -1237,10 +1180,10 @@ void XMesaGarbageCollect( void )
       next = b->Next;
       if (b->xm_visual &&
           b->xm_visual->display &&
-          b->drawable &&
+          b->ws.drawable &&
           b->type == WINDOW) {
          XSync(b->xm_visual->display, False);
-         if (!window_exists( b->xm_visual->display, b->drawable )) {
+         if (!window_exists( b->xm_visual->display, b->ws.drawable )) {
             /* found a dead window, free the ancillary info */
             XMesaDestroyBuffer( b );
          }

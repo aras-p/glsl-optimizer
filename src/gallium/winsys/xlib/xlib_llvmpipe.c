@@ -42,16 +42,16 @@
 
 #include "llvmpipe/lp_texture.h"
 #include "llvmpipe/lp_screen.h"
-#include "state_tracker/sw_winsys.h"
+#include "state_tracker/xlib_sw_winsys.h"
 #include "util/u_debug.h"
 
 static struct pipe_screen *
-xlib_create_llvmpipe_screen( void )
+xlib_create_llvmpipe_screen( Display *display )
 {
    struct sw_winsys *winsys;
    struct pipe_screen *screen;
 
-   winsys = xlib_create_sw_winsys();
+   winsys = xlib_create_sw_winsys( display );
    if (winsys == NULL)
       return NULL;
 
@@ -70,7 +70,7 @@ fail:
 
 
 static void
-xlib_llvmpipe_display_surface(struct xmesa_buffer *xm_buffer,
+xlib_llvmpipe_display_surface(struct xlib_drawable *xm_buffer,
                               struct pipe_surface *surf)
 {
    struct llvmpipe_texture *texture = llvmpipe_texture(surf->texture);

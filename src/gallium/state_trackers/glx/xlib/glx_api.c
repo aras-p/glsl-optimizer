@@ -689,7 +689,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
    int desiredVisualID = -1;
    int numAux = 0;
 
-   xmesa_init();
+   xmesa_init( dpy );
 
    parselist = list;
 

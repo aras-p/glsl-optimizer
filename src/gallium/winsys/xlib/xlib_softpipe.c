@@ -34,12 +34,12 @@
 #include "util/u_debug.h"
 
 static struct pipe_screen *
-xlib_create_softpipe_screen( void )
+xlib_create_softpipe_screen( Display *display )
 {
    struct sw_winsys *winsys;
    struct pipe_screen *screen;
 
-   winsys = xlib_create_sw_winsys();
+   winsys = xlib_create_sw_winsys( display );
    if (winsys == NULL)
       return NULL;
 

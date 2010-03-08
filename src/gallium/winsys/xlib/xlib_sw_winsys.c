@@ -46,9 +46,16 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
-#include "state_tracker/sw_winsys.h"
+#include "state_tracker/xlib_sw_winsys.h"
 
 #include "xlib.h"
+
+#include <X11/Xlib.h>
+#include <X11/Xlibint.h>
+#include <X11/Xutil.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <X11/extensions/XShm.h>
 
 /**
  * Subclass of pipe_buffer for Xlib winsys.
@@ -64,21 +71,25 @@ struct xm_displaytarget
    void *data;
    void *mapped;
 
+   Display *display;
+   Visual *visual;
    XImage *tempImage;
-#ifdef USE_XSHM
-   int shm;
+
    XShmSegmentInfo shminfo;
-#endif
+   int shm;
 };
 
 
 /**
  * Subclass of sw_winsys for Xlib winsys
  */
-struct xmesa_sw_winsys
+struct xlib_sw_winsys
 {
    struct sw_winsys base;
-/*   struct xmesa_visual *xm_visual; */
+
+
+
+   Display *display;
 };
 
 
@@ -136,8 +147,8 @@ static char *alloc_shm(struct xm_displaytarget *buf, unsigned size)
  * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
  */
 static void
-alloc_shm_ximage(struct xm_displaytarget *xm_buffer,
-                 struct xmesa_buffer *xmb,
+alloc_shm_ximage(struct xm_displaytarget *xm_dt,
+                 struct xlib_drawable *xmb,
                  unsigned width, unsigned height)
 {
    /*
@@ -148,15 +159,15 @@ alloc_shm_ximage(struct xm_displaytarget *xm_buffer,
     */
    int (*old_handler)(Display *, XErrorEvent *);
 
-   xm_buffer->tempImage = XShmCreateImage(xmb->xm_visual->display,
-                                  xmb->xm_visual->visinfo->visual,
-                                  xmb->xm_visual->visinfo->depth,
-                                  ZPixmap,
-                                  NULL,
-                                  &xm_buffer->shminfo,
-                                  width, height);
-   if (xm_buffer->tempImage == NULL) {
-      xm_buffer->shm = 0;
+   xm_dt->tempImage = XShmCreateImage(xm_dt->display,
+                                      xmb->visual,
+                                      xmb->depth,
+                                      ZPixmap,
+                                      NULL,
+                                      &xm_dt->shminfo,
+                                      width, height);
+   if (xm_dt->tempImage == NULL) {
+      xm_dt->shm = 0;
       return;
    }
 
@@ -164,21 +175,21 @@ alloc_shm_ximage(struct xm_displaytarget *xm_buffer,
    mesaXErrorFlag = 0;
    old_handler = XSetErrorHandler(mesaHandleXError);
    /* This may trigger the X protocol error we're ready to catch: */
-   XShmAttach(xmb->xm_visual->display, &xm_buffer->shminfo);
-   XSync(xmb->xm_visual->display, False);
+   XShmAttach(xm_dt->display, &xm_dt->shminfo);
+   XSync(xm_dt->display, False);
 
    if (mesaXErrorFlag) {
       /* we are on a remote display, this error is normal, don't print it */
-      XFlush(xmb->xm_visual->display);
+      XFlush(xm_dt->display);
       mesaXErrorFlag = 0;
-      XDestroyImage(xm_buffer->tempImage);
-      xm_buffer->tempImage = NULL;
-      xm_buffer->shm = 0;
+      XDestroyImage(xm_dt->tempImage);
+      xm_dt->tempImage = NULL;
+      xm_dt->shm = 0;
       (void) XSetErrorHandler(old_handler);
       return;
    }
 
-   xm_buffer->shm = 1;
+   xm_dt->shm = 1;
 }
 
 #endif /* USE_XSHM */
@@ -239,7 +250,7 @@ xm_displaytarget_destroy(struct sw_winsys *ws,
  * by the XMesaBuffer.
  */
 void
-xlib_sw_display(struct xmesa_buffer *xm_buffer,
+xlib_sw_display(struct xlib_drawable *xlib_drawable,
                 struct sw_displaytarget *dt)
 {
    XImage *ximage;
@@ -262,7 +273,8 @@ xlib_sw_display(struct xmesa_buffer *xm_buffer,
       {
          assert(util_format_get_blockwidth(xm_dt->format) == 1);
          assert(util_format_get_blockheight(xm_dt->format) == 1);
-         alloc_shm_ximage(xm_dt, xm_buffer,
+         alloc_shm_ximage(xm_dt,
+                          xlib_drawable,
                           xm_dt->stride / util_format_get_blocksize(xm_dt->format),
                           xm_dt->height);
       }
@@ -271,7 +283,7 @@ xlib_sw_display(struct xmesa_buffer *xm_buffer,
       ximage->data = xm_dt->data;
 
       /* _debug_printf("XSHM\n"); */
-      XShmPutImage(xm_buffer->xm_visual->display, xm_buffer->drawable, xm_buffer->gc,
+      XShmPutImage(xm_dt->display, xlib_drawable->drawable, xlib_drawable->gc,
                    ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height, False);
    }
    else
@@ -291,7 +303,7 @@ xlib_sw_display(struct xmesa_buffer *xm_buffer,
       ximage->bytes_per_line = xm_dt->stride;
 
       /* _debug_printf("XPUT\n"); */
-      XPutImage(xm_buffer->xm_visual->display, xm_buffer->drawable, xm_buffer->gc,
+      XPutImage(xm_dt->display, xlib_drawable->drawable, xlib_drawable->gc,
                 ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height);
    }
 }
@@ -305,9 +317,8 @@ xm_displaytarget_display(struct sw_winsys *ws,
                          struct sw_displaytarget *dt,
                          void *context_private)
 {
-   XMesaContext xmctx = (XMesaContext) context_private;
-   struct xmesa_buffer *xm_buffer = xmctx->xm_buffer;
-   xm_sw_display(xm_buffer, dt);
+   struct xlib_drawable *xlib_drawable = (struct xlib_drawable *)context_private;
+   xlib_sw_display(xlib_drawable, dt);
 }
 
 
@@ -325,6 +336,7 @@ xm_displaytarget_create(struct sw_winsys *winsys,
    if(!xm_dt)
       goto no_xm_dt;
 
+   xm_dt->display = ((struct xlib_sw_winsys *)winsys)->display;
    xm_dt->format = format;
    xm_dt->width = width;
    xm_dt->height = height;
@@ -370,14 +382,15 @@ xm_destroy( struct sw_winsys *ws )
 
 
 struct sw_winsys *
-xlib_create_sw_winsys( void )
+xlib_create_sw_winsys( Display *display )
 {
-   struct xmesa_sw_winsys *ws;
+   struct xlib_sw_winsys *ws;
 
-   ws = CALLOC_STRUCT(xmesa_sw_winsys);
+   ws = CALLOC_STRUCT(xlib_sw_winsys);
    if (!ws)
       return NULL;
 
+   ws->display = display;
    ws->base.destroy = xm_destroy;
 
    ws->base.is_displaytarget_format_supported = xm_is_displaytarget_format_supported;
