@@ -25,6 +25,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 
+#include "nouveau/nouveau_util.h"
 #include "nv50_context.h"
 
 #define NV50_USING_LOATHED_EDGEFLAG(ctx) ((ctx)->vertprog->cfg.edgeflag_in < 16)
@@ -251,85 +252,83 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	nv50_draw_arrays_instanced(pipe, mode, start, count, 0, 1);
 }
 
-static INLINE boolean
-nv50_draw_elements_inline_u08(struct nv50_context *nv50, uint8_t *map,
-			      unsigned start, unsigned count)
-{
-	struct nouveau_channel *chan = nv50->screen->tesla->channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
+struct inline_ctx {
+	struct nv50_context *nv50;
+	void *map;
+};
 
-	map += start;
+static void
+inline_elt08(void *priv, unsigned start, unsigned count)
+{
+	struct inline_ctx *ctx = priv;
+	struct nouveau_grobj *tesla = ctx->nv50->screen->tesla;
+	struct nouveau_channel *chan = tesla->channel;
+	uint8_t *map = (uint8_t *)ctx->map + start;
 
 	if (count & 1) {
 		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32, 1);
 		OUT_RING  (chan, map[0]);
 		map++;
-		count--;
+		count &= ~1;
 	}
 
-	while (count) {
-		unsigned nr = count > 2046 ? 2046 : count;
-		int i;
+	count >>= 1;
+	if (!count)
+		return;
 
-		BEGIN_RING_NI(chan, tesla, NV50TCL_VB_ELEMENT_U16, nr >> 1);
-		for (i = 0; i < nr; i += 2)
-			OUT_RING  (chan, (map[i + 1] << 16) | map[i]);
-
-		count -= nr;
-		map += nr;
+	BEGIN_RING_NI(chan, tesla, NV50TCL_VB_ELEMENT_U16, count);
+	while (count--) {
+		OUT_RING(chan, (map[1] << 16) | map[0]);
+		map += 2;
 	}
-	return TRUE;
 }
 
-static INLINE boolean
-nv50_draw_elements_inline_u16(struct nv50_context *nv50, uint16_t *map,
-			      unsigned start, unsigned count)
+static void
+inline_elt16(void *priv, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv50->screen->tesla->channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-
-	map += start;
+	struct inline_ctx *ctx = priv;
+	struct nouveau_grobj *tesla = ctx->nv50->screen->tesla;
+	struct nouveau_channel *chan = tesla->channel;
+	uint16_t *map = (uint16_t *)ctx->map + start;
 
 	if (count & 1) {
 		BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32, 1);
 		OUT_RING  (chan, map[0]);
+		count &= ~1;
 		map++;
-		count--;
 	}
 
-	while (count) {
-		unsigned nr = count > 2046 ? 2046 : count;
-		int i;
+	count >>= 1;
+	if (!count)
+		return;
 
-		BEGIN_RING_NI(chan, tesla, NV50TCL_VB_ELEMENT_U16, nr >> 1);
-		for (i = 0; i < nr; i += 2)
-			OUT_RING  (chan, (map[i + 1] << 16) | map[i]);
-
-		count -= nr;
-		map += nr;
+	BEGIN_RING_NI(chan, tesla, NV50TCL_VB_ELEMENT_U16, count);
+	while (count--) {
+		OUT_RING(chan, (map[1] << 16) | map[0]);
+		map += 2;
 	}
-	return TRUE;
 }
 
-static INLINE boolean
-nv50_draw_elements_inline_u32(struct nv50_context *nv50, uint32_t *map,
-			      unsigned start, unsigned count)
+static void
+inline_elt32(void *priv, unsigned start, unsigned count)
 {
-	struct nouveau_channel *chan = nv50->screen->tesla->channel;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct inline_ctx *ctx = priv;
+	struct nouveau_grobj *tesla = ctx->nv50->screen->tesla;
+	struct nouveau_channel *chan = tesla->channel;
 
-	map += start;
+	BEGIN_RING_NI(chan, tesla, NV50TCL_VB_ELEMENT_U32, count);
+	OUT_RINGp    (chan, (uint32_t *)ctx->map + start, count);
+}
 
-	while (count) {
-		unsigned nr = count > 2047 ? 2047 : count;
+static void
+inline_edgeflag(void *priv, boolean enabled)
+{
+	struct inline_ctx *ctx = priv;
+	struct nouveau_grobj *tesla = ctx->nv50->screen->tesla;
+	struct nouveau_channel *chan = tesla->channel;
 
-		BEGIN_RING_NI(chan, tesla, NV50TCL_VB_ELEMENT_U32, nr);
-		OUT_RINGp (chan, map, nr);
-
-		count -= nr;
-		map += nr;
-	}
-	return TRUE;
+	BEGIN_RING(chan, tesla, NV50TCL_EDGEFLAG_ENABLE, 1);
+	OUT_RING  (chan, enabled ? 1 : 0);
 }
 
 static void
@@ -343,51 +342,68 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct instance a[16];
-	unsigned prim = nv50_prim(mode);
-	void *map;
+	struct inline_ctx ctx;
+	struct u_split_prim s;
+	boolean nzi = FALSE;
+	unsigned overhead;
 
-	map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
-	assert(map);
-	if (!map)
+	overhead = 16*3; /* potential instance adjustments */
+	overhead += 4; /* Begin()/End() */
+	overhead += 4; /* potential edgeflag disable/reenable */
+	overhead += 3; /* potentially 3 VTX_ELT_U16/U32 packet headers */
+
+	s.priv = &ctx;
+	if (indexSize == 1)
+		s.emit = inline_elt08;
+	else
+	if (indexSize == 2)
+		s.emit = inline_elt16;
+	else
+		s.emit = inline_elt32;
+	s.edge = inline_edgeflag;
+
+	ctx.nv50 = nv50;
+	ctx.map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
+	assert(ctx.map);
+	if (!ctx.map)
 		return;
 
 	instance_init(nv50, a, startInstance);
-	if (!nv50_state_validate(nv50, 0))
+	if (!nv50_state_validate(nv50, overhead + 6 + 3))
 		return;
 
 	BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 2);
 	OUT_RING  (chan, NV50_CB_AUX | (24 << 8));
 	OUT_RING  (chan, startInstance);
 	while (instanceCount--) {
-		if (AVAIL_RING(chan) < (7 + 16*3)) {
-			FIRE_RING(chan);
-			if (!nv50_state_validate(nv50, 0)) {
-				assert(0);
-				return;
+		unsigned max_verts;
+		boolean done;
+
+		u_split_prim_init(&s, mode, start, count);
+		do {
+			if (AVAIL_RING(chan) < (overhead + 6)) {
+				FIRE_RING(chan);
+				if (!nv50_state_validate(nv50, (overhead + 6))) {
+					assert(0);
+					return;
+				}
 			}
-		}
-		instance_step(nv50, a);
 
-		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
-		OUT_RING  (chan, prim);
-		switch (indexSize) {
-		case 1:
-			nv50_draw_elements_inline_u08(nv50, map, start, count);
-			break;
-		case 2:
-			nv50_draw_elements_inline_u16(nv50, map, start, count);
-			break;
-		case 4:
-			nv50_draw_elements_inline_u32(nv50, map, start, count);
-			break;
-		default:
-			assert(0);
-			break;
-		}
-		BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
-		OUT_RING  (chan, 0);
+			max_verts = AVAIL_RING(chan) - overhead;
+			if (max_verts > 2047)
+				max_verts = 2047;
+			if (indexSize != 4)
+				max_verts <<= 1;
+			instance_step(nv50, a);
 
-		prim |= (1 << 28);
+			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
+			OUT_RING  (chan, nv50_prim(s.mode) | (nzi ? (1<<28) : 0));
+			done = u_split_prim_next(&s, max_verts);
+			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
+			OUT_RING  (chan, 0);
+		} while (!done);
+
+		nzi = TRUE;
 	}
 
 	pipe_buffer_unmap(pscreen, indexBuffer);
@@ -406,7 +422,8 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 	struct instance a[16];
 	unsigned prim = nv50_prim(mode);
 
-	if (indexSize == 1) {
+	if (!(indexBuffer->usage & PIPE_BUFFER_USAGE_INDEX) ||
+	    indexSize == 1) {
 		nv50_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count, startInstance,
 					  instanceCount);
