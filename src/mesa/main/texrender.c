@@ -500,7 +500,7 @@ update_wrapper(GLcontext *ctx, const struct gl_renderbuffer_attachment *att)
    else if (trb->TexImage->TexFormat == MESA_FORMAT_Z16) {
       trb->Base.Format = MESA_FORMAT_Z16;
       trb->Base.DataType = GL_UNSIGNED_SHORT;
-      trb->Base._BaseFormat = GL_DEPTH_STENCIL;
+      trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
    }
    else if (trb->TexImage->TexFormat == MESA_FORMAT_Z32) {
       trb->Base.Format = MESA_FORMAT_Z32;
