@@ -30,6 +30,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
+#include "state_tracker/st_api.h"
 
 struct pipe_surface;
 struct pipe_fence_handle;
@@ -57,6 +58,11 @@ struct dri_drawable
 
    /* gallium */
    struct st_framebuffer *stfb;
+   struct st_visual stvis;
+
+   struct pipe_texture *textures[ST_ATTACHMENT_COUNT];
+   unsigned int texture_mask, texture_stamp;
+
    struct pipe_fence_handle *swap_fences[DRI_SWAP_FENCES_MAX];
    unsigned int head;
    unsigned int tail;

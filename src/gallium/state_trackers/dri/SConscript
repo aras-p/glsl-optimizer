@@ -18,6 +18,7 @@ if env['dri']:
 		'dri_drawable.c',
 		'dri_extensions.c',
 		'dri_screen.c',
+		'dri_st_api.c',
 		'dri1.c',
 		]
     )
