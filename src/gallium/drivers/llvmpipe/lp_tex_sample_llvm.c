@@ -51,10 +51,11 @@
 
 
 /**
- * This provides the bridge between the sampler state store in lp_jit_context
- * and lp_jit_texture and the sampler code generator. It provides the
- * texture layout information required by the texture sampler code generator
- * in terms of the state stored in lp_jit_context and lp_jit_texture in runtime.
+ * This provides the bridge between the sampler state store in
+ * lp_jit_context and lp_jit_texture and the sampler code
+ * generator. It provides the texture layout information required by
+ * the texture sampler code generator in terms of the state stored in
+ * lp_jit_context and lp_jit_texture in runtime.
  */
 struct llvmpipe_sampler_dynamic_state
 {
@@ -89,7 +90,8 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
                        unsigned member_index,
                        const char *member_name)
 {
-   struct llvmpipe_sampler_dynamic_state *state = (struct llvmpipe_sampler_dynamic_state *)base;
+   struct llvmpipe_sampler_dynamic_state *state =
+      (struct llvmpipe_sampler_dynamic_state *)base;
    LLVMValueRef indices[4];
    LLVMValueRef ptr;
    LLVMValueRef res;
@@ -116,11 +118,13 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
 
 
 /**
- * Helper macro to instantiate the functions that generate the code to fetch
- * the members of lp_jit_texture to fulfill the sampler code generator requests.
+ * Helper macro to instantiate the functions that generate the code to
+ * fetch the members of lp_jit_texture to fulfill the sampler code
+ * generator requests.
  *
- * This complexity is the price we have to pay to keep the texture sampler code
- * generator a reusable module without dependencies to llvmpipe internals.
+ * This complexity is the price we have to pay to keep the texture
+ * sampler code generator a reusable module without dependencies to
+ * llvmpipe internals.
  */
 #define LP_LLVM_TEXTURE_MEMBER(_name, _index) \
    static LLVMValueRef \
