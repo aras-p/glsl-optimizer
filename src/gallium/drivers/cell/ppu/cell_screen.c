@@ -35,7 +35,9 @@
 #include "cell_context.h"
 #include "cell_screen.h"
 #include "cell_texture.h"
-#include "cell_winsys.h"
+#include "cell_buffer.h"
+
+#include "state_tracker/sw_winsys.h"
 
 
 static const char *
@@ -133,24 +135,50 @@ cell_is_format_supported( struct pipe_screen *screen,
                           unsigned tex_usage, 
                           unsigned geom_flags )
 {
-   /* cell supports most formats, XXX for now anyway */
+   struct sw_winsys *winsys = cell_screen(screen)->winsys;
+
    if (format == PIPE_FORMAT_DXT5_RGBA ||
        format == PIPE_FORMAT_A8B8G8R8_SRGB)
       return FALSE;
-   else
-      return TRUE;
+
+   if (tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      if (!winsys->is_displaytarget_format_supported(winsys, format))
+         return FALSE;
+   }
+
+   /* This is often a lie.  Pull in logic from llvmpipe to fix.
+    */
+   return TRUE;
 }
 
 
 static void
 cell_destroy_screen( struct pipe_screen *screen )
 {
-   struct pipe_winsys *winsys = screen->winsys;
+   struct cell_screen *sp_screen = cell_screen(screen);
+   struct sw_winsys *winsys = sp_screen->winsys;
 
    if(winsys->destroy)
       winsys->destroy(winsys);
 
    FREE(screen);
+}
+
+/* This used to be overriden by the co-state tracker, but really needs
+ * to be active with sw_winsys.
+ */
+static void
+cell_flush_frontbuffer(struct pipe_screen *_screen,
+                           struct pipe_surface *surface,
+                           void *context_private)
+{
+   struct cell_screen *screen = cell_screen(_screen);
+   struct sw_winsys *winsys = screen->winsys;
+   struct cell_texture *texture = cell_texture(surface->texture);
+
+   assert(texture->dt);
+   if (texture->dt)
+      winsys->displaytarget_display(winsys, texture->dt, context_private);
 }
 
 
@@ -160,26 +188,27 @@ cell_destroy_screen( struct pipe_screen *screen )
  * that would be the place to put SPU thread/context info...
  */
 struct pipe_screen *
-cell_create_screen(struct pipe_winsys *winsys)
+cell_create_screen(struct sw_winsys *winsys)
 {
-   struct pipe_screen *screen = CALLOC_STRUCT(pipe_screen);
+   struct cell_screen *screen = CALLOC_STRUCT(pipe_screen);
 
    if (!screen)
       return NULL;
 
    screen->winsys = winsys;
+   screen->base.winsys = NULL;
 
-   screen->destroy = cell_destroy_screen;
+   screen->base.destroy = cell_destroy_screen;
 
-   screen->get_name = cell_get_name;
-   screen->get_vendor = cell_get_vendor;
-   screen->get_param = cell_get_param;
-   screen->get_paramf = cell_get_paramf;
-   screen->is_format_supported = cell_is_format_supported;
-   screen->context_create = cell_create_context;
+   screen->base.get_name = cell_get_name;
+   screen->base.get_vendor = cell_get_vendor;
+   screen->base.get_param = cell_get_param;
+   screen->base.get_paramf = cell_get_paramf;
+   screen->base.is_format_supported = cell_is_format_supported;
+   screen->base.context_create = cell_create_context;
 
-   cell_init_screen_texture_funcs(screen);
-   u_simple_screen_init(screen);
+   cell_init_screen_texture_funcs(&screen->base);
+   cell_init_screen_buffer_funcs(&screen->base);
 
    return screen;
 }

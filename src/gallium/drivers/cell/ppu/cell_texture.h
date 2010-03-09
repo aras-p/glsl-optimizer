@@ -43,8 +43,19 @@ struct cell_texture
    unsigned long level_offset[CELL_MAX_TEXTURE_LEVELS];
    unsigned long stride[CELL_MAX_TEXTURE_LEVELS];
 
-   /** The tiled texture data is held in this buffer */
-   struct pipe_buffer *buffer;
+   /**
+    * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET
+    * usage.
+    */
+   struct sw_displaytarget *dt;
+
+   /**
+    * Malloc'ed data for regular textures, or a mapping to dt above.
+    */
+   void *data;
+
+   /* Size of the linear buffer??
+    */
    unsigned long buffer_size;
 
    /** The buffer above, mapped.  This is the memory from which the

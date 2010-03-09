@@ -136,7 +136,7 @@ cell_create_context(struct pipe_screen *screen,
    memset(cell, 0, sizeof(*cell));
 
    cell->winsys = NULL;		/* XXX: fixme - get this from screen? */
-   cell->pipe.winsys = screen->winsys;
+   cell->pipe.winsys = NULL;
    cell->pipe.screen = screen;
    cell->pipe.priv = priv;
    cell->pipe.destroy = cell_destroy_context;

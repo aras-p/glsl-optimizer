@@ -21,6 +21,7 @@ SPU_CODE_MODULE = ../spu/g3d_spu.a
 
 SOURCES = \
 	cell_batch.c \
+	cell_buffer.c \
 	cell_clear.c \
 	cell_context.c \
 	cell_draw_arrays.c \

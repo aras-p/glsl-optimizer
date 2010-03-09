@@ -43,10 +43,13 @@
 #include "cell_state.h"
 #include "cell_texture.h"
 
+#include "state_tracker/sw_winsys.h"
 
 
-static void
-cell_texture_layout(struct cell_texture *ct)
+
+static boolean
+cell_texture_layout(struct pipe_screen *screen, 
+                    struct cell_texture *ct)
 {
    struct pipe_texture *pt = &ct->base;
    unsigned level;
@@ -82,8 +85,33 @@ cell_texture_layout(struct cell_texture *ct)
       height = u_minify(height, 1);
       depth = u_minify(depth, 1);
    }
+
+   ct->data = align_malloc(ct->buffer_size, 16);
+ 
+   return ct->data != NULL;
 }
 
+
+/**
+ * Texture layout for simple color buffers.
+ */
+static boolean
+cell_displaytarget_layout(struct pipe_screen *screen,
+                          struct cell_texture * ct)
+{
+   struct sw_winsys *winsys = cell_screen(screen)->winsys;
+
+   /* Round up the surface size to a multiple of the tile size?
+    */
+   ct->dt = winsys->displaytarget_create(winsys,
+                                          ct->base.format,
+                                          ct->base.width0, 
+                                          ct->base.height0,
+                                          16,
+                                          &ct->stride[0] );
+
+   return ct->dt != NULL;
+}
 
 static struct pipe_texture *
 cell_texture_create(struct pipe_screen *screen,
@@ -97,31 +125,46 @@ cell_texture_create(struct pipe_screen *screen,
    pipe_reference_init(&ct->base.reference, 1);
    ct->base.screen = screen;
 
-   cell_texture_layout(ct);
-
-   ct->buffer = screen->buffer_create(screen, 32, PIPE_BUFFER_USAGE_PIXEL,
-                                   ct->buffer_size);
-
-   if (!ct->buffer) {
-      FREE(ct);
-      return NULL;
+   if (ct->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                             PIPE_TEXTURE_USAGE_SCANOUT |
+                             PIPE_TEXTURE_USAGE_SHARED)) {
+      if (!cell_displaytarget_layout(screen, ct))
+         goto fail;
+   }
+   else {
+      if (!cell_texture_layout(screen, ct))
+         goto fail;
    }
 
    return &ct->base;
+
+fail:
+   FREE(ct);
+   return NULL;
 }
 
 
 static void
 cell_texture_destroy(struct pipe_texture *pt)
 {
+   struct cell_screen *screen = cell_screen(pt->screen);
+   struct sw_winsys *winsys = screen->winsys;
    struct cell_texture *ct = cell_texture(pt);
 
    if (ct->mapped) {
-      pipe_buffer_unmap(ct->buffer->screen, ct->buffer);
+      if (ct->dt)
+         winsys->displaytarget_unmap(winsys, ct->dt);
       ct->mapped = NULL;
    }
 
-   pipe_buffer_reference(&ct->buffer, NULL);
+   if (ct->dt) {
+      /* display target */
+      winsys->displaytarget_destroy(winsys, ct->dt);
+   }
+   else {
+      /* regular texture */
+      align_free(ct->data);
+   }
 
    FREE(ct);
 }
@@ -388,11 +431,19 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
 
    assert(transfer->texture);
 
-   if (!ct->mapped) {
-      /* map now */
-      ct->mapped = pipe_buffer_map(screen, ct->buffer,
-                                   pipe_transfer_buffer_flags(transfer));
+   if (ct->mapped == NULL) {
+      if (ct->dt) {
+         struct sw_winsys *winsys = cell_screen(screen)->winsys;
+         ct->mapped = winsys->displaytarget_map(screen, ct->dt,
+                                                pipe_transfer_buffer_flags(transfer));
+      }
+      else {
+         ct->mapped = ct->data;
+      }
    }
+
+   if (ct->mapped == NULL)
+      return NULL;
 
    /*
     * Create a buffer of ordinary memory for the linear texture.
@@ -441,9 +492,8 @@ cell_transfer_unmap(struct pipe_screen *screen,
    const uint stride = ct->stride[level];
 
    if (!ct->mapped) {
-      /* map now */
-      ct->mapped = pipe_buffer_map(screen, ct->buffer,
-                                   PIPE_BUFFER_USAGE_CPU_READ);
+      assert(0);
+      return;
    }
 
    if (transfer->usage & PIPE_TRANSFER_WRITE) {
@@ -461,9 +511,18 @@ cell_transfer_unmap(struct pipe_screen *screen,
       }
    }
 
+   if (ct->dt) {
+      /* display target */
+      struct sw_winsys *winsys = cell_screen(screen)->winsys;
+      winsys->displaytarget_unmap(winsys, ct->dt);
+   }
+
    align_free(ctrans->map);
    ctrans->map = NULL;
 }
+
+
+
 
 
 void

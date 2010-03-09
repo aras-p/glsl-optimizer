@@ -30,12 +30,29 @@
 #define CELL_SCREEN_H
 
 
-struct pipe_screen;
-struct pipe_winsys;
+#include "pipe/p_screen.h"
 
+struct sw_winsys;
+
+struct cell_screen {
+   struct pipe_screen base;
+
+   struct sw_winsys *winsys;
+
+   /* Increments whenever textures are modified.  Contexts can track
+    * this.
+    */
+   unsigned timestamp;          
+};
+
+static INLINE struct cell_screen *
+cell_screen( struct pipe_screen *pipe )
+{
+   return (struct cell_screen *)pipe;
+}
 
 extern struct pipe_screen *
-cell_create_screen(struct pipe_winsys *winsys);
+cell_create_screen(struct sw_winsys *winsys);
 
 
 #endif /* CELL_SCREEN_H */

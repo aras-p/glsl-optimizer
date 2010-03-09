@@ -34,6 +34,7 @@
 #include "cell_context.h"
 #include "cell_state.h"
 #include "cell_gen_fp.h"
+#include "cell_buffer.h"
 
 
 /** cast wrapper */
@@ -185,14 +186,26 @@ cell_set_constant_buffer(struct pipe_context *pipe,
                          struct pipe_buffer *buf)
 {
    struct cell_context *cell = cell_context(pipe);
+   unsigned size = constants ? constants->size : 0;
+   const void *data = constants ? cell_buffer(constants)->data : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
+
+   if (cell->constants[shader] == constants)
+      return;
 
    draw_flush(cell->draw);
 
    /* note: reference counting */
    pipe_buffer_reference(&cell->constants[shader], buf);
+
+   if(shader == PIPE_SHADER_VERTEX) {
+      draw_set_mapped_constant_buffer(cell->draw, PIPE_SHADER_VERTEX, 0,
+                                      data, size);
+   }
+
+   cell->mapped_constants[shader] = data;
 
    if (shader == PIPE_SHADER_VERTEX)
       cell->dirty |= CELL_NEW_VS_CONSTANTS;
