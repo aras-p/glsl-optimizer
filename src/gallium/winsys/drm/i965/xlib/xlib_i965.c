@@ -38,7 +38,7 @@
 #include "pipe/p_error.h"
 #include "pipe/p_context.h"
 
-#include "xm_winsys.h"
+#include "xm_public.h"
 
 #include "i965/brw_winsys.h"
 #include "i965/brw_screen.h"

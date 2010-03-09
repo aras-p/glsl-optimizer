@@ -131,7 +131,8 @@ C_SOURCES = \
 	vl/vl_mpeg12_mc_renderer.c \
 	vl/vl_compositor.c \
 	vl/vl_csc.c \
-	vl/vl_shader_build.c
+	vl/vl_shader_build.c \
+	target-helpers/swrast_xlib.c
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_alpha.c \

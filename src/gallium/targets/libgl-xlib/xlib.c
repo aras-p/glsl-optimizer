@@ -30,79 +30,17 @@
  * Authors:
  *   Keith Whitwell
  */
-
-#include "state_tracker/xlib_sw_winsys.h"
-#include "xm_winsys.h"
-#include "util/u_debug.h"
-#include "softpipe/sp_public.h"
-#include "llvmpipe/lp_public.h"
-#include "identity/id_public.h"
-#include "trace/tr_public.h"
-#include "cell/ppu/cell_public.h"
-
+#include "pipe/p_compiler.h"
+#include "target-helpers/swrast_xlib.h"
+#include "xm_public.h"
 
 /* advertise OpenGL support */
 PUBLIC const int st_api_OpenGL = 1;
 
-
-static struct pipe_screen *
-create_screen( struct sw_winsys *winsys )
-{
-#if defined(GALLIUM_CELL)
-   if (!debug_get_bool_option("GALLIUM_NOCELL", FALSE)) 
-      return cell_create_screen( winsys );
-#endif
-
-#if defined(GALLIUM_LLVMPIPE)
-   return llvmpipe_create_screen( winsys );
-#endif
-
-   return softpipe_create_screen( winsys );
-}
-
-
-
-static struct pipe_screen *
-xlib_create_screen( Display *display )
-{
-   struct sw_winsys *winsys;
-   struct pipe_screen *screen;
-
-   winsys = xlib_create_sw_winsys( display );
-   if (winsys == NULL)
-      return NULL;
-
-   screen = create_screen(winsys);
-   if (screen == NULL)
-      goto fail;
-
-   /* Finally we have somewhere to inject layers into the stack in a
-    * clean fashion:
-    */
-   if (debug_get_bool_option("GALLIUM_WRAP", FALSE)) {
-      screen = identity_screen_create(screen);
-   }
-
-   if (debug_get_bool_option("GALLIUM_TRACE", FALSE)) {
-      screen = trace_screen_create( screen );
-   }
-
-   return screen;
-
-fail:
-   if (winsys)
-      winsys->destroy( winsys );
-
-   return NULL;
-}
-
-
 struct xm_driver xlib_driver = 
 {
-   .create_pipe_screen = xlib_create_screen,
+   .create_pipe_screen = swrast_xlib_create_screen,
 };
-
-
 
 
 /* Build the rendering stack.

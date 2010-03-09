@@ -29,11 +29,13 @@
 #ifndef XM_WINSYS_H
 #define XM_WINSYS_H
 
-struct pipe_context;
-struct pipe_screen;
-struct pipe_surface;
-struct xlib_drawable;
+struct xm_driver;
 
+/* This is the driver interface required by the glx/xlib state tracker. 
+ */
+struct xm_driver {
+   struct pipe_screen *(*create_pipe_screen)( Display *display );
+};
 
 extern void
 xmesa_set_driver( const struct xm_driver *driver );

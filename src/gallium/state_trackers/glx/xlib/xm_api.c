@@ -63,7 +63,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 
-#include "xm_winsys.h"
+#include "xm_public.h"
 #include <GL/glx.h>
 
 
