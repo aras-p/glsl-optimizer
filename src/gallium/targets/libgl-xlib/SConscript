@@ -28,35 +28,40 @@ env.Append(CPPPATH = [
 
 env.Append(CPPDEFINES = ['USE_XSHM'])
 
+env.Prepend(LIBS = [
+    st_xlib,
+    ws_xlib,
+    trace,
+    identity,
+    glapi,
+    mesa,
+    glsl,
+    gallium,
+])
+
 sources = [
     'xlib.c',
 ]
 
-drivers = [trace]
-    
 if 'softpipe' in env['drivers']:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
-    sources += ['xlib_softpipe.c', 'xlib_sw_winsys.c']
-    drivers += [softpipe]
+    env.Prepend(LIBS = [softpipe])
 
 if 'llvmpipe' in env['drivers']:
     env.Tool('llvm')
     if 'LLVM_VERSION' in env:
         env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
         env.Tool('udis86')
-        sources += ['xlib_llvmpipe.c', 'xlib_sw_winsys.c']
-        drivers += [llvmpipe]
+        env.Prepend(LIBS = [llvmpipe])
     
 if 'cell' in env['drivers']:
     env.Append(CPPDEFINES = 'GALLIUM_CELL')
-    sources += ['xlib_cell.c']
-    drivers += [cell]
+    env.Prepend(LIBS = [cell])
 
 # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
 libgl = env.SharedLibrary(
     target ='GL',
     source = sources,
-    LIBS = st_xlib + glapi + mesa + glsl + drivers + gallium + env['LIBS'],
 )
 
 if not env['dri']:
