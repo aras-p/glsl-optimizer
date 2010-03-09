@@ -378,7 +378,7 @@ identity_delete_vs_state(struct pipe_context *_pipe,
 }
 
 
-static void
+static void *
 identity_create_vertex_elements_state(struct pipe_context *_pipe,
                                       unsigned num_elements,
                                       const struct pipe_vertex_element *vertex_elements)
@@ -386,9 +386,9 @@ identity_create_vertex_elements_state(struct pipe_context *_pipe,
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   pipe->create_vertex_elements_state(pipe,
-                                      num_elements,
-                                      vertex_elements);
+   return pipe->create_vertex_elements_state(pipe,
+                                             num_elements,
+                                             vertex_elements);
 }
 
 static void
