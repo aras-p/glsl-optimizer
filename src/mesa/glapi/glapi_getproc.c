@@ -39,8 +39,9 @@
 #endif
 
 #include "glapi/glapi.h"
-#include "glapi/glapioffsets.h"
+#include "glapi/glapi_priv.h"
 #include "glapi/glapitable.h"
+#include "glapi/glapioffsets.h"
 
 
 #if defined(USE_X64_64_ASM) && defined(GLX_USE_TLS)
@@ -376,6 +377,12 @@ struct _glapi_function {
     */
    _glapi_proc dispatch_stub;
 };
+
+
+/*
+ * Number of extension functions which we can dynamically add at runtime.
+ */
+#define MAX_EXTENSION_FUNCS 300
 
 
 static struct _glapi_function ExtEntryTable[MAX_EXTENSION_FUNCS];
@@ -766,6 +773,51 @@ _glapi_get_proc_name(GLuint offset)
 
 
 
+/**********************************************************************
+ * GL API table functions.
+ */
+
+
+/*
+ * The dispatch table size (number of entries) is the size of the
+ * _glapi_table struct plus the number of dynamic entries we can add.
+ * The extra slots can be filled in by DRI drivers that register new extension
+ * functions.
+ */
+#define DISPATCH_TABLE_SIZE (sizeof(struct _glapi_table) / sizeof(void *) + MAX_EXTENSION_FUNCS)
+
+
+/**
+ * Return size of dispatch table struct as number of functions (or
+ * slots).
+ */
+PUBLIC GLuint
+_glapi_get_dispatch_table_size(void)
+{
+   return DISPATCH_TABLE_SIZE;
+}
+
+
+/**
+ * Make sure there are no NULL pointers in the given dispatch table.
+ * Intended for debugging purposes.
+ */
+void
+_glapi_check_table_not_null(const struct _glapi_table *table)
+{
+#ifdef EXTRA_DEBUG /* set to DEBUG for extra DEBUG */
+   const GLuint entries = _glapi_get_dispatch_table_size();
+   const void **tab = (const void **) table;
+   GLuint i;
+   for (i = 1; i < entries; i++) {
+      assert(tab[i]);
+   }
+#else
+   (void) table;
+#endif
+}
+
+
 /**
  * Do some spot checks to be sure that the dispatch table
  * slots are assigned correctly. For debugging only.
@@ -773,7 +825,7 @@ _glapi_get_proc_name(GLuint offset)
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
-#if 0 /* enable this for extra DEBUG */
+#ifdef EXTRA_DEBUG /* set to DEBUG for extra DEBUG */
    {
       GLuint BeginOffset = _glapi_get_proc_offset("glBegin");
       char *BeginFunc = (char*) &table->Begin;

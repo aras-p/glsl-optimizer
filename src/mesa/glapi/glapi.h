@@ -165,29 +165,8 @@ extern _glapi_proc
 _glapi_get_proc_address(const char *funcName);
 
 
-/**
- * GL API local functions and defines
- */
-
-extern void
-init_glapi_relocs_once(void);
-
-extern void
-_glapi_check_table_not_null(const struct _glapi_table *table);
-
-
-extern void
-_glapi_check_table(const struct _glapi_table *table);
-
-
 extern const char *
 _glapi_get_proc_name(unsigned int offset);
-
-
-/*
- * Number of extension functions which we can dynamically add at runtime.
- */
-#define MAX_EXTENSION_FUNCS 300
 
 
 #endif
