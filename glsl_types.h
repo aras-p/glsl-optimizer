@@ -135,12 +135,17 @@ struct glsl_type {
    {
       this->fields.structure = fields;
    }
-};
 
-#define is_glsl_type_scalar(t)			\
-   (((t)->vector_elements == 0)			\
-    && ((t)->base_type >= GLSL_TYPE_UINT)	\
-    && ((t)->base_type <= GLSL_TYPE_BOOL))
+   /**
+    * Query whether or not a type is a scalar (non-vector and non-matrix).
+    */
+   bool is_scalar() const
+   {
+      return (vector_elements == 0)
+	 && (base_type >= GLSL_TYPE_UINT)
+	 && (base_type <= GLSL_TYPE_BOOL);
+   }
+};
 
 #define is_glsl_type_vector(t)			\
    (((t)->vector_elements > 0)			\

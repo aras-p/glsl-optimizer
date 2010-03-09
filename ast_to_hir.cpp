@@ -110,7 +110,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *    * The two operands are scalars. In this case the operation is
     *      applied, resulting in a scalar."
     */
-   if (is_glsl_type_scalar(type_a) && is_glsl_type_scalar(type_b))
+   if (type_a->is_scalar() && type_b->is_scalar())
       return type_a;
 
    /*   "* One operand is a scalar, and the other is a vector or matrix.
@@ -118,10 +118,10 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *      component of the vector or matrix, resulting in the same size
     *      vector or matrix."
     */
-   if (is_glsl_type_scalar(type_a)) {
-      if (!is_glsl_type_scalar(type_b))
+   if (type_a->is_scalar()) {
+      if (!type_b->is_scalar())
 	 return type_b;
-   } else if (is_glsl_type_scalar(type_b)) {
+   } else if (type_b->is_scalar()) {
       return type_a;
    }
 
@@ -287,8 +287,8 @@ relational_result_type(const struct glsl_type *type_a,
     */
    if (! is_numeric_base_type(type_a->base_type)
        || ! is_numeric_base_type(type_b->base_type)
-       || ! is_glsl_type_scalar(type_a) 
-       || ! is_glsl_type_scalar(type_b))
+       || !type_a->is_scalar()
+       || !type_b->is_scalar())
       return glsl_error_type;
 
    /*    "Either the operands' types must match, or the conversions from
@@ -513,7 +513,7 @@ ast_expression::hir(exec_list *instructions,
        */
       assert((type == glsl_error_type)
 	     || ((type->base_type == GLSL_TYPE_BOOL)
-		 && is_glsl_type_scalar(type)));
+		 && type->is_scalar()));
 
       result = new ir_expression(operations[this->oper], type,
 				 op[0], op[1]);
