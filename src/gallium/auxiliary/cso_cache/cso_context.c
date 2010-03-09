@@ -1248,7 +1248,7 @@ enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
 
 void cso_save_vertex_elements(struct cso_context *ctx)
 {
-   assert(!ctx->velements);
+   assert(!ctx->velements_saved);
    ctx->velements_saved = ctx->velements;
 }
 
