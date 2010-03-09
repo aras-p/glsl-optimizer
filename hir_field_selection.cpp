@@ -127,7 +127,7 @@ generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
 
 struct ir_instruction *
 _mesa_ast_field_selection_to_hir(const ast_expression *expr,
-				 simple_node *instructions,
+				 exec_list *instructions,
 				 struct _mesa_glsl_parse_state *state)
 {
    ir_instruction *op;

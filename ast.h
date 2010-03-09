@@ -26,6 +26,7 @@
 #define AST_H
 
 #include "main/simple_list.h"
+#include "list.h"
 #include "glsl_parser_extras.h"
 
 struct ir_instruction;
@@ -37,7 +38,7 @@ class ast_node : public simple_node {
 public:
    virtual ~ast_node();
    virtual void print(void) const;
-   virtual ir_instruction *hir(struct simple_node *instructions,
+   virtual ir_instruction *hir(exec_list *instructions,
 			       struct _mesa_glsl_parse_state *state);
 
    /**
@@ -151,7 +152,7 @@ public:
 
    static const char *operator_string(enum ast_operators op);
 
-   virtual ir_instruction *hir(struct simple_node *instructions,
+   virtual ir_instruction *hir(exec_list *instructions,
 			       struct _mesa_glsl_parse_state *state);
 
    virtual void print(void) const;
@@ -198,7 +199,7 @@ public:
    ast_compound_statement(int new_scope, ast_node *statements);
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(struct simple_node *instructions,
+   virtual ir_instruction *hir(exec_list *instructions,
 			       struct _mesa_glsl_parse_state *state);
 
    int new_scope;
@@ -338,7 +339,7 @@ public:
    ast_declarator_list(ast_fully_specified_type *);
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(struct simple_node *instructions,
+   virtual ir_instruction *hir(exec_list *instructions,
 			       struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
@@ -359,7 +360,7 @@ class ast_parameter_declarator : public ast_node {
 public:
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(struct simple_node *instructions,
+   virtual ir_instruction *hir(exec_list *instructions,
 			       struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
@@ -406,7 +407,7 @@ public:
    ast_expression_statement(ast_expression *);
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(struct simple_node *instructions,
+   virtual ir_instruction *hir(exec_list *instructions,
 			       struct _mesa_glsl_parse_state *state);
 
    ast_expression *expression;
@@ -483,7 +484,7 @@ class ast_function_definition : public ast_node {
 public:
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(struct simple_node *instructions,
+   virtual ir_instruction *hir(exec_list *instructions,
 			       struct _mesa_glsl_parse_state *state);
 
    ast_function *prototype;
@@ -493,7 +494,7 @@ public:
 
 extern struct ir_instruction *
 _mesa_ast_field_selection_to_hir(const struct ast_expression *expr,
-				 struct simple_node *instructions,
+				 exec_list *instructions,
 				 struct _mesa_glsl_parse_state *state);
 
 #endif /* AST_H */

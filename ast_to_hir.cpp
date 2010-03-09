@@ -330,7 +330,7 @@ relational_result_type(const struct glsl_type *type_a,
 
 
 ir_instruction *
-ast_node::hir(struct simple_node *instructions,
+ast_node::hir(exec_list *instructions,
 	      struct _mesa_glsl_parse_state *state)
 {
    (void) instructions;
@@ -341,7 +341,7 @@ ast_node::hir(struct simple_node *instructions,
 
 
 ir_instruction *
-ast_expression::hir(struct simple_node *instructions,
+ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
 {
    static const int operations[AST_NUM_OPERATORS] = {
@@ -717,7 +717,7 @@ ast_expression::hir(struct simple_node *instructions,
 
 
 ir_instruction *
-ast_expression_statement::hir(struct simple_node *instructions,
+ast_expression_statement::hir(exec_list *instructions,
 			      struct _mesa_glsl_parse_state *state)
 {
    /* It is possible to have expression statements that don't have an
@@ -739,7 +739,7 @@ ast_expression_statement::hir(struct simple_node *instructions,
 
 
 ir_instruction *
-ast_compound_statement::hir(struct simple_node *instructions,
+ast_compound_statement::hir(exec_list *instructions,
 			    struct _mesa_glsl_parse_state *state)
 {
    struct simple_node *ptr;
@@ -880,7 +880,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 
 
 ir_instruction *
-ast_declarator_list::hir(struct simple_node *instructions,
+ast_declarator_list::hir(exec_list *instructions,
 			 struct _mesa_glsl_parse_state *state)
 {
    struct simple_node *ptr;
@@ -953,7 +953,7 @@ ast_declarator_list::hir(struct simple_node *instructions,
 	 continue;
       }
 
-      insert_at_tail(instructions, (struct simple_node *) var);
+      instructions->push_tail(var);
 
       /* FINISHME: Process the declaration initializer. */
    }
@@ -965,7 +965,7 @@ ast_declarator_list::hir(struct simple_node *instructions,
 
 
 ir_instruction *
-ast_parameter_declarator::hir(struct simple_node *instructions,
+ast_parameter_declarator::hir(exec_list *instructions,
 			      struct _mesa_glsl_parse_state *state)
 {
    const struct glsl_type *type;
@@ -997,7 +997,7 @@ ast_parameter_declarator::hir(struct simple_node *instructions,
 
    apply_type_qualifier_to_variable(& this->type->qualifier, var, state);
 
-   insert_at_tail(instructions, var);
+   instructions->push_tail(var);
 
    /* Parameter declarations do not have r-values.
     */
@@ -1007,7 +1007,7 @@ ast_parameter_declarator::hir(struct simple_node *instructions,
 
 static void
 ast_function_parameters_to_hir(struct simple_node *ast_parameters,
-			       struct simple_node *ir_parameters,
+			       exec_list *ir_parameters,
 			       struct _mesa_glsl_parse_state *state)
 {
    struct simple_node *ptr;
@@ -1019,18 +1019,17 @@ ast_function_parameters_to_hir(struct simple_node *ast_parameters,
 
 
 static bool
-parameter_lists_match(struct simple_node *list_a, struct simple_node *list_b)
+parameter_lists_match(exec_list *list_a, exec_list *list_b)
 {
-   struct simple_node *node_a;
-   struct simple_node *node_b;
+   exec_list_iterator iter_a = list_a->iterator();
+   exec_list_iterator iter_b = list_b->iterator();
 
-   node_b = first_elem(list_b);
-   foreach (node_a, list_a) {
+   while (iter_a.has_next()) {
       /* If all of the parameters from the other parameter list have been
        * exhausted, the lists have different length and, by definition,
        * do not match.
        */
-      if (at_end(list_b, node_b))
+      if (!iter_b.has_next())
 	 return false;
 
       /* If the types of the parameters do not match, the parameters lists
@@ -1039,7 +1038,8 @@ parameter_lists_match(struct simple_node *list_a, struct simple_node *list_b)
       /* FINISHME */
 
 
-      node_b = next_elem(node_b);
+      iter_a.next();
+      iter_b.next();
    }
 
    return true;
@@ -1047,22 +1047,19 @@ parameter_lists_match(struct simple_node *list_a, struct simple_node *list_b)
 
 
 ir_instruction *
-ast_function_definition::hir(struct simple_node *instructions,
+ast_function_definition::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
    ir_label *label;
-   struct simple_node *ptr;
-   struct simple_node *tmp;
    ir_function_signature *signature = NULL;
    ir_function *f = NULL;
-   struct simple_node parameters;
+   exec_list parameters;
 
 
    /* Convert the list of function parameters to HIR now so that they can be
     * used below to compare this function's signature with previously seen
     * signatures for functions with the same name.
     */
-   make_empty_list(& parameters);
    ast_function_parameters_to_hir(& this->prototype->parameters, & parameters,
 				  state);
 
@@ -1075,8 +1072,8 @@ ast_function_definition::hir(struct simple_node *instructions,
       _mesa_symbol_table_find_symbol(state->symbols, 0,
 				     this->prototype->identifier);
    if (f != NULL) {
-      foreach (ptr, & f->signatures) {
-	 signature = (struct ir_function_signature *) ptr;
+      foreach_iter(exec_list_iterator, iter, f->signatures) {
+	 signature = (struct ir_function_signature *) iter.get();
 
 	 /* Compare the parameter list of the function being defined to the
 	  * existing function.  If the parameter lists match, then the return
@@ -1111,17 +1108,17 @@ ast_function_definition::hir(struct simple_node *instructions,
     */
    if (signature == NULL) {
       signature = new ir_function_signature();
-      insert_at_tail(& f->signatures, (struct simple_node *) signature);
+      f->signatures.push_tail(signature);
    } else {
       /* Destroy all of the previous parameter information.  The previous
        * parameter information comes from the function prototype, and it can
        * either include invalid parameter names or may not have names at all.
        */
-      foreach_s(ptr, tmp, & signature->parameters) {
-	 assert(((struct ir_instruction *)ptr)->mode == ir_op_var_decl);
+      foreach_iter(exec_list_iterator, iter, signature->parameters) {
+	 assert(((struct ir_instruction *)iter.get())->mode == ir_op_var_decl);
 
-	 remove_from_list(ptr);
-	 free(ptr);
+	 iter.remove();
+	 delete iter.get();
       }
    }
 
@@ -1135,7 +1132,7 @@ ast_function_definition::hir(struct simple_node *instructions,
    if (signature->definition == NULL) {
       signature->definition = label;
    }
-   insert_at_tail(instructions, label);
+   instructions->push_tail(label);
 
    /* Add the function parameters to the symbol table.  During this step the
     * parameter declarations are also moved from the temporary "parameters" list
@@ -1143,13 +1140,13 @@ ast_function_definition::hir(struct simple_node *instructions,
     * but they involve ugly linked-list gymnastics.
     */
    _mesa_symbol_table_push_scope(state->symbols);
-   foreach_s(ptr, tmp, & parameters) {
-      struct ir_variable *const var = (struct ir_variable *) ptr;
+   foreach_iter(exec_list_iterator, iter, parameters) {
+      ir_variable *const var = (ir_variable *) iter.get();
 
       assert(var->mode == ir_op_var_decl);
 
-      remove_from_list(ptr);
-      insert_at_tail(instructions, ptr);
+      iter.remove();
+      instructions->push_tail(var);
 
       _mesa_symbol_table_add_symbol(state->symbols, 0, var->name, var);
    }

@@ -681,7 +681,7 @@ main(int argc, char **argv)
    char *shader;
    size_t shader_len;
    struct simple_node *ptr;
-   struct simple_node instructions;
+   exec_list instructions;
 
    (void) argc;
    shader = load_text_file(argv[1], & shader_len);
@@ -698,7 +698,6 @@ main(int argc, char **argv)
       ((ast_node *)ptr)->print();
    }
 
-   make_empty_list(& instructions);
    foreach (ptr, & state.translation_unit) {
       ((ast_node *)ptr)->hir(&instructions, &state);
    }

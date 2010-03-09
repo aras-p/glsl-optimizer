@@ -105,12 +105,12 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name)
 ir_function_signature::ir_function_signature(void)
    : ir_instruction(ir_op_func_sig)
 {
-   make_empty_list(& parameters);
+   /* empty */
 }
 
 
 ir_function::ir_function(void)
    : ir_instruction(ir_op_func)
 {
-   make_empty_list(& signatures);
+   /* empty */
 }

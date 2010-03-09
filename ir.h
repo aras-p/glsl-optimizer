@@ -21,6 +21,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "list.h"
+
 struct ir_program {
    void *bong_hits;
 };
@@ -41,7 +43,7 @@ enum ir_opcodes {
 /**
  * Base class of all IR instructions
  */
-class ir_instruction : public simple_node {
+class ir_instruction : public exec_node {
 public:
    unsigned mode;
    const struct glsl_type *type;
@@ -113,7 +115,7 @@ public:
    /**
     * List of function parameters stored as ir_variable objects.
     */
-   struct simple_node parameters;
+   struct exec_list parameters;
 
    /**
     * Pointer to the label that begins the function definition.
@@ -134,7 +136,7 @@ public:
     */
    const char *name;
 
-   struct simple_node signatures;
+   struct exec_list signatures;
 };
 /*@}*/
 
