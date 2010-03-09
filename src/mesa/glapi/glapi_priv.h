@@ -40,4 +40,27 @@ extern void
 init_glapi_relocs_once(void);
 
 
+extern _glapi_proc
+generate_entrypoint(GLuint functionOffset);
+
+
+extern void
+fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset);
+
+
+extern _glapi_proc
+get_entrypoint_address(GLuint functionOffset);
+
+
+#if defined(USE_X64_64_ASM) && defined(GLX_USE_TLS)
+# define DISPATCH_FUNCTION_SIZE  16
+#elif defined(USE_X86_ASM)
+# if defined(THREADS) && !defined(GLX_USE_TLS)
+#  define DISPATCH_FUNCTION_SIZE  32
+# else
+#  define DISPATCH_FUNCTION_SIZE  16
+# endif
+#endif
+
+
 #endif
