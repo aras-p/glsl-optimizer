@@ -73,8 +73,6 @@ struct ximage_surface {
    XVisualInfo visual;
    struct ximage_display *xdpy;
 
-   GC gc;
-
    unsigned int server_stamp;
    unsigned int client_stamp;
    int width, height;
@@ -155,7 +153,6 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
       xbuf->xdraw.visual = xsurf->visual.visual;
       xbuf->xdraw.depth = xsurf->visual.depth;
       xbuf->xdraw.drawable = xsurf->drawable;
-      xbuf->xdraw.gc = xsurf->gc;
    }
 
    /* clean up the buffer if allocation failed */
@@ -373,8 +370,6 @@ ximage_surface_destroy(struct native_surface *nsurf)
    for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++)
       ximage_surface_free_buffer(&xsurf->base, i);
 
-   if (xsurf->type != XIMAGE_SURFACE_TYPE_PBUFFER)
-      XFreeGC(xsurf->xdpy->dpy, xsurf->gc);
    free(xsurf);
 }
 
@@ -400,13 +395,6 @@ ximage_display_create_surface(struct native_display *ndpy,
    if (xsurf->type != XIMAGE_SURFACE_TYPE_PBUFFER) {
       xsurf->drawable = drawable;
       xsurf->visual = *xconf->visual;
-
-      xsurf->gc = XCreateGC(xdpy->dpy, xsurf->drawable, 0, NULL);
-      if (!xsurf->gc) {
-         free(xsurf);
-         return NULL;
-      }
-
       /* initialize the geometry */
       ximage_surface_update_buffers(&xsurf->base, 0x0);
    }

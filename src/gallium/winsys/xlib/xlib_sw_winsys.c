@@ -73,6 +73,12 @@ struct xm_displaytarget
    Display *display;
    Visual *visual;
    XImage *tempImage;
+   GC gc;
+
+   /* This is the last drawable that this display target was presented
+    * against.  May need to recreate gc, tempImage when this changes??
+    */
+   Drawable drawable;
 
    XShmSegmentInfo shminfo;
    int shm;
@@ -260,6 +266,12 @@ xm_displaytarget_destroy(struct sw_winsys *ws,
          FREE(xm_dt->data);
    }
 
+   if (xm_dt->tempImage)
+      XDestroyImage(xm_dt->tempImage);
+
+   if (xm_dt->gc)
+      XFreeGC(xm_dt->display, xm_dt->gc);
+
    FREE(xm_dt);
 }
 
@@ -272,10 +284,11 @@ void
 xlib_sw_display(struct xlib_drawable *xlib_drawable,
                 struct sw_displaytarget *dt)
 {
-   XImage *ximage;
-   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
    static boolean no_swap = 0;
    static boolean firsttime = 1;
+   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
+   Display *display = xm_dt->display;
+   XImage *ximage;
 
    if (firsttime) {
       no_swap = getenv("SP_NO_RAST") != NULL;
@@ -285,8 +298,21 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
    if (no_swap)
       return;
 
-   if (xm_dt->tempImage == NULL)
-   {
+   if (xm_dt->drawable != xlib_drawable->drawable) {
+      if (xm_dt->gc) {
+         XFreeGC( display, xm_dt->gc );
+         xm_dt->gc = NULL;
+      }
+
+      if (xm_dt->tempImage) {
+         XDestroyImage( xm_dt->tempImage );
+         xm_dt->tempImage = NULL;
+      }
+
+      xm_dt->drawable = xlib_drawable->drawable;
+   }
+
+   if (xm_dt->tempImage == NULL) {
       assert(util_format_get_blockwidth(xm_dt->format) == 1);
       assert(util_format_get_blockheight(xm_dt->format) == 1);
       alloc_ximage(xm_dt, xlib_drawable,
@@ -296,6 +322,11 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
          return;
    }
 
+   if (xm_dt->gc == NULL) {
+      xm_dt->gc = XCreateGC( display, xlib_drawable->drawable, 0, NULL );
+      XSetFunction( display, xm_dt->gc, GXcopy );
+   }
+
 #ifdef USE_XSHM
    if (xm_dt->shm)
    {
@@ -303,7 +334,7 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
       ximage->data = xm_dt->data;
 
       /* _debug_printf("XSHM\n"); */
-      XShmPutImage(xm_dt->display, xlib_drawable->drawable, xlib_drawable->gc,
+      XShmPutImage(xm_dt->display, xlib_drawable->drawable, xm_dt->gc,
                    ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height, False);
    }
    else
@@ -323,7 +354,7 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
       ximage->bytes_per_line = xm_dt->stride;
 
       /* _debug_printf("XPUT\n"); */
-      XPutImage(xm_dt->display, xlib_drawable->drawable, xlib_drawable->gc,
+      XPutImage(xm_dt->display, xlib_drawable->drawable, xm_dt->gc,
                 ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height);
    }
 }

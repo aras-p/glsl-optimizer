@@ -446,8 +446,6 @@ xmesa_free_buffer(XMesaBuffer buffer)
          /* Unreference.  If count = zero we'll really delete the buffer */
          _mesa_reference_framebuffer(&fb, NULL);
 
-         XFreeGC(b->xm_visual->display, b->ws.gc);
-
          free(buffer);
 
          return;
@@ -522,16 +520,6 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
       printf("X/Mesa level = %d\n", v->mesa_visual.level);
       printf("X/Mesa depth = %d\n", v->visinfo->depth);
       printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
-   }
-
-   if (b && window) {
-      /* these should have been set in create_xmesa_buffer */
-      ASSERT(b->ws.drawable == window);
-
-
-      /* X11 graphics context */
-      b->ws.gc = XCreateGC( v->display, window, 0, NULL );
-      XSetFunction( v->display, b->ws.gc, GXcopy );
    }
 
    return GL_TRUE;

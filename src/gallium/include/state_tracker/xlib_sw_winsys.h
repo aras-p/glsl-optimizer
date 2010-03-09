@@ -16,7 +16,6 @@ struct xlib_drawable {
    Visual *visual;
    int depth;
    Drawable drawable;
-   GC gc;                       /* temporary? */
 };
 
 
