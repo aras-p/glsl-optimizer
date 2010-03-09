@@ -164,22 +164,6 @@ cell_destroy_screen( struct pipe_screen *screen )
    FREE(screen);
 }
 
-/* This used to be overriden by the co-state tracker, but really needs
- * to be active with sw_winsys.
- */
-static void
-cell_flush_frontbuffer(struct pipe_screen *_screen,
-                           struct pipe_surface *surface,
-                           void *context_private)
-{
-   struct cell_screen *screen = cell_screen(_screen);
-   struct sw_winsys *winsys = screen->winsys;
-   struct cell_texture *texture = cell_texture(surface->texture);
-
-   assert(texture->dt);
-   if (texture->dt)
-      winsys->displaytarget_display(winsys, texture->dt, context_private);
-}
 
 
 /**

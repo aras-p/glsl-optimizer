@@ -48,6 +48,7 @@ struct cell_texture
     * usage.
     */
    struct sw_displaytarget *dt;
+   unsigned dt_stride;
 
    /**
     * Malloc'ed data for regular textures, or a mapping to dt above.

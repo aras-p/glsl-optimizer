@@ -108,7 +108,7 @@ cell_displaytarget_layout(struct pipe_screen *screen,
                                           ct->base.width0, 
                                           ct->base.height0,
                                           16,
-                                          &ct->stride[0] );
+                                          &ct->dt_stride );
 
    return ct->dt != NULL;
 }
@@ -125,21 +125,29 @@ cell_texture_create(struct pipe_screen *screen,
    pipe_reference_init(&ct->base.reference, 1);
    ct->base.screen = screen;
 
+   /* Create both a displaytarget (linear) and regular texture
+    * (twiddled).  Convert twiddled->linear at flush_frontbuffer time.
+    */
    if (ct->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
                              PIPE_TEXTURE_USAGE_SCANOUT |
                              PIPE_TEXTURE_USAGE_SHARED)) {
       if (!cell_displaytarget_layout(screen, ct))
          goto fail;
    }
-   else {
-      if (!cell_texture_layout(screen, ct))
-         goto fail;
-   }
+
+   if (!cell_texture_layout(screen, ct))
+      goto fail;
 
    return &ct->base;
 
 fail:
+   if (ct->dt) {
+      struct sw_winsys winsys = cell_screen(screen)->winsys;
+      winsys->displaytarget_destroy(winsys, ct->dt);
+   }
+
    FREE(ct);
+
    return NULL;
 }
 
@@ -151,20 +159,12 @@ cell_texture_destroy(struct pipe_texture *pt)
    struct sw_winsys *winsys = screen->winsys;
    struct cell_texture *ct = cell_texture(pt);
 
-   if (ct->mapped) {
-      if (ct->dt)
-         winsys->displaytarget_unmap(winsys, ct->dt);
-      ct->mapped = NULL;
-   }
-
    if (ct->dt) {
       /* display target */
       winsys->displaytarget_destroy(winsys, ct->dt);
    }
-   else {
-      /* regular texture */
-      align_free(ct->data);
-   }
+
+   align_free(ct->data);
 
    FREE(ct);
 }
@@ -432,18 +432,8 @@ cell_transfer_map(struct pipe_screen *screen, struct pipe_transfer *transfer)
    assert(transfer->texture);
 
    if (ct->mapped == NULL) {
-      if (ct->dt) {
-         struct sw_winsys *winsys = cell_screen(screen)->winsys;
-         ct->mapped = winsys->displaytarget_map(screen, ct->dt,
-                                                pipe_transfer_buffer_flags(transfer));
-      }
-      else {
-         ct->mapped = ct->data;
-      }
+      ct->mapped = ct->data;
    }
-
-   if (ct->mapped == NULL)
-      return NULL;
 
    /*
     * Create a buffer of ordinary memory for the linear texture.
@@ -511,18 +501,51 @@ cell_transfer_unmap(struct pipe_screen *screen,
       }
    }
 
-   if (ct->dt) {
-      /* display target */
-      struct sw_winsys *winsys = cell_screen(screen)->winsys;
-      winsys->displaytarget_unmap(winsys, ct->dt);
-   }
-
    align_free(ctrans->map);
    ctrans->map = NULL;
 }
 
 
 
+/* This used to be overriden by the co-state tracker, but really needs
+ * to be active with sw_winsys.
+ *
+ * Contrasting with llvmpipe and softpipe, this is the only place
+ * where we use the ct->dt display target in any real sense.
+ *
+ * Basically just untwiddle our local data into the linear
+ * displaytarget.
+ */
+static void
+cell_flush_frontbuffer(struct pipe_screen *_screen,
+                       struct pipe_surface *surface,
+                       void *context_private)
+{
+   struct cell_screen *screen = cell_screen(_screen);
+   struct sw_winsys *winsys = screen->winsys;
+   struct cell_texture *ct = cell_texture(surface->texture);
+
+   if (!ct->dt)
+      return;
+
+   /* Need to untwiddle from our internal representation here:
+    */
+   {
+      unsigned *map = winsys->displaytarget_map(winsys, ct->dt);
+      unsigned *src = (unsigned *)(ct->data + ct->level_offset[surface->level]);
+
+      untwiddle_image_uint(surface->width,
+                           surface->height,
+                           TILE_SIZE,
+                           map,
+                           ct->dt_stride,
+                           src);
+
+      winsys->displaytarget_unmap(winsys, c->dt);
+   }
+
+   winsys->displaytarget_display(winsys, ct->dt, context_private);
+}
 
 
 void
@@ -539,4 +562,6 @@ cell_init_screen_texture_funcs(struct pipe_screen *screen)
 
    screen->transfer_map = cell_transfer_map;
    screen->transfer_unmap = cell_transfer_unmap;
+
+   screen->flush_frontbuffer = cell_flush_frontbuffer;
 }
