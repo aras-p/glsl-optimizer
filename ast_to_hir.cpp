@@ -136,7 +136,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *      operation is done component-wise resulting in the same size
     *      vector."
     */
-   if (is_glsl_type_vector(type_a) && is_glsl_type_vector(type_b)) {
+   if (type_a->is_vector() && type_b->is_vector()) {
       if (type_a->vector_elements == type_b->vector_elements)
 	 return type_a;
       else
@@ -261,8 +261,8 @@ modulus_result_type(const struct glsl_type *type_a,
     *    wise to the vector, resulting in the same type as the vector. If both
     *    are vectors of the same size, the result is computed component-wise."
     */
-   if (is_glsl_type_vector(type_a)) {
-      if (!is_glsl_type_vector(type_b)
+   if (type_a->is_vector()) {
+      if (!type_b->is_vector()
 	  || (type_a->vector_elements == type_b->vector_elements))
 	 return type_a;
    } else

@@ -145,13 +145,18 @@ struct glsl_type {
 	 && (base_type >= GLSL_TYPE_UINT)
 	 && (base_type <= GLSL_TYPE_BOOL);
    }
-};
 
-#define is_glsl_type_vector(t)			\
-   (((t)->vector_elements > 0)			\
-    && ((t)->matrix_rows == 0)			\
-    && ((t)->base_type >= GLSL_TYPE_UINT)	\
-    && ((t)->base_type <= GLSL_TYPE_BOOL))
+   /**
+    * Query whether or not a type is a vector
+    */
+   bool is_vector() const
+   {
+      return (vector_elements > 0)
+	 && (matrix_rows == 0)
+	 && (base_type >= GLSL_TYPE_UINT)
+	 && (base_type <= GLSL_TYPE_BOOL);
+   }
+};
 
 #define is_glsl_type_matrix(t)			\
    (((t)->matrix_rows > 0)			\

@@ -156,7 +156,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
     * being applied.
     */
    loc = expr->get_location();
-   if (is_glsl_type_vector(op->type)) {
+   if (op->type->is_vector()) {
       if (generate_swizzle(expr->primary_expression.identifier, 
 			   & deref->selector.swizzle,
 			   op->type->vector_elements)) {
