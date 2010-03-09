@@ -700,7 +700,6 @@ util_dump_vertex_element(struct os_stream *stream, const struct pipe_vertex_elem
    util_dump_member(stream, uint, state, src_offset);
 
    util_dump_member(stream, uint, state, vertex_buffer_index);
-   util_dump_member(stream, uint, state, nr_components);
 
    util_dump_member(stream, format, state, src_format);
 

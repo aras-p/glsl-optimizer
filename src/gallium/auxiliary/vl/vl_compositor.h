@@ -43,10 +43,10 @@ struct vl_compositor
    void *sampler;
    void *vertex_shader;
    void *fragment_shader;
+   void *vertex_elems;
    struct pipe_viewport_state viewport;
    struct pipe_scissor_state scissor;
    struct pipe_vertex_buffer vertex_bufs[2];
-   struct pipe_vertex_element vertex_elems[2];
    struct pipe_buffer *vs_const_buf, *fs_const_buf;
 };
 

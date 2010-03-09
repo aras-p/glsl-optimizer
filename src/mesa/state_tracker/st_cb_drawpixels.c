@@ -529,6 +529,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_sampler_textures(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
+   cso_save_vertex_elements(cso);
 
    /* rasterizer state: just scissor */
    {
@@ -581,6 +582,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       cso_set_viewport(cso, &vp);
    }
 
+   cso_set_vertex_elements(cso, 3, st->velems_util_draw);
+
    /* texture state: */
    if (st->pixel_xfer.pixelmap_enabled) {
       struct pipe_texture *textures[2];
@@ -615,6 +618,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_sampler_textures(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
+   cso_restore_vertex_elements(cso);
 }
 
 

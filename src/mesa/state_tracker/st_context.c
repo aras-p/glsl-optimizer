@@ -141,6 +141,14 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       st->state.sampler_list[i] = &st->state.samplers[i];
 
+   for (i = 0; i < 3; i++) {
+      memset(&st->velems_util_draw[i], 0, sizeof(struct pipe_vertex_element));
+      st->velems_util_draw[i].src_offset = i * 4 * sizeof(float);
+      st->velems_util_draw[i].instance_divisor = 0;
+      st->velems_util_draw[i].vertex_buffer_index = 0;
+      st->velems_util_draw[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
+
    /* we want all vertex data to be placed in buffer objects */
    vbo_use_buffer_objects(ctx);
 

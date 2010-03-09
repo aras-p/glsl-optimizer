@@ -174,7 +174,7 @@ nv40_state_validate_swtnl(struct nv40_context *nv40)
 
 	if (nv40->draw_dirty & NV40_NEW_ARRAYS) {
 		draw_set_vertex_buffers(draw, nv40->vtxbuf_nr, nv40->vtxbuf);
-		draw_set_vertex_elements(draw, nv40->vtxelt_nr, nv40->vtxelt);	
+		draw_set_vertex_elements(draw, nv40->vtxelt->num_elements, nv40->vtxelt->pipe);	
 	}
 
 	nv40_state_do_validate(nv40, swtnl_states);

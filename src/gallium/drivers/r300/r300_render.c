@@ -143,7 +143,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 {
     struct pipe_vertex_element* velem;
     struct pipe_vertex_buffer* vbuf;
-    unsigned vertex_element_count = r300->vertex_element_count;
+    unsigned vertex_element_count = r300->velems->count;
     unsigned i, v, vbi, dw, elem_offset, dwords;
 
     /* Size of the vertex, in dwords. */
@@ -166,7 +166,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
     /* Calculate the vertex size, offsets, strides etc. and map the buffers. */
     for (i = 0; i < vertex_element_count; i++) {
-        velem = &r300->vertex_element[i];
+        velem = &r300->velems->velem[i];
         offset[i] = velem->src_offset / 4;
         size[i] = util_format_get_blocksize(velem->src_format) / 4;
         vertex_size += size[i];
@@ -202,7 +202,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     /* Emit vertices. */
     for (v = 0; v < count; v++) {
         for (i = 0; i < vertex_element_count; i++) {
-            velem = &r300->vertex_element[i];
+            velem = &r300->velems->velem[i];
             vbi = velem->vertex_buffer_index;
             elem_offset = offset[i] + stride[vbi] * (v + start);
 
@@ -215,7 +215,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
     /* Unmap buffers. */
     for (i = 0; i < vertex_element_count; i++) {
-        vbi = r300->vertex_element[i].vertex_buffer_index;
+        vbi = r300->velems->velem[i].vertex_buffer_index;
 
         if (map[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
@@ -317,6 +317,31 @@ static void r300_emit_draw_elements(struct r300_context *r300,
         RADEON_GEM_DOMAIN_GTT, 0, 0);
 
     END_CS;
+}
+
+static boolean r300_setup_vertex_buffers(struct r300_context *r300)
+{
+    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->velems->velem;
+    struct pipe_buffer *pbuf;
+
+validate:
+    for (int i = 0; i < r300->velems->count; i++) {
+        pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
+
+        if (!r300->winsys->add_buffer(r300->winsys, pbuf,
+                                      RADEON_GEM_DOMAIN_GTT, 0)) {
+            r300->context.flush(&r300->context, 0, NULL);
+            goto validate;
+        }
+    }
+
+    if (!r300->winsys->validate(r300->winsys)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        return r300->winsys->validate(r300->winsys);
+    }
+
+    return TRUE;
 }
 
 static void r300_shorten_ubyte_elts(struct r300_context* r300,

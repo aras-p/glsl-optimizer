@@ -1054,11 +1054,11 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 static boolean r300_validate_aos(struct r300_context *r300)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
+    struct pipe_vertex_element *velem = r300->velems->velem;
     int i;
 
     /* Check if formats and strides are aligned to the size of DWORD. */
-    for (i = 0; i < r300->vertex_element_count; i++) {
+    for (i = 0; i < r300->velems->count; i++) {
         if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
             util_format_get_blocksize(velem[i].src_format) % 4 != 0) {
             return FALSE;
@@ -1067,20 +1067,37 @@ static boolean r300_validate_aos(struct r300_context *r300)
     return TRUE;
 }
 
-static void r300_set_vertex_elements(struct pipe_context* pipe,
-                                    unsigned count,
-                                    const struct pipe_vertex_element* elements)
+static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
+                                               unsigned count,
+                                               const struct pipe_vertex_element* attribs)
 {
-    struct r300_context* r300 = r300_context(pipe);
+    struct r300_velems_state *velems;
 
-    memcpy(r300->vertex_element,
-           elements,
-           sizeof(struct pipe_vertex_element) * count);
-    r300->vertex_element_count = count;
+    /*XXX should precalculate state here instead of later */
+    assert(count <= PIPE_MAX_ATTRIBS);
+    velems = CALLOC_STRUCT(r300_velems_state);
+    if (velems) {
+        velems->count = count;
+        memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
+    }
+    return velems;
+}
+
+static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
+                                            void *velems)
+{
+    struct r300_context *r300 = r300_context(pipe);
+    struct r300_velems_state *r300_velems = (struct r300_velems_state *) velems;
+
+    if (velems == NULL) {
+        return;
+    }
+
+    r300->velems = r300_velems;
 
     if (r300->draw) {
         draw_flush(r300->draw);
-        draw_set_vertex_elements(r300->draw, count, elements);
+        draw_set_vertex_elements(r300->draw, r300_velems->count, r300_velems->velem);
     }
 
     if (!r300_validate_aos(r300)) {
@@ -1088,6 +1105,11 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
         assert(0);
         abort();
     }
+}
+
+static void r300_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
+{
+   FREE(velems);
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
@@ -1262,7 +1284,10 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.set_viewport_state = r300_set_viewport_state;
 
     r300->context.set_vertex_buffers = r300_set_vertex_buffers;
-    r300->context.set_vertex_elements = r300_set_vertex_elements;
+
+    r300->context.create_vertex_elements_state = r300_create_vertex_elements_state;
+    r300->context.bind_vertex_elements_state = r300_bind_vertex_elements_state;
+    r300->context.delete_vertex_elements_state = r300_delete_vertex_elements_state;
 
     r300->context.create_vs_state = r300_create_vs_state;
     r300->context.bind_vs_state = r300_bind_vs_state;

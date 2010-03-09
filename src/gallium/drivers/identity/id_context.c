@@ -377,6 +377,42 @@ identity_delete_vs_state(struct pipe_context *_pipe,
                          vs);
 }
 
+
+static void
+identity_create_vertex_elements_state(struct pipe_context *_pipe,
+                                      unsigned num_elements,
+                                      const struct pipe_vertex_element *vertex_elements)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+
+   pipe->create_vertex_elements_state(pipe,
+                                      num_elements,
+                                      vertex_elements);
+}
+
+static void
+identity_bind_vertex_elements_state(struct pipe_context *_pipe,
+                                    void *velems)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+
+   pipe->bind_vertex_elements_state(pipe,
+                                    velems);
+}
+
+static void
+identity_delete_vertex_elements_state(struct pipe_context *_pipe,
+                                      void *velems)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+
+   pipe->delete_vertex_elements_state(pipe,
+                                      velems);
+}
+
 static void
 identity_set_blend_color(struct pipe_context *_pipe,
                          const struct pipe_blend_color *blend_color)
@@ -563,20 +599,6 @@ identity_set_vertex_buffers(struct pipe_context *_pipe,
                             num_buffers,
                             buffers);
 }
-
-static void
-identity_set_vertex_elements(struct pipe_context *_pipe,
-                             unsigned num_elements,
-                             const struct pipe_vertex_element *vertex_elements)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct pipe_context *pipe = id_pipe->pipe;
-
-   pipe->set_vertex_elements(pipe,
-                             num_elements,
-                             vertex_elements);
-}
-
 static void
 identity_surface_copy(struct pipe_context *_pipe,
                       struct pipe_surface *_dst,
@@ -733,6 +755,9 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.create_vs_state = identity_create_vs_state;
    id_pipe->base.bind_vs_state = identity_bind_vs_state;
    id_pipe->base.delete_vs_state = identity_delete_vs_state;
+   id_pipe->base.create_vertex_elements_state = identity_create_vertex_elements_state;
+   id_pipe->base.bind_vertex_elements_state = identity_bind_vertex_elements_state;
+   id_pipe->base.delete_vertex_elements_state = identity_delete_vertex_elements_state;
    id_pipe->base.set_blend_color = identity_set_blend_color;
    id_pipe->base.set_stencil_ref = identity_set_stencil_ref;
    id_pipe->base.set_clip_state = identity_set_clip_state;
@@ -744,7 +769,6 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_fragment_sampler_textures = identity_set_fragment_sampler_textures;
    id_pipe->base.set_vertex_sampler_textures = identity_set_vertex_sampler_textures;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
-   id_pipe->base.set_vertex_elements = identity_set_vertex_elements;
    id_pipe->base.surface_copy = identity_surface_copy;
    id_pipe->base.surface_fill = identity_surface_fill;
    id_pipe->base.clear = identity_clear;

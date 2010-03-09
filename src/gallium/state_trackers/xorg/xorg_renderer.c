@@ -68,6 +68,8 @@ renderer_draw(struct xorg_renderer *r)
 
 
    if (buf) {
+      cso_set_vertex_elements(r->cso, r->attrs_per_vertex, r->velems);
+
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,
                               num_verts,  /* verts */
@@ -92,6 +94,7 @@ renderer_init_state(struct xorg_renderer *r)
 {
    struct pipe_depth_stencil_alpha_state dsa;
    struct pipe_rasterizer_state raster;
+   unsigned i;
 
    /* set common initial clip state */
    memset(&dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
@@ -103,6 +106,14 @@ renderer_init_state(struct xorg_renderer *r)
    raster.gl_rasterization_rules = 1;
    cso_set_rasterizer(r->cso, &raster);
 
+   /* vertex elements state */
+   memset(&r->velems[0], 0, sizeof(r->velems[0]) * 3);
+   for (i = 0; i < 3; i++) {
+      r->velems[i].src_offset = i * 4 * sizeof(float);
+      r->velems[i].instance_divisor = 0;
+      r->velems[i].vertex_buffer_index = 0;
+      r->velems[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
 }
 
 
@@ -599,6 +610,8 @@ void renderer_draw_yuv(struct xorg_renderer *r,
 
    if (buf) {
       const int num_attribs = 2; /*pos + tex coord*/
+
+      cso_set_vertex_elements(r->cso, num_attribs, r->velems);
 
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,

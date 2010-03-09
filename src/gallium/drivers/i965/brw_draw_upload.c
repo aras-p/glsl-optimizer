@@ -42,141 +42,6 @@
 
 
 
-static unsigned brw_translate_surface_format( unsigned id )
-{
-   switch (id) {
-   case PIPE_FORMAT_R64_FLOAT:
-      return BRW_SURFACEFORMAT_R64_FLOAT;
-   case PIPE_FORMAT_R64G64_FLOAT:
-      return BRW_SURFACEFORMAT_R64G64_FLOAT;
-   case PIPE_FORMAT_R64G64B64_FLOAT:
-      return BRW_SURFACEFORMAT_R64G64B64_FLOAT;
-   case PIPE_FORMAT_R64G64B64A64_FLOAT:
-      return BRW_SURFACEFORMAT_R64G64B64A64_FLOAT;
-
-   case PIPE_FORMAT_R32_FLOAT:
-      return BRW_SURFACEFORMAT_R32_FLOAT;
-   case PIPE_FORMAT_R32G32_FLOAT:
-      return BRW_SURFACEFORMAT_R32G32_FLOAT;
-   case PIPE_FORMAT_R32G32B32_FLOAT:
-      return BRW_SURFACEFORMAT_R32G32B32_FLOAT;
-   case PIPE_FORMAT_R32G32B32A32_FLOAT:
-      return BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
-
-   case PIPE_FORMAT_R32_UNORM:
-      return BRW_SURFACEFORMAT_R32_UNORM;
-   case PIPE_FORMAT_R32G32_UNORM:
-      return BRW_SURFACEFORMAT_R32G32_UNORM;
-   case PIPE_FORMAT_R32G32B32_UNORM:
-      return BRW_SURFACEFORMAT_R32G32B32_UNORM;
-   case PIPE_FORMAT_R32G32B32A32_UNORM:
-      return BRW_SURFACEFORMAT_R32G32B32A32_UNORM;
-
-   case PIPE_FORMAT_R32_USCALED:
-      return BRW_SURFACEFORMAT_R32_USCALED;
-   case PIPE_FORMAT_R32G32_USCALED:
-      return BRW_SURFACEFORMAT_R32G32_USCALED;
-   case PIPE_FORMAT_R32G32B32_USCALED:
-      return BRW_SURFACEFORMAT_R32G32B32_USCALED;
-   case PIPE_FORMAT_R32G32B32A32_USCALED:
-      return BRW_SURFACEFORMAT_R32G32B32A32_USCALED;
-
-   case PIPE_FORMAT_R32_SNORM:
-      return BRW_SURFACEFORMAT_R32_SNORM;
-   case PIPE_FORMAT_R32G32_SNORM:
-      return BRW_SURFACEFORMAT_R32G32_SNORM;
-   case PIPE_FORMAT_R32G32B32_SNORM:
-      return BRW_SURFACEFORMAT_R32G32B32_SNORM;
-   case PIPE_FORMAT_R32G32B32A32_SNORM:
-      return BRW_SURFACEFORMAT_R32G32B32A32_SNORM;
-
-   case PIPE_FORMAT_R32_SSCALED:
-      return BRW_SURFACEFORMAT_R32_SSCALED;
-   case PIPE_FORMAT_R32G32_SSCALED:
-      return BRW_SURFACEFORMAT_R32G32_SSCALED;
-   case PIPE_FORMAT_R32G32B32_SSCALED:
-      return BRW_SURFACEFORMAT_R32G32B32_SSCALED;
-   case PIPE_FORMAT_R32G32B32A32_SSCALED:
-      return BRW_SURFACEFORMAT_R32G32B32A32_SSCALED;
-
-   case PIPE_FORMAT_R16_UNORM:
-      return BRW_SURFACEFORMAT_R16_UNORM;
-   case PIPE_FORMAT_R16G16_UNORM:
-      return BRW_SURFACEFORMAT_R16G16_UNORM;
-   case PIPE_FORMAT_R16G16B16_UNORM:
-      return BRW_SURFACEFORMAT_R16G16B16_UNORM;
-   case PIPE_FORMAT_R16G16B16A16_UNORM:
-      return BRW_SURFACEFORMAT_R16G16B16A16_UNORM;
-
-   case PIPE_FORMAT_R16_USCALED:
-      return BRW_SURFACEFORMAT_R16_USCALED;
-   case PIPE_FORMAT_R16G16_USCALED:
-      return BRW_SURFACEFORMAT_R16G16_USCALED;
-   case PIPE_FORMAT_R16G16B16_USCALED:
-      return BRW_SURFACEFORMAT_R16G16B16_USCALED;
-   case PIPE_FORMAT_R16G16B16A16_USCALED:
-      return BRW_SURFACEFORMAT_R16G16B16A16_USCALED;
-
-   case PIPE_FORMAT_R16_SNORM:
-      return BRW_SURFACEFORMAT_R16_SNORM;
-   case PIPE_FORMAT_R16G16_SNORM:
-      return BRW_SURFACEFORMAT_R16G16_SNORM;
-   case PIPE_FORMAT_R16G16B16_SNORM:
-      return BRW_SURFACEFORMAT_R16G16B16_SNORM;
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
-      return BRW_SURFACEFORMAT_R16G16B16A16_SNORM;
-
-   case PIPE_FORMAT_R16_SSCALED:
-      return BRW_SURFACEFORMAT_R16_SSCALED;
-   case PIPE_FORMAT_R16G16_SSCALED:
-      return BRW_SURFACEFORMAT_R16G16_SSCALED;
-   case PIPE_FORMAT_R16G16B16_SSCALED:
-      return BRW_SURFACEFORMAT_R16G16B16_SSCALED;
-   case PIPE_FORMAT_R16G16B16A16_SSCALED:
-      return BRW_SURFACEFORMAT_R16G16B16A16_SSCALED;
-
-   case PIPE_FORMAT_R8_UNORM:
-      return BRW_SURFACEFORMAT_R8_UNORM;
-   case PIPE_FORMAT_R8G8_UNORM:
-      return BRW_SURFACEFORMAT_R8G8_UNORM;
-   case PIPE_FORMAT_R8G8B8_UNORM:
-      return BRW_SURFACEFORMAT_R8G8B8_UNORM;
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-      return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
-
-   case PIPE_FORMAT_R8_USCALED:
-      return BRW_SURFACEFORMAT_R8_USCALED;
-   case PIPE_FORMAT_R8G8_USCALED:
-      return BRW_SURFACEFORMAT_R8G8_USCALED;
-   case PIPE_FORMAT_R8G8B8_USCALED:
-      return BRW_SURFACEFORMAT_R8G8B8_USCALED;
-   case PIPE_FORMAT_R8G8B8A8_USCALED:
-      return BRW_SURFACEFORMAT_R8G8B8A8_USCALED;
-
-   case PIPE_FORMAT_R8_SNORM:
-      return BRW_SURFACEFORMAT_R8_SNORM;
-   case PIPE_FORMAT_R8G8_SNORM:
-      return BRW_SURFACEFORMAT_R8G8_SNORM;
-   case PIPE_FORMAT_R8G8B8_SNORM:
-      return BRW_SURFACEFORMAT_R8G8B8_SNORM;
-   case PIPE_FORMAT_R8G8B8A8_SNORM:
-      return BRW_SURFACEFORMAT_R8G8B8A8_SNORM;
-
-   case PIPE_FORMAT_R8_SSCALED:
-      return BRW_SURFACEFORMAT_R8_SSCALED;
-   case PIPE_FORMAT_R8G8_SSCALED:
-      return BRW_SURFACEFORMAT_R8G8_SSCALED;
-   case PIPE_FORMAT_R8G8B8_SSCALED:
-      return BRW_SURFACEFORMAT_R8G8B8_SSCALED;
-   case PIPE_FORMAT_R8G8B8A8_SSCALED:
-      return BRW_SURFACEFORMAT_R8G8B8A8_SSCALED;
-
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
 static unsigned get_index_type(int type)
 {
    switch (type) {
@@ -315,75 +180,16 @@ static int brw_emit_vertex_buffers( struct brw_context *brw )
 
 
 
-
 static int brw_emit_vertex_elements(struct brw_context *brw)
 {
-   GLuint nr = brw->curr.num_vertex_elements;
-   GLuint i;
+   const struct brw_vertex_element_packet *brw_velems = brw->curr.velems;
+   unsigned size = brw_velems->header.length + 2;
 
+   /* why is this here */
    brw_emit_query_begin(brw);
 
-   /* If the VS doesn't read any inputs (calculating vertex position from
-    * a state variable for some reason, for example), emit a single pad
-    * VERTEX_ELEMENT struct and bail.
-    *
-    * The stale VB state stays in place, but they don't do anything unless
-    * a VE loads from them.
-    */
-   if (nr == 0) {
-      BEGIN_BATCH(3, IGNORE_CLIPRECTS);
-      OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
-      OUT_BATCH((0 << BRW_VE0_INDEX_SHIFT) |
-		BRW_VE0_VALID |
-		(BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_VE0_FORMAT_SHIFT) |
-		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
-      OUT_BATCH((BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_0_SHIFT) |
-		(BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_1_SHIFT) |
-		(BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |
-		(BRW_VE1_COMPONENT_STORE_1_FLT << BRW_VE1_COMPONENT_3_SHIFT));
-      ADVANCE_BATCH();
-      return 0;
-   }
+   brw_batchbuffer_data(brw->batch, brw_velems, size * 4, IGNORE_CLIPRECTS);
 
-   /* Now emit vertex element (VEP) state packets.
-    *
-    */
-   BEGIN_BATCH(1 + nr * 2, IGNORE_CLIPRECTS);
-   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + nr * 2) - 2));
-   for (i = 0; i < nr; i++) {
-      const struct pipe_vertex_element *input = &brw->curr.vertex_element[i];
-      uint32_t format = brw_translate_surface_format( input->src_format );
-      uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
-      uint32_t comp1 = BRW_VE1_COMPONENT_STORE_SRC;
-      uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
-      uint32_t comp3 = BRW_VE1_COMPONENT_STORE_SRC;
-
-      switch (input->nr_components) {
-      case 0: comp0 = BRW_VE1_COMPONENT_STORE_0; /* fallthrough */
-      case 1: comp1 = BRW_VE1_COMPONENT_STORE_0; /* fallthrough */
-      case 2: comp2 = BRW_VE1_COMPONENT_STORE_0; /* fallthrough */
-      case 3: comp3 = BRW_VE1_COMPONENT_STORE_1_FLT;
-	 break;
-      }
-
-      OUT_BATCH((input->vertex_buffer_index << BRW_VE0_INDEX_SHIFT) |
-		BRW_VE0_VALID |
-		(format << BRW_VE0_FORMAT_SHIFT) |
-		(input->src_offset << BRW_VE0_SRC_OFFSET_SHIFT));
-
-      if (BRW_IS_IGDNG(brw))
-          OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
-                    (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
-                    (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
-                    (comp3 << BRW_VE1_COMPONENT_3_SHIFT));
-      else
-          OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
-                    (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
-                    (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
-                    (comp3 << BRW_VE1_COMPONENT_3_SHIFT) |
-                    ((i * 4) << BRW_VE1_DST_OFFSET_SHIFT));
-   }
-   ADVANCE_BATCH();
    return 0;
 }
 
@@ -396,10 +202,11 @@ static int brw_emit_vertices( struct brw_context *brw )
    if (ret)
       return ret;
 
+   /* XXX should separate this? */
    ret = brw_emit_vertex_elements( brw );
    if (ret)
       return ret;
-   
+
    return 0;
 }
 
@@ -407,7 +214,8 @@ static int brw_emit_vertices( struct brw_context *brw )
 const struct brw_tracked_state brw_vertices = {
    .dirty = {
       .mesa = (PIPE_NEW_INDEX_RANGE |
-               PIPE_NEW_VERTEX_BUFFER),
+               PIPE_NEW_VERTEX_BUFFER |
+               PIPE_NEW_VERTEX_ELEMENT),
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },

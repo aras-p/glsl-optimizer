@@ -72,6 +72,12 @@ struct nv50_sampler_stateobj {
 	unsigned tsc[8];
 };
 
+struct nv50_vtxelt_stateobj {
+	struct pipe_vertex_element pipe[16];
+	unsigned num_elements;
+	uint32_t hw[16];
+};
+
 static INLINE unsigned
 get_tile_height(uint32_t tile_mode)
 {
@@ -169,8 +175,7 @@ struct nv50_context {
 	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
-	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
-	unsigned vtxelt_nr;
+	struct nv50_vtxelt_stateobj *vtxelt;
 	struct nv50_sampler_stateobj *sampler[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
 	unsigned sampler_nr[PIPE_SHADER_TYPES];
 	struct nv50_miptree *miptree[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
@@ -218,6 +223,7 @@ extern void nv50_draw_elements_instanced(struct pipe_context *pipe,
 					 unsigned count,
 					 unsigned startInstance,
 					 unsigned instanceCount);
+extern void nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso);
 extern void nv50_vbo_validate(struct nv50_context *nv50);
 
 /* nv50_clear.c */

@@ -479,7 +479,6 @@ void trace_dump_vertex_element(const struct pipe_vertex_element *state)
    trace_dump_member(uint, state, src_offset);
 
    trace_dump_member(uint, state, vertex_buffer_index);
-   trace_dump_member(uint, state, nr_components);
 
    trace_dump_member(format, state, src_format);
 

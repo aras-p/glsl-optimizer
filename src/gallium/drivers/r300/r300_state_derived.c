@@ -127,10 +127,11 @@ static void r300_vertex_psc(struct r300_context* r300)
     DBG(r300, DBG_DRAW, "r300: vs expects %d attribs, routing %d elements"
             " in psc\n",
             vs->info.num_inputs,
+            r300->velems->count);
             r300->vertex_element_count);
 
-    for (i = 0; i < r300->vertex_element_count; i++) {
-        format = r300->vertex_element[i].src_format;
+    for (i = 0; i < r300->velems->count; i++) {
+        format = r300->velems->velem[i].src_format;
 
         type = r300_translate_vertex_data_type(format) |
             (stream_tab[i] << R300_DST_VEC_LOC_SHIFT);
