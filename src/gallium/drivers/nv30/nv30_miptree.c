@@ -236,5 +236,5 @@ nv30_screen_init_miptree_functions(struct pipe_screen *pscreen)
 	pscreen->get_tex_surface = nv30_miptree_surface_new;
 	pscreen->tex_surface_destroy = nv30_miptree_surface_del;
 
-	nouveau_screen(pscreen)->texture_blanket = nv50_miptree_blanket;
+	nouveau_screen(pscreen)->texture_blanket = nv30_miptree_blanket;
 }
