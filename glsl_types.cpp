@@ -28,21 +28,6 @@
 #include "builtin_types.h"
 
 
-struct glsl_type *
-_mesa_glsl_array_type_ctor(struct glsl_type *base, unsigned length,
-			   const char *name)
-{
-   struct glsl_type *type = calloc(1, sizeof(*type));
-
-   type->base_type = GLSL_TYPE_ARRAY;
-   type->name = name;
-   type->length = length;
-   type->fields.array = base;
-
-   return type;
-}
-
-
 static void
 add_types_to_symbol_table(struct _mesa_symbol_table *symtab,
 			  const struct glsl_type *types,

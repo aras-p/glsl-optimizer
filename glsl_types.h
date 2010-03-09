@@ -25,6 +25,8 @@
 #ifndef GLSL_TYPES_H
 #define GLSL_TYPES_H
 
+#include <cstring>
+
 #define GLSL_TYPE_UINT          0
 #define GLSL_TYPE_INT           1
 #define GLSL_TYPE_FLOAT         2
@@ -44,12 +46,14 @@
 
 #define is_error_type(t) ((t)->base_type == GLSL_TYPE_ERROR)
 
-#define GLSL_SAMPLER_DIM_1D     0
-#define GLSL_SAMPLER_DIM_2D     1
-#define GLSL_SAMPLER_DIM_3D     2
-#define GLSL_SAMPLER_DIM_CUBE   3
-#define GLSL_SAMPLER_DIM_RECT   4
-#define GLSL_SAMPLER_DIM_BUF    5
+enum glsl_sampler_dim {
+   GLSL_SAMPLER_DIM_1D = 0,
+   GLSL_SAMPLER_DIM_2D,
+   GLSL_SAMPLER_DIM_3D,
+   GLSL_SAMPLER_DIM_CUBE,
+   GLSL_SAMPLER_DIM_RECT,
+   GLSL_SAMPLER_DIM_BUF
+};
 
 
 struct glsl_type {
@@ -94,6 +98,43 @@ struct glsl_type {
       const struct glsl_type *parameters;       /**< Parameters to function. */
       const struct glsl_struct_field *structure;/**< List of struct fields. */
    } fields;
+
+
+   glsl_type(unsigned base_type, unsigned vector_elements,
+	     unsigned matrix_rows, const char *name) :
+      base_type(base_type), 
+      sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
+      sampler_type(0),
+      vector_elements(vector_elements), matrix_rows(matrix_rows),
+      name(name),
+      length(0)
+   {
+      memset(& fields, 0, sizeof(fields));
+   }
+
+   glsl_type(enum glsl_sampler_dim dim, bool shadow, bool array,
+	     unsigned type, const char *name) :
+      base_type(GLSL_TYPE_SAMPLER),
+      sampler_dimensionality(dim), sampler_shadow(shadow),
+      sampler_array(array), sampler_type(type),
+      vector_elements(0), matrix_rows(0),
+      name(name),
+      length(0)
+   {
+      memset(& fields, 0, sizeof(fields));
+   }
+
+   glsl_type(const glsl_struct_field *fields, unsigned num_fields,
+	     const char *name) :
+      base_type(GLSL_TYPE_STRUCT),
+      sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
+      sampler_type(0),
+      vector_elements(0), matrix_rows(0),
+      name(name),
+      length(num_fields)
+   {
+      this->fields.structure = fields;
+   }
 };
 
 #define is_glsl_type_scalar(t)			\

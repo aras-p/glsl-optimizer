@@ -23,7 +23,7 @@
 AUTOMAKE_OPTIONS = foreign
 
 bin_PROGRAMS = glsl
-glsl_SOURCES = symbol_table.c hash_table.c glsl_types.c \
+glsl_SOURCES = symbol_table.c hash_table.c glsl_types.cpp \
 	glsl_parser.ypp glsl_lexer.lpp glsl_parser_extras.cpp \
 	ast_expr.cpp ast_to_hir.cpp ir.cpp hir_field_selection.cpp
 

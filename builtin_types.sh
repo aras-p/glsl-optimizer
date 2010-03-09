@@ -24,7 +24,7 @@
 # gen_integral_type <name> <base_type> <vector elements> <matrix rows>
 function gen_integral_type
 {
-    printf '   { %17s, 0, 0, 0, 0, %u, %u, "%s", 0, {NULL} },\n' $2 $3 $4 $1
+    printf '   glsl_type( %17s, %u, %u, "%s"),\n' $2 $3 $4 $1
     index=$((index + 1))
 }
 
@@ -32,8 +32,8 @@ function gen_integral_type
 function gen_struct_type
 {
     elements=$(printf "%s_fields" $1)
-    printf '   {\n      GLSL_TYPE_STRUCT, 0, 0, 0, 0, 0, 0, "%s",\n      Elements(%s),\n      {(void *) %s}\n   },\n' \
-	$1 $elements $elements
+    printf '   glsl_type(%s,\n             Elements(%s),\n             "%s"),\n' \
+	$elements $elements $1
 }
 
 # gen_sampler_type <name> <dimensions> <shadow> <array> <type>
@@ -55,7 +55,7 @@ function gen_sampler_type
 	name=$(printf "u%s" $name)
     fi
 
-    printf '   { GLSL_TYPE_SAMPLER, %21s, %u, %u, %15s, 0, 0,\n     "%s", 0, {NULL} },\n' \
+    printf '   glsl_type(%21s, %u, %u, %15s, "%s"),\n' \
 	$2 $3 $4 $5 $name
 }
 
@@ -119,9 +119,8 @@ cat <<EOF
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
-static const struct glsl_type error_type = {
-   GLSL_TYPE_ERROR, 0, 0, 0, 0, 0, 0, "", 0, {NULL}
-};
+static const struct glsl_type error_type =
+   glsl_type(GLSL_TYPE_ERROR, 0, 0, "");
 
 const struct glsl_type *const glsl_error_type = & error_type;
 
