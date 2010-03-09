@@ -112,9 +112,11 @@ Export([
 #######################################################################
 # Environment setup
 
-# Always build trace driver
+# Always build trace and identity drivers
 if 'trace' not in env['drivers']:
     env['drivers'].append('trace')
+if 'identity' not in env['drivers']:
+    env['drivers'].append('identity')
 
 # Includes
 env.Append(CPPPATH = [
