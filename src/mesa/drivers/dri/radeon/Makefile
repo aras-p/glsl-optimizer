@@ -22,6 +22,7 @@ RADEON_COMMON_SOURCES = \
 	radeon_fbo.c \
 	radeon_lock.c \
 	radeon_mipmap_tree.c \
+	radeon_pixel_read.c \
 	radeon_queryobj.c \
 	radeon_span.c \
 	radeon_texture.c \
