@@ -2245,8 +2245,13 @@ static void r300SetupUsOutputFormat(GLcontext *ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	uint32_t hw_format;
+	struct radeon_renderbuffer *rrb = radeon_get_colorbuffer(&rmesa->radeon);
 
-	switch (radeon_get_colorbuffer(&rmesa->radeon)->base.Format)
+	if (!rrb) {
+		return;
+	}
+	
+	switch (rrb->base.Format)
 	{
 		case MESA_FORMAT_RGBA5551:
 		case MESA_FORMAT_RGBA8888:
