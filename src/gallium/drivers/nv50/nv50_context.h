@@ -129,7 +129,6 @@ struct nv50_state {
 	unsigned miptree_nr[PIPE_SHADER_TYPES];
 	struct nouveau_stateobj *vtxbuf;
 	struct nouveau_stateobj *vtxattr;
-	struct nouveau_stateobj *instbuf;
 	unsigned vtxelt_nr;
 };
 

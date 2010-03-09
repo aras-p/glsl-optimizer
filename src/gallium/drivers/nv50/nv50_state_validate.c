@@ -382,11 +382,6 @@ nv50_state_flush_notify(struct nouveau_channel *chan)
 	so_emit_reloc_markers(chan, nv50->state.hw[4]); /* fp */
 	so_emit_reloc_markers(chan, nv50->state.hw[17]); /* vb */
 	so_emit_reloc_markers(chan, nv50->screen->static_init);
-
-#if 0
-	if (nv50->state.instbuf)
-		so_emit_reloc_markers(chan, nv50->state.instbuf);
-#endif
 }
 
 boolean
