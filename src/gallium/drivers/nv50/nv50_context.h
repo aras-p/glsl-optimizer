@@ -235,7 +235,6 @@ extern void nv50_program_destroy(struct nv50_context *nv50,
 
 /* nv50_state_validate.c */
 extern boolean nv50_state_validate(struct nv50_context *nv50, unsigned dwords);
-extern void nv50_state_flush_notify(struct nouveau_channel *chan);
 
 extern void nv50_so_init_sifc(struct nv50_context *nv50,
 			      struct nouveau_stateobj *so,

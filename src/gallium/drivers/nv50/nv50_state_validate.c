@@ -370,20 +370,6 @@ struct state_validate {
 };
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 
-void
-nv50_state_flush_notify(struct nouveau_channel *chan)
-{
-	struct nv50_context *nv50 = chan->user_private;
-
-	nv50_tex_relocs(nv50);
-
-	so_emit_reloc_markers(chan, nv50->state.hw[0]); /* fb */
-	so_emit_reloc_markers(chan, nv50->state.hw[3]); /* vp */
-	so_emit_reloc_markers(chan, nv50->state.hw[4]); /* fp */
-	so_emit_reloc_markers(chan, nv50->state.hw[17]); /* vb */
-	so_emit_reloc_markers(chan, nv50->screen->static_init);
-}
-
 boolean
 nv50_state_validate(struct nv50_context *nv50, unsigned wait_dwords)
 {
@@ -446,7 +432,12 @@ nv50_state_validate(struct nv50_context *nv50, unsigned wait_dwords)
 	 * this the kernel is given no clue that the buffer is being used
 	 * still.  This can cause all sorts of fun issues.
 	 */
-	nv50_state_flush_notify(chan);
+	nv50_tex_relocs(nv50);
+	so_emit_reloc_markers(chan, nv50->state.hw[0]); /* fb */
+	so_emit_reloc_markers(chan, nv50->state.hw[3]); /* vp */
+	so_emit_reloc_markers(chan, nv50->state.hw[4]); /* fp */
+	so_emit_reloc_markers(chan, nv50->state.hw[17]); /* vb */
+	so_emit_reloc_markers(chan, nv50->screen->static_init);
 
 	/* No idea.. */
 	BEGIN_RING(chan, tesla, 0x142c, 1);
