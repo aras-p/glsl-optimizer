@@ -308,7 +308,7 @@ lp_build_flow_scope_end(struct lp_build_flow_context *flow)
  * Note: this function has no dependencies on the flow code and could
  * be used elsewhere.
  */
-static LLVMBasicBlockRef
+LLVMBasicBlockRef
 lp_build_insert_new_block(LLVMBuilderRef builder, const char *name)
 {
    LLVMBasicBlockRef current_block;
