@@ -14,7 +14,7 @@ if env['platform'] == 'windows':
         '#/src/gallium/drivers',
     ])
 
-    ws_xlib = env.ConvenienceLibrary(
+    ws_gdi = env.ConvenienceLibrary(
         target = 'ws_gdi',
         source = [
            'gdi_sw_winsys.c',
