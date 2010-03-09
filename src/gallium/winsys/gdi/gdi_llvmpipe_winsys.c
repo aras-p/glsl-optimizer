@@ -45,7 +45,7 @@
 static struct pipe_screen *
 gdi_llvmpipe_screen_create(void)
 {
-   static struct llvmpipe_winsys *winsys;
+   static struct sw_winsys *winsys;
    struct pipe_screen *screen;
 
    winsys = gdi_create_sw_winsys();
