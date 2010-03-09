@@ -5,7 +5,7 @@ Import('*')
 #		'drm/SConscript',
 #	])
 	
-if 'xlib' in env['winsys']:
+if 'xlib' in env['targets']:
 	SConscript([
 		'libgl-xlib/SConscript',
 	])

@@ -15,3 +15,7 @@ if platform != 'embedded':
 
 if platform == 'windows':
 	SConscript('state_trackers/wgl/SConscript')
+
+SConscript('winsys/SConscript')
+
+SConscript('targets/SConscript')
