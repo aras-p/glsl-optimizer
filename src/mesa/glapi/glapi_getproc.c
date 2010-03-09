@@ -63,7 +63,7 @@ find_entry( const char * n )
    for (i = 0; static_functions[i].Name_offset >= 0; i++) {
       const char *testName = gl_string_table + static_functions[i].Name_offset;
 #ifdef MANGLE
-      /* skip the "m" prefix on the name */
+      /* skip the prefix on the name */
       if (strcmp(testName, n + 1) == 0)
 #else
       if (strcmp(testName, n) == 0)
@@ -424,7 +424,8 @@ _glapi_get_proc_address(const char *funcName)
    GLuint i;
 
 #ifdef MANGLE
-   if (funcName[0] != 'm' || funcName[1] != 'g' || funcName[2] != 'l')
+   /* skip the prefix on the name */
+   if (funcName[1] != 'g' || funcName[2] != 'l')
       return NULL;
 #else
    if (funcName[0] != 'g' || funcName[1] != 'l')
