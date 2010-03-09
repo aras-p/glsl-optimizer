@@ -28,8 +28,6 @@
 #include "nouveau/nouveau_util.h"
 #include "nv50_context.h"
 
-#define NV50_USING_LOATHED_EDGEFLAG(ctx) ((ctx)->vertprog->cfg.edgeflag_in < 16)
-
 static INLINE uint32_t
 nv50_vbo_type_to_hw(enum pipe_format format)
 {
@@ -551,7 +549,8 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	if (nv50->vtxbuf_nr == 0)
 		return NULL;
 
-	if (nv50->screen->force_push || NV50_USING_LOATHED_EDGEFLAG(nv50))
+	if (nv50->screen->force_push ||
+	    nv50->vertprog->cfg.edgeflag_in < 16)
 		nv50->vbo_fifo = 0xffff;
 
 	for (i = 0; i < nv50->vtxbuf_nr; i++) {
