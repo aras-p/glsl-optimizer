@@ -55,7 +55,7 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
       templ.format = ksurf->color_format;
       templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
       if (ksurf->type == KMS_SURFACE_TYPE_SCANOUT)
-         templ.tex_usage |= PIPE_TEXTURE_SCANOUT;
+         templ.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
    }
 
    /* create textures */
@@ -100,7 +100,7 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
    for (i = 0; i < num_framebuffers; i++) {
       struct kms_framebuffer *fb;
       enum native_attachment natt;
-      unsigned int handle, stride;
+      struct winsys_handle whandle;
       uint block_bits;
 
       if (i == 0) {
@@ -128,13 +128,17 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
       /* TODO detect the real value */
       fb->is_passive = TRUE;
 
-      if (!kdpy->api->local_handle_from_texture(kdpy->api,
-               kdpy->base.screen, fb->texture, &stride, &handle))
+      memset(&whandle, 0, sizeof(whandle));
+      whandle.type = DRM_API_HANDLE_TYPE_KMS;
+
+      if (!kdpy->base.screen->texture_get_handle(kdpy->base.screen,
+               fb->texture, &whandle))
          return FALSE;
 
       block_bits = util_format_get_blocksizebits(ksurf->color_format);
       err = drmModeAddFB(kdpy->fd, ksurf->width, ksurf->height,
-            block_bits, block_bits, stride, handle, &fb->buffer_id);
+            block_bits, block_bits, whandle.stride, whandle.handle,
+            &fb->buffer_id);
       if (err) {
          fb->buffer_id = 0;
          return FALSE;
