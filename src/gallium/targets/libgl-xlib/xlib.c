@@ -36,7 +36,10 @@
 #include "util/u_debug.h"
 #include "softpipe/sp_public.h"
 #include "llvmpipe/lp_public.h"
+#include "identity/id_public.h"
+#include "trace/tr_public.h"
 #include "cell/ppu/cell_public.h"
+
 
 /* advertise OpenGL support */
 PUBLIC const int st_api_OpenGL = 1;
@@ -46,7 +49,7 @@ static struct pipe_screen *
 create_screen( struct sw_winsys *winsys )
 {
 #if defined(GALLIUM_CELL)
-   if (!getenv("GALLIUM_NOCELL")) 
+   if (!debug_get_bool_option("GALLIUM_NOCELL", FALSE)) 
       return cell_create_screen( winsys );
 #endif
 
@@ -72,6 +75,17 @@ xlib_create_screen( Display *display )
    screen = create_screen(winsys);
    if (screen == NULL)
       goto fail;
+
+   /* Finally we have somewhere to inject layers into the stack in a
+    * clean fashion:
+    */
+   if (debug_get_bool_option("GALLIUM_WRAP", FALSE)) {
+      screen = identity_screen_create(screen);
+   }
+
+   if (debug_get_bool_option("GALLIUM_TRACE", FALSE)) {
+      screen = trace_screen_create( screen );
+   }
 
    return screen;
 

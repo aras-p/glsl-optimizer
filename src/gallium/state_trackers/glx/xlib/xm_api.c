@@ -63,10 +63,6 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 
-#include "trace/tr_screen.h"
-#include "trace/tr_context.h"
-#include "trace/tr_texture.h"
-
 #include "xm_winsys.h"
 #include <GL/glx.h>
 
@@ -87,7 +83,6 @@ void xmesa_set_driver( const struct xm_driver *templ )
  */
 pipe_mutex _xmesa_lock;
 
-static struct pipe_screen *_screen = NULL;
 static struct pipe_screen *screen = NULL;
 
 
@@ -709,8 +704,7 @@ xmesa_init( Display *display )
    static GLboolean firstTime = GL_TRUE;
    if (firstTime) {
       pipe_mutex_init(_xmesa_lock);
-      _screen = driver.create_pipe_screen( display );
-      screen = trace_screen_create( _screen );
+      screen = driver.create_pipe_screen( display );
       firstTime = GL_FALSE;
    }
 }
