@@ -36,6 +36,7 @@
 #include "sp_screen.h"
 #include "sp_context.h"
 #include "sp_buffer.h"
+#include "sp_public.h"
 
 
 static const char *

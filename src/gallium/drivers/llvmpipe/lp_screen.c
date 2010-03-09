@@ -38,6 +38,7 @@
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_debug.h"
+#include "lp_public.h"
 
 #include "state_tracker/sw_winsys.h"
 

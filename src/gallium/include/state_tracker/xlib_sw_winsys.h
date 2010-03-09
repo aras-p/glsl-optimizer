@@ -18,13 +18,17 @@ struct xlib_drawable {
    Drawable drawable;
 };
 
-
+/* This is the interface required by the glx/xlib state tracker.  Why
+ * is it being defined in this file?
+ */
 struct xm_driver {
    struct pipe_screen *(*create_pipe_screen)( Display *display );
 };
 
-/* Called by the libgl-xlib target code to build the rendering stack.
+/* This is the public interface to the ws/xlib module.  Why isn't it
+ * being defined in that directory?
  */
-struct xm_driver *xlib_sw_winsys_init( void );
+struct sw_winsys *xlib_create_sw_winsys( Display *display );
+
 
 #endif

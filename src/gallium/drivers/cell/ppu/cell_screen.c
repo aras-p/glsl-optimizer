@@ -36,6 +36,7 @@
 #include "cell_screen.h"
 #include "cell_texture.h"
 #include "cell_buffer.h"
+#include "cell_public.h"
 
 #include "state_tracker/sw_winsys.h"
 

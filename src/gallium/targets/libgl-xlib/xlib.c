@@ -34,28 +34,71 @@
 #include "state_tracker/xlib_sw_winsys.h"
 #include "xm_winsys.h"
 #include "util/u_debug.h"
-
+#include "softpipe/sp_public.h"
+#include "llvmpipe/lp_public.h"
+#include "cell/ppu/cell_public.h"
 
 /* advertise OpenGL support */
 PUBLIC const int st_api_OpenGL = 1;
 
-static void _init( void ) __attribute__((constructor));
+
+static struct pipe_screen *
+create_screen( struct sw_winsys *winsys )
+{
+#if defined(GALLIUM_CELL)
+   if (!getenv("GALLIUM_NOCELL")) 
+      return cell_create_screen( winsys );
+#endif
+
+#if defined(GALLIUM_LLVMPIPE)
+   return llvmpipe_create_screen( winsys );
+#endif
+
+   return softpipe_create_screen( winsys );
+}
+
+
+
+static struct pipe_screen *
+xlib_create_screen( Display *display )
+{
+   struct sw_winsys *winsys;
+   struct pipe_screen *screen;
+
+   winsys = xlib_create_sw_winsys( display );
+   if (winsys == NULL)
+      return NULL;
+
+   screen = create_screen(winsys);
+   if (screen == NULL)
+      goto fail;
+
+   return screen;
+
+fail:
+   if (winsys)
+      winsys->destroy( winsys );
+
+   return NULL;
+}
+
+
+struct xm_driver xlib_driver = 
+{
+   .create_pipe_screen = xlib_create_screen,
+};
+
+
+
 
 /* Build the rendering stack.
  */
+static void _init( void ) __attribute__((constructor));
 static void _init( void )
 {
-   struct xm_driver *driver;
-
-   /* Initialize the xlib software winsys.  Later on, once Display and
-    * other parameters are known, this will be used to create the
-    * gallium driver (such as softpipe), etc.
-    */
-   driver = xlib_sw_winsys_init();
-
    /* Initialize the xlib libgl code, pass in the winsys:
     */
-   xmesa_set_driver( driver );
+   xmesa_set_driver( &xlib_driver );
 }
 
 

@@ -51,8 +51,5 @@ cell_screen( struct pipe_screen *pipe )
    return (struct cell_screen *)pipe;
 }
 
-extern struct pipe_screen *
-cell_create_screen(struct sw_winsys *winsys);
-
 
 #endif /* CELL_SCREEN_H */

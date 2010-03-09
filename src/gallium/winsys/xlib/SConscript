@@ -18,9 +18,6 @@ if env['platform'] == 'linux' \
     ws_xlib = env.ConvenienceLibrary(
         target = 'ws_xlib',
         source = [
-           'xlib_cell.c',
-           'xlib_llvmpipe.c',
-           'xlib_softpipe.c',
            'xlib_sw_winsys.c',
         ]
     )

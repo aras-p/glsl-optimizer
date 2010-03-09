@@ -59,12 +59,4 @@ softpipe_screen( struct pipe_screen *pipe )
 
 
 
-/**
- * Create a softpipe screen that uses the
- * given winsys for allocating buffers.
- */
-struct pipe_screen *softpipe_create_screen( struct sw_winsys * );
-
-
-
 #endif /* SP_SCREEN_H */

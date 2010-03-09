@@ -9,11 +9,7 @@ LIBRARY_INCLUDES = \
 	-I$(TOP)/src/gallium/auxiliary
 
 C_SOURCES = \
-	xlib.c \
-	xlib_cell.c \
-	xlib_sw_winsys.c \
-	xlib_llvmpipe.c \
-	xlib_softpipe.c
+	xlib_sw_winsys.c 
 
 include ../../Makefile.template
 

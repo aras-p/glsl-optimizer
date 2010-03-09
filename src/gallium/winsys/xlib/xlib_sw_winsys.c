@@ -47,8 +47,6 @@
 
 #include "state_tracker/xlib_sw_winsys.h"
 
-#include "xlib.h"
-
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
@@ -274,7 +272,7 @@ xm_displaytarget_destroy(struct sw_winsys *ws,
  * Display/copy the image in the surface into the X window specified
  * by the XMesaBuffer.
  */
-void
+static void
 xlib_sw_display(struct xlib_drawable *xlib_drawable,
                 struct sw_displaytarget *dt)
 {
