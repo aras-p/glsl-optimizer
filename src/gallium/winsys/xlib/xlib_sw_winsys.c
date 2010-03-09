@@ -111,8 +111,6 @@ xm_displaytarget( struct sw_displaytarget *dt )
  * X Shared Memory Image extension code
  */
 
-#ifdef USE_XSHM
-
 static volatile int mesaXErrorFlag = 0;
 
 /**
@@ -197,19 +195,16 @@ alloc_shm_ximage(struct xm_displaytarget *xm_dt,
    xm_dt->shm = 1;
 }
 
-#endif /* USE_XSHM */
 
 static void
 alloc_ximage(struct xm_displaytarget *xm_dt,
              struct xlib_drawable *xmb,
              unsigned width, unsigned height)
 {
-#ifdef USE_XSHM
    if (xm_dt->shm) {
       alloc_shm_ximage(xm_dt, xmb, width, height);
       return;
    }
-#endif
 
    xm_dt->tempImage = XCreateImage(xm_dt->display,
                                    xmb->visual,
@@ -253,7 +248,6 @@ xm_displaytarget_destroy(struct sw_winsys *ws,
    struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
 
    if (xm_dt->data) {
-#ifdef USE_XSHM
       if (xm_dt->shminfo.shmid >= 0) {
          shmdt(xm_dt->shminfo.shmaddr);
          shmctl(xm_dt->shminfo.shmid, IPC_RMID, 0);
@@ -261,9 +255,9 @@ xm_displaytarget_destroy(struct sw_winsys *ws,
          xm_dt->shminfo.shmid = -1;
          xm_dt->shminfo.shmaddr = (char *) -1;
       }
-      else
-#endif
+      else {
          FREE(xm_dt->data);
+      }
    }
 
    if (xm_dt->tempImage)
@@ -327,7 +321,6 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
       XSetFunction( display, xm_dt->gc, GXcopy );
    }
 
-#ifdef USE_XSHM
    if (xm_dt->shm)
    {
       ximage = xm_dt->tempImage;
@@ -337,9 +330,7 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
       XShmPutImage(xm_dt->display, xlib_drawable->drawable, xm_dt->gc,
                    ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height, False);
    }
-   else
-#endif
-   {
+   else {
       /* display image in Window */
       ximage = xm_dt->tempImage;
       ximage->data = xm_dt->data;
@@ -396,7 +387,6 @@ xm_displaytarget_create(struct sw_winsys *winsys,
    xm_dt->stride = align(util_format_get_stride(format, width), alignment);
    size = xm_dt->stride * nblocksy;
 
-#ifdef USE_XSHM
    if (!debug_get_bool_option("XLIB_NO_SHM", FALSE))
    {
       xm_dt->shminfo.shmid = -1;
@@ -407,7 +397,6 @@ xm_displaytarget_create(struct sw_winsys *winsys,
       if(!xm_dt->data)
          goto no_data;
    }
-#endif
 
    if(!xm_dt->data) {
       xm_dt->data = align_malloc(size, alignment);

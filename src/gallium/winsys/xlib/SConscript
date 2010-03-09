@@ -15,8 +15,6 @@ if env['platform'] == 'linux' \
         '#/src/gallium/drivers',
     ])
 
-    env.Append(CPPDEFINES = ['USE_XSHM'])
-
     st_xlib = env.ConvenienceLibrary(
 	target = 'ws_xlib',
 	source = [
