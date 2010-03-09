@@ -128,7 +128,6 @@ static void r300_vertex_psc(struct r300_context* r300)
             " in psc\n",
             vs->info.num_inputs,
             r300->velems->count);
-            r300->vertex_element_count);
 
     for (i = 0; i < r300->velems->count; i++) {
         format = r300->velems->velem[i].src_format;
