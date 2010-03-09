@@ -32,9 +32,9 @@
 #include "util/u_math.h"
 #include "util/u_format.h"
 #include "pipe/p_compiler.h"
-#include "util/u_simple_screen.h"
 #include "util/u_inlines.h"
 #include "state_tracker/xlib_sw_winsys.h"
+#include "target-helpers/swrast_xlib.h"
 #include "egllog.h"
 
 #include "native_x11.h"
@@ -640,8 +640,7 @@ x11_create_ximage_display(EGLNativeDisplayType dpy)
       return NULL;
    }
 
-   xdpy->driver = xlib_sw_winsys_init();
-   xdpy->base.screen = xdpy->driver->create_pipe_screen(xdpy->dpy);
+   xdpy->base.screen = swrast_xlib_create_screen(xdpy->dpy);
 
    xdpy->base.destroy = ximage_display_destroy;
    xdpy->base.get_param = ximage_display_get_param;
