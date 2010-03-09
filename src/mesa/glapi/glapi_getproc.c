@@ -53,7 +53,7 @@
 # endif
 #endif
 
-#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server) && !defined(XGLServer)
+#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server)
 # define NEED_FUNCTION_POINTER
 #endif
 
@@ -112,7 +112,7 @@ extern const GLubyte gl_dispatch_functions_start[];
 #endif /* USE_X86_ASM */
 
 
-#if !defined(XFree86Server) && !defined(XGLServer)
+#if !defined(XFree86Server)
 
 /**
  * Return dispatch function address for the named static (built-in) function.
@@ -140,7 +140,7 @@ get_static_proc_address(const char *funcName)
    }
 }
 
-#endif /* !defined(XFree86Server) && !defined(XGLServer) */
+#endif /* !defined(XFree86Server) */
 
 
 
@@ -724,7 +724,7 @@ _glapi_get_proc_address(const char *funcName)
       }
    }
 
-#if !defined( XFree86Server ) && !defined( XGLServer )
+#if !defined( XFree86Server )
    /* search static functions */
    {
       const _glapi_proc func = get_static_proc_address(funcName);
