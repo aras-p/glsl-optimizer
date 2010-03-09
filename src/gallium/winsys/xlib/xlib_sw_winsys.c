@@ -193,6 +193,26 @@ alloc_shm_ximage(struct xm_displaytarget *xm_dt,
 
 #endif /* USE_XSHM */
 
+static void
+alloc_ximage(struct xm_displaytarget *xm_dt,
+             struct xlib_drawable *xmb,
+             unsigned width, unsigned height)
+{
+#ifdef USE_XSHM
+   if (xm_dt->shm) {
+      alloc_shm_ximage(xm_dt, xmb, width, height);
+      return;
+   }
+#endif
+
+   xm_dt->tempImage = XCreateImage(xm_dt->display,
+                                   xmb->visual,
+                                   xmb->depth,
+                                   ZPixmap, 0,
+                                   NULL, width, height,
+                                   8, 0);
+}
+
 static boolean
 xm_is_displaytarget_format_supported( struct sw_winsys *ws,
                                       enum pipe_format format )
@@ -265,19 +285,20 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
    if (no_swap)
       return;
 
+   if (xm_dt->tempImage == NULL)
+   {
+      assert(util_format_get_blockwidth(xm_dt->format) == 1);
+      assert(util_format_get_blockheight(xm_dt->format) == 1);
+      alloc_ximage(xm_dt, xlib_drawable,
+                   xm_dt->stride / util_format_get_blocksize(xm_dt->format),
+                   xm_dt->height);
+      if (!xm_dt->tempImage)
+         return;
+   }
+
 #ifdef USE_XSHM
    if (xm_dt->shm)
    {
-      if (xm_dt->tempImage == NULL)
-      {
-         assert(util_format_get_blockwidth(xm_dt->format) == 1);
-         assert(util_format_get_blockheight(xm_dt->format) == 1);
-         alloc_shm_ximage(xm_dt,
-                          xlib_drawable,
-                          xm_dt->stride / util_format_get_blocksize(xm_dt->format),
-                          xm_dt->height);
-      }
-
       ximage = xm_dt->tempImage;
       ximage->data = xm_dt->data;
 
