@@ -184,7 +184,7 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
       /* this is an odd-ball case */
       assert(type == GL_UNSIGNED_BYTE);
       assert(normalized);
-      return PIPE_FORMAT_A8R8G8B8_UNORM;
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
    }
 
    if (normalized) {
