@@ -238,18 +238,6 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 }
 
 
-static struct pipe_buffer *
-llvmpipe_surface_buffer_create(struct pipe_screen *screen,
-                               unsigned width, unsigned height,
-                               enum pipe_format format,
-                               unsigned tex_usage,
-                               unsigned usage,
-                               unsigned *stride)
-{
-   /* This function should never be used */
-   assert(0);
-   return NULL;
-}
 
 
 static void
@@ -309,7 +297,6 @@ llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
    screen->base.get_paramf = llvmpipe_get_paramf;
    screen->base.is_format_supported = llvmpipe_is_format_supported;
 
-   screen->base.surface_buffer_create = llvmpipe_surface_buffer_create;
    screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
 

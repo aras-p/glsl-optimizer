@@ -36,6 +36,7 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_simple_screen.h"
 
 #include "sp_context.h"
 #include "sp_texture.h"
@@ -91,13 +92,13 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
                      PIPE_BUFFER_USAGE_GPU_READ_WRITE);
    unsigned tex_usage = spt->base.tex_usage;
 
-   spt->buffer = screen->surface_buffer_create( screen, 
-                                                spt->base.width0, 
-                                                spt->base.height0,
-                                                spt->base.format,
-                                                usage,
-                                                tex_usage,
-                                                &spt->stride[0]);
+   spt->buffer = screen->winsys->surface_buffer_create( screen->winsys, 
+                                                        spt->base.width0, 
+                                                        spt->base.height0,
+                                                        spt->base.format,
+                                                        usage,
+                                                        tex_usage,
+                                                        &spt->stride[0]);
 
    return spt->buffer != NULL;
 }
@@ -141,38 +142,6 @@ softpipe_texture_create(struct pipe_screen *screen,
 }
 
 
-/**
- * Create a new pipe_texture which wraps an existing buffer.
- */
-static struct pipe_texture *
-softpipe_texture_blanket(struct pipe_screen * screen,
-                         const struct pipe_texture *base,
-                         const unsigned *stride,
-                         struct pipe_buffer *buffer)
-{
-   struct softpipe_texture *spt;
-   assert(screen);
-
-   /* Only supports one type */
-   if (base->target != PIPE_TEXTURE_2D ||
-       base->last_level != 0 ||
-       base->depth0 != 1) {
-      return NULL;
-   }
-
-   spt = CALLOC_STRUCT(softpipe_texture);
-   if (!spt)
-      return NULL;
-
-   spt->base = *base;
-   pipe_reference_init(&spt->base.reference, 1);
-   spt->base.screen = screen;
-   spt->stride[0] = stride[0];
-
-   pipe_buffer_reference(&spt->buffer, buffer);
-
-   return &spt->base;
-}
 
 
 static void
@@ -459,7 +428,6 @@ void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = softpipe_texture_create;
-   screen->texture_blanket = softpipe_texture_blanket;
    screen->texture_destroy = softpipe_texture_destroy;
 
    screen->get_tex_surface = softpipe_get_tex_surface;

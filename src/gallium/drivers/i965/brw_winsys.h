@@ -267,28 +267,6 @@ bo_reference(struct brw_winsys_buffer **ptr, struct brw_winsys_buffer *buf)
 struct pipe_screen *brw_create_screen(struct brw_winsys_screen *iws, unsigned pci_id);
 
 
-/**
- * Get the brw_winsys buffer backing the texture.
- *
- * TODO UGLY
- */
-struct pipe_texture;
-boolean brw_texture_get_winsys_buffer(struct pipe_texture *texture,
-                                      struct brw_winsys_buffer **buffer,
-                                      unsigned *stride);
-
-/**
- * Wrap a brw_winsys buffer with a texture blanket.
- *
- * TODO UGLY
- */
-struct pipe_texture * 
-brw_texture_blanket_winsys_buffer(struct pipe_screen *screen,
-                                  const struct pipe_texture *template,
-                                  unsigned pitch,
-				  unsigned tiling,
-                                  struct brw_winsys_buffer *buffer);
-
 
 /*************************************************************************
  * Cooperative dumping between winsys and driver.  TODO: make this

@@ -273,7 +273,8 @@ nouveau_screen_texture_from_handle(struct pipe_screen *pscreen,
 	pb->usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE |
 		    PIPE_BUFFER_USAGE_CPU_READ_WRITE;
 	pb->size = nouveau_bo(pb)->size;
-	pt = pscreen->texture_blanket(pscreen, templ, &whandle->stride, pb);
+	pt = nouveau_screen(pscreen)->texture_blanket(pscreen, templ,
+                                                      &whandle->stride, pb);
 	pipe_buffer_reference(&pb, NULL);
 	return pt;
 }

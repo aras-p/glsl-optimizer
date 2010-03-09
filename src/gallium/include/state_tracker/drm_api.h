@@ -26,8 +26,9 @@ enum drm_create_screen_mode {
 struct winsys_handle
 {
 	/**
-	 * Unused for texture_from_handle, always DRM_API_HANDLE_TYPE_SHARED.
-	 * Input to texture_get_handle, use TEXTURE_USAGE to select handle for kms or ipc.
+	 * Unused for texture_from_handle, always
+	 * DRM_API_HANDLE_TYPE_SHARED.  Input to texture_get_handle,
+	 * use TEXTURE_USAGE to select handle for kms or ipc.
 	 */
 	unsigned type;
 	/**

@@ -416,13 +416,7 @@ brw_texture_get_handle(struct pipe_screen *screen,
    return bscreen->sws->bo_get_handle(tex->bo, whandle, stride);
 }
 
-static struct pipe_texture *brw_texture_blanket(struct pipe_screen *screen,
-						const struct pipe_texture *templ,
-						const unsigned *stride,
-						struct pipe_buffer *buffer)
-{
-   return NULL;
-}
+
 
 static void brw_texture_destroy(struct pipe_texture *pt)
 {
@@ -571,7 +565,6 @@ void brw_screen_tex_init( struct brw_screen *brw_screen )
    brw_screen->base.texture_from_handle = brw_texture_from_handle;
    brw_screen->base.texture_get_handle = brw_texture_get_handle;
    brw_screen->base.texture_destroy = brw_texture_destroy;
-   brw_screen->base.texture_blanket = brw_texture_blanket;
    brw_screen->base.get_tex_transfer = brw_get_tex_transfer;
    brw_screen->base.transfer_map = brw_transfer_map;
    brw_screen->base.transfer_unmap = brw_transfer_unmap;

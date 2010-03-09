@@ -156,6 +156,11 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
    templ.depth0 = 1;
    templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
 
+#if 0
+   /* Interesting and suprising use of texture_blanket +
+    * user_buffer_create...  To be superceded by the sw_winsys branch,
+    * but currently disabled.
+    */
    if (xbuf->shm_info) {
       struct pipe_buffer *pbuf;
       unsigned stride, size;
@@ -188,7 +193,9 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
          }
       }
    }
-   else {
+   else
+#endif
+   {
       xbuf->texture = screen->texture_create(screen, &templ);
    }
 
