@@ -492,36 +492,6 @@ public:
 
 
 extern struct ir_instruction *
-ast_expression_to_hir(const ast_node *ast,
-		      struct simple_node *instructions,
-		      struct _mesa_glsl_parse_state *state);
-
-extern struct ir_instruction *
-ast_expression_statement_to_hir(const struct ast_node *ast,
-				struct simple_node *instructions,
-				struct _mesa_glsl_parse_state *state);
-
-extern struct ir_instruction *
-ast_compound_statement_to_hir(const struct ast_node *ast,
-			      struct simple_node *instructions,
-			      struct _mesa_glsl_parse_state *state);
-
-extern struct ir_instruction *
-ast_function_definition_to_hir(const struct ast_node *ast,
-			       struct simple_node *instructions,
-			       struct _mesa_glsl_parse_state *state);
-
-extern struct ir_instruction *
-ast_declarator_list_to_hir(const struct ast_node *ast,
-			   struct simple_node *instructions,
-			   struct _mesa_glsl_parse_state *state);
-
-extern struct ir_instruction *
-ast_parameter_declarator_to_hir(const struct ast_node *ast,
-				struct simple_node *instructions,
-				struct _mesa_glsl_parse_state *state);
-
-extern struct ir_instruction *
 _mesa_ast_field_selection_to_hir(const struct ast_expression *expr,
 				 struct simple_node *instructions,
 				 struct _mesa_glsl_parse_state *state);
