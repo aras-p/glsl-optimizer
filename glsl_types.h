@@ -156,11 +156,16 @@ struct glsl_type {
 	 && (base_type >= GLSL_TYPE_UINT)
 	 && (base_type <= GLSL_TYPE_BOOL);
    }
-};
 
-#define is_glsl_type_matrix(t)			\
-   (((t)->matrix_rows > 0)			\
-    && ((t)->base_type == GLSL_TYPE_FLOAT)) /* GLSL only has float matrices. */
+   /**
+    * Query whether or not a type is a matrix
+    */
+   bool is_matrix() const
+   {
+      /* GLSL only has float matrices. */
+      return (matrix_rows > 0) && (base_type == GLSL_TYPE_FLOAT);
+   }
+};
 
 struct glsl_struct_field {
    const struct glsl_type *type;

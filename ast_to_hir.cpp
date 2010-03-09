@@ -169,14 +169,14 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *      more detail how vectors and matrices are operated on."
     */
    if (! multiply) {
-      if (is_glsl_type_matrix(type_a) && is_glsl_type_matrix(type_b)
+      if (type_a->is_matrix() && type_b->is_matrix()
 	  && (type_a->vector_elements == type_b->vector_elements)
 	  && (type_a->matrix_rows == type_b->matrix_rows))
 	 return type_a;
       else
 	 return glsl_error_type;
    } else {
-      if (is_glsl_type_matrix(type_a) && is_glsl_type_matrix(type_b)) {
+      if (type_a->is_matrix() && type_b->is_matrix()) {
 	 if (type_a->vector_elements == type_b->matrix_rows) {
 	    char type_name[7];
 	    const struct glsl_type *t;
@@ -199,14 +199,14 @@ arithmetic_result_type(const struct glsl_type *type_a,
 	       _mesa_symbol_table_find_symbol(state->symbols, 0, type_name);
 	    return (t != NULL) ? t : glsl_error_type;
 	 }
-      } else if (is_glsl_type_matrix(type_a)) {
+      } else if (type_a->is_matrix()) {
 	 /* A is a matrix and B is a column vector.  Columns of A must match
 	  * rows of B.
 	  */
 	 if (type_a->vector_elements == type_b->vector_elements)
 	    return type_b;
       } else {
-	 assert(is_glsl_type_matrix(type_b));
+	 assert(type_b->is_matrix());
 
 	 /* A is a row vector and B is a matrix.  Columns of A must match
 	  * rows of B.
