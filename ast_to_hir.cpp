@@ -56,18 +56,6 @@
 #include "glsl_types.h"
 #include "ir.h"
 
-void
-_mesa_generate_hir_from_ast(struct _mesa_glsl_parse_state *state)
-{
-   struct simple_node *ptr;
-
-   foreach (ptr, & state->translation_unit) {
-      if (1) {
-      }
-   }
-}
-
-
 static const struct glsl_type *
 arithmetic_result_type(const struct glsl_type *type_a,
 		       const struct glsl_type *type_b,
