@@ -582,9 +582,14 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	if (nv50->vtxbuf_nr == 0)
 		return NULL;
 
-	if (NV50_USING_LOATHED_EDGEFLAG(nv50))
+	if (nv50->screen->force_push || NV50_USING_LOATHED_EDGEFLAG(nv50))
 		nv50->vbo_fifo = 0xffff;
-	nv50->vbo_fifo = 0xffff;
+
+	for (i = 0; i < nv50->vtxbuf_nr; i++) {
+		if (nv50->vtxbuf[i].stride &&
+		    !(nv50->vtxbuf[i].buffer->usage & PIPE_BUFFER_USAGE_VERTEX))
+			nv50->vbo_fifo = 0xffff;
+	}
 
 	n_ve = MAX2(nv50->vtxelt->num_elements, nv50->state.vtxelt_nr);
 
