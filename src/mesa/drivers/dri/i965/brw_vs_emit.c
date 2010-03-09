@@ -1717,11 +1717,13 @@ void brw_vs_emit(struct brw_vs_compile *c )
             /* patch all the BREAK/CONT instructions from last BEGINLOOP */
             while (inst0 > loop_inst[loop_depth]) {
                inst0--;
-               if (inst0->header.opcode == BRW_OPCODE_BREAK) {
+               if (inst0->header.opcode == BRW_OPCODE_BREAK &&
+		   inst0->bits3.if_else.jump_count == 0) {
                   inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
                   inst0->bits3.if_else.pop_count = 0;
                }
-               else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
+               else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
+			inst0->bits3.if_else.jump_count == 0) {
                   inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
                   inst0->bits3.if_else.pop_count = 0;
                }
