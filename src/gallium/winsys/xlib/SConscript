@@ -4,8 +4,7 @@
 
 Import('*')
 
-if env['platform'] == 'linux' \
-        and 'mesa' in env['statetrackers']:
+if env['platform'] == 'linux':
 
     env = env.Clone()
 
