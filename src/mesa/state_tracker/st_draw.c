@@ -563,6 +563,7 @@ st_draw_vbo(GLcontext *ctx,
    (void) check_uniforms;
 #endif
 
+   memset(velements, 0, sizeof(struct pipe_vertex_element) * vpv->num_inputs);
    /*
     * Setup the vbuffer[] and velements[] arrays.
     */
