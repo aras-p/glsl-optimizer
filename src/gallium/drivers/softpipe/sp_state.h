@@ -102,7 +102,7 @@ struct sp_geometry_shader {
 
 struct sp_velems_state {
    unsigned count;
-   struct pipe_vertex_element velem[];
+   struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
 

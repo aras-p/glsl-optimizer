@@ -171,7 +171,7 @@ struct svga_sampler_state {
 
 struct svga_velems_state {
    unsigned count;
-   struct pipe_vertex_element velem[];
+   struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
 /* Use to calculate differences between state emitted to hardware and

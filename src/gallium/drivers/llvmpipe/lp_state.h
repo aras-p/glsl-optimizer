@@ -121,7 +121,7 @@ struct lp_vertex_shader {
 
 struct lp_velems_state {
    unsigned count;
-   struct pipe_vertex_element velem[];
+   struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
 

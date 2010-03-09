@@ -42,7 +42,7 @@ llvmpipe_create_vertex_elements_state(struct pipe_context *pipe,
 {
    struct lp_velems_state *velems;
    assert(count <= PIPE_MAX_ATTRIBS);
-   velems = (struct lp_velems_state *) MALLOC(sizeof(struct lp_velems_state) + count * sizeof(*attribs));
+   velems = (struct lp_velems_state *) MALLOC(sizeof(struct lp_velems_state));
    if (velems) {
       velems->count = count;
       memcpy(velems->velem, attribs, sizeof(*attribs) * count);

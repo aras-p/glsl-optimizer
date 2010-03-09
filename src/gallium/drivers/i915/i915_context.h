@@ -189,7 +189,7 @@ struct i915_sampler_state {
 
 struct i915_velems_state {
    unsigned count;
-   struct pipe_vertex_element velem[];
+   struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
 struct i915_texture {

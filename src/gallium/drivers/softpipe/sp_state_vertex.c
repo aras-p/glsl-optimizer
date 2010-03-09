@@ -43,7 +43,7 @@ softpipe_create_vertex_elements_state(struct pipe_context *pipe,
 {
    struct sp_velems_state *velems;
    assert(count <= PIPE_MAX_ATTRIBS);
-   velems = (struct sp_velems_state *) MALLOC(sizeof(struct sp_velems_state) + count * sizeof(*attribs));
+   velems = (struct sp_velems_state *) MALLOC(sizeof(struct sp_velems_state));
    if (velems) {
       velems->count = count;
       memcpy(velems->velem, attribs, sizeof(*attribs) * count);

@@ -215,7 +215,7 @@ static void* brw_create_vertex_elements_state( struct pipe_context *pipe,
                                                const struct pipe_vertex_element *attribs )
 {
    /* note: for the brw_swtnl.c code (if ever we need draw fallback) we'd also need
-      store the original data */
+      to store the original data */
    struct brw_context *brw = brw_context(pipe);
    struct brw_vertex_element_packet *velems;
    assert(count <= BRW_VEP_MAX);
