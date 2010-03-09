@@ -43,7 +43,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "state_tracker/sw_winsys.h"
-#include "stw_winsys.h"
+#include "gdi_sw_winsys.h"
 
 
 struct gdi_sw_displaytarget
@@ -168,21 +168,29 @@ no_gdt:
 }
 
 
-static void
-gdi_sw_displaytarget_display(struct sw_winsys *winsys, 
-                             struct sw_displaytarget *dt,
-                             void *context_private)
+void
+gdi_sw_display( struct sw_winsys *winsys,
+                struct sw_displaytarget *dt,
+                HDC hDC )
 {
-    struct gdi_softpipe_displaytarget *gdt = gdi_sw_displaytarget(dt);
-
-    /* nasty:
-     */
-    HDC hDC = (HDC)context_private;
+    struct gdi_sw_displaytarget *gdt = gdi_sw_displaytarget(dt);
 
     StretchDIBits(hDC,
                   0, 0, gdt->width, gdt->height,
                   0, 0, gdt->width, gdt->height,
                   gdt->data, &gdt->bmi, 0, SRCCOPY);
+}
+
+static void
+gdi_sw_displaytarget_display(struct sw_winsys *winsys, 
+                             struct sw_displaytarget *dt,
+                             void *context_private)
+{
+    /* nasty:
+     */
+    HDC hDC = (HDC)context_private;
+
+    gdi_sw_display(winsys, dt, hDC);
 }
 
 

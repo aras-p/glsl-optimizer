@@ -36,8 +36,10 @@
 
 #include <windows.h>
 
+#include "stw_winsys.h"
 #include "gdi_sw_winsys.h"
 #include "llvmpipe/lp_texture.h"
+#include "llvmpipe/lp_screen.h"
 
 
 static struct pipe_screen *
@@ -57,7 +59,7 @@ gdi_llvmpipe_screen_create(void)
    return screen;
    
 no_screen:
-   FREE(winsys);
+   winsys->destroy(winsys);
 no_winsys:
    return NULL;
 }
@@ -70,16 +72,18 @@ gdi_llvmpipe_present(struct pipe_screen *screen,
                      struct pipe_surface *surface,
                      HDC hDC)
 {
-    struct llvmpipe_texture *texture;
-    struct gdi_llvmpipe_displaytarget *gdt;
-
-    texture = llvmpipe_texture(surface->texture);
-    gdt = gdi_llvmpipe_displaytarget(texture->dt);
-
-    StretchDIBits(hDC,
-                  0, 0, gdt->width, gdt->height,
-                  0, 0, gdt->width, gdt->height,
-                  gdt->data, &gdt->bmi, 0, SRCCOPY);
+   /* This will fail if any interposing layer (trace, debug, etc) has
+    * been introduced between the state-trackers and llvmpipe.
+    *
+    * Ideally this would get replaced with a call to
+    * pipe_screen::flush_frontbuffer().
+    *
+    * Failing that, it may be necessary for intervening layers to wrap
+    * other structs such as this stw_winsys as well...
+    */
+   gdi_sw_display(llvmpipe_screen(screen)->winsys,
+                  llvmpipe_texture(surface->texture)->dt,
+                  hDC);
 }
 
 

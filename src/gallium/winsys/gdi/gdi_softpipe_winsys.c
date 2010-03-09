@@ -36,14 +36,16 @@
 
 #include <windows.h>
 
+#include "stw_winsys.h"
 #include "gdi_sw_winsys.h"
 #include "softpipe/sp_texture.h"
+#include "softpipe/sp_screen.h"
 
 
 static struct pipe_screen *
 gdi_softpipe_screen_create(void)
 {
-   static struct softpipe_winsys *winsys;
+   static struct sw_winsys *winsys;
    struct pipe_screen *screen;
 
    winsys = gdi_create_sw_winsys();
@@ -57,7 +59,7 @@ gdi_softpipe_screen_create(void)
    return screen;
    
 no_screen:
-   FREE(winsys);
+   winsys->destroy(winsys);
 no_winsys:
    return NULL;
 }
@@ -70,16 +72,18 @@ gdi_softpipe_present(struct pipe_screen *screen,
                      struct pipe_surface *surface,
                      HDC hDC)
 {
-    struct softpipe_texture *texture;
-    struct gdi_softpipe_displaytarget *gdt;
-
-    texture = softpipe_texture(surface->texture);
-    gdt = gdi_softpipe_displaytarget(texture->dt);
-
-    StretchDIBits(hDC,
-                  0, 0, gdt->width, gdt->height,
-                  0, 0, gdt->width, gdt->height,
-                  gdt->data, &gdt->bmi, 0, SRCCOPY);
+   /* This will fail if any interposing layer (trace, debug, etc) has
+    * been introduced between the state-trackers and softpipe.
+    *
+    * Ideally this would get replaced with a call to
+    * pipe_screen::flush_frontbuffer().
+    *
+    * Failing that, it may be necessary for intervening layers to wrap
+    * other structs such as this stw_winsys as well...
+    */
+   gdi_sw_display(softpipe_screen(screen)->winsys,
+                  softpipe_texture(surface->texture)->dt,
+                  hDC);
 }
 
 
