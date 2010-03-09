@@ -423,14 +423,7 @@ static INLINE unsigned
 util_format_get_nr_components(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
-   unsigned chan;
-   unsigned nr_comp = 0;
-   for (chan = 0; chan < 4; chan++) {
-      if (desc->channel[chan].size != 0) {
-         nr_comp++;
-      }
-   }
-   return nr_comp;
+   return desc->nr_channels;
 }
 
 /*
