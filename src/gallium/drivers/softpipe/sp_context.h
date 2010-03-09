@@ -93,7 +93,7 @@ struct softpipe_context {
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
 
    /** Mapped constant buffers */
-   void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
+   const void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
 
    /** Vertex format */
    struct vertex_info vertex_info;
