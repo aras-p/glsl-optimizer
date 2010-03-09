@@ -1152,18 +1152,25 @@ enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
    unsigned key_size, hash_key;
    struct cso_hash_iter iter;
    void *handle;
+   struct cso_velems_state velems_state;
 
-   key_size = sizeof(struct pipe_vertex_element) * count;
-   hash_key = cso_construct_key((void*)states, key_size);
-   iter = cso_find_state_template(ctx->cache, hash_key, CSO_VELEMENTS, (void*)states, key_size);
+   /* need to include the count into the stored state data too.
+      Otherwise first few count pipe_vertex_elements could be identical even if count
+      is different, and there's no guarantee the hash would be different in that
+      case neither */
+   key_size = sizeof(struct pipe_vertex_element) * count + sizeof(unsigned);
+   velems_state.count = count;
+   memcpy(velems_state.velems, states, sizeof(struct pipe_vertex_element) * count);
+   hash_key = cso_construct_key((void*)&velems_state, key_size);
+   iter = cso_find_state_template(ctx->cache, hash_key, CSO_VELEMENTS, (void*)&velems_state, key_size);
 
    if (cso_hash_iter_is_null(iter)) {
       struct cso_velements *cso = MALLOC(sizeof(struct cso_velements));
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
-      memcpy(&cso->state, states, key_size);
-      cso->data = ctx->pipe->create_vertex_elements_state(ctx->pipe, count, &cso->state[0]);
+      memcpy(&cso->state, &velems_state, key_size);
+      cso->data = ctx->pipe->create_vertex_elements_state(ctx->pipe, count, &cso->state.velems[0]);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_vertex_elements_state;
       cso->context = ctx->pipe;
 

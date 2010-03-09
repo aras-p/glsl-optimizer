@@ -146,8 +146,13 @@ struct cso_sampler {
    struct pipe_context *context;
 };
 
+struct cso_velems_state {
+   unsigned count;
+   struct pipe_vertex_element velems[PIPE_MAX_ATTRIBS];
+};
+
 struct cso_velements {
-   struct pipe_vertex_element state[PIPE_MAX_ATTRIBS];
+   struct cso_velems_state state;
    void *data;
    cso_state_callback delete_state;
    struct pipe_context *context;
