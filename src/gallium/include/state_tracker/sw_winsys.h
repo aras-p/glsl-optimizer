@@ -88,6 +88,9 @@ struct sw_winsys
                             unsigned alignment,
                             unsigned *stride );
 
+   /**
+    * \param flags  bitmask of PIPE_BUFFER_USAGE_x flags
+    */
    void *
    (*displaytarget_map)( struct sw_winsys *ws, 
                          struct sw_displaytarget *dt,

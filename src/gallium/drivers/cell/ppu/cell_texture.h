@@ -28,6 +28,7 @@
 #ifndef CELL_TEXTURE_H
 #define CELL_TEXTURE_H
 
+#include "cell/common.h"
 
 struct cell_context;
 struct pipe_texture;

@@ -34,7 +34,7 @@
 #include "pipe/p_defines.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_vbuf.h"
-#include "cell_winsys.h"
+/*#include "cell_winsys.h"*/
 #include "cell/common.h"
 #include "rtasm/rtasm_ppc_spe.h"
 #include "tgsi/tgsi_scan.h"

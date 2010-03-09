@@ -30,8 +30,8 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
-#include "sp_screen.h"
-#include "sp_buffer.h"
+#include "cell_screen.h"
+#include "cell_buffer.h"
 
 
 static void *

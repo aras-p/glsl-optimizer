@@ -63,21 +63,21 @@ cell_draw_range_elements(struct pipe_context *pipe,
                          unsigned max_index,
                          unsigned mode, unsigned start, unsigned count)
 {
-   struct cell_context *sp = cell_context(pipe);
-   struct draw_context *draw = sp->draw;
+   struct cell_context *cell = cell_context(pipe);
+   struct draw_context *draw = cell->draw;
    unsigned i;
 
-   if (sp->dirty)
-      cell_update_derived( sp );
+   if (cell->dirty)
+      cell_update_derived( cell );
 
 #if 0
-   cell_map_surfaces(sp);
+   cell_map_surfaces(cell);
 #endif
 
    /*
     * Map vertex buffers
     */
-   for (i = 0; i < sp->num_vertex_buffers; i++) {
+   for (i = 0; i < cell->num_vertex_buffers; i++) {
       void *buf = cell_buffer(cell->vertex_buffer[i].buffer)->data;
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
@@ -98,7 +98,7 @@ cell_draw_range_elements(struct pipe_context *pipe,
    /*
     * unmap vertex/index buffers - will cause draw module to flush
     */
-   for (i = 0; i < sp->num_vertex_buffers; i++) {
+   for (i = 0; i < cell->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (indexBuffer) {

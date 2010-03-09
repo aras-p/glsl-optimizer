@@ -174,7 +174,7 @@ cell_destroy_screen( struct pipe_screen *screen )
 struct pipe_screen *
 cell_create_screen(struct sw_winsys *winsys)
 {
-   struct cell_screen *screen = CALLOC_STRUCT(pipe_screen);
+   struct cell_screen *screen = CALLOC_STRUCT(cell_screen);
 
    if (!screen)
       return NULL;
@@ -194,5 +194,5 @@ cell_create_screen(struct sw_winsys *winsys)
    cell_init_screen_texture_funcs(&screen->base);
    cell_init_screen_buffer_funcs(&screen->base);
 
-   return screen;
+   return &screen->base;
 }

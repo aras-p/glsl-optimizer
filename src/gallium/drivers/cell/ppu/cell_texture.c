@@ -40,6 +40,7 @@
 #include "util/u_memory.h"
 
 #include "cell_context.h"
+#include "cell_screen.h"
 #include "cell_state.h"
 #include "cell_texture.h"
 
@@ -142,7 +143,7 @@ cell_texture_create(struct pipe_screen *screen,
 
 fail:
    if (ct->dt) {
-      struct sw_winsys winsys = cell_screen(screen)->winsys;
+      struct sw_winsys *winsys = cell_screen(screen)->winsys;
       winsys->displaytarget_destroy(winsys, ct->dt);
    }
 
@@ -531,7 +532,9 @@ cell_flush_frontbuffer(struct pipe_screen *_screen,
    /* Need to untwiddle from our internal representation here:
     */
    {
-      unsigned *map = winsys->displaytarget_map(winsys, ct->dt);
+      unsigned *map = winsys->displaytarget_map(winsys, ct->dt,
+                                                (PIPE_BUFFER_USAGE_CPU_READ |
+                                                 PIPE_BUFFER_USAGE_CPU_WRITE));
       unsigned *src = (unsigned *)(ct->data + ct->level_offset[surface->level]);
 
       untwiddle_image_uint(surface->width,
@@ -541,7 +544,7 @@ cell_flush_frontbuffer(struct pipe_screen *_screen,
                            ct->dt_stride,
                            src);
 
-      winsys->displaytarget_unmap(winsys, c->dt);
+      winsys->displaytarget_unmap(winsys, ct->dt);
    }
 
    winsys->displaytarget_display(winsys, ct->dt, context_private);

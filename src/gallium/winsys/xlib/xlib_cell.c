@@ -33,10 +33,7 @@
  */
 
 
-
-
 #include "xlib.h"
-
 
 #if defined(GALLIUM_CELL)
 
@@ -46,9 +43,18 @@
 #include "util/u_debug.h"
 
 
-
-
-
+/**
+ * Display/copy the image in the surface into the X window specified
+ * by the XMesaBuffer.
+ */
+static void
+xm_cell_displaytarget_display(struct sw_winsys *ws,
+                              struct sw_displaytarget *dt,
+                              void *context_private)
+{
+   struct xlib_drawable *xlib_drawable = (struct xlib_drawable *)context_private;
+   xlib_sw_display(xlib_drawable, dt);
+}
 
 
 static struct pipe_screen *
@@ -64,7 +70,7 @@ xlib_create_cell_screen( Display *dpy )
    /* Plug in a little cell-specific code:
     */
 
-   ws->base.displaytarget_display = xm_cell_displaytarget_display;
+   winsys->displaytarget_display = xm_cell_displaytarget_display;
 
    screen = cell_create_screen(winsys);
    if (screen == NULL)
@@ -80,13 +86,10 @@ fail:
 }
 
 
-
-
 struct xm_driver xlib_cell_driver = 
 {
    .create_pipe_screen = xlib_create_cell_screen,
 };
-
 
 
 #endif /* GALLIUM_CELL */

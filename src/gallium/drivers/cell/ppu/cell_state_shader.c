@@ -183,7 +183,7 @@ cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 static void
 cell_set_constant_buffer(struct pipe_context *pipe,
                          uint shader, uint index,
-                         struct pipe_buffer *buf)
+                         struct pipe_buffer *constants)
 {
    struct cell_context *cell = cell_context(pipe);
    unsigned size = constants ? constants->size : 0;
@@ -198,7 +198,7 @@ cell_set_constant_buffer(struct pipe_context *pipe,
    draw_flush(cell->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&cell->constants[shader], buf);
+   pipe_buffer_reference(&cell->constants[shader], constants);
 
    if(shader == PIPE_SHADER_VERTEX) {
       draw_set_mapped_constant_buffer(cell->draw, PIPE_SHADER_VERTEX, 0,
