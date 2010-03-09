@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/simple_list.h"
 #include "main/api_arrayelt.h"
 
+#include "drivers/common/meta.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "shader/prog_parameter.h"
@@ -2326,8 +2327,12 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->ClipPlane = r300ClipPlane;
 	functions->Scissor = radeonScissor;
 
-	functions->DrawBuffer		= radeonDrawBuffer;
-	functions->ReadBuffer		= radeonReadBuffer;
+	functions->DrawBuffer = radeonDrawBuffer;
+	functions->ReadBuffer = radeonReadBuffer;
+
+	functions->CopyPixels = _mesa_meta_CopyPixels;
+	functions->DrawPixels = _mesa_meta_DrawPixels;
+	functions->ReadPixels = radeonReadPixels;
 }
 
 void r300InitShaderFunctions(r300ContextPtr r300)
