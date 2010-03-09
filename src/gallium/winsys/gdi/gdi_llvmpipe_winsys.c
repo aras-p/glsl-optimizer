@@ -36,7 +36,7 @@
 
 #include <windows.h>
 
-#include "gdi_winsys.h"
+#include "gdi_sw_winsys.h"
 #include "llvmpipe/lp_texture.h"
 
 
