@@ -43,218 +43,6 @@ static void
 intel_set_span_functions(struct intel_context *intel,
 			 struct gl_renderbuffer *rb);
 
-#define SPAN_CACHE_SIZE		4096
-
-static void
-get_span_cache(struct intel_renderbuffer *irb, uint32_t offset)
-{
-   if (irb->span_cache == NULL) {
-      irb->span_cache = malloc(SPAN_CACHE_SIZE);
-      irb->span_cache_offset = -1;
-   }
-
-   if ((offset & ~(SPAN_CACHE_SIZE - 1)) != irb->span_cache_offset) {
-      irb->span_cache_offset = offset & ~(SPAN_CACHE_SIZE - 1);
-      dri_bo_get_subdata(irb->region->buffer, irb->span_cache_offset,
-			 SPAN_CACHE_SIZE, irb->span_cache);
-   }
-}
-
-static void
-clear_span_cache(struct intel_renderbuffer *irb)
-{
-   irb->span_cache_offset = -1;
-}
-
-static uint32_t
-pread_32(struct intel_renderbuffer *irb, uint32_t offset)
-{
-   get_span_cache(irb, offset);
-
-   return *(uint32_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1)));
-}
-
-static uint32_t
-pread_xrgb8888(struct intel_renderbuffer *irb, uint32_t offset)
-{
-   get_span_cache(irb, offset);
-
-   return *(uint32_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1))) |
-      0xff000000;
-}
-
-static uint16_t
-pread_16(struct intel_renderbuffer *irb, uint32_t offset)
-{
-   get_span_cache(irb, offset);
-
-   return *(uint16_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1)));
-}
-
-static uint8_t
-pread_8(struct intel_renderbuffer *irb, uint32_t offset)
-{
-   get_span_cache(irb, offset);
-
-   return *(uint8_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1)));
-}
-
-static void
-pwrite_32(struct intel_renderbuffer *irb, uint32_t offset, uint32_t val)
-{
-   clear_span_cache(irb);
-
-   dri_bo_subdata(irb->region->buffer, offset, 4, &val);
-}
-
-static void
-pwrite_xrgb8888(struct intel_renderbuffer *irb, uint32_t offset, uint32_t val)
-{
-   clear_span_cache(irb);
-
-   dri_bo_subdata(irb->region->buffer, offset, 3, &val);
-}
-
-static void
-pwrite_16(struct intel_renderbuffer *irb, uint32_t offset, uint16_t val)
-{
-   clear_span_cache(irb);
-
-   dri_bo_subdata(irb->region->buffer, offset, 2, &val);
-}
-
-static void
-pwrite_8(struct intel_renderbuffer *irb, uint32_t offset, uint8_t val)
-{
-   clear_span_cache(irb);
-
-   dri_bo_subdata(irb->region->buffer, offset, 1, &val);
-}
-
-static uint32_t no_tile_swizzle(struct intel_renderbuffer *irb,
-				int x, int y)
-{
-	return (y * irb->region->pitch + x) * irb->region->cpp;
-}
-
-/*
- * Deal with tiled surfaces
- */
-
-static uint32_t x_tile_swizzle(struct intel_renderbuffer *irb,
-			       int x, int y)
-{
-	int	tile_stride;
-	int	xbyte;
-	int	x_tile_off, y_tile_off;
-	int	x_tile_number, y_tile_number;
-	int	tile_off, tile_base;
-	
-        x += irb->region->draw_x;
-        y += irb->region->draw_y;
-
-	tile_stride = (irb->region->pitch * irb->region->cpp) << 3;
-
-	xbyte = x * irb->region->cpp;
-
-	x_tile_off = xbyte & 0x1ff;
-	y_tile_off = y & 7;
-
-	x_tile_number = xbyte >> 9;
-	y_tile_number = y >> 3;
-
-	tile_off = (y_tile_off << 9) + x_tile_off;
-
-	switch (irb->region->bit_6_swizzle) {
-	case I915_BIT_6_SWIZZLE_NONE:
-	   break;
-	case I915_BIT_6_SWIZZLE_9:
-	   tile_off ^= ((tile_off >> 3) & 64);
-	   break;
-	case I915_BIT_6_SWIZZLE_9_10:
-	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64);
-	   break;
-	case I915_BIT_6_SWIZZLE_9_11:
-	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 5) & 64);
-	   break;
-	case I915_BIT_6_SWIZZLE_9_10_11:
-	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64) ^
-	      ((tile_off >> 5) & 64);
-	   break;
-	default:
-	   fprintf(stderr, "Unknown tile swizzling mode %d\n",
-		   irb->region->bit_6_swizzle);
-	   exit(1);
-	}
-
-	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
-
-#if 0
-	printf("(%d,%d) -> %d + %d = %d (pitch = %d, tstride = %d)\n",
-	       x, y, tile_off, tile_base,
-	       tile_off + tile_base,
-	       irb->region->pitch, tile_stride);
-#endif
-
-	return tile_base + tile_off;
-}
-
-static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
-			       int x, int y)
-{
-	int	tile_stride;
-	int	xbyte;
-	int	x_tile_off, y_tile_off;
-	int	x_tile_number, y_tile_number;
-	int	tile_off, tile_base;
-	
-        x += irb->region->draw_x;
-        y += irb->region->draw_y;
-
-	tile_stride = (irb->region->pitch * irb->region->cpp) << 5;
-
-	xbyte = x * irb->region->cpp;
-
-	x_tile_off = xbyte & 0x7f;
-	y_tile_off = y & 0x1f;
-
-	x_tile_number = xbyte >> 7;
-	y_tile_number = y >> 5;
-
-	tile_off = ((x_tile_off & ~0xf) << 5) + (y_tile_off << 4) +
-	   (x_tile_off & 0xf);
-
-	switch (irb->region->bit_6_swizzle) {
-	case I915_BIT_6_SWIZZLE_NONE:
-	   break;
-	case I915_BIT_6_SWIZZLE_9:
-	   tile_off ^= ((tile_off >> 3) & 64);
-	   break;
-	case I915_BIT_6_SWIZZLE_9_10:
-	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64);
-	   break;
-	case I915_BIT_6_SWIZZLE_9_11:
-	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 5) & 64);
-	   break;
-	case I915_BIT_6_SWIZZLE_9_10_11:
-	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64) ^
-	      ((tile_off >> 5) & 64);
-	   break;
-	default:
-	   fprintf(stderr, "Unknown tile swizzling mode %d\n",
-		   irb->region->bit_6_swizzle);
-	   exit(1);
-	}
-
-	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
-
-	return tile_base + tile_off;
-}
-
-/*
-  break intelWriteRGBASpan_ARGB8888
-*/
-
 #undef DBG
 #define DBG 0
 
@@ -280,50 +68,43 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define HW_UNLOCK()
 
-/* Convenience macros to avoid typing the swizzle argument over and over */
-#define NO_TILE(_X, _Y) no_tile_swizzle(irb, (_X), (_Y))
-#define X_TILE(_X, _Y) x_tile_swizzle(irb, (_X), (_Y))
-#define Y_TILE(_X, _Y) y_tile_swizzle(irb, (_X), (_Y))
+/* Convenience macros to avoid typing the address argument over and over */
+#define NO_TILE(_X, _Y) (((_Y) * irb->region->pitch + (_X)) * irb->region->cpp)
 
 /* r5g6b5 color span and pixel functions */
-#define INTEL_PIXEL_FMT GL_RGB
-#define INTEL_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
-#define INTEL_READ_VALUE(offset) pread_16(irb, offset)
-#define INTEL_WRITE_VALUE(offset, v) pwrite_16(irb, offset, v)
-#define INTEL_TAG(x) x##_RGB565
-#include "intel_spantmp.h"
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
+#define TAG(x) intel_##x##_RGB565
+#define TAG2(x,y) intel_##x##y_RGB565
+#include "spantmp2.h"
 
 /* a4r4g4b4 color span and pixel functions */
-#define INTEL_PIXEL_FMT GL_BGRA
-#define INTEL_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4_REV
-#define INTEL_READ_VALUE(offset) pread_16(irb, offset)
-#define INTEL_WRITE_VALUE(offset, v) pwrite_16(irb, offset, v)
-#define INTEL_TAG(x) x##_ARGB4444
-#include "intel_spantmp.h"
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_4_4_4_4_REV
+#define TAG(x) intel_##x##_ARGB4444
+#define TAG2(x,y) intel_##x##y_ARGB4444
+#include "spantmp2.h"
 
 /* a1r5g5b5 color span and pixel functions */
-#define INTEL_PIXEL_FMT GL_BGRA
-#define INTEL_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5_REV
-#define INTEL_READ_VALUE(offset) pread_16(irb, offset)
-#define INTEL_WRITE_VALUE(offset, v) pwrite_16(irb, offset, v)
-#define INTEL_TAG(x) x##_ARGB1555
-#include "intel_spantmp.h"
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_1_5_5_5_REV
+#define TAG(x) intel_##x##_ARGB1555
+#define TAG2(x,y) intel_##x##y##_ARGB1555
+#include "spantmp2.h"
 
 /* a8r8g8b8 color span and pixel functions */
-#define INTEL_PIXEL_FMT GL_BGRA
-#define INTEL_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-#define INTEL_READ_VALUE(offset) pread_32(irb, offset)
-#define INTEL_WRITE_VALUE(offset, v) pwrite_32(irb, offset, v)
-#define INTEL_TAG(x) x##_ARGB8888
-#include "intel_spantmp.h"
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+#define TAG(x) intel_##x##_ARGB8888
+#define TAG2(x,y) intel_##x##y##_ARGB8888
+#include "spantmp2.h"
 
 /* x8r8g8b8 color span and pixel functions */
-#define INTEL_PIXEL_FMT GL_BGR
-#define INTEL_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
-#define INTEL_READ_VALUE(offset) pread_xrgb8888(irb, offset)
-#define INTEL_WRITE_VALUE(offset, v) pwrite_xrgb8888(irb, offset, v)
-#define INTEL_TAG(x) x##_xRGB8888
-#include "intel_spantmp.h"
+#define SPANTMP_PIXEL_FMT GL_BGR
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+#define TAG(x) intel_##x##_xRGB8888
+#define TAG2(x,y) intel_##x##y##_xRGB8888
+#include "spantmp2.h"
 
 #define LOCAL_DEPTH_VARS						\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
@@ -339,52 +120,22 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
 /* z16 depthbuffer functions. */
-#define INTEL_VALUE_TYPE GLushort
-#define INTEL_WRITE_DEPTH(offset, d) pwrite_16(irb, offset, d)
-#define INTEL_READ_DEPTH(offset) pread_16(irb, offset)
-#define INTEL_TAG(name) name##_z16
-#include "intel_depthtmp.h"
+#define VALUE_TYPE GLushort
+#define WRITE_DEPTH(_x, _y, d) \
+   (*(uint16_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y)) = d)
+#define READ_DEPTH(d, _x, _y) \
+   d = *(uint16_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y))
+#define TAG(x) intel_##x##_z16
+#include "depthtmp.h"
 
-/* z24x8 depthbuffer functions. */
-#define INTEL_VALUE_TYPE GLuint
-#define INTEL_WRITE_DEPTH(offset, d) pwrite_32(irb, offset, d)
-#define INTEL_READ_DEPTH(offset) pread_32(irb, offset)
-#define INTEL_TAG(name) name##_z24_x8
-#include "intel_depthtmp.h"
-
-
-/**
- ** 8-bit stencil function (XXX FBO: This is obsolete)
- **/
-/* XXX */
-#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, NO_TILE(_x, _y) + 3, d)
-#define READ_STENCIL(d, _x, _y) d = pread_8(irb, NO_TILE(_x, _y) + 3);
-#define TAG(x) intel_gttmap_##x##_z24_s8
-#include "stenciltmp.h"
-
-/**
- ** 8-bit stencil function (XXX FBO: This is obsolete)
- **/
-#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, NO_TILE(_x, _y) + 3, d)
-#define READ_STENCIL(d, _x, _y) d = pread_8(irb, NO_TILE(_x, _y) + 3);
-#define TAG(x) intel##x##_z24_s8
-#include "stenciltmp.h"
-
-/**
- ** 8-bit x-tile stencil function (XXX FBO: This is obsolete)
- **/
-#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, X_TILE(_x, _y) + 3, d)
-#define READ_STENCIL(d, _x, _y) d = pread_8(irb, X_TILE(_x, _y) + 3);
-#define TAG(x) intel_XTile_##x##_z24_s8
-#include "stenciltmp.h"
-
-/**
- ** 8-bit y-tile stencil function (XXX FBO: This is obsolete)
- **/
-#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, Y_TILE(_x, _y) + 3, d)
-#define READ_STENCIL(d, _x, _y) d = pread_8(irb, Y_TILE(_x, _y) + 3)
-#define TAG(x) intel_YTile_##x##_z24_s8
-#include "stenciltmp.h"
+/* z24_s8 and z24_x8 depthbuffer functions. */
+#define VALUE_TYPE GLuint
+#define WRITE_DEPTH(_x, _y, d) \
+   (*(uint32_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y)) = d)
+#define READ_DEPTH(d, _x, _y) \
+   d = *(uint32_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y))
+#define TAG(x) intel_##x##_z24_x8
+#include "depthtmp.h"
 
 void
 intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
@@ -394,8 +145,7 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    if (irb == NULL || irb->region == NULL)
       return;
 
-   if (intel->intelScreen->kernel_exec_fencing)
-      drm_intel_gem_bo_map_gtt(irb->region->buffer);
+   drm_intel_gem_bo_map_gtt(irb->region->buffer);
 
    intel_set_span_functions(intel, rb);
 }
@@ -409,10 +159,7 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    if (irb == NULL || irb->region == NULL)
       return;
 
-   if (intel->intelScreen->kernel_exec_fencing)
-      drm_intel_gem_bo_unmap_gtt(irb->region->buffer);
-   else
-      clear_span_cache(irb);
+   drm_intel_gem_bo_unmap_gtt(irb->region->buffer);
 
    rb->GetRow = NULL;
    rb->PutRow = NULL;
@@ -592,182 +339,34 @@ intel_set_span_functions(struct intel_context *intel,
 			 struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
-   uint32_t tiling = irb->region->tiling;
 
-   if (intel->intelScreen->kernel_exec_fencing) {
-      switch (irb->Base.Format) {
-      case MESA_FORMAT_RGB565:
-	 intel_gttmap_InitPointers_RGB565(rb);
-	 break;
-      case MESA_FORMAT_ARGB4444:
-	 intel_gttmap_InitPointers_ARGB4444(rb);
-	 break;
-      case MESA_FORMAT_ARGB1555:
-	 intel_gttmap_InitPointers_ARGB1555(rb);
-	 break;
-      case MESA_FORMAT_XRGB8888:
-         intel_gttmap_InitPointers_xRGB8888(rb);
-	 break;
-      case MESA_FORMAT_ARGB8888:
-	 intel_gttmap_InitPointers_ARGB8888(rb);
-	 break;
-      case MESA_FORMAT_Z16:
-	 intel_gttmap_InitDepthPointers_z16(rb);
-	 break;
-      case MESA_FORMAT_X8_Z24:
-	 intel_gttmap_InitDepthPointers_z24_x8(rb);
-	 break;
-      case MESA_FORMAT_S8_Z24:
-	 /* There are a few different ways SW asks us to access the S8Z24 data:
-	  * Z24 depth-only depth reads
-	  * S8Z24 depth reads
-	  * S8Z24 stencil reads.
-	  */
-	 if (rb->Format == MESA_FORMAT_S8_Z24) {
-	    intel_gttmap_InitDepthPointers_z24_x8(rb);
-	 } else if (rb->Format == MESA_FORMAT_S8) {
-	    intel_gttmap_InitStencilPointers_z24_s8(rb);
-	 }
-	 break;
-      default:
-	 _mesa_problem(NULL,
-		       "Unexpected MesaFormat %d in intelSetSpanFunctions",
-		       irb->Base.Format);
-	 break;
-      }
-      return;
-   }
-
-   /* If in GEM mode, we need to do the tile address swizzling ourselves,
-    * instead of the fence registers handling it.
-    */
    switch (irb->Base.Format) {
    case MESA_FORMAT_RGB565:
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-	 intelInitPointers_RGB565(rb);
-	 break;
-      case I915_TILING_X:
-	 intel_XTile_InitPointers_RGB565(rb);
-	 break;
-      case I915_TILING_Y:
-	 intel_YTile_InitPointers_RGB565(rb);
-	 break;
-      }
+      intel_InitPointers_RGB565(rb);
       break;
    case MESA_FORMAT_ARGB4444:
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-	 intelInitPointers_ARGB4444(rb);
-	 break;
-      case I915_TILING_X:
-	 intel_XTile_InitPointers_ARGB4444(rb);
-	 break;
-      case I915_TILING_Y:
-	 intel_YTile_InitPointers_ARGB4444(rb);
-	 break;
-      }
+      intel_InitPointers_ARGB4444(rb);
       break;
    case MESA_FORMAT_ARGB1555:
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-	 intelInitPointers_ARGB1555(rb);
-	 break;
-      case I915_TILING_X:
-	 intel_XTile_InitPointers_ARGB1555(rb);
-	 break;
-      case I915_TILING_Y:
-	 intel_YTile_InitPointers_ARGB1555(rb);
-	 break;
-      }
+      intel_InitPointers_ARGB1555(rb);
       break;
    case MESA_FORMAT_XRGB8888:
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-         intelInitPointers_xRGB8888(rb);
-         break;
-      case I915_TILING_X:
-         intel_XTile_InitPointers_xRGB8888(rb);
-         break;
-      case I915_TILING_Y:
-         intel_YTile_InitPointers_xRGB8888(rb);
-         break;
-      }
+      intel_InitPointers_xRGB8888(rb);
       break;
    case MESA_FORMAT_ARGB8888:
-      /* 8888 RGBA */
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-	 intelInitPointers_ARGB8888(rb);
-	 break;
-      case I915_TILING_X:
-	 intel_XTile_InitPointers_ARGB8888(rb);
-	 break;
-      case I915_TILING_Y:
-	 intel_YTile_InitPointers_ARGB8888(rb);
-	 break;
-      }
+      intel_InitPointers_ARGB8888(rb);
       break;
    case MESA_FORMAT_Z16:
-      switch (tiling) {
-      case I915_TILING_NONE:
-      default:
-	 intelInitDepthPointers_z16(rb);
-	 break;
-      case I915_TILING_X:
-	 intel_XTile_InitDepthPointers_z16(rb);
-	 break;
-      case I915_TILING_Y:
-	 intel_YTile_InitDepthPointers_z16(rb);
-	 break;
-      }
+      intel_InitDepthPointers_z16(rb);
       break;
    case MESA_FORMAT_X8_Z24:
    case MESA_FORMAT_S8_Z24:
-      /* There are a few different ways SW asks us to access the S8Z24 data:
-       * Z24 depth-only depth reads
-       * S8Z24 depth reads
-       * S8Z24 stencil reads.
-       */
-      if (rb->Format == MESA_FORMAT_S8_Z24) {
-	 switch (tiling) {
-	 case I915_TILING_NONE:
-	 default:
-	    intelInitDepthPointers_z24_x8(rb);
-	    break;
-	 case I915_TILING_X:
-	    intel_XTile_InitDepthPointers_z24_x8(rb);
-	    break;
-	 case I915_TILING_Y:
-	    intel_YTile_InitDepthPointers_z24_x8(rb);
-	    break;
-	 }
-      } else if (rb->Format == MESA_FORMAT_S8) {
-	 switch (tiling) {
-	 case I915_TILING_NONE:
-	 default:
-	    intelInitStencilPointers_z24_s8(rb);
-	    break;
-	 case I915_TILING_X:
-	    intel_XTile_InitStencilPointers_z24_s8(rb);
-	    break;
-	 case I915_TILING_Y:
-	    intel_YTile_InitStencilPointers_z24_s8(rb);
-	    break;
-	 }
-      } else {
-	 _mesa_problem(NULL,
-		       "Unexpected ActualFormat in intelSetSpanFunctions");
-      }
+      intel_InitDepthPointers_z24_x8(rb);
       break;
    default:
       _mesa_problem(NULL,
-                    "Unexpected MesaFormat in intelSetSpanFunctions");
+		    "Unexpected MesaFormat %d in intelSetSpanFunctions",
+		    irb->Base.Format);
       break;
    }
 }

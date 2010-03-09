@@ -55,7 +55,7 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
       templ.format = ksurf->color_format;
       templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
       if (ksurf->type == KMS_SURFACE_TYPE_SCANOUT)
-         templ.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
+         templ.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
    }
 
    /* create textures */
@@ -100,7 +100,7 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
    for (i = 0; i < num_framebuffers; i++) {
       struct kms_framebuffer *fb;
       enum native_attachment natt;
-      unsigned int handle, stride;
+      struct winsys_handle whandle;
       uint block_bits;
 
       if (i == 0) {
@@ -128,13 +128,17 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
       /* TODO detect the real value */
       fb->is_passive = TRUE;
 
-      if (!kdpy->api->local_handle_from_texture(kdpy->api,
-               kdpy->base.screen, fb->texture, &stride, &handle))
+      memset(&whandle, 0, sizeof(whandle));
+      whandle.type = DRM_API_HANDLE_TYPE_KMS;
+
+      if (!kdpy->base.screen->texture_get_handle(kdpy->base.screen,
+               fb->texture, &whandle))
          return FALSE;
 
       block_bits = util_format_get_blocksizebits(ksurf->color_format);
       err = drmModeAddFB(kdpy->fd, ksurf->width, ksurf->height,
-            block_bits, block_bits, stride, handle, &fb->buffer_id);
+            block_bits, block_bits, whandle.stride, whandle.handle,
+            &fb->buffer_id);
       if (err) {
          fb->buffer_id = 0;
          return FALSE;
@@ -201,6 +205,8 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
 
    /* the front/back textures are swapped */
    ksurf->sequence_number++;
+   kdpy->event_handler->invalid_surface(&kdpy->base,
+         &ksurf->base, ksurf->sequence_number);
 
    return TRUE;
 }
@@ -663,6 +669,21 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
    return configs;
 }
 
+static int
+kms_display_get_param(struct native_display *ndpy,
+                      enum native_param_type param)
+{
+   int val;
+
+   switch (param) {
+   default:
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
 static void
 kms_display_destroy(struct native_display *ndpy)
 {
@@ -762,13 +783,17 @@ static struct native_display_modeset kms_display_modeset = {
 };
 
 static struct native_display *
-kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
+kms_create_display(EGLNativeDisplayType dpy,
+                   struct native_event_handler *event_handler,
+                   struct drm_api *api)
 {
    struct kms_display *kdpy;
 
    kdpy = CALLOC_STRUCT(kms_display);
    if (!kdpy)
       return NULL;
+
+   kdpy->event_handler = event_handler;
 
    kdpy->api = api;
    if (!kdpy->api) {
@@ -805,6 +830,7 @@ kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
    }
 
    kdpy->base.destroy = kms_display_destroy;
+   kdpy->base.get_param = kms_display_get_param;
    kdpy->base.get_configs = kms_display_get_configs;
    kdpy->base.create_pbuffer_surface = kms_display_create_pbuffer_surface;
 
@@ -845,7 +871,8 @@ native_get_name(void)
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy)
+native_create_display(EGLNativeDisplayType dpy,
+                      struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
 
@@ -853,7 +880,7 @@ native_create_display(EGLNativeDisplayType dpy)
       drm_api = drm_api_create();
 
    if (drm_api)
-      ndpy = kms_create_display(dpy, drm_api);
+      ndpy = kms_create_display(dpy, event_handler, drm_api);
 
    return ndpy;
 }

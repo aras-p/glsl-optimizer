@@ -72,11 +72,8 @@ r300_is_texture_referenced(struct pipe_context *pipe,
                            struct pipe_texture *texture,
                            unsigned face, unsigned level)
 {
-    struct pipe_buffer* buf = 0;
-
-    r300_get_texture_buffer(pipe->screen, texture, &buf, NULL);
-
-    return pipe->is_buffer_referenced(pipe, buf);
+    return pipe->is_buffer_referenced(pipe,
+                                      ((struct r300_texture *)texture)->buffer);
 }
 
 static unsigned int
@@ -86,7 +83,14 @@ r300_is_buffer_referenced(struct pipe_context *pipe,
     /* This only checks to see whether actual hardware buffers are
      * referenced. Since we use managed BOs and transfers, it's actually not
      * possible for pipe_buffers to ever reference the actual hardware, so
-     * buffers are never referenced. */
+     * buffers are never referenced. 
+     */
+
+    /* XXX: that doesn't make sense given that
+     * r300_is_texture_referenced is implemented on top of this
+     * function and hardware can certainly refer to textures
+     * directly...
+     */
     return 0;
 }
 
@@ -159,6 +163,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (!r300)
         return NULL;
 
+    r300screen->ctx = (struct pipe_context*)r300;
+
     r300->winsys = radeon_winsys;
 
     r300->context.winsys = (struct pipe_winsys*)radeon_winsys;
@@ -212,7 +218,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->invariant_state.dirty = TRUE;
 
     r300->winsys->set_flush_cb(r300->winsys, r300_flush_cb, r300);
-    r300->dirty_state = R300_NEW_KITCHEN_SINK;
     r300->dirty_hw++;
 
     r300->blitter = util_blitter_create(&r300->context);

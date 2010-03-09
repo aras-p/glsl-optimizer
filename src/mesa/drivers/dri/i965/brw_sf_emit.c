@@ -354,6 +354,33 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    return is_last_attr;
 }
 
+/* Calculates the predicate control for which channels of a reg
+ * (containing 2 attrs) to do point sprite coordinate replacement on.
+ */
+static uint16_t
+calculate_point_sprite_mask(struct brw_sf_compile *c, GLuint reg)
+{
+   int attr1, attr2;
+   uint16_t pc = 0;
+
+   attr1 = c->idx_to_attr[reg * 2];
+   if (attr1 >= VERT_RESULT_TEX0 && attr1 <= VERT_RESULT_TEX7) {
+      if (c->key.point_sprite_coord_replace & (1 << (attr1 - VERT_RESULT_TEX0)))
+	 pc |= 0x0f;
+   }
+
+   if (reg * 2 + 1 < c->nr_setup_attrs) {
+       attr2 = c->idx_to_attr[reg * 2 + 1];
+       if (attr2 >= VERT_RESULT_TEX0 && attr2 <= VERT_RESULT_TEX7) {
+	  if (c->key.point_sprite_coord_replace & (1 << (attr2 -
+							 VERT_RESULT_TEX0)))
+	     pc |= 0xf0;
+       }
+   }
+
+   return pc;
+}
+
 
 
 void brw_emit_tri_setup( struct brw_sf_compile *c, GLboolean allocate)
@@ -529,22 +556,27 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
    copy_z_inv_w(c);
    for (i = 0; i < c->nr_setup_regs; i++)
    {
-      struct brw_sf_point_tex *tex = &c->point_attrs[c->idx_to_attr[2*i]];
       struct brw_reg a0 = offset(c->vert[0], i);
-      GLushort pc, pc_persp, pc_linear;
+      GLushort pc, pc_persp, pc_linear, pc_coord_replace;
       GLboolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
-            
-      if (pc_persp)
-      {				
-	  if (!tex->CoordReplace) {
-	      brw_set_predicate_control_flag_value(p, pc_persp);
-	      brw_MUL(p, a0, a0, c->inv_w[0]);
-	  }
+
+      pc_coord_replace = calculate_point_sprite_mask(c, i);
+      pc_persp &= ~pc_coord_replace;
+
+      if (pc_persp) {
+	 brw_set_predicate_control_flag_value(p, pc_persp);
+	 brw_MUL(p, a0, a0, c->inv_w[0]);
       }
 
-      if (tex->CoordReplace) {
-	  /* Caculate 1.0/PointWidth */
-	  brw_math(&c->func,
+      /* Point sprite coordinate replacement: A texcoord with this
+       * enabled gets replaced with the value (x, y, 0, 1) where x and
+       * y vary from 0 to 1 across the horizontal and vertical of the
+       * point.
+       */
+      if (pc_coord_replace) {
+	 brw_set_predicate_control_flag_value(p, pc_coord_replace);
+	 /* Caculate 1.0/PointWidth */
+	 brw_math(&c->func,
 		  c->tmp,
 		  BRW_MATH_FUNCTION_INV,
 		  BRW_MATH_SATURATE_NONE,
@@ -553,50 +585,51 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
 		  BRW_MATH_DATA_SCALAR,
 		  BRW_MATH_PRECISION_FULL);
 
-	  if (c->key.sprite_origin_lower_left) {
-	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
-	  	brw_MUL(p, c->m2Cy, c->tmp, negate(c->inv_w[0]));
-		brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
-	  } else {
-	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
-	  	brw_MUL(p, c->m2Cy, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
-	  }
-      } else {
-	  brw_MOV(p, c->m1Cx, brw_imm_ud(0));
-	  brw_MOV(p, c->m2Cy, brw_imm_ud(0));
-      }
+	 brw_set_access_mode(p, BRW_ALIGN_16);
 
-      {
-	 brw_set_predicate_control_flag_value(p, pc); 
-	 if (tex->CoordReplace) {
-	     if (c->key.sprite_origin_lower_left) {
-		 brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
-		 brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
-	     }
-	     else
-		 brw_MOV(p, c->m3C0, brw_imm_f(0.0));
+	 /* dA/dx, dA/dy */
+	 brw_MOV(p, c->m1Cx, brw_imm_f(0.0));
+	 brw_MOV(p, c->m2Cy, brw_imm_f(0.0));
+	 brw_MOV(p, brw_writemask(c->m1Cx, WRITEMASK_X), c->tmp);
+	 if (c->key.sprite_origin_lower_left) {
+	    brw_MOV(p, brw_writemask(c->m2Cy, WRITEMASK_Y), negate(c->tmp));
 	 } else {
-	 	brw_MOV(p, c->m3C0, a0); /* constant value */
+	    brw_MOV(p, brw_writemask(c->m2Cy, WRITEMASK_Y), c->tmp);
 	 }
 
-	 /* Copy m0..m3 to URB. 
-	  */
-	 brw_urb_WRITE(p, 
-		       brw_null_reg(),
-		       0,
-		       brw_vec8_grf(0, 0),
-		       0, 	/* allocate */
-		       1,	/* used */
-		       4, 	/* msg len */
-		       0,	/* response len */
-		       last, 	/* eot */
-		       last, 	/* writes complete */
-		       i*4,	/* urb destination offset */
-		       BRW_URB_SWIZZLE_TRANSPOSE);
+	 /* attribute constant offset */
+	 brw_MOV(p, c->m3C0, brw_imm_f(0.0));
+	 if (c->key.sprite_origin_lower_left) {
+	    brw_MOV(p, brw_writemask(c->m3C0, WRITEMASK_YW), brw_imm_f(1.0));
+	 } else {
+	    brw_MOV(p, brw_writemask(c->m3C0, WRITEMASK_W), brw_imm_f(1.0));
+	 }
+
+	 brw_set_access_mode(p, BRW_ALIGN_1);
       }
+
+      if (pc & ~pc_coord_replace) {
+	 brw_set_predicate_control_flag_value(p, pc & ~pc_coord_replace);
+	 brw_MOV(p, c->m1Cx, brw_imm_ud(0));
+	 brw_MOV(p, c->m2Cy, brw_imm_ud(0));
+	 brw_MOV(p, c->m3C0, a0); /* constant value */
+      }
+
+
+      brw_set_predicate_control_flag_value(p, pc);
+      /* Copy m0..m3 to URB. */
+      brw_urb_WRITE(p,
+		    brw_null_reg(),
+		    0,
+		    brw_vec8_grf(0, 0),
+		    0, 	/* allocate */
+		    1,	/* used */
+		    4, 	/* msg len */
+		    0,	/* response len */
+		    last, 	/* eot */
+		    last, 	/* writes complete */
+		    i*4,	/* urb destination offset */
+		    BRW_URB_SWIZZLE_TRANSPOSE);
    }
 }
 

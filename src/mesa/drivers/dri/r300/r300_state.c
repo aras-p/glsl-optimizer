@@ -366,7 +366,6 @@ static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
 	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
 	ip = (GLint *)ctx->Transform._ClipUserPlane[p];
 
-	R300_STATECHANGE( rmesa, vap_flush );
 	R300_STATECHANGE( rmesa, vpucp[p] );
 	rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
 	rmesa->hw.vpucp[p].cmd[R300_VPUCP_Y] = ip[1];
@@ -794,12 +793,14 @@ static void r300PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 		R300_STATECHANGE(r300, ga_point_minmax);
 		r300->hw.ga_point_minmax.cmd[1] &= ~R300_GA_POINT_MINMAX_MIN_MASK;
 		r300->hw.ga_point_minmax.cmd[1] |= (GLuint)(ctx->Point.MinSize * 6.0);
+		r300PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_SIZE_MAX:
 		R300_STATECHANGE(r300, ga_point_minmax);
 		r300->hw.ga_point_minmax.cmd[1] &= ~R300_GA_POINT_MINMAX_MAX_MASK;
 		r300->hw.ga_point_minmax.cmd[1] |= (GLuint)(ctx->Point.MaxSize * 6.0)
 			<< R300_GA_POINT_MINMAX_MAX_SHIFT;
+		r300PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_DISTANCE_ATTENUATION:
 		break;
@@ -1762,8 +1763,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 	if (RADEON_DEBUG & RADEON_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	radeon_firevertices(&r300->radeon);
-
 	r300ColorMask(ctx,
 		      ctx->Color.ColorMask[0][RCOMP],
 		      ctx->Color.ColorMask[0][GCOMP],
@@ -1984,23 +1983,6 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 
 	if (rmesa->options.hw_tcl_enabled) {
 		struct r300_vertex_program *vp;
-
-		if (rmesa->radeon.NewGLState) {
-			int i;
-			for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-				rmesa->temp_attrib[i] =
-				    TNL_CONTEXT(ctx)->vb.AttribPtr[i];
-				TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-				    &rmesa->dummy_attrib[i];
-			}
-
-			_tnl_UpdateFixedFunctionProgram(ctx);
-
-			for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-				TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-				    rmesa->temp_attrib[i];
-			}
-		}
 
 		vp = r300SelectAndTranslateVertexShader(ctx);
 

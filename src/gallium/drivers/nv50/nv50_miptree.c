@@ -104,7 +104,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		tile_flags = 0x7400;
 		break;
 	default:
-		if ((pt->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY) &&
+		if ((pt->tex_usage & PIPE_TEXTURE_USAGE_SCANOUT) &&
 		    util_format_get_blocksizebits(pt->format) == 32)
 			tile_flags = 0x7a00;
 		else
@@ -255,9 +255,10 @@ void
 nv50_screen_init_miptree_functions(struct pipe_screen *pscreen)
 {
 	pscreen->texture_create = nv50_miptree_create;
-	pscreen->texture_blanket = nv50_miptree_blanket;
 	pscreen->texture_destroy = nv50_miptree_destroy;
 	pscreen->get_tex_surface = nv50_miptree_surface_new;
 	pscreen->tex_surface_destroy = nv50_miptree_surface_del;
+
+	nouveau_screen(pscreen)->texture_blanket = nv50_miptree_blanket;
 }
 

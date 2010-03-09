@@ -130,11 +130,7 @@ _swrast_clear_accum_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint x, y, width, height;
 
-   if (ctx->Visual.accumRedBits == 0) {
-      /* No accumulation buffer! Not an error. */
-      return;
-   }
-
+   /* No accumulation buffer! Not an error. */
    if (!rb || !rb->Data)
       return;
 

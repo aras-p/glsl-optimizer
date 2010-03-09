@@ -21,9 +21,10 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 	struct pipe_surface *ps = NULL;
 	struct pipe_texture *pt = NULL;
 	struct pipe_texture tmpl;
+	struct winsys_handle whandle;
 
 	memset(&tmpl, 0, sizeof(tmpl));
-	tmpl.tex_usage = PIPE_TEXTURE_USAGE_PRIMARY;
+	tmpl.tex_usage = PIPE_TEXTURE_USAGE_SCANOUT;
 	tmpl.target = PIPE_TEXTURE_2D;
 	tmpl.last_level = 0;
 	tmpl.depth0 = 1;
@@ -31,8 +32,11 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 	tmpl.width0 = width;
 	tmpl.height0 = height;
 
-	pt = api->texture_from_shared_handle(api, pscreen, &tmpl,
-					     "front buffer", pitch, handle);
+	memset(&whandle, 0, sizeof(whandle));
+	whandle.stride = pitch;
+	whandle.handle = handle;
+
+	pt = pscreen->texture_from_handle(pscreen, &tmpl, &whandle);
 	if (!pt)
 		return NULL;
 
@@ -142,74 +146,10 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 	return nvws->pscreen;
 }
 
-static struct pipe_texture *
-nouveau_drm_pt_from_name(struct drm_api *api, struct pipe_screen *pscreen,
-			 struct pipe_texture *templ, const char *name,
-			 unsigned stride, unsigned handle)
-{
-	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
-	struct pipe_texture *pt;
-	struct pipe_buffer *pb;
-	int ret;
-
-	pb = CALLOC(1, sizeof(struct pipe_buffer) + sizeof(struct nouveau_bo*));
-	if (!pb)
-		return NULL;
-
-	ret = nouveau_bo_handle_ref(dev, handle, (struct nouveau_bo**)(pb+1));
-	if (ret) {
-		debug_printf("%s: ref name 0x%08x failed with %d\n",
-			     __func__, handle, ret);
-		FREE(pb);
-		return NULL;
-	}
-
-	pipe_reference_init(&pb->reference, 1);
-	pb->screen = pscreen;
-	pb->alignment = 0;
-	pb->usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE |
-		    PIPE_BUFFER_USAGE_CPU_READ_WRITE;
-	pb->size = nouveau_bo(pb)->size;
-	pt = pscreen->texture_blanket(pscreen, templ, &stride, pb);
-	pipe_buffer_reference(&pb, NULL);
-	return pt;
-}
-
-static boolean
-nouveau_drm_name_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
-			 struct pipe_texture *pt, unsigned *stride,
-			 unsigned *handle)
-{
-	struct nouveau_miptree *mt = nouveau_miptree(pt);
-
-	if (!mt || !mt->bo)
-		return false;
-
-	return nouveau_bo_handle_get(mt->bo, handle) == 0;
-}
-
-static boolean
-nouveau_drm_handle_from_pt(struct drm_api *api, struct pipe_screen *pscreen,
-			   struct pipe_texture *pt, unsigned *stride,
-			   unsigned *handle)
-{
-	struct nouveau_miptree *mt = nouveau_miptree(pt);
-
-	if (!mt || !mt->bo)
-		return false;
-
-	*handle = mt->bo->handle;
-	*stride = util_format_get_stride(mt->base.format, mt->base.width0);
-	return true;
-}
-
 struct drm_api drm_api_hooks = {
 	.name = "nouveau",
 	.driver_name = "nouveau",
 	.create_screen = nouveau_drm_create_screen,
-	.texture_from_shared_handle = nouveau_drm_pt_from_name,
-	.shared_handle_from_texture = nouveau_drm_name_from_pt,
-	.local_handle_from_texture = nouveau_drm_handle_from_pt,
 };
 
 struct drm_api *

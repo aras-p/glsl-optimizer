@@ -264,6 +264,75 @@ static int radeon_fence_finish(struct pipe_winsys *ws,
     return 0;
 }
 
+/* Create a buffer from a handle. */
+static struct pipe_buffer* radeon_buffer_from_handle(struct radeon_winsys *radeon_ws,
+                                                     struct pipe_screen *screen,
+                                                     struct winsys_handle *whandle,
+                                                     unsigned *stride)
+{
+    struct radeon_bo_manager* bom = radeon_ws->priv->bom;
+    struct radeon_pipe_buffer* radeon_buffer;
+    struct radeon_bo* bo = NULL;
+
+    bo = radeon_bo_open(bom, whandle->handle, 0, 0, 0, 0);
+    if (bo == NULL) {
+        return NULL;
+    }
+
+    radeon_buffer = CALLOC_STRUCT(radeon_pipe_buffer);
+    if (radeon_buffer == NULL) {
+        radeon_bo_unref(bo);
+        return NULL;
+    }
+
+    pipe_reference_init(&radeon_buffer->base.reference, 1);
+    radeon_buffer->base.screen = screen;
+    radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
+    radeon_buffer->bo = bo;
+
+    *stride = whandle->stride;
+
+    return &radeon_buffer->base;
+}
+
+static boolean radeon_buffer_get_handle(struct radeon_winsys *radeon_ws,
+                                        struct pipe_buffer *buffer,
+                                        unsigned stride,
+                                        struct winsys_handle *whandle)
+{
+    int retval, fd;
+    struct drm_gem_flink flink;
+    struct radeon_pipe_buffer* radeon_buffer;
+
+    radeon_buffer = (struct radeon_pipe_buffer*)buffer;
+
+
+    if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
+        if (!radeon_buffer->flinked) {
+            fd = radeon_ws->priv->fd;
+
+            flink.handle = radeon_buffer->bo->handle;
+
+            retval = ioctl(fd, DRM_IOCTL_GEM_FLINK, &flink);
+            if (retval) {
+                debug_printf("radeon: DRM_IOCTL_GEM_FLINK failed, error %d\n",
+                             retval);
+                return FALSE;
+            }
+
+            radeon_buffer->flink = flink.name;
+            radeon_buffer->flinked = TRUE;
+        }
+
+        whandle->handle = radeon_buffer->flink;
+    } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+        whandle->handle = ((struct radeon_pipe_buffer*)buffer)->bo->handle;
+    }
+    whandle->stride = stride;
+
+    return TRUE;
+}
+
 struct radeon_winsys* radeon_pipe_winsys(int fd)
 {
     struct radeon_winsys* radeon_ws;
@@ -298,6 +367,8 @@ struct radeon_winsys* radeon_pipe_winsys(int fd)
     radeon_ws->base.get_name = radeon_get_name;
 
     radeon_ws->buffer_set_tiling = radeon_buffer_set_tiling;
+    radeon_ws->buffer_from_handle = radeon_buffer_from_handle;
+    radeon_ws->buffer_get_handle = radeon_buffer_get_handle;
 
     return radeon_ws;
 }

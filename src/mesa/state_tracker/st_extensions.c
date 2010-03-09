@@ -137,6 +137,9 @@ void st_init_limits(struct st_context *st)
    /* XXX separate query for early function return? */
    st->ctx->Shader.EmitContReturn =
       screen->get_param(screen, PIPE_CAP_TGSI_CONT_SUPPORTED);
+
+   /* Quads always follow GL provoking rules. */
+   c->QuadsFollowProvokingVertexConvention = GL_FALSE;
 }
 
 

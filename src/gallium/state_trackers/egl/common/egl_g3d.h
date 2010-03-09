@@ -34,6 +34,7 @@
 #include "eglcontext.h"
 #include "eglsurface.h"
 #include "eglconfig.h"
+#include "eglimage.h"
 #include "eglscreen.h"
 #include "eglmode.h"
 
@@ -81,6 +82,14 @@ struct egl_g3d_config {
    const struct native_config *native;
 };
 
+struct egl_g3d_image {
+   _EGLImage base;
+   struct pipe_texture *texture;
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
+};
+
 struct egl_g3d_screen {
    _EGLScreen base;
    const struct native_connector *native;
@@ -90,5 +99,10 @@ struct egl_g3d_screen {
 /* standard typecasts */
 _EGL_DRIVER_STANDARD_TYPECASTS(egl_g3d)
 _EGL_DRIVER_TYPECAST(egl_g3d_screen, _EGLScreen, obj)
+_EGL_DRIVER_TYPECAST(egl_g3d_image, _EGLImage, obj)
+
+
+_EGLConfig *
+egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix);
 
 #endif /* _EGL_G3D_H_ */

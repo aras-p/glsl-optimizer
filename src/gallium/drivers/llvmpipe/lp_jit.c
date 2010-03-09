@@ -51,12 +51,16 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
 
    /* struct lp_jit_texture */
    {
-      LLVMTypeRef elem_types[4];
+      LLVMTypeRef elem_types[6];
 
       elem_types[LP_JIT_TEXTURE_WIDTH]  = LLVMInt32Type();
       elem_types[LP_JIT_TEXTURE_HEIGHT] = LLVMInt32Type();
+      elem_types[LP_JIT_TEXTURE_DEPTH] = LLVMInt32Type();
+      elem_types[LP_JIT_TEXTURE_LAST_LEVEL] = LLVMInt32Type();
       elem_types[LP_JIT_TEXTURE_STRIDE] = LLVMInt32Type();
-      elem_types[LP_JIT_TEXTURE_DATA]   = LLVMPointerType(LLVMInt8Type(), 0);
+      elem_types[LP_JIT_TEXTURE_DATA] =
+         LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0),
+                       LP_MAX_TEXTURE_2D_LEVELS);
 
       texture_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 
@@ -66,6 +70,12 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, height,
                              screen->target, texture_type,
                              LP_JIT_TEXTURE_HEIGHT);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, depth,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_DEPTH);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, last_level,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_LAST_LEVEL);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, stride,
                              screen->target, texture_type,
                              LP_JIT_TEXTURE_STRIDE);

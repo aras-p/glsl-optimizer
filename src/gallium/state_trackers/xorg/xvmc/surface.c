@@ -106,7 +106,7 @@ CreateOrResizeBackBuffer(struct pipe_video_context *vpipe, unsigned int width, u
    template.width0 = width;
    template.height0 = height;
    template.depth0 = 1;
-   template.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+   template.tex_usage = PIPE_TEXTURE_USAGE_SHARED;
 
    tex = vpipe->screen->texture_create(vpipe->screen, &template);
    if (!tex)

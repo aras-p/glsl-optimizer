@@ -180,7 +180,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.8-devel
+VERSION=7.9-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -215,7 +215,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/glx_mangle.h				\
 	$(DIRECTORY)/include/GL/glfbdev.h				\
 	$(DIRECTORY)/include/GL/mesa_wgl.h				\
-	$(DIRECTORY)/include/GL/mglmesa.h				\
 	$(DIRECTORY)/include/GL/osmesa.h				\
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\

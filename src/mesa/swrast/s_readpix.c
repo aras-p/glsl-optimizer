@@ -253,21 +253,21 @@ fast_read_rgba_pixels( GLcontext *ctx,
 /**
  * When we're using a low-precision color buffer (like 16-bit 5/6/5)
  * we have to adjust our color values a bit to pass conformance.
- * The problem is when a 5 or 6-bit color value is convert to an 8-bit
+ * The problem is when a 5 or 6-bit color value is converted to an 8-bit
  * value and then a floating point value, the floating point values don't
  * increment uniformly as the 5 or 6-bit value is incremented.
  *
  * This function adjusts floating point values to compensate.
  */
 static void
-adjust_colors(GLcontext *ctx, GLuint n, GLfloat rgba[][4])
+adjust_colors(const struct gl_framebuffer *fb, GLuint n, GLfloat rgba[][4])
 {
-   const GLuint rShift = 8 - ctx->Visual.redBits;
-   const GLuint gShift = 8 - ctx->Visual.greenBits;
-   const GLuint bShift = 8 - ctx->Visual.blueBits;
-   const GLfloat rScale = 1.0F / (GLfloat) ((1 << ctx->Visual.redBits  ) - 1);
-   const GLfloat gScale = 1.0F / (GLfloat) ((1 << ctx->Visual.greenBits) - 1);
-   const GLfloat bScale = 1.0F / (GLfloat) ((1 << ctx->Visual.blueBits ) - 1);
+   const GLuint rShift = 8 - fb->Visual.redBits;
+   const GLuint gShift = 8 - fb->Visual.greenBits;
+   const GLuint bShift = 8 - fb->Visual.blueBits;
+   const GLfloat rScale = 1.0F / (GLfloat) ((1 << fb->Visual.redBits  ) - 1);
+   const GLfloat gScale = 1.0F / (GLfloat) ((1 << fb->Visual.greenBits) - 1);
+   const GLfloat bScale = 1.0F / (GLfloat) ((1 << fb->Visual.blueBits ) - 1);
    GLuint i;
    for (i = 0; i < n; i++) {
       GLint r, g, b;
@@ -390,7 +390,7 @@ read_rgba_pixels( GLcontext *ctx,
          if (fb->Visual.redBits < 8 ||
              fb->Visual.greenBits < 8 ||
              fb->Visual.blueBits < 8) {
-            adjust_colors(ctx, width, rgba);
+            adjust_colors(fb, width, rgba);
          }
 
          /* pack the row of RGBA pixels into user's buffer */

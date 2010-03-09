@@ -65,13 +65,13 @@ upload_vs_state(struct brw_context *brw)
       constant_bo = drm_intel_bo_alloc(intel->bufmgr, "VS constant_bo",
 				       nr_params * 4 * sizeof(float),
 				       4096);
-      intel_bo_map_gtt_preferred(intel, constant_bo, GL_TRUE);
+      drm_intel_gem_bo_map_gtt(constant_bo);
       for (i = 0; i < nr_params; i++) {
 	 memcpy((char *)constant_bo->virtual + i * 4 * sizeof(float),
 		vp->program.Base.Parameters->ParameterValues[i],
 		4 * sizeof(float));
       }
-      intel_bo_unmap_gtt_preferred(intel, constant_bo);
+      drm_intel_gem_bo_unmap_gtt(constant_bo);
 
       BEGIN_BATCH(5);
       OUT_BATCH(CMD_3D_CONSTANT_VS_STATE << 16 |

@@ -120,7 +120,13 @@ struct util_format_channel_description
 struct util_format_description
 {
    enum pipe_format format;
+
    const char *name;
+
+   /**
+    * Short name, striped of the prefix, lower case.
+    */
+   const char *short_name;
 
    /**
     * Pixel block dimensions.
@@ -138,6 +144,15 @@ struct util_format_description
     * Whether all channels have the same number of (whole) bytes.
     */
    unsigned is_array:1;
+
+   /**
+    * Whether the pixel format can be described as a bitfield structure.
+    *
+    * In particular:
+    * - pixel depth must be 8, 16, or 32 bits;
+    * - all channels must be unsigned, signed, or void
+    */
+   unsigned is_bitmask:1;
 
    /**
     * Whether channels have mixed types (ignoring UTIL_FORMAT_TYPE_VOID).

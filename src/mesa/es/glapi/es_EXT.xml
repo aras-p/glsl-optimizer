@@ -18,6 +18,9 @@
     <enum name="PALETTE8_RGB5_A1_OES"                     value="0x8B99"/>
 </category>
 
+<!-- 23. GL_OES_EGL_image -->
+<xi:include href="../../glapi/gen/OES_EGL_image.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <category name="GL_OES_depth24" number="24">
     <enum name="DEPTH_COMPONENT24_OES"                    value="0x81A6"/>
 </category>

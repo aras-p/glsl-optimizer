@@ -108,11 +108,11 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 13; /* max 4Kx4K */
+      return LP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 9;  /* max 256x256x256 */
+      return LP_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 13; /* max 4Kx4K */
+      return LP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_TGSI_CONT_SUPPORTED:
       return 1;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
@@ -239,18 +239,6 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 }
 
 
-static struct pipe_buffer *
-llvmpipe_surface_buffer_create(struct pipe_screen *screen,
-                               unsigned width, unsigned height,
-                               enum pipe_format format,
-                               unsigned tex_usage,
-                               unsigned usage,
-                               unsigned *stride)
-{
-   /* This function should never be used */
-   assert(0);
-   return NULL;
-}
 
 
 static void
@@ -310,7 +298,6 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    screen->base.get_paramf = llvmpipe_get_paramf;
    screen->base.is_format_supported = llvmpipe_is_format_supported;
 
-   screen->base.surface_buffer_create = llvmpipe_surface_buffer_create;
    screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
 

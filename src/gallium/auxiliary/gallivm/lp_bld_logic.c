@@ -45,6 +45,7 @@
 /**
  * Build code to compare two values 'a' and 'b' of 'type' using the given func.
  * \param func  one of PIPE_FUNC_x
+ * The result values will be 0 for false or ~0 for true.
  */
 LLVMValueRef
 lp_build_compare(LLVMBuilderRef builder,
@@ -311,6 +312,7 @@ lp_build_compare(LLVMBuilderRef builder,
 /**
  * Build code to compare two values 'a' and 'b' using the given func.
  * \param func  one of PIPE_FUNC_x
+ * The result values will be 0 for false or ~0 for true.
  */
 LLVMValueRef
 lp_build_cmp(struct lp_build_context *bld,
@@ -322,6 +324,9 @@ lp_build_cmp(struct lp_build_context *bld,
 }
 
 
+/**
+ * Return mask ? a : b;
+ */
 LLVMValueRef
 lp_build_select(struct lp_build_context *bld,
                 LLVMValueRef mask,

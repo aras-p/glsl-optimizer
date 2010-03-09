@@ -32,6 +32,10 @@
 #include "pipe/p_state.h"
 
 
+#define LP_MAX_TEXTURE_2D_LEVELS 13  /* 4K x 4K for now */
+#define LP_MAX_TEXTURE_3D_LEVELS 10  /* 512 x 512 x 512 for now */
+
+
 struct pipe_context;
 struct pipe_screen;
 struct llvmpipe_context;
@@ -43,8 +47,8 @@ struct llvmpipe_texture
 {
    struct pipe_texture base;
 
-   unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned stride[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned long level_offset[LP_MAX_TEXTURE_2D_LEVELS];
+   unsigned stride[LP_MAX_TEXTURE_2D_LEVELS];
 
    /**
     * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET

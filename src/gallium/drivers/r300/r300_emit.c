@@ -675,7 +675,7 @@ void r300_emit_scissor_state(struct r300_context* r300,
     maxx = fb->width;
     maxy = fb->height;
 
-    if (((struct r300_rs_state*)r300->rs_state.state)->rs.scissor) {
+    if (r300->scissor_enabled) {
         minx = MAX2(minx, scissor->minx);
         miny = MAX2(miny, scissor->miny);
         maxx = MIN2(maxx, scissor->maxx);
@@ -794,6 +794,30 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     END_CS;
 }
 
+void r300_emit_vertex_buffer(struct r300_context* r300)
+{
+    CS_LOCALS(r300);
+
+    DBG(r300, DBG_DRAW, "r300: Preparing vertex buffer %p for render, "
+            "vertex size %d\n", r300->vbo,
+            r300->vertex_info.size);
+    /* Set the pointer to our vertex buffer. The emitted values are this:
+     * PACKET3 [3D_LOAD_VBPNTR]
+     * COUNT   [1]
+     * FORMAT  [size | stride << 8]
+     * OFFSET  [offset into BO]
+     * VBPNTR  [relocated BO]
+     */
+    BEGIN_CS(7);
+    OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, 3);
+    OUT_CS(1);
+    OUT_CS(r300->vertex_info.size |
+            (r300->vertex_info.size << 8));
+    OUT_CS(r300->vbo_offset);
+    OUT_CS_RELOC(r300->vbo, 0, RADEON_GEM_DOMAIN_GTT, 0, 0);
+    END_CS;
+}
+
 void r300_emit_vertex_stream_state(struct r300_context* r300,
                                    unsigned size, void* state)
 {
@@ -868,7 +892,7 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
-        debug_printf("r300: Implementation error: emit_vertex_shader called,"
+        debug_printf("r300: Implementation error: emit_vs_state called,"
                 " but has_tcl is FALSE!\n");
         return;
     }
@@ -907,7 +931,7 @@ void r300_emit_vs_constant_buffer(struct r300_context* r300,
     CS_LOCALS(r300);
 
     if (!r300screen->caps->has_tcl) {
-        debug_printf("r300: Implementation error: emit_vertex_shader called,"
+        debug_printf("r300: Implementation error: emit_vs_constant_buffer called,"
         " but has_tcl is FALSE!\n");
         return;
     }
@@ -1135,8 +1159,10 @@ void r300_emit_dirty_state(struct r300_context* r300)
     assert(r300->dirty_state == 0);
     */
 
-    /* Finally, emit the VBO. */
-    /* r300_emit_vertex_buffer(r300); */
+    /* Emit the VBO for SWTCL. */
+    if (!r300screen->caps->has_tcl) {
+        r300_emit_vertex_buffer(r300);
+    }
 
     r300->dirty_hw++;
 }

@@ -152,8 +152,7 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
 static void lp_exec_mask_update(struct lp_exec_mask *mask)
 {
    mask->exec_mask = mask->cond_mask;
-   if (mask->cond_stack_size > 0)
-      mask->has_mask = TRUE;
+   mask->has_mask = (mask->cond_stack_size > 0);
 }
 
 static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
@@ -384,6 +383,11 @@ emit_store(
       assert(0);
       break;
 
+   case TGSI_FILE_PREDICATE:
+      /* FIXME */
+      assert(0);
+      break;
+
    default:
       assert( 0 );
    }
@@ -580,6 +584,17 @@ emit_instruction(
    /* we can't handle indirect addressing into temp register file yet */
    if (indirect_temp_reference(inst))
       return FALSE;
+
+   /*
+    * Stores and write masks are handled in a general fashion after the long
+    * instruction opcode switch statement.
+    *
+    * Although not stricitly necessary, we avoid generating instructions for
+    * channels which won't be stored, in cases where's that easy. For some
+    * complex instructions, like texture sampling, it is more convenient to
+    * assume a full writemask and then let LLVM optimization passes eliminate
+    * redundant code.
+    */
 
    assert(info->num_dst <= 1);
    if(info->num_dst) {

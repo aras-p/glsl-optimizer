@@ -2534,8 +2534,6 @@ __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
    int ret;
 
-   fprintf(stderr, "waitmsc: %lld, %lld, %lld\n", target_msc, divisor,
-	   remainder);
 
    /* The OML_sync_control spec says these should "generate a GLX_BAD_VALUE
     * error", but the return type in the spec is Bool.
@@ -2547,7 +2545,6 @@ __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
 
 #ifdef __DRI_MEDIA_STREAM_COUNTER
    if (pdraw != NULL && psc->msc != NULL) {
-      fprintf(stderr, "dri1 msc\n");
       ret = (*psc->msc->waitForMSC) (pdraw->driDrawable, target_msc,
                                      divisor, remainder, msc, sbc);
 
@@ -2563,7 +2560,6 @@ __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
       return ret;
    }
 
-   fprintf(stderr, "no drawable??\n");
    return False;
 }
 

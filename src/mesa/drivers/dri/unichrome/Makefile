@@ -5,8 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = unichrome_dri.so
 
-MINIGLX_SOURCES = server/via_dri.c 
-
 DRIVER_SOURCES = \
 	via_context.c \
 	via_fb.c \

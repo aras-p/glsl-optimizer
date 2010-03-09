@@ -53,6 +53,10 @@ do_copy_texsubimage(GLcontext *ctx,
     unsigned src_width;
     unsigned dst_width;
 
+    if (!radeon->vtbl.blit) {
+        return GL_FALSE;
+    }
+
     if (_mesa_get_format_bits(timg->base.TexFormat, GL_DEPTH_BITS) > 0) {
         rrb = radeon_get_depthbuffer(radeon);
     } else {

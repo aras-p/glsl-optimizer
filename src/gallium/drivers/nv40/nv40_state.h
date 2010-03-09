@@ -73,6 +73,8 @@ struct nv40_fragment_program {
 	struct nouveau_stateobj *so;
 };
 
+#define NV40_MAX_TEXTURE_LEVELS  16
+
 struct nv40_miptree {
 	struct pipe_texture base;
 	struct nouveau_bo *bo;
@@ -83,7 +85,7 @@ struct nv40_miptree {
 	struct {
 		uint pitch;
 		uint *image_offset;
-	} level[PIPE_MAX_TEXTURE_LEVELS];
+	} level[NV40_MAX_TEXTURE_LEVELS];
 };
 
 #endif

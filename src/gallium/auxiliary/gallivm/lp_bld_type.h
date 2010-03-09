@@ -257,6 +257,10 @@ lp_build_int32_vec4_type(void);
 
 
 struct lp_type
+lp_uint_type(struct lp_type type);
+
+
+struct lp_type
 lp_int_type(struct lp_type type);
 
 

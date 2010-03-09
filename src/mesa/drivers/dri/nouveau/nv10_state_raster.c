@@ -119,11 +119,6 @@ nv10_emit_dither(GLcontext *ctx, int emit)
 }
 
 void
-nv10_emit_index_mask(GLcontext *ctx, int emit)
-{
-}
-
-void
 nv10_emit_logic_opcode(GLcontext *ctx, int emit)
 {
 	struct nouveau_channel *chan = context_chan(ctx);

@@ -196,6 +196,16 @@ ximage_surface_update_geometry(struct native_surface *nsurf)
    return updated;
 }
 
+static void
+ximage_surface_notify_invalid(struct native_surface *nsurf)
+{
+   struct ximage_surface *xsurf = ximage_surface(nsurf);
+   struct ximage_display *xdpy = xsurf->xdpy;
+
+   xdpy->event_handler->invalid_surface(&xdpy->base,
+         &xsurf->base, xsurf->server_stamp);
+}
+
 /**
  * Update the buffers of the surface.  It is a slow function due to the
  * round-trip to the server.
@@ -278,6 +288,7 @@ ximage_surface_flush_frontbuffer(struct native_surface *nsurf)
          NATIVE_ATTACHMENT_FRONT_LEFT);
    /* force buffers to be updated in next validation call */
    xsurf->server_stamp++;
+   ximage_surface_notify_invalid(&xsurf->base);
 
    return ret;
 }
@@ -294,6 +305,7 @@ ximage_surface_swap_buffers(struct native_surface *nsurf)
          NATIVE_ATTACHMENT_BACK_LEFT);
    /* force buffers to be updated in next validation call */
    xsurf->server_stamp++;
+   ximage_surface_notify_invalid(&xsurf->base);
 
    xfront = &xsurf->buffers[NATIVE_ATTACHMENT_FRONT_LEFT];
    xback = &xsurf->buffers[NATIVE_ATTACHMENT_BACK_LEFT];
@@ -579,6 +591,25 @@ ximage_display_is_pixmap_supported(struct native_display *ndpy,
    return (fmt == nconf->color_format);
 }
 
+static int
+ximage_display_get_param(struct native_display *ndpy,
+                         enum native_param_type param)
+{
+   int val;
+
+   switch (param) {
+   case NATIVE_PARAM_USE_NATIVE_BUFFER:
+      /* private buffers are allocated */
+      val = FALSE;
+      break;
+   default:
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
 static void
 ximage_display_destroy(struct native_display *ndpy)
 {
@@ -625,6 +656,7 @@ x11_create_ximage_display(EGLNativeDisplayType dpy)
    xdpy->base.screen = xdpy->driver->create_pipe_screen(xdpy->dpy);
 
    xdpy->base.destroy = ximage_display_destroy;
+   xdpy->base.get_param = ximage_display_get_param;
 
    xdpy->base.get_configs = ximage_display_get_configs;
    xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;

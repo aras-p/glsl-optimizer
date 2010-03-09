@@ -264,57 +264,29 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
       break;
 
    case PIPE_PRIM_QUADS:
-      if (softpipe->rasterizer->flatshade_first) {
-         for (i = 3; i < nr; i += 4) {
-            sp_setup_tri( setup_ctx,
-                       get_vert(vertex_buffer, indices[i-2], stride),
-                       get_vert(vertex_buffer, indices[i-1], stride),
-                       get_vert(vertex_buffer, indices[i-3], stride) );
-            sp_setup_tri( setup_ctx,
-                       get_vert(vertex_buffer, indices[i-1], stride),
-                       get_vert(vertex_buffer, indices[i-0], stride),
-                       get_vert(vertex_buffer, indices[i-3], stride) );
-         }
-      }
-      else {
-         for (i = 3; i < nr; i += 4) {
-            sp_setup_tri( setup_ctx,
+      for (i = 3; i < nr; i += 4) {
+         sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
 
-            sp_setup_tri( setup_ctx,
+         sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
-         }
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      if (softpipe->rasterizer->flatshade_first) {
-         for (i = 3; i < nr; i += 2) {
-            sp_setup_tri( setup_ctx,
-                       get_vert(vertex_buffer, indices[i-0], stride),
-                       get_vert(vertex_buffer, indices[i-1], stride),
-                       get_vert(vertex_buffer, indices[i-3], stride));
-            sp_setup_tri( setup_ctx,
-                       get_vert(vertex_buffer, indices[i-2], stride),
-                       get_vert(vertex_buffer, indices[i-0], stride),
-                       get_vert(vertex_buffer, indices[i-3], stride) );
-         }
-      }
-      else {
-         for (i = 3; i < nr; i += 2) {
-            sp_setup_tri( setup_ctx,
+      for (i = 3; i < nr; i += 2) {
+         sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-2], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
-            sp_setup_tri( setup_ctx,
+         sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, indices[i-1], stride),
                        get_vert(vertex_buffer, indices[i-3], stride),
                        get_vert(vertex_buffer, indices[i-0], stride) );
-         }
       }
       break;
 
@@ -448,56 +420,28 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       break;
 
    case PIPE_PRIM_QUADS:
-      if (softpipe->rasterizer->flatshade_first) {
-         for (i = 3; i < nr; i += 4) {
-            sp_setup_tri( setup_ctx,
-                       get_vert(vertex_buffer, i-2, stride),
-                       get_vert(vertex_buffer, i-1, stride),
-                       get_vert(vertex_buffer, i-3, stride) );
-            sp_setup_tri( setup_ctx,
-                       get_vert(vertex_buffer, i-1, stride),
-                       get_vert(vertex_buffer, i-0, stride),
-                       get_vert(vertex_buffer, i-3, stride) );
-         }
-      }
-      else {
-         for (i = 3; i < nr; i += 4) {
-            sp_setup_tri( setup_ctx,
+      for (i = 3; i < nr; i += 4) {
+         sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-0, stride) );
-            sp_setup_tri( setup_ctx,
+         sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-0, stride) );
-         }
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      if (softpipe->rasterizer->flatshade_first) {
-         for (i = 3; i < nr; i += 2) {
-            sp_setup_tri( setup_ctx,
-                       get_vert(vertex_buffer, i-0, stride),
-                       get_vert(vertex_buffer, i-1, stride),
-                       get_vert(vertex_buffer, i-3, stride) );
-            sp_setup_tri( setup_ctx,
-                       get_vert(vertex_buffer, i-2, stride),
-                       get_vert(vertex_buffer, i-0, stride),
-                       get_vert(vertex_buffer, i-3, stride) );
-         }
-      }
-      else {
-         for (i = 3; i < nr; i += 2) {
-            sp_setup_tri( setup_ctx,
+      for (i = 3; i < nr; i += 2) {
+         sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-2, stride),
                        get_vert(vertex_buffer, i-0, stride) );
-            sp_setup_tri( setup_ctx,
+         sp_setup_tri( setup_ctx,
                        get_vert(vertex_buffer, i-1, stride),
                        get_vert(vertex_buffer, i-3, stride),
                        get_vert(vertex_buffer, i-0, stride) );
-         }
       }
       break;
 

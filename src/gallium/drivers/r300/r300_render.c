@@ -186,7 +186,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     dwords = 10 + count * vertex_size;
 
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
-    r300_emit_buffer_validate(r300, FALSE, 0);
+    r300_emit_buffer_validate(r300, FALSE, NULL);
     r300_emit_dirty_state(r300);
 
     BEGIN_CS(dwords);
@@ -273,9 +273,14 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     CS_LOCALS(r300);
 
     assert((start * indexSize)  % 4 == 0);
+    assert(count < (1 << 24));
+
+    DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
+        count, minIndex, maxIndex);
+
+    maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
 
     if (alt_num_verts) {
-        assert(count < (1 << 24));
         BEGIN_CS(16);
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
     } else {
@@ -445,7 +450,7 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
         /* Make sure there are at least 128 spare dwords in the command buffer.
          * (most of it being consumed by emit_aos) */
         r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
-        r300_emit_buffer_validate(r300, TRUE, 0);
+        r300_emit_buffer_validate(r300, TRUE, NULL);
         r300_emit_dirty_state(r300);
 
         if (alt_num_verts || count <= 65535) {
@@ -463,7 +468,7 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                 /* Again, we emit both AOS and draw_arrays so there should be
                  * at least 128 spare dwords. */
                 if (count && r300_reserve_cs_space(r300, 128)) {
-                    r300_emit_buffer_validate(r300, TRUE, 0);
+                    r300_emit_buffer_validate(r300, TRUE, NULL);
                     r300_emit_dirty_state(r300);
                 }
             } while (count);
@@ -683,6 +688,7 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     CS_LOCALS(r300);
 
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 2);
+    r300_emit_buffer_validate(r300, FALSE, NULL);
     r300_emit_dirty_state(r300);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
@@ -706,6 +712,7 @@ static void r300_render_draw(struct vbuf_render* render,
     CS_LOCALS(r300);
 
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
+    r300_emit_buffer_validate(r300, FALSE, NULL);
     r300_emit_dirty_state(r300);
 
     BEGIN_CS(dwords);

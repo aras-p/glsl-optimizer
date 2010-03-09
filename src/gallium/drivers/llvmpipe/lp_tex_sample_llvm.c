@@ -51,10 +51,11 @@
 
 
 /**
- * This provides the bridge between the sampler state store in lp_jit_context
- * and lp_jit_texture and the sampler code generator. It provides the
- * texture layout information required by the texture sampler code generator
- * in terms of the state stored in lp_jit_context and lp_jit_texture in runtime.
+ * This provides the bridge between the sampler state store in
+ * lp_jit_context and lp_jit_texture and the sampler code
+ * generator. It provides the texture layout information required by
+ * the texture sampler code generator in terms of the state stored in
+ * lp_jit_context and lp_jit_texture in runtime.
  */
 struct llvmpipe_sampler_dynamic_state
 {
@@ -79,6 +80,9 @@ struct lp_llvm_sampler_soa
 
 /**
  * Fetch the specified member of the lp_jit_texture structure.
+ * \param emit_load  if TRUE, emit the LLVM load instruction to actually
+ *                   fetch the field's value.  Otherwise, just emit the
+ *                   GEP code to address the field.
  *
  * @sa http://llvm.org/docs/GetElementPtr.html
  */
@@ -87,9 +91,11 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
                        LLVMBuilderRef builder,
                        unsigned unit,
                        unsigned member_index,
-                       const char *member_name)
+                       const char *member_name,
+                       boolean emit_load)
 {
-   struct llvmpipe_sampler_dynamic_state *state = (struct llvmpipe_sampler_dynamic_state *)base;
+   struct llvmpipe_sampler_dynamic_state *state =
+      (struct llvmpipe_sampler_dynamic_state *)base;
    LLVMValueRef indices[4];
    LLVMValueRef ptr;
    LLVMValueRef res;
@@ -107,7 +113,10 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
 
    ptr = LLVMBuildGEP(builder, state->context_ptr, indices, Elements(indices), "");
 
-   res = LLVMBuildLoad(builder, ptr, "");
+   if (emit_load)
+      res = LLVMBuildLoad(builder, ptr, "");
+   else
+      res = ptr;
 
    lp_build_name(res, "context.texture%u.%s", unit, member_name);
 
@@ -116,26 +125,30 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
 
 
 /**
- * Helper macro to instantiate the functions that generate the code to fetch
- * the members of lp_jit_texture to fulfill the sampler code generator requests.
+ * Helper macro to instantiate the functions that generate the code to
+ * fetch the members of lp_jit_texture to fulfill the sampler code
+ * generator requests.
  *
- * This complexity is the price we have to pay to keep the texture sampler code
- * generator a reusable module without dependencies to llvmpipe internals.
+ * This complexity is the price we have to pay to keep the texture
+ * sampler code generator a reusable module without dependencies to
+ * llvmpipe internals.
  */
-#define LP_LLVM_TEXTURE_MEMBER(_name, _index) \
+#define LP_LLVM_TEXTURE_MEMBER(_name, _index, _emit_load)  \
    static LLVMValueRef \
    lp_llvm_texture_##_name( struct lp_sampler_dynamic_state *base, \
                             LLVMBuilderRef builder, \
                             unsigned unit) \
    { \
-      return lp_llvm_texture_member(base, builder, unit, _index, #_name ); \
+      return lp_llvm_texture_member(base, builder, unit, _index, #_name, _emit_load ); \
    }
 
 
-LP_LLVM_TEXTURE_MEMBER(width,    LP_JIT_TEXTURE_WIDTH)
-LP_LLVM_TEXTURE_MEMBER(height,   LP_JIT_TEXTURE_HEIGHT)
-LP_LLVM_TEXTURE_MEMBER(stride,   LP_JIT_TEXTURE_STRIDE)
-LP_LLVM_TEXTURE_MEMBER(data_ptr, LP_JIT_TEXTURE_DATA)
+LP_LLVM_TEXTURE_MEMBER(width,      LP_JIT_TEXTURE_WIDTH, TRUE)
+LP_LLVM_TEXTURE_MEMBER(height,     LP_JIT_TEXTURE_HEIGHT, TRUE)
+LP_LLVM_TEXTURE_MEMBER(depth,      LP_JIT_TEXTURE_DEPTH, TRUE)
+LP_LLVM_TEXTURE_MEMBER(last_level, LP_JIT_TEXTURE_LAST_LEVEL, TRUE)
+LP_LLVM_TEXTURE_MEMBER(stride,     LP_JIT_TEXTURE_STRIDE, TRUE)
+LP_LLVM_TEXTURE_MEMBER(data_ptr,   LP_JIT_TEXTURE_DATA, FALSE)
 
 
 static void
@@ -145,6 +158,10 @@ lp_llvm_sampler_soa_destroy(struct lp_build_sampler_soa *sampler)
 }
 
 
+/**
+ * Fetch filtered values from texture.
+ * The 'texel' parameter returns four vectors corresponding to R, G, B, A.
+ */
 static void
 lp_llvm_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *base,
                                      LLVMBuilderRef builder,
@@ -185,6 +202,8 @@ lp_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
    sampler->base.emit_fetch_texel = lp_llvm_sampler_soa_emit_fetch_texel;
    sampler->dynamic_state.base.width = lp_llvm_texture_width;
    sampler->dynamic_state.base.height = lp_llvm_texture_height;
+   sampler->dynamic_state.base.depth = lp_llvm_texture_depth;
+   sampler->dynamic_state.base.last_level = lp_llvm_texture_last_level;
    sampler->dynamic_state.base.stride = lp_llvm_texture_stride;
    sampler->dynamic_state.base.data_ptr = lp_llvm_texture_data_ptr;
    sampler->dynamic_state.static_state = static_state;

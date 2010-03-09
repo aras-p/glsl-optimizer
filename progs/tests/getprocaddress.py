@@ -4,7 +4,7 @@
 # Helper for the getprocaddress.c test.
 
 import sys, getopt, re
-sys.path.append("../../src/mesa/glapi/" )
+sys.path.append("../../src/mesa/glapi/gen" )
 import gl_XML
 import license
 

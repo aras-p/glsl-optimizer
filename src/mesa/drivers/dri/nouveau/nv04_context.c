@@ -265,7 +265,6 @@ const struct nouveau_driver nv04_driver = {
 		nouveau_emit_nothing,
 		nouveau_emit_nothing,
 		nouveau_emit_nothing,
-		nouveau_emit_nothing,
 		nv04_emit_scissor,
 		nv04_defer_blend,
 		nv04_defer_control,

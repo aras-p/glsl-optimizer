@@ -53,7 +53,7 @@ INCLUDE_DIRS = \
 
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(DEFINES) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 default: depend $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME)
 

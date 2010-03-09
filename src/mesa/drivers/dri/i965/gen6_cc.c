@@ -32,8 +32,9 @@
 #include "intel_batchbuffer.h"
 #include "main/macros.h"
 
-struct brw_blend_state_key {
+struct gen6_blend_state_key {
    GLboolean color_blend, alpha_enabled;
+   GLboolean dither;
 
    GLenum logic_op;
 
@@ -42,13 +43,11 @@ struct brw_blend_state_key {
    GLenum blend_dst_rgb, blend_dst_a;
 
    GLenum alpha_func;
-
-   GLboolean dither;
 };
 
 static void
 blend_state_populate_key(struct brw_context *brw,
-			 struct brw_blend_state_key *key)
+			 struct gen6_blend_state_key *key)
 {
    GLcontext *ctx = &brw->intel.ctx;
 
@@ -86,7 +85,7 @@ blend_state_populate_key(struct brw_context *brw,
  */
 static drm_intel_bo *
 blend_state_create_from_key(struct brw_context *brw,
-			    struct brw_blend_state_key *key)
+			    struct gen6_blend_state_key *key)
 {
    struct gen6_blend_state blend;
    drm_intel_bo *bo;
@@ -149,7 +148,7 @@ blend_state_create_from_key(struct brw_context *brw,
 static void
 prepare_blend_state(struct brw_context *brw)
 {
-   struct brw_blend_state_key key;
+   struct gen6_blend_state_key key;
 
    blend_state_populate_key(brw, &key);
 
@@ -172,7 +171,7 @@ const struct brw_tracked_state gen6_blend_state = {
    .prepare = prepare_blend_state,
 };
 
-struct brw_color_calc_state_key {
+struct gen6_color_calc_state_key {
    GLubyte blend_constant_color[4];
    GLclampf alpha_ref;
    GLubyte stencil_ref[2];
@@ -180,7 +179,7 @@ struct brw_color_calc_state_key {
 
 static void
 color_calc_state_populate_key(struct brw_context *brw,
-			      struct brw_color_calc_state_key *key)
+			      struct gen6_color_calc_state_key *key)
 {
    GLcontext *ctx = &brw->intel.ctx;
 
@@ -210,7 +209,7 @@ color_calc_state_populate_key(struct brw_context *brw,
  */
 static drm_intel_bo *
 color_calc_state_create_from_key(struct brw_context *brw,
-				 struct brw_color_calc_state_key *key)
+				 struct gen6_color_calc_state_key *key)
 {
    struct gen6_color_calc_state cc;
    drm_intel_bo *bo;
@@ -239,7 +238,7 @@ color_calc_state_create_from_key(struct brw_context *brw,
 static void
 prepare_color_calc_state(struct brw_context *brw)
 {
-   struct brw_color_calc_state_key key;
+   struct gen6_color_calc_state_key key;
 
    color_calc_state_populate_key(brw, &key);
 

@@ -125,7 +125,8 @@ llvmpipe_texture_create(struct pipe_screen *_screen,
    lpt->base.screen = &screen->base;
 
    if (lpt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                              PIPE_TEXTURE_USAGE_PRIMARY)) {
+                              PIPE_TEXTURE_USAGE_SCANOUT |
+                              PIPE_TEXTURE_USAGE_SHARED)) {
       if (!llvmpipe_displaytarget_layout(screen, lpt))
          goto fail;
    }
@@ -139,43 +140,6 @@ llvmpipe_texture_create(struct pipe_screen *_screen,
  fail:
    FREE(lpt);
    return NULL;
-}
-
-
-static struct pipe_texture *
-llvmpipe_texture_blanket(struct pipe_screen * screen,
-                         const struct pipe_texture *base,
-                         const unsigned *stride,
-                         struct pipe_buffer *buffer)
-{
-   /* FIXME */
-#if 0
-   struct llvmpipe_texture *lpt;
-   assert(screen);
-
-   /* Only supports one type */
-   if (base->target != PIPE_TEXTURE_2D ||
-       base->last_level != 0 ||
-       base->depth0 != 1) {
-      return NULL;
-   }
-
-   lpt = CALLOC_STRUCT(llvmpipe_texture);
-   if (!lpt)
-      return NULL;
-
-   lpt->base = *base;
-   pipe_reference_init(&lpt->base.reference, 1);
-   lpt->base.screen = screen;
-   lpt->stride[0] = stride[0];
-
-   pipe_buffer_reference(&lpt->buffer, buffer);
-
-   return &lpt->base;
-#else
-   debug_printf("llvmpipe_texture_blanket() not implemented!");
-   return NULL;
-#endif
 }
 
 
@@ -408,7 +372,6 @@ void
 llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = llvmpipe_texture_create;
-   screen->texture_blanket = llvmpipe_texture_blanket;
    screen->texture_destroy = llvmpipe_texture_destroy;
 
    screen->get_tex_surface = llvmpipe_get_tex_surface;

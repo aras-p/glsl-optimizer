@@ -4,8 +4,6 @@ include $(TOP)/configs/current
 
 LIBNAME = i915_dri.so
 
-MINIGLX_SOURCES = server/intel_dri.c
-
 DRIVER_SOURCES = \
 	i830_context.c \
 	i830_state.c \

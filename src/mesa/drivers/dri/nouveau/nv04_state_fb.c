@@ -63,7 +63,7 @@ nv04_emit_framebuffer(GLcontext *ctx, int emit)
 		return;
 
 	/* Render target */
-	if (fb->_NumColorDrawBuffers) {
+	if (fb->_ColorDrawBuffers[0]) {
 		s = &to_nouveau_renderbuffer(
 			fb->_ColorDrawBuffers[0])->surface;
 

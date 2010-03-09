@@ -706,29 +706,6 @@ intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 		       texObj, texImage, GL_TRUE);
 }
 
-
-void
-intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
-		  unsigned long long offset, GLint depth, GLuint pitch)
-{
-   struct intel_context *intel = pDRICtx->driverPrivate;
-   struct gl_texture_object *tObj = _mesa_lookup_texture(&intel->ctx, texname);
-   struct intel_texture_object *intelObj = intel_texture_object(tObj);
-
-   if (!intelObj)
-      return;
-
-   if (intelObj->mt)
-      intel_miptree_release(intel, &intelObj->mt);
-
-   intelObj->imageOverride = GL_TRUE;
-   intelObj->depthOverride = depth;
-   intelObj->pitchOverride = pitch;
-
-   if (offset)
-      intelObj->textureOffset = offset;
-}
-
 void
 intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 		   GLint texture_format,

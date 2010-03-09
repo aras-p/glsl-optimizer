@@ -4,6 +4,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_format.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -11,6 +12,9 @@
 #include "nouveau/nouveau_bo.h"
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"
+
+/* XXX this should go away */
+#include "state_tracker/drm_api.h"
 
 static const char *
 nouveau_screen_get_name(struct pipe_screen *pscreen)
@@ -231,6 +235,72 @@ nouveau_screen_fence_finish(struct pipe_screen *screen,
 	return 0;
 }
 
+
+/*
+ * Both texture_{from|get}_handle use drm api defines directly which they
+ * shouldn't do. The problem is that from|get are pipe functions and as
+ * such they should be defined in the pipe level. If nouveau had a propper
+ * winsys interface we would have added from|get to that interface using
+ * the winsys_handle struct as done with other drivers. However this code
+ * calls directly into the libdrm_nouveau.so functions (nouveau_bo_*). So
+ * we need to translate the handle into something they understand.
+ */
+static struct pipe_texture *
+nouveau_screen_texture_from_handle(struct pipe_screen *pscreen,
+				   const struct pipe_texture *templ,
+				   struct winsys_handle *whandle)
+{
+	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
+	struct pipe_texture *pt;
+	struct pipe_buffer *pb;
+	int ret;
+
+	pb = CALLOC(1, sizeof(struct pipe_buffer) + sizeof(struct nouveau_bo*));
+	if (!pb)
+		return NULL;
+
+	ret = nouveau_bo_handle_ref(dev, whandle->handle, (struct nouveau_bo**)(pb+1));
+	if (ret) {
+		debug_printf("%s: ref name 0x%08x failed with %d\n",
+			     __func__, whandle->handle, ret);
+		FREE(pb);
+		return NULL;
+	}
+
+	pipe_reference_init(&pb->reference, 1);
+	pb->screen = pscreen;
+	pb->alignment = 0;
+	pb->usage = PIPE_BUFFER_USAGE_GPU_READ_WRITE |
+		    PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+	pb->size = nouveau_bo(pb)->size;
+	pt = nouveau_screen(pscreen)->texture_blanket(pscreen, templ,
+                                                      &whandle->stride, pb);
+	pipe_buffer_reference(&pb, NULL);
+	return pt;
+}
+
+static boolean
+nouveau_screen_texture_get_handle(struct pipe_screen *pscreen,
+				  struct pipe_texture *pt,
+				  struct winsys_handle *whandle)
+{
+	struct nouveau_miptree *mt = nouveau_miptree(pt);
+
+	if (!mt || !mt->bo)
+		return false;
+
+	whandle->stride = util_format_get_stride(mt->base.format, mt->base.width0);
+
+	if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) { 
+		return nouveau_bo_handle_get(mt->bo, &whandle->handle) == 0;
+	} else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+		whandle->handle = mt->bo->handle;
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
 int
 nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 {
@@ -257,6 +327,9 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 	pscreen->fence_reference = nouveau_screen_fence_ref;
 	pscreen->fence_signalled = nouveau_screen_fence_signalled;
 	pscreen->fence_finish = nouveau_screen_fence_finish;
+
+	pscreen->texture_from_handle = nouveau_screen_texture_from_handle;
+	pscreen->texture_get_handle = nouveau_screen_texture_get_handle;
 
 	return 0;
 }

@@ -911,10 +911,12 @@ static void r700PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 	case GL_POINT_SIZE_MIN:
 		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MinSize * 8.0),
 			 MIN_SIZE_shift, MIN_SIZE_mask);
+		r700PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_SIZE_MAX:
 		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MaxSize * 8.0),
 			 MAX_SIZE_shift, MAX_SIZE_mask);
+		r700PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_DISTANCE_ATTENUATION:
 		break;
@@ -1625,8 +1627,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     context_t *context = R700_CONTEXT(ctx);
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
     int id = 0;
-
-    radeon_firevertices(&context->radeon);
 
     r700->TA_CNTL_AUX.u32All = 0;
     SETfield(r700->TA_CNTL_AUX.u32All, 28, TD_FIFO_CREDIT_shift, TD_FIFO_CREDIT_mask);

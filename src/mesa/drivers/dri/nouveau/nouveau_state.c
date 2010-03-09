@@ -150,6 +150,7 @@ nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 		break;
 	case GL_COLOR_SUM_EXT:
 		context_dirty(ctx, FRAG);
+		context_dirty(ctx, LIGHT_MODEL);
 		break;
 	case GL_CULL_FACE:
 		context_dirty(ctx, CULL_FACE);

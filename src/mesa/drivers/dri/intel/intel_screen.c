@@ -47,9 +47,6 @@
 #include "i915_drm.h"
 
 #define DRI_CONF_TEXTURE_TILING(def) \
-	DRI_CONF_OPT_BEGIN(texture_tiling, bool, def)		\
-		DRI_CONF_DESC(en, "Enable texture tiling")	\
-	DRI_CONF_OPT_END					\
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
@@ -65,11 +62,9 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC_END
       DRI_CONF_OPT_END
 
-#ifdef I915
-     DRI_CONF_TEXTURE_TILING(false)
-#else
-     DRI_CONF_TEXTURE_TILING(true)
-#endif
+      DRI_CONF_OPT_BEGIN(texture_tiling, bool, true)
+	 DRI_CONF_DESC(en, "Enable texture tiling")
+      DRI_CONF_OPT_END
 
       DRI_CONF_OPT_BEGIN(early_z, bool, false)
 	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
@@ -100,11 +95,6 @@ const GLuint __driNConfigOptions = 11;
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE */
-
-static const __DRItexOffsetExtension intelTexOffsetExtension = {
-   { __DRI_TEX_OFFSET },
-   intelSetTexOffset,
-};
 
 static const __DRItexBufferExtension intelTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
@@ -232,7 +222,6 @@ static struct __DRIimageExtensionRec intelImageExtension = {
 
 static const __DRIextension *intelScreenExtensions[] = {
     &driReadDrawableExtension,
-    &intelTexOffsetExtension.base,
     &intelTexBufferExtension.base,
     &intelFlushExtension.base,
     &intelImageExtension.base,
@@ -421,10 +410,11 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
       return GL_FALSE;
    }
 
-   if (intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences))
-      intelScreen->kernel_exec_fencing = !!num_fences;
-   else
-      intelScreen->kernel_exec_fencing = GL_FALSE;
+   if (!intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences) ||
+       num_fences == 0) {
+      fprintf(stderr, "[%s: %u] Kernel 2.6.29 required.\n", __func__, __LINE__);
+      return GL_FALSE;
+   }
 
    drm_intel_bufmgr_gem_enable_fenced_relocs(intelScreen->bufmgr);
 

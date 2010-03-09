@@ -50,6 +50,8 @@ extern "C" {
 
 
 /** Opaque type */
+struct winsys_handle;
+/** Opaque type */
 struct pipe_fence_handle;
 struct pipe_winsys;
 struct pipe_buffer;
@@ -108,16 +110,23 @@ struct pipe_screen {
                                            const struct pipe_texture *templat);
 
    /**
-    * Create a new texture object, using the given template info, but on top of
-    * existing memory.
-    * 
-    * It is assumed that the buffer data is layed out according to the expected
-    * by the hardware. NULL will be returned if any inconsistency is found.  
+    * Create a texture from a winsys_handle. The handle is often created in
+    * another process by first creating a pipe texture and then calling
+    * texture_get_handle.
     */
-   struct pipe_texture * (*texture_blanket)(struct pipe_screen *,
-                                            const struct pipe_texture *templat,
-                                            const unsigned *stride,
-                                            struct pipe_buffer *buffer);
+   struct pipe_texture * (*texture_from_handle)(struct pipe_screen *,
+                                                const struct pipe_texture *templat,
+                                                struct winsys_handle *handle);
+
+   /**
+    * Get a winsys_handle from a texture. Some platforms/winsys requires
+    * that the texture is created with a special usage flag like
+    * DISPLAYTARGET or PRIMARY.
+    */
+   boolean (*texture_get_handle)(struct pipe_screen *,
+                                 struct pipe_texture *tex,
+                                 struct winsys_handle *handle);
+
 
    void (*texture_destroy)(struct pipe_texture *pt);
 
@@ -187,23 +196,6 @@ struct pipe_screen {
                                              void *ptr,
                                              unsigned bytes);
 
-   /**
-    * Allocate storage for a display target surface.
-    *
-    * Often surfaces which are meant to be blitted to the front screen (i.e.,
-    * display targets) must be allocated with special characteristics, memory
-    * pools, or obtained directly from the windowing system.
-    *
-    * This callback is invoked by the pipe_screenwhen creating a texture marked
-    * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag  to get the underlying
-    * buffer storage.
-    */
-   struct pipe_buffer *(*surface_buffer_create)(struct pipe_screen *screen,
-						unsigned width, unsigned height,
-						enum pipe_format format,
-						unsigned usage,
-						unsigned tex_usage,
-						unsigned *stride);
 
 
    /**

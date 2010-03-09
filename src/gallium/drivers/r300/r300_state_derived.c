@@ -433,18 +433,13 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
 {
     struct r300_vertex_shader* vs = r300->vs_state.state;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
-    struct r300_vap_output_state *vap_out =
-        (struct r300_vap_output_state*)r300->vap_output_state.state;
-
-    /* XXX Mmm, delicious hax */
-    memset(&r300->vertex_info, 0, sizeof(struct vertex_info));
-    memcpy(vap_out, vs->hwfmt, sizeof(uint)*4);
 
     r300_update_rs_block(r300, &vs->outputs, &r300->fs->inputs);
 
     if (r300screen->caps->has_tcl) {
         r300_vertex_psc(r300);
     } else {
+        memset(&r300->vertex_info, 0, sizeof(struct vertex_info));
         r300_draw_emit_all_attribs(r300);
         draw_compute_vertex_size(&r300->vertex_info);
         r300_swtcl_vertex_psc(r300);
@@ -582,8 +577,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
 void r300_update_derived_state(struct r300_context* r300)
 {
     if (r300->rs_block_state.dirty ||
-        r300->vertex_stream_state.dirty || /* XXX put updating this state out of this file */
-        r300->rs_state.dirty) {  /* XXX and remove this one (tcl_bypass dependency) */
+        r300->vertex_stream_state.dirty) { /* XXX put updating PSC out of this file */
         r300_update_derived_shader_state(r300);
     }
 

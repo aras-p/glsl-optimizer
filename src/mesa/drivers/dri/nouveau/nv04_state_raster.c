@@ -71,6 +71,10 @@ get_stencil_op(unsigned op)
 		return 0x5;
 	case GL_INVERT:
 		return 0x6;
+	case GL_INCR_WRAP:
+		return 0x7;
+	case GL_DECR_WRAP:
+		return 0x8;
 	default:
 		assert(0);
 	}
@@ -271,6 +275,10 @@ nv04_emit_blend(GLcontext *ctx, int emit)
 		else
 			blend |= NV04_MULTITEX_TRIANGLE_BLEND_SHADE_MODE_FLAT;
 
+		/* Secondary color */
+		if (NEED_SECONDARY_COLOR(ctx))
+			blend |= NV04_MULTITEX_TRIANGLE_BLEND_SPECULAR_ENABLE;
+
 		/* Fog. */
 		if (ctx->Fog.Enabled)
 			blend |= NV04_MULTITEX_TRIANGLE_BLEND_FOG_ENABLE;
@@ -304,6 +312,10 @@ nv04_emit_blend(GLcontext *ctx, int emit)
 			blend |= get_texenv_mode(ctx->Texture.Unit[0].EnvMode);
 		else
 			blend |= get_texenv_mode(GL_MODULATE);
+
+		/* Secondary color */
+		if (NEED_SECONDARY_COLOR(ctx))
+			blend |= NV04_TEXTURED_TRIANGLE_BLEND_SPECULAR_ENABLE;
 
 		/* Fog. */
 		if (ctx->Fog.Enabled)

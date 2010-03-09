@@ -846,6 +846,12 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
       pipe_semaphore_signal(&rast->tasks[i].work_ready);
    }
 
+   /* Wait for threads to terminate before cleaning up per-thread data */
+   for (i = 0; i < rast->num_threads; i++) {
+      pipe_thread_wait(rast->threads[i]);
+   }
+
+   /* Clean up per-thread data */
    for (i = 0; i < rast->num_threads; i++) {
       pipe_semaphore_destroy(&rast->tasks[i].work_ready);
       pipe_semaphore_destroy(&rast->tasks[i].work_done);

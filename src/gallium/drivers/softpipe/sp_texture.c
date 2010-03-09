@@ -36,6 +36,7 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_simple_screen.h"
 
 #include "sp_context.h"
 #include "sp_texture.h"
@@ -121,7 +122,8 @@ softpipe_texture_create(struct pipe_screen *screen,
                util_is_power_of_two(template->depth0));
 
    if (spt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                              PIPE_TEXTURE_USAGE_PRIMARY)) {
+                              PIPE_TEXTURE_USAGE_SCANOUT |
+                              PIPE_TEXTURE_USAGE_SHARED)) {
       if (!softpipe_displaytarget_layout(screen, spt))
          goto fail;
    }
@@ -138,20 +140,6 @@ softpipe_texture_create(struct pipe_screen *screen,
 }
 
 
-/**
- * Create a new pipe_texture which wraps an existing buffer.
- */
-static struct pipe_texture *
-softpipe_texture_blanket(struct pipe_screen * screen,
-                         const struct pipe_texture *base,
-                         const unsigned *stride,
-                         struct pipe_buffer *buffer)
-{
-   /* Texture blanket is going away.
-    */
-   debug_printf("softpipe_texture_blanket() not implemented!");
-   return NULL;
-}
 
 
 static void
@@ -463,7 +451,6 @@ void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = softpipe_texture_create;
-   screen->texture_blanket = softpipe_texture_blanket;
    screen->texture_destroy = softpipe_texture_destroy;
 
    screen->get_tex_surface = softpipe_get_tex_surface;

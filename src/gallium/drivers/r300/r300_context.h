@@ -124,13 +124,15 @@ struct r300_texture_format_state {
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
 };
 
+#define R300_MAX_TEXTURE_LEVELS 13
+
 struct r300_texture_fb_state {
     /* Colorbuffer. */
-    uint32_t colorpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_COLORPITCH[0-3]*/
+    uint32_t colorpitch[R300_MAX_TEXTURE_LEVELS]; /* R300_RB3D_COLORPITCH[0-3]*/
     uint32_t us_out_fmt; /* R300_US_OUT_FMT[0-3] */
 
     /* Zbuffer. */
-    uint32_t depthpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_DEPTHPITCH */
+    uint32_t depthpitch[R300_MAX_TEXTURE_LEVELS]; /* R300_RB3D_DEPTHPITCH */
     uint32_t zb_format; /* R300_ZB_FORMAT */
 };
 
@@ -236,16 +238,16 @@ struct r300_texture {
     struct pipe_texture tex;
 
     /* Offsets into the buffer. */
-    unsigned offset[PIPE_MAX_TEXTURE_LEVELS];
+    unsigned offset[R300_MAX_TEXTURE_LEVELS];
 
     /* A pitch for each mip-level */
-    unsigned pitch[PIPE_MAX_TEXTURE_LEVELS];
+    unsigned pitch[R300_MAX_TEXTURE_LEVELS];
 
     /* Size of one zslice or face based on the texture target */
-    unsigned layer_size[PIPE_MAX_TEXTURE_LEVELS];
+    unsigned layer_size[R300_MAX_TEXTURE_LEVELS];
 
     /* Whether the mipmap level is macrotiled. */
-    enum r300_buffer_tiling mip_macrotile[PIPE_MAX_TEXTURE_LEVELS];
+    enum r300_buffer_tiling mip_macrotile[R300_MAX_TEXTURE_LEVELS];
 
     /**
      * If non-zero, override the natural texture layout with
@@ -368,6 +370,8 @@ struct r300_context {
     boolean polygon_offset_enabled;
     /* Z buffer bit depth. */
     uint32_t zbuffer_bpp;
+    /* Whether scissor is enabled. */
+    boolean scissor_enabled;
 };
 
 /* Convenience cast wrapper. */

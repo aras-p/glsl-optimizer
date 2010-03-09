@@ -1895,7 +1895,7 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
       _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->StencilFP);
       _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
 
-      for (bit = 0; bit < ctx->Visual.stencilBits; bit++) {
+      for (bit = 0; bit < ctx->DrawBuffer->Visual.stencilBits; bit++) {
          const GLuint mask = 1 << bit;
          if (mask & origStencilMask) {
             _mesa_StencilFunc(GL_ALWAYS, mask, mask);

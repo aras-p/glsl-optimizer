@@ -6,6 +6,18 @@ struct nouveau_screen {
 	struct nouveau_device *device;
 	struct nouveau_channel *channel;
 
+        /**
+         * Create a new texture object, using the given template info, but on top of
+         * existing memory.
+         * 
+         * It is assumed that the buffer data is layed out according to the expected
+         * by the hardware. NULL will be returned if any inconsistency is found.  
+         */
+        struct pipe_texture * (*texture_blanket)(struct pipe_screen *,
+                                                 const struct pipe_texture *templat,
+                                                 const unsigned *stride,
+                                                 struct pipe_buffer *buffer);
+
 	int (*pre_pipebuffer_map_callback) (struct pipe_screen *pscreen,
 		struct pipe_buffer *pb, unsigned usage);
 };

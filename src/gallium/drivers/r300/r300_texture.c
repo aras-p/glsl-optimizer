@@ -617,18 +617,23 @@ static unsigned r300_texture_get_tile_size(struct r300_texture* tex,
 /* Return true if macrotiling should be enabled on the miplevel. */
 static boolean r300_texture_macro_switch(struct r300_texture *tex,
                                          unsigned level,
-                                         boolean rv350_mode)
+                                         boolean rv350_mode,
+                                         int dim)
 {
-    unsigned tile_width, width;
+    unsigned tile, texdim;
 
-    tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH, TRUE);
-    width = u_minify(tex->tex.width0, level);
+    tile = r300_texture_get_tile_size(tex, dim, TRUE);
+    if (dim == TILE_WIDTH) {
+        texdim = u_minify(tex->tex.width0, level);
+    } else {
+        texdim = u_minify(tex->tex.height0, level);
+    }
 
     /* See TX_FILTER1_n.MACRO_SWITCH. */
     if (rv350_mode) {
-        return width >= tile_width;
+        return texdim >= tile;
     } else {
-        return width > tile_width;
+        return texdim > tile;
     }
 }
 
@@ -692,9 +697,10 @@ static void r300_setup_miptree(struct r300_screen* screen,
 
     for (i = 0; i <= base->last_level; i++) {
         /* Let's see if this miplevel can be macrotiled. */
-        tex->mip_macrotile[i] = (tex->macrotile == R300_BUFFER_TILED &&
-                                 r300_texture_macro_switch(tex, i, rv350_mode)) ?
-                                 R300_BUFFER_TILED : R300_BUFFER_LINEAR;
+        tex->mip_macrotile[i] =
+            (tex->macrotile == R300_BUFFER_TILED &&
+             r300_texture_macro_switch(tex, i, rv350_mode, TILE_WIDTH)) ?
+             R300_BUFFER_TILED : R300_BUFFER_LINEAR;
 
         stride = r300_texture_get_stride(screen, tex, i);
         nblocksy = r300_texture_get_nblocksy(tex, i);
@@ -724,10 +730,46 @@ static void r300_setup_flags(struct r300_texture* tex)
                    !util_is_power_of_two(tex->tex.height0);
 }
 
+static void r300_setup_tiling(struct pipe_screen *screen,
+                              struct r300_texture *tex)
+{
+    enum pipe_format format = tex->tex.format;
+    boolean rv350_mode = r300_screen(screen)->caps->family >= CHIP_FAMILY_RV350;
+
+    if (util_format_is_compressed(format)) {
+        return;
+    }
+
+    if (tex->tex.width0 == 1 ||
+        tex->tex.height0 == 1) {
+        return;
+    }
+
+    /* Set microtiling. */
+    switch (util_format_get_blocksize(format)) {
+        case 1:
+        case 4:
+            tex->microtile = R300_BUFFER_TILED;
+            break;
+
+        /* XXX Square-tiling doesn't work with kernel older than 2.6.34,
+         * XXX need to check the DRM version */
+        /*case 2:
+        case 8:
+            tex->microtile = R300_BUFFER_SQUARETILED;
+            break;*/
+    }
+
+    /* Set macrotiling. */
+    if (r300_texture_macro_switch(tex, 0, rv350_mode, TILE_WIDTH) &&
+        r300_texture_macro_switch(tex, 0, rv350_mode, TILE_HEIGHT)) {
+        tex->macrotile = R300_BUFFER_TILED;
+    }
+}
+
 /* Create a new texture. */
-static struct pipe_texture*
-    r300_texture_create(struct pipe_screen* screen,
-                        const struct pipe_texture* template)
+static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
+                                         const struct pipe_texture* template)
 {
     struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
     struct r300_screen* rscreen = r300_screen(screen);
@@ -742,6 +784,9 @@ static struct pipe_texture*
     tex->tex.screen = screen;
 
     r300_setup_flags(tex);
+    if (!(template->tex_usage & R300_TEXTURE_USAGE_TRANSFER)) {
+        r300_setup_tiling(screen, tex);
+    }
     r300_setup_miptree(rscreen, tex);
     r300_setup_texture_state(rscreen, tex);
 
@@ -806,19 +851,27 @@ static void r300_tex_surface_destroy(struct pipe_surface* s)
     FREE(s);
 }
 
+
 static struct pipe_texture*
-    r300_texture_blanket(struct pipe_screen* screen,
-                         const struct pipe_texture* base,
-                         const unsigned* stride,
-                         struct pipe_buffer* buffer)
+    r300_texture_from_handle(struct pipe_screen* screen,
+                             const struct pipe_texture* base,
+                             struct winsys_handle *whandle)
 {
-    struct r300_texture* tex;
+    struct radeon_winsys* winsys = (struct radeon_winsys*)screen->winsys;
     struct r300_screen* rscreen = r300_screen(screen);
+    struct pipe_buffer *buffer;
+    struct r300_texture* tex;
+    unsigned stride;
 
     /* Support only 2D textures without mipmaps */
     if (base->target != PIPE_TEXTURE_2D ||
         base->depth0 != 1 ||
         base->last_level != 0) {
+        return NULL;
+    }
+
+    buffer = winsys->buffer_from_handle(winsys, screen, whandle, &stride);
+    if (!buffer) {
         return NULL;
     }
 
@@ -831,15 +884,36 @@ static struct pipe_texture*
     pipe_reference_init(&tex->tex.reference, 1);
     tex->tex.screen = screen;
 
-    tex->stride_override = *stride;
-    tex->pitch[0] = *stride / util_format_get_blocksize(base->format);
+    tex->stride_override = stride;
+    tex->pitch[0] = stride / util_format_get_blocksize(base->format);
 
     r300_setup_flags(tex);
     r300_setup_texture_state(rscreen, tex);
 
-    pipe_buffer_reference(&tex->buffer, buffer);
+    /* one ref already taken */
+    tex->buffer = buffer;
 
     return (struct pipe_texture*)tex;
+}
+
+static boolean
+    r300_texture_get_handle(struct pipe_screen* screen,
+                            struct pipe_texture *texture,
+                            struct winsys_handle *whandle)
+{
+    struct radeon_winsys* winsys = (struct radeon_winsys*)screen->winsys;
+    struct r300_texture* tex = (struct r300_texture*)texture;
+    unsigned stride;
+
+    if (!tex) {
+        return FALSE;
+    }
+
+    stride = r300_texture_get_stride(r300_screen(screen), tex, 0);
+
+    winsys->buffer_get_handle(winsys, tex->buffer, stride, whandle);
+
+    return TRUE;
 }
 
 static struct pipe_video_surface *
@@ -893,30 +967,13 @@ static void r300_video_surface_destroy(struct pipe_video_surface *vsfc)
 void r300_init_screen_texture_functions(struct pipe_screen* screen)
 {
     screen->texture_create = r300_texture_create;
+    screen->texture_from_handle = r300_texture_from_handle;
+    screen->texture_get_handle = r300_texture_get_handle;
     screen->texture_destroy = r300_texture_destroy;
     screen->get_tex_surface = r300_get_tex_surface;
     screen->tex_surface_destroy = r300_tex_surface_destroy;
-    screen->texture_blanket = r300_texture_blanket;
 
     screen->video_surface_create = r300_video_surface_create;
     screen->video_surface_destroy= r300_video_surface_destroy;
 }
 
-boolean r300_get_texture_buffer(struct pipe_screen* screen,
-                                struct pipe_texture* texture,
-                                struct pipe_buffer** buffer,
-                                unsigned* stride)
-{
-    struct r300_texture* tex = (struct r300_texture*)texture;
-    if (!tex) {
-        return FALSE;
-    }
-
-    pipe_buffer_reference(buffer, tex->buffer);
-
-    if (stride) {
-        *stride = r300_texture_get_stride(r300_screen(screen), tex, 0);
-    }
-
-    return TRUE;
-}

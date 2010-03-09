@@ -7,6 +7,8 @@ env.Append(CPPPATH = [
     'util',
 ])
 
+env.Tool('udis86')
+
 env.CodeGenerate(
     target = 'indices/u_indices_gen.c', 
     script = 'indices/u_indices_gen.py', 
@@ -149,6 +151,7 @@ source = [
     'util/u_draw_quad.c',
     'util/u_format_access.c',
     'util/u_format_table.c',
+    'util/u_format_tests.c',
     'util/u_gen_mipmap.c',
     'util/u_handle_table.c',
     'util/u_hash.c',

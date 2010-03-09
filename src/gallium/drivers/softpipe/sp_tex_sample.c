@@ -55,7 +55,7 @@
 static INLINE float
 frac(float f)
 {
-   return f - util_ifloor(f);
+   return f - floorf(f);
 }
 
 
@@ -201,11 +201,9 @@ wrap_nearest_mirror_repeat(const float s[4], unsigned size, int icoord[4])
    const float max = 1.0F - min;
    for (ch = 0; ch < 4; ch++) {
       const int flr = util_ifloor(s[ch]);
-      float u;
+      float u = frac(s[ch]);
       if (flr & 1)
-         u = 1.0F - (s[ch] - (float) flr);
-      else
-         u = s[ch] - (float) flr;
+         u = 1.0F - u;
       if (u < min)
          icoord[ch] = 0;
       else if (u > max)
@@ -358,11 +356,9 @@ wrap_linear_mirror_repeat(const float s[4], unsigned size,
    uint ch;
    for (ch = 0; ch < 4; ch++) {
       const int flr = util_ifloor(s[ch]);
-      float u;
+      float u = frac(s[ch]);
       if (flr & 1)
-         u = 1.0F - (s[ch] - (float) flr);
-      else
-         u = s[ch] - (float) flr;
+         u = 1.0F - u;
       u = u * size - 0.5F;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
@@ -441,8 +437,7 @@ wrap_linear_mirror_clamp_to_border(const float s[4], unsigned size,
 
 
 /**
- * For RECT textures / unnormalized texcoords
- * Only a subset of wrap modes supported.
+ * PIPE_TEX_WRAP_CLAMP for nearest sampling, unnormalized coords.
  */
 static void
 wrap_nearest_unorm_clamp(const float s[4], unsigned size, int icoord[4])
@@ -456,11 +451,25 @@ wrap_nearest_unorm_clamp(const float s[4], unsigned size, int icoord[4])
 
 
 /**
- * Handles clamp_to_edge and clamp_to_border:
+ * PIPE_TEX_WRAP_CLAMP_TO_BORDER for nearest sampling, unnormalized coords.
  */
 static void
 wrap_nearest_unorm_clamp_to_border(const float s[4], unsigned size,
                                    int icoord[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      icoord[ch]= util_ifloor( CLAMP(s[ch], -0.5F, (float) size + 0.5F) );
+   }
+}
+
+
+/**
+ * PIPE_TEX_WRAP_CLAMP_TO_EDGE for nearest sampling, unnormalized coords.
+ */
+static void
+wrap_nearest_unorm_clamp_to_edge(const float s[4], unsigned size,
+                                 int icoord[4])
 {
    uint ch;
    for (ch = 0; ch < 4; ch++) {
@@ -470,8 +479,7 @@ wrap_nearest_unorm_clamp_to_border(const float s[4], unsigned size,
 
 
 /**
- * For RECT textures / unnormalized texcoords.
- * Only a subset of wrap modes supported.
+ * PIPE_TEX_WRAP_CLAMP for linear sampling, unnormalized coords.
  */
 static void
 wrap_linear_unorm_clamp(const float s[4], unsigned size,
@@ -488,13 +496,36 @@ wrap_linear_unorm_clamp(const float s[4], unsigned size,
 }
 
 
+/**
+ * PIPE_TEX_WRAP_CLAMP_TO_BORDER for linear sampling, unnormalized coords.
+ */
 static void
 wrap_linear_unorm_clamp_to_border(const float s[4], unsigned size,
                                   int icoord0[4], int icoord1[4], float w[4])
 {
    uint ch;
    for (ch = 0; ch < 4; ch++) {
-      float u = CLAMP(s[ch], 0.5F, (float) size - 0.5F);
+      float u = CLAMP(s[ch], -0.5F, (float) size + 0.5F);
+      u -= 0.5F;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      if (icoord1[ch] > (int) size - 1)
+         icoord1[ch] = size - 1;
+      w[ch] = frac(u);
+   }
+}
+
+
+/**
+ * PIPE_TEX_WRAP_CLAMP_TO_EDGE for linear sampling, unnormalized coords.
+ */
+static void
+wrap_linear_unorm_clamp_to_edge(const float s[4], unsigned size,
+                                int icoord0[4], int icoord1[4], float w[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = CLAMP(s[ch], +0.5F, (float) size - 0.5F);
       u -= 0.5F;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
@@ -1711,6 +1742,7 @@ get_nearest_unorm_wrap(unsigned mode)
    case PIPE_TEX_WRAP_CLAMP:
       return wrap_nearest_unorm_clamp;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return wrap_nearest_unorm_clamp_to_edge;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return wrap_nearest_unorm_clamp_to_border;
    default:
@@ -1754,6 +1786,7 @@ get_linear_unorm_wrap(unsigned mode)
    case PIPE_TEX_WRAP_CLAMP:
       return wrap_linear_unorm_clamp;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return wrap_linear_unorm_clamp_to_edge;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return wrap_linear_unorm_clamp_to_border;
    default:

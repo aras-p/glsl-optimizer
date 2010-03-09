@@ -197,11 +197,11 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 
     if (!crtcp->cursor_tex) {
 	struct pipe_texture templat;
-	unsigned pitch;
+	struct winsys_handle whandle;
 
 	memset(&templat, 0, sizeof(templat));
 	templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
-	templat.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
+	templat.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
 	templat.target = PIPE_TEXTURE_2D;
 	templat.last_level = 0;
 	templat.depth0 = 1;
@@ -209,13 +209,14 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	templat.width0 = 64;
 	templat.height0 = 64;
 
+	memset(&whandle, 0, sizeof(whandle));
+	whandle.type = DRM_API_HANDLE_TYPE_KMS;
+
 	crtcp->cursor_tex = ms->screen->texture_create(ms->screen,
 						       &templat);
-	ms->api->local_handle_from_texture(ms->api,
-					   ms->screen,
-					   crtcp->cursor_tex,
-					   &pitch,
-					   &crtcp->cursor_handle);
+	ms->screen->texture_get_handle(ms->screen, crtcp->cursor_tex, &whandle);
+
+	crtcp->cursor_handle = whandle.handle;
     }
 
     transfer = ms->screen->get_tex_transfer(ms->screen, crtcp->cursor_tex,

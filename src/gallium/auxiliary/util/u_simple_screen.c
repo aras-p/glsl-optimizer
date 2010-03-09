@@ -59,22 +59,7 @@ pass_user_buffer_create(struct pipe_screen *screen,
    return buffer;
 }
 
-static struct pipe_buffer *
-pass_surface_buffer_create(struct pipe_screen *screen,
-                           unsigned width, unsigned height,
-                           enum pipe_format format,
-                           unsigned usage,
-                           unsigned tex_usage,
-                           unsigned *stride)
-{
-   struct pipe_buffer *buffer =
-      screen->winsys->surface_buffer_create(screen->winsys, width, height,
-                                            format, usage, tex_usage, stride);
 
-   buffer->screen = screen;
-
-   return buffer;
-}
 
 static void *
 pass_buffer_map(struct pipe_screen *screen,
@@ -135,7 +120,6 @@ u_simple_screen_init(struct pipe_screen *screen)
 {
    screen->buffer_create = pass_buffer_create;
    screen->user_buffer_create = pass_user_buffer_create;
-   screen->surface_buffer_create = pass_surface_buffer_create;
 
    screen->buffer_map = pass_buffer_map;
    screen->buffer_unmap = pass_buffer_unmap;

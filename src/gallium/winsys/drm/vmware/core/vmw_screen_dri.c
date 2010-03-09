@@ -44,6 +44,16 @@
 
 #include <stdio.h>
 
+static struct svga_winsys_surface *
+vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
+			    struct winsys_handle *whandle,
+			    SVGA3dSurfaceFormat *format);
+static boolean
+vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
+			   struct svga_winsys_surface *surface,
+			   unsigned stride,
+			   struct winsys_handle *whandle);
+
 static struct dri1_api dri1_api_hooks;
 static struct dri1_api_version ddx_required = { 0, 1, 0 };
 static struct dri1_api_version ddx_compat = { 0, 0, 0 };
@@ -129,7 +139,12 @@ vmw_drm_create_screen(struct drm_api *drm_api,
 				     &drm_compat, "use old scanout field (not a error)"))
 	    use_old_scanout_flag = TRUE;
 	 dri1->api = &dri1_api_hooks;
+#if 0
 	 break;
+#else
+	 assert(!"No dri 1 support for now\n");
+	 return NULL;
+#endif
       default:
 	 return NULL;
       }
@@ -138,6 +153,10 @@ vmw_drm_create_screen(struct drm_api *drm_api,
    vws = vmw_winsys_create( fd, use_old_scanout_flag );
    if (!vws)
       goto out_no_vws;
+
+   /* XXX do this properly */
+   vws->base.surface_from_handle = vmw_drm_surface_from_handle;
+   vws->base.surface_get_handle = vmw_drm_surface_get_handle;
 
    screen = svga_screen_create( &vws->base );
    if (!screen)
@@ -200,6 +219,7 @@ vmw_dri1_present_locked(struct pipe_context *locked_pipe,
 			const struct drm_clip_rect *bbox,
 			struct pipe_fence_handle **p_fence)
 {
+#if 0
    struct svga_winsys_surface *srf =
       svga_screen_texture_get_winsys_surface(surf->texture);
    struct vmw_svga_winsys_surface *vsrf = vmw_svga_winsys_surface(srf);
@@ -246,21 +266,19 @@ vmw_dri1_present_locked(struct pipe_context *locked_pipe,
 
    *p_fence = (visible) ? vmw_pipe_fence(fence_seq) : NULL;
    vmw_svga_winsys_surface_reference(&vsrf, NULL);
+#else
+   assert(!"No dri 1 support for now\n");
+#endif
 }
 
-static struct pipe_texture *
-vmw_drm_texture_from_handle(struct drm_api *drm_api,
-			    struct pipe_screen *screen,
-			    struct pipe_texture *templat,
-			    const char *name,
-			    unsigned stride,
-			    unsigned handle)
+static struct svga_winsys_surface *
+vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
+			    struct winsys_handle *whandle,
+			    SVGA3dSurfaceFormat *format)
 {
     struct vmw_svga_winsys_surface *vsrf;
     struct svga_winsys_surface *ssrf;
-    struct vmw_winsys_screen *vws =
-	vmw_winsys_screen(svga_winsys_screen(screen));
-    struct pipe_texture *tex;
+    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
     union drm_vmw_surface_reference_arg arg;
     struct drm_vmw_surface_arg *req = &arg.req;
     struct drm_vmw_surface_create_req *rep = &arg.rep;
@@ -273,7 +291,7 @@ vmw_drm_texture_from_handle(struct drm_api *drm_api,
      */
 
     memset(&arg, 0, sizeof(arg));
-    req->sid = handle;
+    req->sid = whandle->handle;
 
     ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_REF_SURFACE,
 			      &arg, sizeof(arg));
@@ -281,14 +299,14 @@ vmw_drm_texture_from_handle(struct drm_api *drm_api,
     if (ret) {
 	fprintf(stderr, "Failed referencing shared surface. SID %d.\n"
 		"Error %d (%s).\n",
-		handle, ret, strerror(-ret));
+		whandle->handle, ret, strerror(-ret));
 	return NULL;
     }
 
     if (rep->mip_levels[0] != 1) {
 	fprintf(stderr, "Incorrect number of mipmap levels on shared surface."
 		" SID %d, levels %d\n",
-		handle, rep->mip_levels[0]);
+		whandle->handle, rep->mip_levels[0]);
 	goto out_mip;
     }
 
@@ -296,7 +314,7 @@ vmw_drm_texture_from_handle(struct drm_api *drm_api,
 	if (rep->mip_levels[i] != 0) {
 	    fprintf(stderr, "Incorrect number of faces levels on shared surface."
 		    " SID %d, face %d present.\n",
-		    handle, i);
+		    whandle->handle, i);
 	    goto out_mip;
 	}
     }
@@ -308,38 +326,32 @@ vmw_drm_texture_from_handle(struct drm_api *drm_api,
     pipe_reference_init(&vsrf->refcnt, 1);
     p_atomic_set(&vsrf->validated, 0);
     vsrf->screen = vws;
-    vsrf->sid = handle;
+    vsrf->sid = whandle->handle;
     ssrf = svga_winsys_surface(vsrf);
-    tex = svga_screen_texture_wrap_surface(screen, templat, rep->format, ssrf);
-    if (!tex)
-	vmw_svga_winsys_surface_reference(&vsrf, NULL);
+    *format = rep->format;
 
-    return tex;
-  out_mip:
-    vmw_ioctl_surface_destroy(vws, handle);
+    return ssrf;
+
+out_mip:
+    vmw_ioctl_surface_destroy(vws, whandle->handle);
     return NULL;
 }
 
 static boolean
-vmw_drm_handle_from_texture(struct drm_api *drm_api,
-                           struct pipe_screen *screen,
-			   struct pipe_texture *texture,
-			   unsigned *stride,
-			   unsigned *handle)
+vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
+			   struct svga_winsys_surface *surface,
+			   unsigned stride,
+			   struct winsys_handle *whandle)
 {
-    struct svga_winsys_surface *surface =
-	svga_screen_texture_get_winsys_surface(texture);
     struct vmw_svga_winsys_surface *vsrf;
 
     if (!surface)
 	return FALSE;
 
     vsrf = vmw_svga_winsys_surface(surface);
-    *handle = vsrf->sid;
-    *stride = util_format_get_nblocksx(texture->format, texture->width0) *
-       util_format_get_blocksize(texture->format);
+    whandle->handle = vsrf->sid;
+    whandle->stride = stride;
 
-    vmw_svga_winsys_surface_reference(&vsrf, NULL);
     return TRUE;
 }
 
@@ -353,9 +365,6 @@ static struct drm_api vmw_drm_api_hooks = {
    .name = "vmwgfx",
    .driver_name = "vmwgfx",
    .create_screen = vmw_drm_create_screen,
-   .texture_from_shared_handle = vmw_drm_texture_from_handle,
-   .shared_handle_from_texture = vmw_drm_handle_from_texture,
-   .local_handle_from_texture = vmw_drm_handle_from_texture,
 };
 
 struct drm_api* drm_api_create()

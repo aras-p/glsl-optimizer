@@ -126,7 +126,8 @@ native_get_name(void)
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy)
+native_create_display(EGLNativeDisplayType dpy,
+                      struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
    boolean force_sw;
@@ -136,7 +137,7 @@ native_create_display(EGLNativeDisplayType dpy)
 
    force_sw = debug_get_bool_option("EGL_SOFTWARE", FALSE);
    if (api && !force_sw) {
-      ndpy = x11_create_dri2_display(dpy, api);
+      ndpy = x11_create_dri2_display(dpy, event_handler, api);
    }
 
    if (!ndpy) {

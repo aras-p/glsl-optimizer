@@ -48,6 +48,8 @@ struct dri2_display {
    Display *dpy;
    boolean own_dpy;
 
+   struct native_event_handler *event_handler;
+
    struct drm_api *api;
    struct x11_screen *xscr;
    int xscr_number;
@@ -112,6 +114,7 @@ dri2_surface_process_drawable_buffers(struct native_surface *nsurf,
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
    struct pipe_texture templ;
+   struct winsys_handle whandle;
    uint valid_mask;
    int i;
 
@@ -169,9 +172,11 @@ dri2_surface_process_drawable_buffers(struct native_surface *nsurf,
          continue;
       }
 
-      dri2surf->textures[natt] =
-         dri2dpy->api->texture_from_shared_handle(dri2dpy->api,
-               dri2dpy->base.screen, &templ, desc, xbuf->pitch, xbuf->name);
+      memset(&whandle, 0, sizeof(whandle));
+      whandle.stride = xbuf->pitch;
+      whandle.handle = xbuf->name;
+      dri2surf->textures[natt] = dri2dpy->base.screen->texture_from_handle(
+         dri2dpy->base.screen, &templ, &whandle);
       if (dri2surf->textures[natt])
          valid_mask |= 1 << natt;
    }
@@ -324,8 +329,11 @@ dri2_surface_flush_frontbuffer(struct native_surface *nsurf)
             DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
 
    /* force buffers to be updated in next validation call */
-   if (!dri2_surface_receive_events(&dri2surf->base))
+   if (!dri2_surface_receive_events(&dri2surf->base)) {
       dri2surf->server_stamp++;
+      dri2dpy->event_handler->invalid_surface(&dri2dpy->base,
+            &dri2surf->base, dri2surf->server_stamp);
+   }
 
    return TRUE;
 }
@@ -353,8 +361,11 @@ dri2_surface_swap_buffers(struct native_surface *nsurf)
             DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
 
    /* force buffers to be updated in next validation call */
-   if (!dri2_surface_receive_events(&dri2surf->base))
+   if (!dri2_surface_receive_events(&dri2surf->base)) {
       dri2surf->server_stamp++;
+      dri2dpy->event_handler->invalid_surface(&dri2dpy->base,
+            &dri2surf->base, dri2surf->server_stamp);
+   }
 
    return TRUE;
 }
@@ -699,6 +710,25 @@ dri2_display_is_pixmap_supported(struct native_display *ndpy,
    return (depth == nconf_depth || (depth == 24 && depth + 8 == nconf_depth));
 }
 
+static int
+dri2_display_get_param(struct native_display *ndpy,
+                       enum native_param_type param)
+{
+   int val;
+
+   switch (param) {
+   case NATIVE_PARAM_USE_NATIVE_BUFFER:
+      /* DRI2GetBuffers use the native buffers */
+      val = TRUE;
+      break;
+   default:
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
 static void
 dri2_display_destroy(struct native_display *ndpy)
 {
@@ -737,7 +767,10 @@ dri2_display_invalidate_buffers(struct x11_screen *xscr, Drawable drawable,
       return;
 
    dri2surf = dri2_surface(nsurf);
+
    dri2surf->server_stamp++;
+   dri2dpy->event_handler->invalid_surface(&dri2dpy->base,
+         &dri2surf->base, dri2surf->server_stamp);
 }
 
 /**
@@ -796,7 +829,9 @@ dri2_display_hash_table_compare(void *key1, void *key2)
 }
 
 struct native_display *
-x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
+x11_create_dri2_display(EGLNativeDisplayType dpy,
+                        struct native_event_handler *event_handler,
+                        struct drm_api *api)
 {
    struct dri2_display *dri2dpy;
 
@@ -804,6 +839,7 @@ x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
    if (!dri2dpy)
       return NULL;
 
+   dri2dpy->event_handler = event_handler;
    dri2dpy->api = api;
 
    dri2dpy->dpy = dpy;
@@ -836,6 +872,7 @@ x11_create_dri2_display(EGLNativeDisplayType dpy, struct drm_api *api)
    }
 
    dri2dpy->base.destroy = dri2_display_destroy;
+   dri2dpy->base.get_param = dri2_display_get_param;
    dri2dpy->base.get_configs = dri2_display_get_configs;
    dri2dpy->base.is_pixmap_supported = dri2_display_is_pixmap_supported;
    dri2dpy->base.create_window_surface = dri2_display_create_window_surface;
