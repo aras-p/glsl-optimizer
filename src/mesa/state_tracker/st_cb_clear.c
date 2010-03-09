@@ -220,6 +220,7 @@ clear_with_quad(GLcontext *ctx,
    cso_save_rasterizer(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
    cso_save_vertex_shader(st->cso_context);
+   cso_save_vertex_elements(st->cso_context);
 
    /* blend state: RGBA masking */
    {
@@ -271,6 +272,8 @@ clear_with_quad(GLcontext *ctx,
       cso_set_depth_stencil_alpha(st->cso_context, &depth_stencil);
    }
 
+   cso_set_vertex_elements(st->cso_context, 2, st->velems_util_draw);
+
    cso_set_rasterizer(st->cso_context, &st->clear.raster);
 
    cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
@@ -286,6 +289,7 @@ clear_with_quad(GLcontext *ctx,
    cso_restore_rasterizer(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);
+   cso_restore_vertex_elements(st->cso_context);
 
 }
 

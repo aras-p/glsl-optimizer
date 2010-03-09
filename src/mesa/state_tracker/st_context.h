@@ -173,6 +173,9 @@ struct st_context
       unsigned vbuf_slot;
    } clear;
 
+   /** used for anything using util_draw_vertex_buffer */
+   struct pipe_vertex_element velems_util_draw[3];
+
    void *passthrough_fs;  /**< simple pass-through frag shader */
 
    struct gen_mipmap_state *gen_mipmap;
