@@ -1,5 +1,6 @@
 #######################################################################
-# SConscript for gdi winsys
+# SConscript for xlib winsys
+
 
 Import('*')
 
@@ -8,46 +9,15 @@ if env['platform'] == 'windows':
     env = env.Clone()
 
     env.Append(CPPPATH = [
-        '#src/gallium/state_trackers/wgl',
+        '#/src/gallium/include',
+        '#/src/gallium/auxiliary',
+        '#/src/gallium/drivers',
     ])
 
-    env.Append(LIBS = [
-        'gdi32',
-        'user32',
-        'kernel32',
-        'ws2_32',
-    ])
-
-    sources = []
-    drivers = []
-
-    if 'softpipe' in env['drivers']:
-        sources = ['gdi_sw_winsys.c',
-                   'gdi_softpipe_winsys.c']
-        drivers = [softpipe]
-
-    if 'llvmpipe' in env['drivers']:
-        env.Tool('llvm')
-        if 'LLVM_VERSION' in env:
-            sources = ['gdi_sw_winsys.c',
-                       'gdi_llvmpipe_winsys.c']
-            drivers = [llvmpipe]
-
-    if not sources or not drivers:
-        print 'warning: softpipe or llvmpipe not selected, gdi winsys disabled'
-        Return()
-    
-    if env['gcc']:
-        sources += ['#src/gallium/state_trackers/wgl/opengl32.mingw.def']
-    else:
-        sources += ['#src/gallium/state_trackers/wgl/opengl32.def']
-        
-    drivers += [trace]
-
-    env['no_import_lib'] = 1
-
-    env.SharedLibrary(
-        target ='opengl32',
-        source = sources,
-        LIBS = wgl + glapi + mesa + drivers + gallium + glsl + env['LIBS'],
+    ws_xlib = env.ConvenienceLibrary(
+        target = 'ws_gdi',
+        source = [
+           'gdi_sw_winsys.c',
+        ]
     )
+    Export('ws_gdi')

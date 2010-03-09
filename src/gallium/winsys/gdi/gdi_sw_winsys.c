@@ -28,7 +28,7 @@
 
 /**
  * @file
- * LLVMpipe support.
+ * GDI software rasterizer support.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
