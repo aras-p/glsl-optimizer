@@ -405,6 +405,7 @@ _glapi_add_dispatch( const char * const * function_names,
    unsigned i;
    int offset = ~0;
 
+   init_glapi_relocs_once();
 
    (void) memset( is_static, 0, sizeof( is_static ) );
    (void) memset( entry, 0, sizeof( entry ) );
@@ -532,6 +533,8 @@ _glapi_get_proc_address(const char *funcName)
 {
    _glapi_proc func;
    struct _glapi_function * entry;
+
+   init_glapi_relocs_once();
 
 #ifdef MANGLE
    /* skip the prefix on the name */
