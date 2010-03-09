@@ -60,7 +60,6 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->rs_block_state.state);
     FREE(r300->scissor_state.state);
     FREE(r300->textures_state.state);
-    FREE(r300->vertex_stream_state.state);
     FREE(r300->vap_output_state.state);
     FREE(r300->viewport_state.state);
     FREE(r300->ztop_state.state);
@@ -147,7 +146,6 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
     r300->textures_state.state = CALLOC_STRUCT(r300_textures_state);
-    r300->vertex_stream_state.state = CALLOC_STRUCT(r300_vertex_stream_state);
     r300->vap_output_state.state = CALLOC_STRUCT(r300_vap_output_state);
     r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
