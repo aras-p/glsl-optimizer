@@ -34,6 +34,23 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 
+static GLboolean can_do_pln(struct intel_context *intel,
+			    const struct brw_reg *deltas)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+
+   if (!brw->has_pln)
+      return GL_FALSE;
+
+   if (deltas[1].nr != deltas[0].nr + 1)
+      return GL_FALSE;
+
+   if (intel->gen < 6 && ((deltas[0].nr & 1) != 0))
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
 /* Not quite sure how correct this is - need to understand horiz
  * vs. vertical strides a little better.
  */
@@ -186,6 +203,7 @@ void emit_pixel_w(struct brw_wm_compile *c,
 		  const struct brw_reg *deltas)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
 
    /* Don't need this if all you are doing is interpolating color, for
     * instance.
@@ -196,8 +214,12 @@ void emit_pixel_w(struct brw_wm_compile *c,
       /* Calc 1/w - just linterp wpos[3] optimized by putting the
        * result straight into a message reg.
        */
-      brw_LINE(p, brw_null_reg(), interp3, deltas[0]);
-      brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), deltas[1]);
+      if (can_do_pln(intel, deltas)) {
+	 brw_PLN(p, brw_message_reg(2), interp3, deltas[0]);
+      } else {
+	 brw_LINE(p, brw_null_reg(), interp3, deltas[0]);
+	 brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), deltas[1]);
+      }
 
       /* Calc w */
       if (c->dispatch_width == 16) {
@@ -224,6 +246,7 @@ void emit_linterp(struct brw_compile *p,
 		  const struct brw_reg *arg0,
 		  const struct brw_reg *deltas)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
    GLuint i;
@@ -235,8 +258,12 @@ void emit_linterp(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {
-	 brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
-	 brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+	 if (can_do_pln(intel, deltas)) {
+	    brw_PLN(p, dst[i], interp[i], deltas[0]);
+	 } else {
+	    brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
+	    brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+	 }
       }
    }
 }
@@ -249,6 +276,7 @@ void emit_pinterp(struct brw_compile *p,
 		  const struct brw_reg *deltas,
 		  const struct brw_reg *w)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
    GLuint i;
@@ -260,8 +288,12 @@ void emit_pinterp(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {
-	 brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
-	 brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+	 if (can_do_pln(intel, deltas)) {
+	    brw_PLN(p, dst[i], interp[i], deltas[0]);
+	 } else {
+	    brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
+	    brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+	 }
       }
    }
    for (i = 0; i < 4; i++) {

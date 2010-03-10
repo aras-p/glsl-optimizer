@@ -50,6 +50,7 @@ struct {
     [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_MACH] = { .name = "mach", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_PLN] = { .name = "pln", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SAD2] = { .name = "sad2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SADA2] = { .name = "sada2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP4] = { .name = "dp4", .nsrc = 2, .ndst = 1 },

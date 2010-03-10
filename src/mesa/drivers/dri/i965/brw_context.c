@@ -156,6 +156,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       brw->has_surface_tile_offset = GL_TRUE;
       brw->has_compr4 = GL_TRUE;
       brw->has_aa_line_parameters = GL_TRUE;
+      brw->has_pln = GL_TRUE;
   } else {
       brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_965;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;
