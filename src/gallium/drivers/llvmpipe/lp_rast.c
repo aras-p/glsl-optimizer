@@ -769,7 +769,11 @@ create_rast_threads(struct lp_rasterizer *rast)
     * properly implemented. */
    rast->num_threads = 0;
 #else
+#ifdef PIPE_OS_EMBEDDED
+   rast->num_threads = 0;
+#else
    rast->num_threads = util_cpu_caps.nr_cpus;
+#endif
    rast->num_threads = debug_get_num_option("LP_NUM_THREADS", rast->num_threads);
    rast->num_threads = MIN2(rast->num_threads, MAX_THREADS);
 #endif
