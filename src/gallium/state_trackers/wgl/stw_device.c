@@ -33,11 +33,6 @@
 #include "pipe/p_screen.h"
 #include "state_tracker/st_public.h"
 
-#ifdef DEBUG
-#include "trace/tr_screen.h"
-#include "trace/tr_texture.h"
-#endif
-
 #include "stw_device.h"
 #include "stw_winsys.h"
 #include "stw_pixelformat.h"
@@ -107,13 +102,10 @@ stw_init(const struct stw_winsys *stw_winsys)
    if(stw_winsys->get_adapter_luid)
       stw_winsys->get_adapter_luid(screen, &stw_dev->AdapterLuid);
 
-#ifdef DEBUG
-   stw_dev->screen = trace_screen_create(screen);
-   stw_dev->trace_running = stw_dev->screen != screen ? TRUE : FALSE;
-#else
    stw_dev->screen = screen;
-#endif
-   
+
+   /* XXX
+    */
    stw_dev->screen->flush_frontbuffer = &stw_flush_frontbuffer;
    
    pipe_mutex_init( stw_dev->ctx_mutex );
