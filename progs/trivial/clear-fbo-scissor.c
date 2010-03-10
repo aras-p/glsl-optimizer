@@ -17,6 +17,7 @@
 static int Width = 512, Height = 512;
 static GLuint MyFB, MyRB;
 static GLboolean UseTex = GL_FALSE;
+static GLboolean UseCopyPix = GL_FALSE;
 
 
 #define CheckError() \
@@ -110,7 +111,6 @@ static void
 Draw(void)
 {
    GLboolean scissor = GL_TRUE;
-   GLboolean copyPix = GL_FALSE;
 
    /* draw to user framebuffer */
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
@@ -171,7 +171,7 @@ Draw(void)
    glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
    glDrawBuffer(GL_BACK);
    
-   if (copyPix) {
+   if (UseCopyPix) {
       glWindowPos2i(0, 0);
       glCopyPixels(0, 0, Width, Height, GL_COLOR);
    }
@@ -211,6 +211,8 @@ main(int argc, char *argv[])
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-t") == 0)
          UseTex = GL_TRUE;
+      else if (strcmp(argv[i], "-c") == 0)
+         UseCopyPix = GL_TRUE;
    }
 
    if (UseTex)
