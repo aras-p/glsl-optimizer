@@ -684,8 +684,27 @@ main(int argc, char **argv)
    struct simple_node *ptr;
    exec_list instructions;
 
-   (void) argc;
-   shader = load_text_file(argv[1], & shader_len);
+   if (argc < 3) {
+      printf("Usage: %s [v|g|f] <shader_file>\n", argv[0]);
+      return EXIT_FAILURE;
+   }
+
+   switch (argv[1][0]) {
+   case 'v':
+      state.target = vertex_shader;
+      break;
+   case 'g':
+      state.target = geometry_shader;
+      break;
+   case 'f':
+      state.target = fragment_shader;
+      break;
+   default:
+      printf("Usage: %s [v|g|f] <shader_file>\n", argv[0]);
+      return EXIT_FAILURE;
+   }
+
+   shader = load_text_file(argv[2], & shader_len);
 
    state.scanner = NULL;
    make_empty_list(& state.translation_unit);
