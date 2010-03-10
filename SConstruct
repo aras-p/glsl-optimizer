@@ -124,6 +124,7 @@ env.Append(CPPPATH = [
 	'#/src/gallium/include',
 	'#/src/gallium/auxiliary',
 	'#/src/gallium/drivers',
+	'#/src/gallium/winsys',
 ])
 
 if env['msvc']:

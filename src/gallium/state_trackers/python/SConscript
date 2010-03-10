@@ -33,31 +33,26 @@ if 'python' in env['statetrackers']:
         'gallium.i',
         'st_device.c',
         'st_sample.c',
+        'st_hardpipe_winsys.c',
+        'st_softpipe_winsys.c',
     ]
 
-    drivers = [
-        trace
-    ]
+    env.Prepend(LIBS = [
+        trace,
+        gallium
+    ])
 
     if 'llvmpipe' in env['drivers']:
+        env.Append(CPPDEFINES = ['HAVE_LLVMPIPE'])
         env.Tool('llvm')
-        sources += ['st_llvmpipe_winsys.c']
-        drivers += [llvmpipe]
-    else:
-        sources += ['st_softpipe_winsys.c']
-        drivers += [softpipe]
-
-    pyst = env.ConvenienceLibrary(
-        target = 'pyst',
-        source = sources,
-    )
+        env.Prepend(LIBS = [llvmpipe])
+    if 'softpipe' in env['drivers']:
+        env.Append(CPPDEFINES = ['HAVE_SOFTPIPE'])
+        env.Prepend(LIBS = [softpipe])
 
     env['no_import_lib'] = 1
 
     env.SharedLibrary(
         target = '_gallium',
-        source = [
-            'st_hardpipe_winsys.c',
-        ],
-        LIBS = [pyst] + drivers + gallium + env['LIBS'],
+        source = sources,
     )
