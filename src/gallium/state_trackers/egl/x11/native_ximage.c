@@ -51,10 +51,10 @@ struct ximage_display {
    Display *dpy;
    boolean own_dpy;
 
+   struct native_event_handler *event_handler;
+
    struct x11_screen *xscr;
    int xscr_number;
-
-   struct xm_driver *driver;
 
    struct ximage_config *configs;
    int num_configs;
@@ -138,7 +138,7 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
       switch (which) {
       case NATIVE_ATTACHMENT_FRONT_LEFT:
       case NATIVE_ATTACHMENT_FRONT_RIGHT:
-         templ.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
+         templ.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
          break;
       case NATIVE_ATTACHMENT_BACK_LEFT:
       case NATIVE_ATTACHMENT_BACK_RIGHT:
@@ -615,7 +615,8 @@ ximage_display_destroy(struct native_display *ndpy)
 }
 
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy)
+x11_create_ximage_display(EGLNativeDisplayType dpy,
+                          struct native_event_handler *event_handler)
 {
    struct ximage_display *xdpy;
 
@@ -632,6 +633,8 @@ x11_create_ximage_display(EGLNativeDisplayType dpy)
       }
       xdpy->own_dpy = TRUE;
    }
+
+   xdpy->event_handler = event_handler;
 
    xdpy->xscr_number = DefaultScreen(xdpy->dpy);
    xdpy->xscr = x11_screen_create(xdpy->dpy, xdpy->xscr_number);

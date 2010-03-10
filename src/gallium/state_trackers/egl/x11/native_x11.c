@@ -144,7 +144,7 @@ native_create_display(EGLNativeDisplayType dpy,
       EGLint level = (force_sw) ? _EGL_INFO : _EGL_WARNING;
 
       _eglLog(level, "use software fallback");
-      ndpy = x11_create_ximage_display(dpy);
+      ndpy = x11_create_ximage_display(dpy, event_handler);
    }
 
    return ndpy;
