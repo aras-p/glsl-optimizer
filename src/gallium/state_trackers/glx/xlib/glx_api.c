@@ -35,12 +35,9 @@
 
 #include "xm_api.h"
 #include "main/context.h"
-#include "main/config.h"
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/version.h"
-#include "state_tracker/st_context.h"
-#include "state_tracker/st_public.h"
 
 
 /* This indicates the client-side GLX API and GLX encoder version. */
@@ -1304,7 +1301,7 @@ glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
    if (MakeCurrent_PrevContext == src) {
       _mesa_Flush();
    }
-   st_copy_context_state( xm_src->st, xm_dst->st, (GLuint) mask );
+   XMesaCopyContext(xm_src, xm_dst, mask);
 }
 
 
