@@ -794,7 +794,6 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
 
 {
    const int dims = texture_dims(bld->static_state->target);
-   struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *float_bld = &bld->float_bld;
    LLVMValueRef lod_bias = LLVMConstReal(LLVMFloatType(), bld->static_state->lod_bias);
    LLVMValueRef min_lod = LLVMConstReal(LLVMFloatType(), bld->static_state->min_lod);
@@ -1021,12 +1020,10 @@ lp_build_sample_2d_nearest_mip_nearest_soa(struct lp_build_sample_context *bld,
    lp_build_name(y, "tex.y.wrapped");
 
    /* get pointer to mipmap level [ilevel] data */
-   if (0)
-      data_ptr = lp_build_get_mipmap_level(bld, data_array, ilevel);
-   else
-      data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
+   data_ptr = lp_build_get_mipmap_level(bld, data_array, ilevel);
 
-   lp_build_sample_texel_soa(bld, width_vec, height_vec, x, y, stride, data_ptr, texel);
+   lp_build_sample_texel_soa(bld, width_vec, height_vec, x, y,
+                             stride, data_ptr, texel);
 }
 
 
