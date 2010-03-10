@@ -293,6 +293,51 @@ base_format(GLenum format)
 
 
 /**
+ * Create a temporary texture to hold an image of the given size.
+ * If width, height are not POT and the driver only handles POT textures,
+ * allocate the next larger size of texture that is POT.
+ */
+static struct pipe_texture *
+alloc_texture(struct st_context *st, GLsizei width, GLsizei height,
+              enum pipe_format texFormat)
+{
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_texture *pt;
+   int ptw, pth;
+
+   ptw = width;
+   pth = height;
+
+   /* Need to use POT texture? */
+   if (!screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
+      int l2pt, maxSize;
+
+      l2pt = util_logbase2(width);
+      if (1 << l2pt != width) {
+         ptw = 1 << (l2pt + 1);
+      }
+
+      l2pt = util_logbase2(height);
+      if (1 << l2pt != height) {
+         pth = 1 << (l2pt + 1);
+      }
+
+      /* Check against maximum texture size */
+      maxSize = 1 << (pipe->screen->get_param(pipe->screen,
+                               PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+      assert(ptw <= maxSize);
+      assert(pth <= maxSize);
+   }
+
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, texFormat, 0,
+                          ptw, pth, 1, PIPE_TEXTURE_USAGE_SAMPLER);
+
+   return pt;
+}
+
+
+/**
  * Make texture containing an image for glDrawPixels image.
  * If 'pixels' is NULL, leave the texture image data undefined.
  */
@@ -310,7 +355,6 @@ make_texture(struct st_context *st,
    enum pipe_format pipeFormat;
    GLuint cpp;
    GLenum baseFormat;
-   int ptw, pth;
 
    baseFormat = base_format(format);
 
@@ -325,29 +369,8 @@ make_texture(struct st_context *st,
    if (!pixels)
       return NULL;
 
-   /* Need to use POT texture? */
-   ptw = width;
-   pth = height;
-   if (!screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
-      int l2pt, maxSize;
-
-      l2pt = util_logbase2(width);
-      if (1<<l2pt != width) {
-         ptw = 1<<(l2pt+1);
-      }
-      l2pt = util_logbase2(height);
-      if (1<<l2pt != height) {
-         pth = 1<<(l2pt+1);
-      }
-
-      /* Check against maximum texture size */
-      maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
-      assert(ptw <= maxSize);
-      assert(pth <= maxSize);
-   }
-
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, ptw, pth, 1,
-                          PIPE_TEXTURE_USAGE_SAMPLER);
+   /* alloc temporary texture */
+   pt = alloc_texture(st, width, height, pipeFormat);
    if (!pt) {
       _mesa_unmap_pbo_source(ctx, unpack);
       return NULL;
@@ -940,7 +963,6 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct pipe_texture *pt;
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
-   int ptw, pth;
    GLboolean invertTex = GL_FALSE;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
@@ -1031,30 +1053,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       invertTex = !invertTex;
    }
 
-   /* Need to use POT texture? */
-   ptw = width;
-   pth = height;
-   if (!screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
-      int l2pt, maxSize;
-
-      l2pt = util_logbase2(width);
-      if (1<<l2pt != width) {
-         ptw = 1<<(l2pt+1);
-      }
-      l2pt = util_logbase2(height);
-      if (1<<l2pt != height) {
-         pth = 1<<(l2pt+1);
-      }
-
-      /* Check against maximum texture size */
-      maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
-      assert(ptw <= maxSize);
-      assert(pth <= maxSize);
-   }
-
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, texFormat, 0,
-                          ptw, pth, 1,
-                          PIPE_TEXTURE_USAGE_SAMPLER);
+   /* alloc temporary texture */
+   pt = alloc_texture(st, width, height, texFormat);
    if (!pt)
       return;
 
