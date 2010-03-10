@@ -150,6 +150,15 @@ public:
    ast_expression(int oper, ast_expression *,
 		  ast_expression *, ast_expression *);
 
+   ast_expression(const char *identifier) :
+      oper(ast_identifier)
+   {
+      subexpressions[0] = NULL;
+      subexpressions[1] = NULL;
+      subexpressions[2] = NULL;
+      primary_expression.identifier = (char *) identifier;
+   }
+
    static const char *operator_string(enum ast_operators op);
 
    virtual ir_instruction *hir(exec_list *instructions,

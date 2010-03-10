@@ -351,19 +351,11 @@ function_identifier:
    	}
 	| IDENTIFIER
 	{
-	   ast_expression *expr =
-	      new ast_expression(ast_identifier, NULL, NULL, NULL);
-	   expr->primary_expression.identifier = $1;
-
-	   $$ = (struct ast_node *) expr;
+	   $$ = new ast_expression($1);
    	}
 	| FIELD_SELECTION
 	{
-	   ast_expression *expr =
-	      new ast_expression(ast_identifier, NULL, NULL, NULL);
-	   expr->primary_expression.identifier = $1;
-
-	   $$ = (struct ast_node *) expr;
+	   $$ = new ast_expression($1);
    	}
 	;
 
