@@ -301,7 +301,7 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
    endloop = lp_build_insert_new_block(mask->bld->builder, "endloop");
 
    LLVMBuildCondBr(mask->bld->builder,
-                   i1cond, endloop, mask->loop_block);
+                   i1cond, mask->loop_block, endloop);
 
    LLVMPositionBuilderAtEnd(mask->bld->builder, endloop);
 
@@ -1498,6 +1498,8 @@ emit_instruction(
 
    case TGSI_OPCODE_IF:
       tmp0 = emit_fetch(bld, inst, 0, CHAN_X);
+      tmp0 = lp_build_cmp(&bld->base, PIPE_FUNC_NOTEQUAL,
+                          tmp0, bld->base.zero);
       lp_exec_mask_cond_push(&bld->exec_mask, tmp0);
       break;
 
