@@ -22,6 +22,28 @@
  */
 #include <cstdio>
 #include "ir_print_visitor.h"
+#include "glsl_types.h"
+
+static void
+print_type(const glsl_type *t)
+{
+   if (t->base_type == GLSL_TYPE_ARRAY) {
+      printf("array\n");
+      printf("    (");
+      print_type(t->fields.array);
+      printf(")\n");
+
+      printf("    (%u)\n", t->length);
+      printf(")");
+   } else if (t->base_type == GLSL_TYPE_STRUCT) {
+      printf("struct (%s %u\n", t->name ? t->name : "@", t->length);
+      printf("    (FINISHME: structure fields go here)\n");
+      printf(")");
+   } else {
+      printf("%s", t->name);
+   }
+}
+
 
 void ir_print_visitor::visit(ir_variable *ir)
 {
@@ -35,7 +57,10 @@ void ir_print_visitor::visit(ir_variable *ir)
    printf("    (%s%s%s%s)\n",
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
 
-   printf("    (FINISHME: type goes here)\n");
+   printf("    (");
+   print_type(ir->type);
+   printf(")\n");
+
    printf("    (%s)\n", ir->name);
    printf(")\n");
 }
@@ -98,6 +123,12 @@ void ir_print_visitor::visit(ir_assignment *ir)
 
 void ir_print_visitor::visit(ir_constant *ir)
 {
-   printf("%s:%d:\n", __func__, __LINE__);
    (void) ir;
+
+   printf("(constant\n");
+   printf("    (");
+   print_type(ir->type);
+   printf(")\n");
+   printf("    (FINISHME: value goes here)\n");
+   printf(")\n");
 }
