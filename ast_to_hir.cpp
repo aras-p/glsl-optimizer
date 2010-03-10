@@ -855,7 +855,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else if (qual->attribute || qual->in
 	    || (qual->varying && (state->target == fragment_shader)))
       var->mode = ir_var_in;
-   else if (qual->out)
+   else if (qual->out || (qual->varying && (state->target == vertex_shader)))
       var->mode = ir_var_out;
    else if (qual->uniform)
       var->mode = ir_var_uniform;
