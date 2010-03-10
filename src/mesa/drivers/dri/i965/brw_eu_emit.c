@@ -1290,10 +1290,6 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint simd_mode)
 {
    GLboolean need_stall = 0;
-   GLboolean dispatch_16 = GL_FALSE;
-
-   if (p->current->header.execution_size == BRW_EXECUTE_16)
-      dispatch_16 = GL_TRUE;
 
    if (writemask == 0) {
       /*printf("%s: zero writemask??\n", __FUNCTION__); */
@@ -1331,8 +1327,14 @@ void brw_SAMPLE(struct brw_compile *p,
          /* printf("need stall %x %x\n", newmask , writemask); */
       }
       else {
+	 GLboolean dispatch_16 = GL_FALSE;
+
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
-	 
+
+	 guess_execution_size(p->current, dest);
+	 if (p->current->header.execution_size == BRW_EXECUTE_16)
+	    dispatch_16 = GL_TRUE;
+
 	 newmask = ~newmask & WRITEMASK_XYZW;
 
 	 brw_push_insn_state(p);
