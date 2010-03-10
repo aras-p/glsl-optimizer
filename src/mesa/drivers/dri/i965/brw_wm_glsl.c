@@ -1960,6 +1960,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_LG2:
 		emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
 		break;
+	    case OPCODE_CMP:
+		emit_cmp(p, dst, dst_flags, args[0], args[1], args[2]);
+		break;
 	    case OPCODE_MIN:	
 		unalias2(c, emit_min, dst, dst_flags, args[0], args[1]);
 		break;
