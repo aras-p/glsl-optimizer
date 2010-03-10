@@ -276,27 +276,14 @@ static void lp_exec_continue(struct lp_exec_mask *mask)
 static void lp_exec_endloop(struct lp_exec_mask *mask)
 {
    LLVMBasicBlockRef endloop;
-   LLVMValueRef i1cond;
-
-   { /* convert our soa vector into i1 */
-      int i;
-      LLVMValueRef packed = 0;
-      for (i = 0; i < mask->bld->type.length; ++i) {
-         LLVMValueRef component = LLVMBuildExtractElement(
-            mask->bld->builder,
-            mask->break_mask,
-            LLVMConstInt(LLVMInt32Type(), i, 0), "");
-         if (packed)
-            packed = LLVMBuildOr(mask->bld->builder,
-                                 packed, component, "");
-         else
-            packed = component;
-      }
-      i1cond = LLVMBuildICmp(mask->bld->builder, LLVMIntNE,
-                             packed,
-                             LLVMConstNull(LLVMTypeOf(packed)),
-                             "");
-   }
+   LLVMTypeRef reg_type = LLVMIntType(mask->bld->type.width*
+                                      mask->bld->type.length);
+   /* i1cond = (mask == 0) */
+   LLVMValueRef i1cond = LLVMBuildICmp(
+      mask->bld->builder,
+      LLVMIntNE,
+      LLVMBuildBitCast(mask->bld->builder, mask->break_mask, reg_type, ""),
+      LLVMConstNull(reg_type), "");
 
    endloop = lp_build_insert_new_block(mask->bld->builder, "endloop");
 
