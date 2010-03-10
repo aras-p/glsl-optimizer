@@ -87,6 +87,7 @@ struct softpipe_tex_tile_cache
    unsigned swizzle_g;
    unsigned swizzle_b;
    unsigned swizzle_a;
+   unsigned format;
 
    struct softpipe_tex_cached_tile *last_tile;  /**< most recently retrieved tile */
 };

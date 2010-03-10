@@ -150,6 +150,7 @@ sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
          tc->swizzle_g = view->swizzle_g;
          tc->swizzle_b = view->swizzle_b;
          tc->swizzle_a = view->swizzle_a;
+         tc->format = view->format;
       }
 
       /* mark as entries as invalid/empty */
@@ -274,6 +275,7 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
                             tc->swizzle_g,
                             tc->swizzle_b,
                             tc->swizzle_a,
+                            tc->format,
                             (float *) tile->data.color);
       tile->addr = addr;
    }

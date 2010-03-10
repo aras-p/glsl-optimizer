@@ -81,6 +81,7 @@ pipe_get_tile_swizzle(struct pipe_transfer *pt,
                       uint swizzle_g,
                       uint swizzle_b,
                       uint swizzle_a,
+                      enum pipe_format format,
                       float *p);
 
 void
