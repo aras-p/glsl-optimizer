@@ -937,6 +937,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
    int ptw, pth;
+   GLboolean invertTex = GL_FALSE;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
@@ -1012,8 +1013,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
-   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-      srcy = ctx->DrawBuffer->Height - srcy - height;
+   if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+      srcy = ctx->ReadBuffer->Height - srcy - height;
 
       if (srcy < 0) {
          height -= -srcy;
@@ -1022,6 +1023,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (height < 0)
          return;
+
+      invertTex = !invertTex;
    }
 
    /* Need to use POT texture? */
@@ -1051,7 +1054,9 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (!pt)
       return;
 
-
+   /* Make temporary texture which is a copy of the src region.
+    * We'll draw a quad with this texture to draw the dest image.
+    */
    if (srcFormat == texFormat) {
       /* copy source framebuffer surface into mipmap/texture */
       struct pipe_surface *psRead = screen->get_tex_surface(screen,
@@ -1072,6 +1077,13 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                            psRead,
                            srcx, srcy, width, height);
       }
+
+      if (0) {
+         /* debug */
+         debug_dump_surface("copypixsrcsurf", psRead);
+         debug_dump_surface("copypixtemptex", psTex);
+      }
+
       pipe_surface_reference(&psRead, NULL); 
       pipe_surface_reference(&psTex, NULL);
    }
@@ -1122,7 +1134,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       pt, 
                       driver_vp, 
                       driver_fp,
-                      color, GL_TRUE);
+                      color, invertTex);
 
    pipe_texture_reference(&pt, NULL);
 }
