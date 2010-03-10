@@ -475,7 +475,7 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level pointers */
             int j;
-            for (j = 0; j < LP_MAX_TEXTURE_2D_LEVELS; j++) {
+            for (j = 0; j <= tex->last_level; j++) {
                jit_tex->data[j] =
                   (ubyte *) lp_tex->data + lp_tex->level_offset[j];
             }
