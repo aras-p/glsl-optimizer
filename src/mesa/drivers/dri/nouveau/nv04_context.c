@@ -75,18 +75,16 @@ nv04_channel_flush_notify(struct nouveau_channel *chan)
 	struct nouveau_context *nctx = chan->user_private;
 	GLcontext *ctx = &nctx->base;
 
-	if (nctx->fallback < SWRAST && ctx->DrawBuffer) {
-		GLcontext *ctx = &nctx->base;
-
+	if (nctx->fallback < SWRAST) {
 		/* Flushing seems to clobber the engine context. */
-		context_dirty_i(ctx, TEX_OBJ, 0);
-		context_dirty_i(ctx, TEX_OBJ, 1);
-		context_dirty_i(ctx, TEX_ENV, 0);
-		context_dirty_i(ctx, TEX_ENV, 1);
-		context_dirty(ctx, CONTROL);
-		context_dirty(ctx, BLEND);
+		context_emit(ctx, TEX_OBJ0);
+		context_emit(ctx, TEX_OBJ1);
+		context_emit(ctx, TEX_ENV0);
+		context_emit(ctx, TEX_ENV1);
+		context_emit(ctx, CONTROL);
+		context_emit(ctx, BLEND);
 
-		nouveau_state_emit(ctx);
+		nouveau_bo_state_emit(ctx);
 	}
 }
 
@@ -200,9 +198,9 @@ nv04_context_create(struct nouveau_screen *screen, const GLvisual *visual,
 	if (ret)
 		goto fail;
 
+	init_dummy_texture(ctx);
 	nv04_hwctx_init(ctx);
 	nv04_render_init(ctx);
-	init_dummy_texture(ctx);
 
 	return ctx;
 
