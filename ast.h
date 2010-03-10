@@ -192,6 +192,23 @@ public:
    virtual void print(void) const;
 };
 
+/**
+ * Subclass of expressions for function calls
+ */
+class ast_function_expression : public ast_expression {
+public:
+   ast_function_expression(ast_node *callee)
+      : ast_expression(ast_function_call, (ast_expression *) callee,
+		       NULL, NULL)
+   {
+      /* empty */
+   }
+
+
+   virtual ir_instruction *hir(exec_list *instructions,
+			       struct _mesa_glsl_parse_state *state);
+};
+
 
 /**
  * Number of possible operators for an ast_expression

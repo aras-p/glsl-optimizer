@@ -630,21 +630,10 @@ ast_expression::hir(exec_list *instructions,
       break;
 
    case ast_function_call:
-      /* There are three sorts of function calls.
-       *
-       * 1. contstructors - The first subexpression is an ast_type_specifier.
-       * 2. methods - Only the .length() method of array types.
-       * 3. functions - Calls to regular old functions.
-       *
-       * Method calls are actually detected when the ast_field_selection
-       * expression is handled.
+      /* Should *NEVER* get here.  ast_function_call should always be handled
+       * by ast_function_expression::hir.
        */
-#if 0
-      result = _mesa_ast_function_call_to_hir(this->subexpressions[0],
-					      this->subexpressions[1],
-					      state);
-      type = result->type;
-#endif
+      assert(0);
       break;
 
    case ast_identifier: {
@@ -720,6 +709,24 @@ ast_expression::hir(exec_list *instructions,
    return result;
 }
 
+
+ir_instruction *
+ast_function_expression::hir(exec_list *instructions,
+			     struct _mesa_glsl_parse_state *state)
+{
+   /* There are three sorts of function calls.
+    *
+    * 1. contstructors - The first subexpression is an ast_type_specifier.
+    * 2. methods - Only the .length() method of array types.
+    * 3. functions - Calls to regular old functions.
+    *
+    * Method calls are actually detected when the ast_field_selection
+    * expression is handled.
+    */
+   (void) instructions;
+   (void) state;
+   return NULL;
+}
 
 ir_instruction *
 ast_expression_statement::hir(exec_list *instructions,
