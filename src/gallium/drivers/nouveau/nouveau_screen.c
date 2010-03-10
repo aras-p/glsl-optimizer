@@ -124,7 +124,7 @@ nouveau_screen_map_flags(unsigned pipe)
 	if (pipe & PIPE_BUFFER_USAGE_DONTBLOCK)
 		flags |= NOUVEAU_BO_NOWAIT;
 	else
-	if (pipe & 0 /*PIPE_BUFFER_USAGE_UNSYNCHRONIZED*/)
+	if (pipe & PIPE_BUFFER_USAGE_UNSYNCHRONIZED)
 		flags |= NOUVEAU_BO_NOSYNC;
 
 	return flags;
