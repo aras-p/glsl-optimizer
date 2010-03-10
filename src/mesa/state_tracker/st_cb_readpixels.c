@@ -241,6 +241,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
       GLint row, col, dy, dstStride;
 
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+         /* convert GL Y to Gallium Y */
          y = strb->texture->height0 - y - height;
       }
 
@@ -258,11 +259,16 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
          return GL_FALSE;
       }
 
+      /* We always write to the user/dest buffer from low addr to high addr
+       * but the read order depends on renderbuffer orientation
+       */
       if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+         /* read source rows from bottom to top */
          y = height - 1;
          dy = -1;
       }
       else {
+         /* read source rows from top to bottom */
          y = 0;
          dy = 1;
       }
@@ -396,6 +402,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+      /* convert GL Y to Gallium Y */
       y = strb->Base.Height - y - height;
    }
 
