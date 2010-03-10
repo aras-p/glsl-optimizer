@@ -1028,6 +1028,76 @@ lp_build_sample_2d_nearest_mip_nearest_soa(struct lp_build_sample_context *bld,
 
 
 /**
+ * Sample 2D texture with linear filtering, nearest mipmap.
+ */
+static void
+lp_build_sample_2d_linear_mip_nearest_soa(struct lp_build_sample_context *bld,
+                                          unsigned unit,
+                                          LLVMValueRef s,
+                                          LLVMValueRef t,
+                                          LLVMValueRef width,
+                                          LLVMValueRef height,
+                                          LLVMValueRef width_vec,
+                                          LLVMValueRef height_vec,
+                                          LLVMValueRef stride,
+                                          LLVMValueRef data_array,
+                                          LLVMValueRef *texel)
+{
+   LLVMValueRef x0, y0, x1, y1, s_fpart, t_fpart;
+   LLVMValueRef lod, ilevel, ilevel_vec;
+   LLVMValueRef neighbors[2][2][4];
+   LLVMValueRef data_ptr;
+   int chan;
+
+   /* compute float LOD */
+   lod = lp_build_lod_selector(bld, s, t, NULL, width, height, NULL);
+
+   /* convert LOD to int */
+   lp_build_nearest_mip_level(bld, unit, lod, &ilevel);
+
+   ilevel_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, ilevel);
+
+   /* compute width_vec, height at mipmap level 'ilevel' */
+   width_vec = lp_build_minify(bld, width_vec, ilevel_vec);
+   height_vec = lp_build_minify(bld, height_vec, ilevel_vec);
+   stride = lp_build_minify(bld, stride, ilevel_vec);
+
+   lp_build_sample_wrap_linear(bld, s, width_vec,
+                               bld->static_state->pot_width,
+                               bld->static_state->wrap_s, &x0, &x1, &s_fpart);
+   lp_build_sample_wrap_linear(bld, t, height_vec,
+                               bld->static_state->pot_height,
+                               bld->static_state->wrap_t, &y0, &y1, &t_fpart);
+
+   lp_build_name(x0, "tex.x0.wrapped");
+   lp_build_name(y0, "tex.y0.wrapped");
+   lp_build_name(x1, "tex.x1.wrapped");
+   lp_build_name(y1, "tex.y1.wrapped");
+
+   /* get pointer to mipmap level [ilevel] data */
+   data_ptr = lp_build_get_mipmap_level(bld, data_array, ilevel);
+
+   lp_build_sample_texel_soa(bld, width_vec, height_vec, x0, y0,
+                             stride, data_ptr, neighbors[0][0]);
+   lp_build_sample_texel_soa(bld, width_vec, height_vec, x1, y0,
+                             stride, data_ptr, neighbors[0][1]);
+   lp_build_sample_texel_soa(bld, width_vec, height_vec, x0, y1,
+                             stride, data_ptr, neighbors[1][0]);
+   lp_build_sample_texel_soa(bld, width_vec, height_vec, x1, y1,
+                             stride, data_ptr, neighbors[1][1]);
+
+   for(chan = 0; chan < 4; ++chan) {
+      texel[chan] = lp_build_lerp_2d(&bld->texel_bld,
+                                     s_fpart, t_fpart,
+                                     neighbors[0][0][chan],
+                                     neighbors[0][1][chan],
+                                     neighbors[1][0][chan],
+                                     neighbors[1][1][chan]);
+   }
+}
+
+
+/**
  * Sample 2D texture with bilinear filtering.
  */
 static void
@@ -1413,6 +1483,15 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    case PIPE_TEX_MIPFILTER_NEAREST:
 
       switch (static_state->min_img_filter) {
+      case PIPE_TEX_FILTER_LINEAR:
+         lp_build_sample_2d_linear_mip_nearest_soa(&bld, unit,
+                                                   s, t,
+                                                   width, height,
+                                                   width_vec, height_vec,
+                                                   stride_vec,
+                                                   data_array, texel);
+         done = TRUE;
+         break;
       case PIPE_TEX_FILTER_NEAREST:
          lp_build_sample_2d_nearest_mip_nearest_soa(&bld, unit,
                                                     s, t,
