@@ -42,6 +42,26 @@
 #include "lp_bld_logic.h"
 
 
+/*
+ * XXX
+ *
+ * Selection with vector conditional like
+ *
+ *    select <4 x i1> %C, %A, %B
+ *
+ * is valid IR (e.g. llvm/test/Assembler/vector-select.ll), but it is not
+ * supported on any backend.
+ *
+ * Expanding the boolean vector to full SIMD register width, as in
+ *
+ *    sext <4 x i1> %C to <4 x i32>
+ *
+ * is valid and supported (e.g., llvm/test/CodeGen/X86/vec_compare.ll), but
+ * it causes assertion failures in LLVM 2.6. It appears to work correctly on 
+ * LLVM 2.7.
+ */
+
+
 /**
  * Build code to compare two values 'a' and 'b' of 'type' using the given func.
  * \param func  one of PIPE_FUNC_x
@@ -74,6 +94,7 @@ lp_build_compare(LLVMBuilderRef builder,
 
    /* XXX: It is not clear if we should use the ordered or unordered operators */
 
+#if !defined(HAVE_LLVM) || HAVE_LLVM < 0x0207
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
       if(type.floating && util_cpu_caps.has_sse) {
@@ -200,6 +221,7 @@ lp_build_compare(LLVMBuilderRef builder,
       }
    } /* if (type.width * type.length == 128) */
 #endif
+#endif /* HAVE_LLVM < 0x0207 */
 
    if(type.floating) {
       LLVMRealPredicate op;
@@ -233,10 +255,9 @@ lp_build_compare(LLVMBuilderRef builder,
          return lp_build_undef(type);
       }
 
-#if 0
-      /* XXX: Although valid IR, no LLVM target currently support this */
+#if HAVE_LLVM >= 0x0207
       cond = LLVMBuildFCmp(builder, op, a, b, "");
-      res = LLVMBuildSelect(builder, cond, ones, zeros, "");
+      res = LLVMBuildSExt(builder, cond, int_vec_type, "");
 #else
       res = LLVMGetUndef(int_vec_type);
       if (type.length == 1) {
@@ -286,10 +307,9 @@ lp_build_compare(LLVMBuilderRef builder,
          return lp_build_undef(type);
       }
 
-#if 0
-      /* XXX: Although valid IR, no LLVM target currently support this */
+#if HAVE_LLVM >= 0x0207
       cond = LLVMBuildICmp(builder, op, a, b, "");
-      res = LLVMBuildSelect(builder, cond, ones, zeros, "");
+      res = LLVMBuildSExt(builder, cond, int_vec_type, "");
 #else
       res = LLVMGetUndef(int_vec_type);
       if (type.length == 1) {
