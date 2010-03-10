@@ -61,7 +61,8 @@ llvmpipe_bind_vertex_elements_state(struct pipe_context *pipe,
 
    llvmpipe->dirty |= LP_NEW_VERTEX;
 
-   draw_set_vertex_elements(llvmpipe->draw, lp_velems->count, lp_velems->velem);
+   if (velems)
+      draw_set_vertex_elements(llvmpipe->draw, lp_velems->count, lp_velems->velem);
 }
 
 void
