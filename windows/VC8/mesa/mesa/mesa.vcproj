@@ -538,7 +538,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="YY_NO_UNISTD_H;YY_USE_CONST;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
+						PreprocessorDefinitions="YY_USE_CONST;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -546,7 +546,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="YY_NO_UNISTD_H;YY_USE_CONST;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
+						PreprocessorDefinitions="YY_USE_CONST;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -554,7 +554,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="YY_NO_UNISTD_H;YY_USE_CONST;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
+						PreprocessorDefinitions="YY_USE_CONST;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -562,7 +562,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="YY_NO_UNISTD_H;YY_USE_CONST;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
+						PreprocessorDefinitions="YY_USE_CONST;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE"
 					/>
 				</FileConfiguration>
 			</File>
@@ -1844,7 +1844,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h"
 					/>
@@ -1855,7 +1855,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h"
 					/>
@@ -1866,7 +1866,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h"
 					/>
@@ -1877,7 +1877,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_120_core.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_120_core_gc.h"
 					/>
@@ -1896,7 +1896,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h"
 					/>
@@ -1907,7 +1907,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h"
 					/>
@@ -1918,7 +1918,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h"
 					/>
@@ -1929,7 +1929,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_common_gc.h"
 					/>
@@ -1944,7 +1944,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h"
 					/>
@@ -1955,7 +1955,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h"
 					/>
@@ -1966,7 +1966,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h"
 					/>
@@ -1977,7 +1977,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc ..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_builtin_120_fragment_gc.h"
 					/>
@@ -1996,7 +1996,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h"
 					/>
@@ -2007,7 +2007,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h"
 					/>
@@ -2018,7 +2018,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h"
 					/>
@@ -2029,7 +2029,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_common_builtin_gc.h"
 					/>
@@ -2064,7 +2064,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_core_gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h"
 					/>
@@ -2075,7 +2075,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_core_gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h"
 					/>
@@ -2086,7 +2086,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_core_gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h"
 					/>
@@ -2097,7 +2097,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_core.gc ..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_core_gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_core_gc.h"
 					/>
@@ -2116,7 +2116,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h"
 					/>
@@ -2127,7 +2127,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h"
 					/>
@@ -2138,7 +2138,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h"
 					/>
@@ -2149,7 +2149,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe fragment ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_fragment_builtin_gc.h"
 					/>
@@ -2208,7 +2208,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe vertex ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe vertex ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h"
 					/>
@@ -2219,7 +2219,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe vertex ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe vertex ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h"
 					/>
@@ -2230,7 +2230,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe vertex ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe vertex ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h"
 					/>
@@ -2241,7 +2241,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Building predefined shaders"
-						CommandLine="..\..\..\..\src\glsl\apps\compile.exe vertex ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h"
+						CommandLine="..\..\..\..\src\glsl\apps\compile.exe vertex ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc ..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h&#x0D;&#x0A;"
 						AdditionalDependencies="..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin.gc"
 						Outputs="..\..\..\..\src\mesa\shader\slang\library\slang_vertex_builtin_gc.h"
 					/>
