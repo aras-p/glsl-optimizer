@@ -245,7 +245,7 @@ gen_struct_field builtin_core_types 11 "color"
 gen_struct_field builtin_core_types 8  "density"
 gen_struct_field builtin_core_types 8  "start"
 gen_struct_field builtin_core_types 8  "end"
-gen_struct_field builtin_core_types 8  "scalre"
+gen_struct_field builtin_core_types 8  "scale"
 gen_struct_field_footer
 
 gen_header "110_deprecated_structure"
