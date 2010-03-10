@@ -133,6 +133,7 @@ C_SOURCES = \
 	vl/vl_csc.c \
 	vl/vl_shader_build.c \
 	target-helpers/swrast_xlib.c
+	target-helpers/wrap_screen.c
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_alpha.c \

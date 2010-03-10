@@ -31,65 +31,33 @@
  *   Keith Whitwell
  */
 
-#include "swrast_xlib.h"
-
-#include "state_tracker/xlib_sw_winsys.h"
+#include "target-helpers/wrap_screen.h"
+#include "trace/tr_public.h"
+#include "identity/id_public.h"
 #include "util/u_debug.h"
-#include "softpipe/sp_public.h"
-#include "llvmpipe/lp_public.h"
-#include "cell/ppu/cell_public.h"
-#include "wrap_screen.h"
 
 
-/* Helper function to build a subset of a driver stack consisting of
- * one of the software rasterizers (cell, llvmpipe, softpipe) and the
- * xlib winsys.
- *
- * This can be called by any target that builds on top of this
- * combination.
+/* Centralized code to inject common wrapping layers:
  */
 struct pipe_screen *
-swrast_xlib_create_screen( Display *display )
+gallium_wrap_screen( struct pipe_screen *screen )
 {
-   struct sw_winsys *winsys;
-   struct pipe_screen *screen = NULL;
-
-   /* Create the underlying winsys, which performs presents to Xlib
-    * drawables:
+   /* Screen wrapping functions are required not to fail.  If it is
+    * impossible to wrap a screen, the unwrapped screen should be
+    * returned instead.  Any failure condition should be returned in
+    * an OUT argument.
+    *
+    * Otherwise it is really messy trying to clean up in this code.
     */
-   winsys = xlib_create_sw_winsys( display );
-   if (winsys == NULL)
-      return NULL;
+   if (debug_get_bool_option("GALLIUM_WRAP", FALSE)) {
+      screen = identity_screen_create(screen);
+   }
 
-   /* Create a software rasterizer on top of that winsys:
-    */
-#if defined(GALLIUM_CELL)
-   if (screen == NULL &&
-       !debug_get_bool_option("GALLIUM_NO_CELL", FALSE))
-      screen = cell_create_screen( winsys );
-#endif
+   if (debug_get_bool_option("GALLIUM_TRACE", FALSE)) {
+      screen = trace_screen_create( screen );
+   }
 
-#if defined(GALLIUM_LLVMPIPE)
-   if (screen == NULL &&
-       !debug_get_bool_option("GALLIUM_NO_LLVM", FALSE))
-      screen = llvmpipe_create_screen( winsys );
-#endif
-
-   if (screen == NULL)
-      screen = softpipe_create_screen( winsys );
-
-   if (screen == NULL)
-      goto fail;
-
-   /* Inject any wrapping layers we want to here:
-    */
-   return gallium_wrap_screen( screen );
-
-fail:
-   if (winsys)
-      winsys->destroy( winsys );
-
-   return NULL;
+   return screen;
 }
 
 
