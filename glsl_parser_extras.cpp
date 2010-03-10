@@ -35,6 +35,7 @@
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 #include "symbol_table.h"
+#include "ir_print_visitor.h"
 
 void
 _mesa_glsl_error(YYLTYPE *locp, void *state, const char *fmt, ...)
@@ -700,6 +701,13 @@ main(int argc, char **argv)
 
    foreach (ptr, & state.translation_unit) {
       ((ast_node *)ptr)->hir(&instructions, &state);
+   }
+
+   printf("\n\n");
+   foreach_iter(exec_list_iterator, iter, instructions) {
+      ir_print_visitor v;
+
+      ((ir_instruction *)iter.get())->accept(& v);
    }
 
    _mesa_symbol_table_dtor(state.symbols);
