@@ -892,8 +892,13 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
    if (gctx) {
       ok = egl_g3d_realloc_context(dpy, &gctx->base);
       if (ok) {
+         /* XXX: need to pass the winsys argument for
+          * flush_frontbuffer in the fourth parameter here:
+          */
          ok = gctx->stapi->st_make_current(gctx->st_ctx,
-               gctx->draw.st_fb, gctx->read.st_fb);
+                                           gctx->draw.st_fb,
+                                           gctx->read.st_fb,
+                                           NULL);
          if (ok) {
             egl_g3d_validate_context(dpy, &gctx->base);
             if (gdraw->base.Type == EGL_WINDOW_BIT) {
@@ -905,7 +910,7 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
       }
    }
    else if (old_gctx) {
-      ok = old_gctx->stapi->st_make_current(NULL, NULL, NULL);
+      ok = old_gctx->stapi->st_make_current(NULL, NULL, NULL, NULL);
       old_gctx->base.WindowRenderBuffer = EGL_NONE;
    }
 

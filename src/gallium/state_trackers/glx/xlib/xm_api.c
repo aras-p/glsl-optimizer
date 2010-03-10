@@ -1020,7 +1020,8 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       c->xm_buffer = drawBuffer;
       c->xm_read_buffer = readBuffer;
 
-      st_make_current(c->st, drawBuffer->stfb, readBuffer->stfb);
+      st_make_current(c->st, drawBuffer->stfb, readBuffer->stfb, 
+                      &drawBuffer->ws);
 
       xmesa_check_and_update_buffer_size(c, drawBuffer);
       if (readBuffer != drawBuffer)
@@ -1031,7 +1032,7 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
    }
    else {
       /* Detach */
-      st_make_current( NULL, NULL, NULL );
+      st_make_current( NULL, NULL, NULL, NULL );
 
    }
    return GL_TRUE;

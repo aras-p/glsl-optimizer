@@ -376,11 +376,19 @@ void st_unreference_framebuffer(struct st_framebuffer *stfb)
 
 boolean st_make_current(struct vg_context *st,
                         struct st_framebuffer *draw,
-                        struct st_framebuffer *read)
+                        struct st_framebuffer *read,
+                        void *winsys_drawable_handle)
 {
    vg_set_current_context(st);
    if (st) {
       st->draw_buffer = draw;
+
+      /* VG state tracker doesn't seem to do front-buffer rendering
+       * (no calls to flush_frontbuffer).  If it ever did start doing
+       * that, it would need to pass this value down in the
+       * flush_frontbuffer call:
+       */
+      st->pipe->priv = winsys_drawable_handle;
    }
    return VG_TRUE;
 }

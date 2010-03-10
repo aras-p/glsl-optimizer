@@ -272,7 +272,8 @@ void st_destroy_context( struct st_context *st )
 GLboolean
 st_make_current(struct st_context *st,
                 struct st_framebuffer *draw,
-                struct st_framebuffer *read)
+                struct st_framebuffer *read,
+                void *winsys_drawable_handle )
 {
    /* Call this periodically to detect when the user has begun using
     * GL rendering from multiple threads.
@@ -280,10 +281,13 @@ st_make_current(struct st_context *st,
    _glapi_check_multithread();
 
    if (st) {
-      if (!_mesa_make_current(st->ctx, &draw->Base, &read->Base))
+      if (!_mesa_make_current(st->ctx, &draw->Base, &read->Base)) {
+         st->pipe->priv = NULL;
          return GL_FALSE;
+      }
 
       _mesa_check_init_viewport(st->ctx, draw->InitWidth, draw->InitHeight);
+      st->pipe->priv = winsys_drawable_handle;
 
       return GL_TRUE;
    }
