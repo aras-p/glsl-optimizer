@@ -1,3 +1,4 @@
+/* -*- c++ -*- */
 /*
  * Copyright © 2010 Intel Corporation
  *
