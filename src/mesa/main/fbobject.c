@@ -1549,6 +1549,7 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
       texObj = _mesa_lookup_texture(ctx, texture);
       if (texObj != NULL) {
          if (textarget == 0) {
+            /* XXX what's the purpose of this? */
             err = (texObj->Target != GL_TEXTURE_3D) &&
                 (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT) &&
                 (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT);
@@ -1558,6 +1559,13 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
                 ? !IS_CUBE_FACE(textarget)
                 : (texObj->Target != textarget);
          }
+      }
+      else {
+         /* can't render to a non-existant texture */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glFramebufferTexture%sEXT(non existant texture)",
+                     caller);
+         return;
       }
 
       if (err) {
