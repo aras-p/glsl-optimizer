@@ -46,6 +46,8 @@ st_software_screen_create(void)
    default_driver = "llvmpipe";
 #elif defined(HAVE_SOFTPIPE)
    default_driver = "softpipe";
+#else
+   default_driver = "";
 #endif
 
    ws = null_sw_create();
