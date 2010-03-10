@@ -922,6 +922,11 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
 	drv_leave_vt(scrnIndex, 0);
     }
 
+    if (ms->cursor) {
+       FreeCursor(ms->cursor, None);
+       ms->cursor = NULL;
+    }
+
     if (cust && cust->winsys_screen_close)
 	cust->winsys_screen_close(cust);
 
