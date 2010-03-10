@@ -66,7 +66,7 @@
 
 #include "math/m_matrix.h"
 
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 
@@ -472,7 +472,7 @@ make_list(GLuint name, GLuint count)
 {
    struct gl_display_list *dlist = CALLOC_STRUCT(gl_display_list);
    dlist->Name = name;
-   dlist->Head = (Node *) _mesa_malloc(sizeof(Node) * count);
+   dlist->Head = (Node *) malloc(sizeof(Node) * count);
    dlist->Head[0].opcode = OPCODE_END_OF_LIST;
    return dlist;
 }
@@ -557,108 +557,108 @@ _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
          switch (opcode) {
             /* for some commands, we need to free malloc'd memory */
          case OPCODE_MAP1:
-            _mesa_free(n[6].data);
+            free(n[6].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_MAP2:
-            _mesa_free(n[10].data);
+            free(n[10].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_DRAW_PIXELS:
-            _mesa_free(n[5].data);
+            free(n[5].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_BITMAP:
-            _mesa_free(n[7].data);
+            free(n[7].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COLOR_TABLE:
-            _mesa_free(n[6].data);
+            free(n[6].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COLOR_SUB_TABLE:
-            _mesa_free(n[6].data);
+            free(n[6].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_CONVOLUTION_FILTER_1D:
-            _mesa_free(n[6].data);
+            free(n[6].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_CONVOLUTION_FILTER_2D:
-            _mesa_free(n[7].data);
+            free(n[7].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_POLYGON_STIPPLE:
-            _mesa_free(n[1].data);
+            free(n[1].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_IMAGE1D:
-            _mesa_free(n[8].data);
+            free(n[8].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_IMAGE2D:
-            _mesa_free(n[9].data);
+            free(n[9].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_IMAGE3D:
-            _mesa_free(n[10].data);
+            free(n[10].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_SUB_IMAGE1D:
-            _mesa_free(n[7].data);
+            free(n[7].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_SUB_IMAGE2D:
-            _mesa_free(n[9].data);
+            free(n[9].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_TEX_SUB_IMAGE3D:
-            _mesa_free(n[11].data);
+            free(n[11].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_1D:
-            _mesa_free(n[7].data);
+            free(n[7].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_2D:
-            _mesa_free(n[8].data);
+            free(n[8].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_IMAGE_3D:
-            _mesa_free(n[9].data);
+            free(n[9].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D:
-            _mesa_free(n[7].data);
+            free(n[7].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D:
-            _mesa_free(n[9].data);
+            free(n[9].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D:
-            _mesa_free(n[11].data);
+            free(n[11].data);
             n += InstSize[n[0].opcode];
             break;
 #if FEATURE_NV_vertex_program
          case OPCODE_LOAD_PROGRAM_NV:
-            _mesa_free(n[4].data);      /* program string */
+            free(n[4].data);      /* program string */
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
-            _mesa_free(n[2].data);      /* array of program ids */
+            free(n[2].data);      /* array of program ids */
             n += InstSize[n[0].opcode];
             break;
 #endif
 #if FEATURE_NV_fragment_program
          case OPCODE_PROGRAM_NAMED_PARAMETER_NV:
-            _mesa_free(n[3].data);      /* parameter name */
+            free(n[3].data);      /* parameter name */
             n += InstSize[n[0].opcode];
             break;
 #endif
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
          case OPCODE_PROGRAM_STRING_ARB:
-            _mesa_free(n[4].data);      /* program string */
+            free(n[4].data);      /* program string */
             n += InstSize[n[0].opcode];
             break;
 #endif
@@ -670,7 +670,7 @@ _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
          case OPCODE_UNIFORM_2IV:
          case OPCODE_UNIFORM_3IV:
          case OPCODE_UNIFORM_4IV:
-            _mesa_free(n[3].data);
+            free(n[3].data);
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_UNIFORM_MATRIX22:
@@ -682,17 +682,17 @@ _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
          case OPCODE_UNIFORM_MATRIX32:
          case OPCODE_UNIFORM_MATRIX34:
          case OPCODE_UNIFORM_MATRIX43:
-            _mesa_free(n[4].data);
+            free(n[4].data);
             n += InstSize[n[0].opcode];
             break;
 
          case OPCODE_CONTINUE:
             n = (Node *) n[1].next;
-            _mesa_free(block);
+            free(block);
             block = n;
             break;
          case OPCODE_END_OF_LIST:
-            _mesa_free(block);
+            free(block);
             done = GL_TRUE;
             break;
          default:
@@ -703,7 +703,7 @@ _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
       }
    }
 
-   _mesa_free(dlist);
+   free(dlist);
 }
 
 
@@ -869,7 +869,7 @@ dlist_alloc(GLcontext *ctx, OpCode opcode, GLuint bytes)
       Node *newblock;
       n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
       n[0].opcode = OPCODE_CONTINUE;
-      newblock = (Node *) _mesa_malloc(sizeof(Node) * BLOCK_SIZE);
+      newblock = (Node *) malloc(sizeof(Node) * BLOCK_SIZE);
       if (!newblock) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
          return NULL;
@@ -2912,8 +2912,8 @@ save_PixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
    if (n) {
       n[1].e = map;
       n[2].i = mapsize;
-      n[3].data = (void *) _mesa_malloc(mapsize * sizeof(GLfloat));
-      MEMCPY(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
+      n[3].data = (void *) malloc(mapsize * sizeof(GLfloat));
+      memcpy(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
    }
    if (ctx->ExecuteFlag) {
       CALL_PixelMapfv(ctx->Exec, (map, mapsize, values));
@@ -4360,12 +4360,12 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
       GLvoid *image;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
-      image = _mesa_malloc(imageSize);
+      image = malloc(imageSize);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1DARB");
          return;
       }
-      MEMCPY(image, data, imageSize);
+      memcpy(image, data, imageSize);
       n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 7);
       if (n) {
          n[1].e = target;
@@ -4377,7 +4377,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
          n[7].data = image;
       }
       else if (image) {
-         _mesa_free(image);
+         free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_CompressedTexImage1DARB(ctx->Exec,
@@ -4406,12 +4406,12 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
       GLvoid *image;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
-      image = _mesa_malloc(imageSize);
+      image = malloc(imageSize);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
          return;
       }
-      MEMCPY(image, data, imageSize);
+      memcpy(image, data, imageSize);
       n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 8);
       if (n) {
          n[1].e = target;
@@ -4424,7 +4424,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
          n[8].data = image;
       }
       else if (image) {
-         _mesa_free(image);
+         free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_CompressedTexImage2DARB(ctx->Exec,
@@ -4453,12 +4453,12 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
       GLvoid *image;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
-      image = _mesa_malloc(imageSize);
+      image = malloc(imageSize);
       if (!image) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3DARB");
          return;
       }
-      MEMCPY(image, data, imageSize);
+      memcpy(image, data, imageSize);
       n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 9);
       if (n) {
          n[1].e = target;
@@ -4472,7 +4472,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
          n[9].data = image;
       }
       else if (image) {
-         _mesa_free(image);
+         free(image);
       }
       if (ctx->ExecuteFlag) {
          CALL_CompressedTexImage3DARB(ctx->Exec,
@@ -4496,12 +4496,12 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
-   image = _mesa_malloc(imageSize);
+   image = malloc(imageSize);
    if (!image) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage1DARB");
       return;
    }
-   MEMCPY(image, data, imageSize);
+   memcpy(image, data, imageSize);
    n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 7);
    if (n) {
       n[1].e = target;
@@ -4513,7 +4513,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
       n[7].data = image;
    }
    else if (image) {
-      _mesa_free(image);
+      free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_CompressedTexSubImage1DARB(ctx->Exec, (target, level, xoffset,
@@ -4536,12 +4536,12 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
-   image = _mesa_malloc(imageSize);
+   image = malloc(imageSize);
    if (!image) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2DARB");
       return;
    }
-   MEMCPY(image, data, imageSize);
+   memcpy(image, data, imageSize);
    n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 9);
    if (n) {
       n[1].e = target;
@@ -4555,7 +4555,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
       n[9].data = image;
    }
    else if (image) {
-      _mesa_free(image);
+      free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_CompressedTexSubImage2DARB(ctx->Exec,
@@ -4578,12 +4578,12 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
-   image = _mesa_malloc(imageSize);
+   image = malloc(imageSize);
    if (!image) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage3DARB");
       return;
    }
-   MEMCPY(image, data, imageSize);
+   memcpy(image, data, imageSize);
    n = alloc_instruction(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 11);
    if (n) {
       n[1].e = target;
@@ -4599,7 +4599,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
       n[11].data = image;
    }
    else if (image) {
-      _mesa_free(image);
+      free(image);
    }
    if (ctx->ExecuteFlag) {
       CALL_CompressedTexSubImage3DARB(ctx->Exec,
@@ -4788,12 +4788,12 @@ save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
 
    n = alloc_instruction(ctx, OPCODE_LOAD_PROGRAM_NV, 4);
    if (n) {
-      GLubyte *programCopy = (GLubyte *) _mesa_malloc(len);
+      GLubyte *programCopy = (GLubyte *) malloc(len);
       if (!programCopy) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
          return;
       }
-      _mesa_memcpy(programCopy, program, len);
+      memcpy(programCopy, program, len);
       n[1].e = target;
       n[2].ui = id;
       n[3].i = len;
@@ -4815,12 +4815,12 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
 
    n = alloc_instruction(ctx, OPCODE_TRACK_MATRIX_NV, 2);
    if (n) {
-      GLuint *idCopy = (GLuint *) _mesa_malloc(num * sizeof(GLuint));
+      GLuint *idCopy = (GLuint *) malloc(num * sizeof(GLuint));
       if (!idCopy) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glRequestResidentProgramsNV");
          return;
       }
-      _mesa_memcpy(idCopy, ids, num * sizeof(GLuint));
+      memcpy(idCopy, ids, num * sizeof(GLuint));
       n[1].i = num;
       n[2].data = idCopy;
    }
@@ -4986,12 +4986,12 @@ save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte * name,
 
    n = alloc_instruction(ctx, OPCODE_PROGRAM_NAMED_PARAMETER_NV, 6);
    if (n) {
-      GLubyte *nameCopy = (GLubyte *) _mesa_malloc(len);
+      GLubyte *nameCopy = (GLubyte *) malloc(len);
       if (!nameCopy) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramNamedParameter4fNV");
          return;
       }
-      _mesa_memcpy(nameCopy, name, len);
+      memcpy(nameCopy, name, len);
       n[1].ui = id;
       n[2].i = len;
       n[3].data = nameCopy;
@@ -5085,12 +5085,12 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 
    n = alloc_instruction(ctx, OPCODE_PROGRAM_STRING_ARB, 4);
    if (n) {
-      GLubyte *programCopy = (GLubyte *) _mesa_malloc(len);
+      GLubyte *programCopy = (GLubyte *) malloc(len);
       if (!programCopy) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
          return;
       }
-      _mesa_memcpy(programCopy, string, len);
+      memcpy(programCopy, string, len);
       n[1].e = target;
       n[2].e = format;
       n[3].i = len;
@@ -6199,9 +6199,9 @@ save_Uniform4fARB(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 static void *
 memdup(const void *src, GLsizei bytes)
 {
-   void *b = bytes >= 0 ? _mesa_malloc(bytes) : NULL;
+   void *b = bytes >= 0 ? malloc(bytes) : NULL;
    if (b)
-      _mesa_memcpy(b, src, bytes);
+      memcpy(b, src, bytes);
    return b;
 }
 
@@ -7685,7 +7685,7 @@ execute_list(GLcontext *ctx, GLuint list)
          default:
             {
                char msg[1000];
-               _mesa_sprintf(msg, "Error in execute_list: opcode=%d",
+               sprintf(msg, "Error in execute_list: opcode=%d",
                              (int) opcode);
                _mesa_problem(ctx, msg);
             }
@@ -9285,6 +9285,12 @@ _mesa_init_save_table(struct _glapi_table *table)
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
 
+   /* 371. GL_APPLE_object_purgeable */
+#if FEATURE_APPLE_object_purgeable
+   SET_ObjectPurgeableAPPLE(table, _mesa_ObjectPurgeableAPPLE);
+   SET_ObjectUnpurgeableAPPLE(table, _mesa_ObjectUnpurgeableAPPLE);
+#endif
+
    /* GL 3.0 */
 #if 0
    SET_ClearBufferiv(table, save_ClearBufferiv);
@@ -9320,7 +9326,7 @@ print_list(GLcontext *ctx, GLuint list)
    GLboolean done;
 
    if (!islist(ctx, list)) {
-      _mesa_printf("%u is not a display list ID\n", list);
+      printf("%u is not a display list ID\n", list);
       return;
    }
 
@@ -9330,7 +9336,7 @@ print_list(GLcontext *ctx, GLuint list)
 
    n = dlist->Head;
 
-   _mesa_printf("START-LIST %u, address %p\n", list, (void *) n);
+   printf("START-LIST %u, address %p\n", list, (void *) n);
 
    done = n ? GL_FALSE : GL_TRUE;
    while (!done) {
@@ -9342,196 +9348,196 @@ print_list(GLcontext *ctx, GLuint list)
       else {
          switch (opcode) {
          case OPCODE_ACCUM:
-            _mesa_printf("Accum %s %g\n", enum_string(n[1].e), n[2].f);
+            printf("Accum %s %g\n", enum_string(n[1].e), n[2].f);
             break;
          case OPCODE_BITMAP:
-            _mesa_printf("Bitmap %d %d %g %g %g %g %p\n", n[1].i, n[2].i,
+            printf("Bitmap %d %d %g %g %g %g %p\n", n[1].i, n[2].i,
                          n[3].f, n[4].f, n[5].f, n[6].f, (void *) n[7].data);
             break;
          case OPCODE_CALL_LIST:
-            _mesa_printf("CallList %d\n", (int) n[1].ui);
+            printf("CallList %d\n", (int) n[1].ui);
             break;
          case OPCODE_CALL_LIST_OFFSET:
-            _mesa_printf("CallList %d + offset %u = %u\n", (int) n[1].ui,
+            printf("CallList %d + offset %u = %u\n", (int) n[1].ui,
                          ctx->List.ListBase, ctx->List.ListBase + n[1].ui);
             break;
          case OPCODE_COLOR_TABLE_PARAMETER_FV:
-            _mesa_printf("ColorTableParameterfv %s %s %f %f %f %f\n",
+            printf("ColorTableParameterfv %s %s %f %f %f %f\n",
                          enum_string(n[1].e), enum_string(n[2].e),
                          n[3].f, n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_COLOR_TABLE_PARAMETER_IV:
-            _mesa_printf("ColorTableParameteriv %s %s %d %d %d %d\n",
+            printf("ColorTableParameteriv %s %s %d %d %d %d\n",
                          enum_string(n[1].e), enum_string(n[2].e),
                          n[3].i, n[4].i, n[5].i, n[6].i);
             break;
          case OPCODE_DISABLE:
-            _mesa_printf("Disable %s\n", enum_string(n[1].e));
+            printf("Disable %s\n", enum_string(n[1].e));
             break;
          case OPCODE_ENABLE:
-            _mesa_printf("Enable %s\n", enum_string(n[1].e));
+            printf("Enable %s\n", enum_string(n[1].e));
             break;
          case OPCODE_FRUSTUM:
-            _mesa_printf("Frustum %g %g %g %g %g %g\n",
+            printf("Frustum %g %g %g %g %g %g\n",
                          n[1].f, n[2].f, n[3].f, n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_LINE_STIPPLE:
-            _mesa_printf("LineStipple %d %x\n", n[1].i, (int) n[2].us);
+            printf("LineStipple %d %x\n", n[1].i, (int) n[2].us);
             break;
          case OPCODE_LOAD_IDENTITY:
-            _mesa_printf("LoadIdentity\n");
+            printf("LoadIdentity\n");
             break;
          case OPCODE_LOAD_MATRIX:
-            _mesa_printf("LoadMatrix\n");
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("LoadMatrix\n");
+            printf("  %8f %8f %8f %8f\n",
                          n[1].f, n[5].f, n[9].f, n[13].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[2].f, n[6].f, n[10].f, n[14].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[3].f, n[7].f, n[11].f, n[15].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[4].f, n[8].f, n[12].f, n[16].f);
             break;
          case OPCODE_MULT_MATRIX:
-            _mesa_printf("MultMatrix (or Rotate)\n");
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("MultMatrix (or Rotate)\n");
+            printf("  %8f %8f %8f %8f\n",
                          n[1].f, n[5].f, n[9].f, n[13].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[2].f, n[6].f, n[10].f, n[14].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[3].f, n[7].f, n[11].f, n[15].f);
-            _mesa_printf("  %8f %8f %8f %8f\n",
+            printf("  %8f %8f %8f %8f\n",
                          n[4].f, n[8].f, n[12].f, n[16].f);
             break;
          case OPCODE_ORTHO:
-            _mesa_printf("Ortho %g %g %g %g %g %g\n",
+            printf("Ortho %g %g %g %g %g %g\n",
                          n[1].f, n[2].f, n[3].f, n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_POP_ATTRIB:
-            _mesa_printf("PopAttrib\n");
+            printf("PopAttrib\n");
             break;
          case OPCODE_POP_MATRIX:
-            _mesa_printf("PopMatrix\n");
+            printf("PopMatrix\n");
             break;
          case OPCODE_POP_NAME:
-            _mesa_printf("PopName\n");
+            printf("PopName\n");
             break;
          case OPCODE_PUSH_ATTRIB:
-            _mesa_printf("PushAttrib %x\n", n[1].bf);
+            printf("PushAttrib %x\n", n[1].bf);
             break;
          case OPCODE_PUSH_MATRIX:
-            _mesa_printf("PushMatrix\n");
+            printf("PushMatrix\n");
             break;
          case OPCODE_PUSH_NAME:
-            _mesa_printf("PushName %d\n", (int) n[1].ui);
+            printf("PushName %d\n", (int) n[1].ui);
             break;
          case OPCODE_RASTER_POS:
-            _mesa_printf("RasterPos %g %g %g %g\n",
+            printf("RasterPos %g %g %g %g\n",
                          n[1].f, n[2].f, n[3].f, n[4].f);
             break;
          case OPCODE_ROTATE:
-            _mesa_printf("Rotate %g %g %g %g\n",
+            printf("Rotate %g %g %g %g\n",
                          n[1].f, n[2].f, n[3].f, n[4].f);
             break;
          case OPCODE_SCALE:
-            _mesa_printf("Scale %g %g %g\n", n[1].f, n[2].f, n[3].f);
+            printf("Scale %g %g %g\n", n[1].f, n[2].f, n[3].f);
             break;
          case OPCODE_TRANSLATE:
-            _mesa_printf("Translate %g %g %g\n", n[1].f, n[2].f, n[3].f);
+            printf("Translate %g %g %g\n", n[1].f, n[2].f, n[3].f);
             break;
          case OPCODE_BIND_TEXTURE:
-            _mesa_printf("BindTexture %s %d\n",
+            printf("BindTexture %s %d\n",
                          _mesa_lookup_enum_by_nr(n[1].ui), n[2].ui);
             break;
          case OPCODE_SHADE_MODEL:
-            _mesa_printf("ShadeModel %s\n", _mesa_lookup_enum_by_nr(n[1].ui));
+            printf("ShadeModel %s\n", _mesa_lookup_enum_by_nr(n[1].ui));
             break;
          case OPCODE_MAP1:
-            _mesa_printf("Map1 %s %.3f %.3f %d %d\n",
+            printf("Map1 %s %.3f %.3f %d %d\n",
                          _mesa_lookup_enum_by_nr(n[1].ui),
                          n[2].f, n[3].f, n[4].i, n[5].i);
             break;
          case OPCODE_MAP2:
-            _mesa_printf("Map2 %s %.3f %.3f %.3f %.3f %d %d %d %d\n",
+            printf("Map2 %s %.3f %.3f %.3f %.3f %d %d %d %d\n",
                          _mesa_lookup_enum_by_nr(n[1].ui),
                          n[2].f, n[3].f, n[4].f, n[5].f,
                          n[6].i, n[7].i, n[8].i, n[9].i);
             break;
          case OPCODE_MAPGRID1:
-            _mesa_printf("MapGrid1 %d %.3f %.3f\n", n[1].i, n[2].f, n[3].f);
+            printf("MapGrid1 %d %.3f %.3f\n", n[1].i, n[2].f, n[3].f);
             break;
          case OPCODE_MAPGRID2:
-            _mesa_printf("MapGrid2 %d %.3f %.3f, %d %.3f %.3f\n",
+            printf("MapGrid2 %d %.3f %.3f, %d %.3f %.3f\n",
                          n[1].i, n[2].f, n[3].f, n[4].i, n[5].f, n[6].f);
             break;
          case OPCODE_EVALMESH1:
-            _mesa_printf("EvalMesh1 %d %d\n", n[1].i, n[2].i);
+            printf("EvalMesh1 %d %d\n", n[1].i, n[2].i);
             break;
          case OPCODE_EVALMESH2:
-            _mesa_printf("EvalMesh2 %d %d %d %d\n",
+            printf("EvalMesh2 %d %d %d %d\n",
                          n[1].i, n[2].i, n[3].i, n[4].i);
             break;
 
          case OPCODE_ATTR_1F_NV:
-            _mesa_printf("ATTR_1F_NV attr %d: %f\n", n[1].i, n[2].f);
+            printf("ATTR_1F_NV attr %d: %f\n", n[1].i, n[2].f);
             break;
          case OPCODE_ATTR_2F_NV:
-            _mesa_printf("ATTR_2F_NV attr %d: %f %f\n",
+            printf("ATTR_2F_NV attr %d: %f %f\n",
                          n[1].i, n[2].f, n[3].f);
             break;
          case OPCODE_ATTR_3F_NV:
-            _mesa_printf("ATTR_3F_NV attr %d: %f %f %f\n",
+            printf("ATTR_3F_NV attr %d: %f %f %f\n",
                          n[1].i, n[2].f, n[3].f, n[4].f);
             break;
          case OPCODE_ATTR_4F_NV:
-            _mesa_printf("ATTR_4F_NV attr %d: %f %f %f %f\n",
+            printf("ATTR_4F_NV attr %d: %f %f %f %f\n",
                          n[1].i, n[2].f, n[3].f, n[4].f, n[5].f);
             break;
          case OPCODE_ATTR_1F_ARB:
-            _mesa_printf("ATTR_1F_ARB attr %d: %f\n", n[1].i, n[2].f);
+            printf("ATTR_1F_ARB attr %d: %f\n", n[1].i, n[2].f);
             break;
          case OPCODE_ATTR_2F_ARB:
-            _mesa_printf("ATTR_2F_ARB attr %d: %f %f\n",
+            printf("ATTR_2F_ARB attr %d: %f %f\n",
                          n[1].i, n[2].f, n[3].f);
             break;
          case OPCODE_ATTR_3F_ARB:
-            _mesa_printf("ATTR_3F_ARB attr %d: %f %f %f\n",
+            printf("ATTR_3F_ARB attr %d: %f %f %f\n",
                          n[1].i, n[2].f, n[3].f, n[4].f);
             break;
          case OPCODE_ATTR_4F_ARB:
-            _mesa_printf("ATTR_4F_ARB attr %d: %f %f %f %f\n",
+            printf("ATTR_4F_ARB attr %d: %f %f %f %f\n",
                          n[1].i, n[2].f, n[3].f, n[4].f, n[5].f);
             break;
 
          case OPCODE_MATERIAL:
-            _mesa_printf("MATERIAL %x %x: %f %f %f %f\n",
+            printf("MATERIAL %x %x: %f %f %f %f\n",
                          n[1].i, n[2].i, n[3].f, n[4].f, n[5].f, n[6].f);
             break;
          case OPCODE_BEGIN:
-            _mesa_printf("BEGIN %x\n", n[1].i);
+            printf("BEGIN %x\n", n[1].i);
             break;
          case OPCODE_END:
-            _mesa_printf("END\n");
+            printf("END\n");
             break;
          case OPCODE_RECTF:
-            _mesa_printf("RECTF %f %f %f %f\n", n[1].f, n[2].f, n[3].f,
+            printf("RECTF %f %f %f %f\n", n[1].f, n[2].f, n[3].f,
                          n[4].f);
             break;
          case OPCODE_EVAL_C1:
-            _mesa_printf("EVAL_C1 %f\n", n[1].f);
+            printf("EVAL_C1 %f\n", n[1].f);
             break;
          case OPCODE_EVAL_C2:
-            _mesa_printf("EVAL_C2 %f %f\n", n[1].f, n[2].f);
+            printf("EVAL_C2 %f %f\n", n[1].f, n[2].f);
             break;
          case OPCODE_EVAL_P1:
-            _mesa_printf("EVAL_P1 %d\n", n[1].i);
+            printf("EVAL_P1 %d\n", n[1].i);
             break;
          case OPCODE_EVAL_P2:
-            _mesa_printf("EVAL_P2 %d %d\n", n[1].i, n[2].i);
+            printf("EVAL_P2 %d %d\n", n[1].i, n[2].i);
             break;
 
          case OPCODE_PROVOKING_VERTEX:
-            _mesa_printf("ProvokingVertex %s\n",
+            printf("ProvokingVertex %s\n",
                          _mesa_lookup_enum_by_nr(n[1].ui));
             break;
 
@@ -9539,26 +9545,26 @@ print_list(GLcontext *ctx, GLuint list)
              * meta opcodes/commands
              */
          case OPCODE_ERROR:
-            _mesa_printf("Error: %s %s\n",
+            printf("Error: %s %s\n",
                          enum_string(n[1].e), (const char *) n[2].data);
             break;
          case OPCODE_CONTINUE:
-            _mesa_printf("DISPLAY-LIST-CONTINUE\n");
+            printf("DISPLAY-LIST-CONTINUE\n");
             n = (Node *) n[1].next;
             break;
          case OPCODE_END_OF_LIST:
-            _mesa_printf("END-LIST %u\n", list);
+            printf("END-LIST %u\n", list);
             done = GL_TRUE;
             break;
          default:
             if (opcode < 0 || opcode > OPCODE_END_OF_LIST) {
-               _mesa_printf
+               printf
                   ("ERROR IN DISPLAY LIST: opcode = %d, address = %p\n",
                    opcode, (void *) n);
                return;
             }
             else {
-               _mesa_printf("command %d, %u operands\n", opcode,
+               printf("command %d, %u operands\n", opcode,
                             InstSize[opcode]);
             }
          }
@@ -9711,7 +9717,7 @@ _mesa_init_display_list(GLcontext *ctx)
 
    /* zero-out the instruction size table, just once */
    if (!tableInitialized) {
-      _mesa_bzero(InstSize, sizeof(InstSize));
+      memset(InstSize, 0, sizeof(InstSize));
       tableInitialized = GL_TRUE;
    }
 

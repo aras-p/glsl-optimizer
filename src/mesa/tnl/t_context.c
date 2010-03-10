@@ -107,6 +107,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    const struct gl_vertex_program *vp = ctx->VertexProgram._Current;
    const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+   GLuint i;
 
    if (new_state & (_NEW_HINT | _NEW_PROGRAM)) {
       ASSERT(tnl->AllowVertexFog || tnl->AllowPixelFog);
@@ -119,29 +120,21 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    /* Calculate tnl->render_inputs.  This bitmask indicates which vertex
     * attributes need to be emitted to the rasterizer.
     */
-   if (ctx->Visual.rgbMode) {
-      GLuint i;
+   RENDERINPUTS_ZERO( tnl->render_inputs_bitset );
+   RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
 
-      RENDERINPUTS_ZERO( tnl->render_inputs_bitset );
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
-
-      if (!fp || (fp->Base.InputsRead & FRAG_BIT_COL0)) {
-         RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
-      }
-
-      if (NEED_SECONDARY_COLOR(ctx))
-         RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 );
-
-      for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-         if (ctx->Texture._EnabledCoordUnits & (1 << i) ||
-             (fp && fp->Base.InputsRead & FRAG_BIT_TEX(i))) {
-            RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) );
-         }
-      }
+   if (!fp || (fp->Base.InputsRead & FRAG_BIT_COL0)) {
+     RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
    }
-   else {
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR_INDEX );
+
+   if (NEED_SECONDARY_COLOR(ctx))
+     RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 );
+
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+     if (ctx->Texture._EnabledCoordUnits & (1 << i) ||
+	 (fp && fp->Base.InputsRead & FRAG_BIT_TEX(i))) {
+       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) );
+     }
    }
 
    if (ctx->Fog.Enabled) {

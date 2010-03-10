@@ -864,7 +864,7 @@ draw_install_aapoint_stage(struct draw_context *draw,
     */
    aapoint = draw_aapoint_stage( draw );
    if (aapoint == NULL)
-      goto fail;
+      return FALSE;
 
    aapoint->pipe = pipe;
 
@@ -881,10 +881,4 @@ draw_install_aapoint_stage(struct draw_context *draw,
    draw->pipeline.aapoint = &aapoint->stage;
 
    return TRUE;
-
- fail:
-   if (aapoint)
-      aapoint->stage.destroy( &aapoint->stage );
-
-   return FALSE;
 }

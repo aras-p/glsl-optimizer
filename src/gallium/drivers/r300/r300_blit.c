@@ -33,7 +33,10 @@ static void r300_blitter_save_states(struct r300_context* r300)
     util_blitter_save_stencil_ref(r300->blitter, &(r300->stencil_ref));
     util_blitter_save_rasterizer(r300->blitter, r300->rs_state.state);
     util_blitter_save_fragment_shader(r300->blitter, r300->fs);
-    util_blitter_save_vertex_shader(r300->blitter, r300->vs);
+    util_blitter_save_vertex_shader(r300->blitter, r300->vs_state.state);
+    util_blitter_save_viewport(r300->blitter, &r300->viewport);
+    util_blitter_save_clip(r300->blitter, &r300->clip);
+    util_blitter_save_vertex_elements(r300->blitter, r300->velems);
 }
 
 /* Clear currently bound buffers. */
@@ -98,6 +101,8 @@ static void r300_hw_copy(struct pipe_context* pipe,
                          unsigned width, unsigned height)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_textures_state* state =
+        (struct r300_textures_state*)r300->textures_state.state;
 
     /* Yeah we have to save all those states to ensure this blitter operation
      * is really transparent. The states will be restored by the blitter once
@@ -106,7 +111,7 @@ static void r300_hw_copy(struct pipe_context* pipe,
     util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
 
     util_blitter_save_fragment_sampler_states(
-        r300->blitter, r300->sampler_count, (void**)r300->sampler_states);
+        r300->blitter, state->sampler_count, (void**)state->sampler_states);
 
     util_blitter_save_fragment_sampler_views(
         r300->blitter, r300->fragment_sampler_view_count,
@@ -139,10 +144,10 @@ void r300_surface_copy(struct pipe_context* pipe,
                 new_format = PIPE_FORMAT_I8_UNORM;
                 break;
             case 2:
-                new_format = PIPE_FORMAT_A4R4G4B4_UNORM;
+                new_format = PIPE_FORMAT_B4G4R4A4_UNORM;
                 break;
             case 4:
-                new_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+                new_format = PIPE_FORMAT_B8G8R8A8_UNORM;
                 break;
             default:
                 debug_printf("r300: surface_copy: Unhandled format: %s. Falling back to software.\n"

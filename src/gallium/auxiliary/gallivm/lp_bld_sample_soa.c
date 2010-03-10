@@ -65,11 +65,23 @@ struct lp_build_sample_context
 
    const struct util_format_description *format_desc;
 
+   /** regular scalar float type */
+   struct lp_type float_type;
+   struct lp_build_context float_bld;
+
+   /** regular scalar float type */
+   struct lp_type int_type;
+   struct lp_build_context int_bld;
+
    /** Incoming coordinates type and build context */
    struct lp_type coord_type;
    struct lp_build_context coord_bld;
 
-   /** Integer coordinates */
+   /** Unsigned integer coordinates */
+   struct lp_type uint_coord_type;
+   struct lp_build_context uint_coord_bld;
+
+   /** Signed integer coordinates */
    struct lp_type int_coord_type;
    struct lp_build_context int_coord_bld;
 
@@ -79,36 +91,145 @@ struct lp_build_sample_context
 };
 
 
+/**
+ * Does the given texture wrap mode allow sampling the texture border color?
+ * XXX maybe move this into gallium util code.
+ */
+static boolean
+wrap_mode_uses_border_color(unsigned mode)
+{
+   switch (mode) {
+   case PIPE_TEX_WRAP_REPEAT:
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+      return FALSE;
+   case PIPE_TEX_WRAP_CLAMP:
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP:
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      return TRUE;
+   default:
+      assert(0 && "unexpected wrap mode");
+      return FALSE;
+   }
+}
+
+
+static LLVMValueRef
+lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
+                          LLVMValueRef data_array, LLVMValueRef level)
+{
+   LLVMValueRef indexes[2], data_ptr;
+   indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   indexes[1] = level;
+   data_ptr = LLVMBuildGEP(bld->builder, data_array, indexes, 2, "");
+   data_ptr = LLVMBuildLoad(bld->builder, data_ptr, "");
+   return data_ptr;
+}
+
+
+static LLVMValueRef
+lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
+                                LLVMValueRef data_array, int level)
+{
+   LLVMValueRef lvl = LLVMConstInt(LLVMInt32Type(), level, 0);
+   return lp_build_get_mipmap_level(bld, data_array, lvl);
+}
+
+
+/**
+ * Gen code to fetch a texel from a texture at int coords (x, y).
+ * The result, texel, will be:
+ *   texel[0] = red values
+ *   texel[1] = green values
+ *   texel[2] = blue values
+ *   texel[3] = alpha values
+ */
 static void
 lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
+                          LLVMValueRef width,
+                          LLVMValueRef height,
                           LLVMValueRef x,
                           LLVMValueRef y,
                           LLVMValueRef y_stride,
                           LLVMValueRef data_ptr,
                           LLVMValueRef *texel)
 {
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef offset;
    LLVMValueRef packed;
+   LLVMValueRef use_border = NULL;
 
-   offset = lp_build_sample_offset(&bld->int_coord_bld,
+   /* use_border = x < 0 || x >= width || y < 0 || y >= height */
+   if (wrap_mode_uses_border_color(bld->static_state->wrap_s)) {
+      LLVMValueRef b1, b2;
+      b1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, x, int_coord_bld->zero);
+      b2 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, x, width);
+      use_border = LLVMBuildOr(bld->builder, b1, b2, "b1_or_b2");
+   }
+
+   if (wrap_mode_uses_border_color(bld->static_state->wrap_t)) {
+      LLVMValueRef b1, b2;
+      b1 = lp_build_cmp(int_coord_bld, PIPE_FUNC_LESS, y, int_coord_bld->zero);
+      b2 = lp_build_cmp(int_coord_bld, PIPE_FUNC_GEQUAL, y, height);
+      if (use_border) {
+         use_border = LLVMBuildOr(bld->builder, use_border, b1, "ub_or_b1");
+         use_border = LLVMBuildOr(bld->builder, use_border, b2, "ub_or_b2");
+      }
+      else {
+         use_border = LLVMBuildOr(bld->builder, b1, b2, "b1_or_b2");
+      }
+   }
+
+   /*
+    * Note: if we find an app which frequently samples the texture border
+    * we might want to implement a true conditional here to avoid sampling
+    * the texture whenever possible (since that's quite a bit of code).
+    * Ex:
+    *   if (use_border) {
+    *      texel = border_color;
+    *   }
+    *   else {
+    *      texel = sample_texture(coord);
+    *   }
+    * As it is now, we always sample the texture, then selectively replace
+    * the texel color results with the border color.
+    */
+
+   /* convert x,y coords to linear offset from start of texture, in bytes */
+   offset = lp_build_sample_offset(&bld->uint_coord_bld,
                                    bld->format_desc,
-                                   x, y, y_stride,
-                                   data_ptr);
+                                   x, y, y_stride);
 
    assert(bld->format_desc->block.width == 1);
    assert(bld->format_desc->block.height == 1);
    assert(bld->format_desc->block.bits <= bld->texel_type.width);
 
+   /* gather the texels from the texture */
    packed = lp_build_gather(bld->builder,
                             bld->texel_type.length,
                             bld->format_desc->block.bits,
                             bld->texel_type.width,
                             data_ptr, offset);
 
+   /* convert texels to float rgba */
    lp_build_unpack_rgba_soa(bld->builder,
                             bld->format_desc,
                             bld->texel_type,
                             packed, texel);
+
+   if (use_border) {
+      /* select texel color or border color depending on use_border */
+      int chan;
+      for (chan = 0; chan < 4; chan++) {
+         LLVMValueRef border_chan =
+            lp_build_const_scalar(bld->texel_type,
+                                  bld->static_state->border_color[chan]);
+         texel[chan] = lp_build_select(&bld->texel_bld, use_border,
+                                       border_chan, texel[chan]);
+      }
+   }
 }
 
 
@@ -117,18 +238,21 @@ lp_build_sample_packed(struct lp_build_sample_context *bld,
                        LLVMValueRef x,
                        LLVMValueRef y,
                        LLVMValueRef y_stride,
-                       LLVMValueRef data_ptr)
+                       LLVMValueRef data_array)
 {
    LLVMValueRef offset;
+   LLVMValueRef data_ptr;
 
-   offset = lp_build_sample_offset(&bld->int_coord_bld,
+   offset = lp_build_sample_offset(&bld->uint_coord_bld,
                                    bld->format_desc,
-                                   x, y, y_stride,
-                                   data_ptr);
+                                   x, y, y_stride);
 
    assert(bld->format_desc->block.width == 1);
    assert(bld->format_desc->block.height == 1);
    assert(bld->format_desc->block.bits <= bld->texel_type.width);
+
+   /* get pointer to mipmap level 0 data */
+   data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
 
    return lp_build_gather(bld->builder,
                           bld->texel_type.length,
@@ -138,17 +262,77 @@ lp_build_sample_packed(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Helper to compute the mirror function for the PIPE_WRAP_MIRROR modes.
+ */
 static LLVMValueRef
-lp_build_sample_wrap(struct lp_build_sample_context *bld,
-                     LLVMValueRef coord,
-                     LLVMValueRef length,
-                     boolean is_pot,
-                     unsigned wrap_mode)
+lp_build_coord_mirror(struct lp_build_sample_context *bld,
+                      LLVMValueRef coord)
 {
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   LLVMValueRef fract, flr, isOdd;
+
+   /* fract = coord - floor(coord) */
+   fract = lp_build_sub(coord_bld, coord, lp_build_floor(coord_bld, coord));
+
+   /* flr = ifloor(coord); */
+   flr = lp_build_ifloor(coord_bld, coord);
+
+   /* isOdd = flr & 1 */
+   isOdd = LLVMBuildAnd(bld->builder, flr, int_coord_bld->one, "");
+
+   /* make coord positive or negative depending on isOdd */
+   coord = lp_build_set_sign(coord_bld, fract, isOdd);
+
+   /* convert isOdd to float */
+   isOdd = lp_build_int_to_float(coord_bld, isOdd);
+
+   /* add isOdd to coord */
+   coord = lp_build_add(coord_bld, coord, isOdd);
+
+   return coord;
+}
+
+
+/**
+ * We only support a few wrap modes in lp_build_sample_wrap_int() at this time.
+ * Return whether the given mode is supported by that function.
+ */
+static boolean
+is_simple_wrap_mode(unsigned mode)
+{
+   switch (mode) {
+   case PIPE_TEX_WRAP_REPEAT:
+   case PIPE_TEX_WRAP_CLAMP:
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return TRUE;
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+   default:
+      return FALSE;
+   }
+}
+
+
+/**
+ * Build LLVM code for texture wrap mode, for scaled integer texcoords.
+ * \param coord  the incoming texcoord (s,t,r or q) scaled to the texture size
+ * \param length  the texture size along one dimension
+ * \param is_pot  if TRUE, length is a power of two
+ * \param wrap_mode  one of PIPE_TEX_WRAP_x
+ */
+static LLVMValueRef
+lp_build_sample_wrap_int(struct lp_build_sample_context *bld,
+                         LLVMValueRef coord,
+                         LLVMValueRef length,
+                         boolean is_pot,
+                         unsigned wrap_mode)
+{
+   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef length_minus_one;
 
-   length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
+   length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
 
    switch(wrap_mode) {
    case PIPE_TEX_WRAP_REPEAT:
@@ -161,12 +345,12 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_CLAMP:
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
       coord = lp_build_min(int_coord_bld, coord, length_minus_one);
       break;
 
-   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
@@ -174,8 +358,8 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
       /* FIXME */
       _debug_printf("llvmpipe: failed to translate texture wrap mode %s\n",
                     util_dump_tex_wrap(wrap_mode, TRUE));
-      coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
-      coord = lp_build_min(int_coord_bld, coord, length_minus_one);
+      coord = lp_build_max(uint_coord_bld, coord, uint_coord_bld->zero);
+      coord = lp_build_min(uint_coord_bld, coord, length_minus_one);
       break;
 
    default:
@@ -186,6 +370,583 @@ lp_build_sample_wrap(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Build LLVM code for texture wrap mode for linear filtering.
+ * \param x0_out  returns first integer texcoord
+ * \param x1_out  returns second integer texcoord
+ * \param weight_out  returns linear interpolation weight
+ */
+static void
+lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
+                            LLVMValueRef coord,
+                            LLVMValueRef length,
+                            boolean is_pot,
+                            unsigned wrap_mode,
+                            LLVMValueRef *x0_out,
+                            LLVMValueRef *x1_out,
+                            LLVMValueRef *weight_out)
+{
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
+   LLVMValueRef two = lp_build_const_scalar(coord_bld->type, 2.0);
+   LLVMValueRef half = lp_build_const_scalar(coord_bld->type, 0.5);
+   LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
+   LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
+   LLVMValueRef length_f_minus_one = lp_build_sub(coord_bld, length_f, coord_bld->one);
+   LLVMValueRef coord0, coord1, weight;
+
+   switch(wrap_mode) {
+   case PIPE_TEX_WRAP_REPEAT:
+      /* mul by size and subtract 0.5 */
+      coord = lp_build_mul(coord_bld, coord, length_f);
+      coord = lp_build_sub(coord_bld, coord, half);
+      /* convert to int */
+      coord0 = lp_build_ifloor(coord_bld, coord);
+      coord1 = lp_build_add(uint_coord_bld, coord0, uint_coord_bld->one);
+      /* compute lerp weight */
+      weight = lp_build_fract(coord_bld, coord);
+      /* repeat wrap */
+      if (is_pot) {
+         coord0 = LLVMBuildAnd(bld->builder, coord0, length_minus_one, "");
+         coord1 = LLVMBuildAnd(bld->builder, coord1, length_minus_one, "");
+      }
+      else {
+         /* Signed remainder won't give the right results for negative
+          * dividends but unsigned remainder does.*/
+         coord0 = LLVMBuildURem(bld->builder, coord0, length, "");
+         coord1 = LLVMBuildURem(bld->builder, coord1, length, "");
+      }
+      break;
+
+   case PIPE_TEX_WRAP_CLAMP:
+      if (bld->static_state->normalized_coords) {
+         coord = lp_build_mul(coord_bld, coord, length_f);
+      }
+      weight = lp_build_fract(coord_bld, coord);
+      coord0 = lp_build_clamp(coord_bld, coord, coord_bld->zero,
+                              length_f_minus_one);
+      coord1 = lp_build_add(coord_bld, coord, coord_bld->one);
+      coord1 = lp_build_clamp(coord_bld, coord1, coord_bld->zero,
+                              length_f_minus_one);
+      coord0 = lp_build_ifloor(coord_bld, coord0);
+      coord1 = lp_build_ifloor(coord_bld, coord1);
+      break;
+
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      if (bld->static_state->normalized_coords) {
+         /* clamp to [0,1] */
+         coord = lp_build_clamp(coord_bld, coord, coord_bld->zero, coord_bld->one);
+         /* mul by tex size and subtract 0.5 */
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         coord = lp_build_sub(coord_bld, coord, half);
+      }
+      else {
+         LLVMValueRef min, max;
+         /* clamp to [0.5, length - 0.5] */
+         min = lp_build_const_scalar(coord_bld->type, 0.5F);
+         max = lp_build_sub(coord_bld, length_f, min);
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+      }
+      /* compute lerp weight */
+      weight = lp_build_fract(coord_bld, coord);
+      /* coord0 = floor(coord); */
+      coord0 = lp_build_ifloor(coord_bld, coord);
+      coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+      /* coord0 = max(coord0, 0) */
+      coord0 = lp_build_max(int_coord_bld, coord0, int_coord_bld->zero);
+      /* coord1 = min(coord1, length-1) */
+      coord1 = lp_build_min(int_coord_bld, coord1, length_minus_one);
+      break;
+
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      {
+         LLVMValueRef min, max;
+         if (bld->static_state->normalized_coords) {
+            /* min = -1.0 / (2 * length) = -0.5 / length */
+            min = lp_build_mul(coord_bld,
+                               lp_build_const_scalar(coord_bld->type, -0.5F),
+                               lp_build_rcp(coord_bld, length_f));
+            /* max = 1.0 - min */
+            max = lp_build_sub(coord_bld, coord_bld->one, min);
+            /* coord = clamp(coord, min, max) */
+            coord = lp_build_clamp(coord_bld, coord, min, max);
+            /* scale coord to length (and sub 0.5?) */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+            coord = lp_build_sub(coord_bld, coord, half);
+         }
+         else {
+            /* clamp to [-0.5, length + 0.5] */
+            min = lp_build_const_scalar(coord_bld->type, -0.5F);
+            max = lp_build_sub(coord_bld, length_f, min);
+            coord = lp_build_clamp(coord_bld, coord, min, max);
+            coord = lp_build_sub(coord_bld, coord, half);
+         }
+         /* compute lerp weight */
+         weight = lp_build_fract(coord_bld, coord);
+         /* convert to int */
+         coord0 = lp_build_ifloor(coord_bld, coord);
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+      }
+      break;
+
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:
+      /* compute mirror function */
+      coord = lp_build_coord_mirror(bld, coord);
+
+      /* scale coord to length */
+      coord = lp_build_mul(coord_bld, coord, length_f);
+      coord = lp_build_sub(coord_bld, coord, half);
+
+      /* compute lerp weight */
+      weight = lp_build_fract(coord_bld, coord);
+
+      /* convert to int coords */
+      coord0 = lp_build_ifloor(coord_bld, coord);
+      coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+
+      /* coord0 = max(coord0, 0) */
+      coord0 = lp_build_max(int_coord_bld, coord0, int_coord_bld->zero);
+      /* coord1 = min(coord1, length-1) */
+      coord1 = lp_build_min(int_coord_bld, coord1, length_minus_one);
+      break;
+
+   case PIPE_TEX_WRAP_MIRROR_CLAMP:
+      {
+         LLVMValueRef min, max;
+         /* min = 1.0 / (2 * length) */
+         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
+         /* max = 1.0 - min */
+         max = lp_build_sub(coord_bld, coord_bld->one, min);
+
+         coord = lp_build_abs(coord_bld, coord);
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         if(0)coord = lp_build_sub(coord_bld, coord, half);
+         weight = lp_build_fract(coord_bld, coord);
+         coord0 = lp_build_ifloor(coord_bld, coord);
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+      }
+      break;
+
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+      {
+         LLVMValueRef min, max;
+         /* min = 1.0 / (2 * length) */
+         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
+         /* max = 1.0 - min */
+         max = lp_build_sub(coord_bld, coord_bld->one, min);
+
+         coord = lp_build_abs(coord_bld, coord);
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         coord = lp_build_sub(coord_bld, coord, half);
+         weight = lp_build_fract(coord_bld, coord);
+         coord0 = lp_build_ifloor(coord_bld, coord);
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+      }
+      break;
+
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      {
+         LLVMValueRef min, max;
+         /* min = -1.0 / (2 * length) = -0.5 / length */
+         min = lp_build_mul(coord_bld,
+                            lp_build_const_scalar(coord_bld->type, -0.5F),
+                            lp_build_rcp(coord_bld, length_f));
+         /* max = 1.0 - min */
+         max = lp_build_sub(coord_bld, coord_bld->one, min);
+
+         coord = lp_build_abs(coord_bld, coord);
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         coord = lp_build_sub(coord_bld, coord, half);
+         weight = lp_build_fract(coord_bld, coord);
+         coord0 = lp_build_ifloor(coord_bld, coord);
+         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
+      }
+      break;
+
+   default:
+      assert(0);
+      coord0 = NULL;
+      coord1 = NULL;
+      weight = NULL;
+   }
+
+   *x0_out = coord0;
+   *x1_out = coord1;
+   *weight_out = weight;
+}
+
+
+/**
+ * Build LLVM code for texture wrap mode for nearest filtering.
+ * \param coord  the incoming texcoord (nominally in [0,1])
+ * \param length  the texture size along one dimension, as int
+ * \param is_pot  if TRUE, length is a power of two
+ * \param wrap_mode  one of PIPE_TEX_WRAP_x
+ */
+static LLVMValueRef
+lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
+                             LLVMValueRef coord,
+                             LLVMValueRef length,
+                             boolean is_pot,
+                             unsigned wrap_mode)
+{
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
+   LLVMValueRef two = lp_build_const_scalar(coord_bld->type, 2.0);
+   LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
+   LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
+   LLVMValueRef length_f_minus_one = lp_build_sub(coord_bld, length_f, coord_bld->one);
+   LLVMValueRef icoord;
+   
+   switch(wrap_mode) {
+   case PIPE_TEX_WRAP_REPEAT:
+      coord = lp_build_mul(coord_bld, coord, length_f);
+      icoord = lp_build_ifloor(coord_bld, coord);
+      if (is_pot)
+         icoord = LLVMBuildAnd(bld->builder, icoord, length_minus_one, "");
+      else
+         /* Signed remainder won't give the right results for negative
+          * dividends but unsigned remainder does.*/
+         icoord = LLVMBuildURem(bld->builder, icoord, length, "");
+      break;
+
+   case PIPE_TEX_WRAP_CLAMP:
+      /* mul by size */
+      if (bld->static_state->normalized_coords) {
+         coord = lp_build_mul(coord_bld, coord, length_f);
+      }
+      /* floor */
+      icoord = lp_build_ifloor(coord_bld, coord);
+      /* clamp to [0, size-1].  Note: int coord builder type */
+      icoord = lp_build_clamp(int_coord_bld, icoord, int_coord_bld->zero,
+                              length_minus_one);
+      break;
+
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      {
+         LLVMValueRef min, max;
+         if (bld->static_state->normalized_coords) {
+            /* min = 1.0 / (2 * length) */
+            min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
+            /* max = length - min */
+            max = lp_build_sub(coord_bld, length_f, min);
+            /* scale coord to length */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+         }
+         else {
+            /* clamp to [0.5, length - 0.5] */
+            min = lp_build_const_scalar(coord_bld->type, 0.5F);
+            max = lp_build_sub(coord_bld, length_f, min);
+         }
+         /* coord = clamp(coord, min, max) */
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         icoord = lp_build_ifloor(coord_bld, coord);
+      }
+      break;
+
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      /* Note: this is the same as CLAMP_TO_EDGE, except min = -min */
+      {
+         LLVMValueRef min, max;
+         if (bld->static_state->normalized_coords) {
+            /* min = -1.0 / (2 * length) = -0.5 / length */
+            min = lp_build_mul(coord_bld,
+                               lp_build_const_scalar(coord_bld->type, -0.5F),
+                               lp_build_rcp(coord_bld, length_f));
+            /* max = length - min */
+            max = lp_build_sub(coord_bld, length_f, min);
+            /* scale coord to length */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+         }
+         else {
+            /* clamp to [-0.5, length + 0.5] */
+            min = lp_build_const_scalar(coord_bld->type, -0.5F);
+            max = lp_build_sub(coord_bld, length_f, min);
+         }
+         /* coord = clamp(coord, min, max) */
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         icoord = lp_build_ifloor(coord_bld, coord);
+      }
+      break;
+
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:
+      {
+         LLVMValueRef min, max;
+         /* min = 1.0 / (2 * length) */
+         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
+         /* max = length - min */
+         max = lp_build_sub(coord_bld, length_f, min);
+
+         /* compute mirror function */
+         coord = lp_build_coord_mirror(bld, coord);
+
+         /* scale coord to length */
+         coord = lp_build_mul(coord_bld, coord, length_f);
+
+         /* coord = clamp(coord, min, max) */
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         icoord = lp_build_ifloor(coord_bld, coord);
+      }
+      break;
+
+   case PIPE_TEX_WRAP_MIRROR_CLAMP:
+      coord = lp_build_abs(coord_bld, coord);
+      coord = lp_build_mul(coord_bld, coord, length_f);
+      coord = lp_build_clamp(coord_bld, coord, coord_bld->zero, length_f_minus_one);
+      icoord = lp_build_ifloor(coord_bld, coord);
+      break;
+
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+      {
+         LLVMValueRef min, max;
+         /* min = 1.0 / (2 * length) */
+         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
+         /* max = length - min */
+         max = lp_build_sub(coord_bld, length_f, min);
+
+         coord = lp_build_abs(coord_bld, coord);
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         icoord = lp_build_ifloor(coord_bld, coord);
+      }
+      break;
+
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      {
+         LLVMValueRef min, max;
+         /* min = 1.0 / (2 * length) */
+         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
+         min = lp_build_negate(coord_bld, min);
+         /* max = length - min */
+         max = lp_build_sub(coord_bld, length_f, min);
+
+         coord = lp_build_abs(coord_bld, coord);
+         coord = lp_build_mul(coord_bld, coord, length_f);
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         icoord = lp_build_ifloor(coord_bld, coord);
+      }
+      break;
+
+   default:
+      assert(0);
+      icoord = NULL;
+   }
+
+   return icoord;
+}
+
+
+/**
+ * Codegen equivalent for u_minify().
+ * Return max(1, base_size >> level);
+ */
+static LLVMValueRef
+lp_build_minify(struct lp_build_sample_context *bld,
+                LLVMValueRef base_size,
+                LLVMValueRef level)
+{
+   LLVMValueRef size = LLVMBuildAShr(bld->builder, base_size, level, "minify");
+   size = lp_build_max(&bld->int_coord_bld, size, bld->int_coord_bld.one);
+   return size;
+}
+
+
+static int
+texture_dims(enum pipe_texture_target tex)
+{
+   switch (tex) {
+   case PIPE_TEXTURE_1D:
+      return 1;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_CUBE:
+      return 2;
+   case PIPE_TEXTURE_3D:
+      return 3;
+   default:
+      assert(0 && "bad texture target in texture_dims()");
+      return 2;
+   }
+}
+
+
+/**
+ * Generate code to compute texture level of detail (lambda).
+ * \param s  vector of texcoord s values
+ * \param t  vector of texcoord t values
+ * \param r  vector of texcoord r values
+ * \param width  scalar int texture width
+ * \param height  scalar int texture height
+ * \param depth  scalar int texture depth
+ */
+static LLVMValueRef
+lp_build_lod_selector(struct lp_build_sample_context *bld,
+                      LLVMValueRef s,
+                      LLVMValueRef t,
+                      LLVMValueRef r,
+                      LLVMValueRef width,
+                      LLVMValueRef height,
+                      LLVMValueRef depth)
+
+{
+   const int dims = texture_dims(bld->static_state->target);
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *float_bld = &bld->float_bld;
+   LLVMValueRef lod_bias = LLVMConstReal(LLVMFloatType(), bld->static_state->lod_bias);
+   LLVMValueRef min_lod = LLVMConstReal(LLVMFloatType(), bld->static_state->min_lod);
+   LLVMValueRef max_lod = LLVMConstReal(LLVMFloatType(), bld->static_state->max_lod);
+
+   LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   LLVMValueRef index1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
+   LLVMValueRef index2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
+
+   LLVMValueRef s0, s1, s2;
+   LLVMValueRef t0, t1, t2;
+   LLVMValueRef r0, r1, r2;
+   LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
+   LLVMValueRef rho, lod;
+
+   /*
+    * dsdx = abs(s[1] - s[0]);
+    * dsdy = abs(s[2] - s[0]);
+    * dtdx = abs(t[1] - t[0]);
+    * dtdy = abs(t[2] - t[0]);
+    * drdx = abs(r[1] - r[0]);
+    * drdy = abs(r[2] - r[0]);
+    * XXX we're assuming a four-element quad in 2x2 layout here.
+    */
+   s0 = LLVMBuildExtractElement(bld->builder, s, index0, "s0");
+   s1 = LLVMBuildExtractElement(bld->builder, s, index1, "s1");
+   s2 = LLVMBuildExtractElement(bld->builder, s, index2, "s2");
+   dsdx = LLVMBuildSub(bld->builder, s1, s0, "");
+   dsdx = lp_build_abs(float_bld, dsdx);
+   dsdy = LLVMBuildSub(bld->builder, s2, s0, "");
+   dsdy = lp_build_abs(float_bld, dsdy);
+   if (dims > 1) {
+      t0 = LLVMBuildExtractElement(bld->builder, t, index0, "t0");
+      t1 = LLVMBuildExtractElement(bld->builder, t, index1, "t1");
+      t2 = LLVMBuildExtractElement(bld->builder, t, index2, "t2");
+      dtdx = LLVMBuildSub(bld->builder, t1, t0, "");
+      dtdx = lp_build_abs(float_bld, dtdx);
+      dtdy = LLVMBuildSub(bld->builder, t2, t0, "");
+      dtdy = lp_build_abs(float_bld, dtdy);
+      if (dims > 2) {
+         r0 = LLVMBuildExtractElement(bld->builder, r, index0, "r0");
+         r1 = LLVMBuildExtractElement(bld->builder, r, index1, "r1");
+         r2 = LLVMBuildExtractElement(bld->builder, r, index2, "r2");
+         drdx = LLVMBuildSub(bld->builder, r1, r0, "");
+         drdx = lp_build_abs(float_bld, drdx);
+         drdy = LLVMBuildSub(bld->builder, r2, r0, "");
+         drdy = lp_build_abs(float_bld, drdy);
+      }
+   }
+
+   /* Compute rho = max of all partial derivatives scaled by texture size.
+    * XXX this could be vectorized somewhat
+    */
+   rho = LLVMBuildMul(bld->builder,
+                      lp_build_max(float_bld, dsdx, dsdy),
+                      lp_build_int_to_float(float_bld, width), "");
+   if (dims > 1) {
+      LLVMValueRef max;
+      max = LLVMBuildMul(bld->builder,
+                         lp_build_max(float_bld, dtdx, dtdy),
+                         lp_build_int_to_float(float_bld, height), "");
+      rho = lp_build_max(float_bld, rho, max);
+      if (dims > 2) {
+         max = LLVMBuildMul(bld->builder,
+                            lp_build_max(float_bld, drdx, drdy),
+                            lp_build_int_to_float(float_bld, depth), "");
+         rho = lp_build_max(float_bld, rho, max);
+      }
+   }
+
+   /* compute lod = log2(rho) */
+   lod = lp_build_log2(float_bld, rho);
+
+   /* add lod bias */
+   lod = LLVMBuildAdd(bld->builder, lod, lod_bias, "LOD bias");
+
+   /* clamp lod */
+   lod = lp_build_clamp(float_bld, lod, min_lod, max_lod);
+
+   return lod;
+}
+
+
+/**
+ * For PIPE_TEX_MIPFILTER_NEAREST, convert float LOD to integer
+ * mipmap level index.
+ * Note: this is all scalar code.
+ * \param lod  scalar float texture level of detail
+ * \param level_out  returns integer 
+ */
+static void
+lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
+                           unsigned unit,
+                           LLVMValueRef lod,
+                           LLVMValueRef *level_out)
+{
+   struct lp_build_context *float_bld = &bld->float_bld;
+   struct lp_build_context *int_bld = &bld->int_bld;
+   LLVMValueRef last_level, level;
+
+   LLVMValueRef zero = LLVMConstInt(LLVMInt32Type(), 0, 0);
+
+   last_level = bld->dynamic_state->last_level(bld->dynamic_state,
+                                               bld->builder, unit);
+
+   /* convert float lod to integer */
+   level = lp_build_iround(float_bld, lod);
+
+   /* clamp level to legal range of levels */
+   *level_out = lp_build_clamp(int_bld, level, zero, last_level);
+}
+
+
+/**
+ * For PIPE_TEX_MIPFILTER_LINEAR, convert float LOD to integer to
+ * two (adjacent) mipmap level indexes.  Later, we'll sample from those
+ * two mipmap levels and interpolate between them.
+ */
+static void
+lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
+                           unsigned unit,
+                           LLVMValueRef lod,
+                           LLVMValueRef *level0_out,
+                           LLVMValueRef *level1_out,
+                           LLVMValueRef *weight_out)
+{
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   LLVMValueRef last_level, level;
+
+   last_level = bld->dynamic_state->last_level(bld->dynamic_state,
+                                               bld->builder, unit);
+
+   /* convert float lod to integer */
+   level = lp_build_ifloor(coord_bld, lod);
+
+   /* compute level 0 and clamp to legal range of levels */
+   *level0_out = lp_build_clamp(int_coord_bld, level,
+                                int_coord_bld->zero,
+                                last_level);
+   /* compute level 1 and clamp to legal range of levels */
+   *level1_out = lp_build_add(int_coord_bld, *level0_out, int_coord_bld->one);
+   *level1_out = lp_build_min(int_coord_bld, *level1_out, int_coord_bld->zero);
+
+   *weight_out = lp_build_fract(coord_bld, lod);
+}
+
+
+
+/**
+ * Sample 2D texture with nearest filtering, no mipmapping.
+ */
 static void
 lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
                                LLVMValueRef s,
@@ -193,26 +954,85 @@ lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
                                LLVMValueRef width,
                                LLVMValueRef height,
                                LLVMValueRef stride,
-                               LLVMValueRef data_ptr,
+                               LLVMValueRef data_array,
                                LLVMValueRef *texel)
 {
-   LLVMValueRef x;
-   LLVMValueRef y;
+   LLVMValueRef x, y;
+   LLVMValueRef data_ptr;
 
-   x = lp_build_ifloor(&bld->coord_bld, s);
-   y = lp_build_ifloor(&bld->coord_bld, t);
-   lp_build_name(x, "tex.x.floor");
-   lp_build_name(y, "tex.y.floor");
+   x = lp_build_sample_wrap_nearest(bld, s, width,
+                                    bld->static_state->pot_width,
+                                    bld->static_state->wrap_s);
+   y = lp_build_sample_wrap_nearest(bld, t, height,
+                                    bld->static_state->pot_height,
+                                    bld->static_state->wrap_t);
 
-   x = lp_build_sample_wrap(bld, x, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
-   y = lp_build_sample_wrap(bld, y, height, bld->static_state->pot_height, bld->static_state->wrap_t);
    lp_build_name(x, "tex.x.wrapped");
    lp_build_name(y, "tex.y.wrapped");
 
-   lp_build_sample_texel_soa(bld, x, y, stride, data_ptr, texel);
+   /* get pointer to mipmap level 0 data */
+   data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
+
+   lp_build_sample_texel_soa(bld, width, height, x, y, stride, data_ptr, texel);
 }
 
 
+/**
+ * Sample 2D texture with nearest filtering, nearest mipmap.
+ */
+static void
+lp_build_sample_2d_nearest_mip_nearest_soa(struct lp_build_sample_context *bld,
+                                           unsigned unit,
+                                           LLVMValueRef s,
+                                           LLVMValueRef t,
+                                           LLVMValueRef width,
+                                           LLVMValueRef height,
+                                           LLVMValueRef width_vec,
+                                           LLVMValueRef height_vec,
+                                           LLVMValueRef stride,
+                                           LLVMValueRef data_array,
+                                           LLVMValueRef *texel)
+{
+   LLVMValueRef x, y;
+   LLVMValueRef lod, ilevel, ilevel_vec;
+   LLVMValueRef data_ptr;
+
+   /* compute float LOD */
+   lod = lp_build_lod_selector(bld, s, t, NULL, width, height, NULL);
+
+   /* convert LOD to int */
+   lp_build_nearest_mip_level(bld, unit, lod, &ilevel);
+
+   ilevel_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, ilevel);
+
+   /* compute width_vec, height at mipmap level 'ilevel' */
+   width_vec = lp_build_minify(bld, width_vec, ilevel_vec);
+   height_vec = lp_build_minify(bld, height_vec, ilevel_vec);
+   stride = lp_build_minify(bld, stride, ilevel_vec);
+
+   x = lp_build_sample_wrap_nearest(bld, s, width_vec,
+                                    bld->static_state->pot_width,
+                                    bld->static_state->wrap_s);
+   y = lp_build_sample_wrap_nearest(bld, t, height_vec,
+                                    bld->static_state->pot_height,
+                                    bld->static_state->wrap_t);
+
+   lp_build_name(x, "tex.x.wrapped");
+   lp_build_name(y, "tex.y.wrapped");
+
+   /* get pointer to mipmap level [ilevel] data */
+   if (0)
+      data_ptr = lp_build_get_mipmap_level(bld, data_array, ilevel);
+   else
+      data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
+
+   lp_build_sample_texel_soa(bld, width_vec, height_vec, x, y, stride, data_ptr, texel);
+}
+
+
+/**
+ * Sample 2D texture with bilinear filtering.
+ */
 static void
 lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
                               LLVMValueRef s,
@@ -220,45 +1040,29 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
                               LLVMValueRef width,
                               LLVMValueRef height,
                               LLVMValueRef stride,
-                              LLVMValueRef data_ptr,
+                              LLVMValueRef data_array,
                               LLVMValueRef *texel)
 {
-   LLVMValueRef half;
-   LLVMValueRef s_ipart;
-   LLVMValueRef t_ipart;
    LLVMValueRef s_fpart;
    LLVMValueRef t_fpart;
    LLVMValueRef x0, x1;
    LLVMValueRef y0, y1;
    LLVMValueRef neighbors[2][2][4];
+   LLVMValueRef data_ptr;
    unsigned chan;
 
-   half = lp_build_const_scalar(bld->coord_type, 0.5);
-   s = lp_build_sub(&bld->coord_bld, s, half);
-   t = lp_build_sub(&bld->coord_bld, t, half);
+   lp_build_sample_wrap_linear(bld, s, width, bld->static_state->pot_width,
+                               bld->static_state->wrap_s, &x0, &x1, &s_fpart);
+   lp_build_sample_wrap_linear(bld, t, height, bld->static_state->pot_height,
+                               bld->static_state->wrap_t, &y0, &y1, &t_fpart);
 
-   s_ipart = lp_build_floor(&bld->coord_bld, s);
-   t_ipart = lp_build_floor(&bld->coord_bld, t);
+   /* get pointer to mipmap level 0 data */
+   data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
 
-   s_fpart = lp_build_sub(&bld->coord_bld, s, s_ipart);
-   t_fpart = lp_build_sub(&bld->coord_bld, t, t_ipart);
-
-   x0 = lp_build_itrunc(&bld->coord_bld, s_ipart);
-   y0 = lp_build_itrunc(&bld->coord_bld, t_ipart);
-
-   x0 = lp_build_sample_wrap(bld, x0, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
-   y0 = lp_build_sample_wrap(bld, y0, height, bld->static_state->pot_height, bld->static_state->wrap_t);
-
-   x1 = lp_build_add(&bld->int_coord_bld, x0, bld->int_coord_bld.one);
-   y1 = lp_build_add(&bld->int_coord_bld, y0, bld->int_coord_bld.one);
-
-   x1 = lp_build_sample_wrap(bld, x1, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
-   y1 = lp_build_sample_wrap(bld, y1, height, bld->static_state->pot_height, bld->static_state->wrap_t);
-
-   lp_build_sample_texel_soa(bld, x0, y0, stride, data_ptr, neighbors[0][0]);
-   lp_build_sample_texel_soa(bld, x1, y0, stride, data_ptr, neighbors[0][1]);
-   lp_build_sample_texel_soa(bld, x0, y1, stride, data_ptr, neighbors[1][0]);
-   lp_build_sample_texel_soa(bld, x1, y1, stride, data_ptr, neighbors[1][1]);
+   lp_build_sample_texel_soa(bld, width, height, x0, y0, stride, data_ptr, neighbors[0][0]);
+   lp_build_sample_texel_soa(bld, width, height, x1, y0, stride, data_ptr, neighbors[0][1]);
+   lp_build_sample_texel_soa(bld, width, height, x0, y1, stride, data_ptr, neighbors[1][0]);
+   lp_build_sample_texel_soa(bld, width, height, x1, y1, stride, data_ptr, neighbors[1][1]);
 
    /* TODO: Don't interpolate missing channels */
    for(chan = 0; chan < 4; ++chan) {
@@ -309,7 +1113,7 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
                               LLVMValueRef width,
                               LLVMValueRef height,
                               LLVMValueRef stride,
-                              LLVMValueRef data_ptr,
+                              LLVMValueRef data_array,
                               LLVMValueRef *texel)
 {
    LLVMBuilderRef builder = bld->builder;
@@ -326,7 +1130,7 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    LLVMValueRef packed, packed_lo, packed_hi;
    LLVMValueRef unswizzled[4];
 
-   lp_build_context_init(&i32, builder, lp_type_int(32));
+   lp_build_context_init(&i32, builder, lp_type_int_vec(32));
    lp_build_context_init(&h16, builder, lp_type_ufixed(16));
    lp_build_context_init(&u8n, builder, lp_type_unorm(8));
 
@@ -334,20 +1138,33 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    h16_vec_type = lp_build_vec_type(h16.type);
    u8n_vec_type = lp_build_vec_type(u8n.type);
 
+   if (bld->static_state->normalized_coords) {
+      LLVMTypeRef coord_vec_type = lp_build_vec_type(bld->coord_type);
+      LLVMValueRef fp_width = LLVMBuildSIToFP(bld->builder, width, coord_vec_type, "");
+      LLVMValueRef fp_height = LLVMBuildSIToFP(bld->builder, height, coord_vec_type, "");
+      s = lp_build_mul(&bld->coord_bld, s, fp_width);
+      t = lp_build_mul(&bld->coord_bld, t, fp_height);
+   }
+
+   /* scale coords by 256 (8 fractional bits) */
    s = lp_build_mul_imm(&bld->coord_bld, s, 256);
    t = lp_build_mul_imm(&bld->coord_bld, t, 256);
 
+   /* convert float to int */
    s = LLVMBuildFPToSI(builder, s, i32_vec_type, "");
    t = LLVMBuildFPToSI(builder, t, i32_vec_type, "");
 
+   /* subtract 0.5 (add -128) */
    i32_c128 = lp_build_int_const_scalar(i32.type, -128);
    s = LLVMBuildAdd(builder, s, i32_c128, "");
    t = LLVMBuildAdd(builder, t, i32_c128, "");
 
+   /* compute floor (shift right 8) */
    i32_c8 = lp_build_int_const_scalar(i32.type, 8);
    s_ipart = LLVMBuildAShr(builder, s, i32_c8, "");
    t_ipart = LLVMBuildAShr(builder, t, i32_c8, "");
 
+   /* compute fractional part (AND with 0xff) */
    i32_c255 = lp_build_int_const_scalar(i32.type, 255);
    s_fpart = LLVMBuildAnd(builder, s, i32_c255, "");
    t_fpart = LLVMBuildAnd(builder, t, i32_c255, "");
@@ -355,14 +1172,18 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    x0 = s_ipart;
    y0 = t_ipart;
 
-   x0 = lp_build_sample_wrap(bld, x0, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
-   y0 = lp_build_sample_wrap(bld, y0, height, bld->static_state->pot_height, bld->static_state->wrap_t);
-
    x1 = lp_build_add(&bld->int_coord_bld, x0, bld->int_coord_bld.one);
    y1 = lp_build_add(&bld->int_coord_bld, y0, bld->int_coord_bld.one);
 
-   x1 = lp_build_sample_wrap(bld, x1, width,  bld->static_state->pot_width,  bld->static_state->wrap_s);
-   y1 = lp_build_sample_wrap(bld, y1, height, bld->static_state->pot_height, bld->static_state->wrap_t);
+   x0 = lp_build_sample_wrap_int(bld, x0, width,  bld->static_state->pot_width,
+                                 bld->static_state->wrap_s);
+   y0 = lp_build_sample_wrap_int(bld, y0, height, bld->static_state->pot_height,
+                                 bld->static_state->wrap_t);
+
+   x1 = lp_build_sample_wrap_int(bld, x1, width,  bld->static_state->pot_width,
+                                 bld->static_state->wrap_s);
+   y1 = lp_build_sample_wrap_int(bld, y1, height, bld->static_state->pot_height,
+                                 bld->static_state->wrap_t);
 
    /*
     * Transform 4 x i32 in
@@ -432,10 +1253,10 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
     * The higher 8 bits of the resulting elements will be zero.
     */
 
-   neighbors[0][0] = lp_build_sample_packed(bld, x0, y0, stride, data_ptr);
-   neighbors[0][1] = lp_build_sample_packed(bld, x1, y0, stride, data_ptr);
-   neighbors[1][0] = lp_build_sample_packed(bld, x0, y1, stride, data_ptr);
-   neighbors[1][1] = lp_build_sample_packed(bld, x1, y1, stride, data_ptr);
+   neighbors[0][0] = lp_build_sample_packed(bld, x0, y0, stride, data_array);
+   neighbors[0][1] = lp_build_sample_packed(bld, x1, y0, stride, data_array);
+   neighbors[1][0] = lp_build_sample_packed(bld, x0, y1, stride, data_array);
+   neighbors[1][1] = lp_build_sample_packed(bld, x1, y1, stride, data_array);
 
    neighbors[0][0] = LLVMBuildBitCast(builder, neighbors[0][0], u8n_vec_type, "");
    neighbors[0][1] = LLVMBuildBitCast(builder, neighbors[0][1], u8n_vec_type, "");
@@ -518,6 +1339,12 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Build texture sampling code.
+ * 'texel' will return a vector of four LLVMValueRefs corresponding to
+ * R, G, B, A.
+ * \param type  vector float type to use for coords, etc.
+ */
 void
 lp_build_sample_soa(LLVMBuilderRef builder,
                     const struct lp_sampler_static_state *static_state,
@@ -530,13 +1357,19 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     LLVMValueRef *texel)
 {
    struct lp_build_sample_context bld;
-   LLVMValueRef width;
-   LLVMValueRef height;
-   LLVMValueRef stride;
-   LLVMValueRef data_ptr;
+   LLVMValueRef width, width_vec;
+   LLVMValueRef height, height_vec;
+   LLVMValueRef stride, stride_vec;
+   LLVMValueRef data_array;
    LLVMValueRef s;
    LLVMValueRef t;
-   LLVMValueRef p;
+   LLVMValueRef r;
+   boolean done = FALSE;
+
+   (void) lp_build_lod_selector;   /* temporary to silence warning */
+   (void) lp_build_nearest_mip_level;
+   (void) lp_build_linear_mip_levels;
+   (void) lp_build_minify;
 
    /* Setup our build context */
    memset(&bld, 0, sizeof bld);
@@ -544,10 +1377,18 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    bld.static_state = static_state;
    bld.dynamic_state = dynamic_state;
    bld.format_desc = util_format_description(static_state->format);
+
+   bld.float_type = lp_type_float(32);
+   bld.int_type = lp_type_int(32);
    bld.coord_type = type;
+   bld.uint_coord_type = lp_uint_type(type);
    bld.int_coord_type = lp_int_type(type);
    bld.texel_type = type;
+
+   lp_build_context_init(&bld.float_bld, builder, bld.float_type);
+   lp_build_context_init(&bld.int_bld, builder, bld.int_type);
    lp_build_context_init(&bld.coord_bld, builder, bld.coord_type);
+   lp_build_context_init(&bld.uint_coord_bld, builder, bld.uint_coord_type);
    lp_build_context_init(&bld.int_coord_bld, builder, bld.int_coord_type);
    lp_build_context_init(&bld.texel_bld, builder, bld.texel_type);
 
@@ -555,43 +1396,67 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    width = dynamic_state->width(dynamic_state, builder, unit);
    height = dynamic_state->height(dynamic_state, builder, unit);
    stride = dynamic_state->stride(dynamic_state, builder, unit);
-   data_ptr = dynamic_state->data_ptr(dynamic_state, builder, unit);
+   data_array = dynamic_state->data_ptr(dynamic_state, builder, unit);
+   /* Note that data_array is an array[level] of pointers to texture images */
 
    s = coords[0];
    t = coords[1];
-   p = coords[2];
+   r = coords[2];
 
-   width = lp_build_broadcast_scalar(&bld.int_coord_bld, width);
-   height = lp_build_broadcast_scalar(&bld.int_coord_bld, height);
-   stride = lp_build_broadcast_scalar(&bld.int_coord_bld, stride);
+   width_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, width);
+   height_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, height);
+   stride_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, stride);
 
    if(static_state->target == PIPE_TEXTURE_1D)
       t = bld.coord_bld.zero;
 
-   if(static_state->normalized_coords) {
-      LLVMTypeRef coord_vec_type = lp_build_vec_type(bld.coord_type);
-      LLVMValueRef fp_width = LLVMBuildSIToFP(builder, width, coord_vec_type, "");
-      LLVMValueRef fp_height = LLVMBuildSIToFP(builder, height, coord_vec_type, "");
-      s = lp_build_mul(&bld.coord_bld, s, fp_width);
-      t = lp_build_mul(&bld.coord_bld, t, fp_height);
-   }
-
-   switch (static_state->min_img_filter) {
-   case PIPE_TEX_FILTER_NEAREST:
-      lp_build_sample_2d_nearest_soa(&bld, s, t, width, height, stride, data_ptr, texel);
+   switch (static_state->min_mip_filter) {
+   case PIPE_TEX_MIPFILTER_NONE:
       break;
-   case PIPE_TEX_FILTER_LINEAR:
-      if(lp_format_is_rgba8(bld.format_desc))
-         lp_build_sample_2d_linear_aos(&bld, s, t, width, height, stride, data_ptr, texel);
-      else
-         lp_build_sample_2d_linear_soa(&bld, s, t, width, height, stride, data_ptr, texel);
+   case PIPE_TEX_MIPFILTER_NEAREST:
+
+      switch (static_state->min_img_filter) {
+      case PIPE_TEX_FILTER_NEAREST:
+         lp_build_sample_2d_nearest_mip_nearest_soa(&bld, unit,
+                                                    s, t,
+                                                    width, height,
+                                                    width_vec, height_vec,
+                                                    stride_vec,
+                                                    data_array, texel);
+         done = TRUE;
+         break;
+      }
+
+      break;
+   case PIPE_TEX_MIPFILTER_LINEAR:
       break;
    default:
-      assert(0);
+      assert(0 && "invalid mip filter");
+   }
+
+   if (!done) {
+      switch (static_state->min_img_filter) {
+      case PIPE_TEX_FILTER_NEAREST:
+         lp_build_sample_2d_nearest_soa(&bld, s, t, width_vec, height_vec,
+                                        stride_vec, data_array, texel);
+         break;
+      case PIPE_TEX_FILTER_LINEAR:
+         if(lp_format_is_rgba8(bld.format_desc) &&
+            is_simple_wrap_mode(static_state->wrap_s) &&
+            is_simple_wrap_mode(static_state->wrap_t))
+            lp_build_sample_2d_linear_aos(&bld, s, t, width_vec, height_vec,
+                                          stride_vec, data_array, texel);
+         else
+            lp_build_sample_2d_linear_soa(&bld, s, t, width_vec, height_vec,
+                                          stride_vec, data_array, texel);
+         break;
+      default:
+         assert(0);
+      }
    }
 
    /* FIXME: respect static_state->min_mip_filter */;
    /* FIXME: respect static_state->mag_img_filter */;
 
-   lp_build_sample_compare(&bld, p, texel);
+   lp_build_sample_compare(&bld, r, texel);
 }

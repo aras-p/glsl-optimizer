@@ -39,7 +39,7 @@ static void freeFragProgCache(GLcontext *ctx, struct r300_fragment_program_cont 
 	while (fp) {
 		tmp = fp->next;
 		rc_constants_destroy(&fp->code.constants);
-		_mesa_free(fp);
+		free(fp);
 		fp = tmp;
 	}
 }
@@ -52,7 +52,7 @@ static void freeVertProgCache(GLcontext *ctx, struct r300_vertex_program_cont *c
 		tmp = vp->next;
 		rc_constants_destroy(&vp->code.constants);
 		_mesa_reference_vertprog(ctx, &vp->Base, NULL);
-		_mesa_free(vp);
+		free(vp);
 		vp = tmp;
 	}
 }

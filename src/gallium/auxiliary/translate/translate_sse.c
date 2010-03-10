@@ -336,7 +336,7 @@ static boolean translate_attr( struct translate_sse *p,
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       emit_load_R32G32B32A32(p, dataXMM, srcECX);
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       emit_load_R8G8B8A8_UNORM(p, dataXMM, srcECX);
       emit_swizzle(p, dataXMM, dataXMM, SHUF(Z,Y,X,W));
       break;
@@ -360,7 +360,7 @@ static boolean translate_attr( struct translate_sse *p,
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       emit_store_R32G32B32A32(p, dstEAX, dataXMM);
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       emit_swizzle(p, dataXMM, dataXMM, SHUF(Z,Y,X,W));
       emit_store_R8G8B8A8_UNORM(p, dstEAX, dataXMM);
       break;

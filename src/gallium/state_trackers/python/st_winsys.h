@@ -31,19 +31,13 @@
 
 
 struct pipe_screen;
-struct pipe_context;
 
 
-struct st_winsys 
-{
-   struct pipe_screen *
-   (*screen_create)(void);
-};
+struct pipe_screen *
+st_hardware_screen_create(void);
 
-
-extern const struct st_winsys st_softpipe_winsys;
-
-extern const struct st_winsys st_hardpipe_winsys;
+struct pipe_screen *
+st_software_screen_create(void);
 
 
 #endif /* ST_WINSYS_H_ */

@@ -127,7 +127,7 @@ _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
    assert(fb);
    assert(visual);
 
-   _mesa_bzero(fb, sizeof(struct gl_framebuffer));
+   memset(fb, 0, sizeof(struct gl_framebuffer));
 
    _glthread_INIT_MUTEX(fb->Mutex);
 
@@ -169,7 +169,7 @@ _mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name)
    assert(fb);
    assert(name);
 
-   _mesa_bzero(fb, sizeof(struct gl_framebuffer));
+   memset(fb, 0, sizeof(struct gl_framebuffer));
 
    fb->Name = name;
    fb->RefCount = 1;
@@ -192,7 +192,7 @@ _mesa_destroy_framebuffer(struct gl_framebuffer *fb)
 {
    if (fb) {
       _mesa_free_framebuffer_data(fb);
-      _mesa_free(fb);
+      free(fb);
    }
 }
 
@@ -526,7 +526,7 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
 {
    GLuint i;
 
-   _mesa_bzero(&fb->Visual, sizeof(fb->Visual));
+   memset(&fb->Visual, 0, sizeof(fb->Visual));
    fb->Visual.rgbMode = GL_TRUE; /* assume this */
 
 #if 0 /* this _might_ be needed */
@@ -536,7 +536,7 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
    }
 #endif
 
-   /* find first RGB or CI renderbuffer */
+   /* find first RGB renderbuffer */
    for (i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Renderbuffer) {
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
@@ -552,11 +552,6 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
                + fb->Visual.greenBits + fb->Visual.blueBits;
             fb->Visual.floatMode = GL_FALSE;
             fb->Visual.samples = rb->NumSamples;
-            break;
-         }
-         else if (baseFormat == GL_COLOR_INDEX) {
-            fb->Visual.indexBits = _mesa_get_format_bits(fmt, GL_INDEX_BITS);
-            fb->Visual.rgbMode = GL_FALSE;
             break;
          }
       }
@@ -829,8 +824,12 @@ update_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 void
 _mesa_update_framebuffer(GLcontext *ctx)
 {
-   struct gl_framebuffer *drawFb = ctx->DrawBuffer;
-   struct gl_framebuffer *readFb = ctx->ReadBuffer;
+   struct gl_framebuffer *drawFb;
+   struct gl_framebuffer *readFb;
+
+   assert(ctx);
+   drawFb = ctx->DrawBuffer;
+   readFb = ctx->ReadBuffer;
 
    update_framebuffer(ctx, drawFb);
    if (readFb != drawFb)

@@ -99,8 +99,8 @@ static int update_swtnl_draw( struct svga_context *svga,
 
    if (dirty & SVGA_NEW_VELEMENT)
       draw_set_vertex_elements(svga->swtnl.draw, 
-                               svga->curr.num_vertex_elements, 
-                               svga->curr.ve );
+                               svga->curr.velems->count, 
+                               svga->curr.velems->velem );
 
    if (dirty & SVGA_NEW_CLIP)
       draw_set_clip_state(svga->swtnl.draw, 

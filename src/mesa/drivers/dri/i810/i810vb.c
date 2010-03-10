@@ -464,7 +464,7 @@ void i810InitVB( GLcontext *ctx )
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   imesa->verts = (GLubyte *)ALIGN_MALLOC(size * 4 * 16, 32);
+   imesa->verts = (GLubyte *)_mesa_align_malloc(size * 4 * 16, 32);
 
    {
       static int firsttime = 1;
@@ -480,7 +480,7 @@ void i810FreeVB( GLcontext *ctx )
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    if (imesa->verts) {
-      ALIGN_FREE(imesa->verts);
+      _mesa_align_free(imesa->verts);
       imesa->verts = 0;
    }
 }

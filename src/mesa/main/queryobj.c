@@ -29,7 +29,7 @@
 #include "imports.h"
 #include "queryobj.h"
 #include "mtypes.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_queryobj
@@ -114,7 +114,7 @@ _mesa_check_query(GLcontext *ctx, struct gl_query_object *q)
 static void
 _mesa_delete_query(GLcontext *ctx, struct gl_query_object *q)
 {
-   _mesa_free(q);
+   free(q);
 }
 
 

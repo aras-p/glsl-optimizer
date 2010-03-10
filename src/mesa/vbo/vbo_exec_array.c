@@ -136,13 +136,13 @@ check_array_data(GLcontext *ctx, struct gl_client_array *array,
             for (k = 0; k < array->Size; k++) {
                if (IS_INF_OR_NAN(f[k]) ||
                    f[k] >= 1.0e20 || f[k] <= -1.0e10) {
-                  _mesa_printf("Bad array data:\n");
-                  _mesa_printf("  Element[%u].%u = %f\n", j, k, f[k]);
-                  _mesa_printf("  Array %u at %p\n", attrib, (void* ) array);
-                  _mesa_printf("  Type 0x%x, Size %d, Stride %d\n",
-                               array->Type, array->Size, array->Stride);
-                  _mesa_printf("  Address/offset %p in Buffer Object %u\n",
-                               array->Ptr, array->BufferObj->Name);
+                  printf("Bad array data:\n");
+                  printf("  Element[%u].%u = %f\n", j, k, f[k]);
+                  printf("  Array %u at %p\n", attrib, (void* ) array);
+                  printf("  Type 0x%x, Size %d, Stride %d\n",
+			 array->Type, array->Size, array->Stride);
+                  printf("  Address/offset %p in Buffer Object %u\n",
+			 array->Ptr, array->BufferObj->Name);
                   f[k] = 1.0; /* XXX replace the bad value! */
                }
                /*assert(!IS_INF_OR_NAN(f[k]));*/
@@ -257,21 +257,21 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
 {
    int i;
 
-   _mesa_printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
-                mode, start, count);
+   printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
+	  mode, start, count);
 
    for (i = 0; i < 32; i++) {
       GLuint bufName = exec->array.inputs[i]->BufferObj->Name;
       GLint stride = exec->array.inputs[i]->Stride;
-      _mesa_printf("attr %2d: size %d stride %d  enabled %d  "
-                   "ptr %p  Bufobj %u\n",
-                   i,
-                   exec->array.inputs[i]->Size,
-                   stride,
-                   /*exec->array.inputs[i]->Enabled,*/
-                   exec->array.legacy_array[i]->Enabled,
-                   exec->array.inputs[i]->Ptr,
-                   bufName);
+      printf("attr %2d: size %d stride %d  enabled %d  "
+	     "ptr %p  Bufobj %u\n",
+	     i,
+	     exec->array.inputs[i]->Size,
+	     stride,
+	     /*exec->array.inputs[i]->Enabled,*/
+	     exec->array.legacy_array[i]->Enabled,
+	     exec->array.inputs[i]->Ptr,
+	     bufName);
 
       if (bufName) {
          struct gl_buffer_object *buf = _mesa_lookup_bufferobj(ctx, bufName);
@@ -284,9 +284,9 @@ print_draw_arrays(GLcontext *ctx, struct vbo_exec_context *exec,
          int n = (count * stride) / 4;
          if (n > 32)
             n = 32;
-         _mesa_printf("  Data at offset %d:\n", offset);
+         printf("  Data at offset %d:\n", offset);
          for (i = 0; i < n; i++) {
-            _mesa_printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
+            printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
          }
          ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, buf);
       }
@@ -548,11 +548,11 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
          const GLubyte *us = (const GLubyte *) map;
          GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size; i++) {
-            _mesa_printf("%02x ", us[i]);
+            printf("%02x ", us[i]);
             if (i % 32 == 31)
-               _mesa_printf("\n");
+               printf("\n");
          }
-         _mesa_printf("\n");
+         printf("\n");
       }
       break;
    case GL_UNSIGNED_SHORT:
@@ -560,11 +560,11 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
          const GLushort *us = (const GLushort *) map;
          GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 2; i++) {
-            _mesa_printf("%04x ", us[i]);
+            printf("%04x ", us[i]);
             if (i % 16 == 15)
-               _mesa_printf("\n");
+               printf("\n");
          }
-         _mesa_printf("\n");
+         printf("\n");
       }
       break;
    case GL_UNSIGNED_INT:
@@ -572,11 +572,11 @@ dump_element_buffer(GLcontext *ctx, GLenum type)
          const GLuint *us = (const GLuint *) map;
          GLint i;
          for (i = 0; i < ctx->Array.ElementArrayBufferObj->Size / 4; i++) {
-            _mesa_printf("%08x ", us[i]);
+            printf("%08x ", us[i]);
             if (i % 8 == 7)
-               _mesa_printf("\n");
+               printf("\n");
          }
-         _mesa_printf("\n");
+         printf("\n");
       }
       break;
    default:
@@ -754,12 +754,12 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
       end = ctx->Array.ArrayObj->_MaxElement - 1;
    }
    else if (0) {
-      _mesa_printf("glDraw[Range]Elements{,BaseVertex}"
-                   "(start %u, end %u, type 0x%x, count %d) ElemBuf %u, "
-		   "base %d\n",
-                   start, end, type, count,
-                   ctx->Array.ElementArrayBufferObj->Name,
-		   basevertex);
+      printf("glDraw[Range]Elements{,BaseVertex}"
+	     "(start %u, end %u, type 0x%x, count %d) ElemBuf %u, "
+	     "base %d\n",
+	     start, end, type, count,
+	     ctx->Array.ElementArrayBufferObj->Name,
+	     basevertex);
    }
 
 #if 0
@@ -854,7 +854,7 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
       return;
    }
 
-   prim = _mesa_calloc(primcount * sizeof(*prim));
+   prim = calloc(1, primcount * sizeof(*prim));
    if (prim == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glMultiDrawElements");
       return;
@@ -960,7 +960,7 @@ vbo_validated_multidrawelements(GLcontext *ctx, GLenum mode,
       }
    }
 
-   _mesa_free(prim);
+   free(prim);
 }
 
 

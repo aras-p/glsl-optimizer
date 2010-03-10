@@ -32,8 +32,6 @@ EXPORTS
 	_mesa_buffer_data
 	_mesa_buffer_map
 	_mesa_buffer_subdata
-	_mesa_bzero
-	_mesa_calloc
 	_mesa_choose_tex_format
 	_mesa_compressed_texture_size
 	_mesa_create_framebuffer
@@ -47,15 +45,12 @@ EXPORTS
 	_mesa_enable_1_5_extensions
 	_mesa_enable_sw_extensions
 	_mesa_error
-	_mesa_free
 	_mesa_free_context_data
 	_mesa_get_current_context
 	_mesa_init_default_imports
 	_mesa_init_driver_functions
 	_mesa_initialize_context
 	_mesa_make_current
-	_mesa_memcpy
-	_mesa_memset
 	_mesa_new_buffer_object
 	_mesa_new_texture_object
 	_mesa_problem
@@ -72,7 +67,6 @@ EXPORTS
 	_mesa_store_texsubimage1d
 	_mesa_store_texsubimage2d
 	_mesa_store_texsubimage3d
-	_mesa_strcmp
 	_mesa_test_proxy_teximage
 	_mesa_Viewport
 	_mesa_meta_CopyColorSubTable

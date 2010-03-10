@@ -767,21 +767,42 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
    draw_set_vertex_buffers(i915->draw, count, buffers);
 }
 
-static void i915_set_vertex_elements(struct pipe_context *pipe,
-                                     unsigned count,
-                                     const struct pipe_vertex_element *elements)
+static void *
+i915_create_vertex_elements_state(struct pipe_context *pipe,
+                                  unsigned count,
+                                  const struct pipe_vertex_element *attribs)
+{
+   struct i915_velems_state *velems;
+   assert(count <= PIPE_MAX_ATTRIBS);
+   velems = (struct i915_velems_state *) MALLOC(sizeof(struct i915_velems_state));
+   if (velems) {
+      velems->count = count;
+      memcpy(velems->velem, attribs, sizeof(*attribs) * count);
+   }
+   return velems;
+}
+
+static void
+i915_bind_vertex_elements_state(struct pipe_context *pipe,
+                                void *velems)
 {
    struct i915_context *i915 = i915_context(pipe);
+   struct i915_velems_state *i915_velems = (struct i915_velems_state *) velems;
+
    /* Because we change state before the draw_set_vertex_buffers call
     * we need a flush here, just to be sure.
     */
    draw_flush(i915->draw);
 
-   i915->num_vertex_elements = count;
    /* pass-through to draw module */
-   draw_set_vertex_elements(i915->draw, count, elements);
+   draw_set_vertex_elements(i915->draw, i915_velems->count, i915_velems->velem);
 }
 
+static void
+i915_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
+{
+   FREE( velems );
+}
 
 void
 i915_init_state_functions( struct i915_context *i915 )
@@ -807,6 +828,9 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.create_vs_state = i915_create_vs_state;
    i915->base.bind_vs_state = i915_bind_vs_state;
    i915->base.delete_vs_state = i915_delete_vs_state;
+   i915->base.create_vertex_elements_state = i915_create_vertex_elements_state;
+   i915->base.bind_vertex_elements_state = i915_bind_vertex_elements_state;
+   i915->base.delete_vertex_elements_state = i915_delete_vertex_elements_state;
 
    i915->base.set_blend_color = i915_set_blend_color;
    i915->base.set_stencil_ref = i915_set_stencil_ref;
@@ -821,5 +845,4 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.sampler_view_destroy = i915_sampler_view_destroy;
    i915->base.set_viewport_state = i915_set_viewport_state;
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
-   i915->base.set_vertex_elements = i915_set_vertex_elements;
 }

@@ -148,7 +148,7 @@ struct i915_state
 
    /** Describes the current hardware vertex layout */
    struct vertex_info vertex_info;
-   
+
    unsigned id;			/* track lost context events */
 };
 
@@ -187,6 +187,14 @@ struct i915_sampler_state {
    unsigned maxlod;
 };
 
+struct i915_velems_state {
+   unsigned count;
+   struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+};
+
+#define I915_MAX_TEXTURE_2D_LEVELS 11  /* max 1024x1024 */
+#define I915_MAX_TEXTURE_3D_LEVELS  8  /* max 128x128x128 */
+
 struct i915_texture {
    struct pipe_texture base;
 
@@ -199,7 +207,7 @@ struct i915_texture {
    unsigned sw_tiled; /**< tiled with software flags */
    unsigned hw_tiled; /**< tiled with hardware fences */
 
-   unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned nr_images[I915_MAX_TEXTURE_2D_LEVELS];
 
    /* Explicitly store the offset of each image for each cube face or
     * depth value.  Pretty much have to accept that hardware formats
@@ -207,7 +215,7 @@ struct i915_texture {
     * compute the offsets of depth/cube images within a mipmap level,
     * so have to store them as a lookup table:
     */
-   unsigned *image_offset[PIPE_MAX_TEXTURE_LEVELS];   /**< array [depth] of offsets */
+   unsigned *image_offset[I915_MAX_TEXTURE_2D_LEVELS];   /**< array [depth] of offsets */
 
    /* The data is held here:
     */
@@ -247,7 +255,6 @@ struct i915_context
 
    unsigned num_samplers;
    unsigned num_fragment_sampler_views;
-   unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
    struct intel_batchbuffer *batch;

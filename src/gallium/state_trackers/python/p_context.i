@@ -51,7 +51,7 @@ struct st_context {
    void set_blend( const struct pipe_blend_state *state ) {
       cso_set_blend($self->cso, state);
    }
-   
+
    void set_fragment_sampler( unsigned index, const struct pipe_sampler_state *state ) {
       cso_single_sampler($self->cso, index, state);
       cso_single_sampler_done($self->cso);
@@ -239,9 +239,9 @@ struct st_context {
    void set_vertex_elements(unsigned num) 
    {
       $self->num_vertex_elements = num;
-      $self->pipe->set_vertex_elements($self->pipe, 
-                                       $self->num_vertex_elements, 
-                                       $self->vertex_elements);
+      cso_set_vertex_elements($self->cso,
+                              $self->num_vertex_elements, 
+                              $self->vertex_elements);
    }
 
    /*

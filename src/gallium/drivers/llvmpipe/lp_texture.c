@@ -42,7 +42,7 @@
 #include "lp_screen.h"
 #include "lp_texture.h"
 #include "lp_tile_size.h"
-#include "lp_winsys.h"
+#include "state_tracker/sw_winsys.h"
 
 
 /**
@@ -93,7 +93,7 @@ static boolean
 llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
                               struct llvmpipe_texture *lpt)
 {
-   struct llvmpipe_winsys *winsys = screen->winsys;
+   struct sw_winsys *winsys = screen->winsys;
 
    /* Round up the surface size to a multiple of the tile size to
     * avoid tile clipping.
@@ -124,14 +124,9 @@ llvmpipe_texture_create(struct pipe_screen *_screen,
    pipe_reference_init(&lpt->base.reference, 1);
    lpt->base.screen = &screen->base;
 
-   /* XXX: The xlib state tracker is brain-dead and will request
-    * PIPE_FORMAT_Z16_UNORM no matter how much we tell it we don't support it.
-    */
-   if (lpt->base.format == PIPE_FORMAT_Z16_UNORM)
-      lpt->base.format = PIPE_FORMAT_Z32_UNORM;
-
    if (lpt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                              PIPE_TEXTURE_USAGE_PRIMARY)) {
+                              PIPE_TEXTURE_USAGE_SCANOUT |
+                              PIPE_TEXTURE_USAGE_SHARED)) {
       if (!llvmpipe_displaytarget_layout(screen, lpt))
          goto fail;
    }
@@ -148,43 +143,6 @@ llvmpipe_texture_create(struct pipe_screen *_screen,
 }
 
 
-static struct pipe_texture *
-llvmpipe_texture_blanket(struct pipe_screen * screen,
-                         const struct pipe_texture *base,
-                         const unsigned *stride,
-                         struct pipe_buffer *buffer)
-{
-   /* FIXME */
-#if 0
-   struct llvmpipe_texture *lpt;
-   assert(screen);
-
-   /* Only supports one type */
-   if (base->target != PIPE_TEXTURE_2D ||
-       base->last_level != 0 ||
-       base->depth0 != 1) {
-      return NULL;
-   }
-
-   lpt = CALLOC_STRUCT(llvmpipe_texture);
-   if (!lpt)
-      return NULL;
-
-   lpt->base = *base;
-   pipe_reference_init(&lpt->base.reference, 1);
-   lpt->base.screen = screen;
-   lpt->stride[0] = stride[0];
-
-   pipe_buffer_reference(&lpt->buffer, buffer);
-
-   return &lpt->base;
-#else
-   debug_printf("llvmpipe_texture_blanket() not implemented!");
-   return NULL;
-#endif
-}
-
-
 static void
 llvmpipe_texture_destroy(struct pipe_texture *pt)
 {
@@ -193,7 +151,7 @@ llvmpipe_texture_destroy(struct pipe_texture *pt)
 
    if (lpt->dt) {
       /* display target */
-      struct llvmpipe_winsys *winsys = screen->winsys;
+      struct sw_winsys *winsys = screen->winsys;
       winsys->displaytarget_destroy(winsys, lpt->dt);
    }
    else {
@@ -363,7 +321,7 @@ llvmpipe_transfer_map( struct pipe_screen *_screen,
 
    if (lpt->dt) {
       /* display target */
-      struct llvmpipe_winsys *winsys = screen->winsys;
+      struct sw_winsys *winsys = screen->winsys;
 
       map = winsys->displaytarget_map(winsys, lpt->dt,
                                       pipe_transfer_buffer_flags(transfer));
@@ -404,7 +362,7 @@ llvmpipe_transfer_unmap(struct pipe_screen *screen,
 
    if (lpt->dt) {
       /* display target */
-      struct llvmpipe_winsys *winsys = lp_screen->winsys;
+      struct sw_winsys *winsys = lp_screen->winsys;
       winsys->displaytarget_unmap(winsys, lpt->dt);
    }
 }
@@ -414,7 +372,6 @@ void
 llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = llvmpipe_texture_create;
-   screen->texture_blanket = llvmpipe_texture_blanket;
    screen->texture_destroy = llvmpipe_texture_destroy;
 
    screen->get_tex_surface = llvmpipe_get_tex_surface;

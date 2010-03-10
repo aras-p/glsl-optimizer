@@ -40,9 +40,6 @@ struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct intel_region *region;
-
-   uint8_t *span_cache;
-   unsigned long span_cache_offset;
 };
 
 

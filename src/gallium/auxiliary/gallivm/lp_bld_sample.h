@@ -70,6 +70,8 @@ struct lp_sampler_static_state
    unsigned compare_mode:1;
    unsigned compare_func:3;
    unsigned normalized_coords:1;
+   float lod_bias, min_lod, max_lod;
+   float border_color[4];
 };
 
 
@@ -97,6 +99,18 @@ struct lp_sampler_dynamic_state
    (*height)( struct lp_sampler_dynamic_state *state,
               LLVMBuilderRef builder,
               unsigned unit);
+
+   /** Obtain the base texture depth. */
+   LLVMValueRef
+   (*depth)( struct lp_sampler_dynamic_state *state,
+             LLVMBuilderRef builder,
+             unsigned unit);
+
+   /** Obtain the number of mipmap levels (minus one). */
+   LLVMValueRef
+   (*last_level)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
 
    LLVMValueRef
    (*stride)( struct lp_sampler_dynamic_state *state,
@@ -134,8 +148,7 @@ lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
-                       LLVMValueRef y_stride,
-                       LLVMValueRef data_ptr);
+                       LLVMValueRef y_stride);
 
 
 void

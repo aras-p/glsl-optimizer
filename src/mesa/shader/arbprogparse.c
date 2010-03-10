@@ -85,7 +85,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    }
 
    if (program->Base.String != NULL)
-      _mesa_free(program->Base.String);
+      free(program->Base.String);
 
    /* Copy the relevant contents of the arb_program struct into the
     * fragment_program struct.
@@ -130,7 +130,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
       program->Base.InputsRead |= FRAG_BIT_FOGC;
 
    if (program->Base.Instructions)
-      _mesa_free(program->Base.Instructions);
+      free(program->Base.Instructions);
    program->Base.Instructions = prog.Instructions;
 
    if (program->Base.Parameters)
@@ -148,7 +148,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    }
 
 #if DEBUG_FP
-   _mesa_printf("____________Fragment program %u ________\n", program->Base.Id);
+   printf("____________Fragment program %u ________\n", program->Base.Id);
    _mesa_print_program(&program->Base);
 #endif
 }
@@ -181,7 +181,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    }
 
    if (program->Base.String != NULL)
-      _mesa_free(program->Base.String);
+      free(program->Base.String);
 
    /* Copy the relevant contents of the arb_program struct into the 
     * vertex_program struct.
@@ -203,7 +203,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
       ? GL_TRUE : GL_FALSE;
 
    if (program->Base.Instructions)
-      _mesa_free(program->Base.Instructions);
+      free(program->Base.Instructions);
    program->Base.Instructions = prog.Instructions;
 
    if (program->Base.Parameters)
@@ -211,7 +211,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    program->Base.Parameters = prog.Parameters; 
 
 #if DEBUG_VP
-   _mesa_printf("____________Vertex program %u __________\n", program->Base.Id);
+   printf("____________Vertex program %u __________\n", program->Base.Id);
    _mesa_print_program(&program->Base);
 #endif
 }

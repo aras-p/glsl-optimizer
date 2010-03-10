@@ -211,11 +211,11 @@ static void flush_spans( struct setup_context *setup )
    const int xright1 = setup->span.right[1];
    struct quad_stage *pipe = setup->softpipe->quad.first;
 
-
-   int minleft = block_x(MIN2(xleft0, xleft1));
-   int maxright = MAX2(xright0, xright1);
+   const int minleft = block_x(MIN2(xleft0, xleft1));
+   const int maxright = MAX2(xright0, xright1);
    int x;
 
+   /* process quads in horizontal chunks of 16 */
    for (x = minleft; x < maxright; x += step) {
       unsigned skip_left0 = CLAMP(xleft0 - x, 0, step);
       unsigned skip_left1 = CLAMP(xleft1 - x, 0, step);

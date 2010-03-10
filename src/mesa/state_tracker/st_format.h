@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright (c) 2010 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,30 +31,6 @@
 #define ST_FORMAT_H
 
 #include "main/formats.h"
-
-struct pipe_format_info
-{
-   enum pipe_format format;
-   gl_format mesa_format;
-   GLenum datatype;
-   GLubyte red_bits;
-   GLubyte green_bits;
-   GLubyte blue_bits;
-   GLubyte alpha_bits;
-   GLubyte luminance_bits;
-   GLubyte intensity_bits;
-   GLubyte depth_bits;
-   GLubyte stencil_bits;
-   GLubyte size;           /**< in bytes */
-};
-
-
-GLboolean
-st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo);
-
-
-extern GLuint
-st_sizeof_format(enum pipe_format format);
 
 
 extern GLenum
@@ -85,4 +62,4 @@ extern GLboolean
 st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type);
 
 
-#endif /* ST_CB_TEXIMAGE_H */
+#endif /* ST_FORMAT_H */

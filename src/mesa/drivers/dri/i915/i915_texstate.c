@@ -150,7 +150,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
        i915->state.tex_buffer[unit] = NULL;
    }
 
-   if (!intelObj->imageOverride && !intel_finalize_mipmap_tree(intel, unit))
+   if (!intel_finalize_mipmap_tree(intel, unit))
       return GL_FALSE;
 
    /* Get first image here, since intelObj->firstLevel will get set in
@@ -158,34 +158,14 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    firstImage = tObj->Image[0][intelObj->firstLevel];
 
-   if (intelObj->imageOverride) {
-      i915->state.tex_buffer[unit] = NULL;
-      i915->state.tex_offset[unit] = intelObj->textureOffset;
+   dri_bo_reference(intelObj->mt->region->buffer);
+   i915->state.tex_buffer[unit] = intelObj->mt->region->buffer;
+   i915->state.tex_offset[unit] = 0; /* Always the origin of the miptree */
 
-      switch (intelObj->depthOverride) {
-      case 32:
-	 format = MAPSURF_32BIT | MT_32BIT_ARGB8888;
-	 break;
-      case 24:
-      default:
-	 format = MAPSURF_32BIT | MT_32BIT_XRGB8888;
-	 break;
-      case 16:
-	 format = MAPSURF_16BIT | MT_16BIT_RGB565;
-	 break;
-      }
-
-      pitch = intelObj->pitchOverride;
-   } else {
-      dri_bo_reference(intelObj->mt->region->buffer);
-      i915->state.tex_buffer[unit] = intelObj->mt->region->buffer;
-      i915->state.tex_offset[unit] = 0; /* Always the origin of the miptree */
-
-      format = translate_texture_format(firstImage->TexFormat,
-					firstImage->InternalFormat,
-					tObj->DepthMode);
-      pitch = intelObj->mt->pitch * intelObj->mt->cpp;
-   }
+   format = translate_texture_format(firstImage->TexFormat,
+				     firstImage->InternalFormat,
+				     tObj->DepthMode);
+   pitch = intelObj->mt->pitch * intelObj->mt->cpp;
 
    state[I915_TEXREG_MS3] =
       (((firstImage->Height - 1) << MS3_HEIGHT_SHIFT) |

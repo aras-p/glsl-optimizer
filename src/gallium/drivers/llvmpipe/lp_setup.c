@@ -46,7 +46,7 @@
 #include "lp_rast.h"
 #include "lp_setup_context.h"
 #include "lp_screen.h"
-#include "lp_winsys.h"
+#include "state_tracker/sw_winsys.h"
 
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
@@ -64,11 +64,10 @@ lp_setup_get_current_scene(struct setup_context *setup)
        */
       setup->scene = lp_scene_dequeue(setup->empty_scenes, TRUE);
 
-      if(0)lp_scene_reset( setup->scene ); /* XXX temporary? */
+      assert(lp_scene_is_empty(setup->scene));
 
-      lp_scene_set_framebuffer_size(setup->scene,
-                                    setup->fb.width, 
-                                    setup->fb.height);
+      lp_scene_begin_binning(setup->scene,
+                             &setup->fb );
    }
    return setup->scene;
 }
@@ -133,13 +132,12 @@ static void reset_context( struct setup_context *setup )
 /** Rasterize all scene's bins */
 static void
 lp_setup_rasterize_scene( struct setup_context *setup,
-			 boolean write_depth )
+                          boolean write_depth )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
-   lp_rasterize_scene(setup->rast,
-                      scene,
-                      &setup->fb,
+   lp_scene_rasterize(scene,
+                      setup->rast,
                       write_depth);
 
    reset_context( setup );
@@ -244,19 +242,16 @@ void
 lp_setup_bind_framebuffer( struct setup_context *setup,
                            const struct pipe_framebuffer_state *fb )
 {
-   struct lp_scene *scene = lp_setup_get_current_scene(setup);
-
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
+   /* Flush any old scene.
+    */
    set_scene_state( setup, SETUP_FLUSHED );
 
-   /* re-get scene pointer, may have a new scene after flushing */
-   (void) scene;
-   scene = lp_setup_get_current_scene(setup);
-
+   /* Set new state.  This will be picked up later when we next need a
+    * scene.
+    */
    util_copy_framebuffer_state(&setup->fb, fb);
-
-   lp_scene_set_framebuffer_size(scene, setup->fb.width, setup->fb.height);
 }
 
 
@@ -476,20 +471,28 @@ lp_setup_set_fragment_sampler_views(struct setup_context *setup,
          jit_tex = &setup->fs.current.jit_context.textures[i];
          jit_tex->width = tex->width0;
          jit_tex->height = tex->height0;
+         jit_tex->depth = tex->depth0;
+         jit_tex->last_level = tex->last_level;
          jit_tex->stride = lp_tex->stride[0];
-         if(!lp_tex->dt) {
-            jit_tex->data = lp_tex->data;
+         if (!lp_tex->dt) {
+            /* regular texture - setup array of mipmap level pointers */
+            int j;
+            for (j = 0; j < LP_MAX_TEXTURE_2D_LEVELS; j++) {
+               jit_tex->data[j] =
+                  (ubyte *) lp_tex->data + lp_tex->level_offset[j];
+            }
          }
          else {
+            /* display target texture/surface */
             /*
              * XXX: Where should this be unmapped?
              */
 
             struct llvmpipe_screen *screen = llvmpipe_screen(tex->screen);
-            struct llvmpipe_winsys *winsys = screen->winsys;
-            jit_tex->data = winsys->displaytarget_map(winsys, lp_tex->dt,
+            struct sw_winsys *winsys = screen->winsys;
+            jit_tex->data[0] = winsys->displaytarget_map(winsys, lp_tex->dt,
                                                       PIPE_BUFFER_USAGE_CPU_READ);
-            assert(jit_tex->data);
+            assert(jit_tex->data[0]);
          }
 
          /* the scene references this texture */
@@ -683,7 +686,7 @@ lp_setup_destroy( struct setup_context *setup )
  * it.
  */
 struct setup_context *
-lp_setup_create( struct pipe_screen *screen,
+lp_setup_create( struct pipe_context *pipe,
                  struct draw_context *draw )
 {
    unsigned i;
@@ -698,7 +701,9 @@ lp_setup_create( struct pipe_screen *screen,
    if (!setup->empty_scenes)
       goto fail;
 
-   setup->rast = lp_rast_create( screen, setup->empty_scenes );
+   /* XXX: move this to the screen and share between contexts:
+    */
+   setup->rast = lp_rast_create();
    if (!setup->rast) 
       goto fail;
 
@@ -711,7 +716,8 @@ lp_setup_create( struct pipe_screen *screen,
 
    /* create some empty scenes */
    for (i = 0; i < MAX_SCENES; i++) {
-      setup->scenes[i] = lp_scene_create();
+      setup->scenes[i] = lp_scene_create( pipe, setup->empty_scenes );
+
       lp_scene_enqueue(setup->empty_scenes, setup->scenes[i]);
    }
 

@@ -706,29 +706,6 @@ intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 		       texObj, texImage, GL_TRUE);
 }
 
-
-void
-intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
-		  unsigned long long offset, GLint depth, GLuint pitch)
-{
-   struct intel_context *intel = pDRICtx->driverPrivate;
-   struct gl_texture_object *tObj = _mesa_lookup_texture(&intel->ctx, texname);
-   struct intel_texture_object *intelObj = intel_texture_object(tObj);
-
-   if (!intelObj)
-      return;
-
-   if (intelObj->mt)
-      intel_miptree_release(intel, &intelObj->mt);
-
-   intelObj->imageOverride = GL_TRUE;
-   intelObj->depthOverride = depth;
-   intelObj->pitchOverride = pitch;
-
-   if (offset)
-      intelObj->textureOffset = offset;
-}
-
 void
 intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 		   GLint texture_format,
@@ -814,6 +791,54 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    intelSetTexBuffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
 }
 
+#if FEATURE_OES_EGL_image
+static void
+intel_image_target_texture_2d(GLcontext *ctx, GLenum target,
+			      struct gl_texture_object *texObj,
+			      struct gl_texture_image *texImage,
+			      GLeglImageOES image_handle)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_object *intelObj = intel_texture_object(texObj);
+   struct intel_texture_image *intelImage = intel_texture_image(texImage);
+   struct intel_mipmap_tree *mt;
+   __DRIscreen *screen;
+   __DRIimage *image;
+
+   screen = intel->intelScreen->driScrnPriv;
+   image = screen->dri2.image->lookupEGLImage(intel->driContext, image_handle,
+					      intel->driContext->loaderPrivate);
+   if (image == NULL)
+      return;
+
+   mt = intel_miptree_create_for_region(intel, target,
+					image->internal_format,
+					0, 0, image->region, 1, 0);
+   if (mt == NULL)
+       return;
+
+   if (intelImage->mt) {
+      intel_miptree_release(intel, &intelImage->mt);
+      assert(!texImage->Data);
+   }
+   if (intelObj->mt)
+      intel_miptree_release(intel, &intelObj->mt);
+
+   intelObj->mt = mt;
+   _mesa_init_teximage_fields(&intel->ctx, target, texImage,
+			      image->region->width, image->region->height, 1,
+			      0, image->internal_format);
+
+   intelImage->face = target_to_face(target);
+   intelImage->level = 0;
+   texImage->TexFormat = image->format;
+   texImage->RowStride = image->region->pitch;
+   intel_miptree_reference(&intelImage->mt, intelObj->mt);
+
+   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base))
+      fprintf(stderr, "miptree doesn't match image\n");
+}
+#endif
 
 void
 intelInitTextureImageFuncs(struct dd_function_table *functions)
@@ -825,4 +850,8 @@ intelInitTextureImageFuncs(struct dd_function_table *functions)
 
    functions->CompressedTexImage2D = intelCompressedTexImage2D;
    functions->GetCompressedTexImage = intelGetCompressedTexImage;
+
+#if FEATURE_OES_EGL_image
+   functions->EGLImageTargetTexture2D = intel_image_target_texture_2d;
+#endif
 }

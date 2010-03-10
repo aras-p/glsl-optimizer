@@ -53,7 +53,7 @@
 #include "xmesaP.h"
 
 #ifdef __VMS
-#define _mesa_sprintf sprintf
+#define sprintf sprintf
 #endif
 
 /* This indicates the client-side GLX API and GLX encoder version. */
@@ -152,13 +152,8 @@ is_usable_visual( XVisualInfo *vinfo )
          return GL_TRUE;
       case StaticColor:
       case PseudoColor:
-	 /* Any StaticColor/PseudoColor visual of at least 4 bits */
-	 if (vinfo->depth>=4) {
-	    return GL_TRUE;
-	 }
-	 else {
-	    return GL_FALSE;
-	 }
+	 /* Color-index rendering is not supported. */
+	 return GL_FALSE;
       case TrueColor:
       case DirectColor:
 	 /* Any depth of TrueColor or DirectColor works in RGB mode */
@@ -268,7 +263,7 @@ level_of_visual( Display *dpy, XVisualInfo *vinfo )
  */
 static XMesaVisual
 save_glx_visual( Display *dpy, XVisualInfo *vinfo,
-                 GLboolean rgbFlag, GLboolean alphaFlag, GLboolean dbFlag,
+                 GLboolean alphaFlag, GLboolean dbFlag,
                  GLboolean stereoFlag,
                  GLint depth_size, GLint stencil_size,
                  GLint accumRedSize, GLint accumGreenSize,
@@ -309,7 +304,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       comparePointers = GL_FALSE;
 
    /* Force the visual to have an alpha channel */
-   if (rgbFlag && _mesa_getenv("MESA_GLX_FORCE_ALPHA"))
+   if (_mesa_getenv("MESA_GLX_FORCE_ALPHA"))
       alphaFlag = GL_TRUE;
 
    /* First check if a matching visual is already in the list */
@@ -319,7 +314,6 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
           && v->mesa_visual.level == level
           && v->mesa_visual.numAuxBuffers == numAuxBuffers
           && v->ximage_flag == ximageFlag
-          && v->mesa_visual.rgbMode == rgbFlag
           && v->mesa_visual.doubleBufferMode == dbFlag
           && v->mesa_visual.stereoMode == stereoFlag
           && (v->mesa_visual.alphaBits > 0) == alphaFlag
@@ -339,7 +333,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 
    /* Create a new visual and add it to the list. */
 
-   xmvis = XMesaCreateVisual( dpy, vinfo, rgbFlag, alphaFlag, dbFlag,
+   xmvis = XMesaCreateVisual( dpy, vinfo, GL_TRUE, alphaFlag, dbFlag,
                               stereoFlag, ximageFlag,
                               depth_size, stencil_size,
                               accumRedSize, accumBlueSize,
@@ -378,7 +372,7 @@ default_depth_bits(void)
    int zBits;
    const char *zEnv = _mesa_getenv("MESA_GLX_DEPTH_BITS");
    if (zEnv)
-      zBits = _mesa_atoi(zEnv);
+      zBits = atoi(zEnv);
    else
       zBits = DEFAULT_SOFTWARE_DEPTH_BITS;
    return zBits;
@@ -390,7 +384,7 @@ default_alpha_bits(void)
    int aBits;
    const char *aEnv = _mesa_getenv("MESA_GLX_ALPHA_BITS");
    if (aEnv)
-      aBits = _mesa_atoi(aEnv);
+      aBits = atoi(aEnv);
    else
       aBits = 0;
    return aBits;
@@ -422,53 +416,26 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
 
    vislevel = level_of_visual( dpy, visinfo );
    if (vislevel) {
-      /* Configure this visual as a CI, single-buffered overlay */
-      return save_glx_visual( dpy, visinfo,
-                              GL_FALSE,  /* rgb */
-                              GL_FALSE,  /* alpha */
-                              GL_FALSE,  /* double */
-                              GL_FALSE,  /* stereo */
-                              0,         /* depth bits */
-                              0,         /* stencil bits */
-                              0,0,0,0,   /* accum bits */
-                              vislevel,  /* level */
-                              0          /* numAux */
-                            );
+      /* Color-index rendering to overlays is not supported. */
+      return NULL;
    }
    else if (is_usable_visual( visinfo )) {
-      if (_mesa_getenv("MESA_GLX_FORCE_CI")) {
-         /* Configure this visual as a COLOR INDEX visual. */
-         return save_glx_visual( dpy, visinfo,
-                                 GL_FALSE,   /* rgb */
-                                 GL_FALSE,  /* alpha */
-                                 GL_TRUE,   /* double */
-                                 GL_FALSE,  /* stereo */
-                                 zBits,
-                                 STENCIL_BITS,
-                                 0, 0, 0, 0, /* accum bits */
-                                 0,         /* level */
-                                 0          /* numAux */
-                               );
-      }
-      else {
-         /* Configure this visual as RGB, double-buffered, depth-buffered. */
-         /* This is surely wrong for some people's needs but what else */
-         /* can be done?  They should use glXChooseVisual(). */
-         return save_glx_visual( dpy, visinfo,
-                                 GL_TRUE,   /* rgb */
-                                 alphaFlag, /* alpha */
-                                 GL_TRUE,   /* double */
-                                 GL_FALSE,  /* stereo */
-                                 zBits,
-                                 STENCIL_BITS,
-                                 accBits, /* r */
-                                 accBits, /* g */
-                                 accBits, /* b */
-                                 accBits, /* a */
-                                 0,         /* level */
-                                 0          /* numAux */
-                               );
-      }
+      /* Configure this visual as RGB, double-buffered, depth-buffered. */
+      /* This is surely wrong for some people's needs but what else */
+      /* can be done?  They should use glXChooseVisual(). */
+      return save_glx_visual( dpy, visinfo,
+			      alphaFlag, /* alpha */
+			      GL_TRUE,   /* double */
+			      GL_FALSE,  /* stereo */
+			      zBits,
+			      STENCIL_BITS,
+			      accBits, /* r */
+			      accBits, /* g */
+			      accBits, /* b */
+			      accBits, /* a */
+			      0,         /* level */
+			      0          /* numAux */
+			      );
    }
    else {
       _mesa_warning(NULL, "Mesa: error in glXCreateContext: bad visual\n");
@@ -616,17 +583,15 @@ get_env_visual(Display *dpy, int scr, const char *varname)
       return NULL;
    }
 
-   _mesa_strncpy( value, _mesa_getenv(varname), 100 );
+   strncpy( value, _mesa_getenv(varname), 100 );
    value[99] = 0;
 
    sscanf( value, "%s %d", type, &depth );
 
-   if (_mesa_strcmp(type,"TrueColor")==0)          xclass = TrueColor;
-   else if (_mesa_strcmp(type,"DirectColor")==0)   xclass = DirectColor;
-   else if (_mesa_strcmp(type,"PseudoColor")==0)   xclass = PseudoColor;
-   else if (_mesa_strcmp(type,"StaticColor")==0)   xclass = StaticColor;
-   else if (_mesa_strcmp(type,"GrayScale")==0)     xclass = GrayScale;
-   else if (_mesa_strcmp(type,"StaticGray")==0)    xclass = StaticGray;
+   if (strcmp(type,"TrueColor")==0)          xclass = TrueColor;
+   else if (strcmp(type,"DirectColor")==0)   xclass = DirectColor;
+   else if (strcmp(type,"GrayScale")==0)     xclass = GrayScale;
+   else if (strcmp(type,"StaticGray")==0)    xclass = StaticGray;
 
    if (xclass>-1 && depth>0) {
       vis = get_visual( dpy, scr, depth, xclass );
@@ -646,160 +611,79 @@ get_env_visual(Display *dpy, int scr, const char *varname)
 /*
  * Select an X visual which satisfies the RGBA/CI flag and minimum depth.
  * Input:  dpy, screen - X display and screen number
- *         rgba - GL_TRUE = RGBA mode, GL_FALSE = CI mode
  *         min_depth - minimum visual depth
  *         preferred_class - preferred GLX visual class or DONT_CARE
  * Return:  pointer to an XVisualInfo or NULL.
  */
 static XVisualInfo *
-choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
-                 int preferred_class )
+choose_x_visual(Display *dpy, int screen, int min_depth, int preferred_class)
 {
    XVisualInfo *vis;
    int xclass, visclass = 0;
    int depth;
 
-   if (rgba) {
-      Atom hp_cr_maps = XInternAtom(dpy, "_HP_RGB_SMOOTH_MAP_LIST", True);
-      /* First see if the MESA_RGB_VISUAL env var is defined */
-      vis = get_env_visual( dpy, screen, "MESA_RGB_VISUAL" );
-      if (vis) {
-	 return vis;
-      }
-      /* Otherwise, search for a suitable visual */
-      if (preferred_class==DONT_CARE) {
-         for (xclass=0;xclass<6;xclass++) {
-            switch (xclass) {
-               case 0:  visclass = TrueColor;    break;
-               case 1:  visclass = DirectColor;  break;
-               case 2:  visclass = PseudoColor;  break;
-               case 3:  visclass = StaticColor;  break;
-               case 4:  visclass = GrayScale;    break;
-               case 5:  visclass = StaticGray;   break;
-            }
-            if (min_depth==0) {
-               /* start with shallowest */
-               for (depth=0;depth<=32;depth++) {
-                  if (visclass==TrueColor && depth==8 && !hp_cr_maps) {
-                     /* Special case:  try to get 8-bit PseudoColor before */
-                     /* 8-bit TrueColor */
-                     vis = get_visual( dpy, screen, 8, PseudoColor );
-                     if (vis) {
-                        return vis;
-                     }
-                  }
-                  vis = get_visual( dpy, screen, depth, visclass );
-                  if (vis) {
-                     return vis;
-                  }
-               }
-            }
-            else {
-               /* start with deepest */
-               for (depth=32;depth>=min_depth;depth--) {
-                  if (visclass==TrueColor && depth==8 && !hp_cr_maps) {
-                     /* Special case:  try to get 8-bit PseudoColor before */
-                     /* 8-bit TrueColor */
-                     vis = get_visual( dpy, screen, 8, PseudoColor );
-                     if (vis) {
-                        return vis;
-                     }
-                  }
-                  vis = get_visual( dpy, screen, depth, visclass );
-                  if (vis) {
-                     return vis;
-                  }
-               }
-            }
-         }
-      }
-      else {
-         /* search for a specific visual class */
-         switch (preferred_class) {
-            case GLX_TRUE_COLOR_EXT:    visclass = TrueColor;    break;
-            case GLX_DIRECT_COLOR_EXT:  visclass = DirectColor;  break;
-            case GLX_PSEUDO_COLOR_EXT:  visclass = PseudoColor;  break;
-            case GLX_STATIC_COLOR_EXT:  visclass = StaticColor;  break;
-            case GLX_GRAY_SCALE_EXT:    visclass = GrayScale;    break;
-            case GLX_STATIC_GRAY_EXT:   visclass = StaticGray;   break;
-            default:   return NULL;
-         }
-         if (min_depth==0) {
-            /* start with shallowest */
-            for (depth=0;depth<=32;depth++) {
-               vis = get_visual( dpy, screen, depth, visclass );
-               if (vis) {
-                  return vis;
-               }
-            }
-         }
-         else {
-            /* start with deepest */
-            for (depth=32;depth>=min_depth;depth--) {
-               vis = get_visual( dpy, screen, depth, visclass );
-               if (vis) {
-                  return vis;
-               }
-            }
-         }
+   /* First see if the MESA_RGB_VISUAL env var is defined */
+   vis = get_env_visual( dpy, screen, "MESA_RGB_VISUAL" );
+   if (vis) {
+      return vis;
+   }
+   /* Otherwise, search for a suitable visual */
+   if (preferred_class==DONT_CARE) {
+      for (xclass=0;xclass<4;xclass++) {
+	 switch (xclass) {
+	 case 0:  visclass = TrueColor;    break;
+	 case 1:  visclass = DirectColor;  break;
+	 case 2:  visclass = GrayScale;    break;
+	 case 3:  visclass = StaticGray;   break;
+	 }
+	 if (min_depth==0) {
+	    /* start with shallowest */
+	    for (depth=0;depth<=32;depth++) {
+	       vis = get_visual( dpy, screen, depth, visclass );
+	       if (vis) {
+		  return vis;
+	       }
+	    }
+	 }
+	 else {
+	    /* start with deepest */
+	    for (depth=32;depth>=min_depth;depth--) {
+	       vis = get_visual( dpy, screen, depth, visclass );
+	       if (vis) {
+		  return vis;
+	       }
+	    }
+	 }
       }
    }
    else {
-      /* First see if the MESA_CI_VISUAL env var is defined */
-      vis = get_env_visual( dpy, screen, "MESA_CI_VISUAL" );
-      if (vis) {
-	 return vis;
+      /* search for a specific visual class */
+      switch (preferred_class) {
+      case GLX_TRUE_COLOR_EXT:    visclass = TrueColor;    break;
+      case GLX_DIRECT_COLOR_EXT:  visclass = DirectColor;  break;
+      case GLX_GRAY_SCALE_EXT:    visclass = GrayScale;    break;
+      case GLX_STATIC_GRAY_EXT:   visclass = StaticGray;   break;
+      case GLX_PSEUDO_COLOR_EXT:
+      case GLX_STATIC_COLOR_EXT:
+      default:   return NULL;
       }
-      /* Otherwise, search for a suitable visual, starting with shallowest */
-      if (preferred_class==DONT_CARE) {
-         for (xclass=0;xclass<4;xclass++) {
-            switch (xclass) {
-               case 0:  visclass = PseudoColor;  break;
-               case 1:  visclass = StaticColor;  break;
-               case 2:  visclass = GrayScale;    break;
-               case 3:  visclass = StaticGray;   break;
-            }
-            /* try 8-bit up through 16-bit */
-            for (depth=8;depth<=16;depth++) {
-               vis = get_visual( dpy, screen, depth, visclass );
-               if (vis) {
-                  return vis;
-               }
-            }
-            /* try min_depth up to 8-bit */
-            for (depth=min_depth;depth<8;depth++) {
-               vis = get_visual( dpy, screen, depth, visclass );
-               if (vis) {
-                  return vis;
-               }
-            }
-         }
+      if (min_depth==0) {
+	 /* start with shallowest */
+	 for (depth=0;depth<=32;depth++) {
+	    vis = get_visual( dpy, screen, depth, visclass );
+	    if (vis) {
+	       return vis;
+	    }
+	 }
       }
       else {
-         /* search for a specific visual class */
-         switch (preferred_class) {
-            case GLX_TRUE_COLOR_EXT:    visclass = TrueColor;    break;
-            case GLX_DIRECT_COLOR_EXT:  visclass = DirectColor;  break;
-            case GLX_PSEUDO_COLOR_EXT:  visclass = PseudoColor;  break;
-            case GLX_STATIC_COLOR_EXT:  visclass = StaticColor;  break;
-            case GLX_GRAY_SCALE_EXT:    visclass = GrayScale;    break;
-            case GLX_STATIC_GRAY_EXT:   visclass = StaticGray;   break;
-            default:   return NULL;
-         }
-         /* try 8-bit up through 16-bit */
-         for (depth=8;depth<=16;depth++) {
-            vis = get_visual( dpy, screen, depth, visclass );
-            if (vis) {
-               return vis;
-            }
-         }
-         /* try min_depth up to 8-bit */
-         for (depth=min_depth;depth<8;depth++) {
-            vis = get_visual( dpy, screen, depth, visclass );
-            if (vis) {
-               return vis;
-            }
-         }
+	 /* start with deepest */
+	 for (depth=32;depth>=min_depth;depth--) {
+	    vis = get_visual( dpy, screen, depth, visclass );
+	    if (vis) {
+	       return vis;
+	    }
+	 }
       }
    }
 
@@ -822,7 +706,7 @@ choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
  * Return:  pointer to an XVisualInfo or NULL.
  */
 static XVisualInfo *
-choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
+choose_x_overlay_visual( Display *dpy, int scr,
                          int level, int trans_type, int trans_value,
                          int min_depth, int preferred_class )
 {
@@ -889,14 +773,8 @@ choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
          continue;
       }
 
-      /* if RGB was requested, make sure we have True/DirectColor */
-      if (rgbFlag && vislist->CLASS != TrueColor
-          && vislist->CLASS != DirectColor)
-         continue;
-
-      /* if CI was requested, make sure we have a color indexed visual */
-      if (!rgbFlag
-          && (vislist->CLASS == TrueColor || vislist->CLASS == DirectColor))
+      /* Color-index rendering is not supported.  Make sure we have True/DirectColor */
+      if (vislist->CLASS != TrueColor && vislist->CLASS != DirectColor)
          continue;
 
       if (deepvis==NULL || vislist->depth > deepest) {
@@ -1266,6 +1144,9 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       }
    }
 
+   if (!rgb_flag)
+      return NULL;
+
    (void) caveat;
 
    /*
@@ -1285,46 +1166,27 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       if (vis) {
          /* give the visual some useful GLX attributes */
          double_flag = GL_TRUE;
-         if (vis->depth > 8)
-            rgb_flag = GL_TRUE;
+         if (vis->depth <= 8)
+	    return NULL;
          depth_size = default_depth_bits();
          stencil_size = STENCIL_BITS;
          /* XXX accum??? */
       }
    }
-   else if (level==0) {
-      /* normal color planes */
-      if (rgb_flag) {
-         /* Get an RGB visual */
-         int min_rgb = min_red + min_green + min_blue;
-         if (min_rgb>1 && min_rgb<8) {
-            /* a special case to be sure we can get a monochrome visual */
-            min_rgb = 1;
-         }
-         vis = choose_x_visual( dpy, screen, rgb_flag, min_rgb, visual_type );
-      }
-      else {
-         /* Get a color index visual */
-         vis = choose_x_visual( dpy, screen, rgb_flag, min_ci, visual_type );
-         accumRedSize = accumGreenSize = accumBlueSize = accumAlphaSize = 0;
-      }
-   }
    else {
-      /* over/underlay planes */
-      if (rgb_flag) {
-         /* rgba overlay */
-         int min_rgb = min_red + min_green + min_blue;
-         if (min_rgb>1 && min_rgb<8) {
-            /* a special case to be sure we can get a monochrome visual */
-            min_rgb = 1;
-         }
-         vis = choose_x_overlay_visual( dpy, screen, rgb_flag, level,
-                              trans_type, trans_value, min_rgb, visual_type );
+      /* RGB visual */
+      int min_rgb = min_red + min_green + min_blue;
+      if (min_rgb>1 && min_rgb<8) {
+	 /* a special case to be sure we can get a monochrome visual */
+	 min_rgb = 1;
+      }
+
+      if (level==0) {
+	 vis = choose_x_visual(dpy, screen, min_rgb, visual_type);
       }
       else {
-         /* color index overlay */
-         vis = choose_x_overlay_visual( dpy, screen, rgb_flag, level,
-                              trans_type, trans_value, min_ci, visual_type );
+	 vis = choose_x_overlay_visual(dpy, screen, level,
+				       trans_type, trans_value, min_rgb, visual_type);
       }
    }
 
@@ -1357,7 +1219,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          accumAlphaSize = alpha_flag ? accumRedSize : 0;
       }
 
-      xmvis = save_glx_visual( dpy, vis, rgb_flag, alpha_flag, double_flag,
+      xmvis = save_glx_visual( dpy, vis, alpha_flag, double_flag,
                                stereo_flag, depth_size, stencil_size,
                                accumRedSize, accumGreenSize,
                                accumBlueSize, accumAlphaSize, level, numAux );
@@ -1381,9 +1243,9 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = (XVisualInfo *) malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
-         _mesa_memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
+         memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
       return xmvis->vishandle;
 #endif
@@ -1438,7 +1300,7 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       xmvis = create_glx_visual( dpy, visinfo );
       if (!xmvis) {
          /* unusable visual */
-         _mesa_free(glxCtx);
+         free(glxCtx);
          return NULL;
       }
    }
@@ -1446,7 +1308,7 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      _mesa_free(glxCtx);
+      free(glxCtx);
       return NULL;
    }
 
@@ -1671,7 +1533,7 @@ Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
    MakeCurrent_PrevReadBuffer = 0;
    XMesaDestroyContext( glxCtx->xmesaContext );
    XMesaGarbageCollect();
-   _mesa_free(glxCtx);
+   free(glxCtx);
 }
 
 
@@ -2032,8 +1894,8 @@ static const char *
 Fake_glXQueryServerString( Display *dpy, int screen, int name )
 {
    static char version[1000];
-   _mesa_sprintf(version, "%d.%d %s",
-                 SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, MESA_GLX_VERSION);
+   sprintf(version, "%d.%d %s",
+	   SERVER_MAJOR_VERSION, SERVER_MINOR_VERSION, MESA_GLX_VERSION);
 
    (void) dpy;
    (void) screen;
@@ -2057,8 +1919,8 @@ static const char *
 Fake_glXGetClientString( Display *dpy, int name )
 {
    static char version[1000];
-   _mesa_sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION,
-                 CLIENT_MINOR_VERSION, MESA_GLX_VERSION);
+   sprintf(version, "%d.%d %s", CLIENT_MAJOR_VERSION,
+	   CLIENT_MINOR_VERSION, MESA_GLX_VERSION);
 
    (void) dpy;
 
@@ -2108,7 +1970,7 @@ Fake_glXGetFBConfigs( Display *dpy, int screen, int *nelements )
    visuals = XGetVisualInfo(dpy, visMask, &visTemplate, nelements);
    if (*nelements > 0) {
       XMesaVisual *results;
-      results = (XMesaVisual *) _mesa_malloc(*nelements * sizeof(XMesaVisual));
+      results = (XMesaVisual *) malloc(*nelements * sizeof(XMesaVisual));
       if (!results) {
          *nelements = 0;
          return NULL;
@@ -2135,7 +1997,7 @@ Fake_glXChooseFBConfig( Display *dpy, int screen,
 
    xmvis = choose_visual(dpy, screen, attribList, GL_TRUE);
    if (xmvis) {
-      GLXFBConfig *config = (GLXFBConfig *) _mesa_malloc(sizeof(XMesaVisual));
+      GLXFBConfig *config = (GLXFBConfig *) malloc(sizeof(XMesaVisual));
       if (!config) {
          *nitems = 0;
          return NULL;
@@ -2160,9 +2022,9 @@ Fake_glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = (XVisualInfo *) malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
-         _mesa_memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
+         memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
       return xmvis->vishandle;
 #endif
@@ -2469,7 +2331,7 @@ Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      _mesa_free(glxCtx);
+      free(glxCtx);
       return NULL;
    }
 
@@ -2493,10 +2355,7 @@ Fake_glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
       *value = xmctx->xm_visual->visinfo->visualid;
       break;
    case GLX_RENDER_TYPE:
-      if (xmctx->xm_visual->mesa_visual.rgbMode)
-         *value = GLX_RGBA_TYPE;
-      else
-         *value = GLX_COLOR_INDEX_TYPE;
+      *value = GLX_RGBA_TYPE;
       break;
    case GLX_SCREEN:
       *value = 0;
@@ -2687,7 +2546,7 @@ Fake_glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int re
    glxCtx->xmesaContext = XMesaCreateContext(xmvis,
                                    shareCtx ? shareCtx->xmesaContext : NULL);
    if (!glxCtx->xmesaContext) {
-      _mesa_free(glxCtx);
+      free(glxCtx);
       return NULL;
    }
 

@@ -1769,6 +1769,18 @@ vec4 shadow2DRectProj(const sampler2DRectShadow sampler, const vec4 coord)
 
 
 
+//// GL_EXT_texture_array
+vec4 texture1DArray(const sampler1DArray sampler, const vec2 coord)
+{
+   __asm vec4_tex_1d_array __retVal, sampler, coord;
+}
+
+vec4 texture2DArray(const sampler2DArray sampler, const vec3 coord)
+{
+   __asm vec4_tex_2d_array __retVal, sampler, coord;
+}
+
+
 //
 // 8.9 Noise Functions
 //

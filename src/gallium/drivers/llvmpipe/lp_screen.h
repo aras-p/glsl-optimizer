@@ -43,14 +43,14 @@
 #include "pipe/p_defines.h"
 
 
-struct llvmpipe_winsys;
+struct sw_winsys;
 
 
 struct llvmpipe_screen
 {
    struct pipe_screen base;
 
-   struct llvmpipe_winsys *winsys;
+   struct sw_winsys *winsys;
 
    LLVMModuleRef module;
    LLVMExecutionEngineRef engine;
@@ -74,6 +74,7 @@ llvmpipe_screen( struct pipe_screen *pipe )
 {
    return (struct llvmpipe_screen *)pipe;
 }
+
 
 
 #endif /* LP_SCREEN_H */

@@ -108,7 +108,7 @@ i915CreateContext(const __GLcontextModes * mesaVis,
       return GL_FALSE;
 
    if (0)
-      _mesa_printf("\ntexmem-0-3 branch\n\n");
+      printf("\ntexmem-0-3 branch\n\n");
 
    i915InitVtbl(i915);
 

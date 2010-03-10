@@ -38,8 +38,14 @@
 
 
 
+#ifdef HAVE_DIX_CONFIG_H
+#include <dix-config.h>
+#include "glapi/mesa.h"
+#else
 #include "main/compiler.h"
 #include "main/glheader.h"
+#endif
+
 #include "glapi/glapi.h"
 
 #ifdef DEBUG

@@ -123,7 +123,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
    GLuint count = 0;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
-      _mesa_printf("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
+      printf("%s %d,%d %dx%d bitmap %dx%d skip %d src_offset %d mask %d\n",
 		   __FUNCTION__, x,y,w,h,width,height,unpack->SkipPixels, src_offset, mask);
 
    if (invert) {
@@ -395,7 +395,7 @@ intel_texture_bitmap(GLcontext * ctx,
    }
 
    /* Convert the A1 bitmap to an A8 format suitable for glTexImage */
-   a8_bitmap = _mesa_calloc(width * height);
+   a8_bitmap = calloc(1, width * height);
    _mesa_expand_bitmap(width, height, unpack, bitmap, a8_bitmap, width, 0xff);
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
@@ -430,7 +430,7 @@ intel_texture_bitmap(GLcontext * ctx,
    _mesa_PixelStorei(GL_UNPACK_ALIGNMENT, 1);
    _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0,
 		    GL_ALPHA, GL_UNSIGNED_BYTE, a8_bitmap);
-   _mesa_free(a8_bitmap);
+   free(a8_bitmap);
 
    meta_set_fragment_program(&intel->meta, &intel->meta.bitmap_fp, fp);
    _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,
@@ -516,7 +516,7 @@ intelBitmap(GLcontext * ctx,
       return;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
-      _mesa_printf("%s: fallback to swrast\n", __FUNCTION__);
+      printf("%s: fallback to swrast\n", __FUNCTION__);
 
    _swrast_Bitmap(ctx, x, y, width, height, unpack, pixels);
 }

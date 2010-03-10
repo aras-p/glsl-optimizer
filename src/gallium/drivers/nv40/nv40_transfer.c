@@ -1,10 +1,10 @@
-#include <pipe/p_state.h>
-#include <pipe/p_defines.h>
-#include <util/u_inlines.h>
-#include <util/u_format.h>
-#include <util/u_memory.h>
-#include <util/u_math.h>
-#include <nouveau/nouveau_winsys.h>
+#include "pipe/p_state.h"
+#include "pipe/p_defines.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
+#include "util/u_memory.h"
+#include "util/u_math.h"
+#include "nouveau/nouveau_winsys.h"
 #include "nv40_context.h"
 #include "nv40_screen.h"
 #include "nv40_state.h"

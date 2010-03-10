@@ -119,6 +119,10 @@ struct lp_vertex_shader {
    struct draw_vertex_shader *draw_data;
 };
 
+struct lp_velems_state {
+   unsigned count;
+   struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+};
 
 
 void *
@@ -176,8 +180,14 @@ void *llvmpipe_create_vs_state(struct pipe_context *,
 void llvmpipe_bind_vs_state(struct pipe_context *, void *);
 void llvmpipe_delete_vs_state(struct pipe_context *, void *);
 
+void *llvmpipe_create_vertex_elements_state(struct pipe_context *,
+                                            unsigned count,
+                                            const struct pipe_vertex_element *);
+void llvmpipe_bind_vertex_elements_state(struct pipe_context *, void *);
+void llvmpipe_delete_vertex_elements_state(struct pipe_context *, void *);
+
 void llvmpipe_set_polygon_stipple( struct pipe_context *,
-				  const struct pipe_poly_stipple * );
+                                   const struct pipe_poly_stipple * );
 
 void llvmpipe_set_scissor_state( struct pipe_context *,
                                  const struct pipe_scissor_state * );
@@ -202,10 +212,6 @@ llvmpipe_sampler_view_destroy(struct pipe_context *pipe,
 
 void llvmpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );
-
-void llvmpipe_set_vertex_elements(struct pipe_context *,
-                                  unsigned count,
-                                  const struct pipe_vertex_element *);
 
 void llvmpipe_set_vertex_buffers(struct pipe_context *,
                                  unsigned count,

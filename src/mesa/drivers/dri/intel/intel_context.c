@@ -206,6 +206,11 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    if (intel->is_front_buffer_rendering)
       intel_flush(&intel->ctx, GL_FALSE);
 
+   /* Set this up front, so that in case our buffers get invalidated
+    * while we're getting new buffers, we don't clobber the stamp and
+    * thus ignore the invalidate. */
+   drawable->lastStamp = drawable->dri2.stamp;
+
    if (INTEL_DEBUG & DEBUG_DRI)
       fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
 
@@ -376,7 +381,6 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    }
 
    driUpdateFramebufferSize(&intel->ctx, drawable);
-   drawable->lastStamp = drawable->dri2.stamp;
 }
 
 void
@@ -590,9 +594,13 @@ intelInitContext(struct intel_context *intel,
    struct intel_screen *intelScreen = sPriv->private;
    int bo_reuse_mode;
 
+   /* we can't do anything without a connection to the device */
+   if (intelScreen->bufmgr == NULL)
+      return GL_FALSE;
+
    if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
                                  functions, (void *) intel)) {
-      _mesa_printf("%s: failed to init mesa context\n", __FUNCTION__);
+      printf("%s: failed to init mesa context\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -602,7 +610,11 @@ intelInitContext(struct intel_context *intel,
    intel->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
-   if (IS_965(intel->intelScreen->deviceID)) {
+   if (IS_GEN6(intel->intelScreen->deviceID)) {
+      intel->gen = 6;
+      intel->needs_ff_sync = GL_TRUE;
+      intel->has_luminance_srgb = GL_TRUE;
+   } else if (IS_965(intel->intelScreen->deviceID)) {
       intel->gen = 4;
    } else if (IS_9XX(intel->intelScreen->deviceID)) {
       intel->gen = 3;
@@ -743,12 +755,6 @@ intelInitContext(struct intel_context *intel,
    }
    intel->use_texture_tiling = driQueryOptionb(&intel->optionCache,
 					       "texture_tiling");
-   if (intel->use_texture_tiling &&
-       !intel->intelScreen->kernel_exec_fencing) {
-      fprintf(stderr, "No kernel support for execution fencing, "
-	      "disabling texture tiling\n");
-      intel->use_texture_tiling = GL_FALSE;
-   }
    intel->use_early_z = driQueryOptionb(&intel->optionCache, "early_z");
 
    intel->prim.primitive = ~0;
@@ -879,6 +885,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       intel->driDrawable = driDrawPriv;
       driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
       driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
+      intel_prepare_render(intel);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

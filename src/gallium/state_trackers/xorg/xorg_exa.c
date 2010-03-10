@@ -118,22 +118,22 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp, int *picture_
 {
     switch (depth) {
     case 32:
-	*format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	*format = PIPE_FORMAT_B8G8R8A8_UNORM;
 	*picture_format = PICT_a8r8g8b8;
 	assert(*bbp == 32);
 	break;
     case 24:
-	*format = PIPE_FORMAT_X8R8G8B8_UNORM;
+	*format = PIPE_FORMAT_B8G8R8X8_UNORM;
 	*picture_format = PICT_x8r8g8b8;
 	assert(*bbp == 32);
 	break;
     case 16:
-	*format = PIPE_FORMAT_R5G6B5_UNORM;
+	*format = PIPE_FORMAT_B5G6R5_UNORM;
 	*picture_format = PICT_r5g6b5;
 	assert(*bbp == 16);
 	break;
     case 15:
-	*format = PIPE_FORMAT_A1R5G5B5_UNORM;
+	*format = PIPE_FORMAT_B5G5R5A1_UNORM;
 	*picture_format = PICT_x1r5g5b5;
 	assert(*bbp == 16);
 	break;
@@ -144,7 +144,7 @@ exa_get_pipe_format(int depth, enum pipe_format *format, int *bbp, int *picture_
 	break;
     case 4:
     case 1:
-	*format = PIPE_FORMAT_A8R8G8B8_UNORM; /* bad bad bad */
+	*format = PIPE_FORMAT_B8G8R8A8_UNORM; /* bad bad bad */
 	break;
     default:
 	assert(0);
@@ -789,7 +789,7 @@ xorg_exa_set_displayed_usage(PixmapPtr pPixmap)
 	return 0;
     }
 
-    priv->flags |= PIPE_TEXTURE_USAGE_PRIMARY;
+    priv->flags |= PIPE_TEXTURE_USAGE_SCANOUT;
 
     return 0;
 }
@@ -805,7 +805,7 @@ xorg_exa_set_shared_usage(PixmapPtr pPixmap)
 	return 0;
     }
 
-    priv->flags |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+    priv->flags |= PIPE_TEXTURE_USAGE_SHARED;
 
     return 0;
 }
@@ -943,7 +943,7 @@ xorg_exa_set_texture(PixmapPtr pPixmap, struct  pipe_texture *tex)
 {
     struct exa_pixmap_priv *priv = exaGetPixmapDriverPrivate(pPixmap);
 
-    int mask = PIPE_TEXTURE_USAGE_PRIMARY | PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+    int mask = PIPE_TEXTURE_USAGE_SHARED | PIPE_TEXTURE_USAGE_SCANOUT;
 
     if (!priv)
 	return FALSE;
@@ -976,8 +976,8 @@ xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
     template.depth0 = 1;
     template.last_level = 0;
     template.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
-    template.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
-    template.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+    template.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
+    template.tex_usage |= PIPE_TEXTURE_USAGE_SHARED;
 
     return exa->scrn->texture_create(exa->scrn, &template);
 }

@@ -99,9 +99,6 @@ trace_enabled(void);
 struct trace_screen *
 trace_screen(struct pipe_screen *screen);
 
-struct pipe_screen *
-trace_screen_create(struct pipe_screen *screen);
-
 void
 trace_screen_user_buffer_update(struct pipe_screen *screen,
                                 struct pipe_buffer *buffer);

@@ -20,7 +20,7 @@ Framebuffer objects (GL_EXT_framebuffer_object)       DONE
 Half-float                                            some infrastructure done
 Multisample blit                                      DONE
 Non-normalized Integer texture/framebuffer formats    not started
-1D/2D Texture arrays                                  mostly done
+1D/2D Texture arrays                                  core Mesa, swrast done
 Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
 GL_EXT_texture_compression_rgtc                       not started

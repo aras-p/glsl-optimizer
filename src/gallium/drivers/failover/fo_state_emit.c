@@ -81,6 +81,10 @@ failover_state_emit( struct failover_context *failover )
       failover->sw->bind_vs_state( failover->sw,
                                    failover->vertex_shader->sw_state );
 
+   if (failover->dirty & FO_NEW_VERTEX_ELEMENT)
+      failover->sw->bind_vertex_elements_state( failover->sw,
+                                                failover->vertex_elements->sw_state );
+
    if (failover->dirty & FO_NEW_STIPPLE)
       failover->sw->set_polygon_stipple( failover->sw, &failover->poly_stipple );
 
@@ -126,12 +130,6 @@ failover_state_emit( struct failover_context *failover )
       failover->sw->set_vertex_buffers( failover->sw,
                                         failover->num_vertex_buffers,
                                         failover->vertex_buffers );
-   }
-
-   if (failover->dirty & FO_NEW_VERTEX_ELEMENT) {
-      failover->sw->set_vertex_elements( failover->sw,
-                                         failover->num_vertex_elements,
-                                         failover->vertex_elements );
    }
 
    failover->dirty = 0;

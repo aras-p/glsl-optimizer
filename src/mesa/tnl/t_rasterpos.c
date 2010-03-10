@@ -119,8 +119,7 @@ shade_rastpos(GLcontext *ctx,
               const GLfloat vertex[4],
               const GLfloat normal[3],
               GLfloat Rcolor[4],
-              GLfloat Rspec[4],
-              GLfloat *Rindex)
+              GLfloat Rspec[4])
 {
    /*const*/ GLfloat (*base)[3] = ctx->Light._BaseColor;
    const struct gl_light *light;
@@ -244,28 +243,14 @@ shade_rastpos(GLcontext *ctx,
       ACC_SCALE_SCALAR_3V( specularColor, attenuation, specularContrib );
    }
 
-   if (ctx->Visual.rgbMode) {
-      Rcolor[0] = CLAMP(diffuseColor[0], 0.0F, 1.0F);
-      Rcolor[1] = CLAMP(diffuseColor[1], 0.0F, 1.0F);
-      Rcolor[2] = CLAMP(diffuseColor[2], 0.0F, 1.0F);
-      Rcolor[3] = CLAMP(diffuseColor[3], 0.0F, 1.0F);
-      Rspec[0] = CLAMP(specularColor[0], 0.0F, 1.0F);
-      Rspec[1] = CLAMP(specularColor[1], 0.0F, 1.0F);
-      Rspec[2] = CLAMP(specularColor[2], 0.0F, 1.0F);
-      Rspec[3] = CLAMP(specularColor[3], 0.0F, 1.0F);
-   }
-   else {
-      GLfloat *ind = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_INDEXES];
-      GLfloat d_a = ind[MAT_INDEX_DIFFUSE] - ind[MAT_INDEX_AMBIENT];
-      GLfloat s_a = ind[MAT_INDEX_SPECULAR] - ind[MAT_INDEX_AMBIENT];
-      GLfloat i = (ind[MAT_INDEX_AMBIENT]
-		   + diffuseCI * (1.0F-specularCI) * d_a
-		   + specularCI * s_a);
-      if (i > ind[MAT_INDEX_SPECULAR]) {
-	 i = ind[MAT_INDEX_SPECULAR];
-      }
-      *Rindex = i;
-   }
+   Rcolor[0] = CLAMP(diffuseColor[0], 0.0F, 1.0F);
+   Rcolor[1] = CLAMP(diffuseColor[1], 0.0F, 1.0F);
+   Rcolor[2] = CLAMP(diffuseColor[2], 0.0F, 1.0F);
+   Rcolor[3] = CLAMP(diffuseColor[3], 0.0F, 1.0F);
+   Rspec[0] = CLAMP(specularColor[0], 0.0F, 1.0F);
+   Rspec[1] = CLAMP(specularColor[1], 0.0F, 1.0F);
+   Rspec[2] = CLAMP(specularColor[2], 0.0F, 1.0F);
+   Rspec[3] = CLAMP(specularColor[3], 0.0F, 1.0F);
 }
 
 
@@ -469,21 +454,14 @@ _tnl_RasterPos(GLcontext *ctx, const GLfloat vObj[4])
          /* lighting */
          shade_rastpos( ctx, vObj, norm,
                         ctx->Current.RasterColor,
-                        ctx->Current.RasterSecondaryColor,
-                        &ctx->Current.RasterIndex );
+                        ctx->Current.RasterSecondaryColor );
       }
       else {
-         /* use current color or index */
-         if (ctx->Visual.rgbMode) {
-            COPY_4FV(ctx->Current.RasterColor,
-                     ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
-            COPY_4FV(ctx->Current.RasterSecondaryColor,
-                     ctx->Current.Attrib[VERT_ATTRIB_COLOR1]);
-         }
-         else {
-            ctx->Current.RasterIndex
-               = ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0];
-         }
+         /* use current color */
+	 COPY_4FV(ctx->Current.RasterColor,
+		  ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
+	 COPY_4FV(ctx->Current.RasterSecondaryColor,
+		  ctx->Current.Attrib[VERT_ATTRIB_COLOR1]);
       }
 
       /* texture coords */

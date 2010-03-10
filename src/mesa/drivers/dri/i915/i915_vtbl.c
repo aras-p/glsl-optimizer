@@ -55,6 +55,7 @@ i915_render_prevalidate(struct intel_context *intel)
 static void
 i915_render_start(struct intel_context *intel)
 {
+   intel_prepare_render(intel);
 }
 
 
@@ -377,15 +378,13 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                state->draw_region->draw_offset);
+		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
 
       if (state->depth_region) {
          OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR0]);
          OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR1]);
          OUT_RELOC(state->depth_region->buffer,
-		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                   state->depth_region->draw_offset);
+		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
       }
 
       OUT_BATCH(state->Buffer[I915_DESTREG_DV0]);
@@ -533,6 +532,7 @@ i915_set_draw_region(struct intel_context *intel,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLuint value;
    struct i915_hw_state *state = &i915->state;
+   uint32_t draw_x, draw_y;
 
    if (state->draw_region != color_regions[0]) {
       intel_region_release(&state->draw_region);
@@ -595,14 +595,41 @@ i915_set_draw_region(struct intel_context *intel,
    }
    state->Buffer[I915_DESTREG_DV1] = value;
 
-   state->Buffer[I915_DESTREG_DRAWRECT0] = _3DSTATE_DRAWRECT_INFO;
-   state->Buffer[I915_DESTREG_DRAWRECT1] = 0;
-   state->Buffer[I915_DESTREG_DRAWRECT2] = 0; /* xmin, ymin */
-   state->Buffer[I915_DESTREG_DRAWRECT3] =
-      (ctx->DrawBuffer->Width & 0xffff) |
-      (ctx->DrawBuffer->Height << 16);
-   state->Buffer[I915_DESTREG_DRAWRECT4] = 0; /* xoff, yoff */
-   state->Buffer[I915_DESTREG_DRAWRECT5] = 0;
+   /* We set up the drawing rectangle to be offset into the color
+    * region's location in the miptree.  If it doesn't match with
+    * depth's offsets, we can't render to it.
+    *
+    * (Well, not actually true -- the hw grew a bit to let depth's
+    * offset get forced to 0,0.  We may want to use that if people are
+    * hitting that case.  Also, some configurations may be supportable
+    * by tweaking the start offset of the buffers around, which we
+    * can't do in general due to tiling)
+    */
+   FALLBACK(intel, I915_FALLBACK_DRAW_OFFSET,
+	    (depth_region && color_regions[0]) &&
+	    (depth_region->draw_x != color_regions[0]->draw_x ||
+	     depth_region->draw_y != color_regions[0]->draw_y));
+
+   if (color_regions[0]) {
+      draw_x = color_regions[0]->draw_x;
+      draw_y = color_regions[0]->draw_y;
+   } else if (depth_region) {
+      draw_x = depth_region->draw_x;
+      draw_y = depth_region->draw_y;
+   } else {
+      draw_x = 0;
+      draw_y = 0;
+   }
+
+   /* When changing drawing rectangle offset, an MI_FLUSH is first required. */
+   state->Buffer[I915_DESTREG_DRAWRECT0] = MI_FLUSH;
+   state->Buffer[I915_DESTREG_DRAWRECT1] = _3DSTATE_DRAWRECT_INFO;
+   state->Buffer[I915_DESTREG_DRAWRECT2] = 0;
+   state->Buffer[I915_DESTREG_DRAWRECT3] = (draw_y << 16) | draw_x;
+   state->Buffer[I915_DESTREG_DRAWRECT4] =
+      ((ctx->DrawBuffer->Width + draw_x) & 0xffff) |
+      ((ctx->DrawBuffer->Height + draw_y) << 16);
+   state->Buffer[I915_DESTREG_DRAWRECT5] = (draw_y << 16) | draw_x;
 
    I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
 }

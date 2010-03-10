@@ -153,6 +153,10 @@ brw_get_param(struct pipe_screen *screen, int param)
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return 8;
+   case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+      return 8;
+   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+      return 16; /* XXX correct? */
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
@@ -170,11 +174,11 @@ brw_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 11; /* max 1024x1024 */
+      return BRW_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
+      return BRW_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 11; /* max 1024x1024 */
+      return BRW_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
       return 1;
@@ -225,15 +229,15 @@ brw_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_L16_UNORM,
       /*PIPE_FORMAT_I16_UNORM,*/
       /*PIPE_FORMAT_A16_UNORM,*/
-      PIPE_FORMAT_A8L8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM,
-      PIPE_FORMAT_A1R5G5B5_UNORM,
-      PIPE_FORMAT_A4R4G4B4_UNORM,
-      PIPE_FORMAT_X8R8G8B8_UNORM,
-      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_L8A8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM,
+      PIPE_FORMAT_B5G5R5A1_UNORM,
+      PIPE_FORMAT_B4G4R4A4_UNORM,
+      PIPE_FORMAT_B8G8R8X8_UNORM,
+      PIPE_FORMAT_B8G8R8A8_UNORM,
       /* video */
-      PIPE_FORMAT_YCBCR,
-      PIPE_FORMAT_YCBCR_REV,
+      PIPE_FORMAT_UYVY,
+      PIPE_FORMAT_YUYV,
       /* compressed */
       /*PIPE_FORMAT_FXT1_RGBA,*/
       PIPE_FORMAT_DXT1_RGB,
@@ -241,14 +245,14 @@ brw_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_DXT3_RGBA,
       PIPE_FORMAT_DXT5_RGBA,
       /* sRGB */
-      PIPE_FORMAT_R8G8B8A8_SRGB,
-      PIPE_FORMAT_A8L8_SRGB,
+      PIPE_FORMAT_A8B8G8R8_SRGB,
+      PIPE_FORMAT_L8A8_SRGB,
       PIPE_FORMAT_L8_SRGB,
       PIPE_FORMAT_DXT1_SRGB,
       /* depth */
       PIPE_FORMAT_Z32_FLOAT,
-      PIPE_FORMAT_X8Z24_UNORM,
-      PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_Z24X8_UNORM,
+      PIPE_FORMAT_Z24S8_UNORM,
       PIPE_FORMAT_Z16_UNORM,
       /* signed */
       PIPE_FORMAT_R8G8_SNORM,
@@ -256,15 +260,15 @@ brw_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format render_supported[] = {
-      PIPE_FORMAT_X8R8G8B8_UNORM,
-      PIPE_FORMAT_A8R8G8B8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM,
+      PIPE_FORMAT_B8G8R8X8_UNORM,
+      PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format depth_supported[] = {
       PIPE_FORMAT_Z32_FLOAT,
-      PIPE_FORMAT_X8Z24_UNORM,
-      PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_Z24X8_UNORM,
+      PIPE_FORMAT_Z24S8_UNORM,
       PIPE_FORMAT_Z16_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };

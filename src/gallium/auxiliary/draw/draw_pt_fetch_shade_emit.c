@@ -100,8 +100,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    fse->key.nr_elements = MAX2(fse->key.nr_outputs,     /* outputs - translate to hw format */
                                fse->key.nr_inputs);     /* inputs - fetch from api format */
 
-   fse->key.viewport = (!draw->rasterizer->bypass_vs_clip_and_viewport &&
-                        !draw->identity_viewport);
+   fse->key.viewport = !draw->identity_viewport;
    fse->key.clip = !draw->bypass_clipping;
    fse->key.const_vbuffers = 0;
 

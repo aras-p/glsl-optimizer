@@ -519,7 +519,7 @@ tdfx_readpixels_R5G6B5(GLcontext * ctx, GLint x, GLint y,
 	 const GLint widthInBytes = width * 2;
 	 GLint row;
 	 for (row = 0; row < height; row++) {
-	    MEMCPY(dst, src, widthInBytes);
+	    memcpy(dst, src, widthInBytes);
 	    dst += dstStride;
 	    src -= srcStride;
 	 }
@@ -578,7 +578,7 @@ tdfx_readpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
 	 {
             GLint row;
             for (row = 0; row < height; row++) {
-               MEMCPY(dst, src, widthInBytes);
+               memcpy(dst, src, widthInBytes);
                dst += dstStride;
                src -= srcStride;
             }
@@ -672,7 +672,7 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
              (format == GL_BGRA && type == GL_UNSIGNED_BYTE)) {
             GLint row;
             for (row = 0; row < height; row++) {
-               MEMCPY(dst, src, widthInBytes);
+               memcpy(dst, src, widthInBytes);
                dst -= dstStride;
                src += srcStride;
             }

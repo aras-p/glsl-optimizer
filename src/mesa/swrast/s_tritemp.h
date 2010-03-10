@@ -32,7 +32,6 @@
  *    INTERP_Z        - if defined, interpolate integer Z values
  *    INTERP_RGB      - if defined, interpolate integer RGB values
  *    INTERP_ALPHA    - if defined, interpolate integer Alpha values
- *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_INT_TEX  - if defined, interpolate integer ST texcoords
  *                         (fast, simple 2-D texture mapping, without
  *                         perspective correction)
@@ -319,9 +318,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
    {
       GLint scan_from_left_to_right;  /* true if scanning left-to-right */
-#ifdef INTERP_INDEX
-      GLfloat didx, didy;
-#endif
 
       /*
        * Execute user-supplied setup code
@@ -398,21 +394,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #  endif
       }
 #endif /* INTERP_RGB */
-#ifdef INTERP_INDEX
-      span.interpMask |= SPAN_INDEX;
-      if (ctx->Light.ShadeModel == GL_SMOOTH) {
-         GLfloat eMaj_di = vMax->attrib[FRAG_ATTRIB_CI][0] - vMin->attrib[FRAG_ATTRIB_CI][0];
-         GLfloat eBot_di = vMid->attrib[FRAG_ATTRIB_CI][0] - vMin->attrib[FRAG_ATTRIB_CI][0];
-         didx = oneOverArea * (eMaj_di * eBot.dy - eMaj.dy * eBot_di);
-         didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);
-         span.indexStep = SignedFloatToFixed(didx);
-      }
-      else {
-         span.interpMask |= SPAN_FLAT;
-         didx = didy = 0.0F;
-         span.indexStep = 0;
-      }
-#endif
 #ifdef INTERP_INT_TEX
       {
          GLfloat eMaj_ds = (vMax->attrib[FRAG_ATTRIB_TEX0][0] - vMin->attrib[FRAG_ATTRIB_TEX0][0]) * S_SCALE;
@@ -530,9 +511,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 #ifdef INTERP_ALPHA
          GLint aLeft = 0, fdaOuter = 0, fdaInner;
-#endif
-#ifdef INTERP_INDEX
-         GLfixed iLeft=0, diOuter=0, diInner;
 #endif
 #ifdef INTERP_INT_TEX
          GLfixed sLeft=0, dsOuter=0, dsInner;
@@ -697,18 +675,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif /* INTERP_RGB */
 
 
-#ifdef INTERP_INDEX
-               if (ctx->Light.ShadeModel == GL_SMOOTH) {
-                  iLeft = (GLfixed)(vLower->attrib[FRAG_ATTRIB_CI][0] * FIXED_SCALE
-                                 + didx * adjx + didy * adjy) + FIXED_HALF;
-                  diOuter = SignedFloatToFixed(didy + dxOuter * didx);
-               }
-               else {
-                  ASSERT(ctx->Light.ShadeModel == GL_FLAT);
-                  iLeft = FloatToFixed(v2->attrib[FRAG_ATTRIB_CI][0]);
-                  diOuter = 0;
-               }
-#endif
 #ifdef INTERP_INT_TEX
                {
                   GLfloat s0, t0;
@@ -784,9 +750,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_ALPHA
             fdaInner = fdaOuter + span.alphaStep;
 #endif
-#ifdef INTERP_INDEX
-            diInner = diOuter + span.indexStep;
-#endif
 #ifdef INTERP_INT_TEX
             dsInner = dsOuter + span.intTexStep[0];
             dtInner = dtOuter + span.intTexStep[1];
@@ -822,9 +785,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_ALPHA
                span.alpha = aLeft;
 #endif
-#ifdef INTERP_INDEX
-               span.index = iLeft;
-#endif
 #ifdef INTERP_INT_TEX
                span.intTex[0] = sLeft;
                span.intTex[1] = tLeft;
@@ -854,9 +814,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 #ifdef INTERP_ALPHA
                   CLAMP_INTERPOLANT(alpha, alphaStep, len);
-#endif
-#ifdef INTERP_INDEX
-                  CLAMP_INTERPOLANT(index, indexStep, len);
 #endif
                   {
                      RENDER_SPAN( span );
@@ -896,9 +853,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_ALPHA
                   aLeft += fdaOuter;
 #endif
-#ifdef INTERP_INDEX
-                  iLeft += diOuter;
-#endif
 #ifdef INTERP_INT_TEX
                   sLeft += dsOuter;
                   tLeft += dtOuter;
@@ -930,9 +884,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 #ifdef INTERP_ALPHA
                   aLeft += fdaInner;
-#endif
-#ifdef INTERP_INDEX
-                  iLeft += diInner;
 #endif
 #ifdef INTERP_INT_TEX
                   sLeft += dsInner;
@@ -967,7 +918,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #undef INTERP_Z
 #undef INTERP_RGB
 #undef INTERP_ALPHA
-#undef INTERP_INDEX
 #undef INTERP_INT_TEX
 #undef INTERP_ATTRIBS
 

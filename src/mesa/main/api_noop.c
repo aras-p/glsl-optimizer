@@ -32,7 +32,7 @@
 #include "macros.h"
 #include "dlist.h"
 #include "eval.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**

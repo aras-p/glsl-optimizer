@@ -294,7 +294,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
       LIST_DEL(&buf->head);
       pipe_mutex_unlock(mgr->mutex);
       /* Increase refcount */
-      pipe_reference(NULL, &buf->base.base.reference);
+      pipe_reference_init(&buf->base.base.reference, 1);
       return &buf->base;
    }
    

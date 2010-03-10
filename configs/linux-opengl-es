@@ -6,7 +6,7 @@ CONFIG_NAME = linux-opengl-es
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = egl glsl mesa/es gallium gallium/winsys
+SRC_DIRS = egl glsl mesa/es gallium gallium/winsys gallium/targets
 PROGRAM_DIRS = es1/screen es1/xegl es2/xegl
 
 # egl st needs this

@@ -8,8 +8,6 @@ DRI_LIB_DEPS += $(shell pkg-config libdrm_nouveau --libs)
 
 LIBNAME = nouveau_vieux_dri.so
 
-MINIGLX_SOURCES =
-
 DRIVER_SOURCES = \
 	nouveau_screen.c \
 	nouveau_context.c \
@@ -42,6 +40,7 @@ DRIVER_SOURCES = \
 	nv20_state_polygon.c \
 	nv20_state_raster.c \
 	nv20_state_tex.c \
+	nv20_state_frag.c \
 	nv20_state_tnl.c
 
 C_SOURCES = \

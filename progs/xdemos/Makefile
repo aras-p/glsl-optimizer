@@ -32,6 +32,7 @@ PROGS = \
 	msctest \
 	multictx \
 	offset \
+	omlsync \
 	overlay \
 	pbinfo \
 	pbdemo \

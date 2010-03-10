@@ -198,14 +198,14 @@ blit_nearest(GLcontext *ctx,
    }
 
    /* allocate the src/dst row buffers */
-   srcBuffer = _mesa_malloc(pixelSize * srcWidth);
+   srcBuffer = malloc(pixelSize * srcWidth);
    if (!srcBuffer) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
       return;
    }
-   dstBuffer = _mesa_malloc(pixelSize * dstWidth);
+   dstBuffer = malloc(pixelSize * dstWidth);
    if (!dstBuffer) {
-      _mesa_free(srcBuffer);
+      free(srcBuffer);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
       return;
    }
@@ -235,8 +235,8 @@ blit_nearest(GLcontext *ctx,
       drawRb->PutRow(ctx, drawRb, dstWidth, dstXpos, dstY, dstBuffer, NULL);
    }
 
-   _mesa_free(srcBuffer);
-   _mesa_free(dstBuffer);
+   free(srcBuffer);
+   free(dstBuffer);
 }
 
 
@@ -366,21 +366,21 @@ blit_linear(GLcontext *ctx,
    /* Allocate the src/dst row buffers.
     * Keep two adjacent src rows around for bilinear sampling.
     */
-   srcBuffer0 = _mesa_malloc(pixelSize * srcWidth);
+   srcBuffer0 = malloc(pixelSize * srcWidth);
    if (!srcBuffer0) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
       return;
    }
-   srcBuffer1 = _mesa_malloc(pixelSize * srcWidth);
+   srcBuffer1 = malloc(pixelSize * srcWidth);
    if (!srcBuffer1) {
-      _mesa_free(srcBuffer0);
+      free(srcBuffer0);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
       return;
    }
-   dstBuffer = _mesa_malloc(pixelSize * dstWidth);
+   dstBuffer = malloc(pixelSize * dstWidth);
    if (!dstBuffer) {
-      _mesa_free(srcBuffer0);
-      _mesa_free(srcBuffer1);
+      free(srcBuffer0);
+      free(srcBuffer1);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
       return;
    }
@@ -444,9 +444,9 @@ blit_linear(GLcontext *ctx,
       drawRb->PutRow(ctx, drawRb, dstWidth, dstXpos, dstY, dstBuffer, NULL);
    }
 
-   _mesa_free(srcBuffer0);
-   _mesa_free(srcBuffer1);
-   _mesa_free(dstBuffer);
+   free(srcBuffer0);
+   free(srcBuffer1);
+   free(dstBuffer);
 }
 
 
@@ -535,7 +535,7 @@ simple_blit(GLcontext *ctx,
    }
 
    /* allocate the row buffer */
-   rowBuffer = _mesa_malloc(bytesPerRow);
+   rowBuffer = malloc(bytesPerRow);
    if (!rowBuffer) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBlitFrameBufferEXT");
       return;
@@ -548,7 +548,7 @@ simple_blit(GLcontext *ctx,
       dstY += yStep;
    }
 
-   _mesa_free(rowBuffer);
+   free(rowBuffer);
 }
 
 

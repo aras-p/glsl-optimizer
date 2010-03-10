@@ -34,11 +34,6 @@
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 
-#ifdef DEBUG
-#include "trace/tr_screen.h"
-#include "trace/tr_texture.h"
-#endif
-
 #include "stw_icd.h"
 #include "stw_framebuffer.h"
 #include "stw_device.h"
@@ -495,13 +490,6 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
 
    surface = (struct pipe_surface *)data->pPrivateData;
 
-#ifdef DEBUG
-   if(stw_dev->trace_running) {
-      screen = trace_screen(screen)->screen;
-      surface = trace_surface(surface)->surface;
-   }
-#endif
-
    if(data->hSharedSurface != fb->hSharedSurface) {
       if(fb->shared_surface) {
          stw_dev->stw_winsys->shared_surface_close(screen, fb->shared_surface);
@@ -562,13 +550,6 @@ stw_framebuffer_present_locked(HDC hdc,
    }
    else {
       struct pipe_screen *screen = stw_dev->screen;
-
-#ifdef DEBUG
-      if(stw_dev->trace_running) {
-         screen = trace_screen(screen)->screen;
-         surface = trace_surface(surface)->surface;
-      }
-#endif
 
       stw_dev->stw_winsys->present( screen, surface, hdc );
 

@@ -70,9 +70,9 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 	case GL_DEPTH_COMPONENT24:
 	case GL_STENCIL_INDEX8_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
-		rb->_BaseFormat  = GL_DEPTH_COMPONENT;
+		rb->_BaseFormat  = GL_DEPTH_STENCIL;
 		rb->Format = MESA_FORMAT_Z24_S8;
-		rb->DataType = GL_UNSIGNED_INT;
+		rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
 		s->cpp = 4;
 		break;
 	default:
@@ -142,7 +142,6 @@ nouveau_renderbuffer_dri_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 	rb->Width = width;
 	rb->Height = height;
 
-	context_dirty(ctx, FRAMEBUFFER);
 	return GL_TRUE;
 }
 
@@ -216,6 +215,8 @@ get_tex_format(struct gl_texture_image *ti)
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_ARGB8888:
 		return GL_RGBA8;
+	case MESA_FORMAT_XRGB8888:
+		return GL_RGB8;
 	case MESA_FORMAT_RGB565:
 		return GL_RGB5;
 	default:

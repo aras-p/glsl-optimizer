@@ -71,27 +71,6 @@ extern int vsnprintf(char *str, size_t count, const char *fmt, va_list arg);
 /** \name Memory */
 /*@{*/
 
-/** Wrapper around malloc() */
-void *
-_mesa_malloc(size_t bytes)
-{
-   return malloc(bytes);
-}
-
-/** Wrapper around calloc() */
-void *
-_mesa_calloc(size_t bytes)
-{
-   return calloc(1, bytes);
-}
-
-/** Wrapper around free() */
-void
-_mesa_free(void *ptr)
-{
-   free(ptr);
-}
-
 /**
  * Allocate aligned memory.
  *
@@ -118,7 +97,7 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 
    ASSERT( alignment > 0 );
 
-   ptr = (uintptr_t) _mesa_malloc(bytes + alignment + sizeof(void *));
+   ptr = (uintptr_t) malloc(bytes + alignment + sizeof(void *));
    if (!ptr)
       return NULL;
 
@@ -138,8 +117,8 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 }
 
 /**
- * Same as _mesa_align_malloc(), but using _mesa_calloc() instead of
- * _mesa_malloc()
+ * Same as _mesa_align_malloc(), but using calloc(1, ) instead of
+ * malloc()
  */
 void *
 _mesa_align_calloc(size_t bytes, unsigned long alignment)
@@ -167,7 +146,7 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
 
    ASSERT( alignment > 0 );
 
-   ptr = (uintptr_t) _mesa_calloc(bytes + alignment + sizeof(void *));
+   ptr = (uintptr_t) calloc(1, bytes + alignment + sizeof(void *));
    if (!ptr)
       return NULL;
 
@@ -203,7 +182,7 @@ _mesa_align_free(void *ptr)
 #else
    void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
    void *realAddr = *cubbyHole;
-   _mesa_free(realAddr);
+   free(realAddr);
 #endif /* defined(HAVE_POSIX_MEMALIGN) */
 }
 
@@ -221,7 +200,7 @@ _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
    const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
    void *newBuf = _mesa_align_malloc(newSize, alignment);
    if (newBuf && oldBuffer && copySize > 0) {
-      _mesa_memcpy(newBuf, oldBuffer, copySize);
+      memcpy(newBuf, oldBuffer, copySize);
    }
    if (oldBuffer)
       _mesa_align_free(oldBuffer);
@@ -236,34 +215,12 @@ void *
 _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
 {
    const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
-   void *newBuffer = _mesa_malloc(newSize);
+   void *newBuffer = malloc(newSize);
    if (newBuffer && oldBuffer && copySize > 0)
-      _mesa_memcpy(newBuffer, oldBuffer, copySize);
+      memcpy(newBuffer, oldBuffer, copySize);
    if (oldBuffer)
-      _mesa_free(oldBuffer);
+      free(oldBuffer);
    return newBuffer;
-}
-
-/** memcpy wrapper */
-void *
-_mesa_memcpy(void *dest, const void *src, size_t n)
-{
-#if defined(SUNOS4)
-   return memcpy((char *) dest, (char *) src, (int) n);
-#else
-   return memcpy(dest, src, n);
-#endif
-}
-
-/** Wrapper around memset() */
-void
-_mesa_memset( void *dst, int val, size_t n )
-{
-#if defined(SUNOS4)
-   memset( (char *) dst, (int) val, (int) n );
-#else
-   memset(dst, val, n);
-#endif
 }
 
 /**
@@ -277,28 +234,6 @@ _mesa_memset16( unsigned short *dst, unsigned short val, size_t n )
 {
    while (n-- > 0)
       *dst++ = val;
-}
-
-/** Wrapper around either memset() or bzero() */
-void
-_mesa_bzero( void *dst, size_t n )
-{
-#if defined(__FreeBSD__)
-   bzero( dst, n );
-#else
-   memset( dst, 0, n );
-#endif
-}
-
-/** Wrapper around memcmp() */
-int
-_mesa_memcmp( const void *s1, const void *s2, size_t n )
-{
-#if defined(SUNOS4)
-   return memcmp( (char *) s1, (char *) s2, (int) n );
-#else
-   return memcmp(s1, s2, n);
-#endif
 }
 
 /*@}*/
@@ -841,79 +776,23 @@ _mesa_getenv( const char *var )
 /** \name String */
 /*@{*/
 
-/** Wrapper around strstr() */
-char *
-_mesa_strstr( const char *haystack, const char *needle )
-{
-   return strstr(haystack, needle);
-}
-
-/** Wrapper around strncat() */
-char *
-_mesa_strncat( char *dest, const char *src, size_t n )
-{
-   return strncat(dest, src, n);
-}
-
-/** Wrapper around strcpy() */
-char *
-_mesa_strcpy( char *dest, const char *src )
-{
-   return strcpy(dest, src);
-}
-
-/** Wrapper around strncpy() */
-char *
-_mesa_strncpy( char *dest, const char *src, size_t n )
-{
-   return strncpy(dest, src, n);
-}
-
-/** Wrapper around strlen() */
-size_t
-_mesa_strlen( const char *s )
-{
-   return strlen(s);
-}
-
-/** Wrapper around strcmp() */
-int
-_mesa_strcmp( const char *s1, const char *s2 )
-{
-   return strcmp(s1, s2);
-}
-
-/** Wrapper around strncmp() */
-int
-_mesa_strncmp( const char *s1, const char *s2, size_t n )
-{
-   return strncmp(s1, s2, n);
-}
-
 /**
- * Implemented using _mesa_malloc() and _mesa_strcpy.
+ * Implemented using malloc() and strcpy.
  * Note that NULL is handled accordingly.
  */
 char *
 _mesa_strdup( const char *s )
 {
    if (s) {
-      size_t l = _mesa_strlen(s);
-      char *s2 = (char *) _mesa_malloc(l + 1);
+      size_t l = strlen(s);
+      char *s2 = (char *) malloc(l + 1);
       if (s2)
-         _mesa_strcpy(s2, s);
+         strcpy(s2, s);
       return s2;
    }
    else {
       return NULL;
    }
-}
-
-/** Wrapper around atoi() */
-int
-_mesa_atoi(const char *s)
-{
-   return atoi(s);
 }
 
 /** Wrapper around strtod() */
@@ -948,22 +827,6 @@ _mesa_str_checksum(const char *str)
 /*@}*/
 
 
-/**********************************************************************/
-/** \name I/O */
-/*@{*/
-
-/** Wrapper around vsprintf() */
-int
-_mesa_sprintf( char *str, const char *fmt, ... )
-{
-   int r;
-   va_list args;
-   va_start( args, fmt );  
-   r = vsprintf( str, fmt, args );
-   va_end( args );
-   return r;
-}
-
 /** Wrapper around vsnprintf() */
 int
 _mesa_snprintf( char *str, size_t size, const char *fmt, ... )
@@ -975,38 +838,6 @@ _mesa_snprintf( char *str, size_t size, const char *fmt, ... )
    va_end( args );
    return r;
 }
-
-/** Wrapper around printf(), using vsprintf() for the formatting. */
-void
-_mesa_printf( const char *fmtString, ... )
-{
-   va_list args;
-   va_start( args, fmtString );  
-   vfprintf(stderr, fmtString, args);
-   va_end( args );
-}
-
-/** Wrapper around fprintf(), using vsprintf() for the formatting. */
-void
-_mesa_fprintf( FILE *f, const char *fmtString, ... )
-{
-   char s[MAXSTRING];
-   va_list args;
-   va_start( args, fmtString );  
-   vsnprintf(s, MAXSTRING, fmtString, args);
-   va_end( args );
-   fprintf(f, "%s", s);
-}
-
-
-/** Wrapper around vsprintf() */
-int
-_mesa_vsprintf( char *str, const char *fmt, va_list args )
-{
-   return vsprintf( str, fmt, args );
-}
-
-/*@}*/
 
 
 /**********************************************************************/
@@ -1031,7 +862,7 @@ output_if_debug(const char *prefixString, const char *outputString,
        * set *to any value*.
        */
 #ifdef DEBUG
-      debug = (env != NULL && _mesa_atoi(env) == 0) ? 0 : 1;
+      debug = (env != NULL && atoi(env) == 0) ? 0 : 1;
 #else
       debug = (env != NULL) ? 1 : 0;
 #endif
@@ -1177,7 +1008,7 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
       const char *debugEnv = _mesa_getenv("MESA_DEBUG");
 
 #ifdef DEBUG
-      if (debugEnv && _mesa_strstr(debugEnv, "silent"))
+      if (debugEnv && strstr(debugEnv, "silent"))
          debug = GL_FALSE;
       else
          debug = GL_TRUE;

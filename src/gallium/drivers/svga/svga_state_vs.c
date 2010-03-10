@@ -186,8 +186,8 @@ static int update_zero_stride( struct svga_context *svga,
    svga->curr.zero_stride_vertex_elements = 0;
    svga->curr.num_zero_stride_vertex_elements = 0;
 
-   for (i = 0; i < svga->curr.num_vertex_elements; i++) {
-      const struct pipe_vertex_element *vel = &svga->curr.ve[i];
+   for (i = 0; i < svga->curr.velems->count; i++) {
+      const struct pipe_vertex_element *vel = &svga->curr.velems->velem[i];
       const struct pipe_vertex_buffer *vbuffer = &svga->curr.vb[
          vel->vertex_buffer_index];
       if (vbuffer->stride == 0) {

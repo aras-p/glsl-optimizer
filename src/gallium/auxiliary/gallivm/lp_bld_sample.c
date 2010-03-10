@@ -44,6 +44,11 @@
 #include "lp_bld_sample.h"
 
 
+/**
+ * Initialize lp_sampler_static_state object with the gallium sampler
+ * and texture state.
+ * The former is considered to be static and the later dynamic.
+ */
 void
 lp_sampler_static_state(struct lp_sampler_static_state *state,
                         const struct pipe_texture *texture,
@@ -57,6 +62,18 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    if(!sampler)
       return;
 
+   /*
+    * We don't copy sampler state over unless it is actually enabled, to avoid
+    * spurious recompiles, as the sampler static state is part of the shader
+    * key.
+    *
+    * Ideally the state tracker or cso_cache module would make all state
+    * canonical, but until that happens it's better to be safe than sorry here.
+    *
+    * XXX: Actually there's much more than can be done here, especially
+    * regarding 1D/2D/3D/CUBE textures, wrap modes, etc.
+    */
+
    state->format            = texture->format;
    state->target            = texture->target;
    state->pot_width         = util_is_pot(texture->width0);
@@ -69,11 +86,20 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->min_img_filter    = sampler->min_img_filter;
    state->min_mip_filter    = sampler->min_mip_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
+
    state->compare_mode      = sampler->compare_mode;
-   if(sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
-      state->compare_func      = sampler->compare_func;
+   if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
+      state->compare_func   = sampler->compare_func;
    }
+
    state->normalized_coords = sampler->normalized_coords;
+   state->lod_bias          = sampler->lod_bias;
+   state->min_lod           = sampler->min_lod;
+   state->max_lod           = sampler->max_lod;
+   state->border_color[0]   = sampler->border_color[0];
+   state->border_color[1]   = sampler->border_color[1];
+   state->border_color[2]   = sampler->border_color[2];
+   state->border_color[3]   = sampler->border_color[3];
 }
 
 
@@ -136,8 +162,7 @@ lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
-                       LLVMValueRef y_stride,
-                       LLVMValueRef data_ptr)
+                       LLVMValueRef y_stride)
 {
    LLVMValueRef x_stride;
    LLVMValueRef offset;

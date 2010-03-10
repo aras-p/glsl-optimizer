@@ -25,8 +25,14 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+# Clear CDPATH as the 'cd' command will echo stuff
+# to stdout if it is set
+unset CDPATH
+
 # Given a list of files, look for .a archives and unpack them.
 # Return the original list of files minus the .a files plus the unpacked files.
+# first param:  name of a temp directory (to be deleted when finished)
+# remaining params:  list of .o and .a files
 expand_archives() {
     DIR=$1
     shift
@@ -56,27 +62,6 @@ expand_archives() {
         esac
     done
     cd "$ORIG_DIR"
-    echo $NEWFILES
-}
-
-
-# Given a list of files, look for .a archives and return a list of all objects
-# in the .a archives.
-contents_of_archives() {
-    FILES=$@
-    NEWFILES=""
-    for FILE in $FILES ; do
-        case $FILE in
-            *.a)
-                # get list of members in this .a archive
-                MEMBERS=`ar t $FILE`
-                NEWFILES="$NEWFILES $MEMBERS"
-                ;;
-            *)
-                # skip other file types
-                ;;
-        esac
-    done
     echo $NEWFILES
 }
 
@@ -758,12 +743,20 @@ case $ARCH in
         if [ $STATIC = 1 ] ; then
             LIBNAME="lib${LIBNAME}.a"
             echo "mklib: Making Darwin static library: " ${LIBNAME}
-            LINK="ar"
             OPTS="-ruvs"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
+
+            # expand .a into .o files
+            NEW_OBJECTS=`expand_archives ${LIBNAME}.obj $OBJECTS`
+
+            # make static lib
+            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
+
+            # remove temporary extracted .o files
+            rm -rf ${LIBNAME}.obj
+
             FINAL_LIBS=${LIBNAME}
         else
             # On Darwin a .bundle is used for a library that you want to dlopen
@@ -955,7 +948,14 @@ case $ARCH in
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${OBJECTS}`
+
+            # expand .a into .o files
+            NEW_OBJECTS=`expand_archives ${LIBNAME}.obj $OBJECTS`
+
+            FINAL_LIBS=`make_ar_static_lib ${OPTS} 1 ${LIBNAME} ${NEW_OBJECTS}`
+
+            # remove temporary extracted .o files
+            rm -rf ${LIBNAME}.obj
         else
 	    OPTS="-shared -Wl,--enable-auto-image-base -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
             if [ "${ALTOPTS}" ] ; then
@@ -977,6 +977,11 @@ case $ARCH in
 
             # make lib
             ${LINK} ${OPTS} ${LDFLAGS} -o ${CYGNAME}-${MAJOR}.dll ${OBJECTS} ${DEPS}
+            # make build fail if link failed
+            es=$?
+            if [ "$es" -ne "0" ]; then
+                exit $es
+            fi
             # make usual symlinks
             ln -s ${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a
             # finish up

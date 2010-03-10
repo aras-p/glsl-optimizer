@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gl_API.dtd">
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
 
 <OpenGLAPI>
 
@@ -2641,6 +2641,6 @@
     </function>
 </category>
 
-<xi:include href="../../glapi/APPLE_vertex_array_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="../../glapi/gen/APPLE_vertex_array_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 </OpenGLAPI>

@@ -73,7 +73,7 @@ brw_new_query_object(GLcontext *ctx, GLuint id)
 {
    struct brw_query_object *query;
 
-   query = _mesa_calloc(sizeof(struct brw_query_object));
+   query = calloc(1, sizeof(struct brw_query_object));
 
    query->Base.Id = id;
    query->Base.Result = 0;
@@ -89,7 +89,7 @@ brw_delete_query(GLcontext *ctx, struct gl_query_object *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    dri_bo_unreference(query->bo);
-   _mesa_free(query);
+   free(query);
 }
 
 static void

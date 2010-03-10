@@ -65,7 +65,7 @@ delete_wrapper(struct gl_renderbuffer *rb)
    ASSERT(rb->Format == MESA_FORMAT_Z24_S8 ||
           rb->Format == MESA_FORMAT_S8_Z24);
    _mesa_reference_renderbuffer(&rb->Wrapped, NULL);
-   _mesa_free(rb);
+   free(rb);
 }
 
 
@@ -818,5 +818,5 @@ _mesa_promote_stencil(GLcontext *ctx, struct gl_renderbuffer *stencilRb)
       }
       stencilRb->PutRow(ctx, stencilRb, width, 0, i, depthStencil, NULL);
    }
-   _mesa_free(data);
+   free(data);
 }

@@ -712,15 +712,34 @@ nv40_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	nv40->draw_dirty |= NV40_NEW_ARRAYS;
 }
 
+static void *
+nv40_vtxelts_state_create(struct pipe_context *pipe,
+			  unsigned num_elements,
+			  const struct pipe_vertex_element *elements)
+{
+	struct nv40_vtxelt_state *cso = CALLOC_STRUCT(nv40_vtxelt_state);
+
+	assert(num_elements < 16); /* not doing fallbacks yet */
+	cso->num_elements = num_elements;
+	memcpy(cso->pipe, elements, num_elements * sizeof(*elements));
+
+/*	nv40_vtxelt_construct(cso);*/
+
+	return (void *)cso;
+}
+
 static void
-nv40_set_vertex_elements(struct pipe_context *pipe, unsigned count,
-			 const struct pipe_vertex_element *ve)
+nv40_vtxelts_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+	FREE(hwcso);
+}
+
+static void
+nv40_vtxelts_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	memcpy(nv40->vtxelt, ve, sizeof(*ve) * count);
-	nv40->vtxelt_nr = count;
-
+	nv40->vtxelt = hwcso;
 	nv40->dirty |= NV40_NEW_ARRAYS;
 	nv40->draw_dirty |= NV40_NEW_ARRAYS;
 }
@@ -767,7 +786,10 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.set_scissor_state = nv40_set_scissor_state;
 	nv40->pipe.set_viewport_state = nv40_set_viewport_state;
 
+	nv40->pipe.create_vertex_elements_state = nv40_vtxelts_state_create;
+	nv40->pipe.delete_vertex_elements_state = nv40_vtxelts_state_delete;
+	nv40->pipe.bind_vertex_elements_state = nv40_vtxelts_state_bind;
+
 	nv40->pipe.set_vertex_buffers = nv40_set_vertex_buffers;
-	nv40->pipe.set_vertex_elements = nv40_set_vertex_elements;
 }
 

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gl_API.dtd">
+<!DOCTYPE OpenGLAPI SYSTEM "../../glapi/gen/gl_API.dtd">
 
 <!-- OpenGL and OpenGL ES 1.x APIs
      This file defines the base categories that can be shared by all APIs.

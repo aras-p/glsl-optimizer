@@ -118,39 +118,21 @@ static void FUNC( struct draw_pt_front_end *frontend,
 
    case PIPE_PRIM_QUADS:
       for (i = 0; i+3 < count; i += 4) {
-         if (flatfirst) {
-            QUAD( vcache,
-                  get_elt(elts, i + 0),
-                  get_elt(elts, i + 1),
-                  get_elt(elts, i + 2),
-                  get_elt(elts, i + 3) );
-         }
-         else {
-            QUAD( vcache,
-                  get_elt(elts, i + 0),
-                  get_elt(elts, i + 1),
-                  get_elt(elts, i + 2),
-                  get_elt(elts, i + 3) );
-         }
+         QUAD( vcache,
+               get_elt(elts, i + 0),
+               get_elt(elts, i + 1),
+               get_elt(elts, i + 2),
+               get_elt(elts, i + 3) );
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
       for (i = 0; i+3 < count; i += 2) {
-         if (flatfirst) {
-            QUAD( vcache,
-                  get_elt(elts, i + 0),
-                  get_elt(elts, i + 1),
-                  get_elt(elts, i + 3),
-                  get_elt(elts, i + 2) );
-         }
-         else {
-            QUAD( vcache,
-                  get_elt(elts, i + 2),
-                  get_elt(elts, i + 0),
-                  get_elt(elts, i + 1),
-                  get_elt(elts, i + 3) );
-         }
+         QUAD( vcache,
+               get_elt(elts, i + 2),
+               get_elt(elts, i + 0),
+               get_elt(elts, i + 1),
+               get_elt(elts, i + 3) );
       }
       break;
 

@@ -43,14 +43,15 @@
 
 struct lp_rasterizer;
 struct lp_scene;
-struct lp_scene_queue;
 struct lp_fence;
 struct cmd_bin;
-struct pipe_screen;
 
 /** For sub-pixel positioning */
 #define FIXED_ORDER 4
 #define FIXED_ONE (1<<FIXED_ORDER)
+
+
+struct lp_rasterizer_task;
 
 
 /**
@@ -97,6 +98,10 @@ struct lp_rast_shader_inputs {
  * Objects of this type are put into the setup_context::data buffer.
  */
 struct lp_rast_triangle {
+#ifdef DEBUG
+   float v[3][2];
+#endif
+
    /* one-pixel sized trivial accept offsets for each plane */
    int ei1;                   
    int ei2;
@@ -126,18 +131,21 @@ struct lp_rast_triangle {
 
 
 
-struct lp_rasterizer *lp_rast_create( struct pipe_screen *screen,
-                                      struct lp_scene_queue *empty );
+struct lp_rasterizer *
+lp_rast_create( void );
 
-void lp_rast_destroy( struct lp_rasterizer * );
+void
+lp_rast_destroy( struct lp_rasterizer * );
 
-unsigned lp_rast_get_num_threads( struct lp_rasterizer * );
+unsigned
+lp_rast_get_num_threads( struct lp_rasterizer * );
 
-void lp_rasterize_scene( struct lp_rasterizer *rast,
-			 struct lp_scene *scene,
-			 const struct pipe_framebuffer_state *fb,
-			 bool write_depth );
+void 
+lp_rast_queue_scene( struct lp_rasterizer *rast,
+                     struct lp_scene *scene );
 
+void
+lp_rast_finish( struct lp_rasterizer *rast );
 
 
 union lp_rast_cmd_arg {
@@ -201,32 +209,25 @@ lp_rast_arg_null( void )
  * the bins are executed.
  */
 
-void lp_rast_clear_color( struct lp_rasterizer *, 
-                          unsigned thread_index,
+void lp_rast_clear_color( struct lp_rasterizer_task *, 
                           const union lp_rast_cmd_arg );
 
-void lp_rast_clear_zstencil( struct lp_rasterizer *, 
-                             unsigned thread_index,
+void lp_rast_clear_zstencil( struct lp_rasterizer_task *, 
                              const union lp_rast_cmd_arg );
 
-void lp_rast_load_color( struct lp_rasterizer *, 
-                         unsigned thread_index,
+void lp_rast_load_color( struct lp_rasterizer_task *, 
                          const union lp_rast_cmd_arg );
 
-void lp_rast_set_state( struct lp_rasterizer *, 
-                        unsigned thread_index,
+void lp_rast_set_state( struct lp_rasterizer_task *, 
                         const union lp_rast_cmd_arg );
 
-void lp_rast_triangle( struct lp_rasterizer *, 
-                       unsigned thread_index,
+void lp_rast_triangle( struct lp_rasterizer_task *, 
                        const union lp_rast_cmd_arg );
 
-void lp_rast_shade_tile( struct lp_rasterizer *,
-                         unsigned thread_index,
+void lp_rast_shade_tile( struct lp_rasterizer_task *,
                          const union lp_rast_cmd_arg );
 
-void lp_rast_fence( struct lp_rasterizer *,
-                    unsigned thread_index,
+void lp_rast_fence( struct lp_rasterizer_task *,
                     const union lp_rast_cmd_arg );
 
 #endif

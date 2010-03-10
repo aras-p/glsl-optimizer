@@ -111,7 +111,8 @@ SVGA3D_BufferDMA(struct svga_winsys_context *swc,
                  struct svga_winsys_surface *host,
                  SVGA3dTransferType transfer,
                  uint32 size,
-                 uint32 offset,
+                 uint32 guest_offset,
+                 uint32 host_offset,
                  SVGA3dSurfaceDMAFlags flags);
 
 /*

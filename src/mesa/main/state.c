@@ -682,7 +682,7 @@ _mesa_set_varying_vp_inputs( GLcontext *ctx,
    if (ctx->varying_vp_inputs != varying_inputs) {
       ctx->varying_vp_inputs = varying_inputs;
       ctx->NewState |= _NEW_ARRAY;
-      /*_mesa_printf("%s %x\n", __FUNCTION__, varying_inputs);*/
+      /*printf("%s %x\n", __FUNCTION__, varying_inputs);*/
    }
 }
 

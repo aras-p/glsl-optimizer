@@ -127,11 +127,11 @@ _mesa_free_program_data(GLcontext *ctx)
    if (ctx->ATIFragmentShader.Current) {
       ctx->ATIFragmentShader.Current->RefCount--;
       if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
-         _mesa_free(ctx->ATIFragmentShader.Current);
+         free(ctx->ATIFragmentShader.Current);
       }
    }
 #endif
-   _mesa_free((void *) ctx->Program.ErrorString);
+   free((void *) ctx->Program.ErrorString);
 }
 
 
@@ -162,7 +162,7 @@ _mesa_update_default_objects_program(GLcontext *ctx)
    if (ctx->ATIFragmentShader.Current) {
       ctx->ATIFragmentShader.Current->RefCount--;
       if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
-         _mesa_free(ctx->ATIFragmentShader.Current);
+         free(ctx->ATIFragmentShader.Current);
       }
    }
    ctx->ATIFragmentShader.Current = (struct ati_fragment_shader *) ctx->Shared->DefaultFragmentShader;
@@ -180,7 +180,7 @@ void
 _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
 {
    ctx->Program.ErrorPos = pos;
-   _mesa_free((void *) ctx->Program.ErrorString);
+   free((void *) ctx->Program.ErrorString);
    if (!string)
       string = "";
    ctx->Program.ErrorString = _mesa_strdup(string);
@@ -190,7 +190,7 @@ _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
 /**
  * Find the line number and column for 'pos' within 'string'.
  * Return a copy of the line which contains 'pos'.  Free the line with
- * _mesa_free().
+ * free().
  * \param string  the program string
  * \param pos     the position within the string
  * \param line    returns the line number corresponding to 'pos'.
@@ -222,8 +222,8 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
    while (*p != 0 && *p != '\n')
       p++;
    len = p - lineStart;
-   s = (GLubyte *) _mesa_malloc(len + 1);
-   _mesa_memcpy(s, lineStart, len);
+   s = (GLubyte *) malloc(len + 1);
+   memcpy(s, lineStart, len);
    s[len] = 0;
 
    return s;
@@ -240,7 +240,7 @@ _mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
    (void) ctx;
    if (prog) {
       GLuint i;
-      _mesa_bzero(prog, sizeof(*prog));
+      memset(prog, 0, sizeof(*prog));
       prog->Id = id;
       prog->Target = target;
       prog->Resident = GL_TRUE;
@@ -337,7 +337,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
       return;
 
    if (prog->String)
-      _mesa_free(prog->String);
+      free(prog->String);
 
    _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
 
@@ -351,7 +351,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
       _mesa_free_parameter_list(prog->Attributes);
    }
 
-   _mesa_free(prog);
+   free(prog);
 }
 
 
@@ -809,7 +809,7 @@ _mesa_find_used_registers(const struct gl_program *prog,
 {
    GLuint i, j;
 
-   _mesa_memset(used, 0, usedSize);
+   memset(used, 0, usedSize);
 
    for (i = 0; i < prog->NumInstructions; i++) {
       const struct prog_instruction *inst = prog->Instructions + i;

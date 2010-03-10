@@ -38,7 +38,6 @@ SOURCES =accum.c \
 	debug.c \
 	depth.c \
 	depthstencil.c \
-	dispatch.c \
 	dlist.c \
 	drawpix.c \
 	enable.c \
@@ -113,7 +112,6 @@ convolve.obj,\
 debug.obj,\
 depth.obj,\
 depthstencil.obj,\
-dispatch.obj,\
 dlist.obj,\
 drawpix.obj,\
 enable.obj,\
@@ -198,7 +196,6 @@ convolve.obj : convolve.c
 debug.obj : debug.c
 depth.obj : depth.c
 depthstencil.obj : depthstencil.c
-dispatch.obj : dispatch.c
 dlist.obj : dlist.c
 drawpix.obj : drawpix.c
 enable.obj : enable.c

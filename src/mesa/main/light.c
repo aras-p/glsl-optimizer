@@ -1093,31 +1093,22 @@ _mesa_update_lighting( GLcontext *ctx )
     * FLUSH_UPDATE_CURRENT, as when any outstanding material changes
     * are flushed, they will update the derived state at that time.
     */
-   if (ctx->Visual.rgbMode) {
-      if (ctx->Light.Model.TwoSide)
-	 _mesa_update_material( ctx, 
-				MAT_BIT_FRONT_EMISSION |
-				MAT_BIT_FRONT_AMBIENT |
-				MAT_BIT_FRONT_DIFFUSE | 
-				MAT_BIT_FRONT_SPECULAR |
-				MAT_BIT_BACK_EMISSION |
-				MAT_BIT_BACK_AMBIENT |
-				MAT_BIT_BACK_DIFFUSE | 
-				MAT_BIT_BACK_SPECULAR);
-      else
-	 _mesa_update_material( ctx, 
-				MAT_BIT_FRONT_EMISSION |
-				MAT_BIT_FRONT_AMBIENT |
-				MAT_BIT_FRONT_DIFFUSE | 
-				MAT_BIT_FRONT_SPECULAR);
-   }
-   else {
-      static const GLfloat ci[3] = { .30F, .59F, .11F };
-      foreach(light, &ctx->Light.EnabledList) {
-	 light->_dli = DOT3(ci, light->Diffuse);
-	 light->_sli = DOT3(ci, light->Specular);
-      }
-   }
+   if (ctx->Light.Model.TwoSide)
+      _mesa_update_material(ctx,
+			    MAT_BIT_FRONT_EMISSION |
+			    MAT_BIT_FRONT_AMBIENT |
+			    MAT_BIT_FRONT_DIFFUSE |
+			    MAT_BIT_FRONT_SPECULAR |
+			    MAT_BIT_BACK_EMISSION |
+			    MAT_BIT_BACK_AMBIENT |
+			    MAT_BIT_BACK_DIFFUSE |
+			    MAT_BIT_BACK_SPECULAR);
+   else
+      _mesa_update_material(ctx,
+			    MAT_BIT_FRONT_EMISSION |
+			    MAT_BIT_FRONT_AMBIENT |
+			    MAT_BIT_FRONT_DIFFUSE |
+			    MAT_BIT_FRONT_SPECULAR);
 }
 
 
@@ -1433,7 +1424,7 @@ _mesa_free_lighting_data( GLcontext *ctx )
 
    /* Free lighting shininess exponentiation table */
    foreach_s( s, tmps, ctx->_ShineTabList ) {
-      _mesa_free( s );
+      free( s );
    }
-   _mesa_free( ctx->_ShineTabList );
+   free( ctx->_ShineTabList );
 }

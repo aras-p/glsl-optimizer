@@ -155,7 +155,7 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
 
     TRACE;
 
-    psp = _mesa_calloc(sizeof(*psp));
+    psp = calloc(1, sizeof(*psp));
     if (!psp)
 	return NULL;
 
@@ -184,7 +184,7 @@ static void driDestroyScreen(__DRIscreen *psp)
     TRACE;
 
     if (psp) {
-	_mesa_free(psp);
+	free(psp);
     }
 }
 
@@ -203,34 +203,28 @@ static const __DRIextension **driGetExtensions(__DRIscreen *psp)
 static GLuint
 choose_pixel_format(const GLvisual *v)
 {
-    if (v->rgbMode) {
-	int depth = v->rgbBits;
+    int depth = v->rgbBits;
 
-	if (depth == 32
-	    && v->redMask   == 0xff0000
-	    && v->greenMask == 0x00ff00
-	    && v->blueMask  == 0x0000ff)
-	    return PF_A8R8G8B8;
-	else if (depth == 24
-	    && v->redMask   == 0xff0000
-	    && v->greenMask == 0x00ff00
-	    && v->blueMask  == 0x0000ff)
-	    return PF_X8R8G8B8;
-	else if (depth == 16
-	    && v->redMask   == 0xf800
-	    && v->greenMask == 0x07e0
-	    && v->blueMask  == 0x001f)
-	    return PF_R5G6B5;
-	else if (depth == 8
-	    && v->redMask   == 0x07
-	    && v->greenMask == 0x38
-	    && v->blueMask  == 0xc0)
-	    return PF_R3G3B2;
-    }
-    else {
-	if (v->indexBits == 8)
-	    return PF_CI8;
-    }
+    if (depth == 32
+	&& v->redMask   == 0xff0000
+	&& v->greenMask == 0x00ff00
+	&& v->blueMask  == 0x0000ff)
+	return PF_A8R8G8B8;
+    else if (depth == 24
+	     && v->redMask   == 0xff0000
+	     && v->greenMask == 0x00ff00
+	     && v->blueMask  == 0x0000ff)
+	return PF_X8R8G8B8;
+    else if (depth == 16
+	     && v->redMask   == 0xf800
+	     && v->greenMask == 0x07e0
+	     && v->blueMask  == 0x001f)
+	return PF_R5G6B5;
+    else if (depth == 8
+	     && v->redMask   == 0x07
+	     && v->greenMask == 0x38
+	     && v->blueMask  == 0xc0)
+	return PF_R3G3B2;
 
     _mesa_problem( NULL, "unexpected format in %s", __FUNCTION__ );
     return 0;
@@ -241,8 +235,8 @@ swrast_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
     TRACE;
 
-    _mesa_free(rb->Data);
-    _mesa_free(rb);
+    free(rb->Data);
+    free(rb);
 }
 
 static GLboolean
@@ -272,11 +266,11 @@ swrast_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
     TRACE;
 
-    _mesa_free(rb->Data);
+    free(rb->Data);
 
     swrast_alloc_front_storage(ctx, rb, internalFormat, width, height);
 
-    rb->Data = _mesa_malloc(height * xrb->pitch);
+    rb->Data = malloc(height * xrb->pitch);
 
     return GL_TRUE;
 }
@@ -284,7 +278,7 @@ swrast_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 static struct swrast_renderbuffer *
 swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 {
-    struct swrast_renderbuffer *xrb = _mesa_calloc(sizeof *xrb);
+    struct swrast_renderbuffer *xrb = calloc(1, sizeof *xrb);
     GLuint pixel_format;
 
     TRACE;
@@ -335,13 +329,6 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 	xrb->Base.DataType = GL_UNSIGNED_BYTE;
 	xrb->bpp = 8;
 	break;
-    case PF_CI8:
-	xrb->Base.Format = MESA_FORMAT_CI8;
-	xrb->Base.InternalFormat = GL_COLOR_INDEX8_EXT;
-	xrb->Base._BaseFormat = GL_COLOR_INDEX;
-	xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	xrb->bpp = 8;
-	break;
     default:
 	return NULL;
     }
@@ -358,7 +345,7 @@ driCreateNewDrawable(__DRIscreen *screen,
 
     TRACE;
 
-    buf = _mesa_calloc(sizeof *buf);
+    buf = calloc(1, sizeof *buf);
     if (!buf)
 	return NULL;
 
@@ -366,7 +353,7 @@ driCreateNewDrawable(__DRIscreen *screen,
 
     buf->driScreenPriv = screen;
 
-    buf->row = _mesa_malloc(MAX_WIDTH * 4);
+    buf->row = malloc(MAX_WIDTH * 4);
 
     /* basic framebuffer setup */
     _mesa_initialize_window_framebuffer(&buf->Base, &config->modes);
@@ -401,7 +388,7 @@ driDestroyDrawable(__DRIdrawable *buf)
     if (buf) {
 	struct gl_framebuffer *fb = &buf->Base;
 
-	_mesa_free(buf->row);
+	free(buf->row);
 
 	fb->DeletePending = GL_TRUE;
 	_mesa_reference_framebuffer(&fb, NULL);
@@ -525,7 +512,7 @@ driCreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
 
     TRACE;
 
-    ctx = _mesa_calloc(sizeof *ctx);
+    ctx = calloc(1, sizeof *ctx);
     if (!ctx)
 	return NULL;
 
@@ -540,7 +527,7 @@ driCreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
     if (!_mesa_initialize_context(&ctx->Base, &config->modes,
 				  shared ? &shared->Base : NULL,
 				  &functions, (void *) ctx)) {
-      _mesa_free(ctx);
+      free(ctx);
       return NULL;
     }
 

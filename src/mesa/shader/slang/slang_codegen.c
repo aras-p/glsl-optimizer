@@ -100,14 +100,18 @@ static GLboolean
 is_sampler_type(const slang_fully_specified_type *t)
 {
    switch (t->specifier.type) {
-   case SLANG_SPEC_SAMPLER1D:
-   case SLANG_SPEC_SAMPLER2D:
-   case SLANG_SPEC_SAMPLER3D:
-   case SLANG_SPEC_SAMPLERCUBE:
-   case SLANG_SPEC_SAMPLER1DSHADOW:
-   case SLANG_SPEC_SAMPLER2DSHADOW:
-   case SLANG_SPEC_SAMPLER2DRECT:
-   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+   case SLANG_SPEC_SAMPLER_1D:
+   case SLANG_SPEC_SAMPLER_2D:
+   case SLANG_SPEC_SAMPLER_3D:
+   case SLANG_SPEC_SAMPLER_CUBE:
+   case SLANG_SPEC_SAMPLER_1D_SHADOW:
+   case SLANG_SPEC_SAMPLER_2D_SHADOW:
+   case SLANG_SPEC_SAMPLER_RECT:
+   case SLANG_SPEC_SAMPLER_RECT_SHADOW:
+   case SLANG_SPEC_SAMPLER_1D_ARRAY:
+   case SLANG_SPEC_SAMPLER_2D_ARRAY:
+   case SLANG_SPEC_SAMPLER_1D_ARRAY_SHADOW:
+   case SLANG_SPEC_SAMPLER_2D_ARRAY_SHADOW:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -222,14 +226,18 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
    case SLANG_SPEC_MAT43:
       sz = 4 * 4; /* 4 columns (regs) */
       break;
-   case SLANG_SPEC_SAMPLER1D:
-   case SLANG_SPEC_SAMPLER2D:
-   case SLANG_SPEC_SAMPLER3D:
-   case SLANG_SPEC_SAMPLERCUBE:
-   case SLANG_SPEC_SAMPLER1DSHADOW:
-   case SLANG_SPEC_SAMPLER2DSHADOW:
-   case SLANG_SPEC_SAMPLER2DRECT:
-   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+   case SLANG_SPEC_SAMPLER_1D:
+   case SLANG_SPEC_SAMPLER_2D:
+   case SLANG_SPEC_SAMPLER_3D:
+   case SLANG_SPEC_SAMPLER_CUBE:
+   case SLANG_SPEC_SAMPLER_1D_SHADOW:
+   case SLANG_SPEC_SAMPLER_2D_SHADOW:
+   case SLANG_SPEC_SAMPLER_RECT:
+   case SLANG_SPEC_SAMPLER_RECT_SHADOW:
+   case SLANG_SPEC_SAMPLER_1D_ARRAY:
+   case SLANG_SPEC_SAMPLER_2D_ARRAY:
+   case SLANG_SPEC_SAMPLER_1D_ARRAY_SHADOW:
+   case SLANG_SPEC_SAMPLER_2D_ARRAY_SHADOW:
       sz = 1; /* a sampler is basically just an integer index */
       break;
    case SLANG_SPEC_STRUCT:
@@ -310,22 +318,30 @@ static GLint
 sampler_to_texture_index(const slang_type_specifier_type type)
 {
    switch (type) {
-   case SLANG_SPEC_SAMPLER1D:
+   case SLANG_SPEC_SAMPLER_1D:
       return TEXTURE_1D_INDEX;
-   case SLANG_SPEC_SAMPLER2D:
+   case SLANG_SPEC_SAMPLER_2D:
       return TEXTURE_2D_INDEX;
-   case SLANG_SPEC_SAMPLER3D:
+   case SLANG_SPEC_SAMPLER_3D:
       return TEXTURE_3D_INDEX;
-   case SLANG_SPEC_SAMPLERCUBE:
+   case SLANG_SPEC_SAMPLER_CUBE:
       return TEXTURE_CUBE_INDEX;
-   case SLANG_SPEC_SAMPLER1DSHADOW:
+   case SLANG_SPEC_SAMPLER_1D_SHADOW:
       return TEXTURE_1D_INDEX; /* XXX fix */
-   case SLANG_SPEC_SAMPLER2DSHADOW:
+   case SLANG_SPEC_SAMPLER_2D_SHADOW:
       return TEXTURE_2D_INDEX; /* XXX fix */
-   case SLANG_SPEC_SAMPLER2DRECT:
+   case SLANG_SPEC_SAMPLER_RECT:
       return TEXTURE_RECT_INDEX;
-   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+   case SLANG_SPEC_SAMPLER_RECT_SHADOW:
       return TEXTURE_RECT_INDEX; /* XXX fix */
+   case SLANG_SPEC_SAMPLER_1D_ARRAY:
+      return TEXTURE_1D_ARRAY_INDEX;
+   case SLANG_SPEC_SAMPLER_2D_ARRAY:
+      return TEXTURE_2D_ARRAY_INDEX;
+   case SLANG_SPEC_SAMPLER_1D_ARRAY_SHADOW:
+      return TEXTURE_1D_ARRAY_INDEX;
+   case SLANG_SPEC_SAMPLER_2D_ARRAY_SHADOW:
+      return TEXTURE_2D_ARRAY_INDEX;
    default:
       return -1;
    }
@@ -453,6 +469,14 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_tex_cube", IR_TEX, 1, 2 },      /* cubemap */
    { "vec4_tex_rect", IR_TEX, 1, 2 },      /* rectangle */
    { "vec4_tex_rect_bias", IR_TEX, 1, 2 }, /* rectangle w/ projection */
+   { "vec4_tex_1d_array", IR_TEX, 1, 2 },
+   { "vec4_tex_1d_array_bias", IR_TEXB, 1, 2 },
+   { "vec4_tex_1d_array_shadow", IR_TEX, 1, 2 },
+   { "vec4_tex_1d_array_bias_shadow", IR_TEXB, 1, 2 },
+   { "vec4_tex_2d_array", IR_TEX, 1, 2 },
+   { "vec4_tex_2d_array_bias", IR_TEXB, 1, 2 },
+   { "vec4_tex_2d_array_shadow", IR_TEX, 1, 2 },
+   { "vec4_tex_2d_array_bias_shadow", IR_TEXB, 1, 2 },
 
    /* texture / sampler but with shadow comparison */
    { "vec4_tex_1d_shadow", IR_TEX_SH, 1, 2 },
@@ -1020,7 +1044,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 GLuint i;
          v = _slang_variable_locate(oper->locals, id, GL_TRUE);
 	 if (!v) {
-            if (_mesa_strcmp((char *) oper->a_id, "__notRetFlag"))
+            if (strcmp((char *) oper->a_id, "__notRetFlag"))
                _mesa_problem(NULL, "var %s not found!\n", (char *) oper->a_id);
             return;
 	 }
@@ -1658,7 +1682,7 @@ slang_find_asm_info(const char *name)
 {
    GLuint i;
    for (i = 0; AsmInfo[i].Name; i++) {
-      if (_mesa_strcmp(AsmInfo[i].Name, name) == 0) {
+      if (strcmp(AsmInfo[i].Name, name) == 0) {
          return AsmInfo + i;
       }
    }
@@ -1730,7 +1754,7 @@ swizzle_to_writemask(slang_assemble_ctx *A, GLuint swizzle,
          /* end */
          break;
       }
-      assert(swz >= 0 && swz <= 3);
+      assert(swz <= 3);
 
       if (swizzle != SWIZZLE_XXXX &&
           swizzle != SWIZZLE_YYYY &&
@@ -1870,6 +1894,7 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       _mesa_problem(NULL, "undefined __asm function %s\n",
                     (char *) oper->a_id);
       assert(info);
+      return NULL;
    }
    assert(info->NumParams <= 3);
 
@@ -2317,7 +2342,7 @@ _slang_is_vec_mat_type(const char *name)
    };
    int i;
    for (i = 0; vecmat_types[i]; i++)
-      if (_mesa_strcmp(name, vecmat_types[i]) == 0)
+      if (strcmp(name, vecmat_types[i]) == 0)
          return GL_TRUE;
    return GL_FALSE;
 }
@@ -3160,6 +3185,7 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
       varId = oper->children[0].children[0].a_id;
       var = _slang_variable_locate(oper->children[0].children[0].locals,
                                    varId, GL_TRUE);
+      assert(var);
       start = (GLint) var->initializer->literal[0];
    }
    else {
@@ -3639,7 +3665,7 @@ make_constant_array(slang_assemble_ctx *A,
    assert(initializer->type == SLANG_OPER_CALL);
    assert(initializer->array_constructor);
 
-   values = (GLfloat *) _mesa_malloc(numElements * 4 * sizeof(GLfloat));
+   values = (GLfloat *) malloc(numElements * 4 * sizeof(GLfloat));
 
    /* convert constructor params into ordinary floats */
    for (i = 0; i < numElements; i++) {
@@ -3670,7 +3696,7 @@ make_constant_array(slang_assemble_ctx *A,
    }
    assert(var->store->Size == size);
 
-   _mesa_free(values);
+   free(values);
 
    return GL_TRUE;
 }
@@ -4182,7 +4208,7 @@ swizzle_size(GLuint swizzle)
    GLuint size = 0, i;
    for (i = 0; i < 4; i++) {
       GLuint swz = GET_SWZ(swizzle, i);
-      size += (swz >= 0 && swz <= 3);
+      size += (swz <= 3);
    }
    return size;
 }
@@ -4198,6 +4224,7 @@ _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
       n->Store = _slang_new_ir_storage_relative(0,
                                                 swizzle_size(swizzle),
                                                 child->Store);
+      assert(n->Store);
       n->Store->Swizzle = swizzle;
    }
    return n;
@@ -4499,7 +4526,6 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
                                         SWIZZLE_NIL);
          n = _slang_gen_swizzle(n, swizzle);
       }
-      assert(n->Store);
       return n;
    }
    else {
@@ -4923,8 +4949,8 @@ is_rect_sampler_spec(const slang_type_specifier *spec)
    while (spec->_array) {
       spec = spec->_array;
    }
-   return spec->type == SLANG_SPEC_SAMPLER2DRECT ||
-          spec->type == SLANG_SPEC_SAMPLER2DRECTSHADOW;
+   return spec->type == SLANG_SPEC_SAMPLER_RECT ||
+          spec->type == SLANG_SPEC_SAMPLER_RECT_SHADOW;
 }
 
 
@@ -5224,7 +5250,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    slang_ir_node *n;
    GLboolean success = GL_TRUE;
 
-   if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
+   if (strcmp((char *) fun->header.a_name, "main") != 0) {
       /* we only really generate code for main, all other functions get
        * inlined or codegen'd upon an actual call.
        */
@@ -5321,7 +5347,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
    /* free codegen context */
    /*
-   _mesa_free(A->codegen);
+   free(A->codegen);
    */
 
    return success;

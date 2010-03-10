@@ -323,17 +323,23 @@ cell_sampler_view_destroy(struct pipe_context *pipe,
 static void
 cell_map_surfaces(struct cell_context *cell)
 {
+#if 0
    struct pipe_screen *screen = cell->pipe.screen;
+#endif
    uint i;
 
    for (i = 0; i < 1; i++) {
       struct pipe_surface *ps = cell->framebuffer.cbufs[i];
       if (ps) {
          struct cell_texture *ct = cell_texture(ps->texture);
+#if 0
          cell->cbuf_map[i] = screen->buffer_map(screen,
                                                 ct->buffer,
                                                 (PIPE_BUFFER_USAGE_GPU_READ |
                                                  PIPE_BUFFER_USAGE_GPU_WRITE));
+#else
+         cell->cbuf_map[i] = ct->data;
+#endif
       }
    }
 
@@ -341,10 +347,14 @@ cell_map_surfaces(struct cell_context *cell)
       struct pipe_surface *ps = cell->framebuffer.zsbuf;
       if (ps) {
          struct cell_texture *ct = cell_texture(ps->texture);
+#if 0
          cell->zsbuf_map = screen->buffer_map(screen,
                                               ct->buffer,
                                               (PIPE_BUFFER_USAGE_GPU_READ |
                                                PIPE_BUFFER_USAGE_GPU_WRITE));
+#else
+         cell->zsbuf_map = ct->data;
+#endif
       }
    }
 }
@@ -356,17 +366,17 @@ cell_map_surfaces(struct cell_context *cell)
 static void
 cell_unmap_surfaces(struct cell_context *cell)
 {
-   struct pipe_screen *screen = cell->pipe.screen;
+   /*struct pipe_screen *screen = cell->pipe.screen;*/
    uint i;
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       struct pipe_surface *ps = cell->framebuffer.cbufs[i];
       if (ps && cell->cbuf_map[i]) {
-         struct cell_texture *ct = cell_texture(ps->texture);
+         /*struct cell_texture *ct = cell_texture(ps->texture);*/
          assert(ps->texture);
-         assert(ct->buffer);
+         /*assert(ct->buffer);*/
 
-         screen->buffer_unmap(screen, ct->buffer);
+         /*screen->buffer_unmap(screen, ct->buffer);*/
          cell->cbuf_map[i] = NULL;
       }
    }
@@ -374,8 +384,8 @@ cell_unmap_surfaces(struct cell_context *cell)
    {
       struct pipe_surface *ps = cell->framebuffer.zsbuf;
       if (ps && cell->zsbuf_map) {
-         struct cell_texture *ct = cell_texture(ps->texture);
-         screen->buffer_unmap(screen, ct->buffer);
+         /*struct cell_texture *ct = cell_texture(ps->texture);*/
+         /*screen->buffer_unmap(screen, ct->buffer);*/
          cell->zsbuf_map = NULL;
       }
    }

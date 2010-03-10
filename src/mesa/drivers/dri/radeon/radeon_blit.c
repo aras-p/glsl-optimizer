@@ -38,7 +38,7 @@ static inline uint32_t cmdpacket0(struct radeon_screen *rscrn,
 }
 
 /* common formats supported as both textures and render targets */
-static unsigned is_blit_supported(gl_format mesa_format)
+unsigned r100_check_blit(gl_format mesa_format)
 {
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
@@ -204,15 +204,16 @@ static GLboolean validate_buffers(struct r100_context *r100,
                                   struct radeon_bo *dst_bo)
 {
     int ret;
-    radeon_cs_space_add_persistent_bo(r100->radeon.cmdbuf.cs,
-                                      src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
 
-    radeon_cs_space_add_persistent_bo(r100->radeon.cmdbuf.cs,
-                                      dst_bo, 0, RADEON_GEM_DOMAIN_VRAM);
+    radeon_cs_space_reset_bos(r100->radeon.cmdbuf.cs);
 
     ret = radeon_cs_space_check_with_bo(r100->radeon.cmdbuf.cs,
-                                        first_elem(&r100->radeon.dma.reserved)->bo,
-                                        RADEON_GEM_DOMAIN_GTT, 0);
+                                        src_bo, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
+    if (ret)
+        return GL_FALSE;
+
+    ret = radeon_cs_space_check_with_bo(r100->radeon.cmdbuf.cs,
+                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT);
     if (ret)
         return GL_FALSE;
 
@@ -329,7 +330,7 @@ unsigned r100_blit(GLcontext *ctx,
 {
     struct r100_context *r100 = R100_CONTEXT(ctx);
 
-    if (!is_blit_supported(dst_mesaformat))
+    if (!r100_check_blit(dst_mesaformat))
         return GL_FALSE;
 
     /* Make sure that colorbuffer has even width - hw limitation */

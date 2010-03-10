@@ -65,6 +65,7 @@ quad_shade_stage(struct quad_stage *qs)
 
 /**
  * Execute fragment shader for the four fragments in the quad.
+ * \return TRUE if quad is alive, FALSE if all four pixels are killed
  */
 static INLINE boolean
 shade_quad(struct quad_stage *qs, struct quad_header *quad)
@@ -98,11 +99,14 @@ coverage_quad(struct quad_stage *qs, struct quad_header *quad)
 }
 
 
-
+/**
+ * Shade/write an array of quads
+ * Called via quad_stage::run()
+ */
 static void
 shade_quads(struct quad_stage *qs, 
-                 struct quad_header *quads[],
-                 unsigned nr)
+            struct quad_header *quads[],
+            unsigned nr)
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
@@ -116,7 +120,7 @@ shade_quads(struct quad_stage *qs,
 
    for (i = 0; i < nr; i++) {
       if (!shade_quad(qs, quads[i]))
-         continue;
+         continue; /* quad totally culled/killed */
 
       if (/*do_coverage*/ 0)
          coverage_quad( qs, quads[i] );
@@ -128,9 +132,6 @@ shade_quads(struct quad_stage *qs,
       qs->next->run(qs->next, quads, pass);
 }
    
-
-
-
 
 /**
  * Per-primitive (or per-begin?) setup

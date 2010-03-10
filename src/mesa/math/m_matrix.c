@@ -599,7 +599,7 @@ static GLboolean invert_matrix_3d( GLmatrix *mat )
    }
    else {
       /* pure translation */
-      MEMCPY( out, Identity, sizeof(Identity) );
+      memcpy( out, Identity, sizeof(Identity) );
       MAT(out,0,3) = - MAT(in,0,3);
       MAT(out,1,3) = - MAT(in,1,3);
       MAT(out,2,3) = - MAT(in,2,3);
@@ -637,7 +637,7 @@ static GLboolean invert_matrix_3d( GLmatrix *mat )
  */
 static GLboolean invert_matrix_identity( GLmatrix *mat )
 {
-   MEMCPY( mat->inv, Identity, sizeof(Identity) );
+   memcpy( mat->inv, Identity, sizeof(Identity) );
    return GL_TRUE;
 }
 
@@ -659,7 +659,7 @@ static GLboolean invert_matrix_3d_no_rot( GLmatrix *mat )
    if (MAT(in,0,0) == 0 || MAT(in,1,1) == 0 || MAT(in,2,2) == 0 )
       return GL_FALSE;
 
-   MEMCPY( out, Identity, 16 * sizeof(GLfloat) );
+   memcpy( out, Identity, 16 * sizeof(GLfloat) );
    MAT(out,0,0) = 1.0F / MAT(in,0,0);
    MAT(out,1,1) = 1.0F / MAT(in,1,1);
    MAT(out,2,2) = 1.0F / MAT(in,2,2);
@@ -692,7 +692,7 @@ static GLboolean invert_matrix_2d_no_rot( GLmatrix *mat )
    if (MAT(in,0,0) == 0 || MAT(in,1,1) == 0)
       return GL_FALSE;
 
-   MEMCPY( out, Identity, 16 * sizeof(GLfloat) );
+   memcpy( out, Identity, 16 * sizeof(GLfloat) );
    MAT(out,0,0) = 1.0F / MAT(in,0,0);
    MAT(out,1,1) = 1.0F / MAT(in,1,1);
 
@@ -714,7 +714,7 @@ static GLboolean invert_matrix_perspective( GLmatrix *mat )
    if (MAT(in,2,3) == 0)
       return GL_FALSE;
 
-   MEMCPY( out, Identity, 16 * sizeof(GLfloat) );
+   memcpy( out, Identity, 16 * sizeof(GLfloat) );
 
    MAT(out,0,0) = 1.0F / MAT(in,0,0);
    MAT(out,1,1) = 1.0F / MAT(in,1,1);
@@ -776,7 +776,7 @@ static GLboolean matrix_invert( GLmatrix *mat )
       return GL_TRUE;
    } else {
       mat->flags |= MAT_FLAG_SINGULAR;
-      MEMCPY( mat->inv, Identity, sizeof(Identity) );
+      memcpy( mat->inv, Identity, sizeof(Identity) );
       return GL_FALSE;
    }
 }
@@ -807,7 +807,7 @@ _math_matrix_rotate( GLmatrix *mat,
    s = (GLfloat) _mesa_sin( angle * DEG2RAD );
    c = (GLfloat) _mesa_cos( angle * DEG2RAD );
 
-   MEMCPY(m, Identity, sizeof(GLfloat)*16);
+   memcpy(m, Identity, sizeof(GLfloat)*16);
    optimized = GL_FALSE;
 
 #define M(row,col)  m[col*4+row]
@@ -1141,10 +1141,10 @@ _math_matrix_viewport(GLmatrix *m, GLint x, GLint y, GLint width, GLint height,
 void
 _math_matrix_set_identity( GLmatrix *mat )
 {
-   MEMCPY( mat->m, Identity, 16*sizeof(GLfloat) );
+   memcpy( mat->m, Identity, 16*sizeof(GLfloat) );
 
    if (mat->inv)
-      MEMCPY( mat->inv, Identity, 16*sizeof(GLfloat) );
+      memcpy( mat->inv, Identity, 16*sizeof(GLfloat) );
 
    mat->type = MATRIX_IDENTITY;
    mat->flags &= ~(MAT_DIRTY_FLAGS|
@@ -1444,7 +1444,7 @@ _math_matrix_is_dirty( const GLmatrix *m )
 void
 _math_matrix_copy( GLmatrix *to, const GLmatrix *from )
 {
-   MEMCPY( to->m, from->m, sizeof(Identity) );
+   memcpy( to->m, from->m, sizeof(Identity) );
    to->flags = from->flags;
    to->type = from->type;
 
@@ -1453,7 +1453,7 @@ _math_matrix_copy( GLmatrix *to, const GLmatrix *from )
 	 matrix_invert( to );
       }
       else {
-	 MEMCPY(to->inv, from->inv, sizeof(GLfloat)*16);
+	 memcpy(to->inv, from->inv, sizeof(GLfloat)*16);
       }
    }
 }
@@ -1470,7 +1470,7 @@ _math_matrix_copy( GLmatrix *to, const GLmatrix *from )
 void
 _math_matrix_loadf( GLmatrix *mat, const GLfloat *m )
 {
-   MEMCPY( mat->m, m, 16*sizeof(GLfloat) );
+   memcpy( mat->m, m, 16*sizeof(GLfloat) );
    mat->flags = (MAT_FLAG_GENERAL | MAT_DIRTY);
 }
 
@@ -1484,9 +1484,9 @@ _math_matrix_loadf( GLmatrix *mat, const GLfloat *m )
 void
 _math_matrix_ctr( GLmatrix *m )
 {
-   m->m = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
+   m->m = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
    if (m->m)
-      MEMCPY( m->m, Identity, sizeof(Identity) );
+      memcpy( m->m, Identity, sizeof(Identity) );
    m->inv = NULL;
    m->type = MATRIX_IDENTITY;
    m->flags = 0;
@@ -1503,11 +1503,11 @@ void
 _math_matrix_dtr( GLmatrix *m )
 {
    if (m->m) {
-      ALIGN_FREE( m->m );
+      _mesa_align_free( m->m );
       m->m = NULL;
    }
    if (m->inv) {
-      ALIGN_FREE( m->inv );
+      _mesa_align_free( m->inv );
       m->inv = NULL;
    }
 }
@@ -1523,9 +1523,9 @@ void
 _math_matrix_alloc_inv( GLmatrix *m )
 {
    if (!m->inv) {
-      m->inv = (GLfloat *) ALIGN_MALLOC( 16 * sizeof(GLfloat), 16 );
+      m->inv = (GLfloat *) _mesa_align_malloc( 16 * sizeof(GLfloat), 16 );
       if (m->inv)
-         MEMCPY( m->inv, Identity, 16 * sizeof(GLfloat) );
+         memcpy( m->inv, Identity, 16 * sizeof(GLfloat) );
    }
 }
 

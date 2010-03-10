@@ -101,7 +101,7 @@ _mesa_vector4f_alloc( GLvector4f *v, GLbitfield flags, GLuint count,
 {
    v->stride = 4 * sizeof(GLfloat);
    v->size = 2;
-   v->storage = ALIGN_MALLOC( count * 4 * sizeof(GLfloat), alignment );
+   v->storage = _mesa_align_malloc( count * 4 * sizeof(GLfloat), alignment );
    v->storage_count = count;
    v->start = (GLfloat *) v->storage;
    v->data = (GLfloat (*)[4]) v->storage;
@@ -119,7 +119,7 @@ void
 _mesa_vector4f_free( GLvector4f *v )
 {
    if (v->flags & VEC_MALLOC) {
-      ALIGN_FREE( v->storage );
+      _mesa_align_free( v->storage );
       v->data = NULL;
       v->start = NULL;
       v->storage = NULL;
@@ -148,27 +148,27 @@ _mesa_vector4f_print( const GLvector4f *v, const GLubyte *cullmask,
    GLfloat *d = (GLfloat *)v->data;
    GLuint j, i = 0, count;
 
-   _mesa_printf("data-start\n");
+   printf("data-start\n");
    for (; d != v->start; STRIDE_F(d, v->stride), i++)
-      _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
+      printf(t, i, d[0], d[1], d[2], d[3]);
 
-   _mesa_printf("start-count(%u)\n", v->count);
+   printf("start-count(%u)\n", v->count);
    count = i + v->count;
 
    if (culling) {
       for (; i < count; STRIDE_F(d, v->stride), i++)
 	 if (cullmask[i])
-	    _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
+	    printf(t, i, d[0], d[1], d[2], d[3]);
    }
    else {
       for (; i < count; STRIDE_F(d, v->stride), i++)
-	 _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
+	 printf(t, i, d[0], d[1], d[2], d[3]);
    }
 
    for (j = v->size; j < 4; j++) {
       if ((v->flags & (1<<j)) == 0) {
 
-	 _mesa_printf("checking col %u is clean as advertised ", j);
+	 printf("checking col %u is clean as advertised ", j);
 
 	 for (i = 0, d = (GLfloat *) v->data;
 	      i < count && d[j] == c[j];
@@ -177,9 +177,9 @@ _mesa_vector4f_print( const GLvector4f *v, const GLubyte *cullmask,
          }
 
 	 if (i == count)
-	    _mesa_printf(" --> ok\n");
+	    printf(" --> ok\n");
 	 else
-	    _mesa_printf(" --> Failed at %u ******\n", i);
+	    printf(" --> Failed at %u ******\n", i);
       }
    }
 }

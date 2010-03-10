@@ -337,10 +337,10 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
       spu.fb.zsize = 4;
       spu.fb.zscale = (float) 0xffffffffu;
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_S8Z24_UNORM:
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
       spu.fb.zsize = 4;
       spu.fb.zscale = (float) 0x00ffffffu;
       break;

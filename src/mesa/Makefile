@@ -38,7 +38,7 @@ libmesagallium.a: $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
-	$(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
+	@ $(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
 
 ######################################################################
 # Device drivers
@@ -154,7 +154,7 @@ tags:
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
-	-rm -f depend depend.bak libmesa.a libglapi.a
+	-rm -f depend depend.bak libmesa.a libglapi.a libmesagallium.a
 	-rm -f drivers/*/*.o
 	-rm -f *.pc
 	-rm -f shader/slang/library/*_gc.h

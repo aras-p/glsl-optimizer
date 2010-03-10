@@ -108,7 +108,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
    cpu = _mesa_get_cpu_string();
    if (cpu) {
       offset += sprintf(buffer + offset, " %s", cpu);
-      _mesa_free(cpu);
+      free(cpu);
    }
 
    return offset;
@@ -275,10 +275,9 @@ driCheckDriDdxDrmVersions3(const char * driver_name,
    }
 
    /* Check that the DDX driver version is compatible */
-   /* for miniglx we pass in -1 so we can ignore the DDX version */
-   if ( (ddxActual->major != -1) && ((ddxActual->major < ddxExpected->major_min)
+   if ( (ddxActual->major < ddxExpected->major_min)
 	|| (ddxActual->major > ddxExpected->major_max)
-	|| (ddxActual->minor < ddxExpected->minor)) ) {
+	|| (ddxActual->minor < ddxExpected->minor) ) {
       fprintf(stderr, format2, driver_name, "DDX",
 		       ddxExpected->major_min, ddxExpected->major_max, ddxExpected->minor,
 		       ddxActual->major, ddxActual->minor, ddxActual->patch);
@@ -559,7 +558,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    }
 
    num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
-   configs = _mesa_calloc((num_modes + 1) * sizeof *configs);
+   configs = calloc(1, (num_modes + 1) * sizeof *configs);
    if (configs == NULL)
        return NULL;
 
@@ -568,7 +567,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
 	    for ( h = 0 ; h < num_msaa_modes; h++ ) {
 	    	for ( j = 0 ; j < num_accum_bits ; j++ ) {
-		    *c = _mesa_malloc (sizeof **c);
+		    *c = malloc (sizeof **c);
 		    modes = &(*c)->modes;
 		    c++;
 
@@ -626,11 +625,10 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		    modes->bindToTextureRgb = GL_TRUE;
 		    modes->bindToTextureRgba = GL_TRUE;
 		    modes->bindToMipmapTexture = GL_FALSE;
-		    modes->bindToTextureTargets = modes->rgbMode ?
-		    	__DRI_ATTRIB_TEXTURE_1D_BIT |
-		    	__DRI_ATTRIB_TEXTURE_2D_BIT |
-		    	__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
-		    	0;
+		    modes->bindToTextureTargets =
+			__DRI_ATTRIB_TEXTURE_1D_BIT |
+			__DRI_ATTRIB_TEXTURE_2D_BIT |
+			__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT;
 		}
 	    }
 	}
@@ -653,7 +651,7 @@ __DRIconfig **driConcatConfigs(__DRIconfig **a,
     while (b[j] != NULL)
 	j++;
    
-    all = _mesa_malloc((i + j + 1) * sizeof *all);
+    all = malloc((i + j + 1) * sizeof *all);
     index = 0;
     for (i = 0; a[i] != NULL; i++)
 	all[index++] = a[i];
@@ -661,8 +659,8 @@ __DRIconfig **driConcatConfigs(__DRIconfig **a,
 	all[index++] = b[j];
     all[index++] = NULL;
 
-    _mesa_free(a);
-    _mesa_free(b);
+    free(a);
+    free(b);
 
     return all;
 }
@@ -727,10 +725,7 @@ driGetConfigAttribIndex(const __DRIconfig *config,
 {
     switch (attribMap[index].attrib) {
     case __DRI_ATTRIB_RENDER_TYPE:
-	if (config->modes.rgbMode)
-	    *value = __DRI_ATTRIB_RGBA_BIT;
-	else
-	    *value = __DRI_ATTRIB_COLOR_INDEX_BIT;
+	*value = __DRI_ATTRIB_RGBA_BIT;
 	break;
     case __DRI_ATTRIB_CONFIG_CAVEAT:
 	if (config->modes.visualRating == GLX_NON_CONFORMANT_CONFIG)

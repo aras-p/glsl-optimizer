@@ -161,6 +161,12 @@
 #define TYPE_SPECIFIER_MAT34                       30
 #define TYPE_SPECIFIER_MAT43                       31
 
+/* GL_EXT_texture_array */
+#define TYPE_SPECIFIER_SAMPLER_1D_ARRAY            32
+#define TYPE_SPECIFIER_SAMPLER_2D_ARRAY            33
+#define TYPE_SPECIFIER_SAMPLER_1D_ARRAY_SHADOW     34
+#define TYPE_SPECIFIER_SAMPLER_2D_ARRAY_SHADOW     35
+
 /* type specifier array */
 #define TYPE_SPECIFIER_NONARRAY                    0
 #define TYPE_SPECIFIER_ARRAY                       1
@@ -281,6 +287,10 @@ struct parse_dict {
    int sampler2DShadow;
    int sampler2DRect;
    int sampler2DRectShadow;
+   int sampler1DArray;
+   int sampler2DArray;
+   int sampler1DArrayShadow;
+   int sampler2DArrayShadow;
 
    int invariant;
 
@@ -387,7 +397,8 @@ _error(struct parse_context *ctx,
        const char *msg)
 {
    if (ctx->error[0] == '\0') {
-      strcpy(ctx->error, msg);
+      strncpy(ctx->error, msg, sizeof(ctx->error) - 1);
+      ctx->error[sizeof(ctx->error) - 1] = '\0';
    }
 }
 
@@ -1027,6 +1038,15 @@ _parse_type_specifier_nonarray(struct parse_context *ctx,
       _update(ctx, e, TYPE_SPECIFIER_SAMPLER2DRECT);
    } else if (id == ctx->dict.sampler2DRectShadow) {
       _update(ctx, e, TYPE_SPECIFIER_SAMPLER2DRECTSHADOW);
+   } else if (id == ctx->dict.sampler1DArray) {
+      _update(ctx, e, TYPE_SPECIFIER_SAMPLER_1D_ARRAY);
+   } else if (id == ctx->dict.sampler2DArray) {
+      /* XXX check for GL_EXT_texture_array */
+      _update(ctx, e, TYPE_SPECIFIER_SAMPLER_2D_ARRAY);
+   } else if (id == ctx->dict.sampler1DArrayShadow) {
+      _update(ctx, e, TYPE_SPECIFIER_SAMPLER_1D_ARRAY_SHADOW);
+   } else if (id == ctx->dict.sampler2DArrayShadow) {
+      _update(ctx, e, TYPE_SPECIFIER_SAMPLER_2D_ARRAY_SHADOW);
    } else if (_parse_identifier(ctx, &p) == 0) {
       _update(ctx, e, TYPE_SPECIFIER_TYPENAME);
       *ps = p;
@@ -1943,6 +1963,14 @@ _parse_prectype(struct parse_context *ctx,
       type = TYPE_SPECIFIER_SAMPLER2DRECT;
    } else if (id == ctx->dict.sampler2DRectShadow) {
       type = TYPE_SPECIFIER_SAMPLER2DRECTSHADOW;
+   } else if (id == ctx->dict.sampler1DArray) {
+      type = TYPE_SPECIFIER_SAMPLER_1D_ARRAY;
+   } else if (id == ctx->dict.sampler2DArray) {
+      type = TYPE_SPECIFIER_SAMPLER_2D_ARRAY;
+   } else if (id == ctx->dict.sampler1DArrayShadow) {
+      type = TYPE_SPECIFIER_SAMPLER_1D_ARRAY_SHADOW;
+   } else if (id == ctx->dict.sampler2DArrayShadow) {
+      type = TYPE_SPECIFIER_SAMPLER_2D_ARRAY_SHADOW;
    } else {
       return -1;
    }
@@ -2885,6 +2913,10 @@ sl_cl_compile(struct sl_pp_context *context,
    ADD_NAME(ctx, sampler2DShadow);
    ADD_NAME(ctx, sampler2DRect);
    ADD_NAME(ctx, sampler2DRectShadow);
+   ADD_NAME(ctx, sampler1DArray);
+   ADD_NAME(ctx, sampler2DArray);
+   ADD_NAME(ctx, sampler1DArrayShadow);
+   ADD_NAME(ctx, sampler2DArrayShadow);
 
    ADD_NAME(ctx, invariant);
 
@@ -2948,7 +2980,8 @@ sl_cl_compile(struct sl_pp_context *context,
    ctx.tokens_read = 0;
    ctx.tokens = malloc(ctx.tokens_cap * sizeof(struct sl_pp_token_info));
    if (!ctx.tokens) {
-      strncpy(error, "out of memory", cberror);
+      strncpy(error, "out of memory", cberror - 1);
+      error[cberror - 1] = '\0';
       return -1;
    }
 

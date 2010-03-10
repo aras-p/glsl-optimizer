@@ -19,29 +19,11 @@ COMMON_BM_SOURCES = \
 	$(TOP)/src/mesa/drivers/dri/common/dri_bufmgr.c \
 	$(TOP)/src/mesa/drivers/dri/common/dri_drmpool.c
 
-
-ifeq ($(WINDOW_SYSTEM),dri)
-WINOBJ=
-WINLIB=
 INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES)
 
 OBJECTS = \
 	$(C_SOURCES:.c=.o) \
 	$(ASM_SOURCES:.S=.o) 
-
-else
-# miniglx
-WINOBJ=
-WINLIB=-L$(MESA)/src/glx/mini
-MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
-INCLUDES = $(MINIGLX_INCLUDES) \
-	   $(SHARED_INCLUDES) \
-	   $(PCIACCESS_CFLAGS)
-
-OBJECTS = $(C_SOURCES:.c=.o) \
-	  $(MINIGLX_SOURCES:.c=.o) \
-	  $(ASM_SOURCES:.S=.o) 
-endif
 
 
 ### Include directories
@@ -74,18 +56,19 @@ SHARED_INCLUDES = \
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES)  $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 
 ##### TARGETS #####
 
 default: depend symlinks $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 
-$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
+$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) Makefile \
+		$(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		$(OBJECTS) $(PIPE_DRIVERS) \
                 -Wl,--start-group $(MESA_MODULES) -Wl,--end-group \
-                 $(WINOBJ) $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
+                 $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
 
 $(TOP)/$(LIB_DIR)/gallium:
 	mkdir -p $@

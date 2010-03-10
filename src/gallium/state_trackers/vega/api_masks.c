@@ -86,6 +86,8 @@ draw_clear_quad(struct vg_context *st,
 
    /* draw */
    if (buf) {
+      cso_set_vertex_elements(st->cso_context, 2, st->velems);
+
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */

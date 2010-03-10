@@ -243,7 +243,7 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data )
 	  * includes operations such as glBegin or glDrawArrays.
 	  */
 	 if (0)
-	    _mesa_printf("displaylist recursive begin");
+	    printf("displaylist recursive begin");
 
 	 vbo_save_loopback_vertex_list( ctx, node );
 	 return;

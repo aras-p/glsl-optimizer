@@ -36,8 +36,8 @@ Display( void )
 
    /* draw to user framebuffer */
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
-   glDrawBuffer(GL_COLOR_ATTACHMENT1_EXT);
-   glReadBuffer(GL_COLOR_ATTACHMENT1_EXT);
+   glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+   glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
    status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
    if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
@@ -161,7 +161,7 @@ Init( void )
    assert(i == MyFB);
 
    CheckError(__LINE__);
-   glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT1_EXT,
+   glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
                                 GL_RENDERBUFFER_EXT, MyRB);
 
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, Width, Height);

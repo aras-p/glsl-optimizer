@@ -201,8 +201,10 @@ nv10_emit_light_model(GLcontext *ctx, int emit)
 	BEGIN_RING(chan, celsius, NV10TCL_LIGHT_MODEL, 1);
 	OUT_RING(chan, ((m->LocalViewer ?
 			 NV10TCL_LIGHT_MODEL_LOCAL_VIEWER : 0) |
-			(m->ColorControl == GL_SEPARATE_SPECULAR_COLOR ?
-			 NV10TCL_LIGHT_MODEL_SEPARATE_SPECULAR : 0)));
+			(NEED_SECONDARY_COLOR(ctx) ?
+			 NV10TCL_LIGHT_MODEL_SEPARATE_SPECULAR : 0) |
+			(!ctx->Light.Enabled && ctx->Fog.ColorSumEnabled ?
+			 NV10TCL_LIGHT_MODEL_VERTEX_SPECULAR : 0)));
 }
 
 static float

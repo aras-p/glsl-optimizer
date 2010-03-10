@@ -46,6 +46,28 @@ solaris*)
     ;;
 esac
 
+dnl If we're using GCC, make sure that it is at least version 3.3.0.  Older
+dnl versions are explictly not supported.
+if test "x$GCC" = xyes; then
+    AC_MSG_CHECKING([whether gcc version is sufficient])
+    major=0
+    minor=0
+
+    GCC_VERSION=`$CC -dumpversion`
+    if test $? -eq 0; then
+        major=`echo $GCC_VERSION | cut -d. -f1`
+        minor=`echo $GCC_VERSION | cut -d. -f1`
+    fi
+
+    if test $major -lt 3 -o $major -eq 3 -a $minor -lt 3 ; then
+        AC_MSG_RESULT([no])
+        AC_MSG_ERROR([If using GCC, version 3.3.0 or later is required.])
+    else
+        AC_MSG_RESULT([yes])
+    fi
+fi
+
+
 MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
 if test "x$GCC" = xyes; then
@@ -91,6 +113,9 @@ linux*|*-gnu*|gnu*)
     ;;
 solaris*)
     DEFINES="$DEFINES -DPTHREADS -DSVR4"
+    ;;
+cygwin*)
+    DEFINES="$DEFINES -DPTHREADS"
     ;;
 esac
 
@@ -392,7 +417,7 @@ fi
 
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
-dnl More later: directfb, fbdev, ...
+dnl More later: fbdev, ...
 dnl
 default_driver="xlib"
 
@@ -432,7 +457,6 @@ CORE_DIRS="glsl mesa"
 
 SRC_DIRS="glew"
 GLU_DIRS="sgi"
-WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_WINSYS_DIRS=""
 GALLIUM_WINSYS_DRM_DIRS=""
@@ -447,7 +471,6 @@ xlib)
 dri)
     SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
-    WINDOW_SYSTEM="dri"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"
     ;;
 osmesa)
@@ -457,7 +480,6 @@ esac
 AC_SUBST([SRC_DIRS])
 AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
-AC_SUBST([WINDOW_SYSTEM])
 AC_SUBST([GALLIUM_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
@@ -717,10 +739,9 @@ if test "$mesa_driver" = dri; then
 
         case "$host_cpu" in
         x86_64)
-            # ffb, gamma, and sis are missing because they have not be
-            # converted to use the new interface.  i810 are missing
-            # because there is no x86-64 system where they could *ever*
-            # be used.
+            # sis is missing because they have not be converted to use
+            # the new interface.  i810 are missing because there is no
+            # x86-64 system where they could *ever* be used.
             if test "x$DRI_DIRS" = "xyes"; then
                 DRI_DIRS="i915 i965 mach64 mga r128 r200 r300 r600 radeon \
                     savage tdfx unichrome swrast"
@@ -736,7 +757,7 @@ if test "$mesa_driver" = dri; then
         sparc*)
             # Build only the drivers for cards that exist on sparc`
             if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="mach64 r128 r200 r300 r600 radeon ffb swrast"
+                DRI_DIRS="mach64 r128 r200 r300 r600 radeon swrast"
             fi
             ;;
         esac
@@ -752,8 +773,6 @@ if test "$mesa_driver" = dri; then
             CXXFLAGS="$CXXFLAGS -ansi -pedantic"
         fi
 
-        # ffb and gamma are missing because they have not been converted
-        # to use the new interface.
         if test "x$DRI_DIRS" = "xyes"; then
             DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon tdfx \
                 unichrome savage sis swrast"
@@ -775,7 +794,7 @@ if test "$mesa_driver" = dri; then
     # default drivers
     if test "x$DRI_DIRS" = "xyes"; then
         DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon \
-            savage sis tdfx unichrome ffb swrast"
+            savage sis tdfx unichrome swrast"
     fi
 
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
@@ -804,7 +823,7 @@ AC_SUBST([DRI_LIB_DEPS])
 
 case $DRI_DIRS in
 *i915*|*i965*)
-    PKG_CHECK_MODULES([INTEL], [libdrm_intel])
+    PKG_CHECK_MODULES([INTEL], [libdrm_intel >= 2.4.19])
     ;;
 esac
 

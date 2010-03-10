@@ -66,8 +66,8 @@ struct vl_mpeg12_mc_renderer
    struct pipe_buffer *vs_const_buf;
    struct pipe_buffer *fs_const_buf;
    struct pipe_framebuffer_state fb_state;
-   struct pipe_vertex_element vertex_elems[8];
-	
+   void *vertex_elems[3];
+
    union
    {
       void *all[5];

@@ -18,7 +18,7 @@ On a Windows machine ensure the swig command is in your PATH.
 
 Invoke scons on the top dir as
  
-  scons debug=yes statetrackers=python drivers=softpipe,trace winsys=none
+  scons debug=yes statetrackers=python drivers=softpipe winsys=none
 
 To use it set PYTHONPATH appropriately, e.g, in Linux do:
 

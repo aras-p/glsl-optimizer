@@ -80,7 +80,7 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
    if (st_obj->buffer) 
       pipe_buffer_reference(&st_obj->buffer, NULL);
 
-   _mesa_free(st_obj);
+   free(st_obj);
 }
 
 
@@ -377,7 +377,7 @@ st_copy_buffer_subdata(GLcontext *ctx,
                                             PIPE_BUFFER_USAGE_CPU_WRITE);
 
    if (srcPtr && dstPtr)
-      _mesa_memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
+      memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
 
    pipe_buffer_unmap(pipe->screen, srcObj->buffer);
    pipe_buffer_unmap(pipe->screen, dstObj->buffer);

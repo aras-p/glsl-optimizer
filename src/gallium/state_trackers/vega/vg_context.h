@@ -146,6 +146,7 @@ struct vg_context
    struct vg_shader *clear_vs;
    struct vg_shader *texture_vs;
    struct pipe_buffer *vs_const_buffer;
+   struct pipe_vertex_element velems[2];
 };
 
 struct vg_object {

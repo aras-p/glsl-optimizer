@@ -664,6 +664,7 @@ processEventsAndTimeouts(void)
 	  case XK_KP_Delete: /* Introduced in X11R6. */
             /* The Delete character is really an ASCII key. */
             __glutSetWindow(window);
+            assert(keyboard);
             keyboard(127,  /* ASCII Delete character. */
               event.xkey.x, event.xkey.y);
             goto skip;
@@ -1311,6 +1312,7 @@ processWindowWorkList(GLUTwindow * window)
   }
   /* Combine workMask with window->workMask to determine what
      finish and debug work there is. */
+  assert(window);
   workMask |= window->workMask;
 
   if (workMask & GLUT_FINISH_WORK) {

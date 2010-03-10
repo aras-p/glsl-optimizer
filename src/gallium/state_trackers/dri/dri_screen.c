@@ -109,22 +109,22 @@ dri_fill_in_modes(struct dri_screen *screen,
    stencil_bits_array[0] = 0;
    depth_buffer_factor = 1;
 
-   pf_x8z24 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_X8Z24_UNORM,
+   pf_x8z24 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24X8_UNORM,
 					    PIPE_TEXTURE_2D,
 					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
-   pf_z24x8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24X8_UNORM,
+   pf_z24x8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_X8Z24_UNORM,
 					    PIPE_TEXTURE_2D,
 					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
-   pf_s8z24 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_S8Z24_UNORM,
+   pf_s8z24 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24S8_UNORM,
 					    PIPE_TEXTURE_2D,
 					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
-   pf_z24s8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z24S8_UNORM,
+   pf_z24s8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_S8Z24_UNORM,
 					    PIPE_TEXTURE_2D,
 					    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
-   pf_a8r8g8b8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_A8R8G8B8_UNORM,
+   pf_a8r8g8b8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_B8G8R8A8_UNORM,
 					       PIPE_TEXTURE_2D,
 					       PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
-   pf_x8r8g8b8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_X8R8G8B8_UNORM,
+   pf_x8r8g8b8 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_B8G8R8X8_UNORM,
 					       PIPE_TEXTURE_2D,
 					       PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
 
@@ -139,7 +139,7 @@ dri_fill_in_modes(struct dri_screen *screen,
       pf_z32 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z32_UNORM,
                                              PIPE_TEXTURE_2D,
                                              PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
-      pf_r5g6b5 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_R5G6B5_UNORM,
+      pf_r5g6b5 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_B5G6R5_UNORM,
                                                 PIPE_TEXTURE_2D,
                                                 PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
    } else {

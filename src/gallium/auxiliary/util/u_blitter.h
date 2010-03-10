@@ -43,11 +43,14 @@ struct blitter_context
    /* Private members, really. */
    void *saved_blend_state;   /**< blend state */
    void *saved_dsa_state;     /**< depth stencil alpha state */
+   void *saved_velem_state;   /**< vertex elements state */
    void *saved_rs_state;      /**< rasterizer state */
    void *saved_fs, *saved_vs; /**< fragment shader, vertex shader */
 
    struct pipe_framebuffer_state saved_fb_state;  /**< framebuffer state */
    struct pipe_stencil_ref saved_stencil_ref;     /**< stencil ref */
+   struct pipe_viewport_state saved_viewport;
+   struct pipe_clip_state saved_clip;
 
    int saved_num_sampler_states;
    void *saved_sampler_states[PIPE_MAX_SAMPLERS];
@@ -171,6 +174,13 @@ void util_blitter_save_depth_stencil_alpha(struct blitter_context *blitter,
 }
 
 static INLINE
+void util_blitter_save_vertex_elements(struct blitter_context *blitter,
+                                       void *state)
+{
+   blitter->saved_velem_state = state;
+}
+
+static INLINE
 void util_blitter_save_stencil_ref(struct blitter_context *blitter,
                                    const struct pipe_stencil_ref *state)
 {
@@ -203,6 +213,20 @@ void util_blitter_save_framebuffer(struct blitter_context *blitter,
                                    struct pipe_framebuffer_state *state)
 {
    blitter->saved_fb_state = *state;
+}
+
+static INLINE
+void util_blitter_save_viewport(struct blitter_context *blitter,
+                                struct pipe_viewport_state *state)
+{
+   blitter->saved_viewport = *state;
+}
+
+static INLINE
+void util_blitter_save_clip(struct blitter_context *blitter,
+                            struct pipe_clip_state *state)
+{
+   blitter->saved_clip = *state;
 }
 
 static INLINE

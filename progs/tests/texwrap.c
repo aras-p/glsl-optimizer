@@ -31,6 +31,7 @@
 
 #define BORDER_TEXTURE 1
 #define NO_BORDER_TEXTURE 2
+#define COLOR_TEX_CORNERS 0
 
 #define SIZE 8
 static GLubyte BorderImage[SIZE+2][SIZE+2][4];
@@ -281,6 +282,37 @@ static void Init( void )
 
    for (i = 0; i < SIZE; i++) {
       for (j = 0; j < SIZE; j++) {
+#if COLOR_TEX_CORNERS
+         if (i == 0 && j == 0) {
+            /* lower-left texel = RED */
+            NoBorderImage[i][j][0] = 255;
+            NoBorderImage[i][j][1] = 0;
+            NoBorderImage[i][j][2] = 0;
+            NoBorderImage[i][j][3] = 255;
+         }
+         else  if (i == 0 && j == SIZE-1) {
+            /* lower-right corner = GREEN */
+            NoBorderImage[i][j][0] = 0;
+            NoBorderImage[i][j][1] = 255;
+            NoBorderImage[i][j][2] = 0;
+            NoBorderImage[i][j][3] = 255;
+         }
+         else  if (i == SIZE-1 && j == 0) {
+            /* upper-left corner = BLUE */
+            NoBorderImage[i][j][0] = 0;
+            NoBorderImage[i][j][1] = 0;
+            NoBorderImage[i][j][2] = 255;
+            NoBorderImage[i][j][3] = 255;
+         }
+         else  if (i == SIZE-1 && j == SIZE-1) {
+            /* upper-right corner = YELLOW */
+            NoBorderImage[i][j][0] = 255;
+            NoBorderImage[i][j][1] = 255;
+            NoBorderImage[i][j][2] = 0;
+            NoBorderImage[i][j][3] = 255;
+         }
+         else
+#endif
          if ((i + j) & 1) {
             /* white */
             NoBorderImage[i][j][0] = 255;

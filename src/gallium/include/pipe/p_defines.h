@@ -176,11 +176,12 @@ enum pipe_texture_target {
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
 
 #define PIPE_TEXTURE_USAGE_RENDER_TARGET   0x1
-#define PIPE_TEXTURE_USAGE_DISPLAY_TARGET  0x2 /* ie a backbuffer */
-#define PIPE_TEXTURE_USAGE_PRIMARY         0x4 /* ie a frontbuffer */
+#define PIPE_TEXTURE_USAGE_DISPLAY_TARGET  0x2  /* windows presentable buffer, ie a backbuffer */
+#define PIPE_TEXTURE_USAGE_SCANOUT         0x4  /* ie a frontbuffer */
 #define PIPE_TEXTURE_USAGE_DEPTH_STENCIL   0x8
 #define PIPE_TEXTURE_USAGE_SAMPLER         0x10
 #define PIPE_TEXTURE_USAGE_DYNAMIC         0x20
+#define PIPE_TEXTURE_USAGE_SHARED          0x40
 /** Pipe driver custom usage flags should be greater or equal to this value */
 #define PIPE_TEXTURE_USAGE_CUSTOM          (1 << 16)
 

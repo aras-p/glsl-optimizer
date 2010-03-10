@@ -356,20 +356,7 @@ fetch_vector1ui(const struct prog_src_register *source,
                 const struct gl_program_machine *machine)
 {
    const GLuint *src = (GLuint *) get_src_register_pointer(source, machine);
-   GLuint result;
-
-   ASSERT(src);
-
-   result = src[GET_SWZ(source->Swizzle, 0)];
-
-   if (source->Abs) {
-      result = FABSF(result);
-   }
-   if (source->Negate) {
-      result = -result;
-   }
-
-   return result;
+   return src[GET_SWZ(source->Swizzle, 0)];
 }
 
 
@@ -1780,10 +1767,15 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_PRINT:
          {
-            GLfloat a[4];
-            fetch_vector4(&inst->SrcReg[0], machine, a);
-            _mesa_printf("%s%g, %g, %g, %g\n", (const char *) inst->Data,
-                         a[0], a[1], a[2], a[3]);
+            if (inst->SrcReg[0].File != -1) {
+               GLfloat a[4];
+               fetch_vector4(&inst->SrcReg[0], machine, a);
+               printf("%s%g, %g, %g, %g\n", (const char *) inst->Data,
+                            a[0], a[1], a[2], a[3]);
+            }
+            else {
+               printf("%s\n", (const char *) inst->Data);
+            }
          }
          break;
       case OPCODE_END:

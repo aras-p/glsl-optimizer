@@ -58,6 +58,7 @@
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_stencil_two_side
 #define need_GL_APPLE_vertex_array_object
+#define need_GL_APPLE_object_purgeable
 #define need_GL_ATI_separate_stencil
 #define need_GL_ATI_envmap_bumpmap
 #define need_GL_NV_point_sprite
@@ -121,6 +122,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_EXT_texture_lod_bias",           NULL },
    { "GL_3DFX_texture_compression_FXT1",  NULL },
    { "GL_APPLE_client_storage",           NULL },
+   { "GL_APPLE_object_purgeable",         GL_APPLE_object_purgeable_functions },
    { "GL_APPLE_vertex_array_object",      GL_APPLE_vertex_array_object_functions},
    { "GL_MESA_pack_invert",               NULL },
    { "GL_MESA_ycbcr_texture",             NULL },
@@ -151,6 +153,7 @@ static const struct dri_extension i915_extensions[] = {
 static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_depth_clamp",                NULL },
    { "GL_ARB_depth_texture",              NULL },
+   { "GL_ARB_fragment_coord_conventions", NULL },
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_fragment_program_shadow",    NULL },
    { "GL_ARB_fragment_shader",            NULL },
@@ -180,6 +183,7 @@ static const struct dri_extension arb_oq_extensions[] = {
    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { NULL, NULL }
 };
+
 
 static const struct dri_extension fragment_shader_extensions[] = {
    { "GL_ARB_fragment_shader",            NULL },

@@ -423,10 +423,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\dispatch.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\main\dlist.c"
 				>
 			</File>
@@ -492,6 +488,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glapi.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\glapi\glapi_dispatch.c"
 				>
 			</File>
 			<File

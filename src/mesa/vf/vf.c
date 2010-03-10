@@ -86,7 +86,7 @@ void vf_register_fastpath( struct vertex_fetch *vf,
    fastpath->match_strides = match_strides;
    fastpath->func = vf->emit;
    fastpath->attr = (struct vf_attr_type *)
-      _mesa_malloc(vf->attr_count * sizeof(fastpath->attr[0]));
+      malloc(vf->attr_count * sizeof(fastpath->attr[0]));
 
    for (i = 0; i < vf->attr_count; i++) {
       fastpath->attr[i].format = vf->attr[i].format;
@@ -162,8 +162,8 @@ GLuint vf_set_vertex_attributes( struct vertex_fetch *vf,
       const GLuint format = map[i].format;
       if (format == EMIT_PAD) {
 	 if (DBG)
-	    _mesa_printf("%d: pad %d, offset %d\n", i,  
-			 map[i].offset, offset);  
+	    printf("%d: pad %d, offset %d\n", i,  
+		   map[i].offset, offset);  
 
 	 offset += map[i].offset;
 
@@ -180,9 +180,9 @@ GLuint vf_set_vertex_attributes( struct vertex_fetch *vf,
 	 vf->attr[j].vertoffset = offset;
 	 
 	 if (DBG)
-	    _mesa_printf("%d: %s, offset %d\n", i,  
-			 vf_format_info[format].name,
-			 vf->attr[j].vertoffset);   
+	    printf("%d: %s, offset %d\n", i,  
+		   vf_format_info[format].name,
+		   vf->attr[j].vertoffset);   
 
 	 offset += vf_format_info[format].attrsize;
 	 j++;
@@ -296,7 +296,7 @@ void vf_get_attr( struct vertex_fetch *vf,
 
    /* Else return the value from ctx->Current.
     */
-   _mesa_memcpy( dest, dflt, 4*sizeof(GLfloat));
+   memcpy( dest, dflt, 4*sizeof(GLfloat));
 }
 
 

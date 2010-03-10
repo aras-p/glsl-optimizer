@@ -216,8 +216,8 @@ nv04_surface_copy_swizzle(GLcontext *ctx,
 
         /* If area is too large to copy in one shot we must copy it in
 	 * POT chunks to meet alignment requirements */
-	assert(sub_w == w || _mesa_is_pow_two(sub_w));
-	assert(sub_h == h || _mesa_is_pow_two(sub_h));
+	assert(sub_w == w || _mesa_is_pow_two(w));
+	assert(sub_h == h || _mesa_is_pow_two(h));
 
 	nouveau_bo_marko(bctx, sifm, NV03_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE,
 			 src->bo, bo_flags | NOUVEAU_BO_RD);
@@ -239,8 +239,6 @@ nv04_surface_copy_swizzle(GLcontext *ctx,
 
 		for (x = 0; x < w; x += sub_w) {
 			sub_w = MIN2(sub_w, w - x);
-			/* Must be 64-byte aligned */
-			assert(!(dst->offset & 63));
 
 			MARK_RING(chan, 15, 1);
 
@@ -277,10 +275,10 @@ nv04_surface_copy_swizzle(GLcontext *ctx,
 
 static void
 nv04_surface_copy_m2mf(GLcontext *ctx,
-			  struct nouveau_surface *dst,
-			  struct nouveau_surface *src,
-			  int dx, int dy, int sx, int sy,
-			  int w, int h)
+		       struct nouveau_surface *dst,
+		       struct nouveau_surface *src,
+		       int dx, int dy, int sx, int sy,
+		       int w, int h)
 {
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_hw_state *hw = &to_nouveau_context(ctx)->hw;
@@ -323,6 +321,82 @@ nv04_surface_copy_m2mf(GLcontext *ctx,
 		FIRE_RING(chan);
 }
 
+typedef unsigned (*get_offset_t)(struct nouveau_surface *s,
+				 unsigned x, unsigned y);
+
+static unsigned
+get_linear_offset(struct nouveau_surface *s, unsigned x, unsigned y)
+{
+	return x * s->cpp + y * s->pitch;
+}
+
+static unsigned
+get_swizzled_offset(struct nouveau_surface *s, unsigned x, unsigned y)
+{
+	unsigned k = log2i(MIN2(s->width, s->height));
+
+	unsigned u = (x & 0x001) << 0 |
+		(x & 0x002) << 1 |
+		(x & 0x004) << 2 |
+		(x & 0x008) << 3 |
+		(x & 0x010) << 4 |
+		(x & 0x020) << 5 |
+		(x & 0x040) << 6 |
+		(x & 0x080) << 7 |
+		(x & 0x100) << 8 |
+		(x & 0x200) << 9 |
+		(x & 0x400) << 10 |
+		(x & 0x800) << 11;
+
+	unsigned v = (y & 0x001) << 1 |
+		(y & 0x002) << 2 |
+		(y & 0x004) << 3 |
+		(y & 0x008) << 4 |
+		(y & 0x010) << 5 |
+		(y & 0x020) << 6 |
+		(y & 0x040) << 7 |
+		(y & 0x080) << 8 |
+		(y & 0x100) << 9 |
+		(y & 0x200) << 10 |
+		(y & 0x400) << 11 |
+		(y & 0x800) << 12;
+
+	return s->cpp * (((u | v) & ~(~0 << 2*k)) |
+			 (x & (~0 << k)) << k |
+			 (y & (~0 << k)) << k);
+}
+
+static void
+nv04_surface_copy_cpu(GLcontext *ctx,
+		      struct nouveau_surface *dst,
+		      struct nouveau_surface *src,
+		      int dx, int dy, int sx, int sy,
+		      int w, int h)
+{
+	int x, y;
+	get_offset_t get_dst = (dst->layout == SWIZZLED ?
+				get_swizzled_offset : get_linear_offset);
+	get_offset_t get_src = (src->layout == SWIZZLED ?
+				get_swizzled_offset : get_linear_offset);
+	void *dp, *sp;
+
+	nouveau_bo_map(dst->bo, NOUVEAU_BO_WR);
+	nouveau_bo_map(src->bo, NOUVEAU_BO_RD);
+
+	dp = dst->bo->map + dst->offset;
+	sp = src->bo->map + src->offset;
+
+	for (y = 0; y < h; y++) {
+		for (x = 0; x < w; x++) {
+			memcpy(dp + get_dst(dst, dx + x, dy + y),
+			       sp + get_src(src, sx + x, sy + y), dst->cpp);
+		}
+	}
+
+	nouveau_bo_unmap(src->bo);
+	nouveau_bo_unmap(dst->bo);
+}
+
 void
 nv04_surface_copy(GLcontext *ctx,
 		  struct nouveau_surface *dst,
@@ -330,16 +404,22 @@ nv04_surface_copy(GLcontext *ctx,
 		  int dx, int dy, int sx, int sy,
 		  int w, int h)
 {
-	/* Setup transfer to swizzle the texture to vram if needed */
-        if (src->layout != SWIZZLED &&
-	    dst->layout == SWIZZLED &&
-	    dst->width > 2 && dst->height > 1) {
-		nv04_surface_copy_swizzle(ctx, dst, src,
-					  dx, dy, sx, sy, w, h);
+	/* Linear texture copy. */
+	if ((src->layout == LINEAR && dst->layout == LINEAR) ||
+	    dst->width <= 2 || dst->height <= 1) {
+		nv04_surface_copy_m2mf(ctx, dst, src, dx, dy, sx, sy, w, h);
 		return;
 	}
 
-	nv04_surface_copy_m2mf(ctx, dst, src, dx, dy, sx, sy, w, h);
+	/* Swizzle using sifm+swzsurf. */
+        if (src->layout == LINEAR && dst->layout == SWIZZLED &&
+	    dst->cpp != 1 && !(dst->offset & 63)) {
+		nv04_surface_copy_swizzle(ctx, dst, src, dx, dy, sx, sy, w, h);
+		return;
+	}
+
+	/* Fallback to CPU copy. */
+	nv04_surface_copy_cpu(ctx, dst, src, dx, dy, sx, sy, w, h);
 }
 
 void
@@ -369,7 +449,7 @@ nv04_surface_fill(GLcontext *ctx,
 	BEGIN_RING(chan, patt, NV04_IMAGE_PATTERN_COLOR_FORMAT, 1);
 	OUT_RING  (chan, rect_format(dst->format));
 	BEGIN_RING(chan, patt, NV04_IMAGE_PATTERN_MONOCHROME_COLOR1, 1);
-	OUT_RING  (chan, mask | ~0 << (8 * dst->cpp));
+	OUT_RING  (chan, mask | ~0ll << (8 * dst->cpp));
 
 	BEGIN_RING(chan, rect, NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT, 1);
 	OUT_RING  (chan, rect_format(dst->format));
@@ -484,34 +564,20 @@ nv04_surface_init(GLcontext *ctx)
 	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT_LE);
 
 	/* Swizzled surface. */
-	switch (context_chipset(ctx) & 0xf0) {
-	case 0x00:
-	case 0x10:
+	if (context_chipset(ctx) < 0x20)
 		class = NV04_SWIZZLED_SURFACE;
-		break;
-	case 0x20:
+	else
 		class = NV20_SWIZZLED_SURFACE;
-		break;
-	default:
-		/* Famous last words: this really can't happen.. */
-		assert(0);
-		break;
-	}
 
 	ret = nouveau_grobj_alloc(chan, handle++, class, &hw->swzsurf);
 	if (ret)
 		goto fail;
 
 	/* Scaled image from memory. */
-	switch (context_chipset(ctx) & 0xf0) {
-	case 0x00:
+	if  (context_chipset(ctx) < 0x10)
 		class = NV04_SCALED_IMAGE_FROM_MEMORY;
-		break;
-	case 0x10:
-	case 0x20:
+	else
 		class = NV10_SCALED_IMAGE_FROM_MEMORY;
-		break;
-	}
 
 	ret = nouveau_grobj_alloc(chan, handle++, class, &hw->sifm);
 	if (ret)

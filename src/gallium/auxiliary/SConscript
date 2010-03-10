@@ -7,6 +7,8 @@ env.Append(CPPPATH = [
     'util',
 ])
 
+env.Tool('udis86')
+
 env.CodeGenerate(
     target = 'indices/u_indices_gen.c', 
     script = 'indices/u_indices_gen.py', 
@@ -24,6 +26,13 @@ env.CodeGenerate(
 env.CodeGenerate(
     target = 'util/u_format_table.c',
     script = 'util/u_format_table.py',
+    source = ['util/u_format.csv'],
+    command = 'python $SCRIPT $SOURCE > $TARGET'
+)
+
+env.CodeGenerate(
+    target = File('util/u_format_pack.h').srcnode(),
+    script = 'util/u_format_pack.py',
     source = ['util/u_format.csv'],
     command = 'python $SCRIPT $SOURCE > $TARGET'
 )
@@ -140,9 +149,9 @@ source = [
     'util/u_dump_state.c',
     'util/u_dl.c',
     'util/u_draw_quad.c',
-    'util/u_format.c',
     'util/u_format_access.c',
     'util/u_format_table.c',
+    'util/u_format_tests.c',
     'util/u_gen_mipmap.c',
     'util/u_handle_table.c',
     'util/u_hash.c',
@@ -168,6 +177,7 @@ source = [
     #'vl/vl_compositor.c',
     #'vl/vl_csc.c',
     #'vl/vl_shader_build.c',
+    'target-helpers/wrap_screen.c',
 ]
 
 if drawllvm:
@@ -188,7 +198,7 @@ if drawllvm:
     'gallivm/lp_bld_interp.c',
     'gallivm/lp_bld_intr.c',
     'gallivm/lp_bld_logic.c',
-    'gallivm/lp_bld_misc.cpp',
+    'gallivm/lp_bld_init.cpp',
     'gallivm/lp_bld_pack.c',
     'gallivm/lp_bld_sample.c',
     'gallivm/lp_bld_sample_soa.c',

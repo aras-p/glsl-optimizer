@@ -44,6 +44,14 @@ struct nouveau_texture {
 	to_nouveau_texture(t)->dirty = GL_TRUE;
 
 void
+nouveau_set_texbuffer(__DRIcontext *dri_ctx,
+		      GLint target, GLint format,
+		      __DRIdrawable *draw);
+
+GLboolean
 nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t);
+
+void
+nouveau_texture_reallocate(GLcontext *ctx, struct gl_texture_object *t);
 
 #endif

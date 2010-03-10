@@ -90,7 +90,10 @@ pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
 static INLINE void
 pipe_buffer_reference(struct pipe_buffer **ptr, struct pipe_buffer *buf)
 {
-   struct pipe_buffer *old_buf = *ptr;
+   struct pipe_buffer *old_buf;
+
+   assert(ptr);
+   old_buf = *ptr;
 
    if (pipe_reference(&(*ptr)->reference, &buf->reference))
       old_buf->screen->buffer_destroy(old_buf);

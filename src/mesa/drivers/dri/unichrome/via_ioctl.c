@@ -757,6 +757,8 @@ static void via_emit_cliprect(struct via_context *vmesa,
    vb[0] = HC_HEADER2;
    vb[1] = (HC_ParaType_NotTex << 16);
 
+   assert(vmesa->driDrawable);
+
    if (vmesa->driDrawable->w == 0 || vmesa->driDrawable->h == 0) {
       vb[2] = (HC_SubA_HClipTB << 24) | 0x0;
       vb[3] = (HC_SubA_HClipLR << 24) | 0x0;

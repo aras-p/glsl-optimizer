@@ -543,7 +543,7 @@ class Context(Object):
                     gallium.PIPE_FORMAT_R32G32_FLOAT: '2f',
                     gallium.PIPE_FORMAT_R32G32B32_FLOAT: '3f',
                     gallium.PIPE_FORMAT_R32G32B32A32_FLOAT: '4f',
-                    gallium.PIPE_FORMAT_B8G8R8A8_UNORM: '4B',
+                    gallium.PIPE_FORMAT_A8R8G8B8_UNORM: '4B',
                     gallium.PIPE_FORMAT_R8G8B8A8_UNORM: '4B',
                     gallium.PIPE_FORMAT_R16G16B16_SNORM: '3h',
                 }[velem.src_format]
@@ -551,7 +551,6 @@ class Context(Object):
                 data = vbuf.buffer.read()
                 values = unpack_from(format, data, offset)
                 sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
-                assert len(values) == velem.nr_components
             sys.stdout.write('\t},\n')
         sys.stdout.flush()
 
@@ -572,7 +571,7 @@ class Context(Object):
 
         sys.stdout.write('\t{\n')
         for i in range(start, start + count):
-            if i >= start + 16:
+            if i >= start + 16 and not self.interpreter.verbosity(3):
                 sys.stdout.write('\t...\n')
                 break
             offset = i*isize

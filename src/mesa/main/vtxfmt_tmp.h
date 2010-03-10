@@ -29,7 +29,7 @@
 #define PRE_LOOPBACK( FUNC )
 #endif
 
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 static void GLAPIENTRY TAG(ArrayElement)( GLint i )
 {

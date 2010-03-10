@@ -63,24 +63,17 @@ _swrast_update_rasterflags( GLcontext *ctx )
    if (swrast->_FogEnabled)               rasterMask |= FOG_BIT;
    if (ctx->Scissor.Enabled)              rasterMask |= CLIP_BIT;
    if (ctx->Stencil._Enabled)             rasterMask |= STENCIL_BIT;
-   if (ctx->Visual.rgbMode) {
-      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-         if (!ctx->Color.ColorMask[i][0] ||
-             !ctx->Color.ColorMask[i][1] ||
-             !ctx->Color.ColorMask[i][2] ||
-             !ctx->Color.ColorMask[i][3]) {
-            rasterMask |= MASKING_BIT;
-            break;
-         }
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+      if (!ctx->Color.ColorMask[i][0] ||
+          !ctx->Color.ColorMask[i][1] ||
+          !ctx->Color.ColorMask[i][2] ||
+          !ctx->Color.ColorMask[i][3]) {
+         rasterMask |= MASKING_BIT;
+         break;
       }
-      if (ctx->Color._LogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
-      if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
    }
-   else {
-      if (ctx->Color.IndexMask != 0xffffffff) rasterMask |= MASKING_BIT;
-      if (ctx->Color.IndexLogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
-   }
-
+   if (ctx->Color._LogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
+   if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
    if (   ctx->Viewport.X < 0
        || ctx->Viewport.X + ctx->Viewport.Width > (GLint) ctx->DrawBuffer->Width
        || ctx->Viewport.Y < 0
@@ -100,19 +93,14 @@ _swrast_update_rasterflags( GLcontext *ctx )
       /* more than one color buffer designated for writing (or zero buffers) */
       rasterMask |= MULTI_DRAW_BIT;
    }
-   else if (!ctx->Visual.rgbMode && ctx->Color.IndexMask==0) {
-      rasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
-   }
 
-   if (ctx->Visual.rgbMode) {
-      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-         if (ctx->Color.ColorMask[i][0] +
-             ctx->Color.ColorMask[i][1] +
-             ctx->Color.ColorMask[i][2] +
-             ctx->Color.ColorMask[i][3] == 0) {
-            rasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
-            break;
-         }
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+      if (ctx->Color.ColorMask[i][0] +
+          ctx->Color.ColorMask[i][1] +
+          ctx->Color.ColorMask[i][2] +
+          ctx->Color.ColorMask[i][3] == 0) {
+         rasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
+         break;
       }
    }
 
@@ -892,12 +880,7 @@ _swrast_flush( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    /* flush any pending fragments from rendering points */
    if (swrast->PointSpan.end > 0) {
-      if (ctx->Visual.rgbMode) {
-         _swrast_write_rgba_span(ctx, &(swrast->PointSpan));
-      }
-      else {
-         _swrast_write_index_span(ctx, &(swrast->PointSpan));
-      }
+      _swrast_write_rgba_span(ctx, &(swrast->PointSpan));
       swrast->PointSpan.end = 0;
    }
 }

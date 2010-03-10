@@ -57,6 +57,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "cso_cache/cso_context.h"
 
 
 static GLuint double_types[4] = {
@@ -183,7 +184,7 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
       /* this is an odd-ball case */
       assert(type == GL_UNSIGNED_BYTE);
       assert(normalized);
-      return PIPE_FORMAT_B8G8R8A8_UNORM;
+      return PIPE_FORMAT_A8R8G8B8_UNORM;
    }
 
    if (normalized) {
@@ -368,7 +369,6 @@ setup_interleaved_attribs(GLcontext *ctx,
          (unsigned) (arrays[mesaAttr]->Ptr - offset0);
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = 0;
-      velements[attr].nr_components = arrays[mesaAttr]->Size;
       velements[attr].src_format =
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                arrays[mesaAttr]->Size,
@@ -458,7 +458,6 @@ setup_non_interleaved_attribs(GLcontext *ctx,
       vbuffer[attr].max_index = max_index;
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = attr;
-      velements[attr].nr_components = arrays[mesaAttr]->Size;
       velements[attr].src_format
          = st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                  arrays[mesaAttr]->Size,
@@ -564,6 +563,7 @@ st_draw_vbo(GLcontext *ctx,
    (void) check_uniforms;
 #endif
 
+   memset(velements, 0, sizeof(struct pipe_vertex_element) * vpv->num_inputs);
    /*
     * Setup the vbuffer[] and velements[] arrays.
     */
@@ -596,14 +596,13 @@ st_draw_vbo(GLcontext *ctx,
       for (i = 0; i < num_velements; i++) {
          printf("vlements[%d].vbuffer_index = %u\n", i, velements[i].vertex_buffer_index);
          printf("vlements[%d].src_offset = %u\n", i, velements[i].src_offset);
-         printf("vlements[%d].nr_comps = %u\n", i, velements[i].nr_components);
          printf("vlements[%d].format = %s\n", i, util_format_name(velements[i].src_format));
       }
    }
 #endif
 
    pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
-   pipe->set_vertex_elements(pipe, num_velements, velements);
+   cso_set_vertex_elements(ctx->st->cso_context, num_velements, velements);
 
    if (num_vbuffers == 0 || num_velements == 0)
       return;

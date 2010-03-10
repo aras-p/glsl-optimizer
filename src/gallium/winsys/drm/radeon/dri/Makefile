@@ -4,8 +4,6 @@ include $(TOP)/configs/current
 
 LIBNAME = radeong_dri.so
 
-MINIGLX_SOURCES =
-
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \
 	$(TOP)/src/gallium/winsys/drm/radeon/core/libradeonwinsys.a \

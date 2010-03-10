@@ -31,10 +31,12 @@
 #include "main/macros.h"
 #include "main/bufferobj.h"
 
-#include "intel_context.h"
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "intel_batchbuffer.h"
+#include "intel_context.h"
+#include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 
 static GLboolean
@@ -113,7 +115,7 @@ intel_bufferobj_free(GLcontext * ctx, struct gl_buffer_object *obj)
    if (obj->Pointer)
       intel_bufferobj_unmap(ctx, 0, obj);
 
-   _mesa_free(intel_obj->sys_buffer);
+   free(intel_obj->sys_buffer);
    if (intel_obj->region) {
       intel_bufferobj_release_region(intel, intel_obj);
    }
@@ -121,7 +123,7 @@ intel_bufferobj_free(GLcontext * ctx, struct gl_buffer_object *obj)
       dri_bo_unreference(intel_obj->buffer);
    }
 
-   _mesa_free(intel_obj);
+   free(intel_obj);
 }
 
 
@@ -155,7 +157,7 @@ intel_bufferobj_data(GLcontext * ctx,
       dri_bo_unreference(intel_obj->buffer);
       intel_obj->buffer = NULL;
    }
-   _mesa_free(intel_obj->sys_buffer);
+   free(intel_obj->sys_buffer);
    intel_obj->sys_buffer = NULL;
 
    if (size != 0) {
@@ -164,7 +166,7 @@ intel_bufferobj_data(GLcontext * ctx,
        * with their contents anyway.
        */
       if (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER) {
-	 intel_obj->sys_buffer = _mesa_malloc(size);
+	 intel_obj->sys_buffer = malloc(size);
 	 if (intel_obj->sys_buffer != NULL) {
 	    if (data != NULL)
 	       memcpy(intel_obj->sys_buffer, data, size);
@@ -285,7 +287,7 @@ intel_bufferobj_map(GLcontext * ctx,
       return NULL;
    }
 
-   if (write_only && intel->intelScreen->kernel_exec_fencing) {
+   if (write_only) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
       intel_obj->mapped_gtt = GL_TRUE;
    } else {
@@ -373,14 +375,13 @@ intel_bufferobj_map_range(GLcontext * ctx,
    if ((access & GL_MAP_INVALIDATE_RANGE_BIT) &&
        drm_intel_bo_busy(intel_obj->buffer)) {
       if (access & GL_MAP_FLUSH_EXPLICIT_BIT) {
-	 intel_obj->range_map_buffer = _mesa_malloc(length);
+	 intel_obj->range_map_buffer = malloc(length);
 	 obj->Pointer = intel_obj->range_map_buffer;
       } else {
 	 intel_obj->range_map_bo = drm_intel_bo_alloc(intel->bufmgr,
 						      "range map",
 						      length, 64);
-	 if (!(access & GL_MAP_READ_BIT) &&
-	     intel->intelScreen->kernel_exec_fencing) {
+	 if (!(access & GL_MAP_READ_BIT)) {
 	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
 	    intel_obj->mapped_gtt = GL_TRUE;
 	 } else {
@@ -393,8 +394,7 @@ intel_bufferobj_map_range(GLcontext * ctx,
       return obj->Pointer;
    }
 
-   if (!(access & GL_MAP_READ_BIT) &&
-       intel->intelScreen->kernel_exec_fencing) {
+   if (!(access & GL_MAP_READ_BIT)) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
       intel_obj->mapped_gtt = GL_TRUE;
    } else {
@@ -523,7 +523,7 @@ intel_bufferobj_buffer(struct intel_context *intel,
 			      intel_obj->Base.Size,
 			      sys_buffer,
 			      &intel_obj->Base);
-      _mesa_free(sys_buffer);
+      free(sys_buffer);
       intel_obj->sys_buffer = NULL;
    }
 
@@ -588,6 +588,126 @@ intel_bufferobj_copy_subdata(GLcontext *ctx,
    intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
+#if FEATURE_APPLE_object_purgeable
+static GLenum
+intel_buffer_purgeable(GLcontext * ctx,
+                       drm_intel_bo *buffer,
+                       GLenum option)
+{
+   int retained = 0;
+
+   if (buffer != NULL)
+      retained = drm_intel_bo_madvise (buffer, I915_MADV_DONTNEED);
+
+   return retained ? GL_VOLATILE_APPLE : GL_RELEASED_APPLE;
+}
+
+static GLenum
+intel_buffer_object_purgeable(GLcontext * ctx,
+                              struct gl_buffer_object *obj,
+                              GLenum option)
+{
+   struct intel_buffer_object *intel;
+
+   intel = intel_buffer_object (obj);
+   if (intel->buffer != NULL)
+      return intel_buffer_purgeable (ctx, intel->buffer, option);
+
+   if (option == GL_RELEASED_APPLE) {
+      if (intel->sys_buffer != NULL) {
+         free(intel->sys_buffer);
+         intel->sys_buffer = NULL;
+      }
+
+      return GL_RELEASED_APPLE;
+   } else {
+      /* XXX Create the buffer and madvise(MADV_DONTNEED)? */
+      return intel_buffer_purgeable (ctx,
+                                     intel_bufferobj_buffer(intel_context(ctx),
+                                                            intel, INTEL_READ),
+                                     option);
+   }
+}
+
+static GLenum
+intel_texture_object_purgeable(GLcontext * ctx,
+                               struct gl_texture_object *obj,
+                               GLenum option)
+{
+   struct intel_texture_object *intel;
+
+   intel = intel_texture_object(obj);
+   if (intel->mt == NULL || intel->mt->region == NULL)
+      return GL_RELEASED_APPLE;
+
+   return intel_buffer_purgeable (ctx, intel->mt->region->buffer, option);
+}
+
+static GLenum
+intel_render_object_purgeable(GLcontext * ctx,
+                              struct gl_renderbuffer *obj,
+                              GLenum option)
+{
+   struct intel_renderbuffer *intel;
+
+   intel = intel_renderbuffer(obj);
+   if (intel->region == NULL)
+      return GL_RELEASED_APPLE;
+
+   return intel_buffer_purgeable (ctx, intel->region->buffer, option);
+}
+
+static GLenum
+intel_buffer_unpurgeable(GLcontext * ctx,
+                         drm_intel_bo *buffer,
+                         GLenum option)
+{
+   int retained;
+
+   retained = 0;
+   if (buffer != NULL)
+      retained = drm_intel_bo_madvise (buffer, I915_MADV_WILLNEED);
+
+   return retained ? GL_RETAINED_APPLE : GL_UNDEFINED_APPLE;
+}
+
+static GLenum
+intel_buffer_object_unpurgeable(GLcontext * ctx,
+                                struct gl_buffer_object *obj,
+                                GLenum option)
+{
+   return intel_buffer_unpurgeable (ctx, intel_buffer_object (obj)->buffer, option);
+}
+
+static GLenum
+intel_texture_object_unpurgeable(GLcontext * ctx,
+                                 struct gl_texture_object *obj,
+                                 GLenum option)
+{
+   struct intel_texture_object *intel;
+
+   intel = intel_texture_object(obj);
+   if (intel->mt == NULL || intel->mt->region == NULL)
+      return GL_UNDEFINED_APPLE;
+
+   return intel_buffer_unpurgeable (ctx, intel->mt->region->buffer, option);
+}
+
+static GLenum
+intel_render_object_unpurgeable(GLcontext * ctx,
+                                struct gl_renderbuffer *obj,
+                                GLenum option)
+{
+   struct intel_renderbuffer *intel;
+
+   intel = intel_renderbuffer(obj);
+   if (intel->region == NULL)
+      return GL_UNDEFINED_APPLE;
+
+   return intel_buffer_unpurgeable (ctx, intel->region->buffer, option);
+}
+#endif
+
 void
 intelInitBufferObjectFuncs(struct dd_function_table *functions)
 {
@@ -601,4 +721,14 @@ intelInitBufferObjectFuncs(struct dd_function_table *functions)
    functions->FlushMappedBufferRange = intel_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = intel_bufferobj_unmap;
    functions->CopyBufferSubData = intel_bufferobj_copy_subdata;
+
+#if FEATURE_APPLE_object_purgeable
+   functions->BufferObjectPurgeable = intel_buffer_object_purgeable;
+   functions->TextureObjectPurgeable = intel_texture_object_purgeable;
+   functions->RenderObjectPurgeable = intel_render_object_purgeable;
+
+   functions->BufferObjectUnpurgeable = intel_buffer_object_unpurgeable;
+   functions->TextureObjectUnpurgeable = intel_texture_object_unpurgeable;
+   functions->RenderObjectUnpurgeable = intel_render_object_unpurgeable;
+#endif
 }

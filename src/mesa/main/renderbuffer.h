@@ -53,12 +53,6 @@ _mesa_add_color_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
                               GLboolean frontRight, GLboolean backRight);
 
 extern GLboolean
-_mesa_add_color_index_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
-                                    GLuint indexBits,
-                                    GLboolean frontLeft, GLboolean backLeft,
-                                    GLboolean frontRight, GLboolean backRight);
-
-extern GLboolean
 _mesa_add_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
                               GLuint alphaBits,
                               GLboolean frontLeft, GLboolean backLeft,

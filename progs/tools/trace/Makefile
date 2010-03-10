@@ -20,7 +20,7 @@ $(TRACER): $(OBJECTS)
 		-ldflags '$(LDFLAGS)' $(MKLIB_OPTIONS) $(OBJECTS)
 
 gltrace.cc: gltrace.py
-	PYTHONPATH=$(TOP)/src/mesa/glapi python gltrace.py -f $(TOP)/src/mesa/glapi/gl_API.xml  > gltrace.cc
+	PYTHONPATH=$(TOP)/src/mesa/glapi/gen python gltrace.py -f $(TOP)/src/mesa/glapi/gen/gl_API.xml  > gltrace.cc
 
 
 clean:

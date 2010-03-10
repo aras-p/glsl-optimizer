@@ -38,11 +38,14 @@ nv10_emit_tex_gen(GLcontext *ctx, int emit)
 }
 
 static uint32_t
-get_tex_format(struct gl_texture_image *ti)
+get_tex_format_pot(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_ARGB8888:
 		return NV10TCL_TX_FORMAT_FORMAT_A8R8G8B8;
+
+	case MESA_FORMAT_XRGB8888:
+		return NV10TCL_TX_FORMAT_FORMAT_X8R8G8B8;
 
 	case MESA_FORMAT_ARGB1555:
 		return NV10TCL_TX_FORMAT_FORMAT_A1R5G5B5;
@@ -54,6 +57,7 @@ get_tex_format(struct gl_texture_image *ti)
 		return NV10TCL_TX_FORMAT_FORMAT_R5G6B5;
 
 	case MESA_FORMAT_A8:
+	case MESA_FORMAT_I8:
 		return NV10TCL_TX_FORMAT_FORMAT_A8;
 
 	case MESA_FORMAT_L8:
@@ -61,6 +65,30 @@ get_tex_format(struct gl_texture_image *ti)
 
 	case MESA_FORMAT_CI8:
 		return NV10TCL_TX_FORMAT_FORMAT_INDEX8;
+
+	default:
+		assert(0);
+	}
+}
+
+static uint32_t
+get_tex_format_rect(struct gl_texture_image *ti)
+{
+	switch (ti->TexFormat) {
+	case MESA_FORMAT_ARGB1555:
+		return NV10TCL_TX_FORMAT_FORMAT_A1R5G5B5_RECT;
+
+	case MESA_FORMAT_RGB565:
+		return NV10TCL_TX_FORMAT_FORMAT_R5G6B5_RECT;
+
+	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_XRGB8888:
+		return NV10TCL_TX_FORMAT_FORMAT_A8R8G8B8_RECT;
+
+	case MESA_FORMAT_A8:
+	case MESA_FORMAT_L8:
+	case MESA_FORMAT_I8:
+		return NV10TCL_TX_FORMAT_FORMAT_A8_RECT;
 
 	default:
 		assert(0);
@@ -90,14 +118,14 @@ nv10_emit_tex_obj(GLcontext *ctx, int emit)
 	s = &to_nouveau_texture(t)->surfaces[t->BaseLevel];
 	ti = t->Image[0][t->BaseLevel];
 
-	nouveau_texture_validate(ctx, t);
+	if (!nouveau_texture_validate(ctx, t))
+		return;
 
 	/* Recompute the texturing registers. */
 	tx_format = nvgl_wrap_mode(t->WrapT) << 28
 		| nvgl_wrap_mode(t->WrapS) << 24
 		| ti->HeightLog2 << 20
 		| ti->WidthLog2 << 16
-		| get_tex_format(ti)
 		| 5 << 4 | 1 << 12;
 
 	tx_filter = nvgl_filter_mode(t->MagFilter) << 28
@@ -105,6 +133,17 @@ nv10_emit_tex_obj(GLcontext *ctx, int emit)
 
 	tx_enable = NV10TCL_TX_ENABLE_ENABLE
 		| log2i(t->MaxAnisotropy) << 4;
+
+	if (t->Target == GL_TEXTURE_RECTANGLE) {
+		BEGIN_RING(chan, celsius, NV10TCL_TX_NPOT_PITCH(i), 1);
+		OUT_RING(chan, s->pitch << 16);
+		BEGIN_RING(chan, celsius, NV10TCL_TX_NPOT_SIZE(i), 1);
+		OUT_RING(chan, align(s->width, 2) << 16 | s->height);
+
+		tx_format |= get_tex_format_rect(ti);
+	} else {
+		tx_format |= get_tex_format_pot(ti);
+	}
 
 	if (t->MinFilter != GL_NEAREST &&
 	    t->MinFilter != GL_LINEAR) {

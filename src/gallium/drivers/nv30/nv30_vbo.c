@@ -492,16 +492,16 @@ nv30_vbo_validate(struct nv30_context *nv30)
 	int hw;
 
 	vtxbuf = so_new(3, 17, 18);
-	so_method(vtxbuf, rankine, NV34TCL_VTXBUF_ADDRESS(0), nv30->vtxelt_nr);
+	so_method(vtxbuf, rankine, NV34TCL_VTXBUF_ADDRESS(0), nv30->vtxelt->num_elements);
 	vtxfmt = so_new(1, 16, 0);
-	so_method(vtxfmt, rankine, NV34TCL_VTXFMT(0), nv30->vtxelt_nr);
+	so_method(vtxfmt, rankine, NV34TCL_VTXFMT(0), nv30->vtxelt->num_elements);
 
-	for (hw = 0; hw < nv30->vtxelt_nr; hw++) {
+	for (hw = 0; hw < nv30->vtxelt->num_elements; hw++) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
 		unsigned type, ncomp;
 
-		ve = &nv30->vtxelt[hw];
+		ve = &nv30->vtxelt->pipe[hw];
 		vb = &nv30->vtxbuf[ve->vertex_buffer_index];
 
 		if (!vb->stride) {

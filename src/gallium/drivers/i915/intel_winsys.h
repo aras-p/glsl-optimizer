@@ -33,6 +33,7 @@ struct intel_buffer;
 struct intel_batchbuffer;
 struct pipe_texture;
 struct pipe_fence_handle;
+struct winsys_handle;
 
 enum intel_buffer_usage
 {
@@ -129,6 +130,25 @@ struct intel_winsys {
                                          enum intel_buffer_type type);
 
    /**
+    * Creates a buffer from a handle.
+    * Used to implement pipe_screen::texture_from_handle.
+    * Also provides the stride information needed for the
+    * texture via the stride argument.
+    */
+   struct intel_buffer *(*buffer_from_handle)(struct intel_winsys *iws,
+                                              struct winsys_handle *whandle,
+                                              unsigned *stride);
+
+   /**
+    * Used to implement pipe_screen::texture_get_handle.
+    * The winsys might need the stride information.
+    */
+   boolean (*buffer_get_handle)(struct intel_winsys *iws,
+                                struct intel_buffer *buffer,
+                                struct winsys_handle *whandle,
+                                unsigned stride);
+
+   /**
     * Fence a buffer with a fence reg.
     * Not to be confused with pipe_fence_handle.
     */
@@ -203,24 +223,5 @@ struct intel_winsys {
  */
 struct pipe_screen *i915_create_screen(struct intel_winsys *iws, unsigned pci_id);
 
-
-/**
- * Get the intel_winsys buffer backing the texture.
- *
- * TODO UGLY
- */
-boolean i915_get_texture_buffer_intel(struct pipe_texture *texture,
-                                      struct intel_buffer **buffer,
-                                      unsigned *stride);
-
-/**
- * Wrap a intel_winsys buffer with a texture blanket.
- *
- * TODO UGLY
- */
-struct pipe_texture * i915_texture_blanket_intel(struct pipe_screen *screen,
-                                                 struct pipe_texture *tmplt,
-                                                 unsigned pitch,
-                                                 struct intel_buffer *buffer);
 
 #endif

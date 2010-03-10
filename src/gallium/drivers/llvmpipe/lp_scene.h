@@ -39,6 +39,7 @@
 #include "lp_tile_soa.h"
 #include "lp_rast.h"
 
+struct lp_scene_queue;
 
 /* We're limited to 2K by 2K for 32bit fixed point rasterization.
  * Will need a 64-bit version for larger framebuffers.
@@ -56,8 +57,7 @@
 
 /* switch to a non-pointer value for this:
  */
-typedef void (*lp_rast_cmd)( struct lp_rasterizer *,
-                             unsigned thread_index,
+typedef void (*lp_rast_cmd)( struct lp_rasterizer_task *,
                              const union lp_rast_cmd_arg );
 
 struct cmd_block {
@@ -113,8 +113,14 @@ struct texture_ref {
  * scenes:
  */
 struct lp_scene {
-   struct cmd_bin tile[TILES_X][TILES_Y];
-   struct data_block_list data;
+   struct pipe_context *pipe;
+   struct pipe_transfer *cbuf_transfer[PIPE_MAX_COLOR_BUFS];
+   struct pipe_transfer *zsbuf_transfer;
+
+   /* Scene's buffers are mapped at the time the scene is enqueued:
+    */
+   void *cbuf_map[PIPE_MAX_COLOR_BUFS];
+   uint8_t *zsbuf_map;
 
    /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
@@ -132,25 +138,28 @@ struct lp_scene {
 
    int curr_x, curr_y;  /**< for iterating over bins */
    pipe_mutex mutex;
+
+   /* Where to place this scene once it has been rasterized:
+    */
+   struct lp_scene_queue *empty_queue;
+
+   struct cmd_bin tile[TILES_X][TILES_Y];
+   struct data_block_list data;
 };
 
 
 
-struct lp_scene *lp_scene_create(void);
+struct lp_scene *lp_scene_create(struct pipe_context *pipe,
+                                 struct lp_scene_queue *empty_queue);
 
 void lp_scene_destroy(struct lp_scene *scene);
 
 
-void lp_scene_init(struct lp_scene *scene);
 
 boolean lp_scene_is_empty(struct lp_scene *scene );
 
 void lp_scene_reset(struct lp_scene *scene );
 
-void lp_scene_free_bin_data(struct lp_scene *scene);
-
-void lp_scene_set_framebuffer_size( struct lp_scene *scene,
-                                  unsigned width, unsigned height );
 
 void lp_bin_new_data_block( struct data_block_list *list );
 
@@ -297,5 +306,13 @@ lp_scene_bin_iter_begin( struct lp_scene *scene );
 struct cmd_bin *
 lp_scene_bin_iter_next( struct lp_scene *scene, int *bin_x, int *bin_y );
 
+void
+lp_scene_rasterize( struct lp_scene *scene,
+                    struct lp_rasterizer *rast,
+                    boolean write_depth );
+
+void
+lp_scene_begin_binning( struct lp_scene *scene,
+                        struct pipe_framebuffer_state *fb );
 
 #endif /* LP_BIN_H */

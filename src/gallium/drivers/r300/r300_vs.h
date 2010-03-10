@@ -28,6 +28,7 @@
 #include "tgsi/tgsi_scan.h"
 #include "radeon_code.h"
 
+#include "r300_context.h"
 #include "r300_shader_semantics.h"
 
 struct r300_context;
@@ -38,7 +39,7 @@ struct r300_vertex_shader {
 
     struct tgsi_shader_info info;
     struct r300_shader_semantics outputs;
-    uint hwfmt[4];
+    struct r300_vap_output_state vap_out;
 
     /* Stream locations for SWTCL or if TCL is bypassed. */
     int stream_loc_notcl[16];
@@ -46,12 +47,16 @@ struct r300_vertex_shader {
     /* Output stream location for WPOS. */
     int wpos_tex_output;
 
-    /* Has this shader been translated yet? */
-    boolean translated;
-
+    /* HWTCL-specific.  */
     /* Machine code (if translated) */
     struct r300_vertex_program_code code;
+
+    /* SWTCL-specific. */
+    void *draw_vs;
 };
+
+void r300_vertex_shader_common_init(struct r300_vertex_shader *vs,
+                                    const struct pipe_shader_state *shader);
 
 void r300_translate_vertex_shader(struct r300_context* r300,
                                   struct r300_vertex_shader* vs);

@@ -72,7 +72,7 @@ static void build_state(
 {
 	int unit;
 
-	_mesa_bzero(state, sizeof(*state));
+	memset(state, 0, sizeof(*state));
 
 	for(unit = 0; unit < 16; ++unit) {
 		if (fp->Base.ShadowSamplers & (1 << unit)) {
@@ -227,7 +227,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 
 	if (compiler.Base.Debug) {
 		fflush(stderr);
-		_mesa_printf("Fragment Program: Initial program:\n");
+		printf("Fragment Program: Initial program:\n");
 		_mesa_print_program(&cont->Base.Base);
 		fflush(stderr);
 	}
@@ -271,13 +271,13 @@ struct r300_fragment_program *r300SelectAndTranslateFragmentShader(GLcontext *ct
 
 	fp = fp_list->progs;
 	while (fp) {
-		if (_mesa_memcmp(&fp->state, &state, sizeof(state)) == 0) {
+		if (memcmp(&fp->state, &state, sizeof(state)) == 0) {
 			return r300->selected_fp = fp;
 		}
 		fp = fp->next;
 	}
 
-	fp = _mesa_calloc(sizeof(struct r300_fragment_program));
+	fp = calloc(1, sizeof(struct r300_fragment_program));
 
 	fp->state = state;
 

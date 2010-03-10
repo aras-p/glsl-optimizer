@@ -34,7 +34,7 @@
 #include "pipe/p_defines.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_vbuf.h"
-#include "cell_winsys.h"
+/*#include "cell_winsys.h"*/
 #include "cell/common.h"
 #include "rtasm/rtasm_ppc_spe.h"
 #include "tgsi/tgsi_scan.h"
@@ -93,6 +93,11 @@ struct cell_buffer_list
    struct cell_buffer_node *head;
 };
 
+struct cell_velems_state
+{
+   unsigned count;
+   struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+}
 
 /**
  * Per-context state, subclass of pipe_context.
@@ -110,6 +115,7 @@ struct cell_context
    const struct pipe_rasterizer_state *rasterizer;
    const struct cell_vertex_shader_state *vs;
    const struct cell_fragment_shader_state *fs;
+   const struct cell_velems_state *velems;
 
    struct spe_function logic_op;
 
@@ -126,8 +132,6 @@ struct cell_context
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    uint num_vertex_buffers;
-   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-   uint num_vertex_elements;
 
    ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
    ubyte *zsbuf_map;

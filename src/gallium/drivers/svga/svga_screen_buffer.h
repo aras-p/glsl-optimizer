@@ -57,35 +57,6 @@ struct svga_buffer_range
 
 
 /**
- * Describe a
- *
- * This holds the information to emit a SVGA3dCmdSurfaceDMA.
- */
-struct svga_buffer_upload
-{
-   /**
-    * Guest memory region.
-    */
-   struct svga_winsys_buffer *buf;
-
-   struct svga_buffer_range ranges[SVGA_BUFFER_MAX_RANGES];
-   unsigned num_ranges;
-
-   SVGA3dSurfaceDMAFlags flags;
-
-   /**
-    * Pointer to the DMA copy box *inside* the command buffer.
-    */
-   SVGA3dCopyBox *boxes;
-
-   /**
-    * Context that has the pending DMA to this buffer.
-    */
-   struct svga_context *svga;
-};
-
-
-/**
  * SVGA pipe buffer.
  */
 struct svga_buffer 
@@ -111,14 +82,6 @@ struct svga_buffer
    boolean user;
    
    /**
-    * DMA'ble memory.
-    * 
-    * A piece of GMR memory. It is created when mapping the buffer, and will be
-    * used to upload/download vertex data from the host.
-    */
-   struct svga_buffer_upload hw;
-
-   /**
     * Creation key for the host surface handle.
     * 
     * This structure describes all the host surface characteristics so that it 
@@ -134,19 +97,94 @@ struct svga_buffer
     * trying to bind
     */
    struct svga_winsys_surface *handle;
-   
-   /**
-    * Whether the host has been ever written.
-    */
-   boolean host_written;
 
+   /**
+    * Information about ongoing and past map operations.
+    */
    struct {
+      /**
+       * Number of concurrent mappings.
+       *
+       * XXX: It is impossible to guarantee concurrent maps work in all
+       * circumstances -- pipe_buffers really need transfer objects too.
+       */
       unsigned count;
+
+      /**
+       * Whether this buffer is currently mapped for writing.
+       */
       boolean writing;
+
+      /**
+       * Whether the application will tell us explicity which ranges it touched
+       * or not.
+       */
       boolean flush_explicit;
+
+      /**
+       * Dirty ranges.
+       *
+       * Ranges that were touched by the application and need to be uploaded to
+       * the host.
+       *
+       * This information will be copied into dma.boxes, when emiting the
+       * SVGA3dCmdSurfaceDMA command.
+       */
+      struct svga_buffer_range ranges[SVGA_BUFFER_MAX_RANGES];
+      unsigned num_ranges;
    } map;
-   
-   boolean needs_flush;
+
+   /**
+    * Information about uploaded version of user buffers.
+    */
+   struct {
+      struct pipe_buffer *buffer;
+
+      /**
+       * We combine multiple user buffers into the same hardware buffer. This
+       * is the relative offset within that buffer.
+       */
+      unsigned offset;
+   } uploaded;
+
+   /**
+    * DMA'ble memory.
+    *
+    * A piece of GMR memory, with the same size of the buffer. It is created
+    * when mapping the buffer, and will be used to upload vertex data to the
+    * host.
+    */
+   struct svga_winsys_buffer *hwbuf;
+
+   /**
+    * Information about pending DMA uploads.
+    *
+    */
+   struct {
+      /**
+       * Whether this buffer has an unfinished DMA upload command.
+       *
+       * If not set then the rest of the information is null.
+       */
+      boolean pending;
+
+      SVGA3dSurfaceDMAFlags flags;
+
+      /**
+       * Pointer to the DMA copy box *inside* the command buffer.
+       */
+      SVGA3dCopyBox *boxes;
+
+      /**
+       * Context that has the pending DMA to this buffer.
+       */
+      struct svga_context *svga;
+   } dma;
+
+   /**
+    * Linked list head, used to gather all buffers with pending dma uploads on
+    * a context. It is only valid if the dma.pending is set above.
+    */
    struct list_head head;
 };
 
@@ -176,6 +214,16 @@ svga_buffer_is_user_buffer( struct pipe_buffer *buffer )
 void
 svga_screen_init_buffer_functions(struct pipe_screen *screen);
 
+
+/**
+ * Get the host surface handle for this buffer.
+ *
+ * This will ensure the host surface is updated, issuing DMAs as needed.
+ *
+ * NOTE: This may insert new commands in the context, so it *must* be called
+ * before reserving command buffer space. And, in order to insert commands
+ * it may need to call svga_context_flush().
+ */
 struct svga_winsys_surface *
 svga_buffer_handle(struct svga_context *svga,
                    struct pipe_buffer *buf);

@@ -319,7 +319,7 @@ make_texture(struct st_context *st,
 
    pipeFormat = st_mesa_format_to_pipe_format(mformat);
    assert(pipeFormat);
-   cpp = st_sizeof_format(pipeFormat);
+   cpp = util_format_get_blocksize(pipeFormat);
 
    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
    if (!pixels)
@@ -529,6 +529,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_sampler_textures(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
+   cso_save_vertex_elements(cso);
 
    /* rasterizer state: just scissor */
    {
@@ -572,14 +573,16 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5f * w;
       vp.scale[1] = -0.5f * h;
-      vp.scale[2] = 1.0f;
+      vp.scale[2] = 0.5f;
       vp.scale[3] = 1.0f;
       vp.translate[0] = 0.5f * w;
       vp.translate[1] = 0.5f * h;
-      vp.translate[2] = 0.0f;
+      vp.translate[2] = 0.5f;
       vp.translate[3] = 0.0f;
       cso_set_viewport(cso, &vp);
    }
+
+   cso_set_vertex_elements(cso, 3, st->velems_util_draw);
 
    /* texture state: */
    if (st->pixel_xfer.pixelmap_enabled) {
@@ -601,6 +604,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    y0 = (GLfloat) y;
    y1 = y + height * ctx->Pixel.ZoomY;
 
+   /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
+   z = z * 2.0 - 1.0;
+
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
 	     (GLfloat) width / pt->width0,
 	     (GLfloat) height / pt->height0);
@@ -612,6 +618,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_sampler_textures(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
+   cso_restore_vertex_elements(cso);
 }
 
 
@@ -710,7 +717,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                   memcpy(dest, sValues, spanWidth);
                }
                break;
-            case PIPE_FORMAT_S8Z24_UNORM:
+            case PIPE_FORMAT_Z24S8_UNORM:
                if (format == GL_DEPTH_STENCIL) {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
@@ -728,7 +735,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                   }
                }
                break;
-            case PIPE_FORMAT_Z24S8_UNORM:
+            case PIPE_FORMAT_S8Z24_UNORM:
                if (format == GL_DEPTH_STENCIL) {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
@@ -828,7 +835,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    ubyte *buffer;
    int i;
 
-   buffer = _mesa_malloc(width * height * sizeof(ubyte));
+   buffer = malloc(width * height * sizeof(ubyte));
    if (!buffer) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels(stencil)");
       return;
@@ -876,7 +883,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       src = buffer + i * width;
 
       switch (ptDraw->texture->format) {
-      case PIPE_FORMAT_S8Z24_UNORM:
+      case PIPE_FORMAT_Z24S8_UNORM:
          {
             uint *dst4 = (uint *) dst;
             int j;
@@ -887,7 +894,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             }
          }
          break;
-      case PIPE_FORMAT_Z24S8_UNORM:
+      case PIPE_FORMAT_S8Z24_UNORM:
          {
             uint *dst4 = (uint *) dst;
             int j;
@@ -907,7 +914,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
-   _mesa_free(buffer);
+   free(buffer);
 
    /* unmap the stencil buffer */
    screen->transfer_unmap(screen, ptDraw);
@@ -1089,19 +1096,19 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */
-         GLfloat *buf = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+         GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
          pipe_get_tile_rgba(ptRead, 0, 0, width, height, buf);
          pipe_put_tile_rgba(ptTex, 0, 0, width, height, buf);
 
-         _mesa_free(buf);
+         free(buf);
       }
       else {
          /* GL_DEPTH */
-         GLuint *buf = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
+         GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
          pipe_get_tile_z(ptRead, 0, 0, width, height, buf);
          pipe_put_tile_z(ptTex, 0, 0, width, height, buf);
-         _mesa_free(buf);
+         free(buf);
       }
 
       screen->tex_transfer_destroy(ptRead);

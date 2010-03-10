@@ -45,10 +45,10 @@ _mesa_free_uniform_list(struct gl_uniform_list *list)
 {
    GLuint i;
    for (i = 0; i < list->NumUniforms; i++) {
-      _mesa_free((void *) list->Uniforms[i].Name);
+      free((void *) list->Uniforms[i].Name);
    }
-   _mesa_free(list->Uniforms);
-   _mesa_free(list);
+   free(list->Uniforms);
+   free(list);
 }
 
 
@@ -128,7 +128,7 @@ _mesa_lookup_uniform(const struct gl_uniform_list *list, const char *name)
 {
    GLuint i;
    for (i = 0; list && i < list->NumUniforms; i++) {
-      if (!_mesa_strcmp(list->Uniforms[i].Name, name)) {
+      if (!strcmp(list->Uniforms[i].Name, name)) {
          return i;
       }
    }
@@ -142,7 +142,7 @@ _mesa_longest_uniform_name(const struct gl_uniform_list *list)
    GLint max = 0;
    GLuint i;
    for (i = 0; list && i < list->NumUniforms; i++) {
-      GLint len = (GLint)_mesa_strlen(list->Uniforms[i].Name);
+      GLint len = (GLint) strlen(list->Uniforms[i].Name);
       if (len > max)
          max = len;
    }

@@ -162,10 +162,10 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                                               PIPE_TRANSFER_READ_WRITE,
                                               0, 0, ps->width, ps->height);
 
-      tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_Z24S8_UNORM ||
+      tc->depth_stencil = (ps->format == PIPE_FORMAT_Z24S8_UNORM ||
                            ps->format == PIPE_FORMAT_Z24X8_UNORM ||
+                           ps->format == PIPE_FORMAT_S8Z24_UNORM ||
+                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
                            ps->format == PIPE_FORMAT_Z16_UNORM ||
                            ps->format == PIPE_FORMAT_Z32_UNORM ||
                            ps->format == PIPE_FORMAT_S8_UNORM);
@@ -299,13 +299,14 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
                               x, y, TILE_SIZE, TILE_SIZE,
                               tc->tile.data.color32, 0/*STRIDE*/);
 
-            /* do this? */
-            clear_clear_flag(tc->clear_flags, addr);
-
             numCleared++;
          }
       }
    }
+
+   /* reset all clear flags to zero */
+   memset(tc->clear_flags, 0, sizeof(tc->clear_flags));
+
 #if 0
    debug_printf("num cleared: %u\n", numCleared);
 #endif

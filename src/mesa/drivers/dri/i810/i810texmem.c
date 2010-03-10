@@ -155,6 +155,7 @@ int i810UploadTexImagesLocked( i810ContextPtr imesa, i810TextureObjectPtr t )
 	return -1;
       }
       
+      assert(t->base.memBlock);
       ofs = t->base.memBlock->ofs;
       t->BufAddr = imesa->i810Screen->tex.map + ofs;
       t->Setup[I810_TEXREG_MI3] = imesa->i810Screen->textureOffset + ofs;

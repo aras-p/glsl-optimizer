@@ -78,7 +78,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    GLcontext *ctx = &intel->ctx;
 
    if (!brw) {
-      _mesa_printf("%s: failed to alloc context\n", __FUNCTION__);
+      printf("%s: failed to alloc context\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -87,7 +87,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    if (!intelInitContext( intel, mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions )) {
-      _mesa_printf("%s: failed to init intel context\n", __FUNCTION__);
+      printf("%s: failed to init intel context\n", __FUNCTION__);
       FREE(brw);
       return GL_FALSE;
    }
@@ -150,7 +150,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
 	   ctx->Const.FragmentProgram.MaxEnvParams);
 
-   if (intel->is_ironlake || intel->is_g4x) {
+   if (intel->is_ironlake || intel->is_g4x || intel->gen >= 6) {
       brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_GM45;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
       brw->has_surface_tile_offset = GL_TRUE;
@@ -170,7 +170,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       brw->urb.size = 384;
       brw->vs_max_threads = 32;
       brw->wm_max_threads = 10 * 5;
-   } else {
+   } else if (intel->gen < 6) {
       brw->urb.size = 256;
       brw->vs_max_threads = 16;
       brw->wm_max_threads = 8 * 4;

@@ -34,6 +34,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
+#include "native_modeset.h"
+
 /**
  * Only color buffers are listed.  The others are allocated privately through,
  * for example, st_renderbuffer_alloc_storage().
@@ -45,6 +47,14 @@ enum native_attachment {
    NATIVE_ATTACHMENT_BACK_RIGHT,
 
    NUM_NATIVE_ATTACHMENTS
+};
+
+enum native_param_type {
+   /*
+    * Return TRUE if window/pixmap surfaces use the buffers of the native
+    * types.
+    */
+   NATIVE_PARAM_USE_NATIVE_BUFFER
 };
 
 /**
@@ -69,6 +79,11 @@ struct native_probe {
 };
 
 struct native_surface {
+   /**
+    * Available for caller's use.
+    */
+   void *user_data;
+
    void (*destroy)(struct native_surface *nsurf);
 
    /**
@@ -117,18 +132,6 @@ struct native_config {
    boolean scanout_bit;
 };
 
-struct native_connector {
-   int dummy;
-};
-
-struct native_mode {
-   const char *desc;
-   int width, height;
-   int refresh_rate;
-};
-
-struct native_display_modeset;
-
 /**
  * A pipe winsys abstracts the OS.  A pipe screen abstracts the graphcis
  * hardware.  A native display consists of a pipe winsys, a pipe screen, and
@@ -137,13 +140,23 @@ struct native_display_modeset;
 struct native_display {
    /**
     * The pipe screen of the native display.
-    *
-    * Note that the "flush_frontbuffer" and "update_buffer" callbacks will be
-    * overridden.
     */
    struct pipe_screen *screen;
 
+   /**
+    * Available for caller's use.
+    */
+   void *user_data;
+
    void (*destroy)(struct native_display *ndpy);
+
+   /**
+    * Query the parameters of the native display.
+    *
+    * The return value is defined by the parameter.
+    */
+   int (*get_param)(struct native_display *ndpy,
+                    enum native_param_type param);
 
    /**
     * Get the supported configs.  The configs are owned by the display, but
@@ -196,46 +209,17 @@ struct native_display {
 };
 
 /**
- * Mode setting interface of the native display.  It exposes the mode setting
- * capabilities of the underlying graphics hardware.
+ * The handler for events that a native display may generate.  The events are
+ * generated asynchronously and the handler may be called by any thread at any
+ * time.
  */
-struct native_display_modeset {
+struct native_event_handler {
    /**
-    * Get the available physical connectors and the number of CRTCs.
+    * This function is called when a surface needs to be validated.
     */
-   const struct native_connector **(*get_connectors)(struct native_display *ndpy,
-                                                     int *num_connectors,
-                                                     int *num_crtcs);
-
-   /**
-    * Get the current supported modes of a connector.  The returned modes may
-    * change every time this function is called and those from previous calls
-    * might become invalid.
-    */
-   const struct native_mode **(*get_modes)(struct native_display *ndpy,
-                                           const struct native_connector *nconn,
-                                           int *num_modes);
-
-   /**
-    * Create a scan-out surface.  Required unless no config has
-    * GLX_SCREEN_BIT_MESA set.
-    */
-   struct native_surface *(*create_scanout_surface)(struct native_display *ndpy,
-                                                    const struct native_config *nconf,
-                                                    uint width, uint height);
-
-   /**
-    * Program the CRTC to output the surface to the given connectors with the
-    * given mode.  When surface is not given, the CRTC is disabled.
-    *
-    * This interface does not export a way to query capabilities of the CRTCs.
-    * The native display usually needs to dynamically map the index to a CRTC
-    * that supports the given connectors.
-    */
-   boolean (*program)(struct native_display *ndpy, int crtc_idx,
-                      struct native_surface *nsurf, uint x, uint y,
-                      const struct native_connector **nconns, int num_nconns,
-                      const struct native_mode *nmode);
+   void (*invalid_surface)(struct native_display *ndpy,
+                           struct native_surface *nsurf,
+                           unsigned int seq_num);
 };
 
 /**
@@ -267,6 +251,7 @@ const char *
 native_get_name(void);
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy);
+native_create_display(EGLNativeDisplayType dpy,
+                      struct native_event_handler *handler);
 
 #endif /* _NATIVE_H_ */

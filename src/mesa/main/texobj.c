@@ -106,7 +106,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
           target == GL_TEXTURE_1D_ARRAY_EXT ||
           target == GL_TEXTURE_2D_ARRAY_EXT);
 
-   _mesa_bzero(obj, sizeof(*obj));
+   memset(obj, 0, sizeof(*obj));
    /* init the non-zero fields */
    _glthread_INIT_MUTEX(obj->Mutex);
    obj->RefCount = 1;
@@ -207,7 +207,7 @@ _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
    _glthread_DESTROY_MUTEX(texObj->Mutex);
 
    /* free this object */
-   _mesa_free(texObj);
+   free(texObj);
 }
 
 
@@ -383,7 +383,7 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 static void
 incomplete(const struct gl_texture_object *t, const char *why)
 {
-   _mesa_printf("Texture Obj %d incomplete because: %s\n", t->Name, why);
+   printf("Texture Obj %d incomplete because: %s\n", t->Name, why);
 }
 #else
 #define incomplete(t, why)
@@ -416,7 +416,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
     */
    if ((baseLevel < 0) || (baseLevel >= MAX_TEXTURE_LEVELS)) {
       char s[100];
-      _mesa_sprintf(s, "base level = %d is invalid", baseLevel);
+      sprintf(s, "base level = %d is invalid", baseLevel);
       incomplete(t, s);
       t->_Complete = GL_FALSE;
       return;
@@ -425,7 +425,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Always need the base level image */
    if (!t->Image[0][baseLevel]) {
       char s[100];
-      _mesa_sprintf(s, "Image[baseLevel=%d] == NULL", baseLevel);
+      sprintf(s, "Image[baseLevel=%d] == NULL", baseLevel);
       incomplete(t, s);
       t->_Complete = GL_FALSE;
       return;

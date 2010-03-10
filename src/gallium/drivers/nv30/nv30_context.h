@@ -101,11 +101,15 @@ struct nv30_blend_state {
 struct nv30_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
-	unsigned viewport_bypass;
 	unsigned fp_samplers;
 
 	uint64_t dirty;
 	struct nouveau_stateobj *hw[NV30_STATE_MAX];
+};
+
+struct nv30_vtxelt_state {
+	struct pipe_vertex_element pipe[16];
+	unsigned num_elements;
 };
 
 struct nv30_context {
@@ -144,8 +148,7 @@ struct nv30_context {
 	unsigned dirty_samplers;
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
-	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
-	unsigned vtxelt_nr;
+	struct nv30_vtxelt_state *vtxelt;
 };
 
 static INLINE struct nv30_context *

@@ -696,7 +696,7 @@ fenced_buffer_map(struct pb_buffer *buf,
        * Don't wait for the GPU to finish accessing it, if blocking is forbidden.
        */
       if((flags & PIPE_BUFFER_USAGE_DONTBLOCK) &&
-          ops->fence_signalled(ops, fenced_buf->fence, 0) == 0) {
+          ops->fence_signalled(ops, fenced_buf->fence, 0) != 0) {
          goto done;
       }
 

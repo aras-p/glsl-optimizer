@@ -440,7 +440,7 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 	if (mode) {
 		if ((fallback_warn & bit) == 0) {
 			if (RADEON_DEBUG & RADEON_FALLBACKS)
-				_mesa_fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
+				fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
 			fallback_warn |= bit;
 		}
 		rmesa->fallback |= bit;

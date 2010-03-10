@@ -1056,7 +1056,7 @@ ccMaskRule: IDENTIFIER
 		      ? err_str : "invalid condition code");
 
 	      if (err_str != NULL) {
-		 _mesa_free(err_str);
+		 free(err_str);
 	      }
 
 	      YYERROR;
@@ -1079,7 +1079,7 @@ ccMaskRule2: USED_IDENTIFIER
 		      ? err_str : "invalid condition code");
 
 	      if (err_str != NULL) {
-		 _mesa_free(err_str);
+		 free(err_str);
 	      }
 
 	      YYERROR;
@@ -1956,7 +1956,7 @@ optVarSize: string
 		      ? err_str : "invalid storage size specifier");
 
 	      if (err_str != NULL) {
-		 _mesa_free(err_str);
+		 free(err_str);
 	      }
 
 	      YYERROR;
@@ -2442,7 +2442,7 @@ int add_state_reference(struct gl_program_parameter_list *param_list,
    param_list->StateFlags |= _mesa_program_state_flags(tokens);
 
    /* free name string here since we duplicated it in add_parameter() */
-   _mesa_free(name);
+   free(name);
 
    return index;
 }
@@ -2599,7 +2599,7 @@ make_error_string(const char *fmt, ...)
    va_start(args, fmt);
 
    /* Call vsnprintf once to determine how large the final string is.  Call it
-    * again to do the actual formatting.  from the vsnprintf manual page:
+    * again to do the actual formatting.  from the v_mesa_snprintf manual page:
     *
     *    Upon successful return, these functions return the number of
     *    characters printed  (not including the trailing '\0' used to end
@@ -2607,7 +2607,7 @@ make_error_string(const char *fmt, ...)
     */
    length = 1 + vsnprintf(NULL, 0, fmt, args);
 
-   str = _mesa_malloc(length);
+   str = malloc(length);
    if (str) {
       vsnprintf(str, length, fmt, args);
    }
@@ -2627,7 +2627,7 @@ yyerror(YYLTYPE *locp, struct asm_parser_state *state, const char *s)
    err_str = make_error_string("glProgramStringARB(%s)\n", s);
    if (err_str) {
       _mesa_error(state->ctx, GL_INVALID_OPERATION, err_str);
-      _mesa_free(err_str);
+      free(err_str);
    }
 
    err_str = make_error_string("line %u, char %u: error: %s\n",
@@ -2635,7 +2635,7 @@ yyerror(YYLTYPE *locp, struct asm_parser_state *state, const char *s)
    _mesa_set_program_error(state->ctx, locp->position, err_str);
 
    if (err_str) {
-      _mesa_free(err_str);
+      free(err_str);
    }
 }
 
@@ -2657,12 +2657,12 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
 
    /* Make a copy of the program string and force it to be NUL-terminated.
     */
-   strz = (GLubyte *) _mesa_malloc(len + 1);
+   strz = (GLubyte *) malloc(len + 1);
    if (strz == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
       return GL_FALSE;
    }
-   _mesa_memcpy (strz, str, len);
+   memcpy (strz, str, len);
    strz[len] = '\0';
 
    state->prog->String = strz;
@@ -2745,7 +2745,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target, const GLubyte *str,
 error:
    for (inst = state->inst_head; inst != NULL; inst = temp) {
       temp = inst->next;
-      _mesa_free(inst);
+      free(inst);
    }
 
    state->inst_head = NULL;
@@ -2754,8 +2754,8 @@ error:
    for (sym = state->sym; sym != NULL; sym = temp) {
       temp = sym->next;
 
-      _mesa_free((void *) sym->name);
-      _mesa_free(sym);
+      free((void *) sym->name);
+      free(sym);
    }
    state->sym = NULL;
 

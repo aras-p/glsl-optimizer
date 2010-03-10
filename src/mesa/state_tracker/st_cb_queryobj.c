@@ -69,7 +69,7 @@ st_DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
       stq->pq = NULL;
    }
 
-   _mesa_free(stq);
+   free(stq);
 }
 
 

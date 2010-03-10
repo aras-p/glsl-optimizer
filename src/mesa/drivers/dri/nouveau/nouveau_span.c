@@ -61,6 +61,15 @@
 
 #include "spantmp2.h"
 
+/* RGB888 span functions */
+#define SPANTMP_PIXEL_FMT GL_BGR
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+#define TAG(x) nouveau_##x##_rgb888
+#define TAG2(x, y) nouveau_##x##_rgb888##y
+#define GET_PTR(x, y) (s->bo->map + (y)*s->pitch + (x)*s->cpp)
+
+#include "spantmp2.h"
+
 /* ARGB8888 span functions */
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
@@ -101,6 +110,8 @@ renderbuffer_map_unmap(struct gl_renderbuffer *rb, GLboolean map)
 			nouveau_InitPointers_rgb565(rb);
 			break;
 		case MESA_FORMAT_XRGB8888:
+			nouveau_InitPointers_rgb888(rb);
+			break;
 		case MESA_FORMAT_ARGB8888:
 			nouveau_InitPointers_argb8888(rb);
 			break;

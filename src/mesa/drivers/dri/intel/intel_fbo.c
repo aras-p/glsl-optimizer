@@ -70,14 +70,11 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    ASSERT(irb);
 
-   if (irb->span_cache != NULL)
-      _mesa_free(irb->span_cache);
-
    if (intel && irb->region) {
       intel_region_release(&irb->region);
    }
 
-   _mesa_free(irb);
+   free(irb);
 }
 
 
@@ -200,6 +197,38 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 }
 
 
+#if FEATURE_OES_EGL_image
+static void
+intel_image_target_renderbuffer_storage(GLcontext *ctx,
+					struct gl_renderbuffer *rb,
+					void *image_handle)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_renderbuffer *irb;
+   __DRIscreen *screen;
+   __DRIimage *image;
+
+   screen = intel->intelScreen->driScrnPriv;
+   image = screen->dri2.image->lookupEGLImage(intel->driContext, image_handle,
+					      intel->driContext->loaderPrivate);
+   if (image == NULL)
+      return;
+
+   irb = intel_renderbuffer(rb);
+   if (irb->region)
+      intel_region_release(&irb->region);
+   intel_region_reference(&irb->region, image->region);
+
+   rb->InternalFormat = image->internal_format;
+   rb->Width = image->region->width;
+   rb->Height = image->region->height;
+   rb->Format = image->format;
+   rb->DataType = image->data_type;
+   rb->_BaseFormat = _mesa_base_fbo_format(&intel->ctx,
+					   image->internal_format);
+}
+#endif
+
 /**
  * Called for each hardware renderbuffer when a _window_ is resized.
  * Just update fields.
@@ -316,7 +345,7 @@ intel_create_renderbuffer(gl_format format)
    default:
       _mesa_problem(NULL,
                     "Unexpected intFormat in intel_create_renderbuffer");
-      _mesa_free(irb);
+      free(irb);
       return NULL;
    }
 
@@ -468,7 +497,7 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
    irb->Base.ClassID = INTEL_RB_CLASS;
 
    if (!intel_update_wrapper(ctx, irb, texImage)) {
-      _mesa_free(irb);
+      free(irb);
       return NULL;
    }
 
@@ -525,7 +554,7 @@ intel_render_texture(GLcontext * ctx,
        return;
    }
 
-   DBG("Begin render texture tid %x tex=%u w=%d h=%d refcount=%d\n",
+   DBG("Begin render texture tid %lx tex=%u w=%d h=%d refcount=%d\n",
        _glthread_GetID(),
        att->Texture->Name, newImage->Width, newImage->Height,
        irb->Base.RefCount);
@@ -651,4 +680,9 @@ intel_fbo_init(struct intel_context *intel)
    intel->ctx.Driver.ResizeBuffers = intel_resize_buffers;
    intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;
    intel->ctx.Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+
+#if FEATURE_OES_EGL_image
+   intel->ctx.Driver.EGLImageTargetRenderbufferStorage =
+      intel_image_target_renderbuffer_storage;
+#endif   
 }

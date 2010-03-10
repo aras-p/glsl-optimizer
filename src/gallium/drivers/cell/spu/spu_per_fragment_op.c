@@ -138,14 +138,14 @@ spu_fallback_fragment_ops(uint x, uint y,
 
       if (spu.depth_stencil_alpha.stencil[0].enabled) {
          /* do stencil test */
-         ASSERT(spu.fb.depth_format == PIPE_FORMAT_S8Z24_UNORM);
+         ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z24S8_UNORM);
 
       }
       else if (spu.depth_stencil_alpha.depth.enabled) {
          /* do depth test */
 
-         ASSERT(spu.fb.depth_format == PIPE_FORMAT_S8Z24_UNORM ||
-                spu.fb.depth_format == PIPE_FORMAT_X8Z24_UNORM);
+         ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z24S8_UNORM ||
+                spu.fb.depth_format == PIPE_FORMAT_Z24X8_UNORM);
 
          vector unsigned int ifragZ;
          vector unsigned int zmask;
@@ -240,13 +240,13 @@ spu_fallback_fragment_ops(uint x, uint y,
       {
          vector float temp[4]; /* float colors in AOS form */
          switch (spu.fb.color_format) {
-         case PIPE_FORMAT_B8G8R8A8_UNORM:
+         case PIPE_FORMAT_A8R8G8B8_UNORM:
             temp[0] = spu_unpack_B8G8R8A8(fbc0);
             temp[1] = spu_unpack_B8G8R8A8(fbc1);
             temp[2] = spu_unpack_B8G8R8A8(fbc2);
             temp[3] = spu_unpack_B8G8R8A8(fbc3);
             break;
-         case PIPE_FORMAT_A8R8G8B8_UNORM:
+         case PIPE_FORMAT_B8G8R8A8_UNORM:
             temp[0] = spu_unpack_A8R8G8B8(fbc0);
             temp[1] = spu_unpack_A8R8G8B8(fbc1);
             temp[2] = spu_unpack_A8R8G8B8(fbc2);
@@ -506,13 +506,13 @@ spu_fallback_fragment_ops(uint x, uint y,
     * Pack fragment float colors into 32-bit RGBA words.
     */
    switch (spu.fb.color_format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       fragc0 = spu_pack_A8R8G8B8(frag_aos[0]);
       fragc1 = spu_pack_A8R8G8B8(frag_aos[1]);
       fragc2 = spu_pack_A8R8G8B8(frag_aos[2]);
       fragc3 = spu_pack_A8R8G8B8(frag_aos[3]);
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       fragc0 = spu_pack_B8G8R8A8(frag_aos[0]);
       fragc1 = spu_pack_B8G8R8A8(frag_aos[1]);
       fragc2 = spu_pack_B8G8R8A8(frag_aos[2]);
@@ -532,7 +532,7 @@ spu_fallback_fragment_ops(uint x, uint y,
 
       /* Form bitmask depending on color buffer format and colormask bits */
       switch (spu.fb.color_format) {
-      case PIPE_FORMAT_A8R8G8B8_UNORM:
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
          if (spu.blend.rt[0].colormask & PIPE_MASK_R)
             cmask |= 0x00ff0000; /* red */
          if (spu.blend.rt[0].colormask & PIPE_MASK_G)
@@ -542,7 +542,7 @@ spu_fallback_fragment_ops(uint x, uint y,
          if (spu.blend.rt[0].colormask & PIPE_MASK_A)
             cmask |= 0xff000000; /* alpha */
          break;
-      case PIPE_FORMAT_B8G8R8A8_UNORM:
+      case PIPE_FORMAT_A8R8G8B8_UNORM:
          if (spu.blend.rt[0].colormask & PIPE_MASK_R)
             cmask |= 0x0000ff00; /* red */
          if (spu.blend.rt[0].colormask & PIPE_MASK_G)

@@ -68,7 +68,7 @@ static void
 link_error(struct gl_shader_program *shProg, const char *msg)
 {
    if (shProg->InfoLog) {
-      _mesa_free(shProg->InfoLog);
+      free(shProg->InfoLog);
    }
    shProg->InfoLog = _mesa_strdup(msg);
    shProg->LinkStatus = GL_FALSE;
@@ -103,7 +103,7 @@ link_varying_vars(GLcontext *ctx,
    GLuint *map, i, firstVarying, newFile;
    GLbitfield *inOutFlags;
 
-   map = (GLuint *) _mesa_malloc(prog->Varying->NumParameters * sizeof(GLuint));
+   map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
    if (!map)
       return GL_FALSE;
 
@@ -134,23 +134,23 @@ link_varying_vars(GLcontext *ctx,
             &shProg->Varying->Parameters[j];
          if (var->Size != v->Size) {
             link_error(shProg, "mismatched varying variable types");
-            _mesa_free(map);
+            free(map);
             return GL_FALSE;
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_CENTROID)) {
             char msg[100];
             _mesa_snprintf(msg, sizeof(msg),
-                           "centroid modifier mismatch for '%s'", var->Name);
+		     "centroid modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
-            _mesa_free(map);
+            free(map);
             return GL_FALSE;
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_INVARIANT)) {
             char msg[100];
             _mesa_snprintf(msg, sizeof(msg),
-                           "invariant modifier mismatch for '%s'", var->Name);
+		     "invariant modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
-            _mesa_free(map);
+            free(map);
             return GL_FALSE;
          }
       }
@@ -162,7 +162,7 @@ link_varying_vars(GLcontext *ctx,
 
       if (shProg->Varying->NumParameters > ctx->Const.MaxVarying) {
          link_error(shProg, "Too many varying variables");
-         _mesa_free(map);
+         free(map);
          return GL_FALSE;
       }
 
@@ -202,7 +202,7 @@ link_varying_vars(GLcontext *ctx,
       }
    }
 
-   _mesa_free(map);
+   free(map);
 
    /* these will get recomputed before linking is completed */
    prog->InputsRead = 0x0;
@@ -269,8 +269,8 @@ link_uniform_vars(GLcontext *ctx,
          GLuint newSampNum = *numSamplers;
          if (newSampNum >= ctx->Const.MaxTextureImageUnits) {
             char s[100];
-            _mesa_sprintf(s, "Too many texture samplers (%u, max is %u)",
-                          newSampNum, ctx->Const.MaxTextureImageUnits);
+            sprintf(s, "Too many texture samplers (%u, max is %u)",
+		    newSampNum, ctx->Const.MaxTextureImageUnits);
             link_error(shProg, s);
             return GL_FALSE;
          }
@@ -563,7 +563,7 @@ remove_extra_version_directives(GLchar *source)
 {
    GLuint verCount = 0;
    while (1) {
-      char *ver = _mesa_strstr(source, "#version");
+      char *ver = strstr(source, "#version");
       if (ver) {
          verCount++;
          if (verCount > 1) {
@@ -594,7 +594,7 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    GLuint totalLen = 0, len = 0;
    GLuint i;
 
-   shaderLengths = (GLuint *)_mesa_malloc(shProg->NumShaders * sizeof(GLuint));
+   shaderLengths = (GLuint *)malloc(shProg->NumShaders * sizeof(GLuint));
    if (!shaderLengths) {
       return NULL;
    }
@@ -603,7 +603,7 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    for (i = 0; i < shProg->NumShaders; i++) {
       const struct gl_shader *shader = shProg->Shaders[i];
       if (shader->Type == shaderType) {
-         shaderLengths[i] = _mesa_strlen(shader->Source);
+         shaderLengths[i] = strlen(shader->Source);
          totalLen += shaderLengths[i];
          if (!firstShader)
             firstShader = shader;
@@ -611,13 +611,13 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    }
 
    if (totalLen == 0) {
-      _mesa_free(shaderLengths);
+      free(shaderLengths);
       return NULL;
    }
 
-   source = (GLchar *) _mesa_malloc(totalLen + 1);
+   source = (GLchar *) malloc(totalLen + 1);
    if (!source) {
-      _mesa_free(shaderLengths);
+      free(shaderLengths);
       return NULL;
    }
 
@@ -625,22 +625,22 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
    for (i = 0; i < shProg->NumShaders; i++) {
       const struct gl_shader *shader = shProg->Shaders[i];
       if (shader->Type == shaderType) {
-         _mesa_memcpy(source + len, shader->Source, shaderLengths[i]);
+         memcpy(source + len, shader->Source, shaderLengths[i]);
          len += shaderLengths[i];
       }
    }
    source[len] = '\0';
    /*
-   _mesa_printf("---NEW CONCATENATED SHADER---:\n%s\n------------\n", source);
+   printf("---NEW CONCATENATED SHADER---:\n%s\n------------\n", source);
    */
 
-   _mesa_free(shaderLengths);
+   free(shaderLengths);
 
    remove_extra_version_directives(source);
 
    newShader = CALLOC_STRUCT(gl_shader);
    if (!newShader) {
-      _mesa_free(source);
+      free(source);
       return NULL;
    }
 
@@ -875,11 +875,11 @@ _slang_link(GLcontext *ctx,
       vertNotify = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                                  &shProg->FragmentProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         _mesa_printf("Mesa pre-link fragment program:\n");
+         printf("Mesa pre-link fragment program:\n");
          _mesa_print_program(&fragProg->Base);
          _mesa_print_program_parameters(ctx, &fragProg->Base);
 
-         _mesa_printf("Mesa post-link fragment program:\n");
+         printf("Mesa post-link fragment program:\n");
          _mesa_print_program(&shProg->FragmentProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
       }
@@ -893,11 +893,11 @@ _slang_link(GLcontext *ctx,
       fragNotify = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                                    &shProg->VertexProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         _mesa_printf("Mesa pre-link vertex program:\n");
+         printf("Mesa pre-link vertex program:\n");
          _mesa_print_program(&vertProg->Base);
          _mesa_print_program_parameters(ctx, &vertProg->Base);
 
-         _mesa_printf("Mesa post-link vertex program:\n");
+         printf("Mesa post-link vertex program:\n");
          _mesa_print_program(&shProg->VertexProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
       }
@@ -912,10 +912,10 @@ _slang_link(GLcontext *ctx,
    }
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
-      _mesa_printf("Varying vars:\n");
+      printf("Varying vars:\n");
       _mesa_print_parameter_list(shProg->Varying);
       if (shProg->InfoLog) {
-         _mesa_printf("Info Log: %s\n", shProg->InfoLog);
+         printf("Info Log: %s\n", shProg->InfoLog);
       }
    }
 

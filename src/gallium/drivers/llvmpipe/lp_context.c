@@ -145,6 +145,10 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.bind_vs_state   = llvmpipe_bind_vs_state;
    llvmpipe->pipe.delete_vs_state = llvmpipe_delete_vs_state;
 
+   llvmpipe->pipe.create_vertex_elements_state = llvmpipe_create_vertex_elements_state;
+   llvmpipe->pipe.bind_vertex_elements_state = llvmpipe_bind_vertex_elements_state;
+   llvmpipe->pipe.delete_vertex_elements_state = llvmpipe_delete_vertex_elements_state;
+
    llvmpipe->pipe.set_blend_color = llvmpipe_set_blend_color;
    llvmpipe->pipe.set_stencil_ref = llvmpipe_set_stencil_ref;
    llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
@@ -159,7 +163,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
-   llvmpipe->pipe.set_vertex_elements = llvmpipe_set_vertex_elements;
 
    llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
    llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
@@ -185,7 +188,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
       llvmpipe->no_rast = TRUE;
 
-   llvmpipe->setup = lp_setup_create( screen,
+   llvmpipe->setup = lp_setup_create( &llvmpipe->pipe,
                                       llvmpipe->draw );
    if (!llvmpipe->setup)
       goto fail;

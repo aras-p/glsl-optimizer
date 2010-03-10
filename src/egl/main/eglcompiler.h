@@ -64,8 +64,7 @@
 /**
  * Function visibility
  */
-#if (defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303) \
-	|| (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #  define PUBLIC __attribute__((visibility("default")))
 #else
 #  define PUBLIC
@@ -79,7 +78,7 @@
 #ifndef __FUNCTION__
 # if defined(__VMS)
 #  define __FUNCTION__ "VMS$NL:"
-# elif ((!defined __GNUC__) || (__GNUC__ < 2)) && (!defined __xlC__) && \
+# elif (!defined __GNUC__) && (!defined __xlC__) && \
       (!defined(_MSC_VER) || _MSC_VER < 1300)
 #  if (__STDC_VERSION__ >= 199901L) /* C99 */ || \
     (defined(__SUNPRO_C) && defined(__C99FEATURES__))

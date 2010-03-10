@@ -19,7 +19,8 @@ C_SOURCES = \
 	r300_state_invariant.c \
 	r300_vs.c \
 	r300_texture.c \
-	r300_tgsi_to_rc.c
+	r300_tgsi_to_rc.c \
+	r300_transfer.c
 
 LIBRARY_INCLUDES = \
 	-I$(TOP)/src/mesa/drivers/dri/r300/compiler \
@@ -31,8 +32,6 @@ EXTRA_OBJECTS = \
 	$(COMPILER_ARCHIVE)
 
 include ../../Makefile.template
-
-.PHONY : $(COMPILER_ARCHIVE)
 
 $(COMPILER_ARCHIVE):
 	$(MAKE) -C $(TOP)/src/mesa/drivers/dri/r300/compiler

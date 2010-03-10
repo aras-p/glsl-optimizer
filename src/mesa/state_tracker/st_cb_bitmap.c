@@ -440,6 +440,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_viewport(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
+   cso_save_vertex_elements(cso);
 
    /* rasterizer state: just scissor */
    st->bitmap.rasterizer.scissor = ctx->Scissor.Enabled;
@@ -481,14 +482,19 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5f * width;
       vp.scale[1] = height * (invert ? -0.5f : 0.5f);
-      vp.scale[2] = 1.0f;
+      vp.scale[2] = 0.5f;
       vp.scale[3] = 1.0f;
       vp.translate[0] = 0.5f * width;
       vp.translate[1] = 0.5f * height;
-      vp.translate[2] = 0.0f;
+      vp.translate[2] = 0.5f;
       vp.translate[3] = 0.0f;
       cso_set_viewport(cso, &vp);
    }
+
+   cso_set_vertex_elements(cso, 3, st->velems_util_draw);
+
+   /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
+   z = z * 2.0 - 1.0;
 
    /* draw textured quad */
    offset = setup_bitmap_vertex_data(st, x, y, width, height, z, color);
@@ -506,6 +512,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_viewport(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
+   cso_restore_vertex_elements(cso);
 }
 
 
@@ -536,8 +543,28 @@ reset_cache(struct st_context *st)
                                       st->bitmap.tex_format, 0,
                                       BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
                                       1, PIPE_TEXTURE_USAGE_SAMPLER);
-
 }
+
+
+/** Print bitmap image to stdout (debug) */
+static void
+print_cache(const struct bitmap_cache *cache)
+{
+   int i, j, k;
+
+   for (i = 0; i < BITMAP_CACHE_HEIGHT; i++) {
+      k = BITMAP_CACHE_WIDTH * (BITMAP_CACHE_HEIGHT - i - 1);
+      for (j = 0; j < BITMAP_CACHE_WIDTH; j++) {
+         if (cache->buffer[k])
+            printf("X");
+         else
+            printf(" ");
+         k++;
+      }
+      printf("\n");
+   }
+}
+
 
 static void
 create_cache_trans(struct st_context *st)
@@ -588,6 +615,8 @@ st_flush_bitmap_cache(struct st_context *st)
           * So unmap and release the texture transfer before drawing.
           */
          if (cache->trans) {
+            if (0)
+               print_cache(cache);
             screen->transfer_unmap(screen, cache->trans);
             cache->buffer = NULL;
 
@@ -815,7 +844,7 @@ st_destroy_bitmap(struct st_context *st)
          screen->tex_transfer_destroy(cache->trans);
       }
       pipe_texture_reference(&st->bitmap.cache->texture, NULL);
-      _mesa_free(st->bitmap.cache);
+      free(st->bitmap.cache);
       st->bitmap.cache = NULL;
    }
 }

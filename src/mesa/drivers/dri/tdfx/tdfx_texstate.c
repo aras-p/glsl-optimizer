@@ -2142,11 +2142,13 @@ tdfxUpdateTextureBinding( GLcontext *ctx )
        ctx->Texture.Unit[0]._ReallyEnabled == 0) {
       /* Only unit 0 2D enabled */
       if (shared->umaTexMemory) {
+         assert(ti0);
          fxMesa->TexSource[0].StartAddress = ti0->tm[0]->startAddr;
          fxMesa->TexSource[0].EvenOdd = GR_MIPMAPLEVELMASK_BOTH;
          fxMesa->TexSource[0].Info = &(ti0->info);
       }
       else {
+         assert(ti0);
          if (ti0->LODblend && ti0->whichTMU == TDFX_TMU_SPLIT) {
             fxMesa->TexSource[0].StartAddress = ti0->tm[TDFX_TMU0]->startAddr;
             fxMesa->TexSource[0].EvenOdd = GR_MIPMAPLEVELMASK_ODD;
@@ -2185,20 +2187,26 @@ tdfxUpdateTextureBinding( GLcontext *ctx )
       /* Both 2D enabled */
       if (shared->umaTexMemory) {
          const FxU32 tmu0 = 0, tmu1 = 1;
+
+         assert(ti0);
          fxMesa->TexSource[tmu0].StartAddress = ti0->tm[0]->startAddr;
          fxMesa->TexSource[tmu0].EvenOdd = GR_MIPMAPLEVELMASK_BOTH;
          fxMesa->TexSource[tmu0].Info = &(ti0->info);
 
+         assert(ti1);
          fxMesa->TexSource[tmu1].StartAddress = ti1->tm[0]->startAddr;
          fxMesa->TexSource[tmu1].EvenOdd = GR_MIPMAPLEVELMASK_BOTH;
          fxMesa->TexSource[tmu1].Info = &(ti1->info);
       }
       else {
          const FxU32 tmu0 = 0, tmu1 = 1;
+
+         assert(ti0);
          fxMesa->TexSource[tmu0].StartAddress = ti0->tm[tmu0]->startAddr;
          fxMesa->TexSource[tmu0].EvenOdd = GR_MIPMAPLEVELMASK_BOTH;
          fxMesa->TexSource[tmu0].Info = &(ti0->info);
 
+         assert(ti1);
          fxMesa->TexSource[tmu1].StartAddress = ti1->tm[tmu1]->startAddr;
          fxMesa->TexSource[tmu1].EvenOdd = GR_MIPMAPLEVELMASK_BOTH;
          fxMesa->TexSource[tmu1].Info = &(ti1->info);

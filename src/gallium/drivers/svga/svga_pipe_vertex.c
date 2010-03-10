@@ -26,6 +26,7 @@
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_screen.h"
@@ -49,7 +50,7 @@ static void svga_set_vertex_buffers(struct pipe_context *pipe,
    /* Adjust refcounts */
    for (i = 0; i < count; i++) {
       pipe_buffer_reference(&svga->curr.vb[i].buffer, buffers[i].buffer);
-      if (svga_buffer(buffers[i].buffer)->user)
+      if (svga_buffer_is_user_buffer(buffers[i].buffer))
          any_user_buffer = TRUE;
    }
 
@@ -64,20 +65,37 @@ static void svga_set_vertex_buffers(struct pipe_context *pipe,
    svga->dirty |= SVGA_NEW_VBUFFER;
 }
 
-static void svga_set_vertex_elements(struct pipe_context *pipe,
-                                     unsigned count,
-                                     const struct pipe_vertex_element *elements)
+
+static void *
+svga_create_vertex_elements_state(struct pipe_context *pipe,
+                                  unsigned count,
+                                  const struct pipe_vertex_element *attribs)
+{
+   struct svga_velems_state *velems;
+   assert(count <= PIPE_MAX_ATTRIBS);
+   velems = (struct svga_velems_state *) MALLOC(sizeof(struct svga_velems_state));
+   if (velems) {
+      velems->count = count;
+      memcpy(velems->velem, attribs, sizeof(*attribs) * count);
+   }
+   return velems;
+}
+
+static void svga_bind_vertex_elements_state(struct pipe_context *pipe,
+                                            void *velems)
 {
    struct svga_context *svga = svga_context(pipe);
-   unsigned i;
+   struct svga_velems_state *svga_velems = (struct svga_velems_state *) velems;
 
-   for (i = 0; i < count; i++)
-      svga->curr.ve[i] = elements[i];
-
-   svga->curr.num_vertex_elements = count;
+   svga->curr.velems = svga_velems;
    svga->dirty |= SVGA_NEW_VELEMENT;
 }
 
+static void svga_delete_vertex_elements_state(struct pipe_context *pipe,
+                                              void *velems)
+{
+   FREE(velems);
+}
 
 void svga_cleanup_vertex_state( struct svga_context *svga )
 {
@@ -91,7 +109,9 @@ void svga_cleanup_vertex_state( struct svga_context *svga )
 void svga_init_vertex_functions( struct svga_context *svga )
 {
    svga->pipe.set_vertex_buffers = svga_set_vertex_buffers;
-   svga->pipe.set_vertex_elements = svga_set_vertex_elements;
+   svga->pipe.create_vertex_elements_state = svga_create_vertex_elements_state;
+   svga->pipe.bind_vertex_elements_state = svga_bind_vertex_elements_state;
+   svga->pipe.delete_vertex_elements_state = svga_delete_vertex_elements_state;
 }
 
 

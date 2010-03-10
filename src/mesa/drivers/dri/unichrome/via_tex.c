@@ -951,11 +951,11 @@ void viaInitTextureFuncs(struct dd_function_table * functions)
     * Note that this function is currently disabled in via_tris.c too.
     */
    if (getenv("VIA_NO_SSE"))
-      functions->TextureMemCpy = _mesa_memcpy;
+      functions->TextureMemCpy = memcpy;
    else
       functions->TextureMemCpy = via_sse_memcpy;
 #else
-   functions->TextureMemCpy = _mesa_memcpy;
+   functions->TextureMemCpy = memcpy;
 #endif
 
    functions->UpdateTexturePalette = 0;

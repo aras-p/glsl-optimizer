@@ -717,6 +717,9 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
       if (psc->drawHash == NULL)
          continue;
 
+      /* Initialize per screen dynamic client GLX extensions */
+      psc->ext_list_first_time = GL_TRUE;
+
       if (priv->dri2Display)
          psc->driScreen = (*priv->dri2Display->createScreen) (psc, i, priv);
 

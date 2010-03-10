@@ -173,4 +173,22 @@ OUT_RINGm(struct nouveau_channel *chan, float m[16])
 			OUT_RINGf(chan, m[4*j + i]);
 }
 
+static inline GLboolean
+is_color_operand(int op)
+{
+	return op == GL_SRC_COLOR || op == GL_ONE_MINUS_SRC_COLOR;
+}
+
+static inline GLboolean
+is_negative_operand(int op)
+{
+	return op == GL_ONE_MINUS_SRC_COLOR || op == GL_ONE_MINUS_SRC_ALPHA;
+}
+
+static inline GLboolean
+is_texture_source(int s)
+{
+	return s == GL_TEXTURE || (s >= GL_TEXTURE0 && s <= GL_TEXTURE31);
+}
+
 #endif

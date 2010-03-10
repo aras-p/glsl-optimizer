@@ -752,7 +752,7 @@ subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
    finish_y -= sy;
 
    /*
-   _mesa_printf("%s %d %d\n", __FUNCTION__, start_y, finish_y);  
+   printf("%s %d %d\n", __FUNCTION__, start_y, finish_y);  
    */
 
    for (y = start_y; y < finish_y; y++) {

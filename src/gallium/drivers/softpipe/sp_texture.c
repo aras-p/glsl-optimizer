@@ -36,11 +36,13 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_simple_screen.h"
 
 #include "sp_context.h"
 #include "sp_texture.h"
 #include "sp_screen.h"
-#include "sp_winsys.h"
+
+#include "state_tracker/sw_winsys.h"
 
 
 /**
@@ -72,11 +74,9 @@ softpipe_texture_layout(struct pipe_screen *screen,
       depth = u_minify(depth, 1);
    }
 
-   spt->buffer = screen->buffer_create(screen, 32,
-                                       PIPE_BUFFER_USAGE_PIXEL,
-                                       buffer_size);
+   spt->data = align_malloc(buffer_size, 16);
 
-   return spt->buffer != NULL;
+   return spt->data != NULL;
 }
 
 
@@ -87,19 +87,18 @@ static boolean
 softpipe_displaytarget_layout(struct pipe_screen *screen,
                               struct softpipe_texture * spt)
 {
-   unsigned usage = (PIPE_BUFFER_USAGE_CPU_READ_WRITE |
-                     PIPE_BUFFER_USAGE_GPU_READ_WRITE);
-   unsigned tex_usage = spt->base.tex_usage;
+   struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
 
-   spt->buffer = screen->surface_buffer_create( screen, 
-                                                spt->base.width0, 
-                                                spt->base.height0,
-                                                spt->base.format,
-                                                usage,
-                                                tex_usage,
-                                                &spt->stride[0]);
+   /* Round up the surface size to a multiple of the tile size?
+    */
+   spt->dt = winsys->displaytarget_create(winsys,
+                                          spt->base.format,
+                                          spt->base.width0, 
+                                          spt->base.height0,
+                                          16,
+                                          &spt->stride[0] );
 
-   return spt->buffer != NULL;
+   return spt->dt != NULL;
 }
 
 
@@ -123,7 +122,8 @@ softpipe_texture_create(struct pipe_screen *screen,
                util_is_power_of_two(template->depth0));
 
    if (spt->base.tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                              PIPE_TEXTURE_USAGE_PRIMARY)) {
+                              PIPE_TEXTURE_USAGE_SCANOUT |
+                              PIPE_TEXTURE_USAGE_SHARED)) {
       if (!softpipe_displaytarget_layout(screen, spt))
          goto fail;
    }
@@ -140,46 +140,24 @@ softpipe_texture_create(struct pipe_screen *screen,
 }
 
 
-/**
- * Create a new pipe_texture which wraps an existing buffer.
- */
-static struct pipe_texture *
-softpipe_texture_blanket(struct pipe_screen * screen,
-                         const struct pipe_texture *base,
-                         const unsigned *stride,
-                         struct pipe_buffer *buffer)
-{
-   struct softpipe_texture *spt;
-   assert(screen);
-
-   /* Only supports one type */
-   if (base->target != PIPE_TEXTURE_2D ||
-       base->last_level != 0 ||
-       base->depth0 != 1) {
-      return NULL;
-   }
-
-   spt = CALLOC_STRUCT(softpipe_texture);
-   if (!spt)
-      return NULL;
-
-   spt->base = *base;
-   pipe_reference_init(&spt->base.reference, 1);
-   spt->base.screen = screen;
-   spt->stride[0] = stride[0];
-
-   pipe_buffer_reference(&spt->buffer, buffer);
-
-   return &spt->base;
-}
 
 
 static void
 softpipe_texture_destroy(struct pipe_texture *pt)
 {
+   struct softpipe_screen *screen = softpipe_screen(pt->screen);
    struct softpipe_texture *spt = softpipe_texture(pt);
 
-   pipe_buffer_reference(&spt->buffer, NULL);
+   if (spt->dt) {
+      /* display target */
+      struct sw_winsys *winsys = screen->winsys;
+      winsys->displaytarget_destroy(winsys, spt->dt);
+   }
+   else {
+      /* regular texture */
+      align_free(spt->data);
+   }
+
    FREE(spt);
 }
 
@@ -359,9 +337,20 @@ softpipe_transfer_map( struct pipe_screen *screen,
    spt = softpipe_texture(transfer->texture);
    format = transfer->texture->format;
 
-   map = pipe_buffer_map(screen, spt->buffer, pipe_transfer_buffer_flags(transfer));
-   if (map == NULL)
-      return NULL;
+   if (spt->dt) {
+      /* display target */
+      struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+
+      map = winsys->displaytarget_map(winsys, spt->dt,
+                                      pipe_transfer_buffer_flags(transfer));
+      if (map == NULL)
+         return NULL;
+   }
+   else {
+      map = spt->data;
+      if (map == NULL)
+         return NULL;
+   }
 
    /* May want to different things here depending on read/write nature
     * of the map:
@@ -393,7 +382,11 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
    assert(transfer->texture);
    spt = softpipe_texture(transfer->texture);
 
-   pipe_buffer_unmap( screen, spt->buffer );
+   if (spt->dt) {
+      /* display target */
+      struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+      winsys->displaytarget_unmap(winsys, spt->dt);
+   }
 
    if (transfer->usage & PIPE_TRANSFER_WRITE) {
       /* Mark the texture as dirty to expire the tile caches. */
@@ -426,7 +419,7 @@ softpipe_video_surface_create(struct pipe_screen *screen,
 
    memset(&template, 0, sizeof(struct pipe_texture));
    template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
    template.last_level = 0;
    /* vl_mpeg12_mc_renderer expects this when it's initialized with pot_buffers=true */
    template.width0 = util_next_power_of_two(width);
@@ -458,7 +451,6 @@ void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = softpipe_texture_create;
-   screen->texture_blanket = softpipe_texture_blanket;
    screen->texture_destroy = softpipe_texture_destroy;
 
    screen->get_tex_surface = softpipe_get_tex_surface;
@@ -474,24 +466,4 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 }
 
 
-/**
- * Return pipe_buffer handle and stride for given texture object.
- * XXX used for???
- */
-boolean
-softpipe_get_texture_buffer( struct pipe_texture *texture,
-                             struct pipe_buffer **buf,
-                             unsigned *stride )
-{
-   struct softpipe_texture *tex = (struct softpipe_texture *) texture;
 
-   if (!tex)
-      return FALSE;
-
-   pipe_buffer_reference(buf, tex->buffer);
-
-   if (stride)
-      *stride = tex->stride[0];
-
-   return TRUE;
-}

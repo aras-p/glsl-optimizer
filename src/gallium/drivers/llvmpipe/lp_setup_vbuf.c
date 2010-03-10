@@ -231,57 +231,29 @@ lp_setup_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
       break;
 
    case PIPE_PRIM_QUADS:
-      if (setup->flatshade_first) {
-         for (i = 3; i < nr; i += 4) {
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, indices[i-2], stride),
-                             get_vert(vertex_buffer, indices[i-1], stride),
-                             get_vert(vertex_buffer, indices[i-3], stride) );
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, indices[i-1], stride),
-                             get_vert(vertex_buffer, indices[i-0], stride),
-                             get_vert(vertex_buffer, indices[i-3], stride) );
-         }
-      }
-      else {
-         for (i = 3; i < nr; i += 4) {
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, indices[i-3], stride),
-                             get_vert(vertex_buffer, indices[i-2], stride),
-                             get_vert(vertex_buffer, indices[i-0], stride) );
+      for (i = 3; i < nr; i += 4) {
+         setup->triangle( setup,
+                          get_vert(vertex_buffer, indices[i-3], stride),
+                          get_vert(vertex_buffer, indices[i-2], stride),
+                          get_vert(vertex_buffer, indices[i-0], stride) );
 
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, indices[i-2], stride),
-                             get_vert(vertex_buffer, indices[i-1], stride),
-                             get_vert(vertex_buffer, indices[i-0], stride) );
-         }
+         setup->triangle( setup,
+                          get_vert(vertex_buffer, indices[i-2], stride),
+                          get_vert(vertex_buffer, indices[i-1], stride),
+                          get_vert(vertex_buffer, indices[i-0], stride) );
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      if (setup->flatshade_first) {
-         for (i = 3; i < nr; i += 2) {
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, indices[i-0], stride),
-                             get_vert(vertex_buffer, indices[i-1], stride),
-                             get_vert(vertex_buffer, indices[i-3], stride));
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, indices[i-2], stride),
-                             get_vert(vertex_buffer, indices[i-0], stride),
-                             get_vert(vertex_buffer, indices[i-3], stride) );
-         }
-      }
-      else {
-         for (i = 3; i < nr; i += 2) {
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, indices[i-3], stride),
-                             get_vert(vertex_buffer, indices[i-2], stride),
-                             get_vert(vertex_buffer, indices[i-0], stride) );
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, indices[i-1], stride),
-                             get_vert(vertex_buffer, indices[i-3], stride),
-                             get_vert(vertex_buffer, indices[i-0], stride) );
-         }
+      for (i = 3; i < nr; i += 2) {
+         setup->triangle( setup,
+                          get_vert(vertex_buffer, indices[i-3], stride),
+                          get_vert(vertex_buffer, indices[i-2], stride),
+                          get_vert(vertex_buffer, indices[i-0], stride) );
+         setup->triangle( setup,
+                          get_vert(vertex_buffer, indices[i-1], stride),
+                          get_vert(vertex_buffer, indices[i-3], stride),
+                          get_vert(vertex_buffer, indices[i-0], stride) );
       }
       break;
 
@@ -415,57 +387,28 @@ lp_setup_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
       break;
 
    case PIPE_PRIM_QUADS:
-      if (setup->flatshade_first) {
-         for (i = 3; i < nr; i += 4) {
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, i-2, stride),
-                             get_vert(vertex_buffer, i-1, stride),
-                             get_vert(vertex_buffer, i-3, stride) );
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, i-1, stride),
-                             get_vert(vertex_buffer, i-0, stride),
-                             get_vert(vertex_buffer, i-3, stride) );
-         }
-      }
-      else {
-         for (i = 3; i < nr; i += 4) {
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, i-3, stride),
-                             get_vert(vertex_buffer, i-2, stride),
-                             get_vert(vertex_buffer, i-0, stride) );
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, i-2, stride),
-                             get_vert(vertex_buffer, i-1, stride),
-                             get_vert(vertex_buffer, i-0, stride) );
-         }
+      for (i = 3; i < nr; i += 4) {
+         setup->triangle( setup,
+                          get_vert(vertex_buffer, i-3, stride),
+                          get_vert(vertex_buffer, i-2, stride),
+                          get_vert(vertex_buffer, i-0, stride) );
+         setup->triangle( setup,
+                          get_vert(vertex_buffer, i-2, stride),
+                          get_vert(vertex_buffer, i-1, stride),
+                          get_vert(vertex_buffer, i-0, stride) );
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      if (setup->flatshade_first) {
-         for (i = 3; i < nr; i += 2) {
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, i-0, stride),
-                             get_vert(vertex_buffer, i-1, stride),
-                             get_vert(vertex_buffer, i-3, stride) );
-            setup->triangle( setup,
-
-                             get_vert(vertex_buffer, i-2, stride),
-                             get_vert(vertex_buffer, i-0, stride),
-                             get_vert(vertex_buffer, i-3, stride) );
-         }
-      }
-      else {
-         for (i = 3; i < nr; i += 2) {
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, i-3, stride),
-                             get_vert(vertex_buffer, i-2, stride),
-                             get_vert(vertex_buffer, i-0, stride) );
-            setup->triangle( setup,
-                             get_vert(vertex_buffer, i-1, stride),
-                             get_vert(vertex_buffer, i-3, stride),
-                             get_vert(vertex_buffer, i-0, stride) );
-         }
+      for (i = 3; i < nr; i += 2) {
+         setup->triangle( setup,
+                          get_vert(vertex_buffer, i-3, stride),
+                          get_vert(vertex_buffer, i-2, stride),
+                          get_vert(vertex_buffer, i-0, stride) );
+         setup->triangle( setup,
+                          get_vert(vertex_buffer, i-1, stride),
+                          get_vert(vertex_buffer, i-3, stride),
+                          get_vert(vertex_buffer, i-0, stride) );
       }
       break;
 

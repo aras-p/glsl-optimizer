@@ -89,7 +89,6 @@ struct wm_sampler_key {
       float max_aniso;
       GLenum minfilter, magfilter;
       GLenum comparemode, comparefunc;
-      dri_bo *sdc_bo;
 
       /** If target is cubemap, take context setting.
        */
@@ -105,7 +104,7 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
 				     dri_bo *sdc_bo,
 				     struct brw_sampler_state *sampler)
 {
-   _mesa_memset(sampler, 0, sizeof(*sampler));
+   memset(sampler, 0, sizeof(*sampler));
 
    switch (key->minfilter) {
    case GL_NEAREST:
@@ -230,7 +229,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
    GLcontext *ctx = &brw->intel.ctx;
    int unit;
 
-   memset(key, 0, sizeof(*key));
+   key->sampler_count = 0;
 
    for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
       if (ctx->Texture.Unit[unit]._ReallyEnabled) {
@@ -240,6 +239,8 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 struct intel_texture_object *intelObj = intel_texture_object(texObj);
 	 struct gl_texture_image *firstImage =
 	    texObj->Image[0][intelObj->firstLevel];
+
+	 memset(entry, 0, sizeof(*entry));
 
          entry->tex_target = texObj->Target;
 
@@ -289,7 +290,7 @@ static void upload_wm_samplers( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct wm_sampler_key key;
-   int i;
+   int i, sampler_key_size;
 
    brw_wm_sampler_populate_key(brw, &key);
 
@@ -303,8 +304,11 @@ static void upload_wm_samplers( struct brw_context *brw )
    if (brw->wm.sampler_count == 0)
       return;
 
+   /* Only include the populated portion of the key in the search. */
+   sampler_key_size = offsetof(struct wm_sampler_key,
+			       sampler[key.sampler_count]);
    brw->wm.sampler_bo = brw_search_cache(&brw->cache, BRW_SAMPLER,
-					 &key, sizeof(key),
+					 &key, sampler_key_size,
 					 brw->wm.sdc_bo, key.sampler_count,
 					 NULL);
 
@@ -324,7 +328,7 @@ static void upload_wm_samplers( struct brw_context *brw )
       }
 
       brw->wm.sampler_bo = brw_upload_cache(&brw->cache, BRW_SAMPLER,
-					    &key, sizeof(key),
+					    &key, sampler_key_size,
 					    brw->wm.sdc_bo, key.sampler_count,
 					    &sampler, sizeof(sampler));
 

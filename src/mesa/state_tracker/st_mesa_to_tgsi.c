@@ -1055,7 +1055,7 @@ out:
 
 
 /**
- * Tokens cannot be free with _mesa_free otherwise the builtin gallium
+ * Tokens cannot be free with free otherwise the builtin gallium
  * malloc debugging will get confused.
  */
 void

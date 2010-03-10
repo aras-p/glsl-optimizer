@@ -25,7 +25,7 @@
 #include "main/state.h"
 #include "main/imports.h"
 
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_OES_draw_texture

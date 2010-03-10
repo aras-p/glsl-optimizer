@@ -774,6 +774,70 @@ trace_context_delete_vs_state(struct pipe_context *_pipe,
 }
 
 
+static INLINE void *
+trace_context_create_vertex_elements_state(struct pipe_context *_pipe,
+                                           unsigned num_elements,
+                                           const struct  pipe_vertex_element *elements)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   void * result;
+
+   trace_dump_call_begin("pipe_context", "create_vertex_elements_state");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(uint, num_elements);
+
+   trace_dump_arg_begin("elements");
+   trace_dump_struct_array(vertex_element, elements, num_elements);
+   trace_dump_arg_end();
+
+   result = pipe->create_vertex_elements_state(pipe, num_elements, elements);
+
+   trace_dump_ret(ptr, result);
+
+   trace_dump_call_end();
+
+   return result;
+}
+
+
+static INLINE void
+trace_context_bind_vertex_elements_state(struct pipe_context *_pipe,
+                                         void *state)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "bind_vertex_elements_state");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, state);
+
+   pipe->bind_vertex_elements_state(pipe, state);
+
+   trace_dump_call_end();
+}
+
+
+static INLINE void
+trace_context_delete_vertex_elements_state(struct pipe_context *_pipe,
+                                           void *state)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "delete_verte_elements_state");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, state);
+
+   pipe->delete_vertex_elements_state(pipe, state);
+
+   trace_dump_call_end();
+}
+
+
 static INLINE void
 trace_context_set_blend_color(struct pipe_context *_pipe,
                               const struct pipe_blend_color *state)
@@ -1105,29 +1169,6 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
 
 
 static INLINE void
-trace_context_set_vertex_elements(struct pipe_context *_pipe,
-                                  unsigned num_elements,
-                                  const struct pipe_vertex_element *elements)
-{
-   struct trace_context *tr_ctx = trace_context(_pipe);
-   struct pipe_context *pipe = tr_ctx->pipe;
-
-   trace_dump_call_begin("pipe_context", "set_vertex_elements");
-
-   trace_dump_arg(ptr, pipe);
-   trace_dump_arg(uint, num_elements);
-
-   trace_dump_arg_begin("elements");
-   trace_dump_struct_array(vertex_element, elements, num_elements);
-   trace_dump_arg_end();
-
-   pipe->set_vertex_elements(pipe, num_elements, elements);
-
-   trace_dump_call_end();
-}
-
-
-static INLINE void
 trace_context_surface_copy(struct pipe_context *_pipe,
                            struct pipe_surface *dest,
                            unsigned destx, unsigned desty,
@@ -1360,6 +1401,9 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.create_vs_state = trace_context_create_vs_state;
    tr_ctx->base.bind_vs_state = trace_context_bind_vs_state;
    tr_ctx->base.delete_vs_state = trace_context_delete_vs_state;
+   tr_ctx->base.create_vertex_elements_state = trace_context_create_vertex_elements_state;
+   tr_ctx->base.bind_vertex_elements_state = trace_context_bind_vertex_elements_state;
+   tr_ctx->base.delete_vertex_elements_state = trace_context_delete_vertex_elements_state;
    tr_ctx->base.set_blend_color = trace_context_set_blend_color;
    tr_ctx->base.set_stencil_ref = trace_context_set_stencil_ref;
    tr_ctx->base.set_clip_state = trace_context_set_clip_state;
@@ -1373,7 +1417,6 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.create_sampler_view = trace_create_sampler_view;
    tr_ctx->base.sampler_view_destroy = trace_sampler_view_destroy;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
-   tr_ctx->base.set_vertex_elements = trace_context_set_vertex_elements;
    if (pipe->surface_copy)
       tr_ctx->base.surface_copy = trace_context_surface_copy;
    if (pipe->surface_fill)

@@ -33,8 +33,6 @@
  * The following macros may be defined to indicate what auxillary information
  * must be copmuted across the triangle:
  *    DO_Z         - if defined, compute Z values
- *    DO_RGBA      - if defined, compute RGBA values
- *    DO_INDEX     - if defined, compute color index values
  *    DO_ATTRIBS   - if defined, compute texcoords, varying, etc.
  */
 
@@ -55,12 +53,7 @@
 #ifdef DO_Z
    GLfloat zPlane[4];
 #endif
-#ifdef DO_RGBA
    GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];
-#endif
-#ifdef DO_INDEX
-   GLfloat iPlane[4];
-#endif
 #if defined(DO_ATTRIBS)
    GLfloat attrPlane[FRAG_ATTRIB_MAX][4][4];
    GLfloat wPlane[4];  /* win[3] */
@@ -126,7 +119,6 @@
    compute_plane(p0, p1, p2, p0[2], p1[2], p2[2], zPlane);
    span.arrayMask |= SPAN_Z;
 #endif
-#ifdef DO_RGBA
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       compute_plane(p0, p1, p2, v0->color[RCOMP], v1->color[RCOMP], v2->color[RCOMP], rPlane);
       compute_plane(p0, p1, p2, v0->color[GCOMP], v1->color[GCOMP], v2->color[GCOMP], gPlane);
@@ -140,17 +132,6 @@
       constant_plane(v2->color[ACOMP], aPlane);
    }
    span.arrayMask |= SPAN_RGBA;
-#endif
-#ifdef DO_INDEX
-   if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      compute_plane(p0, p1, p2, (GLfloat) v0->attrib[FRAG_ATTRIB_CI][0],
-                    v1->attrib[FRAG_ATTRIB_CI][0], v2->attrib[FRAG_ATTRIB_CI][0], iPlane);
-   }
-   else {
-      constant_plane(v2->attrib[FRAG_ATTRIB_CI][0], iPlane);
-   }
-   span.arrayMask |= SPAN_INDEX;
-#endif
 #if defined(DO_ATTRIBS)
    {
       const GLfloat invW0 = v0->attrib[FRAG_ATTRIB_WPOS][3];
@@ -234,23 +215,14 @@
             /* (cx,cy) = center of fragment */
             const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
             SWspanarrays *array = span.array;
-#ifdef DO_INDEX
-            array->coverage[count] = (GLfloat) compute_coveragei(pMin, pMid, pMax, ix, iy);
-#else
             array->coverage[count] = coverage;
-#endif
 #ifdef DO_Z
             array->z[count] = (GLuint) solve_plane(cx, cy, zPlane);
 #endif
-#ifdef DO_RGBA
             array->rgba[count][RCOMP] = solve_plane_chan(cx, cy, rPlane);
             array->rgba[count][GCOMP] = solve_plane_chan(cx, cy, gPlane);
             array->rgba[count][BCOMP] = solve_plane_chan(cx, cy, bPlane);
             array->rgba[count][ACOMP] = solve_plane_chan(cx, cy, aPlane);
-#endif
-#ifdef DO_INDEX
-            array->index[count] = (GLint) solve_plane(cx, cy, iPlane);
-#endif
             ix++;
             count++;
             coverage = compute_coveragef(pMin, pMid, pMax, ix, iy);
@@ -262,11 +234,7 @@
          span.x = startX;
          span.y = iy;
          span.end = (GLuint) ix - (GLuint) startX;
-#if defined(DO_RGBA)
          _swrast_write_rgba_span(ctx, &span);
-#else
-         _swrast_write_index_span(ctx, &span);
-#endif
       }
    }
    else {
@@ -304,23 +272,14 @@
             const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
             SWspanarrays *array = span.array;
             ASSERT(ix >= 0);
-#ifdef DO_INDEX
-            array->coverage[ix] = (GLfloat) compute_coveragei(pMin, pMax, pMid, ix, iy);
-#else
             array->coverage[ix] = coverage;
-#endif
 #ifdef DO_Z
             array->z[ix] = (GLuint) solve_plane(cx, cy, zPlane);
 #endif
-#ifdef DO_RGBA
             array->rgba[ix][RCOMP] = solve_plane_chan(cx, cy, rPlane);
             array->rgba[ix][GCOMP] = solve_plane_chan(cx, cy, gPlane);
             array->rgba[ix][BCOMP] = solve_plane_chan(cx, cy, bPlane);
             array->rgba[ix][ACOMP] = solve_plane_chan(cx, cy, aPlane);
-#endif
-#ifdef DO_INDEX
-            array->index[ix] = (GLint) solve_plane(cx, cy, iPlane);
-#endif
             ix--;
             count++;
             coverage = compute_coveragef(pMin, pMax, pMid, ix, iy);
@@ -351,12 +310,7 @@
             GLint j;
             for (j = 0; j < (GLint) n; j++) {
                array->coverage[j] = array->coverage[j + left];
-#ifdef DO_RGBA
                COPY_CHAN4(array->rgba[j], array->rgba[j + left]);
-#endif
-#ifdef DO_INDEX
-               array->index[j] = array->index[j + left];
-#endif
 #ifdef DO_Z
                array->z[j] = array->z[j + left];
 #endif
@@ -366,18 +320,12 @@
          span.x = left;
          span.y = iy;
          span.end = n;
-#if defined(DO_RGBA)
          _swrast_write_rgba_span(ctx, &span);
-#else
-         _swrast_write_index_span(ctx, &span);
-#endif
       }
    }
 }
 
 
 #undef DO_Z
-#undef DO_RGBA
-#undef DO_INDEX
 #undef DO_ATTRIBS
 #undef DO_OCCLUSION_TEST

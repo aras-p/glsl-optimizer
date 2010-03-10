@@ -144,7 +144,13 @@ _eglOpenLibrary(const char *driverPath, lib_handle *handle)
       mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
 #elif defined(_EGL_PLATFORM_POSIX)
    if (lib) {
-      mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
+      union {
+         _EGLMain_t func;
+         void *ptr;
+      } tmp = { NULL };
+      /* direct cast gives a warning when compiled with -pedantic */
+      tmp.ptr = dlsym(lib, "_eglMain");
+      mainFunc = tmp.func;
       if (!mainFunc)
          error = dlerror();
    }

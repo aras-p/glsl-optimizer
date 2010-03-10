@@ -25,7 +25,7 @@ import sys
 import os.path
 import getopt
 
-GLAPI = "../../glapi"
+GLAPI = "../../glapi/gen"
 sys.path.append(GLAPI)
 
 import gl_XML

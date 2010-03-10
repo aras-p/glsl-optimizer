@@ -73,7 +73,7 @@ _mesa_dlsym(void *handle, const char *fname)
    /* need '_' prefix on symbol names */
    char fname2[1000];
    fname2[0] = '_';
-   _mesa_strncpy(fname2 + 1, fname, 998);
+   strncpy(fname2 + 1, fname, 998);
    fname2[999] = 0;
    return (GenericFunc) dlsym(handle, fname2);
 #elif defined(_GNU_SOURCE)

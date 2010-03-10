@@ -241,7 +241,7 @@ alloc_local_temp(slang_emit_info *emitInfo, slang_ir_storage *temp, GLint size)
 {
    assert(size >= 1);
    assert(size <= 4);
-   _mesa_bzero(temp, sizeof(*temp));
+   memset(temp, 0, sizeof(*temp));
    temp->Size = size;
    temp->File = PROGRAM_TEMPORARY;
    temp->Index = -1;
@@ -754,7 +754,7 @@ instruction_annotation(gl_inst_opcode opcode, char *dstAnnot,
    s = (char *) malloc(len);
    sprintf(s, "%s = %s %s %s %s", dstAnnot,
            srcAnnot0, operator, srcAnnot1, srcAnnot2);
-   assert(_mesa_strlen(s) < len);
+   assert(strlen(s) < len);
 
    free(dstAnnot);
    free(srcAnnot0);
@@ -1136,7 +1136,7 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
     * dest for this clamp() is an output reg, we can't use that reg for
     * the intermediate result.  Use a temp register instead.
     */
-   _mesa_bzero(&tmpNode, sizeof(tmpNode));
+   memset(&tmpNode, 0, sizeof(tmpNode));
    if (!alloc_node_storage(emitInfo, &tmpNode, n->Store->Size)) {
       return NULL;
    }
@@ -2304,7 +2304,7 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
          char s[100];
          /* XXX isn't this really an out of memory/resources error? */
          _mesa_snprintf(s, sizeof(s), "Undefined variable '%s'",
-                        (char *) n->Var->a_name);
+		  (char *) n->Var->a_name);
          slang_info_log_error(emitInfo->log, s);
          return NULL;
       }
@@ -2528,7 +2528,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
    GLuint *subroutineLoc, i, total;
 
    subroutineLoc
-      = (GLuint *) _mesa_malloc(emitInfo->NumSubroutines * sizeof(GLuint));
+      = (GLuint *) malloc(emitInfo->NumSubroutines * sizeof(GLuint));
 
    /* total number of instructions */
    total = mainP->NumInstructions;
@@ -2566,7 +2566,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
 
    /* free subroutine list */
    if (emitInfo->Subroutines) {
-      _mesa_free(emitInfo->Subroutines);
+      free(emitInfo->Subroutines);
       emitInfo->Subroutines = NULL;
    }
    emitInfo->NumSubroutines = 0;
@@ -2585,7 +2585,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
       }
    }
 
-   _mesa_free(subroutineLoc);
+   free(subroutineLoc);
 }
 
 

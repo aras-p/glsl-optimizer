@@ -107,12 +107,30 @@ lp_build_max(struct lp_build_context *bld,
              LLVMValueRef b);
 
 LLVMValueRef
+lp_build_clamp(struct lp_build_context *bld,
+               LLVMValueRef a,
+               LLVMValueRef min,
+               LLVMValueRef max);
+
+LLVMValueRef
 lp_build_abs(struct lp_build_context *bld,
              LLVMValueRef a);
 
 LLVMValueRef
+lp_build_negate(struct lp_build_context *bld,
+                LLVMValueRef a);
+
+LLVMValueRef
 lp_build_sgn(struct lp_build_context *bld,
              LLVMValueRef a);
+
+LLVMValueRef
+lp_build_set_sign(struct lp_build_context *bld,
+                  LLVMValueRef a, LLVMValueRef sign);
+
+LLVMValueRef
+lp_build_int_to_float(struct lp_build_context *bld,
+                      LLVMValueRef a);
 
 LLVMValueRef
 lp_build_round(struct lp_build_context *bld,
@@ -128,6 +146,10 @@ lp_build_ceil(struct lp_build_context *bld,
 
 LLVMValueRef
 lp_build_trunc(struct lp_build_context *bld,
+               LLVMValueRef a);
+
+LLVMValueRef
+lp_build_fract(struct lp_build_context *bld,
                LLVMValueRef a);
 
 LLVMValueRef

@@ -20,7 +20,7 @@ nv40_miptree_layout(struct nv40_miptree *mt)
 		                           PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
 		                           PIPE_TEXTURE_USAGE_RENDER_TARGET |
 		                           PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-		                           PIPE_TEXTURE_USAGE_PRIMARY);
+		                           PIPE_TEXTURE_USAGE_SCANOUT);
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		nr_faces = 6;
@@ -80,7 +80,7 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	    pt->height0 & (pt->height0 - 1))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else
-	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
+	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_SCANOUT |
 	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
 	                     PIPE_TEXTURE_USAGE_DEPTH_STENCIL))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
@@ -90,8 +90,8 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	else {
 		switch (pt->format) {
 		/* TODO: Figure out which formats can be swizzled */
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		case PIPE_FORMAT_B8G8R8A8_UNORM:
+		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
 		{
 			if (debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE))
@@ -227,9 +227,10 @@ void
 nv40_screen_init_miptree_functions(struct pipe_screen *pscreen)
 {
 	pscreen->texture_create = nv40_miptree_create;
-	pscreen->texture_blanket = nv40_miptree_blanket;
 	pscreen->texture_destroy = nv40_miptree_destroy;
 	pscreen->get_tex_surface = nv40_miptree_surface_new;
 	pscreen->tex_surface_destroy = nv40_miptree_surface_del;
+
+	nouveau_screen(pscreen)->texture_blanket = nv40_miptree_blanket;
 }
 

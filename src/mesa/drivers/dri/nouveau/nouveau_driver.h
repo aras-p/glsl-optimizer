@@ -70,7 +70,7 @@ struct nouveau_driver {
 };
 
 #define nouveau_error(format, ...) \
-	_mesa_fprintf(stderr, "%s: " format, __func__, ## __VA_ARGS__)
+	fprintf(stderr, "%s: " format, __func__, ## __VA_ARGS__)
 
 void
 nouveau_clear(GLcontext *ctx, GLbitfield buffers);

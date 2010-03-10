@@ -1319,7 +1319,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
    else {
       /* RGBA format */
       GLfloat *tempSrc =
-         (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+         (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
       if (tempSrc && texDest) {
          const GLint dims = 2;
@@ -1359,7 +1359,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
       }
 
       if (tempSrc)
-         _mesa_free(tempSrc);
+         free(tempSrc);
    }
 
    st_texture_image_unmap(ctx->st, stImage);
@@ -1717,18 +1717,15 @@ copy_image_data_to_texture(struct st_context *st,
       st_texture_image_copy(st->pipe,
                             stObj->pt, dstLevel,  /* dest texture, level */
                             stImage->pt, /* src texture */
-                            stImage->face
-                            );
+                            stImage->face);
 
       pipe_texture_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
       /* More straightforward upload.  
        */
-
       st_teximage_flush_before_map(st, stObj->pt, stImage->face, dstLevel,
 				   PIPE_TRANSFER_WRITE);
-
 
       st_texture_image_data(st,
                             stObj->pt,

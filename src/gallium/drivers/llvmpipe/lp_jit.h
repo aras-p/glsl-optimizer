@@ -39,6 +39,7 @@
 #include "gallivm/lp_bld_struct.h"
 
 #include "pipe/p_state.h"
+#include "lp_texture.h"
 
 
 struct llvmpipe_screen;
@@ -48,14 +49,18 @@ struct lp_jit_texture
 {
    uint32_t width;
    uint32_t height;
+   uint32_t depth;
+   uint32_t last_level;
    uint32_t stride;
-   const void *data;
+   const void *data[LP_MAX_TEXTURE_2D_LEVELS];
 };
 
 
 enum {
    LP_JIT_TEXTURE_WIDTH = 0,
    LP_JIT_TEXTURE_HEIGHT,
+   LP_JIT_TEXTURE_DEPTH,
+   LP_JIT_TEXTURE_LAST_LEVEL,
    LP_JIT_TEXTURE_STRIDE,
    LP_JIT_TEXTURE_DATA
 };

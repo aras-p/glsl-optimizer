@@ -1250,6 +1250,7 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
 
     if(pAsm->aArgSubst[1+src] >= 0) 
     {
+        assert(fld >= 0);
         setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
         pAsm->S[fld].src.rtype = SRC_REG_TEMPORARY;
         pAsm->S[fld].src.reg   = pAsm->aArgSubst[1+src];
@@ -1745,18 +1746,21 @@ GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
     switch (source_index) 
     {
         case 0:
+            assert(alu_instruction_ptr);
             alu_instruction_ptr->m_Word0.f.src0_sel  = src_sel;
             alu_instruction_ptr->m_Word0.f.src0_rel  = src_rel;
             alu_instruction_ptr->m_Word0.f.src0_chan = src_chan;
             alu_instruction_ptr->m_Word0.f.src0_neg  = src_neg;
             break;
         case 1:
+            assert(alu_instruction_ptr);
             alu_instruction_ptr->m_Word0.f.src1_sel  = src_sel;
             alu_instruction_ptr->m_Word0.f.src1_rel  = src_rel;
             alu_instruction_ptr->m_Word0.f.src1_chan = src_chan;
             alu_instruction_ptr->m_Word0.f.src1_neg  = src_neg;
             break;
         case 2:
+            assert(alu_instruction_ptr);
             alu_instruction_ptr->m_Word1_OP3.f.src2_sel  = src_sel;
             alu_instruction_ptr->m_Word1_OP3.f.src2_rel  = src_rel;
             alu_instruction_ptr->m_Word1_OP3.f.src2_chan = src_chan;

@@ -974,6 +974,13 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
    assert(fs != llvmpipe->fs);
    (void) llvmpipe;
 
+   /*
+    * XXX: we need to flush the context until we have some sort of reference
+    * counting in fragment shaders as they may still be binned
+    */
+   draw_flush(llvmpipe->draw);
+   lp_setup_flush(llvmpipe->setup, 0);
+
    variant = shader->variants;
    while(variant) {
       struct lp_fragment_shader_variant *next = variant->next;

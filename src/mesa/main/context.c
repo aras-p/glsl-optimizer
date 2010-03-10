@@ -184,7 +184,6 @@ _mesa_notifySwapBuffers(__GLcontext *ctx)
  * Allocates a GLvisual structure and initializes it via
  * _mesa_initialize_visual().
  * 
- * \param rgbFlag GL_TRUE for RGB(A) mode, GL_FALSE for Color Index mode.
  * \param dbFlag double buffering
  * \param stereoFlag stereo buffer
  * \param depthBits requested bits per depth buffer value. Any value in [0, 32]
@@ -206,14 +205,12 @@ _mesa_notifySwapBuffers(__GLcontext *ctx)
  * \note Need to add params for level and numAuxBuffers (at least)
  */
 GLvisual *
-_mesa_create_visual( GLboolean rgbFlag,
-                     GLboolean dbFlag,
+_mesa_create_visual( GLboolean dbFlag,
                      GLboolean stereoFlag,
                      GLint redBits,
                      GLint greenBits,
                      GLint blueBits,
                      GLint alphaBits,
-                     GLint indexBits,
                      GLint depthBits,
                      GLint stencilBits,
                      GLint accumRedBits,
@@ -222,15 +219,15 @@ _mesa_create_visual( GLboolean rgbFlag,
                      GLint accumAlphaBits,
                      GLint numSamples )
 {
-   GLvisual *vis = (GLvisual *) _mesa_calloc(sizeof(GLvisual));
+   GLvisual *vis = (GLvisual *) calloc(1, sizeof(GLvisual));
    if (vis) {
-      if (!_mesa_initialize_visual(vis, rgbFlag, dbFlag, stereoFlag,
+      if (!_mesa_initialize_visual(vis, dbFlag, stereoFlag,
                                    redBits, greenBits, blueBits, alphaBits,
-                                   indexBits, depthBits, stencilBits,
+                                   depthBits, stencilBits,
                                    accumRedBits, accumGreenBits,
                                    accumBlueBits, accumAlphaBits,
                                    numSamples)) {
-         _mesa_free(vis);
+         free(vis);
          return NULL;
       }
    }
@@ -248,14 +245,12 @@ _mesa_create_visual( GLboolean rgbFlag,
  */
 GLboolean
 _mesa_initialize_visual( GLvisual *vis,
-                         GLboolean rgbFlag,
                          GLboolean dbFlag,
                          GLboolean stereoFlag,
                          GLint redBits,
                          GLint greenBits,
                          GLint blueBits,
                          GLint alphaBits,
-                         GLint indexBits,
                          GLint depthBits,
                          GLint stencilBits,
                          GLint accumRedBits,
@@ -277,7 +272,7 @@ _mesa_initialize_visual( GLvisual *vis,
    assert(accumBlueBits >= 0);
    assert(accumAlphaBits >= 0);
 
-   vis->rgbMode          = rgbFlag;
+   vis->rgbMode          = GL_TRUE;
    vis->doubleBufferMode = dbFlag;
    vis->stereoMode       = stereoFlag;
 
@@ -287,7 +282,7 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->alphaBits        = alphaBits;
    vis->rgbBits          = redBits + greenBits + blueBits;
 
-   vis->indexBits      = indexBits;
+   vis->indexBits      = 0;
    vis->depthBits      = depthBits;
    vis->stencilBits    = stencilBits;
 
@@ -320,7 +315,7 @@ _mesa_initialize_visual( GLvisual *vis,
 void
 _mesa_destroy_visual( GLvisual *vis )
 {
-   _mesa_free(vis);
+   free(vis);
 }
 
 /*@}*/
@@ -755,7 +750,7 @@ alloc_dispatch_table(void)
    GLint numEntries = MAX2(_glapi_get_dispatch_table_size(),
                            sizeof(struct _glapi_table) / sizeof(_glapi_proc));
    struct _glapi_table *table =
-      (struct _glapi_table *) _mesa_malloc(numEntries * sizeof(_glapi_proc));
+      (struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
    if (table) {
       _glapi_proc *entry = (_glapi_proc *) table;
       GLint i;
@@ -850,7 +845,7 @@ _mesa_initialize_context(GLcontext *ctx,
    if (!ctx->Exec || !ctx->Save) {
       _mesa_release_shared_state(ctx, ctx->Shared);
       if (ctx->Exec)
-         _mesa_free(ctx->Exec);
+         free(ctx->Exec);
       return GL_FALSE;
    }
 #if FEATURE_dispatch
@@ -913,7 +908,7 @@ _mesa_create_context(const GLvisual *visual,
    ASSERT(visual);
    /*ASSERT(driverContext);*/
 
-   ctx = (GLcontext *) _mesa_calloc(sizeof(GLcontext));
+   ctx = (GLcontext *) calloc(1, sizeof(GLcontext));
    if (!ctx)
       return NULL;
 
@@ -922,7 +917,7 @@ _mesa_create_context(const GLvisual *visual,
       return ctx;
    }
    else {
-      _mesa_free(ctx);
+      free(ctx);
       return NULL;
    }
 }
@@ -989,8 +984,8 @@ _mesa_free_context_data( GLcontext *ctx )
 #endif
 
    /* free dispatch tables */
-   _mesa_free(ctx->Exec);
-   _mesa_free(ctx->Save);
+   free(ctx->Exec);
+   free(ctx->Save);
 
    /* Shared context state (display lists, textures, etc) */
    _mesa_release_shared_state( ctx, ctx->Shared );
@@ -999,10 +994,10 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_display_list_data(ctx);
 
    if (ctx->Extensions.String)
-      _mesa_free((void *) ctx->Extensions.String);
+      free((void *) ctx->Extensions.String);
 
    if (ctx->VersionString)
-      _mesa_free(ctx->VersionString);
+      free(ctx->VersionString);
 
    /* unbind the context if it's currently bound */
    if (ctx == _mesa_get_current_context()) {
@@ -1023,7 +1018,7 @@ _mesa_destroy_context( GLcontext *ctx )
 {
    if (ctx) {
       _mesa_free_context_data(ctx);
-      _mesa_free( (void *) ctx );
+      free( (void *) ctx );
    }
 }
 
@@ -1108,7 +1103,7 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
       dst->Polygon = src->Polygon;
    }
    if (mask & GL_POLYGON_STIPPLE_BIT) {
-      /* Use loop instead of MEMCPY due to problem with Portland Group's
+      /* Use loop instead of memcpy due to problem with Portland Group's
        * C compiler.  Reported by John Stone.
        */
       GLuint i;
@@ -1169,8 +1164,6 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
    if (ctxvis == bufvis)
       return GL_TRUE;
 
-   if (ctxvis->rgbMode != bufvis->rgbMode)
-      return GL_FALSE;
 #if 0
    /* disabling this fixes the fgl_glxgears pbuffer demo */
    if (ctxvis->doubleBufferMode && !bufvis->doubleBufferMode)

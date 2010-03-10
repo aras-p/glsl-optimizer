@@ -1437,6 +1437,12 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	{ 0x7909, 2, 2, "3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP" },
 	{ 0x790a, 3, 3, "3DSTATE_AA_LINE_PARAMETERS" },
 	{ 0x7b00, 6, 6, "3DPRIMITIVE" },
+	{ 0x780e, 4, 4, "3DSTATE_CC_STATE_POINTERS" },
+	{ 0x7810, 6, 6, "3DSTATE_VS_STATE" },
+	{ 0x7811, 6, 6, "3DSTATE_GS_STATE" },
+	{ 0x7812, 4, 4, "3DSTATE_CLIP_STATE" },
+	{ 0x7815, 5, 5, "3DSTATE_CONSTANT_VS_STATE" },
+	{ 0x7816, 5, 5, "3DSTATE_CONSTANT_GS_STATE" },
     };
 
     len = (data[0] & 0x0000ffff) + 2;
@@ -1592,7 +1598,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	return len;
 
     case 0x7905:
-	if (len != 5 && len != 6)
+	if (len < 5 || len > 7)
 	    fprintf(out, "Bad count in 3DSTATE_DEPTH_BUFFER\n");
 	if (count < len)
 	    BUFFER_FAIL(count, len, "3DSTATE_DEPTH_BUFFER");
@@ -1611,6 +1617,8 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	instr_out(data, hw_offset, 4, "volume depth\n");
 	if (len == 6)
 	    instr_out(data, hw_offset, 5, "\n");
+	if (len == 7)
+	    instr_out(data, hw_offset, 6, "render target view extent\n");
 
 	return len;
 

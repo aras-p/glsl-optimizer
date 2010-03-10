@@ -242,7 +242,7 @@ xmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
     * should probably get freed here, but that's currently done in
     * XMesaDestroyBuffer().
     */
-   _mesa_free(rb);
+   free(rb);
 }
 
 
@@ -337,18 +337,10 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
       else
          xrb->Base.AllocStorage = xmesa_alloc_front_storage;
 
-      if (visual->rgbMode) {
-         xrb->Base.InternalFormat = GL_RGBA;
-         xrb->Base.Format = MESA_FORMAT_RGBA8888;
-         xrb->Base._BaseFormat = GL_RGBA;
-         xrb->Base.DataType = GL_UNSIGNED_BYTE;
-      }
-      else {
-         xrb->Base.InternalFormat = GL_COLOR_INDEX;
-         xrb->Base.Format = MESA_FORMAT_CI8;
-         xrb->Base._BaseFormat = GL_COLOR_INDEX;
-         xrb->Base.DataType = GL_UNSIGNED_INT;
-      }
+      xrb->Base.InternalFormat = GL_RGBA;
+      xrb->Base.Format = MESA_FORMAT_RGBA8888;
+      xrb->Base._BaseFormat = GL_RGBA;
+      xrb->Base.DataType = GL_UNSIGNED_BYTE;
       /* only need to set Red/Green/EtcBits fields for user-created RBs */
    }
    return xrb;
@@ -412,11 +404,11 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
    }
 
    if (b->rowimage) {
-      _mesa_free( b->rowimage->data );
+      free( b->rowimage->data );
       b->rowimage->data = NULL;
       XMesaDestroyImage( b->rowimage );
    }
 
    _mesa_free_framebuffer_data(fb);
-   _mesa_free(fb);
+   free(fb);
 }

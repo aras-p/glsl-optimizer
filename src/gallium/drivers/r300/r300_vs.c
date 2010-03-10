@@ -89,95 +89,41 @@ static void r300_shader_read_vs_outputs(
                 assert(0);
         }
     }
+
+    /* WPOS is a straight copy of POSITION and it's always emitted. */
+    vs_outputs->wpos = i;
 }
 
-static void r300_shader_vap_output_fmt(struct r300_vertex_shader* vs)
+/* This function sets up:
+ * - VAP mapping, which maps VS registers to output semantics and
+ *   at the same time it indicates which attributes are enabled and should
+ *   be rasterized.
+ * - Stream mapping to VS outputs if TCL is not present. */
+static void r300_init_vs_output_mapping(struct r300_vertex_shader* vs)
 {
     struct r300_shader_semantics* vs_outputs = &vs->outputs;
-    uint32_t* hwfmt = vs->hwfmt;
-    int i, gen_count;
+    struct r300_vap_output_state *vap_out = &vs->vap_out;
+    int *stream_loc = vs->stream_loc_notcl;
+    int i, gen_count, tabi = 0;
     boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
                               vs_outputs->bcolor[1] != ATTR_UNUSED;
 
-    /* Do the actual vertex_info setup.
-     *
-     * vertex_info has four uints of hardware-specific data in it.
-     * vinfo.hwfmt[0] is R300_VAP_VTX_STATE_CNTL
-     * vinfo.hwfmt[1] is R300_VAP_VSM_VTX_ASSM
-     * vinfo.hwfmt[2] is R300_VAP_OUTPUT_VTX_FMT_0
-     * vinfo.hwfmt[3] is R300_VAP_OUTPUT_VTX_FMT_1 */
-
-    hwfmt[0] = 0x5555; /* XXX this is classic Mesa bonghits */
+    vap_out->vap_vtx_state_cntl = 0x5555; /* XXX this is classic Mesa bonghits */
 
     /* Position. */
     if (vs_outputs->pos != ATTR_UNUSED) {
-        hwfmt[1] |= R300_INPUT_CNTL_POS;
-        hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+        vap_out->vap_vsm_vtx_assm |= R300_INPUT_CNTL_POS;
+        vap_out->vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+
+        stream_loc[tabi++] = 0;
     } else {
         assert(0);
     }
 
     /* Point size. */
     if (vs_outputs->psize != ATTR_UNUSED) {
-        hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
-    }
+        vap_out->vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 
-    /* Colors. */
-    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used ||
-            vs_outputs->color[1] != ATTR_UNUSED) {
-            hwfmt[1] |= R300_INPUT_CNTL_COLOR;
-            hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i;
-        }
-    }
-
-    /* Back-face colors. */
-    if (any_bcolor_used) {
-        for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-            hwfmt[1] |= R300_INPUT_CNTL_COLOR;
-            hwfmt[2] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << (2+i);
-        }
-    }
-
-    /* Texture coordinates. */
-    gen_count = 0;
-    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
-        if (vs_outputs->generic[i] != ATTR_UNUSED) {
-            hwfmt[1] |= (R300_INPUT_CNTL_TC0 << gen_count);
-            hwfmt[3] |= (4 << (3 * gen_count));
-            gen_count++;
-        }
-    }
-
-    /* Fog coordinates. */
-    if (vs_outputs->fog != ATTR_UNUSED) {
-        hwfmt[1] |= (R300_INPUT_CNTL_TC0 << gen_count);
-        hwfmt[3] |= (4 << (3 * gen_count));
-        gen_count++;
-    }
-
-    /* XXX magic */
-    assert(gen_count <= 8);
-
-    /* WPOS. */
-    vs->wpos_tex_output = gen_count;
-}
-
-/* Sets up stream mapping to equivalent VS outputs if TCL is bypassed
- * or isn't present. */
-static void r300_stream_locations_notcl(
-    struct r300_shader_semantics* vs_outputs,
-    int* stream_loc)
-{
-    int i, tabi = 0, gen_count;
-    boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
-                              vs_outputs->bcolor[1] != ATTR_UNUSED;
-
-    /* Position. */
-    stream_loc[tabi++] = 0;
-
-    /* Point size. */
-    if (vs_outputs->psize != ATTR_UNUSED) {
         stream_loc[tabi++] = 1;
     }
 
@@ -185,6 +131,9 @@ static void r300_stream_locations_notcl(
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
         if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used ||
             vs_outputs->color[1] != ATTR_UNUSED) {
+            vap_out->vap_vsm_vtx_assm |= R300_INPUT_CNTL_COLOR;
+            vap_out->vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i;
+
             stream_loc[tabi++] = 2 + i;
         }
     }
@@ -192,6 +141,9 @@ static void r300_stream_locations_notcl(
     /* Back-face colors. */
     if (any_bcolor_used) {
         for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+            vap_out->vap_vsm_vtx_assm |= R300_INPUT_CNTL_COLOR;
+            vap_out->vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << (2+i);
+
             stream_loc[tabi++] = 4 + i;
         }
     }
@@ -200,6 +152,9 @@ static void r300_stream_locations_notcl(
     gen_count = 0;
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
         if (vs_outputs->generic[i] != ATTR_UNUSED) {
+            vap_out->vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << gen_count);
+            vap_out->vap_out_vtx_fmt[1] |= (4 << (3 * gen_count));
+
             assert(tabi < 16);
             stream_loc[tabi++] = 6 + gen_count;
             gen_count++;
@@ -208,17 +163,22 @@ static void r300_stream_locations_notcl(
 
     /* Fog coordinates. */
     if (vs_outputs->fog != ATTR_UNUSED) {
+        vap_out->vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << gen_count);
+        vap_out->vap_out_vtx_fmt[1] |= (4 << (3 * gen_count));
+
         assert(tabi < 16);
         stream_loc[tabi++] = 6 + gen_count;
         gen_count++;
     }
 
+    /* XXX magic */
+    assert(gen_count <= 8);
+
     /* WPOS. */
-    if (vs_outputs->wpos != ATTR_UNUSED) {
-        assert(tabi < 16);
-        stream_loc[tabi++] = 6 + gen_count;
-        gen_count++;
-    }
+    vs->wpos_tex_output = gen_count;
+
+    assert(tabi < 16);
+    stream_loc[tabi++] = 6 + gen_count;
 
     for (; tabi < 16;) {
         stream_loc[tabi++] = -1;
@@ -294,26 +254,16 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     }
 }
 
-static void r300_insert_wpos(struct r300_vertex_program_compiler* c,
-                             struct r300_shader_semantics* outputs)
+void r300_vertex_shader_common_init(struct r300_vertex_shader *vs,
+                                    const struct pipe_shader_state *shader)
 {
-    int i, lastOutput = 0;
+    /* Copy state directly into shader. */
+    vs->state = *shader;
+    vs->state.tokens = tgsi_dup_tokens(shader->tokens);
+    tgsi_scan_shader(shader->tokens, &vs->info);
 
-    /* Find the max output index. */
-    lastOutput = MAX2(lastOutput, outputs->psize);
-    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-        lastOutput = MAX2(lastOutput, outputs->color[i]);
-        lastOutput = MAX2(lastOutput, outputs->bcolor[i]);
-    }
-    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
-        lastOutput = MAX2(lastOutput, outputs->generic[i]);
-    }
-    lastOutput = MAX2(lastOutput, outputs->fog);
-
-    /* Set WPOS after the last output. */
-    lastOutput++;
-    rc_copy_output(&c->Base, 0, lastOutput); /* out[lastOutput] = out[0]; */
-    outputs->wpos = lastOutput;
+    r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
+    r300_init_vs_output_mapping(vs);
 }
 
 void r300_translate_vertex_shader(struct r300_context* r300,
@@ -321,9 +271,6 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 {
     struct r300_vertex_program_compiler compiler;
     struct tgsi_to_rc ttr;
-
-    /* Initialize. */
-    r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
 
     /* Setup the compiler */
     rc_init(&compiler.Base);
@@ -348,10 +295,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     compiler.SetHwInputOutput = &set_vertex_inputs_outputs;
 
     /* Insert the WPOS output. */
-    r300_insert_wpos(&compiler, &vs->outputs);
-
-    r300_shader_vap_output_fmt(vs);
-    r300_stream_locations_notcl(&vs->outputs, vs->stream_loc_notcl);
+    rc_copy_output(&compiler.Base, 0, vs->outputs.wpos);
 
     /* Invoke the compiler */
     r3xx_compile_vertex_program(&compiler);
@@ -363,30 +307,29 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     /* And, finally... */
     rc_destroy(&compiler.Base);
-    vs->translated = TRUE;
 }
 
 boolean r300_vertex_shader_setup_wpos(struct r300_context* r300)
 {
-    struct r300_vertex_shader* vs = r300->vs;
-    int tex_output = r300->vs->wpos_tex_output;
+    struct r300_vertex_shader* vs = r300->vs_state.state;
+    struct r300_vap_output_state *vap_out = &vs->vap_out;
+    int tex_output = vs->wpos_tex_output;
     uint32_t tex_fmt = R300_INPUT_CNTL_TC0 << tex_output;
-    uint32_t* hwfmt = vs->hwfmt;
 
     if (r300->fs->inputs.wpos != ATTR_UNUSED) {
         /* Enable WPOS in VAP. */
-        if (!(hwfmt[1] & tex_fmt)) {
-            hwfmt[1] |= tex_fmt;
-            hwfmt[3] |= (4 << (3 * tex_output));
+        if (!(vap_out->vap_vsm_vtx_assm & tex_fmt)) {
+            vap_out->vap_vsm_vtx_assm |= tex_fmt;
+            vap_out->vap_out_vtx_fmt[1] |= (4 << (3 * tex_output));
 
             assert(tex_output < 8);
             return TRUE;
         }
     } else {
         /* Disable WPOS in VAP. */
-        if (hwfmt[1] & tex_fmt) {
-            hwfmt[1] &= ~tex_fmt;
-            hwfmt[3] &= ~(4 << (3 * tex_output));
+        if (vap_out->vap_vsm_vtx_assm & tex_fmt) {
+            vap_out->vap_vsm_vtx_assm &= ~tex_fmt;
+            vap_out->vap_out_vtx_fmt[1] &= ~(4 << (3 * tex_output));
             return TRUE;
         }
     }

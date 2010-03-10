@@ -138,6 +138,7 @@ static INLINE boolean emit_dst( struct svga_shader_emitter *emit,
                          SVGA3dShaderDestToken dest )
 {
    assert(dest.reserved0);
+   assert(dest.mask);
    return svga_shader_emit_dword( emit, dest.value );
 }
 
@@ -267,6 +268,7 @@ static INLINE SVGA3dShaderDestToken
 writemask( SVGA3dShaderDestToken dest,
            unsigned mask )
 {
+   assert(dest.mask & mask);
    dest.mask &= mask;
    return dest;
 }

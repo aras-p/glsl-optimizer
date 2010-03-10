@@ -103,7 +103,7 @@ struct lp_type {
    unsigned width:14;
 
    /**
-    * Vector length.
+    * Vector length.  If length==1, this is a scalar (float/int) type.
     *
     * width*length should be a power of two greater or equal to eight.
     *
@@ -139,8 +139,25 @@ struct lp_build_context
 };
 
 
+/** Create scalar float type */
 static INLINE struct lp_type
 lp_type_float(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.floating = TRUE;
+   res_type.sign = TRUE;
+   res_type.width = width;
+   res_type.length = 1;
+
+   return res_type;
+}
+
+
+/** Create vector of float type */
+static INLINE struct lp_type
+lp_type_float_vec(unsigned width)
 {
    struct lp_type res_type;
 
@@ -154,8 +171,24 @@ lp_type_float(unsigned width)
 }
 
 
+/** Create scalar int type */
 static INLINE struct lp_type
 lp_type_int(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.sign = TRUE;
+   res_type.width = width;
+   res_type.length = 1;
+
+   return res_type;
+}
+
+
+/** Create vector int type */
+static INLINE struct lp_type
+lp_type_int_vec(unsigned width)
 {
    struct lp_type res_type;
 
@@ -168,8 +201,23 @@ lp_type_int(unsigned width)
 }
 
 
+/** Create scalar uint type */
 static INLINE struct lp_type
 lp_type_uint(unsigned width)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.width = width;
+   res_type.length = 1;
+
+   return res_type;
+}
+
+
+/** Create vector uint type */
+static INLINE struct lp_type
+lp_type_uint_vec(unsigned width)
 {
    struct lp_type res_type;
 
@@ -254,6 +302,10 @@ lp_build_int_vec_type(struct lp_type type);
 
 LLVMTypeRef
 lp_build_int32_vec4_type(void);
+
+
+struct lp_type
+lp_uint_type(struct lp_type type);
 
 
 struct lp_type

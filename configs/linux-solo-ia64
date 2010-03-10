@@ -1,7 +1,0 @@
-# Configuration for linux-solo-ia64: Linux DRI hardware drivers for fbdev
-
-include $(TOP)/configs/linux-solo
-
-CONFIG_NAME = linux-solo-ia64
-
-DRI_DIRS = fb mach64 mga r128 r200 radeon sis tdfx unichrome

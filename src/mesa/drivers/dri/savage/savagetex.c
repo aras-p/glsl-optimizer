@@ -603,7 +603,7 @@ _savage_texstore_a1114444(TEXSTORE_PARAMS)
             dstRow += dstRowStride;
 	}
     }
-    _mesa_free((void *) tempImage);
+    free((void *) tempImage);
 
     return GL_TRUE;
 }
@@ -643,7 +643,7 @@ _savage_texstore_a1118888(TEXSTORE_PARAMS)
             dstRow += dstRowStride;
 	}
     }
-    _mesa_free((void *) tempImage);
+    free((void *) tempImage);
 
     return GL_TRUE;
 }
@@ -1021,6 +1021,7 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
 	  return;
       }
 
+      assert(t->base.memBlock);
       ofs = t->base.memBlock->ofs;
       t->setup.physAddr = imesa->savageScreen->textureOffset[heap] + ofs;
       t->bufAddr = (GLubyte *)imesa->savageScreen->texVirtual[heap] + ofs;

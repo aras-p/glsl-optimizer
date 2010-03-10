@@ -150,7 +150,7 @@ rehash(struct brw_cache *cache)
    GLuint size, i;
 
    size = cache->size * 3;
-   items = (struct brw_cache_item**) _mesa_calloc(size * sizeof(*items));
+   items = (struct brw_cache_item**) calloc(1, size * sizeof(*items));
 
    for (i = 0; i < cache->size; i++)
       for (c = cache->items[i]; c; c = next) {
@@ -237,7 +237,7 @@ brw_upload_cache_with_auxdata(struct brw_cache *cache,
 
 
    /* Set up the memory containing the key, aux_data, and reloc_bufs */
-   tmp = _mesa_malloc(key_size + aux_size + relocs_size);
+   tmp = malloc(key_size + aux_size + relocs_size);
 
    memcpy(tmp, key, key_size);
    memcpy(tmp + key_size, aux, aux_size);
@@ -266,7 +266,7 @@ brw_upload_cache_with_auxdata(struct brw_cache *cache,
    }
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("upload %s: %d bytes to cache id %d\n",
+      printf("upload %s: %d bytes to cache id %d\n",
 		   cache->name[cache_id],
 		   data_size, cache_id);
 
@@ -366,7 +366,7 @@ brw_init_non_surface_cache(struct brw_context *brw)
    cache->size = 7;
    cache->n_items = 0;
    cache->items = (struct brw_cache_item **)
-      _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
+      calloc(1, cache->size * sizeof(struct brw_cache_item));
 
    brw_init_cache_id(cache, "CC_VP", BRW_CC_VP);
    brw_init_cache_id(cache, "CC_UNIT", BRW_CC_UNIT);
@@ -390,6 +390,7 @@ brw_init_non_surface_cache(struct brw_context *brw)
    brw_init_cache_id(cache, "GS_UNIT", BRW_GS_UNIT);
 
    brw_init_cache_id(cache, "GS_PROG", BRW_GS_PROG);
+   brw_init_cache_id(cache, "BLEND_STATE", BRW_BLEND_STATE);
 }
 
 
@@ -403,7 +404,7 @@ brw_init_surface_cache(struct brw_context *brw)
    cache->size = 7;
    cache->n_items = 0;
    cache->items = (struct brw_cache_item **)
-      _mesa_calloc(cache->size * sizeof(struct brw_cache_item));
+      calloc(1, cache->size * sizeof(struct brw_cache_item));
 
    brw_init_cache_id(cache, "SS_SURFACE", BRW_SS_SURFACE);
    brw_init_cache_id(cache, "SS_SURF_BIND", BRW_SS_SURF_BIND);
@@ -425,7 +426,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    GLuint i;
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+      printf("%s\n", __FUNCTION__);
 
    for (i = 0; i < cache->size; i++) {
       for (c = cache->items[i]; c; c = next) {
@@ -444,7 +445,7 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    cache->n_items = 0;
 
    if (brw->curbe.last_buf) {
-      _mesa_free(brw->curbe.last_buf);
+      free(brw->curbe.last_buf);
       brw->curbe.last_buf = NULL;
    }
 
@@ -465,7 +466,7 @@ brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo)
    GLuint i;
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+      printf("%s\n", __FUNCTION__);
 
    for (i = 0; i < cache->size; i++) {
       for (prev = &cache->items[i]; *prev;) {
@@ -493,7 +494,7 @@ void
 brw_state_cache_check_size(struct brw_context *brw)
 {
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
+      printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
 
    /* un-tuned guess.  We've got around 20 state objects for a total of around
     * 32k, so 1000 of them is around 1.5MB.
@@ -512,7 +513,7 @@ brw_destroy_cache(struct brw_context *brw, struct brw_cache *cache)
    GLuint i;
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
+      printf("%s\n", __FUNCTION__);
 
    brw_clear_cache(brw, cache);
    for (i = 0; i < BRW_MAX_CACHE; i++) {

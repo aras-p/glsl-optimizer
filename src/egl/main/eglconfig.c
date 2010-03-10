@@ -76,9 +76,6 @@ _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 }
 
 
-#ifndef _EGL_SKIP_HANDLE_CHECK
-
-
 EGLBoolean
 _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
 {
@@ -96,9 +93,6 @@ _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
 }
 
 
-#endif /* _EGL_SKIP_HANDLE_CHECK */
-
-
 enum {
    /* types */
    ATTRIB_TYPE_INTEGER,
@@ -112,7 +106,7 @@ enum {
    ATTRIB_CRITERION_ATLEAST,
    ATTRIB_CRITERION_MASK,
    ATTRIB_CRITERION_SPECIAL,
-   ATTRIB_CRITERION_IGNORE,
+   ATTRIB_CRITERION_IGNORE
 };
 
 

@@ -205,8 +205,10 @@ st_translate_vertex_program(struct st_context *st,
    unsigned num_outputs;
 
    ureg = ureg_create( TGSI_PROCESSOR_VERTEX );
-   if (ureg == NULL)
+   if (ureg == NULL) {
+      FREE(vpv);
       return NULL;
+   }
 
    vpv->num_inputs = stvp->num_inputs;
    num_outputs = stvp->num_outputs;

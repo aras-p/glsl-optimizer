@@ -34,7 +34,7 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "arrayobj.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**
@@ -1083,14 +1083,14 @@ static void
 print_array(const char *name, GLint index, const struct gl_client_array *array)
 {
    if (index >= 0)
-      _mesa_printf("  %s[%d]: ", name, index);
+      printf("  %s[%d]: ", name, index);
    else
-      _mesa_printf("  %s: ", name);
-   _mesa_printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %u), MaxElem=%u\n",
-                array->Ptr, array->Type, array->Size,
-                array->_ElementSize, array->StrideB,
-                array->BufferObj->Name, array->BufferObj->Size,
-                array->_MaxElement);
+      printf("  %s: ", name);
+   printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %u), MaxElem=%u\n",
+	  array->Ptr, array->Type, array->Size,
+	  array->_ElementSize, array->StrideB,
+	  array->BufferObj->Name, array->BufferObj->Size,
+	  array->_MaxElement);
 }
 
 
@@ -1105,7 +1105,7 @@ _mesa_print_arrays(GLcontext *ctx)
 
    _mesa_update_array_object_max_element(ctx, arrayObj);
 
-   _mesa_printf("Array Object %u\n", arrayObj->Name);
+   printf("Array Object %u\n", arrayObj->Name);
    if (arrayObj->Vertex.Enabled)
       print_array("Vertex", -1, &arrayObj->Vertex);
    if (arrayObj->Normal.Enabled)
@@ -1118,7 +1118,7 @@ _mesa_print_arrays(GLcontext *ctx)
    for (i = 0; i < Elements(arrayObj->VertexAttrib); i++)
       if (arrayObj->VertexAttrib[i].Enabled)
          print_array("Attrib", i, &arrayObj->VertexAttrib[i]);
-   _mesa_printf("  _MaxElement = %u\n", arrayObj->_MaxElement);
+   printf("  _MaxElement = %u\n", arrayObj->_MaxElement);
 }
 
 

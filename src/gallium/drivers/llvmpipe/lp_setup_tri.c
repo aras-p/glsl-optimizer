@@ -297,6 +297,15 @@ do_triangle_ccw(struct setup_context *setup,
 
    tri = alloc_triangle(scene, setup->fs.nr_inputs, &tri_bytes);
 
+#ifdef DEBUG
+   tri->v[0][0] = v1[0][0];
+   tri->v[1][0] = v2[0][0];
+   tri->v[2][0] = v3[0][0];
+   tri->v[0][1] = v1[0][1];
+   tri->v[1][1] = v2[0][1];
+   tri->v[2][1] = v3[0][1];
+#endif
+
    tri->dx12 = x1 - x2;
    tri->dx23 = x2 - x3;
    tri->dx31 = x3 - x1;

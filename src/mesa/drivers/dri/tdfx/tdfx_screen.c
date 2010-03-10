@@ -295,6 +295,8 @@ tdfxSwapBuffers( __DRIdrawable *driDrawPriv )
    }
 #endif
 
+   assert(fxMesa);
+
    if (fxMesa->scissoredClipRects) {
       /* restore clip rects without scissor box */
       fxMesa->Glide.grDRIPosition( driDrawPriv->x, driDrawPriv->y,

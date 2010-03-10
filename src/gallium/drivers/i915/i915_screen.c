@@ -95,6 +95,10 @@ i915_get_param(struct pipe_screen *screen, int param)
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return 8;
+   case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+      return 0;
+   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+      return 8;
    case PIPE_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
@@ -112,11 +116,11 @@ i915_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 11; /* max 1024x1024 */
+      return I915_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
+      return I915_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 11; /* max 1024x1024 */
+      return I915_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
       return 1;
@@ -161,22 +165,22 @@ i915_is_format_supported(struct pipe_screen *screen,
                          unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
-      PIPE_FORMAT_R8G8B8A8_UNORM,
-      PIPE_FORMAT_A8R8G8B8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM,
+      PIPE_FORMAT_A8B8G8R8_UNORM,
+      PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM,
       PIPE_FORMAT_L8_UNORM,
       PIPE_FORMAT_A8_UNORM,
       PIPE_FORMAT_I8_UNORM,
-      PIPE_FORMAT_A8L8_UNORM,
-      PIPE_FORMAT_YCBCR,
-      PIPE_FORMAT_YCBCR_REV,
-      PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_L8A8_UNORM,
+      PIPE_FORMAT_UYVY,
+      PIPE_FORMAT_YUYV,
+      PIPE_FORMAT_Z24S8_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format surface_supported[] = {
-      PIPE_FORMAT_A8R8G8B8_UNORM,
-      PIPE_FORMAT_R5G6B5_UNORM,
-      PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_B5G6R5_UNORM,
+      PIPE_FORMAT_Z24S8_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;

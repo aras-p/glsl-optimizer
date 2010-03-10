@@ -131,6 +131,7 @@ static const struct {
    { ON,  "GL_EXT_subtexture",                 F(EXT_subtexture) },
    { ON,  "GL_EXT_texture",                    F(EXT_texture) },
    { ON,  "GL_EXT_texture3D",                  F(EXT_texture3D) },
+   { OFF, "GL_EXT_texture_array",              F(EXT_texture_array) },
    { OFF, "GL_EXT_texture_compression_s3tc",   F(EXT_texture_compression_s3tc) },
    { OFF, "GL_EXT_texture_cube_map",           F(ARB_texture_cube_map) },
    { ON,  "GL_EXT_texture_edge_clamp",         F(SGIS_texture_edge_clamp) },
@@ -152,6 +153,7 @@ static const struct {
    { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) },
    { ON,  "GL_APPLE_packed_pixels",            F(APPLE_packed_pixels) },
    { OFF, "GL_APPLE_vertex_array_object",      F(APPLE_vertex_array_object) },
+   { OFF, "GL_APPLE_object_purgeable",         F(APPLE_object_purgeable) },
    { OFF, "GL_ATI_blend_equation_separate",    F(EXT_blend_equation_separate) },
    { OFF, "GL_ATI_envmap_bumpmap",             F(ATI_envmap_bumpmap) },
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
@@ -264,6 +266,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_sync = GL_TRUE;
 #endif
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
+#if FEATURE_APPLE_object_purgeable
+   ctx->Extensions.APPLE_object_purgeable = GL_TRUE;
+#endif
    ctx->Extensions.ATI_envmap_bumpmap = GL_TRUE;
 #if FEATURE_ATI_fragment_shader
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
@@ -304,6 +309,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_shared_texture_palette = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
+   ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
@@ -498,7 +504,7 @@ set_extension( GLcontext *ctx, const char *name, GLboolean state )
    }
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
+      if (strcmp(default_extensions[i].name, name) == 0) {
          if (default_extensions[i].flag_offset) {
             GLboolean *enabled = base + default_extensions[i].flag_offset;
             *enabled = state;
@@ -560,7 +566,7 @@ _mesa_extension_is_enabled( GLcontext *ctx, const char *name )
    GLuint i;
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
+      if (strcmp(default_extensions[i].name, name) == 0) {
          return extension_enabled(ctx, i);
       }
    }
@@ -574,18 +580,18 @@ _mesa_extension_is_enabled( GLcontext *ctx, const char *name )
 static char *
 append(const char *a, const char *b)
 {
-   const GLuint aLen = a ? _mesa_strlen(a) : 0;
-   const GLuint bLen = b ? _mesa_strlen(b) : 0;
-   char *s = _mesa_calloc(aLen + bLen + 1);
+   const GLuint aLen = a ? strlen(a) : 0;
+   const GLuint bLen = b ? strlen(b) : 0;
+   char *s = calloc(1, aLen + bLen + 1);
    if (s) {
       if (a)
-         _mesa_memcpy(s, a, aLen);
+         memcpy(s, a, aLen);
       if (b)
-         _mesa_memcpy(s + aLen, b, bLen);
+         memcpy(s + aLen, b, bLen);
       s[aLen + bLen] = '\0';
    }
    if (a)
-      _mesa_free((void *) a);
+      free((void *) a);
    return s;
 }
 
@@ -677,15 +683,15 @@ _mesa_make_extension_string( GLcontext *ctx )
    /* first, compute length of the extension string */
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (extension_enabled(ctx, i)) {
-         extStrLen += (GLuint)_mesa_strlen(default_extensions[i].name) + 1;
+         extStrLen += (GLuint) strlen(default_extensions[i].name) + 1;
       }
    }
 
    if (extraExt)
-      extStrLen += _mesa_strlen(extraExt) + 1; /* +1 for space */
+      extStrLen += strlen(extraExt) + 1; /* +1 for space */
 
    /* allocate the extension string */
-   s = (char *) _mesa_malloc(extStrLen);
+   s = (char *) malloc(extStrLen);
    if (!s)
       return NULL;
 
@@ -693,8 +699,8 @@ _mesa_make_extension_string( GLcontext *ctx )
    extStrLen = 0;
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (extension_enabled(ctx, i)) {
-         GLuint len = (GLuint)_mesa_strlen(default_extensions[i].name);
-         _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
+         GLuint len = (GLuint) strlen(default_extensions[i].name);
+         memcpy(s + extStrLen, default_extensions[i].name, len);
          extStrLen += len;
          s[extStrLen] = ' ';
          extStrLen++;

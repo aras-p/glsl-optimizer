@@ -614,6 +614,22 @@ lp_build_max(struct lp_build_context *bld,
 
 
 /**
+ * Generate clamp(a, min, max)
+ * Do checks for special cases.
+ */
+LLVMValueRef
+lp_build_clamp(struct lp_build_context *bld,
+               LLVMValueRef a,
+               LLVMValueRef min,
+               LLVMValueRef max)
+{
+   a = lp_build_min(bld, a, max);
+   a = lp_build_max(bld, a, min);
+   return a;
+}
+
+
+/**
  * Generate abs(a)
  */
 LLVMValueRef
@@ -628,13 +644,26 @@ lp_build_abs(struct lp_build_context *bld,
 
    if(type.floating) {
       /* Mask out the sign bit */
-      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-      unsigned long long absMask = ~(1ULL << (type.width - 1));
-      LLVMValueRef mask = lp_build_int_const_scalar(type, ((unsigned long long) absMask));
-      a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
-      a = LLVMBuildAnd(bld->builder, a, mask, "");
-      a = LLVMBuildBitCast(bld->builder, a, vec_type, "");
-      return a;
+      if (type.length == 1) {
+         LLVMTypeRef int_type = LLVMIntType(type.width);
+         LLVMTypeRef float_type = LLVMFloatType();
+         unsigned long long absMask = ~(1ULL << (type.width - 1));
+         LLVMValueRef mask = LLVMConstInt(int_type, absMask, 0);
+         a = LLVMBuildBitCast(bld->builder, a, int_type, "");
+         a = LLVMBuildAnd(bld->builder, a, mask, "");
+         a = LLVMBuildBitCast(bld->builder, a, float_type, "");
+         return a;
+      }
+      else {
+         /* vector of floats */
+         LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+         unsigned long long absMask = ~(1ULL << (type.width - 1));
+         LLVMValueRef mask = lp_build_int_const_scalar(type, ((unsigned long long) absMask));
+         a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+         a = LLVMBuildAnd(bld->builder, a, mask, "");
+         a = LLVMBuildBitCast(bld->builder, a, vec_type, "");
+         return a;
+      }
    }
 
    if(type.width*type.length == 128 && util_cpu_caps.has_ssse3) {
@@ -649,6 +678,14 @@ lp_build_abs(struct lp_build_context *bld,
    }
 
    return lp_build_max(bld, a, LLVMBuildNeg(bld->builder, a, ""));
+}
+
+
+LLVMValueRef
+lp_build_negate(struct lp_build_context *bld,
+                LLVMValueRef a)
+{
+   return LLVMBuildNeg(bld->builder, a, "");
 }
 
 
@@ -691,6 +728,68 @@ lp_build_sgn(struct lp_build_context *bld,
 
    return res;
 }
+
+
+/**
+ * Set the sign of float vector 'a' according to 'sign'.
+ * If sign==0, return abs(a).
+ * If sign==1, return -abs(a);
+ * Other values for sign produce undefined results.
+ */
+LLVMValueRef
+lp_build_set_sign(struct lp_build_context *bld,
+                  LLVMValueRef a, LLVMValueRef sign)
+{
+   const struct lp_type type = bld->type;
+   LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   LLVMValueRef shift = lp_build_int_const_scalar(type, type.width - 1);
+   LLVMValueRef mask = lp_build_int_const_scalar(type,
+                             ~((unsigned long long) 1 << (type.width - 1)));
+   LLVMValueRef val, res;
+
+   assert(type.floating);
+
+   /* val = reinterpret_cast<int>(a) */
+   val = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+   /* val = val & mask */
+   val = LLVMBuildAnd(bld->builder, val, mask, "");
+   /* sign = sign << shift */
+   sign = LLVMBuildShl(bld->builder, sign, shift, "");
+   /* res = val | sign */
+   res = LLVMBuildOr(bld->builder, val, sign, "");
+   /* res = reinterpret_cast<float>(res) */
+   res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+
+   return res;
+}
+
+
+/**
+ * Convert vector of (or scalar) int to vector of (or scalar) float.
+ */
+LLVMValueRef
+lp_build_int_to_float(struct lp_build_context *bld,
+                      LLVMValueRef a)
+{
+   const struct lp_type type = bld->type;
+
+   assert(type.floating);
+   /*assert(lp_check_value(type, a));*/
+
+   if (type.length == 1) {
+      LLVMTypeRef float_type = LLVMFloatType();
+      return LLVMBuildSIToFP(bld->builder, a, float_type, "");
+   }
+   else {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      /*LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);*/
+      LLVMValueRef res;
+      res = LLVMBuildSIToFP(bld->builder, a, vec_type, "");
+      return res;
+   }
+}
+
 
 
 enum lp_build_round_sse41_mode
@@ -818,20 +917,39 @@ lp_build_ceil(struct lp_build_context *bld,
 
 
 /**
+ * Return fractional part of 'a' computed as a - floor(f)
+ * Typically used in texture coord arithmetic.
+ */
+LLVMValueRef
+lp_build_fract(struct lp_build_context *bld,
+               LLVMValueRef a)
+{
+   assert(bld->type.floating);
+   return lp_build_sub(bld, a, lp_build_floor(bld, a));
+}
+
+
+/**
  * Convert to integer, through whichever rounding method that's fastest,
- * typically truncating to zero.
+ * typically truncating toward zero.
  */
 LLVMValueRef
 lp_build_itrunc(struct lp_build_context *bld,
                 LLVMValueRef a)
 {
    const struct lp_type type = bld->type;
-   LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
 
    assert(type.floating);
-   assert(lp_check_value(type, a));
 
-   return LLVMBuildFPToSI(bld->builder, a, int_vec_type, "");
+   if (type.length == 1) {
+      LLVMTypeRef int_type = LLVMIntType(type.width);
+      return LLVMBuildFPTrunc(bld->builder, a, int_type, "");
+   }
+   else {
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+      assert(lp_check_value(type, a));
+      return LLVMBuildFPToSI(bld->builder, a, int_vec_type, "");
+   }
 }
 
 
@@ -844,6 +962,15 @@ lp_build_iround(struct lp_build_context *bld,
    LLVMValueRef res;
 
    assert(type.floating);
+
+   if (type.length == 1) {
+      /* scalar float to int */
+      LLVMTypeRef int_type = LLVMIntType(type.width);
+      /* XXX we want rounding here! */
+      res = LLVMBuildFPToSI(bld->builder, a, int_type, "");
+      return res;
+   }
+
    assert(lp_check_value(type, a));
 
    if(util_cpu_caps.has_sse4_1) {
@@ -1112,6 +1239,7 @@ lp_build_polynomial(struct lp_build_context *bld,
                     unsigned num_coeffs)
 {
    const struct lp_type type = bld->type;
+   LLVMTypeRef float_type = LLVMFloatType();
    LLVMValueRef res = NULL;
    unsigned i;
 
@@ -1121,7 +1249,13 @@ lp_build_polynomial(struct lp_build_context *bld,
                    __FUNCTION__);
 
    for (i = num_coeffs; i--; ) {
-      LLVMValueRef coeff = lp_build_const_scalar(type, coeffs[i]);
+      LLVMValueRef coeff;
+
+      if (type.length == 1)
+         coeff = LLVMConstReal(float_type, coeffs[i]);
+      else
+         coeff = lp_build_const_scalar(type, coeffs[i]);
+
       if(res)
          res = lp_build_add(bld, coeff, lp_build_mul(bld, x, res));
       else
@@ -1315,11 +1449,87 @@ lp_build_log2_approx(struct lp_build_context *bld,
 }
 
 
+/** scalar version of above function */
+static void
+lp_build_float_log2_approx(struct lp_build_context *bld,
+                           LLVMValueRef x,
+                           LLVMValueRef *p_exp,
+                           LLVMValueRef *p_floor_log2,
+                           LLVMValueRef *p_log2)
+{
+   const struct lp_type type = bld->type;
+   LLVMTypeRef float_type = LLVMFloatType();
+   LLVMTypeRef int_type = LLVMIntType(type.width);
+
+   LLVMValueRef expmask = LLVMConstInt(int_type, 0x7f800000, 0);
+   LLVMValueRef mantmask = LLVMConstInt(int_type, 0x007fffff, 0);
+   LLVMValueRef one = LLVMConstBitCast(bld->one, int_type);
+
+   LLVMValueRef i = NULL;
+   LLVMValueRef exp = NULL;
+   LLVMValueRef mant = NULL;
+   LLVMValueRef logexp = NULL;
+   LLVMValueRef logmant = NULL;
+   LLVMValueRef res = NULL;
+
+   if(p_exp || p_floor_log2 || p_log2) {
+      /* TODO: optimize the constant case */
+      if(LLVMIsConstant(x))
+         debug_printf("%s: inefficient/imprecise constant arithmetic\n",
+                      __FUNCTION__);
+
+      assert(type.floating && type.width == 32);
+
+      i = LLVMBuildBitCast(bld->builder, x, int_type, "");
+
+      /* exp = (float) exponent(x) */
+      exp = LLVMBuildAnd(bld->builder, i, expmask, "");
+   }
+
+   if(p_floor_log2 || p_log2) {
+      LLVMValueRef c23 = LLVMConstInt(int_type, 23, 0);
+      LLVMValueRef c127 = LLVMConstInt(int_type, 127, 0);
+      logexp = LLVMBuildLShr(bld->builder, exp, c23, "");
+      logexp = LLVMBuildSub(bld->builder, logexp, c127, "");
+      logexp = LLVMBuildSIToFP(bld->builder, logexp, float_type, "");
+   }
+
+   if(p_log2) {
+      /* mant = (float) mantissa(x) */
+      mant = LLVMBuildAnd(bld->builder, i, mantmask, "");
+      mant = LLVMBuildOr(bld->builder, mant, one, "");
+      mant = LLVMBuildBitCast(bld->builder, mant, float_type, "");
+
+      logmant = lp_build_polynomial(bld, mant, lp_build_log2_polynomial,
+                                    Elements(lp_build_log2_polynomial));
+
+      /* This effectively increases the polynomial degree by one, but ensures that log2(1) == 0*/
+      logmant = LLVMBuildMul(bld->builder, logmant, LLVMBuildSub(bld->builder, mant, bld->one, ""), "");
+
+      res = LLVMBuildAdd(bld->builder, logmant, logexp, "");
+   }
+
+   if(p_exp)
+      *p_exp = exp;
+
+   if(p_floor_log2)
+      *p_floor_log2 = logexp;
+
+   if(p_log2)
+      *p_log2 = res;
+}
+
+
 LLVMValueRef
 lp_build_log2(struct lp_build_context *bld,
               LLVMValueRef x)
 {
    LLVMValueRef res;
-   lp_build_log2_approx(bld, x, NULL, NULL, &res);
+   if (bld->type.length == 1) {
+      lp_build_float_log2_approx(bld, x, NULL, NULL, &res);
+   }
+   else {
+      lp_build_log2_approx(bld, x, NULL, NULL, &res);
+   }
    return res;
 }

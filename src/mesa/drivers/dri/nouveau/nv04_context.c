@@ -40,6 +40,7 @@ nv04_context_engine(GLcontext *ctx)
 
 	if (ctx->Texture.Unit[0].EnvMode == GL_COMBINE ||
 	    ctx->Texture.Unit[0].EnvMode == GL_BLEND ||
+	    ctx->Texture.Unit[0].EnvMode == GL_ADD ||
 	    ctx->Texture.Unit[1]._ReallyEnabled ||
 	    ctx->Stencil.Enabled)
 		fahrenheit = hw->eng3dm;
@@ -235,7 +236,6 @@ const struct nouveau_driver nv04_driver = {
 		nouveau_emit_nothing,
 		nv04_emit_framebuffer,
 		nv04_defer_blend,
-		nouveau_emit_nothing,
 		nouveau_emit_nothing,
 		nouveau_emit_nothing,
 		nouveau_emit_nothing,

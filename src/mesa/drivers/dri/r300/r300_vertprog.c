@@ -79,6 +79,7 @@ static int r300VertexProgUpdateParams(GLcontext * ctx, struct r300_vertex_progra
 			break;
 		}
 
+		assert(src);
 		dst[4*i] = src[0];
 		dst[4*i + 1] = src[1];
 		dst[4*i + 2] = src[2];
@@ -233,9 +234,9 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	struct r300_vertex_program *vp;
 	struct r300_vertex_program_compiler compiler;
 
-	vp = _mesa_calloc(sizeof(*vp));
+	vp = calloc(1, sizeof(*vp));
 	vp->Base = _mesa_clone_vertex_program(ctx, mesa_vp);
-	_mesa_memcpy(&vp->key, wanted_key, sizeof(vp->key));
+	memcpy(&vp->key, wanted_key, sizeof(vp->key));
 
 	rc_init(&compiler.Base);
 	compiler.Base.Debug = (RADEON_DEBUG & RADEON_VERTS) ? GL_TRUE : GL_FALSE;
@@ -311,13 +312,13 @@ struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 		r300SelectAndTranslateFragmentShader(ctx);
 	}
 
+	assert(r300->selected_fp);
 	wanted_key.FpReads = r300->selected_fp->InputsRead;
 	wanted_key.FogAttr = r300->selected_fp->fog_attr;
 	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
 
 	for (vp = vpc->progs; vp; vp = vp->next) {
-		if (_mesa_memcmp(&vp->key, &wanted_key, sizeof(wanted_key))
-		    == 0) {
+		if (memcmp(&vp->key, &wanted_key, sizeof(wanted_key)) == 0) {
 			return r300->selected_vp = vp;
 		}
 	}
@@ -340,8 +341,6 @@ static void r300EmitVertexProgram(r300ContextPtr r300, int dest, struct r300_ver
 	int i;
 
 	assert((code->length > 0) && (code->length % 4 == 0));
-
-	R300_STATECHANGE( r300, vap_flush );
 
 	switch ((dest >> 8) & 0xf) {
 		case 0:
@@ -380,7 +379,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
 
-	R300_STATECHANGE(rmesa, vap_flush);
+	R300_STATECHANGE(rmesa, vap_cntl);
 	R300_STATECHANGE(rmesa, vpp);
 	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);

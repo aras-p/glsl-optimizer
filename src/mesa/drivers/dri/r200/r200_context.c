@@ -264,7 +264,9 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.fallback = r200Fallback;
    radeon->vtbl.update_scissor = r200_vtbl_update_scissor;
    radeon->vtbl.emit_query_finish = r200_emit_query_finish;
+   radeon->vtbl.check_blit = r200_check_blit;
    radeon->vtbl.blit = r200_blit;
+   radeon->vtbl.is_format_renderable = radeonIsFormatRenderable;
 }
 
 

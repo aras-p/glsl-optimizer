@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Francisco Jerez.
+ * Copyright (C) 2009-2010 Francisco Jerez.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -90,11 +90,11 @@ struct combiner_state {
 	} while (0)
 
 /* Get the RC input source for the specified EXT_texture_env_combine
- * argument. */
+ * source. */
 static uint32_t
-get_input_source(struct combiner_state *rc, int arg)
+get_input_source(struct combiner_state *rc, int source)
 {
-	switch (rc->source[arg]) {
+	switch (source) {
 	case GL_TEXTURE:
 		return RC_IN_SOURCE(TEXTURE0) + rc->unit;
 
@@ -127,52 +127,76 @@ get_input_source(struct combiner_state *rc, int arg)
 	}
 }
 
-/* Get the RC input mapping for the specified argument, possibly
- * inverted or biased. */
+/* Get the RC input mapping for the specified texture_env_combine
+ * operand, possibly inverted or biased. */
 #define INVERT 0x1
 #define HALF_BIAS 0x2
 
 static uint32_t
-get_input_mapping(struct combiner_state *rc, int arg, int flags)
+get_input_mapping(struct combiner_state *rc, int operand, int flags)
 {
 	int map = 0;
 
-	switch (rc->operand[arg]) {
-	case GL_SRC_COLOR:
-	case GL_ONE_MINUS_SRC_COLOR:
+	if (is_color_operand(operand))
 		map |= RC_IN_USAGE(RGB);
-		break;
-
-	case GL_SRC_ALPHA:
-	case GL_ONE_MINUS_SRC_ALPHA:
+	else
 		map |= RC_IN_USAGE(ALPHA);
-		break;
-	}
 
-	switch (rc->operand[arg]) {
-	case GL_SRC_COLOR:
-	case GL_SRC_ALPHA:
-		map |= (flags & INVERT ? RC_IN_MAPPING(UNSIGNED_INVERT) :
-			flags & HALF_BIAS ? RC_IN_MAPPING(HALF_BIAS_NORMAL) :
-			RC_IN_MAPPING(UNSIGNED_IDENTITY));
-		break;
-
-	case GL_ONE_MINUS_SRC_COLOR:
-	case GL_ONE_MINUS_SRC_ALPHA:
-		map |= (flags & INVERT ? RC_IN_MAPPING(UNSIGNED_IDENTITY) :
-			flags & HALF_BIAS ? RC_IN_MAPPING(HALF_BIAS_NEGATE) :
-			RC_IN_MAPPING(UNSIGNED_INVERT));
-		break;
-	}
+	if (is_negative_operand(operand) == !(flags & INVERT))
+		map |= flags & HALF_BIAS ?
+			RC_IN_MAPPING(HALF_BIAS_NEGATE) :
+			RC_IN_MAPPING(UNSIGNED_INVERT);
+	else
+		map |= flags & HALF_BIAS ?
+			RC_IN_MAPPING(HALF_BIAS_NORMAL) :
+			RC_IN_MAPPING(UNSIGNED_IDENTITY);
 
 	return map;
+}
+
+static uint32_t
+get_input_arg(struct combiner_state *rc, int arg, int flags)
+{
+	int source = rc->source[arg];
+	int operand = rc->operand[arg];
+
+	/* Fake several unsupported texture formats. */
+	if (is_texture_source(source)) {
+		int i = (source == GL_TEXTURE ?
+			 rc->unit : source - GL_TEXTURE0);
+		struct gl_texture_object *t = rc->ctx->Texture.Unit[i]._Current;
+		gl_format format = t->Image[0][t->BaseLevel]->TexFormat;
+
+		if (format == MESA_FORMAT_A8) {
+			/* Emulated using I8. */
+			if (is_color_operand(operand))
+				return RC_IN_SOURCE(ZERO) |
+					get_input_mapping(rc, operand, flags);
+
+		} else if (format == MESA_FORMAT_L8) {
+			/* Sometimes emulated using I8. */
+			if (!is_color_operand(operand))
+				return RC_IN_SOURCE(ZERO) |
+					get_input_mapping(rc, operand,
+							  flags ^ INVERT);
+
+		} else if (format == MESA_FORMAT_XRGB8888) {
+			/* Sometimes emulated using ARGB8888. */
+			if (!is_color_operand(operand))
+				return RC_IN_SOURCE(ZERO) |
+					get_input_mapping(rc, operand,
+							  flags ^ INVERT);
+		}
+	}
+
+	return get_input_source(rc, source) |
+		get_input_mapping(rc, operand, flags);
 }
 
 /* Bind the RC input variable <var> to the EXT_texture_env_combine
  * argument <arg>, possibly inverted or biased. */
 #define INPUT_ARG(rc, var, arg, flags)					\
-	(rc)->in |= (get_input_mapping(rc, arg, flags) |		\
-		     get_input_source(rc, arg)) << RC_IN_SHIFT_##var
+	(rc)->in |= get_input_arg(rc, arg, flags) << RC_IN_SHIFT_##var
 
 /* Bind the RC input variable <var> to the RC source <src>. */
 #define INPUT_SRC(rc, var, src, chan)					\
@@ -268,86 +292,13 @@ setup_combiner(struct combiner_state *rc)
 	}
 }
 
-/* Write the register combiner state out to the hardware. */
-static void
-nv10_load_combiner(GLcontext *ctx, int i, struct combiner_state *rc_a,
-		   struct combiner_state *rc_c, uint32_t rc_const)
-{
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
-
-	/* Enable the combiners we're going to need. */
-	if (i == 1) {
-		if (rc_c->out || rc_a->out)
-			rc_c->out |= 0x5 << 27;
-		else
-			rc_c->out |= 0x3 << 27;
-	}
-
-	BEGIN_RING(chan, celsius, NV10TCL_RC_IN_ALPHA(i), 1);
-	OUT_RING(chan, rc_a->in);
-	BEGIN_RING(chan, celsius, NV10TCL_RC_IN_RGB(i), 1);
-	OUT_RING(chan, rc_c->in);
-	BEGIN_RING(chan, celsius, NV10TCL_RC_COLOR(i), 1);
-	OUT_RING(chan, rc_const);
-	BEGIN_RING(chan, celsius, NV10TCL_RC_OUT_ALPHA(i), 1);
-	OUT_RING(chan, rc_a->out);
-	BEGIN_RING(chan, celsius, NV10TCL_RC_OUT_RGB(i), 1);
-	OUT_RING(chan, rc_c->out);
-}
-
-static void
-nv10_load_final(GLcontext *ctx, struct combiner_state *rc, int n)
-{
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *celsius = context_eng3d(ctx);
-
-	BEGIN_RING(chan, celsius, NV10TCL_RC_FINAL0, 2);
-	OUT_RING(chan, rc->in);
-	OUT_RING(chan, rc->in >> 32);
-}
-
-static void
-nv20_load_combiner(GLcontext *ctx, int i, struct combiner_state *rc_a,
-		   struct combiner_state *rc_c, uint32_t rc_const)
-{
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
-
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_IN_ALPHA(i), 1);
-	OUT_RING(chan, rc_a->in);
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_OUT_ALPHA(i), 1);
-	OUT_RING(chan, rc_a->out);
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_IN_RGB(i), 1);
-	OUT_RING(chan, rc_c->in);
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_OUT_RGB(i), 1);
-	OUT_RING(chan, rc_c->out);
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_CONSTANT_COLOR0(i), 1);
-	OUT_RING(chan, rc_const);
-}
-
-static void
-nv20_load_final(GLcontext *ctx, struct combiner_state *rc, int n)
-{
-	struct nouveau_channel *chan = context_chan(ctx);
-	struct nouveau_grobj *kelvin = context_eng3d(ctx);
-
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_FINAL0, 2);
-	OUT_RING(chan, rc->in);
-	OUT_RING(chan, rc->in >> 32);
-
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_ENABLE, 1);
-	OUT_RING(chan, n);
-}
-
 void
-nv10_emit_tex_env(GLcontext *ctx, int emit)
+nv10_get_general_combiner(GLcontext *ctx, int i,
+			  uint32_t *a_in, uint32_t *a_out,
+			  uint32_t *c_in, uint32_t *c_out, uint32_t *k)
 {
-	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
 	struct combiner_state rc_a, rc_c;
-	uint32_t rc_const;
 
-	/* Compute the new combiner state. */
 	if (ctx->Texture.Unit[i]._ReallyEnabled) {
 		INIT_COMBINER(RGB, ctx, &rc_c, i);
 
@@ -359,26 +310,22 @@ nv10_emit_tex_env(GLcontext *ctx, int emit)
 		setup_combiner(&rc_c);
 		setup_combiner(&rc_a);
 
-		rc_const = pack_rgba_f(MESA_FORMAT_ARGB8888,
-				       ctx->Texture.Unit[i].EnvColor);
-
 	} else {
-		rc_a.in = rc_a.out = rc_c.in = rc_c.out = rc_const = 0;
+		rc_a.in = rc_a.out = rc_c.in = rc_c.out = 0;
 	}
 
-	if (context_chipset(ctx) >= 0x20)
-		nv20_load_combiner(ctx, i, &rc_a, &rc_c, rc_const);
-	else
-		nv10_load_combiner(ctx, i, &rc_a, &rc_c, rc_const);
-
-	context_dirty(ctx, FRAG);
+	*k = pack_rgba_f(MESA_FORMAT_ARGB8888,
+			 ctx->Texture.Unit[i].EnvColor);
+	*a_in = rc_a.in;
+	*a_out = rc_a.out;
+	*c_in = rc_c.in;
+	*c_out = rc_c.out;
 }
 
 void
-nv10_emit_frag(GLcontext *ctx, int emit)
+nv10_get_final_combiner(GLcontext *ctx, uint64_t *in, int *n)
 {
 	struct combiner_state rc = {};
-	int n = log2i(ctx->Texture._EnabledUnits) + 1;
 
 	/*
 	 * The final fragment value equation is something like:
@@ -409,8 +356,53 @@ nv10_emit_frag(GLcontext *ctx, int emit)
 		INPUT_SRC(&rc, G, PRIMARY_COLOR, ALPHA);
 	}
 
-	if (context_chipset(ctx) >= 0x20)
-		nv20_load_final(ctx, &rc, n);
-	else
-		nv10_load_final(ctx, &rc, n);
+	*in = rc.in;
+	*n = log2i(ctx->Texture._EnabledUnits) + 1;
+}
+
+void
+nv10_emit_tex_env(GLcontext *ctx, int emit)
+{
+	const int i = emit - NOUVEAU_STATE_TEX_ENV0;
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	uint32_t a_in, a_out, c_in, c_out, k;
+
+	nv10_get_general_combiner(ctx, i, &a_in, &a_out, &c_in, &c_out, &k);
+
+	/* Enable the combiners we're going to need. */
+	if (i == 1) {
+		if (c_out || a_out)
+			c_out |= 0x5 << 27;
+		else
+			c_out |= 0x3 << 27;
+	}
+
+	BEGIN_RING(chan, celsius, NV10TCL_RC_IN_ALPHA(i), 1);
+	OUT_RING(chan, a_in);
+	BEGIN_RING(chan, celsius, NV10TCL_RC_IN_RGB(i), 1);
+	OUT_RING(chan, c_in);
+	BEGIN_RING(chan, celsius, NV10TCL_RC_COLOR(i), 1);
+	OUT_RING(chan, k);
+	BEGIN_RING(chan, celsius, NV10TCL_RC_OUT_ALPHA(i), 1);
+	OUT_RING(chan, a_out);
+	BEGIN_RING(chan, celsius, NV10TCL_RC_OUT_RGB(i), 1);
+	OUT_RING(chan, c_out);
+
+	context_dirty(ctx, FRAG);
+}
+
+void
+nv10_emit_frag(GLcontext *ctx, int emit)
+{
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_grobj *celsius = context_eng3d(ctx);
+	uint64_t in;
+	int n;
+
+	nv10_get_final_combiner(ctx, &in, &n);
+
+	BEGIN_RING(chan, celsius, NV10TCL_RC_FINAL0, 2);
+	OUT_RING(chan, in);
+	OUT_RING(chan, in >> 32);
 }

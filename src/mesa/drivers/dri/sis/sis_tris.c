@@ -375,7 +375,6 @@ static struct {
 #define DO_POINTS    1
 #define DO_FULL_QUAD 1
 
-#define HAVE_RGBA   1
 #define HAVE_SPEC   1
 #define HAVE_BACK_COLORS  0
 #define HAVE_HW_FLATSHADE 1
@@ -994,6 +993,7 @@ sisFlushPrimsLocked(sisContextPtr smesa)
 	 MMIO(REG_3D_PrimitiveSet, smesa->dwPrimitiveSet);
       }
       while (smesa->vb_last < smesa->vb_cur) {
+	 assert(sis_emit_func);
 	 sis_emit_func(smesa, (char *)smesa->vb_last);
 	 smesa->vb_last += incr;
       }

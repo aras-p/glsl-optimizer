@@ -54,33 +54,30 @@ upload_user_buffers( struct svga_context *svga )
    {
       if (svga_buffer_is_user_buffer(svga->curr.vb[i].buffer))
       {
-         struct pipe_buffer *upload_buffer = NULL;
-         unsigned offset = /*svga->curr.vb[i].buffer_offset*/ 0;
-         unsigned size = svga->curr.vb[i].buffer->size /*- offset*/;
-         unsigned upload_offset;
+         struct svga_buffer *buffer = svga_buffer(svga->curr.vb[i].buffer);
 
-         ret = u_upload_buffer( svga->upload_vb,
-                                offset,
-                                size,
-                                svga->curr.vb[i].buffer,
-                                &upload_offset,
-                                &upload_buffer );
-         if (ret)
-            return ret;
+         if (!buffer->uploaded.buffer) {
+            ret = u_upload_buffer( svga->upload_vb,
+                                   0,
+                                   buffer->base.size,
+                                   &buffer->base,
+                                   &buffer->uploaded.offset,
+                                   &buffer->uploaded.buffer );
+            if (ret)
+               return ret;
 
-         if (0)
-            debug_printf("%s: %d: orig buf %p upl buf %p ofs %d sz %d\n", 
-                         __FUNCTION__, 
-                         i,
-                         svga->curr.vb[i].buffer,
-                         upload_buffer, upload_offset, size);
+            if (0)
+               debug_printf("%s: %d: orig buf %p upl buf %p ofs %d sz %d\n",
+                            __FUNCTION__,
+                            i,
+                            buffer,
+                            buffer->uploaded.buffer,
+                            buffer->uploaded.offset,
+                            buffer->base.size);
+         }
 
-         /* Make sure we release the old buffer and end up with the
-          * correct refcount on the uploaded buffer.
-          */
-         pipe_buffer_reference( &svga->curr.vb[i].buffer, NULL );
-         svga->curr.vb[i].buffer = upload_buffer;
-         svga->curr.vb[i].buffer_offset = upload_offset;
+         pipe_buffer_reference( &svga->curr.vb[i].buffer, buffer->uploaded.buffer );
+         svga->curr.vb[i].buffer_offset = buffer->uploaded.offset;
       }
    }
 
@@ -98,17 +95,17 @@ upload_user_buffers( struct svga_context *svga )
 static int emit_hw_vs_vdecl( struct svga_context *svga,
                              unsigned dirty )
 {
-   const struct pipe_vertex_element *ve = svga->curr.ve;
+   const struct pipe_vertex_element *ve = svga->curr.velems->velem;
    SVGA3dVertexDecl decl;
    unsigned i;
 
-   assert(svga->curr.num_vertex_elements >=
+   assert(svga->curr.velems->count >=
           svga->curr.vs->base.info.file_count[TGSI_FILE_INPUT]);
 
    svga_hwtnl_reset_vdecl( svga->hwtnl, 
-                           svga->curr.num_vertex_elements );
+                           svga->curr.velems->count );
 
-   for (i = 0; i < svga->curr.num_vertex_elements; i++) {
+   for (i = 0; i < svga->curr.velems->count; i++) {
       const struct pipe_vertex_buffer *vb = &svga->curr.vb[ve[i].vertex_buffer_index];
       unsigned usage, index;
 

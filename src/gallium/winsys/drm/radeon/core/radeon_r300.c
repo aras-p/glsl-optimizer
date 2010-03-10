@@ -21,6 +21,9 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "radeon_r300.h"
+#include "radeon_buffer.h"
+
+#include "radeon_cs_gem.h"
 
 static void radeon_set_flush_cb(struct radeon_winsys *winsys,
                                 void (*flush_cb)(void *),

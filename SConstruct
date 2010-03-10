@@ -110,12 +110,19 @@ Export([
 #######################################################################
 # Environment setup
 
+# Always build trace and identity drivers
+if 'trace' not in env['drivers']:
+    env['drivers'].append('trace')
+if 'identity' not in env['drivers']:
+    env['drivers'].append('identity')
+
 # Includes
 env.Append(CPPPATH = [
 	'#/include',
 	'#/src/gallium/include',
 	'#/src/gallium/auxiliary',
 	'#/src/gallium/drivers',
+	'#/src/gallium/winsys',
 ])
 
 if env['msvc']:

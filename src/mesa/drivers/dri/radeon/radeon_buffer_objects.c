@@ -70,7 +70,7 @@ radeonDeleteBufferObject(GLcontext * ctx,
         radeon_bo_unref(radeon_obj->bo);
     }
 
-    _mesa_free(radeon_obj);
+    free(radeon_obj);
 }
 
 
@@ -114,7 +114,7 @@ radeonBufferData(GLcontext * ctx,
         if (data != NULL) {
             radeon_bo_map(radeon_obj->bo, GL_TRUE);
 
-            _mesa_memcpy(radeon_obj->bo->ptr, data, size);
+            memcpy(radeon_obj->bo->ptr, data, size);
 
             radeon_bo_unmap(radeon_obj->bo);
         }
@@ -145,7 +145,7 @@ radeonBufferSubData(GLcontext * ctx,
 
     radeon_bo_map(radeon_obj->bo, GL_TRUE);
 
-    _mesa_memcpy(radeon_obj->bo->ptr + offset, data, size);
+    memcpy(radeon_obj->bo->ptr + offset, data, size);
 
     radeon_bo_unmap(radeon_obj->bo);
 }
@@ -165,7 +165,7 @@ radeonGetBufferSubData(GLcontext * ctx,
 
     radeon_bo_map(radeon_obj->bo, GL_FALSE);
 
-    _mesa_memcpy(data, radeon_obj->bo->ptr + offset, size);
+    memcpy(data, radeon_obj->bo->ptr + offset, size);
 
     radeon_bo_unmap(radeon_obj->bo);
 }

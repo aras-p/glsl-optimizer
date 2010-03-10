@@ -269,10 +269,10 @@ slang_operation_insert(GLuint *numElements, slang_operation **array,
       slang_operation *newOp;
       newOp = ops + pos;
       if (pos > 0)
-         _mesa_memcpy(ops, *array, pos * sizeof(slang_operation));
+         memcpy(ops, *array, pos * sizeof(slang_operation));
       if (pos < *numElements)
-         _mesa_memcpy(newOp + 1, (*array) + pos,
-                      (*numElements - pos) * sizeof(slang_operation));
+         memcpy(newOp + 1, (*array) + pos,
+                (*numElements - pos) * sizeof(slang_operation));
 
       if (!slang_operation_construct(newOp)) {
          _slang_free(ops);

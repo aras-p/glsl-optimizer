@@ -38,6 +38,7 @@ get_tex_format(struct gl_texture_image *ti)
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_A8:
 	case MESA_FORMAT_L8:
+	case MESA_FORMAT_I8:
 		return NV04_TEXTURED_TRIANGLE_FORMAT_COLOR_Y8;
 	case MESA_FORMAT_ARGB1555:
 		return NV04_TEXTURED_TRIANGLE_FORMAT_COLOR_A1R5G5B5;
@@ -47,6 +48,8 @@ get_tex_format(struct gl_texture_image *ti)
 		return NV04_TEXTURED_TRIANGLE_FORMAT_COLOR_R5G6B5;
 	case MESA_FORMAT_ARGB8888:
 		return NV04_TEXTURED_TRIANGLE_FORMAT_COLOR_A8R8G8B8;
+	case MESA_FORMAT_XRGB8888:
+		return NV04_TEXTURED_TRIANGLE_FORMAT_COLOR_X8R8G8B8;
 	default:
 		assert(0);
 	}
@@ -89,7 +92,9 @@ nv04_emit_tex_obj(GLcontext *ctx, int emit)
 		struct gl_texture_image *ti = t->Image[0][t->BaseLevel];
 		int lod_max = 1, lod_bias = 0;
 
-		nouveau_texture_validate(ctx, t);
+		if (!nouveau_texture_validate(ctx, t))
+			return;
+
 		s = &to_nouveau_texture(t)->surfaces[t->BaseLevel];
 
 		if (t->MinFilter != GL_NEAREST &&

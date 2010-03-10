@@ -72,7 +72,7 @@ nouveau_bufferobj_data(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 
 	if (data) {
 		nouveau_bo_map(nbo->bo, NOUVEAU_BO_WR);
-		_mesa_memcpy(nbo->bo->map, data, size);
+		memcpy(nbo->bo->map, data, size);
 		nouveau_bo_unmap(nbo->bo);
 	}
 
@@ -87,7 +87,7 @@ nouveau_bufferobj_subdata(GLcontext *ctx, GLenum target, GLintptrARB offset,
 	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
 
 	nouveau_bo_map(nbo->bo, NOUVEAU_BO_WR);
-	_mesa_memcpy(nbo->bo->map + offset, data, size);
+	memcpy(nbo->bo->map + offset, data, size);
 	nouveau_bo_unmap(nbo->bo);
 }
 
@@ -99,7 +99,7 @@ nouveau_bufferobj_get_subdata(GLcontext *ctx, GLenum target, GLintptrARB offset,
 	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
 
 	nouveau_bo_map(nbo->bo, NOUVEAU_BO_RD);
-	_mesa_memcpy(data, nbo->bo->map + offset, size);
+	memcpy(data, nbo->bo->map + offset, size);
 	nouveau_bo_unmap(nbo->bo);
 }
 
