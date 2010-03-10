@@ -32,12 +32,6 @@
  *   Brian Paul
  */
 
-
-
-
-#undef ASSERT
-#undef Elements
-
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
