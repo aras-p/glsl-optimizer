@@ -328,6 +328,12 @@ void emit_cinterp(struct brw_compile *p,
 		  const struct brw_reg *dst,
 		  GLuint mask,
 		  const struct brw_reg *arg0);
+void emit_cmp(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1,
+	      const struct brw_reg *arg2);
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,

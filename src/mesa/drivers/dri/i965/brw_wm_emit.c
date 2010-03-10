@@ -566,12 +566,12 @@ static void emit_sne( struct brw_compile *p,
    emit_sop(p, dst, mask, BRW_CONDITIONAL_NEQ, arg0, arg1);
 }
 
-static void emit_cmp( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1,
-		      const struct brw_reg *arg2 )
+void emit_cmp(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1,
+	      const struct brw_reg *arg2)
 {
    GLuint i;
 
