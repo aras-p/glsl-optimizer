@@ -62,7 +62,8 @@ softpipe_bind_vertex_elements_state(struct pipe_context *pipe,
 
    softpipe->dirty |= SP_NEW_VERTEX;
 
-   draw_set_vertex_elements(softpipe->draw, sp_velems->count, sp_velems->velem);
+   if (sp_velems)
+      draw_set_vertex_elements(softpipe->draw, sp_velems->count, sp_velems->velem);
 }
 
 void
