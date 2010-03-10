@@ -590,7 +590,7 @@ static void r300SetDepthState(GLcontext * ctx)
 					    R500_STENCIL_REFMASK_FRONT_BACK);
 	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_Z_FUNC_SHIFT);
 
-	if (ctx->Depth.Test) {
+	if (ctx->Depth.Test && ctx->DrawBuffer->_DepthBuffer) {
 		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_ENABLE;
 		if (ctx->Depth.Mask)
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_WRITE_ENABLE;
