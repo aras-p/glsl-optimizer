@@ -287,7 +287,7 @@ st_make_current(struct st_context *st,
       }
 
       _mesa_check_init_viewport(st->ctx, draw->InitWidth, draw->InitHeight);
-      st->pipe->priv = winsys_drawable_handle;
+      st->winsys_drawable_handle = winsys_drawable_handle;
 
       return GL_TRUE;
    }

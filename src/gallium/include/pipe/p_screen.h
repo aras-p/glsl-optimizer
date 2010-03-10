@@ -265,6 +265,7 @@ struct pipe_screen {
 
    /**
     * Do any special operations to ensure buffer size is correct
+    * \param context_private  the private data of the calling context
     */
    void (*update_buffer)( struct pipe_screen *ws,
                           void *context_private );
@@ -272,10 +273,12 @@ struct pipe_screen {
    /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
+    * \param winsys_drawable_handle  an opaque handle that the calling context
+    *                                gets out-of-band
     */
    void (*flush_frontbuffer)( struct pipe_screen *screen,
                               struct pipe_surface *surf,
-                              void *context_private );
+                              void *winsys_drawable_handle );
 
 
 
