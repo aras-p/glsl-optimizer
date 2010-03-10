@@ -1110,11 +1110,19 @@ static void emit_kil( struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-   GLuint i;
-   
-   /* XXX - usually won't need 4 compares!
-    */
+   GLuint i, j;
+
    for (i = 0; i < 4; i++) {
+      /* Check if we've already done the comparison for this reg
+       * -- common when someone does KIL TEMP.wwww.
+       */
+      for (j = 0; j < i; j++) {
+	 if (memcmp(&arg0[j], &arg0[i], sizeof(arg0[0])) == 0)
+	    break;
+      }
+      if (j != i)
+	 continue;
+
       brw_push_insn_state(p);
       brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0[i], brw_imm_f(0));   
       brw_set_predicate_control_flag_value(p, 0xff);
