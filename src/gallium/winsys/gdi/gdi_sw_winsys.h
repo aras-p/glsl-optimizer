@@ -1,6 +1,8 @@
 #ifndef GDI_SW_WINSYS_H
 #define GDI_SW_WINSYS_H
 
+#include <windows.h>
+
 #include "pipe/p_compiler.h"
 #include "state_tracker/sw_winsys.h"
 
