@@ -718,9 +718,7 @@ main(int argc, char **argv)
       ((ast_node *)ptr)->print();
    }
 
-   foreach (ptr, & state.translation_unit) {
-      ((ast_node *)ptr)->hir(&instructions, &state);
-   }
+   _mesa_ast_to_hir(&instructions, &state);
 
    printf("\n\n");
    foreach_iter(exec_list_iterator, iter, instructions) {

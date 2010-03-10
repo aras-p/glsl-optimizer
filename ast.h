@@ -492,6 +492,9 @@ public:
 };
 
 
+extern void
+_mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state);
+
 extern struct ir_instruction *
 _mesa_ast_field_selection_to_hir(const struct ast_expression *expr,
 				 exec_list *instructions,
