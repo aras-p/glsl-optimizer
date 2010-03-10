@@ -22,6 +22,7 @@
  */
 
 #include "list.h"
+#include "ir_visitor.h"
 
 struct ir_program {
    void *bong_hits;
@@ -47,6 +48,8 @@ class ir_instruction : public exec_node {
 public:
    unsigned mode;
    const struct glsl_type *type;
+
+   virtual void accept(ir_visitor *) = 0;
 
 protected:
    ir_instruction(int mode);
@@ -81,6 +84,11 @@ class ir_variable : public ir_instruction {
 public:
    ir_variable(const struct glsl_type *, const char *);
 
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
    const char *name;
 
    unsigned read_only:1;
@@ -96,6 +104,11 @@ class ir_label : public ir_instruction {
 public:
    ir_label(const char *label);
 
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
    const char *label;
 };
 
@@ -104,6 +117,11 @@ public:
 class ir_function_signature : public ir_instruction {
 public:
    ir_function_signature(void);
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
 
    /**
     * Function return type.
@@ -131,6 +149,11 @@ class ir_function : public ir_instruction {
 public:
    ir_function(void);
 
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
    /**
     * Name of the function.
     */
@@ -147,6 +170,11 @@ class ir_assignment : public ir_instruction {
 public:
    ir_assignment(ir_instruction *lhs, ir_instruction *rhs,
 		 ir_expression *condition);
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
 
    /**
     * Left-hand side of the assignment.
@@ -234,6 +262,11 @@ public:
    ir_expression(int op, const struct glsl_type *type,
 		 ir_instruction *, ir_instruction *);
 
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
    ir_expression_operation operation;
    ir_instruction *operands[2];
 };
@@ -262,6 +295,11 @@ class ir_dereference : public ir_instruction {
 public:
    ir_dereference(struct ir_instruction *);
 
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
    enum {
       ir_reference_variable,
       ir_reference_array,
@@ -286,6 +324,11 @@ public:
 class ir_constant : public ir_instruction {
 public:
    ir_constant(const struct glsl_type *type, const void *data);
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
 
    /**
     * Value of the constant.
