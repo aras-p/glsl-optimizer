@@ -11,6 +11,7 @@
 #include <string.h>
 #include <GL/glew.h>
 #include <GL/glut.h>
+#include <GL/glu.h>
 
 
 static int Width = 512, Height = 512;
@@ -18,12 +19,20 @@ static GLuint MyFB, MyRB;
 static GLboolean UseTex = GL_FALSE;
 
 
-#define CheckError() assert(glGetError() == 0)
+#define CheckError() \
+   do { \
+      GLenum err = glGetError(); \
+      if (err != GL_NO_ERROR) \
+         printf("Error: %s\n", gluErrorString(err)); \
+      assert(err == GL_NO_ERROR); \
+   } while (0)
 
 
 static void
 Init(void)
 {
+   GLenum status;
+
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
@@ -45,6 +54,8 @@ Init(void)
       glBindTexture(GL_TEXTURE_2D, tex);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0,
                    GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, 
                                 GL_COLOR_ATTACHMENT0_EXT,
                                 GL_TEXTURE_2D, tex, 0);
@@ -57,6 +68,11 @@ Init(void)
                                    GL_RENDERBUFFER_EXT, MyRB);
 
       glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, Width, Height);
+   }
+
+   status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+   if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      fprintf(stderr, "Framebuffer object is incomplete (0x%x)!\n", status);
    }
 
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
@@ -133,6 +149,8 @@ Draw(void)
       glClearColor(0, 1, 0, 0);
       glClear(GL_COLOR_BUFFER_BIT);
    }
+
+   CheckError();
 
    /* gray triangle in middle, pointing up */
    glColor3f(0.5, 0.5, 0.5);
