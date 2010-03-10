@@ -77,8 +77,22 @@ void ir_print_visitor::visit(ir_dereference *ir)
 
 void ir_print_visitor::visit(ir_assignment *ir)
 {
-   printf("%s:%d:\n", __func__, __LINE__);
-   (void) ir;
+   printf("(assign\n");
+
+   printf("    (");
+   if (ir->condition)
+      ir->condition->accept(this);
+   else
+      printf("true");
+   printf(")\n");
+
+   printf("    (");
+   ir->lhs->accept(this);
+   printf(")\n");
+
+   printf("    (");
+   ir->rhs->accept(this);
+   printf(")\n");
 }
 
 
