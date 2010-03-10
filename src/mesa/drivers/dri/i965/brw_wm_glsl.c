@@ -2026,8 +2026,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                }
                break;
 	    default:
-		printf("unsupported IR in fragment shader %d\n",
-			inst->Opcode);
+		printf("unsupported opcode %d (%s) in fragment shader\n",
+		       inst->Opcode, inst->Opcode < MAX_OPCODE ?
+		       _mesa_opcode_string(inst->Opcode) : "unknown");
 	}
 
 	/* Release temporaries containing any unaliased source regs. */
