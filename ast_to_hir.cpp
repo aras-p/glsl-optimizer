@@ -61,6 +61,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 {
    struct simple_node *ptr;
 
+   _mesa_glsl_initialize_variables(instructions, state);
+
    foreach (ptr, & state->translation_unit) {
       ((ast_node *)ptr)->hir(instructions, state);
    }
