@@ -155,7 +155,7 @@ static void svga_bind_sampler_states(struct pipe_context *pipe,
    /* Check for no-op */
    if (num == svga->curr.num_samplers &&
        !memcmp(svga->curr.sampler, sampler, num * sizeof(void *))) {
-      debug_printf("sampler noop\n");
+      if (0) debug_printf("sampler noop\n");
       return;
    }
 
