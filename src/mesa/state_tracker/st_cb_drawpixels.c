@@ -405,7 +405,7 @@ make_texture(struct st_context *st,
 
 /**
  * Draw quad with texcoords and optional color.
- * Coords are window coords with y=0=bottom.
+ * Coords are gallium window coords with y=0=top.
  * \param color  may be null
  * \param invertTex  if true, flip texcoords vertically
  */
@@ -592,10 +592,15 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       pipe->set_fragment_sampler_textures(pipe, 1, &pt);
    }
 
-   /* Compute window coords (y=0=bottom) with pixel zoom.
+   /* Compute Gallium window coords (y=0=top) with pixel zoom.
     * Recall that these coords are transformed by the current
     * vertex shader and viewport transformation.
     */
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_BOTTOM) {
+      y = ctx->DrawBuffer->Height - (int) (y + height * ctx->Pixel.ZoomY);
+      invertTex = !invertTex;
+   }
+
    x0 = (GLfloat) x;
    x1 = x + width * ctx->Pixel.ZoomX;
    y0 = (GLfloat) y;
