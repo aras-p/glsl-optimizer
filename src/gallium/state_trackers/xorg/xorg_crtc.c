@@ -276,7 +276,21 @@ err_bo_destroy:
 static void
 crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 {
+    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     modesettingPtr ms = modesettingPTR(crtc->scrn);
+
+    /* Older X servers have cursor reference counting bugs leading to use of
+     * freed memory and consequently random crashes. Should be fixed as of
+     * xserver 1.8, but this workaround shouldn't hurt anyway.
+     */
+    if (config->cursor)
+       config->cursor->refcnt++;
+
+    if (ms->cursor)
+       FreeCursor(ms->cursor, None);
+
+    ms->cursor = config->cursor;
+
     if (ms->screen)
 	crtc_load_cursor_argb_ga3d(crtc, image);
 #ifdef HAVE_LIBKMS
