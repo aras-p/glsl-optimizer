@@ -54,11 +54,6 @@ static PFNGETGALLIUMSCREENMESAPROC pfnGetGalliumScreenMESA = NULL;
 static PFNCREATEGALLIUMCONTEXTMESAPROC pfnCreateGalliumContextMESA = NULL;
 
 
-/* XXX: Force init_gallium symbol to be linked */
-extern void init_gallium(void);
-void (*force_init_gallium_linkage)(void) = &init_gallium;
-
-
 #ifdef PIPE_OS_WINDOWS
 
 static INLINE boolean

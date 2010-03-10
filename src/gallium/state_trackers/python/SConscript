@@ -24,6 +24,7 @@ if 'python' in env['statetrackers']:
             'ws2_32',
         ])
     else:
+        env.Append(CPPDEFINES = ['GCC_HASCLASSVISIBILITY'])
         env.Append(LIBS = [
         	'GL',
             'X11',
