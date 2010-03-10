@@ -33,7 +33,8 @@ CheckError(int line)
 static void
 Display( void )
 {
-   GLubyte *buffer = malloc(Width * Height * 4);
+   GLboolean copyPix = GL_FALSE;
+   GLboolean blitPix = GL_FALSE;
    GLenum status;
 
    CheckError(__LINE__);
@@ -63,16 +64,43 @@ Display( void )
    glutSolidTeapot(2.0);
    glPopMatrix();
 
-   /* read from user framebuffer */
-   glReadPixels(0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+   if (copyPix) {
+      glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, MyFB);
+      glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+      glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+      glDrawBuffer(GL_BACK);
 
-   /* draw to window */
-   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-   glDisable(GL_DEPTH_TEST);  /* in case window has depth buffer */
-   glWindowPos2iARB(0, 0);
-   glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+      glDisable(GL_DEPTH_TEST);  /* in case window has depth buffer */
 
-   free(buffer);
+      glWindowPos2iARB(0, 0);
+      glCopyPixels(0, 0, Width, Height, GL_COLOR);
+   }
+   else if (blitPix) {
+      glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, MyFB);
+      glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+      glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+      glDrawBuffer(GL_BACK);
+
+      glDisable(GL_DEPTH_TEST);  /* in case window has depth buffer */
+
+      glBlitFramebufferEXT(0, 0, Width, Height,
+                           0, 0, Width, Height,
+                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
+   }
+   else {
+      GLubyte *buffer = malloc(Width * Height * 4);
+      /* read from user framebuffer */
+      glReadPixels(0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+      /* draw to window */
+      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+      glDisable(GL_DEPTH_TEST);  /* in case window has depth buffer */
+      glWindowPos2iARB(0, 0);
+      glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+      free(buffer);
+   }
+
    glutSwapBuffers();
    CheckError(__LINE__);
 }
