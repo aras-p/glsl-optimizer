@@ -367,7 +367,7 @@ success:
 fail:
    if(fb)
       stw_framebuffer_release(fb);
-   st_make_current( NULL, NULL, NULL );
+   st_make_current( NULL, NULL, NULL, NULL );
    return FALSE;
 }
 
