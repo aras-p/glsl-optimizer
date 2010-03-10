@@ -48,6 +48,8 @@ unsigned r200_check_blit(gl_format mesa_format)
     case MESA_FORMAT_ARGB4444:
     case MESA_FORMAT_ARGB1555:
     case MESA_FORMAT_A8:
+    case MESA_FORMAT_L8:
+    case MESA_FORMAT_I8:
 	    break;
     default:
 	    return 0;
@@ -105,6 +107,12 @@ static void inline emit_tx_setup(struct r200_context *r200,
     case MESA_FORMAT_ARGB8888:
 	    txformat |= R200_TXFORMAT_ARGB8888 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
+    case MESA_FORMAT_RGBA8888:
+	    txformat |= R200_TXFORMAT_RGBA8888 | R200_TXFORMAT_ALPHA_IN_MAP;
+	    break;
+    case MESA_FORMAT_RGBA8888_REV:
+	    txformat |= R200_TXFORMAT_ABGR8888 | R200_TXFORMAT_ALPHA_IN_MAP;
+	    break;
     case MESA_FORMAT_XRGB8888:
 	    txformat |= R200_TXFORMAT_ARGB8888;
 	    break;
@@ -118,7 +126,14 @@ static void inline emit_tx_setup(struct r200_context *r200,
 	    txformat |= R200_TXFORMAT_ARGB1555 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
     case MESA_FORMAT_A8:
+    case MESA_FORMAT_I8:
 	    txformat |= R200_TXFORMAT_I8 | R200_TXFORMAT_ALPHA_IN_MAP;
+	    break;
+    case MESA_FORMAT_L8:
+	    txformat |= R200_TXFORMAT_I8;
+	    break;
+    case MESA_FORMAT_AL88:
+	    txformat |= R200_TXFORMAT_AI88 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
     default:
 	    break;
@@ -182,6 +197,8 @@ static inline void emit_cb_setup(struct r200_context *r200,
 	    dst_format = RADEON_COLOR_FORMAT_ARGB1555;
 	    break;
     case MESA_FORMAT_A8:
+    case MESA_FORMAT_L8:
+    case MESA_FORMAT_I8:
 	    dst_format = RADEON_COLOR_FORMAT_RGB8;
 	    break;
     default:
