@@ -25,6 +25,7 @@
 #ifndef GLSL_PARSER_EXTRAS_H
 #define GLSL_PARSER_EXTRAS_H
 
+#include <cstdlib>
 #include "main/simple_list.h"
 
 enum _mesa_glsl_parser_targets {
