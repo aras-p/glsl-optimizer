@@ -95,7 +95,8 @@ ir_dereference::ir_dereference(ir_instruction *var)
 
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name)
-   : ir_instruction(ir_op_var_decl)
+   : ir_instruction(ir_op_var_decl), read_only(false), centroid(false),
+     invariant(false), mode(ir_var_auto), interpolation(ir_var_smooth)
 {
    this->type = type;
    this->name = name;
