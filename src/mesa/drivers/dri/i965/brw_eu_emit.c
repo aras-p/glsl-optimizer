@@ -1290,7 +1290,11 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint simd_mode)
 {
    GLboolean need_stall = 0;
-   
+   GLboolean dispatch_16 = GL_FALSE;
+
+   if (p->current->header.execution_size == BRW_EXECUTE_16)
+      dispatch_16 = GL_TRUE;
+
    if (writemask == 0) {
       /*printf("%s: zero writemask??\n", __FUNCTION__); */
       return;
@@ -1343,7 +1347,13 @@ void brw_SAMPLE(struct brw_compile *p,
 
   	 src0 = retype(brw_null_reg(), BRW_REGISTER_TYPE_UW); 
 	 dest = offset(dest, dst_offset);
-	 response_length = len * 2;
+
+	 /* For 16-wide dispatch, masked channels are skipped in the
+	  * response.  For 8-wide, masked channels still take up slots,
+	  * and are just not written to.
+	  */
+	 if (dispatch_16)
+	    response_length = len * 2;
       }
    }
 
