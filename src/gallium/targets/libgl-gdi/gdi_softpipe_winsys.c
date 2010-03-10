@@ -37,9 +37,10 @@
 #include <windows.h>
 
 #include "stw_winsys.h"
-#include "gdi_sw_winsys.h"
+#include "gdi/gdi_sw_winsys.h"
 #include "softpipe/sp_texture.h"
 #include "softpipe/sp_screen.h"
+#include "softpipe/sp_public.h"
 
 
 static struct pipe_screen *

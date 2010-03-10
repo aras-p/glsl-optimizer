@@ -37,9 +37,10 @@
 #include <windows.h>
 
 #include "stw_winsys.h"
-#include "gdi_sw_winsys.h"
+#include "gdi/gdi_sw_winsys.h"
 #include "llvmpipe/lp_texture.h"
 #include "llvmpipe/lp_screen.h"
+#include "llvmpipe/lp_public.h"
 
 
 static struct pipe_screen *
