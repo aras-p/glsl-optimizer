@@ -1046,19 +1046,17 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     if (r300->draw) {
         draw_flush(r300->draw);
         draw_set_vertex_buffers(r300->draw, count, buffers);
-    } else {
-        r300->vertex_stream_state.dirty = TRUE;
     }
 }
 
 static boolean r300_validate_aos(struct r300_context *r300)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
+    struct pipe_vertex_element *velem = r300->velems->velem;
     int i;
 
     /* Check if formats and strides are aligned to the size of DWORD. */
-    for (i = 0; i < r300->vertex_element_count; i++) {
+    for (i = 0; i < r300->velems->count; i++) {
         if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
             util_format_get_blocksize(velem[i].src_format) % 4 != 0) {
             return FALSE;
@@ -1067,20 +1065,209 @@ static boolean r300_validate_aos(struct r300_context *r300)
     return TRUE;
 }
 
-static void r300_set_vertex_elements(struct pipe_context* pipe,
-                                    unsigned count,
-                                    const struct pipe_vertex_element* elements)
+static void r300_draw_emit_attrib(struct r300_context* r300,
+                                  enum attrib_emit emit,
+                                  enum interp_mode interp,
+                                  int index)
 {
-    struct r300_context* r300 = r300_context(pipe);
+    struct r300_vertex_shader* vs = r300->vs_state.state;
+    struct tgsi_shader_info* info = &vs->info;
+    int output;
 
-    memcpy(r300->vertex_element,
-           elements,
-           sizeof(struct pipe_vertex_element) * count);
-    r300->vertex_element_count = count;
+    output = draw_find_shader_output(r300->draw,
+                                     info->output_semantic_name[index],
+                                     info->output_semantic_index[index]);
+    draw_emit_vertex_attr(&r300->vertex_info, emit, interp, output);
+}
+
+static void r300_draw_emit_all_attribs(struct r300_context* r300)
+{
+    struct r300_vertex_shader* vs = r300->vs_state.state;
+    struct r300_shader_semantics* vs_outputs = &vs->outputs;
+    int i, gen_count;
+
+    /* Position. */
+    if (vs_outputs->pos != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                              vs_outputs->pos);
+    } else {
+        assert(0);
+    }
+
+    /* Point size. */
+    if (vs_outputs->psize != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_1F_PSIZE, INTERP_POS,
+                              vs_outputs->psize);
+    }
+
+    /* Colors. */
+    for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+        if (vs_outputs->color[i] != ATTR_UNUSED) {
+            r300_draw_emit_attrib(r300, EMIT_4F, INTERP_LINEAR,
+                                  vs_outputs->color[i]);
+        }
+    }
+
+    /* XXX Back-face colors. */
+
+    /* Texture coordinates. */
+    gen_count = 0;
+    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+            r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                                  vs_outputs->generic[i]);
+            gen_count++;
+        }
+    }
+
+    /* Fog coordinates. */
+    if (vs_outputs->fog != ATTR_UNUSED) {
+        r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
+                              vs_outputs->fog);
+        gen_count++;
+    }
+
+    /* XXX magic */
+    assert(gen_count <= 8);
+}
+
+/* Update the PSC tables. */
+static void r300_vertex_psc(struct r300_vertex_element_state *velems)
+{
+    struct r300_vertex_stream_state *vstream = &velems->vertex_stream;
+    uint16_t type, swizzle;
+    enum pipe_format format;
+    unsigned i;
+
+    assert(velems->count <= 16);
+
+    /* Vertex shaders have no semantics on their inputs,
+     * so PSC should just route stuff based on the vertex elements,
+     * and not on attrib information. */
+    for (i = 0; i < velems->count; i++) {
+        format = velems->velem[i].src_format;
+
+        type = r300_translate_vertex_data_type(format) |
+            (i << R300_DST_VEC_LOC_SHIFT);
+        swizzle = r300_translate_vertex_data_swizzle(format);
+
+        if (i & 1) {
+            vstream->vap_prog_stream_cntl[i >> 1] |= type << 16;
+            vstream->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 16;
+        } else {
+            vstream->vap_prog_stream_cntl[i >> 1] |= type;
+            vstream->vap_prog_stream_cntl_ext[i >> 1] |= swizzle;
+        }
+    }
+
+    /* Set the last vector in the PSC. */
+    if (i) {
+        i -= 1;
+    }
+    vstream->vap_prog_stream_cntl[i >> 1] |=
+        (R300_LAST_VEC << (i & 1 ? 16 : 0));
+
+    vstream->count = (i >> 1) + 1;
+}
+
+/* Update the PSC tables for SW TCL, using Draw. */
+static void r300_swtcl_vertex_psc(struct r300_context *r300,
+                                  struct r300_vertex_element_state *velems)
+{
+    struct r300_vertex_stream_state *vstream = &velems->vertex_stream;
+    struct r300_vertex_shader* vs = r300->vs_state.state;
+    struct vertex_info* vinfo = &r300->vertex_info;
+    uint16_t type, swizzle;
+    enum pipe_format format;
+    unsigned i, attrib_count;
+    int* vs_output_tab = vs->stream_loc_notcl;
+
+    /* For each Draw attribute, route it to the fragment shader according
+     * to the vs_output_tab. */
+    attrib_count = vinfo->num_attribs;
+    DBG(r300, DBG_DRAW, "r300: attrib count: %d\n", attrib_count);
+    for (i = 0; i < attrib_count; i++) {
+        DBG(r300, DBG_DRAW, "r300: attrib: offset %d, interp %d, size %d,"
+               " vs_output_tab %d\n", vinfo->attrib[i].src_index,
+               vinfo->attrib[i].interp_mode, vinfo->attrib[i].emit,
+               vs_output_tab[i]);
+    }
+
+    for (i = 0; i < attrib_count; i++) {
+        /* Make sure we have a proper destination for our attribute. */
+        assert(vs_output_tab[i] != -1);
+
+        format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
+
+        /* Obtain the type of data in this attribute. */
+        type = r300_translate_vertex_data_type(format) |
+            vs_output_tab[i] << R300_DST_VEC_LOC_SHIFT;
+
+        /* Obtain the swizzle for this attribute. Note that the default
+         * swizzle in the hardware is not XYZW! */
+        swizzle = r300_translate_vertex_data_swizzle(format);
+
+        /* Add the attribute to the PSC table. */
+        if (i & 1) {
+            vstream->vap_prog_stream_cntl[i >> 1] |= type << 16;
+            vstream->vap_prog_stream_cntl_ext[i >> 1] |= swizzle << 16;
+        } else {
+            vstream->vap_prog_stream_cntl[i >> 1] |= type;
+            vstream->vap_prog_stream_cntl_ext[i >> 1] |= swizzle;
+        }
+    }
+
+    /* Set the last vector in the PSC. */
+    if (i) {
+        i -= 1;
+    }
+    vstream->vap_prog_stream_cntl[i >> 1] |=
+        (R300_LAST_VEC << (i & 1 ? 16 : 0));
+
+    vstream->count = (i >> 1) + 1;
+}
+
+static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
+                                               unsigned count,
+                                               const struct pipe_vertex_element* attribs)
+{
+    struct r300_context *r300 = r300_context(pipe);
+    struct r300_screen* r300screen = r300_screen(pipe->screen);
+    struct r300_vertex_element_state *velems;
+
+    assert(count <= PIPE_MAX_ATTRIBS);
+    velems = CALLOC_STRUCT(r300_vertex_element_state);
+    if (velems != NULL) {
+        velems->count = count;
+        memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
+
+        if (r300screen->caps->has_tcl) {
+            r300_vertex_psc(velems);
+        } else {
+            memset(&r300->vertex_info, 0, sizeof(struct vertex_info));
+            r300_draw_emit_all_attribs(r300);
+            draw_compute_vertex_size(&r300->vertex_info);
+            r300_swtcl_vertex_psc(r300, velems);
+        }
+    }
+    return velems;
+}
+
+static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
+                                            void *state)
+{
+    struct r300_context *r300 = r300_context(pipe);
+    struct r300_vertex_element_state *velems = state;
+
+    if (velems == NULL) {
+        return;
+    }
+
+    r300->velems = velems;
 
     if (r300->draw) {
         draw_flush(r300->draw);
-        draw_set_vertex_elements(r300->draw, count, elements);
+        draw_set_vertex_elements(r300->draw, velems->count, velems->velem);
     }
 
     if (!r300_validate_aos(r300)) {
@@ -1088,6 +1275,14 @@ static void r300_set_vertex_elements(struct pipe_context* pipe,
         assert(0);
         abort();
     }
+
+    UPDATE_STATE(&velems->vertex_stream, r300->vertex_stream_state);
+    r300->vertex_stream_state.size = (1 + velems->vertex_stream.count) * 2;
+}
+
+static void r300_delete_vertex_elements_state(struct pipe_context *pipe, void *state)
+{
+   FREE(state);
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
@@ -1262,7 +1457,10 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.set_viewport_state = r300_set_viewport_state;
 
     r300->context.set_vertex_buffers = r300_set_vertex_buffers;
-    r300->context.set_vertex_elements = r300_set_vertex_elements;
+
+    r300->context.create_vertex_elements_state = r300_create_vertex_elements_state;
+    r300->context.bind_vertex_elements_state = r300_bind_vertex_elements_state;
+    r300->context.delete_vertex_elements_state = r300_delete_vertex_elements_state;
 
     r300->context.create_vs_state = r300_create_vs_state;
     r300->context.bind_vs_state = r300_bind_vs_state;

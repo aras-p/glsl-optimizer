@@ -440,6 +440,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_viewport(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
+   cso_save_vertex_elements(cso);
 
    /* rasterizer state: just scissor */
    st->bitmap.rasterizer.scissor = ctx->Scissor.Enabled;
@@ -490,6 +491,8 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       cso_set_viewport(cso, &vp);
    }
 
+   cso_set_vertex_elements(cso, 3, st->velems_util_draw);
+
    /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
    z = z * 2.0 - 1.0;
 
@@ -509,6 +512,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_viewport(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
+   cso_restore_vertex_elements(cso);
 }
 
 

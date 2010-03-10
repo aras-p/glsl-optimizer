@@ -31,13 +31,8 @@
 
 #include "p_config.h"
 
-#ifndef XFree86Server
 #include <stdlib.h>
 #include <string.h>
-#else
-#include "xf86_ansic.h"
-#include "xf86_libc.h"
-#endif
 #include <stddef.h>
 #include <stdarg.h>
 

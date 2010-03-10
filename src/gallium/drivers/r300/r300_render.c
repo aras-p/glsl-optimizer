@@ -143,7 +143,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 {
     struct pipe_vertex_element* velem;
     struct pipe_vertex_buffer* vbuf;
-    unsigned vertex_element_count = r300->vertex_element_count;
+    unsigned vertex_element_count = r300->velems->count;
     unsigned i, v, vbi, dw, elem_offset, dwords;
 
     /* Size of the vertex, in dwords. */
@@ -166,7 +166,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
     /* Calculate the vertex size, offsets, strides etc. and map the buffers. */
     for (i = 0; i < vertex_element_count; i++) {
-        velem = &r300->vertex_element[i];
+        velem = &r300->velems->velem[i];
         offset[i] = velem->src_offset / 4;
         size[i] = util_format_get_blocksize(velem->src_format) / 4;
         vertex_size += size[i];
@@ -183,7 +183,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
         }
     }
 
-    dwords = 10 + count * vertex_size;
+    dwords = 9 + count * vertex_size;
 
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
     r300_emit_buffer_validate(r300, FALSE, NULL);
@@ -193,8 +193,9 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
-    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0);
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
+    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
+    OUT_CS(count - 1);
+    OUT_CS(0);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
             r300_translate_primitive(mode));
@@ -202,7 +203,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     /* Emit vertices. */
     for (v = 0; v < count; v++) {
         for (i = 0; i < vertex_element_count; i++) {
-            velem = &r300->vertex_element[i];
+            velem = &r300->velems->velem[i];
             vbi = velem->vertex_buffer_index;
             elem_offset = offset[i] + stride[vbi] * (v + start);
 
@@ -215,7 +216,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
     /* Unmap buffers. */
     for (i = 0; i < vertex_element_count; i++) {
-        vbi = r300->vertex_element[i].vertex_buffer_index;
+        vbi = r300->velems->velem[i].vertex_buffer_index;
 
         if (map[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
@@ -238,15 +239,16 @@ static void r300_emit_draw_arrays(struct r300_context *r300,
 
     if (alt_num_verts) {
         assert(count < (1 << 24));
-        BEGIN_CS(10);
+        BEGIN_CS(9);
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
     } else {
-        BEGIN_CS(8);
+        BEGIN_CS(7);
     }
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
-    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, 0);
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
+    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
+    OUT_CS(count - 1);
+    OUT_CS(0);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
            r300_translate_primitive(mode) |
@@ -281,15 +283,16 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
 
     if (alt_num_verts) {
-        BEGIN_CS(16);
+        BEGIN_CS(15);
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
     } else {
-        BEGIN_CS(14);
+        BEGIN_CS(13);
     }
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
-    OUT_CS_REG(R300_VAP_VF_MIN_VTX_INDX, minIndex);
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, maxIndex);
+    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
+    OUT_CS(maxIndex);
+    OUT_CS(minIndex);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     if (indexSize == 4) {
         count_dwords = count;

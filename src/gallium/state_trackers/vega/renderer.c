@@ -210,6 +210,7 @@ void renderer_draw_quad(struct renderer *r,
    buf = setup_vertex_data(r, x1, y1, x2, y2, depth);
 
    if (buf) {
+      cso_set_vertex_elements(r->cso, 2, r->owner->velems);
       util_draw_vertex_buffer(r->pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
@@ -248,6 +249,7 @@ void renderer_draw_texture(struct renderer *r,
                                s0, t0, s1, t1, 0.0f);
 
    if (buf) {
+      cso_set_vertex_elements(r->cso, 2, r->owner->velems);
       util_draw_vertex_buffer(pipe, buf, 0,
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
@@ -370,6 +372,7 @@ void renderer_copy_texture(struct renderer *ctx,
                          0.0f);
 
    if (buf) {
+      cso_set_vertex_elements(ctx->cso, 2, ctx->owner->velems);
       util_draw_vertex_buffer(ctx->pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
@@ -535,6 +538,7 @@ void renderer_copy_surface(struct renderer *ctx,
                            (float) dstX1, (float) dstY1, z);
 
    if (buf) {
+      cso_set_vertex_elements(ctx->cso, 2, ctx->owner->velems);
       util_draw_vertex_buffer(ctx->pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
@@ -587,6 +591,7 @@ void renderer_texture_quad(struct renderer *r,
                           s0, t0, s1, t1, 0.0f);
 
    if (buf) {
+      cso_set_vertex_elements(r->cso, 2, r->owner->velems);
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */

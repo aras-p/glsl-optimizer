@@ -321,6 +321,12 @@ static void r300_init_vtbl(radeonContextPtr radeon)
 
 	radeon->vtbl.check_blit = r300_check_blit;
 	radeon->vtbl.blit = r300_blit;
+
+	if (radeon->radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+		radeon->vtbl.is_format_renderable = r500IsFormatRenderable;
+	} else {
+		radeon->vtbl.is_format_renderable = r300IsFormatRenderable;
+	}
 }
 
 static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)

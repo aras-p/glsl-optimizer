@@ -307,9 +307,8 @@ draw_arrays_instanced(struct draw_context *draw,
       tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
       debug_printf("Elements:\n");
       for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
-         debug_printf("  format=%s comps=%u\n",
-                      util_format_name(draw->pt.vertex_element[i].src_format),
-                      draw->pt.vertex_element[i].nr_components);
+         debug_printf("  format=%s\n",
+                      util_format_name(draw->pt.vertex_element[i].src_format));
       }
       debug_printf("Buffers:\n");
       for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {

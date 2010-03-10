@@ -89,6 +89,7 @@ struct cso_context {
    void *rasterizer, *rasterizer_saved;
    void *fragment_shader, *fragment_shader_saved, *geometry_shader;
    void *vertex_shader, *vertex_shader_saved, *geometry_shader_saved;
+   void *velements, *velements_saved;
 
    struct pipe_clip_state clip;
    struct pipe_clip_state clip_saved;
@@ -174,6 +175,20 @@ static boolean delete_vs_state(struct cso_context *ctx, void *state)
    return FALSE;
 }
 
+static boolean delete_vertex_elements(struct cso_context *ctx,
+                                      void *state)
+{
+   struct cso_velements *cso = (struct cso_velements *)state;
+
+   if (ctx->velements == cso->data)
+      return FALSE;
+
+   if (cso->delete_state)
+      cso->delete_state(cso->context, cso->data);
+   FREE(state);
+   return TRUE;
+}
+
 
 static INLINE boolean delete_cso(struct cso_context *ctx,
                                  void *state, enum cso_cache_type type)
@@ -196,6 +211,9 @@ static INLINE boolean delete_cso(struct cso_context *ctx,
       break;
    case CSO_VERTEX_SHADER:
       return delete_vs_state(ctx, state);
+      break;
+   case CSO_VELEMENTS:
+      return delete_vertex_elements(ctx, state);
       break;
    default:
       assert(0);
@@ -271,6 +289,7 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_depth_stencil_alpha_state( ctx->pipe, NULL );
       ctx->pipe->bind_fs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
+      ctx->pipe->bind_vertex_elements_state( ctx->pipe, NULL );
    }
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
@@ -1130,7 +1149,6 @@ void cso_restore_geometry_shader(struct cso_context *ctx)
    ctx->geometry_shader_saved = NULL;
 }
 
-
 /* clip state */
 
 static INLINE void
@@ -1179,4 +1197,67 @@ cso_restore_clip(struct cso_context *ctx)
       clip_state_cpy(&ctx->clip, &ctx->clip_saved);
       ctx->pipe->set_clip_state(ctx->pipe, &ctx->clip_saved);
    }
+}
+
+enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
+                                        unsigned count,
+                                        const struct pipe_vertex_element *states)
+{
+   unsigned key_size, hash_key;
+   struct cso_hash_iter iter;
+   void *handle;
+   struct cso_velems_state velems_state;
+
+   /* need to include the count into the stored state data too.
+      Otherwise first few count pipe_vertex_elements could be identical even if count
+      is different, and there's no guarantee the hash would be different in that
+      case neither */
+   key_size = sizeof(struct pipe_vertex_element) * count + sizeof(unsigned);
+   velems_state.count = count;
+   memcpy(velems_state.velems, states, sizeof(struct pipe_vertex_element) * count);
+   hash_key = cso_construct_key((void*)&velems_state, key_size);
+   iter = cso_find_state_template(ctx->cache, hash_key, CSO_VELEMENTS, (void*)&velems_state, key_size);
+
+   if (cso_hash_iter_is_null(iter)) {
+      struct cso_velements *cso = MALLOC(sizeof(struct cso_velements));
+      if (!cso)
+         return PIPE_ERROR_OUT_OF_MEMORY;
+
+      memcpy(&cso->state, &velems_state, key_size);
+      cso->data = ctx->pipe->create_vertex_elements_state(ctx->pipe, count, &cso->state.velems[0]);
+      cso->delete_state = (cso_state_callback)ctx->pipe->delete_vertex_elements_state;
+      cso->context = ctx->pipe;
+
+      iter = cso_insert_state(ctx->cache, hash_key, CSO_VELEMENTS, cso);
+      if (cso_hash_iter_is_null(iter)) {
+         FREE(cso);
+         return PIPE_ERROR_OUT_OF_MEMORY;
+      }
+
+      handle = cso->data;
+   }
+   else {
+      handle = ((struct cso_velements *)cso_hash_iter_data(iter))->data;
+   }
+
+   if (ctx->velements != handle) {
+      ctx->velements = handle;
+      ctx->pipe->bind_vertex_elements_state(ctx->pipe, handle);
+   }
+   return PIPE_OK;
+}
+
+void cso_save_vertex_elements(struct cso_context *ctx)
+{
+   assert(!ctx->velements_saved);
+   ctx->velements_saved = ctx->velements;
+}
+
+void cso_restore_vertex_elements(struct cso_context *ctx)
+{
+   if (ctx->velements != ctx->velements_saved) {
+      ctx->velements = ctx->velements_saved;
+      ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->velements_saved);
+   }
+   ctx->velements_saved = NULL;
 }

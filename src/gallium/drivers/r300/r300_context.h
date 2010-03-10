@@ -278,6 +278,23 @@ struct r300_texture {
     enum r300_buffer_tiling microtile, macrotile;
 };
 
+struct r300_vertex_info {
+    /* Parent class */
+    struct vertex_info vinfo;
+
+    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
+    uint32_t vap_prog_stream_cntl[8];
+    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
+    uint32_t vap_prog_stream_cntl_ext[8];
+};
+
+struct r300_vertex_element_state {
+    unsigned count;
+    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+
+    struct r300_vertex_stream_state vertex_stream;
+};
+
 extern struct pipe_viewport_state r300_viewport_identity;
 
 struct r300_context {
@@ -350,8 +367,7 @@ struct r300_context {
     int vertex_buffer_count;
     int vertex_buffer_max_index;
     /* Vertex elements for Gallium. */
-    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-    int vertex_element_count;
+    struct r300_vertex_element_state *velems;
 
     /* Vertex info for Draw. */
     struct vertex_info vertex_info;

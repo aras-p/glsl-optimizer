@@ -36,7 +36,7 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
 	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	unsigned mode = 0, i;
 
-	if (!nv50_state_validate(nv50))
+	if (!nv50_state_validate(nv50, 64))
 		return;
 
 	if (buffers & PIPE_CLEAR_COLOR && fb->nr_cbufs) {

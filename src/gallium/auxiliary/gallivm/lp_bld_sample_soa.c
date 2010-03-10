@@ -65,6 +65,14 @@ struct lp_build_sample_context
 
    const struct util_format_description *format_desc;
 
+   /** regular scalar float type */
+   struct lp_type float_type;
+   struct lp_build_context float_bld;
+
+   /** regular scalar float type */
+   struct lp_type int_type;
+   struct lp_build_context int_bld;
+
    /** Incoming coordinates type and build context */
    struct lp_type coord_type;
    struct lp_build_context coord_bld;
@@ -108,6 +116,27 @@ wrap_mode_uses_border_color(unsigned mode)
 }
 
 
+static LLVMValueRef
+lp_build_get_mipmap_level(struct lp_build_sample_context *bld,
+                          LLVMValueRef data_array, LLVMValueRef level)
+{
+   LLVMValueRef indexes[2], data_ptr;
+   indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   indexes[1] = level;
+   data_ptr = LLVMBuildGEP(bld->builder, data_array, indexes, 2, "");
+   data_ptr = LLVMBuildLoad(bld->builder, data_ptr, "");
+   return data_ptr;
+}
+
+
+static LLVMValueRef
+lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
+                                LLVMValueRef data_array, int level)
+{
+   LLVMValueRef lvl = LLVMConstInt(LLVMInt32Type(), level, 0);
+   return lp_build_get_mipmap_level(bld, data_array, lvl);
+}
+
 
 /**
  * Gen code to fetch a texel from a texture at int coords (x, y).
@@ -124,14 +153,13 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                           LLVMValueRef x,
                           LLVMValueRef y,
                           LLVMValueRef y_stride,
-                          LLVMValueRef data_array,
+                          LLVMValueRef data_ptr,
                           LLVMValueRef *texel)
 {
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef offset;
    LLVMValueRef packed;
    LLVMValueRef use_border = NULL;
-   LLVMValueRef data_ptr;
 
    /* use_border = x < 0 || x >= width || y < 0 || y >= height */
    if (wrap_mode_uses_border_color(bld->static_state->wrap_s)) {
@@ -152,16 +180,6 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
       else {
          use_border = LLVMBuildOr(bld->builder, b1, b2, "b1_or_b2");
       }
-   }
-
-   /* XXX always use mipmap level 0 for now */
-   {
-      const int level = 0;
-      LLVMValueRef indexes[2];
-      indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
-      indexes[1] = LLVMConstInt(LLVMInt32Type(), level, 0);
-      data_ptr = LLVMBuildGEP(bld->builder, data_array, indexes, 2, "");
-      data_ptr = LLVMBuildLoad(bld->builder, data_ptr, "");
    }
 
    /*
@@ -233,17 +251,8 @@ lp_build_sample_packed(struct lp_build_sample_context *bld,
    assert(bld->format_desc->block.height == 1);
    assert(bld->format_desc->block.bits <= bld->texel_type.width);
 
-   /* XXX always use mipmap level 0 for now */
-   {
-      const int level = 0;
-      LLVMValueRef indexes[2];
-      /* get data_ptr[level] */
-      indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
-      indexes[1] = LLVMConstInt(LLVMInt32Type(), level, 0);
-      data_ptr = LLVMBuildGEP(bld->builder, data_array, indexes, 2, "");
-      /* load texture base address */
-      data_ptr = LLVMBuildLoad(bld->builder, data_ptr, "");
-   }
+   /* get pointer to mipmap level 0 data */
+   data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
 
    return lp_build_gather(bld->builder,
                           bld->texel_type.length,
@@ -733,7 +742,210 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
 
 
 /**
- * Sample 2D texture with nearest filtering.
+ * Codegen equivalent for u_minify().
+ * Return max(1, base_size >> level);
+ */
+static LLVMValueRef
+lp_build_minify(struct lp_build_sample_context *bld,
+                LLVMValueRef base_size,
+                LLVMValueRef level)
+{
+   LLVMValueRef size = LLVMBuildAShr(bld->builder, base_size, level, "minify");
+   size = lp_build_max(&bld->int_coord_bld, size, bld->int_coord_bld.one);
+   return size;
+}
+
+
+static int
+texture_dims(enum pipe_texture_target tex)
+{
+   switch (tex) {
+   case PIPE_TEXTURE_1D:
+      return 1;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_CUBE:
+      return 2;
+   case PIPE_TEXTURE_3D:
+      return 3;
+   default:
+      assert(0 && "bad texture target in texture_dims()");
+      return 2;
+   }
+}
+
+
+/**
+ * Generate code to compute texture level of detail (lambda).
+ * \param s  vector of texcoord s values
+ * \param t  vector of texcoord t values
+ * \param r  vector of texcoord r values
+ * \param width  scalar int texture width
+ * \param height  scalar int texture height
+ * \param depth  scalar int texture depth
+ */
+static LLVMValueRef
+lp_build_lod_selector(struct lp_build_sample_context *bld,
+                      LLVMValueRef s,
+                      LLVMValueRef t,
+                      LLVMValueRef r,
+                      LLVMValueRef width,
+                      LLVMValueRef height,
+                      LLVMValueRef depth)
+
+{
+   const int dims = texture_dims(bld->static_state->target);
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *float_bld = &bld->float_bld;
+   LLVMValueRef lod_bias = LLVMConstReal(LLVMFloatType(), bld->static_state->lod_bias);
+   LLVMValueRef min_lod = LLVMConstReal(LLVMFloatType(), bld->static_state->min_lod);
+   LLVMValueRef max_lod = LLVMConstReal(LLVMFloatType(), bld->static_state->max_lod);
+
+   LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   LLVMValueRef index1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
+   LLVMValueRef index2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
+
+   LLVMValueRef s0, s1, s2;
+   LLVMValueRef t0, t1, t2;
+   LLVMValueRef r0, r1, r2;
+   LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
+   LLVMValueRef rho, lod;
+
+   /*
+    * dsdx = abs(s[1] - s[0]);
+    * dsdy = abs(s[2] - s[0]);
+    * dtdx = abs(t[1] - t[0]);
+    * dtdy = abs(t[2] - t[0]);
+    * drdx = abs(r[1] - r[0]);
+    * drdy = abs(r[2] - r[0]);
+    * XXX we're assuming a four-element quad in 2x2 layout here.
+    */
+   s0 = LLVMBuildExtractElement(bld->builder, s, index0, "s0");
+   s1 = LLVMBuildExtractElement(bld->builder, s, index1, "s1");
+   s2 = LLVMBuildExtractElement(bld->builder, s, index2, "s2");
+   dsdx = LLVMBuildSub(bld->builder, s1, s0, "");
+   dsdx = lp_build_abs(float_bld, dsdx);
+   dsdy = LLVMBuildSub(bld->builder, s2, s0, "");
+   dsdy = lp_build_abs(float_bld, dsdy);
+   if (dims > 1) {
+      t0 = LLVMBuildExtractElement(bld->builder, t, index0, "t0");
+      t1 = LLVMBuildExtractElement(bld->builder, t, index1, "t1");
+      t2 = LLVMBuildExtractElement(bld->builder, t, index2, "t2");
+      dtdx = LLVMBuildSub(bld->builder, t1, t0, "");
+      dtdx = lp_build_abs(float_bld, dtdx);
+      dtdy = LLVMBuildSub(bld->builder, t2, t0, "");
+      dtdy = lp_build_abs(float_bld, dtdy);
+      if (dims > 2) {
+         r0 = LLVMBuildExtractElement(bld->builder, r, index0, "r0");
+         r1 = LLVMBuildExtractElement(bld->builder, r, index1, "r1");
+         r2 = LLVMBuildExtractElement(bld->builder, r, index2, "r2");
+         drdx = LLVMBuildSub(bld->builder, r1, r0, "");
+         drdx = lp_build_abs(float_bld, drdx);
+         drdy = LLVMBuildSub(bld->builder, r2, r0, "");
+         drdy = lp_build_abs(float_bld, drdy);
+      }
+   }
+
+   /* Compute rho = max of all partial derivatives scaled by texture size.
+    * XXX this could be vectorized somewhat
+    */
+   rho = LLVMBuildMul(bld->builder,
+                      lp_build_max(float_bld, dsdx, dsdy),
+                      lp_build_int_to_float(float_bld, width), "");
+   if (dims > 1) {
+      LLVMValueRef max;
+      max = LLVMBuildMul(bld->builder,
+                         lp_build_max(float_bld, dtdx, dtdy),
+                         lp_build_int_to_float(float_bld, height), "");
+      rho = lp_build_max(float_bld, rho, max);
+      if (dims > 2) {
+         max = LLVMBuildMul(bld->builder,
+                            lp_build_max(float_bld, drdx, drdy),
+                            lp_build_int_to_float(float_bld, depth), "");
+         rho = lp_build_max(float_bld, rho, max);
+      }
+   }
+
+   /* compute lod = log2(rho) */
+   lod = lp_build_log2(float_bld, rho);
+
+   /* add lod bias */
+   lod = LLVMBuildAdd(bld->builder, lod, lod_bias, "LOD bias");
+
+   /* clamp lod */
+   lod = lp_build_clamp(float_bld, lod, min_lod, max_lod);
+
+   return lod;
+}
+
+
+/**
+ * For PIPE_TEX_MIPFILTER_NEAREST, convert float LOD to integer
+ * mipmap level index.
+ * Note: this is all scalar code.
+ * \param lod  scalar float texture level of detail
+ * \param level_out  returns integer 
+ */
+static void
+lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
+                           unsigned unit,
+                           LLVMValueRef lod,
+                           LLVMValueRef *level_out)
+{
+   struct lp_build_context *float_bld = &bld->float_bld;
+   struct lp_build_context *int_bld = &bld->int_bld;
+   LLVMValueRef last_level, level;
+
+   LLVMValueRef zero = LLVMConstInt(LLVMInt32Type(), 0, 0);
+
+   last_level = bld->dynamic_state->last_level(bld->dynamic_state,
+                                               bld->builder, unit);
+
+   /* convert float lod to integer */
+   level = lp_build_iround(float_bld, lod);
+
+   /* clamp level to legal range of levels */
+   *level_out = lp_build_clamp(int_bld, level, zero, last_level);
+}
+
+
+/**
+ * For PIPE_TEX_MIPFILTER_LINEAR, convert float LOD to integer to
+ * two (adjacent) mipmap level indexes.  Later, we'll sample from those
+ * two mipmap levels and interpolate between them.
+ */
+static void
+lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
+                           unsigned unit,
+                           LLVMValueRef lod,
+                           LLVMValueRef *level0_out,
+                           LLVMValueRef *level1_out,
+                           LLVMValueRef *weight_out)
+{
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   LLVMValueRef last_level, level;
+
+   last_level = bld->dynamic_state->last_level(bld->dynamic_state,
+                                               bld->builder, unit);
+
+   /* convert float lod to integer */
+   level = lp_build_ifloor(coord_bld, lod);
+
+   /* compute level 0 and clamp to legal range of levels */
+   *level0_out = lp_build_clamp(int_coord_bld, level,
+                                int_coord_bld->zero,
+                                last_level);
+   /* compute level 1 and clamp to legal range of levels */
+   *level1_out = lp_build_add(int_coord_bld, *level0_out, int_coord_bld->one);
+   *level1_out = lp_build_min(int_coord_bld, *level1_out, int_coord_bld->zero);
+
+   *weight_out = lp_build_fract(coord_bld, lod);
+}
+
+
+
+/**
+ * Sample 2D texture with nearest filtering, no mipmapping.
  */
 static void
 lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
@@ -746,6 +958,7 @@ lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
                                LLVMValueRef *texel)
 {
    LLVMValueRef x, y;
+   LLVMValueRef data_ptr;
 
    x = lp_build_sample_wrap_nearest(bld, s, width,
                                     bld->static_state->pot_width,
@@ -757,7 +970,63 @@ lp_build_sample_2d_nearest_soa(struct lp_build_sample_context *bld,
    lp_build_name(x, "tex.x.wrapped");
    lp_build_name(y, "tex.y.wrapped");
 
-   lp_build_sample_texel_soa(bld, width, height, x, y, stride, data_array, texel);
+   /* get pointer to mipmap level 0 data */
+   data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
+
+   lp_build_sample_texel_soa(bld, width, height, x, y, stride, data_ptr, texel);
+}
+
+
+/**
+ * Sample 2D texture with nearest filtering, nearest mipmap.
+ */
+static void
+lp_build_sample_2d_nearest_mip_nearest_soa(struct lp_build_sample_context *bld,
+                                           unsigned unit,
+                                           LLVMValueRef s,
+                                           LLVMValueRef t,
+                                           LLVMValueRef width,
+                                           LLVMValueRef height,
+                                           LLVMValueRef width_vec,
+                                           LLVMValueRef height_vec,
+                                           LLVMValueRef stride,
+                                           LLVMValueRef data_array,
+                                           LLVMValueRef *texel)
+{
+   LLVMValueRef x, y;
+   LLVMValueRef lod, ilevel, ilevel_vec;
+   LLVMValueRef data_ptr;
+
+   /* compute float LOD */
+   lod = lp_build_lod_selector(bld, s, t, NULL, width, height, NULL);
+
+   /* convert LOD to int */
+   lp_build_nearest_mip_level(bld, unit, lod, &ilevel);
+
+   ilevel_vec = lp_build_broadcast_scalar(&bld->int_coord_bld, ilevel);
+
+   /* compute width_vec, height at mipmap level 'ilevel' */
+   width_vec = lp_build_minify(bld, width_vec, ilevel_vec);
+   height_vec = lp_build_minify(bld, height_vec, ilevel_vec);
+   stride = lp_build_minify(bld, stride, ilevel_vec);
+
+   x = lp_build_sample_wrap_nearest(bld, s, width_vec,
+                                    bld->static_state->pot_width,
+                                    bld->static_state->wrap_s);
+   y = lp_build_sample_wrap_nearest(bld, t, height_vec,
+                                    bld->static_state->pot_height,
+                                    bld->static_state->wrap_t);
+
+   lp_build_name(x, "tex.x.wrapped");
+   lp_build_name(y, "tex.y.wrapped");
+
+   /* get pointer to mipmap level [ilevel] data */
+   if (0)
+      data_ptr = lp_build_get_mipmap_level(bld, data_array, ilevel);
+   else
+      data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
+
+   lp_build_sample_texel_soa(bld, width_vec, height_vec, x, y, stride, data_ptr, texel);
 }
 
 
@@ -779,6 +1048,7 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
    LLVMValueRef x0, x1;
    LLVMValueRef y0, y1;
    LLVMValueRef neighbors[2][2][4];
+   LLVMValueRef data_ptr;
    unsigned chan;
 
    lp_build_sample_wrap_linear(bld, s, width, bld->static_state->pot_width,
@@ -786,10 +1056,13 @@ lp_build_sample_2d_linear_soa(struct lp_build_sample_context *bld,
    lp_build_sample_wrap_linear(bld, t, height, bld->static_state->pot_height,
                                bld->static_state->wrap_t, &y0, &y1, &t_fpart);
 
-   lp_build_sample_texel_soa(bld, width, height, x0, y0, stride, data_array, neighbors[0][0]);
-   lp_build_sample_texel_soa(bld, width, height, x1, y0, stride, data_array, neighbors[0][1]);
-   lp_build_sample_texel_soa(bld, width, height, x0, y1, stride, data_array, neighbors[1][0]);
-   lp_build_sample_texel_soa(bld, width, height, x1, y1, stride, data_array, neighbors[1][1]);
+   /* get pointer to mipmap level 0 data */
+   data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
+
+   lp_build_sample_texel_soa(bld, width, height, x0, y0, stride, data_ptr, neighbors[0][0]);
+   lp_build_sample_texel_soa(bld, width, height, x1, y0, stride, data_ptr, neighbors[0][1]);
+   lp_build_sample_texel_soa(bld, width, height, x0, y1, stride, data_ptr, neighbors[1][0]);
+   lp_build_sample_texel_soa(bld, width, height, x1, y1, stride, data_ptr, neighbors[1][1]);
 
    /* TODO: Don't interpolate missing channels */
    for(chan = 0; chan < 4; ++chan) {
@@ -857,7 +1130,7 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    LLVMValueRef packed, packed_lo, packed_hi;
    LLVMValueRef unswizzled[4];
 
-   lp_build_context_init(&i32, builder, lp_type_int(32));
+   lp_build_context_init(&i32, builder, lp_type_int_vec(32));
    lp_build_context_init(&h16, builder, lp_type_ufixed(16));
    lp_build_context_init(&u8n, builder, lp_type_unorm(8));
 
@@ -1066,194 +1339,11 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
 }
 
 
-static int
-texture_dims(enum pipe_texture_target tex)
-{
-   switch (tex) {
-   case PIPE_TEXTURE_1D:
-      return 1;
-   case PIPE_TEXTURE_2D:
-   case PIPE_TEXTURE_CUBE:
-      return 2;
-   case PIPE_TEXTURE_3D:
-      return 3;
-   default:
-      assert(0 && "bad texture target in texture_dims()");
-      return 2;
-   }
-}
-
-
-/**
- * Generate code to compute texture level of detail (lambda).
- * \param s  vector of texcoord s values
- * \param t  vector of texcoord t values
- * \param r  vector of texcoord r values
- * \param width  scalar int texture width
- * \param height  scalar int texture height
- * \param depth  scalar int texture depth
- */
-static LLVMValueRef
-lp_build_lod_selector(struct lp_build_sample_context *bld,
-                      LLVMValueRef s,
-                      LLVMValueRef t,
-                      LLVMValueRef r,
-                      LLVMValueRef width,
-                      LLVMValueRef height,
-                      LLVMValueRef depth)
-
-{
-   const int dims = texture_dims(bld->static_state->target);
-   struct lp_build_context *coord_bld = &bld->coord_bld;
-
-   LLVMValueRef lod_bias = lp_build_const_scalar(bld->coord_bld.type,
-                                                 bld->static_state->lod_bias);
-   LLVMValueRef min_lod = lp_build_const_scalar(bld->coord_bld.type,
-                                                bld->static_state->min_lod);
-   LLVMValueRef max_lod = lp_build_const_scalar(bld->coord_bld.type,
-                                                bld->static_state->max_lod);
-
-   LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
-   LLVMValueRef index1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
-   LLVMValueRef index2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
-
-   LLVMValueRef s0, s1, s2;
-   LLVMValueRef t0, t1, t2;
-   LLVMValueRef r0, r1, r2;
-   LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
-   LLVMValueRef rho, lod;
-
-   /*
-    * dsdx = abs(s[1] - s[0]);
-    * dsdy = abs(s[2] - s[0]);
-    * dtdx = abs(t[1] - t[0]);
-    * dtdy = abs(t[2] - t[0]);
-    * drdx = abs(r[1] - r[0]);
-    * drdy = abs(r[2] - r[0]);
-    * XXX we're assuming a four-element quad in 2x2 layout here.
-    */
-   s0 = LLVMBuildExtractElement(bld->builder, s, index0, "s0");
-   s1 = LLVMBuildExtractElement(bld->builder, s, index1, "s1");
-   s2 = LLVMBuildExtractElement(bld->builder, s, index2, "s2");
-   dsdx = lp_build_abs(coord_bld, lp_build_sub(coord_bld, s1, s0));
-   dsdy = lp_build_abs(coord_bld, lp_build_sub(coord_bld, s2, s0));
-   if (dims > 1) {
-      t0 = LLVMBuildExtractElement(bld->builder, t, index0, "t0");
-      t1 = LLVMBuildExtractElement(bld->builder, t, index1, "t1");
-      t2 = LLVMBuildExtractElement(bld->builder, t, index2, "t2");
-      dtdx = lp_build_abs(coord_bld, lp_build_sub(coord_bld, t1, t0));
-      dtdy = lp_build_abs(coord_bld, lp_build_sub(coord_bld, t2, t0));
-      if (dims > 2) {
-         r0 = LLVMBuildExtractElement(bld->builder, r, index0, "r0");
-         r1 = LLVMBuildExtractElement(bld->builder, r, index1, "r1");
-         r2 = LLVMBuildExtractElement(bld->builder, r, index2, "r2");
-         drdx = lp_build_abs(coord_bld, lp_build_sub(coord_bld, r1, r0));
-         drdy = lp_build_abs(coord_bld, lp_build_sub(coord_bld, r2, r0));
-      }
-   }
-
-   /* Compute rho = max of all partial derivatives scaled by texture size.
-    * XXX this can be vectorized somewhat
-    */
-   rho = lp_build_mul(coord_bld,
-                       lp_build_max(coord_bld, dsdx, dsdy),
-                       lp_build_int_to_float(coord_bld, width));
-   if (dims > 1) {
-      LLVMValueRef max;
-      max = lp_build_mul(coord_bld,
-                         lp_build_max(coord_bld, dtdx, dtdy),
-                         lp_build_int_to_float(coord_bld, height));
-      rho = lp_build_max(coord_bld, rho, max);
-      if (dims > 2) {
-         max = lp_build_mul(coord_bld,
-                            lp_build_max(coord_bld, drdx, drdy),
-                            lp_build_int_to_float(coord_bld, depth));
-         rho = lp_build_max(coord_bld, rho, max);
-      }
-   }
-
-   /* compute lod = log2(rho) */
-   lod = lp_build_log2(coord_bld, rho);
-
-   /* add lod bias */
-   lod = lp_build_add(coord_bld, lod, lod_bias);
-
-   /* clamp lod */
-   lod = lp_build_clamp(coord_bld, lod, min_lod, max_lod);
-
-   return lod;
-}
-
-
-/**
- * For PIPE_TEX_MIPFILTER_NEAREST, convert float LOD to integer
- * mipmap level index.
- * \param lod  scalar float texture level of detail
- * \param level_out  returns integer 
- */
-static void
-lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
-                           unsigned unit,
-                           LLVMValueRef lod,
-                           LLVMValueRef *level_out)
-{
-   struct lp_build_context *coord_bld = &bld->coord_bld;
-   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
-   LLVMValueRef last_level, level;
-
-   last_level = bld->dynamic_state->last_level(bld->dynamic_state,
-                                               bld->builder, unit);
-
-   /* convert float lod to integer */
-   level = lp_build_iround(coord_bld, lod);
-
-   /* clamp level to legal range of levels */
-   *level_out = lp_build_clamp(int_coord_bld, level,
-                               int_coord_bld->zero,
-                               last_level);
-}
-
-
-/**
- * For PIPE_TEX_MIPFILTER_LINEAR, convert float LOD to integer to
- * two (adjacent) mipmap level indexes.  Later, we'll sample from those
- * two mipmap levels and interpolate between them.
- */
-static void
-lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
-                           unsigned unit,
-                           LLVMValueRef lod,
-                           LLVMValueRef *level0_out,
-                           LLVMValueRef *level1_out,
-                           LLVMValueRef *weight_out)
-{
-   struct lp_build_context *coord_bld = &bld->coord_bld;
-   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
-   LLVMValueRef last_level, level;
-
-   last_level = bld->dynamic_state->last_level(bld->dynamic_state,
-                                               bld->builder, unit);
-
-   /* convert float lod to integer */
-   level = lp_build_ifloor(coord_bld, lod);
-
-   /* compute level 0 and clamp to legal range of levels */
-   *level0_out = lp_build_clamp(int_coord_bld, level,
-                                int_coord_bld->zero,
-                                last_level);
-   /* compute level 1 and clamp to legal range of levels */
-   *level1_out = lp_build_add(int_coord_bld, *level0_out, int_coord_bld->one);
-   *level1_out = lp_build_min(int_coord_bld, *level1_out, int_coord_bld->zero);
-
-   *weight_out = lp_build_fract(coord_bld, lod);
-}
-
-
-
 /**
  * Build texture sampling code.
  * 'texel' will return a vector of four LLVMValueRefs corresponding to
  * R, G, B, A.
+ * \param type  vector float type to use for coords, etc.
  */
 void
 lp_build_sample_soa(LLVMBuilderRef builder,
@@ -1267,17 +1357,19 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     LLVMValueRef *texel)
 {
    struct lp_build_sample_context bld;
-   LLVMValueRef width;
-   LLVMValueRef height;
-   LLVMValueRef stride;
+   LLVMValueRef width, width_vec;
+   LLVMValueRef height, height_vec;
+   LLVMValueRef stride, stride_vec;
    LLVMValueRef data_array;
    LLVMValueRef s;
    LLVMValueRef t;
    LLVMValueRef r;
+   boolean done = FALSE;
 
    (void) lp_build_lod_selector;   /* temporary to silence warning */
    (void) lp_build_nearest_mip_level;
    (void) lp_build_linear_mip_levels;
+   (void) lp_build_minify;
 
    /* Setup our build context */
    memset(&bld, 0, sizeof bld);
@@ -1285,10 +1377,16 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    bld.static_state = static_state;
    bld.dynamic_state = dynamic_state;
    bld.format_desc = util_format_description(static_state->format);
+
+   bld.float_type = lp_type_float(32);
+   bld.int_type = lp_type_int(32);
    bld.coord_type = type;
    bld.uint_coord_type = lp_uint_type(type);
    bld.int_coord_type = lp_int_type(type);
    bld.texel_type = type;
+
+   lp_build_context_init(&bld.float_bld, builder, bld.float_type);
+   lp_build_context_init(&bld.int_bld, builder, bld.int_type);
    lp_build_context_init(&bld.coord_bld, builder, bld.coord_type);
    lp_build_context_init(&bld.uint_coord_bld, builder, bld.uint_coord_type);
    lp_build_context_init(&bld.int_coord_bld, builder, bld.int_coord_type);
@@ -1305,30 +1403,56 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    t = coords[1];
    r = coords[2];
 
-   width = lp_build_broadcast_scalar(&bld.uint_coord_bld, width);
-   height = lp_build_broadcast_scalar(&bld.uint_coord_bld, height);
-   stride = lp_build_broadcast_scalar(&bld.uint_coord_bld, stride);
+   width_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, width);
+   height_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, height);
+   stride_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, stride);
 
    if(static_state->target == PIPE_TEXTURE_1D)
       t = bld.coord_bld.zero;
 
-   switch (static_state->min_img_filter) {
-   case PIPE_TEX_FILTER_NEAREST:
-      lp_build_sample_2d_nearest_soa(&bld, s, t, width, height,
-                                     stride, data_array, texel);
+   switch (static_state->min_mip_filter) {
+   case PIPE_TEX_MIPFILTER_NONE:
       break;
-   case PIPE_TEX_FILTER_LINEAR:
-      if(lp_format_is_rgba8(bld.format_desc) &&
-         is_simple_wrap_mode(static_state->wrap_s) &&
-         is_simple_wrap_mode(static_state->wrap_t))
-         lp_build_sample_2d_linear_aos(&bld, s, t, width, height,
-                                       stride, data_array, texel);
-      else
-         lp_build_sample_2d_linear_soa(&bld, s, t, width, height,
-                                       stride, data_array, texel);
+   case PIPE_TEX_MIPFILTER_NEAREST:
+
+      switch (static_state->min_img_filter) {
+      case PIPE_TEX_FILTER_NEAREST:
+         lp_build_sample_2d_nearest_mip_nearest_soa(&bld, unit,
+                                                    s, t,
+                                                    width, height,
+                                                    width_vec, height_vec,
+                                                    stride_vec,
+                                                    data_array, texel);
+         done = TRUE;
+         break;
+      }
+
+      break;
+   case PIPE_TEX_MIPFILTER_LINEAR:
       break;
    default:
-      assert(0);
+      assert(0 && "invalid mip filter");
+   }
+
+   if (!done) {
+      switch (static_state->min_img_filter) {
+      case PIPE_TEX_FILTER_NEAREST:
+         lp_build_sample_2d_nearest_soa(&bld, s, t, width_vec, height_vec,
+                                        stride_vec, data_array, texel);
+         break;
+      case PIPE_TEX_FILTER_LINEAR:
+         if(lp_format_is_rgba8(bld.format_desc) &&
+            is_simple_wrap_mode(static_state->wrap_s) &&
+            is_simple_wrap_mode(static_state->wrap_t))
+            lp_build_sample_2d_linear_aos(&bld, s, t, width_vec, height_vec,
+                                          stride_vec, data_array, texel);
+         else
+            lp_build_sample_2d_linear_soa(&bld, s, t, width_vec, height_vec,
+                                          stride_vec, data_array, texel);
+         break;
+      default:
+         assert(0);
+      }
    }
 
    /* FIXME: respect static_state->min_mip_filter */;

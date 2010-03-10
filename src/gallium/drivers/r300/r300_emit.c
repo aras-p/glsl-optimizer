@@ -757,9 +757,9 @@ void r300_emit_textures_state(struct r300_context *r300,
 void r300_emit_aos(struct r300_context* r300, unsigned offset)
 {
     struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
+    struct pipe_vertex_element *velem = r300->velems->velem;
     int i;
-    unsigned size1, size2, aos_count = r300->vertex_element_count;
+    unsigned size1, size2, aos_count = r300->velems->count;
     unsigned packet_size = (aos_count * 3 + 1) / 2;
     CS_LOCALS(r300);
 
@@ -1004,7 +1004,7 @@ void r300_emit_buffer_validate(struct r300_context *r300,
         (struct r300_textures_state*)r300->textures_state.state;
     struct r300_texture* tex;
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->vertex_element;
+    struct pipe_vertex_element *velem = r300->velems->velem;
     struct pipe_buffer *pbuf;
     unsigned i;
     boolean invalid = FALSE;
@@ -1062,7 +1062,7 @@ validate:
     }
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers) {
-        for (i = 0; i < r300->vertex_element_count; i++) {
+        for (i = 0; i < r300->velems->count; i++) {
             pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
 
             if (!r300->winsys->add_buffer(r300->winsys, pbuf,

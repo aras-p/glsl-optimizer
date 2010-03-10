@@ -95,6 +95,8 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 static int
 nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 {
+	struct nv50_screen *screen = nv50_screen(pscreen);
+
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
 		return 32;
@@ -132,9 +134,9 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 		return 1;
 	case NOUVEAU_CAP_HW_VTXBUF:
-		return 1;
+		return screen->force_push ? 0 : 1;
 	case NOUVEAU_CAP_HW_IDXBUF:
-		return 1;
+		return screen->force_push ? 0 : 1;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 		return 1;
 	case PIPE_CAP_INDEP_BLEND_FUNC:
@@ -202,28 +204,6 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 	FREE(screen);
 }
 
-static int
-nv50_pre_pipebuffer_map(struct pipe_screen *pscreen, struct pipe_buffer *pb,
-	unsigned usage)
-{
-	struct nv50_screen *screen = nv50_screen(pscreen);
-	struct nv50_context *ctx = screen->cur_ctx;
-
-	if (!(pb->usage & PIPE_BUFFER_USAGE_VERTEX))
-		return 0;
-
-	/* Our vtxbuf got mapped, it can no longer be considered part of current
-	 * state, remove it to avoid emitting reloc markers.
-	 */
-	if (ctx && ctx->state.vtxbuf && so_bo_is_reloc(ctx->state.vtxbuf,
-			nouveau_bo(pb))) {
-		so_ref(NULL, &ctx->state.vtxbuf);
-		ctx->dirty |= NV50_NEW_ARRAYS;
-	}
-
-	return 0;
-}
-
 struct pipe_screen *
 nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
@@ -252,7 +232,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_paramf = nv50_screen_get_paramf;
 	pscreen->is_format_supported = nv50_screen_is_format_supported;
 	pscreen->context_create = nv50_create;
-	screen->base.pre_pipebuffer_map_callback = nv50_pre_pipebuffer_map;
 
 	nv50_screen_init_miptree_functions(pscreen);
 	nv50_transfer_init_screen_functions(pscreen);
@@ -508,10 +487,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_method(so, screen->tesla, NV50TCL_LINKED_TSC, 1);
 	so_data  (so, 1);
 
-	/* activate first scissor rectangle */
-	so_method(so, screen->tesla, NV50TCL_SCISSOR_ENABLE(0), 1);
-	so_data  (so, 1);
-
 	so_method(so, screen->tesla, NV50TCL_EDGEFLAG_ENABLE, 1);
 	so_data  (so, 1); /* default edgeflag to TRUE */
 
@@ -520,6 +495,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	so_ref (NULL, &so);
 	nouveau_pushbuf_flush(chan, 0);
 
+	screen->force_push = debug_get_bool_option("NV50_ALWAYS_PUSH", FALSE);
 	return pscreen;
 }
 

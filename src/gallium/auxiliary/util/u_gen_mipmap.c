@@ -62,6 +62,7 @@ struct gen_mipmap_state
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
    struct pipe_clip_state clip;
+   struct pipe_vertex_element velem[2];
 
    void *vs;
    void *fs2d, *fsCube;
@@ -1307,6 +1308,15 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
    ctx->sampler.normalized_coords = 1;
 
+   /* vertex elements state */
+   memset(&ctx->velem[0], 0, sizeof(ctx->velem[0]) * 2);
+   for (i = 0; i < 2; i++) {
+      ctx->velem[i].src_offset = i * 4 * sizeof(float);
+      ctx->velem[i].instance_divisor = 0;
+      ctx->velem[i].vertex_buffer_index = 0;
+      ctx->velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
+
    /* vertex shader - still needed to specify mapping from fragment
     * shader input semantics to vertex elements 
     */
@@ -1501,12 +1511,14 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_vertex_shader(ctx->cso);
    cso_save_viewport(ctx->cso);
    cso_save_clip(ctx->cso);
+   cso_save_vertex_elements(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_clip(ctx->cso, &ctx->clip);
+   cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
 
    cso_set_fragment_shader_handle(ctx->cso, fs);
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
@@ -1593,4 +1605,5 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_viewport(ctx->cso);
    cso_restore_clip(ctx->cso);
+   cso_restore_vertex_elements(ctx->cso);
 }

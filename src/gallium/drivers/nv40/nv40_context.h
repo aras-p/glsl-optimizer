@@ -107,6 +107,12 @@ struct nv40_state {
 	struct nouveau_stateobj *hw[NV40_STATE_MAX];
 };
 
+
+struct nv40_vtxelt_state {
+	struct pipe_vertex_element pipe[16];
+	unsigned num_elements;
+};
+
 struct nv40_context {
 	struct pipe_context pipe;
 
@@ -157,8 +163,7 @@ struct nv40_context {
 	unsigned dirty_samplers;
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
-	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
-	unsigned vtxelt_nr;
+	struct nv40_vtxelt_state *vtxelt;
 };
 
 static INLINE struct nv40_context *

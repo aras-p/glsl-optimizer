@@ -44,6 +44,12 @@ radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,
 struct radeon_renderbuffer *
 radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv);
 
+void
+radeonReadPixels(GLcontext * ctx,
+				GLint x, GLint y, GLsizei width, GLsizei height,
+				GLenum format, GLenum type,
+				const struct gl_pixelstore_attrib *pack, GLvoid * pixels);
+
 void radeon_check_front_buffer_rendering(GLcontext *ctx);
 static inline struct radeon_renderbuffer *radeon_renderbuffer(struct gl_renderbuffer *rb)
 {

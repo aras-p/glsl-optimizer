@@ -415,6 +415,16 @@ util_format_has_alpha(enum pipe_format format)
    }
 }
 
+/**
+ * Return the number of components stored.
+ * Formats with block size != 1x1 will always have 1 component (the block).
+ */
+static INLINE unsigned
+util_format_get_nr_components(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   return desc->nr_channels;
+}
 
 /*
  * Format access functions.

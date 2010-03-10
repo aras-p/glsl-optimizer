@@ -36,6 +36,7 @@ static void r300_blitter_save_states(struct r300_context* r300)
     util_blitter_save_vertex_shader(r300->blitter, r300->vs_state.state);
     util_blitter_save_viewport(r300->blitter, &r300->viewport);
     util_blitter_save_clip(r300->blitter, &r300->clip);
+    util_blitter_save_vertex_elements(r300->blitter, r300->velems);
 }
 
 /* Clear currently bound buffers. */

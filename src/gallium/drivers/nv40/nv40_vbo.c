@@ -493,16 +493,16 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	int hw;
 
 	vtxbuf = so_new(3, 17, 18);
-	so_method(vtxbuf, curie, NV40TCL_VTXBUF_ADDRESS(0), nv40->vtxelt_nr);
+	so_method(vtxbuf, curie, NV40TCL_VTXBUF_ADDRESS(0), nv40->vtxelt->num_elements);
 	vtxfmt = so_new(1, 16, 0);
-	so_method(vtxfmt, curie, NV40TCL_VTXFMT(0), nv40->vtxelt_nr);
+	so_method(vtxfmt, curie, NV40TCL_VTXFMT(0), nv40->vtxelt->num_elements);
 
-	for (hw = 0; hw < nv40->vtxelt_nr; hw++) {
+	for (hw = 0; hw < nv40->vtxelt->num_elements; hw++) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
 		unsigned type, ncomp;
 
-		ve = &nv40->vtxelt[hw];
+		ve = &nv40->vtxelt->pipe[hw];
 		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
 
 		if (!vb->stride) {

@@ -78,6 +78,7 @@ struct failover_context {
    const struct fo_state     *rasterizer;
    const struct fo_state     *fragment_shader;
    const struct fo_state     *vertex_shader;
+   const struct fo_state     *vertex_elements;
 
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
@@ -89,10 +90,8 @@ struct failover_context {
    struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
-   struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
 
    uint num_vertex_buffers;
-   uint num_vertex_elements;
 
    void *sw_sampler_state[PIPE_MAX_SAMPLERS];
    void *hw_sampler_state[PIPE_MAX_SAMPLERS];

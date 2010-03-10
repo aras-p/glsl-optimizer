@@ -16,6 +16,7 @@ C_SOURCES = \
 	nv50_surface.c \
 	nv50_tex.c \
 	nv50_transfer.c \
-	nv50_vbo.c
+	nv50_vbo.c \
+	nv50_push.c
 
 include ../../Makefile.template

@@ -348,39 +348,12 @@ static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
     return 0;
 }
 
-/* Utility function to count the number of components in RGBAZS formats.
- * XXX should go to util or p_format.h */
-static INLINE unsigned pf_component_count(enum pipe_format format) {
-    unsigned count = 0;
-
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 1)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 2)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
-        count++;
-    }
-
-    return count;
-}
-
 /* Translate pipe_formats into PSC vertex types. */
 static INLINE uint16_t
 r300_translate_vertex_data_type(enum pipe_format format) {
     uint32_t result = 0;
     const struct util_format_description *desc;
-    unsigned components = pf_component_count(format);
+    unsigned components = util_format_get_nr_components(format);
 
     desc = util_format_description(format);
 
