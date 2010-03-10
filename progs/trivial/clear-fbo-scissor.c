@@ -15,6 +15,7 @@
 
 static int Width = 512, Height = 512;
 static GLuint MyFB, MyRB;
+static GLboolean UseTex = GL_FALSE;
 
 
 #define CheckError() assert(glGetError() == 0)
@@ -38,12 +39,25 @@ Init(void)
 
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
 
-   glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, MyRB);
+   if (UseTex) {
+      GLuint tex;
+      glGenTextures(1, &tex);
+      glBindTexture(GL_TEXTURE_2D, tex);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0,
+                   GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, 
+                                GL_COLOR_ATTACHMENT0_EXT,
+                                GL_TEXTURE_2D, tex, 0);
+   }
+   else {
+      glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, MyRB);
 
-   glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-                                GL_RENDERBUFFER_EXT, MyRB);
+      glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+                                   GL_COLOR_ATTACHMENT0_EXT,
+                                   GL_RENDERBUFFER_EXT, MyRB);
 
-   glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, Width, Height);
+      glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, Width, Height);
+   }
 
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
@@ -60,7 +74,9 @@ Reshape(int width, int height)
 
    Width = width;
    Height = height;
-   glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, Width, Height);
+   if (!UseTex) {
+      glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, Width, Height);
+   }
 }
 
 
@@ -167,10 +183,22 @@ Draw(void)
 int
 main(int argc, char *argv[])
 {
+   int i;
+
    glutInit(&argc, argv);
    glutInitWindowPosition(100, 0);
    glutInitWindowSize(Width, Height);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+
+   for (i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "-t") == 0)
+         UseTex = GL_TRUE;
+   }
+
+   if (UseTex)
+      printf("Using render to texture\n");
+   else
+      printf("Using user-created render buffer\n");
 
    if (!glutCreateWindow(argv[0])) {
       exit(1);
