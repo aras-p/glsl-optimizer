@@ -198,16 +198,35 @@ public:
  */
 class ast_function_expression : public ast_expression {
 public:
-   ast_function_expression(ast_node *callee)
-      : ast_expression(ast_function_call, (ast_expression *) callee,
-		       NULL, NULL)
+   ast_function_expression(ast_expression *callee)
+      : ast_expression(ast_function_call, callee,
+		       NULL, NULL),
+	cons(false)
    {
       /* empty */
    }
 
+   ast_function_expression(class ast_type_specifier *type)
+      : ast_expression(ast_function_call, (ast_expression *) type,
+		       NULL, NULL),
+	cons(true)
+   {
+      /* empty */
+   }
+
+   bool is_constructor() const
+   {
+      return cons;
+   }
 
    virtual ir_instruction *hir(exec_list *instructions,
 			       struct _mesa_glsl_parse_state *state);
+
+private:
+   /**
+    * Is this function call actually a constructor?
+    */
+   bool cons;
 };
 
 

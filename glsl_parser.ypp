@@ -337,23 +337,22 @@ function_call_header_with_parameters:
 	// recognized through "type_specifier".
 function_call_header:
 	function_identifier '('
-	{
-	   $$ = new ast_function_expression($1);
-	}
 	;
 
 function_identifier:
 	type_specifier
 	{
-	   $$ = (struct ast_node *) $1;
+	   $$ = new ast_function_expression($1);
    	}
 	| IDENTIFIER
 	{
-	   $$ = new ast_expression($1);
+	   ast_expression *callee = new ast_expression($1);
+	   $$ = new ast_function_expression(callee);
    	}
 	| FIELD_SELECTION
 	{
-	   $$ = new ast_expression($1);
+	   ast_expression *callee = new ast_expression($1);
+	   $$ = new ast_function_expression(callee);
    	}
 	;
 
