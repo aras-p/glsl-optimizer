@@ -62,7 +62,8 @@ cell_bind_vertex_elements_state(struct pipe_context *pipe,
 
    cell->dirty |= CELL_NEW_VERTEX;
 
-   draw_set_vertex_elements(cell->draw, cell_velems->count, cell_velems->velem);
+   if (cell_velems)
+      draw_set_vertex_elements(cell->draw, cell_velems->count, cell_velems->velem);
 }
 
 void
