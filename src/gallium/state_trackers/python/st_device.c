@@ -34,6 +34,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
+#include "trace/tr_public.h"
 
 #include "st_device.h"
 #include "st_winsys.h"
@@ -83,6 +84,10 @@ st_device_create(boolean hardware)
       screen = st_hardware_screen_create();
    else
       screen = st_software_screen_create();
+
+   screen = trace_screen_create(screen);
+   if (!screen)
+      goto no_screen;
 
    st_dev = CALLOC_STRUCT(st_device);
    if (!st_dev)

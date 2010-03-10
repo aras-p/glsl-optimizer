@@ -38,8 +38,9 @@ if 'python' in env['statetrackers']:
     ]
 
     env.Prepend(LIBS = [
+        ws_null,
         trace,
-        gallium
+        gallium,
     ])
 
     if 'llvmpipe' in env['drivers']:

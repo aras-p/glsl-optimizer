@@ -7,6 +7,9 @@ SConscript('auxiliary/SConscript')
 for driver in env['drivers']:
 	SConscript(os.path.join('drivers', driver, 'SConscript'))
 
+# Needed by some state trackers
+SConscript('winsys/null/SConscript')
+
 SConscript('state_trackers/python/SConscript')
 if platform != 'embedded':
 	SConscript('state_trackers/glx/xlib/SConscript')
