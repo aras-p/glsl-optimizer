@@ -51,7 +51,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
-#include "r200_pixel.h"
 #include "r200_tex.h"
 #include "r200_swtcl.h"
 #include "r200_tcl.h"
@@ -474,7 +473,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    /* XXX these should really go right after _mesa_init_driver_functions() */
    radeon_fbo_init(&rmesa->radeon);
    radeonInitSpanFuncs( ctx );
-   r200InitPixelFuncs( ctx );
    r200InitTnlFuncs( ctx );
    r200InitState( rmesa );
    r200InitSwtcl( ctx );

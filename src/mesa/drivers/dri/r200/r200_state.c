@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
+#include "drivers/common/meta.h"
 
 #include "radeon_common.h"
 #include "radeon_mipmap_tree.h"
@@ -2494,6 +2495,9 @@ void r200InitStateFuncs( struct dd_function_table *functions )
 
    functions->DrawBuffer		= radeonDrawBuffer;
    functions->ReadBuffer		= radeonReadBuffer;
+   functions->CopyPixels                = _mesa_meta_CopyPixels;
+   functions->DrawPixels                = _mesa_meta_DrawPixels;
+   functions->ReadPixels                = radeonReadPixels;
 
    functions->AlphaFunc			= r200AlphaFunc;
    functions->BlendColor		= r200BlendColor;

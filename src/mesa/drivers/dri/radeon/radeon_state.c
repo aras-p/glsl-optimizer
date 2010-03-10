@@ -45,6 +45,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
+#include "drivers/common/meta.h"
 
 #include "radeon_context.h"
 #include "radeon_mipmap_tree.h"
@@ -2248,6 +2249,9 @@ void radeonInitStateFuncs( GLcontext *ctx , GLboolean dri2 )
 
    ctx->Driver.DrawBuffer		= radeonDrawBuffer;
    ctx->Driver.ReadBuffer		= radeonReadBuffer;
+   ctx->Driver.CopyPixels               = _mesa_meta_CopyPixels;
+   ctx->Driver.DrawPixels               = _mesa_meta_DrawPixels;
+   ctx->Driver.ReadPixels               = radeonReadPixels;
 
    ctx->Driver.AlphaFunc		= radeonAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= radeonBlendEquationSeparate;

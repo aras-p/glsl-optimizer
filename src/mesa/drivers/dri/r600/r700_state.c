@@ -39,6 +39,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "main/api_arrayelt.h"
 #include "main/framebuffer.h"
+#include "drivers/common/meta.h"
 
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
@@ -1857,8 +1858,12 @@ void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
 
 	functions->Scissor = radeonScissor;
 
-	functions->DrawBuffer		= radeonDrawBuffer;
-	functions->ReadBuffer		= radeonReadBuffer;
+	functions->DrawBuffer = radeonDrawBuffer;
+	functions->ReadBuffer = radeonReadBuffer;
+
+	functions->CopyPixels = _mesa_meta_CopyPixels;
+	functions->DrawPixels = _mesa_meta_DrawPixels;
+	functions->ReadPixels = radeonReadPixels;
 
 }
 
