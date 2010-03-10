@@ -398,7 +398,7 @@ ast_expression::hir(exec_list *instructions,
    make_empty_list(& op_list);
 
    switch (this->oper) {
-   case ast_assign:
+   case ast_assign: {
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
@@ -437,8 +437,12 @@ ast_expression::hir(exec_list *instructions,
       /* FINISHME: Check that the LHS and RHS have matching types. */
       /* FINISHME: For GLSL 1.10, check that the types are not arrays. */
 
-      result = new ir_assignment(op[0], op[1], NULL);
+      ir_instruction *tmp = new ir_assignment(op[0], op[1], NULL);
+      instructions->push_tail(tmp);
+
+      result = op[0];
       break;
+   }
 
    case ast_plus:
       op[0] = this->subexpressions[0]->hir(instructions, state);
