@@ -164,7 +164,6 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 	env.Append(LIBS = [
 		'm',
 		'pthread',
-		'expat',
 		'dl',
 	])
 
