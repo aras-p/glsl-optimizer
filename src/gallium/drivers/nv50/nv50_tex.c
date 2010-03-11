@@ -105,7 +105,7 @@ nv50_tex_construct(struct nv50_sampler_view *view)
 	struct nv50_miptree *mt = nv50_miptree(view->pipe.texture);
 	uint32_t swz[4], *tic = view->tic;
 
-	tic[0] = nv50_texture_formats[mt->base.base.format];
+	tic[0] = nv50_texture_formats[view->pipe.format];
 
 	swz[0] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_r);
 	swz[1] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_g);
