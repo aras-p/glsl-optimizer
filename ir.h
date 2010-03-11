@@ -53,7 +53,11 @@ public:
    virtual void accept(ir_visitor *) = 0;
 
 protected:
-   ir_instruction(int mode);
+   ir_instruction(int mode)
+      : mode(mode)
+   {
+      /* empty */
+   }
 
 private:
    /**

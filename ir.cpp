@@ -26,13 +26,6 @@
 #include "ir.h"
 #include "glsl_types.h"
 
-ir_instruction::ir_instruction(int mode)
-{
-   this->mode = mode;
-   make_empty_list(this);
-}
-
-
 ir_assignment::ir_assignment(ir_instruction *lhs, ir_instruction *rhs,
 			     ir_expression *condition)
    : ir_instruction(ir_op_assign)
