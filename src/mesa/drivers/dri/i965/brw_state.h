@@ -185,6 +185,11 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
 				   GLuint sz );
 void brw_destroy_batch_cache( struct brw_context *brw );
 void brw_clear_batch_cache( struct brw_context *brw );
+void *brw_state_batch(struct brw_context *brw,
+		      int size,
+		      int alignment,
+		      drm_intel_bo **out_bo,
+		      uint32_t *out_offset);
 
 /* brw_wm_surface_state.c */
 drm_intel_bo *

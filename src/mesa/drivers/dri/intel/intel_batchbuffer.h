@@ -23,6 +23,7 @@ struct intel_batchbuffer
    GLubyte *ptr;
 
    GLuint size;
+   uint32_t state_batch_offset;
 
 #ifdef DEBUG
    /** Tracking of BEGIN_BATCH()/OUT_BATCH()/ADVANCE_BATCH() debugging */
@@ -92,7 +93,8 @@ static INLINE uint32_t float_as_int(float f)
 static INLINE GLint
 intel_batchbuffer_space(struct intel_batchbuffer *batch)
 {
-   return (batch->size - batch->reserved_space) - (batch->ptr - batch->map);
+   return (batch->state_batch_offset - batch->reserved_space) -
+      (batch->ptr - batch->map);
 }
 
 

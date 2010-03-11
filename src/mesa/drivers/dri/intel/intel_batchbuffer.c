@@ -49,6 +49,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->ptr = batch->map;
    batch->reserved_space = BATCH_RESERVED;
    batch->dirty_state = ~0;
+   batch->state_batch_offset = batch->size;
 }
 
 struct intel_batchbuffer *
@@ -84,6 +85,12 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
    int x_off = 0, y_off = 0;
 
    drm_intel_bo_subdata(batch->buf, 0, used, batch->buffer);
+   if (batch->state_batch_offset != batch->size) {
+      drm_intel_bo_subdata(batch->buf,
+			   batch->state_batch_offset,
+			   batch->size - batch->state_batch_offset,
+			   batch->buffer + batch->state_batch_offset);
+   }
 
    batch->ptr = NULL;
 

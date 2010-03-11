@@ -261,6 +261,8 @@ extern char *__progname;
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
+#define ROUND_DOWN_TO(value, alignment) (ALIGN(value - alignment - 1, \
+					       alignment))
 #define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
 
 static INLINE uint32_t
