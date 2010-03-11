@@ -95,6 +95,9 @@
 #include "lp_tex_sample.h"
 
 
+#include <llvm-c/Analysis.h>
+
+
 static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
 static const unsigned char quad_offset_y[4] = {0, 0, 1, 1};
 

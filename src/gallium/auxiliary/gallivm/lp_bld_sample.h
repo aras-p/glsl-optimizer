@@ -36,7 +36,7 @@
 #define LP_BLD_SAMPLE_H
 
 
-#include <llvm-c/Core.h>
+#include "os/os_llvm.h"
 
 struct pipe_texture;
 struct pipe_sampler_state;

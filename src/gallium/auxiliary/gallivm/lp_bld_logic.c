@@ -92,7 +92,7 @@ lp_build_compare(LLVMBuilderRef builder,
 
    /* XXX: It is not clear if we should use the ordered or unordered operators */
 
-#if !defined(HAVE_LLVM) || HAVE_LLVM < 0x0207
+#if HAVE_LLVM < 0x0207
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    if(type.width * type.length == 128) {
       if(type.floating && util_cpu_caps.has_sse) {

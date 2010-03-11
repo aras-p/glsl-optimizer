@@ -34,9 +34,7 @@
 #ifndef LP_SCREEN_H
 #define LP_SCREEN_H
 
-#include <llvm-c/Core.h>
-#include <llvm-c/Analysis.h>
-#include <llvm-c/Target.h>
+#include "os/os_llvm.h"
 #include <llvm-c/ExecutionEngine.h>
 
 #include "pipe/p_screen.h"
