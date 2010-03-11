@@ -1265,6 +1265,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_TXC_OUTPUT_MASK_G                 (5 << 20)
 #define     R200_TXC_OUTPUT_MASK_B                 (6 << 20)
 #define     R200_TXC_OUTPUT_MASK_NONE              (7 << 20)
+#define     R200_TXC_OUTPUT_ROTATE_RGB             (0 << 24)
+#define     R200_TXC_OUTPUT_ROTATE_ARG             (1 << 24)
+#define     R200_TXC_OUTPUT_ROTATE_GBA             (2 << 24)
+#define     R200_TXC_OUTPUT_ROTATE_RGA             (3 << 24)
 #define     R200_TXC_REPL_NORMAL                   0
 #define     R200_TXC_REPL_RED                      1
 #define     R200_TXC_REPL_GREEN                    2
