@@ -148,7 +148,9 @@ lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
-                       LLVMValueRef y_stride);
+                       LLVMValueRef z,
+                       LLVMValueRef y_stride,
+                       LLVMValueRef z_stride);
 
 
 void

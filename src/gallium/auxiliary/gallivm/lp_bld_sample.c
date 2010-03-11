@@ -155,14 +155,16 @@ lp_build_gather(LLVMBuilderRef builder,
 /**
  * Compute the offset of a pixel.
  *
- * x, y, y_stride are vectors
+ * x, y, z, y_stride, z_stride are vectors
  */
 LLVMValueRef
 lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
-                       LLVMValueRef y_stride)
+                       LLVMValueRef z,
+                       LLVMValueRef y_stride,
+                       LLVMValueRef z_stride)
 {
    LLVMValueRef x_stride;
    LLVMValueRef offset;
@@ -177,6 +179,10 @@ lp_build_sample_offset(struct lp_build_context *bld,
       LLVMValueRef x_offset_lo, x_offset_hi;
       LLVMValueRef y_offset_lo, y_offset_hi;
       LLVMValueRef offset_lo, offset_hi;
+
+      /* XXX 1D & 3D addressing not done yet */
+      assert(!z);
+      assert(!z_stride);
 
       x_lo = LLVMBuildAnd(bld->builder, x, bld->one, "");
       y_lo = LLVMBuildAnd(bld->builder, y, bld->one, "");
@@ -201,13 +207,17 @@ lp_build_sample_offset(struct lp_build_context *bld,
       offset = lp_build_add(bld, offset_hi, offset_lo);
    }
    else {
-      LLVMValueRef x_offset;
-      LLVMValueRef y_offset;
+      offset = lp_build_mul(bld, x, x_stride);
 
-      x_offset = lp_build_mul(bld, x, x_stride);
-      y_offset = lp_build_mul(bld, y, y_stride);
+      if (y && y_stride) {
+         LLVMValueRef y_offset = lp_build_mul(bld, y, y_stride);
+         offset = lp_build_add(bld, offset, y_offset);
+      }
 
-      offset = lp_build_add(bld, x_offset, y_offset);
+      if (z && z_stride) {
+         LLVMValueRef z_offset = lp_build_mul(bld, z, z_stride);
+         offset = lp_build_add(bld, offset, z_offset);
+      }
    }
 
    return offset;
