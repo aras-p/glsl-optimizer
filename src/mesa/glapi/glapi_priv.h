@@ -52,12 +52,18 @@ extern _glapi_proc
 get_entrypoint_address(GLuint functionOffset);
 
 
-#if defined(USE_X64_64_ASM) && defined(GLX_USE_TLS)
-# define DISPATCH_FUNCTION_SIZE  16
-#elif defined(USE_X86_ASM)
-# if defined(THREADS) && !defined(GLX_USE_TLS)
+#if defined(USE_X86_ASM)
+# if defined(GLX_USE_TLS)
+#  define DISPATCH_FUNCTION_SIZE  16
+# elif defined(THREADS)
 #  define DISPATCH_FUNCTION_SIZE  32
 # else
+#  define DISPATCH_FUNCTION_SIZE  16
+# endif
+#endif
+
+#if defined(USE_X64_64_ASM)
+# if defined(GLX_USE_TLS)
 #  define DISPATCH_FUNCTION_SIZE  16
 # endif
 #endif
