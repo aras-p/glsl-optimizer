@@ -1119,7 +1119,6 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
                uint face, uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
    const uint zslice = 0;
    uint dstLevel;
 
@@ -1128,27 +1127,27 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_transfer *srcTrans, *dstTrans;
       void *srcMap, *dstMap;
       
-      srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
+      srcTrans = pipe->get_tex_transfer(pipe, pt, face, srcLevel, zslice,
                                           PIPE_TRANSFER_READ, 0, 0,
                                           u_minify(pt->width0, srcLevel),
                                           u_minify(pt->height0, srcLevel));
-      dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
+      dstTrans = pipe->get_tex_transfer(pipe, pt, face, dstLevel, zslice,
                                           PIPE_TRANSFER_WRITE, 0, 0,
                                           u_minify(pt->width0, dstLevel),
                                           u_minify(pt->height0, dstLevel));
 
-      srcMap = (ubyte *) screen->transfer_map(screen, srcTrans);
-      dstMap = (ubyte *) screen->transfer_map(screen, dstTrans);
+      srcMap = (ubyte *) pipe->transfer_map(pipe, srcTrans);
+      dstMap = (ubyte *) pipe->transfer_map(pipe, dstTrans);
 
       reduce_1d(pt->format,
                 srcTrans->width, srcMap,
                 dstTrans->width, dstMap);
 
-      screen->transfer_unmap(screen, srcTrans);
-      screen->transfer_unmap(screen, dstTrans);
+      pipe->transfer_unmap(pipe, srcTrans);
+      pipe->transfer_unmap(pipe, dstTrans);
 
-      screen->tex_transfer_destroy(srcTrans);
-      screen->tex_transfer_destroy(dstTrans);
+      pipe->tex_transfer_destroy(srcTrans);
+      pipe->tex_transfer_destroy(dstTrans);
    }
 }
 
@@ -1159,7 +1158,6 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
                uint face, uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
    const uint zslice = 0;
    uint dstLevel;
    
@@ -1171,17 +1169,17 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_transfer *srcTrans, *dstTrans;
       ubyte *srcMap, *dstMap;
       
-      srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
+      srcTrans = pipe->get_tex_transfer(pipe, pt, face, srcLevel, zslice,
                                           PIPE_TRANSFER_READ, 0, 0,
                                           u_minify(pt->width0, srcLevel),
                                           u_minify(pt->height0, srcLevel));
-      dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
+      dstTrans = pipe->get_tex_transfer(pipe, pt, face, dstLevel, zslice,
                                           PIPE_TRANSFER_WRITE, 0, 0,
                                           u_minify(pt->width0, dstLevel),
                                           u_minify(pt->height0, dstLevel));
 
-      srcMap = (ubyte *) screen->transfer_map(screen, srcTrans);
-      dstMap = (ubyte *) screen->transfer_map(screen, dstTrans);
+      srcMap = (ubyte *) pipe->transfer_map(pipe, srcTrans);
+      dstMap = (ubyte *) pipe->transfer_map(pipe, dstTrans);
 
       reduce_2d(pt->format,
                 srcTrans->width, srcTrans->height,
@@ -1189,11 +1187,11 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
                 dstTrans->width, dstTrans->height,
                 dstTrans->stride, dstMap);
 
-      screen->transfer_unmap(screen, srcTrans);
-      screen->transfer_unmap(screen, dstTrans);
+      pipe->transfer_unmap(pipe, srcTrans);
+      pipe->transfer_unmap(pipe, dstTrans);
 
-      screen->tex_transfer_destroy(srcTrans);
-      screen->tex_transfer_destroy(dstTrans);
+      pipe->tex_transfer_destroy(srcTrans);
+      pipe->tex_transfer_destroy(dstTrans);
    }
 }
 
@@ -1216,17 +1214,17 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_transfer *srcTrans, *dstTrans;
       ubyte *srcMap, *dstMap;
       
-      srcTrans = screen->get_tex_transfer(screen, pt, face, srcLevel, zslice,
+      srcTrans = pipe->get_tex_transfer(pipe, pt, face, srcLevel, zslice,
                                           PIPE_TRANSFER_READ, 0, 0,
                                           u_minify(pt->width0, srcLevel),
                                           u_minify(pt->height0, srcLevel));
-      dstTrans = screen->get_tex_transfer(screen, pt, face, dstLevel, zslice,
+      dstTrans = pipe->get_tex_transfer(pipe, pt, face, dstLevel, zslice,
                                           PIPE_TRANSFER_WRITE, 0, 0,
                                           u_minify(pt->width0, dstLevel),
                                           u_minify(pt->height0, dstLevel));
 
-      srcMap = (ubyte *) screen->transfer_map(screen, srcTrans);
-      dstMap = (ubyte *) screen->transfer_map(screen, dstTrans);
+      srcMap = (ubyte *) pipe->transfer_map(pipe, srcTrans);
+      dstMap = (ubyte *) pipe->transfer_map(pipe, dstTrans);
 
       reduce_3d(pt->format,
                 srcTrans->width, srcTrans->height,
@@ -1234,11 +1232,11 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
                 dstTrans->width, dstTrans->height,
                 dstTrans->stride, dstMap);
 
-      screen->transfer_unmap(screen, srcTrans);
-      screen->transfer_unmap(screen, dstTrans);
+      pipe->transfer_unmap(pipe, srcTrans);
+      pipe->transfer_unmap(pipe, dstTrans);
 
-      screen->tex_transfer_destroy(srcTrans);
-      screen->tex_transfer_destroy(dstTrans);
+      pipe->tex_transfer_destroy(srcTrans);
+      pipe->tex_transfer_destroy(dstTrans);
    }
 #else
    (void) reduce_3d;

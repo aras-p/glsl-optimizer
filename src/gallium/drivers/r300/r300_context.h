@@ -404,6 +404,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_surface_functions(struct r300_context* r300);
+void r300_init_tex_functions( struct pipe_context *pipe );
 
 static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {

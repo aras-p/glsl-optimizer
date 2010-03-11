@@ -26,6 +26,8 @@
 
 #include "pipe/p_screen.h"
 
-void r300_init_screen_transfer_functions(struct pipe_screen *screen);
+struct r300_context;
+
+void r300_init_transfer_functions(struct r300_context *r300ctx);
 
 #endif

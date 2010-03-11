@@ -34,6 +34,7 @@
 
 #include "tr_screen.h"
 
+struct trace_context;
 
 struct trace_texture
 {
@@ -112,8 +113,9 @@ void
 trace_surface_destroy(struct trace_surface *tr_surf);
 
 struct pipe_transfer *
-trace_transfer_create(struct trace_texture *tr_tex,
-                      struct pipe_transfer *transfer);
+trace_transfer_create(struct trace_context *tr_ctx,
+		      struct trace_texture *tr_tex,
+		      struct pipe_transfer *transfer);
 
 void
 trace_transfer_destroy(struct trace_transfer *tr_trans);

@@ -107,5 +107,8 @@ softpipe_video_surface(struct pipe_video_surface *pvs)
 extern void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 
+void
+softpipe_init_texture_funcs(struct pipe_context *pipe);
+
 
 #endif /* SP_TEXTURE */

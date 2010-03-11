@@ -378,7 +378,7 @@ void image_sub_data(struct vg_image *image,
    VGfloat *df = (VGfloat*)temp;
    VGint i;
    struct vg_context *ctx = vg_current_context();
-   struct pipe_screen *screen = ctx->pipe->screen;
+   struct pipe_context *pipe = ctx->pipe;
    struct pipe_texture *texture = image_texture(image);
    VGint xoffset = 0, yoffset = 0;
 
@@ -412,8 +412,8 @@ void image_sub_data(struct vg_image *image,
    }
 
    { /* upload color_data */
-      struct pipe_transfer *transfer = screen->get_tex_transfer(
-         screen, texture, 0, 0, 0,
+      struct pipe_transfer *transfer = pipe->get_tex_transfer(
+         pipe, texture, 0, 0, 0,
          PIPE_TRANSFER_WRITE, 0, 0, texture->width0, texture->height0);
       src += (dataStride * yoffset);
       for (i = 0; i < height; i++) {
@@ -422,7 +422,7 @@ void image_sub_data(struct vg_image *image,
          y += yStep;
          src += dataStride;
       }
-      screen->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(transfer);
    }
 }
 
@@ -435,7 +435,6 @@ void image_get_sub_data(struct vg_image * image,
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
    VGfloat temp[VEGA_MAX_IMAGE_WIDTH][4];
    VGfloat *df = (VGfloat*)temp;
    VGint y = 0, yStep = 1;
@@ -444,7 +443,7 @@ void image_get_sub_data(struct vg_image * image,
 
    {
       struct pipe_transfer *transfer =
-         screen->get_tex_transfer(screen,
+         pipe->get_tex_transfer(pipe,
                                   image->texture,  0, 0, 0,
                                   PIPE_TRANSFER_READ,
                                   0, 0,
@@ -461,7 +460,7 @@ void image_get_sub_data(struct vg_image * image,
          dst += dataStride;
       }
 
-      screen->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(transfer);
    }
 }
 

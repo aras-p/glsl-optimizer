@@ -31,6 +31,7 @@
 #include "util/u_simple_list.h"
 
 #include "tr_screen.h"
+#include "tr_context.h"
 #include "tr_texture.h"
 
 
@@ -124,8 +125,9 @@ trace_surface_destroy(struct trace_surface *tr_surf)
 
 
 struct pipe_transfer *
-trace_transfer_create(struct trace_texture *tr_tex,
-                     struct pipe_transfer *transfer)
+trace_transfer_create(struct trace_context *tr_ctx,
+		      struct trace_texture *tr_tex,
+		      struct pipe_transfer *transfer)
 {
    struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
    struct trace_transfer *tr_trans;
@@ -141,6 +143,7 @@ trace_transfer_create(struct trace_texture *tr_tex,
 
    memcpy(&tr_trans->base, transfer, sizeof(struct pipe_transfer));
 
+   tr_trans->base.pipe = &tr_ctx->base;
    tr_trans->base.texture = NULL;
    pipe_texture_reference(&tr_trans->base.texture, &tr_tex->base);
    tr_trans->transfer = transfer;
@@ -151,7 +154,7 @@ trace_transfer_create(struct trace_texture *tr_tex,
    return &tr_trans->base;
 
 error:
-   transfer->texture->screen->tex_transfer_destroy(transfer);
+   tr_ctx->pipe->tex_transfer_destroy(transfer);
    return NULL;
 }
 
@@ -160,12 +163,12 @@ void
 trace_transfer_destroy(struct trace_transfer *tr_trans)
 {
    struct trace_screen *tr_scr = trace_screen(tr_trans->base.texture->screen);
-   struct pipe_screen *screen = tr_trans->transfer->texture->screen;
+   struct pipe_context *context = tr_trans->transfer->pipe;
 
    trace_screen_remove_from_list(tr_scr, transfers, tr_trans);
 
    pipe_texture_reference(&tr_trans->base.texture, NULL);
-   screen->tex_transfer_destroy(tr_trans->transfer);
+   context->tex_transfer_destroy(tr_trans->transfer);
    FREE(tr_trans);
 }
 

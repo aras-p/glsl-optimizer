@@ -74,6 +74,7 @@ nv40_create(struct pipe_screen *pscreen, void *priv)
 	nv40_init_query_functions(nv40);
 	nv40_init_surface_functions(nv40);
 	nv40_init_state_functions(nv40);
+	nv40_init_transfer_functions(nv40);
 
 	/* Create, configure, and install fallback swtnl path */
 	nv40->draw = draw_create();

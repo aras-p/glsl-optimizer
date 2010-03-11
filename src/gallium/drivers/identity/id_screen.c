@@ -207,71 +207,6 @@ identity_screen_tex_surface_destroy(struct pipe_surface *_surface)
    identity_surface_destroy(identity_surface(_surface));
 }
 
-static struct pipe_transfer *
-identity_screen_get_tex_transfer(struct pipe_screen *_screen,
-                                 struct pipe_texture *_texture,
-                                 unsigned face,
-                                 unsigned level,
-                                 unsigned zslice,
-                                 enum pipe_transfer_usage usage,
-                                 unsigned x,
-                                 unsigned y,
-                                 unsigned w,
-                                 unsigned h)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_texture *id_texture = identity_texture(_texture);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_texture *texture = id_texture->texture;
-   struct pipe_transfer *result;
-
-   result = screen->get_tex_transfer(screen,
-                                     texture,
-                                     face,
-                                     level,
-                                     zslice,
-                                     usage,
-                                     x,
-                                     y,
-                                     w,
-                                     h);
-
-   if (result)
-      return identity_transfer_create(id_texture, result);
-   return NULL;
-}
-
-static void
-identity_screen_tex_transfer_destroy(struct pipe_transfer *_transfer)
-{
-   identity_transfer_destroy(identity_transfer(_transfer));
-}
-
-static void *
-identity_screen_transfer_map(struct pipe_screen *_screen,
-                             struct pipe_transfer *_transfer)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_transfer *id_transfer = identity_transfer(_transfer);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_transfer *transfer = id_transfer->transfer;
-
-   return screen->transfer_map(screen,
-                               transfer);
-}
-
-static void
-identity_screen_transfer_unmap(struct pipe_screen *_screen,
-                               struct pipe_transfer *_transfer)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_transfer *id_transfer = identity_transfer(_transfer);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_transfer *transfer = id_transfer->transfer;
-
-   screen->transfer_unmap(screen,
-                          transfer);
-}
 
 static struct pipe_buffer *
 identity_screen_buffer_create(struct pipe_screen *_screen,
@@ -488,10 +423,6 @@ identity_screen_create(struct pipe_screen *screen)
    id_screen->base.texture_destroy = identity_screen_texture_destroy;
    id_screen->base.get_tex_surface = identity_screen_get_tex_surface;
    id_screen->base.tex_surface_destroy = identity_screen_tex_surface_destroy;
-   id_screen->base.get_tex_transfer = identity_screen_get_tex_transfer;
-   id_screen->base.tex_transfer_destroy = identity_screen_tex_transfer_destroy;
-   id_screen->base.transfer_map = identity_screen_transfer_map;
-   id_screen->base.transfer_unmap = identity_screen_transfer_unmap;
    id_screen->base.buffer_create = identity_screen_buffer_create;
    id_screen->base.user_buffer_create = identity_screen_user_buffer_create;
    if (screen->buffer_map)

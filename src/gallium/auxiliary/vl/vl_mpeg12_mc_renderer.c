@@ -680,14 +680,14 @@ xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    for (i = 0; i < 3; ++i) {
-      r->tex_transfer[i] = r->pipe->screen->get_tex_transfer
+      r->tex_transfer[i] = r->pipe->get_tex_transfer
       (
-         r->pipe->screen, r->textures.all[i],
+         r->pipe, r->textures.all[i],
          0, 0, 0, PIPE_TRANSFER_WRITE, 0, 0,
          r->textures.all[i]->width0, r->textures.all[i]->height0
       );
 
-      r->texels[i] = r->pipe->screen->transfer_map(r->pipe->screen, r->tex_transfer[i]);
+      r->texels[i] = r->pipe->transfer_map(r->pipe, r->tex_transfer[i]);
    }
 }
 
@@ -699,8 +699,8 @@ xfer_buffers_unmap(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    for (i = 0; i < 3; ++i) {
-      r->pipe->screen->transfer_unmap(r->pipe->screen, r->tex_transfer[i]);
-      r->pipe->screen->tex_transfer_destroy(r->tex_transfer[i]);
+      r->pipe->transfer_unmap(r->pipe, r->tex_transfer[i]);
+      r->pipe->tex_transfer_destroy(r->tex_transfer[i]);
    }
 }
 

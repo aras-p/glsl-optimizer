@@ -349,7 +349,6 @@ make_texture(struct st_context *st,
 {
    GLcontext *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    gl_format mformat;
    struct pipe_texture *pt;
    enum pipe_format pipeFormat;
@@ -391,7 +390,7 @@ make_texture(struct st_context *st,
 					      width, height);
 
       /* map texture transfer */
-      dest = screen->transfer_map(screen, transfer);
+      dest = pipe->transfer_map(pipe, transfer);
 
 
       /* Put image into texture transfer.
@@ -411,8 +410,8 @@ make_texture(struct st_context *st,
                                unpack);
 
       /* unmap */
-      screen->transfer_unmap(screen, transfer);
-      screen->tex_transfer_destroy(transfer);
+      pipe->transfer_unmap(pipe, transfer);
+      pipe->tex_transfer_destroy(transfer);
 
       assert(success);
 
@@ -658,7 +657,6 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *strb;
    enum pipe_transfer_usage usage;
    struct pipe_transfer *pt;
@@ -692,7 +690,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 				       usage, x, y,
 				       width, height);
 
-   stmap = screen->transfer_map(screen, pt);
+   stmap = pipe->transfer_map(pipe, pt);
 
    pixels = _mesa_map_pbo_source(ctx, &clippedUnpack, pixels);
    assert(pixels);
@@ -792,8 +790,8 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    _mesa_unmap_pbo_source(ctx, &clippedUnpack);
 
    /* unmap the stencil buffer */
-   screen->transfer_unmap(screen, pt);
-   screen->tex_transfer_destroy(pt);
+   pipe->transfer_unmap(pipe, pt);
+   pipe->tex_transfer_destroy(pt);
 }
 
 
@@ -856,7 +854,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                     GLint dstx, GLint dsty)
 {
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
-   struct pipe_screen *screen = ctx->st->pipe->screen;
+   struct pipe_context *pipe = ctx->st->pipe;
    enum pipe_transfer_usage usage;
    struct pipe_transfer *ptDraw;
    ubyte *drawMap;
@@ -892,7 +890,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    assert(util_format_get_blockheight(ptDraw->texture->format) == 1);
 
    /* map the stencil buffer */
-   drawMap = screen->transfer_map(screen, ptDraw);
+   drawMap = pipe->transfer_map(pipe, ptDraw);
 
    /* draw */
    /* XXX PixelZoom not handled yet */
@@ -945,8 +943,8 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    free(buffer);
 
    /* unmap the stencil buffer */
-   screen->transfer_unmap(screen, ptDraw);
-   screen->tex_transfer_destroy(ptDraw);
+   pipe->transfer_unmap(pipe, ptDraw);
+   pipe->tex_transfer_destroy(ptDraw);
 }
 
 
@@ -1084,8 +1082,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       if (0) {
          /* debug */
-         debug_dump_surface("copypixsrcsurf", psRead);
-         debug_dump_surface("copypixtemptex", psTex);
+         debug_dump_surface(pipe, "copypixsrcsurf", psRead);
+         debug_dump_surface(pipe, "copypixtemptex", psTex);
       }
 
       pipe_surface_reference(&psRead, NULL); 
@@ -1128,8 +1126,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          free(buf);
       }
 
-      screen->tex_transfer_destroy(ptRead);
-      screen->tex_transfer_destroy(ptTex);
+      pipe->tex_transfer_destroy(ptRead);
+      pipe->tex_transfer_destroy(ptTex);
    }
 
    /* draw textured quad */

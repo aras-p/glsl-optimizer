@@ -397,7 +397,6 @@ void vgReadPixels(void * data, VGint dataStride,
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
 
    struct st_framebuffer *stfb = ctx->draw_buffer;
    struct st_renderbuffer *strb = stfb->strb;
@@ -442,7 +441,7 @@ void vgReadPixels(void * data, VGint dataStride,
    {
       struct pipe_transfer *transfer;
 
-      transfer = screen->get_tex_transfer(screen, strb->texture,  0, 0, 0,
+      transfer = pipe->get_tex_transfer(pipe, strb->texture,  0, 0, 0,
                                           PIPE_TRANSFER_READ,
                                           0, 0, width, height);
 
@@ -458,7 +457,7 @@ void vgReadPixels(void * data, VGint dataStride,
          dst += dataStride;
       }
 
-      screen->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(transfer);
    }
 }
 

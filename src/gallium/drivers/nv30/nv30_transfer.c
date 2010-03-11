@@ -33,11 +33,12 @@ nv30_compatible_transfer_tex(struct pipe_texture *pt, unsigned width, unsigned h
 }
 
 static struct pipe_transfer *
-nv30_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
+nv30_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 		  unsigned face, unsigned level, unsigned zslice,
 		  enum pipe_transfer_usage usage,
 		  unsigned x, unsigned y, unsigned w, unsigned h)
 {
+        struct pipe_screen *pscreen = pcontext->screen;
 	struct nv30_miptree *mt = (struct nv30_miptree *)pt;
 	struct nv30_transfer *tx;
 	struct pipe_texture tx_tex_template, *tx_tex;
@@ -145,8 +146,9 @@ nv30_transfer_del(struct pipe_transfer *ptx)
 }
 
 static void *
-nv30_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
+nv30_transfer_map(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 {
+        struct pipe_screen *pscreen = pcontext->screen;
 	struct nv30_transfer *tx = (struct nv30_transfer *)ptx;
 	struct nv04_surface *ns = (struct nv04_surface *)tx->surface;
 	struct nv30_miptree *mt = (struct nv30_miptree *)tx->surface->texture;
@@ -160,8 +162,9 @@ nv30_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 }
 
 static void
-nv30_transfer_unmap(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
+nv30_transfer_unmap(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 {
+        struct pipe_screen *pscreen = pcontext->screen;
 	struct nv30_transfer *tx = (struct nv30_transfer *)ptx;
 	struct nv30_miptree *mt = (struct nv30_miptree *)tx->surface->texture;
 
@@ -169,10 +172,10 @@ nv30_transfer_unmap(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 }
 
 void
-nv30_screen_init_transfer_functions(struct pipe_screen *pscreen)
+nv30_init_transfer_functions(struct nv30_context *nv30)
 {
-	pscreen->get_tex_transfer = nv30_transfer_new;
-	pscreen->tex_transfer_destroy = nv30_transfer_del;
-	pscreen->transfer_map = nv30_transfer_map;
-	pscreen->transfer_unmap = nv30_transfer_unmap;
+	nv30->pipe.get_tex_transfer = nv30_transfer_new;
+	nv30->pipe.tex_transfer_destroy = nv30_transfer_del;
+	nv30->pipe.transfer_map = nv30_transfer_map;
+	nv30->pipe.transfer_unmap = nv30_transfer_unmap;
 }

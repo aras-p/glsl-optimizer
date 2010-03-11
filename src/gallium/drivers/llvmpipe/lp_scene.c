@@ -397,7 +397,7 @@ end:
 static boolean
 lp_scene_map_buffers( struct lp_scene *scene )
 {
-   struct pipe_screen *screen = scene->pipe->screen;
+   struct pipe_context *pipe = scene->pipe;
    struct pipe_surface *cbuf, *zsbuf;
    int i;
 
@@ -409,7 +409,7 @@ lp_scene_map_buffers( struct lp_scene *scene )
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       cbuf = scene->fb.cbufs[i];
       if (cbuf) {
-	 scene->cbuf_transfer[i] = screen->get_tex_transfer(screen,
+	 scene->cbuf_transfer[i] = pipe->get_tex_transfer(pipe,
                                                           cbuf->texture,
                                                           cbuf->face,
                                                           cbuf->level,
@@ -421,7 +421,7 @@ lp_scene_map_buffers( struct lp_scene *scene )
 	 if (!scene->cbuf_transfer[i])
 	    goto fail;
 
-	 scene->cbuf_map[i] = screen->transfer_map(screen, 
+	 scene->cbuf_map[i] = pipe->transfer_map(pipe, 
                                                  scene->cbuf_transfer[i]);
 	 if (!scene->cbuf_map[i])
 	    goto fail;
@@ -432,7 +432,7 @@ lp_scene_map_buffers( struct lp_scene *scene )
     */
    zsbuf = scene->fb.zsbuf;
    if (zsbuf) {
-      scene->zsbuf_transfer = screen->get_tex_transfer(screen,
+      scene->zsbuf_transfer = pipe->get_tex_transfer(pipe,
                                                        zsbuf->texture,
                                                        zsbuf->face,
                                                        zsbuf->level,
@@ -444,7 +444,7 @@ lp_scene_map_buffers( struct lp_scene *scene )
       if (!scene->zsbuf_transfer)
          goto fail;
 
-      scene->zsbuf_map = screen->transfer_map(screen, 
+      scene->zsbuf_map = pipe->transfer_map(pipe, 
                                               scene->zsbuf_transfer);
       if (!scene->zsbuf_map)
 	 goto fail;
@@ -469,25 +469,25 @@ fail:
 static void
 lp_scene_unmap_buffers( struct lp_scene *scene )
 {
-   struct pipe_screen *screen = scene->pipe->screen;
+   struct pipe_context *pipe = scene->pipe;
    unsigned i;
 
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       if (scene->cbuf_map[i]) 
-	 screen->transfer_unmap(screen, scene->cbuf_transfer[i]);
+	 pipe->transfer_unmap(pipe, scene->cbuf_transfer[i]);
 
       if (scene->cbuf_transfer[i])
-	 screen->tex_transfer_destroy(scene->cbuf_transfer[i]);
+	 pipe->tex_transfer_destroy(scene->cbuf_transfer[i]);
 
       scene->cbuf_transfer[i] = NULL;
       scene->cbuf_map[i] = NULL;
    }
 
    if (scene->zsbuf_map) 
-      screen->transfer_unmap(screen, scene->zsbuf_transfer);
+      pipe->transfer_unmap(pipe, scene->zsbuf_transfer);
 
    if (scene->zsbuf_transfer)
-      screen->tex_transfer_destroy(scene->zsbuf_transfer);
+      pipe->tex_transfer_destroy(scene->zsbuf_transfer);
 
    scene->zsbuf_transfer = NULL;
    scene->zsbuf_map = NULL;

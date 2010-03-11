@@ -35,6 +35,7 @@
 
 #include "id_screen.h"
 
+struct identity_context;
 
 struct identity_buffer
 {
@@ -177,7 +178,8 @@ void
 identity_surface_destroy(struct identity_surface *id_surface);
 
 struct pipe_transfer *
-identity_transfer_create(struct identity_texture *id_texture,
+identity_transfer_create(struct identity_context *id_context,
+			 struct identity_texture *id_texture,
                          struct pipe_transfer *transfer);
 
 void

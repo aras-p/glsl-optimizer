@@ -55,7 +55,7 @@ testprogs := lp_test_format	\
 
 LIBS += $(GL_LIB_DEPS) -L. -lllvmpipe -L../../auxiliary/ -lgallium
 
-$(testprogs): lp_test_% : lp_test_%.o lp_test_main.o libllvmpipe.a
-	$(LD) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS) -Wl,--end-group
+#$(testprogs): lp_test_% : lp_test_%.o lp_test_main.o libllvmpipe.a
+#	$(LD) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS) -Wl,--end-group
 
-default: $(testprogs)
+#default: $(testprogs)

@@ -186,6 +186,9 @@ svga_surface_needs_propagation(struct pipe_surface *surf);
 extern void
 svga_screen_init_texture_functions(struct pipe_screen *screen);
 
+void
+svga_init_texture_functions(struct pipe_context *pipe);
+
 enum SVGA3dSurfaceFormat
 svga_translate_format(enum pipe_format format);
 

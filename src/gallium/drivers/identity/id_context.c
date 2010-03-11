@@ -711,6 +711,74 @@ identity_is_buffer_referenced(struct pipe_context *_pipe,
                                      buffer);
 }
 
+
+
+static struct pipe_transfer *
+identity_context_get_tex_transfer(struct pipe_context *_context,
+				  struct pipe_texture *_texture,
+                                 unsigned face,
+                                 unsigned level,
+                                 unsigned zslice,
+                                 enum pipe_transfer_usage usage,
+                                 unsigned x,
+                                 unsigned y,
+                                 unsigned w,
+                                 unsigned h)
+{
+   struct identity_context *id_context = identity_context(_context);
+   struct identity_texture *id_texture = identity_texture(_texture);
+   struct pipe_context *context = id_context->pipe;
+   struct pipe_texture *texture = id_texture->texture;
+   struct pipe_transfer *result;
+
+   result = context->get_tex_transfer(context,
+                                     texture,
+                                     face,
+                                     level,
+                                     zslice,
+                                     usage,
+                                     x,
+                                     y,
+                                     w,
+                                     h);
+
+   if (result)
+      return identity_transfer_create(id_context, id_texture, result);
+   return NULL;
+}
+
+static void
+identity_context_tex_transfer_destroy(struct pipe_transfer *_transfer)
+{
+   identity_transfer_destroy(identity_transfer(_transfer));
+}
+
+static void *
+identity_context_transfer_map(struct pipe_context *_context,
+                             struct pipe_transfer *_transfer)
+{
+   struct identity_context *id_context = identity_context(_context);
+   struct identity_transfer *id_transfer = identity_transfer(_transfer);
+   struct pipe_context *context = id_context->pipe;
+   struct pipe_transfer *transfer = id_transfer->transfer;
+
+   return context->transfer_map(context,
+				transfer);
+}
+
+static void
+identity_context_transfer_unmap(struct pipe_context *_context,
+                               struct pipe_transfer *_transfer)
+{
+   struct identity_context *id_context = identity_context(_context);
+   struct identity_transfer *id_transfer = identity_transfer(_transfer);
+   struct pipe_context *context = id_context->pipe;
+   struct pipe_transfer *transfer = id_transfer->transfer;
+
+   context->transfer_unmap(context,
+                          transfer);
+}
+
 struct pipe_context *
 identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 {
@@ -775,6 +843,10 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.flush = identity_flush;
    id_pipe->base.is_texture_referenced = identity_is_texture_referenced;
    id_pipe->base.is_buffer_referenced = identity_is_buffer_referenced;
+   id_pipe->base.get_tex_transfer = identity_context_get_tex_transfer;
+   id_pipe->base.tex_transfer_destroy = identity_context_tex_transfer_destroy;
+   id_pipe->base.transfer_map = identity_context_transfer_map;
+   id_pipe->base.transfer_unmap = identity_context_transfer_unmap;
 
    id_pipe->pipe = pipe;
 

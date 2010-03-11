@@ -214,7 +214,6 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->context_create = nv30_create;
 
 	nv30_screen_init_miptree_functions(pscreen);
-	nv30_screen_init_transfer_functions(pscreen);
 
 	/* 3D object */
 	switch (dev->chipset & 0xf0) {

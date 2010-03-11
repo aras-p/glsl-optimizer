@@ -169,7 +169,6 @@ util_surface_copy(struct pipe_context *pipe,
                   unsigned src_x, unsigned src_y, 
                   unsigned w, unsigned h)
 {
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *src_trans, *dst_trans;
    void *dst_map;
    const void *src_map;
@@ -182,7 +181,7 @@ util_surface_copy(struct pipe_context *pipe,
    src_format = src->texture->format;
    dst_format = dst->texture->format;
 
-   src_trans = screen->get_tex_transfer(screen,
+   src_trans = pipe->get_tex_transfer(pipe,
                                         src->texture,
                                         src->face,
                                         src->level,
@@ -190,7 +189,7 @@ util_surface_copy(struct pipe_context *pipe,
                                         PIPE_TRANSFER_READ,
                                         src_x, src_y, w, h);
 
-   dst_trans = screen->get_tex_transfer(screen,
+   dst_trans = pipe->get_tex_transfer(pipe,
                                         dst->texture,
                                         dst->face,
                                         dst->level,
@@ -202,8 +201,8 @@ util_surface_copy(struct pipe_context *pipe,
    assert(util_format_get_blockwidth(dst_format) == util_format_get_blockwidth(src_format));
    assert(util_format_get_blockheight(dst_format) == util_format_get_blockheight(src_format));
 
-   src_map = pipe->screen->transfer_map(screen, src_trans);
-   dst_map = pipe->screen->transfer_map(screen, dst_trans);
+   src_map = pipe->transfer_map(pipe, src_trans);
+   dst_map = pipe->transfer_map(pipe, dst_trans);
 
    assert(src_map);
    assert(dst_map);
@@ -221,11 +220,11 @@ util_surface_copy(struct pipe_context *pipe,
                      do_flip ? h - 1 : 0);
    }
 
-   pipe->screen->transfer_unmap(pipe->screen, src_trans);
-   pipe->screen->transfer_unmap(pipe->screen, dst_trans);
+   pipe->transfer_unmap(pipe, src_trans);
+   pipe->transfer_unmap(pipe, dst_trans);
 
-   screen->tex_transfer_destroy(src_trans);
-   screen->tex_transfer_destroy(dst_trans);
+   pipe->tex_transfer_destroy(src_trans);
+   pipe->tex_transfer_destroy(dst_trans);
 }
 
 
@@ -243,14 +242,13 @@ util_surface_fill(struct pipe_context *pipe,
                   unsigned dstx, unsigned dsty,
                   unsigned width, unsigned height, unsigned value)
 {
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *dst_trans;
    void *dst_map;
 
    assert(dst->texture);
    if (!dst->texture)
       return;
-   dst_trans = screen->get_tex_transfer(screen,
+   dst_trans = pipe->get_tex_transfer(pipe,
                                         dst->texture,
                                         dst->face,
                                         dst->level,
@@ -258,7 +256,7 @@ util_surface_fill(struct pipe_context *pipe,
                                         PIPE_TRANSFER_WRITE,
                                         dstx, dsty, width, height);
 
-   dst_map = pipe->screen->transfer_map(screen, dst_trans);
+   dst_map = pipe->transfer_map(pipe, dst_trans);
 
    assert(dst_map);
 
@@ -302,6 +300,6 @@ util_surface_fill(struct pipe_context *pipe,
       }
    }
 
-   pipe->screen->transfer_unmap(pipe->screen, dst_trans);
-   screen->tex_transfer_destroy(dst_trans);
+   pipe->transfer_unmap(pipe, dst_trans);
+   pipe->tex_transfer_destroy(dst_trans);
 }
