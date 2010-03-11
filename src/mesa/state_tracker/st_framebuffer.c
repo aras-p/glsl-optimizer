@@ -167,9 +167,7 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
                            uint surfIndex, struct pipe_surface *surf)
 {
    GET_CURRENT_CONTEXT(ctx);
-   static const GLuint invalid_size = 9999999;
    struct st_renderbuffer *strb;
-   GLuint width, height, i;
 
    /* sanity checks */
    assert(ST_SURFACE_FRONT_LEFT == BUFFER_FRONT_LEFT);
@@ -183,18 +181,17 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
    strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
 
    if (!strb) {
-      if (surfIndex == ST_SURFACE_FRONT_LEFT) {
-         /* Delayed creation when the window system supplies a fake front buffer */
-         struct st_renderbuffer *strb_back
-            = st_renderbuffer(stfb->Base.Attachment[ST_SURFACE_BACK_LEFT].Renderbuffer);
-         struct gl_renderbuffer *rb
-            = st_new_renderbuffer_fb(surf->format, strb_back->Base.NumSamples, FALSE);
-         _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
-         strb = st_renderbuffer(rb);
-      } else {
-         /* fail */
+      /* create new renderbuffer for this surface now */
+      const GLuint numSamples = stfb->Base.Visual.samples;
+      struct gl_renderbuffer *rb =
+         st_new_renderbuffer_fb(surf->format, numSamples, FALSE);
+      if (!rb) {
+         /* out of memory */
+         _mesa_warning(ctx, "Out of memory allocating renderbuffer");
          return;
       }
+      _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
+      strb = st_renderbuffer(rb);
    }
 
    /* replace the renderbuffer's surface/texture pointers */
@@ -206,39 +203,16 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
        * But when we do, we need to start setting this dirty bit
        * to ensure the renderbuffer attachements are up-to-date
        * via update_framebuffer.
+       * Core Mesa's state validation will update the parent framebuffer's
+       * size info, etc.
        */
       ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;
+      ctx->NewState |= _NEW_BUFFERS;
    }
 
    /* update renderbuffer's width/height */
    strb->Base.Width = surf->width;
    strb->Base.Height = surf->height;
-
-   /* Try to update the framebuffer's width/height from the renderbuffer
-    * sizes.  Before we start drawing, all the rbs _should_ be the same size.
-    */
-   width = height = invalid_size;
-   for (i = 0; i < BUFFER_COUNT; i++) {
-      if (stfb->Base.Attachment[i].Renderbuffer) {
-         if (width == invalid_size) {
-            width = stfb->Base.Attachment[i].Renderbuffer->Width;
-            height = stfb->Base.Attachment[i].Renderbuffer->Height;
-         }
-         else if (width != stfb->Base.Attachment[i].Renderbuffer->Width ||
-                  height != stfb->Base.Attachment[i].Renderbuffer->Height) {
-            /* inconsistant renderbuffer sizes, bail out */
-            return;
-         }
-      }
-   }
-
-   if (width != invalid_size) {
-      /* OK, the renderbuffers are of a consistant size, so update the
-       * parent framebuffer's size.
-       */
-      stfb->Base.Width = width;
-      stfb->Base.Height = height;
-   }
 }
 
 
