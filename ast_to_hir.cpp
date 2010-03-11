@@ -720,11 +720,74 @@ ast_function_expression::hir(exec_list *instructions,
     * 2. methods - Only the .length() method of array types.
     * 3. functions - Calls to regular old functions.
     *
+    * There are two kinds of constructor call.  Constructors for built-in
+    * language types, such as mat4 and vec2, are free form.  The only
+    * requirement is that the parameters must provide enough values of the
+    * correct scalar type.  Constructors for arrays and structures must have
+    * the exact number of parameters with matching types in the correct order.
+    * These constructors follow essentially the same type matching rules as
+    * functions.
+    *
     * Method calls are actually detected when the ast_field_selection
     * expression is handled.
     */
-   (void) instructions;
-   (void) state;
+   if (is_constructor()) {
+      return ir_call::get_error_instruction();
+   } else {
+      const ast_expression *id = subexpressions[0];
+
+      ir_function *f = (ir_function *)
+	 _mesa_symbol_table_find_symbol(state->symbols, 0,
+					id->primary_expression.identifier);
+
+      if (f == NULL) {
+	 YYLTYPE loc = id->get_location();
+
+	 _mesa_glsl_error(& loc, state, "function `%s' undeclared",
+			  id->primary_expression.identifier);
+	 return ir_call::get_error_instruction();
+      }
+
+      /* Once we've determined that the function being called might exist,
+       * process the parameters.
+       */
+      exec_list actual_parameters;
+      simple_node *const first = subexpressions[1];
+      if (first != NULL) {
+	 simple_node *ptr = first;
+	 do {
+	    ir_instruction *const result =
+	       ((ast_node *) ptr)->hir(instructions, state);
+	    ptr = ptr->next;
+
+	    actual_parameters.push_tail(result);
+	 } while (ptr != first);
+      }
+
+      /* After processing the function's actual parameters, try to find an
+       * overload of the function that matches.
+       */
+      const ir_function_signature *sig =
+	 f->matching_signature(& actual_parameters);
+      if (sig != NULL) {
+	 /* FINISHME: The list of actual parameters needs to be modified to
+	  * FINISHME: include any necessary conversions.
+	  */
+	 return new ir_call(sig, & actual_parameters);
+      } else {
+	 YYLTYPE loc = id->get_location();
+
+	 /* FINISHME: Log a better error message here.  G++ will show the types
+	  * FINISHME: of the actual parameters and the set of candidate
+	  * FINISHME: functions.  A different error should also be logged when
+	  * FINISHME: multiple functions match.
+	  */
+	 _mesa_glsl_error(& loc, state, "no matching function for call to `%s'",
+			  id->primary_expression.identifier);
+	 return ir_call::get_error_instruction();
+      }
+   }
+
    return ir_call::get_error_instruction();
 }
 

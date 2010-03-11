@@ -1,0 +1,185 @@
+/*
+ * Copyright © 2010 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+#include "glsl_types.h"
+#include "ir.h"
+
+int
+type_compare(const glsl_type *a, const glsl_type *b)
+{
+   switch (a->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      if ((a->vector_elements != b->vector_elements)
+	  || (a->matrix_rows != b->matrix_rows))
+	 return -1;
+
+      if (a->base_type == b->base_type)
+	 return 0;
+
+      /* There is no implicit conversion to or from bool.
+       */
+      if ((a->base_type == GLSL_TYPE_BOOL)
+	  || (b->base_type == GLSL_TYPE_BOOL))
+	 return -1;
+
+      return 1;
+
+   case GLSL_TYPE_SAMPLER:
+      return ((a->sampler_dimensionality == b->sampler_dimensionality)
+	      && (a->sampler_shadow == b->sampler_shadow)
+	      && (a->sampler_array == b->sampler_array)
+	      && (a->sampler_type == b->sampler_type))
+	 ? 0 : -1;
+
+   case GLSL_TYPE_STRUCT:
+      return (strcmp(a->name, b->name) == 0) ? 0 : -1;
+
+   case GLSL_TYPE_ARRAY:
+      if ((b->base_type != GLSL_TYPE_ARRAY)
+	  || (a->length != b->length))
+	 return -1;
+
+      /* From GLSL 1.50 spec, page 27 (page 33 of the PDF):
+       *    "There are no implicit array or structure conversions."
+       *
+       * If the comparison of the array element types detects that a conversion
+       * would be required, the array types do not match.
+       */
+      return (type_compare(a->fields.array, b->fields.array) == 0) ? 0 : -1;
+
+   case GLSL_TYPE_FUNCTION:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+   default:
+      /* These are all error conditions.  It is invalid for a parameter to
+       * a function to be declared as error, void, or a function.
+       */
+      return -1;
+   }
+
+   /* This point should be unreachable.
+    */
+   assert(0);
+}
+
+
+static int
+parameter_lists_match(exec_list *list_a, exec_list *list_b)
+{
+   exec_list_iterator iter_a = list_a->iterator();
+   exec_list_iterator iter_b = list_b->iterator();
+   int total_score = 0;
+
+   for (/* empty */ ; iter_a.has_next(); iter_a.next(), iter_b.next()) {
+      /* If all of the parameters from the other parameter list have been
+       * exhausted, the lists have different length and, by definition,
+       * do not match.
+       */
+      if (!iter_b.has_next())
+	 return -1;
+
+
+      const ir_variable *const param = (ir_variable *) iter_a.get();
+      const ir_instruction *const actual = (ir_instruction *) iter_b.get();
+
+      /* Determine whether or not the types match.  If the types are an
+       * exact match, the match score is zero.  If the types don't match
+       * but the actual parameter can be coerced to the type of the declared
+       * parameter, the match score is one.
+       */
+      int score;
+      switch ((enum ir_variable_mode)(param->mode)) {
+      case ir_var_auto:
+      case ir_var_uniform:
+	 /* These are all error conditions.  It is invalid for a parameter to
+	  * a function to be declared as auto (not in, out, or inout) or
+	  * as uniform.
+	  */
+	 assert(0);
+	 return -1;
+
+      case ir_var_in:
+	 score = type_compare(param->type, actual->type);
+	 break;
+
+      case ir_var_out:
+	 /* FINISHME: Make sure that actual is a valid lvalue. */
+	 score = type_compare(actual->type, param->type);
+	 break;
+
+      case ir_var_inout:
+	 /* FINISHME: Make sure that actual is a valid lvalue. */
+
+	 /* Since there are no bi-directional automatic conversions (e.g.,
+	  * there is int -> float but no float -> int), inout parameters must
+	  * be exact matches.
+	  */
+	 score = (type_compare(actual->type, param->type) == 0) ? 0 : -1;
+	 break;
+      }
+
+      if (score < 0)
+	 return -1;
+
+      total_score += score;
+   }
+
+   /* If all of the parameters from the other parameter list have been
+    * exhausted, the lists have different length and, by definition, do not
+    * match.
+    */
+   if (iter_b.has_next())
+      return -1;
+
+   return total_score;
+}
+
+
+const ir_function_signature *
+ir_function::matching_signature(exec_list *actual_parameters)
+{
+   ir_function_signature *match = NULL;
+
+   foreach_iter(exec_list_iterator, iter, signatures) {
+      ir_function_signature *const sig =
+	 (ir_function_signature *) iter.get();
+
+      const int score = parameter_lists_match(& sig->parameters,
+					      actual_parameters);
+
+      if (score == 0)
+	 return sig;
+
+      if (score > 0) {
+	 if (match != NULL)
+	    return NULL;
+
+	 match = sig;
+      }
+   }
+
+   return match;
+}

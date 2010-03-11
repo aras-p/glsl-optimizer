@@ -26,7 +26,7 @@ bin_PROGRAMS = glsl
 glsl_SOURCES = symbol_table.c hash_table.c glsl_types.cpp \
 	glsl_parser.ypp glsl_lexer.lpp glsl_parser_extras.cpp \
 	ast_expr.cpp ast_to_hir.cpp ir.cpp hir_field_selection.cpp \
-	ir_print_visitor.cpp ir_variable.cpp
+	ir_print_visitor.cpp ir_variable.cpp ir_function.cpp
 
 BUILT_SOURCES = glsl_parser.h builtin_types.h
 

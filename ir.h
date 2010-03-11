@@ -161,10 +161,18 @@ public:
    }
 
    /**
+    * Find a signature that matches a set of actual parameters.
+    */
+   const ir_function_signature *matching_signature(exec_list *actual_param);
+
+   /**
     * Name of the function.
     */
    const char *name;
 
+   /**
+    * Set of overloaded functions with this name.
+    */
    struct exec_list signatures;
 };
 /*@}*/
@@ -283,10 +291,10 @@ public:
  */
 class ir_call : public ir_instruction {
 public:
-   ir_call()
-      : ir_instruction(ir_op_call), callee(NULL)
+   ir_call(const ir_function_signature *callee, exec_list *actual_parameters)
+      : ir_instruction(ir_op_call), callee(callee)
    {
-      /* empty */
+      actual_parameters->move_nodes_to(& this->actual_parameters);
    }
 
    virtual void accept(ir_visitor *v)
@@ -300,7 +308,13 @@ public:
    static ir_call *get_error_instruction();
 
 private:
-   ir_function_signature *callee;
+   ir_call()
+      : ir_instruction(ir_op_call), callee(NULL)
+   {
+      /* empty */
+   }
+
+   const ir_function_signature *callee;
    exec_list actual_parameters;
 };
 
