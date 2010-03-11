@@ -202,4 +202,5 @@ boolean brw_is_buffer_referenced_by_bo( struct brw_screen *brw_screen,
                                         struct brw_winsys_buffer *bo );
 
 
+
 #endif /* BRW_SCREEN_H */

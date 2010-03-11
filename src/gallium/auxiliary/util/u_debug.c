@@ -459,7 +459,7 @@ void debug_dump_surface(struct pipe_context *pipe,
    
    pipe->transfer_unmap(pipe, transfer);
 error:
-   pipe->tex_transfer_destroy(transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 }
 
 
@@ -530,14 +530,15 @@ debug_dump_surface_bmp(struct pipe_context *pipe,
 				     PIPE_TRANSFER_READ, 0, 0, surface->width,
 				     surface->height);
 
-   debug_dump_transfer_bmp(filename, transfer);
+   debug_dump_transfer_bmp(pipe, filename, transfer);
 
-   pipe->tex_transfer_destroy(transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 #endif
 }
 
 void
-debug_dump_transfer_bmp(const char *filename,
+debug_dump_transfer_bmp(struct pipe_context *pipe,
+                        const char *filename,
                         struct pipe_transfer *transfer)
 {
 #ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
@@ -550,7 +551,7 @@ debug_dump_transfer_bmp(const char *filename,
    if(!rgba)
       goto error1;
 
-   pipe_get_tile_rgba(transfer, 0, 0,
+   pipe_get_tile_rgba(pipe, transfer, 0, 0,
                       transfer->width, transfer->height,
                       rgba);
 

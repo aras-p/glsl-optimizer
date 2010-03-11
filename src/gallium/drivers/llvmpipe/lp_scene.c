@@ -477,7 +477,7 @@ lp_scene_unmap_buffers( struct lp_scene *scene )
 	 pipe->transfer_unmap(pipe, scene->cbuf_transfer[i]);
 
       if (scene->cbuf_transfer[i])
-	 pipe->tex_transfer_destroy(scene->cbuf_transfer[i]);
+	 pipe->tex_transfer_destroy(pipe, scene->cbuf_transfer[i]);
 
       scene->cbuf_transfer[i] = NULL;
       scene->cbuf_map[i] = NULL;
@@ -487,7 +487,7 @@ lp_scene_unmap_buffers( struct lp_scene *scene )
       pipe->transfer_unmap(pipe, scene->zsbuf_transfer);
 
    if (scene->zsbuf_transfer)
-      pipe->tex_transfer_destroy(scene->zsbuf_transfer);
+      pipe->tex_transfer_destroy(pipe, scene->zsbuf_transfer);
 
    scene->zsbuf_transfer = NULL;
    scene->zsbuf_map = NULL;

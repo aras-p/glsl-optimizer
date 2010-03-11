@@ -162,7 +162,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    /* unmap the stencil buffer */
    pipe->transfer_unmap(pipe, pt);
-   pipe->tex_transfer_destroy(pt);
+   pipe->tex_transfer_destroy(pipe, pt);
 }
 
 
@@ -254,7 +254,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
 
       map = pipe->transfer_map(pipe, trans);
       if (!map) {
-         pipe->tex_transfer_destroy(trans);
+         pipe->tex_transfer_destroy(pipe, trans);
          return GL_FALSE;
       }
 
@@ -317,7 +317,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
       }
 
       pipe->transfer_unmap(pipe, trans);
-      pipe->tex_transfer_destroy(trans);
+      pipe->tex_transfer_destroy(pipe, trans);
    }
 
    return GL_TRUE;
@@ -441,7 +441,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                GLuint ztemp[MAX_WIDTH];
                GLfloat zfloat[MAX_WIDTH];
                const double scale = 1.0 / ((1 << 24) - 1);
-               pipe_get_tile_raw(trans, 0, y, width, 1, ztemp, 0);
+               pipe_get_tile_raw(pipe, trans, 0, y, width, 1, ztemp, 0);
                y += yStep;
                for (j = 0; j < width; j++) {
                   zfloat[j] = (float) (scale * (ztemp[j] & 0xffffff));
@@ -456,7 +456,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             assert(format == GL_DEPTH_STENCIL_EXT);
             for (i = 0; i < height; i++) {
                GLuint *zshort = (GLuint *)dst;
-               pipe_get_tile_raw(trans, 0, y, width, 1, dst, 0);
+               pipe_get_tile_raw(pipe, trans, 0, y, width, 1, dst, 0);
                y += yStep;
                /* Reverse into 24/8 */
                for (j = 0; j < width; j++) {
@@ -473,7 +473,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                GLuint ztemp[MAX_WIDTH];
                GLfloat zfloat[MAX_WIDTH];
                const double scale = 1.0 / ((1 << 24) - 1);
-               pipe_get_tile_raw(trans, 0, y, width, 1, ztemp, 0);
+               pipe_get_tile_raw(pipe, trans, 0, y, width, 1, ztemp, 0);
                y += yStep;
                for (j = 0; j < width; j++) {
                   zfloat[j] = (float) (scale * ((ztemp[j] >> 8) & 0xffffff));
@@ -487,7 +487,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             /* XXX: unreachable code -- should be before st_read_stencil_pixels */
             assert(format == GL_DEPTH_STENCIL_EXT);
             for (i = 0; i < height; i++) {
-               pipe_get_tile_raw(trans, 0, y, width, 1, dst, 0);
+               pipe_get_tile_raw(pipe, trans, 0, y, width, 1, dst, 0);
                y += yStep;
                dst += dstStride;
             }
@@ -498,7 +498,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             GLushort ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffff;
-            pipe_get_tile_raw(trans, 0, y, width, 1, ztemp, 0);
+            pipe_get_tile_raw(pipe, trans, 0, y, width, 1, ztemp, 0);
             y += yStep;
             for (j = 0; j < width; j++) {
                zfloat[j] = (float) (scale * ztemp[j]);
@@ -513,7 +513,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             GLuint ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffffffff;
-            pipe_get_tile_raw(trans, 0, y, width, 1, ztemp, 0);
+            pipe_get_tile_raw(pipe, trans, 0, y, width, 1, ztemp, 0);
             y += yStep;
             for (j = 0; j < width; j++) {
                zfloat[j] = (float) (scale * ztemp[j]);
@@ -527,7 +527,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          /* RGBA format */
          /* Do a row at a time to flip image data vertically */
          for (i = 0; i < height; i++) {
-            pipe_get_tile_rgba(trans, 0, y, width, 1, df);
+            pipe_get_tile_rgba(pipe, trans, 0, y, width, 1, df);
             y += yStep;
             df += dfStride;
             if (!dfStride) {
@@ -539,7 +539,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       }
    }
 
-   pipe->tex_transfer_destroy(trans);
+   pipe->tex_transfer_destroy(pipe, trans);
 
    _mesa_unmap_pbo_dest(ctx, &clippedPacking);
 }

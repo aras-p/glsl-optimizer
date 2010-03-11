@@ -449,7 +449,7 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       /* unmap */
       pipe->transfer_unmap(pipe, transfer);
-      pipe->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
    return TRUE;
 }

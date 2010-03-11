@@ -69,10 +69,10 @@ sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc)
       /*assert(tc->entries[pos].x < 0);*/
    }
    if (tc->transfer) {
-      tc->pipe->tex_transfer_destroy(tc->transfer);
+      tc->pipe->tex_transfer_destroy(tc->pipe, tc->transfer);
    }
    if (tc->tex_trans) {
-      tc->pipe->tex_transfer_destroy(tc->tex_trans);
+      tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
    }
 
    FREE( tc );
@@ -135,7 +135,7 @@ sp_tex_tile_cache_set_texture(struct softpipe_tex_tile_cache *tc,
             tc->tex_trans_map = NULL;
          }
 
-         tc->pipe->tex_transfer_destroy(tc->tex_trans);
+         tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
          tc->tex_trans = NULL;
       }
 
@@ -230,7 +230,7 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
                tc->tex_trans_map = NULL;
             }
 
-            tc->pipe->tex_transfer_destroy(tc->tex_trans);
+            tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
             tc->tex_trans = NULL;
          }
 
@@ -251,7 +251,8 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
       }
 
       /* get tile from the transfer (view into texture) */
-      pipe_get_tile_rgba(tc->tex_trans,
+      pipe_get_tile_rgba(tc->pipe,
+                         tc->tex_trans,
                          addr.bits.x * TILE_SIZE, 
                          addr.bits.y * TILE_SIZE,
                          TILE_SIZE, TILE_SIZE,

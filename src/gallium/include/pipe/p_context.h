@@ -323,7 +323,8 @@ struct pipe_context {
                                              unsigned x, unsigned y,
                                              unsigned w, unsigned h);
 
-   void (*tex_transfer_destroy)(struct pipe_transfer *);
+   void (*tex_transfer_destroy)(struct pipe_context *,
+                                struct pipe_transfer *);
    
    void *(*transfer_map)( struct pipe_context *,
                           struct pipe_transfer *transfer );

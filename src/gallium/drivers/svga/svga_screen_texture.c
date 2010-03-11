@@ -899,10 +899,11 @@ svga_transfer_unmap(struct pipe_context *pipe,
 
 
 static void
-svga_tex_transfer_destroy(struct pipe_transfer *transfer)
+svga_tex_transfer_destroy(struct pipe_context *pipe,
+                          struct pipe_transfer *transfer)
 {
    struct svga_texture *tex = svga_texture(transfer->texture);
-   struct svga_screen *ss = svga_screen(transfer->texture->screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st = svga_transfer(transfer);
 

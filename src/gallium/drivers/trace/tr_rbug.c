@@ -257,7 +257,7 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
                                 NULL);
 
    context->transfer_unmap(context, t);
-   context->tex_transfer_destroy(t);
+   context->tex_transfer_destroy(context, t);
 
    pipe_mutex_unlock(tr_scr->list_mutex);
 

@@ -295,7 +295,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
    /* Release transfer */
    pipe->transfer_unmap(pipe, transfer);
-   pipe->tex_transfer_destroy(transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 
    return pt;
 }
@@ -530,7 +530,7 @@ reset_cache(struct st_context *st)
    cache->ymax = -1000000;
 
    if (cache->trans) {
-      pipe->tex_transfer_destroy(cache->trans);
+      pipe->tex_transfer_destroy(pipe, cache->trans);
       cache->trans = NULL;
    }
 
@@ -616,7 +616,7 @@ st_flush_bitmap_cache(struct st_context *st)
             pipe->transfer_unmap(pipe, cache->trans);
             cache->buffer = NULL;
 
-            pipe->tex_transfer_destroy(cache->trans);
+            pipe->tex_transfer_destroy(pipe, cache->trans);
             cache->trans = NULL;
          }
 
@@ -836,7 +836,7 @@ st_destroy_bitmap(struct st_context *st)
    if (cache) {
       if (cache->trans) {
          pipe->transfer_unmap(pipe, cache->trans);
-         pipe->tex_transfer_destroy(cache->trans);
+         pipe->tex_transfer_destroy(pipe, cache->trans);
       }
       pipe_texture_reference(&st->bitmap.cache->texture, NULL);
       free(st->bitmap.cache);

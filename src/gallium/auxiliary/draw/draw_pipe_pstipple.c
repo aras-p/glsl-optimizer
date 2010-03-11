@@ -411,7 +411,7 @@ pstip_update_texture(struct pstip_stage *pstip)
 
    /* unmap */
    pipe->transfer_unmap(pipe, transfer);
-   pipe->tex_transfer_destroy(transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 }
 
 

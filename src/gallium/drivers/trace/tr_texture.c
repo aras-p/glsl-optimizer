@@ -143,10 +143,10 @@ trace_transfer_create(struct trace_context *tr_ctx,
 
    memcpy(&tr_trans->base, transfer, sizeof(struct pipe_transfer));
 
-   tr_trans->base.pipe = &tr_ctx->base;
    tr_trans->base.texture = NULL;
-   pipe_texture_reference(&tr_trans->base.texture, &tr_tex->base);
    tr_trans->transfer = transfer;
+
+   pipe_texture_reference(&tr_trans->base.texture, &tr_tex->base);
    assert(tr_trans->base.texture == &tr_tex->base);
 
    trace_screen_add_to_list(tr_scr, transfers, tr_trans);
@@ -154,21 +154,23 @@ trace_transfer_create(struct trace_context *tr_ctx,
    return &tr_trans->base;
 
 error:
-   tr_ctx->pipe->tex_transfer_destroy(transfer);
+   tr_ctx->pipe->tex_transfer_destroy(tr_ctx->pipe, transfer);
    return NULL;
 }
 
 
 void
-trace_transfer_destroy(struct trace_transfer *tr_trans)
+trace_transfer_destroy(struct trace_context *tr_context,
+                       struct trace_transfer *tr_trans)
 {
-   struct trace_screen *tr_scr = trace_screen(tr_trans->base.texture->screen);
-   struct pipe_context *context = tr_trans->transfer->pipe;
+   struct trace_screen *tr_scr = trace_screen(tr_context->base.screen);
+   struct pipe_context *context = tr_context->pipe;
+   struct pipe_transfer *transfer = tr_trans->transfer;
 
    trace_screen_remove_from_list(tr_scr, transfers, tr_trans);
 
    pipe_texture_reference(&tr_trans->base.texture, NULL);
-   context->tex_transfer_destroy(tr_trans->transfer);
+   context->tex_transfer_destroy(context, transfer);
    FREE(tr_trans);
 }
 

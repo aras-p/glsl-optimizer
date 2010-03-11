@@ -217,7 +217,7 @@ st_texture_image_unmap(struct st_context *st,
 
    pipe->transfer_unmap(pipe, stImage->transfer);
 
-   pipe->tex_transfer_destroy(stImage->transfer);
+   pipe->tex_transfer_destroy(pipe, stImage->transfer);
 }
 
 
@@ -284,7 +284,7 @@ st_texture_image_data(struct st_context *st,
 		      u_minify(dst->width0, level),
                       u_minify(dst->height0, level));      /* width, height */
 
-      pipe->tex_transfer_destroy(dst_transfer);
+      pipe->tex_transfer_destroy(pipe, dst_transfer);
 
       srcUB += src_image_stride;
    }

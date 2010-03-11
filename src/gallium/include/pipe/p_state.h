@@ -304,8 +304,6 @@ struct pipe_surface
  */
 struct pipe_transfer
 {
-   struct pipe_context *pipe;
-
    unsigned x;                   /**< x offset from start of texture image */
    unsigned y;                   /**< y offset from start of texture image */
    unsigned width;               /**< logical width in pixels */

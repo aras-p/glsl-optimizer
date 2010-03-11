@@ -748,9 +748,11 @@ identity_context_get_tex_transfer(struct pipe_context *_context,
 }
 
 static void
-identity_context_tex_transfer_destroy(struct pipe_transfer *_transfer)
+identity_context_tex_transfer_destroy(struct pipe_context *_pipe,
+                                      struct pipe_transfer *_transfer)
 {
-   identity_transfer_destroy(identity_transfer(_transfer));
+   identity_transfer_destroy(identity_context(_pipe),
+                             identity_transfer(_transfer));
 }
 
 static void *

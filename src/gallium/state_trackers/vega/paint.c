@@ -167,7 +167,7 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
       void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, p->gradient.color_data, sizeof(VGint)*1024);
       pipe->transfer_unmap(pipe, transfer);
-      pipe->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 
    return tex;

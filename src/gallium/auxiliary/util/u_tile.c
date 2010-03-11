@@ -45,11 +45,11 @@
  * Move raw block of pixels from transfer object to user memory.
  */
 void
-pipe_get_tile_raw(struct pipe_transfer *pt,
+pipe_get_tile_raw(struct pipe_context *pipe,
+                  struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   void *dst, int dst_stride)
 {
-   struct pipe_context *pipe = pt->pipe;
    const void *src;
 
    if (dst_stride == 0)
@@ -73,11 +73,11 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
  * Move raw block of pixels from user memory to transfer object.
  */
 void
-pipe_put_tile_raw(struct pipe_transfer *pt,
+pipe_put_tile_raw(struct pipe_context *pipe,
+                  struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   const void *src, int src_stride)
 {
-   struct pipe_context *pipe = pt->pipe;
    void *dst;
    enum pipe_format format = pt->texture->format;
 
@@ -1246,7 +1246,8 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
 
 
 void
-pipe_get_tile_rgba(struct pipe_transfer *pt,
+pipe_get_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    float *p)
 {
@@ -1265,7 +1266,7 @@ pipe_get_tile_rgba(struct pipe_transfer *pt,
    if(format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV)
       assert((x & 1) == 0);
 
-   pipe_get_tile_raw(pt, x, y, w, h, packed, 0);
+   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
 
    pipe_tile_raw_to_rgba(format, packed, w, h, p, dst_stride);
 
@@ -1274,7 +1275,8 @@ pipe_get_tile_rgba(struct pipe_transfer *pt,
 
 
 void
-pipe_put_tile_rgba(struct pipe_transfer *pt,
+pipe_put_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    const float *p)
 {
@@ -1363,7 +1365,7 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
                            0, 0, w, h);
    }
 
-   pipe_put_tile_raw(pt, x, y, w, h, packed, 0);
+   pipe_put_tile_raw(pipe, pt, x, y, w, h, packed, 0);
 
    FREE(packed);
 }
@@ -1373,11 +1375,11 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
  * Get a block of Z values, converted to 32-bit range.
  */
 void
-pipe_get_tile_z(struct pipe_transfer *pt,
+pipe_get_tile_z(struct pipe_context *pipe,
+                struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 uint *z)
 {
-   struct pipe_context *pipe = pt->pipe;
    const uint dstStride = w;
    ubyte *map;
    uint *pDest = z;
@@ -1458,11 +1460,11 @@ pipe_get_tile_z(struct pipe_transfer *pt,
 
 
 void
-pipe_put_tile_z(struct pipe_transfer *pt,
+pipe_put_tile_z(struct pipe_context *pipe,
+                struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 const uint *zSrc)
 {
-   struct pipe_context *pipe = pt->pipe;
    const uint srcStride = w;
    const uint *ptrc = zSrc;
    ubyte *map;

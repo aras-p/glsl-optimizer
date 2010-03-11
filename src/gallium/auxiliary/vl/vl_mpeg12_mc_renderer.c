@@ -700,7 +700,7 @@ xfer_buffers_unmap(struct vl_mpeg12_mc_renderer *r)
 
    for (i = 0; i < 3; ++i) {
       r->pipe->transfer_unmap(r->pipe, r->tex_transfer[i]);
-      r->pipe->tex_transfer_destroy(r->tex_transfer[i]);
+      r->pipe->tex_transfer_destroy(r->pipe, r->tex_transfer[i]);
    }
 }
 

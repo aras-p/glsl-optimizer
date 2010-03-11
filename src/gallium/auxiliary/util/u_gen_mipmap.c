@@ -1146,8 +1146,8 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
 
-      pipe->tex_transfer_destroy(srcTrans);
-      pipe->tex_transfer_destroy(dstTrans);
+      pipe->tex_transfer_destroy(pipe, srcTrans);
+      pipe->tex_transfer_destroy(pipe, dstTrans);
    }
 }
 
@@ -1190,8 +1190,8 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
 
-      pipe->tex_transfer_destroy(srcTrans);
-      pipe->tex_transfer_destroy(dstTrans);
+      pipe->tex_transfer_destroy(pipe, srcTrans);
+      pipe->tex_transfer_destroy(pipe, dstTrans);
    }
 }
 
@@ -1235,8 +1235,8 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
 
-      pipe->tex_transfer_destroy(srcTrans);
-      pipe->tex_transfer_destroy(dstTrans);
+      pipe->tex_transfer_destroy(pipe, srcTrans);
+      pipe->tex_transfer_destroy(pipe, dstTrans);
    }
 #else
    (void) reduce_3d;

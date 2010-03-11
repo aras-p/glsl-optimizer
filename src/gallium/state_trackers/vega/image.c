@@ -418,11 +418,11 @@ void image_sub_data(struct vg_image *image,
       src += (dataStride * yoffset);
       for (i = 0; i < height; i++) {
          _vega_unpack_float_span_rgba(ctx, width, xoffset, src, dataFormat, temp);
-         pipe_put_tile_rgba(transfer, x+image->x, y+image->y, width, 1, df);
+         pipe_put_tile_rgba(pipe, transfer, x+image->x, y+image->y, width, 1, df);
          y += yStep;
          src += dataStride;
       }
-      pipe->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 }
 
@@ -454,13 +454,13 @@ void image_get_sub_data(struct vg_image * image,
 #if 0
          debug_printf("%d-%d  == %d\n", sy, height, y);
 #endif
-         pipe_get_tile_rgba(transfer, sx+image->x, y, width, 1, df);
+         pipe_get_tile_rgba(pipe, transfer, sx+image->x, y, width, 1, df);
          y += yStep;
          _vega_pack_rgba_span_float(ctx, width, temp, dataFormat, dst);
          dst += dataStride;
       }
 
-      pipe->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 }
 

@@ -825,7 +825,6 @@ i915_get_tex_transfer(struct pipe_context *pipe,
    trans = CALLOC_STRUCT(i915_transfer);
    if (trans) {
       pipe_texture_reference(&trans->base.texture, texture);
-      trans->base.pipe = pipe;
       trans->base.x = x;
       trans->base.y = y;
       trans->base.width = w;
@@ -869,7 +868,8 @@ i915_transfer_unmap(struct pipe_context *pipe,
 }
 
 static void
-i915_tex_transfer_destroy(struct pipe_transfer *trans)
+i915_tex_transfer_destroy(struct pipe_context *pipe,
+                          struct pipe_transfer *trans)
 {
    pipe_texture_reference(&trans->texture, NULL);
    FREE(trans);

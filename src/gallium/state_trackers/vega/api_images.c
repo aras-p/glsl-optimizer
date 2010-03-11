@@ -450,14 +450,14 @@ void vgReadPixels(void * data, VGint dataStride,
 #if 0
          debug_printf("%d-%d  == %d\n", sy, height, y);
 #endif
-         pipe_get_tile_rgba(transfer, sx, y, width, 1, df);
+         pipe_get_tile_rgba(pipe, transfer, sx, y, width, 1, df);
          y += yStep;
          _vega_pack_rgba_span_float(ctx, width, temp, dataFormat,
                                     dst + yoffset + xoffset);
          dst += dataStride;
       }
 
-      pipe->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 }
 

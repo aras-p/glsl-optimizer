@@ -277,7 +277,6 @@ softpipe_get_tex_transfer(struct pipe_context *pipe,
       struct pipe_transfer *pt = &spt->base;
       int nblocksy = util_format_get_nblocksy(texture->format, u_minify(texture->height0, level));
       pipe_texture_reference(&pt->texture, texture);
-      pt->pipe = pipe;
       pt->x = x;
       pt->y = y;
       pt->width = w;
@@ -311,7 +310,8 @@ softpipe_get_tex_transfer(struct pipe_context *pipe,
  * softpipe_get_tex_transfer().
  */
 static void 
-softpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
+softpipe_tex_transfer_destroy(struct pipe_context *pipe,
+                              struct pipe_transfer *transfer)
 {
    /* Effectively do the texture_update work here - if texture images
     * needed post-processing to put them into hardware layout, this is

@@ -65,6 +65,7 @@ struct identity_transfer
 {
    struct pipe_transfer base;
 
+   struct pipe_context *pipe;
    struct pipe_transfer *transfer;
 };
 
@@ -183,7 +184,8 @@ identity_transfer_create(struct identity_context *id_context,
                          struct pipe_transfer *transfer);
 
 void
-identity_transfer_destroy(struct identity_transfer *id_transfer);
+identity_transfer_destroy(struct identity_context *id_context,
+                          struct identity_transfer *id_transfer);
 
 struct pipe_video_surface *
 identity_video_surface_create(struct identity_screen *id_screen,

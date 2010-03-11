@@ -411,7 +411,7 @@ make_texture(struct st_context *st,
 
       /* unmap */
       pipe->transfer_unmap(pipe, transfer);
-      pipe->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
 
       assert(success);
 
@@ -791,7 +791,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    /* unmap the stencil buffer */
    pipe->transfer_unmap(pipe, pt);
-   pipe->tex_transfer_destroy(pt);
+   pipe->tex_transfer_destroy(pipe, pt);
 }
 
 
@@ -944,7 +944,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    /* unmap the stencil buffer */
    pipe->transfer_unmap(pipe, ptDraw);
-   pipe->tex_transfer_destroy(ptDraw);
+   pipe->tex_transfer_destroy(pipe, ptDraw);
 }
 
 
@@ -1113,21 +1113,21 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          /* alternate path using get/put_tile() */
          GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-         pipe_get_tile_rgba(ptRead, 0, 0, width, height, buf);
-         pipe_put_tile_rgba(ptTex, 0, 0, width, height, buf);
+         pipe_get_tile_rgba(pipe, ptRead, 0, 0, width, height, buf);
+         pipe_put_tile_rgba(pipe, ptTex, 0, 0, width, height, buf);
 
          free(buf);
       }
       else {
          /* GL_DEPTH */
          GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
-         pipe_get_tile_z(ptRead, 0, 0, width, height, buf);
-         pipe_put_tile_z(ptTex, 0, 0, width, height, buf);
+         pipe_get_tile_z(pipe, ptRead, 0, 0, width, height, buf);
+         pipe_put_tile_z(pipe, ptTex, 0, 0, width, height, buf);
          free(buf);
       }
 
-      pipe->tex_transfer_destroy(ptRead);
-      pipe->tex_transfer_destroy(ptTex);
+      pipe->tex_transfer_destroy(pipe, ptRead);
+      pipe->tex_transfer_destroy(pipe, ptTex);
    }
 
    /* draw textured quad */

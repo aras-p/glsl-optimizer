@@ -294,7 +294,8 @@ llvmpipe_get_tex_transfer(struct pipe_context *pipe,
 
 
 static void 
-llvmpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
+llvmpipe_tex_transfer_destroy(struct pipe_context *pipe,
+                              struct pipe_transfer *transfer)
 {
    /* Effectively do the texture_update work here - if texture images
     * needed post-processing to put them into hardware layout, this is

@@ -331,7 +331,8 @@ void debug_dump_texture(struct pipe_context *pipe,
 void debug_dump_surface_bmp(struct pipe_context *pipe,
                             const char *filename,
                             struct pipe_surface *surface);
-void debug_dump_transfer_bmp(const char *filename,
+void debug_dump_transfer_bmp(struct pipe_context *pipe,
+                             const char *filename,
                              struct pipe_transfer *transfer);
 void debug_dump_float_rgba_bmp(const char *filename,
                                unsigned width, unsigned height,

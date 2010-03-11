@@ -205,7 +205,8 @@ r300_get_tex_transfer(struct pipe_context *ctx,
     return &trans->transfer;
 }
 
-static void r300_tex_transfer_destroy(struct pipe_transfer *trans)
+static void r300_tex_transfer_destroy(struct pipe_context *ctx,
+                                      struct pipe_transfer *trans)
 {
     struct r300_transfer *r300transfer = r300_transfer(trans);
 

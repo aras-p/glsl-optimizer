@@ -435,7 +435,7 @@ compress_with_blit(GLcontext * ctx,
                   unpack);          /* source data packing */
 
    pipe->transfer_unmap(pipe, tex_xfer);
-   pipe->tex_transfer_destroy(tex_xfer);
+   pipe->tex_transfer_destroy(pipe, tex_xfer);
 
    /* copy / compress image */
    util_blit_pixels_tex(ctx->st->blit,
@@ -873,7 +873,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
             debug_printf("%s: fallback format translation\n", __FUNCTION__);
 
          /* get float[4] rgba row from surface */
-         pipe_get_tile_rgba(tex_xfer, 0, row, width, 1, rgba);
+         pipe_get_tile_rgba(pipe, tex_xfer, 0, row, width, 1, rgba);
 
          _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
                                     type, dest, &ctx->Pack, transferOps);
@@ -1310,11 +1310,11 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
       /* To avoid a large temp memory allocation, do copy row by row */
       for (row = 0; row < height; row++, srcY += yStep) {
          uint data[MAX_WIDTH];
-         pipe_get_tile_z(src_trans, 0, srcY, width, 1, data);
+         pipe_get_tile_z(pipe, src_trans, 0, srcY, width, 1, data);
          if (scaleOrBias) {
             _mesa_scale_and_bias_depth_uint(ctx, width, data);
          }
-         pipe_put_tile_z(stImage->transfer, 0, row, width, 1, data);
+         pipe_put_tile_z(pipe, stImage->transfer, 0, row, width, 1, data);
       }
    }
    else {
@@ -1336,7 +1336,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
          /* XXX this usually involves a lot of int/float conversion.
           * try to avoid that someday.
           */
-         pipe_get_tile_rgba(src_trans, 0, 0, width, height, tempSrc);
+         pipe_get_tile_rgba(pipe, src_trans, 0, 0, width, height, tempSrc);
 
          /* Store into texture memory.
           * Note that this does some special things such as pixel transfer
@@ -1364,7 +1364,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
    }
 
    st_texture_image_unmap(ctx->st, stImage);
-   pipe->tex_transfer_destroy(src_trans);
+   pipe->tex_transfer_destroy(pipe, src_trans);
 }
 
 

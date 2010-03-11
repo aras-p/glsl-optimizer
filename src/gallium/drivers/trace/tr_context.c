@@ -1336,11 +1336,12 @@ trace_context_get_tex_transfer(struct pipe_context *_context,
 
 
 static void
-trace_context_tex_transfer_destroy(struct pipe_transfer *_transfer)
+trace_context_tex_transfer_destroy(struct pipe_context *_context,
+                                   struct pipe_transfer *_transfer)
 {
-   struct trace_context *tr_ctx = trace_context(_transfer->pipe);
+   struct trace_context *tr_context = trace_context(_context);
    struct trace_transfer *tr_trans = trace_transfer(_transfer);
-   struct pipe_context *context = tr_ctx->pipe;
+   struct pipe_context *context = tr_context->pipe;
    struct pipe_transfer *transfer = tr_trans->transfer;
 
    trace_dump_call_begin("pipe_context", "tex_transfer_destroy");
@@ -1350,7 +1351,7 @@ trace_context_tex_transfer_destroy(struct pipe_transfer *_transfer)
 
    trace_dump_call_end();
 
-   trace_transfer_destroy(tr_trans);
+   trace_transfer_destroy(tr_context, tr_trans);
 }
 
 

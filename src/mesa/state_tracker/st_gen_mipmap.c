@@ -163,8 +163,8 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
 
-      pipe->tex_transfer_destroy(srcTrans);
-      pipe->tex_transfer_destroy(dstTrans);
+      pipe->tex_transfer_destroy(pipe, srcTrans);
+      pipe->tex_transfer_destroy(pipe, dstTrans);
    }
 }
 

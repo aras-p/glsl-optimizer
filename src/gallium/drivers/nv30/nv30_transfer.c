@@ -118,12 +118,13 @@ nv30_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 }
 
 static void
-nv30_transfer_del(struct pipe_transfer *ptx)
+nv30_transfer_del(struct pipe_context *pcontext,
+                  struct pipe_transfer *ptx)
 {
 	struct nv30_transfer *tx = (struct nv30_transfer *)ptx;
 
 	if (!tx->direct && (ptx->usage & PIPE_TRANSFER_WRITE)) {
-		struct pipe_screen *pscreen = ptx->texture->screen;
+		struct pipe_screen *pscreen = pcontext->screen;
 		struct nv30_screen *nvscreen = nv30_screen(pscreen);
 		struct pipe_surface *dst;
 

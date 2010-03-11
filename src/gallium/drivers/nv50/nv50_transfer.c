@@ -187,7 +187,7 @@ nv50_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 }
 
 static void
-nv50_transfer_del(struct pipe_transfer *ptx)
+nv50_transfer_del(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
@@ -197,7 +197,7 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 	unsigned ny = util_format_get_nblocksy(pt->format, tx->base.height);
 
 	if (ptx->usage & PIPE_TRANSFER_WRITE) {
-		struct pipe_screen *pscreen = pt->screen;
+		struct pipe_screen *pscreen = pcontext->screen;
 
 		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0,
 					tx->base.stride, tx->bo->tile_mode,

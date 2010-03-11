@@ -251,8 +251,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     return retval == usage;
 }
 
-
-
 static void r300_destroy_screen(struct pipe_screen* pscreen)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);

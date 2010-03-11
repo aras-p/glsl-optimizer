@@ -85,7 +85,7 @@ static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
       void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, color_data, sizeof(VGint)*color_data_len);
       pipe->transfer_unmap(pipe, transfer);
-      pipe->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 
    return tex;
