@@ -8,6 +8,6 @@ void main() {
         if (i > 0)
            break;
     }
-    sum.a = 1;
+    sum.a = 1.0;
     gl_FragColor = sum;
 }
