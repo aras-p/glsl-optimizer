@@ -190,7 +190,7 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
          _mesa_warning(ctx, "Out of memory allocating renderbuffer");
          return;
       }
-      _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
+      _mesa_add_renderbuffer(&stfb->Base, surfIndex, rb);
       strb = st_renderbuffer(rb);
    }
 
