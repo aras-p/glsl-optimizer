@@ -120,6 +120,7 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
    GLboolean emitColor;
    uint semantic_names[2 + MAX_TEXTURE_UNITS];
    uint semantic_indexes[2 + MAX_TEXTURE_UNITS];
+   struct pipe_vertex_element velements[2 + MAX_TEXTURE_UNITS];
    GLbitfield inputs = VERT_BIT_POS;
 
    /* determine if we need vertex color */
@@ -232,12 +233,21 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
 
    cso_save_viewport(cso);
    cso_save_vertex_shader(cso);
+   cso_save_vertex_elements(cso);
 
    {
       void *vs = lookup_shader(pipe, numAttribs,
                                semantic_names, semantic_indexes);
       cso_set_vertex_shader_handle(cso, vs);
    }
+
+   for (i = 0; i < numAttribs; i++) {
+      velements[i].src_offset = i * 4 * sizeof(float);
+      velements[i].instance_divisor = 0;
+      velements[i].vertex_buffer_index = 0;
+      velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
+   cso_set_vertex_elements(cso, numAttribs, velements);
 
    /* viewport state: viewport matching window dims */
    {
@@ -270,6 +280,7 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
    /* restore state */
    cso_restore_viewport(cso);
    cso_restore_vertex_shader(cso);
+   cso_restore_vertex_elements(cso);
 }
 
 
