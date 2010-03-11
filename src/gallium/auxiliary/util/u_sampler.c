@@ -41,7 +41,7 @@ default_template(struct pipe_sampler_view *view,
 
    view->format = format;
    view->first_level = 0;
-   view->num_levels = texture->last_level + 1;
+   view->last_level = texture->last_level;
    view->swizzle_r = PIPE_SWIZZLE_RED;
    view->swizzle_g = PIPE_SWIZZLE_GREEN;
    view->swizzle_b = PIPE_SWIZZLE_BLUE;

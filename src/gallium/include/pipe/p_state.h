@@ -309,7 +309,7 @@ struct pipe_sampler_view
    struct pipe_texture *texture; /**< texture into which this is a view  */
    struct pipe_context *context; /**< context this view belongs to */
    unsigned first_level:8;       /**< first mipmap level */
-   unsigned num_levels:8;        /**< number of mipamp levels */
+   unsigned last_level:8;        /**< last mipmap level */
    unsigned swizzle_r:3;         /**< PIPE_SWIZZLE_x for red component */
    unsigned swizzle_g:3;         /**< PIPE_SWIZZLE_x for green component */
    unsigned swizzle_b:3;         /**< PIPE_SWIZZLE_x for blue component */
