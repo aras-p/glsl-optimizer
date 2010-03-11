@@ -28,6 +28,9 @@
 
 #include "glthread.h"
 
+
+/* getproc */
+
 extern void
 _glapi_check_table_not_null(const struct _glapi_table *table);
 
@@ -35,6 +38,14 @@ _glapi_check_table_not_null(const struct _glapi_table *table);
 extern void
 _glapi_check_table(const struct _glapi_table *table);
 
+
+/* execmem */
+
+extern void *
+_glapi_exec_malloc(GLuint size);
+
+
+/* entrypoint */
 
 extern void
 init_glapi_relocs_once(void);
@@ -52,6 +63,9 @@ extern _glapi_proc
 get_entrypoint_address(GLuint functionOffset);
 
 
+/**
+ * Size (in bytes) of dispatch function (entrypoint).
+ */
 #if defined(USE_X86_ASM)
 # if defined(GLX_USE_TLS)
 #  define DISPATCH_FUNCTION_SIZE  16
@@ -67,6 +81,17 @@ get_entrypoint_address(GLuint functionOffset);
 #  define DISPATCH_FUNCTION_SIZE  16
 # endif
 #endif
+
+
+/**
+ * Number of extension functions which we can dynamically add at runtime.
+ *
+ * Number of extension functions is also subject to the size of backing exec
+ * mem we allocate. For the common case of dispatch stubs with size 16 bytes,
+ * the two limits will be hit simultaneously. For larger dispatch function
+ * sizes, MAX_EXTENSION_FUNCS is effectively reduced.
+ */
+#define MAX_EXTENSION_FUNCS 256
 
 
 #endif

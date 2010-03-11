@@ -89,6 +89,7 @@ GLAPI_SOURCES = \
 	glapi/glapi.c \
 	glapi/glapi_dispatch.c \
 	glapi/glapi_entrypoint.c \
+	glapi/glapi_execmem.c \
 	glapi/glapi_getproc.c \
 	glapi/glapi_nop.c \
 	glapi/glthread.c

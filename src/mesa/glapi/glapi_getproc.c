@@ -200,12 +200,6 @@ struct _glapi_function {
 };
 
 
-/*
- * Number of extension functions which we can dynamically add at runtime.
- */
-#define MAX_EXTENSION_FUNCS 300
-
-
 static struct _glapi_function ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 

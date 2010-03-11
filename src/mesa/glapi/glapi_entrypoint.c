@@ -105,7 +105,7 @@ generate_entrypoint(GLuint functionOffset)
     */
    const GLubyte * const template_func = gl_dispatch_functions_start 
      + (DISPATCH_FUNCTION_SIZE * 32);
-   GLubyte * const code = (GLubyte *) malloc(DISPATCH_FUNCTION_SIZE);
+   GLubyte * const code = (GLubyte *) _glapi_exec_malloc(DISPATCH_FUNCTION_SIZE);
 
 
    if ( code != NULL ) {
@@ -288,7 +288,7 @@ generate_entrypoint(GLuint functionOffset)
    extern unsigned int __glapi_sparc_pthread_stub;
    unsigned long call_dest = (unsigned long ) &__glapi_sparc_pthread_stub;
 #endif
-   unsigned int *code = (unsigned int *) malloc(sizeof(template));
+   unsigned int *code = (unsigned int *) _glapi_exec_malloc(sizeof(template));
    if (code) {
       code[0] = template[0] | (functionOffset & 0x3fffff);
       code[1] = template[1];
