@@ -1007,7 +1007,12 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * FINISHME: complete handling of constant expressions.
     */
 
+   /* Apply any specified qualifiers to the parameter declaration.  Note that
+    * for function parameters the default mode is 'in'.
+    */
    apply_type_qualifier_to_variable(& this->type->qualifier, var, state);
+   if (var->mode == ir_var_auto)
+      var->mode = ir_var_in;
 
    instructions->push_tail(var);
 
@@ -1155,7 +1160,7 @@ ast_function_definition::hir(exec_list *instructions,
    foreach_iter(exec_list_iterator, iter, parameters) {
       ir_variable *const var = (ir_variable *) iter.get();
 
-      assert(var->mode == ir_op_var_decl);
+      assert(((ir_instruction *)var)->mode == ir_op_var_decl);
 
       iter.remove();
       instructions->push_tail(var);
