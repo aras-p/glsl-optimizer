@@ -208,6 +208,7 @@ alloc_ximage(struct xm_displaytarget *xm_dt,
 
 static boolean
 xm_is_displaytarget_format_supported( struct sw_winsys *ws,
+                                      unsigned tex_usage,
                                       enum pipe_format format )
 {
    /* TODO: check visuals or other sensible thing here */
@@ -358,6 +359,7 @@ xm_displaytarget_display(struct sw_winsys *ws,
 
 static struct sw_displaytarget *
 xm_displaytarget_create(struct sw_winsys *winsys,
+                        unsigned tex_usage,
                         enum pipe_format format,
                         unsigned width, unsigned height,
                         unsigned alignment,
@@ -406,6 +408,27 @@ no_xm_dt:
 }
 
 
+static struct sw_displaytarget *
+xm_displaytarget_from_handle(struct sw_winsys *winsys,
+                             const struct pipe_texture *templet,
+                             struct winsys_handle *whandle,
+                             unsigned *stride)
+{
+   assert(0);
+   return NULL;
+}
+
+
+static boolean
+xm_displaytarget_get_handle(struct sw_winsys *winsys,
+                            struct sw_displaytarget *dt,
+                            struct winsys_handle *whandle)
+{
+   assert(0);
+   return FALSE;
+}
+
+
 static void
 xm_destroy( struct sw_winsys *ws )
 {
@@ -428,6 +451,8 @@ xlib_create_sw_winsys( Display *display )
    ws->base.is_displaytarget_format_supported = xm_is_displaytarget_format_supported;
 
    ws->base.displaytarget_create = xm_displaytarget_create;
+   ws->base.displaytarget_from_handle = xm_displaytarget_from_handle;
+   ws->base.displaytarget_get_handle = xm_displaytarget_get_handle;
    ws->base.displaytarget_map = xm_displaytarget_map;
    ws->base.displaytarget_unmap = xm_displaytarget_unmap;
    ws->base.displaytarget_destroy = xm_displaytarget_destroy;

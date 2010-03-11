@@ -7,6 +7,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \
 	$(TOP)/src/gallium/winsys/drm/i965/gem/libi965drm.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
+	$(TOP)/src/gallium/winsys/drm/sw/libswdrm.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/identity/libidentity.a \
 	$(TOP)/src/gallium/drivers/i965/libi965.a

@@ -91,6 +91,7 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
    /* Round up the surface size to a multiple of the tile size?
     */
    spt->dt = winsys->displaytarget_create(winsys,
+                                          spt->base.tex_usage,
                                           spt->base.format,
                                           spt->base.width0, 
                                           spt->base.height0,
@@ -139,8 +140,6 @@ softpipe_texture_create(struct pipe_screen *screen,
 }
 
 
-
-
 static void
 softpipe_texture_destroy(struct pipe_texture *pt)
 {
@@ -158,6 +157,55 @@ softpipe_texture_destroy(struct pipe_texture *pt)
    }
 
    FREE(spt);
+}
+
+
+static struct pipe_texture *
+softpipe_texture_from_handle(struct pipe_screen *screen,
+                             const struct pipe_texture *template,
+                             struct winsys_handle *whandle)
+{
+   struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+   struct softpipe_texture *spt = CALLOC_STRUCT(softpipe_texture);
+   if (!spt)
+      return NULL;
+
+   spt->base = *template;
+   pipe_reference_init(&spt->base.reference, 1);
+   spt->base.screen = screen;
+
+   spt->pot = (util_is_power_of_two(template->width0) &&
+               util_is_power_of_two(template->height0) &&
+               util_is_power_of_two(template->depth0));
+
+   spt->dt = winsys->displaytarget_from_handle(winsys,
+                                               template,
+                                               whandle,
+                                               &spt->stride[0]);
+   if (!spt->dt)
+      goto fail;
+
+   return &spt->base;
+
+ fail:
+   FREE(spt);
+   return NULL;
+}
+
+
+static boolean
+softpipe_texture_get_handle(struct pipe_screen *screen,
+                            struct pipe_texture *pt,
+                            struct winsys_handle *whandle)
+{
+   struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+   struct softpipe_texture *spt = softpipe_texture(pt);
+
+   assert(spt->dt);
+   if (!spt->dt)
+      return FALSE;
+
+   return winsys->displaytarget_get_handle(winsys, spt->dt, whandle);
 }
 
 
@@ -461,6 +509,8 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = softpipe_texture_create;
    screen->texture_destroy = softpipe_texture_destroy;
+   screen->texture_from_handle = softpipe_texture_from_handle;
+   screen->texture_get_handle = softpipe_texture_get_handle;
 
    screen->get_tex_surface = softpipe_get_tex_surface;
    screen->tex_surface_destroy = softpipe_tex_surface_destroy;

@@ -44,6 +44,7 @@
 
 static boolean
 null_sw_is_displaytarget_format_supported(struct sw_winsys *ws,
+                                          unsigned tex_usage,
                                           enum pipe_format format )
 {
    return FALSE;
@@ -78,12 +79,33 @@ null_sw_displaytarget_destroy(struct sw_winsys *winsys,
 
 static struct sw_displaytarget *
 null_sw_displaytarget_create(struct sw_winsys *winsys,
+                             unsigned tex_usage,
                              enum pipe_format format,
                              unsigned width, unsigned height,
                              unsigned alignment,
                              unsigned *stride)
 {
    return NULL;
+}
+
+
+static struct sw_displaytarget *
+null_sw_displaytarget_from_handle(struct sw_winsys *winsys,
+                                  const struct pipe_texture *templet,
+                                  struct winsys_handle *whandle,
+                                  unsigned *stride)
+{
+   return NULL;
+}
+
+
+static boolean
+null_sw_displaytarget_get_handle(struct sw_winsys *winsys,
+                                 struct sw_displaytarget *dt,
+                                 struct winsys_handle *whandle)
+{
+   assert(0);
+   return FALSE;
 }
 
 
@@ -115,6 +137,8 @@ null_sw_create(void)
    winsys->destroy = null_sw_destroy;
    winsys->is_displaytarget_format_supported = null_sw_is_displaytarget_format_supported;
    winsys->displaytarget_create = null_sw_displaytarget_create;
+   winsys->displaytarget_from_handle = null_sw_displaytarget_from_handle;
+   winsys->displaytarget_get_handle = null_sw_displaytarget_get_handle;
    winsys->displaytarget_map = null_sw_displaytarget_map;
    winsys->displaytarget_unmap = null_sw_displaytarget_unmap;
    winsys->displaytarget_display = null_sw_displaytarget_display;

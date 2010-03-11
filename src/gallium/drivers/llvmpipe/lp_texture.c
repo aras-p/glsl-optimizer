@@ -103,6 +103,7 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
    unsigned height = align(lpt->base.height0, TILE_SIZE);
 
    lpt->dt = winsys->displaytarget_create(winsys,
+                                          lpt->base.tex_usage,
                                           lpt->base.format,
                                           width, height,
                                           16,
@@ -247,6 +248,55 @@ llvmpipe_texture_unmap(struct pipe_texture *texture,
 
       winsys->displaytarget_unmap(winsys, lpt->dt);
    }
+}
+
+
+static struct pipe_texture *
+llvmpipe_texture_from_handle(struct pipe_screen *screen,
+                             const struct pipe_texture *template,
+                             struct winsys_handle *whandle)
+{
+   struct sw_winsys *winsys = llvmpipe_screen(screen)->winsys;
+   struct llvmpipe_texture *lpt = CALLOC_STRUCT(llvmpipe_texture);
+   if (!lpt)
+      return NULL;
+
+   lpt->base = *template;
+   pipe_reference_init(&lpt->base.reference, 1);
+   lpt->base.screen = screen;
+
+   lpt->pot = (util_is_power_of_two(template->width0) &&
+               util_is_power_of_two(template->height0) &&
+               util_is_power_of_two(template->depth0));
+
+   lpt->dt = winsys->displaytarget_from_handle(winsys,
+                                               template,
+                                               whandle,
+                                               &lpt->stride[0]);
+   if (!lpt->dt)
+      goto fail;
+
+   return &lpt->base;
+
+ fail:
+   FREE(lpt);
+   return NULL;
+}
+
+
+static boolean
+llvmpipe_texture_get_handle(struct pipe_screen *screen,
+                            struct pipe_texture *pt,
+                            struct winsys_handle *whandle)
+{
+   struct sw_winsys *winsys = llvmpipe_screen(screen)->winsys;
+   struct llvmpipe_texture *lpt = llvmpipe_texture(pt);
+
+   assert(lpt->dt);
+   if (!lpt->dt)
+      return FALSE;
+
+   return winsys->displaytarget_get_handle(winsys, lpt->dt, whandle);
 }
 
 
@@ -418,6 +468,7 @@ llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = llvmpipe_texture_create;
    screen->texture_destroy = llvmpipe_texture_destroy;
+   screen->texture_get_handle = llvmpipe_texture_get_handle;
 
    screen->get_tex_surface = llvmpipe_get_tex_surface;
    screen->tex_surface_destroy = llvmpipe_tex_surface_destroy;
