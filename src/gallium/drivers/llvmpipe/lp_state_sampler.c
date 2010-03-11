@@ -170,11 +170,13 @@ llvmpipe_create_sampler_view(struct pipe_context *pipe,
 {
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
 
-   *view = *templ;
-   view->reference.count = 1;
-   view->texture = NULL;
-   pipe_texture_reference(&view->texture, texture);
-   view->context = pipe;
+   if (view) {
+      *view = *templ;
+      view->reference.count = 1;
+      view->texture = NULL;
+      pipe_texture_reference(&view->texture, texture);
+      view->context = pipe;
+   }
 
    return view;
 }
