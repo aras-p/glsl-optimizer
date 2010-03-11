@@ -90,6 +90,55 @@ init_glapi_relocs( void )
 #endif
 }
 
+
+/**
+ * Generate a dispatch function (entrypoint) which jumps through
+ * the given slot number (offset) in the current dispatch table.
+ * We need assembly language in order to accomplish this.
+ */
+_glapi_proc
+generate_entrypoint(GLuint functionOffset)
+{
+   /* 32 is chosen as something of a magic offset.  For x86, the dispatch
+    * at offset 32 is the first one where the offset in the
+    * "jmp OFFSET*4(%eax)" can't be encoded in a single byte.
+    */
+   const GLubyte * const template_func = gl_dispatch_functions_start 
+     + (DISPATCH_FUNCTION_SIZE * 32);
+   GLubyte * const code = (GLubyte *) malloc(DISPATCH_FUNCTION_SIZE);
+
+
+   if ( code != NULL ) {
+      (void) memcpy(code, template_func, DISPATCH_FUNCTION_SIZE);
+      fill_in_entrypoint_offset( (_glapi_proc) code, functionOffset );
+   }
+
+   return (_glapi_proc) code;
+}
+
+
+/**
+ * This function inserts a new dispatch offset into the assembly language
+ * stub that was generated with the preceeding function.
+ */
+void
+fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
+{
+   GLubyte * const code = (GLubyte *) entrypoint;
+
+#if DISPATCH_FUNCTION_SIZE == 32
+   *((unsigned int *)(code + 11)) = 4 * offset;
+   *((unsigned int *)(code + 22)) = 4 * offset;
+#elif DISPATCH_FUNCTION_SIZE == 16 && defined( GLX_USE_TLS )
+   *((unsigned int *)(code +  8)) = 4 * offset;
+#elif DISPATCH_FUNCTION_SIZE == 16
+   *((unsigned int *)(code +  7)) = 4 * offset;
+#else
+# error Invalid DISPATCH_FUNCTION_SIZE!
+#endif
+}
+
+
 #elif defined(USE_SPARC_ASM)
 
 extern void __glapi_sparc_icache_flush(unsigned int *);
@@ -223,52 +272,6 @@ init_glapi_relocs( void )
 #endif
 }
 
-#else
-
-static void
-init_glapi_relocs( void ) { }
-
-#endif /* USE_*_ASM */
-
-
-void
-init_glapi_relocs_once( void )
-{
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
-   static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-   pthread_once( & once_control, init_glapi_relocs );
-#endif
-}
-
-
-#if defined(USE_X86_ASM)
-
-/**
- * Generate a dispatch function (entrypoint) which jumps through
- * the given slot number (offset) in the current dispatch table.
- * We need assembly language in order to accomplish this.
- */
-_glapi_proc
-generate_entrypoint(GLuint functionOffset)
-{
-   /* 32 is chosen as something of a magic offset.  For x86, the dispatch
-    * at offset 32 is the first one where the offset in the
-    * "jmp OFFSET*4(%eax)" can't be encoded in a single byte.
-    */
-   const GLubyte * const template_func = gl_dispatch_functions_start 
-     + (DISPATCH_FUNCTION_SIZE * 32);
-   GLubyte * const code = (GLubyte *) malloc(DISPATCH_FUNCTION_SIZE);
-
-
-   if ( code != NULL ) {
-      (void) memcpy(code, template_func, DISPATCH_FUNCTION_SIZE);
-      fill_in_entrypoint_offset( (_glapi_proc) code, functionOffset );
-   }
-
-   return (_glapi_proc) code;
-}
-
-#elif defined(USE_SPARC_ASM)
 
 _glapi_proc
 generate_entrypoint(GLuint functionOffset)
@@ -302,42 +305,6 @@ generate_entrypoint(GLuint functionOffset)
 #endif
 }
 
-#else
-
-_glapi_proc
-generate_entrypoint(GLuint functionOffset)
-{
-   (void) functionOffset;
-   return NULL;
-}
-
-#endif /* USE_*_ASM */
-
-
-#if defined(USE_X86_ASM)
-
-/**
- * This function inserts a new dispatch offset into the assembly language
- * stub that was generated with the preceeding function.
- */
-void
-fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
-{
-   GLubyte * const code = (GLubyte *) entrypoint;
-
-#if DISPATCH_FUNCTION_SIZE == 32
-   *((unsigned int *)(code + 11)) = 4 * offset;
-   *((unsigned int *)(code + 22)) = 4 * offset;
-#elif DISPATCH_FUNCTION_SIZE == 16 && defined( GLX_USE_TLS )
-   *((unsigned int *)(code +  8)) = 4 * offset;
-#elif DISPATCH_FUNCTION_SIZE == 16
-   *((unsigned int *)(code +  7)) = 4 * offset;
-#else
-# error Invalid DISPATCH_FUNCTION_SIZE!
-#endif
-}
-
-#elif defined(USE_SPARC_ASM)
 
 void
 fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
@@ -349,7 +316,22 @@ fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
    __glapi_sparc_icache_flush(&code[0]);
 }
 
-#else
+
+#else /* USE_*_ASM */
+
+static void
+init_glapi_relocs( void )
+{
+}
+
+
+_glapi_proc
+generate_entrypoint(GLuint functionOffset)
+{
+   (void) functionOffset;
+   return NULL;
+}
+
 
 void
 fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
@@ -360,3 +342,13 @@ fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 }
 
 #endif /* USE_*_ASM */
+
+
+void
+init_glapi_relocs_once( void )
+{
+#if defined(PTHREADS) || defined(GLX_USE_TLS)
+   static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+   pthread_once( & once_control, init_glapi_relocs );
+#endif
+}
