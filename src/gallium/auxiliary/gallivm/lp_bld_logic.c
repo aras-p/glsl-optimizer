@@ -259,11 +259,13 @@ lp_build_compare(LLVMBuilderRef builder,
       cond = LLVMBuildFCmp(builder, op, a, b, "");
       res = LLVMBuildSExt(builder, cond, int_vec_type, "");
 #else
-      res = LLVMGetUndef(int_vec_type);
       if (type.length == 1) {
-         res = LLVMBuildFCmp(builder, op, a, b, "");
+         cond = LLVMBuildFCmp(builder, op, a, b, "");
+         res = LLVMBuildSExt(builder, cond, int_vec_type, "");
       }
       else {
+         res = LLVMGetUndef(int_vec_type);
+
          debug_printf("%s: warning: using slow element-wise float"
                       " vector comparison\n", __FUNCTION__);
          for (i = 0; i < type.length; ++i) {
@@ -311,11 +313,13 @@ lp_build_compare(LLVMBuilderRef builder,
       cond = LLVMBuildICmp(builder, op, a, b, "");
       res = LLVMBuildSExt(builder, cond, int_vec_type, "");
 #else
-      res = LLVMGetUndef(int_vec_type);
       if (type.length == 1) {
-         res = LLVMBuildICmp(builder, op, a, b, "");
+         cond = LLVMBuildICmp(builder, op, a, b, "");
+         res = LLVMBuildSExt(builder, cond, int_vec_type, "");
       }
       else {
+         res = LLVMGetUndef(int_vec_type);
+
          debug_printf("%s: warning: using slow element-wise int"
                       " vector comparison\n", __FUNCTION__);
 
@@ -357,6 +361,8 @@ lp_build_cmp(struct lp_build_context *bld,
 
 /**
  * Return mask ? a : b;
+ *
+ * mask is a bitwise mask, composed of 0 or ~0 for each element.
  */
 LLVMValueRef
 lp_build_select(struct lp_build_context *bld,
@@ -371,6 +377,7 @@ lp_build_select(struct lp_build_context *bld,
       return a;
 
    if (type.length == 1) {
+      mask = LLVMBuildTrunc(bld->builder, mask, LLVMInt1Type(), "");
       res = LLVMBuildSelect(bld->builder, mask, a, b, "");
    }
    else {
