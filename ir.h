@@ -39,7 +39,8 @@ enum ir_opcodes {
    ir_op_label,
    ir_op_constant,
    ir_op_func_sig,
-   ir_op_func
+   ir_op_func,
+   ir_op_call,
 };
 
 /**
@@ -274,6 +275,33 @@ public:
 
    ir_expression_operation operation;
    ir_instruction *operands[2];
+};
+
+
+/**
+ * IR instruction representing a function call
+ */
+class ir_call : public ir_instruction {
+public:
+   ir_call()
+      : ir_instruction(ir_op_call), callee(NULL)
+   {
+      /* empty */
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   /**
+    * Get a generic ir_call object when an error occurs
+    */
+   static ir_call *get_error_instruction();
+
+private:
+   ir_function_signature *callee;
+   exec_list actual_parameters;
 };
 
 

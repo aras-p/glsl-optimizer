@@ -725,7 +725,7 @@ ast_function_expression::hir(exec_list *instructions,
     */
    (void) instructions;
    (void) state;
-   return NULL;
+   return ir_call::get_error_instruction();
 }
 
 ir_instruction *

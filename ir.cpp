@@ -108,3 +108,13 @@ ir_function::ir_function(void)
 {
    /* empty */
 }
+
+
+ir_call *
+ir_call::get_error_instruction()
+{
+   ir_call *call = new ir_call;
+
+   call->type = glsl_error_type;
+   return call;
+}

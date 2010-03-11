@@ -132,3 +132,13 @@ void ir_print_visitor::visit(ir_constant *ir)
    printf("    (FINISHME: value goes here)\n");
    printf(")\n");
 }
+
+
+void
+ir_print_visitor::visit(ir_call *ir)
+{
+   (void) ir;
+
+   printf("(call FINISHME: function name here\n");
+   printf("    (FINISHME: function paramaters here))\n");
+}

@@ -60,6 +60,7 @@ public:
    virtual void visit(ir_dereference *);
    virtual void visit(ir_assignment *);
    virtual void visit(ir_constant *);
+   virtual void visit(ir_call *);
    /*@}*/
 };
 
