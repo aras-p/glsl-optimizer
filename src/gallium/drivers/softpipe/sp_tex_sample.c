@@ -1647,57 +1647,33 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
       const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
 
       if (arx >= ary && arx >= arz) {
-         if (rx >= 0.0F) {
-            for (j = 0; j < QUAD_SIZE; j++) {
-               const float ima = 1.0 / fabsf(s[j]);
-               ssss[j] = (-p[j] * ima + 1.0F) * 0.5F;
-               tttt[j] = (-t[j] * ima + 1.0F) * 0.5F;
-               samp->faces[j] = PIPE_TEX_FACE_POS_X;
-            }
-         }
-         else {
-            for (j = 0; j < QUAD_SIZE; j++) {
-               const float ima = 1.0 / fabsf(s[j]);
-               ssss[j] = ( p[j] * ima + 1.0F) * 0.5F;
-               tttt[j] = (-t[j] * ima + 1.0F) * 0.5F;
-               samp->faces[j] = PIPE_TEX_FACE_NEG_X;
-            }
+         float sign = (rx >= 0.0F) ? 1.0F : -1.0F;
+         uint face = (rx >= 0.0F) ? PIPE_TEX_FACE_POS_X : PIPE_TEX_FACE_NEG_X;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            const float ima = -0.5F / fabsf(s[j]);
+            ssss[j] = sign *  p[j] * ima + 0.5F;
+            tttt[j] =         t[j] * ima + 0.5F;
+            samp->faces[j] = face;
          }
       }
       else if (ary >= arx && ary >= arz) {
-         if (ry >= 0.0F) {
-            for (j = 0; j < QUAD_SIZE; j++) {
-               const float ima = 1.0 / fabsf(t[j]);
-               ssss[j] = (s[j] * ima + 1.0F) * 0.5F;
-               tttt[j] = (p[j] * ima + 1.0F) * 0.5F;
-               samp->faces[j] = PIPE_TEX_FACE_POS_Y;
-            }
-         }
-         else {
-            for (j = 0; j < QUAD_SIZE; j++) {
-               const float ima = 1.0 / fabsf(t[j]);
-               ssss[j] = ( s[j] * ima + 1.0F) * 0.5F;
-               tttt[j] = (-p[j] * ima + 1.0F) * 0.5F;
-               samp->faces[j] = PIPE_TEX_FACE_NEG_Y;
-            }
+         float sign = (ry >= 0.0F) ? 1.0F : -1.0F;
+         uint face = (ry >= 0.0F) ? PIPE_TEX_FACE_POS_Y : PIPE_TEX_FACE_NEG_Y;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            const float ima = -0.5F / fabsf(t[j]);
+            ssss[j] =        -s[j] * ima + 0.5F;
+            tttt[j] = sign * -p[j] * ima + 0.5F;
+            samp->faces[j] = face;
          }
       }
       else {
-         if (rz > 0.0F) {
-            for (j = 0; j < QUAD_SIZE; j++) {
-               const float ima = 1.0 / fabsf(p[j]);
-               ssss[j] = ( s[j] * ima + 1.0F) * 0.5F;
-               tttt[j] = (-t[j] * ima + 1.0F) * 0.5F;
-               samp->faces[j] = PIPE_TEX_FACE_POS_Z;
-            }
-         }
-         else {
-            for (j = 0; j < QUAD_SIZE; j++) {
-               const float ima = 1.0 / fabsf(p[j]);
-               ssss[j] = (-s[j] * ima + 1.0F) * 0.5F;
-               tttt[j] = (-t[j] * ima + 1.0F) * 0.5F;
-               samp->faces[j] = PIPE_TEX_FACE_NEG_Z;
-            }
+         float sign = (rz >= 0.0F) ? 1.0F : -1.0F;
+         uint face = (rz >= 0.0F) ? PIPE_TEX_FACE_POS_Z : PIPE_TEX_FACE_NEG_Z;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            const float ima = -0.5 / fabsf(p[j]);
+            ssss[j] = sign * -s[j] * ima + 0.5F;
+            tttt[j] =         t[j] * ima + 0.5F;
+            samp->faces[j] = face;
          }
       }
    }
