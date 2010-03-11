@@ -883,6 +883,10 @@ lp_build_floor(struct lp_build_context *bld,
 
    assert(type.floating);
 
+   if (type.length == 1) {
+      return LLVMBuildFPTrunc(bld->builder, a, LLVMFloatType(), "");
+   }
+
    if(util_cpu_caps.has_sse4_1)
       return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
    else {
@@ -953,6 +957,9 @@ lp_build_itrunc(struct lp_build_context *bld,
 }
 
 
+/**
+ * Convert float[] to int[] with round().
+ */
 LLVMValueRef
 lp_build_iround(struct lp_build_context *bld,
                 LLVMValueRef a)
@@ -1013,6 +1020,14 @@ lp_build_ifloor(struct lp_build_context *bld,
    LLVMValueRef res;
 
    assert(type.floating);
+
+   if (type.length == 1) {
+      /* scalar float to int */
+      LLVMTypeRef int_type = LLVMIntType(type.width);
+      res = LLVMBuildFPToSI(bld->builder, a, int_type, "");
+      return res;
+   }
+
    assert(lp_check_value(type, a));
 
    if(util_cpu_caps.has_sse4_1) {
