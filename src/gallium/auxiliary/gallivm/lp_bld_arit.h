@@ -57,6 +57,10 @@ lp_build_add(struct lp_build_context *bld,
              LLVMValueRef b);
 
 LLVMValueRef
+lp_build_sum_vector(struct lp_build_context *bld,
+                    LLVMValueRef a);
+
+LLVMValueRef
 lp_build_sub(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);

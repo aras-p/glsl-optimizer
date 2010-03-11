@@ -232,6 +232,37 @@ lp_build_add(struct lp_build_context *bld,
 }
 
 
+/** Return the sum of the elements of a */
+LLVMValueRef
+lp_build_sum_vector(struct lp_build_context *bld,
+                    LLVMValueRef a)
+{
+   const struct lp_type type = bld->type;
+   LLVMValueRef index, res;
+   int i;
+
+   if (a == bld->zero)
+      return bld->zero;
+   if (a == bld->undef)
+      return bld->undef;
+   assert(type.length > 1);
+
+   assert(!bld->type.norm);
+
+   index = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   res = LLVMBuildExtractElement(bld->builder, a, index, "");
+
+   for (i = 1; i < type.length; i++) {
+      index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      res = LLVMBuildAdd(bld->builder, res,
+                         LLVMBuildExtractElement(bld->builder, a, index, ""),
+                         "");
+   }
+
+   return res;
+}
+
+
 /**
  * Generate a - b
  */
