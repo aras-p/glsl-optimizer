@@ -1007,7 +1007,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
       }
    }
    else {
-      y = NULL;
+      y = z = NULL;
    }
 
    /*
@@ -1075,6 +1075,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    }
    else {
       y0 = y1 = t_fpart = NULL;
+      z0 = z1 = r_fpart = NULL;
    }
 
    /*
@@ -1092,9 +1093,11 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 
    if (dims == 1) {
       /* Interpolate two samples from 1D image to produce one color */
-      colors_out[chan] = lp_build_lerp(&bld->texel_bld, s_fpart,
-                                       neighbors[0][0][chan],
-                                       neighbors[0][1][chan]);
+      for (chan = 0; chan < 4; chan++) {
+         colors_out[chan] = lp_build_lerp(&bld->texel_bld, s_fpart,
+                                          neighbors[0][0][chan],
+                                          neighbors[0][1][chan]);
+      }
    }
    else {
       /* 2D/3D texture */
@@ -1198,10 +1201,10 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    const int dims = texture_dims(bld->static_state->target);
    LLVMValueRef lod, lod_fpart;
    LLVMValueRef ilevel0, ilevel1, ilevel0_vec, ilevel1_vec;
-   LLVMValueRef width0_vec, height0_vec, depth0_vec;
-   LLVMValueRef width1_vec, height1_vec, depth1_vec;
-   LLVMValueRef row_stride0_vec, row_stride1_vec;
-   LLVMValueRef img_stride0_vec, img_stride1_vec;
+   LLVMValueRef width0_vec = NULL, height0_vec = NULL, depth0_vec = NULL;
+   LLVMValueRef width1_vec = NULL, height1_vec = NULL, depth1_vec = NULL;
+   LLVMValueRef row_stride0_vec = NULL, row_stride1_vec = NULL;
+   LLVMValueRef img_stride0_vec = NULL, img_stride1_vec = NULL;
    LLVMValueRef data_ptr0, data_ptr1;
    int chan;
 
