@@ -123,6 +123,8 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
    struct pipe_vertex_element velements[2 + MAX_TEXTURE_UNITS];
    GLbitfield inputs = VERT_BIT_POS;
 
+   st_validate_state(st);
+
    /* determine if we need vertex color */
    if (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_COL0)
       emitColor = GL_TRUE;
