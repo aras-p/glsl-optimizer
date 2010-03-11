@@ -458,6 +458,7 @@ CORE_DIRS="glsl mesa"
 SRC_DIRS="glew"
 GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
+GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS=""
 GALLIUM_WINSYS_DRM_DIRS=""
 GALLIUM_DRIVERS_DIRS="softpipe failover trace identity"
@@ -467,11 +468,12 @@ case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS libgl-xlib"
     ;;
 dri)
     SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib drm"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -481,6 +483,7 @@ AC_SUBST([SRC_DIRS])
 AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
 AC_SUBST([GALLIUM_DIRS])
+AC_SUBST([GALLIUM_TARGET_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
 AC_SUBST([GALLIUM_DRIVERS_DIRS])
@@ -1415,6 +1418,7 @@ echo ""
 if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Gallium:         yes"
     echo "        Gallium dirs:    $GALLIUM_DIRS"
+    echo "        Target dirs:     $GALLIUM_TARGET_DIRS"
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Winsys drm dirs:$GALLIUM_WINSYS_DRM_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
