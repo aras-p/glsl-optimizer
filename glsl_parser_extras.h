@@ -41,6 +41,9 @@ struct _mesa_glsl_parse_state {
 
    unsigned language_version;
    enum _mesa_glsl_parser_targets target;
+
+   /** Was there an error during compilation? */
+   bool error;
 };
 
 typedef struct YYLTYPE {
@@ -53,7 +56,8 @@ typedef struct YYLTYPE {
 # define YYLTYPE_IS_DECLARED 1
 # define YYLTYPE_IS_TRIVIAL 1
 
-extern void _mesa_glsl_error(YYLTYPE *locp, void *state, const char *fmt, ...);
+extern void _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
+			     const char *fmt, ...);
 
 extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,
 				  const char *string, size_t len);

@@ -38,13 +38,16 @@
 #include "ir_print_visitor.h"
 
 void
-_mesa_glsl_error(YYLTYPE *locp, void *state, const char *fmt, ...)
+_mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
+		 const char *fmt, ...)
 {
    char buf[1024];
    int len;
    va_list ap;
 
-   (void) state;
+   if (state)
+      state->error = true;
+
    len = snprintf(buf, sizeof(buf), "%u:%u(%u): error: ",
 		  locp->source, locp->first_line, locp->first_column);
 
@@ -709,6 +712,7 @@ main(int argc, char **argv)
    state.scanner = NULL;
    make_empty_list(& state.translation_unit);
    state.symbols = _mesa_symbol_table_ctor();
+   state.error = false;
 
    _mesa_glsl_lexer_ctor(& state, shader, shader_len);
    _mesa_glsl_parse(& state);
@@ -721,10 +725,13 @@ main(int argc, char **argv)
    _mesa_ast_to_hir(&instructions, &state);
 
    printf("\n\n");
-   foreach_iter(exec_list_iterator, iter, instructions) {
-      ir_print_visitor v;
 
-      ((ir_instruction *)iter.get())->accept(& v);
+   if (!state.error) {
+      foreach_iter(exec_list_iterator, iter, instructions) {
+	 ir_print_visitor v;
+
+	 ((ir_instruction *)iter.get())->accept(& v);
+      }
    }
 
    _mesa_symbol_table_dtor(state.symbols);
