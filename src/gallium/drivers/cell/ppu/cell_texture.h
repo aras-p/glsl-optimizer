@@ -95,5 +95,7 @@ cell_transfer(struct pipe_transfer *pt)
 extern void
 cell_init_screen_texture_funcs(struct pipe_screen *screen);
 
+extern void
+cell_init_texture_transfer_funcs(struct cell_context *cell);
 
 #endif /* CELL_TEXTURE_H */
