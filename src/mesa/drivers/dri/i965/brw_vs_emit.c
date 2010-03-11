@@ -1825,6 +1825,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    post_vs_emit(c, end_inst, last_inst);
 
+   brw_optimize(p);
+
    if (INTEL_DEBUG & DEBUG_VS) {
       int i;
 

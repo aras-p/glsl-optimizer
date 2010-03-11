@@ -966,4 +966,9 @@ void brw_math_invert( struct brw_compile *p,
 
 void brw_set_src1( struct brw_instruction *insn,
                           struct brw_reg reg );
+
+
+/* brw_optimize.c */
+void brw_optimize(struct brw_compile *p);
+
 #endif
