@@ -1280,6 +1280,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                                                       ilevel0);
       if (dims == 3) {
          depth0_vec = lp_build_minify(bld, depth_vec, ilevel0_vec);
+         img_stride0_vec = lp_build_mul(&bld->int_coord_bld,
+                                        row_stride0_vec, height0_vec);
       }
    }
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
@@ -1291,6 +1293,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                                                          ilevel1);
          if (dims == 3) {
             depth1_vec = lp_build_minify(bld, depth_vec, ilevel1_vec);
+            img_stride1_vec = lp_build_mul(&bld->int_coord_bld,
+                                           row_stride1_vec, height1_vec);
          }
       }
    }
@@ -1710,6 +1714,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    depth_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, depth);
 
    if (lp_format_is_rgba8(bld.format_desc) &&
+       static_state->target == PIPE_TEXTURE_2D &&
        static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
        static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&
        static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE &&
