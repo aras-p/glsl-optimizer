@@ -152,8 +152,7 @@ nv50_tex_construct(struct nv50_sampler_view *view)
 
 	tic[6] = 0x03000000;
 
-	tic[7] = (view->pipe.last_level - view->pipe.first_level) << 4;
-	tic[7] |= view->pipe.first_level;
+	tic[7] = (view->pipe.last_level << 4) | view->pipe.first_level;
 
 	return TRUE;
 }
