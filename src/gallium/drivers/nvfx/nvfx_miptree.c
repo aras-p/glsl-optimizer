@@ -23,7 +23,8 @@ nvfx_miptree_choose_format(struct nvfx_miptree *mt)
 
 	if (!util_is_pot(pt->width0) ||
 	    !util_is_pot(pt->height0) ||
-	    !util_is_pot(pt->depth0)
+	    !util_is_pot(pt->depth0) ||
+	    (!nvfx_screen(pt->screen)->is_nv4x && pt->target == PIPE_TEXTURE_RECT)
 	    )
 		uniform_pitch = 1;
 

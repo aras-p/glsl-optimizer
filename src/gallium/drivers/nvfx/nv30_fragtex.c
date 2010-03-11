@@ -37,6 +37,7 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 #define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w)                        \
 [PIPE_FORMAT_##m] = {                                                                              \
   NV34TCL_TX_FORMAT_FORMAT_##tf,                                               \
+  NV34TCL_TX_FORMAT_FORMAT_##tf##_RECT,                                               \
   (NV34TCL_TX_SWIZZLE_S0_X_##ts0x | NV34TCL_TX_SWIZZLE_S0_Y_##ts0y |           \
    NV34TCL_TX_SWIZZLE_S0_Z_##ts0z | NV34TCL_TX_SWIZZLE_S0_W_##ts0w |           \
    NV34TCL_TX_SWIZZLE_S1_X_##ts1x | NV34TCL_TX_SWIZZLE_S1_Y_##ts1y |           \
@@ -45,12 +46,17 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 
 struct nv30_texture_format {
 	int     format;
+	int     rect_format;
 	int     swizzle;
 };
 
+#define NV34TCL_TX_FORMAT_FORMAT_DXT1_RECT NV34TCL_TX_FORMAT_FORMAT_DXT1
+#define NV34TCL_TX_FORMAT_FORMAT_DXT3_RECT NV34TCL_TX_FORMAT_FORMAT_DXT3
+#define NV34TCL_TX_FORMAT_FORMAT_DXT5_RECT NV34TCL_TX_FORMAT_FORMAT_DXT5
+
 static struct nv30_texture_format
 nv30_texture_formats[PIPE_FORMAT_COUNT] = {
-	[0 ... PIPE_FORMAT_COUNT - 1] = {-1, 0},
+	[0 ... PIPE_FORMAT_COUNT - 1] = {-1, 0, 0},
 	_(B8G8R8X8_UNORM, A8R8G8B8,   S1,   S1,   S1,  ONE, X, Y, Z, W),
 	_(B8G8R8A8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	_(B5G5R5A1_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W),
@@ -80,11 +86,34 @@ nv30_fragtex_set(struct nvfx_context *nvfx, int unit)
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	uint32_t txf, txs;
 	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
+	unsigned use_rect;
 
 	tf = &nv30_texture_formats[pt->format];
 	assert(tf->format >= 0);
 
-	txf  = tf->format;
+	if(pt->height0 <= 1 || util_format_is_compressed(pt->format))
+	{
+		/* in the case of compressed or 1D textures, we can get away with this,
+		 * since the layout is the same
+		 */
+		use_rect = ps->fmt;
+	}
+	else
+	{
+		static int warned = 0;
+		if(!warned && !ps->fmt != !(pt->flags & NVFX_RESOURCE_FLAG_LINEAR)) {
+			warned = 1;
+			fprintf(stderr,
+					"Unimplemented: coordinate normalization mismatch. Possible reasons:\n"
+					"1. ARB_texture_non_power_of_two is being used despite the fact it isn't supported\n"
+					"2. The state tracker is not using the appropriate coordinate normalization\n"
+					"3. The state tracker is not supported\n");
+		}
+
+		use_rect  = pt->flags & NVFX_RESOURCE_FLAG_LINEAR;
+	}
+
+	txf = use_rect ? tf->rect_format : tf->format;
 	txf |= ((pt->last_level>0) ? NV34TCL_TX_FORMAT_MIPMAP : 0);
 	txf |= log2i(pt->width0) << NV34TCL_TX_FORMAT_BASE_SIZE_U_SHIFT;
 	txf |= log2i(pt->height0) << NV34TCL_TX_FORMAT_BASE_SIZE_V_SHIFT;
@@ -111,6 +140,9 @@ nv30_fragtex_set(struct nvfx_context *nvfx, int unit)
 	}
 
 	txs = tf->swizzle;
+
+	if(use_rect)
+		txs |= nvfx_subresource_pitch(&mt->base, 0) << NV34TCL_TX_SWIZZLE_RECT_PITCH_SHIFT;
 
 	MARK_RING(chan, 9, 2);
 	OUT_RING(chan, RING_3D(NV34TCL_TX_OFFSET(unit), 8));
