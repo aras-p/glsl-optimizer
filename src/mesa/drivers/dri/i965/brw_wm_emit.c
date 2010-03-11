@@ -125,23 +125,22 @@ void emit_delta_xy(struct brw_compile *p,
 {
    struct brw_reg r1 = brw_vec1_grf(1, 0);
 
+   if (mask == 0)
+      return;
+
+   assert(mask == WRITEMASK_XY);
+
    /* Calc delta X,Y by subtracting origin in r1 from the pixel
     * centers.
     */
-   if (mask & WRITEMASK_X) {
-      brw_ADD(p,
-	      dst[0],
-	      retype(arg0[0], BRW_REGISTER_TYPE_UW),
-	      negate(r1));
-   }
-
-   if (mask & WRITEMASK_Y) {
-      brw_ADD(p,
-	      dst[1],
-	      retype(arg0[1], BRW_REGISTER_TYPE_UW),
-	      negate(suboffset(r1,1)));
-
-   }
+   brw_ADD(p,
+	   dst[0],
+	   retype(arg0[0], BRW_REGISTER_TYPE_UW),
+	   negate(r1));
+   brw_ADD(p,
+	   dst[1],
+	   retype(arg0[1], BRW_REGISTER_TYPE_UW),
+	   negate(suboffset(r1,1)));
 }
 
 void emit_wpos_xy(struct brw_wm_compile *c,
