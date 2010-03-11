@@ -54,8 +54,8 @@ static const uint32_t nv50_texture_formats[PIPE_FORMAT_COUNT] =
 	_(A8_UNORM, UNORM, ZERO, ZERO, ZERO, C0, 8),
 	_(I8_UNORM, UNORM, C0, C0, C0, C0, 8),
 
-	_(A8L8_UNORM, UNORM, C0, C0, C0, C1, 8_8),
-	_(A8L8_SRGB,  UNORM, C0, C0, C0, C1, 8_8),
+	_(L8A8_UNORM, UNORM, C0, C0, C0, C1, 8_8),
+	_(L8A8_SRGB,  UNORM, C0, C0, C0, C1, 8_8),
 
 	_(DXT1_RGB, UNORM, C0, C1, C2, ONE, DXT1),
 	_(DXT1_RGBA, UNORM, C0, C1, C2, C3, DXT1),
@@ -221,23 +221,25 @@ nv50_tex_relocs(struct nv50_context *nv50)
 	int p, unit;
 
 	p = PIPE_SHADER_FRAGMENT;
-	for (unit = 0; unit < nv50->miptree_nr[p]; unit++) {
-		if (!nv50->miptree[p][unit])
+	for (unit = 0; unit < nv50->sampler_view_nr[p]; unit++) {
+		struct pipe_sampler_view *view = nv50->sampler_views[p][unit];
+		if (!view)
 			continue;
 		nouveau_reloc_emit(chan, nv50->screen->tic,
 				   ((p * 32) + unit) * 32, NULL,
-				   nv50->miptree[p][unit]->base.bo, 0, 0,
+				   nv50_miptree(view->texture)->base.bo, 0, 0,
 				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
 				   NOUVEAU_BO_RD, 0, 0);
 	}
 
 	p = PIPE_SHADER_VERTEX;
-	for (unit = 0; unit < nv50->miptree_nr[p]; unit++) {
-		if (!nv50->miptree[p][unit])
+	for (unit = 0; unit < nv50->sampler_view_nr[p]; unit++) {
+		struct pipe_sampler_view *view = nv50->sampler_views[p][unit];
+		if (!view)
 			continue;
 		nouveau_reloc_emit(chan, nv50->screen->tic,
 				   ((p * 32) + unit) * 32, NULL,
-				   nv50->miptree[p][unit]->base.bo, 0, 0,
+				   nv50_miptree(view->texture)->base.bo, 0, 0,
 				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
 				   NOUVEAU_BO_RD, 0, 0);
 	}

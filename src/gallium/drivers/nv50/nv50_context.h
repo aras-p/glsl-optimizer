@@ -137,7 +137,7 @@ struct nv50_state {
 	struct nouveau_stateobj *hw[64];
 	uint64_t hw_dirty;
 
-	unsigned miptree_nr[PIPE_SHADER_TYPES];
+	unsigned sampler_view_nr[3];
 	struct nouveau_stateobj *vtxbuf;
 	struct nouveau_stateobj *vtxattr;
 	unsigned vtxelt_nr;
@@ -169,12 +169,10 @@ struct nv50_context {
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
 	struct nv50_vtxelt_stateobj *vtxelt;
-	struct nv50_sampler_stateobj *sampler[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
-	unsigned sampler_nr[PIPE_SHADER_TYPES];
+	struct nv50_sampler_stateobj *sampler[3][PIPE_MAX_SAMPLERS];
+	unsigned sampler_nr[3];
 	struct pipe_sampler_view *sampler_views[3][PIPE_MAX_SAMPLERS];
 	unsigned sampler_view_nr[3];
-	struct nv50_miptree *miptree[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
-	unsigned miptree_nr[PIPE_SHADER_TYPES];
 
 	unsigned vbo_fifo;
 };
