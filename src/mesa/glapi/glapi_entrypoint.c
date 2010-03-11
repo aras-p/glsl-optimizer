@@ -65,7 +65,7 @@ get_entrypoint_address(GLuint functionOffset)
 #endif
 
 
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
+#if defined(USE_X86_ASM)
 
 /**
  * Perform platform-specific GL API entry-point fixups.
@@ -73,7 +73,7 @@ get_entrypoint_address(GLuint functionOffset)
 static void
 init_glapi_relocs( void )
 {
-#if defined(USE_X86_ASM) && defined(GLX_USE_TLS) && !defined(GLX_X86_READONLY_TEXT)
+#if defined(GLX_USE_TLS) && !defined(GLX_X86_READONLY_TEXT)
     extern unsigned long _x86_get_dispatch(void);
     char run_time_patch[] = {
        0x65, 0xa1, 0, 0, 0, 0 /* movl %gs:0,%eax */
@@ -88,8 +88,16 @@ init_glapi_relocs( void )
 	curr_func += DISPATCH_FUNCTION_SIZE;
     }
 #endif
-#ifdef USE_SPARC_ASM
-    extern void __glapi_sparc_icache_flush(unsigned int *);
+}
+
+#elif defined(USE_SPARC_ASM)
+
+extern void __glapi_sparc_icache_flush(unsigned int *);
+
+static void
+init_glapi_relocs( void )
+{
+#if defined(PTHREADS) || defined(GLX_USE_TLS)
     static const unsigned int template[] = {
 #ifdef GLX_USE_TLS
 	0x05000000, /* sethi %hi(_glapi_tls_Dispatch), %g2 */
@@ -155,7 +163,7 @@ init_glapi_relocs( void )
     int idx;
 #endif
 
-#if defined(GLX_USE_TLS)
+#ifdef GLX_USE_TLS
     code[0] = template[0] | (dispatch >> 10);
     code[1] = template[1];
     __glapi_sparc_icache_flush(&code[0]);
@@ -215,24 +223,25 @@ init_glapi_relocs( void )
 #endif
 }
 
+#else
+
+static void
+init_glapi_relocs( void ) { }
+
+#endif /* USE_*_ASM */
+
+
 void
 init_glapi_relocs_once( void )
 {
+#if defined(PTHREADS) || defined(GLX_USE_TLS)
    static pthread_once_t once_control = PTHREAD_ONCE_INIT;
    pthread_once( & once_control, init_glapi_relocs );
+#endif
 }
 
-#else
 
-void
-init_glapi_relocs_once( void ) { }
-
-#endif /* defined(PTHREADS) || defined(GLX_USE_TLS) */
-
-
-#ifdef USE_SPARC_ASM
-extern void __glapi_sparc_icache_flush(unsigned int *);
-#endif
+#if defined(USE_X86_ASM)
 
 /**
  * Generate a dispatch function (entrypoint) which jumps through
@@ -242,7 +251,6 @@ extern void __glapi_sparc_icache_flush(unsigned int *);
 _glapi_proc
 generate_entrypoint(GLuint functionOffset)
 {
-#if defined(USE_X86_ASM)
    /* 32 is chosen as something of a magic offset.  For x86, the dispatch
     * at offset 32 is the first one where the offset in the
     * "jmp OFFSET*4(%eax)" can't be encoded in a single byte.
@@ -258,8 +266,13 @@ generate_entrypoint(GLuint functionOffset)
    }
 
    return (_glapi_proc) code;
+}
+
 #elif defined(USE_SPARC_ASM)
 
+_glapi_proc
+generate_entrypoint(GLuint functionOffset)
+{
 #if defined(PTHREADS) || defined(GLX_USE_TLS)
    static const unsigned int template[] = {
       0x07000000, /* sethi %hi(0), %g3 */
@@ -287,13 +300,21 @@ generate_entrypoint(GLuint functionOffset)
    }
    return (_glapi_proc) code;
 #endif
-
-#else
-   (void) functionOffset;
-   return NULL;
-#endif /* USE_*_ASM */
 }
 
+#else
+
+_glapi_proc
+generate_entrypoint(GLuint functionOffset)
+{
+   (void) functionOffset;
+   return NULL;
+}
+
+#endif /* USE_*_ASM */
+
+
+#if defined(USE_X86_ASM)
 
 /**
  * This function inserts a new dispatch offset into the assembly language
@@ -302,7 +323,6 @@ generate_entrypoint(GLuint functionOffset)
 void
 fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 {
-#if defined(USE_X86_ASM)
    GLubyte * const code = (GLubyte *) entrypoint;
 
 #if DISPATCH_FUNCTION_SIZE == 32
@@ -315,17 +335,28 @@ fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 #else
 # error Invalid DISPATCH_FUNCTION_SIZE!
 #endif
+}
 
 #elif defined(USE_SPARC_ASM)
+
+void
+fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
+{
    unsigned int *code = (unsigned int *) entrypoint;
+
    code[0] &= ~0x3fffff;
    code[0] |= (offset * sizeof(void *)) & 0x3fffff;
    __glapi_sparc_icache_flush(&code[0]);
+}
+
 #else
 
+void
+fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
+{
    /* an unimplemented architecture */
    (void) entrypoint;
    (void) offset;
+}
 
 #endif /* USE_*_ASM */
-}
