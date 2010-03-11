@@ -40,7 +40,7 @@
  * - depth/stencil test (stencil TBI)
  * - blending
  *
- * This file has only the glue to assembly the fragment pipeline.  The actual
+ * This file has only the glue to assemble the fragment pipeline.  The actual
  * plumbing of converting Gallium state into LLVM IR is done elsewhere, in the
  * lp_bld_*.[ch] files, and in a complete generic and reusable way. Here we
  * muster the LLVM JIT execution engine to create a function that follows an
