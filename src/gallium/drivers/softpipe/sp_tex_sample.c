@@ -1614,7 +1614,6 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
    unsigned j;
    float ssss[4], tttt[4];
-   unsigned face;
 
    /*
      major axis
@@ -1628,7 +1627,8 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
      -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
    */
 
-   /* First choose the cube face.
+   /* Choose the cube face and compute new s/t coords for the 2D face.
+    *
     * Use the same cube face for all four pixels in the quad.
     *
     * This isn't ideal, but if we want to use a different cube face
@@ -1648,81 +1648,57 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
 
       if (arx >= ary && arx >= arz) {
          if (rx >= 0.0F) {
-            face = PIPE_TEX_FACE_POS_X;
+            for (j = 0; j < QUAD_SIZE; j++) {
+               const float ima = 1.0 / fabsf(s[j]);
+               ssss[j] = (-p[j] * ima + 1.0F) * 0.5F;
+               tttt[j] = (-t[j] * ima + 1.0F) * 0.5F;
+               samp->faces[j] = PIPE_TEX_FACE_POS_X;
+            }
          }
          else {
-            face = PIPE_TEX_FACE_NEG_X;
+            for (j = 0; j < QUAD_SIZE; j++) {
+               const float ima = 1.0 / fabsf(s[j]);
+               ssss[j] = ( p[j] * ima + 1.0F) * 0.5F;
+               tttt[j] = (-t[j] * ima + 1.0F) * 0.5F;
+               samp->faces[j] = PIPE_TEX_FACE_NEG_X;
+            }
          }
       }
       else if (ary >= arx && ary >= arz) {
          if (ry >= 0.0F) {
-            face = PIPE_TEX_FACE_POS_Y;
+            for (j = 0; j < QUAD_SIZE; j++) {
+               const float ima = 1.0 / fabsf(t[j]);
+               ssss[j] = (s[j] * ima + 1.0F) * 0.5F;
+               tttt[j] = (p[j] * ima + 1.0F) * 0.5F;
+               samp->faces[j] = PIPE_TEX_FACE_POS_Y;
+            }
          }
          else {
-            face = PIPE_TEX_FACE_NEG_Y;
+            for (j = 0; j < QUAD_SIZE; j++) {
+               const float ima = 1.0 / fabsf(t[j]);
+               ssss[j] = ( s[j] * ima + 1.0F) * 0.5F;
+               tttt[j] = (-p[j] * ima + 1.0F) * 0.5F;
+               samp->faces[j] = PIPE_TEX_FACE_NEG_Y;
+            }
          }
       }
       else {
          if (rz > 0.0F) {
-            face = PIPE_TEX_FACE_POS_Z;
+            for (j = 0; j < QUAD_SIZE; j++) {
+               const float ima = 1.0 / fabsf(p[j]);
+               ssss[j] = ( s[j] * ima + 1.0F) * 0.5F;
+               tttt[j] = (-t[j] * ima + 1.0F) * 0.5F;
+               samp->faces[j] = PIPE_TEX_FACE_POS_Z;
+            }
          }
          else {
-            face = PIPE_TEX_FACE_NEG_Z;
+            for (j = 0; j < QUAD_SIZE; j++) {
+               const float ima = 1.0 / fabsf(p[j]);
+               ssss[j] = (-s[j] * ima + 1.0F) * 0.5F;
+               tttt[j] = (-t[j] * ima + 1.0F) * 0.5F;
+               samp->faces[j] = PIPE_TEX_FACE_NEG_Z;
+            }
          }
-      }
-   }
-
-   /* Now compute the 2D _face_ texture coords from the
-    * 3D _cube_ texture coords.
-    */
-   for (j = 0; j < QUAD_SIZE; j++) {
-      const float rx = s[j], ry = t[j], rz = p[j];
-      const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
-      float sc, tc, ma;
-
-      switch (face) {
-      case PIPE_TEX_FACE_POS_X:
-         sc = -rz;
-         tc = -ry;
-         ma = arx;
-         break;
-      case PIPE_TEX_FACE_NEG_X:
-         sc = rz;
-         tc = -ry;
-         ma = arx;
-         break;
-      case PIPE_TEX_FACE_POS_Y:
-         sc = rx;
-         tc = rz;
-         ma = ary;
-         break;
-      case PIPE_TEX_FACE_NEG_Y:
-         sc = rx;
-         tc = -rz;
-         ma = ary;
-         break;
-      case PIPE_TEX_FACE_POS_Z:
-         sc = rx;
-         tc = -ry;
-         ma = arz;
-         break;
-      case PIPE_TEX_FACE_NEG_Z:
-         sc = -rx;
-         tc = -ry;
-         ma = arz;
-         break;
-      default:
-         assert(0 && "bad cube face");
-         sc = 0.0F;
-         tc = 0.0F;
-         ma = 0.0F;
-      }
-
-      {
-	 const float ima = 1.0 / ma;
-	 ssss[j] = ( sc * ima + 1.0F ) * 0.5F;
-	 tttt[j] = ( tc * ima + 1.0F ) * 0.5F;
-	 samp->faces[j] = face;
       }
    }
 
