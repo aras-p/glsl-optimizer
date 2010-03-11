@@ -126,15 +126,13 @@ fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 {
    GLubyte * const code = (GLubyte *) entrypoint;
 
-#if DISPATCH_FUNCTION_SIZE == 32
+#if defined(GLX_USE_TLS)
+   *((unsigned int *)(code +  8)) = 4 * offset;
+#elif defined(THREADS)
    *((unsigned int *)(code + 11)) = 4 * offset;
    *((unsigned int *)(code + 22)) = 4 * offset;
-#elif DISPATCH_FUNCTION_SIZE == 16 && defined( GLX_USE_TLS )
-   *((unsigned int *)(code +  8)) = 4 * offset;
-#elif DISPATCH_FUNCTION_SIZE == 16
-   *((unsigned int *)(code +  7)) = 4 * offset;
 #else
-# error Invalid DISPATCH_FUNCTION_SIZE!
+   *((unsigned int *)(code +  7)) = 4 * offset;
 #endif
 }
 
