@@ -534,11 +534,8 @@ void emit_sop(struct brw_compile *p,
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {	
 	 brw_push_insn_state(p);
-	 brw_CMP(p, brw_null_reg(), cond, arg0[i], arg1[i]);
-	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-	 brw_MOV(p, dst[i], brw_imm_f(0));
-	 brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-	 brw_MOV(p, dst[i], brw_imm_f(1.0));
+	 brw_CMP(p, brw_null_reg(), cond, arg1[i], arg0[i]);
+	 brw_SEL(p, dst[i], brw_null_reg(), brw_imm_f(1.0));
 	 brw_pop_insn_state(p);
       }
    }
