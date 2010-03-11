@@ -51,7 +51,7 @@ struct lp_jit_texture
    uint32_t height;
    uint32_t depth;
    uint32_t last_level;
-   uint32_t stride;
+   uint32_t row_stride[LP_MAX_TEXTURE_2D_LEVELS];
    const void *data[LP_MAX_TEXTURE_2D_LEVELS];
 };
 
@@ -61,7 +61,7 @@ enum {
    LP_JIT_TEXTURE_HEIGHT,
    LP_JIT_TEXTURE_DEPTH,
    LP_JIT_TEXTURE_LAST_LEVEL,
-   LP_JIT_TEXTURE_STRIDE,
+   LP_JIT_TEXTURE_ROW_STRIDE,
    LP_JIT_TEXTURE_DATA
 };
 

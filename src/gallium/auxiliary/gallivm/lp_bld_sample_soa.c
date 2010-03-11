@@ -138,6 +138,34 @@ lp_build_get_const_mipmap_level(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Dereference stride_array[mipmap_level] array to get a stride.
+ * Return stride as a vector.
+ */
+static LLVMValueRef
+lp_build_get_level_stride_vec(struct lp_build_sample_context *bld,
+                              LLVMValueRef stride_array, LLVMValueRef level)
+{
+   LLVMValueRef indexes[2], stride;
+   indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   indexes[1] = level;
+   stride = LLVMBuildGEP(bld->builder, stride_array, indexes, 2, "");
+   stride = LLVMBuildLoad(bld->builder, stride, "");
+   stride = lp_build_broadcast_scalar(&bld->int_coord_bld, stride);
+   return stride;
+}
+
+
+/** Dereference stride_array[0] array to get a stride (as vector). */
+static LLVMValueRef
+lp_build_get_const_level_stride_vec(struct lp_build_sample_context *bld,
+                                    LLVMValueRef stride_array, int level)
+{
+   LLVMValueRef lvl = LLVMConstInt(LLVMInt32Type(), level, 0);
+   return lp_build_get_level_stride_vec(bld, stride_array, lvl);
+}
+
+
 static int
 texture_dims(enum pipe_texture_target tex)
 {
@@ -1190,7 +1218,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef width_vec,
                         LLVMValueRef height_vec,
                         LLVMValueRef depth_vec,
-                        LLVMValueRef row_stride_vec,
+                        LLVMValueRef row_stride_array,
                         LLVMValueRef img_stride_vec,
                         LLVMValueRef data_array,
                         LLVMValueRef *colors_out)
@@ -1248,7 +1276,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    width0_vec = lp_build_minify(bld, width_vec, ilevel0_vec);
    if (dims >= 2) {
       height0_vec = lp_build_minify(bld, height_vec, ilevel0_vec);
-      row_stride0_vec = lp_build_minify(bld, row_stride_vec, ilevel0_vec);
+      row_stride0_vec = lp_build_get_level_stride_vec(bld, row_stride_array,
+                                                      ilevel0);
       if (dims == 3) {
          depth0_vec = lp_build_minify(bld, depth_vec, ilevel0_vec);
       }
@@ -1258,7 +1287,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       width1_vec = lp_build_minify(bld, width_vec, ilevel1_vec);
       if (dims >= 2) {
          height1_vec = lp_build_minify(bld, height_vec, ilevel1_vec);
-         row_stride1_vec = lp_build_minify(bld, row_stride_vec, ilevel1_vec);
+         row_stride1_vec = lp_build_get_level_stride_vec(bld, row_stride_array,
+                                                         ilevel1);
          if (dims == 3) {
             depth1_vec = lp_build_minify(bld, depth_vec, ilevel1_vec);
          }
@@ -1380,7 +1410,7 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
                               LLVMValueRef t,
                               LLVMValueRef width,
                               LLVMValueRef height,
-                              LLVMValueRef stride,
+                              LLVMValueRef stride_array,
                               LLVMValueRef data_array,
                               LLVMValueRef *texel)
 {
@@ -1397,6 +1427,7 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    LLVMValueRef neighbors_hi[2][2];
    LLVMValueRef packed, packed_lo, packed_hi;
    LLVMValueRef unswizzled[4];
+   LLVMValueRef stride;
 
    lp_build_context_init(&i32, builder, lp_type_int_vec(32));
    lp_build_context_init(&h16, builder, lp_type_ufixed(16));
@@ -1503,6 +1534,8 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
       s_fpart_hi = LLVMBuildShuffleVector(builder, s_fpart, h16.undef, shuffle_hi, "");
       t_fpart_hi = LLVMBuildShuffleVector(builder, t_fpart, h16.undef, shuffle_hi, "");
    }
+
+   stride = lp_build_get_const_level_stride_vec(bld, stride_array, 0);
 
    /*
     * Fetch the pixels as 4 x 32bit (rgba order might differ):
@@ -1628,7 +1661,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    LLVMValueRef width, width_vec;
    LLVMValueRef height, height_vec;
    LLVMValueRef depth, depth_vec;
-   LLVMValueRef stride, stride_vec;
+   LLVMValueRef stride_array;
    LLVMValueRef data_array;
    LLVMValueRef s;
    LLVMValueRef t;
@@ -1664,7 +1697,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    width = dynamic_state->width(dynamic_state, builder, unit);
    height = dynamic_state->height(dynamic_state, builder, unit);
    depth = dynamic_state->depth(dynamic_state, builder, unit);
-   stride = dynamic_state->stride(dynamic_state, builder, unit);
+   stride_array = dynamic_state->row_stride(dynamic_state, builder, unit);
    data_array = dynamic_state->data_ptr(dynamic_state, builder, unit);
    /* Note that data_array is an array[level] of pointers to texture images */
 
@@ -1675,7 +1708,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    width_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, width);
    height_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, height);
    depth_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, depth);
-   stride_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, stride);
 
    if (lp_format_is_rgba8(bld.format_desc) &&
        static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
@@ -1685,13 +1717,13 @@ lp_build_sample_soa(LLVMBuilderRef builder,
        is_simple_wrap_mode(static_state->wrap_t)) {
       /* special case */
       lp_build_sample_2d_linear_aos(&bld, s, t, width_vec, height_vec,
-                                    stride_vec, data_array, texel);
+                                    stride_array, data_array, texel);
    }
    else {
       lp_build_sample_general(&bld, unit, s, t, r,
                               width, height, depth,
                               width_vec, height_vec, depth_vec,
-                              stride_vec, NULL, data_array,
+                              stride_array, NULL, data_array,
                               texel);
    }
 

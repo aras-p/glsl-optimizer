@@ -471,13 +471,13 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
          jit_tex->height = tex->height0;
          jit_tex->depth = tex->depth0;
          jit_tex->last_level = tex->last_level;
-         jit_tex->stride = lp_tex->stride[0];
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level pointers */
             int j;
             for (j = 0; j <= tex->last_level; j++) {
                jit_tex->data[j] =
                   (ubyte *) lp_tex->data + lp_tex->level_offset[j];
+               jit_tex->row_stride[j] = lp_tex->stride[j];
             }
          }
          else {
@@ -490,6 +490,7 @@ lp_setup_set_sampler_textures( struct setup_context *setup,
             struct sw_winsys *winsys = screen->winsys;
             jit_tex->data[0] = winsys->displaytarget_map(winsys, lp_tex->dt,
                                                       PIPE_BUFFER_USAGE_CPU_READ);
+            jit_tex->row_stride[0] = lp_tex->stride[0];
             assert(jit_tex->data[0]);
          }
 
