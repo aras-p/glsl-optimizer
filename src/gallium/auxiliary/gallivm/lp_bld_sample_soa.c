@@ -48,6 +48,7 @@
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_pack.h"
+#include "lp_bld_flow.h"
 #include "lp_bld_format.h"
 #include "lp_bld_sample.h"
 
@@ -1200,6 +1201,93 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Generate code to do cube face selection and per-face texcoords.
+ */
+static void
+lp_build_cube_lookup(struct lp_build_sample_context *bld,
+                     LLVMValueRef s,
+                     LLVMValueRef t,
+                     LLVMValueRef r,
+                     LLVMValueRef *face,
+                     LLVMValueRef *face_s,
+                     LLVMValueRef *face_t)
+{
+#if 0
+   struct lp_build_context *float_bld = &bld->float_bld;
+   LLVMValueRef rx, ry, rz;
+   LLVMValueRef arx, ary, arz;
+   LLVMValueRef sc, tc, ma;
+   LLVMValueRef c25 = LLVMConstReal(LLVMFloatType(), 0.25);
+   LLVMValueRef arx_ge_ary, arx_ge_arz;
+   LLVMValueRef ary_ge_arx, ary_ge_arz;
+   LLVMValueRef arx_ge_ary_arz, ary_ge_arx_arz;
+   LLVMValueRef rx_pos, ry_pos, rz_pos;
+
+   assert(bld->coord_bld.type.length == 4);
+
+   /*
+    * Use the average of the four pixel's texcoords to choose the face.
+    */
+   rx = lp_build_mul(float_bld, c25,
+                     lp_build_sum_vector(&bld->coord_bld, s));
+   ry = lp_build_mul(float_bld, c25,
+                     lp_build_sum_vector(&bld->coord_bld, t));
+   rz = lp_build_mul(float_bld, c25,
+                     lp_build_sum_vector(&bld->coord_bld, r));
+
+   arx = lp_build_abs(float_bld, rx);
+   ary = lp_build_abs(float_bld, ry);
+   arz = lp_build_abs(float_bld, rz);
+
+   /*
+    * Compare sign/magnitude of rx,ry,rz to determine face
+    */
+   arx_ge_ary = LLVMBuildFCmp(bld->builder, LLVMRealUGE, arx, ary, "");
+   arx_ge_arz = LLVMBuildFCmp(bld->builder, LLVMRealUGE, arx, arz, "");
+   ary_ge_arx = LLVMBuildFCmp(bld->builder, LLVMRealUGE, ary, arx, "");
+   ary_ge_arz = LLVMBuildFCmp(bld->builder, LLVMRealUGE, ary, arz, "");
+
+   arx_ge_ary_arz = LLVMBuildAnd(bld->builder, arx_ge_ary, arx_ge_arz, "");
+   ary_ge_arx_arz = LLVMBuildAnd(bld->builder, ary_ge_arx, ary_ge_arz, "");
+
+   rx_pos = LLVMBuildFCmp(bld->builder, LLVMRealUGE, rx, float_bld->zero, "");
+   ry_pos = LLVMBuildFCmp(bld->builder, LLVMRealUGE, ry, float_bld->zero, "");
+   rz_pos = LLVMBuildFCmp(bld->builder, LLVMRealUGE, rz, float_bld->zero, "");
+
+   {
+      struct lp_build_flow_context *flow_ctx;
+      struct lp_build_if_state if_ctx, if2_ctx;
+
+      flow_ctx = lp_build_flow_create(bld->builder);
+
+      lp_build_if(&if_ctx, flow_ctx, bld->builder, arx_ge_ary_arz);
+      {
+#if 0
+         lp_build_if(&if2_ctx, flow_ctx, bld->builder, rx_pos);
+         {
+            /* Positive X face */
+         }
+         lp_build_else(&if2_ctx);
+         {
+            /* Negative X face */
+         }
+         lp_build_endif(&if2_ctx);
+#endif
+      }
+      lp_build_else(&if_ctx);
+      {
+
+
+      }
+      lp_build_endif(&if_ctx);
+
+      lp_build_flow_destroy(flow_ctx);
+   }
+#endif
+}
+
+
 
 /**
  * General texture sampling codegen.
@@ -1303,7 +1391,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
     * Choose cube face, recompute texcoords.
     */
    if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
-
+      LLVMValueRef face, face_s, face_t;
+      lp_build_cube_lookup(bld, s, t, r, &face, &face_s, &face_t);
    }
 
    /*
