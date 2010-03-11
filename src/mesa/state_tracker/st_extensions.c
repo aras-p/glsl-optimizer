@@ -179,7 +179,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
-   ctx->Extensions.EXT_cull_vertex = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
@@ -196,9 +195,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
 
-   ctx->Extensions.TDFX_texture_compression_FXT1 = GL_TRUE;
-
-   ctx->Extensions.APPLE_client_storage = GL_TRUE;
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
 
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
@@ -207,8 +203,11 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+#if 0
+   /* possibly could support the following two */
    ctx->Extensions.NV_vertex_program = GL_TRUE;
    ctx->Extensions.NV_vertex_program1_1 = GL_TRUE;
+#endif
 
 #if FEATURE_OES_draw_texture
    ctx->Extensions.OES_draw_texture = GL_TRUE;
