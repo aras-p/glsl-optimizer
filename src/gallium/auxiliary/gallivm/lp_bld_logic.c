@@ -74,13 +74,11 @@ lp_build_compare(LLVMBuilderRef builder,
                  LLVMValueRef a,
                  LLVMValueRef b)
 {
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
    LLVMValueRef zeros = LLVMConstNull(int_vec_type);
    LLVMValueRef ones = LLVMConstAllOnes(int_vec_type);
    LLVMValueRef cond;
    LLVMValueRef res;
-   unsigned i;
 
    assert(func >= PIPE_FUNC_NEVER);
    assert(func <= PIPE_FUNC_ALWAYS);
@@ -99,6 +97,7 @@ lp_build_compare(LLVMBuilderRef builder,
    if(type.width * type.length == 128) {
       if(type.floating && util_cpu_caps.has_sse) {
          /* float[4] comparison */
+         LLVMTypeRef vec_type = lp_build_vec_type(type);
          LLVMValueRef args[3];
          unsigned cc;
          boolean swap;
@@ -168,6 +167,7 @@ lp_build_compare(LLVMBuilderRef builder,
          const char *pcmpgt;
          LLVMValueRef args[2];
          LLVMValueRef res;
+         LLVMTypeRef vec_type = lp_build_vec_type(type);
 
          switch (type.width) {
          case 8:
@@ -264,6 +264,8 @@ lp_build_compare(LLVMBuilderRef builder,
          res = LLVMBuildSExt(builder, cond, int_vec_type, "");
       }
       else {
+         unsigned i;
+
          res = LLVMGetUndef(int_vec_type);
 
          debug_printf("%s: warning: using slow element-wise float"
@@ -318,6 +320,8 @@ lp_build_compare(LLVMBuilderRef builder,
          res = LLVMBuildSExt(builder, cond, int_vec_type, "");
       }
       else {
+         unsigned i;
+
          res = LLVMGetUndef(int_vec_type);
 
          debug_printf("%s: warning: using slow element-wise int"
