@@ -2488,16 +2488,19 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
 }
 /* Initialize the driver's state functions.
  */
-void r200InitStateFuncs( struct dd_function_table *functions )
+void r200InitStateFuncs( radeonContextPtr radeon, struct dd_function_table *functions )
 {
    functions->UpdateState		= r200InvalidateState;
    functions->LightingSpaceChange	= r200LightingSpaceChange;
 
    functions->DrawBuffer		= radeonDrawBuffer;
    functions->ReadBuffer		= radeonReadBuffer;
-   functions->CopyPixels                = _mesa_meta_CopyPixels;
-   functions->DrawPixels                = _mesa_meta_DrawPixels;
-   functions->ReadPixels                = radeonReadPixels;
+
+   if (radeon->radeonScreen->kernel_mm) {
+	   functions->CopyPixels                = _mesa_meta_CopyPixels;
+	   functions->DrawPixels                = _mesa_meta_DrawPixels;
+	   functions->ReadPixels                = radeonReadPixels;
+   }
 
    functions->AlphaFunc			= r200AlphaFunc;
    functions->BlendColor		= r200BlendColor;

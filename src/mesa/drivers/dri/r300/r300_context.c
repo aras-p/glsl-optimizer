@@ -500,7 +500,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	_mesa_init_driver_functions(&functions);
 	r300InitIoctlFuncs(&functions);
-	r300InitStateFuncs(&functions);
+	r300InitStateFuncs(&r300->radeon, &functions);
 	r300InitTextureFuncs(&r300->radeon, &functions);
 	r300InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);

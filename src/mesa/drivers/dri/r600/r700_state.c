@@ -1817,7 +1817,7 @@ void r700InitState(GLcontext * ctx) //-------------------
 
 }
 
-void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
+void r700InitStateFuncs(radeonContextPtr radeon, struct dd_function_table *functions)
 {
 	functions->UpdateState = r700InvalidateState;
 	functions->AlphaFunc = r700AlphaFunc;
@@ -1861,9 +1861,10 @@ void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
 	functions->DrawBuffer = radeonDrawBuffer;
 	functions->ReadBuffer = radeonReadBuffer;
 
-	functions->CopyPixels = _mesa_meta_CopyPixels;
-	functions->DrawPixels = _mesa_meta_DrawPixels;
-	functions->ReadPixels = radeonReadPixels;
-
+	if (radeon->radeonScreen->kernel_mm) {
+		functions->CopyPixels = _mesa_meta_CopyPixels;
+		functions->DrawPixels = _mesa_meta_DrawPixels;
+		functions->ReadPixels = radeonReadPixels;
+	}
 }
 

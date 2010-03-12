@@ -2354,7 +2354,7 @@ static void r300RenderMode(GLcontext * ctx, GLenum mode)
 /**
  * Initialize driver's state callback functions
  */
-void r300InitStateFuncs(struct dd_function_table *functions)
+void r300InitStateFuncs(radeonContextPtr radeon, struct dd_function_table *functions)
 {
 
 	functions->UpdateState = r300InvalidateState;
@@ -2396,9 +2396,11 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->DrawBuffer = radeonDrawBuffer;
 	functions->ReadBuffer = radeonReadBuffer;
 
-	functions->CopyPixels = _mesa_meta_CopyPixels;
-	functions->DrawPixels = _mesa_meta_DrawPixels;
-	functions->ReadPixels = radeonReadPixels;
+	if (radeon->radeonScreen->kernel_mm) {
+		functions->CopyPixels = _mesa_meta_CopyPixels;
+		functions->DrawPixels = _mesa_meta_DrawPixels;
+		functions->ReadPixels = radeonReadPixels;
+	}
 }
 
 void r300InitShaderFunctions(r300ContextPtr r300)
