@@ -58,8 +58,8 @@ enum pipe_format {
    PIPE_FORMAT_I8_UNORM              = 11,   /**< ubyte intensity */
    PIPE_FORMAT_L8A8_UNORM            = 12,   /**< ubyte alpha, luminance */
    PIPE_FORMAT_L16_UNORM             = 13,   /**< ushort luminance */
-   PIPE_FORMAT_UYVY                  = 14,
-   PIPE_FORMAT_YUYV                  = 15,
+   PIPE_FORMAT_UYVY                  = 14,   /**< aka Y422, UYNV, HDYC */
+   PIPE_FORMAT_YUYV                  = 15,   /**< aka YUY2, YUNV, V422 */
    PIPE_FORMAT_Z16_UNORM             = 16,
    PIPE_FORMAT_Z32_UNORM             = 17,
    PIPE_FORMAT_Z32_FLOAT             = 18,
@@ -158,6 +158,16 @@ enum pipe_format {
 
    PIPE_FORMAT_A8B8G8R8_UNORM        = 110,
 
+   PIPE_FORMAT_YV12                  = 111,
+   PIPE_FORMAT_YV16                  = 112,
+   PIPE_FORMAT_IYUV                  = 113,  /**< aka I420 */
+   PIPE_FORMAT_NV12                  = 114,
+   PIPE_FORMAT_NV21                  = 115,
+   PIPE_FORMAT_AYUV                  = PIPE_FORMAT_A8R8G8B8_UNORM,
+   PIPE_FORMAT_VUYA                  = PIPE_FORMAT_B8G8R8A8_UNORM,
+   PIPE_FORMAT_IA44                  = 116,
+   PIPE_FORMAT_AI44                  = 117,
+
    PIPE_FORMAT_COUNT
 };
 
@@ -168,17 +178,6 @@ enum pipe_video_chroma_format
    PIPE_VIDEO_CHROMA_FORMAT_422,
    PIPE_VIDEO_CHROMA_FORMAT_444
 };
-
-#if 0
-enum pipe_video_surface_format
-{
-   PIPE_VIDEO_SURFACE_FORMAT_NV12,  /**< Planar; Y plane, UV plane */
-   PIPE_VIDEO_SURFACE_FORMAT_YV12,  /**< Planar; Y plane, U plane, V plane */
-   PIPE_VIDEO_SURFACE_FORMAT_YUYV,  /**< Interleaved; Y,U,Y,V,Y,U,Y,V */
-   PIPE_VIDEO_SURFACE_FORMAT_UYVY,  /**< Interleaved; U,Y,V,Y,U,Y,V,Y */
-   PIPE_VIDEO_SURFACE_FORMAT_VUYA   /**< Packed; A31-24|Y23-16|U15-8|V7-0 */
-};
-#endif
 
 #ifdef __cplusplus
 }

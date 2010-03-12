@@ -184,3 +184,10 @@ PIPE_FORMAT_R8_SSCALED            , plain, 1, 1, s8  ,     ,     ,     , x001, r
 PIPE_FORMAT_R8G8_SSCALED          , plain, 1, 1, s8  , s8  ,     ,     , xy01, rgb
 PIPE_FORMAT_R8G8B8_SSCALED        , plain, 1, 1, s8  , s8  , s8  ,     , xyz1, rgb
 PIPE_FORMAT_R8G8B8A8_SSCALED      , plain, 1, 1, s8  , s8  , s8  , s8  , xyzw, rgb
+PIPE_FORMAT_YV12                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_YV16                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_IYUV                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_NV12                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_NV21                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_IA44                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
+PIPE_FORMAT_AI44                  , subsampled, 1, 1, x8  , x8  , x8  , x8  , xyzw, yuv
