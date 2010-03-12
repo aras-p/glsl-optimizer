@@ -720,12 +720,12 @@ lp_build_negate(struct lp_build_context *bld,
 }
 
 
+/** Return -1, 0 or +1 depending on the sign of a */
 LLVMValueRef
 lp_build_sgn(struct lp_build_context *bld,
              LLVMValueRef a)
 {
    const struct lp_type type = bld->type;
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMValueRef cond;
    LLVMValueRef res;
 
@@ -735,14 +735,29 @@ lp_build_sgn(struct lp_build_context *bld,
       res = bld->one;
    }
    else if(type.floating) {
-      /* Take the sign bit and add it to 1 constant */
-      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-      LLVMValueRef mask = lp_build_int_const_scalar(type, (unsigned long long)1 << (type.width - 1));
+      LLVMTypeRef vec_type;
+      LLVMTypeRef int_type;
+      LLVMValueRef mask;
       LLVMValueRef sign;
       LLVMValueRef one;
-      sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      unsigned long long maskBit = (unsigned long long)1 << (type.width - 1);
+
+      if (type.length == 1) {
+         int_type = lp_build_int_elem_type(type);
+         vec_type = lp_build_elem_type(type);
+         mask = LLVMConstInt(int_type, maskBit, 0);
+      }
+      else {
+         /* vector */
+         int_type = lp_build_int_vec_type(type);
+         vec_type = lp_build_vec_type(type);
+         mask = lp_build_int_const_scalar(type, maskBit);
+      }
+
+      /* Take the sign bit and add it to 1 constant */
+      sign = LLVMBuildBitCast(bld->builder, a, int_type, "");
       sign = LLVMBuildAnd(bld->builder, sign, mask, "");
-      one = LLVMConstBitCast(bld->one, int_vec_type);
+      one = LLVMConstBitCast(bld->one, int_type);
       res = LLVMBuildOr(bld->builder, sign, one, "");
       res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
    }
