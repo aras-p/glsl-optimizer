@@ -293,14 +293,14 @@ void vl_compositor_cleanup(struct vl_compositor *compositor)
 }
 
 void vl_compositor_set_background(struct vl_compositor *compositor,
-                                 struct pipe_texture *bg, struct pipe_video_rect *bg_src_rect)
+                                 struct pipe_surface *bg, struct pipe_video_rect *bg_src_rect)
 {
    assert(compositor);
    assert((bg && bg_src_rect) || (!bg && !bg_src_rect));
 
    if (compositor->bg != bg ||
        !u_video_rects_equal(&compositor->bg_src_rect, bg_src_rect)) {
-      pipe_texture_reference(&compositor->bg, bg);
+      pipe_surface_reference(&compositor->bg, bg);
       /*if (!u_video_rects_equal(&compositor->bg_src_rect, bg_src_rect))*/
          compositor->bg_src_rect = *bg_src_rect;
       compositor->dirty_bg = true;
@@ -308,7 +308,7 @@ void vl_compositor_set_background(struct vl_compositor *compositor,
 }
 
 void vl_compositor_set_layers(struct vl_compositor *compositor,
-                              struct pipe_texture *layers[],
+                              struct pipe_surface *layers[],
                               struct pipe_video_rect *src_rects[],
                               struct pipe_video_rect *dst_rects[],
                               unsigned num_layers)
@@ -327,7 +327,7 @@ void vl_compositor_set_layers(struct vl_compositor *compositor,
           !u_video_rects_equal(&compositor->layer_src_rects[i], src_rects[i]) ||
           !u_video_rects_equal(&compositor->layer_dst_rects[i], dst_rects[i]))
       {
-         pipe_texture_reference(&compositor->layers[i], layers[i]);
+         pipe_surface_reference(&compositor->layers[i], layers[i]);
          /*if (!u_video_rects_equal(&compositor->layer_src_rects[i], src_rects[i]))*/
             compositor->layer_src_rects[i] = *src_rects[i];
          /*if (!u_video_rects_equal(&compositor->layer_dst_rects[i], dst_rects[i]))*/
@@ -337,7 +337,7 @@ void vl_compositor_set_layers(struct vl_compositor *compositor,
    }
 
    for (; i < VL_COMPOSITOR_MAX_LAYERS; ++i)
-      pipe_texture_reference(&compositor->layers[i], NULL);
+      pipe_surface_reference(&compositor->layers[i], NULL);
 }
 
 static void gen_rect_verts(unsigned pos,
@@ -385,10 +385,10 @@ static void gen_rect_verts(unsigned pos,
 }
 
 static unsigned gen_data(struct vl_compositor *c,
-                         struct pipe_texture *src_surface,
+                         struct pipe_surface *src_surface,
                          struct pipe_video_rect *src_rect,
                          struct pipe_video_rect *dst_rect,
-                         struct pipe_texture **textures)
+                         struct pipe_surface **textures)
 {
    void *vb;
    unsigned num_rects = 0;
@@ -407,7 +407,7 @@ static unsigned gen_data(struct vl_compositor *c,
       return 0;
 
    if (c->dirty_bg) {
-      struct vertex2f bg_inv_size = {1.0f / c->bg->width0, 1.0f / c->bg->height0};
+      struct vertex2f bg_inv_size = {1.0f / c->bg->width, 1.0f / c->bg->height};
       gen_rect_verts(num_rects, &c->bg_src_rect, &bg_inv_size, NULL, NULL, vb);
       textures[num_rects] = c->bg;
       ++num_rects;
@@ -415,7 +415,7 @@ static unsigned gen_data(struct vl_compositor *c,
    }
 
    {
-      struct vertex2f src_inv_size = { 1.0f / src_surface->width0, 1.0f / src_surface->height0};
+      struct vertex2f src_inv_size = { 1.0f / src_surface->width, 1.0f / src_surface->height};
       gen_rect_verts(num_rects, src_rect, &src_inv_size, dst_rect, &c->fb_inv_size, vb);
       textures[num_rects] = src_surface;
       ++num_rects;
@@ -425,7 +425,7 @@ static unsigned gen_data(struct vl_compositor *c,
       assert(i < VL_COMPOSITOR_MAX_LAYERS);
 
       if (c->dirty_layers & (1 << i)) {
-         struct vertex2f layer_inv_size = {1.0f / c->layers[i]->width0, 1.0f / c->layers[i]->height0};
+         struct vertex2f layer_inv_size = {1.0f / c->layers[i]->width, 1.0f / c->layers[i]->height};
          gen_rect_verts(num_rects, &c->layer_src_rects[i], &layer_inv_size,
                         &c->layer_dst_rects[i], &c->fb_inv_size, vb);
          textures[num_rects] = c->layers[i];
@@ -440,12 +440,12 @@ static unsigned gen_data(struct vl_compositor *c,
 }
 
 static void draw_layers(struct vl_compositor *c,
-                        struct pipe_texture *src_surface,
+                        struct pipe_surface *src_surface,
                         struct pipe_video_rect *src_rect,
                         struct pipe_video_rect *dst_rect)
 {
    unsigned num_rects;
-   struct pipe_texture *textures[VL_COMPOSITOR_MAX_LAYERS + 2];
+   struct pipe_surface *src_surfaces[VL_COMPOSITOR_MAX_LAYERS + 2];
    unsigned i;
 
    assert(c);
@@ -453,23 +453,23 @@ static void draw_layers(struct vl_compositor *c,
    assert(src_rect);
    assert(dst_rect);
 
-   num_rects = gen_data(c, src_surface, src_rect, dst_rect, textures);
+   num_rects = gen_data(c, src_surface, src_rect, dst_rect, src_surfaces);
 
    for (i = 0; i < num_rects; ++i) {
-      c->pipe->set_fragment_sampler_textures(c->pipe, 1, &textures[i]);
+      c->pipe->set_fragment_sampler_textures(c->pipe, 1, &src_surfaces[i]->texture);
       c->pipe->draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
    }
 }
 
 void vl_compositor_render(struct vl_compositor          *compositor,
-                          struct pipe_texture           *src_surface,
+                          struct pipe_surface           *src_surface,
                           enum pipe_mpeg12_picture_type picture_type,
                           /*unsigned                    num_past_surfaces,
-                          struct pipe_texture           *past_surfaces,
+                          struct pipe_surface           *past_surfaces,
                           unsigned                      num_future_surfaces,
-                          struct pipe_texture           *future_surfaces,*/
+                          struct pipe_surface           *future_surfaces,*/
                           struct pipe_video_rect        *src_area,
-                          struct pipe_texture           *dst_surface,
+                          struct pipe_surface           *dst_surface,
                           struct pipe_video_rect        *dst_area,
                           struct pipe_fence_handle      **fence)
 {
@@ -480,21 +480,16 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    assert(dst_area);
    assert(picture_type == PIPE_MPEG12_PICTURE_TYPE_FRAME);
 
-   if (compositor->fb_state.width != dst_surface->width0) {
-      compositor->fb_inv_size.x = 1.0f / dst_surface->width0;
-      compositor->fb_state.width = dst_surface->width0;
+   if (compositor->fb_state.width != dst_surface->width) {
+      compositor->fb_inv_size.x = 1.0f / dst_surface->width;
+      compositor->fb_state.width = dst_surface->width;
    }
-   if (compositor->fb_state.height != dst_surface->height0) {
-      compositor->fb_inv_size.y = 1.0f / dst_surface->height0;
-      compositor->fb_state.height = dst_surface->height0;
+   if (compositor->fb_state.height != dst_surface->height) {
+      compositor->fb_inv_size.y = 1.0f / dst_surface->height;
+      compositor->fb_state.height = dst_surface->height;
    }
 
-   compositor->fb_state.cbufs[0] = compositor->pipe->screen->get_tex_surface
-   (
-      compositor->pipe->screen,
-      dst_surface,
-      0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ_WRITE
-   );
+   compositor->fb_state.cbufs[0] = dst_surface;
 
    compositor->viewport.scale[0] = compositor->fb_state.width;
    compositor->viewport.scale[1] = compositor->fb_state.height;
@@ -518,8 +513,6 @@ void vl_compositor_render(struct vl_compositor          *compositor,
 
    assert(!compositor->dirty_bg && !compositor->dirty_layers);
    compositor->pipe->flush(compositor->pipe, PIPE_FLUSH_RENDER_CACHE, fence);
-
-   pipe_surface_reference(&compositor->fb_state.cbufs[0], NULL);
 }
 
 void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float *mat)

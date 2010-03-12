@@ -103,11 +103,11 @@ struct pipe_video_context
     */
    /*@{*/
    void (*set_picture_background)(struct pipe_video_context *vpipe,
-                                  struct pipe_texture *bg,
+                                  struct pipe_surface *bg,
                                   struct pipe_video_rect *bg_src_rect);
 
    void (*set_picture_layers)(struct pipe_video_context *vpipe,
-                              struct pipe_texture *layers[],
+                              struct pipe_surface *layers[],
                               struct pipe_video_rect *src_rects[],
                               struct pipe_video_rect *dst_rects[],
                               unsigned num_layers);

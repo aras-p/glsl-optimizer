@@ -87,7 +87,7 @@ struct vl_mpeg12_mc_renderer
       struct { struct pipe_vertex_buffer ycbcr, ref[2]; } individual;
    } vertex_bufs;
 
-   struct pipe_texture *surface, *past, *future;
+   struct pipe_surface *surface, *past, *future;
    struct pipe_fence_handle **fence;
    unsigned num_macroblocks;
    struct pipe_mpeg12_macroblock *macroblock_buf;
@@ -109,9 +109,9 @@ bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 
 void vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
-                                              struct pipe_texture *surface,
-                                              struct pipe_texture *past,
-                                              struct pipe_texture *future,
+                                              struct pipe_surface *surface,
+                                              struct pipe_surface *past,
+                                              struct pipe_surface *future,
                                               unsigned num_macroblocks,
                                               struct pipe_mpeg12_macroblock *mpeg12_macroblocks,
                                               struct pipe_fence_handle **fence);

@@ -34,7 +34,6 @@
 #include "vl_types.h"
 
 struct pipe_context;
-struct pipe_texture;
 
 #define VL_COMPOSITOR_MAX_LAYERS 16
 
@@ -52,10 +51,10 @@ struct vl_compositor
    struct pipe_vertex_element vertex_elems[2];
    struct pipe_buffer *fs_const_buf;
 
-   struct pipe_texture *bg;
+   struct pipe_surface *bg;
    struct pipe_video_rect bg_src_rect;
    bool dirty_bg;
-   struct pipe_texture *layers[VL_COMPOSITOR_MAX_LAYERS];
+   struct pipe_surface *layers[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_src_rects[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_dst_rects[VL_COMPOSITOR_MAX_LAYERS];
    unsigned dirty_layers;
@@ -66,23 +65,23 @@ bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *p
 void vl_compositor_cleanup(struct vl_compositor *compositor);
 
 void vl_compositor_set_background(struct vl_compositor *compositor,
-                                  struct pipe_texture *bg, struct pipe_video_rect *bg_src_rect);
+                                  struct pipe_surface *bg, struct pipe_video_rect *bg_src_rect);
 
 void vl_compositor_set_layers(struct vl_compositor *compositor,
-                              struct pipe_texture *layers[],
+                              struct pipe_surface *layers[],
                               struct pipe_video_rect *src_rects[],
                               struct pipe_video_rect *dst_rects[],
                               unsigned num_layers);
 
 void vl_compositor_render(struct vl_compositor          *compositor,
-                          struct pipe_texture           *src_surface,
+                          struct pipe_surface           *src_surface,
                           enum pipe_mpeg12_picture_type picture_type,
                           /*unsigned                    num_past_surfaces,
-                          struct pipe_texture           *past_surfaces,
+                          struct pipe_surface           *past_surfaces,
                           unsigned                      num_future_surfaces,
-                          struct pipe_texture           *future_surfaces,*/
+                          struct pipe_surface           *future_surfaces,*/
                           struct pipe_video_rect        *src_area,
-                          struct pipe_texture           *dst_surface,
+                          struct pipe_surface           *dst_surface,
                           struct pipe_video_rect        *dst_area,
                           struct pipe_fence_handle      **fence);
 

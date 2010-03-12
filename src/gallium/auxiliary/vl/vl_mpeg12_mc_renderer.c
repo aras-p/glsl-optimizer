@@ -997,11 +997,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    gen_macroblock_stream(r, num_macroblocks);
 
-   r->fb_state.cbufs[0] = r->pipe->screen->get_tex_surface
-   (
-      r->pipe->screen, r->surface,
-      0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE
-   );
+   r->fb_state.cbufs[0] = r->surface;
 
    r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
    r->pipe->set_viewport_state(r->pipe, &r->viewport);
@@ -1012,8 +1008,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
    );
 
-   vs_consts->denorm.x = r->surface->width0;
-   vs_consts->denorm.y = r->surface->height0;
+   vs_consts->denorm.x = r->surface->width;
+   vs_consts->denorm.y = r->surface->height;
 
    pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf);
 
@@ -1036,7 +1032,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    if (num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
-      r->textures.individual.ref[0] = r->past;
+      r->textures.individual.ref[0] = r->past->texture;
       r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
@@ -1050,7 +1046,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    if (false /*num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
-      r->textures.individual.ref[0] = r->past;
+      r->textures.individual.ref[0] = r->past->texture;
       r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
@@ -1064,7 +1060,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    if (num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
-      r->textures.individual.ref[0] = r->future;
+      r->textures.individual.ref[0] = r->future->texture;
       r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
@@ -1078,7 +1074,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    if (false /*num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
-      r->textures.individual.ref[0] = r->future;
+      r->textures.individual.ref[0] = r->future->texture;
       r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
@@ -1092,8 +1088,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
    if (num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
-      r->textures.individual.ref[0] = r->past;
-      r->textures.individual.ref[1] = r->future;
+      r->textures.individual.ref[0] = r->past->texture;
+      r->textures.individual.ref[1] = r->future->texture;
       r->pipe->set_fragment_sampler_textures(r->pipe, 5, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->b_vs[0]);
@@ -1107,8 +1103,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
    if (false /*num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
-      r->textures.individual.ref[0] = r->past;
-      r->textures.individual.ref[1] = r->future;
+      r->textures.individual.ref[0] = r->past->texture;
+      r->textures.individual.ref[1] = r->future->texture;
       r->pipe->set_fragment_sampler_textures(r->pipe, 5, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->b_vs[1]);
@@ -1120,7 +1116,6 @@ flush(struct vl_mpeg12_mc_renderer *r)
    }
 
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
-   pipe_surface_reference(&r->fb_state.cbufs[0], NULL);
 
    if (r->eb_handling == VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE)
       for (i = 0; i < 3; ++i)
@@ -1328,9 +1323,9 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 void
 vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
                                          *renderer,
-                                         struct pipe_texture *surface,
-                                         struct pipe_texture *past,
-                                         struct pipe_texture *future,
+                                         struct pipe_surface *surface,
+                                         struct pipe_surface *past,
+                                         struct pipe_surface *future,
                                          unsigned num_macroblocks,
                                          struct pipe_mpeg12_macroblock
                                          *mpeg12_macroblocks,
@@ -1365,8 +1360,8 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       renderer->past = past;
       renderer->future = future;
       renderer->fence = fence;
-      renderer->surface_tex_inv_size.x = 1.0f / surface->width0;
-      renderer->surface_tex_inv_size.y = 1.0f / surface->height0;
+      renderer->surface_tex_inv_size.x = 1.0f / surface->width;
+      renderer->surface_tex_inv_size.y = 1.0f / surface->height;
    }
 
    while (num_macroblocks) {
