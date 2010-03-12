@@ -581,13 +581,13 @@ function_header_with_parameters:
 	function_header parameter_declaration
 	{
 	   $$ = $1;
-	   insert_at_head(& $$->parameters,
+	   insert_at_tail(& $$->parameters,
 			  (struct simple_node *) $2);
 	}
 	| function_header_with_parameters ',' parameter_declaration
 	{
 	   $$ = $1;
-	   insert_at_head(& $$->parameters,
+	   insert_at_tail(& $$->parameters,
 			  (struct simple_node *) $3);
 	}
 	;
