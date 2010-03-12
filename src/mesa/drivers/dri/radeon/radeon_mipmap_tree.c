@@ -539,6 +539,8 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 	}
 
 	if (mtCount == 0) {
+		free(mtSizes);
+		free(mts);
 		return NULL;
 	}
 
