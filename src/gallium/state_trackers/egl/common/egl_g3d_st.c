@@ -85,6 +85,37 @@ egl_g3d_create_st_api(enum st_api_type api)
    return mod->create_api();
 }
 
+static boolean
+egl_g3d_st_manager_get_egl_image(struct st_manager *smapi,
+                                 struct st_egl_image *stimg)
+{
+   struct egl_g3d_st_manager *gsmapi = egl_g3d_st_manager(smapi);
+   EGLImageKHR handle = (EGLImageKHR) stimg->egl_image;
+   _EGLImage *img;
+   struct egl_g3d_image *gimg;
+
+   /* this is called from state trackers */
+   _eglLockMutex(&gsmapi->display->Mutex);
+
+   img = _eglLookupImage(handle, gsmapi->display);
+   if (!img) {
+      _eglUnlockMutex(&gsmapi->display->Mutex);
+      return FALSE;
+   }
+
+   gimg = egl_g3d_image(img);
+
+   stimg->texture = NULL;
+   pipe_texture_reference(&stimg->texture, gimg->texture);
+   stimg->face = gimg->face;
+   stimg->level = gimg->level;
+   stimg->zslice = gimg->zslice;
+
+   _eglUnlockMutex(&gsmapi->display->Mutex);
+
+   return TRUE;
+}
+
 struct st_manager *
 egl_g3d_create_st_manager(_EGLDisplay *dpy)
 {
@@ -96,6 +127,7 @@ egl_g3d_create_st_manager(_EGLDisplay *dpy)
       gsmapi->display = dpy;
 
       gsmapi->base.screen = gdpy->native->screen;
+      gsmapi->base.get_egl_image = egl_g3d_st_manager_get_egl_image;
    }
 
    return &gsmapi->base;;
