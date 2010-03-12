@@ -994,6 +994,7 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
 
 /**
  * Generate code to sample a mipmap level with nearest filtering.
+ * If sampling a cube texture, r = cube face in [0,5].
  */
 static void
 lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
@@ -1031,6 +1032,9 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                                           bld->static_state->wrap_r);
          lp_build_name(z, "tex.z.wrapped");
       }
+      else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
+         z = r;
+      }
       else {
          z = NULL;
       }
@@ -1051,7 +1055,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
 
 /**
  * Generate code to sample a mipmap level with linear filtering.
- * 1D, 2D and 3D images are suppored.
+ * If sampling a cube texture, r = cube face in [0,5].
  */
 static void
 lp_build_sample_image_linear(struct lp_build_sample_context *bld,
@@ -1098,8 +1102,13 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
          lp_build_name(z0, "tex.z0.wrapped");
          lp_build_name(z1, "tex.z1.wrapped");
       }
+      else if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
+         z0 = z1 = r;  /* cube face */
+         r_fpart = NULL;
+      }
       else {
-         z0 = z1 = r_fpart = NULL;
+         z0 = z1 = NULL;
+         r_fpart = NULL;
       }
    }
    else {
@@ -1201,6 +1210,70 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 }
 
 
+/** Helper used by lp_build_cube_lookup() */
+static LLVMValueRef
+lp_build_cube_ima(struct lp_build_context *coord_bld, LLVMValueRef coord)
+{
+   /* ima = -0.5 / abs(coord); */
+   LLVMValueRef negHalf = lp_build_const_scalar(coord_bld->type, -0.5);
+   LLVMValueRef absCoord = lp_build_abs(coord_bld, coord);
+   LLVMValueRef ima = lp_build_mul(coord_bld, negHalf,
+                                   lp_build_rcp(coord_bld, absCoord));
+   return ima;
+}
+
+
+/**
+ * Helper used by lp_build_cube_lookup()
+ * \param sign  scalar +1 or -1
+ * \param coord  float vector
+ * \param ima  float vector
+ */
+static LLVMValueRef
+lp_build_cube_coord(struct lp_build_context *coord_bld,
+                    LLVMValueRef sign, int negate_coord,
+                    LLVMValueRef coord, LLVMValueRef ima)
+{
+   /* return negate(coord) * ima * sign + 0.5; */
+   LLVMValueRef half = lp_build_const_scalar(coord_bld->type, 0.5);
+   LLVMValueRef res;
+
+   assert(negate_coord == +1 || negate_coord == -1);
+
+   if (negate_coord == -1) {
+      coord = lp_build_negate(coord_bld, coord);
+   }
+
+   res = lp_build_mul(coord_bld, coord, ima);
+   if (sign) {
+      sign = lp_build_broadcast_scalar(coord_bld, sign);
+      res = lp_build_mul(coord_bld, res, sign);
+   }
+   res = lp_build_add(coord_bld, res, half);
+
+   return res;
+}
+
+
+/** Helper used by lp_build_cube_lookup()
+ * Return (major_coord >= 0) ? pos_face : neg_face;
+ */
+static LLVMValueRef
+lp_build_cube_face(struct lp_build_sample_context *bld,
+                   LLVMValueRef major_coord,
+                   unsigned pos_face, unsigned neg_face)
+{
+   LLVMValueRef cmp = LLVMBuildFCmp(bld->builder, LLVMRealUGE,
+                                    major_coord,
+                                    bld->float_bld.zero, "");
+   LLVMValueRef pos = LLVMConstInt(LLVMInt32Type(), pos_face, 0);
+   LLVMValueRef neg = LLVMConstInt(LLVMInt32Type(), neg_face, 0);
+   LLVMValueRef res = LLVMBuildSelect(bld->builder, cmp, pos, neg, "");
+   return res;
+}
+
+
+
 /**
  * Generate code to do cube face selection and per-face texcoords.
  */
@@ -1213,11 +1286,10 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
                      LLVMValueRef *face_s,
                      LLVMValueRef *face_t)
 {
-#if 0
    struct lp_build_context *float_bld = &bld->float_bld;
+   struct lp_build_context *coord_bld = &bld->coord_bld;
    LLVMValueRef rx, ry, rz;
    LLVMValueRef arx, ary, arz;
-   LLVMValueRef sc, tc, ma;
    LLVMValueRef c25 = LLVMConstReal(LLVMFloatType(), 0.25);
    LLVMValueRef arx_ge_ary, arx_ge_arz;
    LLVMValueRef ary_ge_arx, ary_ge_arz;
@@ -1257,34 +1329,86 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
 
    {
       struct lp_build_flow_context *flow_ctx;
-      struct lp_build_if_state if_ctx, if2_ctx;
+      struct lp_build_if_state if_ctx;
 
       flow_ctx = lp_build_flow_create(bld->builder);
+      lp_build_flow_scope_begin(flow_ctx);
+
+      *face_s = bld->coord_bld.undef;
+      *face_t = bld->coord_bld.undef;
+      *face = bld->int_bld.undef;
+
+      lp_build_name(*face_s, "face_s");
+      lp_build_name(*face_t, "face_t");
+      lp_build_name(*face, "face");
+
+      lp_build_flow_scope_declare(flow_ctx, face_s);
+      lp_build_flow_scope_declare(flow_ctx, face_t);
+      lp_build_flow_scope_declare(flow_ctx, face);
 
       lp_build_if(&if_ctx, flow_ctx, bld->builder, arx_ge_ary_arz);
       {
-#if 0
-         lp_build_if(&if2_ctx, flow_ctx, bld->builder, rx_pos);
-         {
-            /* Positive X face */
-         }
-         lp_build_else(&if2_ctx);
-         {
-            /* Negative X face */
-         }
-         lp_build_endif(&if2_ctx);
-#endif
+         /* +/- X face */
+         LLVMValueRef sign = lp_build_sgn(float_bld, rx);
+         LLVMValueRef ima = lp_build_cube_ima(coord_bld, s);
+         *face_s = lp_build_cube_coord(coord_bld, sign, +1, r, ima);
+         *face_t = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
+         *face = lp_build_cube_face(bld, rx,
+                                    PIPE_TEX_FACE_POS_X,
+                                    PIPE_TEX_FACE_NEG_X);
       }
       lp_build_else(&if_ctx);
       {
+         struct lp_build_flow_context *flow_ctx2;
+         struct lp_build_if_state if_ctx2;
 
+         LLVMValueRef face_s2 = bld->coord_bld.undef;
+         LLVMValueRef face_t2 = bld->coord_bld.undef;
+         LLVMValueRef face2 = bld->int_bld.undef;
 
+         flow_ctx2 = lp_build_flow_create(bld->builder);
+         lp_build_flow_scope_begin(flow_ctx2);
+         lp_build_flow_scope_declare(flow_ctx2, &face_s2);
+         lp_build_flow_scope_declare(flow_ctx2, &face_t2);
+         lp_build_flow_scope_declare(flow_ctx2, &face2);
+
+         ary_ge_arx_arz = LLVMBuildAnd(bld->builder, ary_ge_arx, ary_ge_arz, "");
+
+         lp_build_if(&if_ctx2, flow_ctx2, bld->builder, ary_ge_arx_arz);
+         {
+            /* +/- Y face */
+            LLVMValueRef sign = lp_build_sgn(float_bld, ry);
+            LLVMValueRef ima = lp_build_cube_ima(coord_bld, t);
+            face_s2 = lp_build_cube_coord(coord_bld, NULL, -1, s, ima);
+            face_t2 = lp_build_cube_coord(coord_bld, sign, -1, r, ima);
+            face2 = lp_build_cube_face(bld, ry,
+                                       PIPE_TEX_FACE_POS_Y,
+                                       PIPE_TEX_FACE_NEG_Y);
+         }
+         lp_build_else(&if_ctx2);
+         {
+            /* +/- Z face */
+            LLVMValueRef sign = lp_build_sgn(float_bld, rz);
+            LLVMValueRef ima = lp_build_cube_ima(coord_bld, r);
+            face_s2 = lp_build_cube_coord(coord_bld, sign, -1, s, ima);
+            face_t2 = lp_build_cube_coord(coord_bld, NULL, +1, t, ima);
+            face2 = lp_build_cube_face(bld, rz,
+                                       PIPE_TEX_FACE_POS_Z,
+                                       PIPE_TEX_FACE_NEG_Z);
+         }
+         lp_build_endif(&if_ctx2);
+         lp_build_flow_scope_end(flow_ctx2);
+         lp_build_flow_destroy(flow_ctx2);
+
+         *face_s = face_s2;
+         *face_t = face_t2;
+         *face = face2;
       }
-      lp_build_endif(&if_ctx);
 
+      lp_build_endif(&if_ctx);
+      lp_build_flow_scope_end(flow_ctx);
       lp_build_flow_destroy(flow_ctx);
    }
-#endif
 }
 
 
@@ -1366,10 +1490,12 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       height0_vec = lp_build_minify(bld, height_vec, ilevel0_vec);
       row_stride0_vec = lp_build_get_level_stride_vec(bld, row_stride_array,
                                                       ilevel0);
-      if (dims == 3) {
-         depth0_vec = lp_build_minify(bld, depth_vec, ilevel0_vec);
+      if (dims == 3 || bld->static_state->target == PIPE_TEXTURE_CUBE) {
          img_stride0_vec = lp_build_mul(&bld->int_coord_bld,
                                         row_stride0_vec, height0_vec);
+         if (dims == 3) {
+            depth0_vec = lp_build_minify(bld, depth_vec, ilevel0_vec);
+         }
       }
    }
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
@@ -1379,10 +1505,12 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
          height1_vec = lp_build_minify(bld, height_vec, ilevel1_vec);
          row_stride1_vec = lp_build_get_level_stride_vec(bld, row_stride_array,
                                                          ilevel1);
-         if (dims == 3) {
-            depth1_vec = lp_build_minify(bld, depth_vec, ilevel1_vec);
+         if (dims == 3 || bld->static_state->target == PIPE_TEXTURE_CUBE) {
             img_stride1_vec = lp_build_mul(&bld->int_coord_bld,
                                            row_stride1_vec, height1_vec);
+            if (dims ==3) {
+               depth1_vec = lp_build_minify(bld, depth_vec, ilevel1_vec);
+            }
          }
       }
    }
@@ -1393,6 +1521,10 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
       LLVMValueRef face, face_s, face_t;
       lp_build_cube_lookup(bld, s, t, r, &face, &face_s, &face_t);
+      s = face_s; /* vec */
+      t = face_t; /* vec */
+      /* use 'r' to indicate cube face */
+      r = lp_build_broadcast_scalar(&bld->int_coord_bld, face); /* vec */
    }
 
    /*
