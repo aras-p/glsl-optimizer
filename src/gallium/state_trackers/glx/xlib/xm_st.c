@@ -225,6 +225,12 @@ void
 xmesa_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi)
 {
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
+   int i;
+
+   pipe_surface_reference(&xstfb->display_surface, NULL);
+
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
+      pipe_texture_reference(&xstfb->textures[i], NULL);
 
    FREE(xstfb);
    FREE(stfbi);
