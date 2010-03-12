@@ -188,10 +188,6 @@ ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
     if (!priv || !priv->tex)
 	return FALSE;
 
-    if (exa->pipe->is_texture_referenced(exa->pipe, priv->tex, 0, 0) &
-	PIPE_REFERENCED_FOR_WRITE)
-	exa->pipe->flush(exa->pipe, 0, NULL);
-
     transfer = exa->pipe->get_tex_transfer(exa->pipe, priv->tex, 0, 0, 0,
 					   PIPE_TRANSFER_READ, x, y, w, h);
     if (!transfer)
@@ -225,11 +221,6 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
 
     if (!priv || !priv->tex)
 	return FALSE;
-
-    /* make sure that any pending operations are flushed to hardware */
-    if (exa->pipe->is_texture_referenced(exa->pipe, priv->tex, 0, 0) &
-	(PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE))
-	xorg_exa_flush(exa, 0, NULL);
 
     transfer = exa->pipe->get_tex_transfer(exa->pipe, priv->tex, 0, 0, 0,
 					   PIPE_TRANSFER_WRITE, x, y, w, h);
@@ -270,10 +261,6 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 
     if (priv->map_count == 0)
     {
-	if (exa->pipe->is_texture_referenced(exa->pipe, priv->tex, 0, 0) &
-	    PIPE_REFERENCED_FOR_WRITE)
-	    exa->pipe->flush(exa->pipe, 0, NULL);
-
         assert(pPix->drawable.width <= priv->tex->width0);
         assert(pPix->drawable.height <= priv->tex->height0);
 
