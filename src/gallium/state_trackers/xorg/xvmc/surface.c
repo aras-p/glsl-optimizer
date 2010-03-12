@@ -127,8 +127,7 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
       return false;
 
    *backbuffer = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
-                                                PIPE_BUFFER_USAGE_GPU_READ |
-                                                PIPE_BUFFER_USAGE_GPU_WRITE);
+                                                PIPE_BUFFER_USAGE_GPU_READ_WRITE);
    pipe_texture_reference(&tex, NULL);
 
    if (!*backbuffer)
