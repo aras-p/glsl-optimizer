@@ -3,7 +3,8 @@ import os.path
 
 Import('*')
 
-if 'python' in env['statetrackers']:
+if 'python' in env['statetrackers'] and 0:
+    # FIXME: Disable python state tracker until transfers are done by contexts  
 
     env = env.Clone()
     
