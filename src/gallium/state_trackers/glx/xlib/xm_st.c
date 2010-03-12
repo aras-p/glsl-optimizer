@@ -186,7 +186,7 @@ xmesa_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
    boolean ret;
 
-   ret = xmesa_st_framebuffer_flush_front(stfbi, statt);
+   ret = xmesa_st_framebuffer_display(stfbi, statt);
    if (ret)
       xmesa_check_buffer_size(xstfb->buffer);
 
