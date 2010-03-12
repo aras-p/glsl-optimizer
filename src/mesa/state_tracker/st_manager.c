@@ -270,9 +270,15 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
    if (!rb)
       return FALSE;
 
-   _mesa_add_renderbuffer(&stfb->Base, idx, rb);
-   if (idx == BUFFER_DEPTH)
-      _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL, rb);
+   if (idx != BUFFER_DEPTH) {
+      _mesa_add_renderbuffer(&stfb->Base, idx, rb);
+   }
+   else {
+      if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0))
+         _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, rb);
+      if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1))
+         _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL, rb);
+   }
 
    return TRUE;
 }
