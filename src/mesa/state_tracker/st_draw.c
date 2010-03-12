@@ -542,9 +542,9 @@ st_draw_vbo(GLcontext *ctx,
    assert(ctx->NewState == 0x0);
 
    /* Gallium probably doesn't want this in some cases. */
-   if (!index_bounds_valid)
-      if (!vbo_all_varyings_in_vbos(arrays))
-	 vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
+   if (index_bounds_valid != GL_TRUE) {
+      vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
+   }
 
    /* sanity check for pointer arithmetic below */
    assert(sizeof(arrays[0]->Ptr[0]) == 1);
