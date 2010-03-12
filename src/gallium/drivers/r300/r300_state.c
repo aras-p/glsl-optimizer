@@ -1031,7 +1031,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
-    unsigned i, max_index = ~0;
+    unsigned i, max_index = (1 << 24) - 1;
 
     memcpy(r300->vertex_buffer, buffers,
         sizeof(struct pipe_vertex_buffer) * count);
