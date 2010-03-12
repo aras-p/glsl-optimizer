@@ -37,6 +37,7 @@
 
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
+#include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
 #include "tgsi/tgsi_parse.h"
@@ -71,19 +72,23 @@ struct cso_context {
    void *vertex_samplers_saved[PIPE_MAX_VERTEX_SAMPLERS];
 
    struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
+   uint nr_fragment_sampler_views;
+   struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    uint nr_textures;
 
    struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
+   uint nr_vertex_sampler_views;
    struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
    uint nr_vertex_textures;
 
    uint nr_textures_saved;
    struct pipe_texture *textures_saved[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_view *sampler_views_saved[PIPE_MAX_SAMPLERS];
+   uint nr_fragment_sampler_views_saved;
+   struct pipe_sampler_view *fragment_sampler_views_saved[PIPE_MAX_SAMPLERS];
 
    uint nr_vertex_textures_saved;
    struct pipe_texture *vertex_textures_saved[PIPE_MAX_VERTEX_SAMPLERS];
+   uint nr_vertex_sampler_views_saved;
    struct pipe_sampler_view *vertex_sampler_views_saved[PIPE_MAX_VERTEX_SAMPLERS];
 
    /** Current and saved state.
@@ -300,8 +305,8 @@ void cso_release_all( struct cso_context *ctx )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       pipe_texture_reference(&ctx->textures[i], NULL);
       pipe_texture_reference(&ctx->textures_saved[i], NULL);
-      pipe_sampler_view_reference(&ctx->sampler_views[i], NULL);
-      pipe_sampler_view_reference(&ctx->sampler_views_saved[i], NULL);
+      pipe_sampler_view_reference(&ctx->fragment_sampler_views[i], NULL);
+      pipe_sampler_view_reference(&ctx->fragment_sampler_views_saved[i], NULL);
    }
 
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
@@ -644,16 +649,16 @@ enum pipe_error cso_set_sampler_textures( struct cso_context *ctx,
                                             &templ);
 
       pipe_texture_reference(&ctx->textures[i], textures[i]);
-      pipe_sampler_view_reference(&ctx->sampler_views[i], view);
+      pipe_sampler_view_reference(&ctx->fragment_sampler_views[i], view);
    }
    for ( ; i < PIPE_MAX_SAMPLERS; i++) {
       pipe_texture_reference(&ctx->textures[i], NULL);
-      pipe_sampler_view_reference(&ctx->sampler_views[i], NULL);
+      pipe_sampler_view_reference(&ctx->fragment_sampler_views[i], NULL);
    }
 
    ctx->pipe->set_fragment_sampler_views(ctx->pipe,
                                          count,
-                                         ctx->sampler_views);
+                                         ctx->fragment_sampler_views);
 
    return PIPE_OK;
 }
@@ -665,11 +670,11 @@ void cso_save_sampler_textures( struct cso_context *ctx )
    ctx->nr_textures_saved = ctx->nr_textures;
    for (i = 0; i < ctx->nr_textures; i++) {
       assert(!ctx->textures_saved[i]);
-      assert(!ctx->sampler_views_saved[i]);
+      assert(!ctx->fragment_sampler_views_saved[i]);
 
       pipe_texture_reference(&ctx->textures_saved[i], ctx->textures[i]);
-      pipe_sampler_view_reference(&ctx->sampler_views_saved[i],
-                                  ctx->sampler_views[i]);
+      pipe_sampler_view_reference(&ctx->fragment_sampler_views_saved[i],
+                                  ctx->fragment_sampler_views[i]);
    }
 }
 
@@ -684,18 +689,18 @@ void cso_restore_sampler_textures( struct cso_context *ctx )
       ctx->textures[i] = ctx->textures_saved[i];
       ctx->textures_saved[i] = NULL;
 
-      pipe_sampler_view_reference(&ctx->sampler_views[i], NULL);
-      ctx->sampler_views[i] = ctx->sampler_views_saved[i];
-      ctx->sampler_views_saved[i] = NULL;
+      pipe_sampler_view_reference(&ctx->fragment_sampler_views[i], NULL);
+      ctx->fragment_sampler_views[i] = ctx->fragment_sampler_views_saved[i];
+      ctx->fragment_sampler_views_saved[i] = NULL;
    }
    for ( ; i < PIPE_MAX_SAMPLERS; i++) {
       pipe_texture_reference(&ctx->textures[i], NULL);
-      pipe_sampler_view_reference(&ctx->sampler_views[i], NULL);
+      pipe_sampler_view_reference(&ctx->fragment_sampler_views[i], NULL);
    }
 
    ctx->pipe->set_fragment_sampler_views(ctx->pipe,
                                          ctx->nr_textures,
-                                         ctx->sampler_views);
+                                         ctx->fragment_sampler_views);
 
    ctx->nr_textures_saved = 0;
 }
@@ -1318,4 +1323,123 @@ void cso_restore_vertex_elements(struct cso_context *ctx)
       ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->velements_saved);
    }
    ctx->velements_saved = NULL;
+}
+
+/* fragment sampler view state */
+
+void
+cso_set_fragment_sampler_views(struct cso_context *cso,
+                               uint count,
+                               struct pipe_sampler_view **views)
+{
+   uint i;
+
+   for (i = 0; i < count; i++) {
+      pipe_sampler_view_reference(&cso->fragment_sampler_views[i], views[i]);
+   }
+   for (; i < cso->nr_fragment_sampler_views; i++) {
+      pipe_sampler_view_reference(&cso->fragment_sampler_views[i], NULL);
+   }
+
+   cso->pipe->set_fragment_sampler_views(cso->pipe,
+                                         MAX2(count, cso->nr_fragment_sampler_views),
+                                         cso->fragment_sampler_views);
+
+   cso->nr_fragment_sampler_views = count;
+}
+
+void
+cso_save_fragment_sampler_views(struct cso_context *cso)
+{
+   uint i;
+
+   cso->nr_fragment_sampler_views_saved = cso->nr_fragment_sampler_views;
+
+   for (i = 0; i < cso->nr_fragment_sampler_views; i++) {
+      assert(!cso->fragment_sampler_views_saved[i]);
+
+      pipe_sampler_view_reference(&cso->fragment_sampler_views_saved[i],
+                                  cso->fragment_sampler_views[i]);
+   }
+}
+
+void
+cso_restore_fragment_sampler_views(struct cso_context *cso)
+{
+   uint i;
+
+   for (i = 0; i < cso->nr_fragment_sampler_views_saved; i++) {
+      pipe_sampler_view_reference(&cso->fragment_sampler_views[i], cso->fragment_sampler_views_saved[i]);
+      pipe_sampler_view_reference(&cso->fragment_sampler_views_saved[i], NULL);
+   }
+   for (; i < cso->nr_fragment_sampler_views; i++) {
+      pipe_sampler_view_reference(&cso->fragment_sampler_views[i], NULL);
+   }
+
+   cso->pipe->set_fragment_sampler_views(cso->pipe,
+                                         MAX2(cso->nr_fragment_sampler_views, cso->nr_fragment_sampler_views_saved),
+                                         cso->fragment_sampler_views);
+
+   cso->nr_fragment_sampler_views = cso->nr_fragment_sampler_views_saved;
+   cso->nr_fragment_sampler_views_saved = 0;
+}
+
+
+/* vertex sampler view state */
+
+void
+cso_set_vertex_sampler_views(struct cso_context *cso,
+                             uint count,
+                             struct pipe_sampler_view **views)
+{
+   uint i;
+
+   for (i = 0; i < count; i++) {
+      pipe_sampler_view_reference(&cso->vertex_sampler_views[i], views[i]);
+   }
+   for (; i < cso->nr_vertex_sampler_views; i++) {
+      pipe_sampler_view_reference(&cso->vertex_sampler_views[i], NULL);
+   }
+
+   cso->pipe->set_vertex_sampler_views(cso->pipe,
+                                       MAX2(count, cso->nr_vertex_sampler_views),
+                                       cso->vertex_sampler_views);
+
+   cso->nr_vertex_sampler_views = count;
+}
+
+void
+cso_save_vertex_sampler_views(struct cso_context *cso)
+{
+   uint i;
+
+   cso->nr_vertex_sampler_views_saved = cso->nr_vertex_sampler_views;
+
+   for (i = 0; i < cso->nr_vertex_sampler_views; i++) {
+      assert(!cso->vertex_sampler_views_saved[i]);
+
+      pipe_sampler_view_reference(&cso->vertex_sampler_views_saved[i],
+                                  cso->vertex_sampler_views[i]);
+   }
+}
+
+void
+cso_restore_vertex_sampler_views(struct cso_context *cso)
+{
+   uint i;
+
+   for (i = 0; i < cso->nr_vertex_sampler_views_saved; i++) {
+      pipe_sampler_view_reference(&cso->vertex_sampler_views[i], cso->vertex_sampler_views_saved[i]);
+      pipe_sampler_view_reference(&cso->vertex_sampler_views_saved[i], NULL);
+   }
+   for (; i < cso->nr_vertex_sampler_views; i++) {
+      pipe_sampler_view_reference(&cso->vertex_sampler_views[i], NULL);
+   }
+
+   cso->pipe->set_vertex_sampler_views(cso->pipe,
+                                       MAX2(cso->nr_vertex_sampler_views, cso->nr_vertex_sampler_views_saved),
+                                       cso->vertex_sampler_views);
+
+   cso->nr_vertex_sampler_views = cso->nr_vertex_sampler_views_saved;
+   cso->nr_vertex_sampler_views_saved = 0;
 }

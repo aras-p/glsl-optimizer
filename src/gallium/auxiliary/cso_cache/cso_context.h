@@ -198,6 +198,34 @@ void
 cso_restore_clip(struct cso_context *cso);
 
 
+/* fragment sampler view state */
+
+void
+cso_set_fragment_sampler_views(struct cso_context *cso,
+                               uint count,
+                               struct pipe_sampler_view **views);
+
+void
+cso_save_fragment_sampler_views(struct cso_context *cso);
+
+void
+cso_restore_fragment_sampler_views(struct cso_context *cso);
+
+
+/* vertex sampler view state */
+
+void
+cso_set_vertex_sampler_views(struct cso_context *cso,
+                             uint count,
+                             struct pipe_sampler_view **views);
+
+void
+cso_save_vertex_sampler_views(struct cso_context *cso);
+
+void
+cso_restore_vertex_sampler_views(struct cso_context *cso);
+
+
 #ifdef	__cplusplus
 }
 #endif
