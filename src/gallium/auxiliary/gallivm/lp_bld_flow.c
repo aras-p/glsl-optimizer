@@ -648,7 +648,9 @@ lp_build_if(struct lp_build_if_state *ctx,
       ifthen->phi[i] = LLVMBuildPhi(builder, LLVMTypeOf(*flow->variables[i]), "");
 
       /* add add the initial value of the var from the entry block */
-      LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->entry_block, 1);
+      if (!LLVMIsUndef(*flow->variables[i]))
+         LLVMAddIncoming(ifthen->phi[i], flow->variables[i],
+                         &ifthen->entry_block, 1);
    }
 
    /* create/insert true_block before merge_block */
@@ -695,18 +697,21 @@ lp_build_endif(struct lp_build_if_state *ctx)
 {
    struct lp_build_flow_context *flow = ctx->flow;
    struct lp_build_flow_if *ifthen;
+   LLVMBasicBlockRef curBlock = LLVMGetInsertBlock(ctx->builder);
    unsigned i;
 
    ifthen = &lp_build_flow_pop(flow, LP_BUILD_FLOW_IF)->ifthen;
    assert(ifthen);
+
+   /* Insert branch to the merge block from current block */
+   LLVMBuildBr(ctx->builder, ifthen->merge_block);
 
    if (ifthen->false_block) {
       LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
       /* for each variable, update the Phi node with a (variable, block) pair */
       for (i = 0; i < flow->num_variables; i++) {
          assert(*flow->variables[i]);
-         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->false_block, 1);
-
+         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &curBlock, 1);
          /* replace the variable ref with the phi function */
          *flow->variables[i] = ifthen->phi[i];
       }
@@ -742,15 +747,18 @@ lp_build_endif(struct lp_build_if_state *ctx)
                       ifthen->true_block, ifthen->merge_block);
    }
 
-   /* Append an unconditional Br(anch) instruction on the true_block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->true_block);
-   LLVMBuildBr(ctx->builder, ifthen->merge_block);
+   /* Insert branch from end of true_block to merge_block */
    if (ifthen->false_block) {
-      /* Append an unconditional Br(anch) instruction on the false_block */
-      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->false_block);
+      /* Append an unconditional Br(anch) instruction on the true_block */
+      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->true_block);
       LLVMBuildBr(ctx->builder, ifthen->merge_block);
    }
-
+   else {
+      /* No else clause.
+       * Note that we've already inserted the branch at the end of
+       * true_block.  See the very first LLVMBuildBr() call in this function.
+       */
+   }
 
    /* Resume building code at end of the ifthen->merge_block */
    LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
