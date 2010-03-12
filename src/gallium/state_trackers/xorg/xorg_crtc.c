@@ -220,16 +220,16 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	crtcp->cursor_handle = whandle.handle;
     }
 
-    transfer = ms->screen->get_tex_transfer(ms->screen, crtcp->cursor_tex,
-					    0, 0, 0,
-					    PIPE_TRANSFER_WRITE,
-					    0, 0, 64, 64);
-    ptr = ms->screen->transfer_map(ms->screen, transfer);
+    transfer = ms->ctx->get_tex_transfer(ms->ctx, crtcp->cursor_tex,
+                                         0, 0, 0,
+                                         PIPE_TRANSFER_WRITE,
+                                         0, 0, 64, 64);
+    ptr = ms->ctx->transfer_map(ms->ctx, transfer);
     util_copy_rect(ptr, crtcp->cursor_tex->format,
 		   transfer->stride, 0, 0,
 		   64, 64, (void*)image, 64 * 4, 0, 0);
-    ms->screen->transfer_unmap(ms->screen, transfer);
-    ms->screen->tex_transfer_destroy(transfer);
+    ms->ctx->transfer_unmap(ms->ctx, transfer);
+    ms->ctx->tex_transfer_destroy(ms->ctx, transfer);
 }
 
 #if HAVE_LIBKMS

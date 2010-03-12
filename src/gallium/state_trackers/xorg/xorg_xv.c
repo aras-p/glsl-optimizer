@@ -275,28 +275,28 @@ copy_packed_data(ScrnInfoPtr pScrn,
    int i, j;
    struct pipe_texture **dst = port->yuv[port->current_set];
    struct pipe_transfer *ytrans, *utrans, *vtrans;
-   struct pipe_screen *screen = port->r->pipe->screen;
+   struct pipe_context *pipe = port->r->pipe;
    char *ymap, *vmap, *umap;
    unsigned char y1, y2, u, v;
    int yidx, uidx, vidx;
    int y_array_size = w * h;
 
-   ytrans = screen->get_tex_transfer(screen, dst[0],
-                                     0, 0, 0,
-                                     PIPE_TRANSFER_WRITE,
-                                     left, top, w, h);
-   utrans = screen->get_tex_transfer(screen, dst[1],
-                                     0, 0, 0,
-                                     PIPE_TRANSFER_WRITE,
-                                     left, top, w, h);
-   vtrans = screen->get_tex_transfer(screen, dst[2],
-                                     0, 0, 0,
-                                     PIPE_TRANSFER_WRITE,
-                                     left, top, w, h);
+   ytrans = pipe->get_tex_transfer(pipe, dst[0],
+                                   0, 0, 0,
+                                   PIPE_TRANSFER_WRITE,
+                                   left, top, w, h);
+   utrans = pipe->get_tex_transfer(pipe, dst[1],
+                                   0, 0, 0,
+                                   PIPE_TRANSFER_WRITE,
+                                   left, top, w, h);
+   vtrans = pipe->get_tex_transfer(pipe, dst[2],
+                                   0, 0, 0,
+                                   PIPE_TRANSFER_WRITE,
+                                   left, top, w, h);
 
-   ymap = (char*)screen->transfer_map(screen, ytrans);
-   umap = (char*)screen->transfer_map(screen, utrans);
-   vmap = (char*)screen->transfer_map(screen, vtrans);
+   ymap = (char*)pipe->transfer_map(pipe, ytrans);
+   umap = (char*)pipe->transfer_map(pipe, utrans);
+   vmap = (char*)pipe->transfer_map(pipe, vtrans);
 
    yidx = uidx = vidx = 0;
 
@@ -362,12 +362,12 @@ copy_packed_data(ScrnInfoPtr pScrn,
       break;
    }
 
-   screen->transfer_unmap(screen, ytrans);
-   screen->transfer_unmap(screen, utrans);
-   screen->transfer_unmap(screen, vtrans);
-   screen->tex_transfer_destroy(ytrans);
-   screen->tex_transfer_destroy(utrans);
-   screen->tex_transfer_destroy(vtrans);
+   pipe->transfer_unmap(pipe, ytrans);
+   pipe->transfer_unmap(pipe, utrans);
+   pipe->transfer_unmap(pipe, vtrans);
+   pipe->tex_transfer_destroy(pipe, ytrans);
+   pipe->tex_transfer_destroy(pipe, utrans);
+   pipe->tex_transfer_destroy(pipe, vtrans);
 }
 
 
