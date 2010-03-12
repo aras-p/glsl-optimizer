@@ -402,58 +402,6 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
 }
 
 
-static struct pipe_video_surface*
-softpipe_video_surface_create(struct pipe_screen *screen,
-                              enum pipe_video_chroma_format chroma_format,
-                              unsigned width, unsigned height)
-{
-   struct softpipe_video_surface *sp_vsfc;
-   struct pipe_texture template;
-
-   assert(screen);
-   assert(width && height);
-
-   sp_vsfc = CALLOC_STRUCT(softpipe_video_surface);
-   if (!sp_vsfc)
-      return NULL;
-
-   pipe_reference_init(&sp_vsfc->base.reference, 1);
-   sp_vsfc->base.screen = screen;
-   sp_vsfc->base.chroma_format = chroma_format;
-   /*sp_vsfc->base.surface_format = PIPE_VIDEO_SURFACE_FORMAT_VUYA;*/
-   sp_vsfc->base.width = width;
-   sp_vsfc->base.height = height;
-
-   memset(&template, 0, sizeof(struct pipe_texture));
-   template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
-   template.last_level = 0;
-   /* vl_mpeg12_mc_renderer expects this when it's initialized with pot_buffers=true */
-   template.width0 = util_next_power_of_two(width);
-   template.height0 = util_next_power_of_two(height);
-   template.depth0 = 1;
-   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
-
-   sp_vsfc->tex = screen->texture_create(screen, &template);
-   if (!sp_vsfc->tex) {
-      FREE(sp_vsfc);
-      return NULL;
-   }
-
-   return &sp_vsfc->base;
-}
-
-
-static void
-softpipe_video_surface_destroy(struct pipe_video_surface *vsfc)
-{
-   struct softpipe_video_surface *sp_vsfc = softpipe_video_surface(vsfc);
-
-   pipe_texture_reference(&sp_vsfc->tex, NULL);
-   FREE(sp_vsfc);
-}
-
-
 void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
@@ -468,9 +416,6 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->tex_transfer_destroy = softpipe_tex_transfer_destroy;
    screen->transfer_map = softpipe_transfer_map;
    screen->transfer_unmap = softpipe_transfer_unmap;
-
-   screen->video_surface_create = softpipe_video_surface_create;
-   screen->video_surface_destroy = softpipe_video_surface_destroy;
 }
 
 

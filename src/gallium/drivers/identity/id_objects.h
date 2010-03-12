@@ -31,7 +31,6 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
-#include "pipe/p_video_state.h"
 
 #include "id_screen.h"
 
@@ -65,14 +64,6 @@ struct identity_transfer
    struct pipe_transfer base;
 
    struct pipe_transfer *transfer;
-};
-
-
-struct identity_video_surface
-{
-   struct pipe_video_surface base;
-
-   struct pipe_video_surface *video_surface;
 };
 
 
@@ -110,16 +101,6 @@ identity_transfer(struct pipe_transfer *_transfer)
       return NULL;
    (void)identity_texture(_transfer->texture);
    return (struct identity_transfer *)_transfer;
-}
-
-static INLINE struct identity_video_surface *
-identity_video_surface(struct pipe_video_surface *_video_surface)
-{
-   if (!_video_surface) {
-      return NULL;
-   }
-   (void)identity_screen(_video_surface->screen);
-   return (struct identity_video_surface *)_video_surface;
 }
 
 static INLINE struct pipe_buffer *
@@ -182,13 +163,6 @@ identity_transfer_create(struct identity_texture *id_texture,
 
 void
 identity_transfer_destroy(struct identity_transfer *id_transfer);
-
-struct pipe_video_surface *
-identity_video_surface_create(struct identity_screen *id_screen,
-                              struct pipe_video_surface *video_surface);
-
-void
-identity_video_surface_destroy(struct identity_video_surface *id_video_surface);
 
 
 #endif /* ID_OBJECTS_H */

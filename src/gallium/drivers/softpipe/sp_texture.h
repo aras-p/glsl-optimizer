@@ -30,7 +30,6 @@
 
 
 #include "pipe/p_state.h"
-#include "pipe/p_video_state.h"
 
 
 struct pipe_context;
@@ -63,15 +62,6 @@ struct softpipe_transfer
    unsigned long offset;
 };
 
-struct softpipe_video_surface
-{
-   struct pipe_video_surface base;
-
-   /* The data is held here:
-    */
-   struct pipe_texture *tex;
-};
-
 
 /** cast wrappers */
 static INLINE struct softpipe_texture *
@@ -84,12 +74,6 @@ static INLINE struct softpipe_transfer *
 softpipe_transfer(struct pipe_transfer *pt)
 {
    return (struct softpipe_transfer *) pt;
-}
-
-static INLINE struct softpipe_video_surface *
-softpipe_video_surface(struct pipe_video_surface *pvs)
-{
-   return (struct softpipe_video_surface *) pvs;
 }
 
 

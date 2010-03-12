@@ -37,7 +37,6 @@ extern "C" {
 struct pipe_screen;
 struct pipe_buffer;
 struct pipe_surface;
-struct pipe_video_surface;
 struct pipe_macroblock;
 struct pipe_picture_desc;
 struct pipe_fence_handle;
@@ -66,28 +65,22 @@ struct pipe_video_context
                             struct pipe_buffer **bitstream_buf);
 
    void (*decode_macroblocks)(struct pipe_video_context *vpipe,
-                              struct pipe_video_surface *past,
-                              struct pipe_video_surface *future,
+                              struct pipe_surface *past,
+                              struct pipe_surface *future,
                               unsigned num_macroblocks,
                               struct pipe_macroblock *macroblocks,
                               struct pipe_fence_handle **fence);
 
    void (*render_picture)(struct pipe_video_context     *vpipe,
-                          /*struct pipe_surface         *backround,
-                          struct pipe_video_rect        *backround_area,*/
-                          struct pipe_video_surface     *src_surface,
+                          struct pipe_surface           *src_surface,
                           enum pipe_mpeg12_picture_type picture_type,
                           /*unsigned                    num_past_surfaces,
-                          struct pipe_video_surface     *past_surfaces,
+                          struct pipe_surface           *past_surfaces,
                           unsigned                      num_future_surfaces,
-                          struct pipe_video_surface     *future_surfaces,*/
+                          struct pipe_surface           *future_surfaces,*/
                           struct pipe_video_rect        *src_area,
                           struct pipe_surface           *dst_surface,
                           struct pipe_video_rect        *dst_area,
-                          /*unsigned                      num_layers,
-                          struct pipe_texture           *layers,
-                          struct pipe_video_rect        *layer_src_areas,
-                          struct pipe_video_rect        *layer_dst_areas,*/
                           struct pipe_fence_handle      **fence);
 
    void (*surface_fill)(struct pipe_video_context *vpipe,
@@ -123,7 +116,7 @@ struct pipe_video_context
                             const struct pipe_picture_desc *desc);
 
    void (*set_decode_target)(struct pipe_video_context *vpipe,
-                             struct pipe_video_surface *dt);
+                             struct pipe_surface *dt);
 
    void (*set_csc_matrix)(struct pipe_video_context *vpipe, const float *mat);
 

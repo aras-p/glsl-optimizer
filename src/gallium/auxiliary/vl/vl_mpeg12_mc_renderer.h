@@ -34,7 +34,6 @@
 #include "vl_types.h"
 
 struct pipe_context;
-struct pipe_video_surface;
 struct pipe_macroblock;
 
 /* A slice is video-width (rounded up to a multiple of macroblock width) x macroblock height */

@@ -38,26 +38,6 @@
 extern "C" {
 #endif
 
-struct pipe_video_surface
-{
-   struct pipe_reference reference;
-   struct pipe_screen *screen;
-   enum pipe_video_chroma_format chroma_format;
-   /*enum pipe_video_surface_format surface_format;*/
-   unsigned width;
-   unsigned height;
-};
-
-static INLINE void
-pipe_video_surface_reference(struct pipe_video_surface **ptr, struct pipe_video_surface *surf)
-{
-   struct pipe_video_surface *old_surf = *ptr;
-
-   if (pipe_reference(&(*ptr)->reference, &surf->reference))
-      old_surf->screen->video_surface_destroy(old_surf);
-   *ptr = surf;
-}
-
 struct pipe_video_rect
 {
    unsigned x, y, w, h;

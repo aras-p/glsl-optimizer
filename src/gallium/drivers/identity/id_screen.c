@@ -394,33 +394,6 @@ identity_screen_buffer_destroy(struct pipe_buffer *_buffer)
    identity_buffer_destroy(identity_buffer(_buffer));
 }
 
-static struct pipe_video_surface *
-identity_screen_video_surface_create(struct pipe_screen *_screen,
-                                     enum pipe_video_chroma_format chroma_format,
-                                     unsigned width,
-                                     unsigned height)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_video_surface *result;
-
-   result = screen->video_surface_create(screen,
-                                         chroma_format,
-                                         width,
-                                         height);
-
-   if (result) {
-      return identity_video_surface_create(id_screen, result);
-   }
-   return NULL;
-}
-
-static void
-identity_screen_video_surface_destroy(struct pipe_video_surface *_vsfc)
-{
-   identity_video_surface_destroy(identity_video_surface(_vsfc));
-}
-
 static void
 identity_screen_flush_frontbuffer(struct pipe_screen *_screen,
                                   struct pipe_surface *_surface,
@@ -515,12 +488,6 @@ identity_screen_create(struct pipe_screen *screen)
    if (screen->buffer_unmap)
       id_screen->base.buffer_unmap = identity_screen_buffer_unmap;
    id_screen->base.buffer_destroy = identity_screen_buffer_destroy;
-   if (screen->video_surface_create) {
-      id_screen->base.video_surface_create = identity_screen_video_surface_create;
-   }
-   if (screen->video_surface_destroy) {
-      id_screen->base.video_surface_destroy = identity_screen_video_surface_destroy;
-   }
    id_screen->base.flush_frontbuffer = identity_screen_flush_frontbuffer;
    id_screen->base.fence_reference = identity_screen_fence_reference;
    id_screen->base.fence_signalled = identity_screen_fence_signalled;

@@ -34,13 +34,12 @@
 
 struct pipe_screen;
 struct pipe_context;
-struct pipe_video_surface;
 
 struct sp_mpeg12_context
 {
    struct pipe_video_context base;
    struct pipe_context *pipe;
-   struct pipe_video_surface *decode_target;
+   struct pipe_surface *decode_target;
    struct vl_mpeg12_mc_renderer mc_renderer;
    struct vl_compositor compositor;
 

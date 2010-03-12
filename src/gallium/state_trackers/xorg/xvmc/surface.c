@@ -33,6 +33,7 @@
 #include <pipe/p_state.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_math.h>
 #include "xvmc_private.h"
 
 static enum pipe_mpeg12_macroblock_type TypeToPipe(int xvmc_mb_type)
@@ -190,7 +191,9 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    XvMCContextPrivate *context_priv;
    struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
-   struct pipe_video_surface *vsfc;
+   struct pipe_texture template;
+   struct pipe_texture *vsfc_tex;
+   struct pipe_surface *vsfc;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating surface %p.\n", surface);
 
@@ -208,9 +211,25 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    if (!surface_priv)
       return BadAlloc;
 
-   assert(vpipe->screen->video_surface_create);
-   vsfc = vpipe->screen->video_surface_create(vpipe->screen, vpipe->chroma_format,
-                                              vpipe->width, vpipe->height);
+   memset(&template, 0, sizeof(struct pipe_texture));
+   template.target = PIPE_TEXTURE_2D;
+   /* XXX: Let the pipe_video_context choose whatever format it likes to render to */
+   template.format = PIPE_FORMAT_AYUV;
+   template.last_level = 0;
+   /* XXX: vl_mpeg12_mc_renderer expects this when it's initialized with pot_buffers=true, clean this up */
+   template.width0 = util_next_power_of_two(context->width);
+   template.height0 = util_next_power_of_two(context->height);
+   template.depth0 = 1;
+   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   vsfc_tex = vpipe->screen->texture_create(vpipe->screen, &template);
+   if (!vsfc_tex) {
+      FREE(surface_priv);
+      return BadAlloc;
+   }
+
+   vsfc = vpipe->screen->get_tex_surface(vpipe->screen, vsfc_tex, 0, 0, 0,
+                                         PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+   pipe_texture_reference(&vsfc_tex, NULL);
    if (!vsfc) {
       FREE(surface_priv);
       return BadAlloc;
@@ -390,7 +409,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p has subpicture %p.\n", surface, surface_priv->subpicture);
 
       assert(subpicture_priv->surface == surface);
-      vpipe->set_picture_layers(vpipe, &subpicture_priv->sfc->texture, &src_rects, &dst_rects, 1);
+      vpipe->set_picture_layers(vpipe, &subpicture_priv->sfc, &src_rects, &dst_rects, 1);
 
       surface_priv->subpicture = NULL;
       subpicture_priv->surface = NULL;
@@ -443,7 +462,7 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
       return XvMCBadSurface;
 
    surface_priv = surface->privData;
-   pipe_video_surface_reference(&surface_priv->pipe_vsfc, NULL);
+   pipe_surface_reference(&surface_priv->pipe_vsfc, NULL);
    FREE(surface_priv);
    surface->privData = NULL;
 

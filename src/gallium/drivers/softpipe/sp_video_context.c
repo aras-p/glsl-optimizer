@@ -51,7 +51,7 @@ sp_mpeg12_destroy(struct pipe_video_context *vpipe)
    ctx->pipe->delete_rasterizer_state(ctx->pipe, ctx->rast);
    ctx->pipe->delete_depth_stencil_alpha_state(ctx->pipe, ctx->dsa);
 
-   pipe_video_surface_reference(&ctx->decode_target, NULL);
+   pipe_surface_reference(&ctx->decode_target, NULL);
    vl_compositor_cleanup(&ctx->compositor);
    vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
    ctx->pipe->destroy(ctx->pipe);
@@ -61,8 +61,8 @@ sp_mpeg12_destroy(struct pipe_video_context *vpipe)
 
 static void
 sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
-                             struct pipe_video_surface *past,
-                             struct pipe_video_surface *future,
+                             struct pipe_surface *past,
+                             struct pipe_surface *future,
                              unsigned num_macroblocks,
                              struct pipe_macroblock *macroblocks,
                              struct pipe_fence_handle **fence)
@@ -77,9 +77,9 @@ sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
    assert(ctx->decode_target);
 
    vl_mpeg12_mc_renderer_render_macroblocks(&ctx->mc_renderer,
-                                            softpipe_video_surface(ctx->decode_target)->tex,
-                                            past ? softpipe_video_surface(past)->tex : NULL,
-                                            future ? softpipe_video_surface(future)->tex : NULL,
+                                            ctx->decode_target->texture,
+                                            past ? past->texture : NULL,
+                                            future ? future->texture : NULL,
                                             num_macroblocks, mpeg12_macroblocks, fence);
 }
 
@@ -122,12 +122,12 @@ sp_mpeg12_surface_copy(struct pipe_video_context *vpipe,
 
 static void
 sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
-                         struct pipe_video_surface     *src_surface,
+                         struct pipe_surface           *src_surface,
                          enum pipe_mpeg12_picture_type picture_type,
                          /*unsigned                    num_past_surfaces,
-                         struct pipe_video_surface     *past_surfaces,
+                         struct pipe_surface           *past_surfaces,
                          unsigned                      num_future_surfaces,
-                         struct pipe_video_surface     *future_surfaces,*/
+                         struct pipe_surface           *future_surfaces,*/
                          struct pipe_video_rect        *src_area,
                          struct pipe_surface           *dst_surface,
                          struct pipe_video_rect        *dst_area,
@@ -141,7 +141,7 @@ sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
    assert(dst_surface);
    assert(dst_area);
 
-   vl_compositor_render(&ctx->compositor, softpipe_video_surface(src_surface)->tex,
+   vl_compositor_render(&ctx->compositor, src_surface->texture,
                         picture_type, src_area, dst_surface->texture, dst_area, fence);
 }
 
@@ -177,14 +177,14 @@ sp_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
 
 static void
 sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
-                            struct pipe_video_surface *dt)
+                            struct pipe_surface *dt)
 {
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(dt);
 
-   pipe_video_surface_reference(&ctx->decode_target, dt);
+   pipe_surface_reference(&ctx->decode_target, dt);
 }
 
 static void
