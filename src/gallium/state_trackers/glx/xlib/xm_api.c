@@ -274,7 +274,8 @@ choose_pixel_format(XMesaVisual v)
 }
 
 /**
- * Choose a depth/stencil format for the given depth and stencil sizes.
+ * Choose a depth/stencil format that is "better" than the given depth and
+ * stencil sizes.
  */
 static enum pipe_format
 choose_depth_stencil_format(int depth, int stencil)
@@ -289,21 +290,16 @@ choose_depth_stencil_format(int depth, int stencil)
    assert(screen);
 
    count = 0;
-   switch (depth) {
-   case 16:
-      if (!stencil)
-         formats[count++] = PIPE_FORMAT_Z16_UNORM;
-      break;
-   case 24:
+   if (depth <= 24 && stencil <= 8) {
       formats[count++] = PIPE_FORMAT_S8Z24_UNORM;
       formats[count++] = PIPE_FORMAT_Z24S8_UNORM;
-      break;
-   case 32:
-      if (!stencil)
+   }
+
+   if (!stencil) {
+      if (depth <= 16)
+         formats[count++] = PIPE_FORMAT_Z16_UNORM;
+      if (depth <= 32)
          formats[count++] = PIPE_FORMAT_Z32_UNORM;
-      break;
-   default:
-      break;
    }
 
    fmt = PIPE_FORMAT_NONE;
