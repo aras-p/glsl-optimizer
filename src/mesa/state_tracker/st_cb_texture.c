@@ -123,6 +123,8 @@ st_DeleteTextureObject(GLcontext *ctx,
    struct st_texture_object *stObj = st_texture_object(texObj);
    if (stObj->pt)
       pipe_texture_reference(&stObj->pt, NULL);
+   if (stObj->sampler_view)
+      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -311,6 +313,8 @@ guess_and_alloc_texture(struct st_context *st,
                                  height,
                                  depth,
                                  usage);
+
+   stObj->pipe = st->pipe;
 
    DBG("%s - success\n", __FUNCTION__);
 }

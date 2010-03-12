@@ -398,7 +398,7 @@ setup_bitmap_vertex_data(struct st_context *st,
 static void
 draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                  GLsizei width, GLsizei height,
-                 struct pipe_texture *pt,
+                 struct pipe_sampler_view *sv,
                  const GLfloat *color)
 {
    struct st_context *st = ctx->st;
@@ -436,7 +436,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    cso_save_rasterizer(cso);
    cso_save_samplers(cso);
-   cso_save_sampler_textures(cso);
+   cso_save_fragment_sampler_views(cso);
    cso_save_viewport(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
@@ -466,11 +466,11 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* user textures, plus the bitmap texture */
    {
-      struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
       uint num = MAX2(stfp->bitmap_sampler + 1, st->state.num_textures);
-      memcpy(textures, st->state.sampler_texture, sizeof(textures));
-      textures[stfp->bitmap_sampler] = pt;
-      cso_set_sampler_textures(cso, num, textures);
+      memcpy(sampler_views, st->state.sampler_views, sizeof(sampler_views));
+      sampler_views[stfp->bitmap_sampler] = sv;
+      cso_set_fragment_sampler_views(cso, num, sampler_views);
    }
 
    /* viewport state: viewport matching window dims */
@@ -508,7 +508,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_samplers(cso);
-   cso_restore_sampler_textures(cso);
+   cso_restore_fragment_sampler_views(cso);
    cso_restore_viewport(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
@@ -602,6 +602,7 @@ st_flush_bitmap_cache(struct st_context *st)
       if (st->ctx->DrawBuffer) {
          struct pipe_context *pipe = st->pipe;
          struct pipe_screen *screen = pipe->screen;
+         struct pipe_sampler_view *sv;
 
          assert(cache->xmin <= cache->xmax);
  
@@ -624,13 +625,18 @@ st_flush_bitmap_cache(struct st_context *st)
             cache->trans = NULL;
          }
 
-         draw_bitmap_quad(st->ctx,
-                          cache->xpos,
-                          cache->ypos,
-                          cache->zpos,
-                          BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
-                          cache->texture,
-                          cache->color);
+         sv = st_sampler_view_from_texture(st->pipe, cache->texture);
+         if (sv) {
+            draw_bitmap_quad(st->ctx,
+                             cache->xpos,
+                             cache->ypos,
+                             cache->zpos,
+                             BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
+                             sv,
+                             cache->color);
+
+            pipe_sampler_view_reference(&sv, NULL);
+         }
       }
 
       /* release/free the texture */
@@ -753,10 +759,18 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    pt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
    if (pt) {
+      struct pipe_sampler_view *sv = st_sampler_view_from_texture(st->pipe, pt);
+
       assert(pt->target == PIPE_TEXTURE_2D);
-      draw_bitmap_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                       width, height, pt,
-                       st->ctx->Current.RasterColor);
+
+      if (sv) {
+         draw_bitmap_quad(ctx, x, y, ctx->Current.RasterPos[2],
+                          width, height, sv,
+                          st->ctx->Current.RasterColor);
+
+         pipe_sampler_view_reference(&sv, NULL);
+      }
+
       /* release/free the texture */
       pipe_texture_reference(&pt, NULL);
    }

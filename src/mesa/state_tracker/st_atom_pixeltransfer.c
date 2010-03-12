@@ -257,6 +257,8 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
       /* create the colormap/texture now if not already done */
       if (!st->pixel_xfer.pixelmap_texture) {
          st->pixel_xfer.pixelmap_texture = create_color_map_texture(ctx);
+         st->pixel_xfer.pixelmap_sampler_view = st_sampler_view_from_texture(ctx->st->pipe,
+                                                                             st->pixel_xfer.pixelmap_texture);
       }
 
       /* with a little effort, we can do four pixel map look-ups with

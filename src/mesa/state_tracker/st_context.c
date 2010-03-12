@@ -215,8 +215,8 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_drawtex(st);
 #endif
 
-   for (i = 0; i < Elements(st->state.sampler_texture); i++) {
-      pipe_texture_reference(&st->state.sampler_texture[i], NULL);
+   for (i = 0; i < Elements(st->state.sampler_views); i++) {
+      pipe_sampler_view_reference(&st->state.sampler_views[i], NULL);
    }
 
    for (i = 0; i < Elements(st->state.constants); i++) {

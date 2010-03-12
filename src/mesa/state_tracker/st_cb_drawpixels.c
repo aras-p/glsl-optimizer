@@ -503,7 +503,7 @@ static void
 draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    GLsizei width, GLsizei height,
                    GLfloat zoomX, GLfloat zoomY,
-                   struct pipe_texture *pt,
+                   struct pipe_sampler_view *sv,
                    void *driver_vp,
                    void *driver_fp,
                    const GLfloat *color,
@@ -526,7 +526,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_rasterizer(cso);
    cso_save_viewport(cso);
    cso_save_samplers(cso);
-   cso_save_sampler_textures(cso);
+   cso_save_fragment_sampler_views(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
    cso_save_vertex_elements(cso);
@@ -586,13 +586,13 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* texture state: */
    if (st->pixel_xfer.pixelmap_enabled) {
-      struct pipe_texture *textures[2];
-      textures[0] = pt;
-      textures[1] = st->pixel_xfer.pixelmap_texture;
-      cso_set_sampler_textures(cso, 2, textures);
+      struct pipe_sampler_view *sampler_views[2];
+      sampler_views[0] = sv;
+      sampler_views[1] = st->pixel_xfer.pixelmap_sampler_view;
+      cso_set_fragment_sampler_views(cso, 2, sampler_views);
    }
    else {
-      cso_set_sampler_textures(cso, 1, &pt);
+      cso_set_fragment_sampler_views(cso, 1, &sv);
    }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
@@ -608,14 +608,14 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    z = z * 2.0 - 1.0;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
-	     (GLfloat) width / pt->width0,
-	     (GLfloat) height / pt->height0);
+             (GLfloat) width / sv->texture->width0,
+             (GLfloat) height / sv->texture->height0);
 
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_viewport(cso);
    cso_restore_samplers(cso);
-   cso_restore_sampler_textures(cso);
+   cso_restore_fragment_sampler_views(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
    cso_restore_vertex_elements(cso);
@@ -809,12 +809,17 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       struct pipe_texture *pt
          = make_texture(st, width, height, format, type, unpack, pixels);
       if (pt) {
-         draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                            width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                            pt, 
-                            driver_vp, 
-                            driver_fp,
-                            color, GL_FALSE);
+         struct pipe_sampler_view *sv = st_sampler_view_from_texture(st->pipe, pt);
+
+         if (sv) {
+            draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
+                               width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
+                               sv,
+                               driver_vp, 
+                               driver_fp,
+                               color, GL_FALSE);
+            pipe_sampler_view_reference(&sv, NULL);
+         }
          pipe_texture_reference(&pt, NULL);
       }
    }
@@ -933,6 +938,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct st_renderbuffer *rbRead;
    void *driver_vp, *driver_fp;
    struct pipe_texture *pt;
+   struct pipe_sampler_view *sv;
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
    int ptw, pth;
@@ -1050,6 +1056,11 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (!pt)
       return;
 
+   sv = st_sampler_view_from_texture(st->pipe, pt);
+   if (!sv) {
+      pipe_texture_reference(&pt, NULL);
+      return;
+   }
 
    if (srcFormat == texFormat) {
       /* copy source framebuffer surface into mipmap/texture */
@@ -1118,12 +1129,13 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* draw textured quad */
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                      pt, 
+                      sv, 
                       driver_vp, 
                       driver_fp,
                       color, GL_TRUE);
 
    pipe_texture_reference(&pt, NULL);
+   pipe_sampler_view_reference(&sv, NULL);
 }
 
 
