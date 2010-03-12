@@ -62,7 +62,13 @@ static INLINE struct brw_reg sechalf( struct brw_reg reg )
 }
 
 
-/* Payload R0:
+/**
+ * Computes the screen-space x,y position of the pixels.
+ *
+ * This will be used by emit_delta_xy() or emit_wpos_xy() for
+ * interpolation of attributes..
+ *
+ * Payload R0:
  *
  * R0.0 -- pixel mask, one bit for each of 4 pixels in 4 tiles,
  *         corresponding to each of the 16 execution channels.
@@ -77,7 +83,6 @@ static INLINE struct brw_reg sechalf( struct brw_reg reg )
  * R1.7 -- ?
  * R1.8 -- ?
  */
-
 void emit_pixel_xy(struct brw_wm_compile *c,
 		   const struct brw_reg *dst,
 		   GLuint mask)
@@ -117,7 +122,14 @@ void emit_pixel_xy(struct brw_wm_compile *c,
    brw_pop_insn_state(p);
 }
 
-
+/**
+ * Computes the screen-space x,y distance of the pixels from the start
+ * vertex.
+ *
+ * This will be used in linterp or pinterp with the start vertex value
+ * and the Cx, Cy, and C0 coefficients passed in from the setup engine
+ * to produce interpolated attribute values.
+ */
 void emit_delta_xy(struct brw_compile *p,
 		   const struct brw_reg *dst,
 		   GLuint mask,
@@ -131,7 +143,7 @@ void emit_delta_xy(struct brw_compile *p,
    assert(mask == WRITEMASK_XY);
 
    /* Calc delta X,Y by subtracting origin in r1 from the pixel
-    * centers.
+    * centers produced by emit_pixel_xy().
     */
    brw_ADD(p,
 	   dst[0],
@@ -143,6 +155,9 @@ void emit_delta_xy(struct brw_compile *p,
 	   negate(suboffset(r1,1)));
 }
 
+/**
+ * Computes the pixel offset from the window origin for gl_FragCoord().
+ */
 void emit_wpos_xy(struct brw_wm_compile *c,
 		  const struct brw_reg *dst,
 		  GLuint mask,
@@ -150,9 +165,6 @@ void emit_wpos_xy(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
 
-   /* Calculate the pixel offset from window bottom left into destination
-    * X and Y channels.
-    */
    if (mask & WRITEMASK_X) {
       if (c->fp->program.PixelCenterInteger) {
 	 /* X' = X */
