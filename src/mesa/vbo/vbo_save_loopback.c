@@ -78,7 +78,7 @@ struct loopback_attr {
 };
 
 /* Don't emit ends and begins on wrapped primitives.  Don't replay
- * wrapped vertices.  If we get here, it's probably because the the
+ * wrapped vertices.  If we get here, it's probably because the
  * precalculated wrapping is wrong.
  */
 static void loopback_prim( GLcontext *ctx,

@@ -431,7 +431,7 @@ extern const int xmesa_kernel8[DITH_DY * DITH_DX];
  * If pixelformat==PF_HPCR:
  *
  *      HP Color Recovery dithering               (ad@lms.be 30/08/95)
- *      HP has on it's 8-bit 700-series computers, a feature called
+ *      HP has on its 8-bit 700-series computers, a feature called
  *      'Color Recovery'.  This allows near 24-bit output (so they say).
  *      It is enabled by selecting the 8-bit  TrueColor  visual AND
  *      corresponding  colormap (see tkInitWindow) AND doing some special

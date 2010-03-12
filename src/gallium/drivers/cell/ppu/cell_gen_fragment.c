@@ -1352,7 +1352,7 @@ gen_stencil_values(struct spe_function *f,
     */
    ASSERT(fbS_reg != newS_reg);
 
-   /* The code also assumes the the stencil_max_value is of the form 
+   /* The code also assumes that the stencil_max_value is of the form
     * 2^n-1 and can therefore be used as a mask for the valid bits in 
     * addition to a maximum.  Make sure this is the case as well.
     * The clever math below exploits the fact that incrementing a 

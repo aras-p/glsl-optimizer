@@ -1901,7 +1901,7 @@ void radeonUploadTexMatrix( r100ContextPtr rmesa,
    So: if we need the q coord in the end (solely determined by the texture
    target, i.e. 2d / 1d / texrect targets) we swap the third and 4th row.
    Additionally, if we don't have texgen but 4 tex coords submitted, we swap
-   column 3 and 4 (for the 2d / 1d / texrect targets) since the the q coord
+   column 3 and 4 (for the 2d / 1d / texrect targets) since the q coord
    will get submitted in the "wrong", i.e. 3rd, slot.
    If an app submits 3 coords for 2d targets, we assume it is saving on vertex
    size and using the texture matrix to swap the r and q coords around (ut2k3

@@ -71,7 +71,7 @@ os_time_sleep(int64_t usecs);
 /*
  * Helper function for detecting time outs, taking in account overflow.
  *
- * Returns true the the current time has elapsed beyond the specified interval.
+ * Returns true if the current time has elapsed beyond the specified interval.
  */
 static INLINE boolean
 os_time_timeout(int64_t start,

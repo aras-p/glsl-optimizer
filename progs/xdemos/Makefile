@@ -11,7 +11,7 @@ LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 # Add X11 and pthread libs to satisfy GNU gold.
 APP_LIB_DEPS += -lX11 -lpthread
 
-LIBS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(APP_LIB_DEPS)
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -L$(libdir) $(APP_LIB_DEPS)
 
 PROGS = \
 	corender \

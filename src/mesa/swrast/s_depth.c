@@ -526,7 +526,7 @@ _swrast_depth_clamp_span( GLcontext *ctx, SWspan *span )
 
    /* Convert floating point values in [0,1] to device Z coordinates in
     * [0, DepthMax].
-    * ex: If the the Z buffer has 24 bits, DepthMax = 0xffffff.
+    * ex: If the Z buffer has 24 bits, DepthMax = 0xffffff.
     * 
     * XXX this all falls apart if we have 31 or more bits of Z because
     * the triangle rasterization code produces unsigned Z values.  Negative

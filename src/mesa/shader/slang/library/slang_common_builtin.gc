@@ -695,7 +695,7 @@ vec3 normalize(const vec3 v)
 {
 //   const float s = inversesqrt(dot(v, v));
 //   __retVal = v * s;
-// XXX note, we _could_ use __retVal.w instead of tmp and and save a
+// XXX note, we _could_ use __retVal.w instead of tmp and save a
 // register, but that's actually a compilation error because v is a vec3
 // and the .w suffix is illegal.  Oh well.
    float tmp;
