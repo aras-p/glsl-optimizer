@@ -44,6 +44,9 @@
 #include <X11/Xlib-xcb.h>
 #endif /* USE_XCB */
 
+#if !defined(__GNUC__)
+#  define __builtin_expect(x, y) x
+#endif
 
 /* Used for GL_ARB_transpose_matrix */
 static void
