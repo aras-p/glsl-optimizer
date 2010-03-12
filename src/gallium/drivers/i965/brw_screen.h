@@ -181,6 +181,10 @@ void brw_update_texture( struct brw_screen *brw_screen,
 			 struct brw_texture *tex );
 
 
+/* brw_screen_texture.h
+ */
+struct brw_context;
+void brw_tex_init( struct brw_context *brw );
 void brw_screen_tex_init( struct brw_screen *brw_screen );
 void brw_screen_tex_surface_init( struct brw_screen *brw_screen );
 

@@ -56,6 +56,7 @@ struct trace_screen
    struct pipe_screen base;
 
    struct pipe_screen *screen;
+   struct pipe_context *private_context;
 
    /* remote debugger */
    struct trace_rbug *rbug;

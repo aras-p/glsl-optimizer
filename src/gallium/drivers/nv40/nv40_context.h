@@ -183,6 +183,7 @@ struct nv40_state_entry {
 extern void nv40_init_state_functions(struct nv40_context *nv40);
 extern void nv40_init_surface_functions(struct nv40_context *nv40);
 extern void nv40_init_query_functions(struct nv40_context *nv40);
+extern void nv40_init_transfer_functions(struct nv40_context *nv40);
 
 extern void nv40_screen_init_miptree_functions(struct pipe_screen *pscreen);
 

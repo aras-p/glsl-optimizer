@@ -27,7 +27,6 @@
 
 #include "r300_context.h"
 #include "r300_texture.h"
-#include "r300_transfer.h"
 
 #include "radeon_winsys.h"
 #include "r300_winsys.h"
@@ -290,7 +289,6 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
     r300screen->screen.context_create = r300_create_context;
 
     r300_init_screen_texture_functions(&r300screen->screen);
-    r300_init_screen_transfer_functions(&r300screen->screen);
     u_simple_screen_init(&r300screen->screen);
 
     return &r300screen->screen;

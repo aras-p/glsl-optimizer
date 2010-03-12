@@ -421,26 +421,31 @@ void debug_dump_image(const char *prefix,
 #endif
 }
 
-void debug_dump_surface(const char *prefix,
+void debug_dump_surface(struct pipe_context *pipe,
+			const char *prefix,
                         struct pipe_surface *surface)     
 {
    struct pipe_texture *texture;
-   struct pipe_screen *screen;
    struct pipe_transfer *transfer;
    void *data;
 
    if (!surface)
       return;
 
+   /* XXX: this doesn't necessarily work, as the driver may be using
+    * temporary storage for the surface which hasn't been propagated
+    * back into the texture.  Need to nail down the semantics of views
+    * and transfers a bit better before we can say if extra work needs
+    * to be done here:
+    */
    texture = surface->texture;
-   screen = texture->screen;
 
-   transfer = screen->get_tex_transfer(screen, texture, surface->face,
-                                       surface->level, surface->zslice,
-                                       PIPE_TRANSFER_READ, 0, 0, surface->width,
-                                       surface->height);
+   transfer = pipe->get_tex_transfer(pipe, texture, surface->face,
+				     surface->level, surface->zslice,
+				     PIPE_TRANSFER_READ, 0, 0, surface->width,
+				     surface->height);
    
-   data = screen->transfer_map(screen, transfer);
+   data = pipe->transfer_map(pipe, transfer);
    if(!data)
       goto error;
    
@@ -452,13 +457,14 @@ void debug_dump_surface(const char *prefix,
                     transfer->stride,
                     data);
    
-   screen->transfer_unmap(screen, transfer);
+   pipe->transfer_unmap(pipe, transfer);
 error:
-   screen->tex_transfer_destroy(transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 }
 
 
-void debug_dump_texture(const char *prefix,
+void debug_dump_texture(struct pipe_context *pipe,
+                        const char *prefix,
                         struct pipe_texture *texture)
 {
    struct pipe_surface *surface;
@@ -473,7 +479,7 @@ void debug_dump_texture(const char *prefix,
    surface = screen->get_tex_surface(screen, texture, 0, 0, 0,
                                      PIPE_TEXTURE_USAGE_SAMPLER);
    if (surface) {
-      debug_dump_surface(prefix, surface);
+      debug_dump_surface(pipe, prefix, surface);
       screen->tex_surface_destroy(surface);
    }
 }
@@ -511,27 +517,28 @@ struct bmp_rgb_quad {
 };
 
 void
-debug_dump_surface_bmp(const char *filename,
+debug_dump_surface_bmp(struct pipe_context *pipe,
+		       const char *filename,
                        struct pipe_surface *surface)
 {
 #ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
    struct pipe_transfer *transfer;
    struct pipe_texture *texture = surface->texture;
-   struct pipe_screen *screen = texture->screen;
 
-   transfer = screen->get_tex_transfer(screen, texture, surface->face,
-                                       surface->level, surface->zslice,
-                                       PIPE_TRANSFER_READ, 0, 0, surface->width,
-                                       surface->height);
+   transfer = pipe->get_tex_transfer(pipe, texture, surface->face,
+				     surface->level, surface->zslice,
+				     PIPE_TRANSFER_READ, 0, 0, surface->width,
+				     surface->height);
 
-   debug_dump_transfer_bmp(filename, transfer);
+   debug_dump_transfer_bmp(pipe, filename, transfer);
 
-   screen->tex_transfer_destroy(transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 #endif
 }
 
 void
-debug_dump_transfer_bmp(const char *filename,
+debug_dump_transfer_bmp(struct pipe_context *pipe,
+                        const char *filename,
                         struct pipe_transfer *transfer)
 {
 #ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
@@ -544,7 +551,7 @@ debug_dump_transfer_bmp(const char *filename,
    if(!rgba)
       goto error1;
 
-   pipe_get_tile_rgba(transfer, 0, 0,
+   pipe_get_tile_rgba(pipe, transfer, 0, 0,
                       transfer->width, transfer->height,
                       rgba);
 

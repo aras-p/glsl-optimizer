@@ -173,6 +173,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.is_buffer_referenced = llvmpipe_is_buffer_referenced;
 
    llvmpipe_init_query_funcs( llvmpipe );
+   llvmpipe_init_context_texture_funcs( &llvmpipe->pipe );
 
    /*
     * Create drawing context and plug our rendering stage into it.

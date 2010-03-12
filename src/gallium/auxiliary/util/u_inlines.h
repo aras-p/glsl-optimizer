@@ -264,24 +264,24 @@ pipe_buffer_read(struct pipe_screen *screen,
 }
 
 static INLINE void *
-pipe_transfer_map( struct pipe_transfer *transf )
+pipe_transfer_map( struct pipe_context *context,
+                   struct pipe_transfer *transf )
 {
-   struct pipe_screen *screen = transf->texture->screen;
-   return screen->transfer_map(screen, transf);
+   return context->transfer_map(context, transf);
 }
 
 static INLINE void
-pipe_transfer_unmap( struct pipe_transfer *transf )
+pipe_transfer_unmap( struct pipe_context *context,
+                     struct pipe_transfer *transf )
 {
-   struct pipe_screen *screen = transf->texture->screen;
-   screen->transfer_unmap(screen, transf);
+   context->transfer_unmap(context, transf);
 }
 
 static INLINE void
-pipe_transfer_destroy( struct pipe_transfer *transf )
+pipe_transfer_destroy( struct pipe_context *context,
+                       struct pipe_transfer *transfer )
 {
-   struct pipe_screen *screen = transf->texture->screen;
-   screen->tex_transfer_destroy(transf);
+   context->tex_transfer_destroy(context, transfer);
 }
 
 static INLINE unsigned

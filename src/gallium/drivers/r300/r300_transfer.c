@@ -118,15 +118,15 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
 }
 
 static struct pipe_transfer*
-r300_get_tex_transfer(struct pipe_screen *screen,
+r300_get_tex_transfer(struct pipe_context *ctx,
                       struct pipe_texture *texture,
                       unsigned face, unsigned level, unsigned zslice,
                       enum pipe_transfer_usage usage, unsigned x, unsigned y,
                       unsigned w, unsigned h)
 {
     struct r300_texture *tex = (struct r300_texture *)texture;
+    struct r300_screen *r300screen = r300_screen(ctx->screen);
     struct r300_transfer *trans;
-    struct r300_screen *r300screen = r300_screen(screen);
     struct pipe_texture template;
 
     trans = CALLOC_STRUCT(r300_transfer);
@@ -136,7 +136,7 @@ r300_get_tex_transfer(struct pipe_screen *screen,
         trans->transfer.usage = usage;
         trans->transfer.width = w;
         trans->transfer.height = h;
-        trans->ctx = r300screen->ctx;
+        trans->ctx = ctx;
         trans->x = x;
         trans->y = y;
         trans->level = level;
@@ -174,8 +174,10 @@ r300_get_tex_transfer(struct pipe_screen *screen,
             }
 
             /* Create the temporary texture. */
-            trans->detiled_texture =
-                (struct r300_texture*)screen->texture_create(screen, &template);
+            trans->detiled_texture = (struct r300_texture*)
+               ctx->screen->texture_create(ctx->screen,
+                                           &template);
+
             assert(!trans->detiled_texture->microtile &&
                    !trans->detiled_texture->macrotile);
 
@@ -187,7 +189,7 @@ r300_get_tex_transfer(struct pipe_screen *screen,
             if (usage & PIPE_TRANSFER_READ) {
                 /* We cannot map a tiled texture directly because the data is
                  * in a different order, therefore we do detiling using a blit. */
-                r300_copy_from_tiled_texture(r300screen->ctx, trans);
+                r300_copy_from_tiled_texture(ctx, trans);
             }
         } else {
             trans->transfer.x = x;
@@ -203,7 +205,8 @@ r300_get_tex_transfer(struct pipe_screen *screen,
     return &trans->transfer;
 }
 
-static void r300_tex_transfer_destroy(struct pipe_transfer *trans)
+static void r300_tex_transfer_destroy(struct pipe_context *ctx,
+                                      struct pipe_transfer *trans)
 {
     struct r300_transfer *r300transfer = r300_transfer(trans);
 
@@ -219,7 +222,7 @@ static void r300_tex_transfer_destroy(struct pipe_transfer *trans)
     FREE(trans);
 }
 
-static void* r300_transfer_map(struct pipe_screen *screen,
+static void* r300_transfer_map(struct pipe_context *ctx,
                                struct pipe_transfer *transfer)
 {
     struct r300_transfer *r300transfer = r300_transfer(transfer);
@@ -230,12 +233,12 @@ static void* r300_transfer_map(struct pipe_screen *screen,
     if (r300transfer->detiled_texture) {
         /* The detiled texture is of the same size as the region being mapped
          * (no offset needed). */
-        return pipe_buffer_map(screen,
+        return pipe_buffer_map(ctx->screen,
                                r300transfer->detiled_texture->buffer,
                                pipe_transfer_buffer_flags(transfer));
     } else {
         /* Tiling is disabled. */
-        map = pipe_buffer_map(screen, tex->buffer,
+        map = pipe_buffer_map(ctx->screen, tex->buffer,
                               pipe_transfer_buffer_flags(transfer));
 
         if (!map) {
@@ -248,23 +251,26 @@ static void* r300_transfer_map(struct pipe_screen *screen,
     }
 }
 
-static void r300_transfer_unmap(struct pipe_screen *screen,
+static void r300_transfer_unmap(struct pipe_context *ctx,
                                 struct pipe_transfer *transfer)
 {
     struct r300_transfer *r300transfer = r300_transfer(transfer);
     struct r300_texture *tex = (struct r300_texture*)transfer->texture;
 
     if (r300transfer->detiled_texture) {
-        pipe_buffer_unmap(screen, r300transfer->detiled_texture->buffer);
+        pipe_buffer_unmap(ctx->screen, r300transfer->detiled_texture->buffer);
     } else {
-        pipe_buffer_unmap(screen, tex->buffer);
+        pipe_buffer_unmap(ctx->screen, tex->buffer);
     }
 }
 
-void r300_init_screen_transfer_functions(struct pipe_screen *screen)
+
+void r300_init_transfer_functions( struct r300_context *r300ctx )
 {
-    screen->get_tex_transfer = r300_get_tex_transfer;
-    screen->tex_transfer_destroy = r300_tex_transfer_destroy;
-    screen->transfer_map = r300_transfer_map;
-    screen->transfer_unmap = r300_transfer_unmap;
+   struct pipe_context *ctx = &r300ctx->context;
+
+   ctx->get_tex_transfer = r300_get_tex_transfer;
+   ctx->tex_transfer_destroy = r300_tex_transfer_destroy;
+   ctx->transfer_map = r300_transfer_map;
+   ctx->transfer_unmap = r300_transfer_unmap;
 }

@@ -167,6 +167,7 @@ struct nv30_state_entry {
 extern void nv30_init_state_functions(struct nv30_context *nv30);
 extern void nv30_init_surface_functions(struct nv30_context *nv30);
 extern void nv30_init_query_functions(struct nv30_context *nv30);
+extern void nv30_init_transfer_functions(struct nv30_context *nv30);
 
 extern void nv30_screen_init_miptree_functions(struct pipe_screen *pscreen);
 

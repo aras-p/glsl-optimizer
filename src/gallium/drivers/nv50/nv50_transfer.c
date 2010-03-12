@@ -121,11 +121,12 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 }
 
 static struct pipe_transfer *
-nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
+nv50_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 		  unsigned face, unsigned level, unsigned zslice,
 		  enum pipe_transfer_usage usage,
 		  unsigned x, unsigned y, unsigned w, unsigned h)
 {
+        struct pipe_screen *pscreen = pcontext->screen;
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	struct nv50_miptree_level *lvl = &mt->level[level];
@@ -186,7 +187,7 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 }
 
 static void
-nv50_transfer_del(struct pipe_transfer *ptx)
+nv50_transfer_del(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
@@ -196,7 +197,7 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 	unsigned ny = util_format_get_nblocksy(pt->format, tx->base.height);
 
 	if (ptx->usage & PIPE_TRANSFER_WRITE) {
-		struct pipe_screen *pscreen = pt->screen;
+		struct pipe_screen *pscreen = pcontext->screen;
 
 		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0,
 					tx->base.stride, tx->bo->tile_mode,
@@ -218,7 +219,7 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 }
 
 static void *
-nv50_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
+nv50_transfer_map(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 	unsigned flags = 0;
@@ -236,7 +237,7 @@ nv50_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 }
 
 static void
-nv50_transfer_unmap(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
+nv50_transfer_unmap(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 
@@ -244,12 +245,12 @@ nv50_transfer_unmap(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 }
 
 void
-nv50_transfer_init_screen_functions(struct pipe_screen *pscreen)
+nv50_init_transfer_functions(struct nv50_context *nv50)
 {
-	pscreen->get_tex_transfer = nv50_transfer_new;
-	pscreen->tex_transfer_destroy = nv50_transfer_del;
-	pscreen->transfer_map = nv50_transfer_map;
-	pscreen->transfer_unmap = nv50_transfer_unmap;
+	nv50->pipe.get_tex_transfer = nv50_transfer_new;
+	nv50->pipe.tex_transfer_destroy = nv50_transfer_del;
+	nv50->pipe.transfer_map = nv50_transfer_map;
+	nv50->pipe.transfer_unmap = nv50_transfer_unmap;
 }
 
 void

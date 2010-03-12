@@ -44,6 +44,7 @@
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
 #include "sp_tex_tile_cache.h"
+#include "sp_texture.h"
 #include "sp_query.h"
 
 
@@ -275,6 +276,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
 
    softpipe_init_query_funcs( softpipe );
+   softpipe_init_texture_funcs( &softpipe->pipe );
 
    softpipe->pipe.render_condition = softpipe_render_condition;
 
@@ -283,13 +285,13 @@ softpipe_create_context( struct pipe_screen *screen,
     * Must be before quad stage setup!
     */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-      softpipe->cbuf_cache[i] = sp_create_tile_cache( screen );
-   softpipe->zsbuf_cache = sp_create_tile_cache( screen );
+      softpipe->cbuf_cache[i] = sp_create_tile_cache( &softpipe->pipe );
+   softpipe->zsbuf_cache = sp_create_tile_cache( &softpipe->pipe );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      softpipe->tex_cache[i] = sp_create_tex_tile_cache( screen );
+      softpipe->tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      softpipe->vertex_tex_cache[i] = sp_create_tex_tile_cache(screen);
+      softpipe->vertex_tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
    }
 
    /* setup quad rendering stages */

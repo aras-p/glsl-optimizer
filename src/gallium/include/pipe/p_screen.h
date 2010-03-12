@@ -142,23 +142,6 @@ struct pipe_screen {
    void (*tex_surface_destroy)(struct pipe_surface *);
    
 
-   /** Get a transfer object for transferring data to/from a texture */
-   struct pipe_transfer *(*get_tex_transfer)(struct pipe_screen *,
-                                             struct pipe_texture *texture,
-                                             unsigned face, unsigned level,
-                                             unsigned zslice,
-                                             enum pipe_transfer_usage usage,
-                                             unsigned x, unsigned y,
-                                             unsigned w, unsigned h);
-
-   void (*tex_transfer_destroy)(struct pipe_transfer *);
-   
-   void *(*transfer_map)( struct pipe_screen *,
-                          struct pipe_transfer *transfer );
-
-   void (*transfer_unmap)( struct pipe_screen *,
-                           struct pipe_transfer *transfer );
-
 
    /**
     * Create a new buffer.

@@ -243,7 +243,7 @@ llvmpipe_tex_surface_destroy(struct pipe_surface *surf)
 
 
 static struct pipe_transfer *
-llvmpipe_get_tex_transfer(struct pipe_screen *screen,
+llvmpipe_get_tex_transfer(struct pipe_context *pipe,
                           struct pipe_texture *texture,
                           unsigned face, unsigned level, unsigned zslice,
                           enum pipe_transfer_usage usage,
@@ -294,7 +294,8 @@ llvmpipe_get_tex_transfer(struct pipe_screen *screen,
 
 
 static void 
-llvmpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
+llvmpipe_tex_transfer_destroy(struct pipe_context *pipe,
+                              struct pipe_transfer *transfer)
 {
    /* Effectively do the texture_update work here - if texture images
     * needed post-processing to put them into hardware layout, this is
@@ -307,10 +308,10 @@ llvmpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
 
 
 static void *
-llvmpipe_transfer_map( struct pipe_screen *_screen,
+llvmpipe_transfer_map( struct pipe_context *pipe,
                        struct pipe_transfer *transfer )
 {
-   struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
+   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
    ubyte *map, *xfer_map;
    struct llvmpipe_texture *lpt;
    enum pipe_format format;
@@ -351,10 +352,10 @@ llvmpipe_transfer_map( struct pipe_screen *_screen,
 
 
 static void
-llvmpipe_transfer_unmap(struct pipe_screen *screen,
-                       struct pipe_transfer *transfer)
+llvmpipe_transfer_unmap(struct pipe_context *pipe,
+                        struct pipe_transfer *transfer)
 {
-   struct llvmpipe_screen *lp_screen = llvmpipe_screen(screen);
+   struct llvmpipe_screen *lp_screen = llvmpipe_screen(pipe->screen);
    struct llvmpipe_texture *lpt;
 
    assert(transfer->texture);
@@ -376,9 +377,14 @@ llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 
    screen->get_tex_surface = llvmpipe_get_tex_surface;
    screen->tex_surface_destroy = llvmpipe_tex_surface_destroy;
+}
 
-   screen->get_tex_transfer = llvmpipe_get_tex_transfer;
-   screen->tex_transfer_destroy = llvmpipe_tex_transfer_destroy;
-   screen->transfer_map = llvmpipe_transfer_map;
-   screen->transfer_unmap = llvmpipe_transfer_unmap;
+
+void
+llvmpipe_init_context_texture_funcs(struct pipe_context *pipe)
+{
+   pipe->get_tex_transfer = llvmpipe_get_tex_transfer;
+   pipe->tex_transfer_destroy = llvmpipe_tex_transfer_destroy;
+   pipe->transfer_map = llvmpipe_transfer_map;
+   pipe->transfer_unmap = llvmpipe_transfer_unmap;
 }

@@ -219,7 +219,7 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    struct trace_texture *tr_tex = NULL;
    struct tr_list *ptr;
 
-   struct pipe_screen *screen = tr_scr->screen;
+   struct pipe_context *context = tr_scr->private_context;
    struct pipe_texture *tex;
    struct pipe_transfer *t;
 
@@ -239,12 +239,12 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    }
 
    tex = tr_tex->texture;
-   t = screen->get_tex_transfer(tr_scr->screen, tex,
-                                gptr->face, gptr->level, gptr->zslice,
-                                PIPE_TRANSFER_READ,
-                                gptr->x, gptr->y, gptr->w, gptr->h);
+   t = context->get_tex_transfer(context, tex,
+				 gptr->face, gptr->level, gptr->zslice,
+				 PIPE_TRANSFER_READ,
+				 gptr->x, gptr->y, gptr->w, gptr->h);
 
-   map = screen->transfer_map(screen, t);
+   map = context->transfer_map(context, t);
 
    rbug_send_texture_read_reply(tr_rbug->con, serial,
                                 t->texture->format,
@@ -256,8 +256,8 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
                                 t->stride,
                                 NULL);
 
-   screen->transfer_unmap(screen, t);
-   screen->tex_transfer_destroy(t);
+   context->transfer_unmap(context, t);
+   context->tex_transfer_destroy(context, t);
 
    pipe_mutex_unlock(tr_scr->list_mutex);
 

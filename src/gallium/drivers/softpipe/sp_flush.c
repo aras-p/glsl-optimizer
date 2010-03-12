@@ -93,9 +93,9 @@ softpipe_flush( struct pipe_context *pipe,
       static unsigned frame_no = 1;
       static char filename[256];
       util_snprintf(filename, sizeof(filename), "cbuf_%u.bmp", frame_no);
-      debug_dump_surface_bmp(filename, softpipe->framebuffer.cbufs[0]);
+      debug_dump_surface_bmp(softpipe, filename, softpipe->framebuffer.cbufs[0]);
       util_snprintf(filename, sizeof(filename), "zsbuf_%u.bmp", frame_no);
-      debug_dump_surface_bmp(filename, softpipe->framebuffer.zsbuf);
+      debug_dump_surface_bmp(softpipe, filename, softpipe->framebuffer.zsbuf);
       ++frame_no;
    }
 #endif

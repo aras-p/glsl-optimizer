@@ -783,15 +783,17 @@ svga_surface_needs_propagation(struct pipe_surface *surf)
    return s->dirty && s->handle != tex->handle;
 }
 
-
+/* XXX: Still implementing this as if it was a screen function, but
+ * can now modify it to queue transfers on the context.
+ */
 static struct pipe_transfer *
-svga_get_tex_transfer(struct pipe_screen *screen,
-                     struct pipe_texture *texture,
-                     unsigned face, unsigned level, unsigned zslice,
-                     enum pipe_transfer_usage usage, unsigned x, unsigned y,
-                     unsigned w, unsigned h)
+svga_get_tex_transfer(struct pipe_context *pipe,
+		      struct pipe_texture *texture,
+		      unsigned face, unsigned level, unsigned zslice,
+		      enum pipe_transfer_usage usage, unsigned x, unsigned y,
+		      unsigned w, unsigned h)
 {
-   struct svga_screen *ss = svga_screen(screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st;
    unsigned nblocksx = util_format_get_nblocksx(texture->format, w);
@@ -859,11 +861,14 @@ no_hwbuf:
 }
 
 
+/* XXX: Still implementing this as if it was a screen function, but
+ * can now modify it to queue transfers on the context.
+ */
 static void *
-svga_transfer_map( struct pipe_screen *screen,
+svga_transfer_map( struct pipe_context *pipe,
                    struct pipe_transfer *transfer )
 {
-   struct svga_screen *ss = svga_screen(screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st = svga_transfer(transfer);
 
@@ -877,11 +882,14 @@ svga_transfer_map( struct pipe_screen *screen,
 }
 
 
+/* XXX: Still implementing this as if it was a screen function, but
+ * can now modify it to queue transfers on the context.
+ */
 static void
-svga_transfer_unmap(struct pipe_screen *screen,
+svga_transfer_unmap(struct pipe_context *pipe,
                     struct pipe_transfer *transfer)
 {
-   struct svga_screen *ss = svga_screen(screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st = svga_transfer(transfer);
    
@@ -891,10 +899,11 @@ svga_transfer_unmap(struct pipe_screen *screen,
 
 
 static void
-svga_tex_transfer_destroy(struct pipe_transfer *transfer)
+svga_tex_transfer_destroy(struct pipe_context *pipe,
+                          struct pipe_transfer *transfer)
 {
    struct svga_texture *tex = svga_texture(transfer->texture);
-   struct svga_screen *ss = svga_screen(transfer->texture->screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st = svga_transfer(transfer);
 
@@ -911,6 +920,17 @@ svga_tex_transfer_destroy(struct pipe_transfer *transfer)
    FREE(st);
 }
 
+
+void
+svga_init_texture_functions(struct pipe_context *pipe)
+{
+   pipe->get_tex_transfer = svga_get_tex_transfer;
+   pipe->transfer_map = svga_transfer_map;
+   pipe->transfer_unmap = svga_transfer_unmap;
+   pipe->tex_transfer_destroy = svga_tex_transfer_destroy;
+}
+
+
 void
 svga_screen_init_texture_functions(struct pipe_screen *screen)
 {
@@ -920,10 +940,6 @@ svga_screen_init_texture_functions(struct pipe_screen *screen)
    screen->texture_destroy = svga_texture_destroy;
    screen->get_tex_surface = svga_get_tex_surface;
    screen->tex_surface_destroy = svga_tex_surface_destroy;
-   screen->get_tex_transfer = svga_get_tex_transfer;
-   screen->transfer_map = svga_transfer_map;
-   screen->transfer_unmap = svga_transfer_unmap;
-   screen->tex_transfer_destroy = svga_tex_transfer_destroy;
 }
 
 /*********************************************************************** 

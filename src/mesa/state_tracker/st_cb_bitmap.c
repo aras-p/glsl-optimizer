@@ -259,7 +259,6 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
                     const GLubyte *bitmap)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *transfer;
    ubyte *dest;
    struct pipe_texture *pt;
@@ -285,7 +284,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 					   PIPE_TRANSFER_WRITE,
 					   0, 0, width, height);
 
-   dest = screen->transfer_map(screen, transfer);
+   dest = pipe->transfer_map(pipe, transfer);
 
    /* Put image into texture transfer */
    memset(dest, 0xff, height * transfer->stride);
@@ -295,8 +294,8 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    _mesa_unmap_pbo_source(ctx, unpack);
 
    /* Release transfer */
-   screen->transfer_unmap(screen, transfer);
-   screen->tex_transfer_destroy(transfer);
+   pipe->transfer_unmap(pipe, transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 
    return pt;
 }
@@ -520,7 +519,6 @@ static void
 reset_cache(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct bitmap_cache *cache = st->bitmap.cache;
 
    /*memset(cache->buffer, 0xff, sizeof(cache->buffer));*/
@@ -532,7 +530,7 @@ reset_cache(struct st_context *st)
    cache->ymax = -1000000;
 
    if (cache->trans) {
-      screen->tex_transfer_destroy(cache->trans);
+      pipe->tex_transfer_destroy(pipe, cache->trans);
       cache->trans = NULL;
    }
 
@@ -570,7 +568,6 @@ static void
 create_cache_trans(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct bitmap_cache *cache = st->bitmap.cache;
 
    if (cache->trans)
@@ -583,7 +580,7 @@ create_cache_trans(struct st_context *st)
 					       PIPE_TRANSFER_WRITE, 0, 0,
 					       BITMAP_CACHE_WIDTH,
 					       BITMAP_CACHE_HEIGHT);
-   cache->buffer = screen->transfer_map(screen, cache->trans);
+   cache->buffer = pipe->transfer_map(pipe, cache->trans);
 
    /* init image to all 0xff */
    memset(cache->buffer, 0xff, cache->trans->stride * BITMAP_CACHE_HEIGHT);
@@ -601,7 +598,6 @@ st_flush_bitmap_cache(struct st_context *st)
 
       if (st->ctx->DrawBuffer) {
          struct pipe_context *pipe = st->pipe;
-         struct pipe_screen *screen = pipe->screen;
 
          assert(cache->xmin <= cache->xmax);
  
@@ -617,10 +613,10 @@ st_flush_bitmap_cache(struct st_context *st)
          if (cache->trans) {
             if (0)
                print_cache(cache);
-            screen->transfer_unmap(screen, cache->trans);
+            pipe->transfer_unmap(pipe, cache->trans);
             cache->buffer = NULL;
 
-            screen->tex_transfer_destroy(cache->trans);
+            pipe->tex_transfer_destroy(pipe, cache->trans);
             cache->trans = NULL;
          }
 
@@ -823,7 +819,6 @@ void
 st_destroy_bitmap(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct bitmap_cache *cache = st->bitmap.cache;
 
 
@@ -840,8 +835,8 @@ st_destroy_bitmap(struct st_context *st)
 
    if (cache) {
       if (cache->trans) {
-         screen->transfer_unmap(screen, cache->trans);
-         screen->tex_transfer_destroy(cache->trans);
+         pipe->transfer_unmap(pipe, cache->trans);
+         pipe->tex_transfer_destroy(pipe, cache->trans);
       }
       pipe_texture_reference(&st->bitmap.cache->texture, NULL);
       free(st->bitmap.cache);

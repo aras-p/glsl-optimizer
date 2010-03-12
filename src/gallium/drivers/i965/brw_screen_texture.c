@@ -37,6 +37,8 @@
 #include "brw_defines.h"
 #include "brw_structs.h"
 #include "brw_winsys.h"
+#include "brw_context.h"
+
 
 
 
@@ -479,7 +481,7 @@ boolean brw_is_texture_referenced_by_bo( struct brw_screen *brw_screen,
  */
 
 static struct pipe_transfer*
-brw_get_tex_transfer(struct pipe_screen *screen,
+brw_get_tex_transfer(struct pipe_context *pipe,
                      struct pipe_texture *texture,
                      unsigned face, unsigned level, unsigned zslice,
                      enum pipe_transfer_usage usage, unsigned x, unsigned y,
@@ -514,11 +516,11 @@ brw_get_tex_transfer(struct pipe_screen *screen,
 }
 
 static void *
-brw_transfer_map(struct pipe_screen *screen,
+brw_transfer_map(struct pipe_context *pipe,
                  struct pipe_transfer *transfer)
 {
    struct brw_texture *tex = brw_texture(transfer->texture);
-   struct brw_winsys_screen *sws = brw_screen(screen)->sws;
+   struct brw_winsys_screen *sws = brw_screen(pipe->screen)->sws;
    char *map;
    unsigned usage = transfer->usage;
 
@@ -541,22 +543,31 @@ brw_transfer_map(struct pipe_screen *screen,
 }
 
 static void
-brw_transfer_unmap(struct pipe_screen *screen,
+brw_transfer_unmap(struct pipe_context *pipe,
                    struct pipe_transfer *transfer)
 {
    struct brw_texture *tex = brw_texture(transfer->texture);
-   struct brw_winsys_screen *sws = brw_screen(screen)->sws;
+   struct brw_winsys_screen *sws = brw_screen(pipe->screen)->sws;
 
    sws->bo_unmap(tex->bo);
 }
 
 static void
-brw_tex_transfer_destroy(struct pipe_transfer *trans)
+brw_tex_transfer_destroy(struct pipe_context *pipe,
+                         struct pipe_transfer *trans)
 {
    pipe_texture_reference(&trans->texture, NULL);
    FREE(trans);
 }
 
+
+void brw_tex_init( struct brw_context *brw )
+{
+   brw->base.get_tex_transfer = brw_get_tex_transfer;
+   brw->base.transfer_map = brw_transfer_map;
+   brw->base.transfer_unmap = brw_transfer_unmap;
+   brw->base.tex_transfer_destroy = brw_tex_transfer_destroy;
+}
 
 void brw_screen_tex_init( struct brw_screen *brw_screen )
 {
@@ -565,8 +576,4 @@ void brw_screen_tex_init( struct brw_screen *brw_screen )
    brw_screen->base.texture_from_handle = brw_texture_from_handle;
    brw_screen->base.texture_get_handle = brw_texture_get_handle;
    brw_screen->base.texture_destroy = brw_texture_destroy;
-   brw_screen->base.get_tex_transfer = brw_get_tex_transfer;
-   brw_screen->base.transfer_map = brw_transfer_map;
-   brw_screen->base.transfer_unmap = brw_transfer_unmap;
-   brw_screen->base.tex_transfer_destroy = brw_tex_transfer_destroy;
 }
