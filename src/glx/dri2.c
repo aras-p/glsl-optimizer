@@ -269,6 +269,7 @@ DRI2Connect(Display * dpy, XID window, char **driverName, char **deviceName)
    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
    xDRI2ConnectReply rep;
    xDRI2ConnectReq *req;
+   char *prime;
 
    XextCheckExtension(dpy, info, dri2ExtensionName, False);
 
@@ -277,7 +278,19 @@ DRI2Connect(Display * dpy, XID window, char **driverName, char **deviceName)
    req->reqType = info->codes->major_opcode;
    req->dri2ReqType = X_DRI2Connect;
    req->window = window;
+
    req->driverType = DRI2DriverDRI;
+#ifdef DRI2DriverPrimeShift
+   prime = getenv("DRI_PRIME");
+   if (prime) {
+      uint32_t primeid;
+      errno = 0;
+      primeid = strtoul(prime, NULL, 0);
+      if (errno == 0)
+         req->driverType |= ((primeid & DRI2DriverPrimeMask) << DRI2DriverPrimeShift);
+   }
+#endif
+
    if (!_XReply(dpy, (xReply *) & rep, 0, xFalse)) {
       UnlockDisplay(dpy);
       SyncHandle();
