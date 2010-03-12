@@ -1235,19 +1235,15 @@ static void
 grab_macroblock(struct vl_mpeg12_mc_renderer *r,
                 struct pipe_mpeg12_macroblock *mb)
 {
-   void *blocks;
-
    assert(r);
    assert(mb);
+   assert(mb->blocks);
    assert(r->num_macroblocks < r->macroblocks_per_batch);
 
    memcpy(&r->macroblock_buf[r->num_macroblocks], mb,
           sizeof(struct pipe_mpeg12_macroblock));
 
-   blocks = pipe_buffer_map(r->pipe->screen, mb->blocks,
-                            PIPE_BUFFER_USAGE_CPU_READ);
-   grab_blocks(r, mb->mbx, mb->mby, mb->dct_type, mb->cbp, blocks);
-   pipe_buffer_unmap(r->pipe->screen, mb->blocks);
+   grab_blocks(r, mb->mbx, mb->mby, mb->dct_type, mb->cbp, mb->blocks);
 
    ++r->num_macroblocks;
 }
@@ -1318,6 +1314,10 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
    cleanup_pipe_state(renderer);
    cleanup_shaders(renderer);
    cleanup_buffers(renderer);
+
+   pipe_surface_reference(&renderer->surface, NULL);
+   pipe_surface_reference(&renderer->past, NULL);
+   pipe_surface_reference(&renderer->future, NULL);
 }
 
 void
@@ -1356,9 +1356,9 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       new_surface = true;
 
    if (new_surface) {
-      renderer->surface = surface;
-      renderer->past = past;
-      renderer->future = future;
+      pipe_surface_reference(&renderer->surface, surface);
+      pipe_surface_reference(&renderer->past, past);
+      pipe_surface_reference(&renderer->future, future);
       renderer->fence = fence;
       renderer->surface_tex_inv_size.x = 1.0f / surface->width;
       renderer->surface_tex_inv_size.y = 1.0f / surface->height;
@@ -1381,7 +1381,9 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
          flush(renderer);
          xfer_buffers_map(renderer);
          /* Next time we get this surface it may have new ref frames */
-         renderer->surface = NULL;
+         pipe_surface_reference(&renderer->surface, NULL);
+         pipe_surface_reference(&renderer->past, NULL);
+         pipe_surface_reference(&renderer->future, NULL);
       }
    }
 }

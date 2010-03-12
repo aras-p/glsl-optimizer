@@ -178,8 +178,7 @@ MacroBlocksToPipe(struct pipe_screen *screen,
                pipe_macroblocks->pmv[j][k][l] = xvmc_mb->PMV[j][k][l];
 
       pipe_macroblocks->cbp = xvmc_mb->coded_block_pattern;
-      pipe_macroblocks->blocks = pipe_user_buffer_create(screen, xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES,
-                                                         BLOCK_SIZE_BYTES);
+      pipe_macroblocks->blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
 
       ++pipe_macroblocks;
       ++xvmc_mb;
@@ -319,9 +318,6 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    vpipe->set_decode_target(vpipe, t_vsfc);
    vpipe->decode_macroblocks(vpipe, p_vsfc, f_vsfc, num_macroblocks,
                              &pipe_macroblocks->base, target_surface_priv->render_fence);
-
-   for (i = 0; i < num_macroblocks; ++i)
-      vpipe->screen->buffer_destroy(pipe_macroblocks[i].blocks);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for rendering.\n", target_surface);
 

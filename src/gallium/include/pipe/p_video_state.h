@@ -90,7 +90,7 @@ struct pipe_mpeg12_macroblock
    enum pipe_mpeg12_dct_type dct_type;
    signed pmv[2][2][2];
    unsigned cbp;
-   struct pipe_buffer *blocks;
+   short *blocks;
 };
 
 #if 0
