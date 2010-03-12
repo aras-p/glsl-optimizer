@@ -164,7 +164,7 @@
 %type <expression> function_call
 %type <n> assignment_operator
 %type <n> unary_operator
-%type <node> function_identifier
+%type <expression> function_identifier
 %type <node> external_declaration
 %type <declarator_list> init_declarator_list
 %type <declarator_list> single_declaration
