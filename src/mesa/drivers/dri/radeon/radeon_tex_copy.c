@@ -28,6 +28,7 @@
 #include "radeon_common.h"
 #include "radeon_texture.h"
 
+#include "main/enums.h"
 #include "main/image.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
@@ -183,6 +184,10 @@ radeonCopyTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     return;
 
 fail:
+    radeon_print(RADEON_FALLBACKS, RADEON_NORMAL,
+                 "Falling back to sw for glCopyTexImage2D (internalFormat %s, border %d)\n",
+                 _mesa_lookup_enum_by_nr(internalFormat), border);
+
     _mesa_meta_CopyTexImage2D(ctx, target, level, internalFormat, x, y,
                               width, height, border);
 }
@@ -201,7 +206,8 @@ radeonCopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
                              radeon_tex_obj(texObj), (radeon_texture_image *)texImage,
                              xoffset, yoffset, x, y, width, height)) {
 
-       //DEBUG_FALLBACKS
+        radeon_print(RADEON_FALLBACKS, RADEON_NORMAL,
+                     "Falling back to sw for glCopyTexSubImage2D\n");
 
         _mesa_meta_CopyTexSubImage2D(ctx, target, level,
                                      xoffset, yoffset, x, y, width, height);
