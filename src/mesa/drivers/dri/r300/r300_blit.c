@@ -582,12 +582,6 @@ unsigned r300_blit(GLcontext *ctx,
     if (dst_pitch % 2 > 0)
         ++dst_pitch;
 
-    /* Rendering to small buffer doesn't work.
-     * Looks like a hw limitation.
-     */
-    if (dst_pitch < 32)
-        return 0;
-
     /* Need to clamp the region size to make sure
      * we don't read outside of the source buffer
      * or write outside of the destination buffer.
