@@ -429,13 +429,15 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
    if (state & META_SHADER) {
       if (ctx->Extensions.ARB_vertex_program) {
          save->VertexProgramEnabled = ctx->VertexProgram.Enabled;
-         save->VertexProgram = ctx->VertexProgram.Current;
+         _mesa_reference_vertprog(ctx, &save->VertexProgram,
+				  ctx->VertexProgram.Current);
          _mesa_set_enable(ctx, GL_VERTEX_PROGRAM_ARB, GL_FALSE);
       }
 
       if (ctx->Extensions.ARB_fragment_program) {
          save->FragmentProgramEnabled = ctx->FragmentProgram.Enabled;
-         save->FragmentProgram = ctx->FragmentProgram.Current;
+         _mesa_reference_fragprog(ctx, &save->FragmentProgram,
+				  ctx->FragmentProgram.Current);
          _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_FALSE);
       }
 
@@ -663,6 +665,7 @@ _mesa_meta_end(GLcontext *ctx)
                           save->VertexProgramEnabled);
          _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, 
                                   save->VertexProgram);
+	 _mesa_reference_vertprog(ctx, &save->VertexProgram, NULL);
       }
 
       if (ctx->Extensions.ARB_fragment_program) {
@@ -670,6 +673,7 @@ _mesa_meta_end(GLcontext *ctx)
                           save->FragmentProgramEnabled);
          _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
                                   save->FragmentProgram);
+	 _mesa_reference_fragprog(ctx, &save->FragmentProgram, NULL);
       }
 
       if (ctx->Extensions.ARB_shader_objects) {
@@ -720,6 +724,7 @@ _mesa_meta_end(GLcontext *ctx)
       for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
          _mesa_reference_texobj(&ctx->Texture.Unit[0].CurrentTex[tgt],
                                 save->CurrentTexture[tgt]);
+         _mesa_reference_texobj(&save->CurrentTexture[tgt], NULL);
       }
 
       /* Re-enable textures, texgen */
