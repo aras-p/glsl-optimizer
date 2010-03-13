@@ -118,6 +118,9 @@ struct radeon_winsys {
                               uint32_t pitch,
                               boolean microtiled,
                               boolean macrotiled);
+
+    boolean (*is_buffer_referenced)(struct radeon_winsys *winsys,
+                                    struct pipe_buffer *buffer);
 };
 
 #endif

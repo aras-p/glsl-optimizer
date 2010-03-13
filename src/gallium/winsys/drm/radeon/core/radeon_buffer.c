@@ -213,6 +213,18 @@ static void radeon_buffer_unmap(struct pipe_winsys *ws,
     }
 }
 
+static boolean radeon_is_buffer_referenced(struct radeon_winsys *ws,
+                                           struct pipe_buffer *buffer)
+{
+    struct radeon_pipe_buffer *radeon_buffer =
+        (struct radeon_pipe_buffer*)buffer;
+    uint32_t domain;
+
+    /* Referenced by CS or HW. */
+    return radeon_bo_is_referenced_by_cs(radeon_buffer->bo, ws->priv->cs) ||
+           radeon_bo_is_busy(radeon_buffer->bo, &domain);
+}
+
 static void radeon_buffer_set_tiling(struct radeon_winsys *ws,
                                      struct pipe_buffer *buffer,
                                      uint32_t pitch,
@@ -369,6 +381,8 @@ struct radeon_winsys* radeon_pipe_winsys(int fd)
     radeon_ws->buffer_set_tiling = radeon_buffer_set_tiling;
     radeon_ws->buffer_from_handle = radeon_buffer_from_handle;
     radeon_ws->buffer_get_handle = radeon_buffer_get_handle;
+
+    radeon_ws->is_buffer_referenced = radeon_is_buffer_referenced;
 
     return radeon_ws;
 }

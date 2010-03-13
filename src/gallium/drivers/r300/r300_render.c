@@ -131,9 +131,38 @@ static boolean r300_reserve_cs_space(struct r300_context *r300,
 }
 
 static boolean immd_is_good_idea(struct r300_context *r300,
-                                      unsigned count)
+                                 unsigned count)
 {
-    return count <= 4;
+    struct pipe_vertex_element* velem;
+    struct pipe_vertex_buffer* vbuf;
+    boolean checked[PIPE_MAX_ATTRIBS] = {0};
+    unsigned vertex_element_count = r300->velems->count;
+    unsigned i, vbi;
+
+    if (count > 4) {
+        return FALSE;
+    }
+
+    /* We shouldn't map buffers referenced by CS, busy buffers,
+     * and ones placed in VRAM. */
+    /* XXX Check for VRAM buffers. */
+    for (i = 0; i < vertex_element_count; i++) {
+        velem = &r300->velems->velem[i];
+        vbi = velem->vertex_buffer_index;
+
+        if (!checked[vbi]) {
+            vbuf = &r300->vertex_buffer[vbi];
+
+            if (r300->winsys->is_buffer_referenced(r300->winsys,
+                                                   vbuf->buffer)) {
+                /* It's a very bad idea to map it... */
+                return FALSE;
+            }
+            checked[vbi] = TRUE;
+        }
+    }
+
+    return TRUE;
 }
 
 static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
