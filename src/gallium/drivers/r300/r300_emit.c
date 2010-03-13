@@ -448,7 +448,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     END_CS;
 }
 
-static void r300_emit_query_start(struct r300_context *r300)
+void r300_emit_query_start(struct r300_context *r300)
 {
     struct r300_capabilities *caps = r300_screen(r300->context.screen)->caps;
     struct r300_query *query = r300->query_current;

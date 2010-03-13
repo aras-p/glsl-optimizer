@@ -57,8 +57,7 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
 
 void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state);
 
-void r300_emit_query_begin(struct r300_context* r300,
-                           struct r300_query* query);
+void r300_emit_query_start(struct r300_context* r300);
 
 void r300_emit_query_end(struct r300_context* r300);
 
