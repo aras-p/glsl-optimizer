@@ -59,6 +59,48 @@ sp_mpeg12_destroy(struct pipe_video_context *vpipe)
    FREE(ctx);
 }
 
+static int
+sp_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+
+   switch (param) {
+      case PIPE_CAP_NPOT_TEXTURES:
+         /* XXX: Temporary; not all paths are NPOT-tested */
+#if 0
+         return ctx->pipe->screen->get_param(ctx->pipe->screen, param);
+#endif
+         return FALSE;
+      case PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT:
+         return PIPE_FORMAT_AYUV;
+      default:
+      {
+         debug_printf("Softpipe: Unknown PIPE_CAP %d\n", param);
+         return 0;
+      }
+   }
+}
+
+static boolean
+sp_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
+                              enum pipe_format format,
+                              unsigned usage,
+                              unsigned geom)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+
+   /* XXX: Temporary; not all paths are NPOT-tested */
+   if (geom & PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)
+      return FALSE;
+
+   return ctx->pipe->screen->is_format_supported(ctx->pipe->screen, PIPE_TEXTURE_2D,
+                                                 format, usage, geom);
+}
+
 static void
 sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
                              struct pipe_surface *past,
@@ -297,6 +339,8 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
 
    ctx->base.screen = pipe->screen;
    ctx->base.destroy = sp_mpeg12_destroy;
+   ctx->base.get_param = sp_mpeg12_get_param;
+   ctx->base.is_format_supported = sp_mpeg12_is_format_supported;
    ctx->base.decode_macroblocks = sp_mpeg12_decode_macroblocks;
    ctx->base.render_picture = sp_mpeg12_render_picture;
    ctx->base.surface_fill = sp_mpeg12_surface_fill;

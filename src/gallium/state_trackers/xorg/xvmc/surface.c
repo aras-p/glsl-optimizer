@@ -211,12 +211,23 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
 
    memset(&template, 0, sizeof(struct pipe_texture));
    template.target = PIPE_TEXTURE_2D;
-   /* XXX: Let the pipe_video_context choose whatever format it likes to render to */
-   template.format = PIPE_FORMAT_AYUV;
+   template.format = (enum pipe_format)vpipe->get_param(vpipe, PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
    template.last_level = 0;
-   /* XXX: vl_mpeg12_mc_renderer expects this when it's initialized with pot_buffers=true, clean this up */
-   template.width0 = util_next_power_of_two(context->width);
-   template.height0 = util_next_power_of_two(context->height);
+   if (vpipe->is_format_supported(vpipe, template.format,
+                                  PIPE_TEXTURE_USAGE_SAMPLER |
+                                  PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                  PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)) {
+      template.width0 = context->width;
+      template.height0 = context->height;
+   }
+   else {
+      assert(vpipe->is_format_supported(vpipe, template.format,
+                                       PIPE_TEXTURE_USAGE_SAMPLER |
+                                       PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                       PIPE_TEXTURE_GEOM_NON_SQUARE));
+      template.width0 = util_next_power_of_two(context->width);
+      template.height0 = util_next_power_of_two(context->height);
+   }
    template.depth0 = 1;
    template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
    vsfc_tex = vpipe->screen->texture_create(vpipe->screen, &template);

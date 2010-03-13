@@ -34,6 +34,9 @@ extern "C" {
 
 #include <pipe/p_video_state.h>
 
+/* XXX: Move to an appropriate place */
+#define PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT 256
+
 struct pipe_screen;
 struct pipe_buffer;
 struct pipe_surface;
@@ -53,6 +56,21 @@ struct pipe_video_context
    unsigned height;
 
    void *priv; /**< context private data (for DRI for example) */
+
+   /**
+    * Query an integer-valued capability/parameter/limit
+    * \param param  one of PIPE_CAP_x
+    */
+   int (*get_param)(struct pipe_video_context *vpipe, int param);
+
+   /**
+    * Check if the given pipe_format is supported as a texture or
+    * drawing surface.
+    */
+   boolean (*is_format_supported)(struct pipe_video_context *vpipe,
+                                  enum pipe_format format,
+                                  unsigned usage,
+                                  unsigned geom);
 
    void (*destroy)(struct pipe_video_context *vpipe);
 
