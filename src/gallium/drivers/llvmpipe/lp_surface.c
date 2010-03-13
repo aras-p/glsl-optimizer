@@ -27,6 +27,7 @@
 
 #include "util/u_rect.h"
 #include "lp_context.h"
+#include "lp_flush.h"
 #include "lp_surface.h"
 
 
@@ -36,6 +37,20 @@ lp_surface_copy(struct pipe_context *pipe,
                 struct pipe_surface *src, unsigned srcx, unsigned srcy,
                 unsigned width, unsigned height)
 {
+   llvmpipe_flush_texture(pipe,
+                          dest->texture, dest->face, dest->level,
+                          0, /* flush_flags */
+                          FALSE, /* read_only */
+                          FALSE, /* cpu_access */
+                          FALSE); /* do_not_flush */
+
+   llvmpipe_flush_texture(pipe,
+                          src->texture, src->face, src->level,
+                          0, /* flush_flags */
+                          TRUE, /* read_only */
+                          FALSE, /* cpu_access */
+                          FALSE); /* do_not_flush */
+
    util_surface_copy(pipe, FALSE,
                      dest, destx, desty,
                      src, srcx, srcy,

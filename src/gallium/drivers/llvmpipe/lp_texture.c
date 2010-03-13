@@ -371,6 +371,16 @@ llvmpipe_transfer_map( struct pipe_context *pipe,
    lpt = llvmpipe_texture(transfer->texture);
    format = lpt->base.format;
 
+   /*
+    * Transfers, like other pipe operations, must happen in order, so flush the
+    * context if necessary.
+    */
+   llvmpipe_flush_texture(pipe,
+                          transfer->texture, transfer->face, transfer->level,
+                          0, /* flush_flags */
+                          !(transfer->usage & PIPE_TRANSFER_WRITE), /* read_only */
+                          TRUE, /* cpu_access */
+                          FALSE); /* do_not_flush */
 
    map = llvmpipe_texture_map(transfer->texture,
                               transfer->face, transfer->level, transfer->zslice);
