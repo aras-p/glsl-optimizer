@@ -6,7 +6,8 @@ LIBNAME = ws_xlib
 LIBRARY_INCLUDES = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
-	-I$(TOP)/src/gallium/auxiliary
+	-I$(TOP)/src/gallium/auxiliary \
+	$(X_CFLAGS)
 
 C_SOURCES = \
 	xlib_sw_winsys.c 
