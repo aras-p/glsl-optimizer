@@ -575,8 +575,8 @@ _mesa_getenv( const char *var );
 extern char *
 _mesa_strdup( const char *s );
 
-extern double
-_mesa_strtod( const char *s, char **end );
+extern float
+_mesa_strtof( const char *s, char **end );
 
 extern unsigned int
 _mesa_str_checksum(const char *str);

@@ -2198,7 +2198,7 @@ case 142:
 YY_RULE_SETUP
 #line 326 "program_lexer.l"
 {
-   yylval->real = (float) _mesa_strtod(yytext, NULL);
+   yylval->real = _mesa_strtof(yytext, NULL);
    return REAL;
 }
 	YY_BREAK
@@ -2210,7 +2210,7 @@ YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
 #line 330 "program_lexer.l"
 {
-   yylval->real = (float) _mesa_strtod(yytext, NULL);
+   yylval->real = _mesa_strtof(yytext, NULL);
    return REAL;
 }
 	YY_BREAK
@@ -2218,7 +2218,7 @@ case 144:
 YY_RULE_SETUP
 #line 334 "program_lexer.l"
 {
-   yylval->real = (float) _mesa_strtod(yytext, NULL);
+   yylval->real = _mesa_strtof(yytext, NULL);
    return REAL;
 }
 	YY_BREAK
@@ -2226,7 +2226,7 @@ case 145:
 YY_RULE_SETUP
 #line 338 "program_lexer.l"
 {
-   yylval->real = (float) _mesa_strtod(yytext, NULL);
+   yylval->real = _mesa_strtof(yytext, NULL);
    return REAL;
 }
 	YY_BREAK
