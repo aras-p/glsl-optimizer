@@ -173,7 +173,7 @@ static void setup_facing_coef( struct lp_rast_triangle *tri,
 /**
  * Compute the tri->coef[] array dadx, dady, a0 values.
  */
-static void setup_tri_coefficients( struct setup_context *setup,
+static void setup_tri_coefficients( struct lp_setup_context *setup,
 				    struct lp_rast_triangle *tri,
                                     float oneoverarea,
 				    const float (*v1)[4],
@@ -274,7 +274,7 @@ alloc_triangle(struct lp_scene *scene, unsigned nr_inputs, unsigned *tri_size)
  * bins for the tiles which we overlap.
  */
 static void 
-do_triangle_ccw(struct setup_context *setup,
+do_triangle_ccw(struct lp_setup_context *setup,
 		const float (*v1)[4],
 		const float (*v2)[4],
 		const float (*v3)[4],
@@ -565,7 +565,7 @@ do_triangle_ccw(struct setup_context *setup,
 }
 
 
-static void triangle_cw( struct setup_context *setup,
+static void triangle_cw( struct lp_setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
@@ -574,7 +574,7 @@ static void triangle_cw( struct setup_context *setup,
 }
 
 
-static void triangle_ccw( struct setup_context *setup,
+static void triangle_ccw( struct lp_setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
@@ -583,7 +583,7 @@ static void triangle_ccw( struct setup_context *setup,
 }
 
 
-static void triangle_both( struct setup_context *setup,
+static void triangle_both( struct lp_setup_context *setup,
 			   const float (*v0)[4],
 			   const float (*v1)[4],
 			   const float (*v2)[4] )
@@ -602,7 +602,7 @@ static void triangle_both( struct setup_context *setup,
 }
 
 
-static void triangle_nop( struct setup_context *setup,
+static void triangle_nop( struct lp_setup_context *setup,
 			  const float (*v0)[4],
 			  const float (*v1)[4],
 			  const float (*v2)[4] )
@@ -611,7 +611,7 @@ static void triangle_nop( struct setup_context *setup,
 
 
 void 
-lp_setup_choose_triangle( struct setup_context *setup )
+lp_setup_choose_triangle( struct lp_setup_context *setup )
 {
    switch (setup->cullmode) {
    case PIPE_WINDING_NONE:

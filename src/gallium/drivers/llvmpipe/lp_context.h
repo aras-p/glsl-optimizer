@@ -45,7 +45,7 @@ struct draw_stage;
 struct lp_fragment_shader;
 struct lp_vertex_shader;
 struct lp_blend_state;
-struct setup_context;
+struct lp_setup_context;
 struct lp_velems_state;
 
 struct llvmpipe_context {
@@ -98,7 +98,7 @@ struct llvmpipe_context {
    int psize_slot;
 
    /** The tiling engine */
-   struct setup_context *setup;
+   struct lp_setup_context *setup;
 
    /** The primitive drawing context */
    struct draw_context *draw;

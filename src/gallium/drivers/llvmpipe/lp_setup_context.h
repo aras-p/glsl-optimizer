@@ -65,7 +65,7 @@ struct lp_scene_queue;
  * Subclass of vbuf_render, plugged directly into the draw module as
  * the rendering backend.
  */
-struct setup_context
+struct lp_setup_context
 {
    struct vbuf_render base;
 
@@ -131,29 +131,29 @@ struct setup_context
 
    unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */
 
-   void (*point)( struct setup_context *,
+   void (*point)( struct lp_setup_context *,
                   const float (*v0)[4]);
 
-   void (*line)( struct setup_context *,
+   void (*line)( struct lp_setup_context *,
                  const float (*v0)[4],
                  const float (*v1)[4]);
 
-   void (*triangle)( struct setup_context *,
+   void (*triangle)( struct lp_setup_context *,
                      const float (*v0)[4],
                      const float (*v1)[4],
                      const float (*v2)[4]);
 };
 
-void lp_setup_choose_triangle( struct setup_context *setup );
-void lp_setup_choose_line( struct setup_context *setup );
-void lp_setup_choose_point( struct setup_context *setup );
+void lp_setup_choose_triangle( struct lp_setup_context *setup );
+void lp_setup_choose_line( struct lp_setup_context *setup );
+void lp_setup_choose_point( struct lp_setup_context *setup );
 
-struct lp_scene *lp_setup_get_current_scene(struct setup_context *setup);
+struct lp_scene *lp_setup_get_current_scene(struct lp_setup_context *setup);
 
-void lp_setup_init_vbuf(struct setup_context *setup);
+void lp_setup_init_vbuf(struct lp_setup_context *setup);
 
-void lp_setup_update_state( struct setup_context *setup );
+void lp_setup_update_state( struct lp_setup_context *setup );
 
-void lp_setup_destroy( struct setup_context *setup );
+void lp_setup_destroy( struct lp_setup_context *setup );
 
 #endif
