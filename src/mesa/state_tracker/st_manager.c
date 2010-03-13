@@ -226,6 +226,8 @@ st_framebuffer_update_attachments(struct st_framebuffer *stfb)
           st_visual_have_buffers(stfb->iface->visual, 1 << statt))
          stfb->statts[stfb->num_statts++] = statt;
    }
+
+   p_atomic_set(&stfb->revalidate, TRUE);
 }
 
 /**
@@ -438,7 +440,6 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
 
    st_framebuffer_update_attachments(stfb);
 
-   p_atomic_set(&stfb->revalidate, TRUE);
    stfb->Base.Initialized = GL_TRUE;
 
    return stfb;
