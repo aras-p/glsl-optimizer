@@ -397,7 +397,6 @@ end:
 static boolean
 lp_scene_map_buffers( struct lp_scene *scene )
 {
-   struct pipe_context *pipe = scene->pipe;
    struct pipe_surface *cbuf, *zsbuf;
    int i;
 
@@ -409,20 +408,10 @@ lp_scene_map_buffers( struct lp_scene *scene )
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       cbuf = scene->fb.cbufs[i];
       if (cbuf) {
-	 scene->cbuf_transfer[i] = pipe->get_tex_transfer(pipe,
-                                                          cbuf->texture,
-                                                          cbuf->face,
-                                                          cbuf->level,
-                                                          cbuf->zslice,
-                                                          PIPE_TRANSFER_READ_WRITE,
-                                                          0, 0,
-                                                          cbuf->width, 
-                                                          cbuf->height);
-	 if (!scene->cbuf_transfer[i])
-	    goto fail;
-
-	 scene->cbuf_map[i] = pipe->transfer_map(pipe, 
-                                                 scene->cbuf_transfer[i]);
+	 scene->cbuf_map[i] = llvmpipe_texture_map(cbuf->texture,
+	                                           cbuf->face,
+                                                   cbuf->level,
+                                                   cbuf->zslice);
 	 if (!scene->cbuf_map[i])
 	    goto fail;
       }
@@ -432,20 +421,10 @@ lp_scene_map_buffers( struct lp_scene *scene )
     */
    zsbuf = scene->fb.zsbuf;
    if (zsbuf) {
-      scene->zsbuf_transfer = pipe->get_tex_transfer(pipe,
-                                                       zsbuf->texture,
-                                                       zsbuf->face,
-                                                       zsbuf->level,
-                                                       zsbuf->zslice,
-                                                       PIPE_TRANSFER_READ_WRITE,
-                                                       0, 0,
-                                                       zsbuf->width,
-                                                       zsbuf->height);
-      if (!scene->zsbuf_transfer)
-         goto fail;
-
-      scene->zsbuf_map = pipe->transfer_map(pipe, 
-                                              scene->zsbuf_transfer);
+      scene->zsbuf_map = llvmpipe_texture_map(zsbuf->texture,
+                                              zsbuf->face,
+                                              zsbuf->level,
+                                              zsbuf->zslice);
       if (!scene->zsbuf_map)
 	 goto fail;
    }
@@ -469,28 +448,27 @@ fail:
 static void
 lp_scene_unmap_buffers( struct lp_scene *scene )
 {
-   struct pipe_context *pipe = scene->pipe;
    unsigned i;
 
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      if (scene->cbuf_map[i]) 
-	 pipe->transfer_unmap(pipe, scene->cbuf_transfer[i]);
-
-      if (scene->cbuf_transfer[i])
-	 pipe->tex_transfer_destroy(pipe, scene->cbuf_transfer[i]);
-
-      scene->cbuf_transfer[i] = NULL;
-      scene->cbuf_map[i] = NULL;
+      if (scene->cbuf_map[i]) {
+         struct pipe_surface *cbuf = scene->fb.cbufs[i];
+         llvmpipe_texture_unmap(cbuf->texture,
+                                cbuf->face,
+                                cbuf->level,
+                                cbuf->zslice);
+         scene->cbuf_map[i] = NULL;
+      }
    }
 
-   if (scene->zsbuf_map) 
-      pipe->transfer_unmap(pipe, scene->zsbuf_transfer);
-
-   if (scene->zsbuf_transfer)
-      pipe->tex_transfer_destroy(pipe, scene->zsbuf_transfer);
-
-   scene->zsbuf_transfer = NULL;
-   scene->zsbuf_map = NULL;
+   if (scene->zsbuf_map) {
+      struct pipe_surface *zsbuf = scene->fb.zsbuf;
+      llvmpipe_texture_unmap(zsbuf->texture,
+                             zsbuf->face,
+                             zsbuf->level,
+                             zsbuf->zslice);
+      scene->zsbuf_map = NULL;
+   }
 
    util_unreference_framebuffer_state( &scene->fb );
 }

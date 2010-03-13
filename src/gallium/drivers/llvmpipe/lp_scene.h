@@ -114,8 +114,6 @@ struct texture_ref {
  */
 struct lp_scene {
    struct pipe_context *pipe;
-   struct pipe_transfer *cbuf_transfer[PIPE_MAX_COLOR_BUFS];
-   struct pipe_transfer *zsbuf_transfer;
 
    /* Scene's buffers are mapped at the time the scene is enqueued:
     */

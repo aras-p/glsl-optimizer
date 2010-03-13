@@ -62,18 +62,20 @@ lp_rast_begin( struct lp_rasterizer *rast,
    rast->state.write_color = write_color;
    
    for (i = 0; i < rast->state.nr_cbufs; i++) {
+      struct pipe_surface *cbuf = scene->fb.cbufs[i];
       rast->cbuf[i].map = scene->cbuf_map[i];
-      rast->cbuf[i].format = scene->cbuf_transfer[i]->texture->format;
-      rast->cbuf[i].width = scene->cbuf_transfer[i]->width;
-      rast->cbuf[i].height = scene->cbuf_transfer[i]->height;
-      rast->cbuf[i].stride = scene->cbuf_transfer[i]->stride;
+      rast->cbuf[i].format = cbuf->texture->format;
+      rast->cbuf[i].width = cbuf->width;
+      rast->cbuf[i].height = cbuf->height;
+      rast->cbuf[i].stride = llvmpipe_texture_stride(cbuf->texture, cbuf->level);
    }
 
    if (write_zstencil) {
+      struct pipe_surface *zsbuf = scene->fb.zsbuf;
       rast->zsbuf.map = scene->zsbuf_map;
-      rast->zsbuf.stride = scene->zsbuf_transfer->stride;
+      rast->zsbuf.stride = llvmpipe_texture_stride(zsbuf->texture, zsbuf->level);
       rast->zsbuf.blocksize = 
-         util_format_get_blocksize(scene->zsbuf_transfer->texture->format);
+         util_format_get_blocksize(zsbuf->texture->format);
    }
 
    lp_scene_bin_iter_begin( scene );
