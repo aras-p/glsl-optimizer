@@ -104,9 +104,10 @@ fail:
    return NULL;
 }
 
-struct xm_driver xlib_driver = 
+static struct xm_driver xlib_driver = 
 {
    .create_pipe_screen = swrast_xlib_create_screen,
+   .create_st_api = st_manager_create_api,
 };
 
 

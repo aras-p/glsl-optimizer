@@ -33,9 +33,6 @@
 
 #include "xm_api.h"
 
-struct st_api *
-xmesa_create_st_api(void);
-
 struct st_framebuffer_iface *
 xmesa_create_st_framebuffer(struct pipe_screen *screen, XMesaBuffer b);
 

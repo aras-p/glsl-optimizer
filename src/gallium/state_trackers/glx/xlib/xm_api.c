@@ -708,7 +708,7 @@ xmesa_init( Display *display )
    if (firstTime) {
       pipe_mutex_init(_xmesa_lock);
       screen = driver.create_pipe_screen( display );
-      stapi = xmesa_create_st_api();
+      stapi = driver.create_st_api();
       smapi = CALLOC_STRUCT(st_manager);
       if (smapi)
          smapi->screen = screen;

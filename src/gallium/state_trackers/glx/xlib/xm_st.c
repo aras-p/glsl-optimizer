@@ -31,11 +31,6 @@
 #include "xm_api.h"
 #include "xm_st.h"
 
-/* support OpenGL by default */
-#ifndef XMESA_ST_MODULE
-#define XMESA_ST_MODULE st_module_OpenGL
-#endif
-
 struct xmesa_st_framebuffer {
    struct pipe_screen *screen;
    XMesaBuffer buffer;
@@ -266,10 +261,4 @@ xmesa_copy_st_framebuffer(struct st_framebuffer_iface *stfbi,
                           int x, int y, int w, int h)
 {
    /* TODO */
-}
-
-struct st_api *
-xmesa_create_st_api(void)
-{
-   return XMESA_ST_MODULE.create_api();
 }
