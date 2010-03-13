@@ -59,18 +59,27 @@ do_copy_texsubimage(GLcontext *ctx,
     }
 
     if (_mesa_get_format_bits(timg->base.TexFormat, GL_DEPTH_BITS) > 0) {
-        rrb = radeon_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
+        if (ctx->ReadBuffer->_DepthBuffer && ctx->ReadBuffer->_DepthBuffer->Wrapped) {
+            rrb = radeon_renderbuffer(ctx->ReadBuffer->_DepthBuffer->Wrapped);
+        } else {
+            rrb = radeon_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
+        }
         flip_y = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Type == GL_NONE;
     } else {
         rrb = radeon_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
         flip_y = ctx->ReadBuffer->Attachment[BUFFER_COLOR0].Type == GL_NONE;
     }
 
+    // This is software renderbuffer, fallback to swrast
+    if (!rrb) {
+        return GL_FALSE;
+    }
+
     if (!timg->mt) {
         radeon_validate_texture_miptree(ctx, &tobj->base);
     }
 
-    assert(rrb && rrb->bo);
+    assert(rrb->bo);
     assert(timg->mt);
     assert(timg->mt->bo);
     assert(timg->base.Width >= dstx + width);
