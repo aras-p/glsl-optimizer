@@ -666,11 +666,11 @@ XMesaVisual XMesaCreateVisual( Display *display,
 
    v->stvis.buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
    if (db_flag)
-      v->stvis.buffer_mask = ST_ATTACHMENT_BACK_LEFT_MASK;
+      v->stvis.buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
    if (stereo_flag) {
-      v->stvis.buffer_mask = ST_ATTACHMENT_FRONT_RIGHT_MASK;
+      v->stvis.buffer_mask |= ST_ATTACHMENT_FRONT_RIGHT_MASK;
       if (db_flag)
-         v->stvis.buffer_mask = ST_ATTACHMENT_BACK_RIGHT_MASK;
+         v->stvis.buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
    }
 
    v->stvis.color_format = choose_pixel_format(v);
