@@ -864,6 +864,8 @@ static void*
                                                    state->min_mip_filter,
                                                    state->max_anisotropy > 0);
 
+    sampler->filter0 |= r300_anisotropy(state->max_anisotropy);
+
     /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
     /* We must pass these to the merge function to clamp them properly. */
     sampler->min_lod = MAX2((unsigned)state->min_lod, 0);
@@ -872,8 +874,6 @@ static void*
     lod_bias = CLAMP((int)(state->lod_bias * 32), -(1 << 9), (1 << 9) - 1);
 
     sampler->filter1 |= lod_bias << R300_LOD_BIAS_SHIFT;
-
-    sampler->filter1 |= r300_anisotropy(state->max_anisotropy);
 
     util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
     sampler->border_color = uc.ui;
