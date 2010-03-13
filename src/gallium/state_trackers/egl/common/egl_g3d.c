@@ -323,8 +323,13 @@ egl_g3d_invalid_surface(struct native_display *ndpy,
 {
    /* XXX not thread safe? */
    struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
-   struct egl_g3d_context *gctx = egl_g3d_context(gsurf->base.CurrentContext);
-
+   struct egl_g3d_context *gctx;
+   
+   /*
+    * Some functions such as egl_g3d_copy_buffers create a temporary native
+    * surface.  There is no gsurf associated with it.
+    */
+   gctx = (gsurf) ? egl_g3d_context(gsurf->base.CurrentContext) : NULL;
    if (gctx)
       gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gsurf->stfbi);
 }
@@ -341,6 +346,9 @@ egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 
    _eglReleaseDisplayResources(drv, dpy);
    _eglCleanupDisplay(dpy);
+
+   if (gdpy->pipe)
+      gdpy->pipe->destroy(gdpy->pipe);
 
    if (dpy->Screens) {
       for (i = 0; i < dpy->NumScreens; i++) {
@@ -778,7 +786,7 @@ get_pipe_surface(struct native_display *ndpy, struct native_surface *nsurf,
       return NULL;
 
    psurf = ndpy->screen->get_tex_surface(ndpy->screen, textures[natt],
-         0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE);
+         0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
    pipe_texture_reference(&textures[natt], NULL);
 
    return psurf;
@@ -815,22 +823,22 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
             PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
    }
 
+   /* create a pipe context to copy surfaces */
+   if (!gdpy->pipe) {
+      gdpy->pipe =
+         gdpy->native->screen->context_create(gdpy->native->screen, NULL);
+      if (!gdpy->pipe)
+         return EGL_FALSE;
+   }
+
    psurf = get_pipe_surface(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
    if (psurf) {
-      struct pipe_context pipe;
       struct pipe_surface *psrc;
 
-      /**
-       * XXX This is hacky.  We should probably create a pipe context for
-       * EGLDisplay and use a blitter context for this.
-       */
-      memset(&pipe, 0, sizeof(pipe));
-      pipe.screen = screen;
-
       psrc = screen->get_tex_surface(screen, gsurf->render_texture,
-            0, 0, 0, PIPE_BUFFER_USAGE_CPU_READ);
+            0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
       if (psrc) {
-         util_surface_copy(&pipe, FALSE, psurf, 0, 0,
+         gdpy->pipe->surface_copy(gdpy->pipe, psurf, 0, 0,
                psrc, 0, 0, psurf->width, psurf->height);
          pipe_surface_reference(&psrc, NULL);
 
