@@ -177,15 +177,15 @@ nouveau_choose_tex_format(GLcontext *ctx, GLint internalFormat,
 }
 
 static GLboolean
-teximage_fits(struct gl_texture_object *t, int level,
-	      struct gl_texture_image *ti)
+teximage_fits(struct gl_texture_object *t, int level)
 {
 	struct nouveau_surface *s = &to_nouveau_texture(t)->surfaces[level];
+	struct gl_texture_image *ti = t->Image[0][level];
 
-	return t->Target == GL_TEXTURE_RECTANGLE ||
-		(s->bo && s->width == ti->Width &&
-		 s->height == ti->Height &&
-		 s->format == ti->TexFormat);
+	return ti && (t->Target == GL_TEXTURE_RECTANGLE ||
+		      (s->bo && s->width == ti->Width &&
+		       s->height == ti->Height &&
+		       s->format == ti->TexFormat));
 }
 
 static GLboolean
@@ -195,7 +195,7 @@ validate_teximage(GLcontext *ctx, struct gl_texture_object *t,
 {
 	struct gl_texture_image *ti = t->Image[0][level];
 
-	if (ti && teximage_fits(t, level, ti)) {
+	if (teximage_fits(t, level)) {
 		struct nouveau_surface *ss = to_nouveau_texture(t)->surfaces;
 		struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 
@@ -304,9 +304,12 @@ nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t)
 void
 nouveau_texture_reallocate(GLcontext *ctx, struct gl_texture_object *t)
 {
-	texture_dirty(t);
-	relayout_texture(ctx, t);
-	nouveau_texture_validate(ctx, t);
+	if (!teximage_fits(t, t->BaseLevel) ||
+	    !teximage_fits(t, get_last_level(t))) {
+		texture_dirty(t);
+		relayout_texture(ctx, t);
+		nouveau_texture_validate(ctx, t);
+	}
 }
 
 static unsigned
@@ -364,7 +367,7 @@ nouveau_teximage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
 	}
 
 	if (level == t->BaseLevel) {
-		if (!teximage_fits(t, level, ti))
+		if (!teximage_fits(t, level))
 			relayout_texture(ctx, t);
 		nouveau_texture_validate(ctx, t);
 	}
