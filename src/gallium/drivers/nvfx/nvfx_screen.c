@@ -44,7 +44,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TWO_SIDED_STENCIL:
 		return 1;
 	case PIPE_CAP_GLSL:
-		return 0;
+		return 1;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 		return 1;
 	case PIPE_CAP_POINT_SPRITE:
