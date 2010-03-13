@@ -37,7 +37,7 @@ struct xmesa_st_framebuffer {
 
    struct st_visual stvis;
 
-   unsigned texture_width, texture_height;
+   unsigned texture_width, texture_height, texture_mask;
    struct pipe_texture *textures[ST_ATTACHMENT_COUNT];
 
    struct pipe_surface *display_surface;
@@ -86,39 +86,37 @@ xmesa_st_framebuffer_display(struct st_framebuffer_iface *stfbi,
  */
 static void
 xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
-                                       const enum st_attachment_type *statts,
-                                       unsigned count)
+                                       unsigned width, unsigned height,
+                                       unsigned mask)
 {
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
    struct pipe_texture templ;
-   unsigned request_mask, i;
+   unsigned i;
 
-   request_mask = 0;
-   for (i = 0; i < count; i++)
-      request_mask |= 1 << statts[i];
+   /* remove outdated textures */
+   if (xstfb->texture_width != width || xstfb->texture_height != height) {
+      for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
+         pipe_texture_reference(&xstfb->textures[i], NULL);
+   }
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_2D;
-   templ.width0 = xstfb->texture_width;
-   templ.height0 = xstfb->texture_height;
+   templ.width0 = width;
+   templ.height0 = height;
    templ.depth0 = 1;
    templ.last_level = 0;
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
-      struct pipe_texture *ptex = xstfb->textures[i];
       enum pipe_format format;
       unsigned tex_usage;
 
-      /* remove outdated textures */
-      if (ptex && (ptex->width0 != xstfb->texture_width ||
-                   ptex->height0 != xstfb->texture_height)) {
-         pipe_texture_reference(&xstfb->textures[i], NULL);
-         ptex = NULL;
-      }
-
       /* the texture already exists or not requested */
-      if (ptex || !(request_mask & (1 << i)))
+      if (xstfb->textures[i] || !(mask & (1 << i))) {
+         /* remember the texture */
+         if (xstfb->textures[i])
+            mask |= (1 << i);
          continue;
+      }
 
       switch (i) {
       case ST_ATTACHMENT_FRONT_LEFT:
@@ -146,6 +144,10 @@ xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
             xstfb->screen->texture_create(xstfb->screen, &templ);
       }
    }
+
+   xstfb->texture_width = width;
+   xstfb->texture_height = height;
+   xstfb->texture_mask = mask;
 }
 
 static boolean 
@@ -155,15 +157,18 @@ xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
                               struct pipe_texture **out)
 {
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
-   unsigned i;
+   unsigned statt_mask, i;
+
+   statt_mask = 0x0;
+   for (i = 0; i < count; i++)
+      statt_mask |= 1 << statts[i];
 
    /* revalidate textures */
    if (xstfb->buffer->width != xstfb->texture_width ||
-       xstfb->buffer->height != xstfb->texture_height) {
-      xstfb->texture_width = xstfb->buffer->width;
-      xstfb->texture_height = xstfb->buffer->height;
-
-      xmesa_st_framebuffer_validate_textures(stfbi, statts, count);
+       xstfb->buffer->height != xstfb->texture_height ||
+       (xstfb->texture_mask & statt_mask) != statt_mask) {
+      xmesa_st_framebuffer_validate_textures(stfbi,
+            xstfb->buffer->width, xstfb->buffer->height, statt_mask);
    }
 
    for (i = 0; i < count; i++) {
