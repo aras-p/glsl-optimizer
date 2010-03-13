@@ -1500,6 +1500,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_ANISO_THRESHOLD_MASK       (7<<17)
 
 #	define R500_MACRO_SWITCH               (1<<22)
+#       define R500_TX_MAX_ANISO(x)            ((x) << 23)
+#       define R500_TX_MAX_ANISO_MASK          (63 << 23)
+#       define R500_TX_ANISO_HIGH_QUALITY      (1 << 30)
+
 #	define R500_BORDER_FIX                 (1<<31)
 
 #define R300_TX_FORMAT0_0                   0x4480

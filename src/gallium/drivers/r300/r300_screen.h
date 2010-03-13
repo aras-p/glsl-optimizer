@@ -77,6 +77,7 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys);
 #define DBG_DRAW    0x0000010
 #define DBG_TEX     0x0000020
 #define DBG_FALL    0x0000040
+#define DBG_ANISOHQ 0x0000080
 /*@}*/
 
 static INLINE boolean SCREEN_DBG_ON(struct r300_screen * screen, unsigned flags)

@@ -849,6 +849,7 @@ static void*
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
+    boolean is_r500 = r300_screen(pipe->screen)->caps->is_r500;
     int lod_bias;
     union util_color uc;
 
@@ -874,6 +875,14 @@ static void*
     lod_bias = CLAMP((int)(state->lod_bias * 32), -(1 << 9), (1 << 9) - 1);
 
     sampler->filter1 |= lod_bias << R300_LOD_BIAS_SHIFT;
+
+    /* This is very high quality anisotropic filtering for R5xx.
+     * It's good for benchmarking the performance of texturing but
+     * in practice we don't want to slow down the driver because it's
+     * a pretty good performance killer. Feel free to play with it. */
+    if (DBG_ON(r300, DBG_ANISOHQ) && is_r500) {
+        sampler->filter1 |= r500_anisotropy(state->max_anisotropy);
+    }
 
     util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
     sampler->border_color = uc.ui;
