@@ -398,39 +398,6 @@ tgsi_mask(uint tgsi)
 }
 
 static boolean
-src_native_swz(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc,
-	       struct nvfx_sreg *src)
-{
-	const struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
-	struct nvfx_sreg tgsi = tgsi_src(vpc, fsrc);
-	uint mask = 0;
-	uint c;
-
-	for (c = 0; c < 4; c++) {
-		switch (tgsi_util_get_full_src_register_swizzle(fsrc, c)) {
-		case TGSI_SWIZZLE_X:
-		case TGSI_SWIZZLE_Y:
-		case TGSI_SWIZZLE_Z:
-		case TGSI_SWIZZLE_W:
-			mask |= tgsi_mask(1 << c);
-			break;
-		default:
-			assert(0);
-		}
-	}
-
-	if (mask == NVFX_VP_MASK_ALL)
-		return TRUE;
-
-	*src = temp(vpc);
-
-	if (mask)
-		arith(vpc, VEC, MOV, *src, mask, tgsi, none, none);
-
-	return FALSE;
-}
-
-static boolean
 nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 				const struct tgsi_full_instruction *finst)
 {
@@ -456,17 +423,6 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		const struct tgsi_full_src_register *fsrc;
 
 		fsrc = &finst->Src[i];
-
-		switch (fsrc->Register.File) {
-		case TGSI_FILE_INPUT:
-		case TGSI_FILE_CONSTANT:
-		case TGSI_FILE_TEMPORARY:
-			if (!src_native_swz(nvfx, vpc, fsrc, &src[i]))
-				continue;
-			break;
-		default:
-			break;
-		}
 
 		switch (fsrc->Register.File) {
 		case TGSI_FILE_INPUT:
