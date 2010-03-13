@@ -234,7 +234,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->context_create = nv50_create;
 
 	nv50_screen_init_miptree_functions(pscreen);
-	nv50_transfer_init_screen_functions(pscreen);
 
 	/* DMA engine object */
 	ret = nouveau_grobj_alloc(chan, 0xbeef5039,

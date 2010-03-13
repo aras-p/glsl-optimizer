@@ -38,6 +38,4 @@ nv50_screen(struct pipe_screen *screen)
 	return (struct nv50_screen *)screen;
 }
 
-void nv50_transfer_init_screen_functions(struct pipe_screen *);
-
 #endif
