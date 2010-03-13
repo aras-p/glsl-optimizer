@@ -2067,8 +2067,10 @@ _mesa_meta_Bitmap(GLcontext *ctx,
    }
 
    bitmap1 = _mesa_map_pbo_source(ctx, &unpackSave, bitmap1);
-   if (!bitmap1)
+   if (!bitmap1) {
+      _mesa_meta_end(ctx);
       return;
+   }
 
    bitmap8 = (GLubyte *) calloc(1, width * height);
    if (bitmap8) {
