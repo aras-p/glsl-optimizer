@@ -188,11 +188,7 @@ ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
     if (!priv || !priv->tex)
 	return FALSE;
 
-    if (exa->pipe->is_texture_referenced(exa->pipe, priv->tex, 0, 0) &
-	PIPE_REFERENCED_FOR_WRITE)
-	exa->pipe->flush(exa->pipe, 0, NULL);
-
-    transfer = exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
+    transfer = exa->pipe->get_tex_transfer(exa->pipe, priv->tex, 0, 0, 0,
 					   PIPE_TRANSFER_READ, x, y, w, h);
     if (!transfer)
 	return FALSE;
@@ -203,11 +199,11 @@ ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
 #endif
 
     util_copy_rect((unsigned char*)dst, priv->tex->format, dst_pitch, 0, 0,
-		   w, h, exa->scrn->transfer_map(exa->scrn, transfer),
+		   w, h, exa->pipe->transfer_map(exa->pipe, transfer),
 		   transfer->stride, 0, 0);
 
-    exa->scrn->transfer_unmap(exa->scrn, transfer);
-    exa->scrn->tex_transfer_destroy(transfer);
+    exa->pipe->transfer_unmap(exa->pipe, transfer);
+    exa->pipe->tex_transfer_destroy(exa->pipe, transfer);
 
     return TRUE;
 }
@@ -226,12 +222,7 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
     if (!priv || !priv->tex)
 	return FALSE;
 
-    /* make sure that any pending operations are flushed to hardware */
-    if (exa->pipe->is_texture_referenced(exa->pipe, priv->tex, 0, 0) &
-	(PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE))
-	xorg_exa_flush(exa, 0, NULL);
-
-    transfer = exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
+    transfer = exa->pipe->get_tex_transfer(exa->pipe, priv->tex, 0, 0, 0,
 					   PIPE_TRANSFER_WRITE, x, y, w, h);
     if (!transfer)
 	return FALSE;
@@ -241,12 +232,12 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
                  x, y, w, h, src_pitch);
 #endif
 
-    util_copy_rect(exa->scrn->transfer_map(exa->scrn, transfer),
+    util_copy_rect(exa->pipe->transfer_map(exa->pipe, transfer),
 		   priv->tex->format, transfer->stride, 0, 0, w, h,
 		   (unsigned char*)src, src_pitch, 0, 0);
 
-    exa->scrn->transfer_unmap(exa->scrn, transfer);
-    exa->scrn->tex_transfer_destroy(transfer);
+    exa->pipe->transfer_unmap(exa->pipe, transfer);
+    exa->pipe->tex_transfer_destroy(exa->pipe, transfer);
 
     return TRUE;
 }
@@ -270,15 +261,11 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 
     if (priv->map_count == 0)
     {
-	if (exa->pipe->is_texture_referenced(exa->pipe, priv->tex, 0, 0) &
-	    PIPE_REFERENCED_FOR_WRITE)
-	    exa->pipe->flush(exa->pipe, 0, NULL);
-
         assert(pPix->drawable.width <= priv->tex->width0);
         assert(pPix->drawable.height <= priv->tex->height0);
 
 	priv->map_transfer =
-	    exa->scrn->get_tex_transfer(exa->scrn, priv->tex, 0, 0, 0,
+	    exa->pipe->get_tex_transfer(exa->pipe, priv->tex, 0, 0, 0,
 #ifdef EXA_MIXED_PIXMAPS
 					PIPE_TRANSFER_MAP_DIRECTLY |
 #endif
@@ -294,7 +281,7 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
 #endif
 
 	pPix->devPrivate.ptr =
-	    exa->scrn->transfer_map(exa->scrn, priv->map_transfer);
+	    exa->pipe->transfer_map(exa->pipe, priv->map_transfer);
 	pPix->devKind = priv->map_transfer->stride;
     }
 
@@ -321,8 +308,8 @@ ExaFinishAccess(PixmapPtr pPix, int index)
 
     if (--priv->map_count == 0) {
 	assert(priv->map_transfer);
-	exa->scrn->transfer_unmap(exa->scrn, priv->map_transfer);
-	exa->scrn->tex_transfer_destroy(priv->map_transfer);
+	exa->pipe->transfer_unmap(exa->pipe, priv->map_transfer);
+	exa->pipe->tex_transfer_destroy(exa->pipe, priv->map_transfer);
 	priv->map_transfer = NULL;
 	pPix->devPrivate.ptr = NULL;
     }

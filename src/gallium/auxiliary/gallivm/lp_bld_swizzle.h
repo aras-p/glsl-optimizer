@@ -37,7 +37,7 @@
 #define LP_BLD_SWIZZLE_H
 
 
-#include <llvm-c/Core.h>  
+#include "os/os_llvm.h"
 
 
 struct lp_type;

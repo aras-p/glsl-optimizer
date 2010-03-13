@@ -377,19 +377,21 @@ pstip_update_texture(struct pstip_stage *pstip)
 {
    static const uint bit31 = 1 << 31;
    struct pipe_context *pipe = pstip->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *transfer;
    const uint *stipple = pstip->state.stipple->stipple;
    uint i, j;
    ubyte *data;
 
    /* XXX: want to avoid flushing just because we use stipple: 
+    *
+    * Flush should no longer be necessary if driver is properly
+    * interleaving drawing and transfers on a given context:
     */
    pipe->flush( pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL );
 
-   transfer = screen->get_tex_transfer(screen, pstip->texture, 0, 0, 0,
-                                       PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
-   data = screen->transfer_map(screen, transfer);
+   transfer = pipe->get_tex_transfer(pipe, pstip->texture, 0, 0, 0,
+				     PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
+   data = pipe->transfer_map(pipe, transfer);
 
    /*
     * Load alpha texture.
@@ -411,8 +413,8 @@ pstip_update_texture(struct pstip_stage *pstip)
    }
 
    /* unmap */
-   screen->transfer_unmap(screen, transfer);
-   screen->tex_transfer_destroy(transfer);
+   pipe->transfer_unmap(pipe, transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 }
 
 

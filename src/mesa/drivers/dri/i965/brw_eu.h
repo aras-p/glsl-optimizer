@@ -795,6 +795,7 @@ ALU2(DPH)
 ALU2(DP3)
 ALU2(DP2)
 ALU2(LINE)
+ALU2(PLN)
 
 #undef ALU1
 #undef ALU2
@@ -965,4 +966,9 @@ void brw_math_invert( struct brw_compile *p,
 
 void brw_set_src1( struct brw_instruction *insn,
                           struct brw_reg reg );
+
+
+/* brw_optimize.c */
+void brw_optimize(struct brw_compile *p);
+
 #endif

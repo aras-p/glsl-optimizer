@@ -33,7 +33,6 @@
 #include "lp_screen.h"
 #include "lp_buffer.h"
 
-#include "state_tracker/sw_winsys.h"
 
 static void *
 llvmpipe_buffer_map(struct pipe_screen *screen,

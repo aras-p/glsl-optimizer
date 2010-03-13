@@ -52,11 +52,11 @@
 #include "draw/draw_vbuf.h"
 
 
-static void set_scene_state( struct setup_context *, unsigned );
+static void set_scene_state( struct lp_setup_context *, unsigned );
 
 
 struct lp_scene *
-lp_setup_get_current_scene(struct setup_context *setup)
+lp_setup_get_current_scene(struct lp_setup_context *setup)
 {
    if (!setup->scene) {
 
@@ -74,7 +74,7 @@ lp_setup_get_current_scene(struct setup_context *setup)
 
 
 static void
-first_triangle( struct setup_context *setup,
+first_triangle( struct lp_setup_context *setup,
                 const float (*v0)[4],
                 const float (*v1)[4],
                 const float (*v2)[4])
@@ -85,7 +85,7 @@ first_triangle( struct setup_context *setup,
 }
 
 static void
-first_line( struct setup_context *setup,
+first_line( struct lp_setup_context *setup,
 	    const float (*v0)[4],
 	    const float (*v1)[4])
 {
@@ -95,7 +95,7 @@ first_line( struct setup_context *setup,
 }
 
 static void
-first_point( struct setup_context *setup,
+first_point( struct lp_setup_context *setup,
 	     const float (*v0)[4])
 {
    set_scene_state( setup, SETUP_ACTIVE );
@@ -103,7 +103,7 @@ first_point( struct setup_context *setup,
    setup->point( setup, v0 );
 }
 
-static void reset_context( struct setup_context *setup )
+static void reset_context( struct lp_setup_context *setup )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -131,7 +131,7 @@ static void reset_context( struct setup_context *setup )
 
 /** Rasterize all scene's bins */
 static void
-lp_setup_rasterize_scene( struct setup_context *setup,
+lp_setup_rasterize_scene( struct lp_setup_context *setup,
                           boolean write_depth )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
@@ -148,7 +148,7 @@ lp_setup_rasterize_scene( struct setup_context *setup,
 
 
 static void
-begin_binning( struct setup_context *setup )
+begin_binning( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
@@ -184,7 +184,7 @@ begin_binning( struct setup_context *setup )
  * TODO: fast path for fullscreen clears and no triangles.
  */
 static void
-execute_clears( struct setup_context *setup )
+execute_clears( struct lp_setup_context *setup )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -194,7 +194,7 @@ execute_clears( struct setup_context *setup )
 
 
 static void
-set_scene_state( struct setup_context *setup,
+set_scene_state( struct lp_setup_context *setup,
            unsigned new_state )
 {
    unsigned old_state = setup->state;
@@ -229,7 +229,7 @@ set_scene_state( struct setup_context *setup,
 
 
 void
-lp_setup_flush( struct setup_context *setup,
+lp_setup_flush( struct lp_setup_context *setup,
                 unsigned flags )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
@@ -239,7 +239,7 @@ lp_setup_flush( struct setup_context *setup,
 
 
 void
-lp_setup_bind_framebuffer( struct setup_context *setup,
+lp_setup_bind_framebuffer( struct lp_setup_context *setup,
                            const struct pipe_framebuffer_state *fb )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
@@ -256,7 +256,7 @@ lp_setup_bind_framebuffer( struct setup_context *setup,
 
 
 void
-lp_setup_clear( struct setup_context *setup,
+lp_setup_clear( struct lp_setup_context *setup,
                 const float *color,
                 double depth,
                 unsigned stencil,
@@ -314,7 +314,7 @@ lp_setup_clear( struct setup_context *setup,
  * Emit a fence.
  */
 struct pipe_fence_handle *
-lp_setup_fence( struct setup_context *setup )
+lp_setup_fence( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    const unsigned rank = lp_scene_get_num_bins( scene ); /* xxx */
@@ -334,10 +334,11 @@ lp_setup_fence( struct setup_context *setup )
 
 
 void 
-lp_setup_set_triangle_state( struct setup_context *setup,
+lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              unsigned cull_mode,
                              boolean ccw_is_frontface,
-                             boolean scissor )
+                             boolean scissor,
+                             boolean gl_rasterization_rules)
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -345,12 +346,13 @@ lp_setup_set_triangle_state( struct setup_context *setup,
    setup->cullmode = cull_mode;
    setup->triangle = first_triangle;
    setup->scissor_test = scissor;
+   setup->pixel_offset = gl_rasterization_rules ? 0.5f : 0.0f;
 }
 
 
 
 void
-lp_setup_set_fs_inputs( struct setup_context *setup,
+lp_setup_set_fs_inputs( struct lp_setup_context *setup,
                         const struct lp_shader_input *input,
                         unsigned nr )
 {
@@ -361,7 +363,7 @@ lp_setup_set_fs_inputs( struct setup_context *setup,
 }
 
 void
-lp_setup_set_fs_functions( struct setup_context *setup,
+lp_setup_set_fs_functions( struct lp_setup_context *setup,
                            lp_jit_frag_func jit_function0,
                            lp_jit_frag_func jit_function1,
                            boolean opaque )
@@ -376,7 +378,7 @@ lp_setup_set_fs_functions( struct setup_context *setup,
 }
 
 void
-lp_setup_set_fs_constants(struct setup_context *setup,
+lp_setup_set_fs_constants(struct lp_setup_context *setup,
                           struct pipe_buffer *buffer)
 {
    LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) buffer);
@@ -388,7 +390,7 @@ lp_setup_set_fs_constants(struct setup_context *setup,
 
 
 void
-lp_setup_set_alpha_ref_value( struct setup_context *setup,
+lp_setup_set_alpha_ref_value( struct lp_setup_context *setup,
                               float alpha_ref_value )
 {
    LP_DBG(DEBUG_SETUP, "%s %f\n", __FUNCTION__, alpha_ref_value);
@@ -400,7 +402,7 @@ lp_setup_set_alpha_ref_value( struct setup_context *setup,
 }
 
 void
-lp_setup_set_blend_color( struct setup_context *setup,
+lp_setup_set_blend_color( struct lp_setup_context *setup,
                           const struct pipe_blend_color *blend_color )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
@@ -415,7 +417,7 @@ lp_setup_set_blend_color( struct setup_context *setup,
 
 
 void
-lp_setup_set_scissor( struct setup_context *setup,
+lp_setup_set_scissor( struct lp_setup_context *setup,
                       const struct pipe_scissor_state *scissor )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
@@ -430,7 +432,7 @@ lp_setup_set_scissor( struct setup_context *setup,
 
 
 void 
-lp_setup_set_flatshade_first( struct setup_context *setup,
+lp_setup_set_flatshade_first( struct lp_setup_context *setup,
                               boolean flatshade_first )
 {
    setup->flatshade_first = flatshade_first;
@@ -438,7 +440,7 @@ lp_setup_set_flatshade_first( struct setup_context *setup,
 
 
 void 
-lp_setup_set_vertex_info( struct setup_context *setup,
+lp_setup_set_vertex_info( struct lp_setup_context *setup,
                           struct vertex_info *vertex_info )
 {
    /* XXX: just silently holding onto the pointer:
@@ -451,7 +453,7 @@ lp_setup_set_vertex_info( struct setup_context *setup,
  * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
  */
 void
-lp_setup_set_fragment_sampler_views(struct setup_context *setup,
+lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                     unsigned num,
                                     struct pipe_sampler_view **views)
 {
@@ -473,13 +475,13 @@ lp_setup_set_fragment_sampler_views(struct setup_context *setup,
          jit_tex->height = tex->height0;
          jit_tex->depth = tex->depth0;
          jit_tex->last_level = tex->last_level;
-         jit_tex->stride = lp_tex->stride[0];
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level pointers */
             int j;
-            for (j = 0; j < LP_MAX_TEXTURE_2D_LEVELS; j++) {
+            for (j = 0; j <= tex->last_level; j++) {
                jit_tex->data[j] =
                   (ubyte *) lp_tex->data + lp_tex->level_offset[j];
+               jit_tex->row_stride[j] = lp_tex->stride[j];
             }
          }
          else {
@@ -492,6 +494,7 @@ lp_setup_set_fragment_sampler_views(struct setup_context *setup,
             struct sw_winsys *winsys = screen->winsys;
             jit_tex->data[0] = winsys->displaytarget_map(winsys, lp_tex->dt,
                                                       PIPE_BUFFER_USAGE_CPU_READ);
+            jit_tex->row_stride[0] = lp_tex->stride[0];
             assert(jit_tex->data[0]);
          }
 
@@ -513,7 +516,7 @@ lp_setup_set_fragment_sampler_views(struct setup_context *setup,
  * being rendered and the current scene being built.
  */
 unsigned
-lp_setup_is_texture_referenced( const struct setup_context *setup,
+lp_setup_is_texture_referenced( const struct lp_setup_context *setup,
                                 const struct pipe_texture *texture )
 {
    unsigned i;
@@ -542,7 +545,7 @@ lp_setup_is_texture_referenced( const struct setup_context *setup,
  * Called by vbuf code when we're about to draw something.
  */
 void
-lp_setup_update_state( struct setup_context *setup )
+lp_setup_update_state( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
@@ -660,7 +663,7 @@ lp_setup_update_state( struct setup_context *setup )
 /* Only caller is lp_setup_vbuf_destroy()
  */
 void 
-lp_setup_destroy( struct setup_context *setup )
+lp_setup_destroy( struct lp_setup_context *setup )
 {
    reset_context( setup );
 
@@ -685,12 +688,12 @@ lp_setup_destroy( struct setup_context *setup )
  * the draw module.  Currently also creates a rasterizer to use with
  * it.
  */
-struct setup_context *
+struct lp_setup_context *
 lp_setup_create( struct pipe_context *pipe,
                  struct draw_context *draw )
 {
    unsigned i;
-   struct setup_context *setup = CALLOC_STRUCT(setup_context);
+   struct lp_setup_context *setup = CALLOC_STRUCT(lp_setup_context);
 
    if (!setup)
       return NULL;

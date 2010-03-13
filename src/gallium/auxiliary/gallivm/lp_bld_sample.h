@@ -36,7 +36,7 @@
 #define LP_BLD_SAMPLE_H
 
 
-#include <llvm-c/Core.h>
+#include "os/os_llvm.h"
 
 struct pipe_texture;
 struct pipe_sampler_state;
@@ -113,9 +113,9 @@ struct lp_sampler_dynamic_state
                   unsigned unit);
 
    LLVMValueRef
-   (*stride)( struct lp_sampler_dynamic_state *state,
-              LLVMBuilderRef builder,
-              unsigned unit);
+   (*row_stride)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
 
    LLVMValueRef
    (*data_ptr)( struct lp_sampler_dynamic_state *state,
@@ -148,7 +148,9 @@ lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
-                       LLVMValueRef y_stride);
+                       LLVMValueRef z,
+                       LLVMValueRef y_stride,
+                       LLVMValueRef z_stride);
 
 
 void

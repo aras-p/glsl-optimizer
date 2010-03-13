@@ -82,6 +82,8 @@ struct ximage_surface {
    int width, height;
    struct ximage_buffer buffers[NUM_NATIVE_ATTACHMENTS];
    uint valid_mask;
+
+   struct pipe_surface *draw_surface;
 };
 
 struct ximage_config {
@@ -266,15 +268,19 @@ ximage_surface_draw_buffer(struct native_surface *nsurf,
 
    assert(xsurf->drawable && xbuf->texture);
 
-   /* what's the cost of surface creation? */
-   psurf = screen->get_tex_surface(screen,
-         xbuf->texture, 0, 0, 0, PIPE_BUFFER_USAGE_CPU_READ);
-   if (!psurf)
-      return FALSE;
+   psurf = xsurf->draw_surface;
+   if (!psurf || psurf->texture != xbuf->texture) {
+      pipe_surface_reference(&xsurf->draw_surface, NULL);
+
+      psurf = screen->get_tex_surface(screen,
+            xbuf->texture, 0, 0, 0, PIPE_BUFFER_USAGE_CPU_READ);
+      if (!psurf)
+         return FALSE;
+
+      xsurf->draw_surface = psurf;
+   }
 
    screen->flush_frontbuffer(screen, psurf, &xbuf->xdraw);
-
-   pipe_surface_reference(&psurf, NULL);
 
    return TRUE;
 }
@@ -370,6 +376,8 @@ ximage_surface_destroy(struct native_surface *nsurf)
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    int i;
+
+   pipe_surface_reference(&xsurf->draw_surface, NULL);
 
    for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++)
       ximage_surface_free_buffer(&xsurf->base, i);

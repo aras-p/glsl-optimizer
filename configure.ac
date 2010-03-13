@@ -22,6 +22,8 @@ LIBDRM_REQUIRED=2.4.15
 LIBDRM_RADEON_REQUIRED=2.4.17
 DRI2PROTO_REQUIRED=2.1
 GLPROTO_REQUIRED=1.4.11
+LIBDRM_XORG_REQUIRED=2.4.17
+LIBKMS_XORG_REQUIRED=1.0.0
 
 dnl Check for progs
 AC_PROG_CPP
@@ -458,6 +460,7 @@ CORE_DIRS="glsl mesa"
 SRC_DIRS="glew"
 GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
+GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS=""
 GALLIUM_WINSYS_DRM_DIRS=""
 GALLIUM_DRIVERS_DIRS="softpipe failover trace identity"
@@ -467,11 +470,12 @@ case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS libgl-xlib"
     ;;
 dri)
     SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib drm"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -481,6 +485,7 @@ AC_SUBST([SRC_DIRS])
 AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
 AC_SUBST([GALLIUM_DIRS])
+AC_SUBST([GALLIUM_TARGET_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
 AC_SUBST([GALLIUM_DRIVERS_DIRS])
@@ -1200,7 +1205,7 @@ yes)
             GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
         fi
         # Have only tested st/xorg on 1.6.0 servers
-        PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0],
+        PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0 libdrm >= $LIBDRM_XORG_REQUIRED libkms >= $LIBKMS_XORG_REQUIRED],
             HAVE_XORG="yes"; GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg",
             HAVE_XORG="no")
         ;;
@@ -1220,9 +1225,9 @@ yes)
             fi
             ;;
         xorg)
-	    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
-                  HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
-                  HAVE_XEXTPROTO_71="no")
+            PKG_CHECK_MODULES([LIBDRM_XORG], [libdrm >= $LIBDRM_XORG_REQUIRED])
+            PKG_CHECK_MODULES([LIBKMS_XORG], [libkms >= $LIBKMS_XORG_REQUIRED])
+            HAVE_XORG="yes"
             ;;
         es)
             # mesa/es is required to build es state tracker
@@ -1233,6 +1238,12 @@ yes)
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
 esac
+
+if test "x$HAVE_XORG" = xyes; then
+    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
+        HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
+        HAVE_XEXTPROTO_71="no")
+fi
 
 AC_ARG_WITH([egl-displays],
     [AS_HELP_STRING([--with-egl-displays@<:@=DIRS...@:>@],
@@ -1415,6 +1426,7 @@ echo ""
 if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Gallium:         yes"
     echo "        Gallium dirs:    $GALLIUM_DIRS"
+    echo "        Target dirs:     $GALLIUM_TARGET_DIRS"
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Winsys drm dirs:$GALLIUM_WINSYS_DRM_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"

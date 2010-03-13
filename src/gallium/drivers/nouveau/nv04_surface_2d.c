@@ -518,7 +518,6 @@ nv04_surface_wrap_for_render(struct pipe_screen *pscreen, struct nv04_surface_2d
 		ns->base.usage = PIPE_BUFFER_USAGE_GPU_WRITE | NOUVEAU_BUFFER_USAGE_NO_RENDER | PIPE_BUFFER_USAGE_GPU_READ;
 	}
 
-	struct nv40_screen* screen = (struct nv40_screen*)pscreen;
 	ns->base.usage = PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
 
 	struct pipe_texture templ;

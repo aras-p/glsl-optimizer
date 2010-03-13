@@ -37,7 +37,7 @@
 #define LP_BLD_STRUCT_H
 
 
-#include <llvm-c/Core.h>  
+#include "os/os_llvm.h"
 #include <llvm-c/Target.h>
 
 #include "util/u_debug.h"

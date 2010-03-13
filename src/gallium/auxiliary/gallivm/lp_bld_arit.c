@@ -232,6 +232,37 @@ lp_build_add(struct lp_build_context *bld,
 }
 
 
+/** Return the sum of the elements of a */
+LLVMValueRef
+lp_build_sum_vector(struct lp_build_context *bld,
+                    LLVMValueRef a)
+{
+   const struct lp_type type = bld->type;
+   LLVMValueRef index, res;
+   int i;
+
+   if (a == bld->zero)
+      return bld->zero;
+   if (a == bld->undef)
+      return bld->undef;
+   assert(type.length > 1);
+
+   assert(!bld->type.norm);
+
+   index = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   res = LLVMBuildExtractElement(bld->builder, a, index, "");
+
+   for (i = 1; i < type.length; i++) {
+      index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      res = LLVMBuildAdd(bld->builder, res,
+                         LLVMBuildExtractElement(bld->builder, a, index, ""),
+                         "");
+   }
+
+   return res;
+}
+
+
 /**
  * Generate a - b
  */
@@ -689,12 +720,12 @@ lp_build_negate(struct lp_build_context *bld,
 }
 
 
+/** Return -1, 0 or +1 depending on the sign of a */
 LLVMValueRef
 lp_build_sgn(struct lp_build_context *bld,
              LLVMValueRef a)
 {
    const struct lp_type type = bld->type;
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMValueRef cond;
    LLVMValueRef res;
 
@@ -704,14 +735,29 @@ lp_build_sgn(struct lp_build_context *bld,
       res = bld->one;
    }
    else if(type.floating) {
-      /* Take the sign bit and add it to 1 constant */
-      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-      LLVMValueRef mask = lp_build_int_const_scalar(type, (unsigned long long)1 << (type.width - 1));
+      LLVMTypeRef vec_type;
+      LLVMTypeRef int_type;
+      LLVMValueRef mask;
       LLVMValueRef sign;
       LLVMValueRef one;
-      sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      unsigned long long maskBit = (unsigned long long)1 << (type.width - 1);
+
+      if (type.length == 1) {
+         int_type = lp_build_int_elem_type(type);
+         vec_type = lp_build_elem_type(type);
+         mask = LLVMConstInt(int_type, maskBit, 0);
+      }
+      else {
+         /* vector */
+         int_type = lp_build_int_vec_type(type);
+         vec_type = lp_build_vec_type(type);
+         mask = lp_build_int_const_scalar(type, maskBit);
+      }
+
+      /* Take the sign bit and add it to 1 constant */
+      sign = LLVMBuildBitCast(bld->builder, a, int_type, "");
       sign = LLVMBuildAnd(bld->builder, sign, mask, "");
-      one = LLVMConstBitCast(bld->one, int_vec_type);
+      one = LLVMConstBitCast(bld->one, int_type);
       res = LLVMBuildOr(bld->builder, sign, one, "");
       res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
    }
@@ -883,6 +929,10 @@ lp_build_floor(struct lp_build_context *bld,
 
    assert(type.floating);
 
+   if (type.length == 1) {
+      return LLVMBuildFPTrunc(bld->builder, a, LLVMFloatType(), "");
+   }
+
    if(util_cpu_caps.has_sse4_1)
       return lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_FLOOR);
    else {
@@ -953,6 +1003,9 @@ lp_build_itrunc(struct lp_build_context *bld,
 }
 
 
+/**
+ * Convert float[] to int[] with round().
+ */
 LLVMValueRef
 lp_build_iround(struct lp_build_context *bld,
                 LLVMValueRef a)
@@ -1013,6 +1066,14 @@ lp_build_ifloor(struct lp_build_context *bld,
    LLVMValueRef res;
 
    assert(type.floating);
+
+   if (type.length == 1) {
+      /* scalar float to int */
+      LLVMTypeRef int_type = LLVMIntType(type.width);
+      res = LLVMBuildFPToSI(bld->builder, a, int_type, "");
+      return res;
+   }
+
    assert(lp_check_value(type, a));
 
    if(util_cpu_caps.has_sse4_1) {

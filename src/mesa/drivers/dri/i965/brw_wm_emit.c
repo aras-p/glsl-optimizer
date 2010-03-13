@@ -34,6 +34,23 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 
+static GLboolean can_do_pln(struct intel_context *intel,
+			    const struct brw_reg *deltas)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+
+   if (!brw->has_pln)
+      return GL_FALSE;
+
+   if (deltas[1].nr != deltas[0].nr + 1)
+      return GL_FALSE;
+
+   if (intel->gen < 6 && ((deltas[0].nr & 1) != 0))
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
 /* Not quite sure how correct this is - need to understand horiz
  * vs. vertical strides a little better.
  */
@@ -45,7 +62,13 @@ static INLINE struct brw_reg sechalf( struct brw_reg reg )
 }
 
 
-/* Payload R0:
+/**
+ * Computes the screen-space x,y position of the pixels.
+ *
+ * This will be used by emit_delta_xy() or emit_wpos_xy() for
+ * interpolation of attributes..
+ *
+ * Payload R0:
  *
  * R0.0 -- pixel mask, one bit for each of 4 pixels in 4 tiles,
  *         corresponding to each of the 16 execution channels.
@@ -60,7 +83,6 @@ static INLINE struct brw_reg sechalf( struct brw_reg reg )
  * R1.7 -- ?
  * R1.8 -- ?
  */
-
 void emit_pixel_xy(struct brw_wm_compile *c,
 		   const struct brw_reg *dst,
 		   GLuint mask)
@@ -100,7 +122,14 @@ void emit_pixel_xy(struct brw_wm_compile *c,
    brw_pop_insn_state(p);
 }
 
-
+/**
+ * Computes the screen-space x,y distance of the pixels from the start
+ * vertex.
+ *
+ * This will be used in linterp or pinterp with the start vertex value
+ * and the Cx, Cy, and C0 coefficients passed in from the setup engine
+ * to produce interpolated attribute values.
+ */
 void emit_delta_xy(struct brw_compile *p,
 		   const struct brw_reg *dst,
 		   GLuint mask,
@@ -108,25 +137,27 @@ void emit_delta_xy(struct brw_compile *p,
 {
    struct brw_reg r1 = brw_vec1_grf(1, 0);
 
+   if (mask == 0)
+      return;
+
+   assert(mask == WRITEMASK_XY);
+
    /* Calc delta X,Y by subtracting origin in r1 from the pixel
-    * centers.
+    * centers produced by emit_pixel_xy().
     */
-   if (mask & WRITEMASK_X) {
-      brw_ADD(p,
-	      dst[0],
-	      retype(arg0[0], BRW_REGISTER_TYPE_UW),
-	      negate(r1));
-   }
-
-   if (mask & WRITEMASK_Y) {
-      brw_ADD(p,
-	      dst[1],
-	      retype(arg0[1], BRW_REGISTER_TYPE_UW),
-	      negate(suboffset(r1,1)));
-
-   }
+   brw_ADD(p,
+	   dst[0],
+	   retype(arg0[0], BRW_REGISTER_TYPE_UW),
+	   negate(r1));
+   brw_ADD(p,
+	   dst[1],
+	   retype(arg0[1], BRW_REGISTER_TYPE_UW),
+	   negate(suboffset(r1,1)));
 }
 
+/**
+ * Computes the pixel offset from the window origin for gl_FragCoord().
+ */
 void emit_wpos_xy(struct brw_wm_compile *c,
 		  const struct brw_reg *dst,
 		  GLuint mask,
@@ -134,9 +165,6 @@ void emit_wpos_xy(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
 
-   /* Calculate the pixel offset from window bottom left into destination
-    * X and Y channels.
-    */
    if (mask & WRITEMASK_X) {
       if (c->fp->program.PixelCenterInteger) {
 	 /* X' = X */
@@ -186,6 +214,7 @@ void emit_pixel_w(struct brw_wm_compile *c,
 		  const struct brw_reg *deltas)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
 
    /* Don't need this if all you are doing is interpolating color, for
     * instance.
@@ -196,8 +225,12 @@ void emit_pixel_w(struct brw_wm_compile *c,
       /* Calc 1/w - just linterp wpos[3] optimized by putting the
        * result straight into a message reg.
        */
-      brw_LINE(p, brw_null_reg(), interp3, deltas[0]);
-      brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), deltas[1]);
+      if (can_do_pln(intel, deltas)) {
+	 brw_PLN(p, brw_message_reg(2), interp3, deltas[0]);
+      } else {
+	 brw_LINE(p, brw_null_reg(), interp3, deltas[0]);
+	 brw_MAC(p, brw_message_reg(2), suboffset(interp3, 1), deltas[1]);
+      }
 
       /* Calc w */
       if (c->dispatch_width == 16) {
@@ -224,6 +257,7 @@ void emit_linterp(struct brw_compile *p,
 		  const struct brw_reg *arg0,
 		  const struct brw_reg *deltas)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
    GLuint i;
@@ -235,8 +269,12 @@ void emit_linterp(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {
-	 brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
-	 brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+	 if (can_do_pln(intel, deltas)) {
+	    brw_PLN(p, dst[i], interp[i], deltas[0]);
+	 } else {
+	    brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
+	    brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+	 }
       }
    }
 }
@@ -249,6 +287,7 @@ void emit_pinterp(struct brw_compile *p,
 		  const struct brw_reg *deltas,
 		  const struct brw_reg *w)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg interp[4];
    GLuint nr = arg0[0].nr;
    GLuint i;
@@ -260,8 +299,12 @@ void emit_pinterp(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {
-	 brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
-	 brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+	 if (can_do_pln(intel, deltas)) {
+	    brw_PLN(p, dst[i], interp[i], deltas[0]);
+	 } else {
+	    brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
+	    brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+	 }
       }
    }
    for (i = 0; i < 4; i++) {
@@ -502,11 +545,8 @@ void emit_sop(struct brw_compile *p,
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {	
 	 brw_push_insn_state(p);
-	 brw_CMP(p, brw_null_reg(), cond, arg0[i], arg1[i]);
-	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-	 brw_MOV(p, dst[i], brw_imm_f(0));
-	 brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-	 brw_MOV(p, dst[i], brw_imm_f(1.0));
+	 brw_CMP(p, brw_null_reg(), cond, arg1[i], arg0[i]);
+	 brw_SEL(p, dst[i], brw_null_reg(), brw_imm_f(1.0));
 	 brw_pop_insn_state(p);
       }
    }
@@ -566,12 +606,12 @@ static void emit_sne( struct brw_compile *p,
    emit_sop(p, dst, mask, BRW_CONDITIONAL_NEQ, arg0, arg1);
 }
 
-static void emit_cmp( struct brw_compile *p, 
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1,
-		      const struct brw_reg *arg2 )
+void emit_cmp(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1,
+	      const struct brw_reg *arg2)
 {
    GLuint i;
 
@@ -601,14 +641,10 @@ void emit_max(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {	
-	 brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
-	 brw_MOV(p, dst[i], arg0[i]);
-	 brw_set_saturate(p, 0);
-
-	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0[i], arg1[i]);
+	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0[i], arg1[i]);
 
 	 brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
-	 brw_MOV(p, dst[i], arg1[i]);
+	 brw_SEL(p, dst[i], arg0[i], arg1[i]);
 	 brw_set_saturate(p, 0);
 	 brw_set_predicate_control_flag_value(p, 0xff);
       }
@@ -625,14 +661,10 @@ void emit_min(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {	
-	 brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
-	 brw_MOV(p, dst[i], arg1[i]);
-	 brw_set_saturate(p, 0);
-
 	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0[i], arg1[i]);
 
 	 brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
-	 brw_MOV(p, dst[i], arg0[i]);
+	 brw_SEL(p, dst[i], arg0[i], arg1[i]);
 	 brw_set_saturate(p, 0);
 	 brw_set_predicate_control_flag_value(p, 0xff);
       }
@@ -1086,11 +1118,19 @@ static void emit_kil( struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-   GLuint i;
-   
-   /* XXX - usually won't need 4 compares!
-    */
+   GLuint i, j;
+
    for (i = 0; i < 4; i++) {
+      /* Check if we've already done the comparison for this reg
+       * -- common when someone does KIL TEMP.wwww.
+       */
+      for (j = 0; j < i; j++) {
+	 if (memcmp(&arg0[j], &arg0[i], sizeof(arg0[0])) == 0)
+	    break;
+      }
+      if (j != i)
+	 continue;
+
       brw_push_insn_state(p);
       brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0[i], brw_imm_f(0));   
       brw_set_predicate_control_flag_value(p, 0xff);

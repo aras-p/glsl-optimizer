@@ -797,7 +797,10 @@ i915_bind_vertex_elements_state(struct pipe_context *pipe,
    draw_flush(i915->draw);
 
    /* pass-through to draw module */
-   draw_set_vertex_elements(i915->draw, i915_velems->count, i915_velems->velem);
+   if (i915_velems) {
+      draw_set_vertex_elements(i915->draw,
+            i915_velems->count, i915_velems->velem);
+   }
 }
 
 static void

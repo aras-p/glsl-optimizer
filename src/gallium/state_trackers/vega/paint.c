@@ -164,10 +164,10 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
       struct pipe_transfer *transfer =
          st_no_flush_get_tex_transfer(p->base.ctx, tex, 0, 0, 0,
                                       PIPE_TRANSFER_WRITE, 0, 0, 1024, 1);
-      void *map = screen->transfer_map(screen, transfer);
+      void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, p->gradient.color_data, sizeof(VGint)*1024);
-      screen->transfer_unmap(screen, transfer);
-      screen->tex_transfer_destroy(transfer);
+      pipe->transfer_unmap(pipe, transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 
    return tex;

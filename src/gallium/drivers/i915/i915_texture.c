@@ -795,12 +795,12 @@ i915_tex_surface_destroy(struct pipe_surface *surf)
 
 
 /*
- * Screen transfer functions
+ * Texture transfer functions
  */
 
 
-static struct pipe_transfer*
-i915_get_tex_transfer(struct pipe_screen *screen,
+static struct pipe_transfer *
+i915_get_tex_transfer(struct pipe_context *pipe,
                       struct pipe_texture *texture,
                       unsigned face, unsigned level, unsigned zslice,
                       enum pipe_transfer_usage usage, unsigned x, unsigned y,
@@ -837,7 +837,7 @@ i915_get_tex_transfer(struct pipe_screen *screen,
 }
 
 static void *
-i915_transfer_map(struct pipe_screen *screen,
+i915_transfer_map(struct pipe_context *pipe,
                   struct pipe_transfer *transfer)
 {
    struct i915_texture *tex = (struct i915_texture *)transfer->texture;
@@ -859,7 +859,7 @@ i915_transfer_map(struct pipe_screen *screen,
 }
 
 static void
-i915_transfer_unmap(struct pipe_screen *screen,
+i915_transfer_unmap(struct pipe_context *pipe,
                     struct pipe_transfer *transfer)
 {
    struct i915_texture *tex = (struct i915_texture *)transfer->texture;
@@ -868,7 +868,8 @@ i915_transfer_unmap(struct pipe_screen *screen,
 }
 
 static void
-i915_tex_transfer_destroy(struct pipe_transfer *trans)
+i915_tex_transfer_destroy(struct pipe_context *pipe,
+                          struct pipe_transfer *trans)
 {
    pipe_texture_reference(&trans->texture, NULL);
    FREE(trans);
@@ -879,6 +880,14 @@ i915_tex_transfer_destroy(struct pipe_transfer *trans)
  * Other texture functions
  */
 
+void
+i915_init_texture_functions(struct i915_context *i915 )
+{
+   i915->base.get_tex_transfer = i915_get_tex_transfer;
+   i915->base.transfer_map = i915_transfer_map;
+   i915->base.transfer_unmap = i915_transfer_unmap;
+   i915->base.tex_transfer_destroy = i915_tex_transfer_destroy;
+}
 
 void
 i915_init_screen_texture_functions(struct i915_screen *is)
@@ -889,8 +898,4 @@ i915_init_screen_texture_functions(struct i915_screen *is)
    is->base.texture_destroy = i915_texture_destroy;
    is->base.get_tex_surface = i915_get_tex_surface;
    is->base.tex_surface_destroy = i915_tex_surface_destroy;
-   is->base.get_tex_transfer = i915_get_tex_transfer;
-   is->base.transfer_map = i915_transfer_map;
-   is->base.transfer_unmap = i915_transfer_unmap;
-   is->base.tex_transfer_destroy = i915_tex_transfer_destroy;
 }

@@ -69,8 +69,8 @@ nouveau_channel_flush_notify(struct nouveau_channel *chan)
 	struct nouveau_context *nctx = chan->user_private;
 	GLcontext *ctx = &nctx->base;
 
-	if (nctx->fallback < SWRAST && ctx->DrawBuffer)
-		nouveau_state_emit(&nctx->base);
+	if (nctx->fallback < SWRAST)
+		nouveau_bo_state_emit(ctx);
 }
 
 GLboolean

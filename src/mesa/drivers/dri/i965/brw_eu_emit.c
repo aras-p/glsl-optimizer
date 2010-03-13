@@ -573,7 +573,7 @@ ALU2(DPH)
 ALU2(DP3)
 ALU2(DP2)
 ALU2(LINE)
-
+ALU2(PLN)
 
 
 
@@ -1290,7 +1290,7 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint simd_mode)
 {
    GLboolean need_stall = 0;
-   
+
    if (writemask == 0) {
       /*printf("%s: zero writemask??\n", __FUNCTION__); */
       return;
@@ -1327,8 +1327,14 @@ void brw_SAMPLE(struct brw_compile *p,
          /* printf("need stall %x %x\n", newmask , writemask); */
       }
       else {
+	 GLboolean dispatch_16 = GL_FALSE;
+
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
-	 
+
+	 guess_execution_size(p->current, dest);
+	 if (p->current->header.execution_size == BRW_EXECUTE_16)
+	    dispatch_16 = GL_TRUE;
+
 	 newmask = ~newmask & WRITEMASK_XYZW;
 
 	 brw_push_insn_state(p);
@@ -1343,7 +1349,13 @@ void brw_SAMPLE(struct brw_compile *p,
 
   	 src0 = retype(brw_null_reg(), BRW_REGISTER_TYPE_UW); 
 	 dest = offset(dest, dst_offset);
-	 response_length = len * 2;
+
+	 /* For 16-wide dispatch, masked channels are skipped in the
+	  * response.  For 8-wide, masked channels still take up slots,
+	  * and are just not written to.
+	  */
+	 if (dispatch_16)
+	    response_length = len * 2;
       }
    }
 

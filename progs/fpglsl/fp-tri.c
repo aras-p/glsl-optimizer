@@ -129,6 +129,11 @@ static void setup_uniforms()
    }
 
    {
+      GLint loci = glGetUniformLocationARB(program, "KernelSizeInt");
+      if (loci >= 0)
+         glUniform1i(loci, 4);
+   }
+   {
       GLint loc1f = glGetUniformLocationARB(program, "KernelValue1f");
       GLint loc2f = glGetUniformLocationARB(program, "KernelValue2f");
       GLint loc4f = glGetUniformLocationARB(program, "KernelValue4f");

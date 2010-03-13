@@ -192,7 +192,6 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
                      GLuint x, GLuint y, GLuint w, GLuint h)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_texture *pt = stImage->pt;
 
    DBG("%s \n", __FUNCTION__);
@@ -202,7 +201,7 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 						    usage, x, y, w, h);
 
    if (stImage->transfer)
-      return screen->transfer_map(screen, stImage->transfer);
+      return pipe->transfer_map(pipe, stImage->transfer);
    else
       return NULL;
 }
@@ -212,13 +211,13 @@ void
 st_texture_image_unmap(struct st_context *st,
                        struct st_texture_image *stImage)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_context *pipe = st->pipe;
 
    DBG("%s\n", __FUNCTION__);
 
-   screen->transfer_unmap(screen, stImage->transfer);
+   pipe->transfer_unmap(pipe, stImage->transfer);
 
-   screen->tex_transfer_destroy(stImage->transfer);
+   pipe->tex_transfer_destroy(pipe, stImage->transfer);
 }
 
 
@@ -238,8 +237,7 @@ st_surface_data(struct pipe_context *pipe,
 		const void *src, unsigned src_stride,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   struct pipe_screen *screen = pipe->screen;
-   void *map = screen->transfer_map(screen, dst);
+   void *map = pipe->transfer_map(pipe, dst);
 
    assert(dst->texture);
    util_copy_rect(map,
@@ -250,7 +248,7 @@ st_surface_data(struct pipe_context *pipe,
                   src, src_stride, 
                   srcx, srcy);
 
-   screen->transfer_unmap(screen, dst);
+   pipe->transfer_unmap(pipe, dst);
 }
 
 
@@ -265,7 +263,6 @@ st_texture_image_data(struct st_context *st,
                       GLuint src_row_stride, GLuint src_image_stride)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    GLuint depth = u_minify(dst->depth0, level);
    GLuint i;
    const GLubyte *srcUB = src;
@@ -287,7 +284,7 @@ st_texture_image_data(struct st_context *st,
 		      u_minify(dst->width0, level),
                       u_minify(dst->height0, level));      /* width, height */
 
-      screen->tex_transfer_destroy(dst_transfer);
+      pipe->tex_transfer_destroy(pipe, dst_transfer);
 
       srcUB += src_image_stride;
    }

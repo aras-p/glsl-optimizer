@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
+#include "drivers/common/meta.h"
 
 #include "radeon_common.h"
 #include "radeon_mipmap_tree.h"
@@ -2487,13 +2488,19 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
 }
 /* Initialize the driver's state functions.
  */
-void r200InitStateFuncs( struct dd_function_table *functions )
+void r200InitStateFuncs( radeonContextPtr radeon, struct dd_function_table *functions )
 {
    functions->UpdateState		= r200InvalidateState;
    functions->LightingSpaceChange	= r200LightingSpaceChange;
 
    functions->DrawBuffer		= radeonDrawBuffer;
    functions->ReadBuffer		= radeonReadBuffer;
+
+   if (radeon->radeonScreen->kernel_mm) {
+	   functions->CopyPixels                = _mesa_meta_CopyPixels;
+	   functions->DrawPixels                = _mesa_meta_DrawPixels;
+	   functions->ReadPixels                = radeonReadPixels;
+   }
 
    functions->AlphaFunc			= r200AlphaFunc;
    functions->BlendColor		= r200BlendColor;

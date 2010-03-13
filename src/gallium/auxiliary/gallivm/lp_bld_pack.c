@@ -256,7 +256,7 @@ lp_build_pack2(LLVMBuilderRef builder,
                LLVMValueRef lo,
                LLVMValueRef hi)
 {
-#if !(HAVE_LLVM >= 0x0207)
+#if HAVE_LLVM < 0x0207
    LLVMTypeRef src_vec_type = lp_build_vec_type(src_type);
 #endif
    LLVMTypeRef dst_vec_type = lp_build_vec_type(dst_type);

@@ -37,7 +37,7 @@
 #define LP_BLD_TYPE_H
 
 
-#include <llvm-c/Core.h>  
+#include "os/os_llvm.h"
 
 #include <pipe/p_compiler.h>
 

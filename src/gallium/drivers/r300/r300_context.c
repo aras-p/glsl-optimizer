@@ -34,6 +34,7 @@
 #include "r300_screen.h"
 #include "r300_state_invariant.h"
 #include "r300_texture.h"
+#include "r300_transfer.h"
 
 #include "radeon_winsys.h"
 
@@ -208,6 +209,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_flush_functions(r300);
 
     r300_init_query_functions(r300);
+
+    r300_init_transfer_functions(r300);
 
     /* r300_init_surface_functions(r300); */
 

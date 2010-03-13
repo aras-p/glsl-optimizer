@@ -384,7 +384,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	 */
 	_mesa_init_driver_functions(&functions);
 
-	r700InitStateFuncs(&functions);
+	r700InitStateFuncs(&r600->radeon, &functions);
 	r600InitTextureFuncs(&r600->radeon, &functions);
 	r700InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);

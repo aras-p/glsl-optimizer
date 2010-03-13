@@ -221,8 +221,16 @@ lp_build_undef(struct lp_type type)
 LLVMValueRef
 lp_build_zero(struct lp_type type)
 {
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
-   return LLVMConstNull(vec_type);
+   if (type.length == 1) {
+      if (type.floating)
+         return LLVMConstReal(LLVMFloatType(), 0.0);
+      else
+         return LLVMConstInt(LLVMIntType(type.width), 0, 0);
+   }
+   else {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      return LLVMConstNull(vec_type);
+   }
 }
                
 

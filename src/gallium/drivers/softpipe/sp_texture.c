@@ -256,7 +256,7 @@ softpipe_tex_surface_destroy(struct pipe_surface *surf)
  * \param height  height of region to read/write
  */
 static struct pipe_transfer *
-softpipe_get_tex_transfer(struct pipe_screen *screen,
+softpipe_get_tex_transfer(struct pipe_context *pipe,
                           struct pipe_texture *texture,
                           unsigned face, unsigned level, unsigned zslice,
                           enum pipe_transfer_usage usage,
@@ -310,7 +310,8 @@ softpipe_get_tex_transfer(struct pipe_screen *screen,
  * softpipe_get_tex_transfer().
  */
 static void 
-softpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
+softpipe_tex_transfer_destroy(struct pipe_context *pipe,
+                              struct pipe_transfer *transfer)
 {
    /* Effectively do the texture_update work here - if texture images
     * needed post-processing to put them into hardware layout, this is
@@ -326,7 +327,7 @@ softpipe_tex_transfer_destroy(struct pipe_transfer *transfer)
  * Create memory mapping for given pipe_transfer object.
  */
 static void *
-softpipe_transfer_map( struct pipe_screen *screen,
+softpipe_transfer_map( struct pipe_context *pipe,
                        struct pipe_transfer *transfer )
 {
    ubyte *map, *xfer_map;
@@ -339,7 +340,7 @@ softpipe_transfer_map( struct pipe_screen *screen,
 
    if (spt->dt) {
       /* display target */
-      struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+      struct sw_winsys *winsys = softpipe_screen(pipe->screen)->winsys;
 
       map = winsys->displaytarget_map(winsys, spt->dt,
                                       pipe_transfer_buffer_flags(transfer));
@@ -359,7 +360,7 @@ softpipe_transfer_map( struct pipe_screen *screen,
       /* Do something to notify sharing contexts of a texture change.
        * In softpipe, that would mean flushing the texture cache.
        */
-      softpipe_screen(screen)->timestamp++;
+      softpipe_screen(pipe->screen)->timestamp++;
    }
 
    xfer_map = map + softpipe_transfer(transfer)->offset +
@@ -374,7 +375,7 @@ softpipe_transfer_map( struct pipe_screen *screen,
  * Unmap memory mapping for given pipe_transfer object.
  */
 static void
-softpipe_transfer_unmap(struct pipe_screen *screen,
+softpipe_transfer_unmap(struct pipe_context *pipe,
                         struct pipe_transfer *transfer)
 {
    struct softpipe_texture *spt;
@@ -384,7 +385,7 @@ softpipe_transfer_unmap(struct pipe_screen *screen,
 
    if (spt->dt) {
       /* display target */
-      struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+      struct sw_winsys *winsys = softpipe_screen(pipe->screen)->winsys;
       winsys->displaytarget_unmap(winsys, spt->dt);
    }
 
@@ -448,6 +449,15 @@ softpipe_video_surface_destroy(struct pipe_video_surface *vsfc)
 
 
 void
+softpipe_init_texture_funcs(struct pipe_context *pipe)
+{
+   pipe->get_tex_transfer = softpipe_get_tex_transfer;
+   pipe->tex_transfer_destroy = softpipe_tex_transfer_destroy;
+   pipe->transfer_map = softpipe_transfer_map;
+   pipe->transfer_unmap = softpipe_transfer_unmap;
+}
+
+void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = softpipe_texture_create;
@@ -455,11 +465,6 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 
    screen->get_tex_surface = softpipe_get_tex_surface;
    screen->tex_surface_destroy = softpipe_tex_surface_destroy;
-
-   screen->get_tex_transfer = softpipe_get_tex_transfer;
-   screen->tex_transfer_destroy = softpipe_tex_transfer_destroy;
-   screen->transfer_map = softpipe_transfer_map;
-   screen->transfer_unmap = softpipe_transfer_unmap;
 
    screen->video_surface_create = softpipe_video_surface_create;
    screen->video_surface_destroy = softpipe_video_surface_destroy;

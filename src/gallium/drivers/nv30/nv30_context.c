@@ -74,6 +74,7 @@ nv30_create(struct pipe_screen *pscreen, void *priv)
 	nv30_init_query_functions(nv30);
 	nv30_init_surface_functions(nv30);
 	nv30_init_state_functions(nv30);
+	nv30_init_transfer_functions(nv30);
 
 	/* Create, configure, and install fallback swtnl path */
 	nv30->draw = draw_create();

@@ -98,5 +98,7 @@ llvmpipe_transfer(struct pipe_transfer *pt)
 extern void
 llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 
+extern void
+llvmpipe_init_context_texture_funcs(struct pipe_context *pipe);
 
 #endif /* LP_TEXTURE_H */

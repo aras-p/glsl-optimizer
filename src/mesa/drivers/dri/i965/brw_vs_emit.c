@@ -384,9 +384,8 @@ static void emit_sop( struct brw_vs_compile *c,
 {
    struct brw_compile *p = &c->func;
 
-   brw_MOV(p, dst, brw_imm_f(0.0f));
-   brw_CMP(p, brw_null_reg(), cond, arg0, arg1);
-   brw_MOV(p, dst, brw_imm_f(1.0f));
+   brw_CMP(p, brw_null_reg(), cond, arg1, arg0);
+   brw_SEL(p, dst, brw_null_reg(), brw_imm_f(1.0f));
    brw_set_predicate_control_flag_value(p, 0xff);
 }
 
@@ -1824,6 +1823,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
    emit_vertex_write(c);
 
    post_vs_emit(c, end_inst, last_inst);
+
+   brw_optimize(p);
 
    if (INTEL_DEBUG & DEBUG_VS) {
       int i;

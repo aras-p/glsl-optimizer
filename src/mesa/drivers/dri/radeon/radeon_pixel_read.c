@@ -96,7 +96,7 @@ do_blit_readpixels(GLcontext * ctx,
         return GL_FALSE;
     }
 
-    if (ctx->_ImageTransferState) {
+    if (ctx->_ImageTransferState || ctx->Color._LogicOpEnabled) {
         return GL_FALSE;
     }
 

@@ -41,7 +41,7 @@
 #define LP_BLD_INTERP_H
 
 
-#include <llvm-c/Core.h>
+#include "os/os_llvm.h"
 
 #include "tgsi/tgsi_exec.h"
 

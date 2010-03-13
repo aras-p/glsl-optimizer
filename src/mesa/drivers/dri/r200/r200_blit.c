@@ -48,6 +48,11 @@ unsigned r200_check_blit(gl_format mesa_format)
     case MESA_FORMAT_ARGB4444:
     case MESA_FORMAT_ARGB1555:
     case MESA_FORMAT_A8:
+    case MESA_FORMAT_L8:
+    case MESA_FORMAT_I8:
+    /* swizzled */
+    case MESA_FORMAT_RGBA8888:
+    case MESA_FORMAT_RGBA8888_REV:
 	    break;
     default:
 	    return 0;
@@ -86,7 +91,8 @@ static inline void emit_vtx_state(struct r200_context *r200)
 }
 
 static void inline emit_tx_setup(struct r200_context *r200,
-				 gl_format mesa_format,
+				 gl_format src_mesa_format,
+				 gl_format dst_mesa_format,
 				 struct radeon_bo *bo,
 				 intptr_t offset,
 				 unsigned width,
@@ -101,9 +107,15 @@ static void inline emit_tx_setup(struct r200_context *r200,
     assert(offset % 32 == 0);
 
     /* XXX others?  BE/LE? */
-    switch (mesa_format) {
+    switch (src_mesa_format) {
     case MESA_FORMAT_ARGB8888:
 	    txformat |= R200_TXFORMAT_ARGB8888 | R200_TXFORMAT_ALPHA_IN_MAP;
+	    break;
+    case MESA_FORMAT_RGBA8888:
+	    txformat |= R200_TXFORMAT_RGBA8888 | R200_TXFORMAT_ALPHA_IN_MAP;
+	    break;
+    case MESA_FORMAT_RGBA8888_REV:
+	    txformat |= R200_TXFORMAT_ABGR8888 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
     case MESA_FORMAT_XRGB8888:
 	    txformat |= R200_TXFORMAT_ARGB8888;
@@ -118,26 +130,143 @@ static void inline emit_tx_setup(struct r200_context *r200,
 	    txformat |= R200_TXFORMAT_ARGB1555 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
     case MESA_FORMAT_A8:
+    case MESA_FORMAT_I8:
 	    txformat |= R200_TXFORMAT_I8 | R200_TXFORMAT_ALPHA_IN_MAP;
+	    break;
+    case MESA_FORMAT_L8:
+	    txformat |= R200_TXFORMAT_I8;
+	    break;
+    case MESA_FORMAT_AL88:
+	    txformat |= R200_TXFORMAT_AI88 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
     default:
 	    break;
     }
 
-    BEGIN_BATCH(28);
-    OUT_BATCH_REGVAL(RADEON_PP_CNTL, RADEON_TEX_0_ENABLE | RADEON_TEX_BLEND_0_ENABLE);
+    switch (dst_mesa_format) {
+    case MESA_FORMAT_ARGB8888:
+    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_RGB565:
+    case MESA_FORMAT_ARGB4444:
+    case MESA_FORMAT_ARGB1555:
+    case MESA_FORMAT_A8:
+    case MESA_FORMAT_L8:
+    case MESA_FORMAT_I8:
+    default:
+	    /* no swizzle required */
+	    BEGIN_BATCH(10);
+	    OUT_BATCH_REGVAL(RADEON_PP_CNTL, (RADEON_TEX_0_ENABLE |
+					      RADEON_TEX_BLEND_0_ENABLE));
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND_0, (R200_TXC_ARG_A_ZERO |
+						  R200_TXC_ARG_B_ZERO |
+						  R200_TXC_ARG_C_R0_COLOR |
+						  R200_TXC_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND2_0, (R200_TXC_CLAMP_0_1 |
+						   R200_TXC_OUTPUT_REG_R0));
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND_0, (R200_TXA_ARG_A_ZERO |
+						  R200_TXA_ARG_B_ZERO |
+						  R200_TXA_ARG_C_R0_ALPHA |
+						  R200_TXA_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND2_0, (R200_TXA_CLAMP_0_1 |
+						   R200_TXA_OUTPUT_REG_R0));
+	    END_BATCH();
+	    break;
+    case MESA_FORMAT_RGBA8888:
+	    BEGIN_BATCH(10);
+	    OUT_BATCH_REGVAL(RADEON_PP_CNTL, (RADEON_TEX_0_ENABLE |
+					      RADEON_TEX_BLEND_0_ENABLE));
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND_0, (R200_TXC_ARG_A_ZERO |
+						  R200_TXC_ARG_B_ZERO |
+						  R200_TXC_ARG_C_R0_COLOR |
+						  R200_TXC_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND2_0, (R200_TXC_CLAMP_0_1 |
+						   R200_TXC_OUTPUT_ROTATE_GBA |
+						   R200_TXC_OUTPUT_REG_R0));
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND_0, (R200_TXA_ARG_A_ZERO |
+						  R200_TXA_ARG_B_ZERO |
+						  R200_TXA_ARG_C_R0_ALPHA |
+						  R200_TXA_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND2_0, (R200_TXA_CLAMP_0_1 |
+						   (R200_TXA_REPL_RED << R200_TXA_REPL_ARG_C_SHIFT) |
+						   R200_TXA_OUTPUT_REG_R0));
+	    END_BATCH();
+	    break;
+    case MESA_FORMAT_RGBA8888_REV:
+	    BEGIN_BATCH(34);
+	    OUT_BATCH_REGVAL(RADEON_PP_CNTL, (RADEON_TEX_0_ENABLE |
+					      RADEON_TEX_BLEND_0_ENABLE |
+					      RADEON_TEX_BLEND_1_ENABLE |
+					      RADEON_TEX_BLEND_2_ENABLE |
+					      RADEON_TEX_BLEND_3_ENABLE));
+	    /* r1.r = r0.b */
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND_0, (R200_TXC_ARG_A_ZERO |
+						  R200_TXC_ARG_B_ZERO |
+						  R200_TXC_ARG_C_R0_COLOR |
+						  R200_TXC_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND2_0, (R200_TXC_CLAMP_0_1 |
+						   R200_TXC_OUTPUT_MASK_R |
+						   (R200_TXC_REPL_BLUE << R200_TXC_REPL_ARG_C_SHIFT) |
+						   R200_TXC_OUTPUT_REG_R1));
+	    /* r1.a = r0.a */
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND_0, (R200_TXA_ARG_A_ZERO |
+						  R200_TXA_ARG_B_ZERO |
+						  R200_TXA_ARG_C_R0_ALPHA |
+						  R200_TXA_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND2_0, (R200_TXA_CLAMP_0_1 |
+						   R200_TXA_OUTPUT_REG_R1));
+	    /* r1.g = r0.g */
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND_1, (R200_TXC_ARG_A_ZERO |
+						  R200_TXC_ARG_B_ZERO |
+						  R200_TXC_ARG_C_R0_COLOR |
+						  R200_TXC_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND2_1, (R200_TXC_CLAMP_0_1 |
+						   R200_TXC_OUTPUT_MASK_G |
+						   (R200_TXC_REPL_GREEN << R200_TXC_REPL_ARG_C_SHIFT) |
+						   R200_TXC_OUTPUT_REG_R1));
+	    /* r1.a = r0.a */
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND_1, (R200_TXA_ARG_A_ZERO |
+						  R200_TXA_ARG_B_ZERO |
+						  R200_TXA_ARG_C_R0_ALPHA |
+						  R200_TXA_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND2_1, (R200_TXA_CLAMP_0_1 |
+						   R200_TXA_OUTPUT_REG_R1));
+	    /* r1.b = r0.r */
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND_2, (R200_TXC_ARG_A_ZERO |
+						  R200_TXC_ARG_B_ZERO |
+						  R200_TXC_ARG_C_R0_COLOR |
+						  R200_TXC_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND2_2, (R200_TXC_CLAMP_0_1 |
+						   R200_TXC_OUTPUT_MASK_B |
+						   (R200_TXC_REPL_RED << R200_TXC_REPL_ARG_C_SHIFT) |
+						   R200_TXC_OUTPUT_REG_R1));
+	    /* r1.a = r0.a */
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND_2, (R200_TXA_ARG_A_ZERO |
+						  R200_TXA_ARG_B_ZERO |
+						  R200_TXA_ARG_C_R0_ALPHA |
+						  R200_TXA_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND2_2, (R200_TXA_CLAMP_0_1 |
+						   R200_TXA_OUTPUT_REG_R1));
+	    /* r0.rgb = r1.rgb */
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND_3, (R200_TXC_ARG_A_ZERO |
+						  R200_TXC_ARG_B_ZERO |
+						  R200_TXC_ARG_C_R1_COLOR |
+						  R200_TXC_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXCBLEND2_3, (R200_TXC_CLAMP_0_1 |
+						   R200_TXC_OUTPUT_REG_R0));
+	    /* r0.a = r1.a */
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND_3, (R200_TXA_ARG_A_ZERO |
+						  R200_TXA_ARG_B_ZERO |
+						  R200_TXA_ARG_C_R1_ALPHA |
+						  R200_TXA_OP_MADD));
+	    OUT_BATCH_REGVAL(R200_PP_TXABLEND2_3, (R200_TXA_CLAMP_0_1 |
+						   R200_TXA_OUTPUT_REG_R0));
+	    END_BATCH();
+	    break;
+    }
+
+    BEGIN_BATCH(18);
     OUT_BATCH_REGVAL(R200_PP_CNTL_X, 0);
     OUT_BATCH_REGVAL(R200_PP_TXMULTI_CTL_0, 0);
-    OUT_BATCH_REGVAL(R200_PP_TXCBLEND_0, (R200_TXC_ARG_A_ZERO |
-					  R200_TXC_ARG_B_ZERO |
-					  R200_TXC_ARG_C_R0_COLOR |
-					  R200_TXC_OP_MADD));
-    OUT_BATCH_REGVAL(R200_PP_TXCBLEND2_0, R200_TXC_CLAMP_0_1 | R200_TXC_OUTPUT_REG_R0);
-    OUT_BATCH_REGVAL(R200_PP_TXABLEND_0, (R200_TXA_ARG_A_ZERO |
-					  R200_TXA_ARG_B_ZERO |
-					  R200_TXA_ARG_C_R0_ALPHA |
-					  R200_TXA_OP_MADD));
-    OUT_BATCH_REGVAL(R200_PP_TXABLEND2_0, R200_TXA_CLAMP_0_1 | R200_TXA_OUTPUT_REG_R0);
     OUT_BATCH_REGVAL(R200_PP_TXFILTER_0, (R200_CLAMP_S_CLAMP_LAST |
 					  R200_CLAMP_T_CLAMP_LAST |
 					  R200_MAG_FILTER_NEAREST |
@@ -146,7 +275,7 @@ static void inline emit_tx_setup(struct r200_context *r200,
     OUT_BATCH_REGVAL(R200_PP_TXFORMAT_X_0, 0);
     OUT_BATCH_REGVAL(R200_PP_TXSIZE_0, ((width - 1) |
 					((height - 1) << RADEON_TEX_VSIZE_SHIFT)));
-    OUT_BATCH_REGVAL(R200_PP_TXPITCH_0, pitch * _mesa_get_format_bytes(mesa_format) - 32);
+    OUT_BATCH_REGVAL(R200_PP_TXPITCH_0, pitch * _mesa_get_format_bytes(src_mesa_format) - 32);
 
     OUT_BATCH_REGSEQ(R200_PP_TXOFFSET_0, 1);
     OUT_BATCH_RELOC(0, bo, 0, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
@@ -170,6 +299,8 @@ static inline void emit_cb_setup(struct r200_context *r200,
     switch (mesa_format) {
     case MESA_FORMAT_ARGB8888:
     case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_RGBA8888:
+    case MESA_FORMAT_RGBA8888_REV:
 	    dst_format = RADEON_COLOR_FORMAT_ARGB8888;
 	    break;
     case MESA_FORMAT_RGB565:
@@ -182,6 +313,8 @@ static inline void emit_cb_setup(struct r200_context *r200,
 	    dst_format = RADEON_COLOR_FORMAT_ARGB1555;
 	    break;
     case MESA_FORMAT_A8:
+    case MESA_FORMAT_L8:
+    case MESA_FORMAT_I8:
 	    dst_format = RADEON_COLOR_FORMAT_RGB8;
 	    break;
     default:
@@ -384,15 +517,15 @@ unsigned r200_blit(GLcontext *ctx,
     /* Flush is needed to make sure that source buffer has correct data */
     radeonFlush(r200->radeon.glCtx);
 
-    rcommonEnsureCmdBufSpace(&r200->radeon, 78, __FUNCTION__);
+    rcommonEnsureCmdBufSpace(&r200->radeon, 102, __FUNCTION__);
 
     if (!validate_buffers(r200, src_bo, dst_bo))
         return GL_FALSE;
 
     /* 14 */
     emit_vtx_state(r200);
-    /* 28 */
-    emit_tx_setup(r200, src_mesaformat, src_bo, src_offset, src_width, src_height, src_pitch);
+    /* 52 */
+    emit_tx_setup(r200, src_mesaformat, dst_mesaformat, src_bo, src_offset, src_width, src_height, src_pitch);
     /* 22 */
     emit_cb_setup(r200, dst_bo, dst_offset, dst_mesaformat, dst_pitch, dst_width, dst_height);
     /* 14 */

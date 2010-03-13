@@ -186,6 +186,7 @@ struct st_context
    struct cso_context *cso_context;
 
    int force_msaa;
+   void *winsys_drawable_handle;
 };
 
 

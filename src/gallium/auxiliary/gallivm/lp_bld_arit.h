@@ -37,7 +37,7 @@
 #define LP_BLD_ARIT_H
 
 
-#include <llvm-c/Core.h>  
+#include "os/os_llvm.h"
 
 
 struct lp_type;
@@ -55,6 +55,10 @@ LLVMValueRef
 lp_build_add(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
+
+LLVMValueRef
+lp_build_sum_vector(struct lp_build_context *bld,
+                    LLVMValueRef a);
 
 LLVMValueRef
 lp_build_sub(struct lp_build_context *bld,

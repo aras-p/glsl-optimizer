@@ -316,6 +316,32 @@ struct pipe_context {
 
    void (*sampler_view_destroy)(struct pipe_context *ctx,
                                 struct pipe_sampler_view *view);
+
+
+   /**
+    * Get a transfer object for transferring data to/from a texture.
+    *
+    * Transfers are (by default) context-private and allow uploads to be
+    * interleaved with
+    */
+   struct pipe_transfer *(*get_tex_transfer)(struct pipe_context *,
+                                             struct pipe_texture *texture,
+                                             unsigned face, unsigned level,
+                                             unsigned zslice,
+                                             enum pipe_transfer_usage usage,
+                                             unsigned x, unsigned y,
+                                             unsigned w, unsigned h);
+
+   void (*tex_transfer_destroy)(struct pipe_context *,
+                                struct pipe_transfer *);
+   
+   void *(*transfer_map)( struct pipe_context *,
+                          struct pipe_transfer *transfer );
+
+   void (*transfer_unmap)( struct pipe_context *,
+                           struct pipe_transfer *transfer );
+
+
 };
 
 

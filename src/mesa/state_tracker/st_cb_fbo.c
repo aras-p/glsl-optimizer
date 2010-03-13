@@ -379,6 +379,8 @@ st_render_texture(GLcontext *ctx,
                                            PIPE_BUFFER_USAGE_GPU_READ |
                                            PIPE_BUFFER_USAGE_GPU_WRITE);
 
+   strb->format = pt->format;
+
    strb->Base.Format = st_pipe_format_to_mesa_format(pt->format);
    strb->Base.DataType = st_format_datatype(pt->format);
 

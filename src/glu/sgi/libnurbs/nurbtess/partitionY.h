@@ -39,7 +39,7 @@
  *or both at or below v. In addition, at least one of the ajacent verteces is
  *strictly below or above v. 
  * A vertex is a relex vertex if the internals angle is strictly greater than 
- *180. In other words, if the the signed area is negative:
+ *180. In other words, if the signed area is negative:
  *(x1, y1), (x2, y2), (x3, y3) are the three vertices along a polygon, the 
  *order is such that left hand side is inside the polygon. Then (x2,y2) is
  *reflex if: 

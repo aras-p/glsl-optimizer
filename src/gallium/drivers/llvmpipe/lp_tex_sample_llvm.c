@@ -147,7 +147,7 @@ LP_LLVM_TEXTURE_MEMBER(width,      LP_JIT_TEXTURE_WIDTH, TRUE)
 LP_LLVM_TEXTURE_MEMBER(height,     LP_JIT_TEXTURE_HEIGHT, TRUE)
 LP_LLVM_TEXTURE_MEMBER(depth,      LP_JIT_TEXTURE_DEPTH, TRUE)
 LP_LLVM_TEXTURE_MEMBER(last_level, LP_JIT_TEXTURE_LAST_LEVEL, TRUE)
-LP_LLVM_TEXTURE_MEMBER(stride,     LP_JIT_TEXTURE_STRIDE, TRUE)
+LP_LLVM_TEXTURE_MEMBER(row_stride, LP_JIT_TEXTURE_ROW_STRIDE, FALSE)
 LP_LLVM_TEXTURE_MEMBER(data_ptr,   LP_JIT_TEXTURE_DATA, FALSE)
 
 
@@ -204,7 +204,7 @@ lp_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
    sampler->dynamic_state.base.height = lp_llvm_texture_height;
    sampler->dynamic_state.base.depth = lp_llvm_texture_depth;
    sampler->dynamic_state.base.last_level = lp_llvm_texture_last_level;
-   sampler->dynamic_state.base.stride = lp_llvm_texture_stride;
+   sampler->dynamic_state.base.row_stride = lp_llvm_texture_row_stride;
    sampler->dynamic_state.base.data_ptr = lp_llvm_texture_data_ptr;
    sampler->dynamic_state.static_state = static_state;
    sampler->dynamic_state.context_ptr = context_ptr;

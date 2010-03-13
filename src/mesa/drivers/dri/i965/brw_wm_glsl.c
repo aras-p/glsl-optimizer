@@ -289,6 +289,7 @@ reclaim_temps(struct brw_wm_compile *c)
  */
 static void prealloc_reg(struct brw_wm_compile *c)
 {
+    struct intel_context *intel = &c->func.brw->intel;
     int i, j;
     struct brw_reg reg;
     int urb_read_length = 0;
@@ -408,6 +409,43 @@ static void prealloc_reg(struct brw_wm_compile *c)
 		    assert(dst[j].nr == dst[j - 1].nr + 1);
 	    }
 	    break;
+	default:
+	    break;
+	}
+    }
+
+    for (i = 0; i < c->nr_fp_insns; i++) {
+	const struct prog_instruction *inst = &c->prog_instructions[i];
+
+	switch (inst->Opcode) {
+	case WM_DELTAXY:
+	    /* Allocate WM_DELTAXY destination on G45/GM45 to an
+	     * even-numbered GRF if possible so that we can use the PLN
+	     * instruction.
+	     */
+	    if (inst->DstReg.WriteMask == WRITEMASK_XY &&
+		!c->wm_regs[inst->DstReg.File][inst->DstReg.Index][0].inited &&
+		!c->wm_regs[inst->DstReg.File][inst->DstReg.Index][1].inited &&
+		(IS_G4X(intel->intelScreen->deviceID) || intel->gen == 5)) {
+		int grf;
+
+		for (grf = c->first_free_grf & ~1;
+		     grf < BRW_WM_MAX_GRF;
+		     grf += 2)
+		{
+		    if (!c->used_grf[grf] && !c->used_grf[grf + 1]) {
+			c->used_grf[grf] = GL_TRUE;
+			c->used_grf[grf + 1] = GL_TRUE;
+			c->first_free_grf = grf + 2;  /* a guess */
+
+			set_reg(c, inst->DstReg.File, inst->DstReg.Index, 0,
+				brw_vec8_grf(grf, 0));
+			set_reg(c, inst->DstReg.File, inst->DstReg.Index, 1,
+				brw_vec8_grf(grf + 1, 0));
+			break;
+		    }
+		}
+	    }
 	default:
 	    break;
 	}
@@ -1869,6 +1907,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_LG2:
 		emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
 		break;
+	    case OPCODE_CMP:
+		emit_cmp(p, dst, dst_flags, args[0], args[1], args[2]);
+		break;
 	    case OPCODE_MIN:	
 		emit_min(p, dst, dst_flags, args[0], args[1]);
 		break;
@@ -2026,8 +2067,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                }
                break;
 	    default:
-		printf("unsupported IR in fragment shader %d\n",
-			inst->Opcode);
+		printf("unsupported opcode %d (%s) in fragment shader\n",
+		       inst->Opcode, inst->Opcode < MAX_OPCODE ?
+		       _mesa_opcode_string(inst->Opcode) : "unknown");
 	}
 
 	/* Release temporaries containing any unaliased source regs. */

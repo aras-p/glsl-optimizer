@@ -109,9 +109,9 @@ struct blitter_context_priv
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 {
    struct blitter_context_priv *ctx;
-   struct pipe_blend_state blend = { 0 };
-   struct pipe_depth_stencil_alpha_state dsa = { { 0 } };
-   struct pipe_rasterizer_state rs_state = { 0 };
+   struct pipe_blend_state blend;
+   struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_rasterizer_state rs_state;
    struct pipe_sampler_state *sampler_state;
    struct pipe_vertex_element velem[2];
    unsigned i;
@@ -134,12 +134,14 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->blitter.saved_num_sampler_states = ~0;
 
    /* blend state objects */
+   memset(&blend, 0, sizeof(blend));
    ctx->blend_keep_color = pipe->create_blend_state(pipe, &blend);
 
    blend.rt[0].colormask = PIPE_MASK_RGBA;
    ctx->blend_write_color = pipe->create_blend_state(pipe, &blend);
 
    /* depth stencil alpha state objects */
+   memset(&dsa, 0, sizeof(dsa));
    ctx->dsa_keep_depth_stencil =
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 

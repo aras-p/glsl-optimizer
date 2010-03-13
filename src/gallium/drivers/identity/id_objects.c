@@ -30,6 +30,7 @@
 
 #include "id_screen.h"
 #include "id_objects.h"
+#include "id_context.h"
 
 struct pipe_buffer *
 identity_buffer_create(struct identity_screen *id_screen,
@@ -142,7 +143,8 @@ identity_surface_destroy(struct identity_surface *id_surface)
 
 
 struct pipe_transfer *
-identity_transfer_create(struct identity_texture *id_texture,
+identity_transfer_create(struct identity_context *id_context,
+			 struct identity_texture *id_texture,
                          struct pipe_transfer *transfer)
 {
    struct identity_transfer *id_transfer;
@@ -159,25 +161,25 @@ identity_transfer_create(struct identity_texture *id_texture,
    memcpy(&id_transfer->base, transfer, sizeof(struct pipe_transfer));
 
    id_transfer->base.texture = NULL;
-   pipe_texture_reference(&id_transfer->base.texture, &id_texture->base);
    id_transfer->transfer = transfer;
+
+   pipe_texture_reference(&id_transfer->base.texture, &id_texture->base);
    assert(id_transfer->base.texture == &id_texture->base);
 
    return &id_transfer->base;
 
 error:
-   transfer->texture->screen->tex_transfer_destroy(transfer);
+   id_context->pipe->tex_transfer_destroy(id_context->pipe, transfer);
    return NULL;
 }
 
 void
-identity_transfer_destroy(struct identity_transfer *id_transfer)
+identity_transfer_destroy(struct identity_context *id_context,
+                          struct identity_transfer *id_transfer)
 {
-   struct identity_screen *id_screen = identity_screen(id_transfer->base.texture->screen);
-   struct pipe_screen *screen = id_screen->screen;
-
    pipe_texture_reference(&id_transfer->base.texture, NULL);
-   screen->tex_transfer_destroy(id_transfer->transfer);
+   id_context->pipe->tex_transfer_destroy(id_context->pipe,
+                                          id_transfer->transfer);
    FREE(id_transfer);
 }
 

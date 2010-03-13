@@ -34,7 +34,6 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_state.c \
 		 r200_state_init.c \
 		 r200_cmdbuf.c \
-		 r200_pixel.c \
 		 r200_tex.c \
 		 r200_texstate.c \
 		 r200_tcl.c \

@@ -590,7 +590,7 @@ static void r300SetDepthState(GLcontext * ctx)
 					    R500_STENCIL_REFMASK_FRONT_BACK);
 	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_Z_FUNC_SHIFT);
 
-	if (ctx->Depth.Test) {
+	if (ctx->Depth.Test && ctx->DrawBuffer->_DepthBuffer) {
 		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_ENABLE;
 		if (ctx->Depth.Mask)
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_WRITE_ENABLE;
@@ -2354,7 +2354,7 @@ static void r300RenderMode(GLcontext * ctx, GLenum mode)
 /**
  * Initialize driver's state callback functions
  */
-void r300InitStateFuncs(struct dd_function_table *functions)
+void r300InitStateFuncs(radeonContextPtr radeon, struct dd_function_table *functions)
 {
 
 	functions->UpdateState = r300InvalidateState;
@@ -2396,9 +2396,11 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->DrawBuffer = radeonDrawBuffer;
 	functions->ReadBuffer = radeonReadBuffer;
 
-	functions->CopyPixels = _mesa_meta_CopyPixels;
-	functions->DrawPixels = _mesa_meta_DrawPixels;
-	functions->ReadPixels = radeonReadPixels;
+	if (radeon->radeonScreen->kernel_mm) {
+		functions->CopyPixels = _mesa_meta_CopyPixels;
+		functions->DrawPixels = _mesa_meta_DrawPixels;
+		functions->ReadPixels = radeonReadPixels;
+	}
 }
 
 void r300InitShaderFunctions(r300ContextPtr r300)

@@ -142,23 +142,6 @@ struct pipe_screen {
    void (*tex_surface_destroy)(struct pipe_surface *);
    
 
-   /** Get a transfer object for transferring data to/from a texture */
-   struct pipe_transfer *(*get_tex_transfer)(struct pipe_screen *,
-                                             struct pipe_texture *texture,
-                                             unsigned face, unsigned level,
-                                             unsigned zslice,
-                                             enum pipe_transfer_usage usage,
-                                             unsigned x, unsigned y,
-                                             unsigned w, unsigned h);
-
-   void (*tex_transfer_destroy)(struct pipe_transfer *);
-   
-   void *(*transfer_map)( struct pipe_screen *,
-                          struct pipe_transfer *transfer );
-
-   void (*transfer_unmap)( struct pipe_screen *,
-                           struct pipe_transfer *transfer );
-
 
    /**
     * Create a new buffer.
@@ -265,6 +248,7 @@ struct pipe_screen {
 
    /**
     * Do any special operations to ensure buffer size is correct
+    * \param context_private  the private data of the calling context
     */
    void (*update_buffer)( struct pipe_screen *ws,
                           void *context_private );
@@ -272,10 +256,12 @@ struct pipe_screen {
    /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
+    * \param winsys_drawable_handle  an opaque handle that the calling context
+    *                                gets out-of-band
     */
    void (*flush_frontbuffer)( struct pipe_screen *screen,
                               struct pipe_surface *surf,
-                              void *context_private );
+                              void *winsys_drawable_handle );
 
 
 

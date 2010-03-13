@@ -153,7 +153,7 @@ glmFacetNormals(GLMmodel* model);
 
 /* glmVertexNormals: Generates smooth vertex normals for a model.
  * First builds a list of all the triangles each vertex is in.  Then
- * loops through each vertex in the the list averaging all the facet
+ * loops through each vertex in the list averaging all the facet
  * normals of the triangles each vertex is in.  Finally, sets the
  * normal index in the triangle for the vertex to the generated smooth
  * normal.  If the dot product of a facet normal and the facet normal

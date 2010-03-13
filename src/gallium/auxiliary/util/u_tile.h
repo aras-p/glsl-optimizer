@@ -56,23 +56,27 @@ extern "C" {
 #endif
 
 void
-pipe_get_tile_raw(struct pipe_transfer *pt,
+pipe_get_tile_raw(struct pipe_context *pipe,
+                  struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride);
 
 void
-pipe_put_tile_raw(struct pipe_transfer *pt,
+pipe_put_tile_raw(struct pipe_context *pipe,
+                  struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride);
 
 
 void
-pipe_get_tile_rgba(struct pipe_transfer *pt,
+pipe_get_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    float *p);
 
 void
-pipe_get_tile_swizzle(struct pipe_transfer *pt,
+pipe_get_tile_swizzle(struct pipe_context *pipe,
+		      struct pipe_transfer *pt,
                       uint x,
                       uint y,
                       uint w,
@@ -85,18 +89,21 @@ pipe_get_tile_swizzle(struct pipe_transfer *pt,
                       float *p);
 
 void
-pipe_put_tile_rgba(struct pipe_transfer *pt,
+pipe_put_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    const float *p);
 
 
 void
-pipe_get_tile_z(struct pipe_transfer *pt,
+pipe_get_tile_z(struct pipe_context *pipe,
+                struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 uint *z);
 
 void
-pipe_put_tile_z(struct pipe_transfer *pt,
+pipe_put_tile_z(struct pipe_context *pipe,
+                struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 const uint *z);
 

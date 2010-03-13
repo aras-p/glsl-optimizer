@@ -31,7 +31,7 @@
 #ifndef LP_STATE_H
 #define LP_STATE_H
 
-#include <llvm-c/Core.h>
+#include "os/os_llvm.h"
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"

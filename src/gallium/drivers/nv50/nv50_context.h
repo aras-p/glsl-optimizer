@@ -186,6 +186,7 @@ nv50_context(struct pipe_context *pipe)
 extern void nv50_init_surface_functions(struct nv50_context *nv50);
 extern void nv50_init_state_functions(struct nv50_context *nv50);
 extern void nv50_init_query_functions(struct nv50_context *nv50);
+extern void nv50_init_transfer_functions(struct nv50_context *nv50);
 
 extern void nv50_screen_init_miptree_functions(struct pipe_screen *pscreen);
 

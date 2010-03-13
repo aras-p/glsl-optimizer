@@ -350,6 +350,12 @@ struct pipe_context *i915_create_context(struct pipe_screen *screen,
 
 
 /***********************************************************************
+ * i915_texture.c
+ */
+void i915_init_texture_functions(struct i915_context *i915 );
+
+
+/***********************************************************************
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
  */

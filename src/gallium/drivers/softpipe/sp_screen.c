@@ -36,6 +36,7 @@
 #include "sp_screen.h"
 #include "sp_context.h"
 #include "sp_buffer.h"
+#include "sp_fence.h"
 #include "sp_public.h"
 
 
@@ -239,6 +240,7 @@ softpipe_create_screen(struct sw_winsys *winsys)
 
    softpipe_init_screen_texture_funcs(&screen->base);
    softpipe_init_screen_buffer_funcs(&screen->base);
+   softpipe_init_screen_fence_funcs(&screen->base);
 
    return &screen->base;
 }

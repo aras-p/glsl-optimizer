@@ -363,7 +363,7 @@ xm_displaytarget_create(struct sw_winsys *winsys,
                         unsigned alignment,
                         unsigned *stride)
 {
-   struct xm_displaytarget *xm_dt = CALLOC_STRUCT(xm_displaytarget);
+   struct xm_displaytarget *xm_dt;
    unsigned nblocksy, size;
 
    xm_dt = CALLOC_STRUCT(xm_displaytarget);

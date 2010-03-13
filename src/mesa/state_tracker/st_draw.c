@@ -184,7 +184,7 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
       /* this is an odd-ball case */
       assert(type == GL_UNSIGNED_BYTE);
       assert(normalized);
-      return PIPE_FORMAT_A8R8G8B8_UNORM;
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
    }
 
    if (normalized) {
@@ -273,7 +273,8 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
    }
 
    *userSpace = (num_client_arrays == vpv->num_inputs);
-   /* printf("user space: %d (%d %d)\n", (int) *userSpace,num_client_arrays,vp->num_inputs); */
+   /* debug_printf("user space: %s (%d arrays, %d inputs)\n",
+      (int)*userSpace ? "Yes" : "No", num_client_arrays, vp->num_inputs); */
 
    return GL_TRUE;
 }
@@ -293,6 +294,8 @@ get_arrays_bounds(const struct st_vertex_program *vp,
    const GLubyte *high_addr = NULL;
    GLuint attr;
 
+   /* debug_printf("get_arrays_bounds: Handling %u attrs\n", vpv->num_inputs); */
+
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       const GLint stride = arrays[mesaAttr]->StrideB;
@@ -300,6 +303,9 @@ get_arrays_bounds(const struct st_vertex_program *vp,
       const unsigned sz = (arrays[mesaAttr]->Size * 
                            _mesa_sizeof_type(arrays[mesaAttr]->Type));
       const GLubyte *end = start + (max_index * stride) + sz;
+
+      /* debug_printf("attr %u: stride %d size %u start %p end %p\n",
+         attr, stride, sz, start, end); */
 
       if (attr == 0) {
          low_addr = start;
@@ -348,7 +354,8 @@ setup_interleaved_attribs(GLcontext *ctx,
          const GLubyte *low, *high;
 
          get_arrays_bounds(vp, vpv, arrays, max_index, &low, &high);
-         /*printf("buffer range: %p %p  %d\n", low, high, high-low);*/
+         /* debug_printf("buffer range: %p %p range %d max index %u\n",
+            low, high, high - low, max_index); */
 
          offset0 = low;
          if (userSpace) {
