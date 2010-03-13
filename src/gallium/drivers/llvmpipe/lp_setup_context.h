@@ -89,6 +89,7 @@ struct lp_setup_context
    boolean ccw_is_frontface;
    boolean scissor_test;
    unsigned cullmode;
+   float pixel_offset;
 
    struct pipe_framebuffer_state fb;
 

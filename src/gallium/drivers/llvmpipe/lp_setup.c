@@ -337,7 +337,8 @@ void
 lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              unsigned cull_mode,
                              boolean ccw_is_frontface,
-                             boolean scissor )
+                             boolean scissor,
+                             boolean gl_rasterization_rules)
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -345,6 +346,7 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
    setup->cullmode = cull_mode;
    setup->triangle = first_triangle;
    setup->scissor_test = scissor;
+   setup->pixel_offset = gl_rasterization_rules ? 0.5f : 0.0f;
 }
 
 

@@ -89,7 +89,8 @@ void
 lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              unsigned cullmode,
                              boolean front_is_ccw,
-                             boolean scissor );
+                             boolean scissor,
+                             boolean gl_rasterization_rules );
 
 void
 lp_setup_set_fs_inputs( struct lp_setup_context *setup,

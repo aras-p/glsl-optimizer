@@ -62,7 +62,8 @@ void llvmpipe_bind_rasterizer_state(struct pipe_context *pipe,
       lp_setup_set_triangle_state( llvmpipe->setup,
                    llvmpipe->rasterizer->cull_mode,
                    llvmpipe->rasterizer->front_winding == PIPE_WINDING_CCW,
-                   llvmpipe->rasterizer->scissor);
+                   llvmpipe->rasterizer->scissor,
+                   llvmpipe->rasterizer->gl_rasterization_rules);
    }
 
    llvmpipe->dirty |= LP_NEW_RASTERIZER;
