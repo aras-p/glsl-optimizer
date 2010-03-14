@@ -26,8 +26,8 @@
 #define _DRI_SW_H
 
 #include <GL/gl.h>
+#include <GL/internal/glcore.h>
 #include <GL/internal/dri_interface.h>
-#include "main/mtypes.h"
 
 
 /**
