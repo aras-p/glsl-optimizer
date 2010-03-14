@@ -474,24 +474,35 @@ static GLboolean
 dri_create_context(const __GLcontextModes * visual,
 		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
-    GLcontext *mesaCtx;
-    GLcontext *sharedCtx;
+    struct dri_context *ctx = NULL;
+    struct dri_context *share = (struct dri_context *)sharedContextPrivate;
+    GLcontext *mesaCtx = NULL;
+    GLcontext *sharedCtx = NULL;
     struct dd_function_table functions;
 
     TRACE;
+
+    ctx = CALLOC_STRUCT(dri_context);
+    if (ctx == NULL)
+	goto context_fail;
+
+    cPriv->driverPrivate = ctx;
+    ctx->cPriv = cPriv;
 
     /* build table of device driver functions */
     _mesa_init_driver_functions(&functions);
     swrast_init_driver_functions(&functions);
 
-    sharedCtx = sharedContextPrivate;
-
-    /* basic context setup */
-    if (!_mesa_initialize_context(&cPriv->Base, visual, sharedCtx, &functions, (void *) cPriv)) {
-      return GL_FALSE;
+    if (share) {
+	sharedCtx = &share->Base;
     }
 
-    mesaCtx = &cPriv->Base;
+    mesaCtx = &ctx->Base;
+
+    /* basic context setup */
+    if (!_mesa_initialize_context(mesaCtx, visual, sharedCtx, &functions, (void *) cPriv)) {
+	goto context_fail;
+    }
 
     /* do bounds checking to prevent segfaults and server crashes! */
     mesaCtx->Const.CheckArrayBounds = GL_TRUE;
@@ -521,16 +532,24 @@ dri_create_context(const __GLcontextModes * visual,
     driInitExtensions( mesaCtx, NULL, GL_FALSE );
 
     return GL_TRUE;
+
+context_fail:
+
+    FREE(ctx);
+
+    return GL_FALSE;
 }
 
 static void
 dri_destroy_context(__DRIcontext * cPriv)
 {
-    GLcontext *mesaCtx;
     TRACE;
 
     if (cPriv) {
-	mesaCtx = &cPriv->Base;
+	struct dri_context *ctx = dri_context(cPriv);
+	GLcontext *mesaCtx;
+
+	mesaCtx = &ctx->Base;
 
         _mesa_meta_free(mesaCtx);
 	_swsetup_DestroyContext( mesaCtx );
@@ -552,10 +571,12 @@ dri_make_current(__DRIcontext * cPriv,
     TRACE;
 
     if (cPriv) {
+	struct dri_context *ctx = dri_context(cPriv);
+
 	if (!driDrawPriv || !driReadPriv)
 	    return GL_FALSE;
 
-	mesaCtx = &cPriv->Base;
+	mesaCtx = &ctx->Base;
 	mesaDraw = &driDrawPriv->Base;
 	mesaRead = &driReadPriv->Base;
 

@@ -54,7 +54,7 @@ struct __DRIscreenRec {
 
 struct __DRIcontextRec {
 
-    GLcontext Base;
+    void *driverPrivate;
 
     void *loaderPrivate;
 

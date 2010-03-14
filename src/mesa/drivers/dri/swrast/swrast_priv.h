@@ -59,6 +59,27 @@
 /**
  * Data types
  */
+struct dri_context
+{
+    /* mesa */
+    GLcontext Base;
+
+    /* dri */
+    __DRIcontext *cPriv;
+};
+
+static INLINE struct dri_context *
+dri_context(__DRIcontext * driContextPriv)
+{
+    return (struct dri_context *)driContextPriv->driverPrivate;
+}
+
+static INLINE struct dri_context *
+swrast_context(GLcontext *ctx)
+{
+    return (struct dri_context *) ctx;
+}
+
 struct swrast_renderbuffer {
     struct gl_renderbuffer Base;
 
@@ -67,12 +88,6 @@ struct swrast_renderbuffer {
    /* bits per pixel of storage */
     GLuint bpp;
 };
-
-static INLINE __DRIcontext *
-swrast_context(GLcontext *ctx)
-{
-    return (__DRIcontext *) ctx;
-}
 
 static INLINE __DRIdrawable *
 swrast_drawable(GLframebuffer *fb)

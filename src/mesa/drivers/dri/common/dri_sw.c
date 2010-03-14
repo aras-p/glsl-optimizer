@@ -99,7 +99,7 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
 		    __DRIcontext *shared, void *data)
 {
     __DRIcontext *pcp;
-    void * const shareCtx = (shared != NULL) ? &shared->Base : NULL;
+    void * const shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
 
     pcp = CALLOC_STRUCT(__DRIcontextRec);
     if (!pcp)
