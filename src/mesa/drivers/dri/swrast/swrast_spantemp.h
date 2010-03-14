@@ -40,7 +40,7 @@ static INLINE void
 PUT_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 {
     __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
-    __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer);
+    __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer)->dPriv;
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
@@ -54,7 +54,7 @@ static INLINE void
 GET_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 {
     __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
-    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer);
+    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer)->dPriv;
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
@@ -66,7 +66,7 @@ static INLINE void
 PUT_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
     __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
-    __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer);
+    __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer)->dPriv;
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
@@ -79,7 +79,7 @@ static INLINE void
 GET_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
     __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
-    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer);
+    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer)->dPriv;
 
     __DRIscreen *screen = ctx->driScreenPriv;
 

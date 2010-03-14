@@ -80,6 +80,30 @@ swrast_context(GLcontext *ctx)
     return (struct dri_context *) ctx;
 }
 
+struct dri_drawable
+{
+    /* mesa */
+    GLframebuffer Base;
+
+    /* dri */
+    __DRIdrawable *dPriv;
+
+    /* scratch row for optimized front-buffer rendering */
+    char *row;
+};
+
+static INLINE struct dri_drawable *
+dri_drawable(__DRIdrawable * driDrawPriv)
+{
+    return (struct dri_drawable *)driDrawPriv->driverPrivate;
+}
+
+static INLINE struct dri_drawable *
+swrast_drawable(GLframebuffer *fb)
+{
+    return (struct dri_drawable *) fb;
+}
+
 struct swrast_renderbuffer {
     struct gl_renderbuffer Base;
 
@@ -88,12 +112,6 @@ struct swrast_renderbuffer {
    /* bits per pixel of storage */
     GLuint bpp;
 };
-
-static INLINE __DRIdrawable *
-swrast_drawable(GLframebuffer *fb)
-{
-    return (__DRIdrawable *) fb;
-}
 
 static INLINE struct swrast_renderbuffer *
 swrast_renderbuffer(struct gl_renderbuffer *rb)

@@ -308,14 +308,24 @@ dri_create_buffer(__DRIscreen * sPriv,
 		  __DRIdrawable * dPriv,
 		  const __GLcontextModes * visual, GLboolean isPixmap)
 {
+    struct dri_drawable *drawable = NULL;
     GLframebuffer *fb;
     struct swrast_renderbuffer *frontrb, *backrb;
 
     TRACE;
 
-    fb = &dPriv->Base;
+    drawable = CALLOC_STRUCT(dri_drawable);
+    if (drawable == NULL)
+	goto drawable_fail;
 
-    dPriv->row = malloc(MAX_WIDTH * 4);
+    dPriv->driverPrivate = drawable;
+    drawable->dPriv = dPriv;
+
+    drawable->row = malloc(MAX_WIDTH * 4);
+    if (drawable->row == NULL)
+	goto drawable_fail;
+
+    fb = &drawable->Base;
 
     /* basic framebuffer setup */
     _mesa_initialize_window_framebuffer(fb, visual);
@@ -340,6 +350,15 @@ dri_create_buffer(__DRIscreen * sPriv,
 				 GL_FALSE /* aux bufs */);
 
     return GL_TRUE;
+
+drawable_fail:
+
+    if (drawable)
+	free(drawable->row);
+
+    FREE(drawable);
+
+    return GL_FALSE;
 }
 
 static void
@@ -348,11 +367,12 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
     TRACE;
 
     if (dPriv) {
+	struct dri_drawable *drawable = dri_drawable(dPriv);
 	GLframebuffer *fb;
 
-	free(dPriv->row);
+	free(drawable->row);
 
-	fb = &dPriv->Base;
+	fb = &drawable->Base;
 
 	fb->DeletePending = GL_TRUE;
 	_mesa_reference_framebuffer(&fb, NULL);
@@ -366,12 +386,13 @@ dri_swap_buffers(__DRIdrawable * dPriv)
 
     GET_CURRENT_CONTEXT(ctx);
 
+    struct dri_drawable *drawable = dri_drawable(dPriv);
     GLframebuffer *fb;
     struct swrast_renderbuffer *frontrb, *backrb;
 
     TRACE;
 
-    fb = &dPriv->Base;
+    fb = &drawable->Base;
 
     frontrb = swrast_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
     backrb = swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
@@ -402,7 +423,7 @@ dri_swap_buffers(__DRIdrawable * dPriv)
 static void
 get_window_size( GLframebuffer *fb, GLsizei *w, GLsizei *h )
 {
-    __DRIdrawable *dPriv = swrast_drawable(fb);
+    __DRIdrawable *dPriv = swrast_drawable(fb)->dPriv;
     __DRIscreen *sPriv = dPriv->driScreenPriv;
     int x, y;
 
@@ -572,13 +593,15 @@ dri_make_current(__DRIcontext * cPriv,
 
     if (cPriv) {
 	struct dri_context *ctx = dri_context(cPriv);
+	struct dri_drawable *draw = dri_drawable(driDrawPriv);
+	struct dri_drawable *read = dri_drawable(driReadPriv);
 
 	if (!driDrawPriv || !driReadPriv)
 	    return GL_FALSE;
 
 	mesaCtx = &ctx->Base;
-	mesaDraw = &driDrawPriv->Base;
-	mesaRead = &driReadPriv->Base;
+	mesaDraw = &draw->Base;
+	mesaRead = &read->Base;
 
 	/* check for same context and buffer */
 	if (mesaCtx == _mesa_get_current_context()

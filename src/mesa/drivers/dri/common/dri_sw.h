@@ -67,16 +67,13 @@ struct __DRIcontextRec {
 
 struct __DRIdrawableRec {
 
-    GLframebuffer Base;
+    void *driverPrivate;
 
     void *loaderPrivate;
 
     __DRIscreen *driScreenPriv;
 
     int refcount;
-
-    /* scratch row for optimized front-buffer rendering */
-    char *row;
 };
 
 
