@@ -111,6 +111,12 @@ struct nvfx_vtxelt_state {
 	unsigned num_elements;
 };
 
+struct nvfx_render_target {
+	struct nouveau_bo* bo;
+	unsigned offset;
+	unsigned pitch;
+};
+
 struct nvfx_context {
 	struct pipe_context pipe;
 
@@ -169,6 +175,8 @@ struct nvfx_context {
 	unsigned hw_vtxelt_nr;
 	uint8_t hw_samplers;
 	uint32_t hw_txf[8];
+	struct nvfx_render_target hw_rt[4];
+	struct nvfx_render_target hw_zeta;
 };
 
 static INLINE struct nvfx_context *
@@ -217,6 +225,10 @@ extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 					struct pipe_resource *idxbuf,
 					unsigned ib_size, unsigned mode,
 					unsigned start, unsigned count);
+
+/* nvfx_fb.c */
+void
+nvfx_framebuffer_relocate(struct nvfx_context *nvfx);
 
 /* nvfx_fragprog.c */
 extern void nvfx_fragprog_destroy(struct nvfx_context *,

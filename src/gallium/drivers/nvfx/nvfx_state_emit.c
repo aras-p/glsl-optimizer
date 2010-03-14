@@ -98,9 +98,7 @@ nvfx_state_emit(struct nvfx_context *nvfx)
 void
 nvfx_state_relocate(struct nvfx_context *nvfx)
 {
-	struct nouveau_channel *chan = nvfx->screen->base.channel;
-	struct nvfx_state *state = &nvfx->state;
-	so_emit_reloc_markers(chan, state->hw[NVFX_STATE_FB]);
+	nvfx_framebuffer_relocate(nvfx);
 	nvfx_fragtex_relocate(nvfx);
 	nvfx_fragprog_relocate(nvfx);
 	if (nvfx->render_mode == HW)
