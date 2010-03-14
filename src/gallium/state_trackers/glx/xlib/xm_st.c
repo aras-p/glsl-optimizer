@@ -197,18 +197,36 @@ xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
                               struct pipe_texture **out)
 {
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
-   unsigned statt_mask, i;
+   unsigned statt_mask, new_mask, i;
+   boolean resized;
 
    statt_mask = 0x0;
    for (i = 0; i < count; i++)
       statt_mask |= 1 << statts[i];
+   /* record newly allocated textures */
+   new_mask = statt_mask & ~xstfb->texture_mask;
+
+   resized = (xstfb->buffer->width != xstfb->texture_width ||
+              xstfb->buffer->height != xstfb->texture_height);
 
    /* revalidate textures */
-   if (xstfb->buffer->width != xstfb->texture_width ||
-       xstfb->buffer->height != xstfb->texture_height ||
-       (xstfb->texture_mask & statt_mask) != statt_mask) {
+   if (resized || new_mask) {
       xmesa_st_framebuffer_validate_textures(stfbi,
             xstfb->buffer->width, xstfb->buffer->height, statt_mask);
+
+      if (!resized) {
+         enum st_attachment_type back, front;
+
+         back = ST_ATTACHMENT_BACK_LEFT;
+         front = ST_ATTACHMENT_FRONT_LEFT;
+         /* copy the contents if front is newly allocated and back is not */
+         if ((statt_mask & (1 << back)) &&
+             (new_mask & (1 << front)) &&
+             !(new_mask & (1 << back))) {
+            xmesa_st_framebuffer_copy_textures(stfbi, back, front,
+                  0, 0, xstfb->texture_width, xstfb->texture_height);
+         }
+      }
    }
 
    for (i = 0; i < count; i++) {
