@@ -115,7 +115,7 @@ xmesa_st_framebuffer_copy_textures(struct st_framebuffer_iface *stfbi,
          dst_ptex, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
 
    if (src && dst)
-      pipe->surface_copy(pipe, dst, 0, 0, src, 0, 0, src->width, src->height);
+      pipe->surface_copy(pipe, dst, x, y, src, x, y, width, height);
 
    pipe_surface_reference(&src, NULL);
    pipe_surface_reference(&dst, NULL);
