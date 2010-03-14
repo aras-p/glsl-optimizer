@@ -79,6 +79,8 @@ struct xmesa_display {
    Display *display;
    struct pipe_screen *screen;
    struct st_manager *smapi;
+
+   struct pipe_context *pipe;
 };
 
 

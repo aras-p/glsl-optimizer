@@ -32,8 +32,9 @@
 #include "xm_st.h"
 
 struct xmesa_st_framebuffer {
-   struct pipe_screen *screen;
+   XMesaDisplay display;
    XMesaBuffer buffer;
+   struct pipe_screen *screen;
 
    struct st_visual stvis;
 
@@ -79,6 +80,45 @@ xmesa_st_framebuffer_display(struct st_framebuffer_iface *stfbi,
    xstfb->screen->flush_frontbuffer(xstfb->screen, psurf, &xstfb->buffer->ws);
 
    return TRUE;
+}
+
+/**
+ * Copy the contents between the attachments.
+ */
+static void
+xmesa_st_framebuffer_copy_textures(struct st_framebuffer_iface *stfbi,
+                                   enum st_attachment_type src_statt,
+                                   enum st_attachment_type dst_statt,
+                                   unsigned x, unsigned y,
+                                   unsigned width, unsigned height)
+{
+   struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
+   struct pipe_texture *src_ptex = xstfb->textures[src_statt];
+   struct pipe_texture *dst_ptex = xstfb->textures[dst_statt];
+   struct pipe_surface *src, *dst;
+   struct pipe_context *pipe;
+
+   if (!src_ptex || !dst_ptex)
+      return;
+
+   pipe = xstfb->display->pipe;
+   if (!pipe) {
+      pipe = xstfb->screen->context_create(xstfb->screen, NULL);
+      if (!pipe)
+         return;
+      xstfb->display->pipe = pipe;
+   }
+
+   src = xstfb->screen->get_tex_surface(xstfb->screen,
+         src_ptex, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
+   dst = xstfb->screen->get_tex_surface(xstfb->screen,
+         dst_ptex, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
+
+   if (src && dst)
+      pipe->surface_copy(pipe, dst, 0, 0, src, 0, 0, src->width, src->height);
+
+   pipe_surface_reference(&src, NULL);
+   pipe_surface_reference(&dst, NULL);
 }
 
 /**
@@ -194,10 +234,12 @@ xmesa_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
 }
 
 struct st_framebuffer_iface *
-xmesa_create_st_framebuffer(struct pipe_screen *screen, XMesaBuffer b)
+xmesa_create_st_framebuffer(XMesaDisplay xmdpy, XMesaBuffer b)
 {
    struct st_framebuffer_iface *stfbi;
    struct xmesa_st_framebuffer *xstfb;
+
+   assert(xmdpy->display == b->xm_visual->display);
 
    stfbi = CALLOC_STRUCT(st_framebuffer_iface);
    xstfb = CALLOC_STRUCT(xmesa_st_framebuffer);
@@ -209,8 +251,9 @@ xmesa_create_st_framebuffer(struct pipe_screen *screen, XMesaBuffer b)
       return NULL;
    }
 
-   xstfb->screen = screen;
+   xstfb->display = xmdpy;
    xstfb->buffer = b;
+   xstfb->screen = xmdpy->screen;
    xstfb->stvis = b->xm_visual->stvis;
 
    stfbi->visual = &xstfb->stvis;
@@ -265,5 +308,7 @@ xmesa_copy_st_framebuffer(struct st_framebuffer_iface *stfbi,
                           enum st_attachment_type dst,
                           int x, int y, int w, int h)
 {
-   /* TODO */
+   xmesa_st_framebuffer_copy_textures(stfbi, src, dst, x, y, w, h);
+   if (dst == ST_ATTACHMENT_FRONT_LEFT)
+      xmesa_st_framebuffer_display(stfbi, dst);
 }

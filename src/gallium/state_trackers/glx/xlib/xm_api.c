@@ -398,7 +398,7 @@ create_xmesa_buffer(Drawable d, BufferType type,
    /*
     * Create framebuffer, but we'll plug in our own renderbuffers below.
     */
-   b->stfb = xmesa_create_st_framebuffer(xmdpy->screen, b);
+   b->stfb = xmesa_create_st_framebuffer(xmdpy, b);
 
    /* GLX_EXT_texture_from_pixmap */
    b->TextureTarget = 0;
