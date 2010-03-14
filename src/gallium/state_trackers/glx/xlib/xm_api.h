@@ -67,10 +67,19 @@ and create a window, you must do the following to use the X/Mesa interface:
 # include <X11/Xlibint.h>
 # include <X11/Xutil.h>
 
+typedef struct xmesa_display *XMesaDisplay;
 typedef struct xmesa_buffer *XMesaBuffer;
 typedef struct xmesa_context *XMesaContext;
 typedef struct xmesa_visual *XMesaVisual;
 
+
+struct xmesa_display {
+   pipe_mutex mutex;
+
+   Display *display;
+   struct pipe_screen *screen;
+   struct st_manager *smapi;
+};
 
 
 /*
@@ -263,11 +272,6 @@ XMesaCopyContext(XMesaContext src, XMesaContext dst, unsigned long mask);
 
 /***********************************************************************
  */
-
-extern pipe_mutex _xmesa_lock;
-
-extern struct xmesa_buffer *XMesaBufferList;
-
 
 /**
  * Visual inforation, derived from GLvisual.
