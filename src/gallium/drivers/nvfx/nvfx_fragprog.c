@@ -864,15 +864,14 @@ nvfx_fragprog_upload(struct nvfx_context *nvfx,
 	}
 }
 
-static boolean
+boolean
 nvfx_fragprog_validate(struct nvfx_context *nvfx)
 {
-	struct pipe_context *pipe = &nvfx->pipe;
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_fragment_program *fp = nvfx->fragprog;
 	struct pipe_resource *constbuf =
 		nvfx->constbuf[PIPE_SHADER_FRAGMENT];
 	struct pipe_screen *pscreen = nvfx->pipe.screen;
-	struct nouveau_stateobj *so;
 	boolean new_consts = FALSE;
 	int i;
 
@@ -882,7 +881,19 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	nvfx->fallback_swrast &= ~NVFX_NEW_FRAGPROG;
 	nvfx_fragprog_translate(nvfx, fp);
 	if (!fp->translated) {
-		nvfx->fallback_swrast |= NVFX_NEW_FRAGPROG;
+		static unsigned dummy[8] = {1, 0, 0, 0, 1, 0, 0, 0};
+		static int warned = 0;
+		if(!warned)
+		{
+			fprintf(stderr, "nvfx: failed to translate fragment program!\n");
+			warned = 1;
+		}
+
+		/* use a dummy program: we cannot fail here */
+		fp->translated = TRUE;
+		fp->insn = malloc(sizeof(dummy));
+		memcpy(fp->insn, dummy, sizeof(dummy));
+		fp->insn_len = sizeof(dummy) / sizeof(dummy[0]);
 		return FALSE;
 	}
 
@@ -893,30 +904,12 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 					0, fp->insn_len * 4);
 	nvfx_fragprog_upload(nvfx, fp);
 
-	so = so_new(4, 4, 1);
-	so_method(so, nvfx->screen->eng3d, NV34TCL_FP_ACTIVE_PROGRAM, 1);
-	so_reloc (so, nvfx_resource(fp->buffer)->bo, 0, NOUVEAU_BO_VRAM |
-		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
-		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
-		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
-	so_method(so, nvfx->screen->eng3d, NV34TCL_FP_CONTROL, 1);
-	so_data  (so, fp->fp_control);
-	if(!nvfx->is_nv4x) {
-		so_method(so, nvfx->screen->eng3d, NV34TCL_FP_REG_CONTROL, 1);
-		so_data  (so, (1<<16)|0x4);
-		so_method(so, nvfx->screen->eng3d, NV34TCL_TX_UNITS_ENABLE, 1);
-		so_data  (so, fp->samplers);
-	}
-
-	so_ref(so, &fp->so);
-	so_ref(NULL, &so);
-
 update_constants:
 	if (fp->nr_consts) {
 		struct pipe_transfer *transfer;
 		float *map;
 
-		map = pipe_buffer_map(pipe, constbuf,
+		map = pipe_buffer_map(&nvfx->pipe, constbuf,
 				      PIPE_TRANSFER_READ,
 				      &transfer);
 
@@ -935,18 +928,42 @@ update_constants:
 			memcpy(p, cb, 4 * sizeof(float));
 			new_consts = TRUE;
 		}
-		pipe_buffer_unmap(pipe, constbuf, transfer);
+		pipe_buffer_unmap(&nvfx->pipe, constbuf, transfer);
 
 		if (new_consts)
 			nvfx_fragprog_upload(nvfx, fp);
 	}
 
-	if (new_consts || fp->so != nvfx->state.hw[NVFX_STATE_FRAGPROG]) {
-		so_ref(fp->so, &nvfx->state.hw[NVFX_STATE_FRAGPROG]);
-		return TRUE;
+	MARK_RING(chan, 8, 1);
+	OUT_RING(chan, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1));
+	OUT_RELOC(chan, nvfx_resource(fp->buffer)->bo, 0, NOUVEAU_BO_VRAM |
+		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
+		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
+		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
+	OUT_RING(chan, RING_3D(NV34TCL_FP_CONTROL, 1));
+	OUT_RING(chan, fp->fp_control);
+	if(!nvfx->is_nv4x) {
+		OUT_RING(chan, RING_3D(NV34TCL_FP_REG_CONTROL, 1));
+		OUT_RING(chan, (1<<16)|0x4);
+		OUT_RING(chan, RING_3D(NV34TCL_TX_UNITS_ENABLE, 1));
+		OUT_RING(chan, fp->samplers);
 	}
+	return TRUE;
+}
 
-	return FALSE;
+void
+nvfx_fragprog_relocate(struct nvfx_context *nvfx)
+{
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nvfx_fragment_program *fp = nvfx->fragprog;
+	struct nouveau_bo* bo = nvfx_resource(fp->buffer)->bo;
+	unsigned fp_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD; // TODO: GART?
+	fp_flags |= NOUVEAU_BO_DUMMY;
+	MARK_RING(chan, 2, 2);
+	OUT_RELOC(chan, bo, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1), fp_flags, 0, 0);
+	OUT_RELOC(chan, bo, 0, fp_flags | NOUVEAU_BO_LOW |
+		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
+		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
 }
 
 void
@@ -956,9 +973,6 @@ nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 	if (fp->buffer)
 		pipe_resource_reference(&fp->buffer, NULL);
 
-	if (fp->so)
-		so_ref(NULL, &fp->so);
-
 	if (fp->insn_len)
 		FREE(fp->insn);
 }
@@ -967,6 +981,6 @@ struct nvfx_state_entry nvfx_state_fragprog = {
 	.validate = nvfx_fragprog_validate,
 	.dirty = {
 		.pipe = NVFX_NEW_FRAGPROG,
-		.hw = NVFX_STATE_FRAGPROG
+		.hw = 0
 	}
 };

@@ -65,7 +65,6 @@ struct nvfx_fragment_program {
 	struct pipe_resource *buffer;
 
 	uint32_t fp_control;
-	struct nouveau_stateobj *so;
 };
 
 

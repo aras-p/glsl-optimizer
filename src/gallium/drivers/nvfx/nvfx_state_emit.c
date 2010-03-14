@@ -102,7 +102,7 @@ nvfx_state_relocate(struct nvfx_context *nvfx)
 	struct nvfx_state *state = &nvfx->state;
 	so_emit_reloc_markers(chan, state->hw[NVFX_STATE_FB]);
 	nvfx_fragtex_relocate(nvfx);
-	so_emit_reloc_markers(chan, state->hw[NVFX_STATE_FRAGPROG]);
+	nvfx_fragprog_relocate(nvfx);
 	if (nvfx->render_mode == HW)
 		nvfx_vbo_relocate(nvfx);
 }

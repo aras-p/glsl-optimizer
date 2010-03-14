@@ -221,6 +221,8 @@ extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 /* nvfx_fragprog.c */
 extern void nvfx_fragprog_destroy(struct nvfx_context *,
 				    struct nvfx_fragment_program *);
+extern void
+nvfx_fragprog_relocate(struct nvfx_context *nvfx);
 
 /* nvfx_fragtex.c */
 extern void
