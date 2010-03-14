@@ -38,10 +38,6 @@ struct r300_screen {
 
     struct radeon_winsys* radeon_winsys;
 
-    /* XXX This hack will be removed once texture transfers become part of
-     * pipe_context. */
-    struct pipe_context* ctx;
-
     /* Chipset capabilities */
     struct r300_capabilities* caps;
 
