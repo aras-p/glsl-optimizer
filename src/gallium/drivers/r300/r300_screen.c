@@ -29,7 +29,6 @@
 #include "r300_texture.h"
 
 #include "radeon_winsys.h"
-#include "r300_winsys.h"
 
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
