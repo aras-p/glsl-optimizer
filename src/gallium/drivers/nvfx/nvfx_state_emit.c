@@ -100,16 +100,8 @@ nvfx_state_relocate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
 	struct nvfx_state *state = &nvfx->state;
-	unsigned i, samplers;
-
 	so_emit_reloc_markers(chan, state->hw[NVFX_STATE_FB]);
-	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
-		if (!(samplers & (1 << i)))
-			continue;
-		so_emit_reloc_markers(chan,
-				      state->hw[NVFX_STATE_FRAGTEX0+i]);
-		samplers &= ~(1ULL << i);
-	}
+	nvfx_fragtex_relocate(nvfx);
 	so_emit_reloc_markers(chan, state->hw[NVFX_STATE_FRAGPROG]);
 	if (nvfx->render_mode == HW)
 		nvfx_vbo_relocate(nvfx);

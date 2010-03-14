@@ -106,15 +106,16 @@ nv40_fragtex_format(uint pipe_format)
 }
 
 
-struct nouveau_stateobj *
-nv40_fragtex_build(struct nvfx_context *nvfx, int unit)
+void
+nv40_fragtex_set(struct nvfx_context *nvfx, int unit)
 {
+	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_sampler_state *ps = nvfx->tex_sampler[unit];
 	struct nvfx_miptree *nv40mt = (struct nvfx_miptree *)nvfx->fragment_sampler_views[unit]->texture;
 	struct nouveau_bo *bo = nv40mt->base.bo;
 	struct pipe_resource *pt = &nv40mt->base.base;
 	struct nv40_texture_format *tf;
-	struct nouveau_stateobj *so;
+
 	uint32_t txf, txs, txp;
 	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
@@ -144,7 +145,7 @@ nv40_fragtex_build(struct nvfx_context *nvfx, int unit)
 		break;
 	default:
 		NOUVEAU_ERR("Unknown target %d\n", pt->target);
-		return NULL;
+		return;
 	}
 
 	if (!(pt->flags & NVFX_RESOURCE_FLAG_LINEAR)) {
@@ -156,20 +157,20 @@ nv40_fragtex_build(struct nvfx_context *nvfx, int unit)
 
 	txs = tf->swizzle;
 
-	so = so_new(2, 9, 2);
-	so_method(so, nvfx->screen->eng3d, NV34TCL_TX_OFFSET(unit), 8);
-	so_reloc (so, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
-	so_reloc (so, bo, txf, tex_flags | NOUVEAU_BO_OR,
-		      NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
-	so_data  (so, ps->wrap);
-	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en);
-	so_data  (so, txs);
-	so_data  (so, ps->filt | tf->sign | 0x2000 /*voodoo*/);
-	so_data  (so, (pt->width0 << NV34TCL_TX_NPOT_SIZE_W_SHIFT) |
-		       pt->height0);
-	so_data  (so, ps->bcol);
-	so_method(so, nvfx->screen->eng3d, NV40TCL_TEX_SIZE1(unit), 1);
-	so_data  (so, (pt->depth0 << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
+	MARK_RING(chan, 11 + 2 * !unit, 2);
+	OUT_RING(chan, RING_3D(NV34TCL_TX_OFFSET(unit), 8));
+	OUT_RELOC(chan, bo, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
+	OUT_RELOC(chan, bo, txf, tex_flags | NOUVEAU_BO_OR,
+			NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
+	OUT_RING(chan, ps->wrap);
+	OUT_RING(chan, NV40TCL_TEX_ENABLE_ENABLE | ps->en);
+	OUT_RING(chan, txs);
+	OUT_RING(chan, ps->filt | tf->sign | 0x2000 /*voodoo*/);
+	OUT_RING(chan, (pt->width0 << NV34TCL_TX_NPOT_SIZE_W_SHIFT) | pt->height0);
+	OUT_RING(chan, ps->bcol);
+	OUT_RING(chan, RING_3D(NV40TCL_TEX_SIZE1(unit), 1));
+	OUT_RING(chan, (pt->depth0 << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
 
-	return so;
+	nvfx->hw_txf[unit] = txf;
+	nvfx->hw_samplers |= (1 << unit);
 }

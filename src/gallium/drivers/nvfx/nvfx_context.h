@@ -167,6 +167,8 @@ struct nvfx_context {
 
 	unsigned vbo_bo;
 	unsigned hw_vtxelt_nr;
+	uint8_t hw_samplers;
+	uint32_t hw_txf[8];
 };
 
 static INLINE struct nvfx_context *
@@ -220,23 +222,23 @@ extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 extern void nvfx_fragprog_destroy(struct nvfx_context *,
 				    struct nvfx_fragment_program *);
 
+/* nvfx_fragtex.c */
+extern void
+nvfx_fragtex_relocate(struct nvfx_context *nvfx);
+
 /* nv30_fragtex.c */
 extern void
 nv30_sampler_state_init(struct pipe_context *pipe,
 			  struct nvfx_sampler_state *ps,
 			  const struct pipe_sampler_state *cso);
-extern void nv30_fragtex_bind(struct nvfx_context *);
-extern struct nouveau_stateobj *
-nv30_fragtex_build(struct nvfx_context *nvfx, int unit);
+extern void nv30_fragtex_set(struct nvfx_context *nvfx, int unit);
 
 /* nv40_fragtex.c */
 extern void
 nv40_sampler_state_init(struct pipe_context *pipe,
 			  struct nvfx_sampler_state *ps,
 			  const struct pipe_sampler_state *cso);
-extern void nv40_fragtex_bind(struct nvfx_context *);
-extern struct nouveau_stateobj *
-nv40_fragtex_build(struct nvfx_context *nvfx, int unit);
+extern void nv40_fragtex_set(struct nvfx_context *nvfx, int unit);
 
 /* nvfx_state.c */
 extern void nvfx_init_state_functions(struct nvfx_context *nvfx);
