@@ -54,17 +54,9 @@
  * Screen and config-related functions
  */
 
-static void
-setupLoaderExtensions(__DRIscreen *psp,
-		      const __DRIextension **extensions)
-{
-    int i;
-
-    for (i = 0; extensions[i]; i++) {
-	if (strcmp(extensions[i]->name, __DRI_SWRAST_LOADER) == 0)
-	    psp->swrast_loader = (__DRIswrastLoaderExtension *) extensions[i];
-    }
-}
+static const __DRIextension *dri_screen_extensions[] = {
+    NULL
+};
 
 static __DRIconfig **
 swrastFillInModes(__DRIscreen *psp,
@@ -143,26 +135,14 @@ swrastFillInModes(__DRIscreen *psp,
     return configs;
 }
 
-static __DRIscreen *
-driCreateNewScreen(int scrn, const __DRIextension **extensions,
-		   const __DRIconfig ***driver_configs, void *data)
+static const __DRIconfig **
+dri_init_screen(__DRIscreen * psp)
 {
-    static const __DRIextension *emptyExtensionList[] = { NULL };
-    __DRIscreen *psp;
     __DRIconfig **configs8, **configs16, **configs24, **configs32;
-
-    (void) data;
 
     TRACE;
 
-    psp = calloc(1, sizeof(*psp));
-    if (!psp)
-	return NULL;
-
-    setupLoaderExtensions(psp, extensions);
-
-    psp->num = scrn;
-    psp->extensions = emptyExtensionList;
+    psp->extensions = dri_screen_extensions;
 
     configs8  = swrastFillInModes(psp,  8,  8, 0, 1);
     configs16 = swrastFillInModes(psp, 16, 16, 0, 1);
@@ -171,28 +151,15 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
 
     configs16 = driConcatConfigs(configs8, configs16);
     configs24 = driConcatConfigs(configs16, configs24);
-    *driver_configs = (const __DRIconfig **)
-       driConcatConfigs(configs24, configs32);
+    configs32 = driConcatConfigs(configs24, configs32);
 
-    driInitExtensions( NULL, NULL, GL_FALSE );
-
-    return psp;
+    return (const __DRIconfig **)configs32;
 }
 
-static void driDestroyScreen(__DRIscreen *psp)
+static void
+dri_destroy_screen(__DRIscreen * sPriv)
 {
     TRACE;
-
-    if (psp) {
-	free(psp);
-    }
-}
-
-static const __DRIextension **driGetExtensions(__DRIscreen *psp)
-{
-    TRACE;
-
-    return psp->extensions;
 }
 
 
@@ -336,94 +303,95 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
     return xrb;
 }
 
-static __DRIdrawable *
-driCreateNewDrawable(__DRIscreen *screen,
-		     const __DRIconfig *config, void *data)
+static GLboolean
+dri_create_buffer(__DRIscreen * sPriv,
+		  __DRIdrawable * dPriv,
+		  const __GLcontextModes * visual, GLboolean isPixmap)
 {
-    __DRIdrawable *buf;
+    GLframebuffer *fb;
     struct swrast_renderbuffer *frontrb, *backrb;
 
     TRACE;
 
-    buf = calloc(1, sizeof *buf);
-    if (!buf)
-	return NULL;
+    fb = &dPriv->Base;
 
-    buf->loaderPrivate = data;
-
-    buf->driScreenPriv = screen;
-
-    buf->row = malloc(MAX_WIDTH * 4);
+    dPriv->row = malloc(MAX_WIDTH * 4);
 
     /* basic framebuffer setup */
-    _mesa_initialize_window_framebuffer(&buf->Base, &config->modes);
+    _mesa_initialize_window_framebuffer(fb, visual);
 
     /* add front renderbuffer */
-    frontrb = swrast_new_renderbuffer(&config->modes, GL_TRUE);
-    _mesa_add_renderbuffer(&buf->Base, BUFFER_FRONT_LEFT, &frontrb->Base);
+    frontrb = swrast_new_renderbuffer(visual, GL_TRUE);
+    _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontrb->Base);
 
     /* add back renderbuffer */
-    if (config->modes.doubleBufferMode) {
-	backrb = swrast_new_renderbuffer(&config->modes, GL_FALSE);
-	_mesa_add_renderbuffer(&buf->Base, BUFFER_BACK_LEFT, &backrb->Base);
+    if (visual->doubleBufferMode) {
+	backrb = swrast_new_renderbuffer(visual, GL_FALSE);
+	_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backrb->Base);
     }
 
     /* add software renderbuffers */
-    _mesa_add_soft_renderbuffers(&buf->Base,
+    _mesa_add_soft_renderbuffers(fb,
 				 GL_FALSE, /* color */
-				 config->modes.haveDepthBuffer,
-				 config->modes.haveStencilBuffer,
-				 config->modes.haveAccumBuffer,
+				 visual->haveDepthBuffer,
+				 visual->haveStencilBuffer,
+				 visual->haveAccumBuffer,
 				 GL_FALSE, /* alpha */
 				 GL_FALSE /* aux bufs */);
 
-    return buf;
+    return GL_TRUE;
 }
 
 static void
-driDestroyDrawable(__DRIdrawable *buf)
+dri_destroy_buffer(__DRIdrawable * dPriv)
 {
     TRACE;
 
-    if (buf) {
-	struct gl_framebuffer *fb = &buf->Base;
+    if (dPriv) {
+	GLframebuffer *fb;
 
-	free(buf->row);
+	free(dPriv->row);
+
+	fb = &dPriv->Base;
 
 	fb->DeletePending = GL_TRUE;
 	_mesa_reference_framebuffer(&fb, NULL);
     }
 }
 
-static void driSwapBuffers(__DRIdrawable *buf)
+static void
+dri_swap_buffers(__DRIdrawable * dPriv)
 {
+    __DRIscreen *sPriv = dPriv->driScreenPriv;
+
     GET_CURRENT_CONTEXT(ctx);
 
-    struct swrast_renderbuffer *frontrb =
-	swrast_renderbuffer(buf->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-    struct swrast_renderbuffer *backrb =
-	swrast_renderbuffer(buf->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer);
-
-    __DRIscreen *screen = buf->driScreenPriv;
+    GLframebuffer *fb;
+    struct swrast_renderbuffer *frontrb, *backrb;
 
     TRACE;
+
+    fb = &dPriv->Base;
+
+    frontrb = swrast_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+    backrb = swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 
     /* check for signle-buffered */
     if (backrb == NULL)
 	return;
 
     /* check if swapping currently bound buffer */
-    if (ctx && ctx->DrawBuffer == &(buf->Base)) {
+    if (ctx && ctx->DrawBuffer == fb) {
 	/* flush pending rendering */
 	_mesa_notifySwapBuffers(ctx);
     }
 
-    screen->swrast_loader->putImage(buf, __DRI_SWRAST_IMAGE_OP_SWAP,
-				    0, 0,
-				    frontrb->Base.Width,
-				    frontrb->Base.Height,
-				    backrb->Base.Data,
-				    buf->loaderPrivate);
+    sPriv->swrast_loader->putImage(dPriv, __DRI_SWRAST_IMAGE_OP_SWAP,
+				   0, 0,
+				   frontrb->Base.Width,
+				   frontrb->Base.Height,
+				   backrb->Base.Data,
+				   dPriv->loaderPrivate);
 }
 
 
@@ -434,13 +402,13 @@ static void driSwapBuffers(__DRIdrawable *buf)
 static void
 get_window_size( GLframebuffer *fb, GLsizei *w, GLsizei *h )
 {
-    __DRIdrawable *buf = swrast_drawable(fb);
-    __DRIscreen *screen = buf->driScreenPriv;
+    __DRIdrawable *dPriv = swrast_drawable(fb);
+    __DRIscreen *sPriv = dPriv->driScreenPriv;
     int x, y;
 
-    screen->swrast_loader->getDrawableInfo(buf,
-					   &x, &y, w, h,
-					   buf->loaderPrivate);
+    sPriv->swrast_loader->getDrawableInfo(dPriv,
+					  &x, &y, w, h,
+					  dPriv->loaderPrivate);
 }
 
 static void
@@ -502,36 +470,28 @@ swrast_init_driver_functions(struct dd_function_table *driver)
  * Context-related functions.
  */
 
-static __DRIcontext *
-driCreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
-		    __DRIcontext *shared, void *data)
+static GLboolean
+dri_create_context(const __GLcontextModes * visual,
+		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
-    __DRIcontext *ctx;
     GLcontext *mesaCtx;
+    GLcontext *sharedCtx;
     struct dd_function_table functions;
 
     TRACE;
-
-    ctx = calloc(1, sizeof *ctx);
-    if (!ctx)
-	return NULL;
-
-    ctx->loaderPrivate = data;
-
-    ctx->driScreenPriv = screen;
 
     /* build table of device driver functions */
     _mesa_init_driver_functions(&functions);
     swrast_init_driver_functions(&functions);
 
-    if (!_mesa_initialize_context(&ctx->Base, &config->modes,
-				  shared ? &shared->Base : NULL,
-				  &functions, (void *) ctx)) {
-      free(ctx);
-      return NULL;
+    sharedCtx = sharedContextPrivate;
+
+    /* basic context setup */
+    if (!_mesa_initialize_context(&cPriv->Base, visual, sharedCtx, &functions, (void *) cPriv)) {
+      return GL_FALSE;
     }
 
-    mesaCtx = &ctx->Base;
+    mesaCtx = &cPriv->Base;
 
     /* do bounds checking to prevent segfaults and server crashes! */
     mesaCtx->Const.CheckArrayBounds = GL_TRUE;
@@ -558,17 +518,20 @@ driCreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
 
     _mesa_meta_init(mesaCtx);
 
-    return ctx;
+    driInitExtensions( mesaCtx, NULL, GL_FALSE );
+
+    return GL_TRUE;
 }
 
 static void
-driDestroyContext(__DRIcontext *ctx)
+dri_destroy_context(__DRIcontext * cPriv)
 {
     GLcontext *mesaCtx;
     TRACE;
 
-    if (ctx) {
-	mesaCtx = &ctx->Base;
+    if (cPriv) {
+	mesaCtx = &cPriv->Base;
+
         _mesa_meta_free(mesaCtx);
 	_swsetup_DestroyContext( mesaCtx );
 	_swrast_DestroyContext( mesaCtx );
@@ -578,31 +541,23 @@ driDestroyContext(__DRIcontext *ctx)
     }
 }
 
-static int
-driCopyContext(__DRIcontext *dst, __DRIcontext *src, unsigned long mask)
-{
-    TRACE;
-
-    _mesa_copy_context(&src->Base, &dst->Base, mask);
-    return GL_TRUE;
-}
-
-static int driBindContext(__DRIcontext *ctx,
-			  __DRIdrawable *draw,
-			  __DRIdrawable *read)
+static GLboolean
+dri_make_current(__DRIcontext * cPriv,
+		 __DRIdrawable * driDrawPriv,
+		 __DRIdrawable * driReadPriv)
 {
     GLcontext *mesaCtx;
     GLframebuffer *mesaDraw;
     GLframebuffer *mesaRead;
     TRACE;
 
-    if (ctx) {
-	if (!draw || !read)
+    if (cPriv) {
+	if (!driDrawPriv || !driReadPriv)
 	    return GL_FALSE;
 
-	mesaCtx = &ctx->Base;
-	mesaDraw = &draw->Base;
-	mesaRead = &read->Base;
+	mesaCtx = &cPriv->Base;
+	mesaDraw = &driDrawPriv->Base;
+	mesaRead = &driReadPriv->Base;
 
 	/* check for same context and buffer */
 	if (mesaCtx == _mesa_get_current_context()
@@ -614,7 +569,7 @@ static int driBindContext(__DRIcontext *ctx,
 	_glapi_check_multithread();
 
 	swrast_check_and_update_window_size(mesaCtx, mesaDraw);
-	if (read != draw)
+	if (mesaRead != mesaDraw)
 	    swrast_check_and_update_window_size(mesaCtx, mesaRead);
 
 	_mesa_make_current( mesaCtx,
@@ -629,35 +584,25 @@ static int driBindContext(__DRIcontext *ctx,
     return GL_TRUE;
 }
 
-static int driUnbindContext(__DRIcontext *ctx)
+static GLboolean
+dri_unbind_context(__DRIcontext * cPriv)
 {
     TRACE;
-    (void) ctx;
+    (void) cPriv;
     return GL_TRUE;
 }
 
 
-static const __DRIcoreExtension driCoreExtension = {
-    { __DRI_CORE, __DRI_CORE_VERSION },
-    NULL, /* driCreateNewScreen */
-    driDestroyScreen,
-    driGetExtensions,
-    driGetConfigAttrib,
-    driIndexConfigAttrib,
-    NULL, /* driCreateNewDrawable */
-    driDestroyDrawable,
-    driSwapBuffers,
-    driCreateNewContext,
-    driCopyContext,
-    driDestroyContext,
-    driBindContext,
-    driUnbindContext
-};
-
-static const __DRIswrastExtension driSWRastExtension = {
-    { __DRI_SWRAST, __DRI_SWRAST_VERSION },
-    driCreateNewScreen,
-    driCreateNewDrawable
+const struct __DriverAPIRec driDriverAPI = {
+    .InitScreen = dri_init_screen,
+    .DestroyScreen = dri_destroy_screen,
+    .CreateContext = dri_create_context,
+    .DestroyContext = dri_destroy_context,
+    .CreateBuffer = dri_create_buffer,
+    .DestroyBuffer = dri_destroy_buffer,
+    .SwapBuffers = dri_swap_buffers,
+    .MakeCurrent = dri_make_current,
+    .UnbindContext = dri_unbind_context,
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */

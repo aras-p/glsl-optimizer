@@ -34,6 +34,7 @@
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 #include "main/mtypes.h"
+#include "dri_sw.h"
 
 
 /**
@@ -58,33 +59,6 @@
 /**
  * Data types
  */
-struct __DRIscreenRec {
-    int num;
-
-    const __DRIextension **extensions;
-
-    const __DRIswrastLoaderExtension *swrast_loader;
-};
-
-struct __DRIcontextRec {
-    GLcontext Base;
-
-    void *loaderPrivate;
-
-    __DRIscreen *driScreenPriv;
-};
-
-struct __DRIdrawableRec {
-    GLframebuffer Base;
-
-    void *loaderPrivate;
-
-    __DRIscreen *driScreenPriv;
-
-    /* scratch row for optimized front-buffer rendering */
-    char *row;
-};
-
 struct swrast_renderbuffer {
     struct gl_renderbuffer Base;
 
