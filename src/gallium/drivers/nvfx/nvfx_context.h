@@ -239,7 +239,7 @@ nv40_fragtex_build(struct nvfx_context *nvfx, int unit);
 extern void nvfx_init_state_functions(struct nvfx_context *nvfx);
 
 /* nvfx_state_emit.c */
-extern void nvfx_state_flush_notify(struct nouveau_channel *chan);
+extern void nvfx_state_relocate(struct nvfx_context *nvfx);
 extern boolean nvfx_state_validate(struct nvfx_context *nvfx);
 extern boolean nvfx_state_validate_swtnl(struct nvfx_context *nvfx);
 extern void nvfx_state_emit(struct nvfx_context *nvfx);

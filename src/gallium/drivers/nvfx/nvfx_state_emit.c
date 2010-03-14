@@ -81,12 +81,24 @@ nvfx_state_emit(struct nvfx_context *nvfx)
 		}
 	}
 	state->dirty = 0;
+
+	/* we need to ensure there is enough space to output relocations in one go */
+	unsigned max_relocs = 0
+	      + 16 /* vertex buffers, incl. dma flag */
+	      + 2 /* index buffer plus format+dma flag */
+	      + 2 * 5 /* 4 cbufs + zsbuf, plus dma objects */
+	      + 2 * 16 /* fragment textures plus format+dma flag */
+	      + 2 * 4 /* vertex textures plus format+dma flag */
+	      + 1 /* fragprog incl dma flag */
+	      ;
+	MARK_RING(chan, max_relocs * 2, max_relocs * 2);
+	nvfx_state_relocate(nvfx);
 }
 
 void
-nvfx_state_flush_notify(struct nouveau_channel *chan)
+nvfx_state_relocate(struct nvfx_context *nvfx)
 {
-	struct nvfx_context *nvfx = chan->user_private;
+	struct nouveau_channel *chan = nvfx->screen->base.channel;
 	struct nvfx_state *state = &nvfx->state;
 	unsigned i, samplers;
 

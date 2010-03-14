@@ -67,7 +67,6 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.flush = nvfx_flush;
 
 	screen->base.channel->user_private = nvfx;
-	screen->base.channel->flush_notify = nvfx_state_flush_notify;
 
 	nvfx->is_nv4x = screen->is_nv4x;
 
