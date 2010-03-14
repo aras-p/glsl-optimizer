@@ -57,7 +57,7 @@
  */
 struct dri_context
 {
-    /* mesa */
+    /* mesa, base class, must be first */
     GLcontext Base;
 
     /* dri */
@@ -78,7 +78,7 @@ swrast_context(GLcontext *ctx)
 
 struct dri_drawable
 {
-    /* mesa */
+    /* mesa, base class, must be first */
     GLframebuffer Base;
 
     /* dri */
