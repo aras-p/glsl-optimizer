@@ -36,7 +36,6 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_simple_screen.h"
 
 #include "sp_context.h"
 #include "sp_texture.h"
