@@ -1414,6 +1414,85 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
 
 
 /**
+ * Sample the texture/mipmap using given image filter and mip filter.
+ * data0_ptr and data1_ptr point to the two mipmap levels to sample
+ * from.  width0/1_vec, height0/1_vec, depth0/1_vec indicate their sizes.
+ * If we're using nearest miplevel sampling the '1' values will be null/unused.
+ */
+static void
+lp_sample_mipmap(struct lp_build_sample_context *bld,
+                 unsigned img_filter,
+                 unsigned mip_filter,
+                 LLVMValueRef s,
+                 LLVMValueRef t,
+                 LLVMValueRef r,
+                 LLVMValueRef lod_fpart,
+                 LLVMValueRef width0_vec,
+                 LLVMValueRef width1_vec,
+                 LLVMValueRef height0_vec,
+                 LLVMValueRef height1_vec,
+                 LLVMValueRef depth0_vec,
+                 LLVMValueRef depth1_vec,
+                 LLVMValueRef row_stride0_vec,
+                 LLVMValueRef row_stride1_vec,
+                 LLVMValueRef img_stride0_vec,
+                 LLVMValueRef img_stride1_vec,
+                 LLVMValueRef data_ptr0,
+                 LLVMValueRef data_ptr1,
+                 LLVMValueRef *colors_out)
+{
+   LLVMValueRef colors0[4], colors1[4];
+   int chan;
+
+   if (img_filter == PIPE_TEX_FILTER_NEAREST) {
+      lp_build_sample_image_nearest(bld,
+                                    width0_vec, height0_vec, depth0_vec,
+                                    row_stride0_vec, img_stride0_vec,
+                                    data_ptr0, s, t, r, colors0);
+
+      if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
+         /* sample the second mipmap level, and interp */
+         lp_build_sample_image_nearest(bld,
+                                       width1_vec, height1_vec, depth1_vec,
+                                       row_stride1_vec, img_stride1_vec,
+                                       data_ptr1, s, t, r, colors1);
+      }
+   }
+   else {
+      assert(img_filter == PIPE_TEX_FILTER_LINEAR);
+
+      lp_build_sample_image_linear(bld,
+                                   width0_vec, height0_vec, depth0_vec,
+                                   row_stride0_vec, img_stride0_vec,
+                                   data_ptr0, s, t, r, colors0);
+
+      if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
+         /* sample the second mipmap level, and interp */
+         lp_build_sample_image_linear(bld,
+                                      width1_vec, height1_vec, depth1_vec,
+                                      row_stride1_vec, img_stride1_vec,
+                                      data_ptr1, s, t, r, colors1);
+      }
+   }
+
+   if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
+      /* interpolate samples from the two mipmap levels */
+      for (chan = 0; chan < 4; chan++) {
+         colors_out[chan] = lp_build_lerp(&bld->texel_bld, lod_fpart,
+                                          colors0[chan], colors1[chan]);
+      }
+   }
+   else {
+      /* use first/only level's colors */
+      for (chan = 0; chan < 4; chan++) {
+         colors_out[chan] = colors0[chan];
+      }
+   }
+}
+
+
+
+/**
  * General texture sampling codegen.
  * This function handles texture sampling for all texture targets (1D,
  * 2D, 3D, cube) and all filtering modes.
@@ -1435,6 +1514,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef data_array,
                         LLVMValueRef *colors_out)
 {
+   struct lp_build_context *float_bld = &bld->float_bld;
    const unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
@@ -1446,7 +1526,6 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    LLVMValueRef row_stride0_vec = NULL, row_stride1_vec = NULL;
    LLVMValueRef img_stride0_vec = NULL, img_stride1_vec = NULL;
    LLVMValueRef data_ptr0, data_ptr1;
-   int chan;
 
    /*
    printf("%s mip %d  min %d  mag %d\n", __FUNCTION__,
@@ -1459,6 +1538,10 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    if (mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       /* always use mip level 0 */
       ilevel0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+
+      /* XXX temporary here */
+      lod = lp_build_lod_selector(bld, s, t, r, width, height, depth);
+
    }
    else {
       /* compute float LOD */
@@ -1538,62 +1621,65 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    /*
     * Get/interpolate texture colors.
     */
-   /* XXX temporarily force this path: */
-   if (1 /*min_filter == mag_filter*/) {
-      /* same filter for minification or magnification */
-      LLVMValueRef colors0[4], colors1[4];
-
-      if (min_filter == PIPE_TEX_FILTER_NEAREST) {
-         lp_build_sample_image_nearest(bld,
-                                       width0_vec, height0_vec, depth0_vec,
-                                       row_stride0_vec, img_stride0_vec,
-                                       data_ptr0, s, t, r, colors0);
-
-         if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-            /* sample the second mipmap level, and interp */
-            lp_build_sample_image_nearest(bld,
-                                          width1_vec, height1_vec, depth1_vec,
-                                          row_stride1_vec, img_stride1_vec,
-                                          data_ptr1, s, t, r, colors1);
-         }
-      }
-      else {
-         assert(min_filter == PIPE_TEX_FILTER_LINEAR);
-
-         lp_build_sample_image_linear(bld,
-                                      width0_vec, height0_vec, depth0_vec,
-                                      row_stride0_vec, img_stride0_vec,
-                                      data_ptr0, s, t, r, colors0);
-
-
-         if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-            /* sample the second mipmap level, and interp */
-            lp_build_sample_image_linear(bld,
-                                         width1_vec, height1_vec, depth1_vec,
-                                         row_stride1_vec, img_stride1_vec,
-                                         data_ptr1, s, t, r, colors1);
-         }
-      }
-
-      if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-         /* interpolate samples from the two mipmap levels */
-         for (chan = 0; chan < 4; chan++) {
-            colors_out[chan] = lp_build_lerp(&bld->texel_bld, lod_fpart,
-                                             colors0[chan], colors1[chan]);
-         }
-      }
-      else {
-         /* use first/only level's colors */
-         for (chan = 0; chan < 4; chan++) {
-            colors_out[chan] = colors0[chan];
-         }
-      }
+   if (min_filter == mag_filter) {
+      /* no need to distinquish between minification and magnification */
+      lp_sample_mipmap(bld, min_filter, mip_filter, s, t, r, lod_fpart,
+                       width0_vec, width1_vec,
+                       height0_vec, height1_vec,
+                       depth0_vec, depth1_vec,
+                       row_stride0_vec, row_stride1_vec,
+                       img_stride0_vec, img_stride1_vec,
+                       data_ptr0, data_ptr1,
+                       colors_out);
    }
    else {
-      /* emit conditional to choose min image filter or mag image filter
+      /* Emit conditional to choose min image filter or mag image filter
        * depending on the lod being >0 or <= 0, respectively.
        */
-      abort();
+      struct lp_build_flow_context *flow_ctx;
+      struct lp_build_if_state if_ctx;
+      LLVMValueRef minify;
+
+      flow_ctx = lp_build_flow_create(bld->builder);
+      lp_build_flow_scope_begin(flow_ctx);
+
+      lp_build_flow_scope_declare(flow_ctx, &colors_out[0]);
+      lp_build_flow_scope_declare(flow_ctx, &colors_out[1]);
+      lp_build_flow_scope_declare(flow_ctx, &colors_out[2]);
+      lp_build_flow_scope_declare(flow_ctx, &colors_out[3]);
+
+      /* minify = lod > 0.0 */
+      minify = LLVMBuildFCmp(bld->builder, LLVMRealUGE,
+                             lod, float_bld->zero, "");
+
+      lp_build_if(&if_ctx, flow_ctx, bld->builder, minify);
+      {
+         /* Use the minification filter */
+         lp_sample_mipmap(bld, min_filter, mip_filter, s, t, r, lod_fpart,
+                          width0_vec, width1_vec,
+                          height0_vec, height1_vec,
+                          depth0_vec, depth1_vec,
+                          row_stride0_vec, row_stride1_vec,
+                          img_stride0_vec, img_stride1_vec,
+                          data_ptr0, data_ptr1,
+                          colors_out);
+      }
+      lp_build_else(&if_ctx);
+      {
+         /* Use the magnification filter */
+         lp_sample_mipmap(bld, mag_filter, mip_filter, s, t, r, lod_fpart,
+                          width0_vec, width1_vec,
+                          height0_vec, height1_vec,
+                          depth0_vec, depth1_vec,
+                          row_stride0_vec, row_stride1_vec,
+                          img_stride0_vec, img_stride1_vec,
+                          data_ptr0, data_ptr1,
+                          colors_out);
+      }
+      lp_build_endif(&if_ctx);
+
+      lp_build_flow_scope_end(flow_ctx);
+      lp_build_flow_destroy(flow_ctx);
    }
 }
 
