@@ -185,11 +185,11 @@ lp_build_depth_test(LLVMBuilderRef builder,
       if(padding_left || padding_right) {
          const unsigned long long mask_left = ((unsigned long long)1 << (format_desc->block.bits - padding_left)) - 1;
          const unsigned long long mask_right = ((unsigned long long)1 << (padding_right)) - 1;
-         z_bitmask = lp_build_int_const_scalar(type, mask_left ^ mask_right);
+         z_bitmask = lp_build_const_int_vec(type, mask_left ^ mask_right);
       }
 
       if(padding_left)
-         src = LLVMBuildLShr(builder, src, lp_build_int_const_scalar(type, padding_left), "");
+         src = LLVMBuildLShr(builder, src, lp_build_const_int_vec(type, padding_left), "");
       if(padding_right)
          src = LLVMBuildAnd(builder, src, z_bitmask, "");
       if(padding_left || padding_right)

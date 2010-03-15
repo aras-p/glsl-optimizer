@@ -252,7 +252,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
                                    LLVMConstInt(LLVMInt32Type(), INT_MIN, 0),
                                    "");
 
-      in_out_mask = lp_build_int_const_scalar(i32_type, ~0);
+      in_out_mask = lp_build_const_int_vec(i32_type, ~0);
 
 
       lp_build_flow_scope_declare(flow, &in_out_mask);
@@ -367,7 +367,7 @@ build_int32_vec_const(int value)
    i32_type.norm = FALSE;     /* values are not normalized */
    i32_type.width = 32;       /* 32-bit int values */
    i32_type.length = 4;       /* 4 elements per vector */
-   return lp_build_int_const_scalar(i32_type, value);
+   return lp_build_const_int_vec(i32_type, value);
 }
 
 

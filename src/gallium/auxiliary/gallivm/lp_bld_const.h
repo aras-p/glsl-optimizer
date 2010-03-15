@@ -85,13 +85,11 @@ lp_build_one(struct lp_type type);
 
 
 LLVMValueRef
-lp_build_const_scalar(struct lp_type type,
-                      double val);
+lp_build_const_vec(struct lp_type type, double val);
 
 
 LLVMValueRef
-lp_build_int_const_scalar(struct lp_type type,
-                          long long val);
+lp_build_const_int_vec(struct lp_type type, long long val);
 
 
 LLVMValueRef

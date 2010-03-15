@@ -193,7 +193,7 @@ lp_build_compare(LLVMBuilderRef builder,
          if(table[func].gt &&
             ((type.width == 8 && type.sign) ||
              (type.width != 8 && !type.sign))) {
-            LLVMValueRef msb = lp_build_int_const_scalar(type, (unsigned long long)1 << (type.width - 1));
+            LLVMValueRef msb = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
             a = LLVMBuildXor(builder, a, msb, "");
             b = LLVMBuildXor(builder, b, msb, "");
          }

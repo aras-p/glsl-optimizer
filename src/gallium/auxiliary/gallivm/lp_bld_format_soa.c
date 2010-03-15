@@ -114,10 +114,10 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
       case UTIL_FORMAT_TYPE_UNSIGNED:
          if(type.floating) {
             if(start)
-               input = LLVMBuildLShr(builder, input, lp_build_int_const_scalar(type, start), "");
+               input = LLVMBuildLShr(builder, input, lp_build_const_int_vec(type, start), "");
             if(stop < format_desc->block.bits) {
                unsigned mask = ((unsigned long long)1 << width) - 1;
-               input = LLVMBuildAnd(builder, input, lp_build_int_const_scalar(type, mask), "");
+               input = LLVMBuildAnd(builder, input, lp_build_const_int_vec(type, mask), "");
             }
 
             if(format_desc->channel[chan].normalized)
