@@ -843,87 +843,98 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef depth)
 
 {
-   const int dims = texture_dims(bld->static_state->target);
-   struct lp_build_context *float_bld = &bld->float_bld;
-   LLVMValueRef lod_bias = LLVMConstReal(LLVMFloatType(), bld->static_state->lod_bias);
-   LLVMValueRef min_lod = LLVMConstReal(LLVMFloatType(), bld->static_state->min_lod);
-   LLVMValueRef max_lod = LLVMConstReal(LLVMFloatType(), bld->static_state->max_lod);
-
-   LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
-   LLVMValueRef index1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
-   LLVMValueRef index2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
-
-   LLVMValueRef s0, s1, s2;
-   LLVMValueRef t0, t1, t2;
-   LLVMValueRef r0, r1, r2;
-   LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
-   LLVMValueRef rho, lod;
-
-   /*
-    * dsdx = abs(s[1] - s[0]);
-    * dsdy = abs(s[2] - s[0]);
-    * dtdx = abs(t[1] - t[0]);
-    * dtdy = abs(t[2] - t[0]);
-    * drdx = abs(r[1] - r[0]);
-    * drdy = abs(r[2] - r[0]);
-    * XXX we're assuming a four-element quad in 2x2 layout here.
-    */
-   s0 = LLVMBuildExtractElement(bld->builder, s, index0, "s0");
-   s1 = LLVMBuildExtractElement(bld->builder, s, index1, "s1");
-   s2 = LLVMBuildExtractElement(bld->builder, s, index2, "s2");
-   dsdx = LLVMBuildSub(bld->builder, s1, s0, "");
-   dsdx = lp_build_abs(float_bld, dsdx);
-   dsdy = LLVMBuildSub(bld->builder, s2, s0, "");
-   dsdy = lp_build_abs(float_bld, dsdy);
-   if (dims > 1) {
-      t0 = LLVMBuildExtractElement(bld->builder, t, index0, "t0");
-      t1 = LLVMBuildExtractElement(bld->builder, t, index1, "t1");
-      t2 = LLVMBuildExtractElement(bld->builder, t, index2, "t2");
-      dtdx = LLVMBuildSub(bld->builder, t1, t0, "");
-      dtdx = lp_build_abs(float_bld, dtdx);
-      dtdy = LLVMBuildSub(bld->builder, t2, t0, "");
-      dtdy = lp_build_abs(float_bld, dtdy);
-      if (dims > 2) {
-         r0 = LLVMBuildExtractElement(bld->builder, r, index0, "r0");
-         r1 = LLVMBuildExtractElement(bld->builder, r, index1, "r1");
-         r2 = LLVMBuildExtractElement(bld->builder, r, index2, "r2");
-         drdx = LLVMBuildSub(bld->builder, r1, r0, "");
-         drdx = lp_build_abs(float_bld, drdx);
-         drdy = LLVMBuildSub(bld->builder, r2, r0, "");
-         drdy = lp_build_abs(float_bld, drdy);
-      }
+   if (bld->static_state->min_lod == bld->static_state->max_lod) {
+      /* User is forcing sampling from a particular mipmap level.
+       * This is hit during mipmap generation.
+       */
+      return LLVMConstReal(LLVMFloatType(), bld->static_state->min_lod);
    }
+   else {
+      const int dims = texture_dims(bld->static_state->target);
+      struct lp_build_context *float_bld = &bld->float_bld;
+      LLVMValueRef lod_bias = LLVMConstReal(LLVMFloatType(),
+                                            bld->static_state->lod_bias);
+      LLVMValueRef min_lod = LLVMConstReal(LLVMFloatType(),
+                                           bld->static_state->min_lod);
+      LLVMValueRef max_lod = LLVMConstReal(LLVMFloatType(),
+                                           bld->static_state->max_lod);
 
-   /* Compute rho = max of all partial derivatives scaled by texture size.
-    * XXX this could be vectorized somewhat
-    */
-   rho = LLVMBuildMul(bld->builder,
-                      lp_build_max(float_bld, dsdx, dsdy),
-                      lp_build_int_to_float(float_bld, width), "");
-   if (dims > 1) {
-      LLVMValueRef max;
-      max = LLVMBuildMul(bld->builder,
-                         lp_build_max(float_bld, dtdx, dtdy),
-                         lp_build_int_to_float(float_bld, height), "");
-      rho = lp_build_max(float_bld, rho, max);
-      if (dims > 2) {
+      LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+      LLVMValueRef index1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
+      LLVMValueRef index2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
+
+      LLVMValueRef s0, s1, s2;
+      LLVMValueRef t0, t1, t2;
+      LLVMValueRef r0, r1, r2;
+      LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
+      LLVMValueRef rho, lod;
+
+      /*
+       * dsdx = abs(s[1] - s[0]);
+       * dsdy = abs(s[2] - s[0]);
+       * dtdx = abs(t[1] - t[0]);
+       * dtdy = abs(t[2] - t[0]);
+       * drdx = abs(r[1] - r[0]);
+       * drdy = abs(r[2] - r[0]);
+       * XXX we're assuming a four-element quad in 2x2 layout here.
+       */
+      s0 = LLVMBuildExtractElement(bld->builder, s, index0, "s0");
+      s1 = LLVMBuildExtractElement(bld->builder, s, index1, "s1");
+      s2 = LLVMBuildExtractElement(bld->builder, s, index2, "s2");
+      dsdx = LLVMBuildSub(bld->builder, s1, s0, "");
+      dsdx = lp_build_abs(float_bld, dsdx);
+      dsdy = LLVMBuildSub(bld->builder, s2, s0, "");
+      dsdy = lp_build_abs(float_bld, dsdy);
+      if (dims > 1) {
+         t0 = LLVMBuildExtractElement(bld->builder, t, index0, "t0");
+         t1 = LLVMBuildExtractElement(bld->builder, t, index1, "t1");
+         t2 = LLVMBuildExtractElement(bld->builder, t, index2, "t2");
+         dtdx = LLVMBuildSub(bld->builder, t1, t0, "");
+         dtdx = lp_build_abs(float_bld, dtdx);
+         dtdy = LLVMBuildSub(bld->builder, t2, t0, "");
+         dtdy = lp_build_abs(float_bld, dtdy);
+         if (dims > 2) {
+            r0 = LLVMBuildExtractElement(bld->builder, r, index0, "r0");
+            r1 = LLVMBuildExtractElement(bld->builder, r, index1, "r1");
+            r2 = LLVMBuildExtractElement(bld->builder, r, index2, "r2");
+            drdx = LLVMBuildSub(bld->builder, r1, r0, "");
+            drdx = lp_build_abs(float_bld, drdx);
+            drdy = LLVMBuildSub(bld->builder, r2, r0, "");
+            drdy = lp_build_abs(float_bld, drdy);
+         }
+      }
+
+      /* Compute rho = max of all partial derivatives scaled by texture size.
+       * XXX this could be vectorized somewhat
+       */
+      rho = LLVMBuildMul(bld->builder,
+                         lp_build_max(float_bld, dsdx, dsdy),
+                         lp_build_int_to_float(float_bld, width), "");
+      if (dims > 1) {
+         LLVMValueRef max;
          max = LLVMBuildMul(bld->builder,
-                            lp_build_max(float_bld, drdx, drdy),
-                            lp_build_int_to_float(float_bld, depth), "");
+                            lp_build_max(float_bld, dtdx, dtdy),
+                            lp_build_int_to_float(float_bld, height), "");
          rho = lp_build_max(float_bld, rho, max);
+         if (dims > 2) {
+            max = LLVMBuildMul(bld->builder,
+                               lp_build_max(float_bld, drdx, drdy),
+                               lp_build_int_to_float(float_bld, depth), "");
+            rho = lp_build_max(float_bld, rho, max);
+         }
       }
+
+      /* compute lod = log2(rho) */
+      lod = lp_build_log2(float_bld, rho);
+
+      /* add lod bias */
+      lod = LLVMBuildAdd(bld->builder, lod, lod_bias, "LOD bias");
+
+      /* clamp lod */
+      lod = lp_build_clamp(float_bld, lod, min_lod, max_lod);
+
+      return lod;
    }
-
-   /* compute lod = log2(rho) */
-   lod = lp_build_log2(float_bld, rho);
-
-   /* add lod bias */
-   lod = LLVMBuildAdd(bld->builder, lod, lod_bias, "LOD bias");
-
-   /* clamp lod */
-   lod = lp_build_clamp(float_bld, lod, min_lod, max_lod);
-
-   return lod;
 }
 
 
