@@ -614,7 +614,7 @@ static GLuint translate_logicop(GLenum logicop)
 	case GL_XOR:
 		return 0x66;
 	case GL_EQUIV:
-		return 0xaa;
+		return 0x99;
 	case GL_AND_REVERSE:
 		return 0x44;
 	case GL_AND_INVERTED:
