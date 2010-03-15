@@ -167,7 +167,7 @@ dri_make_current(__DRIcontext * cPriv,
        * flush_frontbuffer directly (in front-buffer rendering), it
        * will have access to the drawable argument:
        */
-      st_make_current(ctx->st, draw->stfb, read->stfb, NULL);
+      st_make_current(ctx->st, draw->stfb, read->stfb, ctx);
 
       if (__dri1_api_hooks) {
 	 dri1_update_drawables(ctx, draw, read);
