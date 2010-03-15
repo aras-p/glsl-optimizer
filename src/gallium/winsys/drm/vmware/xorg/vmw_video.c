@@ -226,7 +226,7 @@ static void vmw_xv_query_best_size(ScrnInfoPtr pScrn, Bool motion,
 /*
  * Local functions.
  */
-static XF86VideoAdaptorPtr vmw_video_init_adaptor(ScrnInfoPtr pScrn, struct vmw_driver *vmw);
+static XF86VideoAdaptorPtr vmw_video_init_adaptor(ScrnInfoPtr pScrn, struct vmw_customizer *vmw);
 
 static int vmw_video_port_init(ScrnInfoPtr pScrn,
                                struct vmw_video_port *port,
@@ -243,9 +243,9 @@ static int vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
                                short height, RegionPtr clipBoxes);
 static void vmw_video_port_cleanup(ScrnInfoPtr pScrn, struct vmw_video_port *port);
 
-static int vmw_video_buffer_alloc(struct vmw_driver *vmw, int size,
+static int vmw_video_buffer_alloc(struct vmw_customizer *vmw, int size,
                                   struct vmw_video_buffer *out);
-static int vmw_video_buffer_free(struct vmw_driver *vmw,
+static int vmw_video_buffer_free(struct vmw_customizer *vmw,
                                  struct vmw_video_buffer *out);
 
 
@@ -267,8 +267,9 @@ static int vmw_video_buffer_free(struct vmw_driver *vmw,
  */
 
 Bool
-vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
+vmw_video_init(struct vmw_customizer *vmw)
 {
+    ScrnInfoPtr pScrn = vmw->pScrn;
     ScreenPtr pScreen = pScrn->pScreen;
     XF86VideoAdaptorPtr *overlayAdaptors, *newAdaptors = NULL;
     XF86VideoAdaptorPtr newAdaptor = NULL;
@@ -345,8 +346,9 @@ vmw_video_init(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
  */
 
 Bool
-vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
+vmw_video_close(struct vmw_customizer *vmw)
 {
+    ScrnInfoPtr pScrn = vmw->pScrn;
     struct vmw_video_private *video;
     int i;
 
@@ -387,8 +389,9 @@ vmw_video_close(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
  *-----------------------------------------------------------------------------
  */
 
-void vmw_video_stop_all(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
+void vmw_video_stop_all(struct vmw_customizer *vmw)
 {
+    ScrnInfoPtr pScrn = vmw->pScrn;
     struct vmw_video_private *video = vmw->video_priv;
     int i;
 
@@ -421,7 +424,7 @@ void vmw_video_stop_all(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
  */
 
 static XF86VideoAdaptorPtr
-vmw_video_init_adaptor(ScrnInfoPtr pScrn, struct vmw_driver *vmw)
+vmw_video_init_adaptor(ScrnInfoPtr pScrn, struct vmw_customizer *vmw)
 {
     XF86VideoAdaptorPtr adaptor;
     struct vmw_video_private *video;
@@ -515,7 +518,7 @@ vmw_video_port_init(ScrnInfoPtr pScrn, struct vmw_video_port *port,
                     unsigned char *buf, short width,
                     short height, RegionPtr clipBoxes)
 {
-    struct vmw_driver *vmw = vmw_driver(pScrn);
+    struct vmw_customizer *vmw = vmw_customizer(xorg_customizer(pScrn));
     unsigned short w, h;
     int i, ret;
 
@@ -583,7 +586,7 @@ vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
                     unsigned char *buf, short width,
                     short height, RegionPtr clipBoxes)
 {
-    struct vmw_driver *vmw = vmw_driver(pScrn);
+    struct vmw_customizer *vmw = vmw_customizer(xorg_customizer(pScrn));
     struct drm_vmw_control_stream_arg arg;
     unsigned short w, h;
     int size;
@@ -675,7 +678,7 @@ vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
 static void
 vmw_video_port_cleanup(ScrnInfoPtr pScrn, struct vmw_video_port *port)
 {
-    struct vmw_driver *vmw = vmw_driver(pScrn);
+    struct vmw_customizer *vmw = vmw_customizer(xorg_customizer(pScrn));
     uint32 id, colorKey, flags;
     Bool isAutoPaintColorkey;
     int i;
@@ -721,7 +724,7 @@ vmw_video_port_cleanup(ScrnInfoPtr pScrn, struct vmw_video_port *port)
  */
 
 static int
-vmw_video_buffer_alloc(struct vmw_driver *vmw, int size,
+vmw_video_buffer_alloc(struct vmw_customizer *vmw, int size,
                        struct vmw_video_buffer *out)
 {
     out->buf = vmw_ioctl_buffer_create(vmw, size, &out->handle);
@@ -764,7 +767,7 @@ vmw_video_buffer_alloc(struct vmw_driver *vmw, int size,
  */
 
 static int
-vmw_video_buffer_free(struct vmw_driver *vmw,
+vmw_video_buffer_free(struct vmw_customizer *vmw,
                       struct vmw_video_buffer *out)
 {
     if (out->size == 0)
@@ -814,7 +817,7 @@ vmw_xv_put_image(ScrnInfoPtr pScrn, short src_x, short src_y,
                  Bool sync, RegionPtr clipBoxes, pointer data,
                  DrawablePtr dst)
 {
-    struct vmw_driver *vmw = vmw_driver(pScrn);
+    struct vmw_customizer *vmw = vmw_customizer(xorg_customizer(pScrn));
     struct vmw_video_port *port = data;
 
     debug_printf("%s: enter (%u, %u) (%ux%u) (%u, %u) (%ux%u) (%ux%u)\n", __func__,
@@ -852,7 +855,7 @@ vmw_xv_put_image(ScrnInfoPtr pScrn, short src_x, short src_y,
 static void
 vmw_xv_stop_video(ScrnInfoPtr pScrn, pointer data, Bool cleanup)
 {
-    struct vmw_driver *vmw = vmw_driver(pScrn);
+    struct vmw_customizer *vmw = vmw_customizer(xorg_customizer(pScrn));
     struct vmw_video_port *port = data;
     struct drm_vmw_control_stream_arg arg;
     int ret;

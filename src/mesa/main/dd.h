@@ -620,8 +620,6 @@ struct dd_function_table {
    void (*ClearColor)(GLcontext *ctx, const GLfloat color[4]);
    /** Specify the clear value for the depth buffer */
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
-   /** Specify the clear value for the color index buffers */
-   void (*ClearIndex)(GLcontext *ctx, GLuint index);
    /** Specify the clear value for the stencil buffer */
    void (*ClearStencil)(GLcontext *ctx, GLint s);
    /** Specify a plane against which all geometry is clipped */
@@ -653,8 +651,6 @@ struct dd_function_table {
    void (*Fogfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
    /** Specify implementation-specific hints */
    void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
-   /** Control the writing of individual bits in the color index buffers */
-   void (*IndexMask)(GLcontext *ctx, GLuint mask);
    /** Set light source parameters.
     * Note: for GL_POSITION and GL_SPOT_DIRECTION, params will have already
     * been transformed to eye-space.
@@ -777,6 +773,23 @@ struct dd_function_table {
 
    GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
 			     struct gl_buffer_object *obj );
+   /*@}*/
+#endif
+
+   /**
+    * \name Functions for GL_APPLE_object_purgeable
+    */
+#if FEATURE_APPLE_object_purgeable
+   /*@{*/
+   /* variations on ObjectPurgeable */
+   GLenum (*BufferObjectPurgeable)( GLcontext *ctx, struct gl_buffer_object *obj, GLenum option );
+   GLenum (*RenderObjectPurgeable)( GLcontext *ctx, struct gl_renderbuffer *obj, GLenum option );
+   GLenum (*TextureObjectPurgeable)( GLcontext *ctx, struct gl_texture_object *obj, GLenum option );
+
+   /* variations on ObjectUnpurgeable */
+   GLenum (*BufferObjectUnpurgeable)( GLcontext *ctx, struct gl_buffer_object *obj, GLenum option );
+   GLenum (*RenderObjectUnpurgeable)( GLcontext *ctx, struct gl_renderbuffer *obj, GLenum option );
+   GLenum (*TextureObjectUnpurgeable)( GLcontext *ctx, struct gl_texture_object *obj, GLenum option );
    /*@}*/
 #endif
 
@@ -1035,6 +1048,17 @@ struct dd_function_table {
                    GLfloat width, GLfloat height);
    /*@}*/
 #endif
+
+#if FEATURE_OES_EGL_image
+   void (*EGLImageTargetTexture2D)(GLcontext *ctx, GLenum target,
+				   struct gl_texture_object *texObj,
+				   struct gl_texture_image *texImage,
+				   GLeglImageOES image_handle);
+   void (*EGLImageTargetRenderbufferStorage)(GLcontext *ctx,
+					     struct gl_renderbuffer *rb,
+					     void *image_handle);
+#endif
+
 };
 
 
@@ -1048,7 +1072,7 @@ struct dd_function_table {
  * These are the initial values to be installed into dispatch by
  * mesa.  If the T&L driver wants to modify the dispatch table
  * while installed, it must do so itself.  It would be possible for
- * the vertexformat to install it's own initial values for these
+ * the vertexformat to install its own initial values for these
  * functions, but this way there is an obvious list of what is
  * expected of the driver.
  *

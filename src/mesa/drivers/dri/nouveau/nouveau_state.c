@@ -150,6 +150,7 @@ nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 		break;
 	case GL_COLOR_SUM_EXT:
 		context_dirty(ctx, FRAG);
+		context_dirty(ctx, LIGHT_MODEL);
 		break;
 	case GL_CULL_FACE:
 		context_dirty(ctx, CULL_FACE);
@@ -240,12 +241,6 @@ static void
 nouveau_fog(GLcontext *ctx, GLenum pname, const GLfloat *params)
 {
 	context_dirty(ctx, FOG);
-}
-
-static void
-nouveau_index_mask(GLcontext *ctx, GLuint mask)
-{
-	context_dirty(ctx, INDEX_MASK);
 }
 
 static void
@@ -396,7 +391,6 @@ nouveau_tex_parameter(GLcontext *ctx, GLenum target,
 		      const GLfloat *params)
 {
 	switch (pname) {
-	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_MAG_FILTER:
 	case GL_TEXTURE_WRAP_S:
 	case GL_TEXTURE_WRAP_T:
@@ -408,9 +402,10 @@ nouveau_tex_parameter(GLcontext *ctx, GLenum target,
 		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
 		break;
 
+	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_BASE_LEVEL:
 	case GL_TEXTURE_MAX_LEVEL:
-		texture_dirty(t);
+		nouveau_texture_reallocate(ctx, t);
 		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
 		break;
 	}
@@ -504,7 +499,6 @@ nouveau_state_init(GLcontext *ctx)
 	ctx->Driver.DrawBuffers = nouveau_draw_buffers;
 	ctx->Driver.Enable = nouveau_enable;
 	ctx->Driver.Fogfv = nouveau_fog;
-	ctx->Driver.IndexMask = nouveau_index_mask;
 	ctx->Driver.Lightfv = nouveau_light;
 	ctx->Driver.LightModelfv = nouveau_light_model;
 	ctx->Driver.LineStipple = nouveau_line_stipple;

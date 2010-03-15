@@ -100,6 +100,9 @@ struct brw_surface
 };
 
 
+#define BRW_MAX_TEXTURE_2D_LEVELS 11  /* max 1024x1024 */
+#define BRW_MAX_TEXTURE_3D_LEVELS  8  /* max 128x128x128 */
+
 
 struct brw_texture
 {
@@ -107,9 +110,9 @@ struct brw_texture
    struct brw_winsys_buffer *bo;
    struct brw_surface_state ss;
 
-   unsigned *image_offset[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned level_offset[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned *image_offset[BRW_MAX_TEXTURE_2D_LEVELS];
+   unsigned nr_images[BRW_MAX_TEXTURE_2D_LEVELS];
+   unsigned level_offset[BRW_MAX_TEXTURE_2D_LEVELS];
 
    boolean compressed;
    unsigned brw_target;
@@ -178,6 +181,10 @@ void brw_update_texture( struct brw_screen *brw_screen,
 			 struct brw_texture *tex );
 
 
+/* brw_screen_texture.h
+ */
+struct brw_context;
+void brw_tex_init( struct brw_context *brw );
 void brw_screen_tex_init( struct brw_screen *brw_screen );
 void brw_screen_tex_surface_init( struct brw_screen *brw_screen );
 

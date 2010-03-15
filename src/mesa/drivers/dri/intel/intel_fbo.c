@@ -70,9 +70,6 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    ASSERT(irb);
 
-   if (irb->span_cache != NULL)
-      free(irb->span_cache);
-
    if (intel && irb->region) {
       intel_region_release(&irb->region);
    }
@@ -199,6 +196,38 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    return GL_TRUE;
 }
 
+
+#if FEATURE_OES_EGL_image
+static void
+intel_image_target_renderbuffer_storage(GLcontext *ctx,
+					struct gl_renderbuffer *rb,
+					void *image_handle)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_renderbuffer *irb;
+   __DRIscreen *screen;
+   __DRIimage *image;
+
+   screen = intel->intelScreen->driScrnPriv;
+   image = screen->dri2.image->lookupEGLImage(intel->driContext, image_handle,
+					      intel->driContext->loaderPrivate);
+   if (image == NULL)
+      return;
+
+   irb = intel_renderbuffer(rb);
+   if (irb->region)
+      intel_region_release(&irb->region);
+   intel_region_reference(&irb->region, image->region);
+
+   rb->InternalFormat = image->internal_format;
+   rb->Width = image->region->width;
+   rb->Height = image->region->height;
+   rb->Format = image->format;
+   rb->DataType = image->data_type;
+   rb->_BaseFormat = _mesa_base_fbo_format(&intel->ctx,
+					   image->internal_format);
+}
+#endif
 
 /**
  * Called for each hardware renderbuffer when a _window_ is resized.
@@ -651,4 +680,9 @@ intel_fbo_init(struct intel_context *intel)
    intel->ctx.Driver.ResizeBuffers = intel_resize_buffers;
    intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;
    intel->ctx.Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+
+#if FEATURE_OES_EGL_image
+   intel->ctx.Driver.EGLImageTargetRenderbufferStorage =
+      intel_image_target_renderbuffer_storage;
+#endif   
 }

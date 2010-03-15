@@ -155,7 +155,7 @@ static void svga_bind_sampler_states(struct pipe_context *pipe,
    /* Check for no-op */
    if (num == svga->curr.num_samplers &&
        !memcmp(svga->curr.sampler, sampler, num * sizeof(void *))) {
-      debug_printf("sampler noop\n");
+      if (0) debug_printf("sampler noop\n");
       return;
    }
 
@@ -201,7 +201,7 @@ static void svga_set_sampler_textures(struct pipe_context *pipe,
       if (!texture[i])
          continue;
 
-      if (texture[i]->format == PIPE_FORMAT_A8R8G8B8_SRGB)
+      if (texture[i]->format == PIPE_FORMAT_B8G8R8A8_SRGB)
          flag_srgb |= 1 << i;
 
       if (texture[i]->target == PIPE_TEXTURE_1D)

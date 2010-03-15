@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 Vmware, Inc.
+ * Copyright 2009-2010 Vmware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -39,47 +39,32 @@ extern "C" {
 
 
 /**
- * Describe how to best pack/unpack pixels into/from the prescribed format.
+ * Describe how to pack/unpack pixels into/from the prescribed format.
  *
- * These are used for automatic code generation of pixel packing and unpacking
- * routines (in compile time, e.g., u_format_access.py, or in runtime, like
- * llvmpipe does).
- *
- * Thumb rule is: if you're not code generating pixel packing/unpacking then
- * these are irrelevant for you.
- *
- * Note that this can be deduced from other values in util_format_description
- * structure. This is by design, to make code generation of pixel
- * packing/unpacking/sampling routines simple and efficient.
- *
- * XXX: This should be renamed to something like util_format_pack.
+ * XXX: This could be renamed to something like util_format_pack, or broke down
+ * in flags inside util_format_block that said exactly what we want.
  */
 enum util_format_layout {
    /**
-    * Single scalar component.
+    * Formats with util_format_block::width == util_format_block::height == 1
+    * that can be described as an ordinary data structure.
     */
-   UTIL_FORMAT_LAYOUT_SCALAR = 0,
+   UTIL_FORMAT_LAYOUT_PLAIN = 0,
 
    /**
-    * One or more components of mixed integer formats, arithmetically encoded
-    * in a word up to 32bits.
+    * Formats with sub-sampled channels.
+    *
+    * This is for formats like YV12 where there is less than one sample per
+    * pixel.
+    *
+    * XXX: This could actually b
     */
-   UTIL_FORMAT_LAYOUT_ARITH = 1,
+   UTIL_FORMAT_LAYOUT_SUBSAMPLED = 3,
 
    /**
-    * One or more components, no mixed formats, each with equal power of two
-    * number of bytes.
+    * An unspecified compression algorithm.
     */
-   UTIL_FORMAT_LAYOUT_ARRAY = 2,
-
-   /**
-    * XXX: Not used yet. These might go away and be replaced by a single entry,
-    * for formats where multiple pixels have to be
-    * read in order to determine a single pixel value (i.e., block.width > 1
-    * || block.height > 1)
-    */
-   UTIL_FORMAT_LAYOUT_YUV = 3,
-   UTIL_FORMAT_LAYOUT_DXT = 4
+   UTIL_FORMAT_LAYOUT_COMPRESSED = 4
 };
 
 
@@ -135,11 +120,66 @@ struct util_format_channel_description
 struct util_format_description
 {
    enum pipe_format format;
+
    const char *name;
+
+   /**
+    * Short name, striped of the prefix, lower case.
+    */
+   const char *short_name;
+
+   /**
+    * Pixel block dimensions.
+    */
    struct util_format_block block;
+
    enum util_format_layout layout;
+
+   /**
+    * The number of channels.
+    */
+   unsigned nr_channels:3;
+
+   /**
+    * Whether all channels have the same number of (whole) bytes.
+    */
+   unsigned is_array:1;
+
+   /**
+    * Whether the pixel format can be described as a bitfield structure.
+    *
+    * In particular:
+    * - pixel depth must be 8, 16, or 32 bits;
+    * - all channels must be unsigned, signed, or void
+    */
+   unsigned is_bitmask:1;
+
+   /**
+    * Whether channels have mixed types (ignoring UTIL_FORMAT_TYPE_VOID).
+    */
+   unsigned is_mixed:1;
+
+   /**
+    * Input channel description.
+    *
+    * Only valid for UTIL_FORMAT_LAYOUT_PLAIN formats.
+    */
    struct util_format_channel_description channel[4];
+
+   /**
+    * Output channel swizzle.
+    *
+    * The order is either:
+    * - RGBA
+    * - YUV(A)
+    * - ZS
+    * depending on the colorspace.
+    */
    unsigned char swizzle[4];
+
+   /**
+    * Colorspace transformation.
+    */
    enum util_format_colorspace colorspace;
 };
 
@@ -179,7 +219,7 @@ util_format_is_compressed(enum pipe_format format)
       return FALSE;
    }
 
-   return desc->layout == UTIL_FORMAT_LAYOUT_DXT ? TRUE : FALSE;
+   return desc->layout == UTIL_FORMAT_LAYOUT_COMPRESSED ? TRUE : FALSE;
 }
 
 static INLINE boolean 
@@ -253,14 +293,7 @@ util_format_get_blockwidth(enum pipe_format format)
       return 1;
    }
 
-   switch (desc->layout) {
-   case UTIL_FORMAT_LAYOUT_YUV:
-      return 2;
-   case UTIL_FORMAT_LAYOUT_DXT:
-      return 4;
-   default:
-      return 1;
-   }
+   return desc->block.width;
 }
 
 static INLINE uint
@@ -273,12 +306,7 @@ util_format_get_blockheight(enum pipe_format format)
       return 1;
    }
 
-   switch (desc->layout) {
-   case UTIL_FORMAT_LAYOUT_DXT:
-      return 4;
-   default:
-      return 1;
-   }
+   return desc->block.height;
 }
 
 static INLINE unsigned
@@ -373,37 +401,30 @@ util_format_has_alpha(enum pipe_format format)
       return FALSE;
    }
 
-   switch (desc->layout) {
-   case UTIL_FORMAT_LAYOUT_SCALAR:
-   case UTIL_FORMAT_LAYOUT_ARITH:
-   case UTIL_FORMAT_LAYOUT_ARRAY:
-      /* FIXME: pf_get_component_bits( PIPE_FORMAT_A8L8_UNORM, PIPE_FORMAT_COMP_A ) should not return 0 right? */
-      if (format == PIPE_FORMAT_A8_UNORM ||
-          format == PIPE_FORMAT_A8L8_UNORM ||
-          format == PIPE_FORMAT_A8L8_SRGB) {
-         return TRUE;
-      }
-      return util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3) != 0;
-   case UTIL_FORMAT_LAYOUT_YUV:
+   switch (desc->colorspace) {
+   case UTIL_FORMAT_COLORSPACE_RGB:
+   case UTIL_FORMAT_COLORSPACE_SRGB:
+      return desc->swizzle[3] != UTIL_FORMAT_SWIZZLE_1;
+   case UTIL_FORMAT_COLORSPACE_YUV:
       return FALSE;
-   case UTIL_FORMAT_LAYOUT_DXT:
-      switch (format) {
-      case PIPE_FORMAT_DXT1_RGBA:
-      case PIPE_FORMAT_DXT3_RGBA:
-      case PIPE_FORMAT_DXT5_RGBA:
-      case PIPE_FORMAT_DXT1_SRGBA:
-      case PIPE_FORMAT_DXT3_SRGBA:
-      case PIPE_FORMAT_DXT5_SRGBA:
-         return TRUE;
-      default:
-         return FALSE;
-      }
+   case UTIL_FORMAT_COLORSPACE_ZS:
+      return FALSE;
    default:
       assert(0);
       return FALSE;
    }
 }
 
+/**
+ * Return the number of components stored.
+ * Formats with block size != 1x1 will always have 1 component (the block).
+ */
+static INLINE unsigned
+util_format_get_nr_components(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   return desc->nr_channels;
+}
 
 /*
  * Format access functions.

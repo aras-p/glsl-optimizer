@@ -327,6 +327,18 @@ static INLINE uint32_t r300_anisotropy(unsigned max_aniso)
     }
 }
 
+static INLINE uint32_t r500_anisotropy(unsigned max_aniso)
+{
+    if (!max_aniso) {
+        return 0;
+    }
+    max_aniso -= 1;
+
+    // Map the range [0, 15] to [0, 63].
+    return R500_TX_MAX_ANISO(MIN2((unsigned)(max_aniso*4.2001), 63)) |
+           R500_TX_ANISO_HIGH_QUALITY;;
+}
+
 /* Non-CSO state. (For now.) */
 
 static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
@@ -348,44 +360,16 @@ static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
     return 0;
 }
 
-/* Utility function to count the number of components in RGBAZS formats.
- * XXX should go to util or p_format.h */
-static INLINE unsigned pf_component_count(enum pipe_format format) {
-    unsigned count = 0;
-
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 1)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 2)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 0)) {
-        count++;
-    }
-    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
-        count++;
-    }
-
-    return count;
-}
-
 /* Translate pipe_formats into PSC vertex types. */
 static INLINE uint16_t
 r300_translate_vertex_data_type(enum pipe_format format) {
     uint32_t result = 0;
     const struct util_format_description *desc;
-    unsigned components = pf_component_count(format);
+    unsigned components = util_format_get_nr_components(format);
 
     desc = util_format_description(format);
 
-    if (desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-        desc->layout != UTIL_FORMAT_LAYOUT_ARRAY) {
+    if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
         debug_printf("r300: Bad format %s in %s:%d\n", util_format_name(format),
             __FUNCTION__, __LINE__);
         assert(0);
@@ -454,36 +438,19 @@ r300_translate_vertex_data_type(enum pipe_format format) {
 static INLINE uint16_t
 r300_translate_vertex_data_swizzle(enum pipe_format format) {
     const struct util_format_description *desc = util_format_description(format);
-    unsigned swizzle[4], i;
 
     assert(format);
 
-    if (desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-        desc->layout != UTIL_FORMAT_LAYOUT_ARRAY) {
+    if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
         debug_printf("r300: Bad format %s in %s:%d\n",
             util_format_name(format), __FUNCTION__, __LINE__);
         return 0;
     }
 
-    /* Swizzles for 8bits formats are in the reversed order, not sure why. */
-    if (desc->channel[0].size == 8) {
-        for (i = 0; i < 4; i++) {
-            if (desc->swizzle[i] <= 3) {
-                swizzle[i] = 3 - desc->swizzle[i];
-            } else {
-                swizzle[i] = desc->swizzle[i];
-            }
-        }
-    } else {
-        for (i = 0; i < 4; i++) {
-            swizzle[i] = desc->swizzle[i];
-        }
-    }
-
-    return ((swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
-            (swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
-            (swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
-            (swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT) |
+    return ((desc->swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
+            (desc->swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
+            (desc->swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
+            (desc->swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT) |
             (0xf << R300_WRITE_ENA_SHIFT));
 }
 

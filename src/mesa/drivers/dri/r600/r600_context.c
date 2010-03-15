@@ -140,6 +140,7 @@ static const struct dri_extension card_extensions[] = {
   {"GL_NV_blend_square",		NULL},
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},
+  {"GL_ARB_pixel_buffer_object",        NULL},
   {NULL,				NULL}
   /* *INDENT-ON* */
 };
@@ -236,7 +237,9 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.pre_emit_atoms = r600_vtbl_pre_emit_atoms;
 	radeon->vtbl.fallback = r600_fallback;
 	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
+	radeon->vtbl.check_blit = r600_check_blit;
 	radeon->vtbl.blit = r600_blit;
+	radeon->vtbl.is_format_renderable = radeonIsFormatRenderable;
 }
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
@@ -340,9 +343,12 @@ static void r600InitGLExtensions(GLcontext *ctx)
 		_mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
 	}
 
-	/* XXX: RV740 only seems to report results from half of its DBs */
-	if (r600->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV740)
-		_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
+	/* RV740 had a broken pipe config prior to drm 1.32 */
+	if (!r600->radeon.radeonScreen->kernel_mm) {
+		if ((r600->radeon.dri.drmMinor < 32) &&
+		    (r600->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV740))
+			_mesa_disable_extension(ctx, "GL_ARB_occlusion_query");
+	}
 }
 
 /* Create the device specific rendering context.
@@ -378,7 +384,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	 */
 	_mesa_init_driver_functions(&functions);
 
-	r700InitStateFuncs(&functions);
+	r700InitStateFuncs(&r600->radeon, &functions);
 	r600InitTextureFuncs(&r600->radeon, &functions);
 	r700InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);

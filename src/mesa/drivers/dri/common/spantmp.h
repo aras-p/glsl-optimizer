@@ -288,7 +288,6 @@ static void TAG(ReadRGBAPixels)( GLcontext *ctx,
    HW_READ_LOCK()
       {
          GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
-         const GLubyte *mask = NULL; /* remove someday */
 	 GLuint i;
 	 LOCAL_VARS;
 
@@ -296,23 +295,11 @@ static void TAG(ReadRGBAPixels)( GLcontext *ctx,
 
 	 HW_READ_CLIPLOOP()
 	    {
-	       if (mask)
-	       {
-		  for (i=0;i<n;i++)
-		     if (mask[i]) {
-			int fy = Y_FLIP( y[i] );
-			if (CLIPPIXEL( x[i], fy ))
-			   READ_RGBA( rgba[i], x[i], fy );
-		     }
-	       }
-	       else
-	       {
-		  for (i=0;i<n;i++) {
-		     int fy = Y_FLIP( y[i] );
-		     if (CLIPPIXEL( x[i], fy ))
-			READ_RGBA( rgba[i], x[i], fy );
-		  }
-	       }
+               for (i=0;i<n;i++) {
+                  int fy = Y_FLIP( y[i] );
+                  if (CLIPPIXEL( x[i], fy ))
+                     READ_RGBA( rgba[i], x[i], fy );
+               }
 	    }
 	 HW_ENDCLIPLOOP();
       }

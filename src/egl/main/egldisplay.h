@@ -101,36 +101,12 @@ PUBLIC void
 _eglCleanupDisplay(_EGLDisplay *disp);
 
 
-#ifndef _EGL_SKIP_HANDLE_CHECK
-
-
 extern EGLBoolean
 _eglCheckDisplayHandle(EGLDisplay dpy);
 
 
 PUBLIC EGLBoolean
 _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy);
-
-
-#else /* !_EGL_SKIP_HANDLE_CHECK */
-
-/* Only do a quick check.  This is NOT standard compliant. */
-
-static INLINE EGLBoolean
-_eglCheckDisplayHandle(EGLDisplay dpy)
-{
-   return ((_EGLDisplay *) dpy != NULL);
-}
-
-
-static INLINE EGLBoolean
-_eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy);
-{
-   return (((_EGLResource *) res)->Display == dpy);
-}
-
-
-#endif /* _EGL_SKIP_HANDLE_CHECK */
 
 
 /**

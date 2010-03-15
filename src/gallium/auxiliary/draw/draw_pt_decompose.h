@@ -105,40 +105,20 @@ static void FUNC( ARGS,
 
 
    case PIPE_PRIM_QUADS:
-      if (flatfirst) {
-         for (i = 0; i+3 < count; i += 4) {
-            QUAD( (i + 1),
-                  (i + 2),
-                  (i + 3),
-                  (i + 0) );
-         }
-      }
-      else {
-         for (i = 0; i+3 < count; i += 4) {
-            QUAD( (i + 0),
-                  (i + 1),
-                  (i + 2),
-                  (i + 3));
-         }
+      for (i = 0; i+3 < count; i += 4) {
+         QUAD( (i + 0),
+               (i + 1),
+               (i + 2),
+               (i + 3));
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      if (flatfirst) {
-         for (i = 0; i+3 < count; i += 2) {
-            QUAD( (i + 1),
-                  (i + 3),
-                  (i + 2),
-                  (i + 0) );
-         }
-      }
-      else {
-         for (i = 0; i+3 < count; i += 2) {
-            QUAD( (i + 2),
-                  (i + 0),
-                  (i + 1),
-                  (i + 3));
-         }
+      for (i = 0; i+3 < count; i += 2) {
+         QUAD( (i + 2),
+               (i + 0),
+               (i + 1),
+               (i + 3));
       }
       break;
 

@@ -2455,6 +2455,15 @@
 #define CALL_TextureRangeAPPLE(disp, parameters) (*((disp)->TextureRangeAPPLE)) parameters
 #define GET_TextureRangeAPPLE(disp) ((disp)->TextureRangeAPPLE)
 #define SET_TextureRangeAPPLE(disp, fn) ((disp)->TextureRangeAPPLE = fn)
+#define CALL_GetObjectParameterivAPPLE(disp, parameters) (*((disp)->GetObjectParameterivAPPLE)) parameters
+#define GET_GetObjectParameterivAPPLE(disp) ((disp)->GetObjectParameterivAPPLE)
+#define SET_GetObjectParameterivAPPLE(disp, fn) ((disp)->GetObjectParameterivAPPLE = fn)
+#define CALL_ObjectPurgeableAPPLE(disp, parameters) (*((disp)->ObjectPurgeableAPPLE)) parameters
+#define GET_ObjectPurgeableAPPLE(disp) ((disp)->ObjectPurgeableAPPLE)
+#define SET_ObjectPurgeableAPPLE(disp, fn) ((disp)->ObjectPurgeableAPPLE = fn)
+#define CALL_ObjectUnpurgeableAPPLE(disp, parameters) (*((disp)->ObjectUnpurgeableAPPLE)) parameters
+#define GET_ObjectUnpurgeableAPPLE(disp) ((disp)->ObjectUnpurgeableAPPLE)
+#define SET_ObjectUnpurgeableAPPLE(disp, fn) ((disp)->ObjectUnpurgeableAPPLE = fn)
 #define CALL_StencilFuncSeparateATI(disp, parameters) (*((disp)->StencilFuncSeparateATI)) parameters
 #define GET_StencilFuncSeparateATI(disp) ((disp)->StencilFuncSeparateATI)
 #define SET_StencilFuncSeparateATI(disp, fn) ((disp)->StencilFuncSeparateATI = fn)
@@ -2470,10 +2479,16 @@
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) (*((disp)->GetQueryObjectui64vEXT)) parameters
 #define GET_GetQueryObjectui64vEXT(disp) ((disp)->GetQueryObjectui64vEXT)
 #define SET_GetQueryObjectui64vEXT(disp, fn) ((disp)->GetQueryObjectui64vEXT = fn)
+#define CALL_EGLImageTargetRenderbufferStorageOES(disp, parameters) (*((disp)->EGLImageTargetRenderbufferStorageOES)) parameters
+#define GET_EGLImageTargetRenderbufferStorageOES(disp) ((disp)->EGLImageTargetRenderbufferStorageOES)
+#define SET_EGLImageTargetRenderbufferStorageOES(disp, fn) ((disp)->EGLImageTargetRenderbufferStorageOES = fn)
+#define CALL_EGLImageTargetTexture2DOES(disp, parameters) (*((disp)->EGLImageTargetTexture2DOES)) parameters
+#define GET_EGLImageTargetTexture2DOES(disp) ((disp)->EGLImageTargetTexture2DOES)
+#define SET_EGLImageTargetTexture2DOES(disp, fn) ((disp)->EGLImageTargetTexture2DOES = fn)
 
 #else
 
-#define driDispatchRemapTable_size 395
+#define driDispatchRemapTable_size 400
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2866,11 +2881,16 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define ProvokingVertexEXT_remap_index 387
 #define GetTexParameterPointervAPPLE_remap_index 388
 #define TextureRangeAPPLE_remap_index 389
-#define StencilFuncSeparateATI_remap_index 390
-#define ProgramEnvParameters4fvEXT_remap_index 391
-#define ProgramLocalParameters4fvEXT_remap_index 392
-#define GetQueryObjecti64vEXT_remap_index 393
-#define GetQueryObjectui64vEXT_remap_index 394
+#define GetObjectParameterivAPPLE_remap_index 390
+#define ObjectPurgeableAPPLE_remap_index 391
+#define ObjectUnpurgeableAPPLE_remap_index 392
+#define StencilFuncSeparateATI_remap_index 393
+#define ProgramEnvParameters4fvEXT_remap_index 394
+#define ProgramLocalParameters4fvEXT_remap_index 395
+#define GetQueryObjecti64vEXT_remap_index 396
+#define GetQueryObjectui64vEXT_remap_index 397
+#define EGLImageTargetRenderbufferStorageOES_remap_index 398
+#define EGLImageTargetTexture2DOES_remap_index 399
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -4042,6 +4062,15 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_TextureRangeAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLsizei, GLvoid *)), driDispatchRemapTable[TextureRangeAPPLE_remap_index], parameters)
 #define GET_TextureRangeAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[TextureRangeAPPLE_remap_index])
 #define SET_TextureRangeAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TextureRangeAPPLE_remap_index], fn)
+#define CALL_GetObjectParameterivAPPLE(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLenum, GLint *)), driDispatchRemapTable[GetObjectParameterivAPPLE_remap_index], parameters)
+#define GET_GetObjectParameterivAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[GetObjectParameterivAPPLE_remap_index])
+#define SET_GetObjectParameterivAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetObjectParameterivAPPLE_remap_index], fn)
+#define CALL_ObjectPurgeableAPPLE(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLenum, GLuint, GLenum)), driDispatchRemapTable[ObjectPurgeableAPPLE_remap_index], parameters)
+#define GET_ObjectPurgeableAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[ObjectPurgeableAPPLE_remap_index])
+#define SET_ObjectPurgeableAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ObjectPurgeableAPPLE_remap_index], fn)
+#define CALL_ObjectUnpurgeableAPPLE(disp, parameters) CALL_by_offset(disp, (GLenum (GLAPIENTRYP)(GLenum, GLuint, GLenum)), driDispatchRemapTable[ObjectUnpurgeableAPPLE_remap_index], parameters)
+#define GET_ObjectUnpurgeableAPPLE(disp) GET_by_offset(disp, driDispatchRemapTable[ObjectUnpurgeableAPPLE_remap_index])
+#define SET_ObjectUnpurgeableAPPLE(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ObjectUnpurgeableAPPLE_remap_index], fn)
 #define CALL_StencilFuncSeparateATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), driDispatchRemapTable[StencilFuncSeparateATI_remap_index], parameters)
 #define GET_StencilFuncSeparateATI(disp) GET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparateATI_remap_index])
 #define SET_StencilFuncSeparateATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparateATI_remap_index], fn)
@@ -4057,6 +4086,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_GetQueryObjectui64vEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLenum, GLuint64EXT *)), driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], parameters)
 #define GET_GetQueryObjectui64vEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index])
 #define SET_GetQueryObjectui64vEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetQueryObjectui64vEXT_remap_index], fn)
+#define CALL_EGLImageTargetRenderbufferStorageOES(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid *)), driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index], parameters)
+#define GET_EGLImageTargetRenderbufferStorageOES(disp) GET_by_offset(disp, driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index])
+#define SET_EGLImageTargetRenderbufferStorageOES(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EGLImageTargetRenderbufferStorageOES_remap_index], fn)
+#define CALL_EGLImageTargetTexture2DOES(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLvoid *)), driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index], parameters)
+#define GET_EGLImageTargetTexture2DOES(disp) GET_by_offset(disp, driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index])
+#define SET_EGLImageTargetTexture2DOES(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EGLImageTargetTexture2DOES_remap_index], fn)
 
 #endif /* !defined(_GLAPI_USE_REMAP_TABLE) */
 

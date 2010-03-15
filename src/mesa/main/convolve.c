@@ -39,7 +39,7 @@
 #include "image.h"
 #include "mtypes.h"
 #include "state.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_convolve

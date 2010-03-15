@@ -226,7 +226,7 @@ DrvDeleteContext(
       
       /* Unbind current if deleting current context. */
       if (curctx == ctx)
-         st_make_current( NULL, NULL, NULL );
+         st_make_current( NULL, NULL, NULL, NULL );
 
       st_destroy_context(ctx->st);
       FREE(ctx);
@@ -317,7 +317,7 @@ stw_make_current(
    }
 
    if (hdc == NULL || dhglrc == 0) {
-      return st_make_current( NULL, NULL, NULL );
+      return st_make_current( NULL, NULL, NULL, NULL );
    }
 
    pipe_mutex_lock( stw_dev->ctx_mutex ); 
@@ -352,7 +352,7 @@ stw_make_current(
    /* pass to stw_flush_frontbuffer as context_private */
    ctx->st->pipe->priv = hdc;
    
-   if(!st_make_current( ctx->st, fb->stfb, fb->stfb ))
+   if(!st_make_current( ctx->st, fb->stfb, fb->stfb, hdc ))
       goto fail;
 
 success:
@@ -367,7 +367,7 @@ success:
 fail:
    if(fb)
       stw_framebuffer_release(fb);
-   st_make_current( NULL, NULL, NULL );
+   st_make_current( NULL, NULL, NULL, NULL );
    return FALSE;
 }
 

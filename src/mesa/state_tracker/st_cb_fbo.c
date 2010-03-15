@@ -55,25 +55,6 @@
 
 
 /**
- * Compute the renderbuffer's Red/Green/EtcBit fields from the pipe format.
- */
-static int
-init_renderbuffer_bits(struct st_renderbuffer *strb,
-                       enum pipe_format pipeFormat)
-{
-   struct pipe_format_info info;
-
-   if (!st_get_format_info( pipeFormat, &info )) {
-      assert( 0 );
-   }
-
-   strb->Base.Format = info.mesa_format;
-   strb->Base.DataType = st_format_datatype(pipeFormat);
-
-   return info.size;
-}
-
-/**
  * gl_renderbuffer::AllocStorage()
  * This is called to allocate the original drawing surface, and
  * during window resize.
@@ -83,23 +64,24 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                               GLenum internalFormat,
                               GLuint width, GLuint height)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    enum pipe_format format;
 
    if (strb->format != PIPE_FORMAT_NONE)
       format = strb->format;
    else
-      format = st_choose_renderbuffer_format(pipe->screen, internalFormat);
+      format = st_choose_renderbuffer_format(screen, internalFormat);
       
    /* init renderbuffer fields */
    strb->Base.Width  = width;
    strb->Base.Height = height;
-   init_renderbuffer_bits(strb, format);
+   strb->Base.Format = st_pipe_format_to_mesa_format(format);
+   strb->Base.DataType = st_format_datatype(format);
 
    strb->defined = GL_FALSE;  /* undefined contents now */
 
-   if(strb->software) {
+   if (strb->software) {
       size_t size;
       
       free(strb->data);
@@ -149,16 +131,15 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                        PIPE_BUFFER_USAGE_CPU_WRITE);
 #endif
 
-      strb->texture = pipe->screen->texture_create( pipe->screen,
-                                                    &template );
+      strb->texture = screen->texture_create(screen, &template);
 
       if (!strb->texture) 
          return FALSE;
 
-      strb->surface = pipe->screen->get_tex_surface( pipe->screen,
-                                                     strb->texture,
-                                                     0, 0, 0,
-                                                     surface_usage );
+      strb->surface = screen->get_tex_surface(screen,
+                                              strb->texture,
+                                              0, 0, 0,
+                                              surface_usage);
       if (strb->surface) {
          assert(strb->surface->texture);
          assert(strb->surface->format);
@@ -251,18 +232,19 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    _mesa_init_renderbuffer(&strb->Base, 0);
    strb->Base.ClassID = 0x4242; /* just a unique value */
    strb->Base.NumSamples = samples;
+   strb->Base.Format = st_pipe_format_to_mesa_format(format);
+   strb->Base.DataType = st_format_datatype(format);
    strb->format = format;
-   init_renderbuffer_bits(strb, format);
    strb->software = sw;
    
    switch (format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8X8_UNORM:
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       strb->Base.InternalFormat = GL_RGBA;
       break;
    case PIPE_FORMAT_Z16_UNORM:
@@ -271,10 +253,10 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_Z32_UNORM:
       strb->Base.InternalFormat = GL_DEPTH_COMPONENT32;
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_Z24S8_UNORM:
-   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       strb->Base.InternalFormat = GL_DEPTH24_STENCIL8_EXT;
       break;
    case PIPE_FORMAT_S8_UNORM:
@@ -397,7 +379,10 @@ st_render_texture(GLcontext *ctx,
                                            PIPE_BUFFER_USAGE_GPU_READ |
                                            PIPE_BUFFER_USAGE_GPU_WRITE);
 
-   init_renderbuffer_bits(strb, pt->format);
+   strb->format = pt->format;
+
+   strb->Base.Format = st_pipe_format_to_mesa_format(pt->format);
+   strb->Base.DataType = st_format_datatype(pt->format);
 
    /*
    printf("RENDER TO TEXTURE obj=%p pt=%p surf=%p  %d x %d\n",
@@ -427,16 +412,11 @@ st_finish_render_texture(GLcontext *ctx,
 
    st_flush( ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL );
 
-   if (strb->surface)
-      pipe_surface_reference( &strb->surface, NULL );
-
    strb->rtt = NULL;
 
    /*
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
    */
-
-   _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
 
    /* restore previous framebuffer state */
    st_invalidate_state(ctx, _NEW_BUFFERS);

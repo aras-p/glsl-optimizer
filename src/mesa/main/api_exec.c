@@ -104,7 +104,7 @@
 #if FEATURE_ARB_sync
 #include "syncobj.h"
 #endif
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 
@@ -753,4 +753,15 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* GL_NV_conditional_render */
    SET_BeginConditionalRenderNV(exec, _mesa_BeginConditionalRender);
    SET_EndConditionalRenderNV(exec, _mesa_EndConditionalRender);
+
+#if FEATURE_OES_EGL_image
+   SET_EGLImageTargetTexture2DOES(exec, _mesa_EGLImageTargetTexture2DOES);
+   SET_EGLImageTargetRenderbufferStorageOES(exec, _mesa_EGLImageTargetRenderbufferStorageOES);
+#endif
+
+#if FEATURE_APPLE_object_purgeable
+   SET_ObjectPurgeableAPPLE(exec, _mesa_ObjectPurgeableAPPLE);
+   SET_ObjectUnpurgeableAPPLE(exec, _mesa_ObjectUnpurgeableAPPLE);
+   SET_GetObjectParameterivAPPLE(exec, _mesa_GetObjectParameterivAPPLE);
+#endif
 }

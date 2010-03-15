@@ -191,7 +191,7 @@ static boolean load_input( struct aos_compilation *cp,
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       emit_load_R32G32B32A32(cp, dataXMM, src);
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       emit_load_R8G8B8A8_UNORM(cp, dataXMM, src);
       emit_swizzle(cp, dataXMM, dataXMM, SHUF(Z,Y,X,W));
       break;

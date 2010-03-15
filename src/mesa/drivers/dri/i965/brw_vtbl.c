@@ -102,6 +102,9 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->cc.prog_bo);
    dri_bo_release(&brw->cc.state_bo);
    dri_bo_release(&brw->cc.vp_bo);
+   dri_bo_release(&brw->cc.blend_state_bo);
+   dri_bo_release(&brw->cc.depth_stencil_state_bo);
+   dri_bo_release(&brw->cc.color_calc_state_bo);
 }
 
 
@@ -141,7 +144,7 @@ static void brw_finish_batch(struct intel_context *intel)
    brw_emit_query_end(brw);
 
    if (brw->curbe.curbe_bo) {
-      intel_bo_unmap_gtt_preferred(intel, brw->curbe.curbe_bo);
+      drm_intel_gem_bo_unmap_gtt(brw->curbe.curbe_bo);
       drm_intel_bo_unreference(brw->curbe.curbe_bo);
       brw->curbe.curbe_bo = NULL;
    }

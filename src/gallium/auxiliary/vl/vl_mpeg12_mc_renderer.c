@@ -680,14 +680,14 @@ xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    for (i = 0; i < 3; ++i) {
-      r->tex_transfer[i] = r->pipe->screen->get_tex_transfer
+      r->tex_transfer[i] = r->pipe->get_tex_transfer
       (
-         r->pipe->screen, r->textures.all[i],
+         r->pipe, r->textures.all[i],
          0, 0, 0, PIPE_TRANSFER_WRITE, 0, 0,
          r->textures.all[i]->width0, r->textures.all[i]->height0
       );
 
-      r->texels[i] = r->pipe->screen->transfer_map(r->pipe->screen, r->tex_transfer[i]);
+      r->texels[i] = r->pipe->transfer_map(r->pipe, r->tex_transfer[i]);
    }
 }
 
@@ -699,8 +699,8 @@ xfer_buffers_unmap(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    for (i = 0; i < 3; ++i) {
-      r->pipe->screen->transfer_unmap(r->pipe->screen, r->tex_transfer[i]);
-      r->pipe->screen->tex_transfer_destroy(r->tex_transfer[i]);
+      r->pipe->transfer_unmap(r->pipe, r->tex_transfer[i]);
+      r->pipe->tex_transfer_destroy(r->pipe, r->tex_transfer[i]);
    }
 }
 
@@ -708,6 +708,7 @@ static bool
 init_pipe_state(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_sampler_state sampler;
+   struct pipe_vertex_element vertex_elems[8];
    unsigned filters[5];
    unsigned i;
 
@@ -771,6 +772,59 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
       r->samplers.all[i] = r->pipe->create_sampler_state(r->pipe, &sampler);
    }
 
+   /* Position element */
+   vertex_elems[0].src_offset = 0;
+   vertex_elems[0].instance_divisor = 0;
+   vertex_elems[0].vertex_buffer_index = 0;
+   vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   /* Luma, texcoord element */
+   vertex_elems[1].src_offset = sizeof(struct vertex2f);
+   vertex_elems[1].instance_divisor = 0;
+   vertex_elems[1].vertex_buffer_index = 0;
+   vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   /* Chroma Cr texcoord element */
+   vertex_elems[2].src_offset = sizeof(struct vertex2f) * 2;
+   vertex_elems[2].instance_divisor = 0;
+   vertex_elems[2].vertex_buffer_index = 0;
+   vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   /* Chroma Cb texcoord element */
+   vertex_elems[3].src_offset = sizeof(struct vertex2f) * 3;
+   vertex_elems[3].instance_divisor = 0;
+   vertex_elems[3].vertex_buffer_index = 0;
+   vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   /* First ref surface top field texcoord element */
+   vertex_elems[4].src_offset = 0;
+   vertex_elems[4].instance_divisor = 0;
+   vertex_elems[4].vertex_buffer_index = 1;
+   vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   /* First ref surface bottom field texcoord element */
+   vertex_elems[5].src_offset = sizeof(struct vertex2f);
+   vertex_elems[5].instance_divisor = 0;
+   vertex_elems[5].vertex_buffer_index = 1;
+   vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   /* Second ref surface top field texcoord element */
+   vertex_elems[6].src_offset = 0;
+   vertex_elems[6].instance_divisor = 0;
+   vertex_elems[6].vertex_buffer_index = 2;
+   vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   /* Second ref surface bottom field texcoord element */
+   vertex_elems[7].src_offset = sizeof(struct vertex2f);
+   vertex_elems[7].instance_divisor = 0;
+   vertex_elems[7].vertex_buffer_index = 2;
+   vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   /* need versions with 4,6 and 8 vertex elems */
+   r->vertex_elems[0] = r->pipe->create_vertex_elements_state(r->pipe, 4, vertex_elems);
+   r->vertex_elems[1] = r->pipe->create_vertex_elements_state(r->pipe, 6, vertex_elems);
+   r->vertex_elems[2] = r->pipe->create_vertex_elements_state(r->pipe, 8, vertex_elems);
+
    return true;
 }
 
@@ -783,6 +837,8 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
 
    for (i = 0; i < 5; ++i)
       r->pipe->delete_sampler_state(r->pipe, r->samplers.all[i]);
+   for (i = 0; i < 3; i++)
+      r->pipe->delete_vertex_elements_state(r->pipe, r->vertex_elems[i]);
 }
 
 static bool
@@ -887,62 +943,6 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
          sizeof(struct vertex2f) * 2 * 24 * r->macroblocks_per_batch
       );
    }
-
-   /* Position element */
-   r->vertex_elems[0].src_offset = 0;
-   r->vertex_elems[0].instance_divisor = 0;
-   r->vertex_elems[0].vertex_buffer_index = 0;
-   r->vertex_elems[0].nr_components = 2;
-   r->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* Luma, texcoord element */
-   r->vertex_elems[1].src_offset = sizeof(struct vertex2f);
-   r->vertex_elems[1].instance_divisor = 0;
-   r->vertex_elems[1].vertex_buffer_index = 0;
-   r->vertex_elems[1].nr_components = 2;
-   r->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* Chroma Cr texcoord element */
-   r->vertex_elems[2].src_offset = sizeof(struct vertex2f) * 2;
-   r->vertex_elems[2].instance_divisor = 0;
-   r->vertex_elems[2].vertex_buffer_index = 0;
-   r->vertex_elems[2].nr_components = 2;
-   r->vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* Chroma Cb texcoord element */
-   r->vertex_elems[3].src_offset = sizeof(struct vertex2f) * 3;
-   r->vertex_elems[3].instance_divisor = 0;
-   r->vertex_elems[3].vertex_buffer_index = 0;
-   r->vertex_elems[3].nr_components = 2;
-   r->vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* First ref surface top field texcoord element */
-   r->vertex_elems[4].src_offset = 0;
-   r->vertex_elems[4].instance_divisor = 0;
-   r->vertex_elems[4].vertex_buffer_index = 1;
-   r->vertex_elems[4].nr_components = 2;
-   r->vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* First ref surface bottom field texcoord element */
-   r->vertex_elems[5].src_offset = sizeof(struct vertex2f);
-   r->vertex_elems[5].instance_divisor = 0;
-   r->vertex_elems[5].vertex_buffer_index = 1;
-   r->vertex_elems[5].nr_components = 2;
-   r->vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* Second ref surface top field texcoord element */
-   r->vertex_elems[6].src_offset = 0;
-   r->vertex_elems[6].instance_divisor = 0;
-   r->vertex_elems[6].vertex_buffer_index = 2;
-   r->vertex_elems[6].nr_components = 2;
-   r->vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* Second ref surface bottom field texcoord element */
-   r->vertex_elems[7].src_offset = sizeof(struct vertex2f);
-   r->vertex_elems[7].instance_divisor = 0;
-   r->vertex_elems[7].vertex_buffer_index = 2;
-   r->vertex_elems[7].nr_components = 2;
-   r->vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    r->vs_const_buf = pipe_buffer_create
    (
@@ -1307,7 +1307,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 4, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems[0]);
       r->pipe->set_fragment_sampler_textures(r->pipe, 3, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 3, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->i_vs);
@@ -1320,7 +1320,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems[1]);
       r->textures.individual.ref[0] = r->past;
       r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
@@ -1334,7 +1334,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (false /*num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems[1]);
       r->textures.individual.ref[0] = r->past;
       r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
@@ -1348,7 +1348,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems[1]);
       r->textures.individual.ref[0] = r->future;
       r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
@@ -1362,7 +1362,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (false /*num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems[1]);
       r->textures.individual.ref[0] = r->future;
       r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
@@ -1376,7 +1376,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems[2]);
       r->textures.individual.ref[0] = r->past;
       r->textures.individual.ref[1] = r->future;
       r->pipe->set_fragment_sampler_textures(r->pipe, 5, r->textures.all);
@@ -1391,7 +1391,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (false /*num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems[2]);
       r->textures.individual.ref[0] = r->past;
       r->textures.individual.ref[1] = r->future;
       r->pipe->set_fragment_sampler_textures(r->pipe, 5, r->textures.all);

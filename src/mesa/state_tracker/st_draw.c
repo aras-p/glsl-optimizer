@@ -57,6 +57,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "cso_cache/cso_context.h"
 
 
 static GLuint double_types[4] = {
@@ -272,7 +273,8 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
    }
 
    *userSpace = (num_client_arrays == vpv->num_inputs);
-   /* printf("user space: %d (%d %d)\n", (int) *userSpace,num_client_arrays,vp->num_inputs); */
+   /* debug_printf("user space: %s (%d arrays, %d inputs)\n",
+      (int)*userSpace ? "Yes" : "No", num_client_arrays, vp->num_inputs); */
 
    return GL_TRUE;
 }
@@ -292,6 +294,8 @@ get_arrays_bounds(const struct st_vertex_program *vp,
    const GLubyte *high_addr = NULL;
    GLuint attr;
 
+   /* debug_printf("get_arrays_bounds: Handling %u attrs\n", vpv->num_inputs); */
+
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       const GLint stride = arrays[mesaAttr]->StrideB;
@@ -299,6 +303,9 @@ get_arrays_bounds(const struct st_vertex_program *vp,
       const unsigned sz = (arrays[mesaAttr]->Size * 
                            _mesa_sizeof_type(arrays[mesaAttr]->Type));
       const GLubyte *end = start + (max_index * stride) + sz;
+
+      /* debug_printf("attr %u: stride %d size %u start %p end %p\n",
+         attr, stride, sz, start, end); */
 
       if (attr == 0) {
          low_addr = start;
@@ -347,7 +354,8 @@ setup_interleaved_attribs(GLcontext *ctx,
          const GLubyte *low, *high;
 
          get_arrays_bounds(vp, vpv, arrays, max_index, &low, &high);
-         /*printf("buffer range: %p %p  %d\n", low, high, high-low);*/
+         /* debug_printf("buffer range: %p %p range %d max index %u\n",
+            low, high, high - low, max_index); */
 
          offset0 = low;
          if (userSpace) {
@@ -368,7 +376,6 @@ setup_interleaved_attribs(GLcontext *ctx,
          (unsigned) (arrays[mesaAttr]->Ptr - offset0);
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = 0;
-      velements[attr].nr_components = arrays[mesaAttr]->Size;
       velements[attr].src_format =
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                arrays[mesaAttr]->Size,
@@ -458,7 +465,6 @@ setup_non_interleaved_attribs(GLcontext *ctx,
       vbuffer[attr].max_index = max_index;
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = attr;
-      velements[attr].nr_components = arrays[mesaAttr]->Size;
       velements[attr].src_format
          = st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                  arrays[mesaAttr]->Size,
@@ -564,6 +570,7 @@ st_draw_vbo(GLcontext *ctx,
    (void) check_uniforms;
 #endif
 
+   memset(velements, 0, sizeof(struct pipe_vertex_element) * vpv->num_inputs);
    /*
     * Setup the vbuffer[] and velements[] arrays.
     */
@@ -596,14 +603,13 @@ st_draw_vbo(GLcontext *ctx,
       for (i = 0; i < num_velements; i++) {
          printf("vlements[%d].vbuffer_index = %u\n", i, velements[i].vertex_buffer_index);
          printf("vlements[%d].src_offset = %u\n", i, velements[i].src_offset);
-         printf("vlements[%d].nr_comps = %u\n", i, velements[i].nr_components);
          printf("vlements[%d].format = %s\n", i, util_format_name(velements[i].src_format));
       }
    }
 #endif
 
    pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
-   pipe->set_vertex_elements(pipe, num_velements, velements);
+   cso_set_vertex_elements(ctx->st->cso_context, num_velements, velements);
 
    if (num_vbuffers == 0 || num_velements == 0)
       return;

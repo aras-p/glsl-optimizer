@@ -291,7 +291,8 @@ __glXInitVertexArrayState(__GLXcontext * gc)
 
    arrays->stack_index = 0;
    arrays->stack = malloc(sizeof(struct array_stack_state)
-                          * arrays->num_arrays);
+                          * arrays->num_arrays
+                          * __GL_CLIENT_ATTRIB_STACK_DEPTH);
 }
 
 

@@ -207,33 +207,14 @@ brw_create_texture_surface( struct brw_context *brw,
 
    surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    surf.ss0.surface_type = translate_tex_target(key->target);
-   if (key->bo) {
-      surf.ss0.surface_format = translate_tex_format(key->format,
-						     key->internal_format,
-						     key->depthmode);
-   }
-   else {
-      switch (key->depth) {
-      case 32:
-         surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-         break;
-      default:
-      case 24:
-         surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
-         break;
-      case 16:
-         surf.ss0.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
-         break;
-      }
-   }
+   surf.ss0.surface_format = translate_tex_format(key->format,
+						  key->internal_format,
+						  key->depthmode);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
 /*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
-   if (key->bo)
-      surf.ss1.base_addr = key->bo->offset; /* reloc */
-   else
-      surf.ss1.base_addr = key->offset;
+   surf.ss1.base_addr = key->bo->offset; /* reloc */
 
    surf.ss2.mip_count = key->last_level - key->first_level;
    surf.ss2.width = key->width - 1;
@@ -255,17 +236,14 @@ brw_create_texture_surface( struct brw_context *brw,
 
    bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
-			 &key->bo, key->bo ? 1 : 0,
+			 &key->bo, 1,
 			 &surf, sizeof(surf));
 
-   if (key->bo) {
-      /* Emit relocation to surface contents */
-      dri_bo_emit_reloc(bo,
-			I915_GEM_DOMAIN_SAMPLER, 0,
-			0,
-			offsetof(struct brw_surface_state, ss1),
-			key->bo);
-   }
+   /* Emit relocation to surface contents */
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_surface_state, ss1),
+			   key->bo, 0,
+			   I915_GEM_DOMAIN_SAMPLER, 0);
+
    return bo;
 }
 
@@ -281,19 +259,12 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 
    memset(&key, 0, sizeof(key));
 
-   if (intelObj->imageOverride) {
-      key.pitch = intelObj->pitchOverride / intelObj->mt->cpp;
-      key.depth = intelObj->depthOverride;
-      key.bo = NULL;
-      key.offset = intelObj->textureOffset;
-   } else {
-      key.format = firstImage->TexFormat;
-      key.internal_format = firstImage->InternalFormat;
-      key.pitch = intelObj->mt->pitch;
-      key.depth = firstImage->Depth;
-      key.bo = intelObj->mt->region->buffer;
-      key.offset = 0;
-   }
+   key.format = firstImage->TexFormat;
+   key.internal_format = firstImage->InternalFormat;
+   key.pitch = intelObj->mt->pitch;
+   key.depth = firstImage->Depth;
+   key.bo = intelObj->mt->region->buffer;
+   key.offset = 0;
 
    key.target = tObj->Target;
    key.depthmode = tObj->DepthMode;
@@ -308,7 +279,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
-                                            &key.bo, key.bo ? 1 : 0,
+                                            &key.bo, 1,
                                             NULL);
    if (brw->wm.surf_bo[surf] == NULL) {
       brw->wm.surf_bo[surf] = brw_create_texture_surface(brw, &key);
@@ -336,10 +307,7 @@ brw_create_constant_surface( struct brw_context *brw,
    surf.ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
 
    assert(key->bo);
-   if (key->bo)
-      surf.ss1.base_addr = key->bo->offset; /* reloc */
-   else
-      surf.ss1.base_addr = key->offset;
+   surf.ss1.base_addr = key->bo->offset; /* reloc */
 
    surf.ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
    surf.ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
@@ -349,20 +317,16 @@ brw_create_constant_surface( struct brw_context *brw,
  
    bo = brw_upload_cache(&brw->surface_cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
-			 &key->bo, key->bo ? 1 : 0,
+			 &key->bo, 1,
 			 &surf, sizeof(surf));
 
-   if (key->bo) {
-      /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
-       * bspec ("Data Cache") says that the data cache does not exist as
-       * a separate cache and is just the sampler cache.
-       */
-      dri_bo_emit_reloc(bo,
-			I915_GEM_DOMAIN_SAMPLER, 0,
-			0,
-			offsetof(struct brw_surface_state, ss1),
-			key->bo);
-   }
+   /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
+    * bspec ("Data Cache") says that the data cache does not exist as
+    * a separate cache and is just the sampler cache.
+    */
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_surface_state, ss1),
+			   key->bo, 0,
+			   I915_GEM_DOMAIN_SAMPLER, 0);
 
    return bo;
 }
@@ -420,7 +384,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
-   if (fp->const_buffer == 0) {
+   if (fp->const_buffer == NULL) {
       drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
       brw->wm.surf_bo[surf] = NULL;
       return;
@@ -448,7 +412,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
-                                            &key.bo, key.bo ? 1 : 0,
+                                            &key.bo, 1,
                                             NULL);
    if (brw->wm.surf_bo[surf] == NULL) {
       brw->wm.surf_bo[surf] = brw_create_constant_surface(brw, &key);
@@ -509,7 +473,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 				struct gl_renderbuffer *rb,
 				unsigned int unit)
 {
-   struct intel_context *intel = &brw->intel;;
+   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &intel->ctx;
    dri_bo *region_bo = NULL;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
@@ -576,18 +540,21 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       key.draw_x = 0;
       key.draw_y = 0;
    }
-   /* _NEW_COLOR */
-   memcpy(key.color_mask, ctx->Color.ColorMask[unit],
-	  sizeof(key.color_mask));
 
-   /* As mentioned above, disable writes to the alpha component when the
-    * renderbuffer is XRGB.
-    */
-   if (ctx->DrawBuffer->Visual.alphaBits == 0)
-     key.color_mask[3] = GL_FALSE;
+   if (intel->gen < 6) {
+      /* _NEW_COLOR */
+      memcpy(key.color_mask, ctx->Color.ColorMask[unit],
+	     sizeof(key.color_mask));
 
-   key.color_blend = (!ctx->Color._LogicOpEnabled &&
-		      (ctx->Color.BlendEnabled & (1 << unit)));
+      /* As mentioned above, disable writes to the alpha component when the
+       * renderbuffer is XRGB.
+       */
+      if (ctx->DrawBuffer->Visual.alphaBits == 0)
+	 key.color_mask[3] = GL_FALSE;
+
+      key.color_blend = (!ctx->Color._LogicOpEnabled &&
+			 (ctx->Color.BlendEnabled & (1 << unit)));
+   }
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
@@ -639,12 +606,14 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       brw_set_surface_tiling(&surf, key.tiling);
       surf.ss3.pitch = (key.pitch * key.cpp) - 1;
 
-      /* _NEW_COLOR */
-      surf.ss0.color_blend = key.color_blend;
-      surf.ss0.writedisable_red =   !key.color_mask[0];
-      surf.ss0.writedisable_green = !key.color_mask[1];
-      surf.ss0.writedisable_blue =  !key.color_mask[2];
-      surf.ss0.writedisable_alpha = !key.color_mask[3];
+      if (intel->gen < 6) {
+	 /* _NEW_COLOR */
+	 surf.ss0.color_blend = key.color_blend;
+	 surf.ss0.writedisable_red =   !key.color_mask[0];
+	 surf.ss0.writedisable_green = !key.color_mask[1];
+	 surf.ss0.writedisable_blue =  !key.color_mask[2];
+	 surf.ss0.writedisable_alpha = !key.color_mask[3];
+      }
 
       /* Key size will never match key size for textures, so we're safe. */
       brw->wm.surf_bo[unit] = brw_upload_cache(&brw->surface_cache,

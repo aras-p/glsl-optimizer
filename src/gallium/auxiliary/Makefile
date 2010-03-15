@@ -105,9 +105,9 @@ C_SOURCES = \
 	util/u_cpu_detect.c \
 	util/u_dl.c \
 	util/u_draw_quad.c \
-	util/u_format.c \
 	util/u_format_access.c \
 	util/u_format_table.c \
+	util/u_format_tests.c \
 	util/u_gen_mipmap.c \
 	util/u_handle_table.c \
 	util/u_hash_table.c \
@@ -131,7 +131,8 @@ C_SOURCES = \
 	vl/vl_mpeg12_mc_renderer.c \
 	vl/vl_compositor.c \
 	vl/vl_csc.c \
-	vl/vl_shader_build.c
+	vl/vl_shader_build.c \
+	target-helpers/wrap_screen.c
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_alpha.c \
@@ -159,7 +160,14 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_type.c
 
 GALLIVM_CPP_SOURCES = \
-        gallivm/lp_bld_misc.cpp
+        gallivm/lp_bld_init.cpp
+
+GENERATED_SOURCES = \
+	indices/u_indices_gen.c \
+	indices/u_unfilled_gen.c \
+	util/u_format_access.c \
+	util/u_format_pack.h \
+	util/u_format_table.c
 
 
 ifeq ($(MESA_LLVM),1)
@@ -185,5 +193,9 @@ indices/u_unfilled_gen.c: indices/u_unfilled_gen.py
 util/u_format_table.c: util/u_format_table.py util/u_format_parse.py util/u_format.csv
 	python util/u_format_table.py util/u_format.csv > $@
 
+util/u_format_pack.h: util/u_format_pack.py util/u_format_parse.py util/u_format.csv
+	python util/u_format_pack.py util/u_format.csv > $@
+
 util/u_format_access.c: util/u_format_access.py util/u_format_parse.py util/u_format.csv
 	python util/u_format_access.py util/u_format.csv > $@
+

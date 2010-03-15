@@ -26,7 +26,7 @@ import os.path
 import getopt
 import re
 
-GLAPI = "../../glapi"
+GLAPI = "../../glapi/gen"
 sys.path.append(GLAPI)
 
 class HeaderParser(object):

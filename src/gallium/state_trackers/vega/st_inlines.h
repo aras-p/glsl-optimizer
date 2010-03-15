@@ -51,7 +51,6 @@ st_cond_flush_get_tex_transfer(struct vg_context *st,
 			       unsigned int x, unsigned int y,
 			       unsigned int w, unsigned int h)
 {
-   struct pipe_screen *screen = st->pipe->screen;
    struct pipe_context *pipe = st->pipe;
    unsigned referenced =
       pipe->is_texture_referenced(pipe, pt, face, level);
@@ -60,7 +59,7 @@ st_cond_flush_get_tex_transfer(struct vg_context *st,
 		      (usage & PIPE_TRANSFER_WRITE)))
       vgFlush();
 
-   return screen->get_tex_transfer(screen, pt, face, level, zslice, usage,
+   return pipe->get_tex_transfer(pipe, pt, face, level, zslice, usage,
 				   x, y, w, h);
 }
 
@@ -74,10 +73,10 @@ st_no_flush_get_tex_transfer(struct vg_context *st,
 			     unsigned int x, unsigned int y,
 			     unsigned int w, unsigned int h)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_context *pipe = st->pipe;
 
-   return screen->get_tex_transfer(screen, pt, face, level,
-				   zslice, usage, x, y, w, h);
+   return pipe->get_tex_transfer(pipe, pt, face, level,
+				 zslice, usage, x, y, w, h);
 }
 
 static INLINE void *

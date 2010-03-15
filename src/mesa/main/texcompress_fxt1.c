@@ -476,7 +476,7 @@ fxt1_lloyd (GLfloat vec[][MAX_COMP], GLint nv,
     *     for each sample color
     *         sort to nearest vector.
     *
-    *     replace each vector with the centroid of it's matching colors.
+    *     replace each vector with the centroid of its matching colors.
     *
     *     repeat until RMS doesn't improve.
     *
@@ -528,6 +528,7 @@ fxt1_lloyd (GLfloat vec[][MAX_COMP], GLint nv,
 #else
          GLint best = fxt1_bestcol(vec, nv, input[k], nc, &err);
 #endif
+         assert(best >= 0);
          /* add in closest color */
          for (i = 0; i < nc; i++) {
             sum[best][i] += input[k][i];

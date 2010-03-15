@@ -133,6 +133,12 @@ intelClear(GLcontext *ctx, GLbitfield mask)
       }
    }
 
+   if (intel->gen >= 6) {
+      /* Blits are in a different ringbuffer so we don't use them. */
+      tri_mask |= blit_mask;
+      blit_mask = 0;
+   }
+
    /* SW fallback clearing */
    swrast_mask = mask & ~tri_mask & ~blit_mask;
 

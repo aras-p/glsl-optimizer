@@ -304,7 +304,7 @@ unpack_colors(struct spe_function *f,
    spe_comment(f, 0, "Unpack framebuffer colors, convert to floats");
 
    switch (color_format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       /* fbB = fbRGBA & mask */
       spe_and(f, fbB_reg, fbRGBA_reg, mask0_reg);
 
@@ -327,7 +327,7 @@ unpack_colors(struct spe_function *f,
       spe_roti(f, fbA_reg, fbA_reg, -24);
       break;
 
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       /* fbA = fbRGBA & mask */
       spe_and(f, fbA_reg, fbRGBA_reg, mask0_reg);
 
@@ -1043,12 +1043,12 @@ gen_pack_colors(struct spe_function *f,
    spe_rotmi(f, a_reg, a_reg, -24);
 
    /* Shift the color bytes according to the surface format */
-   if (color_format == PIPE_FORMAT_A8R8G8B8_UNORM) {
+   if (color_format == PIPE_FORMAT_B8G8R8A8_UNORM) {
       spe_roti(f, g_reg, g_reg, 8);   /* green <<= 8 */
       spe_roti(f, r_reg, r_reg, 16);  /* red <<= 16 */
       spe_roti(f, a_reg, a_reg, 24);  /* alpha <<= 24 */
    }
-   else if (color_format == PIPE_FORMAT_B8G8R8A8_UNORM) {
+   else if (color_format == PIPE_FORMAT_A8R8G8B8_UNORM) {
       spe_roti(f, r_reg, r_reg, 8);   /* red <<= 8 */
       spe_roti(f, g_reg, g_reg, 16);  /* green <<= 16 */
       spe_roti(f, b_reg, b_reg, 24);  /* blue <<= 24 */
@@ -1096,14 +1096,14 @@ gen_colormask(struct spe_function *f,
     * end up, so we can mask them correctly.
     */
    switch(color_format) {
-      case PIPE_FORMAT_A8R8G8B8_UNORM:
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
          /* ARGB */
          a_mask = 0xff000000;
          r_mask = 0x00ff0000;
          g_mask = 0x0000ff00;
          b_mask = 0x000000ff;
          break;
-      case PIPE_FORMAT_B8G8R8A8_UNORM:
+      case PIPE_FORMAT_A8R8G8B8_UNORM:
          /* BGRA */
          b_mask = 0xff000000;
          g_mask = 0x00ff0000;
@@ -1352,7 +1352,7 @@ gen_stencil_values(struct spe_function *f,
     */
    ASSERT(fbS_reg != newS_reg);
 
-   /* The code also assumes the the stencil_max_value is of the form 
+   /* The code also assumes that the stencil_max_value is of the form
     * 2^n-1 and can therefore be used as a mask for the valid bits in 
     * addition to a maximum.  Make sure this is the case as well.
     * The clever math below exploits the fact that incrementing a 
@@ -1859,8 +1859,8 @@ gen_depth_stencil(struct cell_context *cell,
    spe_comment(f, 0, "Fetch Z/stencil quad from tile");
 
    switch(zs_format) {
-   case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
-   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
+   case PIPE_FORMAT_Z24X8_UNORM:
       /* prepare mask to extract Z vals from ZS vals */
       spe_load_uint(f, zmask_reg, 0x00ffffff);
 
@@ -1880,8 +1880,8 @@ gen_depth_stencil(struct cell_context *cell,
       spe_rotmi(f, fbS_reg, fbZS_reg, -24);
       break;
 
-   case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
+   case PIPE_FORMAT_X8Z24_UNORM:
       /* convert fragment Z from [0,1] to 32-bit ints */
       spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
 
@@ -1969,13 +1969,13 @@ gen_depth_stencil(struct cell_context *cell,
        * fbS_reg has four 8-bit Z values in bits [7..0].
        */
       spe_comment(f, 0, "Store quad's depth/stencil values in tile");
-      if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
-          zs_format == PIPE_FORMAT_X8Z24_UNORM) {
+      if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
+          zs_format == PIPE_FORMAT_Z24X8_UNORM) {
          spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
          spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
       }
-      else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
-               zs_format == PIPE_FORMAT_Z24X8_UNORM) {
+      else if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
+               zs_format == PIPE_FORMAT_X8Z24_UNORM) {
          spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
          spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
       }
@@ -2015,7 +2015,7 @@ gen_depth_stencil(struct cell_context *cell,
  * code before the fragment shader to cull fragments/quads that are
  * totally occluded/discarded.
  *
- * XXX we only support PIPE_FORMAT_Z24S8_UNORM z/stencil buffer right now.
+ * XXX we only support PIPE_FORMAT_S8Z24_UNORM z/stencil buffer right now.
  *
  * See the spu_default_fragment_ops() function to see how the per-fragment
  * operations would be done with ordinary C code.

@@ -630,7 +630,6 @@ struct gl_current_attrib
    GLfloat RasterDistance;
    GLfloat RasterColor[4];
    GLfloat RasterSecondaryColor[4];
-   GLfloat RasterIndex;
    GLfloat RasterTexCoords[MAX_TEXTURE_COORD_UNITS][4];
    GLboolean RasterPosValid;
    /*@}*/
@@ -1245,6 +1244,7 @@ struct gl_texture_object
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
    GLboolean _Complete;		/**< Is texture object complete? */
    GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
+   GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -1440,6 +1440,7 @@ struct gl_buffer_object
    GLsizeiptr Length;   /**< Mapped length */
    /*@}*/
    GLboolean Written;   /**< Ever written to? (for debugging) */
+   GLboolean Purgeable; /**< Is the buffer purgeable under memory pressure? */
 };
 
 
@@ -2105,6 +2106,7 @@ struct gl_renderbuffer
    GLuint Name;
    GLint RefCount;
    GLuint Width, Height;
+   GLboolean Purgeable;   /**< Is the buffer purgeable under memory pressure? */
 
    GLenum InternalFormat; /**< The user-specified format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
@@ -2474,6 +2476,7 @@ struct gl_extensions
    GLboolean EXT_texture;
    GLboolean EXT_texture_object;
    GLboolean EXT_texture3D;
+   GLboolean EXT_texture_array;
    GLboolean EXT_texture_compression_s3tc;
    GLboolean EXT_texture_env_add;
    GLboolean EXT_texture_env_combine;
@@ -2491,6 +2494,7 @@ struct gl_extensions
    GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;
    GLboolean APPLE_vertex_array_object;
+   GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;

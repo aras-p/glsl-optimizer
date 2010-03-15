@@ -456,9 +456,6 @@ _mesa_IndexMask( GLuint mask )
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.IndexMask = mask;
-
-   if (ctx->Driver.IndexMask)
-      ctx->Driver.IndexMask( ctx, mask );
 }
 #endif
 

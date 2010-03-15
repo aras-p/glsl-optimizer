@@ -45,6 +45,7 @@ struct softpipe_tile_cache;
 struct softpipe_tex_tile_cache;
 struct sp_fragment_shader;
 struct sp_vertex_shader;
+struct sp_velems_state;
 
 
 struct softpipe_context {
@@ -59,6 +60,7 @@ struct softpipe_context {
    struct sp_fragment_shader *fs;
    struct sp_vertex_shader *vs;
    struct sp_geometry_shader *gs;
+   struct sp_velems_state *velems;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -72,13 +74,11 @@ struct softpipe_context {
    struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
 
    unsigned num_samplers;
    unsigned num_textures;
    unsigned num_vertex_samplers;
    unsigned num_vertex_textures;
-   unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
    unsigned dirty; /**< Mask of SP_NEW_x flags */
@@ -93,7 +93,7 @@ struct softpipe_context {
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
 
    /** Mapped constant buffers */
-   void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
+   const void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
 
    /** Vertex format */
    struct vertex_info vertex_info;

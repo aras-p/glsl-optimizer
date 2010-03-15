@@ -46,7 +46,7 @@
 #include "shader/shader_api.h"
 #include "shader/slang/slang_compile.h"
 #include "shader/slang/slang_link.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**
@@ -769,6 +769,8 @@ sizeof_glsl_type(GLenum type)
    case GL_SAMPLER_2D_SHADOW:
    case GL_SAMPLER_2D_RECT_ARB:
    case GL_SAMPLER_2D_RECT_SHADOW_ARB:
+   case GL_SAMPLER_1D_ARRAY_EXT:
+   case GL_SAMPLER_2D_ARRAY_EXT:
    case GL_SAMPLER_1D_ARRAY_SHADOW_EXT:
    case GL_SAMPLER_2D_ARRAY_SHADOW_EXT:
    case GL_SAMPLER_CUBE_SHADOW_EXT:
@@ -848,6 +850,8 @@ is_sampler_type(GLenum type)
    case GL_SAMPLER_2D_RECT_SHADOW_ARB:
    case GL_SAMPLER_1D_ARRAY_EXT:
    case GL_SAMPLER_2D_ARRAY_EXT:
+   case GL_SAMPLER_1D_ARRAY_SHADOW_EXT:
+   case GL_SAMPLER_2D_ARRAY_SHADOW_EXT:
       return GL_TRUE;
    default:
       return GL_FALSE;

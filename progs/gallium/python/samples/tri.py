@@ -134,7 +134,7 @@ def test(dev):
 
     # framebuffer
     cbuf = dev.texture_create(
-        PIPE_FORMAT_X8R8G8B8_UNORM, 
+        PIPE_FORMAT_B8G8R8X8_UNORM, 
         width, height,
         tex_usage=PIPE_TEXTURE_USAGE_RENDER_TARGET,
     ).get_surface()

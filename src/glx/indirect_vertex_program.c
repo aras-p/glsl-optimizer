@@ -30,7 +30,7 @@
 #include "indirect_vertex_array.h"
 #include <GL/glxproto.h>
 
-#if !defined __GNUC__ || __GNUC__ < 3
+#if !defined(__GNUC__)
 #  define __builtin_expect(x, y) x
 #endif
 

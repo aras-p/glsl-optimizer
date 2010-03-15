@@ -103,7 +103,7 @@ extern "C" {
 #	define GLUTAPI extern
 #endif
 
-#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#elif defined(__GNUC__)
 
 #  define GLUTAPIENTRY
 #  define GLUTAPIENTRYV

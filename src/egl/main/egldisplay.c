@@ -134,9 +134,6 @@ _eglCleanupDisplay(_EGLDisplay *disp)
 }
 
 
-#ifndef _EGL_SKIP_HANDLE_CHECK
-
-
 /**
  * Return EGL_TRUE if the given handle is a valid handle to a display.
  */
@@ -179,9 +176,6 @@ _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
 
    return (list != NULL);
 }
-
-
-#endif /* !_EGL_SKIP_HANDLE_CHECK */
 
 
 /**

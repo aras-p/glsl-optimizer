@@ -48,7 +48,7 @@ install:
 	done
 
 
-.PHONY: default doxygen clean realclean distclean install linux-directfb-install
+.PHONY: default doxygen clean realclean distclean install
 
 # If there's no current configuration file
 $(TOP)/configs/current:
@@ -109,7 +109,6 @@ linux-alpha-static \
 linux-cell \
 linux-cell-debug \
 linux-debug \
-linux-directfb \
 linux-dri \
 linux-dri-debug \
 linux-dri-x86 \
@@ -119,7 +118,6 @@ linux-dri-xcb \
 linux-egl \
 linux-indirect \
 linux-fbdev \
-linux-glide \
 linux-ia64-icc \
 linux-ia64-icc-static \
 linux-icc \
@@ -135,9 +133,6 @@ linux-osmesa32 \
 linux-ppc \
 linux-ppc-static \
 linux-profile \
-linux-solo \
-linux-solo-x86 \
-linux-solo-ia64 \
 linux-sparc \
 linux-sparc5 \
 linux-static \
@@ -150,7 +145,6 @@ linux-x86-64 \
 linux-x86-64-debug \
 linux-x86-64-profile \
 linux-x86-64-static \
-linux-x86-glide \
 linux-x86-profile \
 linux-x86-static \
 netbsd \
@@ -186,7 +180,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.7
+VERSION=7.9-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -211,8 +205,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/docs/RELNOTES*					\
 	$(DIRECTORY)/docs/*.spec					\
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
-	$(DIRECTORY)/include/GL/dmesa.h					\
-	$(DIRECTORY)/include/GL/ggimesa.h				\
 	$(DIRECTORY)/include/GL/gl.h					\
 	$(DIRECTORY)/include/GL/glext.h					\
 	$(DIRECTORY)/include/GL/gl_mangle.h				\
@@ -223,16 +215,16 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/glx_mangle.h				\
 	$(DIRECTORY)/include/GL/glfbdev.h				\
 	$(DIRECTORY)/include/GL/mesa_wgl.h				\
-	$(DIRECTORY)/include/GL/mglmesa.h				\
 	$(DIRECTORY)/include/GL/osmesa.h				\
-	$(DIRECTORY)/include/GL/svgamesa.h				\
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
+	$(DIRECTORY)/include/VG/*.h					\
+	$(DIRECTORY)/include/KHR/*.h					\
 	$(DIRECTORY)/src/glsl/Makefile					\
 	$(DIRECTORY)/src/glsl/Makefile.template				\
+	$(DIRECTORY)/src/glsl/SConscript				\
 	$(DIRECTORY)/src/glsl/*/Makefile				\
-	$(DIRECTORY)/src/glsl/*/SConscript				\
 	$(DIRECTORY)/src/glsl/*/*.[ch]					\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
@@ -253,7 +245,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.gc			\
-	$(DIRECTORY)/src/mesa/shader/slang/library/*.syn		\
 	$(DIRECTORY)/src/mesa/shader/slang/library/Makefile		\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
@@ -271,25 +262,13 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms		\
-	$(DIRECTORY)/src/mesa/drivers/directfb/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/directfb/Makefile			\
-	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
-	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/ggimesa.conf.in		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/default/*.c			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/default/genkgi.conf.in	\
-	$(DIRECTORY)/src/mesa/drivers/ggi/display/*.c			\
-	$(DIRECTORY)/src/mesa/drivers/ggi/display/fbdev.conf.in		\
-	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/svga/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
 	$(DIRECTORY)/src/mesa/drivers/x11/Makefile			\
@@ -314,9 +293,9 @@ MAIN_FILES = \
 ES_FILES = \
 	$(DIRECTORY)/include/GLES/*.h					\
 	$(DIRECTORY)/include/GLES2/*.h					\
-	$(DIRECTORY)/src/mesa/glapi/*.xml				\
-	$(DIRECTORY)/src/mesa/glapi/*.py				\
-	$(DIRECTORY)/src/mesa/glapi/*.dtd				\
+	$(DIRECTORY)/src/mesa/glapi/gen/*.xml				\
+	$(DIRECTORY)/src/mesa/glapi/gen/*.py				\
+	$(DIRECTORY)/src/mesa/glapi/gen/*.dtd				\
 	$(DIRECTORY)/src/mesa/es/glapi/Makefile				\
 	$(DIRECTORY)/src/mesa/es/glapi/*.xml				\
 	$(DIRECTORY)/src/mesa/es/glapi/*.py				\
@@ -332,6 +311,7 @@ EGL_FILES = \
 	$(DIRECTORY)/include/EGL/*.h					\
 	$(DIRECTORY)/src/egl/Makefile					\
 	$(DIRECTORY)/src/egl/*/Makefile					\
+	$(DIRECTORY)/src/egl/*/Makefile.template			\
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
 	$(DIRECTORY)/src/egl/*/*/Makefile				\
 	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
@@ -458,11 +438,7 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/glsl/*.c			\
 	$(DIRECTORY)/progs/glsl/*.frag			\
 	$(DIRECTORY)/progs/glsl/*.vert			\
-	$(DIRECTORY)/progs/glsl/*.shtest		\
-	$(DIRECTORY)/progs/windml/Makefile.ugl		\
-	$(DIRECTORY)/progs/windml/*.c			\
-	$(DIRECTORY)/progs/windml/*.bmp			\
-	$(DIRECTORY)/progs/ggi/*.c
+	$(DIRECTORY)/progs/glsl/*.shtest
 
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
@@ -475,17 +451,10 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/beos/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.cpp		\
 	$(DIRECTORY)/src/glut/beos/Makefile		\
-	$(DIRECTORY)/src/glut/dos/*.[ch]		\
-	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
-	$(DIRECTORY)/src/glut/ggi/*.[ch]		\
-	$(DIRECTORY)/src/glut/ggi/Makefile		\
 	$(DIRECTORY)/src/glut/fbdev/Makefile		\
 	$(DIRECTORY)/src/glut/fbdev/*[ch]		\
 	$(DIRECTORY)/src/glut/mini/*[ch]		\
 	$(DIRECTORY)/src/glut/mini/glut.pc.in		\
-	$(DIRECTORY)/src/glut/directfb/Makefile		\
-	$(DIRECTORY)/src/glut/directfb/NOTES		\
-	$(DIRECTORY)/src/glut/directfb/*[ch]
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\

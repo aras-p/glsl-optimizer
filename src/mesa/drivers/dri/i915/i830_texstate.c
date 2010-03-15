@@ -122,6 +122,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    GLuint *state = i830->state.Tex[unit], format, pitch;
    GLint lodbias;
    GLubyte border[4];
+   GLuint dst_x, dst_y;
 
    memset(state, 0, sizeof(state));
 
@@ -132,7 +133,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
        i830->state.tex_buffer[unit] = NULL;
    }
 
-   if (!intelObj->imageOverride && !intel_finalize_mipmap_tree(intel, unit))
+   if (!intel_finalize_mipmap_tree(intel, unit))
       return GL_FALSE;
 
    /* Get first image here, since intelObj->firstLevel will get set in
@@ -140,42 +141,20 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    firstImage = tObj->Image[0][intelObj->firstLevel];
 
-   if (intelObj->imageOverride) {
-      i830->state.tex_buffer[unit] = NULL;
-      i830->state.tex_offset[unit] = intelObj->textureOffset;
+   intel_miptree_get_image_offset(intelObj->mt, intelObj->firstLevel, 0, 0,
+				  &dst_x, &dst_y);
 
-      switch (intelObj->depthOverride) {
-      case 32:
-	 format = MAPSURF_32BIT | MT_32BIT_ARGB8888;
-	 break;
-      case 24:
-      default:
-	 format = MAPSURF_32BIT | MT_32BIT_XRGB8888;
-	 break;
-      case 16:
-	 format = MAPSURF_16BIT | MT_16BIT_RGB565;
-	 break;
-      }
+   dri_bo_reference(intelObj->mt->region->buffer);
+   i830->state.tex_buffer[unit] = intelObj->mt->region->buffer;
+   /* XXX: This calculation is probably broken for tiled images with
+    * a non-page-aligned offset.
+    */
+   i830->state.tex_offset[unit] = (dst_x + dst_y * intelObj->mt->pitch) *
+      intelObj->mt->cpp;
 
-      pitch = intelObj->pitchOverride;
-   } else {
-      GLuint dst_x, dst_y;
-
-      intel_miptree_get_image_offset(intelObj->mt, intelObj->firstLevel, 0, 0,
-				     &dst_x, &dst_y);
-
-      dri_bo_reference(intelObj->mt->region->buffer);
-      i830->state.tex_buffer[unit] = intelObj->mt->region->buffer;
-      /* XXX: This calculation is probably broken for tiled images with
-       * a non-page-aligned offset.
-       */
-      i830->state.tex_offset[unit] = (dst_x + dst_y * intelObj->mt->pitch) *
-	 intelObj->mt->cpp;
-
-      format = translate_texture_format(firstImage->TexFormat,
-					firstImage->InternalFormat);
-      pitch = intelObj->mt->pitch * intelObj->mt->cpp;
-   }
+   format = translate_texture_format(firstImage->TexFormat,
+				     firstImage->InternalFormat);
+   pitch = intelObj->mt->pitch * intelObj->mt->cpp;
 
    state[I830_TEXREG_TM0LI] = (_3DSTATE_LOAD_STATE_IMMEDIATE_2 |
                                (LOAD_TEXTURE_MAP0 << unit) | 4);

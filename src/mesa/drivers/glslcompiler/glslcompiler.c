@@ -113,9 +113,9 @@ CreateContext(void)
    GLcontext *ctx;
    CompilerContext *cc;
 
-   vis = _mesa_create_visual(GL_TRUE, GL_FALSE, GL_FALSE, /* RGB */
+   vis = _mesa_create_visual(GL_FALSE, GL_FALSE, /* RGB */
                              8, 8, 8, 8,  /* color */
-                             0, 0, 0,  /* z, stencil */
+                             0, 0,  /* z, stencil */
                              0, 0, 0, 0, 1);  /* accum */
    buf = _mesa_create_framebuffer(vis);
 

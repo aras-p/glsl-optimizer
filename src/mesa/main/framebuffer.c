@@ -536,7 +536,7 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
    }
 #endif
 
-   /* find first RGB or CI renderbuffer */
+   /* find first RGB renderbuffer */
    for (i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Renderbuffer) {
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
@@ -552,11 +552,6 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
                + fb->Visual.greenBits + fb->Visual.blueBits;
             fb->Visual.floatMode = GL_FALSE;
             fb->Visual.samples = rb->NumSamples;
-            break;
-         }
-         else if (baseFormat == GL_COLOR_INDEX) {
-            fb->Visual.indexBits = _mesa_get_format_bits(fmt, GL_INDEX_BITS);
-            fb->Visual.rgbMode = GL_FALSE;
             break;
          }
       }
@@ -991,6 +986,10 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
    return GL_TRUE;
 }
 
+
+/**
+ * Used to answer the GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES query.
+ */
 GLenum
 _mesa_get_color_read_format(GLcontext *ctx)
 {
@@ -1004,6 +1003,10 @@ _mesa_get_color_read_format(GLcontext *ctx)
    }
 }
 
+
+/**
+ * Used to answer the GL_IMPLEMENTATION_COLOR_READ_TYPE_OES query.
+ */
 GLenum
 _mesa_get_color_read_type(GLcontext *ctx)
 {

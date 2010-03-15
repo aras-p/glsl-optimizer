@@ -39,6 +39,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "main/api_arrayelt.h"
 #include "main/framebuffer.h"
+#include "drivers/common/meta.h"
 
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
@@ -911,10 +912,12 @@ static void r700PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 	case GL_POINT_SIZE_MIN:
 		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MinSize * 8.0),
 			 MIN_SIZE_shift, MIN_SIZE_mask);
+		r700PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_SIZE_MAX:
 		SETfield(r700->PA_SU_POINT_MINMAX.u32All, (int)(ctx->Point.MaxSize * 8.0),
 			 MAX_SIZE_shift, MAX_SIZE_mask);
+		r700PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_DISTANCE_ATTENUATION:
 		break;
@@ -1626,8 +1629,6 @@ void r700InitState(GLcontext * ctx) //-------------------
     R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
     int id = 0;
 
-    radeon_firevertices(&context->radeon);
-
     r700->TA_CNTL_AUX.u32All = 0;
     SETfield(r700->TA_CNTL_AUX.u32All, 28, TD_FIFO_CREDIT_shift, TD_FIFO_CREDIT_mask);
     r700->VC_ENHANCE.u32All = 0;
@@ -1816,7 +1817,7 @@ void r700InitState(GLcontext * ctx) //-------------------
 
 }
 
-void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
+void r700InitStateFuncs(radeonContextPtr radeon, struct dd_function_table *functions)
 {
 	functions->UpdateState = r700InvalidateState;
 	functions->AlphaFunc = r700AlphaFunc;
@@ -1857,8 +1858,13 @@ void r700InitStateFuncs(struct dd_function_table *functions) //-----------------
 
 	functions->Scissor = radeonScissor;
 
-	functions->DrawBuffer		= radeonDrawBuffer;
-	functions->ReadBuffer		= radeonReadBuffer;
+	functions->DrawBuffer = radeonDrawBuffer;
+	functions->ReadBuffer = radeonReadBuffer;
 
+	if (radeon->radeonScreen->kernel_mm) {
+		functions->CopyPixels = _mesa_meta_CopyPixels;
+		functions->DrawPixels = _mesa_meta_DrawPixels;
+		functions->ReadPixels = radeonReadPixels;
+	}
 }
 

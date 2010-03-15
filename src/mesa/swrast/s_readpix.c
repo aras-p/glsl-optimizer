@@ -41,42 +41,6 @@
 #include "s_stencil.h"
 
 
-/*
- * Read a block of color index pixels.
- */
-static void
-read_index_pixels( GLcontext *ctx,
-                   GLint x, GLint y,
-                   GLsizei width, GLsizei height,
-                   GLenum type, GLvoid *pixels,
-                   const struct gl_pixelstore_attrib *packing )
-{
-   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-   GLint i;
-
-   if (!rb)
-      return;
-
-   /* width should never be > MAX_WIDTH since we did clipping earlier */
-   ASSERT(width <= MAX_WIDTH);
-
-   /* process image row by row */
-   for (i = 0; i < height; i++) {
-      GLuint index[MAX_WIDTH];
-      GLvoid *dest;
-      ASSERT(rb->DataType == GL_UNSIGNED_INT);
-      rb->GetRow(ctx, rb, width, x, y + i, index);
-
-      dest = _mesa_image_address2d(packing, pixels, width, height,
-                                   GL_COLOR_INDEX, type, i, 0);
-
-      _mesa_pack_index_span(ctx, width, type, dest, index,
-                            &ctx->Pack, ctx->_ImageTransferState);
-   }
-}
-
-
-
 /**
  * Read pixels for format=GL_DEPTH_COMPONENT.
  */
@@ -289,21 +253,21 @@ fast_read_rgba_pixels( GLcontext *ctx,
 /**
  * When we're using a low-precision color buffer (like 16-bit 5/6/5)
  * we have to adjust our color values a bit to pass conformance.
- * The problem is when a 5 or 6-bit color value is convert to an 8-bit
+ * The problem is when a 5 or 6-bit color value is converted to an 8-bit
  * value and then a floating point value, the floating point values don't
  * increment uniformly as the 5 or 6-bit value is incremented.
  *
  * This function adjusts floating point values to compensate.
  */
 static void
-adjust_colors(GLcontext *ctx, GLuint n, GLfloat rgba[][4])
+adjust_colors(const struct gl_framebuffer *fb, GLuint n, GLfloat rgba[][4])
 {
-   const GLuint rShift = 8 - ctx->Visual.redBits;
-   const GLuint gShift = 8 - ctx->Visual.greenBits;
-   const GLuint bShift = 8 - ctx->Visual.blueBits;
-   const GLfloat rScale = 1.0F / (GLfloat) ((1 << ctx->Visual.redBits  ) - 1);
-   const GLfloat gScale = 1.0F / (GLfloat) ((1 << ctx->Visual.greenBits) - 1);
-   const GLfloat bScale = 1.0F / (GLfloat) ((1 << ctx->Visual.blueBits ) - 1);
+   const GLuint rShift = 8 - fb->Visual.redBits;
+   const GLuint gShift = 8 - fb->Visual.greenBits;
+   const GLuint bShift = 8 - fb->Visual.blueBits;
+   const GLfloat rScale = 1.0F / (GLfloat) ((1 << fb->Visual.redBits  ) - 1);
+   const GLfloat gScale = 1.0F / (GLfloat) ((1 << fb->Visual.greenBits) - 1);
+   const GLfloat bScale = 1.0F / (GLfloat) ((1 << fb->Visual.blueBits ) - 1);
    GLuint i;
    for (i = 0; i < n; i++) {
       GLint r, g, b;
@@ -373,18 +337,7 @@ read_rgba_pixels( GLcontext *ctx,
       /* read full RGBA, FLOAT image */
       dest = tmpImage;
       for (row = 0; row < height; row++, y++) {
-         if (fb->Visual.rgbMode) {
-            _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, dest);
-         }
-         else {
-            GLuint index[MAX_WIDTH];
-            ASSERT(rb->DataType == GL_UNSIGNED_INT);
-            rb->GetRow(ctx, rb, width, x, y, index);
-            _mesa_apply_ci_transfer_ops(ctx,
-                                        transferOps & IMAGE_SHIFT_OFFSET_BIT,
-                                        width, index);
-            _mesa_map_ci_to_rgba(ctx, width, index, (GLfloat (*)[4]) dest);
-         }
+         _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, dest);
          _mesa_apply_rgba_transfer_ops(ctx, 
                                       transferOps & IMAGE_PRE_CONVOLUTION_BITS,
                                       width, (GLfloat (*)[4]) dest);
@@ -431,25 +384,13 @@ read_rgba_pixels( GLcontext *ctx,
       for (row = 0; row < height; row++, y++) {
 
          /* Get float rgba pixels */
-         if (fb->Visual.rgbMode) {
-            _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, rgba);
-         }
-         else {
-            /* read CI and convert to RGBA */
-            GLuint index[MAX_WIDTH];
-            ASSERT(rb->DataType == GL_UNSIGNED_INT);
-            rb->GetRow(ctx, rb, width, x, y, index);
-            _mesa_apply_ci_transfer_ops(ctx,
-                                        transferOps & IMAGE_SHIFT_OFFSET_BIT,
-                                        width, index);
-            _mesa_map_ci_to_rgba(ctx, width, index, rgba);
-         }
+         _swrast_read_rgba_span(ctx, rb, width, x, y, GL_FLOAT, rgba);
 
          /* apply fudge factor for shallow color buffers */
          if (fb->Visual.redBits < 8 ||
              fb->Visual.greenBits < 8 ||
              fb->Visual.blueBits < 8) {
-            adjust_colors(ctx, width, rgba);
+            adjust_colors(fb, width, rgba);
          }
 
          /* pack the row of RGBA pixels into user's buffer */
@@ -592,10 +533,6 @@ _swrast_ReadPixels( GLcontext *ctx,
       return;
   
    switch (format) {
-      case GL_COLOR_INDEX:
-         read_index_pixels(ctx, x, y, width, height, type, pixels,
-                           &clippedPacking);
-	 break;
       case GL_STENCIL_INDEX:
 	 read_stencil_pixels(ctx, x, y, width, height, type, pixels,
                              &clippedPacking);

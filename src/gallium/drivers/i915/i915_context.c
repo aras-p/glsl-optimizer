@@ -221,6 +221,7 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    i915_init_surface_functions(i915);
    i915_init_state_functions(i915);
    i915_init_flush_functions(i915);
+   i915_init_texture_functions(i915);
 
    draw_install_aaline_stage(i915->draw, &i915->base);
    draw_install_aapoint_stage(i915->draw, &i915->base);

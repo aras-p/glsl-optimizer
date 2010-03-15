@@ -32,56 +32,54 @@
 
 #include <stdio.h>
 
-#include "util/u_simple_screen.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 
 #include "pipebuffer/pb_buffer.h"
-
-#include "util/u_memory.h"
+#include "pipebuffer/pb_bufmgr.h"
 
 #include "radeon_bo.h"
 #include "radeon_cs.h"
 
-#include "radeon_drm.h"
-
 #include "radeon_winsys.h"
 
-struct radeon_pipe_buffer {
-    struct pipe_buffer  base;
-    /* Pointer to GPU-backed BO. */
-    struct radeon_bo    *bo;
-    /* Pointer to fallback PB buffer. */
-    struct pb_buffer    *pb;
-    boolean flinked;
-    uint32_t flink;
-};
 
 #define RADEON_MAX_BOS 24
 
-struct radeon_winsys_priv {
-    /* DRM FD */
-    int fd;
+static INLINE struct pb_buffer *
+radeon_pb_buffer(struct r300_winsys_buffer *buffer)
+{
+    return (struct pb_buffer *)buffer;
+}
 
-    /* Radeon BO manager. */
-    struct radeon_bo_manager* bom;
+static INLINE struct r300_winsys_buffer *
+radeon_libdrm_winsys_buffer(struct pb_buffer *buffer)
+{
+    return (struct r300_winsys_buffer *)buffer;
+}
 
-    /* Radeon CS manager. */
-    struct radeon_cs_manager* csm;
+struct pb_manager *
+radeon_drm_bufmgr_create(struct radeon_libdrm_winsys *rws);
 
-    /* Current CS. */
-    struct radeon_cs* cs;
+boolean radeon_drm_bufmgr_add_buffer(struct pb_buffer *_buf,
+				     uint32_t rd, uint32_t wd);
 
-    /* Flush CB */
-    void (*flush_cb)(void *);
-    void *flush_data;
-};
 
-struct radeon_winsys* radeon_pipe_winsys(int fb);
-#if 0
-struct pipe_surface *radeon_surface_from_handle(struct radeon_context *radeon_context,
-                                             uint32_t handle,
-                                             enum pipe_format format,
-                                             int w, int h, int pitch);
-#endif
+void radeon_drm_bufmgr_write_reloc(struct pb_buffer *_buf,
+				   uint32_t rd, uint32_t wd,
+				   uint32_t flags);
+
+struct radeon_libdrm_winsys* radeon_pipe_winsys(int fd);
+
+struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager *_mgr,
+							      uint32_t handle);
+
+void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf, boolean microtiled, boolean macrotiled, uint32_t pitch);
+
+void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr);
+
+boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
+				     struct winsys_handle *whandle);
+
+boolean radeon_drm_bufmgr_is_buffer_referenced(struct pb_buffer *_buf);
 #endif

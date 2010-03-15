@@ -122,6 +122,12 @@ void
 cso_restore_vertex_sampler_textures(struct cso_context *cso);
 
 
+enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
+                                        unsigned count,
+                                        const struct pipe_vertex_element *states);
+void cso_save_vertex_elements(struct cso_context *ctx);
+void cso_restore_vertex_elements(struct cso_context *ctx);
+
 
 /* These aren't really sensible -- most of the time the api provides
  * object semantics for shaders anyway, and the cases where it doesn't
@@ -157,7 +163,6 @@ void cso_save_geometry_shader(struct cso_context *cso);
 void cso_restore_geometry_shader(struct cso_context *cso);
 
 
-
 enum pipe_error cso_set_framebuffer(struct cso_context *cso,
                                     const struct pipe_framebuffer_state *fb);
 void cso_save_framebuffer(struct cso_context *cso);
@@ -178,6 +183,19 @@ enum pipe_error cso_set_stencil_ref(struct cso_context *cso,
                                     const struct pipe_stencil_ref *sr);
 void cso_save_stencil_ref(struct cso_context *cso);
 void cso_restore_stencil_ref(struct cso_context *cso);
+
+
+/* clip state */
+
+void
+cso_set_clip(struct cso_context *cso,
+             const struct pipe_clip_state *clip);
+
+void
+cso_save_clip(struct cso_context *cso);
+
+void
+cso_restore_clip(struct cso_context *cso);
 
 
 #ifdef	__cplusplus

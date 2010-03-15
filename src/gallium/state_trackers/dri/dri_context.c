@@ -128,7 +128,7 @@ dri_unbind_context(__DRIcontext * cPriv)
       if (--ctx->bind_count == 0) {
 	 if (ctx->st && ctx->st == st_get_current()) {
 	    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-	    st_make_current(NULL, NULL, NULL);
+	    st_make_current(NULL, NULL, NULL, NULL);
 	 }
       }
    }
@@ -161,7 +161,13 @@ dri_make_current(__DRIcontext * cPriv,
 	 ctx->r_stamp = driReadPriv->lastStamp - 1;
       }
 
-      st_make_current(ctx->st, draw->stfb, read->stfb);
+      /* DRI co-state tracker currently overrides flush_frontbuffer.
+       * When this is fixed, will need to pass the drawable in the
+       * fourth parameter here so that when Mesa calls
+       * flush_frontbuffer directly (in front-buffer rendering), it
+       * will have access to the drawable argument:
+       */
+      st_make_current(ctx->st, draw->stfb, read->stfb, NULL);
 
       if (__dri1_api_hooks) {
 	 dri1_update_drawables(ctx, draw, read);
@@ -170,7 +176,7 @@ dri_make_current(__DRIcontext * cPriv,
 			   ctx->pipe->priv);
       }
    } else {
-      st_make_current(NULL, NULL, NULL);
+      st_make_current(NULL, NULL, NULL, NULL);
    }
 
    return GL_TRUE;

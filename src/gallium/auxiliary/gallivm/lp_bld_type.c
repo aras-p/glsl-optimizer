@@ -58,7 +58,10 @@ LLVMTypeRef
 lp_build_vec_type(struct lp_type type)
 {
    LLVMTypeRef elem_type = lp_build_elem_type(type);
-   return LLVMVectorType(elem_type, type.length);
+   if (type.length == 1)
+      return elem_type;
+   else
+      return LLVMVectorType(elem_type, type.length);
 }
 
 
@@ -115,6 +118,9 @@ lp_check_vec_type(struct lp_type type, LLVMTypeRef vec_type)
    if(!vec_type)
       return FALSE;
 
+   if (type.length == 1)
+      return lp_check_elem_type(type, vec_type);
+
    if(LLVMGetTypeKind(vec_type) != LLVMVectorTypeKind)
       return FALSE;
 
@@ -153,7 +159,10 @@ LLVMTypeRef
 lp_build_int_vec_type(struct lp_type type)
 {
    LLVMTypeRef elem_type = lp_build_int_elem_type(type);
-   return LLVMVectorType(elem_type, type.length);
+   if (type.length == 1)
+      return elem_type;
+   else
+      return LLVMVectorType(elem_type, type.length);
 }
 
 
@@ -178,6 +187,25 @@ lp_build_int32_vec4_type(void)
 }
 
 
+/**
+ * Create unsigned integer type variation of given type.
+ */
+struct lp_type
+lp_uint_type(struct lp_type type)
+{
+   struct lp_type res_type;
+
+   memset(&res_type, 0, sizeof res_type);
+   res_type.width = type.width;
+   res_type.length = type.length;
+
+   return res_type;
+}
+
+
+/**
+ * Create signed integer type variation of given type.
+ */
 struct lp_type
 lp_int_type(struct lp_type type)
 {
@@ -186,6 +214,7 @@ lp_int_type(struct lp_type type)
    memset(&res_type, 0, sizeof res_type);
    res_type.width = type.width;
    res_type.length = type.length;
+   res_type.sign = 1;
 
    return res_type;
 }

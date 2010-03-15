@@ -9,7 +9,7 @@ ST_PUBLIC(st_get_framebuffer_surface,     int,                       struct st_f
 ST_PUBLIC(st_get_framebuffer_texture,     int,                       struct st_framebuffer *stfb, uint surfIndex, struct pipe_texture **texture)
 ST_PUBLIC(st_framebuffer_private,         void *,                    struct st_framebuffer *stfb)
 ST_PUBLIC(st_unreference_framebuffer,     void,                      struct st_framebuffer *stfb)
-ST_PUBLIC(st_make_current,                GLboolean,                 struct st_context *st, struct st_framebuffer *draw, struct st_framebuffer *read)
+ST_PUBLIC(st_make_current,                GLboolean,                 struct st_context *st, struct st_framebuffer *draw, struct st_framebuffer *read, void *winsys_drawable_handle)
 ST_PUBLIC(st_get_current,                 struct st_context *,       void)
 ST_PUBLIC(st_flush,                       void,                      struct st_context *st, uint pipeFlushFlags, struct pipe_fence_handle **fence)
 ST_PUBLIC(st_finish,                      void,                      struct st_context *st)

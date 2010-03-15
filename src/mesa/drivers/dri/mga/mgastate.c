@@ -1193,8 +1193,5 @@ void mgaDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.Viewport = mgaViewport;
    ctx->Driver.RenderMode = mgaRenderMode;
 
-   ctx->Driver.ClearIndex = 0;
-   ctx->Driver.IndexMask = 0;
-
    TNL_CONTEXT(ctx)->Driver.RunPipeline = mgaRunPipeline;
 }

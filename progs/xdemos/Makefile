@@ -9,7 +9,7 @@ INCDIR = $(TOP)/include
 LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 # Add X11 and pthread libs to satisfy GNU gold.
-APP_LIB_DEPS += -lX11 -lpthread
+APP_LIB_DEPS += $(X_LIBS) -lpthread
 
 LIBS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(APP_LIB_DEPS)
 
@@ -32,6 +32,7 @@ PROGS = \
 	msctest \
 	multictx \
 	offset \
+	omlsync \
 	overlay \
 	pbinfo \
 	pbdemo \

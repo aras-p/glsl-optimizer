@@ -253,7 +253,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.RasterDistance);
          break;
       case GL_CURRENT_RASTER_INDEX:
-         params[0] = FLOAT_TO_BOOLEAN(ctx->Current.RasterIndex);
+         params[0] = FLOAT_TO_BOOLEAN(1.0);
          break;
       case GL_CURRENT_RASTER_POSITION:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.RasterPos[0]);
@@ -391,7 +391,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->Color.ClearIndex);
          break;
       case GL_INDEX_MODE:
-         params[0] = !ctx->DrawBuffer->Visual.rgbMode;
+         params[0] = GL_FALSE;
          break;
       case GL_INDEX_OFFSET:
          params[0] = INT_TO_BOOLEAN(ctx->Pixel.IndexOffset);
@@ -827,7 +827,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->Transform.RescaleNormals;
          break;
       case GL_RGBA_MODE:
-         params[0] = ctx->DrawBuffer->Visual.rgbMode;
+         params[0] = GL_TRUE;
          break;
       case GL_SCISSOR_BOX:
          params[0] = INT_TO_BOOLEAN(ctx->Scissor.X);
@@ -2122,7 +2122,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Current.RasterDistance;
          break;
       case GL_CURRENT_RASTER_INDEX:
-         params[0] = ctx->Current.RasterIndex;
+         params[0] = 1.0;
          break;
       case GL_CURRENT_RASTER_POSITION:
          params[0] = ctx->Current.RasterPos[0];
@@ -2260,7 +2260,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->Color.ClearIndex);
          break;
       case GL_INDEX_MODE:
-         params[0] = BOOLEAN_TO_FLOAT(!ctx->DrawBuffer->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_FLOAT(GL_FALSE);
          break;
       case GL_INDEX_OFFSET:
          params[0] = (GLfloat)(ctx->Pixel.IndexOffset);
@@ -2696,7 +2696,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->Transform.RescaleNormals);
          break;
       case GL_RGBA_MODE:
-         params[0] = BOOLEAN_TO_FLOAT(ctx->DrawBuffer->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_FLOAT(GL_TRUE);
          break;
       case GL_SCISSOR_BOX:
          params[0] = (GLfloat)(ctx->Scissor.X);
@@ -3991,7 +3991,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Current.RasterDistance);
          break;
       case GL_CURRENT_RASTER_INDEX:
-         params[0] = IROUND(ctx->Current.RasterIndex);
+         params[0] = IROUND(1.0);
          break;
       case GL_CURRENT_RASTER_POSITION:
          params[0] = IROUND(ctx->Current.RasterPos[0]);
@@ -4129,7 +4129,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->Color.ClearIndex;
          break;
       case GL_INDEX_MODE:
-         params[0] = BOOLEAN_TO_INT(!ctx->DrawBuffer->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_INT(GL_FALSE);
          break;
       case GL_INDEX_OFFSET:
          params[0] = ctx->Pixel.IndexOffset;
@@ -4565,7 +4565,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->Transform.RescaleNormals);
          break;
       case GL_RGBA_MODE:
-         params[0] = BOOLEAN_TO_INT(ctx->DrawBuffer->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_INT(GL_TRUE);
          break;
       case GL_SCISSOR_BOX:
          params[0] = ctx->Scissor.X;
@@ -5861,7 +5861,7 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = IROUND64(ctx->Current.RasterDistance);
          break;
       case GL_CURRENT_RASTER_INDEX:
-         params[0] = IROUND64(ctx->Current.RasterIndex);
+         params[0] = IROUND64(1.0);
          break;
       case GL_CURRENT_RASTER_POSITION:
          params[0] = IROUND64(ctx->Current.RasterPos[0]);
@@ -5999,7 +5999,7 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = (GLint64)(ctx->Color.ClearIndex);
          break;
       case GL_INDEX_MODE:
-         params[0] = BOOLEAN_TO_INT64(!ctx->DrawBuffer->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_INT64(GL_FALSE);
          break;
       case GL_INDEX_OFFSET:
          params[0] = (GLint64)(ctx->Pixel.IndexOffset);
@@ -6435,7 +6435,7 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = BOOLEAN_TO_INT64(ctx->Transform.RescaleNormals);
          break;
       case GL_RGBA_MODE:
-         params[0] = BOOLEAN_TO_INT64(ctx->DrawBuffer->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_INT64(GL_TRUE);
          break;
       case GL_SCISSOR_BOX:
          params[0] = (GLint64)(ctx->Scissor.X);

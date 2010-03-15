@@ -79,20 +79,20 @@ clear_clear_flag(uint *bitvec, union tile_address addr)
    
 
 struct softpipe_tile_cache *
-sp_create_tile_cache( struct pipe_screen *screen )
+sp_create_tile_cache( struct pipe_context *pipe )
 {
    struct softpipe_tile_cache *tc;
    uint pos;
    int maxLevels, maxTexSize;
 
    /* sanity checking: max sure MAX_WIDTH/HEIGHT >= largest texture image */
-   maxLevels = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+   maxLevels = pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
    maxTexSize = 1 << (maxLevels - 1);
    assert(MAX_WIDTH >= maxTexSize);
 
    tc = CALLOC_STRUCT( softpipe_tile_cache );
    if (tc) {
-      tc->screen = screen;
+      tc->pipe = pipe;
       for (pos = 0; pos < NUM_ENTRIES; pos++) {
          tc->entries[pos].addr.bits.invalid = 1;
       }
@@ -115,15 +115,13 @@ sp_create_tile_cache( struct pipe_screen *screen )
 void
 sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
 {
-   struct pipe_screen *screen;
    uint pos;
 
    for (pos = 0; pos < NUM_ENTRIES; pos++) {
       /*assert(tc->entries[pos].x < 0);*/
    }
    if (tc->transfer) {
-      screen = tc->transfer->texture->screen;
-      screen->tex_transfer_destroy(tc->transfer);
+      tc->pipe->tex_transfer_destroy(tc->pipe, tc->transfer);
    }
 
    FREE( tc );
@@ -137,35 +135,33 @@ void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct pipe_surface *ps)
 {
-   if (tc->transfer) {
-      struct pipe_screen *screen = tc->transfer->texture->screen;
+   struct pipe_context *pipe = tc->pipe;
 
+   if (tc->transfer) {
       if (ps == tc->surface)
          return;
 
       if (tc->transfer_map) {
-         screen->transfer_unmap(screen, tc->transfer);
+         pipe->transfer_unmap(pipe, tc->transfer);
          tc->transfer_map = NULL;
       }
 
-      screen->tex_transfer_destroy(tc->transfer);
+      pipe->tex_transfer_destroy(pipe, tc->transfer);
       tc->transfer = NULL;
    }
 
    tc->surface = ps;
 
    if (ps) {
-      struct pipe_screen *screen = ps->texture->screen;
-
-      tc->transfer = screen->get_tex_transfer(screen, ps->texture, ps->face,
+      tc->transfer = pipe->get_tex_transfer(pipe, ps->texture, ps->face,
                                               ps->level, ps->zslice,
                                               PIPE_TRANSFER_READ_WRITE,
                                               0, 0, ps->width, ps->height);
 
-      tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
-                           ps->format == PIPE_FORMAT_Z24S8_UNORM ||
+      tc->depth_stencil = (ps->format == PIPE_FORMAT_Z24S8_UNORM ||
                            ps->format == PIPE_FORMAT_Z24X8_UNORM ||
+                           ps->format == PIPE_FORMAT_S8Z24_UNORM ||
+                           ps->format == PIPE_FORMAT_X8Z24_UNORM ||
                            ps->format == PIPE_FORMAT_Z16_UNORM ||
                            ps->format == PIPE_FORMAT_Z32_UNORM ||
                            ps->format == PIPE_FORMAT_S8_UNORM);
@@ -187,7 +183,7 @@ void
 sp_tile_cache_map_transfers(struct softpipe_tile_cache *tc)
 {
    if (tc->transfer && !tc->transfer_map)
-      tc->transfer_map = tc->screen->transfer_map(tc->screen, tc->transfer);
+      tc->transfer_map = tc->pipe->transfer_map(tc->pipe, tc->transfer);
 }
 
 
@@ -195,7 +191,7 @@ void
 sp_tile_cache_unmap_transfers(struct softpipe_tile_cache *tc)
 {
    if (tc->transfer_map) {
-      tc->screen->transfer_unmap(tc->screen, tc->transfer);
+      tc->pipe->transfer_unmap(tc->pipe, tc->transfer);
       tc->transfer_map = NULL;
    }
 }
@@ -295,17 +291,19 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
          union tile_address addr = tile_address(x, y);
 
          if (is_clear_flag_set(tc->clear_flags, addr)) {
-            pipe_put_tile_raw(pt,
+            pipe_put_tile_raw(tc->pipe,
+                              pt,
                               x, y, TILE_SIZE, TILE_SIZE,
                               tc->tile.data.color32, 0/*STRIDE*/);
-
-            /* do this? */
-            clear_clear_flag(tc->clear_flags, addr);
 
             numCleared++;
          }
       }
    }
+
+   /* reset all clear flags to zero */
+   memset(tc->clear_flags, 0, sizeof(tc->clear_flags));
+
 #if 0
    debug_printf("num cleared: %u\n", numCleared);
 #endif
@@ -328,14 +326,14 @@ sp_flush_tile_cache(struct softpipe_tile_cache *tc)
          struct softpipe_cached_tile *tile = tc->entries + pos;
          if (!tile->addr.bits.invalid) {
             if (tc->depth_stencil) {
-               pipe_put_tile_raw(pt,
+               pipe_put_tile_raw(tc->pipe, pt,
                                  tile->addr.bits.x * TILE_SIZE, 
                                  tile->addr.bits.y * TILE_SIZE, 
                                  TILE_SIZE, TILE_SIZE,
                                  tile->data.depth32, 0/*STRIDE*/);
             }
             else {
-               pipe_put_tile_rgba(pt,
+               pipe_put_tile_rgba(tc->pipe, pt,
                                   tile->addr.bits.x * TILE_SIZE, 
                                   tile->addr.bits.y * TILE_SIZE, 
                                   TILE_SIZE, TILE_SIZE,
@@ -378,14 +376,14 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
       if (tile->addr.bits.invalid == 0) {
          /* put dirty tile back in framebuffer */
          if (tc->depth_stencil) {
-            pipe_put_tile_raw(pt,
+            pipe_put_tile_raw(tc->pipe, pt,
                               tile->addr.bits.x * TILE_SIZE,
                               tile->addr.bits.y * TILE_SIZE,
                               TILE_SIZE, TILE_SIZE,
                               tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe_put_tile_rgba(pt,
+            pipe_put_tile_rgba(tc->pipe, pt,
                                tile->addr.bits.x * TILE_SIZE,
                                tile->addr.bits.y * TILE_SIZE,
                                TILE_SIZE, TILE_SIZE,
@@ -408,14 +406,14 @@ sp_find_cached_tile(struct softpipe_tile_cache *tc,
       else {
          /* get new tile data from transfer */
          if (tc->depth_stencil) {
-            pipe_get_tile_raw(pt,
+            pipe_get_tile_raw(tc->pipe, pt,
                               tile->addr.bits.x * TILE_SIZE, 
                               tile->addr.bits.y * TILE_SIZE, 
                               TILE_SIZE, TILE_SIZE,
                               tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe_get_tile_rgba(pt,
+            pipe_get_tile_rgba(tc->pipe, pt,
                                tile->addr.bits.x * TILE_SIZE, 
                                tile->addr.bits.y * TILE_SIZE,
                                TILE_SIZE, TILE_SIZE,

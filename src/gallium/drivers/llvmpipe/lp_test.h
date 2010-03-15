@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <float.h>
 
-#include <llvm-c/Core.h>
+#include "os/os_llvm.h"
 #include <llvm-c/Analysis.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>

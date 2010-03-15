@@ -158,7 +158,7 @@ nv20_emit_light_model(GLcontext *ctx, int emit)
 	OUT_RING(chan, ((m->LocalViewer ?
 			 NV20TCL_LIGHT_MODEL_VIEWER_LOCAL :
 			 NV20TCL_LIGHT_MODEL_VIEWER_NONLOCAL) |
-			(m->ColorControl == GL_SEPARATE_SPECULAR_COLOR ?
+			(NEED_SECONDARY_COLOR(ctx) ?
 			 NV20TCL_LIGHT_MODEL_SEPARATE_SPECULAR :
 			 0)));
 

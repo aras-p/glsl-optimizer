@@ -151,7 +151,7 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_1D;
-   templ.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+   templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
    templ.last_level = 0;
    templ.width0 = 1024;
    templ.height0 = 1;
@@ -164,10 +164,10 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
       struct pipe_transfer *transfer =
          st_no_flush_get_tex_transfer(p->base.ctx, tex, 0, 0, 0,
                                       PIPE_TRANSFER_WRITE, 0, 0, 1024, 1);
-      void *map = screen->transfer_map(screen, transfer);
+      void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, p->gradient.color_data, sizeof(VGint)*1024);
-      screen->transfer_unmap(screen, transfer);
-      screen->tex_transfer_destroy(transfer);
+      pipe->transfer_unmap(pipe, transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 
    return tex;
@@ -639,9 +639,6 @@ VGint paint_bind_samplers(struct vg_paint *paint, struct pipe_sampler_state **sa
    }
       break;
    default:
-      samplers[0] = &paint->pattern.sampler; /* dummy */
-      textures[0] = 0;
-      return 0;
       break;
    }
    return 0;

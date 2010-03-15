@@ -141,6 +141,14 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       st->state.sampler_list[i] = &st->state.samplers[i];
 
+   for (i = 0; i < 3; i++) {
+      memset(&st->velems_util_draw[i], 0, sizeof(struct pipe_vertex_element));
+      st->velems_util_draw[i].src_offset = i * 4 * sizeof(float);
+      st->velems_util_draw[i].instance_divisor = 0;
+      st->velems_util_draw[i].vertex_buffer_index = 0;
+      st->velems_util_draw[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
+
    /* we want all vertex data to be placed in buffer objects */
    vbo_use_buffer_objects(ctx);
 
@@ -264,7 +272,8 @@ void st_destroy_context( struct st_context *st )
 GLboolean
 st_make_current(struct st_context *st,
                 struct st_framebuffer *draw,
-                struct st_framebuffer *read)
+                struct st_framebuffer *read,
+                void *winsys_drawable_handle )
 {
    /* Call this periodically to detect when the user has begun using
     * GL rendering from multiple threads.
@@ -272,10 +281,13 @@ st_make_current(struct st_context *st,
    _glapi_check_multithread();
 
    if (st) {
-      if (!_mesa_make_current(st->ctx, &draw->Base, &read->Base))
+      if (!_mesa_make_current(st->ctx, &draw->Base, &read->Base)) {
+         st->pipe->priv = NULL;
          return GL_FALSE;
+      }
 
       _mesa_check_init_viewport(st->ctx, draw->InitWidth, draw->InitHeight);
+      st->winsys_drawable_handle = winsys_drawable_handle;
 
       return GL_TRUE;
    }

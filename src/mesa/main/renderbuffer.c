@@ -1142,7 +1142,8 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    rb->Width = width;
    rb->Height = height;
-   rb->_BaseFormat = _mesa_base_fbo_format(ctx, rb->InternalFormat);
+   rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
+   ASSERT(rb->_BaseFormat);
 
    return GL_TRUE;
 }
@@ -1552,62 +1553,6 @@ _mesa_add_color_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
 
 
 /**
- * Add software-based color index renderbuffers to the given framebuffer.
- * This is a helper routine for device drivers when creating a
- * window system framebuffer (not a user-created render/framebuffer).
- * Once this function is called, you can basically forget about this
- * renderbuffer; core Mesa will handle all the buffer management and
- * rendering!
- */
-GLboolean
-_mesa_add_color_index_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
-                                    GLuint indexBits,
-                                    GLboolean frontLeft, GLboolean backLeft,
-                                    GLboolean frontRight, GLboolean backRight)
-{
-   GLuint b;
-
-   if (indexBits > 8) {
-      _mesa_problem(ctx,
-                "Unsupported bit depth in _mesa_add_color_index_renderbuffers");
-      return GL_FALSE;
-   }
-
-   assert(MAX_COLOR_ATTACHMENTS >= 4);
-
-   for (b = BUFFER_FRONT_LEFT; b <= BUFFER_BACK_RIGHT; b++) {
-      struct gl_renderbuffer *rb;
-
-      if (b == BUFFER_FRONT_LEFT && !frontLeft)
-         continue;
-      else if (b == BUFFER_BACK_LEFT && !backLeft)
-         continue;
-      else if (b == BUFFER_FRONT_RIGHT && !frontRight)
-         continue;
-      else if (b == BUFFER_BACK_RIGHT && !backRight)
-         continue;
-
-      assert(fb->Attachment[b].Renderbuffer == NULL);
-
-      rb = _mesa_new_renderbuffer(ctx, 0);
-      if (!rb) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "Allocating color buffer");
-         return GL_FALSE;
-      }
-
-      assert(indexBits <= 8);
-      rb->Format = MESA_FORMAT_CI8;
-      rb->InternalFormat = GL_COLOR_INDEX;
-
-      rb->AllocStorage = _mesa_soft_renderbuffer_storage;
-      _mesa_add_renderbuffer(fb, b, rb);
-   }
-
-   return GL_TRUE;
-}
-
-
-/**
  * Add software-based alpha renderbuffers to the given framebuffer.
  * This is a helper routine for device drivers when creating a
  * window system framebuffer (not a user-created render/framebuffer).
@@ -1906,21 +1851,13 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
    GLboolean backRight = fb->Visual.stereoMode && fb->Visual.doubleBufferMode;
 
    if (color) {
-      if (fb->Visual.rgbMode) {
-         assert(fb->Visual.redBits == fb->Visual.greenBits);
-         assert(fb->Visual.redBits == fb->Visual.blueBits);
-         _mesa_add_color_renderbuffers(NULL, fb,
-                                       fb->Visual.redBits,
-                                       fb->Visual.alphaBits,
-                                       frontLeft, backLeft,
-                                       frontRight, backRight);
-      }
-      else {
-         _mesa_add_color_index_renderbuffers(NULL, fb,
-                                             fb->Visual.indexBits,
-                                             frontLeft, backLeft,
-                                             frontRight, backRight);
-      }
+      assert(fb->Visual.redBits == fb->Visual.greenBits);
+      assert(fb->Visual.redBits == fb->Visual.blueBits);
+      _mesa_add_color_renderbuffers(NULL, fb,
+				    fb->Visual.redBits,
+				    fb->Visual.alphaBits,
+				    frontLeft, backLeft,
+				    frontRight, backRight);
    }
 
    if (depth) {
@@ -1934,7 +1871,6 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
    }
 
    if (accum) {
-      assert(fb->Visual.rgbMode);
       assert(fb->Visual.accumRedBits > 0);
       assert(fb->Visual.accumGreenBits > 0);
       assert(fb->Visual.accumBlueBits > 0);
@@ -1946,14 +1882,12 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
    }
 
    if (aux) {
-      assert(fb->Visual.rgbMode);
       assert(fb->Visual.numAuxBuffers > 0);
       _mesa_add_aux_renderbuffers(NULL, fb, fb->Visual.redBits,
                                   fb->Visual.numAuxBuffers);
    }
 
    if (alpha) {
-      assert(fb->Visual.rgbMode);
       assert(fb->Visual.alphaBits > 0);
       _mesa_add_alpha_renderbuffers(NULL, fb, fb->Visual.alphaBits,
                                     frontLeft, backLeft,

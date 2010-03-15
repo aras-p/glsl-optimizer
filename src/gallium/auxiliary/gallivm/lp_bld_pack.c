@@ -256,7 +256,9 @@ lp_build_pack2(LLVMBuilderRef builder,
                LLVMValueRef lo,
                LLVMValueRef hi)
 {
+#if HAVE_LLVM < 0x0207
    LLVMTypeRef src_vec_type = lp_build_vec_type(src_type);
+#endif
    LLVMTypeRef dst_vec_type = lp_build_vec_type(dst_type);
    LLVMValueRef shuffle;
    LLVMValueRef res;
@@ -272,11 +274,14 @@ lp_build_pack2(LLVMBuilderRef builder,
       switch(src_type.width) {
       case 32:
          if(dst_type.sign) {
+#if HAVE_LLVM >= 0x0207
+            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", dst_vec_type, lo, hi);
+#else
             res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", src_vec_type, lo, hi);
+#endif
          }
          else {
             if (util_cpu_caps.has_sse4_1) {
-               /* PACKUSDW is the only instrinsic with a consistent signature */
                return lp_build_intrinsic_binary(builder, "llvm.x86.sse41.packusdw", dst_vec_type, lo, hi);
             }
             else {
@@ -288,9 +293,17 @@ lp_build_pack2(LLVMBuilderRef builder,
 
       case 16:
          if(dst_type.sign)
+#if HAVE_LLVM >= 0x0207
+            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packsswb.128", dst_vec_type, lo, hi);
+#else
             res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packsswb.128", src_vec_type, lo, hi);
+#endif
          else
+#if HAVE_LLVM >= 0x0207
+            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128", dst_vec_type, lo, hi);
+#else
             res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128", src_vec_type, lo, hi);
+#endif
          break;
 
       default:

@@ -23,17 +23,8 @@
 #ifndef RADEON_R300_H
 #define RADEON_R300_H
 
-/* XXX WTF is this! I shouldn't have to include those first three! FUCK! */
-#include <stdint.h>
-#include <stdlib.h>
-#include "drm.h"
-#include "radeon_drm.h"
-#include "radeon_cs_gem.h"
+#include "radeon_winsys.h"
 
-#include "r300_winsys.h"
-
-#include "radeon_buffer.h"
-
-void radeon_setup_winsys(int fd, struct radeon_winsys* winsys);
+boolean radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* winsys);
 
 #endif /* RADEON_R300_H */

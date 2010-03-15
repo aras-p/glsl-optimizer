@@ -55,7 +55,7 @@
 
 
 /** re-defined below, should be the same though */
-#define TYPE_SPECIFIER_COUNT 32
+#define TYPE_SPECIFIER_COUNT 36
 
 
 /**
@@ -742,13 +742,18 @@ parse_type_qualifier(slang_parse_ctx * C, slang_type_qualifier * qual)
 #define TYPE_SPECIFIER_MAT42 29
 #define TYPE_SPECIFIER_MAT34 30
 #define TYPE_SPECIFIER_MAT43 31
-#define TYPE_SPECIFIER_COUNT 32
+#define TYPE_SPECIFIER_SAMPLER_1D_ARRAY 32
+#define TYPE_SPECIFIER_SAMPLER_2D_ARRAY 33
+#define TYPE_SPECIFIER_SAMPLER_1D_ARRAY_SHADOW 34
+#define TYPE_SPECIFIER_SAMPLER_2D_ARRAY_SHADOW 35
+#define TYPE_SPECIFIER_COUNT 36
 
 static int
 parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
                      slang_type_specifier * spec)
 {
-   switch (*C->I++) {
+   int type = *C->I++;
+   switch (type) {
    case TYPE_SPECIFIER_VOID:
       spec->type = SLANG_SPEC_VOID;
       break;
@@ -816,28 +821,40 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
       spec->type = SLANG_SPEC_MAT43;
       break;
    case TYPE_SPECIFIER_SAMPLER1D:
-      spec->type = SLANG_SPEC_SAMPLER1D;
+      spec->type = SLANG_SPEC_SAMPLER_1D;
       break;
    case TYPE_SPECIFIER_SAMPLER2D:
-      spec->type = SLANG_SPEC_SAMPLER2D;
+      spec->type = SLANG_SPEC_SAMPLER_2D;
       break;
    case TYPE_SPECIFIER_SAMPLER3D:
-      spec->type = SLANG_SPEC_SAMPLER3D;
+      spec->type = SLANG_SPEC_SAMPLER_3D;
       break;
    case TYPE_SPECIFIER_SAMPLERCUBE:
-      spec->type = SLANG_SPEC_SAMPLERCUBE;
+      spec->type = SLANG_SPEC_SAMPLER_CUBE;
       break;
    case TYPE_SPECIFIER_SAMPLER2DRECT:
-      spec->type = SLANG_SPEC_SAMPLER2DRECT;
+      spec->type = SLANG_SPEC_SAMPLER_RECT;
       break;
    case TYPE_SPECIFIER_SAMPLER1DSHADOW:
-      spec->type = SLANG_SPEC_SAMPLER1DSHADOW;
+      spec->type = SLANG_SPEC_SAMPLER_1D_SHADOW;
       break;
    case TYPE_SPECIFIER_SAMPLER2DSHADOW:
-      spec->type = SLANG_SPEC_SAMPLER2DSHADOW;
+      spec->type = SLANG_SPEC_SAMPLER_2D_SHADOW;
       break;
    case TYPE_SPECIFIER_SAMPLER2DRECTSHADOW:
-      spec->type = SLANG_SPEC_SAMPLER2DRECTSHADOW;
+      spec->type = SLANG_SPEC_SAMPLER_RECT_SHADOW;
+      break;
+   case TYPE_SPECIFIER_SAMPLER_1D_ARRAY:
+      spec->type = SLANG_SPEC_SAMPLER_1D_ARRAY;
+      break;
+   case TYPE_SPECIFIER_SAMPLER_2D_ARRAY:
+      spec->type = SLANG_SPEC_SAMPLER_2D_ARRAY;
+      break;
+   case TYPE_SPECIFIER_SAMPLER_1D_ARRAY_SHADOW:
+      spec->type = SLANG_SPEC_SAMPLER_1D_ARRAY_SHADOW;
+      break;
+   case TYPE_SPECIFIER_SAMPLER_2D_ARRAY_SHADOW:
+      spec->type = SLANG_SPEC_SAMPLER_2D_ARRAY_SHADOW;
       break;
    case TYPE_SPECIFIER_STRUCT:
       spec->type = SLANG_SPEC_STRUCT;
@@ -2133,6 +2150,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       var->type.qualifier = type->qualifier;
       var->type.centroid = type->centroid;
       var->type.precision = type->precision;
+      var->type.specifier = type->specifier;/*new*/
       var->type.variant = type->variant;
       var->type.layout = type->layout;
       var->type.array_len = type->array_len;
@@ -2441,6 +2459,10 @@ parse_default_precision(slang_parse_ctx * C, slang_output_ctx * O)
    case TYPE_SPECIFIER_SAMPLER2DSHADOW:
    case TYPE_SPECIFIER_SAMPLER2DRECT:
    case TYPE_SPECIFIER_SAMPLER2DRECTSHADOW:
+   case TYPE_SPECIFIER_SAMPLER_1D_ARRAY:
+   case TYPE_SPECIFIER_SAMPLER_2D_ARRAY:
+   case TYPE_SPECIFIER_SAMPLER_1D_ARRAY_SHADOW:
+   case TYPE_SPECIFIER_SAMPLER_2D_ARRAY_SHADOW:
       /* OK */
       break;
    default:

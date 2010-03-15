@@ -371,7 +371,8 @@ compress_with_blit(GLcontext * ctx,
 {
    const GLuint dstImageOffsets[1] = {0};
    struct st_texture_image *stImage = st_texture_image(texImage);
-   struct pipe_screen *screen = ctx->st->pipe->screen;
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    gl_format mesa_format;
    struct pipe_texture templ;
    struct pipe_texture *src_tex;
@@ -421,7 +422,7 @@ compress_with_blit(GLcontext * ctx,
 					     0, 0, 0, /* face, level are zero */
 					     PIPE_TRANSFER_WRITE,
 					     0, 0, width, height); /* x, y, w, h */
-   map = screen->transfer_map(screen, tex_xfer);
+   map = pipe->transfer_map(pipe, tex_xfer);
 
    _mesa_texstore(ctx, 2, GL_RGBA, mesa_format,
                   map,              /* dest ptr */
@@ -433,8 +434,8 @@ compress_with_blit(GLcontext * ctx,
                   pixels,           /* source data */
                   unpack);          /* source data packing */
 
-   screen->transfer_unmap(screen, tex_xfer);
-   screen->tex_transfer_destroy(tex_xfer);
+   pipe->transfer_unmap(pipe, tex_xfer);
+   pipe->tex_transfer_destroy(pipe, tex_xfer);
 
    /* copy / compress image */
    util_blit_pixels_tex(ctx->st->blit,
@@ -809,7 +810,8 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
                      struct gl_texture_object *texObj,
                      struct gl_texture_image *texImage)
 {
-   struct pipe_screen *screen = ctx->st->pipe->screen;
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct st_texture_image *stImage = st_texture_image(texImage);
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
@@ -848,7 +850,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
    if (st_equal_formats(stImage->pt->format, format, type)) {
       /* memcpy */
       const uint bytesPerRow = width * util_format_get_blocksize(stImage->pt->format);
-      ubyte *map = screen->transfer_map(screen, tex_xfer);
+      ubyte *map = pipe->transfer_map(pipe, tex_xfer);
       GLuint row;
       for (row = 0; row < height; row++) {
          GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
@@ -856,7 +858,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
          memcpy(dest, map, bytesPerRow);
          map += tex_xfer->stride;
       }
-      screen->transfer_unmap(screen, tex_xfer);
+      pipe->transfer_unmap(pipe, tex_xfer);
    }
    else {
       /* format translation via floats */
@@ -871,7 +873,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
             debug_printf("%s: fallback format translation\n", __FUNCTION__);
 
          /* get float[4] rgba row from surface */
-         pipe_get_tile_rgba(tex_xfer, 0, row, width, 1, rgba);
+         pipe_get_tile_rgba(pipe, tex_xfer, 0, row, width, 1, rgba);
 
          _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
                                     type, dest, &ctx->Pack, transferOps);
@@ -1256,7 +1258,6 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
                           GLsizei width, GLsizei height)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *src_trans;
    GLvoid *texDest;
    enum pipe_transfer_usage transfer_usage;
@@ -1309,11 +1310,11 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
       /* To avoid a large temp memory allocation, do copy row by row */
       for (row = 0; row < height; row++, srcY += yStep) {
          uint data[MAX_WIDTH];
-         pipe_get_tile_z(src_trans, 0, srcY, width, 1, data);
+         pipe_get_tile_z(pipe, src_trans, 0, srcY, width, 1, data);
          if (scaleOrBias) {
             _mesa_scale_and_bias_depth_uint(ctx, width, data);
          }
-         pipe_put_tile_z(stImage->transfer, 0, row, width, 1, data);
+         pipe_put_tile_z(pipe, stImage->transfer, 0, row, width, 1, data);
       }
    }
    else {
@@ -1335,7 +1336,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
          /* XXX this usually involves a lot of int/float conversion.
           * try to avoid that someday.
           */
-         pipe_get_tile_rgba(src_trans, 0, 0, width, height, tempSrc);
+         pipe_get_tile_rgba(pipe, src_trans, 0, 0, width, height, tempSrc);
 
          /* Store into texture memory.
           * Note that this does some special things such as pixel transfer
@@ -1363,7 +1364,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
    }
 
    st_texture_image_unmap(ctx->st, stImage);
-   screen->tex_transfer_destroy(src_trans);
+   pipe->tex_transfer_destroy(pipe, src_trans);
 }
 
 
@@ -1717,18 +1718,15 @@ copy_image_data_to_texture(struct st_context *st,
       st_texture_image_copy(st->pipe,
                             stObj->pt, dstLevel,  /* dest texture, level */
                             stImage->pt, /* src texture */
-                            stImage->face
-                            );
+                            stImage->face);
 
       pipe_texture_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
       /* More straightforward upload.  
        */
-
       st_teximage_flush_before_map(st, stObj->pt, stImage->face, dstLevel,
 				   PIPE_TRANSFER_WRITE);
-
 
       st_texture_image_data(st,
                             stObj->pt,

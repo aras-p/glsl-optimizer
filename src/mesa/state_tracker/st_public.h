@@ -105,7 +105,8 @@ void st_unreference_framebuffer( struct st_framebuffer *stfb );
 PUBLIC
 GLboolean st_make_current(struct st_context *st,
                           struct st_framebuffer *draw,
-                          struct st_framebuffer *read);
+                          struct st_framebuffer *read,
+                          void *winsys_drawable_handle);
 
 PUBLIC
 struct st_context *st_get_current(void);

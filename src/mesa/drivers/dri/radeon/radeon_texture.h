@@ -135,4 +135,6 @@ void radeonCopyTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
 			GLint x, GLint y,
 			GLsizei width, GLsizei height);
 
+unsigned radeonIsFormatRenderable(gl_format mesa_format);
+
 #endif

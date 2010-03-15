@@ -28,7 +28,7 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-        
+
 
 #ifndef BRW_STRUCTS_H
 #define BRW_STRUCTS_H
@@ -1149,7 +1149,7 @@ struct brw_vertex_element_state
       GLuint valid:1; 
       GLuint vertex_buffer_index:5; 
    } ve0;
-   
+
    struct
    {
       GLuint dst_offset:8; 

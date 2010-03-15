@@ -5,10 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = sis_dri.so
 
-
-# Not yet
-# MINIGLX_SOURCES = server/sis_dri.c 
-
 DRIVER_SOURCES = \
 	sis6326_state.c \
 	sis6326_clear.c \

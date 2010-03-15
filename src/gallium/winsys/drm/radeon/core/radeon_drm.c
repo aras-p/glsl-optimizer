@@ -30,9 +30,33 @@
  */
 
 #include "radeon_drm.h"
+#include "radeon_r300.h"
+#include "radeon_buffer.h"
+
+#include "r300_winsys.h"
+#include "trace/tr_drm.h"
+
+#include "util/u_memory.h"
+
+#include "xf86drm.h"
+#include <sys/ioctl.h>
+
+static struct radeon_libdrm_winsys *
+radeon_winsys_create(int fd)
+{
+    struct radeon_libdrm_winsys *rws;
+
+    rws = CALLOC_STRUCT(radeon_libdrm_winsys);
+    if (rws == NULL) {
+        return NULL;
+    }
+
+    rws->fd = fd;
+    return rws;
+}
 
 /* Helper function to do the ioctls needed for setup and init. */
-static void do_ioctls(int fd, struct radeon_winsys* winsys)
+static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
 {
     struct drm_radeon_gem_info gem_info = {0};
     struct drm_radeon_info info = {0};
@@ -123,137 +147,28 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
                                          struct drm_create_screen_arg *arg)
 {
-    struct radeon_winsys* rwinsys = radeon_pipe_winsys(drmFB);
-    do_ioctls(drmFB, rwinsys);
+    struct radeon_libdrm_winsys* rws; 
+    boolean ret;
+
+    rws = radeon_winsys_create(drmFB);
+    if (!rws)
+	return NULL;
+
+    do_ioctls(drmFB, rws);
 
     /* The state tracker can organize a softpipe fallback if no hw
      * driver is found.
      */
-    if (is_r3xx(rwinsys->pci_id)) {
-        radeon_setup_winsys(drmFB, rwinsys);
-        return r300_create_screen(rwinsys);
-    } else {
-        FREE(rwinsys);
-        return NULL;
-    }
-}
-
-
-boolean radeon_buffer_from_texture(struct drm_api* api,
-                                   struct pipe_screen* screen,
-                                   struct pipe_texture* texture,
-                                   struct pipe_buffer** buffer,
-                                   unsigned* stride)
-{
-    /* XXX fix this */
-    return r300_get_texture_buffer(screen, texture, buffer, stride);
-}
-
-/* Create a buffer from a handle. */
-/* XXX what's up with name? */
-struct pipe_buffer* radeon_buffer_from_handle(struct drm_api* api,
-                                              struct pipe_screen* screen,
-                                              const char* name,
-                                              unsigned handle)
-{
-    struct radeon_bo_manager* bom =
-        ((struct radeon_winsys*)screen->winsys)->priv->bom;
-    struct radeon_pipe_buffer* radeon_buffer;
-    struct radeon_bo* bo = NULL;
-
-    bo = radeon_bo_open(bom, handle, 0, 0, 0, 0);
-    if (bo == NULL) {
-        return NULL;
+    if (is_r3xx(rws->pci_id)) {
+        ret = radeon_setup_winsys(drmFB, rws);
+	if (ret == FALSE)
+	    goto fail;
+        return r300_create_screen(&rws->base);
     }
 
-    radeon_buffer = CALLOC_STRUCT(radeon_pipe_buffer);
-    if (radeon_buffer == NULL) {
-        radeon_bo_unref(bo);
-        return NULL;
-    }
-
-    pipe_reference_init(&radeon_buffer->base.reference, 1);
-    radeon_buffer->base.screen = screen;
-    radeon_buffer->base.usage = PIPE_BUFFER_USAGE_PIXEL;
-    radeon_buffer->bo = bo;
-    return &radeon_buffer->base;
-}
-
-static struct pipe_texture*
-radeon_texture_from_shared_handle(struct drm_api *api,
-                                  struct pipe_screen *screen,
-                                  struct pipe_texture *templ,
-                                  const char *name,
-                                  unsigned stride,
-                                  unsigned handle)
-{
-    struct pipe_buffer *buffer;
-    struct pipe_texture *blanket;
-
-    buffer = radeon_buffer_from_handle(api, screen, name, handle);
-    if (!buffer) {
-        return NULL;
-    }
-
-    blanket = screen->texture_blanket(screen, templ, &stride, buffer);
-
-    pipe_buffer_reference(&buffer, NULL);
-
-    return blanket;
-}
-
-static boolean radeon_shared_handle_from_texture(struct drm_api *api,
-                                                 struct pipe_screen *screen,
-                                                 struct pipe_texture *texture,
-                                                 unsigned *stride,
-                                                 unsigned *handle)
-{
-    int retval, fd;
-    struct drm_gem_flink flink;
-    struct radeon_pipe_buffer* radeon_buffer;
-    struct pipe_buffer *buffer = NULL;
-
-    if (!radeon_buffer_from_texture(api, screen, texture, &buffer, stride)) {
-        return FALSE;
-    }
-
-    radeon_buffer = (struct radeon_pipe_buffer*)buffer;
-    if (!radeon_buffer->flinked) {
-        fd = ((struct radeon_winsys*)screen->winsys)->priv->fd;
-
-        flink.handle = radeon_buffer->bo->handle;
-
-        retval = ioctl(fd, DRM_IOCTL_GEM_FLINK, &flink);
-        if (retval) {
-            debug_printf("radeon: DRM_IOCTL_GEM_FLINK failed, error %d\n",
-                    retval);
-            return FALSE;
-        }
-
-        radeon_buffer->flink = flink.name;
-        radeon_buffer->flinked = TRUE;
-    }
-
-    *handle = radeon_buffer->flink;
-    return TRUE;
-}
-
-static boolean radeon_local_handle_from_texture(struct drm_api *api,
-                                                struct pipe_screen *screen,
-                                                struct pipe_texture *texture,
-                                                unsigned *stride,
-                                                unsigned *handle)
-{
-    struct pipe_buffer *buffer = NULL;
-    if (!radeon_buffer_from_texture(api, screen, texture, &buffer, stride)) {
-        return FALSE;
-    }
-
-    *handle = ((struct radeon_pipe_buffer*)buffer)->bo->handle;
-
-    pipe_buffer_reference(&buffer, NULL);
-
-    return TRUE;
+fail:
+    FREE(rws);
+    return NULL;
 }
 
 static void radeon_drm_api_destroy(struct drm_api *api)
@@ -265,9 +180,6 @@ struct drm_api drm_api_hooks = {
     .name = "radeon",
     .driver_name = "radeon",
     .create_screen = radeon_create_screen,
-    .texture_from_shared_handle = radeon_texture_from_shared_handle,
-    .shared_handle_from_texture = radeon_shared_handle_from_texture,
-    .local_handle_from_texture = radeon_local_handle_from_texture,
     .destroy = radeon_drm_api_destroy,
 };
 

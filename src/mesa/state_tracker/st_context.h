@@ -166,12 +166,16 @@ struct st_context
    struct {
       struct pipe_rasterizer_state raster;
       struct pipe_viewport_state viewport;
+      struct pipe_clip_state clip;
       void *vs;
       void *fs;
       float vertices[4][2][4];  /**< vertex pos + color */
       struct pipe_buffer *vbuf;
       unsigned vbuf_slot;
    } clear;
+
+   /** used for anything using util_draw_vertex_buffer */
+   struct pipe_vertex_element velems_util_draw[3];
 
    void *passthrough_fs;  /**< simple pass-through frag shader */
 
@@ -181,6 +185,7 @@ struct st_context
    struct cso_context *cso_context;
 
    int force_msaa;
+   void *winsys_drawable_handle;
 };
 
 

@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,17 +21,15 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
-#include "util/u_simple_screen.h"
 
 #include "r300_context.h"
-#include "r300_screen.h"
 #include "r300_texture.h"
 
 #include "radeon_winsys.h"
-#include "r300_winsys.h"
+
+#include "r300_screen_buffer.h"
 
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
@@ -210,9 +209,9 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 {
     uint32_t retval = 0;
     boolean is_r500 = r300_screen(screen)->caps->is_r500;
-    boolean is_z24 = format == PIPE_FORMAT_Z24X8_UNORM ||
-                     format == PIPE_FORMAT_Z24S8_UNORM;
-    boolean is_color2101010 = format == PIPE_FORMAT_A2B10G10R10_UNORM;
+    boolean is_z24 = format == PIPE_FORMAT_X8Z24_UNORM ||
+                     format == PIPE_FORMAT_S8Z24_UNORM;
+    boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM;
 
     if (target >= PIPE_MAX_TEXTURE_TYPES) {
         debug_printf("r300: Implementation error: Received bogus texture "
@@ -231,14 +230,16 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     /* Check colorbuffer format support. */
     if ((usage & (PIPE_TEXTURE_USAGE_RENDER_TARGET |
                   PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                  PIPE_TEXTURE_USAGE_PRIMARY)) &&
+                  PIPE_TEXTURE_USAGE_SCANOUT |
+                  PIPE_TEXTURE_USAGE_SHARED)) &&
         /* 2101010 cannot be rendered to on non-r5xx. */
         (is_r500 || !is_color2101010) &&
         r300_is_colorbuffer_format_supported(format)) {
         retval |= usage &
             (PIPE_TEXTURE_USAGE_RENDER_TARGET |
              PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-             PIPE_TEXTURE_USAGE_PRIMARY);
+             PIPE_TEXTURE_USAGE_SCANOUT |
+             PIPE_TEXTURE_USAGE_SHARED);
     }
 
     /* Check depth-stencil format support. */
@@ -250,82 +251,22 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     return retval == usage;
 }
 
-static struct pipe_transfer*
-r300_get_tex_transfer(struct pipe_screen *screen,
-                      struct pipe_texture *texture,
-                      unsigned face, unsigned level, unsigned zslice,
-                      enum pipe_transfer_usage usage, unsigned x, unsigned y,
-                      unsigned w, unsigned h)
-{
-    struct r300_texture *tex = (struct r300_texture *)texture;
-    struct r300_transfer *trans;
-    struct r300_screen *rscreen = r300_screen(screen);
-    unsigned offset;
-
-    offset = r300_texture_get_offset(tex, level, zslice, face);  /* in bytes */
-
-    trans = CALLOC_STRUCT(r300_transfer);
-    if (trans) {
-        pipe_texture_reference(&trans->transfer.texture, texture);
-        trans->transfer.x = x;
-        trans->transfer.y = y;
-        trans->transfer.width = w;
-        trans->transfer.height = h;
-        trans->transfer.stride = r300_texture_get_stride(rscreen, tex, level);
-        trans->transfer.usage = usage;
-        trans->transfer.zslice = zslice;
-        trans->transfer.face = face;
-
-        trans->offset = offset;
-    }
-    return &trans->transfer;
-}
-
-static void
-r300_tex_transfer_destroy(struct pipe_transfer *trans)
-{
-   pipe_texture_reference(&trans->texture, NULL);
-   FREE(trans);
-}
-
-static void* r300_transfer_map(struct pipe_screen* screen,
-                              struct pipe_transfer* transfer)
-{
-    struct r300_texture* tex = (struct r300_texture*)transfer->texture;
-    char* map;
-    enum pipe_format format = tex->tex.format;
-
-    map = pipe_buffer_map(screen, tex->buffer,
-                          pipe_transfer_buffer_flags(transfer));
-
-    if (!map) {
-        return NULL;
-    }
-
-    return map + r300_transfer(transfer)->offset +
-        transfer->y / util_format_get_blockheight(format) * transfer->stride +
-        transfer->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
-}
-
-static void r300_transfer_unmap(struct pipe_screen* screen,
-                                struct pipe_transfer* transfer)
-{
-    struct r300_texture* tex = (struct r300_texture*)transfer->texture;
-    pipe_buffer_unmap(screen, tex->buffer);
-}
-
 static void r300_destroy_screen(struct pipe_screen* pscreen)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
+    struct r300_winsys_screen *rws = r300_winsys_screen(pscreen);
+
+    if (rws)
+      rws->destroy(rws);
 
     FREE(r300screen->caps);
     FREE(r300screen);
 }
 
-struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
+struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
 {
-    struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
-    struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
+    struct r300_screen *r300screen = CALLOC_STRUCT(r300_screen);
+    struct r300_capabilities *caps = CALLOC_STRUCT(r300_capabilities);
 
     if (!r300screen || !caps) {
         FREE(r300screen);
@@ -333,16 +274,16 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
         return NULL;
     }
 
-    caps->pci_id = radeon_winsys->pci_id;
-    caps->num_frag_pipes = radeon_winsys->gb_pipes;
-    caps->num_z_pipes = radeon_winsys->z_pipes;
+    caps->pci_id = rws->get_value(rws, R300_VID_PCI_ID);
+    caps->num_frag_pipes = rws->get_value(rws, R300_VID_GB_PIPES);
+    caps->num_z_pipes = rws->get_value(rws, R300_VID_Z_PIPES);
 
     r300_init_debug(r300screen);
     r300_parse_chipset(caps);
 
     r300screen->caps = caps;
-    r300screen->radeon_winsys = radeon_winsys;
-    r300screen->screen.winsys = (struct pipe_winsys*)radeon_winsys;
+    r300screen->rws = rws;
+    r300screen->screen.winsys = (struct pipe_winsys*)rws;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;
     r300screen->screen.get_vendor = r300_get_vendor;
@@ -350,13 +291,15 @@ struct pipe_screen* r300_create_screen(struct radeon_winsys* radeon_winsys)
     r300screen->screen.get_paramf = r300_get_paramf;
     r300screen->screen.is_format_supported = r300_is_format_supported;
     r300screen->screen.context_create = r300_create_context;
-    r300screen->screen.get_tex_transfer = r300_get_tex_transfer;
-    r300screen->screen.tex_transfer_destroy = r300_tex_transfer_destroy;
-    r300screen->screen.transfer_map = r300_transfer_map;
-    r300screen->screen.transfer_unmap = r300_transfer_unmap;
 
     r300_init_screen_texture_functions(&r300screen->screen);
-    u_simple_screen_init(&r300screen->screen);
 
+    r300_screen_init_buffer_functions(r300screen);
     return &r300screen->screen;
+}
+
+struct r300_winsys_screen *
+r300_winsys_screen(struct pipe_screen *screen)
+{
+    return r300_screen(screen)->rws;
 }

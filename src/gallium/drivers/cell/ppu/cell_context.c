@@ -36,7 +36,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
-#include "util/u_simple_screen.h"
 #include "pipe/p_screen.h"
 
 #include "draw/draw_context.h"
@@ -137,7 +136,7 @@ cell_create_context(struct pipe_screen *screen,
    memset(cell, 0, sizeof(*cell));
 
    cell->winsys = NULL;		/* XXX: fixme - get this from screen? */
-   cell->pipe.winsys = screen->winsys;
+   cell->pipe.winsys = NULL;
    cell->pipe.screen = screen;
    cell->pipe.priv = priv;
    cell->pipe.destroy = cell_destroy_context;
@@ -159,6 +158,7 @@ cell_create_context(struct pipe_screen *screen,
    cell_init_shader_functions(cell);
    cell_init_surface_functions(cell);
    cell_init_vertex_functions(cell);
+   cell_init_texture_transfer_funcs(cell);
 
    cell->draw = cell_draw_create(cell);
 

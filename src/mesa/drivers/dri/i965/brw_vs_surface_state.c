@@ -67,13 +67,13 @@ brw_vs_update_constant_buffer(struct brw_context *brw)
     */
    _mesa_load_state_parameters(&brw->intel.ctx, vp->program.Base.Parameters);
 
-   intel_bo_map_gtt_preferred(intel, const_buffer, GL_TRUE);
+   drm_intel_gem_bo_map_gtt(const_buffer);
    for (i = 0; i < params->NumParameters; i++) {
       memcpy(const_buffer->virtual + i * 4 * sizeof(float),
 	     params->ParameterValues[i],
 	     4 * sizeof(float));
    }
-   intel_bo_unmap_gtt_preferred(intel, const_buffer);
+   drm_intel_gem_bo_unmap_gtt(const_buffer);
 
    return const_buffer;
 }
@@ -104,7 +104,7 @@ brw_update_vs_constant_surface( GLcontext *ctx,
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
-   if (vp->const_buffer == 0) {
+   if (vp->const_buffer == NULL) {
       drm_intel_bo_unreference(brw->vs.surf_bo[surf]);
       brw->vs.surf_bo[surf] = NULL;
       return;
@@ -132,7 +132,7 @@ brw_update_vs_constant_surface( GLcontext *ctx,
    brw->vs.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
-                                            &key.bo, key.bo ? 1 : 0,
+                                            &key.bo, 1,
                                             NULL);
    if (brw->vs.surf_bo[surf] == NULL) {
       brw->vs.surf_bo[surf] = brw_create_constant_surface(brw, &key);

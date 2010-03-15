@@ -73,8 +73,8 @@ get_depth_stencil_values( struct depth_data *data,
          data->bzzzz[j] = tile->data.depth32[y][x];
       }
       break;
-   case PIPE_FORMAT_X8Z24_UNORM:
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->input.x0 % TILE_SIZE + (j & 1);
          int y = quad->input.y0 % TILE_SIZE + (j >> 1);
@@ -82,8 +82,8 @@ get_depth_stencil_values( struct depth_data *data,
          data->stencilVals[j] = tile->data.depth32[y][x] >> 24;
       }
    break;
-   case PIPE_FORMAT_Z24X8_UNORM:
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->input.x0 % TILE_SIZE + (j & 1);
          int y = quad->input.y0 % TILE_SIZE + (j >> 1);
@@ -146,8 +146,8 @@ convert_quad_depth( struct depth_data *data,
          }
       }
       break;
-   case PIPE_FORMAT_X8Z24_UNORM:
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
       {
          float scale = (float) ((1 << 24) - 1);
 
@@ -156,8 +156,8 @@ convert_quad_depth( struct depth_data *data,
          }
       }
       break;
-   case PIPE_FORMAT_Z24X8_UNORM:
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       {
          float scale = (float) ((1 << 24) - 1);
 
@@ -189,7 +189,7 @@ write_depth_stencil_values( struct depth_data *data,
          tile->data.depth16[y][x] = (ushort) data->bzzzz[j];
       }
       break;
-   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z32_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->input.x0 % TILE_SIZE + (j & 1);
@@ -197,21 +197,21 @@ write_depth_stencil_values( struct depth_data *data,
          tile->data.depth32[y][x] = data->bzzzz[j];
       }
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->input.x0 % TILE_SIZE + (j & 1);
          int y = quad->input.y0 % TILE_SIZE + (j >> 1);
          tile->data.depth32[y][x] = (data->stencilVals[j] << 24) | data->bzzzz[j];
       }
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->input.x0 % TILE_SIZE + (j & 1);
          int y = quad->input.y0 % TILE_SIZE + (j >> 1);
          tile->data.depth32[y][x] = (data->bzzzz[j] << 8) | data->stencilVals[j];
       }
       break;
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->input.x0 % TILE_SIZE + (j & 1);
          int y = quad->input.y0 % TILE_SIZE + (j >> 1);

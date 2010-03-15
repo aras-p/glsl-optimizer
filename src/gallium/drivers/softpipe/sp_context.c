@@ -44,6 +44,7 @@
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
 #include "sp_tex_tile_cache.h"
+#include "sp_texture.h"
 #include "sp_query.h"
 
 
@@ -210,7 +211,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
    softpipe->dump_gs = debug_get_bool_option( "SOFTPIPE_DUMP_GS", FALSE );
 
-   softpipe->pipe.winsys = screen->winsys;
+   softpipe->pipe.winsys = NULL;
    softpipe->pipe.screen = screen;
    softpipe->pipe.destroy = softpipe_destroy;
    softpipe->pipe.priv = priv;
@@ -245,6 +246,10 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.bind_gs_state   = softpipe_bind_gs_state;
    softpipe->pipe.delete_gs_state = softpipe_delete_gs_state;
 
+   softpipe->pipe.create_vertex_elements_state = softpipe_create_vertex_elements_state;
+   softpipe->pipe.bind_vertex_elements_state = softpipe_bind_vertex_elements_state;
+   softpipe->pipe.delete_vertex_elements_state = softpipe_delete_vertex_elements_state;
+
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_stencil_ref = softpipe_set_stencil_ref;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
@@ -257,7 +262,6 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 
    softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
-   softpipe->pipe.set_vertex_elements = softpipe_set_vertex_elements;
 
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;
@@ -272,6 +276,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
 
    softpipe_init_query_funcs( softpipe );
+   softpipe_init_texture_funcs( &softpipe->pipe );
 
    softpipe->pipe.render_condition = softpipe_render_condition;
 
@@ -280,13 +285,13 @@ softpipe_create_context( struct pipe_screen *screen,
     * Must be before quad stage setup!
     */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-      softpipe->cbuf_cache[i] = sp_create_tile_cache( screen );
-   softpipe->zsbuf_cache = sp_create_tile_cache( screen );
+      softpipe->cbuf_cache[i] = sp_create_tile_cache( &softpipe->pipe );
+   softpipe->zsbuf_cache = sp_create_tile_cache( &softpipe->pipe );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      softpipe->tex_cache[i] = sp_create_tex_tile_cache( screen );
+      softpipe->tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      softpipe->vertex_tex_cache[i] = sp_create_tex_tile_cache(screen);
+      softpipe->vertex_tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
    }
 
    /* setup quad rendering stages */

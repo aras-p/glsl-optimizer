@@ -3,6 +3,7 @@
  * Version:  7.1
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright 2008, 2010 George Sapountzis <gsapountzis@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,11 +23,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * Authors:
- *    George Sapountzis <gsap7@yahoo.gr>
- */
-
 
 #ifndef _SWRAST_PRIV_H
 #define _SWRAST_PRIV_H
@@ -34,6 +30,7 @@
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 #include "main/mtypes.h"
+#include "dri_sw.h"
 
 
 /**
@@ -58,32 +55,50 @@
 /**
  * Data types
  */
-struct __DRIscreenRec {
-    int num;
-
-    const __DRIextension **extensions;
-
-    const __DRIswrastLoaderExtension *swrast_loader;
-};
-
-struct __DRIcontextRec {
+struct dri_context
+{
+    /* mesa, base class, must be first */
     GLcontext Base;
 
-    void *loaderPrivate;
-
-    __DRIscreen *driScreenPriv;
+    /* dri */
+    __DRIcontext *cPriv;
 };
 
-struct __DRIdrawableRec {
+static INLINE struct dri_context *
+dri_context(__DRIcontext * driContextPriv)
+{
+    return (struct dri_context *)driContextPriv->driverPrivate;
+}
+
+static INLINE struct dri_context *
+swrast_context(GLcontext *ctx)
+{
+    return (struct dri_context *) ctx;
+}
+
+struct dri_drawable
+{
+    /* mesa, base class, must be first */
     GLframebuffer Base;
 
-    void *loaderPrivate;
-
-    __DRIscreen *driScreenPriv;
+    /* dri */
+    __DRIdrawable *dPriv;
 
     /* scratch row for optimized front-buffer rendering */
     char *row;
 };
+
+static INLINE struct dri_drawable *
+dri_drawable(__DRIdrawable * driDrawPriv)
+{
+    return (struct dri_drawable *)driDrawPriv->driverPrivate;
+}
+
+static INLINE struct dri_drawable *
+swrast_drawable(GLframebuffer *fb)
+{
+    return (struct dri_drawable *) fb;
+}
 
 struct swrast_renderbuffer {
     struct gl_renderbuffer Base;
@@ -93,18 +108,6 @@ struct swrast_renderbuffer {
    /* bits per pixel of storage */
     GLuint bpp;
 };
-
-static INLINE __DRIcontext *
-swrast_context(GLcontext *ctx)
-{
-    return (__DRIcontext *) ctx;
-}
-
-static INLINE __DRIdrawable *
-swrast_drawable(GLframebuffer *fb)
-{
-    return (__DRIdrawable *) fb;
-}
 
 static INLINE struct swrast_renderbuffer *
 swrast_renderbuffer(struct gl_renderbuffer *rb)
@@ -116,11 +119,10 @@ swrast_renderbuffer(struct gl_renderbuffer *rb)
 /**
  * Pixel formats we support
  */
-#define PF_CI8        1		/**< Color Index mode */
-#define PF_A8R8G8B8   2		/**< 32bpp TrueColor:  8-A, 8-R, 8-G, 8-B bits */
-#define PF_R5G6B5     3		/**< 16bpp TrueColor:  5-R, 6-G, 5-B bits */
-#define PF_R3G3B2     4		/**<  8bpp TrueColor:  3-R, 3-G, 2-B bits */
-#define PF_X8R8G8B8   5		/**< 32bpp TrueColor:  8-R, 8-G, 8-B bits */
+#define PF_A8R8G8B8   1		/**< 32bpp TrueColor:  8-A, 8-R, 8-G, 8-B bits */
+#define PF_R5G6B5     2		/**< 16bpp TrueColor:  5-R, 6-G, 5-B bits */
+#define PF_R3G3B2     3		/**<  8bpp TrueColor:  3-R, 3-G, 2-B bits */
+#define PF_X8R8G8B8   4		/**< 32bpp TrueColor:  8-R, 8-G, 8-B bits */
 
 /**
  * Renderbuffer pitch alignment (in bits).

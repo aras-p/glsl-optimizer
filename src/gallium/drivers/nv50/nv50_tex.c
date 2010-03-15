@@ -24,6 +24,7 @@
 #include "nv50_texture.h"
 
 #include "nouveau/nouveau_stateobj.h"
+#include "nouveau/nouveau_reloc.h"
 
 #include "util/u_format.h"
 
@@ -49,28 +50,28 @@ struct nv50_texture_format {
 
 static const struct nv50_texture_format nv50_tex_format_list[] =
 {
-	_(A8R8G8B8_UNORM, UNORM, C2, C1, C0, C3,  8_8_8_8),
-	_(A8R8G8B8_SRGB,  UNORM, C2, C1, C0, C3,  8_8_8_8),
-	_(X8R8G8B8_UNORM, UNORM, C2, C1, C0, ONE, 8_8_8_8),
-	_(X8R8G8B8_SRGB,  UNORM, C2, C1, C0, ONE, 8_8_8_8),
-	_(A1R5G5B5_UNORM, UNORM, C2, C1, C0, C3,  1_5_5_5),
-	_(A4R4G4B4_UNORM, UNORM, C2, C1, C0, C3,  4_4_4_4),
+	_(B8G8R8A8_UNORM, UNORM, C2, C1, C0, C3,  8_8_8_8),
+	_(B8G8R8A8_SRGB,  UNORM, C2, C1, C0, C3,  8_8_8_8),
+	_(B8G8R8X8_UNORM, UNORM, C2, C1, C0, ONE, 8_8_8_8),
+	_(B8G8R8X8_SRGB,  UNORM, C2, C1, C0, ONE, 8_8_8_8),
+	_(B5G5R5A1_UNORM, UNORM, C2, C1, C0, C3,  1_5_5_5),
+	_(B4G4R4A4_UNORM, UNORM, C2, C1, C0, C3,  4_4_4_4),
 
-	_(R5G6B5_UNORM, UNORM, C2, C1, C0, ONE, 5_6_5),
+	_(B5G6R5_UNORM, UNORM, C2, C1, C0, ONE, 5_6_5),
 
 	_(L8_UNORM, UNORM, C0, C0, C0, ONE, 8),
 	_(A8_UNORM, UNORM, ZERO, ZERO, ZERO, C0, 8),
 	_(I8_UNORM, UNORM, C0, C0, C0, C0, 8),
 
-	_(A8L8_UNORM, UNORM, C0, C0, C0, C1, 8_8),
+	_(L8A8_UNORM, UNORM, C0, C0, C0, C1, 8_8),
 
 	_(DXT1_RGB, UNORM, C0, C1, C2, ONE, DXT1),
 	_(DXT1_RGBA, UNORM, C0, C1, C2, C3, DXT1),
 	_(DXT3_RGBA, UNORM, C0, C1, C2, C3, DXT3),
 	_(DXT5_RGBA, UNORM, C0, C1, C2, C3, DXT5),
 
-	_MIXED(Z24S8_UNORM, UINT, UNORM, UINT, UINT, C1, C1, C1, ONE, 24_8),
-	_MIXED(S8Z24_UNORM, UNORM, UINT, UINT, UINT, C0, C0, C0, ONE, 8_24),
+	_MIXED(S8Z24_UNORM, UINT, UNORM, UINT, UINT, C1, C1, C1, ONE, 24_8),
+	_MIXED(Z24S8_UNORM, UNORM, UINT, UINT, UINT, C0, C0, C0, ONE, 8_24),
 
 	_(R16G16B16A16_SNORM, UNORM, C0, C1, C2, C3, 16_16_16_16),
 	_(R16G16B16A16_UNORM, SNORM, C0, C1, C2, C3, 16_16_16_16),
@@ -195,6 +196,35 @@ nv50_validate_textures(struct nv50_context *nv50, struct nouveau_stateobj *so,
 }
 
 void
+nv50_tex_relocs(struct nv50_context *nv50)
+{
+	struct nouveau_channel *chan = nv50->screen->tesla->channel;
+	int p, unit;
+
+	p = PIPE_SHADER_FRAGMENT;
+	for (unit = 0; unit < nv50->miptree_nr[p]; unit++) {
+		if (!nv50->miptree[p][unit])
+			continue;
+		nouveau_reloc_emit(chan, nv50->screen->tic,
+				   ((p * 32) + unit) * 32, NULL,
+				   nv50->miptree[p][unit]->base.bo, 0, 0,
+				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
+				   NOUVEAU_BO_RD, 0, 0);
+	}
+
+	p = PIPE_SHADER_VERTEX;
+	for (unit = 0; unit < nv50->miptree_nr[p]; unit++) {
+		if (!nv50->miptree[p][unit])
+			continue;
+		nouveau_reloc_emit(chan, nv50->screen->tic,
+				   ((p * 32) + unit) * 32, NULL,
+				   nv50->miptree[p][unit]->base.bo, 0, 0,
+				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
+				   NOUVEAU_BO_RD, 0, 0);
+	}
+}
+
+struct nouveau_stateobj *
 nv50_tex_validate(struct nv50_context *nv50)
 {
 	struct nouveau_stateobj *so;
@@ -217,12 +247,11 @@ nv50_tex_validate(struct nv50_context *nv50)
 		so_ref(NULL, &so);
 
 		NOUVEAU_ERR("failed tex validate\n");
-		return;
+		return NULL;
 	}
 
 	so_method(so, tesla, 0x1330, 1); /* flush TIC */
 	so_data  (so, 0);
 
-	so_ref(so, &nv50->state.tic_upload);
-	so_ref(NULL, &so);
+	return so;
 }

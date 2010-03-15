@@ -27,15 +27,17 @@
 
 
 #include "util/u_memory.h"
-#include "util/u_simple_screen.h"
-#include "util/u_simple_screen.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
+#include "state_tracker/sw_winsys.h"
+
 #include "sp_texture.h"
-#include "sp_winsys.h"
 #include "sp_screen.h"
 #include "sp_context.h"
+#include "sp_buffer.h"
+#include "sp_fence.h"
+#include "sp_public.h"
 
 
 static const char *
@@ -83,11 +85,11 @@ softpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 13; /* max 4Kx4K */
+      return SP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 9;  /* max 256x256x256 */
+      return SP_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 13; /* max 4Kx4K */
+      return SP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_TGSI_CONT_SUPPORTED:
       return 1;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
@@ -145,6 +147,8 @@ softpipe_is_format_supported( struct pipe_screen *screen,
                               unsigned tex_usage, 
                               unsigned geom_flags )
 {
+   struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+
    assert(target == PIPE_TEXTURE_1D ||
           target == PIPE_TEXTURE_2D ||
           target == PIPE_TEXTURE_3D ||
@@ -152,29 +156,39 @@ softpipe_is_format_supported( struct pipe_screen *screen,
 
    switch(format) {
    case PIPE_FORMAT_L16_UNORM:
-   case PIPE_FORMAT_YCBCR_REV:
-   case PIPE_FORMAT_YCBCR:
+   case PIPE_FORMAT_YUYV:
+   case PIPE_FORMAT_UYVY:
    case PIPE_FORMAT_DXT1_RGB:
    case PIPE_FORMAT_DXT1_RGBA:
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
    case PIPE_FORMAT_Z32_FLOAT:
    case PIPE_FORMAT_R8G8_SNORM:
-   case PIPE_FORMAT_B6UG5SR5S_NORM:
-   case PIPE_FORMAT_X8UB8UG8SR8S_NORM:
-   case PIPE_FORMAT_A8B8G8R8_SNORM:
+   case PIPE_FORMAT_R5SG5SB6U_NORM:
+   case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
+   case PIPE_FORMAT_R8G8B8A8_SNORM:
    case PIPE_FORMAT_NONE:
       return FALSE;
    default:
-      return TRUE;
+      break;
    }
+
+   if(tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      if(!winsys->is_displaytarget_format_supported(winsys, format))
+         return FALSE;
+   }
+
+   /* XXX: this is often a lie.  Pull in logic from llvmpipe to fix.
+    */
+   return TRUE;
 }
 
 
 static void
 softpipe_destroy_screen( struct pipe_screen *screen )
 {
-   struct pipe_winsys *winsys = screen->winsys;
+   struct softpipe_screen *sp_screen = softpipe_screen(screen);
+   struct sw_winsys *winsys = sp_screen->winsys;
 
    if(winsys->destroy)
       winsys->destroy(winsys);
@@ -183,21 +197,37 @@ softpipe_destroy_screen( struct pipe_screen *screen )
 }
 
 
+/* This is often overriden by the co-state tracker.
+ */
+static void
+softpipe_flush_frontbuffer(struct pipe_screen *_screen,
+                           struct pipe_surface *surface,
+                           void *context_private)
+{
+   struct softpipe_screen *screen = softpipe_screen(_screen);
+   struct sw_winsys *winsys = screen->winsys;
+   struct softpipe_texture *texture = softpipe_texture(surface->texture);
+
+   assert(texture->dt);
+   if (texture->dt)
+      winsys->displaytarget_display(winsys, texture->dt, context_private);
+}
 
 /**
  * Create a new pipe_screen object
  * Note: we're not presently subclassing pipe_screen (no softpipe_screen).
  */
 struct pipe_screen *
-softpipe_create_screen(struct pipe_winsys *winsys)
+softpipe_create_screen(struct sw_winsys *winsys)
 {
    struct softpipe_screen *screen = CALLOC_STRUCT(softpipe_screen);
 
    if (!screen)
       return NULL;
 
-   screen->base.winsys = winsys;
+   screen->winsys = winsys;
 
+   screen->base.winsys = NULL;
    screen->base.destroy = softpipe_destroy_screen;
 
    screen->base.get_name = softpipe_get_name;
@@ -206,9 +236,11 @@ softpipe_create_screen(struct pipe_winsys *winsys)
    screen->base.get_paramf = softpipe_get_paramf;
    screen->base.is_format_supported = softpipe_is_format_supported;
    screen->base.context_create = softpipe_create_context;
+   screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
 
    softpipe_init_screen_texture_funcs(&screen->base);
-   u_simple_screen_init(&screen->base);
+   softpipe_init_screen_buffer_funcs(&screen->base);
+   softpipe_init_screen_fence_funcs(&screen->base);
 
    return &screen->base;
 }

@@ -59,14 +59,6 @@ driNewRenderbuffer(gl_format format, GLvoid *addr,
 {
    driRenderbuffer *drb;
 
-   assert(format == GL_RGBA ||
-          format == GL_RGB5 ||
-          format == GL_RGBA8 ||
-          format == GL_DEPTH_COMPONENT16 ||
-          format == GL_DEPTH_COMPONENT24 ||
-          format == GL_DEPTH_COMPONENT32 ||
-          format == GL_STENCIL_INDEX8_EXT);
-
    assert(cpp > 0);
    assert(pitch > 0);
 

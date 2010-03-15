@@ -50,6 +50,8 @@ extern "C" {
 
 
 /** Opaque type */
+struct winsys_handle;
+/** Opaque type */
 struct pipe_fence_handle;
 struct pipe_winsys;
 struct pipe_buffer;
@@ -108,20 +110,29 @@ struct pipe_screen {
                                            const struct pipe_texture *templat);
 
    /**
-    * Create a new texture object, using the given template info, but on top of
-    * existing memory.
-    * 
-    * It is assumed that the buffer data is layed out according to the expected
-    * by the hardware. NULL will be returned if any inconsistency is found.  
+    * Create a texture from a winsys_handle. The handle is often created in
+    * another process by first creating a pipe texture and then calling
+    * texture_get_handle.
     */
-   struct pipe_texture * (*texture_blanket)(struct pipe_screen *,
-                                            const struct pipe_texture *templat,
-                                            const unsigned *stride,
-                                            struct pipe_buffer *buffer);
+   struct pipe_texture * (*texture_from_handle)(struct pipe_screen *,
+                                                const struct pipe_texture *templat,
+                                                struct winsys_handle *handle);
+
+   /**
+    * Get a winsys_handle from a texture. Some platforms/winsys requires
+    * that the texture is created with a special usage flag like
+    * DISPLAYTARGET or PRIMARY.
+    */
+   boolean (*texture_get_handle)(struct pipe_screen *,
+                                 struct pipe_texture *tex,
+                                 struct winsys_handle *handle);
+
 
    void (*texture_destroy)(struct pipe_texture *pt);
 
-   /** Get a surface which is a "view" into a texture */
+   /** Get a 2D surface which is a "view" into a texture
+    * \param usage  bitmaks of PIPE_BUFFER_USAGE_* read/write flags
+    */
    struct pipe_surface *(*get_tex_surface)(struct pipe_screen *,
                                            struct pipe_texture *texture,
                                            unsigned face, unsigned level,
@@ -130,23 +141,6 @@ struct pipe_screen {
 
    void (*tex_surface_destroy)(struct pipe_surface *);
    
-
-   /** Get a transfer object for transferring data to/from a texture */
-   struct pipe_transfer *(*get_tex_transfer)(struct pipe_screen *,
-                                             struct pipe_texture *texture,
-                                             unsigned face, unsigned level,
-                                             unsigned zslice,
-                                             enum pipe_transfer_usage usage,
-                                             unsigned x, unsigned y,
-                                             unsigned w, unsigned h);
-
-   void (*tex_transfer_destroy)(struct pipe_transfer *);
-   
-   void *(*transfer_map)( struct pipe_screen *,
-                          struct pipe_transfer *transfer );
-
-   void (*transfer_unmap)( struct pipe_screen *,
-                           struct pipe_transfer *transfer );
 
 
    /**
@@ -185,23 +179,6 @@ struct pipe_screen {
                                              void *ptr,
                                              unsigned bytes);
 
-   /**
-    * Allocate storage for a display target surface.
-    *
-    * Often surfaces which are meant to be blitted to the front screen (i.e.,
-    * display targets) must be allocated with special characteristics, memory
-    * pools, or obtained directly from the windowing system.
-    *
-    * This callback is invoked by the pipe_screenwhen creating a texture marked
-    * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag  to get the underlying
-    * buffer storage.
-    */
-   struct pipe_buffer *(*surface_buffer_create)(struct pipe_screen *screen,
-						unsigned width, unsigned height,
-						enum pipe_format format,
-						unsigned usage,
-						unsigned tex_usage,
-						unsigned *stride);
 
 
    /**
@@ -271,6 +248,7 @@ struct pipe_screen {
 
    /**
     * Do any special operations to ensure buffer size is correct
+    * \param context_private  the private data of the calling context
     */
    void (*update_buffer)( struct pipe_screen *ws,
                           void *context_private );
@@ -278,10 +256,12 @@ struct pipe_screen {
    /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
+    * \param winsys_drawable_handle  an opaque handle that the calling context
+    *                                gets out-of-band
     */
    void (*flush_frontbuffer)( struct pipe_screen *screen,
                               struct pipe_surface *surf,
-                              void *context_private );
+                              void *winsys_drawable_handle );
 
 
 

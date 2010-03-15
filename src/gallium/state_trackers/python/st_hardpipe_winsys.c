@@ -54,11 +54,6 @@ static PFNGETGALLIUMSCREENMESAPROC pfnGetGalliumScreenMESA = NULL;
 static PFNCREATEGALLIUMCONTEXTMESAPROC pfnCreateGalliumContextMESA = NULL;
 
 
-/* XXX: Force init_gallium symbol to be linked */
-extern void init_gallium(void);
-void (*force_init_gallium_linkage)(void) = &init_gallium;
-
-
 #ifdef PIPE_OS_WINDOWS
 
 static INLINE boolean
@@ -207,16 +202,11 @@ st_hardpipe_load(void)
 #endif
 
 
-static struct pipe_screen *
-st_hardpipe_screen_create(void)
+struct pipe_screen *
+st_hardware_screen_create(void)
 {
    if(st_hardpipe_load())
       return pfnGetGalliumScreenMESA();
    else
-      return st_softpipe_winsys.screen_create();
+      return st_software_screen_create();
 }
-
-
-const struct st_winsys st_hardpipe_winsys = {
-   &st_hardpipe_screen_create
-};

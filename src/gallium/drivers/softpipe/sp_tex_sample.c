@@ -55,7 +55,7 @@
 static INLINE float
 frac(float f)
 {
-   return f - util_ifloor(f);
+   return f - floorf(f);
 }
 
 
@@ -201,11 +201,9 @@ wrap_nearest_mirror_repeat(const float s[4], unsigned size, int icoord[4])
    const float max = 1.0F - min;
    for (ch = 0; ch < 4; ch++) {
       const int flr = util_ifloor(s[ch]);
-      float u;
+      float u = frac(s[ch]);
       if (flr & 1)
-         u = 1.0F - (s[ch] - (float) flr);
-      else
-         u = s[ch] - (float) flr;
+         u = 1.0F - u;
       if (u < min)
          icoord[ch] = 0;
       else if (u > max)
@@ -358,11 +356,9 @@ wrap_linear_mirror_repeat(const float s[4], unsigned size,
    uint ch;
    for (ch = 0; ch < 4; ch++) {
       const int flr = util_ifloor(s[ch]);
-      float u;
+      float u = frac(s[ch]);
       if (flr & 1)
-         u = 1.0F - (s[ch] - (float) flr);
-      else
-         u = s[ch] - (float) flr;
+         u = 1.0F - u;
       u = u * size - 0.5F;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
@@ -441,8 +437,7 @@ wrap_linear_mirror_clamp_to_border(const float s[4], unsigned size,
 
 
 /**
- * For RECT textures / unnormalized texcoords
- * Only a subset of wrap modes supported.
+ * PIPE_TEX_WRAP_CLAMP for nearest sampling, unnormalized coords.
  */
 static void
 wrap_nearest_unorm_clamp(const float s[4], unsigned size, int icoord[4])
@@ -456,11 +451,25 @@ wrap_nearest_unorm_clamp(const float s[4], unsigned size, int icoord[4])
 
 
 /**
- * Handles clamp_to_edge and clamp_to_border:
+ * PIPE_TEX_WRAP_CLAMP_TO_BORDER for nearest sampling, unnormalized coords.
  */
 static void
 wrap_nearest_unorm_clamp_to_border(const float s[4], unsigned size,
                                    int icoord[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      icoord[ch]= util_ifloor( CLAMP(s[ch], -0.5F, (float) size + 0.5F) );
+   }
+}
+
+
+/**
+ * PIPE_TEX_WRAP_CLAMP_TO_EDGE for nearest sampling, unnormalized coords.
+ */
+static void
+wrap_nearest_unorm_clamp_to_edge(const float s[4], unsigned size,
+                                 int icoord[4])
 {
    uint ch;
    for (ch = 0; ch < 4; ch++) {
@@ -470,8 +479,7 @@ wrap_nearest_unorm_clamp_to_border(const float s[4], unsigned size,
 
 
 /**
- * For RECT textures / unnormalized texcoords.
- * Only a subset of wrap modes supported.
+ * PIPE_TEX_WRAP_CLAMP for linear sampling, unnormalized coords.
  */
 static void
 wrap_linear_unorm_clamp(const float s[4], unsigned size,
@@ -488,13 +496,36 @@ wrap_linear_unorm_clamp(const float s[4], unsigned size,
 }
 
 
+/**
+ * PIPE_TEX_WRAP_CLAMP_TO_BORDER for linear sampling, unnormalized coords.
+ */
 static void
 wrap_linear_unorm_clamp_to_border(const float s[4], unsigned size,
                                   int icoord0[4], int icoord1[4], float w[4])
 {
    uint ch;
    for (ch = 0; ch < 4; ch++) {
-      float u = CLAMP(s[ch], 0.5F, (float) size - 0.5F);
+      float u = CLAMP(s[ch], -0.5F, (float) size + 0.5F);
+      u -= 0.5F;
+      icoord0[ch] = util_ifloor(u);
+      icoord1[ch] = icoord0[ch] + 1;
+      if (icoord1[ch] > (int) size - 1)
+         icoord1[ch] = size - 1;
+      w[ch] = frac(u);
+   }
+}
+
+
+/**
+ * PIPE_TEX_WRAP_CLAMP_TO_EDGE for linear sampling, unnormalized coords.
+ */
+static void
+wrap_linear_unorm_clamp_to_edge(const float s[4], unsigned size,
+                                int icoord0[4], int icoord1[4], float w[4])
+{
+   uint ch;
+   for (ch = 0; ch < 4; ch++) {
+      float u = CLAMP(s[ch], +0.5F, (float) size - 0.5F);
       u -= 0.5F;
       icoord0[ch] = util_ifloor(u);
       icoord1[ch] = icoord0[ch] + 1;
@@ -1583,7 +1614,6 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
    unsigned j;
    float ssss[4], tttt[4];
-   unsigned face;
 
    /*
      major axis
@@ -1597,7 +1627,8 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
      -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
    */
 
-   /* First choose the cube face.
+   /* Choose the cube face and compute new s/t coords for the 2D face.
+    *
     * Use the same cube face for all four pixels in the quad.
     *
     * This isn't ideal, but if we want to use a different cube face
@@ -1616,82 +1647,34 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
       const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
 
       if (arx >= ary && arx >= arz) {
-         if (rx >= 0.0F) {
-            face = PIPE_TEX_FACE_POS_X;
-         }
-         else {
-            face = PIPE_TEX_FACE_NEG_X;
+         float sign = (rx >= 0.0F) ? 1.0F : -1.0F;
+         uint face = (rx >= 0.0F) ? PIPE_TEX_FACE_POS_X : PIPE_TEX_FACE_NEG_X;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            const float ima = -0.5F / fabsf(s[j]);
+            ssss[j] = sign *  p[j] * ima + 0.5F;
+            tttt[j] =         t[j] * ima + 0.5F;
+            samp->faces[j] = face;
          }
       }
       else if (ary >= arx && ary >= arz) {
-         if (ry >= 0.0F) {
-            face = PIPE_TEX_FACE_POS_Y;
-         }
-         else {
-            face = PIPE_TEX_FACE_NEG_Y;
+         float sign = (ry >= 0.0F) ? 1.0F : -1.0F;
+         uint face = (ry >= 0.0F) ? PIPE_TEX_FACE_POS_Y : PIPE_TEX_FACE_NEG_Y;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            const float ima = -0.5F / fabsf(t[j]);
+            ssss[j] =        -s[j] * ima + 0.5F;
+            tttt[j] = sign * -p[j] * ima + 0.5F;
+            samp->faces[j] = face;
          }
       }
       else {
-         if (rz > 0.0F) {
-            face = PIPE_TEX_FACE_POS_Z;
+         float sign = (rz >= 0.0F) ? 1.0F : -1.0F;
+         uint face = (rz >= 0.0F) ? PIPE_TEX_FACE_POS_Z : PIPE_TEX_FACE_NEG_Z;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            const float ima = -0.5 / fabsf(p[j]);
+            ssss[j] = sign * -s[j] * ima + 0.5F;
+            tttt[j] =         t[j] * ima + 0.5F;
+            samp->faces[j] = face;
          }
-         else {
-            face = PIPE_TEX_FACE_NEG_Z;
-         }
-      }
-   }
-
-   /* Now compute the 2D _face_ texture coords from the
-    * 3D _cube_ texture coords.
-    */
-   for (j = 0; j < QUAD_SIZE; j++) {
-      const float rx = s[j], ry = t[j], rz = p[j];
-      const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
-      float sc, tc, ma;
-
-      switch (face) {
-      case PIPE_TEX_FACE_POS_X:
-         sc = -rz;
-         tc = -ry;
-         ma = arx;
-         break;
-      case PIPE_TEX_FACE_NEG_X:
-         sc = rz;
-         tc = -ry;
-         ma = arx;
-         break;
-      case PIPE_TEX_FACE_POS_Y:
-         sc = rx;
-         tc = rz;
-         ma = ary;
-         break;
-      case PIPE_TEX_FACE_NEG_Y:
-         sc = rx;
-         tc = -rz;
-         ma = ary;
-         break;
-      case PIPE_TEX_FACE_POS_Z:
-         sc = rx;
-         tc = -ry;
-         ma = arz;
-         break;
-      case PIPE_TEX_FACE_NEG_Z:
-         sc = -rx;
-         tc = -ry;
-         ma = arz;
-         break;
-      default:
-         assert(0 && "bad cube face");
-         sc = 0.0F;
-         tc = 0.0F;
-         ma = 0.0F;
-      }
-
-      {
-	 const float ima = 1.0 / ma;
-	 ssss[j] = ( sc * ima + 1.0F ) * 0.5F;
-	 tttt[j] = ( tc * ima + 1.0F ) * 0.5F;
-	 samp->faces[j] = face;
       }
    }
 
@@ -1711,6 +1694,7 @@ get_nearest_unorm_wrap(unsigned mode)
    case PIPE_TEX_WRAP_CLAMP:
       return wrap_nearest_unorm_clamp;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return wrap_nearest_unorm_clamp_to_edge;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return wrap_nearest_unorm_clamp_to_border;
    default:
@@ -1754,6 +1738,7 @@ get_linear_unorm_wrap(unsigned mode)
    case PIPE_TEX_WRAP_CLAMP:
       return wrap_linear_unorm_clamp;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return wrap_linear_unorm_clamp_to_edge;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return wrap_linear_unorm_clamp_to_border;
    default:

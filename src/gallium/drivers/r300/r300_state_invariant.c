@@ -38,7 +38,8 @@ struct pipe_viewport_state r300_viewport_identity = {
  *
  * Note that eventually this should be empty, but it's useful for development
  * and general unduplication of code. */
-void r300_emit_invariant_state(struct r300_context* r300, void* state)
+void r300_emit_invariant_state(struct r300_context* r300,
+                               unsigned size, void* state)
 {
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);

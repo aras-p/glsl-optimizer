@@ -45,6 +45,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
+#include "drivers/common/meta.h"
 
 #include "radeon_context.h"
 #include "radeon_mipmap_tree.h"
@@ -1900,7 +1901,7 @@ void radeonUploadTexMatrix( r100ContextPtr rmesa,
    So: if we need the q coord in the end (solely determined by the texture
    target, i.e. 2d / 1d / texrect targets) we swap the third and 4th row.
    Additionally, if we don't have texgen but 4 tex coords submitted, we swap
-   column 3 and 4 (for the 2d / 1d / texrect targets) since the the q coord
+   column 3 and 4 (for the 2d / 1d / texrect targets) since the q coord
    will get submitted in the "wrong", i.e. 3rd, slot.
    If an app submits 3 coords for 2d targets, we assume it is saving on vertex
    size and using the texture matrix to swap the r and q coords around (ut2k3
@@ -2248,13 +2249,17 @@ void radeonInitStateFuncs( GLcontext *ctx , GLboolean dri2 )
 
    ctx->Driver.DrawBuffer		= radeonDrawBuffer;
    ctx->Driver.ReadBuffer		= radeonReadBuffer;
+   if (dri2) {
+	   ctx->Driver.CopyPixels               = _mesa_meta_CopyPixels;
+	   ctx->Driver.DrawPixels               = _mesa_meta_DrawPixels;
+	   ctx->Driver.ReadPixels               = radeonReadPixels;
+   }
 
    ctx->Driver.AlphaFunc		= radeonAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= radeonBlendEquationSeparate;
    ctx->Driver.BlendFuncSeparate	= radeonBlendFuncSeparate;
    ctx->Driver.ClearColor		= radeonClearColor;
    ctx->Driver.ClearDepth		= radeonClearDepth;
-   ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearStencil		= radeonClearStencil;
    ctx->Driver.ClipPlane		= radeonClipPlane;
    ctx->Driver.ColorMask		= radeonColorMask;
@@ -2266,7 +2271,6 @@ void radeonInitStateFuncs( GLcontext *ctx , GLboolean dri2 )
    ctx->Driver.Fogfv			= radeonFogfv;
    ctx->Driver.FrontFace		= radeonFrontFace;
    ctx->Driver.Hint			= NULL;
-   ctx->Driver.IndexMask		= NULL;
    ctx->Driver.LightModelfv		= radeonLightModelfv;
    ctx->Driver.Lightfv			= radeonLightfv;
    ctx->Driver.LineStipple              = radeonLineStipple;

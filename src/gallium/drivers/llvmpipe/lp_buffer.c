@@ -30,7 +30,6 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
-#include "lp_winsys.h"
 #include "lp_screen.h"
 #include "lp_buffer.h"
 

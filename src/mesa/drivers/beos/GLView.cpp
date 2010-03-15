@@ -297,11 +297,9 @@ BGLView::BGLView(BRect rect, char *name,
    MesaDriver * md = new MesaDriver();
 
    // examine option flags and create gl_context struct
-   GLvisual * visual = _mesa_create_visual( rgbFlag,
-                                            dblFlag,
+   GLvisual * visual = _mesa_create_visual( dblFlag,
                                             stereoFlag,
                                             red, green, blue, alpha,
-                                            index,
                                             depth,
                                             stencil,
                                             accum, accum, accum, accum,

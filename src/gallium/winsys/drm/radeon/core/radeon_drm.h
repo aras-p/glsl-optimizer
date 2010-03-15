@@ -30,39 +30,18 @@
 #ifndef RADEON_DRM_H
 #define RADEON_DRM_H
 
-#include <sys/ioctl.h>
-
-#include "xf86drm.h"
-
-#include "pipe/p_screen.h"
-
-#include "trace/tr_drm.h"
-#include "util/u_debug.h"
-#include "util/u_memory.h"
-
 #include "state_tracker/drm_api.h"
 
-#include "radeon_buffer.h"
-#include "radeon_r300.h"
-
-/* XXX */
-#include "r300_screen.h"
 
 struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
 					 struct drm_create_screen_arg *arg);
-
 
 boolean radeon_buffer_from_texture(struct drm_api* api,
                                    struct pipe_screen* screen,
                                    struct pipe_texture* texture,
                                    struct pipe_buffer** buffer,
                                    unsigned* stride);
-
-struct pipe_buffer* radeon_buffer_from_handle(struct drm_api* api,
-                                              struct pipe_screen* screen,
-                                              const char* name,
-                                              unsigned handle);
 
 boolean radeon_handle_from_buffer(struct drm_api* api,
                                   struct pipe_screen* screen,

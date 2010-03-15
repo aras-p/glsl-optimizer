@@ -29,37 +29,30 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_simple_list.h"
+#include "util/u_surface.h"
 #include "lp_scene.h"
+#include "lp_scene_queue.h"
+#include "lp_debug.h"
 
 
 struct lp_scene *
-lp_scene_create(void)
-{
-   struct lp_scene *scene = CALLOC_STRUCT(lp_scene);
-   if (scene)
-      lp_scene_init(scene);
-   return scene;
-}
-
-
-void
-lp_scene_destroy(struct lp_scene *scene)
-{
-   lp_scene_reset(scene);
-   lp_scene_free_bin_data(scene);
-   FREE(scene);
-}
-
-
-void
-lp_scene_init(struct lp_scene *scene)
+lp_scene_create( struct pipe_context *pipe,
+                 struct lp_scene_queue *queue )
 {
    unsigned i, j;
-   for (i = 0; i < TILES_X; i++)
+   struct lp_scene *scene = CALLOC_STRUCT(lp_scene);
+   if (!scene)
+      return NULL;
+
+   scene->pipe = pipe;
+   scene->empty_queue = queue;
+
+   for (i = 0; i < TILES_X; i++) {
       for (j = 0; j < TILES_Y; j++) {
          struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
          bin->commands.head = bin->commands.tail = CALLOC_STRUCT(cmd_block);
       }
+   }
 
    scene->data.head =
       scene->data.tail = CALLOC_STRUCT(data_block);
@@ -67,6 +60,36 @@ lp_scene_init(struct lp_scene *scene)
    make_empty_list(&scene->textures);
 
    pipe_mutex_init(scene->mutex);
+
+   return scene;
+}
+
+
+/**
+ * Free all data associated with the given scene, and free(scene).
+ */
+void
+lp_scene_destroy(struct lp_scene *scene)
+{
+   unsigned i, j;
+
+   lp_scene_reset(scene);
+
+   for (i = 0; i < TILES_X; i++)
+      for (j = 0; j < TILES_Y; j++) {
+         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
+         assert(bin->commands.head == bin->commands.tail);
+         FREE(bin->commands.head);
+         bin->commands.head = NULL;
+         bin->commands.tail = NULL;
+      }
+
+   FREE(scene->data.head);
+   scene->data.head = NULL;
+
+   pipe_mutex_destroy(scene->mutex);
+
+   FREE(scene);
 }
 
 
@@ -92,6 +115,9 @@ lp_scene_is_empty(struct lp_scene *scene )
 }
 
 
+/* Free data for one particular bin.  May be called from the
+ * rasterizer thread(s).
+ */
 void
 lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
 {
@@ -99,6 +125,9 @@ lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
    struct cmd_block_list *list = &bin->commands;
    struct cmd_block *block;
    struct cmd_block *tmp;
+
+   assert(x < TILES_X);
+   assert(y < TILES_Y);
 
    for (block = list->head; block != list->tail; block = tmp) {
       tmp = block->next;
@@ -112,7 +141,8 @@ lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
 
 
 /**
- * Set scene to empty state.
+ * Free all the temporary data in a scene.  May be called from the
+ * rasterizer thread(s).
  */
 void
 lp_scene_reset(struct lp_scene *scene )
@@ -159,40 +189,8 @@ lp_scene_reset(struct lp_scene *scene )
 }
 
 
-/**
- * Free all data associated with the given bin, but don't free(scene).
- */
-void
-lp_scene_free_bin_data(struct lp_scene *scene)
-{
-   unsigned i, j;
-
-   for (i = 0; i < TILES_X; i++)
-      for (j = 0; j < TILES_Y; j++) {
-         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-         /* lp_reset_scene() should have been already called */
-         assert(bin->commands.head == bin->commands.tail);
-         FREE(bin->commands.head);
-         bin->commands.head = NULL;
-         bin->commands.tail = NULL;
-      }
-
-   FREE(scene->data.head);
-   scene->data.head = NULL;
-
-   pipe_mutex_destroy(scene->mutex);
-}
 
 
-void
-lp_scene_set_framebuffer_size( struct lp_scene *scene,
-                               unsigned width, unsigned height )
-{
-   assert(lp_scene_is_empty(scene));
-
-   scene->tiles_x = align(width, TILE_SIZE) / TILE_SIZE;
-   scene->tiles_y = align(height, TILE_SIZE) / TILE_SIZE;
-}
 
 
 void
@@ -389,4 +387,137 @@ end:
    /*printf("return bin %p at %d, %d\n", (void *) bin, *bin_x, *bin_y);*/
    pipe_mutex_unlock(scene->mutex);
    return bin;
+}
+
+
+/**
+ * Prepare this scene for the rasterizer.
+ * Map the framebuffer surfaces.  Initialize the 'rast' state.
+ */
+static boolean
+lp_scene_map_buffers( struct lp_scene *scene )
+{
+   struct pipe_surface *cbuf, *zsbuf;
+   int i;
+
+   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
+
+
+   /* Map all color buffers 
+    */
+   for (i = 0; i < scene->fb.nr_cbufs; i++) {
+      cbuf = scene->fb.cbufs[i];
+      if (cbuf) {
+	 scene->cbuf_map[i] = llvmpipe_texture_map(cbuf->texture,
+	                                           cbuf->face,
+                                                   cbuf->level,
+                                                   cbuf->zslice);
+	 if (!scene->cbuf_map[i])
+	    goto fail;
+      }
+   }
+
+   /* Map the zsbuffer
+    */
+   zsbuf = scene->fb.zsbuf;
+   if (zsbuf) {
+      scene->zsbuf_map = llvmpipe_texture_map(zsbuf->texture,
+                                              zsbuf->face,
+                                              zsbuf->level,
+                                              zsbuf->zslice);
+      if (!scene->zsbuf_map)
+	 goto fail;
+   }
+
+   return TRUE;
+
+fail:
+   /* Unmap and release transfers?
+    */
+   return FALSE;
+}
+
+
+
+/**
+ * Called after rasterizer as finished rasterizing a scene. 
+ * 
+ * We want to call this from the pipe_context's current thread to
+ * avoid having to have mutexes on the transfer functions.
+ */
+static void
+lp_scene_unmap_buffers( struct lp_scene *scene )
+{
+   unsigned i;
+
+   for (i = 0; i < scene->fb.nr_cbufs; i++) {
+      if (scene->cbuf_map[i]) {
+         struct pipe_surface *cbuf = scene->fb.cbufs[i];
+         llvmpipe_texture_unmap(cbuf->texture,
+                                cbuf->face,
+                                cbuf->level,
+                                cbuf->zslice);
+         scene->cbuf_map[i] = NULL;
+      }
+   }
+
+   if (scene->zsbuf_map) {
+      struct pipe_surface *zsbuf = scene->fb.zsbuf;
+      llvmpipe_texture_unmap(zsbuf->texture,
+                             zsbuf->face,
+                             zsbuf->level,
+                             zsbuf->zslice);
+      scene->zsbuf_map = NULL;
+   }
+
+   util_unreference_framebuffer_state( &scene->fb );
+}
+
+
+void lp_scene_begin_binning( struct lp_scene *scene,
+                             struct pipe_framebuffer_state *fb )
+{
+   assert(lp_scene_is_empty(scene));
+
+   util_copy_framebuffer_state(&scene->fb, fb);
+
+   scene->tiles_x = align(fb->width, TILE_SIZE) / TILE_SIZE;
+   scene->tiles_y = align(fb->height, TILE_SIZE) / TILE_SIZE;
+}
+
+
+void lp_scene_rasterize( struct lp_scene *scene,
+                         struct lp_rasterizer *rast,
+                         boolean write_depth )
+{
+   if (0) {
+      unsigned x, y;
+      debug_printf("rasterize scene:\n");
+      debug_printf("  data size: %u\n", lp_scene_data_size(scene));
+      for (y = 0; y < scene->tiles_y; y++) {
+         for (x = 0; x < scene->tiles_x; x++) {
+            debug_printf("  bin %u, %u size: %u\n", x, y,
+                         lp_scene_bin_size(scene, x, y));
+         }
+      }
+   }
+
+
+   scene->write_depth = (scene->fb.zsbuf != NULL &&
+                         write_depth);
+
+   lp_scene_map_buffers( scene );
+
+   /* Enqueue the scene for rasterization, then immediately wait for
+    * it to finish.
+    */
+   lp_rast_queue_scene( rast, scene );
+
+   /* Currently just wait for the rasterizer to finish.  Some
+    * threading interactions need to be worked out, particularly once
+    * transfers become per-context:
+    */
+   lp_rast_finish( rast );
+   lp_scene_unmap_buffers( scene );
+   lp_scene_enqueue( scene->empty_queue, scene );
 }

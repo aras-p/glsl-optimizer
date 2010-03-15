@@ -1156,12 +1156,10 @@ void mach64DDInitStateFuncs( GLcontext *ctx )
 {
    ctx->Driver.UpdateState		= mach64DDInvalidateState;
 
-   ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearColor		= mach64DDClearColor;
    ctx->Driver.DrawBuffer		= mach64DDDrawBuffer;
    ctx->Driver.ReadBuffer		= mach64DDReadBuffer;
 
-   ctx->Driver.IndexMask		= NULL;
    ctx->Driver.ColorMask		= mach64DDColorMask;
    ctx->Driver.AlphaFunc		= mach64DDAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= mach64DDBlendEquationSeparate;

@@ -289,6 +289,7 @@ reclaim_temps(struct brw_wm_compile *c)
  */
 static void prealloc_reg(struct brw_wm_compile *c)
 {
+    struct intel_context *intel = &c->func.brw->intel;
     int i, j;
     struct brw_reg reg;
     int urb_read_length = 0;
@@ -408,6 +409,43 @@ static void prealloc_reg(struct brw_wm_compile *c)
 		    assert(dst[j].nr == dst[j - 1].nr + 1);
 	    }
 	    break;
+	default:
+	    break;
+	}
+    }
+
+    for (i = 0; i < c->nr_fp_insns; i++) {
+	const struct prog_instruction *inst = &c->prog_instructions[i];
+
+	switch (inst->Opcode) {
+	case WM_DELTAXY:
+	    /* Allocate WM_DELTAXY destination on G45/GM45 to an
+	     * even-numbered GRF if possible so that we can use the PLN
+	     * instruction.
+	     */
+	    if (inst->DstReg.WriteMask == WRITEMASK_XY &&
+		!c->wm_regs[inst->DstReg.File][inst->DstReg.Index][0].inited &&
+		!c->wm_regs[inst->DstReg.File][inst->DstReg.Index][1].inited &&
+		(IS_G4X(intel->intelScreen->deviceID) || intel->gen == 5)) {
+		int grf;
+
+		for (grf = c->first_free_grf & ~1;
+		     grf < BRW_WM_MAX_GRF;
+		     grf += 2)
+		{
+		    if (!c->used_grf[grf] && !c->used_grf[grf + 1]) {
+			c->used_grf[grf] = GL_TRUE;
+			c->used_grf[grf + 1] = GL_TRUE;
+			c->first_free_grf = grf + 2;  /* a guess */
+
+			set_reg(c, inst->DstReg.File, inst->DstReg.Index, 0,
+				brw_vec8_grf(grf, 0));
+			set_reg(c, inst->DstReg.File, inst->DstReg.Index, 1,
+				brw_vec8_grf(grf + 1, 0));
+			break;
+		    }
+		}
+	    }
 	default:
 	    break;
 	}
@@ -612,112 +650,6 @@ static void invoke_subroutine( struct brw_wm_compile *c,
 	
 	release_tmps( c, mark );
     }
-}
-
-/* Workaround for using brw_wm_emit.c's emit functions, which expect
- * destination regs to be uniquely written.  Moves arguments out to
- * temporaries as necessary for instructions which use their destination as
- * a temporary.
- */
-static void
-unalias3(struct brw_wm_compile *c,
-	 void (*func)(struct brw_compile *c,
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1,
-		      const struct brw_reg *arg2),
-	 const struct brw_reg *dst,
-	 GLuint mask,
-	 const struct brw_reg *arg0,
-	 const struct brw_reg *arg1,
-	 const struct brw_reg *arg2)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg tmp_arg0[4], tmp_arg1[4], tmp_arg2[4];
-    int i, j;
-    int mark = mark_tmps(c);
-
-    for (j = 0; j < 4; j++) {
-	tmp_arg0[j] = arg0[j];
-	tmp_arg1[j] = arg1[j];
-	tmp_arg2[j] = arg2[j];
-    }
-
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    for (j = 0; j < 4; j++) {
-		if (arg0[j].file == dst[i].file &&
-		    dst[i].nr == arg0[j].nr) {
-		    tmp_arg0[j] = alloc_tmp(c);
-		    brw_MOV(p, tmp_arg0[j], arg0[j]);
-		}
-		if (arg1[j].file == dst[i].file &&
-		    dst[i].nr == arg1[j].nr) {
-		    tmp_arg1[j] = alloc_tmp(c);
-		    brw_MOV(p, tmp_arg1[j], arg1[j]);
-		}
-		if (arg2[j].file == dst[i].file &&
-		    dst[i].nr == arg2[j].nr) {
-		    tmp_arg2[j] = alloc_tmp(c);
-		    brw_MOV(p, tmp_arg2[j], arg2[j]);
-		}
-	    }
-	}
-    }
-
-    func(p, dst, mask, tmp_arg0, tmp_arg1, tmp_arg2);
-
-    release_tmps(c, mark);
-}
-
-/* Workaround for using brw_wm_emit.c's emit functions, which expect
- * destination regs to be uniquely written.  Moves arguments out to
- * temporaries as necessary for instructions which use their destination as
- * a temporary.
- */
-static void
-unalias2(struct brw_wm_compile *c,
-	 void (*func)(struct brw_compile *c,
-		      const struct brw_reg *dst,
-		      GLuint mask,
-		      const struct brw_reg *arg0,
-		      const struct brw_reg *arg1),
-	 const struct brw_reg *dst,
-	 GLuint mask,
-	 const struct brw_reg *arg0,
-	 const struct brw_reg *arg1)
-{
-    struct brw_compile *p = &c->func;
-    struct brw_reg tmp_arg0[4], tmp_arg1[4];
-    int i, j;
-    int mark = mark_tmps(c);
-
-    for (j = 0; j < 4; j++) {
-	tmp_arg0[j] = arg0[j];
-	tmp_arg1[j] = arg1[j];
-    }
-
-    for (i = 0; i < 4; i++) {
-	if (mask & (1<<i)) {
-	    for (j = 0; j < 4; j++) {
-		if (arg0[j].file == dst[i].file &&
-		    dst[i].nr == arg0[j].nr) {
-		    tmp_arg0[j] = alloc_tmp(c);
-		    brw_MOV(p, tmp_arg0[j], arg0[j]);
-		}
-		if (arg1[j].file == dst[i].file &&
-		    dst[i].nr == arg1[j].nr) {
-		    tmp_arg1[j] = alloc_tmp(c);
-		    brw_MOV(p, tmp_arg1[j], arg1[j]);
-		}
-	    }
-	}
-    }
-
-    func(p, dst, mask, tmp_arg0, tmp_arg1);
-
-    release_tmps(c, mark);
 }
 
 static void emit_arl(struct brw_wm_compile *c,
@@ -1813,14 +1745,29 @@ static void
 get_argument_regs(struct brw_wm_compile *c,
 		  const struct prog_instruction *inst,
 		  int index,
+		  struct brw_reg *dst,
 		  struct brw_reg *regs,
 		  int mask)
 {
-    int i;
+    struct brw_compile *p = &c->func;
+    int i, j;
 
     for (i = 0; i < 4; i++) {
-	if (mask & (1 << i))
+	if (mask & (1 << i)) {
 	    regs[i] = get_src_reg(c, inst, index, i);
+
+	    /* Unalias destination registers from our sources. */
+	    if (regs[i].file == BRW_GENERAL_REGISTER_FILE) {
+	       for (j = 0; j < 4; j++) {
+		   if (memcmp(&regs[i], &dst[j], sizeof(regs[0])) == 0) {
+		       struct brw_reg tmp = alloc_tmp(c);
+		       brw_MOV(p, tmp, regs[i]);
+		       regs[i] = tmp;
+		       break;
+		   }
+	       }
+	    }
+	}
     }
 }
 
@@ -1845,6 +1792,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	int dst_flags;
 	struct brw_reg args[3][4], dst[4];
 	int j;
+	int mark = mark_tmps( c );
 
         c->cur_inst = i;
 
@@ -1866,7 +1814,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	   }
 	}
 	for (j = 0; j < brw_wm_nr_args(inst->Opcode); j++)
-	    get_argument_regs(c, inst, j, args[j], WRITEMASK_XYZW);
+	    get_argument_regs(c, inst, j, dst, args[j], WRITEMASK_XYZW);
 
 	dst_flags = inst->DstReg.WriteMask;
 	if (inst->SaturateMode == SATURATE_ZERO_ONE)
@@ -1920,8 +1868,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_alu1(p, brw_RNDD, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_LRP:
-		unalias3(c, emit_lrp,
-			 dst, dst_flags, args[0], args[1], args[2]);
+		emit_lrp(p, dst, dst_flags, args[0], args[1], args[2]);
 		break;
 	    case OPCODE_TRUNC:
 		emit_alu1(p, brw_RNDZ, dst, dst_flags, args[0]);
@@ -1960,11 +1907,14 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_LG2:
 		emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, dst_flags, args[0]);
 		break;
+	    case OPCODE_CMP:
+		emit_cmp(p, dst, dst_flags, args[0], args[1], args[2]);
+		break;
 	    case OPCODE_MIN:	
-		unalias2(c, emit_min, dst, dst_flags, args[0], args[1]);
+		emit_min(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_MAX:	
-		unalias2(c, emit_max, dst, dst_flags, args[0], args[1]);
+		emit_max(p, dst, dst_flags, args[0], args[1]);
 		break;
 	    case OPCODE_DDX:
 	    case OPCODE_DDY:
@@ -2103,11 +2053,13 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                   /* patch all the BREAK/CONT instructions from last BGNLOOP */
                   while (inst0 > loop_inst[loop_depth]) {
                      inst0--;
-                     if (inst0->header.opcode == BRW_OPCODE_BREAK) {
+                     if (inst0->header.opcode == BRW_OPCODE_BREAK &&
+			 inst0->bits3.if_else.jump_count == 0) {
 			inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
 			inst0->bits3.if_else.pop_count = 0;
                      }
-                     else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
+                     else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
+			      inst0->bits3.if_else.jump_count == 0) {
                         inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
                         inst0->bits3.if_else.pop_count = 0;
                      }
@@ -2115,9 +2067,13 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                }
                break;
 	    default:
-		printf("unsupported IR in fragment shader %d\n",
-			inst->Opcode);
+		printf("unsupported opcode %d (%s) in fragment shader\n",
+		       inst->Opcode, inst->Opcode < MAX_OPCODE ?
+		       _mesa_opcode_string(inst->Opcode) : "unknown");
 	}
+
+	/* Release temporaries containing any unaliased source regs. */
+	release_tmps( c, mark );
 
 	if (inst->CondUpdate)
 	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);

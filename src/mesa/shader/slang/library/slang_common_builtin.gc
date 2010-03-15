@@ -695,7 +695,7 @@ vec3 normalize(const vec3 v)
 {
 //   const float s = inversesqrt(dot(v, v));
 //   __retVal = v * s;
-// XXX note, we _could_ use __retVal.w instead of tmp and and save a
+// XXX note, we _could_ use __retVal.w instead of tmp and save a
 // register, but that's actually a compilation error because v is a vec3
 // and the .w suffix is illegal.  Oh well.
    float tmp;
@@ -1767,6 +1767,18 @@ vec4 shadow2DRectProj(const sampler2DRectShadow sampler, const vec4 coord)
    __asm vec4_tex_rect_proj_shadow __retVal, sampler, coord;
 }
 
+
+
+//// GL_EXT_texture_array
+vec4 texture1DArray(const sampler1DArray sampler, const vec2 coord)
+{
+   __asm vec4_tex_1d_array __retVal, sampler, coord;
+}
+
+vec4 texture2DArray(const sampler2DArray sampler, const vec3 coord)
+{
+   __asm vec4_tex_2d_array __retVal, sampler, coord;
+}
 
 
 //

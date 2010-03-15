@@ -1895,7 +1895,7 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
       _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->StencilFP);
       _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
 
-      for (bit = 0; bit < ctx->Visual.stencilBits; bit++) {
+      for (bit = 0; bit < ctx->DrawBuffer->Visual.stencilBits; bit++) {
          const GLuint mask = 1 << bit;
          if (mask & origStencilMask) {
             _mesa_StencilFunc(GL_ALWAYS, mask, mask);
@@ -2131,12 +2131,15 @@ _mesa_meta_check_generate_mipmap_fallback(GLcontext *ctx, GLenum target,
                                     GL_COLOR_ATTACHMENT0_EXT,
                                     target, texObj->Name, srcLevel);
    }
+#if 0
+   /* other work is needed to enable 3D mipmap generation */
    else if (target == GL_TEXTURE_3D) {
       GLint zoffset = 0;
       _mesa_FramebufferTexture3DEXT(GL_FRAMEBUFFER_EXT,
                                     GL_COLOR_ATTACHMENT0_EXT,
                                     target, texObj->Name, srcLevel, zoffset);
    }
+#endif
    else {
       /* 2D / cube */
       _mesa_FramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,

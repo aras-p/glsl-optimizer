@@ -79,6 +79,7 @@ static int r300VertexProgUpdateParams(GLcontext * ctx, struct r300_vertex_progra
 			break;
 		}
 
+		assert(src);
 		dst[4*i] = src[0];
 		dst[4*i + 1] = src[1];
 		dst[4*i + 2] = src[2];
@@ -311,6 +312,7 @@ struct r300_vertex_program * r300SelectAndTranslateVertexShader(GLcontext *ctx)
 		r300SelectAndTranslateFragmentShader(ctx);
 	}
 
+	assert(r300->selected_fp);
 	wanted_key.FpReads = r300->selected_fp->InputsRead;
 	wanted_key.FogAttr = r300->selected_fp->fog_attr;
 	wanted_key.WPosAttr = r300->selected_fp->wpos_attr;
@@ -339,8 +341,6 @@ static void r300EmitVertexProgram(r300ContextPtr r300, int dest, struct r300_ver
 	int i;
 
 	assert((code->length > 0) && (code->length % 4 == 0));
-
-	R300_STATECHANGE( r300, vap_flush );
 
 	switch ((dest >> 8) & 0xf) {
 		case 0:
@@ -379,7 +379,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
 
-	R300_STATECHANGE(rmesa, vap_flush);
+	R300_STATECHANGE(rmesa, vap_cntl);
 	R300_STATECHANGE(rmesa, vpp);
 	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);

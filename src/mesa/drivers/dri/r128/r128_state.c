@@ -1407,13 +1407,11 @@ void r128DDInitStateFuncs( GLcontext *ctx )
 {
    ctx->Driver.UpdateState		= r128DDInvalidateState;
 
-   ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearColor		= r128DDClearColor;
    ctx->Driver.ClearStencil		= r128DDClearStencil;
    ctx->Driver.DrawBuffer		= r128DDDrawBuffer;
    ctx->Driver.ReadBuffer		= r128DDReadBuffer;
 
-   ctx->Driver.IndexMask		= NULL;
    ctx->Driver.ColorMask		= r128DDColorMask;
    ctx->Driver.AlphaFunc		= r128DDAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= r128DDBlendEquationSeparate;

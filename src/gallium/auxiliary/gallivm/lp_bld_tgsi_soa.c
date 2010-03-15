@@ -41,6 +41,7 @@
 #include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
@@ -52,6 +53,7 @@
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
 #include "lp_bld_tgsi.h"
+#include "lp_bld_debug.h"
 
 
 #define LP_MAX_TEMPS 256
@@ -81,6 +83,34 @@
 #define QUAD_BOTTOM_LEFT  2
 #define QUAD_BOTTOM_RIGHT 3
 
+#define LP_TGSI_MAX_NESTING 16
+
+struct lp_exec_mask {
+   struct lp_build_context *bld;
+
+   boolean has_mask;
+
+   LLVMTypeRef int_vec_type;
+
+   LLVMValueRef cond_stack[LP_TGSI_MAX_NESTING];
+   int cond_stack_size;
+   LLVMValueRef cond_mask;
+
+   LLVMValueRef break_stack[LP_TGSI_MAX_NESTING];
+   int break_stack_size;
+   LLVMValueRef break_mask;
+
+   LLVMValueRef cont_stack[LP_TGSI_MAX_NESTING];
+   int cont_stack_size;
+   LLVMValueRef cont_mask;
+
+   LLVMBasicBlockRef loop_stack[LP_TGSI_MAX_NESTING];
+   int loop_stack_size;
+   LLVMBasicBlockRef loop_block;
+
+
+   LLVMValueRef exec_mask;
+};
 
 struct lp_build_tgsi_soa_context
 {
@@ -97,8 +127,8 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
 
    struct lp_build_mask_context *mask;
+   struct lp_exec_mask exec_mask;
 };
-
 
 static const unsigned char
 swizzle_left[4] = {
@@ -123,6 +153,174 @@ swizzle_bottom[4] = {
    QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT,
    QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT
 };
+
+static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context *bld)
+{
+   mask->bld = bld;
+   mask->has_mask = FALSE;
+   mask->cond_stack_size = 0;
+   mask->loop_stack_size = 0;
+   mask->break_stack_size = 0;
+   mask->cont_stack_size = 0;
+
+   mask->int_vec_type = lp_build_int_vec_type(mask->bld->type);
+}
+
+static void lp_exec_mask_update(struct lp_exec_mask *mask)
+{
+   if (mask->loop_stack_size) {
+      /*for loops we need to update the entire mask at
+       * runtime */
+      LLVMValueRef tmp;
+      tmp = LLVMBuildAnd(mask->bld->builder,
+                         mask->cont_mask,
+                         mask->break_mask,
+                         "maskcb");
+      mask->exec_mask = LLVMBuildAnd(mask->bld->builder,
+                                     mask->cond_mask,
+                                     tmp,
+                                     "maskfull");
+   } else
+      mask->exec_mask = mask->cond_mask;
+
+
+   mask->has_mask = (mask->cond_stack_size > 0 ||
+                     mask->loop_stack_size > 0);
+}
+
+static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
+                                   LLVMValueRef val)
+{
+   mask->cond_stack[mask->cond_stack_size++] = mask->cond_mask;
+   mask->cond_mask = LLVMBuildBitCast(mask->bld->builder, val,
+                                      mask->int_vec_type, "");
+
+   lp_exec_mask_update(mask);
+}
+
+static void lp_exec_mask_cond_invert(struct lp_exec_mask *mask)
+{
+   LLVMValueRef prev_mask = mask->cond_stack[mask->cond_stack_size - 1];
+   LLVMValueRef inv_mask = LLVMBuildNot(mask->bld->builder,
+                                        mask->cond_mask, "");
+
+   /* means that we didn't have any mask before and that
+    * we were fully enabled */
+   if (mask->cond_stack_size <= 1) {
+      prev_mask = LLVMConstAllOnes(mask->int_vec_type);
+   }
+
+   mask->cond_mask = LLVMBuildAnd(mask->bld->builder,
+                                  inv_mask,
+                                  prev_mask, "");
+   lp_exec_mask_update(mask);
+}
+
+static void lp_exec_mask_cond_pop(struct lp_exec_mask *mask)
+{
+   mask->cond_mask = mask->cond_stack[--mask->cond_stack_size];
+   lp_exec_mask_update(mask);
+}
+
+static void lp_exec_bgnloop(struct lp_exec_mask *mask)
+{
+
+   if (mask->cont_stack_size == 0)
+      mask->cont_mask = LLVMConstAllOnes(mask->int_vec_type);
+   if (mask->cont_stack_size == 0)
+      mask->break_mask = LLVMConstAllOnes(mask->int_vec_type);
+   if (mask->cond_stack_size == 0)
+      mask->cond_mask = LLVMConstAllOnes(mask->int_vec_type);
+   mask->loop_stack[mask->loop_stack_size++] = mask->loop_block;
+   mask->loop_block = lp_build_insert_new_block(mask->bld->builder, "bgnloop");
+   LLVMBuildBr(mask->bld->builder, mask->loop_block);
+   LLVMPositionBuilderAtEnd(mask->bld->builder, mask->loop_block);
+
+   lp_exec_mask_update(mask);
+}
+
+static void lp_exec_break(struct lp_exec_mask *mask)
+{
+   LLVMValueRef exec_mask = LLVMBuildNot(mask->bld->builder,
+                                         mask->exec_mask,
+                                         "break");
+
+   mask->break_stack[mask->break_stack_size++] = mask->break_mask;
+   if (mask->break_stack_size > 1) {
+      mask->break_mask = LLVMBuildAnd(mask->bld->builder,
+                                      mask->break_mask,
+                                      exec_mask, "break_full");
+   } else
+      mask->break_mask = exec_mask;
+
+   lp_exec_mask_update(mask);
+}
+
+static void lp_exec_continue(struct lp_exec_mask *mask)
+{
+   LLVMValueRef exec_mask = LLVMBuildNot(mask->bld->builder,
+                                         mask->exec_mask,
+                                         "");
+
+   mask->cont_stack[mask->cont_stack_size++] = mask->cont_mask;
+   if (mask->cont_stack_size > 1) {
+      mask->cont_mask = LLVMBuildAnd(mask->bld->builder,
+                                     mask->cont_mask,
+                                     exec_mask, "");
+   } else
+      mask->cont_mask = exec_mask;
+
+   lp_exec_mask_update(mask);
+}
+
+
+static void lp_exec_endloop(struct lp_exec_mask *mask)
+{
+   LLVMBasicBlockRef endloop;
+   LLVMTypeRef reg_type = LLVMIntType(mask->bld->type.width*
+                                      mask->bld->type.length);
+   /* i1cond = (mask == 0) */
+   LLVMValueRef i1cond = LLVMBuildICmp(
+      mask->bld->builder,
+      LLVMIntNE,
+      LLVMBuildBitCast(mask->bld->builder, mask->break_mask, reg_type, ""),
+      LLVMConstNull(reg_type), "");
+
+   endloop = lp_build_insert_new_block(mask->bld->builder, "endloop");
+
+   LLVMBuildCondBr(mask->bld->builder,
+                   i1cond, mask->loop_block, endloop);
+
+   LLVMPositionBuilderAtEnd(mask->bld->builder, endloop);
+
+   mask->loop_block = mask->loop_stack[--mask->loop_stack_size];
+   /* pop the break mask */
+   if (mask->cont_stack_size) {
+      mask->cont_mask = mask->cont_stack[--mask->cont_stack_size];
+   }
+   if (mask->break_stack_size) {
+      mask->break_mask = mask->cont_stack[--mask->break_stack_size];
+   }
+
+   lp_exec_mask_update(mask);
+}
+
+static void lp_exec_mask_store(struct lp_exec_mask *mask,
+                               LLVMValueRef val,
+                               LLVMValueRef dst)
+{
+   if (mask->has_mask) {
+      LLVMValueRef real_val, dst_val;
+
+      dst_val = LLVMBuildLoad(mask->bld->builder, dst, "");
+      real_val = lp_build_select(mask->bld,
+                                 mask->exec_mask,
+                                 val, dst_val);
+
+      LLVMBuildStore(mask->bld->builder, real_val, dst);
+   } else
+      LLVMBuildStore(mask->bld->builder, val, dst);
+}
 
 
 static LLVMValueRef
@@ -287,16 +485,21 @@ emit_store(
 
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
-      LLVMBuildStore(bld->base.builder, value,
-                     bld->outputs[reg->Register.Index][chan_index]);
+      lp_exec_mask_store(&bld->exec_mask, value,
+                         bld->outputs[reg->Register.Index][chan_index]);
       break;
 
    case TGSI_FILE_TEMPORARY:
-      LLVMBuildStore(bld->base.builder, value,
-                     bld->temps[reg->Register.Index][chan_index]);
+      lp_exec_mask_store(&bld->exec_mask, value,
+                         bld->temps[reg->Register.Index][chan_index]);
       break;
 
    case TGSI_FILE_ADDRESS:
+      /* FIXME */
+      assert(0);
+      break;
+
+   case TGSI_FILE_PREDICATE:
       /* FIXME */
       assert(0);
       break;
@@ -497,6 +700,17 @@ emit_instruction(
    /* we can't handle indirect addressing into temp register file yet */
    if (indirect_temp_reference(inst))
       return FALSE;
+
+   /*
+    * Stores and write masks are handled in a general fashion after the long
+    * instruction opcode switch statement.
+    *
+    * Although not stricitly necessary, we avoid generating instructions for
+    * channels which won't be stored, in cases where's that easy. For some
+    * complex instructions, like texture sampling, it is more convenient to
+    * assume a full writemask and then let LLVM optimization passes eliminate
+    * redundant code.
+    */
 
    assert(info->num_dst <= 1);
    if(info->num_dst) {
@@ -1265,21 +1479,26 @@ emit_instruction(
    case TGSI_OPCODE_TXP:
       emit_tex( bld, inst, FALSE, TRUE, dst0 );
       break;
-      
+
    case TGSI_OPCODE_BRK:
-      /* FIXME */
-      return 0;
+      lp_exec_break(&bld->exec_mask);
       break;
 
    case TGSI_OPCODE_IF:
-      /* FIXME */
-      return 0;
+      tmp0 = emit_fetch(bld, inst, 0, CHAN_X);
+      tmp0 = lp_build_cmp(&bld->base, PIPE_FUNC_NOTEQUAL,
+                          tmp0, bld->base.zero);
+      lp_exec_mask_cond_push(&bld->exec_mask, tmp0);
       break;
 
    case TGSI_OPCODE_BGNFOR:
       /* deprecated */
       assert(0);
       return 0;
+      break;
+
+   case TGSI_OPCODE_BGNLOOP:
+      lp_exec_bgnloop(&bld->exec_mask);
       break;
 
    case TGSI_OPCODE_REP:
@@ -1289,19 +1508,21 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_ELSE:
-      /* FIXME */
-      return 0;
+      lp_exec_mask_cond_invert(&bld->exec_mask);
       break;
 
    case TGSI_OPCODE_ENDIF:
-      /* FIXME */
-      return 0;
+      lp_exec_mask_cond_pop(&bld->exec_mask);
       break;
 
    case TGSI_OPCODE_ENDFOR:
       /* deprecated */
       assert(0);
       return 0;
+      break;
+
+   case TGSI_OPCODE_ENDLOOP:
+      lp_exec_endloop(&bld->exec_mask);
       break;
 
    case TGSI_OPCODE_ENDREP:
@@ -1403,8 +1624,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_CONT:
-      /* FIXME */
-      return 0;
+      lp_exec_continue(&bld->exec_mask);
       break;
 
    case TGSI_OPCODE_EMIT:
@@ -1458,6 +1678,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    bld.consts_ptr = consts_ptr;
    bld.sampler = sampler;
 
+   lp_exec_mask_init(&bld.exec_mask, &bld.base);
+
    tgsi_parse_init( &parse, tokens );
 
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
@@ -1505,7 +1727,14 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          assert( 0 );
       }
    }
-
+   if (0) {
+      LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
+      LLVMValueRef function = LLVMGetBasicBlockParent(block);
+      debug_printf("11111111111111111111111111111 \n");
+      tgsi_dump(tokens, 0);
+      LLVMDumpValue(function);
+      debug_printf("2222222222222222222222222222 \n");
+   }
    tgsi_parse_free( &parse );
 }
 

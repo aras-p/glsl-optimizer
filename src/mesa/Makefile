@@ -154,7 +154,7 @@ tags:
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
-	-rm -f depend depend.bak libmesa.a libglapi.a
+	-rm -f depend depend.bak libmesa.a libglapi.a libmesagallium.a
 	-rm -f drivers/*/*.o
 	-rm -f *.pc
 	-rm -f shader/slang/library/*_gc.h

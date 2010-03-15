@@ -38,7 +38,7 @@
 #include "remap.h"
 #include "imports.h"
 
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_remap_table
@@ -183,7 +183,7 @@ _mesa_map_static_functions(void)
 /**
  * Initialize the remap table.  This is called in one_time_init().
  * The remap table needs to be initialized before calling the
- * CALL/GET/SET macros defined in glapi/dispatch.h.
+ * CALL/GET/SET macros defined in main/dispatch.h.
  */
 void
 _mesa_init_remap_table(void)

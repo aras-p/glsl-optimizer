@@ -48,6 +48,7 @@ if env['platform'] == 'linux':
             svgadrm,
             svga,
             mesa,
+            glsl,
             gallium,
             ])
       

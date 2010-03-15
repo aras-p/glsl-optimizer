@@ -37,7 +37,7 @@
 #define LP_BLD_LOGIC_H
 
 
-#include <llvm-c/Core.h>  
+#include "os/os_llvm.h"
 
 #include "pipe/p_defines.h" /* For PIPE_FUNC_xxx */
 

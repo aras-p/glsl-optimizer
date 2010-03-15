@@ -88,9 +88,9 @@ LoadSkyBoxCubeTexture(const char *filePosX,
       return 0;
    if (!load(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, fileNegX, GL_TRUE, GL_TRUE))
       return 0;
-   if (!load(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, filePosY, 1+GL_FALSE, GL_TRUE))
+   if (!load(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, filePosY, GL_TRUE, GL_TRUE))
       return 0;
-   if (!load(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, fileNegY, 1+GL_FALSE, GL_TRUE))
+   if (!load(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, fileNegY, GL_TRUE, GL_TRUE))
       return 0;
    if (!load(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, filePosZ, GL_TRUE, GL_TRUE))
       return 0;

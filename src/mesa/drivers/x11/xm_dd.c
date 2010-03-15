@@ -107,18 +107,6 @@ finish_or_flush( GLcontext *ctx )
 
 
 static void
-clear_index( GLcontext *ctx, GLuint index )
-{
-   if (ctx->DrawBuffer->Name == 0) {
-      const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-      xmesa->clearpixel = (unsigned long) index;
-      XMesaSetForeground( xmesa->display, xmbuf->cleargc, (unsigned long) index );
-   }
-}
-
-
-static void
 clear_color( GLcontext *ctx, const GLfloat color[4] )
 {
    if (ctx->DrawBuffer->Name == 0) {
@@ -142,26 +130,6 @@ clear_color( GLcontext *ctx, const GLfloat color[4] )
    }
 }
 
-
-
-/* Set index mask ala glIndexMask */
-static void
-index_mask( GLcontext *ctx, GLuint mask )
-{
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-   /* not sure this conditional is really needed */
-   if (xmbuf->backxrb && xmbuf->backxrb->pixmap) {
-      unsigned long m;
-      if (mask==0xffffffff) {
-	 m = ((unsigned long)~0L);
-      }
-      else {
-         m = (unsigned long) mask;
-      }
-      XMesaSetPlaneMask( xmesa->display, xmbuf->cleargc, m );
-   }
-}
 
 
 /* Implements glColorMask() */
@@ -1143,9 +1111,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->GetBufferSize = NULL; /* OBSOLETE */
    driver->Flush = finish_or_flush;
    driver->Finish = finish_or_flush;
-   driver->ClearIndex = clear_index;
    driver->ClearColor = clear_color;
-   driver->IndexMask = index_mask;
    driver->ColorMask = color_mask;
    driver->Enable = enable;
    driver->Viewport = xmesa_viewport;

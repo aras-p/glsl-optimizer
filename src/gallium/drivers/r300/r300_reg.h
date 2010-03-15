@@ -540,7 +540,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_FIRST_INST(x)            ((x) << 0)
 #       define R300_PVS_XYZW_VALID_INST(x)       ((x) << 10)
 #       define R300_PVS_LAST_INST(x)             ((x) << 20)
-/* Addresses are relative the the vertex program parameters area. */
+/* Addresses are relative to the vertex program parameters area. */
 #define R300_VAP_PVS_CONST_CNTL             0x22D4
 #       define R300_PVS_CONST_BASE_OFFSET_SHIFT  0
 #       define R300_PVS_MAX_CONST_ADDR_SHIFT     16
@@ -1500,6 +1500,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_ANISO_THRESHOLD_MASK       (7<<17)
 
 #	define R500_MACRO_SWITCH               (1<<22)
+#       define R500_TX_MAX_ANISO(x)            ((x) << 23)
+#       define R500_TX_MAX_ANISO_MASK          (63 << 23)
+#       define R500_TX_ANISO_HIGH_QUALITY      (1 << 30)
+
 #	define R500_BORDER_FIX                 (1<<31)
 
 #define R300_TX_FORMAT0_0                   0x4480
@@ -1857,7 +1861,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * The destination register index is in FPI1 (color) and FPI3 (alpha)
  * together with enable bits.
  * There are separate enable bits for writing into temporary registers
- * (DSTC_REG_* /DSTA_REG) and and program output registers (DSTC_OUTPUT_*
+ * (DSTC_REG_* /DSTA_REG) and program output registers (DSTC_OUTPUT_*
  * /DSTA_OUTPUT). You can write to both at once, or not write at all (the
  * same index must be used for both).
  *

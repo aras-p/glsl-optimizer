@@ -5,8 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = r128_dri.so
 
-MINIGLX_SOURCES = server/r128_dri.c 
-
 DRIVER_SOURCES = \
 	r128_context.c \
 	r128_lock.c \

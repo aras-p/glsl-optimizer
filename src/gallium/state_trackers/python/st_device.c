@@ -34,8 +34,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
-#include "trace/tr_screen.h"
-#include "trace/tr_context.h"
+#include "trace/tr_public.h"
 
 #include "st_device.h"
 #include "st_winsys.h"
@@ -75,43 +74,34 @@ st_device_destroy(struct st_device *st_dev)
 }
 
 
-static struct st_device *
-st_device_create_from_st_winsys(const struct st_winsys *st_ws) 
+struct st_device *
+st_device_create(boolean hardware)
 {
+   struct pipe_screen *screen;
    struct st_device *st_dev;
-   
-   if(!st_ws->screen_create)
-      return NULL;
-   
+
+   if (hardware)
+      screen = st_hardware_screen_create();
+   else
+      screen = st_software_screen_create();
+
+   screen = trace_screen_create(screen);
+   if (!screen)
+      goto no_screen;
+
    st_dev = CALLOC_STRUCT(st_device);
-   if(!st_dev)
-      return NULL;
+   if (!st_dev)
+      goto no_device;
    
    pipe_reference_init(&st_dev->reference, 1);
-   st_dev->st_ws = st_ws;
-   
-   st_dev->real_screen = st_ws->screen_create();
-   if(!st_dev->real_screen) {
-      st_device_destroy(st_dev);
-      return NULL;
-   }
-
-   st_dev->screen = trace_screen_create(st_dev->real_screen);
-   if(!st_dev->screen) {
-      st_device_destroy(st_dev);
-      return NULL;
-   }
+   st_dev->screen = screen;
    
    return st_dev;
-}
 
-
-struct st_device *
-st_device_create(boolean hardware) {
-   if(hardware)
-      return st_device_create_from_st_winsys(&st_hardpipe_winsys);
-   else
-      return st_device_create_from_st_winsys(&st_softpipe_winsys);
+no_device:
+   screen->destroy(screen);
+no_screen:
+   return NULL;
 }
 
 
@@ -244,7 +234,7 @@ st_context_create(struct st_device *st_dev)
 
       memset( &templat, 0, sizeof( templat ) );
       templat.target = PIPE_TEXTURE_2D;
-      templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      templat.format = PIPE_FORMAT_B8G8R8A8_UNORM;
       templat.width0 = 1;
       templat.height0 = 1;
       templat.depth0 = 1;

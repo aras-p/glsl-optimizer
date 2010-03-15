@@ -36,7 +36,7 @@
 #define LP_BLD_SAMPLE_H
 
 
-#include <llvm-c/Core.h>
+#include "os/os_llvm.h"
 
 struct pipe_texture;
 struct pipe_sampler_state;
@@ -70,6 +70,8 @@ struct lp_sampler_static_state
    unsigned compare_mode:1;
    unsigned compare_func:3;
    unsigned normalized_coords:1;
+   float lod_bias, min_lod, max_lod;
+   float border_color[4];
 };
 
 
@@ -98,10 +100,22 @@ struct lp_sampler_dynamic_state
               LLVMBuilderRef builder,
               unsigned unit);
 
+   /** Obtain the base texture depth. */
    LLVMValueRef
-   (*stride)( struct lp_sampler_dynamic_state *state,
-              LLVMBuilderRef builder,
-              unsigned unit);
+   (*depth)( struct lp_sampler_dynamic_state *state,
+             LLVMBuilderRef builder,
+             unsigned unit);
+
+   /** Obtain the number of mipmap levels (minus one). */
+   LLVMValueRef
+   (*last_level)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
+
+   LLVMValueRef
+   (*row_stride)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
 
    LLVMValueRef
    (*data_ptr)( struct lp_sampler_dynamic_state *state,
@@ -134,8 +148,9 @@ lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
+                       LLVMValueRef z,
                        LLVMValueRef y_stride,
-                       LLVMValueRef data_ptr);
+                       LLVMValueRef z_stride);
 
 
 void

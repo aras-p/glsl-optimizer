@@ -63,18 +63,11 @@ void (*swap_interval)();
 
 static int GLXExtensionSupported(Display *dpy, const char *extension)
 {
-	const char *extensionsString, *client_extensions, *pos;
+	const char *extensionsString, *pos;
 
 	extensionsString = glXQueryExtensionsString(dpy, DefaultScreen(dpy));
-	client_extensions = glXGetClientString(dpy, GLX_EXTENSIONS);
 
 	pos = strstr(extensionsString, extension);
-
-	if (pos != NULL && (pos == extensionsString || pos[-1] == ' ') &&
-	    (pos[strlen(extension)] == ' ' || pos[strlen(extension)] == '\0'))
-		return 1;
-
-	pos = strstr(client_extensions, extension);
 
 	if (pos != NULL && (pos == extensionsString || pos[-1] == ' ') &&
 	    (pos[strlen(extension)] == ' ' || pos[strlen(extension)] == '\0'))
@@ -235,7 +228,7 @@ int main(int argc, char *argv[])
 
 	XMapWindow(disp, winGL);
 	ret = glXMakeCurrent(disp, winGL, context);
-	if (ret) {
+	if (!ret) {
 		fprintf(stderr, "failed to make context current: %d\n", ret);
 	}
 

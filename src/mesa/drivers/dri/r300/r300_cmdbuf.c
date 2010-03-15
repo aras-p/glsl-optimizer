@@ -90,8 +90,7 @@ void r300_emit_vpu(struct r300_context *r300,
 {
     BATCH_LOCALS(&r300->radeon);
 
-    BEGIN_BATCH_NO_AUTOSTATE(5 + len);
-    OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 0);
+    BEGIN_BATCH_NO_AUTOSTATE(3 + len);
     OUT_BATCH_REGVAL(R300_VAP_PVS_VECTOR_INDX_REG, addr);
     OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, len-1) | RADEON_ONE_REG_WR);
     OUT_BATCH_TABLE(data, len);
@@ -333,36 +332,37 @@ void r300_emit_cb_setup(struct r300_context *r300,
     assert(offset % 32 == 0);
 
     switch (format) {
-        case MESA_FORMAT_RGB565:
-            assert(_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_RGB565;
+        case MESA_FORMAT_SL8:
+        case MESA_FORMAT_A8:
+        case MESA_FORMAT_L8:
+        case MESA_FORMAT_I8:
+            cbpitch |= R300_COLOR_FORMAT_I8;
             break;
+        case MESA_FORMAT_RGB565:
         case MESA_FORMAT_RGB565_REV:
-            assert(!_mesa_little_endian());
             cbpitch |= R300_COLOR_FORMAT_RGB565;
             break;
         case MESA_FORMAT_ARGB4444:
-            assert(_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_ARGB4444;
-            break;
         case MESA_FORMAT_ARGB4444_REV:
-            assert(!_mesa_little_endian());
             cbpitch |= R300_COLOR_FORMAT_ARGB4444;
             break;
+        case MESA_FORMAT_RGBA5551:
         case MESA_FORMAT_ARGB1555:
-            assert(_mesa_little_endian());
+        case MESA_FORMAT_ARGB1555_REV:
             cbpitch |= R300_COLOR_FORMAT_ARGB1555;
             break;
-        case MESA_FORMAT_ARGB1555_REV:
-            assert(!_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_ARGB1555;
+        case MESA_FORMAT_RGBA8888:
+        case MESA_FORMAT_RGBA8888_REV:
+        case MESA_FORMAT_XRGB8888:
+        case MESA_FORMAT_ARGB8888:
+        case MESA_FORMAT_XRGB8888_REV:
+        case MESA_FORMAT_ARGB8888_REV:
+        case MESA_FORMAT_SRGBA8:
+        case MESA_FORMAT_SARGB8:
+            cbpitch |= R300_COLOR_FORMAT_ARGB8888;
             break;
         default:
-            if (cpp == 4) {
-                cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-            } else {
-                _mesa_problem(r300->radeon.glCtx, "unexpected format in emit_cb_offset()");;
-            }
+            _mesa_problem(r300->radeon.glCtx, "unexpected format in emit_cb_offset()");
             break;
     }
 
@@ -778,24 +778,6 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	/* VPU only on TCL */
 	if (has_tcl) {
 		int i;
-		if (r300->radeon.radeonScreen->kernel_mm) {
-			ALLOC_STATE(vap_flush, always, 10, 0);
-			/* flush processing vertices */
-			r300->hw.vap_flush.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_SC_SCREENDOOR, 1);
-			r300->hw.vap_flush.cmd[1] = 0;
-			r300->hw.vap_flush.cmd[2] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_DSTCACHE_CTLSTAT, 1);
-			r300->hw.vap_flush.cmd[3] = R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D;
-			r300->hw.vap_flush.cmd[4] = cmdpacket0(r300->radeon.radeonScreen, RADEON_WAIT_UNTIL, 1);
-			r300->hw.vap_flush.cmd[5] = RADEON_WAIT_3D_IDLECLEAN;
-			r300->hw.vap_flush.cmd[6] = cmdpacket0(r300->radeon.radeonScreen, R300_SC_SCREENDOOR, 1);
-			r300->hw.vap_flush.cmd[7] = 0xffffff;
-			r300->hw.vap_flush.cmd[8] = cmdpacket0(r300->radeon.radeonScreen, R300_VAP_PVS_STATE_FLUSH_REG, 1);
-			r300->hw.vap_flush.cmd[9] = 0;
-		} else {
-			ALLOC_STATE(vap_flush, never, 10, 0);
-		}
-
-
 		ALLOC_STATE(vpi, vpu, R300_VPI_CMDSIZE, 0);
 		r300->hw.vpi.cmd[0] =
 			cmdvpu(r300->radeon.radeonScreen, R300_PVS_CODE_START, 0);

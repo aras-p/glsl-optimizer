@@ -644,7 +644,7 @@ Hints and Special Features:
 
 	- The Voodoo driver supports the GL_EXT_paletted_texture. it works
 	  only with GL_COLOR_INDEX8_EXT, GL_RGBA palettes and the alpha value
-	  is ignored because this is a limitation of the the current Glide
+	  is ignored because this is a limitation of the current Glide
 	  version and of the Voodoo hardware. See Mesa-3.1/3Dfx/demos/paltex.c for
 	  a demo of this extension.
 

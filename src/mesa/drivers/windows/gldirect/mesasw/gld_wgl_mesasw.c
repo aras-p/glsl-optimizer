@@ -631,21 +631,6 @@ static void flush(GLcontext* ctx)
 
 //---------------------------------------------------------------------------
 
-
-/*
- * Set the color index used to clear the color buffer.
- */
-static void clear_index(GLcontext* ctx, GLuint index)
-{
-	GLD_context *gldCtx = GLD_GET_CONTEXT(ctx);
-	WMesaContext *Current = GLD_GET_WMESA_DRIVER(gldCtx);
-  Current->clearpixel = index;
-}
-
-
-
-//---------------------------------------------------------------------------
-
 /*
  * Set the color used to clear the color buffer.
  */
@@ -1367,7 +1352,6 @@ static void wmesa_update_state_first_time(
 	ctx->Driver.Clear					= clear;
 	
 	ctx->Driver.Flush					= flush;
-	ctx->Driver.ClearIndex				= clear_index;
 	ctx->Driver.ClearColor				= clear_color;
 	ctx->Driver.Enable					= enable;
 	

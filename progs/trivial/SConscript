@@ -1,7 +1,8 @@
 Import('*')
 
 progs = [
-    'clear-fbo-tex',
+	'clear-fbo-scissor',
+	'clear-fbo-tex',
 	'clear-fbo',
 	'clear-scissor',
 	'clear-undefined',
@@ -158,7 +159,7 @@ for prog in progs:
 # auto code generation
 #getprocaddress: getprocaddress.c getproclist.h
 
-#getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.py
+#getproclist.h: $(TOP)/src/mesa/glapi/gen/gl_API.xml getprocaddress.c getprocaddress.py
 #	python getprocaddress.py > getproclist.h
 
 

@@ -28,6 +28,7 @@ struct xorg_renderer {
 
    float buffer[BUF_SIZE];
    int buffer_size;
+   struct pipe_vertex_element velems[3];
 
    /* number of attributes per vertex for the current
     * draw operation */

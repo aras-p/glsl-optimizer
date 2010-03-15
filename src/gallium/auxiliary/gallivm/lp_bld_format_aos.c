@@ -70,7 +70,7 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
    unsigned i;
 
    /* FIXME: Support more formats */
-   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
+   assert(desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
    assert(desc->block.width == 1);
    assert(desc->block.height == 1);
    assert(desc->block.bits <= 32);
@@ -189,7 +189,7 @@ lp_build_unpack_rgba8_aos(LLVMBuilderRef builder,
    lp_build_context_init(&bld, builder, type);
 
    /* FIXME: Support more formats */
-   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
+   assert(desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
    assert(desc->block.width == 1);
    assert(desc->block.height == 1);
    assert(desc->block.bits <= 32);
@@ -303,7 +303,7 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
    unsigned shift;
    unsigned i, j;
 
-   assert(desc->layout == UTIL_FORMAT_LAYOUT_ARITH);
+   assert(desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
    assert(desc->block.width == 1);
    assert(desc->block.height == 1);
 

@@ -51,7 +51,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
-#include "r200_pixel.h"
 #include "r200_tex.h"
 #include "r200_swtcl.h"
 #include "r200_tcl.h"
@@ -264,7 +263,9 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.fallback = r200Fallback;
    radeon->vtbl.update_scissor = r200_vtbl_update_scissor;
    radeon->vtbl.emit_query_finish = r200_emit_query_finish;
+   radeon->vtbl.check_blit = r200_check_blit;
    radeon->vtbl.blit = r200_blit;
+   radeon->vtbl.is_format_renderable = radeonIsFormatRenderable;
 }
 
 
@@ -323,7 +324,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _mesa_init_driver_functions(&functions);
    r200InitDriverFuncs(&functions);
    r200InitIoctlFuncs(&functions);
-   r200InitStateFuncs(&functions);
+   r200InitStateFuncs(&rmesa->radeon, &functions);
    r200InitTextureFuncs(&rmesa->radeon, &functions);
    r200InitShaderFuncs(&functions);
    radeonInitQueryObjFunctions(&functions);
@@ -472,7 +473,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    /* XXX these should really go right after _mesa_init_driver_functions() */
    radeon_fbo_init(&rmesa->radeon);
    radeonInitSpanFuncs( ctx );
-   r200InitPixelFuncs( ctx );
    r200InitTnlFuncs( ctx );
    r200InitState( rmesa );
    r200InitSwtcl( ctx );

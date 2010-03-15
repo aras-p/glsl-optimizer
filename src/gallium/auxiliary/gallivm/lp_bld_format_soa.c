@@ -92,9 +92,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
    unsigned chan;
 
    /* FIXME: Support more formats */
-   assert(format_desc->layout == UTIL_FORMAT_LAYOUT_ARITH ||
-          (format_desc->layout == UTIL_FORMAT_LAYOUT_ARRAY &&
-           format_desc->block.bits == format_desc->channel[0].size));
+   assert(format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
    assert(format_desc->block.width == 1);
    assert(format_desc->block.height == 1);
    assert(format_desc->block.bits <= 32);

@@ -158,7 +158,7 @@ clean:
 # auto code generation
 getprocaddress: getprocaddress.c getproclist.h
 
-getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.py
+getproclist.h: $(TOP)/src/mesa/glapi/gen/gl_API.xml getprocaddress.c getprocaddress.py
 	python getprocaddress.py > getproclist.h
 
 arraytexture: arraytexture.o readtex.o

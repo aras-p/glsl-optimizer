@@ -28,10 +28,22 @@
 #ifndef LP_FLUSH_H
 #define LP_FLUSH_H
 
+#include "pipe/p_compiler.h"
+
 struct pipe_context;
 struct pipe_fence_handle;
 
 void llvmpipe_flush(struct pipe_context *pipe, unsigned flags,
                     struct pipe_fence_handle **fence);
+
+boolean
+llvmpipe_flush_texture(struct pipe_context *pipe,
+                       struct pipe_texture *texture,
+                       unsigned face,
+                       unsigned level,
+                       unsigned flush_flags,
+                       boolean read_only,
+                       boolean cpu_access,
+                       boolean do_not_flush);
 
 #endif

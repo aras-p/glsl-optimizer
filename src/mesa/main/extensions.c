@@ -131,6 +131,7 @@ static const struct {
    { ON,  "GL_EXT_subtexture",                 F(EXT_subtexture) },
    { ON,  "GL_EXT_texture",                    F(EXT_texture) },
    { ON,  "GL_EXT_texture3D",                  F(EXT_texture3D) },
+   { OFF, "GL_EXT_texture_array",              F(EXT_texture_array) },
    { OFF, "GL_EXT_texture_compression_s3tc",   F(EXT_texture_compression_s3tc) },
    { OFF, "GL_EXT_texture_cube_map",           F(ARB_texture_cube_map) },
    { ON,  "GL_EXT_texture_edge_clamp",         F(SGIS_texture_edge_clamp) },
@@ -152,6 +153,7 @@ static const struct {
    { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) },
    { ON,  "GL_APPLE_packed_pixels",            F(APPLE_packed_pixels) },
    { OFF, "GL_APPLE_vertex_array_object",      F(APPLE_vertex_array_object) },
+   { OFF, "GL_APPLE_object_purgeable",         F(APPLE_object_purgeable) },
    { OFF, "GL_ATI_blend_equation_separate",    F(EXT_blend_equation_separate) },
    { OFF, "GL_ATI_envmap_bumpmap",             F(ATI_envmap_bumpmap) },
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
@@ -264,6 +266,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_sync = GL_TRUE;
 #endif
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
+#if FEATURE_APPLE_object_purgeable
+   ctx->Extensions.APPLE_object_purgeable = GL_TRUE;
+#endif
    ctx->Extensions.ATI_envmap_bumpmap = GL_TRUE;
 #if FEATURE_ATI_fragment_shader
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
@@ -304,6 +309,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_shared_texture_palette = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
+   ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;

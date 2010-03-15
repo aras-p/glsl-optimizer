@@ -129,7 +129,6 @@ accum_accum(struct st_context *st, GLfloat value,
             struct st_renderbuffer *color_strb)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *color_trans;
    size_t stride = acc_strb->stride;
    GLubyte *data = acc_strb->data;
@@ -145,7 +144,7 @@ accum_accum(struct st_context *st, GLfloat value,
 
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
+   pipe_get_tile_rgba(pipe, color_trans, 0, 0, width, height, buf);
 
    switch (acc_strb->format) {
    case PIPE_FORMAT_R16G16B16A16_SNORM:
@@ -166,7 +165,7 @@ accum_accum(struct st_context *st, GLfloat value,
    }
 
    free(buf);
-   screen->tex_transfer_destroy(color_trans);
+   pipe->tex_transfer_destroy(pipe, color_trans);
 }
 
 
@@ -177,7 +176,6 @@ accum_load(struct st_context *st, GLfloat value,
            struct st_renderbuffer *color_strb)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_transfer *color_trans;
    size_t stride = acc_strb->stride;
    GLubyte *data = acc_strb->data;
@@ -194,7 +192,7 @@ accum_load(struct st_context *st, GLfloat value,
 
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
+   pipe_get_tile_rgba(pipe, color_trans, 0, 0, width, height, buf);
 
    switch (acc_strb->format) {
    case PIPE_FORMAT_R16G16B16A16_SNORM:
@@ -215,7 +213,7 @@ accum_load(struct st_context *st, GLfloat value,
    }
 
    free(buf);
-   screen->tex_transfer_destroy(color_trans);
+   pipe->tex_transfer_destroy(pipe, color_trans);
 }
 
 
@@ -226,7 +224,6 @@ accum_return(GLcontext *ctx, GLfloat value,
              struct st_renderbuffer *color_strb)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    const GLubyte *colormask = ctx->Color.ColorMask[0];
    enum pipe_transfer_usage usage;
    struct pipe_transfer *color_trans;
@@ -251,7 +248,7 @@ accum_return(GLcontext *ctx, GLfloat value,
 						width, height);
 
    if (usage & PIPE_TRANSFER_READ)
-      pipe_get_tile_rgba(color_trans, 0, 0, width, height, buf);
+      pipe_get_tile_rgba(pipe, color_trans, 0, 0, width, height, buf);
 
    switch (acc_strb->format) {
    case PIPE_FORMAT_R16G16B16A16_SNORM:
@@ -280,10 +277,10 @@ accum_return(GLcontext *ctx, GLfloat value,
       _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
    }
 
-   pipe_put_tile_rgba(color_trans, 0, 0, width, height, buf);
+   pipe_put_tile_rgba(pipe, color_trans, 0, 0, width, height, buf);
 
    free(buf);
-   screen->tex_transfer_destroy(color_trans);
+   pipe->tex_transfer_destroy(pipe, color_trans);
 }
 
 

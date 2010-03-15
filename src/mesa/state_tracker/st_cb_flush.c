@@ -79,7 +79,7 @@ display_front_buffer(struct st_context *st)
       /* Hook for copying "fake" frontbuffer if necessary:
        */
       st->pipe->screen->flush_frontbuffer( st->pipe->screen, front_surf,
-                                           st->pipe->priv );
+                                           st->winsys_drawable_handle );
 
       /*
         st->frontbuffer_status = FRONT_STATUS_UNDEFINED;

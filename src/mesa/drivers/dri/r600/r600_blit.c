@@ -33,7 +33,7 @@
 #include "r600_cmdbuf.h"
 
 /* common formats supported as both textures and render targets */
-static unsigned is_blit_supported(gl_format mesa_format)
+unsigned r600_check_blit(gl_format mesa_format)
 {
     switch (mesa_format) {
     case MESA_FORMAT_RGBA8888:
@@ -1532,24 +1532,22 @@ static GLboolean validate_buffers(context_t *rmesa,
                                   struct radeon_bo *dst_bo)
 {
     int ret;
-    radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
-                                      src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
 
-    radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
-                                      dst_bo, 0, RADEON_GEM_DOMAIN_VRAM);
-
-    radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs,
-                                      rmesa->blit_bo, RADEON_GEM_DOMAIN_GTT, 0);
+    radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
 
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
-					rmesa->blit_bo,
-					RADEON_GEM_DOMAIN_GTT, 0);
+					src_bo, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
     if (ret)
         return GL_FALSE;
 
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
-                                        first_elem(&rmesa->radeon.dma.reserved)->bo,
-                                        RADEON_GEM_DOMAIN_GTT, 0);
+                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT);
+    if (ret)
+        return GL_FALSE;
+
+    ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
+					rmesa->blit_bo,
+					RADEON_GEM_DOMAIN_GTT, 0);
     if (ret)
         return GL_FALSE;
 
@@ -1580,7 +1578,7 @@ unsigned r600_blit(GLcontext *ctx,
     context_t *context = R700_CONTEXT(ctx);
     int id = 0;
 
-    if (!is_blit_supported(dst_mesaformat))
+    if (!r600_check_blit(dst_mesaformat))
         return GL_FALSE;
 
     if (src_bo == dst_bo) {

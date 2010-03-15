@@ -10,18 +10,6 @@ multisample state, scissoring and flat/smooth shading.
 Members
 -------
 
-bypass_vs_clip_and_viewport
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Whether the entire TCL pipeline should be bypassed. This implies that
-vertices are pre-transformed for the viewport, and will not be run
-through the vertex shader.
-
-.. note::
-   
-   Implementations may still clip away vertices that are not in the viewport
-   when this is set.
-
 flatshade
 ^^^^^^^^^
 

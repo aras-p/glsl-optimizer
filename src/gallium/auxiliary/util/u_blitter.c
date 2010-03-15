@@ -88,20 +88,29 @@ struct blitter_context_priv
    void *dsa_write_depth_keep_stencil;
    void *dsa_keep_depth_stencil;
 
+   void *velem_state;
+
    /* Sampler state for clamping to a miplevel. */
    void *sampler_state[PIPE_MAX_TEXTURE_LEVELS];
 
    /* Rasterizer state. */
    void *rs_state;
+
+   /* Viewport state. */
+   struct pipe_viewport_state viewport;
+
+   /* Clip state. */
+   struct pipe_clip_state clip;
 };
 
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 {
    struct blitter_context_priv *ctx;
-   struct pipe_blend_state blend = { 0 };
-   struct pipe_depth_stencil_alpha_state dsa = { { 0 } };
-   struct pipe_rasterizer_state rs_state = { 0 };
+   struct pipe_blend_state blend;
+   struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_rasterizer_state rs_state;
    struct pipe_sampler_state *sampler_state;
+   struct pipe_vertex_element velem[2];
    unsigned i;
 
    ctx = CALLOC_STRUCT(blitter_context_priv);
@@ -116,17 +125,20 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->blitter.saved_rs_state = INVALID_PTR;
    ctx->blitter.saved_fs = INVALID_PTR;
    ctx->blitter.saved_vs = INVALID_PTR;
+   ctx->blitter.saved_velem_state = INVALID_PTR;
    ctx->blitter.saved_fb_state.nr_cbufs = ~0;
    ctx->blitter.saved_num_textures = ~0;
    ctx->blitter.saved_num_sampler_states = ~0;
 
    /* blend state objects */
+   memset(&blend, 0, sizeof(blend));
    ctx->blend_keep_color = pipe->create_blend_state(pipe, &blend);
 
    blend.rt[0].colormask = PIPE_MASK_RGBA;
    ctx->blend_write_color = pipe->create_blend_state(pipe, &blend);
 
    /* depth stencil alpha state objects */
+   memset(&dsa, 0, sizeof(dsa));
    ctx->dsa_keep_depth_stencil =
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
@@ -160,10 +172,19 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    memset(&rs_state, 0, sizeof(rs_state));
    rs_state.front_winding = PIPE_WINDING_CW;
    rs_state.cull_mode = PIPE_WINDING_NONE;
-   rs_state.bypass_vs_clip_and_viewport = 1;
    rs_state.gl_rasterization_rules = 1;
    rs_state.flatshade = 1;
    ctx->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);
+
+   /* vertex elements state */
+   memset(&velem[0], 0, sizeof(velem[0]) * 2);
+   for (i = 0; i < 2; i++) {
+      velem[i].src_offset = i * 4 * sizeof(float);
+      velem[i].instance_divisor = 0;
+      velem[i].vertex_buffer_index = 0;
+      velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
+   ctx->velem_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
 
    /* fragment shaders are created on-demand */
 
@@ -214,6 +235,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs_col);
    pipe->delete_vs_state(pipe, ctx->vs_tex);
+   pipe->delete_vertex_elements_state(pipe, ctx->velem_state);
 
    for (i = 0; i < PIPE_MAX_TEXTURE_TYPES; i++) {
       if (ctx->fs_texfetch_col[i])
@@ -241,7 +263,8 @@ static void blitter_check_saved_CSOs(struct blitter_context_priv *ctx)
           ctx->blitter.saved_dsa_state != INVALID_PTR &&
           ctx->blitter.saved_rs_state != INVALID_PTR &&
           ctx->blitter.saved_fs != INVALID_PTR &&
-          ctx->blitter.saved_vs != INVALID_PTR);
+          ctx->blitter.saved_vs != INVALID_PTR &&
+          ctx->blitter.saved_velem_state != INVALID_PTR);
 }
 
 static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
@@ -254,14 +277,19 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
    pipe->bind_rasterizer_state(pipe, ctx->blitter.saved_rs_state);
    pipe->bind_fs_state(pipe, ctx->blitter.saved_fs);
    pipe->bind_vs_state(pipe, ctx->blitter.saved_vs);
+   pipe->bind_vertex_elements_state(pipe, ctx->blitter.saved_velem_state);
 
    ctx->blitter.saved_blend_state = INVALID_PTR;
    ctx->blitter.saved_dsa_state = INVALID_PTR;
    ctx->blitter.saved_rs_state = INVALID_PTR;
    ctx->blitter.saved_fs = INVALID_PTR;
    ctx->blitter.saved_vs = INVALID_PTR;
+   ctx->blitter.saved_velem_state = INVALID_PTR;
 
    pipe->set_stencil_ref(pipe, &ctx->blitter.saved_stencil_ref);
+
+   pipe->set_viewport_state(pipe, &ctx->blitter.saved_viewport);
+   pipe->set_clip_state(pipe, &ctx->blitter.saved_clip);
 
    /* restore the state objects which are required to be saved before copy/fill
     */
@@ -288,25 +316,40 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
 static void blitter_set_rectangle(struct blitter_context_priv *ctx,
                                   unsigned x1, unsigned y1,
                                   unsigned x2, unsigned y2,
+                                  unsigned width, unsigned height,
                                   float depth)
 {
    int i;
 
    /* set vertex positions */
-   ctx->vertices[0][0][0] = x1; /*v0.x*/
-   ctx->vertices[0][0][1] = y1; /*v0.y*/
+   ctx->vertices[0][0][0] = (float)x1 / width * 2.0f - 1.0f; /*v0.x*/
+   ctx->vertices[0][0][1] = (float)y1 / height * 2.0f - 1.0f; /*v0.y*/
 
-   ctx->vertices[1][0][0] = x2; /*v1.x*/
-   ctx->vertices[1][0][1] = y1; /*v1.y*/
+   ctx->vertices[1][0][0] = (float)x2 / width * 2.0f - 1.0f; /*v1.x*/
+   ctx->vertices[1][0][1] = (float)y1 / height * 2.0f - 1.0f; /*v1.y*/
 
-   ctx->vertices[2][0][0] = x2; /*v2.x*/
-   ctx->vertices[2][0][1] = y2; /*v2.y*/
+   ctx->vertices[2][0][0] = (float)x2 / width * 2.0f - 1.0f; /*v2.x*/
+   ctx->vertices[2][0][1] = (float)y2 / height * 2.0f - 1.0f; /*v2.y*/
 
-   ctx->vertices[3][0][0] = x1; /*v3.x*/
-   ctx->vertices[3][0][1] = y2; /*v3.y*/
+   ctx->vertices[3][0][0] = (float)x1 / width * 2.0f - 1.0f; /*v3.x*/
+   ctx->vertices[3][0][1] = (float)y2 / height * 2.0f - 1.0f; /*v3.y*/
 
    for (i = 0; i < 4; i++)
       ctx->vertices[i][0][2] = depth; /*z*/
+
+   /* viewport */
+   ctx->viewport.scale[0] = 0.5f * width;
+   ctx->viewport.scale[1] = 0.5f * height;
+   ctx->viewport.scale[2] = 1.0f;
+   ctx->viewport.scale[3] = 1.0f;
+   ctx->viewport.translate[0] = 0.5f * width;
+   ctx->viewport.translate[1] = 0.5f * height;
+   ctx->viewport.translate[2] = 0.0f;
+   ctx->viewport.translate[3] = 0.0f;
+   ctx->pipe->set_viewport_state(ctx->pipe, &ctx->viewport);
+
+   /* clip */
+   ctx->pipe->set_clip_state(ctx->pipe, &ctx->clip);
 }
 
 static void blitter_set_clear_color(struct blitter_context_priv *ctx,
@@ -546,11 +589,12 @@ void util_blitter_clear(struct blitter_context *blitter,
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
 
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, num_cbufs));
    pipe->bind_vs_state(pipe, ctx->vs_col);
 
    blitter_set_clear_color(ctx, rgba);
-   blitter_set_rectangle(ctx, 0, 0, width, height, depth);
+   blitter_set_rectangle(ctx, 0, 0, width, height, width, height, depth);
    blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
 }
@@ -611,6 +655,7 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
    pipe->bind_vs_state(pipe, ctx->vs_tex);
    pipe->bind_fragment_sampler_states(pipe, 1,
       blitter_get_sampler_state(ctx, src->level));
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->set_fragment_sampler_textures(pipe, 1, &src->texture);
    pipe->set_framebuffer_state(pipe, &fb_state);
 
@@ -633,7 +678,7 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
          assert(0);
    }
 
-   blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
+   blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, dst->width, dst->height, 0);
    blitter_draw_quad(ctx);
 
 }
@@ -784,6 +829,7 @@ void util_blitter_fill(struct blitter_context *blitter,
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1));
    pipe->bind_vs_state(pipe, ctx->vs_col);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
    fb_state.width = dst->width;
@@ -794,7 +840,7 @@ void util_blitter_fill(struct blitter_context *blitter,
    pipe->set_framebuffer_state(pipe, &fb_state);
 
    blitter_set_clear_color(ctx, rgba);
-   blitter_set_rectangle(ctx, 0, 0, width, height, 0);
+   blitter_set_rectangle(ctx, 0, 0, width, height, dst->width, dst->height, 0);
    blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
 }

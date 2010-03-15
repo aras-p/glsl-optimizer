@@ -114,16 +114,6 @@ struct pipe_rasterizer_state
    unsigned line_last_pixel:1;
 
    /** 
-    * Vertex coordinates are pre-transformed to screen space.  Skip
-    * the vertex shader, clipping and viewport processing.  Note that
-    * a vertex shader is still needed though, to indicate the mapping
-    * from vertex elements to fragment shader input semantics.
-    *
-    * XXX: considered for removal.
-    */
-   unsigned bypass_vs_clip_and_viewport:1;
-
-   /** 
     * Use the first vertex of a primitive as the provoking vertex for
     * flat shading.
     */
@@ -259,7 +249,7 @@ struct pipe_framebuffer_state
 {
    unsigned width, height;
 
-   /** multiple colorbuffers for multiple render targets */
+   /** multiple color buffers for multiple render targets */
    unsigned nr_cbufs;
    struct pipe_surface *cbufs[PIPE_MAX_COLOR_BUFS];
 
@@ -295,12 +285,12 @@ struct pipe_sampler_state
 struct pipe_surface
 {
    struct pipe_reference reference;
-   enum pipe_format format;      /**< PIPE_FORMAT_x */
+   enum pipe_format format;
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
    unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
    unsigned offset;              /**< offset from start of buffer, in bytes */
-   unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
+   unsigned usage;               /**< bitmask of PIPE_BUFFER_USAGE_x */
 
    unsigned zslice;
    struct pipe_texture *texture; /**< texture into which this is a view  */
@@ -346,7 +336,7 @@ struct pipe_texture
 
    unsigned nr_samples:8;    /**< for multisampled surfaces, nr of samples */
 
-   unsigned tex_usage;       /* PIPE_TEXTURE_USAGE_* */
+   unsigned tex_usage;       /**< bitmask of PIPE_TEXTURE_USAGE_* */
 
    struct pipe_screen *screen; /**< screen that this texture belongs to */
 };
@@ -383,9 +373,8 @@ struct pipe_vertex_element
     * this attribute live in?
     */
    unsigned vertex_buffer_index:8;
-   unsigned nr_components:8;
  
-   enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
+   enum pipe_format src_format;
 };
 
 

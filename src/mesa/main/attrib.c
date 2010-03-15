@@ -56,7 +56,7 @@
 #include "varray.h"
 #include "viewport.h"
 #include "mtypes.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**

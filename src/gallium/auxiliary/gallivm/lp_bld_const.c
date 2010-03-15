@@ -221,8 +221,16 @@ lp_build_undef(struct lp_type type)
 LLVMValueRef
 lp_build_zero(struct lp_type type)
 {
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
-   return LLVMConstNull(vec_type);
+   if (type.length == 1) {
+      if (type.floating)
+         return LLVMConstReal(LLVMFloatType(), 0.0);
+      else
+         return LLVMConstInt(LLVMIntType(type.width), 0, 0);
+   }
+   else {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      return LLVMConstNull(vec_type);
+   }
 }
                
 
@@ -264,10 +272,16 @@ lp_build_one(struct lp_type type)
    for(i = 1; i < type.length; ++i)
       elems[i] = elems[0];
 
-   return LLVMConstVector(elems, type.length);
+   if (type.length == 1)
+      return elems[0];
+   else
+      return LLVMConstVector(elems, type.length);
 }
                
 
+/**
+ * Build constant-valued vector from a scalar value.
+ */
 LLVMValueRef
 lp_build_const_scalar(struct lp_type type,
                       double val)

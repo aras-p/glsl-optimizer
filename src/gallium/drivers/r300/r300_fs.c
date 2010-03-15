@@ -133,10 +133,13 @@ static void get_compare_state(
     struct r300_fragment_program_external_state* state,
     unsigned shadow_samplers)
 {
+    struct r300_textures_state *texstate =
+        (struct r300_textures_state*)r300->textures_state.state;
+
     memset(state, 0, sizeof(*state));
 
-    for (int i = 0; i < r300->sampler_count; i++) {
-        struct r300_sampler_state* s = r300->sampler_states[i];
+    for (int i = 0; i < texstate->sampler_count; i++) {
+        struct r300_sampler_state* s = texstate->sampler_states[i];
 
         if (s && s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
             /* XXX Gallium doesn't provide us with any information regarding
@@ -204,6 +207,7 @@ static void r300_translate_fragment_shader(
         DBG(r300, DBG_FP, "r300: Error compiling fragment program: %s\n",
             compiler.Base.ErrorMsg);
         assert(0);
+        abort();
     }
 
     /* And, finally... */

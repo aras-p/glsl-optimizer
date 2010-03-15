@@ -364,9 +364,6 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
    if (psp == NULL)
       return NULL;
 
-   /* Initialize per screen dynamic client GLX extensions */
-   psc->ext_list_first_time = GL_TRUE;
-
    psc->driver = driOpenDriver(driverName);
    if (psc->driver == NULL)
       goto handle_error;

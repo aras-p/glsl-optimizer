@@ -302,7 +302,7 @@ static void *
 nv50_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
-	struct nouveau_stateobj *so = so_new(15, 21, 0);
+	struct nouveau_stateobj *so = so_new(16, 22, 0);
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_rasterizer_stateobj *rso =
 		CALLOC_STRUCT(nv50_rasterizer_stateobj);
@@ -313,6 +313,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	- multisample
 	 * 	- point_sprite / sprite_coord_mode
 	 */
+
+	so_method(so, tesla, NV50TCL_SCISSOR_ENABLE(0), 1);
+	so_data  (so, cso->scissor);
 
 	so_method(so, tesla, NV50TCL_SHADE_MODEL, 1);
 	so_data  (so, cso->flatshade ? NV50TCL_SHADE_MODEL_FLAT :
@@ -720,15 +723,34 @@ nv50_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	nv50->dirty |= NV50_NEW_ARRAYS;
 }
 
+static void *
+nv50_vtxelts_state_create(struct pipe_context *pipe,
+			  unsigned num_elements,
+			  const struct pipe_vertex_element *elements)
+{
+	struct nv50_vtxelt_stateobj *cso = CALLOC_STRUCT(nv50_vtxelt_stateobj);
+
+	assert(num_elements < 16); /* not doing fallbacks yet */
+	cso->num_elements = num_elements;
+	memcpy(cso->pipe, elements, num_elements * sizeof(*elements));
+
+	nv50_vtxelt_construct(cso);
+
+	return (void *)cso;
+}
+
 static void
-nv50_set_vertex_elements(struct pipe_context *pipe, unsigned count,
-			 const struct pipe_vertex_element *ve)
+nv50_vtxelts_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+	FREE(hwcso);
+}
+
+static void
+nv50_vtxelts_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
-	memcpy(nv50->vtxelt, ve, sizeof(*ve) * count);
-	nv50->vtxelt_nr = count;
-
+	nv50->vtxelt = hwcso;
 	nv50->dirty |= NV50_NEW_ARRAYS;
 }
 
@@ -778,7 +800,10 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.set_scissor_state = nv50_set_scissor_state;
 	nv50->pipe.set_viewport_state = nv50_set_viewport_state;
 
+	nv50->pipe.create_vertex_elements_state = nv50_vtxelts_state_create;
+	nv50->pipe.delete_vertex_elements_state = nv50_vtxelts_state_delete;
+	nv50->pipe.bind_vertex_elements_state = nv50_vtxelts_state_bind;
+
 	nv50->pipe.set_vertex_buffers = nv50_set_vertex_buffers;
-	nv50->pipe.set_vertex_elements = nv50_set_vertex_elements;
 }
 

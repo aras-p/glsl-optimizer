@@ -104,7 +104,8 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
    batch->map = NULL;
    batch->ptr = NULL;
 
-   dri_bo_exec(batch->buf, used, NULL, 0, (x_off & 0xffff) | (y_off << 16));
+   if (!intel->no_hw)
+      dri_bo_exec(batch->buf, used, NULL, 0, (x_off & 0xffff) | (y_off << 16));
 
    if (INTEL_DEBUG & DEBUG_BATCH) {
       dri_bo_map(batch->buf, GL_FALSE);
@@ -209,6 +210,8 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 {
    int ret;
 
+   assert(delta < buffer->size);
+
    if (batch->ptr - batch->map > batch->buf->size)
     printf ("bad relocation ptr %p map %p offset %d size %lu\n",
 	    batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
@@ -219,6 +222,33 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
     * Using the old buffer offset, write in what the right data would be, in case
     * the buffer doesn't move and we can short-circuit the relocation processing
     * in the kernel
+    */
+   intel_batchbuffer_emit_dword (batch, buffer->offset + delta);
+
+   return GL_TRUE;
+}
+
+GLboolean
+intel_batchbuffer_emit_reloc_fenced(struct intel_batchbuffer *batch,
+				    drm_intel_bo *buffer,
+				    uint32_t read_domains, uint32_t write_domain,
+				    uint32_t delta)
+{
+   int ret;
+
+   assert(delta < buffer->size);
+
+   if (batch->ptr - batch->map > batch->buf->size)
+    printf ("bad relocation ptr %p map %p offset %d size %lu\n",
+	    batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
+   ret = drm_intel_bo_emit_reloc_fence(batch->buf, batch->ptr - batch->map,
+				       buffer, delta,
+				       read_domains, write_domain);
+
+   /*
+    * Using the old buffer offset, write in what the right data would
+    * be, in case the buffer doesn't move and we can short-circuit the
+    * relocation processing in the kernel
     */
    intel_batchbuffer_emit_dword (batch, buffer->offset + delta);
 

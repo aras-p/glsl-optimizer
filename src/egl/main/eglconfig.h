@@ -92,25 +92,8 @@ PUBLIC EGLConfig
 _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf);
 
 
-#ifndef _EGL_SKIP_HANDLE_CHECK
-
-
 extern EGLBoolean
 _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy);
-
-
-#else
-
-
-static INLINE EGLBoolean
-_eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
-{
-   _EGLConfig *conf = (_EGLConfig *) config;
-   return (dpy && conf && conf->Display == dpy);
-}
-
-
-#endif /* _EGL_SKIP_HANDLE_CHECK */
 
 
 /**

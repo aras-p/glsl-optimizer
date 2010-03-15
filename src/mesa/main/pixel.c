@@ -35,7 +35,7 @@
 #include "macros.h"
 #include "pixel.h"
 #include "mtypes.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 #if FEATURE_pixel_transfer
@@ -427,7 +427,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetPixelMapusv(map)");
       return;
    }
-   mapsize = pm ? pm->Size : 0;
+   mapsize = pm->Size;
 
    if (!validate_pbo_access(ctx, &ctx->Pack, mapsize,
                             GL_INTENSITY, GL_UNSIGNED_SHORT, values)) {

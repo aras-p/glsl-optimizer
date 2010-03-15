@@ -1,5 +1,5 @@
 TOP = ../../../..
-GLAPI = ../../glapi
+GLAPI = ../../glapi/gen
 include $(TOP)/configs/current
 
 OUTPUTS :=			\

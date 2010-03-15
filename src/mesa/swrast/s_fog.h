@@ -37,8 +37,4 @@ _swrast_z_to_fogfactor(GLcontext *ctx, GLfloat z);
 extern void
 _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span );
 
-extern void
-_swrast_fog_ci_span( const GLcontext *ctx, SWspan *span );
-
-
 #endif

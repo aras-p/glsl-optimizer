@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <llvm-c/Core.h>
+#include "os/os_llvm.h"
 #include <llvm-c/Analysis.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
@@ -52,25 +52,25 @@ struct pixel_test_case
 
 struct pixel_test_case test_cases[] =
 {
-   {PIPE_FORMAT_R5G6B5_UNORM,   0x0000, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_R5G6B5_UNORM,   0x001f, {0.0, 0.0, 1.0, 1.0}},
-   {PIPE_FORMAT_R5G6B5_UNORM,   0x07e0, {0.0, 1.0, 0.0, 1.0}},
-   {PIPE_FORMAT_R5G6B5_UNORM,   0xf800, {1.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_R5G6B5_UNORM,   0xffff, {1.0, 1.0, 1.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM,   0x0000, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM,   0x001f, {0.0, 0.0, 1.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM,   0x07e0, {0.0, 1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM,   0xf800, {1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B5G6R5_UNORM,   0xffff, {1.0, 1.0, 1.0, 1.0}},
 
-   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x0000, {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x001f, {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x03e0, {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x7c00, {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A1R5G5B5_UNORM, 0x8000, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_A1R5G5B5_UNORM, 0xffff, {1.0, 1.0, 1.0, 1.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x0000, {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x001f, {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x03e0, {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x7c00, {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x8000, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B5G5R5A1_UNORM, 0xffff, {1.0, 1.0, 1.0, 1.0}},
 
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x000000ff, {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x0000ff00, {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x00ff0000, {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0xff000000, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x000000ff, {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x0000ff00, {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x00ff0000, {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0xff000000, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_B8G8R8A8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
 
 #if 0
    {PIPE_FORMAT_R8G8B8A8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
@@ -81,12 +81,12 @@ struct pixel_test_case test_cases[] =
    {PIPE_FORMAT_R8G8B8A8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
 #endif
 
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x000000ff, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x0000ff00, {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x00ff0000, {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0xff000000, {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x000000ff, {0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x0000ff00, {1.0, 0.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x00ff0000, {0.0, 1.0, 0.0, 0.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0xff000000, {0.0, 0.0, 1.0, 0.0}},
+   {PIPE_FORMAT_A8R8G8B8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
 };
 
 

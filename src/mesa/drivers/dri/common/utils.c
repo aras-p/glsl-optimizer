@@ -37,6 +37,29 @@
 #include "utils.h"
 
 
+/**
+ * Print message to \c stderr if the \c LIBGL_DEBUG environment variable
+ * is set. 
+ * 
+ * Is called from the drivers.
+ * 
+ * \param f \c printf like format string.
+ */
+void
+__driUtilMessage(const char *f, ...)
+{
+    va_list args;
+
+    if (getenv("LIBGL_DEBUG")) {
+        fprintf(stderr, "libGL: ");
+        va_start(args, f);
+        vfprintf(stderr, f, args);
+        va_end(args);
+        fprintf(stderr, "\n");
+    }
+}
+
+
 unsigned
 driParseDebugString( const char * debug, 
 		     const struct dri_debug_control * control  )
@@ -230,9 +253,6 @@ void driInitSingleExtension( GLcontext * ctx,
 /**
  * Utility function used by drivers to test the verions of other components.
  *
- * If one of the version requirements is not met, a message is logged using
- * \c __driUtilMessage.
- *
  * \param driver_name  Name of the driver.  Used in error messages.
  * \param driActual    Actual DRI version supplied __driCreateNewScreen.
  * \param driExpected  Minimum DRI version required by the driver.
@@ -244,7 +264,7 @@ void driInitSingleExtension( GLcontext * ctx,
  * \returns \c GL_TRUE if all version requirements are met.  Otherwise,
  *          \c GL_FALSE is returned.
  * 
- * \sa __driCreateNewScreen, driCheckDriDdxDrmVersions2, __driUtilMessage
+ * \sa __driCreateNewScreen, driCheckDriDdxDrmVersions2
  *
  * \todo
  * Now that the old \c driCheckDriDdxDrmVersions function is gone, this
@@ -275,10 +295,9 @@ driCheckDriDdxDrmVersions3(const char * driver_name,
    }
 
    /* Check that the DDX driver version is compatible */
-   /* for miniglx we pass in -1 so we can ignore the DDX version */
-   if ( (ddxActual->major != -1) && ((ddxActual->major < ddxExpected->major_min)
+   if ( (ddxActual->major < ddxExpected->major_min)
 	|| (ddxActual->major > ddxExpected->major_max)
-	|| (ddxActual->minor < ddxExpected->minor)) ) {
+	|| (ddxActual->minor < ddxExpected->minor) ) {
       fprintf(stderr, format2, driver_name, "DDX",
 		       ddxExpected->major_min, ddxExpected->major_max, ddxExpected->minor,
 		       ddxActual->major, ddxActual->minor, ddxActual->patch);
@@ -626,11 +645,10 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		    modes->bindToTextureRgb = GL_TRUE;
 		    modes->bindToTextureRgba = GL_TRUE;
 		    modes->bindToMipmapTexture = GL_FALSE;
-		    modes->bindToTextureTargets = modes->rgbMode ?
-		    	__DRI_ATTRIB_TEXTURE_1D_BIT |
-		    	__DRI_ATTRIB_TEXTURE_2D_BIT |
-		    	__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
-		    	0;
+		    modes->bindToTextureTargets =
+			__DRI_ATTRIB_TEXTURE_1D_BIT |
+			__DRI_ATTRIB_TEXTURE_2D_BIT |
+			__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT;
 		}
 	    }
 	}
@@ -727,10 +745,7 @@ driGetConfigAttribIndex(const __DRIconfig *config,
 {
     switch (attribMap[index].attrib) {
     case __DRI_ATTRIB_RENDER_TYPE:
-	if (config->modes.rgbMode)
-	    *value = __DRI_ATTRIB_RGBA_BIT;
-	else
-	    *value = __DRI_ATTRIB_COLOR_INDEX_BIT;
+	*value = __DRI_ATTRIB_RGBA_BIT;
 	break;
     case __DRI_ATTRIB_CONFIG_CAVEAT:
 	if (config->modes.visualRating == GLX_NON_CONFORMANT_CONFIG)

@@ -603,7 +603,6 @@ static struct
 #define DO_POINTS    1
 #define DO_FULL_QUAD 1
 
-#define HAVE_RGBA         1
 #define HAVE_SPEC         1
 #define HAVE_BACK_COLORS  0
 #define HAVE_HW_FLATSHADE 1
@@ -1177,6 +1176,8 @@ static char *fallbackStrings[] = {
    [17] = "Logic op",
    [18] = "Smooth polygon",
    [19] = "Smooth point",
+   [20] = "point sprite coord origin",
+   [21] = "depth/color drawing offset",
 };
 
 

@@ -867,7 +867,6 @@ EXPORTS
 	_glapi_get_proc_address
 	_mesa_add_soft_renderbuffers
 	_mesa_add_renderbuffer
-	_mesa_bzero
 	_mesa_check_conditional_render
 	_mesa_choose_tex_format
 	_mesa_create_framebuffer

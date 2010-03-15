@@ -70,7 +70,7 @@ native_create_probe(EGLNativeDisplayType dpy)
    xscr = x11_screen_create(xdpy, scr);
    if (xscr) {
       if (x11_screen_support(xscr, X11_SCREEN_EXTENSION_DRI2)) {
-         driver_name = x11_screen_probe_dri2(xscr);
+         driver_name = x11_screen_probe_dri2(xscr, NULL, NULL);
          if (driver_name)
             nprobe->data = strdup(driver_name);
       }
@@ -126,7 +126,8 @@ native_get_name(void)
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy)
+native_create_display(EGLNativeDisplayType dpy,
+                      struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
    boolean force_sw;
@@ -136,21 +137,14 @@ native_create_display(EGLNativeDisplayType dpy)
 
    force_sw = debug_get_bool_option("EGL_SOFTWARE", FALSE);
    if (api && !force_sw) {
-      ndpy = x11_create_dri2_display(dpy, api);
+      ndpy = x11_create_dri2_display(dpy, event_handler, api);
    }
 
    if (!ndpy) {
       EGLint level = (force_sw) ? _EGL_INFO : _EGL_WARNING;
-      boolean use_shm;
 
-      /*
-       * XXX st/mesa calls pipe_screen::update_buffer in st_validate_state.
-       * When SHM is used, there is a good chance that the shared memory
-       * segment is detached before the softpipe tile cache is flushed.
-       */
-      use_shm = FALSE;
-      _eglLog(level, "use software%s fallback", (use_shm) ? " (SHM)" : "");
-      ndpy = x11_create_ximage_display(dpy, use_shm);
+      _eglLog(level, "use software fallback");
+      ndpy = x11_create_ximage_display(dpy, event_handler);
    }
 
    return ndpy;

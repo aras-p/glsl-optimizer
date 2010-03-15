@@ -67,13 +67,14 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     struct exa_pixmap_priv *exa_priv;
     BufferPrivatePtr private = buffer->driverPrivate;
     PixmapPtr pPixmap;
-    unsigned stride, handle;
+    struct winsys_handle whandle;
 
     if (pDraw->type == DRAWABLE_PIXMAP)
 	pPixmap = (PixmapPtr) pDraw;
     else
 	pPixmap = (*pScreen->GetWindowPixmap)((WindowPtr) pDraw);
     exa_priv = exaGetPixmapDriverPrivate(pPixmap);
+
 
     switch (buffer->attachment) {
     default:
@@ -116,19 +117,19 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
                   break;
                default:
                   template.format = ms->ds_depth_bits_last ?
-                                    PIPE_FORMAT_X8Z24_UNORM : PIPE_FORMAT_Z24X8_UNORM;
+                                    PIPE_FORMAT_Z24X8_UNORM : PIPE_FORMAT_X8Z24_UNORM;
                   break;
                }
             } else {
                template.format = ms->ds_depth_bits_last ?
-                                 PIPE_FORMAT_S8Z24_UNORM : PIPE_FORMAT_Z24S8_UNORM;
+                                 PIPE_FORMAT_Z24S8_UNORM : PIPE_FORMAT_S8Z24_UNORM;
             }
 	    template.width0 = pDraw->width;
 	    template.height0 = pDraw->height;
 	    template.depth0 = 1;
 	    template.last_level = 0;
 	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
-		PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+		PIPE_TEXTURE_USAGE_SHARED;
 	    tex = ms->screen->texture_create(ms->screen, &template);
 	    pipe_texture_reference(&exa_priv->depth_stencil_tex, tex);
 	}
@@ -153,10 +154,13 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     if (!tex)
 	FatalError("NO TEXTURE IN DRI2\n");
 
-    ms->api->shared_handle_from_texture(ms->api, ms->screen, tex, &stride, &handle);
+    memset(&whandle, 0, sizeof(whandle));
+    whandle.type = DRM_API_HANDLE_TYPE_SHARED;
 
-    buffer->name = handle;
-    buffer->pitch = stride;
+    ms->screen->texture_get_handle(ms->screen, tex, &whandle);
+
+    buffer->name = whandle.handle;
+    buffer->pitch = whandle.stride;
     buffer->cpp = 4;
     buffer->driverPrivate = private;
     buffer->flags = 0; /* not tiled */
@@ -431,11 +435,11 @@ xorg_dri2_init(ScreenPtr pScreen)
     dri2info.Wait = NULL;
 
     ms->d_depth_bits_last =
-	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_X8Z24_UNORM,
+	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24X8_UNORM,
 					 PIPE_TEXTURE_2D,
 					 PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
     ms->ds_depth_bits_last =
-	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_S8Z24_UNORM,
+	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24S8_UNORM,
 					 PIPE_TEXTURE_2D,
 					 PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
 

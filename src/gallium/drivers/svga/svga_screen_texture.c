@@ -41,8 +41,6 @@
 #include "svga_debug.h"
 #include "svga_screen_buffer.h"
 
-#include <util/u_string.h>
-
 
 /* XXX: This isn't a real hardware flag, but just a hack for kernel to
  * know about primary surfaces. Find a better way to accomplish this.
@@ -59,21 +57,21 @@ svga_translate_format(enum pipe_format format)
 {
    switch(format) {
    
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return SVGA3D_A8R8G8B8;
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
       return SVGA3D_X8R8G8B8;
 
       /* Required for GL2.1:
        */
-   case PIPE_FORMAT_A8R8G8B8_SRGB:
+   case PIPE_FORMAT_B8G8R8A8_SRGB:
       return SVGA3D_A8R8G8B8;
 
-   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
       return SVGA3D_R5G6B5;
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
       return SVGA3D_A1R5G5B5;
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
       return SVGA3D_A4R4G4B4;
 
       
@@ -83,9 +81,9 @@ svga_translate_format(enum pipe_format format)
     */
    case PIPE_FORMAT_Z16_UNORM:
       return SVGA3D_Z_D16;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       return SVGA3D_Z_D24S8;
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       return SVGA3D_Z_D24X8;
 
    case PIPE_FORMAT_A8_UNORM:
@@ -111,13 +109,13 @@ SVGA3dSurfaceFormat
 svga_translate_format_render(enum pipe_format format)
 {
    switch(format) { 
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
-   case PIPE_FORMAT_R5G6B5_UNORM:
-   case PIPE_FORMAT_Z24S8_UNORM:
-   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+   case PIPE_FORMAT_B5G5R5A1_UNORM:
+   case PIPE_FORMAT_B4G4R4A4_UNORM:
+   case PIPE_FORMAT_B5G6R5_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_Z32_UNORM:
    case PIPE_FORMAT_Z16_UNORM:
    case PIPE_FORMAT_L8_UNORM:
@@ -315,7 +313,11 @@ svga_texture_create(struct pipe_screen *screen,
       tex->key.cachable = 0;
    }
 
-   if(templat->tex_usage & PIPE_TEXTURE_USAGE_PRIMARY) {
+   if(templat->tex_usage & PIPE_TEXTURE_USAGE_SHARED) {
+      tex->key.cachable = 0;
+   }
+
+   if(templat->tex_usage & PIPE_TEXTURE_USAGE_SCANOUT) {
       tex->key.flags |= SVGA3D_SURFACE_HINT_SCANOUT;
       tex->key.cachable = 0;
    }
@@ -355,80 +357,18 @@ error1:
 }
 
 
+
+
+
 static struct pipe_texture *
-svga_texture_blanket(struct pipe_screen * screen,
-                     const struct pipe_texture *base,
-                     const unsigned *stride,
-                     struct pipe_buffer *buffer)
+svga_screen_texture_from_handle(struct pipe_screen *screen,
+                                const struct pipe_texture *base,
+                                struct winsys_handle *whandle)
 {
-   struct svga_texture *tex;
-   struct svga_buffer *sbuf = svga_buffer(buffer);
    struct svga_winsys_screen *sws = svga_winsys_screen(screen);
-   assert(screen);
-
-   /* Only supports one type */
-   if (base->target != PIPE_TEXTURE_2D ||
-       base->last_level != 0 ||
-       base->depth0 != 1) {
-      return NULL;
-   }
-
-   /**
-    * We currently can't do texture blanket on
-    * SVGA3D_BUFFER. Need to blit to a temporary surface?
-    */
-
-   assert(sbuf->handle);
-   if (!sbuf->handle)
-      return NULL;
-
-   if (svga_translate_format(base->format) != sbuf->key.format) {
-      unsigned f1 = svga_translate_format(base->format);
-      unsigned f2 = sbuf->key.format;
-
-      /* It's okay for XRGB and ARGB or depth with/out stencil to get mixed up */
-      if ( !( (f1 == SVGA3D_X8R8G8B8 && f2 == SVGA3D_A8R8G8B8) ||
-              (f1 == SVGA3D_A8R8G8B8 && f2 == SVGA3D_X8R8G8B8) ||
-              (f1 == SVGA3D_Z_D24X8 && f2 == SVGA3D_Z_D24S8) ) ) {
-         debug_printf("%s wrong format %u != %u\n", __FUNCTION__, f1, f2);
-         return NULL;
-      }
-   }
-
-   tex = CALLOC_STRUCT(svga_texture);
-   if (!tex)
-      return NULL;
-
-   tex->base = *base;
-   
-
-   if (sbuf->key.format == 1)
-      tex->base.format = PIPE_FORMAT_X8R8G8B8_UNORM;
-   else if (sbuf->key.format == 2)
-      tex->base.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-
-   pipe_reference_init(&tex->base.reference, 1);
-   tex->base.screen = screen;
-
-   SVGA_DBG(DEBUG_DMA, "blanket sid %p\n", sbuf->handle);
-
-   /* We don't own this storage, so don't try to cache it.
-    */
-   assert(sbuf->key.cachable == 0);
-   tex->key.cachable = 0;
-   sws->surface_reference(sws, &tex->handle, sbuf->handle);
-
-   return &tex->base;
-}
-
-
-struct pipe_texture *
-svga_screen_texture_wrap_surface(struct pipe_screen *screen,
-				 struct pipe_texture *base,
-				 enum SVGA3dSurfaceFormat format,
-				 struct svga_winsys_surface *srf)
-{
+   struct svga_winsys_surface *srf;
    struct svga_texture *tex;
+   enum SVGA3dSurfaceFormat format = 0;
    assert(screen);
 
    /* Only supports one type */
@@ -437,6 +377,8 @@ svga_screen_texture_wrap_surface(struct pipe_screen *screen,
        base->depth0 != 1) {
       return NULL;
    }
+
+   srf = sws->surface_from_handle(sws, whandle, &format);
 
    if (!srf)
       return NULL;
@@ -462,9 +404,9 @@ svga_screen_texture_wrap_surface(struct pipe_screen *screen,
    
 
    if (format == 1)
-      tex->base.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+      tex->base.format = PIPE_FORMAT_B8G8R8X8_UNORM;
    else if (format == 2)
-      tex->base.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      tex->base.format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
    pipe_reference_init(&tex->base.reference, 1);
    tex->base.screen = screen;
@@ -475,6 +417,22 @@ svga_screen_texture_wrap_surface(struct pipe_screen *screen,
    tex->handle = srf;
 
    return &tex->base;
+}
+
+
+static boolean 
+svga_screen_texture_get_handle(struct pipe_screen *screen,
+                               struct pipe_texture *texture,
+                               struct winsys_handle *whandle)
+{
+   struct svga_winsys_screen *sws = svga_winsys_screen(texture->screen);
+   unsigned stride;
+
+   assert(svga_texture(texture)->key.cachable == 0);
+   svga_texture(texture)->key.cachable = 0;
+   stride = util_format_get_nblocksx(texture->format, texture->width0) *
+            util_format_get_blocksize(texture->format);
+   return sws->surface_get_handle(sws, svga_texture(texture)->handle, stride, whandle);
 }
 
 
@@ -823,15 +781,17 @@ svga_surface_needs_propagation(struct pipe_surface *surf)
    return s->dirty && s->handle != tex->handle;
 }
 
-
+/* XXX: Still implementing this as if it was a screen function, but
+ * can now modify it to queue transfers on the context.
+ */
 static struct pipe_transfer *
-svga_get_tex_transfer(struct pipe_screen *screen,
-                     struct pipe_texture *texture,
-                     unsigned face, unsigned level, unsigned zslice,
-                     enum pipe_transfer_usage usage, unsigned x, unsigned y,
-                     unsigned w, unsigned h)
+svga_get_tex_transfer(struct pipe_context *pipe,
+		      struct pipe_texture *texture,
+		      unsigned face, unsigned level, unsigned zslice,
+		      enum pipe_transfer_usage usage, unsigned x, unsigned y,
+		      unsigned w, unsigned h)
 {
-   struct svga_screen *ss = svga_screen(screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st;
    unsigned nblocksx = util_format_get_nblocksx(texture->format, w);
@@ -899,11 +859,14 @@ no_hwbuf:
 }
 
 
+/* XXX: Still implementing this as if it was a screen function, but
+ * can now modify it to queue transfers on the context.
+ */
 static void *
-svga_transfer_map( struct pipe_screen *screen,
+svga_transfer_map( struct pipe_context *pipe,
                    struct pipe_transfer *transfer )
 {
-   struct svga_screen *ss = svga_screen(screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st = svga_transfer(transfer);
 
@@ -917,11 +880,14 @@ svga_transfer_map( struct pipe_screen *screen,
 }
 
 
+/* XXX: Still implementing this as if it was a screen function, but
+ * can now modify it to queue transfers on the context.
+ */
 static void
-svga_transfer_unmap(struct pipe_screen *screen,
+svga_transfer_unmap(struct pipe_context *pipe,
                     struct pipe_transfer *transfer)
 {
-   struct svga_screen *ss = svga_screen(screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st = svga_transfer(transfer);
    
@@ -931,10 +897,11 @@ svga_transfer_unmap(struct pipe_screen *screen,
 
 
 static void
-svga_tex_transfer_destroy(struct pipe_transfer *transfer)
+svga_tex_transfer_destroy(struct pipe_context *pipe,
+                          struct pipe_transfer *transfer)
 {
    struct svga_texture *tex = svga_texture(transfer->texture);
-   struct svga_screen *ss = svga_screen(transfer->texture->screen);
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
    struct svga_transfer *st = svga_transfer(transfer);
 
@@ -951,18 +918,26 @@ svga_tex_transfer_destroy(struct pipe_transfer *transfer)
    FREE(st);
 }
 
+
+void
+svga_init_texture_functions(struct pipe_context *pipe)
+{
+   pipe->get_tex_transfer = svga_get_tex_transfer;
+   pipe->transfer_map = svga_transfer_map;
+   pipe->transfer_unmap = svga_transfer_unmap;
+   pipe->tex_transfer_destroy = svga_tex_transfer_destroy;
+}
+
+
 void
 svga_screen_init_texture_functions(struct pipe_screen *screen)
 {
    screen->texture_create = svga_texture_create;
+   screen->texture_from_handle = svga_screen_texture_from_handle;
+   screen->texture_get_handle = svga_screen_texture_get_handle;
    screen->texture_destroy = svga_texture_destroy;
    screen->get_tex_surface = svga_get_tex_surface;
    screen->tex_surface_destroy = svga_tex_surface_destroy;
-   screen->texture_blanket = svga_texture_blanket;
-   screen->get_tex_transfer = svga_get_tex_transfer;
-   screen->transfer_map = svga_transfer_map;
-   screen->transfer_unmap = svga_transfer_unmap;
-   screen->tex_transfer_destroy = svga_tex_transfer_destroy;
 }
 
 /*********************************************************************** 
@@ -1119,34 +1094,4 @@ svga_destroy_sampler_view_priv(struct svga_sampler_view *v)
    }
    pipe_texture_reference(&v->texture, NULL);
    FREE(v);
-}
-
-boolean
-svga_screen_buffer_from_texture(struct pipe_texture *texture,
-				struct pipe_buffer **buffer,
-				unsigned *stride)
-{
-   struct svga_texture *stex = svga_texture(texture);
-
-   *buffer = svga_screen_buffer_wrap_surface
-      (texture->screen,
-       svga_translate_format(texture->format),
-       stex->handle);
-
-   *stride = util_format_get_stride(texture->format, texture->width0);
-
-   return *buffer != NULL;
-}
-
-
-struct svga_winsys_surface *
-svga_screen_texture_get_winsys_surface(struct pipe_texture *texture)
-{
-   struct svga_winsys_screen *sws = svga_winsys_screen(texture->screen);
-   struct svga_winsys_surface *vsurf = NULL;
-
-   assert(svga_texture(texture)->key.cachable == 0);
-   svga_texture(texture)->key.cachable = 0;
-   sws->surface_reference(sws, &vsurf, svga_texture(texture)->handle);
-   return vsurf;
 }

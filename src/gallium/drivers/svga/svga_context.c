@@ -164,6 +164,8 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    svga_init_constbuffer_functions(svga);
    svga_init_query_functions(svga);
 
+   svga_init_texture_functions(&svga->pipe);
+
    /* debug */
    svga->debug.no_swtnl = debug_get_bool_option("SVGA_NO_SWTNL", FALSE);
    svga->debug.force_swtnl = debug_get_bool_option("SVGA_FORCE_SWTNL", FALSE);

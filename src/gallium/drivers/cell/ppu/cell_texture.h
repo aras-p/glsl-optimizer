@@ -28,6 +28,7 @@
 #ifndef CELL_TEXTURE_H
 #define CELL_TEXTURE_H
 
+#include "cell/common.h"
 
 struct cell_context;
 struct pipe_texture;
@@ -43,8 +44,20 @@ struct cell_texture
    unsigned long level_offset[CELL_MAX_TEXTURE_LEVELS];
    unsigned long stride[CELL_MAX_TEXTURE_LEVELS];
 
-   /** The tiled texture data is held in this buffer */
-   struct pipe_buffer *buffer;
+   /**
+    * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET
+    * usage.
+    */
+   struct sw_displaytarget *dt;
+   unsigned dt_stride;
+
+   /**
+    * Malloc'ed data for regular textures, or a mapping to dt above.
+    */
+   void *data;
+
+   /* Size of the linear buffer??
+    */
    unsigned long buffer_size;
 
    /** The buffer above, mapped.  This is the memory from which the
@@ -82,5 +95,7 @@ cell_transfer(struct pipe_transfer *pt)
 extern void
 cell_init_screen_texture_funcs(struct pipe_screen *screen);
 
+extern void
+cell_init_texture_transfer_funcs(struct cell_context *cell);
 
 #endif /* CELL_TEXTURE_H */

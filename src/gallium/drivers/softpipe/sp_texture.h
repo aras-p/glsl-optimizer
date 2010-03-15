@@ -33,6 +33,10 @@
 #include "pipe/p_video_state.h"
 
 
+#define SP_MAX_TEXTURE_2D_LEVELS 13  /* 4K x 4K */
+#define SP_MAX_TEXTURE_3D_LEVELS 9   /* 512 x 512 x 512 */
+
+
 struct pipe_context;
 struct pipe_screen;
 struct softpipe_context;
@@ -42,12 +46,19 @@ struct softpipe_texture
 {
    struct pipe_texture base;
 
-   unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned stride[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned long level_offset[SP_MAX_TEXTURE_2D_LEVELS];
+   unsigned stride[SP_MAX_TEXTURE_2D_LEVELS];
 
-   /* The data is held here:
+   /**
+    * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET
+    * usage.
     */
-   struct pipe_buffer *buffer;
+   struct sw_displaytarget *dt;
+
+   /**
+    * Malloc'ed data for regular textures, or a mapping to dt above.
+    */
+   void *data;
 
    /* True if texture images are power-of-two in all dimensions:
     */
@@ -95,6 +106,9 @@ softpipe_video_surface(struct pipe_video_surface *pvs)
 
 extern void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen);
+
+void
+softpipe_init_texture_funcs(struct pipe_context *pipe);
 
 
 #endif /* SP_TEXTURE */

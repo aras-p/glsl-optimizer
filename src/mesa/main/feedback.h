@@ -41,7 +41,6 @@ extern void
 _mesa_feedback_vertex( GLcontext *ctx,
                        const GLfloat win[4],
                        const GLfloat color[4],
-                       GLfloat index,
                        const GLfloat texcoord[4] );
 
 
@@ -70,7 +69,6 @@ static INLINE void
 _mesa_feedback_vertex( GLcontext *ctx,
                        const GLfloat win[4],
                        const GLfloat color[4],
-                       GLfloat index,
                        const GLfloat texcoord[4] )
 {
    /* render mode is always GL_RENDER */

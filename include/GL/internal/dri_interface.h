@@ -751,4 +751,59 @@ struct __DRIdri2ExtensionRec {
 
 };
 
+
+/**
+ * This extension provides functionality to enable various EGLImage
+ * extensions.
+ */
+#define __DRI_IMAGE "DRI_IMAGE"
+#define __DRI_IMAGE_VERSION 1
+
+/**
+ * These formats correspond to the similarly named MESA_FORMAT_*
+ * tokens, except in the native endian of the CPU.  For example, on
+ * little endian __DRI_IMAGE_FORMAT_XRGB8888 corresponds to
+ * MESA_FORMAT_XRGB8888, but MESA_FORMAT_XRGB8888_REV on big endian.
+ */
+#define __DRI_IMAGE_FORMAT_RGB565       0x1001
+#define __DRI_IMAGE_FORMAT_XRGB8888     0x1002
+#define __DRI_IMAGE_FORMAT_ARGB8888     0x1003
+
+typedef struct __DRIimageRec          __DRIimage;
+typedef struct __DRIimageExtensionRec __DRIimageExtension;
+struct __DRIimageExtensionRec {
+    __DRIextension base;
+
+    __DRIimage *(*createImageFromName)(__DRIcontext *context,
+				       int width, int height, int format,
+				       int name, int pitch,
+				       void *loaderPrivate);
+
+    __DRIimage *(*createImageFromRenderbuffer)(__DRIcontext *context,
+					       int renderbuffer,
+					       void *loaderPrivate);
+
+    void (*destroyImage)(__DRIimage *image);
+};
+
+/**
+ * This extension must be implemented by the loader and passed to the
+ * driver at screen creation time.  The EGLImage entry points in the
+ * various client APIs take opaque EGLImage handles and use this
+ * extension to map them to a __DRIimage.  At version 1, this
+ * extensions allows mapping EGLImage pointers to __DRIimage pointers,
+ * but future versions could support other EGLImage-like, opaque types
+ * with new lookup functions.
+ */
+#define __DRI_IMAGE_LOOKUP "DRI_IMAGE_LOOKUP"
+#define __DRI_IMAGE_LOOKUP_VERSION 1
+
+typedef struct __DRIimageLookupExtensionRec __DRIimageLookupExtension;
+struct __DRIimageLookupExtensionRec {
+    __DRIextension base;
+
+    __DRIimage *(*lookupEGLImage)(__DRIcontext *context, void *image,
+				  void *loaderPrivate);
+};
+
 #endif

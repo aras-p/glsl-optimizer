@@ -45,7 +45,8 @@ struct draw_stage;
 struct lp_fragment_shader;
 struct lp_vertex_shader;
 struct lp_blend_state;
-struct setup_context;
+struct lp_setup_context;
+struct lp_velems_state;
 
 struct llvmpipe_context {
    struct pipe_context pipe;  /**< base class */
@@ -58,6 +59,7 @@ struct llvmpipe_context {
    const struct pipe_rasterizer_state *rasterizer;
    struct lp_fragment_shader *fs;
    const struct lp_vertex_shader *vs;
+   const struct lp_velems_state *velems;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -71,13 +73,11 @@ struct llvmpipe_context {
    struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
 
    unsigned num_samplers;
    unsigned num_textures;
    unsigned num_vertex_samplers;
    unsigned num_vertex_textures;
-   unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
    unsigned dirty; /**< Mask of LP_NEW_x flags */
@@ -98,7 +98,7 @@ struct llvmpipe_context {
    int psize_slot;
 
    /** The tiling engine */
-   struct setup_context *setup;
+   struct lp_setup_context *setup;
 
    /** The primitive drawing context */
    struct draw_context *draw;

@@ -32,24 +32,29 @@
 #include "pipe/p_state.h"
 
 
+#define LP_MAX_TEXTURE_2D_LEVELS 13  /* 4K x 4K for now */
+#define LP_MAX_TEXTURE_3D_LEVELS 10  /* 512 x 512 x 512 for now */
+
+
 struct pipe_context;
 struct pipe_screen;
 struct llvmpipe_context;
-struct llvmpipe_displaytarget;
+
+struct sw_displaytarget;
 
 
 struct llvmpipe_texture
 {
    struct pipe_texture base;
 
-   unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned stride[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned long level_offset[LP_MAX_TEXTURE_2D_LEVELS];
+   unsigned stride[LP_MAX_TEXTURE_2D_LEVELS];
 
    /**
     * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET
     * usage.
     */
-   struct llvmpipe_displaytarget *dt;
+   struct sw_displaytarget *dt;
 
    /**
     * Malloc'ed data for regular textures, or a mapping to dt above.
@@ -90,8 +95,32 @@ llvmpipe_transfer(struct pipe_transfer *pt)
 }
 
 
+static INLINE unsigned
+llvmpipe_texture_stride(struct pipe_texture *texture,
+                        unsigned level)
+{
+   struct llvmpipe_texture *lpt = llvmpipe_texture(texture);
+   assert(level < LP_MAX_TEXTURE_2D_LEVELS);
+   return lpt->stride[level];
+}
+
+
+void *
+llvmpipe_texture_map(struct pipe_texture *texture,
+                     unsigned face,
+                     unsigned level,
+                     unsigned zslice);
+
+void
+llvmpipe_texture_unmap(struct pipe_texture *texture,
+                       unsigned face,
+                       unsigned level,
+                       unsigned zslice);
+
 extern void
 llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 
+extern void
+llvmpipe_init_context_texture_funcs(struct pipe_context *pipe);
 
 #endif /* LP_TEXTURE_H */

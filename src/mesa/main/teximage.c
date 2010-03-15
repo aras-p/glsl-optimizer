@@ -2448,6 +2448,47 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
 }
 
 
+#if FEATURE_OES_EGL_image
+void GLAPIENTRY
+_mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
+{
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (target != GL_TEXTURE_2D) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+		  "glEGLImageTargetTexture2D(target=%d)", target);
+      return;
+   }
+
+   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
+      _mesa_update_state(ctx);
+
+   texObj = _mesa_get_current_tex_object(ctx, target);
+   _mesa_lock_texture(ctx, texObj);
+
+   texImage = _mesa_get_tex_image(ctx, texObj, target, 0);
+   if (!texImage) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glEGLImageTargetTexture2D");
+   } else {
+      if (texImage->Data)
+	 ctx->Driver.FreeTexImageData( ctx, texImage );
+
+      ASSERT(texImage->Data == NULL);
+      ctx->Driver.EGLImageTargetTexture2D(ctx, target,
+					  texObj, texImage, image);
+
+      /* state update */
+      texObj->_Complete = GL_FALSE;
+      ctx->NewState |= _NEW_TEXTURE;
+   }
+   _mesa_unlock_texture(ctx, texObj);
+
+}
+#endif
+
 
 void GLAPIENTRY
 _mesa_TexSubImage1D( GLenum target, GLint level,

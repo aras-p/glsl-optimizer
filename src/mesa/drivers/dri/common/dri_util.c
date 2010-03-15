@@ -47,28 +47,6 @@ const __DRIextension driReadDrawableExtension = {
     __DRI_READ_DRAWABLE, __DRI_READ_DRAWABLE_VERSION
 };
 
-/**
- * Print message to \c stderr if the \c LIBGL_DEBUG environment variable
- * is set. 
- * 
- * Is called from the drivers.
- * 
- * \param f \c printf like format string.
- */
-void
-__driUtilMessage(const char *f, ...)
-{
-    va_list args;
-
-    if (getenv("LIBGL_DEBUG")) {
-        fprintf(stderr, "libGL: ");
-        va_start(args, f);
-        vfprintf(stderr, f, args);
-        va_end(args);
-        fprintf(stderr, "\n");
-    }
-}
-
 GLint
 driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
 {
@@ -127,6 +105,7 @@ static int driUnbindContext(__DRIcontext *pcp)
     /* Let driver unbind drawable from context */
     (*psp->DriverAPI.UnbindContext)(pcp);
 
+    assert(pdp);
     if (pdp->refcount == 0) {
 	/* ERROR!!! */
 	return GL_FALSE;
@@ -189,6 +168,7 @@ static int driBindContext(__DRIcontext *pcp,
     ** initialize the drawable information if has not been done before.
     */
 
+    assert(psp);
     if (!psp->dri2.enabled) {
 	if (pdp && !pdp->pStamp) {
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
@@ -675,6 +655,8 @@ setupLoaderExtensions(__DRIscreen *psp,
 	    psp->systemTime = (__DRIsystemTimeExtension *) extensions[i];
 	if (strcmp(extensions[i]->name, __DRI_DRI2_LOADER) == 0)
 	    psp->dri2.loader = (__DRIdri2LoaderExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_IMAGE_LOOKUP) == 0)
+	    psp->dri2.image = (__DRIimageLookupExtension *) extensions[i];
     }
 }
 
@@ -694,7 +676,7 @@ setupLoaderExtensions(__DRIscreen *psp,
  * \param drm_version Version of the kernel DRM.
  * \param frame_buffer Data describing the location and layout of the
  *                     framebuffer.
- * \param pSAREA       Pointer the the SAREA.
+ * \param pSAREA       Pointer to the SAREA.
  * \param fd           Device handle for the DRM.
  * \param extensions   ??
  * \param driver_modes  Returns modes suppoted by the driver

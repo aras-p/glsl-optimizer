@@ -1113,7 +1113,7 @@ usage(void)
    printf("\t-display <dname>: Print GLX visuals on specified server.\n");
    printf("\t-h: This information.\n");
    printf("\t-i: Force an indirect rendering context.\n");
-   printf("\t-b: Find the 'best' visual and print it's number.\n");
+   printf("\t-b: Find the 'best' visual and print its number.\n");
    printf("\t-l: Print interesting OpenGL limits.\n");
 }
 

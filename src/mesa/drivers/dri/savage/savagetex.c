@@ -1021,6 +1021,7 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
 	  return;
       }
 
+      assert(t->base.memBlock);
       ofs = t->base.memBlock->ofs;
       t->setup.physAddr = imesa->savageScreen->textureOffset[heap] + ofs;
       t->bufAddr = (GLubyte *)imesa->savageScreen->texVirtual[heap] + ofs;

@@ -60,13 +60,11 @@ r300_video_surface(struct pipe_video_surface *pvs)
     return (struct r300_video_surface *)pvs;
 }
 
-#ifndef R300_WINSYS_H
-
+/* Used internally for texture_is_referenced()
+ */
 boolean r300_get_texture_buffer(struct pipe_screen* screen,
-                                struct pipe_texture* texture,
-                                struct pipe_buffer** buffer,
+                                struct pipe_texture *texture,
+                                struct r300_winsys_buffer** buffer,
                                 unsigned* stride);
-
-#endif /* R300_WINSYS_H */
 
 #endif /* R300_TEXTURE_H */

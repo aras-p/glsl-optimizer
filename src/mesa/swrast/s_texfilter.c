@@ -475,6 +475,18 @@ clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
 
 
 /**
+ * Compute slice/image to use for 1D or 2D array texture.
+ */
+static INLINE GLint
+tex_array_slice(GLfloat coord, GLsizei size)
+{
+   GLint slice = IFLOOR(coord + 0.5f);
+   slice = CLAMP(slice, 0, size - 1);
+   return slice;
+}
+
+
+/**
  * Compute nearest integer texcoords for given texobj and coordinate.
  */
 static INLINE void
@@ -506,13 +518,13 @@ nearest_texcoord(const struct gl_texture_object *texObj,
       break;
    case GL_TEXTURE_1D_ARRAY_EXT:
       *i = nearest_texel_location(texObj->WrapS, img, width, texcoord[0]);
-      *j = clamp_rect_coord_nearest(texObj->WrapT, texcoord[1], height);
+      *j = tex_array_slice(texcoord[1], height);
       *k = 0;
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
       *i = nearest_texel_location(texObj->WrapS, img, width, texcoord[0]);
       *j = nearest_texel_location(texObj->WrapT, img, height, texcoord[1]);
-      *k = clamp_rect_coord_nearest(texObj->WrapR, texcoord[2], depth);
+      *k = tex_array_slice(texcoord[2], depth);
       break;
    default:
       *i = *j = *k = 0;
@@ -556,7 +568,7 @@ linear_texcoord(const struct gl_texture_object *texObj,
    case GL_TEXTURE_1D_ARRAY_EXT:
       linear_texel_locations(texObj->WrapS, img, width,
                              texcoord[0], i0, i1, wi);
-      *j0 = clamp_rect_coord_nearest(texObj->WrapT, texcoord[1], height);
+      *j0 = tex_array_slice(texcoord[1], height);
       *j1 = *j0;
       *slice = 0;
       break;
@@ -566,7 +578,7 @@ linear_texcoord(const struct gl_texture_object *texObj,
                              texcoord[0], i0, i1, wi);
       linear_texel_locations(texObj->WrapT, img, height,
                              texcoord[1], j0, j1, wj);
-      *slice = clamp_rect_coord_nearest(texObj->WrapR, texcoord[2], depth);
+      *slice = tex_array_slice(texcoord[2], depth);
       break;
 
    default:
@@ -2269,7 +2281,6 @@ sample_lambda_rect(GLcontext *ctx,
 }
 
 
-
 /**********************************************************************/
 /*                2D Texture Array Sampling Functions                 */
 /**********************************************************************/
@@ -2293,7 +2304,7 @@ sample_2d_array_nearest(GLcontext *ctx,
 
    i = nearest_texel_location(tObj->WrapS, img, width, texcoord[0]);
    j = nearest_texel_location(tObj->WrapT, img, height, texcoord[1]);
-   array = clamp_rect_coord_nearest(tObj->WrapR, texcoord[2], depth);
+   array = tex_array_slice(texcoord[2], depth);
 
    if (i < 0 || i >= (GLint) img->Width ||
        j < 0 || j >= (GLint) img->Height ||
@@ -2328,7 +2339,7 @@ sample_2d_array_linear(GLcontext *ctx,
 
    linear_texel_locations(tObj->WrapS, img, width,  texcoord[0], &i0, &i1, &a);
    linear_texel_locations(tObj->WrapT, img, height, texcoord[1], &j0, &j1, &b);
-   array = clamp_rect_coord_nearest(tObj->WrapR, texcoord[2], depth);
+   array = tex_array_slice(texcoord[2], depth);
 
    if (array < 0 || array >= depth) {
       COPY_4V(rgba, tObj->BorderColor.f);
@@ -2601,7 +2612,7 @@ sample_1d_array_nearest(GLcontext *ctx,
    (void) ctx;
 
    i = nearest_texel_location(tObj->WrapS, img, width, texcoord[0]);
-   array = clamp_rect_coord_nearest(tObj->WrapT, texcoord[1], height);
+   array = tex_array_slice(texcoord[1], height);
 
    if (i < 0 || i >= (GLint) img->Width ||
        array < 0 || array >= (GLint) img->Height) {
@@ -2633,7 +2644,7 @@ sample_1d_array_linear(GLcontext *ctx,
    GLfloat t0[4], t1[4];
 
    linear_texel_locations(tObj->WrapS, img, width, texcoord[0], &i0, &i1, &a);
-   array = clamp_rect_coord_nearest(tObj->WrapT, texcoord[1], height);
+   array = tex_array_slice(texcoord[1], height);
 
    if (img->Border) {
       i0 += img->Border;

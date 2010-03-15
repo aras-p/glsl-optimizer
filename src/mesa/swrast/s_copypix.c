@@ -307,100 +307,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 }
 
 
-static void
-copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
-                GLint width, GLint height,
-                GLint destx, GLint desty )
-{
-   GLuint *tmpImage,*p;
-   GLint sy, dy, stepy;
-   GLint j;
-   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
-   GLint overlapping;
-   SWspan span;
-
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
-
-   INIT_SPAN(span, GL_BITMAP);
-   _swrast_span_default_attribs(ctx, &span);
-   span.arrayMask = SPAN_INDEX;
-
-   if (ctx->DrawBuffer == ctx->ReadBuffer) {
-      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
-   }
-   else {
-      overlapping = GL_FALSE;
-   }
-
-   /* Determine if copy should be bottom-to-top or top-to-bottom */
-   if (!overlapping && srcy < desty) {
-      /* top-down  max-to-min */
-      sy = srcy + height - 1;
-      dy = desty + height - 1;
-      stepy = -1;
-   }
-   else {
-      /* bottom-up  min-to-max */
-      sy = srcy;
-      dy = desty;
-      stepy = 1;
-   }
-
-   if (overlapping) {
-      GLint ssy = sy;
-      tmpImage = (GLuint *) malloc(width * height * sizeof(GLuint));
-      if (!tmpImage) {
-         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
-         return;
-      }
-      /* read the image */
-      p = tmpImage;
-      for (j = 0; j < height; j++, ssy += stepy) {
-         _swrast_read_index_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                                  width, srcx, ssy, p );
-         p += width;
-      }
-      p = tmpImage;
-   }
-   else {
-      tmpImage = NULL;  /* silence compiler warning */
-      p = NULL;
-   }
-
-   for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
-      /* Get color indexes */
-      if (overlapping) {
-         memcpy(span.array->index, p, width * sizeof(GLuint));
-         p += width;
-      }
-      else {
-         _swrast_read_index_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                                  width, srcx, sy, span.array->index );
-      }
-
-      if (ctx->_ImageTransferState)
-         _mesa_apply_ci_transfer_ops(ctx, ctx->_ImageTransferState,
-                                     width, span.array->index);
-
-      /* write color indexes */
-      span.x = destx;
-      span.y = dy;
-      span.end = width;
-      if (zoom)
-         _swrast_write_zoomed_index_span(ctx, destx, desty, &span);
-      else
-         _swrast_write_index_span(ctx, &span);
-   }
-
-   if (overlapping)
-      free(tmpImage);
-}
-
-
 /**
  * Convert floating point Z values to integer Z values with pixel transfer's
  * Z scale and bias.
@@ -522,18 +428,10 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       span.x = destx;
       span.y = dy;
       span.end = width;
-      if (fb->Visual.rgbMode) {
-         if (zoom)
-            _swrast_write_zoomed_depth_span(ctx, destx, desty, &span);
-         else
-            _swrast_write_rgba_span(ctx, &span);
-      }
-      else {
-         if (zoom)
-            _swrast_write_zoomed_depth_span(ctx, destx, desty, &span);
-         else
-            _swrast_write_index_span(ctx, &span);
-      }
+      if (zoom)
+         _swrast_write_zoomed_depth_span(ctx, destx, desty, &span);
+      else
+         _swrast_write_rgba_span(ctx, &span);
    }
 
    if (overlapping)
@@ -909,12 +807,7 @@ _swrast_CopyPixels( GLcontext *ctx,
    if (!fast_copy_pixels(ctx, srcx, srcy, width, height, destx, desty, type)) {
       switch (type) {
       case GL_COLOR:
-         if (ctx->Visual.rgbMode) {
-            copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
-         }
-         else {
-            copy_ci_pixels( ctx, srcx, srcy, width, height, destx, desty );
-         }
+         copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
          break;
       case GL_DEPTH:
          copy_depth_pixels( ctx, srcx, srcy, width, height, destx, desty );

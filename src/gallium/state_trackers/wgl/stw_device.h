@@ -48,10 +48,6 @@ struct stw_device
    
    struct pipe_screen *screen;
    
-#ifdef DEBUG
-   boolean trace_running;
-#endif
-
    LUID AdapterLuid;
 
    struct stw_pixelformat_info pixelformats[STW_MAX_PIXELFORMATS];

@@ -53,6 +53,8 @@ struct kms_crtc {
 struct kms_display {
    struct native_display base;
 
+   struct native_event_handler *event_handler;
+
    int fd;
    struct drm_api *api;
    drmModeResPtr resources;

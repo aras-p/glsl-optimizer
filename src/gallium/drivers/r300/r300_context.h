@@ -32,6 +32,7 @@
 
 #include "r300_screen.h"
 
+struct u_upload_mgr;
 struct r300_context;
 
 struct r300_fragment_shader;
@@ -45,7 +46,7 @@ struct r300_atom {
     /* Opaque state. */
     void* state;
     /* Emit the state to the context. */
-    void (*emit)(struct r300_context*, void*);
+    void (*emit)(struct r300_context*, unsigned, void*);
     /* Upper bound on number of dwords to emit. */
     unsigned size;
     /* Whether this atom should be emitted. */
@@ -86,7 +87,6 @@ struct r300_rs_state {
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t antialiasing_config;   /* R300_GB_AA_CONFIG: 0x4020 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
-    uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
     uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
     float depth_scale;            /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
                                   /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
@@ -119,20 +119,56 @@ struct r300_sampler_state {
     unsigned min_lod, max_lod;
 };
 
-struct r300_texture_state {
+struct r300_texture_format_state {
     uint32_t format0; /* R300_TX_FORMAT0: 0x4480 */
     uint32_t format1; /* R300_TX_FORMAT1: 0x44c0 */
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
 };
 
+#define R300_MAX_TEXTURE_LEVELS 13
+
 struct r300_texture_fb_state {
     /* Colorbuffer. */
-    uint32_t colorpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_COLORPITCH[0-3]*/
+    uint32_t colorpitch[R300_MAX_TEXTURE_LEVELS]; /* R300_RB3D_COLORPITCH[0-3]*/
     uint32_t us_out_fmt; /* R300_US_OUT_FMT[0-3] */
 
     /* Zbuffer. */
-    uint32_t depthpitch[PIPE_MAX_TEXTURE_LEVELS]; /* R300_RB3D_DEPTHPITCH */
+    uint32_t depthpitch[R300_MAX_TEXTURE_LEVELS]; /* R300_RB3D_DEPTHPITCH */
     uint32_t zb_format; /* R300_ZB_FORMAT */
+};
+
+struct r300_textures_state {
+    /* Textures. */
+    struct r300_texture *textures[8];
+    int texture_count;
+    /* Sampler states. */
+    struct r300_sampler_state *sampler_states[8];
+    int sampler_count;
+
+    /* These is the merge of the texture and sampler states. */
+    unsigned count;
+    uint32_t tx_enable;         /* R300_TX_ENABLE: 0x4101 */
+    struct r300_texture_sampler_state {
+        uint32_t format[3];     /* R300_TX_FORMAT[0-2] */
+        uint32_t filter[2];     /* R300_TX_FILTER[0-1] */
+        uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
+        uint32_t tile_config;   /* R300_TX_OFFSET (subset thereof) */
+    } regs[8];
+};
+
+struct r300_vertex_stream_state {
+    /* R300_VAP_PROG_STREAK_CNTL_[0-7] */
+    uint32_t vap_prog_stream_cntl[8];
+    /* R300_VAP_PROG_STREAK_CNTL_EXT_[0-7] */
+    uint32_t vap_prog_stream_cntl_ext[8];
+
+    unsigned count;
+};
+
+struct r300_vap_output_state {
+    uint32_t vap_vtx_state_cntl;  /* R300_VAP_VTX_STATE_CNTL: 0x2180 */
+    uint32_t vap_vsm_vtx_assm;    /* R300_VAP_VSM_VTX_ASSM: 0x2184 */
+    uint32_t vap_out_vtx_fmt[2];  /* R300_VAP_OUTPUT_VTX_FMT_[0-1]: 0x2090 */
 };
 
 struct r300_viewport_state {
@@ -151,11 +187,6 @@ struct r300_ztop_state {
 
 #define R300_NEW_FRAGMENT_SHADER 0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
-#define R300_NEW_SAMPLER         0x00000200
-#define R300_ANY_NEW_SAMPLERS    0x0001fe00
-#define R300_NEW_TEXTURE         0x00040000
-#define R300_ANY_NEW_TEXTURES    0x03fc0000
-#define R300_NEW_VERTEX_SHADER   0x08000000
 #define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
 #define R300_NEW_QUERY           0x40000000
 #define R300_NEW_KITCHEN_SINK    0x7fffffff
@@ -208,16 +239,16 @@ struct r300_texture {
     struct pipe_texture tex;
 
     /* Offsets into the buffer. */
-    unsigned offset[PIPE_MAX_TEXTURE_LEVELS];
+    unsigned offset[R300_MAX_TEXTURE_LEVELS];
 
     /* A pitch for each mip-level */
-    unsigned pitch[PIPE_MAX_TEXTURE_LEVELS];
+    unsigned pitch[R300_MAX_TEXTURE_LEVELS];
 
     /* Size of one zslice or face based on the texture target */
-    unsigned layer_size[PIPE_MAX_TEXTURE_LEVELS];
+    unsigned layer_size[R300_MAX_TEXTURE_LEVELS];
 
     /* Whether the mipmap level is macrotiled. */
-    enum r300_buffer_tiling mip_macrotile[PIPE_MAX_TEXTURE_LEVELS];
+    enum r300_buffer_tiling mip_macrotile[R300_MAX_TEXTURE_LEVELS];
 
     /**
      * If non-zero, override the natural texture layout with
@@ -238,10 +269,10 @@ struct r300_texture {
     boolean is_npot;
 
     /* Pipe buffer backing this texture. */
-    struct pipe_buffer* buffer;
+    struct r300_winsys_buffer *buffer;
 
     /* Registers carrying texture format data. */
-    struct r300_texture_state state;
+    struct r300_texture_format_state state;
     struct r300_texture_fb_state fb_state;
 
     /* Buffer tiling */
@@ -258,6 +289,13 @@ struct r300_vertex_info {
     uint32_t vap_prog_stream_cntl_ext[8];
 };
 
+struct r300_vertex_element_state {
+    unsigned count;
+    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+
+    struct r300_vertex_stream_state vertex_stream;
+};
+
 extern struct pipe_viewport_state r300_viewport_identity;
 
 struct r300_context {
@@ -265,7 +303,7 @@ struct r300_context {
     struct pipe_context context;
 
     /* The interface to the windowing system, etc. */
-    struct radeon_winsys* winsys;
+    struct r300_winsys_screen *rws;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
     /* Accelerated blit support. */
@@ -281,9 +319,6 @@ struct r300_context {
     /* Query list. */
     struct r300_query *query_current;
     struct r300_query query_list;
-
-    /* Vertex formatting information. */
-    struct r300_atom vertex_format_state;
 
     /* Various CSO state objects. */
     /* Beginning of atom list. */
@@ -306,20 +341,24 @@ struct r300_context {
     struct r300_atom rs_state;
     /* RS block state. */
     struct r300_atom rs_block_state;
-    /* Sampler states. */
-    struct r300_sampler_state* sampler_states[8];
-    int sampler_count;
     /* Scissor state. */
     struct r300_atom scissor_state;
-    /* Texture states. */
-    struct r300_texture* textures[8];
-    int texture_count;
+    /* Textures state. */
+    struct r300_atom textures_state;
+    /* Vertex stream formatting state. */
+    struct r300_atom vertex_stream_state;
+    /* VAP (vertex shader) output mapping state. */
+    struct r300_atom vap_output_state;
     /* Vertex shader. */
-    struct r300_vertex_shader* vs;
+    struct r300_atom vs_state;
     /* Viewport state. */
     struct r300_atom viewport_state;
     /* ZTOP state. */
     struct r300_atom ztop_state;
+    /* PVS flush. */
+    struct r300_atom pvs_flush;
+    /* Texture cache invalidate. */
+    struct r300_atom texture_cache_inval;
 
     /* Invariant state. This must be emitted to get the engine started. */
     struct r300_atom invariant_state;
@@ -327,22 +366,33 @@ struct r300_context {
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
+    int vertex_buffer_max_index;
     /* Vertex elements for Gallium. */
-    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-    int vertex_element_count;
+    struct r300_vertex_element_state *velems;
+    bool any_user_vbs;
+
+    /* Vertex info for Draw. */
+    struct vertex_info vertex_info;
 
     struct pipe_stencil_ref stencil_ref;
+
+    struct pipe_clip_state clip;
+
+    struct pipe_viewport_state viewport;
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
     uint32_t dirty_hw;
-    /* Whether the TCL engine should be in bypass mode. */
-    boolean tcl_bypass;
     /* Whether polygon offset is enabled. */
     boolean polygon_offset_enabled;
     /* Z buffer bit depth. */
     uint32_t zbuffer_bpp;
+    /* Whether scissor is enabled. */
+    boolean scissor_enabled;
+    /* upload managers */
+    struct u_upload_mgr *upload_vb;
+    struct u_upload_mgr *upload_ib;
 };
 
 /* Convenience cast wrapper. */
@@ -359,6 +409,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_surface_functions(struct r300_context* r300);
+void r300_init_tex_functions( struct pipe_context *pipe );
 
 static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {

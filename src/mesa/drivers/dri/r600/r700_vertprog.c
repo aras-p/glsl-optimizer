@@ -42,7 +42,7 @@
 #include "radeon_debug.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
-#include "shader/programopt.c"
+#include "shader/programopt.h"
 
 #include "r700_debug.h"
 #include "r700_vertprog.h"

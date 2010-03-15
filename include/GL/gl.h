@@ -67,8 +67,7 @@
 #elif defined(__CYGWIN__) && defined(USE_OPENGL32) /* use native windows opengl32 */
 #  define GLAPI extern
 #  define GLAPIENTRY __stdcall
-#elif (defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303) \
-	|| (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#elif defined(__GNUC__)	|| (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #  define GLAPI __attribute__((visibility("default")))
 #  define GLAPIENTRY
 #endif /* WIN32 && !CYGWIN */
@@ -2195,6 +2194,21 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLen
 
 #endif /* GL_ATI_blend_equation_separate */
 
+
+/* GL_OES_EGL_image */
+#ifndef GL_OES_EGL_image
+typedef void* GLeglImageOES;
+#endif
+
+#ifndef GL_OES_EGL_image
+#define GL_OES_EGL_image 1
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glEGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image);
+GLAPI void APIENTRY glEGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image);
+#endif
+typedef void (APIENTRYP PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, GLeglImageOES image);
+typedef void (APIENTRYP PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC) (GLenum target, GLeglImageOES image);
+#endif
 
 
 /**

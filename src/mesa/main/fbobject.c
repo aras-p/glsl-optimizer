@@ -987,7 +987,7 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       assert(rb->Width == (GLuint) width);
       assert(rb->Height == (GLuint) height);
       rb->InternalFormat = internalFormat;
-      rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
+      rb->_BaseFormat = baseFormat;
       assert(rb->_BaseFormat != 0);
    }
    else {
@@ -1008,6 +1008,30 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
     */
 }
 
+#if FEATURE_OES_EGL_image
+void GLAPIENTRY
+_mesa_EGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image)
+{
+   struct gl_renderbuffer *rb;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (target != GL_RENDERBUFFER) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "EGLImageTargetRenderbufferStorageOES");
+      return;
+   }
+
+   rb = ctx->CurrentRenderbuffer;
+   if (!rb) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "EGLImageTargetRenderbufferStorageOES");
+      return;
+   }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
+   ctx->Driver.EGLImageTargetRenderbufferStorage(ctx, rb, image);
+}
+#endif
 
 /**
  * Helper function for _mesa_GetRenderbufferParameterivEXT() and
@@ -1525,6 +1549,7 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
       texObj = _mesa_lookup_texture(ctx, texture);
       if (texObj != NULL) {
          if (textarget == 0) {
+            /* XXX what's the purpose of this? */
             err = (texObj->Target != GL_TEXTURE_3D) &&
                 (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT) &&
                 (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT);
@@ -1534,6 +1559,13 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
                 ? !IS_CUBE_FACE(textarget)
                 : (texObj->Target != textarget);
          }
+      }
+      else {
+         /* can't render to a non-existant texture */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glFramebufferTexture%sEXT(non existant texture)",
+                     caller);
+         return;
       }
 
       if (err) {

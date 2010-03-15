@@ -48,7 +48,7 @@
 #endif
 #include "arrayobj.h"
 #include "macros.h"
-#include "glapi/dispatch.h"
+#include "main/dispatch.h"
 
 
 /**

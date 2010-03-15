@@ -30,7 +30,6 @@
 #include "indirect.h"
 #include "glxclient.h"
 #include "indirect_size.h"
-#include "glapitable.h"
 #include "glapidispatch.h"
 #include "glapi.h"
 #include "glthread.h"
@@ -54,7 +53,7 @@
 #    define NOINLINE
 #  endif
 
-#if !defined __GNUC__ || __GNUC__ < 3
+#ifndef __GNUC__
 #  define __builtin_expect(x, y) x
 #endif
 

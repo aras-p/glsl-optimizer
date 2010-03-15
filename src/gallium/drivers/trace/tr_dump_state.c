@@ -112,7 +112,6 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(uint, state, line_stipple_factor);
    trace_dump_member(uint, state, line_stipple_pattern);
    trace_dump_member(bool, state, line_last_pixel);
-   trace_dump_member(bool, state, bypass_vs_clip_and_viewport);
    trace_dump_member(bool, state, flatshade_first);
    trace_dump_member(bool, state, gl_rasterization_rules);
 
@@ -480,7 +479,6 @@ void trace_dump_vertex_element(const struct pipe_vertex_element *state)
    trace_dump_member(uint, state, src_offset);
 
    trace_dump_member(uint, state, vertex_buffer_index);
-   trace_dump_member(uint, state, nr_components);
 
    trace_dump_member(format, state, src_format);
 

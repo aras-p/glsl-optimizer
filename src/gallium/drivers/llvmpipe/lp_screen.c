@@ -34,11 +34,13 @@
 #include "lp_texture.h"
 #include "lp_buffer.h"
 #include "lp_fence.h"
-#include "lp_winsys.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
 #include "lp_context.h"
 #include "lp_debug.h"
+#include "lp_public.h"
+
+#include "state_tracker/sw_winsys.h"
 
 #ifdef DEBUG
 int LP_DEBUG = 0;
@@ -83,7 +85,7 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return PIPE_MAX_VERTEX_SAMPLERS;
+      return 0;
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
@@ -107,11 +109,11 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 13; /* max 4Kx4K */
+      return LP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 9;  /* max 256x256x256 */
+      return LP_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 13; /* max 4Kx4K */
+      return LP_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_TGSI_CONT_SUPPORTED:
       return 1;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
@@ -167,7 +169,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
                               unsigned geom_flags )
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
-   struct llvmpipe_winsys *winsys = screen->winsys;
+   struct sw_winsys *winsys = screen->winsys;
    const struct util_format_description *format_desc;
 
    format_desc = util_format_description(format);
@@ -194,9 +196,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          format_desc->block.height != 1)
          return FALSE;
 
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_SCALAR &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
@@ -224,14 +224,15 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          format_desc->block.height != 1)
          return FALSE;
 
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_SCALAR &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARITH &&
-         format_desc->layout != UTIL_FORMAT_LAYOUT_ARRAY)
+      if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
-         format_desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB &&
          format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
+         return FALSE;
+
+      /* not supported yet */
+      if (format == PIPE_FORMAT_Z16_UNORM)
          return FALSE;
    }
 
@@ -239,18 +240,6 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 }
 
 
-static struct pipe_buffer *
-llvmpipe_surface_buffer_create(struct pipe_screen *screen,
-                               unsigned width, unsigned height,
-                               enum pipe_format format,
-                               unsigned tex_usage,
-                               unsigned usage,
-                               unsigned *stride)
-{
-   /* This function should never be used */
-   assert(0);
-   return NULL;
-}
 
 
 static void
@@ -259,7 +248,7 @@ llvmpipe_flush_frontbuffer(struct pipe_screen *_screen,
                            void *context_private)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
-   struct llvmpipe_winsys *winsys = screen->winsys;
+   struct sw_winsys *winsys = screen->winsys;
    struct llvmpipe_texture *texture = llvmpipe_texture(surface->texture);
 
    assert(texture->dt);
@@ -272,7 +261,7 @@ static void
 llvmpipe_destroy_screen( struct pipe_screen *_screen )
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
-   struct llvmpipe_winsys *winsys = screen->winsys;
+   struct sw_winsys *winsys = screen->winsys;
 
    lp_jit_screen_cleanup(screen);
 
@@ -289,7 +278,7 @@ llvmpipe_destroy_screen( struct pipe_screen *_screen )
  * Note: we're not presently subclassing pipe_screen (no llvmpipe_screen).
  */
 struct pipe_screen *
-llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
+llvmpipe_create_screen(struct sw_winsys *winsys)
 {
    struct llvmpipe_screen *screen = CALLOC_STRUCT(llvmpipe_screen);
 
@@ -310,7 +299,6 @@ llvmpipe_create_screen(struct llvmpipe_winsys *winsys)
    screen->base.get_paramf = llvmpipe_get_paramf;
    screen->base.is_format_supported = llvmpipe_is_format_supported;
 
-   screen->base.surface_buffer_create = llvmpipe_surface_buffer_create;
    screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
 

@@ -390,6 +390,7 @@ brw_init_non_surface_cache(struct brw_context *brw)
    brw_init_cache_id(cache, "GS_UNIT", BRW_GS_UNIT);
 
    brw_init_cache_id(cache, "GS_PROG", BRW_GS_PROG);
+   brw_init_cache_id(cache, "BLEND_STATE", BRW_BLEND_STATE);
 }
 
 

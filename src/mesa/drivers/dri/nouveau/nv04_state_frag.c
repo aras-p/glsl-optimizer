@@ -41,6 +41,7 @@
 	NV04_MULTITEX_TRIANGLE_COMBINE_COLOR_ALPHA0
 
 struct combiner_state {
+	GLcontext *ctx;
 	int unit;
 	GLboolean alpha;
 
@@ -59,11 +60,12 @@ struct combiner_state {
 
 /* Initialize a combiner_state struct from the texture unit
  * context. */
-#define INIT_COMBINER(chan, rc, i) do {				\
+#define INIT_COMBINER(chan, ctx, rc, i) do {			\
 		struct gl_tex_env_combine_state *c =		\
 			ctx->Texture.Unit[i]._CurrentCombine;	\
-		(rc)->alpha = __INIT_COMBINER_ALPHA_##chan;	\
+		(rc)->ctx = ctx;				\
 		(rc)->unit = i;					\
+		(rc)->alpha = __INIT_COMBINER_ALPHA_##chan;	\
 		(rc)->mode = c->Mode##chan;			\
 		(rc)->source = c->Source##chan;			\
 		(rc)->operand = c->Operand##chan;		\
@@ -72,11 +74,11 @@ struct combiner_state {
 	} while (0)
 
 /* Get the combiner source for the specified EXT_texture_env_combine
- * argument. */
+ * source. */
 static uint32_t
-get_arg_source(struct combiner_state *rc, int arg)
+get_input_source(struct combiner_state *rc, int source)
 {
-	switch (rc->source[arg]) {
+	switch (source) {
 	case GL_TEXTURE:
 		return rc->unit ? COMBINER_SOURCE(TEXTURE1) :
 			COMBINER_SOURCE(TEXTURE0);
@@ -103,38 +105,53 @@ get_arg_source(struct combiner_state *rc, int arg)
 }
 
 /* Get the (possibly inverted) combiner input mapping for the
- * specified argument. */
+ * specified EXT_texture_env_combine operand. */
 #define INVERT 0x1
 
 static uint32_t
-get_arg_mapping(struct combiner_state *rc, int arg, int flags)
+get_input_mapping(struct combiner_state *rc, int operand, int flags)
 {
 	int map = 0;
 
-	switch (rc->operand[arg]) {
-	case GL_SRC_COLOR:
-	case GL_ONE_MINUS_SRC_COLOR:
-		break;
+	if (!is_color_operand(operand) && !rc->alpha)
+		map |= COMBINER_ALPHA;
 
-	case GL_SRC_ALPHA:
-	case GL_ONE_MINUS_SRC_ALPHA:
-		map |= rc->alpha ? 0 : COMBINER_ALPHA;
-		break;
-	}
-
-	switch (rc->operand[arg]) {
-	case GL_SRC_COLOR:
-	case GL_SRC_ALPHA:
-		map |= flags & INVERT ? COMBINER_INVERT : 0;
-		break;
-
-	case GL_ONE_MINUS_SRC_COLOR:
-	case GL_ONE_MINUS_SRC_ALPHA:
-		map |= flags & INVERT ? 0 : COMBINER_INVERT;
-		break;
-	}
+	if (is_negative_operand(operand) == !(flags & INVERT))
+		map |= COMBINER_INVERT;
 
 	return map;
+}
+
+static uint32_t
+get_input_arg(struct combiner_state *rc, int arg, int flags)
+{
+	int source = rc->source[arg];
+	int operand = rc->operand[arg];
+
+	/* Fake several unsupported texture formats. */
+	if (is_texture_source(source)) {
+		int i = (source == GL_TEXTURE ?
+			 rc->unit : source - GL_TEXTURE0);
+		struct gl_texture_object *t = rc->ctx->Texture.Unit[i]._Current;
+		gl_format format = t->Image[0][t->BaseLevel]->TexFormat;
+
+		if (format == MESA_FORMAT_A8) {
+			/* Emulated using I8. */
+			if (is_color_operand(operand))
+				return COMBINER_SOURCE(ZERO) |
+					get_input_mapping(rc, operand, flags);
+
+		} else if (format == MESA_FORMAT_L8) {
+			/* Emulated using I8. */
+			if (!is_color_operand(operand))
+				return COMBINER_SOURCE(ZERO) |
+					get_input_mapping(rc, operand,
+							  flags ^ INVERT);
+		}
+	}
+
+	return get_input_source(rc, source) |
+		get_input_mapping(rc, operand, flags);
 }
 
 /* Bind the combiner input <in> to the combiner source <src>,
@@ -146,8 +163,7 @@ get_arg_mapping(struct combiner_state *rc, int arg, int flags)
 /* Bind the combiner input <in> to the EXT_texture_env_combine
  * argument <arg>, possibly inverted. */
 #define INPUT_ARG(rc, in, arg, flags)					\
-	(rc)->hw |= (get_arg_source(rc, arg) |				\
-		     get_arg_mapping(rc, arg, flags)) << COMBINER_SHIFT(in)
+	(rc)->hw |= get_input_arg(rc, arg, flags) << COMBINER_SHIFT(in)
 
 #define UNSIGNED_OP(rc)							\
 	(rc)->hw |= ((rc)->logscale ?					\
@@ -222,10 +238,10 @@ nv04_emit_tex_env(GLcontext *ctx, int emit)
 
 	/* Compute the new combiner state. */
 	if (ctx->Texture.Unit[i]._ReallyEnabled) {
-		INIT_COMBINER(A, &rc_a, i);
+		INIT_COMBINER(A, ctx, &rc_a, i);
 		setup_combiner(&rc_a);
 
-		INIT_COMBINER(RGB, &rc_c, i);
+		INIT_COMBINER(RGB, ctx, &rc_c, i);
 		setup_combiner(&rc_c);
 
 	} else {

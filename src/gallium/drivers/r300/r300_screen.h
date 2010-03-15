@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,13 +28,15 @@
 
 #include "r300_chipset.h"
 
+#define R300_TEXTURE_USAGE_TRANSFER PIPE_TEXTURE_USAGE_CUSTOM
+
 struct radeon_winsys;
 
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
 
-    struct radeon_winsys* radeon_winsys;
+    struct r300_winsys_screen *rws;
 
     /* Chipset capabilities */
     struct r300_capabilities* caps;
@@ -42,24 +45,10 @@ struct r300_screen {
     unsigned debug;
 };
 
-struct r300_transfer {
-    /* Parent class */
-    struct pipe_transfer transfer;
-
-    /* Offset from start of buffer. */
-    unsigned offset;
-};
 
 /* Convenience cast wrapper. */
 static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
     return (struct r300_screen*)screen;
-}
-
-/* Convenience cast wrapper. */
-static INLINE struct r300_transfer*
-r300_transfer(struct pipe_transfer* transfer)
-{
-    return (struct r300_transfer*)transfer;
 }
 
 /* Debug functionality. */
@@ -81,6 +70,7 @@ r300_transfer(struct pipe_transfer* transfer)
 #define DBG_DRAW    0x0000010
 #define DBG_TEX     0x0000020
 #define DBG_FALL    0x0000040
+#define DBG_ANISOHQ 0x0000080
 /*@}*/
 
 static INLINE boolean SCREEN_DBG_ON(struct r300_screen * screen, unsigned flags)

@@ -51,6 +51,7 @@ struct pipe_context;
 struct pipe_fence_handle;
 struct pipe_texture;
 struct svga_region;
+struct winsys_handle;
 
 
 #define SVGA_BUFFER_USAGE_PINNED  (PIPE_BUFFER_USAGE_CUSTOM << 0)
@@ -187,6 +188,25 @@ struct svga_winsys_screen
                      uint32 numMipLevels);
 
    /**
+    * Creates a surface from a winsys handle.
+    * Used to implement pipe_screen::texture_from_handle.
+    */
+   struct svga_winsys_surface *
+   (*surface_from_handle)(struct svga_winsys_screen *sws,
+                          struct winsys_handle *whandle,
+                          SVGA3dSurfaceFormat *format);
+
+   /**
+    * Get a winsys_handle from a surface.
+    * Used to implement pipe_screen::texture_get_handle.
+    */
+   boolean
+   (*surface_get_handle)(struct svga_winsys_screen *sws,
+                         struct svga_winsys_surface *surface,
+                         unsigned stride,
+                         struct winsys_handle *whandle);
+
+   /**
     * Whether this surface is sitting in a validate list
     */
    boolean
@@ -284,19 +304,6 @@ svga_screen_buffer_wrap_surface(struct pipe_screen *screen,
 				struct svga_winsys_surface *srf);
 
 struct svga_winsys_surface *
-svga_screen_texture_get_winsys_surface(struct pipe_texture *texture);
-struct svga_winsys_surface *
 svga_screen_buffer_get_winsys_surface(struct pipe_buffer *buffer);
-
-boolean
-svga_screen_buffer_from_texture(struct pipe_texture *texture,
-				struct pipe_buffer **buffer,
-				unsigned *stride);
-
-struct pipe_texture *
-svga_screen_texture_wrap_surface(struct pipe_screen *screen,
-				 struct pipe_texture *base,
-				 enum SVGA3dSurfaceFormat format,
-				 struct svga_winsys_surface *srf);
 
 #endif /* SVGA_WINSYS_H_ */

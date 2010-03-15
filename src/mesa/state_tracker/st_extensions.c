@@ -137,6 +137,9 @@ void st_init_limits(struct st_context *st)
    /* XXX separate query for early function return? */
    st->ctx->Shader.EmitContReturn =
       screen->get_param(screen, PIPE_CAP_TGSI_CONT_SUPPORTED);
+
+   /* Quads always follow GL provoking rules. */
+   c->QuadsFollowProvokingVertexConvention = GL_FALSE;
 }
 
 
@@ -169,6 +172,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_vertex_array_object = GL_TRUE;
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
+   ctx->Extensions.ARB_window_pos = GL_TRUE;
 
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
@@ -193,9 +197,17 @@ void st_init_extensions(struct st_context *st)
 
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
 
+   ctx->Extensions.MESA_pack_invert = GL_TRUE;
+
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
+   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+#if 0
+   /* possibly could support the following two */
+   ctx->Extensions.NV_vertex_program = GL_TRUE;
+   ctx->Extensions.NV_vertex_program1_1 = GL_TRUE;
+#endif
 
 #if FEATURE_OES_draw_texture
    ctx->Extensions.OES_draw_texture = GL_TRUE;
@@ -233,7 +245,6 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
       ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
-      ctx->Extensions.NV_texture_rectangle = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS) > 1) {
@@ -270,28 +281,28 @@ void st_init_extensions(struct st_context *st)
    /* GL_EXT_packed_depth_stencil requires both the ability to render to
     * a depth/stencil buffer and texture from depth/stencil source.
     */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+       screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
                                         PIPE_TEXTURE_2D, 
                                         PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
-            screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+            screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
                                         PIPE_TEXTURE_2D, 
                                         PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
 
    /* sRGB support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_A8B8G8R8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
-      screen->is_format_supported(screen, PIPE_FORMAT_A8R8G8B8_SRGB,
+      screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
@@ -299,17 +310,21 @@ void st_init_extensions(struct st_context *st)
 
    /* s3tc support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
-                                   PIPE_TEXTURE_2D, 
-                                   PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+                                   PIPE_TEXTURE_2D,
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0) &&
+       (ctx->Mesa_DXTn ||
+        screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
+                                    PIPE_TEXTURE_2D,
+                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
       ctx->Extensions.S3_s3tc = GL_TRUE;
    }
 
    /* ycbcr support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR, 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_UYVY, 
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
-       screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV, 
+       screen->is_format_supported(screen, PIPE_FORMAT_YUYV, 
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;

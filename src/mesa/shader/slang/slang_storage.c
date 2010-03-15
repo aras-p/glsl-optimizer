@@ -199,14 +199,19 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
    case SLANG_SPEC_MAT43:
       return aggregate_matrix(agg, SLANG_STORE_FLOAT, 4, 3);
 
-   case SLANG_SPEC_SAMPLER1D:
-   case SLANG_SPEC_SAMPLER2D:
-   case SLANG_SPEC_SAMPLER3D:
-   case SLANG_SPEC_SAMPLERCUBE:
-   case SLANG_SPEC_SAMPLER1DSHADOW:
-   case SLANG_SPEC_SAMPLER2DSHADOW:
-   case SLANG_SPEC_SAMPLER2DRECT:
-   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+   case SLANG_SPEC_SAMPLER_1D:
+   case SLANG_SPEC_SAMPLER_2D:
+   case SLANG_SPEC_SAMPLER_3D:
+   case SLANG_SPEC_SAMPLER_CUBE:
+   case SLANG_SPEC_SAMPLER_1D_SHADOW:
+   case SLANG_SPEC_SAMPLER_2D_SHADOW:
+   case SLANG_SPEC_SAMPLER_RECT:
+   case SLANG_SPEC_SAMPLER_RECT_SHADOW:
+   case SLANG_SPEC_SAMPLER_1D_ARRAY:
+   case SLANG_SPEC_SAMPLER_2D_ARRAY:
+   case SLANG_SPEC_SAMPLER_1D_ARRAY_SHADOW:
+   case SLANG_SPEC_SAMPLER_2D_ARRAY_SHADOW:
+
       return aggregate_vector(agg, SLANG_STORE_INT, 1);
    case SLANG_SPEC_STRUCT:
       return aggregate_variables(agg, spec->_struct->fields, funcs, structs,

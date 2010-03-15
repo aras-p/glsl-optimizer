@@ -3502,6 +3502,31 @@
 	</desc>
 </template>
 
+<template name="EGLImageTargetTexture2D">
+	<proto>
+		<return type="void"/>
+		<param name="target" type="GLenum"/>
+		<param name="image" type="GLeglImageOES"/>
+	</proto>
+
+	<desc name="target">
+		<value name="GL_TEXTURE_2D"/>
+	</desc>
+</template>
+
+<template name="EGLImageTargetRenderbufferStorage">
+	<proto>
+		<return type="void"/>
+		<param name="target" type="GLenum"/>
+		<param name="image" type="GLeglImageOES"/>
+	</proto>
+
+	<desc name="target">
+		<value name="GL_RENDERBUFFER_OES" category="OES_framebuffer_object"/>
+		<value name="GL_RENDERBUFFER" category="GLES2.0"/>
+	</desc>
+</template>
+
 <api name="mesa" implementation="true">
 	<category name="MESA"/>
 
@@ -3770,6 +3795,10 @@
         <!-- EXT_multi_draw_arrays -->
         <function name="MultiDrawArraysEXT" template="MultiDrawArrays"/>
         <function name="MultiDrawElementsEXT" template="MultiDrawElements"/>
+
+        <!-- OES_EGL_image -->
+        <function name="EGLImageTargetTexture2DOES" template="EGLImageTargetTexture2D"/>
+        <function name="EGLImageTargetRenderbufferStorageOES" template="EGLImageTargetRenderbufferStorage"/>
 </api>
 
 <api name="GLES1.1">
@@ -3811,6 +3840,7 @@
 	<category name="EXT_blend_minmax"/>
 	-->
 	<category name="EXT_multi_draw_arrays"/>
+	<category name="OES_EGL_image"/>
 
 	<category name="OES_matrix_palette"/>
 
@@ -4068,6 +4098,10 @@
         <!-- EXT_multi_draw_arrays -->
         <function name="MultiDrawArraysEXT" template="MultiDrawArrays"/>
         <function name="MultiDrawElementsEXT" template="MultiDrawElements"/>
+
+        <!-- OES_EGL_image -->
+        <function name="EGLImageTargetTexture2DOES" template="EGLImageTargetTexture2D"/>
+        <function name="EGLImageTargetRenderbufferStorageOES" template="EGLImageTargetRenderbufferStorage"/>
 </api>
 
 <api name="GLES2.0">
@@ -4095,6 +4129,7 @@
 	<category name="EXT_blend_minmax"/>
 	-->
 	<category name="EXT_multi_draw_arrays"/>
+	<category name="OES_EGL_image"/>
 
 	<function name="CullFace" template="CullFace"/>
 
@@ -4292,6 +4327,10 @@
         <!-- EXT_multi_draw_arrays -->
         <function name="MultiDrawArraysEXT" template="MultiDrawArrays"/>
         <function name="MultiDrawElementsEXT" template="MultiDrawElements"/>
+
+        <!-- OES_EGL_image -->
+        <function name="EGLImageTargetTexture2DOES" template="EGLImageTargetTexture2D"/>
+        <function name="EGLImageTargetRenderbufferStorageOES" template="EGLImageTargetRenderbufferStorage"/>
 </api>
 
 </apispec>

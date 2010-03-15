@@ -419,7 +419,7 @@ static void r700RunRenderPrimitiveImmediate(GLcontext * ctx, int start, int end,
 }
 
 /* start 3d, idle, cb/db flush */
-#define PRE_EMIT_STATE_BUFSZ 5 + 5 + 18
+#define PRE_EMIT_STATE_BUFSZ 5 + 5 + 14
 
 static GLuint r700PredictRenderSize(GLcontext* ctx,
 				    const struct _mesa_prim *prim,
@@ -829,11 +829,10 @@ static void r700SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
 
 #if MESA_BIG_ENDIAN
     if (mesa_ind_buf->type == GL_UNSIGNED_INT)
-    {
 #else
     if (mesa_ind_buf->type != GL_UNSIGNED_BYTE)
-    {
 #endif
+    {
         const GLvoid *src_ptr;
         GLvoid *dst_ptr;
         GLboolean mapped_named_bo = GL_FALSE;
@@ -872,6 +871,14 @@ static void r700SetupIndexBuffer(GLcontext *ctx, const struct _mesa_index_buffer
     }
 }
 
+static GLboolean check_fallbacks(GLcontext *ctx)
+{
+	if (ctx->RenderMode != GL_RENDER)
+		return GL_TRUE;
+
+	return GL_FALSE;
+}
+
 static GLboolean r700TryDrawPrims(GLcontext *ctx,
 				  const struct gl_client_array *arrays[],
 				  const struct _mesa_prim *prim,
@@ -887,6 +894,9 @@ static GLboolean r700TryDrawPrims(GLcontext *ctx,
 
     if (ctx->NewState)
         _mesa_update_state( ctx );
+
+    if (check_fallbacks(ctx))
+	    return GL_FALSE;
 
     _tnl_UpdateFixedFunctionProgram(ctx);
     r700SetVertexFormat(ctx, arrays, max_index + 1);
@@ -983,8 +993,10 @@ static void r700DrawPrims(GLcontext *ctx,
 	retval = r700TryDrawPrims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 
 	/* If failed run tnl pipeline - it should take care of fallbacks */
-	if (!retval)
+	if (!retval) {
+		_swsetup_Wakeup(ctx);
 		_tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+	}
 }
 
 void r700InitDraw(GLcontext *ctx)

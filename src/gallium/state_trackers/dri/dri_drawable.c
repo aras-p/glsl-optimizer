@@ -58,6 +58,7 @@ dri_surface_from_handle(struct drm_api *api,
    struct pipe_surface *surface = NULL;
    struct pipe_texture *texture = NULL;
    struct pipe_texture templat;
+   struct winsys_handle whandle;
 
    memset(&templat, 0, sizeof(templat));
    templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
@@ -68,8 +69,11 @@ dri_surface_from_handle(struct drm_api *api,
    templat.width0 = width;
    templat.height0 = height;
 
-   texture = api->texture_from_shared_handle(api, screen, &templat,
-                                             "dri2 buffer", pitch, handle);
+   memset(&whandle, 0, sizeof(whandle));
+   whandle.handle = handle;
+   whandle.stride = pitch;
+
+   texture = screen->texture_from_handle(screen, &templat, &whandle);
 
    if (!texture) {
       debug_printf("%s: Failed to blanket the buffer with a texture\n", __func__);
@@ -134,12 +138,13 @@ dri_get_buffers(__DRIdrawable * dPriv)
 
    if ((dri_screen->dri2.loader
         && (dri_screen->dri2.loader->base.version > 2)
-        && (dri_screen->dri2.loader->getBuffersWithFormat != NULL)))
+        && (dri_screen->dri2.loader->getBuffersWithFormat != NULL))) {
       buffers = (*dri_screen->dri2.loader->getBuffersWithFormat)
                 (dri_drawable, &dri_drawable->w, &dri_drawable->h,
                  drawable->attachments, drawable->num_attachments,
                  &count, dri_drawable->loaderPrivate);
-   else
+   } else {
+      assert(dri_screen->dri2.loader);
       buffers = (*dri_screen->dri2.loader->getBuffers) (dri_drawable,
                                                         &dri_drawable->w,
                                                         &dri_drawable->h,
@@ -148,6 +153,7 @@ dri_get_buffers(__DRIdrawable * dPriv)
                                                         num_attachments, &count,
                                                         dri_drawable->
                                                         loaderPrivate);
+   }
 
    if (buffers == NULL) {
       return;
@@ -347,11 +353,11 @@ dri_create_buffer(__DRIscreen * sPriv,
 
    if (visual->redBits == 8) {
       if (visual->alphaBits == 8)
-         drawable->color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+         drawable->color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
       else
-         drawable->color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
+         drawable->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
    } else {
-      drawable->color_format = PIPE_FORMAT_R5G6B5_UNORM;
+      drawable->color_format = PIPE_FORMAT_B5G6R5_UNORM;
    }
 
    switch(visual->depthBits) {
@@ -365,12 +371,12 @@ dri_create_buffer(__DRIscreen * sPriv,
    case 24:
       if (visual->stencilBits == 0) {
 	 drawable->depth_stencil_format = (screen->d_depth_bits_last) ?
-                                          PIPE_FORMAT_X8Z24_UNORM:
-                                          PIPE_FORMAT_Z24X8_UNORM;
+                                          PIPE_FORMAT_Z24X8_UNORM:
+                                          PIPE_FORMAT_X8Z24_UNORM;
       } else {
 	 drawable->depth_stencil_format = (screen->sd_depth_bits_last) ?
-                                          PIPE_FORMAT_S8Z24_UNORM:
-                                          PIPE_FORMAT_Z24S8_UNORM;
+                                          PIPE_FORMAT_Z24S8_UNORM:
+                                          PIPE_FORMAT_S8Z24_UNORM;
       }
       break;
    case 32:

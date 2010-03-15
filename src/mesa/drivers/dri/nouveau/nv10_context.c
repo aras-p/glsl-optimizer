@@ -32,6 +32,11 @@
 #include "nv04_driver.h"
 #include "nv10_driver.h"
 
+static const struct dri_extension nv10_extensions[] = {
+	{ "GL_EXT_texture_rectangle",	NULL },
+	{ NULL,				NULL }
+};
+
 static void
 nv10_clear(GLcontext *ctx, GLbitfield buffers)
 {
@@ -301,6 +306,8 @@ nv10_context_create(struct nouveau_screen *screen, const GLvisual *visual,
 	if (!nouveau_context_init(ctx, screen, visual, share_ctx))
 		goto fail;
 
+	driInitExtensions(ctx, nv10_extensions, GL_FALSE);
+
 	/* GL constants. */
 	ctx->Const.MaxTextureLevels = 12;
 	ctx->Const.MaxTextureCoordUnits = NV10_TEXTURE_UNITS;
@@ -363,7 +370,6 @@ const struct nouveau_driver nv10_driver = {
 		nv10_emit_frag,
 		nv10_emit_framebuffer,
 		nv10_emit_fog,
-		nv10_emit_index_mask,
 		nv10_emit_light_enable,
 		nv10_emit_light_model,
 		nv10_emit_light_source,

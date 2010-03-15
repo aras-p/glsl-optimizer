@@ -43,14 +43,14 @@
    
 
 struct softpipe_tex_tile_cache *
-sp_create_tex_tile_cache( struct pipe_screen *screen )
+sp_create_tex_tile_cache( struct pipe_context *pipe )
 {
    struct softpipe_tex_tile_cache *tc;
    uint pos;
 
    tc = CALLOC_STRUCT( softpipe_tex_tile_cache );
    if (tc) {
-      tc->screen = screen;
+      tc->pipe = pipe;
       for (pos = 0; pos < NUM_ENTRIES; pos++) {
          tc->entries[pos].addr.bits.invalid = 1;
       }
@@ -63,19 +63,16 @@ sp_create_tex_tile_cache( struct pipe_screen *screen )
 void
 sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc)
 {
-   struct pipe_screen *screen;
    uint pos;
 
    for (pos = 0; pos < NUM_ENTRIES; pos++) {
       /*assert(tc->entries[pos].x < 0);*/
    }
    if (tc->transfer) {
-      screen = tc->transfer->texture->screen;
-      screen->tex_transfer_destroy(tc->transfer);
+      tc->pipe->tex_transfer_destroy(tc->pipe, tc->transfer);
    }
    if (tc->tex_trans) {
-      screen = tc->tex_trans->texture->screen;
-      screen->tex_transfer_destroy(tc->tex_trans);
+      tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
    }
 
    FREE( tc );
@@ -88,7 +85,7 @@ void
 sp_tex_tile_cache_map_transfers(struct softpipe_tex_tile_cache *tc)
 {
    if (tc->tex_trans && !tc->tex_trans_map)
-      tc->tex_trans_map = tc->screen->transfer_map(tc->screen, tc->tex_trans);
+      tc->tex_trans_map = tc->pipe->transfer_map(tc->pipe, tc->tex_trans);
 }
 
 
@@ -96,7 +93,7 @@ void
 sp_tex_tile_cache_unmap_transfers(struct softpipe_tex_tile_cache *tc)
 {
    if (tc->tex_trans_map) {
-      tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
+      tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
       tc->tex_trans_map = NULL;
    }
 }
@@ -133,14 +130,12 @@ sp_tex_tile_cache_set_texture(struct softpipe_tex_tile_cache *tc,
       pipe_texture_reference(&tc->texture, texture);
 
       if (tc->tex_trans) {
-         struct pipe_screen *screen = tc->tex_trans->texture->screen;
-         
          if (tc->tex_trans_map) {
-            screen->transfer_unmap(screen, tc->tex_trans);
+            tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
             tc->tex_trans_map = NULL;
          }
 
-         screen->tex_transfer_destroy(tc->tex_trans);
+         tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
          tc->tex_trans = NULL;
       }
 
@@ -204,7 +199,6 @@ const struct softpipe_tex_cached_tile *
 sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc, 
                         union tex_tile_address addr )
 {
-   struct pipe_screen *screen = tc->screen;
    struct softpipe_tex_cached_tile *tile;
    
    tile = tc->entries + tex_cache_pos( addr );
@@ -232,16 +226,16 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
 
          if (tc->tex_trans) {
             if (tc->tex_trans_map) {
-               tc->screen->transfer_unmap(tc->screen, tc->tex_trans);
+               tc->pipe->transfer_unmap(tc->pipe, tc->tex_trans);
                tc->tex_trans_map = NULL;
             }
 
-            screen->tex_transfer_destroy(tc->tex_trans);
+            tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
             tc->tex_trans = NULL;
          }
 
          tc->tex_trans = 
-            screen->get_tex_transfer(screen, tc->texture, 
+            tc->pipe->get_tex_transfer(tc->pipe, tc->texture, 
                                      addr.bits.face, 
                                      addr.bits.level, 
                                      addr.bits.z, 
@@ -249,7 +243,7 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
                                      u_minify(tc->texture->width0, addr.bits.level),
                                      u_minify(tc->texture->height0, addr.bits.level));
          
-         tc->tex_trans_map = screen->transfer_map(screen, tc->tex_trans);
+         tc->tex_trans_map = tc->pipe->transfer_map(tc->pipe, tc->tex_trans);
 
          tc->tex_face = addr.bits.face;
          tc->tex_level = addr.bits.level;
@@ -257,7 +251,8 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
       }
 
       /* get tile from the transfer (view into texture) */
-      pipe_get_tile_rgba(tc->tex_trans,
+      pipe_get_tile_rgba(tc->pipe,
+                         tc->tex_trans,
                          addr.bits.x * TILE_SIZE, 
                          addr.bits.y * TILE_SIZE,
                          TILE_SIZE, TILE_SIZE,

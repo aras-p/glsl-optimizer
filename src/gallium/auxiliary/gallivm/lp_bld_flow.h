@@ -35,7 +35,7 @@
 #define LP_BLD_FLOW_H
 
 
-#include <llvm-c/Core.h>  
+#include "os/os_llvm.h"
 
 
 struct lp_type;
@@ -145,7 +145,9 @@ lp_build_else(struct lp_build_if_state *ctx);
 
 void
 lp_build_endif(struct lp_build_if_state *ctx);
-              
+
+LLVMBasicBlockRef
+lp_build_insert_new_block(LLVMBuilderRef builder, const char *name);
 
 
 #endif /* !LP_BLD_FLOW_H */

@@ -61,6 +61,12 @@ static void r300_flush(struct pipe_context* pipe,
                 atom->dirty = TRUE;
             }
         }
+
+        /* Unmark HWTCL state for SWTCL. */
+        if (!r300_screen(pipe->screen)->caps->has_tcl) {
+            r300->vs_state.dirty = FALSE;
+            r300->dirty_state &= ~R300_NEW_VERTEX_SHADER_CONSTANTS;
+        }
     }
 
     /* reset flushed query */

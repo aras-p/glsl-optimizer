@@ -106,7 +106,6 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                          struct gl_texture_object *texObj)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct pipe_texture *pt = st_get_texobj_texture(texObj);
    const uint baseLevel = texObj->BaseLevel;
    const uint lastLevel = pt->last_level;
@@ -142,8 +141,8 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
 						u_minify(pt->width0, dstLevel),
 						u_minify(pt->height0, dstLevel));
 
-      srcData = (ubyte *) screen->transfer_map(screen, srcTrans);
-      dstData = (ubyte *) screen->transfer_map(screen, dstTrans);
+      srcData = (ubyte *) pipe->transfer_map(pipe, srcTrans);
+      dstData = (ubyte *) pipe->transfer_map(pipe, dstTrans);
 
       srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->texture->format);
       dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->texture->format);
@@ -161,11 +160,11 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                                   dstData,
                                   dstStride); /* stride in texels */
 
-      screen->transfer_unmap(screen, srcTrans);
-      screen->transfer_unmap(screen, dstTrans);
+      pipe->transfer_unmap(pipe, srcTrans);
+      pipe->transfer_unmap(pipe, dstTrans);
 
-      screen->tex_transfer_destroy(srcTrans);
-      screen->tex_transfer_destroy(dstTrans);
+      pipe->tex_transfer_destroy(pipe, srcTrans);
+      pipe->tex_transfer_destroy(pipe, dstTrans);
    }
 }
 

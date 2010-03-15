@@ -57,7 +57,7 @@ struct vmw_dma_buffer
 };
 
 static int
-vmw_ioctl_get_param(struct vmw_driver *vmw, uint32_t param, uint64_t *out)
+vmw_ioctl_get_param(struct vmw_customizer *vmw, uint32_t param, uint64_t *out)
 {
     struct drm_vmw_getparam_arg gp_arg;
     int ret;
@@ -75,7 +75,7 @@ vmw_ioctl_get_param(struct vmw_driver *vmw, uint32_t param, uint64_t *out)
 }
 
 int
-vmw_ioctl_supports_streams(struct vmw_driver *vmw)
+vmw_ioctl_supports_streams(struct vmw_customizer *vmw)
 {
     uint64_t value;
     int ret;
@@ -88,7 +88,7 @@ vmw_ioctl_supports_streams(struct vmw_driver *vmw)
 }
 
 int
-vmw_ioctl_num_streams(struct vmw_driver *vmw,
+vmw_ioctl_num_streams(struct vmw_customizer *vmw,
 		      uint32_t *ntot, uint32_t *nfree)
 {
     uint64_t v1, v2;
@@ -109,7 +109,7 @@ vmw_ioctl_num_streams(struct vmw_driver *vmw,
 }
 
 int
-vmw_ioctl_claim_stream(struct vmw_driver *vmw, uint32_t *out)
+vmw_ioctl_claim_stream(struct vmw_customizer *vmw, uint32_t *out)
 {
     struct drm_vmw_stream_arg s_arg;
     int ret;
@@ -125,7 +125,7 @@ vmw_ioctl_claim_stream(struct vmw_driver *vmw, uint32_t *out)
 }
 
 int
-vmw_ioctl_unref_stream(struct vmw_driver *vmw, uint32_t stream_id)
+vmw_ioctl_unref_stream(struct vmw_customizer *vmw, uint32_t stream_id)
 {
     struct drm_vmw_stream_arg s_arg;
     int ret;
@@ -140,7 +140,7 @@ vmw_ioctl_unref_stream(struct vmw_driver *vmw, uint32_t stream_id)
 }
 
 int
-vmw_ioctl_cursor_bypass(struct vmw_driver *vmw, int xhot, int yhot)
+vmw_ioctl_cursor_bypass(struct vmw_customizer *vmw, int xhot, int yhot)
 {
     struct drm_vmw_cursor_bypass_arg arg;
     int ret;
@@ -157,7 +157,7 @@ vmw_ioctl_cursor_bypass(struct vmw_driver *vmw, int xhot, int yhot)
 }
 
 struct vmw_dma_buffer *
-vmw_ioctl_buffer_create(struct vmw_driver *vmw, uint32_t size, unsigned *handle)
+vmw_ioctl_buffer_create(struct vmw_customizer *vmw, uint32_t size, unsigned *handle)
 {
     struct vmw_dma_buffer *buf;
     union drm_vmw_alloc_dmabuf_arg arg;
@@ -198,7 +198,7 @@ err:
 }
 
 void
-vmw_ioctl_buffer_destroy(struct vmw_driver *vmw, struct vmw_dma_buffer *buf) 
+vmw_ioctl_buffer_destroy(struct vmw_customizer *vmw, struct vmw_dma_buffer *buf)
 { 
     struct drm_vmw_unref_dmabuf_arg arg; 
 
@@ -215,7 +215,7 @@ vmw_ioctl_buffer_destroy(struct vmw_driver *vmw, struct vmw_dma_buffer *buf)
 } 
 
 void *
-vmw_ioctl_buffer_map(struct vmw_driver *vmw, struct vmw_dma_buffer *buf)
+vmw_ioctl_buffer_map(struct vmw_customizer *vmw, struct vmw_dma_buffer *buf)
 {
     void *map;
 
@@ -236,7 +236,7 @@ vmw_ioctl_buffer_map(struct vmw_driver *vmw, struct vmw_dma_buffer *buf)
 }
 
 void
-vmw_ioctl_buffer_unmap(struct vmw_driver *vmw, struct vmw_dma_buffer *buf)
+vmw_ioctl_buffer_unmap(struct vmw_customizer *vmw, struct vmw_dma_buffer *buf)
 {
     --buf->map_count;
 }

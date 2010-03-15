@@ -36,6 +36,7 @@
 
 #include "native.h"
 #include "egl_g3d.h"
+#include "egl_g3d_image.h"
 #include "egl_st.h"
 
 /**
@@ -508,20 +509,6 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
 }
 
 /**
- * Flush the front buffer of the context's draw surface.
- */
-static void
-egl_g3d_flush_frontbuffer(struct pipe_screen *screen,
-                          struct pipe_surface *surf, void *context_private)
-{
-   struct egl_g3d_context *gctx = egl_g3d_context(context_private);
-   struct egl_g3d_surface *gsurf = egl_g3d_surface(gctx->base.DrawSurface);
-
-   if (gsurf)
-      gsurf->native->flush_frontbuffer(gsurf->native);
-}
-
-/**
  * Re-validate the context.
  */
 static void
@@ -530,6 +517,24 @@ egl_g3d_update_buffer(struct pipe_screen *screen, void *context_private)
    struct egl_g3d_context *gctx = egl_g3d_context(context_private);
    egl_g3d_validate_context(gctx->base.Resource.Display, &gctx->base);
 }
+
+static void
+egl_g3d_invalid_surface(struct native_display *ndpy,
+                        struct native_surface *nsurf,
+                        unsigned int seq_num)
+{
+   /* XXX not thread safe? */
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
+   struct egl_g3d_context *gctx = egl_g3d_context(gsurf->base.CurrentContext);
+
+   /* set force_validate to skip an unnecessary check */
+   if (gctx)
+      gctx->force_validate = TRUE;
+}
+
+static struct native_event_handler egl_g3d_native_event_handler = {
+   .invalid_surface = egl_g3d_invalid_surface
+};
 
 static EGLBoolean
 egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
@@ -575,13 +580,14 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    }
    dpy->DriverData = gdpy;
 
-   gdpy->native = native_create_display(dpy->NativeDisplay);
+   gdpy->native = native_create_display(dpy->NativeDisplay,
+         &egl_g3d_native_event_handler);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");
       goto fail;
    }
 
-   gdpy->native->screen->flush_frontbuffer = egl_g3d_flush_frontbuffer;
+   gdpy->native->user_data = (void *) dpy;
    gdpy->native->screen->update_buffer = egl_g3d_update_buffer;
 
    egl_g3d_init_st(&gdrv->base);
@@ -594,6 +600,10 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
       egl_g3d_add_screens(drv, dpy);
    }
 #endif
+
+   dpy->Extensions.KHR_image_base = EGL_TRUE;
+   if (gdpy->native->get_param(gdpy->native, NATIVE_PARAM_USE_NATIVE_BUFFER))
+      dpy->Extensions.KHR_image_pixmap = EGL_TRUE;
 
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
@@ -687,14 +697,104 @@ egl_g3d_destroy_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
    return EGL_TRUE;
 }
 
-static EGLBoolean
-init_surface_geometry(_EGLSurface *surf)
-{
-   struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
+struct egl_g3d_create_surface_arg {
+   EGLint type;
+   union {
+      EGLNativeWindowType win;
+      EGLNativePixmapType pix;
+   } u;
+};
 
-   return gsurf->native->validate(gsurf->native, 0x0,
-         &gsurf->sequence_number, NULL,
-         &gsurf->base.Width, &gsurf->base.Height);
+static _EGLSurface *
+egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
+                       struct egl_g3d_create_surface_arg *arg,
+                       const EGLint *attribs)
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct egl_g3d_config *gconf = egl_g3d_config(conf);
+   struct egl_g3d_surface *gsurf;
+   struct native_surface *nsurf;
+   const char *err;
+
+   switch (arg->type) {
+   case EGL_WINDOW_BIT:
+      err = "eglCreateWindowSurface";
+      break;
+   case EGL_PIXMAP_BIT:
+      err = "eglCreatePixmapSurface";
+      break;
+   case EGL_PBUFFER_BIT:
+      err = "eglCreatePBufferSurface";
+      break;
+#ifdef EGL_MESA_screen_surface
+   case EGL_SCREEN_BIT_MESA:
+      err = "eglCreateScreenSurface";
+      break;
+#endif
+   default:
+      err = "eglCreateUnknownSurface";
+      break;
+   }
+
+   gsurf = CALLOC_STRUCT(egl_g3d_surface);
+   if (!gsurf) {
+      _eglError(EGL_BAD_ALLOC, err);
+      return NULL;
+   }
+
+   if (!_eglInitSurface(&gsurf->base, dpy, arg->type, conf, attribs)) {
+      free(gsurf);
+      return NULL;
+   }
+
+   /* create the native surface */
+   switch (arg->type) {
+   case EGL_WINDOW_BIT:
+      nsurf = gdpy->native->create_window_surface(gdpy->native,
+            arg->u.win, gconf->native);
+      break;
+   case EGL_PIXMAP_BIT:
+      nsurf = gdpy->native->create_pixmap_surface(gdpy->native,
+            arg->u.pix, gconf->native);
+      break;
+   case EGL_PBUFFER_BIT:
+      nsurf = gdpy->native->create_pbuffer_surface(gdpy->native,
+            gconf->native, gsurf->base.Width, gsurf->base.Height);
+      break;
+#ifdef EGL_MESA_screen_surface
+   case EGL_SCREEN_BIT_MESA:
+      /* prefer back buffer (move to _eglInitSurface?) */
+      gsurf->base.RenderBuffer = EGL_BACK_BUFFER;
+      nsurf = gdpy->native->modeset->create_scanout_surface(gdpy->native,
+            gconf->native, gsurf->base.Width, gsurf->base.Height);
+      break;
+#endif
+   default:
+      nsurf = NULL;
+      break;
+   }
+
+   if (!nsurf) {
+      free(gsurf);
+      return NULL;
+   }
+   /* initialize the geometry */
+   if (!nsurf->validate(nsurf, 0x0, &gsurf->sequence_number, NULL,
+            &gsurf->base.Width, &gsurf->base.Height)) {
+      nsurf->destroy(nsurf);
+      free(gsurf);
+      return NULL;
+   }
+
+   nsurf->user_data = &gsurf->base;
+   gsurf->native = nsurf;
+
+   gsurf->render_att = (gsurf->base.RenderBuffer == EGL_SINGLE_BUFFER) ?
+      NATIVE_ATTACHMENT_FRONT_LEFT : NATIVE_ATTACHMENT_BACK_LEFT;
+   if (!gconf->native->mode.doubleBufferMode)
+      gsurf->render_att = NATIVE_ATTACHMENT_FRONT_LEFT;
+
+   return &gsurf->base;
 }
 
 static _EGLSurface *
@@ -702,39 +802,13 @@ egl_g3d_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy,
                               _EGLConfig *conf, EGLNativeWindowType win,
                               const EGLint *attribs)
 {
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct egl_g3d_config *gconf = egl_g3d_config(conf);
-   struct egl_g3d_surface *gsurf;
+   struct egl_g3d_create_surface_arg arg;
 
-   gsurf = CALLOC_STRUCT(egl_g3d_surface);
-   if (!gsurf) {
-      _eglError(EGL_BAD_ALLOC, "eglCreateWindowSurface");
-      return NULL;
-   }
+   memset(&arg, 0, sizeof(arg));
+   arg.type = EGL_WINDOW_BIT;
+   arg.u.win = win;
 
-   if (!_eglInitSurface(&gsurf->base, dpy, EGL_WINDOW_BIT, conf, attribs)) {
-      free(gsurf);
-      return NULL;
-   }
-
-   gsurf->native =
-      gdpy->native->create_window_surface(gdpy->native, win, gconf->native);
-   if (!gsurf->native) {
-      free(gsurf);
-      return NULL;
-   }
-
-   if (!init_surface_geometry(&gsurf->base)) {
-      gsurf->native->destroy(gsurf->native);
-      free(gsurf);
-      return NULL;
-   }
-
-   gsurf->render_att = (gsurf->base.RenderBuffer == EGL_SINGLE_BUFFER ||
-                        !gconf->native->mode.doubleBufferMode) ?
-      NATIVE_ATTACHMENT_FRONT_LEFT : NATIVE_ATTACHMENT_BACK_LEFT;
-
-   return &gsurf->base;
+   return egl_g3d_create_surface(drv, dpy, conf, &arg, attribs);
 }
 
 static _EGLSurface *
@@ -742,76 +816,25 @@ egl_g3d_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy,
                               _EGLConfig *conf, EGLNativePixmapType pix,
                               const EGLint *attribs)
 {
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct egl_g3d_config *gconf = egl_g3d_config(conf);
-   struct egl_g3d_surface *gsurf;
+   struct egl_g3d_create_surface_arg arg;
 
-   gsurf = CALLOC_STRUCT(egl_g3d_surface);
-   if (!gsurf) {
-      _eglError(EGL_BAD_ALLOC, "eglCreatePixmapSurface");
-      return NULL;
-   }
+   memset(&arg, 0, sizeof(arg));
+   arg.type = EGL_PIXMAP_BIT;
+   arg.u.pix = pix;
 
-   if (!_eglInitSurface(&gsurf->base, dpy, EGL_PIXMAP_BIT, conf, attribs)) {
-      free(gsurf);
-      return NULL;
-   }
-
-   gsurf->native =
-      gdpy->native->create_pixmap_surface(gdpy->native, pix, gconf->native);
-   if (!gsurf->native) {
-      free(gsurf);
-      return NULL;
-   }
-
-   if (!init_surface_geometry(&gsurf->base)) {
-      gsurf->native->destroy(gsurf->native);
-      free(gsurf);
-      return NULL;
-   }
-
-   gsurf->render_att = NATIVE_ATTACHMENT_FRONT_LEFT;
-
-   return &gsurf->base;
+   return egl_g3d_create_surface(drv, dpy, conf, &arg, attribs);
 }
 
 static _EGLSurface *
 egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLConfig *conf, const EGLint *attribs)
 {
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct egl_g3d_config *gconf = egl_g3d_config(conf);
-   struct egl_g3d_surface *gsurf;
+   struct egl_g3d_create_surface_arg arg;
 
-   gsurf = CALLOC_STRUCT(egl_g3d_surface);
-   if (!gsurf) {
-      _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
-      return NULL;
-   }
+   memset(&arg, 0, sizeof(arg));
+   arg.type = EGL_PBUFFER_BIT;
 
-   if (!_eglInitSurface(&gsurf->base, dpy, EGL_PBUFFER_BIT, conf, attribs)) {
-      free(gsurf);
-      return NULL;
-   }
-
-   gsurf->native =
-      gdpy->native->create_pbuffer_surface(gdpy->native, gconf->native,
-            gsurf->base.Width, gsurf->base.Height);
-   if (!gsurf->native) {
-      free(gsurf);
-      return NULL;
-   }
-
-   if (!init_surface_geometry(&gsurf->base)) {
-      gsurf->native->destroy(gsurf->native);
-      free(gsurf);
-      return NULL;
-   }
-
-   gsurf->render_att = (!gconf->native->mode.doubleBufferMode) ?
-      NATIVE_ATTACHMENT_FRONT_LEFT : NATIVE_ATTACHMENT_BACK_LEFT;
-
-   return &gsurf->base;
+   return egl_g3d_create_surface(drv, dpy, conf, &arg, attribs);
 }
 
 /**
@@ -869,8 +892,13 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
    if (gctx) {
       ok = egl_g3d_realloc_context(dpy, &gctx->base);
       if (ok) {
+         /* XXX: need to pass the winsys argument for
+          * flush_frontbuffer in the fourth parameter here:
+          */
          ok = gctx->stapi->st_make_current(gctx->st_ctx,
-               gctx->draw.st_fb, gctx->read.st_fb);
+                                           gctx->draw.st_fb,
+                                           gctx->read.st_fb,
+                                           NULL);
          if (ok) {
             egl_g3d_validate_context(dpy, &gctx->base);
             if (gdraw->base.Type == EGL_WINDOW_BIT) {
@@ -882,7 +910,7 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
       }
    }
    else if (old_gctx) {
-      ok = old_gctx->stapi->st_make_current(NULL, NULL, NULL);
+      ok = old_gctx->stapi->st_make_current(NULL, NULL, NULL, NULL);
       old_gctx->base.WindowRenderBuffer = EGL_NONE;
    }
 
@@ -919,32 +947,14 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
    if (gctx)
       gctx->stapi->st_notify_swapbuffers(gctx->draw.st_fb);
 
-   /*
-    * We drew on the back buffer, unless there was no back buffer.
-    * In that case, we drew on the front buffer.  Either case, we call
-    * swap_buffers.
-    */
-   if (!gsurf->native->swap_buffers(gsurf->native))
-      return EGL_FALSE;
-
-   if (gctx) {
-      struct egl_g3d_config *gconf = egl_g3d_config(gsurf->base.Config);
-
-      /* force validation if the swap method is not copy */
-      if (gconf->native->mode.swapMethod != GLX_SWAP_COPY_OML) {
-         gctx->force_validate = EGL_TRUE;
-         egl_g3d_validate_context(dpy, &gctx->base);
-      }
-   }
-
-   return EGL_TRUE;
+   return gsurf->native->swap_buffers(gsurf->native);
 }
 
 /**
  * Find a config that supports the pixmap.
  */
-static _EGLConfig *
-find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
+_EGLConfig *
+egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_config *gconf;
@@ -996,7 +1006,7 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    if (!gsurf->render_surface)
       return EGL_TRUE;
 
-   gconf = egl_g3d_config(find_pixmap_config(dpy, target));
+   gconf = egl_g3d_config(egl_g3d_find_pixmap_config(dpy, target));
    if (!gconf)
       return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
 
@@ -1103,7 +1113,7 @@ egl_g3d_bind_tex_image(_EGLDriver *drv, _EGLDisplay *dpy,
       target_format = PIPE_FORMAT_R8G8B8_UNORM;
       break;
    case EGL_TEXTURE_RGBA:
-      target_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      target_format = PIPE_FORMAT_B8G8R8A8_UNORM;
       break;
    default:
       return _eglError(EGL_BAD_MATCH, "eglBindTexImage");
@@ -1171,34 +1181,12 @@ static _EGLSurface *
 egl_g3d_create_screen_surface(_EGLDriver *drv, _EGLDisplay *dpy,
                               _EGLConfig *conf, const EGLint *attribs)
 {
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct egl_g3d_config *gconf = egl_g3d_config(conf);
-   struct egl_g3d_surface *gsurf;
+   struct egl_g3d_create_surface_arg arg;
 
-   gsurf = CALLOC_STRUCT(egl_g3d_surface);
-   if (!gsurf) {
-      _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
-      return NULL;
-   }
+   memset(&arg, 0, sizeof(arg));
+   arg.type = EGL_SCREEN_BIT_MESA;
 
-   if (!_eglInitSurface(&gsurf->base, dpy,
-            EGL_SCREEN_BIT_MESA, conf, attribs)) {
-      free(gsurf);
-      return NULL;
-   }
-
-   gsurf->native =
-      gdpy->native->modeset->create_scanout_surface(gdpy->native,
-            gconf->native, gsurf->base.Width, gsurf->base.Height);
-   if (!gsurf->native) {
-      free(gsurf);
-      return NULL;
-   }
-
-   gsurf->render_att = (!gconf->native->mode.doubleBufferMode) ?
-      NATIVE_ATTACHMENT_FRONT_LEFT : NATIVE_ATTACHMENT_BACK_LEFT;
-
-   return &gsurf->base;
+   return egl_g3d_create_surface(drv, dpy, conf, &arg, attribs);
 }
 
 static EGLBoolean
@@ -1328,6 +1316,9 @@ _eglMain(const char *args)
 
    gdrv->base.API.BindTexImage = egl_g3d_bind_tex_image;
    gdrv->base.API.ReleaseTexImage = egl_g3d_release_tex_image;
+
+   gdrv->base.API.CreateImageKHR = egl_g3d_create_image;
+   gdrv->base.API.DestroyImageKHR = egl_g3d_destroy_image;
 
 #ifdef EGL_MESA_screen_surface
    gdrv->base.API.CreateScreenSurfaceMESA = egl_g3d_create_screen_surface;

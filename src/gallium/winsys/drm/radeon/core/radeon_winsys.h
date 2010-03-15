@@ -30,16 +30,15 @@
 #ifndef RADEON_WINSYS_H
 #define RADEON_WINSYS_H
 
-#include "util/u_simple_screen.h"
+#include "r300_winsys.h"
 
-struct radeon_winsys_priv;
-
-struct radeon_winsys {
+struct radeon_libdrm_winsys {
     /* Parent class. */
-    struct pipe_winsys base;
+    struct r300_winsys_screen base;
 
-    /* Winsys private */
-    struct radeon_winsys_priv* priv;
+    struct pb_manager *kman;
+
+    struct pb_manager *mman;
 
     /* PCI ID */
     uint32_t pci_id;
@@ -56,56 +55,27 @@ struct radeon_winsys {
     /* VRAM size. */
     uint32_t vram_size;
 
-    /* Add a pipe_buffer to the list of buffer objects to validate. */
-    boolean (*add_buffer)(struct radeon_winsys* winsys,
-                          struct pipe_buffer* pbuffer,
-                          uint32_t rd,
-                          uint32_t wd);
+    /* DRM FD */
+    int fd;
 
-    /* Revalidate all currently setup pipe_buffers.
-     * Returns TRUE if a flush is required. */
-    boolean (*validate)(struct radeon_winsys* winsys);
+    /* Radeon BO manager. */
+    struct radeon_bo_manager *bom;
 
-    /* Check to see if there's room for commands. */
-    boolean (*check_cs)(struct radeon_winsys* winsys, int size);
+    /* Radeon CS manager. */
+    struct radeon_cs_manager *csm;
 
-    /* Start a command emit. */
-    void (*begin_cs)(struct radeon_winsys* winsys,
-                     int size,
-                     const char* file,
-                     const char* function,
-                     int line);
+    /* Current CS. */
+    struct radeon_cs *cs;
 
-    /* Write a dword to the command buffer. */
-    void (*write_cs_dword)(struct radeon_winsys* winsys, uint32_t dword);
-
-    /* Write a relocated dword to the command buffer. */
-    void (*write_cs_reloc)(struct radeon_winsys* winsys,
-                           struct pipe_buffer* bo,
-                           uint32_t rd,
-                           uint32_t wd,
-                           uint32_t flags);
-
-    /* Finish a command emit. */
-    void (*end_cs)(struct radeon_winsys* winsys,
-                   const char* file,
-                   const char* function,
-                   int line);
-
-    /* Flush the CS. */
-    void (*flush_cs)(struct radeon_winsys* winsys);
-
-    /* winsys flush - callback from winsys when flush required */
-    void (*set_flush_cb)(struct radeon_winsys *winsys,
-			 void (*flush_cb)(void *), void *data);
-
-    void (*reset_bos)(struct radeon_winsys *winsys);
-
-    void (*buffer_set_tiling)(struct radeon_winsys* winsys,
-                              struct pipe_buffer* buffer,
-                              uint32_t pitch,
-                              boolean microtiled,
-                              boolean macrotiled);
+    /* Flush CB */
+    void (*flush_cb)(void *);
+    void *flush_data;
 };
+
+static INLINE struct radeon_libdrm_winsys *
+radeon_winsys_screen(struct r300_winsys_screen *base)
+{
+  return (struct radeon_libdrm_winsys *)base;
+}
 
 #endif

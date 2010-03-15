@@ -31,6 +31,11 @@
 #include "nv10_driver.h"
 #include "nv20_driver.h"
 
+static const struct dri_extension nv20_extensions[] = {
+	{ "GL_EXT_texture_rectangle",	NULL },
+	{ NULL,				NULL }
+};
+
 static void
 nv20_hwctx_init(GLcontext *ctx)
 {
@@ -394,6 +399,8 @@ nv20_context_create(struct nouveau_screen *screen, const GLvisual *visual,
 	if (!nouveau_context_init(ctx, screen, visual, share_ctx))
 		goto fail;
 
+	driInitExtensions(ctx, nv20_extensions, GL_FALSE);
+
 	/* GL constants. */
 	ctx->Const.MaxTextureCoordUnits = NV20_TEXTURE_UNITS;
 	ctx->Const.MaxTextureImageUnits = NV20_TEXTURE_UNITS;
@@ -449,10 +456,9 @@ const struct nouveau_driver nv20_driver = {
 		nv10_emit_front_face,
 		nv10_emit_depth,
 		nv10_emit_dither,
-		nv10_emit_frag,
+		nv20_emit_frag,
 		nv20_emit_framebuffer,
 		nv20_emit_fog,
-		nv10_emit_index_mask,
 		nv10_emit_light_enable,
 		nv20_emit_light_model,
 		nv20_emit_light_source,
@@ -487,10 +493,10 @@ const struct nouveau_driver nv20_driver = {
 		nv10_emit_stencil_func,
 		nv10_emit_stencil_mask,
 		nv10_emit_stencil_op,
-		nv10_emit_tex_env,
-		nv10_emit_tex_env,
-		nv10_emit_tex_env,
-		nv10_emit_tex_env,
+		nv20_emit_tex_env,
+		nv20_emit_tex_env,
+		nv20_emit_tex_env,
+		nv20_emit_tex_env,
 		nv10_emit_tex_gen,
 		nv10_emit_tex_gen,
 		nv10_emit_tex_gen,

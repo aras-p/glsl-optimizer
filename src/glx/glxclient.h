@@ -69,7 +69,7 @@
  * We also need to define a USED attribute, so the optimizer doesn't
  * inline a static function that we later use in an alias. - ajax
  */
-#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#if defined(__GNUC__)
 #  define PUBLIC __attribute__((visibility("default")))
 #  define USED __attribute__((used))
 #else

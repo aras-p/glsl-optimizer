@@ -48,16 +48,16 @@ static enum pipe_format vg_format_to_pipe(VGImageFormat format)
 {
    switch(format) {
    case VG_sRGB_565:
-      return PIPE_FORMAT_R5G6B5_UNORM;
+      return PIPE_FORMAT_B5G6R5_UNORM;
    case VG_sRGBA_5551:
-      return PIPE_FORMAT_A1R5G5B5_UNORM;
+      return PIPE_FORMAT_B5G5R5A1_UNORM;
    case VG_sRGBA_4444:
-      return PIPE_FORMAT_A4R4G4B4_UNORM;
+      return PIPE_FORMAT_B4G4R4A4_UNORM;
    case VG_sL_8:
    case VG_lL_8:
       return PIPE_FORMAT_L8_UNORM;
    case VG_BW_1:
-      return PIPE_FORMAT_A8R8G8B8_UNORM;
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
    case VG_A_8:
       return PIPE_FORMAT_A8_UNORM;
 #ifdef OPENVG_VERSION_1_1
@@ -66,7 +66,7 @@ static enum pipe_format vg_format_to_pipe(VGImageFormat format)
       return PIPE_FORMAT_A8_UNORM;
 #endif
    default:
-      return PIPE_FORMAT_A8R8G8B8_UNORM;
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
    }
 }
 
@@ -378,7 +378,7 @@ void image_sub_data(struct vg_image *image,
    VGfloat *df = (VGfloat*)temp;
    VGint i;
    struct vg_context *ctx = vg_current_context();
-   struct pipe_screen *screen = ctx->pipe->screen;
+   struct pipe_context *pipe = ctx->pipe;
    struct pipe_texture *texture = image_texture(image);
    VGint xoffset = 0, yoffset = 0;
 
@@ -412,17 +412,17 @@ void image_sub_data(struct vg_image *image,
    }
 
    { /* upload color_data */
-      struct pipe_transfer *transfer = screen->get_tex_transfer(
-         screen, texture, 0, 0, 0,
+      struct pipe_transfer *transfer = pipe->get_tex_transfer(
+         pipe, texture, 0, 0, 0,
          PIPE_TRANSFER_WRITE, 0, 0, texture->width0, texture->height0);
       src += (dataStride * yoffset);
       for (i = 0; i < height; i++) {
          _vega_unpack_float_span_rgba(ctx, width, xoffset, src, dataFormat, temp);
-         pipe_put_tile_rgba(transfer, x+image->x, y+image->y, width, 1, df);
+         pipe_put_tile_rgba(pipe, transfer, x+image->x, y+image->y, width, 1, df);
          y += yStep;
          src += dataStride;
       }
-      screen->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 }
 
@@ -435,7 +435,6 @@ void image_get_sub_data(struct vg_image * image,
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
    VGfloat temp[VEGA_MAX_IMAGE_WIDTH][4];
    VGfloat *df = (VGfloat*)temp;
    VGint y = 0, yStep = 1;
@@ -444,7 +443,7 @@ void image_get_sub_data(struct vg_image * image,
 
    {
       struct pipe_transfer *transfer =
-         screen->get_tex_transfer(screen,
+         pipe->get_tex_transfer(pipe,
                                   image->texture,  0, 0, 0,
                                   PIPE_TRANSFER_READ,
                                   0, 0,
@@ -455,13 +454,13 @@ void image_get_sub_data(struct vg_image * image,
 #if 0
          debug_printf("%d-%d  == %d\n", sy, height, y);
 #endif
-         pipe_get_tile_rgba(transfer, sx+image->x, y, width, 1, df);
+         pipe_get_tile_rgba(pipe, transfer, sx+image->x, y, width, 1, df);
          y += yStep;
          _vega_pack_rgba_span_float(ctx, width, temp, dataFormat, dst);
          dst += dataStride;
       }
 
-      screen->tex_transfer_destroy(transfer);
+      pipe->tex_transfer_destroy(pipe, transfer);
    }
 }
 

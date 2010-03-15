@@ -519,9 +519,6 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    if (psp == NULL)
       return NULL;
 
-   /* Initialize per screen dynamic client GLX extensions */
-   psc->ext_list_first_time = GL_TRUE;
-
    if (!DRI2Connect(psc->dpy, RootWindow(psc->dpy, screen),
 		    &driverName, &deviceName)) {
       XFree(psp);
@@ -613,6 +610,9 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
 #ifdef X_DRI2SwapInterval
       psp->setSwapInterval = dri2SetSwapInterval;
       psp->getSwapInterval = dri2GetSwapInterval;
+#endif
+#if defined(X_DRI2GetMSC) && defined(X_DRI2WaitMSC) && defined(X_DRI2SwapInterval)
+      __glXEnableDirectExtension(psc, "GLX_OML_sync_control");
 #endif
    }
 

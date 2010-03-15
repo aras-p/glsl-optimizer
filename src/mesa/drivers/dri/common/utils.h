@@ -69,6 +69,9 @@ struct __DRIutilversionRec2 {
     int    patch;        /**< Patch-level. */
 };
 
+extern void
+__driUtilMessage(const char *f, ...);
+
 extern unsigned driParseDebugString( const char * debug,
     const struct dri_debug_control * control );
 
