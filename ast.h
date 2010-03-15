@@ -357,6 +357,22 @@ class ast_type_specifier : public ast_node {
 public:
    ast_type_specifier(int specifier);
 
+   /** Construct a type specifier from a type name */
+   ast_type_specifier(const char *name) 
+      : type_specifier(ast_type_name), type_name(name), structure(NULL),
+	is_array(false), array_size(NULL), precision(ast_precision_high)
+   {
+      /* empty */
+   }
+
+   /** Construct a type specifier from a structure definition */
+   ast_type_specifier(ast_struct_specifier *s)
+      : type_specifier(ast_struct), type_name(s->name), structure(s),
+	is_array(false), array_size(NULL), precision(ast_precision_high)
+   {
+      /* empty */
+   }
+
    virtual void print(void) const;
 
    enum ast_types type_specifier;
