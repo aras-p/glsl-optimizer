@@ -34,6 +34,7 @@
 #include "r300_context.h"
 #include "r300_reg.h"
 #include "r300_screen.h"
+#include "r300_screen_buffer.h"
 #include "r300_state_inlines.h"
 #include "r300_fs.h"
 #include "r300_vs.h"
@@ -525,7 +526,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
         tex = (struct r300_texture*)old_state->cbufs[i]->texture;
 
         if (tex) {
-            r300->winsys->buffer_set_tiling(r300->winsys, tex->buffer,
+            r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
                                             tex->pitch[0],
                                             tex->microtile != 0,
                                             tex->macrotile != 0);
@@ -537,7 +538,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
         tex = (struct r300_texture*)old_state->zsbuf->texture;
 
         if (tex) {
-            r300->winsys->buffer_set_tiling(r300->winsys, tex->buffer,
+            r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
                                             tex->pitch[0],
                                             tex->microtile != 0,
                                             tex->macrotile != 0);
@@ -549,7 +550,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
         tex = (struct r300_texture*)new_state->cbufs[i]->texture;
         level = new_state->cbufs[i]->level;
 
-        r300->winsys->buffer_set_tiling(r300->winsys, tex->buffer,
+        r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
                                         tex->pitch[level],
                                         tex->microtile != 0,
                                         tex->mip_macrotile[level] != 0);
@@ -558,7 +559,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
         tex = (struct r300_texture*)new_state->zsbuf->texture;
         level = new_state->zsbuf->level;
 
-        r300->winsys->buffer_set_tiling(r300->winsys, tex->buffer,
+        r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
                                         tex->pitch[level],
                                         tex->microtile != 0,
                                         tex->mip_macrotile[level] != 0);
@@ -849,6 +850,7 @@ static void*
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
+    boolean is_r500 = r300_screen(pipe->screen)->caps->is_r500;
     int lod_bias;
     union util_color uc;
 
@@ -864,6 +866,8 @@ static void*
                                                    state->min_mip_filter,
                                                    state->max_anisotropy > 0);
 
+    sampler->filter0 |= r300_anisotropy(state->max_anisotropy);
+
     /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
     /* We must pass these to the merge function to clamp them properly. */
     sampler->min_lod = MAX2((unsigned)state->min_lod, 0);
@@ -873,7 +877,13 @@ static void*
 
     sampler->filter1 |= lod_bias << R300_LOD_BIAS_SHIFT;
 
-    sampler->filter1 |= r300_anisotropy(state->max_anisotropy);
+    /* This is very high quality anisotropic filtering for R5xx.
+     * It's good for benchmarking the performance of texturing but
+     * in practice we don't want to slow down the driver because it's
+     * a pretty good performance killer. Feel free to play with it. */
+    if (DBG_ON(r300, DBG_ANISOHQ) && is_r500) {
+        sampler->filter1 |= r500_anisotropy(state->max_anisotropy);
+    }
 
     util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
     sampler->border_color = uc.ui;
@@ -1061,17 +1071,30 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
-    unsigned i, max_index = (1 << 24) - 1;
+    int i;
+    unsigned max_index = (1 << 24) - 1;
+    boolean any_user_buffer = false;
 
-    memcpy(r300->vertex_buffer, buffers,
-        sizeof(struct pipe_vertex_buffer) * count);
+    if (count == r300->vertex_buffer_count &&
+	memcmp(r300->vertex_buffer, buffers, count * sizeof(buffers[0])) == 0)
+        return;
 
     for (i = 0; i < count; i++) {
+	pipe_buffer_reference(&r300->vertex_buffer[i].buffer, buffers[i].buffer);
+	if (r300_buffer_is_user_buffer(buffers[i].buffer))
+	    any_user_buffer = true;
         max_index = MIN2(buffers[i].max_index, max_index);
     }
 
+    for ( ; i < r300->vertex_buffer_count; i++)
+	pipe_buffer_reference(&r300->vertex_buffer[i].buffer, NULL);
+
+    memcpy(r300->vertex_buffer, buffers,
+	   sizeof(struct pipe_vertex_buffer) * count);
+
     r300->vertex_buffer_count = count;
     r300->vertex_buffer_max_index = max_index;
+    r300->any_user_vbs = any_user_buffer;
 
     if (r300->draw) {
         draw_flush(r300->draw);

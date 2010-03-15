@@ -31,6 +31,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/extensions.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
 

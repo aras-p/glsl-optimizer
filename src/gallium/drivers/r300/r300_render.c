@@ -30,10 +30,12 @@
 
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_upload_mgr.h"
 #include "util/u_prim.h"
 
 #include "r300_cs.h"
 #include "r300_context.h"
+#include "r300_screen_buffer.h"
 #include "r300_emit.h"
 #include "r300_reg.h"
 #include "r300_render.h"
@@ -123,7 +125,7 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
 static boolean r300_reserve_cs_space(struct r300_context *r300,
                                      unsigned dwords)
 {
-    if (!r300->winsys->check_cs(r300->winsys, dwords)) {
+    if (!r300->rws->check_cs(r300->rws, dwords)) {
         r300->context.flush(&r300->context, 0, NULL);
         return TRUE;
     }
@@ -131,9 +133,37 @@ static boolean r300_reserve_cs_space(struct r300_context *r300,
 }
 
 static boolean immd_is_good_idea(struct r300_context *r300,
-                                      unsigned count)
+                                 unsigned count)
 {
-    return count <= 4;
+    struct pipe_vertex_element* velem;
+    struct pipe_vertex_buffer* vbuf;
+    boolean checked[PIPE_MAX_ATTRIBS] = {0};
+    unsigned vertex_element_count = r300->velems->count;
+    unsigned i, vbi;
+
+    if (count > 4) {
+        return FALSE;
+    }
+
+    /* We shouldn't map buffers referenced by CS, busy buffers,
+     * and ones placed in VRAM. */
+    /* XXX Check for VRAM buffers. */
+    for (i = 0; i < vertex_element_count; i++) {
+        velem = &r300->velems->velem[i];
+        vbi = velem->vertex_buffer_index;
+
+        if (!checked[vbi]) {
+            vbuf = &r300->vertex_buffer[vbi];
+
+            if (r300_buffer_is_referenced(r300,
+					  vbuf->buffer)) {
+                /* It's a very bad idea to map it... */
+                return FALSE;
+            }
+            checked[vbi] = TRUE;
+        }
+    }
+    return TRUE;
 }
 
 static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
@@ -316,8 +346,8 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2) |
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
     OUT_CS(offset_dwords << 2);
-    OUT_CS_RELOC(indexBuffer, count_dwords,
-        RADEON_GEM_DOMAIN_GTT, 0, 0);
+    OUT_CS_BUF_RELOC(indexBuffer, count_dwords,
+		     RADEON_GEM_DOMAIN_GTT, 0, 0);
 
     END_CS;
 }
@@ -384,12 +414,16 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 
     r300_update_derived_state(r300);
 
+    r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count);
+
     /* 128 dwords for emit_aos and emit_draw_elements */
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
     r300_emit_buffer_validate(r300, TRUE, indexBuffer);
     r300_emit_dirty_state(r300);
     r300_emit_aos(r300, 0);
 
+    u_upload_flush(r300->upload_vb);
+    u_upload_flush(r300->upload_ib);
     if (alt_num_verts || count <= 65535) {
         r300_emit_draw_elements(r300, indexBuffer, indexSize, minIndex,
                                 maxIndex, mode, start, count);
@@ -412,7 +446,7 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     }
 
     if (indexBuffer != orgIndexBuffer) {
-        pipe->screen->buffer_destroy(indexBuffer);
+        pipe_buffer_reference( &indexBuffer, NULL );
     }
 }
 
@@ -476,6 +510,7 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                 }
             } while (count);
         }
+	u_upload_flush(r300->upload_vb);
     }
 }
 

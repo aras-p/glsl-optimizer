@@ -552,10 +552,6 @@ struct __DRIscreenRec {
 };
 
 extern void
-__driUtilMessage(const char *f, ...);
-
-
-extern void
 __driUtilUpdateDrawableInfo(__DRIdrawable *pdp);
 
 extern float

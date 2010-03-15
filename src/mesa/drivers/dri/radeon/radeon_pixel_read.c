@@ -50,22 +50,33 @@ static gl_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
             break;
         case GL_RGBA:
             switch (type) {
-                case GL_UNSIGNED_BYTE:
-                    return MESA_FORMAT_RGBA8888_REV;
                 case GL_FLOAT:
                     return MESA_FORMAT_RGBA_FLOAT32;
+                case GL_UNSIGNED_SHORT_5_5_5_1:
+                    return MESA_FORMAT_RGBA5551;
+                case GL_UNSIGNED_INT_8_8_8_8:
+                    return MESA_FORMAT_RGBA8888;
+                case GL_UNSIGNED_BYTE:
+                case GL_UNSIGNED_INT_8_8_8_8_REV:
+                    return MESA_FORMAT_RGBA8888_REV;
+            }
+            break;
+        case GL_BGRA:
+            switch (type) {
                 case GL_UNSIGNED_SHORT_4_4_4_4:
-                    return MESA_FORMAT_ARGB4444;
+                    return MESA_FORMAT_ARGB4444_REV;
                 case GL_UNSIGNED_SHORT_4_4_4_4_REV:
                     return MESA_FORMAT_ARGB4444;
                 case GL_UNSIGNED_SHORT_5_5_5_1:
-                    return MESA_FORMAT_RGBA5551;
-                case GL_UNSIGNED_SHORT_1_5_5_5_REV:
                     return MESA_FORMAT_ARGB1555_REV;
+                case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+                    return MESA_FORMAT_ARGB1555;
                 case GL_UNSIGNED_INT_8_8_8_8:
-                    return MESA_FORMAT_ARGB8888;
-                case GL_UNSIGNED_INT_8_8_8_8_REV:
                     return MESA_FORMAT_ARGB8888_REV;
+                case GL_UNSIGNED_BYTE:
+                case GL_UNSIGNED_INT_8_8_8_8_REV:
+                    return MESA_FORMAT_ARGB8888;
+
             }
             break;
     }

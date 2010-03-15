@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include "main/imports.h"
-#include "dri_util.h"
+#include "utils.h"
 #include "xmlconfig.h"
 
 #undef GET_PROGRAM_NAME

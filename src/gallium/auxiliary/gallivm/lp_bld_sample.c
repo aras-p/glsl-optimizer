@@ -84,8 +84,12 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->wrap_t            = sampler->wrap_t;
    state->wrap_r            = sampler->wrap_r;
    state->min_img_filter    = sampler->min_img_filter;
-   state->min_mip_filter    = sampler->min_mip_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
+   if (texture->last_level) {
+      state->min_mip_filter = sampler->min_mip_filter;
+   } else {
+      state->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   }
 
    state->compare_mode      = sampler->compare_mode;
    if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {

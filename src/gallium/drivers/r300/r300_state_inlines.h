@@ -327,6 +327,18 @@ static INLINE uint32_t r300_anisotropy(unsigned max_aniso)
     }
 }
 
+static INLINE uint32_t r500_anisotropy(unsigned max_aniso)
+{
+    if (!max_aniso) {
+        return 0;
+    }
+    max_aniso -= 1;
+
+    // Map the range [0, 15] to [0, 63].
+    return R500_TX_MAX_ANISO(MIN2((unsigned)(max_aniso*4.2001), 63)) |
+           R500_TX_ANISO_HIGH_QUALITY;;
+}
+
 /* Non-CSO state. (For now.) */
 
 static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)

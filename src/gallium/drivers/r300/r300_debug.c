@@ -37,6 +37,7 @@ static struct debug_option debug_options[] = {
     { "draw", DBG_DRAW, "Draw and emit" },
     { "tex", DBG_TEX, "Textures" },
     { "fall", DBG_FALL, "Fallbacks" },
+    { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking purposes only!)" },
 
     { "all", ~0, "Convenience option that enables all debug flags" },
 

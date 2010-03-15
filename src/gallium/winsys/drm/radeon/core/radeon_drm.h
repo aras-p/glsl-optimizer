@@ -37,6 +37,22 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api,
                                          int drmFB,
 					 struct drm_create_screen_arg *arg);
 
+boolean radeon_buffer_from_texture(struct drm_api* api,
+                                   struct pipe_screen* screen,
+                                   struct pipe_texture* texture,
+                                   struct pipe_buffer** buffer,
+                                   unsigned* stride);
+
+boolean radeon_handle_from_buffer(struct drm_api* api,
+                                  struct pipe_screen* screen,
+                                  struct pipe_buffer* buffer,
+                                  unsigned* handle);
+
+boolean radeon_global_handle_from_buffer(struct drm_api* api,
+                                         struct pipe_screen* screen,
+                                         struct pipe_buffer* buffer,
+                                         unsigned* handle);
+
 void radeon_destroy_drm_api(struct drm_api* api);
 
 /* Guess at whether this chipset should use r300g.

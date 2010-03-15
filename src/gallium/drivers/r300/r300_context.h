@@ -32,6 +32,7 @@
 
 #include "r300_screen.h"
 
+struct u_upload_mgr;
 struct r300_context;
 
 struct r300_fragment_shader;
@@ -268,7 +269,7 @@ struct r300_texture {
     boolean is_npot;
 
     /* Pipe buffer backing this texture. */
-    struct pipe_buffer* buffer;
+    struct r300_winsys_buffer *buffer;
 
     /* Registers carrying texture format data. */
     struct r300_texture_format_state state;
@@ -302,7 +303,7 @@ struct r300_context {
     struct pipe_context context;
 
     /* The interface to the windowing system, etc. */
-    struct radeon_winsys* winsys;
+    struct r300_winsys_screen *rws;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
     /* Accelerated blit support. */
@@ -369,6 +370,7 @@ struct r300_context {
     int vertex_buffer_max_index;
     /* Vertex elements for Gallium. */
     struct r300_vertex_element_state *velems;
+    bool any_user_vbs;
 
     /* Vertex info for Draw. */
     struct vertex_info vertex_info;
@@ -389,6 +391,9 @@ struct r300_context {
     uint32_t zbuffer_bpp;
     /* Whether scissor is enabled. */
     boolean scissor_enabled;
+    /* upload managers */
+    struct u_upload_mgr *upload_vb;
+    struct u_upload_mgr *upload_ib;
 };
 
 /* Convenience cast wrapper. */

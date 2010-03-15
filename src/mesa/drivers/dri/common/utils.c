@@ -37,6 +37,29 @@
 #include "utils.h"
 
 
+/**
+ * Print message to \c stderr if the \c LIBGL_DEBUG environment variable
+ * is set. 
+ * 
+ * Is called from the drivers.
+ * 
+ * \param f \c printf like format string.
+ */
+void
+__driUtilMessage(const char *f, ...)
+{
+    va_list args;
+
+    if (getenv("LIBGL_DEBUG")) {
+        fprintf(stderr, "libGL: ");
+        va_start(args, f);
+        vfprintf(stderr, f, args);
+        va_end(args);
+        fprintf(stderr, "\n");
+    }
+}
+
+
 unsigned
 driParseDebugString( const char * debug, 
 		     const struct dri_debug_control * control  )
@@ -230,9 +253,6 @@ void driInitSingleExtension( GLcontext * ctx,
 /**
  * Utility function used by drivers to test the verions of other components.
  *
- * If one of the version requirements is not met, a message is logged using
- * \c __driUtilMessage.
- *
  * \param driver_name  Name of the driver.  Used in error messages.
  * \param driActual    Actual DRI version supplied __driCreateNewScreen.
  * \param driExpected  Minimum DRI version required by the driver.
@@ -244,7 +264,7 @@ void driInitSingleExtension( GLcontext * ctx,
  * \returns \c GL_TRUE if all version requirements are met.  Otherwise,
  *          \c GL_FALSE is returned.
  * 
- * \sa __driCreateNewScreen, driCheckDriDdxDrmVersions2, __driUtilMessage
+ * \sa __driCreateNewScreen, driCheckDriDdxDrmVersions2
  *
  * \todo
  * Now that the old \c driCheckDriDdxDrmVersions function is gone, this

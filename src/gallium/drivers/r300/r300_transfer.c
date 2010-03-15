@@ -26,6 +26,8 @@
 #include "r300_texture.h"
 #include "r300_screen.h"
 
+#include "r300_winsys.h"
+
 #include "util/u_memory.h"
 #include "util/u_format.h"
 
@@ -225,6 +227,7 @@ static void r300_tex_transfer_destroy(struct pipe_context *ctx,
 static void* r300_transfer_map(struct pipe_context *ctx,
                                struct pipe_transfer *transfer)
 {
+    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)ctx->winsys;
     struct r300_transfer *r300transfer = r300_transfer(transfer);
     struct r300_texture *tex = (struct r300_texture*)transfer->texture;
     char *map;
@@ -233,12 +236,12 @@ static void* r300_transfer_map(struct pipe_context *ctx,
     if (r300transfer->detiled_texture) {
         /* The detiled texture is of the same size as the region being mapped
          * (no offset needed). */
-        return pipe_buffer_map(ctx->screen,
+        return rws->buffer_map(rws,
                                r300transfer->detiled_texture->buffer,
                                pipe_transfer_buffer_flags(transfer));
     } else {
         /* Tiling is disabled. */
-        map = pipe_buffer_map(ctx->screen, tex->buffer,
+        map = rws->buffer_map(rws, tex->buffer,
                               pipe_transfer_buffer_flags(transfer));
 
         if (!map) {
@@ -254,13 +257,14 @@ static void* r300_transfer_map(struct pipe_context *ctx,
 static void r300_transfer_unmap(struct pipe_context *ctx,
                                 struct pipe_transfer *transfer)
 {
+    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)ctx->winsys;
     struct r300_transfer *r300transfer = r300_transfer(transfer);
     struct r300_texture *tex = (struct r300_texture*)transfer->texture;
 
     if (r300transfer->detiled_texture) {
-        pipe_buffer_unmap(ctx->screen, r300transfer->detiled_texture->buffer);
+	rws->buffer_unmap(rws, r300transfer->detiled_texture->buffer);
     } else {
-        pipe_buffer_unmap(ctx->screen, tex->buffer);
+        rws->buffer_unmap(rws, tex->buffer);
     }
 }
 

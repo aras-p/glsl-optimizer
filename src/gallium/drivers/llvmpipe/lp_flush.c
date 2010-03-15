@@ -92,3 +92,68 @@ llvmpipe_flush( struct pipe_context *pipe,
 #endif
 }
 
+
+/**
+ * Flush context if necessary.
+ *
+ * TODO: move this logic to an auxiliary library?
+ *
+ * FIXME: We must implement DISCARD/DONTBLOCK/UNSYNCHRONIZED/etc for
+ * textures to avoid blocking.
+ */
+boolean
+llvmpipe_flush_texture(struct pipe_context *pipe,
+                       struct pipe_texture *texture,
+                       unsigned face,
+                       unsigned level,
+                       unsigned flush_flags,
+                       boolean read_only,
+                       boolean cpu_access,
+                       boolean do_not_flush)
+{
+   struct pipe_fence_handle *last_fence = NULL;
+   unsigned referenced;
+
+   referenced = pipe->is_texture_referenced(pipe, texture, face, level);
+
+   if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
+       ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {
+
+      if (do_not_flush)
+         return FALSE;
+
+      /*
+       * TODO: The semantics of these flush flags are too obtuse. They should
+       * disappear and the pipe driver should just ensure that all visible
+       * side-effects happen when they need to happen.
+       */
+      if (referenced & PIPE_REFERENCED_FOR_WRITE)
+         flush_flags |= PIPE_FLUSH_RENDER_CACHE;
+
+      if (referenced & PIPE_REFERENCED_FOR_READ)
+         flush_flags |= PIPE_FLUSH_TEXTURE_CACHE;
+
+      if (cpu_access) {
+         /*
+          * Flush and wait.
+          */
+
+         struct pipe_fence_handle *fence = NULL;
+
+         pipe->flush(pipe, flush_flags, &fence);
+
+         if (last_fence) {
+            pipe->screen->fence_finish(pipe->screen, fence, 0);
+            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+         }
+      } else {
+         /*
+          * Just flush.
+          */
+
+         pipe->flush(pipe, flush_flags, NULL);
+      }
+   }
+
+   return TRUE;
+}

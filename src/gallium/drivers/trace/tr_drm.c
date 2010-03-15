@@ -30,9 +30,6 @@
 #include "util/u_memory.h"
 #include "tr_drm.h"
 #include "tr_screen.h"
-#include "tr_context.h"
-#include "tr_buffer.h"
-#include "tr_texture.h"
 #include "tr_public.h"
 
 struct trace_drm_api

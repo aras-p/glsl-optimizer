@@ -34,8 +34,6 @@
 
 #include "radeon_compiler.h"
 
-#include "util/u_math.h"
-
 /* Convert info about VS output semantics into r300_shader_semantics. */
 static void r300_shader_read_vs_outputs(
     struct tgsi_shader_info* info,
