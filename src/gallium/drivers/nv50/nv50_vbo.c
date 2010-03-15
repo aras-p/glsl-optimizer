@@ -549,6 +549,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 	if (nv50->vtxbuf_nr == 0)
 		return NULL;
 
+	nv50->vbo_fifo = 0;
 	if (nv50->screen->force_push ||
 	    nv50->vertprog->cfg.edgeflag_in < 16)
 		nv50->vbo_fifo = 0xffff;
