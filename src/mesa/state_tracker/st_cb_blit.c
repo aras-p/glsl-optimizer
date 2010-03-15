@@ -133,7 +133,7 @@ st_BlitFramebuffer(GLcontext *ctx,
             return;
 
          util_blit_pixels(st->blit,
-                          srcSurf, st_get_stobj_sampler_view(srcObj, pipe),
+                          srcSurf, st_get_stobj_sampler_view(srcObj),
                           srcX0, srcY0, srcX1, srcY1,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
                           0.0, pFilter);
