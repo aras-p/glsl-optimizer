@@ -292,7 +292,6 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture *tex = NULL;
    struct pipe_sampler_view *sampler_view = NULL;
    struct pipe_framebuffer_state fb;
    const int srcW = abs(srcX1 - srcX0);
@@ -348,6 +347,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
        src->texture->last_level != 0)
    {
       struct pipe_texture texTemp;
+      struct pipe_texture *tex;
       struct pipe_sampler_view sv_templ;
       struct pipe_surface *texSurf;
       const int srcLeft = MIN2(srcX0, srcX1);
@@ -416,10 +416,10 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    }
    else {
       pipe_sampler_view_reference(&sampler_view, src_sampler_view);
-      s0 = srcX0 / (float)tex->width0;
-      s1 = srcX1 / (float)tex->width0;
-      t0 = srcY0 / (float)tex->height0;
-      t1 = srcY1 / (float)tex->height0;
+      s0 = srcX0 / (float)src->texture->width0;
+      s1 = srcX1 / (float)src->texture->width0;
+      t0 = srcY0 / (float)src->texture->height0;
+      t1 = srcY1 / (float)src->texture->height0;
    }
 
    
