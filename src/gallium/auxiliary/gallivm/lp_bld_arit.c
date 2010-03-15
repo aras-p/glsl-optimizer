@@ -770,7 +770,7 @@ lp_build_sgn(struct lp_build_context *bld,
 
    /* Handle zero */
    cond = lp_build_cmp(bld, PIPE_FUNC_EQUAL, a, bld->zero);
-   res = lp_build_select(bld, cond, bld->zero, bld->one);
+   res = lp_build_select(bld, cond, bld->zero, res);
 
    return res;
 }
