@@ -81,8 +81,10 @@ swrast_xlib_create_screen( Display *display )
       screen = llvmpipe_create_screen( winsys );
 #endif
 
+#if defined(GALLIUM_SOFTPIPE)
    if (screen == NULL)
       screen = softpipe_create_screen( winsys );
+#endif
 
    if (screen == NULL)
       goto fail;
