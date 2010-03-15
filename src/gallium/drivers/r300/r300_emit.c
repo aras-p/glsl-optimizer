@@ -165,7 +165,7 @@ static const float * get_shader_constant(
                 /* Factor for converting rectangle coords to
                  * normalized coords. Should only show up on non-r500. */
                 case RC_STATE_R300_TEXRECT_FACTOR:
-                    tex = r300->fragment_sampler_views[constant->u.State[1]]->texture;
+                    tex = texstate->fragment_sampler_views[constant->u.State[1]]->texture;
                     vec[0] = 1.0 / tex->width0;
                     vec[1] = 1.0 / tex->height0;
                     break;
@@ -749,8 +749,9 @@ void r300_emit_textures_state(struct r300_context *r300,
             OUT_CS_REG(R300_TX_FORMAT2_0 + (i * 4), texstate->format[2]);
 
             OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-            OUT_CS_TEX_RELOC(allstate->textures[i], texstate->tile_config,
-                         RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
+            OUT_CS_TEX_RELOC((struct r300_texture *)allstate->fragment_sampler_views[i]->texture,
+                             texstate->tile_config,
+                             RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
         }
     }
     END_CS;
@@ -1042,10 +1043,10 @@ validate:
         }
     }
     /* ...textures... */
-    for (i = 0; i < r300->fragment_sampler_view_count; i++) {
-        if (!r300->fragment_sampler_views[i])
+    for (i = 0; i < texstate->count; i++) {
+        tex = (struct r300_texture*)texstate->fragment_sampler_views[i]->texture;
+        if (!tex || !texstate->sampler_states[i])
             continue;
-        tex = (struct r300_texture *)r300->fragment_sampler_views[i]->texture;
         if (!r300_add_texture(r300->rws, tex,
 			      RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
             r300->context.flush(&r300->context, 0, NULL);

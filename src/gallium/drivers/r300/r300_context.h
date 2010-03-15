@@ -139,7 +139,7 @@ struct r300_texture_fb_state {
 
 struct r300_textures_state {
     /* Textures. */
-    struct r300_texture *textures[8];
+    struct pipe_sampler_view *fragment_sampler_views[8];
     int texture_count;
     /* Sampler states. */
     struct r300_sampler_state *sampler_states[8];
@@ -343,9 +343,8 @@ struct r300_context {
     struct r300_atom rs_block_state;
     /* Scissor state. */
     struct r300_atom scissor_state;
-    /* Sampler view states. */
-    struct pipe_sampler_view* fragment_sampler_views[8];
-    int fragment_sampler_view_count;
+    /* Textures state. */
+    struct r300_atom textures_state;
     /* Vertex stream formatting state. */
     struct r300_atom vertex_stream_state;
     /* VAP (vertex shader) output mapping state. */

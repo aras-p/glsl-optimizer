@@ -340,10 +340,10 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     size = 2;
 
     for (i = 0; i < count; i++) {
-        if (state->textures[i] && state->sampler_states[i]) {
+        if (state->fragment_sampler_views[i] && state->sampler_states[i]) {
             state->tx_enable |= 1 << i;
 
-            tex = state->textures[i];
+            tex = (struct r300_texture *)state->fragment_sampler_views[i]->texture;
             sampler = state->sampler_states[i];
 
             texstate = &state->regs[i];
