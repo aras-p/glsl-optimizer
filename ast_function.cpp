@@ -27,6 +27,58 @@
 #include "glsl_types.h"
 #include "ir.h"
 
+static ir_instruction *
+match_function_by_name(exec_list *instructions, const char *name,
+		       YYLTYPE *loc, simple_node *parameters,
+		       struct _mesa_glsl_parse_state *state)
+{
+   ir_function *f = (ir_function *)
+      _mesa_symbol_table_find_symbol(state->symbols, 0, name);
+
+   if (f == NULL) {
+      _mesa_glsl_error(loc, state, "function `%s' undeclared", name);
+      return ir_call::get_error_instruction();
+   }
+
+   /* Once we've determined that the function being called might exist,
+    * process the parameters.
+    */
+   exec_list actual_parameters;
+   simple_node *const first = parameters;
+   if (first != NULL) {
+      simple_node *ptr = first;
+      do {
+	 ir_instruction *const result =
+	    ((ast_node *) ptr)->hir(instructions, state);
+	 ptr = ptr->next;
+
+	 actual_parameters.push_tail(result);
+      } while (ptr != first);
+   }
+
+   /* After processing the function's actual parameters, try to find an
+    * overload of the function that matches.
+    */
+   const ir_function_signature *sig =
+      f->matching_signature(& actual_parameters);
+   if (sig != NULL) {
+      /* FINISHME: The list of actual parameters needs to be modified to
+       * FINISHME: include any necessary conversions.
+       */
+      return new ir_call(sig, & actual_parameters);
+   } else {
+      /* FINISHME: Log a better error message here.  G++ will show the types
+       * FINISHME: of the actual parameters and the set of candidate
+       * FINISHME: functions.  A different error should also be logged when
+       * FINISHME: multiple functions match.
+       */
+      _mesa_glsl_error(loc, state, "no matching function for call to `%s'",
+		       name);
+      return ir_call::get_error_instruction();
+   }
+}
+
+
 ir_instruction *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
@@ -52,57 +104,11 @@ ast_function_expression::hir(exec_list *instructions,
       return ir_call::get_error_instruction();
    } else {
       const ast_expression *id = subexpressions[0];
+      YYLTYPE loc = id->get_location();
 
-      ir_function *f = (ir_function *)
-	 _mesa_symbol_table_find_symbol(state->symbols, 0,
-					id->primary_expression.identifier);
-
-      if (f == NULL) {
-	 YYLTYPE loc = id->get_location();
-
-	 _mesa_glsl_error(& loc, state, "function `%s' undeclared",
-			  id->primary_expression.identifier);
-	 return ir_call::get_error_instruction();
-      }
-
-      /* Once we've determined that the function being called might exist,
-       * process the parameters.
-       */
-      exec_list actual_parameters;
-      simple_node *const first = subexpressions[1];
-      if (first != NULL) {
-	 simple_node *ptr = first;
-	 do {
-	    ir_instruction *const result =
-	       ((ast_node *) ptr)->hir(instructions, state);
-	    ptr = ptr->next;
-
-	    actual_parameters.push_tail(result);
-	 } while (ptr != first);
-      }
-
-      /* After processing the function's actual parameters, try to find an
-       * overload of the function that matches.
-       */
-      const ir_function_signature *sig =
-	 f->matching_signature(& actual_parameters);
-      if (sig != NULL) {
-	 /* FINISHME: The list of actual parameters needs to be modified to
-	  * FINISHME: include any necessary conversions.
-	  */
-	 return new ir_call(sig, & actual_parameters);
-      } else {
-	 YYLTYPE loc = id->get_location();
-
-	 /* FINISHME: Log a better error message here.  G++ will show the types
-	  * FINISHME: of the actual parameters and the set of candidate
-	  * FINISHME: functions.  A different error should also be logged when
-	  * FINISHME: multiple functions match.
-	  */
-	 _mesa_glsl_error(& loc, state, "no matching function for call to `%s'",
-			  id->primary_expression.identifier);
-	 return ir_call::get_error_instruction();
-      }
+      return match_function_by_name(instructions, 
+				    id->primary_expression.identifier, & loc,
+				    subexpressions[1], state);
    }
 
    return ir_call::get_error_instruction();
