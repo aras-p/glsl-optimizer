@@ -528,13 +528,20 @@ st_bind_teximage(struct st_framebuffer *stfb, uint surfIndex,
    /* save the renderbuffer's surface/texture info */
    pipe_texture_reference(&strb->texture_save, strb->texture);
    pipe_surface_reference(&strb->surface_save, strb->surface);
+   pipe_sampler_view_reference(&strb->sampler_view_save, strb->sampler_view);
 
    /* plug in new surface/texture info */
    pipe_texture_reference(&strb->texture, stImage->pt);
+
+   /* XXX: Shouldn't we release reference to old surface here?
+    */
+
    strb->surface = screen->get_tex_surface(screen, strb->texture,
                                            face, level, slice,
                                            (PIPE_BUFFER_USAGE_GPU_READ |
                                             PIPE_BUFFER_USAGE_GPU_WRITE));
+
+   pipe_sampler_view_reference(&strb->sampler_view, NULL);
 
    st->dirty.st |= ST_NEW_FRAMEBUFFER;
 
@@ -565,9 +572,11 @@ st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
    /* free tex surface, restore original */
    pipe_surface_reference(&strb->surface, strb->surface_save);
    pipe_texture_reference(&strb->texture, strb->texture_save);
+   pipe_sampler_view_reference(&strb->sampler_view, strb->sampler_view_save);
 
    pipe_surface_reference(&strb->surface_save, NULL);
    pipe_texture_reference(&strb->texture_save, NULL);
+   pipe_sampler_view_reference(&strb->sampler_view, NULL);
 
    st->dirty.st |= ST_NEW_FRAMEBUFFER;
 
