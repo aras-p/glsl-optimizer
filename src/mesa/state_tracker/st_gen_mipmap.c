@@ -79,22 +79,23 @@ st_destroy_generate_mipmap(struct st_context *st)
 static boolean
 st_render_mipmap(struct st_context *st,
                  GLenum target,
-                 struct pipe_texture *pt,
+                 struct st_texture_object *stObj,
                  uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
+   struct pipe_sampler_view *psv = st_get_stobj_sampler_view(stObj);
    const uint face = _mesa_tex_target_to_face(target);
 
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, pt->format, pt->target,
+   if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
                                     PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
       return FALSE;
    }
 
-   util_gen_mipmap(st->gen_mipmap, pt, face, baseLevel, lastLevel,
+   util_gen_mipmap(st->gen_mipmap, psv, face, baseLevel, lastLevel,
                    PIPE_TEX_FILTER_LINEAR);
 
    return TRUE;
@@ -211,6 +212,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
                    struct gl_texture_object *texObj)
 {
    struct st_context *st = ctx->st;
+   struct st_texture_object *stObj = st_texture_object(texObj);
    struct pipe_texture *pt = st_get_texobj_texture(texObj);
    const uint baseLevel = texObj->BaseLevel;
    uint lastLevel;
@@ -229,7 +231,6 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       /* The current gallium texture doesn't have space for all the
        * mipmap levels we need to generate.  So allocate a new texture.
        */
-      struct st_texture_object *stObj = st_texture_object(texObj);
       struct pipe_texture *oldTex = stObj->pt;
       GLboolean needFlush;
 
@@ -264,7 +265,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    /* Recall that the Mesa BaseLevel image is stored in the gallium
     * texture's level[0] position.  So pass baseLevel=0 here.
     */
-   if (!st_render_mipmap(st, target, pt, 0, lastLevel)) {
+   if (!st_render_mipmap(st, target, stObj, 0, lastLevel)) {
       fallback_generate_mipmap(ctx, target, texObj);
    }
 

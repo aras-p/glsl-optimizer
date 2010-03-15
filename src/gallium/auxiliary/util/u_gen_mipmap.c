@@ -1460,7 +1460,7 @@ void util_gen_mipmap_flush( struct gen_mipmap_state *ctx )
  * Generate mipmap images.  It's assumed all needed texture memory is
  * already allocated.
  *
- * \param pt  the texture to generate mipmap levels for
+ * \param psv  the sampler view to the texture to generate mipmap levels for
  * \param face  which cube face to generate mipmaps for (0 for non-cube maps)
  * \param baseLevel  the first mipmap level to use as a src
  * \param lastLevel  the last mipmap level to generate
@@ -1469,12 +1469,13 @@ void util_gen_mipmap_flush( struct gen_mipmap_state *ctx )
  */
 void
 util_gen_mipmap(struct gen_mipmap_state *ctx,
-                struct pipe_texture *pt,
+                struct pipe_sampler_view *psv,
                 uint face, uint baseLevel, uint lastLevel, uint filter)
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_framebuffer_state fb;
+   struct pipe_texture *pt = psv->texture;
    void *fs = (pt->target == PIPE_TEXTURE_CUBE) ? ctx->fsCube : ctx->fs2d;
    uint dstLevel;
    uint zslice = 0;
@@ -1492,7 +1493,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
           filter == PIPE_TEX_FILTER_NEAREST);
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, pt->format, PIPE_TEXTURE_2D,
+   if (!screen->is_format_supported(screen, psv->format, PIPE_TEXTURE_2D,
                                     PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
       fallback_gen_mipmap(ctx, pt, face, baseLevel, lastLevel);
       return;
@@ -1503,7 +1504,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_depth_stencil_alpha(ctx->cso);
    cso_save_rasterizer(ctx->cso);
    cso_save_samplers(ctx->cso);
-   cso_save_sampler_textures(ctx->cso);
+   cso_save_fragment_sampler_views(ctx->cso);
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
@@ -1572,7 +1573,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       cso_single_sampler(ctx->cso, 0, &ctx->sampler);
       cso_single_sampler_done(ctx->cso);
 
-      cso_set_sampler_textures(ctx->cso, 1, &pt);
+      cso_set_fragment_sampler_views(ctx->cso, 1, &psv);
 
       /* quad coords in clip coords */
       offset = set_vertex_data(ctx,
@@ -1597,7 +1598,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_depth_stencil_alpha(ctx->cso);
    cso_restore_rasterizer(ctx->cso);
    cso_restore_samplers(ctx->cso);
-   cso_restore_sampler_textures(ctx->cso);
+   cso_restore_fragment_sampler_views(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);

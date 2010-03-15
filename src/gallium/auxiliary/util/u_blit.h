@@ -75,7 +75,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
 extern void
 util_blit_pixels_tex(struct blit_state *ctx,
-                     struct pipe_texture *tex,
+                     struct pipe_sampler_view *src_sampler_view,
                      int srcX0, int srcY0,
                      int srcX1, int srcY1,
                      struct pipe_surface *dst,

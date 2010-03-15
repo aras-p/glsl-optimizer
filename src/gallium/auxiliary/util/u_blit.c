@@ -555,21 +555,23 @@ void util_blit_flush( struct blit_state *ctx )
  */
 void
 util_blit_pixels_tex(struct blit_state *ctx,
-                 struct pipe_texture *tex,
-                 int srcX0, int srcY0,
-                 int srcX1, int srcY1,
-                 struct pipe_surface *dst,
-                 int dstX0, int dstY0,
-                 int dstX1, int dstY1,
-                 float z, uint filter)
+                     struct pipe_sampler_view *src_sampler_view,
+                     int srcX0, int srcY0,
+                     int srcX1, int srcY1,
+                     struct pipe_surface *dst,
+                     int dstX0, int dstY0,
+                     int dstX1, int dstY1,
+                     float z, uint filter)
 {
    struct pipe_framebuffer_state fb;
    float s0, t0, s1, t1;
    unsigned offset;
+   struct pipe_texture *tex = src_sampler_view->texture;
 
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
 
+   assert(tex);
    assert(tex->width0 != 0);
    assert(tex->height0 != 0);
 
@@ -588,7 +590,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_depth_stencil_alpha(ctx->cso);
    cso_save_rasterizer(ctx->cso);
    cso_save_samplers(ctx->cso);
-   cso_save_sampler_textures(ctx->cso);
+   cso_save_fragment_sampler_views(ctx->cso);
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
@@ -620,7 +622,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_viewport(ctx->cso, &ctx->viewport);
 
    /* texture */
-   cso_set_sampler_textures(ctx->cso, 1, &tex);
+   cso_set_fragment_sampler_views(ctx->cso, 1, &src_sampler_view);
 
    /* shaders */
    cso_set_fragment_shader_handle(ctx->cso, ctx->fs[TGSI_WRITEMASK_XYZW]);
@@ -654,7 +656,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_depth_stencil_alpha(ctx->cso);
    cso_restore_rasterizer(ctx->cso);
    cso_restore_samplers(ctx->cso);
-   cso_restore_sampler_textures(ctx->cso);
+   cso_restore_fragment_sampler_views(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
