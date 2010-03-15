@@ -1457,6 +1457,7 @@ st_copy_texsubimage(GLcontext *ctx,
       &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_object *texObj =
       _mesa_select_tex_object(ctx, texUnit, target);
+   struct st_texture_object *stObj = st_texture_object(texObj);
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
    struct st_texture_image *stImage = st_texture_image(texImage);
@@ -1597,6 +1598,7 @@ st_copy_texsubimage(GLcontext *ctx,
          }
          util_blit_pixels_writemask(ctx->st->blit,
                                     strb->surface,
+                                    st_get_stobj_sampler_view(stObj),
                                     srcX, srcY0,
                                     srcX + width, srcY1,
                                     dest_surface,
