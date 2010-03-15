@@ -1598,7 +1598,7 @@ st_copy_texsubimage(GLcontext *ctx,
          }
          util_blit_pixels_writemask(ctx->st->blit,
                                     strb->surface,
-                                    st_get_stobj_sampler_view(stObj),
+                                    st_renderbuffer_get_sampler_view(strb, pipe),
                                     srcX, srcY0,
                                     srcX + width, srcY1,
                                     dest_surface,
