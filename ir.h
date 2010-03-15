@@ -22,6 +22,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#pragma once
+#ifndef IR_H
+#define IR_H
+
 #include "list.h"
 #include "ir_visitor.h"
 
@@ -396,3 +400,5 @@ public:
 extern void
 _mesa_glsl_initialize_variables(exec_list *instructions,
 				struct _mesa_glsl_parse_state *state);
+
+#endif /* IR_H */
