@@ -141,7 +141,7 @@ buffer_index_to_attachment(gl_buffer_index index)
 }
 
 /**
- * Validate a framebuffer and update the states of the context.
+ * Validate a framebuffer to make sure up-to-date pipe_textures are used.
  */
 static void
 st_framebuffer_validate(struct st_framebuffer *stfb, struct st_context *st)
@@ -215,7 +215,7 @@ st_framebuffer_validate(struct st_framebuffer *stfb, struct st_context *st)
 }
 
 /**
- * Update the attachments to validate.
+ * Update the attachments to validate by looping the existing renderbuffers.
  */
 static void
 st_framebuffer_update_attachments(struct st_framebuffer *stfb)
@@ -718,7 +718,7 @@ st_manager_flush_frontbuffer(struct st_context *st)
 }
 
 /**
- * Re-validate the framebuffer.
+ * Re-validate the framebuffers.
  */
 void
 st_manager_validate_framebuffers(struct st_context *st)
@@ -741,7 +741,7 @@ st_manager_validate_framebuffers(struct st_context *st)
 }
 
 /**
- * Add a color buffer on demand.
+ * Add a color renderbuffer on demand.
  */
 boolean
 st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
@@ -776,6 +776,9 @@ st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
    return TRUE;
 }
 
+/**
+ * Create an st_api to manage the state tracker.
+ */
 struct st_api *
 st_manager_create_api(void)
 {
