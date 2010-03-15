@@ -1420,26 +1420,26 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
  * If we're using nearest miplevel sampling the '1' values will be null/unused.
  */
 static void
-lp_sample_mipmap(struct lp_build_sample_context *bld,
-                 unsigned img_filter,
-                 unsigned mip_filter,
-                 LLVMValueRef s,
-                 LLVMValueRef t,
-                 LLVMValueRef r,
-                 LLVMValueRef lod_fpart,
-                 LLVMValueRef width0_vec,
-                 LLVMValueRef width1_vec,
-                 LLVMValueRef height0_vec,
-                 LLVMValueRef height1_vec,
-                 LLVMValueRef depth0_vec,
-                 LLVMValueRef depth1_vec,
-                 LLVMValueRef row_stride0_vec,
-                 LLVMValueRef row_stride1_vec,
-                 LLVMValueRef img_stride0_vec,
-                 LLVMValueRef img_stride1_vec,
-                 LLVMValueRef data_ptr0,
-                 LLVMValueRef data_ptr1,
-                 LLVMValueRef *colors_out)
+lp_build_sample_mipmap(struct lp_build_sample_context *bld,
+                       unsigned img_filter,
+                       unsigned mip_filter,
+                       LLVMValueRef s,
+                       LLVMValueRef t,
+                       LLVMValueRef r,
+                       LLVMValueRef lod_fpart,
+                       LLVMValueRef width0_vec,
+                       LLVMValueRef width1_vec,
+                       LLVMValueRef height0_vec,
+                       LLVMValueRef height1_vec,
+                       LLVMValueRef depth0_vec,
+                       LLVMValueRef depth1_vec,
+                       LLVMValueRef row_stride0_vec,
+                       LLVMValueRef row_stride1_vec,
+                       LLVMValueRef img_stride0_vec,
+                       LLVMValueRef img_stride1_vec,
+                       LLVMValueRef data_ptr0,
+                       LLVMValueRef data_ptr1,
+                       LLVMValueRef *colors_out)
 {
    LLVMValueRef colors0[4], colors1[4];
    int chan;
@@ -1533,20 +1533,24 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    */
 
    /*
-    * Compute the level of detail (mipmap level index(es)).
+    * Compute the level of detail (float).
+    */
+   if (min_filter != mag_filter ||
+       mip_filter != PIPE_TEX_MIPFILTER_NONE) {
+      /* Need to compute lod either to choose mipmap levels or to
+       * distinguish between minification/magnification with one mipmap level.
+       */
+      lod = lp_build_lod_selector(bld, s, t, r, width, height, depth);
+   }
+
+   /*
+    * Compute integer mipmap level(s) to fetch texels from.
     */
    if (mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       /* always use mip level 0 */
       ilevel0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
-
-      /* XXX temporary here */
-      lod = lp_build_lod_selector(bld, s, t, r, width, height, depth);
-
    }
    else {
-      /* compute float LOD */
-      lod = lp_build_lod_selector(bld, s, t, r, width, height, depth);
-
       if (mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
          lp_build_nearest_mip_level(bld, unit, lod, &ilevel0);
       }
@@ -1582,7 +1586,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       }
    }
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      /* compute width, height, depth for second mipmap level at ilevel1 */
+      /* compute width, height, depth for second mipmap level at 'ilevel1' */
       width1_vec = lp_build_minify(bld, width_vec, ilevel1_vec);
       if (dims >= 2) {
          height1_vec = lp_build_minify(bld, height_vec, ilevel1_vec);
@@ -1599,7 +1603,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    }
 
    /*
-    * Choose cube face, recompute texcoords.
+    * Choose cube face, recompute per-face texcoords.
     */
    if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
       LLVMValueRef face, face_s, face_t;
@@ -1623,14 +1627,14 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
     */
    if (min_filter == mag_filter) {
       /* no need to distinquish between minification and magnification */
-      lp_sample_mipmap(bld, min_filter, mip_filter, s, t, r, lod_fpart,
-                       width0_vec, width1_vec,
-                       height0_vec, height1_vec,
-                       depth0_vec, depth1_vec,
-                       row_stride0_vec, row_stride1_vec,
-                       img_stride0_vec, img_stride1_vec,
-                       data_ptr0, data_ptr1,
-                       colors_out);
+      lp_build_sample_mipmap(bld, min_filter, mip_filter, s, t, r, lod_fpart,
+                             width0_vec, width1_vec,
+                             height0_vec, height1_vec,
+                             depth0_vec, depth1_vec,
+                             row_stride0_vec, row_stride1_vec,
+                             img_stride0_vec, img_stride1_vec,
+                             data_ptr0, data_ptr1,
+                             colors_out);
    }
    else {
       /* Emit conditional to choose min image filter or mag image filter
@@ -1655,26 +1659,28 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       lp_build_if(&if_ctx, flow_ctx, bld->builder, minify);
       {
          /* Use the minification filter */
-         lp_sample_mipmap(bld, min_filter, mip_filter, s, t, r, lod_fpart,
-                          width0_vec, width1_vec,
-                          height0_vec, height1_vec,
-                          depth0_vec, depth1_vec,
-                          row_stride0_vec, row_stride1_vec,
-                          img_stride0_vec, img_stride1_vec,
-                          data_ptr0, data_ptr1,
-                          colors_out);
+         lp_build_sample_mipmap(bld, min_filter, mip_filter,
+                                s, t, r, lod_fpart,
+                                width0_vec, width1_vec,
+                                height0_vec, height1_vec,
+                                depth0_vec, depth1_vec,
+                                row_stride0_vec, row_stride1_vec,
+                                img_stride0_vec, img_stride1_vec,
+                                data_ptr0, data_ptr1,
+                                colors_out);
       }
       lp_build_else(&if_ctx);
       {
          /* Use the magnification filter */
-         lp_sample_mipmap(bld, mag_filter, mip_filter, s, t, r, lod_fpart,
-                          width0_vec, width1_vec,
-                          height0_vec, height1_vec,
-                          depth0_vec, depth1_vec,
-                          row_stride0_vec, row_stride1_vec,
-                          img_stride0_vec, img_stride1_vec,
-                          data_ptr0, data_ptr1,
-                          colors_out);
+         lp_build_sample_mipmap(bld, mag_filter, mip_filter,
+                                s, t, r, lod_fpart,
+                                width0_vec, width1_vec,
+                                height0_vec, height1_vec,
+                                depth0_vec, depth1_vec,
+                                row_stride0_vec, row_stride1_vec,
+                                img_stride0_vec, img_stride1_vec,
+                                data_ptr0, data_ptr1,
+                                colors_out);
       }
       lp_build_endif(&if_ctx);
 
