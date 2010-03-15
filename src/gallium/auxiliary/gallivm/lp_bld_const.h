@@ -37,9 +37,9 @@
 #define LP_BLD_CONST_H
 
 
+#include "pipe/p_compiler.h"
 #include "gallivm/lp_bld.h"
 
-#include <pipe/p_compiler.h>
 
 
 struct lp_type;
