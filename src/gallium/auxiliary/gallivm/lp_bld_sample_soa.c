@@ -986,7 +986,7 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
                                 last_level);
    /* compute level 1 and clamp to legal range of levels */
    *level1_out = lp_build_add(int_bld, *level0_out, int_bld->one);
-   *level1_out = lp_build_min(int_bld, *level1_out, int_bld->zero);
+   *level1_out = lp_build_min(int_bld, *level1_out, last_level);
 
    *weight_out = lp_build_fract(float_bld, lod);
 }
