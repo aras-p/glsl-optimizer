@@ -930,7 +930,10 @@ lp_build_floor(struct lp_build_context *bld,
    assert(type.floating);
 
    if (type.length == 1) {
-      return LLVMBuildFPTrunc(bld->builder, a, LLVMFloatType(), "");
+      LLVMValueRef res;
+      res = lp_build_ifloor(bld, a);
+      res = LLVMBuildSIToFP(bld->builder, res, LLVMFloatType(), "");
+      return res;
    }
 
    if(util_cpu_caps.has_sse4_1)
@@ -993,7 +996,7 @@ lp_build_itrunc(struct lp_build_context *bld,
 
    if (type.length == 1) {
       LLVMTypeRef int_type = LLVMIntType(type.width);
-      return LLVMBuildFPTrunc(bld->builder, a, int_type, "");
+      return LLVMBuildFPToSI(bld->builder, a, int_type, "");
    }
    else {
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
