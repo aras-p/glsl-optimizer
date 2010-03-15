@@ -64,11 +64,14 @@ SHARED_INCLUDES = \
 default: depend symlinks $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) Makefile \
-		$(TOP)/src/mesa/drivers/dri/Makefile.template
-	$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		$(TOP)/src/mesa/drivers/dri/Makefile.template $(TOP)/src/mesa/drivers/dri/common/dri_test.o
+	$(MKLIB) -o $@.tmp -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		$(OBJECTS) $(PIPE_DRIVERS) \
                 -Wl,--start-group $(MESA_MODULES) -Wl,--end-group \
                  $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
+	$(CC) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp -L$(TOP)/lib -lGL
+	@rm -f $@.test
+	mv $@.tmp $@
 
 $(TOP)/$(LIB_DIR)/gallium:
 	mkdir -p $@
