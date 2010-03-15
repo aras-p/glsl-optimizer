@@ -31,8 +31,8 @@
  */
 
 
-#ifndef OS_LLVM_H
-#define OS_LLVM_H
+#ifndef LP_BLD_H
+#define LP_BLD_H
 
 
 #include <llvm-c/Core.h>  
@@ -40,8 +40,8 @@
 
 /** Set version to 0 if missing to avoid #ifdef HAVE_LLVM everywhere */
 #ifndef HAVE_LLVM
-#define HAVE_LLVM 0x0
+#define HAVE_LLVM 0x0207
 #endif
 
 
-#endif /* OS_LLVM_H */
+#endif /* LP_BLD_H */

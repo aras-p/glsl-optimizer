@@ -35,7 +35,7 @@
 #define LP_BLD_ALPHA_H
 
 
-#include "os/os_llvm.h"
+#include "gallivm/lp_bld.h"
 
 struct pipe_alpha_state;
 struct lp_type;

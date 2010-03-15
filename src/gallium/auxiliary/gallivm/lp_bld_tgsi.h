@@ -35,7 +35,7 @@
 #ifndef LP_BLD_TGSI_H
 #define LP_BLD_TGSI_H
 
-#include "os/os_llvm.h"
+#include "gallivm/lp_bld.h"
 
 
 struct tgsi_token;

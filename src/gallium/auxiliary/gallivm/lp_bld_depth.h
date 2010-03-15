@@ -36,7 +36,7 @@
 #define LP_BLD_DEPTH_H
 
 
-#include "os/os_llvm.h"
+#include "gallivm/lp_bld.h"
 
  
 struct pipe_depth_state;
