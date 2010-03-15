@@ -361,7 +361,7 @@ public:
 
    enum ast_types type_specifier;
 
-   char *type_name;
+   const char *type_name;
    ast_struct_specifier *structure;
 
    int is_array;

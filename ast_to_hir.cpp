@@ -759,73 +759,15 @@ type_specifier_to_glsl_type(const struct ast_type_specifier *spec,
 			    const char **name,
 			    struct _mesa_glsl_parse_state *state)
 {
-   static const char *const type_names[] = {
-      "void",
-      "float",
-      "int",
-      "uint",
-      "bool",
-      "vec2",
-      "vec3",
-      "vec4",
-      "bvec2",
-      "bvec3",
-      "bvec4",
-      "ivec2",
-      "ivec3",
-      "ivec4",
-      "uvec2",
-      "uvec3",
-      "uvec4",
-      "mat2",
-      "mat2x3",
-      "mat2x4",
-      "mat3x2",
-      "mat3",
-      "mat3x4",
-      "mat4x2",
-      "mat4x3",
-      "mat4",
-      "sampler1D",
-      "sampler2D",
-      "sampler3D",
-      "samplerCube",
-      "sampler1DShadow",
-      "sampler2DShadow",
-      "samplerCubeShadow",
-      "sampler1DArray",
-      "sampler2DArray",
-      "sampler1DArrayShadow",
-      "sampler2DArrayShadow",
-      "isampler1D",
-      "isampler2D",
-      "isampler3D",
-      "isamplerCube",
-      "isampler1DArray",
-      "isampler2DArray",
-      "usampler1D",
-      "usampler2D",
-      "usampler3D",
-      "usamplerCube",
-      "usampler1DArray",
-      "usampler2DArray",
-
-      NULL, /* ast_struct */
-      NULL  /* ast_type_name */
-   };
    struct glsl_type *type;
-   const char *type_name = NULL;
 
    if (spec->type_specifier == ast_struct) {
       /* FINISHME: Handle annonymous structures. */
       type = NULL;
    } else {
-      type_name = (spec->type_specifier == ast_type_name)
-	 ? spec->type_name : type_names[spec->type_specifier];
-
       type = (glsl_type *)
-	 _mesa_symbol_table_find_symbol(state->symbols, 0, type_name);
-      *name = type_name;
+	 _mesa_symbol_table_find_symbol(state->symbols, 0, spec->type_name);
+      *name = spec->type_name;
 
       /* FINISHME: Handle array declarations.  Note that this requires complete
        * FINSIHME: handling of constant expressions.
