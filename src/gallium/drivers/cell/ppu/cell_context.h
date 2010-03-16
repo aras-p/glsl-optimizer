@@ -97,7 +97,7 @@ struct cell_velems_state
 {
    unsigned count;
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
-}
+};
 
 /**
  * Per-context state, subclass of pipe_context.
