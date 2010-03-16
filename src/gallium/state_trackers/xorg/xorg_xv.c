@@ -9,6 +9,7 @@
 #include "xorg_exa_tgsi.h"
 
 #include "cso_cache/cso_context.h"
+#include "util/u_sampler.h"
 
 #include "pipe/p_screen.h"
 
@@ -91,6 +92,7 @@ struct xorg_xv_port_priv {
    /* juggle two sets of seperate Y, U and V
     * textures */
    struct pipe_texture *yuv[2][3];
+   struct pipe_sampler_view *yuv_views[2][3];
 };
 
 
@@ -180,32 +182,60 @@ static int
 check_yuv_textures(struct xorg_xv_port_priv *priv,  int width, int height)
 {
    struct pipe_texture **dst = priv->yuv[priv->current_set];
+   struct pipe_sampler_view **dst_view = priv->yuv_views[priv->current_set];
+   struct pipe_sampler_view view_templ;
+   struct pipe_context *pipe = priv->r->pipe;
+
    if (!dst[0] ||
        dst[0]->width0 != width ||
        dst[0]->height0 != height) {
       pipe_texture_reference(&dst[0], NULL);
+      pipe_sampler_view_reference(&dst_view[0], NULL);
    }
    if (!dst[1] ||
        dst[1]->width0 != width ||
        dst[1]->height0 != height) {
       pipe_texture_reference(&dst[1], NULL);
+      pipe_sampler_view_reference(&dst_view[1], NULL);
    }
    if (!dst[2] ||
        dst[2]->width0 != width ||
        dst[2]->height0 != height) {
       pipe_texture_reference(&dst[2], NULL);
+      pipe_sampler_view_reference(&dst_view[2], NULL);
    }
 
-   if (!dst[0])
+   if (!dst[0]) {
       dst[0] = create_component_texture(priv->r->pipe, width, height);
+      if (dst[0]) {
+         u_sampler_view_default_template(&view_templ,
+                                         dst[0],
+                                         dst[0]->format);
+         dst_view[0] = pipe->create_sampler_view(pipe, dst[0], &view_templ);
+      }
+   }
 
-   if (!dst[1])
+   if (!dst[1]) {
       dst[1] = create_component_texture(priv->r->pipe, width, height);
+      if (dst[1]) {
+         u_sampler_view_default_template(&view_templ,
+                                         dst[1],
+                                         dst[1]->format);
+         dst_view[1] = pipe->create_sampler_view(pipe, dst[1], &view_templ);
+      }
+   }
 
-   if (!dst[2])
+   if (!dst[2]) {
       dst[2] = create_component_texture(priv->r->pipe, width, height);
+      if (dst[2]) {
+         u_sampler_view_default_template(&view_templ,
+                                      dst[2],
+                                      dst[2]->format);
+         dst_view[2] = pipe->create_sampler_view(pipe, dst[2], &view_templ);
+      }
+   }
 
-   if (!dst[0] || !dst[1] || !dst[2])
+   if (!dst[0] || !dst[1] || !dst[2] || !dst_view[0] || !dst_view[1] || !dst_view[2] )
       return BadAlloc;
 
    return Success;
@@ -450,6 +480,7 @@ bind_samplers(struct xorg_xv_port_priv *port)
    struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_state sampler;
    struct pipe_texture **dst = port->yuv[port->current_set];
+   struct pipe_sampler_view **dst_views = port->yuv_views[port->current_set];
 
    memset(&sampler, 0, sizeof(struct pipe_sampler_state));
 
@@ -469,8 +500,7 @@ bind_samplers(struct xorg_xv_port_priv *port)
 
    cso_set_samplers(port->r->cso, 3,
                     (const struct pipe_sampler_state **)samplers);
-   cso_set_sampler_textures(port->r->cso, 3,
-                            dst);
+   cso_set_fragment_sampler_views(port->r->cso, 3, dst_views);
 }
 
 static int

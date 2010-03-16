@@ -975,6 +975,9 @@ xorg_exa_close(ScrnInfoPtr pScrn)
    modesettingPtr ms = modesettingPTR(pScrn);
    struct exa_context *exa = ms->exa;
 
+   pipe_sampler_view_reference(&exa->bound_sampler_views[0], NULL);
+   pipe_sampler_view_reference(&exa->bound_sampler_views[1], NULL);
+
    renderer_destroy(exa->renderer);
 
    if (exa->pipe)
