@@ -310,15 +310,16 @@ PUBLIC const struct __DriverAPIRec driDriverAPI = {
    .DestroyContext = dri_destroy_context,
    .CreateBuffer = dri_create_buffer,
    .DestroyBuffer = dri_destroy_buffer,
-   .SwapBuffers = dri_swap_buffers,
    .MakeCurrent = dri_make_current,
    .UnbindContext = dri_unbind_context,
    .GetSwapInfo = dri_get_swap_info,
    .GetDrawableMSC = driDrawableGetMSC32,
    .WaitForMSC = driWaitForMSC32,
-   .CopySubBuffer = dri_copy_sub_buffer,
-   .InitScreen = dri1_init_screen,
    .InitScreen2 = dri_init_screen2,
+
+   .InitScreen = dri1_init_screen,
+   .SwapBuffers = dri1_swap_buffers,
+   .CopySubBuffer = dri1_copy_sub_buffer,
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */

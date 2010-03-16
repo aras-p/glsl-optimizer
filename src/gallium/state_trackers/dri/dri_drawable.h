@@ -88,11 +88,6 @@ void
 dri_flush_frontbuffer(struct pipe_screen *screen,
 		      struct pipe_surface *surf, void *context_private);
 
-void dri_swap_buffers(__DRIdrawable * dPriv);
-
-void
-dri_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h);
-
 void dri_get_buffers(__DRIdrawable * dPriv);
 
 void dri_destroy_buffer(__DRIdrawable * dPriv);
@@ -103,13 +98,6 @@ void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
 void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
                          __DRIdrawable *dPriv);
 
-void
-dri1_update_drawables(struct dri_context *ctx,
-		      struct dri_drawable *draw, struct dri_drawable *read);
-
-void
-dri1_flush_frontbuffer(struct pipe_screen *screen,
-		       struct pipe_surface *surf, void *context_private);
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

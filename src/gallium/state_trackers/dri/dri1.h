@@ -40,4 +40,20 @@ extern struct dri1_api *__dri1_api_hooks;
 const __DRIconfig **
 dri1_init_screen(__DRIscreen * sPriv);
 
+void
+dri1_update_drawables(struct dri_context *ctx,
+		      struct dri_drawable *draw, struct dri_drawable *read);
+
+void
+dri1_flush_frontbuffer(struct pipe_screen *screen,
+		       struct pipe_surface *surf, void *context_private);
+
+void dri1_swap_buffers(__DRIdrawable * dPriv);
+
+void
+dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h);
+
+void
+dri1_swap_fences_clear(struct dri_drawable *drawable);
+
 #endif /* DRI1_H */
