@@ -31,6 +31,7 @@
 #include "main/mtypes.h"
 #include "shader/prog_cache.h"
 #include "pipe/p_state.h"
+#include "state_tracker/st_api.h"
 
 
 struct st_context;
@@ -73,6 +74,8 @@ struct st_tracked_state {
 
 struct st_context
 {
+   struct st_context_iface iface;
+
    GLcontext *ctx;
 
    struct pipe_context *pipe;
@@ -207,6 +210,11 @@ struct st_framebuffer
    GLframebuffer Base;
    void *Private;
    GLuint InitWidth, InitHeight;
+
+   struct st_framebuffer_iface *iface;
+   enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
+   unsigned num_statts;
+   int32_t revalidate;
 };
 
 

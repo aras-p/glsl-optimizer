@@ -39,9 +39,15 @@
 #include "target-helpers/wrap_screen.h"
 #include "xm_public.h"
 
+#include "state_tracker/st_manager.h"
+
 /* advertise OpenGL support */
 PUBLIC const int st_api_OpenGL = 1;
 
+PUBLIC const struct st_module st_module_OpenGL = {
+   .api = ST_API_OPENGL,
+   .create_api = st_manager_create_api
+};
 
 /* Helper function to build a subset of a driver stack consisting of
  * one of the software rasterizers (cell, llvmpipe, softpipe) and the
@@ -81,8 +87,10 @@ swrast_xlib_create_screen( Display *display )
       screen = llvmpipe_create_screen( winsys );
 #endif
 
+#if defined(GALLIUM_SOFTPIPE)
    if (screen == NULL)
       screen = softpipe_create_screen( winsys );
+#endif
 
    if (screen == NULL)
       goto fail;
@@ -98,9 +106,10 @@ fail:
    return NULL;
 }
 
-struct xm_driver xlib_driver = 
+static struct xm_driver xlib_driver = 
 {
    .create_pipe_screen = swrast_xlib_create_screen,
+   .create_st_api = st_manager_create_api,
 };
 
 

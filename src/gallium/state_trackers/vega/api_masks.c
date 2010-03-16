@@ -117,10 +117,6 @@ clear_with_quad(struct vg_context *st, float x0, float y0,
      x1, y1);
    */
 
-   if (st->pipe->screen && st->pipe->screen->update_buffer)
-      st->pipe->screen->update_buffer( st->pipe->screen,
-                                       st->pipe->priv );
-
    cso_save_blend(st->cso_context);
    cso_save_rasterizer(st->cso_context);
    cso_save_fragment_shader(st->cso_context);

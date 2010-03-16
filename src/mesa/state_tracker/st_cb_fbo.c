@@ -48,6 +48,7 @@
 #include "st_format.h"
 #include "st_public.h"
 #include "st_texture.h"
+#include "st_manager.h"
 
 #include "util/u_format.h"
 #include "util/u_rect.h"
@@ -618,8 +619,18 @@ check_create_front_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
 static void
 st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
 {
+   GLframebuffer *fb = ctx->DrawBuffer;
+   GLuint i;
+
    (void) count;
    (void) buffers;
+
+   /* add the renderbuffers on demand */
+   for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+      gl_buffer_index idx = fb->_ColorDrawBufferIndexes[i];
+      st_manager_add_color_renderbuffer(ctx->st, fb, idx);
+   }
+
    check_create_front_buffers(ctx, ctx->DrawBuffer);
 }
 
@@ -630,8 +641,13 @@ st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
 static void
 st_ReadBuffer(GLcontext *ctx, GLenum buffer)
 {
+   GLframebuffer *fb = ctx->ReadBuffer;
+
    (void) buffer;
-   check_create_front_buffers(ctx, ctx->ReadBuffer);
+
+   /* add the renderbuffer on demand */
+   st_manager_add_color_renderbuffer(ctx->st, fb, fb->_ColorReadBufferIndex);
+   check_create_front_buffers(ctx, fb);
 }
 
 

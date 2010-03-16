@@ -289,17 +289,17 @@ pos_update(struct lp_build_interp_soa_context *bld, int quad_index)
       /* top-right or bottom-right quad in block */
       /* build x += xstep */
       x = lp_build_add(&bld->base, x,
-                       lp_build_const_scalar(bld->base.type, xstep));
+                       lp_build_const_vec(bld->base.type, xstep));
    }
 
    if (quad_index == 2) {
       /* bottom-left quad in block */
       /* build y += ystep */
       y = lp_build_add(&bld->base, y,
-                       lp_build_const_scalar(bld->base.type, ystep));
+                       lp_build_const_vec(bld->base.type, ystep));
       /* build x -= xstep */
       x = lp_build_sub(&bld->base, x,
-                       lp_build_const_scalar(bld->base.type, xstep));
+                       lp_build_const_vec(bld->base.type, xstep));
    }
 
    lp_build_name(x, "pos.x");

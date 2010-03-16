@@ -105,6 +105,7 @@ cell_displaytarget_layout(struct pipe_screen *screen,
    /* Round up the surface size to a multiple of the tile size?
     */
    ct->dt = winsys->displaytarget_create(winsys,
+                                          ct->base->tex_usage,
                                           ct->base.format,
                                           ct->base.width0, 
                                           ct->base.height0,

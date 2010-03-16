@@ -45,6 +45,7 @@
 
 #include "st_debug.h"
 #include "st_context.h"
+#include "st_atom.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
 #include "st_public.h"
@@ -349,6 +350,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    /* XXX convolution not done yet */
    assert((transferOps & IMAGE_CONVOLUTION_BIT) == 0);
+
+   st_validate_state(ctx->st);
 
    /* Do all needed clipping here, so that we can forget about it later */
    if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {

@@ -32,6 +32,7 @@
 #include "shader.h"
 #include "asm_util.h"
 #include "st_inlines.h"
+#include "vg_manager.h"
 
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
@@ -305,6 +306,8 @@ static void update_clip_state(struct vg_context *ctx)
 
 void vg_validate_state(struct vg_context *ctx)
 {
+   vg_manager_validate_framebuffer(ctx);
+
    if ((ctx->state.dirty & BLEND_DIRTY)) {
       struct pipe_blend_state *blend = &ctx->state.g3d.blend;
       memset(blend, 0, sizeof(struct pipe_blend_state));

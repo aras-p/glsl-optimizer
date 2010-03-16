@@ -35,7 +35,6 @@
 #include "state_tracker/drm_api.h"
 #include "state_tracker/dri1_api.h"
 #include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
 #include "pipe/p_context.h"
 
 #include "dri_context.h"
@@ -167,7 +166,7 @@ dri_make_current(__DRIcontext * cPriv,
        * flush_frontbuffer directly (in front-buffer rendering), it
        * will have access to the drawable argument:
        */
-      st_make_current(ctx->st, draw->stfb, read->stfb, NULL);
+      st_make_current(ctx->st, draw->stfb, read->stfb, ctx);
 
       if (__dri1_api_hooks) {
 	 dri1_update_drawables(ctx, draw, read);

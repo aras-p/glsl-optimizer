@@ -173,7 +173,7 @@ lp_build_sample_offset(struct lp_build_context *bld,
    LLVMValueRef x_stride;
    LLVMValueRef offset;
 
-   x_stride = lp_build_const_scalar(bld->type, format_desc->block.bits/8);
+   x_stride = lp_build_const_vec(bld->type, format_desc->block.bits/8);
 
    if(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
       LLVMValueRef x_lo, x_hi;
@@ -195,9 +195,9 @@ lp_build_sample_offset(struct lp_build_context *bld,
       y_hi = LLVMBuildLShr(bld->builder, y, bld->one, "");
 
       x_stride_lo = x_stride;
-      y_stride_lo = lp_build_const_scalar(bld->type, 2*format_desc->block.bits/8);
+      y_stride_lo = lp_build_const_vec(bld->type, 2*format_desc->block.bits/8);
 
-      x_stride_hi = lp_build_const_scalar(bld->type, 4*format_desc->block.bits/8);
+      x_stride_hi = lp_build_const_vec(bld->type, 4*format_desc->block.bits/8);
       y_stride_hi = LLVMBuildShl(bld->builder, y_stride, bld->one, "");
 
       x_offset_lo = lp_build_mul(bld, x_lo, x_stride_lo);

@@ -58,8 +58,7 @@ and create a window, you must do the following to use the X/Mesa interface:
 
 
 #include "main/mtypes.h"
-#include "state_tracker/st_context.h"
-#include "state_tracker/st_public.h"
+#include "state_tracker/st_api.h"
 #include "os/os_thread.h"
 
 #include "state_tracker/xlib_sw_winsys.h"
@@ -68,10 +67,21 @@ and create a window, you must do the following to use the X/Mesa interface:
 # include <X11/Xlibint.h>
 # include <X11/Xutil.h>
 
+typedef struct xmesa_display *XMesaDisplay;
 typedef struct xmesa_buffer *XMesaBuffer;
 typedef struct xmesa_context *XMesaContext;
 typedef struct xmesa_visual *XMesaVisual;
 
+
+struct xmesa_display {
+   pipe_mutex mutex;
+
+   Display *display;
+   struct pipe_screen *screen;
+   struct st_manager *smapi;
+
+   struct pipe_context *pipe;
+};
 
 
 /*
@@ -258,15 +268,12 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
                                int format, int target, int mipmap);
 
 
+extern void
+XMesaCopyContext(XMesaContext src, XMesaContext dst, unsigned long mask);
 
 
 /***********************************************************************
  */
-
-extern pipe_mutex _xmesa_lock;
-
-extern struct xmesa_buffer *XMesaBufferList;
-
 
 /**
  * Visual inforation, derived from GLvisual.
@@ -280,6 +287,8 @@ struct xmesa_visual {
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
    GLboolean ximage_flag;	/* Use XImage for back buffer (not pixmap)? */
+
+   struct st_visual stvis;
 };
 
 
@@ -288,7 +297,7 @@ struct xmesa_visual {
  * Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
-   struct st_context *st;
+   struct st_context_iface *st;
    XMesaVisual xm_visual;	/** pixel format info */
    XMesaBuffer xm_buffer;	/** current drawbuffer */
    XMesaBuffer xm_read_buffer;  /** current readbuffer */
@@ -311,7 +320,7 @@ typedef enum {
  * Basically corresponds to a GLXDrawable.
  */
 struct xmesa_buffer {
-   struct st_framebuffer *stfb;
+   struct st_framebuffer_iface *stfb;
    struct xlib_drawable ws;
 
    GLboolean wasCurrent;	/* was ever the current buffer? */
@@ -335,32 +344,14 @@ struct xmesa_buffer {
    GLint TextureMipmap; /** 0 or 1 */
 
    struct xmesa_buffer *Next;	/* Linked list pointer: */
+
+   unsigned width, height;
 };
 
 
 
-/** cast wrapper */
-static INLINE XMesaContext
-xmesa_context(GLcontext *ctx)
-{
-   return (XMesaContext) ctx->DriverCtx;
-}
-
-
-/** cast wrapper */
-static INLINE XMesaBuffer
-xmesa_buffer(GLframebuffer *fb)
-{
-   struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
-   return (XMesaBuffer) st_framebuffer_private(stfb);
-}
-
-
 extern void
 xmesa_init(Display *dpy);
-
-extern void
-xmesa_delete_framebuffer(struct gl_framebuffer *fb);
 
 extern XMesaBuffer
 xmesa_find_buffer(Display *dpy, Colormap cmap, XMesaBuffer notThis);
@@ -370,7 +361,7 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
                       GLuint *width, GLuint *height);
 
 extern void
-xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
+xmesa_check_buffer_size(XMesaBuffer b);
 
 extern void
 xmesa_destroy_buffers_on_display(Display *dpy);
@@ -378,13 +369,13 @@ xmesa_destroy_buffers_on_display(Display *dpy);
 static INLINE GLuint
 xmesa_buffer_width(XMesaBuffer b)
 {
-   return b->stfb->Base.Width;
+   return b->width;
 }
 
 static INLINE GLuint
 xmesa_buffer_height(XMesaBuffer b)
 {
-   return b->stfb->Base.Height;
+   return b->height;
 }
 
 
