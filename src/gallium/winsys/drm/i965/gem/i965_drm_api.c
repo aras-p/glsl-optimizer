@@ -110,7 +110,7 @@ struct drm_api i965_libdrm_api =
 struct drm_api *
 drm_api_create()
 {
-   struct drm_api *api;
+   struct drm_api *api = NULL;
 
    if (api == NULL && debug_get_bool_option("BRW_SOFTPIPE", FALSE))
       api = sw_drm_api_create(&i965_libdrm_api);
