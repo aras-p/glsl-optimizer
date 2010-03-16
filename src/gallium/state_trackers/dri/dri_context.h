@@ -72,33 +72,9 @@ dri_context(__DRIcontext * driContextPriv)
    return (struct dri_context *)driContextPriv->driverPrivate;
 }
 
-static INLINE void
-dri_lock(struct dri_context *ctx)
-{
-   drm_context_t hw_context = ctx->cPriv->hHWContext;
-   char ret = 0;
-
-   DRM_CAS(ctx->lock, hw_context, DRM_LOCK_HELD | hw_context, ret);
-   if (ret) {
-      drmGetLock(ctx->sPriv->fd, hw_context, 0);
-      ctx->stLostLock = TRUE;
-      ctx->wsLostLock = TRUE;
-   }
-   ctx->isLocked = TRUE;
-}
-
-static INLINE void
-dri_unlock(struct dri_context *ctx)
-{
-   ctx->isLocked = FALSE;
-   DRM_UNLOCK(ctx->sPriv->fd, ctx->lock, ctx->cPriv->hHWContext);
-}
-
 /***********************************************************************
  * dri_context.c
  */
-extern struct dri1_api_lock_funcs dri1_lf;
-
 void dri_destroy_context(__DRIcontext * driContextPriv);
 
 boolean dri_unbind_context(__DRIcontext * driContextPriv);

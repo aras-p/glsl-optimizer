@@ -40,6 +40,28 @@
 #include "dri_drawable.h"
 #include "dri1.h"
 
+static INLINE void
+dri1_lock(struct dri_context *ctx)
+{
+   drm_context_t hw_context = ctx->cPriv->hHWContext;
+   char ret = 0;
+
+   DRM_CAS(ctx->lock, hw_context, DRM_LOCK_HELD | hw_context, ret);
+   if (ret) {
+      drmGetLock(ctx->sPriv->fd, hw_context, 0);
+      ctx->stLostLock = TRUE;
+      ctx->wsLostLock = TRUE;
+   }
+   ctx->isLocked = TRUE;
+}
+
+static INLINE void
+dri1_unlock(struct dri_context *ctx)
+{
+   ctx->isLocked = FALSE;
+   DRM_UNLOCK(ctx->sPriv->fd, ctx->lock, ctx->cPriv->hHWContext);
+}
+
 static struct pipe_fence_handle *
 dri_swap_fences_pop_front(struct dri_drawable *draw)
 {
@@ -141,9 +163,9 @@ void
 dri1_update_drawables(struct dri_context *ctx,
 		      struct dri_drawable *draw, struct dri_drawable *read)
 {
-   dri_lock(ctx);
+   dri1_lock(ctx);
    dri1_update_drawables_locked(ctx, draw->dPriv, read->dPriv);
-   dri_unlock(ctx);
+   dri1_unlock(ctx);
 
    dri1_propagate_drawable_change(ctx);
 }
@@ -228,7 +250,7 @@ dri1_copy_to_front(struct dri_context *ctx,
 
    *fence = NULL;
 
-   dri_lock(ctx);
+   dri1_lock(ctx);
    save_lost_lock = ctx->stLostLock;
    dri1_update_drawables_locked(ctx, dPriv, dPriv);
    st_get_framebuffer_dimensions(dri_drawable(dPriv)->stfb, &cur_w, &cur_h);
@@ -268,7 +290,7 @@ dri1_copy_to_front(struct dri_context *ctx,
    if (!sub_box)
       dri1_update_drawables_locked(ctx, ctx->dPriv, ctx->rPriv);
 
-   dri_unlock(ctx);
+   dri1_unlock(ctx);
    dri1_propagate_drawable_change(ctx);
 }
 
@@ -349,6 +371,44 @@ dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
       screen->fence_reference(screen, &dummy_fence, NULL);
    }
 }
+
+static void
+st_dri_lock(struct pipe_context *pipe)
+{
+   dri1_lock((struct dri_context *)pipe->priv);
+}
+
+static void
+st_dri_unlock(struct pipe_context *pipe)
+{
+   dri1_unlock((struct dri_context *)pipe->priv);
+}
+
+static boolean
+st_dri_is_locked(struct pipe_context *pipe)
+{
+   return ((struct dri_context *)pipe->priv)->isLocked;
+}
+
+static boolean
+st_dri_lost_lock(struct pipe_context *pipe)
+{
+   return ((struct dri_context *)pipe->priv)->wsLostLock;
+}
+
+static void
+st_dri_clear_lost_lock(struct pipe_context *pipe)
+{
+   ((struct dri_context *)pipe->priv)->wsLostLock = FALSE;
+}
+
+static struct dri1_api_lock_funcs dri1_lf = {
+   .lock = st_dri_lock,
+   .unlock = st_dri_unlock,
+   .is_locked = st_dri_is_locked,
+   .is_lock_lost = st_dri_lost_lock,
+   .clear_lost_lock = st_dri_clear_lost_lock
+};
 
 static const __DRIextension *dri1_screen_extensions[] = {
    &driReadDrawableExtension,
