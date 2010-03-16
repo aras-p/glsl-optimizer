@@ -12,6 +12,7 @@ C_SOURCES = \
 	glx_api.c \
 	glx_getproc.c \
 	glx_usefont.c \
-	xm_api.c
+	xm_api.c \
+	xm_st.c
 
 include ../../../Makefile.template

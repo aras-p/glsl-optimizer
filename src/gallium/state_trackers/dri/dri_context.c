@@ -35,7 +35,6 @@
 #include "state_tracker/drm_api.h"
 #include "state_tracker/dri1_api.h"
 #include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
 #include "pipe/p_context.h"
 
 #include "dri_context.h"
