@@ -15,7 +15,8 @@ C_SOURCES = \
 	dri_context.c \
 	dri_screen.c \
 	dri_drawable.c \
-	dri_extensions.c
+	dri_extensions.c \
+	dri1.c
 
 #	$(TOP)/src/mesa/drivers/dri/common/utils.c \
 	$(TOP)/src/mesa/drivers/dri/common/vblank.c \

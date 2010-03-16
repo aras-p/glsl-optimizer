@@ -29,6 +29,7 @@
 #define DRI_DRAWABLE_H
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
 
 struct pipe_surface;
 struct pipe_fence_handle;

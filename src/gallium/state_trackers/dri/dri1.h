@@ -29,49 +29,15 @@
  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
-#ifndef DRI_SCREEN_H
-#define DRI_SCREEN_H
+#ifndef DRI1_H
+#define DRI1_H
 
+#include "state_tracker/dri1_api.h"
 #include "dri_util.h"
-#include "xmlconfig.h"
 
-#include "pipe/p_compiler.h"
-
-struct dri_screen
-{
-   /* dri */
-   __DRIscreen *sPriv;
-
-   /**
-    * Configuration cache with default values for all contexts
-    */
-   driOptionCache optionCache;
-
-   /* drm */
-   int fd;
-   drmLock *drmLock;
-
-   /* gallium */
-   struct drm_api *api;
-   struct pipe_winsys *pipe_winsys;
-   struct pipe_screen *pipe_screen;
-   boolean d_depth_bits_last;
-   boolean sd_depth_bits_last;
-   boolean auto_fake_front;
-};
-
-/** cast wrapper */
-static INLINE struct dri_screen *
-dri_screen(__DRIscreen * sPriv)
-{
-   return (struct dri_screen *)sPriv->private;
-}
-
-extern const uint __driNConfigOptions;
+extern struct dri1_api *__dri1_api_hooks;
 
 const __DRIconfig **
-dri_fill_in_modes(struct dri_screen *screen, unsigned pixel_bits);
+dri1_init_screen(__DRIscreen * sPriv);
 
-#endif
-
-/* vim: set sw=3 ts=8 sts=3 expandtab: */
+#endif /* DRI1_H */

@@ -38,6 +38,7 @@
 #include "pipe/p_context.h"
 
 #include "dri_context.h"
+#include "dri1.h"
 
 #include "util/u_memory.h"
 
