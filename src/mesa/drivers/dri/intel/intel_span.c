@@ -134,7 +134,7 @@ intel_set_span_functions(struct intel_context *intel,
    (*(uint32_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y)) = d)
 #define READ_DEPTH(d, _x, _y) \
    d = *(uint32_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y))
-#define TAG(x) intel_##x##_z24_x8
+#define TAG(x) intel_##x##_z24_s8
 #include "depthtmp.h"
 
 void
@@ -361,7 +361,7 @@ intel_set_span_functions(struct intel_context *intel,
       break;
    case MESA_FORMAT_X8_Z24:
    case MESA_FORMAT_S8_Z24:
-      intel_InitDepthPointers_z24_x8(rb);
+      intel_InitDepthPointers_z24_s8(rb);
       break;
    default:
       _mesa_problem(NULL,
