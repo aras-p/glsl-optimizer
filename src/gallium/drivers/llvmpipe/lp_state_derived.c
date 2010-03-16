@@ -174,9 +174,12 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
    if (llvmpipe->dirty & LP_NEW_SCISSOR)
       lp_setup_set_scissor(llvmpipe->setup, &llvmpipe->scissor);
 
-   if (llvmpipe->dirty & LP_NEW_DEPTH_STENCIL_ALPHA)
+   if (llvmpipe->dirty & LP_NEW_DEPTH_STENCIL_ALPHA) {
       lp_setup_set_alpha_ref_value(llvmpipe->setup, 
                                    llvmpipe->depth_stencil->alpha.ref_value);
+      lp_setup_set_stencil_ref_values(llvmpipe->setup,
+                                      llvmpipe->stencil_ref.ref_value);
+   }
 
    if (llvmpipe->dirty & LP_NEW_CONSTANTS)
       lp_setup_set_fs_constants(llvmpipe->setup, 

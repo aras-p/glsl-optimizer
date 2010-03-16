@@ -402,6 +402,20 @@ lp_setup_set_alpha_ref_value( struct lp_setup_context *setup,
 }
 
 void
+lp_setup_set_stencil_ref_values( struct lp_setup_context *setup,
+                                 const ubyte refs[2] )
+{
+   LP_DBG(DEBUG_SETUP, "%s %d %d\n", __FUNCTION__, refs[0], refs[1]);
+
+   if (setup->fs.current.jit_context.stencil_ref[0] != refs[0] ||
+       setup->fs.current.jit_context.stencil_ref[1] != refs[1]) {
+      setup->fs.current.jit_context.stencil_ref[0] = refs[0];
+      setup->fs.current.jit_context.stencil_ref[1] = refs[1];
+      setup->dirty |= LP_SETUP_NEW_FS;
+   }
+}
+
+void
 lp_setup_set_blend_color( struct lp_setup_context *setup,
                           const struct pipe_blend_color *blend_color )
 {

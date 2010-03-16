@@ -84,6 +84,8 @@ struct lp_jit_context
 
    float alpha_ref_value;
 
+   ubyte stencil_ref[2];
+
    /** floats, not ints */
    float scissor_xmin, scissor_ymin, scissor_xmax, scissor_ymax;
 
@@ -100,22 +102,25 @@ struct lp_jit_context
 #define lp_jit_context_alpha_ref_value(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, 1, "alpha_ref_value")
 
+#define lp_jit_context_stencil_ref_value(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 2, "stencil_ref_values")
+
 #define lp_jit_context_scissor_xmin_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 2, "scissor_xmin")
+   lp_build_struct_get(_builder, _ptr, 3, "scissor_xmin")
 
 #define lp_jit_context_scissor_ymin_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 3, "scissor_ymin")
+   lp_build_struct_get(_builder, _ptr, 4, "scissor_ymin")
 
 #define lp_jit_context_scissor_xmax_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 4, "scissor_xmax")
+   lp_build_struct_get(_builder, _ptr, 5, "scissor_xmax")
 
 #define lp_jit_context_scissor_ymax_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 5, "scissor_ymax")
+   lp_build_struct_get(_builder, _ptr, 6, "scissor_ymax")
 
 #define lp_jit_context_blend_color(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 6, "blend_color")
+   lp_build_struct_get(_builder, _ptr, 7, "blend_color")
 
-#define LP_JIT_CONTEXT_TEXTURES_INDEX 7
+#define LP_JIT_CONTEXT_TEXTURES_INDEX 8
 
 #define lp_jit_context_textures(_builder, _ptr) \
    lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CONTEXT_TEXTURES_INDEX, "textures")
