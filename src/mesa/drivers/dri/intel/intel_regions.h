@@ -78,7 +78,7 @@ struct intel_region
 struct intel_region *intel_region_alloc(struct intel_context *intel,
                                         uint32_t tiling,
 					GLuint cpp, GLuint width,
-                                        GLuint height, GLuint pitch,
+                                        GLuint height,
 					GLboolean expect_accelerated_upload);
 
 struct intel_region *

@@ -172,7 +172,7 @@ intel_region_alloc_internal(struct intel_context *intel,
 struct intel_region *
 intel_region_alloc(struct intel_context *intel,
 		   uint32_t tiling,
-                   GLuint cpp, GLuint width, GLuint height, GLuint pitch,
+                   GLuint cpp, GLuint width, GLuint height,
 		   GLboolean expect_accelerated_upload)
 {
    dri_bo *buffer;
@@ -186,13 +186,9 @@ intel_region_alloc(struct intel_context *intel,
    buffer = drm_intel_bo_alloc_tiled(intel->bufmgr, "region",
 				     width, height, cpp,
 				     &tiling, &aligned_pitch, flags);
-   /* We've already chosen a pitch as part of miptree layout.  It had
-    * better be the same.
-    */
-   assert(aligned_pitch == pitch * cpp);
 
    region = intel_region_alloc_internal(intel, cpp, width, height,
-					pitch, buffer);
+					aligned_pitch / cpp, buffer);
    region->tiling = tiling;
 
    return region;

@@ -104,7 +104,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    int cpp;
-   GLuint pitch;
 
    ASSERT(rb->Name != 0);
 
@@ -176,15 +175,11 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    /* allocate new memory region/renderbuffer */
 
-   /* Choose a pitch to match hardware requirements:
-    */
-   pitch = ((cpp * width + 63) & ~63) / cpp;
-
    /* alloc hardware renderbuffer */
-   DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width, height, pitch);
+   DBG("Allocating %d x %d Intel RBO\n", width, height);
 
    irb->region = intel_region_alloc(intel, I915_TILING_NONE, cpp,
-				    width, height, pitch, GL_TRUE);
+				    width, height, GL_TRUE);
    if (!irb->region)
       return GL_FALSE;       /* out of memory? */
 

@@ -146,8 +146,8 @@ intel_miptree_create(struct intel_context *intel,
 				   mt->cpp,
 				   mt->pitch,
 				   mt->total_height,
-				   mt->pitch,
 				   expect_accelerated_upload);
+   mt->pitch = mt->region->pitch;
 
    if (!mt->region) {
        free(mt);
@@ -177,20 +177,11 @@ intel_miptree_create_for_region(struct intel_context *intel,
 				      I915_TILING_NONE);
    if (!mt)
       return mt;
-#if 0
-   if (mt->pitch != region->pitch) {
-      fprintf(stderr,
-	      "region pitch (%d) doesn't match mipmap tree pitch (%d)\n",
-	      region->pitch, mt->pitch);
-      free(mt);
-      return NULL;
-   }
-#else
+
    /* The mipmap tree pitch is aligned to 64 bytes to make sure render
     * to texture works, but we don't need that for texturing from a
     * pixmap.  Just override it here. */
    mt->pitch = region->pitch;
-#endif
 
    intel_region_reference(&mt->region, region);
 
