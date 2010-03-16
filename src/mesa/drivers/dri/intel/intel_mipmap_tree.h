@@ -62,14 +62,6 @@
  */
 struct intel_mipmap_level
 {
-   /**
-    * Byte offset to the base of this level.
-    *
-    * This is used for mipmap levels of 1D/2D/3D textures.  However, CUBE
-    * layouts spread images around the whole tree, so the level offset is
-    * always zero in that case.
-    */
-   GLuint level_offset;
    /** Offset to this miptree level, used in computing x_offset. */
    GLuint level_x;
    /** Offset to this miptree level, used in computing y_offset. */
@@ -81,8 +73,8 @@ struct intel_mipmap_level
    /** Number of images at this level: 1 for 1D/2D, 6 for CUBE, depth for 3D */
    GLuint nr_images;
 
-   /**
-    * Byte offset from level_offset to the image for each cube face or depth
+   /** @{
+    * offsets from level_[xy] to the image for each cube face or depth
     * level.
     *
     * Pretty much have to accept that hardware formats
@@ -91,6 +83,7 @@ struct intel_mipmap_level
     * so have to store them as a lookup table.
     */
    GLuint *x_offset, *y_offset;
+   /** @} */
 };
 
 struct intel_mipmap_tree

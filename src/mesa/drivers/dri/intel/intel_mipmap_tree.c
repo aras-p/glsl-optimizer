@@ -351,13 +351,12 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
    mt->level[level].width = w;
    mt->level[level].height = h;
    mt->level[level].depth = d;
-   mt->level[level].level_offset = (x + y * mt->pitch) * mt->cpp;
    mt->level[level].level_x = x;
    mt->level[level].level_y = y;
    mt->level[level].nr_images = nr_images;
 
-   DBG("%s level %d size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
-       level, w, h, d, x, y, mt->level[level].level_offset);
+   DBG("%s level %d size: %d,%d,%d offset %d,%d\n", __FUNCTION__,
+       level, w, h, d, x, y);
 
    assert(nr_images);
    assert(!mt->level[level].x_offset);
