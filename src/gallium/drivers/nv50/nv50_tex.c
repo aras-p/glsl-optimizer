@@ -137,7 +137,8 @@ nv50_tex_construct(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	so_data (so, nv50_tex_format_list[i].hw);
 	so_reloc(so, mt->base.bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
 		 NOUVEAU_BO_RD, 0, 0);
-	so_data (so, mode);
+	so_reloc(so, mt->base.bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH |
+		 NOUVEAU_BO_RD | NOUVEAU_BO_OR, mode, mode);
 	so_data (so, 0x00300000);
 	so_data (so, mt->base.base.width0 | (1 << 31));
 	so_data (so, (mt->base.base.last_level << 28) |
