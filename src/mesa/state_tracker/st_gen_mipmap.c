@@ -256,6 +256,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
 
       /* release the old tex (will likely be freed too) */
       pipe_texture_reference(&oldTex, NULL);
+      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
       pt = stObj->pt;
    }

@@ -571,6 +571,7 @@ st_TexImage(GLcontext * ctx,
          DBG("release it\n");
          pipe_texture_reference(&stObj->pt, NULL);
          assert(!stObj->pt);
+         pipe_sampler_view_reference(&stObj->sampler_view, NULL);
          stObj->teximage_realloc = FALSE;
       }
    }
@@ -1807,6 +1808,7 @@ st_finalize_texture(GLcontext *ctx,
        firstImage->pt != stObj->pt &&
        firstImage->pt->last_level >= stObj->lastLevel) {
       pipe_texture_reference(&stObj->pt, firstImage->pt);
+      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
    }
 
    /* bytes per pixel block (blocks are usually 1x1) */
@@ -1826,6 +1828,7 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->depth0 != firstImage->base.Depth2)
       {
          pipe_texture_reference(&stObj->pt, NULL);
+         pipe_sampler_view_reference(&stObj->sampler_view, NULL);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;
       }
    }
