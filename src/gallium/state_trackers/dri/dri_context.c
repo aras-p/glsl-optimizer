@@ -30,16 +30,12 @@
  */
 
 #include "dri_screen.h"
-
 #include "dri_drawable.h"
-#include "state_tracker/drm_api.h"
-#include "state_tracker/dri1_api.h"
-#include "state_tracker/st_public.h"
-#include "pipe/p_context.h"
-
 #include "dri_context.h"
 #include "dri1.h"
 
+#include "state_tracker/st_public.h"
+#include "pipe/p_context.h"
 #include "util/u_memory.h"
 
 GLboolean

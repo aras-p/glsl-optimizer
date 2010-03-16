@@ -32,7 +32,8 @@
 #ifndef DRI1_H
 #define DRI1_H
 
-#include "state_tracker/dri1_api.h"
+#include "dri_context.h"
+#include "dri_drawable.h"
 #include "dri_util.h"
 
 extern struct dri1_api *__dri1_api_hooks;

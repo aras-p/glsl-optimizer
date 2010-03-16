@@ -34,6 +34,7 @@
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
+#include "state_tracker/dri1_api.h"
 
 #include "dri_screen.h"
 #include "dri_context.h"

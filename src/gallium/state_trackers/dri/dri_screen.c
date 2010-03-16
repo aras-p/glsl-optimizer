@@ -41,7 +41,6 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_format.h"
 #include "state_tracker/drm_api.h"
-#include "state_tracker/dri1_api.h"
 
 #include "util/u_debug.h"
 
@@ -304,7 +303,7 @@ dri_destroy_screen(__DRIscreen * sPriv)
    sPriv->private = NULL;
 }
 
-PUBLIC const struct __DriverAPIRec driDriverAPI = {
+const struct __DriverAPIRec driDriverAPI = {
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
    .DestroyContext = dri_destroy_context,

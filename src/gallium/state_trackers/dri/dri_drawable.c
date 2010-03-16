@@ -34,19 +34,16 @@
 #include "dri_drawable.h"
 #include "dri1.h"
 
-#include "pipe/p_context.h"
-#include "pipe/p_screen.h"
 #include "main/mtypes.h"
 #include "main/renderbuffer.h"
-#include "state_tracker/drm_api.h"
-#include "state_tracker/dri1_api.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_cb_fbo.h"
+#include "state_tracker/drm_api.h"
 
+#include "pipe/p_screen.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
-#include "util/u_rect.h"
 #include "util/u_inlines.h"
  
 static struct pipe_surface *
