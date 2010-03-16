@@ -91,40 +91,49 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
 
    /* struct lp_jit_context */
    {
-      LLVMTypeRef elem_types[9];
+      LLVMTypeRef elem_types[LP_JIT_CTX_COUNT];
       LLVMTypeRef context_type;
 
-      elem_types[0] = LLVMPointerType(LLVMFloatType(), 0); /* constants */
-      elem_types[1] = LLVMFloatType();                     /* alpha_ref_value */
-      elem_types[2] = LLVMArrayType(LLVMInt8Type(), 2);    /* stencil_refs */
-      elem_types[3] = LLVMFloatType();                     /* scissor_xmin */
-      elem_types[4] = LLVMFloatType();                     /* scissor_ymin */
-      elem_types[5] = LLVMFloatType();                     /* scissor_xmax */
-      elem_types[6] = LLVMFloatType();                     /* scissor_ymax */
-      elem_types[7] = LLVMPointerType(LLVMInt8Type(), 0);  /* blend_color */
-      elem_types[8] = LLVMArrayType(texture_type, PIPE_MAX_SAMPLERS); /* textures */
+      elem_types[LP_JIT_CTX_CONSTANTS] = LLVMPointerType(LLVMFloatType(), 0);
+      elem_types[LP_JIT_CTX_ALPHA_REF] = LLVMFloatType();
+      elem_types[LP_JIT_CTX_STENCIL_REF] = LLVMArrayType(LLVMInt8Type(), 2);
+      elem_types[LP_JIT_CTX_SCISSOR_XMIN] = LLVMFloatType();
+      elem_types[LP_JIT_CTX_SCISSOR_YMIN] = LLVMFloatType();
+      elem_types[LP_JIT_CTX_SCISSOR_XMAX] = LLVMFloatType();
+      elem_types[LP_JIT_CTX_SCISSOR_YMAX] = LLVMFloatType();
+      elem_types[LP_JIT_CTX_BLEND_COLOR] = LLVMPointerType(LLVMInt8Type(), 0);
+      elem_types[LP_JIT_CTX_TEXTURES] = LLVMArrayType(texture_type,
+                                                      PIPE_MAX_SAMPLERS);
 
       context_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, constants,
-                             screen->target, context_type, 0);
+                             screen->target, context_type,
+                             LP_JIT_CTX_CONSTANTS);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, alpha_ref_value,
-                             screen->target, context_type, 1);
+                             screen->target, context_type,
+                             LP_JIT_CTX_ALPHA_REF);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, stencil_ref,
-                             screen->target, context_type, 2);
+                             screen->target, context_type,
+                             LP_JIT_CTX_STENCIL_REF);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_xmin,
-                             screen->target, context_type, 3);
+                             screen->target, context_type,
+                             LP_JIT_CTX_SCISSOR_XMIN);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_ymin,
-                             screen->target, context_type, 4);
+                             screen->target, context_type,
+                             LP_JIT_CTX_SCISSOR_YMIN);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_xmax,
-                             screen->target, context_type, 5);
+                             screen->target, context_type,
+                             LP_JIT_CTX_SCISSOR_XMAX);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_ymax,
-                             screen->target, context_type, 6);
+                             screen->target, context_type,
+                             LP_JIT_CTX_SCISSOR_YMAX);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, blend_color,
-                             screen->target, context_type, 7);
+                             screen->target, context_type,
+                             LP_JIT_CTX_BLEND_COLOR);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, textures,
                              screen->target, context_type,
-                             LP_JIT_CONTEXT_TEXTURES_INDEX);
+                             LP_JIT_CTX_TEXTURES);
       LP_CHECK_STRUCT_SIZE(struct lp_jit_context,
                            screen->target, context_type);
 

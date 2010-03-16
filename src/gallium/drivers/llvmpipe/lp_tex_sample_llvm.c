@@ -105,7 +105,7 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
    /* context[0] */
    indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
    /* context[0].textures */
-   indices[1] = LLVMConstInt(LLVMInt32Type(), LP_JIT_CONTEXT_TEXTURES_INDEX, 0);
+   indices[1] = LLVMConstInt(LLVMInt32Type(), LP_JIT_CTX_TEXTURES, 0);
    /* context[0].textures[unit] */
    indices[2] = LLVMConstInt(LLVMInt32Type(), unit, 0);
    /* context[0].textures[unit].member */

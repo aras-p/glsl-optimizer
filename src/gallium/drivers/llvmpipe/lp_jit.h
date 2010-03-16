@@ -84,7 +84,7 @@ struct lp_jit_context
 
    float alpha_ref_value;
 
-   ubyte stencil_ref[2];
+   uint8_t stencil_ref[2];
 
    /** floats, not ints */
    float scissor_xmin, scissor_ymin, scissor_xmax, scissor_ymax;
@@ -96,34 +96,50 @@ struct lp_jit_context
 };
 
 
+/**
+ * These enum values must match the position of the fields in the
+ * lp_jit_context struct above.
+ */
+enum {
+   LP_JIT_CTX_CONSTANTS = 0,
+   LP_JIT_CTX_ALPHA_REF,
+   LP_JIT_CTX_STENCIL_REF,
+   LP_JIT_CTX_SCISSOR_XMIN,
+   LP_JIT_CTX_SCISSOR_YMIN,
+   LP_JIT_CTX_SCISSOR_XMAX,
+   LP_JIT_CTX_SCISSOR_YMAX,
+   LP_JIT_CTX_BLEND_COLOR,
+   LP_JIT_CTX_TEXTURES,
+   LP_JIT_CTX_COUNT
+};
+
+
 #define lp_jit_context_constants(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 0, "constants")
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_CONSTANTS, "constants")
 
 #define lp_jit_context_alpha_ref_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 1, "alpha_ref_value")
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_ALPHA_REF, "alpha_ref_value")
 
 #define lp_jit_context_stencil_ref_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 2, "stencil_ref_values")
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_STENCIL_REF, "stencil_ref")
 
 #define lp_jit_context_scissor_xmin_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 3, "scissor_xmin")
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_XMIN, "scissor_xmin")
 
 #define lp_jit_context_scissor_ymin_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 4, "scissor_ymin")
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_YMIN, "scissor_ymin")
 
 #define lp_jit_context_scissor_xmax_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 5, "scissor_xmax")
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_XMAX, "scissor_xmax")
 
 #define lp_jit_context_scissor_ymax_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 6, "scissor_ymax")
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_YMAX, "scissor_ymax")
 
 #define lp_jit_context_blend_color(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 7, "blend_color")
-
-#define LP_JIT_CONTEXT_TEXTURES_INDEX 8
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_BLEND_COLOR, "blend_color")
 
 #define lp_jit_context_textures(_builder, _ptr) \
-   lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CONTEXT_TEXTURES_INDEX, "textures")
+   lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CONTEXT_TEXTURES, "textures")
 
 
 typedef void
