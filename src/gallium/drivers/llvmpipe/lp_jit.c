@@ -95,7 +95,8 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       LLVMTypeRef context_type;
 
       elem_types[0] = LLVMPointerType(LLVMFloatType(), 0); /* constants */
-      elem_types[1] = LLVMFloatType();                     /* alpha_ref_value */      elem_types[2] = LLVMFloatType();                     /* scissor_xmin */
+      elem_types[1] = LLVMFloatType();                     /* alpha_ref_value */
+      elem_types[2] = LLVMFloatType();                     /* scissor_xmin */
       elem_types[3] = LLVMFloatType();                     /* scissor_ymin */
       elem_types[4] = LLVMFloatType();                     /* scissor_xmax */
       elem_types[5] = LLVMFloatType();                     /* scissor_ymax */
