@@ -525,7 +525,8 @@ intel_miptree_image_copy(struct intel_context *intel,
       intel_miptree_get_image_offset(dst, level, face, i, &dst_x, &dst_y);
       success = intel_region_copy(intel,
 				  dst->region, 0, dst_x, dst_y,
-				  src->region, 0, src_x, src_y, width, height,
+				  src->region, 0, src_x, src_y,
+				  width, height, GL_FALSE,
 				  GL_COPY);
       if (!success) {
 	 GLubyte *src_ptr, *dst_ptr;

@@ -380,8 +380,11 @@ intel_region_copy(struct intel_context *intel,
                   struct intel_region *src,
                   GLuint src_offset,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height,
+		  GLboolean flip,
 		  GLenum logicop)
 {
+   uint32_t src_pitch = src->pitch;
+
    _DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
@@ -397,9 +400,12 @@ intel_region_copy(struct intel_context *intel,
 
    assert(src->cpp == dst->cpp);
 
+   if (flip)
+      src_pitch = -src_pitch;
+
    return intelEmitCopyBlit(intel,
 			    dst->cpp,
-			    src->pitch, src->buffer, src_offset, src->tiling,
+			    src_pitch, src->buffer, src_offset, src->tiling,
 			    dst->pitch, dst->buffer, dst_offset, dst->tiling,
 			    srcx, srcy, dstx, dsty, width, height,
 			    logicop);

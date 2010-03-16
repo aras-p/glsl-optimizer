@@ -122,6 +122,7 @@ intel_region_copy(struct intel_context *intel,
 		  struct intel_region *src,
 		  GLuint src_offset,
 		  GLuint srcx, GLuint srcy, GLuint width, GLuint height,
+		  GLboolean flip,
 		  GLenum logicop);
 
 /* Helpers for zerocopy uploads, particularly texture image uploads:
