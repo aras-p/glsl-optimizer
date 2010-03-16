@@ -548,9 +548,13 @@ else
 fi
 dnl Use the autoconf macro if no pkg-config files
 if test "$x11_pkgconfig" = yes; then
-    PKG_CHECK_MODULES([X], [x11])
+    PKG_CHECK_MODULES([X11], [x11])
 else
     AC_PATH_XTRA
+    test -z "$X11_CFLAGS" && X11_CFLAGS="$X_CFLAGS"
+    test -z "$X11_LIBS" && X11_LIBS="$X_LIBS -lX11"
+    AC_SUBST([X11_CFLAGS])
+    AC_SUBST([X11_LIBS])
 fi
 
 dnl Try to tell the user that the --x-* options are only used when

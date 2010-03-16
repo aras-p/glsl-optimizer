@@ -7,7 +7,7 @@ LIBRARY_INCLUDES = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/auxiliary \
-	$(X_CFLAGS)
+	$(X11_CFLAGS)
 
 C_SOURCES = \
 	xlib_sw_winsys.c 
