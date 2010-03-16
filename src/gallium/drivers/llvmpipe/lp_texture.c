@@ -265,10 +265,6 @@ llvmpipe_texture_from_handle(struct pipe_screen *screen,
    pipe_reference_init(&lpt->base.reference, 1);
    lpt->base.screen = screen;
 
-   lpt->pot = (util_is_power_of_two(template->width0) &&
-               util_is_power_of_two(template->height0) &&
-               util_is_power_of_two(template->depth0));
-
    lpt->dt = winsys->displaytarget_from_handle(winsys,
                                                template,
                                                whandle,
