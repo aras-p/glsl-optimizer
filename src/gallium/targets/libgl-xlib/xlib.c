@@ -63,6 +63,8 @@ PUBLIC const struct st_module st_module_OpenGL = {
 static struct pipe_screen *
 swrast_xlib_create_screen( Display *display )
 {
+   const char *default_driver;
+   const char *driver;
    struct sw_winsys *winsys;
    struct pipe_screen *screen = NULL;
 
@@ -73,17 +75,29 @@ swrast_xlib_create_screen( Display *display )
    if (winsys == NULL)
       return NULL;
 
+#if defined(GALLIUM_CELL)
+   default_driver = "cell";
+#elif defined(GALLIUM_LLVMPIPE)
+   default_driver = "llvmpipe";
+#elif defined(GALLIUM_SOFTPIPE)
+   default_driver = "softpipe";
+#else
+   default_driver = "";
+#endif
+
+   driver = debug_get_option("GALLIUM_DRIVER", default_driver);
+
    /* Create a software rasterizer on top of that winsys:
     */
 #if defined(GALLIUM_CELL)
    if (screen == NULL &&
-       !debug_get_bool_option("GALLIUM_NO_CELL", FALSE))
+       strcmp(driver, "cell") == 0)
       screen = cell_create_screen( winsys );
 #endif
 
 #if defined(GALLIUM_LLVMPIPE)
    if (screen == NULL &&
-       !debug_get_bool_option("GALLIUM_NO_LLVM", FALSE))
+       strcmp(driver, "llvmpipe") == 0)
       screen = llvmpipe_create_screen( winsys );
 #endif
 
