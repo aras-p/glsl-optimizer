@@ -58,9 +58,8 @@ PROGRAM_DIRS := egl $(PROGRAM_DIRS)
 EGL_DRIVERS_DIRS = glx
 
 DRIVER_DIRS = dri
-GALLIUM_WINSYS_DIRS = null xlib drm
+GALLIUM_WINSYS_DIRS = null xlib drm/vmware drm/intel drm/i965
 GALLIUM_TARGET_DIRS =
-GALLIUM_WINSYS_DRM_DIRS = vmware intel i965
 GALLIUM_STATE_TRACKERS_DIRS = egl
 
 DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon \

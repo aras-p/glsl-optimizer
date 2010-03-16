@@ -24,5 +24,4 @@ GALLIUM_STATE_TRACKERS_DIRS = es
 # build egl_x11_{swrast,i915}.so
 GALLIUM_DRIVERS_DIRS += trace i915
 GALLIUM_STATE_TRACKERS_DIRS += egl
-GALLIUM_WINSYS_DIRS += drm
-GALLIUM_WINSYS_DRM_DIRS += intel swrast
+GALLIUM_WINSYS_DIRS += drm/intel drm/swrast
