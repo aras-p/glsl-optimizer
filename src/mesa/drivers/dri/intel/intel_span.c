@@ -48,11 +48,11 @@ intel_set_span_functions(struct intel_context *intel,
 
 #define LOCAL_VARS							\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
-   const GLint yBias = ctx->DrawBuffer->Name ? 0 : irb->Base.Height - 1;\
+   const GLint yScale = rb->Name ? 1 : -1;				\
+   const GLint yBias = rb->Name ? 0 : rb->Height - 1;			\
    int minx = 0, miny = 0;						\
-   int maxx = ctx->DrawBuffer->Width;					\
-   int maxy = ctx->DrawBuffer->Height;					\
+   int maxx = rb->Width;						\
+   int maxy = rb->Height;						\
    int pitch = irb->region->pitch * irb->region->cpp;			\
    void *buf = irb->region->buffer->virtual;				\
    GLuint p;								\
@@ -108,11 +108,11 @@ intel_set_span_functions(struct intel_context *intel,
 
 #define LOCAL_DEPTH_VARS						\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   const GLint yScale = ctx->DrawBuffer->Name ? 1 : -1;			\
-   const GLint yBias = ctx->DrawBuffer->Name ? 0 : irb->Base.Height - 1;\
+   const GLint yScale = rb->Name ? 1 : -1;				\
+   const GLint yBias = rb->Name ? 0 : rb->Height - 1;			\
    int minx = 0, miny = 0;						\
-   int maxx = ctx->DrawBuffer->Width;					\
-   int maxy = ctx->DrawBuffer->Height;					\
+   int maxx = rb->Width;						\
+   int maxy = rb->Height;						\
    int pitch = irb->region->pitch * irb->region->cpp;			\
    void *buf = irb->region->buffer->virtual;				\
    (void)buf; (void)pitch; /* unused for non-gttmap. */			\
