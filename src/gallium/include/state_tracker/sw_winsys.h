@@ -47,6 +47,7 @@ extern "C" {
 struct winsys_handle;
 struct pipe_screen;
 struct pipe_context;
+struct pipe_texture;
 
 
 /**
