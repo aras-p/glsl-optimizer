@@ -461,20 +461,20 @@ SRC_DIRS="glew"
 GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_TARGET_DIRS=""
-GALLIUM_WINSYS_DIRS="null"
+GALLIUM_WINSYS_DIRS="sw"
 GALLIUM_DRIVERS_DIRS="softpipe failover trace identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
 case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
     GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS libgl-xlib"
     ;;
 dri)
     SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib drm/sw"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib sw/drm"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -1317,7 +1317,7 @@ AC_ARG_ENABLE([gallium-svga],
     [enable_gallium_svga=auto])
 if test "x$enable_gallium_svga" = xyes; then
     if test "x$mesa_driver" = xdri; then
-         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/vmware"
+         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS svga/drm"
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-vmwgfx"
     fi
     if test "x$enable_egl" = xyes; then
@@ -1341,7 +1341,7 @@ AC_ARG_ENABLE([gallium-intel],
     [enable_gallium_intel=auto])
 if test "x$enable_gallium_intel" = xyes; then
     if test "x$mesa_driver" = xdri; then
-         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/intel drm/i965"
+         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/drm i965/drm"
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-i915 dri-i965"
     fi
     if test "x$enable_egl" = xyes; then
@@ -1365,7 +1365,7 @@ AC_ARG_ENABLE([gallium-radeon],
     [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xyes; then
     if test "x$mesa_driver" = xdri; then
-         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/radeon"
+         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS radeon/drm"
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-radeong"
     fi
     if test "x$enable_egl" = xyes; then
@@ -1389,7 +1389,7 @@ AC_ARG_ENABLE([gallium-nouveau],
     [enable_gallium_nouveau=no])
 if test "x$enable_gallium_nouveau" = xyes; then
     if test "x$mesa_driver" = xdri; then
-         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/nouveau"
+         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS nouveau/drm"
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-nouveau"
     fi
     if test "x$enable_egl" = xyes; then

@@ -42,7 +42,7 @@
 
 #include <sys/mman.h>
 #include "xf86drm.h"
-#include "../../winsys/drm/vmware/core/vmwgfx_drm.h"
+#include "../../winsys/svga/drm/vmwgfx_drm.h"
 
 #include "vmw_driver.h"
 #include "util/u_debug.h"

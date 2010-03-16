@@ -62,7 +62,7 @@ typedef uint8_t uint8;
 #include <X11/extensions/Xv.h>
 
 #include "xf86drm.h"
-#include "../../winsys/drm/vmware/core/vmwgfx_drm.h"
+#include "../../winsys/svga/drm/vmwgfx_drm.h"
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
 

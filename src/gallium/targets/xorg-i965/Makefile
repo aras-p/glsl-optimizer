@@ -17,7 +17,7 @@ CFLAGS = -DHAVE_CONFIG_H \
 
 LIBS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
-	$(TOP)/src/gallium/winsys/drm/i965/gem/libi965drm.a \
+	$(TOP)/src/gallium/winsys/i965/drm/libi965drm.a \
 	$(TOP)/src/gallium/drivers/i965/libi965.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \

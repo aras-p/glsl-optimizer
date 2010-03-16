@@ -16,7 +16,7 @@ INCLUDES = \
 
 LIBS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
-	$(TOP)/src/gallium/winsys/drm/nouveau/drm/libnouveaudrm.a \
+	$(TOP)/src/gallium/winsys/nouveau/drm/libnouveaudrm.a \
 	$(TOP)/src/gallium/drivers/nvfx/libnvfx.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a \

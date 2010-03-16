@@ -17,7 +17,7 @@ CFLAGS = -DHAVE_CONFIG_H \
 
 LIBS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
-	$(TOP)/src/gallium/winsys/drm/radeon/core/libradeonwinsys.a \
+	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \

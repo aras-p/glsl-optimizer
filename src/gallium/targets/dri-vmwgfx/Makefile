@@ -5,7 +5,7 @@ LIBNAME = vmwgfx_dri.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \
-	$(TOP)/src/gallium/winsys/drm/vmware/core/libsvgadrm.a \
+	$(TOP)/src/gallium/winsys/svga/drm/libsvgadrm.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a
 

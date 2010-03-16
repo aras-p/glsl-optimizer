@@ -20,7 +20,7 @@ INCLUDES = \
 
 LIBS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
-	$(TOP)/src/gallium/winsys/drm/vmware/core/libsvgadrm.a \
+	$(TOP)/src/gallium/winsys/svga/drm/libsvgadrm.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a \
 	$(GALLIUM_AUXILIARIES)
