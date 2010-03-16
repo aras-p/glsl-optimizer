@@ -120,7 +120,7 @@ enum {
 #define lp_jit_context_alpha_ref_value(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_ALPHA_REF, "alpha_ref_value")
 
-#define lp_jit_context_stencil_ref_value(_builder, _ptr) \
+#define lp_jit_context_stencil_ref_values(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_STENCIL_REF, "stencil_ref")
 
 #define lp_jit_context_scissor_xmin_value(_builder, _ptr) \

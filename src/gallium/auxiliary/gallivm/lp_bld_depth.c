@@ -217,6 +217,7 @@ lp_build_depth_test(LLVMBuilderRef builder,
                     struct lp_type type,
                     const struct util_format_description *format_desc,
                     struct lp_build_mask_context *mask,
+                    LLVMValueRef stencil_refs,
                     LLVMValueRef src,
                     LLVMValueRef dst_ptr)
 {

@@ -145,6 +145,7 @@ generate_depth(LLVMBuilderRef builder,
                const struct lp_fragment_shader_variant_key *key,
                struct lp_type src_type,
                struct lp_build_mask_context *mask,
+               LLVMValueRef stencil_refs,
                LLVMValueRef src,
                LLVMValueRef dst_ptr)
 {
@@ -189,6 +190,7 @@ generate_depth(LLVMBuilderRef builder,
                        dst_type,
                        format_desc,
                        mask,
+                       stencil_refs,
                        src,
                        dst_ptr);
 }
@@ -405,6 +407,7 @@ generate_fs(struct llvmpipe_context *lp,
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef z = interp->pos[2];
+   LLVMValueRef stencil_refs;
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
    boolean early_depth_test;
@@ -413,6 +416,8 @@ generate_fs(struct llvmpipe_context *lp,
    unsigned cbuf;
 
    assert(i < 4);
+
+   stencil_refs = lp_jit_context_stencil_ref_values(builder, context_ptr);
 
    elem_type = lp_build_elem_type(type);
    vec_type = lp_build_vec_type(type);
@@ -462,7 +467,7 @@ generate_fs(struct llvmpipe_context *lp,
    if(early_depth_test)
       generate_depth(builder, key,
                      type, &mask,
-                     z, depth_ptr);
+                     stencil_refs, z, depth_ptr);
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
@@ -509,7 +514,7 @@ generate_fs(struct llvmpipe_context *lp,
    if(!early_depth_test)
       generate_depth(builder, key,
                      type, &mask,
-                     z, depth_ptr);
+                     stencil_refs, z, depth_ptr);
 
    lp_build_mask_end(&mask);
 
@@ -1054,10 +1059,15 @@ make_variant_key(struct llvmpipe_context *lp,
 
    memset(key, 0, sizeof *key);
 
-   if(lp->framebuffer.zsbuf &&
-      lp->depth_stencil->depth.enabled) {
-      key->zsbuf_format = lp->framebuffer.zsbuf->format;
-      memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
+   if (lp->framebuffer.zsbuf) {
+      if (lp->depth_stencil->depth.enabled) {
+         key->zsbuf_format = lp->framebuffer.zsbuf->format;
+         memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
+      }
+      if (lp->depth_stencil->stencil[0].enabled) {
+         key->zsbuf_format = lp->framebuffer.zsbuf->format;
+         memcpy(&key->stencil, &lp->depth_stencil->stencil, sizeof key->stencil);
+      }
    }
 
    key->alpha.enabled = lp->depth_stencil->alpha.enabled;
