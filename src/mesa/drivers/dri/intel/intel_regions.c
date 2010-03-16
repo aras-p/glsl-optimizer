@@ -164,7 +164,6 @@ intel_region_alloc_internal(struct intel_context *intel,
 
    /* Default to no tiling */
    region->tiling = I915_TILING_NONE;
-   region->bit_6_swizzle = I915_BIT_6_SWIZZLE_NONE;
 
    _DBG("%s <-- %p\n", __FUNCTION__, region);
    return region;
@@ -194,12 +193,7 @@ intel_region_alloc(struct intel_context *intel,
 
    region = intel_region_alloc_internal(intel, cpp, width, height,
 					pitch, buffer);
-
-   if (tiling != I915_TILING_NONE) {
-      assert(((pitch * cpp) & 127) == 0);
-      drm_intel_bo_set_tiling(buffer, &tiling, pitch * cpp);
-      drm_intel_bo_get_tiling(buffer, &region->tiling, &region->bit_6_swizzle);
-   }
+   region->tiling = tiling;
 
    return region;
 }
@@ -213,6 +207,7 @@ intel_region_alloc_for_handle(struct intel_context *intel,
    struct intel_region *region, *dummy;
    dri_bo *buffer;
    int ret;
+   uint32_t bit_6_swizzle;
 
    region = _mesa_HashLookup(intel->intelScreen->named_regions, handle);
    if (region != NULL) {
@@ -236,7 +231,7 @@ intel_region_alloc_for_handle(struct intel_context *intel,
       return region;
 
    ret = dri_bo_get_tiling(region->buffer, &region->tiling,
-			   &region->bit_6_swizzle);
+			   &bit_6_swizzle);
    if (ret != 0) {
       fprintf(stderr, "Couldn't get tiling of buffer %d (%s): %s\n",
 	      handle, name, strerror(-ret));
