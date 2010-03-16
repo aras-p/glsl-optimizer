@@ -127,14 +127,15 @@ C_SOURCES = \
 	util/u_tile.c \
 	util/u_timed_winsys.c \
 	util/u_upload_mgr.c \
-	util/u_simple_screen.c
+	util/u_simple_screen.c \
+	target-helpers/wrap_screen.c
+
 	# Disabling until pipe-video branch gets merged in
 	#vl/vl_bitstream_parser.c \
 	#vl/vl_mpeg12_mc_renderer.c \
 	#vl/vl_compositor.c \
 	#vl/vl_csc.c \
 	#vl/vl_shader_build.c \
-	target-helpers/wrap_screen.c
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_alpha.c \
