@@ -938,38 +938,12 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    enum pipe_format srcFormat, texFormat;
    int ptw, pth;
    GLboolean invertTex = GL_FALSE;
+   GLint readX, readY, readW, readH;
+   struct gl_pixelstore_attrib unpack = ctx->DefaultPacking;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    st_validate_state(st);
-
-   if (srcx < 0) {
-      width -= -srcx;
-      dstx += -srcx;
-      srcx = 0;
-   }
-
-   if (srcy < 0) {
-      height -= -srcy;
-      dsty += -srcy;
-      srcy = 0;
-   }
-
-   if (dstx < 0) {
-      width -= -dstx;
-      srcx += -dstx;
-      dstx = 0;
-   }
-
-   if (dsty < 0) {
-      height -= -dsty;
-      srcy += -dsty;
-      dsty = 0;
-   }
-
-   if (width < 0 || height < 0)
-      return;
-
 
    if (type == GL_STENCIL) {
       /* can't use texturing to do stencil */
@@ -1003,7 +977,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
                                       PIPE_TEXTURE_2D, 
                                       PIPE_TEXTURE_USAGE_DEPTH_STENCIL);
-         assert(texFormat != PIPE_FORMAT_NONE); /* XXX no depth texture formats??? */
+         assert(texFormat != PIPE_FORMAT_NONE);
       }
       else {
          /* default color format */
@@ -1013,19 +987,25 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
+   /* Invert src region if needed */
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
       srcy = ctx->ReadBuffer->Height - srcy - height;
-
-      if (srcy < 0) {
-         height -= -srcy;
-         srcy = 0;
-      }
-
-      if (height < 0)
-         return;
-
       invertTex = !invertTex;
    }
+
+   /* Clip the read region against the src buffer bounds.
+    * We'll still allocate a temporary buffer/texture for the original
+    * src region size but we'll only read the region which is on-screen.
+    * This may mean that we draw garbage pixels into the dest region, but
+    * that's expected.
+    */
+   readX = srcx;
+   readY = srcy;
+   readW = width;
+   readH = height;
+   _mesa_clip_readpixels(ctx, &readX, &readY, &readW, &readH, &unpack);
+   readW = MAX2(0, readW);
+   readH = MAX2(0, readH);
 
    /* Need to use POT texture? */
    ptw = width;
@@ -1055,7 +1035,6 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       return;
 
    /* Make temporary texture which is a copy of the src region.
-    * We'll draw a quad with this texture to draw the dest image.
     */
    if (srcFormat == texFormat) {
       /* copy source framebuffer surface into mipmap/texture */
@@ -1066,16 +1045,16 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                       PIPE_BUFFER_USAGE_GPU_WRITE );
       if (pipe->surface_copy) {
          pipe->surface_copy(pipe,
-                            psTex, /* dest */
-                            0, 0, /* destx/y */
-                            psRead,
-                            srcx, srcy, width, height);
+                            psTex,                               /* dest surf */
+                            unpack.SkipPixels, unpack.SkipRows,  /* dest pos */
+                            psRead,                              /* src surf */
+                            readX, readY, readW, readH);         /* src region */
       } else {
          util_surface_copy(pipe, FALSE,
                            psTex,
-                           0, 0,
+                           unpack.SkipPixels, unpack.SkipRows,
                            psRead,
-                           srcx, srcy, width, height);
+                           readX, readY, readW, readH);
       }
 
       if (0) {
@@ -1091,8 +1070,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* CPU-based fallback/conversion */
       struct pipe_transfer *ptRead =
          st_cond_flush_get_tex_transfer(st, rbRead->texture, 0, 0, 0,
-					PIPE_TRANSFER_READ, srcx, srcy, width,
-					height);
+                                        PIPE_TRANSFER_READ,
+                                        readX, readY, readW, readH);
       struct pipe_transfer *ptTex;
       enum pipe_transfer_usage transfer_usage;
 
@@ -1107,20 +1086,21 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       ptTex = st_cond_flush_get_tex_transfer(st, pt, 0, 0, 0, transfer_usage,
                                              0, 0, width, height);
 
+      /* copy image from ptRead surface to ptTex surface */
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */
          GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-
-         pipe_get_tile_rgba(ptRead, 0, 0, width, height, buf);
-         pipe_put_tile_rgba(ptTex, 0, 0, width, height, buf);
-
+         pipe_get_tile_rgba(ptRead, readX, readY, readW, readH, buf);
+         pipe_put_tile_rgba(ptTex, unpack.SkipPixels, unpack.SkipRows,
+                            readW, readH, buf);
          free(buf);
       }
       else {
          /* GL_DEPTH */
          GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
-         pipe_get_tile_z(ptRead, 0, 0, width, height, buf);
-         pipe_put_tile_z(ptTex, 0, 0, width, height, buf);
+         pipe_get_tile_z(ptRead, readX, readY, readW, readH, buf);
+         pipe_put_tile_z(ptTex, unpack.SkipPixels, unpack.SkipRows,
+                            readW, readH, buf);
          free(buf);
       }
 
@@ -1128,7 +1108,9 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       screen->tex_transfer_destroy(ptTex);
    }
 
-   /* draw textured quad */
+   /* OK, the texture 'pt' contains the src image/pixels.  Now draw a
+    * textured quad with that texture.
+    */
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                       pt, 
