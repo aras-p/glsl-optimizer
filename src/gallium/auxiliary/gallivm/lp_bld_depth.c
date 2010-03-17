@@ -80,8 +80,8 @@
 static LLVMValueRef
 lp_build_stencil_test(struct lp_build_context *bld,
                       const struct pipe_stencil_state *stencil,
-                      LLVMValueRef stencilVals,
-                      LLVMValueRef stencilRef)
+                      LLVMValueRef stencilRef,
+                      LLVMValueRef stencilVals)
 {
    const unsigned stencilMax = 255; /* XXX fix */
    struct lp_type type = bld->type;
@@ -97,8 +97,7 @@ lp_build_stencil_test(struct lp_build_context *bld,
       stencilVals = LLVMBuildAnd(bld->builder, stencilVals, valuemask, "");
    }
 
-   res = lp_build_compare(bld->builder, bld->type, stencil->func,
-                          stencilVals, stencilRef);
+   res = lp_build_cmp(bld, stencil->func, stencilVals, stencilRef);
 
    return res;
 }
@@ -111,10 +110,11 @@ lp_build_stencil_test(struct lp_build_context *bld,
  */
 static LLVMValueRef
 lp_build_stencil_op(struct lp_build_context *bld,
+                    const struct pipe_stencil_state *stencil,
                     unsigned stencil_op,
                     LLVMValueRef stencilRef,
-                    const struct pipe_stencil_state *stencil,
-                    LLVMValueRef stencilVals)
+                    LLVMValueRef stencilVals,
+                    LLVMValueRef mask)
 
 {
    const unsigned stencilMax = 255; /* XXX fix */
@@ -125,24 +125,33 @@ lp_build_stencil_op(struct lp_build_context *bld,
    switch (stencil_op) {
    case PIPE_STENCIL_OP_KEEP:
       res = stencilVals;
+      /* we can return early for this case */
+      return res;
    case PIPE_STENCIL_OP_ZERO:
       res = bld->zero;
+      break;
    case PIPE_STENCIL_OP_REPLACE:
-      res = lp_build_broadcast_scalar(bld, stencilRef);
+      res = stencilRef;
+      break;
    case PIPE_STENCIL_OP_INCR:
       res = lp_build_add(bld, stencilVals, bld->one);
       res = lp_build_min(bld, res, max);
+      break;
    case PIPE_STENCIL_OP_DECR:
       res = lp_build_sub(bld, stencilVals, bld->one);
       res = lp_build_max(bld, res, bld->zero);
+      break;
    case PIPE_STENCIL_OP_INCR_WRAP:
       res = lp_build_add(bld, stencilVals, bld->one);
       res = LLVMBuildAnd(bld->builder, res, max, "");
+      break;
    case PIPE_STENCIL_OP_DECR_WRAP:
       res = lp_build_sub(bld, stencilVals, bld->one);
       res = LLVMBuildAnd(bld->builder, res, max, "");
+      break;
    case PIPE_STENCIL_OP_INVERT:
       res = LLVMBuildNot(bld->builder, stencilVals, "");
+      break;
    default:
       assert(0 && "bad stencil op mode");
       res = NULL;
@@ -156,6 +165,9 @@ lp_build_stencil_op(struct lp_build_context *bld,
       LLVMValueRef t2 = LLVMBuildAnd(bld->builder, stencilVals, cmask, "t2");
       res = LLVMBuildOr(bld->builder, t1, t2, "t1_or_t2");
    }
+
+   /* only the update the vector elements enabled by 'mask' */
+   res = lp_build_select(bld, mask, res, stencilVals);
 
    return res;
 }
@@ -201,6 +213,27 @@ lp_depth_type(const struct util_format_description *format_desc,
 }
 
 
+static LLVMValueRef
+lp_build_get_stencil_ref(struct lp_build_context *bld,
+                         struct lp_type type, LLVMValueRef stencil_refs_ptr)
+{
+   LLVMValueRef indexes[2], ptr, ref, ref_vec;
+
+   /* load 0th element of the array */
+   indexes[0] = indexes[1] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   ptr = LLVMBuildGEP(bld->builder, stencil_refs_ptr, indexes, 2, "");
+   ref = LLVMBuildLoad(bld->builder, ptr, "");
+
+   /* convert int8 value to i32 */
+   ref = LLVMBuildZExt(bld->builder, ref, LLVMIntType(type.width), "");
+
+   /* make scalar into vector */
+   ref_vec = lp_build_broadcast_scalar(bld, ref);
+
+   return ref_vec;
+}
+
+
 /**
  * Generate code for performing depth and/or stencil tests.
  * We operate on a vector of values (typically a 2x2 quad).
@@ -224,12 +257,11 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
 {
    struct lp_build_context bld;
    unsigned z_swizzle, s_swizzle;
-   LLVMValueRef zs_dst;
-   LLVMValueRef z_bitmask = NULL;
-   LLVMValueRef z_pass;
-
-   (void) lp_build_stencil_test;
-   (void) lp_build_stencil_op;
+   LLVMValueRef zs_dst, z_dst = NULL;
+   LLVMValueRef stencil_vals = NULL;
+   LLVMValueRef z_bitmask = NULL, s_bitmask = NULL;
+   LLVMValueRef z_pass = NULL, s_pass_mask = NULL;
+   LLVMValueRef orig_mask = mask->value;
 
    assert(depth->enabled || stencil[0].enabled);
 
@@ -262,15 +294,16 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    /* Setup build context */
    lp_build_context_init(&bld, builder, type);
 
+   /* Load current z/stencil value from z/stencil buffer */
    zs_dst = LLVMBuildLoad(builder, zs_dst_ptr, "");
 
-   lp_build_name(zs_dst, "zsbuf");
+   lp_build_name(zs_dst, "zsbufval");
 
    /* Align the source depth bits with the destination's, and mask out any
     * stencil or padding bits from both */
    if(format_desc->channel[z_swizzle].size == format_desc->block.bits) {
       assert(z_swizzle == 0);
-      /* nothing to do */
+      z_dst = zs_dst;
    }
    else {
       /* shift/mask bits to right-justify the Z bits */
@@ -295,28 +328,109 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
          z_bitmask = lp_build_const_int_vec(type, mask_left ^ mask_right);
       }
 
+      s_bitmask = LLVMBuildNot(builder, z_bitmask, "");
+
+      stencil_vals = LLVMBuildAnd(builder, zs_dst, s_bitmask, "");
+
       if(padding_left)
          z_src = LLVMBuildLShr(builder, z_src,
                                 lp_build_const_int_vec(type, padding_left), "");
       if(padding_right)
          z_src = LLVMBuildAnd(builder, z_src, z_bitmask, "");
       if(padding_left || padding_right)
-         zs_dst = LLVMBuildAnd(builder, zs_dst, z_bitmask, "");
+         z_dst = LLVMBuildAnd(builder, zs_dst, z_bitmask, "");
+      else
+         z_dst = zs_dst;
    }
 
-   lp_build_name(zs_dst, "zsbuf.z");
+   lp_build_name(z_dst, "zsbuf.z");
 
-   /* compare src Z to dst Z, returning 'pass' mask */
-   z_pass = lp_build_cmp(&bld, depth->func, z_src, zs_dst);
-   lp_build_mask_update(mask, z_pass);
+   /*
+   printf("build depth %d stencil %d\n",
+          depth->enabled,
+          stencil[0].enabled);
+   */
 
-   if (depth->writemask) {
-      if(z_bitmask)
-         z_bitmask = LLVMBuildAnd(builder, mask->value, z_bitmask, "");
+   if (stencil[0].enabled) {
+      /* Incoming stencil_refs is ptr to int8[2].  Get/convert to int32[4]. */
+      stencil_refs = lp_build_get_stencil_ref(&bld, type, stencil_refs);
+
+      s_pass_mask = lp_build_stencil_test(&bld, stencil,
+                                          stencil_refs, stencil_vals);
+
+      /* apply stencil-fail operator */
+      {
+         LLVMValueRef s_fail_mask = lp_build_andc(&bld, orig_mask, s_pass_mask);
+         stencil_vals = lp_build_stencil_op(&bld, stencil, stencil[0].fail_op,
+                                            stencil_refs, stencil_vals,
+                                            s_fail_mask);
+      }
+   }
+
+   if (depth->enabled) {
+      /* compare src Z to dst Z, returning 'pass' mask */
+      z_pass = lp_build_cmp(&bld, depth->func, z_src, z_dst);
+
+      if (!stencil[0].enabled) {
+         /* We can potentially skip all remaining operations here, but only
+          * if stencil is disabled because we still need to update the stencil
+          * buffer values.  Don't need to update Z buffer values.
+          */
+         lp_build_mask_update(mask, z_pass);
+      }
+
+      if (depth->writemask) {
+         if(z_bitmask)
+            z_bitmask = LLVMBuildAnd(builder, mask->value, z_bitmask, "");
+         else
+            z_bitmask = mask->value;
+
+         z_dst = lp_build_select(&bld, z_bitmask, z_src, z_dst);
+      }
+
+      if (stencil[0].enabled) {
+         /* update stencil buffer values according to z pass/fail result */
+         LLVMValueRef z_fail_mask, z_pass_mask;
+
+         /* apply Z-fail operator */
+         z_fail_mask = lp_build_andc(&bld, orig_mask, z_pass);
+         stencil_vals = lp_build_stencil_op(&bld, stencil, stencil[0].zfail_op,
+                                            stencil_refs, stencil_vals,
+                                            z_fail_mask);
+
+         /* apply Z-pass operator */
+         z_pass_mask = LLVMBuildAnd(bld.builder, orig_mask, z_pass, "");
+         stencil_vals = lp_build_stencil_op(&bld, stencil, stencil[0].zpass_op,
+                                            stencil_refs, stencil_vals,
+                                            z_pass_mask);
+      }
+   }
+   else {
+      /* No depth test: apply Z-pass operator to stencil buffer values which
+       * passed the stencil test.
+       */
+      s_pass_mask = LLVMBuildAnd(bld.builder, orig_mask, s_pass_mask, "");
+      stencil_vals = lp_build_stencil_op(&bld, stencil, stencil[0].zpass_op,
+                                         stencil_refs, stencil_vals, s_pass_mask);
+   }
+
+   /* Finally, merge/store the z/stencil values */
+   if ((depth->enabled && depth->writemask) ||
+       (stencil[0].enabled && stencil[0].writemask)) {
+
+      if (z_dst && stencil_vals)
+         zs_dst = LLVMBuildOr(bld.builder, z_dst, stencil_vals, "");
+      else if (z_dst)
+         zs_dst = z_dst;
       else
-         z_bitmask = mask->value;
+         zs_dst = stencil_vals;
 
-      zs_dst = lp_build_select(&bld, z_bitmask, z_src, zs_dst);
       LLVMBuildStore(builder, zs_dst, zs_dst_ptr);
    }
+
+   if (s_pass_mask)
+      lp_build_mask_update(mask, s_pass_mask);
+
+   if (depth->enabled && stencil[0].enabled)
+      lp_build_mask_update(mask, z_pass);
 }
