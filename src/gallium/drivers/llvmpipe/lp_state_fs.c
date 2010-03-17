@@ -138,7 +138,7 @@ generate_pos0(LLVMBuilderRef builder,
 
 
 /**
- * Generate the depth test.
+ * Generate the depth /stencil test code.
  */
 static void
 generate_depth_stencil(LLVMBuilderRef builder,
@@ -151,9 +151,6 @@ generate_depth_stencil(LLVMBuilderRef builder,
 {
    const struct util_format_description *format_desc;
    struct lp_type dst_type;
-
-   if(!key->depth.enabled)
-      return;
 
    format_desc = util_format_description(key->zsbuf_format);
    assert(format_desc);
