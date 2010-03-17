@@ -482,6 +482,7 @@ intel_emit_linear_blit(struct intel_context *intel,
 		       unsigned int size)
 {
    GLuint pitch, height;
+   GLboolean ok;
 
    /* Blits are in a different ringbuffer so we don't use them. */
    assert(intel->gen < 6);
@@ -489,25 +490,27 @@ intel_emit_linear_blit(struct intel_context *intel,
    /* The pitch is a signed value. */
    pitch = MIN2(size, (1 << 15) - 1);
    height = size / pitch;
-   intelEmitCopyBlit(intel, 1,
-		     pitch, src_bo, src_offset, I915_TILING_NONE,
-		     pitch, dst_bo, dst_offset, I915_TILING_NONE,
-		     0, 0, /* src x/y */
-		     0, 0, /* dst x/y */
-		     pitch, height, /* w, h */
-		     GL_COPY);
+   ok = intelEmitCopyBlit(intel, 1,
+			  pitch, src_bo, src_offset, I915_TILING_NONE,
+			  pitch, dst_bo, dst_offset, I915_TILING_NONE,
+			  0, 0, /* src x/y */
+			  0, 0, /* dst x/y */
+			  pitch, height, /* w, h */
+			  GL_COPY);
+   assert(ok);
 
    src_offset += pitch * height;
    dst_offset += pitch * height;
    size -= pitch * height;
    assert (size < (1 << 15));
    if (size != 0) {
-      intelEmitCopyBlit(intel, 1,
-			size, src_bo, src_offset, I915_TILING_NONE,
-			size, dst_bo, dst_offset, I915_TILING_NONE,
-			0, 0, /* src x/y */
-			0, 0, /* dst x/y */
-			size, 1, /* w, h */
-			GL_COPY);
+      ok = intelEmitCopyBlit(intel, 1,
+			     size, src_bo, src_offset, I915_TILING_NONE,
+			     size, dst_bo, dst_offset, I915_TILING_NONE,
+			     0, 0, /* src x/y */
+			     0, 0, /* dst x/y */
+			     size, 1, /* w, h */
+			     GL_COPY);
+      assert(ok);
    }
 }
