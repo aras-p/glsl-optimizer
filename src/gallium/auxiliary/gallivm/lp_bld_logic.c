@@ -483,3 +483,13 @@ lp_build_alloca(struct lp_build_context *bld)
       return LLVMBuildAlloca(bld->builder, lp_build_elem_type(type), "");
    }
 }
+
+
+/** Return (a & ~b) */
+LLVMValueRef
+lp_build_andc(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
+{
+   b = LLVMBuildNot(bld->builder, b, "");
+   b = LLVMBuildAnd(bld->builder, a, b, "");
+   return b;
+}

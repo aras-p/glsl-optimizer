@@ -79,4 +79,9 @@ lp_build_select_aos(struct lp_build_context *bld,
 LLVMValueRef
 lp_build_alloca(struct lp_build_context *bld);
 
+
+LLVMValueRef
+lp_build_andc(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b);
+
+
 #endif /* !LP_BLD_LOGIC_H */
