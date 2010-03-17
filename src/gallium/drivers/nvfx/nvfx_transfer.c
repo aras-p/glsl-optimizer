@@ -33,12 +33,12 @@ nvfx_compatible_transfer_tex(struct pipe_texture *pt, unsigned width, unsigned h
 }
 
 static struct pipe_transfer *
-nvfx_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
+nvfx_transfer_new(struct pipe_context *pipe, struct pipe_texture *pt,
 		  unsigned face, unsigned level, unsigned zslice,
 		  enum pipe_transfer_usage usage,
 		  unsigned x, unsigned y, unsigned w, unsigned h)
 {
-        struct pipe_screen *pscreen = pcontext->screen;
+	struct pipe_screen *pscreen = pipe->screen;
 	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
 	struct nvfx_transfer *tx;
 	struct pipe_texture tx_tex_template, *tx_tex;
@@ -120,13 +120,13 @@ nvfx_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 }
 
 static void
-nvfx_transfer_del(struct pipe_context *pcontext,
+nvfx_transfer_del(struct pipe_context *pipe,
                   struct pipe_transfer *ptx)
 {
 	struct nvfx_transfer *tx = (struct nvfx_transfer *)ptx;
 
 	if (!tx->direct && (ptx->usage & PIPE_TRANSFER_WRITE)) {
-		struct pipe_screen *pscreen = pcontext->screen;
+		struct pipe_screen *pscreen = pipe->screen;
 		struct nvfx_screen *nvscreen = nvfx_screen(pscreen);
 		struct pipe_surface *dst;
 
@@ -149,9 +149,9 @@ nvfx_transfer_del(struct pipe_context *pcontext,
 }
 
 static void *
-nvfx_transfer_map(struct pipe_context *pcontext, struct pipe_transfer *ptx)
+nvfx_transfer_map(struct pipe_context *pipe, struct pipe_transfer *ptx)
 {
-        struct pipe_screen *pscreen = pcontext->screen;
+	struct pipe_screen *pscreen = pipe->screen;
 	struct nvfx_transfer *tx = (struct nvfx_transfer *)ptx;
 	struct nv04_surface *ns = (struct nv04_surface *)tx->surface;
 	struct nvfx_miptree *mt = (struct nvfx_miptree *)tx->surface->texture;
@@ -165,9 +165,9 @@ nvfx_transfer_map(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 }
 
 static void
-nvfx_transfer_unmap(struct pipe_context *pcontext, struct pipe_transfer *ptx)
+nvfx_transfer_unmap(struct pipe_context *pipe, struct pipe_transfer *ptx)
 {
-	struct pipe_screen *pscreen = pcontext->screen;
+	struct pipe_screen *pscreen = pipe->screen;
 	struct nvfx_transfer *tx = (struct nvfx_transfer *)ptx;
 	struct nvfx_miptree *mt = (struct nvfx_miptree *)tx->surface->texture;
 
