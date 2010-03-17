@@ -51,7 +51,6 @@
 #include "st_manager.h"
 
 #include "util/u_format.h"
-#include "util/u_rect.h"
 #include "util/u_inlines.h"
 
 
@@ -518,17 +517,10 @@ copy_back_to_front(struct st_context *st,
    (void) st_get_framebuffer_surface(stfb, backIndex, &surf_back);
 
    if (surf_front && surf_back) {
-      if (st->pipe->surface_copy) {
-         st->pipe->surface_copy(st->pipe,
-                                surf_front, 0, 0,  /* dest */
-                                surf_back, 0, 0,   /* src */
-                                fb->Width, fb->Height);
-      } else {
-         util_surface_copy(st->pipe, FALSE,
-                           surf_front, 0, 0,
-                           surf_back, 0, 0,
-                           fb->Width, fb->Height);
-      }
+      st->pipe->surface_copy(st->pipe,
+                             surf_front, 0, 0,  /* dest */
+                             surf_back, 0, 0,   /* src */
+                             fb->Width, fb->Height);
    }
 }
 

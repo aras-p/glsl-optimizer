@@ -59,7 +59,6 @@
 #include "util/u_draw_quad.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
-#include "util/u_rect.h"
 #include "shader/prog_instruction.h"
 #include "cso_cache/cso_context.h"
 
@@ -1057,19 +1056,11 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                        PIPE_BUFFER_USAGE_GPU_READ);
       struct pipe_surface *psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
                                       PIPE_BUFFER_USAGE_GPU_WRITE );
-      if (pipe->surface_copy) {
-         pipe->surface_copy(pipe,
-                            psTex,                               /* dest surf */
-                            unpack.SkipPixels, unpack.SkipRows,  /* dest pos */
-                            psRead,                              /* src surf */
-                            readX, readY, readW, readH);         /* src region */
-      } else {
-         util_surface_copy(pipe, FALSE,
-                           psTex,
-                           unpack.SkipPixels, unpack.SkipRows,
-                           psRead,
-                           readX, readY, readW, readH);
-      }
+      pipe->surface_copy(pipe,
+                         psTex,                               /* dest surf */
+                         unpack.SkipPixels, unpack.SkipRows,  /* dest pos */
+                         psRead,                              /* src surf */
+                         readX, readY, readW, readH);         /* src region */
 
       if (0) {
          /* debug */

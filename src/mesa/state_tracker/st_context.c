@@ -63,6 +63,7 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
+#include "util/u_rect.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
@@ -94,6 +95,19 @@ st_get_msaa(void)
    if (msaa)
       return atoi(msaa);
    return 0;
+}
+
+
+/** Default method for pipe_context::surface_copy() */
+static void
+st_surface_copy(struct pipe_context *pipe,
+                struct pipe_surface *dst,
+                unsigned dst_x, unsigned dst_y,
+                struct pipe_surface *src,
+                unsigned src_x, unsigned src_y, 
+                unsigned w, unsigned h)
+{
+   util_surface_copy(pipe, FALSE, dst, dst_x, dst_y, src, src_x, src_y, w, h);
 }
 
 
@@ -165,6 +179,10 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    /* GL limits and extensions */
    st_init_limits(st);
    st_init_extensions(st);
+
+   /* plug in helper driver functions if needed */
+   if (!pipe->surface_copy)
+      pipe->surface_copy = st_surface_copy;
 
    return st;
 }
