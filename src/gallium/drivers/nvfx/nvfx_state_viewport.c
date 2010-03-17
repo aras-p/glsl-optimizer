@@ -1,14 +1,15 @@
 #include "nvfx_context.h"
 
+/* Having this depend on FB and RAST looks wrong, but it seems
+   necessary to make this work on nv3x
+   TODO: find the right fix
+*/
+
 static boolean
 nvfx_state_viewport_validate(struct nvfx_context *nvfx)
 {
 	struct pipe_viewport_state *vpt = &nvfx->viewport;
 	struct nouveau_stateobj *so;
-
-	if (nvfx->state.hw[NVFX_STATE_VIEWPORT] &&
-	    !(nvfx->dirty & NVFX_NEW_VIEWPORT))
-		return FALSE;
 
 	so = so_new(2, 9, 0);
 	so_method(so, nvfx->screen->eng3d,
@@ -45,7 +46,7 @@ nvfx_state_viewport_validate(struct nvfx_context *nvfx)
 struct nvfx_state_entry nvfx_state_viewport = {
 	.validate = nvfx_state_viewport_validate,
 	.dirty = {
-		.pipe = NVFX_NEW_VIEWPORT,
+		.pipe = NVFX_NEW_VIEWPORT | NVFX_NEW_FB | NVFX_NEW_RAST,
 		.hw = NVFX_STATE_VIEWPORT
 	}
 };
