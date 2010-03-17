@@ -67,6 +67,9 @@ nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	struct nvfx_miptree *mt;
 	unsigned buf_usage = PIPE_BUFFER_USAGE_PIXEL |
 	                     NOUVEAU_BUFFER_USAGE_TEXTURE;
+	static int no_swizzle = -1;
+	if(no_swizzle < 0)
+		no_swizzle = debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE);
 
 	mt = MALLOC(sizeof(struct nvfx_miptree));
 	if (!mt)
@@ -106,7 +109,7 @@ nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_R16_SNORM:
 		{
-			if (debug_get_bool_option("NOUVEAU_NO_SWIZZLE", FALSE))
+			if (no_swizzle)
 				mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 			break;
 		}

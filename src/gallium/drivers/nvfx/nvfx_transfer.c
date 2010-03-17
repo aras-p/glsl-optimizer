@@ -42,6 +42,9 @@ nvfx_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
 	struct nvfx_transfer *tx;
 	struct pipe_texture tx_tex_template, *tx_tex;
+	static int no_transfer = -1;
+	if(no_transfer < 0)
+		no_transfer = debug_get_bool_option("NOUVEAU_NO_TRANSFER", TRUE/*XXX:FALSE*/);
 
 	tx = CALLOC_STRUCT(nvfx_transfer);
 	if (!tx)
@@ -59,8 +62,7 @@ nvfx_transfer_new(struct pipe_context *pcontext, struct pipe_texture *pt,
 	tx->base.zslice = zslice;
 
 	/* Direct access to texture */
-	if ((pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC ||
-	     debug_get_bool_option("NOUVEAU_NO_TRANSFER", TRUE/*XXX:FALSE*/)) &&
+	if ((pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC || no_transfer) &&
 	    pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)
 	{
 		tx->direct = true;
