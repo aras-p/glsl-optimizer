@@ -307,7 +307,7 @@ _mesa_copy_rect(GLubyte * dst,
    dst += dst_x * cpp;
    src += src_x * cpp;
    dst += dst_y * dst_pitch;
-   src += src_y * dst_pitch;
+   src += src_y * src_pitch;
    width *= cpp;
 
    if (width == dst_pitch && width == src_pitch)
