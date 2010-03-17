@@ -95,6 +95,8 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 0;
+   case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+      return 1;
    default:
       return 0;
    }
