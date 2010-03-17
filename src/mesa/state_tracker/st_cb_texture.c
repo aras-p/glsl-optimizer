@@ -900,7 +900,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
 
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 
-   screen->tex_transfer_destroy(tex_xfer);
+   pipe->tex_transfer_destroy(pipe, tex_xfer);
 
    /* destroy the temp / dest surface */
    util_destroy_rgba_surface(dst_texture, dst_surface);
