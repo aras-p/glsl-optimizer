@@ -102,8 +102,7 @@ struct intel_mipmap_tree
 
    /* Derived from the above:
     */
-   GLuint pitch;
-   GLuint depth_pitch;          /* per-image on i945? */
+   GLuint total_width;
    GLuint total_height;
 
    /* Includes image offset tables:

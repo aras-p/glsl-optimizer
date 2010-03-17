@@ -568,7 +568,7 @@ intel_render_texture(GLcontext * ctx,
 				  att->Zoffset,
 				  &dst_x, &dst_y);
 
-   intel_image->mt->region->draw_offset = (dst_y * intel_image->mt->pitch +
+   intel_image->mt->region->draw_offset = (dst_y * intel_image->mt->region->pitch +
 					   dst_x) * intel_image->mt->cpp;
    intel_image->mt->region->draw_x = dst_x;
    intel_image->mt->region->draw_y = dst_y;

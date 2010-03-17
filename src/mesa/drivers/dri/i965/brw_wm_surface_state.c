@@ -261,7 +261,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 
    key.format = firstImage->TexFormat;
    key.internal_format = firstImage->InternalFormat;
-   key.pitch = intelObj->mt->pitch;
+   key.pitch = intelObj->mt->region->pitch;
    key.depth = firstImage->Depth;
    key.bo = intelObj->mt->region->buffer;
    key.offset = 0;

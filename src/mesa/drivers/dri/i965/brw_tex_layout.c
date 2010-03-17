@@ -58,12 +58,12 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
           GLuint qpitch = 0;
           GLuint y_pitch = 0;
 
-          mt->pitch = mt->width0;
+          mt->total_width = mt->width0;
           intel_get_texture_alignment_unit(mt->internal_format, &align_w, &align_h);
           y_pitch = ALIGN(height, align_h);
 
           if (mt->compressed) {
-              mt->pitch = ALIGN(mt->width0, align_w);
+              mt->total_width = ALIGN(mt->width0, align_w);
           }
 
           if (mt->first_level != mt->last_level) {
@@ -77,12 +77,10 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
                       + minify(minify(mt->width0));
               }
 
-              if (mip1_width > mt->pitch) {
-                  mt->pitch = mip1_width;
+              if (mip1_width > mt->total_width) {
+                  mt->total_width = mip1_width;
               }
           }
-
-          mt->pitch = intel_miptree_pitch_align(intel, mt, tiling, mt->pitch);
 
           if (mt->compressed) {
               qpitch = (y_pitch + ALIGN(minify(y_pitch), align_h) + 11 * align_h) / 4;
@@ -137,10 +135,10 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
       intel_get_texture_alignment_unit(mt->internal_format, &align_w, &align_h);
 
       if (mt->compressed) {
-          mt->pitch = ALIGN(width, align_w);
+          mt->total_width = ALIGN(width, align_w);
           pack_y_pitch = (height + 3) / 4;
       } else {
-	 mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, mt->width0);
+	 mt->total_width = mt->width0;
 	 pack_y_pitch = ALIGN(mt->height0, align_h);
       }
 
@@ -184,7 +182,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 	    if (pack_x_pitch > 4) {
 	       pack_x_pitch >>= 1;
 	       pack_x_nr <<= 1;
-	       assert(pack_x_pitch * pack_x_nr <= mt->pitch);
+	       assert(pack_x_pitch * pack_x_nr <= mt->total_width);
 	    }
 
 	    if (pack_y_pitch > 2) {
@@ -211,11 +209,8 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
       i945_miptree_layout_2d(intel, mt, tiling);
       break;
    }
-   DBG("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__,
-		mt->pitch,
-		mt->total_height,
-		mt->cpp,
-		mt->pitch * mt->total_height * mt->cpp );
+   DBG("%s: %dx%dx%d\n", __FUNCTION__,
+       mt->total_width, mt->total_height, mt->cpp);
 
    return GL_TRUE;
 }

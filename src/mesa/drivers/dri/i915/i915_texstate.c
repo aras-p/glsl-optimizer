@@ -165,7 +165,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    format = translate_texture_format(firstImage->TexFormat,
 				     firstImage->InternalFormat,
 				     tObj->DepthMode);
-   pitch = intelObj->mt->pitch * intelObj->mt->cpp;
+   pitch = intelObj->mt->region->pitch * intelObj->mt->cpp;
 
    state[I915_TEXREG_MS3] =
       (((firstImage->Height - 1) << MS3_HEIGHT_SHIFT) |

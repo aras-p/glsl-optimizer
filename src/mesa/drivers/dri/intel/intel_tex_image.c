@@ -236,7 +236,7 @@ try_pbo_upload(struct intel_context *intel,
 				  intelImage->face, 0,
 				  &dst_x, &dst_y);
 
-   dst_stride = intelImage->mt->pitch;
+   dst_stride = intelImage->mt->region->pitch;
 
    if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
       intelFlush(&intel->ctx);
@@ -290,7 +290,7 @@ try_pbo_zcopy(struct intel_context *intel,
 				  intelImage->face, 0,
 				  &dst_x, &dst_y);
 
-   dst_stride = intelImage->mt->pitch;
+   dst_stride = intelImage->mt->region->pitch;
 
    if (src_stride != dst_stride || dst_x != 0 || dst_y != 0 ||
        src_offset != 0) {
