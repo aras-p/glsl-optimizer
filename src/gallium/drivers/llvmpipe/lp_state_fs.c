@@ -141,13 +141,13 @@ generate_pos0(LLVMBuilderRef builder,
  * Generate the depth test.
  */
 static void
-generate_depth(LLVMBuilderRef builder,
-               const struct lp_fragment_shader_variant_key *key,
-               struct lp_type src_type,
-               struct lp_build_mask_context *mask,
-               LLVMValueRef stencil_refs,
-               LLVMValueRef src,
-               LLVMValueRef dst_ptr)
+generate_depth_stencil(LLVMBuilderRef builder,
+                       const struct lp_fragment_shader_variant_key *key,
+                       struct lp_type src_type,
+                       struct lp_build_mask_context *mask,
+                       LLVMValueRef stencil_refs,
+                       LLVMValueRef src,
+                       LLVMValueRef dst_ptr)
 {
    const struct util_format_description *format_desc;
    struct lp_type dst_type;
@@ -179,20 +179,21 @@ generate_depth(LLVMBuilderRef builder,
    assert(dst_type.width == src_type.width);
    assert(dst_type.length == src_type.length);
 
+   /* Convert fragment Z from float to integer */
    lp_build_conv(builder, src_type, dst_type, &src, 1, &src, 1);
 
    dst_ptr = LLVMBuildBitCast(builder,
                               dst_ptr,
                               LLVMPointerType(lp_build_vec_type(dst_type), 0), "");
-
-   lp_build_depth_test(builder,
-                       &key->depth,
-                       dst_type,
-                       format_desc,
-                       mask,
-                       stencil_refs,
-                       src,
-                       dst_ptr);
+   lp_build_depth_stencil_test(builder,
+                               &key->depth,
+                               key->stencil,
+                               dst_type,
+                               format_desc,
+                               mask,
+                               stencil_refs,
+                               src,
+                               dst_ptr);
 }
 
 
@@ -410,7 +411,7 @@ generate_fs(struct llvmpipe_context *lp,
    LLVMValueRef stencil_refs;
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
-   boolean early_depth_test;
+   boolean early_depth_stencil_test;
    unsigned attrib;
    unsigned chan;
    unsigned cbuf;
@@ -458,16 +459,16 @@ generate_fs(struct llvmpipe_context *lp,
       lp_build_mask_update(&mask, smask);
    }
 
-   early_depth_test =
-      key->depth.enabled &&
+   early_depth_stencil_test =
+      (key->depth.enabled || key->stencil[0].enabled) &&
       !key->alpha.enabled &&
       !shader->info.uses_kill &&
       !shader->info.writes_z;
 
-   if(early_depth_test)
-      generate_depth(builder, key,
-                     type, &mask,
-                     stencil_refs, z, depth_ptr);
+   if (early_depth_stencil_test)
+      generate_depth_stencil(builder, key,
+                             type, &mask,
+                             stencil_refs, z, depth_ptr);
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
@@ -511,10 +512,10 @@ generate_fs(struct llvmpipe_context *lp,
       }
    }
 
-   if(!early_depth_test)
-      generate_depth(builder, key,
-                     type, &mask,
-                     stencil_refs, z, depth_ptr);
+   if (!early_depth_stencil_test)
+      generate_depth_stencil(builder, key,
+                             type, &mask,
+                             stencil_refs, z, depth_ptr);
 
    lp_build_mask_end(&mask);
 

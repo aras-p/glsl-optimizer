@@ -212,34 +212,36 @@ lp_depth_type(const struct util_format_description *format_desc,
  * \param dst_ptr  the outgoing/updated depth/stencil values
  */
 void
-lp_build_depth_test(LLVMBuilderRef builder,
-                    const struct pipe_depth_state *state,
-                    struct lp_type type,
-                    const struct util_format_description *format_desc,
-                    struct lp_build_mask_context *mask,
-                    LLVMValueRef stencil_refs,
-                    LLVMValueRef src,
-                    LLVMValueRef dst_ptr)
+lp_build_depth_stencil_test(LLVMBuilderRef builder,
+                            const struct pipe_depth_state *depth,
+                            const struct pipe_stencil_state stencil[2],
+                            struct lp_type type,
+                            const struct util_format_description *format_desc,
+                            struct lp_build_mask_context *mask,
+                            LLVMValueRef stencil_refs,
+                            LLVMValueRef z_src,
+                            LLVMValueRef zs_dst_ptr)
 {
    struct lp_build_context bld;
-   unsigned z_swizzle;
-   LLVMValueRef dst;
+   unsigned z_swizzle, s_swizzle;
+   LLVMValueRef zs_dst;
    LLVMValueRef z_bitmask = NULL;
-   LLVMValueRef test;
+   LLVMValueRef z_pass;
 
    (void) lp_build_stencil_test;
    (void) lp_build_stencil_op;
 
-   if(!state->enabled)
-      return;
+   assert(depth->enabled || stencil[0].enabled);
 
    assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
    assert(format_desc->block.width == 1);
    assert(format_desc->block.height == 1);
 
    z_swizzle = format_desc->swizzle[0];
-   if(z_swizzle == UTIL_FORMAT_SWIZZLE_NONE)
-      return;
+   s_swizzle = format_desc->swizzle[1];
+
+   assert(z_swizzle != UTIL_FORMAT_SWIZZLE_NONE ||
+          s_swizzle != UTIL_FORMAT_SWIZZLE_NONE);
 
    /* Sanity checking */
    assert(z_swizzle < 4);
@@ -260,9 +262,9 @@ lp_build_depth_test(LLVMBuilderRef builder,
    /* Setup build context */
    lp_build_context_init(&bld, builder, type);
 
-   dst = LLVMBuildLoad(builder, dst_ptr, "");
+   zs_dst = LLVMBuildLoad(builder, zs_dst_ptr, "");
 
-   lp_build_name(dst, "zsbuf");
+   lp_build_name(zs_dst, "zsbuf");
 
    /* Align the source depth bits with the destination's, and mask out any
     * stencil or padding bits from both */
@@ -271,6 +273,7 @@ lp_build_depth_test(LLVMBuilderRef builder,
       /* nothing to do */
    }
    else {
+      /* shift/mask bits to right-justify the Z bits */
       unsigned padding_left;
       unsigned padding_right;
       unsigned chan;
@@ -287,32 +290,33 @@ lp_build_depth_test(LLVMBuilderRef builder,
                      (padding_right + format_desc->channel[z_swizzle].size);
 
       if(padding_left || padding_right) {
-         const unsigned long long mask_left = ((unsigned long long)1 << (format_desc->block.bits - padding_left)) - 1;
-         const unsigned long long mask_right = ((unsigned long long)1 << (padding_right)) - 1;
+         const unsigned long long mask_left = (1ULL << (format_desc->block.bits - padding_left)) - 1;
+         const unsigned long long mask_right = (1ULL << (padding_right)) - 1;
          z_bitmask = lp_build_const_int_vec(type, mask_left ^ mask_right);
       }
 
       if(padding_left)
-         src = LLVMBuildLShr(builder, src, lp_build_const_int_vec(type, padding_left), "");
+         z_src = LLVMBuildLShr(builder, z_src,
+                                lp_build_const_int_vec(type, padding_left), "");
       if(padding_right)
-         src = LLVMBuildAnd(builder, src, z_bitmask, "");
+         z_src = LLVMBuildAnd(builder, z_src, z_bitmask, "");
       if(padding_left || padding_right)
-         dst = LLVMBuildAnd(builder, dst, z_bitmask, "");
+         zs_dst = LLVMBuildAnd(builder, zs_dst, z_bitmask, "");
    }
 
-   lp_build_name(dst, "zsbuf.z");
+   lp_build_name(zs_dst, "zsbuf.z");
 
    /* compare src Z to dst Z, returning 'pass' mask */
-   test = lp_build_cmp(&bld, state->func, src, dst);
-   lp_build_mask_update(mask, test);
+   z_pass = lp_build_cmp(&bld, depth->func, z_src, zs_dst);
+   lp_build_mask_update(mask, z_pass);
 
-   if(state->writemask) {
+   if (depth->writemask) {
       if(z_bitmask)
          z_bitmask = LLVMBuildAnd(builder, mask->value, z_bitmask, "");
       else
          z_bitmask = mask->value;
 
-      dst = lp_build_select(&bld, z_bitmask, src, dst);
-      LLVMBuildStore(builder, dst, dst_ptr);
+      zs_dst = lp_build_select(&bld, z_bitmask, z_src, zs_dst);
+      LLVMBuildStore(builder, zs_dst, zs_dst_ptr);
    }
 }

@@ -51,14 +51,15 @@ lp_depth_type(const struct util_format_description *format_desc,
 
 
 void
-lp_build_depth_test(LLVMBuilderRef builder,
-                    const struct pipe_depth_state *state,
-                    struct lp_type type,
-                    const struct util_format_description *format_desc,
-                    struct lp_build_mask_context *mask,
-                    LLVMValueRef stencil_refs,
-                    LLVMValueRef src,
-                    LLVMValueRef dst_ptr);
+lp_build_depth_stencil_test(LLVMBuilderRef builder,
+                            const struct pipe_depth_state *depth,
+                            const struct pipe_stencil_state stencil[2],
+                            struct lp_type type,
+                            const struct util_format_description *format_desc,
+                            struct lp_build_mask_context *mask,
+                            LLVMValueRef stencil_refs,
+                            LLVMValueRef zs_src,
+                            LLVMValueRef zs_dst_ptr);
 
 
 #endif /* !LP_BLD_DEPTH_H */
