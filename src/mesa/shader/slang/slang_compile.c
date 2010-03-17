@@ -246,7 +246,7 @@ parse_general_number(slang_parse_ctx *ctx, float *number)
    if (flt[strlen(flt) - 1] == 'f' || flt[strlen(flt) - 1] == 'F') {
       flt[strlen(flt) - 1] = '\0';
    }
-   *number = (float)_mesa_strtod(flt, (char **)NULL);
+   *number = _mesa_strtof(flt, (char **)NULL);
    free(flt);
 
    return 1;
@@ -312,7 +312,7 @@ parse_float(slang_parse_ctx * C, float *number)
       slang_string_concat(whole, "E");
       slang_string_concat(whole, exponent);
 
-      *number = (float) (_mesa_strtod(whole, (char **) NULL));
+      *number = _mesa_strtof(whole, (char **) NULL);
 
       _slang_free(whole);
    }
