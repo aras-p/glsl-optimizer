@@ -38,16 +38,13 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
+#include "state_tracker/st_api.h"
 
 struct stw_pixelformat_info
 {
-   enum pipe_format color_format;
-   enum pipe_format depth_stencil_format;
-   
    PIXELFORMATDESCRIPTOR pfd;
    
-   unsigned numSampleBuffers;
-   unsigned numSamples;
+   struct st_visual stvis;
 };
 
 void
@@ -61,10 +58,6 @@ stw_pixelformat_get_extended_count( void );
 
 const struct stw_pixelformat_info *
 stw_pixelformat_get_info( uint index );
-
-void
-stw_pixelformat_visual(GLvisual *visual, 
-                       const struct stw_pixelformat_info *pfi );
 
 int
 stw_pixelformat_choose( HDC hdc,

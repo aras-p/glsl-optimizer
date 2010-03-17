@@ -142,9 +142,6 @@ stw_pixelformat_add(
    
    memset(pfi, 0, sizeof *pfi);
    
-   pfi->color_format = color->format;
-   pfi->depth_stencil_format = depth->format;
-   
    pfi->pfd.nSize = sizeof pfi->pfd;
    pfi->pfd.nVersion = 1;
 
@@ -184,11 +181,22 @@ stw_pixelformat_add(
    pfi->pfd.dwVisibleMask = 0;
    pfi->pfd.dwDamageMask = 0;
 
-   if(samples) {
-      pfi->numSampleBuffers = 1;
-      pfi->numSamples = samples;
-      extended = TRUE;
-   }
+   /*
+    * since state trackers can allocate depth/stencil/accum buffers, we provide
+    * only color buffers here
+    */
+   pfi->stvis.buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
+   if (doublebuffer)
+      pfi->stvis.buffer_mask = ST_ATTACHMENT_BACK_LEFT_MASK;
+
+   pfi->stvis.color_format = color->format;
+   pfi->stvis.depth_stencil_format = depth->format;
+
+   pfi->stvis.accum_format = (accum) ?
+      PIPE_FORMAT_R16G16B16A16_SNORM : PIPE_FORMAT_NONE;
+
+   pfi->stvis.samples = samples;
+   pfi->stvis.render_buffer = ST_ATTACHMENT_INVALID;
    
    ++stw_dev->pixelformat_extended_count;
    
@@ -261,29 +269,6 @@ stw_pixelformat_get_info( uint index )
    assert( index < stw_dev->pixelformat_extended_count );
 
    return &stw_dev->pixelformats[index];
-}
-
-
-void
-stw_pixelformat_visual(GLvisual *visual, 
-                       const struct stw_pixelformat_info *pfi )
-{
-   memset(visual, 0, sizeof *visual);
-   _mesa_initialize_visual(
-      visual,
-      (pfi->pfd.dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
-      (pfi->pfd.dwFlags & PFD_STEREO) ? GL_TRUE : GL_FALSE,
-      pfi->pfd.cRedBits,
-      pfi->pfd.cGreenBits,
-      pfi->pfd.cBlueBits,
-      pfi->pfd.cAlphaBits,
-      pfi->pfd.cDepthBits,
-      pfi->pfd.cStencilBits,
-      pfi->pfd.cAccumRedBits,
-      pfi->pfd.cAccumGreenBits,
-      pfi->pfd.cAccumBlueBits,
-      pfi->pfd.cAccumAlphaBits,
-      pfi->numSamples );
 }
 
 
