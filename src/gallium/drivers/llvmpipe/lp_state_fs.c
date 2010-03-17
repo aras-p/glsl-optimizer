@@ -591,6 +591,20 @@ generate_blend(const struct pipe_blend_state *blend,
 }
 
 
+/** casting function to avoid compiler warnings */
+static lp_jit_frag_func
+cast_voidptr_to_lp_jit_frag_func(void *p)
+{
+   union {
+      void *v;
+      lp_jit_frag_func f;
+   } tmp;
+   assert(sizeof(tmp.v) == sizeof(tmp.f));
+   tmp.v = p;
+   return tmp.f;
+}
+
+
 /**
  * Generate the runtime callable function for the whole fragment pipeline.
  * Note that the function which we generate operates on a block of 16
@@ -851,10 +865,14 @@ generate_fragment(struct llvmpipe_context *lp,
    /*
     * Translate the LLVM IR into machine code.
     */
-   variant->jit_function[do_tri_test] = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, function);
+   {
+      void *f = LLVMGetPointerToGlobal(screen->engine, function);
 
-   if (LP_DEBUG & DEBUG_ASM)
-      lp_disassemble(variant->jit_function[do_tri_test]);
+      variant->jit_function[do_tri_test] = cast_voidptr_to_lp_jit_frag_func(f);
+
+      if (LP_DEBUG & DEBUG_ASM)
+         lp_disassemble(f);
+   }
 }
 
 
