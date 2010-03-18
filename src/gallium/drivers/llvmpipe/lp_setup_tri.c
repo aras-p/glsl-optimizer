@@ -361,6 +361,8 @@ do_triangle_ccw(struct lp_setup_context *setup,
     */
    setup_tri_coefficients( setup, tri, oneoverarea, v1, v2, v3, frontfacing );
 
+   tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
+
    /* half-edge constants, will be interated over the whole render target.
     */
    tri->c1 = tri->dy12 * x1 - tri->dx12 * y1;

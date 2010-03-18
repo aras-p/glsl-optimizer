@@ -59,7 +59,8 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             struct lp_build_mask_context *mask,
                             LLVMValueRef stencil_refs[2],
                             LLVMValueRef zs_src,
-                            LLVMValueRef zs_dst_ptr);
+                            LLVMValueRef zs_dst_ptr,
+                            LLVMValueRef facing);
 
 
 #endif /* !LP_BLD_DEPTH_H */

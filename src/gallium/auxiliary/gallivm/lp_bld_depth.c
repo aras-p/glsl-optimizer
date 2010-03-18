@@ -143,7 +143,7 @@ lp_build_stencil_test(struct lp_build_context *bld,
       struct lp_build_if_state if_ctx;
       LLVMValueRef front_facing;
       LLVMValueRef zero = LLVMConstReal(LLVMFloatType(), 0.0);
-      LLVMValueRef result = NULL;
+      LLVMValueRef result = bld->undef;
 
       flow_ctx = lp_build_flow_create(bld->builder);
       lp_build_flow_scope_begin(flow_ctx);
@@ -151,7 +151,7 @@ lp_build_stencil_test(struct lp_build_context *bld,
       lp_build_flow_scope_declare(flow_ctx, &result);
 
       /* front_facing = face > 0.0 */
-      front_facing = lp_build_cmp(bld, PIPE_FUNC_GREATER, face, zero);
+      front_facing = LLVMBuildFCmp(bld->builder, LLVMRealUGT, face, zero, "");
 
       lp_build_if(&if_ctx, flow_ctx, bld->builder, front_facing);
       {
@@ -287,7 +287,7 @@ lp_build_stencil_op(struct lp_build_context *bld,
       struct lp_build_if_state if_ctx;
       LLVMValueRef front_facing;
       LLVMValueRef zero = LLVMConstReal(LLVMFloatType(), 0.0);
-      LLVMValueRef result = NULL;
+      LLVMValueRef result = bld->undef;
 
       flow_ctx = lp_build_flow_create(bld->builder);
       lp_build_flow_scope_begin(flow_ctx);
@@ -295,7 +295,7 @@ lp_build_stencil_op(struct lp_build_context *bld,
       lp_build_flow_scope_declare(flow_ctx, &result);
 
       /* front_facing = face > 0.0 */
-      front_facing = lp_build_cmp(bld, PIPE_FUNC_GREATER, face, zero);
+      front_facing = LLVMBuildFCmp(bld->builder, LLVMRealUGT, face, zero, "");
 
       lp_build_if(&if_ctx, flow_ctx, bld->builder, front_facing);
       {
@@ -367,11 +367,15 @@ lp_depth_type(const struct util_format_description *format_desc,
  * Generate code for performing depth and/or stencil tests.
  * We operate on a vector of values (typically a 2x2 quad).
  *
+ * \param depth  the depth test state
+ * \param stencil  the front/back stencil state
  * \param type  the data type of the fragment depth/stencil values
  * \param format_desc  description of the depth/stencil surface
- * \param mask  the alive/dead pixel mask for the quad
- * \param src  the incoming depth/stencil values (a 2x2 quad)
- * \param dst_ptr  the outgoing/updated depth/stencil values
+ * \param mask  the alive/dead pixel mask for the quad (vector)
+ * \param stencil_refs  the front/back stencil ref values (scalar)
+ * \param z_src  the incoming depth/stencil values (a 2x2 quad)
+ * \param zs_dst_ptr  pointer to depth/stencil values in framebuffer
+ * \param facing  contains float value indicating front/back facing polygon
  */
 void
 lp_build_depth_stencil_test(LLVMBuilderRef builder,
@@ -382,7 +386,8 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             struct lp_build_mask_context *mask,
                             LLVMValueRef stencil_refs[2],
                             LLVMValueRef z_src,
-                            LLVMValueRef zs_dst_ptr)
+                            LLVMValueRef zs_dst_ptr,
+                            LLVMValueRef face)
 {
    struct lp_build_context bld;
    unsigned z_swizzle, s_swizzle;
@@ -391,7 +396,6 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    LLVMValueRef z_bitmask = NULL, s_bitmask = NULL;
    LLVMValueRef z_pass = NULL, s_pass_mask = NULL;
    LLVMValueRef orig_mask = mask->value;
-   LLVMValueRef face = NULL;
 
    assert(depth->enabled || stencil[0].enabled);
 

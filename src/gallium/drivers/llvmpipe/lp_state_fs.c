@@ -147,7 +147,8 @@ generate_depth_stencil(LLVMBuilderRef builder,
                        struct lp_build_mask_context *mask,
                        LLVMValueRef stencil_refs[2],
                        LLVMValueRef src,
-                       LLVMValueRef dst_ptr)
+                       LLVMValueRef dst_ptr,
+                       LLVMValueRef facing)
 {
    const struct util_format_description *format_desc;
    struct lp_type dst_type;
@@ -193,7 +194,8 @@ generate_depth_stencil(LLVMBuilderRef builder,
                                mask,
                                stencil_refs,
                                src,
-                               dst_ptr);
+                               dst_ptr,
+                               facing);
 }
 
 
@@ -393,6 +395,7 @@ generate_fs(struct llvmpipe_context *lp,
             LLVMValueRef *pmask,
             LLVMValueRef (*color)[4],
             LLVMValueRef depth_ptr,
+            LLVMValueRef facing,
             unsigned do_tri_test,
             LLVMValueRef c0,
             LLVMValueRef c1,
@@ -469,7 +472,7 @@ generate_fs(struct llvmpipe_context *lp,
    if (early_depth_stencil_test)
       generate_depth_stencil(builder, key,
                              type, &mask,
-                             stencil_refs, z, depth_ptr);
+                             stencil_refs, z, depth_ptr, facing);
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
@@ -516,7 +519,7 @@ generate_fs(struct llvmpipe_context *lp,
    if (!early_depth_stencil_test)
       generate_depth_stencil(builder, key,
                              type, &mask,
-                             stencil_refs, z, depth_ptr);
+                             stencil_refs, z, depth_ptr, facing);
 
    lp_build_mask_end(&mask);
 
@@ -627,7 +630,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
    LLVMTypeRef blend_int_vec_type;
-   LLVMTypeRef arg_types[14];
+   LLVMTypeRef arg_types[15];
    LLVMTypeRef func_type;
    LLVMTypeRef int32_vec4_type = lp_build_int32_vec4_type();
    LLVMValueRef context_ptr;
@@ -650,6 +653,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef blend_mask;
    LLVMValueRef blend_in_color[NUM_CHANNELS];
    LLVMValueRef function;
+   LLVMValueRef facing;
    unsigned num_fs;
    unsigned i;
    unsigned chan;
@@ -689,20 +693,21 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[0] = screen->context_ptr_type;            /* context */
    arg_types[1] = LLVMInt32Type();                     /* x */
    arg_types[2] = LLVMInt32Type();                     /* y */
-   arg_types[3] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
-   arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
-   arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dady */
-   arg_types[6] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
-   arg_types[7] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
-   arg_types[8] = LLVMInt32Type();                     /* c0 */
-   arg_types[9] = LLVMInt32Type();                     /* c1 */
-   arg_types[10] = LLVMInt32Type();                    /* c2 */
+   arg_types[3] = LLVMFloatType();                     /* facing */
+   arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
+   arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
+   arg_types[6] = LLVMPointerType(fs_elem_type, 0);    /* dady */
+   arg_types[7] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
+   arg_types[8] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
+   arg_types[9] = LLVMInt32Type();                     /* c0 */
+   arg_types[10] = LLVMInt32Type();                    /* c1 */
+   arg_types[11] = LLVMInt32Type();                    /* c2 */
    /* Note: the step arrays are built as int32[16] but we interpret
     * them here as int32_vec4[4].
     */
-   arg_types[11] = LLVMPointerType(int32_vec4_type, 0);/* step0 */
-   arg_types[12] = LLVMPointerType(int32_vec4_type, 0);/* step1 */
-   arg_types[13] = LLVMPointerType(int32_vec4_type, 0);/* step2 */
+   arg_types[12] = LLVMPointerType(int32_vec4_type, 0);/* step0 */
+   arg_types[13] = LLVMPointerType(int32_vec4_type, 0);/* step1 */
+   arg_types[14] = LLVMPointerType(int32_vec4_type, 0);/* step2 */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -722,17 +727,18 @@ generate_fragment(struct llvmpipe_context *lp,
    context_ptr  = LLVMGetParam(function, 0);
    x            = LLVMGetParam(function, 1);
    y            = LLVMGetParam(function, 2);
-   a0_ptr       = LLVMGetParam(function, 3);
-   dadx_ptr     = LLVMGetParam(function, 4);
-   dady_ptr     = LLVMGetParam(function, 5);
-   color_ptr_ptr = LLVMGetParam(function, 6);
-   depth_ptr    = LLVMGetParam(function, 7);
-   c0           = LLVMGetParam(function, 8);
-   c1           = LLVMGetParam(function, 9);
-   c2           = LLVMGetParam(function, 10);
-   step0_ptr    = LLVMGetParam(function, 11);
-   step1_ptr    = LLVMGetParam(function, 12);
-   step2_ptr    = LLVMGetParam(function, 13);
+   facing       = LLVMGetParam(function, 3);
+   a0_ptr       = LLVMGetParam(function, 4);
+   dadx_ptr     = LLVMGetParam(function, 5);
+   dady_ptr     = LLVMGetParam(function, 6);
+   color_ptr_ptr = LLVMGetParam(function, 7);
+   depth_ptr    = LLVMGetParam(function, 8);
+   c0           = LLVMGetParam(function, 9);
+   c1           = LLVMGetParam(function, 10);
+   c2           = LLVMGetParam(function, 11);
+   step0_ptr    = LLVMGetParam(function, 12);
+   step1_ptr    = LLVMGetParam(function, 13);
+   step2_ptr    = LLVMGetParam(function, 14);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(x, "x");
@@ -791,6 +797,7 @@ generate_fragment(struct llvmpipe_context *lp,
                   &fs_mask[i], /* output */
                   out_color,
                   depth_ptr_i,
+                  facing,
                   do_tri_test,
                   c0, c1, c2,
                   step0_ptr, step1_ptr, step2_ptr);
