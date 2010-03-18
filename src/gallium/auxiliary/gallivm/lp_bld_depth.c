@@ -400,7 +400,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    unsigned z_swizzle, s_swizzle;
    LLVMValueRef zs_dst, z_dst = NULL;
    LLVMValueRef stencil_vals = NULL;
-   LLVMValueRef z_bitmask = NULL, s_bitmask = NULL;
+   LLVMValueRef z_bitmask = NULL, s_bitmask = NULL, s_shift = NULL;
    LLVMValueRef z_pass = NULL, s_pass_mask = NULL;
    LLVMValueRef orig_mask = mask->value;
 
@@ -415,6 +415,11 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
 
    assert(z_swizzle != UTIL_FORMAT_SWIZZLE_NONE ||
           s_swizzle != UTIL_FORMAT_SWIZZLE_NONE);
+
+   if (stencil[0].enabled) {
+      assert(format_desc->format == PIPE_FORMAT_Z24S8_UNORM ||
+             format_desc->format == PIPE_FORMAT_S8Z24_UNORM);
+   }
 
    /* Sanity checking */
    assert(z_swizzle < 4);
@@ -473,9 +478,16 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
          z_bitmask = lp_build_const_int_vec(type, mask_left ^ mask_right);
       }
 
-      s_bitmask = LLVMBuildNot(builder, z_bitmask, "");
+      /* If PIPE_FORMAT_Z24S8, we'll shift zs >> 24 to position stencil_vals */
+      if (format_desc->format == PIPE_FORMAT_Z24S8_UNORM)
+         s_shift = lp_build_const_int_vec(type, 24);
+      else
+         s_shift = lp_build_const_int_vec(type, 0);
 
-      stencil_vals = LLVMBuildAnd(builder, zs_dst, s_bitmask, "");
+      s_bitmask = lp_build_const_int_vec(s_type, 0xff);
+
+      stencil_vals = LLVMBuildLShr(builder, zs_dst, s_shift, "");
+      stencil_vals = LLVMBuildAnd(builder, stencil_vals, s_bitmask, "");
 
       if(padding_left)
          z_src = LLVMBuildLShr(builder, z_src,
@@ -560,6 +572,9 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
       stencil_vals = lp_build_stencil_op(&sbld, stencil, Z_PASS_OP, stencil_refs,
                                          stencil_vals, s_pass_mask, face);
    }
+
+   if (stencil_vals)
+      stencil_vals = LLVMBuildShl(bld.builder, stencil_vals, s_shift, "");
 
    /* Finally, merge/store the z/stencil values */
    if ((depth->enabled && depth->writemask) ||
