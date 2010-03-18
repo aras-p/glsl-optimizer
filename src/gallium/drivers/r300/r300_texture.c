@@ -302,7 +302,6 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_A8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
         case PIPE_FORMAT_L8_UNORM:
-        case PIPE_FORMAT_L8_SRGB:
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return R300_COLOR_FORMAT_I8;
@@ -317,18 +316,12 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
 
         /* 32-bit buffers. */
         case PIPE_FORMAT_B8G8R8A8_UNORM:
-        case PIPE_FORMAT_B8G8R8A8_SRGB:
         case PIPE_FORMAT_B8G8R8X8_UNORM:
-        case PIPE_FORMAT_B8G8R8X8_SRGB:
         case PIPE_FORMAT_A8R8G8B8_UNORM:
-        case PIPE_FORMAT_A8R8G8B8_SRGB:
         case PIPE_FORMAT_X8R8G8B8_UNORM:
-        case PIPE_FORMAT_X8R8G8B8_SRGB:
         case PIPE_FORMAT_A8B8G8R8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
-        case PIPE_FORMAT_A8B8G8R8_SRGB:
         case PIPE_FORMAT_X8B8G8R8_UNORM:
-        case PIPE_FORMAT_X8B8G8R8_SRGB:
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
             return R300_COLOR_FORMAT_ARGB8888;
         case PIPE_FORMAT_R10G10B10A2_UNORM:
@@ -393,12 +386,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
     desc = util_format_description(format);
 
     /* Specifies how the shader output is written to the fog unit. */
-    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
-        /* The gamma correction causes precision loss so we need
-         * higher precision to maintain reasonable quality.
-         * It has nothing to do with the colorbuffer format. */
-        modifier |= R300_US_OUT_FMT_C4_10_GAMMA;
-    } else if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
+    if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
         if (desc->channel[0].size == 32) {
             modifier |= R300_US_OUT_FMT_C4_32_FP;
         } else {
@@ -428,7 +416,6 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
             return modifier | R300_C2_SEL_A;
         case PIPE_FORMAT_I8_UNORM:
         case PIPE_FORMAT_L8_UNORM:
-        case PIPE_FORMAT_L8_SRGB:
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return modifier | R300_C2_SEL_R;
@@ -438,18 +425,14 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_B5G5R5A1_UNORM:
         case PIPE_FORMAT_B4G4R4A4_UNORM:
         case PIPE_FORMAT_B8G8R8A8_UNORM:
-        case PIPE_FORMAT_B8G8R8A8_SRGB:
         case PIPE_FORMAT_B8G8R8X8_UNORM:
-        case PIPE_FORMAT_B8G8R8X8_SRGB:
             return modifier |
                 R300_C0_SEL_B | R300_C1_SEL_G |
                 R300_C2_SEL_R | R300_C3_SEL_A;
 
         /* BGRA 32-bit outputs. */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
-        case PIPE_FORMAT_A8R8G8B8_SRGB:
         case PIPE_FORMAT_X8R8G8B8_UNORM:
-        case PIPE_FORMAT_X8R8G8B8_SRGB:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_R |
                 R300_C2_SEL_G | R300_C3_SEL_B;
@@ -457,9 +440,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /* RGBA 32-bit outputs. */
         case PIPE_FORMAT_A8B8G8R8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
-        case PIPE_FORMAT_A8B8G8R8_SRGB:
         case PIPE_FORMAT_X8B8G8R8_UNORM:
-        case PIPE_FORMAT_X8B8G8R8_SRGB:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_B |
                 R300_C2_SEL_G | R300_C3_SEL_R;
