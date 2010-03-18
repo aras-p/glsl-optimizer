@@ -1178,7 +1178,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
             ? TRUE : FALSE;
 
    lp_setup_set_fs_functions(lp->setup, 
-                             shader->current->jit_function[0],
-                             shader->current->jit_function[1],
+                             shader->current->jit_function[RAST_WHOLE],
+                             shader->current->jit_function[RAST_EDGE_TEST],
                              opaque);
 }

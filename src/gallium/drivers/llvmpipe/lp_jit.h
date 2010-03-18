@@ -146,6 +146,11 @@ enum {
    lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CONTEXT_TEXTURES, "textures")
 
 
+/** Indexes into jit_function[] array */
+#define RAST_WHOLE 0
+#define RAST_EDGE_TEST 1
+
+
 typedef void
 (*lp_jit_frag_func)(const struct lp_jit_context *context,
                     uint32_t x,
