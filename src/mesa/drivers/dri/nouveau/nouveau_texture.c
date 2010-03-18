@@ -296,6 +296,8 @@ nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t)
 			validate_teximage(ctx, t, i, 0, 0, 0,
 					  s->width, s->height, 1);
 		}
+
+		FIRE_RING(context_chan(ctx));
 	}
 
 	return GL_TRUE;
