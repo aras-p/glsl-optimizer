@@ -32,9 +32,34 @@
 #include "nouveau_util.h"
 #include "nv10_driver.h"
 
+#define TX_MATRIX(i) (NV10TCL_TX0_MATRIX(0) + 64 * (i))
+
 void
 nv10_emit_tex_gen(GLcontext *ctx, int emit)
 {
+}
+
+void
+nv10_emit_tex_mat(GLcontext *ctx, int emit)
+{
+	const int i = emit - NOUVEAU_STATE_TEX_MAT0;
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_grobj *celsius = context_eng3d(ctx);
+
+	if (nctx->fallback == HWTNL &&
+	    ((ctx->Texture._TexMatEnabled & 1 << i) ||
+	     ctx->Texture.Unit[i]._GenFlags)) {
+		BEGIN_RING(chan, celsius, NV10TCL_TX_MATRIX_ENABLE(i), 1);
+		OUT_RING(chan, 1);
+
+		BEGIN_RING(chan, celsius, TX_MATRIX(i), 16);
+		OUT_RINGm(chan, ctx->TextureMatrixStack[i].Top->m);
+
+	} else {
+		BEGIN_RING(chan, celsius, NV10TCL_TX_MATRIX_ENABLE(i), 1);
+		OUT_RING(chan, 0);
+	}
 }
 
 static uint32_t

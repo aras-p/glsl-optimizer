@@ -68,6 +68,9 @@ nv20_emit_frag(GLcontext *ctx, int emit);
 
 /* nv20_state_tex.c */
 void
+nv20_emit_tex_mat(GLcontext *ctx, int emit);
+
+void
 nv20_emit_tex_obj(GLcontext *ctx, int emit);
 
 void

@@ -32,6 +32,30 @@
 #include "nouveau_util.h"
 #include "nv20_driver.h"
 
+#define TX_MATRIX(i) (NV20TCL_TX0_MATRIX(0) + 64 * (i))
+
+void
+nv20_emit_tex_mat(GLcontext *ctx, int emit)
+{
+	const int i = emit - NOUVEAU_STATE_TEX_MAT0;
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+
+	if (nctx->fallback == HWTNL &&
+	    (ctx->Texture._TexMatEnabled & 1 << i)) {
+		BEGIN_RING(chan, kelvin, NV20TCL_TX_MATRIX_ENABLE(i), 1);
+		OUT_RING(chan, 1);
+
+		BEGIN_RING(chan, kelvin, TX_MATRIX(i), 16);
+		OUT_RINGm(chan, ctx->TextureMatrixStack[i].Top->m);
+
+	} else {
+		BEGIN_RING(chan, kelvin, NV20TCL_TX_MATRIX_ENABLE(i), 1);
+		OUT_RING(chan, 0);
+	}
+}
+
 static uint32_t
 get_tex_format_pot(struct gl_texture_image *ti)
 {

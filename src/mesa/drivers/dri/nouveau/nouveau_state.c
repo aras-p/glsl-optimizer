@@ -454,11 +454,18 @@ nouveau_state_emit(GLcontext *ctx)
 static void
 nouveau_update_state(GLcontext *ctx, GLbitfield new_state)
 {
+	int i;
+
 	if (new_state & (_NEW_PROJECTION | _NEW_MODELVIEW))
 		context_dirty(ctx, PROJECTION);
 
 	if (new_state & _NEW_MODELVIEW)
 		context_dirty(ctx, MODELVIEW);
+
+	if (new_state & _NEW_TEXTURE_MATRIX) {
+		for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
+			context_dirty_i(ctx, TEX_MAT, i);
+	}
 
 	if (new_state & _NEW_CURRENT_ATTRIB &&
 	    new_state & _NEW_LIGHT) {
