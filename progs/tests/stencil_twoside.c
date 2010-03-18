@@ -85,6 +85,9 @@ static void Display( void )
    /* Draw the first two squares using incr for the affected face
     */
 
+   /*************************************************************************
+    * 2nd square
+    */
    if (use20syntax) {
       stencil_func_separate(GL_FRONT, GL_ALWAYS, 0, ~0);
       stencil_func_separate(GL_BACK, GL_ALWAYS, 0, ~0);
@@ -98,8 +101,8 @@ static void Display( void )
    glTranslatef(3.0, 0, 0);
    glBegin(GL_QUADS);
    glColor3f( 0.9, 0.9, 0.9 );
-   /* this should be front facing */
    for ( i = 0 ; i < (max_stencil + 5) ; i++ ) {
+      /* this should be front facing */
       glVertex2f(-1, -1);
       glVertex2f( 1, -1);
       glVertex2f( 1,  1);
@@ -107,6 +110,7 @@ static void Display( void )
    }
    glEnd();
 
+   /* stencil vals should be equal to max_stencil */
    glStencilFunc(GL_EQUAL, max_stencil, ~0);
    glBegin(GL_QUADS);
    glColor3f( 0.5, 0.5, 0.5 );
@@ -116,6 +120,9 @@ static void Display( void )
    glVertex2f(-1,  1);
    glEnd();
 
+   /*************************************************************************
+    * 3rd square
+    */
    if (use20syntax) {
       stencil_func_separate(GL_FRONT, GL_ALWAYS, 0, ~0);
       stencil_func_separate(GL_BACK, GL_ALWAYS, 0, ~0);
@@ -129,9 +136,8 @@ static void Display( void )
    glTranslatef(3.0, 0, 0);
    glBegin(GL_QUADS);
    glColor3f( 0.9, 0.9, 0.9 );
-
-   /* this should be back facing */
    for ( i = 0 ; i < (max_stencil + 5) ; i++ ) {
+      /* this should be back facing */
       glVertex2f(-1, -1);
       glVertex2f(-1,  1);
       glVertex2f( 1,  1);
@@ -139,6 +145,7 @@ static void Display( void )
    }
    glEnd();
 
+   /* stencil vals should be equal to max_stencil */
    glStencilFunc(GL_EQUAL, max_stencil, ~0);
    glBegin(GL_QUADS);
    glColor3f( 0.5, 0.5, 0.5 );
@@ -148,6 +155,9 @@ static void Display( void )
    glVertex2f(-1,  1);
    glEnd();
 
+   /*************************************************************************
+    * 4th square
+    */
    if (use20syntax) {
       stencil_func_separate(GL_FRONT, GL_NEVER, 0, ~0);
       stencil_func_separate(GL_BACK, GL_ALWAYS, 0, ~0);
@@ -161,15 +171,13 @@ static void Display( void )
    glTranslatef(3.0, 0, 0);
    glBegin(GL_QUADS);
    glColor3f( 0.9, 0.9, 0.9 );
-
-   /* this should be back facing */
    for ( i = 0 ; i < (max_stencil + 5) ; i++ ) {
-   /* this should be back facing */
+      /* this should be back facing */
       glVertex2f(-1, -1);
       glVertex2f(-1,  1);
       glVertex2f( 1,  1);
       glVertex2f( 1, -1);
-   /* this should be front facing */
+      /* this should be front facing */
       glVertex2f(-1, -1);
       glVertex2f( 1, -1);
       glVertex2f( 1,  1);
@@ -177,6 +185,7 @@ static void Display( void )
    }
    glEnd();
 
+   /* stencil vals should be equal to max_stencil */
    glStencilFunc(GL_EQUAL, max_stencil, ~0);
    glBegin(GL_QUADS);
    glColor3f( 0.5, 0.5, 0.5 );
@@ -186,6 +195,9 @@ static void Display( void )
    glVertex2f(-1,  1);
    glEnd();
 
+   /*************************************************************************
+    * 5th square
+    */
    if (use20syntax) {
       stencil_func_separate(GL_FRONT, GL_ALWAYS, 0, ~0);
       stencil_func_separate(GL_BACK, GL_ALWAYS, 0, ~0);
@@ -199,15 +211,13 @@ static void Display( void )
    glTranslatef(3.0, 0, 0);
    glBegin(GL_QUADS);
    glColor3f( 0.9, 0.9, 0.9 );
-
-   /* this should be back facing */
    for ( i = 0 ; i < (max_stencil + 5) ; i++ ) {
-   /* this should be back facing */
+      /* this should be back facing */
       glVertex2f(-1, -1);
       glVertex2f(-1,  1);
       glVertex2f( 1,  1);
       glVertex2f( 1, -1);
-   /* this should be front facing */
+      /* this should be front facing */
       glVertex2f(-1, -1);
       glVertex2f( 1, -1);
       glVertex2f( 1,  1);
