@@ -26,7 +26,7 @@
  * \file stencil_twoside.c
  * 
  * Simple test of GL_ATI_separate_stencil (or the OGL 2.0 equivalent) functionality.
- * Four squares are drawn
+ * Five squares (or six if stencil wrap is available) are drawn
  * with different stencil modes, but all should be rendered with the same
  * final color.
  */
@@ -37,7 +37,7 @@
 #include <GL/glut.h>
 
 static int use20syntax = 1;
-static int Width = 550;
+static int Width = 650;
 static int Height = 200;
 static const GLfloat Near = 5.0, Far = 25.0;
 
@@ -70,7 +70,7 @@ static void Display( void )
     */
 
    glDisable(GL_STENCIL_TEST);
-   glTranslatef(-6.0, 0, 0);
+   glTranslatef(-7.0, 0, 0);
    glBegin(GL_QUADS);
    glColor3f( 0.5, 0.5, 0.5 );
    glVertex2f(-1, -1);
@@ -205,8 +205,8 @@ static void Display( void )
    else {
       stencil_func_separate_ati(GL_ALWAYS, GL_ALWAYS, 0, ~0);
    }
-   stencil_op_separate(GL_FRONT, GL_KEEP, GL_KEEP, GL_DECR);
-   stencil_op_separate(GL_BACK, GL_KEEP, GL_KEEP, GL_INCR);
+   stencil_op_separate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR);
+   stencil_op_separate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR);
 
    glTranslatef(3.0, 0, 0);
    glBegin(GL_QUADS);
@@ -233,6 +233,47 @@ static void Display( void )
    glVertex2f( 1,  1);
    glVertex2f(-1,  1);
    glEnd();
+
+   /*************************************************************************
+    * 6th square
+    */
+   if (glutExtensionSupported("GL_EXT_stencil_wrap")) {
+      if (use20syntax) {
+         stencil_func_separate(GL_FRONT, GL_ALWAYS, 0, ~0);
+         stencil_func_separate(GL_BACK, GL_ALWAYS, 0, ~0);
+      }
+      else {
+         stencil_func_separate_ati(GL_ALWAYS, GL_ALWAYS, 0, ~0);
+      }
+      stencil_op_separate(GL_FRONT, GL_KEEP, GL_KEEP, GL_KEEP);
+      stencil_op_separate(GL_BACK, GL_KEEP, GL_KEEP, GL_INCR_WRAP);
+
+      glTranslatef(3.0, 0, 0);
+      glBegin(GL_QUADS);
+      glColor3f( 0.9, 0.9, 0.9 );
+      for ( i = 0 ; i < (max_stencil + 5) ; i++ ) {
+         /* this should be back facing */
+         glVertex2f(-1, -1);
+         glVertex2f(-1,  1);
+         glVertex2f( 1,  1);
+         glVertex2f( 1, -1);
+         /* this should be front facing */
+         glVertex2f(-1, -1);
+         glVertex2f( 1, -1);
+         glVertex2f( 1,  1);
+         glVertex2f(-1,  1);
+      }
+      glEnd();
+
+      glStencilFunc(GL_EQUAL, 260 - 255, ~0);
+      glBegin(GL_QUADS);
+      glColor3f( 0.5, 0.5, 0.5 );
+      glVertex2f(-1, -1);
+      glVertex2f( 1, -1);
+      glVertex2f( 1,  1);
+      glVertex2f(-1,  1);
+      glEnd();
+   }
 
    glPopMatrix();
 
@@ -288,7 +329,7 @@ static void Init( void )
    stencil_func_separate_ati = (PFNGLSTENCILFUNCSEPARATEATIPROC) glutGetProcAddress( "glStencilFuncSeparateATI" );
    stencil_op_separate = (PFNGLSTENCILOPSEPARATEPROC) glutGetProcAddress( "glStencilOpSeparate" );
 
-   printf("\nAll 5 squares should be the same color.\n");
+   printf("\nAll 5 (or 6) squares should be the same color.\n");
 }
 
 
