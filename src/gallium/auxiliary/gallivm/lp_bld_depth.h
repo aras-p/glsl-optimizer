@@ -57,7 +57,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             struct lp_type type,
                             const struct util_format_description *format_desc,
                             struct lp_build_mask_context *mask,
-                            LLVMValueRef stencil_refs,
+                            LLVMValueRef stencil_refs[2],
                             LLVMValueRef zs_src,
                             LLVMValueRef zs_dst_ptr);
 

@@ -84,7 +84,7 @@ struct lp_jit_context
 
    float alpha_ref_value;
 
-   uint8_t stencil_ref[2];
+   uint32_t stencil_ref_front, stencil_ref_back;
 
    /** floats, not ints */
    float scissor_xmin, scissor_ymin, scissor_xmax, scissor_ymax;
@@ -103,7 +103,8 @@ struct lp_jit_context
 enum {
    LP_JIT_CTX_CONSTANTS = 0,
    LP_JIT_CTX_ALPHA_REF,
-   LP_JIT_CTX_STENCIL_REF,
+   LP_JIT_CTX_STENCIL_REF_FRONT,
+   LP_JIT_CTX_STENCIL_REF_BACK,
    LP_JIT_CTX_SCISSOR_XMIN,
    LP_JIT_CTX_SCISSOR_YMIN,
    LP_JIT_CTX_SCISSOR_XMAX,
@@ -120,8 +121,11 @@ enum {
 #define lp_jit_context_alpha_ref_value(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_ALPHA_REF, "alpha_ref_value")
 
-#define lp_jit_context_stencil_ref_values(_builder, _ptr) \
-   lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CTX_STENCIL_REF, "stencil_ref")
+#define lp_jit_context_stencil_ref_front_value(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_STENCIL_REF_FRONT, "stencil_ref_front")
+
+#define lp_jit_context_stencil_ref_back_value(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_STENCIL_REF_BACK, "stencil_ref_back")
 
 #define lp_jit_context_scissor_xmin_value(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_XMIN, "scissor_xmin")

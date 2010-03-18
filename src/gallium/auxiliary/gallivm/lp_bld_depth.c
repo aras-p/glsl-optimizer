@@ -363,32 +363,6 @@ lp_depth_type(const struct util_format_description *format_desc,
 }
 
 
-/** Get front/back-face stencil ref value */
-static LLVMValueRef
-lp_build_get_stencil_ref(struct lp_build_context *bld,
-                         struct lp_type type, LLVMValueRef stencil_refs_ptr,
-                         unsigned face_index)
-{
-   LLVMValueRef indexes[2], ptr, ref, ref_vec;
-
-   assert(face_index < 2);
-
-   /* load [face_index] element of the array */
-   indexes[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
-   indexes[1] = LLVMConstInt(LLVMInt32Type(), face_index, 0);
-   ptr = LLVMBuildGEP(bld->builder, stencil_refs_ptr, indexes, 2, "");
-   ref = LLVMBuildLoad(bld->builder, ptr, "");
-
-   /* convert int8 value to i32 */
-   ref = LLVMBuildZExt(bld->builder, ref, LLVMIntType(type.width), "");
-
-   /* make scalar into vector */
-   ref_vec = lp_build_broadcast_scalar(bld, ref);
-
-   return ref_vec;
-}
-
-
 /**
  * Generate code for performing depth and/or stencil tests.
  * We operate on a vector of values (typically a 2x2 quad).
@@ -406,13 +380,12 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             struct lp_type type,
                             const struct util_format_description *format_desc,
                             struct lp_build_mask_context *mask,
-                            LLVMValueRef stencil_refs_ptr,
+                            LLVMValueRef stencil_refs[2],
                             LLVMValueRef z_src,
                             LLVMValueRef zs_dst_ptr)
 {
    struct lp_build_context bld;
    unsigned z_swizzle, s_swizzle;
-   LLVMValueRef stencil_refs[2];
    LLVMValueRef zs_dst, z_dst = NULL;
    LLVMValueRef stencil_vals = NULL;
    LLVMValueRef z_bitmask = NULL, s_bitmask = NULL;
@@ -502,19 +475,17 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
 
    lp_build_name(z_dst, "zsbuf.z");
 
-
+   /*
    printf("build depth %d stencil %d\n",
           depth->enabled,
           stencil[0].enabled);
-
+   */
 
    if (stencil[0].enabled) {
-      /* Incoming stencil_refs is ptr to int8[2].  Get/convert to int32[4]. */
-      stencil_refs[0] = lp_build_get_stencil_ref(&bld, type, stencil_refs_ptr, 0);
+      /* convert scalar stencil refs into vectors */
+      stencil_refs[0] = lp_build_broadcast_scalar(&bld, stencil_refs[0]);
+      stencil_refs[1] = lp_build_broadcast_scalar(&bld, stencil_refs[1]);
 
-      if (stencil[1].enabled)
-         stencil_refs[1] =
-            lp_build_get_stencil_ref(&bld, type, stencil_refs_ptr, 1);
 
       s_pass_mask = lp_build_stencil_test(&bld, stencil,
                                           stencil_refs, stencil_vals, face);

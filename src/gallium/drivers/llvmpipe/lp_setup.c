@@ -407,10 +407,10 @@ lp_setup_set_stencil_ref_values( struct lp_setup_context *setup,
 {
    LP_DBG(DEBUG_SETUP, "%s %d %d\n", __FUNCTION__, refs[0], refs[1]);
 
-   if (setup->fs.current.jit_context.stencil_ref[0] != refs[0] ||
-       setup->fs.current.jit_context.stencil_ref[1] != refs[1]) {
-      setup->fs.current.jit_context.stencil_ref[0] = refs[0];
-      setup->fs.current.jit_context.stencil_ref[1] = refs[1];
+   if (setup->fs.current.jit_context.stencil_ref_front != refs[0] ||
+       setup->fs.current.jit_context.stencil_ref_back != refs[1]) {
+      setup->fs.current.jit_context.stencil_ref_front = refs[0];
+      setup->fs.current.jit_context.stencil_ref_back = refs[1];
       setup->dirty |= LP_SETUP_NEW_FS;
    }
 }

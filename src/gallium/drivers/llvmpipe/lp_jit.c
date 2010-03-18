@@ -96,7 +96,8 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
 
       elem_types[LP_JIT_CTX_CONSTANTS] = LLVMPointerType(LLVMFloatType(), 0);
       elem_types[LP_JIT_CTX_ALPHA_REF] = LLVMFloatType();
-      elem_types[LP_JIT_CTX_STENCIL_REF] = LLVMArrayType(LLVMInt8Type(), 2);
+      elem_types[LP_JIT_CTX_STENCIL_REF_FRONT] = LLVMInt32Type();
+      elem_types[LP_JIT_CTX_STENCIL_REF_BACK] = LLVMInt32Type();
       elem_types[LP_JIT_CTX_SCISSOR_XMIN] = LLVMFloatType();
       elem_types[LP_JIT_CTX_SCISSOR_YMIN] = LLVMFloatType();
       elem_types[LP_JIT_CTX_SCISSOR_XMAX] = LLVMFloatType();
@@ -113,9 +114,12 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, alpha_ref_value,
                              screen->target, context_type,
                              LP_JIT_CTX_ALPHA_REF);
-      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, stencil_ref,
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, stencil_ref_front,
                              screen->target, context_type,
-                             LP_JIT_CTX_STENCIL_REF);
+                             LP_JIT_CTX_STENCIL_REF_FRONT);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, stencil_ref_back,
+                             screen->target, context_type,
+                             LP_JIT_CTX_STENCIL_REF_BACK);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_context, scissor_xmin,
                              screen->target, context_type,
                              LP_JIT_CTX_SCISSOR_XMIN);

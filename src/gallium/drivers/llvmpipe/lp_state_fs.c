@@ -145,7 +145,7 @@ generate_depth_stencil(LLVMBuilderRef builder,
                        const struct lp_fragment_shader_variant_key *key,
                        struct lp_type src_type,
                        struct lp_build_mask_context *mask,
-                       LLVMValueRef stencil_refs,
+                       LLVMValueRef stencil_refs[2],
                        LLVMValueRef src,
                        LLVMValueRef dst_ptr)
 {
@@ -408,7 +408,7 @@ generate_fs(struct llvmpipe_context *lp,
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef z = interp->pos[2];
-   LLVMValueRef stencil_refs;
+   LLVMValueRef stencil_refs[2];
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
    boolean early_depth_stencil_test;
@@ -418,7 +418,8 @@ generate_fs(struct llvmpipe_context *lp,
 
    assert(i < 4);
 
-   stencil_refs = lp_jit_context_stencil_ref_values(builder, context_ptr);
+   stencil_refs[0] = lp_jit_context_stencil_ref_front_value(builder, context_ptr);
+   stencil_refs[1] = lp_jit_context_stencil_ref_back_value(builder, context_ptr);
 
    elem_type = lp_build_elem_type(type);
    vec_type = lp_build_vec_type(type);
