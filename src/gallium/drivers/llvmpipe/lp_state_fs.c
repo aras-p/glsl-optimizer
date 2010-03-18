@@ -1169,6 +1169,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    opaque = !key.blend.logicop_enable &&
             !key.blend.rt[0].blend_enable &&
             key.blend.rt[0].colormask == 0xf &&
+            !key.stencil[0].enabled &&
             !key.alpha.enabled &&
             !key.depth.enabled &&
             !key.scissor &&
