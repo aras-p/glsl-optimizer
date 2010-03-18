@@ -310,6 +310,7 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_B5G6R5_UNORM:
             return R300_COLOR_FORMAT_RGB565;
         case PIPE_FORMAT_B5G5R5A1_UNORM:
+        case PIPE_FORMAT_B5G5R5X1_UNORM:
             return R300_COLOR_FORMAT_ARGB1555;
         case PIPE_FORMAT_B4G4R4A4_UNORM:
             return R300_COLOR_FORMAT_ARGB4444;
@@ -420,9 +421,10 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_R8_SNORM:
             return modifier | R300_C2_SEL_R;
 
-        /* ARGB 32-bit outputs. */
+        /* BGRA outputs. */
         case PIPE_FORMAT_B5G6R5_UNORM:
         case PIPE_FORMAT_B5G5R5A1_UNORM:
+        case PIPE_FORMAT_B5G5R5X1_UNORM:
         case PIPE_FORMAT_B4G4R4A4_UNORM:
         case PIPE_FORMAT_B8G8R8A8_UNORM:
         case PIPE_FORMAT_B8G8R8X8_UNORM:
@@ -430,25 +432,24 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
                 R300_C0_SEL_B | R300_C1_SEL_G |
                 R300_C2_SEL_R | R300_C3_SEL_A;
 
-        /* BGRA 32-bit outputs. */
+        /* ARGB outputs. */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
         case PIPE_FORMAT_X8R8G8B8_UNORM:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_R |
                 R300_C2_SEL_G | R300_C3_SEL_B;
 
-        /* RGBA 32-bit outputs. */
+        /* ABGR outputs. */
         case PIPE_FORMAT_A8B8G8R8_UNORM:
-        case PIPE_FORMAT_R8G8B8A8_SNORM:
         case PIPE_FORMAT_X8B8G8R8_UNORM:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_B |
                 R300_C2_SEL_G | R300_C3_SEL_R;
 
-        /* ABGR 32-bit outputs. */
+        /* RGBA outputs. */
+        case PIPE_FORMAT_R8G8B8A8_SNORM:
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
         case PIPE_FORMAT_R10G10B10A2_UNORM:
-        /* RGBA high precision outputs (same swizzles as ABGR low precision) */
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
         //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
