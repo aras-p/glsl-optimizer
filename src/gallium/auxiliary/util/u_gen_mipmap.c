@@ -938,6 +938,7 @@ format_to_type_comps(enum pipe_format pformat,
       *datatype = DTYPE_UBYTE;
       *comps = 4;
       return;
+   case PIPE_FORMAT_B5G5R5X1_UNORM:
    case PIPE_FORMAT_B5G5R5A1_UNORM:
       *datatype = DTYPE_USHORT_1_5_5_5_REV;
       *comps = 4;

@@ -63,6 +63,7 @@ PIPE_FORMAT_A8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, r
 PIPE_FORMAT_X8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, rgb
 PIPE_FORMAT_A8B8G8R8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, rgb
 PIPE_FORMAT_X8B8G8R8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
+PIPE_FORMAT_B5G5R5X1_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyx1, rgb
 PIPE_FORMAT_B5G5R5A1_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyxw, rgb
 PIPE_FORMAT_B4G4R4A4_UNORM        , plain, 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
 PIPE_FORMAT_B5G6R5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
