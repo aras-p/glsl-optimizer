@@ -1022,74 +1022,16 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(BlendColorEXT, _gloffset_BlendColor, BlendColorEXT@16, BlendColor, BlendColor@16)
 	GL_STUB_ALIAS(BlendEquationEXT, _gloffset_BlendEquation, BlendEquationEXT@4, BlendEquation, BlendEquation@4)
 	GL_STUB_ALIAS(DrawRangeElementsEXT, _gloffset_DrawRangeElements, DrawRangeElementsEXT@24, DrawRangeElements, DrawRangeElements@24)
-	GL_STUB_ALIAS(ColorTableSGI, _gloffset_ColorTable, ColorTableSGI@24, ColorTable, ColorTable@24)
 	GL_STUB_ALIAS(ColorTableEXT, _gloffset_ColorTable, ColorTableEXT@24, ColorTable, ColorTable@24)
-	GL_STUB_ALIAS(ColorTableParameterfvSGI, _gloffset_ColorTableParameterfv, ColorTableParameterfvSGI@12, ColorTableParameterfv, ColorTableParameterfv@12)
-	GL_STUB_ALIAS(ColorTableParameterivSGI, _gloffset_ColorTableParameteriv, ColorTableParameterivSGI@12, ColorTableParameteriv, ColorTableParameteriv@12)
-	GL_STUB_ALIAS(CopyColorTableSGI, _gloffset_CopyColorTable, CopyColorTableSGI@20, CopyColorTable, CopyColorTable@20)
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetColorTableSGI, _gloffset_GetColorTable, GetColorTableSGI@16, GetColorTable, GetColorTable@16)
-#endif
 #ifndef GLX_INDIRECT_RENDERING
 	GL_STUB_ALIAS(GetColorTableEXT, _gloffset_GetColorTable, GetColorTableEXT@16, GetColorTable, GetColorTable@16)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetColorTableParameterfvSGI, _gloffset_GetColorTableParameterfv, GetColorTableParameterfvSGI@12, GetColorTableParameterfv, GetColorTableParameterfv@12)
 #endif
 #ifndef GLX_INDIRECT_RENDERING
 	GL_STUB_ALIAS(GetColorTableParameterfvEXT, _gloffset_GetColorTableParameterfv, GetColorTableParameterfvEXT@12, GetColorTableParameterfv, GetColorTableParameterfv@12)
 #endif
 #ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetColorTableParameterivSGI, _gloffset_GetColorTableParameteriv, GetColorTableParameterivSGI@12, GetColorTableParameteriv, GetColorTableParameteriv@12)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
 	GL_STUB_ALIAS(GetColorTableParameterivEXT, _gloffset_GetColorTableParameteriv, GetColorTableParameterivEXT@12, GetColorTableParameteriv, GetColorTableParameteriv@12)
 #endif
-	GL_STUB_ALIAS(ColorSubTableEXT, _gloffset_ColorSubTable, ColorSubTableEXT@24, ColorSubTable, ColorSubTable@24)
-	GL_STUB_ALIAS(CopyColorSubTableEXT, _gloffset_CopyColorSubTable, CopyColorSubTableEXT@20, CopyColorSubTable, CopyColorSubTable@20)
-	GL_STUB_ALIAS(ConvolutionFilter1DEXT, _gloffset_ConvolutionFilter1D, ConvolutionFilter1DEXT@24, ConvolutionFilter1D, ConvolutionFilter1D@24)
-	GL_STUB_ALIAS(ConvolutionFilter2DEXT, _gloffset_ConvolutionFilter2D, ConvolutionFilter2DEXT@28, ConvolutionFilter2D, ConvolutionFilter2D@28)
-	GL_STUB_ALIAS(ConvolutionParameterfEXT, _gloffset_ConvolutionParameterf, ConvolutionParameterfEXT@12, ConvolutionParameterf, ConvolutionParameterf@12)
-	GL_STUB_ALIAS(ConvolutionParameterfvEXT, _gloffset_ConvolutionParameterfv, ConvolutionParameterfvEXT@12, ConvolutionParameterfv, ConvolutionParameterfv@12)
-	GL_STUB_ALIAS(ConvolutionParameteriEXT, _gloffset_ConvolutionParameteri, ConvolutionParameteriEXT@12, ConvolutionParameteri, ConvolutionParameteri@12)
-	GL_STUB_ALIAS(ConvolutionParameterivEXT, _gloffset_ConvolutionParameteriv, ConvolutionParameterivEXT@12, ConvolutionParameteriv, ConvolutionParameteriv@12)
-	GL_STUB_ALIAS(CopyConvolutionFilter1DEXT, _gloffset_CopyConvolutionFilter1D, CopyConvolutionFilter1DEXT@20, CopyConvolutionFilter1D, CopyConvolutionFilter1D@20)
-	GL_STUB_ALIAS(CopyConvolutionFilter2DEXT, _gloffset_CopyConvolutionFilter2D, CopyConvolutionFilter2DEXT@24, CopyConvolutionFilter2D, CopyConvolutionFilter2D@24)
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetConvolutionFilterEXT, _gloffset_GetConvolutionFilter, GetConvolutionFilterEXT@16, GetConvolutionFilter, GetConvolutionFilter@16)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetConvolutionParameterfvEXT, _gloffset_GetConvolutionParameterfv, GetConvolutionParameterfvEXT@12, GetConvolutionParameterfv, GetConvolutionParameterfv@12)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetConvolutionParameterivEXT, _gloffset_GetConvolutionParameteriv, GetConvolutionParameterivEXT@12, GetConvolutionParameteriv, GetConvolutionParameteriv@12)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetSeparableFilterEXT, _gloffset_GetSeparableFilter, GetSeparableFilterEXT@24, GetSeparableFilter, GetSeparableFilter@24)
-#endif
-	GL_STUB_ALIAS(SeparableFilter2DEXT, _gloffset_SeparableFilter2D, SeparableFilter2DEXT@32, SeparableFilter2D, SeparableFilter2D@32)
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetHistogramEXT, _gloffset_GetHistogram, GetHistogramEXT@20, GetHistogram, GetHistogram@20)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetHistogramParameterfvEXT, _gloffset_GetHistogramParameterfv, GetHistogramParameterfvEXT@12, GetHistogramParameterfv, GetHistogramParameterfv@12)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetHistogramParameterivEXT, _gloffset_GetHistogramParameteriv, GetHistogramParameterivEXT@12, GetHistogramParameteriv, GetHistogramParameteriv@12)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetMinmaxEXT, _gloffset_GetMinmax, GetMinmaxEXT@20, GetMinmax, GetMinmax@20)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetMinmaxParameterfvEXT, _gloffset_GetMinmaxParameterfv, GetMinmaxParameterfvEXT@12, GetMinmaxParameterfv, GetMinmaxParameterfv@12)
-#endif
-#ifndef GLX_INDIRECT_RENDERING
-	GL_STUB_ALIAS(GetMinmaxParameterivEXT, _gloffset_GetMinmaxParameteriv, GetMinmaxParameterivEXT@12, GetMinmaxParameteriv, GetMinmaxParameteriv@12)
-#endif
-	GL_STUB_ALIAS(HistogramEXT, _gloffset_Histogram, HistogramEXT@16, Histogram, Histogram@16)
-	GL_STUB_ALIAS(MinmaxEXT, _gloffset_Minmax, MinmaxEXT@12, Minmax, Minmax@12)
-	GL_STUB_ALIAS(ResetHistogramEXT, _gloffset_ResetHistogram, ResetHistogramEXT@4, ResetHistogram, ResetHistogram@4)
-	GL_STUB_ALIAS(ResetMinmaxEXT, _gloffset_ResetMinmax, ResetMinmaxEXT@4, ResetMinmax, ResetMinmax@4)
 	GL_STUB_ALIAS(TexImage3DEXT, _gloffset_TexImage3D, TexImage3DEXT@40, TexImage3D, TexImage3D@40)
 	GL_STUB_ALIAS(TexSubImage3DEXT, _gloffset_TexSubImage3D, TexSubImage3DEXT@44, TexSubImage3D, TexSubImage3D@44)
 	GL_STUB_ALIAS(CopyTexSubImage3DEXT, _gloffset_CopyTexSubImage3D, CopyTexSubImage3DEXT@36, CopyTexSubImage3D, CopyTexSubImage3D@36)
@@ -1127,7 +1069,6 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(MultiTexCoord4iv, _gloffset_MultiTexCoord4ivARB, MultiTexCoord4iv@8, MultiTexCoord4ivARB, MultiTexCoord4ivARB@8)
 	GL_STUB_ALIAS(MultiTexCoord4s, _gloffset_MultiTexCoord4sARB, MultiTexCoord4s@20, MultiTexCoord4sARB, MultiTexCoord4sARB@20)
 	GL_STUB_ALIAS(MultiTexCoord4sv, _gloffset_MultiTexCoord4svARB, MultiTexCoord4sv@8, MultiTexCoord4svARB, MultiTexCoord4svARB@8)
-	GL_STUB_ALIAS(StencilOpSeparateATI, _gloffset_StencilOpSeparate, StencilOpSeparateATI@16, StencilOpSeparate, StencilOpSeparate@16)
 	GL_STUB_ALIAS(LoadTransposeMatrixd, _gloffset_LoadTransposeMatrixdARB, LoadTransposeMatrixd@4, LoadTransposeMatrixdARB, LoadTransposeMatrixdARB@4)
 	GL_STUB_ALIAS(LoadTransposeMatrixf, _gloffset_LoadTransposeMatrixfARB, LoadTransposeMatrixf@4, LoadTransposeMatrixfARB, LoadTransposeMatrixfARB@4)
 	GL_STUB_ALIAS(MultTransposeMatrixd, _gloffset_MultTransposeMatrixdARB, MultTransposeMatrixd@4, MultTransposeMatrixdARB, MultTransposeMatrixdARB@4)
@@ -1242,10 +1183,8 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(RenderbufferStorageMultisampleEXT, _gloffset_RenderbufferStorageMultisample, RenderbufferStorageMultisampleEXT@20, RenderbufferStorageMultisample, RenderbufferStorageMultisample@20)
 	GL_STUB_ALIAS(PointParameterf, _gloffset_PointParameterfEXT, PointParameterf@8, PointParameterfEXT, PointParameterfEXT@8)
 	GL_STUB_ALIAS(PointParameterfARB, _gloffset_PointParameterfEXT, PointParameterfARB@8, PointParameterfEXT, PointParameterfEXT@8)
-	GL_STUB_ALIAS(PointParameterfSGIS, _gloffset_PointParameterfEXT, PointParameterfSGIS@8, PointParameterfEXT, PointParameterfEXT@8)
 	GL_STUB_ALIAS(PointParameterfv, _gloffset_PointParameterfvEXT, PointParameterfv@8, PointParameterfvEXT, PointParameterfvEXT@8)
 	GL_STUB_ALIAS(PointParameterfvARB, _gloffset_PointParameterfvEXT, PointParameterfvARB@8, PointParameterfvEXT, PointParameterfvEXT@8)
-	GL_STUB_ALIAS(PointParameterfvSGIS, _gloffset_PointParameterfvEXT, PointParameterfvSGIS@8, PointParameterfvEXT, PointParameterfvEXT@8)
 	GL_STUB_ALIAS(SecondaryColor3b, _gloffset_SecondaryColor3bEXT, SecondaryColor3b@12, SecondaryColor3bEXT, SecondaryColor3bEXT@12)
 	GL_STUB_ALIAS(SecondaryColor3bv, _gloffset_SecondaryColor3bvEXT, SecondaryColor3bv@4, SecondaryColor3bvEXT, SecondaryColor3bvEXT@4)
 	GL_STUB_ALIAS(SecondaryColor3d, _gloffset_SecondaryColor3dEXT, SecondaryColor3d@24, SecondaryColor3dEXT, SecondaryColor3dEXT@24)
@@ -1271,7 +1210,6 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(FogCoordf, _gloffset_FogCoordfEXT, FogCoordf@4, FogCoordfEXT, FogCoordfEXT@4)
 	GL_STUB_ALIAS(FogCoordfv, _gloffset_FogCoordfvEXT, FogCoordfv@4, FogCoordfvEXT, FogCoordfvEXT@4)
 	GL_STUB_ALIAS(BlendFuncSeparate, _gloffset_BlendFuncSeparateEXT, BlendFuncSeparate@16, BlendFuncSeparateEXT, BlendFuncSeparateEXT@16)
-	GL_STUB_ALIAS(BlendFuncSeparateINGR, _gloffset_BlendFuncSeparateEXT, BlendFuncSeparateINGR@16, BlendFuncSeparateEXT, BlendFuncSeparateEXT@16)
 	GL_STUB_ALIAS(WindowPos2d, _gloffset_WindowPos2dMESA, WindowPos2d@16, WindowPos2dMESA, WindowPos2dMESA@16)
 	GL_STUB_ALIAS(WindowPos2dARB, _gloffset_WindowPos2dMESA, WindowPos2dARB@16, WindowPos2dMESA, WindowPos2dMESA@16)
 	GL_STUB_ALIAS(WindowPos2dv, _gloffset_WindowPos2dvMESA, WindowPos2dv@4, WindowPos2dvMESA, WindowPos2dvMESA@4)
@@ -1312,6 +1250,9 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(IsProgramARB, _gloffset_IsProgramNV, IsProgramARB@4, IsProgramNV, IsProgramNV@4)
 	GL_STUB_ALIAS(PointParameteri, _gloffset_PointParameteriNV, PointParameteri@8, PointParameteriNV, PointParameteriNV@8)
 	GL_STUB_ALIAS(PointParameteriv, _gloffset_PointParameterivNV, PointParameteriv@8, PointParameterivNV, PointParameterivNV@8)
+	GL_STUB_ALIAS(DeleteVertexArrays, _gloffset_DeleteVertexArraysAPPLE, DeleteVertexArrays@8, DeleteVertexArraysAPPLE, _dispatch_stub_755@8)
+	GL_STUB_ALIAS(IsVertexArray, _gloffset_IsVertexArrayAPPLE, IsVertexArray@4, IsVertexArrayAPPLE, _dispatch_stub_757@4)
+	GL_STUB_ALIAS(BlendEquationSeparate, _gloffset_BlendEquationSeparateEXT, BlendEquationSeparate@8, BlendEquationSeparateEXT, _dispatch_stub_765@8)
 	GL_STUB_ALIAS(BindFramebuffer, _gloffset_BindFramebufferEXT, BindFramebuffer@8, BindFramebufferEXT, BindFramebufferEXT@8)
 	GL_STUB_ALIAS(BindRenderbuffer, _gloffset_BindRenderbufferEXT, BindRenderbuffer@8, BindRenderbufferEXT, BindRenderbufferEXT@8)
 	GL_STUB_ALIAS(CheckFramebufferStatus, _gloffset_CheckFramebufferStatusEXT, CheckFramebufferStatus@4, CheckFramebufferStatusEXT, CheckFramebufferStatusEXT@4)
@@ -1329,6 +1270,7 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(IsFramebuffer, _gloffset_IsFramebufferEXT, IsFramebuffer@4, IsFramebufferEXT, IsFramebufferEXT@4)
 	GL_STUB_ALIAS(IsRenderbuffer, _gloffset_IsRenderbufferEXT, IsRenderbuffer@4, IsRenderbufferEXT, IsRenderbufferEXT@4)
 	GL_STUB_ALIAS(RenderbufferStorage, _gloffset_RenderbufferStorageEXT, RenderbufferStorage@16, RenderbufferStorageEXT, RenderbufferStorageEXT@16)
+	GL_STUB_ALIAS(BlitFramebuffer, _gloffset_BlitFramebufferEXT, BlitFramebuffer@40, BlitFramebufferEXT, _dispatch_stub_783@40)
 	GL_STUB_ALIAS(FramebufferTextureLayer, _gloffset_FramebufferTextureLayerEXT, FramebufferTextureLayer@20, FramebufferTextureLayerEXT, FramebufferTextureLayerEXT@20)
 	GL_STUB_ALIAS(ProvokingVertex, _gloffset_ProvokingVertexEXT, ProvokingVertex@4, ProvokingVertexEXT, ProvokingVertexEXT@4)
 
