@@ -251,7 +251,7 @@ void intel_flush_prim(struct intel_context *intel)
       BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
-      assert((offset & !S0_VB_OFFSET_MASK) == 0);
+      assert((offset & ~S0_VB_OFFSET_MASK) == 0);
       OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0, offset);
       OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
 		(intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
