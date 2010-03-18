@@ -32,7 +32,42 @@
 #include "nouveau_util.h"
 #include "nv20_driver.h"
 
+#define TX_GEN_MODE(i, j) (NV20TCL_TX_GEN_MODE_S(i) + 4 * (j))
+#define TX_GEN_COEFF(i, j) (NV20TCL_TX_GEN_COEFF_S_A(i) + 16 * (j))
 #define TX_MATRIX(i) (NV20TCL_TX0_MATRIX(0) + 64 * (i))
+
+void
+nv20_emit_tex_gen(GLcontext *ctx, int emit)
+{
+	const int i = emit - NOUVEAU_STATE_TEX_GEN0;
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct nouveau_channel *chan = context_chan(ctx);
+	struct nouveau_grobj *kelvin = context_eng3d(ctx);
+	struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
+	int j;
+
+	for (j = 0; j < 4; j++) {
+		if (nctx->fallback == HWTNL && (unit->TexGenEnabled & 1 << j)) {
+			struct gl_texgen *coord = get_texgen_coord(unit, j);
+			float *k = get_texgen_coeff(coord);
+
+			if (k) {
+				BEGIN_RING(chan, kelvin, TX_GEN_COEFF(i, j), 4);
+				OUT_RINGf(chan, k[0]);
+				OUT_RINGf(chan, k[1]);
+				OUT_RINGf(chan, k[2]);
+				OUT_RINGf(chan, k[3]);
+			}
+
+			BEGIN_RING(chan, kelvin, TX_GEN_MODE(i, j), 1);
+			OUT_RING(chan, nvgl_texgen_mode(coord->Mode));
+
+		} else {
+			BEGIN_RING(chan, kelvin, TX_GEN_MODE(i, j), 1);
+			OUT_RING(chan, 0);
+		}
+	}
+}
 
 void
 nv20_emit_tex_mat(GLcontext *ctx, int emit)

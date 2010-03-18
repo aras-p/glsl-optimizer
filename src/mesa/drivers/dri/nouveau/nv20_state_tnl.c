@@ -359,12 +359,14 @@ nv20_emit_modelview(GLcontext *ctx, int emit)
 	if (nctx->fallback != HWTNL)
 		return;
 
-	if (ctx->Light._NeedEyeCoords || ctx->Fog.Enabled) {
+	if (ctx->Light._NeedEyeCoords || ctx->Fog.Enabled ||
+	    (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD)) {
 		BEGIN_RING(chan, kelvin, NV20TCL_MODELVIEW0_MATRIX(0), 16);
 		OUT_RINGm(chan, m->m);
 	}
 
-	if (ctx->Light.Enabled) {
+	if (ctx->Light.Enabled ||
+	    (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD)) {
 		int i, j;
 
 		BEGIN_RING(chan, kelvin,

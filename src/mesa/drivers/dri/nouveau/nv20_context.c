@@ -297,9 +297,9 @@ nv20_hwctx_init(GLcontext *ctx)
 	BEGIN_RING(chan, kelvin, NV20TCL_POLYGON_STIPPLE_ENABLE, 1);
 	OUT_RING  (chan, 0);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_TX_GEN_S(0),
-		   4 * NV20TCL_TX_GEN_S__SIZE);
-	for (i=0; i < 4 * NV20TCL_TX_GEN_S__SIZE; i++)
+	BEGIN_RING(chan, kelvin, NV20TCL_TX_GEN_MODE_S(0),
+		   4 * NV20TCL_TX_GEN_MODE_S__SIZE);
+	for (i=0; i < 4 * NV20TCL_TX_GEN_MODE_S__SIZE; i++)
 		OUT_RING(chan, 0);
 
 	BEGIN_RING(chan, kelvin, NV20TCL_FOG_EQUATION_CONSTANT, 3);
@@ -497,10 +497,10 @@ const struct nouveau_driver nv20_driver = {
 		nv20_emit_tex_env,
 		nv20_emit_tex_env,
 		nv20_emit_tex_env,
-		nv10_emit_tex_gen,
-		nv10_emit_tex_gen,
-		nv10_emit_tex_gen,
-		nv10_emit_tex_gen,
+		nv20_emit_tex_gen,
+		nv20_emit_tex_gen,
+		nv20_emit_tex_gen,
+		nv20_emit_tex_gen,
 		nv20_emit_tex_mat,
 		nv20_emit_tex_mat,
 		nv20_emit_tex_mat,

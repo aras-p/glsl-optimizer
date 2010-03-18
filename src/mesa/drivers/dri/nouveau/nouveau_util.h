@@ -191,4 +191,22 @@ is_texture_source(int s)
 	return s == GL_TEXTURE || (s >= GL_TEXTURE0 && s <= GL_TEXTURE31);
 }
 
+static inline struct gl_texgen *
+get_texgen_coord(struct gl_texture_unit *u, int i)
+{
+	return ((struct gl_texgen *[])
+		{ &u->GenS, &u->GenT, &u->GenR, &u->GenQ }) [i];
+}
+
+static inline float *
+get_texgen_coeff(struct gl_texgen *c)
+{
+	if (c->Mode == GL_OBJECT_LINEAR)
+		return c->ObjectPlane;
+	else if (c->Mode == GL_EYE_LINEAR)
+		return c->EyePlane;
+	else
+		return NULL;
+}
+
 #endif

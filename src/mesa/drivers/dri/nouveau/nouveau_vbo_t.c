@@ -224,9 +224,11 @@ vbo_choose_attrs(GLcontext *ctx, const struct gl_client_array **arrays)
 	if (ctx->Fog.Enabled && ctx->Fog.FogCoordinateSource == GL_FOG_COORD)
 		vbo_emit_attr(ctx, arrays, VERT_ATTRIB_FOG);
 
-	if (ctx->Light.Enabled) {
+	if (ctx->Light.Enabled ||
+	    (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS))
 		vbo_emit_attr(ctx, arrays, VERT_ATTRIB_NORMAL);
 
+	if (ctx->Light.Enabled) {
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_AMBIENT));
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_DIFFUSE));
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_SPECULAR));
