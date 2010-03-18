@@ -152,6 +152,9 @@ generate_depth_stencil(LLVMBuilderRef builder,
    const struct util_format_description *format_desc;
    struct lp_type dst_type;
 
+   if (!key->depth.enabled && !key->stencil[0].enabled && !key->stencil[1].enabled)
+      return;
+
    format_desc = util_format_description(key->zsbuf_format);
    assert(format_desc);
 
