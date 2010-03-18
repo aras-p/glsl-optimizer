@@ -553,6 +553,7 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
       _mesa_clear_texture_image(ctx, texImage);
    }
 
+   stObj->pipe = st->pipe;
    pipe_texture_reference(&stImage->pt, tex);
 
    _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
