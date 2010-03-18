@@ -239,8 +239,8 @@ util_format_name(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return "???";
    }
 
@@ -252,8 +252,8 @@ util_format_is_s3tc(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return FALSE;
    }
 
@@ -265,8 +265,8 @@ util_format_is_depth_or_stencil(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return FALSE;
    }
 
@@ -278,8 +278,8 @@ util_format_is_depth_and_stencil(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return FALSE;
    }
 
@@ -328,8 +328,8 @@ util_format_get_blocksizebits(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return 0;
    }
 
@@ -354,8 +354,8 @@ util_format_get_blockwidth(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return 1;
    }
 
@@ -367,8 +367,8 @@ util_format_get_blockheight(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return 1;
    }
 

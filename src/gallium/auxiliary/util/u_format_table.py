@@ -3,7 +3,7 @@
 '''
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -87,53 +87,6 @@ def write_format_table(formats):
     print
     print '#include "u_format.h"'
     print
-    print '''
-static void
-util_format_none_unpack_8unorm(uint8_t *dst, const uint8_t *src, unsigned length)
-{
-}
-
-static void
-util_format_none_pack_8unorm(uint8_t *dst, const uint8_t *src, unsigned length)
-{
-}
-
-static void
-util_format_none_unpack_float(float *dst, const uint8_t *src, unsigned length)
-{
-}
-
-static void
-util_format_none_pack_float(uint8_t *dst, const float *src, unsigned length)
-{
-}
-
-static void
-util_format_none_fetch_float(float *dst, const uint8_t *src, unsigned i, unsigned j)
-{
-}
-    '''
-    print 'const struct util_format_description'
-    print 'util_format_none_description = {'
-    print "   PIPE_FORMAT_NONE,"
-    print "   \"PIPE_FORMAT_NONE\","
-    print "   \"none\","
-    print "   {0, 0, 0},"
-    print "   0,"
-    print "   0,"
-    print "   0,"
-    print "   0,"
-    print "   0,"
-    print "   {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
-    print "   {0, 0, 0, 0},"
-    print "   0,"
-    print "   &util_format_none_unpack_8unorm," 
-    print "   &util_format_none_pack_8unorm," 
-    print "   &util_format_none_unpack_float," 
-    print "   &util_format_none_pack_float,"
-    print "   &util_format_none_fetch_float"
-    print "};"
-    print
     
     u_format_pack.generate(formats)
     
@@ -191,8 +144,6 @@ util_format_none_fetch_float(float *dst, const uint8_t *src, unsigned i, unsigne
     print "   }"
     print
     print "   switch (format) {"
-    print "   case PIPE_FORMAT_NONE:"
-    print "      return &util_format_none_description;"
     for format in formats:
         print "   case %s:" % format.name
         print "      return &util_format_%s_description;" % (format.short_name(),)
