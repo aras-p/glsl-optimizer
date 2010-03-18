@@ -880,12 +880,12 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       struct gl_framebuffer *fb = driDrawPriv->driverPrivate;
       struct gl_framebuffer *readFb = driReadPriv->driverPrivate;
 
-      _mesa_make_current(&intel->ctx, fb, readFb);
       intel->driReadDrawable = driReadPriv;
       intel->driDrawable = driDrawPriv;
       driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
       driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
       intel_prepare_render(intel);
+      _mesa_make_current(&intel->ctx, fb, readFb);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
