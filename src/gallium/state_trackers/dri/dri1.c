@@ -451,7 +451,7 @@ dri1_allocate_textures(struct dri_drawable *drawable,
          break;
       }
 
-      if (templ.format != PIPE_FORMAT_NONE) {
+      if (format != PIPE_FORMAT_NONE) {
          templ.format = format;
          templ.tex_usage = tex_usage;
 
