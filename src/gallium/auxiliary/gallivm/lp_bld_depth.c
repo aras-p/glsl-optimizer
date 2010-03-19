@@ -369,6 +369,83 @@ lp_depth_type(const struct util_format_description *format_desc,
 
 
 /**
+ * Compute bitmask and bit shift to apply to the incoming fragment Z values
+ * and the Z buffer values needed before doing the Z comparison.
+ *
+ * Note that we leave the Z bits in the position that we find them
+ * in the Z buffer (typically 0xffffff00 or 0x00ffffff).  That lets us
+ * get by with fewer bit twiddling steps.
+ */
+static boolean
+get_z_shift_and_mask(const struct util_format_description *format_desc,
+                     unsigned *shift, unsigned *mask)
+{
+   const unsigned total_bits = format_desc->block.bits;
+   unsigned z_swizzle;
+   int chan;
+   unsigned padding_left, padding_right;
+   
+   assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
+   assert(format_desc->block.width == 1);
+   assert(format_desc->block.height == 1);
+
+   z_swizzle = format_desc->swizzle[0];
+
+   if (z_swizzle == UTIL_FORMAT_SWIZZLE_NONE)
+      return FALSE;
+
+   padding_right = 0;
+   for (chan = 0; chan < z_swizzle; ++chan)
+      padding_right += format_desc->channel[chan].size;
+
+   padding_left =
+      total_bits - (padding_right + format_desc->channel[z_swizzle].size);
+
+   if (padding_left || padding_right) {
+      unsigned long long mask_left = (1ULL << (total_bits - padding_left)) - 1;
+      unsigned long long mask_right = (1ULL << (padding_right)) - 1;
+      *mask = mask_left ^ mask_right;
+   }
+   else {
+      *mask = 0xffffffff;
+   }
+
+   *shift = padding_left;
+
+   return TRUE;
+}
+
+
+/**
+ * Compute bitmask and bit shift to apply to the framebuffer pixel values
+ * to put the stencil bits in the least significant position.
+ * (i.e. 0x000000ff)
+ */
+static boolean
+get_s_shift_and_mask(const struct util_format_description *format_desc,
+                     unsigned *shift, unsigned *mask)
+{
+   unsigned s_swizzle;
+   int chan, sz;
+
+   s_swizzle = format_desc->swizzle[1];
+
+   if (s_swizzle == UTIL_FORMAT_SWIZZLE_NONE)
+      return FALSE;
+
+   *shift = 0;
+   for (chan = 0; chan < s_swizzle; chan++)
+      *shift += format_desc->channel[chan].size;
+
+   sz = format_desc->channel[s_swizzle].size;
+   *mask = (1U << sz) - 1U;
+
+   return TRUE;
+}
+
+
+
+/**
  * Generate code for performing depth and/or stencil tests.
  * We operate on a vector of values (typically a 2x2 quad).
  *
@@ -397,45 +474,50 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
    struct lp_build_context bld;
    struct lp_build_context sbld;
    struct lp_type s_type;
-   unsigned z_swizzle, s_swizzle;
    LLVMValueRef zs_dst, z_dst = NULL;
    LLVMValueRef stencil_vals = NULL;
-   LLVMValueRef z_bitmask = NULL, s_bitmask = NULL, s_shift = NULL;
+   LLVMValueRef z_bitmask = NULL, stencil_shift = NULL;
    LLVMValueRef z_pass = NULL, s_pass_mask = NULL;
    LLVMValueRef orig_mask = mask->value;
 
-   assert(depth->enabled || stencil[0].enabled);
-
-   assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
-   assert(format_desc->block.width == 1);
-   assert(format_desc->block.height == 1);
-
-   z_swizzle = format_desc->swizzle[0];
-   s_swizzle = format_desc->swizzle[1];
-
-   assert(z_swizzle != UTIL_FORMAT_SWIZZLE_NONE ||
-          s_swizzle != UTIL_FORMAT_SWIZZLE_NONE);
-
-   if (stencil[0].enabled) {
-      assert(format_desc->format == PIPE_FORMAT_Z24S8_UNORM ||
-             format_desc->format == PIPE_FORMAT_S8Z24_UNORM);
-   }
-
    /* Sanity checking */
-   assert(z_swizzle < 4);
-   assert(format_desc->block.bits == type.width);
-   if(type.floating) {
-      assert(z_swizzle == 0);
-      assert(format_desc->channel[z_swizzle].type == UTIL_FORMAT_TYPE_FLOAT);
-      assert(format_desc->channel[z_swizzle].size == format_desc->block.bits);
+   {
+      const unsigned z_swizzle = format_desc->swizzle[0];
+      const unsigned s_swizzle = format_desc->swizzle[1];
+
+      assert(z_swizzle != UTIL_FORMAT_SWIZZLE_NONE ||
+             s_swizzle != UTIL_FORMAT_SWIZZLE_NONE);
+
+      assert(depth->enabled || stencil[0].enabled);
+
+      assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
+      assert(format_desc->block.width == 1);
+      assert(format_desc->block.height == 1);
+
+      if (stencil[0].enabled) {
+         assert(format_desc->format == PIPE_FORMAT_Z24S8_UNORM ||
+                format_desc->format == PIPE_FORMAT_S8Z24_UNORM);
+      }
+
+      assert(z_swizzle < 4);
+      assert(format_desc->block.bits == type.width);
+      if (type.floating) {
+         assert(z_swizzle == 0);
+         assert(format_desc->channel[z_swizzle].type ==
+                UTIL_FORMAT_TYPE_FLOAT);
+         assert(format_desc->channel[z_swizzle].size ==
+                format_desc->block.bits);
+      }
+      else {
+         assert(format_desc->channel[z_swizzle].type ==
+                UTIL_FORMAT_TYPE_UNSIGNED);
+         assert(format_desc->channel[z_swizzle].normalized);
+         assert(!type.fixed);
+         assert(!type.sign);
+         assert(type.norm);
+      }
    }
-   else {
-      assert(format_desc->channel[z_swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED);
-      assert(format_desc->channel[z_swizzle].normalized);
-      assert(!type.fixed);
-      assert(!type.sign);
-      assert(type.norm);
-   }
+
 
    /* Setup build context for Z vals */
    lp_build_context_init(&bld, builder, type);
@@ -449,70 +531,56 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
 
    lp_build_name(zs_dst, "zsbufval");
 
-   /* Align the source depth bits with the destination's, and mask out any
-    * stencil or padding bits from both */
-   if(format_desc->channel[z_swizzle].size == format_desc->block.bits) {
-      assert(z_swizzle == 0);
-      z_dst = zs_dst;
-   }
-   else {
-      /* shift/mask bits to right-justify the Z bits */
-      unsigned padding_left;
-      unsigned padding_right;
-      unsigned chan;
 
-      assert(format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
-      assert(format_desc->channel[z_swizzle].type == UTIL_FORMAT_TYPE_UNSIGNED);
-      assert(format_desc->channel[z_swizzle].size <= format_desc->block.bits);
-      assert(format_desc->channel[z_swizzle].normalized);
+   /* Compute and apply the Z/stencil bitmasks and shifts.
+    */
+   {
+      unsigned z_shift, z_mask;
+      unsigned s_shift, s_mask;
 
-      padding_right = 0;
-      for(chan = 0; chan < z_swizzle; ++chan)
-         padding_right += format_desc->channel[chan].size;
-      padding_left = format_desc->block.bits -
-                     (padding_right + format_desc->channel[z_swizzle].size);
+      if (get_z_shift_and_mask(format_desc, &z_shift, &z_mask)) {
+         if (z_shift) {
+            LLVMValueRef shift = lp_build_const_int_vec(type, z_shift);
+            z_src = LLVMBuildLShr(builder, z_src, shift, "");
+         }
 
-      if(padding_left || padding_right) {
-         const unsigned long long mask_left = (1ULL << (format_desc->block.bits - padding_left)) - 1;
-         const unsigned long long mask_right = (1ULL << (padding_right)) - 1;
-         z_bitmask = lp_build_const_int_vec(type, mask_left ^ mask_right);
+         if (z_mask != 0xffffffff) {
+            LLVMValueRef mask = lp_build_const_int_vec(type, z_mask);
+            z_src = LLVMBuildAnd(builder, z_src, mask, "");
+            z_dst = LLVMBuildAnd(builder, zs_dst, mask, "");
+            z_bitmask = mask;  /* used below */
+         }
+         else {
+            z_dst = zs_dst;
+         }
+
+         lp_build_name(z_dst, "zsbuf.z");
       }
 
-      /* If PIPE_FORMAT_Z24S8, we'll shift zs >> 24 to position stencil_vals */
-      if (format_desc->format == PIPE_FORMAT_Z24S8_UNORM)
-         s_shift = lp_build_const_int_vec(type, 24);
-      else
-         s_shift = lp_build_const_int_vec(type, 0);
+      if (get_s_shift_and_mask(format_desc, &s_shift, &s_mask)) {
+         if (s_shift) {
+            LLVMValueRef shift = lp_build_const_int_vec(type, s_shift);
+            stencil_vals = LLVMBuildLShr(builder, zs_dst, shift, "");
+            stencil_shift = shift;  /* used below */
+         }
+         else {
+            stencil_vals = zs_dst;
+         }
 
-      s_bitmask = lp_build_const_int_vec(s_type, 0xff);
+         if (s_mask != 0xffffffff) {
+            LLVMValueRef mask = lp_build_const_int_vec(type, s_mask);
+            stencil_vals = LLVMBuildAnd(builder, stencil_vals, mask, "");
+         }
 
-      stencil_vals = LLVMBuildLShr(builder, zs_dst, s_shift, "");
-      stencil_vals = LLVMBuildAnd(builder, stencil_vals, s_bitmask, "");
-
-      if(padding_left)
-         z_src = LLVMBuildLShr(builder, z_src,
-                                lp_build_const_int_vec(type, padding_left), "");
-      if(padding_right)
-         z_src = LLVMBuildAnd(builder, z_src, z_bitmask, "");
-      if(padding_left || padding_right)
-         z_dst = LLVMBuildAnd(builder, zs_dst, z_bitmask, "");
-      else
-         z_dst = zs_dst;
+         lp_build_name(stencil_vals, "stencil");
+      }
    }
 
-   lp_build_name(z_dst, "zsbuf.z");
-
-   /*
-   printf("build depth %d stencil %d\n",
-          depth->enabled,
-          stencil[0].enabled);
-   */
 
    if (stencil[0].enabled) {
       /* convert scalar stencil refs into vectors */
       stencil_refs[0] = lp_build_broadcast_scalar(&bld, stencil_refs[0]);
       stencil_refs[1] = lp_build_broadcast_scalar(&bld, stencil_refs[1]);
-
 
       s_pass_mask = lp_build_stencil_test(&sbld, stencil,
                                           stencil_refs, stencil_vals, face);
@@ -569,12 +637,17 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
        * passed the stencil test.
        */
       s_pass_mask = LLVMBuildAnd(bld.builder, orig_mask, s_pass_mask, "");
-      stencil_vals = lp_build_stencil_op(&sbld, stencil, Z_PASS_OP, stencil_refs,
-                                         stencil_vals, s_pass_mask, face);
+      stencil_vals = lp_build_stencil_op(&sbld, stencil, Z_PASS_OP,
+                                         stencil_refs, stencil_vals,
+                                         s_pass_mask, face);
    }
 
-   if (stencil_vals)
-      stencil_vals = LLVMBuildShl(bld.builder, stencil_vals, s_shift, "");
+   /* The Z bits are already in the right place but we may need to shift the
+    * stencil bits before ORing Z with Stencil to make the final pixel value.
+    */
+   if (stencil_vals && stencil_shift)
+      stencil_vals = LLVMBuildShl(bld.builder, stencil_vals,
+                                  stencil_shift, "");
 
    /* Finally, merge/store the z/stencil values */
    if ((depth->enabled && depth->writemask) ||
