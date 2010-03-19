@@ -464,6 +464,7 @@ llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = llvmpipe_texture_create;
    screen->texture_destroy = llvmpipe_texture_destroy;
+   screen->texture_from_handle = llvmpipe_texture_from_handle;
    screen->texture_get_handle = llvmpipe_texture_get_handle;
 
    screen->get_tex_surface = llvmpipe_get_tex_surface;
