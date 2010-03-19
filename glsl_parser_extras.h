@@ -27,6 +27,7 @@
 
 #include <cstdlib>
 #include "main/simple_list.h"
+#include "glsl_symbol_table.h"
 
 enum _mesa_glsl_parser_targets {
    vertex_shader,
@@ -37,7 +38,7 @@ enum _mesa_glsl_parser_targets {
 struct _mesa_glsl_parse_state {
    void *scanner;
    struct simple_node translation_unit;
-   struct _mesa_symbol_table *symbols;
+   glsl_symbol_table *symbols;
 
    unsigned language_version;
    enum _mesa_glsl_parser_targets target;

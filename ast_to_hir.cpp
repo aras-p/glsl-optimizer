@@ -50,7 +50,7 @@
  */
 #include <stdio.h>
 #include "main/imports.h"
-#include "symbol_table.h"
+#include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ast.h"
 #include "glsl_types.h"
@@ -208,8 +208,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
 	       type_name[6] = '\0';
 	    }
 
-	    t = (glsl_type *)
-	       _mesa_symbol_table_find_symbol(state->symbols, 0, type_name);
+	    t = state->symbols->get_type(type_name);
 	    return (t != NULL) ? t : glsl_error_type;
 	 }
       } else if (type_a->is_matrix()) {
@@ -641,9 +640,8 @@ ast_expression::hir(exec_list *instructions,
        * tree.  This particular use must be at location specified in the grammar
        * as 'variable_identifier'.
        */
-      ir_variable *var = (ir_variable *)
-	 _mesa_symbol_table_find_symbol(state->symbols, 0,
-					this->primary_expression.identifier);
+      ir_variable *var = 
+	 state->symbols->get_variable(this->primary_expression.identifier);
 
       result = new ir_dereference(var);
 
@@ -740,13 +738,13 @@ ast_compound_statement::hir(exec_list *instructions,
 
 
    if (new_scope)
-      _mesa_symbol_table_push_scope(state->symbols);
+      state->symbols->push_scope();
 
    foreach (ptr, &statements)
       ((ast_node *)ptr)->hir(instructions, state);
 
    if (new_scope)
-      _mesa_symbol_table_pop_scope(state->symbols);
+      state->symbols->pop_scope();
 
    /* Compound statements do not have r-values.
     */
@@ -765,8 +763,7 @@ type_specifier_to_glsl_type(const struct ast_type_specifier *spec,
       /* FINISHME: Handle annonymous structures. */
       type = NULL;
    } else {
-      type = (glsl_type *)
-	 _mesa_symbol_table_find_symbol(state->symbols, 0, spec->type_name);
+      type = state->symbols->get_type(spec->type_name);
       *name = spec->type_name;
 
       /* FINISHME: Handle array declarations.  Note that this requires complete
@@ -880,8 +877,7 @@ ast_declarator_list::hir(exec_list *instructions,
       /* Attempt to add the variable to the symbol table.  If this fails, it
        * means the variable has already been declared at this scope.
        */
-      if (_mesa_symbol_table_add_symbol(state->symbols, 0, decl->identifier,
-					var) != 0) {
+      if (!state->symbols->add_variable(decl->identifier, var)) {
 	 YYLTYPE loc = this->get_location();
 
 	 _mesa_glsl_error(& loc, state, "`%s' redeclared",
@@ -1009,9 +1005,7 @@ ast_function_definition::hir(exec_list *instructions,
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
     */
-   f = (ir_function *)
-      _mesa_symbol_table_find_symbol(state->symbols, 0,
-				     this->prototype->identifier);
+   f = state->symbols->get_function(this->prototype->identifier);
    if (f != NULL) {
       foreach_iter(exec_list_iterator, iter, f->signatures) {
 	 signature = (struct ir_function_signature *) iter.get();
@@ -1041,7 +1035,7 @@ ast_function_definition::hir(exec_list *instructions,
       f = new ir_function();
       f->name = this->prototype->identifier;
 
-      _mesa_symbol_table_add_symbol(state->symbols, 0, f->name, f);
+      state->symbols->add_function(f->name, f);
    }
 
 
@@ -1080,7 +1074,7 @@ ast_function_definition::hir(exec_list *instructions,
     * to the instruction list.  There are other more efficient ways to do this,
     * but they involve ugly linked-list gymnastics.
     */
-   _mesa_symbol_table_push_scope(state->symbols);
+   state->symbols->push_scope();
    foreach_iter(exec_list_iterator, iter, parameters) {
       ir_variable *const var = (ir_variable *) iter.get();
 
@@ -1089,7 +1083,7 @@ ast_function_definition::hir(exec_list *instructions,
       iter.remove();
       instructions->push_tail(var);
 
-      _mesa_symbol_table_add_symbol(state->symbols, 0, var->name, var);
+      state->symbols->add_variable(var->name, var);
    }
 
    /* Convert the body of the function to HIR, and append the resulting
@@ -1098,7 +1092,7 @@ ast_function_definition::hir(exec_list *instructions,
     */
    this->body->hir(instructions, state);
 
-   _mesa_symbol_table_pop_scope(state->symbols);
+   state->symbols->pop_scope();
 
 
    /* Function definitions do not have r-values.

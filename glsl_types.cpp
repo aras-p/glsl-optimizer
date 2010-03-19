@@ -22,28 +22,27 @@
  */
 
 #include <stdlib.h>
-#include "symbol_table.h"
+#include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
 #include "builtin_types.h"
 
 
 static void
-add_types_to_symbol_table(struct _mesa_symbol_table *symtab,
+add_types_to_symbol_table(glsl_symbol_table *symtab,
 			  const struct glsl_type *types,
 			  unsigned num_types)
 {
    unsigned i;
 
    for (i = 0; i < num_types; i++) {
-      _mesa_symbol_table_add_symbol(symtab, 0, types[i].name,
-				    (void *) & types[i]);
+      symtab->add_type(types[i].name, & types[i]);
    }
 }
 
 
 static void
-generate_110_types(struct _mesa_symbol_table *symtab)
+generate_110_types(glsl_symbol_table *symtab)
 {
    add_types_to_symbol_table(symtab, builtin_core_types,
 			     Elements(builtin_core_types));
@@ -55,7 +54,7 @@ generate_110_types(struct _mesa_symbol_table *symtab)
 
 
 static void
-generate_120_types(struct _mesa_symbol_table *symtab)
+generate_120_types(glsl_symbol_table *symtab)
 {
    generate_110_types(symtab);
 
@@ -65,7 +64,7 @@ generate_120_types(struct _mesa_symbol_table *symtab)
 
 
 static void
-generate_130_types(struct _mesa_symbol_table *symtab)
+generate_130_types(glsl_symbol_table *symtab)
 {
    generate_120_types(symtab);
 

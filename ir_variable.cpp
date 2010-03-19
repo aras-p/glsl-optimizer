@@ -22,7 +22,7 @@
  */
 
 #include "glsl_parser_extras.h"
-#include "symbol_table.h"
+#include "glsl_symbol_table.h"
 #include "ir.h"
 #include "builtin_variables.h"
 
@@ -32,13 +32,12 @@
 
 static void
 add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
-		     struct _mesa_symbol_table *symtab)
+		     glsl_symbol_table *symtab)
 {
    /* Create a new variable declaration from the description supplied by
     * the caller.
     */
-   const glsl_type *const type = (glsl_type *)
-      _mesa_symbol_table_find_symbol(symtab, 0, proto->type);
+   const glsl_type *const type = symtab->get_type(proto->type);
 
    assert(type != NULL);
 
@@ -54,13 +53,13 @@ add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
     */
    instructions->push_tail(var);
 
-   _mesa_symbol_table_add_symbol(symtab, 0, var->name, var);
+   symtab->add_variable(var->name, var);
 }
 
 
 static void
 generate_110_vs_variables(exec_list *instructions,
-			  struct _mesa_symbol_table *symtab)
+			  glsl_symbol_table *symtab)
 {
    for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
       add_builtin_variable(& builtin_core_vs_variables[i],
@@ -83,7 +82,7 @@ generate_110_vs_variables(exec_list *instructions,
 
 static void
 generate_120_vs_variables(exec_list *instructions,
-			  struct _mesa_symbol_table *symtab)
+			  glsl_symbol_table *symtab)
 {
    /* GLSL version 1.20 did not add any built-in variables in the vertex
     * shader.
@@ -94,7 +93,7 @@ generate_120_vs_variables(exec_list *instructions,
 
 static void
 generate_130_vs_variables(exec_list *instructions,
-			  struct _mesa_symbol_table *symtab)
+			  glsl_symbol_table *symtab)
 {
    generate_120_vs_variables(instructions, symtab);
 

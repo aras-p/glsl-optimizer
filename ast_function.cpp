@@ -22,7 +22,7 @@
  */
 
 #include <cstdio>
-#include "symbol_table.h"
+#include "glsl_symbol_table.h"
 #include "ast.h"
 #include "glsl_types.h"
 #include "ir.h"
@@ -32,8 +32,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 		       YYLTYPE *loc, simple_node *parameters,
 		       struct _mesa_glsl_parse_state *state)
 {
-   ir_function *f = (ir_function *)
-      _mesa_symbol_table_find_symbol(state->symbols, 0, name);
+   ir_function *f = state->symbols->get_function(name);
 
    if (f == NULL) {
       _mesa_glsl_error(loc, state, "function `%s' undeclared", name);

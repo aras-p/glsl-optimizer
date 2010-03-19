@@ -34,7 +34,6 @@
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
-#include "symbol_table.h"
 #include "ir_print_visitor.h"
 
 void
@@ -634,7 +633,7 @@ main(int argc, char **argv)
 
    state.scanner = NULL;
    make_empty_list(& state.translation_unit);
-   state.symbols = _mesa_symbol_table_ctor();
+   state.symbols = new glsl_symbol_table;
    state.error = false;
 
    _mesa_glsl_lexer_ctor(& state, shader, shader_len);
@@ -657,7 +656,7 @@ main(int argc, char **argv)
       }
    }
 
-   _mesa_symbol_table_dtor(state.symbols);
+   delete state.symbols;
 
    return 0;
 }
