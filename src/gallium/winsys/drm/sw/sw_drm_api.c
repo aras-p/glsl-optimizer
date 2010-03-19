@@ -24,8 +24,11 @@
  **********************************************************/
 
 
+#include "pipe/p_screen.h"
 #include "util/u_memory.h"
-#include "softpipe/sp_public.h"
+#include "target-helpers/soft_screen.h"
+
+#include "state_tracker/sw_winsys.h"
 #include "state_tracker/drm_api.h"
 #include "wrapper_sw_winsys.h"
 #include "sw_drm_api.h"
@@ -60,14 +63,35 @@ sw_drm_create_screen(struct drm_api *_api, int drmFD,
 {
    struct sw_drm_api *swapi = sw_drm_api(_api);
    struct drm_api *api = swapi->api;
-   struct sw_winsys *sww;
-   struct pipe_screen *screen;
+   struct sw_winsys *sww = NULL;
+   struct pipe_screen *screen = NULL;
+   struct pipe_screen *soft_screen = NULL;
 
    screen = api->create_screen(api, drmFD, arg);
+   if (screen == NULL)
+      goto fail;
 
    sww = wrapper_sw_winsys_warp_pipe_screen(screen);
+   if (sww == NULL)
+      goto fail;
 
-   return softpipe_create_screen(sww);
+   soft_screen = gallium_soft_create_screen(sww);
+   if (soft_screen == NULL)
+      goto fail;
+
+   return soft_screen;
+
+fail:
+   if (soft_screen)
+      soft_screen->destroy(soft_screen);
+
+   if (sww)
+      sww->destroy(sww);
+
+   if (screen)
+      screen->destroy(screen);
+
+   return NULL;
 }
 
 static void
