@@ -74,11 +74,11 @@ is being cast to another format. Casting can be done only between compatible
 formats, that is formats that have matching component order and sizes.
 
 Swizzle fields specify they way in which fetched texel components are placed
-in the result register. For example, swizzle_r specifies what is going to be
-placed in destination register x (AKA r).
+in the result register. For example, ``swizzle_r`` specifies what is going to be
+placed in first component of result register.
 
-first_level and last_level fields of sampler view template specify the LOD
-range the texture is going to be constrained to.
+The ``first_level`` and ``last_level`` fields of sampler view template specify
+the LOD range the texture is going to be constrained to.
 
 * ``set_fragment_sampler_views`` binds an array of sampler views to
   fragment shader stage. Every binding point acquires a reference
@@ -89,7 +89,7 @@ range the texture is going to be constrained to.
   shader stage. Every binding point acquires a reference to a respective
   sampler view and releases a reference to the previous sampler view.
 
-* ``create_sampler_view`` creates a new sampler view. texture is associated
+* ``create_sampler_view`` creates a new sampler view. ``texture`` is associated
   with the sampler view which results in sampler view holding a reference
   to the texture. Format specified in template must be compatible
   with texture format.
