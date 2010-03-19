@@ -269,6 +269,36 @@ _mesa_symbol_table_iterator_next(struct _mesa_symbol_table_iterator *iter)
 }
 
 
+/**
+ * Determine the scope "distance" of a symbol from the current scope
+ *
+ * \return
+ * A non-negative number for the number of scopes between the current scope
+ * and the scope where a symbol was defined.  A value of zero means the current
+ * scope.  A negative number if the symbol does not exist.
+ */
+int
+_mesa_symbol_table_symbol_scope(struct _mesa_symbol_table *table,
+				int name_space, const char *name)
+{
+    struct symbol_header *const hdr = find_symbol(table, name);
+    struct symbol *sym;
+
+    if (hdr != NULL) {
+       for (sym = hdr->symbols; sym != NULL; sym = sym->next_with_same_name) {
+	  assert(sym->hdr == hdr);
+
+	  if ((name_space == -1) || (sym->name_space == name_space)) {
+	     assert(sym->depth <= table->depth);
+	     return sym->depth - table->depth;
+	  }
+       }
+    }
+
+    return -1;
+}
+
+
 void *
 _mesa_symbol_table_find_symbol(struct _mesa_symbol_table *table,
                                int name_space, const char *name)
