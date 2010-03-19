@@ -323,6 +323,51 @@ private:
 };
 
 
+/**
+ * \name Jump-like IR instructions.
+ *
+ * These include \c break, \c continue, \c return, and \c discard.
+ */
+/*@{*/
+class ir_jump : public ir_instruction {
+protected:
+   ir_jump()
+      : ir_instruction(ir_op_jump)
+   {
+      /* empty */
+   }
+};
+
+class ir_return : public ir_jump {
+public:
+   ir_return()
+      : value(NULL)
+   {
+      /* empty */
+   }
+
+   ir_return(ir_expression *value)
+      : value(value)
+   {
+      /* empty */
+   }
+
+   ir_expression *get_value() const
+   {
+      return value;
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+private:
+   ir_expression *value;
+};
+/*@}*/
+
+
 struct ir_swizzle_mask {
    unsigned x:2;
    unsigned y:2;

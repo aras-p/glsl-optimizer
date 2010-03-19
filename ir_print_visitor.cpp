@@ -142,3 +142,18 @@ ir_print_visitor::visit(ir_call *ir)
    printf("(call FINISHME: function name here\n");
    printf("    (FINISHME: function paramaters here))\n");
 }
+
+
+void
+ir_print_visitor::visit(ir_return *ir)
+{
+   printf("(return");
+
+   ir_expression *const value = ir->get_value();
+   if (value) {
+      printf(" ");
+      value->accept(this);
+   }
+
+   printf(")\n");
+}

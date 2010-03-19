@@ -53,6 +53,7 @@ public:
    virtual void visit(class ir_assignment *) = 0;
    virtual void visit(class ir_constant *) = 0;
    virtual void visit(class ir_call *) = 0;
+   virtual void visit(class ir_return *) = 0;
    /*@}*/
 };
 
