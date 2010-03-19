@@ -38,6 +38,7 @@ SYS_LIBS = -lm -pthread
 
 
 INCLUDE_DIRS = \
+	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/gallium/include
 
