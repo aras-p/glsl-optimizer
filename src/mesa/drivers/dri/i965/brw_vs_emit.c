@@ -1361,31 +1361,6 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    }
 }
 
-
-/**
- * Called after code generation to resolve subroutine calls and the
- * END instruction.
- * \param end_inst  points to brw code for END instruction
- * \param last_inst  points to last instruction emitted before vertex write
- */
-static void 
-post_vs_emit( struct brw_vs_compile *c,
-              struct brw_instruction *end_inst,
-              struct brw_instruction *last_inst )
-{
-   GLint offset;
-
-   brw_resolve_cals(&c->func);
-
-   /* patch up the END code to jump past subroutines, etc */
-   offset = last_inst - end_inst;
-   if (offset > 1) {
-      brw_set_src1(end_inst, brw_imm_d(offset * 16));
-   } else {
-      end_inst->header.opcode = BRW_OPCODE_NOP;
-   }
-}
-
 static GLboolean
 accumulator_contains(struct brw_vs_compile *c, struct brw_reg val)
 {
@@ -1466,8 +1441,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
    struct intel_context *intel = &brw->intel;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_depth = 0, loop_depth = 0;
-   GLuint end_offset = 0;
-   struct brw_instruction *end_inst, *last_inst;
    struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH] = { 0 };
    const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
@@ -1751,12 +1724,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
          brw_MOV(p, brw_ip_reg(), deref_1d(stack_index, 0));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
 	 break;
-      case OPCODE_END:	
-         end_offset = p->nr_insn;
-         /* this instruction will get patched later to jump past subroutine
-          * code, etc.
-          */
-         brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
+      case OPCODE_END:
+	 emit_vertex_write(c);
          break;
       case OPCODE_PRINT:
          /* no-op */
@@ -1817,13 +1786,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
       release_tmps(c);
    }
 
-   end_inst = &p->store[end_offset];
-   last_inst = &p->store[p->nr_insn];
-
-   /* The END instruction will be patched to jump to this code */
-   emit_vertex_write(c);
-
-   post_vs_emit(c, end_inst, last_inst);
+   brw_resolve_cals(p);
 
    brw_optimize(p);
 
