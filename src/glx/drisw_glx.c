@@ -334,10 +334,17 @@ driCreateDrawable(__GLXscreenConfigs * psc,
    return pdraw;
 }
 
-static void
-driSwapBuffers(__GLXDRIdrawable * pdraw)
+static int64_t
+driSwapBuffers(__GLXDRIdrawable * pdraw,
+               int64_t target_msc, int64_t divisor, int64_t remainder)
 {
+   (void) target_msc;
+   (void) divisor;
+   (void) remainder;
+
    (*pdraw->psc->core->swapBuffers) (pdraw->driDrawable);
+
+   return 0;
 }
 
 static void
