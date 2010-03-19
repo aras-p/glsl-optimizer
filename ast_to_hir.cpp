@@ -1120,3 +1120,40 @@ ast_function_definition::hir(exec_list *instructions,
     */
    return NULL;
 }
+
+
+ir_instruction *
+ast_jump_statement::hir(exec_list *instructions,
+			struct _mesa_glsl_parse_state *state)
+{
+
+   if (mode == ast_return) {
+      ir_return *inst;
+
+      if (opt_return_value) {
+	 /* FINISHME: Make sure the enclosing function has a non-void return
+	  * FINISHME: type.
+	  */
+
+	 ir_expression *const ret = (ir_expression *)
+	    opt_return_value->hir(instructions, state);
+	 assert(ret != NULL);
+
+	 /* FINISHME: Make sure the type of the return value matches the return
+	  * FINISHME: type of the enclosing function.
+	  */
+
+	 inst = new ir_return(ret);
+      } else {
+	 /* FINISHME: Make sure the enclosing function has a void return type.
+	  */
+	 inst = new ir_return;
+      }
+
+      instructions->push_tail(inst);
+   }
+
+   /* Jump instructions do not have r-values.
+    */
+   return NULL;
+}

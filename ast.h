@@ -531,6 +531,9 @@ public:
    ast_jump_statement(int mode, ast_expression *return_value);
    virtual void print(void) const;
 
+   virtual ir_instruction *hir(exec_list *instructions,
+			       struct _mesa_glsl_parse_state *state);
+
    enum ast_jump_modes {
       ast_continue,
       ast_break,
