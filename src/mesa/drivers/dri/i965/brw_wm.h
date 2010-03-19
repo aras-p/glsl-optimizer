@@ -286,7 +286,7 @@ void brw_wm_pass0( struct brw_wm_compile *c );
 void brw_wm_pass1( struct brw_wm_compile *c );
 void brw_wm_pass2( struct brw_wm_compile *c );
 void brw_wm_emit( struct brw_wm_compile *c );
-
+GLboolean brw_wm_arg_can_be_immediate(enum prog_opcode, int arg);
 void brw_wm_print_value( struct brw_wm_compile *c,
 			 struct brw_wm_value *value );
 

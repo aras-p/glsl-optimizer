@@ -570,12 +570,25 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     const GLuint nr = 1;
     const GLuint component = GET_SWZ(src->Swizzle, channel);
 
-    /* Extended swizzle terms */
-    if (component == SWIZZLE_ZERO) {
-       return brw_imm_f(0.0F);
-    }
-    else if (component == SWIZZLE_ONE) {
-       return brw_imm_f(1.0F);
+    /* Only one immediate value can be used per native opcode, and it
+     * has be in the src1 slot, so not all Mesa instructions will get
+     * to take advantage of immediate constants.
+     */
+    if (brw_wm_arg_can_be_immediate(inst->Opcode, srcRegIndex)) {
+       const struct gl_program_parameter_list *params;
+
+       params = c->fp->program.Base.Parameters;
+
+       /* Extended swizzle terms */
+       if (component == SWIZZLE_ZERO) {
+	  return brw_imm_f(0.0F);
+       } else if (component == SWIZZLE_ONE) {
+	  return brw_imm_f(1.0F);
+       }
+
+       if (src->File == PROGRAM_CONSTANT) {
+	  return brw_imm_f(params->ParameterValues[src->Index][component]);
+       }
     }
 
     if (c->fp->use_const_buffer &&
