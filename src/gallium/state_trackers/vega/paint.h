@@ -108,7 +108,7 @@ VGboolean paint_color_ramp_premultiplied(struct vg_paint *paint);
 
 
 VGint paint_bind_samplers(struct vg_paint *paint, struct pipe_sampler_state **samplers,
-                          struct pipe_texture **textures);
+                          struct pipe_sampler_view **sampler_views);
 
 VGint paint_constant_buffer_size(struct vg_paint *paint);
 void paint_fill_constant_buffer(struct vg_paint *paint,

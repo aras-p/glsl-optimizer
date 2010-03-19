@@ -45,7 +45,7 @@ struct vg_mask_layer {
    VGint width;
    VGint height;
 
-   struct pipe_texture *texture;
+   struct pipe_sampler_view *sampler_view;
 };
 
 static INLINE struct pipe_surface *
@@ -54,7 +54,7 @@ alpha_mask_surface(struct vg_context *ctx, int usage)
    struct pipe_screen *screen = ctx->pipe->screen;
    struct st_framebuffer *stfb = ctx->draw_buffer;
    return screen->get_tex_surface(screen,
-                                  stfb->alpha_mask,
+                                  stfb->alpha_mask_view->texture,
                                   0, 0, 0,
                                   usage);
 }
@@ -284,35 +284,33 @@ static void setup_mask_operation(VGMaskOperation operation)
    cso_set_fragment_shader_handle(ctx->cso_context, shader);
 }
 
-static void setup_mask_samplers(struct pipe_texture *umask)
+static void setup_mask_samplers(struct pipe_sampler_view *umask)
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-   struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
    struct st_framebuffer *fb_buffers = ctx->draw_buffer;
-   struct pipe_texture *uprev = NULL;
+   struct pipe_sampler_view *uprev = NULL;
    struct pipe_sampler_state sampler;
 
-   uprev = fb_buffers->blend_texture;
+   uprev = fb_buffers->blend_texture_view;
    sampler = ctx->mask.sampler;
    sampler.normalized_coords = 1;
 
    samplers[0] = NULL;
    samplers[1] = NULL;
-   samplers[2] = NULL;
-   textures[0] = NULL;
-   textures[1] = NULL;
-   textures[2] = NULL;
+   sampler_views[0] = NULL;
+   sampler_views[1] = NULL;
 
    samplers[0] = &sampler;
    samplers[1] = &ctx->mask.sampler;
 
-   textures[0] = umask;
-   textures[1] = uprev;
+   sampler_views[0] = umask;
+   sampler_views[1] = uprev;
 
    cso_set_samplers(ctx->cso_context, 2,
                     (const struct pipe_sampler_state **)samplers);
-   cso_set_sampler_textures(ctx->cso_context, 2, textures);
+   cso_set_fragment_sampler_views(ctx->cso_context, 2, sampler_views);
 }
 
 
@@ -411,12 +409,13 @@ static void surface_fill(struct pipe_surface *surf,
 }
 
 
-static void mask_using_texture(struct pipe_texture *texture,
+static void mask_using_texture(struct pipe_sampler_view *sampler_view,
                                VGMaskOperation operation,
                                VGint x, VGint y,
                                VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
+   struct pipe_texture *texture = sampler_view->texture;
    struct pipe_surface *surface =
       alpha_mask_surface(ctx, PIPE_BUFFER_USAGE_GPU_WRITE);
    VGint offsets[4], loc[4];
@@ -439,13 +438,13 @@ static void mask_using_texture(struct pipe_texture *texture,
    vg_prepare_blend_surface_from_mask(ctx);
 
    cso_save_samplers(ctx->cso_context);
-   cso_save_sampler_textures(ctx->cso_context);
+   cso_save_fragment_sampler_views(ctx->cso_context);
    cso_save_framebuffer(ctx->cso_context);
    cso_save_blend(ctx->cso_context);
    cso_save_fragment_shader(ctx->cso_context);
    cso_save_viewport(ctx->cso_context);
 
-   setup_mask_samplers(texture);
+   setup_mask_samplers(sampler_view);
    setup_mask_blend();
    setup_mask_operation(operation);
    setup_mask_framebuffer(surface, surface->width, surface->height);
@@ -463,7 +462,7 @@ static void mask_using_texture(struct pipe_texture *texture,
    cso_restore_framebuffer(ctx->cso_context);
    cso_restore_fragment_shader(ctx->cso_context);
    cso_restore_samplers(ctx->cso_context);
-   cso_restore_sampler_textures(ctx->cso_context);
+   cso_restore_fragment_sampler_views(ctx->cso_context);
    cso_restore_viewport(ctx->cso_context);
 
    pipe_surface_reference(&surface, NULL);
@@ -484,7 +483,11 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
 
    {
       struct pipe_texture pt;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_screen *screen = ctx->pipe->screen;
+      struct pipe_sampler_view view_templ;
+      struct pipe_sampler_view *view = NULL;
+      struct pipe_texture *texture;
 
       memset(&pt, 0, sizeof(pt));
       pt.target = PIPE_TEXTURE_2D;
@@ -496,7 +499,14 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
       pt.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
       pt.compressed = 0;
 
-      mask->texture = screen->texture_create(screen, &pt);
+      texture = screen->texture_create(screen, &pt);
+
+      if (texture) {
+         u_sampler_view_default_template(&view_templ, texture, texture->format);
+         view = pipe->create_sampler_view(pipe, texture, &view_templ);
+      }
+      pipe_texture_reference(&texture, NULL);
+      mask->sampler_view = view;
    }
 
    vg_context_add_object(ctx, VG_OBJECT_MASK, mask);
@@ -525,7 +535,7 @@ void mask_layer_fill(struct vg_mask_layer *layer,
    alpha_color[3] = value;
 
    surface = ctx->pipe->screen->get_tex_surface(
-      ctx->pipe->screen, layer->texture,
+      ctx->pipe->screen, layer->sampler_view->texture,
       0, 0, 0,
       PIPE_BUFFER_USAGE_GPU_WRITE);
 
@@ -545,10 +555,10 @@ void mask_copy(struct vg_mask_layer *layer,
     struct st_framebuffer *fb_buffers = ctx->draw_buffer;
 
     renderer_copy_texture(ctx->renderer,
-                          layer->texture,
+                          layer->sampler_view,
                           sx, sy,
                           sx + width, sy + height,
-                          fb_buffers->alpha_mask,
+                          fb_buffers->alpha_mask_view->texture,
                           dx, dy,
                           dx + width, dy + height);
 }
@@ -562,7 +572,7 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
    struct pipe_screen *screen = ctx->pipe->screen;
    struct pipe_surface *surface;
 
-   surface = screen->get_tex_surface(screen, layer->texture,  0, 0, 0,
+   surface = screen->get_tex_surface(screen, layer->sampler_view->texture,  0, 0, 0,
                                      PIPE_BUFFER_USAGE_GPU_WRITE);
 
    cso_save_framebuffer(ctx->cso_context);
@@ -604,8 +614,8 @@ void mask_render_to(struct path *path,
    struct vg_mask_layer *temp_layer;
    VGint width, height;
 
-   width = fb_buffers->alpha_mask->width0;
-   height = fb_buffers->alpha_mask->width0;
+   width = fb_buffers->alpha_mask_view->texture->width0;
+   height = fb_buffers->alpha_mask_view->texture->width0;
 
    temp_layer = mask_layer_create(width, height);
 
@@ -622,7 +632,7 @@ void mask_using_layer(struct vg_mask_layer *layer,
                       VGint x, VGint y,
                       VGint width, VGint height)
 {
-   mask_using_texture(layer->texture, operation,
+   mask_using_texture(layer->sampler_view, operation,
                       x, y, width, height);
 }
 
@@ -644,7 +654,7 @@ void mask_using_image(struct vg_image *image,
                       VGint x, VGint y,
                       VGint width, VGint height)
 {
-   mask_using_texture(image->texture, operation,
+   mask_using_texture(image->sampler_view, operation,
                       x, y, width, height);
 }
 
@@ -672,7 +682,7 @@ void mask_fill(VGint x, VGint y, VGint width, VGint height,
 }
 
 VGint mask_bind_samplers(struct pipe_sampler_state **samplers,
-                         struct pipe_texture **textures)
+                         struct pipe_sampler_view **sampler_views)
 {
    struct vg_context *ctx = vg_current_context();
 
@@ -680,7 +690,7 @@ VGint mask_bind_samplers(struct pipe_sampler_state **samplers,
       struct st_framebuffer *fb_buffers = ctx->draw_buffer;
 
       samplers[1] = &ctx->mask.sampler;
-      textures[1] = fb_buffers->alpha_mask;
+      sampler_views[1] = fb_buffers->alpha_mask_view;
       return 1;
    } else
       return 0;

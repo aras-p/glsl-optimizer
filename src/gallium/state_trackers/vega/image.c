@@ -43,6 +43,7 @@
 #include "util/u_tile.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_sampler.h"
 
 static enum pipe_format vg_format_to_pipe(VGImageFormat format)
 {
@@ -81,7 +82,7 @@ static INLINE void vg_sync_size(VGfloat *src_loc, VGfloat *dst_loc)
 
 static void vg_copy_texture(struct vg_context *ctx,
                             struct pipe_texture *dst, VGint dx, VGint dy,
-                            struct pipe_texture *src, VGint sx, VGint sy,
+                            struct pipe_sampler_view *src, VGint sx, VGint sy,
                             VGint width, VGint height)
 {
    VGfloat dst_loc[4], src_loc[4];
@@ -103,8 +104,8 @@ static void vg_copy_texture(struct vg_context *ctx,
    src_loc[3] = height;
    src_bounds[0] = 0.f;
    src_bounds[1] = 0.f;
-   src_bounds[2] = src->width0;
-   src_bounds[3] = src->height0;
+   src_bounds[2] = src->texture->width0;
+   src_bounds[3] = src->texture->height0;
 
    vg_bound_rect(src_loc, src_bounds, src_shift);
    vg_bound_rect(dst_loc, dst_bounds, dst_shift);
@@ -218,7 +219,7 @@ void vg_copy_surface(struct vg_context *ctx,
 
 static struct pipe_texture *image_texture(struct vg_image *img)
 {
-   struct pipe_texture *tex = img->texture;
+   struct pipe_texture *tex = img->sampler_view->texture;
    return tex;
 }
 
@@ -247,9 +248,12 @@ struct vg_image * image_create(VGImageFormat format,
                                VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
+   struct pipe_context *pipe = ctx->pipe;
    struct vg_image *image = CALLOC_STRUCT(vg_image);
    enum pipe_format pformat = vg_format_to_pipe(format);
    struct pipe_texture pt, *newtex;
+   struct pipe_sampler_view view_templ;
+   struct pipe_sampler_view *view;
    struct pipe_screen *screen = ctx->pipe->screen;
 
    vg_init_object(&image->base, ctx, VG_OBJECT_IMAGE);
@@ -281,7 +285,12 @@ struct vg_image * image_create(VGImageFormat format,
 
    debug_assert(newtex);
 
-   image->texture = newtex;
+   u_sampler_view_default_template(&view_templ, newtex, newtex->format);
+   view = pipe->create_sampler_view(pipe, newtex, &view_templ);
+   /* want the texture to go away if the view is freed */
+   pipe_texture_reference(&newtex, NULL);
+
+   image->sampler_view = view;
 
    vg_context_add_object(ctx, VG_OBJECT_IMAGE, image);
 
@@ -345,7 +354,7 @@ void image_destroy(struct vg_image *img)
       array_destroy(img->children_array);
    }
 
-   pipe_texture_reference(&img->texture, NULL);
+   pipe_sampler_view_reference(&img->sampler_view, NULL);
    free(img);
 }
 
@@ -444,7 +453,7 @@ void image_get_sub_data(struct vg_image * image,
    {
       struct pipe_transfer *transfer =
          pipe->get_tex_transfer(pipe,
-                                  image->texture,  0, 0, 0,
+                                  image->sampler_view->texture,  0, 0, 0,
                                   PIPE_TRANSFER_READ,
                                   0, 0,
                                   image->x + image->width,
@@ -478,9 +487,9 @@ struct vg_image * image_child_image(struct vg_image *parent,
    image->width = width;
    image->height = height;
    image->parent = parent;
-   image->texture = 0;
-   pipe_texture_reference(&image->texture,
-                          parent->texture);
+   image->sampler_view = NULL;
+   pipe_sampler_view_reference(&image->sampler_view,
+                               parent->sampler_view);
 
    image->sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    image->sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -514,8 +523,8 @@ void image_copy(struct vg_image *dst, VGint dx, VGint dy,
    }
    /* make sure rendering has completed */
    ctx->pipe->flush(ctx->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-   vg_copy_texture(ctx, dst->texture, dst->x + dx, dst->y + dy,
-                   src->texture, src->x + sx, src->y + sy, width, height);
+   vg_copy_texture(ctx, dst->sampler_view->texture, dst->x + dx, dst->y + dy,
+                   src->sampler_view, src->x + sx, src->y + sy, width, height);
 }
 
 void image_draw(struct vg_image *img)
@@ -624,12 +633,12 @@ VGboolean vg_image_overlaps(struct vg_image *dst,
 }
 
 VGint image_bind_samplers(struct vg_image *img, struct pipe_sampler_state **samplers,
-                          struct pipe_texture **textures)
+                          struct pipe_sampler_view **sampler_views)
 {
    img->sampler.min_img_filter = image_sampler_filter(img->base.ctx);
    img->sampler.mag_img_filter = image_sampler_filter(img->base.ctx);
    samplers[3] = &img->sampler;
-   textures[3] = img->texture;
+   sampler_views[3] = img->sampler_view;
    return 1;
 }
 

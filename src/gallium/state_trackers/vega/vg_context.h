@@ -55,9 +55,10 @@ struct st_framebuffer {
    struct st_renderbuffer *strb;
    struct st_renderbuffer *dsrb;
 
-   struct pipe_texture *alpha_mask;
+   struct pipe_sampler_view *alpha_mask_view;
 
-   struct pipe_texture *blend_texture;
+   struct pipe_sampler_view *blend_texture_view;
+
 
    struct st_framebuffer_iface *iface;
    enum st_attachment_type strb_att;

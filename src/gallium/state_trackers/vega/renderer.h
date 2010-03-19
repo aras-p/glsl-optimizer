@@ -33,6 +33,7 @@ struct renderer;
 
 struct vg_context;
 struct pipe_texture;
+struct pipe_sampler_view;
 struct pipe_surface;
 
 struct renderer *renderer_create(struct vg_context *owner);
@@ -57,7 +58,7 @@ void renderer_texture_quad(struct renderer *,
                            VGfloat x3, VGfloat y3,
                            VGfloat x4, VGfloat y4);
 void renderer_copy_texture(struct renderer *r,
-                           struct pipe_texture *src,
+                           struct pipe_sampler_view *src,
                            VGfloat sx1, VGfloat sy1,
                            VGfloat sx2, VGfloat sy2,
                            struct pipe_texture *dst,

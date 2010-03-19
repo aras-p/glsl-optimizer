@@ -43,6 +43,7 @@
 #include "util/u_simple_shaders.h"
 #include "util/u_memory.h"
 #include "util/u_blit.h"
+#include "util/u_sampler.h"
 
 struct vg_context *_vg_context = 0;
 
@@ -436,19 +437,24 @@ void vg_prepare_blend_surface(struct vg_context *ctx)
 {
    struct pipe_surface *dest_surface = NULL;
    struct pipe_context *pipe = ctx->pipe;
+   struct pipe_sampler_view *view;
+   struct pipe_sampler_view view_templ;
    struct st_framebuffer *stfb = ctx->draw_buffer;
    struct st_renderbuffer *strb = stfb->strb;
 
    /* first finish all pending rendering */
    vgFinish();
 
+   u_sampler_view_default_template(&view_templ, strb->texture, strb->texture->format);
+   view = pipe->create_sampler_view(pipe, strb->texture, &view_templ);
+
    dest_surface = pipe->screen->get_tex_surface(pipe->screen,
-                                                stfb->blend_texture,
+                                                stfb->blend_texture_view->texture,
                                                 0, 0, 0,
                                                 PIPE_BUFFER_USAGE_GPU_WRITE);
    /* flip it, because we want to use it as a sampler */
    util_blit_pixels_tex(ctx->blit,
-                        strb->texture,
+                        view,
                         0, strb->height,
                         strb->width, 0,
                         dest_surface,
@@ -461,6 +467,8 @@ void vg_prepare_blend_surface(struct vg_context *ctx)
 
    /* make sure it's complete */
    vgFinish();
+
+   pipe_sampler_view_reference(&view, NULL);
 }
 
 
@@ -477,13 +485,13 @@ void vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
    vgFinish();
 
    dest_surface = pipe->screen->get_tex_surface(pipe->screen,
-                                                stfb->blend_texture,
+                                                stfb->blend_texture_view->texture,
                                                 0, 0, 0,
                                                 PIPE_BUFFER_USAGE_GPU_WRITE);
 
    /* flip it, because we want to use it as a sampler */
    util_blit_pixels_tex(ctx->blit,
-                        stfb->alpha_mask,
+                        stfb->alpha_mask_view,
                         0, strb->height,
                         strb->width, 0,
                         dest_surface,
