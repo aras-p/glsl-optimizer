@@ -7,7 +7,7 @@
 
 #include "state_tracker/drm_api.h"
 
-#include <drm.h>
+struct drm_clip_rect;
 
 struct pipe_screen;
 struct pipe_winsys;
