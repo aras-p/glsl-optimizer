@@ -22,12 +22,12 @@
  */
 
 /**
- * \file dri_sw.c
+ * \file drisw_util.c
  *
  * DRISW utility functions, i.e. dri_util.c stripped from drm-specific bits.
  */
 
-#include "dri_sw.h"
+#include "drisw_util.h"
 #include "utils.h"
 
 

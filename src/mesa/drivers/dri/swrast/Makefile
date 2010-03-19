@@ -20,7 +20,7 @@ ASM_SOURCES =
 SWRAST_COMMON_SOURCES = \
 	../../common/driverfuncs.c \
 	../common/utils.c \
-	../common/dri_sw.c
+	../common/drisw_util.c
 
 include ../Makefile.template
 

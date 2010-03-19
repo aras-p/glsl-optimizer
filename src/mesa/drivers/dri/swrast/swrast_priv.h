@@ -30,7 +30,7 @@
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 #include "main/mtypes.h"
-#include "dri_sw.h"
+#include "drisw_util.h"
 
 
 /**
