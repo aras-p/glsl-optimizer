@@ -24,7 +24,6 @@
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
-#include "symbol_table.h"
 
 #define YY_USER_ACTION						\
    do {								\
@@ -245,13 +244,7 @@ precision	return PRECISION;
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    yylval->identifier = strdup(yytext);
-
-			    if (_mesa_symbol_table_find_symbol(yyextra->symbols,
-							       0,
-							       yylval->identifier))
-			       return TYPE_NAME;
-			    else
-			       return IDENTIFIER;
+			    return IDENTIFIER;
 			}
 
 .			{ return yytext[0]; }

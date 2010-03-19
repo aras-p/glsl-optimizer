@@ -28,7 +28,6 @@
     
 #include "ast.h"
 #include "glsl_parser_extras.h"
-#include "symbol_table.h"
 #include "glsl_types.h"
 
 #define YYLEX_PARAM state->scanner
@@ -934,8 +933,6 @@ struct_specifier:
 	STRUCT IDENTIFIER '{' struct_declaration_list '}'
 	{
 	   $$ = new ast_struct_specifier($2, $4);
-
-	   _mesa_symbol_table_add_symbol(state->symbols, 0, $2, $$);
 	}
 	| STRUCT '{' struct_declaration_list '}'
 	{
