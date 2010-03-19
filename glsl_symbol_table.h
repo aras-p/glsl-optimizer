@@ -37,6 +37,13 @@
  * type safe and some symbol table invariants.
  */
 class glsl_symbol_table {
+private:
+   enum glsl_symbol_name_space {
+      glsl_variable_name_space = 0,
+      glsl_type_name_space = 1,
+      glsl_function_name_space = 2
+   };
+
 public:
    glsl_symbol_table()
    {
@@ -68,17 +75,20 @@ public:
    /*@{*/
    bool add_variable(const char *name, ir_variable *v)
    {
-      return _mesa_symbol_table_add_symbol(table, 0, name, v) == 0;
+      return _mesa_symbol_table_add_symbol(table, glsl_variable_name_space,
+					   name, v) == 0;
    }
 
    bool add_type(const char *name, const glsl_type *t)
    {
-      return _mesa_symbol_table_add_symbol(table, 0, name, (void *) t) == 0;
+      return _mesa_symbol_table_add_symbol(table, glsl_type_name_space,
+					   name, (void *) t) == 0;
    }
 
    bool add_function(const char *name, ir_function *f)
    {
-      return _mesa_symbol_table_add_symbol(table, 0, name, f) == 0;
+      return _mesa_symbol_table_add_symbol(table, glsl_function_name_space,
+					   name, f) == 0;
    }
    /*@}*/
 
@@ -88,17 +98,20 @@ public:
    /*@{*/
    ir_variable *get_variable(const char *name)
    {
-      return (ir_variable *) _mesa_symbol_table_find_symbol(table, 0, name);
+      return (ir_variable *)
+	 _mesa_symbol_table_find_symbol(table, glsl_variable_name_space, name);
    }
 
    glsl_type *get_type(const char *name)
    {
-      return (glsl_type *) _mesa_symbol_table_find_symbol(table, 0, name);
+      return (glsl_type *)
+	 _mesa_symbol_table_find_symbol(table, glsl_type_name_space, name);
    }
 
    ir_function *get_function(const char *name)
    {
-      return (ir_function *) _mesa_symbol_table_find_symbol(table, 0, name);
+      return (ir_function *)
+	 _mesa_symbol_table_find_symbol(table, glsl_function_name_space, name);
    }
    /*@}*/
 
