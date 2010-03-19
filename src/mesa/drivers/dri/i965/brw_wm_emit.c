@@ -620,14 +620,10 @@ void emit_cmp(struct brw_compile *p,
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {	
-	 brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
-	 brw_MOV(p, dst[i], arg2[i]);
-	 brw_set_saturate(p, 0);
-
 	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0[i], brw_imm_f(0));
 
 	 brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
-	 brw_MOV(p, dst[i], arg1[i]);
+	 brw_SEL(p, dst[i], arg1[i], arg2[i]);
 	 brw_set_saturate(p, 0);
 	 brw_set_predicate_control_flag_value(p, 0xff);
       }
