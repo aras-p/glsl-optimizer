@@ -1,4 +1,4 @@
-.. _vertex,elements
+.. _vertexelements:
 
 Vertex Elements
 ===============

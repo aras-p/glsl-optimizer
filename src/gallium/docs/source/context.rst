@@ -50,6 +50,7 @@ Non-CSO State
 These pieces of state are too small, variable, and/or trivial to have CSO
 objects. They all follow simple, one-method binding calls, e.g.
 ``set_blend_color``.
+
 * ``set_stencil_ref`` sets the stencil front and back reference values
   which are used as comparison values in stencil test.
 * ``set_blend_color``
