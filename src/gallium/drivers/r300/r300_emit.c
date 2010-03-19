@@ -1050,9 +1050,11 @@ validate:
     }
     /* ...textures... */
     for (i = 0; i < texstate->count; i++) {
-        tex = (struct r300_texture*)texstate->fragment_sampler_views[i]->texture;
-        if (!tex || !texstate->sampler_states[i])
+        if (!(texstate->tx_enable & (1 << i))) {
             continue;
+        }
+
+        tex = (struct r300_texture*)texstate->fragment_sampler_views[i]->texture;
         if (!r300_add_texture(r300->rws, tex,
 			      RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
             r300->context.flush(&r300->context, 0, NULL);

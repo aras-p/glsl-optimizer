@@ -973,6 +973,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_textures_state* state =
         (struct r300_textures_state*)r300->textures_state.state;
+    struct r300_texture *texture;
     unsigned i;
     boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
     boolean dirty_tex = FALSE;
@@ -984,15 +985,18 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
 
     for (i = 0; i < count; i++) {
         if (state->fragment_sampler_views[i] != views[i]) {
-            struct r300_texture *texture;
- 
             pipe_sampler_view_reference(&state->fragment_sampler_views[i],
                                         views[i]);
+
+            if (!views[i]) {
+                continue;
+            }
+
+            /* A new sampler view (= texture)... */
             dirty_tex = TRUE;
 
-            texture = (struct r300_texture *)views[i]->texture;
-
             /* R300-specific - set the texrect factor in the fragment shader */
+            texture = (struct r300_texture *)views[i]->texture;
             if (!is_r500 && texture->is_npot) {
                 /* XXX It would be nice to re-emit just 1 constant,
                  * XXX not all of them */

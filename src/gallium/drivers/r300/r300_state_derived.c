@@ -335,19 +335,24 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
         (struct r300_textures_state*)r300->textures_state.state;
     struct r300_texture_sampler_state *texstate;
     struct r300_sampler_state *sampler;
+    struct pipe_sampler_view *view;
     struct r300_texture *tex;
     unsigned min_level, max_level, i, size;
     unsigned count = MIN2(state->texture_count, state->sampler_count);
 
     state->tx_enable = 0;
+    state->count = 0;
     size = 2;
 
     for (i = 0; i < count; i++) {
         if (state->fragment_sampler_views[i] && state->sampler_states[i]) {
             state->tx_enable |= 1 << i;
 
-            tex = (struct r300_texture *)state->fragment_sampler_views[i]->texture;
+            view = state->fragment_sampler_views[i];
+            tex = (struct r300_texture *)view->texture;
             sampler = state->sampler_states[i];
+
+            assert(view->format == tex->tex.format);
 
             texstate = &state->regs[i];
             memcpy(texstate->format, &tex->state, sizeof(uint32_t)*3);
@@ -370,8 +375,10 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             } else {
                 /* determine min/max levels */
                 /* the MAX_MIP level is the largest (finest) one */
-                max_level = MIN2(sampler->max_lod, tex->tex.last_level);
-                min_level = MIN2(sampler->min_lod, max_level);
+                max_level = MIN3(sampler->max_lod, tex->tex.last_level,
+                                 view->last_level);
+                min_level = MIN2(MAX2(sampler->min_lod, view->first_level),
+                                 max_level);
                 texstate->format[0] |= R300_TX_NUM_LEVELS(max_level);
                 texstate->filter[0] |= R300_TX_MAX_MIP_LEVEL(min_level);
             }
