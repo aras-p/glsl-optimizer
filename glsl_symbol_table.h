@@ -66,6 +66,14 @@ public:
    }
 
    /**
+    * Determine whether a name was declared at the current scope
+    */
+   bool name_declared_this_scope(const char *name)
+   {
+      return _mesa_symbol_table_symbol_scope(table, -1, name) == 0;
+   }
+
+   /**
     * \name Methods to add symbols to the table
     *
     * There is some temptation to rename all these functions to \c add_symbol
