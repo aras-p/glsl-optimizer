@@ -5,6 +5,8 @@ include $(TOP)/configs/current
 
 LIBNAME = swrast_dri.so
 
+DRIVER_DEFINES = -D__NOT_HAVE_DRM_H
+
 DRIVER_SOURCES = \
 	swrast.c \
 	swrast_span.c
