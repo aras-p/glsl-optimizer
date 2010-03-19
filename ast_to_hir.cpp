@@ -877,13 +877,17 @@ ast_declarator_list::hir(exec_list *instructions,
       /* Attempt to add the variable to the symbol table.  If this fails, it
        * means the variable has already been declared at this scope.
        */
-      if (!state->symbols->add_variable(decl->identifier, var)) {
+      if (state->symbols->name_declared_this_scope(decl->identifier)) {
 	 YYLTYPE loc = this->get_location();
 
 	 _mesa_glsl_error(& loc, state, "`%s' redeclared",
 			  decl->identifier);
 	 continue;
       }
+
+      const bool added_variable =
+	 state->symbols->add_variable(decl->identifier, var);
+      assert(added_variable);
 
       instructions->push_tail(var);
 
@@ -1005,7 +1009,8 @@ ast_function_definition::hir(exec_list *instructions,
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
     */
-   f = state->symbols->get_function(this->prototype->identifier);
+   const char *const name = this->prototype->identifier;
+   f = state->symbols->get_function(name);
    if (f != NULL) {
       foreach_iter(exec_list_iterator, iter, f->signatures) {
 	 signature = (struct ir_function_signature *) iter.get();
@@ -1021,8 +1026,7 @@ ast_function_definition::hir(exec_list *instructions,
 	    if (signature->definition != NULL) {
 	       YYLTYPE loc = this->get_location();
 
-	       _mesa_glsl_error(& loc, state, "function `%s' redefined",
-				this->prototype->identifier);
+	       _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
 	       signature = NULL;
 	       break;
 	    }
@@ -1031,9 +1035,17 @@ ast_function_definition::hir(exec_list *instructions,
 	 signature = NULL;
       }
 
+   } else if (state->symbols->name_declared_this_scope(name)) {
+      /* This function name shadows a non-function use of the same name.
+       */
+      YYLTYPE loc = this->get_location();
+
+      _mesa_glsl_error(& loc, state, "function name `%s' conflicts with "
+		       "non-function", name);
+      signature = NULL;
    } else {
       f = new ir_function();
-      f->name = this->prototype->identifier;
+      f->name = name;
 
       state->symbols->add_function(f->name, f);
    }
@@ -1063,7 +1075,7 @@ ast_function_definition::hir(exec_list *instructions,
 				  state);
    /* FINISHME: Set signature->return_type */
 
-   label = new ir_label(this->prototype->identifier);
+   label = new ir_label(name);
    if (signature->definition == NULL) {
       signature->definition = label;
    }
@@ -1083,7 +1095,16 @@ ast_function_definition::hir(exec_list *instructions,
       iter.remove();
       instructions->push_tail(var);
 
-      state->symbols->add_variable(var->name, var);
+      /* The only way a parameter would "exist" is if two parameters have
+       * the same name.
+       */
+      if (state->symbols->name_declared_this_scope(var->name)) {
+	 YYLTYPE loc = this->get_location();
+
+	 _mesa_glsl_error(& loc, state, "parameter `%s' redeclared", var->name);
+      } else {
+	 state->symbols->add_variable(var->name, var);
+      }
    }
 
    /* Convert the body of the function to HIR, and append the resulting
