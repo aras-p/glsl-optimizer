@@ -444,6 +444,7 @@ static const struct dri_debug_control debug_control[] = {
    { "sing",  DEBUG_SINGLE_THREAD },
    { "thre",  DEBUG_SINGLE_THREAD },
    { "wm",    DEBUG_WM },
+   { "glsl_force", DEBUG_GLSL_FORCE },
    { "urb",   DEBUG_URB },
    { "vs",    DEBUG_VS },
    { NULL,    0 }

@@ -23,6 +23,9 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 {
     int i;
 
+    if (INTEL_DEBUG & DEBUG_GLSL_FORCE)
+       return GL_TRUE;
+
     for (i = 0; i < fp->Base.NumInstructions; i++) {
 	const struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
