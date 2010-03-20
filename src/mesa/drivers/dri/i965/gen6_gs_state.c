@@ -50,7 +50,8 @@ upload_gs_state(struct brw_context *brw)
       BEGIN_BATCH(7);
       OUT_BATCH(CMD_3D_GS_STATE << 16 | (7 - 2));
       OUT_RELOC(brw->gs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
-      OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
+      OUT_BATCH(GEN6_GS_SPF_MODE |
+		(0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
 		(0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
       OUT_BATCH(0); /* scratch space base offset */
       OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
