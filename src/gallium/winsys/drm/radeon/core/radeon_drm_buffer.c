@@ -23,7 +23,6 @@ struct radeon_drm_buffer {
     boolean flinked;
     uint32_t flink;
 
-    boolean mapped;
     struct radeon_drm_buffer *next, *prev;
 };
 
@@ -56,10 +55,10 @@ radeon_drm_buffer_destroy(struct pb_buffer *_buf)
 {
     struct radeon_drm_buffer *buf = radeon_drm_buffer(_buf);
 
-    if (buf->mapped) {
+    if (buf->bo->ptr != NULL) {
 	remove_from_list(buf);
 	radeon_bo_unmap(buf->bo);
-	buf->mapped = false;
+	buf->bo->ptr = NULL;
     }
     radeon_bo_unref(buf->bo);
 
@@ -73,7 +72,7 @@ radeon_drm_buffer_map(struct pb_buffer *_buf,
     struct radeon_drm_buffer *buf = radeon_drm_buffer(_buf);
     int write;
 
-    if (buf->mapped)
+    if (buf->bo->ptr != NULL)
 	return buf->bo->ptr;
     
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
@@ -95,7 +94,6 @@ radeon_drm_buffer_map(struct pb_buffer *_buf,
     if (radeon_bo_map(buf->bo, write)) {
         return NULL;
     }
-    buf->mapped = true;
     insert_at_tail(&buf->mgr->buffer_map_list, buf);
     return buf->bo->ptr;
 }
@@ -365,12 +363,10 @@ void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr)
     struct radeon_drm_buffer *rpb, *t_rpb;
 
     foreach_s(rpb, t_rpb, &mgr->buffer_map_list) {
-	rpb->mapped = 0;
 	radeon_bo_unmap(rpb->bo);
+	rpb->bo->ptr = NULL;
 	remove_from_list(rpb);
     }
 
     make_empty_list(&mgr->buffer_map_list);
-
-    
 }
