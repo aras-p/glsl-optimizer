@@ -1039,7 +1039,6 @@ r300_create_sampler_view(struct pipe_context *pipe,
    return view;
 }
 
-
 static void
 r300_sampler_view_destroy(struct pipe_context *pipe,
                           struct pipe_sampler_view *view)
@@ -1125,6 +1124,12 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
         /* Reference our buffer. */
         pipe_buffer_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
+
+        /* Skip NULL buffers */
+        if (!buffers[i].buffer) {
+            continue;
+        }
+
         if (r300_buffer_is_user_buffer(vbo->buffer)) {
             any_user_buffer = TRUE;
         }
