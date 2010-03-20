@@ -72,29 +72,23 @@ static void r300_destroy_context(struct pipe_context* context)
 }
 
 static unsigned int
-r300_is_texture_referenced(struct pipe_context *pipe,
+r300_is_texture_referenced(struct pipe_context *context,
                            struct pipe_texture *texture,
                            unsigned face, unsigned level)
 {
-    return 0;
+    struct r300_context* r300 = r300_context(context);
+    struct r300_texture* tex = (struct r300_texture*)texture;
+
+    return r300->rws->is_buffer_referenced(r300->rws, tex->buffer);
 }
 
 static unsigned int
-r300_is_buffer_referenced(struct pipe_context *pipe,
+r300_is_buffer_referenced(struct pipe_context *context,
                           struct pipe_buffer *buf)
 {
-    /* This only checks to see whether actual hardware buffers are
-     * referenced. Since we use managed BOs and transfers, it's actually not
-     * possible for pipe_buffers to ever reference the actual hardware, so
-     * buffers are never referenced. 
-     */
+    struct r300_context* r300 = r300_context(context);
 
-    /* XXX: that doesn't make sense given that
-     * r300_is_texture_referenced is implemented on top of this
-     * function and hardware can certainly refer to textures
-     * directly...
-     */
-    return 0;
+    return r300_buffer_is_referenced(r300, buf);
 }
 
 static void r300_flush_cb(void *data)
