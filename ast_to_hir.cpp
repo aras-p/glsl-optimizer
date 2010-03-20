@@ -63,6 +63,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 
    _mesa_glsl_initialize_variables(instructions, state);
 
+   state->current_function = NULL;
+
    foreach (ptr, & state->translation_unit) {
       ((ast_node *)ptr)->hir(instructions, state);
    }
@@ -1070,6 +1072,9 @@ ast_function_definition::hir(exec_list *instructions,
    }
 
 
+   assert(state->current_function == NULL);
+   state->current_function = signature;
+
    ast_function_parameters_to_hir(& this->prototype->parameters,
 				  & signature->parameters,
 				  state);
@@ -1115,6 +1120,8 @@ ast_function_definition::hir(exec_list *instructions,
 
    state->symbols->pop_scope();
 
+   assert(state->current_function == signature);
+   state->current_function = NULL;
 
    /* Function definitions do not have r-values.
     */

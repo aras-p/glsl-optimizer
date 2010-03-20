@@ -43,6 +43,14 @@ struct _mesa_glsl_parse_state {
    unsigned language_version;
    enum _mesa_glsl_parser_targets target;
 
+   /**
+    * During AST to IR conversion, pointer to current IR function
+    *
+    * Will be \c NULL whenever the AST to IR conversion is not inside a
+    * function definition.
+    */
+   class ir_function_signature *current_function;
+
    /** Was there an error during compilation? */
    bool error;
 };
