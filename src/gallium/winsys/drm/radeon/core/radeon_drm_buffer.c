@@ -287,7 +287,7 @@ boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
 
 	    retval = ioctl(fd, DRM_IOCTL_GEM_FLINK, &flink);
 	    if (retval) {
-		return false;
+		return FALSE;
 	    }
 
 	    buf->flinked = TRUE;
@@ -329,7 +329,7 @@ boolean radeon_drm_bufmgr_add_buffer(struct pb_buffer *_buf,
     struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
     radeon_cs_space_add_persistent_bo(buf->mgr->rws->cs, buf->bo,
 					  rd, wd);
-    return true;
+    return TRUE;
 }
 
 void radeon_drm_bufmgr_write_reloc(struct pb_buffer *_buf,
