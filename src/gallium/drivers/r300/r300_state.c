@@ -1118,6 +1118,20 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         return;
     }
 
+    /* Check if the stride is aligned to the size of DWORD. */
+    for (i = 0; i < count; i++) {
+        if (buffers[i].buffer) {
+            if (buffers[i].stride % 4 != 0) {
+                // XXX Shouldn't we align the buffer?
+                fprintf(stderr, "r300_set_vertex_buffers: "
+                        "Unaligned buffer stride %i isn't supported.\n",
+                        buffers[i].stride);
+                assert(0);
+                abort();
+            }
+        }
+    }
+
     for (i = 0; i < count; i++) {
         /* Why, yes, I AM casting away constness. How did you know? */
         vbo = (struct pipe_vertex_buffer*)&buffers[i];
@@ -1159,22 +1173,6 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         draw_flush(r300->draw);
         draw_set_vertex_buffers(r300->draw, count, buffers);
     }
-}
-
-static boolean r300_validate_aos(struct r300_context *r300)
-{
-    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->velems->velem;
-    int i;
-
-    /* Check if formats and strides are aligned to the size of DWORD. */
-    for (i = 0; i < r300->velems->count; i++) {
-        if (vbuf[velem[i].vertex_buffer_index].stride % 4 != 0 ||
-            util_format_get_blocksize(velem[i].src_format) % 4 != 0) {
-            return FALSE;
-        }
-    }
-    return TRUE;
 }
 
 static void r300_draw_emit_attrib(struct r300_context* r300,
@@ -1346,6 +1344,7 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
     struct r300_context *r300 = r300_context(pipe);
     struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_vertex_element_state *velems;
+    unsigned i, size;
 
     assert(count <= PIPE_MAX_ATTRIBS);
     velems = CALLOC_STRUCT(r300_vertex_element_state);
@@ -1354,6 +1353,20 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
         memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
 
         if (r300screen->caps->has_tcl) {
+            /* Check if the format is aligned to the size of DWORD. */
+            for (i = 0; i < count; i++) {
+                size = util_format_get_blocksize(attribs[i].src_format);
+
+                if (size % 4 != 0) {
+                    /* XXX Shouldn't we align the format? */
+                    fprintf(stderr, "r300_create_vertex_elements_state: "
+                            "Unaligned format %s:%i isn't supported\n",
+                            util_format_name(attribs[i].src_format), size);
+                    assert(0);
+                    abort();
+                }
+            }
+
             r300_vertex_psc(velems);
         } else {
             memset(&r300->vertex_info, 0, sizeof(struct vertex_info));
@@ -1380,12 +1393,6 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
     if (r300->draw) {
         draw_flush(r300->draw);
         draw_set_vertex_elements(r300->draw, velems->count, velems->velem);
-    }
-
-    if (!r300_validate_aos(r300)) {
-        /* XXX We should fallback using draw. */
-        assert(0);
-        abort();
     }
 
     UPDATE_STATE(&velems->vertex_stream, r300->vertex_stream_state);
