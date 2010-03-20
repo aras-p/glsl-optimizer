@@ -306,13 +306,21 @@ boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
 void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf, boolean microtiled, boolean macrotiled, uint32_t pitch)
 {
     struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
-    uint32_t flags = 0;
-
+    uint32_t flags = 0, old_flags, old_pitch;
     if (microtiled)
 	flags |= RADEON_BO_FLAGS_MICRO_TILE;
     if (macrotiled)
 	flags |= RADEON_BO_FLAGS_MACRO_TILE;
 
+    radeon_bo_get_tiling(buf->bo, &old_flags, &old_pitch);
+
+    if (flags != old_flags || pitch != old_pitch) {
+        /* Tiling determines how DRM treats the buffer data.
+         * We must flush CS when changing it if the buffer is referenced. */
+        if (radeon_bo_is_referenced_by_cs(buf->bo,  buf->mgr->rws->cs)) {
+	    buf->mgr->rws->flush_cb(buf->mgr->rws->flush_data);
+        }
+    }
     radeon_bo_set_tiling(buf->bo, flags, pitch);
 
 }
