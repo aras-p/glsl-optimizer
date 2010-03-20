@@ -16,6 +16,7 @@ GLSL changes (GL_EXT_gpu_shader4, etc)                not started
 Conditional rendering (GL_NV_conditional_render)      DONE (swrast & softpipe)
 Map buffer subranges (GL_APPLE_flush_buffer_range)    not started
 Float textures, renderbuffers                         some infrastructure done
+ (incl. GL_EXT_packed_float, GL_EXT_shared_exponent)
 Framebuffer objects (GL_EXT_framebuffer_object)       DONE
 Half-float                                            some infrastructure done
 Multisample blit                                      DONE
