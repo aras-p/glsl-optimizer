@@ -1932,6 +1932,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_MINOR_VERSION:
          params[0] = INT_TO_BOOLEAN(ctx->VersionMinor);
          break;
+      case GL_CONTEXT_FLAGS:
+         params[0] = INT_TO_BOOLEAN(ctx->Const.ContextFlags);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3800,6 +3803,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_MINOR_VERSION:
          params[0] = (GLfloat)(ctx->VersionMinor);
+         break;
+      case GL_CONTEXT_FLAGS:
+         params[0] = (GLfloat)(ctx->Const.ContextFlags);
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
@@ -5670,6 +5676,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_MINOR_VERSION:
          params[0] = ctx->VersionMinor;
          break;
+      case GL_CONTEXT_FLAGS:
+         params[0] = ctx->Const.ContextFlags;
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
    }
@@ -7539,6 +7548,9 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          break;
       case GL_MINOR_VERSION:
          params[0] = (GLint64)(ctx->VersionMinor);
+         break;
+      case GL_CONTEXT_FLAGS:
+         params[0] = (GLint64)(ctx->Const.ContextFlags);
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64v(pname=0x%x)", pname);

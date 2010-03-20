@@ -1062,7 +1062,8 @@ StateVars = [
 	# GL3
 	( "GL_NUM_EXTENSIONS", GLint, ["_mesa_get_extension_count(ctx)"], "", None ),
 	( "GL_MAJOR_VERSION", GLint, ["ctx->VersionMajor"], "", None ),
-	( "GL_MINOR_VERSION", GLint, ["ctx->VersionMinor"], "", None )
+	( "GL_MINOR_VERSION", GLint, ["ctx->VersionMinor"], "", None ),
+	( "GL_CONTEXT_FLAGS", GLint, ["ctx->Const.ContextFlags"], "", None )
 ]
 
 
