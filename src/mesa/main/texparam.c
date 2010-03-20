@@ -940,6 +940,18 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                         "glGetTexLevelParameter[if]v(pname)");
          }
          break;
+      case GL_TEXTURE_SHARED_SIZE:
+         if (ctx->VersionMajor >= 3) {
+            /* XXX return number of exponent bits for shared exponent texture
+             * formats, like GL_RGB9_E5.
+             */
+            *params = 0;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         break;
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
