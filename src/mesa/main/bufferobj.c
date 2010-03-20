@@ -32,6 +32,7 @@
 
 
 #include "glheader.h"
+#include "enums.h"
 #include "hash.h"
 #include "imports.h"
 #include "image.h"
@@ -1376,31 +1377,49 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
 
    bufObj = get_buffer(ctx, target);
    if (!bufObj) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "GetBufferParameterivARB(target)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameterivARB(target)" );
       return;
    }
    if (!_mesa_is_bufferobj(bufObj)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "GetBufferParameterivARB" );
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetBufferParameterivARB" );
       return;
    }
 
    switch (pname) {
    case GL_BUFFER_SIZE_ARB:
       *params = (GLint) bufObj->Size;
-      break;
+      return;
    case GL_BUFFER_USAGE_ARB:
       *params = bufObj->Usage;
-      break;
+      return;
    case GL_BUFFER_ACCESS_ARB:
       *params = simplified_access_mode(bufObj->AccessFlags);
-      break;
+      return;
    case GL_BUFFER_MAPPED_ARB:
       *params = _mesa_bufferobj_mapped(bufObj);
-      break;
-   default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameterivARB(pname)");
       return;
+   case GL_BUFFER_ACCESS_FLAGS:
+      if (ctx->VersionMajor < 3)
+         goto invalid_pname;
+      *params = bufObj->AccessFlags;
+      return;
+   case GL_BUFFER_MAP_OFFSET:
+      if (ctx->VersionMajor < 3)
+         goto invalid_pname;
+      *params = (GLint) bufObj->Offset;
+      return;
+   case GL_BUFFER_MAP_LENGTH:
+      if (ctx->VersionMajor < 3)
+         goto invalid_pname;
+      *params = (GLint) bufObj->Length;
+      return;
+   default:
+      ; /* fall-through */
    }
+
+invalid_pname:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameterivARB(pname=%s)",
+               _mesa_lookup_enum_by_nr(pname));
 }
 
 
@@ -1418,31 +1437,50 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
 
    bufObj = get_buffer(ctx, target);
    if (!bufObj) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "GetBufferParameteri64v(target)" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameteri64v(target)" );
       return;
    }
    if (!_mesa_is_bufferobj(bufObj)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "GetBufferParameteri64v" );
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetBufferParameteri64v" );
       return;
    }
 
    switch (pname) {
    case GL_BUFFER_SIZE_ARB:
       *params = bufObj->Size;
-      break;
+      return;
    case GL_BUFFER_USAGE_ARB:
       *params = bufObj->Usage;
-      break;
+      return;
    case GL_BUFFER_ACCESS_ARB:
       *params = simplified_access_mode(bufObj->AccessFlags);
-      break;
+      return;
+   case GL_BUFFER_ACCESS_FLAGS:
+      if (ctx->VersionMajor < 3)
+         goto invalid_pname;
+      *params = bufObj->AccessFlags;
+      return;
    case GL_BUFFER_MAPPED_ARB:
       *params = _mesa_bufferobj_mapped(bufObj);
-      break;
+      return;
+   case GL_BUFFER_MAP_OFFSET:
+      if (ctx->VersionMajor < 3)
+         goto invalid_pname;
+      *params = bufObj->Offset;
+      return;
+   case GL_BUFFER_MAP_LENGTH:
+      if (ctx->VersionMajor < 3)
+         goto invalid_pname;
+      *params = bufObj->Length;
+      return;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameteri64v(pname)");
+      ; /* fall-through */
       return;
    }
+
+invalid_pname:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetBufferParameteri64v(pname=%s)",
+               _mesa_lookup_enum_by_nr(pname));
 }
 
 
