@@ -45,6 +45,18 @@ static const unsigned microblock_table[5][3][2] = {
     {{ 2, 1}, {0, 0}, {0, 0}}  /* 128 bits per pixel */
 };
 
+/* Return true for non-compressed and non-YUV formats. */
+static boolean r300_format_is_plain(enum pipe_format format)
+{
+    const struct util_format_description *desc = util_format_description(format);
+
+    if (!format) {
+        return FALSE;
+    }
+
+    return desc->layout == UTIL_FORMAT_LAYOUT_PLAIN;
+}
+
 /* Translate a pipe_format into a useful texture format for sampling.
  *
  * Some special formats are translated directly using R300_EASY_TX_FORMAT,
@@ -639,7 +651,7 @@ unsigned r300_texture_get_stride(struct r300_screen* screen,
 
     width = u_minify(tex->tex.width0, level);
 
-    if (!util_format_is_compressed(tex->tex.format)) {
+    if (r300_format_is_plain(tex->tex.format)) {
         tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH,
                                                 tex->mip_macrotile[level]);
         width = align(width, tile_width);
@@ -657,7 +669,7 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
 
     height = u_minify(tex->tex.height0, level);
 
-    if (!util_format_is_compressed(tex->tex.format)) {
+    if (r300_format_is_plain(tex->tex.format)) {
         tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT,
                                                  tex->mip_macrotile[level]);
         height = align(height, tile_height);
@@ -718,7 +730,7 @@ static void r300_setup_tiling(struct pipe_screen *screen,
     enum pipe_format format = tex->tex.format;
     boolean rv350_mode = r300_screen(screen)->caps->family >= CHIP_FAMILY_RV350;
 
-    if (util_format_is_compressed(format)) {
+    if (!r300_format_is_plain(format)) {
         return;
     }
 
