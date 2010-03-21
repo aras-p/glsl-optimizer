@@ -149,6 +149,9 @@ void r300_surface_copy(struct pipe_context* pipe,
             case 4:
                 new_format = PIPE_FORMAT_B8G8R8A8_UNORM;
                 break;
+            case 8:
+                new_format = PIPE_FORMAT_R16G16B16A16_UNORM;
+                break;
             default:
                 debug_printf("r300: surface_copy: Unhandled format: %s. Falling back to software.\n"
                              "r300: surface_copy: Software fallback doesn't work for tiled textures.\n",
