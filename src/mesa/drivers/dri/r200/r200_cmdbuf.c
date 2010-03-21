@@ -190,7 +190,7 @@ void r200FlushElts(GLcontext *ctx)
      radeonReturnDmaRegion(&rmesa->radeon, R200_ELT_BUF_SZ - elt_used);
 
    if (radeon_is_debug_enabled(RADEON_SYNC, RADEON_CRITICAL)
-   	&& !rmesa->radeon.radeonScreen->kernel_mm) {
+         && !rmesa->radeon.radeonScreen->kernel_mm) {
       radeon_print(RADEON_SYNC, RADEON_NORMAL, "%s: Syncing\n", __FUNCTION__);
       radeonFinish( rmesa->radeon.glCtx );
    }

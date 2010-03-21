@@ -404,8 +404,9 @@ static GLuint r200EnsureEmitSize( GLcontext * ctx , GLubyte* vimap_rev )
          rendering code may decide convert to elts.
 	 In that case we have to make pessimistic prediction.
 	 and use larger of 2 paths. */
-      const GLuint elts = ELTS_BUFSZ(nr_aos);
-      const GLuint index = INDEX_BUFSZ;
+      const GLuint elt_count =(VB->Primitive[i].count/GET_MAX_HW_ELTS() + 1);
+      const GLuint elts = ELTS_BUFSZ(nr_aos) * elt_count;
+      const GLuint index = INDEX_BUFSZ * elt_count;
       const GLuint vbuf = VBUF_BUFSZ;
       if ( (!VB->Elts && VB->Primitive[i].count >= MAX_CONVERSION_SIZE)
 	  || vbuf > index + elts)
