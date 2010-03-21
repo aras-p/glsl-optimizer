@@ -27,8 +27,6 @@ struct nv50_screen {
 	struct nouveau_bo *tic;
 	struct nouveau_bo *tsc;
 
-	struct nouveau_stateobj *static_init;
-
 	boolean force_push;
 };
 
@@ -37,5 +35,7 @@ nv50_screen(struct pipe_screen *screen)
 {
 	return (struct nv50_screen *)screen;
 }
+
+extern void nv50_screen_relocs(struct nv50_screen *);
 
 #endif
