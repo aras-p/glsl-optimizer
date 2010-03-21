@@ -83,6 +83,23 @@ static int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom)
 	return cnt ? (cnt * 4) + extra : 0;
 }
 
+static int check_vpp(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+    int cnt;
+    int extra = 1;
+
+    if (r300->radeon.radeonScreen->kernel_mm) {
+        cnt = r300->selected_vp->code.constants.Count * 4;
+        extra = 5;
+    } else {
+        cnt = vpu_count(atom->cmd);
+        extra = 1;
+    }
+
+    return cnt ? (cnt * 4) + extra : 0;
+}
+
 void r300_emit_vpu(struct r300_context *r300,
                    uint32_t *data,
                    unsigned len,
@@ -101,13 +118,24 @@ static void emit_vpu_state(GLcontext *ctx, struct radeon_state_atom * atom)
 {
     r300ContextPtr r300 = R300_CONTEXT(ctx);
     drm_r300_cmd_header_t cmd;
-    uint32_t addr, ndw;
+    uint32_t addr;
 
     cmd.u = atom->cmd[0];
     addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
-    ndw = atom->check(ctx, atom);
 
     r300_emit_vpu(r300, &atom->cmd[1], vpu_count(atom->cmd) * 4, addr);
+}
+
+static void emit_vpp_state(GLcontext *ctx, struct radeon_state_atom * atom)
+{
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+    drm_r300_cmd_header_t cmd;
+    uint32_t addr;
+
+    cmd.u = atom->cmd[0];
+    addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
+
+    r300_emit_vpu(r300, &atom->cmd[1], r300->selected_vp->code.constants.Count * 4, addr);
 }
 
 void r500_emit_fp(struct r300_context *r300,
@@ -784,11 +812,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 			r300->hw.vpi.emit = emit_vpu_state;
 
 		if (is_r500) {
-			ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+			ALLOC_STATE(vpp, vpp, R300_VPP_CMDSIZE, 0);
 			r300->hw.vpp.cmd[0] =
 				cmdvpu(r300->radeon.radeonScreen, R500_PVS_CONST_START, 0);
 			if (r300->radeon.radeonScreen->kernel_mm)
-				r300->hw.vpp.emit = emit_vpu_state;
+				r300->hw.vpp.emit = emit_vpp_state;
 
 			ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 			r300->hw.vps.cmd[0] =
@@ -805,11 +833,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 					r300->hw.vpucp[i].emit = emit_vpu_state;
 			}
 		} else {
-			ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+			ALLOC_STATE(vpp, vpp, R300_VPP_CMDSIZE, 0);
 			r300->hw.vpp.cmd[0] =
 				cmdvpu(r300->radeon.radeonScreen, R300_PVS_CONST_START, 0);
 			if (r300->radeon.radeonScreen->kernel_mm)
-				r300->hw.vpp.emit = emit_vpu_state;
+				r300->hw.vpp.emit = emit_vpp_state;
 
 			ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 			r300->hw.vps.cmd[0] =

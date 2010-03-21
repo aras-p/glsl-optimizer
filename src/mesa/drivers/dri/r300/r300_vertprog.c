@@ -392,7 +392,11 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	R300_STATECHANGE(rmesa, vap_cntl);
 	R300_STATECHANGE(rmesa, vpp);
 	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
-	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
+	if (!rmesa->radeon.radeonScreen->kernel_mm && param_count > 255 * 4) {
+		WARN_ONCE("Too many VP params, expect rendering errors\n");
+	}
+	/* Prevent the overflow (vpu.count is u8) */
+	bump_vpu_count(rmesa->hw.vpp.cmd, MIN2(255 * 4, param_count));
 	param_count /= 4;
 
 	r300EmitVertexProgram(rmesa, R300_PVS_CODE_START, &(prog->code));
