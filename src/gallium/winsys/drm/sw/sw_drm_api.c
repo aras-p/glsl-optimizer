@@ -40,6 +40,7 @@ struct sw_drm_api
 {
    struct drm_api base;
    struct drm_api *api;
+   struct sw_winsys *sw;
 };
 
 static INLINE struct sw_drm_api *
