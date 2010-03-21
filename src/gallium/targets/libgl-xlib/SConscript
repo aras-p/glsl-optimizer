@@ -40,6 +40,7 @@ env.Prepend(LIBS = [
 ])
 
 sources = [
+    'soft_screen.c',
     'xlib.c',
 ]
 
