@@ -227,6 +227,8 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
                           pb_size size,
                           const struct pb_desc *desc)
 {
+   void *map;
+
    if(buf->base.base.size < size)
       return FALSE;
 
@@ -239,6 +241,13 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
    
    if(!pb_check_usage(desc->usage, buf->base.base.usage))
       return FALSE;
+
+   map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_DONTBLOCK);
+   if (!map) {
+      return FALSE;
+   }
+
+   pb_unmap(buf->buffer);
    
    return TRUE;
 }
