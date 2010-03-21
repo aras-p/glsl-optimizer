@@ -307,7 +307,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     assert((start * indexSize) % 4 == 0);
     assert(count < (1 << 24));
 
-    maxIndex = MIN3(maxIndex, r300->vertex_buffer_max_index, count - minIndex);
+    maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
 
     DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
         count, minIndex, maxIndex);

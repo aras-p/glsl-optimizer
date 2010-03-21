@@ -1109,26 +1109,42 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
-    int i;
-    unsigned max_index = (1 << 24) - 1;
-    boolean any_user_buffer = false;
+    struct pipe_vertex_buffer *vbo;
+    unsigned i, max_index = (1 << 24) - 1;
+    boolean any_user_buffer = FALSE;
 
     if (count == r300->vertex_buffer_count &&
-	memcmp(r300->vertex_buffer, buffers, count * sizeof(buffers[0])) == 0)
+        memcmp(r300->vertex_buffer, buffers,
+            sizeof(struct pipe_vertex_buffer) * count) == 0) {
         return;
-
-    for (i = 0; i < count; i++) {
-	pipe_buffer_reference(&r300->vertex_buffer[i].buffer, buffers[i].buffer);
-	if (r300_buffer_is_user_buffer(buffers[i].buffer))
-	    any_user_buffer = true;
-        max_index = MIN2(buffers[i].max_index, max_index);
     }
 
-    for ( ; i < r300->vertex_buffer_count; i++)
-	pipe_buffer_reference(&r300->vertex_buffer[i].buffer, NULL);
+    for (i = 0; i < count; i++) {
+        /* Why, yes, I AM casting away constness. How did you know? */
+        vbo = (struct pipe_vertex_buffer*)&buffers[i];
+
+        /* Reference our buffer. */
+        pipe_buffer_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
+        if (r300_buffer_is_user_buffer(vbo->buffer)) {
+            any_user_buffer = TRUE;
+        }
+
+        if (vbo->max_index == ~0) {
+            /* Bogus value from broken state tracker; hax it. */
+            vbo->max_index =
+                (vbo->buffer->size - vbo->buffer_offset) / vbo->stride;
+        }
+
+        max_index = MIN2(vbo->max_index, max_index);
+    }
+
+    for (; i < r300->vertex_buffer_count; i++) {
+        /* Dereference any old buffers. */
+        pipe_buffer_reference(&r300->vertex_buffer[i].buffer, NULL);
+    }
 
     memcpy(r300->vertex_buffer, buffers,
-	   sizeof(struct pipe_vertex_buffer) * count);
+        sizeof(struct pipe_vertex_buffer) * count);
 
     r300->vertex_buffer_count = count;
     r300->vertex_buffer_max_index = max_index;
