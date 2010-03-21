@@ -353,6 +353,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 
 static void r300_shorten_ubyte_elts(struct r300_context* r300,
                                     struct pipe_buffer** elts,
+                                    unsigned start,
                                     unsigned count)
 {
     struct pipe_screen* screen = r300->context.screen;
@@ -369,6 +370,8 @@ static void r300_shorten_ubyte_elts(struct r300_context* r300,
 
     in_map = pipe_buffer_map(screen, *elts, PIPE_BUFFER_USAGE_CPU_READ);
     out_map = pipe_buffer_map(screen, new_elts, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+    in_map += start;
 
     for (i = 0; i < count; i++) {
         *out_map = (unsigned short)*in_map;
@@ -407,8 +410,9 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     }
 
     if (indexSize == 1) {
-        r300_shorten_ubyte_elts(r300, &indexBuffer, count);
+        r300_shorten_ubyte_elts(r300, &indexBuffer, start, count);
         indexSize = 2;
+        start = 0;
     }
 
     r300_update_derived_state(r300);
