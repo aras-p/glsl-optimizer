@@ -263,15 +263,25 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	rc_move_output(&compiler.Base, VERT_RESULT_PSIZ, VERT_RESULT_PSIZ, WRITEMASK_X);
 
 	if (vp->key.WPosAttr != FRAG_ATTRIB_MAX) {
-		rc_copy_output(&compiler.Base,
-			VERT_RESULT_HPOS,
-			vp->key.WPosAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0);
+		unsigned int vp_wpos_attr = vp->key.WPosAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0;
+
+		/* Set empty writemask for instructions writing to vp_wpos_attr
+		 * before moving the wpos attr there.
+		 * Such instructions will be removed by DCE.
+		 */
+		rc_move_output(&compiler.Base, vp_wpos_attr, vp->key.WPosAttr, 0);
+		rc_copy_output(&compiler.Base, VERT_RESULT_HPOS, vp_wpos_attr);
 	}
 
 	if (vp->key.FogAttr != FRAG_ATTRIB_MAX) {
-		rc_move_output(&compiler.Base,
-			VERT_RESULT_FOGC,
-			vp->key.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0, WRITEMASK_X);
+		unsigned int vp_fog_attr = vp->key.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0;
+
+		/* Set empty writemask for instructions writing to vp_fog_attr
+		 * before moving the fog attr there.
+		 * Such instructions will be removed by DCE.
+		 */
+		rc_move_output(&compiler.Base, vp_fog_attr, vp->key.FogAttr, 0);
+		rc_move_output(&compiler.Base, VERT_RESULT_FOGC, vp_fog_attr, WRITEMASK_X);
 	}
 
 	r3xx_compile_vertex_program(&compiler);
