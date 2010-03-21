@@ -72,16 +72,19 @@ radeon_drm_buffer_map(struct pb_buffer *_buf,
     struct radeon_drm_buffer *buf = radeon_drm_buffer(_buf);
     int write;
 
+    if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
+	if (radeon_bo_is_referenced_by_cs(buf->bo, buf->mgr->rws->cs))
+	    return NULL;
+    }
+
     if (buf->bo->ptr != NULL)
 	return buf->bo->ptr;
-    
+
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
         uint32_t domain;
-
         if (radeon_bo_is_busy(buf->bo, &domain))
             return NULL;
     }
-
 
     if (radeon_bo_is_referenced_by_cs(buf->bo, buf->mgr->rws->cs)) {
         buf->mgr->rws->flush_cb(buf->mgr->rws->flush_data);

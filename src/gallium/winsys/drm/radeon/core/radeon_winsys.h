@@ -38,6 +38,8 @@ struct radeon_libdrm_winsys {
 
     struct pb_manager *kman;
 
+    struct pb_manager *cman;
+
     struct pb_manager *mman;
 
     /* PCI ID */
