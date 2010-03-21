@@ -73,8 +73,10 @@ radeon_drm_buffer_map(struct pb_buffer *_buf,
     int write;
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
-	if (radeon_bo_is_referenced_by_cs(buf->bo, buf->mgr->rws->cs))
-	    return NULL;
+	if ((_buf->base.usage & PIPE_BUFFER_USAGE_VERTEX) ||
+	    (_buf->base.usage & PIPE_BUFFER_USAGE_INDEX))
+	    if (radeon_bo_is_referenced_by_cs(buf->bo, buf->mgr->rws->cs))
+		return NULL;
     }
 
     if (buf->bo->ptr != NULL)

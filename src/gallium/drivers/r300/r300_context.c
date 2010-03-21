@@ -200,7 +200,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     /* Open up the OQ BO. */
     r300->oqbo = screen->buffer_create(screen, 4096,
-            PIPE_BUFFER_USAGE_VERTEX, 4096);
+            PIPE_BUFFER_USAGE_PIXEL, 4096);
     make_empty_list(&r300->query_list);
 
     r300_init_flush_functions(r300);
