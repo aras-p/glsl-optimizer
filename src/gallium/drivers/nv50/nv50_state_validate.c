@@ -435,7 +435,7 @@ nv50_state_validate(struct nv50_context *nv50, unsigned wait_dwords)
 	so_emit_reloc_markers(chan, nv50->state.hw[3]); /* vp */
 	so_emit_reloc_markers(chan, nv50->state.hw[4]); /* fp */
 	so_emit_reloc_markers(chan, nv50->state.hw[17]); /* vb */
-	so_emit_reloc_markers(chan, nv50->screen->static_init);
+	nv50_screen_relocs(nv50->screen);
 
 	/* No idea.. */
 	BEGIN_RING(chan, tesla, 0x142c, 1);
