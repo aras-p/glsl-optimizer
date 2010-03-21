@@ -189,6 +189,7 @@ nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	case GL_LIGHTING:
 		context_dirty(ctx, FRAG);
 		context_dirty(ctx, MODELVIEW);
+		context_dirty(ctx, LIGHT_MODEL);
 		context_dirty(ctx, LIGHT_ENABLE);
 
 		for (i = 0; i < MAX_LIGHTS; i++) {
