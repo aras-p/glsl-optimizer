@@ -687,25 +687,24 @@ static char *getFallbackString(GLuint bit)
 
 void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint oldfallback = rmesa->radeon.TclFallback;
+	r200ContextPtr rmesa = R200_CONTEXT(ctx);
+	GLuint oldfallback = rmesa->radeon.TclFallback;
 
-   if (mode) {
-      rmesa->radeon.TclFallback |= bit;
-      if (oldfallback == 0) {
-	 if (R200_DEBUG & RADEON_FALLBACKS)
-	    fprintf(stderr, "R200 begin tcl fallback %s\n",
-		    getFallbackString( bit ));
-	 transition_to_swtnl( ctx );
-      }
-   }
-   else {
-      rmesa->radeon.TclFallback &= ~bit;
-      if (oldfallback == bit) {
-	 if (R200_DEBUG & RADEON_FALLBACKS)
-	    fprintf(stderr, "R200 end tcl fallback %s\n",
-		    getFallbackString( bit ));
-	 transition_to_hwtnl( ctx );
-      }
-   }
+	if (mode) {
+		rmesa->radeon.TclFallback |= bit;
+		if (oldfallback == 0) {
+			if (R200_DEBUG & RADEON_FALLBACKS)
+				fprintf(stderr, "R200 begin tcl fallback %s\n",
+						getFallbackString( bit ));
+			transition_to_swtnl( ctx );
+		}
+	} else {
+		rmesa->radeon.TclFallback &= ~bit;
+		if (oldfallback == bit) {
+			if (R200_DEBUG & RADEON_FALLBACKS)
+				fprintf(stderr, "R200 end tcl fallback %s\n",
+						getFallbackString( bit ));
+			transition_to_hwtnl( ctx );
+		}
+	}
 }
