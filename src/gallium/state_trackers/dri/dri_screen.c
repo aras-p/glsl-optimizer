@@ -36,11 +36,13 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
+#include "dri_st_api.h"
+#include "dri1.h"
 
+#include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_format.h"
 #include "state_tracker/drm_api.h"
-#include "state_tracker/dri1_api.h"
 
 #include "util/u_debug.h"
 
@@ -53,7 +55,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_ALLOW_LARGE_TEXTURES(1)
    DRI_CONF_SECTION_END DRI_CONF_END;
 
-   const uint __driNConfigOptions = 3;
+const uint __driNConfigOptions = 3;
 
 static const __DRItexBufferExtension dri2TexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
@@ -66,10 +68,23 @@ dri2_flush_drawable(__DRIdrawable *draw)
 {
 }
 
+static void
+dri2_invalidate_drawable(__DRIdrawable *dPriv)
+{
+   struct dri_drawable *drawable = dri_drawable(dPriv);
+   struct dri_context *ctx = dri_context(dPriv->driContextPriv);
+
+   dri2InvalidateDrawable(dPriv);
+   drawable->dPriv->lastStamp = *drawable->dPriv->pStamp;
+
+   if (ctx)
+      ctx->st->notify_invalid_framebuffer(ctx->st, drawable->stfb);
+}
+
 static const __DRI2flushExtension dri2FlushExtension = {
     { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
     dri2_flush_drawable,
-    dri2InvalidateDrawable,
+    dri2_invalidate_drawable,
 };
 
    static const __DRIextension *dri_screen_extensions[] = {
@@ -83,9 +98,7 @@ static const __DRI2flushExtension dri2FlushExtension = {
       NULL
    };
 
-struct dri1_api *__dri1_api_hooks = NULL;
-
-static const __DRIconfig **
+const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen,
 		  unsigned pixel_bits)
 {
@@ -229,6 +242,68 @@ dri_fill_in_modes(struct dri_screen *screen,
 }
 
 /**
+ * Roughly the converse of dri_fill_in_modes.
+ */
+void
+dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
+                   const __GLcontextModes *mode)
+{
+   memset(stvis, 0, sizeof(*stvis));
+
+   stvis->samples = mode->samples;
+   stvis->render_buffer = ST_ATTACHMENT_INVALID;
+
+   if (mode->redBits == 8) {
+      if (mode->alphaBits == 8)
+         stvis->color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+      else
+         stvis->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
+   } else {
+      stvis->color_format = PIPE_FORMAT_B5G6R5_UNORM;
+   }
+
+   switch (mode->depthBits) {
+   default:
+   case 0:
+      stvis->depth_stencil_format = PIPE_FORMAT_NONE;
+      break;
+   case 16:
+      stvis->depth_stencil_format = PIPE_FORMAT_Z16_UNORM;
+      break;
+   case 24:
+      if (mode->stencilBits == 0) {
+	 stvis->depth_stencil_format = (screen->d_depth_bits_last) ?
+                                          PIPE_FORMAT_Z24X8_UNORM:
+                                          PIPE_FORMAT_X8Z24_UNORM;
+      } else {
+	 stvis->depth_stencil_format = (screen->sd_depth_bits_last) ?
+                                          PIPE_FORMAT_Z24S8_UNORM:
+                                          PIPE_FORMAT_S8Z24_UNORM;
+      }
+      break;
+   case 32:
+      stvis->depth_stencil_format = PIPE_FORMAT_Z32_UNORM;
+      break;
+   }
+
+   stvis->accum_format = (mode->haveAccumBuffer) ?
+      PIPE_FORMAT_R16G16B16A16_SNORM : PIPE_FORMAT_NONE;
+
+   stvis->buffer_mask |= ST_ATTACHMENT_FRONT_LEFT_MASK;
+   if (mode->doubleBufferMode)
+      stvis->buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
+   if (mode->stereoMode) {
+      stvis->buffer_mask |= ST_ATTACHMENT_FRONT_RIGHT_MASK;
+      if (mode->doubleBufferMode)
+         stvis->buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
+   }
+
+   if (mode->haveDepthBuffer || mode->haveStencilBuffer)
+      stvis->buffer_mask |= ST_ATTACHMENT_DEPTH_STENCIL_MASK;
+   /* let the state tracker allocate the accum buffer */
+}
+
+/**
  * Get information about previous buffer swaps.
  */
 static int
@@ -240,73 +315,31 @@ dri_get_swap_info(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
       return 0;
 }
 
-static INLINE void
-dri_copy_version(struct dri1_api_version *dst,
-		 const struct __DRIversionRec *src)
+static void
+dri_destroy_screen(__DRIscreen * sPriv)
 {
-   dst->major = src->major;
-   dst->minor = src->minor;
-   dst->patch_level = src->patch;
-}
+   struct dri_screen *screen = dri_screen(sPriv);
+   int i;
 
-static const __DRIconfig **
-dri_init_screen(__DRIscreen * sPriv)
-{
-   struct dri_screen *screen;
-   const __DRIconfig **configs;
-   struct dri1_create_screen_arg arg;
+   if (screen->dri1_pipe)
+      screen->dri1_pipe->destroy(screen->dri1_pipe);
 
-   screen = CALLOC_STRUCT(dri_screen);
-   if (!screen)
-      return NULL;
+   if (screen->smapi)
+      dri_destroy_st_manager(screen->smapi);
+   if (screen->pipe_screen)
+      screen->pipe_screen->destroy(screen->pipe_screen);
 
-   screen->api = drm_api_create();
-   screen->sPriv = sPriv;
-   screen->fd = sPriv->fd;
-   screen->drmLock = (drmLock *) & sPriv->pSAREA->lock;
-
-   sPriv->private = (void *)screen;
-   sPriv->extensions = dri_screen_extensions;
-
-   arg.base.mode = DRM_CREATE_DRI1;
-   arg.lf = &dri1_lf;
-   arg.ddx_info = sPriv->pDevPriv;
-   arg.ddx_info_size = sPriv->devPrivSize;
-   arg.sarea = sPriv->pSAREA;
-   dri_copy_version(&arg.ddx_version, &sPriv->ddx_version);
-   dri_copy_version(&arg.dri_version, &sPriv->dri_version);
-   dri_copy_version(&arg.drm_version, &sPriv->drm_version);
-   arg.api = NULL;
-
-   screen->pipe_screen = screen->api->create_screen(screen->api, screen->fd, &arg.base);
-
-   if (!screen->pipe_screen || !arg.api) {
-      debug_printf("%s: failed to create dri1 screen\n", __FUNCTION__);
-      goto out_no_screen;
+   for (i = 0; i < (1 << screen->optionCache.tableSize); ++i) {
+      FREE(screen->optionCache.info[i].name);
+      FREE(screen->optionCache.info[i].ranges);
    }
 
-   __dri1_api_hooks = arg.api;
+   FREE(screen->optionCache.info);
+   FREE(screen->optionCache.values);
 
-   screen->pipe_screen->flush_frontbuffer = dri1_flush_frontbuffer;
-   driParseOptionInfo(&screen->optionCache,
-		      __driConfigOptions, __driNConfigOptions);
-
-   /**
-    * FIXME: If the driver supports format conversion swapbuffer blits, we might
-    * want to support other color bit depths than the server is currently
-    * using.
-    */
-
-   configs = dri_fill_in_modes(screen, sPriv->fbBPP);
-   if (!configs)
-      goto out_no_configs;
-
-   return configs;
- out_no_configs:
-   screen->pipe_screen->destroy(screen->pipe_screen);
- out_no_screen:
    FREE(screen);
-   return NULL;
+   sPriv->private = NULL;
+   sPriv->extensions = NULL;
 }
 
 /**
@@ -324,7 +357,7 @@ dri_init_screen2(__DRIscreen * sPriv)
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
-      goto fail;
+      return NULL;
 
    screen->api = drm_api_create();
    screen->sPriv = sPriv;
@@ -339,9 +372,9 @@ dri_init_screen2(__DRIscreen * sPriv)
       goto fail;
    }
 
-   /* We need to hook in here */
-   screen->pipe_screen->update_buffer = dri_update_buffer;
-   screen->pipe_screen->flush_frontbuffer = dri_flush_frontbuffer;
+   screen->smapi = dri_create_st_manager(screen);
+   if (!screen->smapi)
+      goto fail;
 
    driParseOptionInfo(&screen->optionCache,
 		      __driConfigOptions, __driNConfigOptions);
@@ -350,46 +383,27 @@ dri_init_screen2(__DRIscreen * sPriv)
       dri2_ext->getBuffersWithFormat != NULL;
 
    return dri_fill_in_modes(screen, 32);
- fail:
+fail:
+   dri_destroy_screen(sPriv);
    return NULL;
 }
 
-static void
-dri_destroy_screen(__DRIscreen * sPriv)
-{
-   struct dri_screen *screen = dri_screen(sPriv);
-   int i;
-
-   screen->pipe_screen->destroy(screen->pipe_screen);
-   
-   for (i = 0; i < (1 << screen->optionCache.tableSize); ++i) {
-      FREE(screen->optionCache.info[i].name);
-      FREE(screen->optionCache.info[i].ranges);
-   }
-
-   FREE(screen->optionCache.info);
-   FREE(screen->optionCache.values);
-
-   FREE(screen);
-   sPriv->private = NULL;
-}
-
-PUBLIC const struct __DriverAPIRec driDriverAPI = {
-   .InitScreen = dri_init_screen,
+const struct __DriverAPIRec driDriverAPI = {
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
    .DestroyContext = dri_destroy_context,
    .CreateBuffer = dri_create_buffer,
    .DestroyBuffer = dri_destroy_buffer,
-   .SwapBuffers = dri_swap_buffers,
    .MakeCurrent = dri_make_current,
    .UnbindContext = dri_unbind_context,
    .GetSwapInfo = dri_get_swap_info,
    .GetDrawableMSC = driDrawableGetMSC32,
    .WaitForMSC = driWaitForMSC32,
-   .CopySubBuffer = dri_copy_sub_buffer,
-   .InitScreen = dri_init_screen,
    .InitScreen2 = dri_init_screen2,
+
+   .InitScreen = dri1_init_screen,
+   .SwapBuffers = dri1_swap_buffers,
+   .CopySubBuffer = dri1_copy_sub_buffer,
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */

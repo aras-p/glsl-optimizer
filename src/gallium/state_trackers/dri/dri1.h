@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright (C) 2009 VMware, Inc.
+ * Copyright 2009, VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,70 +29,35 @@
  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
-#ifndef DRI_CONTEXT_H
-#define DRI_CONTEXT_H
+#ifndef DRI1_H
+#define DRI1_H
 
-#include "pipe/p_compiler.h"
-#include "drm.h"
+#include "dri_context.h"
+#include "dri_drawable.h"
+
+#include "state_tracker/st_api.h"
 #include "dri_util.h"
 
-struct pipe_context;
-struct pipe_fence;
-struct st_context;
-struct dri_drawable;
+extern struct dri1_api *__dri1_api_hooks;
 
-struct dri_context
-{
-   /* dri */
-   __DRIscreen *sPriv;
-   __DRIcontext *cPriv;
-   __DRIdrawable *dPriv;
-   __DRIdrawable *rPriv;
+const __DRIconfig **
+dri1_init_screen(__DRIscreen * sPriv);
 
-   driOptionCache optionCache;
+void
+dri1_flush_frontbuffer(struct dri_drawable *drawable,
+                       struct pipe_texture *ptex);
 
-   drmLock *lock;
-   boolean isLocked;
-   boolean stLostLock;
-   boolean wsLostLock;
+void
+dri1_allocate_textures(struct dri_drawable *drawable,
+                       unsigned width, unsigned height,
+                       unsigned mask);
 
-   unsigned int bind_count;
+void dri1_swap_buffers(__DRIdrawable * dPriv);
 
-   /* gallium */
-   struct st_context_iface *st;
-};
+void
+dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h);
 
-static INLINE struct dri_context *
-dri_context(__DRIcontext * driContextPriv)
-{
-   return (struct dri_context *)driContextPriv->driverPrivate;
-}
+void
+dri1_swap_fences_clear(struct dri_drawable *drawable);
 
-/***********************************************************************
- * dri_context.c
- */
-void dri_destroy_context(__DRIcontext * driContextPriv);
-
-boolean dri_unbind_context(__DRIcontext * driContextPriv);
-
-boolean
-dri_make_current(__DRIcontext * driContextPriv,
-		 __DRIdrawable * driDrawPriv,
-		 __DRIdrawable * driReadPriv);
-
-struct dri_context *
-dri_get_current(void);
-
-boolean
-dri_create_context(const __GLcontextModes * visual,
-		   __DRIcontext * driContextPriv,
-		   void *sharedContextPrivate);
-
-/***********************************************************************
- * dri_extensions.c
- */
-void dri_init_extensions(struct dri_context *ctx);
-
-#endif
-
-/* vim: set sw=3 ts=8 sts=3 expandtab: */
+#endif /* DRI1_H */
