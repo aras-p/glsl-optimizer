@@ -30,6 +30,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
+#include "r300_defines.h"
+
 struct r300_winsys_screen;
 
 /* Creates a new r300 screen. */

@@ -41,9 +41,6 @@
 #include "r300_render.h"
 #include "r300_state_derived.h"
 
-/* r300_render: Vertex and index buffer primitive emission. */
-#define R300_MAX_VBO_SIZE  (1024 * 1024)
-
 /* XXX The DRM rejects VAP_ALT_NUM_VERTICES.. */
 //#define ENABLE_ALT_NUM_VERTS
 
@@ -689,9 +686,9 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
         r300render->vbo = pipe_buffer_create(screen,
                                              64,
                                              PIPE_BUFFER_USAGE_VERTEX,
-                                             R300_MAX_VBO_SIZE);
+                                             R300_MAX_DRAW_VBO_SIZE);
         r300render->vbo_offset = 0;
-        r300render->vbo_size = R300_MAX_VBO_SIZE;
+        r300render->vbo_size = R300_MAX_DRAW_VBO_SIZE;
     }
 
     r300render->vertex_size = vertex_size;
