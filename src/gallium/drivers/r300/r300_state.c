@@ -38,8 +38,7 @@
 #include "r300_state_inlines.h"
 #include "r300_fs.h"
 #include "r300_vs.h"
-
-#include "radeon_winsys.h"
+#include "r300_winsys.h"
 
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects. */

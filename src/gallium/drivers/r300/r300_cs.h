@@ -26,8 +26,7 @@
 #include "util/u_math.h"
 
 #include "r300_reg.h"
-
-#include "radeon_winsys.h"
+#include "r300_winsys.h"
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so

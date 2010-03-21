@@ -33,11 +33,11 @@
 #include "r300_query.h"
 #include "r300_render.h"
 #include "r300_screen.h"
+#include "r300_screen_buffer.h"
 #include "r300_state_invariant.h"
 #include "r300_texture.h"
 #include "r300_transfer.h"
-
-#include "radeon_winsys.h"
+#include "r300_winsys.h"
 
 static void r300_destroy_context(struct pipe_context* context)
 {

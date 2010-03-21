@@ -31,8 +31,7 @@
 #include "r300_texture.h"
 #include "r300_screen.h"
 #include "r300_state_inlines.h"
-
-#include "radeon_winsys.h"
+#include "r300_winsys.h"
 
 #define TILE_WIDTH 0
 #define TILE_HEIGHT 1
