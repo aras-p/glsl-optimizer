@@ -27,7 +27,6 @@ DEFINES += \
 #-DGALLIUM_CELL will be defined by the config */
 
 XLIB_TARGET_SOURCES = \
-	soft_screen.c \
 	xlib.c
 
 
