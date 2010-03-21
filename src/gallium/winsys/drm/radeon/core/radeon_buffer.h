@@ -69,8 +69,6 @@ void radeon_drm_bufmgr_write_reloc(struct pb_buffer *_buf,
 				   uint32_t rd, uint32_t wd,
 				   uint32_t flags);
 
-struct radeon_libdrm_winsys* radeon_pipe_winsys(int fd);
-
 struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager *_mgr,
 							      uint32_t handle);
 

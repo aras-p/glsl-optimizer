@@ -237,7 +237,7 @@ r300_buffer_map_range(struct pipe_screen *screen,
 	}
     }
 just_map:
-    map = rws->buffer_map(rws, rbuf->buf, usage | R300_USAGE_FLAG_DONT_SYNC);
+    map = rws->buffer_map(rws, rbuf->buf, usage);
    
     return map;
 }

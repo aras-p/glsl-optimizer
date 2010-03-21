@@ -49,8 +49,6 @@ enum r300_value_id {
     R300_VID_Z_PIPES,
 };
 
-#define R300_USAGE_FLAG_DONT_SYNC (1 << 17)
-
 struct r300_winsys_screen {
     void (*destroy)(struct r300_winsys_screen *ws);
     
