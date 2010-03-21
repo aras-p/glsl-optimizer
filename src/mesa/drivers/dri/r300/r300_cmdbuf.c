@@ -77,7 +77,7 @@ static int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom)
 	cnt = vpu_count(atom->cmd);
 
 	if (r300->radeon.radeonScreen->kernel_mm) {
-		extra = 5;
+		extra = 3;
 	}
 
 	return cnt ? (cnt * 4) + extra : 0;
@@ -91,7 +91,7 @@ static int check_vpp(GLcontext *ctx, struct radeon_state_atom *atom)
 
     if (r300->radeon.radeonScreen->kernel_mm) {
         cnt = r300->selected_vp->code.constants.Count * 4;
-        extra = 5;
+        extra = 3;
     } else {
         cnt = vpu_count(atom->cmd);
         extra = 1;
