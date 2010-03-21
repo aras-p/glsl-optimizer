@@ -303,7 +303,6 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 #endif
     CS_LOCALS(r300);
 
-    assert((start * indexSize) % 4 == 0);
     assert(count < (1 << 24));
 
     maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
@@ -385,6 +384,32 @@ static void r300_shorten_ubyte_elts(struct r300_context* r300,
     *elts = new_elts;
 }
 
+static void r300_align_ushort_elts(struct r300_context *r300,
+                                   struct pipe_buffer **elts,
+                                   unsigned start, unsigned count)
+{
+    struct pipe_screen* screen = r300->context.screen;
+    struct pipe_buffer* new_elts;
+    unsigned short *in_map;
+    unsigned short *out_map;
+
+    new_elts = screen->buffer_create(screen, 32,
+                                     PIPE_BUFFER_USAGE_INDEX |
+                                     PIPE_BUFFER_USAGE_CPU_WRITE |
+                                     PIPE_BUFFER_USAGE_GPU_READ,
+                                     2 * count);
+
+    in_map = pipe_buffer_map(screen, *elts, PIPE_BUFFER_USAGE_CPU_READ);
+    out_map = pipe_buffer_map(screen, new_elts, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+    memcpy(out_map, in_map+start, 2 * count);
+
+    pipe_buffer_unmap(screen, *elts);
+    pipe_buffer_unmap(screen, new_elts);
+
+    *elts = new_elts;
+}
+
 /* This is the fast-path drawing & emission for HW TCL. */
 void r300_draw_range_elements(struct pipe_context* pipe,
                               struct pipe_buffer* indexBuffer,
@@ -412,6 +437,9 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     if (indexSize == 1) {
         r300_shorten_ubyte_elts(r300, &indexBuffer, start, count);
         indexSize = 2;
+        start = 0;
+    } else if (indexSize == 2 && start % 2 != 0) {
+        r300_align_ushort_elts(r300, &indexBuffer, start, count);
         start = 0;
     }
 
