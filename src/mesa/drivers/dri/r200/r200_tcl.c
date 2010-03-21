@@ -691,20 +691,30 @@ void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	GLuint oldfallback = rmesa->radeon.TclFallback;
 
 	if (mode) {
-		rmesa->radeon.TclFallback |= bit;
 		if (oldfallback == 0) {
+			/* We have to flush before transition */
+			if ( rmesa->radeon.dma.flush )
+				rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+
 			if (R200_DEBUG & RADEON_FALLBACKS)
 				fprintf(stderr, "R200 begin tcl fallback %s\n",
 						getFallbackString( bit ));
+			rmesa->radeon.TclFallback |= bit;
 			transition_to_swtnl( ctx );
-		}
+		} else
+			rmesa->radeon.TclFallback |= bit;
 	} else {
-		rmesa->radeon.TclFallback &= ~bit;
 		if (oldfallback == bit) {
+			/* We have to flush before transition */
+			if ( rmesa->radeon.dma.flush )
+				rmesa->radeon.dma.flush( rmesa->radeon.glCtx );
+
 			if (R200_DEBUG & RADEON_FALLBACKS)
 				fprintf(stderr, "R200 end tcl fallback %s\n",
 						getFallbackString( bit ));
+			rmesa->radeon.TclFallback &= ~bit;
 			transition_to_hwtnl( ctx );
-		}
+		} else
+			rmesa->radeon.TclFallback &= ~bit;
 	}
 }
