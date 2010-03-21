@@ -140,9 +140,7 @@ nv10_emit_fog(GLcontext *ctx, int emit)
 	OUT_RING(chan, pack_rgba_f(MESA_FORMAT_RGBA8888_REV, f->Color));
 
 	BEGIN_RING(chan, celsius, NV10TCL_FOG_EQUATION_CONSTANT, 3);
-	OUT_RINGf(chan, k[0]);
-	OUT_RINGf(chan, k[1]);
-	OUT_RINGf(chan, k[2]);
+	OUT_RINGp(chan, k, 3);
 
 	context_dirty(ctx, FRAG);
 }
@@ -284,9 +282,7 @@ nv10_emit_light_source(GLcontext *ctx, int emit)
 
 	if (l->_Flags & LIGHT_POSITIONAL) {
 		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_POSITION_X(i), 3);
-		OUT_RINGf(chan, l->_Position[0]);
-		OUT_RINGf(chan, l->_Position[1]);
-		OUT_RINGf(chan, l->_Position[2]);
+		OUT_RINGp(chan, l->_Position, 3);
 
 		BEGIN_RING(chan, celsius,
 			   NV10TCL_LIGHT_ATTENUATION_CONSTANT(i), 3);
@@ -296,14 +292,10 @@ nv10_emit_light_source(GLcontext *ctx, int emit)
 
 	} else {
 		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_DIRECTION_X(i), 3);
-		OUT_RINGf(chan, l->_VP_inf_norm[0]);
-		OUT_RINGf(chan, l->_VP_inf_norm[1]);
-		OUT_RINGf(chan, l->_VP_inf_norm[2]);
+		OUT_RINGp(chan, l->_VP_inf_norm, 3);
 
 		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_HALF_VECTOR_X(i), 3);
-		OUT_RINGf(chan, l->_h_inf_norm[0]);
-		OUT_RINGf(chan, l->_h_inf_norm[1]);
-		OUT_RINGf(chan, l->_h_inf_norm[2]);
+		OUT_RINGp(chan, l->_h_inf_norm, 3);
 	}
 
 	if (l->_Flags & LIGHT_SPOT) {
@@ -312,13 +304,7 @@ nv10_emit_light_source(GLcontext *ctx, int emit)
 		nv10_get_spot_coeff(l, k);
 
 		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_SPOT_CUTOFF_A(i), 7);
-		OUT_RINGf(chan, k[0]);
-		OUT_RINGf(chan, k[1]);
-		OUT_RINGf(chan, k[2]);
-		OUT_RINGf(chan, k[3]);
-		OUT_RINGf(chan, k[4]);
-		OUT_RINGf(chan, k[5]);
-		OUT_RINGf(chan, k[6]);
+		OUT_RINGp(chan, k, 7);
 	}
 }
 
@@ -350,15 +336,11 @@ nv10_emit_material_ambient(GLcontext *ctx, int emit)
 	}
 
 	BEGIN_RING(chan, celsius, NV10TCL_LIGHT_MODEL_AMBIENT_R, 3);
-	OUT_RINGf(chan, c_scene[0]);
-	OUT_RINGf(chan, c_scene[1]);
-	OUT_RINGf(chan, c_scene[2]);
+	OUT_RINGp(chan, c_scene, 3);
 
 	if (ctx->Light.ColorMaterialEnabled) {
 		BEGIN_RING(chan, celsius, NV10TCL_MATERIAL_FACTOR_R, 3);
-		OUT_RINGf(chan, c_factor[0]);
-		OUT_RINGf(chan, c_factor[1]);
-		OUT_RINGf(chan, c_factor[2]);
+		OUT_RINGp(chan, c_factor, 3);
 	}
 
 	foreach(l, &ctx->Light.EnabledList) {
@@ -368,9 +350,7 @@ nv10_emit_material_ambient(GLcontext *ctx, int emit)
 				  l->_MatAmbient[0]);
 
 		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_AMBIENT_R(i), 3);
-		OUT_RINGf(chan, c_light[0]);
-		OUT_RINGf(chan, c_light[1]);
-		OUT_RINGf(chan, c_light[2]);
+		OUT_RINGp(chan, c_light, 3);
 	}
 }
 
@@ -392,9 +372,7 @@ nv10_emit_material_diffuse(GLcontext *ctx, int emit)
 				  l->_MatDiffuse[0]);
 
 		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_DIFFUSE_R(i), 3);
-		OUT_RINGf(chan, c_light[0]);
-		OUT_RINGf(chan, c_light[1]);
-		OUT_RINGf(chan, c_light[2]);
+		OUT_RINGp(chan, c_light, 3);
 	}
 }
 
@@ -412,9 +390,7 @@ nv10_emit_material_specular(GLcontext *ctx, int emit)
 				  l->_MatSpecular[0]);
 
 		BEGIN_RING(chan, celsius, NV10TCL_LIGHT_SPECULAR_R(i), 3);
-		OUT_RINGf(chan, c_light[0]);
-		OUT_RINGf(chan, c_light[1]);
-		OUT_RINGf(chan, c_light[2]);
+		OUT_RINGp(chan, c_light, 3);
 	}
 }
 
@@ -455,12 +431,7 @@ nv10_emit_material_shininess(GLcontext *ctx, int emit)
 		k);
 
 	BEGIN_RING(chan, celsius, NV10TCL_MATERIAL_SHININESS(0), 6);
-	OUT_RINGf(chan, k[0]);
-	OUT_RINGf(chan, k[1]);
-	OUT_RINGf(chan, k[2]);
-	OUT_RINGf(chan, k[3]);
-	OUT_RINGf(chan, k[4]);
-	OUT_RINGf(chan, k[5]);
+	OUT_RINGp(chan, k, 6);
 }
 
 void

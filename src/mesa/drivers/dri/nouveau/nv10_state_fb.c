@@ -172,15 +172,13 @@ nv10_emit_viewport(GLcontext *ctx, int emit)
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	float a[4] = {};
-	int i;
 
 	get_viewport_translate(ctx, a);
 	a[0] -= 2048;
 	a[1] -= 2048;
 
 	BEGIN_RING(chan, celsius, NV10TCL_VIEWPORT_TRANSLATE_X, 4);
-	for (i = 0; i < 4; i++)
-		OUT_RINGf(chan, a[i]);
+	OUT_RINGp(chan, a, 4);
 
 	BEGIN_RING(chan, celsius, NV10TCL_VIEWPORT_CLIP_HORIZ(0), 1);
 	OUT_RING(chan, (fb->Width - 1) << 16 | 0x08000800);

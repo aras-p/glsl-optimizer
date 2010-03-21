@@ -85,6 +85,18 @@ vbo_deinit_array(struct nouveau_array_state *a)
 	a->fields = 0;
 }
 
+static int
+get_array_stride(GLcontext *ctx, const struct gl_client_array *a)
+{
+	struct nouveau_render_state *render = to_render_state(ctx);
+
+	if (render->mode == VBO && !_mesa_is_bufferobj(a->BufferObj))
+		/* Pack client buffers. */
+		return align(_mesa_sizeof_type(a->Type) * a->Size, 4);
+	else
+		return a->StrideB;
+}
+
 static void
 vbo_init_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 		const struct gl_client_array **arrays)
@@ -101,18 +113,10 @@ vbo_init_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 
 		if (attr >= 0) {
 			const struct gl_client_array *array = arrays[attr];
-			int stride;
-
-			if (render->mode == VBO &&
-			    !_mesa_is_bufferobj(array->BufferObj))
-				/* Pack client buffers. */
-				stride = align(_mesa_sizeof_type(array->Type)
-					       * array->Size, 4);
-			else
-				stride = array->StrideB;
 
 			vbo_init_array(&render->attrs[attr], attr,
-				       stride, array->Size, array->Type,
+				       get_array_stride(ctx, array),
+				       array->Size, array->Type,
 				       array->BufferObj, array->Ptr,
 				       render->mode == IMM);
 		}
@@ -245,7 +249,7 @@ vbo_choose_attrs(GLcontext *ctx, const struct gl_client_array **arrays)
 	vbo_emit_attr(ctx, arrays, VERT_ATTRIB_POS);
 }
 
-static unsigned
+static int
 get_max_client_stride(GLcontext *ctx, const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
@@ -258,7 +262,7 @@ get_max_client_stride(GLcontext *ctx, const struct gl_client_array **arrays)
 			const struct gl_client_array *a = arrays[attr];
 
 			if (!_mesa_is_bufferobj(a->BufferObj))
-				s = MAX2(a->StrideB, s);
+				s = MAX2(s, get_array_stride(ctx, a));
 		}
 	}
 
@@ -327,6 +331,7 @@ vbo_bind_vertices(GLcontext *ctx, const struct gl_client_array **arrays,
 				* array->StrideB;
 
 			if (a->bo) {
+				/* Array in a buffer obj. */
 				a->offset = (intptr_t)array->Ptr + delta;
 			} else {
 				int j, n = max_index - min_index + 1;
@@ -334,6 +339,8 @@ vbo_bind_vertices(GLcontext *ctx, const struct gl_client_array **arrays,
 				char *dp = get_scratch_vbo(ctx, n * a->stride,
 							   &a->bo, &a->offset);
 
+				/* Array in client memory, move it to
+				 * a scratch buffer obj. */
 				for (j = 0; j < n; j++)
 					memcpy(dp + j * a->stride,
 					       sp + j * array->StrideB,

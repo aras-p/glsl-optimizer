@@ -54,10 +54,7 @@ nv10_emit_tex_gen(GLcontext *ctx, int emit)
 			if (k) {
 				BEGIN_RING(chan, celsius,
 					   TX_GEN_COEFF(i, j), 4);
-				OUT_RINGf(chan, k[0]);
-				OUT_RINGf(chan, k[1]);
-				OUT_RINGf(chan, k[2]);
-				OUT_RINGf(chan, k[3]);
+				OUT_RINGp(chan, k, 4);
 			}
 
 			BEGIN_RING(chan, celsius, TX_GEN_MODE(i, j), 1);
