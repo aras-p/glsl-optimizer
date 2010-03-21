@@ -141,7 +141,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
     unsigned vertex_element_count = r300->velems->count;
     unsigned i, vbi;
 
-    if (count > 4) {
+    if (count > 10) {
         return FALSE;
     }
 
@@ -155,8 +155,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         if (!checked[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
 
-            if (r300_buffer_is_referenced(r300,
-					  vbuf->buffer)) {
+            if (r300_buffer_is_referenced(r300, vbuf->buffer)) {
                 /* It's a very bad idea to map it... */
                 return FALSE;
             }
