@@ -72,7 +72,10 @@ void radeon_drm_bufmgr_write_reloc(struct pb_buffer *_buf,
 struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager *_mgr,
 							      uint32_t handle);
 
-void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf, boolean microtiled, boolean macrotiled, uint32_t pitch);
+void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf,
+                                  enum r300_buffer_tiling microtiled,
+                                  enum r300_buffer_tiling macrotiled,
+                                  uint32_t pitch);
 
 void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr);
 

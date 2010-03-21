@@ -65,8 +65,8 @@ static void radeon_r300_winsys_buffer_destroy(struct r300_winsys_buffer *buf)
 static void radeon_r300_winsys_buffer_set_tiling(struct r300_winsys_screen *rws,
 						  struct r300_winsys_buffer *buf,
 						  uint32_t pitch,
-						  boolean microtiled,
-						  boolean macrotiled)
+						  enum r300_buffer_tiling microtiled,
+						  enum r300_buffer_tiling macrotiled)
 {
     struct pb_buffer *_buf = radeon_pb_buffer(buf);
     radeon_drm_bufmgr_set_tiling(_buf, microtiled, macrotiled, pitch);

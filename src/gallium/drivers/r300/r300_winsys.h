@@ -148,8 +148,8 @@ struct r300_winsys_screen {
     void (*buffer_set_tiling)(struct r300_winsys_screen *winsys,
                               struct r300_winsys_buffer *buffer,
                               uint32_t pitch,
-                              boolean microtiled,
-                              boolean macrotiled);
+                              enum r300_buffer_tiling microtiled,
+                              enum r300_buffer_tiling macrotiled);
 
     uint32_t (*get_value)(struct r300_winsys_screen *winsys,
 			  enum r300_value_id vid);

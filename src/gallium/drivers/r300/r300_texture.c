@@ -777,8 +777,8 @@ static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
 				     tex->size);
     rws->buffer_set_tiling(rws, tex->buffer,
 			   tex->pitch[0],
-			   tex->microtile != R300_BUFFER_LINEAR,
-			   tex->macrotile != R300_BUFFER_LINEAR);
+			   tex->microtile,
+			   tex->macrotile);
 
     if (!tex->buffer) {
         FREE(tex);
