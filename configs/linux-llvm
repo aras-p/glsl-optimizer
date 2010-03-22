@@ -24,6 +24,8 @@ ifeq ($(LLVM_VERSION),)
   MESA_LLVM=0
 else
   MESA_LLVM=1
+  HAVE_LLVM := 0x0$(subst .,0,$(LLVM_VERSION:svn=))
+  DEFINES += -DHAVE_LLVM=$(HAVE_LLVM)
 #  $(info Using LLVM version: $(LLVM_VERSION))
 endif
 
