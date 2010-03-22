@@ -10,9 +10,10 @@ PROGRAM = glslcompiler
 OBJECTS = \
 	glslcompiler.o \
 	../../glapi/glapi.o \
+	../../glapi/glapi_getproc.o \
+	../../glapi/glapi_dispatch.o \
 	../../glapi/glapi_nop.o \
 	../../glapi/glthread.o \
-	../../main/dispatch.o \
 	../common/driverfuncs.o \
 	../../libmesa.a
 
