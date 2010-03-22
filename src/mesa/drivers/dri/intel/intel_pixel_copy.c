@@ -108,8 +108,8 @@ do_blit_copypixels(GLcontext * ctx,
                    GLint dstx, GLint dsty, GLenum type)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst = intel_drawbuf_region(intel);
-   struct intel_region *src = copypix_src_region(intel, type);
+   struct intel_region *dst;
+   struct intel_region *src;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_framebuffer *read_fb = ctx->ReadBuffer;
    GLint orig_dstx;
@@ -133,12 +133,15 @@ do_blit_copypixels(GLcontext * ctx,
        ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F)
       return GL_FALSE;
 
+   intel_prepare_render(intel);
+
+   dst = intel_drawbuf_region(intel);
+   src = copypix_src_region(intel, type);
+
    if (!src || !dst)
       return GL_FALSE;
 
    intelFlush(&intel->ctx);
-
-   intel_prepare_render(intel);
 
    /* XXX: We fail to handle different inversion between read and draw framebuffer. */
 

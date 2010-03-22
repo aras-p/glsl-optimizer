@@ -119,8 +119,6 @@ intelEmitCopyBlit(struct intel_context *intel,
            break;
    } while (pass < 2);
 
-   intel_prepare_render(intel);
-
    if (pass >= 2) {
       drm_intel_gem_bo_map_gtt(dst_buffer);
       drm_intel_gem_bo_map_gtt(src_buffer);
