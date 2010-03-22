@@ -232,6 +232,7 @@ nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	case GL_TEXTURE_1D:
 	case GL_TEXTURE_2D:
 	case GL_TEXTURE_3D:
+	case GL_TEXTURE_RECTANGLE:
 		context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
 		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
 		break;
