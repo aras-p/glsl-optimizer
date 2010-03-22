@@ -39,7 +39,6 @@
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_sampler.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "cso_cache/cso_context.h"
