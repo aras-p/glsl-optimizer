@@ -1475,7 +1475,6 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
       return;
    default:
       ; /* fall-through */
-      return;
    }
 
 invalid_pname:
