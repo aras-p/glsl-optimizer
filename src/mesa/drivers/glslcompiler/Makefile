@@ -10,6 +10,7 @@ PROGRAM = glslcompiler
 OBJECTS = \
 	glslcompiler.o \
 	../../glapi/glapi.o \
+	../../glapi/glapi_entrypoint.o \
 	../../glapi/glapi_getproc.o \
 	../../glapi/glapi_dispatch.o \
 	../../glapi/glapi_nop.o \
