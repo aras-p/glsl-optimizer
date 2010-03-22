@@ -40,7 +40,6 @@
 #include "main/teximage.h"
 #include "main/texstate.h"
 #include "main/texfetch.h"
-#include "main/fbobject.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "st_texture.h"

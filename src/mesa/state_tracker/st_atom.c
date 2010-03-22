@@ -36,8 +36,6 @@
 #include "st_program.h"
 #include "st_manager.h"
 
-#include "pipe/p_context.h"
-
 
 /**
  * This is used to initialize st->atoms[].
