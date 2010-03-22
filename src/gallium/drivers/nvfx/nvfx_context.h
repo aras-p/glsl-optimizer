@@ -158,7 +158,6 @@ struct nvfx_context {
 	struct pipe_buffer *idxbuf;
 	unsigned idxbuf_format;
 	struct nvfx_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
-	struct nvfx_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
 	struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
 	unsigned nr_samplers;
 	unsigned nr_textures;
