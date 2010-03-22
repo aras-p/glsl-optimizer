@@ -337,6 +337,8 @@ nouveau_validate_framebuffer(GLcontext *ctx)
 		update_framebuffer(dri_ctx, dri_read,
 				   &dri_ctx->dri2.read_stamp);
 
-	if (nouveau_next_dirty_state(ctx) >= 0)
+	if (nouveau_next_dirty_state(ctx) >= 0) {
+		nouveau_state_emit(ctx);
 		FIRE_RING(context_chan(ctx));
+	}
 }
