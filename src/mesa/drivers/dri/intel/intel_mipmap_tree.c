@@ -448,6 +448,8 @@ intel_miptree_image_copy(struct intel_context *intel,
        width = ALIGN(width, align_w);
    }
 
+   intel_prepare_render(intel);
+
    for (i = 0; i < depth; i++) {
       intel_miptree_get_image_offset(src, level, face, i, &src_x, &src_y);
       intel_miptree_get_image_offset(dst, level, face, i, &dst_x, &dst_y);
