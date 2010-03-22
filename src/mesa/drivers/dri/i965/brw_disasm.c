@@ -57,6 +57,7 @@ struct {
     [BRW_OPCODE_DPH] = { .name = "dph", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP3] = { .name = "dp3", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP2] = { .name = "dp2", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_MATH] = { .name = "math", .nsrc = 2, .ndst = 1 },
 
     [BRW_OPCODE_AVG] = { .name = "avg", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_ADD] = { .name = "add", .nsrc = 2, .ndst = 1 },
@@ -797,7 +798,11 @@ int brw_disasm (FILE *file, struct brw_instruction *inst)
     err |= control (file, "saturate", saturate, inst->header.saturate, NULL);
     err |= control (file, "debug control", debug_ctrl, inst->header.debug_control, NULL);
 
-    if (inst->header.opcode != BRW_OPCODE_SEND)
+    if (inst->header.opcode == BRW_OPCODE_MATH) {
+	string (file, " ");
+	err |= control (file, "function", math_function,
+			inst->header.destreg__conditionalmod, NULL);
+    } else if (inst->header.opcode != BRW_OPCODE_SEND)
 	err |= control (file, "conditional modifier", conditional_modifier,
 			inst->header.destreg__conditionalmod, NULL);
 
