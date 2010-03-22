@@ -51,6 +51,7 @@ struct {
     [BRW_OPCODE_MACH] = { .name = "mach", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_PLN] = { .name = "pln", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_MAD] = { .name = "mad", .nsrc = 3, .ndst = 1 },
     [BRW_OPCODE_SAD2] = { .name = "sad2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SADA2] = { .name = "sada2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP4] = { .name = "dp4", .nsrc = 2, .ndst = 1 },
@@ -578,6 +579,28 @@ static int dest (FILE *file, struct brw_instruction *inst)
     return 0;
 }
 
+static int dest_3src (FILE *file, struct brw_instruction *inst)
+{
+    int	err = 0;
+    uint32_t reg_file;
+
+    if (inst->bits1.da3src.dest_reg_file)
+       reg_file = BRW_MESSAGE_REGISTER_FILE;
+    else
+       reg_file = BRW_GENERAL_REGISTER_FILE;
+
+    err |= reg (file, reg_file, inst->bits1.da3src.dest_reg_nr);
+    if (err == -1)
+       return 0;
+    if (inst->bits1.da3src.dest_subreg_nr)
+       format (file, ".%d", inst->bits1.da3src.dest_subreg_nr);
+    string (file, "<1>");
+    err |= control (file, "writemask", writemask, inst->bits1.da3src.dest_writemask, NULL);
+    err |= control (file, "dest reg encoding", reg_encoding, BRW_REGISTER_TYPE_F, NULL);
+
+    return 0;
+}
+
 static int src_align1_region (FILE *file,
 			      GLuint _vert_stride, GLuint _width, GLuint _horiz_stride)
 {
@@ -694,6 +717,156 @@ static int src_da16 (FILE *file,
     return err;
 }
 
+static int src0_3src (FILE *file, struct brw_instruction *inst)
+{
+    int err = 0;
+    GLuint swz_x = (inst->bits2.da3src.src0_swizzle >> 0) & 0x3;
+    GLuint swz_y = (inst->bits2.da3src.src0_swizzle >> 2) & 0x3;
+    GLuint swz_z = (inst->bits2.da3src.src0_swizzle >> 4) & 0x3;
+    GLuint swz_w = (inst->bits2.da3src.src0_swizzle >> 6) & 0x3;
+
+    err |= control (file, "negate", negate, inst->bits1.da3src.src0_negate, NULL);
+    err |= control (file, "abs", _abs, inst->bits1.da3src.src0_abs, NULL);
+
+    err |= reg (file, BRW_GENERAL_REGISTER_FILE, inst->bits2.da3src.src0_reg_nr);
+    if (err == -1)
+	return 0;
+    if (inst->bits2.da3src.src0_subreg_nr)
+	format (file, ".%d", inst->bits2.da3src.src0_subreg_nr);
+    string (file, "<4,1,1>");
+    err |= control (file, "src da16 reg type", reg_encoding,
+		    BRW_REGISTER_TYPE_F, NULL);
+    /*
+     * Three kinds of swizzle display:
+     *  identity - nothing printed
+     *  1->all	 - print the single channel
+     *  1->1     - print the mapping
+     */
+    if (swz_x == BRW_CHANNEL_X &&
+	swz_y == BRW_CHANNEL_Y &&
+	swz_z == BRW_CHANNEL_Z &&
+	swz_w == BRW_CHANNEL_W)
+    {
+	;
+    }
+    else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w)
+    {
+	string (file, ".");
+	err |= control (file, "channel select", chan_sel, swz_x, NULL);
+    }
+    else
+    {
+	string (file, ".");
+	err |= control (file, "channel select", chan_sel, swz_x, NULL);
+	err |= control (file, "channel select", chan_sel, swz_y, NULL);
+	err |= control (file, "channel select", chan_sel, swz_z, NULL);
+	err |= control (file, "channel select", chan_sel, swz_w, NULL);
+    }
+    return err;
+}
+
+static int src1_3src (FILE *file, struct brw_instruction *inst)
+{
+    int err = 0;
+    GLuint swz_x = (inst->bits2.da3src.src1_swizzle >> 0) & 0x3;
+    GLuint swz_y = (inst->bits2.da3src.src1_swizzle >> 2) & 0x3;
+    GLuint swz_z = (inst->bits2.da3src.src1_swizzle >> 4) & 0x3;
+    GLuint swz_w = (inst->bits2.da3src.src1_swizzle >> 6) & 0x3;
+    GLuint src1_subreg_nr = (inst->bits2.da3src.src1_subreg_nr_low |
+			     (inst->bits3.da3src.src1_subreg_nr_high << 2));
+
+    err |= control (file, "negate", negate, inst->bits1.da3src.src1_negate,
+		    NULL);
+    err |= control (file, "abs", _abs, inst->bits1.da3src.src1_abs, NULL);
+
+    err |= reg (file, BRW_GENERAL_REGISTER_FILE,
+		inst->bits3.da3src.src1_reg_nr);
+    if (err == -1)
+	return 0;
+    if (src1_subreg_nr)
+	format (file, ".%d", src1_subreg_nr);
+    string (file, "<4,1,1>");
+    err |= control (file, "src da16 reg type", reg_encoding,
+		    BRW_REGISTER_TYPE_F, NULL);
+    /*
+     * Three kinds of swizzle display:
+     *  identity - nothing printed
+     *  1->all	 - print the single channel
+     *  1->1     - print the mapping
+     */
+    if (swz_x == BRW_CHANNEL_X &&
+	swz_y == BRW_CHANNEL_Y &&
+	swz_z == BRW_CHANNEL_Z &&
+	swz_w == BRW_CHANNEL_W)
+    {
+	;
+    }
+    else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w)
+    {
+	string (file, ".");
+	err |= control (file, "channel select", chan_sel, swz_x, NULL);
+    }
+    else
+    {
+	string (file, ".");
+	err |= control (file, "channel select", chan_sel, swz_x, NULL);
+	err |= control (file, "channel select", chan_sel, swz_y, NULL);
+	err |= control (file, "channel select", chan_sel, swz_z, NULL);
+	err |= control (file, "channel select", chan_sel, swz_w, NULL);
+    }
+    return err;
+}
+
+
+static int src2_3src (FILE *file, struct brw_instruction *inst)
+{
+    int err = 0;
+    GLuint swz_x = (inst->bits3.da3src.src2_swizzle >> 0) & 0x3;
+    GLuint swz_y = (inst->bits3.da3src.src2_swizzle >> 2) & 0x3;
+    GLuint swz_z = (inst->bits3.da3src.src2_swizzle >> 4) & 0x3;
+    GLuint swz_w = (inst->bits3.da3src.src2_swizzle >> 6) & 0x3;
+
+    err |= control (file, "negate", negate, inst->bits1.da3src.src2_negate,
+		    NULL);
+    err |= control (file, "abs", _abs, inst->bits1.da3src.src2_abs, NULL);
+
+    err |= reg (file, BRW_GENERAL_REGISTER_FILE,
+		inst->bits3.da3src.src2_reg_nr);
+    if (err == -1)
+	return 0;
+    if (inst->bits3.da3src.src2_subreg_nr)
+	format (file, ".%d", inst->bits3.da3src.src2_subreg_nr);
+    string (file, "<4,1,1>");
+    err |= control (file, "src da16 reg type", reg_encoding,
+		    BRW_REGISTER_TYPE_F, NULL);
+    /*
+     * Three kinds of swizzle display:
+     *  identity - nothing printed
+     *  1->all	 - print the single channel
+     *  1->1     - print the mapping
+     */
+    if (swz_x == BRW_CHANNEL_X &&
+	swz_y == BRW_CHANNEL_Y &&
+	swz_z == BRW_CHANNEL_Z &&
+	swz_w == BRW_CHANNEL_W)
+    {
+	;
+    }
+    else if (swz_x == swz_y && swz_x == swz_z && swz_x == swz_w)
+    {
+	string (file, ".");
+	err |= control (file, "channel select", chan_sel, swz_x, NULL);
+    }
+    else
+    {
+	string (file, ".");
+	err |= control (file, "channel select", chan_sel, swz_x, NULL);
+	err |= control (file, "channel select", chan_sel, swz_y, NULL);
+	err |= control (file, "channel select", chan_sel, swz_z, NULL);
+	err |= control (file, "channel select", chan_sel, swz_w, NULL);
+    }
+    return err;
+}
 
 static int imm (FILE *file, GLuint type, struct brw_instruction *inst) {
     switch (type) {
@@ -924,25 +1097,39 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
     if (inst->header.opcode == BRW_OPCODE_SEND && gen < 6)
 	format (file, " %d", inst->header.destreg__conditionalmod);
 
-    if (opcode[inst->header.opcode].ndst > 0) {
-	pad (file, 16);
-	err |= dest (file, inst);
-    } else if (gen >= 6 && (inst->header.opcode == BRW_OPCODE_IF ||
-			    inst->header.opcode == BRW_OPCODE_ELSE ||
-			    inst->header.opcode == BRW_OPCODE_ENDIF ||
-			    inst->header.opcode == BRW_OPCODE_WHILE)) {
-       format (file, " %d", inst->bits1.branch_gen6.jump_count);
-    } else if (inst->header.opcode == BRW_OPCODE_JMPI) {
-       format (file, " %d", inst->bits3.d);
-    }
+    if (opcode[inst->header.opcode].nsrc == 3) {
+       pad (file, 16);
+       err |= dest_3src (file, inst);
 
-    if (opcode[inst->header.opcode].nsrc > 0) {
-	pad (file, 32);
-	err |= src0 (file, inst);
-    }
-    if (opcode[inst->header.opcode].nsrc > 1) {
-	pad (file, 48);
-	err |= src1 (file, inst);
+       pad (file, 32);
+       err |= src0_3src (file, inst);
+
+       pad (file, 48);
+       err |= src1_3src (file, inst);
+
+       pad (file, 64);
+       err |= src2_3src (file, inst);
+    } else {
+       if (opcode[inst->header.opcode].ndst > 0) {
+	  pad (file, 16);
+	  err |= dest (file, inst);
+       } else if (gen >= 6 && (inst->header.opcode == BRW_OPCODE_IF ||
+			       inst->header.opcode == BRW_OPCODE_ELSE ||
+			       inst->header.opcode == BRW_OPCODE_ENDIF ||
+			       inst->header.opcode == BRW_OPCODE_WHILE)) {
+	  format (file, " %d", inst->bits1.branch_gen6.jump_count);
+       } else if (inst->header.opcode == BRW_OPCODE_JMPI) {
+	  format (file, " %d", inst->bits3.d);
+       }
+
+       if (opcode[inst->header.opcode].nsrc > 0) {
+	  pad (file, 32);
+	  err |= src0 (file, inst);
+       }
+       if (opcode[inst->header.opcode].nsrc > 1) {
+	  pad (file, 48);
+	  err |= src1 (file, inst);
+       }
     }
 
     if (inst->header.opcode == BRW_OPCODE_SEND ||

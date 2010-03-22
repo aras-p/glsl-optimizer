@@ -1007,6 +1007,22 @@ struct brw_instruction
 
 	 GLint jump_count:16;
       } branch_gen6;
+
+      struct {
+	 GLuint dest_reg_file:1;
+	 GLuint flag_subreg_num:1;
+	 GLuint pad0:2;
+	 GLuint src0_abs:1;
+	 GLuint src0_negate:1;
+	 GLuint src1_abs:1;
+	 GLuint src1_negate:1;
+	 GLuint src2_abs:1;
+	 GLuint src2_negate:1;
+	 GLuint pad1:7;
+	 GLuint dest_writemask:4;
+	 GLuint dest_subreg_nr:3;
+	 GLuint dest_reg_nr:8;
+      } da3src;
    } bits1;
 
 
@@ -1086,6 +1102,16 @@ struct brw_instruction
            GLuint sfid:4;
        } send_gen5;  /* for Ironlake only */
 
+      struct {
+	 GLuint src0_rep_ctrl:1;
+	 GLuint src0_swizzle:8;
+	 GLuint src0_subreg_nr:3;
+	 GLuint src0_reg_nr:8;
+	 GLuint pad0:1;
+	 GLuint src1_rep_ctrl:1;
+	 GLuint src1_swizzle:8;
+	 GLuint src1_subreg_nr_low:2;
+      } da3src;
    } bits2;
 
    union
@@ -1465,6 +1491,17 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } gen7_dp;
       /** @} */
+
+      struct {
+	 GLuint src1_subreg_nr_high:1;
+	 GLuint src1_reg_nr:8;
+	 GLuint pad0:1;
+	 GLuint src2_rep_ctrl:1;
+	 GLuint src2_swizzle:8;
+	 GLuint src2_subreg_nr:3;
+	 GLuint src2_reg_nr:8;
+	 GLuint pad1:2;
+      } da3src;
 
       GLint d;
       GLuint ud;

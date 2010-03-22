@@ -749,6 +749,78 @@ static struct brw_instruction *brw_alu2(struct brw_compile *p,
    return insn;
 }
 
+static int
+get_3src_subreg_nr(struct brw_reg reg)
+{
+   if (reg.vstride == BRW_VERTICAL_STRIDE_0) {
+      assert(brw_is_single_value_swizzle(reg.dw1.bits.swizzle));
+      return reg.subnr / 4 + BRW_GET_SWZ(reg.dw1.bits.swizzle, 0);
+   } else {
+      return reg.subnr / 4;
+   }
+}
+
+static struct brw_instruction *brw_alu3(struct brw_compile *p,
+					GLuint opcode,
+					struct brw_reg dest,
+					struct brw_reg src0,
+					struct brw_reg src1,
+					struct brw_reg src2)
+{
+   struct brw_instruction *insn = next_insn(p, opcode);
+
+   gen7_convert_mrf_to_grf(p, &dest);
+
+   assert(insn->header.access_mode == BRW_ALIGN_16);
+
+   assert(dest.file == BRW_GENERAL_REGISTER_FILE ||
+	  dest.file == BRW_MESSAGE_REGISTER_FILE);
+   assert(dest.nr < 128);
+   assert(dest.address_mode == BRW_ADDRESS_DIRECT);
+   assert(dest.type = BRW_REGISTER_TYPE_F);
+   insn->bits1.da3src.dest_reg_file = (dest.file == BRW_MESSAGE_REGISTER_FILE);
+   insn->bits1.da3src.dest_reg_nr = dest.nr;
+   insn->bits1.da3src.dest_subreg_nr = dest.subnr / 16;
+   insn->bits1.da3src.dest_writemask = dest.dw1.bits.writemask;
+   guess_execution_size(p, insn, dest);
+
+   assert(src0.file == BRW_GENERAL_REGISTER_FILE);
+   assert(src0.address_mode == BRW_ADDRESS_DIRECT);
+   assert(src0.nr < 128);
+   assert(src0.type == BRW_REGISTER_TYPE_F);
+   insn->bits2.da3src.src0_swizzle = src0.dw1.bits.swizzle;
+   insn->bits2.da3src.src0_subreg_nr = get_3src_subreg_nr(src0);
+   insn->bits2.da3src.src0_reg_nr = src0.nr;
+   insn->bits1.da3src.src0_abs = src0.abs;
+   insn->bits1.da3src.src0_negate = src0.negate;
+   insn->bits2.da3src.src0_rep_ctrl = src0.vstride == BRW_VERTICAL_STRIDE_0;
+
+   assert(src1.file == BRW_GENERAL_REGISTER_FILE);
+   assert(src1.address_mode == BRW_ADDRESS_DIRECT);
+   assert(src1.nr < 128);
+   assert(src1.type == BRW_REGISTER_TYPE_F);
+   insn->bits2.da3src.src1_swizzle = src1.dw1.bits.swizzle;
+   insn->bits2.da3src.src1_subreg_nr_low = get_3src_subreg_nr(src1) & 0x3;
+   insn->bits3.da3src.src1_subreg_nr_high = get_3src_subreg_nr(src1) >> 2;
+   insn->bits2.da3src.src1_rep_ctrl = src1.vstride == BRW_VERTICAL_STRIDE_0;
+   insn->bits3.da3src.src1_reg_nr = src1.nr;
+   insn->bits1.da3src.src1_abs = src1.abs;
+   insn->bits1.da3src.src1_negate = src1.negate;
+
+   assert(src2.file == BRW_GENERAL_REGISTER_FILE);
+   assert(src2.address_mode == BRW_ADDRESS_DIRECT);
+   assert(src2.nr < 128);
+   assert(src2.type == BRW_REGISTER_TYPE_F);
+   insn->bits3.da3src.src2_swizzle = src2.dw1.bits.swizzle;
+   insn->bits3.da3src.src2_subreg_nr = get_3src_subreg_nr(src2);
+   insn->bits3.da3src.src2_rep_ctrl = src2.vstride == BRW_VERTICAL_STRIDE_0;
+   insn->bits3.da3src.src2_reg_nr = src2.nr;
+   insn->bits1.da3src.src2_abs = src2.abs;
+   insn->bits1.da3src.src2_negate = src2.negate;
+
+   return insn;
+}
+
 
 /***********************************************************************
  * Convenience routines.
@@ -768,6 +840,16 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,	\
 	      struct brw_reg src1)   			\
 {							\
    return brw_alu2(p, BRW_OPCODE_##OP, dest, src0, src1);	\
+}
+
+#define ALU3(OP)					\
+struct brw_instruction *brw_##OP(struct brw_compile *p,	\
+	      struct brw_reg dest,			\
+	      struct brw_reg src0,			\
+	      struct brw_reg src1,			\
+	      struct brw_reg src2)   			\
+{							\
+   return brw_alu3(p, BRW_OPCODE_##OP, dest, src0, src1, src2);	\
 }
 
 /* Rounding operations (other than RNDD) require two instructions - the first
@@ -818,7 +900,7 @@ ALU2(DP3)
 ALU2(DP2)
 ALU2(LINE)
 ALU2(PLN)
-
+ALU3(MAD)
 
 ROUND(RNDZ)
 ROUND(RNDE)

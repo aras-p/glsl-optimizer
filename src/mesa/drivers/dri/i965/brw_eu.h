@@ -49,6 +49,13 @@
 #define BRW_SWIZZLE_WWWW      BRW_SWIZZLE4(3,3,3,3)
 #define BRW_SWIZZLE_XYXY      BRW_SWIZZLE4(0,1,0,1)
 
+static inline bool brw_is_single_value_swizzle(int swiz)
+{
+   return (swiz == BRW_SWIZZLE_XXXX ||
+	   swiz == BRW_SWIZZLE_YYYY ||
+	   swiz == BRW_SWIZZLE_ZZZZ ||
+	   swiz == BRW_SWIZZLE_WWWW);
+}
 
 #define REG_SIZE (8*4)
 
@@ -847,9 +854,15 @@ struct brw_instruction *brw_##OP(struct brw_compile *p,	\
 	      struct brw_reg src0,			\
 	      struct brw_reg src1);
 
+#define ALU3(OP)					\
+struct brw_instruction *brw_##OP(struct brw_compile *p,	\
+	      struct brw_reg dest,			\
+	      struct brw_reg src0,			\
+	      struct brw_reg src1,			\
+	      struct brw_reg src2);
+
 #define ROUND(OP) \
 void brw_##OP(struct brw_compile *p, struct brw_reg dest, struct brw_reg src0);
-
 
 ALU1(MOV)
 ALU2(SEL)
@@ -876,12 +889,14 @@ ALU2(DP3)
 ALU2(DP2)
 ALU2(LINE)
 ALU2(PLN)
+ALU3(MAD)
 
 ROUND(RNDZ)
 ROUND(RNDE)
 
 #undef ALU1
 #undef ALU2
+#undef ALU3
 #undef ROUND
 
 

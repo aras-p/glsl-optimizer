@@ -620,6 +620,7 @@ enum opcode {
    BRW_OPCODE_DPA2 =	88,
    BRW_OPCODE_LINE =	89,
    BRW_OPCODE_PLN =	90,
+   BRW_OPCODE_MAD =	91,
    BRW_OPCODE_NOP =	126,
 
    /* These are compiler backend opcodes that get translated into other
