@@ -968,7 +968,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    enum pipe_format srcFormat, texFormat;
    GLboolean invertTex = GL_FALSE;
    GLint readX, readY, readW, readH;
-   struct gl_pixelstore_attrib unpack = ctx->DefaultPacking;
+   struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
@@ -1032,7 +1032,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    readY = srcy;
    readW = width;
    readH = height;
-   _mesa_clip_readpixels(ctx, &readX, &readY, &readW, &readH, &unpack);
+   _mesa_clip_readpixels(ctx, &readX, &readY, &readW, &readH, &pack);
    readW = MAX2(0, readW);
    readH = MAX2(0, readH);
 
@@ -1056,9 +1056,10 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                        PIPE_BUFFER_USAGE_GPU_READ);
       struct pipe_surface *psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
                                       PIPE_BUFFER_USAGE_GPU_WRITE );
+
       pipe->surface_copy(pipe,
                          psTex,                               /* dest surf */
-                         unpack.SkipPixels, unpack.SkipRows,  /* dest pos */
+                         pack.SkipPixels, pack.SkipRows,      /* dest pos */
                          psRead,                              /* src surf */
                          readX, readY, readW, readH);         /* src region */
 
@@ -1096,7 +1097,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          /* alternate path using get/put_tile() */
          GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
          pipe_get_tile_rgba(pipe, ptRead, readX, readY, readW, readH, buf);
-         pipe_put_tile_rgba(pipe, ptTex, unpack.SkipPixels, unpack.SkipRows,
+         pipe_put_tile_rgba(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
                             readW, readH, buf);
          free(buf);
       }
@@ -1104,7 +1105,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          /* GL_DEPTH */
          GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
          pipe_get_tile_z(pipe, ptRead, readX, readY, readW, readH, buf);
-         pipe_put_tile_z(pipe, ptTex, unpack.SkipPixels, unpack.SkipRows,
+         pipe_put_tile_z(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
                          readW, readH, buf);
          free(buf);
       }
