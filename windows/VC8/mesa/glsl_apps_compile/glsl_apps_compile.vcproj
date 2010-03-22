@@ -89,7 +89,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\compile.exe ..\..\..\..\src\glsl\apps"
+				CommandLine="copy &quot;$(OutDir)\compile.exe&quot; ..\..\..\..\src\glsl\apps"
 			/>
 		</Configuration>
 		<Configuration
@@ -166,7 +166,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\compile.exe ..\..\..\..\src\glsl\apps"
+				CommandLine="copy &quot;$(OutDir)\compile.exe&quot; ..\..\..\..\src\glsl\apps"
 			/>
 		</Configuration>
 	</Configurations>
