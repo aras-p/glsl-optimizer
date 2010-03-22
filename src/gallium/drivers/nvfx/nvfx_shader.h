@@ -209,7 +209,7 @@
 #define NVFX_FP_OP_OPCODE_RFL_NV30 0x36
 
 /* NV40 only fragment program opcodes */
-#define NVFX_FP_OP_OPCODE_TXL_NV40 0x31
+#define NVFX_FP_OP_OPCODE_TXL_NV40 0x2F
 /* The use of these instructions appears to be indicated by bit 31 of DWORD 2.*/
 #define NV40_FP_OP_BRA_OPCODE_BRK                                    0x0
 #define NV40_FP_OP_BRA_OPCODE_CAL                                    0x1
