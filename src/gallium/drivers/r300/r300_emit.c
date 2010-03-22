@@ -832,6 +832,15 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
     unsigned packet_size = (aos_count * 3 + 1) / 2;
     CS_LOCALS(r300);
 
+    for (i = 0; i < aos_count; i++) {
+        if ((vbuf[velem[i].vertex_buffer_index].buffer_offset + velem[i].src_offset) % 4 != 0) {
+            /* XXX We must align the buffer. */
+            assert(0);
+            fprintf(stderr, "r300: Unaligned vertex buffer offsets aren't supported, aborting..\n");
+            abort();
+        }
+    }
+
     BEGIN_CS(2 + packet_size + aos_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
     OUT_CS(aos_count);
