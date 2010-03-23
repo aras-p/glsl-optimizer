@@ -70,7 +70,7 @@ radeon_drm_buffer_map(struct pb_buffer *_buf,
 		      unsigned flags)
 {
     struct radeon_drm_buffer *buf = radeon_drm_buffer(_buf);
-    int write;
+    int write = 0;
 
     if (flags & PIPE_BUFFER_USAGE_DONTBLOCK) {
 	if ((_buf->base.usage & PIPE_BUFFER_USAGE_VERTEX) ||
@@ -365,7 +365,7 @@ boolean radeon_drm_bufmgr_is_buffer_referenced(struct pb_buffer *_buf)
     return (radeon_bo_is_referenced_by_cs(buf->bo, buf->mgr->rws->cs) ||
 	    radeon_bo_is_busy(buf->bo, &domain));
 }
-					    
+
 
 void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr)
 {
