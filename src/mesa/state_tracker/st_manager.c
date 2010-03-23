@@ -333,15 +333,15 @@ st_visual_to_context_mode(const struct st_visual *visual,
    }
 
    if (visual->depth_stencil_format != PIPE_FORMAT_NONE) {
-      mode->haveDepthBuffer = GL_TRUE;
-      mode->haveStencilBuffer = GL_TRUE;
-
       mode->depthBits =
          util_format_get_component_bits(visual->depth_stencil_format,
                UTIL_FORMAT_COLORSPACE_ZS, 0);
       mode->stencilBits =
          util_format_get_component_bits(visual->depth_stencil_format,
                UTIL_FORMAT_COLORSPACE_ZS, 1);
+
+      mode->haveDepthBuffer = mode->depthBits > 0;
+      mode->haveStencilBuffer = mode->stencilBits > 0;
    }
 
    if (visual->accum_format != PIPE_FORMAT_NONE) {
