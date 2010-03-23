@@ -78,17 +78,39 @@ void xmesa_set_driver( const struct xm_driver *templ )
    stapi = driver.create_st_api();
 }
 
+
+/*
+ * XXX replace this with a linked list, or better yet, try to attach the
+ * gallium/mesa extra bits to the X Display object with XAddExtension().
+ */
+#define MAX_DISPLAYS 10
+static struct xmesa_display Displays[MAX_DISPLAYS];
+static int NumDisplays = 0;
+
+
 static XMesaDisplay
 xmesa_init_display( Display *display )
 {
    pipe_static_mutex(init_mutex);
-   static struct xmesa_display xm_display;
    XMesaDisplay xmdpy;
-   
+   int i;
+
    pipe_mutex_lock(init_mutex);
 
-   /* TODO support for multiple displays */
-   xmdpy = &xm_display;
+   /* Look for XMesaDisplay which corresponds to 'display' */
+   for (i = 0; i < NumDisplays; i++) {
+      if (Displays[i].display == display) {
+         /* Found it */
+         pipe_mutex_unlock(init_mutex);
+         return &Displays[i];
+      }
+   }
+
+   /* Create new XMesaDisplay */
+
+   assert(NumDisplays < MAX_DISPLAYS);
+   xmdpy = &Displays[NumDisplays];
+   NumDisplays++;
 
    if (!xmdpy->display && display) {
       xmdpy->display = display;
