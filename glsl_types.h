@@ -168,6 +168,14 @@ struct glsl_type {
    }
 
    /**
+    * Query whether or not a type is a sampler
+    */
+   bool is_sampler() const
+   {
+      return base_type == GLSL_TYPE_SAMPLER;
+   }
+
+   /**
     * Query whether or not a type is the void type singleton.
     */
    bool is_void() const
