@@ -56,7 +56,7 @@ $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) Makefile \
 		$(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(DRI_LIB_DEPS)
 	$(CC) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp -L$(TOP)/lib -lGL
 	@rm -f $@.test
-	mv $@.tmp $@
+	mv -f $@.tmp $@
 
 
 $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)

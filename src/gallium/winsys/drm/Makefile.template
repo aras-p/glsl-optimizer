@@ -71,7 +71,7 @@ $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) Makefile \
                  $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
 	$(CC) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp -L$(TOP)/lib -lGL
 	@rm -f $@.test
-	mv $@.tmp $@
+	mv -f $@.tmp $@
 
 $(TOP)/$(LIB_DIR)/gallium:
 	mkdir -p $@
