@@ -1,4 +1,4 @@
-TOP = ../../../../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = i915_dri.so
@@ -11,16 +11,12 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/identity/libidentity.a \
 	$(TOP)/src/gallium/drivers/i915/libi915.a
 
-
-DRIVER_SOURCES =
-
 C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 
-include ../../Makefile.template
+include ../Makefile.dri
 
 DRI_LIB_DEPS += -ldrm_intel
 
-symlinks: $(TOP)/$(LIB_DIR)/gallium
-	@rm -f $(TOP)/$(LIB_DIR)/gallium/i965_dri.so
+symlinks:

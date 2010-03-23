@@ -1180,7 +1180,7 @@ AC_ARG_ENABLE([gallium],
     [enable_gallium="$enableval"],
     [enable_gallium=yes])
 if test "x$enable_gallium" = xyes; then
-    SRC_DIRS="$SRC_DIRS gallium gallium/winsys"
+    SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
 fi
 
 dnl
@@ -1318,6 +1318,7 @@ AC_ARG_ENABLE([gallium-svga],
 if test "x$enable_gallium_svga" = xyes; then
     if test "x$mesa_driver" = xdri; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/vmware"
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-vmwgfx"
     fi
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
 elif test "x$enable_gallium_svga" = xauto; then
@@ -1335,6 +1336,7 @@ AC_ARG_ENABLE([gallium-intel],
 if test "x$enable_gallium_intel" = xyes; then
     if test "x$mesa_driver" = xdri; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/intel drm/i965"
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-i915 dri-i965"
     fi
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
 elif test "x$enable_gallium_intel" = xauto; then
@@ -1352,6 +1354,7 @@ AC_ARG_ENABLE([gallium-radeon],
 if test "x$enable_gallium_radeon" = xyes; then
     if test "x$mesa_driver" = xdri; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/radeon"
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-radeong"
     fi
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 elif test "x$enable_gallium_radeon" = xauto; then
@@ -1369,6 +1372,7 @@ AC_ARG_ENABLE([gallium-nouveau],
 if test "x$enable_gallium_nouveau" = xyes; then
     if test "x$mesa_driver" = xdri; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/nouveau"
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-nouveau"
     fi
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50"
 fi

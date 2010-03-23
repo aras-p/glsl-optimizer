@@ -1,5 +1,4 @@
-
-TOP = ../../../../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = vmwgfx_dri.so
@@ -13,6 +12,6 @@ PIPE_DRIVERS = \
 C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES)
 
-include ../../Makefile.template
+include ../Makefile.dri
 
 symlinks:

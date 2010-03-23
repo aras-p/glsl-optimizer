@@ -1,5 +1,4 @@
-
-TOP = ../../../../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = radeong_dri.so
@@ -15,9 +14,7 @@ C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 
-ASM_SOURCES = 
-
-include ../../Makefile.template
+include ../Makefile.dri
 
 DRI_LIB_DEPS += -ldrm_radeon
 

@@ -1,4 +1,4 @@
-TOP = ../../../../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = nouveau_dri.so
@@ -10,13 +10,11 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
 
-DRIVER_SOURCES =
-
 C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 
-include ../../Makefile.template
+include ../Makefile.dri
 
 DRI_LIB_DEPS += $(shell pkg-config libdrm_nouveau --libs)
 
