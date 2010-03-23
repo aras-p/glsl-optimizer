@@ -769,7 +769,7 @@ type_specifier_to_glsl_type(const struct ast_type_specifier *spec,
       *name = spec->type_name;
 
       /* FINISHME: Handle array declarations.  Note that this requires complete
-       * FINSIHME: handling of constant expressions.
+       * FINISHME: handling of constant expressions.
        */
    }
 
@@ -869,7 +869,7 @@ ast_declarator_list::hir(exec_list *instructions,
 
       var = new ir_variable(var_type, decl->identifier);
 
-      /* FINSIHME: Variables that are attribute, uniform, varying, in, or
+      /* FINISHME: Variables that are attribute, uniform, varying, in, or
        * FINISHME: out varibles must be declared either at global scope or
        * FINISHME: in a parameter list (in and out only).
        */
