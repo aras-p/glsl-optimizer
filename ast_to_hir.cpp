@@ -331,6 +331,45 @@ relational_result_type(const struct glsl_type *type_a,
 }
 
 
+/**
+ * Validates that a value can be assigned to a location with a specified type
+ *
+ * Validates that \c rhs can be assigned to some location.  If the types are
+ * not an exact match but an automatic conversion is possible, \c rhs will be
+ * converted.
+ *
+ * \return
+ * \c NULL if \c rhs cannot be assigned to a location with type \c lhs_type.
+ * Otherwise the actual RHS to be assigned will be returned.  This may be
+ * \c rhs, or it may be \c rhs after some type conversion.
+ *
+ * \note
+ * In addition to being used for assignments, this function is used to
+ * type-check return values.
+ */
+ir_instruction *
+validate_assignment(const glsl_type *lhs_type, ir_instruction *rhs)
+{
+   const glsl_type *const rhs_type = rhs->type;
+
+   /* If there is already some error in the RHS, just return it.  Anything
+    * else will lead to an avalanche of error message back to the user.
+    */
+   if (rhs_type->is_error())
+      return rhs;
+
+   /* FINISHME: For GLSL 1.10, check that the types are not arrays. */
+
+   /* If the types are identical, the assignment can trivially proceed.
+    */
+   if (rhs_type == lhs_type)
+      return rhs;
+
+   /* FINISHME: Check for and apply automatic conversions. */
+   return NULL;
+}
+
+
 ir_instruction *
 ast_node::hir(exec_list *instructions,
 	      struct _mesa_glsl_parse_state *state)
@@ -448,8 +487,11 @@ ast_expression::hir(exec_list *instructions,
 	 }
       }
 
-      /* FINISHME: Check that the LHS and RHS have matching types. */
-      /* FINISHME: For GLSL 1.10, check that the types are not arrays. */
+      ir_instruction *rhs = validate_assignment(op[0]->type, op[1]);
+      if (rhs == NULL) {
+	 type = glsl_error_type;
+	 rhs = op[1];
+      }
 
       ir_instruction *tmp = new ir_assignment(op[0], op[1], NULL);
       instructions->push_tail(tmp);
