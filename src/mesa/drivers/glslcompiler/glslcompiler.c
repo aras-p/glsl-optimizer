@@ -68,6 +68,7 @@ static const char *Prog = "glslcompiler";
 
 struct options {
    GLboolean LineNumbers;
+   GLboolean Link;
    gl_prog_print_mode Mode;
    const char *VertFile;
    const char *FragFile;
@@ -207,23 +208,29 @@ ReadShader(GLuint shader, const char *filename)
 }
 
 
-#if 0
 static void
-CheckLink(GLuint prog)
+CheckLink(GLuint v_shader, GLuint f_shader)
 {
+   GLuint prog;
    GLint stat;
+
+   prog = _mesa_CreateProgram();
+
+   _mesa_AttachShader(prog, v_shader);
+   _mesa_AttachShader(prog, f_shader);
+
+   _mesa_LinkProgramARB(prog);
    _mesa_GetProgramiv(prog, GL_LINK_STATUS, &stat);
    if (!stat) {
       GLchar log[1000];
       GLsizei len;
       _mesa_GetProgramInfoLog(prog, 1000, &len, log);
-      fprintf(stderr, "%s: Linker error:\n%s\n", Prog, log);
+      fprintf(stderr, "Linker error:\n%s\n", log);
    }
    else {
-      fprintf(stderr, "%s: Link success!\n", Prog);
+      fprintf(stderr, "Link success!\n");
    }
 }
-#endif
 
 
 static void
@@ -262,6 +269,7 @@ Usage(void)
    printf("  --fs FILE          fragment shader input filename\n");
    printf("  --arb              emit ARB-style instructions\n");
    printf("  --nv               emit NV-style instructions\n");
+   printf("  --link             run linker\n");
    printf("  --debug            force #pragma debug(on)\n");
    printf("  --nodebug          force #pragma debug(off)\n");
    printf("  --opt              force #pragma optimize(on)\n");
@@ -308,6 +316,9 @@ ParseOptions(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "--nv") == 0) {
          Options.Mode = PROG_PRINT_NV;
+      }
+      else if (strcmp(argv[i], "--link") == 0) {
+         Options.Link = GL_TRUE;
       }
       else if (strcmp(argv[i], "--debug") == 0) {
          Options.Pragmas.IgnoreDebug = GL_TRUE;
@@ -358,7 +369,7 @@ ParseOptions(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
-   GLuint shader = 0;
+   GLuint v_shader = 0, f_shader = 0;
 
    ParseOptions(argc, argv);
 
@@ -368,23 +379,37 @@ main(int argc, char *argv[])
    }
 
    if (Options.VertFile) {
-      shader = CompileShader(Options.VertFile, GL_VERTEX_SHADER);
-   }
-   else if (Options.FragFile) {
-      shader = CompileShader(Options.FragFile, GL_FRAGMENT_SHADER);
+      v_shader = CompileShader(Options.VertFile, GL_VERTEX_SHADER);
    }
 
-   if (shader) {
+   if (Options.FragFile) {
+      f_shader = CompileShader(Options.FragFile, GL_FRAGMENT_SHADER);
+   }
+
+   if (v_shader || f_shader) {
       if (Options.OutputFile) {
          fclose(stdout);
          /*stdout =*/ freopen(Options.OutputFile, "w", stdout);
       }
-      if (stdout) {
-         PrintShaderInstructions(shader, stdout);
+      if (stdout && v_shader) {
+         PrintShaderInstructions(v_shader, stdout);
+      }
+      if (stdout && f_shader) {
+         PrintShaderInstructions(f_shader, stdout);
       }
       if (Options.OutputFile) {
          fclose(stdout);
       }
+   }
+
+   if (Options.Link) {
+      if (!v_shader || !f_shader) {
+         fprintf(stderr,
+                 "--link option requires both a vertex and fragment shader.\n");
+         exit(1);
+      }
+
+      CheckLink(v_shader, f_shader);
    }
 
    return 0;
