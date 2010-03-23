@@ -841,7 +841,7 @@ ast_declarator_list::hir(exec_list *instructions,
        * FINISHME: declaration at a higher scope.
        */
 
-      if (decl_type == NULL) {
+      if ((decl_type == NULL) || decl_type->is_void()) {
 	 YYLTYPE loc;
 
 	 loc = this->get_location();
