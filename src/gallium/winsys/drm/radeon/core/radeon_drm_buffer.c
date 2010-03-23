@@ -315,8 +315,11 @@ void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf,
     uint32_t flags = 0, old_flags, old_pitch;
     if (microtiled == R300_BUFFER_TILED)
         flags |= RADEON_BO_FLAGS_MICRO_TILE;
+/* XXX Remove this ifdef when libdrm version 2.4.19 becomes mandatory. */
+#ifdef RADEON_BO_FLAGS_MICRO_TILE_SQUARE
     else if (microtiled == R300_BUFFER_SQUARETILED)
         flags |= RADEON_BO_FLAGS_MICRO_TILE_SQUARE;
+#endif
     if (macrotiled == R300_BUFFER_TILED)
         flags |= RADEON_BO_FLAGS_MACRO_TILE;
 
