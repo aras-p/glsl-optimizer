@@ -44,8 +44,7 @@ _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
    int len;
    va_list ap;
 
-   if (state)
-      state->error = true;
+   state->error = true;
 
    len = snprintf(buf, sizeof(buf), "%u:%u(%u): error: ",
 		  locp->source, locp->first_line, locp->first_column);

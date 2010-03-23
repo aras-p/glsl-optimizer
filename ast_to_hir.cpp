@@ -650,7 +650,7 @@ ast_expression::hir(exec_list *instructions,
       if (var != NULL) {
 	 type = result->type;
       } else {
-	 _mesa_glsl_error(& loc, NULL, "`%s' undeclared",
+	 _mesa_glsl_error(& loc, state, "`%s' undeclared",
 			  this->primary_expression.identifier);
 
 	 error_emitted = true;
@@ -704,7 +704,7 @@ ast_expression::hir(exec_list *instructions,
    }
 
    if (is_error_type(type) && !error_emitted)
-      _mesa_glsl_error(& loc, NULL, "type mismatch");
+      _mesa_glsl_error(& loc, state, "type mismatch");
 
    return result;
 }
