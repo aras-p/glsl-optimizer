@@ -495,7 +495,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct pipe_buffer *ib = nvfx->idxbuf;
 	unsigned ib_format = nvfx->idxbuf_format;
-	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
+	unsigned vb_flags = NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 	int hw;
 
 	vtxbuf = so_new(3, 17, 18);
