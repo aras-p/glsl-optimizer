@@ -1006,6 +1006,13 @@ ast_function_definition::hir(exec_list *instructions,
    ast_function_parameters_to_hir(& this->prototype->parameters, & parameters,
 				  state);
 
+   const char *return_type_name;
+   const glsl_type *return_type =
+      type_specifier_to_glsl_type(this->prototype->return_type->specifier,
+				  & return_type_name, state);
+
+   assert(return_type != NULL);
+
 
    /* Verify that this function's signature either doesn't match a previously
     * seen signature for a function with the same name, or, if a match is found,
@@ -1056,7 +1063,7 @@ ast_function_definition::hir(exec_list *instructions,
    /* Finish storing the information about this new function in its signature.
     */
    if (signature == NULL) {
-      signature = new ir_function_signature();
+      signature = new ir_function_signature(return_type);
       f->signatures.push_tail(signature);
    } else {
       /* Destroy all of the previous parameter information.  The previous

@@ -126,7 +126,7 @@ public:
 /*@{*/
 class ir_function_signature : public ir_instruction {
 public:
-   ir_function_signature(void);
+   ir_function_signature(const glsl_type *return_type);
 
    virtual void accept(ir_visitor *v)
    {

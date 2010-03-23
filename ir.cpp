@@ -96,8 +96,8 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name)
 }
 
 
-ir_function_signature::ir_function_signature(void)
-   : ir_instruction(ir_op_func_sig)
+ir_function_signature::ir_function_signature(const glsl_type *return_type)
+   : ir_instruction(ir_op_func_sig), return_type(return_type), definition(NULL)
 {
    /* empty */
 }
