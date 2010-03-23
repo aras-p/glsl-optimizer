@@ -17,10 +17,15 @@ PUBLIC __thread struct _glapi_table * _glapi_tls_Dispatch
 PUBLIC __thread void * _glapi_tls_Context
     __attribute__((tls_model("initial-exec")));
 
-#endif
-
 PUBLIC const struct _glapi_table *_glapi_Dispatch;
 PUBLIC const void *_glapi_Context;
+
+#else
+
+PUBLIC struct _glapi_table *_glapi_Dispatch;
+PUBLIC void *_glapi_Context;
+
+#endif
 
 PUBLIC void
 _glapi_check_multithread(void)
