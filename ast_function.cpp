@@ -88,18 +88,35 @@ ast_function_expression::hir(exec_list *instructions,
     * 2. methods - Only the .length() method of array types.
     * 3. functions - Calls to regular old functions.
     *
-    * There are two kinds of constructor call.  Constructors for built-in
-    * language types, such as mat4 and vec2, are free form.  The only
-    * requirement is that the parameters must provide enough values of the
-    * correct scalar type.  Constructors for arrays and structures must have
-    * the exact number of parameters with matching types in the correct order.
-    * These constructors follow essentially the same type matching rules as
-    * functions.
-    *
     * Method calls are actually detected when the ast_field_selection
     * expression is handled.
     */
    if (is_constructor()) {
+      const ast_type_specifier *type = (ast_type_specifier *) subexpressions[0];
+      YYLTYPE loc = type->get_location();
+
+      const glsl_type *const constructor_type =
+	 state->symbols->get_type(type->type_name);
+
+
+      /* Constructors for samplers are illegal.
+       */
+      if (constructor_type->is_sampler()) {
+	 _mesa_glsl_error(& loc, state, "cannot construct sampler type `%s'",
+			  constructor_type->name);
+	 return ir_call::get_error_instruction();
+      }
+
+
+      /* There are two kinds of constructor call.  Constructors for built-in
+       * language types, such as mat4 and vec2, are free form.  The only
+       * requirement is that the parameters must provide enough values of the
+       * correct scalar type.  Constructors for arrays and structures must
+       * have the exact number of parameters with matching types in the
+       * correct order.  These constructors follow essentially the same type
+       * matching rules as functions.
+       */
+
       return ir_call::get_error_instruction();
    } else {
       const ast_expression *id = subexpressions[0];
