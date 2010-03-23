@@ -62,6 +62,8 @@ static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire);
 static Status
 DRI2EventToWire(Display *dpy, XEvent *event, xEvent *wire);
+static int
+DRI2Error(Display *display, xError *err, XExtCodes *codes, int *ret_code);
 
 static /* const */ XExtensionHooks dri2ExtensionHooks = {
   NULL,                   /* create_gc */
@@ -73,7 +75,7 @@ static /* const */ XExtensionHooks dri2ExtensionHooks = {
   DRI2CloseDisplay,       /* close_display */
   DRI2WireToEvent,        /* wire_to_event */
   DRI2EventToWire,        /* event_to_wire */
-  NULL,                   /* error */
+  DRI2Error,              /* error */
   NULL,                   /* error_string */
 };
 
@@ -158,6 +160,17 @@ DRI2EventToWire(Display *dpy, XEvent *event, xEvent *wire)
    }
 
    return Success;
+}
+
+static int
+DRI2Error(Display *display, xError *err, XExtCodes *codes, int *ret_code)
+{
+    if (err->majorCode == codes->major_opcode &&
+	err->errorCode == BadDrawable &&
+	err->minorCode == X_DRI2CopyRegion)
+	return True;
+
+    return False;
 }
 
 Bool
