@@ -323,6 +323,7 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/*/Makefile.egl			\
 	$(DIRECTORY)/src/gallium/*/*/Makefile.template			\
 	$(DIRECTORY)/src/gallium/*/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
@@ -406,6 +407,14 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/demos/*.cxx			\
 	$(DIRECTORY)/progs/demos/*.dat			\
 	$(DIRECTORY)/progs/demos/README			\
+	$(DIRECTORY)/progs/egl/Makefile			\
+	$(DIRECTORY)/progs/egl/*.[ch]			\
+	$(DIRECTORY)/progs/es1/*/Makefile		\
+	$(DIRECTORY)/progs/es1/*/*.[ch]			\
+	$(DIRECTORY)/progs/es2/*/Makefile		\
+	$(DIRECTORY)/progs/es2/*/*.[ch]			\
+	$(DIRECTORY)/progs/openvg/*/Makefile		\
+	$(DIRECTORY)/progs/openvg/*/*.[ch]		\
 	$(DIRECTORY)/progs/fbdev/Makefile		\
 	$(DIRECTORY)/progs/fbdev/glfbdevtest.c		\
 	$(DIRECTORY)/progs/objviewer/*.[ch]		\
