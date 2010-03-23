@@ -298,6 +298,8 @@ public:
    ir_call(const ir_function_signature *callee, exec_list *actual_parameters)
       : ir_instruction(ir_op_call), callee(callee)
    {
+      assert(callee->return_type != NULL);
+      type = callee->return_type;
       actual_parameters->move_nodes_to(& this->actual_parameters);
    }
 
