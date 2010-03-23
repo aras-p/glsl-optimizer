@@ -122,6 +122,9 @@ cat <<EOF
 static const struct glsl_type error_type =
    glsl_type(GLSL_TYPE_ERROR, 0, 0, "");
 
+static const struct glsl_type void_type =
+   glsl_type(GLSL_TYPE_VOID, 0, 0, "void");
+
 const struct glsl_type *const glsl_error_type = & error_type;
 
 EOF

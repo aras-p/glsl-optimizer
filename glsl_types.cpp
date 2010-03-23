@@ -50,6 +50,7 @@ generate_110_types(glsl_symbol_table *symtab)
 			     Elements(builtin_structure_types));
    add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
 			     Elements(builtin_110_deprecated_structure_types));
+   add_types_to_symbol_table(symtab, & void_type, 1);
 }
 
 
