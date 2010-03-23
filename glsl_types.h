@@ -166,6 +166,22 @@ struct glsl_type {
       /* GLSL only has float matrices. */
       return (matrix_rows > 0) && (base_type == GLSL_TYPE_FLOAT);
    }
+
+   /**
+    * Query whether or not a type is the void type singleton.
+    */
+   bool is_void() const
+   {
+      return base_type == GLSL_TYPE_VOID;
+   }
+
+   /**
+    * Query whether or not a type is the error type singleton.
+    */
+   bool is_error() const
+   {
+      return base_type == GLSL_TYPE_ERROR;
+   }
 };
 
 struct glsl_struct_field {
