@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -18,7 +19,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL THE AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -26,7 +27,7 @@
  **************************************************************************/
 
 /**
- * \brief  Quad depth testing
+ * \brief  Quad depth / stencil testing
  */
 
 #include "pipe/p_defines.h"
@@ -96,7 +97,9 @@ get_depth_stencil_values( struct depth_data *data,
    }
 }
 
-/* If the shader has not been run, interpolate the depth values
+
+/**
+ * If the shader has not been run, interpolate the depth values
  * ourselves.
  */
 static void
@@ -115,6 +118,9 @@ interpolate_quad_depth( struct quad_header *quad )
 }
 
 
+/**
+ * Compute the depth_data::qzzzz[] values from the float fragment Z values.
+ */
 static void
 convert_quad_depth( struct depth_data *data, 
                     const struct quad_header *quad )
@@ -173,6 +179,9 @@ convert_quad_depth( struct depth_data *data,
 
 
 
+/**
+ * Write data->bzzzz[] values and data->stencilVals into the Z/stencil buffer.
+ */
 static void
 write_depth_stencil_values( struct depth_data *data,
                             struct quad_header *quad )
@@ -222,7 +231,6 @@ write_depth_stencil_values( struct depth_data *data,
       assert(0);
    }
 }
-
 
 
 
@@ -408,12 +416,11 @@ apply_stencil_op(struct depth_data *data,
 
    
 
-/*
+/**
  * To increase efficiency, we should probably have multiple versions
  * of this function that are specifically for Z16, Z32 and FP Z buffers.
  * Try to effectively do that with codegen...
  */
-
 static boolean
 depth_test_quad(struct quad_stage *qs, 
                 struct depth_data *data,
@@ -523,7 +530,6 @@ depth_stencil_test_quad(struct quad_stage *qs,
    wrtMask = softpipe->depth_stencil->stencil[face].writemask;
    valMask = softpipe->depth_stencil->stencil[face].valuemask;
 
-
    /* do the stencil test first */
    {
       unsigned passMask, failMask;
@@ -563,7 +569,7 @@ depth_stencil_test_quad(struct quad_stage *qs,
 
 
 #define ALPHATEST( FUNC, COMP )                                         \
-   static int                                                          \
+   static int                                                           \
    alpha_test_quads_##FUNC( struct quad_stage *qs,                      \
                            struct quad_header *quads[],                 \
                            unsigned nr )                                \
@@ -629,6 +635,7 @@ alpha_test_quads(struct quad_stage *qs,
    }
 }
 
+
 static unsigned mask_count[16] = 
 {
    0,                           /* 0x0 */
@@ -665,6 +672,9 @@ get_depth_bits(struct quad_stage *qs)
 
 
 
+/**
+ * General depth/stencil test function.  Used when there's no fast-path.
+ */
 static void
 depth_test_quads_fallback(struct quad_stage *qs, 
                           struct quad_header *quads[],
@@ -711,7 +721,6 @@ depth_test_quads_fallback(struct quad_stage *qs,
             if (qs->softpipe->depth_stencil->depth.writemask)
                write_depth_stencil_values(&data, quads[i]);
          }
-
 
          quads[pass++] = quads[i];
       }
@@ -848,22 +857,23 @@ choose_depth_test(struct quad_stage *qs,
 
 
 
-
-
-static void depth_test_begin(struct quad_stage *qs)
+static void
+depth_test_begin(struct quad_stage *qs)
 {
    qs->run = choose_depth_test;
    qs->next->begin(qs->next);
 }
 
 
-static void depth_test_destroy(struct quad_stage *qs)
+static void
+depth_test_destroy(struct quad_stage *qs)
 {
    FREE( qs );
 }
 
 
-struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe )
+struct quad_stage *
+sp_quad_depth_test_stage(struct softpipe_context *softpipe)
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
