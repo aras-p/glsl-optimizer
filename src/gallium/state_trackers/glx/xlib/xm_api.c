@@ -324,7 +324,7 @@ choose_pixel_format(XMesaVisual v)
  * at least matches the given depthBits and stencilBits.
  */
 static void
-xmesa_choose_z_stencil_format(int depthBits, int stencilBits,
+xmesa_choose_z_stencil_format(int depth, int stencil,
                               enum pipe_format *depthFormat,
                               enum pipe_format *stencilFormat)
 {
@@ -332,20 +332,28 @@ xmesa_choose_z_stencil_format(int depthBits, int stencilBits,
    const unsigned tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
    const unsigned geom_flags = (PIPE_TEXTURE_GEOM_NON_SQUARE |
                                 PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO);
-   static enum pipe_format formats[] = {
-      PIPE_FORMAT_S8Z24_UNORM,
-      PIPE_FORMAT_Z24S8_UNORM,
-      PIPE_FORMAT_Z16_UNORM,
-      PIPE_FORMAT_Z32_UNORM
-   };
-   int i;
+   enum pipe_format formats[8];
+   int count, i;
 
-   assert(screen);
+   count = 0;
 
-   *depthFormat = *stencilFormat = PIPE_FORMAT_NONE;
+   if (depth <= 16 && stencil == 0) {
+      formats[count++] = PIPE_FORMAT_Z16_UNORM;
+   }
+   if (depth <= 24 && stencil == 0) {
+      formats[count++] = PIPE_FORMAT_X8Z24_UNORM;
+      formats[count++] = PIPE_FORMAT_Z24X8_UNORM;
+   }
+   if (depth <= 24 && stencil <= 8) {
+      formats[count++] = PIPE_FORMAT_S8Z24_UNORM;
+      formats[count++] = PIPE_FORMAT_Z24S8_UNORM;
+   }
+   if (depth <= 32 && stencil == 0) {
+      formats[count++] = PIPE_FORMAT_Z32_UNORM;
+   }
 
-   /* search for supported format */
-   for (i = 0; i < Elements(formats); i++) {
+   *depthFormat = PIPE_FORMAT_NONE;
+   for (i = 0; i < count; i++) {
       if (screen->is_format_supported(screen, formats[i],
                                       target, tex_usage, geom_flags)) {
          *depthFormat = formats[i];
@@ -353,13 +361,12 @@ xmesa_choose_z_stencil_format(int depthBits, int stencilBits,
       }
    }
 
-   if (stencilBits) {
+   if (stencil) {
       *stencilFormat = *depthFormat;
    }
-
-   /* XXX we should check that he chosen format has at least as many bits
-    * as what was requested.
-    */
+   else {
+      *stencilFormat = PIPE_FORMAT_NONE;
+   }
 }
 
 
