@@ -583,11 +583,21 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
        if (component == SWIZZLE_ZERO) {
 	  return brw_imm_f(0.0F);
        } else if (component == SWIZZLE_ONE) {
-	  return brw_imm_f(1.0F);
+	  if (src->Negate)
+	     return brw_imm_f(-1.0F);
+	  else
+	     return brw_imm_f(1.0F);
        }
 
        if (src->File == PROGRAM_CONSTANT) {
-	  return brw_imm_f(params->ParameterValues[src->Index][component]);
+	  float f = params->ParameterValues[src->Index][component];
+
+	  if (src->Abs)
+	     f = fabs(f);
+	  if (src->Negate)
+	     f = -f;
+
+	  return brw_imm_f(f);
        }
     }
 
