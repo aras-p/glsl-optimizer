@@ -131,7 +131,7 @@ st_DeleteTextureObject(GLcontext *ctx,
           * crashes when the texture object is shared among contexts
           * and the original/owner context has already been destroyed.
           */
-         stObj->sampler_view->context == ctx->st->pipe;
+         stObj->sampler_view->context = ctx->st->pipe;
       }
       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
    }
