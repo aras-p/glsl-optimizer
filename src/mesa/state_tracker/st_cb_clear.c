@@ -47,16 +47,19 @@
 #include "st_inlines.h"
 
 #include "pipe/p_context.h"
-#include "util/u_inlines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_format.h"
+#include "util/u_inlines.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
 
 #include "cso_cache/cso_context.h"
 
 
+/**
+ * Do per-context initialization for glClear.
+ */
 void
 st_init_clear(struct st_context *st)
 {
@@ -67,8 +70,7 @@ st_init_clear(struct st_context *st)
    st->clear.raster.gl_rasterization_rules = 1;
 
    /* fragment shader state: color pass-through program */
-   st->clear.fs =
-      util_make_fragment_passthrough_shader(pipe);
+   st->clear.fs = util_make_fragment_passthrough_shader(pipe);
 
    /* vertex shader state: color/position pass-through */
    {
@@ -82,6 +84,9 @@ st_init_clear(struct st_context *st)
 }
 
 
+/**
+ * Free per-context state for glClear.
+ */
 void
 st_destroy_clear(struct st_context *st)
 {
@@ -131,7 +136,8 @@ draw_quad(GLcontext *ctx,
    }
 
    if (!st->clear.vbuf) {
-      st->clear.vbuf = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
+      st->clear.vbuf = pipe_buffer_create(pipe->screen, 32,
+                                          PIPE_BUFFER_USAGE_VERTEX,
                                           max_slots * sizeof(st->clear.vertices));
    }
 
@@ -160,7 +166,8 @@ draw_quad(GLcontext *ctx,
 
    /* put vertex data into vbuf */
    st_no_flush_pipe_buffer_write_nooverlap(st, st->clear.vbuf,
-                                           st->clear.vbuf_slot * sizeof(st->clear.vertices),
+                                           st->clear.vbuf_slot
+                                             * sizeof(st->clear.vertices),
                                            sizeof(st->clear.vertices),
                                            st->clear.vertices);
 
@@ -289,7 +296,8 @@ clear_with_quad(GLcontext *ctx,
    cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
-   draw_quad(ctx, x0, y0, x1, y1, (GLfloat) ctx->Depth.Clear, ctx->Color.ClearColor);
+   draw_quad(ctx, x0, y0, x1, y1,
+             (GLfloat) ctx->Depth.Clear, ctx->Color.ClearColor);
 
    /* Restore pipe state */
    cso_restore_blend(st->cso_context);
@@ -301,7 +309,6 @@ clear_with_quad(GLcontext *ctx,
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);
    cso_restore_vertex_elements(st->cso_context);
-
 }
 
 
@@ -328,6 +335,10 @@ check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 }
 
 
+/**
+ * Determine if we need to clear the combiend depth/stencil buffer by
+ * drawing a quad.
+ */
 static INLINE GLboolean
 check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
@@ -369,8 +380,7 @@ check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
         ctx->Scissor.Height < rb->Height))
       return GL_TRUE;
 
-   if (isDS && 
-       ctx->DrawBuffer->Visual.stencilBits > 0)
+   if (isDS && ctx->DrawBuffer->Visual.stencilBits > 0)
       return GL_TRUE;
 
    return GL_FALSE;
@@ -408,8 +418,7 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
     * rather than taking depth and stencil clear values from the
     * current state.
     */
-   if (isDS && 
-       ctx->DrawBuffer->Visual.depthBits > 0)
+   if (isDS && ctx->DrawBuffer->Visual.depthBits > 0)
       return GL_TRUE;
 
    return GL_FALSE;
@@ -417,7 +426,11 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 
 
 
-void st_flush_clear( struct st_context *st )
+/**
+ * Called when we need to flush.
+ */
+void
+st_flush_clear(struct st_context *st)
 {
    /* Release vertex buffer to avoid synchronous rendering if we were
     * to map it in the next frame.
@@ -431,7 +444,8 @@ void st_flush_clear( struct st_context *st )
 /**
  * Called via ctx->Driver.Clear()
  */
-static void st_Clear(GLcontext *ctx, GLbitfield mask)
+static void
+st_Clear(GLcontext *ctx, GLbitfield mask)
 {
    static const GLbitfield BUFFER_BITS_DS
       = (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
@@ -440,8 +454,8 @@ static void st_Clear(GLcontext *ctx, GLbitfield mask)
       = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    struct gl_renderbuffer *stencilRb
       = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
-   GLbitfield quad_buffers = 0;
-   GLbitfield clear_buffers = 0;
+   GLbitfield quad_buffers = 0x0;
+   GLbitfield clear_buffers = 0x0;
    GLuint i;
 
    /* This makes sure the pipe has the latest scissor, etc values */
@@ -526,7 +540,8 @@ static void st_Clear(GLcontext *ctx, GLbitfield mask)
 }
 
 
-void st_init_clear_functions(struct dd_function_table *functions)
+void
+st_init_clear_functions(struct dd_function_table *functions)
 {
    functions->Clear = st_Clear;
 }
