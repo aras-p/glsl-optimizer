@@ -93,7 +93,7 @@ generate_swizzle(const char *str, ir_dereference *deref,
       if ((str[i] < 'a') || (str[i] > 'z'))
 	 return false;
 
-      swiz_idx[i] = idx_map[str[0] - 'a'] - base;
+      swiz_idx[i] = idx_map[str[i] - 'a'] - base;
       if ((swiz_idx[i] < 0) || (swiz_idx[i] >= (int) vector_length))
 	 return false;
    }
