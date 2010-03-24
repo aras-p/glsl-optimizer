@@ -168,13 +168,18 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
    boolean with_format;
    __DRIbuffer *buffers;
    int num_buffers;
-   unsigned attachments[8];
+   unsigned attachments[10];
    unsigned num_attachments, i;
 
    assert(loader);
    with_format = (loader->base.version > 2 && loader->getBuffersWithFormat);
 
    num_attachments = 0;
+
+   /* for Xserver 1.6.0 (DRI2 version 1) we always need to ask for the front */
+   if (!with_format)
+      attachments[num_attachments++] = __DRI_BUFFER_FRONT_LEFT;
+
    for (i = 0; i < *count; i++) {
       enum pipe_format format;
       int att;
@@ -185,6 +190,9 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
 
       switch (statts[i]) {
       case ST_ATTACHMENT_FRONT_LEFT:
+         /* already added */
+         if (!with_format)
+            continue;
          att = __DRI_BUFFER_FRONT_LEFT;
          break;
       case ST_ATTACHMENT_BACK_LEFT:
