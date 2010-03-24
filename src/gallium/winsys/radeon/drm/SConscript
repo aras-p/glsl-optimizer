@@ -3,7 +3,7 @@ Import('*')
 env = drienv.Clone()
 
 radeon_sources = [
-    'radeon_buffer.c',
+    'radeon_drm_buffer.c',
     'radeon_drm.c',
     'radeon_r300.c',
 ]
