@@ -138,6 +138,16 @@ struct glsl_type {
    }
 
    /**
+    * For numeric and boolean derrived types returns the basic scalar type
+    *
+    * If the type is a numeric or boolean scalar, vector, or matrix type,
+    * this function gets the scalar type of the individual components.  For
+    * all other types, including arrays of numeric or boolean types, the
+    * error type is returned.
+    */
+   const glsl_type *get_base_type() const;
+
+   /**
     * Query whether or not a type is a scalar (non-vector and non-matrix).
     */
    bool is_scalar() const

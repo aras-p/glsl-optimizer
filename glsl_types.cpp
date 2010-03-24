@@ -142,3 +142,20 @@ _mesa_glsl_get_vector_type(unsigned base_type, unsigned vector_length)
       return glsl_error_type;
    }
 }
+
+
+const glsl_type *glsl_type::get_base_type() const
+{
+   switch (base_type) {
+   case GLSL_TYPE_UINT:
+      return glsl_uint_type;
+   case GLSL_TYPE_INT:
+      return glsl_int_type;
+   case GLSL_TYPE_FLOAT:
+      return glsl_float_type;
+   case GLSL_TYPE_BOOL:
+      return glsl_bool_type;
+   default:
+      return glsl_error_type;
+   }
+}
