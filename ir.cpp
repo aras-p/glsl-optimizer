@@ -87,6 +87,32 @@ ir_dereference::ir_dereference(ir_instruction *var)
 }
 
 
+void
+ir_dereference::set_swizzle(unsigned x, unsigned y, unsigned z, unsigned w,
+			    unsigned count)
+{
+   assert((count >= 1) && (count <= 4));
+
+   const unsigned dup_mask = 0
+      | ((count > 1) ? ((1U << y) & ((1U << x)                        )) : 0)
+      | ((count > 2) ? ((1U << z) & ((1U << x) | (1U << y)            )) : 0)
+      | ((count > 3) ? ((1U << w) & ((1U << x) | (1U << y) | (1U << z))) : 0);
+
+   assert(x <= 3);
+   assert(y <= 3);
+   assert(z <= 3);
+   assert(w <= 3);
+
+   selector.swizzle.x = x;
+   selector.swizzle.y = y;
+   selector.swizzle.z = z;
+   selector.swizzle.w = w;
+   selector.swizzle.num_components = count;
+   selector.swizzle.has_duplicates = dup_mask != 0;
+}
+
+
+
 ir_variable::ir_variable(const struct glsl_type *type, const char *name)
    : ir_instruction(ir_op_var_decl), read_only(false), centroid(false),
      invariant(false), mode(ir_var_auto), interpolation(ir_var_smooth)

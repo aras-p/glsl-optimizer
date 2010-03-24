@@ -398,6 +398,13 @@ public:
       v->visit(this);
    }
 
+   /**
+    * Setting the swizzle of a derefernce
+    */
+   void set_swizzle(unsigned x, unsigned y, unsigned z, unsigned w,
+		    unsigned count);
+
+
    enum {
       ir_reference_variable,
       ir_reference_array,
