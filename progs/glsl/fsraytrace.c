@@ -1,4 +1,4 @@
-// -*- mode: c; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2; coding: utf-8-unix -*-
+/* -*- mode: c; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2; coding: utf-8-unix -*- */
 /*
   Copyright (c) 2010 Kristóf Ralovich
 

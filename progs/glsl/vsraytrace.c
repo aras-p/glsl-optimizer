@@ -1,4 +1,4 @@
-// -*- mode: c; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2; coding: utf-8-unix -*-
+/* -*- mode: c; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2; coding: utf-8-unix -*- */
 /*
   Copyright (c) 2010 Kristóf Ralovich
 
@@ -221,7 +221,6 @@ Draw(void)
 
   float rot[9] = {1,0,0,  0,1,0,   0,0,1};
   GLint location = glGetUniformLocation(program, "rot");
-  //printf("loc=%d\n", location);
 
   glUseProgram(program);
   glUniformMatrix3fv(location, 1, 0, rot);
