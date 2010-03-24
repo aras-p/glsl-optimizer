@@ -124,9 +124,17 @@ st_DeleteTextureObject(GLcontext *ctx,
    struct st_texture_object *stObj = st_texture_object(texObj);
    if (stObj->pt)
       pipe_texture_reference(&stObj->pt, NULL);
-   if (stObj->sampler_view)
+   if (stObj->sampler_view) {
+      if (stObj->sampler_view->context != ctx->st->pipe) {
+         /* Take "ownership" of this texture sampler view by setting
+          * its context pointer to this context.  This avoids potential
+          * crashes when the texture object is shared among contexts
+          * and the original/owner context has already been destroyed.
+          */
+         stObj->sampler_view->context == ctx->st->pipe;
+      }
       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
-
+   }
    _mesa_delete_texture_object(ctx, texObj);
 }
 
