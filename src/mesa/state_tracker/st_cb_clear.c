@@ -316,15 +316,15 @@ check_clear_color_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
         ctx->Scissor.Y != 0 ||
         ctx->Scissor.Width < rb->Width ||
         ctx->Scissor.Height < rb->Height))
-      return TRUE;
+      return GL_TRUE;
 
    if (!ctx->Color.ColorMask[0][0] ||
        !ctx->Color.ColorMask[0][1] ||
        !ctx->Color.ColorMask[0][2] ||
        !ctx->Color.ColorMask[0][3])
-      return TRUE;
+      return GL_TRUE;
 
-   return FALSE;
+   return GL_FALSE;
 }
 
 
@@ -344,12 +344,12 @@ check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
         ctx->Scissor.Y != 0 ||
         ctx->Scissor.Width < rb->Width ||
         ctx->Scissor.Height < rb->Height))
-      return TRUE;
+      return GL_TRUE;
 
    if (maskStencil)
-      return TRUE;
+      return GL_TRUE;
 
-   return FALSE;
+   return GL_FALSE;
 }
 
 
@@ -367,13 +367,13 @@ check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
         ctx->Scissor.Y != 0 ||
         ctx->Scissor.Width < rb->Width ||
         ctx->Scissor.Height < rb->Height))
-      return TRUE;
+      return GL_TRUE;
 
    if (isDS && 
        ctx->DrawBuffer->Visual.stencilBits > 0)
-      return TRUE;
+      return GL_TRUE;
 
-   return FALSE;
+   return GL_FALSE;
 }
 
 
@@ -394,14 +394,14 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
           rb->Format == MESA_FORMAT_S8_Z24);
 
    if (maskStencil) 
-      return TRUE;
+      return GL_TRUE;
 
    if (ctx->Scissor.Enabled &&
        (ctx->Scissor.X != 0 ||
         ctx->Scissor.Y != 0 ||
         ctx->Scissor.Width < rb->Width ||
         ctx->Scissor.Height < rb->Height))
-      return TRUE;
+      return GL_TRUE;
 
    /* This is correct, but it is necessary to look at the depth clear
     * value held in the surface when it comes time to issue the clear,
@@ -410,9 +410,9 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
     */
    if (isDS && 
        ctx->DrawBuffer->Visual.depthBits > 0)
-      return TRUE;
+      return GL_TRUE;
 
-   return FALSE;
+   return GL_FALSE;
 }
 
 
@@ -430,8 +430,6 @@ void st_flush_clear( struct st_context *st )
 
 /**
  * Called via ctx->Driver.Clear()
- * XXX: doesn't pick up the differences between front/back/left/right
- * clears.  Need to sort that out...
  */
 static void st_clear(GLcontext *ctx, GLbitfield mask)
 {
