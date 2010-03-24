@@ -168,6 +168,22 @@ struct glsl_type {
    }
 
    /**
+    * Query whether or not a type is a non-array numeric type
+    */
+   bool is_numeric() const
+   {
+      return (base_type >= GLSL_TYPE_UINT) && (base_type <= GLSL_TYPE_FLOAT);
+   }
+
+   /**
+    * Query whether or not a type is a non-array boolean type
+    */
+   bool is_boolean() const
+   {
+      return base_type == GLSL_TYPE_BOOL;
+   }
+
+   /**
     * Query whether or not a type is a sampler
     */
    bool is_sampler() const
