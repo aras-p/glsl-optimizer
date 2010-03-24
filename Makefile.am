@@ -30,6 +30,7 @@ glsl_SOURCES = symbol_table.c hash_table.c glsl_types.cpp \
 	ir_print_visitor.cpp ir_variable.cpp ir_function.cpp
 
 BUILT_SOURCES = glsl_parser.h builtin_types.h
+CLEANFILES = $(BUILT_SOURCES)
 
 glsl_parser.h: glsl_parser.ypp
 
