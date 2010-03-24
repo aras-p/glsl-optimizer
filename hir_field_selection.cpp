@@ -34,7 +34,7 @@
 #define I 13
 
 static bool
-generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
+generate_swizzle(const char *str, ir_dereference *deref,
 		 unsigned vector_length)
 {
    /* For each possible swizzle character, this table encodes the value in
@@ -75,8 +75,6 @@ generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
 
    int swiz_idx[4] = { 0, 0, 0, 0 };
    unsigned base;
-   unsigned dup_mask = 0;
-   unsigned seen_mask = 0;
    unsigned i;
 
 
@@ -90,8 +88,6 @@ generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
 
 
    for (i = 0; (i < 4) && (str[i] != '\0'); i++) {
-      unsigned bit;
-
       /* Validate the next character, and, as described above, convert it to a
        * swizzle index.
        */
@@ -101,26 +97,12 @@ generate_swizzle(const char *str, struct ir_swizzle_mask *swiz,
       swiz_idx[i] = idx_map[str[0] - 'a'] - base;
       if ((swiz_idx[i] < 0) || (swiz_idx[i] >= (int) vector_length))
 	 return false;
-
-
-      /* Track a bit-mask of the swizzle index values that have been seen.  If
-       * a value is seen more than once, set the "duplicate" flag.
-       */
-      bit = (1U << swiz_idx[i]);
-      dup_mask |= seen_mask & bit;
-      seen_mask |= bit;
    }
 
    if (str[i] != '\0')
 	 return false;
 
-   swiz->x = swiz_idx[0];
-   swiz->y = swiz_idx[1];
-   swiz->z = swiz_idx[2];
-   swiz->w = swiz_idx[3];
-   swiz->num_components = i;
-   swiz->has_duplicates = (dup_mask != 0);
-
+   deref->set_swizzle(swiz_idx[0], swiz_idx[1], swiz_idx[2], swiz_idx[3], i);
    return true;
 }
 
@@ -158,8 +140,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
    loc = expr->get_location();
    if (op->type->is_vector()) {
       if (generate_swizzle(expr->primary_expression.identifier, 
-			   & deref->selector.swizzle,
-			   op->type->vector_elements)) {
+			   deref, op->type->vector_elements)) {
 	 /* Based on the number of elements in the swizzle and the base type
 	  * (i.e., float, int, unsigned, or bool) of the vector being swizzled,
 	  * generate the type of the resulting value.
