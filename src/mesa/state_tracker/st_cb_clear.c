@@ -431,7 +431,7 @@ void st_flush_clear( struct st_context *st )
 /**
  * Called via ctx->Driver.Clear()
  */
-static void st_clear(GLcontext *ctx, GLbitfield mask)
+static void st_Clear(GLcontext *ctx, GLbitfield mask)
 {
    static const GLbitfield BUFFER_BITS_DS
       = (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
@@ -528,5 +528,5 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
 
 void st_init_clear_functions(struct dd_function_table *functions)
 {
-   functions->Clear = st_clear;
+   functions->Clear = st_Clear;
 }
