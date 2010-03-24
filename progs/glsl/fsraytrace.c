@@ -237,12 +237,13 @@ Draw(void)
 {
   float rot[9] = {1,0,0,  0,1,0,   0,0,1};
   GLint location = glGetUniformLocation(program, "rot");
-
-  glUseProgram(program);
-  glUniformMatrix3fv(location, 1, 0, rot);
   static const float m = -10.F;
   static const float p =  10.F;
   static const float d = -0.5F;
+
+  glUseProgram(program);
+  glUniformMatrix3fv(location, 1, 0, rot);
+
   glBegin(GL_QUADS);
   {
     glTexCoord2f(0.0F, 0.0F); glVertex3f(m, m, d);
@@ -255,18 +256,21 @@ Draw(void)
 
   glutSwapBuffers();
 
-  static int frames = 0;
-  static int t0 = 0;
-  static int t1 = 0;
-  frames++;
-  t1 = glutGet(GLUT_ELAPSED_TIME);
-  float dt = (float)(t1-t0)/1000.0F;
-  if(dt >= 5.0F)
   {
-    float fps = (float)frames / dt;
-    printf("%f FPS (%d frames in %f seconds)\n", fps, frames, dt);
-    frames = 0;
-    t0 = t1;
+    static int frames = 0;
+    static int t0 = 0;
+    static int t1 = 0;
+    float dt;
+    frames++;
+    t1 = glutGet(GLUT_ELAPSED_TIME);
+    dt = (float)(t1-t0)/1000.0F;
+    if(dt >= 5.0F)
+    {
+      float fps = (float)frames / dt;
+      printf("%f FPS (%d frames in %f seconds)\n", fps, frames, dt);
+      frames = 0;
+      t0 = t1;
+    }
   }
 }
 
@@ -366,9 +370,8 @@ Init(void)
 int
 main(int argc, char *argv[])
 {
-  /*setenv("LIBGL_ALWAYS_SOFTWARE", "1", 1);*/
-  glutInit(&argc, argv);
   glutInitWindowSize(WinWidth, WinHeight);
+  glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
   Win = glutCreateWindow(argv[0]);
   glewInit();

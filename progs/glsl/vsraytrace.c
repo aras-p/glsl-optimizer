@@ -30,8 +30,7 @@
 
 
 static int Win;
-//static int WinWidth = 256, WinHeight = 256;
-static int WinWidth = 50, WinHeight = 50;
+static int WinWidth = 256, WinHeight = 256;
 static int mouseGrabbed = 0;
 
 static const char* vsSource =
@@ -241,18 +240,21 @@ Draw(void)
 
   glutSwapBuffers();
 
-  static int frames = 0;
-  static int t0 = 0;
-  static int t1 = 0;
-  frames++;
-  t1 = glutGet(GLUT_ELAPSED_TIME);
-  float dt = (float)(t1-t0)/1000.0F;
-  if(dt >= 5.0F)
   {
-    float fps = (float)frames / dt;
-    printf("%f FPS (%d frames in %f seconds)\n", fps, frames, dt);
-    frames = 0;
-    t0 = t1;
+    static int frames = 0;
+    static int t0 = 0;
+    static int t1 = 0;
+    float dt;
+    frames++;
+    t1 = glutGet(GLUT_ELAPSED_TIME);
+    dt = (float)(t1-t0)/1000.0F;
+    if (dt >= 5.0F)
+    {
+      float fps = (float)frames / dt;
+      printf("%f FPS (%d frames in %f seconds)\n", fps, frames, dt);
+      frames = 0;
+      t0 = t1;
+    }
   }
 }
 
@@ -344,9 +346,8 @@ Init(void)
 int
 main(int argc, char *argv[])
 {
-//  setenv("LIBGL_ALWAYS_SOFTWARE", "1", 1);
-  glutInit(&argc, argv);
   glutInitWindowSize(WinWidth, WinHeight);
+  glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
   Win = glutCreateWindow(argv[0]);
   glewInit();
