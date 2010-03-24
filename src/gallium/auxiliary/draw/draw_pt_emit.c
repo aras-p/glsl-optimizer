@@ -86,40 +86,15 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       unsigned output_format;
       unsigned src_offset = (vinfo->attrib[i].src_index * 4 * sizeof(float) );
 
+      output_format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
+      emit_sz = draw_translate_vinfo_size(vinfo->attrib[i].emit);
 
-         
-      switch (vinfo->attrib[i].emit) {
-      case EMIT_4F:
-	 output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-	 emit_sz = 4 * sizeof(float);
-	 break;
-      case EMIT_3F:
-	 output_format = PIPE_FORMAT_R32G32B32_FLOAT;
-	 emit_sz = 3 * sizeof(float);
-	 break;
-      case EMIT_2F:
-	 output_format = PIPE_FORMAT_R32G32_FLOAT;
-	 emit_sz = 2 * sizeof(float);
-	 break;
-      case EMIT_1F:
-	 output_format = PIPE_FORMAT_R32_FLOAT;
-	 emit_sz = 1 * sizeof(float);
-	 break;
-      case EMIT_1F_PSIZE:
-	 output_format = PIPE_FORMAT_R32_FLOAT;
-	 emit_sz = 1 * sizeof(float);
+      /* doesn't handle EMIT_OMIT */
+      assert(emit_sz != 0);
+
+      if (vinfo->attrib[i].emit == EMIT_1F_PSIZE) {
 	 src_buffer = 1;
 	 src_offset = 0;
-	 break;
-      case EMIT_4UB:
-	 output_format = PIPE_FORMAT_A8R8G8B8_UNORM;
-	 emit_sz = 4 * sizeof(ubyte);
-         break;
-      default:
-	 assert(0);
-	 output_format = PIPE_FORMAT_NONE;
-	 emit_sz = 0;
-	 break;
       }
 
       hw_key.element[i].type = TRANSLATE_ELEMENT_NORMAL;

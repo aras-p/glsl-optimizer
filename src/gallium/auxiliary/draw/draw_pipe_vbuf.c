@@ -238,38 +238,15 @@ vbuf_start_prim( struct vbuf_stage *vbuf, uint prim )
       unsigned output_format;
       unsigned src_offset = (vbuf->vinfo->attrib[i].src_index * 4 * sizeof(float) );
 
-      switch (vbuf->vinfo->attrib[i].emit) {
-      case EMIT_4F:
-	 output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-	 emit_sz = 4 * sizeof(float);
-	 break;
-      case EMIT_3F:
-	 output_format = PIPE_FORMAT_R32G32B32_FLOAT;
-	 emit_sz = 3 * sizeof(float);
-	 break;
-      case EMIT_2F:
-	 output_format = PIPE_FORMAT_R32G32_FLOAT;
-	 emit_sz = 2 * sizeof(float);
-	 break;
-      case EMIT_1F:
-	 output_format = PIPE_FORMAT_R32_FLOAT;
-	 emit_sz = 1 * sizeof(float);
-	 break;
-      case EMIT_1F_PSIZE:
-	 output_format = PIPE_FORMAT_R32_FLOAT;
-	 emit_sz = 1 * sizeof(float);
+      output_format = draw_translate_vinfo_format(vbuf->vinfo->attrib[i].emit);
+      emit_sz = draw_translate_vinfo_size(vbuf->vinfo->attrib[i].emit);
+
+      /* doesn't handle EMIT_OMIT */
+      assert(emit_sz != 0);
+
+      if (vbuf->vinfo->attrib[i].emit == EMIT_1F_PSIZE) {
 	 src_buffer = 1;
 	 src_offset = 0;
-	 break;
-      case EMIT_4UB:
-	 output_format = PIPE_FORMAT_A8R8G8B8_UNORM;
-	 emit_sz = 4 * sizeof(ubyte);
-         break;
-      default:
-	 assert(0);
-	 output_format = PIPE_FORMAT_NONE;
-	 emit_sz = 0;
-	 break;
       }
 
       hw_key.element[i].type = TRANSLATE_ELEMENT_NORMAL;
