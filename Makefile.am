@@ -38,4 +38,4 @@ glsl_parser.h: glsl_parser.ypp
 	$(LEXCOMPILE) --outfile="$@" $<
 
 builtin_types.h: builtin_types.sh
-	sh ./builtin_types.sh > builtin_types.h
+	bash ./builtin_types.sh > builtin_types.h
