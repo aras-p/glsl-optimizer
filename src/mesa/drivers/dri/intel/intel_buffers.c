@@ -226,7 +226,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
        * only changes with _NEW_STENCIL (which seems sensible).  So flag it
        * here since this is the _NEW_BUFFERS path.
        */
-      ctx->NewState |= (_NEW_DEPTH | _NEW_STENCIL);
+      intel->NewGLState |= (_NEW_DEPTH | _NEW_STENCIL);
    }
 
    intel->vtbl.set_draw_region(intel, colorRegions, depthRegion, 
@@ -236,7 +236,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 #ifdef I915
    intelCalcViewport(ctx);
 #else
-   ctx->NewState |= _NEW_VIEWPORT;
+   intel->NewGLState |= _NEW_VIEWPORT;
 #endif
    /* Set state we know depends on drawable parameters:
     */
@@ -256,7 +256,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    if (ctx->Driver.FrontFace)
       ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
    else
-      ctx->NewState |= _NEW_POLYGON;
+      intel->NewGLState |= _NEW_POLYGON;
 }
 
 
