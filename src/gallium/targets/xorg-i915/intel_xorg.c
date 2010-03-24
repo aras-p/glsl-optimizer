@@ -28,7 +28,7 @@
  *
  */
 
-#include "../../../../state_trackers/xorg/xorg_winsys.h"
+#include "../../state_trackers/xorg/xorg_winsys.h"
 
 static void intel_xorg_identify(int flags);
 static Bool intel_xorg_pci_probe(DriverPtr driver,

@@ -25,35 +25,34 @@
  *
  * Author: Alan Hourihane <alanh@tungstengraphics.com>
  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
- * Author: Corbin Simpson <MostAwesomedude@gmail.com>
  *
  */
 
-#include "../../../../state_trackers/xorg/xorg_winsys.h"
+#include "../../state_trackers/xorg/xorg_winsys.h"
 
-static void radeon_xorg_identify(int flags);
-static Bool radeon_xorg_pci_probe(DriverPtr driver,
+static void intel_xorg_identify(int flags);
+static Bool intel_xorg_pci_probe(DriverPtr driver,
 				 int entity_num,
 				 struct pci_device *device,
 				 intptr_t match_data);
 
-static const struct pci_id_match radeon_xorg_device_match[] = {
-    {0x1002, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
+static const struct pci_id_match intel_xorg_device_match[] = {
+    {0x8086, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
     {0, 0, 0},
 };
 
-static SymTabRec radeon_xorg_chipsets[] = {
-    {PCI_MATCH_ANY, "ATI/AMD Radeon Graphics Chipset"},
+static SymTabRec intel_xorg_chipsets[] = {
+    {PCI_MATCH_ANY, "Intel Graphics Device"},
     {-1, NULL}
 };
 
-static PciChipsets radeon_xorg_pci_devices[] = {
+static PciChipsets intel_xorg_pci_devices[] = {
     {PCI_MATCH_ANY, PCI_MATCH_ANY, NULL},
     {-1, -1, NULL}
 };
 
-static XF86ModuleVersionInfo radeon_xorg_version = {
-    "radeong",
+static XF86ModuleVersionInfo intel_xorg_version = {
+    "modesetting",
     MODULEVENDORSTRING,
     MODINFOSTRING1,
     MODINFOSTRING2,
@@ -69,24 +68,24 @@ static XF86ModuleVersionInfo radeon_xorg_version = {
  * Xorg driver exported structures
  */
 
-_X_EXPORT DriverRec radeong = {
+_X_EXPORT DriverRec modesetting = {
     1,
-    "radeong",
-    radeon_xorg_identify,
+    "modesetting",
+    intel_xorg_identify,
     NULL,
     xorg_tracker_available_options,
     NULL,
     0,
     NULL,
-    radeon_xorg_device_match,
-    radeon_xorg_pci_probe
+    intel_xorg_device_match,
+    intel_xorg_pci_probe
 };
 
-static MODULESETUPPROTO(radeon_xorg_setup);
+static MODULESETUPPROTO(intel_xorg_setup);
 
-_X_EXPORT XF86ModuleData radeongModuleData = {
-    &radeon_xorg_version,
-    radeon_xorg_setup,
+_X_EXPORT XF86ModuleData modesettingModuleData = {
+    &intel_xorg_version,
+    intel_xorg_setup,
     NULL
 };
 
@@ -95,7 +94,7 @@ _X_EXPORT XF86ModuleData radeongModuleData = {
  */
 
 static pointer
-radeon_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
+intel_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
     static Bool setupDone = 0;
 
@@ -103,7 +102,7 @@ radeon_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
      */
     if (!setupDone) {
 	setupDone = 1;
-	xf86AddDriver(&radeong, module, HaveDriverFuncs);
+	xf86AddDriver(&modesetting, module, HaveDriverFuncs);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -118,25 +117,25 @@ radeon_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 }
 
 static void
-radeon_xorg_identify(int flags)
+intel_xorg_identify(int flags)
 {
-    xf86PrintChipsets("radeong", "Driver for Radeon Gallium with KMS",
-		      radeon_xorg_chipsets);
+    xf86PrintChipsets("modesetting", "Driver for Modesetting Kernel Drivers",
+		      intel_xorg_chipsets);
 }
 
 static Bool
-radeon_xorg_pci_probe(DriverPtr driver,
+intel_xorg_pci_probe(DriverPtr driver,
 	  int entity_num, struct pci_device *device, intptr_t match_data)
 {
     ScrnInfoPtr scrn = NULL;
     EntityInfoPtr entity;
 
-    scrn = xf86ConfigPciEntity(scrn, 0, entity_num, radeon_xorg_pci_devices,
+    scrn = xf86ConfigPciEntity(scrn, 0, entity_num, intel_xorg_pci_devices,
 			       NULL, NULL, NULL, NULL, NULL);
     if (scrn != NULL) {
 	scrn->driverVersion = 1;
-	scrn->driverName = "radeong";
-	scrn->name = "radeong";
+	scrn->driverName = "i965";
+	scrn->name = "modesetting";
 	scrn->Probe = NULL;
 
 	entity = xf86GetEntityInfo(entity_num);

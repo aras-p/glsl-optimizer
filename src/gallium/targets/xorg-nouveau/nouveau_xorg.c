@@ -28,30 +28,32 @@
  *
  */
 
-#include "../../../../state_trackers/xorg/xorg_winsys.h"
+#include "../../state_trackers/xorg/xorg_winsys.h"
 
-static void intel_xorg_identify(int flags);
-static Bool intel_xorg_pci_probe(DriverPtr driver,
-				 int entity_num,
-				 struct pci_device *device,
-				 intptr_t match_data);
+static void nouveau_xorg_identify(int flags);
+static Bool nouveau_xorg_pci_probe(DriverPtr driver, int entity_num,
+				   struct pci_device *device,
+				   intptr_t match_data);
 
-static const struct pci_id_match intel_xorg_device_match[] = {
-    {0x8086, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
+static const struct pci_id_match nouveau_xorg_device_match[] = {
+    { 0x10de, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
+      0x00030000, 0x00ffffff, 0 },
+    { 0x12d2, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
+      0x00030000, 0x00ffffff, 0 },
     {0, 0, 0},
 };
 
-static SymTabRec intel_xorg_chipsets[] = {
-    {PCI_MATCH_ANY, "Intel Graphics Device"},
+static SymTabRec nouveau_xorg_chipsets[] = {
+    {PCI_MATCH_ANY, "NVIDIA Graphics Device"},
     {-1, NULL}
 };
 
-static PciChipsets intel_xorg_pci_devices[] = {
+static PciChipsets nouveau_xorg_pci_devices[] = {
     {PCI_MATCH_ANY, PCI_MATCH_ANY, NULL},
     {-1, -1, NULL}
 };
 
-static XF86ModuleVersionInfo intel_xorg_version = {
+static XF86ModuleVersionInfo nouveau_xorg_version = {
     "modesetting",
     MODULEVENDORSTRING,
     MODINFOSTRING1,
@@ -71,21 +73,21 @@ static XF86ModuleVersionInfo intel_xorg_version = {
 _X_EXPORT DriverRec modesetting = {
     1,
     "modesetting",
-    intel_xorg_identify,
+    nouveau_xorg_identify,
     NULL,
     xorg_tracker_available_options,
     NULL,
     0,
     NULL,
-    intel_xorg_device_match,
-    intel_xorg_pci_probe
+    nouveau_xorg_device_match,
+    nouveau_xorg_pci_probe
 };
 
-static MODULESETUPPROTO(intel_xorg_setup);
+static MODULESETUPPROTO(nouveau_xorg_setup);
 
 _X_EXPORT XF86ModuleData modesettingModuleData = {
-    &intel_xorg_version,
-    intel_xorg_setup,
+    &nouveau_xorg_version,
+    nouveau_xorg_setup,
     NULL
 };
 
@@ -94,7 +96,7 @@ _X_EXPORT XF86ModuleData modesettingModuleData = {
  */
 
 static pointer
-intel_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
+nouveau_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
     static Bool setupDone = 0;
 
@@ -117,24 +119,24 @@ intel_xorg_setup(pointer module, pointer opts, int *errmaj, int *errmin)
 }
 
 static void
-intel_xorg_identify(int flags)
+nouveau_xorg_identify(int flags)
 {
     xf86PrintChipsets("modesetting", "Driver for Modesetting Kernel Drivers",
-		      intel_xorg_chipsets);
+		      nouveau_xorg_chipsets);
 }
 
 static Bool
-intel_xorg_pci_probe(DriverPtr driver,
+nouveau_xorg_pci_probe(DriverPtr driver,
 	  int entity_num, struct pci_device *device, intptr_t match_data)
 {
     ScrnInfoPtr scrn = NULL;
     EntityInfoPtr entity;
 
-    scrn = xf86ConfigPciEntity(scrn, 0, entity_num, intel_xorg_pci_devices,
+    scrn = xf86ConfigPciEntity(scrn, 0, entity_num, nouveau_xorg_pci_devices,
 			       NULL, NULL, NULL, NULL, NULL);
     if (scrn != NULL) {
 	scrn->driverVersion = 1;
-	scrn->driverName = "i965";
+	scrn->driverName = "i915";
 	scrn->name = "modesetting";
 	scrn->Probe = NULL;
 

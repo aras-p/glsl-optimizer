@@ -1,13 +1,12 @@
+TOP = ../../../..
+include $(TOP)/configs/current
+
 TARGET     = modesetting_drv.so
 CFILES     = $(wildcard ./*.c)
 OBJECTS    = $(patsubst ./%.c,./%.o,$(CFILES))
-TOP        = ../../../../../..
-
-include $(TOP)/configs/current
 
 INCLUDES = \
 	$(shell pkg-config --cflags-only-I pixman-1 xorg-server libdrm xproto) \
-	-I../gem \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/auxiliary \
