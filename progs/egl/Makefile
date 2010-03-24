@@ -60,7 +60,7 @@ xeglgears: xeglgears.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lm $(X11_LIBS)
 
 xeglthreads: xeglthreads.o $(HEADERS) $(LIB_DEP)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lm $(X11_LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lpthread -lm $(X11_LIBS)
 
 xegl_tri: xegl_tri.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lm $(X11_LIBS)
