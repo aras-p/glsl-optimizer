@@ -1,6 +1,6 @@
 Import('*')
 
-env = drienv.Clone()
+env = env.Clone()
 
 inteldrm_sources = [
     'intel_drm_api.c',

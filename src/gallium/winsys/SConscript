@@ -9,3 +9,24 @@ if 'gdi' in env['winsys']:
 	SConscript([
 		'sw/gdi/SConscript',
 	])
+
+if env['dri']:
+	if 'vmware' in env['winsys']:
+		SConscript([
+			'svga/drm/SConscript',
+		])
+
+	if 'intel' in env['winsys']:
+		SConscript([
+			'i915/drm/SConscript',
+		])
+
+	if 'i965' in env['winsys']:
+		SConscript([
+			'i965/drm/SConscript',
+		])
+
+	if 'radeon' in env['winsys']:
+		SConscript([
+			'radeon/drm/SConscript',
+		])

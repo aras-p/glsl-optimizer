@@ -1,6 +1,6 @@
 Import('*')
 
-env = drienv.Clone()
+env = env.Clone()
 
 i965drm_sources = [
     'i965_drm_api.c',
