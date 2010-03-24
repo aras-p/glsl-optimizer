@@ -2,6 +2,10 @@ import os.path
 
 Import('*')
 
+if not 'svga' in env['drivers']:
+    print 'warning: svga pipe driver not built skipping vmwgfx_drv.so'
+    Return()
+
 if env['platform'] == 'linux':
 
 	env = env.Clone()

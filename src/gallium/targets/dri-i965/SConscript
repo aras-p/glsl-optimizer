@@ -1,5 +1,9 @@
 Import('*')
 
+if not 'i965' in env['drivers']:
+    print 'warning: i965 pipe driver not built skipping i965_dri.so'
+    Return()
+
 env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_intel')

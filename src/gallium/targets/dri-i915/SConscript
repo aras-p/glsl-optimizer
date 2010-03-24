@@ -1,5 +1,9 @@
 Import('*')
 
+if not 'i915' in env['drivers']:
+    print 'warning: i915 pipe driver not built skipping i915_dri.so'
+    Return()
+
 env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
