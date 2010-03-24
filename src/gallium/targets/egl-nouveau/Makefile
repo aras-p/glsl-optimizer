@@ -1,4 +1,4 @@
-TOP = ../../../../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 EGL_DRIVER_NAME = nouveau
@@ -12,4 +12,4 @@ EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
 
-include ../../Makefile.egl
+include ../Makefile.egl

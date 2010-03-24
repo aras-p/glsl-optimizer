@@ -1,4 +1,4 @@
-TOP = ../../../../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 EGL_DRIVER_NAME = radeon
@@ -11,4 +11,4 @@ EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 
-include ../../Makefile.egl
+include ../Makefile.egl

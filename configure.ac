@@ -1320,6 +1320,9 @@ if test "x$enable_gallium_svga" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/vmware"
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-vmwgfx"
     fi
+    if test "x$enable_egl" = xyes; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-vmwgfx"
+    fi
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
 elif test "x$enable_gallium_svga" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
@@ -1337,6 +1340,9 @@ if test "x$enable_gallium_intel" = xyes; then
     if test "x$mesa_driver" = xdri; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/intel drm/i965"
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-i915 dri-i965"
+    fi
+    if test "x$enable_egl" = xyes; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-i915 egl-i965"
     fi
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
 elif test "x$enable_gallium_intel" = xauto; then
@@ -1356,6 +1362,9 @@ if test "x$enable_gallium_radeon" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/radeon"
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-radeong"
     fi
+    if test "x$enable_egl" = xyes; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-radeon"
+    fi
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 elif test "x$enable_gallium_radeon" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
@@ -1374,6 +1383,9 @@ if test "x$enable_gallium_nouveau" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/nouveau"
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-nouveau"
     fi
+    if test "x$enable_egl" = xyes; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-nouveau"
+    fi
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50"
 fi
 
@@ -1382,11 +1394,18 @@ dnl Gallium swrast configuration
 dnl
 AC_ARG_ENABLE([gallium-swrast],
     [AS_HELP_STRING([--enable-gallium-swrast],
-        [build gallium swrast @<:@default=disabled@:>@])],
+        [build gallium swrast @<:@default=auto@:>@])],
     [enable_gallium_swrast="$enableval"],
     [enable_gallium_swrast=auto])
 if test "x$enable_gallium_swrast" = xyes; then
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm/swrast"
+    if test "x$enable_egl" != xyes; then
+        AC_MSG_ERROR([EGL needs to be enabled for egl-swrast target])
+    fi
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-swrast"
+elif test "x$enable_gallium_swrast" = xauto; then
+    if test "x$enable_egl" = xyes; then
+        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-swrast"
+    fi
 fi
 
 dnl prepend CORE_DIRS to SRC_DIRS
