@@ -103,8 +103,8 @@ ir_function_signature::ir_function_signature(const glsl_type *return_type)
 }
 
 
-ir_function::ir_function(void)
-   : ir_instruction(ir_op_func)
+ir_function::ir_function(const char *name)
+   : ir_instruction(ir_op_func), name(name)
 {
    /* empty */
 }

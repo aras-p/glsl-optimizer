@@ -157,7 +157,7 @@ public:
  */
 class ir_function : public ir_instruction {
 public:
-   ir_function(void);
+   ir_function(const char *name);
 
    virtual void accept(ir_visitor *v)
    {

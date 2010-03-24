@@ -1095,9 +1095,7 @@ ast_function_definition::hir(exec_list *instructions,
 		       "non-function", name);
       signature = NULL;
    } else {
-      f = new ir_function();
-      f->name = name;
-
+      f = new ir_function(name);
       state->symbols->add_function(f->name, f);
    }
 
