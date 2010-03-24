@@ -347,10 +347,16 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
 
     check_symbol_table(table);
 
-    /* If the symbol already exists at this scope, it cannot be added to the
-     * table.
+    /* If the symbol already exists in this namespace at this scope, it cannot
+     * be added to the table.
      */
-    if (hdr->symbols && (hdr->symbols->depth == table->depth))
+    for (sym = hdr->symbols
+	    ; (sym != NULL) && (sym->name_space != name_space)
+	    ; sym = sym->next_with_same_name) {
+       /* empty */
+    }
+
+    if (sym && (sym->depth == table->depth))
        return -1;
 
     sym = calloc(1, sizeof(*sym));
