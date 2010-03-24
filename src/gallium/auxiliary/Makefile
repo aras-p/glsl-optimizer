@@ -110,6 +110,7 @@ C_SOURCES = \
 	util/u_format_table.c \
 	util/u_format_tests.c \
 	util/u_gen_mipmap.c \
+	util/u_half.c \
 	util/u_handle_table.c \
 	util/u_hash_table.c \
 	util/u_hash.c \
@@ -137,6 +138,9 @@ C_SOURCES = \
 	#vl/vl_compositor.c \
 	#vl/vl_csc.c \
 	#vl/vl_shader_build.c \
+
+CPP_SOURCES = \
+	util/u_gctors.cpp
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_alpha.c \
