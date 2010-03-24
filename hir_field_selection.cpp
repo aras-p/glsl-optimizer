@@ -42,7 +42,7 @@ generate_swizzle(const char *str, ir_dereference *deref,
     * swizzle characters (e.g., 'k'), a special value is used that will allow
     * detection of errors.
     */
-   unsigned char base_idx[26] = {
+   static const unsigned char base_idx[26] = {
    /* a  b  c  d  e  f  g  h  i  j  k  l  m */
       R, R, I, I, I, I, R, I, I, I, I, I, I,
    /* n  o  p  q  r  s  t  u  v  w  x  y  z */
@@ -66,7 +66,7 @@ generate_swizzle(const char *str, ir_dereference *deref,
     * swizzle values are { 3, 2, 4, 5 }.  Since 4 and 5 are outside the range
     * [0,3], the error is detected.
     */
-   unsigned char idx_map[26] = {
+   static const unsigned char idx_map[26] = {
    /* a    b    c    d    e    f    g    h    i    j    k    l    m */
       R+3, R+2, 0,   0,   0,   0,   R+1, 0,   0,   0,   0,   0,   0,
    /* n    o    p    q    r    s    t    u    v    w    x    y    z */
@@ -74,7 +74,6 @@ generate_swizzle(const char *str, ir_dereference *deref,
    };
 
    int swiz_idx[4] = { 0, 0, 0, 0 };
-   unsigned base;
    unsigned i;
 
 
@@ -84,7 +83,7 @@ generate_swizzle(const char *str, ir_dereference *deref,
    if ((str[0] < 'a') || (str[0] > 'z'))
       return false;
 
-   base = base_idx[str[0] - 'a'];
+   const unsigned base = base_idx[str[0] - 'a'];
 
 
    for (i = 0; (i < 4) && (str[i] != '\0'); i++) {
