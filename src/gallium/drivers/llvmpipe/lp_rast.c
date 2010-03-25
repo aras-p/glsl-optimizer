@@ -491,18 +491,7 @@ lp_rast_fence(struct lp_rasterizer_task *task,
               const union lp_rast_cmd_arg arg)
 {
    struct lp_fence *fence = arg.fence;
-
-   pipe_mutex_lock( fence->mutex );
-
-   fence->count++;
-   assert(fence->count <= fence->rank);
-
-   LP_DBG(DEBUG_RAST, "%s count=%u rank=%u\n", __FUNCTION__,
-          fence->count, fence->rank);
-
-   pipe_condvar_signal( fence->signalled );
-
-   pipe_mutex_unlock( fence->mutex );
+   lp_fence_signal(fence);
 }
 
 
