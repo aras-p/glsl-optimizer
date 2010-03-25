@@ -202,7 +202,7 @@ public:
    /**
     * Value being assigned
     *
-    * This should be either \c ir_op_expression or \c ir_op_deference.
+    * This should be either \c ir_op_expression or \c ir_op_dereference.
     */
    ir_instruction *rhs;
 
@@ -379,7 +379,7 @@ struct ir_swizzle_mask {
    /**
     * Number of components in the swizzle.
     */
-   unsigned num_components:2;
+   unsigned num_components:3;
 
    /**
     * Does the swizzle contain duplicate components?
@@ -414,7 +414,7 @@ public:
    /**
     * Object being dereferenced.
     *
-    * Must be either an \c ir_variable or an \c ir_deference.
+    * Must be either an \c ir_variable or an \c ir_dereference.
     */
    ir_instruction *var;
 
