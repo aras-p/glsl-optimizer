@@ -657,5 +657,5 @@ main(int argc, char **argv)
 
    delete state.symbols;
 
-   return 0;
+   return state.error != 0;
 }

@@ -127,6 +127,57 @@ initialize_vs_variables(exec_list *instructions,
    }
 }
 
+static void
+generate_110_fs_variables(exec_list *instructions,
+			  glsl_symbol_table *symtab)
+{
+   for (unsigned i = 0; i < Elements(builtin_core_fs_variables); i++) {
+      add_builtin_variable(& builtin_core_fs_variables[i],
+			   instructions, symtab);
+   }
+
+   /* FINISHME: Add support for gl_FragData[GL_MAX_DRAW_BUFFERS]. */
+}
+
+static void
+generate_120_fs_variables(exec_list *instructions,
+			  glsl_symbol_table *symtab)
+{
+   /* GLSL version 1.20 did not add any built-in variables in the fragment
+    * shader.
+    */
+   generate_110_fs_variables(instructions, symtab);
+}
+
+static void
+generate_130_fs_variables(exec_list *instructions,
+			  glsl_symbol_table *symtab)
+{
+   generate_120_fs_variables(instructions, symtab);
+
+   /* FINISHME: Add support fo gl_ClipDistance.  The size of this array is
+    * FINISHME: implementation dependent based on the value of
+    * FINISHME: GL_MAX_CLIP_DISTANCES.
+    */
+}
+
+static void
+initialize_fs_variables(exec_list *instructions,
+			struct _mesa_glsl_parse_state *state)
+{
+
+   switch (state->language_version) {
+   case 110:
+      generate_110_fs_variables(instructions, state->symbols);
+      break;
+   case 120:
+      generate_120_fs_variables(instructions, state->symbols);
+      break;
+   case 130:
+      generate_130_fs_variables(instructions, state->symbols);
+      break;
+   }
+}
 
 void
 _mesa_glsl_initialize_variables(exec_list *instructions,
@@ -137,7 +188,9 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
       initialize_vs_variables(instructions, state);
       break;
    case geometry_shader:
+      break;
    case fragment_shader:
+      initialize_fs_variables(instructions, state);
       break;
    }
 }
