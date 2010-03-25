@@ -1,1 +1,1 @@
-../dri_extensions.c
+../common/dri_extensions.c

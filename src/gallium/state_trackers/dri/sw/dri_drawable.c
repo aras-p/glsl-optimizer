@@ -1,1 +1,1 @@
-../dri_drawable.c
+../common/dri_drawable.c

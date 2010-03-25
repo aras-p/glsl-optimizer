@@ -1,1 +1,1 @@
-../dri_context.c
+../common/dri_context.c

@@ -9,7 +9,7 @@ if env['dri']:
 
     env.Append(CPPPATH = [
         '#/src/mesa',
-	'#/src/gallium/state_trackers/dri',
+	'#/src/gallium/state_trackers/dri/common',
 	'#/src/mesa/drivers/dri/common',
     ])
 

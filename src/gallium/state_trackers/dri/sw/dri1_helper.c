@@ -1,1 +1,1 @@
-../dri1_helper.c
+../common/dri1_helper.c

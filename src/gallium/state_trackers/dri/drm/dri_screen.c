@@ -1,1 +1,1 @@
-../dri_screen.c
+../common/dri_screen.c

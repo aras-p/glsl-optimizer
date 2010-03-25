@@ -6,7 +6,7 @@ LIBNAME = dridrm
 LIBRARY_INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/gallium/state_trackers/dri \
+	-I$(TOP)/src/gallium/state_trackers/dri/common \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-I$(TOP)/src/mesa/main \
          $(shell pkg-config --cflags-only-I libdrm)

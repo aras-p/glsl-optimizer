@@ -1,1 +1,1 @@
-../dri_st_api.c
+../common/dri_st_api.c
