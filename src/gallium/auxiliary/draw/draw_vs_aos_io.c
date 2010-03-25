@@ -401,13 +401,11 @@ static boolean emit_output( struct aos_compilation *cp,
       emit_store_R32G32B32A32(cp, ptr, dataXMM);
       break;
    case EMIT_4UB:
-      if (1) {
-         emit_swizzle(cp, dataXMM, dataXMM, SHUF(Z,Y,X,W));
-         emit_store_R8G8B8A8_UNORM(cp, ptr, dataXMM);
-      }
-      else {
-         emit_store_R8G8B8A8_UNORM(cp, ptr, dataXMM);
-      }
+      emit_store_R8G8B8A8_UNORM(cp, ptr, dataXMM);
+      break;
+   case EMIT_4UB_BGRA:
+      emit_swizzle(cp, dataXMM, dataXMM, SHUF(Z,Y,X,W));
+      emit_store_R8G8B8A8_UNORM(cp, ptr, dataXMM);
       break;
    default:
       AOS_ERROR(cp, "unhandled output format");

@@ -79,6 +79,12 @@ nvfx_render_vertex(struct nvfx_context *nvfx, const struct vertex_header *v)
 					    float_to_ubyte(v->data[idx][1]),
 					    float_to_ubyte(v->data[idx][2]),
 					    float_to_ubyte(v->data[idx][3])));
+		case EMIT_4UB_BGRA:
+			BEGIN_RING(chan, eng3d, NV34TCL_VTX_ATTR_4UB(hw), 1);
+			OUT_RING  (chan, pack_ub4(float_to_ubyte(v->data[idx][2]),
+					    float_to_ubyte(v->data[idx][1]),
+					    float_to_ubyte(v->data[idx][0]),
+					    float_to_ubyte(v->data[idx][3])));
 			break;
 		default:
 			assert(0);

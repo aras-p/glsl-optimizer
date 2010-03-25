@@ -101,14 +101,14 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    /* primary color */
    if (colors[0]) {
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_COLOR, 0);
-      draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_4UB_BGRA, colorInterp, src);
       vinfo.hwfmt[0] |= S4_VFMT_COLOR;
    }
 
    /* secondary color */
    if (colors[1]) {
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_COLOR, 1);
-      draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_4UB_BGRA, colorInterp, src);
       vinfo.hwfmt[0] |= S4_VFMT_SPEC_FOG;
    }
 

@@ -102,6 +102,13 @@ draw_dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
          debug_printf("%u ", *data++);
          debug_printf("%u ", *data++);
          break;
+      case EMIT_4UB_BGRA:
+         debug_printf("EMIT_4UB_BGRA:\t");
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
+         break;
       default:
          assert(0);
       }

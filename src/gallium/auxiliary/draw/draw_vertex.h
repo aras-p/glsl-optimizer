@@ -54,7 +54,8 @@ enum attrib_emit {
    EMIT_2F,
    EMIT_3F,
    EMIT_4F,
-   EMIT_4UB  /**< XXX may need variations for RGBA vs BGRA, etc */
+   EMIT_4UB, /**< is RGBA like the rest */
+   EMIT_4UB_BGRA
 };
 
 
@@ -157,6 +158,8 @@ static INLINE unsigned draw_translate_vinfo_format(enum attrib_emit emit)
       return PIPE_FORMAT_R32G32B32A32_FLOAT;
    case EMIT_4UB:
       return PIPE_FORMAT_R8G8B8A8_UNORM;
+   case EMIT_4UB_BGRA:
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
    default:
       assert(!"unexpected format");
       return PIPE_FORMAT_NONE;
@@ -178,6 +181,8 @@ static INLINE unsigned draw_translate_vinfo_size(enum attrib_emit emit)
    case EMIT_4F:
       return 4 * sizeof(float);
    case EMIT_4UB:
+      return 4 * sizeof(unsigned char);
+   case EMIT_4UB_BGRA:
       return 4 * sizeof(unsigned char);
    default:
       assert(!"unexpected format");
