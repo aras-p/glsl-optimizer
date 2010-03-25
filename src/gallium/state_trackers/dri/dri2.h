@@ -29,7 +29,7 @@
 #define DRI2_H
 
 #include "dri_drawable.h"
-#include "dri_util.h"
+#include "dri_wrapper.h"
 
 const __DRIconfig **
 dri_init_screen2(__DRIscreen * sPriv);

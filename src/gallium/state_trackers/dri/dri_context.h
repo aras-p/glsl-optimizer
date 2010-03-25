@@ -33,8 +33,7 @@
 #define DRI_CONTEXT_H
 
 #include "pipe/p_compiler.h"
-#include "drm.h"
-#include "dri_util.h"
+#include "dri_wrapper.h"
 
 struct pipe_context;
 struct pipe_fence;

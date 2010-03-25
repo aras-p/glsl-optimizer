@@ -32,7 +32,7 @@
 #ifndef DRI_SCREEN_H
 #define DRI_SCREEN_H
 
-#include "dri_util.h"
+#include "dri_wrapper.h"
 #include "xmlconfig.h"
 
 #include "pipe/p_compiler.h"

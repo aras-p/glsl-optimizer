@@ -33,7 +33,6 @@
 #include "dri_drawable.h"
 #include "dri_context.h"
 #include "dri_st_api.h"
-#include "dri1.h"
 
 #include "pipe/p_context.h"
 #include "util/u_memory.h"

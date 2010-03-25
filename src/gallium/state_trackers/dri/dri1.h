@@ -36,7 +36,7 @@
 #include "dri_drawable.h"
 
 #include "state_tracker/st_api.h"
-#include "dri_util.h"
+#include "dri_wrapper.h"
 
 extern struct dri1_api *__dri1_api_hooks;
 
