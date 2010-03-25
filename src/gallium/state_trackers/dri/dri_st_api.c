@@ -110,27 +110,29 @@ dri_drawable_process_buffers(struct dri_drawable *drawable,
 
       switch (buf->attachment) {
       case __DRI_BUFFER_FRONT_LEFT:
-	 if (!screen->auto_fake_front) {
+         if (!screen->auto_fake_front) {
             statt = ST_ATTACHMENT_INVALID;
             break;
          }
-	 /* fallthrough */
+         /* fallthrough */
       case __DRI_BUFFER_FAKE_FRONT_LEFT:
          statt = ST_ATTACHMENT_FRONT_LEFT;
-	 break;
+         break;
       case __DRI_BUFFER_BACK_LEFT:
          statt = ST_ATTACHMENT_BACK_LEFT;
-	 break;
+         break;
       case __DRI_BUFFER_DEPTH:
       case __DRI_BUFFER_DEPTH_STENCIL:
       case __DRI_BUFFER_STENCIL:
-         statt = ST_ATTACHMENT_DEPTH_STENCIL;
          /* use only the first depth/stencil buffer */
-         if (have_depth)
-            statt = ST_ATTACHMENT_INVALID;
-         else
+         if (!have_depth) {
             have_depth = TRUE;
-	 break;
+            statt = ST_ATTACHMENT_DEPTH_STENCIL;
+         }
+         else {
+            statt = ST_ATTACHMENT_INVALID;
+         }
+         break;
       default:
          statt = ST_ATTACHMENT_INVALID;
          break;
@@ -143,7 +145,7 @@ dri_drawable_process_buffers(struct dri_drawable *drawable,
       templ.format = format;
       whandle.handle = buf->name;
       whandle.stride = buf->pitch;
-   
+
       drawable->textures[statt] =
          screen->pipe_screen->texture_from_handle(screen->pipe_screen,
                &templ, &whandle);
@@ -182,7 +184,7 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
 
    for (i = 0; i < *count; i++) {
       enum pipe_format format;
-      int att;
+      int att, bpp;
 
       format = dri_drawable_get_format(drawable, statts[i]);
       if (format == PIPE_FORMAT_NONE)
@@ -212,11 +214,12 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
          break;
       }
 
+      bpp = util_format_get_blocksizebits(format);
+
       if (att >= 0) {
          attachments[num_attachments++] = att;
          if (with_format) {
-            attachments[num_attachments++] =
-               util_format_get_blocksizebits(format);
+            attachments[num_attachments++] = bpp;
          }
       }
    }
@@ -258,7 +261,7 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
    return buffers;
 }
 
-static boolean 
+static boolean
 dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
                             const enum st_attachment_type *statts,
                             unsigned count,
