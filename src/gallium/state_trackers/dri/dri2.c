@@ -107,8 +107,8 @@ static const __DRItexBufferExtension dri2TexBufferExtension = {
  * Get the format of an attachment.
  */
 static INLINE enum pipe_format
-dri_drawable_get_format(struct dri_drawable *drawable,
-                        enum st_attachment_type statt)
+dri2_drawable_get_format(struct dri_drawable *drawable,
+                         enum st_attachment_type statt)
 {
    enum pipe_format format;
 
@@ -134,9 +134,9 @@ dri_drawable_get_format(struct dri_drawable *drawable,
  * Retrieve __DRIbuffer from the DRI loader.
  */
 static __DRIbuffer *
-dri_drawable_get_buffers(struct dri_drawable *drawable,
-                         const enum st_attachment_type *statts,
-                         unsigned *count)
+dri2_drawable_get_buffers(struct dri_drawable *drawable,
+                          const enum st_attachment_type *statts,
+                          unsigned *count)
 {
    __DRIdrawable *dri_drawable = drawable->dPriv;
    struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
@@ -159,7 +159,7 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
       enum pipe_format format;
       int att, bpp;
 
-      format = dri_drawable_get_format(drawable, statts[i]);
+      format = dri2_drawable_get_format(drawable, statts[i]);
       if (format == PIPE_FORMAT_NONE)
          continue;
 
@@ -238,8 +238,8 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
  * Process __DRIbuffer and convert them into pipe_textures.
  */
 static void
-dri_drawable_process_buffers(struct dri_drawable *drawable,
-                             __DRIbuffer *buffers, unsigned count)
+dri2_drawable_process_buffers(struct dri_drawable *drawable,
+                              __DRIbuffer *buffers, unsigned count)
 {
    struct dri_screen *screen = dri_screen(drawable->sPriv);
    __DRIdrawable *dri_drawable = drawable->dPriv;
@@ -302,7 +302,7 @@ dri_drawable_process_buffers(struct dri_drawable *drawable,
          break;
       }
 
-      format = dri_drawable_get_format(drawable, statt);
+      format = dri2_drawable_get_format(drawable, statt);
       if (statt == ST_ATTACHMENT_INVALID || format == PIPE_FORMAT_NONE)
          continue;
 
@@ -326,20 +326,20 @@ dri_drawable_process_buffers(struct dri_drawable *drawable,
  */
 
 void
-dri_allocate_textures(struct dri_drawable *drawable,
-                      const enum st_attachment_type *statts,
-                      unsigned count)
+dri2_allocate_textures(struct dri_drawable *drawable,
+                       const enum st_attachment_type *statts,
+                       unsigned count)
 {
    __DRIbuffer *buffers;
    unsigned num_buffers = count;
 
-   buffers = dri_drawable_get_buffers(drawable, statts, &num_buffers);
-   dri_drawable_process_buffers(drawable, buffers, num_buffers);
+   buffers = dri2_drawable_get_buffers(drawable, statts, &num_buffers);
+   dri2_drawable_process_buffers(drawable, buffers, num_buffers);
 }
 
 void
-dri_flush_frontbuffer(struct dri_drawable *drawable,
-                      enum st_attachment_type statt)
+dri2_flush_frontbuffer(struct dri_drawable *drawable,
+                       enum st_attachment_type statt)
 {
    __DRIdrawable *dri_drawable = drawable->dPriv;
    struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
@@ -373,7 +373,7 @@ static const __DRIextension *dri_screen_extensions[] = {
  * Returns the __GLcontextModes supported by this driver.
  */
 const __DRIconfig **
-dri_init_screen2(__DRIscreen * sPriv)
+dri2_init_screen(__DRIscreen * sPriv)
 {
    struct dri_screen *screen;
    struct drm_create_screen_arg arg;

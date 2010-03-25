@@ -73,7 +73,7 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
          dri1_allocate_textures(drawable, statt_mask);
       }
       else {
-         dri_allocate_textures(drawable, statts, count);
+         dri2_allocate_textures(drawable, statts, count);
       }
 #else
       if (new_stamp)
@@ -115,7 +115,7 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
       dri1_flush_frontbuffer(drawable, statt);
    }
    else {
-      dri_flush_frontbuffer(drawable, statt);
+      dri2_flush_frontbuffer(drawable, statt);
    }
 #else
    drisw_flush_frontbuffer(drawable, statt);

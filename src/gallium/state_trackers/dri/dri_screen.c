@@ -328,7 +328,7 @@ const struct __DriverAPIRec driDriverAPI = {
    .GetSwapInfo = dri_get_swap_info,
    .GetDrawableMSC = driDrawableGetMSC32,
    .WaitForMSC = driWaitForMSC32,
-   .InitScreen2 = dri_init_screen2,
+   .InitScreen2 = dri2_init_screen,
 
    .InitScreen = dri1_init_screen,
    .SwapBuffers = dri1_swap_buffers,
