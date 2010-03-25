@@ -202,7 +202,7 @@ static const char* vsSource =
   "void main()                                                         \n"
   "{                                                                   \n"
   "  const vec3 cameraPos = vec3(0,0,3);                               \n"
-  "  const vec3 rayDir = normalize(vec3(gl_Vertex.x, gl_Vertex.y, -1.0) * rot);\n"
+  "  vec3 rayDir = normalize(vec3(gl_Vertex.x, gl_Vertex.y, -1.0) * rot);\n"
   "  Ray ray = Ray(cameraPos, rayDir);                                 \n"
   "  gl_Position = gl_Vertex;                                          \n"
   "  gl_FrontColor = trace1(ray);                                      \n"
