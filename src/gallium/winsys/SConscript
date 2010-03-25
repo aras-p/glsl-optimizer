@@ -1,16 +1,32 @@
 Import('*')
 
-if env['dri']:
-	SConscript([
-		'drm/SConscript',
-	])
-	
 if 'xlib' in env['winsys']:
 	SConscript([
-		'xlib/SConscript',
+		'sw/xlib/SConscript',
 	])
 
 if 'gdi' in env['winsys']:
 	SConscript([
-		'gdi/SConscript',
+		'sw/gdi/SConscript',
 	])
+
+if env['dri']:
+	if 'vmware' in env['winsys']:
+		SConscript([
+			'svga/drm/SConscript',
+		])
+
+	if 'intel' in env['winsys']:
+		SConscript([
+			'i915/drm/SConscript',
+		])
+
+	if 'i965' in env['winsys']:
+		SConscript([
+			'i965/drm/SConscript',
+		])
+
+	if 'radeon' in env['winsys']:
+		SConscript([
+			'radeon/drm/SConscript',
+		])

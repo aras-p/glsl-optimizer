@@ -1,0 +1,23 @@
+Import('*')
+
+if not 'i965' in env['drivers']:
+    print 'warning: i965 pipe driver not built skipping i965_dri.so'
+    Return()
+
+env = drienv.Clone()
+
+env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
+
+drivers = [
+    st_dri,
+    i965drm,
+    i965,
+    trace,
+]
+
+env.LoadableModule(
+    target ='i965_dri.so',
+    source = COMMON_GALLIUM_SOURCES,
+    LIBS = drivers + mesa + gallium + env['LIBS'],
+    SHLIBPREFIX = '',
+)
