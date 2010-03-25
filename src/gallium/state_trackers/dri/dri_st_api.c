@@ -172,7 +172,7 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
    unsigned num_attachments, i;
 
    assert(loader);
-   with_format = (loader->base.version > 2 && loader->getBuffersWithFormat);
+   with_format = dri_with_format(drawable->sPriv);
 
    num_attachments = 0;
 

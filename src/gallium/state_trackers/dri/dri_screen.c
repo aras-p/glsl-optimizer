@@ -148,9 +148,7 @@ dri_fill_in_modes(struct dri_screen *screen,
 					     PIPE_TEXTURE_USAGE_RENDER_TARGET, 0);
 
    /* We can only get a 16 or 32 bit depth buffer with getBuffersWithFormat */
-   if (screen->sPriv->dri2.loader &&
-       (screen->sPriv->dri2.loader->base.version > 2) &&
-       (screen->sPriv->dri2.loader->getBuffersWithFormat != NULL)) {
+   if (dri_with_format(screen->sPriv)) {
       pf_z16 = p_screen->is_format_supported(p_screen, PIPE_FORMAT_Z16_UNORM,
                                              PIPE_TEXTURE_2D,
                                              PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
@@ -352,8 +350,6 @@ dri_init_screen2(__DRIscreen * sPriv)
 {
    struct dri_screen *screen;
    struct drm_create_screen_arg arg;
-   const __DRIdri2LoaderExtension *dri2_ext =
-     sPriv->dri2.loader;
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
@@ -379,8 +375,7 @@ dri_init_screen2(__DRIscreen * sPriv)
    driParseOptionInfo(&screen->optionCache,
 		      __driConfigOptions, __driNConfigOptions);
 
-   screen->auto_fake_front = dri2_ext->base.version >= 3 &&
-      dri2_ext->getBuffersWithFormat != NULL;
+   screen->auto_fake_front = dri_with_format(sPriv);
 
    return dri_fill_in_modes(screen, 32);
 fail:

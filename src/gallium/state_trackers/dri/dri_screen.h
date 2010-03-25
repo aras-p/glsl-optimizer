@@ -75,6 +75,16 @@ dri_screen(__DRIscreen * sPriv)
    return (struct dri_screen *)sPriv->private;
 }
 
+static INLINE boolean
+dri_with_format(__DRIscreen * sPriv)
+{
+   const __DRIdri2LoaderExtension *loader = sPriv->dri2.loader;
+
+   return loader
+       && (loader->base.version >= 3)
+       && (loader->getBuffersWithFormat != NULL);
+}
+
 extern const uint __driNConfigOptions;
 
 const __DRIconfig **
