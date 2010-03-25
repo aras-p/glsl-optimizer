@@ -1204,7 +1204,7 @@ yes)
         GALLIUM_STATE_TRACKERS_DIRS=glx
         ;;
     dri)
-        GALLIUM_STATE_TRACKERS_DIRS="dri"
+        GALLIUM_STATE_TRACKERS_DIRS="dri drisw"
         if test "x$enable_egl" = xyes; then
             GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
         fi
