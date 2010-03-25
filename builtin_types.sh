@@ -155,6 +155,7 @@ for i in 2 3 4; do
     gen_integral_type "vec$i" "GLSL_TYPE_FLOAT" $i 0
 done
 
+matX_index=$index
 for i in 2 3 4; do
     gen_integral_type "mat$i" "GLSL_TYPE_FLOAT" $i $i
 done
@@ -175,6 +176,9 @@ echo
 echo 'const struct glsl_type *const glsl_bool_type  = & builtin_core_types['$bool_index'];'
 echo 'const struct glsl_type *const glsl_int_type   = & builtin_core_types['$int_index'];'
 echo 'const struct glsl_type *const glsl_float_type = & builtin_core_types['$float_index'];'
+echo 'const glsl_type *const glsl_type::mat2_type = & builtin_core_types['$(($matX_index + 0))'];'
+echo 'const glsl_type *const glsl_type::mat3_type = & builtin_core_types['$(($matX_index + 1))'];'
+echo 'const glsl_type *const glsl_type::mat4_type = & builtin_core_types['$(($matX_index + 2))'];'
 echo '/*@}*/'
 
 echo
@@ -268,16 +272,22 @@ echo '/** \name Types added in GLSL 1.20'
 echo ' */'
 echo '/*@{*/'
 gen_header "120"
-for i in 2 3 4; do
-    for j in 2 3 4; do
-	if [ $i -ne $j ]; then
-	    gen_integral_type "mat${i}x${j}" "GLSL_TYPE_FLOAT" $i $j
+for c in 2 3 4; do
+    for r in 2 3 4; do
+	if [ $c -ne $r ]; then
+	    gen_integral_type "mat${c}x${r}" "GLSL_TYPE_FLOAT" $c $r
 	fi
     done
 done
 gen_footer
-echo '/*@}*/'
 
+echo 'const glsl_type *const glsl_type::mat2x3_type = & builtin_120_types[0];'
+echo 'const glsl_type *const glsl_type::mat2x4_type = & builtin_120_types[1];'
+echo 'const glsl_type *const glsl_type::mat3x2_type = & builtin_120_types[2];'
+echo 'const glsl_type *const glsl_type::mat3x4_type = & builtin_120_types[3];'
+echo 'const glsl_type *const glsl_type::mat4x2_type = & builtin_120_types[4];'
+echo 'const glsl_type *const glsl_type::mat4x3_type = & builtin_120_types[5];'
+echo '/*@}*/'
 echo
 echo '/** \name Types added in GLSL 1.30'
 echo ' */'

@@ -216,6 +216,22 @@ struct glsl_type {
    {
       return base_type == GLSL_TYPE_ERROR;
    }
+
+private:
+   /**
+    * \name Pointers to various type singletons
+    */
+   /*@{*/
+   static const glsl_type *const mat2_type;
+   static const glsl_type *const mat2x3_type;
+   static const glsl_type *const mat2x4_type;
+   static const glsl_type *const mat3x2_type;
+   static const glsl_type *const mat3_type;
+   static const glsl_type *const mat3x4_type;
+   static const glsl_type *const mat4x2_type;
+   static const glsl_type *const mat4x3_type;
+   static const glsl_type *const mat4_type;
+   /*@}*/
 };
 
 struct glsl_struct_field {
