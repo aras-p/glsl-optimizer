@@ -379,7 +379,7 @@ struct ir_swizzle_mask {
    /**
     * Number of components in the swizzle.
     */
-   unsigned num_components:2;
+   unsigned num_components:3;
 
    /**
     * Does the swizzle contain duplicate components?
