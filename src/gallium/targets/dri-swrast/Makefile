@@ -6,7 +6,7 @@ LIBNAME = swrastg_dri.so
 DRIVER_DEFINES = -D__NOT_HAVE_DRM_H
 
 PIPE_DRIVERS = \
-	$(TOP)/src/gallium/state_trackers/drisw/libdrisw.a \
+	$(TOP)/src/gallium/state_trackers/dri/sw/libdrisw.a \
 	$(TOP)/src/gallium/winsys/sw/dri/libswdri.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
 

@@ -4,7 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = i915_dri.so
 
 PIPE_DRIVERS = \
-	$(TOP)/src/gallium/state_trackers/dri/libdridrm.a \
+	$(TOP)/src/gallium/state_trackers/dri/drm/libdridrm.a \
 	$(TOP)/src/gallium/winsys/i915/drm/libinteldrm.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \

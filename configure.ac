@@ -1204,9 +1204,8 @@ yes)
         GALLIUM_STATE_TRACKERS_DIRS=glx
         ;;
     dri)
-        GALLIUM_STATE_TRACKERS_DIRS="dri drisw"
+        GALLIUM_STATE_TRACKERS_DIRS="dri"
         HAVE_ST_DRI="yes"
-        HAVE_ST_DRISW="yes"
         if test "x$enable_egl" = xyes; then
             GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
             HAVE_ST_EGL="yes"
@@ -1231,12 +1230,6 @@ yes)
                 AC_MSG_ERROR([cannot build dri state tracker without mesa driver set to dri])
             fi
             HAVE_ST_DRI="yes"
-            ;;
-        drisw)
-            if test "x$mesa_driver" != xdri; then
-                AC_MSG_ERROR([cannot build drisw state tracker without mesa driver set to dri])
-            fi
-            HAVE_ST_DRISW="yes"
             ;;
         egl)
             if test "x$enable_egl" != xyes; then
@@ -1409,7 +1402,7 @@ AC_ARG_ENABLE([gallium-swrast],
     [enable_gallium_swrast="$enableval"],
     [enable_gallium_swrast=auto])
 if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xauto; then
-    if test "x$HAVE_ST_DRISW" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes; then
         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
     fi
     if test "x$HAVE_ST_EGL" = xyes; then

@@ -1,4 +1,4 @@
-TOP = ../../../..
+TOP = ../../../../..
 include $(TOP)/configs/current
 
 LIBNAME = drisw
@@ -9,6 +9,7 @@ LIBRARY_INCLUDES = \
 	-I../dri \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/gallium/state_trackers/dri \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-I$(TOP)/src/mesa/main \
 	-D__NOT_HAVE_DRM_H
@@ -23,4 +24,4 @@ C_SOURCES = \
 	dri1_helper.c \
 	drisw.c
 
-include ../../Makefile.template
+include ../../../Makefile.template
