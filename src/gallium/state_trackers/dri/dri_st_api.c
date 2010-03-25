@@ -390,33 +390,33 @@ dri_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi)
 }
 
 /**
- * Return the texture at an attachment.  Allocate the texture if it does not
+ * Validate the texture at an attachment.  Allocate the texture if it does not
  * exist.
  */
-struct pipe_texture *
-dri_get_st_framebuffer_texture(struct st_framebuffer_iface *stfbi,
-                               enum st_attachment_type statt)
+void
+dri_st_framebuffer_validate_att(struct st_framebuffer_iface *stfbi,
+                                enum st_attachment_type statt)
 {
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
-   
-   if (!(drawable->texture_mask & (1 << statt))) {
-      enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
-      unsigned i, count = 0;
+   enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
+   unsigned i, count = 0;
 
-      /* make sure DRI2 does not destroy existing buffers */
-      for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
-         if (drawable->texture_mask & (1 << i)) {
-            statts[count++] = i;
-         }
+   /* check if buffer already exists */
+   if (drawable->texture_mask & (1 << statt))
+      return;
+
+   /* make sure DRI2 does not destroy existing buffers */
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+      if (drawable->texture_mask & (1 << i)) {
+         statts[count++] = i;
       }
-      statts[count++] = statt;
-
-      drawable->texture_stamp = drawable->dPriv->lastStamp - 1;
-      dri_st_framebuffer_validate(stfbi, statts, count, NULL);
    }
+   statts[count++] = statt;
 
-   return drawable->textures[statt];
+   drawable->texture_stamp = drawable->dPriv->lastStamp - 1;
+
+   stfbi->validate(stfbi, statts, count, NULL);
 }
 
 /**

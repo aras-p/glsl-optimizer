@@ -48,8 +48,8 @@ dri_create_st_framebuffer(struct dri_drawable *drawable);
 void
 dri_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi);
 
-struct pipe_texture *
-dri_get_st_framebuffer_texture(struct st_framebuffer_iface *stfbi,
-                               enum st_attachment_type statt);
+void
+dri_st_framebuffer_validate_att(struct st_framebuffer_iface *stfbi,
+                                enum st_attachment_type statt);
 
 #endif /* _DRI_ST_API_H_ */

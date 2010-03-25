@@ -48,8 +48,11 @@ void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
 {
    struct dri_context *ctx = dri_context(pDRICtx);
    struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_texture *pt =
-      dri_get_st_framebuffer_texture(drawable->stfb, ST_ATTACHMENT_FRONT_LEFT);
+   struct pipe_texture *pt;
+
+   dri_st_framebuffer_validate_att(drawable->stfb, ST_ATTACHMENT_FRONT_LEFT);
+
+   pt = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
 
    if (pt) {
       ctx->st->teximage(ctx->st,
