@@ -159,3 +159,59 @@ const glsl_type *glsl_type::get_base_type() const
       return glsl_error_type;
    }
 }
+
+
+const glsl_type *
+glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
+{
+   if ((rows < 1) || (rows > 4) || (columns < 1) || (columns > 4))
+      return glsl_error_type;
+
+
+   /* Treat GLSL vectors as Nx1 matrices.
+    */
+   if (columns == 1) {
+      switch (base_type) {
+      case GLSL_TYPE_UINT:
+	 return glsl_uint_type + (rows - 1);
+      case GLSL_TYPE_INT:
+	 return glsl_int_type + (rows - 1);
+      case GLSL_TYPE_FLOAT:
+	 return glsl_float_type + (rows - 1);
+      case GLSL_TYPE_BOOL:
+	 return glsl_bool_type + (rows - 1);
+      default:
+	 return glsl_error_type;
+      }
+   } else {
+      if ((base_type != GLSL_TYPE_FLOAT) || (rows == 1))
+	 return glsl_error_type;
+
+      /* GLSL matrix types are named mat{COLUMNS}x{ROWS}.  Only the following
+       * combinations are valid:
+       *
+       *   1 2 3 4
+       * 1
+       * 2   x x x
+       * 3   x x x
+       * 4   x x x
+       */
+#define IDX(c,r) (((c-1)*3) + (r-1))
+
+      switch (IDX(columns, rows)) {
+      case IDX(2,2): return mat2_type;
+      case IDX(2,3): return mat2x3_type;
+      case IDX(2,4): return mat2x4_type;
+      case IDX(3,2): return mat3x2_type;
+      case IDX(3,3): return mat3_type;
+      case IDX(3,4): return mat3x4_type;
+      case IDX(4,2): return mat4x2_type;
+      case IDX(4,3): return mat4x3_type;
+      case IDX(4,4): return mat4_type;
+      default: return glsl_error_type;
+      }
+   }
+
+   assert(!"Should not get here.");
+   return glsl_error_type;
+}

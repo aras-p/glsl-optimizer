@@ -148,6 +148,12 @@ struct glsl_type {
    const glsl_type *get_base_type() const;
 
    /**
+    * Get the instance of a built-in scalar, vector, or matrix type
+    */
+   static const glsl_type *get_instance(unsigned base_type, unsigned rows,
+					unsigned columns);
+
+   /**
     * Query whether or not a type is a scalar (non-vector and non-matrix).
     */
    bool is_scalar() const
