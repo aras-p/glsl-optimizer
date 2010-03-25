@@ -35,7 +35,6 @@
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
 #include "r300_state_invariant.h"
-#include "r300_texture.h"
 #include "r300_transfer.h"
 #include "r300_winsys.h"
 
