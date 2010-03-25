@@ -256,6 +256,19 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 
 	fp->InputsRead = compiler.Base.Program.InputsRead;
 
+	/* Clear the fog/wpos_attr if code accessing these
+	 * attributes has been removed during compilation
+	 */
+	if (fp->fog_attr != FRAG_ATTRIB_MAX) {
+		if (!(fp->InputsRead & (1 << fp->fog_attr)))
+			fp->fog_attr = FRAG_ATTRIB_MAX;
+	}
+
+	if (fp->wpos_attr != FRAG_ATTRIB_MAX) {
+		if (!(fp->InputsRead & (1 << fp->wpos_attr)))
+			fp->wpos_attr = FRAG_ATTRIB_MAX;
+	}
+
 	rc_destroy(&compiler.Base);
 }
 

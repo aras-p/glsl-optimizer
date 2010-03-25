@@ -263,15 +263,25 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	rc_move_output(&compiler.Base, VERT_RESULT_PSIZ, VERT_RESULT_PSIZ, WRITEMASK_X);
 
 	if (vp->key.WPosAttr != FRAG_ATTRIB_MAX) {
-		rc_copy_output(&compiler.Base,
-			VERT_RESULT_HPOS,
-			vp->key.WPosAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0);
+		unsigned int vp_wpos_attr = vp->key.WPosAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0;
+
+		/* Set empty writemask for instructions writing to vp_wpos_attr
+		 * before moving the wpos attr there.
+		 * Such instructions will be removed by DCE.
+		 */
+		rc_move_output(&compiler.Base, vp_wpos_attr, vp->key.WPosAttr, 0);
+		rc_copy_output(&compiler.Base, VERT_RESULT_HPOS, vp_wpos_attr);
 	}
 
 	if (vp->key.FogAttr != FRAG_ATTRIB_MAX) {
-		rc_move_output(&compiler.Base,
-			VERT_RESULT_FOGC,
-			vp->key.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0, WRITEMASK_X);
+		unsigned int vp_fog_attr = vp->key.FogAttr - FRAG_ATTRIB_TEX0 + VERT_RESULT_TEX0;
+
+		/* Set empty writemask for instructions writing to vp_fog_attr
+		 * before moving the fog attr there.
+		 * Such instructions will be removed by DCE.
+		 */
+		rc_move_output(&compiler.Base, vp_fog_attr, vp->key.FogAttr, 0);
+		rc_move_output(&compiler.Base, VERT_RESULT_FOGC, vp_fog_attr, WRITEMASK_X);
 	}
 
 	r3xx_compile_vertex_program(&compiler);
@@ -382,7 +392,11 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	R300_STATECHANGE(rmesa, vap_cntl);
 	R300_STATECHANGE(rmesa, vpp);
 	param_count = r300VertexProgUpdateParams(ctx, prog, (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
-	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
+	if (!rmesa->radeon.radeonScreen->kernel_mm && param_count > 255 * 4) {
+		WARN_ONCE("Too many VP params, expect rendering errors\n");
+	}
+	/* Prevent the overflow (vpu.count is u8) */
+	bump_vpu_count(rmesa->hw.vpp.cmd, MIN2(255 * 4, param_count));
 	param_count /= 4;
 
 	r300EmitVertexProgram(rmesa, R300_PVS_CODE_START, &(prog->code));
@@ -395,6 +409,6 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] = (0 << R300_PVS_FIRST_INST_SHIFT) | (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
 				(inst_count << R300_PVS_LAST_INST_SHIFT);
 
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] = (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) | (param_count << R300_PVS_MAX_CONST_ADDR_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] = (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) | ((param_count - 1) << R300_PVS_MAX_CONST_ADDR_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] = (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
 }
