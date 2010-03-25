@@ -26,6 +26,36 @@
  *
  **************************************************************************/
 
+/* TODO:
+ *
+ * stride:
+ *
+ * The driver and the loaders (libGL, xserver/glx) compute the stride from the
+ * width independently. winsys has a workaround that works for softpipe but may
+ * explode for other drivers or platforms, rendering- or performance-wise.
+ * Solving this issue properly requires extending the DRISW loader extension,
+ * in order to make the stride available to the putImage callback.
+ *
+ * drisw_api:
+ *
+ * Define drisw_api similarly to dri_api and use it to call the loader. This is
+ * predicated on support for calling the loader from the winsys, which has to
+ * grow for DRI2 as well.
+ *
+ * xshm:
+ *
+ * Allow the loaders to use the XSHM extension. It probably requires callbacks
+ * for createImage/destroyImage similar to DRI2 getBuffers. Probably not worth
+ * it, given the scope of DRISW, unless it falls naturally from properly
+ * solving the above two issues.
+ *
+ * swrast_create_screen:
+ *
+ * Allow for any software renderer to be used. Factor out the code from
+ * targets/libgl-xlib/xlib.c, put it in targets/common or winsys/sw/common and
+ * use it in all software targets.
+ */
+
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "pipe/p_context.h"
