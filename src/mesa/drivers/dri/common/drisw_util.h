@@ -28,6 +28,7 @@
 #include <GL/gl.h>
 #include <GL/internal/glcore.h>
 #include <GL/internal/dri_interface.h>
+typedef struct _drmLock drmLock;
 
 
 /**
@@ -71,9 +72,17 @@ struct __DRIdrawableRec {
 
     void *loaderPrivate;
 
+    __DRIcontext *driContextPriv;
+
     __DRIscreen *driScreenPriv;
 
     int refcount;
+
+    /* gallium */
+    unsigned int lastStamp;
+
+    int w;
+    int h;
 };
 
 
