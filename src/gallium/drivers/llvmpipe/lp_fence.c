@@ -29,6 +29,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "lp_debug.h"
 #include "lp_fence.h"
 
 
@@ -99,6 +100,21 @@ llvmpipe_fence_finish(struct pipe_screen *screen,
 }
 
 
+void
+lp_fence_signal(struct lp_fence *fence)
+{
+   pipe_mutex_lock(fence->mutex);
+
+   fence->count++;
+   assert(fence->count <= fence->rank);
+
+   LP_DBG(DEBUG_RAST, "%s count=%u rank=%u\n", __FUNCTION__,
+          fence->count, fence->rank);
+
+   pipe_condvar_signal(fence->signalled);
+
+   pipe_mutex_unlock(fence->mutex);
+}
 
 
 void

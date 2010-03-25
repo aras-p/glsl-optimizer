@@ -54,6 +54,10 @@ lp_fence_create(unsigned rank);
 
 
 void
+lp_fence_signal(struct lp_fence *fence);
+
+
+void
 llvmpipe_init_screen_fence_funcs(struct pipe_screen *screen);
 
 
