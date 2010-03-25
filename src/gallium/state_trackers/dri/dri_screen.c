@@ -51,7 +51,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
    DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
    DRI_CONF_SECTION_END DRI_CONF_SECTION_QUALITY
-    /*DRI_CONF_FORCE_S3TC_ENABLE(false) */
+/* DRI_CONF_FORCE_S3TC_ENABLE(false) */
    DRI_CONF_ALLOW_LARGE_TEXTURES(1)
    DRI_CONF_SECTION_END DRI_CONF_END;
 
@@ -86,17 +86,6 @@ static const __DRI2flushExtension dri2FlushExtension = {
     dri2_flush_drawable,
     dri2_invalidate_drawable,
 };
-
-   static const __DRIextension *dri_screen_extensions[] = {
-      &driReadDrawableExtension,
-      &driCopySubBufferExtension.base,
-      &driSwapControlExtension.base,
-      &driFrameTrackingExtension.base,
-      &driMediaStreamCounterExtension.base,
-      &dri2TexBufferExtension.base,
-      &dri2FlushExtension.base,
-      NULL
-   };
 
 const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen,
@@ -314,10 +303,23 @@ dri_get_swap_info(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
 }
 
 static void
+dri_destroy_option_cache(struct dri_screen * screen)
+{
+   int i;
+
+   for (i = 0; i < (1 << screen->optionCache.tableSize); ++i) {
+      FREE(screen->optionCache.info[i].name);
+      FREE(screen->optionCache.info[i].ranges);
+   }
+
+   FREE(screen->optionCache.info);
+   FREE(screen->optionCache.values);
+}
+
+static void
 dri_destroy_screen(__DRIscreen * sPriv)
 {
    struct dri_screen *screen = dri_screen(sPriv);
-   int i;
 
    if (screen->dri1_pipe)
       screen->dri1_pipe->destroy(screen->dri1_pipe);
@@ -327,18 +329,23 @@ dri_destroy_screen(__DRIscreen * sPriv)
    if (screen->pipe_screen)
       screen->pipe_screen->destroy(screen->pipe_screen);
 
-   for (i = 0; i < (1 << screen->optionCache.tableSize); ++i) {
-      FREE(screen->optionCache.info[i].name);
-      FREE(screen->optionCache.info[i].ranges);
-   }
-
-   FREE(screen->optionCache.info);
-   FREE(screen->optionCache.values);
+   dri_destroy_option_cache(screen);
 
    FREE(screen);
    sPriv->private = NULL;
    sPriv->extensions = NULL;
 }
+
+static const __DRIextension *dri_screen_extensions[] = {
+   &driReadDrawableExtension,
+   &driCopySubBufferExtension.base,
+   &driSwapControlExtension.base,
+   &driFrameTrackingExtension.base,
+   &driMediaStreamCounterExtension.base,
+   &dri2TexBufferExtension.base,
+   &dri2FlushExtension.base,
+   NULL
+};
 
 /**
  * This is the driver specific part of the createNewScreen entry point.
