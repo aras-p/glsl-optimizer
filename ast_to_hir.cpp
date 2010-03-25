@@ -183,24 +183,39 @@ arithmetic_result_type(const struct glsl_type *type_a,
       return (type_a == type_b) ? type_a : glsl_error_type;
    } else {
       if (type_a->is_matrix() && type_b->is_matrix()) {
-	 if (type_a->vector_elements == type_b->matrix_rows) {
-	    return glsl_type::get_instance(type_a->base_type,
-					   type_b->matrix_rows,
-					   type_a->vector_elements);
+	 /* Matrix multiply.  The columns of A must match the rows of B.  Given
+	  * the other previously tested constraints, this means the vector type
+	  * of a row from A must be the same as the vector type of a column from
+	  * B.
+	  */
+	 if (type_a->row_type() == type_b->column_type()) {
+	    /* The resulting matrix has the number of columns of matrix B and
+	     * the number of rows of matrix A.  We get the row count of A by
+	     * looking at the size of a vector that makes up a column.  The
+	     * transpose (size of a row) is done for B.
+	     */
+	    return
+	       glsl_type::get_instance(type_a->base_type,
+				       type_a->column_type()->vector_elements,
+				       type_b->row_type()->vector_elements);
 	 }
       } else if (type_a->is_matrix()) {
 	 /* A is a matrix and B is a column vector.  Columns of A must match
-	  * rows of B.
+	  * rows of B.  Given the other previously tested constraints, this
+	  * means the vector type of a row from A must be the same as the
+	  * vector the type of B.
 	  */
-	 if (type_a->vector_elements == type_b->vector_elements)
+	 if (type_a->row_type() == type_b)
 	    return type_b;
       } else {
 	 assert(type_b->is_matrix());
 
-	 /* A is a row vector and B is a matrix.  Columns of A must match
-	  * rows of B.
+	 /* A is a row vector and B is a matrix.  Columns of A must match rows
+	  * of B.  Given the other previously tested constraints, this means
+	  * the type of A must be the same as the vector type of a column from
+	  * B.
 	  */
-	 if (type_a->vector_elements == type_b->matrix_rows)
+	 if (type_a == type_b->column_type())
 	    return type_a;
       }
    }
