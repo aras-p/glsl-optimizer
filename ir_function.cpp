@@ -38,7 +38,7 @@ type_compare(const glsl_type *a, const glsl_type *b)
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
       if ((a->vector_elements != b->vector_elements)
-	  || (a->matrix_rows != b->matrix_rows))
+	  || (a->matrix_columns != b->matrix_columns))
 	 return -1;
 
       /* There is no implicit conversion to or from bool.

@@ -59,7 +59,7 @@ ir_constant::ir_constant(const struct glsl_type *type, const void *data)
 {
    const unsigned elements = 
       ((type->vector_elements == 0) ? 1 : type->vector_elements)
-      * ((type->matrix_rows == 0) ? 1 : type->matrix_rows);
+      * ((type->matrix_columns == 0) ? 1 : type->matrix_columns);
    unsigned size = 0;
 
    this->type = type;

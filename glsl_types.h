@@ -75,7 +75,7 @@ struct glsl_type {
 				*/
 
    unsigned vector_elements:3; /**< 0, 2, 3, or 4 vector elements. */
-   unsigned matrix_rows:3;     /**< 0, 2, 3, or 4 matrix rows. */
+   unsigned matrix_columns:3;  /**< 0, 2, 3, or 4 matrix columns. */
 
    /**
     * Name of the data type
@@ -108,11 +108,11 @@ struct glsl_type {
 
 
    glsl_type(unsigned base_type, unsigned vector_elements,
-	     unsigned matrix_rows, const char *name) :
+	     unsigned matrix_columns, const char *name) :
       base_type(base_type), 
       sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
       sampler_type(0),
-      vector_elements(vector_elements), matrix_rows(matrix_rows),
+      vector_elements(vector_elements), matrix_columns(matrix_columns),
       name(name),
       length(0)
    {
@@ -124,7 +124,7 @@ struct glsl_type {
       base_type(GLSL_TYPE_SAMPLER),
       sampler_dimensionality(dim), sampler_shadow(shadow),
       sampler_array(array), sampler_type(type),
-      vector_elements(0), matrix_rows(0),
+      vector_elements(0), matrix_columns(0),
       name(name),
       length(0)
    {
@@ -136,7 +136,7 @@ struct glsl_type {
       base_type(GLSL_TYPE_STRUCT),
       sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
       sampler_type(0),
-      vector_elements(0), matrix_rows(0),
+      vector_elements(0), matrix_columns(0),
       name(name),
       length(num_fields)
    {
@@ -175,7 +175,7 @@ struct glsl_type {
    bool is_vector() const
    {
       return (vector_elements > 0)
-	 && (matrix_rows == 0)
+	 && (matrix_columns == 0)
 	 && (base_type >= GLSL_TYPE_UINT)
 	 && (base_type <= GLSL_TYPE_BOOL);
    }
@@ -186,7 +186,7 @@ struct glsl_type {
    bool is_matrix() const
    {
       /* GLSL only has float matrices. */
-      return (matrix_rows > 0) && (base_type == GLSL_TYPE_FLOAT);
+      return (matrix_columns > 0) && (base_type == GLSL_TYPE_FLOAT);
    }
 
    /**
@@ -239,7 +239,7 @@ struct glsl_type {
    const glsl_type *row_type() const
    {
       return is_matrix()
-	 ? get_instance(base_type, matrix_rows, 1)
+	 ? get_instance(base_type, matrix_columns, 1)
 	 : glsl_error_type;
    }
 

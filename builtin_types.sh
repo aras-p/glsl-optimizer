@@ -275,7 +275,7 @@ gen_header "120"
 for c in 2 3 4; do
     for r in 2 3 4; do
 	if [ $c -ne $r ]; then
-	    gen_integral_type "mat${c}x${r}" "GLSL_TYPE_FLOAT" $c $r
+	    gen_integral_type "mat${c}x${r}" "GLSL_TYPE_FLOAT" $r $c
 	fi
     done
 done
