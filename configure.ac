@@ -474,7 +474,7 @@ xlib)
 dri)
     SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib sw/drm"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib sw/dri sw/drm"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -1409,12 +1409,10 @@ AC_ARG_ENABLE([gallium-swrast],
         [build gallium swrast @<:@default=auto@:>@])],
     [enable_gallium_swrast="$enableval"],
     [enable_gallium_swrast=auto])
-if test "x$enable_gallium_swrast" = xyes; then
-    if test "x$enable_egl" != xyes; then
-        AC_MSG_ERROR([EGL needs to be enabled for egl-swrast target])
+if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xauto; then
+    if test "x$mesa_driver" = xdri; then
+        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
     fi
-    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-swrast"
-elif test "x$enable_gallium_swrast" = xauto; then
     if test "x$enable_egl" = xyes; then
         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-swrast"
     fi
