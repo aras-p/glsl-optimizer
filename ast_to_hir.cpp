@@ -83,8 +83,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *    multiply (*), and divide (/) operate on integer and
     *    floating-point scalars, vectors, and matrices."
     */
-   if (! is_numeric_base_type(type_a->base_type)
-       || ! is_numeric_base_type(type_b->base_type)) {
+   if (!type_a->is_numeric() || !type_b->is_numeric()) {
       return glsl_error_type;
    }
 
@@ -109,9 +108,9 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *
     * From this rule and the preceeding conversion it can be inferred that
     * both types must be GLSL_TYPE_FLOAT, or GLSL_TYPE_UINT, or GLSL_TYPE_INT.
-    * The is_numeric_base_type check above already filtered out the case
-    * where either type is not one of these, so now the base types need only
-    * be tested for equality.
+    * The is_numeric check above already filtered out the case where either
+    * type is not one of these, so now the base types need only be tested for
+    * equality.
     */
    if (type_a->base_type != type_b->base_type) {
       return glsl_error_type;
@@ -144,8 +143,8 @@ arithmetic_result_type(const struct glsl_type *type_a,
     * <scalar, vector>, <scalar, matrix>, and <matrix, scalar> have been
     * handled.
     */
-   assert(type_a->vector_elements > 1);
-   assert(type_b->vector_elements > 1);
+   assert(!type_a->is_scalar());
+   assert(!type_b->is_scalar());
 
    /*   "* The two operands are vectors of the same size. In this case, the
     *      operation is done component-wise resulting in the same size
@@ -164,7 +163,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     * be matrix.  Further, since there are no integer matrix types, the base
     * type of both operands must be float.
     */
-   assert((type_a->matrix_rows > 1) || (type_b->matrix_rows > 1));
+   assert(type_a->is_matrix() || type_b->is_matrix());
    assert(type_a->base_type == GLSL_TYPE_FLOAT);
    assert(type_b->base_type == GLSL_TYPE_FLOAT);
 
