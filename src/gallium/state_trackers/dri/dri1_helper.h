@@ -29,66 +29,33 @@
  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
+#ifndef DRI1_HELPER_H
+#define DRI1_HELPER_H
+
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri_st_api.h"
-#include "dri1_helper.h"
 
-#include "pipe/p_screen.h"
-#include "util/u_format.h"
-#include "util/u_memory.h"
-#include "util/u_inlines.h"
- 
-/**
- * This is called when we need to set up GL rendering to a new X window.
- */
-boolean
-dri_create_buffer(__DRIscreen * sPriv,
-		  __DRIdrawable * dPriv,
-		  const __GLcontextModes * visual, boolean isPixmap)
-{
-   struct dri_screen *screen = sPriv->private;
-   struct dri_drawable *drawable = NULL;
-
-   if (isPixmap)
-      goto fail;		       /* not implemented */
-
-   drawable = CALLOC_STRUCT(dri_drawable);
-   if (drawable == NULL)
-      goto fail;
-
-   dri_fill_st_visual(&drawable->stvis, screen, visual);
-   drawable->stfb = dri_create_st_framebuffer(drawable);
-   if (drawable->stfb == NULL)
-      goto fail;
-
-   drawable->sPriv = sPriv;
-   drawable->dPriv = dPriv;
-   dPriv->driverPrivate = (void *)drawable;
-
-   drawable->desired_fences = 2;
-
-   return GL_TRUE;
-fail:
-   FREE(drawable);
-   return GL_FALSE;
-}
+struct pipe_fence_handle *
+dri1_swap_fences_pop_front(struct dri_drawable *draw);
 
 void
-dri_destroy_buffer(__DRIdrawable * dPriv)
-{
-   struct dri_drawable *drawable = dri_drawable(dPriv);
+dri1_swap_fences_push_back(struct dri_drawable *draw,
+                           struct pipe_fence_handle *fence);
 
-   dri1_swap_fences_clear(drawable);
+void
+dri1_swap_fences_clear(struct dri_drawable *drawable);
 
-   dri1_destroy_pipe_surface(drawable);
+struct pipe_surface *
+dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_texture *ptex);
 
-   dri_destroy_st_framebuffer(drawable->stfb);
+void
+dri1_destroy_pipe_surface(struct dri_drawable *drawable);
 
-   drawable->desired_fences = 0;
+struct pipe_context *
+dri1_get_pipe_context(struct dri_screen *screen);
 
-   FREE(drawable);
-}
+void
+dri1_destroy_pipe_context(struct dri_screen *screen);
 
-/* vim: set sw=3 ts=8 sts=3 expandtab: */
+#endif /* DRI1_HELPER_H */

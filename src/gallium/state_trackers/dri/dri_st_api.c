@@ -35,6 +35,7 @@
 #include "dri_context.h"
 #include "dri_drawable.h"
 #include "dri_st_api.h"
+#include "dri1_helper.h"
 #include "dri1.h"
 #include "dri2.h"
 
@@ -136,6 +137,13 @@ dri_create_st_framebuffer(struct dri_drawable *drawable)
 void
 dri_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi)
 {
+   struct dri_drawable *drawable =
+      (struct dri_drawable *) stfbi->st_manager_private;
+   int i;
+
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
+      pipe_texture_reference(&drawable->textures[i], NULL);
+
    FREE(stfbi);
 }
 

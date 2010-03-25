@@ -56,7 +56,4 @@ void dri1_swap_buffers(__DRIdrawable * dPriv);
 void
 dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h);
 
-void
-dri1_swap_fences_clear(struct dri_drawable *drawable);
-
 #endif /* DRI1_H */

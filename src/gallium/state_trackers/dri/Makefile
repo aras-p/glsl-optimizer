@@ -17,6 +17,7 @@ C_SOURCES = \
 	dri_drawable.c \
 	dri_extensions.c \
 	dri_st_api.c \
+	dri1_helper.c \
 	dri1.c \
 	dri2.c
 

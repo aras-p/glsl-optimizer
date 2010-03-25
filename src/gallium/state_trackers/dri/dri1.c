@@ -41,6 +41,7 @@
 #include "dri_context.h"
 #include "dri_drawable.h"
 #include "dri_st_api.h"
+#include "dri1_helper.h"
 #include "dri1.h"
 
 static INLINE void
@@ -63,50 +64,6 @@ dri1_unlock(struct dri_context *ctx)
 {
    ctx->isLocked = FALSE;
    DRM_UNLOCK(ctx->sPriv->fd, ctx->lock, ctx->cPriv->hHWContext);
-}
-
-static struct pipe_fence_handle *
-dri_swap_fences_pop_front(struct dri_drawable *draw)
-{
-   struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
-   struct pipe_fence_handle *fence = NULL;
-
-   if (draw->cur_fences >= draw->desired_fences) {
-      screen->fence_reference(screen, &fence, draw->swap_fences[draw->tail]);
-      screen->fence_reference(screen, &draw->swap_fences[draw->tail++], NULL);
-      --draw->cur_fences;
-      draw->tail &= DRI_SWAP_FENCES_MASK;
-   }
-   return fence;
-}
-
-static void
-dri_swap_fences_push_back(struct dri_drawable *draw,
-			  struct pipe_fence_handle *fence)
-{
-   struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
-
-   if (!fence)
-      return;
-
-   if (draw->cur_fences < DRI_SWAP_FENCES_MAX) {
-      draw->cur_fences++;
-      screen->fence_reference(screen, &draw->swap_fences[draw->head++],
-			      fence);
-      draw->head &= DRI_SWAP_FENCES_MASK;
-   }
-}
-
-void
-dri1_swap_fences_clear(struct dri_drawable *drawable)
-{
-   struct pipe_screen *screen = dri_screen(drawable->sPriv)->pipe_screen;
-   struct pipe_fence_handle *fence;
-
-   while (drawable->cur_fences) {
-      fence = dri_swap_fences_pop_front(drawable);
-      screen->fence_reference(screen, &fence, NULL);
-   }
 }
 
 static void
@@ -213,39 +170,6 @@ dri1_swap_copy(struct pipe_context *pipe,
    }
 }
 
-static struct pipe_surface *
-dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_texture *ptex)
-{
-   struct pipe_screen *pipe_screen = dri_screen(drawable->sPriv)->pipe_screen;
-   struct pipe_surface *psurf = drawable->dri1_surface;
-
-   if (!psurf || psurf->texture != ptex) {
-      pipe_surface_reference(&drawable->dri1_surface, NULL);
-
-      drawable->dri1_surface = pipe_screen->get_tex_surface(pipe_screen,
-            ptex, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
-
-      psurf = drawable->dri1_surface;
-   }
-
-   return psurf;
-}
-
-static struct pipe_context *
-dri1_get_pipe_context(struct dri_drawable *drawable)
-{
-   struct dri_screen *screen = dri_screen(drawable->sPriv);
-   struct pipe_context *pipe = screen->dri1_pipe;
-
-   if (!pipe) {
-      screen->dri1_pipe =
-         screen->pipe_screen->context_create(screen->pipe_screen, NULL);
-      pipe = screen->dri1_pipe;
-   }
-
-   return pipe;
-}
-
 static void
 dri1_present_texture_locked(__DRIdrawable * dPriv,
                             struct pipe_texture *ptex,
@@ -253,6 +177,7 @@ dri1_present_texture_locked(__DRIdrawable * dPriv,
                             struct pipe_fence_handle **fence)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
+   struct dri_screen *screen = dri_screen(drawable->sPriv);
    struct pipe_context *pipe;
    struct pipe_surface *psurf;
    struct drm_clip_rect bbox;
@@ -270,7 +195,7 @@ dri1_present_texture_locked(__DRIdrawable * dPriv,
    if (!visible)
       return;
 
-   pipe = dri1_get_pipe_context(drawable);
+   pipe = dri1_get_pipe_context(screen);
    psurf = dri1_get_pipe_surface(drawable, ptex);
    if (!pipe || !psurf)
       return;
@@ -317,6 +242,10 @@ dri1_copy_to_front(struct dri_context *ctx,
    dri1_propagate_drawable_change(ctx);
 }
 
+/*
+ * Backend functions for st_framebuffer interface and swap_buffers.
+ */
+
 void
 dri1_flush_frontbuffer(struct dri_drawable *draw,
                        enum st_attachment_type statt)
@@ -359,13 +288,13 @@ dri1_swap_buffers(__DRIdrawable * dPriv)
    ptex = draw->textures[ST_ATTACHMENT_BACK_LEFT];
    if (ptex) {
       ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-      fence = dri_swap_fences_pop_front(draw);
+      fence = dri1_swap_fences_pop_front(draw);
       if (fence) {
 	 (void)pipe_screen->fence_finish(pipe_screen, fence, 0);
 	 pipe_screen->fence_reference(pipe_screen, &fence, NULL);
       }
       dri1_copy_to_front(ctx, ptex, dPriv, NULL, &fence);
-      dri_swap_fences_push_back(draw, fence);
+      dri1_swap_fences_push_back(draw, fence);
       pipe_screen->fence_reference(pipe_screen, &fence, NULL);
    }
 }
@@ -512,6 +441,10 @@ static struct dri1_api_lock_funcs dri1_lf = {
    .is_lock_lost = st_dri_lost_lock,
    .clear_lost_lock = st_dri_clear_lost_lock
 };
+
+/*
+ * Backend function for init_screen.
+ */
 
 static const __DRIextension *dri1_screen_extensions[] = {
    &driReadDrawableExtension,
