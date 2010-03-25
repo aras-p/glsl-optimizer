@@ -94,56 +94,6 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 }
 
 
-const struct glsl_type *
-_mesa_glsl_get_vector_type(unsigned base_type, unsigned vector_length)
-{
-   switch (base_type) {
-   case GLSL_TYPE_UINT:
-      switch (vector_length) {
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-	 return glsl_uint_type + (vector_length - 1);
-      default:
-	 return glsl_error_type;
-      }
-   case GLSL_TYPE_INT:
-      switch (vector_length) {
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-	 return glsl_int_type + (vector_length - 1);
-      default:
-	 return glsl_error_type;
-      }
-   case GLSL_TYPE_FLOAT:
-      switch (vector_length) {
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-	 return glsl_float_type + (vector_length - 1);
-      default:
-	 return glsl_error_type;
-      }
-   case GLSL_TYPE_BOOL:
-      switch (vector_length) {
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-	 return glsl_bool_type + (vector_length - 1);
-      default:
-	 return glsl_error_type;
-      }
-   default:
-      return glsl_error_type;
-   }
-}
-
-
 const glsl_type *glsl_type::get_base_type() const
 {
    switch (base_type) {

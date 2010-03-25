@@ -254,9 +254,6 @@ extern "C" {
 extern void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
 
-extern const struct glsl_type *
-_mesa_glsl_get_vector_type(unsigned base_type, unsigned vector_length);
-
 extern const struct glsl_type *const glsl_error_type;
 extern const struct glsl_type *const glsl_int_type;
 extern const struct glsl_type *const glsl_uint_type;
