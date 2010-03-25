@@ -151,10 +151,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *      vector."
     */
    if (type_a->is_vector() && type_b->is_vector()) {
-      if (type_a->vector_elements == type_b->vector_elements)
-	 return type_a;
-      else
-	 return glsl_error_type;
+      return (type_a == type_b) ? type_a : glsl_error_type;
    }
 
    /* All of the combinations of <scalar, scalar>, <vector, scalar>,
@@ -183,12 +180,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *      more detail how vectors and matrices are operated on."
     */
    if (! multiply) {
-      if (type_a->is_matrix() && type_b->is_matrix()
-	  && (type_a->vector_elements == type_b->vector_elements)
-	  && (type_a->matrix_rows == type_b->matrix_rows))
-	 return type_a;
-      else
-	 return glsl_error_type;
+      return (type_a == type_b) ? type_a : glsl_error_type;
    } else {
       if (type_a->is_matrix() && type_b->is_matrix()) {
 	 if (type_a->vector_elements == type_b->matrix_rows) {
