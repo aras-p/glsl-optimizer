@@ -318,16 +318,30 @@ lp_setup_fence( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    const unsigned rank = lp_scene_get_num_bins( scene ); /* xxx */
-   struct lp_fence *fence = lp_fence_create(rank);
+   struct lp_fence *fence;
 
    LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
 
-   set_scene_state( setup, SETUP_ACTIVE );
+   if (setup->state == SETUP_FLUSHED) {
+      /* We're in a flushed state so there's nothing in the bins.
+       * No need to wait on a fence.
+       */
+      fence = NULL;
+   }
+   else {
+      /* There's material in the bins.  Emit the fence into the bins.
+       * When the rasterizer(s) find the fence, they'll signal on it.
+       */
+      fence = lp_fence_create(rank);
 
-   /* insert the fence into all command bins */
-   lp_scene_bin_everywhere( scene,
-			    lp_rast_fence,
-			    lp_rast_arg_fence(fence) );
+      set_scene_state( setup, SETUP_ACTIVE );
+
+      /* insert the fence into all command bins */
+      lp_scene_bin_everywhere( scene,
+                               lp_rast_fence,
+                               lp_rast_arg_fence(fence) );
+
+   }
 
    return (struct pipe_fence_handle *) fence;
 }
