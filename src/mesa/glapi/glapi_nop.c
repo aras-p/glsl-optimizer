@@ -93,7 +93,7 @@ NoOpUnused(void)
 
 #else
 
-static void
+static int
 NoOpGeneric(void)
 {
 #if !defined(_WIN32_WCE)
@@ -101,6 +101,7 @@ NoOpGeneric(void)
       fprintf(stderr, "GL User Error: calling GL function without a rendering context\n");
    }
 #endif
+   return 0;
 }
 
 #define TABLE_ENTRY(name) (_glapi_proc) NoOpGeneric
