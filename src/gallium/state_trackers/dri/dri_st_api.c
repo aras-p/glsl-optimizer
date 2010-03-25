@@ -38,6 +38,7 @@
 #include "dri1_helper.h"
 #include "dri1.h"
 #include "dri2.h"
+#include "drisw.h"
 
 static boolean
 dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
@@ -67,12 +68,19 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
 
    if (new_stamp || new_mask) {
 
+#ifndef __NOT_HAVE_DRM_H
       if (__dri1_api_hooks) {
          dri1_allocate_textures(drawable, statt_mask);
       }
       else {
          dri_allocate_textures(drawable, statts, count);
       }
+#else
+      if (new_stamp)
+         drisw_update_drawable_info(drawable->dPriv);
+
+      drisw_allocate_textures(drawable, statt_mask);
+#endif
 
       /* add existing textures */
       for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
@@ -102,12 +110,16 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
 
+#ifndef __NOT_HAVE_DRM_H
    if (__dri1_api_hooks) {
       dri1_flush_frontbuffer(drawable, statt);
    }
    else {
       dri_flush_frontbuffer(drawable, statt);
    }
+#else
+   drisw_flush_frontbuffer(drawable, statt);
+#endif
 
    return TRUE;
 }

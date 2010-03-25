@@ -30,7 +30,9 @@
  */
 
 #include "utils.h"
+#ifndef __NOT_HAVE_DRM_H
 #include "vblank.h"
+#endif
 #include "xmlpool.h"
 
 #include "dri_screen.h"
@@ -40,6 +42,7 @@
 #include "dri1_helper.h"
 #include "dri1.h"
 #include "dri2.h"
+#include "drisw.h"
 
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
@@ -262,6 +265,8 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
    /* let the state tracker allocate the accum buffer */
 }
 
+#ifndef __NOT_HAVE_DRM_H
+
 /**
  * Get information about previous buffer swaps.
  */
@@ -273,6 +278,8 @@ dri_get_swap_info(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
    else
       return 0;
 }
+
+#endif
 
 static void
 dri_destroy_option_cache(struct dri_screen * screen)
@@ -308,6 +315,8 @@ dri_destroy_screen(__DRIscreen * sPriv)
    sPriv->extensions = NULL;
 }
 
+#ifndef __NOT_HAVE_DRM_H
+
 const struct __DriverAPIRec driDriverAPI = {
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
@@ -333,5 +342,29 @@ PUBLIC const __DRIextension *__driDriverExtensions[] = {
     &driDRI2Extension.base,
     NULL
 };
+
+#else
+
+const struct __DriverAPIRec driDriverAPI = {
+   .DestroyScreen = dri_destroy_screen,
+   .CreateContext = dri_create_context,
+   .DestroyContext = dri_destroy_context,
+   .CreateBuffer = dri_create_buffer,
+   .DestroyBuffer = dri_destroy_buffer,
+   .MakeCurrent = dri_make_current,
+   .UnbindContext = dri_unbind_context,
+
+   .InitScreen = drisw_init_screen,
+   .SwapBuffers = drisw_swap_buffers,
+};
+
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driSWRastExtension.base,
+    NULL
+};
+
+#endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

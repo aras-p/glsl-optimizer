@@ -75,6 +75,8 @@ dri_screen(__DRIscreen * sPriv)
    return (struct dri_screen *)sPriv->private;
 }
 
+#ifndef __NOT_HAVE_DRM_H
+
 static INLINE boolean
 dri_with_format(__DRIscreen * sPriv)
 {
@@ -84,6 +86,16 @@ dri_with_format(__DRIscreen * sPriv)
        && (loader->base.version >= 3)
        && (loader->getBuffersWithFormat != NULL);
 }
+
+#else
+
+static INLINE boolean
+dri_with_format(__DRIscreen * sPriv)
+{
+   return TRUE;
+}
+
+#endif
 
 extern const uint __driNConfigOptions;
 
