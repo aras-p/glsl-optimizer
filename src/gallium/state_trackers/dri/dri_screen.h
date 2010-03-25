@@ -94,6 +94,9 @@ void
 dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
                    const __GLcontextModes *mode);
 
+void
+dri_destroy_screen(__DRIscreen * sPriv);
+
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

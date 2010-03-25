@@ -29,7 +29,6 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_debug.h"
-#include "state_tracker/drm_api.h"
 #include "state_tracker/st_manager.h" /* for st_manager_create_api */
 
 #include "dri_screen.h"
@@ -37,241 +36,7 @@
 #include "dri_drawable.h"
 #include "dri_st_api.h"
 #include "dri1.h"
-
-static struct {
-   int32_t refcnt;
-   struct st_api *stapi;
-} dri_st_api;
-
-/**
- * Get the format of an attachment.
- */
-static INLINE enum pipe_format
-dri_drawable_get_format(struct dri_drawable *drawable,
-                        enum st_attachment_type statt)
-{
-   enum pipe_format format;
-
-   switch (statt) {
-   case ST_ATTACHMENT_FRONT_LEFT:
-   case ST_ATTACHMENT_BACK_LEFT:
-   case ST_ATTACHMENT_FRONT_RIGHT:
-   case ST_ATTACHMENT_BACK_RIGHT:
-      format = drawable->stvis.color_format;
-      break;
-   case ST_ATTACHMENT_DEPTH_STENCIL:
-      format = drawable->stvis.depth_stencil_format;
-      break;
-   default:
-      format = PIPE_FORMAT_NONE;
-      break;
-   }
-
-   return format;
-}
-
-/**
- * Process __DRIbuffer and convert them into pipe_textures.
- */
-static void
-dri_drawable_process_buffers(struct dri_drawable *drawable,
-                             __DRIbuffer *buffers, unsigned count)
-{
-   struct dri_screen *screen = dri_screen(drawable->sPriv);
-   __DRIdrawable *dri_drawable = drawable->dPriv;
-   struct pipe_texture templ;
-   struct winsys_handle whandle;
-   boolean have_depth = FALSE;
-   unsigned i;
-
-   if (drawable->old_num == count &&
-       drawable->old_w == dri_drawable->w &&
-       drawable->old_h == dri_drawable->h &&
-       memcmp(drawable->old, buffers, sizeof(__DRIbuffer) * count) == 0)
-      return;
-
-   for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
-      pipe_texture_reference(&drawable->textures[i], NULL);
-
-   memset(&templ, 0, sizeof(templ));
-   templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
-   templ.target = PIPE_TEXTURE_2D;
-   templ.last_level = 0;
-   templ.width0 = dri_drawable->w;
-   templ.height0 = dri_drawable->h;
-   templ.depth0 = 1;
-
-   memset(&whandle, 0, sizeof(whandle));
-
-   for (i = 0; i < count; i++) {
-      __DRIbuffer *buf = &buffers[i];
-      enum st_attachment_type statt;
-      enum pipe_format format;
-
-      switch (buf->attachment) {
-      case __DRI_BUFFER_FRONT_LEFT:
-         if (!screen->auto_fake_front) {
-            statt = ST_ATTACHMENT_INVALID;
-            break;
-         }
-         /* fallthrough */
-      case __DRI_BUFFER_FAKE_FRONT_LEFT:
-         statt = ST_ATTACHMENT_FRONT_LEFT;
-         break;
-      case __DRI_BUFFER_BACK_LEFT:
-         statt = ST_ATTACHMENT_BACK_LEFT;
-         break;
-      case __DRI_BUFFER_DEPTH:
-      case __DRI_BUFFER_DEPTH_STENCIL:
-      case __DRI_BUFFER_STENCIL:
-         /* use only the first depth/stencil buffer */
-         if (!have_depth) {
-            have_depth = TRUE;
-            statt = ST_ATTACHMENT_DEPTH_STENCIL;
-         }
-         else {
-            statt = ST_ATTACHMENT_INVALID;
-         }
-         break;
-      default:
-         statt = ST_ATTACHMENT_INVALID;
-         break;
-      }
-
-      format = dri_drawable_get_format(drawable, statt);
-      if (statt == ST_ATTACHMENT_INVALID || format == PIPE_FORMAT_NONE)
-         continue;
-
-      templ.format = format;
-      whandle.handle = buf->name;
-      whandle.stride = buf->pitch;
-
-      drawable->textures[statt] =
-         screen->pipe_screen->texture_from_handle(screen->pipe_screen,
-               &templ, &whandle);
-   }
-
-   drawable->old_num = count;
-   drawable->old_w = dri_drawable->w;
-   drawable->old_h = dri_drawable->h;
-   memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * count);
-}
-
-/**
- * Retrieve __DRIbuffer from the DRI loader.
- */
-static __DRIbuffer *
-dri_drawable_get_buffers(struct dri_drawable *drawable,
-                         const enum st_attachment_type *statts,
-                         unsigned *count)
-{
-   __DRIdrawable *dri_drawable = drawable->dPriv;
-   struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
-   boolean with_format;
-   __DRIbuffer *buffers;
-   int num_buffers;
-   unsigned attachments[10];
-   unsigned num_attachments, i;
-
-   assert(loader);
-   with_format = dri_with_format(drawable->sPriv);
-
-   num_attachments = 0;
-
-   /* for Xserver 1.6.0 (DRI2 version 1) we always need to ask for the front */
-   if (!with_format)
-      attachments[num_attachments++] = __DRI_BUFFER_FRONT_LEFT;
-
-   for (i = 0; i < *count; i++) {
-      enum pipe_format format;
-      int att, bpp;
-
-      format = dri_drawable_get_format(drawable, statts[i]);
-      if (format == PIPE_FORMAT_NONE)
-         continue;
-
-      switch (statts[i]) {
-      case ST_ATTACHMENT_FRONT_LEFT:
-         /* already added */
-         if (!with_format)
-            continue;
-         att = __DRI_BUFFER_FRONT_LEFT;
-         break;
-      case ST_ATTACHMENT_BACK_LEFT:
-         att = __DRI_BUFFER_BACK_LEFT;
-         break;
-      case ST_ATTACHMENT_FRONT_RIGHT:
-         att = __DRI_BUFFER_FRONT_RIGHT;
-         break;
-      case ST_ATTACHMENT_BACK_RIGHT:
-         att = __DRI_BUFFER_BACK_RIGHT;
-         break;
-      case ST_ATTACHMENT_DEPTH_STENCIL:
-         att = __DRI_BUFFER_DEPTH_STENCIL;
-         break;
-      default:
-         att = -1;
-         break;
-      }
-
-      bpp = util_format_get_blocksizebits(format);
-
-      if (att >= 0) {
-         attachments[num_attachments++] = att;
-         if (with_format) {
-            attachments[num_attachments++] = bpp;
-         }
-      }
-   }
-
-   if (with_format) {
-      num_attachments /= 2;
-      buffers = loader->getBuffersWithFormat(dri_drawable,
-            &dri_drawable->w, &dri_drawable->h,
-            attachments, num_attachments,
-            &num_buffers, dri_drawable->loaderPrivate);
-   }
-   else {
-      buffers = loader->getBuffers(dri_drawable,
-            &dri_drawable->w, &dri_drawable->h,
-            attachments, num_attachments,
-            &num_buffers, dri_drawable->loaderPrivate);
-   }
-
-   if (buffers) {
-      /* set one cliprect to cover the whole dri_drawable */
-      dri_drawable->x = 0;
-      dri_drawable->y = 0;
-      dri_drawable->backX = 0;
-      dri_drawable->backY = 0;
-      dri_drawable->numClipRects = 1;
-      dri_drawable->pClipRects[0].x1 = 0;
-      dri_drawable->pClipRects[0].y1 = 0;
-      dri_drawable->pClipRects[0].x2 = dri_drawable->w;
-      dri_drawable->pClipRects[0].y2 = dri_drawable->h;
-      dri_drawable->numBackClipRects = 1;
-      dri_drawable->pBackClipRects[0].x1 = 0;
-      dri_drawable->pBackClipRects[0].y1 = 0;
-      dri_drawable->pBackClipRects[0].x2 = dri_drawable->w;
-      dri_drawable->pBackClipRects[0].y2 = dri_drawable->h;
-
-      *count = num_buffers;
-   }
-
-   return buffers;
-}
-
-static void
-dri_allocate_textures(struct dri_drawable *drawable,
-                      const enum st_attachment_type *statts,
-                      unsigned count)
-{
-   __DRIbuffer *buffers;
-   unsigned num_buffers = count;
-
-   buffers = dri_drawable_get_buffers(drawable, statts, &num_buffers);
-   dri_drawable_process_buffers(drawable, buffers, num_buffers);
-}
+#include "dri2.h"
 
 static boolean
 dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
@@ -327,21 +92,6 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    }
 
    return TRUE;
-}
-
-static void
-dri_flush_frontbuffer(struct dri_drawable *drawable,
-                      enum st_attachment_type statt)
-{
-   __DRIdrawable *dri_drawable = drawable->dPriv;
-   struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
-
-   if (loader->flushFrontBuffer == NULL)
-      return;
-
-   if (statt == ST_ATTACHMENT_FRONT_LEFT) {
-      loader->flushFrontBuffer(dri_drawable, dri_drawable->loaderPrivate);
-   }
 }
 
 static boolean
@@ -418,6 +168,14 @@ dri_st_framebuffer_validate_att(struct st_framebuffer_iface *stfbi,
 
    stfbi->validate(stfbi, statts, count, NULL);
 }
+
+/**
+ * Reference counted st_api.
+ */
+static struct {
+   int32_t refcnt;
+   struct st_api *stapi;
+} dri_st_api;
 
 /**
  * Add a reference to the st_api of the state tracker.

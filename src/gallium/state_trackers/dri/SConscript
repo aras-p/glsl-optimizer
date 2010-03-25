@@ -20,6 +20,7 @@ if env['dri']:
 		'dri_screen.c',
 		'dri_st_api.c',
 		'dri1.c',
+		'dri2.c',
 		]
     )
     Export('st_dri')

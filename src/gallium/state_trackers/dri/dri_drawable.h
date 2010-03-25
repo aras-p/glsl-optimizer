@@ -84,12 +84,6 @@ dri_create_buffer(__DRIscreen * sPriv,
 
 void dri_destroy_buffer(__DRIdrawable * dPriv);
 
-void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
-                          GLint glx_texture_format, __DRIdrawable *dPriv);
-
-void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
-                         __DRIdrawable *dPriv);
-
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

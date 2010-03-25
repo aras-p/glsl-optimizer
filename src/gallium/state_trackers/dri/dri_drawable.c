@@ -41,33 +41,6 @@
 #include "util/u_inlines.h"
  
 /**
- * These are used for GLX_EXT_texture_from_pixmap
- */
-void dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
-                          GLint format, __DRIdrawable *dPriv)
-{
-   struct dri_context *ctx = dri_context(pDRICtx);
-   struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_texture *pt;
-
-   dri_st_framebuffer_validate_att(drawable->stfb, ST_ATTACHMENT_FRONT_LEFT);
-
-   pt = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
-
-   if (pt) {
-      ctx->st->teximage(ctx->st,
-            (target == GL_TEXTURE_2D) ? ST_TEXTURE_2D : ST_TEXTURE_RECT,
-            0, drawable->stvis.color_format, pt, FALSE);
-   }
-}
-
-void dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
-                         __DRIdrawable *dPriv)
-{
-   dri2_set_tex_buffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
-}
-
-/**
  * This is called when we need to set up GL rendering to a new X window.
  */
 boolean

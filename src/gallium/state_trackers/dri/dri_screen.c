@@ -38,6 +38,7 @@
 #include "dri_drawable.h"
 #include "dri_st_api.h"
 #include "dri1.h"
+#include "dri2.h"
 
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
@@ -56,36 +57,6 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END DRI_CONF_END;
 
 const uint __driNConfigOptions = 3;
-
-static const __DRItexBufferExtension dri2TexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   dri2_set_tex_buffer,
-   dri2_set_tex_buffer2,
-};
-
-static void
-dri2_flush_drawable(__DRIdrawable *draw)
-{
-}
-
-static void
-dri2_invalidate_drawable(__DRIdrawable *dPriv)
-{
-   struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct dri_context *ctx = dri_context(dPriv->driContextPriv);
-
-   dri2InvalidateDrawable(dPriv);
-   drawable->dPriv->lastStamp = *drawable->dPriv->pStamp;
-
-   if (ctx)
-      ctx->st->notify_invalid_framebuffer(ctx->st, drawable->stfb);
-}
-
-static const __DRI2flushExtension dri2FlushExtension = {
-    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
-    dri2_flush_drawable,
-    dri2_invalidate_drawable,
-};
 
 const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen,
@@ -316,7 +287,7 @@ dri_destroy_option_cache(struct dri_screen * screen)
    FREE(screen->optionCache.values);
 }
 
-static void
+void
 dri_destroy_screen(__DRIscreen * sPriv)
 {
    struct dri_screen *screen = dri_screen(sPriv);
@@ -334,60 +305,6 @@ dri_destroy_screen(__DRIscreen * sPriv)
    FREE(screen);
    sPriv->private = NULL;
    sPriv->extensions = NULL;
-}
-
-static const __DRIextension *dri_screen_extensions[] = {
-   &driReadDrawableExtension,
-   &driCopySubBufferExtension.base,
-   &driSwapControlExtension.base,
-   &driFrameTrackingExtension.base,
-   &driMediaStreamCounterExtension.base,
-   &dri2TexBufferExtension.base,
-   &dri2FlushExtension.base,
-   NULL
-};
-
-/**
- * This is the driver specific part of the createNewScreen entry point.
- *
- * Returns the __GLcontextModes supported by this driver.
- */
-static const __DRIconfig **
-dri_init_screen2(__DRIscreen * sPriv)
-{
-   struct dri_screen *screen;
-   struct drm_create_screen_arg arg;
-
-   screen = CALLOC_STRUCT(dri_screen);
-   if (!screen)
-      return NULL;
-
-   screen->api = drm_api_create();
-   screen->sPriv = sPriv;
-   screen->fd = sPriv->fd;
-   sPriv->private = (void *)screen;
-   sPriv->extensions = dri_screen_extensions;
-   arg.mode = DRM_CREATE_NORMAL;
-
-   screen->pipe_screen = screen->api->create_screen(screen->api, screen->fd, &arg);
-   if (!screen->pipe_screen) {
-      debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
-      goto fail;
-   }
-
-   screen->smapi = dri_create_st_manager(screen);
-   if (!screen->smapi)
-      goto fail;
-
-   driParseOptionInfo(&screen->optionCache,
-		      __driConfigOptions, __driNConfigOptions);
-
-   screen->auto_fake_front = dri_with_format(sPriv);
-
-   return dri_fill_in_modes(screen, 32);
-fail:
-   dri_destroy_screen(sPriv);
-   return NULL;
 }
 
 const struct __DriverAPIRec driDriverAPI = {
