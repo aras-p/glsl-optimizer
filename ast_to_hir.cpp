@@ -192,25 +192,9 @@ arithmetic_result_type(const struct glsl_type *type_a,
    } else {
       if (type_a->is_matrix() && type_b->is_matrix()) {
 	 if (type_a->vector_elements == type_b->matrix_rows) {
-	    char type_name[7];
-	    const struct glsl_type *t;
-
-	    type_name[0] = 'm';
-	    type_name[1] = 'a';
-	    type_name[2] = 't';
-
-	    if (type_a->matrix_rows == type_b->vector_elements) {
-	       type_name[3] = '0' + type_a->matrix_rows;
-	       type_name[4] = '\0';
-	    } else {
-	       type_name[3] = '0' + type_a->matrix_rows;
-	       type_name[4] = 'x';
-	       type_name[5] = '0' + type_b->vector_elements;
-	       type_name[6] = '\0';
-	    }
-
-	    t = state->symbols->get_type(type_name);
-	    return (t != NULL) ? t : glsl_error_type;
+	    return glsl_type::get_instance(type_a->base_type,
+					   type_b->matrix_rows,
+					   type_a->vector_elements);
 	 }
       } else if (type_a->is_matrix()) {
 	 /* A is a matrix and B is a column vector.  Columns of A must match
