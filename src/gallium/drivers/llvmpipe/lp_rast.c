@@ -189,7 +189,7 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
    LP_DBG(DEBUG_RAST, "%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
 
-   assert(rast->zsbuf.map);
+   /*assert(rast->zsbuf.map);*/
    if (!rast->zsbuf.map)
       return;
 
