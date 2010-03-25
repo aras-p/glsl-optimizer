@@ -45,11 +45,10 @@ dri1_init_screen(__DRIscreen * sPriv);
 
 void
 dri1_flush_frontbuffer(struct dri_drawable *drawable,
-                       struct pipe_texture *ptex);
+                       enum st_attachment_type statt);
 
 void
 dri1_allocate_textures(struct dri_drawable *drawable,
-                       unsigned width, unsigned height,
                        unsigned mask);
 
 void dri1_swap_buffers(__DRIdrawable * dPriv);

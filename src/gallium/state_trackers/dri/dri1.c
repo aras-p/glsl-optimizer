@@ -318,23 +318,23 @@ dri1_copy_to_front(struct dri_context *ctx,
 }
 
 void
-dri1_flush_frontbuffer(struct dri_drawable *drawable,
-                       struct pipe_texture *ptex)
+dri1_flush_frontbuffer(struct dri_drawable *draw,
+                       enum st_attachment_type statt)
 {
-   struct st_api *stapi = dri_get_st_api();
-   struct dri_screen *screen = dri_screen(drawable->sPriv);
+   struct dri_context *ctx = dri_get_current();
+   struct dri_screen *screen = dri_screen(draw->sPriv);
    struct pipe_screen *pipe_screen = screen->pipe_screen;
-   struct dri_context *ctx;
    struct pipe_fence_handle *dummy_fence;
-   struct st_context_iface *st = stapi->get_current(stapi);
+   struct pipe_texture *ptex;
 
-   if (!st)
-      return;
+   if (!ctx)
+      return;			       /* For now */
 
-   ctx = (struct dri_context *) st->st_manager_private;
-
-   dri1_copy_to_front(ctx, ptex, ctx->dPriv, NULL, &dummy_fence);
-   pipe_screen->fence_reference(pipe_screen, &dummy_fence, NULL);
+   ptex = draw->textures[statt];
+   if (ptex) {
+      dri1_copy_to_front(ctx, ptex, ctx->dPriv, NULL, &dummy_fence);
+      pipe_screen->fence_reference(pipe_screen, &dummy_fence, NULL);
+   }
 
    /**
     * FIXME: Do we need swap throttling here?
@@ -399,17 +399,31 @@ dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
    }
 }
 
+/**
+ * Allocate framebuffer attachments.
+ *
+ * During fixed-size operation, the function keeps allocating new attachments
+ * as they are requested. Unused attachments are not removed, not until the
+ * framebuffer is resized or destroyed.
+ */
 void
 dri1_allocate_textures(struct dri_drawable *drawable,
-                       unsigned width, unsigned height,
                        unsigned mask)
 {
    struct dri_screen *screen = dri_screen(drawable->sPriv);
    struct pipe_texture templ;
+   unsigned width, height;
+   boolean resized;
    int i;
 
+   width  = drawable->dPriv->w;
+   height = drawable->dPriv->h;
+
+   resized = (drawable->old_w != width ||
+              drawable->old_h != height);
+
    /* remove outdated textures */
-   if (drawable->old_w != width || drawable->old_h != height) {
+   if (resized) {
       for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
          pipe_texture_reference(&drawable->textures[i], NULL);
    }
@@ -427,9 +441,6 @@ dri1_allocate_textures(struct dri_drawable *drawable,
 
       /* the texture already exists or not requested */
       if (drawable->textures[i] || !(mask & (1 << i))) {
-         /* remember the texture */
-         if (drawable->textures[i])
-            mask |= (1 << i);
          continue;
       }
 
@@ -462,7 +473,6 @@ dri1_allocate_textures(struct dri_drawable *drawable,
 
    drawable->old_w = width;
    drawable->old_h = height;
-   drawable->texture_mask = mask;
 }
 
 static void

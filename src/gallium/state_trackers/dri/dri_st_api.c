@@ -285,8 +285,7 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    if (drawable->texture_stamp != drawable->dPriv->lastStamp ||
        (statt_mask & ~drawable->texture_mask)) {
       if (__dri1_api_hooks) {
-         dri1_allocate_textures(drawable,
-               drawable->dPriv->w, drawable->dPriv->h, statt_mask);
+         dri1_allocate_textures(drawable, statt_mask);
       }
       else {
          __DRIbuffer *buffers;
@@ -294,6 +293,12 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
 
          buffers = dri_drawable_get_buffers(drawable, statts, &num_buffers);
          dri_drawable_process_buffers(drawable, buffers, num_buffers);
+      }
+
+      /* add existing textures */
+      for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+         if (drawable->textures[i])
+            statt_mask |= (1 << i);
       }
 
       drawable->texture_stamp = drawable->dPriv->lastStamp;
@@ -321,9 +326,7 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
       drawable->sPriv->dri2.loader;
 
    if (__dri1_api_hooks) {
-      struct pipe_texture *ptex = drawable->textures[statt];
-      if (ptex)
-         dri1_flush_frontbuffer(drawable, ptex);
+      dri1_flush_frontbuffer(drawable, statt);
       return TRUE;
    }
 
