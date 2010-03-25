@@ -145,8 +145,9 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 	  * generate the type of the resulting value.
 	  */
 	 deref->type =
-	    _mesa_glsl_get_vector_type(op->type->base_type,
-				       deref->selector.swizzle.num_components);
+	    glsl_type::get_instance(op->type->base_type,
+				    deref->selector.swizzle.num_components,
+				    1);
       } else {
 	 /* FINISHME: Logging of error messages should be moved into
 	  * FINISHME: generate_swizzle.  This allows the generation of more
