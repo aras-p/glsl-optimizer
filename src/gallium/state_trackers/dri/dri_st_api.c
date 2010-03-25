@@ -261,6 +261,18 @@ dri_drawable_get_buffers(struct dri_drawable *drawable,
    return buffers;
 }
 
+static void
+dri_allocate_textures(struct dri_drawable *drawable,
+                      const enum st_attachment_type *statts,
+                      unsigned count)
+{
+   __DRIbuffer *buffers;
+   unsigned num_buffers = count;
+
+   buffers = dri_drawable_get_buffers(drawable, statts, &num_buffers);
+   dri_drawable_process_buffers(drawable, buffers, num_buffers);
+}
+
 static boolean
 dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
                             const enum st_attachment_type *statts,
@@ -269,30 +281,31 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
 {
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
-   unsigned statt_mask, i;
+   unsigned statt_mask, new_mask;
+   boolean new_stamp;
+   int i;
 
    statt_mask = 0x0;
    for (i = 0; i < count; i++)
       statt_mask |= (1 << statts[i]);
 
+   /* record newly allocated textures */
+   new_mask = (statt_mask & ~drawable->texture_mask);
+
    /*
     * dPriv->pStamp is the server stamp.  It should be accessed with a lock, at
     * least for DRI1.  dPriv->lastStamp is the client stamp.  It has the value
     * of the server stamp when last checked.
-    *
-    * This function updates the textures and records the stamp of the textures.
     */
-   if (drawable->texture_stamp != drawable->dPriv->lastStamp ||
-       (statt_mask & ~drawable->texture_mask)) {
+   new_stamp = (drawable->texture_stamp != drawable->dPriv->lastStamp);
+
+   if (new_stamp || new_mask) {
+
       if (__dri1_api_hooks) {
          dri1_allocate_textures(drawable, statt_mask);
       }
       else {
-         __DRIbuffer *buffers;
-         unsigned num_buffers = count;
-
-         buffers = dri_drawable_get_buffers(drawable, statts, &num_buffers);
-         dri_drawable_process_buffers(drawable, buffers, num_buffers);
+         dri_allocate_textures(drawable, statts, count);
       }
 
       /* add existing textures */
@@ -316,23 +329,33 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    return TRUE;
 }
 
+static void
+dri_flush_frontbuffer(struct dri_drawable *drawable,
+                      enum st_attachment_type statt)
+{
+   __DRIdrawable *dri_drawable = drawable->dPriv;
+   struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
+
+   if (loader->flushFrontBuffer == NULL)
+      return;
+
+   if (statt == ST_ATTACHMENT_FRONT_LEFT) {
+      loader->flushFrontBuffer(dri_drawable, dri_drawable->loaderPrivate);
+   }
+}
+
 static boolean
 dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
                                enum st_attachment_type statt)
 {
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
-   struct __DRIdri2LoaderExtensionRec *loader =
-      drawable->sPriv->dri2.loader;
 
    if (__dri1_api_hooks) {
       dri1_flush_frontbuffer(drawable, statt);
-      return TRUE;
    }
-
-   if (statt == ST_ATTACHMENT_FRONT_LEFT && loader->flushFrontBuffer) {
-      loader->flushFrontBuffer(drawable->dPriv,
-            drawable->dPriv->loaderPrivate);
+   else {
+      dri_flush_frontbuffer(drawable, statt);
    }
 
    return TRUE;
