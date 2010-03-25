@@ -1,17 +1,17 @@
 
 #include "state_tracker/drm_api.h"
-#include "intel_drm_winsys.h"
+#include "i915_drm_winsys.h"
 #include "util/u_memory.h"
 
 #include "i915_drm.h"
 
-static struct intel_buffer *
-intel_drm_buffer_create(struct intel_winsys *iws,
+static struct i915_winsys_buffer *
+i915_drm_buffer_create(struct i915_winsys *iws,
                         unsigned size, unsigned alignment,
-                        enum intel_buffer_type type)
+                        enum i915_winsys_buffer_type type)
 {
-   struct intel_drm_buffer *buf = CALLOC_STRUCT(intel_drm_buffer);
-   struct intel_drm_winsys *idws = intel_drm_winsys(iws);
+   struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
+   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
    drm_intel_bufmgr *pool;
    char *name;
 
@@ -23,14 +23,14 @@ intel_drm_buffer_create(struct intel_winsys *iws,
    buf->flink = 0;
    buf->map_gtt = FALSE;
 
-   if (type == INTEL_NEW_TEXTURE) {
+   if (type == I915_NEW_TEXTURE) {
       name = "gallium3d_texture";
       pool = idws->pools.gem;
-   } else if (type == INTEL_NEW_VERTEX) {
+   } else if (type == I915_NEW_VERTEX) {
       name = "gallium3d_vertex";
       pool = idws->pools.gem;
       buf->map_gtt = TRUE;
-   } else if (type == INTEL_NEW_SCANOUT) {
+   } else if (type == I915_NEW_SCANOUT) {
       name = "gallium3d_scanout";
       pool = idws->pools.gem;
       buf->map_gtt = TRUE;
@@ -45,7 +45,7 @@ intel_drm_buffer_create(struct intel_winsys *iws,
    if (!buf->bo)
       goto err;
 
-   return (struct intel_buffer *)buf;
+   return (struct i915_winsys_buffer *)buf;
 
 err:
    assert(0);
@@ -53,13 +53,13 @@ err:
    return NULL;
 }
 
-static struct intel_buffer *
-intel_drm_buffer_from_handle(struct intel_winsys *iws,
+static struct i915_winsys_buffer *
+i915_drm_buffer_from_handle(struct i915_winsys *iws,
                              struct winsys_handle *whandle,
                              unsigned *stride)
 {
-   struct intel_drm_winsys *idws = intel_drm_winsys(iws);
-   struct intel_drm_buffer *buf = CALLOC_STRUCT(intel_drm_buffer);
+   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
+   struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
    uint32_t tile = 0, swizzle = 0;
 
    if (!buf)
@@ -74,12 +74,12 @@ intel_drm_buffer_from_handle(struct intel_winsys *iws,
       goto err;
 
    drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
-   if (tile != INTEL_TILE_NONE)
+   if (tile != I915_TILE_NONE)
       buf->map_gtt = TRUE;
 
    *stride = whandle->stride;
 
-   return (struct intel_buffer *)buf;
+   return (struct i915_winsys_buffer *)buf;
 
 err:
    FREE(buf);
@@ -87,12 +87,12 @@ err:
 }
 
 static boolean
-intel_drm_buffer_get_handle(struct intel_winsys *iws,
-                            struct intel_buffer *buffer,
+i915_drm_buffer_get_handle(struct i915_winsys *iws,
+                            struct i915_winsys_buffer *buffer,
                             struct winsys_handle *whandle,
                             unsigned stride)
 {
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
+   struct i915_drm_buffer *buf = i915_drm_buffer(buffer);
 
    if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
       if (!buf->flinked) {
@@ -114,17 +114,17 @@ intel_drm_buffer_get_handle(struct intel_winsys *iws,
 }
 
 static int
-intel_drm_buffer_set_fence_reg(struct intel_winsys *iws,
-                               struct intel_buffer *buffer,
+i915_drm_buffer_set_fence_reg(struct i915_winsys *iws,
+                               struct i915_winsys_buffer *buffer,
                                unsigned stride,
-                               enum intel_buffer_tile tile)
+                               enum i915_winsys_buffer_tile tile)
 {
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
-   assert(I915_TILING_NONE == INTEL_TILE_NONE);
-   assert(I915_TILING_X == INTEL_TILE_X);
-   assert(I915_TILING_Y == INTEL_TILE_Y);
+   struct i915_drm_buffer *buf = i915_drm_buffer(buffer);
+   assert(I915_TILING_NONE == I915_TILE_NONE);
+   assert(I915_TILING_X == I915_TILE_X);
+   assert(I915_TILING_Y == I915_TILE_Y);
 
-   if (tile != INTEL_TILE_NONE) {
+   if (tile != I915_TILE_NONE) {
       assert(buf->map_count == 0);
       buf->map_gtt = TRUE;
    }
@@ -133,11 +133,11 @@ intel_drm_buffer_set_fence_reg(struct intel_winsys *iws,
 }
 
 static void *
-intel_drm_buffer_map(struct intel_winsys *iws,
-                     struct intel_buffer *buffer,
+i915_drm_buffer_map(struct i915_winsys *iws,
+                     struct i915_winsys_buffer *buffer,
                      boolean write)
 {
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
+   struct i915_drm_buffer *buf = i915_drm_buffer(buffer);
    drm_intel_bo *bo = intel_bo(buffer);
    int ret = 0;
 
@@ -163,10 +163,10 @@ out:
 }
 
 static void
-intel_drm_buffer_unmap(struct intel_winsys *iws,
-                       struct intel_buffer *buffer)
+i915_drm_buffer_unmap(struct i915_winsys *iws,
+                       struct i915_winsys_buffer *buffer)
 {
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
+   struct i915_drm_buffer *buf = i915_drm_buffer(buffer);
 
    if (--buf->map_count)
       return;
@@ -178,40 +178,40 @@ intel_drm_buffer_unmap(struct intel_winsys *iws,
 }
 
 static int
-intel_drm_buffer_write(struct intel_winsys *iws,
-                       struct intel_buffer *buffer,
+i915_drm_buffer_write(struct i915_winsys *iws,
+                       struct i915_winsys_buffer *buffer,
                        size_t offset,
                        size_t size,
                        const void *data)
 {
-   struct intel_drm_buffer *buf = intel_drm_buffer(buffer);
+   struct i915_drm_buffer *buf = i915_drm_buffer(buffer);
 
    return drm_intel_bo_subdata(buf->bo, offset, size, (void*)data);
 }
 
 static void
-intel_drm_buffer_destroy(struct intel_winsys *iws,
-                         struct intel_buffer *buffer)
+i915_drm_buffer_destroy(struct i915_winsys *iws,
+                         struct i915_winsys_buffer *buffer)
 {
    drm_intel_bo_unreference(intel_bo(buffer));
 
 #ifdef DEBUG
-   intel_drm_buffer(buffer)->magic = 0;
-   intel_drm_buffer(buffer)->bo = NULL;
+   i915_drm_buffer(buffer)->magic = 0;
+   i915_drm_buffer(buffer)->bo = NULL;
 #endif
 
    FREE(buffer);
 }
 
 void
-intel_drm_winsys_init_buffer_functions(struct intel_drm_winsys *idws)
+i915_drm_winsys_init_buffer_functions(struct i915_drm_winsys *idws)
 {
-   idws->base.buffer_create = intel_drm_buffer_create;
-   idws->base.buffer_from_handle = intel_drm_buffer_from_handle;
-   idws->base.buffer_get_handle = intel_drm_buffer_get_handle;
-   idws->base.buffer_set_fence_reg = intel_drm_buffer_set_fence_reg;
-   idws->base.buffer_map = intel_drm_buffer_map;
-   idws->base.buffer_unmap = intel_drm_buffer_unmap;
-   idws->base.buffer_write = intel_drm_buffer_write;
-   idws->base.buffer_destroy = intel_drm_buffer_destroy;
+   idws->base.buffer_create = i915_drm_buffer_create;
+   idws->base.buffer_from_handle = i915_drm_buffer_from_handle;
+   idws->base.buffer_get_handle = i915_drm_buffer_get_handle;
+   idws->base.buffer_set_fence_reg = i915_drm_buffer_set_fence_reg;
+   idws->base.buffer_map = i915_drm_buffer_map;
+   idws->base.buffer_unmap = i915_drm_buffer_unmap;
+   idws->base.buffer_write = i915_drm_buffer_write;
+   idws->base.buffer_destroy = i915_drm_buffer_destroy;
 }

@@ -1,13 +1,13 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = inteldrm
+LIBNAME = i915drm
 
 C_SOURCES = \
-	intel_drm_batchbuffer.c \
-	intel_drm_buffer.c \
-	intel_drm_fence.c \
-	intel_drm_api.c
+	i915_drm_batchbuffer.c \
+	i915_drm_buffer.c \
+	i915_drm_fence.c \
+	i915_drm_api.c
 
 LIBRARY_INCLUDES = $(shell pkg-config libdrm --cflags-only-I)
 

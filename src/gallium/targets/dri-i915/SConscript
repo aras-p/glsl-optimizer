@@ -10,7 +10,7 @@ env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
 
 env.Prepend(LIBS = [
     st_dri,
-    inteldrm,
+    i915drm,
     i915,
     trace,
     mesa,

@@ -38,9 +38,9 @@
 #include "tgsi/tgsi_scan.h"
 
 
-struct intel_winsys;
-struct intel_buffer;
-struct intel_batchbuffer;
+struct i915_winsys;
+struct i915_winsys_buffer;
+struct i915_winsys_batchbuffer;
 
 
 #define I915_TEX_UNITS 8
@@ -219,14 +219,14 @@ struct i915_texture {
 
    /* The data is held here:
     */
-   struct intel_buffer *buffer;
+   struct i915_winsys_buffer *buffer;
 };
 
 struct i915_context
 {
    struct pipe_context base;
 
-   struct intel_winsys *iws;
+   struct i915_winsys *iws;
 
    struct draw_context *draw;
 
@@ -257,10 +257,10 @@ struct i915_context
    unsigned num_fragment_sampler_views;
    unsigned num_vertex_buffers;
 
-   struct intel_batchbuffer *batch;
+   struct i915_winsys_batchbuffer *batch;
 
    /** Vertex buffer */
-   struct intel_buffer *vbo;
+   struct i915_winsys_buffer *vbo;
    size_t vbo_offset;
    unsigned vbo_flushed;
 

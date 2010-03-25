@@ -35,7 +35,7 @@
 #include "i915_screen.h"
 #include "i915_buffer.h"
 #include "i915_texture.h"
-#include "intel_winsys.h"
+#include "i915_winsys.h"
 
 
 /*
@@ -260,7 +260,7 @@ i915_destroy_screen(struct pipe_screen *screen)
  * Create a new i915_screen object
  */
 struct pipe_screen *
-i915_create_screen(struct intel_winsys *iws, uint pci_id)
+i915_create_screen(struct i915_winsys *iws, uint pci_id)
 {
    struct i915_screen *is = CALLOC_STRUCT(i915_screen);
 

@@ -23,46 +23,46 @@
  *
  **************************************************************************/
 
-#ifndef INTEL_WINSYS_H
-#define INTEL_WINSYS_H
+#ifndef I915_WINSYS_H
+#define I915_WINSYS_H
 
 #include "pipe/p_compiler.h"
 
-struct intel_winsys;
-struct intel_buffer;
-struct intel_batchbuffer;
+struct i915_winsys;
+struct i915_winsys_buffer;
+struct i915_winsys_batchbuffer;
 struct pipe_texture;
 struct pipe_fence_handle;
 struct winsys_handle;
 
-enum intel_buffer_usage
+enum i915_winsys_buffer_usage
 {
    /* use on textures */
-   INTEL_USAGE_RENDER    = 0x01,
-   INTEL_USAGE_SAMPLER   = 0x02,
-   INTEL_USAGE_2D_TARGET = 0x04,
-   INTEL_USAGE_2D_SOURCE = 0x08,
+   I915_USAGE_RENDER    = 0x01,
+   I915_USAGE_SAMPLER   = 0x02,
+   I915_USAGE_2D_TARGET = 0x04,
+   I915_USAGE_2D_SOURCE = 0x08,
    /* use on vertex */
-   INTEL_USAGE_VERTEX    = 0x10
+   I915_USAGE_VERTEX    = 0x10
 };
 
-enum intel_buffer_type
+enum i915_winsys_buffer_type
 {
-   INTEL_NEW_TEXTURE,
-   INTEL_NEW_SCANOUT, /**< a texture used for scanning out from */
-   INTEL_NEW_VERTEX
+   I915_NEW_TEXTURE,
+   I915_NEW_SCANOUT, /**< a texture used for scanning out from */
+   I915_NEW_VERTEX
 };
 
-enum intel_buffer_tile
+enum i915_winsys_buffer_tile
 {
-   INTEL_TILE_NONE,
-   INTEL_TILE_X,
-   INTEL_TILE_Y
+   I915_TILE_NONE,
+   I915_TILE_X,
+   I915_TILE_Y
 };
 
-struct intel_batchbuffer {
+struct i915_winsys_batchbuffer {
 
-   struct intel_winsys *iws;
+   struct i915_winsys *iws;
 
    /**
     * Values exported to speed up the writing the batchbuffer,
@@ -79,7 +79,7 @@ struct intel_batchbuffer {
    /*@}*/
 };
 
-struct intel_winsys {
+struct i915_winsys {
 
    /**
     * Batchbuffer functions.
@@ -88,7 +88,8 @@ struct intel_winsys {
    /**
     * Create a new batchbuffer.
     */
-   struct intel_batchbuffer *(*batchbuffer_create)(struct intel_winsys *iws);
+   struct i915_winsys_batchbuffer *
+      (*batchbuffer_create)(struct i915_winsys *iws);
 
    /**
     * Emit a relocation to a buffer.
@@ -100,21 +101,21 @@ struct intel_winsys {
     * @offset add this to the reloc buffers address
     * @target buffer where to write the address, null for batchbuffer.
     */
-   int (*batchbuffer_reloc)(struct intel_batchbuffer *batch,
-                            struct intel_buffer *reloc,
-                            enum intel_buffer_usage usage,
+   int (*batchbuffer_reloc)(struct i915_winsys_batchbuffer *batch,
+                            struct i915_winsys_buffer *reloc,
+                            enum i915_winsys_buffer_usage usage,
                             unsigned offset);
 
    /**
     * Flush a bufferbatch.
     */
-   void (*batchbuffer_flush)(struct intel_batchbuffer *batch,
+   void (*batchbuffer_flush)(struct i915_winsys_batchbuffer *batch,
                              struct pipe_fence_handle **fence);
 
    /**
     * Destroy a batchbuffer.
     */
-   void (*batchbuffer_destroy)(struct intel_batchbuffer *batch);
+   void (*batchbuffer_destroy)(struct i915_winsys_batchbuffer *batch);
    /*@}*/
 
 
@@ -125,9 +126,10 @@ struct intel_winsys {
    /**
     * Create a buffer.
     */
-   struct intel_buffer *(*buffer_create)(struct intel_winsys *iws,
-                                         unsigned size, unsigned alignment,
-                                         enum intel_buffer_type type);
+   struct i915_winsys_buffer *
+      (*buffer_create)(struct i915_winsys *iws,
+                       unsigned size, unsigned alignment,
+                       enum i915_winsys_buffer_type type);
 
    /**
     * Creates a buffer from a handle.
@@ -135,16 +137,17 @@ struct intel_winsys {
     * Also provides the stride information needed for the
     * texture via the stride argument.
     */
-   struct intel_buffer *(*buffer_from_handle)(struct intel_winsys *iws,
-                                              struct winsys_handle *whandle,
-                                              unsigned *stride);
+   struct i915_winsys_buffer *
+      (*buffer_from_handle)(struct i915_winsys *iws,
+                            struct winsys_handle *whandle,
+                            unsigned *stride);
 
    /**
     * Used to implement pipe_screen::texture_get_handle.
     * The winsys might need the stride information.
     */
-   boolean (*buffer_get_handle)(struct intel_winsys *iws,
-                                struct intel_buffer *buffer,
+   boolean (*buffer_get_handle)(struct i915_winsys *iws,
+                                struct i915_winsys_buffer *buffer,
                                 struct winsys_handle *whandle,
                                 unsigned stride);
 
@@ -152,37 +155,37 @@ struct intel_winsys {
     * Fence a buffer with a fence reg.
     * Not to be confused with pipe_fence_handle.
     */
-   int (*buffer_set_fence_reg)(struct intel_winsys *iws,
-                               struct intel_buffer *buffer,
+   int (*buffer_set_fence_reg)(struct i915_winsys *iws,
+                               struct i915_winsys_buffer *buffer,
                                unsigned stride,
-                               enum intel_buffer_tile tile);
+                               enum i915_winsys_buffer_tile tile);
 
    /**
     * Map a buffer.
     */
-   void *(*buffer_map)(struct intel_winsys *iws,
-                       struct intel_buffer *buffer,
+   void *(*buffer_map)(struct i915_winsys *iws,
+                       struct i915_winsys_buffer *buffer,
                        boolean write);
 
    /**
     * Unmap a buffer.
     */
-   void (*buffer_unmap)(struct intel_winsys *iws,
-                        struct intel_buffer *buffer);
+   void (*buffer_unmap)(struct i915_winsys *iws,
+                        struct i915_winsys_buffer *buffer);
 
    /**
     * Write to a buffer.
     *
     * Arguments follows pipe_buffer_write.
     */
-   int (*buffer_write)(struct intel_winsys *iws,
-                       struct intel_buffer *dst,
+   int (*buffer_write)(struct i915_winsys *iws,
+                       struct i915_winsys_buffer *dst,
                        size_t offset,
                        size_t size,
                        const void *data);
 
-   void (*buffer_destroy)(struct intel_winsys *iws,
-                          struct intel_buffer *buffer);
+   void (*buffer_destroy)(struct i915_winsys *iws,
+                          struct i915_winsys_buffer *buffer);
    /*@}*/
 
 
@@ -193,20 +196,20 @@ struct intel_winsys {
    /**
     * Reference fence and set ptr to fence.
     */
-   void (*fence_reference)(struct intel_winsys *iws,
+   void (*fence_reference)(struct i915_winsys *iws,
                            struct pipe_fence_handle **ptr,
                            struct pipe_fence_handle *fence);
 
    /**
     * Check if a fence has finished.
     */
-   int (*fence_signalled)(struct intel_winsys *iws,
+   int (*fence_signalled)(struct i915_winsys *iws,
                           struct pipe_fence_handle *fence);
 
    /**
     * Wait on a fence to finish.
     */
-   int (*fence_finish)(struct intel_winsys *iws,
+   int (*fence_finish)(struct i915_winsys *iws,
                        struct pipe_fence_handle *fence);
    /*@}*/
 
@@ -214,14 +217,14 @@ struct intel_winsys {
    /**
     * Destroy the winsys.
     */
-   void (*destroy)(struct intel_winsys *iws);
+   void (*destroy)(struct i915_winsys *iws);
 };
 
 
 /**
  * Create i915 pipe_screen.
  */
-struct pipe_screen *i915_create_screen(struct intel_winsys *iws, unsigned pci_id);
+struct pipe_screen *i915_create_screen(struct i915_winsys *iws, unsigned pci_id);
 
 
 #endif

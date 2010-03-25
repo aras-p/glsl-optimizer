@@ -1,5 +1,5 @@
 
-#include "intel_drm_winsys.h"
+#include "i915_drm_winsys.h"
 #include "util/u_memory.h"
 
 #include "i915_drm.h"
@@ -17,25 +17,25 @@
 #undef INTEL_MAP_GTT
 #define INTEL_ALWAYS_FLUSH
 
-struct intel_drm_batchbuffer
+struct i915_drm_batchbuffer
 {
-   struct intel_batchbuffer base;
+   struct i915_winsys_batchbuffer base;
 
    size_t actual_size;
 
    drm_intel_bo *bo;
 };
 
-static INLINE struct intel_drm_batchbuffer *
-intel_drm_batchbuffer(struct intel_batchbuffer *batch)
+static INLINE struct i915_drm_batchbuffer *
+i915_drm_batchbuffer(struct i915_winsys_batchbuffer *batch)
 {
-   return (struct intel_drm_batchbuffer *)batch;
+   return (struct i915_drm_batchbuffer *)batch;
 }
 
 static void
-intel_drm_batchbuffer_reset(struct intel_drm_batchbuffer *batch)
+i915_drm_batchbuffer_reset(struct i915_drm_batchbuffer *batch)
 {
-   struct intel_drm_winsys *idws = intel_drm_winsys(batch->base.iws);
+   struct i915_drm_winsys *idws = i915_drm_winsys(batch->base.iws);
    int ret;
 
    if (batch->bo)
@@ -63,11 +63,11 @@ intel_drm_batchbuffer_reset(struct intel_drm_batchbuffer *batch)
    batch->base.relocs = 0;
 }
 
-static struct intel_batchbuffer *
-intel_drm_batchbuffer_create(struct intel_winsys *iws)
+static struct i915_winsys_batchbuffer *
+i915_drm_batchbuffer_create(struct i915_winsys *iws)
 {
-   struct intel_drm_winsys *idws = intel_drm_winsys(iws);
-   struct intel_drm_batchbuffer *batch = CALLOC_STRUCT(intel_drm_batchbuffer);
+   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
+   struct i915_drm_batchbuffer *batch = CALLOC_STRUCT(i915_drm_batchbuffer);
 
    batch->actual_size = idws->max_batch_size;
 
@@ -84,18 +84,18 @@ intel_drm_batchbuffer_create(struct intel_winsys *iws)
 
    batch->base.iws = iws;
 
-   intel_drm_batchbuffer_reset(batch);
+   i915_drm_batchbuffer_reset(batch);
 
    return &batch->base;
 }
 
 static int
-intel_drm_batchbuffer_reloc(struct intel_batchbuffer *ibatch,
-                            struct intel_buffer *buffer,
-                            enum intel_buffer_usage usage,
+i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
+                            struct i915_winsys_buffer *buffer,
+                            enum i915_winsys_buffer_usage usage,
                             unsigned pre_add)
 {
-   struct intel_drm_batchbuffer *batch = intel_drm_batchbuffer(ibatch);
+   struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
    unsigned write_domain = 0;
    unsigned read_domain = 0;
    unsigned offset;
@@ -103,23 +103,23 @@ intel_drm_batchbuffer_reloc(struct intel_batchbuffer *ibatch,
 
    assert(batch->base.relocs < batch->base.max_relocs);
 
-   if (usage == INTEL_USAGE_SAMPLER) {
+   if (usage == I915_USAGE_SAMPLER) {
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_SAMPLER;
 
-   } else if (usage == INTEL_USAGE_RENDER) {
+   } else if (usage == I915_USAGE_RENDER) {
       write_domain = I915_GEM_DOMAIN_RENDER;
       read_domain = I915_GEM_DOMAIN_RENDER;
 
-   } else if (usage == INTEL_USAGE_2D_TARGET) {
+   } else if (usage == I915_USAGE_2D_TARGET) {
       write_domain = I915_GEM_DOMAIN_RENDER;
       read_domain = I915_GEM_DOMAIN_RENDER;
 
-   } else if (usage == INTEL_USAGE_2D_SOURCE) {
+   } else if (usage == I915_USAGE_2D_SOURCE) {
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_RENDER;
 
-   } else if (usage == INTEL_USAGE_VERTEX) {
+   } else if (usage == I915_USAGE_VERTEX) {
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_VERTEX;
 
@@ -145,15 +145,15 @@ intel_drm_batchbuffer_reloc(struct intel_batchbuffer *ibatch,
 }
 
 static void
-intel_drm_batchbuffer_flush(struct intel_batchbuffer *ibatch,
+i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
                             struct pipe_fence_handle **fence)
 {
-   struct intel_drm_batchbuffer *batch = intel_drm_batchbuffer(ibatch);
+   struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
    unsigned used = 0;
    int ret = 0;
    int i;
 
-   assert(intel_batchbuffer_space(ibatch) >= 0);
+   assert(i915_winsys_batchbuffer_space(ibatch) >= 0);
 
    used = batch->base.ptr - batch->base.map;
    assert((used & 3) == 0);
@@ -161,16 +161,16 @@ intel_drm_batchbuffer_flush(struct intel_batchbuffer *ibatch,
 
 #ifdef INTEL_ALWAYS_FLUSH
    /* MI_FLUSH | FLUSH_MAP_CACHE */
-   intel_batchbuffer_dword(ibatch, (0x4<<23)|(1<<0));
+   i915_winsys_batchbuffer_dword(ibatch, (0x4<<23)|(1<<0));
    used += 4;
 #endif
 
    if ((used & 4) == 0) {
       /* MI_NOOP */
-      intel_batchbuffer_dword(ibatch, 0);
+      i915_winsys_batchbuffer_dword(ibatch, 0);
    }
    /* MI_BATCH_BUFFER_END */
-   intel_batchbuffer_dword(ibatch, (0xA<<23));
+   i915_winsys_batchbuffer_dword(ibatch, (0xA<<23));
 
    used = batch->base.ptr - batch->base.map;
    assert((used & 4) == 0);
@@ -189,7 +189,7 @@ intel_drm_batchbuffer_flush(struct intel_batchbuffer *ibatch,
    ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
    assert(ret == 0);
 
-   if (intel_drm_winsys(ibatch->iws)->dump_cmd) {
+   if (i915_drm_winsys(ibatch->iws)->dump_cmd) {
       unsigned *ptr;
       drm_intel_bo_map(batch->bo, FALSE);
       ptr = (unsigned*)batch->bo->virtual;
@@ -212,19 +212,19 @@ intel_drm_batchbuffer_flush(struct intel_batchbuffer *ibatch,
 
 #ifdef INTEL_RUN_SYNC
       /* we run synced to GPU so just pass null */
-      (*fence) = intel_drm_fence_create(NULL);
+      (*fence) = i915_drm_fence_create(NULL);
 #else
-      (*fence) = intel_drm_fence_create(batch->bo);
+      (*fence) = i915_drm_fence_create(batch->bo);
 #endif
    }
 
-   intel_drm_batchbuffer_reset(batch);
+   i915_drm_batchbuffer_reset(batch);
 }
 
 static void
-intel_drm_batchbuffer_destroy(struct intel_batchbuffer *ibatch)
+i915_drm_batchbuffer_destroy(struct i915_winsys_batchbuffer *ibatch)
 {
-   struct intel_drm_batchbuffer *batch = intel_drm_batchbuffer(ibatch);
+   struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
 
    if (batch->bo)
       drm_intel_bo_unreference(batch->bo);
@@ -235,10 +235,10 @@ intel_drm_batchbuffer_destroy(struct intel_batchbuffer *ibatch)
    FREE(batch);
 }
 
-void intel_drm_winsys_init_batchbuffer_functions(struct intel_drm_winsys *idws)
+void i915_drm_winsys_init_batchbuffer_functions(struct i915_drm_winsys *idws)
 {
-   idws->base.batchbuffer_create = intel_drm_batchbuffer_create;
-   idws->base.batchbuffer_reloc = intel_drm_batchbuffer_reloc;
-   idws->base.batchbuffer_flush = intel_drm_batchbuffer_flush;
-   idws->base.batchbuffer_destroy = intel_drm_batchbuffer_destroy;
+   idws->base.batchbuffer_create = i915_drm_batchbuffer_create;
+   idws->base.batchbuffer_reloc = i915_drm_batchbuffer_reloc;
+   idws->base.batchbuffer_flush = i915_drm_batchbuffer_flush;
+   idws->base.batchbuffer_destroy = i915_drm_batchbuffer_destroy;
 }

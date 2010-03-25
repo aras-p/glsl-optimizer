@@ -2,7 +2,7 @@
 
 #include "state_tracker/drm_api.h"
 
-#include "intel_drm_winsys.h"
+#include "i915_drm_winsys.h"
 #include "util/u_memory.h"
 
 #include "i915/i915_context.h"
@@ -16,7 +16,7 @@
 
 
 static void
-intel_drm_get_device_id(unsigned int *device_id)
+i915_drm_get_device_id(unsigned int *device_id)
 {
    char path[512];
    FILE *file;
@@ -39,9 +39,9 @@ intel_drm_get_device_id(unsigned int *device_id)
 }
 
 static void
-intel_drm_winsys_destroy(struct intel_winsys *iws)
+i915_drm_winsys_destroy(struct i915_winsys *iws)
 {
-   struct intel_drm_winsys *idws = intel_drm_winsys(iws);
+   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
 
    drm_intel_bufmgr_destroy(idws->pools.gem);
 
@@ -49,10 +49,10 @@ intel_drm_winsys_destroy(struct intel_winsys *iws)
 }
 
 static struct pipe_screen *
-intel_drm_create_screen(struct drm_api *api, int drmFD,
-                        struct drm_create_screen_arg *arg)
+i915_drm_create_screen(struct drm_api *api, int drmFD,
+                       struct drm_create_screen_arg *arg)
 {
-   struct intel_drm_winsys *idws;
+   struct i915_drm_winsys *idws;
    unsigned int deviceID;
 
    if (arg != NULL) {
@@ -64,21 +64,21 @@ intel_drm_create_screen(struct drm_api *api, int drmFD,
       }
    }
 
-   idws = CALLOC_STRUCT(intel_drm_winsys);
+   idws = CALLOC_STRUCT(i915_drm_winsys);
    if (!idws)
       return NULL;
 
-   intel_drm_get_device_id(&deviceID);
+   i915_drm_get_device_id(&deviceID);
 
-   intel_drm_winsys_init_batchbuffer_functions(idws);
-   intel_drm_winsys_init_buffer_functions(idws);
-   intel_drm_winsys_init_fence_functions(idws);
+   i915_drm_winsys_init_batchbuffer_functions(idws);
+   i915_drm_winsys_init_buffer_functions(idws);
+   i915_drm_winsys_init_fence_functions(idws);
 
    idws->fd = drmFD;
    idws->id = deviceID;
    idws->max_batch_size = 16 * 4096;
 
-   idws->base.destroy = intel_drm_winsys_destroy;
+   idws->base.destroy = i915_drm_winsys_destroy;
 
    idws->pools.gem = drm_intel_bufmgr_gem_init(idws->fd, idws->max_batch_size);
    drm_intel_bufmgr_gem_enable_reuse(idws->pools.gem);
@@ -98,7 +98,7 @@ struct drm_api intel_drm_api =
 {
    .name = "i915",
    .driver_name = "i915",
-   .create_screen = intel_drm_create_screen,
+   .create_screen = i915_drm_create_screen,
    .destroy = destroy,
 };
 

@@ -62,7 +62,7 @@ if env['dri']:
 			'dri-vmwgfx/SConscript',
 		])
 
-	if 'intel' in env['winsys']:
+	if 'i915' in env['winsys']:
 		SConscript([
 			'dri-i915/SConscript',
 		])

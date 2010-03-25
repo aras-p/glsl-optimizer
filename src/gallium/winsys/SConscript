@@ -16,7 +16,7 @@ if env['dri']:
 			'svga/drm/SConscript',
 		])
 
-	if 'intel' in env['winsys']:
+	if 'i915' in env['winsys']:
 		SConscript([
 			'i915/drm/SConscript',
 		])
