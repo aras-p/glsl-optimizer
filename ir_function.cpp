@@ -27,6 +27,11 @@
 int
 type_compare(const glsl_type *a, const glsl_type *b)
 {
+   /* If the types are the same, they trivially match.
+    */
+   if (a == b)
+      return 0;
+
    switch (a->base_type) {
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
@@ -35,9 +40,6 @@ type_compare(const glsl_type *a, const glsl_type *b)
       if ((a->vector_elements != b->vector_elements)
 	  || (a->matrix_rows != b->matrix_rows))
 	 return -1;
-
-      if (a->base_type == b->base_type)
-	 return 0;
 
       /* There is no implicit conversion to or from bool.
        */
@@ -48,14 +50,10 @@ type_compare(const glsl_type *a, const glsl_type *b)
       return 1;
 
    case GLSL_TYPE_SAMPLER:
-      return ((a->sampler_dimensionality == b->sampler_dimensionality)
-	      && (a->sampler_shadow == b->sampler_shadow)
-	      && (a->sampler_array == b->sampler_array)
-	      && (a->sampler_type == b->sampler_type))
-	 ? 0 : -1;
-
    case GLSL_TYPE_STRUCT:
-      return (strcmp(a->name, b->name) == 0) ? 0 : -1;
+      /* Samplers and structures must match exactly.
+       */
+      return -1;
 
    case GLSL_TYPE_ARRAY:
       if ((b->base_type != GLSL_TYPE_ARRAY)
