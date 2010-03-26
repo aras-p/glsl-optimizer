@@ -947,6 +947,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	 /* FINISHME: Handle array declarations.  Note that this requires
 	  * FINISHME: complete handling of constant expressions.
 	  */
+	 var_type = glsl_type::error_type;
 
 	 /* FINISHME: Reject delcarations of multidimensional arrays. */
       } else {
