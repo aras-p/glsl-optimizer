@@ -19,7 +19,6 @@ C_SOURCES = \
 	dri_context.c \
 	dri_screen.c \
 	dri_drawable.c \
-	dri_extensions.c \
 	dri_st_api.c \
 	dri1_helper.c \
 	drisw.c

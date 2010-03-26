@@ -29,13 +29,25 @@
  * Author: Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
+#include "utils.h"
+
 #include "dri_screen.h"
 #include "dri_drawable.h"
 #include "dri_context.h"
 #include "dri_st_api.h"
 
 #include "pipe/p_context.h"
-#include "util/u_memory.h"
+#include "state_tracker/st_context.h"
+
+static void
+dri_init_extensions(struct dri_context *ctx)
+{
+   struct st_context *st = (struct st_context *) ctx->st;
+
+   /* New extensions should be added in mesa/state_tracker/st_extensions.c
+    * and not in this file. */
+   driInitExtensions(st->ctx, NULL, GL_FALSE);
+}
 
 GLboolean
 dri_create_context(const __GLcontextModes * visual,

@@ -87,11 +87,6 @@ dri_create_context(const __GLcontextModes * visual,
 		   __DRIcontext * driContextPriv,
 		   void *sharedContextPrivate);
 
-/***********************************************************************
- * dri_extensions.c
- */
-void dri_init_extensions(struct dri_context *ctx);
-
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
