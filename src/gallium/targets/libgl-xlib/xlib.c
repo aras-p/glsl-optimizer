@@ -31,12 +31,9 @@
  *   Keith Whitwell
  */
 #include "pipe/p_compiler.h"
-#include "state_tracker/xlib_sw_winsys.h"
 #include "util/u_debug.h"
-#include "softpipe/sp_public.h"
-#include "llvmpipe/lp_public.h"
-#include "cell/ppu/cell_public.h"
 #include "target-helpers/wrap_screen.h"
+#include "state_tracker/xlib_sw_winsys.h"
 #include "xm_public.h"
 
 #include "state_tracker/st_manager.h"
@@ -49,9 +46,8 @@ PUBLIC const struct st_module st_module_OpenGL = {
    .create_api = st_manager_create_api
 };
 
-/* Helper function to build a subset of a driver stack consisting of
- * one of the software rasterizers (cell, llvmpipe, softpipe) and the
- * xlib winsys.
+/* Helper function to choose and instantiate one of the software rasterizers:
+ * cell, llvmpipe, softpipe.
  *
  * This function could be shared, but currently causes headaches for
  * the build systems, particularly scons if we try.  Long term, want
@@ -60,20 +56,25 @@ PUBLIC const struct st_module st_module_OpenGL = {
  * things that are painful for it now are likely to be painful for
  * other build systems in the future.
  */
+
+#ifdef GALLIUM_SOFTPIPE
+#include "softpipe/sp_public.h"
+#endif
+
+#ifdef GALLIUM_LLVMPIPE
+#include "llvmpipe/lp_public.h"
+#endif
+
+#ifdef GALLIUM_CELL
+#include "cell/ppu/cell_public.h"
+#endif
+
 static struct pipe_screen *
-swrast_xlib_create_screen( Display *display )
+swrast_create_screen(struct sw_winsys *winsys)
 {
    const char *default_driver;
    const char *driver;
-   struct sw_winsys *winsys;
    struct pipe_screen *screen = NULL;
-
-   /* Create the underlying winsys, which performs presents to Xlib
-    * drawables:
-    */
-   winsys = xlib_create_sw_winsys( display );
-   if (winsys == NULL)
-      return NULL;
 
 #if defined(GALLIUM_CELL)
    default_driver = "cell";
@@ -87,17 +88,13 @@ swrast_xlib_create_screen( Display *display )
 
    driver = debug_get_option("GALLIUM_DRIVER", default_driver);
 
-   /* Create a software rasterizer on top of that winsys:
-    */
 #if defined(GALLIUM_CELL)
-   if (screen == NULL &&
-       strcmp(driver, "cell") == 0)
+   if (screen == NULL && strcmp(driver, "cell") == 0)
       screen = cell_create_screen( winsys );
 #endif
 
 #if defined(GALLIUM_LLVMPIPE)
-   if (screen == NULL &&
-       strcmp(driver, "llvmpipe") == 0)
+   if (screen == NULL && strcmp(driver, "llvmpipe") == 0)
       screen = llvmpipe_create_screen( winsys );
 #endif
 
@@ -106,6 +103,29 @@ swrast_xlib_create_screen( Display *display )
       screen = softpipe_create_screen( winsys );
 #endif
 
+   return screen;
+}
+
+/* Helper function to build a subset of a driver stack consisting of
+ * one of the software rasterizers (cell, llvmpipe, softpipe) and the
+ * xlib winsys.
+ */
+static struct pipe_screen *
+swrast_xlib_create_screen( Display *display )
+{
+   struct sw_winsys *winsys;
+   struct pipe_screen *screen = NULL;
+
+   /* Create the underlying winsys, which performs presents to Xlib
+    * drawables:
+    */
+   winsys = xlib_create_sw_winsys( display );
+   if (winsys == NULL)
+      return NULL;
+
+   /* Create a software rasterizer on top of that winsys:
+    */
+   screen = swrast_create_screen( winsys );
    if (screen == NULL)
       goto fail;
 

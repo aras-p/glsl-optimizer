@@ -32,6 +32,16 @@
 #include "state_tracker/sw_winsys.h"
 #include "dri_sw_winsys.h"
 
+/* Copied from targets/libgl-xlib.
+ *
+ * TODO:
+ * This function should be put in targets/common or winsys/sw/common and shared
+ * with targets/libgl-xlib and winsys/sw/drm.
+ *
+ * For targets/common, you get layering violations in the build system unless
+ * all of drm_api's are moved under targets.
+ */
+
 #ifdef GALLIUM_SOFTPIPE
 #include "softpipe/sp_public.h"
 #endif
@@ -40,10 +50,51 @@
 #include "llvmpipe/lp_public.h"
 #endif
 
+#ifdef GALLIUM_CELL
+#include "cell/ppu/cell_public.h"
+#endif
+
 static struct pipe_screen *
-swrast_create_screen(struct drm_api *api,
-                     int drmFD,
-                     struct drm_create_screen_arg *arg)
+swrast_create_screen(struct sw_winsys *winsys)
+{
+   const char *default_driver;
+   const char *driver;
+   struct pipe_screen *screen = NULL;
+
+#if defined(GALLIUM_CELL)
+   default_driver = "cell";
+#elif defined(GALLIUM_LLVMPIPE)
+   default_driver = "llvmpipe";
+#elif defined(GALLIUM_SOFTPIPE)
+   default_driver = "softpipe";
+#else
+   default_driver = "";
+#endif
+
+   driver = debug_get_option("GALLIUM_DRIVER", default_driver);
+
+#if defined(GALLIUM_CELL)
+   if (screen == NULL && strcmp(driver, "cell") == 0)
+      screen = cell_create_screen( winsys );
+#endif
+
+#if defined(GALLIUM_LLVMPIPE)
+   if (screen == NULL && strcmp(driver, "llvmpipe") == 0)
+      screen = llvmpipe_create_screen( winsys );
+#endif
+
+#if defined(GALLIUM_SOFTPIPE)
+   if (screen == NULL)
+      screen = softpipe_create_screen( winsys );
+#endif
+
+   return screen;
+}
+
+static struct pipe_screen *
+swrast_drm_create_screen(struct drm_api *api,
+                         int drmFD,
+                         struct drm_create_screen_arg *arg)
 {
    struct sw_winsys *winsys = NULL;
    struct pipe_screen *screen = NULL;
@@ -63,16 +114,7 @@ swrast_create_screen(struct drm_api *api,
    if (winsys == NULL)
       return NULL;
 
-#ifdef GALLIUM_LLVMPIPE
-   if (!screen)
-      screen = llvmpipe_create_screen(winsys);
-#endif
-
-#ifdef GALLIUM_SOFTPIPE
-   if (!screen)
-      screen = softpipe_create_screen(winsys);
-#endif
-
+   screen = swrast_create_screen(winsys);
    if (!screen)
       goto fail;
 
@@ -95,7 +137,7 @@ static struct drm_api swrast_drm_api =
 {
    .name = "swrast",
    .driver_name = "swrast",
-   .create_screen = swrast_create_screen,
+   .create_screen = swrast_drm_create_screen,
    .destroy = swrast_drm_api_destroy,
 };
 

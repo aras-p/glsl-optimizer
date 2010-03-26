@@ -48,12 +48,6 @@
  * for createImage/destroyImage similar to DRI2 getBuffers. Probably not worth
  * it, given the scope of DRISW, unless it falls naturally from properly
  * solving the above two issues.
- *
- * swrast_create_screen:
- *
- * Allow for any software renderer to be used. Factor out the code from
- * targets/libgl-xlib/xlib.c, put it in targets/common or winsys/sw/common and
- * use it in all software targets.
  */
 
 #include "util/u_memory.h"
