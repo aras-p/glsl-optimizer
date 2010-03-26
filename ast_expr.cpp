@@ -50,6 +50,7 @@ ast_expression::operator_string(enum ast_operators op)
       "~",
       "&&",
       "^^",
+      "||",
       "!",
 
       "*=",
@@ -64,12 +65,15 @@ ast_expression::operator_string(enum ast_operators op)
       "|=",
 
       "?:",
+
       "++",
       "--",
       "++",
       "--",
       ".",
    };
+
+   assert((unsigned int)op < sizeof(operators) / sizeof(operators[0]));
 
    return operators[op];
 }
