@@ -344,8 +344,11 @@ dri_init_screen_helper(struct dri_screen *screen,
    return dri_fill_in_modes(screen, pixel_bits);
 }
 
-#ifndef __NOT_HAVE_DRM_H
-
+/**
+ * DRI driver virtual function table.
+ *
+ * DRI versions differ in their implementation of init_screen and swap_buffers.
+ */
 const struct __DriverAPIRec driDriverAPI = {
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
@@ -354,6 +357,9 @@ const struct __DriverAPIRec driDriverAPI = {
    .DestroyBuffer = dri_destroy_buffer,
    .MakeCurrent = dri_make_current,
    .UnbindContext = dri_unbind_context,
+
+#ifndef __NOT_HAVE_DRM_H
+
    .GetSwapInfo = dri_get_swap_info,
    .GetDrawableMSC = driDrawableGetMSC32,
    .WaitForMSC = driWaitForMSC32,
@@ -362,23 +368,14 @@ const struct __DriverAPIRec driDriverAPI = {
    .InitScreen = dri1_init_screen,
    .SwapBuffers = dri1_swap_buffers,
    .CopySubBuffer = dri1_copy_sub_buffer,
-};
 
 #else
 
-const struct __DriverAPIRec driDriverAPI = {
-   .DestroyScreen = dri_destroy_screen,
-   .CreateContext = dri_create_context,
-   .DestroyContext = dri_destroy_context,
-   .CreateBuffer = dri_create_buffer,
-   .DestroyBuffer = dri_destroy_buffer,
-   .MakeCurrent = dri_make_current,
-   .UnbindContext = dri_unbind_context,
-
    .InitScreen = drisw_init_screen,
    .SwapBuffers = drisw_swap_buffers,
-};
 
 #endif
+
+};
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
