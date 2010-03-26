@@ -74,6 +74,34 @@ ir_constant::ir_constant(const struct glsl_type *type, const void *data)
    memcpy(& this->value, data, size * type->components());
 }
 
+ir_constant::ir_constant(float f)
+   : ir_rvalue()
+{
+   this->type = glsl_type::float_type;
+   this->value.f[0] = f;
+}
+
+ir_constant::ir_constant(unsigned int u)
+   : ir_rvalue()
+{
+   this->type = glsl_type::uint_type;
+   this->value.u[0] = u;
+}
+
+ir_constant::ir_constant(int i)
+   : ir_rvalue()
+{
+   this->type = glsl_type::int_type;
+   this->value.i[0] = i;
+}
+
+ir_constant::ir_constant(bool b)
+   : ir_rvalue()
+{
+   this->type = glsl_type::bool_type;
+   this->value.b[0] = b;
+}
+
 
 ir_dereference::ir_dereference(ir_instruction *var)
    : ir_rvalue()

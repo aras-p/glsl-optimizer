@@ -481,6 +481,10 @@ public:
 class ir_constant : public ir_rvalue {
 public:
    ir_constant(const struct glsl_type *type, const void *data);
+   ir_constant(bool b);
+   ir_constant(unsigned int u);
+   ir_constant(int i);
+   ir_constant(float f);
 
    virtual void accept(ir_visitor *v)
    {
