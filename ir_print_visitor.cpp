@@ -163,13 +163,30 @@ void ir_print_visitor::visit(ir_assignment *ir)
 
 void ir_print_visitor::visit(ir_constant *ir)
 {
-   (void) ir;
+   const glsl_type *const base_type = ir->type->get_base_type();
 
    printf("(constant (");
-   print_type(ir->type);
+   print_type(base_type);
    printf(") ");
-   printf("(FINISHME: value goes here)");
-   printf(") ");
+
+   const unsigned num_values = 1
+      * ((ir->type->vector_elements > 0) ? ir->type->vector_elements : 1)
+      * ((ir->type->matrix_columns > 0) ? ir->type->matrix_columns : 1);
+
+   printf("(%d) (", num_values);
+   for (unsigned i = 0; i < num_values; i++) {
+      if (i != 0)
+	 printf(", ");
+
+      switch (base_type->base_type) {
+      case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
+      case GLSL_TYPE_INT:   printf("%d", ir->value.i[i]); break;
+      case GLSL_TYPE_FLOAT: printf("%f", ir->value.f[i]); break;
+      case GLSL_TYPE_BOOL:  printf("%d", ir->value.b[i]); break;
+      default: assert(0);
+      }
+   }
+   printf(")) ");
 }
 
 
