@@ -454,23 +454,10 @@ ast_expression::hir(exec_list *instructions,
 	 YYLTYPE loc;
 
 	 /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
-	 loc = this->subexpressions[0]->get_location();
-	 const ir_dereference *const ref = op[0]->as_dereference();
-	 if (ref == NULL) {
-	    _mesa_glsl_error(& loc, state, "invalid lvalue in assignment");
+	 if (!op[0]->is_lvalue()) {
+	    _mesa_glsl_error(& loc, state, "non-lvalue in assignment");
 	    error_emitted = true;
-
 	    type = glsl_error_type;
-	 } else {
-	    const ir_variable *const var = (ir_variable *) ref->var;
-
-	    if (var != NULL && var->read_only) {
-	       _mesa_glsl_error(& loc, state, "cannot assign to read-only "
-				"variable `%s'", var->name);
-	       error_emitted = true;
-
-	       type = glsl_error_type;
-	    }
 	 }
       }
 
@@ -612,24 +599,10 @@ ast_expression::hir(exec_list *instructions,
       if (!error_emitted) {
 	 YYLTYPE loc;
 
-	 /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
-	 loc = this->subexpressions[0]->get_location();
-	 const ir_dereference *const ref = op[0]->as_dereference();
-	 if (ref == NULL) {
-	    _mesa_glsl_error(& loc, state, "invalid lvalue in assignment");
+	 if (!op[0]->is_lvalue()) {
+	    _mesa_glsl_error(& loc, state, "non-lvalue in assignment");
 	    error_emitted = true;
-
 	    type = glsl_error_type;
-	 } else {
-	    const ir_variable *const var = (ir_variable *) ref->var;
-
-	    if (var != NULL && var->read_only) {
-	       _mesa_glsl_error(& loc, state, "cannot assign to read-only "
-				"variable `%s'", var->name);
-	       error_emitted = true;
-
-	       type = glsl_error_type;
-	    }
 	 }
       }
 

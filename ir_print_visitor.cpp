@@ -102,26 +102,34 @@ void ir_print_visitor::visit(ir_expression *ir)
 }
 
 
+void ir_print_visitor::visit(ir_swizzle *ir)
+{
+   const unsigned swiz[4] = {
+      ir->mask.x,
+      ir->mask.y,
+      ir->mask.z,
+      ir->mask.w,
+   };
+
+   printf("(swiz ");
+   for (unsigned i = 0; i < ir->mask.num_components; i++) {
+      printf("%c", "xyzw"[swiz[i]]);
+   }
+   printf(" ");
+   ir->val->accept(this);
+   printf(")");
+}
+
+
 void ir_print_visitor::visit(ir_dereference *ir)
 {
    deref_depth++;
 
    switch (ir->mode) {
    case ir_dereference::ir_reference_variable: {
-      const unsigned swiz[4] = {
-	 ir->selector.swizzle.x,
-	 ir->selector.swizzle.y,
-	 ir->selector.swizzle.z,
-	 ir->selector.swizzle.w,
-      };
-
       printf("(var_ref ");
       ir->var->accept(this);
-      printf("(");
-      for (unsigned i = 0; i < ir->selector.swizzle.num_components; i++) {
-	 printf("%c", "xyzw"[swiz[i]]);
-      }
-      printf(")) ");
+      printf(") ");
       break;
    }
    case ir_dereference::ir_reference_array:

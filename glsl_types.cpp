@@ -178,17 +178,18 @@ generate_vec_body_from_scalar(exec_list *instructions,
    /* Generate a single assignment of the parameter to __retval.x and return
     * __retval.xxxx for however many vector components there are.
     */
-   ir_dereference *const lhs = new ir_dereference(declarations[16]);
+   ir_dereference *const lhs_ref = new ir_dereference(declarations[16]);
    ir_dereference *const rhs = new ir_dereference(declarations[0]);
 
-   lhs->set_swizzle(0, 0, 0, 0, 1);
+   ir_swizzle *lhs = new ir_swizzle(lhs_ref, 0, 0, 0, 0, 1);
 
    inst = new ir_assignment(lhs, rhs, NULL);
    instructions->push_tail(inst);
 
-   ir_dereference *const retval = new ir_dereference(declarations[16]);
+   ir_dereference *const retref = new ir_dereference(declarations[16]);
 
-   retval->set_swizzle(0, 0, 0, 0, declarations[16]->type->vector_elements);
+   ir_swizzle *retval = new ir_swizzle(retref, 0, 0, 0, 0,
+                                       declarations[16]->type->vector_elements);
 
    inst = new ir_return(retval);
    instructions->push_tail(inst);
@@ -210,11 +211,10 @@ generate_vec_body_from_N_scalars(exec_list *instructions,
     * __retval.x and return __retval.
     */
    for (unsigned i = 0; i < vec_type->vector_elements; i++) {
-      ir_dereference *const lhs = new ir_dereference(declarations[16]);
+      ir_dereference *const lhs_ref = new ir_dereference(declarations[16]);
       ir_dereference *const rhs = new ir_dereference(declarations[i]);
 
-      lhs->selector.swizzle.x = i;
-      lhs->selector.swizzle.num_components = 1;
+      ir_swizzle *lhs = new ir_swizzle(lhs_ref, 1, 0, 0, 0, 1);
 
       inst = new ir_assignment(lhs, rhs, NULL);
       instructions->push_tail(inst);
@@ -262,10 +262,10 @@ generate_mat_body_from_scalar(exec_list *instructions,
 
    instructions->push_tail(column);
 
-   ir_dereference *const lhs = new ir_dereference(column);
+   ir_dereference *const lhs_ref = new ir_dereference(column);
    ir_dereference *const rhs = new ir_dereference(declarations[0]);
 
-   lhs->set_swizzle(0, 0, 0, 0, 1);
+   ir_swizzle *lhs = new ir_swizzle(lhs_ref, 0, 0, 0, 0, 1);
 
    inst = new ir_assignment(lhs, rhs, NULL);
    instructions->push_tail(inst);
@@ -274,9 +274,9 @@ generate_mat_body_from_scalar(exec_list *instructions,
    ir_constant *const zero = new ir_constant(glsl_float_type, &z);
 
    for (unsigned i = 1; i < column_type->vector_elements; i++) {
-      ir_dereference *const lhs = new ir_dereference(column);
+      ir_dereference *const lhs_ref = new ir_dereference(column);
 
-      lhs->set_swizzle(i, 0, 0, 0, 1);
+      ir_swizzle *lhs = new ir_swizzle(lhs_ref, i, 0, 0, 0, 1);
 
       inst = new ir_assignment(lhs, zero, NULL);
       instructions->push_tail(inst);
@@ -285,12 +285,13 @@ generate_mat_body_from_scalar(exec_list *instructions,
 
    for (unsigned i = 0; i < row_type->vector_elements; i++) {
       static const unsigned swiz[] = { 1, 1, 1, 0, 1, 1, 1 };
-      ir_dereference *const rhs = new ir_dereference(column);
+      ir_dereference *const rhs_ref = new ir_dereference(column);
 
       /* This will be .xyyy when i=0, .yxyy when i=1, etc.
        */
-      rhs->set_swizzle(swiz[3 - i], swiz[4 - i], swiz[5 - i], swiz[6 - i],
-		       column_type->vector_elements);
+      ir_swizzle *rhs = new ir_swizzle(rhs_ref, swiz[3 - i], swiz[4 - i],
+                                       swiz[5 - i], swiz[6 - i],
+				       column_type->vector_elements);
 
       ir_constant *const idx = new ir_constant(glsl_int_type, &i);
       ir_dereference *const lhs = new ir_dereference(declarations[16], idx);
@@ -326,11 +327,11 @@ generate_mat_body_from_N_scalars(exec_list *instructions,
 	 ir_dereference *const row_access =
 	    new ir_dereference(declarations[16], row_index);
 
-	 ir_dereference *const component_access =
+	 ir_dereference *const component_access_ref =
 	    new ir_dereference(row_access);
 
-	 component_access->selector.swizzle.x = j;
-	 component_access->selector.swizzle.num_components = 1;
+	 ir_swizzle *component_access = new ir_swizzle(component_access_ref,
+	                                               j, 0, 0, 0, 1);
 
 	 const unsigned param = (i * row_type->vector_elements) + j;
 	 ir_dereference *const rhs = new ir_dereference(declarations[param]);

@@ -394,6 +394,31 @@ struct ir_swizzle_mask {
    unsigned has_duplicates:1;
 };
 
+
+class ir_swizzle : public ir_rvalue {
+public:
+   ir_swizzle(ir_rvalue *, unsigned x, unsigned y, unsigned z, unsigned w,
+              unsigned count);
+   /**
+    * Construct an ir_swizzle from the textual representation.  Can fail.
+    */
+   static ir_swizzle *create(ir_rvalue *, const char *, unsigned vector_length);
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   bool is_lvalue()
+   {
+      return val->is_lvalue();
+   }
+
+   ir_rvalue *val;
+   ir_swizzle_mask mask;
+};
+
+
 class ir_dereference : public ir_rvalue {
 public:
    ir_dereference(struct ir_instruction *);
@@ -415,13 +440,6 @@ public:
       return var != NULL;
    }
 
-   /**
-    * Setting the swizzle of a derefernce
-    */
-   void set_swizzle(unsigned x, unsigned y, unsigned z, unsigned w,
-		    unsigned count);
-
-
    enum {
       ir_reference_variable,
       ir_reference_array,
@@ -438,7 +456,6 @@ public:
    union {
       ir_rvalue *array_index;
       const char *field;
-      struct ir_swizzle_mask swizzle;
    } selector;
 };
 
