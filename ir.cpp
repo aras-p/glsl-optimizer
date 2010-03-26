@@ -87,6 +87,16 @@ ir_dereference::ir_dereference(ir_instruction *var)
 }
 
 
+ir_dereference::ir_dereference(ir_instruction *var,
+			       ir_instruction *array_index)
+   : ir_instruction(ir_op_dereference), mode(ir_reference_array),
+     var(var)
+{
+   this->type = (var != NULL) ? var->type : glsl_error_type;
+   this->selector.array_index = array_index;
+}
+
+
 void
 ir_dereference::set_swizzle(unsigned x, unsigned y, unsigned z, unsigned w,
 			    unsigned count)

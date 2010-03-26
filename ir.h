@@ -393,6 +393,8 @@ class ir_dereference : public ir_instruction {
 public:
    ir_dereference(struct ir_instruction *);
 
+   ir_dereference(ir_instruction *variable, ir_instruction *array_index);
+
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
@@ -419,7 +421,7 @@ public:
    ir_instruction *var;
 
    union {
-      ir_expression *array_index;
+      ir_instruction *array_index;
       const char *field;
       struct ir_swizzle_mask swizzle;
    } selector;
