@@ -28,11 +28,17 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
-
-#include "softpipe/sp_public.h"
 #include "state_tracker/drm_api.h"
 #include "state_tracker/sw_winsys.h"
 #include "dri_sw_winsys.h"
+
+#ifdef GALLIUM_SOFTPIPE
+#include "softpipe/sp_public.h"
+#endif
+
+#ifdef GALLIUM_LLVMPIPE
+#include "llvmpipe/lp_public.h"
+#endif
 
 static struct pipe_screen *
 swrast_create_screen(struct drm_api *api,
@@ -57,15 +63,24 @@ swrast_create_screen(struct drm_api *api,
    if (winsys == NULL)
       return NULL;
 
-   screen = softpipe_create_screen( winsys );
-   if (screen == NULL)
+#ifdef GALLIUM_LLVMPIPE
+   if (!screen)
+      screen = llvmpipe_create_screen(winsys);
+#endif
+
+#ifdef GALLIUM_SOFTPIPE
+   if (!screen)
+      screen = softpipe_create_screen(winsys);
+#endif
+
+   if (!screen)
       goto fail;
 
    return screen;
 
 fail:
    if (winsys)
-      winsys->destroy( winsys );
+      winsys->destroy(winsys);
 
    return NULL;
 }
