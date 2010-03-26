@@ -455,7 +455,17 @@ public:
 
    bool is_lvalue()
    {
-      return var != NULL;
+      ir_variable *as_var;
+
+      if (var == NULL)
+	 return NULL;
+
+      as_var = var->as_variable();
+
+      if (as_var == NULL)
+	 return NULL;
+
+      return !as_var->read_only;
    }
 
    enum {
