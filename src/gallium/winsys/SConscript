@@ -11,6 +11,10 @@ if 'gdi' in env['winsys']:
 	])
 
 if env['dri']:
+	SConscript([
+		'sw/dri/SConscript',
+	])
+
 	if 'vmware' in env['winsys']:
 		SConscript([
 			'svga/drm/SConscript',

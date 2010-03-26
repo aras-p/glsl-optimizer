@@ -46,6 +46,18 @@ dri_common_dri_util = drienv.SharedObject(
 	source = '#src/mesa/drivers/dri/common/dri_util.c'
 )
 
+dri_common_drisw_util = drienv.SharedObject(
+	target = 'drisw_util.o',
+	source = '#src/mesa/drivers/dri/common/drisw_util.c'
+)
+
+
+COMMON_DRI_SW_OBJECTS = [
+	dri_common_utils,
+	dri_common_xmlconfig,
+	dri_common_drisw_util,
+]
+
 COMMON_DRI_DRM_OBJECTS = [
 	dri_common_utils,
 	dri_common_xmlconfig,
@@ -55,7 +67,12 @@ COMMON_DRI_DRM_OBJECTS = [
 
 Export([
 	'drienv',
+	'COMMON_DRI_SW_OBJECTS',
 	'COMMON_DRI_DRM_OBJECTS',
+])
+
+SConscript([
+	'dri-swrast/SConscript',
 ])
 
 if 'vmware' in env['winsys']:
