@@ -652,6 +652,7 @@ main(int argc, char **argv)
 	 ir_print_visitor v;
 
 	 ((ir_instruction *)iter.get())->accept(& v);
+	 printf("\n");
       }
    }
 

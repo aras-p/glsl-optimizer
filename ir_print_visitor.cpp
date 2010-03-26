@@ -28,16 +28,12 @@ static void
 print_type(const glsl_type *t)
 {
    if (t->base_type == GLSL_TYPE_ARRAY) {
-      printf("array\n");
-      printf("    (");
+      printf("array (");
       print_type(t->fields.array);
-      printf(")\n");
-
-      printf("    (%u)\n", t->length);
-      printf(")");
+      printf(") (%u))", t->length);
    } else if (t->base_type == GLSL_TYPE_STRUCT) {
-      printf("struct (%s %u\n", t->name ? t->name : "@", t->length);
-      printf("    (FINISHME: structure fields go here)\n");
+      printf("struct (%s %u ", t->name ? t->name : "@", t->length);
+      printf("(FINISHME: structure fields go here) ");
       printf(")");
    } else {
       printf("%s", t->name);
@@ -63,14 +59,14 @@ void ir_print_visitor::visit(ir_variable *ir)
       printf("(");
       print_type(ir->type);
       printf(") ");
-      printf("(%s))\n", ir->name);
+      printf("(%s)) ", ir->name);
    }
 }
 
 
 void ir_print_visitor::visit(ir_label *ir)
 {
-   printf("(label %s)\n", ir->label);
+   printf("\n(label %s)", ir->label);
 }
 
 
@@ -125,19 +121,19 @@ void ir_print_visitor::visit(ir_dereference *ir)
       for (unsigned i = 0; i < ir->selector.swizzle.num_components; i++) {
 	 printf("%c", "xyzw"[swiz[i]]);
       }
-      printf("))\n");
+      printf(")) ");
       break;
    }
    case ir_dereference::ir_reference_array:
       printf("(array_ref ");
       ir->var->accept(this);
       ir->selector.array_index->accept(this);
-      printf(")\n");
+      printf(") ");
       break;
    case ir_dereference::ir_reference_record:
       printf("(record_ref ");
       ir->var->accept(this);
-      printf("(%s))\n", ir->selector.field);
+      printf("(%s)) ", ir->selector.field);
       break;
    }
 
@@ -147,22 +143,21 @@ void ir_print_visitor::visit(ir_dereference *ir)
 
 void ir_print_visitor::visit(ir_assignment *ir)
 {
-   printf("(assign\n");
+   printf("(assign (");
 
-   printf("    (");
    if (ir->condition)
       ir->condition->accept(this);
    else
       printf("true");
-   printf(")\n");
 
-   printf("    (");
+   printf(") (");
+
    ir->lhs->accept(this);
-   printf(")\n");
 
-   printf("    (");
+   printf(") (");
+
    ir->rhs->accept(this);
-   printf(")\n");
+   printf(") ");
 }
 
 
@@ -170,12 +165,11 @@ void ir_print_visitor::visit(ir_constant *ir)
 {
    (void) ir;
 
-   printf("(constant\n");
-   printf("    (");
+   printf("(constant (");
    print_type(ir->type);
-   printf(")\n");
-   printf("    (FINISHME: value goes here)\n");
-   printf(")\n");
+   printf(") ");
+   printf("(FINISHME: value goes here)");
+   printf(") ");
 }
 
 
@@ -200,5 +194,5 @@ ir_print_visitor::visit(ir_return *ir)
       value->accept(this);
    }
 
-   printf(")\n");
+   printf(")");
 }
