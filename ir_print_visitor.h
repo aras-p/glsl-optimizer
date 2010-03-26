@@ -35,6 +35,7 @@
 class ir_print_visitor : public ir_visitor {
 public:
    ir_print_visitor()
+      : deref_depth(0)
    {
       /* empty */
    }
@@ -63,6 +64,9 @@ public:
    virtual void visit(ir_call *);
    virtual void visit(ir_return *);
    /*@}*/
+
+private:
+   int deref_depth;
 };
 
 #endif /* IR_PRINT_VISITOR_H */
