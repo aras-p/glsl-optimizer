@@ -138,21 +138,21 @@ gen_header "core"
 
 index=0;
 bool_index=$index
-gen_integral_type "bool" "GLSL_TYPE_BOOL" 0 0
+gen_integral_type "bool" "GLSL_TYPE_BOOL" 1 1
 for i in 2 3 4; do
-    gen_integral_type "bvec$i" "GLSL_TYPE_BOOL" $i 0
+    gen_integral_type "bvec$i" "GLSL_TYPE_BOOL" $i 1
 done
 
 int_index=$index
-gen_integral_type "int" "GLSL_TYPE_INT" 0 0
+gen_integral_type "int" "GLSL_TYPE_INT" 1 1
 for i in 2 3 4; do
-    gen_integral_type "ivec$i" "GLSL_TYPE_INT" $i 0
+    gen_integral_type "ivec$i" "GLSL_TYPE_INT" $i 1
 done
 
 float_index=$index
-gen_integral_type "float" "GLSL_TYPE_FLOAT" 0 0
+gen_integral_type "float" "GLSL_TYPE_FLOAT" 1 1
 for i in 2 3 4; do
-    gen_integral_type "vec$i" "GLSL_TYPE_FLOAT" $i 0
+    gen_integral_type "vec$i" "GLSL_TYPE_FLOAT" $i 1
 done
 
 matX_index=$index
@@ -295,9 +295,9 @@ echo '/*@{*/'
 gen_header "130"
 index=0;
 uint_index=$index
-gen_integral_type "uint" "GLSL_TYPE_UINT" 0 0
+gen_integral_type "uint" "GLSL_TYPE_UINT" 1 1
 for i in 2 3 4; do
-    gen_integral_type "uvec$i" "GLSL_TYPE_UINT" $i 0
+    gen_integral_type "uvec$i" "GLSL_TYPE_UINT" $i 1
 done
 
 echo

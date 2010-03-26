@@ -27,6 +27,7 @@
 #define GLSL_TYPES_H
 
 #include <cstring>
+#include <cassert>
 
 #define GLSL_TYPE_UINT          0
 #define GLSL_TYPE_INT           1
@@ -60,8 +61,16 @@ struct glsl_type {
 				* and \c GLSL_TYPE_UINT are valid.
 				*/
 
-   unsigned vector_elements:3; /**< 0, 2, 3, or 4 vector elements. */
-   unsigned matrix_columns:3;  /**< 0, 2, 3, or 4 matrix columns. */
+   /**
+    * \name Vector and matrix element counts
+    *
+    * For scalars, each of these values will be 1.  For non-numeric types
+    * these will be 0.
+    */
+   /*@{*/
+   unsigned vector_elements:3; /**< 1, 2, 3, or 4 vector elements. */
+   unsigned matrix_columns:3;  /**< 1, 2, 3, or 4 matrix columns. */
+   /*@}*/
 
    /**
     * Name of the data type
@@ -114,6 +123,9 @@ struct glsl_type {
       name(name),
       length(0)
    {
+      /* Neither dimension is zero or both dimensions are zero.
+       */
+      assert((vector_elements == 0) == (matrix_columns == 0));
       memset(& fields, 0, sizeof(fields));
    }
 
@@ -162,9 +174,7 @@ struct glsl_type {
     */
    unsigned components() const
    {
-      return ((vector_elements == 0) ? 1 : vector_elements)
-	 * ((matrix_columns == 0) ? 1 : matrix_columns);
-
+      return vector_elements * matrix_columns;
    }
 
    /**
@@ -172,7 +182,7 @@ struct glsl_type {
     */
    bool is_scalar() const
    {
-      return (vector_elements == 0)
+      return (vector_elements == 1)
 	 && (base_type >= GLSL_TYPE_UINT)
 	 && (base_type <= GLSL_TYPE_BOOL);
    }
@@ -182,8 +192,8 @@ struct glsl_type {
     */
    bool is_vector() const
    {
-      return (vector_elements > 0)
-	 && (matrix_columns == 0)
+      return (vector_elements > 1)
+	 && (matrix_columns == 1)
 	 && (base_type >= GLSL_TYPE_UINT)
 	 && (base_type <= GLSL_TYPE_BOOL);
    }
@@ -194,7 +204,7 @@ struct glsl_type {
    bool is_matrix() const
    {
       /* GLSL only has float matrices. */
-      return (matrix_columns > 0) && (base_type == GLSL_TYPE_FLOAT);
+      return (matrix_columns > 1) && (base_type == GLSL_TYPE_FLOAT);
    }
 
    /**
