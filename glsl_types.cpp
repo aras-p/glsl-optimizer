@@ -98,15 +98,15 @@ const glsl_type *glsl_type::get_base_type() const
 {
    switch (base_type) {
    case GLSL_TYPE_UINT:
-      return glsl_uint_type;
+      return uint_type;
    case GLSL_TYPE_INT:
-      return glsl_int_type;
+      return int_type;
    case GLSL_TYPE_FLOAT:
-      return glsl_float_type;
+      return float_type;
    case GLSL_TYPE_BOOL:
-      return glsl_bool_type;
+      return bool_type;
    default:
-      return glsl_error_type;
+      return error_type;
    }
 }
 
@@ -271,7 +271,7 @@ generate_mat_body_from_scalar(exec_list *instructions,
    instructions->push_tail(inst);
 
    const float z = 0.0f;
-   ir_constant *const zero = new ir_constant(glsl_float_type, &z);
+   ir_constant *const zero = new ir_constant(glsl_type::float_type, &z);
 
    for (unsigned i = 1; i < column_type->vector_elements; i++) {
       ir_dereference *const lhs_ref = new ir_dereference(column);
@@ -293,7 +293,7 @@ generate_mat_body_from_scalar(exec_list *instructions,
                                        swiz[5 - i], swiz[6 - i],
 				       column_type->vector_elements);
 
-      ir_constant *const idx = new ir_constant(glsl_int_type, &i);
+      ir_constant *const idx = new ir_constant(glsl_type::int_type, &i);
       ir_dereference *const lhs = new ir_dereference(declarations[16], idx);
 
       inst = new ir_assignment(lhs, rhs, NULL);
@@ -323,7 +323,7 @@ generate_mat_body_from_N_scalars(exec_list *instructions,
     */
    for (unsigned i = 0; i < column_type->vector_elements; i++) {
       for (unsigned j = 0; j < row_type->vector_elements; j++) {
-	 ir_constant *row_index = new ir_constant(glsl_int_type, &i);
+	 ir_constant *row_index = new ir_constant(glsl_type::int_type, &i);
 	 ir_dereference *const row_access =
 	    new ir_dereference(declarations[16], row_index);
 
@@ -486,7 +486,7 @@ const glsl_type *
 glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 {
    if ((rows < 1) || (rows > 4) || (columns < 1) || (columns > 4))
-      return glsl_error_type;
+      return error_type;
 
 
    /* Treat GLSL vectors as Nx1 matrices.
@@ -494,19 +494,19 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
    if (columns == 1) {
       switch (base_type) {
       case GLSL_TYPE_UINT:
-	 return glsl_uint_type + (rows - 1);
+	 return uint_type + (rows - 1);
       case GLSL_TYPE_INT:
-	 return glsl_int_type + (rows - 1);
+	 return int_type + (rows - 1);
       case GLSL_TYPE_FLOAT:
-	 return glsl_float_type + (rows - 1);
+	 return float_type + (rows - 1);
       case GLSL_TYPE_BOOL:
-	 return glsl_bool_type + (rows - 1);
+	 return bool_type + (rows - 1);
       default:
-	 return glsl_error_type;
+	 return error_type;
       }
    } else {
       if ((base_type != GLSL_TYPE_FLOAT) || (rows == 1))
-	 return glsl_error_type;
+	 return error_type;
 
       /* GLSL matrix types are named mat{COLUMNS}x{ROWS}.  Only the following
        * combinations are valid:
@@ -529,10 +529,10 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
       case IDX(4,2): return mat4x2_type;
       case IDX(4,3): return mat4x3_type;
       case IDX(4,4): return mat4_type;
-      default: return glsl_error_type;
+      default: return error_type;
       }
    }
 
    assert(!"Should not get here.");
-   return glsl_error_type;
+   return error_type;
 }

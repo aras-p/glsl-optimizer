@@ -39,12 +39,6 @@
 #define GLSL_TYPE_VOID          8
 #define GLSL_TYPE_ERROR         9
 
-extern const struct glsl_type *const glsl_error_type;
-extern const struct glsl_type *const glsl_int_type;
-extern const struct glsl_type *const glsl_uint_type;
-extern const struct glsl_type *const glsl_float_type;
-extern const struct glsl_type *const glsl_bool_type;
-
 #define is_numeric_base_type(b) \
    (((b) >= GLSL_TYPE_UINT) && ((b) <= GLSL_TYPE_FLOAT))
 
@@ -105,6 +99,18 @@ struct glsl_type {
       const struct glsl_type *parameters;       /**< Parameters to function. */
       const struct glsl_struct_field *structure;/**< List of struct fields. */
    } fields;
+
+
+   /**
+    * \name Pointers to various public type singletons
+    */
+   /*@{*/
+   static const glsl_type *const error_type;
+   static const glsl_type *const int_type;
+   static const glsl_type *const uint_type;
+   static const glsl_type *const float_type;
+   static const glsl_type *const bool_type;
+   /*@}*/
 
 
    glsl_type(unsigned base_type, unsigned vector_elements,
@@ -233,33 +239,33 @@ struct glsl_type {
     * Query the full type of a matrix row
     *
     * \return
-    * If the type is not a matrix, \c glsl_error_type is returned.  Otherwise
-    * a type matching the rows of the matrix is returned.
+    * If the type is not a matrix, \c glsl_type::error_type is returned.
+    * Otherwise a type matching the rows of the matrix is returned.
     */
    const glsl_type *row_type() const
    {
       return is_matrix()
 	 ? get_instance(base_type, matrix_columns, 1)
-	 : glsl_error_type;
+	 : error_type;
    }
 
    /**
     * Query the full type of a matrix column
     *
     * \return
-    * If the type is not a matrix, \c glsl_error_type is returned.  Otherwise
-    * a type matching the columns of the matrix is returned.
+    * If the type is not a matrix, \c glsl_type::error_type is returned.
+    * Otherwise a type matching the columns of the matrix is returned.
     */
    const glsl_type *column_type() const
    {
       return is_matrix()
 	 ? get_instance(base_type, vector_elements, 1)
-	 : glsl_error_type;
+	 : error_type;
    }
 
 private:
    /**
-    * \name Pointers to various type singletons
+    * \name Pointers to various private type singletons
     */
    /*@{*/
    static const glsl_type *const mat2_type;

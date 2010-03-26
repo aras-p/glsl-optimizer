@@ -83,7 +83,7 @@ ir_dereference::ir_dereference(ir_instruction *var)
 {
    this->mode = ir_reference_variable;
    this->var = var;
-   this->type = (var != NULL) ? var->type : glsl_error_type;
+   this->type = (var != NULL) ? var->type : glsl_type::error_type;
 }
 
 
@@ -92,7 +92,7 @@ ir_dereference::ir_dereference(ir_instruction *var,
    : ir_rvalue(), mode(ir_reference_array),
      var(var)
 {
-   this->type = (var != NULL) ? var->type : glsl_error_type;
+   this->type = (var != NULL) ? var->type : glsl_type::error_type;
    this->selector.array_index = array_index;
 }
 
@@ -237,6 +237,6 @@ ir_call::get_error_instruction()
 {
    ir_call *call = new ir_call;
 
-   call->type = glsl_error_type;
+   call->type = glsl_type::error_type;
    return call;
 }

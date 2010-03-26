@@ -85,7 +85,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *    floating-point scalars, vectors, and matrices."
     */
    if (!type_a->is_numeric() || !type_b->is_numeric()) {
-      return glsl_error_type;
+      return glsl_type::error_type;
    }
 
 
@@ -114,7 +114,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     * equality.
     */
    if (type_a->base_type != type_b->base_type) {
-      return glsl_error_type;
+      return glsl_type::error_type;
    }
 
    /*    "All arithmetic binary operators result in the same fundamental type
@@ -152,7 +152,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *      vector."
     */
    if (type_a->is_vector() && type_b->is_vector()) {
-      return (type_a == type_b) ? type_a : glsl_error_type;
+      return (type_a == type_b) ? type_a : glsl_type::error_type;
    }
 
    /* All of the combinations of <scalar, scalar>, <vector, scalar>,
@@ -181,7 +181,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
     *      more detail how vectors and matrices are operated on."
     */
    if (! multiply) {
-      return (type_a == type_b) ? type_a : glsl_error_type;
+      return (type_a == type_b) ? type_a : glsl_type::error_type;
    } else {
       if (type_a->is_matrix() && type_b->is_matrix()) {
 	 /* Matrix multiply.  The columns of A must match the rows of B.  Given
@@ -224,7 +224,7 @@ arithmetic_result_type(const struct glsl_type *type_a,
 
    /*    "All other cases are illegal."
     */
-   return glsl_error_type;
+   return glsl_type::error_type;
 }
 
 
@@ -240,7 +240,7 @@ unary_arithmetic_result_type(const struct glsl_type *type)
     *     they operated on."
     */
    if (!is_numeric_base_type(type->base_type))
-      return glsl_error_type;
+      return glsl_type::error_type;
 
    return type;
 }
@@ -258,7 +258,7 @@ modulus_result_type(const struct glsl_type *type_a,
    if (! is_integer_base_type(type_a->base_type)
        || ! is_integer_base_type(type_b->base_type)
        || (type_a->base_type != type_b->base_type)) {
-      return glsl_error_type;
+      return glsl_type::error_type;
    }
 
    /*    "The operands cannot be vectors of differing size. If one operand is
@@ -276,7 +276,7 @@ modulus_result_type(const struct glsl_type *type_a,
    /*    "The operator modulus (%) is not defined for any other data types
     *    (non-integer types)."
     */
-   return glsl_error_type;
+   return glsl_type::error_type;
 }
 
 
@@ -294,7 +294,7 @@ relational_result_type(const struct glsl_type *type_a,
        || ! is_numeric_base_type(type_b->base_type)
        || !type_a->is_scalar()
        || !type_b->is_scalar())
-      return glsl_error_type;
+      return glsl_type::error_type;
 
    /*    "Either the operands' types must match, or the conversions from
     *    Section 4.1.10 "Implicit Conversions" will be applied to the integer
@@ -314,11 +314,11 @@ relational_result_type(const struct glsl_type *type_a,
    }
 
    if (type_a->base_type != type_b->base_type)
-      return glsl_error_type;
+      return glsl_type::error_type;
 
    /*    "The result is scalar Boolean."
     */
-   return glsl_bool_type;
+   return glsl_type::bool_type;
 }
 
 
@@ -434,7 +434,7 @@ ast_expression::hir(exec_list *instructions,
    ir_rvalue *result = NULL;
    ir_rvalue *op[2];
    struct simple_node op_list;
-   const struct glsl_type *type = glsl_error_type;
+   const struct glsl_type *type = glsl_type::error_type;
    bool error_emitted = false;
    YYLTYPE loc;
 
@@ -456,13 +456,13 @@ ast_expression::hir(exec_list *instructions,
 	 if (!op[0]->is_lvalue()) {
 	    _mesa_glsl_error(& loc, state, "non-lvalue in assignment");
 	    error_emitted = true;
-	    type = glsl_error_type;
+	    type = glsl_type::error_type;
 	 }
       }
 
       ir_instruction *rhs = validate_assignment(op[0]->type, op[1]);
       if (rhs == NULL) {
-	 type = glsl_error_type;
+	 type = glsl_type::error_type;
 	 rhs = op[1];
       }
 
@@ -597,13 +597,13 @@ ast_expression::hir(exec_list *instructions,
 	 if (!op[0]->is_lvalue()) {
 	    _mesa_glsl_error(& loc, state, "non-lvalue in assignment");
 	    error_emitted = true;
-	    type = glsl_error_type;
+	    type = glsl_type::error_type;
 	 }
       }
 
       ir_rvalue *rhs = validate_assignment(op[0]->type, temp_rhs);
       if (rhs == NULL) {
-	 type = glsl_error_type;
+	 type = glsl_type::error_type;
 	 rhs = temp_rhs;
       }
 
@@ -674,22 +674,22 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_int_constant:
-      type = glsl_int_type;
+      type = glsl_type::int_type;
       result = new ir_constant(type, & this->primary_expression);
       break;
 
    case ast_uint_constant:
-      type = glsl_uint_type;
+      type = glsl_type::uint_type;
       result = new ir_constant(type, & this->primary_expression);
       break;
 
    case ast_float_constant:
-      type = glsl_float_type;
+      type = glsl_type::float_type;
       result = new ir_constant(type, & this->primary_expression);
       break;
 
    case ast_bool_constant:
-      type = glsl_bool_type;
+      type = glsl_type::bool_type;
       result = new ir_constant(type, & this->primary_expression);
       break;
 
@@ -939,7 +939,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
 			  this->identifier);
       }
 
-      type = glsl_error_type;
+      type = glsl_type::error_type;
    }
 
    ir_variable *var = new ir_variable(type, this->identifier);

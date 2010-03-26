@@ -119,13 +119,13 @@ cat <<EOF
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
-static const struct glsl_type error_type =
+static const struct glsl_type _error_type =
    glsl_type(GLSL_TYPE_ERROR, 0, 0, "");
 
 static const struct glsl_type void_type =
    glsl_type(GLSL_TYPE_VOID, 0, 0, "void");
 
-const struct glsl_type *const glsl_error_type = & error_type;
+const glsl_type *const glsl_type::error_type = & _error_type;
 
 EOF
 
@@ -173,9 +173,9 @@ gen_sampler_type "2DRect" "GLSL_SAMPLER_DIM_RECT" 1 0 "GLSL_TYPE_FLOAT"
 gen_footer
 
 echo
-echo 'const struct glsl_type *const glsl_bool_type  = & builtin_core_types['$bool_index'];'
-echo 'const struct glsl_type *const glsl_int_type   = & builtin_core_types['$int_index'];'
-echo 'const struct glsl_type *const glsl_float_type = & builtin_core_types['$float_index'];'
+echo 'const glsl_type *const glsl_type::bool_type  = & builtin_core_types['$bool_index'];'
+echo 'const glsl_type *const glsl_type::int_type   = & builtin_core_types['$int_index'];'
+echo 'const glsl_type *const glsl_type::float_type = & builtin_core_types['$float_index'];'
 echo 'const glsl_type *const glsl_type::mat2_type = & builtin_core_types['$(($matX_index + 0))'];'
 echo 'const glsl_type *const glsl_type::mat3_type = & builtin_core_types['$(($matX_index + 1))'];'
 echo 'const glsl_type *const glsl_type::mat4_type = & builtin_core_types['$(($matX_index + 2))'];'
@@ -325,7 +325,7 @@ gen_sampler_type "Cube"   "GLSL_SAMPLER_DIM_CUBE" 0 0 "GLSL_TYPE_UINT"
 
 gen_footer
 echo ''
-echo 'const struct glsl_type *const glsl_uint_type   = & builtin_130_types['$uint_index'];'
+echo 'const glsl_type *const glsl_type::uint_type = & builtin_130_types['$uint_index'];'
 echo '/*@}*/'
 
 echo
