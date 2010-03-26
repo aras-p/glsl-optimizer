@@ -607,32 +607,56 @@ ast_expression::hir(exec_list *instructions,
       temp_rhs = new ir_expression(operations[this->oper], type,
 				   op[0], op[1]);
 
-      /* FINISHME: Check that the LHS is assignable. */
-
-      /* We still have to test that the LHS and RHS have matching type.  For
-       * example, the following GLSL code should generate a type error:
-       *
-       *    mat4 m; vec4 v; m *= v;
-       *
-       * The type of (m*v) is a vec4, but the type of m is a mat4.
-       *
-       * FINISHME: Is multiplication between a matrix and a vector the only
-       * FINISHME: case that resuls in mismatched types?
+      /* FINISHME: This is copied from ast_assign above.  It should
+       * FINISHME: probably be consolidated.
        */
-      /* FINISHME: Check that the LHS and RHS have matching types. */
+      error_emitted = ((op[0]->type == glsl_error_type)
+		       || (temp_rhs->type == glsl_error_type));
+
+      type = op[0]->type;
+      if (!error_emitted) {
+	 YYLTYPE loc;
+
+	 /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
+	 loc = this->subexpressions[0]->get_location();
+	 if (op[0]->mode != ir_op_dereference) {
+	    _mesa_glsl_error(& loc, state, "invalid lvalue in assignment");
+	    error_emitted = true;
+
+	    type = glsl_error_type;
+	 } else {
+	    const struct ir_dereference *const ref =
+	       (struct ir_dereference *) op[0];
+	    const struct ir_variable *const var =
+	       (struct ir_variable *) ref->var;
+
+	    if ((var != NULL)
+		&& (var->mode == ir_op_var_decl)
+		&& (var->read_only)) {
+	       _mesa_glsl_error(& loc, state, "cannot assign to read-only "
+				"variable `%s'", var->name);
+	       error_emitted = true;
+
+	       type = glsl_error_type;
+	    }
+	 }
+      }
+
+      ir_instruction *rhs = validate_assignment(op[0]->type, temp_rhs);
+      if (rhs == NULL) {
+	 type = glsl_error_type;
+	 rhs = temp_rhs;
+      }
+
+      ir_instruction *tmp = new ir_assignment(op[0], rhs, NULL);
+      instructions->push_tail(tmp);
 
       /* GLSL 1.10 does not allow array assignment.  However, we don't have to
        * explicitly test for this because none of the binary expression
        * operators allow array operands either.
        */
 
-      /* FINISHME: This is wrong.  The operation should assign to a new
-       * FINISHME: temporary.  This assignment should then be added to the
-       * FINISHME: instruction list.  Another assignment to the real
-       * FINISHME: destination should be generated.  The temporary should then
-       * FINISHME: be returned as the r-value.
-       */
-      result = new ir_assignment(op[0], temp_rhs, NULL);
+      result = op[0];
       break;
    }
 
