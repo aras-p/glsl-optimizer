@@ -39,9 +39,6 @@
 #define GLSL_TYPE_VOID          8
 #define GLSL_TYPE_ERROR         9
 
-#define is_numeric_base_type(b) \
-   (((b) >= GLSL_TYPE_UINT) && ((b) <= GLSL_TYPE_FLOAT))
-
 #define is_error_type(t) ((t)->base_type == GLSL_TYPE_ERROR)
 
 enum glsl_sampler_dim {

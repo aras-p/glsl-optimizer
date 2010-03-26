@@ -239,7 +239,7 @@ unary_arithmetic_result_type(const struct glsl_type *type)
     *     component-wise on their operands. These result with the same type
     *     they operated on."
     */
-   if (!is_numeric_base_type(type->base_type))
+   if (!type->is_numeric())
       return glsl_type::error_type;
 
    return type;
@@ -289,8 +289,8 @@ relational_result_type(const struct glsl_type *type_a,
     *    than or equal (>=), and less than or equal (<=) operate only on
     *    scalar integer and scalar floating-point expressions."
     */
-   if (! is_numeric_base_type(type_a->base_type)
-       || ! is_numeric_base_type(type_b->base_type)
+   if (!type_a->is_numeric()
+       || !type_b->is_numeric()
        || !type_a->is_scalar()
        || !type_b->is_scalar())
       return glsl_type::error_type;
