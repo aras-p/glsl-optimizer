@@ -62,6 +62,7 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
    struct simple_node *ptr;
 
    _mesa_glsl_initialize_variables(instructions, state);
+   _mesa_glsl_initialize_constructors(instructions, state);
 
    state->current_function = NULL;
 
