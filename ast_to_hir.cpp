@@ -656,7 +656,26 @@ ast_expression::hir(exec_list *instructions,
    case ast_conditional:
 
    case ast_pre_inc:
-   case ast_pre_dec:
+   case ast_pre_dec: {
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      if (op[0]->type->base_type == GLSL_TYPE_FLOAT)
+	 op[1] = new ir_constant(1.0f);
+      else
+	 op[1] = new ir_constant(1);
+
+      type = arithmetic_result_type(op[0]->type, op[1]->type,
+				    false, state);
+
+      struct ir_rvalue *temp_rhs;
+      temp_rhs = new ir_expression(operations[this->oper], type,
+				   op[0], op[1]);
+
+      result = do_assignment(instructions, state, op[0], temp_rhs,
+			     this->subexpressions[0]->get_location());
+      type = result->type;
+      error_emitted = op[0]->type->is_error();
+      break;
+   }
 
    case ast_post_inc:
    case ast_post_dec: {
