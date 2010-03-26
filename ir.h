@@ -217,7 +217,7 @@ public:
    ir_rvalue *condition;
 };
 
-
+/* Update ir_print_visitor.cpp when updating this list. */
 enum ir_expression_operation {
    ir_unop_bit_not,
    ir_unop_logic_not,

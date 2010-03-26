@@ -86,22 +86,53 @@ void ir_print_visitor::visit(ir_function *ir)
 
 void ir_print_visitor::visit(ir_expression *ir)
 {
+   static const char *const operators[] = {
+      "~",
+      "!",
+      "-",
+      "abs",
+      "rcp",
+      "rsq",
+      "exp",
+      "log",
+      "f2i",
+      "i2f",
+      "u2f",
+      "trunc",
+      "ceil",
+      "floor",
+      "+",
+      "-",
+      "*",
+      "/",
+      "%",
+      "<",
+      ">",
+      "<=",
+      ">=",
+      "==",
+      "!=",
+      "<<",
+      ">>",
+      "&",
+      "^",
+      "|",
+      "&&",
+      "^^",
+      "||",
+      "!",
+      "dot",
+      "min",
+      "max",
+   };
+
    printf("(expression ");
 
-   const char *str;
-   char buf[256];
+   assert((unsigned int)ir->operation <
+	  sizeof(operators) / sizeof(operators[0]));
 
-   switch (ir->operation) {
-   case ir_unop_f2i: str = "f2i"; break;
-   case ir_unop_i2f: str = "i2f"; break;
-   case ir_unop_u2f: str = "u2f"; break;
-   default:
-      snprintf(buf, sizeof(buf), "operator %u", ir->operation);
-      str = buf;
-      break;
-   }
-
-   printf("(%s) (", str);
+   printf("%s", operators[ir->operation]);
+   printf("(");
    if (ir->operands[0])
       ir->operands[0]->accept(this);
    printf(") ");
