@@ -47,22 +47,21 @@ print_type(const glsl_type *t)
 
 void ir_print_visitor::visit(ir_variable *ir)
 {
-   printf("(declare \n");
+   printf("(declare ");
 
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "in ", "out ", "inout " };
    const char *const interp[] = { "", "flat", "noperspective" };
 
-   printf("    (%s%s%s%s)\n",
+   printf("(%s%s%s%s) ",
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
 
-   printf("    (");
+   printf("(");
    print_type(ir->type);
-   printf(")\n");
+   printf(") ");
 
-   printf("    (%s)\n", ir->name);
-   printf(")\n");
+   printf("(%s))\n", ir->name);
 }
 
 
