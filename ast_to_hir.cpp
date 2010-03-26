@@ -455,20 +455,16 @@ ast_expression::hir(exec_list *instructions,
 
 	 /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
 	 loc = this->subexpressions[0]->get_location();
-	 if (op[0]->mode != ir_op_dereference) {
+	 const ir_dereference *const ref = op[0]->as_dereference();
+	 if (ref == NULL) {
 	    _mesa_glsl_error(& loc, state, "invalid lvalue in assignment");
 	    error_emitted = true;
 
 	    type = glsl_error_type;
 	 } else {
-	    const struct ir_dereference *const ref =
-	       (struct ir_dereference *) op[0];
-	    const struct ir_variable *const var =
-	       (struct ir_variable *) ref->var;
+	    const ir_variable *const var = (ir_variable *) ref->var;
 
-	    if ((var != NULL)
-		&& (var->mode == ir_op_var_decl)
-		&& (var->read_only)) {
+	    if (var != NULL && var->read_only) {
 	       _mesa_glsl_error(& loc, state, "cannot assign to read-only "
 				"variable `%s'", var->name);
 	       error_emitted = true;
@@ -620,20 +616,16 @@ ast_expression::hir(exec_list *instructions,
 
 	 /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
 	 loc = this->subexpressions[0]->get_location();
-	 if (op[0]->mode != ir_op_dereference) {
+	 const ir_dereference *const ref = op[0]->as_dereference();
+	 if (ref == NULL) {
 	    _mesa_glsl_error(& loc, state, "invalid lvalue in assignment");
 	    error_emitted = true;
 
 	    type = glsl_error_type;
 	 } else {
-	    const struct ir_dereference *const ref =
-	       (struct ir_dereference *) op[0];
-	    const struct ir_variable *const var =
-	       (struct ir_variable *) ref->var;
+	    const ir_variable *const var = (ir_variable *) ref->var;
 
-	    if ((var != NULL)
-		&& (var->mode == ir_op_var_decl)
-		&& (var->read_only)) {
+	    if (var != NULL && var->read_only) {
 	       _mesa_glsl_error(& loc, state, "cannot assign to read-only "
 				"variable `%s'", var->name);
 	       error_emitted = true;
@@ -1126,7 +1118,7 @@ ast_function_definition::hir(exec_list *instructions,
        * either include invalid parameter names or may not have names at all.
        */
       foreach_iter(exec_list_iterator, iter, signature->parameters) {
-	 assert(((struct ir_instruction *)iter.get())->mode == ir_op_var_decl);
+	 assert(((ir_instruction *) iter.get())->as_variable() != NULL);
 
 	 iter.remove();
 	 delete iter.get();
@@ -1157,7 +1149,7 @@ ast_function_definition::hir(exec_list *instructions,
    foreach_iter(exec_list_iterator, iter, parameters) {
       ir_variable *const var = (ir_variable *) iter.get();
 
-      assert(((ir_instruction *)var)->mode == ir_op_var_decl);
+      assert(((ir_instruction *) var)->as_variable() != NULL);
 
       iter.remove();
       instructions->push_tail(var);

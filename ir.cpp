@@ -28,7 +28,7 @@
 
 ir_assignment::ir_assignment(ir_instruction *lhs, ir_instruction *rhs,
 			     ir_expression *condition)
-   : ir_instruction(ir_op_assign)
+   : ir_instruction()
 {
    this->lhs = (ir_dereference *) lhs;
    this->rhs = rhs;
@@ -38,7 +38,7 @@ ir_assignment::ir_assignment(ir_instruction *lhs, ir_instruction *rhs,
 
 ir_expression::ir_expression(int op, const struct glsl_type *type,
 			     ir_instruction *op0, ir_instruction *op1)
-   : ir_instruction(ir_op_expression)
+   : ir_instruction()
 {
    this->type = type;
    this->operation = ir_expression_operation(op);
@@ -48,14 +48,14 @@ ir_expression::ir_expression(int op, const struct glsl_type *type,
 
 
 ir_label::ir_label(const char *label)
-   : ir_instruction(ir_op_label), label(label)
+   : ir_instruction(), label(label)
 {
    /* empty */
 }
 
 
 ir_constant::ir_constant(const struct glsl_type *type, const void *data)
-   : ir_instruction(ir_op_constant)
+   : ir_instruction()
 {
    const unsigned elements = 
       ((type->vector_elements == 0) ? 1 : type->vector_elements)
@@ -79,7 +79,7 @@ ir_constant::ir_constant(const struct glsl_type *type, const void *data)
 
 
 ir_dereference::ir_dereference(ir_instruction *var)
-   : ir_instruction(ir_op_dereference)
+   : ir_instruction()
 {
    this->mode = ir_reference_variable;
    this->var = var;
@@ -89,7 +89,7 @@ ir_dereference::ir_dereference(ir_instruction *var)
 
 ir_dereference::ir_dereference(ir_instruction *var,
 			       ir_instruction *array_index)
-   : ir_instruction(ir_op_dereference), mode(ir_reference_array),
+   : ir_instruction(), mode(ir_reference_array),
      var(var)
 {
    this->type = (var != NULL) ? var->type : glsl_error_type;
@@ -124,8 +124,8 @@ ir_dereference::set_swizzle(unsigned x, unsigned y, unsigned z, unsigned w,
 
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name)
-   : ir_instruction(ir_op_var_decl), read_only(false), centroid(false),
-     invariant(false), mode(ir_var_auto), interpolation(ir_var_smooth)
+   : ir_instruction(), read_only(false), centroid(false), invariant(false),
+     mode(ir_var_auto), interpolation(ir_var_smooth)
 {
    this->type = type;
    this->name = name;
@@ -133,14 +133,14 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name)
 
 
 ir_function_signature::ir_function_signature(const glsl_type *return_type)
-   : ir_instruction(ir_op_func_sig), return_type(return_type), definition(NULL)
+   : ir_instruction(), return_type(return_type), definition(NULL)
 {
    /* empty */
 }
 
 
 ir_function::ir_function(const char *name)
-   : ir_instruction(ir_op_func), name(name)
+   : ir_instruction(), name(name)
 {
    /* empty */
 }

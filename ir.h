@@ -33,46 +33,32 @@ struct ir_program {
    void *bong_hits;
 };
 
-
-enum ir_opcodes {
-   ir_op_var_decl,
-   ir_op_assign,
-   ir_op_expression,
-   ir_op_dereference,
-   ir_op_jump,
-   ir_op_label,
-   ir_op_constant,
-   ir_op_func_sig,
-   ir_op_func,
-   ir_op_call,
-};
-
 /**
  * Base class of all IR instructions
  */
 class ir_instruction : public exec_node {
 public:
-   unsigned mode;
    const struct glsl_type *type;
 
    virtual void accept(ir_visitor *) = 0;
 
+   /**
+    * \name IR instruction downcast functions
+    *
+    * These functions either cast the object to a derived class or return
+    * \c NULL if the object's type does not match the specified derived class.
+    * Additional downcast functions will be added as needed.
+    */
+   /*@{*/
+   virtual class ir_variable *          as_variable()         { return NULL; }
+   virtual class ir_dereference *       as_dereference()      { return NULL; }
+   /*@}*/
+
 protected:
-   ir_instruction(int mode)
-      : mode(mode)
+   ir_instruction()
    {
       /* empty */
    }
-
-private:
-   /**
-    * Dummy constructor to catch bad constructors in derived classes.
-    *
-    * Every derived must use the constructor that sets the instructions
-    * mode.  Having the \c void constructor private prevents derived classes
-    * from accidentally doing the wrong thing.
-    */
-   ir_instruction(void);
 };
 
 
@@ -93,6 +79,11 @@ enum ir_varaible_interpolation {
 class ir_variable : public ir_instruction {
 public:
    ir_variable(const struct glsl_type *, const char *);
+
+   virtual ir_variable *as_variable()
+   {
+      return this;
+   }
 
    virtual void accept(ir_visitor *v)
    {
@@ -181,8 +172,6 @@ public:
 };
 /*@}*/
 
-class ir_expression;
-class ir_dereference;
 
 class ir_assignment : public ir_instruction {
 public:
@@ -296,7 +285,7 @@ public:
 class ir_call : public ir_instruction {
 public:
    ir_call(const ir_function_signature *callee, exec_list *actual_parameters)
-      : ir_instruction(ir_op_call), callee(callee)
+      : ir_instruction(), callee(callee)
    {
       assert(callee->return_type != NULL);
       type = callee->return_type;
@@ -315,7 +304,7 @@ public:
 
 private:
    ir_call()
-      : ir_instruction(ir_op_call), callee(NULL)
+      : ir_instruction(), callee(NULL)
    {
       /* empty */
    }
@@ -334,7 +323,7 @@ private:
 class ir_jump : public ir_instruction {
 protected:
    ir_jump()
-      : ir_instruction(ir_op_jump)
+      : ir_instruction()
    {
       /* empty */
    }
@@ -394,6 +383,11 @@ public:
    ir_dereference(struct ir_instruction *);
 
    ir_dereference(ir_instruction *variable, ir_instruction *array_index);
+
+   virtual ir_dereference *as_dereference()
+   {
+      return this;
+   }
 
    virtual void accept(ir_visitor *v)
    {
