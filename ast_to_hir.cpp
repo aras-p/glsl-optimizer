@@ -359,6 +359,33 @@ validate_assignment(const glsl_type *lhs_type, ir_rvalue *rhs)
    return NULL;
 }
 
+ir_rvalue *
+do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
+	      ir_rvalue *lhs, ir_rvalue *rhs,
+	      YYLTYPE lhs_loc)
+{
+   bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
+
+   if (!error_emitted) {
+      /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
+      if (!lhs->is_lvalue()) {
+	 _mesa_glsl_error(& lhs_loc, state, "non-lvalue in assignment");
+	 error_emitted = true;
+      }
+   }
+
+   ir_rvalue *new_rhs = validate_assignment(lhs->type, rhs);
+   if (new_rhs == NULL) {
+      _mesa_glsl_error(& lhs_loc, state, "type mismatch");
+   } else {
+      rhs = new_rhs;
+   }
+
+   ir_instruction *tmp = new ir_assignment(lhs, rhs, NULL);
+   instructions->push_tail(tmp);
+
+   return rhs;
+}
 
 ir_rvalue *
 ast_node::hir(exec_list *instructions,
@@ -445,30 +472,10 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
-
-      type = op[0]->type;
-      if (!error_emitted) {
-	 YYLTYPE loc;
-
-	 /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
-	 if (!op[0]->is_lvalue()) {
-	    _mesa_glsl_error(& loc, state, "non-lvalue in assignment");
-	    error_emitted = true;
-	    type = glsl_type::error_type;
-	 }
-      }
-
-      ir_instruction *rhs = validate_assignment(op[0]->type, op[1]);
-      if (rhs == NULL) {
-	 type = glsl_type::error_type;
-	 rhs = op[1];
-      }
-
-      ir_instruction *tmp = new ir_assignment(op[0], op[1], NULL);
-      instructions->push_tail(tmp);
-
-      result = op[0];
+      result = do_assignment(instructions, state, op[0], op[1],
+			     this->subexpressions[0]->get_location());
+      error_emitted = result->type->is_error();
+      type = result->type;
       break;
    }
 
@@ -575,8 +582,6 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
-
       type = arithmetic_result_type(op[0]->type, op[1]->type,
 				    (this->oper == ast_mul_assign),
 				    state);
@@ -584,37 +589,16 @@ ast_expression::hir(exec_list *instructions,
       ir_rvalue *temp_rhs = new ir_expression(operations[this->oper], type,
 				              op[0], op[1]);
 
-      /* FINISHME: This is copied from ast_assign above.  It should
-       * FINISHME: probably be consolidated.
-       */
-      error_emitted = op[0]->type->is_error() || temp_rhs->type->is_error();
-
-      type = op[0]->type;
-      if (!error_emitted) {
-	 YYLTYPE loc;
-
-	 if (!op[0]->is_lvalue()) {
-	    _mesa_glsl_error(& loc, state, "non-lvalue in assignment");
-	    error_emitted = true;
-	    type = glsl_type::error_type;
-	 }
-      }
-
-      ir_rvalue *rhs = validate_assignment(op[0]->type, temp_rhs);
-      if (rhs == NULL) {
-	 type = glsl_type::error_type;
-	 rhs = temp_rhs;
-      }
-
-      ir_instruction *tmp = new ir_assignment(op[0], rhs, NULL);
-      instructions->push_tail(tmp);
+      result = do_assignment(instructions, state, op[0], temp_rhs,
+			     this->subexpressions[0]->get_location());
+      type = result->type;
+      error_emitted = (op[0]->type->is_error());
 
       /* GLSL 1.10 does not allow array assignment.  However, we don't have to
        * explicitly test for this because none of the binary expression
        * operators allow array operands either.
        */
 
-      result = op[0];
       break;
    }
 
