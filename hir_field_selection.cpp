@@ -45,7 +45,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
     * being applied.
     */
    YYLTYPE loc = expr->get_location();
-   if (op->type == glsl_error_type) {
+   if (op->type->is_error()) {
       /* silently propagate the error */
    } else if (op->type->is_vector()) {
       ir_swizzle *swiz = ir_swizzle::create(op,

@@ -446,8 +446,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = ((op[0]->type == glsl_error_type)
-		       || (op[1]->type == glsl_error_type));
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
       type = op[0]->type;
       if (!error_emitted) {
@@ -477,8 +476,8 @@ ast_expression::hir(exec_list *instructions,
    case ast_plus:
       op[0] = this->subexpressions[0]->hir(instructions, state);
 
-      error_emitted = (op[0]->type == glsl_error_type);
-      if (type == glsl_error_type)
+      error_emitted = op[0]->type->is_error();
+      if (type->is_error())
 	 op[0]->type = type;
 
       result = op[0];
@@ -489,7 +488,7 @@ ast_expression::hir(exec_list *instructions,
 
       type = unary_arithmetic_result_type(op[0]->type);
 
-      error_emitted = (op[0]->type == glsl_error_type);
+      error_emitted = op[0]->type->is_error();
 
       result = new ir_expression(operations[this->oper], type,
 				 op[0], NULL);
@@ -514,8 +513,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = ((op[0]->type == glsl_error_type)
-		       || (op[1]->type == glsl_error_type));
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
       type = modulus_result_type(op[0]->type, op[1]->type);
 
@@ -537,15 +535,14 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = ((op[0]->type == glsl_error_type)
-		       || (op[1]->type == glsl_error_type));
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
       type = relational_result_type(op[0]->type, op[1]->type, state);
 
       /* The relational operators must either generate an error or result
        * in a scalar boolean.  See page 57 of the GLSL 1.50 spec.
        */
-      assert((type == glsl_error_type)
+      assert(type->is_error()
 	     || ((type->base_type == GLSL_TYPE_BOOL)
 		 && type->is_scalar()));
 
@@ -579,8 +576,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = ((op[0]->type == glsl_error_type)
-		       || (op[1]->type == glsl_error_type));
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
       type = arithmetic_result_type(op[0]->type, op[1]->type,
 				    (this->oper == ast_mul_assign),
@@ -592,8 +588,7 @@ ast_expression::hir(exec_list *instructions,
       /* FINISHME: This is copied from ast_assign above.  It should
        * FINISHME: probably be consolidated.
        */
-      error_emitted = ((op[0]->type == glsl_error_type)
-		       || (temp_rhs->type == glsl_error_type));
+      error_emitted = op[0]->type->is_error() || temp_rhs->type->is_error();
 
       type = op[0]->type;
       if (!error_emitted) {
