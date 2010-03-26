@@ -717,7 +717,7 @@ ast_expression::hir(exec_list *instructions,
    }
    }
 
-   if (is_error_type(type) && !error_emitted)
+   if (type->is_error() && !error_emitted)
       _mesa_glsl_error(& loc, state, "type mismatch");
 
    return result;
