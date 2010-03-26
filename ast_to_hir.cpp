@@ -387,6 +387,29 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    return rhs;
 }
 
+static ir_rvalue *
+get_lvalue_copy(exec_list *instructions, struct _mesa_glsl_parse_state *state,
+		ir_rvalue *lvalue, YYLTYPE loc)
+{
+   ir_variable *var;
+   ir_rvalue *var_deref;
+
+   /* FINISHME: Give unique names to the temporaries. */
+   var = new ir_variable(lvalue->type, "_internal_tmp");
+   var->mode = ir_var_auto;
+
+   var_deref = new ir_dereference(var);
+   do_assignment(instructions, state, var_deref, lvalue, loc);
+
+   /* Once we've created this temporary, mark it read only so it's no
+    * longer considered an lvalue.
+    */
+   var->read_only = true;
+
+   return var_deref;
+}
+
+
 ir_rvalue *
 ast_node::hir(exec_list *instructions,
 	      struct _mesa_glsl_parse_state *state)
@@ -443,10 +466,10 @@ ast_expression::hir(exec_list *instructions,
       ir_binop_bit_or,  /* ast_or_assign */
 
       -1,               /* ast_conditional doesn't convert to ir_expression. */
-      -1,               /* ast_pre_inc doesn't convert to ir_expression. */
-      -1,               /* ast_pre_dec doesn't convert to ir_expression. */
-      -1,               /* ast_post_inc doesn't convert to ir_expression. */
-      -1,               /* ast_post_dec doesn't convert to ir_expression. */
+      ir_binop_add,     /* ast_pre_inc. */
+      ir_binop_sub,     /* ast_pre_dec. */
+      ir_binop_add,     /* ast_post_inc. */
+      ir_binop_sub,     /* ast_post_dec. */
       -1,               /* ast_field_selection doesn't conv to ir_expression. */
       -1,               /* ast_array_index doesn't convert to ir_expression. */
       -1,               /* ast_function_call doesn't conv to ir_expression. */
@@ -636,8 +659,35 @@ ast_expression::hir(exec_list *instructions,
    case ast_pre_dec:
 
    case ast_post_inc:
-   case ast_post_dec:
+   case ast_post_dec: {
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      if (op[0]->type->base_type == GLSL_TYPE_FLOAT)
+	 op[1] = new ir_constant(1.0f);
+      else
+	 op[1] = new ir_constant(1);
+
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+
+      type = arithmetic_result_type(op[0]->type, op[1]->type,
+				    false, state);
+
+      struct ir_rvalue *temp_rhs;
+      temp_rhs = new ir_expression(operations[this->oper], type,
+				   op[0], op[1]);
+
+      /* Get a temporary of a copy of the lvalue before it's modified.
+       * This may get thrown away later.
+       */
+      result = get_lvalue_copy(instructions, state, op[0],
+			       this->subexpressions[0]->get_location());
+
+      (void)do_assignment(instructions, state, op[0], temp_rhs,
+			  this->subexpressions[0]->get_location());
+
+      type = result->type;
+      error_emitted = op[0]->type->is_error();
       break;
+   }
 
    case ast_field_selection:
       result = _mesa_ast_field_selection_to_hir(this, instructions, state);
