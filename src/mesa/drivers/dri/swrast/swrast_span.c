@@ -236,7 +236,7 @@ static const GLubyte kernel[16] = {
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLushort *P = (GLushort *)row;
-#define INC_PIXEL_PTR(P) P += 2
+#define INC_PIXEL_PTR(P) P++
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    STORE_PIXEL_R5G6B5(DST, X, Y, VALUE)
 #define FETCH_PIXEL(DST, SRC) \
