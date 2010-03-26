@@ -602,7 +602,26 @@ ast_expression::hir(exec_list *instructions,
       break;
    }
 
-   case ast_mod_assign:
+   case ast_mod_assign: {
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
+
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+
+      type = modulus_result_type(op[0]->type, op[1]->type);
+
+      assert(operations[this->oper] == ir_binop_mod);
+
+      struct ir_rvalue *temp_rhs;
+      temp_rhs = new ir_expression(operations[this->oper], type,
+				   op[0], op[1]);
+
+      result = do_assignment(instructions, state, op[0], temp_rhs,
+			     this->subexpressions[0]->get_location());
+      type = result->type;
+      error_emitted = op[0]->type->is_error();
+      break;
+   }
 
    case ast_ls_assign:
    case ast_rs_assign:
