@@ -177,12 +177,8 @@ void ir_print_visitor::visit(ir_constant *ir)
    print_type(base_type);
    printf(") ");
 
-   const unsigned num_values = 1
-      * ((ir->type->vector_elements > 0) ? ir->type->vector_elements : 1)
-      * ((ir->type->matrix_columns > 0) ? ir->type->matrix_columns : 1);
-
-   printf("(%d) (", num_values);
-   for (unsigned i = 0; i < num_values; i++) {
+   printf("(%d) (", ir->type->components());
+   for (unsigned i = 0; i < ir->type->components(); i++) {
       if (i != 0)
 	 printf(", ");
 

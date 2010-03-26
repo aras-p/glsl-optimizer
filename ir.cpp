@@ -57,9 +57,6 @@ ir_label::ir_label(const char *label)
 ir_constant::ir_constant(const struct glsl_type *type, const void *data)
    : ir_rvalue()
 {
-   const unsigned elements = 
-      ((type->vector_elements == 0) ? 1 : type->vector_elements)
-      * ((type->matrix_columns == 0) ? 1 : type->matrix_columns);
    unsigned size = 0;
 
    this->type = type;
@@ -74,7 +71,7 @@ ir_constant::ir_constant(const struct glsl_type *type, const void *data)
       break;
    }
 
-   memcpy(& this->value, data, size * elements);
+   memcpy(& this->value, data, size * type->components());
 }
 
 

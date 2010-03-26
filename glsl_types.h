@@ -158,6 +158,16 @@ struct glsl_type {
 					unsigned columns);
 
    /**
+    * Query the total number of scalars that make up a scalar, vector or matrix
+    */
+   unsigned components() const
+   {
+      return ((vector_elements == 0) ? 1 : vector_elements)
+	 * ((matrix_columns == 0) ? 1 : matrix_columns);
+
+   }
+
+   /**
     * Query whether or not a type is a scalar (non-vector and non-matrix).
     */
    bool is_scalar() const
