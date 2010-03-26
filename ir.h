@@ -229,6 +229,7 @@ enum ir_expression_operation {
    ir_unop_log,
    ir_unop_f2i,      /**< Float-to-integer conversion. */
    ir_unop_i2f,      /**< Integer-to-float conversion. */
+   ir_unop_u2f,      /**< Unsigned-to-float conversion. */
 
    /**
     * \name Unary floating-point rounding operations.
