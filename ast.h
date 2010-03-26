@@ -39,8 +39,8 @@ class ast_node : public simple_node {
 public:
    virtual ~ast_node();
    virtual void print(void) const;
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    /**
     * Retrieve the source location of an AST node
@@ -162,8 +162,8 @@ public:
 
    static const char *operator_string(enum ast_operators op);
 
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    virtual void print(void) const;
 
@@ -219,8 +219,8 @@ public:
       return cons;
    }
 
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
 private:
    /**
@@ -245,8 +245,8 @@ public:
    ast_compound_statement(int new_scope, ast_node *statements);
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    int new_scope;
    struct simple_node statements;
@@ -401,8 +401,8 @@ public:
    ast_declarator_list(ast_fully_specified_type *);
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
    struct simple_node declarations;
@@ -422,8 +422,8 @@ class ast_parameter_declarator : public ast_node {
 public:
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
    char *identifier;
@@ -469,8 +469,8 @@ public:
    ast_expression_statement(ast_expression *);
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    ast_expression *expression;
 };
@@ -531,8 +531,8 @@ public:
    ast_jump_statement(int mode, ast_expression *return_value);
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    enum ast_jump_modes {
       ast_continue,
@@ -549,8 +549,8 @@ class ast_function_definition : public ast_node {
 public:
    virtual void print(void) const;
 
-   virtual ir_instruction *hir(exec_list *instructions,
-			       struct _mesa_glsl_parse_state *state);
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
 
    ast_function *prototype;
    ast_compound_statement *body;
@@ -560,7 +560,7 @@ public:
 extern void
 _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state);
 
-extern struct ir_instruction *
+extern struct ir_rvalue *
 _mesa_ast_field_selection_to_hir(const struct ast_expression *expr,
 				 exec_list *instructions,
 				 struct _mesa_glsl_parse_state *state);

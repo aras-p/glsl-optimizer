@@ -190,7 +190,7 @@ generate_vec_body_from_scalar(exec_list *instructions,
 
    retval->set_swizzle(0, 0, 0, 0, declarations[16]->type->vector_elements);
 
-   inst = new ir_return((ir_expression *) retval);
+   inst = new ir_return(retval);
    instructions->push_tail(inst);
 }
 
@@ -222,7 +222,7 @@ generate_vec_body_from_N_scalars(exec_list *instructions,
 
    ir_dereference *retval = new ir_dereference(declarations[16]);
 
-   inst = new ir_return((ir_expression *) retval);
+   inst = new ir_return(retval);
    instructions->push_tail(inst);
 }
 
@@ -300,7 +300,7 @@ generate_mat_body_from_scalar(exec_list *instructions,
    }
 
    ir_dereference *const retval = new ir_dereference(declarations[16]);
-   inst = new ir_return((ir_expression *) retval);
+   inst = new ir_return(retval);
    instructions->push_tail(inst);
 }
 
@@ -342,7 +342,7 @@ generate_mat_body_from_N_scalars(exec_list *instructions,
 
    ir_dereference *retval = new ir_dereference(declarations[16]);
 
-   inst = new ir_return((ir_expression *) retval);
+   inst = new ir_return(retval);
    instructions->push_tail(inst);
 }
 

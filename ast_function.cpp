@@ -27,7 +27,7 @@
 #include "glsl_types.h"
 #include "ir.h"
 
-static ir_instruction *
+static ir_rvalue *
 match_function_by_name(exec_list *instructions, const char *name,
 		       YYLTYPE *loc, simple_node *parameters,
 		       struct _mesa_glsl_parse_state *state)
@@ -78,7 +78,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {

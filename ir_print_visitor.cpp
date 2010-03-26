@@ -205,7 +205,7 @@ ir_print_visitor::visit(ir_return *ir)
 {
    printf("(return");
 
-   ir_expression *const value = ir->get_value();
+   ir_rvalue *const value = ir->get_value();
    if (value) {
       printf(" ");
       value->accept(this);

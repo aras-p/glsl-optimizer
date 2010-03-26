@@ -106,12 +106,12 @@ generate_swizzle(const char *str, ir_dereference *deref,
 }
 
 
-struct ir_instruction *
+struct ir_rvalue *
 _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 				 exec_list *instructions,
 				 struct _mesa_glsl_parse_state *state)
 {
-   ir_instruction *op;
+   ir_rvalue *op;
    ir_dereference *deref;
    YYLTYPE loc;
 
@@ -128,7 +128,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
     * now.  Doing so prevents spurious error messages from being logged below.
     */
    if (is_error_type(op->type))
-      return (struct ir_instruction *) deref;
+      return deref;
 
    /* There are two kinds of field selection.  There is the selection of a
     * specific field from a structure, and there is the selection of a
@@ -164,5 +164,5 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 		       expr->primary_expression.identifier);
    }
 
-   return (struct ir_instruction *) deref;
+   return deref;
 }

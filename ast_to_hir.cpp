@@ -338,8 +338,8 @@ relational_result_type(const struct glsl_type *type_a,
  * In addition to being used for assignments, this function is used to
  * type-check return values.
  */
-ir_instruction *
-validate_assignment(const glsl_type *lhs_type, ir_instruction *rhs)
+ir_rvalue *
+validate_assignment(const glsl_type *lhs_type, ir_rvalue *rhs)
 {
    const glsl_type *const rhs_type = rhs->type;
 
@@ -361,7 +361,7 @@ validate_assignment(const glsl_type *lhs_type, ir_instruction *rhs)
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_node::hir(exec_list *instructions,
 	      struct _mesa_glsl_parse_state *state)
 {
@@ -372,7 +372,7 @@ ast_node::hir(exec_list *instructions,
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
 {
@@ -431,8 +431,8 @@ ast_expression::hir(exec_list *instructions,
       -1,               /* ast_bool_constant doesn't conv to ir_expression. */
       -1,               /* ast_sequence doesn't convert to ir_expression. */
    };
-   ir_instruction *result = NULL;
-   ir_instruction *op[2];
+   ir_rvalue *result = NULL;
+   ir_rvalue *op[2];
    struct simple_node op_list;
    const struct glsl_type *type = glsl_error_type;
    bool error_emitted = false;
@@ -589,8 +589,6 @@ ast_expression::hir(exec_list *instructions,
    case ast_div_assign:
    case ast_add_assign:
    case ast_sub_assign: {
-      struct ir_instruction *temp_rhs;
-
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
@@ -601,8 +599,8 @@ ast_expression::hir(exec_list *instructions,
 				    (this->oper == ast_mul_assign),
 				    state);
 
-      temp_rhs = new ir_expression(operations[this->oper], type,
-				   op[0], op[1]);
+      ir_rvalue *temp_rhs = new ir_expression(operations[this->oper], type,
+				              op[0], op[1]);
 
       /* FINISHME: This is copied from ast_assign above.  It should
        * FINISHME: probably be consolidated.
@@ -635,7 +633,7 @@ ast_expression::hir(exec_list *instructions,
 	 }
       }
 
-      ir_instruction *rhs = validate_assignment(op[0]->type, temp_rhs);
+      ir_rvalue *rhs = validate_assignment(op[0]->type, temp_rhs);
       if (rhs == NULL) {
 	 type = glsl_error_type;
 	 rhs = temp_rhs;
@@ -759,7 +757,7 @@ ast_expression::hir(exec_list *instructions,
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_expression_statement::hir(exec_list *instructions,
 			      struct _mesa_glsl_parse_state *state)
 {
@@ -781,7 +779,7 @@ ast_expression_statement::hir(exec_list *instructions,
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_compound_statement::hir(exec_list *instructions,
 			    struct _mesa_glsl_parse_state *state)
 {
@@ -863,7 +861,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_declarator_list::hir(exec_list *instructions,
 			 struct _mesa_glsl_parse_state *state)
 {
@@ -951,7 +949,7 @@ ast_declarator_list::hir(exec_list *instructions,
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_parameter_declarator::hir(exec_list *instructions,
 			      struct _mesa_glsl_parse_state *state)
 {
@@ -1038,7 +1036,7 @@ parameter_lists_match(exec_list *list_a, exec_list *list_b)
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_function_definition::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
@@ -1183,7 +1181,7 @@ ast_function_definition::hir(exec_list *instructions,
 }
 
 
-ir_instruction *
+ir_rvalue *
 ast_jump_statement::hir(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state)
 {

@@ -26,19 +26,19 @@
 #include "ir.h"
 #include "glsl_types.h"
 
-ir_assignment::ir_assignment(ir_instruction *lhs, ir_instruction *rhs,
-			     ir_expression *condition)
-   : ir_instruction()
+ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
+			     ir_rvalue *condition)
+   : ir_rvalue()
 {
-   this->lhs = (ir_dereference *) lhs;
+   this->lhs = lhs;
    this->rhs = rhs;
    this->condition = condition;
 }
 
 
 ir_expression::ir_expression(int op, const struct glsl_type *type,
-			     ir_instruction *op0, ir_instruction *op1)
-   : ir_instruction()
+			     ir_rvalue *op0, ir_rvalue *op1)
+   : ir_rvalue()
 {
    this->type = type;
    this->operation = ir_expression_operation(op);
@@ -55,7 +55,7 @@ ir_label::ir_label(const char *label)
 
 
 ir_constant::ir_constant(const struct glsl_type *type, const void *data)
-   : ir_instruction()
+   : ir_rvalue()
 {
    const unsigned elements = 
       ((type->vector_elements == 0) ? 1 : type->vector_elements)
@@ -79,7 +79,7 @@ ir_constant::ir_constant(const struct glsl_type *type, const void *data)
 
 
 ir_dereference::ir_dereference(ir_instruction *var)
-   : ir_instruction()
+   : ir_rvalue()
 {
    this->mode = ir_reference_variable;
    this->var = var;
@@ -88,8 +88,8 @@ ir_dereference::ir_dereference(ir_instruction *var)
 
 
 ir_dereference::ir_dereference(ir_instruction *var,
-			       ir_instruction *array_index)
-   : ir_instruction(), mode(ir_reference_array),
+			       ir_rvalue *array_index)
+   : ir_rvalue(), mode(ir_reference_array),
      var(var)
 {
    this->type = (var != NULL) ? var->type : glsl_error_type;

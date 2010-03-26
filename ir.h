@@ -52,6 +52,7 @@ public:
    /*@{*/
    virtual class ir_variable *          as_variable()         { return NULL; }
    virtual class ir_dereference *       as_dereference()      { return NULL; }
+   virtual class ir_rvalue *            as_rvalue()           { return NULL; }
    /*@}*/
 
 protected:
@@ -59,6 +60,23 @@ protected:
    {
       /* empty */
    }
+};
+
+
+class ir_rvalue : public ir_instruction {
+public:
+   virtual ir_rvalue * as_rvalue()
+   {
+      return this;
+   }
+
+   virtual bool is_lvalue()
+   {
+      return false;
+   }
+
+protected:
+   ir_rvalue() : ir_instruction() { }
 };
 
 
@@ -75,6 +93,7 @@ enum ir_varaible_interpolation {
    ir_var_flat,
    ir_var_noperspective
 };
+
 
 class ir_variable : public ir_instruction {
 public:
@@ -173,10 +192,9 @@ public:
 /*@}*/
 
 
-class ir_assignment : public ir_instruction {
+class ir_assignment : public ir_rvalue {
 public:
-   ir_assignment(ir_instruction *lhs, ir_instruction *rhs,
-		 ir_expression *condition);
+   ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition);
 
    virtual void accept(ir_visitor *v)
    {
@@ -186,19 +204,17 @@ public:
    /**
     * Left-hand side of the assignment.
     */
-   ir_dereference *lhs;
+   ir_rvalue *lhs;
 
    /**
     * Value being assigned
-    *
-    * This should be either \c ir_op_expression or \c ir_op_dereference.
     */
-   ir_instruction *rhs;
+   ir_rvalue *rhs;
 
    /**
     * Optional condition for the assignment.
     */
-   ir_expression *condition;
+   ir_rvalue *condition;
 };
 
 
@@ -264,10 +280,10 @@ enum ir_expression_operation {
    ir_binop_pow
 };
 
-class ir_expression : public ir_instruction {
+class ir_expression : public ir_rvalue {
 public:
    ir_expression(int op, const struct glsl_type *type,
-		 ir_instruction *, ir_instruction *);
+		 ir_rvalue *, ir_rvalue *);
 
    virtual void accept(ir_visitor *v)
    {
@@ -275,17 +291,17 @@ public:
    }
 
    ir_expression_operation operation;
-   ir_instruction *operands[2];
+   ir_rvalue *operands[2];
 };
 
 
 /**
  * IR instruction representing a function call
  */
-class ir_call : public ir_instruction {
+class ir_call : public ir_rvalue {
 public:
    ir_call(const ir_function_signature *callee, exec_list *actual_parameters)
-      : ir_instruction(), callee(callee)
+      : ir_rvalue(), callee(callee)
    {
       assert(callee->return_type != NULL);
       type = callee->return_type;
@@ -304,7 +320,7 @@ public:
 
 private:
    ir_call()
-      : ir_instruction(), callee(NULL)
+      : ir_rvalue(), callee(NULL)
    {
       /* empty */
    }
@@ -337,13 +353,13 @@ public:
       /* empty */
    }
 
-   ir_return(ir_expression *value)
+   ir_return(ir_rvalue *value)
       : value(value)
    {
       /* empty */
    }
 
-   ir_expression *get_value() const
+   ir_rvalue *get_value() const
    {
       return value;
    }
@@ -354,7 +370,7 @@ public:
    }
 
 private:
-   ir_expression *value;
+   ir_rvalue *value;
 };
 /*@}*/
 
@@ -378,11 +394,11 @@ struct ir_swizzle_mask {
    unsigned has_duplicates:1;
 };
 
-class ir_dereference : public ir_instruction {
+class ir_dereference : public ir_rvalue {
 public:
    ir_dereference(struct ir_instruction *);
 
-   ir_dereference(ir_instruction *variable, ir_instruction *array_index);
+   ir_dereference(ir_instruction *variable, ir_rvalue *array_index);
 
    virtual ir_dereference *as_dereference()
    {
@@ -392,6 +408,11 @@ public:
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
+   }
+
+   bool is_lvalue()
+   {
+      return var != NULL;
    }
 
    /**
@@ -410,19 +431,19 @@ public:
    /**
     * Object being dereferenced.
     *
-    * Must be either an \c ir_variable or an \c ir_dereference.
+    * Must be either an \c ir_variable or an \c ir_rvalue.
     */
    ir_instruction *var;
 
    union {
-      ir_instruction *array_index;
+      ir_rvalue *array_index;
       const char *field;
       struct ir_swizzle_mask swizzle;
    } selector;
 };
 
 
-class ir_constant : public ir_instruction {
+class ir_constant : public ir_rvalue {
 public:
    ir_constant(const struct glsl_type *type, const void *data);
 
