@@ -8,10 +8,19 @@ env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
 
-drivers = r300 + trace + softpipe
+env.Prepend(LIBS = [
+    st_dri,
+    radeonwinsys,
+    r300,
+    trace,
+    mesa,
+    glsl,
+    gallium,
+    COMMON_DRI_DRM_OBJECTS
+])
 
 env.SharedLibrary(
     target ='radeon_dri.so',
-    source = COMMON_GALLIUM_SOURCES,
-    LIBS = st_dri + radeonwinsys + mesa + glsl + drivers + gallium + env['LIBS'],
+    source = 'dummy.c',
+    SHLIBPREFIX = '',
 )

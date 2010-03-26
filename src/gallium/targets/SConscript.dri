@@ -1,0 +1,79 @@
+###################################
+# SConcscript file for dri targets
+
+Import('*')
+
+drienv = env.Clone()
+
+drienv.Replace(CPPPATH = [
+	'#src/mesa/drivers/dri/common',
+	'#include',
+	'#include/GL/internal',
+	'#src/gallium/include',
+	'#src/gallium/auxiliary',
+	'#src/gallium/drivers',
+	'#src/mesa',
+	'#src/mesa/main',
+	'#src/mesa/glapi',
+	'#src/mesa/math',
+	'#src/mesa/transform',
+	'#src/mesa/shader',
+	'#src/mesa/swrast',
+	'#src/mesa/swrast_setup',
+	'#src/egl/main',
+	'#src/egl/drivers/dri',
+])
+
+drienv.ParseConfig('pkg-config --cflags --libs libdrm')
+
+dri_common_utils = drienv.SharedObject(
+	target = 'utils.o',
+	source = '#src/mesa/drivers/dri/common/utils.c'
+)
+
+dri_common_xmlconfig = drienv.SharedObject(
+	target = 'xmlconfig.o',
+	source = '#src/mesa/drivers/dri/common/xmlconfig.c'
+)
+
+dri_common_vblank = drienv.SharedObject(
+	target = 'vblank.o',
+	source = '#src/mesa/drivers/dri/common/vblank.c'
+)
+
+dri_common_dri_util = drienv.SharedObject(
+	target = 'dri_util.o',
+	source = '#src/mesa/drivers/dri/common/dri_util.c'
+)
+
+COMMON_DRI_DRM_OBJECTS = [
+	dri_common_utils,
+	dri_common_xmlconfig,
+	dri_common_vblank,
+	dri_common_dri_util,
+]
+
+Export([
+	'drienv',
+	'COMMON_DRI_DRM_OBJECTS',
+])
+
+if 'vmware' in env['winsys']:
+	SConscript([
+		'dri-vmwgfx/SConscript',
+	])
+
+if 'i915' in env['winsys']:
+	SConscript([
+		'dri-i915/SConscript',
+	])
+
+if 'i965' in env['winsys']:
+	SConscript([
+		'dri-i965/SConscript',
+	])
+
+if 'radeon' in env['winsys']:
+	SConscript([
+		'dri-radeong/SConscript',
+	])

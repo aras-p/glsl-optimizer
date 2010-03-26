@@ -6,19 +6,19 @@ if not 'svga' in env['drivers']:
 
 env = drienv.Clone()
 
-drivers = [
-	trace,
-	st_dri,
-	svgadrm,
-	svga,
-	mesa,
-	glsl,
-	gallium,
-]
+env.Prepend(LIBS = [
+    st_dri,
+    svgadrm,
+    svga,
+    trace,
+    mesa,
+    glsl,
+    gallium,
+    COMMON_DRI_DRM_OBJECTS
+])
 
 env.LoadableModule(
-    target ='vmwgfx_dri.so',
-    source = COMMON_GALLIUM_SOURCES,
-    LIBS = drivers + mesa + gallium + env['LIBS'],
+    target = 'vmwgfx_dri.so',
+    source = 'dummy.c',
     SHLIBPREFIX = '',
 )

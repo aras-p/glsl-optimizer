@@ -15,11 +15,12 @@ env.Prepend(LIBS = [
     trace,
     mesa,
     glsl,
-    gallium
+    gallium,
+    COMMON_DRI_DRM_OBJECTS
 ])
 
 env.LoadableModule(
-    target ='i915_dri.so',
-    source = COMMON_GALLIUM_SOURCES,
+    target = 'i915_dri.so',
+    source = 'dummy.c',
     SHLIBPREFIX = '',
 )
