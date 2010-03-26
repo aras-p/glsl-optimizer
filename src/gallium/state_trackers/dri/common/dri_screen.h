@@ -39,6 +39,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
+#include "state_tracker/drm_api.h"
 
 struct dri_screen
 {
@@ -97,17 +98,17 @@ dri_with_format(__DRIscreen * sPriv)
 
 #endif
 
-extern const uint __driNConfigOptions;
-
-const __DRIconfig **
-dri_fill_in_modes(struct dri_screen *screen, unsigned pixel_bits);
-
 void
 dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
                    const __GLcontextModes *mode);
 
+const __DRIconfig **
+dri_init_screen_helper(struct dri_screen *screen,
+                       struct drm_create_screen_arg *arg,
+                       unsigned pixel_bits);
+
 void
-dri_destroy_screen(__DRIscreen * sPriv);
+dri_destroy_screen_helper(struct dri_screen * screen);
 
 #endif
 

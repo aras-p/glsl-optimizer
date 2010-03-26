@@ -469,8 +469,8 @@ dri1_copy_version(struct dri1_api_version *dst,
 const __DRIconfig **
 dri1_init_screen(__DRIscreen * sPriv)
 {
-   struct dri_screen *screen;
    const __DRIconfig **configs;
+   struct dri_screen *screen;
    struct dri1_create_screen_arg arg;
 
    screen = CALLOC_STRUCT(dri_screen);
@@ -495,32 +495,26 @@ dri1_init_screen(__DRIscreen * sPriv)
    dri1_copy_version(&arg.drm_version, &sPriv->drm_version);
    arg.api = NULL;
 
-   screen->pipe_screen = screen->api->create_screen(screen->api, screen->fd, &arg.base);
-
-   if (!screen->pipe_screen || !arg.api) {
-      debug_printf("%s: failed to create dri1 screen\n", __FUNCTION__);
-      goto out_no_screen;
-   }
-
-   __dri1_api_hooks = arg.api;
-
-   driParseOptionInfo(&screen->optionCache,
-		      __driConfigOptions, __driNConfigOptions);
-
    /**
     * FIXME: If the driver supports format conversion swapbuffer blits, we might
     * want to support other color bit depths than the server is currently
     * using.
     */
 
-   configs = dri_fill_in_modes(screen, sPriv->fbBPP);
+   configs = dri_init_screen_helper(screen, &arg.base, sPriv->fbBPP);
    if (!configs)
-      goto out_no_configs;
+      goto fail;
+
+   if (!arg.api) {
+      debug_printf("%s: failed to create dri1 screen\n", __FUNCTION__);
+      goto fail;
+   }
+
+   __dri1_api_hooks = arg.api;
 
    return configs;
- out_no_configs:
-   screen->pipe_screen->destroy(screen->pipe_screen);
- out_no_screen:
+fail:
+   dri_destroy_screen_helper(screen);
    FREE(screen);
    return NULL;
 }

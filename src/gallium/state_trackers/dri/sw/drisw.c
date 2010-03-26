@@ -282,6 +282,7 @@ static const __DRIextension *drisw_screen_extensions[] = {
 const __DRIconfig **
 drisw_init_screen(__DRIscreen * sPriv)
 {
+   const __DRIconfig **configs;
    struct dri_screen *screen;
    struct drm_create_screen_arg arg;
 
@@ -292,26 +293,20 @@ drisw_init_screen(__DRIscreen * sPriv)
    screen->api = drm_api_create();
    screen->sPriv = sPriv;
    screen->fd = -1;
+
    sPriv->private = (void *)screen;
    sPriv->extensions = drisw_screen_extensions;
+
    arg.mode = DRM_CREATE_DRISW;
 
-   screen->pipe_screen = screen->api->create_screen(screen->api, -1, &arg);
-   if (!screen->pipe_screen) {
-      debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
-      goto fail;
-   }
-
-   screen->smapi = dri_create_st_manager(screen);
-   if (!screen->smapi)
+   configs = dri_init_screen_helper(screen, &arg, 32);
+   if (!configs)
       goto fail;
 
-   driParseOptionInfo(&screen->optionCache,
-                      __driConfigOptions, __driNConfigOptions);
-
-   return dri_fill_in_modes(screen, 32);
+   return configs;
 fail:
-   dri_destroy_screen(sPriv);
+   dri_destroy_screen_helper(screen);
+   FREE(screen);
    return NULL;
 }
 

@@ -50,7 +50,6 @@
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_format.h"
-#include "state_tracker/drm_api.h"
 
 #include "util/u_debug.h"
 
@@ -63,9 +62,9 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_ALLOW_LARGE_TEXTURES(1)
    DRI_CONF_SECTION_END DRI_CONF_END;
 
-const uint __driNConfigOptions = 3;
+static const uint __driNConfigOptions = 3;
 
-const __DRIconfig **
+static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen,
 		  unsigned pixel_bits)
 {
@@ -299,10 +298,8 @@ dri_destroy_option_cache(struct dri_screen * screen)
 }
 
 void
-dri_destroy_screen(__DRIscreen * sPriv)
+dri_destroy_screen_helper(struct dri_screen * screen)
 {
-   struct dri_screen *screen = dri_screen(sPriv);
-
    dri1_destroy_pipe_context(screen);
 
    if (screen->smapi)
@@ -312,10 +309,39 @@ dri_destroy_screen(__DRIscreen * sPriv)
       screen->pipe_screen->destroy(screen->pipe_screen);
 
    dri_destroy_option_cache(screen);
+}
+
+static void
+dri_destroy_screen(__DRIscreen * sPriv)
+{
+   struct dri_screen *screen = dri_screen(sPriv);
+
+   dri_destroy_screen_helper(screen);
 
    FREE(screen);
    sPriv->private = NULL;
    sPriv->extensions = NULL;
+}
+
+const __DRIconfig **
+dri_init_screen_helper(struct dri_screen *screen,
+                       struct drm_create_screen_arg *arg,
+                       unsigned pixel_bits)
+{
+   screen->pipe_screen = screen->api->create_screen(screen->api, screen->fd, arg);
+   if (!screen->pipe_screen) {
+      debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
+      return NULL;
+   }
+
+   screen->smapi = dri_create_st_manager(screen);
+   if (!screen->smapi)
+      return NULL;
+
+   driParseOptionInfo(&screen->optionCache,
+                      __driConfigOptions, __driNConfigOptions);
+
+   return dri_fill_in_modes(screen, pixel_bits);
 }
 
 #ifndef __NOT_HAVE_DRM_H
