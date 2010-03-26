@@ -42,9 +42,6 @@
 #define is_numeric_base_type(b) \
    (((b) >= GLSL_TYPE_UINT) && ((b) <= GLSL_TYPE_FLOAT))
 
-#define is_integer_base_type(b) \
-   (((b) == GLSL_TYPE_UINT) || ((b) == GLSL_TYPE_INT))
-
 #define is_error_type(t) ((t)->base_type == GLSL_TYPE_ERROR)
 
 enum glsl_sampler_dim {
@@ -201,6 +198,14 @@ struct glsl_type {
    bool is_numeric() const
    {
       return (base_type >= GLSL_TYPE_UINT) && (base_type <= GLSL_TYPE_FLOAT);
+   }
+
+   /**
+    * Query whether or not a type is an integral type
+    */
+   bool is_integer() const
+   {
+      return (base_type == GLSL_TYPE_UINT) || (base_type == GLSL_TYPE_INT);
    }
 
    /**

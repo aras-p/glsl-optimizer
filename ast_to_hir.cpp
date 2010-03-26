@@ -255,8 +255,7 @@ modulus_result_type(const struct glsl_type *type_a,
     *    integer vectors. The operand types must both be signed or both be
     *    unsigned."
     */
-   if (! is_integer_base_type(type_a->base_type)
-       || ! is_integer_base_type(type_b->base_type)
+   if (!type_a->is_integer() || !type_b->is_integer()
        || (type_a->base_type != type_b->base_type)) {
       return glsl_type::error_type;
    }
