@@ -39,7 +39,7 @@
 
 #include <state_tracker/dri1_api.h>
 #include <state_tracker/drm_api.h>
-#include <vmwgfx_drm.h>
+#include "vmwgfx_drm.h"
 #include <xf86drm.h>
 
 #include <stdio.h>
