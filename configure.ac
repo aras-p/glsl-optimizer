@@ -1344,7 +1344,7 @@ AC_ARG_ENABLE([gallium-svga],
     [enable_gallium_svga="$enableval"],
     [enable_gallium_svga=auto])
 if test "x$enable_gallium_svga" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga/drm"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
     gallium_check_st "svga/drm" "dri-vmwgfx" "egl-vmwgfx" "xorg-vmwgfx"
 elif test "x$enable_gallium_svga" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
