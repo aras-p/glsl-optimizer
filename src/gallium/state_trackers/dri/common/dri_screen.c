@@ -338,14 +338,6 @@ const struct __DriverAPIRec driDriverAPI = {
    .CopySubBuffer = dri1_copy_sub_buffer,
 };
 
-/* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
-    &driCoreExtension.base,
-    &driLegacyExtension.base,
-    &driDRI2Extension.base,
-    NULL
-};
-
 #else
 
 const struct __DriverAPIRec driDriverAPI = {
@@ -359,13 +351,6 @@ const struct __DriverAPIRec driDriverAPI = {
 
    .InitScreen = drisw_init_screen,
    .SwapBuffers = drisw_swap_buffers,
-};
-
-/* This is the table of extensions that the loader will dlsym() for. */
-PUBLIC const __DRIextension *__driDriverExtensions[] = {
-    &driCoreExtension.base,
-    &driSWRastExtension.base,
-    NULL
 };
 
 #endif

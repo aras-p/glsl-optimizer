@@ -410,4 +410,12 @@ fail:
    return NULL;
 }
 
+/* This is the table of extensions that the loader will dlsym() for. */
+PUBLIC const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    &driDRI2Extension.base,
+    NULL
+};
+
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
