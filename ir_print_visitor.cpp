@@ -90,8 +90,19 @@ void ir_print_visitor::visit(ir_function *ir)
 
 void ir_print_visitor::visit(ir_expression *ir)
 {
-   printf("%s:%d:\n", __func__, __LINE__);
-   (void) ir;
+   printf("(expression ");
+
+   printf("(FINISHME: operator) ");
+
+   printf("(");
+   if (ir->operands[0])
+      ir->operands[0]->accept(this);
+   printf(") ");
+
+   printf("(");
+   if (ir->operands[1])
+      ir->operands[1]->accept(this);
+   printf(")) ");
 }
 
 
