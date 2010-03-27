@@ -120,12 +120,8 @@ _mesa_DeleteHashTable(struct _mesa_HashTable *table)
 
 
 /**
- * Lookup an entry in the hash table.
- * 
- * \param table the hash table.
- * \param key the key.
- * 
- * \return pointer to user's data or NULL if key not in table
+ * Lookup an entry in the hash table, without locking.
+ * \sa _mesa_HashLookup
  */
 static INLINE void *
 _mesa_HashLookup_unlocked(struct _mesa_HashTable *table, GLuint key)
@@ -147,6 +143,15 @@ _mesa_HashLookup_unlocked(struct _mesa_HashTable *table, GLuint key)
    return NULL;
 }
 
+
+/**
+ * Lookup an entry in the hash table.
+ * 
+ * \param table the hash table.
+ * \param key the key.
+ * 
+ * \return pointer to user's data or NULL if key not in table
+ */
 void *
 _mesa_HashLookup(struct _mesa_HashTable *table, GLuint key)
 {
