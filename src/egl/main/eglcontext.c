@@ -212,21 +212,35 @@ _eglBindContextToSurfaces(_EGLContext *ctx,
                           _EGLSurface **draw, _EGLSurface **read)
 {
    _EGLSurface *newDraw = *draw, *newRead = *read;
+   _EGLContext *oldCtx;
 
-   if (newDraw->CurrentContext)
-      newDraw->CurrentContext->DrawSurface = NULL;
-   newDraw->CurrentContext = ctx;
+   oldCtx = newDraw->CurrentContext;
+   if (ctx != oldCtx) {
+      if (oldCtx) {
+         assert(*draw == oldCtx->DrawSurface);
+         oldCtx->DrawSurface = NULL;
+      }
+      if (ctx) {
+         *draw = ctx->DrawSurface;
+         ctx->DrawSurface = newDraw;
+      }
 
-   if (newRead->CurrentContext)
-      newRead->CurrentContext->ReadSurface = NULL;
-   newRead->CurrentContext = ctx;
+      newDraw->CurrentContext = ctx;
+   }
 
-   if (ctx) {
-      *draw = ctx->DrawSurface;
-      ctx->DrawSurface = newDraw;
+   if (newRead != newDraw)
+      oldCtx = newRead->CurrentContext;
+   if (ctx != oldCtx) {
+      if (oldCtx) {
+         assert(*read == oldCtx->ReadSurface);
+         oldCtx->ReadSurface = NULL;
+      }
+      if (ctx) {
+         *read = ctx->ReadSurface;
+         ctx->ReadSurface = newRead;
+      }
 
-      *read = ctx->ReadSurface;
-      ctx->ReadSurface = newRead;
+      newRead->CurrentContext = ctx;
    }
 }
 
