@@ -692,7 +692,8 @@ static void r300_setup_miptree(struct r300_screen* screen,
         /* Let's see if this miplevel can be macrotiled. */
         tex->mip_macrotile[i] =
             (tex->macrotile == R300_BUFFER_TILED &&
-             r300_texture_macro_switch(tex, i, rv350_mode, TILE_WIDTH)) ?
+             r300_texture_macro_switch(tex, i, rv350_mode, TILE_WIDTH) &&
+             r300_texture_macro_switch(tex, i, rv350_mode, TILE_HEIGHT)) ?
              R300_BUFFER_TILED : R300_BUFFER_LINEAR;
 
         stride = r300_texture_get_stride(screen, tex, i);
