@@ -127,7 +127,7 @@ void r300_emit_invariant_state(struct r300_context* r300,
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
 
     /* XXX */
-    OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
+    OUT_CS_REG(R300_SC_CLIP_RULE, 0xFFFF);
 
     END_CS;
 }
