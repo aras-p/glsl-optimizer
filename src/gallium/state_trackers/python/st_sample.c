@@ -521,7 +521,7 @@ st_sample_pixel_block(enum pipe_format format,
    }
 }
 
-
+#if 0
 void
 st_sample_surface(struct st_surface *surface, float *rgba) 
 {
@@ -533,7 +533,7 @@ st_sample_surface(struct st_surface *surface, float *rgba)
    struct pipe_transfer *transfer;
    void *raw;
 
-   transfer = screen->get_tex_transfer(screen,
+   transfer = pipe->get_tex_transfer(pipe,
                                        surface->texture,
                                        surface->face,
                                        surface->level,
@@ -572,3 +572,4 @@ st_sample_surface(struct st_surface *surface, float *rgba)
    
    screen->tex_transfer_destroy(transfer);
 }
+#endif

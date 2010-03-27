@@ -125,10 +125,10 @@ struct st_surface
    }
    
    %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
-   void get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, char **STRING, int *LENGTH)
+   void get_tile_raw(struct st_context *ctx, unsigned x, unsigned y, unsigned w, unsigned h, char **STRING, int *LENGTH)
    {
       struct pipe_texture *texture = $self->texture;
-      struct pipe_screen *screen = texture->screen;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_transfer *transfer;
       unsigned stride;
 
@@ -138,7 +138,7 @@ struct st_surface
       if(!*STRING)
          return;
 
-      transfer = screen->get_tex_transfer(screen,
+      transfer = pipe->get_tex_transfer(pipe,
                                           $self->texture,
                                           $self->face,
                                           $self->level,
@@ -146,16 +146,16 @@ struct st_surface
                                           PIPE_TRANSFER_READ,
                                           x, y, w, h);
       if(transfer) {
-         pipe_get_tile_raw(transfer, 0, 0, w, h, *STRING, stride);
-         screen->tex_transfer_destroy(transfer);
+         pipe_get_tile_raw(pipe, transfer, 0, 0, w, h, *STRING, stride);
+         pipe->tex_transfer_destroy(pipe, transfer);
       }
    }
 
    %cstring_input_binary(const char *STRING, unsigned LENGTH);
-   void put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const char *STRING, unsigned LENGTH, unsigned stride = 0)
+   void put_tile_raw(struct st_context *ctx, unsigned x, unsigned y, unsigned w, unsigned h, const char *STRING, unsigned LENGTH, unsigned stride = 0)
    {
       struct pipe_texture *texture = $self->texture;
-      struct pipe_screen *screen = texture->screen;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_transfer *transfer;
      
       if(stride == 0)
@@ -164,7 +164,7 @@ struct st_surface
       if(LENGTH < util_format_get_nblocksy(texture->format, h) * stride)
          SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
          
-      transfer = screen->get_tex_transfer(screen,
+      transfer = pipe->get_tex_transfer(pipe,
                                           $self->texture,
                                           $self->face,
                                           $self->level,
@@ -174,19 +174,18 @@ struct st_surface
       if(!transfer)
          SWIG_exception(SWIG_MemoryError, "couldn't initiate transfer");
          
-      pipe_put_tile_raw(transfer, 0, 0, w, h, STRING, stride);
-      screen->tex_transfer_destroy(transfer);
+      pipe_put_tile_raw(pipe, transfer, 0, 0, w, h, STRING, stride);
+      pipe->tex_transfer_destroy(pipe, transfer);
 
    fail:
       return;
    }
 
-   void
-   get_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, float *rgba) 
+   void get_tile_rgba(struct st_context *ctx, unsigned x, unsigned y, unsigned w, unsigned h, float *rgba) 
    {
-      struct pipe_screen *screen = $self->texture->screen;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_transfer *transfer;
-      transfer = screen->get_tex_transfer(screen,
+      transfer = pipe->get_tex_transfer(pipe,
                                           $self->texture,
                                           $self->face,
                                           $self->level,
@@ -194,17 +193,17 @@ struct st_surface
                                           PIPE_TRANSFER_READ,
                                           x, y, w, h);
       if(transfer) {
-         pipe_get_tile_rgba(transfer, 0, 0, w, h, rgba);
-         screen->tex_transfer_destroy(transfer);
+         pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
+         pipe->tex_transfer_destroy(pipe, transfer);
       }
    }
 
    void
-   put_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, const float *rgba)
+      put_tile_rgba(struct st_context *ctx, unsigned x, unsigned y, unsigned w, unsigned h, const float *rgba)
    {
-      struct pipe_screen *screen = $self->texture->screen;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_transfer *transfer;
-      transfer = screen->get_tex_transfer(screen,
+      transfer = pipe->get_tex_transfer(pipe,
                                           $self->texture,
                                           $self->face,
                                           $self->level,
@@ -212,16 +211,16 @@ struct st_surface
                                           PIPE_TRANSFER_WRITE,
                                           x, y, w, h);
       if(transfer) {
-         pipe_put_tile_rgba(transfer, 0, 0, w, h, rgba);
-         screen->tex_transfer_destroy(transfer);
+         pipe_put_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
+         pipe->tex_transfer_destroy(pipe, transfer);
       }
    }
 
    %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
    void
-   get_tile_rgba8(unsigned x, unsigned y, unsigned w, unsigned h, char **STRING, int *LENGTH) 
+   get_tile_rgba8(struct st_context *ctx, unsigned x, unsigned y, unsigned w, unsigned h, char **STRING, int *LENGTH) 
    {
-      struct pipe_screen *screen = $self->texture->screen;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_transfer *transfer;
       float *rgba;
       unsigned char *rgba8;
@@ -244,7 +243,7 @@ struct st_surface
       
       rgba8 = (unsigned char *) *STRING;
 
-      transfer = screen->get_tex_transfer(screen,
+      transfer = pipe->get_tex_transfer(pipe,
                                           $self->texture,
                                           $self->face,
                                           $self->level,
@@ -253,24 +252,23 @@ struct st_surface
                                           x, y,
                                           w, h);
       if(transfer) {
-         pipe_get_tile_rgba(transfer, 0, 0, w, h, rgba);
+         pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
          for(j = 0; j < h; ++j) {
             for(i = 0; i < w; ++i)
                for(k = 0; k <4; ++k)
                   rgba8[j*w*4 + i*4 + k] = float_to_ubyte(rgba[j*w*4 + i*4 + k]);
          }
-         screen->tex_transfer_destroy(transfer);
+         pipe->tex_transfer_destroy(pipe, transfer);
       }
       
       free(rgba);
    }
 
-   void
-   get_tile_z(unsigned x, unsigned y, unsigned w, unsigned h, unsigned *z)
+   void get_tile_z(struct st_context *ctx, unsigned x, unsigned y, unsigned w, unsigned h, unsigned *z)
    {
-      struct pipe_screen *screen = $self->texture->screen;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_transfer *transfer;
-      transfer = screen->get_tex_transfer(screen,
+      transfer = pipe->get_tex_transfer(pipe,
                                           $self->texture,
                                           $self->face,
                                           $self->level,
@@ -278,17 +276,16 @@ struct st_surface
                                           PIPE_TRANSFER_READ,
                                           x, y, w, h);
       if(transfer) {
-         pipe_get_tile_z(transfer, 0, 0, w, h, z);
-         screen->tex_transfer_destroy(transfer);
+         pipe_get_tile_z(pipe, transfer, 0, 0, w, h, z);
+         pipe->tex_transfer_destroy(pipe, transfer);
       }
    }
 
-   void
-   put_tile_z(unsigned x, unsigned y, unsigned w, unsigned h, const unsigned *z)
+   void put_tile_z(struct st_context *ctx, unsigned x, unsigned y, unsigned w, unsigned h, const unsigned *z)
    {
-      struct pipe_screen *screen = $self->texture->screen;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_transfer *transfer;
-      transfer = screen->get_tex_transfer(screen,
+      transfer = pipe->get_tex_transfer(pipe,
                                           $self->texture,
                                           $self->face,
                                           $self->level,
@@ -296,20 +293,21 @@ struct st_surface
                                           PIPE_TRANSFER_WRITE,
                                           x, y, w, h);
       if(transfer) {
-         pipe_put_tile_z(transfer, 0, 0, w, h, z);
-         screen->tex_transfer_destroy(transfer);
+         pipe_put_tile_z(pipe, transfer, 0, 0, w, h, z);
+         pipe->tex_transfer_destroy(pipe, transfer);
       }
    }
    
+/*
    void
    sample_rgba(float *rgba) {
       st_sample_surface($self, rgba);
    }
+*/
    
-   unsigned
-   compare_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, const float *rgba, float tol = 0.0) 
+   unsigned compare_tile_rgba(struct st_context *ctx, unsigned x, unsigned y, unsigned w, unsigned h, const float *rgba, float tol = 0.0) 
    {
-      struct pipe_screen *screen = $self->texture->screen;
+      struct pipe_context *pipe = ctx->pipe;
       struct pipe_transfer *transfer;
       float *rgba2;
       const float *p1;
@@ -320,7 +318,7 @@ struct st_surface
       if(!rgba2)
          return ~0;
 
-      transfer = screen->get_tex_transfer(screen,
+      transfer = pipe->get_tex_transfer(pipe,
                                           $self->texture,
                                           $self->face,
                                           $self->level,
@@ -332,8 +330,8 @@ struct st_surface
          return ~0;
       }
 
-      pipe_get_tile_rgba(transfer, 0, 0, w, h, rgba2);
-      screen->tex_transfer_destroy(transfer);
+      pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba2);
+      pipe->tex_transfer_destroy(pipe, transfer);
 
       p1 = rgba;
       p2 = rgba2;

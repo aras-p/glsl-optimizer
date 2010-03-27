@@ -30,7 +30,7 @@
 #include "softpipe/sp_public.h"
 #include "llvmpipe/lp_public.h"
 #include "state_tracker/sw_winsys.h"
-#include "null/null_sw_winsys.h"
+#include "sw/null/null_sw_winsys.h"
 #include "st_winsys.h"
 
 

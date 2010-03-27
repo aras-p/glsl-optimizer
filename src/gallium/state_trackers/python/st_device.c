@@ -31,6 +31,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
+#include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
@@ -228,6 +229,7 @@ st_context_create(struct st_device *st_dev)
 
    /* default textures */
    {
+      struct pipe_context *pipe = st_ctx->pipe;
       struct pipe_screen *screen = st_dev->screen;
       struct pipe_texture templat;
       struct pipe_transfer *transfer;
@@ -245,21 +247,21 @@ st_context_create(struct st_device *st_dev)
    
       st_ctx->default_texture = screen->texture_create( screen, &templat );
       if(st_ctx->default_texture) {
-         transfer = screen->get_tex_transfer(screen,
-                                             st_ctx->default_texture,
-                                             0, 0, 0,
-                                             PIPE_TRANSFER_WRITE,
-                                             0, 0,
-                                             st_ctx->default_texture->width0,
-                                             st_ctx->default_texture->height0);
+         transfer = pipe->get_tex_transfer(pipe,
+                                       st_ctx->default_texture,
+                                       0, 0, 0,
+                                       PIPE_TRANSFER_WRITE,
+                                       0, 0,
+                                       st_ctx->default_texture->width0,
+                                       st_ctx->default_texture->height0);
          if (transfer) {
             uint32_t *map;
-            map = (uint32_t *) screen->transfer_map(screen, transfer);
+            map = (uint32_t *) pipe->transfer_map(pipe, transfer);
             if(map) {
                *map = 0x00000000;
-               screen->transfer_unmap(screen, transfer);
+               pipe->transfer_unmap(pipe, transfer);
             }
-            screen->tex_transfer_destroy(transfer);
+            pipe->tex_transfer_destroy(pipe, transfer);
          }
       }
 
