@@ -28,18 +28,67 @@
 #include "ir.h"
 
 static void
-generate_exp(exec_list *instructions,
-	     ir_variable **declarations,
-	     const glsl_type *type)
+generate_unop(exec_list *instructions,
+	      ir_variable **declarations,
+	      const glsl_type *type,
+	      enum ir_expression_operation op)
 {
    ir_dereference *const retval = new ir_dereference(declarations[16]);
    ir_dereference *const arg = new ir_dereference(declarations[0]);
    ir_rvalue *result;
 
-   result = new ir_expression(ir_unop_exp, type, arg, NULL);
+   result = new ir_expression(op, type, arg, NULL);
 
    ir_instruction *inst = new ir_assignment(retval, result, NULL);
    instructions->push_tail(inst);
+}
+
+static void
+generate_exp(exec_list *instructions,
+	     ir_variable **declarations,
+	     const glsl_type *type)
+{
+   generate_unop(instructions, declarations, type, ir_unop_exp);
+}
+
+static void
+generate_log(exec_list *instructions,
+	     ir_variable **declarations,
+	     const glsl_type *type)
+{
+   generate_unop(instructions, declarations, type, ir_unop_log);
+}
+
+static void
+generate_rsq(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   generate_unop(instructions, declarations, type, ir_unop_rsq);
+}
+
+static void
+generate_abs(exec_list *instructions,
+	     ir_variable **declarations,
+	     const glsl_type *type)
+{
+   generate_unop(instructions, declarations, type, ir_unop_abs);
+}
+
+static void
+generate_ceil(exec_list *instructions,
+	      ir_variable **declarations,
+	      const glsl_type *type)
+{
+   generate_unop(instructions, declarations, type, ir_unop_ceil);
+}
+
+static void
+generate_floor(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   generate_unop(instructions, declarations, type, ir_unop_floor);
 }
 
 void
@@ -112,15 +161,15 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: atan(y/x) */
    /* FINISHME: pow() */
    make_gentype_function(symtab, instructions, "exp", generate_exp);
-   /* FINISHME: log() */
+   make_gentype_function(symtab, instructions, "log", generate_log);
    /* FINISHME: exp2() */
    /* FINISHME: log2() */
    /* FINISHME: sqrt() */
-   /* FINISHME: inversesqrt() */
-   /* FINISHME: abs() */
+   make_gentype_function(symtab, instructions, "inversesqrt", generate_rsq);
+   make_gentype_function(symtab, instructions, "abs", generate_abs);
    /* FINISHME: sign() */
-   /* FINISHME: floor() */
-   /* FINISHME: ceil() */
+   make_gentype_function(symtab, instructions, "floor", generate_floor);
+   make_gentype_function(symtab, instructions, "ceil", generate_ceil);
    /* FINISHME: fract() */
    /* FINISHME: mod(x, float y) */
    /* FINISHME: mod(x, y) */
