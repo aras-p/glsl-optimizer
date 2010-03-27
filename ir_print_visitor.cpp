@@ -197,10 +197,12 @@ void ir_print_visitor::visit(ir_constant *ir)
 void
 ir_print_visitor::visit(ir_call *ir)
 {
-   (void) ir;
+   printf("(call (%s) ", ir->callee_name());
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_instruction *const inst = (ir_instruction *) iter.get();
 
-   printf("(call FINISHME: function name here\n");
-   printf("    (FINISHME: function paramaters here))\n");
+      inst->accept(this);
+   }
 }
 
 
