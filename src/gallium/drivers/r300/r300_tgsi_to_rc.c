@@ -273,9 +273,6 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
     struct rc_instruction * dst;
     int i;
 
-    if (src->Instruction.Opcode == TGSI_OPCODE_END)
-        return;
-
     dst = rc_insert_new_instruction(ttr->compiler, ttr->compiler->Program.Instructions.Prev);
     dst->U.I.Opcode = translate_opcode(src->Instruction.Opcode);
     dst->U.I.SaturateMode = translate_saturate(src->Instruction.Saturate);
@@ -334,6 +331,7 @@ static void handle_immediate(struct tgsi_to_rc * ttr,
 void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
                      const struct tgsi_token * tokens)
 {
+    struct tgsi_full_instruction *inst;
     struct tgsi_parse_context parser;
     unsigned imm_index = 0;
     int i;
@@ -368,7 +366,15 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
                 imm_index++;
                 break;
             case TGSI_TOKEN_TYPE_INSTRUCTION:
-                transform_instruction(ttr, &parser.FullToken.FullInstruction);
+                inst = &parser.FullToken.FullInstruction;
+                /* This hack with the RET opcode woudn't work with
+                 * conditionals. */
+                if (inst->Instruction.Opcode == TGSI_OPCODE_END ||
+                    inst->Instruction.Opcode == TGSI_OPCODE_RET) {
+                    break;
+                }
+
+                transform_instruction(ttr, inst);
                 break;
         }
     }
