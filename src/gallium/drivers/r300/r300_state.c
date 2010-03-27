@@ -575,9 +575,8 @@ static void
     unsigned max_width, max_height;
     uint32_t zbuffer_bpp = 0;
 
-
     if (state->nr_cbufs > 4) {
-        debug_printf("r300: Implementation error: Too many MRTs in %s, "
+        fprintf(stderr, "r300: Implementation error: Too many MRTs in %s, "
             "refusing to bind framebuffer state!\n", __FUNCTION__);
         return;
     }
@@ -591,7 +590,7 @@ static void
     }
 
     if (state->width > max_width || state->height > max_height) {
-        debug_printf("r300: Implementation error: Render targets are too "
+        fprintf(stderr, "r300: Implementation error: Render targets are too "
         "big in %s, refusing to bind framebuffer state!\n", __FUNCTION__);
         return;
     }
@@ -1353,7 +1352,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 
     /* XXX Subtract immediates and RC_STATE_* variables. */
     if (buf->size > (sizeof(float) * 4 * max_size)) {
-        debug_printf("r300: Max size of the constant buffer is "
+        fprintf(stderr, "r300: Max size of the constant buffer is "
                       "%i*4 floats.\n", max_size);
         abort();
     }

@@ -204,9 +204,8 @@ static void r300_translate_fragment_shader(
     r3xx_compile_fragment_program(&compiler);
     if (compiler.Base.Error) {
         /* XXX failover maybe? */
-        DBG(r300, DBG_FP, "r300: Error compiling fragment program: %s\n",
-            compiler.Base.ErrorMsg);
-        assert(0);
+        fprintf(stderr, "r300 FP: Compiler Error:\n%s",
+                compiler.Base.ErrorMsg);
         abort();
     }
 

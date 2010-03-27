@@ -22,6 +22,7 @@
 
 #include "r300_context.h"
 
+#include <stdio.h>
 
 struct debug_option {
     const char * name;
@@ -69,7 +70,7 @@ void r300_init_debug(struct r300_screen * screen)
             }
 
             if (!opt->name) {
-                debug_printf("Unknown debug option: %s\n", options);
+                fprintf(stderr, "Unknown debug option: %s\n", options);
                 printhint = TRUE;
             }
 
@@ -81,10 +82,13 @@ void r300_init_debug(struct r300_screen * screen)
     }
 
     if (printhint || screen->debug & DBG_HELP) {
-        debug_printf("You can enable debug output by setting the RADEON_DEBUG environment variable\n"
-                     "to a comma-separated list of debug options. Available options are:\n");
+        fprintf(stderr, "You can enable debug output by setting "
+                        "the RADEON_DEBUG environment variable\n"
+                        "to a comma-separated list of debug options. "
+                        "Available options are:\n");
+
         for(opt = debug_options; opt->name; ++opt) {
-            debug_printf("    %s: %s\n", opt->name, opt->description);
+            fprintf(stderr, "    %s: %s\n", opt->name, opt->description);
         }
     }
 }

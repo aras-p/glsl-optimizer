@@ -25,6 +25,7 @@
 #include "radeon_compiler.h"
 #include "radeon_program.h"
 
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_util.h"
@@ -145,7 +146,7 @@ static unsigned translate_opcode(unsigned opcode)
         case TGSI_OPCODE_KIL: return RC_OPCODE_KIL;
     }
 
-    debug_printf("r300: Unknown TGSI/RC opcode: %i\n", opcode);
+    fprintf(stderr, "r300: Unknown TGSI/RC opcode: %s\n", tgsi_get_opcode_name(opcode));
     return RC_OPCODE_ILLEGAL_OPCODE;
 }
 

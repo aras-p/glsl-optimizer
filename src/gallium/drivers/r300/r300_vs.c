@@ -299,7 +299,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     r3xx_compile_vertex_program(&compiler);
     if (compiler.Base.Error) {
         /* XXX We should fallback using Draw. */
-        fprintf(stderr, "r300 VP: Compiler error\n");
+        fprintf(stderr, "r300 VP: Compiler error:\n%s", compiler.Base.ErrorMsg);
         abort();
     }
 

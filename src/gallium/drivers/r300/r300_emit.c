@@ -186,13 +186,13 @@ static const float * get_shader_constant(
                     break;
 
                 default:
-                    debug_printf("r300: Implementation error: "
+                    fprintf(stderr, "r300: Implementation error: "
                         "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
             }
             break;
 
         default:
-            debug_printf("r300: Implementation error: "
+            fprintf(stderr, "r300: Implementation error: "
                 "Unhandled constant type %d\n", constant->Type);
     }
 
@@ -514,9 +514,9 @@ static void r300_emit_query_finish(struct r300_context *r300,
                     0, RADEON_GEM_DOMAIN_GTT, 0);
             break;
         default:
-            debug_printf("r300: Implementation error: Chipset reports %d"
+            fprintf(stderr, "r300: Implementation error: Chipset reports %d"
                     " pixel pipes!\n", caps->num_frag_pipes);
-            assert(0);
+            abort();
     }
 
     /* And, finally, reset it to normal... */
@@ -1077,8 +1077,8 @@ validate:
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
             /* Well, hell. */
-            debug_printf("r300: Stuck in validation loop, gonna quit now.");
-            exit(1);
+            fprintf(stderr, "r300: Stuck in validation loop, gonna quit now.\n");
+            abort();
         }
         invalid = TRUE;
         goto validate;

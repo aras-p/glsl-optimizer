@@ -32,6 +32,8 @@
 
 #include "r300_reg.h"
 
+#include <stdio.h>
+
 /* Some maths. These should probably find their way to u_math, if needed. */
 
 static INLINE int pack_float_16_6x(float f) {
@@ -54,7 +56,7 @@ static INLINE uint32_t r300_translate_blend_function(int blend_func)
         case PIPE_BLEND_MAX:
             return R300_COMB_FCN_MAX;
         default:
-            debug_printf("r300: Unknown blend function %d\n", blend_func);
+            fprintf(stderr, "r300: Unknown blend function %d\n", blend_func);
             assert(0);
             break;
     }
@@ -100,13 +102,13 @@ static INLINE uint32_t r300_translate_blend_factor(int blend_fact)
         case PIPE_BLENDFACTOR_SRC1_ALPHA:
         case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
         case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
-            debug_printf("r300: Implementation error: "
+            fprintf(stderr, "r300: Implementation error: "
                 "Bad blend factor %d not supported!\n", blend_fact);
             assert(0);
             break;
 
         default:
-            debug_printf("r300: Unknown blend factor %d\n", blend_fact);
+            fprintf(stderr, "r300: Unknown blend factor %d\n", blend_fact);
             assert(0);
             break;
     }
@@ -135,7 +137,7 @@ static INLINE uint32_t r300_translate_depth_stencil_function(int zs_func)
         case PIPE_FUNC_ALWAYS:
             return R300_ZS_ALWAYS;
         default:
-            debug_printf("r300: Unknown depth/stencil function %d\n",
+            fprintf(stderr, "r300: Unknown depth/stencil function %d\n",
                 zs_func);
             assert(0);
             break;
@@ -163,7 +165,7 @@ static INLINE uint32_t r300_translate_stencil_op(int s_op)
         case PIPE_STENCIL_OP_INVERT:
             return R300_ZS_INVERT;
         default:
-            debug_printf("r300: Unknown stencil op %d", s_op);
+            fprintf(stderr, "r300: Unknown stencil op %d", s_op);
             assert(0);
             break;
     }
@@ -190,7 +192,7 @@ static INLINE uint32_t r300_translate_alpha_function(int alpha_func)
         case PIPE_FUNC_ALWAYS:
             return R300_FG_ALPHA_FUNC_ALWAYS;
         default:
-            debug_printf("r300: Unknown alpha function %d", alpha_func);
+            fprintf(stderr, "r300: Unknown alpha function %d", alpha_func);
             assert(0);
             break;
     }
@@ -209,7 +211,7 @@ r300_translate_polygon_mode_front(unsigned mode) {
             return R300_GA_POLY_MODE_FRONT_PTYPE_POINT;
 
         default:
-            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
+            fprintf(stderr, "r300: Bad polygon mode %i in %s\n", mode,
                 __FUNCTION__);
             return R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
     }
@@ -227,7 +229,7 @@ r300_translate_polygon_mode_back(unsigned mode) {
             return R300_GA_POLY_MODE_BACK_PTYPE_POINT;
 
         default:
-            debug_printf("r300: Bad polygon mode %i in %s\n", mode,
+            fprintf(stderr, "r300: Bad polygon mode %i in %s\n", mode,
                 __FUNCTION__);
             return R300_GA_POLY_MODE_BACK_PTYPE_TRI;
     }
@@ -255,7 +257,7 @@ static INLINE uint32_t r300_translate_wrap(int wrap)
         case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
             return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
         default:
-            debug_printf("r300: Unknown texture wrap %d", wrap);
+            fprintf(stderr, "r300: Unknown texture wrap %d", wrap);
             assert(0);
             return 0;
     }
@@ -276,7 +278,7 @@ static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip,
             retval |= R300_TX_MIN_FILTER_LINEAR;
             break;
         default:
-            debug_printf("r300: Unknown texture filter %d\n", min);
+            fprintf(stderr, "r300: Unknown texture filter %d\n", min);
             assert(0);
             break;
         }
@@ -288,7 +290,7 @@ static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip,
             retval |= R300_TX_MAG_FILTER_LINEAR;
             break;
         default:
-            debug_printf("r300: Unknown texture filter %d\n", mag);
+            fprintf(stderr, "r300: Unknown texture filter %d\n", mag);
             assert(0);
             break;
         }
@@ -304,7 +306,7 @@ static INLINE uint32_t r300_translate_tex_filters(int min, int mag, int mip,
             retval |= R300_TX_MIN_FILTER_MIP_LINEAR;
             break;
         default:
-            debug_printf("r300: Unknown texture filter %d\n", mip);
+            fprintf(stderr, "r300: Unknown texture filter %d\n", mip);
             assert(0);
             break;
     }
@@ -370,7 +372,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
     desc = util_format_description(format);
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-        debug_printf("r300: Bad format %s in %s:%d\n", util_format_name(format),
+        fprintf(stderr, "r300: Bad format %s in %s:%d\n", util_format_name(format),
             __FUNCTION__, __LINE__);
         assert(0);
     }
@@ -391,7 +393,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     result = R300_DATA_TYPE_FLOAT_1 + (components - 1);
                     break;
                 default:
-                    debug_printf("r300: Bad format %s in %s:%d\n",
+                    fprintf(stderr, "r300: Bad format %s in %s:%d\n",
                         util_format_name(format), __FUNCTION__, __LINE__);
                     assert(0);
             }
@@ -412,15 +414,15 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     }
                     break;
                 default:
-                    debug_printf("r300: Bad format %s in %s:%d\n",
+                    fprintf(stderr, "r300: Bad format %s in %s:%d\n",
                         util_format_name(format), __FUNCTION__, __LINE__);
-                    debug_printf("r300: util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0) == %d\n",
+                    fprintf(stderr, "r300: util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0) == %d\n",
                         util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 0));
                     assert(0);
             }
             break;
         default:
-            debug_printf("r300: Bad format %s in %s:%d\n",
+            fprintf(stderr, "r300: Bad format %s in %s:%d\n",
                 util_format_name(format), __FUNCTION__, __LINE__);
             assert(0);
     }
@@ -442,7 +444,7 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
     assert(format);
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-        debug_printf("r300: Bad format %s in %s:%d\n",
+        fprintf(stderr, "r300: Bad format %s in %s:%d\n",
             util_format_name(format), __FUNCTION__, __LINE__);
         return 0;
     }
