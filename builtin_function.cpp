@@ -44,6 +44,23 @@ generate_unop(exec_list *instructions,
 }
 
 static void
+generate_binop(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type,
+	       enum ir_expression_operation op)
+{
+   ir_dereference *const retval = new ir_dereference(declarations[16]);
+   ir_dereference *const arg1 = new ir_dereference(declarations[0]);
+   ir_dereference *const arg2 = new ir_dereference(declarations[1]);
+   ir_rvalue *result;
+
+   result = new ir_expression(op, type, arg1, arg2);
+
+   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   instructions->push_tail(inst);
+}
+
+static void
 generate_exp(exec_list *instructions,
 	     ir_variable **declarations,
 	     const glsl_type *type)
@@ -91,10 +108,35 @@ generate_floor(exec_list *instructions,
    generate_unop(instructions, declarations, type, ir_unop_floor);
 }
 
+static void
+generate_mod(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   generate_binop(instructions, declarations, type, ir_binop_mod);
+}
+
+static void
+generate_min(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   generate_binop(instructions, declarations, type, ir_binop_min);
+}
+
+static void
+generate_max(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   generate_binop(instructions, declarations, type, ir_binop_max);
+}
+
 void
 generate_function_instance(ir_function *f,
 			   const char *name,
 			   exec_list *instructions,
+			   int n_args,
 			   void (*generate)(exec_list *instructions,
 					    ir_variable **declarations,
 					    const glsl_type *type),
@@ -108,15 +150,22 @@ generate_function_instance(ir_function *f,
    ir_label *const label = new ir_label(name);
    instructions->push_tail(label);
    sig->definition = label;
+   static const char *arg_names[] = {
+      "arg0",
+      "arg1"
+   };
+   int i;
 
-   ir_variable *var = new ir_variable(type, "arg");
+   for (i = 0; i < n_args; i++) {
+      ir_variable *var = new ir_variable(type, arg_names[i]);
 
-   var->mode = ir_var_in;
-   sig->parameters.push_tail(var);
+      var->mode = ir_var_in;
+      sig->parameters.push_tail(var);
 
-   var = new ir_variable(type, "arg");
+      var = new ir_variable(type, arg_names[i]);
 
-   declarations[0] = var;
+      declarations[i] = var;
+   }
 
    ir_variable *retval = new ir_variable(type, "__retval");
    instructions->push_tail(retval);
@@ -129,6 +178,7 @@ generate_function_instance(ir_function *f,
 void
 make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
 		      const char *name,
+		      int n_args,
 		      void (*generate)(exec_list *instructions,
 				       ir_variable **declarations,
 				       const glsl_type *type))
@@ -141,10 +191,14 @@ make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
    bool added = symtab->add_function(name, f);
    assert(added);
 
-   generate_function_instance(f, name, instructions, generate, glsl_type::float_type);
-   generate_function_instance(f, name, instructions, generate, vec2_type);
-   generate_function_instance(f, name, instructions, generate, vec3_type);
-   generate_function_instance(f, name, instructions, generate, vec4_type);
+   generate_function_instance(f, name, instructions, n_args, generate,
+			      glsl_type::float_type);
+   generate_function_instance(f, name, instructions, n_args, generate,
+			      vec2_type);
+   generate_function_instance(f, name, instructions, n_args, generate,
+			      vec3_type);
+   generate_function_instance(f, name, instructions, n_args, generate,
+			      vec4_type);
 }
 
 void
@@ -160,21 +214,23 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: atan(y,x) */
    /* FINISHME: atan(y/x) */
    /* FINISHME: pow() */
-   make_gentype_function(symtab, instructions, "exp", generate_exp);
-   make_gentype_function(symtab, instructions, "log", generate_log);
+   make_gentype_function(symtab, instructions, "exp", 1, generate_exp);
+   make_gentype_function(symtab, instructions, "log", 1, generate_log);
    /* FINISHME: exp2() */
    /* FINISHME: log2() */
    /* FINISHME: sqrt() */
-   make_gentype_function(symtab, instructions, "inversesqrt", generate_rsq);
-   make_gentype_function(symtab, instructions, "abs", generate_abs);
+   make_gentype_function(symtab, instructions, "inversesqrt", 1, generate_rsq);
+   make_gentype_function(symtab, instructions, "abs", 1, generate_abs);
    /* FINISHME: sign() */
-   make_gentype_function(symtab, instructions, "floor", generate_floor);
-   make_gentype_function(symtab, instructions, "ceil", generate_ceil);
+   make_gentype_function(symtab, instructions, "floor", 1, generate_floor);
+   make_gentype_function(symtab, instructions, "ceil", 1, generate_ceil);
    /* FINISHME: fract() */
    /* FINISHME: mod(x, float y) */
-   /* FINISHME: mod(x, y) */
-   /* FINISHME: min() */
-   /* FINISHME: max() */
+   make_gentype_function(symtab, instructions, "mod", 2, generate_mod);
+   make_gentype_function(symtab, instructions, "min", 2, generate_min);
+   /* FINISHME: min(x, float y) */
+   make_gentype_function(symtab, instructions, "max", 2, generate_max);
+   /* FINISHME: max(x, float y) */
    /* FINISHME: clamp() */
    /* FINISHME: clamp() */
    /* FINISHME: mix() */
