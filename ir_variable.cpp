@@ -136,6 +136,14 @@ generate_110_fs_variables(exec_list *instructions,
 			   instructions, symtab);
    }
 
+   /* FINISHME: Add support for gl_TexCoord[] */
+   for (unsigned i = 0
+	   ; i < Elements(builtin_110_deprecated_fs_variables)
+	   ; i++) {
+      add_builtin_variable(& builtin_110_deprecated_fs_variables[i],
+			   instructions, symtab);
+   }
+
    /* FINISHME: Add support for gl_FragData[GL_MAX_DRAW_BUFFERS]. */
 }
 

@@ -39,6 +39,12 @@ static const builtin_variable builtin_core_fs_variables[] = {
    { ir_var_out, "float", "gl_FragDepth" },
 };
 
+static const builtin_variable builtin_110_deprecated_fs_variables[] = {
+   { ir_var_in,  "vec4",  "gl_Color" },
+   { ir_var_in,  "vec4",  "gl_SecondaryColor" },
+   { ir_var_in,  "vec4",  "gl_FogFragCoord" },
+};
+
 static const builtin_variable builtin_110_deprecated_vs_variables[] = {
    { ir_var_in,  "vec4",  "gl_Vertex" },
    { ir_var_in,  "vec4",  "gl_Normal" },
