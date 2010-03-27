@@ -327,6 +327,15 @@ public:
       return actual_parameters.iterator();
    }
 
+   /**
+    * Get the name of the function being called.
+    */
+   const char *callee_name() const
+   {
+      /* FINISHME: This only works for functions that have definitions. */
+      return callee->definition->label;
+   }
+
 private:
    ir_call()
       : ir_rvalue(), callee(NULL)
