@@ -246,15 +246,14 @@ _eglBindContextToThread(_EGLContext *ctx, _EGLThreadInfo *t)
       _eglConvertApiToIndex(ctx->ClientAPI) : t->CurrentAPIIndex;
 
    oldCtx = t->CurrentContexts[apiIndex];
-   if (ctx == oldCtx)
-      return NULL;
+   if (ctx != oldCtx) {
+      if (oldCtx)
+         oldCtx->Binding = NULL;
+      if (ctx)
+         ctx->Binding = t;
 
-   if (oldCtx)
-      oldCtx->Binding = NULL;
-   if (ctx)
-      ctx->Binding = t;
-
-   t->CurrentContexts[apiIndex] = ctx;
+      t->CurrentContexts[apiIndex] = ctx;
+   }
 
    return oldCtx;
 }
@@ -352,7 +351,7 @@ _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read)
       _eglBindContextToSurfaces(newCtx, draw, read);
 
    /* unbind the old context from its binding surfaces */
-   if (oldCtx) {
+   if (oldCtx && oldCtx != newCtx) {
       /*
        * If the new context replaces some old context, the new one should not
        * be current before the replacement and it should not be bound to any
