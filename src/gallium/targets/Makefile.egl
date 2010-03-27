@@ -13,8 +13,14 @@ EGL_DRIVER_OBJECTS = $(EGL_DRIVER_SOURCES:.c=.o)
 
 common_LIBS = -ldrm -lm -ldl
 
+# ximage backend calls gallium_wrap_screen, which requires libidentity.a and
+# libtrace.a
 x11_ST = $(TOP)/src/gallium/state_trackers/egl/libeglx11.a \
-	 $(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a
+	 $(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a \
+	 $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
+	 $(TOP)/src/gallium/drivers/identity/libidentity.a \
+	 $(TOP)/src/gallium/drivers/trace/libtrace.a
+
 x11_LIBS = $(common_LIBS) -lX11 -lXext -lXfixes
 
 kms_ST = $(TOP)/src/gallium/state_trackers/egl/libeglkms.a

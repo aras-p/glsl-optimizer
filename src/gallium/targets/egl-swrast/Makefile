@@ -7,6 +7,6 @@ CFLAGS+="-I$(TOP)/src/gallium/include"
 EGL_DRIVER_NAME = swrast
 EGL_DRIVER_SOURCES = swrast_glue.c
 EGL_DRIVER_LIBS =
-EGL_DRIVER_PIPES = $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
+EGL_DRIVER_PIPES =
 
 include ../Makefile.egl

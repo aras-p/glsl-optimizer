@@ -9,7 +9,6 @@ EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/winsys/nouveau/drm/libnouveaudrm.a \
 	$(TOP)/src/gallium/drivers/nvfx/libnvfx.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
-	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
+	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
 
 include ../Makefile.egl

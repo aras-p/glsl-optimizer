@@ -7,7 +7,6 @@ EGL_DRIVER_LIBS =
 
 EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/winsys/svga/drm/libsvgadrm.a \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a
 

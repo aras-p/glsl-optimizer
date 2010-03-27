@@ -7,7 +7,6 @@ EGL_DRIVER_LIBS = -ldrm_intel
 
 EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/winsys/i915/drm/libi915drm.a \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/i915/libi915.a
 
