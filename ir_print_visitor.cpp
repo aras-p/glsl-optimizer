@@ -96,6 +96,8 @@ void ir_print_visitor::visit(ir_expression *ir)
       "sqrt",
       "exp",
       "log",
+      "exp2",
+      "log2",
       "f2i",
       "i2f",
       "u2f",

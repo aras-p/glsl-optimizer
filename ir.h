@@ -228,6 +228,8 @@ enum ir_expression_operation {
    ir_unop_sqrt,
    ir_unop_exp,
    ir_unop_log,
+   ir_unop_exp2,
+   ir_unop_log2,
    ir_unop_f2i,      /**< Float-to-integer conversion. */
    ir_unop_i2f,      /**< Integer-to-float conversion. */
    ir_unop_u2f,      /**< Unsigned-to-float conversion. */
