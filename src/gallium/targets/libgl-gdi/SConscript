@@ -9,6 +9,7 @@ if env['platform'] == 'windows':
 
     env.Append(CPPPATH = [
         '#src/gallium/state_trackers/wgl',
+        '#src/gallium/winsys/sw',
     ])
 
     env.Append(LIBS = [
