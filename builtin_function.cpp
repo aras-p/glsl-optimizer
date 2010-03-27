@@ -279,6 +279,46 @@ generate_length_functions(glsl_symbol_table *symtab, exec_list *instructions)
 			      float_type, vec4_type);
 }
 
+static void
+generate_dot(exec_list *instructions,
+		ir_variable **declarations,
+		const glsl_type *type)
+{
+   ir_dereference *const retval = new ir_dereference(declarations[16]);
+   ir_dereference *const arg = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   (void)type;
+
+   result = new ir_expression(ir_binop_dot, glsl_type::float_type, arg, arg);
+
+   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   instructions->push_tail(inst);
+}
+
+void
+generate_dot_functions(glsl_symbol_table *symtab, exec_list *instructions)
+{
+   const char *name = "dot";
+   ir_function *const f = new ir_function(name);
+   const glsl_type *float_type = glsl_type::float_type;
+   const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
+   const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
+   const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
+
+   bool added = symtab->add_function(name, f);
+   assert(added);
+
+   generate_function_instance(f, name, instructions, 1, generate_dot,
+			      float_type, float_type);
+   generate_function_instance(f, name, instructions, 1, generate_dot,
+			      float_type, vec2_type);
+   generate_function_instance(f, name, instructions, 1, generate_dot,
+			      float_type, vec3_type);
+   generate_function_instance(f, name, instructions, 1, generate_dot,
+			      float_type, vec4_type);
+}
+
 void
 generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
 {
@@ -321,7 +361,7 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: step() */
    generate_length_functions(symtab, instructions);
    /* FINISHME: distance() */
-   /* FINISHME: dot() */
+   generate_dot_functions(symtab, instructions);
    /* FINISHME: cross() */
    /* FINISHME: normalize() */
    /* FINISHME: ftransform() */
