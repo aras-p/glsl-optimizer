@@ -127,8 +127,8 @@ _mesa_DeleteHashTable(struct _mesa_HashTable *table)
  * 
  * \return pointer to user's data or NULL if key not in table
  */
-void *
-_mesa_HashLookup(struct _mesa_HashTable *table, GLuint key)
+static INLINE void *
+_mesa_HashLookup_unlocked(struct _mesa_HashTable *table, GLuint key)
 {
    GLuint pos;
    const struct HashEntry *entry;
@@ -137,19 +137,26 @@ _mesa_HashLookup(struct _mesa_HashTable *table, GLuint key)
    assert(key);
 
    pos = HASH_FUNC(key);
-   _glthread_LOCK_MUTEX(table->Mutex);
    entry = table->Table[pos];
    while (entry) {
       if (entry->Key == key) {
-         _glthread_UNLOCK_MUTEX(table->Mutex);
          return entry->Data;
       }
       entry = entry->Next;
    }
-   _glthread_UNLOCK_MUTEX(table->Mutex);
    return NULL;
 }
 
+void *
+_mesa_HashLookup(struct _mesa_HashTable *table, GLuint key)
+{
+   void *res;
+   assert(table);
+   _glthread_LOCK_MUTEX(table->Mutex);
+   res = _mesa_HashLookup_unlocked(table, key);
+   _glthread_UNLOCK_MUTEX(table->Mutex);
+   return res;
+}
 
 
 /**
@@ -447,7 +454,7 @@ _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys)
       GLuint freeStart = 1;
       GLuint key;
       for (key = 1; key != maxKey; key++) {
-	 if (_mesa_HashLookup(table, key)) {
+	 if (_mesa_HashLookup_unlocked(table, key)) {
 	    /* darn, this key is already in use */
 	    freeCount = 0;
 	    freeStart = key+1;
