@@ -55,10 +55,6 @@ struct __GLXDRIdrawablePrivateRec
    XImage *ximage;
 };
 
-/**
- * swrast loader functions
- */
-
 static Bool
 XCreateDrawable(__GLXDRIdrawablePrivate * pdp,
                 Display * dpy, XID drawable, int visualid)
@@ -78,12 +74,13 @@ XCreateDrawable(__GLXDRIdrawablePrivate * pdp,
    XChangeGC(dpy, pdp->swapgc, GCFunction, &gcvalues);
    XChangeGC(dpy, pdp->swapgc, GCGraphicsExposures, &gcvalues);
 
-   /* create XImage  */
+   /* visual */
    visTemp.screen = DefaultScreen(dpy);
    visTemp.visualid = visualid;
    visMask = (VisualScreenMask | VisualIDMask);
    pdp->visinfo = XGetVisualInfo(dpy, visMask, &visTemp, &num_visuals);
 
+   /* create XImage */
    pdp->ximage = XCreateImage(dpy,
                               pdp->visinfo->visual,
                               pdp->visinfo->depth,
@@ -105,6 +102,10 @@ XDestroyDrawable(__GLXDRIdrawablePrivate * pdp, Display * dpy, XID drawable)
    XFreeGC(dpy, pdp->gc);
    XFreeGC(dpy, pdp->swapgc);
 }
+
+/**
+ * swrast loader functions
+ */
 
 static void
 swrastGetDrawableInfo(__DRIdrawable * draw,
@@ -189,12 +190,17 @@ swrastGetImage2(__DRIdrawable * read,
 }
 
 /**
- * Renderbuffer pitch alignment (in bits).
+ * Align renderbuffer pitch.
  *
  * This should be chosen by the driver and the loader (libGL, xserver/glx)
- * should use the driver provided pitch. I had a comment that the xserver
- * requires padding images to 32 bits. Is this a hard requirement or can it use
- * the driver pitch without extra copies ? XXX
+ * should use the driver provided pitch.
+ *
+ * It seems that the xorg loader (that is the xserver loading swrast_dri for
+ * indirect rendering, not client-side libGL) requires that the pitch is
+ * exactly the image width padded to 32 bits. XXX
+ *
+ * Is this a hard requirement that requires extra copies for different pitches
+ * or can the xorg loader use the driver pitch without extra copies ?
  */
 static inline int
 bytes_per_line(unsigned pitch_bits, unsigned mul)
