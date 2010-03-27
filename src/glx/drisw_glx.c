@@ -53,7 +53,6 @@ struct __GLXDRIdrawablePrivateRec
 
    XVisualInfo *visinfo;
    XImage *ximage;
-   int bpp;
 };
 
 /**
@@ -90,12 +89,9 @@ XCreateDrawable(__GLXDRIdrawablePrivate * pdp,
                               pdp->visinfo->depth,
                               ZPixmap, 0,             /* format, offset */
                               NULL,                   /* data */
-                              0, 0,                   /* size */
-                              32,                     /* bitmap_pad */
+                              0, 0,                   /* width, height */
+                              8,                      /* bitmap_pad */
                               0);                     /* bytes_per_line */
-
-   /* get the true number of bits per pixel */
-   pdp->bpp = pdp->ximage->bits_per_pixel;
 
    return True;
 }
@@ -112,7 +108,8 @@ XDestroyDrawable(__GLXDRIdrawablePrivate * pdp, Display * dpy, XID drawable)
 
 static void
 swrastGetDrawableInfo(__DRIdrawable * draw,
-                      int *x, int *y, int *w, int *h, void *loaderPrivate)
+                      int *x, int *y, int *w, int *h,
+                      void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *pdp = loaderPrivate;
    __GLXDRIdrawable *pdraw = &(pdp->base);
@@ -121,26 +118,20 @@ swrastGetDrawableInfo(__DRIdrawable * draw,
 
    Window root;
    Status stat;
-   unsigned int bw, depth;
+   unsigned uw, uh, bw, depth;
 
    drawable = pdraw->xDrawable;
 
    stat = XGetGeometry(dpy, drawable, &root,
-                       x, y, (unsigned int *) w, (unsigned int *) h,
-                       &bw, &depth);
-}
-
-static inline int
-bytes_per_line(int w, int bpp, unsigned mul)
-{
-   unsigned mask = mul - 1;
-
-   return ((w * bpp + mask) & ~mask) / 8;
+                       x, y, &uw, &uh, &bw, &depth);
+   *w = uw;
+   *h = uh;
 }
 
 static void
-swrastPutImage(__DRIdrawable * draw, int op,
-               int x, int y, int w, int h, char *data, void *loaderPrivate)
+swrastPutImage2(__DRIdrawable * draw, int op,
+                int x, int y, int w, int h,
+                char *data, int pitch, void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *pdp = loaderPrivate;
    __GLXDRIdrawable *pdraw = &(pdp->base);
@@ -166,7 +157,7 @@ swrastPutImage(__DRIdrawable * draw, int op,
    ximage->data = data;
    ximage->width = w;
    ximage->height = h;
-   ximage->bytes_per_line = bytes_per_line(w, pdp->bpp, 32);
+   ximage->bytes_per_line = pitch;
 
    XPutImage(dpy, drawable, gc, ximage, 0, 0, x, y, w, h);
 
@@ -174,26 +165,65 @@ swrastPutImage(__DRIdrawable * draw, int op,
 }
 
 static void
-swrastGetImage(__DRIdrawable * draw,
-               int x, int y, int w, int h, char *data, void *loaderPrivate)
+swrastGetImage2(__DRIdrawable * read,
+                int x, int y, int w, int h,
+                char *data, int pitch, void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *pdp = loaderPrivate;
-   __GLXDRIdrawable *pdraw = &(pdp->base);
-   Display *dpy = pdraw->psc->dpy;
-   Drawable drawable;
+   __GLXDRIdrawablePrivate *prp = loaderPrivate;
+   __GLXDRIdrawable *pread = &(prp->base);
+   Display *dpy = pread->psc->dpy;
+   Drawable readable;
    XImage *ximage;
 
-   drawable = pdraw->xDrawable;
+   readable = pread->xDrawable;
 
-   ximage = pdp->ximage;
+   ximage = prp->ximage;
    ximage->data = data;
    ximage->width = w;
    ximage->height = h;
-   ximage->bytes_per_line = bytes_per_line(w, pdp->bpp, 32);
+   ximage->bytes_per_line = pitch;
 
-   XGetSubImage(dpy, drawable, x, y, w, h, ~0L, ZPixmap, ximage, 0, 0);
+   XGetSubImage(dpy, readable, x, y, w, h, ~0L, ZPixmap, ximage, 0, 0);
 
    ximage->data = NULL;
+}
+
+static inline int
+bytes_per_line(unsigned pitch_bits, unsigned mul)
+{
+   unsigned mask = mul - 1;
+
+   return ((pitch_bits + mask) & ~mask) / 8;
+}
+
+static void
+swrastPutImage(__DRIdrawable * draw, int op,
+               int x, int y, int w, int h,
+               char *data, void *loaderPrivate)
+{
+   __GLXDRIdrawablePrivate *pdp = loaderPrivate;
+   int bpp, pitch;
+
+   bpp = pdp->ximage->bits_per_pixel;
+
+   pitch = bytes_per_line(w * bpp, 32);
+
+   swrastPutImage2(draw, op, x, y, w, h, data, pitch, loaderPrivate);
+}
+
+static void
+swrastGetImage(__DRIdrawable * read,
+               int x, int y, int w, int h,
+               char *data, void *loaderPrivate)
+{
+   __GLXDRIdrawablePrivate *prp = loaderPrivate;
+   int bpp, pitch;
+
+   bpp = prp->ximage->bits_per_pixel;
+
+   pitch = bytes_per_line(w * bpp, 32);
+
+   swrastGetImage2(read, x, y, w, h, data, pitch, loaderPrivate);
 }
 
 static const __DRIswrastLoaderExtension swrastLoaderExtension = {

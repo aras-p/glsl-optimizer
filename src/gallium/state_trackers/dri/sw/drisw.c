@@ -38,16 +38,16 @@
  *
  * drisw_api:
  *
- * Define drisw_api similarly to dri_api and use it to call the loader. This is
- * predicated on support for calling the loader from the winsys, which has to
- * grow for DRI2 as well.
+ * Define drisw_api similarly to dri1_api and use it to call the loader. This
+ * is predicated on support for calling the loader from the winsys, which has
+ * to grow for DRI2 as well.
  *
- * xshm:
+ * xshm / texture_from_pixmap / EGLImage:
  *
  * Allow the loaders to use the XSHM extension. It probably requires callbacks
  * for createImage/destroyImage similar to DRI2 getBuffers. Probably not worth
  * it, given the scope of DRISW, unless it falls naturally from properly
- * solving the above two issues.
+ * solving the other issues.
  */
 
 #include "util/u_memory.h"

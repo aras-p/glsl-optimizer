@@ -63,11 +63,11 @@ xm_is_displaytarget_format_supported( struct sw_winsys *ws,
 }
 
 static INLINE int
-bytes_per_line(unsigned stride, unsigned mul)
+bytes_per_line(unsigned pitch_bits, unsigned mul)
 {
    unsigned mask = mul - 1;
 
-   return ((stride * 8 + mask) & ~mask) / 8;
+   return ((pitch_bits + mask) & ~mask) / 8;
 }
 
 /* pipe_screen::texture_create DISPLAY_TARGET / SCANOUT / SHARED */
@@ -88,7 +88,7 @@ xm_displaytarget_create(struct sw_winsys *winsys,
 
    format_stride = util_format_get_stride(format, width);
    xm_stride = align(format_stride, alignment);
-   loader_stride = bytes_per_line(format_stride, 32);
+   loader_stride = bytes_per_line(format_stride * 8, 32);
 
    nblocksy = util_format_get_nblocksy(format, height);
    size = xm_stride * nblocksy;

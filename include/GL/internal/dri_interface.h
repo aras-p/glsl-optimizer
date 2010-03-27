@@ -416,15 +416,15 @@ struct __DRIswrastLoaderExtensionRec {
      * Put image to drawable
      */
     void (*putImage)(__DRIdrawable *drawable, int op,
-		     int x, int y, int width, int height, char *data,
-		     void *loaderPrivate);
+		     int x, int y, int width, int height,
+		     char *data, void *loaderPrivate);
 
     /**
-     * Get image from drawable
+     * Get image from readable
      */
-    void (*getImage)(__DRIdrawable *drawable,
-		     int x, int y, int width, int height, char *data,
-		     void *loaderPrivate);
+    void (*getImage)(__DRIdrawable *readable,
+		     int x, int y, int width, int height,
+		     char *data, void *loaderPrivate);
 };
 
 /**
