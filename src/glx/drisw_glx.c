@@ -360,6 +360,20 @@ driDestroyScreen(__GLXscreenConfigs * psc)
       dlclose(psc->driver);
 }
 
+static void *
+driOpenSwrast(void)
+{
+   void *driver = NULL;
+
+   if (driver == NULL)
+      driver = driOpenDriver("swrast");
+
+   if (driver == NULL)
+      driver = driOpenDriver("swrastg");
+
+   return driver;
+}
+
 static __GLXDRIscreen *
 driCreateScreen(__GLXscreenConfigs * psc, int screen,
                 __GLXdisplayPrivate * priv)
@@ -367,14 +381,13 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
    __GLXDRIscreen *psp;
    const __DRIconfig **driver_configs;
    const __DRIextension **extensions;
-   const char *driverName = "swrast";
    int i;
 
    psp = Xcalloc(1, sizeof *psp);
    if (psp == NULL)
       return NULL;
 
-   psc->driver = driOpenDriver(driverName);
+   psc->driver = driOpenSwrast();
    if (psc->driver == NULL)
       goto handle_error;
 
