@@ -126,7 +126,7 @@ const glsl_type *glsl_type::get_base_type() const
  *                     parameters.  These are used later to avoid having to use
  *                     the symbol table.
  */
-static void
+static ir_label *
 generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
 			   exec_list *parameters, exec_list *instructions,
 			   ir_variable **declarations)
@@ -163,6 +163,7 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
    instructions->push_tail(retval);
 
    declarations[16] = retval;
+   return label;
 }
 
 
@@ -399,8 +400,9 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
       ir_function_signature *const sig = new ir_function_signature(& types[i]);
       f->signatures.push_tail(sig);
 
-      generate_constructor_intro(& types[i], 1, & sig->parameters,
-				 instructions, declarations);
+      sig->definition =
+	 generate_constructor_intro(& types[i], 1, & sig->parameters,
+				    instructions, declarations);
 
       if (types[i].is_vector()) {
 	 generate_vec_body_from_scalar(instructions, declarations);
@@ -409,9 +411,10 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 	    new ir_function_signature(& types[i]);
 	 f->signatures.push_tail(vec_sig);
 
-	 generate_constructor_intro(& types[i], types[i].vector_elements,
-				    & vec_sig->parameters, instructions,
-				    declarations);
+	 vec_sig->definition =
+	    generate_constructor_intro(& types[i], types[i].vector_elements,
+				       & vec_sig->parameters, instructions,
+				       declarations);
 	 generate_vec_body_from_N_scalars(instructions, declarations);
       } else {
 	 assert(types[i].is_matrix());
@@ -422,11 +425,12 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 	    new ir_function_signature(& types[i]);
 	 f->signatures.push_tail(mat_sig);
 
-	 generate_constructor_intro(& types[i],
-				    (types[i].vector_elements
-				     * types[i].matrix_columns),
-				    & mat_sig->parameters, instructions,
-				    declarations);
+	 mat_sig->definition =
+	    generate_constructor_intro(& types[i],
+				       (types[i].vector_elements
+					* types[i].matrix_columns),
+				       & mat_sig->parameters, instructions,
+				       declarations);
 	 generate_mat_body_from_N_scalars(instructions, declarations);
       }
    }
