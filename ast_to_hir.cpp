@@ -980,6 +980,21 @@ ast_declarator_list::hir(exec_list *instructions,
 
       instructions->push_tail(var);
 
+      /* From page 24 (page 30 of the PDF) of the GLSL 1.10 spec:
+       *
+       *    "All uniform variables are read-only and are initialized either
+       *    directly by an application via API commands, or indirectly by
+       *    OpenGL."
+       */
+      if ((state->language_version <= 110)
+	  && (var->mode == ir_var_uniform)
+	  && (decl->initializer != NULL)) {
+	 YYLTYPE loc = decl->initializer->get_location();
+
+	 _mesa_glsl_error(& loc, state, "uniform initializers forbidden in "
+			  "GLSL 1.10");
+      }
+
       /* FINISHME: Process the declaration initializer. */
    }
 
