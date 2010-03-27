@@ -62,6 +62,7 @@ xm_is_displaytarget_format_supported( struct sw_winsys *ws,
    return TRUE;
 }
 
+/* see bytes_per_line in libGL */
 static INLINE int
 bytes_per_line(unsigned pitch_bits, unsigned mul)
 {

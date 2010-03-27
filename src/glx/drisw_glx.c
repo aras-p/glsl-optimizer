@@ -90,7 +90,7 @@ XCreateDrawable(__GLXDRIdrawablePrivate * pdp,
                               ZPixmap, 0,             /* format, offset */
                               NULL,                   /* data */
                               0, 0,                   /* width, height */
-                              8,                      /* bitmap_pad */
+                              32,                     /* bitmap_pad */
                               0);                     /* bytes_per_line */
 
    return True;
@@ -188,6 +188,14 @@ swrastGetImage2(__DRIdrawable * read,
    ximage->data = NULL;
 }
 
+/**
+ * Renderbuffer pitch alignment (in bits).
+ *
+ * This should be chosen by the driver and the loader (libGL, xserver/glx)
+ * should use the driver provided pitch. I had a comment that the xserver
+ * requires padding images to 32 bits. Is this a hard requirement or can it use
+ * the driver pitch without extra copies ? XXX
+ */
 static inline int
 bytes_per_line(unsigned pitch_bits, unsigned mul)
 {

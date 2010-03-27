@@ -206,6 +206,7 @@ swrast_delete_renderbuffer(struct gl_renderbuffer *rb)
     free(rb);
 }
 
+/* see bytes_per_line in libGL */
 static INLINE int
 bytes_per_line(unsigned pitch_bits, unsigned mul)
 {
