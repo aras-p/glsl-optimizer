@@ -88,9 +88,20 @@ void ir_print_visitor::visit(ir_expression *ir)
 {
    printf("(expression ");
 
-   printf("(FINISHME: operator) ");
+   const char *str;
+   char buf[256];
 
-   printf("(");
+   switch (ir->operation) {
+   case ir_unop_f2i: str = "f2i"; break;
+   case ir_unop_i2f: str = "i2f"; break;
+   case ir_unop_u2f: str = "u2f"; break;
+   default:
+      snprintf(buf, sizeof(buf), "operator %u", ir->operation);
+      str = buf;
+      break;
+   }
+
+   printf("(%s) (", str);
    if (ir->operands[0])
       ir->operands[0]->accept(this);
    printf(") ");
