@@ -93,6 +93,7 @@ void ir_print_visitor::visit(ir_expression *ir)
       "abs",
       "rcp",
       "rsq",
+      "sqrt",
       "exp",
       "log",
       "f2i",

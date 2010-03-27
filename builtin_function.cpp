@@ -85,6 +85,14 @@ generate_rsq(exec_list *instructions,
 }
 
 static void
+generate_sqrt(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   generate_unop(instructions, declarations, type, ir_unop_sqrt);
+}
+
+static void
 generate_abs(exec_list *instructions,
 	     ir_variable **declarations,
 	     const glsl_type *type)
@@ -227,7 +235,7 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    make_gentype_function(symtab, instructions, "log", 1, generate_log);
    /* FINISHME: exp2() */
    /* FINISHME: log2() */
-   /* FINISHME: sqrt() */
+   make_gentype_function(symtab, instructions, "sqrt", 1, generate_sqrt);
    make_gentype_function(symtab, instructions, "inversesqrt", 1, generate_rsq);
    make_gentype_function(symtab, instructions, "abs", 1, generate_abs);
    /* FINISHME: sign() */
