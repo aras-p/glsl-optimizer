@@ -183,7 +183,7 @@ private:
 };
 
 #define foreach_iter(iter_type, iter, container) \
-   for (iter_type iter = container . iterator(); iter.has_next(); iter.next())
+   for (iter_type iter = (container) . iterator(); iter.has_next(); iter.next())
 #endif
 
 
