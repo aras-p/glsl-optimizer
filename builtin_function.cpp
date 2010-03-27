@@ -132,6 +132,15 @@ generate_max(exec_list *instructions,
    generate_binop(instructions, declarations, type, ir_binop_max);
 }
 
+
+static void
+generate_pow(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   generate_binop(instructions, declarations, type, ir_binop_pow);
+}
+
 void
 generate_function_instance(ir_function *f,
 			   const char *name,
@@ -213,7 +222,7 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: acos() */
    /* FINISHME: atan(y,x) */
    /* FINISHME: atan(y/x) */
-   /* FINISHME: pow() */
+   make_gentype_function(symtab, instructions, "pow", 2, generate_pow);
    make_gentype_function(symtab, instructions, "exp", 1, generate_exp);
    make_gentype_function(symtab, instructions, "log", 1, generate_log);
    /* FINISHME: exp2() */
