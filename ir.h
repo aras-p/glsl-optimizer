@@ -319,6 +319,14 @@ public:
     */
    static ir_call *get_error_instruction();
 
+   /**
+    * Get an iterator for the set of acutal parameters
+    */
+   exec_list_iterator iterator()
+   {
+      return actual_parameters.iterator();
+   }
+
 private:
    ir_call()
       : ir_rvalue(), callee(NULL)
