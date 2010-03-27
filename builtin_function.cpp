@@ -157,6 +157,7 @@ generate_function_instance(ir_function *f,
 			   void (*generate)(exec_list *instructions,
 					    ir_variable **declarations,
 					    const glsl_type *type),
+			   const glsl_type *ret_type,
 			   const glsl_type *type)
 {
    ir_variable *declarations[17];
@@ -184,7 +185,7 @@ generate_function_instance(ir_function *f,
       declarations[i] = var;
    }
 
-   ir_variable *retval = new ir_variable(type, "__retval");
+   ir_variable *retval = new ir_variable(ret_type, "__retval");
    instructions->push_tail(retval);
 
    declarations[16] = retval;
@@ -201,6 +202,7 @@ make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
 				       const glsl_type *type))
 {
    ir_function *const f = new ir_function(name);
+   const glsl_type *float_type = glsl_type::float_type;
    const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
    const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
    const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
@@ -209,13 +211,56 @@ make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
    assert(added);
 
    generate_function_instance(f, name, instructions, n_args, generate,
-			      glsl_type::float_type);
+			      float_type, float_type);
    generate_function_instance(f, name, instructions, n_args, generate,
-			      vec2_type);
+			      vec2_type, vec2_type);
    generate_function_instance(f, name, instructions, n_args, generate,
-			      vec3_type);
+			      vec3_type, vec3_type);
    generate_function_instance(f, name, instructions, n_args, generate,
-			      vec4_type);
+			      vec4_type, vec4_type);
+}
+
+static void
+generate_length(exec_list *instructions,
+		ir_variable **declarations,
+		const glsl_type *type)
+{
+   ir_dereference *const retval = new ir_dereference(declarations[16]);
+   ir_dereference *const arg = new ir_dereference(declarations[0]);
+   ir_rvalue *result, *temp;
+
+   (void)type;
+
+   /* FINISHME: implement the abs(arg) variant for length(float f) */
+
+   temp = new ir_expression(ir_binop_dot, glsl_type::float_type, arg, arg);
+   result = new ir_expression(ir_unop_sqrt, glsl_type::float_type, temp, NULL);
+
+   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   instructions->push_tail(inst);
+}
+
+void
+generate_length_functions(glsl_symbol_table *symtab, exec_list *instructions)
+{
+   const char *name = "length";
+   ir_function *const f = new ir_function(name);
+   const glsl_type *float_type = glsl_type::float_type;
+   const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
+   const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
+   const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
+
+   bool added = symtab->add_function(name, f);
+   assert(added);
+
+   generate_function_instance(f, name, instructions, 1, generate_length,
+			      float_type, float_type);
+   generate_function_instance(f, name, instructions, 1, generate_length,
+			      float_type, vec2_type);
+   generate_function_instance(f, name, instructions, 1, generate_length,
+			      float_type, vec3_type);
+   generate_function_instance(f, name, instructions, 1, generate_length,
+			      float_type, vec4_type);
 }
 
 void
@@ -258,7 +303,7 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: smoothstep() */
    /* FINISHME: floor() */
    /* FINISHME: step() */
-   /* FINISHME: length() */
+   generate_length_functions(symtab, instructions);
    /* FINISHME: distance() */
    /* FINISHME: dot() */
    /* FINISHME: cross() */
