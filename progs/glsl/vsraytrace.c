@@ -27,11 +27,14 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include "shaderutil.h"
-
+#include <math.h>
 
 static int Win;
 static int WinWidth = 256, WinHeight = 256;
 static int mouseGrabbed = 0;
+static GLuint vertShader;
+static GLuint program;
+float rot[9] = {1,0,0,  0,1,0,   0,0,1};
 
 static const char* vsSource =
   "const float INF     = 9999.9;                                       \n"
@@ -206,11 +209,37 @@ static const char* vsSource =
   "  Ray ray = Ray(cameraPos, rayDir);                                 \n"
   "  gl_Position = gl_Vertex;                                          \n"
   "  gl_FrontColor = trace1(ray);                                      \n"
-  "}                                                                   \n";
+  "}\n";
 
-static GLuint vertShader;
-static GLuint program;
 
+static inline
+float
+deg2rad(const float degree)
+{
+  return( degree * 0.017453292519943295769236907684886F);
+}
+
+static inline void
+rotate_xy(float* mat3, const float degreesAroundX, const float degreesAroundY)
+{
+  const float rad1 = deg2rad(degreesAroundX);
+  const float c1 = cosf(rad1);
+  const float s1 = sinf(rad1);
+  const float rad2 = deg2rad(degreesAroundY);
+  const float c2 = cosf(rad2);
+  const float s2 = sinf(rad2);
+  mat3[0] = c2;    mat3[3] = 0.0F; mat3[6] = s2;
+  mat3[1] = s1*s2; mat3[4] = c1;   mat3[7] = -s1*c2;
+  mat3[2] = -c1*s2;mat3[5] = s1;   mat3[8] = c1*c2;
+}
+
+static inline void
+identity(float* mat3)
+{
+  mat3[0] = 1.0F; mat3[3] = 0.0F; mat3[6] = 0.0F;
+  mat3[1] = 0.0F; mat3[4] = 1.0F; mat3[7] = 0.0F;
+  mat3[2] = 0.0F; mat3[5] = 0.0F; mat3[8] = 1.0F;
+}
 
 static void
 Draw(void)
@@ -219,7 +248,6 @@ Draw(void)
   const float h = 0.5F * WinHeight;
   int x,y;
 
-  float rot[9] = {1,0,0,  0,1,0,   0,0,1};
   GLint location = glGetUniformLocation(program, "rot");
 
   glUseProgram(program);
@@ -287,9 +315,14 @@ static
 void
 drag(int x, int y)
 {
+  float scale = 1.5F;
   if(mouseGrabbed)
   {
-    printf("%4d %4d\n", x, y);
+    static GLfloat xRot = 0, yRot = 0;
+    xRot = (float)(x - WinWidth/2) / scale;
+    yRot = (float)(y - WinHeight/2) / scale;
+    identity(rot);
+    rotate_xy(rot, yRot, xRot);
   }
 }
 
@@ -355,7 +388,7 @@ main(int argc, char *argv[])
   glutDisplayFunc(Draw);
   glutIdleFunc(Draw);
   glutMouseFunc(mouse);
-  glutMotionFunc(drag);
+  glutPassiveMotionFunc(drag);
   Init();
   glutMainLoop();
   return 0;
