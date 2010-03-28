@@ -48,8 +48,13 @@
  * for createImage/destroyImage similar to DRI2 getBuffers. Probably not worth
  * it, given the scope of DRISW, unless it falls naturally from properly
  * solving the other issues.
+ *
+ * fences:
+ *
+ * No fences are used, are they needed for llvmpipe / cell ?
  */
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "pipe/p_context.h"
@@ -75,14 +80,19 @@ get_drawable_info(__DRIdrawable *dPriv, int *w, int *h)
                            dPriv->loaderPrivate);
 }
 
+/*
+ * Set the width to 'stride / cpp'. PutImage seems to correctly clip the width
+ * to the actual width of the dst drawable. Even if this is not specified but
+ * an implementation detail, it is the correct thing to do, so rely on it. XXX
+ */
 static INLINE void
-put_image(__DRIdrawable *dPriv, void *data)
+put_image(__DRIdrawable *dPriv, void *data, unsigned width)
 {
    __DRIscreen *sPriv = dPriv->driScreenPriv;
    const __DRIswrastLoaderExtension *loader = sPriv->swrast_loader;
 
    loader->putImage(dPriv, __DRI_SWRAST_IMAGE_OP_SWAP,
-                    0, 0, dPriv->w, dPriv->h,
+                    0, 0, width, dPriv->h,
                     data, dPriv->loaderPrivate);
 }
 
@@ -102,6 +112,7 @@ drisw_present_texture(__DRIdrawable *dPriv,
    struct pipe_surface *psurf;
    struct pipe_transfer *ptrans;
    void *pmap;
+   unsigned width;
 
    pipe = dri1_get_pipe_context(screen);
    psurf = dri1_get_pipe_surface(drawable, ptex);
@@ -112,11 +123,13 @@ drisw_present_texture(__DRIdrawable *dPriv,
                                    PIPE_TRANSFER_READ,
                                    0, 0, dPriv->w, dPriv->h);
 
+   width = ptrans->stride / util_format_get_blocksize(ptex->format);
+
    pmap = pipe->transfer_map(pipe, ptrans);
 
    assert(pmap);
 
-   put_image(dPriv, pmap);
+   put_image(dPriv, pmap, width);
 
    pipe->transfer_unmap(pipe, ptrans);
 

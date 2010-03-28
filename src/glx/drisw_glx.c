@@ -129,10 +129,32 @@ swrastGetDrawableInfo(__DRIdrawable * draw,
    *h = uh;
 }
 
+/**
+ * Align renderbuffer pitch.
+ *
+ * This should be chosen by the driver and the loader (libGL, xserver/glx)
+ * should use the driver provided pitch.
+ *
+ * It seems that the xorg loader (that is the xserver loading swrast_dri for
+ * indirect rendering, not client-side libGL) requires that the pitch is
+ * exactly the image width padded to 32 bits. XXX
+ *
+ * The above restriction can probably be overcome by using ScratchPixmap and
+ * CopyArea in the xserver, similar to ShmPutImage, and setting the width of
+ * the scratch pixmap to 'pitch / cpp'.
+ */
+static inline int
+bytes_per_line(unsigned pitch_bits, unsigned mul)
+{
+   unsigned mask = mul - 1;
+
+   return ((pitch_bits + mask) & ~mask) / 8;
+}
+
 static void
-swrastPutImage2(__DRIdrawable * draw, int op,
-                int x, int y, int w, int h,
-                char *data, int pitch, void *loaderPrivate)
+swrastPutImage(__DRIdrawable * draw, int op,
+               int x, int y, int w, int h,
+               char *data, void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *pdp = loaderPrivate;
    __GLXDRIdrawable *pdraw = &(pdp->base);
@@ -158,7 +180,7 @@ swrastPutImage2(__DRIdrawable * draw, int op,
    ximage->data = data;
    ximage->width = w;
    ximage->height = h;
-   ximage->bytes_per_line = pitch;
+   ximage->bytes_per_line = bytes_per_line(w * ximage->bits_per_pixel, 32);
 
    XPutImage(dpy, drawable, gc, ximage, 0, 0, x, y, w, h);
 
@@ -166,9 +188,9 @@ swrastPutImage2(__DRIdrawable * draw, int op,
 }
 
 static void
-swrastGetImage2(__DRIdrawable * read,
-                int x, int y, int w, int h,
-                char *data, int pitch, void *loaderPrivate)
+swrastGetImage(__DRIdrawable * read,
+               int x, int y, int w, int h,
+               char *data, void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *prp = loaderPrivate;
    __GLXDRIdrawable *pread = &(prp->base);
@@ -182,62 +204,11 @@ swrastGetImage2(__DRIdrawable * read,
    ximage->data = data;
    ximage->width = w;
    ximage->height = h;
-   ximage->bytes_per_line = pitch;
+   ximage->bytes_per_line = bytes_per_line(w * ximage->bits_per_pixel, 32);
 
    XGetSubImage(dpy, readable, x, y, w, h, ~0L, ZPixmap, ximage, 0, 0);
 
    ximage->data = NULL;
-}
-
-/**
- * Align renderbuffer pitch.
- *
- * This should be chosen by the driver and the loader (libGL, xserver/glx)
- * should use the driver provided pitch.
- *
- * It seems that the xorg loader (that is the xserver loading swrast_dri for
- * indirect rendering, not client-side libGL) requires that the pitch is
- * exactly the image width padded to 32 bits. XXX
- *
- * Is this a hard requirement that requires extra copies for different pitches
- * or can the xorg loader use the driver pitch without extra copies ?
- */
-static inline int
-bytes_per_line(unsigned pitch_bits, unsigned mul)
-{
-   unsigned mask = mul - 1;
-
-   return ((pitch_bits + mask) & ~mask) / 8;
-}
-
-static void
-swrastPutImage(__DRIdrawable * draw, int op,
-               int x, int y, int w, int h,
-               char *data, void *loaderPrivate)
-{
-   __GLXDRIdrawablePrivate *pdp = loaderPrivate;
-   int bpp, pitch;
-
-   bpp = pdp->ximage->bits_per_pixel;
-
-   pitch = bytes_per_line(w * bpp, 32);
-
-   swrastPutImage2(draw, op, x, y, w, h, data, pitch, loaderPrivate);
-}
-
-static void
-swrastGetImage(__DRIdrawable * read,
-               int x, int y, int w, int h,
-               char *data, void *loaderPrivate)
-{
-   __GLXDRIdrawablePrivate *prp = loaderPrivate;
-   int bpp, pitch;
-
-   bpp = prp->ximage->bits_per_pixel;
-
-   pitch = bytes_per_line(w * bpp, 32);
-
-   swrastGetImage2(read, x, y, w, h, data, pitch, loaderPrivate);
 }
 
 static const __DRIswrastLoaderExtension swrastLoaderExtension = {

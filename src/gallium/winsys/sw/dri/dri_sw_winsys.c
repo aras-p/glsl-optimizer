@@ -62,15 +62,6 @@ xm_is_displaytarget_format_supported( struct sw_winsys *ws,
    return TRUE;
 }
 
-/* see bytes_per_line in libGL */
-static INLINE int
-bytes_per_line(unsigned pitch_bits, unsigned mul)
-{
-   unsigned mask = mul - 1;
-
-   return ((pitch_bits + mask) & ~mask) / 8;
-}
-
 /* pipe_screen::texture_create DISPLAY_TARGET / SCANOUT / SHARED */
 static struct sw_displaytarget *
 xm_displaytarget_create(struct sw_winsys *winsys,
@@ -81,7 +72,7 @@ xm_displaytarget_create(struct sw_winsys *winsys,
                         unsigned *stride)
 {
    struct xm_displaytarget *xm_dt;
-   unsigned nblocksy, size, xm_stride, loader_stride, format_stride;
+   unsigned nblocksy, size, xm_stride, format_stride;
 
    xm_dt = CALLOC_STRUCT(xm_displaytarget);
    if(!xm_dt)
@@ -89,27 +80,15 @@ xm_displaytarget_create(struct sw_winsys *winsys,
 
    format_stride = util_format_get_stride(format, width);
    xm_stride = align(format_stride, alignment);
-   loader_stride = bytes_per_line(format_stride * 8, 32);
 
    nblocksy = util_format_get_nblocksy(format, height);
    size = xm_stride * nblocksy;
-
-#ifdef DEBUG
-   debug_printf("swrast format stride: %8d\n", format_stride);
-   debug_printf("swrast pipe stride  : %8d\n", xm_stride);
-   debug_printf("swrast loader stride: %8d\n", loader_stride);
-#endif
-
-   /*
-    * Allocate with the aligned stride required by the pipe but set the stride
-    * to the one hardcoded in the loaders XXX
-    */
 
    xm_dt->data = align_malloc(size, alignment);
    if(!xm_dt->data)
       goto no_data;
 
-   *stride = loader_stride;
+   *stride = xm_stride;
    return (struct sw_displaytarget *)xm_dt;
 
 no_data:

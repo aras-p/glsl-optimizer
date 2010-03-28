@@ -38,8 +38,8 @@
  * This function should be put in targets/common or winsys/sw/common and shared
  * with targets/libgl-xlib and winsys/sw/drm.
  *
- * For targets/common, you get layering violations in the build system unless
- * all of drm_api's are moved under targets.
+ * For targets/common, you get layering violations unless all of drm_api's are
+ * moved under targets.
  */
 
 #ifdef GALLIUM_SOFTPIPE
