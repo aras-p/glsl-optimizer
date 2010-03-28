@@ -409,7 +409,7 @@ static INLINE void CTX_DBG(struct r300_context * ctx, unsigned flags,
     if (CTX_DBG_ON(ctx, flags)) {
         va_list va;
         va_start(va, fmt);
-        debug_vprintf(fmt, va);
+        vfprintf(stderr, fmt, va);
         va_end(va);
     }
 }

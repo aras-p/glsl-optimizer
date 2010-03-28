@@ -28,6 +28,8 @@
 
 #include "r300_chipset.h"
 
+#include <stdio.h>
+
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
@@ -80,7 +82,7 @@ static INLINE void SCREEN_DBG(struct r300_screen * screen, unsigned flags,
     if (SCREEN_DBG_ON(screen, flags)) {
         va_list va;
         va_start(va, fmt);
-        debug_vprintf(fmt, va);
+        vfprintf(stderr, fmt, va);
         va_end(va);
     }
 }
