@@ -70,3 +70,21 @@ static const builtin_variable builtin_110_deprecated_vs_variables[] = {
 static const builtin_variable builtin_130_vs_variables[] = {
    { ir_var_in,  "int",   "gl_VertexID" },
 };
+
+static const builtin_variable builtin_110_deprecated_uniforms[] = {
+   { ir_var_uniform, "mat4", "gl_ModelViewMatrix" },
+   { ir_var_uniform, "mat4", "gl_ProjectionMatrix" },
+   { ir_var_uniform, "mat4", "gl_ModelViewProjectionMatrix" },
+   { ir_var_uniform, "mat3", "gl_NormalMatrix" },
+   { ir_var_uniform, "mat4", "gl_ModelViewMatrixInverse" },
+   { ir_var_uniform, "mat4", "gl_ProjectionMatrixInverse" },
+   { ir_var_uniform, "mat4", "gl_ModelViewProjectionMatrixInverse" },
+   { ir_var_uniform, "mat4", "gl_ModelViewMatrixTranspose" },
+   { ir_var_uniform, "mat4", "gl_ProjectionMatrixTranspose" },
+   { ir_var_uniform, "mat4", "gl_ModelViewProjectionMatrixTranspose" },
+   { ir_var_uniform, "mat4", "gl_ModelViewMatrixInverseTranspose" },
+   { ir_var_uniform, "mat4", "gl_ProjectionMatrixInverseTranspose" },
+   { ir_var_uniform, "mat4", "gl_ModelViewProjectionMatrixInverseTranspose" },
+   { ir_var_uniform, "float", "gl_NormalScale" },
+};
+

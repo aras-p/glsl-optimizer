@@ -56,6 +56,37 @@ add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
    symtab->add_variable(var->name, var);
 }
 
+static void
+generate_110_uniforms(exec_list *instructions,
+		      glsl_symbol_table *symtab)
+{
+   for (unsigned i = 0
+	   ; i < Elements(builtin_110_deprecated_uniforms)
+	   ; i++) {
+      add_builtin_variable(& builtin_110_deprecated_uniforms[i],
+			   instructions, symtab);
+   }
+
+   /* FINISHME: Add support for gl_TextureMatrix[].  The size of this array is
+    * FINISHME: implementation dependent based on the value of
+    * FINISHME: GL_MAX_TEXTURE_COORDS.
+    */
+
+   /* FINISHME: Add support for gl_DepthRangeParameters */
+   /* FINISHME: Add support for gl_ClipPlane[] */
+   /* FINISHME: Add support for gl_PointParameters */
+
+   /* FINISHME: Add support for gl_MaterialParameters
+    * FINISHME: (glFrontMaterial, glBackMaterial)
+    */
+
+   /* FINISHME: Add support for gl_LightSource[] */
+   /* FINISHME: Add support for gl_LightModel */
+   /* FINISHME: Add support for gl_FrontLightProduct[], gl_BackLightProduct[] */
+   /* FINISHME: Add support for gl_TextureEnvColor[] */
+   /* FINISHME: Add support for gl_ObjectPlane*[], gl_EyePlane*[] */
+   /* FINISHME: Add support for gl_Fog */
+}
 
 static void
 generate_110_vs_variables(exec_list *instructions,
@@ -72,6 +103,7 @@ generate_110_vs_variables(exec_list *instructions,
       add_builtin_variable(& builtin_110_deprecated_vs_variables[i],
 			   instructions, symtab);
    }
+   generate_110_uniforms(instructions, symtab);
 
    /* FINISHME: Add support fo gl_TexCoord.  The size of this array is
     * FINISHME: implementation dependent based on the value of
@@ -143,6 +175,7 @@ generate_110_fs_variables(exec_list *instructions,
       add_builtin_variable(& builtin_110_deprecated_fs_variables[i],
 			   instructions, symtab);
    }
+   generate_110_uniforms(instructions, symtab);
 
    /* FINISHME: Add support for gl_FragData[GL_MAX_DRAW_BUFFERS]. */
 }
