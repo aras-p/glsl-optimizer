@@ -1,0 +1,42 @@
+#######################################################################
+# SConscript for swrast convenience library
+#
+# This is a meta-driver which consists of any and all of the software
+# rasterizers into a single driver.  A software rasterizer is defined
+# as any driver which takes an sw_winsys pointer as the only argument
+# to create_screen.
+#
+# XXX: unfortunately users of this driver still need to link in any
+# extra libraries needed for the particular driver (eg llvm for
+# llvmpipe).  Not sure how to get around this.
+
+Import('*')
+
+if not set(('softpipe', 'llvmpipe', 'cell')).intersection(env['drivers']):
+    print 'warning: no supported pipe driver: skipping build of sw meta-driver'
+    Return()
+
+env = env.Clone()
+
+if 'softpipe' in env['drivers']:
+    env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
+    env.Prepend(LIBS = [softpipe])
+
+if 'llvmpipe' in env['drivers']:
+    env.Tool('llvm')
+    if 'LLVM_VERSION' in env:
+        env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
+        env.Tool('udis86')
+        env.Prepend(LIBS = [llvmpipe])
+    
+if 'cell' in env['drivers']:
+    env.Append(CPPDEFINES = 'GALLIUM_CELL')
+    env.Prepend(LIBS = [cell])
+
+sw = env.ConvenienceLibrary(
+	target = 'sw',
+	source = [
+		'sw.c',
+		]
+    )
+    Export('sw')

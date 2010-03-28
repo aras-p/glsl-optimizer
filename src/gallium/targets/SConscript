@@ -10,6 +10,11 @@ if 'gdi' in env['winsys']:
 		'libgl-gdi/SConscript',
 	])
 
+if 'graw-xlib' in env['winsys']:
+	SConscript([
+		'graw-xlib/SConscript',
+	])
+
 if env['dri']:
 	SConscript([
 		'SConscript.dri'
