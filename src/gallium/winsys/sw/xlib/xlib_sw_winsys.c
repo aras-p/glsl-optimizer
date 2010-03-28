@@ -341,6 +341,8 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
       XPutImage(xm_dt->display, xlib_drawable->drawable, xm_dt->gc,
                 ximage, 0, 0, 0, 0, xm_dt->width, xm_dt->height);
    }
+
+   XFlush(xm_dt->display);
 }
 
 /**
