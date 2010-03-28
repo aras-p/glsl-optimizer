@@ -193,11 +193,13 @@ generate_function_instance(ir_function *f,
    for (i = 0; i < n_args; i++) {
       ir_variable *var = new ir_variable(type, arg_names[i]);
 
+      var = new ir_variable(type, arg_names[i]);
       var->mode = ir_var_in;
       sig->parameters.push_tail(var);
 
       var = new ir_variable(type, arg_names[i]);
-
+      var->mode = ir_var_in;
+      instructions->push_tail(var);
       declarations[i] = var;
    }
 
