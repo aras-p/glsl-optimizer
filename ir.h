@@ -432,7 +432,7 @@ public:
 
    bool is_lvalue()
    {
-      return val->is_lvalue();
+      return val->is_lvalue() && !mask.has_duplicates;
    }
 
    ir_rvalue *val;
