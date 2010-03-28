@@ -489,9 +489,11 @@ _mesa_glsl_initialize_constructors(exec_list *instructions,
 const glsl_type *
 glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 {
+   if (base_type == GLSL_TYPE_VOID)
+      return &void_type;
+
    if ((rows < 1) || (rows > 4) || (columns < 1) || (columns > 4))
       return error_type;
-
 
    /* Treat GLSL vectors as Nx1 matrices.
     */

@@ -1146,7 +1146,6 @@ ast_function_definition::hir(exec_list *instructions,
 
    assert(return_type != NULL);
 
-
    /* Verify that this function's signature either doesn't match a previously
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
@@ -1190,6 +1189,14 @@ ast_function_definition::hir(exec_list *instructions,
       state->symbols->add_function(f->name, f);
    }
 
+   /* Verify the return type of main() */
+   if (strcmp(name, "main") == 0) {
+      if (return_type != glsl_type::get_instance(GLSL_TYPE_VOID, 0, 0)) {
+	 YYLTYPE loc = this->get_location();
+
+	 _mesa_glsl_error(& loc, state, "main() must return void");
+      }
+   }
 
    /* Finish storing the information about this new function in its signature.
     */
