@@ -867,7 +867,8 @@ type_specifier_to_glsl_type(const struct ast_type_specifier *spec,
 static void
 apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 struct ir_variable *var,
-				 struct _mesa_glsl_parse_state *state)
+				 struct _mesa_glsl_parse_state *state,
+				 YYLTYPE *loc)
 {
    if (qual->invariant)
       var->invariant = 1;
@@ -879,6 +880,13 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 
    if (qual->centroid)
       var->centroid = 1;
+
+   if (qual->attribute && state->target == fragment_shader) {
+      var->type = glsl_type::error_type;
+      _mesa_glsl_error(loc, state,
+		       "`attribute' variables may not be declared in the "
+		       "fragment shader");
+   }
 
    if (qual->in && qual->out)
       var->mode = ir_var_inout;
@@ -922,16 +930,13 @@ ast_declarator_list::hir(exec_list *instructions,
       struct ast_declaration *const decl = (struct ast_declaration * )ptr;
       const struct glsl_type *var_type;
       struct ir_variable *var;
-
+      YYLTYPE loc = this->get_location();
 
       /* FINISHME: Emit a warning if a variable declaration shadows a
        * FINISHME: declaration at a higher scope.
        */
 
       if ((decl_type == NULL) || decl_type->is_void()) {
-	 YYLTYPE loc;
-
-	 loc = this->get_location();
 	 if (type_name != NULL) {
 	    _mesa_glsl_error(& loc, state,
 			     "invalid type `%s' in declaration of `%s'",
@@ -962,7 +967,8 @@ ast_declarator_list::hir(exec_list *instructions,
        * FINISHME: in a parameter list (in and out only).
        */
 
-      apply_type_qualifier_to_variable(& this->type->qualifier, var, state);
+      apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
+				       & loc);
 
       /* Attempt to add the variable to the symbol table.  If this fails, it
        * means the variable has already been declared at this scope.
@@ -1036,12 +1042,11 @@ ast_parameter_declarator::hir(exec_list *instructions,
 {
    const struct glsl_type *type;
    const char *name = NULL;
-
+   YYLTYPE loc = this->get_location();
 
    type = type_specifier_to_glsl_type(this->type->specifier, & name, state);
 
    if (type == NULL) {
-      YYLTYPE loc = this->get_location();
       if (name != NULL) {
 	 _mesa_glsl_error(& loc, state,
 			  "invalid type `%s' in declaration of `%s'",
@@ -1064,7 +1069,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
    /* Apply any specified qualifiers to the parameter declaration.  Note that
     * for function parameters the default mode is 'in'.
     */
-   apply_type_qualifier_to_variable(& this->type->qualifier, var, state);
+   apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc);
    if (var->mode == ir_var_auto)
       var->mode = ir_var_in;
 
