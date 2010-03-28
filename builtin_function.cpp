@@ -22,6 +22,7 @@
  */
 
 #include <stdlib.h>
+#include <math.h>
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
@@ -55,6 +56,40 @@ generate_binop(exec_list *instructions,
    ir_rvalue *result;
 
    result = new ir_expression(op, type, arg1, arg2);
+
+   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   instructions->push_tail(inst);
+}
+
+static void
+generate_radians(exec_list *instructions,
+		 ir_variable **declarations,
+		 const glsl_type *type)
+{
+   ir_dereference *const retval = new ir_dereference(declarations[16]);
+   ir_dereference *const arg = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   result = new ir_expression(ir_binop_mul, type,
+			      arg,
+			      new ir_constant((float)(M_PI / 180.0)));
+
+   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   instructions->push_tail(inst);
+}
+
+static void
+generate_degrees(exec_list *instructions,
+		 ir_variable **declarations,
+		 const glsl_type *type)
+{
+   ir_dereference *const retval = new ir_dereference(declarations[16]);
+   ir_dereference *const arg = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   result = new ir_expression(ir_binop_mul, type,
+			      arg,
+			      new ir_constant((float)(180.0 / M_PI)));
 
    ir_instruction *inst = new ir_assignment(retval, result, NULL);
    instructions->push_tail(inst);
@@ -324,8 +359,8 @@ generate_dot_functions(glsl_symbol_table *symtab, exec_list *instructions)
 void
 generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
 {
-   /* FINISHME: radians() */
-   /* FINISHME: degrees() */
+   make_gentype_function(symtab, instructions, "radians", 1, generate_radians);
+   make_gentype_function(symtab, instructions, "degrees", 1, generate_degrees);
    /* FINISHME: sin() */
    /* FINISHME: cos() */
    /* FINISHME: tan() */
