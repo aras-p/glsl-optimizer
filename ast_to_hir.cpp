@@ -980,22 +980,33 @@ ast_declarator_list::hir(exec_list *instructions,
 
       instructions->push_tail(var);
 
-      /* From page 24 (page 30 of the PDF) of the GLSL 1.10 spec:
-       *
-       *    "All uniform variables are read-only and are initialized either
-       *    directly by an application via API commands, or indirectly by
-       *    OpenGL."
-       */
-      if ((state->language_version <= 110)
-	  && (var->mode == ir_var_uniform)
-	  && (decl->initializer != NULL)) {
-	 YYLTYPE loc = decl->initializer->get_location();
+      if (decl->initializer != NULL) {
+	 /* From page 24 (page 30 of the PDF) of the GLSL 1.10 spec:
+	  *
+	  *    "All uniform variables are read-only and are initialized either
+	  *    directly by an application via API commands, or indirectly by
+	  *    OpenGL."
+	  */
+	 if ((state->language_version <= 110)
+	     && (var->mode == ir_var_uniform)) {
+	    YYLTYPE loc = decl->initializer->get_location();
 
-	 _mesa_glsl_error(& loc, state, "uniform initializers forbidden in "
-			  "GLSL 1.10");
+	    _mesa_glsl_error(& loc, state, "uniform initializers forbidden in "
+			     "GLSL 1.10");
+	 }
+
+	 ir_dereference *const lhs = new ir_dereference(var);
+	 ir_rvalue *const rhs = decl->initializer->hir(instructions, state);
+
+	 /* FINISHME: If the declaration is either 'const' or 'uniform', the
+	  * FINISHME: initializer (rhs) must be a constant expression.
+	  */
+
+	 if (!rhs->type->is_error()) {
+	    (void) do_assignment(instructions, state, lhs, rhs,
+				 this->get_location());
+	 }
       }
-
-      /* FINISHME: Process the declaration initializer. */
    }
 
    /* Variable declarations do not have r-values.
