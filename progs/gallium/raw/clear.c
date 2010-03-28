@@ -9,6 +9,8 @@
 #include "pipe/p_defines.h"
 #include <unistd.h>             /* for sleep() */
 
+#include "util/u_debug.h"       /* debug_dump_surface_bmp() */
+
 enum pipe_format formats[] = {
    PIPE_FORMAT_R8G8B8A8_UNORM,
    PIPE_FORMAT_B8G8R8A8_UNORM,
@@ -77,6 +79,14 @@ int main( int argc, char *argv[] )
    pipe->set_framebuffer_state(pipe, &fb);
    pipe->clear(pipe, PIPE_CLEAR_COLOR, clear_color, 0, 0);
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+   /* At the moment, libgraw includes/makes available all the symbols
+    * from gallium/auxiliary, including these debug helpers.  Will
+    * eventually want to bless some of these paths, and lock the
+    * others down so they aren't accessible from test programs.
+    */
+   if (0)
+      debug_dump_surface_bmp(pipe, "result.bmp", surf);
 
    screen->flush_frontbuffer(screen, surf, window);
 
