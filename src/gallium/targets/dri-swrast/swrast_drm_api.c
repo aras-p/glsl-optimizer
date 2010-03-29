@@ -32,15 +32,7 @@
 #include "state_tracker/sw_winsys.h"
 #include "dri_sw_winsys.h"
 
-/* Copied from targets/libgl-xlib.
- *
- * TODO:
- * This function should be put in targets/common or winsys/sw/common and shared
- * with targets/libgl-xlib and winsys/sw/drm.
- *
- * For targets/common, you get layering violations unless all of drm_api's are
- * moved under targets.
- */
+/* Copied from targets/libgl-xlib */
 
 #ifdef GALLIUM_SOFTPIPE
 #include "softpipe/sp_public.h"
@@ -98,19 +90,24 @@ swrast_drm_create_screen(struct drm_api *api,
 {
    struct sw_winsys *winsys = NULL;
    struct pipe_screen *screen = NULL;
+   struct drisw_create_screen_arg *drisw;
 
    (void) drmFD;
 
    if (arg != NULL) {
       switch(arg->mode) {
       case DRM_CREATE_DRISW:
+         drisw = (struct drisw_create_screen_arg *)arg;
          break;
       default:
          return NULL;
       }
    }
+   else {
+      return NULL;
+   }
 
-   winsys = dri_create_sw_winsys();
+   winsys = dri_create_sw_winsys(drisw->lf);
    if (winsys == NULL)
       return NULL;
 

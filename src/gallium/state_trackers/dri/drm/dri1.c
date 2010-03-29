@@ -404,6 +404,19 @@ dri1_allocate_textures(struct dri_drawable *drawable,
    drawable->old_h = height;
 }
 
+/*
+ * Backend function for init_screen.
+ */
+
+static const __DRIextension *dri1_screen_extensions[] = {
+   &driReadDrawableExtension,
+   &driCopySubBufferExtension.base,
+   &driSwapControlExtension.base,
+   &driFrameTrackingExtension.base,
+   &driMediaStreamCounterExtension.base,
+   NULL
+};
+
 static void
 st_dri_lock(struct pipe_context *pipe)
 {
@@ -442,21 +455,6 @@ static struct dri1_api_lock_funcs dri1_lf = {
    .clear_lost_lock = st_dri_clear_lost_lock
 };
 
-/*
- * Backend function for init_screen.
- */
-
-static const __DRIextension *dri1_screen_extensions[] = {
-   &driReadDrawableExtension,
-   &driCopySubBufferExtension.base,
-   &driSwapControlExtension.base,
-   &driFrameTrackingExtension.base,
-   &driMediaStreamCounterExtension.base,
-   NULL
-};
-
-struct dri1_api *__dri1_api_hooks = NULL;
-
 static INLINE void
 dri1_copy_version(struct dri1_api_version *dst,
 		  const struct __DRIversionRec *src)
@@ -465,6 +463,8 @@ dri1_copy_version(struct dri1_api_version *dst,
    dst->minor = src->minor;
    dst->patch_level = src->patch;
 }
+
+struct dri1_api *__dri1_api_hooks = NULL;
 
 const __DRIconfig **
 dri1_init_screen(__DRIscreen * sPriv)

@@ -7,13 +7,13 @@
 
 #include "state_tracker/drm_api.h"
 
-struct drm_clip_rect;
-
 struct pipe_screen;
 struct pipe_winsys;
 struct pipe_buffer;
 struct pipe_context;
 struct pipe_texture;
+
+struct drm_clip_rect;
 
 struct dri1_api_version
 {
@@ -31,8 +31,8 @@ struct dri1_api_lock_funcs
 {
    void (*lock) (struct pipe_context * pipe);
    void (*unlock) (struct pipe_context * locked_pipe);
-      boolean(*is_locked) (struct pipe_context * locked_pipe);
-      boolean(*is_lock_lost) (struct pipe_context * locked_pipe);
+   boolean(*is_locked) (struct pipe_context * locked_pipe);
+   boolean(*is_lock_lost) (struct pipe_context * locked_pipe);
    void (*clear_lost_lock) (struct pipe_context * locked_pipe);
 };
 

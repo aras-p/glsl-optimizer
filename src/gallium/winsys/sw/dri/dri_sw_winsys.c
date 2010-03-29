@@ -39,6 +39,11 @@
 
 struct dri_sw_displaytarget
 {
+   enum pipe_format format;
+   unsigned width;
+   unsigned height;
+   unsigned stride;
+
    void *data;
    void *mapped;
 };
@@ -46,6 +51,8 @@ struct dri_sw_displaytarget
 struct dri_sw_winsys
 {
    struct sw_winsys base;
+
+   struct drisw_loader_funcs *lf;
 };
 
 static INLINE struct dri_sw_displaytarget *
@@ -79,23 +86,27 @@ dri_sw_displaytarget_create(struct sw_winsys *winsys,
                             unsigned *stride)
 {
    struct dri_sw_displaytarget *dri_sw_dt;
-   unsigned nblocksy, size, dri_sw_stride, format_stride;
+   unsigned nblocksy, size, format_stride;
 
    dri_sw_dt = CALLOC_STRUCT(dri_sw_displaytarget);
    if(!dri_sw_dt)
       goto no_dt;
 
+   dri_sw_dt->format = format;
+   dri_sw_dt->width = width;
+   dri_sw_dt->height = height;
+
    format_stride = util_format_get_stride(format, width);
-   dri_sw_stride = align(format_stride, alignment);
+   dri_sw_dt->stride = align(format_stride, alignment);
 
    nblocksy = util_format_get_nblocksy(format, height);
-   size = dri_sw_stride * nblocksy;
+   size = dri_sw_dt->stride * nblocksy;
 
    dri_sw_dt->data = align_malloc(size, alignment);
    if(!dri_sw_dt->data)
       goto no_data;
 
-   *stride = dri_sw_stride;
+   *stride = dri_sw_dt->stride;
    return (struct sw_displaytarget *)dri_sw_dt;
 
 no_data:
@@ -159,7 +170,20 @@ dri_sw_displaytarget_display(struct sw_winsys *ws,
                              struct sw_displaytarget *dt,
                              void *context_private)
 {
-   assert(0);
+   struct dri_sw_winsys *dri_sw_ws = dri_sw_winsys(ws);
+   struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
+   struct dri_drawable *dri_drawable = (struct dri_drawable *)context_private;
+   unsigned width, height;
+
+   /* Set the width to 'stride / cpp'.
+    *
+    * PutImage correctly clips to the width of the dst drawable.
+    */
+   width = dri_sw_dt->stride / util_format_get_blocksize(dri_sw_dt->format);
+
+   height = dri_sw_dt->height;
+
+   dri_sw_ws->lf->put_image(dri_drawable, dri_sw_dt->data, width, height);
 }
 
 
@@ -170,7 +194,7 @@ dri_destroy_sw_winsys(struct sw_winsys *winsys)
 }
 
 struct sw_winsys *
-dri_create_sw_winsys(void)
+dri_create_sw_winsys(struct drisw_loader_funcs *lf)
 {
    struct dri_sw_winsys *ws;
 
@@ -178,6 +202,7 @@ dri_create_sw_winsys(void)
    if (!ws)
       return NULL;
 
+   ws->lf = lf;
    ws->base.destroy = dri_destroy_sw_winsys;
 
    ws->base.is_displaytarget_format_supported = dri_sw_is_displaytarget_format_supported;

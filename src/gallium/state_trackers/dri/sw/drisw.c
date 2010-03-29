@@ -28,37 +28,17 @@
 
 /* TODO:
  *
- * stride:
- *
- * The driver and the loaders (libGL, xserver/glx) compute the stride from the
- * width independently. winsys has a workaround that works for softpipe but may
- * explode for other drivers or platforms, rendering- or performance-wise.
- * Solving this issue properly requires extending the DRISW loader extension,
- * in order to make the stride available to the putImage callback.
- *
- * drisw_api:
- *
- * Define drisw_api similarly to dri1_api and use it to call the loader. This
- * is predicated on support for calling the loader from the winsys, which has
- * to grow for DRI2 as well.
- *
  * xshm / texture_from_pixmap / EGLImage:
  *
  * Allow the loaders to use the XSHM extension. It probably requires callbacks
- * for createImage/destroyImage similar to DRI2 getBuffers. Probably not worth
- * it, given the scope of DRISW, unless it falls naturally from properly
- * solving the other issues.
- *
- * fences:
- *
- * No fences are used, are they needed for llvmpipe / cell ?
+ * for createImage/destroyImage similar to DRI2 getBuffers.
  */
 
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "pipe/p_context.h"
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drisw_api.h"
 
 #include "dri_screen.h"
 #include "dri_context.h"
@@ -80,26 +60,32 @@ get_drawable_info(__DRIdrawable *dPriv, int *w, int *h)
                            dPriv->loaderPrivate);
 }
 
-/*
- * Set the width to 'stride / cpp'. PutImage seems to correctly clip the width
- * to the actual width of the dst drawable. Even if this is not specified but
- * an implementation detail, it is the correct thing to do, so rely on it. XXX
- */
 static INLINE void
-put_image(__DRIdrawable *dPriv, void *data, unsigned width)
+put_image(__DRIdrawable *dPriv, void *data, unsigned width, unsigned height)
 {
    __DRIscreen *sPriv = dPriv->driScreenPriv;
    const __DRIswrastLoaderExtension *loader = sPriv->swrast_loader;
 
    loader->putImage(dPriv, __DRI_SWRAST_IMAGE_OP_SWAP,
-                    0, 0, width, dPriv->h,
+                    0, 0, width, height,
                     data, dPriv->loaderPrivate);
 }
 
 void
-drisw_update_drawable_info(__DRIdrawable *dPriv)
+drisw_update_drawable_info(struct dri_drawable *drawable)
 {
+   __DRIdrawable *dPriv = drawable->dPriv;
+
    get_drawable_info(dPriv, &dPriv->w, &dPriv->h);
+}
+
+static void
+drisw_put_image(struct dri_drawable *drawable,
+                void *data, unsigned width, unsigned height)
+{
+   __DRIdrawable *dPriv = drawable->dPriv;
+
+   put_image(dPriv, data, width, height);
 }
 
 static INLINE void
@@ -108,32 +94,13 @@ drisw_present_texture(__DRIdrawable *dPriv,
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct dri_screen *screen = dri_screen(drawable->sPriv);
-   struct pipe_context *pipe;
    struct pipe_surface *psurf;
-   struct pipe_transfer *ptrans;
-   void *pmap;
-   unsigned width;
 
-   pipe = dri1_get_pipe_context(screen);
    psurf = dri1_get_pipe_surface(drawable, ptex);
-   if (!pipe || !psurf)
+   if (!psurf)
       return;
 
-   ptrans = pipe->get_tex_transfer(pipe, ptex, 0, 0, 0,
-                                   PIPE_TRANSFER_READ,
-                                   0, 0, dPriv->w, dPriv->h);
-
-   width = ptrans->stride / util_format_get_blocksize(ptex->format);
-
-   pmap = pipe->transfer_map(pipe, ptrans);
-
-   assert(pmap);
-
-   put_image(dPriv, pmap, width);
-
-   pipe->transfer_unmap(pipe, ptrans);
-
-   pipe->tex_transfer_destroy(pipe, ptrans);
+   screen->pipe_screen->flush_frontbuffer(screen->pipe_screen, psurf, drawable);
 }
 
 static INLINE void
@@ -163,23 +130,6 @@ drisw_copy_to_front(__DRIdrawable * dPriv,
  */
 
 void
-drisw_flush_frontbuffer(struct dri_drawable *drawable,
-                        enum st_attachment_type statt)
-{
-   struct dri_context *ctx = dri_get_current();
-   struct pipe_texture *ptex;
-
-   if (!ctx)
-      return;
-
-   ptex = drawable->textures[statt];
-
-   if (ptex) {
-      drisw_copy_to_front(ctx->dPriv, ptex);
-   }
-}
-
-void
 drisw_swap_buffers(__DRIdrawable *dPriv)
 {
    struct dri_context *ctx = dri_get_current();
@@ -195,6 +145,23 @@ drisw_swap_buffers(__DRIdrawable *dPriv)
       ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
       drisw_copy_to_front(dPriv, ptex);
+   }
+}
+
+void
+drisw_flush_frontbuffer(struct dri_drawable *drawable,
+                        enum st_attachment_type statt)
+{
+   struct dri_context *ctx = dri_get_current();
+   struct pipe_texture *ptex;
+
+   if (!ctx)
+      return;
+
+   ptex = drawable->textures[statt];
+
+   if (ptex) {
+      drisw_copy_to_front(ctx->dPriv, ptex);
    }
 }
 
@@ -286,12 +253,16 @@ static const __DRIextension *drisw_screen_extensions[] = {
    NULL
 };
 
+static struct drisw_loader_funcs drisw_lf = {
+   .put_image = drisw_put_image
+};
+
 const __DRIconfig **
 drisw_init_screen(__DRIscreen * sPriv)
 {
    const __DRIconfig **configs;
    struct dri_screen *screen;
-   struct drm_create_screen_arg arg;
+   struct drisw_create_screen_arg arg;
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
@@ -304,9 +275,10 @@ drisw_init_screen(__DRIscreen * sPriv)
    sPriv->private = (void *)screen;
    sPriv->extensions = drisw_screen_extensions;
 
-   arg.mode = DRM_CREATE_DRISW;
+   arg.base.mode = DRM_CREATE_DRISW;
+   arg.lf = &drisw_lf;
 
-   configs = dri_init_screen_helper(screen, &arg, 32);
+   configs = dri_init_screen_helper(screen, &arg.base, 32);
    if (!configs)
       goto fail;
 
