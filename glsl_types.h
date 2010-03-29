@@ -224,6 +224,14 @@ struct glsl_type {
    }
 
    /**
+    * Query whether or not a type is a float type
+    */
+   bool is_float() const
+   {
+      return base_type == GLSL_TYPE_FLOAT;
+   }
+
+   /**
     * Query whether or not a type is a non-array boolean type
     */
    bool is_boolean() const
@@ -237,6 +245,14 @@ struct glsl_type {
    bool is_sampler() const
    {
       return base_type == GLSL_TYPE_SAMPLER;
+   }
+
+   /**
+    * Query whether or not a type is an array
+    */
+   bool is_array() const
+   {
+      return base_type == GLSL_TYPE_ARRAY;
    }
 
    /**
