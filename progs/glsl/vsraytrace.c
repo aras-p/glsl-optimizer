@@ -31,7 +31,7 @@
 
 static int Win;
 static int WinWidth = 256, WinHeight = 256;
-static int mouseGrabbed = 0;
+static GLboolean mouseGrabbed = GL_FALSE;
 static GLuint vertShader;
 static GLuint program;
 float rot[9] = {1,0,0,  0,1,0,   0,0,1};
@@ -323,6 +323,7 @@ drag(int x, int y)
     yRot = (float)(y - WinHeight/2) / scale;
     identity(rot);
     rotate_xy(rot, yRot, xRot);
+    glutPostRedisplay();
   }
 }
 
@@ -331,10 +332,7 @@ static
 void
 mouse(int button, int state, int x, int y)
 {
-  if(state == GLUT_DOWN)
-  {
-    mouseGrabbed = !mouseGrabbed;
-  }
+  mouseGrabbed = (state == GLUT_DOWN);
 }
 
 
@@ -388,7 +386,7 @@ main(int argc, char *argv[])
   glutDisplayFunc(Draw);
   glutIdleFunc(Draw);
   glutMouseFunc(mouse);
-  glutPassiveMotionFunc(drag);
+  glutMotionFunc(drag);
   Init();
   glutMainLoop();
   return 0;

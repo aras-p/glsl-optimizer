@@ -333,6 +333,7 @@ drag(int x, int y)
     yRot = (float)(y - WinHeight/2) / scale;
     identity(rot);
     rotate_xy(rot, yRot, xRot);
+    glutPostRedisplay();
   }
 }
 
@@ -341,10 +342,7 @@ static
 void
 mouse(int button, int state, int x, int y)
 {
-  if(state == GLUT_DOWN)
-  {
-    mouseGrabbed = !mouseGrabbed;
-  }
+  mouseGrabbed = (state == GLUT_DOWN);
 }
 
 
@@ -398,7 +396,7 @@ main(int argc, char *argv[])
   glutKeyboardFunc(Key);
   glutDisplayFunc(Draw);
   glutMouseFunc(mouse);
-  glutPassiveMotionFunc(drag);
+  glutMotionFunc(drag);
   glutIdleFunc(Draw);
   Init();
   glutMainLoop();
