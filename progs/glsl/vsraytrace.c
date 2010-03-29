@@ -64,10 +64,17 @@ static const char* vsSource =
   "  vec3 n;                                                           \n"
   "};                                                                  \n"
   "                                                                    \n"
+#ifdef __APPLE__
+  "Sphere spheres0 = Sphere( vec3(0.0,0.0,-1.0), 0.5 );                \n"
+  "Sphere spheres1 = Sphere( vec3(-3.0,0.0,-1.0), 1.5 );               \n"
+  "Sphere spheres2 = Sphere( vec3(0.0,3.0,-1.0), 0.5 );                \n"
+  "Sphere spheres3 = Sphere( vec3(2.0,0.0,-1.0), 1.0 );                \n"
+#else
   "const Sphere spheres0 = Sphere( vec3(0.0,0.0,-1.0), 0.5 );          \n"
   "const Sphere spheres1 = Sphere( vec3(-3.0,0.0,-1.0), 1.5 );         \n"
   "const Sphere spheres2 = Sphere( vec3(0.0,3.0,-1.0), 0.5 );          \n"
   "const Sphere spheres3 = Sphere( vec3(2.0,0.0,-1.0), 1.0 );          \n"
+#endif
   "                                                                    \n"
   "// Mesa intel gen4 generates \"unsupported IR in fragment shader 13\" for\n"
   "// sqrt, let's work around.                                         \n"
