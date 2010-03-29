@@ -280,8 +280,11 @@ struct st_context {
       struct pipe_context *pipe = $self->pipe;
       struct pipe_screen *screen = pipe->screen;
       struct pipe_buffer *vbuf;
+      struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
+      struct pipe_vertex_buffer vbuffer;
       float *map;
       unsigned size;
+      unsigned i;
 
       size = num_verts * num_attribs * 4 * sizeof(float);
 
@@ -297,15 +300,44 @@ struct st_context {
          goto error2;
       memcpy(map, vertices, size);
       pipe_buffer_unmap(screen, vbuf);
-      
-      util_draw_vertex_buffer(pipe, vbuf, 0, prim, num_verts, num_attribs);
-      
+
+      cso_save_vertex_elements($self->cso);
+
+      /* tell pipe about the vertex attributes */
+      for (i = 0; i < num_attribs; i++) {
+         velements[i].src_offset = i * 4 * sizeof(float);
+         velements[i].instance_divisor = 0;
+         velements[i].vertex_buffer_index = 0;
+         velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      }
+      cso_set_vertex_elements($self->cso, num_attribs, velements);
+
+      /* tell pipe about the vertex buffer */
+      memset(&vbuffer, 0, sizeof(vbuffer));
+      vbuffer.buffer = vbuf;
+      vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
+      vbuffer.buffer_offset = 0;
+      vbuffer.max_index = num_verts - 1;
+      pipe->set_vertex_buffers(pipe, 1, &vbuffer);
+
+      /* draw */
+      pipe->draw_arrays(pipe, prim, 0, num_verts);
+
+      cso_restore_vertex_elements($self->cso);
+
 error2:
       pipe_buffer_reference(&vbuf, NULL);
 error1:
       ;
    }
    
+   void
+   clear(unsigned buffers, const float *rgba, double depth = 0.0f,
+         unsigned stencil = 0)
+   {
+      $self->pipe->clear($self->pipe, buffers, rgba, depth, stencil);
+   }
+
    void
    flush(unsigned flags = 0) {
       struct pipe_fence_handle *fence = NULL; 
