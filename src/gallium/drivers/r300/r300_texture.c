@@ -159,7 +159,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
     }
 
     /* Compressed formats. */
-    if (desc->layout == UTIL_FORMAT_LAYOUT_COMPRESSED) {
+    if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
         switch (format) {
             case PIPE_FORMAT_DXT1_RGB:
             case PIPE_FORMAT_DXT1_RGBA:
