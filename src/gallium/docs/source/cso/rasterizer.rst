@@ -81,8 +81,8 @@ point_quad_rasterization
 Determines if points should be rasterized as quads or points. Certain APIs,
 like Direct3D, always use quad rasterization for points, regardless of
 whether point sprites are enabled or not. If this state is enabled, point
-smoothing and antialiasing are disabled, and sprite coordinates are not
-generated.
+smoothing and antialiasing are disabled. If it is disabled, point sprite
+coordinates are not generated.
 
 .. note::
 

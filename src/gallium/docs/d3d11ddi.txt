@@ -138,7 +138,7 @@ ClearUnorderedAccessViewUint (D3D11 only)
 	- Gallium does not support unordered access views (views that can be written to arbitrarily from compute shaders)
 
 CreateBlendState (extended in D3D10.1) -> create_blend_state
-	# D3D10 does not support per-RT blending, only D3D10.1 does
+	# D3D10 does not support per-RT blend modes (but per-RT blending), only D3D10.1 does
 	- Gallium lacks alpha-to-coverage
 	+ Gallium supports logic ops
 	+ Gallium supports dithering
