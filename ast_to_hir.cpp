@@ -794,17 +794,17 @@ ast_expression::hir(exec_list *instructions,
        *     resulting matching type is the type of the entire
        *     expression."
        */
-      /* FINISHME: Apply implicit conversions */
-      if (op[1]->type == op[2]->type) {
-	 tmp->type = op[1]->type;
-      } else {
+      if ((!apply_implicit_conversion(op[1]->type, & op[2], state)
+	   && !apply_implicit_conversion(op[2]->type, & op[1], state))
+	  || (op[1]->type != op[2]->type)) {
 	 YYLTYPE loc = this->subexpressions[1]->get_location();
 
 	 _mesa_glsl_error(& loc, state, "Second and third operands of ?: "
 			  "operator must have matching types.");
 	 error_emitted = true;
+      } else {
+	 tmp->type = op[1]->type;
       }
-
 
       result = new ir_dereference(tmp);
       type = tmp->type;
