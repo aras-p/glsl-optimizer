@@ -281,18 +281,18 @@ void st_init_extensions(struct st_context *st)
    /* GL_EXT_packed_depth_stencil requires both the ability to render to
     * a depth/stencil buffer and texture from depth/stencil source.
     */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_S8_USCALED_Z24_UNORM,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+       screen->is_format_supported(screen, PIPE_FORMAT_S8_USCALED_Z24_UNORM,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
                                         PIPE_TEXTURE_2D, 
                                         PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
-            screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+            screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
                                         PIPE_TEXTURE_2D, 
                                         PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;

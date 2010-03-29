@@ -526,8 +526,8 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
             xconf->base.stencil_format = PIPE_FORMAT_NONE;
             /* create the second config with depth/stencil buffer */
             if (j == 1) {
-               xconf->base.depth_format = PIPE_FORMAT_Z24S8_UNORM;
-               xconf->base.stencil_format = PIPE_FORMAT_Z24S8_UNORM;
+               xconf->base.depth_format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
+               xconf->base.stencil_format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
                mode->depthBits = 24;
                mode->stencilBits = 8;
                mode->haveDepthBuffer = TRUE;

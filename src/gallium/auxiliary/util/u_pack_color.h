@@ -446,17 +446,17 @@ util_pack_z(enum pipe_format format, double z)
       return (uint) (z * 0xffffffff);
    case PIPE_FORMAT_Z32_FLOAT:
       return (uint)z;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
       if (z == 1.0)
          return 0xffffff;
       return (uint) (z * 0xffffff);
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       if (z == 1.0)
          return 0xffffff00;
       return ((uint) (z * 0xffffff)) << 8;
-   case PIPE_FORMAT_S8_UNORM:
+   case PIPE_FORMAT_S8_USCALED:
       /* this case can get it via util_pack_z_stencil() */
       return 0;
    default:
@@ -477,13 +477,13 @@ util_pack_z_stencil(enum pipe_format format, double z, uint s)
    unsigned packed = util_pack_z(format, z);
 
    switch (format) {
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       packed |= s << 24;
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       packed |= s;
       break;
-   case PIPE_FORMAT_S8_UNORM:
+   case PIPE_FORMAT_S8_USCALED:
       packed |= s;
       break;
    default:

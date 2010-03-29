@@ -1036,7 +1036,7 @@ z32_get_tile_rgba(const unsigned *src,
 }
 
 
-/*** PIPE_FORMAT_Z24S8_UNORM ***/
+/*** PIPE_FORMAT_Z24_UNORM_S8_USCALED ***/
 
 /**
  * Return Z component as four float in [0,1].  Stencil part ignored.
@@ -1063,7 +1063,7 @@ s8z24_get_tile_rgba(const unsigned *src,
 }
 
 
-/*** PIPE_FORMAT_S8Z24_UNORM ***/
+/*** PIPE_FORMAT_S8_USCALED_Z24_UNORM ***/
 
 /**
  * Return Z component as four float in [0,1].  Stencil part ignored.
@@ -1271,11 +1271,11 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
    case PIPE_FORMAT_Z32_UNORM:
       z32_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
       s8z24_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       z24s8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
@@ -1468,11 +1468,11 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
    case PIPE_FORMAT_Z32_UNORM:
       /*z32_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
       /*s8z24_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       /*z24s8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
@@ -1525,7 +1525,7 @@ pipe_get_tile_z(struct pipe_context *pipe,
          }
       }
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
       {
          const uint *ptrc
@@ -1540,7 +1540,7 @@ pipe_get_tile_z(struct pipe_context *pipe,
          }
       }
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       {
          const uint *ptrc
@@ -1609,7 +1609,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
          }
       }
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
          assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
@@ -1636,7 +1636,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
          }
       }
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
          assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);

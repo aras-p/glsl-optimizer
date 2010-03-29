@@ -138,13 +138,13 @@ spu_fallback_fragment_ops(uint x, uint y,
 
       if (spu.depth_stencil_alpha.stencil[0].enabled) {
          /* do stencil test */
-         ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z24S8_UNORM);
+         ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z24_UNORM_S8_USCALED);
 
       }
       else if (spu.depth_stencil_alpha.depth.enabled) {
          /* do depth test */
 
-         ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z24S8_UNORM ||
+         ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
                 spu.fb.depth_format == PIPE_FORMAT_Z24X8_UNORM);
 
          vector unsigned int ifragZ;

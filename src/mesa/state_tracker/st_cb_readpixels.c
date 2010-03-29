@@ -103,13 +103,13 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
       /* get stencil (and Z) values */
       switch (pt->texture->format) {
-      case PIPE_FORMAT_S8_UNORM:
+      case PIPE_FORMAT_S8_USCALED:
          {
             const ubyte *src = stmap + srcY * pt->stride;
             memcpy(sValues, src, width);
          }
          break;
-      case PIPE_FORMAT_Z24S8_UNORM:
+      case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
             const GLfloat scale = 1.0f / (0xffffff);
@@ -127,7 +127,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             }
          }
          break;
-      case PIPE_FORMAT_S8Z24_UNORM:
+      case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
          if (format == GL_DEPTH_STENCIL) {
             const uint *src = (uint *) (stmap + srcY * pt->stride);
             const GLfloat scale = 1.0f / (0xffffff);
@@ -437,7 +437,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       const GLint dstStride = _mesa_image_row_stride(&clippedPacking, width,
                                                      format, type);
 
-      if (trans->texture->format == PIPE_FORMAT_Z24S8_UNORM ||
+      if (trans->texture->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
           trans->texture->format == PIPE_FORMAT_Z24X8_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
@@ -469,7 +469,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             }
          }
       }
-      else if (trans->texture->format == PIPE_FORMAT_S8Z24_UNORM ||
+      else if (trans->texture->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
                trans->texture->format == PIPE_FORMAT_X8Z24_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {

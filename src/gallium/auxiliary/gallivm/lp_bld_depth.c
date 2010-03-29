@@ -495,8 +495,8 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
       assert(format_desc->block.height == 1);
 
       if (stencil[0].enabled) {
-         assert(format_desc->format == PIPE_FORMAT_Z24S8_UNORM ||
-                format_desc->format == PIPE_FORMAT_S8Z24_UNORM);
+         assert(format_desc->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
+                format_desc->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM);
       }
 
       assert(z_swizzle < 4);

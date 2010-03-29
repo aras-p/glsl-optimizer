@@ -122,13 +122,13 @@ validate_fb(struct nv50_context *nv50)
 		so_reloc (so, bo, fb->zsbuf->offset, NOUVEAU_BO_VRAM |
 			      NOUVEAU_BO_LOW | NOUVEAU_BO_RDWR, 0, 0);
 		switch (fb->zsbuf->format) {
-		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 			so_data(so, NV50TCL_ZETA_FORMAT_S8Z24_UNORM);
 			break;
 		case PIPE_FORMAT_Z24X8_UNORM:
 			so_data(so, NV50TCL_ZETA_FORMAT_X8Z24_UNORM);
 			break;
-		case PIPE_FORMAT_S8Z24_UNORM:
+		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 			so_data(so, NV50TCL_ZETA_FORMAT_Z24S8_UNORM);
 			break;
 		case PIPE_FORMAT_Z32_FLOAT:
