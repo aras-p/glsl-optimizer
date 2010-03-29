@@ -333,10 +333,12 @@ modulus_result_type(const struct glsl_type *type_a,
 
 
 static const struct glsl_type *
-relational_result_type(const struct glsl_type *type_a,
-		       const struct glsl_type *type_b,
+relational_result_type(ir_rvalue **value_a, ir_rvalue **value_b,
 		       struct _mesa_glsl_parse_state *state)
 {
+   const glsl_type *const type_a = (*value_a)->type;
+   const glsl_type *const type_b = (*value_b)->type;
+
    /* From GLSL 1.50 spec, page 56:
     *    "The relational operators greater than (>), less than (<), greater
     *    than or equal (>=), and less than or equal (<=) operate only on
@@ -351,18 +353,10 @@ relational_result_type(const struct glsl_type *type_a,
    /*    "Either the operands' types must match, or the conversions from
     *    Section 4.1.10 "Implicit Conversions" will be applied to the integer
     *    operand, after which the types must match."
-    *
-    * This conversion was added in GLSL 1.20.  If the compilation mode is
-    * GLSL 1.10, the conversion is skipped.
     */
-   if (state->language_version >= 120) {
-      if ((type_a->base_type == GLSL_TYPE_FLOAT)
-	  && (type_b->base_type != GLSL_TYPE_FLOAT)) {
-	 /* FINISHME: Generate the implicit type conversion. */
-      } else if ((type_a->base_type != GLSL_TYPE_FLOAT)
-		 && (type_b->base_type == GLSL_TYPE_FLOAT)) {
-	 /* FINISHME: Generate the implicit type conversion. */
-      }
+   if (!apply_implicit_conversion(type_a, value_b, state)
+       && !apply_implicit_conversion(type_b, value_a, state)) {
+      return glsl_type::error_type;
    }
 
    if (type_a->base_type != type_b->base_type)
@@ -639,7 +633,7 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      type = relational_result_type(op[0]->type, op[1]->type, state);
+      type = relational_result_type(& op[0], & op[1], state);
 
       /* The relational operators must either generate an error or result
        * in a scalar boolean.  See page 57 of the GLSL 1.50 spec.
