@@ -114,6 +114,10 @@ init_globals(struct draw_llvm *llvm)
 
       llvm->context_ptr_type = LLVMPointerType(context_type, 0);
    }
+   {
+      LLVMTypeRef buffer_ptr = LLVMPointerType(LLVMOpaqueType(), 0);
+      llvm->buffer_ptr_type = LLVMArrayType(buffer_ptr, PIPE_MAX_ATTRIBS);
+   }
 }
 
 struct draw_llvm *
@@ -171,6 +175,7 @@ draw_llvm_destroy(struct draw_llvm *llvm)
 void
 draw_llvm_prepare(struct draw_llvm *llvm)
 {
+   draw_llvm_generate(llvm);
 }
 
 
@@ -194,14 +199,14 @@ fail:
 static void
 generate_vs(struct draw_llvm *llvm,
             LLVMBuilderRef builder,
+            LLVMValueRef (*outputs)[NUM_CHANNELS],
+            const LLVMValueRef (*inputs)[NUM_CHANNELS],
             LLVMValueRef context_ptr,
             LLVMValueRef io)
 {
    const struct tgsi_token *tokens = llvm->draw->vs.vertex_shader->state.tokens;
    struct lp_type vs_type = lp_type_float(32);
    LLVMValueRef vs_consts;
-   const LLVMValueRef (*inputs)[NUM_CHANNELS];
-   LLVMValueRef (*outputs)[NUM_CHANNELS];
 
    lp_build_tgsi_soa(builder,
                      tokens,
@@ -214,28 +219,129 @@ generate_vs(struct draw_llvm *llvm,
                      NULL/*sampler*/);
 }
 
+static void
+generate_fetch(LLVMBuilderRef builder,
+               const LLVMValueRef vbuffers_ptr,
+               LLVMValueRef *res,
+               struct pipe_vertex_element *velem,
+               struct pipe_vertex_buffer *vbuf,
+               LLVMValueRef index)
+{
+   LLVMValueRef indices = LLVMConstInt(LLVMInt32Type(),
+                                       velem->vertex_buffer_index, 0);
+   LLVMValueRef vbuffer_ptr = LLVMBuildGEP(builder, vbuffers_ptr,
+                                           &indices, 1, "");
+   LLVMValueRef stride = LLVMBuildMul(builder,
+                                      LLVMConstInt(LLVMInt32Type(), vbuf->stride, 0),
+                                      index, "");
+   stride = LLVMBuildAdd(builder, stride,
+                         LLVMConstInt(LLVMInt32Type(), vbuf->buffer_offset, 0),
+                         "");
+   stride = LLVMBuildAdd(builder, stride,
+                         LLVMConstInt(LLVMInt32Type(), velem->src_offset, 0),
+                         "");
+
+   vbuffer_ptr = LLVMBuildGEP(builder, vbuffer_ptr, &stride, 1, "");
+
+   *res = draw_llvm_translate_from(builder, vbuffer_ptr, velem->src_format);
+}
+
+static LLVMValueRef
+aos_to_soa(LLVMBuilderRef builder,
+           LLVMValueRef val0,
+           LLVMValueRef val1,
+           LLVMValueRef val2,
+           LLVMValueRef val3,
+           LLVMValueRef channel)
+{
+   LLVMValueRef ex, res;
+
+   ex = LLVMBuildExtractElement(builder, val0,
+                                channel, "");
+   res = LLVMBuildInsertElement(builder,
+                                LLVMConstNull(LLVMTypeOf(val0)),
+                                ex,
+                                LLVMConstInt(LLVMInt32Type(), 0, 0),
+                                "");
+
+   ex = LLVMBuildExtractElement(builder, val1,
+                                channel, "");
+   res = LLVMBuildInsertElement(builder,
+                                res, ex,
+                                LLVMConstInt(LLVMInt32Type(), 1, 0),
+                                "");
+
+   ex = LLVMBuildExtractElement(builder, val2,
+                                channel, "");
+   res = LLVMBuildInsertElement(builder,
+                                res, ex,
+                                LLVMConstInt(LLVMInt32Type(), 2, 0),
+                                "");
+
+   ex = LLVMBuildExtractElement(builder, val3,
+                                channel, "");
+   res = LLVMBuildInsertElement(builder,
+                                res, ex,
+                                LLVMConstInt(LLVMInt32Type(), 3, 0),
+                                "");
+
+   return res;
+}
+
+static void
+convert_to_soa(LLVMBuilderRef builder,
+               LLVMValueRef (*aos)[NUM_CHANNELS],
+               LLVMValueRef (*soa)[NUM_CHANNELS],
+               int num_attribs)
+{
+   int i;
+
+   debug_assert(NUM_CHANNELS == 4);
+
+   for (i = 0; i < num_attribs; ++i) {
+      LLVMValueRef val0 = aos[i][0];
+      LLVMValueRef val1 = aos[i][1];
+      LLVMValueRef val2 = aos[i][2];
+      LLVMValueRef val3 = aos[i][3];
+
+      soa[i][0] = aos_to_soa(builder, val0, val1, val2, val3,
+                             LLVMConstInt(LLVMInt32Type(), 0, 0));
+      soa[i][1] = aos_to_soa(builder, val0, val1, val2, val3,
+                             LLVMConstInt(LLVMInt32Type(), 1, 0));
+      soa[i][2] = aos_to_soa(builder, val0, val1, val2, val3,
+                             LLVMConstInt(LLVMInt32Type(), 2, 0));
+      soa[i][3] = aos_to_soa(builder, val0, val1, val2, val3,
+                             LLVMConstInt(LLVMInt32Type(), 3, 0));
+
+   }
+}
+
 void
 draw_llvm_generate(struct draw_llvm *llvm)
 {
-   LLVMTypeRef arg_types[5];
+   LLVMTypeRef arg_types[6];
    LLVMTypeRef func_type;
    LLVMValueRef context_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef function;
    LLVMValueRef start, end, count, stride, step;
-   LLVMValueRef io_ptr;
-   unsigned i;
+   LLVMValueRef io_ptr, vbuffers_ptr;
+   struct draw_context *draw = llvm->draw;
+   unsigned i, j;
    unsigned chan;
    struct lp_build_context bld;
    struct lp_build_loop_state lp_loop;
-   struct lp_type vs_type = lp_type_float(32);
+   struct lp_type vs_type = lp_type_float_vec(32);
+   const int max_vertices = 4;
+   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
 
    arg_types[0] = llvm->context_ptr_type;           /* context */
    arg_types[1] = llvm->vertex_header_ptr_type;     /* vertex_header */
-   arg_types[2] = LLVMInt32Type();                  /* start */
-   arg_types[3] = LLVMInt32Type();                  /* count */
-   arg_types[4] = LLVMInt32Type();                  /* stride */
+   arg_types[2] = llvm->buffer_ptr_type;            /* vbuffers */
+   arg_types[3] = LLVMInt32Type();                  /* start */
+   arg_types[4] = LLVMInt32Type();                  /* count */
+   arg_types[5] = LLVMInt32Type();                  /* stride */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -247,12 +353,14 @@ draw_llvm_generate(struct draw_llvm *llvm)
 
    context_ptr  = LLVMGetParam(function, 0);
    io_ptr       = LLVMGetParam(function, 1);
-   start        = LLVMGetParam(function, 2);
-   count        = LLVMGetParam(function, 3);
-   stride       = LLVMGetParam(function, 4);
+   vbuffers_ptr = LLVMGetParam(function, 2);
+   start        = LLVMGetParam(function, 3);
+   count        = LLVMGetParam(function, 4);
+   stride       = LLVMGetParam(function, 5);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(io_ptr, "io");
+   lp_build_name(vbuffers_ptr, "vbuffers");
    lp_build_name(start, "start");
    lp_build_name(count, "count");
    lp_build_name(stride, "stride");
@@ -269,13 +377,34 @@ draw_llvm_generate(struct draw_llvm *llvm)
 
    end = lp_build_add(&bld, start, count);
 
-   step = LLVMConstInt(LLVMInt32Type(), 1, 0);
+   step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
    lp_build_loop_begin(builder, start, &lp_loop);
    {
+      LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+      LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
       LLVMValueRef io = LLVMBuildGEP(builder, io_ptr, &lp_loop.counter, 1, "");
+
+      for (i = 0; i < NUM_CHANNELS; ++i) {
+         LLVMValueRef true_index = LLVMBuildAdd(
+            builder,
+            lp_loop.counter,
+            LLVMConstInt(LLVMInt32Type(), i, 0), "");
+         for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
+            struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
+            struct pipe_vertex_buffer *vbuf = &draw->pt.vertex_buffer[
+               velem->vertex_buffer_index];
+
+            generate_fetch(builder, vbuffers_ptr,
+                           &aos_attribs[j][i], velem, vbuf, true_index);
+         }
+      }
+      convert_to_soa(builder, inputs, aos_attribs,
+                     draw->pt.nr_vertex_elements);
 
       generate_vs(llvm,
                   builder,
+                  outputs,
+                  inputs,
                   context_ptr,
                   io);
    }

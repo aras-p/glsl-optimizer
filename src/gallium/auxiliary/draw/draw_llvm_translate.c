@@ -492,162 +492,17 @@ struct draw_llvm_translate {
    {PIPE_FORMAT_B8G8R8A8_UNORM, from_8_unorm, to_8_unorm, LLVMIntType(), 4},
 };
 
-/**
- * Fetch vertex attributes for 'count' vertices.
- */
-static void PIPE_CDECL generic_run_elts( struct translate *translate,
-                                         const unsigned *elts,
-                                         unsigned count,
-                                         unsigned instance_id,
-                                         void *output_buffer )
+
+LLVMValueRef
+draw_llvm_translate_from(LLVMBuilderRef builder,
+                         LLVMValueRef vbuffer,
+                         enum pipe_format from_format)
 {
-   struct translate_generic *tg = translate_generic(translate);
-   char *vert = output_buffer;
-   unsigned nr_attrs = tg->nr_attrib;
-   unsigned attr;
-   unsigned i;
-
-   /* loop over vertex attributes (vertex shader inputs)
-    */
-   for (i = 0; i < count; i++) {
-      unsigned elt = *elts++;
-
-      for (attr = 0; attr < nr_attrs; attr++) {
-	 float data[4];
-         const char *src;
-
-	 char *dst = (vert +
-		      tg->attrib[attr].output_offset);
-
-         if (tg->attrib[attr].instance_divisor) {
-            src = tg->attrib[attr].input_ptr +
-                  tg->attrib[attr].input_stride *
-                  (instance_id / tg->attrib[attr].instance_divisor);
-         } else {
-            src = tg->attrib[attr].input_ptr +
-                  tg->attrib[attr].input_stride * elt;
-         }
-
-	 tg->attrib[attr].fetch( src, data );
-
-         if (0) debug_printf("vert %d/%d attr %d: %f %f %f %f\n",
-                             i, elt, attr, data[0], data[1], data[2], data[3]);
-
-	 tg->attrib[attr].emit( data, dst );
-      }
-
-      vert += tg->translate.key.output_stride;
-   }
-}
-
-
-
-static void PIPE_CDECL generic_run( struct translate *translate,
-                                    unsigned start,
-                                    unsigned count,
-                                    unsigned instance_id,
-                                    void *output_buffer )
-{
-   struct translate_generic *tg = translate_generic(translate);
-   char *vert = output_buffer;
-   unsigned nr_attrs = tg->nr_attrib;
-   unsigned attr;
-   unsigned i;
-
-   /* loop over vertex attributes (vertex shader inputs)
-    */
-   for (i = 0; i < count; i++) {
-      unsigned elt = start + i;
-
-      for (attr = 0; attr < nr_attrs; attr++) {
-	 float data[4];
-
-	 char *dst = (vert +
-		      tg->attrib[attr].output_offset);
-
-         if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
-            const char *src;
-
-            if (tg->attrib[attr].instance_divisor) {
-               src = tg->attrib[attr].input_ptr +
-                     tg->attrib[attr].input_stride *
-                     (instance_id / tg->attrib[attr].instance_divisor);
-            } else {
-               src = tg->attrib[attr].input_ptr +
-                     tg->attrib[attr].input_stride * elt;
-            }
-
-            tg->attrib[attr].fetch( src, data );
-         } else {
-            data[0] = (float)instance_id;
-         }
-
-         if (0) debug_printf("vert %d attr %d: %f %f %f %f\n",
-                             i, attr, data[0], data[1], data[2], data[3]);
-
-	 tg->attrib[attr].emit( data, dst );
-      }
-
-      vert += tg->translate.key.output_stride;
-   }
-}
-
-
-
-static void generic_set_buffer( struct translate *translate,
-				unsigned buf,
-				const void *ptr,
-				unsigned stride )
-{
-   struct translate_generic *tg = translate_generic(translate);
-   unsigned i;
-
-   for (i = 0; i < tg->nr_attrib; i++) {
-      if (tg->attrib[i].buffer == buf) {
-	 tg->attrib[i].input_ptr = ((char *)ptr +
-				    tg->attrib[i].input_offset);
-	 tg->attrib[i].input_stride = stride;
+   int i;
+   for (i = 0; i < Elements(translates); ++i) {
+      if (translates[i].format == from_format) {
+         return translates.from_func(builder, vbuffer, from_format);
       }
    }
-}
-
-
-static void generic_release( struct translate *translate )
-{
-   /* Refcount?
-    */
-   FREE(translate);
-}
-
-struct translate *translate_generic_create( const struct translate_key *key )
-{
-   struct translate_generic *tg = CALLOC_STRUCT(translate_generic);
-   unsigned i;
-
-   if (tg == NULL)
-      return NULL;
-
-   tg->translate.key = *key;
-   tg->translate.release = generic_release;
-   tg->translate.set_buffer = generic_set_buffer;
-   tg->translate.run_elts = generic_run_elts;
-   tg->translate.run = generic_run;
-
-   for (i = 0; i < key->nr_elements; i++) {
-      tg->attrib[i].type = key->element[i].type;
-
-      tg->attrib[i].fetch = get_fetch_func(key->element[i].input_format);
-      tg->attrib[i].buffer = key->element[i].input_buffer;
-      tg->attrib[i].input_offset = key->element[i].input_offset;
-      tg->attrib[i].instance_divisor = key->element[i].instance_divisor;
-
-      tg->attrib[i].emit = get_emit_func(key->element[i].output_format);
-      tg->attrib[i].output_offset = key->element[i].output_offset;
-
-   }
-
-   tg->nr_attrib = key->nr_elements;
-
-
-   return &tg->translate;
+   return LLVMGetUndef(LLVMTypeOf(vbuffer));
 }

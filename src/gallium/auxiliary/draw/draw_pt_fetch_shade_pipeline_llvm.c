@@ -110,8 +110,7 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
     */
    draw_pt_post_vs_prepare( fpme->post_vs,
 			    (boolean)draw->bypass_clipping,
-			    (boolean)(draw->identity_viewport ||
-			    draw->rasterizer->bypass_vs_clip_and_viewport),
+			    (boolean)(draw->identity_viewport),
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
 			    (draw->vs.edgeflag_output ? true : false) );
 
@@ -242,6 +241,7 @@ static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
 
    fpme->llvm->jit_func( &fpme->llvm->jit_context,
                          pipeline_verts,
+                         draw->pt.user.vbuffer,
                          start,
                          count,
                          fpme->vertex_size );

@@ -78,12 +78,12 @@ struct draw_jit_context
    const float *gs_constants;
 
    struct draw_jit_texture textures[PIPE_MAX_SAMPLERS];
-   const void *vbuffers;
 };
 
 void
 draw_shader(struct draw_jit_context *context,
             struct vertex_header *io,
+            const void *vbuffers[PIPE_MAX_ATTRIBS],
             unsigned start,
             unsigned count,
             unsigned stride)
@@ -115,6 +115,7 @@ draw_shader(struct draw_jit_context *context,
 typedef void
 (*draw_jit_vert_func)(struct draw_jit_context *context,
                       struct vertex_header *io,
+                      const void *vbuffers[PIPE_MAX_ATTRIBS],
                       unsigned start,
                       unsigned count,
                       unsigned stride);
@@ -134,6 +135,7 @@ struct draw_llvm {
 
    LLVMTypeRef context_ptr_type;
    LLVMTypeRef vertex_header_ptr_type;
+   LLVMTypeRef buffer_ptr_type;
 };
 
 
@@ -150,5 +152,9 @@ draw_llvm_prepare(struct draw_llvm *llvm);
 void
 draw_llvm_generate(struct draw_llvm *llvm);
 
+LLVMValueRef
+draw_llvm_translate_from(LLVMBuilderRef builder,
+                         LLVMValueRef vbuffer,
+                         enum pipe_format from_format);
 
 #endif
