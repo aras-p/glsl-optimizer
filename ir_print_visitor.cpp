@@ -265,3 +265,27 @@ ir_print_visitor::visit(ir_return *ir)
 
    printf(")");
 }
+
+
+void
+ir_print_visitor::visit(ir_if *ir)
+{
+   printf("(if ");
+   ir->condition->accept(this);
+
+   printf("(\n");
+   foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
+      ir_instruction *const inst = (ir_instruction *) iter.get();
+
+      inst->accept(this);
+   }
+   printf(")\n");
+
+   printf("(\n");
+   foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
+      ir_instruction *const inst = (ir_instruction *) iter.get();
+
+      inst->accept(this);
+   }
+   printf("))\n");
+}

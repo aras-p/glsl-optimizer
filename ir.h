@@ -192,6 +192,28 @@ public:
 /*@}*/
 
 
+/**
+ * IR instruction representing high-level if-statements
+ */
+class ir_if : public ir_instruction {
+public:
+   ir_if(ir_rvalue *condition)
+      : condition(condition)
+   {
+      /* empty */
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   ir_rvalue *condition;
+   exec_list  then_instructions;
+   exec_list  else_instructions;
+};
+
+
 class ir_assignment : public ir_rvalue {
 public:
    ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition);

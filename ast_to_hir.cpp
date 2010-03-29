@@ -1318,3 +1318,52 @@ ast_jump_statement::hir(exec_list *instructions,
     */
    return NULL;
 }
+
+
+ir_rvalue *
+ast_selection_statement::hir(exec_list *instructions,
+			     struct _mesa_glsl_parse_state *state)
+{
+   ir_rvalue *const condition = this->condition->hir(instructions, state);
+   struct simple_node *ptr;
+
+   /* From page 66 (page 72 of the PDF) of the GLSL 1.50 spec:
+    *
+    *    "Any expression whose type evaluates to a Boolean can be used as the
+    *    conditional expression bool-expression. Vector types are not accepted
+    *    as the expression to if."
+    *
+    * The checks are separated so that higher quality diagnostics can be
+    * generated for cases where both rules are violated.
+    */
+   if (!condition->type->is_boolean() || !condition->type->is_scalar()) {
+      YYLTYPE loc = this->condition->get_location();
+
+      _mesa_glsl_error(& loc, state, "if-statement condition must be scalar "
+		       "boolean");
+   }
+
+   ir_if *const stmt = new ir_if(condition);
+
+   if (then_statement != NULL) {
+      ast_node *node = (ast_node *) then_statement;
+      do {
+	 node->hir(& stmt->then_instructions, state);
+	 node = (ast_node *) node->next;
+      } while (node != then_statement);
+   }
+
+   if (else_statement != NULL) {
+      ast_node *node = (ast_node *) else_statement;
+      do {
+	 node->hir(& stmt->else_instructions, state);
+	 node = (ast_node *) node->next;
+      } while (node != else_statement);
+   }
+
+   instructions->push_tail(stmt);
+
+   /* if-statements do not have r-values.
+    */
+   return NULL;
+}

@@ -492,6 +492,9 @@ public:
 			   ast_node *else_statement);
    virtual void print(void) const;
 
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
    ast_expression *condition;
    ast_node *then_statement;
    ast_node *else_statement;
