@@ -221,14 +221,14 @@ static const char* fsSource =
   "  gl_FragColor = trace1(r);                                         \n"
   "}\n";
 
-static inline
+static
 float
 deg2rad(const float degree)
 {
   return( degree * 0.017453292519943295769236907684886F);
 }
 
-static inline void
+static void
 rotate_xy(float* mat3, const float degreesAroundX, const float degreesAroundY)
 {
   const float rad1 = deg2rad(degreesAroundX);
@@ -242,7 +242,7 @@ rotate_xy(float* mat3, const float degreesAroundX, const float degreesAroundY)
   mat3[2] = -c1*s2;mat3[5] = s1;   mat3[8] = c1*c2;
 }
 
-static inline void
+static void
 identity(float* mat3)
 {
   mat3[0] = 1.0F; mat3[3] = 0.0F; mat3[6] = 0.0F;
