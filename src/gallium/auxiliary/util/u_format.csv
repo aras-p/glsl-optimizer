@@ -58,12 +58,12 @@
 
 # Typical rendertarget formats
 PIPE_FORMAT_B8G8R8A8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , zyxw, rgb
-PIPE_FORMAT_B8G8R8X8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , zyx1, rgb
+PIPE_FORMAT_B8G8R8X8_UNORM        , plain, 1, 1, un8 , un8 , un8 , x8  , zyx1, rgb
 PIPE_FORMAT_A8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, rgb
-PIPE_FORMAT_X8R8G8B8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, rgb
+PIPE_FORMAT_X8R8G8B8_UNORM        , plain, 1, 1, x8  , un8 , un8 , un8 , yzw1, rgb
 PIPE_FORMAT_A8B8G8R8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, rgb
-PIPE_FORMAT_X8B8G8R8_UNORM        , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, rgb
-PIPE_FORMAT_B5G5R5X1_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyx1, rgb
+PIPE_FORMAT_X8B8G8R8_UNORM        , plain, 1, 1, x8  , un8 , un8 , un8 , wzy1, rgb
+PIPE_FORMAT_B5G5R5X1_UNORM        , plain, 1, 1, un5 , un5 , un5 , x1  , zyx1, rgb
 PIPE_FORMAT_B5G5R5A1_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyxw, rgb
 PIPE_FORMAT_B4G4R4A4_UNORM        , plain, 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
 PIPE_FORMAT_B5G6R5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
@@ -82,11 +82,11 @@ PIPE_FORMAT_L8A8_SRGB             , plain, 1, 1, un8 , un8 ,     ,     , xxxy, s
 PIPE_FORMAT_R8G8B8_SRGB           , plain, 1, 1, un8 , un8 , un8 ,     , xyz1, srgb 
 PIPE_FORMAT_R8G8B8A8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , xyzw, srgb 
 PIPE_FORMAT_A8B8G8R8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , wzyx, srgb
-PIPE_FORMAT_X8B8G8R8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , wzy1, srgb
+PIPE_FORMAT_X8B8G8R8_SRGB         , plain, 1, 1, x8  , un8 , un8 , un8 , wzy1, srgb
 PIPE_FORMAT_B8G8R8A8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , zyxw, srgb
-PIPE_FORMAT_B8G8R8X8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , zyx1, srgb
+PIPE_FORMAT_B8G8R8X8_SRGB         , plain, 1, 1, un8 , un8 , un8 , x8  , zyx1, srgb
 PIPE_FORMAT_A8R8G8B8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzwx, srgb
-PIPE_FORMAT_X8R8G8B8_SRGB         , plain, 1, 1, un8 , un8 , un8 , un8 , yzw1, srgb
+PIPE_FORMAT_X8R8G8B8_SRGB         , plain, 1, 1, x8  , un8 , un8 , un8 , yzw1, srgb
 
 # Mixed-sign formats (typically used for bump map textures)
 PIPE_FORMAT_R8SG8SB8UX8U_NORM     , plain, 1, 1, sn8 , sn8 , un8 , x8  , xyz1, rgb
@@ -99,9 +99,9 @@ PIPE_FORMAT_Z32_UNORM               , plain, 1, 1, un32,     ,     ,     , x___,
 PIPE_FORMAT_Z32_FLOAT               , plain, 1, 1, f32 ,     ,     ,     , x___, zs
 PIPE_FORMAT_Z24_UNORM_S8_USCALED    , plain, 1, 1, un24, u8  ,     ,     , xy__, zs
 PIPE_FORMAT_S8_USCALED_Z24_UNORM    , plain, 1, 1, u8 ,  un24,     ,     , yx__, zs
-PIPE_FORMAT_Z24X8_UNORM             , plain, 1, 1, un24, u8  ,     ,     , x___, zs
-PIPE_FORMAT_X8Z24_UNORM             , plain, 1, 1, u8  , un24,     ,     , y___, zs
-PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED , plain, 1, 1, f32,  u8  , u24 ,     , xy__, zs
+PIPE_FORMAT_Z24X8_UNORM             , plain, 1, 1, un24, x8  ,     ,     , x___, zs
+PIPE_FORMAT_X8Z24_UNORM             , plain, 1, 1, x8  , un24,     ,     , y___, zs
+PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED , plain, 1, 1, f32,  u8  , x24 ,     , xy__, zs
 
 # YUV formats
 # http://www.fourcc.org/yuv.php#UYVY

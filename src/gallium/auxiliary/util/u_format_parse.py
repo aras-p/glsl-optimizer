@@ -142,6 +142,8 @@ class Format:
 
     def is_mixed(self):
         ref_channel = self.channels[0]
+        if ref_channel.type == VOID:
+           ref_channel = self.channels[1]
         for channel in self.channels[1:]:
             if channel.type != VOID:
                 if channel.type != ref_channel.type:
