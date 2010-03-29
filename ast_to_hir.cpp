@@ -981,10 +981,6 @@ ast_declarator_list::hir(exec_list *instructions,
 	 continue;
       }
 
-      const bool added_variable =
-	 state->symbols->add_variable(decl->identifier, var);
-      assert(added_variable);
-
       instructions->push_tail(var);
 
       if (decl->initializer != NULL) {
@@ -1028,6 +1024,19 @@ ast_declarator_list::hir(exec_list *instructions,
 				 this->get_location());
 	 }
       }
+
+      /* Add the vairable to the symbol table after processing the initializer.
+       * This differs from most C-like languages, but it follows the GLSL
+       * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
+       * spec:
+       *
+       *     "Within a declaration, the scope of a name starts immediately
+       *     after the initializer if present or immediately after the name
+       *     being declared if not."
+       */
+      const bool added_variable =
+	 state->symbols->add_variable(decl->identifier, var);
+      assert(added_variable);
    }
 
    /* Variable declarations do not have r-values.
