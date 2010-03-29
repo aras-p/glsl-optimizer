@@ -699,8 +699,70 @@ ast_expression::hir(exec_list *instructions,
    case ast_or_assign:
       break;
 
-   case ast_conditional:
+   case ast_conditional: {
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+
+      /* From page 59 (page 65 of the PDF) of the GLSL 1.50 spec:
+       *
+       *    "The ternary selection operator (?:). It operates on three
+       *    expressions (exp1 ? exp2 : exp3). This operator evaluates the
+       *    first expression, which must result in a scalar Boolean."
+       */
+      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
+	 YYLTYPE loc = this->subexpressions[0]->get_location();
+
+	 _mesa_glsl_error(& loc, state, "?: condition must be scalar boolean");
+	 error_emitted = true;
+      }
+
+      /* The :? operator is implemented by generating an anonymous temporary
+       * followed by an if-statement.  The last instruction in each branch of
+       * the if-statement assigns a value to the anonymous temporary.  This
+       * temporary is the r-value of the expression.
+       */
+      ir_variable *const tmp = generate_temporary(glsl_type::error_type,
+						  instructions, state);
+
+      ir_if *const stmt = new ir_if(op[0]);
+      instructions->push_tail(stmt);
+
+      op[1] = this->subexpressions[1]->hir(& stmt->then_instructions, state);
+      ir_dereference *const then_deref = new ir_dereference(tmp);
+      ir_assignment *const then_assign =
+	 new ir_assignment(then_deref, op[1], NULL);
+      stmt->then_instructions.push_tail(then_assign);
+
+      op[2] = this->subexpressions[2]->hir(& stmt->else_instructions, state);
+      ir_dereference *const else_deref = new ir_dereference(tmp);
+      ir_assignment *const else_assign =
+	 new ir_assignment(else_deref, op[2], NULL);
+      stmt->else_instructions.push_tail(else_assign);
+
+      /* From page 59 (page 65 of the PDF) of the GLSL 1.50 spec:
+       *
+       *     "The second and third expressions can be any type, as
+       *     long their types match, or there is a conversion in
+       *     Section 4.1.10 "Implicit Conversions" that can be applied
+       *     to one of the expressions to make their types match. This
+       *     resulting matching type is the type of the entire
+       *     expression."
+       */
+      /* FINISHME: Apply implicit conversions */
+      if (op[1]->type == op[2]->type) {
+	 tmp->type = op[1]->type;
+      } else {
+	 YYLTYPE loc = this->subexpressions[1]->get_location();
+
+	 _mesa_glsl_error(& loc, state, "Second and third operands of ?: "
+			  "operator must have matching types.");
+	 error_emitted = true;
+      }
+
+
+      result = new ir_dereference(tmp);
+      type = tmp->type;
       break;
+   }
 
    case ast_pre_inc:
    case ast_pre_dec: {
