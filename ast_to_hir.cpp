@@ -981,6 +981,8 @@ ast_declarator_list::hir(exec_list *instructions,
       instructions->push_tail(var);
 
       if (decl->initializer != NULL) {
+	 YYLTYPE initializer_loc = decl->initializer->get_location();
+
 	 /* From page 24 (page 30 of the PDF) of the GLSL 1.10 spec:
 	  *
 	  *    "All uniform variables are read-only and are initialized either
@@ -989,10 +991,22 @@ ast_declarator_list::hir(exec_list *instructions,
 	  */
 	 if ((state->language_version <= 110)
 	     && (var->mode == ir_var_uniform)) {
-	    YYLTYPE loc = decl->initializer->get_location();
+	    _mesa_glsl_error(& initializer_loc, state,
+			     "cannot initialize uniforms in GLSL 1.10");
+	 }
 
-	    _mesa_glsl_error(& loc, state, "uniform initializers forbidden in "
-			     "GLSL 1.10");
+	 if (var->type->is_sampler()) {
+	    _mesa_glsl_error(& initializer_loc, state,
+			     "cannot initialize samplers");
+	 }
+
+	 if ((var->mode == ir_var_in) && (state->current_function == NULL)) {
+	    _mesa_glsl_error(& initializer_loc, state,
+			     "cannot initialize %s shader input / %s",
+			     (state->target == vertex_shader)
+			     ? "vertex" : "fragment",
+			     (state->target == vertex_shader)
+			     ? "attribute" : "varying");
 	 }
 
 	 ir_dereference *const lhs = new ir_dereference(var);
