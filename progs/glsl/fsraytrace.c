@@ -27,23 +27,23 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include "shaderutil.h"
-
+#include <math.h>
 
 static int Win;
 static int WinWidth = 512, WinHeight = 512;
-static GLfloat Xrot = 0, Yrot = 0;
 static int mouseGrabbed = 0;
 static GLuint vertShader;
 static GLuint fragShader;
 static GLuint program;
+static float rot[9] = {1,0,0,  0,1,0,   0,0,1};
 
 static const char* vsSource =
-  "varying vec2 rayDir;\n"
-  "\n"
-  "void main()\n"
-  "{\n"
-  "  rayDir = gl_MultiTexCoord0.xy - vec2(0.5,0.5);\n"
-  "  gl_Position = gl_ProjectionMatrix * gl_Vertex;\n"
+  "varying vec2 rayDir;                                                \n"
+  "                                                                    \n"
+  "void main()                                                         \n"
+  "{                                                                   \n"
+  "  rayDir = gl_MultiTexCoord0.xy - vec2(0.5,0.5);                    \n"
+  "  gl_Position = gl_ProjectionMatrix * gl_Vertex;                    \n"
   "}\n";
 
 static const char* fsSource =
@@ -76,10 +76,17 @@ static const char* fsSource =
   "  vec3 n;                                                           \n"
   "};                                                                  \n"
   "                                                                    \n"
+#ifdef __APPLE__
+  "Sphere spheres0 = Sphere( vec3(0.0,0.0,-1.0), 0.5 );                \n"
+  "Sphere spheres1 = Sphere( vec3(-3.0,0.0,-1.0), 1.5 );               \n"
+  "Sphere spheres2 = Sphere( vec3(0.0,3.0,-1.0), 0.5 );                \n"
+  "Sphere spheres3 = Sphere( vec3(2.0,0.0,-1.0), 1.0 );                \n"
+#else
   "const Sphere spheres0 = Sphere( vec3(0.0,0.0,-1.0), 0.5 );          \n"
   "const Sphere spheres1 = Sphere( vec3(-3.0,0.0,-1.0), 1.5 );         \n"
   "const Sphere spheres2 = Sphere( vec3(0.0,3.0,-1.0), 0.5 );          \n"
   "const Sphere spheres3 = Sphere( vec3(2.0,0.0,-1.0), 1.0 );          \n"
+#endif
   "                                                                    \n"
   "// Mesa intel gen4 generates \"unsupported IR in fragment shader 13\" for\n"
   "// sqrt, let's work around.                                         \n"
@@ -213,29 +220,46 @@ static const char* fsSource =
   "    clamp(dot(reflect(-L,N),camera_dir),0.0,1.0),16.0);             \n"
   "}                                                                   \n"
   "                                                                    \n"
-  "\n"
-  "void\n"
-  "main()\n"
-  "{\n"
-  "  const float z = -0.5;\n"
+  "void main()                                                         \n"
+  "{                                                                   \n"
+  "  const float z = -0.5;                                             \n"
   "  const vec3 cameraPos = vec3(0,0,3);                               \n"
-  "  Ray r = Ray(cameraPos, normalize(vec3(rayDir, z) * rot));\n"
-  "  gl_FragColor = trace1(r);\n"
+  "  Ray r = Ray(cameraPos, normalize(vec3(rayDir, z) * rot));         \n"
+  "  gl_FragColor = trace1(r);                                         \n"
   "}\n";
 
-
-
-static void
-Idle(void)
+static
+float
+deg2rad(const float degree)
 {
-  glutPostRedisplay();
+  return( degree * 0.017453292519943295769236907684886F);
 }
 
+static void
+rotate_xy(float* mat3, const float degreesAroundX, const float degreesAroundY)
+{
+  const float rad1 = deg2rad(degreesAroundX);
+  const float c1 = cosf(rad1);
+  const float s1 = sinf(rad1);
+  const float rad2 = deg2rad(degreesAroundY);
+  const float c2 = cosf(rad2);
+  const float s2 = sinf(rad2);
+  mat3[0] = c2;    mat3[3] = 0.0F; mat3[6] = s2;
+  mat3[1] = s1*s2; mat3[4] = c1;   mat3[7] = -s1*c2;
+  mat3[2] = -c1*s2;mat3[5] = s1;   mat3[8] = c1*c2;
+}
+
+static void
+identity(float* mat3)
+{
+  mat3[0] = 1.0F; mat3[3] = 0.0F; mat3[6] = 0.0F;
+  mat3[1] = 0.0F; mat3[4] = 1.0F; mat3[7] = 0.0F;
+  mat3[2] = 0.0F; mat3[5] = 0.0F; mat3[8] = 1.0F;
+}
 
 static void
 Draw(void)
 {
-  float rot[9] = {1,0,0,  0,1,0,   0,0,1};
   GLint location = glGetUniformLocation(program, "rot");
   static const float m = -10.F;
   static const float p =  10.F;
@@ -311,9 +335,12 @@ drag(int x, int y)
   float scale = 1.5F;
   if(mouseGrabbed)
   {
-    Xrot = (float)(x - WinWidth/2) / scale;
-    Yrot = (float)(y - WinHeight/2) / scale;
-    printf("%4.2f %4.2f\n", Xrot, Yrot);
+    static GLfloat xRot = 0, yRot = 0;
+    xRot = (float)(x - WinWidth/2) / scale;
+    yRot = (float)(y - WinHeight/2) / scale;
+    identity(rot);
+    rotate_xy(rot, yRot, xRot);
+    glutPostRedisplay();
   }
 }
 
@@ -322,10 +349,7 @@ static
 void
 mouse(int button, int state, int x, int y)
 {
-  if(state == GLUT_DOWN)
-  {
-    mouseGrabbed = !mouseGrabbed;
-  }
+  mouseGrabbed = (state == GLUT_DOWN);
 }
 
 
@@ -379,8 +403,8 @@ main(int argc, char *argv[])
   glutKeyboardFunc(Key);
   glutDisplayFunc(Draw);
   glutMouseFunc(mouse);
-  glutPassiveMotionFunc(drag);
-  glutIdleFunc(Idle);
+  glutMotionFunc(drag);
+  glutIdleFunc(Draw);
   Init();
   glutMainLoop();
   return 0;

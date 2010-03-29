@@ -44,7 +44,8 @@ CPP_SOURCES = \
 
 PROGS := lp_test_format	\
 	 lp_test_blend	\
-	 lp_test_conv
+	 lp_test_conv	\
+	 lp_test_printf
 
 
 include ../../Makefile.template

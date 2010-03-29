@@ -206,7 +206,7 @@ static struct pipe_texture *brw_texture_create( struct pipe_screen *screen,
    /* XXX: compressed textures need special treatment here
     */
    tex->cpp = util_format_get_blocksize(tex->base.format);
-   tex->compressed = util_format_is_compressed(tex->base.format);
+   tex->compressed = util_format_is_s3tc(tex->base.format);
 
    make_empty_list(&tex->views[0]);
    make_empty_list(&tex->views[1]);
@@ -321,7 +321,7 @@ brw_texture_from_handle(struct pipe_screen *screen,
        templ->depth0 != 1)
       return NULL;
 
-   if (util_format_is_compressed(templ->format))
+   if (util_format_is_s3tc(templ->format))
       return NULL;
 
    tex = CALLOC_STRUCT(brw_texture);

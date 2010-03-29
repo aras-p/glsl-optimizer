@@ -1,8 +1,7 @@
 /**************************************************************************
  *
- * Copyright 2009, VMware, Inc.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
- * Copyright 2010 George Sapountzis <gsapountzis@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -26,13 +25,15 @@
  *
  **************************************************************************/
 
-#ifndef DRI_SW_WINSYS
-#define DRI_SW_WINSYS
+#ifndef LP_BLD_PRINTF_H
+#define LP_BLD_PRINTF_H
 
-#include "state_tracker/drisw_api.h"
 
-struct sw_winsys;
+#include "pipe/p_compiler.h"
+#include "lp_bld.h"
 
-struct sw_winsys *dri_create_sw_winsys(struct drisw_loader_funcs *lf);
+LLVMValueRef lp_build_const_string_variable(LLVMModuleRef module, const char *str, int len);
+LLVMValueRef lp_build_printf(LLVMBuilderRef builder, const char *fmt, ...);
 
 #endif
+

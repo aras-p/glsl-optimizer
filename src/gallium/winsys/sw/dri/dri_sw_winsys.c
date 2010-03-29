@@ -37,128 +37,153 @@
 #include "dri_sw_winsys.h"
 
 
-struct xm_displaytarget
+struct dri_sw_displaytarget
 {
+   enum pipe_format format;
+   unsigned width;
+   unsigned height;
+   unsigned stride;
+
    void *data;
    void *mapped;
 };
 
-
-/** Cast wrapper */
-static INLINE struct xm_displaytarget *
-xm_displaytarget( struct sw_displaytarget *dt )
+struct dri_sw_winsys
 {
-   return (struct xm_displaytarget *)dt;
+   struct sw_winsys base;
+
+   struct drisw_loader_funcs *lf;
+};
+
+static INLINE struct dri_sw_displaytarget *
+dri_sw_displaytarget( struct sw_displaytarget *dt )
+{
+   return (struct dri_sw_displaytarget *)dt;
+}
+
+static INLINE struct dri_sw_winsys *
+dri_sw_winsys( struct sw_winsys *ws )
+{
+   return (struct dri_sw_winsys *)ws;
 }
 
 
-/* pipe_screen::is_format_supported */
 static boolean
-xm_is_displaytarget_format_supported( struct sw_winsys *ws,
-                                      unsigned tex_usage,
-                                      enum pipe_format format )
+dri_sw_is_displaytarget_format_supported( struct sw_winsys *ws,
+                                          unsigned tex_usage,
+                                          enum pipe_format format )
 {
    /* TODO: check visuals or other sensible thing here */
    return TRUE;
 }
 
-/* pipe_screen::texture_create DISPLAY_TARGET / SCANOUT / SHARED */
 static struct sw_displaytarget *
-xm_displaytarget_create(struct sw_winsys *winsys,
-                        unsigned tex_usage,
-                        enum pipe_format format,
-                        unsigned width, unsigned height,
-                        unsigned alignment,
-                        unsigned *stride)
+dri_sw_displaytarget_create(struct sw_winsys *winsys,
+                            unsigned tex_usage,
+                            enum pipe_format format,
+                            unsigned width, unsigned height,
+                            unsigned alignment,
+                            unsigned *stride)
 {
-   struct xm_displaytarget *xm_dt;
-   unsigned nblocksy, size, xm_stride, format_stride;
+   struct dri_sw_displaytarget *dri_sw_dt;
+   unsigned nblocksy, size, format_stride;
 
-   xm_dt = CALLOC_STRUCT(xm_displaytarget);
-   if(!xm_dt)
-      goto no_xm_dt;
+   dri_sw_dt = CALLOC_STRUCT(dri_sw_displaytarget);
+   if(!dri_sw_dt)
+      goto no_dt;
+
+   dri_sw_dt->format = format;
+   dri_sw_dt->width = width;
+   dri_sw_dt->height = height;
 
    format_stride = util_format_get_stride(format, width);
-   xm_stride = align(format_stride, alignment);
+   dri_sw_dt->stride = align(format_stride, alignment);
 
    nblocksy = util_format_get_nblocksy(format, height);
-   size = xm_stride * nblocksy;
+   size = dri_sw_dt->stride * nblocksy;
 
-   xm_dt->data = align_malloc(size, alignment);
-   if(!xm_dt->data)
+   dri_sw_dt->data = align_malloc(size, alignment);
+   if(!dri_sw_dt->data)
       goto no_data;
 
-   *stride = xm_stride;
-   return (struct sw_displaytarget *)xm_dt;
+   *stride = dri_sw_dt->stride;
+   return (struct sw_displaytarget *)dri_sw_dt;
 
 no_data:
-   FREE(xm_dt);
-no_xm_dt:
+   FREE(dri_sw_dt);
+no_dt:
    return NULL;
 }
 
-/* pipe_screen::texture_destroy */
 static void
-xm_displaytarget_destroy(struct sw_winsys *ws,
-                         struct sw_displaytarget *dt)
+dri_sw_displaytarget_destroy(struct sw_winsys *ws,
+                             struct sw_displaytarget *dt)
 {
-   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
+   struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
 
-   if (xm_dt->data) {
-      FREE(xm_dt->data);
+   if (dri_sw_dt->data) {
+      FREE(dri_sw_dt->data);
    }
 
-   FREE(xm_dt);
+   FREE(dri_sw_dt);
 }
 
-/* pipe_context::transfer_map */
 static void *
-xm_displaytarget_map(struct sw_winsys *ws,
-                     struct sw_displaytarget *dt,
-                     unsigned flags)
+dri_sw_displaytarget_map(struct sw_winsys *ws,
+                         struct sw_displaytarget *dt,
+                         unsigned flags)
 {
-   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
-   xm_dt->mapped = xm_dt->data;
-   return xm_dt->mapped;
+   struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
+   dri_sw_dt->mapped = dri_sw_dt->data;
+   return dri_sw_dt->mapped;
 }
 
-/* pipe_context::transfer_unmap */
 static void
-xm_displaytarget_unmap(struct sw_winsys *ws,
-                       struct sw_displaytarget *dt)
+dri_sw_displaytarget_unmap(struct sw_winsys *ws,
+                           struct sw_displaytarget *dt)
 {
-   struct xm_displaytarget *xm_dt = xm_displaytarget(dt);
-   xm_dt->mapped = NULL;
+   struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
+   dri_sw_dt->mapped = NULL;
 }
 
-/* pipe_screen::texture_from_handle */
 static struct sw_displaytarget *
-xm_displaytarget_from_handle(struct sw_winsys *winsys,
-                             const struct pipe_texture *templ,
-                             struct winsys_handle *whandle,
-                             unsigned *stride)
+dri_sw_displaytarget_from_handle(struct sw_winsys *winsys,
+                                 const struct pipe_texture *templ,
+                                 struct winsys_handle *whandle,
+                                 unsigned *stride)
 {
    assert(0);
    return NULL;
 }
 
-/* pipe_screen::texture_get_handle */
 static boolean
-xm_displaytarget_get_handle(struct sw_winsys *winsys,
-                            struct sw_displaytarget *dt,
-                            struct winsys_handle *whandle)
+dri_sw_displaytarget_get_handle(struct sw_winsys *winsys,
+                                struct sw_displaytarget *dt,
+                                struct winsys_handle *whandle)
 {
    assert(0);
    return FALSE;
 }
 
-/* pipe_screen::flush_frontbuffer */
 static void
-xm_displaytarget_display(struct sw_winsys *ws,
-                         struct sw_displaytarget *dt,
-                         void *context_private)
+dri_sw_displaytarget_display(struct sw_winsys *ws,
+                             struct sw_displaytarget *dt,
+                             void *context_private)
 {
-   assert(0);
+   struct dri_sw_winsys *dri_sw_ws = dri_sw_winsys(ws);
+   struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
+   struct dri_drawable *dri_drawable = (struct dri_drawable *)context_private;
+   unsigned width, height;
+
+   /* Set the width to 'stride / cpp'.
+    *
+    * PutImage correctly clips to the width of the dst drawable.
+    */
+   width = dri_sw_dt->stride / util_format_get_blocksize(dri_sw_dt->format);
+
+   height = dri_sw_dt->height;
+
+   dri_sw_ws->lf->put_image(dri_drawable, dri_sw_dt->data, width, height);
 }
 
 
@@ -169,31 +194,32 @@ dri_destroy_sw_winsys(struct sw_winsys *winsys)
 }
 
 struct sw_winsys *
-dri_create_sw_winsys(void)
+dri_create_sw_winsys(struct drisw_loader_funcs *lf)
 {
-   struct sw_winsys *ws;
+   struct dri_sw_winsys *ws;
 
-   ws = CALLOC_STRUCT(sw_winsys);
+   ws = CALLOC_STRUCT(dri_sw_winsys);
    if (!ws)
       return NULL;
 
-   ws->destroy = dri_destroy_sw_winsys;
+   ws->lf = lf;
+   ws->base.destroy = dri_destroy_sw_winsys;
 
-   ws->is_displaytarget_format_supported = xm_is_displaytarget_format_supported;
+   ws->base.is_displaytarget_format_supported = dri_sw_is_displaytarget_format_supported;
 
    /* screen texture functions */
-   ws->displaytarget_create = xm_displaytarget_create;
-   ws->displaytarget_destroy = xm_displaytarget_destroy;
-   ws->displaytarget_from_handle = xm_displaytarget_from_handle;
-   ws->displaytarget_get_handle = xm_displaytarget_get_handle;
+   ws->base.displaytarget_create = dri_sw_displaytarget_create;
+   ws->base.displaytarget_destroy = dri_sw_displaytarget_destroy;
+   ws->base.displaytarget_from_handle = dri_sw_displaytarget_from_handle;
+   ws->base.displaytarget_get_handle = dri_sw_displaytarget_get_handle;
 
    /* texture functions */
-   ws->displaytarget_map = xm_displaytarget_map;
-   ws->displaytarget_unmap = xm_displaytarget_unmap;
+   ws->base.displaytarget_map = dri_sw_displaytarget_map;
+   ws->base.displaytarget_unmap = dri_sw_displaytarget_unmap;
 
-   ws->displaytarget_display = xm_displaytarget_display;
+   ws->base.displaytarget_display = dri_sw_displaytarget_display;
 
-   return ws;
+   return &ws->base;
 }
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

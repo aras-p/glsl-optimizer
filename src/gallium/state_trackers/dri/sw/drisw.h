@@ -39,7 +39,7 @@ const __DRIconfig **
 drisw_init_screen(__DRIscreen * sPriv);
 
 void
-drisw_update_drawable_info(__DRIdrawable *dPriv);
+drisw_update_drawable_info(struct dri_drawable *drawable);
 
 void
 drisw_flush_frontbuffer(struct dri_drawable *drawable,

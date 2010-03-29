@@ -55,6 +55,14 @@ PUBLIC const struct st_module st_module_OpenGL = {
  * GALLIUM_CELL, etc.  Scons already eliminates those #defines, so
  * things that are painful for it now are likely to be painful for
  * other build systems in the future.
+ *
+ * Copies (full or partial):
+ *    targets/libgl-xlib
+ *    targets/graw-xlib
+ *    targets/dri-swrast
+ *    winsys/sw/drm
+ *    drivers/sw
+ *
  */
 
 #ifdef GALLIUM_SOFTPIPE

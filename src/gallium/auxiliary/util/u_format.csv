@@ -121,18 +121,23 @@ PIPE_FORMAT_R9G9B9E5_FLOAT        , compressed, 1,  1, x32 ,     ,     ,     , x
 PIPE_FORMAT_R1_UNORM              , compressed, 8,  1, x8  ,     ,     ,     , x001, rgb
 
 # Compressed formats
-PIPE_FORMAT_DXT1_RGB              , compressed, 4, 4, x64 ,     ,     ,     , xyz1, rgb
-PIPE_FORMAT_DXT1_RGBA             , compressed, 4, 4, x64 ,     ,     ,     , xyzw, rgb
-PIPE_FORMAT_DXT3_RGBA             , compressed, 4, 4, x128,     ,     ,     , xyzw, rgb
-PIPE_FORMAT_DXT5_RGBA             , compressed, 4, 4, x128,     ,     ,     , xyzw, rgb
-PIPE_FORMAT_DXT1_SRGB             , compressed, 4, 4, x64 ,     ,     ,     , xyz1, srgb
-PIPE_FORMAT_DXT1_SRGBA            , compressed, 4, 4, x64 ,     ,     ,     , xyzw, srgb
-PIPE_FORMAT_DXT3_SRGBA            , compressed, 4, 4, x128,     ,     ,     , xyzw, srgb
-PIPE_FORMAT_DXT5_SRGBA            , compressed, 4, 4, x128,     ,     ,     , xyzw, srgb
-PIPE_FORMAT_RGTC1_UNORM           , compressed, 4, 4, x64,      ,     ,     , x001, rgb
-PIPE_FORMAT_RGTC1_SNORM           , compressed, 4, 4, x64,      ,     ,     , x001, rgb
-PIPE_FORMAT_RGTC2_UNORM           , compressed, 4, 4, x128,     ,     ,     , xy01, rgb
-PIPE_FORMAT_RGTC2_SNORM           , compressed, 4, 4, x128,     ,     ,     , xy01, rgb
+# - http://en.wikipedia.org/wiki/S3_Texture_Compression
+# - http://www.opengl.org/registry/specs/EXT/texture_compression_s3tc.txt
+# - http://www.opengl.org/registry/specs/ARB/texture_compression_rgtc.txt
+# - http://msdn.microsoft.com/en-us/library/bb694531.aspx
+PIPE_FORMAT_DXT1_RGB              , s3tc, 4, 4, x64 ,     ,     ,     , xyz1, rgb
+PIPE_FORMAT_DXT1_RGBA             , s3tc, 4, 4, x64 ,     ,     ,     , xyzw, rgb
+PIPE_FORMAT_DXT3_RGBA             , s3tc, 4, 4, x128,     ,     ,     , xyzw, rgb
+PIPE_FORMAT_DXT5_RGBA             , s3tc, 4, 4, x128,     ,     ,     , xyzw, rgb
+PIPE_FORMAT_DXT1_SRGB             , s3tc, 4, 4, x64 ,     ,     ,     , xyz1, srgb
+PIPE_FORMAT_DXT1_SRGBA            , s3tc, 4, 4, x64 ,     ,     ,     , xyzw, srgb
+PIPE_FORMAT_DXT3_SRGBA            , s3tc, 4, 4, x128,     ,     ,     , xyzw, srgb
+PIPE_FORMAT_DXT5_SRGBA            , s3tc, 4, 4, x128,     ,     ,     , xyzw, srgb
+
+PIPE_FORMAT_RGTC1_UNORM           , rgtc, 4, 4, x64,      ,     ,     , x001, rgb
+PIPE_FORMAT_RGTC1_SNORM           , rgtc, 4, 4, x64,      ,     ,     , x001, rgb
+PIPE_FORMAT_RGTC2_UNORM           , rgtc, 4, 4, x128,     ,     ,     , xy01, rgb
+PIPE_FORMAT_RGTC2_SNORM           , rgtc, 4, 4, x128,     ,     ,     , xy01, rgb
 
 # Straightforward D3D10-like formats (also used for 
 # vertex buffer element description)

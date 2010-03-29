@@ -80,7 +80,7 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
       }
 #else
       if (new_stamp)
-         drisw_update_drawable_info(drawable->dPriv);
+         drisw_update_drawable_info(drawable);
 
       drisw_allocate_textures(drawable, statt_mask);
 #endif
