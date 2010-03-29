@@ -1365,10 +1365,14 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
         if (r300screen->caps->has_tcl) {
             r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
             r300->pvs_flush.dirty = TRUE;
+        } else if (r300->draw) {
+            draw_set_mapped_constant_buffer(r300->draw, PIPE_SHADER_VERTEX,
+                0, r300->shader_constants[PIPE_SHADER_VERTEX].constants,
+                buf->size);
         }
-    }
-    else if (shader == PIPE_SHADER_FRAGMENT)
+    } else if (shader == PIPE_SHADER_FRAGMENT) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+    }
 }
 
 void r300_init_state_functions(struct r300_context* r300)
