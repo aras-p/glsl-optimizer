@@ -1160,7 +1160,7 @@ float length(const vec2 v)
    float r;
    const float p = dot(v, v);      // p = v.x * v.x + v.y * v.y
    __asm float_rsq r, p;           // r = 1 / sqrt(p)
-   __asm float_rcp __retVal.x, r;  // retVal = 1 / r
+   __retVal = p * r;               // p * r = sqrt(p);
 }
 
 float length(const vec3 v)
@@ -1168,7 +1168,7 @@ float length(const vec3 v)
    float r;
    const float p = dot(v, v);      // p = v.x * v.x + v.y * v.y + v.z * v.z
    __asm float_rsq r, p;           // r = 1 / sqrt(p)
-   __asm float_rcp __retVal, r;    // retVal = 1 / r
+   __retVal = p * r;               // p * r = sqrt(p);
 }
 
 float length(const vec4 v)
@@ -1176,7 +1176,7 @@ float length(const vec4 v)
    float r;
    const float p = dot(v, v);      // p = v.x * v.x + v.y * v.y + ...
    __asm float_rsq r, p;           // r = 1 / sqrt(p)
-   __asm float_rcp __retVal, r;    // retVal = 1 / r
+   __retVal = p * r;               // p * r = sqrt(p);
 }
 
 
