@@ -651,6 +651,19 @@ emit_declaration(
    unsigned first = decl->Range.First;
    unsigned last = decl->Range.Last;
    unsigned idx, i;
+   LLVMBasicBlockRef current_block =
+      LLVMGetInsertBlock(bld->base.builder);
+   LLVMBasicBlockRef first_block =
+      LLVMGetEntryBasicBlock(
+         LLVMGetBasicBlockParent(current_block));
+   LLVMValueRef first_inst =
+      LLVMGetFirstInstruction(first_block);
+
+   /* we want alloca's to be the first instruction
+    * in the function so we need to rewind the builder
+    * to the very beginning */
+   LLVMPositionBuilderBefore(bld->base.builder,
+                             first_inst);
 
    for (idx = first; idx <= last; ++idx) {
       boolean ok;
@@ -673,10 +686,15 @@ emit_declaration(
          ok = TRUE;
       }
 
-      if (!ok)
+      if (!ok) {
+         LLVMPositionBuilderAtEnd(bld->base.builder,
+                                  current_block);
          return FALSE;
+      }
    }
 
+   LLVMPositionBuilderAtEnd(bld->base.builder,
+                            current_block);
    return TRUE;
 }
 
