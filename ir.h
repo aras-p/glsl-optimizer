@@ -458,15 +458,12 @@ public:
 
    bool is_lvalue()
    {
-      ir_variable *as_var;
-
       if (var == NULL)
-	 return NULL;
+	 return false;
 
-      as_var = var->as_variable();
-
+      ir_variable *const as_var = var->as_variable();
       if (as_var == NULL)
-	 return NULL;
+	 return false;
 
       return !as_var->read_only;
    }
