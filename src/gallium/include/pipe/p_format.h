@@ -63,11 +63,11 @@ enum pipe_format {
    PIPE_FORMAT_Z16_UNORM               = 16,
    PIPE_FORMAT_Z32_UNORM               = 17,
    PIPE_FORMAT_Z32_FLOAT               = 18,
-   PIPE_FORMAT_Z24S8_UNORM             = 19,
-   PIPE_FORMAT_S8Z24_UNORM             = 20,
+   PIPE_FORMAT_Z24_UNORM_S8_USCALED    = 19,
+   PIPE_FORMAT_S8_USCALED_Z24_UNORM    = 20,
    PIPE_FORMAT_Z24X8_UNORM             = 21,
    PIPE_FORMAT_X8Z24_UNORM             = 22,
-   PIPE_FORMAT_S8_UNORM                = 23,   /**< ubyte stencil */
+   PIPE_FORMAT_S8_USCALED              = 23,   /**< ubyte stencil */
    PIPE_FORMAT_R64_FLOAT               = 24,
    PIPE_FORMAT_R64G64_FLOAT            = 25,
    PIPE_FORMAT_R64G64B64_FLOAT         = 26,
@@ -176,7 +176,7 @@ enum pipe_format {
    PIPE_FORMAT_R10G10B10A2_USCALED     = 123,
    PIPE_FORMAT_R11G11B10_FLOAT         = 124,
    PIPE_FORMAT_R9G9B9E5_FLOAT          = 125,
-   PIPE_FORMAT_Z32_FLOAT_S8X24_UNORM   = 126,
+   PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED = 126,
    PIPE_FORMAT_R1_UNORM                = 127,
 
    PIPE_FORMAT_COUNT

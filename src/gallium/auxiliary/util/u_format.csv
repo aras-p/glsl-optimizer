@@ -93,16 +93,15 @@ PIPE_FORMAT_R8SG8SB8UX8U_NORM     , plain, 1, 1, sn8 , sn8 , un8 , x8  , xyz1, r
 PIPE_FORMAT_R5SG5SB6U_NORM        , plain, 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
 
 # Depth-stencil formats
-# UNORM isn't really fitting. Only applies to depth, not stencil component
-PIPE_FORMAT_S8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , _x__, zs 
-PIPE_FORMAT_Z16_UNORM             , plain, 1, 1, un16,     ,     ,     , x___, zs 
-PIPE_FORMAT_Z32_UNORM             , plain, 1, 1, un32,     ,     ,     , x___, zs 
-PIPE_FORMAT_Z32_FLOAT             , plain, 1, 1, f32 ,     ,     ,     , x___, zs 
-PIPE_FORMAT_Z24S8_UNORM           , plain, 1, 1, un24, un8 ,     ,     , xy__, zs 
-PIPE_FORMAT_S8Z24_UNORM           , plain, 1, 1, un8 , un24,     ,     , yx__, zs 
-PIPE_FORMAT_Z24X8_UNORM           , plain, 1, 1, un24, un8 ,     ,     , x___, zs 
-PIPE_FORMAT_X8Z24_UNORM           , plain, 1, 1, un8 , un24,     ,     , y___, zs 
-PIPE_FORMAT_Z32_FLOAT_S8X24_UNORM , plain, 1, 1, f32,  un8 , un24,     , xy__, zs
+PIPE_FORMAT_S8_USCALED              , plain, 1, 1, u8  ,     ,     ,     , _x__, zs
+PIPE_FORMAT_Z16_UNORM               , plain, 1, 1, un16,     ,     ,     , x___, zs
+PIPE_FORMAT_Z32_UNORM               , plain, 1, 1, un32,     ,     ,     , x___, zs
+PIPE_FORMAT_Z32_FLOAT               , plain, 1, 1, f32 ,     ,     ,     , x___, zs
+PIPE_FORMAT_Z24_UNORM_S8_USCALED    , plain, 1, 1, un24, u8  ,     ,     , xy__, zs
+PIPE_FORMAT_S8_USCALED_Z24_UNORM    , plain, 1, 1, u8 ,  un24,     ,     , yx__, zs
+PIPE_FORMAT_Z24X8_UNORM             , plain, 1, 1, un24, u8  ,     ,     , x___, zs
+PIPE_FORMAT_X8Z24_UNORM             , plain, 1, 1, u8  , un24,     ,     , y___, zs
+PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED , plain, 1, 1, f32,  u8  , u24 ,     , xy__, zs
 
 # YUV formats
 # http://www.fourcc.org/yuv.php#UYVY
