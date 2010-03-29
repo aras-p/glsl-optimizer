@@ -660,8 +660,9 @@ ast_expression::hir(exec_list *instructions,
        *    applied to one operand that can make them match, in which
        *    case this conversion is done."
        */
-      /* FINISHME: Apply implicit conversions */
-      if (op[0]->type != op[1]->type) {
+      if ((!apply_implicit_conversion(op[0]->type, & op[1], state)
+	   && !apply_implicit_conversion(op[1]->type, & op[0], state))
+	  || (op[0]->type != op[1]->type)) {
 	 _mesa_glsl_error(& loc, state, "operands of `%s' must have the same "
 			  "type", (this->oper == ast_equal) ? "==" : "!=");
 	 error_emitted = true;
