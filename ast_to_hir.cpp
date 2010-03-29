@@ -388,6 +388,26 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    return rhs;
 }
 
+
+/**
+ * Generate a new temporary and add its declaration to the instruction stream
+ */
+static ir_variable *
+generate_temporary(const glsl_type *type, exec_list *instructions,
+		   struct _mesa_glsl_parse_state *state)
+{
+   char *name = (char *) malloc(sizeof(char) * 13);
+
+   snprintf(name, 13, "tmp_%08X", state->temp_index);
+   state->temp_index++;
+
+   ir_variable *const var = new ir_variable(type, name);
+   instructions->push_tail(var);
+
+   return var;
+}
+
+
 static ir_rvalue *
 get_lvalue_copy(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 		ir_rvalue *lvalue, YYLTYPE loc)

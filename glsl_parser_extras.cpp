@@ -634,6 +634,7 @@ main(int argc, char **argv)
    make_empty_list(& state.translation_unit);
    state.symbols = new glsl_symbol_table;
    state.error = false;
+   state.temp_index = 0;
 
    _mesa_glsl_lexer_ctor(& state, shader, shader_len);
    _mesa_glsl_parse(& state);

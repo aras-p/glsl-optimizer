@@ -53,6 +53,9 @@ struct _mesa_glsl_parse_state {
 
    /** Was there an error during compilation? */
    bool error;
+
+   /** Index of last generated anonymous temporary. */
+   unsigned temp_index;
 };
 
 typedef struct YYLTYPE {
