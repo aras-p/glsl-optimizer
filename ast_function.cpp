@@ -327,7 +327,7 @@ ast_function_expression::hir(exec_list *instructions,
 	  *    arguments to provide an initializer for every component in the
 	  *    constructed value."
 	  */
-	 if (components_used < type_components) {
+	 if ((components_used < type_components) && (components_used != 1)) {
 	    _mesa_glsl_error(& loc, state, "too few components to construct "
 			     "`%s'",
 			     constructor_type->name);
