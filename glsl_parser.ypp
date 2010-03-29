@@ -900,10 +900,12 @@ basic_type_specifier_nonarray:
 	| MAT4X4		{ $$ = ast_mat4; }
 	| SAMPLER1D		{ $$ = ast_sampler1d; }
 	| SAMPLER2D		{ $$ = ast_sampler2d; }
+	| SAMPLER2DRECT		{ $$ = ast_sampler2drect; }
 	| SAMPLER3D		{ $$ = ast_sampler3d; }
 	| SAMPLERCUBE		{ $$ = ast_samplercube; }
 	| SAMPLER1DSHADOW	{ $$ = ast_sampler1dshadow; }
 	| SAMPLER2DSHADOW	{ $$ = ast_sampler2dshadow; }
+	| SAMPLER2DRECTSHADOW	{ $$ = ast_sampler2drectshadow; }
 	| SAMPLERCUBESHADOW	{ $$ = ast_samplercubeshadow; }
 	| SAMPLER1DARRAY	{ $$ = ast_sampler1darray; }
 	| SAMPLER2DARRAY	{ $$ = ast_sampler2darray; }
