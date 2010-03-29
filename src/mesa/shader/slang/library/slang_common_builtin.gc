@@ -605,7 +605,7 @@ float sqrt(const float x)
    const float nx = -x;
    float r;
    __asm float_rsq r, x;
-   __asm float_rcp r, r;
+   r = r * x;
    __asm vec4_cmp __retVal, nx, r, 0.0;
 }
 
@@ -615,8 +615,7 @@ vec2 sqrt(const vec2 x)
    vec2 r;
    __asm float_rsq r.x, x.x;
    __asm float_rsq r.y, x.y;
-   __asm float_rcp r.x, r.x;
-   __asm float_rcp r.y, r.y;
+   r = r * x;
    __asm vec4_cmp __retVal, nx, r, zero;
 }
 
@@ -627,9 +626,7 @@ vec3 sqrt(const vec3 x)
    __asm float_rsq r.x, x.x;
    __asm float_rsq r.y, x.y;
    __asm float_rsq r.z, x.z;
-   __asm float_rcp r.x, r.x;
-   __asm float_rcp r.y, r.y;
-   __asm float_rcp r.z, r.z;
+   r = r * x;
    __asm vec4_cmp __retVal, nx, r, zero;
 }
 
@@ -641,10 +638,7 @@ vec4 sqrt(const vec4 x)
    __asm float_rsq r.y, x.y;
    __asm float_rsq r.z, x.z;
    __asm float_rsq r.w, x.w;
-   __asm float_rcp r.x, r.x;
-   __asm float_rcp r.y, r.y;
-   __asm float_rcp r.z, r.z;
-   __asm float_rcp r.w, r.w;
+   r = r * x;
    __asm vec4_cmp __retVal, nx, r, zero;
 }
 
