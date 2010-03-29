@@ -582,7 +582,30 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_nequal:
    case ast_equal:
-      /* FINISHME: Implement equality operators. */
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
+
+      /* From page 58 (page 64 of the PDF) of the GLSL 1.50 spec:
+       *
+       *    "The equality operators equal (==), and not equal (!=)
+       *    operate on all types. They result in a scalar Boolean. If
+       *    the operand types do not match, then there must be a
+       *    conversion from Section 4.1.10 "Implicit Conversions"
+       *    applied to one operand that can make them match, in which
+       *    case this conversion is done."
+       */
+      /* FINISHME: Apply implicit conversions */
+      if (op[0]->type != op[1]->type) {
+	 _mesa_glsl_error(& loc, state, "operands of `%s' must have the same "
+			  "type", (this->oper == ast_equal) ? "==" : "!=");
+	 error_emitted = true;
+      }
+
+      result = new ir_expression(operations[this->oper], glsl_type::bool_type,
+				 op[0], op[1]);
+      type = glsl_type::bool_type;
+
+      assert(result->type == glsl_type::bool_type);
       break;
 
    case ast_bit_and:
