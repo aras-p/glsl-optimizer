@@ -73,12 +73,70 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 }
 
 
+/**
+ * If a conversion is available, convert one operand to a different type
+ *
+ * The \c from \c ir_rvalue is converted "in place".
+ *
+ * \param to     Type that the operand it to be converted to
+ * \param from   Operand that is being converted
+ * \param state  GLSL compiler state
+ *
+ * \return
+ * If a conversion is possible (or unnecessary), \c true is returned.
+ * Otherwise \c false is returned.
+ */
+static bool
+apply_implicit_conversion(const glsl_type *to, ir_rvalue **from,
+			  struct _mesa_glsl_parse_state *state)
+{
+   if (to->base_type == (*from)->type->base_type)
+      return true;
+
+   /* This conversion was added in GLSL 1.20.  If the compilation mode is
+    * GLSL 1.10, the conversion is skipped.
+    */
+   if (state->language_version < 120)
+      return false;
+
+   /* From page 27 (page 33 of the PDF) of the GLSL 1.50 spec:
+    *
+    *    "There are no implicit array or structure conversions. For
+    *    example, an array of int cannot be implicitly converted to an
+    *    array of float. There are no implicit conversions between
+    *    signed and unsigned integers."
+    */
+   /* FINISHME: The above comment is partially a lie.  There is int/uint
+    * FINISHME: conversion for immediate constants.
+    */
+   if (!to->is_float() || !(*from)->type->is_numeric())
+      return false;
+
+   switch (((*from))->type->base_type) {
+   case GLSL_TYPE_INT:
+      (*from) = new ir_expression(ir_unop_i2f, to, (*from), NULL);
+      break;
+   case GLSL_TYPE_UINT:
+      (*from) = new ir_expression(ir_unop_u2f, to, (*from), NULL);
+      break;
+   case GLSL_TYPE_BOOL:
+      assert(!"FINISHME: Convert bool to float.");
+   default:
+      assert(0);
+   }
+
+   return true;
+}
+
+
 static const struct glsl_type *
-arithmetic_result_type(const struct glsl_type *type_a,
-		       const struct glsl_type *type_b,
+arithmetic_result_type(ir_rvalue **value_a, ir_rvalue **value_b,
 		       bool multiply,
 		       struct _mesa_glsl_parse_state *state)
 {
+   const glsl_type *const type_a = (*value_a)->type;
+   const glsl_type *const type_b = (*value_b)->type;
+
    /* From GLSL 1.50 spec, page 56:
     *
     *    "The arithmetic binary operators add (+), subtract (-),
@@ -93,16 +151,10 @@ arithmetic_result_type(const struct glsl_type *type_a,
    /*    "If one operand is floating-point based and the other is
     *    not, then the conversions from Section 4.1.10 "Implicit
     *    Conversions" are applied to the non-floating-point-based operand."
-    *
-    * This conversion was added in GLSL 1.20.  If the compilation mode is
-    * GLSL 1.10, the conversion is skipped.
     */
-   if (state->language_version >= 120) {
-      if ((type_a->base_type == GLSL_TYPE_FLOAT)
-	  && (type_b->base_type != GLSL_TYPE_FLOAT)) {
-      } else if ((type_a->base_type != GLSL_TYPE_FLOAT)
-		 && (type_b->base_type == GLSL_TYPE_FLOAT)) {
-      }
+   if (!apply_implicit_conversion(type_a, value_b, state)
+       && !apply_implicit_conversion(type_b, value_a, state)) {
+      return glsl_type::error_type;
    }
       
    /*    "If the operands are integer types, they must both be signed or
@@ -551,7 +603,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      type = arithmetic_result_type(op[0]->type, op[1]->type,
+      type = arithmetic_result_type(& op[0], & op[1],
 				    (this->oper == ast_mul),
 				    state);
 
@@ -649,7 +701,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      type = arithmetic_result_type(op[0]->type, op[1]->type,
+      type = arithmetic_result_type(& op[0], & op[1],
 				    (this->oper == ast_mul_assign),
 				    state);
 
@@ -772,8 +824,7 @@ ast_expression::hir(exec_list *instructions,
       else
 	 op[1] = new ir_constant(1);
 
-      type = arithmetic_result_type(op[0]->type, op[1]->type,
-				    false, state);
+      type = arithmetic_result_type(& op[0], & op[1], false, state);
 
       struct ir_rvalue *temp_rhs;
       temp_rhs = new ir_expression(operations[this->oper], type,
@@ -796,8 +847,7 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      type = arithmetic_result_type(op[0]->type, op[1]->type,
-				    false, state);
+      type = arithmetic_result_type(& op[0], & op[1], false, state);
 
       struct ir_rvalue *temp_rhs;
       temp_rhs = new ir_expression(operations[this->oper], type,
