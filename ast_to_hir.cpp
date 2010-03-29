@@ -87,10 +87,10 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
  * Otherwise \c false is returned.
  */
 static bool
-apply_implicit_conversion(const glsl_type *to, ir_rvalue **from,
+apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
 			  struct _mesa_glsl_parse_state *state)
 {
-   if (to->base_type == (*from)->type->base_type)
+   if (to->base_type == from->type->base_type)
       return true;
 
    /* This conversion was added in GLSL 1.20.  If the compilation mode is
@@ -109,15 +109,15 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue **from,
    /* FINISHME: The above comment is partially a lie.  There is int/uint
     * FINISHME: conversion for immediate constants.
     */
-   if (!to->is_float() || !(*from)->type->is_numeric())
+   if (!to->is_float() || !from->type->is_numeric())
       return false;
 
-   switch (((*from))->type->base_type) {
+   switch (from->type->base_type) {
    case GLSL_TYPE_INT:
-      (*from) = new ir_expression(ir_unop_i2f, to, (*from), NULL);
+      from = new ir_expression(ir_unop_i2f, to, from, NULL);
       break;
    case GLSL_TYPE_UINT:
-      (*from) = new ir_expression(ir_unop_u2f, to, (*from), NULL);
+      from = new ir_expression(ir_unop_u2f, to, from, NULL);
       break;
    case GLSL_TYPE_BOOL:
       assert(!"FINISHME: Convert bool to float.");
@@ -130,12 +130,12 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue **from,
 
 
 static const struct glsl_type *
-arithmetic_result_type(ir_rvalue **value_a, ir_rvalue **value_b,
+arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 		       bool multiply,
 		       struct _mesa_glsl_parse_state *state)
 {
-   const glsl_type *const type_a = (*value_a)->type;
-   const glsl_type *const type_b = (*value_b)->type;
+   const glsl_type *const type_a = value_a->type;
+   const glsl_type *const type_b = value_b->type;
 
    /* From GLSL 1.50 spec, page 56:
     *
@@ -333,11 +333,11 @@ modulus_result_type(const struct glsl_type *type_a,
 
 
 static const struct glsl_type *
-relational_result_type(ir_rvalue **value_a, ir_rvalue **value_b,
+relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 		       struct _mesa_glsl_parse_state *state)
 {
-   const glsl_type *const type_a = (*value_a)->type;
-   const glsl_type *const type_b = (*value_b)->type;
+   const glsl_type *const type_a = value_a->type;
+   const glsl_type *const type_b = value_b->type;
 
    /* From GLSL 1.50 spec, page 56:
     *    "The relational operators greater than (>), less than (<), greater
@@ -597,7 +597,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      type = arithmetic_result_type(& op[0], & op[1],
+      type = arithmetic_result_type(op[0], op[1],
 				    (this->oper == ast_mul),
 				    state);
 
@@ -633,7 +633,7 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      type = relational_result_type(& op[0], & op[1], state);
+      type = relational_result_type(op[0], op[1], state);
 
       /* The relational operators must either generate an error or result
        * in a scalar boolean.  See page 57 of the GLSL 1.50 spec.
@@ -660,8 +660,8 @@ ast_expression::hir(exec_list *instructions,
        *    applied to one operand that can make them match, in which
        *    case this conversion is done."
        */
-      if ((!apply_implicit_conversion(op[0]->type, & op[1], state)
-	   && !apply_implicit_conversion(op[1]->type, & op[0], state))
+      if ((!apply_implicit_conversion(op[0]->type, op[1], state)
+	   && !apply_implicit_conversion(op[1]->type, op[0], state))
 	  || (op[0]->type != op[1]->type)) {
 	 _mesa_glsl_error(& loc, state, "operands of `%s' must have the same "
 			  "type", (this->oper == ast_equal) ? "==" : "!=");
@@ -696,7 +696,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      type = arithmetic_result_type(& op[0], & op[1],
+      type = arithmetic_result_type(op[0], op[1],
 				    (this->oper == ast_mul_assign),
 				    state);
 
@@ -794,8 +794,8 @@ ast_expression::hir(exec_list *instructions,
        *     resulting matching type is the type of the entire
        *     expression."
        */
-      if ((!apply_implicit_conversion(op[1]->type, & op[2], state)
-	   && !apply_implicit_conversion(op[2]->type, & op[1], state))
+      if ((!apply_implicit_conversion(op[1]->type, op[2], state)
+	   && !apply_implicit_conversion(op[2]->type, op[1], state))
 	  || (op[1]->type != op[2]->type)) {
 	 YYLTYPE loc = this->subexpressions[1]->get_location();
 
@@ -819,7 +819,7 @@ ast_expression::hir(exec_list *instructions,
       else
 	 op[1] = new ir_constant(1);
 
-      type = arithmetic_result_type(& op[0], & op[1], false, state);
+      type = arithmetic_result_type(op[0], op[1], false, state);
 
       struct ir_rvalue *temp_rhs;
       temp_rhs = new ir_expression(operations[this->oper], type,
@@ -842,7 +842,7 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      type = arithmetic_result_type(& op[0], & op[1], false, state);
+      type = arithmetic_result_type(op[0], op[1], false, state);
 
       struct ir_rvalue *temp_rhs;
       temp_rhs = new ir_expression(operations[this->oper], type,
