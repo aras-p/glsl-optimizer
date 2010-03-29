@@ -649,12 +649,15 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_ls_assign:
    case ast_rs_assign:
+      break;
 
    case ast_and_assign:
    case ast_xor_assign:
    case ast_or_assign:
+      break;
 
    case ast_conditional:
+      break;
 
    case ast_pre_inc:
    case ast_pre_dec: {
