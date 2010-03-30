@@ -243,9 +243,6 @@ struct intel_context
    int driFd;
 
    __DRIcontext *driContext;
-   __DRIdrawable *driDrawable;
-   __DRIdrawable *driReadDrawable;
-   __DRIscreen *driScreen;
    struct intel_screen *intelScreen;
 
    /**
