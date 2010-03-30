@@ -327,8 +327,7 @@ choose_pixel_format(XMesaVisual v)
       return PIPE_FORMAT_B5G6R5_UNORM;
    }
 
-   assert(0);
-   return 0;
+   return PIPE_FORMAT_NONE;
 }
 
 
@@ -737,6 +736,12 @@ XMesaVisual XMesaCreateVisual( Display *display,
    }
 
    v->stvis.color_format = choose_pixel_format(v);
+   if (v->stvis.color_format == PIPE_FORMAT_NONE) {
+      FREE(v->visinfo);
+      FREE(v);
+      return NULL;
+   }
+
    v->stvis.depth_stencil_format =
       choose_depth_stencil_format(xmdpy, depth_size, stencil_size);
 

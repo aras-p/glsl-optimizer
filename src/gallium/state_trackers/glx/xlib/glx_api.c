@@ -1758,6 +1758,10 @@ glXGetFBConfigs( Display *dpy, int screen, int *nelements )
       }
       for (i = 0; i < *nelements; i++) {
          results[i] = create_glx_visual(dpy, visuals + i);
+         if (!results[i]) {
+            *nelements = i;
+            break;
+         }
       }
       return (GLXFBConfig *) results;
    }
