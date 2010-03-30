@@ -27,6 +27,8 @@
 
 #include <stdio.h>
 
+#include "util/u_debug.h"
+#include "util/u_memory.h"
 #include "lp_bld_printf.h"
 
 
@@ -84,11 +86,13 @@ lp_build_printf(LLVMBuilderRef builder, const char *fmt, ...)
    int i = 0;
    int argcount = lp_get_printf_arg_count(fmt);
    LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
-   LLVMValueRef params[argcount + 1];
+   LLVMValueRef params[50];
    LLVMValueRef fmtarg = lp_build_const_string_variable(module, fmt, strlen(fmt) + 1);
    LLVMValueRef int0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
    LLVMValueRef index[2];
    LLVMValueRef func_printf = LLVMGetNamedFunction(module, "printf");
+
+   assert(Elements(params) >= argcount + 1);
 
    index[0] = index[1] = int0;
 
