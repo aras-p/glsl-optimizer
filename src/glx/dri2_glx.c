@@ -202,12 +202,19 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    return &pdraw->base;
 }
 
+#ifdef X_DRI2GetMSC
+
 static int
 dri2DrawableGetMSC(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
 		   int64_t *ust, int64_t *msc, int64_t *sbc)
 {
    return DRI2GetMSC(psc->dpy, pdraw->xDrawable, ust, msc, sbc);
 }
+
+#endif
+
+
+#ifdef X_DRI2WaitMSC
 
 static int
 dri2WaitForMSC(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
@@ -224,6 +231,8 @@ dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
    return DRI2WaitSBC(pdraw->psc->dpy, pdraw->xDrawable, target_sbc, ust, msc,
 		      sbc);
 }
+
+#endif /* X_DRI2WaitMSC */
 
 static void
 dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
@@ -448,6 +457,8 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
    return pdraw->buffers;
 }
 
+#ifdef X_DRI2SwapInterval
+
 static void
 dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
@@ -464,6 +475,8 @@ dri2GetSwapInterval(__GLXDRIdrawable *pdraw)
 
   return priv->swap_interval;
 }
+
+#endif /* X_DRI2SwapInterval */
 
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
    {__DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION},
