@@ -30,8 +30,6 @@
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_util.h"
 
-#include "util/u_debug.h"
-
 static unsigned translate_opcode(unsigned opcode)
 {
     switch(opcode) {
