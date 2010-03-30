@@ -994,12 +994,55 @@ ast_compound_statement::hir(exec_list *instructions,
 }
 
 
+static const glsl_type *
+process_array_type(const glsl_type *base, ast_node *array_size,
+		   struct _mesa_glsl_parse_state *state)
+{
+   unsigned length = 0;
+
+   /* FINISHME: Reject delcarations of multidimensional arrays. */
+
+   if (array_size != NULL) {
+      exec_list dummy_instructions;
+      ir_rvalue *const ir = array_size->hir(& dummy_instructions, state);
+      YYLTYPE loc = array_size->get_location();
+
+      /* FINISHME: Verify that the grammar forbids side-effects in array
+       * FINISHME: sizes.   i.e., 'vec4 [x = 12] data'
+       */
+      assert(dummy_instructions.is_empty());
+
+      if (ir != NULL) {
+	 if (!ir->type->is_integer()) {
+	    _mesa_glsl_error(& loc, state, "array size must be integer type");
+	 } else if (!ir->type->is_scalar()) {
+	    _mesa_glsl_error(& loc, state, "array size must be scalar type");
+	 } else {
+	    ir_constant *const size = ir->constant_expression_value();
+
+	    if (size == NULL) {
+	       _mesa_glsl_error(& loc, state, "array size must be a "
+				"constant valued expression");
+	    } else if (size->value.i[0] <= 0) {
+	       _mesa_glsl_error(& loc, state, "array size must be > 0");
+	    } else {
+	       assert(size->type == ir->type);
+	       length = size->value.u[0];
+	    }
+	 }
+      }
+   }
+
+   return glsl_type::get_array_instance(base, length);
+}
+
+
 static const struct glsl_type *
 type_specifier_to_glsl_type(const struct ast_type_specifier *spec,
 			    const char **name,
 			    struct _mesa_glsl_parse_state *state)
 {
-   struct glsl_type *type;
+   const glsl_type *type;
 
    if (spec->type_specifier == ast_struct) {
       /* FINISHME: Handle annonymous structures. */
@@ -1008,9 +1051,9 @@ type_specifier_to_glsl_type(const struct ast_type_specifier *spec,
       type = state->symbols->get_type(spec->type_name);
       *name = spec->type_name;
 
-      /* FINISHME: Handle array declarations.  Note that this requires complete
-       * FINISHME: handling of constant expressions.
-       */
+      if (spec->is_array) {
+	 type = process_array_type(type, spec->array_size, state);
+      }
    }
 
    return type;
@@ -1103,12 +1146,7 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
       if (decl->is_array) {
-	 /* FINISHME: Handle array declarations.  Note that this requires
-	  * FINISHME: complete handling of constant expressions.
-	  */
-	 var_type = glsl_type::error_type;
-
-	 /* FINISHME: Reject delcarations of multidimensional arrays. */
+	 var_type = process_array_type(decl_type, decl->array_size, state);
       } else {
 	 var_type = decl_type;
       }
