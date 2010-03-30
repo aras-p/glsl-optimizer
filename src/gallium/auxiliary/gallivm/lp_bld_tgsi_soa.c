@@ -666,30 +666,20 @@ emit_declaration(
                              first_inst);
 
    for (idx = first; idx <= last; ++idx) {
-      boolean ok;
-
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->temps[idx][i] = lp_build_alloca(&bld->base);
-         ok = TRUE;
          break;
 
       case TGSI_FILE_OUTPUT:
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->outputs[idx][i] = lp_build_alloca(&bld->base);
-         ok = TRUE;
          break;
 
       default:
          /* don't need to declare other vars */
-         ok = TRUE;
-      }
-
-      if (!ok) {
-         LLVMPositionBuilderAtEnd(bld->base.builder,
-                                  current_block);
-         return FALSE;
+         break;
       }
    }
 
