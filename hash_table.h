@@ -31,6 +31,10 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 
 struct hash_table;
@@ -113,5 +117,9 @@ extern unsigned hash_table_string_hash(const void *key);
  * \sa hash_table_string_hash
  */
 #define hash_table_string_compare ((hash_compare_func_t) strcmp)
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* HASH_TABLE_H */
