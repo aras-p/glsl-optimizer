@@ -1136,6 +1136,61 @@ ast_declarator_list::hir(exec_list *instructions,
 
       instructions->push_tail(var);
 
+      if (this->type->qualifier.attribute
+	  && (state->current_function != NULL)) {
+	 _mesa_glsl_error(& loc, state,
+			  "attribute variable `%s' must be declared at global "
+			  "scope",
+			  var->name);
+      }
+
+      if ((var->mode == ir_var_in) && (state->current_function == NULL)) {
+	 if (state->target == vertex_shader) {
+	    bool error_emitted = false;
+
+	    /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
+	     *
+	     *    "Vertex shader inputs can only be float, floating-point
+	     *    vectors, matrices, signed and unsigned integers and integer
+	     *    vectors. Vertex shader inputs can also form arrays of these
+	     *    types, but not structures."
+	     *
+	     * From page 23 (page 29 of the PDF) of the GLSL 1.20 spec:
+	     *
+	     *    "The attribute qualifier can be used only with float,
+	     *    floating-point vectors, and matrices. Attribute variables
+	     *    cannot be declared as arrays or structures."
+	     */
+	    const glsl_type *check_type = var->type->is_array()
+	       ? var->type->fields.array : var->type;
+
+	    switch (check_type->base_type) {
+	    case GLSL_TYPE_FLOAT:
+	       break;
+	    case GLSL_TYPE_UINT:
+	    case GLSL_TYPE_INT:
+	       if (state->language_version > 120)
+		  break;
+	       /* FALLTHROUGH */
+	    default:
+	       _mesa_glsl_error(& loc, state,
+				"vertex shader input / attribute cannot have "
+				"type %s`%s'",
+				var->type->is_array() ? "array of " : "",
+				check_type->name);
+	       error_emitted = true;
+	    }
+
+	    if (!error_emitted && (state->language_version <= 120)
+		&& var->type->is_array()) {
+	       _mesa_glsl_error(& loc, state,
+				"vertex shader input / attribute cannot have "
+				"array type");
+	       error_emitted = true;
+	    }
+	 }
+      }
+
       if (decl->initializer != NULL) {
 	 YYLTYPE initializer_loc = decl->initializer->get_location();
 
