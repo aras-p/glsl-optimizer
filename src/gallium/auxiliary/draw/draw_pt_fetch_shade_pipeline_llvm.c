@@ -130,6 +130,12 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    *max_vertices = *max_vertices & ~1;
 
    draw_llvm_prepare(fpme->llvm);
+
+   /*XXX we only support one constant buffer */
+   fpme->llvm->jit_context.vs_constants =
+      draw->pt.user.vs_constants[0];
+   fpme->llvm->jit_context.gs_constants =
+      draw->pt.user.gs_constants[0];
 }
 
 
@@ -241,7 +247,7 @@ static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
 
    fpme->llvm->jit_func( &fpme->llvm->jit_context,
                          pipeline_verts,
-                         draw->pt.user.vbuffer,
+                         (const char **)draw->pt.user.vbuffer,
                          start,
                          count,
                          fpme->vertex_size );

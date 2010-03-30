@@ -110,7 +110,7 @@ init_globals(struct draw_llvm *llvm)
       LP_CHECK_STRUCT_SIZE(struct draw_jit_context,
                            llvm->target, context_type);
 
-      LLVMAddTypeName(llvm->module, "context", context_type);
+      LLVMAddTypeName(llvm->module, "draw_jit_context", context_type);
 
       llvm->context_ptr_type = LLVMPointerType(context_type, 0);
    }
