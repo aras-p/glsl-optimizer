@@ -205,14 +205,24 @@ generate_vs(struct draw_llvm *llvm,
             LLVMValueRef io)
 {
    const struct tgsi_token *tokens = llvm->draw->vs.vertex_shader->state.tokens;
-   struct lp_type vs_type = lp_type_float(32);
-   LLVMValueRef vs_consts;
+   struct lp_type vs_type;
+   LLVMValueRef consts_ptr = draw_jit_context_vs_constants(builder, context_ptr);
+
+   memset(&vs_type, 0, sizeof vs_type);
+   vs_type.floating = TRUE; /* floating point values */
+   vs_type.sign = TRUE;     /* values are signed */
+   vs_type.norm = FALSE;    /* values are not limited to [0,1] or [-1,1] */
+   vs_type.width = 32;      /* 32-bit float */
+   vs_type.length = 4;      /* 4 elements per vector */
+#if 0
+   num_vs = 4;              /* number of vertices per block */
+#endif
 
    lp_build_tgsi_soa(builder,
                      tokens,
                      vs_type,
                      NULL /*struct lp_build_mask_context *mask*/,
-                     vs_consts,
+                     consts_ptr,
                      NULL /*pos*/,
                      inputs,
                      outputs,
@@ -312,7 +322,6 @@ convert_to_soa(LLVMBuilderRef builder,
                              LLVMConstInt(LLVMInt32Type(), 2, 0));
       soa[i][3] = aos_to_soa(builder, val0, val1, val2, val3,
                              LLVMConstInt(LLVMInt32Type(), 3, 0));
-
    }
 }
 
@@ -329,7 +338,6 @@ draw_llvm_generate(struct draw_llvm *llvm)
    LLVMValueRef io_ptr, vbuffers_ptr;
    struct draw_context *draw = llvm->draw;
    unsigned i, j;
-   unsigned chan;
    struct lp_build_context bld;
    struct lp_build_loop_state lp_loop;
    struct lp_type vs_type = lp_type_float_vec(32);
@@ -393,12 +401,11 @@ draw_llvm_generate(struct draw_llvm *llvm)
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
             struct pipe_vertex_buffer *vbuf = &draw->pt.vertex_buffer[
                velem->vertex_buffer_index];
-            LLVMDumpValue(function);
             generate_fetch(builder, vbuffers_ptr,
                            &aos_attribs[j][i], velem, vbuf, true_index);
          }
       }
-      convert_to_soa(builder, inputs, aos_attribs,
+      convert_to_soa(builder, aos_attribs, inputs,
                      draw->pt.nr_vertex_elements);
 
       generate_vs(llvm,
@@ -407,6 +414,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
                   inputs,
                   context_ptr,
                   io);
+      LLVMDumpModule(llvm->module);
    }
    lp_build_loop_end(builder, end, step, &lp_loop);
 

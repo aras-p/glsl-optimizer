@@ -436,7 +436,6 @@ fetch(LLVMBuilderRef builder,
 
       src_tmp = LLVMBuildLoad(builder, src_tmp, "");
 
-      LLVMDumpValue(src_tmp);
       /* convert src_tmp to float */
       component = func(builder, src_tmp);
 
