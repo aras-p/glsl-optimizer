@@ -70,4 +70,11 @@ void
 util_dl_close(struct util_dl_library *library);
 
 
+/**
+ * Return most recent error message.
+ */
+const char *
+util_dl_error(void);
+
+
 #endif /* U_DL_H_ */
