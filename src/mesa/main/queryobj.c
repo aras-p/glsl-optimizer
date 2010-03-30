@@ -130,6 +130,30 @@ _mesa_init_query_object_functions(struct dd_function_table *driver)
 }
 
 
+/**
+ * Return pointer to the query object binding point for the given target.
+ * \return NULL if invalid target, else the address of binding point
+ */
+static struct gl_query_object **
+get_query_binding_point(GLcontext *ctx, GLenum target)
+{
+   switch (target) {
+   case GL_SAMPLES_PASSED_ARB:
+      if (ctx->Extensions.ARB_occlusion_query)
+         return &ctx->Query.CurrentOcclusionObject;
+      else
+         return NULL;
+   case GL_TIME_ELAPSED_EXT:
+      if (ctx->Extensions.EXT_timer_query)
+         return &ctx->Query.CurrentTimerObject;
+      else
+         return NULL;
+   default:
+      return NULL;
+   }
+}
+
+
 void GLAPIENTRY
 _mesa_GenQueriesARB(GLsizei n, GLuint *ids)
 {
@@ -214,36 +238,16 @@ _mesa_IsQueryARB(GLuint id)
 static void GLAPIENTRY
 _mesa_BeginQueryARB(GLenum target, GLuint id)
 {
-   struct gl_query_object *q;
+   struct gl_query_object *q, **bindpt;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
 
-   switch (target) {
-      case GL_SAMPLES_PASSED_ARB:
-         if (!ctx->Extensions.ARB_occlusion_query) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
-            return;
-         }
-         if (ctx->Query.CurrentOcclusionObject) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQueryARB");
-            return;
-         }
-         break;
-      case GL_TIME_ELAPSED_EXT:
-         if (!ctx->Extensions.EXT_timer_query) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
-            return;
-         }
-         if (ctx->Query.CurrentTimerObject) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginQueryARB");
-            return;
-         }
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
-         return;
+   bindpt = get_query_binding_point(ctx, target);
+   if (!bindpt) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
+      return;
    }
 
    if (id == 0) {
@@ -275,12 +279,8 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
    q->Result = 0;
    q->Ready = GL_FALSE;
 
-   if (target == GL_SAMPLES_PASSED_ARB) {
-      ctx->Query.CurrentOcclusionObject = q;
-   }
-   else if (target == GL_TIME_ELAPSED_EXT) {
-      ctx->Query.CurrentTimerObject = q;
-   }
+   /* XXX should probably refcount query objects */
+   *bindpt = q;
 
    ctx->Driver.BeginQuery(ctx, q);
 }
@@ -289,33 +289,21 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
 static void GLAPIENTRY
 _mesa_EndQueryARB(GLenum target)
 {
-   struct gl_query_object *q;
+   struct gl_query_object *q, **bindpt;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_DEPTH);
 
-   switch (target) {
-      case GL_SAMPLES_PASSED_ARB:
-         if (!ctx->Extensions.ARB_occlusion_query) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
-            return;
-         }
-         q = ctx->Query.CurrentOcclusionObject;
-         ctx->Query.CurrentOcclusionObject = NULL;
-         break;
-      case GL_TIME_ELAPSED_EXT:
-         if (!ctx->Extensions.EXT_timer_query) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
-            return;
-         }
-         q = ctx->Query.CurrentTimerObject;
-         ctx->Query.CurrentTimerObject = NULL;
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
-         return;
+   bindpt = get_query_binding_point(ctx, target);
+   if (!bindpt) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
+      return;
    }
+
+   /* XXX should probably refcount query objects */
+   q = *bindpt;
+   *bindpt = NULL;
 
    if (!q || !q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -331,29 +319,17 @@ _mesa_EndQueryARB(GLenum target)
 void GLAPIENTRY
 _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
 {
-   struct gl_query_object *q;
+   struct gl_query_object *q, **bindpt;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   switch (target) {
-      case GL_SAMPLES_PASSED_ARB:
-         if (!ctx->Extensions.ARB_occlusion_query) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
-            return;
-         }
-         q = ctx->Query.CurrentOcclusionObject;
-         break;
-      case GL_TIME_ELAPSED_EXT:
-         if (!ctx->Extensions.EXT_timer_query) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
-            return;
-         }
-         q = ctx->Query.CurrentTimerObject;
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryivARB(target)");
-         return;
+   bindpt = get_query_binding_point(ctx, target);
+   if (!bindpt) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryARB(target)");
+      return;
    }
+
+   q = *bindpt;
 
    switch (pname) {
       case GL_QUERY_COUNTER_BITS_ARB:
