@@ -130,18 +130,8 @@ do_copy_texsubimage(struct intel_context *intel,
       }
 
       if (ctx->ReadBuffer->Name == 0) {
-	 /* reading from a window, adjust x, y */
-	 const __DRIdrawable *dPriv = intel->driReadDrawable;
-	 y = dPriv->y + (dPriv->h - (y + height));
-	 x += dPriv->x;
-
-	 /* Invert the data coming from the source rectangle due to GL
-	  * and hardware disagreeing on where y=0 is.
-	  *
-	  * It appears that our offsets and pitches get mangled
-	  * appropriately by the hardware, and we don't need to adjust them
-	  * on our own.
-	  */
+	 /* Flip vertical orientation for system framebuffers */
+	 y = ctx->ReadBuffer->Height - (y + height);
 	 src_pitch = -src->pitch;
       } else {
 	 /* reading from a FBO, y is already oriented the way we like */
