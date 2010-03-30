@@ -115,7 +115,7 @@ draw_shader(struct draw_jit_context *context,
 typedef void
 (*draw_jit_vert_func)(struct draw_jit_context *context,
                       struct vertex_header *io,
-                      const void *vbuffers[PIPE_MAX_ATTRIBS],
+                      const char *vbuffers[PIPE_MAX_ATTRIBS],
                       unsigned start,
                       unsigned count,
                       unsigned stride);

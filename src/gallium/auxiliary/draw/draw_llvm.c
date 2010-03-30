@@ -115,8 +115,8 @@ init_globals(struct draw_llvm *llvm)
       llvm->context_ptr_type = LLVMPointerType(context_type, 0);
    }
    {
-      LLVMTypeRef buffer_ptr = LLVMPointerType(LLVMOpaqueType(), 0);
-      llvm->buffer_ptr_type = LLVMArrayType(buffer_ptr, PIPE_MAX_ATTRIBS);
+      LLVMTypeRef buffer_ptr = LLVMPointerType(LLVMIntType(8), 0);
+      llvm->buffer_ptr_type = LLVMPointerType(buffer_ptr, 0);
    }
 }
 
@@ -221,19 +221,19 @@ generate_vs(struct draw_llvm *llvm,
 
 static void
 generate_fetch(LLVMBuilderRef builder,
-               const LLVMValueRef vbuffers_ptr,
+               LLVMValueRef vbuffers_ptr,
                LLVMValueRef *res,
                struct pipe_vertex_element *velem,
                struct pipe_vertex_buffer *vbuf,
                LLVMValueRef index)
 {
-   LLVMValueRef indices = LLVMConstInt(LLVMInt32Type(),
-                                       velem->vertex_buffer_index, 0);
+   LLVMValueRef indices = LLVMConstInt(LLVMInt64Type(), velem->vertex_buffer_index, 0);
    LLVMValueRef vbuffer_ptr = LLVMBuildGEP(builder, vbuffers_ptr,
                                            &indices, 1, "");
    LLVMValueRef stride = LLVMBuildMul(builder,
                                       LLVMConstInt(LLVMInt32Type(), vbuf->stride, 0),
                                       index, "");
+
    stride = LLVMBuildAdd(builder, stride,
                          LLVMConstInt(LLVMInt32Type(), vbuf->buffer_offset, 0),
                          "");
@@ -393,7 +393,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
             struct pipe_vertex_buffer *vbuf = &draw->pt.vertex_buffer[
                velem->vertex_buffer_index];
-
+            LLVMDumpValue(function);
             generate_fetch(builder, vbuffers_ptr,
                            &aos_attribs[j][i], velem, vbuf, true_index);
          }

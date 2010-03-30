@@ -342,10 +342,10 @@ void draw_geometry_shader_delete(struct draw_geometry_shader *shader)
 void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
                                   struct draw_context *draw)
 {
-    if (shader->machine->Tokens != shader->state.tokens) {
-       tgsi_exec_machine_bind_shader(shader->machine,
-                                     shader->state.tokens,
-                                     draw->gs.num_samplers,
-                                     draw->gs.samplers);
-    }
+   if (shader && shader->machine->Tokens != shader->state.tokens) {
+      tgsi_exec_machine_bind_shader(shader->machine,
+                                    shader->state.tokens,
+                                    draw->gs.num_samplers,
+                                    draw->gs.samplers);
+   }
 }
