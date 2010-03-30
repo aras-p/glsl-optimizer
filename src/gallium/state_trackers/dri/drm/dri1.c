@@ -514,6 +514,8 @@ dri1_init_screen(__DRIscreen * sPriv)
 
    return configs;
 fail:
+   if (configs)
+      FREE(configs);
    dri_destroy_screen_helper(screen);
    FREE(screen);
    return NULL;
