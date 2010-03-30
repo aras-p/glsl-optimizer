@@ -40,6 +40,7 @@ class ir_instruction : public exec_node {
 public:
    const struct glsl_type *type;
 
+   class ir_constant *constant_expression_value();
    virtual void accept(ir_visitor *) = 0;
 
    /**
