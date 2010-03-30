@@ -129,11 +129,6 @@ static int driUnbindContext(__DRIcontext *pcp)
      */
     pcp->driDrawablePriv = pcp->driReadablePriv = NULL;
 
-#if 0
-    /* Unbind the drawable */
-    pdp->driContextPriv = &psp->dummyContextPriv;
-#endif
-
     return GL_TRUE;
 }
 
@@ -433,7 +428,6 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
     pdp->vblFlags = 0;
 
     pdp->driScreenPriv = psp;
-    pdp->driContextPriv = &psp->dummyContextPriv;
 
     if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, &config->modes,
 					renderType == GLX_PIXMAP_BIT)) {
@@ -567,17 +561,6 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     
     pcp->dri2.draw_stamp = 0;
     pcp->dri2.read_stamp = 0;
-    /* When the first context is created for a screen, initialize a "dummy"
-     * context.
-     */
-
-    if (!psp->dri2.enabled && !psp->dummyContextPriv.driScreenPriv) {
-        psp->dummyContextPriv.hHWContext = psp->pSAREA->dummy_context;
-        psp->dummyContextPriv.driScreenPriv = psp;
-        psp->dummyContextPriv.driDrawablePriv = NULL;
-        psp->dummyContextPriv.driverPrivate = NULL;
-	/* No other fields should be used! */
-    }
 
     pcp->hHWContext = hwContext;
 
@@ -733,13 +716,6 @@ driCreateNewScreen(int scrn,
     psp->fd = fd;
     psp->myNum = scrn;
     psp->dri2.enabled = GL_FALSE;
-
-    /*
-    ** Do not init dummy context here; actual initialization will be
-    ** done when the first DRI context is created.  Init screen priv ptr
-    ** to NULL to let CreateContext routine that it needs to be inited.
-    */
-    psp->dummyContextPriv.driScreenPriv = NULL;
 
     psp->DriverAPI = driDriverAPI;
 

@@ -506,18 +506,6 @@ struct __DRIscreenRec {
     /*@}*/
 
     /**
-     * Dummy context to which drawables are bound when not bound to any
-     * other context. 
-     *
-     * A dummy hHWContext is created for this context, and is used by the GL
-     * core when a hardware lock is required but the drawable is not currently
-     * bound (e.g., potentially during a SwapBuffers request).  The dummy
-     * context is created when the first "real" context is created on this
-     * screen.
-     */
-    __DRIcontext dummyContextPriv;
-
-    /**
      * Device-dependent private information (not stored in the SAREA).
      * 
      * This pointer is never touched by the DRI layer.
