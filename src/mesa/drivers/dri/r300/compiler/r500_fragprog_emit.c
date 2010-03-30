@@ -190,6 +190,17 @@ static unsigned int use_source(struct r500_fragment_program_code* code, struct r
 	return 0;
 }
 
+/**
+ * NOP the specified instruction if it is not a texture lookup.
+ */
+static void alu_nop(struct r300_fragment_program_compiler *c, int ip)
+{
+	PROG_CODE;
+
+	if ((code->inst[ip].inst0 & 0x3) != R500_INST_TYPE_TEX) {
+		code->inst[ip].inst0 |= R500_INST_NOP;
+	}
+}
 
 /**
  * Emit a paired ALU instruction.
@@ -204,6 +215,14 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	}
 
 	int ip = ++code->inst_end;
+
+	/* Quirk: MDH/MDV (DDX/DDY) need a NOP on previous non-TEX instructions. */
+	if (inst->RGB.Opcode == RC_OPCODE_DDX || inst->Alpha.Opcode == RC_OPCODE_DDX ||
+		inst->RGB.Opcode == RC_OPCODE_DDY || inst->Alpha.Opcode == RC_OPCODE_DDY) {
+		if (ip > 0) {
+			alu_nop(c, ip - 1);
+		}
+	}
 
 	code->inst[ip].inst5 = translate_rgb_op(c, inst->RGB.Opcode);
 	code->inst[ip].inst4 = translate_alpha_op(c, inst->Alpha.Opcode);
@@ -252,8 +271,8 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	code->inst[ip].inst4 |= translate_arg_alpha(inst, 1) << R500_ALPHA_SEL_B_SHIFT;
 	code->inst[ip].inst5 |= translate_arg_alpha(inst, 2) << R500_ALU_RGBA_ALPHA_SEL_C_SHIFT;
 
-    code->inst[ip].inst3 |= R500_ALU_RGB_TARGET(inst->RGB.Target);
-    code->inst[ip].inst4 |= R500_ALPHA_TARGET(inst->Alpha.Target);
+	code->inst[ip].inst3 |= R500_ALU_RGB_TARGET(inst->RGB.Target);
+	code->inst[ip].inst4 |= R500_ALPHA_TARGET(inst->Alpha.Target);
 
 	if (inst->WriteALUResult) {
 		code->inst[ip].inst3 |= R500_ALU_RGB_WMASK;
