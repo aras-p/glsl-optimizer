@@ -21,7 +21,7 @@ static  LLVMValueRef
 from_64_float(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMDoubleType() , "");
+                                      LLVMPointerType(LLVMDoubleType(), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    return LLVMBuildFPTrunc(builder, l, LLVMFloatType(), "");
 }
@@ -30,7 +30,7 @@ static LLVMValueRef
 from_32_float(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMFloatType() , "");
+                                      LLVMPointerType(LLVMFloatType(), 0) , "");
    return LLVMBuildLoad(builder, bc, "");
 }
 
@@ -45,7 +45,7 @@ static INLINE LLVMValueRef
 from_16_uscaled(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(16) , "");
+                                      LLVMPointerType(LLVMIntType(16), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    return LLVMBuildUIToFP(builder, l, LLVMFloatType(), "");
 }
@@ -54,7 +54,7 @@ static INLINE LLVMValueRef
 from_32_uscaled(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(32) , "");
+                                      LLVMPointerType(LLVMIntType(32), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    return LLVMBuildUIToFP(builder, l, LLVMFloatType(), "");
 }
@@ -70,7 +70,7 @@ static INLINE LLVMValueRef
 from_16_sscaled(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(16) , "");
+                                      LLVMPointerType(LLVMIntType(16), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    return LLVMBuildSIToFP(builder, l, LLVMFloatType(), "");
 }
@@ -79,7 +79,7 @@ static INLINE LLVMValueRef
 from_32_sscaled(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(32) , "");
+                                      LLVMPointerType(LLVMIntType(32), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    return LLVMBuildSIToFP(builder, l, LLVMFloatType(), "");
 }
@@ -98,7 +98,7 @@ static INLINE LLVMValueRef
 from_16_unorm(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(16) , "");
+                                      LLVMPointerType(LLVMIntType(16), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    LLVMValueRef uscaled = LLVMBuildUIToFP(builder, l, LLVMFloatType(), "");
    return LLVMBuildFDiv(builder, uscaled,
@@ -109,7 +109,7 @@ static INLINE LLVMValueRef
 from_32_unorm(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(32) , "");
+                                      LLVMPointerType(LLVMIntType(32), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    LLVMValueRef uscaled = LLVMBuildUIToFP(builder, l, LLVMFloatType(), "");
 
@@ -130,7 +130,7 @@ static INLINE LLVMValueRef
 from_16_snorm(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(16) , "");
+                                      LLVMPointerType(LLVMIntType(16), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    LLVMValueRef uscaled = LLVMBuildSIToFP(builder, l, LLVMFloatType(), "");
    return LLVMBuildFDiv(builder, uscaled,
@@ -141,7 +141,7 @@ static INLINE LLVMValueRef
 from_32_snorm(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(32) , "");
+                                      LLVMPointerType(LLVMIntType(32), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    LLVMValueRef uscaled = LLVMBuildSIToFP(builder, l, LLVMFloatType(), "");
 
@@ -153,7 +153,7 @@ static INLINE LLVMValueRef
 from_32_fixed(LLVMBuilderRef builder, LLVMValueRef val)
 {
    LLVMValueRef bc = LLVMBuildBitCast(builder, val,
-                                      LLVMIntType(32) , "");
+                                      LLVMPointerType(LLVMIntType(32), 0) , "");
    LLVMValueRef l = LLVMBuildLoad(builder, bc, "");
    LLVMValueRef uscaled = LLVMBuildSIToFP(builder, l, LLVMFloatType(), "");
 
@@ -436,6 +436,7 @@ fetch(LLVMBuilderRef builder,
 
       src_tmp = LLVMBuildLoad(builder, src_tmp, "");
 
+      LLVMDumpValue(src_tmp);
       /* convert src_tmp to float */
       component = func(builder, src_tmp);
 
