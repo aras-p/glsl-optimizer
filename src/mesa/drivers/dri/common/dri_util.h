@@ -512,11 +512,6 @@ struct __DRIscreenRec {
      */
     void *private;
 
-    /**
-     * Pointer back to the \c __DRIscreen that contains this structure.
-     */
-    __DRIscreen *psc;
-
     /* Extensions provided by the loader. */
     const __DRIgetDrawableInfoExtension *getDrawableInfo;
     const __DRIsystemTimeExtension *systemTime;
