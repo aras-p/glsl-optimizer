@@ -1183,7 +1183,6 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                                                unsigned count,
                                                const struct pipe_vertex_element* attribs)
 {
-    struct r300_context *r300 = r300_context(pipe);
     struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_vertex_element_state *velems;
     unsigned i, size;
