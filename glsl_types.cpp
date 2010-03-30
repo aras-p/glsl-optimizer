@@ -26,7 +26,10 @@
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
 #include "builtin_types.h"
+#include "hash_table.h"
 
+
+hash_table *glsl_type::array_types = NULL;
 
 static void
 add_types_to_symbol_table(glsl_symbol_table *symtab,
@@ -541,4 +544,50 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 
    assert(!"Should not get here.");
    return error_type;
+}
+
+
+int
+glsl_type::array_key_compare(const void *a, const void *b)
+{
+   const array_hash_key *const key1 = (array_hash_key *) a;
+   const array_hash_key *const key2 = (array_hash_key *) b;
+
+   return ((key1->type == key2->type) && (key1->size == key2->size)) ? 0 : 1;
+}
+
+
+unsigned
+glsl_type::array_key_hash(const void *a)
+{
+   char buf[sizeof(array_hash_key) + 1];
+
+   memcpy(buf, a, sizeof(array_hash_key));
+   buf[sizeof(array_hash_key)] = '\0';
+
+   return hash_table_string_hash(buf);
+}
+
+
+const glsl_type *
+glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
+{
+   array_hash_key key = { base, array_size };
+
+   if (array_types == NULL) {
+      array_types = hash_table_ctor(64, array_key_hash, array_key_compare);
+   }
+
+   const glsl_type *t = (glsl_type *) hash_table_find(array_types, & key);
+   if (t == NULL) {
+      t = new glsl_type(base, array_size);
+
+      hash_table_insert(array_types, (void *) t, & key);
+   }
+
+   assert(t->base_type == GLSL_TYPE_ARRAY);
+   assert(t->length == array_size);
+   assert(t->fields.array == base);
+
+   return t;
 }

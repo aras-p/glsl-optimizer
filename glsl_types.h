@@ -170,6 +170,12 @@ struct glsl_type {
 					unsigned columns);
 
    /**
+    * Get the instance of an array type
+    */
+   static const glsl_type *get_array_instance(const glsl_type *base,
+					      unsigned elements);
+
+   /**
     * Query the total number of scalars that make up a scalar, vector or matrix
     */
    unsigned components() const
@@ -301,6 +307,20 @@ struct glsl_type {
 
 private:
    /**
+    * Constructor for array types
+    */
+   glsl_type(const glsl_type *array, unsigned length) :
+      base_type(GLSL_TYPE_ARRAY),
+      sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
+      sampler_type(0),
+      vector_elements(0), matrix_columns(0),
+      name(NULL), length(length)
+   {
+      this->fields.array = array;
+      this->name = "<array>";
+   }
+
+   /**
     * \name Pointers to various private type singletons
     */
    /*@{*/
@@ -314,6 +334,18 @@ private:
    static const glsl_type *const mat4x3_type;
    static const glsl_type *const mat4_type;
    /*@}*/
+
+   /** Hash table containing the known array types. */
+   static struct hash_table *array_types;
+
+   /** Structure defining the key type used for array_types hash table. */
+   struct array_hash_key {
+      const glsl_type *type;
+      unsigned size;
+   };
+
+   static int array_key_compare(const void *a, const void *b);
+   static unsigned array_key_hash(const void *key);
 };
 
 struct glsl_struct_field {
