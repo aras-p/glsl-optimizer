@@ -110,6 +110,7 @@
 #define FEATURE_texture_fxt1              FEATURE_GL
 #define FEATURE_texture_s3tc              FEATURE_GL
 
+#define FEATURE_extra_context_init        FEATURE_ES
 #define FEATURE_fixedpt                   FEATURE_ES
 #define FEATURE_point_size_array          FEATURE_ES
 #define FEATURE_vertex_array_byte         FEATURE_ES
@@ -142,5 +143,8 @@
 #define FEATURE_NV_vertex_program         FEATURE_GL
 
 #define FEATURE_OES_EGL_image             1
+#define FEATURE_OES_draw_texture          FEATURE_ES1
+#define FEATURE_OES_framebuffer_object    FEATURE_ES
+#define FEATURE_OES_mapbuffer             FEATURE_ES
 
 #endif /* FEATURES_H */

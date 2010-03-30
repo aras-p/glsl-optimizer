@@ -873,7 +873,7 @@ _mesa_initialize_context(GLcontext *ctx,
       ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
    }
 
-#ifdef FEATURE_extra_context_init
+#if FEATURE_extra_context_init
    _mesa_initialize_context_extra(ctx);
 #endif
 

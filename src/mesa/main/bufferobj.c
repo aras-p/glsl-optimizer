@@ -47,7 +47,7 @@
 /*#define BOUNDS_CHECK*/
 
 
-#ifdef FEATURE_OES_mapbuffer
+#if FEATURE_OES_mapbuffer
 #define DEFAULT_ACCESS GL_MAP_WRITE_BIT
 #else
 #define DEFAULT_ACCESS (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT)
