@@ -43,7 +43,6 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri_st_api.h"
 #include "dri1_helper.h"
 #include "drisw.h"
 
