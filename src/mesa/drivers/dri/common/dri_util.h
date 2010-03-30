@@ -399,11 +399,6 @@ struct __DRIcontextRec {
     void *driverPrivate;
 
     /**
-     * Pointer back to the \c __DRIcontext that contains this structure.
-     */
-    __DRIcontext *pctx;
-
-    /**
      * Pointer to drawable currently bound to this context for drawing.
      */
     __DRIdrawable *driDrawablePriv;
