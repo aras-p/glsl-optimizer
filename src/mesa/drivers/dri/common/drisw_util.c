@@ -184,8 +184,6 @@ static int driUnbindContext(__DRIcontext *pcp)
     pcp->driDrawablePriv = NULL;
     pcp->driReadablePriv = NULL;
 
-    pdp->driContextPriv = NULL;
-
     return GL_TRUE;
 }
 
