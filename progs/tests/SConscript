@@ -9,7 +9,6 @@ glx_progs = [
     'getprocaddress',
     'jkrahntest',
     'sharedtex',
-    'texcompress2',
     'texobjshare',
 ]
 
