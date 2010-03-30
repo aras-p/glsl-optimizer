@@ -1,5 +1,5 @@
 #version 130
-/* PASS */
+/* FAIL - attribute cannot have array type in GLSL 1.30 */
 attribute vec4 i[10];
 
 void main()

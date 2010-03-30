@@ -1155,6 +1155,12 @@ ast_declarator_list::hir(exec_list *instructions,
 	     *    vectors. Vertex shader inputs can also form arrays of these
 	     *    types, but not structures."
 	     *
+	     * From page 31 (page 27 of the PDF) of the GLSL 1.30 spec:
+	     *
+	     *    "Vertex shader inputs can only be float, floating-point
+	     *    vectors, matrices, signed and unsigned integers and integer
+	     *    vectors. They cannot be arrays or structures."
+	     *
 	     * From page 23 (page 29 of the PDF) of the GLSL 1.20 spec:
 	     *
 	     *    "The attribute qualifier can be used only with float,
@@ -1181,7 +1187,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	       error_emitted = true;
 	    }
 
-	    if (!error_emitted && (state->language_version <= 120)
+	    if (!error_emitted && (state->language_version <= 130)
 		&& var->type->is_array()) {
 	       _mesa_glsl_error(& loc, state,
 				"vertex shader input / attribute cannot have "
