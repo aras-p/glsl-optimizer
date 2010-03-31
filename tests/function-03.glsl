@@ -1,6 +1,6 @@
 /* PASS */
 
-vec4 foo(float x, float y, float z, float w)
+vec4 foo(in float x, in float y, float z, float w)
 {
   vec4 v;
   v.x = x;
