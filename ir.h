@@ -205,6 +205,7 @@ public:
     */
    const char *name;
 
+private:
    /**
     * Set of overloaded functions with this name.
     */
