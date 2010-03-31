@@ -27,6 +27,59 @@
 #include "glsl_types.h"
 #include "ir.h"
 
+static unsigned
+process_parameters(exec_list *instructions, exec_list *actual_parameters,
+		   simple_node *parameters,
+		   struct _mesa_glsl_parse_state *state)
+{
+   simple_node *const first = parameters;
+   unsigned count = 0;
+
+   if (first != NULL) {
+      simple_node *ptr = first;
+      do {
+	 ir_instruction *const result =
+	    ((ast_node *) ptr)->hir(instructions, state);
+	 ptr = ptr->next;
+
+	 actual_parameters->push_tail(result);
+	 count++;
+      } while (ptr != first);
+   }
+
+   return count;
+}
+
+
+static ir_rvalue *
+process_call(exec_list *instructions, ir_function *f,
+	     YYLTYPE *loc, exec_list *actual_parameters,
+	     struct _mesa_glsl_parse_state *state)
+{
+   const ir_function_signature *sig =
+      f->matching_signature(actual_parameters);
+
+   /* The instructions param will be used when the FINISHMEs below are done */
+   (void) instructions;
+
+   if (sig != NULL) {
+      /* FINISHME: The list of actual parameters needs to be modified to
+       * FINISHME: include any necessary conversions.
+       */
+      return new ir_call(sig, actual_parameters);
+   } else {
+      /* FINISHME: Log a better error message here.  G++ will show the types
+       * FINISHME: of the actual parameters and the set of candidate
+       * FINISHME: functions.  A different error should also be logged when
+       * FINISHME: multiple functions match.
+       */
+      _mesa_glsl_error(loc, state, "no matching function for call to `%s'",
+		       f->name);
+      return ir_call::get_error_instruction();
+   }
+}
+
+
 static ir_rvalue *
 match_function_by_name(exec_list *instructions, const char *name,
 		       YYLTYPE *loc, simple_node *parameters,
@@ -43,38 +96,12 @@ match_function_by_name(exec_list *instructions, const char *name,
     * process the parameters.
     */
    exec_list actual_parameters;
-   simple_node *const first = parameters;
-   if (first != NULL) {
-      simple_node *ptr = first;
-      do {
-	 ir_instruction *const result =
-	    ((ast_node *) ptr)->hir(instructions, state);
-	 ptr = ptr->next;
-
-	 actual_parameters.push_tail(result);
-      } while (ptr != first);
-   }
+   process_parameters(instructions, &actual_parameters, parameters, state);
 
    /* After processing the function's actual parameters, try to find an
     * overload of the function that matches.
     */
-   const ir_function_signature *sig =
-      f->matching_signature(& actual_parameters);
-   if (sig != NULL) {
-      /* FINISHME: The list of actual parameters needs to be modified to
-       * FINISHME: include any necessary conversions.
-       */
-      return new ir_call(sig, & actual_parameters);
-   } else {
-      /* FINISHME: Log a better error message here.  G++ will show the types
-       * FINISHME: of the actual parameters and the set of candidate
-       * FINISHME: functions.  A different error should also be logged when
-       * FINISHME: multiple functions match.
-       */
-      _mesa_glsl_error(loc, state, "no matching function for call to `%s'",
-		       name);
-      return ir_call::get_error_instruction();
-   }
+   return process_call(instructions, f, loc, &actual_parameters, state);
 }
 
 
