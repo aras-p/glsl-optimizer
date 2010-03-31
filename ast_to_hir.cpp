@@ -1211,7 +1211,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	 const char *mode = NULL;
 
 	 /* FINISHME: Variables that are in or out must be declared either at
-	  * FINISHME: global scope or FINISHME: in a parameter list.
+	  * FINISHME: global scope or in a parameter list.
 	  */
 	 if (this->type->qualifier.attribute) {
 	    mode = "attribute";
@@ -1225,7 +1225,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state,
 			     "%s variable `%s' must be declared at "
 			     "global scope",
-			     var->name);
+			     mode, var->name);
 	 }
       } else if (var->mode == ir_var_in) {
 	 if (state->target == vertex_shader) {
