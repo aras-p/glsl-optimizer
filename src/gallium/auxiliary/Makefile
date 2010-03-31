@@ -168,7 +168,6 @@ GENERATED_SOURCES = \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
 	util/u_format_access.c \
-	util/u_format_pack.h \
 	util/u_format_table.c
 
 
@@ -192,11 +191,8 @@ indices/u_indices_gen.c: indices/u_indices_gen.py
 indices/u_unfilled_gen.c: indices/u_unfilled_gen.py
 	python $< > $@
 
-util/u_format_table.c: util/u_format_table.py util/u_format_parse.py util/u_format.csv
+util/u_format_table.c: util/u_format_table.py util/u_format_pack.py util/u_format_parse.py util/u_format.csv
 	python util/u_format_table.py util/u_format.csv > $@
-
-util/u_format_pack.h: util/u_format_pack.py util/u_format_parse.py util/u_format.csv
-	python util/u_format_pack.py util/u_format.csv > $@
 
 util/u_format_access.c: util/u_format_access.py util/u_format_parse.py util/u_format.csv
 	python util/u_format_access.py util/u_format.csv > $@

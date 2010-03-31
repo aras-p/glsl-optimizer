@@ -189,6 +189,23 @@ struct util_format_description
     * Colorspace transformation.
     */
    enum util_format_colorspace colorspace;
+
+   /**
+    * Accessor functions.
+    */
+
+   void
+   (*unpack_8unorm)(uint8_t *dst, const uint8_t *src, unsigned nr_blocks);
+
+   void
+   (*pack_8unorm)(uint8_t *dst, const uint8_t *src, unsigned nr_blocks);
+
+   void
+   (*unpack_float)(float *dst, const uint8_t *src, unsigned nr_blocks);
+
+   void
+   (*pack_float)(uint8_t *dst, const float *src, unsigned nr_blocks);
+
 };
 
 

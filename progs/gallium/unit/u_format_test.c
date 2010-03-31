@@ -31,17 +31,17 @@
 
 #include "util/u_format.h"
 #include "util/u_format_tests.h"
-#include "util/u_format_pack.h"
 
 
 static boolean
-test_format_unpack_4f(const struct util_format_test_case *test)
+test_format_unpack_float(const struct util_format_description *format_desc,
+                         const struct util_format_test_case *test)
 {
    float unpacked[4];
    unsigned i;
    boolean success;
 
-   util_format_unpack_4f(test->format, unpacked, test->packed, 1);
+   format_desc->unpack_float(unpacked, test->packed, 1);
 
    success = TRUE;
    for (i = 0; i < 4; ++i)
@@ -58,7 +58,8 @@ test_format_unpack_4f(const struct util_format_test_case *test)
 
 
 static boolean
-test_format_pack_4f(const struct util_format_test_case *test)
+test_format_pack_float(const struct util_format_description *format_desc,
+                       const struct util_format_test_case *test)
 {
    float unpacked[4];
    uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
@@ -70,7 +71,7 @@ test_format_pack_4f(const struct util_format_test_case *test)
    for (i = 0; i < 4; ++i)
       unpacked[i] = (float) test->unpacked[i];
 
-   util_format_pack_4f(test->format, packed, unpacked, 1);
+   format_desc->pack_float(packed, unpacked, 1);
 
    success = TRUE;
    for (i = 0; i < UTIL_FORMAT_MAX_PACKED_BYTES; ++i)
@@ -96,7 +97,7 @@ test_format_pack_4f(const struct util_format_test_case *test)
 
 
 static boolean
-convert_4f_to_4ub(uint8_t *dst, const double *src)
+convert_float_to_8unorm(uint8_t *dst, const double *src)
 {
    unsigned i;
    boolean accurate = TRUE;
@@ -120,16 +121,17 @@ convert_4f_to_4ub(uint8_t *dst, const double *src)
 
 
 static boolean
-test_format_unpack_4ub(const struct util_format_test_case *test)
+test_format_unpack_8unorm(const struct util_format_description *format_desc,
+                          const struct util_format_test_case *test)
 {
    uint8_t unpacked[4];
    uint8_t expected[4];
    unsigned i;
    boolean success;
 
-   util_format_unpack_4ub(test->format, unpacked, test->packed, 1);
+   format_desc->unpack_8unorm(unpacked, test->packed, 1);
 
-   convert_4f_to_4ub(expected, test->unpacked);
+   convert_float_to_8unorm(expected, test->unpacked);
 
    success = TRUE;
    for (i = 0; i < 4; ++i)
@@ -146,14 +148,15 @@ test_format_unpack_4ub(const struct util_format_test_case *test)
 
 
 static boolean
-test_format_pack_4ub(const struct util_format_test_case *test)
+test_format_pack_8unorm(const struct util_format_description *format_desc,
+                        const struct util_format_test_case *test)
 {
    uint8_t unpacked[4];
    uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
    unsigned i;
    boolean success;
 
-   if (!convert_4f_to_4ub(unpacked, test->unpacked)) {
+   if (!convert_float_to_8unorm(unpacked, test->unpacked)) {
       /*
        * Skip test cases which cannot be represented by four unorm bytes.
        */
@@ -162,7 +165,7 @@ test_format_pack_4ub(const struct util_format_test_case *test)
 
    memset(packed, 0, sizeof packed);
 
-   util_format_pack_4ub(test->format, packed, unpacked, 1);
+   format_desc->pack_8unorm(packed, unpacked, 1);
 
    success = TRUE;
    for (i = 0; i < UTIL_FORMAT_MAX_PACKED_BYTES; ++i)
@@ -188,7 +191,8 @@ test_format_pack_4ub(const struct util_format_test_case *test)
 
 
 typedef boolean
-(*test_func_t)(const struct util_format_test_case *test);
+(*test_func_t)(const struct util_format_description *format_desc,
+               const struct util_format_test_case *test);
 
 
 static boolean
@@ -200,14 +204,15 @@ test_one(test_func_t func, const char *suffix)
 
    for (i = 0; i < util_format_nr_test_cases; ++i) {
       const struct util_format_test_case *test = &util_format_test_cases[i];
+      const struct util_format_description *format_desc;
+      format_desc = util_format_description(test->format);
+
       if (test->format != last_format) {
-         const struct util_format_description *format_desc;
-         format_desc = util_format_description(test->format);
          printf("Testing util_format_%s_%s ...\n", format_desc->short_name, suffix);
          last_format = test->format;
       }
 
-      if (!func(&util_format_test_cases[i]))
+      if (!func(format_desc, &util_format_test_cases[i]))
         success = FALSE;
    }
 
@@ -220,16 +225,16 @@ test_all(void)
 {
    bool success = TRUE;
 
-   if (!test_one(&test_format_pack_4f, "pack_4f"))
+   if (!test_one(&test_format_pack_float, "pack_float"))
      success = FALSE;
 
-   if (!test_one(&test_format_unpack_4f, "unpack_4f"))
+   if (!test_one(&test_format_unpack_float, "unpack_float"))
      success = FALSE;
 
-   if (!test_one(&test_format_pack_4ub, "pack_4ub"))
+   if (!test_one(&test_format_pack_8unorm, "pack_8unorm"))
      success = FALSE;
 
-   if (!test_one(&test_format_unpack_4ub, "unpack_4ub"))
+   if (!test_one(&test_format_unpack_8unorm, "unpack_8unorm"))
      success = FALSE;
 
    return success;

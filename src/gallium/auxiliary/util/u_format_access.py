@@ -317,7 +317,7 @@ def main():
     print
     print '#include "pipe/p_compiler.h"'
     print '#include "u_math.h"'
-    print '#include "u_format_pack.h"'
+    print '#include "u_format.h"'
     print
 
     generate_srgb_tables()

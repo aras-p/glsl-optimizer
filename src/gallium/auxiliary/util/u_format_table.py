@@ -33,6 +33,7 @@
 import sys
 
 from u_format_parse import *
+import u_format_pack
 
 
 def layout_map(layout):
@@ -86,6 +87,27 @@ def write_format_table(formats):
     print
     print '#include "u_format.h"'
     print
+    print '''
+static void
+util_format_none_unpack_8unorm(uint8_t *dst, const uint8_t *src, unsigned length)
+{
+}
+
+static void
+util_format_none_pack_8unorm(uint8_t *dst, const uint8_t *src, unsigned length)
+{
+}
+
+static void
+util_format_none_unpack_float(float *dst, const uint8_t *src, unsigned length)
+{
+}
+
+static void
+util_format_none_pack_float(uint8_t *dst, const float *src, unsigned length)
+{
+}
+    '''
     print 'const struct util_format_description'
     print 'util_format_none_description = {'
     print "   PIPE_FORMAT_NONE,"
@@ -99,9 +121,16 @@ def write_format_table(formats):
     print "   0,"
     print "   {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
     print "   {0, 0, 0, 0},"
-    print "   0"
+    print "   0,"
+    print "   &util_format_none_unpack_8unorm," 
+    print "   &util_format_none_pack_8unorm," 
+    print "   &util_format_none_unpack_float," 
+    print "   &util_format_none_pack_float" 
     print "};"
     print
+    
+    u_format_pack.generate(formats)
+    
     for format in formats:
         print 'const struct util_format_description'
         print 'util_format_%s_description = {' % (format.short_name(),)
@@ -140,8 +169,13 @@ def write_format_table(formats):
             print "      %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
         print "   },"
         print "   %s," % (colorspace_map(format.colorspace),)
+        print "   &util_format_%s_unpack_8unorm," % format.short_name() 
+        print "   &util_format_%s_pack_8unorm," % format.short_name() 
+        print "   &util_format_%s_unpack_float," % format.short_name() 
+        print "   &util_format_%s_pack_float" % format.short_name() 
         print "};"
         print
+        
     print "const struct util_format_description *"
     print "util_format_description(enum pipe_format format)"
     print "{"
