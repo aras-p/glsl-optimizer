@@ -73,7 +73,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
 {
     uint32_t result = 0;
     const struct util_format_description *desc;
-    unsigned components = 0, i;
+    unsigned i;
     boolean uniform = TRUE;
     const uint32_t swizzle_shift[4] = {
         R300_TX_FORMAT_R_SHIFT,
@@ -177,28 +177,21 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
         }
     }
 
-    /* Get the number of components. */
-    for (i = 0; i < 4; i++) {
-        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
-            ++components;
-        }
-    }
-
     /* Add sign. */
-    for (i = 0; i < components; i++) {
+    for (i = 0; i < desc->nr_channels; i++) {
         if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
             result |= sign_bit[i];
         }
     }
 
     /* See whether the components are of the same size. */
-    for (i = 1; i < components; i++) {
+    for (i = 1; i < desc->nr_channels; i++) {
         uniform = uniform && desc->channel[0].size == desc->channel[i].size;
     }
 
     /* Non-uniform formats. */
     if (!uniform) {
-        switch (components) {
+        switch (desc->nr_channels) {
             case 3:
                 if (desc->channel[0].size == 5 &&
                     desc->channel[1].size == 6 &&
@@ -240,7 +233,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
 
             switch (desc->channel[0].size) {
                 case 4:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 2:
                             return R300_TX_FORMAT_Y4X4 | result;
                         case 4:
@@ -249,7 +242,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
                     return ~0;
 
                 case 8:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 1:
                             return R300_TX_FORMAT_X8 | result;
                         case 2:
@@ -260,7 +253,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
                     return ~0;
 
                 case 16:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 1:
                             return R300_TX_FORMAT_X16 | result;
                         case 2:
@@ -276,7 +269,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (desc->channel[0].size) {
                 case 16:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 1:
                             return R300_TX_FORMAT_16F | result;
                         case 2:
@@ -287,7 +280,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
                     return ~0;
 
                 case 32:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 1:
                             return R300_TX_FORMAT_32F | result;
                         case 2:
