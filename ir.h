@@ -160,6 +160,12 @@ public:
     * Pointer to the label that begins the function definition.
     */
    ir_label *definition;
+
+private:
+   /** Function of which this signature is one overload. */
+   class ir_function *function;
+
+   friend class ir_function;
 };
 
 
@@ -173,6 +179,12 @@ public:
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
+   }
+
+   void add_signature(ir_function_signature *sig)
+   {
+      sig->function = this;
+      signatures.push_tail(sig);
    }
 
    /**

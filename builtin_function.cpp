@@ -214,7 +214,7 @@ generate_function_instance(ir_function *f,
    ir_variable *declarations[17];
 
    ir_function_signature *const sig = new ir_function_signature(type);
-   f->signatures.push_tail(sig);
+   f->add_signature(sig);
 
    ir_label *const label = new ir_label(name);
    instructions->push_tail(label);

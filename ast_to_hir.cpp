@@ -1530,7 +1530,7 @@ ast_function_definition::hir(exec_list *instructions,
     */
    if (signature == NULL) {
       signature = new ir_function_signature(return_type);
-      f->signatures.push_tail(signature);
+      f->add_signature(signature);
    } else {
       /* Destroy all of the previous parameter information.  The previous
        * parameter information comes from the function prototype, and it can

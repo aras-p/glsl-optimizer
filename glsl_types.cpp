@@ -129,7 +129,7 @@ glsl_type::generate_constructor_prototype(glsl_symbol_table *symtab) const
    assert(added);
 
    ir_function_signature *const sig = new ir_function_signature(this);
-   f->signatures.push_tail(sig);
+   f->add_signature(sig);
 
    for (unsigned i = 0; i < length; i++) {
       char *const param_name = (char *) malloc(10);
@@ -433,7 +433,7 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
        * appropriate from-scalars constructor.
        */
       ir_function_signature *const sig = new ir_function_signature(& types[i]);
-      f->signatures.push_tail(sig);
+      f->add_signature(sig);
 
       sig->definition =
 	 generate_constructor_intro(& types[i], 1, & sig->parameters,
@@ -444,7 +444,7 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 
 	 ir_function_signature *const vec_sig =
 	    new ir_function_signature(& types[i]);
-	 f->signatures.push_tail(vec_sig);
+	 f->add_signature(vec_sig);
 
 	 vec_sig->definition =
 	    generate_constructor_intro(& types[i], types[i].vector_elements,
@@ -458,7 +458,7 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 
 	 ir_function_signature *const mat_sig =
 	    new ir_function_signature(& types[i]);
-	 f->signatures.push_tail(mat_sig);
+	 f->add_signature(mat_sig);
 
 	 mat_sig->definition =
 	    generate_constructor_intro(& types[i],
