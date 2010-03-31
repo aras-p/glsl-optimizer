@@ -302,9 +302,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
 {
    _mesa_init_glsl_driver_functions(functions);
 
-#if FEATURE_accum
    st_init_accum_functions(functions);
-#endif
 #if FEATURE_EXT_framebuffer_blit
    st_init_blit_functions(functions);
 #endif

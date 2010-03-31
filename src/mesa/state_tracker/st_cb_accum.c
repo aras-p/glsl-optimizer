@@ -45,6 +45,8 @@
 #include "util/u_tile.h"
 
 
+#if FEATURE_accum
+
 /**
  * For hardware that supports deep color buffers, we could accelerate
  * most/all the accum operations with blending/texturing.
@@ -333,3 +335,5 @@ void st_init_accum_functions(struct dd_function_table *functions)
 {
    functions->Accum = st_Accum;
 }
+
+#endif /* FEATURE_accum */
