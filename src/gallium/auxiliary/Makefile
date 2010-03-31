@@ -105,7 +105,7 @@ C_SOURCES = \
 	util/u_cpu_detect.c \
 	util/u_dl.c \
 	util/u_draw_quad.c \
-	util/u_format_access.c \
+	util/u_format.c \
 	util/u_format_table.c \
 	util/u_format_tests.c \
 	util/u_gen_mipmap.c \
@@ -167,7 +167,6 @@ GALLIVM_CPP_SOURCES = \
 GENERATED_SOURCES = \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
-	util/u_format_access.c \
 	util/u_format_table.c
 
 

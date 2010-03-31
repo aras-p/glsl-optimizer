@@ -38,6 +38,7 @@
 
 
 import sys
+import math
 
 from u_format_parse import *
 
@@ -86,6 +87,20 @@ def generate_format_type(format):
             else:
                 assert 0
     print '   } chan;'
+    print '};'
+    print
+
+
+def generate_srgb_tables():
+    print 'static ubyte srgb_to_linear[256] = {'
+    for i in range(256):
+        print '   %s,' % (int(math.pow((i / 255.0 + 0.055) / 1.055, 2.4) * 255))
+    print '};'
+    print
+    print 'static ubyte linear_to_srgb[256] = {'
+    print '   0,'
+    for i in range(1, 256):
+        print '   %s,' % (int((1.055 * math.pow(i / 255.0, 0.41666) - 0.055) * 255))
     print '};'
     print
 
