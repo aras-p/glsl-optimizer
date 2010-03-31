@@ -1501,6 +1501,21 @@ ast_parameter_declarator::hir(exec_list *instructions,
       type = glsl_type::error_type;
    }
 
+   /* From page 62 (page 68 of the PDF) of the GLSL 1.50 spec:
+    *
+    *    "Functions that accept no input arguments need not use void in the
+    *    argument list because prototypes (or definitions) are required and
+    *    therefore there is no ambiguity when an empty argument list "( )" is
+    *    declared. The idiom "(void)" as a parameter list is provided for
+    *    convenience."
+    *
+    * Placing this check here prevents a void parameter being set up
+    * for a function, which avoids tripping up checks for main taking
+    * parameters and lookups of an unnamed symbol.
+    */
+   if (type->is_void() && (this->identifier == NULL))
+      return NULL;
+
    ir_variable *var = new ir_variable(type, this->identifier);
 
    /* FINISHME: Handle array declarations.  Note that this requires
@@ -1530,7 +1545,9 @@ ast_function_parameters_to_hir(struct simple_node *ast_parameters,
    struct simple_node *ptr;
 
    foreach (ptr, ast_parameters) {
-      ((ast_node *)ptr)->hir(ir_parameters, state);
+      ast_node *param = (ast_node *)ptr;
+      param->hir(ir_parameters, state);
+
    }
 }
 
