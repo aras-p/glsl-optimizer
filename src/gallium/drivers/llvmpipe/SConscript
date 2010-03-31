@@ -70,7 +70,6 @@ if env['platform'] != 'embedded':
     env.Prepend(LIBS = [llvmpipe] + gallium)
 
     tests = [
-        'format',
         'blend',
         'conv',
     ]
