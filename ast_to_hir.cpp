@@ -1060,22 +1060,21 @@ process_array_type(const glsl_type *base, ast_node *array_size,
 }
 
 
-static const struct glsl_type *
-type_specifier_to_glsl_type(const struct ast_type_specifier *spec,
-			    const char **name,
-			    struct _mesa_glsl_parse_state *state)
+const glsl_type *
+ast_type_specifier::glsl_type(const char **name,
+			      struct _mesa_glsl_parse_state *state) const
 {
-   const glsl_type *type;
+   const struct glsl_type *type;
 
-   if (spec->type_specifier == ast_struct) {
+   if (this->type_specifier == ast_struct) {
       /* FINISHME: Handle annonymous structures. */
       type = NULL;
    } else {
-      type = state->symbols->get_type(spec->type_name);
-      *name = spec->type_name;
+      type = state->symbols->get_type(this->type_name);
+      *name = this->type_name;
 
-      if (spec->is_array) {
-	 type = process_array_type(type, spec->array_size, state);
+      if (this->is_array) {
+	 type = process_array_type(type, this->array_size, state);
       }
    }
 
@@ -1142,8 +1141,7 @@ ast_declarator_list::hir(exec_list *instructions,
     * FINISHME: invariant.
     */
 
-   decl_type = type_specifier_to_glsl_type(this->type->specifier,
-					   & type_name, state);
+   decl_type = this->type->specifier->glsl_type(& type_name, state);
 
    foreach (ptr, &this->declarations) {
       struct ast_declaration *const decl = (struct ast_declaration * )ptr;
@@ -1368,7 +1366,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
    const char *name = NULL;
    YYLTYPE loc = this->get_location();
 
-   type = type_specifier_to_glsl_type(this->type->specifier, & name, state);
+   type = this->type->specifier->glsl_type(& name, state);
 
    if (type == NULL) {
       if (name != NULL) {
@@ -1465,8 +1463,8 @@ ast_function_definition::hir(exec_list *instructions,
 
    const char *return_type_name;
    const glsl_type *return_type =
-      type_specifier_to_glsl_type(this->prototype->return_type->specifier,
-				  & return_type_name, state);
+      this->prototype->return_type->specifier->glsl_type(& return_type_name,
+							 state);
 
    assert(return_type != NULL);
 

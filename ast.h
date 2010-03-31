@@ -375,6 +375,10 @@ public:
       /* empty */
    }
 
+   const struct glsl_type *glsl_type(const char **name,
+				     struct _mesa_glsl_parse_state *state)
+      const;
+
    virtual void print(void) const;
 
    enum ast_types type_specifier;
