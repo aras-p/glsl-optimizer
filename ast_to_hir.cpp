@@ -1208,13 +1208,22 @@ ast_declarator_list::hir(exec_list *instructions,
       instructions->push_tail(var);
 
       if (state->current_function != NULL) {
-	 /* FINISHME: Variables that are uniform, varying, in, or
-	  * FINISHME: out varibles must be declared either at global scope or
-	  * FINISHME: in a parameter list (in and out only).
+	 const char *mode = NULL;
+
+	 /* FINISHME: Variables that are in or out must be declared either at
+	  * FINISHME: global scope or FINISHME: in a parameter list.
 	  */
 	 if (this->type->qualifier.attribute) {
+	    mode = "attribute";
+	 } else if (this->type->qualifier.uniform) {
+	    mode = "uniform";
+	 } else if (this->type->qualifier.varying) {
+	    mode = "varying";
+	 }
+
+	 if (mode) {
 	    _mesa_glsl_error(& loc, state,
-			     "attribute variable `%s' must be declared at "
+			     "%s variable `%s' must be declared at "
 			     "global scope",
 			     var->name);
 	 }
