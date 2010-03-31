@@ -43,6 +43,8 @@
 #include "st_cb_queryobj.h"
 
 
+#if FEATURE_queryobj
+
 static struct gl_query_object *
 st_NewQueryObject(GLcontext *ctx, GLuint id)
 {
@@ -168,3 +170,5 @@ void st_init_query_functions(struct dd_function_table *functions)
    functions->WaitQuery = st_WaitQuery;
    functions->CheckQuery = st_CheckQuery;
 }
+
+#endif /* FEATURE_queryobj */

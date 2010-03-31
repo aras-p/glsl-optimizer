@@ -299,9 +299,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_fbo_functions(functions);
    st_init_feedback_functions(functions);
    st_init_program_functions(functions);
-#if FEATURE_queryobj
    st_init_query_functions(functions);
-#endif
    st_init_cond_render_functions(functions);
    st_init_readpixels_functions(functions);
    st_init_texture_functions(functions);
