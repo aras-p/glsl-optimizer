@@ -53,6 +53,7 @@
 #include "cso_cache/cso_context.h"
 
 
+#if FEATURE_drawpix
 
 /**
  * glBitmaps are drawn as textured quads.  The user's bitmap pattern
@@ -859,3 +860,5 @@ st_destroy_bitmap(struct st_context *st)
       st->bitmap.cache = NULL;
    }
 }
+
+#endif /* FEATURE_drawpix */

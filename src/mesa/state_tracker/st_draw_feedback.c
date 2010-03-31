@@ -45,7 +45,7 @@
 #include "draw/draw_context.h"
 
 
-#if FEATURE_feedback || FEATURE_drawpix
+#if FEATURE_feedback || FEATURE_rastpos
 
 /**
  * Set the (private) draw module's post-transformed vertex format when in
@@ -279,5 +279,5 @@ st_feedback_draw_vbo(GLcontext *ctx,
    }
 }
 
-#endif /* FEATURE_feedback || FEATURE_drawpix */
+#endif /* FEATURE_feedback || FEATURE_rastpos */
 

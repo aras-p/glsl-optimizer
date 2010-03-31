@@ -62,6 +62,8 @@
 #include "cso_cache/cso_context.h"
 
 
+#if FEATURE_drawpix
+
 /**
  * Check if the given program is:
  * 0: MOVE result.color, fragment.color;
@@ -1144,3 +1146,5 @@ st_destroy_drawpix(struct st_context *st)
    if (st->drawpix.vert_shaders[1])
       ureg_free_tokens(st->drawpix.vert_shaders[1]);
 }
+
+#endif /* FEATURE_drawpix */
