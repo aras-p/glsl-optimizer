@@ -191,21 +191,34 @@ struct util_format_description
    enum util_format_colorspace colorspace;
 
    /**
-    * Accessor functions.
+    * Unpack a span of pixel blocks to R8G8B8A8_UNORM.
     */
-
    void
    (*unpack_8unorm)(uint8_t *dst, const uint8_t *src, unsigned nr_blocks);
 
+   /**
+    * Pack a span of pixel blocks from R8G8B8A8_UNORM.
+    */
    void
    (*pack_8unorm)(uint8_t *dst, const uint8_t *src, unsigned nr_blocks);
 
+   /**
+    * Unpack a span of pixel blocks to R32G32B32A32_FLOAT.
+    */
    void
    (*unpack_float)(float *dst, const uint8_t *src, unsigned nr_blocks);
 
+   /**
+    * Pack a span of pixel blocks from R32G32B32A32_FLOAT.
+    */
    void
    (*pack_float)(uint8_t *dst, const float *src, unsigned nr_blocks);
 
+   /**
+    * Fetch a single pixel (i, j) from a block.
+    */
+   void
+   (*fetch_float)(float *dst, const uint8_t *src, unsigned i, unsigned j);
 };
 
 

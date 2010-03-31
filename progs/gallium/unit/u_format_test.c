@@ -34,6 +34,37 @@
 
 
 static boolean
+test_format_fetch_float(const struct util_format_description *format_desc,
+                        const struct util_format_test_case *test)
+{
+   float unpacked[4];
+   unsigned i;
+   boolean success;
+
+   /*
+    * TODO: test block formats too.
+    */
+   if (format_desc->block.width != 1 && format_desc->block.height != 1) {
+     return TRUE;
+   }
+
+   format_desc->fetch_float(unpacked, test->packed, 0, 0);
+
+   success = TRUE;
+   for (i = 0; i < 4; ++i)
+      if (test->unpacked[i] != unpacked[i])
+         success = FALSE;
+
+   if (!success) {
+      printf("FAILED: (%f %f %f %f) obtained\n", unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
+      printf("        (%f %f %f %f) expected\n", test->unpacked[0], test->unpacked[1], test->unpacked[2], test->unpacked[3]);
+   }
+
+   return success;
+}
+
+
+static boolean
 test_format_unpack_float(const struct util_format_description *format_desc,
                          const struct util_format_test_case *test)
 {
@@ -224,6 +255,9 @@ static boolean
 test_all(void)
 {
    bool success = TRUE;
+
+   if (!test_one(&test_format_fetch_float, "fetch_float"))
+     success = FALSE;
 
    if (!test_one(&test_format_pack_float, "pack_float"))
      success = FALSE;

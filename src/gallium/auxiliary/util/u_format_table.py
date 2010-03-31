@@ -107,6 +107,11 @@ static void
 util_format_none_pack_float(uint8_t *dst, const float *src, unsigned length)
 {
 }
+
+static void
+util_format_none_fetch_float(float *dst, const uint8_t *src, unsigned i, unsigned j)
+{
+}
     '''
     print 'const struct util_format_description'
     print 'util_format_none_description = {'
@@ -125,7 +130,8 @@ util_format_none_pack_float(uint8_t *dst, const float *src, unsigned length)
     print "   &util_format_none_unpack_8unorm," 
     print "   &util_format_none_pack_8unorm," 
     print "   &util_format_none_unpack_float," 
-    print "   &util_format_none_pack_float" 
+    print "   &util_format_none_pack_float,"
+    print "   &util_format_none_fetch_float"
     print "};"
     print
     
@@ -172,7 +178,8 @@ util_format_none_pack_float(uint8_t *dst, const float *src, unsigned length)
         print "   &util_format_%s_unpack_8unorm," % format.short_name() 
         print "   &util_format_%s_pack_8unorm," % format.short_name() 
         print "   &util_format_%s_unpack_float," % format.short_name() 
-        print "   &util_format_%s_pack_float" % format.short_name() 
+        print "   &util_format_%s_pack_float," % format.short_name() 
+        print "   &util_format_%s_fetch_float" % format.short_name() 
         print "};"
         print
         

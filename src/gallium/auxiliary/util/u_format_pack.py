@@ -324,6 +324,177 @@ def conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=True
     assert False
 
 
+def generate_unpack_kernel(format, dst_channel, dst_native_type):
+
+    if not is_format_supported(format):
+        return
+    
+    assert format.layout == PLAIN
+
+    src_native_type = native_type(format)
+
+    if format.is_bitmask():
+        depth = format.block_size()
+        print '      uint%u_t value = *(uint%u_t *)src;' % (depth, depth) 
+
+        # Declare the intermediate variables
+        for i in range(format.nr_channels()):
+            src_channel = format.channels[i]
+            if src_channel.type == UNSIGNED:
+                print '      uint%u_t %s;' % (depth, src_channel.name)
+            elif src_channel.type == SIGNED:
+                print '      int%u_t %s;' % (depth, src_channel.name)
+
+        print '   #ifdef PIPE_ARCH_BIG_ENDIAN'
+        print '      value = util_bswap%u(value);' % depth
+        print '   #endif'
+
+        # Compute the intermediate unshifted values 
+        shift = 0
+        for i in range(format.nr_channels()):
+            src_channel = format.channels[i]
+            value = 'value'
+            if src_channel.type == UNSIGNED:
+                if shift:
+                    value = '%s >> %u' % (value, shift)
+                if shift + src_channel.size < depth:
+                    value = '(%s) & 0x%x' % (value, (1 << src_channel.size) - 1)
+            elif src_channel.type == SIGNED:
+                if shift + src_channel.size < depth:
+                    # Align the sign bit
+                    lshift = depth - (shift + src_channel.size)
+                    value = '%s << %u' % (value, lshift)
+                # Cast to signed
+                value = '(int%u_t)(%s) ' % (depth, value)
+                if src_channel.size < depth:
+                    # Align the LSB bit
+                    rshift = depth - src_channel.size
+                    value = '(%s) >> %u' % (value, rshift)
+            else:
+                value = None
+                
+            if value is not None:
+                print '      %s = %s;' % (src_channel.name, value)
+                
+            shift += src_channel.size
+
+        # Convert, swizzle, and store final values
+        for i in range(4):
+            swizzle = format.swizzles[i]
+            if swizzle < 4:
+                src_channel = format.channels[swizzle]
+                value = src_channel.name 
+                value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+            elif swizzle == SWIZZLE_0:
+                value = '0'
+            elif swizzle == SWIZZLE_1:
+                value = get_one(dst_channel)
+            elif swizzle == SWIZZLE_NONE:
+                value = '0'
+            else:
+                assert False
+            if format.colorspace == ZS:
+                if i == 3:
+                    value = get_one(dst_channel)
+                elif i >= 1:
+                    value = 'dst[0]'
+            print '      dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
+        
+    else:
+        print '      union util_format_%s pixel;' % format.short_name()
+        print '      memcpy(&pixel, src, sizeof pixel);'
+        bswap_format(format)
+    
+        for i in range(4):
+            swizzle = format.swizzles[i]
+            if swizzle < 4:
+                src_channel = format.channels[swizzle]
+                value = 'pixel.chan.%s' % src_channel.name 
+                value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+            elif swizzle == SWIZZLE_0:
+                value = '0'
+            elif swizzle == SWIZZLE_1:
+                value = get_one(dst_channel)
+            elif swizzle == SWIZZLE_NONE:
+                value = '0'
+            else:
+                assert False
+            if format.colorspace == ZS:
+                if i == 3:
+                    value = get_one(dst_channel)
+                elif i >= 1:
+                    value = 'dst[0]'
+            print '      dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
+    
+
+def generate_pack_kernel(format, src_channel, src_native_type):
+
+    if not is_format_supported(format):
+        return
+    
+    dst_native_type = native_type(format)
+
+    assert format.layout == PLAIN
+
+    inv_swizzle = format.inv_swizzles()
+
+    if format.is_bitmask():
+        depth = format.block_size()
+        print '      uint%u_t value = 0;' % depth 
+
+        shift = 0
+        for i in range(4):
+            dst_channel = format.channels[i]
+            if inv_swizzle[i] is not None:
+                value ='src[%u]' % inv_swizzle[i]
+                value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+                if format.colorspace == ZS:
+                    if i == 3:
+                        value = get_one(dst_channel)
+                    elif i >= 1:
+                        value = '0'
+                if dst_channel.type in (UNSIGNED, SIGNED):
+                    if shift + dst_channel.size < depth:
+                        value = '(%s) & 0x%x' % (value, (1 << dst_channel.size) - 1)
+                    if shift:
+                        value = '(%s) << %u' % (value, shift)
+                    if dst_channel.type == SIGNED:
+                        # Cast to unsigned
+                        value = '(uint%u_t)(%s) ' % (depth, value)
+                else:
+                    value = None
+                if value is not None:
+                    print '      value |= %s;' % (value)
+                
+            shift += dst_channel.size
+
+        print '#ifdef PIPE_ARCH_BIG_ENDIAN'
+        print '      value = util_bswap%u(value);' % depth
+        print '#endif'
+        
+        print '      *(uint%u_t *)dst = value;' % depth 
+
+    else:
+        print '      union util_format_%s pixel;' % format.short_name()
+    
+        for i in range(4):
+            dst_channel = format.channels[i]
+            width = dst_channel.size
+            if inv_swizzle[i] is None:
+                continue
+            value ='src[%u]' % inv_swizzle[i]
+            value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+            if format.colorspace == ZS:
+                if i == 3:
+                    value = get_one(dst_channel)
+                elif i >= 1:
+                    value = '0'
+            print '      pixel.chan.%s = %s;' % (dst_channel.name, value)
+    
+        bswap_format(format)
+        print '      memcpy(dst, &pixel, sizeof pixel);'
+    
+
 def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
     '''Generate the function to unpack pixels from a particular format'''
 
@@ -334,105 +505,9 @@ def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
     print '{'
 
     if is_format_supported(format):
-    
-        assert format.layout == PLAIN
-    
-        src_native_type = native_type(format)
-
         print '   while(length--) {'
-    
-        if format.is_bitmask():
-            depth = format.block_size()
-            print '      uint%u_t value = *(uint%u_t *)src;' % (depth, depth) 
-    
-            # Declare the intermediate variables
-            for i in range(format.nr_channels()):
-                src_channel = format.channels[i]
-                if src_channel.type == UNSIGNED:
-                    print '      uint%u_t %s;' % (depth, src_channel.name)
-                elif src_channel.type == SIGNED:
-                    print '      int%u_t %s;' % (depth, src_channel.name)
-    
-            print '   #ifdef PIPE_ARCH_BIG_ENDIAN'
-            print '      value = util_bswap%u(value);' % depth
-            print '   #endif'
-    
-            # Compute the intermediate unshifted values 
-            shift = 0
-            for i in range(format.nr_channels()):
-                src_channel = format.channels[i]
-                value = 'value'
-                if src_channel.type == UNSIGNED:
-                    if shift:
-                        value = '%s >> %u' % (value, shift)
-                    if shift + src_channel.size < depth:
-                        value = '(%s) & 0x%x' % (value, (1 << src_channel.size) - 1)
-                elif src_channel.type == SIGNED:
-                    if shift + src_channel.size < depth:
-                        # Align the sign bit
-                        lshift = depth - (shift + src_channel.size)
-                        value = '%s << %u' % (value, lshift)
-                    # Cast to signed
-                    value = '(int%u_t)(%s) ' % (depth, value)
-                    if src_channel.size < depth:
-                        # Align the LSB bit
-                        rshift = depth - src_channel.size
-                        value = '(%s) >> %u' % (value, rshift)
-                else:
-                    value = None
-                    
-                if value is not None:
-                    print '      %s = %s;' % (src_channel.name, value)
-                    
-                shift += src_channel.size
-    
-            # Convert, swizzle, and store final values
-            for i in range(4):
-                swizzle = format.swizzles[i]
-                if swizzle < 4:
-                    src_channel = format.channels[swizzle]
-                    value = src_channel.name 
-                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
-                elif swizzle == SWIZZLE_0:
-                    value = '0'
-                elif swizzle == SWIZZLE_1:
-                    value = get_one(dst_channel)
-                elif swizzle == SWIZZLE_NONE:
-                    value = '0'
-                else:
-                    assert False
-                if format.colorspace == ZS:
-                    if i == 3:
-                        value = get_one(dst_channel)
-                    elif i >= 1:
-                        value = 'dst[0]'
-                print '      dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
-            
-        else:
-            print '      union util_format_%s pixel;' % format.short_name()
-            print '      memcpy(&pixel, src, sizeof pixel);'
-            bswap_format(format)
-        
-            for i in range(4):
-                swizzle = format.swizzles[i]
-                if swizzle < 4:
-                    src_channel = format.channels[swizzle]
-                    value = 'pixel.chan.%s' % src_channel.name 
-                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
-                elif swizzle == SWIZZLE_0:
-                    value = '0'
-                elif swizzle == SWIZZLE_1:
-                    value = get_one(dst_channel)
-                elif swizzle == SWIZZLE_NONE:
-                    value = '0'
-                else:
-                    assert False
-                if format.colorspace == ZS:
-                    if i == 3:
-                        value = get_one(dst_channel)
-                    elif i >= 1:
-                        value = 'dst[0]'
-                print '      dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
+
+        generate_unpack_kernel(format, dst_channel, dst_native_type)
     
         print '      src += %u;' % (format.block_size() / 8,)
         print '      dst += 4;'
@@ -452,69 +527,9 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
     print '{'
     
     if is_format_supported(format):
-        dst_native_type = native_type(format)
-    
-        assert format.layout == PLAIN
-    
-        inv_swizzle = format.inv_swizzles()
-    
         print '   while(length--) {'
     
-        if format.is_bitmask():
-            depth = format.block_size()
-            print '      uint%u_t value = 0;' % depth 
-    
-            shift = 0
-            for i in range(4):
-                dst_channel = format.channels[i]
-                if inv_swizzle[i] is not None:
-                    value ='src[%u]' % inv_swizzle[i]
-                    value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
-                    if format.colorspace == ZS:
-                        if i == 3:
-                            value = get_one(dst_channel)
-                        elif i >= 1:
-                            value = '0'
-                    if dst_channel.type in (UNSIGNED, SIGNED):
-                        if shift + dst_channel.size < depth:
-                            value = '(%s) & 0x%x' % (value, (1 << dst_channel.size) - 1)
-                        if shift:
-                            value = '(%s) << %u' % (value, shift)
-                        if dst_channel.type == SIGNED:
-                            # Cast to unsigned
-                            value = '(uint%u_t)(%s) ' % (depth, value)
-                    else:
-                        value = None
-                    if value is not None:
-                        print '      value |= %s;' % (value)
-                    
-                shift += dst_channel.size
-    
-            print '#ifdef PIPE_ARCH_BIG_ENDIAN'
-            print '      value = util_bswap%u(value);' % depth
-            print '#endif'
-            
-            print '      *(uint%u_t *)dst = value;' % depth 
-    
-        else:
-            print '      union util_format_%s pixel;' % format.short_name()
-        
-            for i in range(4):
-                dst_channel = format.channels[i]
-                width = dst_channel.size
-                if inv_swizzle[i] is None:
-                    continue
-                value ='src[%u]' % inv_swizzle[i]
-                value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
-                if format.colorspace == ZS:
-                    if i == 3:
-                        value = get_one(dst_channel)
-                    elif i >= 1:
-                        value = '0'
-                print '      pixel.chan.%s = %s;' % (dst_channel.name, value)
-        
-            bswap_format(format)
-            print '      memcpy(dst, &pixel, sizeof pixel);'
+        generate_pack_kernel(format, src_channel, src_native_type)
             
         print '      src += 4;'
         print '      dst += %u;' % (format.block_size() / 8,)
@@ -524,18 +539,20 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
     print
     
 
-def generate_unpack(formats, dst_channel, dst_native_type, dst_suffix):
-    '''Generate the dispatch function to unpack pixels from any format'''
+def generate_format_fetch(format, dst_channel, dst_native_type, dst_suffix):
+    '''Generate the function to unpack pixels from a particular format'''
 
-    for format in formats:
-        generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix)
+    name = format.short_name()
 
+    print 'static INLINE void'
+    print 'util_format_%s_fetch_%s(%s *dst, const uint8_t *src, unsigned i, unsigned j)' % (name, dst_suffix, dst_native_type)
+    print '{'
 
-def generate_pack(formats, src_channel, src_native_type, src_suffix):
-    '''Generate the dispatch function to pack pixels to any format'''
+    if is_format_supported(format):
+        generate_unpack_kernel(format, dst_channel, dst_native_type)
 
-    for format in formats:
-        generate_format_pack(format, src_channel, src_native_type, src_suffix)
+    print '}'
+    print
 
 
 def generate(formats):
@@ -555,13 +572,16 @@ def generate(formats):
     native_type = 'float'
     suffix = 'float'
 
-    generate_unpack(formats, channel, native_type, suffix)
-    generate_pack(formats, channel, native_type, suffix)
+    for format in formats:
+        generate_format_unpack(format, channel, native_type, suffix)
+        generate_format_pack(format, channel, native_type, suffix)
+        generate_format_fetch(format, channel, native_type, suffix)
 
     channel = Channel(UNSIGNED, True, 8)
     native_type = 'uint8_t'
     suffix = '8unorm'
 
-    generate_unpack(formats, channel, native_type, suffix)
-    generate_pack(formats, channel, native_type, suffix)
+    for format in formats:
+        generate_format_unpack(format, channel, native_type, suffix)
+        generate_format_pack(format, channel, native_type, suffix)
 
