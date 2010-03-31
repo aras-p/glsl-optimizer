@@ -1475,7 +1475,7 @@ ast_function_definition::hir(exec_list *instructions,
    const char *const name = this->prototype->identifier;
    f = state->symbols->get_function(name);
    if (f != NULL) {
-      foreach_iter(exec_list_iterator, iter, f->signatures) {
+      foreach_iter(exec_list_iterator, iter, *f) {
 	 signature = (struct ir_function_signature *) iter.get();
 
 	 /* Compare the parameter list of the function being defined to the

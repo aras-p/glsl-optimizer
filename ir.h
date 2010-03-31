@@ -188,6 +188,14 @@ public:
    }
 
    /**
+    * Get an iterator for the set of function signatures
+    */
+   exec_list_iterator iterator()
+   {
+      return signatures.iterator();
+   }
+
+   /**
     * Find a signature that matches a set of actual parameters.
     */
    const ir_function_signature *matching_signature(exec_list *actual_param);
