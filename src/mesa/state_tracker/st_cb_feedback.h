@@ -30,8 +30,20 @@
 #define ST_CB_FEEDBACK_H
 
 
+#include "main/mtypes.h"
+
+#if FEATURE_feedback
+
 extern void
 st_init_feedback_functions(struct dd_function_table *functions);
 
+#else
+
+static INLINE void
+st_init_feedback_functions(struct dd_function_table *functions)
+{
+}
+
+#endif /* FEATURE_feedback */
 
 #endif /* ST_CB_FEEDBACK_H */

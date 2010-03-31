@@ -57,6 +57,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
 
@@ -741,11 +742,26 @@ void st_init_draw( struct st_context *st )
    GLcontext *ctx = st->ctx;
 
    vbo_set_draw_func(ctx, st_draw_vbo);
+
+#if FEATURE_feedback || FEATURE_rastpos
+   st->draw = draw_create(st->pipe); /* for selection/feedback */
+
+   /* Disable draw options that might convert points/lines to tris, etc.
+    * as that would foul-up feedback/selection mode.
+    */
+   draw_wide_line_threshold(st->draw, 1000.0f);
+   draw_wide_point_threshold(st->draw, 1000.0f);
+   draw_enable_line_stipple(st->draw, FALSE);
+   draw_enable_point_sprites(st->draw, FALSE);
+#endif
 }
 
 
 void st_destroy_draw( struct st_context *st )
 {
+#if FEATURE_feedback || FEATURE_rastpos
+   draw_destroy(st->draw);
+#endif
 }
 
 

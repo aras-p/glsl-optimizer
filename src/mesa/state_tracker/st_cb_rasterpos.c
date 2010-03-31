@@ -50,6 +50,7 @@
 #include "vbo/vbo.h"
 
 
+#if FEATURE_rastpos
 
 /**
  * Our special drawing pipeline stage (replaces rasterization).
@@ -267,3 +268,5 @@ void st_init_rasterpos_functions(struct dd_function_table *functions)
 {
    functions->RasterPos = st_RasterPos;
 }
+
+#endif /* FEATURE_rastpos */

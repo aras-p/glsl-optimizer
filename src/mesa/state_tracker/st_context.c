@@ -45,9 +45,7 @@
 #endif
 #include "st_cb_eglimage.h"
 #include "st_cb_fbo.h"
-#if FEATURE_feedback
 #include "st_cb_feedback.h"
-#endif
 #include "st_cb_program.h"
 #include "st_cb_queryobj.h"
 #include "st_cb_readpixels.h"
@@ -64,7 +62,6 @@
 #include "util/u_inlines.h"
 #include "util/u_rect.h"
 #include "util/u_surface.h"
-#include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
 
@@ -127,18 +124,6 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    
    /* state tracker needs the VBO module */
    _vbo_CreateContext(ctx);
-
-#if FEATURE_feedback || FEATURE_rastpos
-   st->draw = draw_create(pipe); /* for selection/feedback */
-
-   /* Disable draw options that might convert points/lines to tris, etc.
-    * as that would foul-up feedback/selection mode.
-    */
-   draw_wide_line_threshold(st->draw, 1000.0f);
-   draw_wide_point_threshold(st->draw, 1000.0f);
-   draw_enable_line_stipple(st->draw, FALSE);
-   draw_enable_point_sprites(st->draw, FALSE);
-#endif
 
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
@@ -224,9 +209,6 @@ static void st_destroy_context_priv( struct st_context *st )
 {
    uint i;
 
-#if FEATURE_feedback || FEATURE_rastpos
-   draw_destroy(st->draw);
-#endif
    st_destroy_atoms( st );
    st_destroy_draw( st );
    st_destroy_generate_mipmap(st);
@@ -315,9 +297,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_eglimage_functions(functions);
 
    st_init_fbo_functions(functions);
-#if FEATURE_feedback
    st_init_feedback_functions(functions);
-#endif
    st_init_program_functions(functions);
 #if FEATURE_queryobj
    st_init_query_functions(functions);
