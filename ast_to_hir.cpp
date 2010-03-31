@@ -1209,9 +1209,10 @@ ast_declarator_list::hir(exec_list *instructions,
 
       if (state->current_function != NULL) {
 	 const char *mode = NULL;
+	 const char *extra = "";
 
-	 /* FINISHME: Variables that are in or out must be declared either at
-	  * FINISHME: global scope or in a parameter list.
+	 /* There is no need to check for 'inout' here because the parser will
+	  * only allow that in function parameter lists.
 	  */
 	 if (this->type->qualifier.attribute) {
 	    mode = "attribute";
@@ -1219,13 +1220,19 @@ ast_declarator_list::hir(exec_list *instructions,
 	    mode = "uniform";
 	 } else if (this->type->qualifier.varying) {
 	    mode = "varying";
+	 } else if (this->type->qualifier.in) {
+	    mode = "in";
+	    extra = " or in function parameter list";
+	 } else if (this->type->qualifier.out) {
+	    mode = "out";
+	    extra = " or in function parameter list";
 	 }
 
 	 if (mode) {
 	    _mesa_glsl_error(& loc, state,
 			     "%s variable `%s' must be declared at "
-			     "global scope",
-			     mode, var->name);
+			     "global scope%s",
+			     mode, var->name, extra);
 	 }
       } else if (var->mode == ir_var_in) {
 	 if (state->target == vertex_shader) {
