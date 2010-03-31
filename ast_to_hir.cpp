@@ -691,7 +691,25 @@ ast_expression::hir(exec_list *instructions,
    case ast_logic_xor:
    case ast_logic_or:
    case ast_logic_not:
-      /* FINISHME: Implement logical operators. */
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
+
+      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
+	 YYLTYPE loc = this->subexpressions[0]->get_location();
+
+	 _mesa_glsl_error(& loc, state, "LHS of `%s' must be scalar boolean",
+			  operator_string(this->oper));
+      }
+
+      if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
+	 YYLTYPE loc = this->subexpressions[1]->get_location();
+
+	 _mesa_glsl_error(& loc, state, "RHS of `%s' must be scalar boolean",
+			  operator_string(this->oper));
+      }
+
+      result = new ir_expression(operations[this->oper], glsl_type::bool_type,
+				 op[0], op[1]);
       break;
 
    case ast_mul_assign:
