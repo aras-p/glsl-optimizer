@@ -1549,9 +1549,16 @@ ast_jump_statement::hir(exec_list *instructions,
       ir_return *inst;
 
       if (opt_return_value) {
-	 /* FINISHME: Make sure the enclosing function has a non-void return
-	  * FINISHME: type.
-	  */
+	 assert(state->current_function);
+	 if (state->current_function->return_type->base_type ==
+	     GLSL_TYPE_VOID) {
+	    YYLTYPE loc = this->get_location();
+
+	    _mesa_glsl_error(& loc, state,
+			     "`return` with a value, in function `%s' "
+			     "returning void",
+			     state->current_function->definition->label);
+	 }
 
 	 ir_expression *const ret = (ir_expression *)
 	    opt_return_value->hir(instructions, state);
