@@ -1329,6 +1329,17 @@ ast_declarator_list::hir(exec_list *instructions,
 	 }
       }
 
+      /* From page 23 (page 29 of the PDF) of the GLSL 1.10 spec:
+       *
+       *     "It is an error to write to a const variable outside of
+       *      its declaration, so they must be initialized when
+       *      declared."
+       */
+      if (this->type->qualifier.constant && decl->initializer == NULL) {
+	 _mesa_glsl_error(& loc, state,
+			  "const declaration of `%s' must be initialized");
+      }
+
       /* Add the vairable to the symbol table after processing the initializer.
        * This differs from most C-like languages, but it follows the GLSL
        * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
