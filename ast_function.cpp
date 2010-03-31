@@ -190,6 +190,15 @@ ast_function_expression::hir(exec_list *instructions,
 	 return ir_call::get_error_instruction();
       }
 
+      if (constructor_type->is_array()) {
+	 if (state->language_version <= 110) {
+	    _mesa_glsl_error(& loc, state,
+			     "array constructors forbidden in GLSL 1.10");
+	    return ir_call::get_error_instruction();
+	 }
+
+	 return ir_call::get_error_instruction();
+      }
 
       /* There are two kinds of constructor call.  Constructors for built-in
        * language types, such as mat4 and vec2, are free form.  The only
