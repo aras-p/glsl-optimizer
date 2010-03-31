@@ -78,7 +78,7 @@ def native_type(format):
         else:
             # For array pixel formats return the integer type that matches the color channel
             channel = format.channels[0]
-            if channel.type == UNSIGNED:
+            if channel.type in (UNSIGNED, VOID):
                 return 'uint%u_t' % channel.size
             elif channel.type == SIGNED:
                 return 'int%u_t' % channel.size

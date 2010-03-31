@@ -124,15 +124,15 @@ def native_type(format):
             return 'uint%u_t' % format.block_size()
         else:
             # For array pixel formats return the integer type that matches the color channel
-            type = format.channels[0]
-            if type.type == UNSIGNED:
-                return 'uint%u_t' % type.size
-            elif type.type == SIGNED:
-                return 'int%u_t' % type.size
-            elif type.type == FLOAT:
-                if type.size == 32:
+            channel = format.channels[0]
+            if channel.type in (UNSIGNED, VOID):
+                return 'uint%u_t' % channel.size
+            elif channel.type == SIGNED:
+                return 'int%u_t' % channel.size
+            elif channel.type == FLOAT:
+                if channel.size == 32:
                     return 'float'
-                elif type.size == 64:
+                elif channel.size == 64:
                     return 'double'
                 else:
                     assert False
