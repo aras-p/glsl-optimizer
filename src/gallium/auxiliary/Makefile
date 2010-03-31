@@ -106,6 +106,7 @@ C_SOURCES = \
 	util/u_dl.c \
 	util/u_draw_quad.c \
 	util/u_format.c \
+	util/u_format_s3tc.c \
 	util/u_format_table.c \
 	util/u_format_tests.c \
 	util/u_gen_mipmap.c \

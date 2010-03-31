@@ -596,15 +596,17 @@ def generate(formats):
     suffix = 'float'
 
     for format in formats:
-        generate_format_unpack(format, channel, native_type, suffix)
-        generate_format_pack(format, channel, native_type, suffix)
-        generate_format_fetch(format, channel, native_type, suffix)
+        if format.layout != 's3tc':
+            generate_format_unpack(format, channel, native_type, suffix)
+            generate_format_pack(format, channel, native_type, suffix)
+            generate_format_fetch(format, channel, native_type, suffix)
 
     channel = Channel(UNSIGNED, True, 8)
     native_type = 'uint8_t'
     suffix = '8unorm'
 
     for format in formats:
-        generate_format_unpack(format, channel, native_type, suffix)
-        generate_format_pack(format, channel, native_type, suffix)
+        if format.layout != 's3tc':
+            generate_format_unpack(format, channel, native_type, suffix)
+            generate_format_pack(format, channel, native_type, suffix)
 
