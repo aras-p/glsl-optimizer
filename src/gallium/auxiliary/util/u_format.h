@@ -261,6 +261,34 @@ util_format_is_depth_and_stencil(enum pipe_format format)
            desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE) ? TRUE : FALSE;
 }
 
+/**
+ * Whether this format is a rgab8 variant.
+ *
+ * That is, any format that matches the
+ *
+ *   PIPE_FORMAT_?8?8?8?8_UNORM
+ */
+static INLINE boolean
+util_format_is_rgba8_variant(const struct util_format_description *desc)
+{
+   unsigned chan;
+
+   if(desc->block.width != 1 ||
+      desc->block.height != 1 ||
+      desc->block.bits != 32)
+      return FALSE;
+
+   for(chan = 0; chan < 4; ++chan) {
+      if(desc->channel[chan].type != UTIL_FORMAT_TYPE_UNSIGNED &&
+         desc->channel[chan].type != UTIL_FORMAT_TYPE_VOID)
+         return FALSE;
+      if(desc->channel[chan].size != 8)
+         return FALSE;
+   }
+
+   return TRUE;
+}
+
 
 /**
  * Return total bits needed for the pixel format per block.
