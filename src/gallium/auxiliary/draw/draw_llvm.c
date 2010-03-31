@@ -391,6 +391,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
       LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
       LLVMValueRef io = LLVMBuildGEP(builder, io_ptr, &lp_loop.counter, 1, "");
+      const LLVMValueRef (*ptr_aos)[NUM_CHANNELS];
 
       for (i = 0; i < NUM_CHANNELS; ++i) {
          LLVMValueRef true_index = LLVMBuildAdd(
@@ -408,16 +409,16 @@ draw_llvm_generate(struct draw_llvm *llvm)
       convert_to_soa(builder, aos_attribs, inputs,
                      draw->pt.nr_vertex_elements);
 
+      ptr_aos = (const LLVMValueRef (*)[NUM_CHANNELS]) inputs;
       generate_vs(llvm,
                   builder,
                   outputs,
-                  inputs,
+                  ptr_aos,
                   context_ptr,
                   io);
       LLVMDumpModule(llvm->module);
    }
    lp_build_loop_end(builder, end, step, &lp_loop);
-
 
    LLVMBuildRetVoid(builder);
 
