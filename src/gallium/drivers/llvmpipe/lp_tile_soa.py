@@ -349,8 +349,6 @@ def main():
     print '};'
     print
 
-    generate_clamp()
-
     channel = Channel(UNSIGNED, True, 8)
     native_type = 'uint8_t'
     suffix = '4ub'
