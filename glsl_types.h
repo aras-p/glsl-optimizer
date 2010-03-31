@@ -175,6 +175,9 @@ struct glsl_type {
    static const glsl_type *get_array_instance(const glsl_type *base,
 					      unsigned elements);
 
+   class ir_function *generate_constructor_prototype(class glsl_symbol_table *)
+      const;
+
    /**
     * Query the total number of scalars that make up a scalar, vector or matrix
     */
