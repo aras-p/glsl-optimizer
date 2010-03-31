@@ -44,8 +44,6 @@ util_format_read_4f(enum pipe_format format,
    const struct util_format_description *format_desc;
    const uint8_t *src_row;
    float *dst_row;
-   unsigned row_blocks;
-   unsigned i;
 
    format_desc = util_format_description(format);
 
@@ -54,13 +52,8 @@ util_format_read_4f(enum pipe_format format,
 
    src_row = (const uint8_t *)src + y*src_stride + x*(format_desc->block.bits/8);
    dst_row = dst;
-   row_blocks = (w + format_desc->block.width - 1) / format_desc->block.width;
 
-   for (i = 0; i < h; i += format_desc->block.height) {
-      format_desc->unpack_float(dst_row, src_row, row_blocks);
-      src_row += src_stride;
-      dst_row += dst_stride/sizeof(*dst_row);
-   }
+   format_desc->unpack_float(dst_row, dst_stride, src_row, src_stride, w, h);
 }
 
 
@@ -73,8 +66,6 @@ util_format_write_4f(enum pipe_format format,
    const struct util_format_description *format_desc;
    uint8_t *dst_row;
    const float *src_row;
-   unsigned row_blocks;
-   unsigned i;
 
    format_desc = util_format_description(format);
 
@@ -83,13 +74,8 @@ util_format_write_4f(enum pipe_format format,
 
    dst_row = (uint8_t *)dst + y*dst_stride + x*(format_desc->block.bits/8);
    src_row = src;
-   row_blocks = (w + format_desc->block.width - 1) / format_desc->block.width;
 
-   for (i = 0; i < h; i += format_desc->block.height) {
-      format_desc->pack_float(dst_row, src_row, row_blocks);
-      dst_row += dst_stride;
-      src_row += src_stride/sizeof(*src_row);
-   }
+   format_desc->pack_float(dst_row, dst_stride, src_row, src_stride, w, h);
 }
 
 
@@ -99,8 +85,6 @@ util_format_read_4ub(enum pipe_format format, uint8_t *dst, unsigned dst_stride,
    const struct util_format_description *format_desc;
    const uint8_t *src_row;
    uint8_t *dst_row;
-   unsigned row_blocks;
-   unsigned i;
 
    format_desc = util_format_description(format);
 
@@ -109,13 +93,8 @@ util_format_read_4ub(enum pipe_format format, uint8_t *dst, unsigned dst_stride,
 
    src_row = (const uint8_t *)src + y*src_stride + x*(format_desc->block.bits/8);
    dst_row = dst;
-   row_blocks = (w + format_desc->block.width - 1) / format_desc->block.width;
 
-   for (i = 0; i < h; i += format_desc->block.height) {
-      format_desc->unpack_8unorm(dst_row, src_row, row_blocks);
-      src_row += src_stride;
-      dst_row += dst_stride/sizeof(*dst_row);
-   }
+   format_desc->unpack_8unorm(dst_row, dst_stride, src_row, src_stride, w, h);
 }
 
 
@@ -125,8 +104,6 @@ util_format_write_4ub(enum pipe_format format, const uint8_t *src, unsigned src_
    const struct util_format_description *format_desc;
    uint8_t *dst_row;
    const uint8_t *src_row;
-   unsigned row_blocks;
-   unsigned i;
 
    format_desc = util_format_description(format);
 
@@ -135,12 +112,7 @@ util_format_write_4ub(enum pipe_format format, const uint8_t *src, unsigned src_
 
    dst_row = (uint8_t *)dst + y*dst_stride + x*(format_desc->block.bits/8);
    src_row = src;
-   row_blocks = (w + format_desc->block.width - 1) / format_desc->block.width;
 
-   for (i = 0; i < h; i += format_desc->block.height) {
-      format_desc->pack_8unorm(dst_row, src_row, row_blocks);
-      dst_row += dst_stride;
-      src_row += src_stride/sizeof(*src_row);
-   }
+   format_desc->pack_8unorm(dst_row, dst_stride, src_row, src_stride, w, h);
 }
 

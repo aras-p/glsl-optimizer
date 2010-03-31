@@ -72,7 +72,7 @@ test_format_unpack_float(const struct util_format_description *format_desc,
    unsigned i;
    boolean success;
 
-   format_desc->unpack_float(unpacked, test->packed, 1);
+   format_desc->unpack_float(unpacked, 0, test->packed, 0, 1, 1);
 
    success = TRUE;
    for (i = 0; i < 4; ++i)
@@ -102,7 +102,7 @@ test_format_pack_float(const struct util_format_description *format_desc,
    for (i = 0; i < 4; ++i)
       unpacked[i] = (float) test->unpacked[i];
 
-   format_desc->pack_float(packed, unpacked, 1);
+   format_desc->pack_float(packed, 0, unpacked, 0, 1, 1);
 
    success = TRUE;
    for (i = 0; i < UTIL_FORMAT_MAX_PACKED_BYTES; ++i)
@@ -160,7 +160,7 @@ test_format_unpack_8unorm(const struct util_format_description *format_desc,
    unsigned i;
    boolean success;
 
-   format_desc->unpack_8unorm(unpacked, test->packed, 1);
+   format_desc->unpack_8unorm(unpacked, 0, test->packed, 0, 1, 1);
 
    convert_float_to_8unorm(expected, test->unpacked);
 
@@ -196,7 +196,7 @@ test_format_pack_8unorm(const struct util_format_description *format_desc,
 
    memset(packed, 0, sizeof packed);
 
-   format_desc->pack_8unorm(packed, unpacked, 1);
+   format_desc->pack_8unorm(packed, 0, unpacked, 0, 1, 1);
 
    success = TRUE;
    for (i = 0; i < UTIL_FORMAT_MAX_PACKED_BYTES; ++i)
