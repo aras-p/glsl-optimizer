@@ -56,6 +56,7 @@ class TextureTest(TestCase):
 
     def test(self):
         dev = self.dev
+        ctx = self.ctx
         
         target = self.target
         format = self.format
@@ -103,8 +104,6 @@ class TextureTest(TestCase):
         size = util_format_get_nblocksy(format, h) * stride
         src_raw = os.urandom(size)
 
-        ctx = self.dev.context_create()
-    
         ctx.surface_write_raw(src_surface, 0, 0, w, h, src_raw, stride)
 
         ctx.surface_copy(dst_surface, 0, 0, 
@@ -119,6 +118,7 @@ class TextureTest(TestCase):
 
 def main():
     dev = Device()
+    ctx = dev.context_create()
     suite = TestSuite()
     
     targets = [
@@ -178,6 +178,7 @@ def main():
                             while zslice < depth >> level:
                                 test = TextureTest(
                                     dev = dev,
+                                    ctx = ctx,
                                     target = target,
                                     format = format, 
                                     width = size,

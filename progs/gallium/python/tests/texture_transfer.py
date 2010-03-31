@@ -59,6 +59,7 @@ class TextureTest(TestCase):
 
     def test(self):
         dev = self.dev
+        ctx = self.ctx
         
         target = self.target
         format = self.format
@@ -91,8 +92,6 @@ class TextureTest(TestCase):
 
         in_raw = os.urandom(size)
 
-        ctx = self.dev.context_create()
-
         ctx.surface_write_raw(surface, 0, 0, surface.width, surface.height, in_raw, stride)
 
         out_raw = ctx.surface_read_raw(surface, 0, 0, surface.width, surface.height)
@@ -103,6 +102,7 @@ class TextureTest(TestCase):
 
 def main():
     dev = Device()
+    ctx = dev.context_create()
     suite = TestSuite()
     
     targets = [
@@ -162,6 +162,7 @@ def main():
                             while zslice < depth >> level:
                                 test = TextureTest(
                                     dev = dev,
+                                    ctx = ctx,
                                     target = target,
                                     format = format, 
                                     width = size,
