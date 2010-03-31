@@ -188,6 +188,77 @@ dereference_component(ir_rvalue *src, unsigned component)
 }
 
 
+static ir_rvalue *
+process_array_constructor(exec_list *instructions,
+			  const glsl_type *constructor_type,
+			  YYLTYPE *loc, simple_node *parameters,
+			  struct _mesa_glsl_parse_state *state)
+{
+   /* Array constructors come in two forms: sized and unsized.  Sized array
+    * constructors look like 'vec4[2](a, b)', where 'a' and 'b' are vec4
+    * variables.  In this case the number of parameters must exactly match the
+    * specified size of the array.
+    *
+    * Unsized array constructors look like 'vec4[](a, b)', where 'a' and 'b'
+    * are vec4 variables.  In this case the size of the array being constructed
+    * is determined by the number of parameters.
+    *
+    * From page 52 (page 58 of the PDF) of the GLSL 1.50 spec:
+    *
+    *    "There must be exactly the same number of arguments as the size of
+    *    the array being constructed. If no size is present in the
+    *    constructor, then the array is explicitly sized to the number of
+    *    arguments provided. The arguments are assigned in order, starting at
+    *    element 0, to the elements of the constructed array. Each argument
+    *    must be the same type as the element type of the array, or be a type
+    *    that can be converted to the element type of the array according to
+    *    Section 4.1.10 "Implicit Conversions.""
+    */
+   exec_list actual_parameters;
+   const unsigned parameter_count =
+      process_parameters(instructions, &actual_parameters, parameters, state);
+
+   if ((parameter_count == 0)
+       || ((constructor_type->length != 0)
+	   && (constructor_type->length != parameter_count))) {
+      const unsigned min_param = (constructor_type->length == 0)
+	 ? 1 : constructor_type->length;
+
+      _mesa_glsl_error(loc, state, "array constructor must have %s %u "
+		       "parameter%s",
+		       (constructor_type->length != 0) ? "at least" : "exactly",
+		       min_param, (min_param <= 1) ? "" : "s");
+      return ir_call::get_error_instruction();
+   }
+
+   if (constructor_type->length == 0) {
+      constructor_type =
+	 glsl_type::get_array_instance(constructor_type->get_base_type(),
+				       parameter_count);
+      assert(constructor_type != NULL);
+      assert(constructor_type->length == parameter_count);
+   }
+
+   ir_function *f = state->symbols->get_function(constructor_type->name);
+
+   /* If the constructor for this type of array does not exist, generate the
+    * prototype and add it to the symbol table.  The code will be generated
+    * later.
+    */
+   if (f == NULL) {
+      f = constructor_type->generate_constructor_prototype(state->symbols);
+   }
+
+   ir_rvalue *const r =
+      process_call(instructions, f, loc, &actual_parameters, state);
+
+   assert(r != NULL);
+   assert(r->type->is_error() || (r->type == constructor_type));
+
+   return r;
+}
+
+
 ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
@@ -224,7 +295,8 @@ ast_function_expression::hir(exec_list *instructions,
 	    return ir_call::get_error_instruction();
 	 }
 
-	 return ir_call::get_error_instruction();
+	 return process_array_constructor(instructions, constructor_type,
+					  & loc, subexpressions[1], state);
       }
 
       /* There are two kinds of constructor call.  Constructors for built-in
