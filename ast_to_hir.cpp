@@ -1177,6 +1177,21 @@ ast_declarator_list::hir(exec_list *instructions,
 	 continue;
       }
 
+      /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
+       *
+       *   "Identifiers starting with "gl_" are reserved for use by
+       *   OpenGL, and may not be declared in a shader as either a
+       *   variable or a function."
+       */
+      if (strncmp(decl->identifier, "gl_", 3) == 0) {
+	 /* FINISHME: This should only trigger if we're not redefining
+	  * FINISHME: a builtin (to add a qualifier, for example).
+	  */
+	 _mesa_glsl_error(& loc, state,
+			  "identifier `%s' uses reserved `gl_' prefix",
+			  decl->identifier);
+      }
+
       instructions->push_tail(var);
 
       if (this->type->qualifier.attribute
