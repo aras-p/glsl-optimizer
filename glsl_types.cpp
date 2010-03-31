@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <cstdio>
 #include <stdlib.h>
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
@@ -486,6 +487,31 @@ _mesa_glsl_initialize_constructors(exec_list *instructions,
       /* error */
       break;
    }
+}
+
+
+glsl_type::glsl_type(const glsl_type *array, unsigned length) :
+   base_type(GLSL_TYPE_ARRAY),
+   sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
+   sampler_type(0),
+   vector_elements(0), matrix_columns(0),
+   name(NULL), length(length)
+{
+   this->fields.array = array;
+
+   /* Allow a maximum of 10 characters for the array size.  This is enough
+    * for 32-bits of ~0.  The extra 3 are for the '[', ']', and terminating
+    * NUL.
+    */
+   const unsigned name_length = strlen(array->name) + 10 + 3;
+   char *const n = (char *) malloc(name_length);
+
+   if (length == 0)
+      snprintf(n, name_length, "%s[]", array->name);
+   else
+      snprintf(n, name_length, "%s[%u]", array->name, length);
+
+   this->name = n;
 }
 
 

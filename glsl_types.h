@@ -309,16 +309,8 @@ private:
    /**
     * Constructor for array types
     */
-   glsl_type(const glsl_type *array, unsigned length) :
-      base_type(GLSL_TYPE_ARRAY),
-      sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-      sampler_type(0),
-      vector_elements(0), matrix_columns(0),
-      name(NULL), length(length)
-   {
-      this->fields.array = array;
-      this->name = "<array>";
-   }
+   glsl_type(const glsl_type *array, unsigned length);
+
 
    /**
     * \name Pointers to various private type singletons
