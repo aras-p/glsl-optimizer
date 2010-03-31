@@ -1582,7 +1582,6 @@ ast_selection_statement::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
    ir_rvalue *const condition = this->condition->hir(instructions, state);
-   struct simple_node *ptr;
 
    /* From page 66 (page 72 of the PDF) of the GLSL 1.50 spec:
     *
