@@ -80,6 +80,12 @@ _mesa_init_queryobj_dispatch(struct _glapi_table *disp);
 
 #define _MESA_INIT_QUERYOBJ_FUNCTIONS(driver, impl) do { } while (0)
 
+static INLINE struct gl_query_object *
+_mesa_lookup_query_object(GLcontext *ctx, GLuint id)
+{
+   return NULL;
+}
+
 static INLINE void
 _mesa_init_query_object_functions(struct dd_function_table *driver)
 {
