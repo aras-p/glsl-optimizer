@@ -29,6 +29,10 @@ env.CodeGenerate(
     source = ['util/u_format.csv'],
     command = 'python $SCRIPT $SOURCE > $TARGET'
 )
+env.Depends('util/u_format_table.c', [
+    'util/u_format_parse.py', 
+    'util/u_format_pack.py', 
+])
 
 source = [
     'cso_cache/cso_context.c',
