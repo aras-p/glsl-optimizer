@@ -236,7 +236,7 @@ nouveau_render_texture(GLcontext *ctx, struct gl_framebuffer *fb,
 	/* Allocate a renderbuffer object for the texture if we
 	 * haven't already done so. */
 	if (!rb) {
-		rb = nouveau_renderbuffer_new(ctx, 0);
+		rb = nouveau_renderbuffer_new(ctx, ~0);
 		assert(rb);
 
 		rb->AllocStorage = NULL;
@@ -259,11 +259,7 @@ static void
 nouveau_finish_render_texture(GLcontext *ctx,
 			      struct gl_renderbuffer_attachment *att)
 {
-	struct nouveau_renderbuffer *nrb
-		= to_nouveau_renderbuffer(att->Renderbuffer);
-
 	texture_dirty(att->Texture);
-	nouveau_surface_ref(NULL, &nrb->surface);
 }
 
 void

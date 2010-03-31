@@ -523,29 +523,30 @@ st_sample_pixel_block(enum pipe_format format,
 
 
 void
-st_sample_surface(struct st_surface *surface, float *rgba) 
+st_sample_surface(struct pipe_context *pipe,
+                  struct st_surface *surface,
+                  float *rgba)
 {
    struct pipe_texture *texture = surface->texture;
-   struct pipe_screen *screen = texture->screen;
    unsigned width = u_minify(texture->width0, surface->level);
    unsigned height = u_minify(texture->height0, surface->level);
    uint rgba_stride = width * 4;
    struct pipe_transfer *transfer;
    void *raw;
 
-   transfer = screen->get_tex_transfer(screen,
-                                       surface->texture,
-                                       surface->face,
-                                       surface->level,
-                                       surface->zslice,
-                                       PIPE_TRANSFER_WRITE,
-                                       0, 0,
-                                       width,
-                                       height);
+   transfer = pipe->get_tex_transfer(pipe,
+                                     surface->texture,
+                                     surface->face,
+                                     surface->level,
+                                     surface->zslice,
+                                     PIPE_TRANSFER_WRITE,
+                                     0, 0,
+                                     width,
+                                     height);
    if (!transfer)
       return;
 
-   raw = screen->transfer_map(screen, transfer);
+   raw = pipe->transfer_map(pipe, transfer);
    if (raw) {
       enum pipe_format format = texture->format;
       uint x, y;
@@ -567,8 +568,8 @@ st_sample_surface(struct st_surface *surface, float *rgba)
          }
       }
 
-      screen->transfer_unmap(screen, transfer);
+      pipe->transfer_unmap(pipe, transfer);
    }
    
-   screen->tex_transfer_destroy(transfer);
+   pipe->tex_transfer_destroy(pipe, transfer);
 }

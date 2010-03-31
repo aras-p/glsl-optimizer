@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -35,7 +36,6 @@ GLint windW, windH;
 
 char *fileName = 0;
 PPMImage *image;
-float point[3];
 float zoom;
 GLint x, y;
 
@@ -97,27 +97,27 @@ static void Mouse(int button, int state, int mouseX, int mouseY)
 
 static void Draw(void)
 {
+    GLint src[3], dst[3];
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    point[0] = (windW / 2) - (image->sizeX / 2);
-    point[1] = (windH / 2) - (image->sizeY / 2);
-    point[2] = 0;
-    glRasterPos3fv(point);
+    src[0] = (int) ((windW / 2.0) - (image->sizeX / 2.0));
+    src[1] = (int) ((windH / 2.0) - (image->sizeY / 2.0));
+    src[2] = 0;
+    glWindowPos3ivARB(src);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelZoom(1.0, 1.0);
     glDrawPixels(image->sizeX, image->sizeY, GL_RGB, GL_UNSIGNED_BYTE,
 		 image->data);
 
-    point[0] = (float)x;
-    point[1] = windH - (float)y;
-    point[2] = 0.0;
-    glRasterPos3fv(point);
+    dst[0] = x;
+    dst[1] = windH - y;
+    dst[2] = 0;
+    glWindowPos3ivARB(dst);
 
     glPixelZoom(zoom, zoom);
-    glCopyPixels((windW/2)-(image->sizeX/2),
-		 (windH/2)-(image->sizeY/2),
+    glCopyPixels(src[0], src[1],
 		 image->sizeX, image->sizeY, GL_COLOR);
 
     glFlush();
@@ -170,8 +170,8 @@ int main(int argc, char **argv)
 
     image = LoadPPM(fileName);
 
-    windW = 300;
-    windH = 300;
+    windW = 2*300;
+    windH = 2*300;
     glutInitWindowPosition(0, 0); glutInitWindowSize( windW, windH);
 
     type = GLUT_RGB;
@@ -182,6 +182,7 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
+    glewInit();
     Init();
 
     glutReshapeFunc(Reshape);

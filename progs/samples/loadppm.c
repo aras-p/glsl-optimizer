@@ -9,7 +9,7 @@ static PPMImage *LoadPPM(const char *filename)
     char buff[16];
     PPMImage *result;
     FILE *fp;
-    int maxval;
+    int maxval, w, h;
 
     fp = fopen(filename, "rb");
     if (!fp)
@@ -37,11 +37,13 @@ static PPMImage *LoadPPM(const char *filename)
 	exit(1);
     }
 
-    if (fscanf(fp, "%lu %lu", &result->sizeX, &result->sizeY) != 2)
+    if (fscanf(fp, "%d %d", &w, &h) != 2)
     {
 	fprintf(stderr, "Error loading image `%s'\n", filename);
 	exit(1);
     }
+    result->sizeX = w;
+    result->sizeY = h;
 
     if (fscanf(fp, "%d", &maxval) != 1)
     {

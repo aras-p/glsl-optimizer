@@ -177,15 +177,15 @@ nouveau_choose_tex_format(GLcontext *ctx, GLint internalFormat,
 }
 
 static GLboolean
-teximage_fits(struct gl_texture_object *t, int level,
-	      struct gl_texture_image *ti)
+teximage_fits(struct gl_texture_object *t, int level)
 {
 	struct nouveau_surface *s = &to_nouveau_texture(t)->surfaces[level];
+	struct gl_texture_image *ti = t->Image[0][level];
 
-	return t->Target == GL_TEXTURE_RECTANGLE ||
-		(s->bo && s->width == ti->Width &&
-		 s->height == ti->Height &&
-		 s->format == ti->TexFormat);
+	return ti && (t->Target == GL_TEXTURE_RECTANGLE ||
+		      (s->bo && s->width == ti->Width &&
+		       s->height == ti->Height &&
+		       s->format == ti->TexFormat));
 }
 
 static GLboolean
@@ -195,7 +195,7 @@ validate_teximage(GLcontext *ctx, struct gl_texture_object *t,
 {
 	struct gl_texture_image *ti = t->Image[0][level];
 
-	if (ti && teximage_fits(t, level, ti)) {
+	if (teximage_fits(t, level)) {
 		struct nouveau_surface *ss = to_nouveau_texture(t)->surfaces;
 		struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
 
@@ -283,7 +283,8 @@ nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t)
 	struct nouveau_texture *nt = to_nouveau_texture(t);
 	int i, last = get_last_level(t);
 
-	if (!nt->surfaces[last].bo)
+	if (!teximage_fits(t, t->BaseLevel) ||
+	    !teximage_fits(t, last))
 		return GL_FALSE;
 
 	if (nt->dirty) {
@@ -296,6 +297,8 @@ nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t)
 			validate_teximage(ctx, t, i, 0, 0, 0,
 					  s->width, s->height, 1);
 		}
+
+		FIRE_RING(context_chan(ctx));
 	}
 
 	return GL_TRUE;
@@ -304,9 +307,12 @@ nouveau_texture_validate(GLcontext *ctx, struct gl_texture_object *t)
 void
 nouveau_texture_reallocate(GLcontext *ctx, struct gl_texture_object *t)
 {
-	texture_dirty(t);
-	relayout_texture(ctx, t);
-	nouveau_texture_validate(ctx, t);
+	if (!teximage_fits(t, t->BaseLevel) ||
+	    !teximage_fits(t, get_last_level(t))) {
+		texture_dirty(t);
+		relayout_texture(ctx, t);
+		nouveau_texture_validate(ctx, t);
+	}
 }
 
 static unsigned
@@ -364,7 +370,7 @@ nouveau_teximage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
 	}
 
 	if (level == t->BaseLevel) {
-		if (!teximage_fits(t, level, ti))
+		if (!teximage_fits(t, level))
 			relayout_texture(ctx, t);
 		nouveau_texture_validate(ctx, t);
 	}
@@ -416,6 +422,40 @@ nouveau_teximage_3d(GLcontext *ctx, GLenum target, GLint level,
 }
 
 static void
+nouveau_texsubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
+		    GLint xoffset, GLint yoffset, GLint zoffset,
+		    GLint width, GLint height, GLint depth,
+		    GLenum format, GLenum type, const void *pixels,
+		    const struct gl_pixelstore_attrib *packing,
+		    struct gl_texture_object *t,
+		    struct gl_texture_image *ti)
+{
+	struct nouveau_surface *s = &to_nouveau_teximage(ti)->surface;
+	int ret;
+
+	pixels = _mesa_validate_pbo_teximage(ctx, dims, width, height, depth,
+					     format, type, pixels, packing,
+					     "glTexSubImage");
+	if (pixels) {
+		nouveau_teximage_map(ctx, ti);
+
+		ret = _mesa_texstore(ctx, 3, ti->_BaseFormat, ti->TexFormat,
+				     ti->Data, xoffset, yoffset, zoffset,
+				     s->pitch, ti->ImageOffsets,
+				     width, height, depth, format, type,
+				     pixels, packing);
+		assert(ret);
+
+		nouveau_teximage_unmap(ctx, ti);
+		_mesa_unmap_teximage_pbo(ctx, packing);
+	}
+
+	if (!to_nouveau_texture(t)->dirty)
+		validate_teximage(ctx, t, level, xoffset, yoffset, zoffset,
+				  width, height, depth);
+}
+
+static void
 nouveau_texsubimage_3d(GLcontext *ctx, GLenum target, GLint level,
 		       GLint xoffset, GLint yoffset, GLint zoffset,
 		       GLint width, GLint height, GLint depth,
@@ -424,15 +464,9 @@ nouveau_texsubimage_3d(GLcontext *ctx, GLenum target, GLint level,
 		       struct gl_texture_object *t,
 		       struct gl_texture_image *ti)
 {
-	nouveau_teximage_map(ctx, ti);
-	_mesa_store_texsubimage3d(ctx, target, level, xoffset, yoffset, zoffset,
-				  width, height, depth, format, type, pixels,
-				  packing, t, ti);
-	nouveau_teximage_unmap(ctx, ti);
-
-	if (!to_nouveau_texture(t)->dirty)
-		validate_teximage(ctx, t, level, xoffset, yoffset, zoffset,
-				  width, height, depth);
+	nouveau_texsubimage(ctx, 3, target, level, xoffset, yoffset, zoffset,
+			    width, height, depth, format, type, pixels,
+			    packing, t, ti);
 }
 
 static void
@@ -444,15 +478,9 @@ nouveau_texsubimage_2d(GLcontext *ctx, GLenum target, GLint level,
 		       struct gl_texture_object *t,
 		       struct gl_texture_image *ti)
 {
-	nouveau_teximage_map(ctx, ti);
-	_mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset,
-				  width, height, format, type, pixels,
-				  packing, t, ti);
-	nouveau_teximage_unmap(ctx, ti);
-
-	if (!to_nouveau_texture(t)->dirty)
-		validate_teximage(ctx, t, level, xoffset, yoffset, 0,
-				  width, height, 1);
+	nouveau_texsubimage(ctx, 2, target, level, xoffset, yoffset, 0,
+			    width, height, 1, format, type, pixels,
+			    packing, t, ti);
 }
 
 static void
@@ -463,15 +491,9 @@ nouveau_texsubimage_1d(GLcontext *ctx, GLenum target, GLint level,
 		       struct gl_texture_object *t,
 		       struct gl_texture_image *ti)
 {
-	nouveau_teximage_map(ctx, ti);
-	_mesa_store_texsubimage1d(ctx, target, level, xoffset,
-				  width, format, type, pixels,
-				  packing, t, ti);
-	nouveau_teximage_unmap(ctx, ti);
-
-	if (!to_nouveau_texture(t)->dirty)
-		validate_teximage(ctx, t, level, xoffset, 0, 0,
-				  width, 1, 1);
+	nouveau_texsubimage(ctx, 1, target, level, xoffset, 0, 0,
+			    width, 1, 1, format, type, pixels,
+			    packing, t, ti);
 }
 
 static void

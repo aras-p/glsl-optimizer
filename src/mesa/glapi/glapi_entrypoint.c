@@ -56,7 +56,7 @@ extern const GLubyte gl_dispatch_functions_start[];
 #if defined(DISPATCH_FUNCTION_SIZE)
 
 _glapi_proc
-get_entrypoint_address(GLuint functionOffset)
+get_entrypoint_address(unsigned int functionOffset)
 {
    return (_glapi_proc) (gl_dispatch_functions_start
                          + (DISPATCH_FUNCTION_SIZE * functionOffset));
@@ -97,7 +97,7 @@ init_glapi_relocs( void )
  * We need assembly language in order to accomplish this.
  */
 _glapi_proc
-generate_entrypoint(GLuint functionOffset)
+generate_entrypoint(unsigned int functionOffset)
 {
    /* 32 is chosen as something of a magic offset.  For x86, the dispatch
     * at offset 32 is the first one where the offset in the
@@ -122,7 +122,7 @@ generate_entrypoint(GLuint functionOffset)
  * stub that was generated with the preceeding function.
  */
 void
-fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
+fill_in_entrypoint_offset(_glapi_proc entrypoint, unsigned int offset)
 {
    GLubyte * const code = (GLubyte *) entrypoint;
 

@@ -310,15 +310,13 @@ validate_sampler(struct nv50_context *nv50)
 	struct nouveau_stateobj *so;
 	unsigned nr = 0, i;
 
-	for (i = 0; i < PIPE_SHADER_TYPES; ++i)
+	for (i = 0; i < 3; ++i)
 		nr += nv50->sampler_nr[i];
 
-	so = so_new(1 + 5 * PIPE_SHADER_TYPES,
-		    1 + 19 * PIPE_SHADER_TYPES + nr * 8,
-		    PIPE_SHADER_TYPES * 2);
+	so = so_new(1 + 5 * 3, 1 + 19 * 3 + nr * 8, 3 * 2);
 
-	nv50_validate_samplers(nv50, so, PIPE_SHADER_VERTEX);
-	nv50_validate_samplers(nv50, so, PIPE_SHADER_FRAGMENT);
+	nv50_validate_samplers(nv50, so, 0); /* VP */
+	nv50_validate_samplers(nv50, so, 2); /* FP */
 
 	so_method(so, tesla, 0x1334, 1); /* flush TSC */
 	so_data  (so, 0);
@@ -437,7 +435,7 @@ nv50_state_validate(struct nv50_context *nv50, unsigned wait_dwords)
 	so_emit_reloc_markers(chan, nv50->state.hw[3]); /* vp */
 	so_emit_reloc_markers(chan, nv50->state.hw[4]); /* fp */
 	so_emit_reloc_markers(chan, nv50->state.hw[17]); /* vb */
-	so_emit_reloc_markers(chan, nv50->screen->static_init);
+	nv50_screen_relocs(nv50->screen);
 
 	/* No idea.. */
 	BEGIN_RING(chan, tesla, 0x142c, 1);

@@ -33,7 +33,6 @@
 #include "r300_fs.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
-#include "r300_state_inlines.h"
 #include "r300_vs.h"
 
 void r300_emit_blend_state(struct r300_context* r300,
@@ -146,10 +145,8 @@ static const float * get_shader_constant(
     struct rc_constant * constant,
     struct r300_constant_buffer * externals)
 {
-    struct r300_viewport_state* viewport =
-        (struct r300_viewport_state*)r300->viewport_state.state;
-    struct r300_textures_state* texstate =
-        (struct r300_textures_state*)r300->textures_state.state;
+    struct r300_viewport_state* viewport = r300->viewport_state.state;
+    struct r300_textures_state* texstate = r300->textures_state.state;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct pipe_texture *tex;
 
@@ -165,7 +162,7 @@ static const float * get_shader_constant(
                 /* Factor for converting rectangle coords to
                  * normalized coords. Should only show up on non-r500. */
                 case RC_STATE_R300_TEXRECT_FACTOR:
-                    tex = &texstate->textures[constant->u.State[1]]->tex;
+                    tex = texstate->fragment_sampler_views[constant->u.State[1]]->texture;
                     vec[0] = 1.0 / tex->width0;
                     vec[1] = 1.0 / tex->height0;
                     break;
@@ -189,13 +186,13 @@ static const float * get_shader_constant(
                     break;
 
                 default:
-                    debug_printf("r300: Implementation error: "
+                    fprintf(stderr, "r300: Implementation error: "
                         "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
             }
             break;
 
         default:
-            debug_printf("r300: Implementation error: "
+            fprintf(stderr, "r300: Implementation error: "
                 "Unhandled constant type %d\n", constant->Type);
     }
 
@@ -517,9 +514,9 @@ static void r300_emit_query_finish(struct r300_context *r300,
                     0, RADEON_GEM_DOMAIN_GTT, 0);
             break;
         default:
-            debug_printf("r300: Implementation error: Chipset reports %d"
+            fprintf(stderr, "r300: Implementation error: Chipset reports %d"
                     " pixel pipes!\n", caps->num_frag_pipes);
-            assert(0);
+            abort();
     }
 
     /* And, finally, reset it to normal... */
@@ -749,8 +746,9 @@ void r300_emit_textures_state(struct r300_context *r300,
             OUT_CS_REG(R300_TX_FORMAT2_0 + (i * 4), texstate->format[2]);
 
             OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-            OUT_CS_TEX_RELOC(allstate->textures[i], texstate->tile_config,
-                         RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
+            OUT_CS_TEX_RELOC((struct r300_texture *)allstate->fragment_sampler_views[i]->texture,
+                             texstate->tile_config,
+                             RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
         }
     }
     END_CS;
@@ -893,12 +891,6 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
 
     CS_LOCALS(r300);
 
-    if (!r300screen->caps->has_tcl) {
-        debug_printf("r300: Implementation error: emit_vs_state called,"
-                " but has_tcl is FALSE!\n");
-        return;
-    }
-
     BEGIN_CS(size);
     /* R300_VAP_PVS_CODE_CNTL_0
      * R300_VAP_PVS_CONST_CNTL
@@ -928,18 +920,9 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
 void r300_emit_vs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants)
 {
-    int i;
     struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    unsigned i;
     CS_LOCALS(r300);
-
-    if (!r300screen->caps->has_tcl) {
-        debug_printf("r300: Implementation error: emit_vs_constant_buffer called,"
-        " but has_tcl is FALSE!\n");
-        return;
-    }
-
-    if (constants->Count == 0)
-        return;
 
     BEGIN_CS(constants->Count * 4 + 3);
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
@@ -947,9 +930,9 @@ void r300_emit_vs_constant_buffer(struct r300_context* r300,
                R500_PVS_CONST_START : R300_PVS_CONST_START));
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, constants->Count * 4);
     for (i = 0; i < constants->Count; i++) {
-        const float * data = get_shader_constant(r300,
-                                                 &constants->Constants[i],
-                                                 &r300->shader_constants[PIPE_SHADER_VERTEX]);
+        const float *data = get_shader_constant(r300,
+                                                &constants->Constants[i],
+                                                &r300->shader_constants[PIPE_SHADER_VERTEX]);
         OUT_CS_32F(data[0]);
         OUT_CS_32F(data[1]);
         OUT_CS_32F(data[2]);
@@ -1043,9 +1026,11 @@ validate:
     }
     /* ...textures... */
     for (i = 0; i < texstate->count; i++) {
-        tex = texstate->textures[i];
-        if (!tex || !texstate->sampler_states[i])
+        if (!(texstate->tx_enable & (1 << i))) {
             continue;
+        }
+
+        tex = (struct r300_texture*)texstate->fragment_sampler_views[i]->texture;
         if (!r300_add_texture(r300->rws, tex,
 			      RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
@@ -1092,8 +1077,8 @@ validate:
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
             /* Well, hell. */
-            debug_printf("r300: Stuck in validation loop, gonna quit now.");
-            exit(1);
+            fprintf(stderr, "r300: Stuck in validation loop, gonna quit now.\n");
+            abort();
         }
         invalid = TRUE;
         goto validate;
@@ -1158,7 +1143,9 @@ void r300_emit_dirty_state(struct r300_context* r300)
 
     if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS) {
         struct r300_vertex_shader* vs = r300->vs_state.state;
-        r300_emit_vs_constant_buffer(r300, &vs->code.constants);
+        if (vs->code.constants.Count) {
+            r300_emit_vs_constant_buffer(r300, &vs->code.constants);
+        }
         r300->dirty_state &= ~R300_NEW_VERTEX_SHADER_CONSTANTS;
     }
 

@@ -189,7 +189,7 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
    LP_DBG(DEBUG_RAST, "%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
 
-   assert(rast->zsbuf.map);
+   /*assert(rast->zsbuf.map);*/
    if (!rast->zsbuf.map)
       return;
 
@@ -312,15 +312,16 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
          depth = lp_rast_depth_pointer(rast, tile_x + x, tile_y + y);
 
          /* run shader */
-         state->jit_function[0]( &state->jit_context,
-                                 tile_x + x, tile_y + y,
-                                 inputs->a0,
-                                 inputs->dadx,
-                                 inputs->dady,
-                                 color,
-                                 depth,
-                                 INT_MIN, INT_MIN, INT_MIN,
-                                 NULL, NULL, NULL );
+         state->jit_function[RAST_WHOLE]( &state->jit_context,
+                                          tile_x + x, tile_y + y,
+                                          inputs->facing,
+                                          inputs->a0,
+                                          inputs->dadx,
+                                          inputs->dady,
+                                          color,
+                                          depth,
+                                          INT_MIN, INT_MIN, INT_MIN,
+                                          NULL, NULL, NULL );
       }
    }
 }
@@ -375,15 +376,18 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
    assert(lp_check_alignment(inputs->step[2], 16));
 
    /* run shader */
-   state->jit_function[1]( &state->jit_context,
-                        x, y,
-                        inputs->a0,
-                        inputs->dadx,
-                        inputs->dady,
-                        color,
-                        depth,
-                        c1, c2, c3,
-                        inputs->step[0], inputs->step[1], inputs->step[2]);
+   state->jit_function[RAST_EDGE_TEST]( &state->jit_context,
+                                        x, y,
+                                        inputs->facing,
+                                        inputs->a0,
+                                        inputs->dadx,
+                                        inputs->dady,
+                                        color,
+                                        depth,
+                                        c1, c2, c3,
+                                        inputs->step[0],
+                                        inputs->step[1],
+                                        inputs->step[2]);
 }
 
 
@@ -487,18 +491,7 @@ lp_rast_fence(struct lp_rasterizer_task *task,
               const union lp_rast_cmd_arg arg)
 {
    struct lp_fence *fence = arg.fence;
-
-   pipe_mutex_lock( fence->mutex );
-
-   fence->count++;
-   assert(fence->count <= fence->rank);
-
-   LP_DBG(DEBUG_RAST, "%s count=%u rank=%u\n", __FUNCTION__,
-          fence->count, fence->rank);
-
-   pipe_condvar_signal( fence->signalled );
-
-   pipe_mutex_unlock( fence->mutex );
+   lp_fence_signal(fence);
 }
 
 

@@ -33,6 +33,7 @@
 #include "pipe/p_state.h"
 #include "util/u_pointer.h"
 #include "util/u_math.h"
+#include "state_tracker/st_api.h"
 
 #include "cso_cache/cso_hash.h"
 #include "cso_cache/cso_context.h"
@@ -54,9 +55,13 @@ struct st_framebuffer {
    struct st_renderbuffer *strb;
    struct st_renderbuffer *dsrb;
 
-   struct pipe_texture *alpha_mask;
+   struct pipe_sampler_view *alpha_mask_view;
 
-   struct pipe_texture *blend_texture;
+   struct pipe_sampler_view *blend_texture_view;
+
+
+   struct st_framebuffer_iface *iface;
+   enum st_attachment_type strb_att;
 
    void *privateData;
 };
@@ -84,6 +89,8 @@ enum dirty_state {
 
 struct vg_context
 {
+   struct st_context_iface iface;
+
    struct pipe_context *pipe;
 
    struct {
@@ -101,6 +108,7 @@ struct vg_context
    VGErrorCode _error;
 
    struct st_framebuffer *draw_buffer;
+   int32_t draw_buffer_invalid;
 
    struct cso_hash *owned_objects[VG_OBJECT_LAST];
 

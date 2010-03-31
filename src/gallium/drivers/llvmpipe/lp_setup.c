@@ -402,6 +402,20 @@ lp_setup_set_alpha_ref_value( struct lp_setup_context *setup,
 }
 
 void
+lp_setup_set_stencil_ref_values( struct lp_setup_context *setup,
+                                 const ubyte refs[2] )
+{
+   LP_DBG(DEBUG_SETUP, "%s %d %d\n", __FUNCTION__, refs[0], refs[1]);
+
+   if (setup->fs.current.jit_context.stencil_ref_front != refs[0] ||
+       setup->fs.current.jit_context.stencil_ref_back != refs[1]) {
+      setup->fs.current.jit_context.stencil_ref_front = refs[0];
+      setup->fs.current.jit_context.stencil_ref_back = refs[1];
+      setup->dirty |= LP_SETUP_NEW_FS;
+   }
+}
+
+void
 lp_setup_set_blend_color( struct lp_setup_context *setup,
                           const struct pipe_blend_color *blend_color )
 {
@@ -450,11 +464,12 @@ lp_setup_set_vertex_info( struct lp_setup_context *setup,
 
 
 /**
- * Called during state validation when LP_NEW_TEXTURE is set.
+ * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
  */
 void
-lp_setup_set_sampler_textures( struct lp_setup_context *setup,
-                               unsigned num, struct pipe_texture **texture)
+lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views)
 {
    unsigned i;
 
@@ -463,9 +478,10 @@ lp_setup_set_sampler_textures( struct lp_setup_context *setup,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct pipe_texture *tex = i < num ? texture[i] : NULL;
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      if(tex) {
+      if(view) {
+         struct pipe_texture *tex = view->texture;
          struct llvmpipe_texture *lp_tex = llvmpipe_texture(tex);
          struct lp_jit_texture *jit_tex;
          jit_tex = &setup->fs.current.jit_context.textures[i];
@@ -473,6 +489,12 @@ lp_setup_set_sampler_textures( struct lp_setup_context *setup,
          jit_tex->height = tex->height0;
          jit_tex->depth = tex->depth0;
          jit_tex->last_level = tex->last_level;
+
+         /* We're referencing the texture's internal data, so save a
+          * reference to it.
+          */
+         pipe_texture_reference(&setup->fs.current_tex[i], tex);
+
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level pointers */
             int j;
@@ -494,12 +516,6 @@ lp_setup_set_sampler_textures( struct lp_setup_context *setup,
                                                       PIPE_BUFFER_USAGE_CPU_READ);
             jit_tex->row_stride[0] = lp_tex->stride[0];
             assert(jit_tex->data[0]);
-         }
-
-         /* the scene references this texture */
-         {
-            struct lp_scene *scene = lp_setup_get_current_scene(setup);
-            lp_scene_texture_reference(scene, tex);
          }
       }
    }
@@ -635,6 +651,7 @@ lp_setup_update_state( struct lp_setup_context *setup )
           * the new, current state.  So allocate a new lp_rast_state object
           * and append it to the bin's setup data buffer.
           */
+         uint i;
          struct lp_rast_state *stored =
             (struct lp_rast_state *) lp_scene_alloc(scene, sizeof *stored);
          if(stored) {
@@ -647,6 +664,14 @@ lp_setup_update_state( struct lp_setup_context *setup )
             lp_scene_bin_state_command( scene,
 					lp_rast_set_state, 
 					lp_rast_arg_state(setup->fs.stored) );
+         }
+
+         /* The scene now references the textures in the rasterization
+          * state record.  Note that now.
+          */
+         for (i = 0; i < Elements(setup->fs.current_tex); i++) {
+            if (setup->fs.current_tex[i])
+               lp_scene_texture_reference(scene, setup->fs.current_tex[i]);
          }
       }
    }
@@ -663,7 +688,13 @@ lp_setup_update_state( struct lp_setup_context *setup )
 void 
 lp_setup_destroy( struct lp_setup_context *setup )
 {
+   uint i;
+
    reset_context( setup );
+
+   for (i = 0; i < Elements(setup->fs.current_tex); i++) {
+      pipe_texture_reference(&setup->fs.current_tex[i], NULL);
+   }
 
    pipe_buffer_reference(&setup->constants.current, NULL);
 

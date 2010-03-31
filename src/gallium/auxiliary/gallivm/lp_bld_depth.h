@@ -36,7 +36,7 @@
 #define LP_BLD_DEPTH_H
 
 
-#include "os/os_llvm.h"
+#include "gallivm/lp_bld.h"
 
  
 struct pipe_depth_state;
@@ -51,13 +51,16 @@ lp_depth_type(const struct util_format_description *format_desc,
 
 
 void
-lp_build_depth_test(LLVMBuilderRef builder,
-                    const struct pipe_depth_state *state,
-                    struct lp_type type,
-                    const struct util_format_description *format_desc,
-                    struct lp_build_mask_context *mask,
-                    LLVMValueRef src,
-                    LLVMValueRef dst_ptr);
+lp_build_depth_stencil_test(LLVMBuilderRef builder,
+                            const struct pipe_depth_state *depth,
+                            const struct pipe_stencil_state stencil[2],
+                            struct lp_type type,
+                            const struct util_format_description *format_desc,
+                            struct lp_build_mask_context *mask,
+                            LLVMValueRef stencil_refs[2],
+                            LLVMValueRef zs_src,
+                            LLVMValueRef zs_dst_ptr,
+                            LLVMValueRef facing);
 
 
 #endif /* !LP_BLD_DEPTH_H */

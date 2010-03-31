@@ -177,14 +177,23 @@ void softpipe_set_polygon_stipple( struct pipe_context *,
 void softpipe_set_scissor_state( struct pipe_context *,
                                  const struct pipe_scissor_state * );
 
-void softpipe_set_sampler_textures( struct pipe_context *,
-                                    unsigned num,
-                                    struct pipe_texture ** );
+void softpipe_set_sampler_views( struct pipe_context *,
+                                 unsigned num,
+                                 struct pipe_sampler_view ** );
 
 void
-softpipe_set_vertex_sampler_textures(struct pipe_context *,
-                                     unsigned num_textures,
-                                     struct pipe_texture **);
+softpipe_set_vertex_sampler_views(struct pipe_context *,
+                                  unsigned num,
+                                  struct pipe_sampler_view **);
+
+struct pipe_sampler_view *
+softpipe_create_sampler_view(struct pipe_context *pipe,
+                             struct pipe_texture *texture,
+                             const struct pipe_sampler_view *templ);
+
+void
+softpipe_sampler_view_destroy(struct pipe_context *pipe,
+                              struct pipe_sampler_view *view);
 
 void softpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );

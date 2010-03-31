@@ -292,7 +292,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
       int chan;
       for (chan = 0; chan < 4; chan++) {
          LLVMValueRef border_chan =
-            lp_build_const_scalar(bld->texel_type,
+            lp_build_const_vec(bld->texel_type,
                                   bld->static_state->border_color[chan]);
          texel[chan] = lp_build_select(&bld->texel_bld, use_border,
                                        border_chan, texel[chan]);
@@ -457,8 +457,8 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
-   LLVMValueRef two = lp_build_const_scalar(coord_bld->type, 2.0);
-   LLVMValueRef half = lp_build_const_scalar(coord_bld->type, 0.5);
+   LLVMValueRef two = lp_build_const_vec(coord_bld->type, 2.0);
+   LLVMValueRef half = lp_build_const_vec(coord_bld->type, 0.5);
    LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
    LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
    LLVMValueRef length_f_minus_one = lp_build_sub(coord_bld, length_f, coord_bld->one);
@@ -512,7 +512,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       else {
          LLVMValueRef min, max;
          /* clamp to [0.5, length - 0.5] */
-         min = lp_build_const_scalar(coord_bld->type, 0.5F);
+         min = lp_build_const_vec(coord_bld->type, 0.5F);
          max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
       }
@@ -533,7 +533,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          if (bld->static_state->normalized_coords) {
             /* min = -1.0 / (2 * length) = -0.5 / length */
             min = lp_build_mul(coord_bld,
-                               lp_build_const_scalar(coord_bld->type, -0.5F),
+                               lp_build_const_vec(coord_bld->type, -0.5F),
                                lp_build_rcp(coord_bld, length_f));
             /* max = 1.0 - min */
             max = lp_build_sub(coord_bld, coord_bld->one, min);
@@ -545,7 +545,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          }
          else {
             /* clamp to [-0.5, length + 0.5] */
-            min = lp_build_const_scalar(coord_bld->type, -0.5F);
+            min = lp_build_const_vec(coord_bld->type, -0.5F);
             max = lp_build_sub(coord_bld, length_f, min);
             coord = lp_build_clamp(coord_bld, coord, min, max);
             coord = lp_build_sub(coord_bld, coord, half);
@@ -620,7 +620,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
          LLVMValueRef min, max;
          /* min = -1.0 / (2 * length) = -0.5 / length */
          min = lp_build_mul(coord_bld,
-                            lp_build_const_scalar(coord_bld->type, -0.5F),
+                            lp_build_const_vec(coord_bld->type, -0.5F),
                             lp_build_rcp(coord_bld, length_f));
          /* max = 1.0 - min */
          max = lp_build_sub(coord_bld, coord_bld->one, min);
@@ -665,7 +665,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
-   LLVMValueRef two = lp_build_const_scalar(coord_bld->type, 2.0);
+   LLVMValueRef two = lp_build_const_vec(coord_bld->type, 2.0);
    LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
    LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
    LLVMValueRef length_f_minus_one = lp_build_sub(coord_bld, length_f, coord_bld->one);
@@ -708,7 +708,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          }
          else {
             /* clamp to [0.5, length - 0.5] */
-            min = lp_build_const_scalar(coord_bld->type, 0.5F);
+            min = lp_build_const_vec(coord_bld->type, 0.5F);
             max = lp_build_sub(coord_bld, length_f, min);
          }
          /* coord = clamp(coord, min, max) */
@@ -724,7 +724,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          if (bld->static_state->normalized_coords) {
             /* min = -1.0 / (2 * length) = -0.5 / length */
             min = lp_build_mul(coord_bld,
-                               lp_build_const_scalar(coord_bld->type, -0.5F),
+                               lp_build_const_vec(coord_bld->type, -0.5F),
                                lp_build_rcp(coord_bld, length_f));
             /* max = length - min */
             max = lp_build_sub(coord_bld, length_f, min);
@@ -733,7 +733,7 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
          }
          else {
             /* clamp to [-0.5, length + 0.5] */
-            min = lp_build_const_scalar(coord_bld->type, -0.5F);
+            min = lp_build_const_vec(coord_bld->type, -0.5F);
             max = lp_build_sub(coord_bld, length_f, min);
          }
          /* coord = clamp(coord, min, max) */
@@ -1226,7 +1226,7 @@ static LLVMValueRef
 lp_build_cube_ima(struct lp_build_context *coord_bld, LLVMValueRef coord)
 {
    /* ima = -0.5 / abs(coord); */
-   LLVMValueRef negHalf = lp_build_const_scalar(coord_bld->type, -0.5);
+   LLVMValueRef negHalf = lp_build_const_vec(coord_bld->type, -0.5);
    LLVMValueRef absCoord = lp_build_abs(coord_bld, coord);
    LLVMValueRef ima = lp_build_mul(coord_bld, negHalf,
                                    lp_build_rcp(coord_bld, absCoord));
@@ -1246,7 +1246,7 @@ lp_build_cube_coord(struct lp_build_context *coord_bld,
                     LLVMValueRef coord, LLVMValueRef ima)
 {
    /* return negate(coord) * ima * sign + 0.5; */
-   LLVMValueRef half = lp_build_const_scalar(coord_bld->type, 0.5);
+   LLVMValueRef half = lp_build_const_vec(coord_bld->type, 0.5);
    LLVMValueRef res;
 
    assert(negate_coord == +1 || negate_coord == -1);
@@ -1708,7 +1708,7 @@ lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
                           LLVMValueRef packed,
                           LLVMValueRef *rgba)
 {
-   LLVMValueRef mask = lp_build_int_const_scalar(dst_type, 0xff);
+   LLVMValueRef mask = lp_build_const_int_vec(dst_type, 0xff);
    unsigned chan;
 
    /* Decode the input vector components */
@@ -1720,7 +1720,7 @@ lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
       input = packed;
 
       if(start)
-         input = LLVMBuildLShr(builder, input, lp_build_int_const_scalar(dst_type, start), "");
+         input = LLVMBuildLShr(builder, input, lp_build_const_int_vec(dst_type, start), "");
 
       if(stop < 32)
          input = LLVMBuildAnd(builder, input, mask, "");
@@ -1782,17 +1782,17 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    t = LLVMBuildFPToSI(builder, t, i32_vec_type, "");
 
    /* subtract 0.5 (add -128) */
-   i32_c128 = lp_build_int_const_scalar(i32.type, -128);
+   i32_c128 = lp_build_const_int_vec(i32.type, -128);
    s = LLVMBuildAdd(builder, s, i32_c128, "");
    t = LLVMBuildAdd(builder, t, i32_c128, "");
 
    /* compute floor (shift right 8) */
-   i32_c8 = lp_build_int_const_scalar(i32.type, 8);
+   i32_c8 = lp_build_const_int_vec(i32.type, 8);
    s_ipart = LLVMBuildAShr(builder, s, i32_c8, "");
    t_ipart = LLVMBuildAShr(builder, t, i32_c8, "");
 
    /* compute fractional part (AND with 0xff) */
-   i32_c255 = lp_build_int_const_scalar(i32.type, 255);
+   i32_c255 = lp_build_const_int_vec(i32.type, 255);
    s_fpart = LLVMBuildAnd(builder, s, i32_c255, "");
    t_fpart = LLVMBuildAnd(builder, t, i32_c255, "");
 
@@ -1959,7 +1959,7 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
    }
 
    assert(res);
-   res = lp_build_mul(texel_bld, res, lp_build_const_scalar(texel_bld->type, 0.25));
+   res = lp_build_mul(texel_bld, res, lp_build_const_vec(texel_bld->type, 0.25));
 
    /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
    for(chan = 0; chan < 3; ++chan)

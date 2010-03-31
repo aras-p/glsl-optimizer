@@ -40,6 +40,7 @@
 
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_sampler.h"
 
 
 #include "asm_filters.h"
@@ -53,7 +54,7 @@ struct filter_info {
    const void *const_buffer;
    VGint const_buffer_len;
    VGTilingMode tiling_mode;
-   struct pipe_texture *extra_texture;
+   struct pipe_sampler_view *extra_texture_view;
 };
 
 static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
@@ -91,13 +92,35 @@ static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
    return tex;
 }
 
+static INLINE struct pipe_sampler_view *create_texture_1d_view(struct vg_context *ctx,
+                                                               const VGuint *color_data,
+                                                               const VGint color_data_len)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_texture *texture;
+   struct pipe_sampler_view view_templ;
+   struct pipe_sampler_view *view;
+
+   texture = create_texture_1d(ctx, color_data, color_data_len);
+
+   if (!texture)
+      return NULL;
+
+   u_sampler_view_default_template(&view_templ, texture, texture->format);
+   view = pipe->create_sampler_view(pipe, texture, &view_templ);
+   /* want the texture to go away if the view is freed */
+   pipe_texture_reference(&texture, NULL);
+
+   return view;
+}
+
 static INLINE struct pipe_surface * setup_framebuffer(struct vg_image *dst)
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_framebuffer_state fb;
    struct pipe_surface *dst_surf = pipe->screen->get_tex_surface(
-      pipe->screen, dst->texture, 0, 0, 0,
+      pipe->screen, dst->sampler_view->texture, 0, 0, 0,
       PIPE_BUFFER_USAGE_GPU_WRITE);
 
    /* drawing dest */
@@ -168,7 +191,7 @@ static void setup_constant_buffer(struct vg_context *ctx, const void *buffer,
 static void setup_samplers(struct vg_context *ctx, struct filter_info *info)
 {
    struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-   struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_state sampler[3];
    int num_samplers = 0;
    int num_textures = 0;
@@ -177,10 +200,10 @@ static void setup_samplers(struct vg_context *ctx, struct filter_info *info)
    samplers[1] = NULL;
    samplers[2] = NULL;
    samplers[3] = NULL;
-   textures[0] = NULL;
-   textures[1] = NULL;
-   textures[2] = NULL;
-   textures[3] = NULL;
+   sampler_views[0] = NULL;
+   sampler_views[1] = NULL;
+   sampler_views[2] = NULL;
+   sampler_views[3] = NULL;
 
    memset(&sampler[0], 0, sizeof(struct pipe_sampler_state));
    sampler[0].wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -215,21 +238,21 @@ static void setup_samplers(struct vg_context *ctx, struct filter_info *info)
    }
 
    samplers[0] = &sampler[0];
-   textures[0] = info->src->texture;
+   sampler_views[0] = info->src->sampler_view;
    ++num_samplers;
    ++num_textures;
 
-   if (info->extra_texture) {
+   if (info->extra_texture_view) {
       memcpy(&sampler[1], &sampler[0], sizeof(struct pipe_sampler_state));
       samplers[1] = &sampler[1];
-      textures[1] = info->extra_texture;
+      sampler_views[1] = info->extra_texture_view;
       ++num_samplers;
       ++num_textures;
    }
 
 
    cso_set_samplers(ctx->cso_context, num_samplers, (const struct pipe_sampler_state **)samplers);
-   cso_set_sampler_textures(ctx->cso_context, num_textures, textures);
+   cso_set_fragment_sampler_views(ctx->cso_context, num_textures, sampler_views);
 }
 
 static struct vg_shader * setup_color_matrix(struct vg_context *ctx, void *user_data)
@@ -308,7 +331,7 @@ static void execute_filter(struct vg_context *ctx,
    cso_save_viewport(ctx->cso_context);
    cso_save_blend(ctx->cso_context);
    cso_save_samplers(ctx->cso_context);
-   cso_save_sampler_textures(ctx->cso_context);
+   cso_save_fragment_sampler_views(ctx->cso_context);
 
    dst_surf = setup_framebuffer(info->dst);
    setup_viewport(info->dst);
@@ -318,7 +341,7 @@ static void execute_filter(struct vg_context *ctx,
    setup_samplers(ctx, info);
 
    renderer_draw_texture(ctx->renderer,
-                         info->src->texture,
+                         info->src->sampler_view->texture,
                          info->dst->x, info->dst->y,
                          info->dst->x + info->dst->width,
                          info->dst->y + info->dst->height,
@@ -331,7 +354,7 @@ static void execute_filter(struct vg_context *ctx,
    cso_restore_viewport(ctx->cso_context);
    cso_restore_blend(ctx->cso_context);
    cso_restore_samplers(ctx->cso_context);
-   cso_restore_sampler_textures(ctx->cso_context);
+   cso_restore_fragment_sampler_views(ctx->cso_context);
 
    vg_shader_destroy(ctx, shader);
 
@@ -369,7 +392,7 @@ void vgColorMatrix(VGImage dst, VGImage src,
    info.const_buffer = matrix;
    info.const_buffer_len = 20 * sizeof(VGfloat);
    info.tiling_mode = VG_TILE_PAD;
-   info.extra_texture = 0;
+   info.extra_texture_view = NULL;
    execute_filter(ctx, &info);
 }
 
@@ -479,7 +502,7 @@ void vgConvolve(VGImage dst, VGImage src,
    info.const_buffer = buffer;
    info.const_buffer_len = buffer_len * sizeof(VGfloat);
    info.tiling_mode = tilingMode;
-   info.extra_texture = 0;
+   info.extra_texture_view = NULL;
    execute_filter(ctx, &info);
 
    free(buffer);
@@ -669,7 +692,7 @@ void vgGaussianBlur(VGImage dst, VGImage src,
    info.const_buffer = buffer;
    info.const_buffer_len = buffer_len * sizeof(VGfloat);
    info.tiling_mode = tilingMode;
-   info.extra_texture = 0;
+   info.extra_texture_view = NULL;
    execute_filter(ctx, &info);
 
    free(buffer);
@@ -688,7 +711,7 @@ void vgLookup(VGImage dst, VGImage src,
    struct vg_image *d, *s;
    VGuint color_data[256];
    VGint i;
-   struct pipe_texture *lut_texture;
+   struct pipe_sampler_view *lut_texture_view;
    VGfloat buffer[4];
    struct filter_info info;
 
@@ -714,7 +737,7 @@ void vgLookup(VGImage dst, VGImage src,
       color_data[i] = blueLUT[i] << 24 | greenLUT[i] << 16 |
                       redLUT[i]  <<  8 | alphaLUT[i];
    }
-   lut_texture = create_texture_1d(ctx, color_data, 255);
+   lut_texture_view = create_texture_1d_view(ctx, color_data, 255);
 
    buffer[0] = 0.f;
    buffer[1] = 0.f;
@@ -728,11 +751,11 @@ void vgLookup(VGImage dst, VGImage src,
    info.const_buffer = buffer;
    info.const_buffer_len = 4 * sizeof(VGfloat);
    info.tiling_mode = VG_TILE_PAD;
-   info.extra_texture = lut_texture;
+   info.extra_texture_view = lut_texture_view;
 
    execute_filter(ctx, &info);
 
-   pipe_texture_reference(&lut_texture, NULL);
+   pipe_sampler_view_reference(&lut_texture_view, NULL);
 }
 
 void vgLookupSingle(VGImage dst, VGImage src,
@@ -743,7 +766,7 @@ void vgLookupSingle(VGImage dst, VGImage src,
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_image *d, *s;
-   struct pipe_texture *lut_texture;
+   struct pipe_sampler_view *lut_texture_view;
    VGfloat buffer[4];
    struct filter_info info;
    VGuint color_data[256];
@@ -783,7 +806,7 @@ void vgLookupSingle(VGImage dst, VGImage src,
       color_data[i] = blue << 24 | green << 16 |
                       red  <<  8 | alpha;
    }
-   lut_texture = create_texture_1d(ctx, color_data, 256);
+   lut_texture_view = create_texture_1d_view(ctx, color_data, 256);
 
    buffer[0] = 0.f;
    buffer[1] = 0.f;
@@ -797,9 +820,9 @@ void vgLookupSingle(VGImage dst, VGImage src,
    info.const_buffer = buffer;
    info.const_buffer_len = 4 * sizeof(VGfloat);
    info.tiling_mode = VG_TILE_PAD;
-   info.extra_texture = lut_texture;
+   info.extra_texture_view = lut_texture_view;
 
    execute_filter(ctx, &info);
 
-   pipe_texture_reference(&lut_texture, NULL);
+   pipe_sampler_view_reference(&lut_texture_view, NULL);
 }

@@ -111,6 +111,7 @@ struct lp_setup_context
 
       const struct lp_rast_state *stored; /**< what's in the scene */
       struct lp_rast_state current;  /**< currently set state */
+      struct pipe_texture *current_tex[PIPE_MAX_SAMPLERS];
    } fs;
 
    /** fragment shader constants */

@@ -475,7 +475,7 @@ emit_store(
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
-      value = lp_build_max(&bld->base, value, lp_build_const_scalar(bld->base.type, -1.0));
+      value = lp_build_max(&bld->base, value, lp_build_const_vec(bld->base.type, -1.0));
       value = lp_build_min(&bld->base, value, bld->base.one);
       break;
 
@@ -651,32 +651,40 @@ emit_declaration(
    unsigned first = decl->Range.First;
    unsigned last = decl->Range.Last;
    unsigned idx, i;
+   LLVMBasicBlockRef current_block =
+      LLVMGetInsertBlock(bld->base.builder);
+   LLVMBasicBlockRef first_block =
+      LLVMGetEntryBasicBlock(
+         LLVMGetBasicBlockParent(current_block));
+   LLVMValueRef first_inst =
+      LLVMGetFirstInstruction(first_block);
+
+   /* we want alloca's to be the first instruction
+    * in the function so we need to rewind the builder
+    * to the very beginning */
+   LLVMPositionBuilderBefore(bld->base.builder,
+                             first_inst);
 
    for (idx = first; idx <= last; ++idx) {
-      boolean ok;
-
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->temps[idx][i] = lp_build_alloca(&bld->base);
-         ok = TRUE;
          break;
 
       case TGSI_FILE_OUTPUT:
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->outputs[idx][i] = lp_build_alloca(&bld->base);
-         ok = TRUE;
          break;
 
       default:
          /* don't need to declare other vars */
-         ok = TRUE;
+         break;
       }
-
-      if (!ok)
-         return FALSE;
    }
 
+   LLVMPositionBuilderAtEnd(bld->base.builder,
+                            current_block);
    return TRUE;
 }
 
@@ -996,7 +1004,7 @@ emit_instruction(
          src0 = emit_fetch( bld, inst, 0, chan_index );
          src1 = emit_fetch( bld, inst, 1, chan_index );
          src2 = emit_fetch( bld, inst, 2, chan_index );
-         tmp1 = lp_build_const_scalar(bld->base.type, 0.5);
+         tmp1 = lp_build_const_vec(bld->base.type, 0.5);
          tmp0 = lp_build_cmp( &bld->base, PIPE_FUNC_GREATER, src2, tmp1);
          dst0[chan_index] = lp_build_select( &bld->base, tmp0, src0, src1 );
       }
@@ -1713,7 +1721,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
             assert(num_immediates < LP_MAX_IMMEDIATES);
             for( i = 0; i < size; ++i )
                bld.immediates[num_immediates][i] =
-                  lp_build_const_scalar(type, parse.FullToken.FullImmediate.u[i].Float);
+                  lp_build_const_vec(type, parse.FullToken.FullImmediate.u[i].Float);
             for( i = size; i < 4; ++i )
                bld.immediates[num_immediates][i] = bld.base.undef;
             num_immediates++;

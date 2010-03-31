@@ -41,7 +41,13 @@
 #define DRI_INTERFACE_H
 
 /* For archs with no drm.h */
-#if !defined(__APPLE__) && !defined(__CYGWIN__) && !defined(__GNU__)
+#if defined(__APPLE__) || defined(__CYGWIN__) || defined(__GNU__)
+#ifndef __NOT_HAVE_DRM_H
+#define __NOT_HAVE_DRM_H
+#endif
+#endif
+
+#ifndef __NOT_HAVE_DRM_H
 #include <drm.h>
 #else
 typedef unsigned int drm_context_t;
@@ -410,15 +416,15 @@ struct __DRIswrastLoaderExtensionRec {
      * Put image to drawable
      */
     void (*putImage)(__DRIdrawable *drawable, int op,
-		     int x, int y, int width, int height, char *data,
-		     void *loaderPrivate);
+		     int x, int y, int width, int height,
+		     char *data, void *loaderPrivate);
 
     /**
-     * Get image from drawable
+     * Get image from readable
      */
-    void (*getImage)(__DRIdrawable *drawable,
-		     int x, int y, int width, int height, char *data,
-		     void *loaderPrivate);
+    void (*getImage)(__DRIdrawable *readable,
+		     int x, int y, int width, int height,
+		     char *data, void *loaderPrivate);
 };
 
 /**

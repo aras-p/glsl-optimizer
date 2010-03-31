@@ -214,13 +214,13 @@ struct pipe_context {
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );
 
-   void (*set_fragment_sampler_textures)(struct pipe_context *,
-                                         unsigned num_textures,
-                                         struct pipe_texture **);
+   void (*set_fragment_sampler_views)(struct pipe_context *,
+                                      unsigned num_views,
+                                      struct pipe_sampler_view **);
 
-   void (*set_vertex_sampler_textures)(struct pipe_context *,
-                                       unsigned num_textures,
-                                       struct pipe_texture **);
+   void (*set_vertex_sampler_views)(struct pipe_context *,
+                                    unsigned num_views,
+                                    struct pipe_sampler_view **);
 
    void (*set_vertex_buffers)( struct pipe_context *,
                                unsigned num_buffers,
@@ -307,6 +307,15 @@ struct pipe_context {
    unsigned int (*is_buffer_referenced)(struct pipe_context *pipe,
 					struct pipe_buffer *buf);
 
+   /**
+    * Create a view on a texture to be used by a shader stage.
+    */
+   struct pipe_sampler_view * (*create_sampler_view)(struct pipe_context *ctx,
+                                                     struct pipe_texture *texture,
+                                                     const struct pipe_sampler_view *templat);
+
+   void (*sampler_view_destroy)(struct pipe_context *ctx,
+                                struct pipe_sampler_view *view);
 
 
    /**

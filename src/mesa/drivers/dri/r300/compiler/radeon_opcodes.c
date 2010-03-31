@@ -75,14 +75,14 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 	{
 		.Opcode = RC_OPCODE_DDX,
 		.Name = "DDX",
-		.NumSrcRegs = 1,
+		.NumSrcRegs = 2,
 		.HasDstReg = 1,
 		.IsComponentwise = 1
 	},
 	{
 		.Opcode = RC_OPCODE_DDY,
 		.Name = "DDY",
-		.NumSrcRegs = 1,
+		.NumSrcRegs = 2,
 		.HasDstReg = 1,
 		.IsComponentwise = 1
 	},

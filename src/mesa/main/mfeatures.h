@@ -68,62 +68,83 @@
  * enabled or not.
  */
 
-#ifdef IN_DRI_DRIVER
-#define FEATURE_remap_table 1
-#else
-#define FEATURE_remap_table 0
+#ifndef FEATURE_ES1
+#define FEATURE_ES1 0
+#endif
+#ifndef FEATURE_ES2
+#define FEATURE_ES2 0
 #endif
 
-#define FEATURE_accum  _HAVE_FULL_GL
-#define FEATURE_arrayelt  _HAVE_FULL_GL
-#define FEATURE_attrib_stack  _HAVE_FULL_GL
+#define FEATURE_ES (FEATURE_ES1 || FEATURE_ES2)
+
+#ifndef FEATURE_GL
+#define FEATURE_GL !FEATURE_ES
+#endif
+
+#ifdef IN_DRI_DRIVER
+#define FEATURE_remap_table               1
+#else
+#define FEATURE_remap_table               0
+#endif
+
+#define FEATURE_dispatch                  1
+#define FEATURE_texgen                    1
+#define FEATURE_userclip                  1
+
+#define FEATURE_accum                     FEATURE_GL
+#define FEATURE_arrayelt                  FEATURE_GL
+#define FEATURE_attrib_stack              FEATURE_GL
 /* this disables vtxfmt, api_loopback, and api_noop completely */
-#define FEATURE_beginend  _HAVE_FULL_GL
-#define FEATURE_colortable  _HAVE_FULL_GL
-#define FEATURE_convolve  _HAVE_FULL_GL
-#define FEATURE_dispatch  _HAVE_FULL_GL
-#define FEATURE_dlist  (_HAVE_FULL_GL && FEATURE_arrayelt && FEATURE_beginend)
-#define FEATURE_draw_read_buffer  _HAVE_FULL_GL
-#define FEATURE_drawpix  _HAVE_FULL_GL
-#define FEATURE_evaluators  _HAVE_FULL_GL
-#define FEATURE_feedback  _HAVE_FULL_GL
-#define FEATURE_fixedpt 0
-#define FEATURE_histogram  _HAVE_FULL_GL
-#define FEATURE_pixel_transfer  _HAVE_FULL_GL
-#define FEATURE_point_size_array 0
-#define FEATURE_queryobj  _HAVE_FULL_GL
-#define FEATURE_rastpos  _HAVE_FULL_GL
-#define FEATURE_texgen  _HAVE_FULL_GL
-#define FEATURE_texture_fxt1  _HAVE_FULL_GL
-#define FEATURE_texture_s3tc  _HAVE_FULL_GL
-#define FEATURE_userclip  _HAVE_FULL_GL
-#define FEATURE_vertex_array_byte 0
-#define FEATURE_es2_glsl 0
+#define FEATURE_beginend                  FEATURE_GL
+#define FEATURE_colortable                FEATURE_GL
+#define FEATURE_convolve                  FEATURE_GL
+#define FEATURE_dlist                     (FEATURE_GL && FEATURE_arrayelt && FEATURE_beginend)
+#define FEATURE_draw_read_buffer          FEATURE_GL
+#define FEATURE_drawpix                   FEATURE_GL
+#define FEATURE_evaluators                FEATURE_GL
+#define FEATURE_feedback                  FEATURE_GL
+#define FEATURE_histogram                 FEATURE_GL
+#define FEATURE_pixel_transfer            FEATURE_GL
+#define FEATURE_queryobj                  FEATURE_GL
+#define FEATURE_rastpos                   FEATURE_GL
+#define FEATURE_texture_fxt1              FEATURE_GL
+#define FEATURE_texture_s3tc              FEATURE_GL
 
-#define FEATURE_ARB_fragment_program  _HAVE_FULL_GL
-#define FEATURE_ARB_framebuffer_object  _HAVE_FULL_GL
-#define FEATURE_ARB_map_buffer_range  _HAVE_FULL_GL
-#define FEATURE_ARB_pixel_buffer_object  _HAVE_FULL_GL
-#define FEATURE_ARB_vertex_buffer_object  _HAVE_FULL_GL
-#define FEATURE_ARB_vertex_program  _HAVE_FULL_GL
-#define FEATURE_ARB_vertex_shader _HAVE_FULL_GL
-#define FEATURE_ARB_fragment_shader _HAVE_FULL_GL
-#define FEATURE_ARB_shader_objects (FEATURE_ARB_vertex_shader || FEATURE_ARB_fragment_shader)
-#define FEATURE_ARB_shading_language_100 FEATURE_ARB_shader_objects
-#define FEATURE_ARB_shading_language_120 FEATURE_ARB_shader_objects
-#define FEATURE_ARB_sync _HAVE_FULL_GL
+#define FEATURE_extra_context_init        FEATURE_ES
+#define FEATURE_fixedpt                   FEATURE_ES
+#define FEATURE_point_size_array          FEATURE_ES
+#define FEATURE_vertex_array_byte         FEATURE_ES
 
-#define FEATURE_EXT_framebuffer_blit _HAVE_FULL_GL
-#define FEATURE_EXT_framebuffer_object _HAVE_FULL_GL
-#define FEATURE_EXT_pixel_buffer_object  _HAVE_FULL_GL
-#define FEATURE_APPLE_object_purgeable _HAVE_FULL_GL
-#define FEATURE_EXT_texture_sRGB _HAVE_FULL_GL
-#define FEATURE_ATI_fragment_shader _HAVE_FULL_GL
-#define FEATURE_NV_fence  _HAVE_FULL_GL
-#define FEATURE_NV_fragment_program  _HAVE_FULL_GL
-#define FEATURE_NV_vertex_program  _HAVE_FULL_GL
+#define FEATURE_es2_glsl                  FEATURE_ES2
 
-#define FEATURE_OES_EGL_image _HAVE_FULL_GL
+#define FEATURE_ARB_fragment_program      1
+#define FEATURE_ARB_vertex_program        1
+#define FEATURE_ARB_vertex_shader         1
+#define FEATURE_ARB_fragment_shader       1
+#define FEATURE_ARB_shader_objects        (FEATURE_ARB_vertex_shader || FEATURE_ARB_fragment_shader)
+#define FEATURE_ARB_shading_language_100  FEATURE_ARB_shader_objects
+#define FEATURE_ARB_shading_language_120  FEATURE_ARB_shader_objects
 
+#define FEATURE_ARB_framebuffer_object    (FEATURE_GL && FEATURE_EXT_framebuffer_object)
+#define FEATURE_ARB_map_buffer_range      FEATURE_GL
+#define FEATURE_ARB_pixel_buffer_object   (FEATURE_GL && FEATURE_EXT_pixel_buffer_object)
+#define FEATURE_ARB_sync                  FEATURE_GL
+#define FEATURE_ARB_vertex_buffer_object  1
+
+#define FEATURE_EXT_framebuffer_blit      FEATURE_GL
+#define FEATURE_EXT_framebuffer_object    1
+#define FEATURE_EXT_pixel_buffer_object   1
+#define FEATURE_EXT_texture_sRGB          FEATURE_GL
+
+#define FEATURE_APPLE_object_purgeable    FEATURE_GL
+#define FEATURE_ATI_fragment_shader       FEATURE_GL
+#define FEATURE_NV_fence                  FEATURE_GL
+#define FEATURE_NV_fragment_program       FEATURE_GL
+#define FEATURE_NV_vertex_program         FEATURE_GL
+
+#define FEATURE_OES_EGL_image             1
+#define FEATURE_OES_draw_texture          FEATURE_ES1
+#define FEATURE_OES_framebuffer_object    FEATURE_ES
+#define FEATURE_OES_mapbuffer             FEATURE_ES
 
 #endif /* FEATURES_H */

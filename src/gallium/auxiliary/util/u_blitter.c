@@ -45,6 +45,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_pack_color.h"
 #include "util/u_rect.h"
+#include "util/u_sampler.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_texture.h"
 
@@ -96,6 +97,8 @@ struct blitter_context_priv
    /* Rasterizer state. */
    void *rs_state;
 
+   struct pipe_sampler_view *sampler_view;
+
    /* Viewport state. */
    struct pipe_viewport_state viewport;
 
@@ -127,7 +130,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->blitter.saved_vs = INVALID_PTR;
    ctx->blitter.saved_velem_state = INVALID_PTR;
    ctx->blitter.saved_fb_state.nr_cbufs = ~0;
-   ctx->blitter.saved_num_textures = ~0;
+   ctx->blitter.saved_num_sampler_views = ~0;
    ctx->blitter.saved_num_sampler_states = ~0;
 
    /* blend state objects */
@@ -252,6 +255,10 @@ void util_blitter_destroy(struct blitter_context *blitter)
       if (ctx->sampler_state[i])
          pipe->delete_sampler_state(pipe, ctx->sampler_state[i]);
 
+   if (ctx->sampler_view) {
+      pipe_sampler_view_reference(&ctx->sampler_view, NULL);
+   }
+
    pipe_buffer_reference(&ctx->vbuf, NULL);
    FREE(ctx);
 }
@@ -305,11 +312,11 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
       ctx->blitter.saved_num_sampler_states = ~0;
    }
 
-   if (ctx->blitter.saved_num_textures != ~0) {
-      pipe->set_fragment_sampler_textures(pipe,
-                                          ctx->blitter.saved_num_textures,
-                                          ctx->blitter.saved_textures);
-      ctx->blitter.saved_num_textures = ~0;
+   if (ctx->blitter.saved_num_sampler_views != ~0) {
+      pipe->set_fragment_sampler_views(pipe,
+                                       ctx->blitter.saved_num_sampler_views,
+                                       ctx->blitter.saved_sampler_views);
+      ctx->blitter.saved_num_sampler_views = ~0;
    }
 }
 
@@ -621,9 +628,10 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_framebuffer_state fb_state;
+   struct pipe_sampler_view viewTempl, *view;
 
    assert(blitter->saved_fb_state.nr_cbufs != ~0);
-   assert(blitter->saved_num_textures != ~0);
+   assert(blitter->saved_num_sampler_views != ~0);
    assert(blitter->saved_num_sampler_states != ~0);
    assert(src->texture->target < PIPE_MAX_TEXTURE_TYPES);
 
@@ -651,12 +659,24 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
       fb_state.zsbuf = 0;
    }
 
+   u_sampler_view_default_template(&viewTempl,
+                                   src->texture,
+                                   src->texture->format);
+   view = pipe->create_sampler_view(pipe,
+                                    src->texture,
+                                    &viewTempl);
+
+   if (ctx->sampler_view) {
+      pipe_sampler_view_reference(&ctx->sampler_view, NULL);
+   }
+   ctx->sampler_view = view;
+
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_vs_state(pipe, ctx->vs_tex);
    pipe->bind_fragment_sampler_states(pipe, 1,
       blitter_get_sampler_state(ctx, src->level));
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
-   pipe->set_fragment_sampler_textures(pipe, 1, &src->texture);
+   pipe->set_fragment_sampler_views(pipe, 1, &view);
    pipe->set_framebuffer_state(pipe, &fb_state);
 
    /* set texture coordinates */

@@ -393,6 +393,8 @@
 #define glEdgeFlagPointerListIBM		MANGLE(EdgeFlagPointerListIBM)
 #define glEdgeFlagPointer		MANGLE(EdgeFlagPointer)
 #define glEdgeFlagv		MANGLE(EdgeFlagv)
+#define glEGLImageTargetRenderbufferStorageOES		MANGLE(EGLImageTargetRenderbufferStorageOES)
+#define glEGLImageTargetTexture2DOES		MANGLE(EGLImageTargetTexture2DOES)
 #define glElementPointerAPPLE		MANGLE(ElementPointerAPPLE)
 #define glElementPointerATI		MANGLE(ElementPointerATI)
 #define glEnableClientStateIndexedEXT		MANGLE(EnableClientStateIndexedEXT)

@@ -85,6 +85,18 @@ vbo_deinit_array(struct nouveau_array_state *a)
 	a->fields = 0;
 }
 
+static int
+get_array_stride(GLcontext *ctx, const struct gl_client_array *a)
+{
+	struct nouveau_render_state *render = to_render_state(ctx);
+
+	if (render->mode == VBO && !_mesa_is_bufferobj(a->BufferObj))
+		/* Pack client buffers. */
+		return align(_mesa_sizeof_type(a->Type) * a->Size, 4);
+	else
+		return a->StrideB;
+}
+
 static void
 vbo_init_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 		const struct gl_client_array **arrays)
@@ -101,18 +113,10 @@ vbo_init_arrays(GLcontext *ctx, const struct _mesa_index_buffer *ib,
 
 		if (attr >= 0) {
 			const struct gl_client_array *array = arrays[attr];
-			int stride;
-
-			if (render->mode == VBO &&
-			    !_mesa_is_bufferobj(array->BufferObj))
-				/* Pack client buffers. */
-				stride = align(_mesa_sizeof_type(array->Type)
-					       * array->Size, 4);
-			else
-				stride = array->StrideB;
 
 			vbo_init_array(&render->attrs[attr], attr,
-				       stride, array->Size, array->Type,
+				       get_array_stride(ctx, array),
+				       array->Size, array->Type,
 				       array->BufferObj, array->Ptr,
 				       render->mode == IMM);
 		}
@@ -224,9 +228,11 @@ vbo_choose_attrs(GLcontext *ctx, const struct gl_client_array **arrays)
 	if (ctx->Fog.Enabled && ctx->Fog.FogCoordinateSource == GL_FOG_COORD)
 		vbo_emit_attr(ctx, arrays, VERT_ATTRIB_FOG);
 
-	if (ctx->Light.Enabled) {
+	if (ctx->Light.Enabled ||
+	    (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS))
 		vbo_emit_attr(ctx, arrays, VERT_ATTRIB_NORMAL);
 
+	if (ctx->Light.Enabled) {
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_AMBIENT));
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_DIFFUSE));
 		vbo_emit_attr(ctx, arrays, MAT(FRONT_SPECULAR));
@@ -243,18 +249,21 @@ vbo_choose_attrs(GLcontext *ctx, const struct gl_client_array **arrays)
 	vbo_emit_attr(ctx, arrays, VERT_ATTRIB_POS);
 }
 
-static unsigned
-get_max_client_stride(GLcontext *ctx)
+static int
+get_max_client_stride(GLcontext *ctx, const struct gl_client_array **arrays)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 	int i, s = 0;
 
 	for (i = 0; i < render->attr_count; i++) {
 		int attr = render->map[i];
-		struct nouveau_array_state *a = &render->attrs[attr];
 
-		if (attr >= 0 && !a->bo)
-			s = MAX2(a->stride, s);
+		if (attr >= 0) {
+			const struct gl_client_array *a = arrays[attr];
+
+			if (!_mesa_is_bufferobj(a->BufferObj))
+				s = MAX2(s, get_array_stride(ctx, a));
+		}
 	}
 
 	return s;
@@ -275,14 +284,15 @@ vbo_maybe_split(GLcontext *ctx, const struct gl_client_array **arrays,
 {
 	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct nouveau_render_state *render = to_render_state(ctx);
-	unsigned pushbuf_avail = PUSHBUF_DWORDS - 2 * nctx->bo.count,
+	unsigned pushbuf_avail = PUSHBUF_DWORDS - 2 * (nctx->bo.count +
+						       render->attr_count),
 		vert_avail = get_max_vertices(ctx, NULL, pushbuf_avail),
 		idx_avail = get_max_vertices(ctx, ib, pushbuf_avail);
 	int stride;
 
 	/* Try to keep client buffers smaller than the scratch BOs. */
 	if (render->mode == VBO &&
-	    (stride = get_max_client_stride(ctx)))
+	    (stride = get_max_client_stride(ctx, arrays)))
 		    vert_avail = MIN2(vert_avail,
 				      RENDER_SCRATCH_SIZE / stride);
 
@@ -321,6 +331,7 @@ vbo_bind_vertices(GLcontext *ctx, const struct gl_client_array **arrays,
 				* array->StrideB;
 
 			if (a->bo) {
+				/* Array in a buffer obj. */
 				a->offset = (intptr_t)array->Ptr + delta;
 			} else {
 				int j, n = max_index - min_index + 1;
@@ -328,6 +339,8 @@ vbo_bind_vertices(GLcontext *ctx, const struct gl_client_array **arrays,
 				char *dp = get_scratch_vbo(ctx, n * a->stride,
 							   &a->bo, &a->offset);
 
+				/* Array in client memory, move it to
+				 * a scratch buffer obj. */
 				for (j = 0; j < n; j++)
 					memcpy(dp + j * a->stride,
 					       sp + j * array->StrideB,
@@ -371,8 +384,6 @@ vbo_draw_vbo(GLcontext *ctx, const struct gl_client_array **arrays,
 		dispatch(ctx, start, delta, count);
 		BATCH_END();
 	}
-
-	FIRE_RING(chan);
 }
 
 /* Immediate rendering path. */
@@ -416,8 +427,6 @@ vbo_draw_imm(GLcontext *ctx, const struct gl_client_array **arrays,
 
 		BATCH_END();
 	}
-
-	FIRE_RING(chan);
 }
 
 /* draw_prims entry point when we're doing hw-tnl. */

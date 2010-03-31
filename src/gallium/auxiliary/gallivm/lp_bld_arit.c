@@ -361,12 +361,12 @@ lp_build_mul_u8n(LLVMBuilderRef builder,
    LLVMValueRef c8;
    LLVMValueRef ab;
 
-   c8 = lp_build_int_const_scalar(i16_type, 8);
+   c8 = lp_build_const_int_vec(i16_type, 8);
    
 #if 0
    
    /* a*b/255 ~= (a*(b + 1)) >> 256 */
-   b = LLVMBuildAdd(builder, b, lp_build_int_const_scalar(i16_type, 1), "");
+   b = LLVMBuildAdd(builder, b, lp_build_const_int_vec(i16_type, 1), "");
    ab = LLVMBuildMul(builder, a, b, "");
 
 #else
@@ -374,7 +374,7 @@ lp_build_mul_u8n(LLVMBuilderRef builder,
    /* ab/255 ~= (ab + (ab >> 8) + 0x80) >> 8 */
    ab = LLVMBuildMul(builder, a, b, "");
    ab = LLVMBuildAdd(builder, ab, LLVMBuildLShr(builder, ab, c8, ""), "");
-   ab = LLVMBuildAdd(builder, ab, lp_build_int_const_scalar(i16_type, 0x80), "");
+   ab = LLVMBuildAdd(builder, ab, lp_build_const_int_vec(i16_type, 0x80), "");
 
 #endif
    
@@ -429,7 +429,7 @@ lp_build_mul(struct lp_build_context *bld,
    }
 
    if(type.fixed)
-      shift = lp_build_int_const_scalar(type, type.width/2);
+      shift = lp_build_const_int_vec(type, type.width/2);
    else
       shift = NULL;
 
@@ -491,7 +491,7 @@ lp_build_mul_imm(struct lp_build_context *bld,
           * for Inf and NaN.
           */
          unsigned mantissa = lp_mantissa(bld->type);
-         factor = lp_build_int_const_scalar(bld->type, (unsigned long long)shift << mantissa);
+         factor = lp_build_const_int_vec(bld->type, (unsigned long long)shift << mantissa);
          a = LLVMBuildBitCast(bld->builder, a, lp_build_int_vec_type(bld->type), "");
          a = LLVMBuildAdd(bld->builder, a, factor, "");
          a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->type), "");
@@ -499,12 +499,12 @@ lp_build_mul_imm(struct lp_build_context *bld,
 #endif
       }
       else {
-         factor = lp_build_const_scalar(bld->type, shift);
+         factor = lp_build_const_vec(bld->type, shift);
          return LLVMBuildShl(bld->builder, a, factor, "");
       }
    }
 
-   factor = lp_build_const_scalar(bld->type, (double)b);
+   factor = lp_build_const_vec(bld->type, (double)b);
    return lp_build_mul(bld, a, factor);
 }
 
@@ -567,7 +567,7 @@ lp_build_lerp(struct lp_build_context *bld,
        * but it will be wrong for other uses. Basically we need a more
        * powerful lp_type, capable of further distinguishing the values
        * interpretation from the value storage. */
-      res = LLVMBuildAnd(bld->builder, res, lp_build_int_const_scalar(bld->type, (1 << bld->type.width/2) - 1), "");
+      res = LLVMBuildAnd(bld->builder, res, lp_build_const_int_vec(bld->type, (1 << bld->type.width/2) - 1), "");
 
    return res;
 }
@@ -689,7 +689,7 @@ lp_build_abs(struct lp_build_context *bld,
          /* vector of floats */
          LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
          unsigned long long absMask = ~(1ULL << (type.width - 1));
-         LLVMValueRef mask = lp_build_int_const_scalar(type, ((unsigned long long) absMask));
+         LLVMValueRef mask = lp_build_const_int_vec(type, ((unsigned long long) absMask));
          a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
          a = LLVMBuildAnd(bld->builder, a, mask, "");
          a = LLVMBuildBitCast(bld->builder, a, vec_type, "");
@@ -751,7 +751,7 @@ lp_build_sgn(struct lp_build_context *bld,
          /* vector */
          int_type = lp_build_int_vec_type(type);
          vec_type = lp_build_vec_type(type);
-         mask = lp_build_int_const_scalar(type, maskBit);
+         mask = lp_build_const_int_vec(type, maskBit);
       }
 
       /* Take the sign bit and add it to 1 constant */
@@ -763,7 +763,7 @@ lp_build_sgn(struct lp_build_context *bld,
    }
    else
    {
-      LLVMValueRef minus_one = lp_build_const_scalar(type, -1.0);
+      LLVMValueRef minus_one = lp_build_const_vec(type, -1.0);
       cond = lp_build_cmp(bld, PIPE_FUNC_GREATER, a, bld->zero);
       res = lp_build_select(bld, cond, bld->one, minus_one);
    }
@@ -789,8 +789,8 @@ lp_build_set_sign(struct lp_build_context *bld,
    const struct lp_type type = bld->type;
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
    LLVMTypeRef vec_type = lp_build_vec_type(type);
-   LLVMValueRef shift = lp_build_int_const_scalar(type, type.width - 1);
-   LLVMValueRef mask = lp_build_int_const_scalar(type,
+   LLVMValueRef shift = lp_build_const_int_vec(type, type.width - 1);
+   LLVMValueRef mask = lp_build_const_int_vec(type,
                              ~((unsigned long long) 1 << (type.width - 1)));
    LLVMValueRef val, res;
 
@@ -1034,7 +1034,7 @@ lp_build_iround(struct lp_build_context *bld,
    }
    else {
       LLVMTypeRef vec_type = lp_build_vec_type(type);
-      LLVMValueRef mask = lp_build_int_const_scalar(type, (unsigned long long)1 << (type.width - 1));
+      LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
       LLVMValueRef sign;
       LLVMValueRef half;
 
@@ -1043,7 +1043,7 @@ lp_build_iround(struct lp_build_context *bld,
       sign = LLVMBuildAnd(bld->builder, sign, mask, "");
 
       /* sign * 0.5 */
-      half = lp_build_const_scalar(type, 0.5);
+      half = lp_build_const_vec(type, 0.5);
       half = LLVMBuildBitCast(bld->builder, half, int_vec_type, "");
       half = LLVMBuildOr(bld->builder, sign, half, "");
       half = LLVMBuildBitCast(bld->builder, half, vec_type, "");
@@ -1086,18 +1086,18 @@ lp_build_ifloor(struct lp_build_context *bld,
       /* Take the sign bit and add it to 1 constant */
       LLVMTypeRef vec_type = lp_build_vec_type(type);
       unsigned mantissa = lp_mantissa(type);
-      LLVMValueRef mask = lp_build_int_const_scalar(type, (unsigned long long)1 << (type.width - 1));
+      LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
       LLVMValueRef sign;
       LLVMValueRef offset;
 
       /* sign = a < 0 ? ~0 : 0 */
       sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
       sign = LLVMBuildAnd(bld->builder, sign, mask, "");
-      sign = LLVMBuildAShr(bld->builder, sign, lp_build_int_const_scalar(type, type.width - 1), "");
+      sign = LLVMBuildAShr(bld->builder, sign, lp_build_const_int_vec(type, type.width - 1), "");
       lp_build_name(sign, "floor.sign");
 
       /* offset = -0.99999(9)f */
-      offset = lp_build_const_scalar(type, -(double)(((unsigned long long)1 << mantissa) - 1)/((unsigned long long)1 << mantissa));
+      offset = lp_build_const_vec(type, -(double)(((unsigned long long)1 << mantissa) - 1)/((unsigned long long)1 << mantissa));
       offset = LLVMConstBitCast(offset, int_vec_type);
 
       /* offset = a < 0 ? -0.99999(9)f : 0.0f */
@@ -1268,7 +1268,7 @@ lp_build_exp(struct lp_build_context *bld,
              LLVMValueRef x)
 {
    /* log2(e) = 1/log(2) */
-   LLVMValueRef log2e = lp_build_const_scalar(bld->type, 1.4426950408889634);
+   LLVMValueRef log2e = lp_build_const_vec(bld->type, 1.4426950408889634);
 
    return lp_build_mul(bld, log2e, lp_build_exp2(bld, x));
 }
@@ -1282,7 +1282,7 @@ lp_build_log(struct lp_build_context *bld,
              LLVMValueRef x)
 {
    /* log(2) */
-   LLVMValueRef log2 = lp_build_const_scalar(bld->type, 0.69314718055994529);
+   LLVMValueRef log2 = lp_build_const_vec(bld->type, 0.69314718055994529);
 
    return lp_build_mul(bld, log2, lp_build_exp2(bld, x));
 }
@@ -1318,7 +1318,7 @@ lp_build_polynomial(struct lp_build_context *bld,
       if (type.length == 1)
          coeff = LLVMConstReal(float_type, coeffs[i]);
       else
-         coeff = lp_build_const_scalar(type, coeffs[i]);
+         coeff = lp_build_const_vec(type, coeffs[i]);
 
       if(res)
          res = lp_build_add(bld, coeff, lp_build_mul(bld, x, res));
@@ -1375,11 +1375,11 @@ lp_build_exp2_approx(struct lp_build_context *bld,
 
       assert(type.floating && type.width == 32);
 
-      x = lp_build_min(bld, x, lp_build_const_scalar(type,  129.0));
-      x = lp_build_max(bld, x, lp_build_const_scalar(type, -126.99999));
+      x = lp_build_min(bld, x, lp_build_const_vec(type,  129.0));
+      x = lp_build_max(bld, x, lp_build_const_vec(type, -126.99999));
 
       /* ipart = int(x - 0.5) */
-      ipart = LLVMBuildSub(bld->builder, x, lp_build_const_scalar(type, 0.5f), "");
+      ipart = LLVMBuildSub(bld->builder, x, lp_build_const_vec(type, 0.5f), "");
       ipart = LLVMBuildFPToSI(bld->builder, ipart, int_vec_type, "");
 
       /* fpart = x - ipart */
@@ -1389,8 +1389,8 @@ lp_build_exp2_approx(struct lp_build_context *bld,
 
    if(p_exp2_int_part || p_exp2) {
       /* expipart = (float) (1 << ipart) */
-      expipart = LLVMBuildAdd(bld->builder, ipart, lp_build_int_const_scalar(type, 127), "");
-      expipart = LLVMBuildShl(bld->builder, expipart, lp_build_int_const_scalar(type, 23), "");
+      expipart = LLVMBuildAdd(bld->builder, ipart, lp_build_const_int_vec(type, 127), "");
+      expipart = LLVMBuildShl(bld->builder, expipart, lp_build_const_int_vec(type, 23), "");
       expipart = LLVMBuildBitCast(bld->builder, expipart, vec_type, "");
    }
 
@@ -1456,8 +1456,8 @@ lp_build_log2_approx(struct lp_build_context *bld,
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
 
-   LLVMValueRef expmask = lp_build_int_const_scalar(type, 0x7f800000);
-   LLVMValueRef mantmask = lp_build_int_const_scalar(type, 0x007fffff);
+   LLVMValueRef expmask = lp_build_const_int_vec(type, 0x7f800000);
+   LLVMValueRef mantmask = lp_build_const_int_vec(type, 0x007fffff);
    LLVMValueRef one = LLVMConstBitCast(bld->one, int_vec_type);
 
    LLVMValueRef i = NULL;
@@ -1482,8 +1482,8 @@ lp_build_log2_approx(struct lp_build_context *bld,
    }
 
    if(p_floor_log2 || p_log2) {
-      logexp = LLVMBuildLShr(bld->builder, exp, lp_build_int_const_scalar(type, 23), "");
-      logexp = LLVMBuildSub(bld->builder, logexp, lp_build_int_const_scalar(type, 127), "");
+      logexp = LLVMBuildLShr(bld->builder, exp, lp_build_const_int_vec(type, 23), "");
+      logexp = LLVMBuildSub(bld->builder, logexp, lp_build_const_int_vec(type, 127), "");
       logexp = LLVMBuildSIToFP(bld->builder, logexp, vec_type, "");
    }
 

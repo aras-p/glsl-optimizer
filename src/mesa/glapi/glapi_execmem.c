@@ -40,6 +40,7 @@
 #endif
 
 #include "glapi/glthread.h"
+#include "glapi/glapi_priv.h"
 
 
 #if defined(__linux__) || defined(__OpenBSD__) || defined(_NetBSD__) || defined(__sun)

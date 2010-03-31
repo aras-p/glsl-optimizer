@@ -371,7 +371,7 @@ set_tex_parameteri(GLcontext *ctx,
       }
       return GL_FALSE;
 
-#ifdef FEATURE_OES_draw_texture
+#if FEATURE_OES_draw_texture
    case GL_TEXTURE_CROP_RECT_OES:
       texObj->CropRect[0] = params[0];
       texObj->CropRect[1] = params[1];
@@ -604,7 +604,7 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
       }
       break;
 
-#ifdef FEATURE_OES_draw_texture
+#if FEATURE_OES_draw_texture
    case GL_TEXTURE_CROP_RECT_OES:
       {
          /* convert float params to int */
@@ -940,6 +940,18 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                         "glGetTexLevelParameter[if]v(pname)");
          }
          break;
+      case GL_TEXTURE_SHARED_SIZE:
+         if (ctx->VersionMajor >= 3) {
+            /* XXX return number of exponent bits for shared exponent texture
+             * formats, like GL_RGB9_E5.
+             */
+            *params = 0;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         break;
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
@@ -1148,7 +1160,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 	 else 
 	    error = GL_TRUE;
          break;
-#ifdef FEATURE_OES_draw_texture
+#if FEATURE_OES_draw_texture
       case GL_TEXTURE_CROP_RECT_OES:
          params[0] = obj->CropRect[0];
          params[1] = obj->CropRect[1];
@@ -1318,7 +1330,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
             error = GL_TRUE;
          }
          break;
-#ifdef FEATURE_OES_draw_texture
+#if FEATURE_OES_draw_texture
       case GL_TEXTURE_CROP_RECT_OES:
          params[0] = obj->CropRect[0];
          params[1] = obj->CropRect[1];

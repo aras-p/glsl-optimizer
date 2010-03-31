@@ -121,9 +121,38 @@ softpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
 }
 
 
+struct pipe_sampler_view *
+softpipe_create_sampler_view(struct pipe_context *pipe,
+                             struct pipe_texture *texture,
+                             const struct pipe_sampler_view *templ)
+{
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   if (view) {
+      *view = *templ;
+      view->reference.count = 1;
+      view->texture = NULL;
+      pipe_texture_reference(&view->texture, texture);
+      view->context = pipe;
+   }
+
+   return view;
+}
+
+
 void
-softpipe_set_sampler_textures(struct pipe_context *pipe,
-                              unsigned num, struct pipe_texture **texture)
+softpipe_sampler_view_destroy(struct pipe_context *pipe,
+                              struct pipe_sampler_view *view)
+{
+   pipe_texture_reference(&view->texture, NULL);
+   FREE(view);
+}
+
+
+void
+softpipe_set_sampler_views(struct pipe_context *pipe,
+                           unsigned num,
+                           struct pipe_sampler_view **views)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint i;
@@ -131,51 +160,51 @@ softpipe_set_sampler_textures(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == softpipe->num_textures &&
-       !memcmp(softpipe->texture, texture, num * sizeof(struct pipe_texture *)))
+   if (num == softpipe->num_sampler_views &&
+       !memcmp(softpipe->sampler_views, views, num * sizeof(struct pipe_sampler_view *)))
       return;
 
    draw_flush(softpipe->draw);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct pipe_texture *tex = i < num ? texture[i] : NULL;
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      pipe_texture_reference(&softpipe->texture[i], tex);
-      sp_tex_tile_cache_set_texture(softpipe->tex_cache[i], tex);
+      pipe_sampler_view_reference(&softpipe->sampler_views[i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[i], view);
    }
 
-   softpipe->num_textures = num;
+   softpipe->num_sampler_views = num;
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
 
 
 void
-softpipe_set_vertex_sampler_textures(struct pipe_context *pipe,
-                                     unsigned num_textures,
-                                     struct pipe_texture **textures)
+softpipe_set_vertex_sampler_views(struct pipe_context *pipe,
+                                  unsigned num,
+                                  struct pipe_sampler_view **views)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint i;
 
-   assert(num_textures <= PIPE_MAX_VERTEX_SAMPLERS);
+   assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
 
    /* Check for no-op */
-   if (num_textures == softpipe->num_vertex_textures &&
-       !memcmp(softpipe->vertex_textures, textures, num_textures * sizeof(struct pipe_texture *))) {
+   if (num == softpipe->num_vertex_sampler_views &&
+       !memcmp(softpipe->vertex_sampler_views, views, num * sizeof(struct pipe_sampler_view *))) {
       return;
    }
 
    draw_flush(softpipe->draw);
 
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      struct pipe_texture *tex = i < num_textures ? textures[i] : NULL;
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      pipe_texture_reference(&softpipe->vertex_textures[i], tex);
-      sp_tex_tile_cache_set_texture(softpipe->vertex_tex_cache[i], tex);
+      pipe_sampler_view_reference(&softpipe->vertex_sampler_views[i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->vertex_tex_cache[i], view);
    }
 
-   softpipe->num_vertex_textures = num_textures;
+   softpipe->num_vertex_sampler_views = num;
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
@@ -245,29 +274,41 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
     */
    for (i = 0; i <= softpipe->vs->max_sampler; i++) {
       if (softpipe->vertex_samplers[i]) {
+         struct pipe_texture *texture = NULL;
+
+         if (softpipe->vertex_sampler_views[i]) {
+            texture = softpipe->vertex_sampler_views[i]->texture;
+         }
+
          softpipe->tgsi.vert_samplers_list[i] = 
             get_sampler_varient( i,
-                                sp_sampler(softpipe->vertex_samplers[i]),
-                                softpipe->vertex_textures[i],
+                                 sp_sampler(softpipe->vertex_samplers[i]),
+                                 texture,
                                  TGSI_PROCESSOR_VERTEX );
 
          sp_sampler_varient_bind_texture( softpipe->tgsi.vert_samplers_list[i], 
-                                         softpipe->vertex_tex_cache[i],
-                                         softpipe->vertex_textures[i] );
+                                          softpipe->vertex_tex_cache[i],
+                                          texture );
       }
    }
 
    for (i = 0; i <= softpipe->fs->info.file_max[TGSI_FILE_SAMPLER]; i++) {
       if (softpipe->sampler[i]) {
+         struct pipe_texture *texture = NULL;
+
+         if (softpipe->sampler_views[i]) {
+            texture = softpipe->sampler_views[i]->texture;
+         }
+
          softpipe->tgsi.frag_samplers_list[i] =
             get_sampler_varient( i,
                                  sp_sampler(softpipe->sampler[i]),
-                                 softpipe->texture[i],
+                                 texture,
                                  TGSI_PROCESSOR_FRAGMENT );
 
          sp_sampler_varient_bind_texture( softpipe->tgsi.frag_samplers_list[i], 
                                           softpipe->tex_cache[i],
-                                          softpipe->texture[i] );
+                                          texture );
       }
    }
 }

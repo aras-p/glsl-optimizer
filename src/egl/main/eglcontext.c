@@ -212,21 +212,35 @@ _eglBindContextToSurfaces(_EGLContext *ctx,
                           _EGLSurface **draw, _EGLSurface **read)
 {
    _EGLSurface *newDraw = *draw, *newRead = *read;
+   _EGLContext *oldCtx;
 
-   if (newDraw->CurrentContext)
-      newDraw->CurrentContext->DrawSurface = NULL;
-   newDraw->CurrentContext = ctx;
+   oldCtx = newDraw->CurrentContext;
+   if (ctx != oldCtx) {
+      if (oldCtx) {
+         assert(*draw == oldCtx->DrawSurface);
+         oldCtx->DrawSurface = NULL;
+      }
+      if (ctx) {
+         *draw = ctx->DrawSurface;
+         ctx->DrawSurface = newDraw;
+      }
 
-   if (newRead->CurrentContext)
-      newRead->CurrentContext->ReadSurface = NULL;
-   newRead->CurrentContext = ctx;
+      newDraw->CurrentContext = ctx;
+   }
 
-   if (ctx) {
-      *draw = ctx->DrawSurface;
-      ctx->DrawSurface = newDraw;
+   if (newRead != newDraw)
+      oldCtx = newRead->CurrentContext;
+   if (ctx != oldCtx) {
+      if (oldCtx) {
+         assert(*read == oldCtx->ReadSurface);
+         oldCtx->ReadSurface = NULL;
+      }
+      if (ctx) {
+         *read = ctx->ReadSurface;
+         ctx->ReadSurface = newRead;
+      }
 
-      *read = ctx->ReadSurface;
-      ctx->ReadSurface = newRead;
+      newRead->CurrentContext = ctx;
    }
 }
 
@@ -246,15 +260,14 @@ _eglBindContextToThread(_EGLContext *ctx, _EGLThreadInfo *t)
       _eglConvertApiToIndex(ctx->ClientAPI) : t->CurrentAPIIndex;
 
    oldCtx = t->CurrentContexts[apiIndex];
-   if (ctx == oldCtx)
-      return NULL;
+   if (ctx != oldCtx) {
+      if (oldCtx)
+         oldCtx->Binding = NULL;
+      if (ctx)
+         ctx->Binding = t;
 
-   if (oldCtx)
-      oldCtx->Binding = NULL;
-   if (ctx)
-      ctx->Binding = t;
-
-   t->CurrentContexts[apiIndex] = ctx;
+      t->CurrentContexts[apiIndex] = ctx;
+   }
 
    return oldCtx;
 }
@@ -352,7 +365,7 @@ _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read)
       _eglBindContextToSurfaces(newCtx, draw, read);
 
    /* unbind the old context from its binding surfaces */
-   if (oldCtx) {
+   if (oldCtx && oldCtx != newCtx) {
       /*
        * If the new context replaces some old context, the new one should not
        * be current before the replacement and it should not be bound to any

@@ -195,6 +195,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    /* run shader */
    state->jit_function[0]( &state->jit_context,
                            x, y,
+                           inputs->facing,
                            inputs->a0,
                            inputs->dadx,
                            inputs->dady,

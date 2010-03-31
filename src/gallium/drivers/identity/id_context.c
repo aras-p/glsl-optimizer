@@ -528,53 +528,49 @@ identity_set_viewport_state(struct pipe_context *_pipe,
 }
 
 static void
-identity_set_fragment_sampler_textures(struct pipe_context *_pipe,
-                                       unsigned num_textures,
-                                       struct pipe_texture **_textures)
+identity_set_fragment_sampler_views(struct pipe_context *_pipe,
+                                    unsigned num,
+                                    struct pipe_sampler_view **_views)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_texture *unwrapped_textures[PIPE_MAX_SAMPLERS];
-   struct pipe_texture **textures = NULL;
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   if (_textures) {
-      for (i = 0; i < num_textures; i++)
-         unwrapped_textures[i] = identity_texture_unwrap(_textures[i]);
+   if (_views) {
+      for (i = 0; i < num; i++)
+         unwrapped_views[i] = identity_sampler_view_unwrap(_views[i]);
       for (; i < PIPE_MAX_SAMPLERS; i++)
-         unwrapped_textures[i] = NULL;
+         unwrapped_views[i] = NULL;
 
-      textures = unwrapped_textures;
+      views = unwrapped_views;
    }
 
-   pipe->set_fragment_sampler_textures(pipe,
-                                       num_textures,
-                                       textures);
+   pipe->set_fragment_sampler_views(pipe, num, views);
 }
 
 static void
-identity_set_vertex_sampler_textures(struct pipe_context *_pipe,
-                                     unsigned num_textures,
-                                     struct pipe_texture **_textures)
+identity_set_vertex_sampler_views(struct pipe_context *_pipe,
+                                  unsigned num,
+                                  struct pipe_sampler_view **_views)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_texture *unwrapped_textures[PIPE_MAX_VERTEX_SAMPLERS];
-   struct pipe_texture **textures = NULL;
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   if (_textures) {
-      for (i = 0; i < num_textures; i++)
-         unwrapped_textures[i] = identity_texture_unwrap(_textures[i]);
+   if (_views) {
+      for (i = 0; i < num; i++)
+         unwrapped_views[i] = identity_sampler_view_unwrap(_views[i]);
       for (; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
-         unwrapped_textures[i] = NULL;
+         unwrapped_views[i] = NULL;
 
-      textures = unwrapped_textures;
+      views = unwrapped_views;
    }
 
-   pipe->set_vertex_sampler_textures(pipe,
-                                     num_textures,
-                                     textures);
+   pipe->set_vertex_sampler_views(pipe, num, views);
 }
 
 static void
@@ -711,6 +707,45 @@ identity_is_buffer_referenced(struct pipe_context *_pipe,
                                      buffer);
 }
 
+static struct pipe_sampler_view *
+identity_create_sampler_view(struct pipe_context *pipe,
+                             struct pipe_texture *texture,
+                             const struct pipe_sampler_view *templ)
+{
+   struct identity_context *id_pipe = identity_context(pipe);
+   struct identity_texture *id_texture = identity_texture(texture);
+   struct pipe_context *pipe_unwrapped = id_pipe->pipe;
+   struct pipe_texture *texture_unwrapped = id_texture->texture;
+   struct identity_sampler_view *view = malloc(sizeof(struct identity_sampler_view));
+
+   view->sampler_view = pipe_unwrapped->create_sampler_view(pipe_unwrapped,
+                                                            texture_unwrapped,
+                                                            templ);
+
+   view->base = *templ;
+   view->base.reference.count = 1;
+   view->base.texture = NULL;
+   pipe_texture_reference(&view->base.texture, texture);
+   view->base.context = pipe;
+
+   return &view->base;
+}
+
+static void
+identity_sampler_view_destroy(struct pipe_context *pipe,
+                              struct pipe_sampler_view *view)
+{
+   struct identity_context *id_pipe = identity_context(pipe);
+   struct identity_sampler_view *id_view = identity_sampler_view(view);
+   struct pipe_context *pipe_unwrapped = id_pipe->pipe;
+   struct pipe_sampler_view *view_unwrapped = id_view->sampler_view;
+
+   pipe_unwrapped->sampler_view_destroy(pipe_unwrapped,
+                                        view_unwrapped);
+
+   pipe_texture_reference(&view->texture, NULL);
+   free(view);
+}
 
 
 static struct pipe_transfer *
@@ -836,8 +871,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_polygon_stipple = identity_set_polygon_stipple;
    id_pipe->base.set_scissor_state = identity_set_scissor_state;
    id_pipe->base.set_viewport_state = identity_set_viewport_state;
-   id_pipe->base.set_fragment_sampler_textures = identity_set_fragment_sampler_textures;
-   id_pipe->base.set_vertex_sampler_textures = identity_set_vertex_sampler_textures;
+   id_pipe->base.set_fragment_sampler_views = identity_set_fragment_sampler_views;
+   id_pipe->base.set_vertex_sampler_views = identity_set_vertex_sampler_views;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
    id_pipe->base.surface_copy = identity_surface_copy;
    id_pipe->base.surface_fill = identity_surface_fill;
@@ -845,6 +880,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.flush = identity_flush;
    id_pipe->base.is_texture_referenced = identity_is_texture_referenced;
    id_pipe->base.is_buffer_referenced = identity_is_buffer_referenced;
+   id_pipe->base.create_sampler_view = identity_create_sampler_view;
+   id_pipe->base.sampler_view_destroy = identity_sampler_view_destroy;
    id_pipe->base.get_tex_transfer = identity_context_get_tex_transfer;
    id_pipe->base.tex_transfer_destroy = identity_context_tex_transfer_destroy;
    id_pipe->base.transfer_map = identity_context_transfer_map;

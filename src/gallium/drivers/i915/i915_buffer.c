@@ -28,13 +28,13 @@
 #include "i915_screen.h"
 #include "i915_buffer.h"
 
-struct intel_buffer;
+struct i915_winsys_buffer;
 
 struct i915_buffer
 {
    struct pipe_buffer base;
 
-   struct intel_buffer *ibuf; /** hw buffer */
+   struct i915_winsys_buffer *ibuf; /** hw buffer */
 
    void *data; /**< user and malloc data */
    boolean own; /**< we own the data incase of malloc */

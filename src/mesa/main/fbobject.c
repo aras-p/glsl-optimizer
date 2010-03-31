@@ -180,8 +180,12 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
       return &fb->Attachment[BUFFER_COLOR0 + i];
    case GL_DEPTH_STENCIL_ATTACHMENT:
       /* fall-through */
+   case GL_DEPTH_BUFFER:
+      /* fall-through / new in GL 3.0 */
    case GL_DEPTH_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_DEPTH];
+   case GL_STENCIL_BUFFER:
+      /* fall-through / new in GL 3.0 */
    case GL_STENCIL_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_STENCIL];
    default:
@@ -625,7 +629,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       }
    }
 
-#ifndef FEATURE_OES_framebuffer_object
+#if !FEATURE_OES_framebuffer_object
    /* Check that all DrawBuffers are present */
    for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
       if (fb->ColorDrawBuffer[j] != GL_NONE) {

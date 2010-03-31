@@ -97,6 +97,8 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 0;
+   case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+      return 1;
    default:
       return 0;
    }
@@ -136,20 +138,23 @@ cell_is_format_supported( struct pipe_screen *screen,
                           unsigned tex_usage, 
                           unsigned geom_flags )
 {
-   struct sw_winsys *winsys = cell_screen(screen)->winsys;
-
-   if (format == PIPE_FORMAT_DXT5_RGBA ||
-       format == PIPE_FORMAT_A8B8G8R8_SRGB)
-      return FALSE;
-
-   if (tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
-      if (!winsys->is_displaytarget_format_supported(winsys, format))
+   if (tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                    PIPE_TEXTURE_USAGE_SCANOUT |
+                    PIPE_TEXTURE_USAGE_SHARED)) {
+      if (!winsys->is_displaytarget_format_supported(winsys, tex_usage, format))
          return FALSE;
    }
 
-   /* This is often a lie.  Pull in logic from llvmpipe to fix.
-    */
-   return TRUE;
+   /* only a few formats are known to work at this time */
+   switch (format) {
+   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_I8_UNORM:
+      return TRUE;
+   default:
+      return FALSE;
+   }
 }
 
 

@@ -75,6 +75,20 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
                    float *p);
 
 void
+pipe_get_tile_swizzle(struct pipe_context *pipe,
+		      struct pipe_transfer *pt,
+                      uint x,
+                      uint y,
+                      uint w,
+                      uint h,
+                      uint swizzle_r,
+                      uint swizzle_g,
+                      uint swizzle_b,
+                      uint swizzle_a,
+                      enum pipe_format format,
+                      float *p);
+
+void
 pipe_put_tile_rgba(struct pipe_context *pipe,
                    struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,

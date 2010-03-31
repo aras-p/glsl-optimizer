@@ -7,7 +7,7 @@ The rasterizer state controls the rendering of points, lines and triangles.
 Attributes include polygon culling state, line width, line stipple,
 multisample state, scissoring and flat/smooth shading.
 
-Members
+Shading
 -------
 
 flatshade
@@ -45,6 +45,49 @@ There are several important exceptions to the specification of this rule.
 * ``PIPE_PRIMITIVE_TRIANGLE_FAN``: When set, the provoking vertex is the
   second vertex, not the first. This permits each segment of the fan to have
   a different color.
+
+Points
+------
+
+sprite_coord_enable
+^^^^^^^^^^^^^^^^^^^
+
+Specifies if a texture unit has its texture coordinates replaced or not. This
+is a packed bitfield containing the enable for all texcoords -- if all bits
+are zero, point sprites are effectively disabled. If any bit is set, then
+point_smooth and point_quad_rasterization are ignored; point smoothing is
+disabled and points are always rasterized as quads. If enabled, the four
+vertices of the resulting quad will be assigned texture coordinates,
+according to sprite_coord_mode.
+
+sprite_coord_mode
+^^^^^^^^^^^^^^^^^
+
+Specifies how the value for each shader output should be computed when drawing
+point sprites. For PIPE_SPRITE_COORD_LOWER_LEFT, the lower-left vertex will
+have coordinates (0,0,0,1). For PIPE_SPRITE_COORD_UPPER_LEFT, the upper-left
+vertex will have coordinates (0,0,0,1).
+This state is used by :ref:`Draw` to generate texcoords.
+
+.. note::
+
+    When geometry shaders are available, a special geometry shader could be
+    used instead of this functionality, to convert incoming points into quads
+    with the proper texture coordinates.
+
+point_quad_rasterization
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Determines if points should be rasterized as quads or points. Certain APIs,
+like Direct3D, always use quad rasterization for points, regardless of
+whether point sprites are enabled or not. If this state is enabled, point
+smoothing and antialiasing are disabled, and sprite coordinates are not
+generated.
+
+.. note::
+
+   Some renderers always internally translate points into quads; this state
+   still affects those renderers by overriding other rasterization state.
 
 Other Members
 ^^^^^^^^^^^^^
@@ -107,37 +150,6 @@ point_size_per_vertex
     Whether vertices have a point size element.
 point_size
     The size of points, if not specified per-vertex.
-sprite_coord_enable
-    Specifies if a coord has its texture coordinates replaced or not. This
-    is a packed bitfield containing the enable for all coords - if all are 0
-    point sprites are effectively disabled, though points may still be
-    rendered slightly different according to point_quad_rasterization.
-    If any coord is non-zero, point_smooth should be disabled, and
-    point_quad_rasterization enabled.
-    If enabled, the four vertices of the resulting quad will be assigned
-    texture coordinates, according to sprite_coord_mode.
-sprite_coord_mode
-    Specifies how the value for each shader output should be computed when
-    drawing sprites, for each coord which has sprite_coord_enable set.
-    For PIPE_SPRITE_COORD_LOWER_LEFT, the lower left vertex will have
-    coordinate (0,0,0,1).
-    For PIPE_SPRITE_COORD_UPPER_LEFT, the upper-left vertex will have
-    coordinate (0,0,0,1).
-    This state is needed by :ref:`Draw` because that's where each
-    point vertex is converted into four quad vertices.  There's no other
-    place to emit the new vertex texture coordinates which are required for
-    sprite rendering.
-    Note that when geometry shaders are available, this state could be
-    removed.  A special geometry shader defined by the state tracker could
-    convert the incoming points into quads with the proper texture coords.
-point_quad_rasterization
-    This determines if points should be rasterized as quads or points.
-    d3d always uses quad rasterization for points, regardless if point sprites
-    are enabled or not, but OGL has different rules. If point_quad_rasterization
-    is set, point_smooth should be disabled, and points will be rendered as
-    squares even if multisample is enabled.
-    sprite_coord_enable should be zero if point_quad_rasterization is not
-    enabled.
 
 scissor
     Whether the scissor test is enabled.

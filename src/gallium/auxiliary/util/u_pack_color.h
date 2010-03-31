@@ -92,6 +92,11 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
          uc->us = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
       }
       return;
+   case PIPE_FORMAT_B5G5R5X1_UNORM:
+      {
+         uc->us = ((0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
+      }
+      return;
    case PIPE_FORMAT_B5G5R5A1_UNORM:
       {
          uc->us = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
@@ -213,6 +218,15 @@ util_unpack_color_ub(enum pipe_format format, union util_color *uc,
          *r = (ubyte) (((p >> 8) & 0xf8) | ((p >> 13) & 0x7));
          *g = (ubyte) (((p >> 3) & 0xfc) | ((p >>  9) & 0x3));
          *b = (ubyte) (((p << 3) & 0xf8) | ((p >>  2) & 0x7));
+         *a = (ubyte) 0xff;
+      }
+      return;
+   case PIPE_FORMAT_B5G5R5X1_UNORM:
+      {
+         ushort p = uc->us;
+         *r = (ubyte) (((p >>  7) & 0xf8) | ((p >> 12) & 0x7));
+         *g = (ubyte) (((p >>  2) & 0xf8) | ((p >>  7) & 0x7));
+         *b = (ubyte) (((p <<  3) & 0xf8) | ((p >>  2) & 0x7));
          *a = (ubyte) 0xff;
       }
       return;
@@ -359,6 +373,11 @@ util_pack_color(const float rgba[4], enum pipe_format format, union util_color *
    case PIPE_FORMAT_B5G6R5_UNORM:
       {
          uc->us = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
+      }
+      return;
+   case PIPE_FORMAT_B5G5R5X1_UNORM:
+      {
+         uc->us = ((0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
       }
       return;
    case PIPE_FORMAT_B5G5R5A1_UNORM:

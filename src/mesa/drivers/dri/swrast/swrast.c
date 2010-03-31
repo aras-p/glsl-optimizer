@@ -206,12 +206,20 @@ swrast_delete_renderbuffer(struct gl_renderbuffer *rb)
     free(rb);
 }
 
+/* see bytes_per_line in libGL */
+static INLINE int
+bytes_per_line(unsigned pitch_bits, unsigned mul)
+{
+   unsigned mask = mul - 1;
+
+   return ((pitch_bits + mask) & ~mask) / 8;
+}
+
 static GLboolean
 swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 			   GLenum internalFormat, GLuint width, GLuint height)
 {
     struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
-    unsigned mask = PITCH_ALIGN_BITS - 1;
 
     TRACE;
 
@@ -219,8 +227,7 @@ swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
     rb->Width = width;
     rb->Height = height;
 
-    /* always pad to PITCH_ALIGN_BITS */
-    xrb->pitch = ((width * xrb->bpp + mask) & ~mask) / 8;
+    xrb->pitch = bytes_per_line(width * xrb->bpp, 32);
 
     return GL_TRUE;
 }
@@ -394,8 +401,10 @@ dri_swap_buffers(__DRIdrawable * dPriv)
 
     fb = &drawable->Base;
 
-    frontrb = swrast_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-    backrb = swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+    frontrb =
+	swrast_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+    backrb =
+	swrast_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
 
     /* check for signle-buffered */
     if (backrb == NULL)

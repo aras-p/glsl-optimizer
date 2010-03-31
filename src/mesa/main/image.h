@@ -303,7 +303,7 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
 
 extern GLboolean
 _mesa_clip_readpixels(const GLcontext *ctx,
-                      GLint *destX, GLint *destY,
+                      GLint *srcX, GLint *srcY,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *pack);
 

@@ -374,7 +374,7 @@ intelCalcViewport(GLcontext * ctx)
    else {
       /* window buffer, y=0=top */
       yScale = -1.0;
-      yBias = (intel->driDrawable) ? intel->driDrawable->h : 0.0F;
+      yBias = ctx->DrawBuffer->Height;
    }
 
    m[MAT_SX] = v[MAT_SX];

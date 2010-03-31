@@ -69,15 +69,15 @@ struct llvmpipe_context {
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
-   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
 
    unsigned num_samplers;
-   unsigned num_textures;
+   unsigned num_fragment_sampler_views;
    unsigned num_vertex_samplers;
-   unsigned num_vertex_textures;
+   unsigned num_vertex_sampler_views;
    unsigned num_vertex_buffers;
 
    unsigned dirty; /**< Mask of LP_NEW_x flags */

@@ -2507,6 +2507,9 @@ __glXSwapBuffersMscOML(Display * dpy, GLXDrawable drawable,
    if (divisor > 0 && remainder >= divisor)
       return -1;
 
+   if (target_msc == 0 && divisor == 0 && remainder == 0)
+      remainder = 1;
+
 #ifdef __DRI_SWAP_BUFFER_COUNTER
    if (psc->counters != NULL)
       return (*psc->sbc->swapBuffersMSC)(pdraw->driDrawable, target_msc,

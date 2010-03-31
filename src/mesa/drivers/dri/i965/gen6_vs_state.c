@@ -100,7 +100,8 @@ upload_vs_state(struct brw_context *brw)
 	     (brw->vs.prog_data->urb_read_length << GEN6_VS_URB_READ_LENGTH_SHIFT) |
 	     (0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT));
    OUT_BATCH((0 << GEN6_VS_MAX_THREADS_SHIFT) |
-	     GEN6_VS_STATISTICS_ENABLE);
+	     GEN6_VS_STATISTICS_ENABLE |
+	     GEN6_VS_ENABLE);
    ADVANCE_BATCH();
 
    intel_batchbuffer_emit_mi_flush(intel->batch);

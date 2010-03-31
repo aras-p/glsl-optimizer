@@ -137,7 +137,7 @@ static int emit_fs_consts( struct svga_context *svga,
 
       for (i = 0; i < key->num_textures; i++) {
          if (key->tex[i].unnormalized) {
-            struct pipe_texture *tex = svga->curr.texture[i];
+            struct pipe_texture *tex = svga->curr.sampler_views[i]->texture;
             float data[4];
 
             data[0] = 1.0 / (float)tex->width0;

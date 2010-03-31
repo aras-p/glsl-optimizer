@@ -2496,11 +2496,10 @@ void r200InitStateFuncs( radeonContextPtr radeon, struct dd_function_table *func
    functions->DrawBuffer		= radeonDrawBuffer;
    functions->ReadBuffer		= radeonReadBuffer;
 
-   if (radeon->radeonScreen->kernel_mm) {
-	   functions->CopyPixels                = _mesa_meta_CopyPixels;
-	   functions->DrawPixels                = _mesa_meta_DrawPixels;
+   functions->CopyPixels                = _mesa_meta_CopyPixels;
+   functions->DrawPixels                = _mesa_meta_DrawPixels;
+   if (radeon->radeonScreen->kernel_mm)
 	   functions->ReadPixels                = radeonReadPixels;
-   }
 
    functions->AlphaFunc			= r200AlphaFunc;
    functions->BlendColor		= r200BlendColor;

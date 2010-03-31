@@ -10,7 +10,7 @@ CONFIG_NAME = linux-llvm
 GALLIUM_DRIVERS_DIRS += llvmpipe
 
 OPT_FLAGS = -O3 -ansi -pedantic
-ARCH_FLAGS = -m32 -mmmx -msse -msse2 -mstackrealign
+ARCH_FLAGS = -mmmx -msse -msse2 -mstackrealign
 
 DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DDRAW_LLVM -DHAVE_UDIS86
 
@@ -24,6 +24,8 @@ ifeq ($(LLVM_VERSION),)
   MESA_LLVM=0
 else
   MESA_LLVM=1
+  HAVE_LLVM := 0x0$(subst .,0,$(LLVM_VERSION:svn=))
+  DEFINES += -DHAVE_LLVM=$(HAVE_LLVM)
 #  $(info Using LLVM version: $(LLVM_VERSION))
 endif
 

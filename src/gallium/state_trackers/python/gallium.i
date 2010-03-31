@@ -49,6 +49,7 @@
 #include "util/u_format.h"
 #include "util/u_dump.h"
 #include "util/u_memory.h"
+#include "util/u_sampler.h"
 #include "cso_cache/cso_context.h"
 #include "tgsi/tgsi_text.h"
 #include "tgsi/tgsi_dump.h"

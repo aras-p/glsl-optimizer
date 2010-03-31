@@ -159,11 +159,6 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 	int nargs = opcode->NumSrcRegs;
 	int i;
 
-	/* Special case for DDX/DDY (MDH/MDV). */
-	if (inst->Opcode == RC_OPCODE_DDX || inst->Opcode == RC_OPCODE_DDY) {
-		nargs++;
-	}
-
 	for(i = 0; i < opcode->NumSrcRegs; ++i) {
 		int source;
 		if (needrgb && !istranscendent) {

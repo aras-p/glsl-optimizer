@@ -120,6 +120,16 @@ pipe_texture_reference(struct pipe_texture **ptr, struct pipe_texture *tex)
    *ptr = tex;
 }
 
+static INLINE void
+pipe_sampler_view_reference(struct pipe_sampler_view **ptr, struct pipe_sampler_view *view)
+{
+   struct pipe_sampler_view *old_view = *ptr;
+
+   if (pipe_reference(&(*ptr)->reference, &view->reference))
+      old_view->context->sampler_view_destroy(old_view->context, old_view);
+   *ptr = view;
+}
+
 
 /*
  * Convenience wrappers for screen buffer functions.

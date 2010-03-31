@@ -31,7 +31,7 @@
 #ifndef LP_STATE_H
 #define LP_STATE_H
 
-#include "os/os_llvm.h"
+#include "gallivm/lp_bld.h"
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
@@ -50,7 +50,7 @@
 #define LP_NEW_DEPTH_STENCIL_ALPHA 0x100
 #define LP_NEW_CONSTANTS     0x200
 #define LP_NEW_SAMPLER       0x400
-#define LP_NEW_TEXTURE       0x800
+#define LP_NEW_SAMPLER_VIEW  0x800
 #define LP_NEW_VERTEX        0x1000
 #define LP_NEW_VS            0x2000
 #define LP_NEW_QUERY         0x4000
@@ -67,6 +67,7 @@ struct lp_fragment_shader;
 struct lp_fragment_shader_variant_key
 {
    struct pipe_depth_state depth;
+   struct pipe_stencil_state stencil[2];
    struct pipe_alpha_state alpha;
    struct pipe_blend_state blend;
    enum pipe_format zsbuf_format;
@@ -192,14 +193,23 @@ void llvmpipe_set_polygon_stipple( struct pipe_context *,
 void llvmpipe_set_scissor_state( struct pipe_context *,
                                  const struct pipe_scissor_state * );
 
-void llvmpipe_set_sampler_textures( struct pipe_context *,
-                                    unsigned num,
-                                    struct pipe_texture ** );
+void llvmpipe_set_fragment_sampler_views(struct pipe_context *,
+                                         unsigned num,
+                                         struct pipe_sampler_view **);
 
 void
-llvmpipe_set_vertex_sampler_textures(struct pipe_context *,
-                                     unsigned num_textures,
-                                     struct pipe_texture **);
+llvmpipe_set_vertex_sampler_views(struct pipe_context *,
+                                  unsigned num,
+                                  struct pipe_sampler_view **);
+
+struct pipe_sampler_view *
+llvmpipe_create_sampler_view(struct pipe_context *pipe,
+                            struct pipe_texture *texture,
+                            const struct pipe_sampler_view *templ);
+
+void
+llvmpipe_sampler_view_destroy(struct pipe_context *pipe,
+                              struct pipe_sampler_view *view);
 
 void llvmpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );

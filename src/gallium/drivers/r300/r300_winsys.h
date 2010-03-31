@@ -30,6 +30,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
+#include "r300_defines.h"
+
 struct r300_winsys_screen;
 
 /* Creates a new r300 screen. */
@@ -47,9 +49,8 @@ enum r300_value_id {
     R300_VID_PCI_ID,
     R300_VID_GB_PIPES,
     R300_VID_Z_PIPES,
+    R300_VID_SQUARE_TILING_SUPPORT
 };
-
-#define R300_USAGE_FLAG_DONT_SYNC (1 << 17)
 
 struct r300_winsys_screen {
     void (*destroy)(struct r300_winsys_screen *ws);
@@ -148,8 +149,8 @@ struct r300_winsys_screen {
     void (*buffer_set_tiling)(struct r300_winsys_screen *winsys,
                               struct r300_winsys_buffer *buffer,
                               uint32_t pitch,
-                              boolean microtiled,
-                              boolean macrotiled);
+                              enum r300_buffer_tiling microtiled,
+                              enum r300_buffer_tiling macrotiled);
 
     uint32_t (*get_value)(struct r300_winsys_screen *winsys,
 			  enum r300_value_id vid);

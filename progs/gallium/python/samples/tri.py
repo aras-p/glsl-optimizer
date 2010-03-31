@@ -30,19 +30,19 @@
 from gallium import *
 
 
-def make_image(surface):
-    data = surface.get_tile_rgba8(0, 0, surface.width, surface.height)
+def make_image(ctx, surface):
+    data = ctx.surface_read_rgba8(surface, 0, 0, surface.width, surface.height)
 
     import Image
     outimage = Image.fromstring('RGBA', (surface.width, surface.height), data, "raw", 'RGBA', 0, 1)
     return outimage
 
-def save_image(filename, surface):
-    outimage = make_image(surface)
+def save_image(ctx, surface, filename):
+    outimage = make_image(ctx, surface)
     outimage.save(filename, "PNG")
 
-def show_image(surface):
-    outimage = make_image(surface)
+def show_image(ctx, surface):
+    outimage = make_image(ctx, surface)
     
     import Tkinter as tk
     from PIL import Image, ImageTk
@@ -216,10 +216,10 @@ def test(dev):
 
     ctx.flush()
     
-    show_image(cbuf)
-    #show_image(zbuf)
-    #save_image('cbuf.png', cbuf)
-    #save_image('zbuf.png', zbuf)
+    show_image(ctx, cbuf)
+    show_image(ctx, zbuf)
+    save_image(ctx, cbuf, 'cbuf.png')
+    save_image(ctx, zbuf, 'zbuf.png')
 
 
 

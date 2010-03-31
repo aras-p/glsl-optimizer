@@ -8,6 +8,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
+#include "util/u_sampler.h"
 
 #include "util/u_inlines.h"
 
@@ -482,8 +483,17 @@ void renderer_copy_prepare(struct xorg_renderer *r,
                              dst_surface->width,
                              dst_surface->height);
 
-   /* texture */
-   cso_set_sampler_textures(r->cso, 1, &src_texture);
+   /* texture/sampler view */
+   {
+      struct pipe_sampler_view templ;
+      struct pipe_sampler_view *src_view;
+      u_sampler_view_default_template(&templ,
+                                      src_texture,
+                                      src_texture->format);
+      src_view = pipe->create_sampler_view(pipe, src_texture, &templ);
+      cso_set_fragment_sampler_views(r->cso, 1, &src_view);
+      pipe_sampler_view_reference(&src_view, NULL);
+   }
 
    /* shaders */
    shader = xorg_shaders_get(r->shaders,
@@ -655,7 +665,6 @@ void renderer_draw_flush(struct xorg_renderer *r)
 }
 
 void renderer_begin_textures(struct xorg_renderer *r,
-                             struct pipe_texture **textures,
                              int num_textures)
 {
    r->attrs_per_vertex = 1 + num_textures;
@@ -665,7 +674,7 @@ void renderer_begin_textures(struct xorg_renderer *r,
 void renderer_texture(struct xorg_renderer *r,
                       int *pos,
                       int width, int height,
-                      struct pipe_texture **textures,
+                      struct pipe_sampler_view **sampler_view,
                       int num_textures,
                       float *src_matrix,
                       float *mask_matrix)
@@ -693,7 +702,7 @@ void renderer_texture(struct xorg_renderer *r,
                        pos[0], pos[1], /* src */
                        pos[4], pos[5], /* dst */
                        width, height,
-                       textures[0], src_matrix);
+                       sampler_view[0]->texture, src_matrix);
       break;
    case 3:
       renderer_draw_conditional(r, 4 * 12);
@@ -702,7 +711,7 @@ void renderer_texture(struct xorg_renderer *r,
                        pos[2], pos[3], /* mask */
                        pos[4], pos[5], /* dst */
                        width, height,
-                       textures[0], textures[1],
+                       sampler_view[0]->texture, sampler_view[1]->texture,
                        src_matrix, mask_matrix);
       break;
    default:

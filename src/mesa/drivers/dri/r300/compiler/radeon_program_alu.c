@@ -506,6 +506,46 @@ static void transform_r300_vertex_ABS(struct radeon_compiler* c,
 	inst->U.I.SrcReg[1].Negate ^= RC_MASK_XYZW;
 }
 
+static void transform_r300_vertex_CMP(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	/* There is no decent CMP available, so let's rig one up.
+	 * CMP is defined as dst = src0 < 0.0 ? src1 : src2
+	 * The following sequence consumes two temps and three extra slots,
+	 * but should be equivalent:
+	 *
+	 * SLT tmp0, src0, 0.0
+	 * SGE tmp1, src0, 0.0
+	 * MUL tmp0, tmp0, src1
+	 * MAD dst, src2, tmp1, tmp0
+	 *
+	 * Yes, I know, I'm a mad scientist. ~ C. */
+	int tempreg0 = rc_find_free_temporary(c);
+	int tempreg1 = rc_find_free_temporary(c);
+
+	/* SLT tmp0, src0, 0.0 */
+	emit2(c, inst->Prev, RC_OPCODE_SLT, 0,
+		dstreg(RC_FILE_TEMPORARY, tempreg0),
+		inst->U.I.SrcReg[0], builtin_zero);
+
+	/* SGE tmp1, src0, 0.0 */
+	emit2(c, inst->Prev, RC_OPCODE_SGE, 0,
+		dstreg(RC_FILE_TEMPORARY, tempreg1),
+		inst->U.I.SrcReg[0], builtin_zero);
+
+	/* MUL tmp0, tmp0, src1 */
+	emit2(c, inst->Prev, RC_OPCODE_MUL, 0,
+		dstreg(RC_FILE_TEMPORARY, tempreg0),
+		srcreg(RC_FILE_TEMPORARY, tempreg0), inst->U.I.SrcReg[1]);
+
+	/* MAD dst, src2, tmp1, tmp0 */
+	emit3(c, inst->Prev, RC_OPCODE_MAD, inst->U.I.SaturateMode,
+		inst->U.I.DstReg,
+		inst->U.I.SrcReg[2], srcreg(RC_FILE_TEMPORARY, tempreg1), srcreg(RC_FILE_TEMPORARY, tempreg0));
+
+	rc_remove_instruction(inst);
+}
+
 /**
  * For use with radeonLocalTransform, this transforms non-native ALU
  * instructions of the r300 up to r500 vertex engine.
@@ -517,6 +557,7 @@ int r300_transform_vertex_alu(
 {
 	switch(inst->U.I.Opcode) {
 	case RC_OPCODE_ABS: transform_r300_vertex_ABS(c, inst); return 1;
+	case RC_OPCODE_CMP: transform_r300_vertex_CMP(c, inst); return 1;
 	case RC_OPCODE_DP3: transform_DP3(c, inst); return 1;
 	case RC_OPCODE_DPH: transform_DPH(c, inst); return 1;
 	case RC_OPCODE_FLR: transform_FLR(c, inst); return 1;

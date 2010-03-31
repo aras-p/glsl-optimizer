@@ -37,13 +37,6 @@
       _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__); \
    } while (0)
 
-#if FEATURE_accum
-/* This is a sanity check that to be sure we're using the correct mfeatures.h
- * header.  We don't want to accidentally use the one from mainline Mesa.
- */
-#error "The wrong mfeatures.h file is being included!"
-#endif
-
 
 /* silence compiler warnings */
 extern void GLAPIENTRY _vbo_Materialf(GLenum face, GLenum pname, GLfloat param);

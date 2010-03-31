@@ -27,6 +27,8 @@
 #define _GLAPI_PRIV_H
 
 #include "glthread.h"
+#include "glapi.h"
+
 
 
 /* getproc */
@@ -42,7 +44,7 @@ _glapi_check_table(const struct _glapi_table *table);
 /* execmem */
 
 extern void *
-_glapi_exec_malloc(GLuint size);
+_glapi_exec_malloc(unsigned int size);
 
 
 /* entrypoint */
@@ -52,15 +54,15 @@ init_glapi_relocs_once(void);
 
 
 extern _glapi_proc
-generate_entrypoint(GLuint functionOffset);
+generate_entrypoint(unsigned int functionOffset);
 
 
 extern void
-fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset);
+fill_in_entrypoint_offset(_glapi_proc entrypoint, unsigned int offset);
 
 
 extern _glapi_proc
-get_entrypoint_address(GLuint functionOffset);
+get_entrypoint_address(unsigned int functionOffset);
 
 
 /**

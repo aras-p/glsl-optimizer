@@ -105,8 +105,9 @@ llvmpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
 
 
 void
-llvmpipe_set_sampler_textures(struct pipe_context *pipe,
-                              unsigned num, struct pipe_texture **texture)
+llvmpipe_set_fragment_sampler_views(struct pipe_context *pipe,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    uint i;
@@ -114,51 +115,79 @@ llvmpipe_set_sampler_textures(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == llvmpipe->num_textures &&
-       !memcmp(llvmpipe->texture, texture, num * sizeof(struct pipe_texture *)))
+   if (num == llvmpipe->num_fragment_sampler_views &&
+       !memcmp(llvmpipe->fragment_sampler_views, views, num * sizeof(struct pipe_sampler_view *)))
       return;
 
    draw_flush(llvmpipe->draw);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct pipe_texture *tex = i < num ? texture[i] : NULL;
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      pipe_texture_reference(&llvmpipe->texture[i], tex);
+      pipe_sampler_view_reference(&llvmpipe->fragment_sampler_views[i], view);
    }
 
-   llvmpipe->num_textures = num;
+   llvmpipe->num_fragment_sampler_views = num;
 
-   llvmpipe->dirty |= LP_NEW_TEXTURE;
+   llvmpipe->dirty |= LP_NEW_SAMPLER_VIEW;
 }
 
 
 void
-llvmpipe_set_vertex_sampler_textures(struct pipe_context *pipe,
-                                     unsigned num_textures,
-                                     struct pipe_texture **textures)
+llvmpipe_set_vertex_sampler_views(struct pipe_context *pipe,
+                                  unsigned num,
+                                  struct pipe_sampler_view **views)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    uint i;
 
-   assert(num_textures <= PIPE_MAX_VERTEX_SAMPLERS);
+   assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
 
    /* Check for no-op */
-   if (num_textures == llvmpipe->num_vertex_textures &&
-       !memcmp(llvmpipe->vertex_textures, textures, num_textures * sizeof(struct pipe_texture *))) {
+   if (num == llvmpipe->num_vertex_sampler_views &&
+       !memcmp(llvmpipe->vertex_sampler_views, views, num * sizeof(struct pipe_sampler_view *))) {
       return;
    }
 
    draw_flush(llvmpipe->draw);
 
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      struct pipe_texture *tex = i < num_textures ? textures[i] : NULL;
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      pipe_texture_reference(&llvmpipe->vertex_textures[i], tex);
+      pipe_sampler_view_reference(&llvmpipe->vertex_sampler_views[i], view);
    }
 
-   llvmpipe->num_vertex_textures = num_textures;
+   llvmpipe->num_vertex_sampler_views = num;
 
-   llvmpipe->dirty |= LP_NEW_TEXTURE;
+   llvmpipe->dirty |= LP_NEW_SAMPLER_VIEW;
+}
+
+
+struct pipe_sampler_view *
+llvmpipe_create_sampler_view(struct pipe_context *pipe,
+                            struct pipe_texture *texture,
+                            const struct pipe_sampler_view *templ)
+{
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   if (view) {
+      *view = *templ;
+      view->reference.count = 1;
+      view->texture = NULL;
+      pipe_texture_reference(&view->texture, texture);
+      view->context = pipe;
+   }
+
+   return view;
+}
+
+
+void
+llvmpipe_sampler_view_destroy(struct pipe_context *pipe,
+                              struct pipe_sampler_view *view)
+{
+   pipe_texture_reference(&view->texture, NULL);
+   FREE(view);
 }
 
 

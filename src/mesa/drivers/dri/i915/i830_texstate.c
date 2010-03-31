@@ -146,15 +146,15 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
    dri_bo_reference(intelObj->mt->region->buffer);
    i830->state.tex_buffer[unit] = intelObj->mt->region->buffer;
+   pitch = intelObj->mt->region->pitch * intelObj->mt->cpp;
+
    /* XXX: This calculation is probably broken for tiled images with
     * a non-page-aligned offset.
     */
-   i830->state.tex_offset[unit] = (dst_x + dst_y * intelObj->mt->pitch) *
-      intelObj->mt->cpp;
+   i830->state.tex_offset[unit] = dst_x * intelObj->mt->cpp + dst_y * pitch;
 
    format = translate_texture_format(firstImage->TexFormat,
 				     firstImage->InternalFormat);
-   pitch = intelObj->mt->pitch * intelObj->mt->cpp;
 
    state[I830_TEXREG_TM0LI] = (_3DSTATE_LOAD_STATE_IMMEDIATE_2 |
                                (LOAD_TEXTURE_MAP0 << unit) | 4);

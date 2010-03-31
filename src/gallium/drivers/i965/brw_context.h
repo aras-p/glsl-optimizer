@@ -551,9 +551,9 @@ struct brw_context
       const struct brw_sampler *sampler[PIPE_MAX_SAMPLERS];
       unsigned num_samplers;
 
-      struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-      unsigned num_textures;
+      unsigned num_fragment_sampler_views;
       unsigned num_vertex_buffers;
 
       struct pipe_scissor_state scissor;

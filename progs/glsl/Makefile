@@ -26,6 +26,7 @@ PROG_SOURCES = \
 	convolutions.c \
 	deriv.c \
 	fragcoord.c \
+	fsraytrace.c \
 	identity.c \
 	linktest.c \
 	mandelbrot.c \
@@ -46,7 +47,8 @@ PROG_SOURCES = \
 	trirast.c \
 	twoside.c \
 	vert-or-frag-only.c \
-	vert-tex.c
+	vert-tex.c \
+	vsraytrace.c
 
 UTIL_HEADERS = \
 	extfuncs.h \

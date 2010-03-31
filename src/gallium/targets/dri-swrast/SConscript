@@ -1,0 +1,42 @@
+Import('*')
+
+if not set(('softpipe', 'llvmpipe')).intersection(env['drivers']):
+    print 'warning: no supported pipe driver: skipping build of swrastg_dri.so'
+    Return()
+
+env = drienv.Clone()
+
+env.Append(CPPPATH = [
+    '#/src/gallium/winsys/sw/dri',
+])
+
+env.Prepend(LIBS = [
+    st_drisw,
+    ws_dri,
+    trace,
+    mesa,
+    glsl,
+    gallium,
+    COMMON_DRI_SW_OBJECTS
+])
+
+if 'softpipe' in env['drivers']:
+    env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
+    env.Prepend(LIBS = [softpipe])
+
+if 'llvmpipe' in env['drivers']:
+    env.Tool('llvm')
+    if 'LLVM_VERSION' in env:
+        env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
+        env.Tool('udis86')
+        env.Prepend(LIBS = [llvmpipe])
+
+swrastg_sources = [
+    'swrast_drm_api.c'
+]
+
+env.LoadableModule(
+    target ='swrastg_dri.so',
+    source = swrastg_sources,
+    SHLIBPREFIX = '',
+)

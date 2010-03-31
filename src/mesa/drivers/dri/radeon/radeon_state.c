@@ -2249,11 +2249,10 @@ void radeonInitStateFuncs( GLcontext *ctx , GLboolean dri2 )
 
    ctx->Driver.DrawBuffer		= radeonDrawBuffer;
    ctx->Driver.ReadBuffer		= radeonReadBuffer;
-   if (dri2) {
-	   ctx->Driver.CopyPixels               = _mesa_meta_CopyPixels;
-	   ctx->Driver.DrawPixels               = _mesa_meta_DrawPixels;
+   ctx->Driver.CopyPixels               = _mesa_meta_CopyPixels;
+   ctx->Driver.DrawPixels               = _mesa_meta_DrawPixels;
+   if (dri2)
 	   ctx->Driver.ReadPixels               = radeonReadPixels;
-   }
 
    ctx->Driver.AlphaFunc		= radeonAlphaFunc;
    ctx->Driver.BlendEquationSeparate	= radeonBlendEquationSeparate;

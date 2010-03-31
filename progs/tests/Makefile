@@ -41,6 +41,7 @@ SOURCES = \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
+	cva_huge.c \
 	cylwrap.c \
 	drawbuffers.c \
 	drawbuffers2.c \

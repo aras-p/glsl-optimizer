@@ -40,8 +40,7 @@ buffers, surfaces) are bound to the driver.
   are mostly restricted to the first one right now).
 
 * ``set_framebuffer_state``
-* ``set_fragment_sampler_textures``
-* ``set_vertex_sampler_textures``
+
 * ``set_vertex_buffers``
 
 
@@ -51,6 +50,7 @@ Non-CSO State
 These pieces of state are too small, variable, and/or trivial to have CSO
 objects. They all follow simple, one-method binding calls, e.g.
 ``set_blend_color``.
+
 * ``set_stencil_ref`` sets the stencil front and back reference values
   which are used as comparison values in stencil test.
 * ``set_blend_color``
@@ -61,6 +61,41 @@ objects. They all follow simple, one-method binding calls, e.g.
   not have the scissor test enabled, then the scissor bounds never need to
   be set since they will not be used.
 * ``set_viewport_state``
+
+
+Sampler Views
+^^^^^^^^^^^^^
+
+These are the means to bind textures to shader stages. To create one, specify
+its format, swizzle and LOD range in sampler view template.
+
+If texture format is different than template format, it is said the texture
+is being cast to another format. Casting can be done only between compatible
+formats, that is formats that have matching component order and sizes.
+
+Swizzle fields specify they way in which fetched texel components are placed
+in the result register. For example, ``swizzle_r`` specifies what is going to be
+placed in first component of result register.
+
+The ``first_level`` and ``last_level`` fields of sampler view template specify
+the LOD range the texture is going to be constrained to.
+
+* ``set_fragment_sampler_views`` binds an array of sampler views to
+  fragment shader stage. Every binding point acquires a reference
+  to a respective sampler view and releases a reference to the previous
+  sampler view.
+
+* ``set_vertex_sampler_views`` binds an array of sampler views to vertex
+  shader stage. Every binding point acquires a reference to a respective
+  sampler view and releases a reference to the previous sampler view.
+
+* ``create_sampler_view`` creates a new sampler view. ``texture`` is associated
+  with the sampler view which results in sampler view holding a reference
+  to the texture. Format specified in template must be compatible
+  with texture format.
+
+* ``sampler_view_destroy`` destroys a sampler view and releases its reference
+  to associated texture.
 
 
 Clearing

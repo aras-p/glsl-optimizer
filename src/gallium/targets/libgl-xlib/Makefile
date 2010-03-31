@@ -38,7 +38,7 @@ XLIB_TARGET_OBJECTS = $(XLIB_TARGET_SOURCES:.c=.o)
 LIBS = \
 	$(GALLIUM_DRIVERS) \
 	$(TOP)/src/gallium/state_trackers/glx/xlib/libxlib.a \
-	$(TOP)/src/gallium/winsys/xlib/libws_xlib.a \
+	$(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/identity/libidentity.a \
 	$(TOP)/src/mesa/libglapi.a \

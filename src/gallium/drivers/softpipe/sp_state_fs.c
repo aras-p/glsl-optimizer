@@ -181,9 +181,8 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    /* note: reference counting */
    pipe_buffer_reference(&softpipe->constants[shader][index], constants);
 
-   if(shader == PIPE_SHADER_VERTEX) {
-      draw_set_mapped_constant_buffer(softpipe->draw, PIPE_SHADER_VERTEX, index,
-                                      data, size);
+   if (shader == PIPE_SHADER_VERTEX || shader == PIPE_SHADER_GEOMETRY) {
+      draw_set_mapped_constant_buffer(softpipe->draw, shader, index, data, size);
    }
 
    softpipe->mapped_constants[shader][index] = data;

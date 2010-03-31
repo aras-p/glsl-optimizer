@@ -26,10 +26,8 @@
 
 #include "r300_context.h"
 #include "r300_texture.h"
-
-#include "radeon_winsys.h"
-
 #include "r300_screen_buffer.h"
+#include "r300_winsys.h"
 
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
@@ -166,7 +164,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
             return 0;
         default:
-            debug_printf("r300: Implementation error: Bad param %d\n",
+            fprintf(stderr, "r300: Implementation error: Bad param %d\n",
                 param);
             return 0;
     }
@@ -195,7 +193,7 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
             return 16.0f;
         default:
-            debug_printf("r300: Implementation error: Bad paramf %d\n",
+            fprintf(stderr, "r300: Implementation error: Bad paramf %d\n",
                 param);
             return 0.0f;
     }
@@ -214,7 +212,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM;
 
     if (target >= PIPE_MAX_TEXTURE_TYPES) {
-        debug_printf("r300: Implementation error: Received bogus texture "
+        fprintf(stderr, "r300: Implementation error: Received bogus texture "
             "target %d in %s\n", target, __FUNCTION__);
         return FALSE;
     }

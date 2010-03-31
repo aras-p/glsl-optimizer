@@ -56,7 +56,7 @@ update_textures(struct st_context *st)
 
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
-      struct pipe_texture *pt = NULL;
+      struct pipe_sampler_view *sampler_view = NULL;
 
       if (samplersUsed & (1 << su)) {
          struct gl_texture_object *texObj;
@@ -84,7 +84,7 @@ update_textures(struct st_context *st)
 
          st->state.num_textures = su + 1;
 
-         pt = st_get_stobj_texture(stObj);
+         sampler_view = st_get_stobj_sampler_view(stObj);
       }
 
       /*
@@ -96,17 +96,17 @@ update_textures(struct st_context *st)
       }
       */
 
-      pipe_texture_reference(&st->state.sampler_texture[su], pt);
+      pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
    }
 
-   cso_set_sampler_textures(st->cso_context,
-                            st->state.num_textures,
-                            st->state.sampler_texture);
+   cso_set_fragment_sampler_views(st->cso_context,
+                                  st->state.num_textures,
+                                  st->state.sampler_views);
    if (st->ctx->Const.MaxVertexTextureImageUnits > 0) {
-      cso_set_vertex_sampler_textures(st->cso_context,
-                                      MIN2(st->state.num_textures,
-                                           st->ctx->Const.MaxVertexTextureImageUnits),
-                                      st->state.sampler_texture);
+      cso_set_vertex_sampler_views(st->cso_context,
+                                   MIN2(st->state.num_textures,
+                                        st->ctx->Const.MaxVertexTextureImageUnits),
+                                   st->state.sampler_views);
    }
 }
 

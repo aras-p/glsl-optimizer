@@ -37,14 +37,14 @@
 void svga_cleanup_tss_binding(struct svga_context *svga)
 {
    int i;
-   unsigned count = MAX2( svga->curr.num_textures,
+   unsigned count = MAX2( svga->curr.num_sampler_views,
                           svga->state.hw_draw.num_views );
 
    for (i = 0; i < count; i++) {
       struct svga_hw_view_state *view = &svga->state.hw_draw.views[i];
 
       svga_sampler_view_reference(&view->v, NULL);
-      pipe_texture_reference( &svga->curr.texture[i], NULL );
+      pipe_sampler_view_reference( &svga->curr.sampler_views[i], NULL );
       pipe_texture_reference( &view->texture, NULL );
 
       view->dirty = 1;
@@ -57,7 +57,7 @@ update_tss_binding(struct svga_context *svga,
                    unsigned dirty )
 {
    unsigned i;
-   unsigned count = MAX2( svga->curr.num_textures,
+   unsigned count = MAX2( svga->curr.num_sampler_views,
                           svga->state.hw_draw.num_views );
    unsigned min_lod;
    unsigned max_lod;
@@ -77,30 +77,32 @@ update_tss_binding(struct svga_context *svga,
    for (i = 0; i < count; i++) {
       const struct svga_sampler_state *s = svga->curr.sampler[i];
       struct svga_hw_view_state *view = &svga->state.hw_draw.views[i];
+      struct pipe_texture *texture = NULL;
 
       /* get min max lod */
-      if (svga->curr.texture[i]) {
+      if (svga->curr.sampler_views[i]) {
          min_lod = MAX2(s->view_min_lod, 0);
-         max_lod = MIN2(s->view_max_lod, svga->curr.texture[i]->last_level);
+         max_lod = MIN2(s->view_max_lod, svga->curr.sampler_views[i]->texture->last_level);
+         texture = svga->curr.sampler_views[i]->texture;
       } else {
          min_lod = 0;
          max_lod = 0;
       }
 
-      if (view->texture != svga->curr.texture[i] ||
+      if (view->texture != texture ||
           view->min_lod != min_lod ||
           view->max_lod != max_lod) {
 
          svga_sampler_view_reference(&view->v, NULL);
-         pipe_texture_reference( &view->texture, svga->curr.texture[i] );
+         pipe_texture_reference( &view->texture, texture );
 
          view->dirty = TRUE;
          view->min_lod = min_lod;
          view->max_lod = max_lod;
 
-         if (svga->curr.texture[i])
+         if (texture)
             view->v = svga_get_tex_sampler_view(&svga->pipe, 
-                                                svga->curr.texture[i], 
+                                                texture, 
                                                 min_lod,
                                                 max_lod);
       }
@@ -115,7 +117,7 @@ update_tss_binding(struct svga_context *svga,
       }
    }
 
-   svga->state.hw_draw.num_views = svga->curr.num_textures;
+   svga->state.hw_draw.num_views = svga->curr.num_sampler_views;
 
    if (queue.bind_count) {
       SVGA3dTextureState *ts;

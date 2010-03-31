@@ -212,7 +212,7 @@ nv10_hwctx_init(GLcontext *ctx)
 	OUT_RING(chan, 0);
 	BEGIN_RING(chan, celsius, NV10TCL_CULL_FACE_ENABLE, 1);
 	OUT_RING(chan, 0);
-	BEGIN_RING(chan, celsius, NV10TCL_TX_GEN_S(0), 8);
+	BEGIN_RING(chan, celsius, NV10TCL_TX_GEN_MODE_S(0), 8);
 	for (i = 0; i < 8; i++)
 		OUT_RING(chan, 0);
 
@@ -410,6 +410,10 @@ const struct nouveau_driver nv10_driver = {
 		nouveau_emit_nothing,
 		nv10_emit_tex_gen,
 		nv10_emit_tex_gen,
+		nouveau_emit_nothing,
+		nouveau_emit_nothing,
+		nv10_emit_tex_mat,
+		nv10_emit_tex_mat,
 		nouveau_emit_nothing,
 		nouveau_emit_nothing,
 		nv10_emit_tex_obj,

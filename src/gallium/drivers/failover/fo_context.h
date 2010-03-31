@@ -47,7 +47,7 @@
 #define FO_NEW_ALPHA_TEST      0x100
 #define FO_NEW_DEPTH_STENCIL   0x200
 #define FO_NEW_SAMPLER         0x400
-#define FO_NEW_TEXTURE         0x800
+#define FO_NEW_SAMPLER_VIEW    0x800
 #define FO_NEW_VERTEX          0x2000
 #define FO_NEW_VERTEX_SHADER   0x4000
 #define FO_NEW_BLEND_COLOR     0x8000
@@ -65,6 +65,13 @@ struct fo_state {
    void *sw_state;
    void *hw_state;
 };
+
+struct fo_sampler_view {
+   struct pipe_sampler_view base;
+   struct pipe_sampler_view *sw;
+   struct pipe_sampler_view *hw;
+};
+
 struct failover_context {
    struct pipe_context pipe;  /**< base class */
 
@@ -86,8 +93,6 @@ struct failover_context {
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
-   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
 
@@ -98,12 +103,15 @@ struct failover_context {
    void *sw_vertex_sampler_state[PIPE_MAX_VERTEX_SAMPLERS];
    void *hw_vertex_sampler_state[PIPE_MAX_VERTEX_SAMPLERS];
 
+   struct fo_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
+   struct fo_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
+   unsigned num_fragment_sampler_views;
+   unsigned num_vertex_sampler_views;
+
    unsigned dirty;
 
    unsigned num_samplers;
    unsigned num_vertex_samplers;
-   unsigned num_textures;
-   unsigned num_vertex_textures;
 
    unsigned mode;
    struct pipe_context *hw;

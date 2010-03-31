@@ -803,7 +803,8 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 		fp->fp_control |= fpc->num_regs << NV40TCL_FP_CONTROL_TEMP_COUNT_SHIFT;
 
 	/* Terminate final instruction */
-	fp->insn[fpc->inst_offset] |= 0x00000001;
+	if(fp->insn)
+                fp->insn[fpc->inst_offset] |= 0x00000001;
 
 	/* Append NOP + END instruction, may or may not be necessary. */
 	fpc->inst_offset = fp->insn_len;

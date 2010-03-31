@@ -54,6 +54,7 @@ static const struct dri_extension nouveau_extensions[] = {
 	{ "GL_ARB_texture_env_dot3",	NULL },
 	{ "GL_ARB_texture_mirrored_repeat", NULL },
 	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
+	{ "GL_EXT_framebuffer_blit",	NULL },
 	{ "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
 	{ "GL_EXT_secondary_color",	GL_EXT_secondary_color_functions },
 	{ "GL_EXT_stencil_wrap",	NULL },
@@ -337,6 +338,8 @@ nouveau_validate_framebuffer(GLcontext *ctx)
 		update_framebuffer(dri_ctx, dri_read,
 				   &dri_ctx->dri2.read_stamp);
 
-	if (nouveau_next_dirty_state(ctx) >= 0)
+	if (nouveau_next_dirty_state(ctx) >= 0) {
+		nouveau_state_emit(ctx);
 		FIRE_RING(context_chan(ctx));
+	}
 }

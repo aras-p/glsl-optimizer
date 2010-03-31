@@ -30,6 +30,7 @@
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
 
+#include "r300_defines.h"
 #include "r300_screen.h"
 
 struct u_upload_mgr;
@@ -125,8 +126,6 @@ struct r300_texture_format_state {
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
 };
 
-#define R300_MAX_TEXTURE_LEVELS 13
-
 struct r300_texture_fb_state {
     /* Colorbuffer. */
     uint32_t colorpitch[R300_MAX_TEXTURE_LEVELS]; /* R300_RB3D_COLORPITCH[0-3]*/
@@ -139,7 +138,7 @@ struct r300_texture_fb_state {
 
 struct r300_textures_state {
     /* Textures. */
-    struct r300_texture *textures[8];
+    struct pipe_sampler_view *fragment_sampler_views[8];
     int texture_count;
     /* Sampler states. */
     struct r300_sampler_state *sampler_states[8];
@@ -185,12 +184,6 @@ struct r300_ztop_state {
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
 };
 
-#define R300_NEW_FRAGMENT_SHADER 0x00000020
-#define R300_NEW_FRAGMENT_SHADER_CONSTANTS    0x00000040
-#define R300_NEW_VERTEX_SHADER_CONSTANTS    0x10000000
-#define R300_NEW_QUERY           0x40000000
-#define R300_NEW_KITCHEN_SINK    0x7fffffff
-
 /* The next several objects are not pure Radeon state; they inherit from
  * various Gallium classes. */
 
@@ -226,12 +219,6 @@ struct r300_query {
     /* Linked list members. */
     struct r300_query* prev;
     struct r300_query* next;
-};
-
-enum r300_buffer_tiling {
-    R300_BUFFER_LINEAR = 0,
-    R300_BUFFER_TILED,
-    R300_BUFFER_SQUARETILED
 };
 
 struct r300_texture {
@@ -422,7 +409,7 @@ static INLINE void CTX_DBG(struct r300_context * ctx, unsigned flags,
     if (CTX_DBG_ON(ctx, flags)) {
         va_list va;
         va_start(va, fmt);
-        debug_vprintf(fmt, va);
+        vfprintf(stderr, fmt, va);
         va_end(va);
     }
 }
@@ -431,4 +418,3 @@ static INLINE void CTX_DBG(struct r300_context * ctx, unsigned flags,
 #define DBG     CTX_DBG
 
 #endif /* R300_CONTEXT_H */
-

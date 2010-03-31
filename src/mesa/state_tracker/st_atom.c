@@ -34,8 +34,7 @@
 #include "st_atom.h"
 #include "st_cb_bitmap.h"
 #include "st_program.h"
-
-#include "pipe/p_context.h"
+#include "st_manager.h"
 
 
 /**
@@ -136,9 +135,7 @@ void st_validate_state( struct st_context *st )
 
    check_program_state( st );
 
-   if (st->pipe->screen->update_buffer)
-      st->pipe->screen->update_buffer(st->pipe->screen,
-				      st->pipe->priv);
+   st_manager_validate_framebuffers(st);
 
    if (state->st == 0)
       return;

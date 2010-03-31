@@ -40,7 +40,7 @@
  * for a standalone example.
  */
 
-#include "os/os_llvm.h"
+#include "gallivm/lp_bld.h"
  
 #include "pipe/p_format.h"
 

@@ -23,6 +23,9 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 {
     int i;
 
+    if (INTEL_DEBUG & DEBUG_GLSL_FORCE)
+       return GL_TRUE;
+
     for (i = 0; i < fp->Base.NumInstructions; i++) {
 	const struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
@@ -567,12 +570,35 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
     const GLuint nr = 1;
     const GLuint component = GET_SWZ(src->Swizzle, channel);
 
-    /* Extended swizzle terms */
-    if (component == SWIZZLE_ZERO) {
-       return brw_imm_f(0.0F);
-    }
-    else if (component == SWIZZLE_ONE) {
-       return brw_imm_f(1.0F);
+    /* Only one immediate value can be used per native opcode, and it
+     * has be in the src1 slot, so not all Mesa instructions will get
+     * to take advantage of immediate constants.
+     */
+    if (brw_wm_arg_can_be_immediate(inst->Opcode, srcRegIndex)) {
+       const struct gl_program_parameter_list *params;
+
+       params = c->fp->program.Base.Parameters;
+
+       /* Extended swizzle terms */
+       if (component == SWIZZLE_ZERO) {
+	  return brw_imm_f(0.0F);
+       } else if (component == SWIZZLE_ONE) {
+	  if (src->Negate)
+	     return brw_imm_f(-1.0F);
+	  else
+	     return brw_imm_f(1.0F);
+       }
+
+       if (src->File == PROGRAM_CONSTANT) {
+	  float f = params->ParameterValues[src->Index][component];
+
+	  if (src->Abs)
+	     f = fabs(f);
+	  if (src->Negate)
+	     f = -f;
+
+	  return brw_imm_f(f);
+       }
     }
 
     if (c->fp->use_const_buffer &&

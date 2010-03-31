@@ -30,7 +30,7 @@
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 #include "main/mtypes.h"
-#include "dri_sw.h"
+#include "drisw_util.h"
 
 
 /**
@@ -123,14 +123,6 @@ swrast_renderbuffer(struct gl_renderbuffer *rb)
 #define PF_R5G6B5     2		/**< 16bpp TrueColor:  5-R, 6-G, 5-B bits */
 #define PF_R3G3B2     3		/**<  8bpp TrueColor:  3-R, 3-G, 2-B bits */
 #define PF_X8R8G8B8   4		/**< 32bpp TrueColor:  8-R, 8-G, 8-B bits */
-
-/**
- * Renderbuffer pitch alignment (in bits).
- *
- * The xorg loader requires padding images to 32 bits. However, this should
- * become a screen/drawable parameter XXX
- */
-#define PITCH_ALIGN_BITS 32
 
 
 /* swrast_span.c */

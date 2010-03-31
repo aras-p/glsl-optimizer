@@ -24,6 +24,8 @@
 
 #include "util/u_debug.h"
 
+#include <stdio.h>
+
 /* r300_chipset: A file all to itself for deducing the various properties of
  * Radeons. */
 
@@ -365,8 +367,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             break;
 
         default:
-            debug_printf("r300: Warning: Unknown chipset 0x%x\n",
-                caps->pci_id);
-            break;
+            fprintf(stderr, "r300: Warning: Unknown chipset 0x%x\n",
+                    caps->pci_id);
     }
 }

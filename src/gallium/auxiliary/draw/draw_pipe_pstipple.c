@@ -42,6 +42,7 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_sampler.h"
 
 #include "tgsi/tgsi_transform.h"
 #include "tgsi/tgsi_dump.h"
@@ -75,8 +76,9 @@ struct pstip_stage
 
    void *sampler_cso;
    struct pipe_texture *texture;
+   struct pipe_sampler_view *sampler_view;
    uint num_samplers;
-   uint num_textures;
+   uint num_sampler_views;
 
    /*
     * Currently bound state
@@ -84,7 +86,7 @@ struct pstip_stage
    struct pstip_fragment_shader *fs;
    struct {
       void *samplers[PIPE_MAX_SAMPLERS];
-      struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
       const struct pipe_poly_stipple *stipple;
    } state;
 
@@ -98,8 +100,9 @@ struct pstip_stage
 
    void (*driver_bind_sampler_states)(struct pipe_context *, unsigned, void **);
 
-   void (*driver_set_sampler_textures)(struct pipe_context *, unsigned,
-                                       struct pipe_texture **);
+   void (*driver_set_sampler_views)(struct pipe_context *,
+                                    unsigned,
+                                    struct pipe_sampler_view **);
 
    void (*driver_set_polygon_stipple)(struct pipe_context *,
                                       const struct pipe_poly_stipple *);
@@ -424,6 +427,7 @@ pstip_create_texture(struct pstip_stage *pstip)
    struct pipe_context *pipe = pstip->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_texture texTemp;
+   struct pipe_sampler_view viewTempl;
 
    memset(&texTemp, 0, sizeof(texTemp));
    texTemp.target = PIPE_TEXTURE_2D;
@@ -436,6 +440,16 @@ pstip_create_texture(struct pstip_stage *pstip)
    pstip->texture = screen->texture_create(screen, &texTemp);
    if (pstip->texture == NULL)
       return FALSE;
+
+   u_sampler_view_default_template(&viewTempl,
+                                   pstip->texture,
+                                   pstip->texture->format);
+   pstip->sampler_view = pipe->create_sampler_view(pipe,
+                                                   pstip->texture,
+                                                   &viewTempl);
+   if (!pstip->sampler_view) {
+      return FALSE;
+   }
 
    return TRUE;
 }
@@ -515,19 +529,19 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
-   num_samplers = MAX2(pstip->num_textures, pstip->num_samplers);
+   num_samplers = MAX2(pstip->num_sampler_views, pstip->num_samplers);
    num_samplers = MAX2(num_samplers, pstip->fs->sampler_unit + 1);
 
    /* plug in our sampler, texture */
    pstip->state.samplers[pstip->fs->sampler_unit] = pstip->sampler_cso;
-   pipe_texture_reference(&pstip->state.textures[pstip->fs->sampler_unit],
-                          pstip->texture);
+   pipe_sampler_view_reference(&pstip->state.sampler_views[pstip->fs->sampler_unit],
+                               pstip->sampler_view);
 
    assert(num_samplers <= PIPE_MAX_SAMPLERS);
 
    draw->suspend_flushing = TRUE;
    pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
-   pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
+   pstip->driver_set_sampler_views(pipe, num_samplers, pstip->state.sampler_views);
    draw->suspend_flushing = FALSE;
 
    /* now really draw first triangle */
@@ -551,8 +565,9 @@ pstip_flush(struct draw_stage *stage, unsigned flags)
    pstip->driver_bind_fs_state(pipe, pstip->fs->driver_fs);
    pstip->driver_bind_sampler_states(pipe, pstip->num_samplers,
                                      pstip->state.samplers);
-   pstip->driver_set_sampler_textures(pipe, pstip->num_textures,
-                                      pstip->state.textures);
+   pstip->driver_set_sampler_views(pipe,
+                                   pstip->num_sampler_views,
+                                   pstip->state.sampler_views);
    draw->suspend_flushing = FALSE;
 }
 
@@ -571,12 +586,16 @@ pstip_destroy(struct draw_stage *stage)
    uint i;
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      pipe_texture_reference(&pstip->state.textures[i], NULL);
+      pipe_sampler_view_reference(&pstip->state.sampler_views[i], NULL);
    }
 
    pstip->pipe->delete_sampler_state(pstip->pipe, pstip->sampler_cso);
 
    pipe_texture_reference(&pstip->texture, NULL);
+
+   if (pstip->sampler_view) {
+      pipe_sampler_view_reference(&pstip->sampler_view, NULL);
+   }
 
    draw_free_temp_verts( stage );
    FREE( stage );
@@ -682,24 +701,25 @@ pstip_bind_sampler_states(struct pipe_context *pipe,
 
 
 static void
-pstip_set_sampler_textures(struct pipe_context *pipe,
-                           unsigned num, struct pipe_texture **texture)
+pstip_set_sampler_views(struct pipe_context *pipe,
+                        unsigned num,
+                        struct pipe_sampler_view **views)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
    uint i;
 
    /* save current */
    for (i = 0; i < num; i++) {
-      pipe_texture_reference(&pstip->state.textures[i], texture[i]);
+      pipe_sampler_view_reference(&pstip->state.sampler_views[i], views[i]);
    }
    for (; i < PIPE_MAX_SAMPLERS; i++) {
-      pipe_texture_reference(&pstip->state.textures[i], NULL);
+      pipe_sampler_view_reference(&pstip->state.sampler_views[i], NULL);
    }
 
-   pstip->num_textures = num;
+   pstip->num_sampler_views = num;
 
    /* pass-through */
-   pstip->driver_set_sampler_textures(pstip->pipe, num, texture);
+   pstip->driver_set_sampler_views(pstip->pipe, num, views);
 }
 
 
@@ -756,7 +776,7 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pstip->driver_delete_fs_state = pipe->delete_fs_state;
 
    pstip->driver_bind_sampler_states = pipe->bind_fragment_sampler_states;
-   pstip->driver_set_sampler_textures = pipe->set_fragment_sampler_textures;
+   pstip->driver_set_sampler_views = pipe->set_fragment_sampler_views;
    pstip->driver_set_polygon_stipple = pipe->set_polygon_stipple;
 
    /* override the driver's functions */
@@ -765,7 +785,7 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->delete_fs_state = pstip_delete_fs_state;
 
    pipe->bind_fragment_sampler_states = pstip_bind_sampler_states;
-   pipe->set_fragment_sampler_textures = pstip_set_sampler_textures;
+   pipe->set_fragment_sampler_views = pstip_set_sampler_views;
    pipe->set_polygon_stipple = pstip_set_polygon_stipple;
 
    return TRUE;

@@ -65,12 +65,12 @@ void renderer_solid(struct xorg_renderer *r,
                     float *color);
 
 void renderer_begin_textures(struct xorg_renderer *r,
-                             struct pipe_texture **textures,
                              int num_textures);
+
 void renderer_texture(struct xorg_renderer *r,
                       int *pos,
                       int width, int height,
-                      struct pipe_texture **textures,
+                      struct pipe_sampler_view **textures,
                       int num_textures,
                       float *src_matrix,
                       float *mask_matrix);

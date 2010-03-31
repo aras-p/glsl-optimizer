@@ -65,7 +65,6 @@ struct intel_region
    GLuint draw_x, draw_y; /**< Offset of drawing within the region */
 
    uint32_t tiling; /**< Which tiling mode the region is in */
-   uint32_t bit_6_swizzle; /**< GEM flag for address swizzling requirement */
    struct intel_buffer_object *pbo;     /* zero-copy uploads */
 
    uint32_t name; /**< Global name for the bo */
@@ -79,7 +78,7 @@ struct intel_region
 struct intel_region *intel_region_alloc(struct intel_context *intel,
                                         uint32_t tiling,
 					GLuint cpp, GLuint width,
-                                        GLuint height, GLuint pitch,
+                                        GLuint height,
 					GLboolean expect_accelerated_upload);
 
 struct intel_region *
@@ -122,6 +121,7 @@ intel_region_copy(struct intel_context *intel,
 		  struct intel_region *src,
 		  GLuint src_offset,
 		  GLuint srcx, GLuint srcy, GLuint width, GLuint height,
+		  GLboolean flip,
 		  GLenum logicop);
 
 /* Helpers for zerocopy uploads, particularly texture image uploads:

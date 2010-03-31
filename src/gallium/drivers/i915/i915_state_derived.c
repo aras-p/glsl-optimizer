@@ -101,14 +101,14 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    /* primary color */
    if (colors[0]) {
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_COLOR, 0);
-      draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_4UB_BGRA, colorInterp, src);
       vinfo.hwfmt[0] |= S4_VFMT_COLOR;
    }
 
    /* secondary color */
    if (colors[1]) {
       src = draw_find_shader_output(i915->draw, TGSI_SEMANTIC_COLOR, 1);
-      draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src);
+      draw_emit_vertex_attr(&vinfo, EMIT_4UB_BGRA, colorInterp, src);
       vinfo.hwfmt[0] |= S4_VFMT_SPEC_FOG;
    }
 
@@ -157,10 +157,10 @@ void i915_update_derived( struct i915_context *i915 )
    if (i915->dirty & (I915_NEW_RASTERIZER | I915_NEW_FS | I915_NEW_VS))
       calculate_vertex_layout( i915 );
 
-   if (i915->dirty & (I915_NEW_SAMPLER | I915_NEW_TEXTURE))
+   if (i915->dirty & (I915_NEW_SAMPLER | I915_NEW_SAMPLER_VIEW))
       i915_update_samplers(i915);
 
-   if (i915->dirty & I915_NEW_TEXTURE)
+   if (i915->dirty & I915_NEW_SAMPLER_VIEW)
       i915_update_textures(i915);
 
    if (i915->dirty)

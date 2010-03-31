@@ -164,7 +164,6 @@ intel_region_alloc_internal(struct intel_context *intel,
 
    /* Default to no tiling */
    region->tiling = I915_TILING_NONE;
-   region->bit_6_swizzle = I915_BIT_6_SWIZZLE_NONE;
 
    _DBG("%s <-- %p\n", __FUNCTION__, region);
    return region;
@@ -173,7 +172,7 @@ intel_region_alloc_internal(struct intel_context *intel,
 struct intel_region *
 intel_region_alloc(struct intel_context *intel,
 		   uint32_t tiling,
-                   GLuint cpp, GLuint width, GLuint height, GLuint pitch,
+                   GLuint cpp, GLuint width, GLuint height,
 		   GLboolean expect_accelerated_upload)
 {
    dri_bo *buffer;
@@ -187,19 +186,10 @@ intel_region_alloc(struct intel_context *intel,
    buffer = drm_intel_bo_alloc_tiled(intel->bufmgr, "region",
 				     width, height, cpp,
 				     &tiling, &aligned_pitch, flags);
-   /* We've already chosen a pitch as part of miptree layout.  It had
-    * better be the same.
-    */
-   assert(aligned_pitch == pitch * cpp);
 
    region = intel_region_alloc_internal(intel, cpp, width, height,
-					pitch, buffer);
-
-   if (tiling != I915_TILING_NONE) {
-      assert(((pitch * cpp) & 127) == 0);
-      drm_intel_bo_set_tiling(buffer, &tiling, pitch * cpp);
-      drm_intel_bo_get_tiling(buffer, &region->tiling, &region->bit_6_swizzle);
-   }
+					aligned_pitch / cpp, buffer);
+   region->tiling = tiling;
 
    return region;
 }
@@ -213,6 +203,7 @@ intel_region_alloc_for_handle(struct intel_context *intel,
    struct intel_region *region, *dummy;
    dri_bo *buffer;
    int ret;
+   uint32_t bit_6_swizzle;
 
    region = _mesa_HashLookup(intel->intelScreen->named_regions, handle);
    if (region != NULL) {
@@ -236,7 +227,7 @@ intel_region_alloc_for_handle(struct intel_context *intel,
       return region;
 
    ret = dri_bo_get_tiling(region->buffer, &region->tiling,
-			   &region->bit_6_swizzle);
+			   &bit_6_swizzle);
    if (ret != 0) {
       fprintf(stderr, "Couldn't get tiling of buffer %d (%s): %s\n",
 	      handle, name, strerror(-ret));
@@ -316,7 +307,7 @@ _mesa_copy_rect(GLubyte * dst,
    dst += dst_x * cpp;
    src += src_x * cpp;
    dst += dst_y * dst_pitch;
-   src += src_y * dst_pitch;
+   src += src_y * src_pitch;
    width *= cpp;
 
    if (width == dst_pitch && width == src_pitch)
@@ -380,8 +371,11 @@ intel_region_copy(struct intel_context *intel,
                   struct intel_region *src,
                   GLuint src_offset,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height,
+		  GLboolean flip,
 		  GLenum logicop)
 {
+   uint32_t src_pitch = src->pitch;
+
    _DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
@@ -397,9 +391,12 @@ intel_region_copy(struct intel_context *intel,
 
    assert(src->cpp == dst->cpp);
 
+   if (flip)
+      src_pitch = -src_pitch;
+
    return intelEmitCopyBlit(intel,
 			    dst->cpp,
-			    src->pitch, src->buffer, src_offset, src->tiling,
+			    src_pitch, src->buffer, src_offset, src->tiling,
 			    dst->pitch, dst->buffer, dst_offset, dst->tiling,
 			    srcx, srcy, dstx, dsty, width, height,
 			    logicop);

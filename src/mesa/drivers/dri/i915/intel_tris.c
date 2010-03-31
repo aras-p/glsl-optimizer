@@ -251,7 +251,7 @@ void intel_flush_prim(struct intel_context *intel)
       BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
-      assert((offset & !S0_VB_OFFSET_MASK) == 0);
+      assert((offset & ~S0_VB_OFFSET_MASK) == 0);
       OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0, offset);
       OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
 		(intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
@@ -270,7 +270,7 @@ void intel_flush_prim(struct intel_context *intel)
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(2) | 1);
       /* S0 */
-      assert((offset & !S0_VB_OFFSET_MASK_830) == 0);
+      assert((offset & ~S0_VB_OFFSET_MASK_830) == 0);
       OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
 		offset | (intel->vertex_size << S0_VB_PITCH_SHIFT_830) |
 		S0_VB_ENABLE_830);
@@ -488,9 +488,9 @@ intel_wpos_triangle(struct intel_context *intel,
    __memcpy(v1_wpos, v1, size);
    __memcpy(v2_wpos, v2, size);
 
-   v0_wpos[1] = -v0_wpos[1] + intel->driDrawable->h;
-   v1_wpos[1] = -v1_wpos[1] + intel->driDrawable->h;
-   v2_wpos[1] = -v2_wpos[1] + intel->driDrawable->h;
+   v0_wpos[1] = -v0_wpos[1] + intel->ctx.DrawBuffer->Height;
+   v1_wpos[1] = -v1_wpos[1] + intel->ctx.DrawBuffer->Height;
+   v2_wpos[1] = -v2_wpos[1] + intel->ctx.DrawBuffer->Height;
 
 
    intel_draw_triangle(intel, v0, v1, v2);
@@ -509,8 +509,8 @@ intel_wpos_line(struct intel_context *intel,
    __memcpy(v0_wpos, v0, size);
    __memcpy(v1_wpos, v1, size);
 
-   v0_wpos[1] = -v0_wpos[1] + intel->driDrawable->h;
-   v1_wpos[1] = -v1_wpos[1] + intel->driDrawable->h;
+   v0_wpos[1] = -v0_wpos[1] + intel->ctx.DrawBuffer->Height;
+   v1_wpos[1] = -v1_wpos[1] + intel->ctx.DrawBuffer->Height;
 
    intel_draw_line(intel, v0, v1);
 }
@@ -524,7 +524,7 @@ intel_wpos_point(struct intel_context *intel, intelVertexPtr v0)
    GLfloat *v0_wpos = (GLfloat *)((char *)v0 + offset);
 
    __memcpy(v0_wpos, v0, size);
-   v0_wpos[1] = -v0_wpos[1] + intel->driDrawable->h;
+   v0_wpos[1] = -v0_wpos[1] + intel->ctx.DrawBuffer->Height;
 
    intel_draw_point(intel, v0);
 }

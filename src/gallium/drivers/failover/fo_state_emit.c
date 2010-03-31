@@ -106,12 +106,24 @@ failover_state_emit( struct failover_context *failover )
                                                failover->sw_vertex_sampler_state);
    }
 
-   if (failover->dirty & FO_NEW_TEXTURE) {
-      failover->sw->set_fragment_sampler_textures( failover->sw, failover->num_textures, 
-                                                   failover->texture );
-      failover->sw->set_vertex_sampler_textures(failover->sw,
-                                                failover->num_vertex_textures, 
-                                                failover->vertex_textures);
+   if (failover->dirty & FO_NEW_SAMPLER_VIEW) {
+      struct pipe_sampler_view *fragment_views[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *vertex_views[PIPE_MAX_VERTEX_SAMPLERS];
+      uint i;
+
+      for (i = 0; i < failover->num_fragment_sampler_views; i++) {
+         fragment_views[i] = failover->fragment_sampler_views[i]->sw;
+      }
+      failover->sw->set_fragment_sampler_views(failover->sw,
+                                               failover->num_fragment_sampler_views,
+                                               fragment_views);
+
+      for (i = 0; i < failover->num_vertex_sampler_views; i++) {
+         vertex_views[i] = failover->vertex_sampler_views[i]->sw;
+      }
+      failover->sw->set_vertex_sampler_views(failover->sw,
+                                             failover->num_vertex_sampler_views,
+                                             vertex_views);
    }
 
    if (failover->dirty & FO_NEW_VERTEX_BUFFER) {

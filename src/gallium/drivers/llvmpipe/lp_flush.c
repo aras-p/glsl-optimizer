@@ -111,7 +111,6 @@ llvmpipe_flush_texture(struct pipe_context *pipe,
                        boolean cpu_access,
                        boolean do_not_flush)
 {
-   struct pipe_fence_handle *last_fence = NULL;
    unsigned referenced;
 
    referenced = pipe->is_texture_referenced(pipe, texture, face, level);
@@ -142,7 +141,7 @@ llvmpipe_flush_texture(struct pipe_context *pipe,
 
          pipe->flush(pipe, flush_flags, &fence);
 
-         if (last_fence) {
+         if (fence) {
             pipe->screen->fence_finish(pipe->screen, fence, 0);
             pipe->screen->fence_reference(pipe->screen, &fence, NULL);
          }

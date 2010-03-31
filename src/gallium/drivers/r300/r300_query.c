@@ -30,6 +30,8 @@
 #include "r300_query.h"
 #include "r300_reg.h"
 
+#include <stdio.h>
+
 static struct pipe_query *r300_create_query(struct pipe_context *pipe,
                                             unsigned query_type)
 {
@@ -97,8 +99,10 @@ static void r300_end_query(struct pipe_context* pipe,
 	                   struct pipe_query* query)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_query* q = (struct r300_query*)query;
 
     r300_emit_query_end(r300);
+    q->begin_emitted = false;
     r300->query_current = NULL;
 }
 
@@ -135,8 +139,8 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
         if (*map == ~0U) {
             /* Looks like our results aren't ready yet. */
             if (wait) {
-                debug_printf("r300: Despite waiting, OQ results haven't"
-                        " come in yet.\n");
+                fprintf(stderr, "r300: Despite waiting, OQ results haven't "
+                                "come in yet.\n");
             }
             temp = ~0U;
             break;

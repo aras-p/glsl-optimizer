@@ -300,6 +300,24 @@ struct pipe_surface
 
 
 /**
+ * A view into a texture that can be bound to a shader stage.
+ */
+struct pipe_sampler_view
+{
+   struct pipe_reference reference;
+   enum pipe_format format;      /**< typed PIPE_FORMAT_x */
+   struct pipe_texture *texture; /**< texture into which this is a view  */
+   struct pipe_context *context; /**< context this view belongs to */
+   unsigned first_level:8;       /**< first mipmap level */
+   unsigned last_level:8;        /**< last mipmap level */
+   unsigned swizzle_r:3;         /**< PIPE_SWIZZLE_x for red component */
+   unsigned swizzle_g:3;         /**< PIPE_SWIZZLE_x for green component */
+   unsigned swizzle_b:3;         /**< PIPE_SWIZZLE_x for blue component */
+   unsigned swizzle_a:3;         /**< PIPE_SWIZZLE_x for alpha component */
+};
+
+
+/**
  * Transfer object.  For data transfer to/from a texture.
  */
 struct pipe_transfer

@@ -113,9 +113,9 @@ static void r300_hw_copy(struct pipe_context* pipe,
     util_blitter_save_fragment_sampler_states(
         r300->blitter, state->sampler_count, (void**)state->sampler_states);
 
-    util_blitter_save_fragment_sampler_textures(
+    util_blitter_save_fragment_sampler_views(
         r300->blitter, state->texture_count,
-        (struct pipe_texture**)state->textures);
+        state->fragment_sampler_views);
 
     /* Do a copy */
     util_blitter_copy(r300->blitter,
@@ -148,6 +148,9 @@ void r300_surface_copy(struct pipe_context* pipe,
                 break;
             case 4:
                 new_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+                break;
+            case 8:
+                new_format = PIPE_FORMAT_R16G16B16A16_UNORM;
                 break;
             default:
                 debug_printf("r300: surface_copy: Unhandled format: %s. Falling back to software.\n"

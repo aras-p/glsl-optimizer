@@ -59,7 +59,6 @@
 #include "util/u_draw_quad.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
-#include "util/u_rect.h"
 #include "shader/prog_instruction.h"
 #include "cso_cache/cso_context.h"
 
@@ -525,7 +524,7 @@ static void
 draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    GLsizei width, GLsizei height,
                    GLfloat zoomX, GLfloat zoomY,
-                   struct pipe_texture *pt,
+                   struct pipe_sampler_view *sv,
                    void *driver_vp,
                    void *driver_fp,
                    const GLfloat *color,
@@ -548,7 +547,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_rasterizer(cso);
    cso_save_viewport(cso);
    cso_save_samplers(cso);
-   cso_save_sampler_textures(cso);
+   cso_save_fragment_sampler_views(cso);
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
    cso_save_vertex_elements(cso);
@@ -608,13 +607,13 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* texture state: */
    if (st->pixel_xfer.pixelmap_enabled) {
-      struct pipe_texture *textures[2];
-      textures[0] = pt;
-      textures[1] = st->pixel_xfer.pixelmap_texture;
-      pipe->set_fragment_sampler_textures(pipe, 2, textures);
+      struct pipe_sampler_view *sampler_views[2];
+      sampler_views[0] = sv;
+      sampler_views[1] = st->pixel_xfer.pixelmap_sampler_view;
+      cso_set_fragment_sampler_views(cso, 2, sampler_views);
    }
    else {
-      pipe->set_fragment_sampler_textures(pipe, 1, &pt);
+      cso_set_fragment_sampler_views(cso, 1, &sv);
    }
 
    /* Compute Gallium window coords (y=0=top) with pixel zoom.
@@ -635,14 +634,14 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    z = z * 2.0 - 1.0;
 
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex,
-	     (GLfloat) width / pt->width0,
-	     (GLfloat) height / pt->height0);
+             (GLfloat) width / sv->texture->width0,
+             (GLfloat) height / sv->texture->height0);
 
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_viewport(cso);
    cso_restore_samplers(cso);
-   cso_restore_sampler_textures(cso);
+   cso_restore_fragment_sampler_views(cso);
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
    cso_restore_vertex_elements(cso);
@@ -835,12 +834,17 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       struct pipe_texture *pt
          = make_texture(st, width, height, format, type, unpack, pixels);
       if (pt) {
-         draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                            width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                            pt, 
-                            driver_vp, 
-                            driver_fp,
-                            color, GL_FALSE);
+         struct pipe_sampler_view *sv = st_sampler_view_from_texture(st->pipe, pt);
+
+         if (sv) {
+            draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
+                               width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
+                               sv,
+                               driver_vp, 
+                               driver_fp,
+                               color, GL_FALSE);
+            pipe_sampler_view_reference(&sv, NULL);
+         }
          pipe_texture_reference(&pt, NULL);
       }
    }
@@ -959,41 +963,16 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct st_renderbuffer *rbRead;
    void *driver_vp, *driver_fp;
    struct pipe_texture *pt;
+   struct pipe_sampler_view *sv;
    GLfloat *color;
    enum pipe_format srcFormat, texFormat;
    GLboolean invertTex = GL_FALSE;
+   GLint readX, readY, readW, readH;
+   struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    st_validate_state(st);
-
-   if (srcx < 0) {
-      width -= -srcx;
-      dstx += -srcx;
-      srcx = 0;
-   }
-
-   if (srcy < 0) {
-      height -= -srcy;
-      dsty += -srcy;
-      srcy = 0;
-   }
-
-   if (dstx < 0) {
-      width -= -dstx;
-      srcx += -dstx;
-      dstx = 0;
-   }
-
-   if (dsty < 0) {
-      height -= -dsty;
-      srcy += -dsty;
-      dsty = 0;
-   }
-
-   if (width < 0 || height < 0)
-      return;
-
 
    if (type == GL_STENCIL) {
       /* can't use texturing to do stencil */
@@ -1027,7 +1006,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
                                       PIPE_TEXTURE_2D, 
                                       PIPE_TEXTURE_USAGE_DEPTH_STENCIL);
-         assert(texFormat != PIPE_FORMAT_NONE); /* XXX no depth texture formats??? */
+         assert(texFormat != PIPE_FORMAT_NONE);
       }
       else {
          /* default color format */
@@ -1037,27 +1016,38 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
+   /* Invert src region if needed */
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
       srcy = ctx->ReadBuffer->Height - srcy - height;
-
-      if (srcy < 0) {
-         height -= -srcy;
-         srcy = 0;
-      }
-
-      if (height < 0)
-         return;
-
       invertTex = !invertTex;
    }
+
+   /* Clip the read region against the src buffer bounds.
+    * We'll still allocate a temporary buffer/texture for the original
+    * src region size but we'll only read the region which is on-screen.
+    * This may mean that we draw garbage pixels into the dest region, but
+    * that's expected.
+    */
+   readX = srcx;
+   readY = srcy;
+   readW = width;
+   readH = height;
+   _mesa_clip_readpixels(ctx, &readX, &readY, &readW, &readH, &pack);
+   readW = MAX2(0, readW);
+   readH = MAX2(0, readH);
 
    /* alloc temporary texture */
    pt = alloc_texture(st, width, height, texFormat);
    if (!pt)
       return;
 
+   sv = st_sampler_view_from_texture(st->pipe, pt);
+   if (!sv) {
+      pipe_texture_reference(&pt, NULL);
+      return;
+   }
+
    /* Make temporary texture which is a copy of the src region.
-    * We'll draw a quad with this texture to draw the dest image.
     */
    if (srcFormat == texFormat) {
       /* copy source framebuffer surface into mipmap/texture */
@@ -1066,19 +1056,12 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                                        PIPE_BUFFER_USAGE_GPU_READ);
       struct pipe_surface *psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
                                       PIPE_BUFFER_USAGE_GPU_WRITE );
-      if (pipe->surface_copy) {
-         pipe->surface_copy(pipe,
-                            psTex, /* dest */
-                            0, 0, /* destx/y */
-                            psRead,
-                            srcx, srcy, width, height);
-      } else {
-         util_surface_copy(pipe, FALSE,
-                           psTex,
-                           0, 0,
-                           psRead,
-                           srcx, srcy, width, height);
-      }
+
+      pipe->surface_copy(pipe,
+                         psTex,                               /* dest surf */
+                         pack.SkipPixels, pack.SkipRows,      /* dest pos */
+                         psRead,                              /* src surf */
+                         readX, readY, readW, readH);         /* src region */
 
       if (0) {
          /* debug */
@@ -1093,8 +1076,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* CPU-based fallback/conversion */
       struct pipe_transfer *ptRead =
          st_cond_flush_get_tex_transfer(st, rbRead->texture, 0, 0, 0,
-					PIPE_TRANSFER_READ, srcx, srcy, width,
-					height);
+                                        PIPE_TRANSFER_READ,
+                                        readX, readY, readW, readH);
       struct pipe_transfer *ptTex;
       enum pipe_transfer_usage transfer_usage;
 
@@ -1109,20 +1092,21 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       ptTex = st_cond_flush_get_tex_transfer(st, pt, 0, 0, 0, transfer_usage,
                                              0, 0, width, height);
 
+      /* copy image from ptRead surface to ptTex surface */
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */
          GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-
-         pipe_get_tile_rgba(pipe, ptRead, 0, 0, width, height, buf);
-         pipe_put_tile_rgba(pipe, ptTex, 0, 0, width, height, buf);
-
+         pipe_get_tile_rgba(pipe, ptRead, readX, readY, readW, readH, buf);
+         pipe_put_tile_rgba(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
+                            readW, readH, buf);
          free(buf);
       }
       else {
          /* GL_DEPTH */
          GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
-         pipe_get_tile_z(pipe, ptRead, 0, 0, width, height, buf);
-         pipe_put_tile_z(pipe, ptTex, 0, 0, width, height, buf);
+         pipe_get_tile_z(pipe, ptRead, readX, readY, readW, readH, buf);
+         pipe_put_tile_z(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
+                         readW, readH, buf);
          free(buf);
       }
 
@@ -1130,15 +1114,18 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       pipe->tex_transfer_destroy(pipe, ptTex);
    }
 
-   /* draw textured quad */
+   /* OK, the texture 'pt' contains the src image/pixels.  Now draw a
+    * textured quad with that texture.
+    */
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                      pt, 
+                      sv, 
                       driver_vp, 
                       driver_fp,
                       color, invertTex);
 
    pipe_texture_reference(&pt, NULL);
+   pipe_sampler_view_reference(&sv, NULL);
 }
 
 

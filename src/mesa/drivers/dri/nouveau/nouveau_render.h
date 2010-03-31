@@ -32,8 +32,8 @@
 struct nouveau_array_state;
 
 typedef void (*dispatch_t)(GLcontext *, unsigned int, int, unsigned int);
-typedef unsigned (*extract_u_t)(struct nouveau_array_state *a, int i, int j);
-typedef float (*extract_f_t)(struct nouveau_array_state *a, int i, int j);
+typedef unsigned (*extract_u_t)(struct nouveau_array_state *, int, int);
+typedef float (*extract_f_t)(struct nouveau_array_state *, int, int);
 
 struct nouveau_attr_info {
 	int vbo_index;

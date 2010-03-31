@@ -2385,6 +2385,9 @@ struct gl_constants
 
    /**< GL_EXT_provoking_vertex */
    GLboolean QuadsFollowProvokingVertexConvention;
+
+   /**< OpenGL version 3.x */
+   GLbitfield ContextFlags;  /**< Ex: GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT */
 };
 
 

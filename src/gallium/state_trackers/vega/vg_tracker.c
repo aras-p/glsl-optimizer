@@ -32,6 +32,7 @@
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
+#include "util/u_sampler.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_rect.h"
@@ -41,7 +42,7 @@ PUBLIC const int st_api_OpenVG = 1;
 
 static struct pipe_texture *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
-               VGint width, VGint height)
+                    VGint width, VGint height)
 {
    struct pipe_texture templ;
 
@@ -69,6 +70,27 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
    }
 
    return pipe->screen->texture_create(pipe->screen, &templ);
+}
+
+static struct pipe_sampler_view *
+create_tex_and_view(struct pipe_context *pipe, enum pipe_format format,
+                    VGint width, VGint height)
+{
+   struct pipe_texture *texture;
+   struct pipe_sampler_view view_templ;
+   struct pipe_sampler_view *view;
+
+   texture = create_texture(pipe, format, width, height);
+
+   if (!texture)
+      return NULL;
+
+   u_sampler_view_default_template(&view_templ, texture, texture->format);
+   view = pipe->create_sampler_view(pipe, texture, &view_templ);
+   /* want the texture to go away if the view is freed */
+   pipe_texture_reference(&texture, NULL);
+
+   return view;
 }
 
 /**
@@ -115,8 +137,8 @@ st_renderbuffer_alloc_storage(struct vg_context * ctx,
    surface_usage = (PIPE_BUFFER_USAGE_GPU_READ  |
                     PIPE_BUFFER_USAGE_GPU_WRITE);
 
-   strb->texture = create_texture(pipe, strb->format,
-                                  width, height);
+   strb->texture = create_texture(pipe, strb->format, width, height);
+
 
    if (!strb->texture)
       return FALSE;
@@ -191,7 +213,7 @@ struct st_framebuffer * st_create_framebuffer(const void *visual,
       /*### currently we always allocate it but it's possible it's
         not necessary if EGL_ALPHA_MASK_SIZE was 0
       */
-      stfb->alpha_mask = 0;
+      stfb->alpha_mask_view = NULL;
 
       stfb->width = width;
       stfb->height = height;
@@ -206,19 +228,19 @@ static void setup_new_alpha_mask(struct vg_context *ctx,
                                  uint width, uint height)
 {
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_texture *old_texture = stfb->alpha_mask;
+   struct pipe_sampler_view *old_sampler_view = stfb->alpha_mask_view;
 
    /*
      we use PIPE_FORMAT_B8G8R8A8_UNORM because we want to render to
      this texture and use it as a sampler, so while this wastes some
      space it makes both of those a lot simpler
    */
-   stfb->alpha_mask =
-      create_texture(pipe, PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
+   stfb->alpha_mask_view =
+      create_tex_and_view(pipe, PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
 
-   if (!stfb->alpha_mask) {
-      if (old_texture)
-         pipe_texture_reference(&old_texture, NULL);
+   if (!stfb->alpha_mask_view) {
+      if (old_sampler_view)
+         pipe_sampler_view_reference(&old_sampler_view, NULL);
       return;
    }
 
@@ -228,15 +250,15 @@ static void setup_new_alpha_mask(struct vg_context *ctx,
    mask_fill(0, 0, width, height, 1.f);
 
    /* if we had an old surface copy it over */
-   if (old_texture) {
+   if (old_sampler_view) {
       struct pipe_surface *surface = pipe->screen->get_tex_surface(
          pipe->screen,
-         stfb->alpha_mask,
+         stfb->alpha_mask_view->texture,
          0, 0, 0,
          PIPE_BUFFER_USAGE_GPU_WRITE);
       struct pipe_surface *old_surface = pipe->screen->get_tex_surface(
          pipe->screen,
-         old_texture,
+         old_sampler_view->texture,
          0, 0, 0,
          PIPE_BUFFER_USAGE_GPU_READ);
       if (pipe->surface_copy) {
@@ -264,8 +286,8 @@ static void setup_new_alpha_mask(struct vg_context *ctx,
 
    /* Free the old texture
     */
-   if (old_texture)
-      pipe_texture_reference(&old_texture, NULL);
+   if (old_sampler_view)
+      pipe_sampler_view_reference(&old_sampler_view, NULL);
 }
 
 void st_resize_framebuffer(struct st_framebuffer *stfb,
@@ -326,9 +348,9 @@ void st_resize_framebuffer(struct st_framebuffer *stfb,
 
    setup_new_alpha_mask(ctx, stfb, width, height);
 
-   pipe_texture_reference( &stfb->blend_texture, NULL );
-   stfb->blend_texture = create_texture(ctx->pipe, PIPE_FORMAT_B8G8R8A8_UNORM,
-                                        width, height);
+   pipe_sampler_view_reference( &stfb->blend_texture_view, NULL );
+   stfb->blend_texture_view = create_tex_and_view(ctx->pipe, PIPE_FORMAT_B8G8R8A8_UNORM,
+                                                  width, height);
 }
 
 void st_set_framebuffer_surface(struct st_framebuffer *stfb,

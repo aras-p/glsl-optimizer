@@ -370,6 +370,17 @@ enum pipe_transfer_usage {
 
 
 /**
+ * Texture swizzles
+ */
+#define PIPE_SWIZZLE_RED   0
+#define PIPE_SWIZZLE_GREEN 1
+#define PIPE_SWIZZLE_BLUE  2
+#define PIPE_SWIZZLE_ALPHA 3
+#define PIPE_SWIZZLE_ZERO  4
+#define PIPE_SWIZZLE_ONE   5
+
+
+/**
  * Implementation capabilities/limits which are queried through
  * pipe_screen::get_param() and pipe_screen::get_paramf().
  */

@@ -130,31 +130,10 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
       unsigned dst_offset = 0;
 
       for (i = 0; i < vinfo->num_attribs; i++) {
-         unsigned emit_sz = 0;
+         unsigned emit_sz = draw_translate_vinfo_size(vinfo->attrib[i].emit);
 
-         switch (vinfo->attrib[i].emit) {
-         case EMIT_4F:
-            emit_sz = 4 * sizeof(float);
-            break;
-         case EMIT_3F:
-            emit_sz = 3 * sizeof(float);
-            break;
-         case EMIT_2F:
-            emit_sz = 2 * sizeof(float);
-            break;
-         case EMIT_1F:
-            emit_sz = 1 * sizeof(float);
-            break;
-         case EMIT_1F_PSIZE:
-            emit_sz = 1 * sizeof(float);
-            break;
-         case EMIT_4UB:
-            emit_sz = 4 * sizeof(ubyte);
-            break;
-         default:
-            assert(0);
-            break;
-         }
+         /* doesn't handle EMIT_OMIT */
+         assert(emit_sz != 0);
 
          /* The elements in the key correspond to vertex shader output
           * numbers, not to positions in the hw vertex description --

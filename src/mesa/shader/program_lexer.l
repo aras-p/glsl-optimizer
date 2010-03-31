@@ -324,19 +324,19 @@ ARRAYSHADOW2D             { return_token_or_IDENTIFIER(require_ARB_fp && require
    return INTEGER;
 }
 {num}?{frac}{exp}?        {
-   yylval->real = (float) _mesa_strtod(yytext, NULL);
+   yylval->real = _mesa_strtof(yytext, NULL);
    return REAL;
 }
 {num}"."/[^.]             {
-   yylval->real = (float) _mesa_strtod(yytext, NULL);
+   yylval->real = _mesa_strtof(yytext, NULL);
    return REAL;
 }
 {num}{exp}                {
-   yylval->real = (float) _mesa_strtod(yytext, NULL);
+   yylval->real = _mesa_strtof(yytext, NULL);
    return REAL;
 }
 {num}"."{exp}             {
-   yylval->real = (float) _mesa_strtod(yytext, NULL);
+   yylval->real = _mesa_strtof(yytext, NULL);
    return REAL;
 }
 

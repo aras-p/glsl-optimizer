@@ -6,7 +6,7 @@ CONFIG_NAME = linux-cell
 
 
 # Omiting other gallium drivers:
-GALLIUM_DRIVERS_DIRS = cell softpipe trace
+GALLIUM_DRIVERS_DIRS = cell softpipe trace identity
 
 
 # Compiler and flags

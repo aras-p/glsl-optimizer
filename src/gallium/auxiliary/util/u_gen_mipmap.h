@@ -59,7 +59,7 @@ util_gen_mipmap_flush( struct gen_mipmap_state *ctx );
 
 extern void
 util_gen_mipmap(struct gen_mipmap_state *ctx,
-                struct pipe_texture *pt,
+                struct pipe_sampler_view *psv,
                 uint face, uint baseLevel, uint lastLevel, uint filter);
 
 

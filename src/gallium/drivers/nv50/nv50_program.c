@@ -3762,7 +3762,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			p->cfg.in[n].hw = rid = aid;
 			i = p->cfg.in[n].id;
 
-			if (p->info.input_semantic_name[n] ==
+			if (p->info.input_semantic_name[i] ==
 			    TGSI_SEMANTIC_FACE) {
 				load_frontfacing(pc, &pc->attr[i * 4]);
 				continue;

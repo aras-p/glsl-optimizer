@@ -243,7 +243,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
-	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.gc			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/Makefile		\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
@@ -324,6 +323,7 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/*/Makefile.egl			\
 	$(DIRECTORY)/src/gallium/*/*/Makefile.template			\
 	$(DIRECTORY)/src/gallium/*/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
@@ -379,15 +379,6 @@ SGI_GLU_FILES = \
 	$(DIRECTORY)/src/glu/sgi/libtess/*.[ch]				\
 	$(DIRECTORY)/src/glu/sgi/libutil/*.[ch]
 
-MESA_GLU_FILES = \
-	$(DIRECTORY)/src/glu/mesa/README[12]		\
-	$(DIRECTORY)/src/glu/mesa/Makefile*		\
-	$(DIRECTORY)/src/glu/mesa/descrip.mms		\
-	$(DIRECTORY)/src/glu/mesa/mms_depend		\
-	$(DIRECTORY)/src/glu/mesa/*.def			\
-	$(DIRECTORY)/src/glu/mesa/depend		\
-	$(DIRECTORY)/src/glu/mesa/*.[ch]
-
 GLW_FILES = \
 	$(DIRECTORY)/src/glw/*.[ch]			\
 	$(DIRECTORY)/src/glw/Makefile*			\
@@ -416,6 +407,14 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/demos/*.cxx			\
 	$(DIRECTORY)/progs/demos/*.dat			\
 	$(DIRECTORY)/progs/demos/README			\
+	$(DIRECTORY)/progs/egl/Makefile			\
+	$(DIRECTORY)/progs/egl/*.[ch]			\
+	$(DIRECTORY)/progs/es1/*/Makefile		\
+	$(DIRECTORY)/progs/es1/*/*.[ch]			\
+	$(DIRECTORY)/progs/es2/*/Makefile		\
+	$(DIRECTORY)/progs/es2/*/*.[ch]			\
+	$(DIRECTORY)/progs/openvg/*/Makefile		\
+	$(DIRECTORY)/progs/openvg/*/*.[ch]		\
 	$(DIRECTORY)/progs/fbdev/Makefile		\
 	$(DIRECTORY)/progs/fbdev/glfbdevtest.c		\
 	$(DIRECTORY)/progs/objviewer/*.[ch]		\
@@ -450,11 +449,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.cpp		\
-	$(DIRECTORY)/src/glut/beos/Makefile		\
-	$(DIRECTORY)/src/glut/fbdev/Makefile		\
-	$(DIRECTORY)/src/glut/fbdev/*[ch]		\
-	$(DIRECTORY)/src/glut/mini/*[ch]		\
-	$(DIRECTORY)/src/glut/mini/glut.pc.in		\
+	$(DIRECTORY)/src/glut/beos/Makefile
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\

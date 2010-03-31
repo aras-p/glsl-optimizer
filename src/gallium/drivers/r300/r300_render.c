@@ -41,9 +41,6 @@
 #include "r300_render.h"
 #include "r300_state_derived.h"
 
-/* r300_render: Vertex and index buffer primitive emission. */
-#define R300_MAX_VBO_SIZE  (1024 * 1024)
-
 /* XXX The DRM rejects VAP_ALT_NUM_VERTICES.. */
 //#define ENABLE_ALT_NUM_VERTS
 
@@ -141,7 +138,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
     unsigned vertex_element_count = r300->velems->count;
     unsigned i, vbi;
 
-    if (count > 4) {
+    if (count > 10) {
         return FALSE;
     }
 
@@ -155,8 +152,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         if (!checked[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
 
-            if (r300_buffer_is_referenced(r300,
-					  vbuf->buffer)) {
+            if (r300_buffer_is_referenced(r300, vbuf->buffer)) {
                 /* It's a very bad idea to map it... */
                 return FALSE;
             }
@@ -304,10 +300,9 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 #endif
     CS_LOCALS(r300);
 
-    assert((start * indexSize) % 4 == 0);
     assert(count < (1 << 24));
 
-    maxIndex = MIN3(maxIndex, r300->vertex_buffer_max_index, count - minIndex);
+    maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
 
     DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
         count, minIndex, maxIndex);
@@ -354,6 +349,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 
 static void r300_shorten_ubyte_elts(struct r300_context* r300,
                                     struct pipe_buffer** elts,
+                                    unsigned start,
                                     unsigned count)
 {
     struct pipe_screen* screen = r300->context.screen;
@@ -371,11 +367,39 @@ static void r300_shorten_ubyte_elts(struct r300_context* r300,
     in_map = pipe_buffer_map(screen, *elts, PIPE_BUFFER_USAGE_CPU_READ);
     out_map = pipe_buffer_map(screen, new_elts, PIPE_BUFFER_USAGE_CPU_WRITE);
 
+    in_map += start;
+
     for (i = 0; i < count; i++) {
         *out_map = (unsigned short)*in_map;
         in_map++;
         out_map++;
     }
+
+    pipe_buffer_unmap(screen, *elts);
+    pipe_buffer_unmap(screen, new_elts);
+
+    *elts = new_elts;
+}
+
+static void r300_align_ushort_elts(struct r300_context *r300,
+                                   struct pipe_buffer **elts,
+                                   unsigned start, unsigned count)
+{
+    struct pipe_screen* screen = r300->context.screen;
+    struct pipe_buffer* new_elts;
+    unsigned short *in_map;
+    unsigned short *out_map;
+
+    new_elts = screen->buffer_create(screen, 32,
+                                     PIPE_BUFFER_USAGE_INDEX |
+                                     PIPE_BUFFER_USAGE_CPU_WRITE |
+                                     PIPE_BUFFER_USAGE_GPU_READ,
+                                     2 * count);
+
+    in_map = pipe_buffer_map(screen, *elts, PIPE_BUFFER_USAGE_CPU_READ);
+    out_map = pipe_buffer_map(screen, new_elts, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+    memcpy(out_map, in_map+start, 2 * count);
 
     pipe_buffer_unmap(screen, *elts);
     pipe_buffer_unmap(screen, new_elts);
@@ -408,8 +432,12 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     }
 
     if (indexSize == 1) {
-        r300_shorten_ubyte_elts(r300, &indexBuffer, count);
+        r300_shorten_ubyte_elts(r300, &indexBuffer, start, count);
         indexSize = 2;
+        start = 0;
+    } else if (indexSize == 2 && start % 2 != 0) {
+        r300_align_ushort_elts(r300, &indexBuffer, start, count);
+        start = 0;
     }
 
     r300_update_derived_state(r300);
@@ -541,13 +569,6 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
 
     draw_set_mapped_element_buffer(r300->draw, 0, NULL);
 
-    draw_set_mapped_constant_buffer(r300->draw,
-				    PIPE_SHADER_VERTEX,
-                                    0,
-				    r300->shader_constants[PIPE_SHADER_VERTEX].constants,
-				    r300->shader_constants[PIPE_SHADER_VERTEX].count *
-                (sizeof(float) * 4));
-
     draw_arrays(r300->draw, mode, start, count);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
@@ -585,13 +606,6 @@ void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                               PIPE_BUFFER_USAGE_CPU_READ);
     draw_set_mapped_element_buffer_range(r300->draw, indexSize,
                                          minIndex, maxIndex, indices);
-
-    draw_set_mapped_constant_buffer(r300->draw,
-				    PIPE_SHADER_VERTEX,
-                                    0,
-            r300->shader_constants[PIPE_SHADER_VERTEX].constants,
-            r300->shader_constants[PIPE_SHADER_VERTEX].count *
-                (sizeof(float) * 4));
 
     draw_arrays(r300->draw, mode, start, count);
 
@@ -658,9 +672,9 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
         r300render->vbo = pipe_buffer_create(screen,
                                              64,
                                              PIPE_BUFFER_USAGE_VERTEX,
-                                             R300_MAX_VBO_SIZE);
+                                             R300_MAX_DRAW_VBO_SIZE);
         r300render->vbo_offset = 0;
-        r300render->vbo_size = R300_MAX_VBO_SIZE;
+        r300render->vbo_size = R300_MAX_DRAW_VBO_SIZE;
     }
 
     r300render->vertex_size = vertex_size;

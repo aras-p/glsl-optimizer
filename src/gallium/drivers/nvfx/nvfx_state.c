@@ -137,26 +137,55 @@ nvfx_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static void
-nvfx_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
-			 struct pipe_texture **miptree)
+nvfx_set_fragment_sampler_views(struct pipe_context *pipe,
+				unsigned nr,
+				struct pipe_sampler_view **views)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	unsigned unit;
 
 	for (unit = 0; unit < nr; unit++) {
-		pipe_texture_reference((struct pipe_texture **)
-				       &nvfx->tex_miptree[unit], miptree[unit]);
+		pipe_sampler_view_reference(&nvfx->fragment_sampler_views[unit],
+                                            views[unit]);
 		nvfx->dirty_samplers |= (1 << unit);
 	}
 
 	for (unit = nr; unit < nvfx->nr_textures; unit++) {
-		pipe_texture_reference((struct pipe_texture **)
-				       &nvfx->tex_miptree[unit], NULL);
+		pipe_sampler_view_reference(&nvfx->fragment_sampler_views[unit],
+                                            NULL);
 		nvfx->dirty_samplers |= (1 << unit);
 	}
 
 	nvfx->nr_textures = nr;
 	nvfx->dirty |= NVFX_NEW_SAMPLER;
+}
+
+
+static struct pipe_sampler_view *
+nvfx_create_sampler_view(struct pipe_context *pipe,
+			 struct pipe_texture *texture,
+			 const struct pipe_sampler_view *templ)
+{
+	struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+	if (view) {
+		*view = *templ;
+		view->reference.count = 1;
+		view->texture = NULL;
+		pipe_texture_reference(&view->texture, texture);
+		view->context = pipe;
+	}
+
+	return view;
+}
+
+
+static void
+nvfx_sampler_view_destroy(struct pipe_context *pipe,
+			  struct pipe_sampler_view *view)
+{
+	pipe_texture_reference(&view->texture, NULL);
+	FREE(view);
 }
 
 static void *
@@ -581,7 +610,9 @@ nvfx_init_state_functions(struct nvfx_context *nvfx)
 	nvfx->pipe.create_sampler_state = nvfx_sampler_state_create;
 	nvfx->pipe.bind_fragment_sampler_states = nvfx_sampler_state_bind;
 	nvfx->pipe.delete_sampler_state = nvfx_sampler_state_delete;
-	nvfx->pipe.set_fragment_sampler_textures = nvfx_set_sampler_texture;
+	nvfx->pipe.set_fragment_sampler_views = nvfx_set_fragment_sampler_views;
+        nvfx->pipe.create_sampler_view = nvfx_create_sampler_view;
+        nvfx->pipe.sampler_view_destroy = nvfx_sampler_view_destroy;
 
 	nvfx->pipe.create_rasterizer_state = nvfx_rasterizer_state_create;
 	nvfx->pipe.bind_rasterizer_state = nvfx_rasterizer_state_bind;

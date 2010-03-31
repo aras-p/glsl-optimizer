@@ -25,6 +25,7 @@ VG_SOURCES = \
            api_transform.c \
            vgu.c        \
            vg_context.c \
+           vg_manager.c \
            vg_state.c   \
            vg_tracker.c \
            vg_translate.c \

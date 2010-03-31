@@ -106,11 +106,11 @@ noted that the classic <code>libGL</code> is not a state tracker and cannot be
 used with EGL (unless the EGL driver in use is <code>egl_glx</code>).  To build
 the OpenGL state tracker, one may append <code>glx</code> to
 <code>--with-state-trackers</code> and manually build
-<code>src/gallium/winsys/xlib/</code>.</p>
+<code>src/gallium/targets/libgl-xlib/</code>.</p>
 
 <h2>Use EGL</h2>
 
-<p> The demos for OpenGL ES and OpenVG can be found in <code>progs/es1/</code>,
+<p>The demos for OpenGL ES and OpenVG can be found in <code>progs/es1/</code>,
 <code>progs/es2/</code> and <code>progs/openvg/</code>.  You can use them to
 test your build.  For example,</p>
 

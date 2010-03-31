@@ -69,11 +69,11 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    pipe_surface_reference(&llvmpipe->framebuffer.zsbuf, NULL);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      pipe_texture_reference(&llvmpipe->texture[i], NULL);
+      pipe_sampler_view_reference(&llvmpipe->fragment_sampler_views[i], NULL);
    }
 
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      pipe_texture_reference(&llvmpipe->vertex_textures[i], NULL);
+      pipe_sampler_view_reference(&llvmpipe->vertex_sampler_views[i], NULL);
    }
 
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
@@ -158,8 +158,10 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
    llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
    llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-   llvmpipe->pipe.set_fragment_sampler_textures = llvmpipe_set_sampler_textures;
-   llvmpipe->pipe.set_vertex_sampler_textures = llvmpipe_set_vertex_sampler_textures;
+   llvmpipe->pipe.set_fragment_sampler_views = llvmpipe_set_fragment_sampler_views;
+   llvmpipe->pipe.set_vertex_sampler_views = llvmpipe_set_vertex_sampler_views;
+   llvmpipe->pipe.create_sampler_view = llvmpipe_create_sampler_view;
+   llvmpipe->pipe.sampler_view_destroy = llvmpipe_sampler_view_destroy;
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;

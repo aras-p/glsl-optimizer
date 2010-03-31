@@ -18,7 +18,7 @@ struct exa_context
    struct pipe_screen *scrn;
    struct xorg_renderer *renderer;
 
-   struct pipe_texture *bound_textures[MAX_EXA_SAMPLERS];
+   struct pipe_sampler_view *bound_sampler_views[MAX_EXA_SAMPLERS];
    int num_bound_samplers;
 
    float solid_color[4];

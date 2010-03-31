@@ -28,6 +28,7 @@
 #include "util/u_inlines.h"
 
 #include "util/u_tile.h"
+#include "util/u_format.h"
 
 static INLINE int
 nv50_format(enum pipe_format format)
@@ -37,10 +38,35 @@ nv50_format(enum pipe_format format)
 		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
 	case PIPE_FORMAT_B8G8R8X8_UNORM:
 		return NV50_2D_DST_FORMAT_X8R8G8B8_UNORM;
+	case PIPE_FORMAT_B8G8R8A8_SRGB:
+		return NV50_2D_DST_FORMAT_A8R8G8B8_SRGB;
+	case PIPE_FORMAT_B8G8R8X8_SRGB:
+		return NV50_2D_DST_FORMAT_X8R8G8B8_SRGB;
 	case PIPE_FORMAT_B5G6R5_UNORM:
 		return NV50_2D_DST_FORMAT_R5G6B5_UNORM;
+	case PIPE_FORMAT_B5G5R5A1_UNORM:
+		return NV50_2D_DST_FORMAT_A1R5G5B5_UNORM;
 	case PIPE_FORMAT_A8_UNORM:
+	case PIPE_FORMAT_I8_UNORM:
+	case PIPE_FORMAT_L8_UNORM:
 		return NV50_2D_DST_FORMAT_R8_UNORM;
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		return NV50_2D_DST_FORMAT_R32G32B32A32_FLOAT;
+	case PIPE_FORMAT_R32G32B32_FLOAT:
+		return NV50_2D_DST_FORMAT_R32G32B32X32_FLOAT;
+	case PIPE_FORMAT_Z32_FLOAT:
+		return NV50_2D_DST_FORMAT_R32_FLOAT;
+
+	/* only because we require src format == dst format: */
+	case PIPE_FORMAT_R16G16_SNORM:
+	case PIPE_FORMAT_R16G16_UNORM:
+	case PIPE_FORMAT_S8Z24_UNORM:
+	case PIPE_FORMAT_Z24S8_UNORM:
+		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
+	case PIPE_FORMAT_L8A8_UNORM:
+	case PIPE_FORMAT_B4G4R4A4_UNORM:
+		return NV50_2D_DST_FORMAT_R16_UNORM;
+
 	default:
 		return -1;
 	}
@@ -57,8 +83,11 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  	int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
 
  	format = nv50_format(ps->format);
- 	if (format < 0)
+	if (format < 0) {
+		NOUVEAU_ERR("invalid/unsupported surface format: %s\n",
+			    util_format_name(ps->format));
  		return 1;
+	}
 
  	if (!bo->tile_flags) {
 		MARK_RING (chan, 9, 2); /* flush on lack of space or relocs */

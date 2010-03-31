@@ -184,9 +184,6 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	radeon_print(RADEON_DMA, RADEON_NORMAL, "%s size %d minimum_size %d\n",
 			__FUNCTION__, size, rmesa->dma.minimum_size);
 
-	if (!is_empty_list(&rmesa->dma.reserved))
-		radeon_bo_unmap(first_elem(&rmesa->dma.reserved)->bo);
-
 	if (is_empty_list(&rmesa->dma.free)
 	      || last_elem(&rmesa->dma.free)->bo->size < size) {
 		dma_bo = CALLOC_STRUCT(radeon_dma_bo);
@@ -336,9 +333,6 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 		legacy_track_pending(rmesa->radeonScreen->bom, 0);
 	}
 
-	if (!is_empty_list(&rmesa->dma.reserved))
-		radeon_bo_unmap(first_elem(&rmesa->dma.reserved)->bo);
-
 	/* move waiting bos to free list.
 	   wait list provides gpu time to handle data before reuse */
 	foreach_s(dma_bo, temp, &rmesa->dma.wait) {
@@ -368,6 +362,7 @@ void radeonReleaseDmaRegions(radeonContextPtr rmesa)
 
 	/* move reserved to wait list */
 	foreach_s(dma_bo, temp, &rmesa->dma.reserved) {
+		radeon_bo_unmap(dma_bo->bo);
 		/* free objects that are too small to be used because of large request */
 		if (dma_bo->bo->size < rmesa->dma.minimum_size) {
 		   radeon_bo_unref(dma_bo->bo);

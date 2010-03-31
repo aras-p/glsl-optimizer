@@ -78,11 +78,11 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 
    memset(key, 0, sizeof(*key));
 
-   key->sampler_count = MIN2(brw->curr.num_textures,
+   key->sampler_count = MIN2(brw->curr.num_fragment_sampler_views,
 			    brw->curr.num_samplers);
 
    for (i = 0; i < key->sampler_count; i++) {
-      const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
+      const struct brw_texture *tex = brw_texture(brw->curr.fragment_sampler_views[i]->texture);
       const struct brw_sampler *sampler = brw->curr.sampler[i];
       struct brw_sampler_state *entry = &key->sampler[i];
 
@@ -122,12 +122,12 @@ static enum pipe_error
 brw_wm_sampler_update_default_colors(struct brw_context *brw)
 {
    enum pipe_error ret;
-   int nr = MIN2(brw->curr.num_textures,
+   int nr = MIN2(brw->curr.num_fragment_sampler_views,
 		 brw->curr.num_samplers);
    int i;
 
    for (i = 0; i < nr; i++) {
-      const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
+      const struct brw_texture *tex = brw_texture(brw->curr.fragment_sampler_views[i]->texture);
       const struct brw_sampler *sampler = brw->curr.sampler[i];
       const float *bc;
       float bordercolor[4] = {

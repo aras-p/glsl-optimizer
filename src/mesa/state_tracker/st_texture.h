@@ -29,6 +29,9 @@
 #define ST_TEXTURE_H
 
 
+#include "pipe/p_context.h"
+#include "util/u_sampler.h"
+
 #include "main/mtypes.h"
 
 struct pipe_context;
@@ -68,6 +71,13 @@ struct st_texture_object
     */
    struct pipe_texture *pt;
 
+   /* Default sampler view attached to this texture object. Created lazily
+    * on first binding.
+    */
+   struct pipe_sampler_view *sampler_view;
+
+   struct pipe_context *pipe;
+
    GLboolean teximage_realloc;
 
    /* True if there is/was a surface bound to this texture object.  It helps
@@ -102,6 +112,35 @@ static INLINE struct pipe_texture *
 st_get_stobj_texture(struct st_texture_object *stObj)
 {
    return stObj ? stObj->pt : NULL;
+}
+
+
+static INLINE struct pipe_sampler_view *
+st_sampler_view_from_texture(struct pipe_context *pipe,
+                             struct pipe_texture *texture)
+{
+   struct pipe_sampler_view templ;
+
+   u_sampler_view_default_template(&templ,
+                                   texture,
+                                   texture->format);
+
+   return pipe->create_sampler_view(pipe, texture, &templ);
+}
+
+
+static INLINE struct pipe_sampler_view *
+st_get_stobj_sampler_view(struct st_texture_object *stObj)
+{
+   if (!stObj || !stObj->pt) {
+      return NULL;
+   }
+
+   if (!stObj->sampler_view) {
+      stObj->sampler_view = st_sampler_view_from_texture(stObj->pipe, stObj->pt);
+   }
+
+   return stObj->sampler_view;
 }
 
 

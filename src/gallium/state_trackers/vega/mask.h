@@ -63,6 +63,6 @@ void mask_fill(VGint x, VGint y,
                VGfloat value);
 
 VGint mask_bind_samplers(struct pipe_sampler_state **samplers,
-                         struct pipe_texture **textures);
+                         struct pipe_sampler_view **sampler_views);
 
 #endif

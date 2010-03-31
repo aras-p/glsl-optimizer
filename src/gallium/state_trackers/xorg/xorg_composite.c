@@ -4,6 +4,7 @@
 #include "xorg_exa_tgsi.h"
 
 #include "cso_cache/cso_context.h"
+#include "util/u_sampler.h"
 
 
 /*XXX also in Xrender.h but the including it here breaks compilition */
@@ -356,6 +357,9 @@ bind_samplers(struct exa_context *exa, int op,
 {
    struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_state src_sampler, mask_sampler;
+   struct pipe_sampler_view view_templ;
+   struct pipe_sampler_view *src_view;
+   struct pipe_context *pipe = exa->pipe;
 
    exa->num_bound_samplers = 0;
 
@@ -366,7 +370,7 @@ bind_samplers(struct exa_context *exa, int op,
       if (exa->has_solid_color) {
          debug_assert(!"solid color with textures");
          samplers[0] = NULL;
-         exa->bound_textures[0] = NULL;
+         pipe_sampler_view_reference(&exa->bound_sampler_views[0], NULL);
       } else {
          unsigned src_wrap = render_repeat_to_gallium(
             pSrcPicture->repeatType);
@@ -381,8 +385,13 @@ bind_samplers(struct exa_context *exa, int op,
          src_sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
          src_sampler.normalized_coords = 1;
          samplers[0] = &src_sampler;
-         exa->bound_textures[0] = pSrc->tex;
          exa->num_bound_samplers = 1;
+         u_sampler_view_default_template(&view_templ,
+                                         pSrc->tex,
+                                         pSrc->tex->format);
+         src_view = pipe->create_sampler_view(pipe, pSrc->tex, &view_templ);
+         pipe_sampler_view_reference(&exa->bound_sampler_views[0], NULL);
+         exa->bound_sampler_views[0] = src_view;
       }
    }
 
@@ -400,14 +409,19 @@ bind_samplers(struct exa_context *exa, int op,
       src_sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
       mask_sampler.normalized_coords = 1;
       samplers[1] = &mask_sampler;
-      exa->bound_textures[1] = pMask->tex;
       exa->num_bound_samplers = 2;
+      u_sampler_view_default_template(&view_templ,
+                                      pMask->tex,
+                                      pMask->tex->format);
+      src_view = pipe->create_sampler_view(pipe, pMask->tex, &view_templ);
+      pipe_sampler_view_reference(&exa->bound_sampler_views[1], NULL);
+      exa->bound_sampler_views[1] = src_view;
    }
 
    cso_set_samplers(exa->renderer->cso, exa->num_bound_samplers,
                     (const struct pipe_sampler_state **)samplers);
-   cso_set_sampler_textures(exa->renderer->cso, exa->num_bound_samplers,
-                            exa->bound_textures);
+   cso_set_fragment_sampler_views(exa->renderer->cso, exa->num_bound_samplers,
+                                  exa->bound_sampler_views);
 }
 
 
@@ -476,7 +490,6 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
       renderer_begin_solid(exa->renderer);
    } else {
       renderer_begin_textures(exa->renderer,
-                              exa->bound_textures,
                               exa->num_bound_samplers);
    }
 
@@ -506,7 +519,7 @@ void xorg_composite(struct exa_context *exa,
 
       renderer_texture(exa->renderer,
                        pos, width, height,
-                       exa->bound_textures,
+                       exa->bound_sampler_views,
                        exa->num_bound_samplers,
                        src_matrix, mask_matrix);
    }
@@ -538,7 +551,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
                              pixmap->width, pixmap->height);
    bind_blend_state(exa, PictOpSrc, NULL, NULL, NULL);
    cso_set_samplers(exa->renderer->cso, 0, NULL);
-   cso_set_sampler_textures(exa->renderer->cso, 0, NULL);
+   cso_set_fragment_sampler_views(exa->renderer->cso, 0, NULL);
 
    shader = xorg_shaders_get(exa->renderer->shaders, vs_traits, fs_traits);
    cso_set_vertex_shader_handle(exa->renderer->cso, shader.vs);

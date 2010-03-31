@@ -119,6 +119,7 @@ C_SOURCES = \
 	util/u_mm.c \
 	util/u_rect.c \
 	util/u_ringbuffer.c \
+	util/u_sampler.c \
 	util/u_simple_shaders.c \
 	util/u_snprintf.c \
 	util/u_surface.c \
@@ -127,12 +128,14 @@ C_SOURCES = \
 	util/u_timed_winsys.c \
 	util/u_upload_mgr.c \
 	util/u_simple_screen.c \
-	vl/vl_bitstream_parser.c \
-	vl/vl_mpeg12_mc_renderer.c \
-	vl/vl_compositor.c \
-	vl/vl_csc.c \
-	vl/vl_shader_build.c \
 	target-helpers/wrap_screen.c
+
+	# Disabling until pipe-video branch gets merged in
+	#vl/vl_bitstream_parser.c \
+	#vl/vl_mpeg12_mc_renderer.c \
+	#vl/vl_compositor.c \
+	#vl/vl_csc.c \
+	#vl/vl_shader_build.c \
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_alpha.c \
@@ -152,6 +155,7 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_intr.c \
         gallivm/lp_bld_logic.c \
         gallivm/lp_bld_pack.c \
+        gallivm/lp_bld_printf.c \
         gallivm/lp_bld_sample.c \
         gallivm/lp_bld_sample_soa.c \
         gallivm/lp_bld_struct.c \

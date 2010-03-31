@@ -43,7 +43,7 @@ struct vg_image {
 
    struct vg_image *parent;
 
-   struct pipe_texture *texture;
+   struct pipe_sampler_view *sampler_view;
    struct pipe_sampler_state sampler;
 
    struct array *children_array;
@@ -89,7 +89,7 @@ void image_get_pixels(struct vg_image *dst, VGint dx, VGint dy,
                       VGint width, VGint height);
 
 VGint image_bind_samplers(struct vg_image *dst, struct pipe_sampler_state **samplers,
-                          struct pipe_texture **textures);
+                          struct pipe_sampler_view **sampler_views);
 
 VGboolean vg_image_overlaps(struct vg_image *dst,
                             struct vg_image *src);

@@ -19,9 +19,8 @@ es1: $(ES1_LIBS)
 es2: $(ES2_LIBS)
 	@rm -f subdirs-stamp-tmp
 
-# force the inclusion of es's mfeatures.h
-ES1_CPPFLAGS := -include main/mfeatures_es1.h -D__GL_EXPORTS
-ES2_CPPFLAGS := -include main/mfeatures_es2.h -D__GL_EXPORTS
+ES1_CPPFLAGS := -DFEATURE_ES1=1 -D__GL_EXPORTS
+ES2_CPPFLAGS := -DFEATURE_ES2=1 -D__GL_EXPORTS
 
 ES1_OBJ_DIR := objs-es1
 ES2_OBJ_DIR := objs-es2
