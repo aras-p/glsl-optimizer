@@ -311,24 +311,26 @@ def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
     src_native_type = native_type(format)
 
     print 'static INLINE void'
-    print 'util_format_%s_unpack_%s(%s *dst, const void *src)' % (name, dst_suffix, dst_native_type)
+    print 'util_format_%s_unpack_%s(%s *dst, const uint8_t *src, unsigned length)' % (name, dst_suffix, dst_native_type)
     print '{'
     
+    print '   while(length--) {'
+
     if format.is_bitmask():
         depth = format.block_size()
-        print '   uint%u_t value = *(uint%u_t *)src;' % (depth, depth) 
+        print '      uint%u_t value = *(uint%u_t *)src;' % (depth, depth) 
 
         # Declare the intermediate variables
         for i in range(format.nr_channels()):
             src_channel = format.channels[i]
             if src_channel.type == UNSIGNED:
-                print '   uint%u_t %s;' % (depth, src_channel.name)
+                print '      uint%u_t %s;' % (depth, src_channel.name)
             elif src_channel.type == SIGNED:
-                print '   int%u_t %s;' % (depth, src_channel.name)
+                print '      int%u_t %s;' % (depth, src_channel.name)
 
-        print '#ifdef PIPE_ARCH_BIG_ENDIAN'
-        print '   value = util_bswap%u(value);' % depth
-        print '#endif'
+        print '   #ifdef PIPE_ARCH_BIG_ENDIAN'
+        print '      value = util_bswap%u(value);' % depth
+        print '   #endif'
 
         # Compute the intermediate unshifted values 
         shift = 0
@@ -355,7 +357,7 @@ def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
                 value = None
                 
             if value is not None:
-                print '   %s = %s;' % (src_channel.name, value)
+                print '      %s = %s;' % (src_channel.name, value)
                 
             shift += src_channel.size
 
@@ -379,11 +381,11 @@ def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
                     value = get_one(dst_channel)
                 elif i >= 1:
                     value = 'dst[0]'
-            print '   dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
+            print '      dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
         
     else:
-        print '   union util_format_%s pixel;' % format.short_name()
-        print '   memcpy(&pixel, src, sizeof pixel);'
+        print '      union util_format_%s pixel;' % format.short_name()
+        print '      memcpy(&pixel, src, sizeof pixel);'
         bswap_format(format)
     
         for i in range(4):
@@ -405,7 +407,11 @@ def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
                     value = get_one(dst_channel)
                 elif i >= 1:
                     value = 'dst[0]'
-            print '   dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
+            print '      dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
+
+    print '      src += %u;' % (format.block_size() / 8,)
+    print '      dst += 4;'
+    print '   }'
 
     print '}'
     print
@@ -423,12 +429,14 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
     inv_swizzle = format.inv_swizzles()
     
     print 'static INLINE void'
-    print 'util_format_%s_pack_%s(void *dst, const %s *src)' % (name, src_suffix, src_native_type)
+    print 'util_format_%s_pack_%s(uint8_t *dst, const %s *src, unsigned length)' % (name, src_suffix, src_native_type)
     print '{'
     
+    print '   while(length--) {'
+
     if format.is_bitmask():
         depth = format.block_size()
-        print '   uint%u_t value = 0;' % depth 
+        print '      uint%u_t value = 0;' % depth 
 
         shift = 0
         for i in range(4):
@@ -452,18 +460,18 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
                 else:
                     value = None
                 if value is not None:
-                    print '   value |= %s;' % (value)
+                    print '      value |= %s;' % (value)
                 
             shift += dst_channel.size
 
         print '#ifdef PIPE_ARCH_BIG_ENDIAN'
-        print '   value = util_bswap%u(value);' % depth
+        print '      value = util_bswap%u(value);' % depth
         print '#endif'
         
-        print '   *(uint%u_t *)dst = value;' % depth 
+        print '      *(uint%u_t *)dst = value;' % depth 
 
     else:
-        print '   union util_format_%s pixel;' % format.short_name()
+        print '      union util_format_%s pixel;' % format.short_name()
     
         for i in range(4):
             dst_channel = format.channels[i]
@@ -477,11 +485,15 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
                     value = get_one(dst_channel)
                 elif i >= 1:
                     value = '0'
-            print '   pixel.chan.%s = %s;' % (dst_channel.name, value)
+            print '      pixel.chan.%s = %s;' % (dst_channel.name, value)
     
         bswap_format(format)
-        print '   memcpy(dst, &pixel, sizeof pixel);'
+        print '      memcpy(dst, &pixel, sizeof pixel);'
         
+    print '      src += 4;'
+    print '      dst += %u;' % (format.block_size() / 8,)
+    print '   }'
+
     print '}'
     print
     
@@ -494,9 +506,9 @@ def generate_unpack(formats, dst_channel, dst_native_type, dst_suffix):
             generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix)
 
     print 'static INLINE void'
-    print 'util_format_unpack_%s(enum pipe_format format, %s *dst, const void *src)' % (dst_suffix, dst_native_type)
+    print 'util_format_unpack_%s(enum pipe_format format, %s *dst, const uint8_t *src, unsigned length)' % (dst_suffix, dst_native_type)
     print '{'
-    print '   void (*func)(%s *dst, const void *src);' % dst_native_type
+    print '   void (*func)(%s *dst, const uint8_t *src, unsigned length);' % dst_native_type
     print '   switch(format) {'
     for format in formats:
         if is_format_supported(format):
@@ -507,7 +519,7 @@ def generate_unpack(formats, dst_channel, dst_native_type, dst_suffix):
     print '      debug_printf("unsupported format\\n");'
     print '      return;'
     print '   }'
-    print '   func(dst, src);'
+    print '   func(dst, src, length);'
     print '}'
     print
 
@@ -520,9 +532,9 @@ def generate_pack(formats, src_channel, src_native_type, src_suffix):
             generate_format_pack(format, src_channel, src_native_type, src_suffix)
 
     print 'static INLINE void'
-    print 'util_format_pack_%s(enum pipe_format format, void *dst, %s *src)' % (src_suffix, src_native_type)
+    print 'util_format_pack_%s(enum pipe_format format, uint8_t *dst, const %s *src, unsigned length)' % (src_suffix, src_native_type)
     print '{'
-    print '   void (*func)(void *dst, const %s *src);' % (src_native_type,)
+    print '   void (*func)(uint8_t *dst, const %s *src, unsigned length);' % (src_native_type,)
     print '   switch(format) {'
     for format in formats:
         if is_format_supported(format):
@@ -533,7 +545,7 @@ def generate_pack(formats, src_channel, src_native_type, src_suffix):
     print '      debug_printf("%s: unsupported format\\n", __FUNCTION__);'
     print '      return;'
     print '   }'
-    print '   func(dst, src);'
+    print '   func(dst, src, length);'
     print '}'
     print
 
