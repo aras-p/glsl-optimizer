@@ -1547,9 +1547,9 @@ ast_jump_statement::hir(exec_list *instructions,
 
    if (mode == ast_return) {
       ir_return *inst;
+      assert(state->current_function);
 
       if (opt_return_value) {
-	 assert(state->current_function);
 	 if (state->current_function->return_type->base_type ==
 	     GLSL_TYPE_VOID) {
 	    YYLTYPE loc = this->get_location();
@@ -1570,8 +1570,15 @@ ast_jump_statement::hir(exec_list *instructions,
 
 	 inst = new ir_return(ret);
       } else {
-	 /* FINISHME: Make sure the enclosing function has a void return type.
-	  */
+	 if (state->current_function->return_type->base_type !=
+	     GLSL_TYPE_VOID) {
+	    YYLTYPE loc = this->get_location();
+
+	    _mesa_glsl_error(& loc, state,
+			     "`return' with no value, in function %s returning "
+			     "non-void",
+			     state->current_function->definition->label);
+	 }
 	 inst = new ir_return;
       }
 
