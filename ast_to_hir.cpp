@@ -1462,6 +1462,12 @@ ast_function_definition::hir(exec_list *instructions,
 
 	 _mesa_glsl_error(& loc, state, "main() must return void");
       }
+
+      if (!parameters.is_empty()) {
+	 YYLTYPE loc = this->get_location();
+
+	 _mesa_glsl_error(& loc, state, "main() must not take any parameters");
+      }
    }
 
    /* Finish storing the information about this new function in its signature.
