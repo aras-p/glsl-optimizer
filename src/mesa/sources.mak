@@ -80,6 +80,7 @@ MAIN_SOURCES = \
 	main/texrender.c \
 	main/texstate.c \
 	main/texstore.c \
+	main/transformfeedback.c \
 	main/varray.c \
 	main/version.c \
 	main/viewport.c \
