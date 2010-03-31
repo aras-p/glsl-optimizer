@@ -1176,11 +1176,6 @@ ast_declarator_list::hir(exec_list *instructions,
 
       var = new ir_variable(var_type, decl->identifier);
 
-      /* FINISHME: Variables that are attribute, uniform, varying, in, or
-       * FINISHME: out varibles must be declared either at global scope or
-       * FINISHME: in a parameter list (in and out only).
-       */
-
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
 				       & loc);
 
@@ -1212,15 +1207,18 @@ ast_declarator_list::hir(exec_list *instructions,
 
       instructions->push_tail(var);
 
-      if (this->type->qualifier.attribute
-	  && (state->current_function != NULL)) {
-	 _mesa_glsl_error(& loc, state,
-			  "attribute variable `%s' must be declared at global "
-			  "scope",
-			  var->name);
-      }
-
-      if ((var->mode == ir_var_in) && (state->current_function == NULL)) {
+      if (state->current_function != NULL) {
+	 /* FINISHME: Variables that are uniform, varying, in, or
+	  * FINISHME: out varibles must be declared either at global scope or
+	  * FINISHME: in a parameter list (in and out only).
+	  */
+	 if (this->type->qualifier.attribute) {
+	    _mesa_glsl_error(& loc, state,
+			     "attribute variable `%s' must be declared at "
+			     "global scope",
+			     var->name);
+	 }
+      } else if (var->mode == ir_var_in) {
 	 if (state->target == vertex_shader) {
 	    bool error_emitted = false;
 
