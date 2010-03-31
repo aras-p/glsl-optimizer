@@ -177,9 +177,9 @@ ast_function_expression::hir(exec_list *instructions,
    if (is_constructor()) {
       const ast_type_specifier *type = (ast_type_specifier *) subexpressions[0];
       YYLTYPE loc = type->get_location();
+      const char *name;
 
-      const glsl_type *const constructor_type =
-	 state->symbols->get_type(type->type_name);
+      const glsl_type *const constructor_type = type->glsl_type(& name, state);
 
 
       /* Constructors for samplers are illegal.
