@@ -43,17 +43,8 @@ from gallium import *
 # Enumerate all pixel formats
 formats = {}
 for name, value in globals().items():
-    if name.startswith("PIPE_FORMAT_") and isinstance(value, int):
+    if name.startswith("PIPE_FORMAT_") and isinstance(value, int) and name != "PIPE_FORMAT_COUNT":
         formats[value] = name
-
-def is_depth_stencil_format(format):
-    # FIXME: make and use binding to util_format_is_depth_or_stencil
-    return format in (
-        PIPE_FORMAT_Z32_UNORM,
-        PIPE_FORMAT_S8Z24_UNORM,
-        PIPE_FORMAT_X8Z24_UNORM,
-        PIPE_FORMAT_Z16_UNORM,
-    )
 
 def make_image(width, height, rgba):
     import Image
