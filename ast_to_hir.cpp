@@ -666,6 +666,11 @@ ast_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "operands of `%s' must have the same "
 			  "type", (this->oper == ast_equal) ? "==" : "!=");
 	 error_emitted = true;
+      } else if ((state->language_version <= 110)
+		 && (op[0]->type->is_array() || op[1]->type->is_array())) {
+	 _mesa_glsl_error(& loc, state, "array comparisons forbidden in "
+			  "GLSL 1.10");
+	 error_emitted = true;
       }
 
       result = new ir_expression(operations[this->oper], glsl_type::bool_type,
