@@ -35,7 +35,6 @@
 #include "dri_context.h"
 #include "dri_drawable.h"
 #include "dri_st_api.h"
-#include "dri1_helper.h"
 #ifndef __NOT_HAVE_DRM_H
 #include "dri1.h"
 #include "dri2.h"
