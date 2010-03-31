@@ -50,7 +50,7 @@ PROGS := \
 
 include ../../Makefile.template
 
-lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_access.py ../../auxiliary/util/u_format.csv
+lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_pack.py ../../auxiliary/util/u_format.csv
 	python lp_tile_soa.py ../../auxiliary/util/u_format.csv > $@
 
 

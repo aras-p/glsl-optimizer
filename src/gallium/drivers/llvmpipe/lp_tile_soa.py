@@ -42,7 +42,7 @@ import os.path
 
 sys.path.insert(0, os.path.join(os.path.dirname(sys.argv[0]), '../../auxiliary/util'))
 
-from u_format_access import *
+from u_format_pack import *
 
 
 def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
@@ -62,7 +62,7 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
     print '      for (x = 0; x < w; ++x) {'
 
     names = ['']*4
-    if format.colorspace == 'rgb':
+    if format.colorspace in ('rgb', 'srgb'):
         for i in range(4):
             swizzle = format.swizzles[i]
             if swizzle < 4:
@@ -104,7 +104,7 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
         assert False
 
     for i in range(4):
-        if format.colorspace == 'rgb':
+        if format.colorspace in ('rgb', 'srgb'):
             swizzle = format.swizzles[i]
             if swizzle < 4:
                 value = names[swizzle]
@@ -134,7 +134,7 @@ def pack_rgba(format, src_channel, r, g, b, a):
     """Return an expression for packing r, g, b, a into a pixel of the
     given format.  Ex: '(b << 24) | (g << 16) | (r << 8) | (a << 0)'
     """
-    assert format.colorspace == 'rgb'
+    assert format.colorspace in ('rgb', 'srgb')
     inv_swizzle = format.inv_swizzles()
     shift = 0
     expr = None
@@ -277,7 +277,7 @@ def generate_read(formats, dst_channel, dst_native_type, dst_suffix):
             print '      func = &lp_tile_%s_read_%s;' % (format.short_name(), dst_suffix)
             print '      break;'
     print '   default:'
-    print '      debug_printf("unsupported format\\n");'
+    print '      debug_printf("%s: unsupported format %s\\n", __FUNCTION__, util_format_name(format));'
     print '      return;'
     print '   }'
     print '   func(dst, (const uint8_t *)src, src_stride, x, y, w, h);'
@@ -304,7 +304,7 @@ def generate_write(formats, src_channel, src_native_type, src_suffix):
             print '      func = &lp_tile_%s_write_%s;' % (format.short_name(), src_suffix)
             print '      break;'
     print '   default:'
-    print '      debug_printf("unsupported format\\n");'
+    print '      debug_printf("%s: unsupported format %s\\n", __FUNCTION__, util_format_name(format));'
     print '      return;'
     print '   }'
     print '   func(src, (uint8_t *)dst, dst_stride, x, y, w, h);'
