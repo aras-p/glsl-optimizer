@@ -1,3 +1,5 @@
+# TODO Make core mesa more feature-aware and remove this file
+
 include $(MESA)/sources.mak
 
 LOCAL_ES1_INCLUDES :=			\
@@ -8,14 +10,6 @@ LOCAL_ES1_INCLUDES :=			\
 LOCAL_ES2_INCLUDES := $(subst es1,es2, $(LOCAL_ES1_INCLUDES))
 
 # MESA sources
-# Ideally, the omit list should be replaced by features.
-
-MAIN_OMITTED :=				\
-	main/api_exec.c			\
-	main/condrender.c		\
-	main/dlopen.c			\
-	main/get.c
-MAIN_SOURCES := $(filter-out $(MAIN_OMITTED), $(MAIN_SOURCES))
 
 VBO_OMITTED :=				\
 	vbo/vbo_save.c			\
@@ -23,14 +17,6 @@ VBO_OMITTED :=				\
 	vbo/vbo_save_draw.c		\
 	vbo/vbo_save_loopback.c
 VBO_SOURCES := $(filter-out $(VBO_OMITTED), $(VBO_SOURCES))
-
-STATETRACKER_OMITTED :=				\
-	state_tracker/st_api.c			\
-	state_tracker/st_cb_drawpixels.c	\
-	state_tracker/st_cb_feedback.c		\
-	state_tracker/st_cb_rasterpos.c		\
-	state_tracker/st_draw_feedback.c
-STATETRACKER_SOURCES := $(filter-out $(STATETRACKER_OMITTED), $(STATETRACKER_SOURCES))
 
 SHADER_OMITTED :=			\
 	shader/atifragshader.c

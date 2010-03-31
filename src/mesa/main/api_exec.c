@@ -107,6 +107,10 @@
 #endif
 #include "main/dispatch.h"
 
+
+#if FEATURE_GL
+
+
 #ifdef _GLAPI_USE_REMAP_TABLE
 
 #define need_MESA_remap_table
@@ -816,3 +820,5 @@ _mesa_create_exec_table(void)
 
    return exec;
 }
+
+#endif /* FEATURE_GL */
