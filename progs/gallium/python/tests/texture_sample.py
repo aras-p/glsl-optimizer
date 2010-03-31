@@ -115,6 +115,7 @@ class TextureColorSampleTest(TestCase):
 
     def test(self):
         dev = self.dev
+        ctx = self.ctx
         
         target = self.target
         format = self.format
@@ -125,6 +126,8 @@ class TextureColorSampleTest(TestCase):
         face = self.face
         level = self.level
         zslice = self.zslice
+        minz = 0.0
+        maxz = 1.0
         
         tex_usage = PIPE_TEXTURE_USAGE_SAMPLER
         geom_flags = 0
@@ -136,8 +139,6 @@ class TextureColorSampleTest(TestCase):
         if not dev.is_format_supported(format, target, tex_usage, geom_flags):
             raise TestSkip
         
-        ctx = self.dev.context_create()
-    
         # disabled blending/masking
         blend = Blend()
         blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE
@@ -155,7 +156,6 @@ class TextureColorSampleTest(TestCase):
         rasterizer = Rasterizer()
         rasterizer.front_winding = PIPE_WINDING_CW
         rasterizer.cull_mode = PIPE_WINDING_NONE
-        rasterizer.bypass_vs_clip_and_viewport = 1
         ctx.set_rasterizer(rasterizer)
     
         # samplers
@@ -183,13 +183,44 @@ class TextureColorSampleTest(TestCase):
         )
         
         expected_rgba = FloatArray(height*width*4) 
-        texture.get_surface(
+        surface = texture.get_surface(
             face = face,
             level = level,
             zslice = zslice,
-        ).sample_rgba(expected_rgba)
+        )
+        
+        ctx.surface_sample_rgba(surface, expected_rgba)
         
         ctx.set_fragment_sampler_texture(0, texture)
+
+        # viewport
+        viewport = Viewport()
+        scale = FloatArray(4)
+        scale[0] = width
+        scale[1] = height
+        scale[2] = (maxz - minz) / 2.0
+        scale[3] = 1.0
+        viewport.scale = scale
+        translate = FloatArray(4)
+        translate[0] = 0.0
+        translate[1] = 0.0
+        translate[2] = (maxz - minz) / 2.0
+        translate[3] = 0.0
+        viewport.translate = translate
+        ctx.set_viewport(viewport)
+
+        # scissor
+        scissor = Scissor()
+        scissor.minx = 0
+        scissor.miny = 0
+        scissor.maxx = width
+        scissor.maxy = height
+        ctx.set_scissor(scissor)
+
+        # clip
+        clip = Clip()
+        clip.nr = 0
+        ctx.set_clip(clip)
 
         #  framebuffer 
         cbuf_tex = dev.texture_create(
@@ -265,8 +296,8 @@ class TextureColorSampleTest(TestCase):
     
         for i in range(0, 4):
             j = 8*i
-            verts[j + 0] = pos[i][0] # x
-            verts[j + 1] = pos[i][1] # y
+            verts[j + 0] = pos[i][0]/float(width) # x
+            verts[j + 1] = pos[i][1]/float(height) # y
             verts[j + 2] = 0.0 # z
             verts[j + 3] = 1.0 # w
             verts[j + 4] = tex[i][0] # s
@@ -283,7 +314,7 @@ class TextureColorSampleTest(TestCase):
     
         cbuf = cbuf_tex.get_surface()
         
-        self.assert_rgba(cbuf, x, y, w, h, expected_rgba, 4.0/256, 0.85)
+        self.assert_rgba(ctx, cbuf, x, y, w, h, expected_rgba, 4.0/256, 0.85)
         
 
 class TextureDepthSampleTest(TestCase):
@@ -302,6 +333,7 @@ class TextureDepthSampleTest(TestCase):
 
     def test(self):
         dev = self.dev
+        ctx = self.ctx
         
         target = self.target
         format = self.format
@@ -312,6 +344,8 @@ class TextureDepthSampleTest(TestCase):
         face = self.face
         level = self.level
         zslice = self.zslice
+        minz = 0.0
+        maxz = 1.0
         
         tex_usage = PIPE_TEXTURE_USAGE_SAMPLER
         geom_flags = 0
@@ -323,8 +357,6 @@ class TextureDepthSampleTest(TestCase):
         if not dev.is_format_supported(format, target, tex_usage, geom_flags):
             raise TestSkip
         
-        ctx = self.dev.context_create()
-    
         # disabled blending/masking
         blend = Blend()
         blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE
@@ -345,9 +377,24 @@ class TextureDepthSampleTest(TestCase):
         rasterizer = Rasterizer()
         rasterizer.front_winding = PIPE_WINDING_CW
         rasterizer.cull_mode = PIPE_WINDING_NONE
-        rasterizer.bypass_vs_clip_and_viewport = 1
         ctx.set_rasterizer(rasterizer)
     
+        # viewport
+        viewport = Viewport()
+        scale = FloatArray(4)
+        scale[0] = width
+        scale[1] = height
+        scale[2] = (maxz - minz) / 2.0
+        scale[3] = 1.0
+        viewport.scale = scale
+        translate = FloatArray(4)
+        translate[0] = 0.0
+        translate[1] = 0.0
+        translate[2] = (maxz - minz) / 2.0
+        translate[3] = 0.0
+        viewport.translate = translate
+        ctx.set_viewport(viewport)
+
         # samplers
         sampler = Sampler()
         sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE
@@ -373,13 +420,28 @@ class TextureDepthSampleTest(TestCase):
         )
         
         expected_rgba = FloatArray(height*width*4) 
-        texture.get_surface(
+        surface = texture.get_surface(
             face = face,
             level = level,
             zslice = zslice,
-        ).sample_rgba(expected_rgba)
+        )
+
+        ctx.surface_sample_rgba(surface, expected_rgba)
         
         ctx.set_fragment_sampler_texture(0, texture)
+
+        # scissor
+        scissor = Scissor()
+        scissor.minx = 0
+        scissor.miny = 0
+        scissor.maxx = width
+        scissor.maxy = height
+        ctx.set_scissor(scissor)
+
+        # clip
+        clip = Clip()
+        clip.nr = 0
+        ctx.set_clip(clip)
 
         #  framebuffer 
         cbuf_tex = dev.texture_create(
@@ -464,8 +526,8 @@ class TextureDepthSampleTest(TestCase):
     
         for i in range(0, 4):
             j = 8*i
-            verts[j + 0] = pos[i][0] # x
-            verts[j + 1] = pos[i][1] # y
+            verts[j + 0] = pos[i][0]/float(width) # x
+            verts[j + 1] = pos[i][1]/float(height) # y
             verts[j + 2] = 0.0 # z
             verts[j + 3] = 1.0 # w
             verts[j + 4] = tex[i][0] # s
@@ -482,7 +544,7 @@ class TextureDepthSampleTest(TestCase):
     
         zsbuf = zsbuf_tex.get_surface()
         
-        self.assert_rgba(zsbuf, x, y, w, h, expected_rgba, 4.0/256, 0.85)
+        self.assert_rgba(ctx, zsbuf, x, y, w, h, expected_rgba, 4.0/256, 0.85)
         
 
 
@@ -534,6 +596,8 @@ def main():
         PIPE_TEX_FACE_NEG_Z,
     ]
 
+    ctx = dev.context_create()
+    
     for format in color_formats:
         for target in targets:
             for size in sizes:
@@ -551,6 +615,7 @@ def main():
                             while zslice < depth >> level:
                                 test = TextureColorSampleTest(
                                     dev = dev,
+                                    ctx = ctx,
                                     target = target,
                                     format = format, 
                                     width = size,
@@ -573,6 +638,7 @@ def main():
         for size in sizes:
             test = TextureDepthSampleTest(
                 dev = dev,
+                ctx = ctx,
                 target = target,
                 format = format, 
                 width = size,

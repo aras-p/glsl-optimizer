@@ -86,15 +86,16 @@ class TextureTest(TestCase):
         
         surface = texture.get_surface(face, level, zslice)
         
-        # ???
-        stride = pf_get_stride(texture->format, w)
-        size = pf_get_nblocksy(texture->format) * stride
+        stride = util_format_get_stride(format, width)
+        size = util_format_get_nblocksy(format, height) * stride
 
         in_raw = os.urandom(size)
 
-        surface.put_tile_raw(0, 0, surface.width, surface.height, in_raw, stride)
+        ctx = self.dev.context_create()
 
-        out_raw = surface.get_tile_raw(0, 0, surface.width, surface.height)
+        ctx.surface_write_raw(surface, 0, 0, surface.width, surface.height, in_raw, stride)
+
+        out_raw = ctx.surface_read_raw(surface, 0, 0, surface.width, surface.height)
 
         if in_raw != out_raw:
             raise TestFailure

@@ -127,16 +127,16 @@ class Test:
         self._run(result)
         result.summary()
 
-    def assert_rgba(self, surface, x, y, w, h, expected_rgba, pixel_tol=4.0/256, surface_tol=0.85):
+    def assert_rgba(self, ctx, surface, x, y, w, h, expected_rgba, pixel_tol=4.0/256, surface_tol=0.85):
         total = h*w
-        different = surface.compare_tile_rgba(x, y, w, h, expected_rgba, tol=pixel_tol)
+        different = ctx.surface_compare_rgba(surface, x, y, w, h, expected_rgba, tol=pixel_tol)
         if different:
             sys.stderr.write("%u out of %u pixels differ\n" % (different, total))
 
         if float(total - different)/float(total) < surface_tol:
             if 0:
                 rgba = FloatArray(h*w*4)
-                surface.get_tile_rgba(x, y, w, h, rgba)
+                ctx.surface_read_rgba(surface, x, y, w, h, rgba)
                 show_image(w, h, Result=rgba, Expected=expected_rgba)
                 save_image(w, h, rgba, "result.png")
                 save_image(w, h, expected_rgba, "expected.png")
