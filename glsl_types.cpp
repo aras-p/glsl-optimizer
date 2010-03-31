@@ -576,29 +576,40 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 int
 glsl_type::array_key_compare(const void *a, const void *b)
 {
-   const array_hash_key *const key1 = (array_hash_key *) a;
-   const array_hash_key *const key2 = (array_hash_key *) b;
+   const glsl_type *const key1 = (glsl_type *) a;
+   const glsl_type *const key2 = (glsl_type *) b;
 
-   return ((key1->type == key2->type) && (key1->size == key2->size)) ? 0 : 1;
+   /* Return zero is the types match (there is zero difference) or non-zero
+    * otherwise.
+    */
+   return ((key1->fields.array == key2->fields.array)
+	   && (key1->length == key2->length)) ? 0 : 1;
 }
 
 
 unsigned
 glsl_type::array_key_hash(const void *a)
 {
-   char buf[sizeof(array_hash_key) + 1];
+   const glsl_type *const key = (glsl_type *) a;
 
-   memcpy(buf, a, sizeof(array_hash_key));
-   buf[sizeof(array_hash_key)] = '\0';
+   const struct {
+      const glsl_type *t;
+      unsigned l;
+      char nul;
+   } hash_key = {
+      key->fields.array,
+      key->length,
+      '\0'
+   };
 
-   return hash_table_string_hash(buf);
+   return hash_table_string_hash(& hash_key);
 }
 
 
 const glsl_type *
 glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
 {
-   array_hash_key key = { base, array_size };
+   const glsl_type key(base, array_size);
 
    if (array_types == NULL) {
       array_types = hash_table_ctor(64, array_key_hash, array_key_compare);
@@ -608,7 +619,7 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
    if (t == NULL) {
       t = new glsl_type(base, array_size);
 
-      hash_table_insert(array_types, (void *) t, & key);
+      hash_table_insert(array_types, (void *) t, t);
    }
 
    assert(t->base_type == GLSL_TYPE_ARRAY);

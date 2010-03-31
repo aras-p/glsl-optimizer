@@ -330,12 +330,6 @@ private:
    /** Hash table containing the known array types. */
    static struct hash_table *array_types;
 
-   /** Structure defining the key type used for array_types hash table. */
-   struct array_hash_key {
-      const glsl_type *type;
-      unsigned size;
-   };
-
    static int array_key_compare(const void *a, const void *b);
    static unsigned array_key_hash(const void *key);
 };
