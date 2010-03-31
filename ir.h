@@ -145,6 +145,11 @@ public:
    }
 
    /**
+    * Get the name of the function for which this is a signature
+    */
+   const char *function_name() const;
+
+   /**
     * Function return type.
     *
     * \note This discards the optional precision qualifier.
@@ -211,6 +216,11 @@ private:
     */
    struct exec_list signatures;
 };
+
+inline const char *ir_function_signature::function_name() const
+{
+   return function->name;
+}
 /*@}*/
 
 
@@ -379,8 +389,7 @@ public:
     */
    const char *callee_name() const
    {
-      /* FINISHME: This only works for functions that have definitions. */
-      return callee->definition->label;
+      return callee->function_name();
    }
 
 private:
