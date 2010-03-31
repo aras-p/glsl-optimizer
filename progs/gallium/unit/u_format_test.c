@@ -60,13 +60,17 @@ test_format_unpack_4f(const struct util_format_test_case *test)
 static boolean
 test_format_pack_4f(const struct util_format_test_case *test)
 {
+   float unpacked[4];
    uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
    unsigned i;
    boolean success;
 
    memset(packed, 0, sizeof packed);
 
-   util_format_pack_4f(test->format, packed, test->unpacked[0], test->unpacked[1], test->unpacked[2], test->unpacked[3]);
+   for (i = 0; i < 4; ++i)
+      unpacked[i] = (float) test->unpacked[i];
+
+   util_format_pack_4f(test->format, packed, unpacked);
 
    success = TRUE;
    for (i = 0; i < UTIL_FORMAT_MAX_PACKED_BYTES; ++i)
@@ -158,7 +162,7 @@ test_format_pack_4ub(const struct util_format_test_case *test)
 
    memset(packed, 0, sizeof packed);
 
-   util_format_pack_4ub(test->format, packed, unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
+   util_format_pack_4ub(test->format, packed, unpacked);
 
    success = TRUE;
    for (i = 0; i < UTIL_FORMAT_MAX_PACKED_BYTES; ++i)

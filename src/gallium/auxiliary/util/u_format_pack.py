@@ -423,7 +423,7 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
     inv_swizzle = format.inv_swizzles()
     
     print 'static INLINE void'
-    print 'util_format_%s_pack_%s(void *dst, %s r, %s g, %s b, %s a)' % (name, src_suffix, src_native_type, src_native_type, src_native_type, src_native_type)
+    print 'util_format_%s_pack_%s(void *dst, const %s *src)' % (name, src_suffix, src_native_type)
     print '{'
     
     if format.is_bitmask():
@@ -434,7 +434,7 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
         for i in range(4):
             dst_channel = format.channels[i]
             if inv_swizzle[i] is not None:
-                value = 'rgba'[inv_swizzle[i]]
+                value ='src[%u]' % inv_swizzle[i]
                 value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
                 if format.colorspace == ZS:
                     if i == 3:
@@ -470,7 +470,7 @@ def generate_format_pack(format, src_channel, src_native_type, src_suffix):
             width = dst_channel.size
             if inv_swizzle[i] is None:
                 continue
-            value = 'rgba'[inv_swizzle[i]]
+            value ='src[%u]' % inv_swizzle[i]
             value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
             if format.colorspace == ZS:
                 if i == 3:
@@ -520,9 +520,9 @@ def generate_pack(formats, src_channel, src_native_type, src_suffix):
             generate_format_pack(format, src_channel, src_native_type, src_suffix)
 
     print 'static INLINE void'
-    print 'util_format_pack_%s(enum pipe_format format, void *dst, %s r, %s g, %s b, %s a)' % (src_suffix, src_native_type, src_native_type, src_native_type, src_native_type)
+    print 'util_format_pack_%s(enum pipe_format format, void *dst, %s *src)' % (src_suffix, src_native_type)
     print '{'
-    print '   void (*func)(void *dst, %s r, %s g, %s b, %s a);' % (src_native_type, src_native_type, src_native_type, src_native_type)
+    print '   void (*func)(void *dst, const %s *src);' % (src_native_type,)
     print '   switch(format) {'
     for format in formats:
         if is_format_supported(format):
@@ -533,7 +533,7 @@ def generate_pack(formats, src_channel, src_native_type, src_suffix):
     print '      debug_printf("%s: unsupported format\\n", __FUNCTION__);'
     print '      return;'
     print '   }'
-    print '   func(dst, r, g, b, a);'
+    print '   func(dst, src);'
     print '}'
     print
 
