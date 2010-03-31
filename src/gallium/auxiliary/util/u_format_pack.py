@@ -43,6 +43,45 @@ import math
 from u_format_parse import *
 
 
+def generate_f16_to_f32():
+    '''Naive implementation, need something faster that operates on bits'''
+
+    print '''
+static float
+f16_to_f32(uint16_t h)
+{
+    unsigned mantissa = h & 0x3ff;
+    unsigned exponent = (h >> 10) & 0x1f;
+    float sign = (h & 0x8000) ? -1.0f : 1.0f;
+
+    if (exponent == 0) {
+        if (mantissa == 0) {
+            return sign * 0.0f;
+        }
+        return sign * powf(2.0f, -14.0f) * (float)mantissa / 1024.0f;
+    }
+    if (exponent == 31) {
+        if (mantissa == 0) {
+            /* XXX: infinity */
+            return sign * 100000.0f;
+        }
+        /* XXX: NaN */
+        return 1000.0f;
+    }
+    return sign * powf(2.0f, (float)exponent - 15.0f) * (1.0f + (float)mantissa / 1024.0f);
+}
+'''
+
+def generate_f32_to_f16():
+    print '''
+static uint16_t
+f32_to_f16(float f)
+{
+    /* TODO */
+    return 0;
+}
+'''
+
 def generate_format_type(format):
     '''Generate a structure that describes the format.'''
 
@@ -127,9 +166,6 @@ def is_format_supported(format):
         channel = format.channels[i]
         if channel.type not in (VOID, UNSIGNED, SIGNED, FLOAT):
             return False
-        if channel.type == FLOAT:
-            if channel.size not in (32, 64):
-               return False
 
     # We can only read a color from a depth/stencil format if the depth channel is present
     if format.colorspace == 'zs' and format.swizzles[0] == SWIZZLE_NONE:
@@ -153,7 +189,9 @@ def native_type(format):
             elif channel.type == SIGNED:
                 return 'int%u_t' % channel.size
             elif channel.type == FLOAT:
-                if channel.size == 32:
+                if channel.size == 16:
+                    return 'uint16_t'
+                elif channel.size == 32:
                     return 'float'
                 elif channel.size == 64:
                     return 'double'
@@ -202,52 +240,12 @@ def get_one(type):
         return (1 << get_one_shift(type)) - 1
 
 
-def generate_clamp():
-    '''Code generate the clamping functions for each type.
-
-    We don't use a macro so that arguments with side effects, 
-    like *src_pixel++ are correctly handled.
-    '''
-
-    for suffix, native_type in [
-        ('', 'double'),
-        ('f', 'float'),
-        ('ui', 'unsigned int'),
-        ('si', 'int'),
-    ]:
-        print 'static INLINE %s' % native_type
-        print 'clamp%s(%s value, %s lbound, %s ubound)' % (suffix, native_type, native_type, native_type)
-        print '{'
-        print '   if(value < lbound)'
-        print '      return lbound;'
-        print '   if(value > ubound)'
-        print '      return ubound;'
-        print '   return value;'
-        print '}'
-        print
-
-
 def clamp_expr(src_channel, dst_channel, dst_native_type, value):
     '''Generate the expression to clamp the value in the source type to the
     destination type range.'''
 
     if src_channel == dst_channel:
         return value
-
-    # Pick the approriate clamp function
-    if src_channel.type == FLOAT:
-        if src_channel.size == 32:
-            func = 'clampf'
-        elif src_channel.size == 64:
-            func = 'clamp'
-        else:
-            assert False
-    elif src_channel.type == UNSIGNED:
-        func = 'clampui'
-    elif src_channel.type == SIGNED:
-        func = 'clampsi'
-    else:
-        assert False
 
     src_min = src_channel.min()
     src_max = src_channel.max()
@@ -273,7 +271,17 @@ def conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=True
         return value
 
     if src_channel.type == FLOAT and dst_channel.type == FLOAT:
-        return '(%s)%s' % (dst_native_type, value)
+        if src_channel.size == dst_channel.size:
+            return value
+        if src_channel.size == 64:
+            value = '(float)%s' % (value)
+        elif src_channel.size == 16:
+            value = 'f16_to_f32(%s)' % (value)
+        if dst_channel.size == 16:
+            value = 'f32_to_f16(%s)' % (value)
+        elif dst_channel.size == 64:
+            value = '(double)%s' % (value)
+        return value
     
     if clamp:
         value = clamp_expr(src_channel, dst_channel, dst_native_type, value)
@@ -562,7 +570,8 @@ def generate(formats):
     print '#include "u_format.h"'
     print
 
-    generate_clamp()
+    generate_f16_to_f32()
+    generate_f32_to_f16()
 
     for format in formats:
         if is_format_supported(format):
