@@ -95,7 +95,7 @@
 
 
 %include "p_compiler.i"
-%include "p_defines.h";
+%include "p_defines.h"
 %include "p_format.h"
 
 %include "p_device.i"
@@ -103,3 +103,4 @@
 %include "p_texture.i"
 %include "p_state.i"
 
+%include "u_format.i"
