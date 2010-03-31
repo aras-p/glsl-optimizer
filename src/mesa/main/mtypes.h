@@ -1910,6 +1910,11 @@ struct gl_query_state
 
    /** GL_NV_conditional_render */
    struct gl_query_object *CondRenderQuery;
+
+   /** GL_EXT_transform_feedback */
+   struct gl_query_object *PrimitivesGenerated;
+   struct gl_query_object *PrimitivesWritten;
+
    GLenum CondRenderMode;
 };
 
@@ -1976,6 +1981,13 @@ struct gl_shader_program
    /** User-defined attribute bindings (glBindAttribLocation) */
    struct gl_program_parameter_list *Attributes;
 
+   /** Transform feedback varyings */
+   struct {
+      GLenum BufferMode;
+      GLuint NumVarying;
+      GLchar **VaryingNames;  /**< Array [NumVarying] of char * */
+   } TransformFeedback;
+
    /* post-link info: */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
@@ -2014,6 +2026,29 @@ struct gl_shader_state
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };
+
+
+/**
+ * Context state for transform feedback.
+ */
+struct gl_transform_feedback
+{
+   GLboolean Active;  /**< Is transform feedback enabled? */
+   GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
+   /** Start of feedback data in dest buffer */
+   GLintptr Offset[MAX_FEEDBACK_ATTRIBS];
+   /** Max data to put into dest buffer (in bytes) */
+   GLsizeiptr Size[MAX_FEEDBACK_ATTRIBS];
+   GLboolean RasterDiscard;  /**< GL_RASTERIZER_DISCARD */
+
+   /** The general binding point (GL_TRANSFORM_FEEDBACK_BUFFER) */
+   struct gl_buffer_object *CurrentBuffer;
+
+   /** The feedback buffers */
+   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
+   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
+};
+
 
 
 /**
@@ -2388,6 +2423,11 @@ struct gl_constants
 
    /**< OpenGL version 3.x */
    GLbitfield ContextFlags;  /**< Ex: GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT */
+
+   /** GL_EXT_transform_feedback */
+   GLuint MaxTransformFeedbackSeparateAttribs;
+   GLuint MaxTransformFeedbackSeparateComponents;
+   GLuint MaxTransformFeedbackInterleavedComponents;
 };
 
 
@@ -2489,6 +2529,7 @@ struct gl_extensions
    GLboolean EXT_texture_mirror_clamp;
    GLboolean EXT_texture_sRGB;
    GLboolean EXT_texture_swizzle;
+   GLboolean EXT_transform_feedback;
    GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array;
    GLboolean EXT_vertex_array_bgra;
@@ -2955,6 +2996,8 @@ struct __GLcontextRec
    struct gl_shader_state Shader; /**< GLSL shader object state */
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
+
+   struct gl_transform_feedback TransformFeedback;
 
    struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
    struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */

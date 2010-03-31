@@ -135,6 +135,7 @@
 #define FEATURE_EXT_framebuffer_object    1
 #define FEATURE_EXT_pixel_buffer_object   1
 #define FEATURE_EXT_texture_sRGB          FEATURE_GL
+#define FEATURE_EXT_transform_feedback    FEATURE_GL
 
 #define FEATURE_APPLE_object_purgeable    FEATURE_GL
 #define FEATURE_ATI_fragment_shader       FEATURE_GL
