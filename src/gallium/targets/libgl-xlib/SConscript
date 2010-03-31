@@ -43,6 +43,8 @@ sources = [
     'xlib.c',
 ]
 
+env.Tool('x11')
+
 if 'softpipe' in env['drivers']:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
     env.Prepend(LIBS = [softpipe])
