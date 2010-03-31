@@ -60,8 +60,8 @@ nv50_format(enum pipe_format format)
 	/* only because we require src format == dst format: */
 	case PIPE_FORMAT_R16G16_SNORM:
 	case PIPE_FORMAT_R16G16_UNORM:
-	case PIPE_FORMAT_S8Z24_UNORM:
-	case PIPE_FORMAT_Z24S8_UNORM:
+	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return NV50_2D_DST_FORMAT_A8R8G8B8_UNORM;
 	case PIPE_FORMAT_L8A8_UNORM:
 	case PIPE_FORMAT_B4G4R4A4_UNORM:

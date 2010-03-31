@@ -60,6 +60,9 @@ def is_format_supported(format):
         channel = format.channels[i]
         if channel.type not in (VOID, UNSIGNED, FLOAT):
             return False
+        if channel.type == FLOAT:
+            if channel.size not in (32, 64) or format.is_mixed():
+               return False
 
     # We can only read a color from a depth/stencil format if the depth channel is present
     if format.colorspace == 'zs' and format.swizzles[0] == SWIZZLE_NONE:

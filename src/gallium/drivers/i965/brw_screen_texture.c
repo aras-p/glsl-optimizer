@@ -158,7 +158,7 @@ static GLuint translate_tex_format( enum pipe_format pf )
    case PIPE_FORMAT_Z16_UNORM:
          return BRW_SURFACEFORMAT_I16_UNORM;
 
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
          return BRW_SURFACEFORMAT_I24X8_UNORM;
 

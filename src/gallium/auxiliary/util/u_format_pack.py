@@ -46,11 +46,11 @@ def generate_format_type(format):
     '''Generate a structure that describes the format.'''
 
     print 'union util_format_%s {' % format.short_name()
-    if format.is_bitmask():
+    if format.is_bitmask() or format.short_name() == "r11g11b10_float":
         print '   uint%u_t value;' % (format.block_size(),)
     print '   struct {'
     for channel in format.channels:
-        if format.is_bitmask() and not format.is_array():
+        if (format.is_bitmask() or format.is_mixed()) and not format.is_array() or format.short_name() == "r11g11b10_float":
             if channel.type == VOID:
                 if channel.size:
                     print '      unsigned %s:%u;' % (channel.name, channel.size)
@@ -58,6 +58,11 @@ def generate_format_type(format):
                 print '      unsigned %s:%u;' % (channel.name, channel.size)
             elif channel.type == SIGNED:
                 print '      int %s:%u;' % (channel.name, channel.size)
+            elif channel.type == FLOAT:
+                if channel.size == 32:
+                    print '      float %s;' % (channel.name)
+                else:
+                    print '      unsigned %s:%u;' % (channel.name, channel.size)
             else:
                 assert 0
         else:
@@ -107,6 +112,9 @@ def is_format_supported(format):
         channel = format.channels[i]
         if channel.type not in (VOID, UNSIGNED, SIGNED, FLOAT):
             return False
+        if channel.type == FLOAT:
+            if channel.size not in (32, 64):
+               return False
 
     # We can only read a color from a depth/stencil format if the depth channel is present
     if format.colorspace == 'zs' and format.swizzles[0] == SWIZZLE_NONE:

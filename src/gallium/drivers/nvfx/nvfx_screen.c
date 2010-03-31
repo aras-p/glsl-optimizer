@@ -133,7 +133,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 	} else
 	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
 		switch (format) {
-		case PIPE_FORMAT_S8Z24_UNORM:
+		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		case PIPE_FORMAT_X8Z24_UNORM:
 			return TRUE;
 		case PIPE_FORMAT_Z16_UNORM:
@@ -155,7 +155,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_I8_UNORM:
 		case PIPE_FORMAT_L8A8_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
-		case PIPE_FORMAT_S8Z24_UNORM:
+		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
 		case PIPE_FORMAT_DXT3_RGBA:

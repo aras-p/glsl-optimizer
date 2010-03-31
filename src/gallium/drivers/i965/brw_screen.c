@@ -252,7 +252,7 @@ brw_is_format_supported(struct pipe_screen *screen,
       /* depth */
       PIPE_FORMAT_Z32_FLOAT,
       PIPE_FORMAT_Z24X8_UNORM,
-      PIPE_FORMAT_Z24S8_UNORM,
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_Z16_UNORM,
       /* signed */
       PIPE_FORMAT_R8G8_SNORM,
@@ -268,7 +268,7 @@ brw_is_format_supported(struct pipe_screen *screen,
    static const enum pipe_format depth_supported[] = {
       PIPE_FORMAT_Z32_FLOAT,
       PIPE_FORMAT_Z24X8_UNORM,
-      PIPE_FORMAT_Z24S8_UNORM,
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_Z16_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
