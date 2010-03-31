@@ -60,6 +60,7 @@ st_destroy_blit(struct st_context *st)
 
 
 #if FEATURE_EXT_framebuffer_blit
+
 static void
 st_BlitFramebuffer(GLcontext *ctx,
                    GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
@@ -207,14 +208,12 @@ st_BlitFramebuffer(GLcontext *ctx,
       }
    }
 }
-#endif /* FEATURE_EXT_framebuffer_blit */
-
 
 
 void
 st_init_blit_functions(struct dd_function_table *functions)
 {
-#if FEATURE_EXT_framebuffer_blit
    functions->BlitFramebuffer = st_BlitFramebuffer;
-#endif
 }
+
+#endif /* FEATURE_EXT_framebuffer_blit */

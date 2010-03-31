@@ -212,9 +212,7 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_atoms( st );
    st_destroy_draw( st );
    st_destroy_generate_mipmap(st);
-#if FEATURE_EXT_framebuffer_blit
    st_destroy_blit(st);
-#endif
    st_destroy_clear(st);
    st_destroy_bitmap(st);
    st_destroy_drawpix(st);
@@ -281,9 +279,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    _mesa_init_glsl_driver_functions(functions);
 
    st_init_accum_functions(functions);
-#if FEATURE_EXT_framebuffer_blit
    st_init_blit_functions(functions);
-#endif
    st_init_bufferobject_functions(functions);
    st_init_clear_functions(functions);
    st_init_bitmap_functions(functions);
