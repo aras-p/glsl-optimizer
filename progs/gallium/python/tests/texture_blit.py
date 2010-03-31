@@ -579,7 +579,10 @@ def main():
 
     ctx = dev.context_create()
 
-    n = 10000
+    try:
+        n = int(sys.argv[1])
+    except:
+        n = 10000
     
     for i in range(n):
         format = random.choice(formats.keys())
