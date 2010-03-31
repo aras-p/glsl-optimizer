@@ -28,6 +28,8 @@
 ##########################################################################
 
 
+import random
+
 from gallium import *
 from base import *
 
@@ -550,6 +552,8 @@ class TextureDepthSampleTest(TestCase):
 
 
 def main():
+    random.seed(0xdead3eef)
+
     dev = Device()
     suite = TestSuite()
     
@@ -574,62 +578,55 @@ def main():
     ]
 
     ctx = dev.context_create()
+
+    n = 10000
     
-    for format in formats.iterkeys():
-        if format == PIPE_FORMAT_NONE:
-            continue
+    for i in range(n):
+        format = random.choice(formats.keys())
         if not util_format_is_depth_or_stencil(format):
-            for target in targets:
-                for size in sizes:
-                    if target == PIPE_TEXTURE_3D:
-                        depth = size
-                    else:
-                        depth = 1
-                    for face in faces:
-                        if target != PIPE_TEXTURE_CUBE and face:
-                            continue
-                        levels = lods(size)
-                        for last_level in range(levels):
-                            for level in range(0, last_level + 1):
-                                zslice = 0
-                                while zslice < depth >> level:
-                                    test = TextureColorSampleTest(
-                                        dev = dev,
-                                        ctx = ctx,
-                                        target = target,
-                                        format = format, 
-                                        width = size,
-                                        height = size,
-                                        depth = depth,
-                                        last_level = last_level,
-                                        face = face,
-                                        level = level,
-                                        zslice = zslice,
-                                    )
-                                    suite.add_test(test)
-                                    zslice = (zslice + 1)*2 - 1
-        else:
-            target = PIPE_TEXTURE_2D
-            depth = 1
-            face = 0
-            last_level = 0
-            level = 0
-            zslice = 0
-            for size in sizes:
-                test = TextureDepthSampleTest(
-                    dev = dev,
-                    ctx = ctx,
-                    target = target,
-                    format = format, 
-                    width = size,
-                    height = size,
-                    depth = depth,
-                    last_level = last_level,
-                    face = face,
-                    level = level,
-                    zslice = zslice,
-                )
-                suite.add_test(test)
+            is_depth_or_stencil = util_format_is_depth_or_stencil(format)
+
+            if is_depth_or_stencil:
+                target = PIPE_TEXTURE_2D
+            else:
+                target = random.choice(targets)
+            
+            size = random.choice(sizes)
+
+            if target == PIPE_TEXTURE_3D:
+                depth = size
+            else:
+                depth = 1
+
+            if target == PIPE_TEXTURE_CUBE:
+                face =random.choice(faces)
+            else:
+                face = PIPE_TEX_FACE_POS_X
+
+            levels = lods(size)
+            last_level = random.randint(0, levels - 1)
+            level = random.randint(0, last_level)
+            zslice = random.randint(0, max(depth >> level, 1) - 1)
+
+            if is_depth_or_stencil:
+                klass = TextureDepthSampleTest
+            else:
+                klass = TextureColorSampleTest
+
+            test = klass(
+                dev = dev,
+                ctx = ctx,
+                target = target,
+                format = format, 
+                width = size,
+                height = size,
+                depth = depth,
+                last_level = last_level,
+                face = face,
+                level = level,
+                zslice = zslice,
+            )
+            suite.add_test(test)
     suite.run()
 
 

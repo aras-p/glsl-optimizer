@@ -43,7 +43,7 @@ from gallium import *
 # Enumerate all pixel formats
 formats = {}
 for name, value in globals().items():
-    if name.startswith("PIPE_FORMAT_") and isinstance(value, int) and name != "PIPE_FORMAT_COUNT":
+    if name.startswith("PIPE_FORMAT_") and isinstance(value, int) and name not in ("PIPE_FORMAT_NONE", "PIPE_FORMAT_COUNT"):
         formats[value] = name
 
 def make_image(width, height, rgba):
