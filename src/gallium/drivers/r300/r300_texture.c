@@ -30,7 +30,6 @@
 #include "r300_context.h"
 #include "r300_texture.h"
 #include "r300_screen.h"
-#include "r300_state_inlines.h"
 #include "r300_winsys.h"
 
 /* XXX Enable float textures here. */
