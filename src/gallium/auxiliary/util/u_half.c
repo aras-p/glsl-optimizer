@@ -59,8 +59,10 @@ uint32_t util_half_to_float_offset_table[64];
 uint16_t util_float_to_half_base_table[512];
 uint8_t util_float_to_half_shift_table[512];
 
-static void
-util_half_init_tables(void)
+boolean util_half_inited;
+
+void
+util_half_do_init(void)
 {
    int i;
 
@@ -161,5 +163,3 @@ util_half_init_tables(void)
       util_float_to_half_shift_table[256 + i] = util_float_to_half_shift_table[i];
    }
 }
-
-UTIL_INIT(util_half_init_tables);

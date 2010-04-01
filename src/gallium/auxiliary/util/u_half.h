@@ -2,7 +2,8 @@
 #define U_HALF_H
 
 #include "pipe/p_compiler.h"
-#include "u_math.h"
+#include "util/u_math.h"
+#include "util/u_inline_init.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +55,8 @@ util_float_to_half(float f)
    i.f = f;
    return util_floatui_to_half(i.ui);
 }
+
+UTIL_INLINE_INIT(util_half);
 
 #ifdef __cplusplus
 }

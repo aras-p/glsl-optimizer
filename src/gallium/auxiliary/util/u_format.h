@@ -32,6 +32,7 @@
 
 #include "pipe/p_format.h"
 #include "util/u_debug.h"
+#include "util/u_inline_init.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -529,6 +530,8 @@ util_format_write_4ub(enum pipe_format format,
                       const uint8_t *src, unsigned src_stride, 
                       void *dst, unsigned dst_stride, 
                       unsigned x, unsigned y, unsigned w, unsigned h);
+
+UTIL_INLINE_INIT(util_format);
 
 #ifdef __cplusplus
 } // extern "C" {

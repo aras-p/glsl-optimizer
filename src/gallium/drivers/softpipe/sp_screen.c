@@ -27,6 +27,7 @@
 
 
 #include "util/u_memory.h"
+#include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
@@ -241,7 +242,7 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
 
-   util_format_s3tc_init();
+   util_format_init();
 
    softpipe_init_screen_texture_funcs(&screen->base);
    softpipe_init_screen_buffer_funcs(&screen->base);

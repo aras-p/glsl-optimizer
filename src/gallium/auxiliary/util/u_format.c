@@ -33,6 +33,8 @@
  */
 
 #include "u_format.h"
+#include "u_format_s3tc.h"
+#include "u_half.h"
 
 
 void
@@ -116,3 +118,11 @@ util_format_write_4ub(enum pipe_format format, const uint8_t *src, unsigned src_
    format_desc->pack_8unorm(dst_row, dst_stride, src_row, src_stride, w, h);
 }
 
+boolean util_format_inited;
+
+void
+util_format_do_init(void)
+{
+   util_format_s3tc_init();
+   util_half_init();
+}

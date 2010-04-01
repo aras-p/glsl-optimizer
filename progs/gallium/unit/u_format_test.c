@@ -404,7 +404,7 @@ int main(int argc, char **argv)
 {
    boolean success;
 
-   util_format_s3tc_init();
+   util_format_init();
 
    success = test_all();
 
