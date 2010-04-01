@@ -1252,6 +1252,18 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 		       "fragment shader");
    }
 
+   /* From page 25 (page 31 of the PDF) of the GLSL 1.10 spec:
+    *
+    *     "The varying qualifier can be used only with the data types
+    *     float, vec2, vec3, vec4, mat2, mat3, and mat4, or arrays of
+    *     these."
+    */
+   if (qual->varying && var->type->base_type != GLSL_TYPE_FLOAT) {
+      var->type = glsl_type::error_type;
+      _mesa_glsl_error(loc, state,
+		       "varying variables must be of base type float");
+   }
+
    if (qual->in && qual->out)
       var->mode = ir_var_inout;
    else if (qual->attribute || qual->in
