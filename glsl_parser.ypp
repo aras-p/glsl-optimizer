@@ -238,26 +238,31 @@ primary_expression:
 	variable_identifier
 	{
 	   $$ = new ast_expression(ast_identifier, NULL, NULL, NULL);
+	   $$->set_location(yylloc);
 	   $$->primary_expression.identifier = $1;
 	}
 	| INTCONSTANT
 	{
 	   $$ = new ast_expression(ast_int_constant, NULL, NULL, NULL);
+	   $$->set_location(yylloc);
 	   $$->primary_expression.int_constant = $1;
 	}
 	| UINTCONSTANT
 	{
 	   $$ = new ast_expression(ast_uint_constant, NULL, NULL, NULL);
+	   $$->set_location(yylloc);
 	   $$->primary_expression.uint_constant = $1;
 	}
 	| FLOATCONSTANT
 	{
 	   $$ = new ast_expression(ast_float_constant, NULL, NULL, NULL);
+	   $$->set_location(yylloc);
 	   $$->primary_expression.float_constant = $1;
 	}
 	| BOOLCONSTANT
 	{
 	   $$ = new ast_expression(ast_bool_constant, NULL, NULL, NULL);
+	   $$->set_location(yylloc);
 	   $$->primary_expression.bool_constant = $1;
 	}
 	| '(' expression ')'
@@ -271,6 +276,7 @@ postfix_expression:
 	| postfix_expression '[' integer_expression ']'
 	{
 	   $$ = new ast_expression(ast_array_index, $1, $3, NULL);
+	   $$->set_location(yylloc);
 	}
 	| function_call
 	{
@@ -279,15 +285,18 @@ postfix_expression:
 	| postfix_expression '.' IDENTIFIER
 	{
 	   $$ = new ast_expression(ast_field_selection, $1, NULL, NULL);
+	   $$->set_location(yylloc);
 	   $$->primary_expression.identifier = $3;
 	}
 	| postfix_expression INC_OP
 	{
 	   $$ = new ast_expression(ast_post_inc, $1, NULL, NULL);
+	   $$->set_location(yylloc);
 	}
 	| postfix_expression DEC_OP
 	{
 	   $$ = new ast_expression(ast_post_dec, $1, NULL, NULL);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -304,6 +313,7 @@ function_call_or_method:
 	| postfix_expression '.' function_call_generic
 	{
 	   $$ = new ast_expression(ast_field_selection, $1, $3, NULL);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -321,11 +331,13 @@ function_call_header_with_parameters:
 	function_call_header assignment_expression
 	{
 	   $$ = $1;
+	   $$->set_location(yylloc);
 	   $$->subexpressions[1] = $2;
 	}
 	| function_call_header_with_parameters ',' assignment_expression
 	{
 	   $$ = $1;
+	   $$->set_location(yylloc);
 	   insert_at_tail((struct simple_node *) $$->subexpressions[1],
 			  (struct simple_node *) $3);
 	}
@@ -342,16 +354,19 @@ function_identifier:
 	type_specifier
 	{
 	   $$ = new ast_function_expression($1);
+	   $$->set_location(yylloc);
    	}
 	| IDENTIFIER
 	{
 	   ast_expression *callee = new ast_expression($1);
 	   $$ = new ast_function_expression(callee);
+	   $$->set_location(yylloc);
    	}
 	| FIELD_SELECTION
 	{
 	   ast_expression *callee = new ast_expression($1);
 	   $$ = new ast_function_expression(callee);
+	   $$->set_location(yylloc);
    	}
 	;
 
@@ -361,14 +376,17 @@ unary_expression:
 	| INC_OP unary_expression
 	{
 	   $$ = new ast_expression(ast_pre_inc, $2, NULL, NULL);
+	   $$->set_location(yylloc);
 	}
 	| DEC_OP unary_expression
 	{
 	   $$ = new ast_expression(ast_pre_dec, $2, NULL, NULL);
+	   $$->set_location(yylloc);
 	}
 	| unary_operator unary_expression
 	{
 	   $$ = new ast_expression($1, $2, NULL, NULL);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -385,14 +403,17 @@ multiplicative_expression:
 	| multiplicative_expression '*' unary_expression
 	{
 	   $$ = new ast_expression_bin(ast_mul, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	| multiplicative_expression '/' unary_expression
 	{
 	   $$ = new ast_expression_bin(ast_div, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	| multiplicative_expression '%' unary_expression
 	{
 	   $$ = new ast_expression_bin(ast_mod, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -401,10 +422,12 @@ additive_expression:
 	| additive_expression '+' multiplicative_expression
 	{
 	   $$ = new ast_expression_bin(ast_add, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	| additive_expression '-' multiplicative_expression
 	{
 	   $$ = new ast_expression_bin(ast_sub, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -413,10 +436,12 @@ shift_expression:
 	| shift_expression LEFT_OP additive_expression
 	{
 	   $$ = new ast_expression_bin(ast_lshift, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	| shift_expression RIGHT_OP additive_expression
 	{
 	   $$ = new ast_expression_bin(ast_rshift, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -425,18 +450,22 @@ relational_expression:
 	| relational_expression '<' shift_expression
 	{
 	   $$ = new ast_expression_bin(ast_less, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	| relational_expression '>' shift_expression
 	{
 	   $$ = new ast_expression_bin(ast_greater, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	| relational_expression LE_OP shift_expression
 	{
 	   $$ = new ast_expression_bin(ast_lequal, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	| relational_expression GE_OP shift_expression
 	{
 	   $$ = new ast_expression_bin(ast_gequal, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -445,10 +474,12 @@ equality_expression:
 	| equality_expression EQ_OP relational_expression
 	{
 	   $$ = new ast_expression_bin(ast_equal, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	| equality_expression NE_OP relational_expression
 	{
 	   $$ = new ast_expression_bin(ast_nequal, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -457,6 +488,7 @@ and_expression:
 	| and_expression '&' equality_expression
 	{
 	   $$ = new ast_expression_bin(ast_bit_or, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -465,6 +497,7 @@ exclusive_or_expression:
 	| exclusive_or_expression '^' and_expression
 	{
 	   $$ = new ast_expression_bin(ast_bit_xor, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -473,6 +506,7 @@ inclusive_or_expression:
 	| inclusive_or_expression '|' exclusive_or_expression
 	{
 	   $$ = new ast_expression_bin(ast_bit_or, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -481,6 +515,7 @@ logical_and_expression:
 	| logical_and_expression AND_OP inclusive_or_expression
 	{
 	   $$ = new ast_expression_bin(ast_logic_and, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -489,6 +524,7 @@ logical_xor_expression:
 	| logical_xor_expression XOR_OP logical_and_expression
 	{
 	   $$ = new ast_expression_bin(ast_logic_xor, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -497,6 +533,7 @@ logical_or_expression:
 	| logical_or_expression OR_OP logical_xor_expression
 	{
 	   $$ = new ast_expression_bin(ast_logic_or, $1, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -505,6 +542,7 @@ conditional_expression:
 	| logical_or_expression '?' expression ':' assignment_expression
 	{
 	   $$ = new ast_expression(ast_conditional, $1, $3, $5);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -513,6 +551,7 @@ assignment_expression:
 	| unary_expression assignment_operator assignment_expression
 	{
 	   $$ = new ast_expression($2, $1, $3, NULL);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -539,6 +578,7 @@ expression:
 	{
 	   if ($1->oper != ast_sequence) {
 	      $$ = new ast_expression(ast_sequence, NULL, NULL, NULL);
+	      $$->set_location(yylloc);
 	      insert_at_tail(& $$->expressions, $1);
 	   } else {
 	      $$ = $1;
@@ -595,6 +635,7 @@ function_header:
 	fully_specified_type IDENTIFIER '('
 	{
 	   $$ = new ast_function();
+	   $$->set_location(yylloc);
 	   $$->return_type = $1;
 	   $$->identifier = $2;
 	}
@@ -604,14 +645,18 @@ parameter_declarator:
 	type_specifier IDENTIFIER
 	{
 	   $$ = new ast_parameter_declarator();
+	   $$->set_location(yylloc);
 	   $$->type = new ast_fully_specified_type();
+	   $$->type->set_location(yylloc);
 	   $$->type->specifier = $1;
 	   $$->identifier = $2;
 	}
 	| type_specifier IDENTIFIER '[' constant_expression ']'
 	{
 	   $$ = new ast_parameter_declarator();
+	   $$->set_location(yylloc);
 	   $$->type = new ast_fully_specified_type();
+	   $$->type->set_location(yylloc);
 	   $$->type->specifier = $1;
 	   $$->identifier = $2;
 	   $$->is_array = true;
@@ -637,6 +682,7 @@ parameter_declaration:
 	   $1.i |= $2.i;
 
 	   $$ = new ast_parameter_declarator();
+	   $$->set_location(yylloc);
 	   $$->type = new ast_fully_specified_type();
 	   $$->type->qualifier = $1.q;
 	   $$->type->specifier = $3;
@@ -644,6 +690,7 @@ parameter_declaration:
 	| parameter_qualifier parameter_type_specifier
 	{
 	   $$ = new ast_parameter_declarator();
+	   $$->set_location(yylloc);
 	   $$->type = new ast_fully_specified_type();
 	   $$->type->qualifier = $1.q;
 	   $$->type->specifier = $2;
@@ -666,6 +713,7 @@ init_declarator_list:
 	| init_declarator_list ',' IDENTIFIER
 	{
 	   ast_declaration *decl = new ast_declaration($3, false, NULL, NULL);
+	   decl->set_location(yylloc);
 
 	   $$ = $1;
 	   insert_at_tail(& $$->declarations,
@@ -674,6 +722,7 @@ init_declarator_list:
 	| init_declarator_list ',' IDENTIFIER '[' ']'
 	{
 	   ast_declaration *decl = new ast_declaration($3, true, NULL, NULL);
+	   decl->set_location(yylloc);
 
 	   $$ = $1;
 	   insert_at_tail(& $$->declarations,
@@ -682,6 +731,7 @@ init_declarator_list:
 	| init_declarator_list ',' IDENTIFIER '[' constant_expression ']'
 	{
 	   ast_declaration *decl = new ast_declaration($3, true, $5, NULL);
+	   decl->set_location(yylloc);
 
 	   $$ = $1;
 	   insert_at_tail(& $$->declarations,
@@ -690,6 +740,7 @@ init_declarator_list:
 	| init_declarator_list ',' IDENTIFIER '[' ']' '=' initializer
 	{
 	   ast_declaration *decl = new ast_declaration($3, true, NULL, $7);
+	   decl->set_location(yylloc);
 
 	   $$ = $1;
 	   insert_at_tail(& $$->declarations,
@@ -698,6 +749,7 @@ init_declarator_list:
 	| init_declarator_list ',' IDENTIFIER '[' constant_expression ']' '=' initializer
 	{
 	   ast_declaration *decl = new ast_declaration($3, true, $5, $8);
+	   decl->set_location(yylloc);
 
 	   $$ = $1;
 	   insert_at_tail(& $$->declarations,
@@ -706,6 +758,7 @@ init_declarator_list:
 	| init_declarator_list ',' IDENTIFIER '=' initializer
 	{
 	   ast_declaration *decl = new ast_declaration($3, false, NULL, $5);
+	   decl->set_location(yylloc);
 
 	   $$ = $1;
 	   insert_at_tail(& $$->declarations,
@@ -718,12 +771,14 @@ single_declaration:
 	fully_specified_type
 	{
 	   $$ = new ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	}
 	| fully_specified_type IDENTIFIER
 	{
 	   ast_declaration *decl = new ast_declaration($2, false, NULL, NULL);
 
 	   $$ = new ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	   insert_at_tail(& $$->declarations,
 			  (struct simple_node *) decl);
 	}
@@ -732,6 +787,7 @@ single_declaration:
 	   ast_declaration *decl = new ast_declaration($2, true, NULL, NULL);
 
 	   $$ = new ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	   insert_at_tail(& $$->declarations,
 			  (struct simple_node *) decl);
 	}
@@ -740,6 +796,7 @@ single_declaration:
 	   ast_declaration *decl = new ast_declaration($2, true, $4, NULL);
 
 	   $$ = new ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	   insert_at_tail(& $$->declarations,
 			  (struct simple_node *) decl);
 	}
@@ -748,6 +805,7 @@ single_declaration:
 	   ast_declaration *decl = new ast_declaration($2, true, NULL, $6);
 
 	   $$ = new ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	   insert_at_tail(& $$->declarations,
 			  (struct simple_node *) decl);
 	}
@@ -756,6 +814,7 @@ single_declaration:
 	   ast_declaration *decl = new ast_declaration($2, true, $4, $7);
 
 	   $$ = new ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	   insert_at_tail(& $$->declarations,
 			  (struct simple_node *) decl);
 	}
@@ -764,6 +823,7 @@ single_declaration:
 	   ast_declaration *decl = new ast_declaration($2, false, NULL, $4);
 
 	   $$ = new ast_declarator_list($1);
+	   $$->set_location(yylloc);
 	   insert_at_tail(& $$->declarations,
 			  (struct simple_node *) decl);
 	}
@@ -772,6 +832,7 @@ single_declaration:
 	   ast_declaration *decl = new ast_declaration($2, false, NULL, NULL);
 
 	   $$ = new ast_declarator_list(NULL);
+	   $$->set_location(yylloc);
 	   $$->invariant = true;
 
 	   insert_at_tail(& $$->declarations,
@@ -783,11 +844,13 @@ fully_specified_type:
 	type_specifier
 	{
 	   $$ = new ast_fully_specified_type();
+	   $$->set_location(yylloc);
 	   $$->specifier = $1;
 	}
 	| type_qualifier type_specifier
 	{
 	   $$ = new ast_fully_specified_type();
+	   $$->set_location(yylloc);
 	   $$->qualifier = $1.q;
 	   $$->specifier = $2;
 	}
@@ -857,14 +920,17 @@ type_specifier_nonarray:
 	basic_type_specifier_nonarray
 	{
 	   $$ = new ast_type_specifier($1);
+	   $$->set_location(yylloc);
 	}
 	| struct_specifier
 	{
 	   $$ = new ast_type_specifier($1);
+	   $$->set_location(yylloc);
 	}
 	| TYPE_NAME
 	{
 	   $$ = new ast_type_specifier($1);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -935,10 +1001,12 @@ struct_specifier:
 	STRUCT IDENTIFIER '{' struct_declaration_list '}'
 	{
 	   $$ = new ast_struct_specifier($2, $4);
+	   $$->set_location(yylloc);
 	}
 	| STRUCT '{' struct_declaration_list '}'
 	{
 	   $$ = new ast_struct_specifier(NULL, $3);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -959,9 +1027,11 @@ struct_declaration:
 	type_specifier struct_declarator_list ';'
 	{
 	   ast_fully_specified_type *type = new ast_fully_specified_type();
+	   type->set_location(yylloc);
 
 	   type->specifier = $1;
 	   $$ = new ast_declarator_list(type);
+	   $$->set_location(yylloc);
 
 	   insert_at_tail((struct simple_node *) $2,
 			  & $$->declarations);
@@ -982,10 +1052,12 @@ struct_declarator:
 	IDENTIFIER
 	{
 	   $$ = new ast_declaration($1, false, NULL, NULL);
+	   $$->set_location(yylloc);
 	}
 	| IDENTIFIER '[' constant_expression ']'
 	{
 	   $$ = new ast_declaration($1, true, $3, NULL);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -1027,10 +1099,12 @@ compound_statement:
 	'{' '}'
 	{
 	   $$ = new ast_compound_statement(true, NULL);
+	   $$->set_location(yylloc);
 	}
 	| '{' statement_list '}'
 	{
 	   $$ = new ast_compound_statement(true, $2);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -1043,10 +1117,12 @@ compound_statement_no_new_scope:
 	'{' '}'
 	{
 	   $$ = new ast_compound_statement(false, NULL);
+	   $$->set_location(yylloc);
 	}
 	| '{' statement_list '}'
 	{
 	   $$ = new ast_compound_statement(false, $2);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -1077,10 +1153,12 @@ expression_statement:
 	';'
 	{
 	   $$ = new ast_expression_statement(NULL);
+	   $$->set_location(yylloc);
 	}
 	| expression ';'
 	{
 	   $$ = new ast_expression_statement($1);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -1088,6 +1166,7 @@ selection_statement_matched:
 	IF '(' expression ')' statement_matched ELSE statement_matched
 	{
 	   $$ = new ast_selection_statement($3, $5, $7);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -1095,14 +1174,17 @@ selection_statement_unmatched:
 	IF '(' expression ')' statement_matched
 	{
 	   $$ = new ast_selection_statement($3, $5, NULL);
+	   $$->set_location(yylloc);
 	}
 	| IF '(' expression ')' statement_unmatched
 	{
 	   $$ = new ast_selection_statement($3, $5, NULL);
+	   $$->set_location(yylloc);
 	}
 	| IF '(' expression ')' statement_matched ELSE statement_unmatched
 	{
 	   $$ = new ast_selection_statement($3, $5, $7);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -1115,6 +1197,8 @@ condition:
 	{
 	   ast_declaration *decl = new ast_declaration($2, false, NULL, $4);
 	   ast_declarator_list *declarator = new ast_declarator_list($1);
+	   decl->set_location(yylloc);
+	   declarator->set_location(yylloc);
 
 	   insert_at_tail(& declarator->declarations,
 			  (struct simple_node *) decl);
@@ -1137,16 +1221,19 @@ iteration_statement:
 	{
 	   $$ = new ast_iteration_statement(ast_iteration_statement::ast_while,
 					    NULL, $3, NULL, $5);
+	   $$->set_location(yylloc);
 	}
 	| DO statement WHILE '(' expression ')' ';'
 	{
 	   $$ = new ast_iteration_statement(ast_iteration_statement::ast_do_while,
 					    NULL, $5, NULL, $2);
+	   $$->set_location(yylloc);
 	}
 	| FOR '(' for_init_statement for_rest_statement ')' statement_no_new_scope
 	{
 	   $$ = new ast_iteration_statement(ast_iteration_statement::ast_for,
 					    $3, $4.cond, $4.rest, $6);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -1181,22 +1268,27 @@ jump_statement:
 	CONTINUE ';' 
 	{
 	   $$ = new ast_jump_statement(ast_jump_statement::ast_continue, NULL);
+	   $$->set_location(yylloc);
 	}
 	| BREAK ';'
 	{
 	   $$ = new ast_jump_statement(ast_jump_statement::ast_break, NULL);
+	   $$->set_location(yylloc);
 	}
 	| RETURN ';'
 	{
 	   $$ = new ast_jump_statement(ast_jump_statement::ast_return, NULL);
+	   $$->set_location(yylloc);
 	}
 	| RETURN expression ';'
 	{
 	   $$ = new ast_jump_statement(ast_jump_statement::ast_return, $2);
+	   $$->set_location(yylloc);
 	}
 	| DISCARD ';' // Fragment shader only.
 	{
 	   $$ = new ast_jump_statement(ast_jump_statement::ast_discard, NULL);
+	   $$->set_location(yylloc);
 	}
 	;
 
@@ -1209,6 +1301,7 @@ function_definition:
 	function_prototype compound_statement_no_new_scope
 	{
 	   $$ = new ast_function_definition();
+	   $$->set_location(yylloc);
 	   $$->prototype = $1;
 	   $$->body = $2;
 	}

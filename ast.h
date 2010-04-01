@@ -68,11 +68,11 @@ public:
     *
     * \sa ast_node::get_location
     */
-   void set_location(const struct YYLTYPE *locp)
+   void set_location(const struct YYLTYPE &locp)
    {
-      this->location.source = locp->source;
-      this->location.line = locp->first_line;
-      this->location.column = locp->first_column;
+      this->location.source = locp.source;
+      this->location.line = locp.first_line;
+      this->location.column = locp.first_column;
    }
 
 
