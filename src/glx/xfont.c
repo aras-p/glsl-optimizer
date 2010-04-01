@@ -33,7 +33,7 @@
   called by that routine when direct rendering is enabled.
 */
 
-#if defined(GLX_DIRECT_RENDERING) || defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
 
 #include "glxclient.h"
 

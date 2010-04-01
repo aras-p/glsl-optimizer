@@ -42,7 +42,7 @@ glDrawBuffer(GLenum mode)
 {
    GLXContext gc = glXGetCurrentContext();
 
-   if (gc && apple_glx_context_uses_stereo(gc->apple)) {
+   if (gc && apple_glx_context_uses_stereo(gc->driContext)) {
       GLenum buf[2];
       GLsizei n = 0;
 
@@ -77,7 +77,7 @@ glDrawBuffers(GLsizei n, const GLenum * bufs)
 {
    GLXContext gc = glXGetCurrentContext();
 
-   if (gc && apple_glx_context_uses_stereo(gc->apple)) {
+   if (gc && apple_glx_context_uses_stereo(gc->driContext)) {
       GLenum newbuf[n + 2];
       GLsizei i, outi = 0;
       bool have_back = false;

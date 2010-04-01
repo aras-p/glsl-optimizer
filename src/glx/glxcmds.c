@@ -34,21 +34,22 @@
  */
 
 #include "glxclient.h"
+#include "glapi.h"
+#include "glxextensions.h"
+#include "glcontextmodes.h"
+
+#ifdef GLX_DIRECT_RENDERING
 #ifdef GLX_USE_APPLEGL
 #include "apple_glx_context.h"
 #include "apple_glx.h"
 #include "glx_error.h"
+#define GC_IS_DIRECT(gc) ((gc)->isDirect)
 #else
-#include "glapi.h"
-#endif
-#include "glxextensions.h"
-#include "glcontextmodes.h"
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 #include <sys/time.h>
 #include <X11/extensions/xf86vmode.h>
 #include "xf86dri.h"
 #define GC_IS_DIRECT(gc) ((gc)->driContext != NULL)
+#endif
 #else
 #define GC_IS_DIRECT(gc) (0)
 #endif
@@ -65,7 +66,7 @@ static const char __glXGLXClientVersion[] = "1.4";
 
 /****************************************************************************/
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
 static Bool windowExistsFlag;
 static int
@@ -352,7 +353,7 @@ AllocateGLXContext(Display * dpy)
    gc->maxSmallRenderCommandSize = bufSize;
    
 #ifdef GLX_USE_APPLEGL
-   gc->apple = NULL;
+   gc->driContext = NULL;
    gc->do_destroy = False;   
 #endif
 
@@ -377,13 +378,13 @@ CreateContext(Display * dpy, int generic_id,
 	      unsigned code, int renderType, int screen)
 {
    GLXContext gc;
-#if defined(GLX_DIRECT_RENDERING) || defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-#endif
 #ifdef GLX_USE_APPLEGL
-    const __GLcontextModes *mode;
-    int errorcode;
-    bool x11error;
+   const __GLcontextModes *mode;
+   int errorcode;
+   bool x11error;
+#endif
 #endif
     
    if (dpy == NULL)
@@ -396,7 +397,7 @@ CreateContext(Display * dpy, int generic_id,
    if (!gc)
       return NULL;
 
-#ifndef GLX_USE_APPLEGL
+#ifndef GLX_USE_APPLEGL  /* TODO: darwin indirect */
 #ifdef GLX_DIRECT_RENDERING
    if (allowDirect && psc->driScreen) {
       gc->driContext = psc->driScreen->createContext(psc, fbconfig, gc,
@@ -476,6 +477,9 @@ CreateContext(Display * dpy, int generic_id,
 #endif
 
    gc->imported = GL_FALSE;
+   gc->renderType = renderType;
+
+   /* TODO: darwin: Integrate with above to do indirect */
 #ifdef GLX_USE_APPLEGL
    mode = _gl_context_modes_find_fbconfig(psc->configs, 
                                           fbconfig->fbconfigID);
@@ -487,8 +491,8 @@ CreateContext(Display * dpy, int generic_id,
       return NULL;
    }
    
-   if(apple_glx_create_context(&gc->apple, dpy, screen, mode, 
-                               shareList ? shareList->apple : NULL,
+   if(apple_glx_create_context(&gc->driContext, dpy, screen, mode, 
+                               shareList ? shareList->driContext : NULL,
                                &errorcode, &x11error)) {
       __glXSendError(dpy, errorcode, 0, X_GLXCreateContext, x11error);
       __glXFreeContext(gc);
@@ -498,8 +502,6 @@ CreateContext(Display * dpy, int generic_id,
    gc->currentContextTag = -1;
    gc->mode = mode;
    gc->isDirect = allowDirect;
-#else
-   gc->renderType = renderType;
 #endif
 
    return gc;
@@ -547,9 +549,7 @@ __glXFreeContext(__GLXcontext * gc)
       XFree((char *) gc->version);
    if (gc->extensions)
       XFree((char *) gc->extensions);
-#ifndef GLX_USE_APPLEGL
    __glFreeAttributeState(gc);
-#endif
    XFree((char *) gc->buf);
    Xfree((char *) gc->client_state_private);
    XFree((char *) gc);
@@ -562,7 +562,7 @@ __glXFreeContext(__GLXcontext * gc)
 static void
 DestroyContext(Display * dpy, GLXContext gc)
 {
-#ifndef GLX_USE_APPLEGL
+#ifndef GLX_USE_APPLEGL /* TODO: darwin: indirect */
    xGLXDestroyContextReq *req;
    GLXContextID xid;
    CARD8 opcode;
@@ -588,7 +588,7 @@ DestroyContext(Display * dpy, GLXContext gc)
       return;
    }
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    /* Destroy the direct rendering context */
    if (gc->driContext) {
       (*gc->driContext->destroyContext) (gc->driContext, gc->psc, dpy);
@@ -617,8 +617,8 @@ DestroyContext(Display * dpy, GLXContext gc)
       /* Destroy the handle if not current to anybody */
       __glXUnlock();
 #ifdef GLX_USE_APPLEGL
-      if(gc->apple)
-         apple_glx_destroy_context(&gc->apple, dpy);
+      if(gc->driContext)
+         apple_glx_destroy_context(&gc->driContext, dpy);
 #endif
       __glXFreeContext(gc);
    }
@@ -705,7 +705,7 @@ glXWaitGL(void)
 #ifdef GLX_USE_APPLEGL
    glFinish();
 #else
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->driContext) {
       int screen;
       __GLXDRIdrawable *pdraw =
@@ -752,9 +752,9 @@ glXWaitX(void)
    __glXFlushRenderBuffer(gc, gc->pc);
 
 #ifdef GLX_USE_APPLEGL
-   apple_glx_waitx(dpy, gc->apple);
+   apple_glx_waitx(dpy, gc->driContext);
 #else
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->driContext) {
       int screen;
       __GLXDRIdrawable *pdraw =
@@ -801,7 +801,7 @@ glXUseXFont(Font font, int first, int count, int listBase)
 #ifdef GLX_USE_APPLEGL
    DRI_glXUseXFont(font, first, count, listBase); 
 #else
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->driContext) {
       DRI_glXUseXFont(font, first, count, listBase);
       return;
@@ -838,7 +838,7 @@ glXCopyContext(Display * dpy, GLXContext source,
    int errorcode;
    bool x11error;
 
-   if(apple_glx_copy_context(gc->apple, source->apple, dest->apple,
+   if(apple_glx_copy_context(gc->driContext, source->driContext, dest->driContext,
                              mask, &errorcode, &x11error)) {
       __glXSendError(dpy, errorcode, 0, X_GLXCopyContext, x11error);
    }
@@ -854,7 +854,7 @@ glXCopyContext(Display * dpy, GLXContext source,
       return;
    }
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->driContext) {
       /* NOT_DONE: This does not work yet */
    }
@@ -886,7 +886,6 @@ glXCopyContext(Display * dpy, GLXContext source,
 }
 
 
-#ifndef GLX_USE_APPLEGL
 /**
  * Determine if a context uses direct rendering.
  *
@@ -898,6 +897,9 @@ glXCopyContext(Display * dpy, GLXContext source,
 static Bool
 __glXIsDirect(Display * dpy, GLXContextID contextID)
 {
+#ifndef GLX_USE_APPLEGL /* TODO: apple indirect */
+   return GC_IS_DIRECT(gc);
+#else
 #if !defined(USE_XCB)
    xGLXIsDirectReq *req;
    xGLXIsDirectReply reply;
@@ -933,8 +935,8 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
 
    return reply.isDirect;
 #endif /* USE_XCB */
-}
 #endif /* GLX_USE_APPLEGL */
+}
 
 /**
  * \todo
@@ -945,17 +947,6 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
 PUBLIC Bool
 glXIsDirect(Display * dpy, GLXContext gc)
 {
-#ifdef GLX_USE_APPLEGL
-   /*
-    * This isn't an ideal test.  
-    * glXIsDirect should probably search a list of contexts.
-    */
-   if(NULL == gc) {
-      __glXSendError(dpy, GLXBadContext, 0, X_GLXIsDirect, false);
-      return False;
-   }
-   return gc->isDirect;
-#else
    if (!gc) {
       return GL_FALSE;
    }
@@ -963,7 +954,6 @@ glXIsDirect(Display * dpy, GLXContext gc)
       return GL_TRUE;
    }
    return __glXIsDirect(dpy, gc->xid);
-#endif /* GLX_USE_APPLEGL */
 }
 
 PUBLIC GLXPixmap
@@ -1002,7 +992,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
    UnlockDisplay(dpy);
    SyncHandle();
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    do {
       /* FIXME: Maybe delay __DRIdrawable creation until the drawable
        * is actually bound to a context... */
@@ -1060,7 +1050,7 @@ glXDestroyGLXPixmap(Display * dpy, GLXPixmap glxpixmap)
    UnlockDisplay(dpy);
    SyncHandle();
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    {
       int screen;
       __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
@@ -1081,8 +1071,8 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
 {
 #ifdef GLX_USE_APPLEGL
    GLXContext gc = glXGetCurrentContext();
-   if(gc && apple_glx_is_current_drawable(dpy, gc->apple, drawable)) {
-      apple_glx_swap_buffers(gc->apple);
+   if(gc && apple_glx_is_current_drawable(dpy, gc->driContext, drawable)) {
+      apple_glx_swap_buffers(gc->driContext);
    } else {
       __glXSendError(dpy, GLXBadCurrentWindow, 0, X_GLXSwapBuffers, false);
    }
@@ -1096,7 +1086,7 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
    xGLXSwapBuffersReq *req;
 #endif
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
    if (pdraw != NULL) {
@@ -1594,7 +1584,7 @@ glXQueryExtensionsString(Display * dpy, int screen)
       }
 
       __glXCalculateUsableExtensions(psc,
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
                                      (psc->driScreen != NULL),
 #else
                                      GL_FALSE,
@@ -1826,7 +1816,7 @@ glXQueryContext(Display * dpy, GLXContext ctx, int attribute, int *value)
    int retVal;
 
    /* get the information from the server if we don't have it already */
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (!ctx->driContext && (ctx->mode == NULL)) {
 #else
    if (ctx->mode == NULL) {
@@ -2549,7 +2539,7 @@ __glXGetSyncValuesOML(Display * dpy, GLXDrawable drawable,
    return False;
 }
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 _X_HIDDEN GLboolean
 __driGetMscRateOML(__DRIdrawable * draw,
                    int32_t * numerator, int32_t * denominator, void *private)
@@ -2989,7 +2979,7 @@ __glXBindTexImageEXT(Display * dpy,
          i++;
    }
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->driContext) {
       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
@@ -3245,7 +3235,7 @@ static const struct name_address_pair GLX_functions[] = {
    GLX_FUNCTION2(glXReleaseTexImageEXT, __glXReleaseTexImageEXT),
 #endif
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    /*** DRI configuration ***/
    GLX_FUNCTION(glXGetScreenDriver),
    GLX_FUNCTION(glXGetDriverConfig),
@@ -3322,7 +3312,7 @@ PUBLIC void (*glXGetProcAddress(const GLubyte * procName)) (void)
 #endif /* __GNUC__ */
 
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 /**
  * Get the unadjusted system time (UST).  Currently, the UST is measured in
  * microseconds since Epoc.  The actual resolution of the UST may vary from

@@ -54,9 +54,7 @@
 #include "GL/glxint.h"
 #include "GL/glxproto.h"
 #include "GL/internal/glcore.h"
-#ifndef GLX_USE_APPLEGL
 #include "glapi/glapitable.h"
-#endif
 #include "glxhash.h"
 #if defined( PTHREADS )
 # include <pthread.h>
@@ -99,8 +97,13 @@ typedef struct _glapi_table __GLapi;
 #define containerOf(ptr, type, member)              \
     (type *)( (char *)ptr - offsetof(type,member) )
 
-#include <GL/internal/dri_interface.h>
+extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
 
+#endif
+
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+
+#include <GL/internal/dri_interface.h>
 
 /**
  * Display dependent methods.  This structure is initialized during the
@@ -187,8 +190,6 @@ extern __GLXDRIdisplay *dri2CreateDisplay(Display * dpy);
 extern void dri2InvalidateBuffers(Display *dpy, XID drawable);
 
 
-extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
-
 /*
 ** Functions to obtain driver configuration information from a direct
 ** rendering client application
@@ -197,10 +198,6 @@ extern const char *glXGetScreenDriver(Display * dpy, int scrNum);
 
 extern const char *glXGetDriverConfig(const char *driverName);
 
-#endif
-
-#ifdef GLX_USE_APPLEGL
-extern void DRI_glXUseXFont( Font font, int first, int count, int listbase );
 #endif
 
 /************************************************************************/
@@ -411,8 +408,13 @@ struct __GLXcontextRec
    const __GLcontextModes *mode;
 
 #ifdef GLX_DIRECT_RENDERING
+#ifdef GLX_USE_APPLEGL
+   void *driContext;
+   Bool do_destroy;
+#else
    __GLXDRIcontext *driContext;
    __DRIcontext *__driContext;
+#endif
 #endif
 
     /**
@@ -455,11 +457,6 @@ struct __GLXcontextRec
    unsigned long thread_id;
 
    char gl_extension_bits[__GL_EXT_BYTES];
-
-#ifdef GLX_USE_APPLEGL
-   void *apple;
-   Bool do_destroy;
-#endif
 };
 
 #define __glXSetError(gc,code)  \
@@ -514,7 +511,7 @@ struct __GLXscreenConfigsRec
      */
    char *effectiveGLXexts;
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     /**
      * Per screen direct rendering interface functions and data.
      */
@@ -625,7 +622,7 @@ struct __GLXdisplayPrivateRec
      */
    __GLXscreenConfigs *screenConfigs;
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     /**
      * Per display direct rendering interface functions and data.
      */
@@ -638,14 +635,12 @@ struct __GLXdisplayPrivateRec
 
 extern GLubyte *__glXFlushRenderBuffer(__GLXcontext *, GLubyte *);
 
-#ifndef GLX_USE_APPLEGL
 extern void __glXSendLargeChunk(__GLXcontext * gc, GLint requestNumber,
                                 GLint totalRequests,
                                 const GLvoid * data, GLint dataLen);
 
 extern void __glXSendLargeCommand(__GLXcontext *, const GLvoid *, GLint,
                                   const GLvoid *, GLint);
-#endif
 
 /* Initialize the GLX extension for dpy */
 extern __GLXdisplayPrivate *__glXInitialize(Display *);
@@ -805,7 +800,7 @@ extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
                                     int32_t * numerator,
                                     int32_t * denominator);
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 GLboolean
 __driGetMscRateOML(__DRIdrawable * draw,
                    int32_t * numerator, int32_t * denominator, void *private);
