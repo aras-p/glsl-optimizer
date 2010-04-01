@@ -33,6 +33,9 @@
 #include "r300_state_inlines.h"
 #include "r300_winsys.h"
 
+/* XXX Enable float textures here. */
+/*#define ENABLE_FLOAT_TEXTURES*/
+
 #define TILE_WIDTH 0
 #define TILE_HEIGHT 1
 
@@ -278,8 +281,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
             }
             return ~0;
 
-/* XXX Enable float textures here. */
-#if 0
+#if defined(ENABLE_FLOAT_TEXTURES)
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (desc->channel[0].size) {
                 case 16:
@@ -360,12 +362,13 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /* 64-bit buffers. */
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
-        //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
+#if defined(ENABLE_FLOAT_TEXTURES)
+        case PIPE_FORMAT_R16G16B16A16_FLOAT:
+#endif
             return R300_COLOR_FORMAT_ARGB16161616;
 
-/* XXX Enable float textures here. */
-#if 0
         /* 128-bit buffers. */
+#if defined(ENABLE_FLOAT_TEXTURES)
         case PIPE_FORMAT_R32G32B32A32_FLOAT:
             return R300_COLOR_FORMAT_ARGB32323232;
 #endif
