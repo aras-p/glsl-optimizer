@@ -222,7 +222,8 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 
    /* FIXME: Temporary restrictions. See lp_bld_sample_soa.c */
    if(tex_usage & PIPE_TEXTURE_USAGE_SAMPLER) {
-      if(!format_desc->is_bitmask)
+      if(!format_desc->is_bitmask &&
+         format != PIPE_FORMAT_R32_FLOAT)
          return FALSE;
 
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&

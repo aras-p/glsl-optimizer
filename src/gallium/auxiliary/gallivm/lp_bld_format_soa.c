@@ -80,6 +80,24 @@ lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
 }
 
 
+/**
+ * Unpack several pixels in SoA.
+ *
+ * It takes a vector of packed pixels:
+ *
+ *   packed = {P0, P1, P2, P3, ..., Pn}
+ *
+ * And will produce four vectors:
+ *
+ *   red    = {R0, R1, R2, R3, ..., Rn}
+ *   green  = {G0, G1, G2, G3, ..., Gn}
+ *   blue   = {B0, B1, B2, B3, ..., Bn}
+ *   alpha  = {A0, A1, A2, A3, ..., An}
+ *
+ * It requires that a packed pixel fits into an element of the output
+ * channels. The common case is when converting pixel with a depth of 32 bit or
+ * less into floats.
+ */
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          const struct util_format_description *format_desc,
@@ -91,11 +109,13 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
    unsigned start;
    unsigned chan;
 
-   /* FIXME: Support more formats */
-   assert(format_desc->is_bitmask);
+   /* FIXME: Support more pixel formats */
    assert(format_desc->block.width == 1);
    assert(format_desc->block.height == 1);
-   assert(format_desc->block.bits <= 32);
+   assert(format_desc->block.bits <= type.width);
+   /* FIXME: Support more output types */
+   assert(type.floating);
+   assert(type.width == 32);
 
    /* Decode the input vector components */
    start = 0;
@@ -188,7 +208,27 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
          break;
 
+      case UTIL_FORMAT_TYPE_FLOAT:
+         if (type.floating) {
+            assert(start == 0);
+            assert(stop == 32);
+            assert(type.width == 32);
+            input = LLVMBuildBitCast(builder, input, lp_build_vec_type(type), "");
+         }
+         else {
+            /* FIXME */
+            assert(0);
+            input = lp_build_undef(type);
+         }
+         break;
+
+      case UTIL_FORMAT_TYPE_FIXED:
+         assert(0);
+         input = lp_build_undef(type);
+         break;
+
       default:
+         assert(0);
          input = lp_build_undef(type);
          break;
       }
