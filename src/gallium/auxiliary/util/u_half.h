@@ -2,6 +2,7 @@
 #define U_HALF_H
 
 #include "pipe/p_compiler.h"
+#include "u_math.h"
 
 extern uint32_t util_half_to_float_mantissa_table[2048];
 extern uint32_t util_half_to_float_exponent_table[64];
@@ -31,8 +32,8 @@ util_half_to_floatui(half h)
 static INLINE float
 util_half_to_float(half h)
 {
-	union {float f; uint32_t v;} r;
-	r.v = util_half_to_floatui(h);
+	union fi r;
+	r.ui = util_half_to_floatui(h);
 	return r.f;
 }
 
@@ -47,9 +48,9 @@ util_floatui_to_half(uint32_t v)
 static INLINE half
 util_float_to_half(float f)
 {
-	union {float f; uint32_t v;} i;
+	union fi i;
 	i.f = f;
-	return util_floatui_to_half(i.v);
+	return util_floatui_to_half(i.ui);
 }
 
 #endif /* U_HALF_H */
