@@ -1122,6 +1122,23 @@ StateVars = [
 	( "GL_MAX_SERVER_WAIT_TIMEOUT", GLint64, ["ctx->Const.MaxServerWaitTimeout"], "",
 	  NoState, ["ARB_sync"] ),
 
+	# GL_EXT_transform_feedback
+	( "GL_TRANSFORM_FEEDBACK_BUFFER_BINDING", GLint,
+	  ["ctx->TransformFeedback.CurrentBuffer->Name"], "",
+	  NoState, ["EXT_transform_feedback"] ),
+	( "GL_RASTERIZER_DISCARD", GLboolean,
+	  ["ctx->TransformFeedback.RasterDiscard"], "",
+	  NoState, ["EXT_transform_feedback"] ),
+	( "GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS", GLint,
+	  ["ctx->Const.MaxTransformFeedbackInterleavedComponents"], "",
+	  NoState, ["EXT_transform_feedback"] ),
+	( "GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS", GLint,
+	  ["ctx->Const.MaxTransformFeedbackSeparateAttribs"], "",
+	  NoState, ["EXT_transform_feedback"] ),
+	( "GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS", GLint,
+	  ["ctx->Const.MaxTransformFeedbackSeparateComponents"], "",
+	  NoState, ["EXT_transform_feedback"] ),
+
 	# GL3
 	( "GL_NUM_EXTENSIONS", GLint, ["_mesa_get_extension_count(ctx)"], "", NoState, NoExt ),
 	( "GL_MAJOR_VERSION", GLint, ["ctx->VersionMajor"], "", NoState, NoExt ),
@@ -1134,6 +1151,7 @@ StateVars = [
 # The tuples are the same as above, with one exception: the "optional"
 # code field is instead the max legal index value.
 IndexedStateVars = [
+	# GL_EXT_draw_buffers2 / GL3
 	( "GL_BLEND", GLint, ["((ctx->Color.BlendEnabled >> index) & 1)"],
 	  "ctx->Const.MaxDrawBuffers", NoState, ["EXT_draw_buffers2"] ),
 	( "GL_COLOR_WRITEMASK", GLint,
@@ -1142,6 +1160,21 @@ IndexedStateVars = [
 		"ctx->Color.ColorMask[index][BCOMP] ? 1 : 0",
 		"ctx->Color.ColorMask[index][ACOMP] ? 1 : 0" ],
 	  "ctx->Const.MaxDrawBuffers", NoState, ["EXT_draw_buffers2"] ),
+
+	# GL_EXT_transform_feedback
+	( "GL_TRANSFORM_FEEDBACK_BUFFER_START", GLint64,
+	  ["ctx->TransformFeedback.Offset[index]"],
+	  "ctx->Const.MaxTransformFeedbackSeparateAttribs",
+	  NoState, ["EXT_transform_feedback"] ),
+	( "GL_TRANSFORM_FEEDBACK_BUFFER_SIZE", GLint64,
+	  ["ctx->TransformFeedback.Size[index]"],
+	  "ctx->Const.MaxTransformFeedbackSeparateAttribs",
+	  NoState, ["EXT_transform_feedback"] ),
+	( "GL_TRANSFORM_FEEDBACK_BUFFER_BINDING", GLint,
+	  ["ctx->TransformFeedback.Buffers[index]->Name"],
+	  "ctx->Const.MaxTransformFeedbackSeparateAttribs",
+	  NoState, ["EXT_transform_feedback"] ),
+
 	# XXX more to come...
 ]
 

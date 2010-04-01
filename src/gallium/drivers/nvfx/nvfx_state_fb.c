@@ -102,7 +102,7 @@ nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
 		rt_format |= NV34TCL_RT_FORMAT_ZETA_Z16;
 		zeta_bits = 16;
 		break;
-	case PIPE_FORMAT_S8Z24_UNORM:
+	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case 0:
 		rt_format |= NV34TCL_RT_FORMAT_ZETA_Z24S8;

@@ -43,17 +43,8 @@ from gallium import *
 # Enumerate all pixel formats
 formats = {}
 for name, value in globals().items():
-    if name.startswith("PIPE_FORMAT_") and isinstance(value, int):
+    if name.startswith("PIPE_FORMAT_") and isinstance(value, int) and name not in ("PIPE_FORMAT_NONE", "PIPE_FORMAT_COUNT"):
         formats[value] = name
-
-def is_depth_stencil_format(format):
-    # FIXME: make and use binding to util_format_is_depth_or_stencil
-    return format in (
-        PIPE_FORMAT_Z32_UNORM,
-        PIPE_FORMAT_S8Z24_UNORM,
-        PIPE_FORMAT_X8Z24_UNORM,
-        PIPE_FORMAT_Z16_UNORM,
-    )
 
 def make_image(width, height, rgba):
     import Image
@@ -127,16 +118,16 @@ class Test:
         self._run(result)
         result.summary()
 
-    def assert_rgba(self, surface, x, y, w, h, expected_rgba, pixel_tol=4.0/256, surface_tol=0.85):
+    def assert_rgba(self, ctx, surface, x, y, w, h, expected_rgba, pixel_tol=4.0/256, surface_tol=0.85):
         total = h*w
-        different = surface.compare_tile_rgba(x, y, w, h, expected_rgba, tol=pixel_tol)
+        different = ctx.surface_compare_rgba(surface, x, y, w, h, expected_rgba, tol=pixel_tol)
         if different:
             sys.stderr.write("%u out of %u pixels differ\n" % (different, total))
 
         if float(total - different)/float(total) < surface_tol:
             if 0:
                 rgba = FloatArray(h*w*4)
-                surface.get_tile_rgba(x, y, w, h, rgba)
+                ctx.surface_read_rgba(surface, x, y, w, h, rgba)
                 show_image(w, h, Result=rgba, Expected=expected_rgba)
                 save_image(w, h, rgba, "result.png")
                 save_image(w, h, expected_rgba, "expected.png")

@@ -210,7 +210,7 @@ svga_translate_format_cap(enum pipe_format format)
 
    case PIPE_FORMAT_Z16_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D16;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D24S8;
    case PIPE_FORMAT_X8Z24_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D24X8;

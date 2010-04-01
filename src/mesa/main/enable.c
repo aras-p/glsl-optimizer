@@ -982,6 +982,16 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	 ctx->Texture.CubeMapSeamless = state;
 	 break;
 
+#if FEATURE_EXT_transform_feedback
+      case GL_RASTERIZER_DISCARD:
+	 CHECK_EXTENSION(EXT_transform_feedback, cap);
+         if (ctx->TransformFeedback.RasterDiscard != state) {
+            ctx->TransformFeedback.RasterDiscard = state;
+            FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+         }
+         break;
+#endif
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "%s(0x%x)", state ? "glEnable" : "glDisable", cap);
@@ -1492,6 +1502,12 @@ _mesa_IsEnabled( GLenum cap )
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
 	 CHECK_EXTENSION(ARB_seamless_cube_map);
 	 return ctx->Texture.CubeMapSeamless;
+
+#if FEATURE_EXT_transform_feedback
+      case GL_RASTERIZER_DISCARD:
+	 CHECK_EXTENSION(EXT_transform_feedback);
+         return ctx->TransformFeedback.RasterDiscard;
+#endif
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);

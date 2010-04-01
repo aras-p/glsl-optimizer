@@ -146,6 +146,7 @@ static const struct {
    { OFF, "GL_EXT_texture_sRGB",               F(EXT_texture_sRGB) },
    { OFF, "GL_EXT_texture_swizzle",            F(EXT_texture_swizzle) },
    { OFF, "GL_EXT_timer_query",                F(EXT_timer_query) },
+   { OFF, "GL_EXT_transform_feedback",         F(EXT_transform_feedback) },
    { ON,  "GL_EXT_vertex_array",               F(EXT_vertex_array) },
    { OFF, "GL_EXT_vertex_array_bgra",          F(EXT_vertex_array_bgra) },
    { OFF, "GL_EXT_vertex_array_set",           F(EXT_vertex_array_set) },
@@ -319,6 +320,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
 #endif
    ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
+#if FEATURE_EXT_transform_feedback
+   ctx->Extensions.EXT_transform_feedback = GL_TRUE;
+#endif
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
    /*ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;*/
    ctx->Extensions.MESA_pack_invert = GL_TRUE;

@@ -104,8 +104,15 @@ lp_build_printf(LLVMBuilderRef builder, const char *fmt, ...)
    params[0] = LLVMBuildGEP(builder, fmtarg, index, 2, "");
 
    va_start(arglist, fmt);
-   for (i = 1; i <= argcount; i++)
-      params[i] = va_arg(arglist, LLVMValueRef);
+   for (i = 1; i <= argcount; i++) {
+      LLVMValueRef val = va_arg(arglist, LLVMValueRef);
+      LLVMTypeRef type = LLVMTypeOf(val);
+      /* printf wants doubles, so lets convert so that
+       * we can actually print them */
+      if (LLVMGetTypeKind(type) == LLVMFloatTypeKind)
+         val = LLVMBuildFPExt(builder, val, LLVMDoubleType(), "");
+      params[i] = val;
+   }
    va_end(arglist);
 
    return LLVMBuildCall(builder, func_printf, params, argcount + 1, "");

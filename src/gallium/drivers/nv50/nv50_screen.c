@@ -51,9 +51,9 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
 		switch (format) {
 		case PIPE_FORMAT_Z32_FLOAT:
-		case PIPE_FORMAT_S8Z24_UNORM:
+		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		case PIPE_FORMAT_Z24X8_UNORM:
-		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 			return TRUE;
 		default:
 			break;
@@ -75,8 +75,8 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_DXT1_RGBA:
 		case PIPE_FORMAT_DXT3_RGBA:
 		case PIPE_FORMAT_DXT5_RGBA:
-		case PIPE_FORMAT_S8Z24_UNORM:
-		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		case PIPE_FORMAT_Z32_FLOAT:
 		case PIPE_FORMAT_R16G16B16A16_SNORM:
 		case PIPE_FORMAT_R16G16B16A16_UNORM:

@@ -33,6 +33,9 @@
 #include "r300_state_inlines.h"
 #include "r300_winsys.h"
 
+/* XXX Enable float textures here. */
+/*#define ENABLE_FLOAT_TEXTURES*/
+
 #define TILE_WIDTH 0
 #define TILE_HEIGHT 1
 
@@ -73,7 +76,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
 {
     uint32_t result = 0;
     const struct util_format_description *desc;
-    unsigned components = 0, i;
+    unsigned i;
     boolean uniform = TRUE;
     const uint32_t swizzle_shift[4] = {
         R300_TX_FORMAT_R_SHIFT,
@@ -104,7 +107,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
                 case PIPE_FORMAT_Z16_UNORM:
                     return R300_EASY_TX_FORMAT(X, X, X, X, X16);
                 case PIPE_FORMAT_X8Z24_UNORM:
-                case PIPE_FORMAT_S8Z24_UNORM:
+                case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
                     return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
                 default:
                     return ~0; /* Unsupported. */
@@ -158,7 +161,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
         }
     }
 
-    /* Compressed formats. */
+    /* S3TC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
         switch (format) {
             case PIPE_FORMAT_DXT1_RGB:
@@ -177,28 +180,35 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
         }
     }
 
-    /* Get the number of components. */
-    for (i = 0; i < 4; i++) {
-        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
-            ++components;
-        }
-    }
-
     /* Add sign. */
-    for (i = 0; i < components; i++) {
+    for (i = 0; i < desc->nr_channels; i++) {
         if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
             result |= sign_bit[i];
         }
     }
 
+    /* RGTC formats. */
+    if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
+        switch (format) {
+            case PIPE_FORMAT_RGTC1_UNORM:
+            case PIPE_FORMAT_RGTC1_SNORM:
+                return R500_TX_FORMAT_ATI1N | result;
+            case PIPE_FORMAT_RGTC2_UNORM:
+            case PIPE_FORMAT_RGTC2_SNORM:
+                return R400_TX_FORMAT_ATI2N | result;
+            default:
+                return ~0; /* Unsupported/unknown. */
+        }
+    }
+
     /* See whether the components are of the same size. */
-    for (i = 1; i < components; i++) {
+    for (i = 1; i < desc->nr_channels; i++) {
         uniform = uniform && desc->channel[0].size == desc->channel[i].size;
     }
 
     /* Non-uniform formats. */
     if (!uniform) {
-        switch (components) {
+        switch (desc->nr_channels) {
             case 3:
                 if (desc->channel[0].size == 5 &&
                     desc->channel[1].size == 6 &&
@@ -240,7 +250,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
 
             switch (desc->channel[0].size) {
                 case 4:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 2:
                             return R300_TX_FORMAT_Y4X4 | result;
                         case 4:
@@ -249,7 +259,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
                     return ~0;
 
                 case 8:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 1:
                             return R300_TX_FORMAT_X8 | result;
                         case 2:
@@ -260,7 +270,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
                     return ~0;
 
                 case 16:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 1:
                             return R300_TX_FORMAT_X16 | result;
                         case 2:
@@ -271,12 +281,11 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
             }
             return ~0;
 
-/* XXX Enable float textures here. */
-#if 0
+#if defined(ENABLE_FLOAT_TEXTURES)
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (desc->channel[0].size) {
                 case 16:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 1:
                             return R300_TX_FORMAT_16F | result;
                         case 2:
@@ -287,7 +296,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
                     return ~0;
 
                 case 32:
-                    switch (components) {
+                    switch (desc->nr_channels) {
                         case 1:
                             return R300_TX_FORMAT_32F | result;
                         case 2:
@@ -300,6 +309,17 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
     }
 
     return ~0; /* Unsupported/unknown. */
+}
+
+static uint32_t r500_tx_format_msb_bit(enum pipe_format format)
+{
+    switch (format) {
+        case PIPE_FORMAT_RGTC1_UNORM:
+        case PIPE_FORMAT_RGTC1_SNORM:
+            return R500_TXFORMAT_MSB;
+        default:
+            return 0;
+    }
 }
 
 /* Buffer formats. */
@@ -342,12 +362,13 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /* 64-bit buffers. */
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
-        //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
+#if defined(ENABLE_FLOAT_TEXTURES)
+        case PIPE_FORMAT_R16G16B16A16_FLOAT:
+#endif
             return R300_COLOR_FORMAT_ARGB16161616;
 
-/* XXX Enable float textures here. */
-#if 0
         /* 128-bit buffers. */
+#if defined(ENABLE_FLOAT_TEXTURES)
         case PIPE_FORMAT_R32G32B32A32_FLOAT:
             return R300_COLOR_FORMAT_ARGB32323232;
 #endif
@@ -372,7 +393,7 @@ static uint32_t r300_translate_zsformat(enum pipe_format format)
         /* 24-bit depth, ignored stencil */
         case PIPE_FORMAT_X8Z24_UNORM:
         /* 24-bit depth, 8-bit stencil */
-        case PIPE_FORMAT_S8Z24_UNORM:
+        case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
             return R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
         default:
             return ~0; /* Unsupported. */
@@ -527,6 +548,7 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
         if (pt->height0 > 2048) {
             state->format2 |= R500_TXHEIGHT_BIT11;
         }
+        state->format2 |= r500_tx_format_msb_bit(pt->format);
     }
 
     SCREEN_DBG(screen, DBG_TEX, "r300: Set texture state (%dx%d, %d levels)\n",

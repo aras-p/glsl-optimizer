@@ -1859,7 +1859,7 @@ gen_depth_stencil(struct cell_context *cell,
    spe_comment(f, 0, "Fetch Z/stencil quad from tile");
 
    switch(zs_format) {
-   case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED: /* fall through */
    case PIPE_FORMAT_Z24X8_UNORM:
       /* prepare mask to extract Z vals from ZS vals */
       spe_load_uint(f, zmask_reg, 0x00ffffff);
@@ -1880,7 +1880,7 @@ gen_depth_stencil(struct cell_context *cell,
       spe_rotmi(f, fbS_reg, fbZS_reg, -24);
       break;
 
-   case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM: /* fall through */
    case PIPE_FORMAT_X8Z24_UNORM:
       /* convert fragment Z from [0,1] to 32-bit ints */
       spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
@@ -1969,12 +1969,12 @@ gen_depth_stencil(struct cell_context *cell,
        * fbS_reg has four 8-bit Z values in bits [7..0].
        */
       spe_comment(f, 0, "Store quad's depth/stencil values in tile");
-      if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
+      if (zs_format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
           zs_format == PIPE_FORMAT_Z24X8_UNORM) {
          spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
          spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
       }
-      else if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
+      else if (zs_format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
                zs_format == PIPE_FORMAT_X8Z24_UNORM) {
          spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
          spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
@@ -1985,7 +1985,7 @@ gen_depth_stencil(struct cell_context *cell,
       else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
          spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
       }
-      else if (zs_format == PIPE_FORMAT_S8_UNORM) {
+      else if (zs_format == PIPE_FORMAT_S8_USCALED) {
          ASSERT(0);   /* XXX to do */
       }
       else {
@@ -2015,7 +2015,7 @@ gen_depth_stencil(struct cell_context *cell,
  * code before the fragment shader to cull fragments/quads that are
  * totally occluded/discarded.
  *
- * XXX we only support PIPE_FORMAT_S8Z24_UNORM z/stencil buffer right now.
+ * XXX we only support PIPE_FORMAT_S8_USCALED_Z24_UNORM z/stencil buffer right now.
  *
  * See the spu_default_fragment_ops() function to see how the per-fragment
  * operations would be done with ordinary C code.

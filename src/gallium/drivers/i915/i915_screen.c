@@ -178,13 +178,13 @@ i915_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_L8A8_UNORM,
       PIPE_FORMAT_UYVY,
       PIPE_FORMAT_YUYV,
-      PIPE_FORMAT_Z24S8_UNORM,
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format surface_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM,
-      PIPE_FORMAT_Z24S8_UNORM,
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;

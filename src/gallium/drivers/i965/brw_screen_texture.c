@@ -158,7 +158,7 @@ static GLuint translate_tex_format( enum pipe_format pf )
    case PIPE_FORMAT_Z16_UNORM:
          return BRW_SURFACEFORMAT_I16_UNORM;
 
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
          return BRW_SURFACEFORMAT_I24X8_UNORM;
 
@@ -315,6 +315,7 @@ brw_texture_from_handle(struct pipe_screen *screen,
    struct brw_winsys_buffer *buffer;
    unsigned tiling;
    unsigned pitch;
+   GLuint format;
 
    if (templ->target != PIPE_TEXTURE_2D ||
        templ->last_level != 0 ||
@@ -362,8 +363,10 @@ brw_texture_from_handle(struct pipe_screen *screen,
 
    tex->ss.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    tex->ss.ss0.surface_type = translate_tex_target(tex->base.target);
-   tex->ss.ss0.surface_format = translate_tex_format(tex->base.format);
-   assert(tex->ss.ss0.surface_format != BRW_SURFACEFORMAT_INVALID);
+
+   format = translate_tex_format(tex->base.format);
+   assert(format != BRW_SURFACEFORMAT_INVALID);
+   tex->ss.ss0.surface_format = format;
 
    /* This is ok for all textures with channel width 8bit or less:
     */

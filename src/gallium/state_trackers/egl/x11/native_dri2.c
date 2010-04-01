@@ -558,8 +558,8 @@ choose_depth_stencil_format(const __GLcontextModes *mode,
       break;
    case 24:
       if (mode->stencilBits) {
-         formats[count++] = PIPE_FORMAT_Z24S8_UNORM;
-         formats[count++] = PIPE_FORMAT_S8Z24_UNORM;
+         formats[count++] = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
+         formats[count++] = PIPE_FORMAT_S8_USCALED_Z24_UNORM;
       }
       else {
          formats[count++] = PIPE_FORMAT_Z24X8_UNORM;

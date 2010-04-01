@@ -83,6 +83,13 @@ get_buffer_target(GLcontext *ctx, GLenum target)
          return &ctx->CopyWriteBuffer;
       }
       break;
+#if FEATURE_EXT_transform_feedback
+   case GL_TRANSFORM_FEEDBACK_BUFFER:
+      if (ctx->Extensions.EXT_transform_feedback) {
+         return &ctx->TransformFeedback.CurrentBuffer;
+      }
+      break;
+#endif
    default:
       return NULL;
    }

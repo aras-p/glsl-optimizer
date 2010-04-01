@@ -123,6 +123,7 @@
 #include "stencil.h"
 #include "texcompress_s3tc.h"
 #include "texstate.h"
+#include "transformfeedback.h"
 #include "mtypes.h"
 #include "varray.h"
 #include "version.h"
@@ -560,6 +561,11 @@ _mesa_init_constants(GLcontext *ctx)
 
    /* GL_EXT_provoking_vertex */
    ctx->Const.QuadsFollowProvokingVertexConvention = GL_TRUE;
+
+   /* GL_EXT_transform_feedback */
+   ctx->Const.MaxTransformFeedbackSeparateAttribs = MAX_FEEDBACK_ATTRIBS;
+   ctx->Const.MaxTransformFeedbackSeparateComponents = 4 * MAX_FEEDBACK_ATTRIBS;
+   ctx->Const.MaxTransformFeedbackInterleavedComponents = 4 * MAX_FEEDBACK_ATTRIBS;
 }
 
 
@@ -684,6 +690,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_shader_state( ctx );
    _mesa_init_stencil( ctx );
    _mesa_init_transform( ctx );
+   _mesa_init_transform_feedback( ctx );
    _mesa_init_varray( ctx );
    _mesa_init_viewport( ctx );
 
@@ -969,6 +976,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_sync_data(ctx);
 #endif
    _mesa_free_varray_data(ctx);
+   _mesa_free_transform_feedback(ctx);
 
    _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 

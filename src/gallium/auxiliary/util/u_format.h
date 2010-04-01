@@ -189,6 +189,46 @@ struct util_format_description
     * Colorspace transformation.
     */
    enum util_format_colorspace colorspace;
+
+   /**
+    * Unpack pixel blocks to R8G8B8A8_UNORM.
+    */
+   void
+   (*unpack_8unorm)(uint8_t *dst, unsigned dst_stride,
+                    const uint8_t *src, unsigned src_stride,
+                    unsigned width, unsigned height);
+
+   /**
+    * Pack pixel blocks from R8G8B8A8_UNORM.
+    */
+   void
+   (*pack_8unorm)(uint8_t *dst, unsigned dst_stride,
+                  const uint8_t *src, unsigned src_stride,
+                  unsigned width, unsigned height);
+
+   /**
+    * Unpack pixel blocks to R32G32B32A32_FLOAT.
+    */
+   void
+   (*unpack_float)(float *dst, unsigned dst_stride,
+                   const uint8_t *src, unsigned src_stride,
+                   unsigned width, unsigned height);
+
+   /**
+    * Pack pixel blocks from R32G32B32A32_FLOAT.
+    */
+   void
+   (*pack_float)(uint8_t *dst, unsigned dst_stride,
+                 const float *src, unsigned src_stride,
+                 unsigned width, unsigned height);
+
+   /**
+    * Fetch a single pixel (i, j) from a block.
+    */
+   void
+   (*fetch_float)(float *dst,
+                  const uint8_t *src,
+                  unsigned i, unsigned j);
 };
 
 
@@ -209,8 +249,8 @@ util_format_name(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return "???";
    }
 
@@ -222,8 +262,8 @@ util_format_is_s3tc(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return FALSE;
    }
 
@@ -235,8 +275,8 @@ util_format_is_depth_or_stencil(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return FALSE;
    }
 
@@ -248,8 +288,8 @@ util_format_is_depth_and_stencil(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return FALSE;
    }
 
@@ -261,6 +301,34 @@ util_format_is_depth_and_stencil(enum pipe_format format)
            desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE) ? TRUE : FALSE;
 }
 
+/**
+ * Whether this format is a rgab8 variant.
+ *
+ * That is, any format that matches the
+ *
+ *   PIPE_FORMAT_?8?8?8?8_UNORM
+ */
+static INLINE boolean
+util_format_is_rgba8_variant(const struct util_format_description *desc)
+{
+   unsigned chan;
+
+   if(desc->block.width != 1 ||
+      desc->block.height != 1 ||
+      desc->block.bits != 32)
+      return FALSE;
+
+   for(chan = 0; chan < 4; ++chan) {
+      if(desc->channel[chan].type != UTIL_FORMAT_TYPE_UNSIGNED &&
+         desc->channel[chan].type != UTIL_FORMAT_TYPE_VOID)
+         return FALSE;
+      if(desc->channel[chan].size != 8)
+         return FALSE;
+   }
+
+   return TRUE;
+}
+
 
 /**
  * Return total bits needed for the pixel format per block.
@@ -270,8 +338,8 @@ util_format_get_blocksizebits(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return 0;
    }
 
@@ -296,8 +364,8 @@ util_format_get_blockwidth(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return 1;
    }
 
@@ -309,8 +377,8 @@ util_format_get_blockheight(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
 
-   assert(format);
-   if (!format) {
+   assert(desc);
+   if (!desc) {
       return 1;
    }
 

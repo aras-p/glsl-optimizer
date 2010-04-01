@@ -105,7 +105,8 @@ C_SOURCES = \
 	util/u_cpu_detect.c \
 	util/u_dl.c \
 	util/u_draw_quad.c \
-	util/u_format_access.c \
+	util/u_format.c \
+	util/u_format_s3tc.c \
 	util/u_format_table.c \
 	util/u_format_tests.c \
 	util/u_gen_mipmap.c \
@@ -148,8 +149,6 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_debug.c \
         gallivm/lp_bld_depth.c \
         gallivm/lp_bld_flow.c \
-        gallivm/lp_bld_format_aos.c \
-        gallivm/lp_bld_format_query.c \
         gallivm/lp_bld_format_soa.c \
         gallivm/lp_bld_interp.c \
         gallivm/lp_bld_intr.c \
@@ -169,8 +168,6 @@ GALLIVM_CPP_SOURCES = \
 GENERATED_SOURCES = \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
-	util/u_format_access.c \
-	util/u_format_pack.h \
 	util/u_format_table.c
 
 
@@ -194,11 +191,8 @@ indices/u_indices_gen.c: indices/u_indices_gen.py
 indices/u_unfilled_gen.c: indices/u_unfilled_gen.py
 	python $< > $@
 
-util/u_format_table.c: util/u_format_table.py util/u_format_parse.py util/u_format.csv
+util/u_format_table.c: util/u_format_table.py util/u_format_pack.py util/u_format_parse.py util/u_format.csv
 	python util/u_format_table.py util/u_format.csv > $@
-
-util/u_format_pack.h: util/u_format_pack.py util/u_format_parse.py util/u_format.csv
-	python util/u_format_pack.py util/u_format.csv > $@
 
 util/u_format_access.c: util/u_format_access.py util/u_format_parse.py util/u_format.csv
 	python util/u_format_access.py util/u_format.csv > $@

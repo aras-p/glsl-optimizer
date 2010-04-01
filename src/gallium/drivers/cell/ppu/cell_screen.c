@@ -147,7 +147,7 @@ cell_is_format_supported( struct pipe_screen *screen,
 
    /* only a few formats are known to work at this time */
    switch (format) {
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
    case PIPE_FORMAT_I8_UNORM:

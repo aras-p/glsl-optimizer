@@ -355,8 +355,8 @@ choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
       formats[count++] = PIPE_FORMAT_Z24X8_UNORM;
    }
    if (depth <= 24 && stencil <= 8) {
-      formats[count++] = PIPE_FORMAT_S8Z24_UNORM;
-      formats[count++] = PIPE_FORMAT_Z24S8_UNORM;
+      formats[count++] = PIPE_FORMAT_S8_USCALED_Z24_UNORM;
+      formats[count++] = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
    }
    if (depth <= 32 && stencil == 0) {
       formats[count++] = PIPE_FORMAT_Z32_UNORM;

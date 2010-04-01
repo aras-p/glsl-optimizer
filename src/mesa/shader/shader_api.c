@@ -123,6 +123,14 @@ _mesa_free_shader_program_data(GLcontext *ctx,
       free(shProg->InfoLog);
       shProg->InfoLog = NULL;
    }
+
+   /* Transform feedback varying vars */
+   for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {
+      free(shProg->TransformFeedback.VaryingNames[i]);
+   }
+   free(shProg->TransformFeedback.VaryingNames);
+   shProg->TransformFeedback.VaryingNames = NULL;
+   shProg->TransformFeedback.NumVarying = 0;
 }
 
 
@@ -397,6 +405,25 @@ get_shader_flags(void)
 
 
 /**
+ * Find the length of the longest transform feedback varying name
+ * which was specified with glTransformFeedbackVaryings().
+ */
+static GLint
+longest_feedback_varying_name(const struct gl_shader_program *shProg)
+{
+   GLuint i;
+   GLint max = 0;
+   for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {
+      GLint len = strlen(shProg->TransformFeedback.VaryingNames[i]);
+      if (len > max)
+         max = len;
+   }
+   return max;
+}
+
+
+
+/**
  * Initialize context's shader state.
  */
 void
@@ -437,8 +464,9 @@ _mesa_free_shader_state(GLcontext *ctx)
  * \param length  returns number of chars copied
  * \param dst  the string destination
  */
-static void
-copy_string(GLchar *dst, GLsizei maxLength, GLsizei *length, const GLchar *src)
+void
+_mesa_copy_string(GLchar *dst, GLsizei maxLength,
+                  GLsizei *length, const GLchar *src)
 {
    GLsizei len;
    for (len = 0; len < maxLength - 1 && src && src[len]; len++)
@@ -879,7 +907,8 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
-   copy_string(nameOut, maxLength, length, attribs->Parameters[index].Name);
+   _mesa_copy_string(nameOut, maxLength, length,
+                     attribs->Parameters[index].Name);
 
    if (size)
       *size = attribs->Parameters[index].Size
@@ -954,7 +983,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
    param = &prog->Parameters->Parameters[progPos];
 
    if (nameOut) {
-      copy_string(nameOut, maxLength, length, param->Name);
+      _mesa_copy_string(nameOut, maxLength, length, param->Name);
    }
 
    if (size) {
@@ -1063,6 +1092,17 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
    case GL_PROGRAM_BINARY_LENGTH_OES:
       *params = 0;
       break;
+#if FEATURE_EXT_transform_feedback
+   case GL_TRANSFORM_FEEDBACK_VARYINGS:
+      *params = shProg->TransformFeedback.NumVarying;
+      break;
+   case GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH:
+      *params = longest_feedback_varying_name(shProg) + 1;
+      break;
+   case GL_TRANSFORM_FEEDBACK_BUFFER_MODE:
+      *params = shProg->TransformFeedback.BufferMode;
+      break;
+#endif
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
       return;
@@ -1112,7 +1152,7 @@ _mesa_get_program_info_log(GLcontext *ctx, GLuint program, GLsizei bufSize,
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramInfoLog(program)");
       return;
    }
-   copy_string(infoLog, bufSize, length, shProg->InfoLog);
+   _mesa_copy_string(infoLog, bufSize, length, shProg->InfoLog);
 }
 
 
@@ -1125,7 +1165,7 @@ _mesa_get_shader_info_log(GLcontext *ctx, GLuint shader, GLsizei bufSize,
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetShaderInfoLog(shader)");
       return;
    }
-   copy_string(infoLog, bufSize, length, sh->InfoLog);
+   _mesa_copy_string(infoLog, bufSize, length, sh->InfoLog);
 }
 
 
@@ -1141,7 +1181,7 @@ _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
    if (!sh) {
       return;
    }
-   copy_string(sourceOut, maxLength, length, sh->Source);
+   _mesa_copy_string(sourceOut, maxLength, length, sh->Source);
 }
 
 

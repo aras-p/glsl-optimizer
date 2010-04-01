@@ -81,7 +81,7 @@ svga_translate_format(enum pipe_format format)
     */
    case PIPE_FORMAT_Z16_UNORM:
       return SVGA3D_Z_D16;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       return SVGA3D_Z_D24S8;
    case PIPE_FORMAT_X8Z24_UNORM:
       return SVGA3D_Z_D24X8;
@@ -114,7 +114,7 @@ svga_translate_format_render(enum pipe_format format)
    case PIPE_FORMAT_B5G5R5A1_UNORM:
    case PIPE_FORMAT_B4G4R4A4_UNORM:
    case PIPE_FORMAT_B5G6R5_UNORM:
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
    case PIPE_FORMAT_Z32_UNORM:
    case PIPE_FORMAT_Z16_UNORM:

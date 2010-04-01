@@ -735,14 +735,14 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
             /* now pack the stencil (and Z) values in the dest format */
             switch (pt->texture->format) {
-            case PIPE_FORMAT_S8_UNORM:
+            case PIPE_FORMAT_S8_USCALED:
                {
                   ubyte *dest = stmap + spanY * pt->stride + spanX;
                   assert(usage == PIPE_TRANSFER_WRITE);
                   memcpy(dest, sValues, spanWidth);
                }
                break;
-            case PIPE_FORMAT_Z24S8_UNORM:
+            case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
                if (format == GL_DEPTH_STENCIL) {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
@@ -760,7 +760,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                   }
                }
                break;
-            case PIPE_FORMAT_S8Z24_UNORM:
+            case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
                if (format == GL_DEPTH_STENCIL) {
                   uint *dest = (uint *) (stmap + spanY * pt->stride + spanX*4);
                   GLint k;
@@ -913,7 +913,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       src = buffer + i * width;
 
       switch (ptDraw->texture->format) {
-      case PIPE_FORMAT_Z24S8_UNORM:
+      case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
          {
             uint *dst4 = (uint *) dst;
             int j;
@@ -924,7 +924,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             }
          }
          break;
-      case PIPE_FORMAT_S8Z24_UNORM:
+      case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
          {
             uint *dst4 = (uint *) dst;
             int j;
@@ -935,7 +935,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             }
          }
          break;
-      case PIPE_FORMAT_S8_UNORM:
+      case PIPE_FORMAT_S8_USCALED:
          assert(usage == PIPE_TRANSFER_WRITE);
          memcpy(dst, src, width);
          break;

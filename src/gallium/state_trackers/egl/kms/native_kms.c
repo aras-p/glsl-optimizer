@@ -631,9 +631,9 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
       nconf->mode.alphaBits = 8;
       nconf->mode.rgbBits = 32;
 
-      format = PIPE_FORMAT_Z24S8_UNORM;
+      format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
       if (!kms_display_is_format_supported(&kdpy->base, format, FALSE)) {
-         format = PIPE_FORMAT_S8Z24_UNORM;
+         format = PIPE_FORMAT_S8_USCALED_Z24_UNORM;
          if (!kms_display_is_format_supported(&kdpy->base, format, FALSE))
             format = PIPE_FORMAT_NONE;
       }

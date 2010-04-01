@@ -208,7 +208,7 @@ struct st_framebuffer * st_create_framebuffer(const void *visual,
       if (stencilFormat == depthFormat)
          stfb->dsrb = st_new_renderbuffer_fb(stencilFormat);
       else
-         stfb->dsrb = st_new_renderbuffer_fb(PIPE_FORMAT_Z24S8_UNORM);
+         stfb->dsrb = st_new_renderbuffer_fb(PIPE_FORMAT_Z24_UNORM_S8_USCALED);
 
       /*### currently we always allocate it but it's possible it's
         not necessary if EGL_ALPHA_MASK_SIZE was 0

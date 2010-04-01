@@ -92,14 +92,14 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
    unsigned chan;
 
    /* FIXME: Support more formats */
-   assert(format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
+   assert(format_desc->is_bitmask);
    assert(format_desc->block.width == 1);
    assert(format_desc->block.height == 1);
    assert(format_desc->block.bits <= 32);
 
    /* Decode the input vector components */
    start = 0;
-   for (chan = 0; chan < 4; ++chan) {
+   for (chan = 0; chan < format_desc->nr_channels; ++chan) {
       unsigned width = format_desc->channel[chan].size;
       unsigned stop = start + width;
       LLVMValueRef input;
@@ -123,7 +123,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
             if(format_desc->channel[chan].normalized)
                input = lp_build_unsigned_norm_to_float(builder, width, type, input);
             else
-               input = LLVMBuildFPToSI(builder, input, lp_build_vec_type(type), "");
+               input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(type), "");
          }
          else {
             /* FIXME */

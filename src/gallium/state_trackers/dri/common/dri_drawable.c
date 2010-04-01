@@ -38,7 +38,6 @@
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
-#include "util/u_inlines.h"
  
 /**
  * This is called when we need to set up GL rendering to a new X window.

@@ -22,7 +22,6 @@ env.CodeGenerate(
 env.Depends('lp_tile_soa.c', [
     '#src/gallium/auxiliary/util/u_format_parse.py', 
     '#src/gallium/auxiliary/util/u_format_pack.py', 
-    '#src/gallium/auxiliary/util/u_format_access.py',
 ])
 
 llvmpipe = env.ConvenienceLibrary(
@@ -70,7 +69,6 @@ if env['platform'] != 'embedded':
     env.Prepend(LIBS = [llvmpipe] + gallium)
 
     tests = [
-        'format',
         'blend',
         'conv',
     ]

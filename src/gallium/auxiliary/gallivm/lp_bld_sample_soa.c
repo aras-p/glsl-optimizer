@@ -2037,7 +2037,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    height_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, height);
    depth_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, depth);
 
-   if (lp_format_is_rgba8(bld.format_desc) &&
+   if (util_format_is_rgba8_variant(bld.format_desc) &&
        static_state->target == PIPE_TEXTURE_2D &&
        static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
        static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&

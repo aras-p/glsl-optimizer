@@ -128,6 +128,7 @@ def test(dev):
     scissor.maxy = height
     ctx.set_scissor(scissor)
 
+    # clip
     clip = Clip()
     clip.nr = 0
     ctx.set_clip(clip)

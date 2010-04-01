@@ -266,7 +266,7 @@ static int emit_depthbuffer(struct brw_context *brw)
 	 cpp = 2;
 	 break;
       case PIPE_FORMAT_Z24X8_UNORM:
-      case PIPE_FORMAT_Z24S8_UNORM:
+      case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 	 format = BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
 	 cpp = 4;
 	 break;

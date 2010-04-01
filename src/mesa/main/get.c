@@ -1922,6 +1922,26 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXT1(ARB_sync, "GetBooleanv");
          params[0] = INT64_TO_BOOLEAN(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback, "GetBooleanv");
+         params[0] = INT_TO_BOOLEAN(ctx->TransformFeedback.CurrentBuffer->Name);
+         break;
+      case GL_RASTERIZER_DISCARD:
+         CHECK_EXT1(EXT_transform_feedback, "GetBooleanv");
+         params[0] = ctx->TransformFeedback.RasterDiscard;
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback, "GetBooleanv");
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTransformFeedbackInterleavedComponents);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
+         CHECK_EXT1(EXT_transform_feedback, "GetBooleanv");
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTransformFeedbackSeparateAttribs);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback, "GetBooleanv");
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTransformFeedbackSeparateComponents);
+         break;
       case GL_NUM_EXTENSIONS:
          params[0] = INT_TO_BOOLEAN(_mesa_get_extension_count(ctx));
          break;
@@ -3793,6 +3813,26 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXT1(ARB_sync, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback, "GetFloatv");
+         params[0] = (GLfloat)(ctx->TransformFeedback.CurrentBuffer->Name);
+         break;
+      case GL_RASTERIZER_DISCARD:
+         CHECK_EXT1(EXT_transform_feedback, "GetFloatv");
+         params[0] = BOOLEAN_TO_FLOAT(ctx->TransformFeedback.RasterDiscard);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback, "GetFloatv");
+         params[0] = (GLfloat)(ctx->Const.MaxTransformFeedbackInterleavedComponents);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
+         CHECK_EXT1(EXT_transform_feedback, "GetFloatv");
+         params[0] = (GLfloat)(ctx->Const.MaxTransformFeedbackSeparateAttribs);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback, "GetFloatv");
+         params[0] = (GLfloat)(ctx->Const.MaxTransformFeedbackSeparateComponents);
+         break;
       case GL_NUM_EXTENSIONS:
          params[0] = (GLfloat)(_mesa_get_extension_count(ctx));
          break;
@@ -5663,6 +5703,26 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_MAX_SERVER_WAIT_TIMEOUT:
          CHECK_EXT1(ARB_sync, "GetIntegerv");
          params[0] = INT64_TO_INT(ctx->Const.MaxServerWaitTimeout);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback, "GetIntegerv");
+         params[0] = ctx->TransformFeedback.CurrentBuffer->Name;
+         break;
+      case GL_RASTERIZER_DISCARD:
+         CHECK_EXT1(EXT_transform_feedback, "GetIntegerv");
+         params[0] = BOOLEAN_TO_INT(ctx->TransformFeedback.RasterDiscard);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback, "GetIntegerv");
+         params[0] = ctx->Const.MaxTransformFeedbackInterleavedComponents;
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
+         CHECK_EXT1(EXT_transform_feedback, "GetIntegerv");
+         params[0] = ctx->Const.MaxTransformFeedbackSeparateAttribs;
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback, "GetIntegerv");
+         params[0] = ctx->Const.MaxTransformFeedbackSeparateComponents;
          break;
       case GL_NUM_EXTENSIONS:
          params[0] = _mesa_get_extension_count(ctx);
@@ -7536,6 +7596,26 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          CHECK_EXT1(ARB_sync, "GetInteger64v");
          params[0] = ctx->Const.MaxServerWaitTimeout;
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback, "GetInteger64v");
+         params[0] = (GLint64)(ctx->TransformFeedback.CurrentBuffer->Name);
+         break;
+      case GL_RASTERIZER_DISCARD:
+         CHECK_EXT1(EXT_transform_feedback, "GetInteger64v");
+         params[0] = BOOLEAN_TO_INT64(ctx->TransformFeedback.RasterDiscard);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback, "GetInteger64v");
+         params[0] = (GLint64)(ctx->Const.MaxTransformFeedbackInterleavedComponents);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
+         CHECK_EXT1(EXT_transform_feedback, "GetInteger64v");
+         params[0] = (GLint64)(ctx->Const.MaxTransformFeedbackSeparateAttribs);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback, "GetInteger64v");
+         params[0] = (GLint64)(ctx->Const.MaxTransformFeedbackSeparateComponents);
+         break;
       case GL_NUM_EXTENSIONS:
          params[0] = (GLint64)(_mesa_get_extension_count(ctx));
          break;
@@ -7606,6 +7686,30 @@ _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
          params[2] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][BCOMP] ? 1 : 0);
          params[3] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][ACOMP] ? 1 : 0);
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_START:
+         CHECK_EXT1(EXT_transform_feedback, "GetBooleanIndexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT64_TO_BOOLEAN(ctx->TransformFeedback.Offset[index]);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
+         CHECK_EXT1(EXT_transform_feedback, "GetBooleanIndexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT64_TO_BOOLEAN(ctx->TransformFeedback.Size[index]);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback, "GetBooleanIndexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT_TO_BOOLEAN(ctx->TransformFeedback.Buffers[index]->Name);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanIndexedv(pname=0x%x)", pname);
    }
@@ -7639,6 +7743,30 @@ _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
          params[1] = ctx->Color.ColorMask[index][GCOMP] ? 1 : 0;
          params[2] = ctx->Color.ColorMask[index][BCOMP] ? 1 : 0;
          params[3] = ctx->Color.ColorMask[index][ACOMP] ? 1 : 0;
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_START:
+         CHECK_EXT1(EXT_transform_feedback, "GetIntegerIndexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT64_TO_INT(ctx->TransformFeedback.Offset[index]);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
+         CHECK_EXT1(EXT_transform_feedback, "GetIntegerIndexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT64_TO_INT(ctx->TransformFeedback.Size[index]);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback, "GetIntegerIndexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = ctx->TransformFeedback.Buffers[index]->Name;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerIndexedv(pname=0x%x)", pname);
@@ -7674,6 +7802,30 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
          params[1] = (GLint64)(ctx->Color.ColorMask[index][GCOMP] ? 1 : 0);
          params[2] = (GLint64)(ctx->Color.ColorMask[index][BCOMP] ? 1 : 0);
          params[3] = (GLint64)(ctx->Color.ColorMask[index][ACOMP] ? 1 : 0);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_START:
+         CHECK_EXT1(EXT_transform_feedback, "GetInteger64Indexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = ctx->TransformFeedback.Offset[index];
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
+         CHECK_EXT1(EXT_transform_feedback, "GetInteger64Indexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = ctx->TransformFeedback.Size[index];
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback, "GetInteger64Indexedv");
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = (GLint64)(ctx->TransformFeedback.Buffers[index]->Name);
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64Indexedv(pname=0x%x)", pname);
