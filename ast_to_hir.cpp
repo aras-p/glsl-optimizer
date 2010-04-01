@@ -1513,7 +1513,7 @@ ast_function_definition::hir(exec_list *instructions,
 
    /* Verify the return type of main() */
    if (strcmp(name, "main") == 0) {
-      if (return_type != glsl_type::get_instance(GLSL_TYPE_VOID, 0, 0)) {
+      if (! return_type->is_void()) {
 	 YYLTYPE loc = this->get_location();
 
 	 _mesa_glsl_error(& loc, state, "main() must return void");
@@ -1551,7 +1551,6 @@ ast_function_definition::hir(exec_list *instructions,
    ast_function_parameters_to_hir(& this->prototype->parameters,
 				  & signature->parameters,
 				  state);
-   /* FINISHME: Set signature->return_type */
 
    label = new ir_label(name);
    if (signature->definition == NULL) {
@@ -1566,9 +1565,9 @@ ast_function_definition::hir(exec_list *instructions,
     */
    state->symbols->push_scope();
    foreach_iter(exec_list_iterator, iter, parameters) {
-      ir_variable *const var = (ir_variable *) iter.get();
+      ir_variable *const var = ((ir_instruction *) iter.get())->as_variable();
 
-      assert(((ir_instruction *) var)->as_variable() != NULL);
+      assert(var != NULL);
 
       iter.remove();
       instructions->push_tail(var);
