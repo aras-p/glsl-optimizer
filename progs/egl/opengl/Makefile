@@ -14,7 +14,8 @@ LIBS = -L$(TOP)/$(LIB_DIR) -lEGL -lGL -lm
 EGLUT_DIR = $(TOP)/progs/egl/eglut
 
 EGLUT_DEMOS = \
-	eglgears
+	eglgears \
+	xegl_tri
 
 EGLUT_X11_DEMOS := $(addsuffix _x11,$(EGLUT_DEMOS))
 EGLUT_SCREEN_DEMOS := $(addsuffix _screen,$(EGLUT_DEMOS))
@@ -28,8 +29,7 @@ PROGRAMS = \
 	eglscreen \
 	peglgears \
 	xeglgears \
-	xeglthreads \
-	xegl_tri
+	xeglthreads
 
 
 .c.o:
@@ -65,10 +65,6 @@ xeglgears: xeglgears.o $(HEADERS) $(LIB_DEP)
 
 xeglthreads: xeglthreads.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lpthread -lm $(X11_LIBS)
-
-xegl_tri: xegl_tri.o $(HEADERS) $(LIB_DEP)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lm $(X11_LIBS)
-
 
 $(EGLUT_DIR)/libeglut-x11.a $(EGLUT_DIR)/libeglut-screen.a:
 	@$(MAKE) -C $(EGLUT_DIR)
