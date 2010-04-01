@@ -15,7 +15,7 @@ EGLUT_DIR = $(TOP)/progs/egl/eglut
 
 EGLUT_DEMOS = \
 	eglgears \
-	xegl_tri
+	egltri
 
 EGLUT_X11_DEMOS := $(addsuffix _x11,$(EGLUT_DEMOS))
 EGLUT_SCREEN_DEMOS := $(addsuffix _screen,$(EGLUT_DEMOS))
@@ -24,7 +24,6 @@ PROGRAMS = \
 	demo1 \
 	demo2 \
 	demo3 \
-	egltri \
 	eglinfo \
 	eglscreen \
 	peglgears \
@@ -46,9 +45,6 @@ demo2: demo2.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
 
 demo3: demo3.o $(HEADERS) $(LIB_DEP)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
-
-egltri: egltri.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(LIBDRM_LIB)
 
 eglinfo: eglinfo.o $(HEADERS) $(LIB_DEP)
