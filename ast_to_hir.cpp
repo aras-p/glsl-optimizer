@@ -1441,8 +1441,12 @@ ast_declarator_list::hir(exec_list *instructions,
 	  */
 
 	 if (!rhs->type->is_error()) {
+	    bool temp = var->read_only;
+	    if (this->type->qualifier.constant)
+	       var->read_only = false;
 	    (void) do_assignment(instructions, state, lhs, rhs,
 				 this->get_location());
+	    var->read_only = temp;
 	 }
       }
 
