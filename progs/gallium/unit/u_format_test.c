@@ -33,31 +33,109 @@
 #include "util/u_format_tests.h"
 
 
+static void
+print_packed(const struct util_format_description *format_desc,
+             const char *prefix,
+             const uint8_t *packed,
+             const char *suffix)
+{
+   unsigned i;
+   const char *sep = "";
+
+   printf("%s", prefix);
+   for (i = 0; i < format_desc->block.bits/8; ++i) {
+      printf("%s%02x", sep, packed[i]);
+      sep = " ";
+   }
+   printf("%s", suffix);
+}
+
+
+static void
+print_unpacked_doubl(const struct util_format_description *format_desc,
+                     const char *prefix,
+                     const double unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
+                     const char *suffix)
+{
+   unsigned i, j;
+   const char *sep = "";
+
+   printf("%s", prefix);
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         printf("%s{%f, %f, %f, %f}", sep, unpacked[i][j][0], unpacked[i][j][1], unpacked[i][j][2], unpacked[i][j][3]);
+         sep = ", ";
+      }
+      sep = ",\n";
+   }
+   printf("%s", suffix);
+}
+
+
+static void
+print_unpacked_float(const struct util_format_description *format_desc,
+                     const char *prefix,
+                     const float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
+                     const char *suffix)
+{
+   unsigned i, j;
+   const char *sep = "";
+
+   printf("%s", prefix);
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         printf("%s{%f, %f, %f, %f}", sep, unpacked[i][j][0], unpacked[i][j][1], unpacked[i][j][2], unpacked[i][j][3]);
+         sep = ", ";
+      }
+      sep = ",\n";
+   }
+   printf("%s", suffix);
+}
+
+
+static void
+print_unpacked_8unorm(const struct util_format_description *format_desc,
+                      const char *prefix,
+                      const uint8_t unpacked[][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
+                      const char *suffix)
+{
+   unsigned i, j;
+   const char *sep = "";
+
+   printf("%s", prefix);
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         printf("%s{0x%02x, 0x%02x, 0x%02x, 0x%02x}", sep, unpacked[i][j][0], unpacked[i][j][1], unpacked[i][j][2], unpacked[i][j][3]);
+         sep = ", ";
+      }
+   }
+   printf("%s", suffix);
+}
+
+
 static boolean
 test_format_fetch_float(const struct util_format_description *format_desc,
                         const struct util_format_test_case *test)
 {
-   float unpacked[4];
-   unsigned i;
+   float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4];
+   unsigned i, j, k;
    boolean success;
 
-   /*
-    * TODO: test block formats too.
-    */
-   if (format_desc->block.width != 1 && format_desc->block.height != 1) {
-     return TRUE;
+   success = TRUE;
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         format_desc->fetch_float(unpacked[i][j], test->packed, j, i);
+         for (k = 0; k < 4; ++k) {
+            if (test->unpacked[i][j][k] != unpacked[i][j][k]) {
+               success = FALSE;
+            }
+         }
+      }
    }
 
-   format_desc->fetch_float(unpacked, test->packed, 0, 0);
-
-   success = TRUE;
-   for (i = 0; i < 4; ++i)
-      if (test->unpacked[i] != unpacked[i])
-         success = FALSE;
-
    if (!success) {
-      printf("FAILED: (%f %f %f %f) obtained\n", unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
-      printf("        (%f %f %f %f) expected\n", test->unpacked[0], test->unpacked[1], test->unpacked[2], test->unpacked[3]);
+      print_unpacked_float(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_doubl(format_desc, "        ", test->unpacked, " expected\n");
    }
 
    return success;
@@ -68,20 +146,26 @@ static boolean
 test_format_unpack_float(const struct util_format_description *format_desc,
                          const struct util_format_test_case *test)
 {
-   float unpacked[4];
-   unsigned i;
+   float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4];
+   unsigned i, j, k;
    boolean success;
 
-   format_desc->unpack_float(unpacked, 0, test->packed, 0, 1, 1);
+   format_desc->unpack_float(&unpacked[0][0][0], sizeof unpacked[0], test->packed, 0, format_desc->block.width, format_desc->block.height);
 
    success = TRUE;
-   for (i = 0; i < 4; ++i)
-      if (test->unpacked[i] != unpacked[i])
-         success = FALSE;
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         for (k = 0; k < 4; ++k) {
+            if (test->unpacked[i][j][k] != unpacked[i][j][k]) {
+               success = FALSE;
+            }
+         }
+      }
+   }
 
    if (!success) {
-      printf("FAILED: (%f %f %f %f) obtained\n", unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
-      printf("        (%f %f %f %f) expected\n", test->unpacked[0], test->unpacked[1], test->unpacked[2], test->unpacked[3]);
+      print_unpacked_float(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_doubl(format_desc, "        ", test->unpacked, " expected\n");
    }
 
    return success;
@@ -89,38 +173,34 @@ test_format_unpack_float(const struct util_format_description *format_desc,
 
 
 static boolean
+
 test_format_pack_float(const struct util_format_description *format_desc,
                        const struct util_format_test_case *test)
 {
-   float unpacked[4];
+   float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4];
    uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
-   unsigned i;
+   unsigned i, j, k;
    boolean success;
 
    memset(packed, 0, sizeof packed);
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         for (k = 0; k < 4; ++k) {
+            unpacked[i][j][k] = (float) test->unpacked[i][j][k];
+         }
+      }
+   }
 
-   for (i = 0; i < 4; ++i)
-      unpacked[i] = (float) test->unpacked[i];
-
-   format_desc->pack_float(packed, 0, unpacked, 0, 1, 1);
+   format_desc->pack_float(packed, 0, &unpacked[0][0][0], sizeof unpacked[0], format_desc->block.width, format_desc->block.height);
 
    success = TRUE;
-   for (i = 0; i < UTIL_FORMAT_MAX_PACKED_BYTES; ++i)
+   for (i = 0; i < format_desc->block.bits/8; ++i)
       if ((test->packed[i] & test->mask[i]) != (packed[i] & test->mask[i]))
          success = FALSE;
 
    if (!success) {
-      /* TODO: print more than 4 bytes */
-      printf("FAILED: (%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x) obtained\n",
-             packed[0], packed[1], packed[2], packed[3],
-             packed[4], packed[5], packed[6], packed[7],
-             packed[8], packed[9], packed[10], packed[11],
-             packed[12], packed[13], packed[14], packed[15]);
-      printf("        (%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x) expected\n",
-             test->packed[0], test->packed[1], test->packed[2], test->packed[3],
-             test->packed[4], test->packed[5], test->packed[6], test->packed[7],
-             test->packed[8], test->packed[9], test->packed[10], test->packed[11],
-             test->packed[12], test->packed[13], test->packed[14], test->packed[15]);
+      print_packed(format_desc, "FAILED: ", packed, " obtained\n");
+      print_packed(format_desc, "        ", test->packed, " expected\n");
    }
 
    return success;
@@ -133,7 +213,7 @@ convert_float_to_8unorm(uint8_t *dst, const double *src)
    unsigned i;
    boolean accurate = TRUE;
 
-   for (i = 0; i < 4; ++i) {
+   for (i = 0; i < UTIL_FORMAT_MAX_UNPACKED_HEIGHT*UTIL_FORMAT_MAX_UNPACKED_WIDTH*4; ++i) {
       if (src[i] < 0.0) {
          accurate = FALSE;
          dst[i] = 0;
@@ -155,23 +235,29 @@ static boolean
 test_format_unpack_8unorm(const struct util_format_description *format_desc,
                           const struct util_format_test_case *test)
 {
-   uint8_t unpacked[4];
-   uint8_t expected[4];
-   unsigned i;
+   uint8_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4];
+   uint8_t expected[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4];
+   unsigned i, j, k;
    boolean success;
 
-   format_desc->unpack_8unorm(unpacked, 0, test->packed, 0, 1, 1);
+   format_desc->unpack_8unorm(&unpacked[0][0][0], 0, test->packed, 0, 1, 1);
 
-   convert_float_to_8unorm(expected, test->unpacked);
+   convert_float_to_8unorm(&expected[0][0][0], &test->unpacked[0][0][0]);
 
    success = TRUE;
-   for (i = 0; i < 4; ++i)
-      if (expected[i] != unpacked[i])
-         success = FALSE;
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         for (k = 0; k < 4; ++k) {
+            if (expected[i][j][k] != unpacked[i][j][k]) {
+               success = FALSE;
+            }
+         }
+      }
+   }
 
    if (!success) {
-      printf("FAILED: (0x%02x 0x%02x 0x%02x 0x%02x) obtained\n", unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
-      printf("        (0x%02x 0x%02x 0x%02x 0x%02x) expected\n", expected[0], expected[1], expected[2], expected[3]);
+      print_unpacked_8unorm(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_8unorm(format_desc, "        ", expected, " expected\n");
    }
 
    return success;
@@ -182,12 +268,12 @@ static boolean
 test_format_pack_8unorm(const struct util_format_description *format_desc,
                         const struct util_format_test_case *test)
 {
-   uint8_t unpacked[4];
+   uint8_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4];
    uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
    unsigned i;
    boolean success;
 
-   if (!convert_float_to_8unorm(unpacked, test->unpacked)) {
+   if (!convert_float_to_8unorm(&unpacked[0][0][0], &test->unpacked[0][0][0])) {
       /*
        * Skip test cases which cannot be represented by four unorm bytes.
        */
@@ -196,25 +282,16 @@ test_format_pack_8unorm(const struct util_format_description *format_desc,
 
    memset(packed, 0, sizeof packed);
 
-   format_desc->pack_8unorm(packed, 0, unpacked, 0, 1, 1);
+   format_desc->pack_8unorm(packed, 0, &unpacked[0][0][0], sizeof unpacked[0], 1, 1);
 
    success = TRUE;
-   for (i = 0; i < UTIL_FORMAT_MAX_PACKED_BYTES; ++i)
+   for (i = 0; i < format_desc->block.bits/8; ++i)
       if ((test->packed[i] & test->mask[i]) != (packed[i] & test->mask[i]))
          success = FALSE;
 
    if (!success) {
-      /* TODO: print more than 4 bytes */
-      printf("FAILED: (%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x) obtained\n",
-             packed[0], packed[1], packed[2], packed[3],
-             packed[4], packed[5], packed[6], packed[7],
-             packed[8], packed[9], packed[10], packed[11],
-             packed[12], packed[13], packed[14], packed[15]);
-      printf("        (%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x) expected\n",
-             test->packed[0], test->packed[1], test->packed[2], test->packed[3],
-             test->packed[4], test->packed[5], test->packed[6], test->packed[7],
-             test->packed[8], test->packed[9], test->packed[10], test->packed[11],
-             test->packed[12], test->packed[13], test->packed[14], test->packed[15]);
+      print_packed(format_desc, "FAILED: ", packed, " obtained\n");
+      print_packed(format_desc, "        ", test->packed, " expected\n");
    }
 
    return success;

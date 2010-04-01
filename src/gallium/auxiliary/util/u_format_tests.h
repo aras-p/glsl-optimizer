@@ -35,6 +35,8 @@
 
 
 #define UTIL_FORMAT_MAX_PACKED_BYTES 16
+#define UTIL_FORMAT_MAX_UNPACKED_WIDTH 4
+#define UTIL_FORMAT_MAX_UNPACKED_HEIGHT 4
 
 
 /**
@@ -55,7 +57,7 @@ struct util_format_test_case
    /**
     * RGBA.
     */
-   double unpacked[4];
+   double unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4];
 };
 
 
