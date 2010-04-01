@@ -110,6 +110,26 @@ public:
       v->visit(this);
    }
 
+   /**
+    * Duplicate an IR variable
+    *
+    * \note
+    * This will probably be made \c virtual and moved to the base class
+    * eventually.
+    */
+   ir_variable *clone() const
+   {
+      ir_variable *var = new ir_variable(type, name);
+
+      var->read_only = this->read_only;
+      var->centroid = this->centroid;
+      var->invariant = this->invariant;
+      var->mode = this->mode;
+      var->interpolation = this->interpolation;
+
+      return var;
+   }
+
    const char *name;
 
    unsigned read_only:1;
