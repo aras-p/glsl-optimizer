@@ -28,9 +28,28 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <float.h>
 
 #include "util/u_format.h"
 #include "util/u_format_tests.h"
+#include "util/u_format_s3tc.h"
+
+
+static boolean
+compare_float(float x, float y)
+{
+   float error = y - x;
+
+   if (error < 0.0f)
+      error = -error;
+
+   if (error > FLT_EPSILON) {
+      printf("error = %g\n", error);
+      return FALSE;
+   }
+
+   return TRUE;
+}
 
 
 static void
@@ -126,7 +145,7 @@ test_format_fetch_float(const struct util_format_description *format_desc,
       for (j = 0; j < format_desc->block.width; ++j) {
          format_desc->fetch_float(unpacked[i][j], test->packed, j, i);
          for (k = 0; k < 4; ++k) {
-            if (test->unpacked[i][j][k] != unpacked[i][j][k]) {
+            if (!compare_float(test->unpacked[i][j][k], unpacked[i][j][k])) {
                success = FALSE;
             }
          }
@@ -156,7 +175,7 @@ test_format_unpack_float(const struct util_format_description *format_desc,
    for (i = 0; i < format_desc->block.height; ++i) {
       for (j = 0; j < format_desc->block.width; ++j) {
          for (k = 0; k < 4; ++k) {
-            if (test->unpacked[i][j][k] != unpacked[i][j][k]) {
+            if (!compare_float(test->unpacked[i][j][k], unpacked[i][j][k])) {
                success = FALSE;
             }
          }
@@ -313,15 +332,26 @@ test_one(test_func_t func, const char *suffix)
    for (i = 0; i < util_format_nr_test_cases; ++i) {
       const struct util_format_test_case *test = &util_format_test_cases[i];
       const struct util_format_description *format_desc;
+      bool skip = FALSE;
+
       format_desc = util_format_description(test->format);
 
+      if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC &&
+          !util_format_s3tc_enabled) {
+         skip = TRUE;
+      }
+
       if (test->format != last_format) {
-         printf("Testing util_format_%s_%s ...\n", format_desc->short_name, suffix);
+         printf("%s util_format_%s_%s ...\n",
+                skip ? "Skipping" : "Testing", format_desc->short_name, suffix);
          last_format = test->format;
       }
 
-      if (!func(format_desc, &util_format_test_cases[i]))
-        success = FALSE;
+      if (!skip) {
+         if (!func(format_desc, &util_format_test_cases[i])) {
+           success = FALSE;
+         }
+      }
    }
 
    return success;
@@ -355,6 +385,8 @@ test_all(void)
 int main(int argc, char **argv)
 {
    boolean success;
+
+   util_format_s3tc_init();
 
    success = test_all();
 
