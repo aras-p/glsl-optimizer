@@ -13,6 +13,7 @@
 #include "gallivm/lp_bld_printf.h"
 
 #include "util/u_cpu_detect.h"
+#include "tgsi/tgsi_dump.h"
 
 #include <llvm-c/Transforms/Scalar.h>
 
@@ -202,8 +203,7 @@ generate_vs(struct draw_llvm *llvm,
             LLVMBuilderRef builder,
             LLVMValueRef (*outputs)[NUM_CHANNELS],
             const LLVMValueRef (*inputs)[NUM_CHANNELS],
-            LLVMValueRef context_ptr,
-            LLVMValueRef io)
+            LLVMValueRef context_ptr)
 {
    const struct tgsi_token *tokens = llvm->draw->vs.vertex_shader->state.tokens;
    struct lp_type vs_type;
@@ -219,6 +219,7 @@ generate_vs(struct draw_llvm *llvm,
    num_vs = 4;              /* number of vertices per block */
 #endif
 
+   tgsi_dump(tokens, 0);
    lp_build_tgsi_soa(builder,
                      tokens,
                      vs_type,
@@ -320,6 +321,41 @@ aos_to_soa(LLVMBuilderRef builder,
 }
 
 static void
+soa_to_aos(LLVMBuilderRef builder,
+           LLVMValueRef soa[NUM_CHANNELS],
+           LLVMValueRef aos[NUM_CHANNELS])
+{
+   LLVMValueRef comp;
+   int i = 0;
+
+   debug_assert(NUM_CHANNELS == 4);
+
+   aos[0] = LLVMConstNull(LLVMTypeOf(soa[0]));
+   aos[1] = aos[2] = aos[3] = aos[0];
+
+   for (i = 0; i < NUM_CHANNELS; ++i) {
+      LLVMValueRef channel = LLVMConstInt(LLVMInt32Type(), i, 0);
+
+      comp = LLVMBuildExtractElement(builder, soa[i],
+                                     LLVMConstInt(LLVMInt32Type(), 0, 0), "");
+      aos[0] = LLVMBuildInsertElement(builder, aos[0], comp, channel, "");
+
+      comp = LLVMBuildExtractElement(builder, soa[i],
+                                     LLVMConstInt(LLVMInt32Type(), 1, 0), "");
+      aos[1] = LLVMBuildInsertElement(builder, aos[1], comp, channel, "");
+
+      comp = LLVMBuildExtractElement(builder, soa[i],
+                                     LLVMConstInt(LLVMInt32Type(), 2, 0), "");
+      aos[2] = LLVMBuildInsertElement(builder, aos[2], comp, channel, "");
+
+      comp = LLVMBuildExtractElement(builder, soa[i],
+                                     LLVMConstInt(LLVMInt32Type(), 3, 0), "");
+      aos[3] = LLVMBuildInsertElement(builder, aos[3], comp, channel, "");
+
+   }
+}
+
+static void
 convert_to_soa(LLVMBuilderRef builder,
                LLVMValueRef (*aos)[NUM_CHANNELS],
                LLVMValueRef (*soa)[NUM_CHANNELS],
@@ -343,6 +379,107 @@ convert_to_soa(LLVMBuilderRef builder,
                              LLVMConstInt(LLVMInt32Type(), 2, 0));
       soa[i][3] = aos_to_soa(builder, val0, val1, val2, val3,
                              LLVMConstInt(LLVMInt32Type(), 3, 0));
+   }
+}
+
+static void
+store_aos(LLVMBuilderRef builder,
+          LLVMValueRef io_ptr,
+          LLVMValueRef index,
+          LLVMValueRef value)
+{
+   LLVMValueRef id_ptr = draw_jit_header_id(builder, io_ptr);
+   LLVMValueRef data_ptr = draw_jit_header_data(builder, io_ptr);
+   LLVMValueRef indices[2];
+
+   indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   indices[1] = index;
+
+   /* undefined vertex */
+   LLVMBuildStore(builder, LLVMConstInt(LLVMInt32Type(),
+                                        0xffff, 0), id_ptr);
+
+
+   data_ptr = LLVMBuildInBoundsGEP(builder, data_ptr, indices, 2, "");
+   lp_build_printf(builder, " ---- storing at %d (%p) ", index, data_ptr);
+   print_vectorf(builder, value);
+   data_ptr = LLVMBuildBitCast(builder, data_ptr,
+                               LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0),
+                               "datavec");
+   LLVMBuildStore(builder, value, data_ptr);
+   lp_build_printf(builder, "     ++ stored\n");
+}
+
+static void
+store_aos_array(LLVMBuilderRef builder,
+                LLVMValueRef io_ptr,
+                LLVMValueRef aos[NUM_CHANNELS],
+                LLVMValueRef start_index,
+                int attrib,
+                int num_outputs)
+{
+   LLVMValueRef attr_index = LLVMConstInt(LLVMInt32Type(), attrib, 0);
+   LLVMValueRef ind0 = start_index;
+   LLVMValueRef ind1 =
+      LLVMBuildAdd(builder, start_index,
+                   LLVMConstInt(LLVMInt32Type(), 1, 0), "");
+   LLVMValueRef ind2 =
+      LLVMBuildAdd(builder, start_index,
+                   LLVMConstInt(LLVMInt32Type(), 2, 0), "");
+   LLVMValueRef ind3 =
+      LLVMBuildAdd(builder, start_index,
+                   LLVMConstInt(LLVMInt32Type(), 3, 0), "");
+   LLVMValueRef io0_ptr, io1_ptr, io2_ptr, io3_ptr;
+
+   debug_assert(NUM_CHANNELS == 4);
+
+   io0_ptr = LLVMBuildGEP(builder, io_ptr,
+                          &ind0, 1, "");
+   io1_ptr = LLVMBuildGEP(builder, io_ptr,
+                          &ind1, 1, "");
+   io2_ptr = LLVMBuildGEP(builder, io_ptr,
+                          &ind2, 1, "");
+   io3_ptr = LLVMBuildGEP(builder, io_ptr,
+                          &ind3, 1, "");
+
+   store_aos(builder, io0_ptr, attr_index, aos[0]);
+   store_aos(builder, io1_ptr, attr_index, aos[1]);
+   store_aos(builder, io2_ptr, attr_index, aos[2]);
+   store_aos(builder, io3_ptr, attr_index, aos[3]);
+}
+
+static void
+convert_to_aos(LLVMBuilderRef builder,
+               LLVMValueRef io,
+               LLVMValueRef (*outputs)[NUM_CHANNELS],
+               int num_outputs,
+               int max_vertices,
+               LLVMValueRef start_index)
+{
+   unsigned chan, attrib;
+
+   for (attrib = 0; attrib < num_outputs; ++attrib) {
+      LLVMValueRef soa[4];
+      LLVMValueRef aos[4];
+      for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+         if(outputs[attrib][chan]) {
+            LLVMValueRef out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
+            lp_build_name(out, "output%u.%c", attrib, "xyzw"[chan]);
+            lp_build_printf(builder, "output %d : %d ",
+                            LLVMConstInt(LLVMInt32Type(), attrib, 0),
+                            LLVMConstInt(LLVMInt32Type(), chan, 0));
+            print_vectorf(builder, out);
+            soa[chan] = out;
+         } else
+            soa[chan] = 0;
+      }
+      soa_to_aos(builder, soa, aos);
+      store_aos_array(builder,
+                      io,
+                      aos,
+                      start_index,
+                      attrib,
+                      num_outputs);
    }
 }
 
@@ -437,8 +574,11 @@ draw_llvm_generate(struct draw_llvm *llvm)
                   builder,
                   outputs,
                   ptr_aos,
-                  context_ptr,
-                  io);
+                  context_ptr);
+
+      convert_to_aos(builder, io, outputs,
+                     draw->vs.vertex_shader->info.num_outputs,
+                     max_vertices, lp_loop.counter);
    }
    lp_build_loop_end(builder, end, step, &lp_loop);
 

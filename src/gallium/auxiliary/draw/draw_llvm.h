@@ -63,6 +63,17 @@ struct draw_jit_context
 #define draw_jit_context_textures(_builder, _ptr) \
    lp_build_struct_get_ptr(_builder, _ptr, DRAW_JIT_CONTEXT_TEXTURES_INDEX, "textures")
 
+
+
+#define draw_jit_header_id(_builder, _ptr)              \
+   lp_build_struct_get_ptr(_builder, _ptr, 0, "id")
+
+#define draw_jit_header_clip(_builder, _ptr) \
+   lp_build_struct_get(_builder, _ptr, 1, "clip")
+
+#define draw_jit_header_data(_builder, _ptr)            \
+   lp_build_struct_get_ptr(_builder, _ptr, 2, "data")
+
 /* we are construction a function of the form:
 
 struct vertex_header {
