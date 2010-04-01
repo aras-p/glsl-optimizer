@@ -27,77 +27,15 @@
  * Program runs for 5 seconds then exits, outputing framerate to console
  */
 
-#define EGL_EGLEXT_PROTOTYPES
-
-#include <assert.h>
 #include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <GL/gl.h>
 #include <EGL/egl.h>
-#include <EGL/eglext.h>
 
-#define MAX_CONFIGS 10
-#define MAX_MODES 100
-
-#define BENCHMARK
-
-#ifdef BENCHMARK
-
-/* XXX this probably isn't very portable */
-
-#include <sys/time.h>
-#include <unistd.h>
-
-/* return current time (in seconds) */
-static double
-current_time(void)
-{
-   struct timeval tv;
-#ifdef __VMS
-   (void) gettimeofday(&tv, NULL );
-#else
-   struct timezone tz;
-   (void) gettimeofday(&tv, &tz);
-#endif
-   return (double) tv.tv_sec + tv.tv_usec / 1000000.0;
-}
-
-#else /*BENCHMARK*/
-
-/* dummy */
-static double
-current_time(void)
-{
-   /* update this function for other platforms! */
-   static double t = 0.0;
-   static int warn = 1;
-   if (warn) {
-      fprintf(stderr, "Warning: current_time() not implemented!!\n");
-      warn = 0;
-   }
-   return t += 1.0;
-}
-
-#endif /*BENCHMARK*/
-
-
-#ifndef M_PI
-#define M_PI 3.14159265
-#endif
-
+#include "eglut.h"
 
 static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
-
-#if 0
-static GLfloat eyesep = 5.0;		/* Eye separation. */
-static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
-static GLfloat left, right, asp;	/* Stereo frustum params.  */
-#endif
-
 
 /*
  *
@@ -270,6 +208,22 @@ draw(void)
 }
 
 
+static void
+idle(void)
+{
+  static double t0 = -1.;
+  double dt, t = eglutGet(EGLUT_ELAPSED_TIME) / 1000.0;
+  if (t0 < 0.0)
+    t0 = t;
+  dt = t - t0;
+  t0 = t;
+
+  angle += 70.0 * dt;  /* 70 degrees per second */
+  angle = fmod(angle, 360.0); /* prevents eventual overflow */
+
+  eglutPostRedisplay();
+}
+
 /* new window size or exposure */
 static void
 reshape(int width, int height)
@@ -325,158 +279,23 @@ init(void)
    glEnable(GL_NORMALIZE);
 }
 
-
-
-
-static void run_gears(EGLDisplay dpy, EGLSurface surf, int ttr)
-{
-	double st = current_time();
-	double ct = st;
-	int frames = 0;
-	GLfloat seconds, fps;
-
-	while (ct - st < ttr)
-	{
-		double tt = current_time();
-		double dt = tt - ct;
-		ct = tt;
-		
-		/* advance rotation for next frame */
-		angle += 70.0 * dt;  /* 70 degrees per second */
-		if (angle > 3600.0)
-			angle -= 3600.0;
-		
-		draw();
-		
-		eglSwapBuffers(dpy, surf);
-	
-		
-		frames++;
-	}
-	
-	seconds = ct - st;
-	fps = frames / seconds;
-	printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds, fps);
-	
-}
-
-
 int
 main(int argc, char *argv[])
 {
-	int maj, min;
-	EGLContext ctx;
-	EGLSurface screen_surf;
-	EGLConfig configs[MAX_CONFIGS];
-	EGLint numConfigs, i;
-	EGLBoolean b;
-	EGLDisplay d;
-	EGLint screenAttribs[10];
-	EGLModeMESA mode[MAX_MODES];
-	EGLScreenMESA screen;
-	EGLint count;
-	EGLint chosenMode = 0;
-	GLboolean printInfo = GL_FALSE;
-	EGLint width = 0, height = 0;
-	
-        /* parse cmd line args */
-	for (i = 1; i < argc; i++)
-	{
-		if (strcmp(argv[i], "-info") == 0)
-		{
-			printInfo = GL_TRUE;
-		}
-		else
-			printf("Warning: unknown parameter: %s\n", argv[i]);
-	}
-	
-	/* DBR : Create EGL context/surface etc */
-	d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-	assert(d);
+   eglutInitWindowSize(300, 300);
+   eglutInitAPIMask(EGLUT_OPENGL_BIT);
+   eglutInit(argc, argv);
 
-	if (!eglInitialize(d, &maj, &min)) {
-		printf("eglgears: eglInitialize failed\n");
-		exit(1);
-	}
-	
-	printf("eglgears: EGL version = %d.%d\n", maj, min);
-	printf("eglgears: EGL_VENDOR = %s\n", eglQueryString(d, EGL_VENDOR));
-	
-        /* XXX use ChooseConfig */
-	eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
-	eglGetScreensMESA(d, &screen, 1, &count);
+   eglutCreateWindow("eglgears");
 
-	if (!eglGetModesMESA(d, screen, mode, MAX_MODES, &count) || count == 0) {
-		printf("eglgears: eglGetModesMESA failed!\n");
-		return 0;
-	}
+   eglutIdleFunc(idle);
+   eglutReshapeFunc(reshape);
+   eglutDisplayFunc(draw);
 
-        /* Print list of modes, and find the one to use */
-	printf("eglgears: Found %d modes:\n", count);
-	for (i = 0; i < count; i++) {
-		EGLint w, h;
-		eglGetModeAttribMESA(d, mode[i], EGL_WIDTH, &w);
-		eglGetModeAttribMESA(d, mode[i], EGL_HEIGHT, &h);
-		printf("%3d: %d x %d\n", i, w, h);
-		if (w > width && h > height) {
-			width = w;
-			height = h;
-                        chosenMode = i;
-		}
-	}
-	printf("eglgears: Using screen mode/size %d: %d x %d\n", chosenMode, width, height);
+   init();
+   glDrawBuffer(GL_BACK);
+	
+   eglutMainLoop();
 
-	eglBindAPI(EGL_OPENGL_API);
-	ctx = eglCreateContext(d, configs[0], EGL_NO_CONTEXT, NULL);
-	if (ctx == EGL_NO_CONTEXT) {
-		printf("eglgears: failed to create context\n");
-		return 0;
-	}
-	
-	/* build up screenAttribs array */
-	i = 0;
-	screenAttribs[i++] = EGL_WIDTH;
-	screenAttribs[i++] = width;
-	screenAttribs[i++] = EGL_HEIGHT;
-	screenAttribs[i++] = height;
-	screenAttribs[i++] = EGL_NONE;
-
-	screen_surf = eglCreateScreenSurfaceMESA(d, configs[0], screenAttribs);
-	if (screen_surf == EGL_NO_SURFACE) {
-		printf("eglgears: failed to create screen surface\n");
-		return 0;
-	}
-	
-	b = eglShowScreenSurfaceMESA(d, screen, screen_surf, mode[chosenMode]);
-	if (!b) {
-		printf("eglgears: show surface failed\n");
-		return 0;
-	}
-
-	b = eglMakeCurrent(d, screen_surf, screen_surf, ctx);
-	if (!b) {
-		printf("eglgears: make current failed\n");
-		return 0;
-	}
-	
-	if (printInfo)
-	{
-		printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
-		printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
-		printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-		printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
-	}
-	
-	init();
-	reshape(width, height);
-
-        glDrawBuffer( GL_BACK );
-
-	run_gears(d, screen_surf, 5.0);
-	
-	eglDestroySurface(d, screen_surf);
-	eglDestroyContext(d, ctx);
-	eglTerminate(d);
-	
-	return 0;
+   return 0;
 }
