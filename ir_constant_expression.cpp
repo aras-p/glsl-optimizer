@@ -36,6 +36,7 @@
 #define NULL 0
 #include "ir.h"
 #include "ir_visitor.h"
+#include "glsl_types.h"
 
 /**
  * Visitor class for evaluating constant expressions
@@ -127,12 +128,42 @@ ir_constant_visitor::visit(ir_function *ir)
    value = NULL;
 }
 
-
 void
 ir_constant_visitor::visit(ir_expression *ir)
 {
-   (void) ir;
    value = NULL;
+   ir_constant *op[2];
+
+   switch (ir->operation) {
+   case ir_binop_mul:
+      op[0] = ir->operands[0]->constant_expression_value();
+      op[1] = ir->operands[1]->constant_expression_value();
+      if (op[0] && op[1] && ir->operands[0]->type == ir->operands[1]->type) {
+	 if (ir->operands[1]->type == glsl_type::float_type) {
+	    value = new ir_constant(op[0]->value.f[0] * op[1]->value.f[0]);
+	    value->type = glsl_type::float_type;
+	 }
+      }
+      break;
+   case ir_binop_logic_and:
+      op[0] = ir->operands[0]->constant_expression_value();
+      op[1] = ir->operands[1]->constant_expression_value();
+      if (op[0] && op[1]) {
+	 value = new ir_constant(op[0]->value.b[0] && op[1]->value.b[0]);
+	 value->type = glsl_type::bool_type;
+      }
+      break;
+   case ir_binop_logic_or:
+      op[0] = ir->operands[0]->constant_expression_value();
+      op[1] = ir->operands[1]->constant_expression_value();
+      if (op[0] && op[1]) {
+	 value = new ir_constant(op[0]->value.b[0] || op[1]->value.b[0]);
+	 value->type = glsl_type::bool_type;
+      }
+      break;
+   default:
+      break;
+   }
 }
 
 
