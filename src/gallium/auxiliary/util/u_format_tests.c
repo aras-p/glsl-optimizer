@@ -544,6 +544,41 @@ util_format_test_cases[] =
    {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0x3f800000), { 0.0,  0.0,  0.0,  1.0}},
    {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x00000000, 0x00000000, 0x00000000, 0xbf800000), { 0.0,  0.0,  0.0, -1.0}},
    {PIPE_FORMAT_R32G32B32A32_FLOAT, PACKED_4x32(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff), PACKED_4x32(0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000), { 1.0,  1.0,  1.0,  1.0}},
+
+   /*
+    * Half float formats
+    */
+
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x0000), {  0.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0x3c00), {  1.0, 0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16_FLOAT, PACKED_1x16(0xffff), PACKED_1x16(0xbc00), { -1.0, 0.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R16G16_FLOAT, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x0000), { 0.0,  0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16_FLOAT, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x3c00, 0x0000), { 1.0,  0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16_FLOAT, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0xbc00, 0x0000), {-1.0,  0.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16_FLOAT, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0x3c00), { 0.0,  1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16_FLOAT, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x0000, 0xbc00), { 0.0, -1.0, 0.0, 1.0}},
+   {PIPE_FORMAT_R16G16_FLOAT, PACKED_2x16(0xffff, 0xffff), PACKED_2x16(0x3c00, 0x3c00), { 1.0,  1.0, 0.0, 1.0}},
+
+   {PIPE_FORMAT_R16G16B16_FLOAT, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x0000), { 0.0,  0.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_FLOAT, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x3c00, 0x0000, 0x0000), { 1.0,  0.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_FLOAT, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0xbc00, 0x0000, 0x0000), {-1.0,  0.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_FLOAT, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x3c00, 0x0000), { 0.0,  1.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_FLOAT, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0xbc00, 0x0000), { 0.0, -1.0,  0.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_FLOAT, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0x3c00), { 0.0,  0.0,  1.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_FLOAT, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x0000, 0x0000, 0xbc00), { 0.0,  0.0, -1.0, 1.0}},
+   {PIPE_FORMAT_R16G16B16_FLOAT, PACKED_3x16(0xffff, 0xffff, 0xffff), PACKED_3x16(0x3c00, 0x3c00, 0x3c00), { 1.0,  1.0,  1.0, 1.0}},
+
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x0000), { 0.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x3c00, 0x0000, 0x0000, 0x0000), { 1.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0xbc00, 0x0000, 0x0000, 0x0000), {-1.0,  0.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x3c00, 0x0000, 0x0000), { 0.0,  1.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0xbc00, 0x0000, 0x0000), { 0.0, -1.0,  0.0,  0.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x3c00, 0x0000), { 0.0,  0.0,  1.0,  0.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0xbc00, 0x0000), { 0.0,  0.0, -1.0,  0.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0x3c00), { 0.0,  0.0,  0.0,  1.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x0000, 0x0000, 0x0000, 0xbc00), { 0.0,  0.0,  0.0, -1.0}},
+   {PIPE_FORMAT_R16G16B16A16_FLOAT, PACKED_4x16(0xffff, 0xffff, 0xffff, 0xffff), PACKED_4x16(0x3c00, 0x3c00, 0x3c00, 0x3c00), { 1.0,  1.0,  1.0,  1.0}},
 };
 
 
