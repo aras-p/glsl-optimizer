@@ -132,7 +132,7 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
 static const struct glsl_type *
 arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 		       bool multiply,
-		       struct _mesa_glsl_parse_state *state)
+		       struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
    const glsl_type *const type_a = value_a->type;
    const glsl_type *const type_b = value_b->type;
@@ -144,6 +144,8 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *    floating-point scalars, vectors, and matrices."
     */
    if (!type_a->is_numeric() || !type_b->is_numeric()) {
+      _mesa_glsl_error(loc, state,
+		       "Operands to arithmetic operators must be numeric");
       return glsl_type::error_type;
    }
 
@@ -154,6 +156,9 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     */
    if (!apply_implicit_conversion(type_a, value_b, state)
        && !apply_implicit_conversion(type_b, value_a, state)) {
+      _mesa_glsl_error(loc, state,
+		       "Could not implicitly convert operands to "
+		       "arithmetic operator");
       return glsl_type::error_type;
    }
       
@@ -167,6 +172,8 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     * equality.
     */
    if (type_a->base_type != type_b->base_type) {
+      _mesa_glsl_error(loc, state,
+		       "base type mismatch for arithmetic operator");
       return glsl_type::error_type;
    }
 
@@ -205,7 +212,13 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *      vector."
     */
    if (type_a->is_vector() && type_b->is_vector()) {
-      return (type_a == type_b) ? type_a : glsl_type::error_type;
+      if (type_a == type_b) {
+	 return type_a;
+      } else {
+	 _mesa_glsl_error(loc, state,
+			  "vector size mismatch for arithmetic operator");
+	 return glsl_type::error_type;
+      }
    }
 
    /* All of the combinations of <scalar, scalar>, <vector, scalar>,
@@ -234,7 +247,8 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     *      more detail how vectors and matrices are operated on."
     */
    if (! multiply) {
-      return (type_a == type_b) ? type_a : glsl_type::error_type;
+      if (type_a == type_b)
+	 return type_a;
    } else {
       if (type_a->is_matrix() && type_b->is_matrix()) {
 	 /* Matrix multiply.  The columns of A must match the rows of B.  Given
@@ -248,10 +262,13 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 	     * looking at the size of a vector that makes up a column.  The
 	     * transpose (size of a row) is done for B.
 	     */
-	    return
+	    const glsl_type *const type =
 	       glsl_type::get_instance(type_a->base_type,
 				       type_a->column_type()->vector_elements,
 				       type_b->row_type()->vector_elements);
+	    assert(type != glsl_type::error_type);
+
+	    return type;
 	 }
       } else if (type_a->is_matrix()) {
 	 /* A is a matrix and B is a column vector.  Columns of A must match
@@ -272,11 +289,15 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 	 if (type_a == type_b->column_type())
 	    return type_a;
       }
+
+      _mesa_glsl_error(loc, state, "size mismatch for matrix multiplication");
+      return glsl_type::error_type;
    }
 
 
    /*    "All other cases are illegal."
     */
+   _mesa_glsl_error(loc, state, "type mismatch");
    return glsl_type::error_type;
 }
 
@@ -599,7 +620,8 @@ ast_expression::hir(exec_list *instructions,
 
       type = arithmetic_result_type(op[0], op[1],
 				    (this->oper == ast_mul),
-				    state);
+				    state, & loc);
+      error_emitted = type->is_error();
 
       result = new ir_expression(operations[this->oper], type,
 				 op[0], op[1]);
@@ -721,7 +743,7 @@ ast_expression::hir(exec_list *instructions,
 
       type = arithmetic_result_type(op[0], op[1],
 				    (this->oper == ast_mul_assign),
-				    state);
+				    state, & loc);
 
       ir_rvalue *temp_rhs = new ir_expression(operations[this->oper], type,
 				              op[0], op[1]);
@@ -842,7 +864,7 @@ ast_expression::hir(exec_list *instructions,
       else
 	 op[1] = new ir_constant(1);
 
-      type = arithmetic_result_type(op[0], op[1], false, state);
+      type = arithmetic_result_type(op[0], op[1], false, state, & loc);
 
       struct ir_rvalue *temp_rhs;
       temp_rhs = new ir_expression(operations[this->oper], type,
@@ -865,7 +887,7 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      type = arithmetic_result_type(op[0], op[1], false, state);
+      type = arithmetic_result_type(op[0], op[1], false, state, & loc);
 
       struct ir_rvalue *temp_rhs;
       temp_rhs = new ir_expression(operations[this->oper], type,
