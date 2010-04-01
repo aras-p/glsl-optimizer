@@ -95,11 +95,16 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
                 shift += width
         else:
             for i in range(4):
+                if names[i]:
+                    print '         %s %s;' % (dst_native_type, names[i])
+            for i in range(4):
                 src_channel = format.channels[i]
                 if names[i]:
                     value = '(*src_pixel++)'
                     value = conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=False)
-                    print '         %s %s = %s;' % (dst_native_type, names[i], value)
+                    print '         %s = %s;' % (names[i], value)
+                elif src_channel.size:
+                    print '         ++src_pixel;'
     else:
         assert False
 
@@ -230,6 +235,8 @@ def emit_tile_pixel_write_code(format, src_channel):
                     value = 'TILE_PIXEL(src, x, y, %u)' % inv_swizzle[i]
                     value = conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=False)
                     print '         *dst_pixel++ = %s;' % value
+                else:
+                    print '         ++dst_pixel;'
     else:
         assert False
 
@@ -251,7 +258,8 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
         and format.block_size() <= 32 \
         and format.is_pot() \
         and not format.is_mixed() \
-        and format.channels[0].type == UNSIGNED:
+        and (format.channels[0].type == UNSIGNED \
+             or format.channels[1].type == UNSIGNED):
         emit_unrolled_write_code(format, src_channel)
     else:
         emit_tile_pixel_write_code(format, src_channel)
