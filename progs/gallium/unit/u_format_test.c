@@ -44,7 +44,6 @@ compare_float(float x, float y)
       error = -error;
 
    if (error > FLT_EPSILON) {
-      printf("error = %g\n", error);
       return FALSE;
    }
 
@@ -201,6 +200,15 @@ test_format_pack_float(const struct util_format_description *format_desc,
    unsigned i, j, k;
    boolean success;
 
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+      /*
+       * Skip S3TC as packed representation is not canonical.
+       *
+       * TODO: Do a round trip conversion.
+       */
+      return TRUE;
+   }
+
    memset(packed, 0, sizeof packed);
    for (i = 0; i < format_desc->block.height; ++i) {
       for (j = 0; j < format_desc->block.width; ++j) {
@@ -259,7 +267,7 @@ test_format_unpack_8unorm(const struct util_format_description *format_desc,
    unsigned i, j, k;
    boolean success;
 
-   format_desc->unpack_8unorm(&unpacked[0][0][0], 0, test->packed, 0, 1, 1);
+   format_desc->unpack_8unorm(&unpacked[0][0][0], sizeof unpacked[0], test->packed, 0, 1, 1);
 
    convert_float_to_8unorm(&expected[0][0][0], &test->unpacked[0][0][0]);
 
@@ -291,6 +299,15 @@ test_format_pack_8unorm(const struct util_format_description *format_desc,
    uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
    unsigned i;
    boolean success;
+
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+      /*
+       * Skip S3TC as packed representation is not canonical.
+       *
+       * TODO: Do a round trip conversion.
+       */
+      return TRUE;
+   }
 
    if (!convert_float_to_8unorm(&unpacked[0][0][0], &test->unpacked[0][0][0])) {
       /*

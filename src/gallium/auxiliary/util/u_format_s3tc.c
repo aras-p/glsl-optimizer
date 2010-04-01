@@ -188,12 +188,43 @@ util_format_dxt5_rgba_fetch_float(float *dst, const uint8_t *src, unsigned i, un
 void
 util_format_dxt1_rgb_unpack_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
 {
+   if (util_format_dxt1_rgb_fetch) {
+      unsigned x, y, i, j;
+      for(y = 0; y < height; y += 4) {
+         const uint8_t *src = src_row;
+         for(x = 0; x < width; x += 4) {
+            for(j = 0; j < 4; ++j) {
+               for(i = 0; i < 4; ++i) {
+                  uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
+                  util_format_dxt1_rgb_fetch(0, src, i, j, dst);
+               }
+            }
+            src += 8;
+         }
+         src_row += src_stride;
+      }
+   }
 }
 
 void
 util_format_dxt1_rgba_unpack_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
 {
-
+   if (util_format_dxt1_rgba_fetch) {
+      unsigned x, y, i, j;
+      for(y = 0; y < height; y += 4) {
+         const uint8_t *src = src_row;
+         for(x = 0; x < width; x += 4) {
+            for(j = 0; j < 4; ++j) {
+               for(i = 0; i < 4; ++i) {
+                  uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
+                  util_format_dxt1_rgba_fetch(0, src, i, j, dst);
+               }
+            }
+            src += 8;
+         }
+         src_row += src_stride;
+      }
+   }
 }
 
 void
@@ -320,6 +351,28 @@ util_format_dxt5_rgba_unpack_float(float *dst_row, unsigned dst_stride, const ui
 void
 util_format_dxt1_rgb_pack_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
 {
+   if (util_format_dxtn_pack) {
+      unsigned x, y, i, j, k;
+      for(y = 0; y < height; y += 4) {
+         const uint8_t *src = src_row;
+         uint8_t *dst = dst_row;
+         for(x = 0; x < width; x += 4) {
+            uint8_t tmp[4][4][3];
+            for(j = 0; j < 4; ++j) {
+               for(i = 0; i < 4; ++i) {
+                  for(k = 0; k < 3; ++k) {
+                     tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + i*4 + k];
+                  }
+               }
+            }
+            util_format_dxtn_pack(3, 4, 4, src, UTIL_FORMAT_DXT1_RGB, dst, dst_stride);
+            src += 4*4;
+            dst += 8;
+         }
+         src_row += src_stride;
+         dst_row += 4*dst_stride/sizeof(*dst_row);
+      }
+   }
 }
 
 void
