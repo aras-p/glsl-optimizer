@@ -50,6 +50,7 @@
  */
 
 #include "util/u_half.h"
+#include "util/u_init.h"
 
 uint32_t util_half_to_float_mantissa_table[2048];
 uint32_t util_half_to_float_exponent_table[64];
@@ -57,14 +58,9 @@ uint32_t util_half_to_float_offset_table[64];
 uint16_t util_float_to_half_base_table[512];
 uint8_t util_float_to_half_shift_table[512];
 
-void util_half_init_tables(void)
+static void util_half_init_tables(void)
 {
-    static boolean inited = FALSE;
 	int i;
-
-    if (inited) {
-        return;
-    }
 
 	/* zero */
 	util_half_to_float_mantissa_table[0] = 0;
@@ -157,6 +153,6 @@ void util_half_init_tables(void)
 		util_float_to_half_base_table[256 + i] = util_float_to_half_base_table[i] | 0x8000;
 		util_float_to_half_shift_table[256 + i] = util_float_to_half_shift_table[i];
 	}
-
-    inited = TRUE;
 }
+
+UTIL_INIT(util_half_init_tables);
