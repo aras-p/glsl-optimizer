@@ -303,7 +303,8 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 
 
 static const struct glsl_type *
-unary_arithmetic_result_type(const struct glsl_type *type)
+unary_arithmetic_result_type(const struct glsl_type *type,
+			     struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
    /* From GLSL 1.50 spec, page 57:
     *
@@ -313,8 +314,11 @@ unary_arithmetic_result_type(const struct glsl_type *type)
     *     component-wise on their operands. These result with the same type
     *     they operated on."
     */
-   if (!type->is_numeric())
+   if (!type->is_numeric()) {
+      _mesa_glsl_error(loc, state,
+		       "Operands to arithmetic operators must be numeric");
       return glsl_type::error_type;
+   }
 
    return type;
 }
@@ -322,7 +326,8 @@ unary_arithmetic_result_type(const struct glsl_type *type)
 
 static const struct glsl_type *
 modulus_result_type(const struct glsl_type *type_a,
-		    const struct glsl_type *type_b)
+		    const struct glsl_type *type_b,
+		    struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
    /* From GLSL 1.50 spec, page 56:
     *    "The operator modulus (%) operates on signed or unsigned integers or
@@ -331,6 +336,7 @@ modulus_result_type(const struct glsl_type *type_a,
     */
    if (!type_a->is_integer() || !type_b->is_integer()
        || (type_a->base_type != type_b->base_type)) {
+      _mesa_glsl_error(loc, state, "type mismatch");
       return glsl_type::error_type;
    }
 
@@ -349,13 +355,14 @@ modulus_result_type(const struct glsl_type *type_a,
    /*    "The operator modulus (%) is not defined for any other data types
     *    (non-integer types)."
     */
+   _mesa_glsl_error(loc, state, "type mismatch");
    return glsl_type::error_type;
 }
 
 
 static const struct glsl_type *
 relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
-		       struct _mesa_glsl_parse_state *state)
+		       struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
    const glsl_type *const type_a = value_a->type;
    const glsl_type *const type_b = value_b->type;
@@ -368,8 +375,12 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
    if (!type_a->is_numeric()
        || !type_b->is_numeric()
        || !type_a->is_scalar()
-       || !type_b->is_scalar())
+       || !type_b->is_scalar()) {
+      _mesa_glsl_error(loc, state,
+		       "Operands to relational operators must be scalar and "
+		       "numeric");
       return glsl_type::error_type;
+   }
 
    /*    "Either the operands' types must match, or the conversions from
     *    Section 4.1.10 "Implicit Conversions" will be applied to the integer
@@ -377,11 +388,16 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
     */
    if (!apply_implicit_conversion(type_a, value_b, state)
        && !apply_implicit_conversion(type_b, value_a, state)) {
+      _mesa_glsl_error(loc, state,
+		       "Could not implicitly convert operands to "
+		       "relational operator");
       return glsl_type::error_type;
    }
 
-   if (type_a->base_type != type_b->base_type)
+   if (type_a->base_type != type_b->base_type) {
+      _mesa_glsl_error(loc, state, "base type mismatch");
       return glsl_type::error_type;
+   }
 
    /*    "The result is scalar Boolean."
     */
@@ -603,9 +619,9 @@ ast_expression::hir(exec_list *instructions,
    case ast_neg:
       op[0] = this->subexpressions[0]->hir(instructions, state);
 
-      type = unary_arithmetic_result_type(op[0]->type);
+      type = unary_arithmetic_result_type(op[0]->type, state, & loc);
 
-      error_emitted = op[0]->type->is_error();
+      error_emitted = type->is_error();
 
       result = new ir_expression(operations[this->oper], type,
 				 op[0], NULL);
@@ -631,14 +647,13 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
-
-      type = modulus_result_type(op[0]->type, op[1]->type);
+      type = modulus_result_type(op[0]->type, op[1]->type, state, & loc);
 
       assert(operations[this->oper] == ir_binop_mod);
 
       result = new ir_expression(operations[this->oper], type,
 				 op[0], op[1]);
+      error_emitted = type->is_error();
       break;
 
    case ast_lshift:
@@ -653,9 +668,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
-
-      type = relational_result_type(op[0], op[1], state);
+      type = relational_result_type(op[0], op[1], state, & loc);
 
       /* The relational operators must either generate an error or result
        * in a scalar boolean.  See page 57 of the GLSL 1.50 spec.
@@ -666,6 +679,7 @@ ast_expression::hir(exec_list *instructions,
 
       result = new ir_expression(operations[this->oper], type,
 				 op[0], op[1]);
+      error_emitted = type->is_error();
       break;
 
    case ast_nequal:
@@ -765,9 +779,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
-
-      type = modulus_result_type(op[0]->type, op[1]->type);
+      type = modulus_result_type(op[0]->type, op[1]->type, state, & loc);
 
       assert(operations[this->oper] == ir_binop_mod);
 
@@ -778,7 +790,7 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state, op[0], temp_rhs,
 			     this->subexpressions[0]->get_location());
       type = result->type;
-      error_emitted = op[0]->type->is_error();
+      error_emitted = type->is_error();
       break;
    }
 
