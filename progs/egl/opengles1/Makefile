@@ -19,6 +19,14 @@ ES1_LIBS = \
 	-L$(TOP)/$(LIB_DIR) -lEGL \
 	-L$(TOP)/$(LIB_DIR) -lGLESv1_CM $(LIBDRM_LIB) -lX11
 
+EGLUT_DIR = $(TOP)/progs/egl/eglut
+
+EGLUT_DEMOS = \
+	tri
+
+EGLUT_X11_DEMOS := $(addsuffix _x11,$(EGLUT_DEMOS))
+EGLUT_SCREEN_DEMOS := $(addsuffix _screen,$(EGLUT_DEMOS))
+
 PROGRAMS = \
 	bindtex \
 	drawtex \
@@ -27,16 +35,15 @@ PROGRAMS = \
 	pbuffer \
 	render_tex \
 	torus \
-	tri \
 	two_win
 
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) -I$(EGLUT_DIR) $(CFLAGS) $< -o $@
 
 
 
-default: $(PROGRAMS)
+default: $(PROGRAMS) $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
 
 
 
@@ -72,11 +79,23 @@ two_win: two_win.o $(ES1_LIB_DEPS)
 	$(CC) $(CFLAGS) two_win.o $(ES1_LIBS) -o $@
 
 
-tri: tri.o $(ES1_LIB_DEPS)
-	$(CC) $(CFLAGS) tri.o $(ES1_LIBS) -o $@
+$(EGLUT_DIR)/libeglut-x11.a $(EGLUT_DIR)/libeglut-screen.a:
+	@$(MAKE) -C $(EGLUT_DIR)
+
+# define the rules for EGLUT demos
+define eglut-demo-rule
+$(1)_x11 $(1)_screen: $(1)_%: $(1).o $(EGLUT_DIR)/libeglut-%.a $(ES1_LIB_DEPS)
+endef
+$(foreach demo, $(EGLUT_DEMOS), $(eval $(call eglut-demo-rule,$(demo))))
+
+# build EGLUT demos
+$(EGLUT_X11_DEMOS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(ES1_LIBS) -L$(EGLUT_DIR) -leglut-$* -lX11
+$(EGLUT_SCREEN_DEMOS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(ES1_LIBS) -L$(EGLUT_DIR) -leglut-$*
 
 
 clean:
-	rm -f *.o *~
-	rm -f $(PROGRAMS)
-
+	-rm -f *.o *~
+	-rm -f $(PROGRAMS) $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
+	@$(MAKE) -C $(EGLUT_DIR) clean
