@@ -736,6 +736,7 @@ ast_expression::hir(exec_list *instructions,
 
 	 _mesa_glsl_error(& loc, state, "LHS of `%s' must be scalar boolean",
 			  operator_string(this->oper));
+	 error_emitted = true;
       }
 
       if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
@@ -743,10 +744,12 @@ ast_expression::hir(exec_list *instructions,
 
 	 _mesa_glsl_error(& loc, state, "RHS of `%s' must be scalar boolean",
 			  operator_string(this->oper));
+	 error_emitted = true;
       }
 
       result = new ir_expression(operations[this->oper], glsl_type::bool_type,
 				 op[0], op[1]);
+      type = glsl_type::bool_type;
       break;
 
    case ast_logic_not:
@@ -757,10 +760,12 @@ ast_expression::hir(exec_list *instructions,
 
 	 _mesa_glsl_error(& loc, state,
 			  "operand of `!' must be scalar boolean");
+	 error_emitted = true;
       }
 
       result = new ir_expression(operations[this->oper], glsl_type::bool_type,
 				 op[0], NULL);
+      type = glsl_type::bool_type;
       break;
 
    case ast_mul_assign:
