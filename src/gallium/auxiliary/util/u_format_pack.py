@@ -147,7 +147,7 @@ def generate_srgb_tables():
 def bswap_format(format):
     '''Generate a structure that describes the format.'''
 
-    if format.is_bitmask() and not format.is_array():
+    if format.is_bitmask() and not format.is_array() and format.block_size() > 8:
         print '#ifdef PIPE_ARCH_BIG_ENDIAN'
         print '   pixel.value = util_bswap%u(pixel.value);' % format.block_size()
         print '#endif'
@@ -353,9 +353,10 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             elif src_channel.type == SIGNED:
                 print '         int%u_t %s;' % (depth, src_channel.name)
 
-        print '#ifdef PIPE_ARCH_BIG_ENDIAN'
-        print '         value = util_bswap%u(value);' % depth
-        print '#endif'
+        if depth > 8:
+            print '#ifdef PIPE_ARCH_BIG_ENDIAN'
+            print '         value = util_bswap%u(value);' % depth
+            print '#endif'
 
         # Compute the intermediate unshifted values 
         shift = 0
@@ -476,9 +477,10 @@ def generate_pack_kernel(format, src_channel, src_native_type):
                 
             shift += dst_channel.size
 
-        print '#ifdef PIPE_ARCH_BIG_ENDIAN'
-        print '         value = util_bswap%u(value);' % depth
-        print '#endif'
+        if depth > 8:
+            print '#ifdef PIPE_ARCH_BIG_ENDIAN'
+            print '         value = util_bswap%u(value);' % depth
+            print '#endif'
         
         print '         *(uint%u_t *)dst = value;' % depth 
 
