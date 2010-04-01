@@ -200,7 +200,7 @@ test_format_pack_float(const struct util_format_description *format_desc,
    unsigned i, j, k;
    boolean success;
 
-   if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+   if (test->format == PIPE_FORMAT_DXT1_RGBA) {
       /*
        * Skip S3TC as packed representation is not canonical.
        *
@@ -300,7 +300,7 @@ test_format_pack_8unorm(const struct util_format_description *format_desc,
    unsigned i;
    boolean success;
 
-   if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+   if (test->format == PIPE_FORMAT_DXT1_RGBA) {
       /*
        * Skip S3TC as packed representation is not canonical.
        *
