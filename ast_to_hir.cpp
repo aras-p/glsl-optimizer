@@ -1434,13 +1434,22 @@ ast_declarator_list::hir(exec_list *instructions,
 	 }
 
 	 ir_dereference *const lhs = new ir_dereference(var);
-	 ir_rvalue *const rhs = decl->initializer->hir(instructions, state);
+	 ir_rvalue *rhs = decl->initializer->hir(instructions, state);
 
-	 /* FINISHME: If the declaration is either 'const' or 'uniform', the
-	  * FINISHME: initializer (rhs) must be a constant expression.
+	 /* Calculate the constant value if this is a const
+	  * declaration.
 	  */
+	 if (this->type->qualifier.constant) {
+	    rhs = rhs->constant_expression_value();
+	    if (!rhs) {
+	       _mesa_glsl_error(& initializer_loc, state,
+				"initializer of const variable `%s' must be a "
+				"constant expression",
+				decl->identifier);
+	    }
+	 }
 
-	 if (!rhs->type->is_error()) {
+	 if (rhs && !rhs->type->is_error()) {
 	    bool temp = var->read_only;
 	    if (this->type->qualifier.constant)
 	       var->read_only = false;
