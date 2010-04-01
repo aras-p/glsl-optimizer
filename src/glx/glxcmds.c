@@ -1917,6 +1917,7 @@ __glXSwapIntervalSGI(int interval)
 #endif
    psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
 
+#ifdef GLX_DIRECT_RENDERING
    if (gc->driContext && psc->driScreen && psc->driScreen->setSwapInterval) {
       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(gc->currentDpy,
 						  gc->currentDrawable,
@@ -1924,6 +1925,7 @@ __glXSwapIntervalSGI(int interval)
       psc->driScreen->setSwapInterval(pdraw, interval);
       return 0;
    }
+#endif
 
    dpy = gc->currentDpy;
    opcode = __glXSetupForCommand(dpy);
@@ -1974,6 +1976,7 @@ __glXSwapIntervalMESA(unsigned int interval)
    }
 #endif
 
+#ifdef GLX_DIRECT_RENDERING
    if (gc != NULL && gc->driContext) {
       __GLXscreenConfigs *psc;
 
@@ -1985,6 +1988,7 @@ __glXSwapIntervalMESA(unsigned int interval)
 	 return 0;
       }
    }
+#endif
 
    return GLX_BAD_CONTEXT;
 }
@@ -2137,8 +2141,13 @@ __glXGetVideoSyncSGI(unsigned int *count)
    __GLXscreenConfigs *psc;
    __GLXDRIdrawable *pdraw;
 
-   if (!gc || !gc->driContext)
+   if (!gc)
       return GLX_BAD_CONTEXT;
+
+#ifdef GLX_DIRECT_RENDERING
+   if (!gc->driContext)
+      return GLX_BAD_CONTEXT;
+#endif
 
    psc = GetGLXScreenConfigs(gc->currentDpy, gc->screen);
    pdraw = GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
@@ -2177,8 +2186,13 @@ __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
    if (divisor <= 0 || remainder < 0)
       return GLX_BAD_VALUE;
 
-   if (!gc || !gc->driContext)
+   if (!gc)
       return GLX_BAD_CONTEXT;
+
+#ifdef GLX_DIRECT_RENDERING
+   if (!gc->driContext)
+      return GLX_BAD_CONTEXT;
+#endif
 
    psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
    pdraw = GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
@@ -2494,8 +2508,13 @@ __glXSwapBuffersMscOML(Display * dpy, GLXDrawable drawable,
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
 
-   if (!pdraw || !gc || !gc->driContext) /* no GLX for this */
+   if (!pdraw || !gc) /* no GLX for this */
       return -1;
+
+#ifdef GLX_DIRECT_RENDERING
+   if (!gc->driContext)
+      return -1;
+#endif
 
    /* The OML_sync_control spec says these should "generate a GLX_BAD_VALUE
     * error", but it also says "It [glXSwapBuffersMscOML] will return a value
