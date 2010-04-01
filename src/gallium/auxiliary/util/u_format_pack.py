@@ -43,45 +43,6 @@ import math
 from u_format_parse import *
 
 
-def generate_f16_to_f32():
-    '''Naive implementation, need something faster that operates on bits'''
-
-    print '''
-static float
-f16_to_f32(uint16_t h)
-{
-    unsigned mantissa = h & 0x3ff;
-    unsigned exponent = (h >> 10) & 0x1f;
-    float sign = (h & 0x8000) ? -1.0f : 1.0f;
-
-    if (exponent == 0) {
-        if (mantissa == 0) {
-            return sign * 0.0f;
-        }
-        return sign * powf(2.0f, -14.0f) * (float)mantissa / 1024.0f;
-    }
-    if (exponent == 31) {
-        if (mantissa == 0) {
-            /* XXX: infinity */
-            return sign * 100000.0f;
-        }
-        /* XXX: NaN */
-        return 1000.0f;
-    }
-    return sign * powf(2.0f, (float)exponent - 15.0f) * (1.0f + (float)mantissa / 1024.0f);
-}
-'''
-
-def generate_f32_to_f16():
-    print '''
-static uint16_t
-f32_to_f16(float f)
-{
-    /* TODO */
-    return 0;
-}
-'''
-
 def generate_format_type(format):
     '''Generate a structure that describes the format.'''
 
@@ -271,18 +232,18 @@ def conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=True
         return value
 
     if src_channel.type == FLOAT and dst_channel.type == FLOAT:
-        if src_channel.size == dst_channel.size:
-            return value
         if src_channel.size == 64:
             value = '(float)%s' % (value)
         elif src_channel.size == 16:
-            value = 'f16_to_f32(%s)' % (value)
+            value = 'util_half_to_float(%s)' % (value)
+
         if dst_channel.size == 16:
-            value = 'f32_to_f16(%s)' % (value)
+            value = 'util_float_to_half(%s)' % (value)
         elif dst_channel.size == 64:
             value = '(double)%s' % (value)
+
         return value
-    
+
     if clamp:
         value = clamp_expr(src_channel, dst_channel, dst_native_type, value)
 
@@ -584,10 +545,8 @@ def generate(formats):
     print '#include "pipe/p_compiler.h"'
     print '#include "u_math.h"'
     print '#include "u_format.h"'
+    print '#include "u_half.h"'
     print
-
-    generate_f16_to_f32()
-    generate_f32_to_f16()
 
     for format in formats:
         if is_format_supported(format):
