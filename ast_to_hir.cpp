@@ -658,7 +658,8 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_lshift:
    case ast_rshift:
-      /* FINISHME: Implement bit-shift operators. */
+      _mesa_glsl_error(& loc, state, "FINISHME: implement bit-shift operators");
+      error_emitted = true;
       break;
 
    case ast_less:
@@ -720,7 +721,8 @@ ast_expression::hir(exec_list *instructions,
    case ast_bit_xor:
    case ast_bit_or:
    case ast_bit_not:
-      /* FINISHME: Implement bit-wise operators. */
+      _mesa_glsl_error(& loc, state, "FINISHME: implement bit-wise operators");
+      error_emitted = true;
       break;
 
    case ast_logic_and:
@@ -809,11 +811,17 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_ls_assign:
    case ast_rs_assign:
+      _mesa_glsl_error(& loc, state,
+		       "FINISHME: implement bit-shift assignment operators");
+      error_emitted = true;
       break;
 
    case ast_and_assign:
    case ast_xor_assign:
    case ast_or_assign:
+      _mesa_glsl_error(& loc, state,
+		       "FINISHME: implement logic assignment operators");
+      error_emitted = true;
       break;
 
    case ast_conditional: {
