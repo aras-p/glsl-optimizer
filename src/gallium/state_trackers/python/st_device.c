@@ -85,7 +85,7 @@ st_device_create(boolean hardware)
    if (hardware)
       screen = st_hardware_screen_create();
    else
-      screen = st_software_screen_create();
+      screen = st_software_screen_create("softpipe");
 
    screen = trace_screen_create(screen);
    if (!screen)

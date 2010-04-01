@@ -35,26 +35,28 @@
 
 
 struct pipe_screen *
-st_software_screen_create(void)
+st_software_screen_create(const char *driver)
 {
    struct sw_winsys *ws;
-   const char *default_driver;
-   const char *driver;
    struct pipe_screen *screen = NULL;
 
+   if (!driver) {
+      const char *default_driver;
+
 #if defined(HAVE_LLVMPIPE)
-   default_driver = "llvmpipe";
+      default_driver = "llvmpipe";
 #elif defined(HAVE_SOFTPIPE)
-   default_driver = "softpipe";
+      default_driver = "softpipe";
 #else
-   default_driver = "";
+      default_driver = "";
 #endif
+
+      driver = debug_get_option("GALLIUM_DRIVER", default_driver);
+   }
 
    ws = null_sw_create();
    if(!ws)
       return NULL;
-
-   driver = debug_get_option("GALLIUM_DRIVER", default_driver);
 
 #ifdef HAVE_LLVMPIPE
    if (strcmp(driver, "llvmpipe") == 0) {
@@ -67,6 +69,10 @@ st_software_screen_create(void)
       screen = softpipe_create_screen(ws);
    }
 #endif
+
+   if (!screen) {
+      ws->destroy(ws);
+   }
 
    return screen;
 }

@@ -37,7 +37,7 @@ struct pipe_screen *
 st_hardware_screen_create(void);
 
 struct pipe_screen *
-st_software_screen_create(void);
+st_software_screen_create(const char *driver);
 
 
 #endif /* ST_WINSYS_H_ */

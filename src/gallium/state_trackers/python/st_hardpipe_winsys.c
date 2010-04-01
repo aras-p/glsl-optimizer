@@ -208,5 +208,5 @@ st_hardware_screen_create(void)
    if(st_hardpipe_load())
       return pfnGetGalliumScreenMESA();
    else
-      return st_software_screen_create();
+      return st_software_screen_create(NULL);
 }
