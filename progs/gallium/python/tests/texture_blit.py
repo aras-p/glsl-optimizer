@@ -191,7 +191,7 @@ class TextureColorSampleTest(TestCase):
             zslice = zslice,
         )
         
-        ctx.surface_sample_rgba(surface, expected_rgba)
+        ctx.surface_sample_rgba(surface, expected_rgba, True)
         
         ctx.set_fragment_sampler_texture(0, texture)
 
@@ -428,7 +428,7 @@ class TextureDepthSampleTest(TestCase):
             zslice = zslice,
         )
 
-        ctx.surface_sample_rgba(surface, expected_rgba)
+        ctx.surface_sample_rgba(surface, expected_rgba, True)
         
         ctx.set_fragment_sampler_texture(0, texture)
 
