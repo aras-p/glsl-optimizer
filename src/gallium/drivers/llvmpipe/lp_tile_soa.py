@@ -45,6 +45,28 @@ sys.path.insert(0, os.path.join(os.path.dirname(sys.argv[0]), '../../auxiliary/u
 from u_format_pack import *
 
 
+def is_format_supported(format):
+    '''Determines whether we actually have the plumbing necessary to generate the 
+    to read/write to/from this format.'''
+
+    # FIXME: Ideally we would support any format combination here.
+
+    if format.layout != PLAIN:
+        return False
+
+    for i in range(4):
+        channel = format.channels[i]
+        if channel.type not in (VOID, UNSIGNED, SIGNED, FLOAT):
+            return False
+        if channel.type == FLOAT and channel.size not in (32 ,64):
+            return False
+
+    if format.colorspace not in ('rgb', 'srgb'):
+        return False
+
+    return True
+
+
 def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
     '''Generate the function to read pixels from a particular format'''
 
@@ -333,6 +355,7 @@ def main():
     print '#include "pipe/p_compiler.h"'
     print '#include "util/u_format.h"'
     print '#include "util/u_math.h"'
+    print '#include "util/u_half.h"'
     print '#include "lp_tile_soa.h"'
     print
     print 'const unsigned char'
