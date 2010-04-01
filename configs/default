@@ -119,7 +119,7 @@ APP_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LI
 
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
-
+X11_LIBS = -lX11
 
 # Installation directories (for make install)
 INSTALL_DIR = /usr/local
