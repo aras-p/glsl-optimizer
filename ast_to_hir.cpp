@@ -726,7 +726,6 @@ ast_expression::hir(exec_list *instructions,
    case ast_logic_and:
    case ast_logic_xor:
    case ast_logic_or:
-   case ast_logic_not:
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
@@ -746,6 +745,20 @@ ast_expression::hir(exec_list *instructions,
 
       result = new ir_expression(operations[this->oper], glsl_type::bool_type,
 				 op[0], op[1]);
+      break;
+
+   case ast_logic_not:
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+
+      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
+	 YYLTYPE loc = this->subexpressions[0]->get_location();
+
+	 _mesa_glsl_error(& loc, state,
+			  "operand of `!' must be scalar boolean");
+      }
+
+      result = new ir_expression(operations[this->oper], glsl_type::bool_type,
+				 op[0], NULL);
       break;
 
    case ast_mul_assign:
