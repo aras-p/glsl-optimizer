@@ -3,37 +3,53 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-VG_LIBS=-lm -pthread -lX11 -lEGL -lOpenVG
+VG_LIBS=-lm -lEGL -lOpenVG
 INCLUDE_DIRS = -I$(TOP)/include
 
+EGLUT_DIR = $(TOP)/progs/egl/eglut
+
+EGLUT_DEMOS = \
+	sp
+
+EGLUT_X11_DEMOS := $(addsuffix _x11,$(EGLUT_DEMOS))
+EGLUT_SCREEN_DEMOS := $(addsuffix _screen,$(EGLUT_DEMOS))
+
 PROGRAMS = \
-        lion \
-        sp
+	lion_x11 \
+	lion_screen
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) -I$(EGLUT_DIR) $(CFLAGS) $< -o $@
 
 
 
-default: $(PROGRAMS)
+default: $(PROGRAMS) $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
 
-lion: lion.o lion-render.o
-	$(CC) $(CFLAGS) lion.o lion-render.o -L$(TOP)/$(LIB_DIR) $(VG_LIBS) -o $@
+lion_x11: lion.o lion-render.o $(EGLUT_DIR)/libeglut-x11.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ lion.o lion-render.o \
+		$(VG_LIBS) -L$(EGLUT_DIR) -leglut-x11 -lX11
 
-lion.o: lion.c lion-render.h $(HEADERS)
-	$(CC) -c $(CFLAGS) -I$(TOP)/include lion.c
-lion-render.o: lion-render.c lion-render.h $(HEADERS)
-	$(CC) -c $(CFLAGS) -I$(TOP)/include lion-render.c
+lion_screen: lion.o lion-render.o $(EGLUT_DIR)/libeglut-screen.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ lion.o lion-render.o \
+		$(VG_LIBS) -L$(EGLUT_DIR) -leglut-screen
 
 
-sp: sp.c eglcommon.o
-	$(CC) $(INCLUDE_DIRS) $(CFLAGS) $^  -L$(TOP)/$(LIB_DIR) $(LIBS) $(VG_LIBS)  $(APP_LIB_DEPS) -o $@
+$(EGLUT_DIR)/libeglut-x11.a $(EGLUT_DIR)/libeglut-screen.a:
+	@$(MAKE) -C $(EGLUT_DIR)
 
-eglcommon.o: eglcommon.c $(HEADERS)
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) eglcommon.c
+# define the rules for EGLUT demos
+define eglut-demo-rule
+$(1)_x11 $(1)_screen: $(1)_%: $(1).o $(EGLUT_DIR)/libeglut-%.a
+endef
+$(foreach demo, $(EGLUT_DEMOS), $(eval $(call eglut-demo-rule,$(demo))))
 
+# build EGLUT demos
+$(EGLUT_X11_DEMOS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(VG_LIBS) -L$(EGLUT_DIR) -leglut-$* -lX11
+$(EGLUT_SCREEN_DEMOS):
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(VG_LIBS) -L$(EGLUT_DIR) -leglut-$*
 
 clean:
 	rm -f *.o *~
-	rm -f *.so
-	rm -f $(PROGRAMS)
+	rm -f $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
+	@$(MAKE) -C $(EGLUT_DIR) clean

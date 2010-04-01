@@ -1,13 +1,9 @@
-#include "eglcommon.h"
-
 #include <VG/openvg.h>
 #include <VG/vgu.h>
-#include <stdio.h>
 #include <math.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include <X11/keysym.h>
+#include "eglut.h"
 
 #define ELEMENTS(x) (sizeof(x)/sizeof((x)[0]))
 
@@ -475,36 +471,13 @@ reshape(int w, int h)
 {
 }
 
-static int
-key_press(unsigned key)
-{
-    switch(key) {
-    case XK_Right:
-
-        break;
-    case XK_Left:
-        break;
-    case XK_Up:
-        break;
-    case XK_Down:
-        break;
-    case 'a':
-        break;
-    case 's':
-        break;
-    default:
-        break;
-    }
-    return VG_FALSE;
-}
-
 static void
 draw(void)
 {
    VGint i;
    VGfloat save_matrix[9];
 
-   vgClear(0, 0, window_width(), window_height());
+   vgClear(0, 0, eglutGetWindowWidth(), eglutGetWindowHeight());
 
    vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
    vgLoadIdentity();
@@ -532,6 +505,18 @@ draw(void)
 
 int main(int argc, char **argv)
 {
-    set_window_size(400, 400);
-    return run(argc, argv, init, reshape, draw, key_press);
+   eglutInitWindowSize(400, 400);
+   eglutInitAPIMask(EGLUT_OPENVG_BIT);
+   eglutInit(argc, argv);
+
+   eglutCreateWindow("sp");
+
+   eglutReshapeFunc(reshape);
+   eglutDisplayFunc(draw);
+
+   init();
+
+   eglutMainLoop();
+
+   return 0;
 }
