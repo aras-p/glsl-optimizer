@@ -22,9 +22,6 @@ uint32_t util_half_to_float_offset_table[64];
 uint16_t util_float_to_half_base_table[512];
 uint8_t util_float_to_half_shift_table[512];
 
-/* called by u_gctors.cpp, which defines the prototype itself */
-void util_half_init_tables(void);
-
 void util_half_init_tables(void)
 {
 	int i;

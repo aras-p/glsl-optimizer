@@ -4,7 +4,7 @@
    __attribute__((constructor)) allows to do this in C, but is GCC-only
 */
 
-extern "C" void util_half_init_tables(void);
+#include "u_half.h"
 
 struct util_gctor_t
 {

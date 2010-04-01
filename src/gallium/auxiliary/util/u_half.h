@@ -4,6 +4,12 @@
 #include "pipe/p_compiler.h"
 #include "u_math.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 extern uint32_t util_half_to_float_mantissa_table[2048];
 extern uint32_t util_half_to_float_exponent_table[64];
 extern uint32_t util_half_to_float_offset_table[64];
@@ -52,5 +58,13 @@ util_float_to_half(float f)
 	i.f = f;
 	return util_floatui_to_half(i.ui);
 }
+
+/* called by u_gctors.cpp, which defines the prototype itself */
+void util_half_init_tables(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* U_HALF_H */
