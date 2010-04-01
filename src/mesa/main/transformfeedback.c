@@ -33,7 +33,6 @@
 #include "buffers.h"
 #include "bufferobj.h"
 #include "context.h"
-#include "enums.h"
 #include "transformfeedback.h"
 
 #include "shader/prog_parameter.h"
