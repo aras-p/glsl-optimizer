@@ -1,0 +1,8 @@
+The design of most of this code is such that we extend the GLX structures 
+with a void * named apple.
+
+The GLX functions that need to do Apple-specific things are passed 
+&s->apple in order to initialize the private structures.
+
+Thus when updating, just run a diff against glxext.c or glxcmds.c, and
+manually merge from there as needed.
