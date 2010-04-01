@@ -273,14 +273,18 @@ struct exec_list {
     */
    void move_nodes_to(exec_list *target)
    {
-      target->head = head;
-      target->tail = NULL;
-      target->tail_pred = tail_pred;
+      if (is_empty()) {
+	 target->make_empty();
+      } else {
+	 target->head = head;
+	 target->tail = NULL;
+	 target->tail_pred = tail_pred;
 
-      target->head->prev = (exec_node *) &target->head;
-      target->tail_pred->next = (exec_node *) &target->tail;
+	 target->head->prev = (exec_node *) &target->head;
+	 target->tail_pred->next = (exec_node *) &target->tail;
 
-      make_empty();
+	 make_empty();
+      }
    }
 
    exec_list_iterator iterator()
