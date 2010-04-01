@@ -108,18 +108,32 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
       switch(format_desc->channel[chan].type) {
       case UTIL_FORMAT_TYPE_VOID:
-         input = NULL;
+         input = lp_build_undef(type);
          break;
 
       case UTIL_FORMAT_TYPE_UNSIGNED:
-         if(type.floating) {
-            if(start)
-               input = LLVMBuildLShr(builder, input, lp_build_const_int_vec(type, start), "");
-            if(stop < format_desc->block.bits) {
-               unsigned mask = ((unsigned long long)1 << width) - 1;
-               input = LLVMBuildAnd(builder, input, lp_build_const_int_vec(type, mask), "");
-            }
+         /*
+          * Align the LSB
+          */
 
+         if (start) {
+            input = LLVMBuildLShr(builder, input, lp_build_const_int_vec(type, start), "");
+         }
+
+         /*
+          * Zero the MSBs
+          */
+
+         if (stop < format_desc->block.bits) {
+            unsigned mask = ((unsigned long long)1 << width) - 1;
+            input = LLVMBuildAnd(builder, input, lp_build_const_int_vec(type, mask), "");
+         }
+
+         /*
+          * Type conversion
+          */
+
+         if (type.floating) {
             if(format_desc->channel[chan].normalized)
                input = lp_build_unsigned_norm_to_float(builder, width, type, input);
             else
@@ -130,10 +144,51 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
             assert(0);
             input = lp_build_undef(type);
          }
+
+         break;
+
+      case UTIL_FORMAT_TYPE_SIGNED:
+         /*
+          * Align the sign bit first.
+          */
+
+         if (stop < type.width) {
+            unsigned bits = type.width - stop;
+            LLVMValueRef bits_val = lp_build_const_int_vec(type, bits);
+            input = LLVMBuildShl(builder, input, bits_val, "");
+         }
+
+         /*
+          * Align the LSB (with an arithmetic shift to preserve the sign)
+          */
+
+         if (format_desc->channel[chan].size < type.width) {
+            unsigned bits = type.width - format_desc->channel[chan].size;
+            LLVMValueRef bits_val = lp_build_const_int_vec(type, bits);
+            input = LLVMBuildAShr(builder, input, bits_val, "");
+         }
+
+         /*
+          * Type conversion
+          */
+
+         if (type.floating) {
+            input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(type), "");
+            if (format_desc->channel[chan].normalized) {
+               double scale = 1.0 / ((1 << (format_desc->channel[chan].size - 1)) - 1);
+               LLVMValueRef scale_val = lp_build_const_vec(type, scale);
+               input = LLVMBuildMul(builder, input, scale_val, "");
+            }
+         }
+         else {
+            /* FIXME */
+            assert(0);
+            input = lp_build_undef(type);
+         }
+
          break;
 
       default:
-         /* fall through */
          input = lp_build_undef(type);
          break;
       }
