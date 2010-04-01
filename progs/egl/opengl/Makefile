@@ -1,6 +1,6 @@
 # progs/egl/Makefile
 
-TOP = ../..
+TOP = ../../..
 include $(TOP)/configs/current
 
 
