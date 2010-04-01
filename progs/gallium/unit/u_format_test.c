@@ -404,7 +404,6 @@ int main(int argc, char **argv)
 {
    boolean success;
 
-   util_half_init_tables();
    util_format_s3tc_init();
 
    success = test_all();

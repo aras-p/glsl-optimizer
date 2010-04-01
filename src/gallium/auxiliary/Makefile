@@ -139,9 +139,6 @@ C_SOURCES = \
 	#vl/vl_csc.c \
 	#vl/vl_shader_build.c \
 
-CPP_SOURCES = \
-	util/u_gctors.cpp
-
 GALLIVM_SOURCES = \
         gallivm/lp_bld_alpha.c \
         gallivm/lp_bld_arit.c \
