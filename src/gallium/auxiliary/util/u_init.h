@@ -40,6 +40,7 @@
 /* add a pointer to the section where MSVC stores global constructor pointers */
 /* see http://blogs.msdn.com/vcblog/archive/2006/10/20/crt-initialization.aspx and
    http://stackoverflow.com/questions/1113409/attribute-constructor-equivalent-in-vc */
+#pragma data_seg(".CRT$XCU")
 #define UTIL_INIT(f) static void __cdecl f##__init(void) {f();}; __declspec(allocate(".CRT$XCU")) void (__cdecl* f##__xcu)(void) = f##__init;
 #elif defined(__GNUC__)
 #define UTIL_INIT(f) static void f##__init(void) __attribute__((constructor)); static void f##__init(void) {f();}
