@@ -10,6 +10,7 @@
 #include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_tgsi.h"
+#include "gallivm/lp_bld_printf.h"
 
 #include "util/u_memory.h"
 #include "pipe/p_state.h"
@@ -431,10 +432,10 @@ fetch(LLVMBuilderRef builder,
    for (i = 0; i < nr_components; ++i) {
       LLVMValueRef src_index = LLVMConstInt(LLVMInt32Type(), offset, 0);
       LLVMValueRef dst_index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef src_tmp = LLVMBuildGEP(builder, ptr, &src_index, 1, "");
+      LLVMValueRef src_tmp;
       LLVMValueRef component;
 
-      src_tmp = LLVMBuildLoad(builder, src_tmp, "");
+      src_tmp = LLVMBuildGEP(builder, ptr, &src_index, 1, "src_tmp");
 
       /* convert src_tmp to float */
       component = func(builder, src_tmp);

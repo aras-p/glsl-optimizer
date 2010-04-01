@@ -10,6 +10,7 @@
 #include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_tgsi.h"
+#include "gallivm/lp_bld_printf.h"
 
 #include "util/u_cpu_detect.h"
 
@@ -229,6 +230,23 @@ generate_vs(struct draw_llvm *llvm,
                      NULL/*sampler*/);
 }
 
+
+static void print_vectorf(LLVMBuilderRef builder,
+                         LLVMValueRef vec)
+{
+   LLVMValueRef val[4];
+   val[0] = LLVMBuildExtractElement(builder, vec,
+                                    LLVMConstInt(LLVMInt32Type(), 0, 0), "");
+   val[1] = LLVMBuildExtractElement(builder, vec,
+                                    LLVMConstInt(LLVMInt32Type(), 1, 0), "");
+   val[2] = LLVMBuildExtractElement(builder, vec,
+                                    LLVMConstInt(LLVMInt32Type(), 2, 0), "");
+   val[3] = LLVMBuildExtractElement(builder, vec,
+                                    LLVMConstInt(LLVMInt32Type(), 3, 0), "");
+   lp_build_printf(builder, "vector = [%f, %f, %f, %f]\n",
+                   val[0], val[1], val[2], val[3]);
+}
+
 static void
 generate_fetch(LLVMBuilderRef builder,
                LLVMValueRef vbuffers_ptr,
@@ -244,6 +262,8 @@ generate_fetch(LLVMBuilderRef builder,
                                       LLVMConstInt(LLVMInt32Type(), vbuf->stride, 0),
                                       index, "");
 
+   vbuffer_ptr = LLVMBuildLoad(builder, vbuffer_ptr, "vbuffer");
+
    stride = LLVMBuildAdd(builder, stride,
                          LLVMConstInt(LLVMInt32Type(), vbuf->buffer_offset, 0),
                          "");
@@ -251,6 +271,7 @@ generate_fetch(LLVMBuilderRef builder,
                          LLVMConstInt(LLVMInt32Type(), velem->src_offset, 0),
                          "");
 
+   /*lp_build_printf(builder, "vbuf index = %d, stride is %d\n", indices, stride);*/
    vbuffer_ptr = LLVMBuildGEP(builder, vbuffer_ptr, &stride, 1, "");
 
    *res = draw_llvm_translate_from(builder, vbuffer_ptr, velem->src_format);
@@ -386,6 +407,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
    end = lp_build_add(&bld, start, count);
 
    step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
+
    lp_build_loop_begin(builder, start, &lp_loop);
    {
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
@@ -404,6 +426,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
                velem->vertex_buffer_index];
             generate_fetch(builder, vbuffers_ptr,
                            &aos_attribs[j][i], velem, vbuf, true_index);
+            /*print_vectorf(builder, aos_attribs[j][i]);*/
          }
       }
       convert_to_soa(builder, aos_attribs, inputs,
@@ -416,7 +439,6 @@ draw_llvm_generate(struct draw_llvm *llvm)
                   ptr_aos,
                   context_ptr,
                   io);
-      LLVMDumpModule(llvm->module);
    }
    lp_build_loop_end(builder, end, step, &lp_loop);
 
@@ -441,7 +463,6 @@ draw_llvm_generate(struct draw_llvm *llvm)
       LLVMDumpValue(function);
       debug_printf("\n");
    }
-
    llvm->jit_func = (draw_jit_vert_func)LLVMGetPointerToGlobal(llvm->draw->engine, function);
 
    if (1)
