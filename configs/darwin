@@ -52,7 +52,7 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X
 APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -L$(X11_DIR)/$(LIB_DIR) -lX11 -lXmu -lXt -lXi -lm
 
 # omit glw lib for now:
-SRC_DIRS = glsl glx/apple mesa gallium glu glut/glx glew
+SRC_DIRS = glsl glx/apple mesa glu glut/glx glew
 GLU_DIRS = sgi
 DRIVER_DIRS = osmesa
 #DRIVER_DIRS = dri
