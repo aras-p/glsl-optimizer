@@ -123,7 +123,6 @@ void ir_print_visitor::visit(ir_expression *ir)
       "&&",
       "^^",
       "||",
-      "!",
       "dot",
       "min",
       "max",

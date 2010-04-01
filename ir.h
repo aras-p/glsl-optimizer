@@ -357,7 +357,6 @@ enum ir_expression_operation {
    ir_binop_logic_and,
    ir_binop_logic_xor,
    ir_binop_logic_or,
-   ir_binop_logic_not,
 
    ir_binop_dot,
    ir_binop_min,
