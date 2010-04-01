@@ -158,7 +158,7 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
         }
     }
 
-    /* Compressed formats. */
+    /* S3TC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
         switch (format) {
             case PIPE_FORMAT_DXT1_RGB:
@@ -181,6 +181,20 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
     for (i = 0; i < desc->nr_channels; i++) {
         if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
             result |= sign_bit[i];
+        }
+    }
+
+    /* RGTC formats. */
+    if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
+        switch (format) {
+            case PIPE_FORMAT_RGTC1_UNORM:
+            case PIPE_FORMAT_RGTC1_SNORM:
+                return R500_TX_FORMAT_ATI1N | result;
+            case PIPE_FORMAT_RGTC2_UNORM:
+            case PIPE_FORMAT_RGTC2_SNORM:
+                return R400_TX_FORMAT_ATI2N | result;
+            default:
+                return ~0; /* Unsupported/unknown. */
         }
     }
 
@@ -293,6 +307,17 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
     }
 
     return ~0; /* Unsupported/unknown. */
+}
+
+static uint32_t r500_tx_format_msb_bit(enum pipe_format format)
+{
+    switch (format) {
+        case PIPE_FORMAT_RGTC1_UNORM:
+        case PIPE_FORMAT_RGTC1_SNORM:
+            return R500_TXFORMAT_MSB;
+        default:
+            return 0;
+    }
 }
 
 /* Buffer formats. */
@@ -520,6 +545,7 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
         if (pt->height0 > 2048) {
             state->format2 |= R500_TXHEIGHT_BIT11;
         }
+        state->format2 |= r500_tx_format_msb_bit(pt->format);
     }
 
     SCREEN_DBG(screen, DBG_TEX, "r300: Set texture state (%dx%d, %d levels)\n",

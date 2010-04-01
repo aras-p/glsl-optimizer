@@ -1556,6 +1556,26 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_FORMAT_32F_32F 	    	    0x1C
 #	define R300_TX_FORMAT_32F_32F_32F_32F  	    0x1D
 #       define R300_TX_FORMAT_W24_FP                0x1E
+#       define R400_TX_FORMAT_ATI2N                 0x1F
+
+/* These need TX_FORMAT2_[0-15].TXFORMAT_MSB set.
+
+   My guess is the 10-bit formats are the 8-bit ones but with filtering being
+   performed with the precision of 10 bits per channel. This makes sense
+   with sRGB textures since the conversion to linear space reduces the precision
+   significantly so the shader gets approximately the 8-bit precision
+   in the end. It might also improve the quality of HDR rendering where
+   high-precision filtering is desirable.
+
+   Again, this is guessed, the formats might mean something entirely else.
+   The others should be fine. */
+#       define R500_TX_FORMAT_X1                    0x0
+#       define R500_TX_FORMAT_X1_REV                0x1
+#       define R500_TX_FORMAT_X10                   0x2
+#       define R500_TX_FORMAT_Y10X10                0x3
+#       define R500_TX_FORMAT_W10Z10Y10X10          0x4
+#       define R500_TX_FORMAT_ATI1N                 0x5
+
 
 #       define R300_TX_FORMAT_SIGNED_W             (1 << 5)
 #       define R300_TX_FORMAT_SIGNED_Z             (1 << 6)

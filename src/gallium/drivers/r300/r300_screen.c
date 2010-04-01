@@ -207,9 +207,14 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 {
     uint32_t retval = 0;
     boolean is_r500 = r300_screen(screen)->caps->is_r500;
+    boolean is_r400 = r300_screen(screen)->caps->is_r400;
     boolean is_z24 = format == PIPE_FORMAT_X8Z24_UNORM ||
                      format == PIPE_FORMAT_S8_USCALED_Z24_UNORM;
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM;
+    boolean is_ati1n = format == PIPE_FORMAT_RGTC1_UNORM ||
+                       format == PIPE_FORMAT_RGTC1_SNORM;
+    boolean is_ati2n = format == PIPE_FORMAT_RGTC2_UNORM ||
+                       format == PIPE_FORMAT_RGTC2_SNORM;
 
     if (target >= PIPE_MAX_TEXTURE_TYPES) {
         fprintf(stderr, "r300: Implementation error: Received bogus texture "
@@ -221,6 +226,10 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     if ((usage & PIPE_TEXTURE_USAGE_SAMPLER) &&
         /* Z24 cannot be sampled from on non-r5xx. */
         (is_r500 || !is_z24) &&
+        /* ATI1N is r5xx-only. */
+        (is_r500 || !is_ati1n) &&
+        /* ATI2N is supported on r4xx-r5xx. */
+        (is_r400 || is_r500 || !is_ati2n) &&
         r300_is_sampler_format_supported(format)) {
         retval |= PIPE_TEXTURE_USAGE_SAMPLER;
     }
