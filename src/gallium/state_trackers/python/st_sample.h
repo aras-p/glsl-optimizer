@@ -40,12 +40,14 @@ void
 st_sample_pixel_block(enum pipe_format format,
                       void *raw,
                       float *rgba, unsigned rgba_stride,
-                      unsigned w, unsigned h);
+                      unsigned w, unsigned h,
+                      boolean norm);
 
 void
 st_sample_surface(struct pipe_context *pipe,
                   struct st_surface *surface,
-                  float *rgba);
+                  float *rgba,
+                  boolean norm);
 
 
 #endif /* ST_SAMPLE_H_ */

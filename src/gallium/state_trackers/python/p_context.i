@@ -589,9 +589,10 @@ error1:
 
    void
    surface_sample_rgba(struct st_surface *surface,
-                       float *rgba)
+                       float *rgba,
+                       int norm = 0)
    {
-      st_sample_surface($self->pipe, surface, rgba);
+      st_sample_surface($self->pipe, surface, rgba, norm != 0);
    }
 
    unsigned
