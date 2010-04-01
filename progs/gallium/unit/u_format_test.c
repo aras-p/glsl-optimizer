@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <float.h>
 
+#include "util/u_half.h"
 #include "util/u_format.h"
 #include "util/u_format_tests.h"
 #include "util/u_format_s3tc.h"
@@ -403,6 +404,7 @@ int main(int argc, char **argv)
 {
    boolean success;
 
+   util_half_init_tables();
    util_format_s3tc_init();
 
    success = test_all();
