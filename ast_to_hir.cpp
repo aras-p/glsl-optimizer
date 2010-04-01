@@ -1445,26 +1445,28 @@ parameter_lists_match(exec_list *list_a, exec_list *list_b)
 
 
 ir_rvalue *
-ast_function_definition::hir(exec_list *instructions,
-			     struct _mesa_glsl_parse_state *state)
+ast_function::hir(exec_list *instructions,
+		  struct _mesa_glsl_parse_state *state)
 {
-   ir_label *label;
-   ir_function_signature *signature = NULL;
    ir_function *f = NULL;
-   exec_list parameters;
+   ir_function_signature *sig = NULL;
+   exec_list hir_parameters;
 
+
+   /* The prototype part of a function does not generate anything in the IR
+    * instruction stream.
+    */
+   (void) instructions;
 
    /* Convert the list of function parameters to HIR now so that they can be
     * used below to compare this function's signature with previously seen
     * signatures for functions with the same name.
     */
-   ast_function_parameters_to_hir(& this->prototype->parameters, & parameters,
-				  state);
+   ast_function_parameters_to_hir(& this->parameters, & hir_parameters, state);
 
    const char *return_type_name;
    const glsl_type *return_type =
-      this->prototype->return_type->specifier->glsl_type(& return_type_name,
-							 state);
+      this->return_type->specifier->glsl_type(& return_type_name, state);
 
    assert(return_type != NULL);
 
@@ -1472,30 +1474,30 @@ ast_function_definition::hir(exec_list *instructions,
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
     */
-   const char *const name = this->prototype->identifier;
+   const char *const name = identifier;
    f = state->symbols->get_function(name);
    if (f != NULL) {
       foreach_iter(exec_list_iterator, iter, *f) {
-	 signature = (struct ir_function_signature *) iter.get();
+	 sig = (struct ir_function_signature *) iter.get();
 
 	 /* Compare the parameter list of the function being defined to the
 	  * existing function.  If the parameter lists match, then the return
 	  * type must also match and the existing function must not have a
 	  * definition.
 	  */
-	 if (parameter_lists_match(& parameters, & signature->parameters)) {
+	 if (parameter_lists_match(& hir_parameters, & sig->parameters)) {
 	    /* FINISHME: Compare return types. */
 
-	    if (signature->definition != NULL) {
+	    if (is_definition && (sig->definition != NULL)) {
 	       YYLTYPE loc = this->get_location();
 
 	       _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
-	       signature = NULL;
+	       sig = NULL;
 	       break;
 	    }
 	 }
 
-	 signature = NULL;
+	 sig = NULL;
       }
 
    } else if (state->symbols->name_declared_this_scope(name)) {
@@ -1505,7 +1507,7 @@ ast_function_definition::hir(exec_list *instructions,
 
       _mesa_glsl_error(& loc, state, "function name `%s' conflicts with "
 		       "non-function", name);
-      signature = NULL;
+      sig = NULL;
    } else {
       f = new ir_function(name);
       state->symbols->add_function(f->name, f);
@@ -1519,7 +1521,7 @@ ast_function_definition::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "main() must return void");
       }
 
-      if (!parameters.is_empty()) {
+      if (!hir_parameters.is_empty()) {
 	 YYLTYPE loc = this->get_location();
 
 	 _mesa_glsl_error(& loc, state, "main() must not take any parameters");
@@ -1528,15 +1530,15 @@ ast_function_definition::hir(exec_list *instructions,
 
    /* Finish storing the information about this new function in its signature.
     */
-   if (signature == NULL) {
-      signature = new ir_function_signature(return_type);
-      f->add_signature(signature);
-   } else {
+   if (sig == NULL) {
+      sig = new ir_function_signature(return_type);
+      f->add_signature(sig);
+   } else if (is_definition) {
       /* Destroy all of the previous parameter information.  The previous
        * parameter information comes from the function prototype, and it can
        * either include invalid parameter names or may not have names at all.
        */
-      foreach_iter(exec_list_iterator, iter, signature->parameters) {
+      foreach_iter(exec_list_iterator, iter, sig->parameters) {
 	 assert(((ir_instruction *) iter.get())->as_variable() != NULL);
 
 	 iter.remove();
@@ -1544,13 +1546,28 @@ ast_function_definition::hir(exec_list *instructions,
       }
    }
 
-   parameters.move_nodes_to(& signature->parameters);
+   hir_parameters.move_nodes_to(& sig->parameters);
+   signature = sig;
 
+   /* Function declarations (prototypes) do not have r-values.
+    */
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_function_definition::hir(exec_list *instructions,
+			     struct _mesa_glsl_parse_state *state)
+{
+   prototype->is_definition = true;
+   prototype->hir(instructions, state);
+
+   ir_function_signature *signature = prototype->signature;
 
    assert(state->current_function == NULL);
    state->current_function = signature;
 
-   label = new ir_label(name);
+   ir_label *label = new ir_label(signature->function_name());
    if (signature->definition == NULL) {
       signature->definition = label;
    }

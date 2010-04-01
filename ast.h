@@ -444,10 +444,36 @@ public:
 
    virtual void print(void) const;
 
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
    ast_fully_specified_type *return_type;
    char *identifier;
 
    struct simple_node parameters;
+
+private:
+   /**
+    * Is this prototype part of the function definition?
+    *
+    * Used by ast_function_definition::hir to process the parameters, etc.
+    * of the function.
+    *
+    * \sa ::hir
+    */
+   bool is_definition;
+
+   /**
+    * Function signature corresponding to this function prototype instance
+    *
+    * Used by ast_function_definition::hir to process the parameters, etc.
+    * of the function.
+    *
+    * \sa ::hir
+    */
+   class ir_function_signature *signature;
+
+   friend class ast_function_definition;
 };
 
 

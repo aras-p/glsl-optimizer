@@ -327,6 +327,7 @@ ast_function::print(void) const
 
 
 ast_function::ast_function(void)
+   : is_definition(false), signature(NULL)
 {
    make_empty_list(& parameters);
 }
