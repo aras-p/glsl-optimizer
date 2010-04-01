@@ -22,6 +22,7 @@ ES1_LIBS = \
 EGLUT_DIR = $(TOP)/progs/egl/eglut
 
 EGLUT_DEMOS = \
+	gears \
 	tri
 
 EGLUT_X11_DEMOS := $(addsuffix _x11,$(EGLUT_DEMOS))

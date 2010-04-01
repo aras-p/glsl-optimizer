@@ -28,7 +28,7 @@
 #include <assert.h>
 
 #include <GLES/gl.h>
-#include "winsys.h"
+#include "eglut.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265
@@ -247,7 +247,7 @@ draw_gear(const struct gear *gear)
 
 
 static void
-gears_draw(void *data)
+gears_draw(void)
 {
    static const GLfloat red[4] = { 0.8, 0.1, 0.0, 1.0 };
    static const GLfloat green[4] = { 0.0, 0.8, 0.2, 1.0 };
@@ -288,11 +288,6 @@ gears_draw(void *data)
    glPopMatrix();
 
    glPopMatrix();
-
-   /* advance rotation for next frame */
-   angle += 0.5; /* 0.5 degree per frame */
-   if (angle > 3600.0)
-      angle -= 3600.0;
 }
 
 
@@ -348,27 +343,41 @@ gears_reshape(int width, int height)
 }
 
 
-static void gears_run(void)
+static void
+gears_idle(void)
 {
-   winsysRun(5.0, gears_draw, NULL);
+  static double t0 = -1.;
+  double dt, t = eglutGet(EGLUT_ELAPSED_TIME) / 1000.0;
+  if (t0 < 0.0)
+    t0 = t;
+  dt = t - t0;
+  t0 = t;
+
+  angle += 70.0 * dt;  /* 70 degrees per second */
+  angle = fmod(angle, 360.0); /* prevents eventual overflow */
+
+  eglutPostRedisplay();
 }
 
 
 int
 main(int argc, char *argv[])
 {
-   EGLint width, height;
+   eglutInitWindowSize(300, 300);
+   eglutInitAPIMask(EGLUT_OPENGL_ES1_BIT);
+   eglutInit(argc, argv);
 
-   if (!winsysInitScreen())
-      exit(1);
-   winsysQueryScreenSize(&width, &height);
+   eglutCreateWindow("gears");
+
+   eglutIdleFunc(gears_idle);
+   eglutReshapeFunc(gears_reshape);
+   eglutDisplayFunc(gears_draw);
 
    gears_init();
-   gears_reshape(width, height);
-   gears_run();
-   gears_fini();
 
-   winsysFiniScreen();
+   eglutMainLoop();
+
+   gears_fini();
 
    return 0;
 }

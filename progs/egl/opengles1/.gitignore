@@ -1,8 +1,7 @@
-screen/gears
-screen/tri
 bindtex
 drawtex
 es1_info
+gears
 msaa
 pbuffer
 render_tex
