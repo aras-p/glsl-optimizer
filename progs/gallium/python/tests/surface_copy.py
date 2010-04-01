@@ -27,6 +27,9 @@
 ##########################################################################
 
 
+import os
+import random
+
 from gallium import *
 from base import *
 
@@ -68,6 +71,14 @@ class TextureTest(TestCase):
         level = self.level
         zslice = self.zslice
         
+        tex_usage = PIPE_TEXTURE_USAGE_SAMPLER
+        geom_flags = 0
+        if not dev.is_format_supported(format, target, tex_usage, geom_flags):
+            raise TestSkip
+
+        if not dev.is_format_supported(format, target, tex_usage, geom_flags):
+            raise TestSkip
+
         #  textures
         dst_texture = dev.texture_create(
             target = target,
@@ -76,10 +87,8 @@ class TextureTest(TestCase):
             height = height,
             depth = depth, 
             last_level = last_level,
-            tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
+            tex_usage = tex_usage,
         )
-        if dst_texture is None:
-            raise TestSkip
 
         dst_surface = dst_texture.get_surface(face = face, level = level, zslice = zslice)
         
@@ -95,8 +104,6 @@ class TextureTest(TestCase):
 
         src_surface = src_texture.get_surface()
         
-        x = 0
-        y = 0
         w = dst_surface.width
         h = dst_surface.height
 
@@ -113,7 +120,6 @@ class TextureTest(TestCase):
 
         if dst_raw != src_raw:
             raise TestFailure
-        
 
 
 def main():
@@ -124,27 +130,7 @@ def main():
     targets = [
         PIPE_TEXTURE_2D,
         PIPE_TEXTURE_CUBE,
-        #PIPE_TEXTURE_3D,
-    ]
-    
-    formats = [
-        PIPE_FORMAT_B8G8R8A8_UNORM,
-        PIPE_FORMAT_B8G8R8X8_UNORM,
-        PIPE_FORMAT_B8G8R8A8_SRGB,
-        PIPE_FORMAT_B5G6R5_UNORM,
-        PIPE_FORMAT_B5G5R5A1_UNORM,
-        PIPE_FORMAT_B4G4R4A4_UNORM,
-        PIPE_FORMAT_Z32_UNORM,
-        PIPE_FORMAT_S8Z24_UNORM,
-        PIPE_FORMAT_X8Z24_UNORM,
-        PIPE_FORMAT_Z16_UNORM,
-        PIPE_FORMAT_S8_UNORM,
-        PIPE_FORMAT_A8_UNORM,
-        PIPE_FORMAT_L8_UNORM,
-        PIPE_FORMAT_DXT1_RGB,
-        PIPE_FORMAT_DXT1_RGBA,
-        PIPE_FORMAT_DXT3_RGBA,
-        PIPE_FORMAT_DXT5_RGBA,
+        PIPE_TEXTURE_3D,
     ]
     
     sizes = [64, 32, 16, 8, 4, 2, 1]
@@ -161,36 +147,52 @@ def main():
         PIPE_TEX_FACE_NEG_Z,
     ]
 
-    for target in targets:
-        for format in formats:
-            for size in sizes:
-                if target == PIPE_TEXTURE_3D:
-                    depth = size
-                else:
-                    depth = 1
-                for face in faces:
-                    if target != PIPE_TEXTURE_CUBE and face:
-                        continue
-                    levels = lods(size)
-                    for last_level in range(levels):
-                        for level in range(0, last_level + 1):
-                            zslice = 0
-                            while zslice < depth >> level:
-                                test = TextureTest(
-                                    dev = dev,
-                                    ctx = ctx,
-                                    target = target,
-                                    format = format, 
-                                    width = size,
-                                    height = size,
-                                    depth = depth,
-                                    last_level = last_level,
-                                    face = face,
-                                    level = level,
-                                    zslice = zslice,
-                                )
-                                suite.add_test(test)
-                                zslice = (zslice + 1)*2 - 1
+    try:
+        n = int(sys.argv[1])
+    except:
+        n = 10000
+    
+    for i in range(n):
+        format = random.choice(formats.keys())
+        if not util_format_is_depth_or_stencil(format):
+            is_depth_or_stencil = util_format_is_depth_or_stencil(format)
+
+            if is_depth_or_stencil:
+                target = PIPE_TEXTURE_2D
+            else:
+                target = random.choice(targets)
+            
+            size = random.choice(sizes)
+
+            if target == PIPE_TEXTURE_3D:
+                depth = size
+            else:
+                depth = 1
+
+            if target == PIPE_TEXTURE_CUBE:
+                face = random.choice(faces)
+            else:
+                face = PIPE_TEX_FACE_POS_X
+
+            levels = lods(size)
+            last_level = random.randint(0, levels - 1)
+            level = random.randint(0, last_level)
+            zslice = random.randint(0, max(depth >> level, 1) - 1)
+
+            test = TextureTest(
+                dev = dev,
+                ctx = ctx,
+                target = target,
+                format = format, 
+                width = size,
+                height = size,
+                depth = depth,
+                last_level = last_level,
+                face = face,
+                level = level,
+                zslice = zslice,
+            )
+            suite.add_test(test)
     suite.run()
 
 

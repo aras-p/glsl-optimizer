@@ -555,6 +555,7 @@ def main():
     random.seed(0xdead3eef)
 
     dev = Device()
+    ctx = dev.context_create()
     suite = TestSuite()
     
     targets = [
@@ -576,8 +577,6 @@ def main():
         PIPE_TEX_FACE_POS_Z, 
         PIPE_TEX_FACE_NEG_Z,
     ]
-
-    ctx = dev.context_create()
 
     try:
         n = int(sys.argv[1])
@@ -602,7 +601,7 @@ def main():
                 depth = 1
 
             if target == PIPE_TEXTURE_CUBE:
-                face =random.choice(faces)
+                face = random.choice(faces)
             else:
                 face = PIPE_TEX_FACE_POS_X
 
