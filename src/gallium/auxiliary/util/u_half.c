@@ -1,7 +1,39 @@
-#include "util/u_half.h"
+/*
+ * Copyright 2010 Luca Barbieri
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
 
-/* see www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+/* The code is a reimplementation of the algorithm in
+ *  www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
  * "Fast Half Float Conversions" by Jeroen van der Zijp, Nov 2008
+ *
+ * The table contents have been slightly changed so that the exponent
+ * bias is now in the exponent table instead of the mantissa table (mostly
+ * for cosmetic reasons, and because it theoretically allows a variant
+ * that flushes denormal to zero but uses a mantissa table with 24-bit
+ * entries).
+ *
+ * The tables are also constructed slightly differently.
  */
 
 /* Note that using a 64K * 4 table is a terrible idea since it will not fit
@@ -16,6 +48,9 @@
  * Note however that if denormals are never encountered, the L1 cache usage
  * is only about 4608 bytes anyway.
  */
+
+#include "util/u_half.h"
+
 uint32_t util_half_to_float_mantissa_table[2048];
 uint32_t util_half_to_float_exponent_table[64];
 uint32_t util_half_to_float_offset_table[64];
