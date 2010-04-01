@@ -1,4 +1,4 @@
-# progs/vg/Makefile
+# progs/egl/openvg/Makefile
 
 TOP = ../../..
 include $(TOP)/configs/current

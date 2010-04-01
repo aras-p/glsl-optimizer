@@ -1,7 +1,8 @@
+# progs/egl/openvg/trivial/Makefile
 # These programs aren't intended to be included with the normal distro.
 # They're not too interesting but they're good for testing.
 
-TOP = ../../../
+TOP = ../../../..
 include $(TOP)/configs/current
 
 INCLUDES = -I. -I$(TOP)/include
