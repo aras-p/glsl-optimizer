@@ -1,6 +1,6 @@
-# progs/es1/screen/Makefile
+# progs/egl/opengles1/screen/Makefile
 
-TOP = ../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 ES1_CFLAGS = -I$(TOP)/include

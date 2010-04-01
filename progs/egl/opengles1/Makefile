@@ -1,4 +1,4 @@
-# progs/es1/xegl/Makefile
+# progs/egl/opengles1/Makefile
 
 TOP = ../../..
 include $(TOP)/configs/current

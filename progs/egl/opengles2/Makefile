@@ -1,4 +1,4 @@
-# progs/es2/xegl/Makefile
+# progs/egl/opengles2/Makefile
 
 TOP = ../../..
 include $(TOP)/configs/current
@@ -33,7 +33,7 @@ default: $(PROGRAMS)
 
 
 
-es2_info.c: ../../es1/xegl/es1_info.c
+es2_info.c: ../opengles1/es1_info.c
 	cp -f $^ $@
 
 es2_info: es2_info.o $(ES2_LIB_DEPS)
