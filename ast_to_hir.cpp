@@ -1544,13 +1544,11 @@ ast_function_definition::hir(exec_list *instructions,
       }
    }
 
+   parameters.move_nodes_to(& signature->parameters);
+
 
    assert(state->current_function == NULL);
    state->current_function = signature;
-
-   ast_function_parameters_to_hir(& this->prototype->parameters,
-				  & signature->parameters,
-				  state);
 
    label = new ir_label(name);
    if (signature->definition == NULL) {
@@ -1558,18 +1556,17 @@ ast_function_definition::hir(exec_list *instructions,
    }
    instructions->push_tail(label);
 
-   /* Add the function parameters to the symbol table.  During this step the
-    * parameter declarations are also moved from the temporary "parameters" list
-    * to the instruction list.  There are other more efficient ways to do this,
-    * but they involve ugly linked-list gymnastics.
+   /* Duplicate parameters declared in the prototype as concrete variables.
+    * Add these to the symbol table.
     */
    state->symbols->push_scope();
-   foreach_iter(exec_list_iterator, iter, parameters) {
-      ir_variable *const var = ((ir_instruction *) iter.get())->as_variable();
+   foreach_iter(exec_list_iterator, iter, signature->parameters) {
+      ir_variable *const proto = ((ir_instruction *) iter.get())->as_variable();
 
-      assert(var != NULL);
+      assert(proto != NULL);
 
-      iter.remove();
+      ir_variable *const var = proto->clone();
+
       instructions->push_tail(var);
 
       /* The only way a parameter would "exist" is if two parameters have
