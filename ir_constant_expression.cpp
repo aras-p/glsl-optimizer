@@ -135,6 +135,13 @@ ir_constant_visitor::visit(ir_expression *ir)
    ir_constant *op[2];
 
    switch (ir->operation) {
+   case ir_unop_logic_not:
+      op[0] = ir->operands[0]->constant_expression_value();
+      if (op[0]) {
+	 value = new ir_constant(!op[0]->value.b[0]);
+	 value->type = glsl_type::bool_type;
+      }
+      break;
    case ir_binop_mul:
       op[0] = ir->operands[0]->constant_expression_value();
       op[1] = ir->operands[1]->constant_expression_value();
