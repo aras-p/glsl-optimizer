@@ -31,19 +31,13 @@
 #endif
 
 static void
-add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
+add_variable(const char *name, enum ir_variable_mode mode,
+	     const glsl_type *type, exec_list *instructions,
 		     glsl_symbol_table *symtab)
 {
-   /* Create a new variable declaration from the description supplied by
-    * the caller.
-    */
-   const glsl_type *const type = symtab->get_type(proto->type);
+   ir_variable *var = new ir_variable(type, name);
 
-   assert(type != NULL);
-
-   ir_variable *var = new ir_variable(type, proto->name);
-
-   var->mode = proto->mode;
+   var->mode = mode;
    if (var->mode != ir_var_out)
       var->read_only = true;
 
@@ -55,6 +49,22 @@ add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
 
    symtab->add_variable(var->name, var);
 }
+
+
+static void
+add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
+		     glsl_symbol_table *symtab)
+{
+   /* Create a new variable declaration from the description supplied by
+    * the caller.
+    */
+   const glsl_type *const type = symtab->get_type(proto->type);
+
+   assert(type != NULL);
+
+   add_variable(proto->name, proto->mode, type, instructions, symtab);
+}
+
 
 static void
 generate_110_uniforms(exec_list *instructions,
@@ -105,10 +115,17 @@ generate_110_vs_variables(exec_list *instructions,
    }
    generate_110_uniforms(instructions, symtab);
 
-   /* FINISHME: Add support fo gl_TexCoord.  The size of this array is
-    * FINISHME: implementation dependent based on the value of
-    * FINISHME: GL_MAX_TEXTURE_COORDS.
+   /* FINISHME: The size of this array is implementation dependent based on the
+    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
+    * FINISHME: at least 2, so hard-code 2 for now.
     */
+   const glsl_type *const vec4_type =
+      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 0);
+   const glsl_type *const vec4_array_type =
+      glsl_type::get_array_instance(vec4_type, 2);
+
+   add_variable("gl_TexCoord", ir_var_out, vec4_array_type, instructions,
+		symtab);
 }
 
 
@@ -168,7 +185,6 @@ generate_110_fs_variables(exec_list *instructions,
 			   instructions, symtab);
    }
 
-   /* FINISHME: Add support for gl_TexCoord[] */
    for (unsigned i = 0
 	   ; i < Elements(builtin_110_deprecated_fs_variables)
 	   ; i++) {
@@ -178,6 +194,18 @@ generate_110_fs_variables(exec_list *instructions,
    generate_110_uniforms(instructions, symtab);
 
    /* FINISHME: Add support for gl_FragData[GL_MAX_DRAW_BUFFERS]. */
+
+   /* FINISHME: The size of this array is implementation dependent based on the
+    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
+    * FINISHME: at least 2, so hard-code 2 for now.
+    */
+   const glsl_type *const vec4_type =
+      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 0);
+   const glsl_type *const vec4_array_type =
+      glsl_type::get_array_instance(vec4_type, 2);
+
+   add_variable("gl_TexCoord", ir_var_in, vec4_array_type, instructions,
+		symtab);
 }
 
 static void
