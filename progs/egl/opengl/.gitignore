@@ -1,12 +1,13 @@
 demo1
 demo2
 demo3
-eglgears
+eglgears_x11
+eglgears_screen
 eglinfo
 eglscreen
-egltri
+egltri_x11
+egltri_screen
 peglgears
 xeglbindtex
 xeglgears
 xeglthreads
-xegl_tri

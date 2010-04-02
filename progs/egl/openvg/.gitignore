@@ -1,5 +1,7 @@
-demos/lion
-demos/sp
+lion_x11
+lion_screen
+sp_x11
+sp_screen
 trivial/arc
 trivial/cap
 trivial/clear
