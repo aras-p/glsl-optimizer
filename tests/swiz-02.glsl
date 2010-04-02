@@ -1,3 +1,4 @@
+/* FAIL: assignment of a vec2 to a float */
 #version 120
 
 void main()

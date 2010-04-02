@@ -1,3 +1,5 @@
+/* FAIL: redefinition of a() */
+
 void a()
 {
 	;	
