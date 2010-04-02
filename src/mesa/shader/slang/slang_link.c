@@ -87,6 +87,31 @@ bits_agree(GLbitfield flags1, GLbitfield flags2, GLbitfield bit)
 
 
 /**
+ * Examine the outputs/varyings written by the vertex shader and
+ * append the names of those outputs onto the Varyings list.
+ * This will only capture the pre-defined/built-in varyings like
+ * gl_Position, not user-defined varyings.  The later should already
+ * be in the varying vars list.
+ */
+static void
+update_varying_var_list(GLcontext *ctx, struct gl_shader_program *shProg)
+{
+   if (shProg->VertexProgram) {
+      GLbitfield64 written = shProg->VertexProgram->Base.OutputsWritten;
+      GLuint i;
+      for (i = 0; written && i < VERT_RESULT_MAX; i++) {
+         if (written & BITFIELD64_BIT(i)) {
+            const char *name = _slang_vertex_output_name(i);            
+            if (name)
+               _mesa_add_varying(shProg->Varying, name, 1, GL_FLOAT_VEC4, 0x0);
+            written &= ~BITFIELD64_BIT(i);
+         }
+      }
+   }
+}
+
+
+/**
  * Linking varying vars involves rearranging varying vars so that the
  * vertex program's output varyings matches the order of the fragment
  * program's input varyings.
@@ -866,6 +891,8 @@ _slang_link(GLcontext *ctx,
       }         
    }
 
+   /* Append built-in, used varyings to the varying var list */
+   update_varying_var_list(ctx, shProg);
 
    if (fragProg && shProg->FragmentProgram) {
       /* Compute initial program's TexturesUsed info */
