@@ -320,12 +320,17 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
         }
     }
 
+    /* Neither fglrx nor classic r300 ever set this, regardless of dithering
+     * state. Since it's an optional implementation detail, we can leave it
+     * out and never dither.
+     *
+     * This could be revisited if we ever get quality or conformance hints.
+     *
     if (state->dither) {
-	/* fglrx appears to never set this */
-	blend->dither = 0;
-        /* blend->dither = R300_RB3D_DITHER_CTL_DITHER_MODE_LUT |
-                           R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT; */
+        blend->dither = R300_RB3D_DITHER_CTL_DITHER_MODE_LUT |
+                        R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT;
     }
+    */
 
     return (void*)blend;
 }
