@@ -14,8 +14,9 @@ main(int argc, char **argv)
    {
       half h = (half) i;
       union fi f;
+      half rh;
       f.ui = util_half_to_floatui(h);
-      half rh = util_floatui_to_half(f.ui);
+      rh = util_floatui_to_half(f.ui);
       if(h != rh)
       {
 	 printf("Roundtrip failed: %x -> %x = %f -> %x\n", h, f.ui, f.f, rh);
