@@ -124,5 +124,4 @@ void
 util_format_do_init(void)
 {
    util_format_s3tc_init();
-   util_half_init();
 }

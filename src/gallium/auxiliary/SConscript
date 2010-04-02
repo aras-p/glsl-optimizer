@@ -29,6 +29,14 @@ env.CodeGenerate(
     source = ['util/u_format.csv'],
     command = 'python $SCRIPT $SOURCE > $TARGET'
 )
+
+env.CodeGenerate(
+    target = 'util/u_half.c',
+    script = 'util/u_half.py',
+    source = [],
+    command = 'python $SCRIPT > $TARGET'
+)
+
 env.Depends('util/u_format_table.c', [
     'util/u_format_parse.py', 
     'util/u_format_pack.py', 
