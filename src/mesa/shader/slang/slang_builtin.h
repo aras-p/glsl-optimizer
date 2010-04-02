@@ -51,4 +51,14 @@ extern GLenum
 _slang_vert_attrib_type(GLuint attrib);
 
 
+const char *
+_slang_vertex_output_name(gl_vert_result index);
+
+const char *
+_slang_fragment_output_name(gl_frag_result index);
+
+GLenum
+_slang_vertex_output_type(gl_vert_result index);
+
+
 #endif /* SLANG_BUILTIN_H */
