@@ -157,7 +157,7 @@ link_varying_vars(GLcontext *ctx,
       else {
          /* not already in linked list */
          j = _mesa_add_varying(shProg->Varying, var->Name, var->Size,
-                               var->Flags);
+                               var->DataType, var->Flags);
       }
 
       if (shProg->Varying->NumParameters > ctx->Const.MaxVarying) {

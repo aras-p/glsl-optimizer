@@ -5130,7 +5130,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             flags |= PROG_PARAM_BIT_INVARIANT;
 
          varyingLoc = _mesa_add_varying(prog->Varying, varName,
-                                        totalSize, flags);
+                                        totalSize, GL_NONE, flags);
          swizzle = _slang_var_swizzle(size, 0);
          store = _slang_new_ir_storage_swz(PROGRAM_VARYING, varyingLoc,
                                            totalSize, swizzle);

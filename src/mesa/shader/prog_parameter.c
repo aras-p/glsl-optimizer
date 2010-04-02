@@ -376,7 +376,8 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
  */
 GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLbitfield flags)
+                  const char *name, GLuint size, GLenum datatype,
+                  GLbitfield flags)
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_VARYING) {
@@ -386,7 +387,7 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
    else {
       /*assert(size == 4);*/
       i = _mesa_add_parameter(paramList, PROGRAM_VARYING, name,
-                              size, GL_NONE, NULL, NULL, flags);
+                              size, datatype, NULL, NULL, flags);
       return i;
    }
 }
