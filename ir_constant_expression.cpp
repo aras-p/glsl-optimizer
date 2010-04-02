@@ -133,40 +133,36 @@ ir_constant_visitor::visit(ir_expression *ir)
 {
    value = NULL;
    ir_constant *op[2];
+   unsigned int i;
+
+   for (i = 0; i < ir->get_num_operands(); i++) {
+      op[i] = ir->operands[i]->constant_expression_value();
+      if (!op[i])
+	 return;
+   }
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      op[0] = ir->operands[0]->constant_expression_value();
-      if (op[0]) {
-	 value = new ir_constant(!op[0]->value.b[0]);
-	 value->type = glsl_type::bool_type;
-      }
+      value = new ir_constant(!op[0]->value.b[0]);
+      value->type = glsl_type::bool_type;
       break;
    case ir_binop_mul:
-      op[0] = ir->operands[0]->constant_expression_value();
-      op[1] = ir->operands[1]->constant_expression_value();
-      if (op[0] && op[1] && ir->operands[0]->type == ir->operands[1]->type) {
+      if (ir->operands[0]->type == ir->operands[1]->type) {
 	 if (ir->operands[1]->type == glsl_type::float_type) {
 	    value = new ir_constant(op[0]->value.f[0] * op[1]->value.f[0]);
 	    value->type = glsl_type::float_type;
 	 }
       }
+      if (value)
+	 value->type = ir->operands[1]->type;
       break;
    case ir_binop_logic_and:
-      op[0] = ir->operands[0]->constant_expression_value();
-      op[1] = ir->operands[1]->constant_expression_value();
-      if (op[0] && op[1]) {
-	 value = new ir_constant(op[0]->value.b[0] && op[1]->value.b[0]);
-	 value->type = glsl_type::bool_type;
-      }
+      value = new ir_constant(op[0]->value.b[0] && op[1]->value.b[0]);
+      value->type = glsl_type::bool_type;
       break;
    case ir_binop_logic_or:
-      op[0] = ir->operands[0]->constant_expression_value();
-      op[1] = ir->operands[1]->constant_expression_value();
-      if (op[0] && op[1]) {
-	 value = new ir_constant(op[0]->value.b[0] || op[1]->value.b[0]);
-	 value->type = glsl_type::bool_type;
-      }
+      value = new ir_constant(op[0]->value.b[0] || op[1]->value.b[0]);
+      value->type = glsl_type::bool_type;
       break;
    default:
       break;

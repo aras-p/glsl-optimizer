@@ -299,7 +299,9 @@ public:
    ir_rvalue *condition;
 };
 
-/* Update ir_print_visitor.cpp when updating this list. */
+/* Update ir_expression::num_operands() and ir_print_visitor.cpp when
+ * updating this list.
+*/
 enum ir_expression_operation {
    ir_unop_bit_not,
    ir_unop_logic_not,
@@ -369,6 +371,8 @@ class ir_expression : public ir_rvalue {
 public:
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
+
+   unsigned int get_num_operands(void);
 
    virtual void accept(ir_visitor *v)
    {
