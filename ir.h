@@ -318,6 +318,8 @@ enum ir_expression_operation {
    ir_unop_i2f,      /**< Integer-to-float conversion. */
    ir_unop_f2b,      /**< Float-to-boolean conversion */
    ir_unop_b2f,      /**< Boolean-to-float conversion */
+   ir_unop_i2b,      /**< int-to-boolean conversion */
+   ir_unop_b2i,      /**< Boolean-to-int conversion */
    ir_unop_u2f,      /**< Unsigned-to-float conversion. */
 
    /**

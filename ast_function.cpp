@@ -130,7 +130,7 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 	 return new ir_expression(ir_unop_f2i, desired_type, src, NULL);
       else {
 	 assert(b == GLSL_TYPE_BOOL);
-	 assert(!"FINISHME: Convert bool to int / uint.");
+	 return new ir_expression(ir_unop_f2b, desired_type, src, NULL);
       }
    case GLSL_TYPE_FLOAT:
       switch (b) {
