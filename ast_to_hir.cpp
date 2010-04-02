@@ -890,8 +890,74 @@ ast_expression::hir(exec_list *instructions,
       type = result->type;
       break;
 
-   case ast_array_index:
+   case ast_array_index: {
+      YYLTYPE index_loc = subexpressions[1]->get_location();
+
+      op[0] = subexpressions[0]->hir(instructions, state);
+      op[1] = subexpressions[1]->hir(instructions, state);
+
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+
+      result = new ir_dereference(op[0], op[1]);
+
+      if (error_emitted)
+	 break;
+
+      /* FINISHME: Handle vectors and matrices accessed with []. */
+      if (!op[0]->type->is_array()) {
+	 _mesa_glsl_error(& index_loc, state,
+			  "cannot dereference non-array");
+	 error_emitted = true;
+      }
+
+      if (!op[1]->type->is_integer()) {
+	 _mesa_glsl_error(& index_loc, state,
+			  "array index must be integer type");
+	 error_emitted = true;
+      } else if (!op[1]->type->is_scalar()) {
+	 _mesa_glsl_error(& index_loc, state,
+			  "array index must be scalar");
+	 error_emitted = true;
+      }
+
+      /* If the array index is a constant expression and the array has a
+       * declared size, ensure that the access is in-bounds.  If the array
+       * index is not a constant expression, ensure that the array has a
+       * declared size.
+       */
+      ir_constant *const const_index = op[1]->constant_expression_value();
+      if (const_index != NULL) {
+	 const int idx = const_index->value.i[0];
+
+	 /* From page 24 (page 30 of the PDF) of the GLSL 1.50 spec:
+	  *
+	  *    "It is illegal to declare an array with a size, and then
+	  *    later (in the same shader) index the same array with an
+	  *    integral constant expression greater than or equal to the
+	  *    declared size. It is also illegal to index an array with a
+	  *    negative constant expression."
+	  */
+	 if ((op[0]->type->array_size() > 0)
+	     && (op[0]->type->array_size() <= idx)) {
+	    _mesa_glsl_error(& loc, state,
+			     "array index must be < %u",
+			     op[0]->type->array_size());
+	    error_emitted = true;
+	 }
+
+	 if (idx < 0) {
+	    _mesa_glsl_error(& loc, state,
+			     "array index must be >= 0");
+	    error_emitted = true;
+	 }
+      }
+
+      if (error_emitted)
+	 result->type = glsl_type::error_type;
+
+      type = result->type;
       break;
+   }
 
    case ast_function_call:
       /* Should *NEVER* get here.  ast_function_call should always be handled
