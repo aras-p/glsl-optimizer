@@ -898,13 +898,29 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      result = new ir_dereference(op[0], op[1]);
+      ir_dereference *const lhs = op[0]->as_dereference();
+      ir_instruction *array;
+      if ((lhs != NULL)
+	  && (lhs->mode == ir_dereference::ir_reference_variable)) {
+	 result = new ir_dereference(lhs->var, op[1]);
+
+	 delete op[0];
+	 array = lhs->var;
+      } else {
+	 result = new ir_dereference(op[0], op[1]);
+	 array = op[0];
+      }
+
+      /* Do not use op[0] after this point.  Use array.
+       */
+      op[0] = NULL;
+
 
       if (error_emitted)
 	 break;
 
       /* FINISHME: Handle vectors and matrices accessed with []. */
-      if (!op[0]->type->is_array()) {
+      if (!array->type->is_array()) {
 	 _mesa_glsl_error(& index_loc, state,
 			  "cannot dereference non-array");
 	 error_emitted = true;
@@ -937,11 +953,11 @@ ast_expression::hir(exec_list *instructions,
 	  *    declared size. It is also illegal to index an array with a
 	  *    negative constant expression."
 	  */
-	 if ((op[0]->type->array_size() > 0)
-	     && (op[0]->type->array_size() <= idx)) {
+	 if ((array->type->array_size() > 0)
+	     && (array->type->array_size() <= idx)) {
 	    _mesa_glsl_error(& loc, state,
 			     "array index must be < %u",
-			     op[0]->type->array_size());
+			     array->type->array_size());
 	    error_emitted = true;
 	 }
 
@@ -950,6 +966,10 @@ ast_expression::hir(exec_list *instructions,
 			     "array index must be >= 0");
 	    error_emitted = true;
 	 }
+
+	 ir_variable *const v = array->as_variable();
+	 if ((v != NULL) && (unsigned(idx) > v->max_array_access))
+	    v->max_array_access = idx;
       }
 
       if (error_emitted)
@@ -1265,9 +1285,15 @@ ast_declarator_list::hir(exec_list *instructions,
 	     * FINISHME: declarations.  It's not 100% clear whether this is
 	     * FINISHME: required or not.
 	     */
-	    /* FINISHME: Check that the array hasn't already been accessed
-	     * FINISHME: beyond the newly defined bounds.
-	     */
+
+	    if (var->type->array_size() <= earlier->max_array_access) {
+	       YYLTYPE loc = this->get_location();
+
+	       _mesa_glsl_error(& loc, state, "array size must be > %u due to "
+				"previous access",
+				earlier->max_array_access);
+	    }
+
 	    earlier->type = var->type;
 	    delete var;
 	    var = NULL;

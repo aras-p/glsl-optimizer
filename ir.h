@@ -121,6 +121,7 @@ public:
    {
       ir_variable *var = new ir_variable(type, name);
 
+      var->max_array_access = this->max_array_access;
       var->read_only = this->read_only;
       var->centroid = this->centroid;
       var->invariant = this->invariant;
@@ -131,6 +132,13 @@ public:
    }
 
    const char *name;
+
+   /**
+    * Highest element accessed with a constant expression array index
+    *
+    * Not used for non-array variables.
+    */
+   unsigned max_array_access;
 
    unsigned read_only:1;
    unsigned centroid:1;

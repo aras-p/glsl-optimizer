@@ -246,7 +246,7 @@ ir_swizzle::create(ir_rvalue *val, const char *str, unsigned vector_length)
 
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name)
-   : ir_instruction(), read_only(false), centroid(false), invariant(false),
+   : max_array_access(0), read_only(false), centroid(false), invariant(false),
      mode(ir_var_auto), interpolation(ir_var_smooth)
 {
    this->type = type;
