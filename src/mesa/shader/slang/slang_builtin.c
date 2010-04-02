@@ -752,7 +752,6 @@ static const struct input_info fragInputs[] = {
    { "gl_Color", FRAG_ATTRIB_COL0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_SecondaryColor", FRAG_ATTRIB_COL1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_TexCoord", FRAG_ATTRIB_TEX0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   /* note: we're packing several quantities into the fogcoord vector */
    { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, GL_FLOAT, SWIZZLE_XXXX },
    { "gl_FrontFacing", FRAG_ATTRIB_FACE, GL_FLOAT, SWIZZLE_XXXX },
    { "gl_PointCoord", FRAG_ATTRIB_PNTC, GL_FLOAT_VEC2, SWIZZLE_XYZW },
