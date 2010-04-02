@@ -58,7 +58,7 @@ struct pipe_context {
    void (*destroy)( struct pipe_context * );
 
    /**
-    * VBO drawing (return false on fallbacks (temporary??))
+    * VBO drawing
     */
    /*@{*/
    void (*draw_arrays)( struct pipe_context *pipe,
