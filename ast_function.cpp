@@ -139,7 +139,7 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
       case GLSL_TYPE_INT:
 	 return new ir_expression(ir_unop_i2f, desired_type, src, NULL);
       case GLSL_TYPE_BOOL:
-	 assert(!"FINISHME: Convert bool to float.");
+	 return new ir_expression(ir_unop_b2f, desired_type, src, NULL);
       }
       break;
    case GLSL_TYPE_BOOL: {

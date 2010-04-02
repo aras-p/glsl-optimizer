@@ -64,6 +64,8 @@ ir_expression::get_num_operands(void)
       1, /* ir_unop_log2 */
       1, /* ir_unop_f2i */
       1, /* ir_unop_i2f */
+      1, /* ir_unop_f2b */
+      1, /* ir_unop_b2f */
       1, /* ir_unop_u2f */
 
       1, /* ir_unop_trunc */

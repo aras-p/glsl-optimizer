@@ -120,7 +120,8 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
       from = new ir_expression(ir_unop_u2f, to, from, NULL);
       break;
    case GLSL_TYPE_BOOL:
-      assert(!"FINISHME: Convert bool to float.");
+      from = new ir_expression(ir_unop_b2f, to, from, NULL);
+      break;
    default:
       assert(0);
    }

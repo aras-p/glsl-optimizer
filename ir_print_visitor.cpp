@@ -100,6 +100,8 @@ void ir_print_visitor::visit(ir_expression *ir)
       "log2",
       "f2i",
       "i2f",
+      "f2b",
+      "b2f",
       "u2f",
       "trunc",
       "ceil",
