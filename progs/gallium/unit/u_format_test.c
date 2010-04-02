@@ -30,10 +30,8 @@
 #include <stdio.h>
 #include <float.h>
 
-#include "util/u_half.h"
 #include "util/u_format.h"
 #include "util/u_format_tests.h"
-#include "util/u_format_s3tc.h"
 
 
 static boolean
@@ -401,8 +399,6 @@ test_all(void)
 int main(int argc, char **argv)
 {
    boolean success;
-
-   util_format_init();
 
    success = test_all();
 

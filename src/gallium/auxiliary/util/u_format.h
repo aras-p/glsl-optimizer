@@ -552,8 +552,6 @@ util_format_write_4ub(enum pipe_format format,
                       void *dst, unsigned dst_stride, 
                       unsigned x, unsigned y, unsigned w, unsigned h);
 
-UTIL_INLINE_INIT(util_format);
-
 #ifdef __cplusplus
 } // extern "C" {
 #endif

@@ -71,8 +71,6 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 	struct nv50_screen *screen = nv50_screen(pscreen);
 	struct nv50_context *nv50;
 
-	util_format_init();
-
 	nv50 = CALLOC_STRUCT(nv50_context);
 	if (!nv50)
 		return NULL;
