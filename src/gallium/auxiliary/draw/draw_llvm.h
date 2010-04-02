@@ -157,7 +157,7 @@ void
 draw_llvm_destroy(struct draw_llvm *llvm);
 
 void
-draw_llvm_prepare(struct draw_llvm *llvm);
+draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs);
 
 /* generates the draw jit function */
 void

@@ -129,7 +129,7 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    /* return even number */
    *max_vertices = *max_vertices & ~1;
 
-   draw_llvm_prepare(fpme->llvm);
+   draw_llvm_prepare(fpme->llvm, nr);
 
    /*XXX we only support one constant buffer */
    fpme->llvm->jit_context.vs_constants =

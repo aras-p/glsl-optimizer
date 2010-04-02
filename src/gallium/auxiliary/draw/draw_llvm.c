@@ -20,48 +20,9 @@
 static void
 init_globals(struct draw_llvm *llvm)
 {
-    LLVMTypeRef vertex_header;
-    LLVMTypeRef texture_type;
+   LLVMTypeRef texture_type;
 
-   /* struct vertex_header */
-   {
-      LLVMTypeRef elem_types[3];
-
-      elem_types[0]  = LLVMIntType(32);
-      elem_types[1]  = LLVMArrayType(LLVMFloatType(), 4);
-      elem_types[2]  = LLVMArrayType(elem_types[1], 0);
-
-      vertex_header = LLVMStructType(elem_types, Elements(elem_types), 0);
-
-      /* these are bit-fields and we can't take address of them
-      LP_CHECK_MEMBER_OFFSET(struct vertex_header, clipmask,
-                             llvm->target, vertex_header,
-                             DRAW_JIT_VERTEX_CLIPMASK);
-      LP_CHECK_MEMBER_OFFSET(struct vertex_header, edgeflag,
-                             llvm->target, vertex_header,
-                             DRAW_JIT_VERTEX_EDGEFLAG);
-      LP_CHECK_MEMBER_OFFSET(struct vertex_header, pad,
-                             llvm->target, vertex_header,
-                             DRAW_JIT_VERTEX_PAD);
-      LP_CHECK_MEMBER_OFFSET(struct vertex_header, vertex_id,
-                             llvm->target, vertex_header,
-                             DRAW_JIT_VERTEX_VERTEX_ID);
-      */
-      LP_CHECK_MEMBER_OFFSET(struct vertex_header, clip,
-                             llvm->target, vertex_header,
-                             DRAW_JIT_VERTEX_CLIP);
-      LP_CHECK_MEMBER_OFFSET(struct vertex_header, data,
-                             llvm->target, vertex_header,
-                             DRAW_JIT_VERTEX_DATA);
-
-      LP_CHECK_STRUCT_SIZE(struct vertex_header,
-                           llvm->target, vertex_header);
-
-      LLVMAddTypeName(llvm->module, "vertex_header", vertex_header);
-
-      llvm->vertex_header_ptr_type = LLVMPointerType(vertex_header, 0);
-   }
-      /* struct draw_jit_texture */
+   /* struct draw_jit_texture */
    {
       LLVMTypeRef elem_types[4];
 
@@ -122,6 +83,45 @@ init_globals(struct draw_llvm *llvm)
    }
 }
 
+static LLVMTypeRef
+create_vertex_header(struct draw_llvm *llvm, int data_elems)
+{
+   /* struct vertex_header */
+   LLVMTypeRef elem_types[3];
+   LLVMTypeRef vertex_header;
+
+   elem_types[0]  = LLVMIntType(32);
+   elem_types[1]  = LLVMArrayType(LLVMFloatType(), 4);
+   elem_types[2]  = LLVMArrayType(elem_types[1], data_elems);
+
+   vertex_header = LLVMStructType(elem_types, Elements(elem_types), 0);
+
+   /* these are bit-fields and we can't take address of them
+      LP_CHECK_MEMBER_OFFSET(struct vertex_header, clipmask,
+      llvm->target, vertex_header,
+      DRAW_JIT_VERTEX_CLIPMASK);
+      LP_CHECK_MEMBER_OFFSET(struct vertex_header, edgeflag,
+      llvm->target, vertex_header,
+      DRAW_JIT_VERTEX_EDGEFLAG);
+      LP_CHECK_MEMBER_OFFSET(struct vertex_header, pad,
+      llvm->target, vertex_header,
+      DRAW_JIT_VERTEX_PAD);
+      LP_CHECK_MEMBER_OFFSET(struct vertex_header, vertex_id,
+      llvm->target, vertex_header,
+      DRAW_JIT_VERTEX_VERTEX_ID);
+   */
+   LP_CHECK_MEMBER_OFFSET(struct vertex_header, clip,
+                          llvm->target, vertex_header,
+                          DRAW_JIT_VERTEX_CLIP);
+   LP_CHECK_MEMBER_OFFSET(struct vertex_header, data,
+                          llvm->target, vertex_header,
+                          DRAW_JIT_VERTEX_DATA);
+
+   LLVMAddTypeName(llvm->module, "vertex_header", vertex_header);
+
+   return LLVMPointerType(vertex_header, 0);
+}
+
 struct draw_llvm *
 draw_llvm_create(struct draw_context *draw)
 {
@@ -175,8 +175,9 @@ draw_llvm_destroy(struct draw_llvm *llvm)
 }
 
 void
-draw_llvm_prepare(struct draw_llvm *llvm)
+draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs)
 {
+   llvm->vertex_header_ptr_type = create_vertex_header(llvm, num_inputs);
    draw_llvm_generate(llvm);
 }
 
@@ -390,24 +391,59 @@ store_aos(LLVMBuilderRef builder,
 {
    LLVMValueRef id_ptr = draw_jit_header_id(builder, io_ptr);
    LLVMValueRef data_ptr = draw_jit_header_data(builder, io_ptr);
-   LLVMValueRef indices[2];
+   LLVMValueRef indices[3];
 
    indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
    indices[1] = index;
+   indices[2] = LLVMConstInt(LLVMInt32Type(), 0, 0);
 
    /* undefined vertex */
    LLVMBuildStore(builder, LLVMConstInt(LLVMInt32Type(),
                                         0xffff, 0), id_ptr);
 
-
-   data_ptr = LLVMBuildInBoundsGEP(builder, data_ptr, indices, 2, "");
-   lp_build_printf(builder, " ---- storing at %d (%p) ", index, data_ptr);
-   print_vectorf(builder, value);
+#if 0
+   /*lp_build_printf(builder, " ---- %p storing at %d (%p)  ", io_ptr, index, data_ptr);
+     print_vectorf(builder, value);*/
    data_ptr = LLVMBuildBitCast(builder, data_ptr,
-                               LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0),
+                               LLVMPointerType(LLVMArrayType(LLVMVectorType(LLVMFloatType(), 4), 0), 0),
                                "datavec");
+   data_ptr = LLVMBuildGEP(builder, data_ptr, indices, 2, "");
+
    LLVMBuildStore(builder, value, data_ptr);
-   lp_build_printf(builder, "     ++ stored\n");
+#else
+   {
+      LLVMValueRef x, y, z, w;
+      LLVMValueRef idx0, idx1, idx2, idx3;
+      LLVMValueRef gep0, gep1, gep2, gep3;
+      data_ptr = LLVMBuildGEP(builder, data_ptr, indices, 3, "");
+
+      idx0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+      idx1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
+      idx2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
+      idx3 = LLVMConstInt(LLVMInt32Type(), 3, 0);
+
+      x = LLVMBuildExtractElement(builder, value,
+                                  idx0, "");
+      y = LLVMBuildExtractElement(builder, value,
+                                  idx1, "");
+      z = LLVMBuildExtractElement(builder, value,
+                                  idx2, "");
+      w = LLVMBuildExtractElement(builder, value,
+                                  idx3, "");
+
+      gep0 = LLVMBuildGEP(builder, data_ptr, &idx0, 1, "");
+      gep1 = LLVMBuildGEP(builder, data_ptr, &idx1, 1, "");
+      gep2 = LLVMBuildGEP(builder, data_ptr, &idx2, 1, "");
+      gep3 = LLVMBuildGEP(builder, data_ptr, &idx3, 1, "");
+
+      /*lp_build_printf(builder, "##### x = %f (%p), y = %f (%p), z = %f (%p), w = %f (%p)\n",
+        x, gep0, y, gep1, z, gep2, w, gep3);*/
+      LLVMBuildStore(builder, x, gep0);
+      LLVMBuildStore(builder, y, gep1);
+      LLVMBuildStore(builder, z, gep2);
+      LLVMBuildStore(builder, w, gep3);
+   }
+#endif
 }
 
 static void
@@ -442,6 +478,8 @@ store_aos_array(LLVMBuilderRef builder,
    io3_ptr = LLVMBuildGEP(builder, io_ptr,
                           &ind3, 1, "");
 
+   /*lp_build_printf(builder, "io = %d\n", start_index);*/
+
    store_aos(builder, io0_ptr, attr_index, aos[0]);
    store_aos(builder, io1_ptr, attr_index, aos[1]);
    store_aos(builder, io2_ptr, attr_index, aos[2]);
@@ -465,10 +503,10 @@ convert_to_aos(LLVMBuilderRef builder,
          if(outputs[attrib][chan]) {
             LLVMValueRef out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
             lp_build_name(out, "output%u.%c", attrib, "xyzw"[chan]);
-            lp_build_printf(builder, "output %d : %d ",
+            /*lp_build_printf(builder, "output %d : %d ",
                             LLVMConstInt(LLVMInt32Type(), attrib, 0),
                             LLVMConstInt(LLVMInt32Type(), chan, 0));
-            print_vectorf(builder, out);
+              print_vectorf(builder, out);*/
             soa[chan] = out;
          } else
             soa[chan] = 0;
@@ -563,7 +601,6 @@ draw_llvm_generate(struct draw_llvm *llvm)
                velem->vertex_buffer_index];
             generate_fetch(builder, vbuffers_ptr,
                            &aos_attribs[j][i], velem, vbuf, true_index);
-            /*print_vectorf(builder, aos_attribs[j][i]);*/
          }
       }
       convert_to_soa(builder, aos_attribs, inputs,
