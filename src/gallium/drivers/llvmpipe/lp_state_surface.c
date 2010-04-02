@@ -32,6 +32,7 @@
 #include "util/u_inlines.h"
 #include "util/u_surface.h"
 #include "lp_context.h"
+#include "lp_scene.h"
 #include "lp_state.h"
 #include "lp_setup.h"
 
@@ -50,6 +51,9 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
    struct llvmpipe_context *lp = llvmpipe_context(pipe);
 
    boolean changed = !util_framebuffer_state_equal(&lp->framebuffer, fb);
+
+   assert(fb->width <= MAXWIDTH);
+   assert(fb->height <= MAXHEIGHT);
 
    if (changed) {
 
