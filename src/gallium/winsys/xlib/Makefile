@@ -20,7 +20,8 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/state_trackers/glx/xlib \
-	-I$(TOP)/src/gallium/auxiliary
+	-I$(TOP)/src/gallium/auxiliary \
+	$(X_CFLAGS)
 
 DEFINES += \
 	-DGALLIUM_SOFTPIPE
