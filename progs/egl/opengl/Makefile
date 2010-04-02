@@ -73,9 +73,9 @@ $(foreach demo, $(EGLUT_DEMOS), $(eval $(call eglut-demo-rule,$(demo))))
 
 # build EGLUT demos
 $(EGLUT_X11_DEMOS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -L$(EGLUT_DIR) -leglut-$* -lX11
-$(EGLUT_SCREEN_DEMOS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -L$(EGLUT_DIR) -leglut-$*
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(LIBS) -lX11
+$(EGLUT_SCREEN_DEMOS):                                                
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(LIBS)
 
 clean:
 	-rm -f *.o *~

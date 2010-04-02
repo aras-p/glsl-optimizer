@@ -27,11 +27,11 @@ default: $(PROGRAMS) $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
 
 lion_x11: lion.o lion-render.o $(EGLUT_DIR)/libeglut-x11.a
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ lion.o lion-render.o \
-		$(VG_LIBS) -L$(EGLUT_DIR) -leglut-x11 -lX11
+		-L$(EGLUT_DIR) -leglut-x11 $(VG_LIBS) -lX11
 
 lion_screen: lion.o lion-render.o $(EGLUT_DIR)/libeglut-screen.a
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ lion.o lion-render.o \
-		$(VG_LIBS) -L$(EGLUT_DIR) -leglut-screen
+		-L$(EGLUT_DIR) -leglut-screen $(VG_LIBS) 
 
 
 $(EGLUT_DIR)/libeglut-x11.a $(EGLUT_DIR)/libeglut-screen.a:
@@ -45,9 +45,9 @@ $(foreach demo, $(EGLUT_DEMOS), $(eval $(call eglut-demo-rule,$(demo))))
 
 # build EGLUT demos
 $(EGLUT_X11_DEMOS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(VG_LIBS) -L$(EGLUT_DIR) -leglut-$* -lX11
-$(EGLUT_SCREEN_DEMOS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(VG_LIBS) -L$(EGLUT_DIR) -leglut-$*
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(VG_LIBS) -lX11
+$(EGLUT_SCREEN_DEMOS):                                                
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(VG_LIBS)
 
 clean:
 	rm -f *.o *~
