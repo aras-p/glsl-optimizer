@@ -133,39 +133,78 @@ ir_constant_visitor::visit(ir_expression *ir)
 {
    value = NULL;
    ir_constant *op[2];
-   unsigned int i;
+   unsigned int operand, c;
+   unsigned u[16];
+   int i[16];
+   float f[16];
+   bool b[16];
+   const glsl_type *type = NULL;
 
-   for (i = 0; i < ir->get_num_operands(); i++) {
-      op[i] = ir->operands[i]->constant_expression_value();
-      if (!op[i])
+   for (operand = 0; operand < ir->get_num_operands(); operand++) {
+      op[operand] = ir->operands[operand]->constant_expression_value();
+      if (!op[operand])
 	 return;
    }
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      value = new ir_constant(!op[0]->value.b[0]);
-      value->type = glsl_type::bool_type;
+      type = ir->operands[0]->type;
+      assert(type->base_type == GLSL_TYPE_BOOL);
+      for (c = 0; c < ir->operands[0]->type->components(); c++)
+	 b[c] = !op[0]->value.b[c];
       break;
    case ir_binop_mul:
-      if (ir->operands[0]->type == ir->operands[1]->type) {
-	 if (ir->operands[1]->type == glsl_type::float_type) {
-	    value = new ir_constant(op[0]->value.f[0] * op[1]->value.f[0]);
-	    value->type = glsl_type::float_type;
+      if (ir->operands[0]->type == ir->operands[1]->type &&
+	  !ir->operands[0]->type->is_matrix()) {
+	 type = ir->operands[0]->type;
+	 for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	    switch (ir->operands[0]->type->base_type) {
+	    case GLSL_TYPE_UINT:
+	       u[c] = op[0]->value.u[c] * op[1]->value.u[c];
+	       break;
+	    case GLSL_TYPE_INT:
+	       i[c] = op[0]->value.i[c] * op[1]->value.i[c];
+	       break;
+	    case GLSL_TYPE_FLOAT:
+	       f[c] = op[0]->value.f[c] * op[1]->value.f[c];
+	       break;
+	    default:
+	       assert(0);
+	    }
 	 }
       }
-      if (value)
-	 value->type = ir->operands[1]->type;
       break;
    case ir_binop_logic_and:
-      value = new ir_constant(op[0]->value.b[0] && op[1]->value.b[0]);
-      value->type = glsl_type::bool_type;
+      type = ir->operands[0]->type;
+      assert(type->base_type == GLSL_TYPE_BOOL);
+      for (c = 0; c < ir->operands[0]->type->components(); c++)
+	 b[c] = op[0]->value.b[c] && op[1]->value.b[c];
       break;
    case ir_binop_logic_or:
-      value = new ir_constant(op[0]->value.b[0] || op[1]->value.b[0]);
-      value->type = glsl_type::bool_type;
+      type = ir->operands[0]->type;
+      assert(type->base_type == GLSL_TYPE_BOOL);
+      for (c = 0; c < ir->operands[0]->type->components(); c++)
+	 b[c] = op[0]->value.b[c] || op[1]->value.b[c];
       break;
    default:
       break;
+   }
+
+   if (type) {
+      switch (type->base_type) {
+      case GLSL_TYPE_UINT:
+	 value = new ir_constant(type, u);
+	 break;
+      case GLSL_TYPE_INT:
+	 value = new ir_constant(type, i);
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 value = new ir_constant(type, f);
+	 break;
+      case GLSL_TYPE_BOOL:
+	 value = new ir_constant(type, b);
+	 break;
+      }
    }
 }
 
