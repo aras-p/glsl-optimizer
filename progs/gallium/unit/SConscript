@@ -5,7 +5,8 @@ env = env.Clone()
 env.Prepend(LIBS = [gallium])
 
 progs = [
-    'u_format_test'
+    'u_format_test',
+    'u_half_test'
 ]
 
 for prog in progs:
