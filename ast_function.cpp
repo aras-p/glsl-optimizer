@@ -63,6 +63,37 @@ process_call(exec_list *instructions, ir_function *f,
    (void) instructions;
 
    if (sig != NULL) {
+      /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
+       * isn't done in ir_function::matching_signature because that function
+       * cannot generate the necessary diagnostics.
+       */
+      exec_list_iterator actual_iter = actual_parameters->iterator();
+      exec_list_iterator formal_iter = sig->parameters.iterator();
+
+      while (actual_iter.has_next()) {
+	 ir_rvalue *actual =
+	    ((ir_instruction *) actual_iter.get())->as_rvalue();
+	 ir_variable *formal =
+	    ((ir_instruction *) formal_iter.get())->as_variable();
+
+	 assert(actual != NULL);
+	 assert(formal != NULL);
+
+	 if ((formal->mode == ir_var_out)
+	     || (formal->mode == ir_var_inout)) {
+	    if (! actual->is_lvalue()) {
+	       /* FINISHME: Log a better diagnostic here.  There is no way
+		* FINISHME: to tell the user which parameter is invalid.
+		*/
+	       _mesa_glsl_error(loc, state, "`%s' parameter is not lvalue",
+				(formal->mode == ir_var_out) ? "out" : "inout");
+	    }
+	 }
+
+	 actual_iter.next();
+	 formal_iter.next();
+      }
+
       /* FINISHME: The list of actual parameters needs to be modified to
        * FINISHME: include any necessary conversions.
        */

@@ -126,13 +126,10 @@ parameter_lists_match(exec_list *list_a, exec_list *list_b)
 	 break;
 
       case ir_var_out:
-	 /* FINISHME: Make sure that actual is a valid lvalue. */
 	 score = type_compare(actual->type, param->type);
 	 break;
 
       case ir_var_inout:
-	 /* FINISHME: Make sure that actual is a valid lvalue. */
-
 	 /* Since there are no bi-directional automatic conversions (e.g.,
 	  * there is int -> float but no float -> int), inout parameters must
 	  * be exact matches.
