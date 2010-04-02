@@ -4,7 +4,7 @@
 #define UTIL_INLINE_INIT(m) \
    extern boolean m##_inited; \
    extern void m##_do_init(void); \
-   static inline void m##_init(void) \
+   static INLINE void m##_init(void) \
    { \
       if(!m##_inited) { \
          m##_do_init(); \
