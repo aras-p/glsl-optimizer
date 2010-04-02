@@ -1628,6 +1628,11 @@ ast_parameter_declarator::hir(exec_list *instructions,
    if (type->is_void() && (this->identifier == NULL))
       return NULL;
 
+   if (formal_parameter && (this->identifier == NULL)) {
+      _mesa_glsl_error(& loc, state, "formal parameter lacks a name");
+      return NULL;
+   }
+
    ir_variable *var = new ir_variable(type, this->identifier);
 
    /* FINISHME: Handle array declarations.  Note that this requires
@@ -1649,17 +1654,18 @@ ast_parameter_declarator::hir(exec_list *instructions,
 }
 
 
-static void
-ast_function_parameters_to_hir(struct simple_node *ast_parameters,
-			       exec_list *ir_parameters,
-			       struct _mesa_glsl_parse_state *state)
+void
+ast_parameter_declarator::parameters_to_hir(struct simple_node *ast_parameters,
+					    bool formal,
+					    exec_list *ir_parameters,
+					    _mesa_glsl_parse_state *state)
 {
    struct simple_node *ptr;
 
    foreach (ptr, ast_parameters) {
-      ast_node *param = (ast_node *)ptr;
+      ast_parameter_declarator *param = (ast_parameter_declarator *)ptr;
+      param->formal_parameter = formal;
       param->hir(ir_parameters, state);
-
    }
 }
 
@@ -1713,7 +1719,9 @@ ast_function::hir(exec_list *instructions,
     * used below to compare this function's signature with previously seen
     * signatures for functions with the same name.
     */
-   ast_function_parameters_to_hir(& this->parameters, & hir_parameters, state);
+   ast_parameter_declarator::parameters_to_hir(& this->parameters,
+					       is_definition,
+					       & hir_parameters, state);
 
    const char *return_type_name;
    const glsl_type *return_type =

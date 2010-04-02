@@ -432,6 +432,14 @@ public:
    char *identifier;
    int is_array;
    ast_expression *array_size;
+
+   static void parameters_to_hir(simple_node *ast_parameters,
+				 bool formal, exec_list *ir_parameters,
+				 struct _mesa_glsl_parse_state *state);
+
+private:
+   /** Is this parameter declaration part of a formal parameter list? */
+   bool formal_parameter;
 };
 
 
