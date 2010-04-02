@@ -321,8 +321,10 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     }
 
     if (state->dither) {
-        blend->dither = R300_RB3D_DITHER_CTL_DITHER_MODE_LUT |
-                R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT;
+	/* fglrx appears to never set this */
+	blend->dither = 0;
+        /* blend->dither = R300_RB3D_DITHER_CTL_DITHER_MODE_LUT |
+                           R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT; */
     }
 
     return (void*)blend;
