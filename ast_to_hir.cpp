@@ -1625,14 +1625,21 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * for a function, which avoids tripping up checks for main taking
     * parameters and lookups of an unnamed symbol.
     */
-   if (type->is_void() && (this->identifier == NULL))
+   if (type->is_void()) {
+      if (this->identifier != NULL)
+	 _mesa_glsl_error(& loc, state,
+			  "named parameter cannot have type `void'");
+
+      is_void = true;
       return NULL;
+   }
 
    if (formal_parameter && (this->identifier == NULL)) {
       _mesa_glsl_error(& loc, state, "formal parameter lacks a name");
       return NULL;
    }
 
+   is_void = false;
    ir_variable *var = new ir_variable(type, this->identifier);
 
    /* FINISHME: Handle array declarations.  Note that this requires
@@ -1661,11 +1668,25 @@ ast_parameter_declarator::parameters_to_hir(struct simple_node *ast_parameters,
 					    _mesa_glsl_parse_state *state)
 {
    struct simple_node *ptr;
+   ast_parameter_declarator *void_param = NULL;
+   unsigned count = 0;
 
    foreach (ptr, ast_parameters) {
       ast_parameter_declarator *param = (ast_parameter_declarator *)ptr;
       param->formal_parameter = formal;
       param->hir(ir_parameters, state);
+
+      if (param->is_void)
+	 void_param = param;
+
+      count++;
+   }
+
+   if ((void_param != NULL) && (count > 1)) {
+      YYLTYPE loc = void_param->get_location();
+
+      _mesa_glsl_error(& loc, state,
+		       "`void' parameter must be only parameter");
    }
 }
 

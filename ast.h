@@ -440,6 +440,13 @@ public:
 private:
    /** Is this parameter declaration part of a formal parameter list? */
    bool formal_parameter;
+
+   /**
+    * Is this parameter 'void' type?
+    *
+    * This field is set by \c ::hir.
+    */
+   bool is_void;
 };
 
 
