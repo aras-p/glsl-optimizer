@@ -57,7 +57,7 @@ GLSL 1.50                                             not started
 Geometry shaders (GL_ARB_geometry_shader4)            partially done (Zack)
 BGRA vertex order (GL_ARB_vertex_array_bgra)          DONE
 Base vertex offset(GL_ARB_draw_elements_base_vertex)  DONE
-Frag shader coord (GL_ARB_fragment_coord_conventions) not started
+Frag shader coord (GL_ARB_fragment_coord_conventions) DONE (swrast, gallium)
 Provoking vertex (GL_ARB_provoking_vertex)            DONE
 Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE, mostly?
 Multisample textures (GL_ARB_texture_multisample)     not started
