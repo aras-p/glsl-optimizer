@@ -35,16 +35,18 @@ type_compare(const glsl_type *a, const glsl_type *b)
    switch (a->base_type) {
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
-   case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
-      if ((a->vector_elements != b->vector_elements)
-	  || (a->matrix_columns != b->matrix_columns))
+      /* There is no implicit conversion to or from integer types or bool.
+       */
+      if ((a->is_integer() != b->is_integer())
+	  || (a->is_boolean() != b->is_boolean()))
 	 return -1;
 
-      /* There is no implicit conversion to or from bool.
-       */
-      if ((a->base_type == GLSL_TYPE_BOOL)
-	  || (b->base_type == GLSL_TYPE_BOOL))
+      /* FALLTHROUGH */
+
+   case GLSL_TYPE_FLOAT:
+      if ((a->vector_elements != b->vector_elements)
+	  || (a->matrix_columns != b->matrix_columns))
 	 return -1;
 
       return 1;
