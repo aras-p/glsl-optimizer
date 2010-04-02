@@ -132,18 +132,18 @@ util_format_s3tc_do_init(void)
 
    if (!library)
       debug_printf("couldn't open " DXTN_LIBNAME ", software DXTn "
-         "compression/decompression unavailable");
+         "compression/decompression unavailable\n");
    else {
       if (!is_nop(util_format_dxt1_rgb_fetch) &&
          !is_nop(util_format_dxt1_rgba_fetch) &&
          !is_nop(util_format_dxt3_rgba_fetch) &&
          !is_nop(util_format_dxt5_rgba_fetch) &&
          !is_nop(util_format_dxtn_pack)) {
-         debug_printf("software DXTn compression/decompression available");
+         debug_printf("software DXTn compression/decompression available\n");
       } else
          debug_printf("couldn't reference all symbols in "
                  DXTN_LIBNAME ", software DXTn compression/decompression "
-                 "unavailable or partially available");
+                 "unavailable or partially available\n");
    }
 
 #define DO(n, a, A) \
