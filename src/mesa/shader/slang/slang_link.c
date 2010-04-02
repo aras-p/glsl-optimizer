@@ -121,7 +121,7 @@ link_transform_feedback(GLcontext *ctx, struct gl_shader_program *shProg)
 
    if (shProg->TransformFeedback.NumVarying == 0) {
       /* nothing to do */
-      return GL_FALSE;
+      return GL_TRUE;
    }
 
    /* Check that there's a vertex shader */
