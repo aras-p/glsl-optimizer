@@ -164,6 +164,18 @@ struct glsl_type {
    const glsl_type *get_base_type() const;
 
    /**
+    * Query the type of elements in an array
+    *
+    * \return
+    * Pointer to the type of elements in the array for array types, or \c NULL
+    * for non-array types.
+    */
+   const glsl_type *element_type() const
+   {
+      return is_array() ? fields.array : NULL;
+   }
+
+   /**
     * Get the instance of a built-in scalar, vector, or matrix type
     */
    static const glsl_type *get_instance(unsigned base_type, unsigned rows,
@@ -306,6 +318,19 @@ struct glsl_type {
       return is_matrix()
 	 ? get_instance(base_type, vector_elements, 1)
 	 : error_type;
+   }
+
+   /**
+    * Query the number of elements in an array type
+    *
+    * \return
+    * The number of elements in the array for array types or -1 for non-array
+    * types.  If the number of elements in the array has not yet been declared,
+    * zero is returned.
+    */
+   int array_size() const
+   {
+      return is_array() ? length : -1;
    }
 
 private:
