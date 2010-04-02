@@ -539,9 +539,7 @@ __glXFreeContext(__GLXcontext * gc)
       XFree((char *) gc->version);
    if (gc->extensions)
       XFree((char *) gc->extensions);
-#ifndef GLX_USE_APPLEGL /* TODO: clientattrib */
    __glFreeAttributeState(gc);
-#endif
    XFree((char *) gc->buf);
    Xfree((char *) gc->client_state_private);
    XFree((char *) gc);

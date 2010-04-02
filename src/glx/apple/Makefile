@@ -20,7 +20,7 @@ BUILD_DIR=builds
 
 all: $(BUILD_DIR)/libGL.1.2.dylib
 
-OBJECTS=glxext.o glxcmds.o glx_pbuffer.o glx_query.o glxcurrent.o glxextensions.o \
+OBJECTS=clientattrib.o glxext.o glxcmds.o glx_pbuffer.o glx_query.o glxcurrent.o glxextensions.o \
     appledri.o apple_glx_context.o apple_glx.o pixel.o \
     compsize.o apple_visual.o apple_cgl.o glxreply.o glcontextmodes.o \
     apple_xgl_api.o apple_glx_drawable.o xfont.o apple_glx_pbuffer.o \
