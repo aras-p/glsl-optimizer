@@ -117,7 +117,18 @@ ir_dereference::ir_dereference(ir_instruction *var,
    : ir_rvalue(), mode(ir_reference_array),
      var(var)
 {
-   this->type = (var != NULL) ? var->type : glsl_type::error_type;
+   type = glsl_type::error_type;
+
+   if (var != NULL) {
+      const glsl_type *const vt = var->type;
+
+      if (vt->is_array()) {
+	 type = vt->element_type();
+      } else if (vt->is_matrix() || vt->is_vector()) {
+	 type = vt->get_base_type();
+      }
+   }
+
    this->selector.array_index = array_index;
 }
 
