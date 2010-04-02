@@ -428,6 +428,12 @@ fetch(LLVMBuilderRef builder,
    int offset = 0;
    LLVMValueRef res = LLVMConstNull(
       LLVMVectorType(LLVMFloatType(), 4));
+   LLVMValueRef defaults[4];
+
+   defaults[0] = LLVMConstReal(LLVMFloatType(), 0);
+   defaults[1] = LLVMConstReal(LLVMFloatType(), 0);
+   defaults[2] = LLVMConstReal(LLVMFloatType(), 0);
+   defaults[3] = LLVMConstReal(LLVMFloatType(), 1);
 
    for (i = 0; i < nr_components; ++i) {
       LLVMValueRef src_index = LLVMConstInt(LLVMInt32Type(), offset, 0);
@@ -446,6 +452,13 @@ fetch(LLVMBuilderRef builder,
                                    component,
                                    dst_index, "");
       offset += val_size;
+   }
+   for (; i < 4; ++i) {
+      LLVMValueRef dst_index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      res = LLVMBuildInsertElement(builder,
+                                   res,
+                                   defaults[i],
+                                   dst_index, "");
    }
    return res;
 }
