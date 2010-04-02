@@ -1644,6 +1644,9 @@ parameter_lists_match(exec_list *list_a, exec_list *list_b)
    exec_list_iterator iter_b = list_b->iterator();
 
    while (iter_a.has_next()) {
+      ir_variable *a = (ir_variable *)iter_a.get();
+      ir_variable *b = (ir_variable *)iter_b.get();
+
       /* If all of the parameters from the other parameter list have been
        * exhausted, the lists have different length and, by definition,
        * do not match.
@@ -1654,8 +1657,8 @@ parameter_lists_match(exec_list *list_a, exec_list *list_b)
       /* If the types of the parameters do not match, the parameters lists
        * are different.
        */
-      /* FINISHME */
-
+      if (a->type != b->type)
+	 return false;
 
       iter_a.next();
       iter_b.next();
