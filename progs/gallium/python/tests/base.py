@@ -116,7 +116,7 @@ class Test:
     def run(self):
         result = TestResult()
         self._run(result)
-        result.summary()
+        result.report()
 
     def assert_rgba(self, ctx, surface, x, y, w, h, expected_rgba, pixel_tol=4.0/256, surface_tol=0.85):
         total = h*w
@@ -250,7 +250,7 @@ class TestResult:
         sys.stdout.write("SKIP\n")
         sys.stdout.flush()
         self.skipped += 1
-        #self.log_result(test, 'skip')
+        self.log_result(test, 'skip')
         
     def test_failed(self, test):
         sys.stdout.write("FAIL\n")
@@ -296,11 +296,16 @@ class TestResult:
         
         self.rows.append(row)
 
-    def summary(self):
+    def report(self):
         sys.stdout.write("%u tests, %u passed, %u skipped, %u failed\n\n" % (self.tests, self.passed, self.skipped, self.failed))
         sys.stdout.flush()
 
         name, ext = os.path.splitext(os.path.basename(sys.argv[0]))
+
+        tree = self.report_tree(name)
+        self.report_junit(name, stdout=tree)
+
+    def report_tree(self, name):
         filename = name + '.tsv'
         stream = file(filename, 'wt')
 
@@ -311,6 +316,8 @@ class TestResult:
 
         # rows
         for row in self.rows:
+            if row[0] == 'skip':
+                continue
             row += ['']*(len(self.names) - len(row))
             stream.write('\t'.join(row) + '\n')
 
@@ -322,7 +329,7 @@ class TestResult:
             import orngTree
         except ImportError:
             sys.stderr.write('Install Orange from http://www.ailab.si/orange/ for a classification tree.\n')
-            return
+            return None
 
         data = orange.ExampleTable(filename)
 
@@ -330,6 +337,63 @@ class TestResult:
 
         orngTree.printTxt(tree, maxDepth=4)
 
-        file(name+'.txt', 'wt').write(orngTree.dumpTree(tree))
+        text_tree = orngTree.dumpTree(tree)
+
+        file(name + '.txt', 'wt').write(text_tree)
 
         orngTree.printDot(tree, fileName=name+'.dot', nodeShape='ellipse', leafShape='box')
+
+        return text_tree
+    
+    def report_junit(self, name, stdout=None, stderr=None):
+        """Write test results in ANT's junit XML format, to use with Hudson CI.
+
+        See also:
+        - http://fisheye.hudson-ci.org/browse/Hudson/trunk/hudson/main/core/src/test/resources/hudson/tasks/junit
+        - http://www.junit.org/node/399
+        - http://wiki.apache.org/ant/Proposals/EnhancedTestReports
+        """
+
+        stream = file(name + '.xml', 'wt')
+
+        stream.write('<?xml version="1.0" encoding="UTF-8" ?>\n')
+        stream.write('<testsuite name="%s">\n' % self.escape_xml(name))
+        stream.write('  <properties>\n')
+        stream.write('  </properties>\n')
+
+        names = self.names[1:]
+
+        for row in self.rows:
+
+            test_name = ' '.join(['%s=%s' % pair for pair in zip(self.names[1:], row[1:])])
+
+            stream.write('  <testcase name="%s">\n' % (self.escape_xml(test_name)))
+
+            result = row[0]
+            if result == 'pass':
+                pass
+            elif result == 'skip':
+                stream.write('    <skipped/>\n')
+            else:
+                stream.write('    <failure/>\n')
+            
+            stream.write('  </testcase>\n')
+
+        if stdout:
+            stream.write('  <system-out>%s</system-out>\n' % self.escape_xml(stdout))
+        if stderr:
+            stream.write('  <system-err>%s</system-err>\n' % self.escape_xml(stderr))
+
+        stream.write('</testsuite>\n')
+
+        stream.close()
+
+    def escape_xml(self, s):
+        '''Escape a XML string.'''
+        s = s.replace('&', '&amp;')
+        s = s.replace('<', '&lt;')
+        s = s.replace('>', '&gt;')
+        s = s.replace('"', '&quot;')
+        s = s.replace("'", '&apos;')
+        return s
+
