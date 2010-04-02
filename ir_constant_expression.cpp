@@ -153,6 +153,46 @@ ir_constant_visitor::visit(ir_expression *ir)
       for (c = 0; c < ir->operands[0]->type->components(); c++)
 	 b[c] = !op[0]->value.b[c];
       break;
+   case ir_binop_add:
+      if (ir->operands[0]->type == ir->operands[1]->type) {
+	 type = ir->operands[0]->type;
+	 for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	    switch (ir->operands[0]->type->base_type) {
+	    case GLSL_TYPE_UINT:
+	       u[c] = op[0]->value.u[c] + op[1]->value.u[c];
+	       break;
+	    case GLSL_TYPE_INT:
+	       i[c] = op[0]->value.i[c] + op[1]->value.i[c];
+	       break;
+	    case GLSL_TYPE_FLOAT:
+	       f[c] = op[0]->value.f[c] + op[1]->value.f[c];
+	       break;
+	    default:
+	       assert(0);
+	    }
+	 }
+      }
+      break;
+   case ir_binop_sub:
+      if (ir->operands[0]->type == ir->operands[1]->type) {
+	 type = ir->operands[0]->type;
+	 for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	    switch (ir->operands[0]->type->base_type) {
+	    case GLSL_TYPE_UINT:
+	       u[c] = op[0]->value.u[c] - op[1]->value.u[c];
+	       break;
+	    case GLSL_TYPE_INT:
+	       i[c] = op[0]->value.i[c] - op[1]->value.i[c];
+	       break;
+	    case GLSL_TYPE_FLOAT:
+	       f[c] = op[0]->value.f[c] - op[1]->value.f[c];
+	       break;
+	    default:
+	       assert(0);
+	    }
+	 }
+      }
+      break;
    case ir_binop_mul:
       if (ir->operands[0]->type == ir->operands[1]->type &&
 	  !ir->operands[0]->type->is_matrix()) {
@@ -174,11 +214,37 @@ ir_constant_visitor::visit(ir_expression *ir)
 	 }
       }
       break;
+   case ir_binop_div:
+      if (ir->operands[0]->type == ir->operands[1]->type) {
+	 type = ir->operands[0]->type;
+	 for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	    switch (ir->operands[0]->type->base_type) {
+	    case GLSL_TYPE_UINT:
+	       u[c] = op[0]->value.u[c] / op[1]->value.u[c];
+	       break;
+	    case GLSL_TYPE_INT:
+	       i[c] = op[0]->value.i[c] / op[1]->value.i[c];
+	       break;
+	    case GLSL_TYPE_FLOAT:
+	       f[c] = op[0]->value.f[c] / op[1]->value.f[c];
+	       break;
+	    default:
+	       assert(0);
+	    }
+	 }
+      }
+      break;
    case ir_binop_logic_and:
       type = ir->operands[0]->type;
       assert(type->base_type == GLSL_TYPE_BOOL);
       for (c = 0; c < ir->operands[0]->type->components(); c++)
 	 b[c] = op[0]->value.b[c] && op[1]->value.b[c];
+      break;
+   case ir_binop_logic_xor:
+      type = ir->operands[0]->type;
+      assert(type->base_type == GLSL_TYPE_BOOL);
+      for (c = 0; c < ir->operands[0]->type->components(); c++)
+	 b[c] = op[0]->value.b[c] ^ op[1]->value.b[c];
       break;
    case ir_binop_logic_or:
       type = ir->operands[0]->type;
