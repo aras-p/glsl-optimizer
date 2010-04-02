@@ -90,7 +90,7 @@ install: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 # Remove .o and backup files
 clean:
-	-rm -f $(TOP)/$(LIB_DIR)/libGL.so*
+	-rm -f $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB)
 	-rm -f *.o *~
 	-rm -f depend depend.bak
 
