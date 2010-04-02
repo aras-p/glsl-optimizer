@@ -66,7 +66,7 @@ extern util_format_dxtn_fetch_t util_format_dxt5_rgba_fetch;
 extern util_format_dxtn_pack_t util_format_dxtn_pack;
 
 
-UTIL_INLINE_INIT(util_format_s3tc);
+UTIL_INLINE_INIT(util_format_s3tc)
 
 
 void
