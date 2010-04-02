@@ -86,7 +86,6 @@ void util_format_dxtn_pack_stub( int src_comps,
    util_format_dxtn_pack_stub(src_comps, width, height, src, dst_format, dst, dst_stride);
 }
 
-boolean util_format_s3tc_enabled = FALSE;
 boolean util_format_s3tc_inited = FALSE;
 
 util_format_dxtn_fetch_t util_format_dxt1_rgb_fetch = util_format_dxt1_rgb_fetch_stub;
@@ -141,12 +140,23 @@ util_format_s3tc_do_init(void)
          !is_nop(util_format_dxt5_rgba_fetch) &&
          !is_nop(util_format_dxtn_pack)) {
          debug_printf("software DXTn compression/decompression available");
-         util_format_s3tc_enabled = TRUE;
       } else
          debug_printf("couldn't reference all symbols in "
-            DXTN_LIBNAME ", software DXTn compression/decompression "
-            "unavailable");
+                 DXTN_LIBNAME ", software DXTn compression/decompression "
+                 "unavailable or partially available");
    }
+
+#define DO(n, a, A) \
+  ((struct util_format_description *)util_format_description(PIPE_FORMAT_DXT##n##_SRGB##A))->is_supported = \
+         ((struct util_format_description *)util_format_description(PIPE_FORMAT_DXT##n##_RGB##A))->is_supported = \
+               !is_nop(util_format_dxt##n##_rgb##a##_fetch);
+
+  DO(1,,);
+  DO(1,a,A);
+  DO(3,a,A);
+  DO(5,a,A);
+
+#undef DO
 }
 
 

@@ -32,7 +32,7 @@
 
 #include "pipe/p_format.h"
 #include "util/u_debug.h"
-#include "util/u_inline_init.h"
+#include "util/u_format_s3tc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -167,6 +167,13 @@ struct util_format_description
     * Whether channels have mixed types (ignoring UTIL_FORMAT_TYPE_VOID).
     */
    unsigned is_mixed:1;
+
+   /**
+    * Whether the pack/unpack functions actually work.
+    *
+    * Call util_format_is_supported instead of using this directly.
+    */
+   unsigned is_supported:1;
 
    /**
     * Input channel description.
@@ -506,6 +513,20 @@ util_format_get_nr_components(enum pipe_format format)
 /*
  * Format access functions.
  */
+
+static INLINE boolean
+util_format_is_supported(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   if(!desc)
+      return FALSE;
+
+   if(desc->layout == UTIL_FORMAT_LAYOUT_S3TC)
+      util_format_s3tc_init();
+
+   return desc->is_supported;
+}
 
 void
 util_format_read_4f(enum pipe_format format,

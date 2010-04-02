@@ -92,7 +92,7 @@ def write_format_table(formats):
     u_format_pack.generate(formats)
     
     for format in formats:
-        print 'const struct util_format_description'
+        print 'struct util_format_description'
         print 'util_format_%s_description = {' % (format.short_name(),)
         print "   %s," % (format.name,)
         print "   \"%s\"," % (format.name,)
@@ -103,6 +103,7 @@ def write_format_table(formats):
         print "   %s,\t/* is_array */" % (bool_map(format.is_array()),)
         print "   %s,\t/* is_bitmask */" % (bool_map(format.is_bitmask()),)
         print "   %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),)
+        print "   %s,\t/* is_supported */" % ("TRUE" if u_format_pack.is_format_supported(format) else "FALSE",)
         print "   {"
         for i in range(4):
             channel = format.channels[i]
