@@ -75,9 +75,6 @@ public:
       this->location.column = locp.first_column;
    }
 
-
-   int  type;
-
    struct {
       unsigned source;
       unsigned line;

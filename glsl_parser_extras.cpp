@@ -104,7 +104,7 @@ _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
 void
 ast_node::print(void) const
 {
-   printf("node_%d ", type);
+   printf("unhandled node ");
 }
 
 
