@@ -22,6 +22,7 @@
 
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
+#include "util/u_format.h"
 
 #include "nv50_context.h"
 #include "nv50_screen.h"
@@ -69,6 +70,8 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 	struct pipe_winsys *pipe_winsys = pscreen->winsys;
 	struct nv50_screen *screen = nv50_screen(pscreen);
 	struct nv50_context *nv50;
+
+	util_format_init();
 
 	nv50 = CALLOC_STRUCT(nv50_context);
 	if (!nv50)
