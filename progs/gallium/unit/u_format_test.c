@@ -30,8 +30,10 @@
 #include <stdio.h>
 #include <float.h>
 
+#include "util/u_half.h"
 #include "util/u_format.h"
 #include "util/u_format_tests.h"
+#include "util/u_format_s3tc.h"
 
 
 static boolean
@@ -352,8 +354,10 @@ test_one(test_func_t func, const char *suffix)
 
       format_desc = util_format_description(test->format);
 
-      if (!util_format_is_supported(test->format))
+      if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC &&
+          !util_format_s3tc_enabled) {
          skip = TRUE;
+      }
 
       if (test->format != last_format) {
          printf("%s util_format_%s_%s ...\n",
@@ -399,6 +403,8 @@ test_all(void)
 int main(int argc, char **argv)
 {
    boolean success;
+
+   util_format_s3tc_init();
 
    success = test_all();
 
