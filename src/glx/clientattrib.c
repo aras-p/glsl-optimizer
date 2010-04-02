@@ -35,7 +35,6 @@
 
 /*****************************************************************************/
 
-#ifndef GLX_USE_APPLEGL
 static void
 do_enable_disable(GLenum array, GLboolean val)
 {
@@ -124,7 +123,6 @@ __indirect_glPopClientAttrib(void)
       return;
    }
 }
-#endif
 
 void
 __glFreeAttributeState(__GLXcontext * gc)

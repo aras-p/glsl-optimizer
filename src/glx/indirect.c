@@ -5198,7 +5198,7 @@ glDeleteTexturesEXT(GLsizei n, const GLuint * textures)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_DeleteTextures(GET_DISPATCH(), (n, textures));
     } else
@@ -5269,7 +5269,7 @@ glGenTexturesEXT(GLsizei n, GLuint * textures)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GenTextures(GET_DISPATCH(), (n, textures));
     } else
@@ -5334,7 +5334,7 @@ glIsTextureEXT(GLuint texture)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         return CALL_IsTexture(GET_DISPATCH(), (texture));
     } else
@@ -5650,7 +5650,7 @@ glGetColorTableEXT(GLenum target, GLenum format, GLenum type, GLvoid * table)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTable(GET_DISPATCH(), (target, format, type, table));
     } else
@@ -5726,7 +5726,7 @@ glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTableParameterfv(GET_DISPATCH(),
                                       (target, pname, params));
@@ -5799,7 +5799,7 @@ glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTableParameteriv(GET_DISPATCH(),
                                       (target, pname, params));
@@ -6125,7 +6125,7 @@ gl_dispatch_stub_356(GLenum target, GLenum format, GLenum type,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionFilter(GET_DISPATCH(),
                                   (target, format, type, image));
@@ -6203,7 +6203,7 @@ gl_dispatch_stub_357(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionParameterfv(GET_DISPATCH(),
                                        (target, pname, params));
@@ -6276,7 +6276,7 @@ gl_dispatch_stub_358(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionParameteriv(GET_DISPATCH(),
                                        (target, pname, params));
@@ -6356,7 +6356,7 @@ gl_dispatch_stub_361(GLenum target, GLboolean reset, GLenum format,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogram(GET_DISPATCH(),
                           (target, reset, format, type, values));
@@ -6433,7 +6433,7 @@ gl_dispatch_stub_362(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogramParameterfv(GET_DISPATCH(), (target, pname, params));
     } else
@@ -6504,7 +6504,7 @@ gl_dispatch_stub_363(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogramParameteriv(GET_DISPATCH(), (target, pname, params));
     } else
@@ -6579,7 +6579,7 @@ gl_dispatch_stub_364(GLenum target, GLboolean reset, GLenum format,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmax(GET_DISPATCH(), (target, reset, format, type, values));
     } else
@@ -6653,7 +6653,7 @@ gl_dispatch_stub_365(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmaxParameterfv(GET_DISPATCH(), (target, pname, params));
     } else
@@ -6721,7 +6721,7 @@ gl_dispatch_stub_366(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmaxParameteriv(GET_DISPATCH(), (target, pname, params));
     } else

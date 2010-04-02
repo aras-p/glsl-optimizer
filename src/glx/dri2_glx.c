@@ -30,7 +30,7 @@
  *   Kristian Høgsberg (krh@redhat.com)
  */
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>

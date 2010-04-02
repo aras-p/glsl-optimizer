@@ -97,13 +97,8 @@ typedef struct _glapi_table __GLapi;
 #define containerOf(ptr, type, member)              \
     (type *)( (char *)ptr - offsetof(type,member) )
 
-extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
-
-#endif
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-
 #include <GL/internal/dri_interface.h>
+
 
 /**
  * Display dependent methods.  This structure is initialized during the
@@ -189,6 +184,8 @@ extern __GLXDRIdisplay *driCreateDisplay(Display * dpy);
 extern __GLXDRIdisplay *dri2CreateDisplay(Display * dpy);
 extern void dri2InvalidateBuffers(Display *dpy, XID drawable);
 
+
+extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
 
 /*
 ** Functions to obtain driver configuration information from a direct
@@ -408,13 +405,8 @@ struct __GLXcontextRec
    const __GLcontextModes *mode;
 
 #ifdef GLX_DIRECT_RENDERING
-#ifdef GLX_USE_APPLEGL
-   void *driContext;
-   Bool do_destroy;
-#else
    __GLXDRIcontext *driContext;
    __DRIcontext *__driContext;
-#endif
 #endif
 
     /**
@@ -511,7 +503,7 @@ struct __GLXscreenConfigsRec
      */
    char *effectiveGLXexts;
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     /**
      * Per screen direct rendering interface functions and data.
      */
@@ -622,7 +614,7 @@ struct __GLXdisplayPrivateRec
      */
    __GLXscreenConfigs *screenConfigs;
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
     /**
      * Per display direct rendering interface functions and data.
      */
@@ -800,7 +792,7 @@ extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
                                     int32_t * numerator,
                                     int32_t * denominator);
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
 GLboolean
 __driGetMscRateOML(__DRIdrawable * draw,
                    int32_t * numerator, int32_t * denominator, void *private);

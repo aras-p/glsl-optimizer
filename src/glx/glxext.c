@@ -42,10 +42,6 @@
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #include <X11/extensions/dri2proto.h>
-#ifdef GLX_USE_APPLEGL
-#include "apple_glx.h"
-#include "apple_visual.h"
-#endif
 #include "glxextensions.h"
 #include "glcontextmodes.h"
 
@@ -69,12 +65,7 @@ _X_HIDDEN int __glXDebug = 0;
 /* Extension required boiler plate */
 
 static char *__glXExtensionName = GLX_EXTENSION_NAME;
-#ifdef GLX_USE_APPLEGL
-static XExtensionInfo __glXExtensionInfo_data;
-XExtensionInfo *__glXExtensionInfo = &__glXExtensionInfo_data;
-#else
 XExtensionInfo *__glXExtensionInfo = NULL;
-#endif
 
 static /* const */ char *error_list[] = {
    "GLXBadContext",
@@ -106,11 +97,6 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
    return XextRemoveDisplay(__glXExtensionInfo, dpy);
 }
 
-
-#ifdef GLX_USE_APPLEGL
-static char *__glXErrorString(Display *dpy, int code, XExtCodes *codes, 
-                              char *buf, int n);
-#endif
 
 static
 XEXT_GENERATE_ERROR_STRING(__glXErrorString, __glXExtensionName,
@@ -259,7 +245,7 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
       }
       Xfree((char *) psc->serverGLXexts);
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
       if (psc->driver_configs) {
          unsigned int j;
          for (j = 0; psc->driver_configs[j]; j++)
@@ -299,7 +285,7 @@ __glXFreeDisplayPrivate(XExtData * extension)
       priv->serverGLXversion = 0x0;     /* to protect against double free's */
    }
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
    /* Free the direct rendering per display data */
    if (priv->driswDisplay)
       (*priv->driswDisplay->destroyDisplay) (priv->driswDisplay);
@@ -372,20 +358,7 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
 #endif /* USE_XCB */
 }
 
-/* 
- * We don't want to enable this GLX_OML_swap_method in glxext.h, 
- * because we can't support it.  The X server writes it out though,
- * so we should handle it somehow, to avoid false warnings.
- */
-enum {
-    IGNORE_GLX_SWAP_METHOD_OML = 0x8060
-};
 
-
-/*
- * getVisualConfigs uses the !tagged_only path.
- * getFBConfigs uses the tagged_only path.
- */
 _X_HIDDEN void
 __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
                                     const INT32 * bp, Bool tagged_only,
@@ -419,14 +392,7 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
       config->numAuxBuffers = *bp++;
       config->level = *bp++;
 
-#ifdef GLX_USE_APPLEGL
-       /* AppleSGLX supports pixmap and pbuffers with all config. */
-       config->drawableType = GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;
-       /* Unfortunately this can create an ABI compatibility problem. */
-       count -= 18;
-#else
       count -= __GLX_MIN_CONFIG_PROPS;
-#endif
    }
 
    /*
@@ -439,9 +405,7 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
     config-> tag = ( fbconfig_style_tags ) ? *bp++ : 1
 
    for (i = 0; i < count; i += 2) {
-      long int tag = *bp++;
-      
-      switch (tag) {
+      switch (*bp++) {
       case GLX_RGBA:
          FETCH_OR_SET(rgbMode);
          break;
@@ -519,10 +483,6 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
          break;
       case GLX_DRAWABLE_TYPE:
          config->drawableType = *bp++;
-#ifdef GLX_USE_APPLEGL
-         /* AppleSGLX supports pixmap and pbuffers with all config. */
-         config->drawableType |= GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;              
-#endif
          break;
       case GLX_RENDER_TYPE:
          config->renderType = *bp++;
@@ -542,7 +502,6 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
       case GLX_MAX_PBUFFER_PIXELS:
          config->maxPbufferPixels = *bp++;
          break;
-#ifndef GLX_USE_APPLEGL
       case GLX_OPTIMAL_PBUFFER_WIDTH_SGIX:
          config->optimalPbufferWidth = *bp++;
          break;
@@ -555,19 +514,12 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
       case GLX_SWAP_METHOD_OML:
          config->swapMethod = *bp++;
          break;
-#endif
       case GLX_SAMPLE_BUFFERS_SGIS:
          config->sampleBuffers = *bp++;
          break;
       case GLX_SAMPLES_SGIS:
          config->samples = *bp++;
          break;
-#ifdef GLX_USE_APPLEGL
-      case IGNORE_GLX_SWAP_METHOD_OML:
-         /* We ignore this tag.  See the comment above this function. */
-         ++bp;
-         break;
-#else
       case GLX_BIND_TO_TEXTURE_RGB_EXT:
          config->bindToTextureRgb = *bp++;
          break;
@@ -583,17 +535,11 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
       case GLX_Y_INVERTED_EXT:
          config->yInverted = *bp++;
          break;
-#endif
       case None:
          i = count;
          break;
       default:
-         if(getenv("LIBGL_DIAGNOSTIC")) {
-             long int tagvalue = *bp++;
-             fprintf(stderr, "WARNING: unknown GLX tag from server: "
-                     "tag 0x%lx value 0x%lx\n", tag, tagvalue);
-         }
-              break;
+         break;
       }
    }
 
@@ -641,18 +587,9 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
    m = modes;
    for (i = 0; i < nvisuals; i++) {
       _XRead(dpy, (char *) props, prop_size);
-#ifdef GLX_USE_APPLEGL
-       /* Older X servers don't send this so we default it here. */
+      /* Older X servers don't send this so we default it here. */
       m->drawableType = GLX_WINDOW_BIT;
-#else
-      /* 
-       * The XQuartz 2.3.2.1 X server doesn't set this properly, so
-       * set the proper bits here.
-       * AppleSGLX supports windows, pixmaps, and pbuffers with all config.
-       */
-      m->drawableType = GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;
-#endif
-       __glXInitializeVisualConfigFromTags(m, nprops, props,
+      __glXInitializeVisualConfigFromTags(m, nprops, props,
                                           tagged_only, GL_TRUE);
       m->screen = screen;
       m = m->next;
@@ -773,7 +710,7 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
       getVisualConfigs(dpy, priv, i);
       getFBConfigs(dpy, priv, i);
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
       psc->scr = i;
       psc->dpy = dpy;
       psc->drawHash = __glxHashCreate();
@@ -813,7 +750,7 @@ __glXInitialize(Display * dpy)
    __GLXdisplayPrivate *dpyPriv;
    XEDataObject dataObj;
    int major, minor;
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
    Bool glx_direct, glx_accel;
 #endif
 
@@ -870,7 +807,7 @@ __glXInitialize(Display * dpy)
    dpyPriv->serverGLXvendor = 0x0;
    dpyPriv->serverGLXversion = 0x0;
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#ifdef GLX_DIRECT_RENDERING
    glx_direct = (getenv("LIBGL_ALWAYS_INDIRECT") == NULL);
    glx_accel = (getenv("LIBGL_ALWAYS_SOFTWARE") == NULL);
 
@@ -886,11 +823,8 @@ __glXInitialize(Display * dpy)
    if (glx_direct)
       dpyPriv->driswDisplay = driswCreateDisplay(dpy);
 #endif
-#ifdef GLX_USE_APPLEGL
-   if (apple_init_glx(dpy) || !AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
-#else
+
    if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
-#endif
       __glXUnlock();
       Xfree((char *) dpyPriv);
       Xfree((char *) private);
