@@ -54,6 +54,7 @@ lp_get_printf_arg_count(const char *fmt)
 	       p += 3;
                continue;
 	    }
+	    /* fallthrough */
 	 default:
 	    count ++;
       }
