@@ -288,12 +288,14 @@ dri_destroy_option_cache(struct dri_screen * screen)
 {
    int i;
 
-   for (i = 0; i < (1 << screen->optionCache.tableSize); ++i) {
-      FREE(screen->optionCache.info[i].name);
-      FREE(screen->optionCache.info[i].ranges);
+   if (screen->optionCache.info) {
+      for (i = 0; i < (1 << screen->optionCache.tableSize); ++i) {
+         FREE(screen->optionCache.info[i].name);
+         FREE(screen->optionCache.info[i].ranges);
+      }
+      FREE(screen->optionCache.info);
    }
 
-   FREE(screen->optionCache.info);
    FREE(screen->optionCache.values);
 }
 
