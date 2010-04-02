@@ -190,6 +190,30 @@ ir_dereference::ir_dereference(ir_instruction *var,
    this->selector.array_index = array_index;
 }
 
+bool
+ir_dereference::is_lvalue()
+{
+   if (var == NULL)
+      return false;
+
+   if (this->type->base_type == GLSL_TYPE_ARRAY ||
+       this->type->base_type == GLSL_TYPE_STRUCT)
+      return false;
+
+   if (mode == ir_reference_variable) {
+      ir_variable *const as_var = var->as_variable();
+      if (as_var == NULL)
+	 return false;
+
+      return !as_var->read_only;
+   } else if (mode == ir_reference_array) {
+      /* FINISHME: Walk up the dereference chain and figure out if
+       * FINISHME: the variable is read-only.
+       */
+   }
+
+   return true;
+}
 
 ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
 		       unsigned w, unsigned count)

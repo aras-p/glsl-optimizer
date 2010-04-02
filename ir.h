@@ -540,17 +540,7 @@ public:
       v->visit(this);
    }
 
-   bool is_lvalue()
-   {
-      if (var == NULL)
-	 return false;
-
-      ir_variable *const as_var = var->as_variable();
-      if (as_var == NULL)
-	 return false;
-
-      return !as_var->read_only;
-   }
+   bool is_lvalue();
 
    enum {
       ir_reference_variable,
