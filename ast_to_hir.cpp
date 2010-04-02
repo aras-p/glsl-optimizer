@@ -1178,13 +1178,40 @@ ast_declarator_list::hir(exec_list *instructions,
 				       & loc);
 
       /* Attempt to add the variable to the symbol table.  If this fails, it
-       * means the variable has already been declared at this scope.
+       * means the variable has already been declared at this scope.  Arrays
+       * fudge this rule a little bit.
+       *
+       * From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
+       *
+       *    "It is legal to declare an array without a size and then
+       *    later re-declare the same name as an array of the same
+       *    type and specify a size."
        */
       if (state->symbols->name_declared_this_scope(decl->identifier)) {
-	 YYLTYPE loc = this->get_location();
+	 ir_variable *const earlier =
+	    state->symbols->get_variable(decl->identifier);
 
-	 _mesa_glsl_error(& loc, state, "`%s' redeclared",
-			  decl->identifier);
+	 if ((earlier != NULL)
+	     && (earlier->type->array_size() == 0)
+	     && var->type->is_array()
+	     && (var->type->element_type() == earlier->type->element_type())) {
+	    /* FINISHME: This doesn't match the qualifiers on the two
+	     * FINISHME: declarations.  It's not 100% clear whether this is
+	     * FINISHME: required or not.
+	     */
+	    /* FINISHME: Check that the array hasn't already been accessed
+	     * FINISHME: beyond the newly defined bounds.
+	     */
+	    earlier->type = var->type;
+	    delete var;
+	    var = NULL;
+	 } else {
+	    YYLTYPE loc = this->get_location();
+
+	    _mesa_glsl_error(& loc, state, "`%s' redeclared",
+			     decl->identifier);
+	 }
+
 	 continue;
       }
 
