@@ -1332,6 +1332,32 @@ ast_declarator_list::hir(exec_list *instructions,
 
       var = new ir_variable(var_type, decl->identifier);
 
+      /* From page 22 (page 28 of the PDF) of the GLSL 1.10 specification;
+       *
+       *     "Global variables can only use the qualifiers const,
+       *     attribute, uni form, or varying. Only one may be
+       *     specified.
+       *
+       *     Local variables can only use the qualifier const."
+       *
+       * This is relaxed in GLSL 1.30.
+       */
+      if (state->language_version < 120) {
+	 if (this->type->qualifier.out) {
+	    _mesa_glsl_error(& loc, state,
+			     "`out' qualifier in declaration of `%s' "
+			     "only valid for function parameters in GLSL 1.10.",
+			     decl->identifier);
+	 }
+	 if (this->type->qualifier.in) {
+	    _mesa_glsl_error(& loc, state,
+			     "`in' qualifier in declaration of `%s' "
+			     "only valid for function parameters in GLSL 1.10.",
+			     decl->identifier);
+	 }
+	 /* FINISHME: Test for other invalid qualifiers. */
+      }
+
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
 				       & loc);
 
