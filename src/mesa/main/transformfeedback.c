@@ -418,9 +418,18 @@ _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
 
       /* return the datatype and value's size (in datatype units) */
       if (type)
-         *type = param->Type;
+         *type = param->DataType;
       if (size)
          *size = param->Size;
+   }
+   else {
+      name[0] = 0;
+      if (length)
+         *length = 0;
+      if (type)
+         *type = 0;
+      if (size)
+         *size = 0;
    }
 }
 
