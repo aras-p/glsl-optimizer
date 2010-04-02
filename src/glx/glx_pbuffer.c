@@ -325,7 +325,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
             }
          }
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
          {
             __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
@@ -391,7 +391,7 @@ CreateDrawable(Display * dpy, const __GLcontextModes * fbconfig,
    UnlockDisplay(dpy);
    SyncHandle();
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    do {
       /* FIXME: Maybe delay __DRIdrawable creation until the drawable
        * is actually bound to a context... */
@@ -455,7 +455,7 @@ DestroyDrawable(Display * dpy, GLXDrawable drawable, CARD32 glxCode)
    UnlockDisplay(dpy);
    SyncHandle();
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    {
       int screen;
       __GLXdisplayPrivate *const priv = __glXInitialize(dpy);

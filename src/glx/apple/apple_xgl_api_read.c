@@ -68,10 +68,10 @@ SetRead(struct apple_xgl_saved_state *saved)
 
       saved->swapped = true;
 
-      if (apple_glx_make_current_context(dpy, gc->apple, gc->apple,
+      if (apple_glx_make_current_context(dpy, gc->driContext, gc->driContext,
                                          gc->currentReadable)) {
          /* An error occurred, so try to restore the old context state. */
-         (void) apple_glx_make_current_context(dpy, gc->apple, gc->apple,
+         (void) apple_glx_make_current_context(dpy, gc->driContext, gc->driContext,
                                                gc->currentDrawable);
          saved->swapped = false;
       }
@@ -85,7 +85,7 @@ UnsetRead(struct apple_xgl_saved_state *saved)
       GLXContext gc = __glXGetCurrentContext();
       Display *dpy = glXGetCurrentDisplay();
 
-      if (apple_glx_make_current_context(dpy, gc->apple, gc->apple,
+      if (apple_glx_make_current_context(dpy, gc->driContext, gc->driContext,
                                          gc->currentDrawable)) {
          /*
           * An error occurred restoring the drawable.

@@ -38,8 +38,8 @@ glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
    GLXContext gc = __glXGetCurrentContext();
    Display *dpy = glXGetCurrentDisplay();
 
-   if (gc && gc->apple)
-      apple_glx_context_update(dpy, gc->apple);
+   if (gc && gc->driContext)
+      apple_glx_context_update(dpy, gc->driContext);
 
    __gl_api.Viewport(x, y, width, height);
 }

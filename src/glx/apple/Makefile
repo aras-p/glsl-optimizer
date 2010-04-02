@@ -2,7 +2,7 @@ INSTALL_DIR = /usr/X11
 X11_DIR = $(INSTALL_DIR)
 
 CC=gcc
-GL_CFLAGS=-Wall -ggdb3 -Os -DPTHREADS -D_REENTRANT -DGLX_USE_APPLEGL -DGLX_ALIAS_UNSUPPORTED $(RC_CFLAGS) $(CFLAGS)
+GL_CFLAGS=-Wall -ggdb3 -Os -DPTHREADS -D_REENTRANT -DGLX_DIRECT_RENDERING -DGLX_USE_APPLEGL -DGLX_ALIAS_UNSUPPORTED $(RC_CFLAGS) $(CFLAGS)
 GL_LDFLAGS=-L$(INSTALL_DIR)/lib -L$(X11_DIR)/lib $(LDFLAGS) -Wl,-single_module
 
 TCLSH=tclsh8.5
@@ -12,7 +12,7 @@ INSTALL=install
 LN=ln
 RM=rm
 
-INCLUDE=-I. -Iinclude -Iinclude/internal -I.. -I../../../include -I$(INSTALL_DIR)/include -I$(X11_DIR)/include
+INCLUDE=-I. -Iinclude -Iinclude/internal -I.. -I../../../include -I../../../src/mesa -I../../../src/mesa/glapi -I$(INSTALL_DIR)/include -I$(X11_DIR)/include
 COMPILE=$(CC) $(INCLUDE) $(GL_CFLAGS) -c
 
 #The directory with the final binaries.
