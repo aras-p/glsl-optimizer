@@ -782,8 +782,11 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 }
 
 
-static GLint
-sizeof_glsl_type(GLenum type)
+/**
+ * Return the size of the given GLSL datatype, in floats (components).
+ */
+GLint
+_mesa_sizeof_glsl_type(GLenum type)
 {
    switch (type) {
    case GL_FLOAT:
@@ -828,7 +831,7 @@ sizeof_glsl_type(GLenum type)
    case GL_FLOAT_MAT4x3:
       return 16;  /* four float[4] vectors */
    default:
-      _mesa_problem(NULL, "Invalid type in sizeof_glsl_type()");
+      _mesa_problem(NULL, "Invalid type in _mesa_sizeof_glsl_type()");
       return 1;
    }
 }
@@ -912,7 +915,7 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
 
    if (size)
       *size = attribs->Parameters[index].Size
-         / sizeof_glsl_type(attribs->Parameters[index].DataType);
+         / _mesa_sizeof_glsl_type(attribs->Parameters[index].DataType);
 
    if (type)
       *type = attribs->Parameters[index].DataType;
@@ -987,7 +990,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
    }
 
    if (size) {
-      GLint typeSize = sizeof_glsl_type(param->DataType);
+      GLint typeSize = _mesa_sizeof_glsl_type(param->DataType);
       if ((GLint) param->Size > typeSize) {
          /* This is an array.
           * Array elements are placed on vector[4] boundaries so they're
@@ -1519,6 +1522,12 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
    if (!shProg)
       return;
 
+   if (ctx->TransformFeedback.Active && shProg == ctx->Shader.CurrentProgram) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glLinkProgram(transform feedback active");
+      return;
+   }
+
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    _slang_link(ctx, program, shProg);
@@ -1582,6 +1591,12 @@ void
 _mesa_use_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
+
+   if (ctx->TransformFeedback.Active) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glUseProgram(transform feedback active)");
+      return;
+   }
 
    if (ctx->Shader.CurrentProgram &&
        ctx->Shader.CurrentProgram->Name == program) {
@@ -1771,7 +1786,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
       const GLboolean isUniformBool = is_boolean_type(param->DataType);
       const GLboolean areIntValues = is_integer_type(type);
       const GLint slots = (param->Size + 3) / 4;
-      const GLint typeSize = sizeof_glsl_type(param->DataType);
+      const GLint typeSize = _mesa_sizeof_glsl_type(param->DataType);
       GLsizei k, i;
 
       if ((GLint) param->Size > typeSize) {
@@ -1960,7 +1975,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
    GLuint src = 0;
    const struct gl_program_parameter * param = &program->Parameters->Parameters[index];
    const GLuint slots = (param->Size + 3) / 4;
-   const GLint typeSize = sizeof_glsl_type(param->DataType);
+   const GLint typeSize = _mesa_sizeof_glsl_type(param->DataType);
    GLint nr, nc;
 
    /* check that the number of rows, columns is correct */
