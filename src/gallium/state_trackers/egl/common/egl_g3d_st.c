@@ -145,6 +145,7 @@ egl_g3d_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
          break;
       case ST_ATTACHMENT_BACK_RIGHT:
          natt = NATIVE_ATTACHMENT_BACK_RIGHT;
+         break;
       default:
          natt = -1;
          break;
