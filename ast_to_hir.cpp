@@ -433,12 +433,22 @@ validate_assignment(const glsl_type *lhs_type, ir_rvalue *rhs)
    if (rhs_type->is_error())
       return rhs;
 
-   /* FINISHME: For GLSL 1.10, check that the types are not arrays. */
-
    /* If the types are identical, the assignment can trivially proceed.
     */
    if (rhs_type == lhs_type)
       return rhs;
+
+   /* If the array element types are the same and the size of the LHS is zero,
+    * the assignment is okay.
+    *
+    * Note: Whole-array assignments are not permitted in GLSL 1.10, but this
+    * is handled by ir_dereference::is_lvalue.
+    */
+   if (lhs_type->is_array() && rhs->type->is_array()
+       && (lhs_type->element_type() == rhs->type->element_type())
+       && (lhs_type->array_size() == 0)) {
+      return rhs;
+   }
 
    /* FINISHME: Check for and apply automatic conversions. */
    return NULL;
@@ -464,6 +474,24 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
       _mesa_glsl_error(& lhs_loc, state, "type mismatch");
    } else {
       rhs = new_rhs;
+
+      /* If the LHS array was not declared with a size, it takes it size from
+       * the RHS.  If the LHS is an l-value and a whole array, it must be a
+       * dereference of a variable.  Any other case would require that the LHS
+       * is either not an l-value or not a whole array.
+       */
+      if (lhs->type->array_size() == 0) {
+	 ir_dereference *const d = lhs->as_dereference();
+
+	 assert(d != NULL);
+
+	 ir_variable *const var = d->var->as_variable();
+
+	 assert(var != NULL);
+
+	 var->type = glsl_type::get_array_instance(lhs->type->element_type(),
+						   rhs->type->array_size());
+      }
    }
 
    ir_instruction *tmp = new ir_assignment(lhs, rhs, NULL);
