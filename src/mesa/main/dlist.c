@@ -396,6 +396,10 @@ typedef enum
    /* GL_EXT_provoking_vertex */
    OPCODE_PROVOKING_VERTEX,
 
+   /* GL_EXT_transform_feedback */
+   OPCODE_BEGIN_TRANSFORM_FEEDBACK,
+   OPCODE_END_TRANSFORM_FEEDBACK,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -6104,6 +6108,37 @@ save_ProvokingVertexEXT(GLenum mode)
 }
 
 
+/** GL_EXT_transform_feedback */
+static void GLAPIENTRY
+save_BeginTransformFeedback(GLenum mode)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_BEGIN_TRANSFORM_FEEDBACK, 1);
+   if (n) {
+      n[1].e = mode;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_BeginTransformFeedbackEXT(ctx->Exec, (mode));
+   }
+}
+
+
+/** GL_EXT_transform_feedback */
+static void GLAPIENTRY
+save_EndTransformFeedback(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_END_TRANSFORM_FEEDBACK, 0);
+   if (ctx->ExecuteFlag) {
+      CALL_EndTransformFeedbackEXT(ctx->Exec, ());
+   }
+}
+
+
 /* aka UseProgram() */
 static void GLAPIENTRY
 save_UseProgramObjectARB(GLhandleARB program)
@@ -7198,6 +7233,12 @@ execute_list(GLcontext *ctx, GLuint list)
             break;
          case OPCODE_PROVOKING_VERTEX:
             CALL_ProvokingVertexEXT(ctx->Exec, (n[1].e));
+            break;
+         case OPCODE_BEGIN_TRANSFORM_FEEDBACK:
+            CALL_BeginTransformFeedbackEXT(ctx->Exec, (n[1].e));
+            break;
+         case OPCODE_END_TRANSFORM_FEEDBACK:
+            CALL_EndTransformFeedbackEXT(ctx->Exec, ());
             break;
          case OPCODE_STENCIL_FUNC:
             CALL_StencilFunc(ctx->Exec, (n[1].e, n[2].i, n[3].ui));
@@ -9267,7 +9308,7 @@ _mesa_init_save_table(struct _glapi_table *table)
    /* 299. GL_EXT_blend_equation_separate */
    SET_BlendEquationSeparateEXT(table, save_BlendEquationSeparateEXT);
 
-   /* GL_EXT_gpu_program_parmaeters */
+   /* GL_EXT_gpu_program_parameters */
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    SET_ProgramEnvParameters4fvEXT(table, save_ProgramEnvParameters4fvEXT);
    SET_ProgramLocalParameters4fvEXT(table, save_ProgramLocalParameters4fvEXT);
@@ -9281,6 +9322,12 @@ _mesa_init_save_table(struct _glapi_table *table)
 
    /* ARB 59. GL_ARB_copy_buffer */
    SET_CopyBufferSubData(table, _mesa_CopyBufferSubData); /* no dlist save */
+
+   /* 352. GL_EXT_transform_feedback */
+#if FEATURE_EXT_transform_feedback
+   SET_BeginTransformFeedbackEXT(table, save_BeginTransformFeedback);
+   SET_EndTransformFeedbackEXT(table, save_EndTransformFeedback);
+#endif
 
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(table, save_ProvokingVertexEXT);
