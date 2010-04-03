@@ -2446,6 +2446,27 @@
 #define CALL_EndConditionalRenderNV(disp, parameters) (*((disp)->EndConditionalRenderNV)) parameters
 #define GET_EndConditionalRenderNV(disp) ((disp)->EndConditionalRenderNV)
 #define SET_EndConditionalRenderNV(disp, fn) ((disp)->EndConditionalRenderNV = fn)
+#define CALL_BeginTransformFeedbackEXT(disp, parameters) (*((disp)->BeginTransformFeedbackEXT)) parameters
+#define GET_BeginTransformFeedbackEXT(disp) ((disp)->BeginTransformFeedbackEXT)
+#define SET_BeginTransformFeedbackEXT(disp, fn) ((disp)->BeginTransformFeedbackEXT = fn)
+#define CALL_BindBufferBaseEXT(disp, parameters) (*((disp)->BindBufferBaseEXT)) parameters
+#define GET_BindBufferBaseEXT(disp) ((disp)->BindBufferBaseEXT)
+#define SET_BindBufferBaseEXT(disp, fn) ((disp)->BindBufferBaseEXT = fn)
+#define CALL_BindBufferOffsetEXT(disp, parameters) (*((disp)->BindBufferOffsetEXT)) parameters
+#define GET_BindBufferOffsetEXT(disp) ((disp)->BindBufferOffsetEXT)
+#define SET_BindBufferOffsetEXT(disp, fn) ((disp)->BindBufferOffsetEXT = fn)
+#define CALL_BindBufferRangeEXT(disp, parameters) (*((disp)->BindBufferRangeEXT)) parameters
+#define GET_BindBufferRangeEXT(disp) ((disp)->BindBufferRangeEXT)
+#define SET_BindBufferRangeEXT(disp, fn) ((disp)->BindBufferRangeEXT = fn)
+#define CALL_EndTransformFeedbackEXT(disp, parameters) (*((disp)->EndTransformFeedbackEXT)) parameters
+#define GET_EndTransformFeedbackEXT(disp) ((disp)->EndTransformFeedbackEXT)
+#define SET_EndTransformFeedbackEXT(disp, fn) ((disp)->EndTransformFeedbackEXT = fn)
+#define CALL_GetTransformFeedbackVaryingEXT(disp, parameters) (*((disp)->GetTransformFeedbackVaryingEXT)) parameters
+#define GET_GetTransformFeedbackVaryingEXT(disp) ((disp)->GetTransformFeedbackVaryingEXT)
+#define SET_GetTransformFeedbackVaryingEXT(disp, fn) ((disp)->GetTransformFeedbackVaryingEXT = fn)
+#define CALL_TransformFeedbackVaryingsEXT(disp, parameters) (*((disp)->TransformFeedbackVaryingsEXT)) parameters
+#define GET_TransformFeedbackVaryingsEXT(disp) ((disp)->TransformFeedbackVaryingsEXT)
+#define SET_TransformFeedbackVaryingsEXT(disp, fn) ((disp)->TransformFeedbackVaryingsEXT = fn)
 #define CALL_ProvokingVertexEXT(disp, parameters) (*((disp)->ProvokingVertexEXT)) parameters
 #define GET_ProvokingVertexEXT(disp) ((disp)->ProvokingVertexEXT)
 #define SET_ProvokingVertexEXT(disp, fn) ((disp)->ProvokingVertexEXT = fn)
@@ -2488,7 +2509,7 @@
 
 #else
 
-#define driDispatchRemapTable_size 400
+#define driDispatchRemapTable_size 407
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2878,19 +2899,26 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define IsEnabledIndexedEXT_remap_index 384
 #define BeginConditionalRenderNV_remap_index 385
 #define EndConditionalRenderNV_remap_index 386
-#define ProvokingVertexEXT_remap_index 387
-#define GetTexParameterPointervAPPLE_remap_index 388
-#define TextureRangeAPPLE_remap_index 389
-#define GetObjectParameterivAPPLE_remap_index 390
-#define ObjectPurgeableAPPLE_remap_index 391
-#define ObjectUnpurgeableAPPLE_remap_index 392
-#define StencilFuncSeparateATI_remap_index 393
-#define ProgramEnvParameters4fvEXT_remap_index 394
-#define ProgramLocalParameters4fvEXT_remap_index 395
-#define GetQueryObjecti64vEXT_remap_index 396
-#define GetQueryObjectui64vEXT_remap_index 397
-#define EGLImageTargetRenderbufferStorageOES_remap_index 398
-#define EGLImageTargetTexture2DOES_remap_index 399
+#define BeginTransformFeedbackEXT_remap_index 387
+#define BindBufferBaseEXT_remap_index 388
+#define BindBufferOffsetEXT_remap_index 389
+#define BindBufferRangeEXT_remap_index 390
+#define EndTransformFeedbackEXT_remap_index 391
+#define GetTransformFeedbackVaryingEXT_remap_index 392
+#define TransformFeedbackVaryingsEXT_remap_index 393
+#define ProvokingVertexEXT_remap_index 394
+#define GetTexParameterPointervAPPLE_remap_index 395
+#define TextureRangeAPPLE_remap_index 396
+#define GetObjectParameterivAPPLE_remap_index 397
+#define ObjectPurgeableAPPLE_remap_index 398
+#define ObjectUnpurgeableAPPLE_remap_index 399
+#define StencilFuncSeparateATI_remap_index 400
+#define ProgramEnvParameters4fvEXT_remap_index 401
+#define ProgramLocalParameters4fvEXT_remap_index 402
+#define GetQueryObjecti64vEXT_remap_index 403
+#define GetQueryObjectui64vEXT_remap_index 404
+#define EGLImageTargetRenderbufferStorageOES_remap_index 405
+#define EGLImageTargetTexture2DOES_remap_index 406
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -4053,6 +4081,27 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_EndConditionalRenderNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[EndConditionalRenderNV_remap_index], parameters)
 #define GET_EndConditionalRenderNV(disp) GET_by_offset(disp, driDispatchRemapTable[EndConditionalRenderNV_remap_index])
 #define SET_EndConditionalRenderNV(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EndConditionalRenderNV_remap_index], fn)
+#define CALL_BeginTransformFeedbackEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[BeginTransformFeedbackEXT_remap_index], parameters)
+#define GET_BeginTransformFeedbackEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BeginTransformFeedbackEXT_remap_index])
+#define SET_BeginTransformFeedbackEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BeginTransformFeedbackEXT_remap_index], fn)
+#define CALL_BindBufferBaseEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint)), driDispatchRemapTable[BindBufferBaseEXT_remap_index], parameters)
+#define GET_BindBufferBaseEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BindBufferBaseEXT_remap_index])
+#define SET_BindBufferBaseEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindBufferBaseEXT_remap_index], fn)
+#define CALL_BindBufferOffsetEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLintptr)), driDispatchRemapTable[BindBufferOffsetEXT_remap_index], parameters)
+#define GET_BindBufferOffsetEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BindBufferOffsetEXT_remap_index])
+#define SET_BindBufferOffsetEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindBufferOffsetEXT_remap_index], fn)
+#define CALL_BindBufferRangeEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLuint, GLintptr, GLsizeiptr)), driDispatchRemapTable[BindBufferRangeEXT_remap_index], parameters)
+#define GET_BindBufferRangeEXT(disp) GET_by_offset(disp, driDispatchRemapTable[BindBufferRangeEXT_remap_index])
+#define SET_BindBufferRangeEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[BindBufferRangeEXT_remap_index], fn)
+#define CALL_EndTransformFeedbackEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), driDispatchRemapTable[EndTransformFeedbackEXT_remap_index], parameters)
+#define GET_EndTransformFeedbackEXT(disp) GET_by_offset(disp, driDispatchRemapTable[EndTransformFeedbackEXT_remap_index])
+#define SET_EndTransformFeedbackEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[EndTransformFeedbackEXT_remap_index], fn)
+#define CALL_GetTransformFeedbackVaryingEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint, GLsizei, GLsizei *, GLsizei *, GLenum *, GLchar *)), driDispatchRemapTable[GetTransformFeedbackVaryingEXT_remap_index], parameters)
+#define GET_GetTransformFeedbackVaryingEXT(disp) GET_by_offset(disp, driDispatchRemapTable[GetTransformFeedbackVaryingEXT_remap_index])
+#define SET_GetTransformFeedbackVaryingEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[GetTransformFeedbackVaryingEXT_remap_index], fn)
+#define CALL_TransformFeedbackVaryingsEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLsizei, const char **, GLenum)), driDispatchRemapTable[TransformFeedbackVaryingsEXT_remap_index], parameters)
+#define GET_TransformFeedbackVaryingsEXT(disp) GET_by_offset(disp, driDispatchRemapTable[TransformFeedbackVaryingsEXT_remap_index])
+#define SET_TransformFeedbackVaryingsEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[TransformFeedbackVaryingsEXT_remap_index], fn)
 #define CALL_ProvokingVertexEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum)), driDispatchRemapTable[ProvokingVertexEXT_remap_index], parameters)
 #define GET_ProvokingVertexEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProvokingVertexEXT_remap_index])
 #define SET_ProvokingVertexEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProvokingVertexEXT_remap_index], fn)

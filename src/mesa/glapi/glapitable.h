@@ -835,19 +835,26 @@ struct _glapi_table
    GLboolean (GLAPIENTRYP IsEnabledIndexedEXT)(GLenum target, GLuint index); /* 792 */
    void (GLAPIENTRYP BeginConditionalRenderNV)(GLuint query, GLenum mode); /* 793 */
    void (GLAPIENTRYP EndConditionalRenderNV)(void); /* 794 */
-   void (GLAPIENTRYP ProvokingVertexEXT)(GLenum mode); /* 795 */
-   void (GLAPIENTRYP GetTexParameterPointervAPPLE)(GLenum target, GLenum pname, GLvoid ** params); /* 796 */
-   void (GLAPIENTRYP TextureRangeAPPLE)(GLenum target, GLsizei length, GLvoid * pointer); /* 797 */
-   void (GLAPIENTRYP GetObjectParameterivAPPLE)(GLenum objectType, GLuint name, GLenum pname, GLint * value); /* 798 */
-   GLenum (GLAPIENTRYP ObjectPurgeableAPPLE)(GLenum objectType, GLuint name, GLenum option); /* 799 */
-   GLenum (GLAPIENTRYP ObjectUnpurgeableAPPLE)(GLenum objectType, GLuint name, GLenum option); /* 800 */
-   void (GLAPIENTRYP StencilFuncSeparateATI)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask); /* 801 */
-   void (GLAPIENTRYP ProgramEnvParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params); /* 802 */
-   void (GLAPIENTRYP ProgramLocalParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params); /* 803 */
-   void (GLAPIENTRYP GetQueryObjecti64vEXT)(GLuint id, GLenum pname, GLint64EXT * params); /* 804 */
-   void (GLAPIENTRYP GetQueryObjectui64vEXT)(GLuint id, GLenum pname, GLuint64EXT * params); /* 805 */
-   void (GLAPIENTRYP EGLImageTargetRenderbufferStorageOES)(GLenum target, GLvoid * writeOffset); /* 806 */
-   void (GLAPIENTRYP EGLImageTargetTexture2DOES)(GLenum target, GLvoid * writeOffset); /* 807 */
+   void (GLAPIENTRYP BeginTransformFeedbackEXT)(GLenum mode); /* 795 */
+   void (GLAPIENTRYP BindBufferBaseEXT)(GLenum target, GLuint index, GLuint buffer); /* 796 */
+   void (GLAPIENTRYP BindBufferOffsetEXT)(GLenum target, GLuint index, GLuint buffer, GLintptr offset); /* 797 */
+   void (GLAPIENTRYP BindBufferRangeEXT)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size); /* 798 */
+   void (GLAPIENTRYP EndTransformFeedbackEXT)(void); /* 799 */
+   void (GLAPIENTRYP GetTransformFeedbackVaryingEXT)(GLuint program, GLuint index, GLsizei bufSize, GLsizei * length, GLsizei * size, GLenum * type, GLchar * name); /* 800 */
+   void (GLAPIENTRYP TransformFeedbackVaryingsEXT)(GLuint program, GLsizei count, const char ** varyings, GLenum bufferMode); /* 801 */
+   void (GLAPIENTRYP ProvokingVertexEXT)(GLenum mode); /* 802 */
+   void (GLAPIENTRYP GetTexParameterPointervAPPLE)(GLenum target, GLenum pname, GLvoid ** params); /* 803 */
+   void (GLAPIENTRYP TextureRangeAPPLE)(GLenum target, GLsizei length, GLvoid * pointer); /* 804 */
+   void (GLAPIENTRYP GetObjectParameterivAPPLE)(GLenum objectType, GLuint name, GLenum pname, GLint * value); /* 805 */
+   GLenum (GLAPIENTRYP ObjectPurgeableAPPLE)(GLenum objectType, GLuint name, GLenum option); /* 806 */
+   GLenum (GLAPIENTRYP ObjectUnpurgeableAPPLE)(GLenum objectType, GLuint name, GLenum option); /* 807 */
+   void (GLAPIENTRYP StencilFuncSeparateATI)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask); /* 808 */
+   void (GLAPIENTRYP ProgramEnvParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params); /* 809 */
+   void (GLAPIENTRYP ProgramLocalParameters4fvEXT)(GLenum target, GLuint index, GLsizei count, const GLfloat * params); /* 810 */
+   void (GLAPIENTRYP GetQueryObjecti64vEXT)(GLuint id, GLenum pname, GLint64EXT * params); /* 811 */
+   void (GLAPIENTRYP GetQueryObjectui64vEXT)(GLuint id, GLenum pname, GLuint64EXT * params); /* 812 */
+   void (GLAPIENTRYP EGLImageTargetRenderbufferStorageOES)(GLenum target, GLvoid * writeOffset); /* 813 */
+   void (GLAPIENTRYP EGLImageTargetTexture2DOES)(GLenum target, GLvoid * writeOffset); /* 814 */
 };
 
 #endif /* !defined( _GLAPI_TABLE_H_ ) */
