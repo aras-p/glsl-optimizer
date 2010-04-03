@@ -433,19 +433,20 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
 	      (inst >> 30));
       fprintf(stderr,"\t3 RGB_INST:  0x%08x:", code->inst[n].inst3);
       inst = code->inst[n].inst3;
-      fprintf(stderr,"rgb_A_src:%d %s/%s/%s %d rgb_B_src:%d %s/%s/%s %d\n",
+      fprintf(stderr,"rgb_A_src:%d %s/%s/%s %d rgb_B_src:%d %s/%s/%s %d targ: %d\n",
 	      (inst) & 0x3, toswiz((inst >> 2) & 0x7), toswiz((inst >> 5) & 0x7), toswiz((inst >> 8) & 0x7),
 	      (inst >> 11) & 0x3,
 	      (inst >> 13) & 0x3, toswiz((inst >> 15) & 0x7), toswiz((inst >> 18) & 0x7), toswiz((inst >> 21) & 0x7),
-	      (inst >> 24) & 0x3);
+	      (inst >> 24) & 0x3, (inst >> 29) & 0x3);
 
 
       fprintf(stderr,"\t4 ALPHA_INST:0x%08x:", code->inst[n].inst4);
       inst = code->inst[n].inst4;
-      fprintf(stderr,"%s dest:%d%s alp_A_src:%d %s %d alp_B_src:%d %s %d w:%d\n", to_alpha_op(inst & 0xf),
+      fprintf(stderr,"%s dest:%d%s alp_A_src:%d %s %d alp_B_src:%d %s %d targ %d w:%d\n", to_alpha_op(inst & 0xf),
 	      (inst >> 4) & 0x7f, inst & (1<<11) ? "(rel)":"",
 	      (inst >> 12) & 0x3, toswiz((inst >> 14) & 0x7), (inst >> 17) & 0x3,
 	      (inst >> 19) & 0x3, toswiz((inst >> 21) & 0x7), (inst >> 24) & 0x3,
+	      (inst >> 29) & 0x3,
 	      (inst >> 31) & 0x1);
 
       fprintf(stderr,"\t5 RGBA_INST: 0x%08x:", code->inst[n].inst5);
