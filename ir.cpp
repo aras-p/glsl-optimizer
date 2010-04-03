@@ -200,16 +200,12 @@ ir_dereference::is_lvalue()
    if (var == NULL)
       return false;
 
-   /* Arrays are not assignable in GLSL 1.10, but in GLSL 1.20 and later they
-    * are.
-    */
-   /* FINISHME: Handle GLSL 1.10 vs 1.20 differences. */
-   if (this->type->base_type == GLSL_TYPE_ARRAY)
-      return false;
-
    if (mode == ir_reference_variable) {
       ir_variable *const as_var = var->as_variable();
       if (as_var == NULL)
+	 return false;
+
+      if (as_var->type->is_array() && !as_var->array_lvalue)
 	 return false;
 
       return !as_var->read_only;

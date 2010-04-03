@@ -1283,6 +1283,10 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->interpolation = ir_var_noperspective;
    else
       var->interpolation = ir_var_smooth;
+
+   if (var->type->is_array() && (state->language_version >= 120)) {
+      var->array_lvalue = true;
+   }
 }
 
 

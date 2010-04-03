@@ -146,6 +146,14 @@ public:
 
    unsigned mode:3;
    unsigned interpolation:2;
+
+   /**
+    * Flag that the whole array is assignable
+    *
+    * In GLSL 1.20 and later whole arrays are assignable (and comparable for
+    * equality).  This flag enables this behavior.
+    */
+   unsigned array_lvalue:1;
 };
 
 
