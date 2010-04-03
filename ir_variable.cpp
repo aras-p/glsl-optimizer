@@ -151,10 +151,14 @@ generate_130_vs_variables(exec_list *instructions,
 			   instructions, symtab);
    }
 
-   /* FINISHME: Add support fo gl_ClipDistance.  The size of this array is
-    * FINISHME: implementation dependent based on the value of
-    * FINISHME: GL_MAX_CLIP_DISTANCES.
+   /* FINISHME: The size of this array is implementation dependent based on
+    * FINISHME: the value of GL_MAX_CLIP_DISTANCES.
     */
+   const glsl_type *const clip_distance_array_type =
+      glsl_type::get_array_instance(glsl_type::float_type, 8);
+   add_variable("gl_ClipDistance", ir_var_out, clip_distance_array_type,
+		instructions, symtab);
+
 }
 
 
