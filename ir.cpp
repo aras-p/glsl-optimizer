@@ -200,8 +200,11 @@ ir_dereference::is_lvalue()
    if (var == NULL)
       return false;
 
-   if (this->type->base_type == GLSL_TYPE_ARRAY ||
-       this->type->base_type == GLSL_TYPE_STRUCT)
+   /* Arrays are not assignable in GLSL 1.10, but in GLSL 1.20 and later they
+    * are.
+    */
+   /* FINISHME: Handle GLSL 1.10 vs 1.20 differences. */
+   if (this->type->base_type == GLSL_TYPE_ARRAY)
       return false;
 
    if (mode == ir_reference_variable) {
