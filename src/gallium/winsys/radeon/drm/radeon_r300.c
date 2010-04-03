@@ -72,6 +72,15 @@ static void radeon_r300_winsys_buffer_set_tiling(struct r300_winsys_screen *rws,
     radeon_drm_bufmgr_set_tiling(_buf, microtiled, macrotiled, pitch);
 }
 
+static void radeon_r300_winsys_buffer_get_tiling(struct r300_winsys_screen *rws,
+						  struct r300_winsys_buffer *buf,
+						  enum r300_buffer_tiling *microtiled,
+						  enum r300_buffer_tiling *macrotiled)
+{
+    struct pb_buffer *_buf = radeon_pb_buffer(buf);
+    radeon_drm_bufmgr_get_tiling(_buf, microtiled, macrotiled);
+}
+
 static void *radeon_r300_winsys_buffer_map(struct r300_winsys_screen *ws,
 					   struct r300_winsys_buffer *buf,
 					   unsigned usage)
@@ -320,6 +329,7 @@ radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* ws)
     ws->base.buffer_create = radeon_r300_winsys_buffer_create;
     ws->base.buffer_destroy = radeon_r300_winsys_buffer_destroy;
     ws->base.buffer_set_tiling = radeon_r300_winsys_buffer_set_tiling;
+    ws->base.buffer_get_tiling = radeon_r300_winsys_buffer_get_tiling;
     ws->base.buffer_map = radeon_r300_winsys_buffer_map;
     ws->base.buffer_unmap = radeon_r300_winsys_buffer_unmap;
     ws->base.buffer_reference = radeon_r300_winsys_buffer_reference;

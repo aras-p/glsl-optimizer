@@ -304,7 +304,24 @@ boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
     }
     return TRUE;
 }
-					   
+
+void radeon_drm_bufmgr_get_tiling(struct pb_buffer *_buf,
+                                  enum r300_buffer_tiling *microtiled,
+                                  enum r300_buffer_tiling *macrotiled)
+{
+    struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
+    uint32_t flags = 0, pitch;
+
+    radeon_bo_get_tiling(buf->bo, &flags, &pitch);
+
+    *microtiled = R300_BUFFER_LINEAR;
+    *macrotiled = R300_BUFFER_LINEAR;
+    if (flags & RADEON_BO_FLAGS_MICRO_TILE)
+	*microtiled = R300_BUFFER_TILED;
+
+    if (flags & RADEON_BO_FLAGS_MACRO_TILE)
+	*macrotiled = R300_BUFFER_TILED;
+}
 
 void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf,
                                   enum r300_buffer_tiling microtiled,

@@ -909,6 +909,7 @@ static struct pipe_texture*
     /* one ref already taken */
     tex->buffer = buffer;
 
+    rws->buffer_get_tiling(rws, buffer, &tex->microtile, &tex->macrotile);
     return (struct pipe_texture*)tex;
 }
 

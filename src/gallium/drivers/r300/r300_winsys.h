@@ -146,6 +146,11 @@ struct r300_winsys_screen {
 
     void (*reset_bos)(struct r300_winsys_screen *winsys);
 
+    void (*buffer_get_tiling)(struct r300_winsys_screen *winsys,
+                              struct r300_winsys_buffer *buffer,
+                              enum r300_buffer_tiling *microtiled,
+                              enum r300_buffer_tiling *macrotiled);
+
     void (*buffer_set_tiling)(struct r300_winsys_screen *winsys,
                               struct r300_winsys_buffer *buffer,
                               uint32_t pitch,
