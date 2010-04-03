@@ -901,15 +901,14 @@ static struct pipe_texture*
     tex->tex.screen = screen;
 
     tex->stride_override = stride;
-    tex->pitch[0] = stride / util_format_get_blocksize(base->format);
-
-    r300_setup_flags(tex);
-    r300_setup_texture_state(rscreen, tex);
 
     /* one ref already taken */
     tex->buffer = buffer;
 
     rws->buffer_get_tiling(rws, buffer, &tex->microtile, &tex->macrotile);
+    r300_setup_flags(tex);
+    r300_setup_miptree(rscreen, tex);
+    r300_setup_texture_state(rscreen, tex);
     return (struct pipe_texture*)tex;
 }
 
