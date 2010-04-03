@@ -86,6 +86,7 @@ API_XML = \
 	EXT_packed_depth_stencil.xml \
 	EXT_provoking_vertex.xml \
 	EXT_texture_array.xml \
+	EXT_transform_feedback.xml \
 	NV_conditional_render.xml \
 	OES_EGL_image.xml
 
