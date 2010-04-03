@@ -89,6 +89,7 @@
 #include "texobj.h"
 #include "texparam.h"
 #include "texstate.h"
+#include "transformfeedback.h"
 #include "mtypes.h"
 #include "varray.h"
 #include "viewport.h"
@@ -477,6 +478,18 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* ???. GL_EXT_depth_bounds_test */
    SET_DepthBoundsEXT(exec, _mesa_DepthBoundsEXT);
 
+   /* 352. GL_EXT_transform_feedback */
+#if _HAVE_FULL_GL
+   SET_BeginTransformFeedbackEXT(exec, _mesa_BeginTransformFeedback);
+   SET_EndTransformFeedbackEXT(exec, _mesa_EndTransformFeedback);
+   SET_BindBufferRangeEXT(exec, _mesa_BindBufferRange);
+   SET_BindBufferBaseEXT(exec, _mesa_BindBufferBase);
+   SET_BindBufferOffsetEXT(exec, _mesa_BindBufferOffsetEXT);
+   SET_TransformFeedbackVaryingsEXT(exec, _mesa_TransformFeedbackVaryings);
+   SET_GetTransformFeedbackVaryingEXT(exec, _mesa_GetTransformFeedbackVarying);
+#endif
+
+   /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(exec, _mesa_ProvokingVertexEXT);
 
    /* ARB 1. GL_ARB_multitexture */
