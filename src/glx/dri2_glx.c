@@ -329,7 +329,7 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 
    /* Old servers don't send invalidate events */
    if (!pdp->invalidateAvailable)
-       dri2InvalidateBuffers(priv->dpy, pdraw->base.xDrawable);
+       dri2InvalidateBuffers(priv->dpy, pdraw->base.drawable);
 
    dri2WaitGL(loaderPrivate);
 }
@@ -393,7 +393,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 
     /* Old servers don't send invalidate events */
     if (!pdp->invalidateAvailable)
-       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->xDrawable);
+       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->drawable);
 
     /* Old servers can't handle swapbuffers */
     if (!pdp->swapAvailable) {
