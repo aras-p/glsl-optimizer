@@ -785,7 +785,7 @@ static void r300_setup_tiling(struct pipe_screen *screen,
 
 /* Create a new texture. */
 static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
-                                         const struct pipe_texture* template)
+                                         const struct pipe_texture* base)
 {
     struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
     struct r300_screen* rscreen = r300_screen(screen);
@@ -795,12 +795,12 @@ static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
         return NULL;
     }
 
-    tex->tex = *template;
+    tex->tex = *base;
     pipe_reference_init(&tex->tex.reference, 1);
     tex->tex.screen = screen;
 
     r300_setup_flags(tex);
-    if (!(template->tex_usage & R300_TEXTURE_USAGE_TRANSFER)) {
+    if (!(base->tex_usage & R300_TEXTURE_USAGE_TRANSFER)) {
         r300_setup_tiling(screen, tex);
     }
     r300_setup_miptree(rscreen, tex);
@@ -938,7 +938,7 @@ r300_video_surface_create(struct pipe_screen *screen,
                           unsigned width, unsigned height)
 {
     struct r300_video_surface *r300_vsfc;
-    struct pipe_texture template;
+    struct pipe_texture base;
 
     assert(screen);
     assert(width && height);
@@ -953,17 +953,17 @@ r300_video_surface_create(struct pipe_screen *screen,
     r300_vsfc->base.width = width;
     r300_vsfc->base.height = height;
 
-    memset(&template, 0, sizeof(struct pipe_texture));
-    template.target = PIPE_TEXTURE_2D;
-    template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
-    template.last_level = 0;
-    template.width0 = util_next_power_of_two(width);
-    template.height0 = util_next_power_of_two(height);
-    template.depth0 = 1;
-    template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER |
-                         PIPE_TEXTURE_USAGE_RENDER_TARGET;
+    memset(&base, 0, sizeof(struct pipe_texture));
+    base.target = PIPE_TEXTURE_2D;
+    base.format = PIPE_FORMAT_B8G8R8X8_UNORM;
+    base.last_level = 0;
+    base.width0 = util_next_power_of_two(width);
+    base.height0 = util_next_power_of_two(height);
+    base.depth0 = 1;
+    base.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER |
+                     PIPE_TEXTURE_USAGE_RENDER_TARGET;
 
-    r300_vsfc->tex = screen->texture_create(screen, &template);
+    r300_vsfc->tex = screen->texture_create(screen, &base);
     if (!r300_vsfc->tex)
     {
         FREE(r300_vsfc);

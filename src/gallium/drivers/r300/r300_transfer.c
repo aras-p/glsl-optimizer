@@ -129,7 +129,7 @@ r300_get_tex_transfer(struct pipe_context *ctx,
     struct r300_texture *tex = (struct r300_texture *)texture;
     struct r300_screen *r300screen = r300_screen(ctx->screen);
     struct r300_transfer *trans;
-    struct pipe_texture template;
+    struct pipe_texture base;
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
@@ -154,31 +154,31 @@ r300_get_tex_transfer(struct pipe_context *ctx,
                 PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
                 PIPE_TEXTURE_USAGE_RENDER_TARGET;
 
-            template.target = PIPE_TEXTURE_2D;
-            template.format = texture->format;
-            template.width0 = w;
-            template.height0 = h;
-            template.depth0 = 0;
-            template.last_level = 0;
-            template.nr_samples = 0;
-            template.tex_usage = PIPE_TEXTURE_USAGE_DYNAMIC |
+            base.target = PIPE_TEXTURE_2D;
+            base.format = texture->format;
+            base.width0 = w;
+            base.height0 = h;
+            base.depth0 = 0;
+            base.last_level = 0;
+            base.nr_samples = 0;
+            base.tex_usage = PIPE_TEXTURE_USAGE_DYNAMIC |
                                  R300_TEXTURE_USAGE_TRANSFER;
 
             /* For texture reading, the temporary (detiled) texture is used as
              * a render target when blitting from a tiled texture. */
             if (usage & PIPE_TRANSFER_READ) {
-                template.tex_usage |= trans->render_target_usage;
+                base.tex_usage |= trans->render_target_usage;
             }
             /* For texture writing, the temporary texture is used as a sampler
              * when blitting into a tiled texture. */
             if (usage & PIPE_TRANSFER_WRITE) {
-                template.tex_usage |= PIPE_TEXTURE_USAGE_SAMPLER;
+                base.tex_usage |= PIPE_TEXTURE_USAGE_SAMPLER;
             }
 
             /* Create the temporary texture. */
             trans->detiled_texture = (struct r300_texture*)
                ctx->screen->texture_create(ctx->screen,
-                                           &template);
+                                           &base);
 
             assert(!trans->detiled_texture->microtile &&
                    !trans->detiled_texture->macrotile);
