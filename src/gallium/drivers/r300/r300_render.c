@@ -564,6 +564,10 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     int i;
 
+    if (r300->skip_rendering) {
+        return;
+    }
+
     if (!u_trim_pipe_prim(mode, &count)) {
         return;
     }
@@ -598,6 +602,10 @@ void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     int i;
     void* indices;
+
+    if (r300->skip_rendering) {
+        return;
+    }
 
     if (!u_trim_pipe_prim(mode, &count)) {
         return;
