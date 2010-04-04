@@ -183,6 +183,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
+   ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
    ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
