@@ -107,6 +107,7 @@ C_SOURCES = \
 	util/u_draw_quad.c \
 	util/u_format.c \
 	util/u_format_s3tc.c \
+	util/u_format_srgb.c \
 	util/u_format_table.c \
 	util/u_format_tests.c \
 	util/u_gen_mipmap.c \
@@ -169,6 +170,7 @@ GALLIVM_CPP_SOURCES = \
 GENERATED_SOURCES = \
 	indices/u_indices_gen.c \
 	indices/u_unfilled_gen.c \
+	util/u_format_srgb.c \
 	util/u_format_table.c \
 	util/u_half.c
 
@@ -193,11 +195,11 @@ indices/u_indices_gen.c: indices/u_indices_gen.py
 indices/u_unfilled_gen.c: indices/u_unfilled_gen.py
 	python $< > $@
 
+util/u_format_srgb.c: util/u_format_srgb.py
+	python $< > $@
+
 util/u_format_table.c: util/u_format_table.py util/u_format_pack.py util/u_format_parse.py util/u_format.csv
 	python util/u_format_table.py util/u_format.csv > $@
-
-util/u_format_access.c: util/u_format_access.py util/u_format_parse.py util/u_format.csv
-	python util/u_format_access.py util/u_format.csv > $@
 
 util/u_half.c: util/u_half.py
 	python util/u_half.py > $@

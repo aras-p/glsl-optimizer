@@ -91,20 +91,6 @@ def generate_format_type(format):
     print
 
 
-def generate_srgb_tables():
-    print 'static ubyte srgb_to_linear[256] = {'
-    for i in range(256):
-        print '   %s,' % (int(math.pow((i / 255.0 + 0.055) / 1.055, 2.4) * 255))
-    print '};'
-    print
-    print 'static ubyte linear_to_srgb[256] = {'
-    print '   0,'
-    for i in range(1, 256):
-        print '   %s,' % (int((1.055 * math.pow(i / 255.0, 0.41666) - 0.055) * 255))
-    print '};'
-    print
-
-
 def bswap_format(format):
     '''Generate a structure that describes the format.'''
 
@@ -225,8 +211,45 @@ def clamp_expr(src_channel, dst_channel, dst_native_type, value):
     return value
 
 
-def conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=True):
+def conversion_expr(src_channel, 
+                    dst_channel, dst_native_type, 
+                    value, 
+                    clamp=True, 
+                    src_colorspace = 'rgb', 
+                    dst_colorspace = 'rgb'):
     '''Generate the expression to convert a value between two types.'''
+
+    if src_colorspace != dst_colorspace:
+        if src_colorspace == 'srgb':
+            assert src_channel.type == UNSIGNED
+            assert src_channel.norm
+            assert src_channel.size == 8
+            assert dst_colorspace == 'rgb'
+            if dst_channel.type == FLOAT:
+                return 'util_format_srgb_8unorm_to_linear_float(%s)' % value
+            else:
+                assert dst_channel.type == UNSIGNED
+                assert dst_channel.norm
+                assert dst_channel.size == 8
+                return 'util_format_srgb_to_linear_8unorm(%s)' % value
+        elif dst_colorspace == 'srgb':
+            assert dst_channel.type == UNSIGNED
+            assert dst_channel.norm
+            assert dst_channel.size == 8
+            assert src_colorspace == 'rgb'
+            if src_channel.type == FLOAT:
+                return 'util_format_linear_float_to_srgb_8unorm(%s)' % value
+            else:
+                assert src_channel.type == UNSIGNED
+                assert src_channel.norm
+                assert src_channel.size == 8
+                return 'util_format_linear_to_srgb_8unorm(%s)' % value
+        elif src_colorspace == 'zs':
+            pass
+        elif dst_colorspace == 'zs':
+            pass
+        else:
+            assert 0
 
     if src_channel == dst_channel:
         return value
@@ -373,8 +396,15 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             swizzle = format.swizzles[i]
             if swizzle < 4:
                 src_channel = format.channels[swizzle]
+                src_colorspace = format.colorspace
+                if src_colorspace == 'srgb' and i == 3:
+                    # Alpha channel is linear
+                    src_colorspace = 'rgb'
                 value = src_channel.name 
-                value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+                value = conversion_expr(src_channel, 
+                                        dst_channel, dst_native_type, 
+                                        value,
+                                        src_colorspace = src_colorspace)
             elif swizzle == SWIZZLE_0:
                 value = '0'
             elif swizzle == SWIZZLE_1:
@@ -399,8 +429,15 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             swizzle = format.swizzles[i]
             if swizzle < 4:
                 src_channel = format.channels[swizzle]
+                src_colorspace = format.colorspace
+                if src_colorspace == 'srgb' and i == 3:
+                    # Alpha channel is linear
+                    src_colorspace = 'rgb'
                 value = 'pixel.chan.%s' % src_channel.name 
-                value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+                value = conversion_expr(src_channel, 
+                                        dst_channel, dst_native_type, 
+                                        value,
+                                        src_colorspace = src_colorspace)
             elif swizzle == SWIZZLE_0:
                 value = '0'
             elif swizzle == SWIZZLE_1:
@@ -437,7 +474,14 @@ def generate_pack_kernel(format, src_channel, src_native_type):
             dst_channel = format.channels[i]
             if inv_swizzle[i] is not None:
                 value ='src[%u]' % inv_swizzle[i]
-                value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+                dst_colorspace = format.colorspace
+                if dst_colorspace == 'srgb' and inv_swizzle[i] == 3:
+                    # Alpha channel is linear
+                    dst_colorspace = 'rgb'
+                value = conversion_expr(src_channel, 
+                                        dst_channel, dst_native_type, 
+                                        value,
+                                        dst_colorspace = dst_colorspace)
                 if format.colorspace == ZS:
                     if i == 3:
                         value = get_one(dst_channel)
@@ -473,8 +517,15 @@ def generate_pack_kernel(format, src_channel, src_native_type):
             width = dst_channel.size
             if inv_swizzle[i] is None:
                 continue
+            dst_colorspace = format.colorspace
+            if dst_colorspace == 'srgb' and inv_swizzle[i] == 3:
+                # Alpha channel is linear
+                dst_colorspace = 'rgb'
             value ='src[%u]' % inv_swizzle[i]
-            value = conversion_expr(src_channel, dst_channel, dst_native_type, value)
+            value = conversion_expr(src_channel, 
+                                    dst_channel, dst_native_type, 
+                                    value, 
+                                    dst_colorspace = dst_colorspace)
             if format.colorspace == ZS:
                 if i == 3:
                     value = get_one(dst_channel)
@@ -565,6 +616,7 @@ def generate(formats):
     print '#include "pipe/p_compiler.h"'
     print '#include "u_math.h"'
     print '#include "u_format.h"'
+    print '#include "u_format_srgb.h"'
     print '#include "u_half.h"'
     print
 

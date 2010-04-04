@@ -24,6 +24,13 @@ env.CodeGenerate(
 )
 
 env.CodeGenerate(
+    target = 'util/u_format_srgb.c', 
+    script = 'util/u_format_srgb.py', 
+    source = [],
+    command = python_cmd + ' $SCRIPT > $TARGET'
+)
+
+env.CodeGenerate(
     target = 'util/u_format_table.c',
     script = 'util/u_format_table.py',
     source = ['util/u_format.csv'],
@@ -149,6 +156,7 @@ source = [
     'util/u_draw_quad.c',
     'util/u_format.c',
     'util/u_format_s3tc.c',
+    'util/u_format_srgb.c',
     'util/u_format_table.c',
     'util/u_format_tests.c',
     'util/u_gen_mipmap.c',
