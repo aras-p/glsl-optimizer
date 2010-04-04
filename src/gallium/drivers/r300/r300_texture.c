@@ -521,7 +521,7 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
     state->format0 = R300_TX_WIDTH((pt->width0 - 1) & 0x7ff) |
                      R300_TX_HEIGHT((pt->height0 - 1) & 0x7ff);
 
-    if (tex->is_npot) {
+    if (tex->is_npot || tex->stride_override) {
         /* rectangles love this */
         state->format0 |= R300_TX_PITCH_EN;
         state->format2 = (tex->pitch[0] - 1) & 0x1fff;
