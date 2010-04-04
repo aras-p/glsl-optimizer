@@ -8,11 +8,11 @@
 extern "C" {
 #endif
 
-extern uint32_t util_half_to_float_mantissa_table[2048];
-extern uint32_t util_half_to_float_exponent_table[64];
-extern uint32_t util_half_to_float_offset_table[64];
-extern uint16_t util_float_to_half_base_table[512];
-extern uint8_t util_float_to_half_shift_table[512];
+extern const uint32_t util_half_to_float_mantissa_table[2048];
+extern const uint32_t util_half_to_float_exponent_table[64];
+extern const uint32_t util_half_to_float_offset_table[64];
+extern const uint16_t util_float_to_half_base_table[512];
+extern const uint8_t util_float_to_half_shift_table[512];
 
 /*
  * Note that if the half float is a signaling NaN, the x87 FPU will turn

@@ -56,7 +56,7 @@ def begin(t, n, l):
 	table_index = 0
 	table_length = l
 	print
-	print t + " " + n + "[" + str(l) + "] = {"
+	print "const " + t + " " + n + "[" + str(l) + "] = {"
 
 def value(v):
 	global table_index
