@@ -582,9 +582,6 @@ _mesa_update_state_locked( GLcontext *ctx )
    if (new_state & _DD_NEW_SEPARATE_SPECULAR)
       update_separate_specular( ctx );
 
-   if (new_state & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT))
-      update_arrays( ctx );
-
    if (new_state & (_NEW_BUFFERS | _NEW_VIEWPORT))
       update_viewport_matrix(ctx);
 
@@ -620,6 +617,8 @@ _mesa_update_state_locked( GLcontext *ctx )
       new_prog_state |= update_program( ctx );
    }
 
+   if (new_state & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT))
+      update_arrays( ctx );
 
  out:
    new_prog_state |= update_program_constants(ctx);
