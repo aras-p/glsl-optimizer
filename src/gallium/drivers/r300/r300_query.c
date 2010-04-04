@@ -159,10 +159,33 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
     return TRUE;
 }
 
+static void r300_render_condition(struct pipe_context *pipe,
+                                  struct pipe_query *query,
+                                  uint mode)
+{
+    struct r300_context *r300 = r300_context(pipe);
+    uint64_t result;
+    boolean wait;
+
+    if (query) {
+        wait = mode == PIPE_RENDER_COND_WAIT ||
+               mode == PIPE_RENDER_COND_BY_REGION_WAIT;
+
+        if (!r300_get_query_result(pipe, query, wait, &result)) {
+            r300->skip_rendering = FALSE;
+        }
+
+        r300->skip_rendering = result == 0;
+    } else {
+        r300->skip_rendering = FALSE;
+    }
+}
+
 void r300_init_query_functions(struct r300_context* r300) {
     r300->context.create_query = r300_create_query;
     r300->context.destroy_query = r300_destroy_query;
     r300->context.begin_query = r300_begin_query;
     r300->context.end_query = r300_end_query;
     r300->context.get_query_result = r300_get_query_result;
+    r300->context.render_condition = r300_render_condition;
 }

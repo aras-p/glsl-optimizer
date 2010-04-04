@@ -377,6 +377,8 @@ struct r300_context {
     uint32_t zbuffer_bpp;
     /* Whether scissor is enabled. */
     boolean scissor_enabled;
+    /* Whether rendering is conditional and should be skipped. */
+    boolean skip_rendering;
     /* upload managers */
     struct u_upload_mgr *upload_vb;
     struct u_upload_mgr *upload_ib;

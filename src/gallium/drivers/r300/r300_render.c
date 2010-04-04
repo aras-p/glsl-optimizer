@@ -427,6 +427,10 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 #endif
     unsigned short_count;
 
+    if (r300->skip_rendering) {
+        return;
+    }
+
     if (!u_trim_pipe_prim(mode, &count)) {
         return;
     }
@@ -502,6 +506,10 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     boolean alt_num_verts = FALSE;
 #endif
     unsigned short_count;
+
+    if (r300->skip_rendering) {
+        return;
+    }
 
     if (!u_trim_pipe_prim(mode, &count)) {
         return;
