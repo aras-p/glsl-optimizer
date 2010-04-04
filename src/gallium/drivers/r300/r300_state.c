@@ -969,7 +969,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
 
             /* R300-specific - set the texrect factor in the fragment shader */
             texture = (struct r300_texture *)views[i]->texture;
-            if (!is_r500 && texture->is_npot) {
+            if (!is_r500 && texture->uses_pitch) {
                 /* XXX It would be nice to re-emit just 1 constant,
                  * XXX not all of them */
                 r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;

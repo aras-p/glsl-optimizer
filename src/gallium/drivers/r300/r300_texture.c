@@ -521,7 +521,7 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
     state->format0 = R300_TX_WIDTH((pt->width0 - 1) & 0x7ff) |
                      R300_TX_HEIGHT((pt->height0 - 1) & 0x7ff);
 
-    if (tex->is_npot || tex->stride_override) {
+    if (tex->uses_pitch) {
         /* rectangles love this */
         state->format0 |= R300_TX_PITCH_EN;
         state->format2 = (tex->pitch[0] - 1) & 0x1fff;
@@ -741,8 +741,9 @@ static void r300_setup_miptree(struct r300_screen* screen,
 
 static void r300_setup_flags(struct r300_texture* tex)
 {
-    tex->is_npot = !util_is_power_of_two(tex->tex.width0) ||
-                   !util_is_power_of_two(tex->tex.height0);
+    tex->uses_pitch = !util_is_power_of_two(tex->tex.width0) ||
+                      !util_is_power_of_two(tex->tex.height0) ||
+                      tex->stride_override;
 }
 
 static void r300_setup_tiling(struct pipe_screen *screen,

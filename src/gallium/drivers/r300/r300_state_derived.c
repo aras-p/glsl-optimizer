@@ -490,7 +490,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 texstate->filter[0] |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
             }
 
-            if (tex->is_npot) {
+            if (tex->uses_pitch) {
                 /* NPOT textures don't support mip filter, unfortunately.
                  * This prevents incorrect rendering. */
                 texstate->filter[0] &= ~R300_TX_MIN_FILTER_MIP_MASK;

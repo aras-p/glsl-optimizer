@@ -250,10 +250,11 @@ struct r300_texture {
     /* Total size of this texture, in bytes. */
     unsigned size;
 
-    /* Whether this texture has non-power-of-two dimensions.
+    /* Whether this texture has non-power-of-two dimensions
+     * or a user-specified pitch.
      * It can be either a regular texture or a rectangle one.
      */
-    boolean is_npot;
+    boolean uses_pitch;
 
     /* Pipe buffer backing this texture. */
     struct r300_winsys_buffer *buffer;
