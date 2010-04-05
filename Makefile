@@ -320,6 +320,7 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/Makefile				\
 	$(DIRECTORY)/src/gallium/Makefile.template			\
 	$(DIRECTORY)/src/gallium/SConscript				\
+	$(DIRECTORY)/src/gallium/targets/Makefile.dri			\
 	$(DIRECTORY)/src/gallium/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/Makefile				\
