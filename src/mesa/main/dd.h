@@ -1186,6 +1186,11 @@ typedef struct {
 						   const GLvoid **indices,
 						   GLsizei primcount,
 						   const GLint *basevertex);
+   void (GLAPIENTRYP DrawArraysInstanced)(GLenum mode, GLint first,
+                                          GLsizei count, GLsizei primcount);
+   void (GLAPIENTRYP DrawElementsInstanced)(GLenum mode, GLsizei count,
+                                            GLenum type, const GLvoid *indices,
+                                            GLsizei primcount);
    /*@}*/
 
    /**

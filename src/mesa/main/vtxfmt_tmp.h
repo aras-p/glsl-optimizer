@@ -391,6 +391,25 @@ static void GLAPIENTRY TAG(MultiDrawElementsBaseVertex)( GLenum mode,
 						      primcount, basevertex ));
 }
 
+static void GLAPIENTRY
+TAG(DrawArraysInstanced)(GLenum mode, GLint first,
+                         GLsizei count, GLsizei primcount)
+{
+   PRE_LOOPBACK( DrawArraysInstanced );
+   CALL_DrawArraysInstanced(GET_DISPATCH(), (mode, first, count, primcount));
+}
+
+static void GLAPIENTRY
+TAG(DrawElementsInstanced)(GLenum mode, GLsizei count,
+                           GLenum type, const GLvoid *indices,
+                           GLsizei primcount)
+{
+   PRE_LOOPBACK( DrawElementsInstanced );
+   CALL_DrawElementsInstanced(GET_DISPATCH(),
+                              (mode, count, type, indices, primcount));
+}
+
+
 static void GLAPIENTRY TAG(EvalMesh1)( GLenum mode, GLint i1, GLint i2 )
 {
    PRE_LOOPBACK( EvalMesh1 );
@@ -574,6 +593,8 @@ static GLvertexformat TAG(vtxfmt) = {
    TAG(DrawElementsBaseVertex),
    TAG(DrawRangeElementsBaseVertex),
    TAG(MultiDrawElementsBaseVertex),
+   TAG(DrawArraysInstanced),
+   TAG(DrawElementsInstanced),
    TAG(EvalMesh1),
    TAG(EvalMesh2)
 };
