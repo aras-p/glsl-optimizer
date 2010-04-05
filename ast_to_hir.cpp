@@ -1008,10 +1008,12 @@ ast_expression::hir(exec_list *instructions,
       if (error_emitted)
 	 break;
 
-      /* FINISHME: Handle vectors and matrices accessed with []. */
-      if (!array->type->is_array()) {
+      if (!array->type->is_array()
+	  && !array->type->is_matrix()
+	  && !array->type->is_vector()) {
 	 _mesa_glsl_error(& index_loc, state,
-			  "cannot dereference non-array");
+			  "cannot dereference non-array / non-matrix / "
+			  "non-vector");
 	 error_emitted = true;
       }
 
@@ -1033,6 +1035,16 @@ ast_expression::hir(exec_list *instructions,
       ir_constant *const const_index = op[1]->constant_expression_value();
       if (const_index != NULL) {
 	 const int idx = const_index->value.i[0];
+	 const char *type_name;
+	 unsigned bound = 0;
+
+	 if (array->type->is_matrix()) {
+	    type_name = "matrix";
+	 } else if (array->type->is_vector()) {
+	    type_name = "vector";
+	 } else {
+	    type_name = "array";
+	 }
 
 	 /* From page 24 (page 30 of the PDF) of the GLSL 1.50 spec:
 	  *
@@ -1042,23 +1054,36 @@ ast_expression::hir(exec_list *instructions,
 	  *    declared size. It is also illegal to index an array with a
 	  *    negative constant expression."
 	  */
-	 if ((array->type->array_size() > 0)
-	     && (array->type->array_size() <= idx)) {
-	    _mesa_glsl_error(& loc, state,
-			     "array index must be < %u",
-			     array->type->array_size());
+	 if (array->type->is_matrix()) {
+	    if (array->type->row_type()->vector_elements <= idx) {
+	       bound = array->type->row_type()->vector_elements;
+	    }
+	 } else if (array->type->is_vector()) {
+	    if (array->type->vector_elements <= idx) {
+	       bound = array->type->vector_elements;
+	    }
+	 } else {
+	    if ((array->type->array_size() > 0)
+		&& (array->type->array_size() <= idx)) {
+	       bound = array->type->array_size();
+	    }
+	 }
+
+	 if (bound > 0) {
+	    _mesa_glsl_error(& loc, state, "%s index must be < %u",
+			     type_name, bound);
+	    error_emitted = true;
+	 } else if (idx < 0) {
+	    _mesa_glsl_error(& loc, state, "%s index must be >= 0",
+			     type_name);
 	    error_emitted = true;
 	 }
 
-	 if (idx < 0) {
-	    _mesa_glsl_error(& loc, state,
-			     "array index must be >= 0");
-	    error_emitted = true;
+	 if (array->type->is_array()) {
+	    ir_variable *const v = array->as_variable();
+	    if ((v != NULL) && (unsigned(idx) > v->max_array_access))
+	       v->max_array_access = idx;
 	 }
-
-	 ir_variable *const v = array->as_variable();
-	 if ((v != NULL) && (unsigned(idx) > v->max_array_access))
-	    v->max_array_access = idx;
       }
 
       if (error_emitted)
