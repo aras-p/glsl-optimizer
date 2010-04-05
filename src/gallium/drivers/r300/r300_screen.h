@@ -37,7 +37,7 @@ struct r300_screen {
     struct r300_winsys_screen *rws;
 
     /* Chipset capabilities */
-    struct r300_capabilities* caps;
+    struct r300_capabilities caps;
 
     /** Combination of DBG_xxx flags */
     unsigned debug;

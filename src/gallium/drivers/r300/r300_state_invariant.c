@@ -41,7 +41,7 @@ struct pipe_viewport_state r300_viewport_identity = {
 void r300_emit_invariant_state(struct r300_context* r300,
                                unsigned size, void* state)
 {
-    struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
+    struct r300_capabilities* caps = &r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
     BEGIN_CS(14 + (caps->has_tcl ? 2: 0));

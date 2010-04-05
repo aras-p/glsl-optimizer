@@ -265,7 +265,7 @@ static void r300_update_rs_block(struct r300_context* r300,
     boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
                               vs_outputs->bcolor[1] != ATTR_UNUSED;
 
-    if (r300_screen(r300->context.screen)->caps->is_r500) {
+    if (r300->screen->caps.is_r500) {
         rX00_rs_col       = r500_rs_col;
         rX00_rs_col_write = r500_rs_col_write;
         rX00_rs_tex       = r500_rs_tex;

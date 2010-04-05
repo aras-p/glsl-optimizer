@@ -219,7 +219,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             /* Enable reading from the colorbuffer. */
             blend->blend_control |= R300_READ_ENABLE;
 
-            if (r300_screen(r300_context(pipe)->context.screen)->caps->is_r500) {
+            if (r300screen->caps.is_r500) {
                 /* Optimization: Depending on incoming pixels, we can
                  * conditionally disable the reading in hardware... */
                 if (eqRGB != PIPE_BLEND_MIN && eqA != PIPE_BLEND_MIN &&
@@ -308,7 +308,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 
     /* Color channel masks for all MRTs. */
     blend->color_channel_mask = bgra_cmask(state->rt[0].colormask);
-    if (r300screen->caps->is_r500 && state->independent_blend_enable) {
+    if (r300screen->caps.is_r500 && state->independent_blend_enable) {
         if (state->rt[1].blend_enable) {
             blend->color_channel_mask |= bgra_cmask(state->rt[1].colormask) << 4;
         }
@@ -363,7 +363,6 @@ static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_blend_color_state* state =
         (struct r300_blend_color_state*)r300->blend_color_state.state;
     union util_color uc;
@@ -379,7 +378,7 @@ static void r300_set_blend_color(struct pipe_context* pipe,
         float_to_fixed10(color->color[2]) |
         (float_to_fixed10(color->color[1]) << 16);
 
-    r300->blend_color_state.size = r300screen->caps->is_r500 ? 3 : 2;
+    r300->blend_color_state.size = r300->screen->caps.is_r500 ? 3 : 2;
     r300->blend_color_state.dirty = TRUE;
 }
 
@@ -390,7 +389,7 @@ static void r300_set_clip_state(struct pipe_context* pipe,
 
     r300->clip = *state;
 
-    if (r300_screen(pipe->screen)->caps->has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         memcpy(r300->clip_state.state, state, sizeof(struct pipe_clip_state));
         r300->clip_state.size = 29;
     } else {
@@ -411,8 +410,7 @@ static void*
         r300_create_dsa_state(struct pipe_context* pipe,
                               const struct pipe_depth_stencil_alpha_state* state)
 {
-    struct r300_capabilities *caps =
-        r300_screen(r300_context(pipe)->context.screen)->caps;
+    struct r300_capabilities *caps = &r300_screen(pipe->screen)->caps;
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
 
     /* Depth test setup. */
@@ -577,7 +575,6 @@ static void
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct pipe_framebuffer_state *old_state = r300->fb_state.state;
     unsigned max_width, max_height;
     uint32_t zbuffer_bpp = 0;
@@ -588,9 +585,9 @@ static void
         return;
     }
 
-    if (r300screen->caps->is_r500) {
+    if (r300->screen->caps.is_r500) {
         max_width = max_height = 4096;
-    } else if (r300screen->caps->is_r400) {
+    } else if (r300->screen->caps.is_r400) {
         max_width = max_height = 4021;
     } else {
         max_width = max_height = 2560;
@@ -718,7 +715,6 @@ static void r300_set_polygon_stipple(struct pipe_context* pipe,
 static void* r300_create_rs_state(struct pipe_context* pipe,
                                   const struct pipe_rasterizer_state* state)
 {
-    struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
 
     /* Copy rasterizer state for Draw. */
@@ -731,7 +727,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 #endif
 
     /* If no TCL engine is present, turn off the HW TCL. */
-    if (!r300screen->caps->has_tcl) {
+    if (!r300_screen(pipe->screen)->caps.has_tcl) {
         rs->vap_control_status |= R300_VAP_TCL_BYPASS;
     }
 
@@ -855,7 +851,7 @@ static void*
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
-    boolean is_r500 = r300_screen(pipe->screen)->caps->is_r500;
+    boolean is_r500 = r300->screen->caps.is_r500;
     int lod_bias;
     union util_color uc;
 
@@ -894,7 +890,7 @@ static void*
     sampler->border_color = uc.ui;
 
     /* R500-specific fixups and optimizations */
-    if (r300_screen(r300->context.screen)->caps->is_r500) {
+    if (r300->screen->caps.is_r500) {
         sampler->filter1 |= R500_BORDER_FIX;
     }
 
@@ -908,7 +904,7 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_textures_state* state =
         (struct r300_textures_state*)r300->textures_state.state;
-    unsigned tex_units = r300_screen(r300->context.screen)->caps->num_tex_units;
+    unsigned tex_units = r300->screen->caps.num_tex_units;
 
     if (count > tex_units) {
         return;
@@ -948,8 +944,8 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
         (struct r300_textures_state*)r300->textures_state.state;
     struct r300_texture *texture;
     unsigned i;
-    unsigned tex_units = r300_screen(r300->context.screen)->caps->num_tex_units;
-    boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
+    unsigned tex_units = r300->screen->caps.num_tex_units;
+    boolean is_r500 = r300->screen->caps.is_r500;
     boolean dirty_tex = FALSE;
 
     if (count > tex_units) {
@@ -1191,7 +1187,6 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                                                unsigned count,
                                                const struct pipe_vertex_element* attribs)
 {
-    struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_vertex_element_state *velems;
     unsigned i, size;
 
@@ -1201,7 +1196,7 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
         velems->count = count;
         memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
 
-        if (r300screen->caps->has_tcl) {
+        if (r300_screen(pipe->screen)->caps.has_tcl) {
             /* Check if the format is aligned to the size of DWORD. */
             for (i = 0; i < count; i++) {
                 size = util_format_get_blocksize(attribs[i].src_format);
@@ -1256,7 +1251,7 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
     struct r300_vertex_shader* vs = CALLOC_STRUCT(r300_vertex_shader);
     r300_vertex_shader_common_init(vs, shader);
 
-    if (r300_screen(pipe->screen)->caps->has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         r300_translate_vertex_shader(r300, vs);
     } else {
         vs->draw_vs = draw_create_vertex_shader(r300->draw, shader);
@@ -1290,7 +1285,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     /* The majority of the RS block bits is dependent on the vertex shader. */
     r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
 
-    if (r300_screen(pipe->screen)->caps->has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         r300->vs_state.dirty = TRUE;
         r300->vs_state.size = vs->code.length + 9;
 
@@ -1309,7 +1304,7 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
     struct r300_context* r300 = r300_context(pipe);
     struct r300_vertex_shader* vs = (struct r300_vertex_shader*)shader;
 
-    if (r300_screen(pipe->screen)->caps->has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         rc_constants_destroy(&vs->code.constants);
     } else {
         draw_delete_vertex_shader(r300->draw,
@@ -1325,7 +1320,6 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
                                      struct pipe_buffer *buf)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_screen *r300screen = r300_screen(pipe->screen);
     void *mapped;
     int max_size = 0;
 
@@ -1344,10 +1338,10 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             max_size = 256;
             break;
         case PIPE_SHADER_FRAGMENT:
-            if (r300screen->caps->is_r500) {
+            if (r300->screen->caps.is_r500) {
                 max_size = 256;
             /* XXX Implement emission of r400's extended constant buffer. */
-            /*} else if (r300screen->caps->is_r400) {
+            /*} else if (r300->screen->caps.is_r400) {
                 max_size = 64;*/
             } else {
                 max_size = 32;
@@ -1369,7 +1363,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     pipe_buffer_unmap(pipe->screen, buf);
 
     if (shader == PIPE_SHADER_VERTEX) {
-        if (r300screen->caps->has_tcl) {
+        if (r300->screen->caps.has_tcl) {
             r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
             r300->pvs_flush.dirty = TRUE;
         } else if (r300->draw) {

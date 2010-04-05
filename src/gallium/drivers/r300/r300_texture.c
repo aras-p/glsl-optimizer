@@ -515,7 +515,7 @@ static void r300_setup_texture_state(struct r300_screen* screen, struct r300_tex
     struct r300_texture_format_state* state = &tex->state;
     struct pipe_texture *pt = &tex->tex;
     unsigned i;
-    boolean is_r500 = screen->caps->is_r500;
+    boolean is_r500 = screen->caps.is_r500;
 
     /* Set sampler state. */
     state->format0 = R300_TX_WIDTH((pt->width0 - 1) & 0x7ff) |
@@ -704,7 +704,7 @@ static void r300_setup_miptree(struct r300_screen* screen,
 {
     struct pipe_texture* base = &tex->tex;
     unsigned stride, size, layer_size, nblocksy, i;
-    boolean rv350_mode = screen->caps->family >= CHIP_FAMILY_RV350;
+    boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_RV350;
 
     SCREEN_DBG(screen, DBG_TEX, "r300: Making miptree for texture, format %s\n",
                util_format_name(base->format));
@@ -751,7 +751,7 @@ static void r300_setup_tiling(struct pipe_screen *screen,
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
     enum pipe_format format = tex->tex.format;
-    boolean rv350_mode = r300_screen(screen)->caps->family >= CHIP_FAMILY_RV350;
+    boolean rv350_mode = r300_screen(screen)->caps.family >= CHIP_FAMILY_RV350;
 
     if (!r300_format_is_plain(format)) {
         return;

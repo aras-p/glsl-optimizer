@@ -292,6 +292,8 @@ struct r300_context {
 
     /* The interface to the windowing system, etc. */
     struct r300_winsys_screen *rws;
+    /* Screen. */
+    struct r300_screen *screen;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
     /* Accelerated blit support. */
@@ -403,7 +405,7 @@ void r300_init_tex_functions( struct pipe_context *pipe );
 
 static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {
-    return SCREEN_DBG_ON(r300_screen(ctx->context.screen), flags);
+    return SCREEN_DBG_ON(ctx->screen, flags);
 }
 
 static INLINE void CTX_DBG(struct r300_context * ctx, unsigned flags,

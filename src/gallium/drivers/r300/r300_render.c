@@ -420,7 +420,7 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_buffer* orgIndexBuffer = indexBuffer;
 #if defined(ENABLE_ALT_NUM_VERTS)
-    boolean alt_num_verts = r300_screen(pipe->screen)->caps->is_r500 &&
+    boolean alt_num_verts = r300->screen->caps.is_r500 &&
                             count > 65536;
 #else
     boolean alt_num_verts = FALSE;
@@ -500,7 +500,7 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
 {
     struct r300_context* r300 = r300_context(pipe);
 #if defined(ENABLE_ALT_NUM_VERTS)
-    boolean alt_num_verts = r300_screen(pipe->screen)->caps->is_r500 &&
+    boolean alt_num_verts = r300->screen->caps.is_r500 &&
                             count > 65536;
 #else
     boolean alt_num_verts = FALSE;

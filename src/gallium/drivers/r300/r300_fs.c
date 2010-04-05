@@ -168,7 +168,7 @@ static void r300_translate_fragment_shader(
 
     compiler.code = &shader->code;
     compiler.state = shader->compare_state;
-    compiler.is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
+    compiler.is_r500 = r300->screen->caps.is_r500;
     compiler.max_temp_regs = compiler.is_r500 ? 128 : 32;
     compiler.AllocateHwInputs = &allocate_hardware_inputs;
     compiler.UserData = &fs->inputs;

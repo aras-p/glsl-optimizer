@@ -36,7 +36,7 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
                                             unsigned query_type)
 {
     struct r300_context *r300 = r300_context(pipe);
-    struct r300_screen *r300screen = r300_screen(r300->context.screen);
+    struct r300_screen *r300screen = r300->screen;
     unsigned query_size;
     struct r300_query *q, *qptr;
 
@@ -47,10 +47,10 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
 
     q->active = FALSE;
 
-    if (r300screen->caps->family == CHIP_FAMILY_RV530)
-	query_size = r300screen->caps->num_z_pipes * sizeof(uint32_t);
+    if (r300screen->caps.family == CHIP_FAMILY_RV530)
+        query_size = r300screen->caps.num_z_pipes * sizeof(uint32_t);
     else
-	query_size = r300screen->caps->num_frag_pipes * sizeof(uint32_t);
+        query_size = r300screen->caps.num_frag_pipes * sizeof(uint32_t);
 
     if (!is_empty_list(&r300->query_list)) {
         qptr = last_elem(&r300->query_list);
@@ -112,7 +112,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
                                      uint64_t* result)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_screen* r300screen = r300_screen(r300->context.screen);
+    struct r300_screen* r300screen = r300->screen;
     struct r300_query *q = (struct r300_query*)query;
     unsigned flags = PIPE_BUFFER_USAGE_CPU_READ;
     uint32_t* map;
@@ -130,10 +130,10 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
         return FALSE;
     map += q->offset / 4;
 
-    if (r300screen->caps->family == CHIP_FAMILY_RV530)
-        num_results = r300screen->caps->num_z_pipes;
+    if (r300screen->caps.family == CHIP_FAMILY_RV530)
+        num_results = r300screen->caps.num_z_pipes;
     else
-        num_results = r300screen->caps->num_frag_pipes;
+        num_results = r300screen->caps.num_frag_pipes;
 
     for (i = 0; i < num_results; i++) {
         if (*map == ~0U) {
