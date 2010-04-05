@@ -208,39 +208,56 @@ _eglQueryContext(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *c,
  * bound to;  when the context is NULL, the same surfaces are returned.
  */
 static void
-_eglBindContextToSurfaces(_EGLContext *ctx,
+_eglBindContextToSurfaces(_EGLContext *newCtx,
                           _EGLSurface **draw, _EGLSurface **read)
 {
    _EGLSurface *newDraw = *draw, *newRead = *read;
    _EGLContext *oldCtx;
 
+   /*
+    * The goal is to bind a newCtx to newDraw.  Since newDraw may already have
+    * a binding context (oldCtx), and newCtx may already be bound to another
+    * surface (oldDraw), the old bindings are broken first and the new one is
+    * created.
+    */
    oldCtx = newDraw->CurrentContext;
-   if (ctx != oldCtx) {
+   if (newCtx != oldCtx) {
       if (oldCtx) {
-         assert(*draw == oldCtx->DrawSurface);
+         assert(oldCtx->DrawSurface == newDraw);
          oldCtx->DrawSurface = NULL;
       }
-      if (ctx) {
-         *draw = ctx->DrawSurface;
-         ctx->DrawSurface = newDraw;
+
+      if (newCtx) {
+         _EGLSurface *oldDraw = newCtx->DrawSurface;
+         if (oldDraw)
+            oldDraw->CurrentContext = NULL;
+
+         newCtx->DrawSurface = newDraw;
+         *draw = oldDraw;
       }
 
-      newDraw->CurrentContext = ctx;
+      newDraw->CurrentContext = newCtx;
    }
 
+   /* likewise */
    if (newRead != newDraw)
       oldCtx = newRead->CurrentContext;
-   if (ctx != oldCtx) {
+   if (newCtx != oldCtx) {
       if (oldCtx) {
-         assert(*read == oldCtx->ReadSurface);
+         assert(oldCtx->ReadSurface == newRead);
          oldCtx->ReadSurface = NULL;
       }
-      if (ctx) {
-         *read = ctx->ReadSurface;
-         ctx->ReadSurface = newRead;
+
+      if (newCtx) {
+         _EGLSurface *oldRead = newCtx->ReadSurface;
+         if (oldRead)
+            oldRead->CurrentContext = NULL;
+
+         newCtx->ReadSurface = newRead;
+         *read = oldRead;
       }
 
-      newRead->CurrentContext = ctx;
+      newRead->CurrentContext = newCtx;
    }
 }
 
@@ -360,26 +377,24 @@ _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read)
 
    /* bind the new context */
    oldCtx = _eglBindContextToThread(newCtx, t);
-   *ctx = oldCtx;
-   if (newCtx)
+
+   if (newCtx) {
       _eglBindContextToSurfaces(newCtx, draw, read);
-
-   /* unbind the old context from its binding surfaces */
-   if (oldCtx && oldCtx != newCtx) {
-      /*
-       * If the new context replaces some old context, the new one should not
-       * be current before the replacement and it should not be bound to any
-       * surface.
-       */
-      if (newCtx)
-         assert(!*draw && !*read);
-
-      *draw = oldCtx->DrawSurface;
-      *read = oldCtx->ReadSurface;
-      assert(*draw && *read);
-
-      _eglBindContextToSurfaces(NULL, draw, read);
    }
+   else {
+      assert(!*draw && !*read);
+      if (oldCtx) {
+         *draw = oldCtx->DrawSurface;
+         *read = oldCtx->ReadSurface;
+         assert(*draw && *read);
+
+         /* unbind the old context from its surfaces */
+         _eglBindContextToSurfaces(NULL, draw, read);
+      }
+   }
+
+   *ctx = oldCtx;
+   /* draw and read have been updated in _eglBindContextToSurfaces */
 
    return EGL_TRUE;
 }
