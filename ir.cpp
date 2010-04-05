@@ -186,7 +186,9 @@ ir_dereference::ir_dereference(ir_instruction *var,
 
       if (vt->is_array()) {
 	 type = vt->element_type();
-      } else if (vt->is_matrix() || vt->is_vector()) {
+      } else if (vt->is_matrix()) {
+	 type = vt->column_type();
+      } else if (vt->is_vector()) {
 	 type = vt->get_base_type();
       }
    }
