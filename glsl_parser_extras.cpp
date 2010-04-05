@@ -34,6 +34,7 @@
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
+#include "ir_constant_folding.h"
 #include "ir_print_visitor.h"
 
 void
@@ -647,6 +648,16 @@ main(int argc, char **argv)
 
    _mesa_ast_to_hir(&instructions, &state);
 
+   /* Optimization passes */
+   if (!state.error) {
+      /* Constant folding */
+      foreach_iter(exec_list_iterator, iter, instructions) {
+	 ir_constant_folding_visitor v;
+	 ((ir_instruction *)iter.get())->accept(& v);
+      }
+   }
+
+   /* Print out the resulting IR */
    printf("\n\n");
 
    if (!state.error) {
