@@ -558,6 +558,8 @@ public:
 
    virtual void print(void) const;
 
+   virtual ir_rvalue *hir(exec_list *, struct _mesa_glsl_parse_state *);
+
    enum ast_iteration_modes {
       ast_for,
       ast_while,

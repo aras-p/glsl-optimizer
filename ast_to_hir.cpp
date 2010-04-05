@@ -2069,3 +2069,66 @@ ast_selection_statement::hir(exec_list *instructions,
     */
    return NULL;
 }
+
+
+ir_rvalue *
+ast_iteration_statement::hir(exec_list *instructions,
+			     struct _mesa_glsl_parse_state *state)
+{
+   /* For loops start a new scope, but while and do-while loops do not.
+    */
+   if (mode == ast_for)
+      state->symbols->push_scope();
+
+   if (init_statement != NULL)
+      init_statement->hir(instructions, state);
+
+   ir_loop *const stmt = new ir_loop();
+   instructions->push_tail(stmt);
+
+   if (condition != NULL) {
+      ir_rvalue *const cond =
+	 condition->hir(& stmt->body_instructions, state);
+
+      if ((cond == NULL)
+	  || !cond->type->is_boolean() || !cond->type->is_scalar()) {
+	 YYLTYPE loc = condition->get_location();
+
+	 _mesa_glsl_error(& loc, state,
+			  "loop condition must be scalar boolean");
+      } else {
+	 /* As the first code in the loop body, generate a block that looks
+	  * like 'if (!condition) break;' as the loop termination condition.
+	  */
+	 ir_rvalue *const not_cond =
+	    new ir_expression(ir_unop_logic_not, glsl_type::bool_type, cond,
+			      NULL);
+
+	 ir_if *const if_stmt = new ir_if(not_cond);
+
+	 ir_jump *const break_stmt =
+	    new ir_loop_jump(stmt, ir_loop_jump::jump_break);
+
+	 if_stmt->then_instructions.push_tail(break_stmt);
+	 stmt->body_instructions.push_tail(if_stmt);
+      }
+   }
+
+   if (body != NULL) {
+      ast_node *node = (ast_node *) body;
+      do {
+	 node->hir(& stmt->body_instructions, state);
+	 node = (ast_node *) node->next;
+      } while (node != body);
+   }
+
+   if (rest_expression != NULL)
+      rest_expression->hir(& stmt->body_instructions, state);
+
+   if (mode == ast_for)
+      state->symbols->pop_scope();
+
+   /* Loops do not have r-values.
+    */
+   return NULL;
+}
