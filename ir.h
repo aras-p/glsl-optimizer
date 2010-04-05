@@ -532,6 +532,51 @@ public:
 private:
    ir_rvalue *value;
 };
+
+
+/**
+ * Jump instructions used inside loops
+ *
+ * These include \c break and \c continue.  The \c break within a loop is
+ * different from the \c break within a switch-statement.
+ *
+ * \sa ir_switch_jump
+ */
+class ir_loop_jump : public ir_jump {
+public:
+   enum jump_mode {
+      jump_break,
+      jump_continue
+   };
+
+   ir_loop_jump(ir_loop *loop, jump_mode mode)
+      : loop(loop), mode(mode)
+   {
+      /* empty */
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   bool is_break() const
+   {
+      return mode == jump_break;
+   }
+
+   bool is_continue() const
+   {
+      return mode == jump_continue;
+   }
+
+private:
+   /** Loop containing this break instruction. */
+   ir_loop *loop;
+
+   /** Mode selector for the jump instruction. */
+   enum jump_mode mode;
+};
 /*@}*/
 
 

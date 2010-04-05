@@ -319,3 +319,10 @@ ir_print_visitor::visit(ir_loop *ir)
    }
    printf("))\n");
 }
+
+
+void
+ir_print_visitor::visit(ir_loop_jump *ir)
+{
+   printf("%s", ir->is_break() ? "break" : "continue");
+}

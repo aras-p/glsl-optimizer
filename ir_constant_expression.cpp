@@ -75,6 +75,7 @@ public:
    virtual void visit(ir_return *);
    virtual void visit(ir_if *);
    virtual void visit(ir_loop *);
+   virtual void visit(ir_loop_jump *);
    /*@}*/
 
    /**
@@ -469,6 +470,14 @@ ir_constant_visitor::visit(ir_if *ir)
 
 void
 ir_constant_visitor::visit(ir_loop *ir)
+{
+   (void) ir;
+   value = NULL;
+}
+
+
+void
+ir_constant_visitor::visit(ir_loop_jump *ir)
 {
    (void) ir;
    value = NULL;
