@@ -26,7 +26,7 @@ Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
 GL_EXT_texture_compression_rgtc                       not started
 Red and red/green texture formats                     Ian?
-Transform feedback (GL_EXT_transform_feedback)        not started
+Transform feedback (GL_EXT_transform_feedback)        ~50% done
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE
 sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     not started
 glClearBuffer commands                                DONE, except for dispatch
@@ -40,7 +40,7 @@ glBindBufferRange, glBindBufferBase commands          not started
 GL 3.1:
 
 GLSL 1.30 and 1.40                                    not started
-Instanced drawing (GL_ARB_draw_instanced)             not started
+Instanced drawing (GL_ARB_draw_instanced)             ~50% done
 Buffer copying (GL_ARB_copy_buffer)                   DONE
 Primitive restart (GL_NV_primitive_restart)           not started
 16 vertex texture image units                         not started
