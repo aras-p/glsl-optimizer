@@ -879,6 +879,7 @@ static struct pipe_texture*
     struct r300_winsys_buffer *buffer;
     struct r300_texture* tex;
     unsigned stride;
+    boolean override_zb_flags;
 
     /* Support only 2D textures without mipmaps */
     if (base->target != PIPE_TEXTURE_2D ||
@@ -908,8 +909,38 @@ static struct pipe_texture*
 
     rws->buffer_get_tiling(rws, buffer, &tex->microtile, &tex->macrotile);
     r300_setup_flags(tex);
+
+    /* Enforce microtiled zbuffer. */
+    override_zb_flags = util_format_is_depth_or_stencil(base->format) &&
+                        tex->microtile == R300_BUFFER_LINEAR;
+
+    if (override_zb_flags) {
+        switch (util_format_get_blocksize(base->format)) {
+            case 4:
+                tex->microtile = R300_BUFFER_TILED;
+                break;
+
+            case 2:
+                if (rws->get_value(rws, R300_VID_SQUARE_TILING_SUPPORT)) {
+                    tex->microtile = R300_BUFFER_SQUARETILED;
+                    break;
+                }
+                /* Pass through. */
+
+            default:
+                override_zb_flags = FALSE;
+        }
+    }
+
     r300_setup_miptree(rscreen, tex);
     r300_setup_texture_state(rscreen, tex);
+
+    if (override_zb_flags) {
+        rws->buffer_set_tiling(rws, tex->buffer,
+                               tex->pitch[0],
+                               tex->microtile,
+                               tex->macrotile);
+    }
     return (struct pipe_texture*)tex;
 }
 
