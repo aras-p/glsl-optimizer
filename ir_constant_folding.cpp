@@ -145,3 +145,10 @@ ir_constant_folding_visitor::visit(ir_if *ir)
    visit_exec_list(&ir->then_instructions, this);
    visit_exec_list(&ir->else_instructions, this);
 }
+
+
+void
+ir_constant_folding_visitor::visit(ir_loop *ir)
+{
+   (void) ir;
+}

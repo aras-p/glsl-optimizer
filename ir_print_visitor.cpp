@@ -294,3 +294,28 @@ ir_print_visitor::visit(ir_if *ir)
    }
    printf("))\n");
 }
+
+
+void
+ir_print_visitor::visit(ir_loop *ir)
+{
+   printf("(loop (");
+   if (ir->counter != NULL)
+      ir->counter->accept(this);
+   printf(") (");
+   if (ir->from != NULL)
+      ir->from->accept(this);
+   printf(") (");
+   if (ir->to != NULL)
+      ir->to->accept(this);
+   printf(") (");
+   if (ir->increment != NULL)
+      ir->increment->accept(this);
+   printf(") (");
+   foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
+      ir_instruction *const inst = (ir_instruction *) iter.get();
+
+      inst->accept(this);
+   }
+   printf("))\n");
+}

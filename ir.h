@@ -287,6 +287,44 @@ public:
 };
 
 
+/**
+ * IR instruction representing a high-level loop structure.
+ */
+class ir_loop : public ir_instruction {
+public:
+   ir_loop() : from(NULL), to(NULL), increment(NULL), counter(NULL)
+   {
+      /* empty */
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   /**
+    * Get an iterator for the instructions of the loop body
+    */
+   exec_list_iterator iterator()
+   {
+      return body_instructions.iterator();
+   }
+
+   /** List of instructions that make up the body of the loop. */
+   exec_list body_instructions;
+
+   /**
+    * \name Loop counter and controls
+    */
+   /*@{*/
+   ir_rvalue *from;
+   ir_rvalue *to;
+   ir_rvalue *increment;
+   ir_variable *counter;
+   /*@}*/
+};
+
+
 class ir_assignment : public ir_rvalue {
 public:
    ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition);

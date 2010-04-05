@@ -65,6 +65,7 @@ public:
    virtual void visit(ir_call *);
    virtual void visit(ir_return *);
    virtual void visit(ir_if *);
+   virtual void visit(ir_loop *);
    /*@}*/
 
 private:
