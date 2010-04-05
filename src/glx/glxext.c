@@ -206,7 +206,7 @@ __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
       break;
    case GLX_EXCHANGE_COMPLETE_INTEL:
       break;
-   case GLX_BLIT_COMPLETE_INTEL:
+   case GLX_COPY_COMPLETE_INTEL:
       break;
    case GLX_FLIP_COMPLETE_INTEL:
       break;
