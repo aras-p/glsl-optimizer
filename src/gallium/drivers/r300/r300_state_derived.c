@@ -99,7 +99,6 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
         gen_count++;
     }
 
-    /* XXX magic */
     assert(gen_count <= 8);
 }
 

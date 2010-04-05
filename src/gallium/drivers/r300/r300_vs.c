@@ -169,7 +169,6 @@ static void r300_init_vs_output_mapping(struct r300_vertex_shader* vs)
         gen_count++;
     }
 
-    /* XXX magic */
     assert(gen_count <= 8);
 
     /* WPOS. */
