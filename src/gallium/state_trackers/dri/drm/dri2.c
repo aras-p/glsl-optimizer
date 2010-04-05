@@ -84,9 +84,25 @@ dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
    pt = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
 
    if (pt) {
+      enum pipe_format internal_format = pt->format;
+
+      if (format == __DRI_TEXTURE_FORMAT_RGB)  {
+         /* only need to cover the formats recognized by dri_fill_st_visual */
+         switch (internal_format) {
+         case PIPE_FORMAT_B8G8R8A8_UNORM:
+            internal_format = PIPE_FORMAT_B8G8R8X8_UNORM;
+            break;
+         case PIPE_FORMAT_A8R8G8B8_UNORM:
+            internal_format = PIPE_FORMAT_X8R8G8B8_UNORM;
+            break;
+         default:
+            break;
+         }
+      }
+
       ctx->st->teximage(ctx->st,
             (target == GL_TEXTURE_2D) ? ST_TEXTURE_2D : ST_TEXTURE_RECT,
-            0, drawable->stvis.color_format, pt, FALSE);
+            0, internal_format, pt, FALSE);
    }
 }
 
