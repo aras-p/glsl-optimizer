@@ -52,4 +52,14 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
 				 const GLvoid *indices, GLint basevertex);
 
 
+extern GLboolean
+_mesa_validate_DrawArraysInstanced(GLcontext *ctx, GLenum mode, GLint first,
+                                   GLsizei count, GLsizei primcount);
+
+extern GLboolean
+_mesa_validate_DrawElementsInstanced(GLcontext *ctx,
+                                     GLenum mode, GLsizei count, GLenum type,
+                                     const GLvoid *indices, GLsizei primcount);
+
+
 #endif
