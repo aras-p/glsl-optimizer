@@ -1967,7 +1967,8 @@ ast_jump_statement::hir(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state)
 {
 
-   if (mode == ast_return) {
+   switch (mode) {
+   case ast_return: {
       ir_return *inst;
       assert(state->current_function);
 
@@ -2005,9 +2006,10 @@ ast_jump_statement::hir(exec_list *instructions,
       }
 
       instructions->push_tail(inst);
+      break;
    }
 
-   if (mode == ast_discard) {
+   case ast_discard:
       /* FINISHME: discard support */
       if (state->target != fragment_shader) {
 	 YYLTYPE loc = this->get_location();
@@ -2015,6 +2017,11 @@ ast_jump_statement::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state,
 			  "`discard' may only appear in a fragment shader");
       }
+      break;
+
+   case ast_break:
+   case ast_continue:
+      break;
    }
 
    /* Jump instructions do not have r-values.
