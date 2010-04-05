@@ -15,6 +15,7 @@ if env['platform'] == 'windows':
         'user32', 
     ])
 else:
+    env.Tool('x11')
     env.PrependUnique(LIBS = [
         'GLU',
         'GL',
