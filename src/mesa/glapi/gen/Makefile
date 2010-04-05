@@ -74,6 +74,7 @@ API_XML = \
 	ARB_copy_buffer.xml \
 	ARB_depth_clamp.xml \
 	ARB_draw_elements_base_vertex.xml \
+	ARB_draw_instanced.xml \
 	ARB_framebuffer_object.xml \
 	ARB_map_buffer_range.xml \
 	ARB_seamless_cube_map.xml \
