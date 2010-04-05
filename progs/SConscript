@@ -24,6 +24,7 @@ if progs_env['platform'] == 'windows':
 if progs_env['platform'] == 'windows':
     progs_env.Prepend(LIBS = ['glu32', 'opengl32'])
 else:
+    progs_env.Tool('x11')
     progs_env.Prepend(LIBS = ['GLU', 'GL'])
 
 # Glut
