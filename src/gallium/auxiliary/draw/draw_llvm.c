@@ -89,6 +89,9 @@ create_vertex_header(struct draw_llvm *llvm, int data_elems)
    /* struct vertex_header */
    LLVMTypeRef elem_types[3];
    LLVMTypeRef vertex_header;
+   char struct_name[24];
+
+   snprintf(struct_name, 23, "vertex_header%d", data_elems);
 
    elem_types[0]  = LLVMIntType(32);
    elem_types[1]  = LLVMArrayType(LLVMFloatType(), 4);
@@ -117,7 +120,7 @@ create_vertex_header(struct draw_llvm *llvm, int data_elems)
                           llvm->target, vertex_header,
                           DRAW_JIT_VERTEX_DATA);
 
-   LLVMAddTypeName(llvm->module, "vertex_header", vertex_header);
+   LLVMAddTypeName(llvm->module, struct_name, vertex_header);
 
    return LLVMPointerType(vertex_header, 0);
 }
