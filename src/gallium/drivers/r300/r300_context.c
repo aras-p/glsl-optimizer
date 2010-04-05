@@ -175,6 +175,16 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         r300->context.draw_arrays = r300_draw_arrays;
         r300->context.draw_elements = r300_draw_elements;
         r300->context.draw_range_elements = r300_draw_range_elements;
+
+        if (r300screen->caps.is_r500) {
+            r300->emit_draw_arrays_immediate = r500_emit_draw_arrays_immediate;
+            r300->emit_draw_arrays = r500_emit_draw_arrays;
+            r300->emit_draw_elements = r500_emit_draw_elements;
+        } else {
+            r300->emit_draw_arrays_immediate = r300_emit_draw_arrays_immediate;
+            r300->emit_draw_arrays = r300_emit_draw_arrays;
+            r300->emit_draw_elements = r300_emit_draw_elements;
+        }
     } else {
         r300->context.draw_arrays = r300_swtcl_draw_arrays;
         r300->context.draw_elements = r300_draw_elements;

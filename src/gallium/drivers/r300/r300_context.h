@@ -79,6 +79,11 @@ struct r300_dsa_state {
     uint32_t z_stencil_control; /* R300_ZB_ZSTENCILCNTL: 0x4f04 */
     uint32_t stencil_ref_mask;  /* R300_ZB_STENCILREFMASK: 0x4f08 */
     uint32_t stencil_ref_bf;    /* R500_ZB_STENCILREFMASK_BF: 0x4fd4 */
+
+    /* Whether a two-sided stencil is enabled. */
+    boolean two_sided;
+    /* Whether a fallback should be used for a two-sided stencil ref value. */
+    boolean stencil_ref_bf_fallback;
 };
 
 struct r300_rs_state {
@@ -290,6 +295,21 @@ struct r300_context {
     /* Parent class */
     struct pipe_context context;
 
+    /* Emission of drawing packets. */
+    void (*emit_draw_arrays_immediate)(
+            struct r300_context *r300,
+            unsigned mode, unsigned start, unsigned count);
+
+    void (*emit_draw_arrays)(
+            struct r300_context *r300,
+            unsigned mode, unsigned count);
+
+    void (*emit_draw_elements)(
+            struct r300_context *r300, struct pipe_buffer* indexBuffer,
+            unsigned indexSize, unsigned minIndex, unsigned maxIndex,
+            unsigned mode, unsigned start, unsigned count);
+
+
     /* The interface to the windowing system, etc. */
     struct r300_winsys_screen *rws;
     /* Screen. */
@@ -382,6 +402,9 @@ struct r300_context {
     boolean scissor_enabled;
     /* Whether rendering is conditional and should be skipped. */
     boolean skip_rendering;
+    /* Whether the two-sided stencil ref value is different for front and
+     * back faces, and fallback should be used for r3xx-r4xx. */
+    boolean stencil_ref_bf_fallback;
     /* upload managers */
     struct u_upload_mgr *upload_vb;
     struct u_upload_mgr *upload_ib;
