@@ -489,6 +489,13 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 
 	 assert(var != NULL);
 
+	 if (var->max_array_access >= unsigned(rhs->type->array_size())) {
+	    /* FINISHME: This should actually log the location of the RHS. */
+	    _mesa_glsl_error(& lhs_loc, state, "array size must be > %u due to "
+			     "previous access",
+			     var->max_array_access);
+	 }
+
 	 var->type = glsl_type::get_array_instance(lhs->type->element_type(),
 						   rhs->type->array_size());
       }
