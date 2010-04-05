@@ -111,7 +111,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 	 aevent->event_type = GLX_EXCHANGE_COMPLETE_INTEL;
 	 break;
       case DRI2_BLIT_COMPLETE:
-	 aevent->event_type = GLX_BLIT_COMPLETE_INTEL;
+	 aevent->event_type = GLX_COPY_COMPLETE_INTEL;
 	 break;
       case DRI2_FLIP_COMPLETE:
 	 aevent->event_type = GLX_FLIP_COMPLETE_INTEL;
