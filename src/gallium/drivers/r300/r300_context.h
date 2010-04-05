@@ -411,6 +411,11 @@ struct r300_context {
 };
 
 /* Convenience cast wrapper. */
+static INLINE struct r300_texture* r300_texture(struct pipe_texture* tex)
+{
+    return (struct r300_texture*)tex;
+}
+
 static INLINE struct r300_context* r300_context(struct pipe_context* context)
 {
     return (struct r300_context*)context;

@@ -554,7 +554,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
             continue;
         }
 
-        tex = (struct r300_texture*)old_state->cbufs[i]->texture;
+        tex = r300_texture(old_state->cbufs[i]->texture);
 
         if (tex) {
             r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
@@ -566,7 +566,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
     if (old_state->zsbuf &&
         (!new_state->zsbuf ||
          old_state->zsbuf->texture != new_state->zsbuf->texture)) {
-        tex = (struct r300_texture*)old_state->zsbuf->texture;
+        tex = r300_texture(old_state->zsbuf->texture);
 
         if (tex) {
             r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
@@ -578,7 +578,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
 
     /* Set tiling flags for new surfaces. */
     for (i = 0; i < new_state->nr_cbufs; i++) {
-        tex = (struct r300_texture*)new_state->cbufs[i]->texture;
+        tex = r300_texture(new_state->cbufs[i]->texture);
         level = new_state->cbufs[i]->level;
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
@@ -587,7 +587,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
                                         tex->mip_macrotile[level]);
     }
     if (new_state->zsbuf) {
-        tex = (struct r300_texture*)new_state->zsbuf->texture;
+        tex = r300_texture(new_state->zsbuf->texture);
         level = new_state->zsbuf->level;
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
@@ -992,7 +992,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
             dirty_tex = TRUE;
 
             /* R300-specific - set the texrect factor in the fragment shader */
-            texture = (struct r300_texture *)views[i]->texture;
+            texture = r300_texture(views[i]->texture);
             if (!is_r500 && texture->uses_pitch) {
                 /* XXX It would be nice to re-emit just 1 constant,
                  * XXX not all of them */

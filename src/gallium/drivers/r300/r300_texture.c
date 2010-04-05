@@ -585,7 +585,7 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
 
     tex->format = new_format;
 
-    r300_setup_texture_state(r300_screen(screen), (struct r300_texture*)tex);
+    r300_setup_texture_state(r300_screen(screen), r300_texture(tex));
 }
 
 unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
@@ -825,7 +825,7 @@ static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
 
 static void r300_texture_destroy(struct pipe_texture* texture)
 {
-    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_texture* tex = r300_texture(texture);
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)texture->screen->winsys;
 
     rws->buffer_reference(rws, &tex->buffer, NULL);
@@ -839,7 +839,7 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
                                                  unsigned zslice,
                                                  unsigned flags)
 {
-    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_texture* tex = r300_texture(texture);
     struct pipe_surface* surface = CALLOC_STRUCT(pipe_surface);
     unsigned offset;
 
@@ -919,7 +919,7 @@ static boolean
                             struct winsys_handle *whandle)
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
-    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_texture* tex = r300_texture(texture);
     unsigned stride;
 
     if (!tex) {
@@ -999,7 +999,7 @@ boolean r300_get_texture_buffer(struct pipe_screen* screen,
                                 struct r300_winsys_buffer** buffer,
                                 unsigned* stride)
 {
-    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_texture* tex = r300_texture(texture);
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
     struct r300_winsys_buffer *buf;
 

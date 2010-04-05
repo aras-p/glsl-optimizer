@@ -470,7 +470,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             state->tx_enable |= 1 << i;
 
             view = state->fragment_sampler_views[i];
-            tex = (struct r300_texture *)view->texture;
+            tex = r300_texture(view->texture);
             sampler = state->sampler_states[i];
 
             assert(view->format == tex->tex.format);

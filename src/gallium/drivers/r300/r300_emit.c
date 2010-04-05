@@ -406,7 +406,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     /* Set up colorbuffers. */
     for (i = 0; i < fb->nr_cbufs; i++) {
         surf = fb->cbufs[i];
-        tex = (struct r300_texture*)surf->texture;
+        tex = r300_texture(surf->texture);
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
 
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
@@ -425,7 +425,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     /* Set up a zbuffer. */
     if (fb->zsbuf) {
         surf = fb->zsbuf;
-        tex = (struct r300_texture*)surf->texture;
+        tex = r300_texture(surf->texture);
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
@@ -739,7 +739,7 @@ void r300_emit_textures_state(struct r300_context *r300,
             OUT_CS_REG(R300_TX_FORMAT2_0 + (i * 4), texstate->format[2]);
 
             OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-            OUT_CS_TEX_RELOC((struct r300_texture *)allstate->fragment_sampler_views[i]->texture,
+            OUT_CS_TEX_RELOC(r300_texture(allstate->fragment_sampler_views[i]->texture),
                              texstate->tile_config,
                              RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
         }
@@ -998,7 +998,7 @@ void r300_emit_buffer_validate(struct r300_context *r300,
 validate:
     /* Color buffers... */
     for (i = 0; i < fb->nr_cbufs; i++) {
-        tex = (struct r300_texture*)fb->cbufs[i]->texture;
+        tex = r300_texture(fb->cbufs[i]->texture);
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
         if (!r300_add_texture(r300->rws, tex,
 			      0, RADEON_GEM_DOMAIN_VRAM)) {
@@ -1008,7 +1008,7 @@ validate:
     }
     /* ...depth buffer... */
     if (fb->zsbuf) {
-        tex = (struct r300_texture*)fb->zsbuf->texture;
+        tex = r300_texture(fb->zsbuf->texture);
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
         if (!r300_add_texture(r300->rws, tex,
 			      0, RADEON_GEM_DOMAIN_VRAM)) {
@@ -1022,7 +1022,7 @@ validate:
             continue;
         }
 
-        tex = (struct r300_texture*)texstate->fragment_sampler_views[i]->texture;
+        tex = r300_texture(texstate->fragment_sampler_views[i]->texture);
         if (!r300_add_texture(r300->rws, tex,
 			      RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
             r300->context.flush(&r300->context, 0, NULL);

@@ -126,7 +126,7 @@ r300_get_tex_transfer(struct pipe_context *ctx,
                       enum pipe_transfer_usage usage, unsigned x, unsigned y,
                       unsigned w, unsigned h)
 {
-    struct r300_texture *tex = (struct r300_texture *)texture;
+    struct r300_texture *tex = r300_texture(texture);
     struct r300_screen *r300screen = r300_screen(ctx->screen);
     struct r300_transfer *trans;
     struct pipe_texture base;
@@ -176,9 +176,9 @@ r300_get_tex_transfer(struct pipe_context *ctx,
             }
 
             /* Create the temporary texture. */
-            trans->detiled_texture = (struct r300_texture*)
+            trans->detiled_texture = r300_texture(
                ctx->screen->texture_create(ctx->screen,
-                                           &base);
+                                           &base));
 
             assert(!trans->detiled_texture->microtile &&
                    !trans->detiled_texture->macrotile);
@@ -229,7 +229,7 @@ static void* r300_transfer_map(struct pipe_context *ctx,
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)ctx->winsys;
     struct r300_transfer *r300transfer = r300_transfer(transfer);
-    struct r300_texture *tex = (struct r300_texture*)transfer->texture;
+    struct r300_texture *tex = r300_texture(transfer->texture);
     char *map;
     enum pipe_format format = tex->tex.format;
 
@@ -259,7 +259,7 @@ static void r300_transfer_unmap(struct pipe_context *ctx,
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)ctx->winsys;
     struct r300_transfer *r300transfer = r300_transfer(transfer);
-    struct r300_texture *tex = (struct r300_texture*)transfer->texture;
+    struct r300_texture *tex = r300_texture(transfer->texture);
 
     if (r300transfer->detiled_texture) {
 	rws->buffer_unmap(rws, r300transfer->detiled_texture->buffer);

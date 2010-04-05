@@ -76,7 +76,7 @@ r300_is_texture_referenced(struct pipe_context *context,
                            unsigned face, unsigned level)
 {
     struct r300_context* r300 = r300_context(context);
-    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_texture* tex = r300_texture(texture);
 
     return r300->rws->is_buffer_referenced(r300->rws, tex->buffer);
 }
