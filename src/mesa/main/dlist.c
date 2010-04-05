@@ -6130,9 +6130,8 @@ static void GLAPIENTRY
 save_EndTransformFeedback(void)
 {
    GET_CURRENT_CONTEXT(ctx);
-   Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = alloc_instruction(ctx, OPCODE_END_TRANSFORM_FEEDBACK, 0);
+   (void) alloc_instruction(ctx, OPCODE_END_TRANSFORM_FEEDBACK, 0);
    if (ctx->ExecuteFlag) {
       CALL_EndTransformFeedbackEXT(ctx->Exec, ());
    }
