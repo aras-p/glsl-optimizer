@@ -311,11 +311,12 @@ ir_print_visitor::visit(ir_loop *ir)
    printf(") (");
    if (ir->increment != NULL)
       ir->increment->accept(this);
-   printf(") (");
+   printf(") (\n");
    foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
       inst->accept(this);
+      printf("\n");
    }
    printf("))\n");
 }
