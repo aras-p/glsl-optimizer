@@ -1791,10 +1791,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
          CHECK_EXT1(OES_read_format, "GetBooleanv");
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
          CHECK_EXT1(OES_read_format, "GetBooleanv");
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
@@ -3682,10 +3686,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
          CHECK_EXT1(OES_read_format, "GetFloatv");
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
          CHECK_EXT1(OES_read_format, "GetFloatv");
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
@@ -5573,10 +5581,14 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
          CHECK_EXT1(OES_read_format, "GetIntegerv");
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = _mesa_get_color_read_type(ctx);
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
          CHECK_EXT1(OES_read_format, "GetIntegerv");
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = _mesa_get_color_read_format(ctx);
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
@@ -7465,10 +7477,14 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
          CHECK_EXT1(OES_read_format, "GetInteger64v");
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
          CHECK_EXT1(OES_read_format, "GetInteger64v");
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:

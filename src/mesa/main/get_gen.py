@@ -1015,9 +1015,9 @@ StateVars = [
 
 	# GL_OES_read_format
 	( "GL_IMPLEMENTATION_COLOR_READ_TYPE_OES", GLint,
-	  ["_mesa_get_color_read_type(ctx)"], "", NoState, ["OES_read_format"] ),
+	  ["_mesa_get_color_read_type(ctx)"], "", "_NEW_BUFFERS", ["OES_read_format"] ),
 	( "GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES", GLint,
-	  ["_mesa_get_color_read_format(ctx)"], "", NoState, ["OES_read_format"] ),
+	  ["_mesa_get_color_read_format(ctx)"], "", "_NEW_BUFFERS", ["OES_read_format"] ),
 
 	# GL_ATI_fragment_shader
 	( "GL_NUM_FRAGMENT_REGISTERS_ATI", GLint, ["6"],
