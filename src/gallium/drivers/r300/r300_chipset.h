@@ -38,6 +38,8 @@ struct r300_capabilities {
     unsigned num_frag_pipes;
     /* The number of z pipes */
     unsigned num_z_pipes;
+    /* The number of texture units. */
+    unsigned num_tex_units;
     /* Whether or not TCL is physically present */
     boolean has_tcl;
     /* Whether or not this is R400. The differences compared to their R3xx

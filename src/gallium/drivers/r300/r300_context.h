@@ -138,10 +138,10 @@ struct r300_texture_fb_state {
 
 struct r300_textures_state {
     /* Textures. */
-    struct pipe_sampler_view *fragment_sampler_views[8];
+    struct pipe_sampler_view *fragment_sampler_views[16];
     int texture_count;
     /* Sampler states. */
-    struct r300_sampler_state *sampler_states[8];
+    struct r300_sampler_state *sampler_states[16];
     int sampler_count;
 
     /* These is the merge of the texture and sampler states. */
@@ -152,7 +152,7 @@ struct r300_textures_state {
         uint32_t filter[2];     /* R300_TX_FILTER[0-1] */
         uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
         uint32_t tile_config;   /* R300_TX_OFFSET (subset thereof) */
-    } regs[8];
+    } regs[16];
 };
 
 struct r300_vertex_stream_state {

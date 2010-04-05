@@ -908,8 +908,9 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_textures_state* state =
         (struct r300_textures_state*)r300->textures_state.state;
+    unsigned tex_units = r300_screen(r300->context.screen)->caps->num_tex_units;
 
-    if (count > 8) {
+    if (count > tex_units) {
         return;
     }
 
@@ -947,11 +948,11 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
         (struct r300_textures_state*)r300->textures_state.state;
     struct r300_texture *texture;
     unsigned i;
+    unsigned tex_units = r300_screen(r300->context.screen)->caps->num_tex_units;
     boolean is_r500 = r300_screen(r300->context.screen)->caps->is_r500;
     boolean dirty_tex = FALSE;
 
-    /* XXX magic num */
-    if (count > 8) {
+    if (count > tex_units) {
         return;
     }
 
@@ -977,7 +978,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
         }
     }
 
-    for (i = count; i < 8; i++) {
+    for (i = count; i < tex_units; i++) {
         if (state->fragment_sampler_views[i]) {
             pipe_sampler_view_reference(&state->fragment_sampler_views[i],
                                         NULL);

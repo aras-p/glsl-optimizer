@@ -338,7 +338,7 @@ static INLINE uint32_t r500_anisotropy(unsigned max_aniso)
 
     // Map the range [0, 15] to [0, 63].
     return R500_TX_MAX_ANISO(MIN2((unsigned)(max_aniso*4.2001), 63)) |
-           R500_TX_ANISO_HIGH_QUALITY;;
+           R500_TX_ANISO_HIGH_QUALITY;
 }
 
 /* Non-CSO state. (For now.) */

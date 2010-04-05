@@ -82,8 +82,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
     switch (param) {
         case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
         case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-            /* XXX I'm told this goes up to 16 */
-            return 8;
+            return r300screen->caps->num_tex_units;
         case PIPE_CAP_NPOT_TEXTURES:
             /* XXX enable now to get GL2.1 API,
              * figure out later how to emulate this */

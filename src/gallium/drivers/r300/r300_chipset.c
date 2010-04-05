@@ -34,11 +34,11 @@ void r300_parse_chipset(struct r300_capabilities* caps)
 {
     /* Reasonable defaults */
     caps->num_vert_fpus = 4;
+    caps->num_tex_units = 16;
     caps->has_tcl = debug_get_bool_option("RADEON_NO_TCL", FALSE) ? FALSE : TRUE;
     caps->is_r400 = FALSE;
     caps->is_r500 = FALSE;
     caps->high_second_pipe = FALSE;
-
 
     /* Note: These are not ordered by PCI ID. I leave that task to GCC,
      * which will perform the ordering while collating jump tables. Instead,
