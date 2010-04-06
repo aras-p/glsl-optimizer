@@ -607,6 +607,8 @@ public:
    } value;
 };
 
+void
+visit_exec_list(exec_list *list, ir_visitor *visitor);
 
 extern void
 _mesa_glsl_initialize_variables(exec_list *instructions,

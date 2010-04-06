@@ -24,6 +24,7 @@
 #include "main/imports.h"
 #include "main/simple_list.h"
 #include "ir.h"
+#include "ir_visitor.h"
 #include "glsl_types.h"
 
 ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
@@ -367,3 +368,12 @@ ir_call::get_error_instruction()
    call->type = glsl_type::error_type;
    return call;
 }
+
+void
+visit_exec_list(exec_list *list, ir_visitor *visitor)
+{
+   foreach_iter(exec_list_iterator, iter, *list) {
+      ((ir_instruction *)iter.get())->accept(visitor);
+   }
+}
+

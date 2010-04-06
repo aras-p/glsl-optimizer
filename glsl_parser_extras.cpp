@@ -651,10 +651,8 @@ main(int argc, char **argv)
    /* Optimization passes */
    if (!state.error) {
       /* Constant folding */
-      foreach_iter(exec_list_iterator, iter, instructions) {
-	 ir_constant_folding_visitor v;
-	 ((ir_instruction *)iter.get())->accept(& v);
-      }
+      ir_constant_folding_visitor constant_folding;
+      visit_exec_list(&instructions, &constant_folding);
    }
 
    /* Print out the resulting IR */

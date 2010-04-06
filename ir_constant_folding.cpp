@@ -141,4 +141,7 @@ ir_constant_folding_visitor::visit(ir_if *ir)
       ir->condition = const_val;
    else
       ir->condition->accept(this);
+
+   visit_exec_list(&ir->then_instructions, this);
+   visit_exec_list(&ir->else_instructions, this);
 }
