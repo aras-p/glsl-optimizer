@@ -127,5 +127,9 @@ ir_constant_folding_visitor::visit(ir_return *ir)
 void
 ir_constant_folding_visitor::visit(ir_if *ir)
 {
-   (void) ir;
+   ir_constant *const_val = ir->condition->constant_expression_value();
+   if (const_val)
+      ir->condition = const_val;
+   else
+      ir->condition->accept(this);
 }
