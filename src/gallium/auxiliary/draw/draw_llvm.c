@@ -17,6 +17,8 @@
 
 #include <llvm-c/Transforms/Scalar.h>
 
+#define DEBUG_STORE 0
+
 static void
 init_globals(struct draw_llvm *llvm)
 {
@@ -235,7 +237,7 @@ generate_vs(struct draw_llvm *llvm,
                      NULL/*sampler*/);
 }
 
-
+#if DEBUG_STORE
 static void print_vectorf(LLVMBuilderRef builder,
                          LLVMValueRef vec)
 {
@@ -251,6 +253,7 @@ static void print_vectorf(LLVMBuilderRef builder,
    lp_build_printf(builder, "vector = [%f, %f, %f, %f]\n",
                    val[0], val[1], val[2], val[3]);
 }
+#endif
 
 static void
 generate_fetch(LLVMBuilderRef builder,
@@ -404,6 +407,9 @@ store_aos(LLVMBuilderRef builder,
    LLVMBuildStore(builder, LLVMConstInt(LLVMInt32Type(),
                                         0xffff, 0), id_ptr);
 
+#if DEBUG_STORE
+   lp_build_printf(builder, "    ---- %p storing at %d (%p)\n", io_ptr, index, data_ptr);
+#endif
 #if 0
    /*lp_build_printf(builder, " ---- %p storing at %d (%p)  ", io_ptr, index, data_ptr);
      print_vectorf(builder, value);*/
@@ -458,16 +464,10 @@ store_aos_array(LLVMBuilderRef builder,
                 int num_outputs)
 {
    LLVMValueRef attr_index = LLVMConstInt(LLVMInt32Type(), attrib, 0);
-   LLVMValueRef ind0 = start_index;
-   LLVMValueRef ind1 =
-      LLVMBuildAdd(builder, start_index,
-                   LLVMConstInt(LLVMInt32Type(), 1, 0), "");
-   LLVMValueRef ind2 =
-      LLVMBuildAdd(builder, start_index,
-                   LLVMConstInt(LLVMInt32Type(), 2, 0), "");
-   LLVMValueRef ind3 =
-      LLVMBuildAdd(builder, start_index,
-                   LLVMConstInt(LLVMInt32Type(), 3, 0), "");
+   LLVMValueRef ind0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   LLVMValueRef ind1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
+   LLVMValueRef ind2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
+   LLVMValueRef ind3 = LLVMConstInt(LLVMInt32Type(), 3, 0);
    LLVMValueRef io0_ptr, io1_ptr, io2_ptr, io3_ptr;
 
    debug_assert(NUM_CHANNELS == 4);
@@ -481,7 +481,10 @@ store_aos_array(LLVMBuilderRef builder,
    io3_ptr = LLVMBuildGEP(builder, io_ptr,
                           &ind3, 1, "");
 
-   /*lp_build_printf(builder, "io = %d\n", start_index);*/
+#if DEBUG_STORE
+   lp_build_printf(builder, "io = %d, indexes[%d, %d, %d, %d]\n",
+                   start_index, ind0, ind1, ind2, ind3);
+#endif
 
    store_aos(builder, io0_ptr, attr_index, aos[0]);
    store_aos(builder, io1_ptr, attr_index, aos[1]);
@@ -499,6 +502,9 @@ convert_to_aos(LLVMBuilderRef builder,
 {
    unsigned chan, attrib;
 
+#if DEBUG_STORE
+   lp_build_printf(builder, "   # storing begin\n");
+#endif
    for (attrib = 0; attrib < num_outputs; ++attrib) {
       LLVMValueRef soa[4];
       LLVMValueRef aos[4];
@@ -522,6 +528,9 @@ convert_to_aos(LLVMBuilderRef builder,
                       attrib,
                       num_outputs);
    }
+#if DEBUG_STORE
+   lp_build_printf(builder, "   # storing end\n");
+#endif
 }
 
 void
@@ -586,13 +595,20 @@ draw_llvm_generate(struct draw_llvm *llvm)
 
    step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
 
+#if DEBUG_STORE
+   lp_build_printf(builder, "start = %d, end = %d, step = %d\n",
+                   start, end, step);
+#endif
    lp_build_loop_begin(builder, start, &lp_loop);
    {
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
       LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
       LLVMValueRef io = LLVMBuildGEP(builder, io_ptr, &lp_loop.counter, 1, "");
       const LLVMValueRef (*ptr_aos)[NUM_CHANNELS];
-
+#if DEBUG_STORE
+      lp_build_printf(builder, " --- loop counter %d\n",
+                      lp_loop.counter);
+#endif
       for (i = 0; i < NUM_CHANNELS; ++i) {
          LLVMValueRef true_index = LLVMBuildAdd(
             builder,
@@ -620,7 +636,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
                      draw->vs.vertex_shader->info.num_outputs,
                      max_vertices, lp_loop.counter);
    }
-   lp_build_loop_end(builder, end, step, &lp_loop);
+   lp_build_loop_end_cond(builder, end, step, LLVMIntUGE, &lp_loop);
 
    LLVMBuildRetVoid(builder);
 

@@ -570,6 +570,35 @@ lp_build_loop_end(LLVMBuilderRef builder,
    LLVMPositionBuilderAtEnd(builder, after_block);
 }
 
+void
+lp_build_loop_end_cond(LLVMBuilderRef builder,
+                       LLVMValueRef end,
+                       LLVMValueRef step,
+                       int llvm_cond,
+                       struct lp_build_loop_state *state)
+{
+   LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
+   LLVMValueRef function = LLVMGetBasicBlockParent(block);
+   LLVMValueRef next;
+   LLVMValueRef cond;
+   LLVMBasicBlockRef after_block;
+
+   if (!step)
+      step = LLVMConstInt(LLVMTypeOf(end), 1, 0);
+
+   next = LLVMBuildAdd(builder, state->counter, step, "");
+
+   cond = LLVMBuildICmp(builder, llvm_cond, next, end, "");
+
+   after_block = LLVMAppendBasicBlock(function, "");
+
+   LLVMBuildCondBr(builder, cond, after_block, state->block);
+
+   LLVMAddIncoming(state->counter, &next, &block, 1);
+
+   LLVMPositionBuilderAtEnd(builder, after_block);
+}
+
 
 
 /*
