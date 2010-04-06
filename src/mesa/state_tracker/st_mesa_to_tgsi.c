@@ -957,8 +957,9 @@ st_translate_mesa_program(
                * do this before emitting the constant decls below, or this
                * will be missed:
                */
-            unsigned pointSizeClampConst = _mesa_add_state_reference(program->Parameters,
-                                                                     pointSizeClampState);
+            unsigned pointSizeClampConst =
+               _mesa_add_state_reference(program->Parameters,
+                                         pointSizeClampState);
             struct ureg_dst psizregtemp = ureg_DECL_temporary( ureg );
             t->pointSizeConst = ureg_DECL_constant( ureg, pointSizeClampConst );
             t->psizregreal = t->outputs[i];
@@ -977,12 +978,10 @@ st_translate_mesa_program(
       t->address[0] = ureg_DECL_address( ureg );
    }
 
-
    /* Emit constants and immediates.  Mesa uses a single index space
     * for these, so we put all the translated regs in t->constants.
     */
    if (program->Parameters) {
-      
       t->constants = CALLOC( program->Parameters->NumParameters,
                              sizeof t->constants[0] );
       if (t->constants == NULL) {
@@ -1037,7 +1036,8 @@ st_translate_mesa_program(
          possible early return */
       if (t->prevInstWrotePsiz && program->Id) {
          set_insn_start( t, ureg_get_instruction_number( ureg ));
-         ureg_MAX( t->ureg, ureg_writemask(t->outputs[t->psizoutindex], WRITEMASK_X),
+         ureg_MAX( t->ureg,
+                   ureg_writemask(t->outputs[t->psizoutindex], WRITEMASK_X),
                    ureg_src(t->outputs[t->psizoutindex]),
                    ureg_swizzle(t->pointSizeConst, 1,1,1,1));
          ureg_MIN( t->ureg, ureg_writemask(t->psizregreal, WRITEMASK_X),
