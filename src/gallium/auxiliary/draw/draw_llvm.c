@@ -17,7 +17,7 @@
 
 #include <llvm-c/Transforms/Scalar.h>
 
-#define DEBUG_STORE 0
+#define DEBUG_STORE 1
 
 static void
 init_globals(struct draw_llvm *llvm)
@@ -481,7 +481,7 @@ store_aos_array(LLVMBuilderRef builder,
                           &ind3, 1, "");
 
 #if DEBUG_STORE
-   lp_build_printf(builder, "io = %p, indexes[%d, %d, %d, %d]\n",
+   lp_build_printf(builder, "   io = %p, indexes[%d, %d, %d, %d]\n",
                    io_ptr, ind0, ind1, ind2, ind3);
 #endif
 
@@ -592,7 +592,6 @@ draw_llvm_generate(struct draw_llvm *llvm)
 
    step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
 
-   io_itr = LLVMConstInt(LLVMInt32Type(), 0, 0);
 #if DEBUG_STORE
    lp_build_printf(builder, "start = %d, end = %d, step = %d\n",
                    start, end, step);
@@ -601,11 +600,14 @@ draw_llvm_generate(struct draw_llvm *llvm)
    {
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
       LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-      LLVMValueRef io = LLVMBuildGEP(builder, io_ptr, &io_itr, 1, "");
+      LLVMValueRef io;
       const LLVMValueRef (*ptr_aos)[NUM_CHANNELS];
+
+      io_itr = LLVMBuildSub(builder, lp_loop.counter, start, "");
+      io = LLVMBuildGEP(builder, io_ptr, &io_itr, 1, "");
 #if DEBUG_STORE
-      lp_build_printf(builder, " --- loop counter %d\n",
-                      lp_loop.counter);
+      lp_build_printf(builder, " --- io %d = %p, loop counter %d\n",
+                      io_itr, io, lp_loop.counter);
 #endif
       for (i = 0; i < NUM_CHANNELS; ++i) {
          LLVMValueRef true_index = LLVMBuildAdd(
@@ -633,8 +635,6 @@ draw_llvm_generate(struct draw_llvm *llvm)
       convert_to_aos(builder, io, outputs,
                      draw->vs.vertex_shader->info.num_outputs,
                      max_vertices);
-
-      io_itr = LLVMBuildAdd(builder, io_itr, step, "");
    }
    lp_build_loop_end_cond(builder, end, step, LLVMIntUGE, &lp_loop);
 
