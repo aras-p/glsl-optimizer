@@ -332,7 +332,6 @@ app_init_exts(struct app_data *data)
    }
 
    exts = (const char *) glGetString(GL_EXTENSIONS);
-   exts = "GL_OES_EGL_image"; /* XXX */
    data->glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)
       eglGetProcAddress("glEGLImageTargetTexture2DOES");
    if (!exts || !strstr(exts, "GL_OES_EGL_image") ||
