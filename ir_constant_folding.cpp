@@ -73,6 +73,8 @@ ir_constant_folding_visitor::visit(ir_expression *ir)
       op[operand] = ir->operands[operand]->constant_expression_value();
       if (op[operand]) {
 	 ir->operands[operand] = op[operand];
+      } else {
+	 ir->operands[operand]->accept(this);
       }
    }
 }
@@ -81,7 +83,7 @@ ir_constant_folding_visitor::visit(ir_expression *ir)
 void
 ir_constant_folding_visitor::visit(ir_swizzle *ir)
 {
-   (void) ir;
+   ir->val->accept(this);
 }
 
 
