@@ -47,7 +47,7 @@
 #include "lp_setup.h"
 
 
-
+#define USE_DRAW_LLVM 0
 
 
 static void llvmpipe_destroy( struct pipe_context *pipe )
@@ -182,7 +182,11 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    /*
     * Create drawing context and plug our rendering stage into it.
     */
+#if USE_DRAW_LLVM
    llvmpipe->draw = draw_create_with_llvm(llvmscreen->engine);
+#else
+   llvmpipe->draw = draw_create();
+#endif
    if (!llvmpipe->draw)
       goto fail;
 
