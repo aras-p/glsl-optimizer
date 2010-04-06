@@ -637,6 +637,7 @@ main(int argc, char **argv)
    state.symbols = new glsl_symbol_table;
    state.error = false;
    state.temp_index = 0;
+   state.loop_or_switch_nesting = NULL;
 
    _mesa_glsl_lexer_ctor(& state, shader, shader_len);
    _mesa_glsl_parse(& state);

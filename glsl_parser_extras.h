@@ -56,6 +56,9 @@ struct _mesa_glsl_parse_state {
 
    /** Index of last generated anonymous temporary. */
    unsigned temp_index;
+
+   /** Loop or switch statement containing the current instructions. */
+   class ir_instruction *loop_or_switch_nesting;
 };
 
 typedef struct YYLTYPE {

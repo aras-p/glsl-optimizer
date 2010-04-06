@@ -2093,6 +2093,12 @@ ast_iteration_statement::hir(exec_list *instructions,
    ir_loop *const stmt = new ir_loop();
    instructions->push_tail(stmt);
 
+   /* Track the current loop and / or switch-statement nesting.
+    */
+   ir_instruction *const nesting = state->loop_or_switch_nesting;
+   state->loop_or_switch_nesting = stmt;
+
+
    if (condition != NULL) {
       ir_rvalue *const cond =
 	 condition->hir(& stmt->body_instructions, state);
@@ -2134,6 +2140,10 @@ ast_iteration_statement::hir(exec_list *instructions,
 
    if (mode == ast_for)
       state->symbols->pop_scope();
+
+   /* Restore previous nesting before returning.
+    */
+   state->loop_or_switch_nesting = nesting;
 
    /* Loops do not have r-values.
     */
