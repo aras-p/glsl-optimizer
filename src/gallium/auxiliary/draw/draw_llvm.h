@@ -136,8 +136,6 @@ struct draw_llvm {
 
    struct draw_jit_context jit_context;
 
-   draw_jit_vert_func jit_func;
-
    LLVMModuleRef module;
    LLVMExecutionEngineRef engine;
    LLVMModuleProviderRef provider;
@@ -150,22 +148,39 @@ struct draw_llvm {
 };
 
 
+struct draw_llvm_variant_key
+{
+   struct pipe_vertex_buffer  vertex_buffer[PIPE_MAX_ATTRIBS];
+   unsigned nr_vertex_buffers;
+   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+   unsigned nr_vertex_elements;
+   struct pipe_shader_state   vs;
+};
+
+struct draw_llvm_variant
+{
+   struct draw_llvm_variant_key key;
+   LLVMValueRef function;
+   draw_jit_vert_func jit_func;
+
+   struct draw_llvm_variant *next;
+};
+
 struct draw_llvm *
 draw_llvm_create(struct draw_context *draw);
 
 void
 draw_llvm_destroy(struct draw_llvm *llvm);
 
-void
+struct draw_llvm_variant *
 draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs);
 
-/* generates the draw jit function */
 void
-draw_llvm_generate(struct draw_llvm *llvm);
+draw_llvm_make_variant_key(struct draw_llvm *llvm,
+                           struct draw_llvm_variant_key *key);
 
 LLVMValueRef
 draw_llvm_translate_from(LLVMBuilderRef builder,
                          LLVMValueRef vbuffer,
                          enum pipe_format from_format);
-
 #endif

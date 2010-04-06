@@ -53,6 +53,8 @@ struct llvm_middle_end {
    unsigned opt;
 
    struct draw_llvm *llvm;
+   struct draw_llvm_variant *variants;
+   struct draw_llvm_variant *current_variant;
 };
 
 
@@ -66,6 +68,8 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
    struct draw_geometry_shader *gs = draw->gs.geometry_shader;
+   struct draw_llvm_variant_key key;
+   struct draw_llvm_variant *variant = NULL;
    unsigned i;
    unsigned instance_id_index = ~0;
 
@@ -129,7 +133,22 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    /* return even number */
    *max_vertices = *max_vertices & ~1;
 
-   draw_llvm_prepare(fpme->llvm, nr);
+   draw_llvm_make_variant_key(fpme->llvm, &key);
+
+   variant = fpme->variants;
+   while(variant) {
+      if(memcmp(&variant->key, &key, sizeof key) == 0)
+         break;
+
+      variant = variant->next;
+   }
+
+   if (!variant) {
+      variant = draw_llvm_prepare(fpme->llvm, nr);
+      variant->next = fpme->variants;
+      fpme->variants = variant;
+   }
+   fpme->current_variant = variant;
 
    /*XXX we only support one constant buffer */
    fpme->llvm->jit_context.vs_constants =
@@ -247,12 +266,12 @@ static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
 
    debug_printf("#### Pipeline = %p (data = %p)\n",
                 pipeline_verts, pipeline_verts->data);
-   fpme->llvm->jit_func( &fpme->llvm->jit_context,
-                         pipeline_verts,
-                         (const char **)draw->pt.user.vbuffer,
-                         start,
-                         count,
-                         fpme->vertex_size );
+   fpme->current_variant->jit_func( &fpme->llvm->jit_context,
+                                    pipeline_verts,
+                                    (const char **)draw->pt.user.vbuffer,
+                                    start,
+                                    count,
+                                    fpme->vertex_size );
 
    if (draw_pt_post_vs_run( fpme->post_vs,
 			    pipeline_verts,
@@ -429,6 +448,9 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit_llvm( struct draw_cont
    fpme->llvm = draw_llvm_create(draw);
    if (!fpme->llvm)
       goto fail;
+
+   fpme->variants = NULL;
+   fpme->current_variant = NULL;
 
    return &fpme->base;
 

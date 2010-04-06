@@ -17,7 +17,12 @@
 
 #include <llvm-c/Transforms/Scalar.h>
 
-#define DEBUG_STORE 1
+#define DEBUG_STORE 0
+
+
+/* generates the draw jit function */
+static void
+draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *var);
 
 static void
 init_globals(struct draw_llvm *llvm)
@@ -179,11 +184,18 @@ draw_llvm_destroy(struct draw_llvm *llvm)
    free(llvm);
 }
 
-void
+struct draw_llvm_variant *
 draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs)
 {
+   struct draw_llvm_variant *variant = MALLOC(sizeof(struct draw_llvm_variant));
+
+   draw_llvm_make_variant_key(llvm, &variant->key);
+
    llvm->vertex_header_ptr_type = create_vertex_header(llvm, num_inputs);
-   draw_llvm_generate(llvm);
+
+   draw_llvm_generate(llvm, variant);
+
+   return variant;
 }
 
 
@@ -530,15 +542,14 @@ convert_to_aos(LLVMBuilderRef builder,
 #endif
 }
 
-void
-draw_llvm_generate(struct draw_llvm *llvm)
+static void
+draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 {
    LLVMTypeRef arg_types[6];
    LLVMTypeRef func_type;
    LLVMValueRef context_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
-   LLVMValueRef function;
    LLVMValueRef start, end, count, stride, step, io_itr;
    LLVMValueRef io_ptr, vbuffers_ptr;
    struct draw_context *draw = llvm->draw;
@@ -558,18 +569,18 @@ draw_llvm_generate(struct draw_llvm *llvm)
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
-   function = LLVMAddFunction(llvm->module, "draw_llvm_shader", func_type);
-   LLVMSetFunctionCallConv(function, LLVMCCallConv);
+   variant->function = LLVMAddFunction(llvm->module, "draw_llvm_shader", func_type);
+   LLVMSetFunctionCallConv(variant->function, LLVMCCallConv);
    for(i = 0; i < Elements(arg_types); ++i)
       if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
-         LLVMAddAttribute(LLVMGetParam(function, i), LLVMNoAliasAttribute);
+         LLVMAddAttribute(LLVMGetParam(variant->function, i), LLVMNoAliasAttribute);
 
-   context_ptr  = LLVMGetParam(function, 0);
-   io_ptr       = LLVMGetParam(function, 1);
-   vbuffers_ptr = LLVMGetParam(function, 2);
-   start        = LLVMGetParam(function, 3);
-   count        = LLVMGetParam(function, 4);
-   stride       = LLVMGetParam(function, 5);
+   context_ptr  = LLVMGetParam(variant->function, 0);
+   io_ptr       = LLVMGetParam(variant->function, 1);
+   vbuffers_ptr = LLVMGetParam(variant->function, 2);
+   start        = LLVMGetParam(variant->function, 3);
+   count        = LLVMGetParam(variant->function, 4);
+   stride       = LLVMGetParam(variant->function, 5);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(io_ptr, "io");
@@ -582,7 +593,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
     * Function body
     */
 
-   block = LLVMAppendBasicBlock(function, "entry");
+   block = LLVMAppendBasicBlock(variant->function, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
@@ -647,20 +658,40 @@ draw_llvm_generate(struct draw_llvm *llvm)
     */
 
 #ifdef DEBUG
-   if(LLVMVerifyFunction(function, LLVMPrintMessageAction)) {
-      LLVMDumpValue(function);
+   if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
+      LLVMDumpValue(variant->function);
       assert(0);
    }
 #endif
 
-   LLVMRunFunctionPassManager(llvm->pass, function);
+   LLVMRunFunctionPassManager(llvm->pass, variant->function);
 
    if (1) {
-      LLVMDumpValue(function);
+      LLVMDumpValue(variant->function);
       debug_printf("\n");
    }
-   llvm->jit_func = (draw_jit_vert_func)LLVMGetPointerToGlobal(llvm->draw->engine, function);
+   variant->jit_func = (draw_jit_vert_func)LLVMGetPointerToGlobal(llvm->draw->engine, variant->function);
 
    if (1)
-      lp_disassemble(llvm->jit_func);
+      lp_disassemble(variant->jit_func);
+}
+
+void
+draw_llvm_make_variant_key(struct draw_llvm *llvm,
+                           struct draw_llvm_variant_key *key)
+{
+   key->nr_vertex_buffers = llvm->draw->pt.nr_vertex_buffers;
+   key->nr_vertex_elements = llvm->draw->pt.nr_vertex_elements;
+
+   memcpy(key->vertex_buffer,
+          llvm->draw->pt.vertex_buffer,
+          sizeof(struct pipe_vertex_buffer) * PIPE_MAX_ATTRIBS);
+
+   memcpy(key->vertex_element,
+          llvm->draw->pt.vertex_element,
+          sizeof(struct pipe_vertex_element) * PIPE_MAX_ATTRIBS);
+
+   memcpy(&key->vs,
+          &llvm->draw->vs.vertex_shader->state,
+          sizeof(struct pipe_shader_state));
 }
