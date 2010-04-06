@@ -168,6 +168,8 @@ draw_both(EGLDisplay egl_dpy, EGLSurface egl_surf, EGLSurface egl_pbuf,
    glReadPixels(0, 0, WinWidth, WinHeight, GL_RGBA, GL_UNSIGNED_BYTE, wbuf);
    printf("Window[%d,%d] = 0x%08x\n", x, y, wbuf[y*WinWidth+x]);
 
+   eglSwapBuffers(egl_dpy, egl_surf);
+
    /* then draw to pbuffer */
    if (!eglMakeCurrent(egl_dpy, egl_pbuf, egl_pbuf, egl_ctx)) {
       printf("Error: eglMakeCurrent(pbuffer) failed\n");
@@ -177,7 +179,6 @@ draw_both(EGLDisplay egl_dpy, EGLSurface egl_surf, EGLSurface egl_pbuf,
    glReadPixels(0, 0, WinWidth, WinHeight, GL_RGBA, GL_UNSIGNED_BYTE, pbuf);
    printf("Pbuffer[%d,%d] = 0x%08x\n", x, y, pbuf[y*WinWidth+x]);
 
-   eglSwapBuffers(egl_dpy, egl_surf);
 
    /* compare renderings */
    for (dif = i = 0; i < WinWidth * WinHeight; i++) {
