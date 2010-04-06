@@ -378,19 +378,18 @@ _eglBindContext(_EGLContext **ctx, _EGLSurface **draw, _EGLSurface **read)
    /* bind the new context */
    oldCtx = _eglBindContextToThread(newCtx, t);
 
-   if (newCtx) {
+   if (newCtx)
       _eglBindContextToSurfaces(newCtx, draw, read);
-   }
-   else {
-      assert(!*draw && !*read);
-      if (oldCtx) {
-         *draw = oldCtx->DrawSurface;
-         *read = oldCtx->ReadSurface;
-         assert(*draw && *read);
 
-         /* unbind the old context from its surfaces */
-         _eglBindContextToSurfaces(NULL, draw, read);
-      }
+   /* unbind the old context from its binding surfaces */
+   if (oldCtx && oldCtx != newCtx) {
+      assert(!*draw && !*read);
+
+      *draw = oldCtx->DrawSurface;
+      *read = oldCtx->ReadSurface;
+      assert(*draw && *read);
+
+      _eglBindContextToSurfaces(NULL, draw, read);
    }
 
    *ctx = oldCtx;
