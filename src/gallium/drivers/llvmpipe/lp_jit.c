@@ -166,8 +166,6 @@ lp_jit_screen_cleanup(struct llvmpipe_screen *screen)
 void
 lp_jit_screen_init(struct llvmpipe_screen *screen)
 {
-   char *error = NULL;
-
    util_cpu_detect();
 
 #if 0
@@ -179,17 +177,10 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
 
    lp_build_init();
 
-   screen->module = LLVMModuleCreateWithName("llvmpipe");
-
-   screen->provider = LLVMCreateModuleProviderForExistingModule(screen->module);
-
-   if (LLVMCreateJITCompiler(&screen->engine, screen->provider, 1, &error)) {
-      _debug_printf("%s\n", error);
-      LLVMDisposeMessage(error);
-      assert(0);
-   }
-
-   screen->target = LLVMGetExecutionEngineTargetData(screen->engine);
+   screen->module = lp_build_module;
+   screen->provider = lp_build_provider;
+   screen->engine = lp_build_engine;
+   screen->target = lp_build_target;
 
    screen->pass = LLVMCreateFunctionPassManager(screen->provider);
    LLVMAddTargetData(screen->target, screen->pass);

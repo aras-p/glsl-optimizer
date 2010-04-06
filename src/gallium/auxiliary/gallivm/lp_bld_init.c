@@ -26,33 +26,42 @@
  **************************************************************************/
 
 
-#include <llvm/Config/config.h>
-#include <llvm/Target/TargetSelect.h>
-#include <llvm/Target/TargetOptions.h>
-
-#include "pipe/p_config.h"
-
+#include "pipe/p_compiler.h"
+#include "util/u_debug.h"
 #include "lp_bld_init.h"
 
 
-extern "C" void LLVMLinkInJIT();
+LLVMModuleRef lp_build_module = NULL;
+LLVMExecutionEngineRef lp_build_engine = NULL;
+LLVMModuleProviderRef lp_build_provider = NULL;
+LLVMTargetDataRef lp_build_target = NULL;
 
 
-extern "C" void
+void
 lp_build_init(void)
 {
-#if defined(PIPE_OS_WINDOWS) && defined(PIPE_ARCH_X86)
-   /*
-    * This is mis-detected on some hardware / software combinations.
-    */
-   llvm::StackAlignment = 4;
-   llvm::RealignStack = true;
-#endif
-
-   /* Same as LLVMInitializeNativeTarget(); */
-   llvm::InitializeNativeTarget();
+   LLVMInitializeNativeTarget();
 
    LLVMLinkInJIT();
+
+   if (!lp_build_module)
+      lp_build_module = LLVMModuleCreateWithName("gallivm");
+
+   if (!lp_build_provider)
+      lp_build_provider = LLVMCreateModuleProviderForExistingModule(lp_build_module);
+
+   if (!lp_build_engine) {
+      char *error = NULL;
+
+      if (LLVMCreateJITCompiler(&lp_build_engine, lp_build_provider, 1, &error)) {
+         _debug_printf("%s\n", error);
+         LLVMDisposeMessage(error);
+         assert(0);
+      }
+   }
+
+   if (!lp_build_target)
+      lp_build_target = LLVMGetExecutionEngineTargetData(lp_build_engine);
 }
 
 
@@ -64,6 +73,6 @@ lp_build_init(void)
  */
 #if defined(_MSC_VER) && defined(_DEBUG)
 #include <crtdefs.h>
-extern "C" _CRTIMP void __cdecl
+_CRTIMP void __cdecl
 _invalid_parameter_noinfo(void) {}
 #endif

@@ -152,6 +152,7 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_depth.c \
         gallivm/lp_bld_flow.c \
         gallivm/lp_bld_format_soa.c \
+        gallivm/lp_bld_init.c \
         gallivm/lp_bld_interp.c \
         gallivm/lp_bld_intr.c \
         gallivm/lp_bld_logic.c \
@@ -164,8 +165,7 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_tgsi_soa.c \
         gallivm/lp_bld_type.c
 
-GALLIVM_CPP_SOURCES = \
-        gallivm/lp_bld_init.cpp
+GALLIVM_CPP_SOURCES =
 
 GENERATED_SOURCES = \
 	indices/u_indices_gen.c \
