@@ -224,6 +224,31 @@ _dri_put_st_api(void)
    }
 }
 
+static boolean
+dri_st_manager_get_egl_image(struct st_manager *smapi,
+                             struct st_egl_image *stimg)
+{
+   __DRIimage *img = NULL;
+
+#ifndef __NOT_HAVE_DRM_H
+   if (!__dri1_api_hooks) {
+      struct dri_context *ctx = (struct dri_context *)
+         stimg->stctxi->st_manager_private;
+      img = dri2_lookup_egl_image(ctx, stimg->egl_image);
+   }
+#endif
+   if (!img)
+      return FALSE;
+
+   stimg->texture = NULL;
+   pipe_texture_reference(&stimg->texture, img->texture);
+   stimg->face = img->face;
+   stimg->level = img->level;
+   stimg->zslice = img->zslice;
+
+   return TRUE;
+}
+
 /**
  * Create a state tracker manager from the given screen.
  */
@@ -235,6 +260,7 @@ dri_create_st_manager(struct dri_screen *screen)
    smapi = CALLOC_STRUCT(st_manager);
    if (smapi) {
       smapi->screen = screen->pipe_screen;
+      smapi->get_egl_image = dri_st_manager_get_egl_image;
       _dri_get_st_api();
    }
 

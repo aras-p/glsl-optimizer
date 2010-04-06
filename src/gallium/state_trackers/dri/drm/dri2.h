@@ -43,4 +43,7 @@ dri2_allocate_textures(struct dri_drawable *drawable,
                        const enum st_attachment_type *statts,
                        unsigned count);
 
+__DRIimage *
+dri2_lookup_egl_image(struct dri_context *ctx, void *handle);
+
 #endif /* DRI2_H */

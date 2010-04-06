@@ -33,6 +33,15 @@
 struct dri_screen;
 struct dri_drawable;
 
+struct __DRIimageRec {
+   struct pipe_texture *texture;
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
+
+   void *loader_private;
+};
+
 struct st_api *
 dri_get_st_api(void);
 

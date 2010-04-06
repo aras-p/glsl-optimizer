@@ -352,6 +352,110 @@ dri2_flush_frontbuffer(struct dri_drawable *drawable,
    }
 }
 
+__DRIimage *
+dri2_lookup_egl_image(struct dri_context *ctx, void *handle)
+{
+   __DRIimageLookupExtension *loader = ctx->sPriv->dri2.image;
+   __DRIimage *img;
+
+   if (!loader->lookupEGLImage)
+      return NULL;
+
+   img = loader->lookupEGLImage(ctx->cPriv, handle, ctx->cPriv->loaderPrivate);
+
+   return img;
+}
+
+static __DRIimage *
+dri2_create_image_from_name(__DRIcontext *context,
+                            int width, int height, int format,
+                            int name, int pitch, void *loaderPrivate)
+{
+   struct dri_screen *screen = dri_screen(context->driScreenPriv);
+   __DRIimage *img;
+   struct pipe_texture templ;
+   struct winsys_handle whandle;
+   unsigned tex_usage;
+   enum pipe_format pf;
+
+   tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET | PIPE_TEXTURE_USAGE_SAMPLER;
+
+   switch (format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      pf = PIPE_FORMAT_B5G6R5_UNORM;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      pf = PIPE_FORMAT_B8G8R8X8_UNORM;
+      break;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      pf = PIPE_FORMAT_B8G8R8A8_UNORM;
+      break;
+   default:
+      pf = PIPE_FORMAT_NONE;
+      break;
+   }
+   if (pf == PIPE_FORMAT_NONE)
+      return NULL;
+
+   img = CALLOC_STRUCT(__DRIimageRec);
+   if (!img)
+      return NULL;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.tex_usage = tex_usage;
+   templ.format = pf;
+   templ.target = PIPE_TEXTURE_2D;
+   templ.last_level = 0;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
+
+   memset(&whandle, 0, sizeof(whandle));
+   whandle.handle = name;
+   whandle.stride = pitch * util_format_get_blocksize(pf);
+
+   img->texture = screen->pipe_screen->texture_from_handle(screen->pipe_screen,
+         &templ, &whandle);
+   if (!img->texture) {
+      FREE(img);
+      return NULL;
+   }
+
+   img->face = 0;
+   img->level = 0;
+   img->zslice = 0;
+   img->loader_private = loaderPrivate;
+
+   return img;
+}
+
+static __DRIimage *
+dri2_create_image_from_renderbuffer(__DRIcontext *context,
+				    int renderbuffer, void *loaderPrivate)
+{
+   struct dri_context *ctx = dri_context(context->driverPrivate);
+
+   if (!ctx->st->get_resource_for_egl_image)
+      return NULL;
+
+   /* TODO */
+   return NULL;
+}
+
+static void
+dri2_destroy_image(__DRIimage *img)
+{
+   pipe_texture_reference(&img->texture, NULL);
+   FREE(img);
+}
+
+static struct __DRIimageExtensionRec dri2ImageExtension = {
+    { __DRI_IMAGE, __DRI_IMAGE_VERSION },
+    dri2_create_image_from_name,
+    dri2_create_image_from_renderbuffer,
+    dri2_destroy_image,
+};
+
 /*
  * Backend function init_screen.
  */
@@ -364,6 +468,7 @@ static const __DRIextension *dri_screen_extensions[] = {
    &driMediaStreamCounterExtension.base,
    &dri2TexBufferExtension.base,
    &dri2FlushExtension.base,
+   &dri2ImageExtension.base,
    NULL
 };
 
