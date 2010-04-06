@@ -2021,6 +2021,32 @@ ast_jump_statement::hir(exec_list *instructions,
 
    case ast_break:
    case ast_continue:
+      /* FINISHME: Handle switch-statements.  They cannot contain 'continue',
+       * FINISHME: and they use a different IR instruction for 'break'.
+       */
+      /* FINISHME: Correctly handle the nesting.  If a switch-statement is
+       * FINISHME: inside a loop, a 'continue' is valid and will bind to the
+       * FINISHME: loop.
+       */
+      if (state->loop_or_switch_nesting == NULL) {
+	 YYLTYPE loc = this->get_location();
+
+	 _mesa_glsl_error(& loc, state,
+			  "`%s' may only appear in a loop",
+			  (mode == ast_break) ? "break" : "continue");
+      } else {
+	 ir_loop *const loop = state->loop_or_switch_nesting->as_loop();
+
+	 if (loop != NULL) {
+	    ir_loop_jump *const jump =
+	       new ir_loop_jump(loop,
+				(mode == ast_break)
+				? ir_loop_jump::jump_break
+				: ir_loop_jump::jump_continue);
+	    instructions->push_tail(jump);
+	 }
+      }
+
       break;
    }
 
