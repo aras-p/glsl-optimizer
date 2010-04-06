@@ -281,6 +281,7 @@ ir_print_visitor::visit(ir_if *ir)
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
       inst->accept(this);
+      printf("\n");
    }
    printf(")\n");
 
@@ -289,6 +290,7 @@ ir_print_visitor::visit(ir_if *ir)
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
       inst->accept(this);
+      printf("\n");
    }
    printf("))\n");
 }
