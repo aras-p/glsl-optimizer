@@ -54,6 +54,8 @@
 struct dri2_egl_driver
 {
    _EGLDriver base;
+
+   void (*glFlush)(void);
 };
 
 struct dri2_egl_display
@@ -873,6 +875,7 @@ static EGLBoolean
 dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
 		  _EGLSurface *rsurf, _EGLContext *ctx)
 {
+   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_dsurf = dri2_egl_surface(dsurf);
    struct dri2_egl_surface *dri2_rsurf = dri2_egl_surface(rsurf);
@@ -883,6 +886,10 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    /* bind the new context and return the "orphaned" one */
    if (!_eglBindContext(&ctx, &dsurf, &rsurf))
       return EGL_FALSE;
+
+   /* flush before context switch */
+   if (ctx && dri2_drv->glFlush)
+      dri2_drv->glFlush();
 
    ddraw = (dri2_dsurf) ? dri2_dsurf->dri_drawable : NULL;
    rdraw = (dri2_rsurf) ? dri2_rsurf->dri_drawable : NULL;
@@ -1011,9 +1018,17 @@ dri2_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *disp,
 static EGLBoolean
 dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 {
+   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
+   _EGLContext *ctx;
    xcb_dri2_copy_region_cookie_t cookie;
+
+   if (dri2_drv->glFlush) {
+      ctx = _eglGetCurrentContext();
+      if (ctx && ctx->DrawSurface == &dri2_surf->base)
+         dri2_drv->glFlush();
+   }
 
    (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
 
@@ -1351,6 +1366,9 @@ _eglMain(const char *args)
 
    dri2_drv->base.Name = "DRI2";
    dri2_drv->base.Unload = dri2_unload;
+
+   dri2_drv->glFlush =
+      (void (*)(void)) dri2_get_proc_address(&dri2_drv->base, "glFlush");
 
    return &dri2_drv->base;
 }
