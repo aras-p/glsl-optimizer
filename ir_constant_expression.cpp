@@ -318,6 +318,49 @@ ir_constant_visitor::visit(ir_expression *ir)
       }
       break;
 
+   case ir_binop_equal:
+      if (ir->operands[0]->type == ir->operands[1]->type) {
+	 type = glsl_type::bool_type;
+	 b[0] = true;
+	 for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	    switch (ir->operands[0]->type->base_type) {
+	    case GLSL_TYPE_UINT:
+	       b[0] = b[0] && op[0]->value.u[c] == op[1]->value.u[c];
+	       break;
+	    case GLSL_TYPE_INT:
+	       b[0] = b[0] && op[0]->value.i[c] == op[1]->value.i[c];
+	       break;
+	    case GLSL_TYPE_FLOAT:
+	       b[0] = b[0] && op[0]->value.f[c] == op[1]->value.f[c];
+	       break;
+	    default:
+	       assert(0);
+	    }
+	 }
+      }
+      break;
+   case ir_binop_nequal:
+      if (ir->operands[0]->type == ir->operands[1]->type) {
+	 type = glsl_type::bool_type;
+	 b[0] = false;
+	 for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	    switch (ir->operands[0]->type->base_type) {
+	    case GLSL_TYPE_UINT:
+	       b[0] = b[0] || op[0]->value.u[c] != op[1]->value.u[c];
+	       break;
+	    case GLSL_TYPE_INT:
+	       b[0] = b[0] || op[0]->value.i[c] != op[1]->value.i[c];
+	       break;
+	    case GLSL_TYPE_FLOAT:
+	       b[0] = b[0] || op[0]->value.f[c] != op[1]->value.f[c];
+	       break;
+	    default:
+	       assert(0);
+	    }
+	 }
+      }
+      break;
+
    default:
       break;
    }
