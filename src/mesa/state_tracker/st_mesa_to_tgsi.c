@@ -739,6 +739,65 @@ emit_inverted_wpos( struct st_translate *t,
 
 
 /**
+ * Emit fragment position/ooordinate code.
+ */
+static void
+emit_wpos(struct st_context *st,
+          struct st_translate *t,
+          const struct gl_program *program,
+          struct ureg_program *ureg)
+{
+   const struct gl_fragment_program *fp =
+      (const struct gl_fragment_program *) program;
+   struct pipe_screen *pscreen = st->pipe->screen;
+   boolean invert = FALSE;
+
+   if (fp->OriginUpperLeft) {
+      if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT)) {
+      }
+      else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT)) {
+         ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
+         invert = TRUE;
+      }
+      else
+         assert(0);
+   }
+   else {
+      if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT))
+         ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
+      else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT))
+         invert = TRUE;
+      else
+         assert(0);
+   }
+   
+   if (fp->PixelCenterInteger) {
+      if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER))
+         ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
+      else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER))
+         emit_adjusted_wpos(t, program, invert ? 0.5f : -0.5f);
+      else
+         assert(0);
+   }
+   else {
+      if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER)) {
+      }
+      else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
+         ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
+         emit_adjusted_wpos(t, program, invert ? -0.5f : 0.5f);
+      }
+      else
+         assert(0);
+   }
+
+   /* we invert after adjustment so that we avoid the MOV to temporary,
+    * and reuse the adjustment ADD instead */
+   if (invert)
+      emit_inverted_wpos(t, program);
+}
+
+
+/**
  * OpenGL's fragment gl_FrontFace input is 1 for front-facing, 0 for back.
  * TGSI uses +1 for front, -1 for back.
  * This function converts the TGSI value to the GL value.  Simply clamping/
@@ -831,7 +890,6 @@ st_translate_mesa_program(
     * Declare input attributes.
     */
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
-      struct gl_fragment_program* fp = (struct gl_fragment_program*)program;
       for (i = 0; i < numInputs; i++) {
          if (program->InputFlags[0] & PROG_PARAM_BIT_CYL_WRAP) {
             t->inputs[i] = ureg_DECL_fs_input_cyl(ureg,
@@ -852,51 +910,7 @@ st_translate_mesa_program(
          /* Must do this after setting up t->inputs, and before
           * emitting constant references, below:
           */
-         struct pipe_screen* pscreen = st_context(ctx)->pipe->screen;
-         boolean invert = FALSE;
-
-         if (fp->OriginUpperLeft) {
-            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT)) {
-            }
-            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT)) {
-               ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
-               invert = TRUE;
-            }
-            else
-               assert(0);
-         }
-         else {
-            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT))
-               ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
-            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT))
-               invert = TRUE;
-            else
-               assert(0);
-         }
-
-         if (fp->PixelCenterInteger) {
-            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER))
-               ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
-            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER))
-               emit_adjusted_wpos(t, program, invert ? 0.5f : -0.5f);
-            else
-               assert(0);
-         }
-         else {
-            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER)) {
-            }
-            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
-               ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
-               emit_adjusted_wpos(t, program, invert ? -0.5f : 0.5f);
-            }
-            else
-               assert(0);
-         }
-
-         /* we invert after adjustment so that we avoid the MOV to temporary,
-          * and reuse the adjustment ADD instead */
-         if (invert)
-            emit_inverted_wpos(t, program);
+         emit_wpos(st_context(ctx), t, program, ureg);
       }
 
       if (program->InputsRead & FRAG_BIT_FACE) {
