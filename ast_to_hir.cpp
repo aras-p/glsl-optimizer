@@ -1603,12 +1603,15 @@ ast_declarator_list::hir(exec_list *instructions,
 	  * declaration.
 	  */
 	 if (this->type->qualifier.constant) {
-	    rhs = rhs->constant_expression_value();
-	    if (!rhs) {
+	    ir_constant *constant_value = rhs->constant_expression_value();
+	    if (!constant_value) {
 	       _mesa_glsl_error(& initializer_loc, state,
 				"initializer of const variable `%s' must be a "
 				"constant expression",
 				decl->identifier);
+	    } else {
+	       rhs = constant_value;
+	       var->constant_value = constant_value;
 	    }
 	 }
 

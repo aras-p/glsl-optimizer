@@ -338,6 +338,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name)
 {
    this->type = type;
    this->name = name;
+   this->constant_value = NULL;
 
    if (type && type->base_type == GLSL_TYPE_SAMPLER)
       this->read_only = true;

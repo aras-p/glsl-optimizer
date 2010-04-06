@@ -395,8 +395,15 @@ ir_constant_visitor::visit(ir_swizzle *ir)
 void
 ir_constant_visitor::visit(ir_dereference *ir)
 {
-   (void) ir;
    value = NULL;
+
+   if (ir->mode == ir_dereference::ir_reference_variable) {
+      ir_variable *var = ir->var->as_variable();
+      if (var && var->constant_value) {
+	 value = new ir_constant(ir->type, &var->constant_value->value);
+      }
+   }
+   /* FINISHME: Other dereference modes. */
 }
 
 

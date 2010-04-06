@@ -154,6 +154,11 @@ public:
     * equality).  This flag enables this behavior.
     */
    unsigned array_lvalue:1;
+
+   /**
+    * Value assigned in the initializer of a variable declared "const"
+    */
+   ir_constant *constant_value;
 };
 
 
