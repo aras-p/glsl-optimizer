@@ -416,7 +416,7 @@ pipe_get_tile_swizzle(struct pipe_context *pipe,
 {
    unsigned dst_stride = w * 4;
    void *packed;
-   uint i;
+   uint iy;
    float rgba01[6];
 
    if (pipe_clip_tile(x, y, &w, &h, pt)) {
@@ -449,16 +449,22 @@ pipe_get_tile_swizzle(struct pipe_context *pipe,
    rgba01[PIPE_SWIZZLE_ZERO] = 0.0f;
    rgba01[PIPE_SWIZZLE_ONE] = 1.0f;
 
-   for (i = 0; i < w * h; i++) {
-      rgba01[PIPE_SWIZZLE_RED] = p[0];
-      rgba01[PIPE_SWIZZLE_GREEN] = p[1];
-      rgba01[PIPE_SWIZZLE_BLUE] = p[2];
-      rgba01[PIPE_SWIZZLE_ALPHA] = p[3];
+   for (iy = 0; iy < h; iy++) {
+      float *row = p;
+      uint ix;
 
-      *p++ = rgba01[swizzle_r];
-      *p++ = rgba01[swizzle_g];
-      *p++ = rgba01[swizzle_b];
-      *p++ = rgba01[swizzle_a];
+      for (ix = 0; ix < w; ix++) {
+         rgba01[PIPE_SWIZZLE_RED] = row[0];
+         rgba01[PIPE_SWIZZLE_GREEN] = row[1];
+         rgba01[PIPE_SWIZZLE_BLUE] = row[2];
+         rgba01[PIPE_SWIZZLE_ALPHA] = row[3];
+
+         *row++ = rgba01[swizzle_r];
+         *row++ = rgba01[swizzle_g];
+         *row++ = rgba01[swizzle_b];
+         *row++ = rgba01[swizzle_a];
+      }
+      p += dst_stride;
    }
 }
 
