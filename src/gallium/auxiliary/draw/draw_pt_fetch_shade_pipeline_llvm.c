@@ -245,6 +245,8 @@ static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
       return;
    }
 
+   debug_printf("#### Pipeline = %p (data = %p)\n",
+                pipeline_verts, pipeline_verts->data);
    fpme->llvm->jit_func( &fpme->llvm->jit_context,
                          pipeline_verts,
                          (const char **)draw->pt.user.vbuffer,

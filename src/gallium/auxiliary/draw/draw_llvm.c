@@ -408,7 +408,7 @@ store_aos(LLVMBuilderRef builder,
                                         0xffff, 0), id_ptr);
 
 #if DEBUG_STORE
-   lp_build_printf(builder, "    ---- %p storing at %d (%p)\n", io_ptr, index, data_ptr);
+   lp_build_printf(builder, "    ---- %p storing attribute %d (io = %p)\n", data_ptr, index, io_ptr);
 #endif
 #if 0
    /*lp_build_printf(builder, " ---- %p storing at %d (%p)  ", io_ptr, index, data_ptr);
@@ -459,7 +459,6 @@ static void
 store_aos_array(LLVMBuilderRef builder,
                 LLVMValueRef io_ptr,
                 LLVMValueRef aos[NUM_CHANNELS],
-                LLVMValueRef start_index,
                 int attrib,
                 int num_outputs)
 {
@@ -482,8 +481,8 @@ store_aos_array(LLVMBuilderRef builder,
                           &ind3, 1, "");
 
 #if DEBUG_STORE
-   lp_build_printf(builder, "io = %d, indexes[%d, %d, %d, %d]\n",
-                   start_index, ind0, ind1, ind2, ind3);
+   lp_build_printf(builder, "io = %p, indexes[%d, %d, %d, %d]\n",
+                   io_ptr, ind0, ind1, ind2, ind3);
 #endif
 
    store_aos(builder, io0_ptr, attr_index, aos[0]);
@@ -497,8 +496,7 @@ convert_to_aos(LLVMBuilderRef builder,
                LLVMValueRef io,
                LLVMValueRef (*outputs)[NUM_CHANNELS],
                int num_outputs,
-               int max_vertices,
-               LLVMValueRef start_index)
+               int max_vertices)
 {
    unsigned chan, attrib;
 
@@ -524,7 +522,6 @@ convert_to_aos(LLVMBuilderRef builder,
       store_aos_array(builder,
                       io,
                       aos,
-                      start_index,
                       attrib,
                       num_outputs);
    }
@@ -542,7 +539,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef function;
-   LLVMValueRef start, end, count, stride, step;
+   LLVMValueRef start, end, count, stride, step, io_itr;
    LLVMValueRef io_ptr, vbuffers_ptr;
    struct draw_context *draw = llvm->draw;
    unsigned i, j;
@@ -595,6 +592,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
 
    step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
 
+   io_itr = LLVMConstInt(LLVMInt32Type(), 0, 0);
 #if DEBUG_STORE
    lp_build_printf(builder, "start = %d, end = %d, step = %d\n",
                    start, end, step);
@@ -603,7 +601,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
    {
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
       LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-      LLVMValueRef io = LLVMBuildGEP(builder, io_ptr, &lp_loop.counter, 1, "");
+      LLVMValueRef io = LLVMBuildGEP(builder, io_ptr, &io_itr, 1, "");
       const LLVMValueRef (*ptr_aos)[NUM_CHANNELS];
 #if DEBUG_STORE
       lp_build_printf(builder, " --- loop counter %d\n",
@@ -634,7 +632,10 @@ draw_llvm_generate(struct draw_llvm *llvm)
 
       convert_to_aos(builder, io, outputs,
                      draw->vs.vertex_shader->info.num_outputs,
-                     max_vertices, lp_loop.counter);
+                     max_vertices);
+
+      io_itr = LLVMBuildAdd(builder, io_itr,
+                            LLVMConstInt(LLVMInt32Type(), 1, 0), "");
    }
    lp_build_loop_end_cond(builder, end, step, LLVMIntUGE, &lp_loop);
 

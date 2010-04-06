@@ -108,7 +108,7 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    for (j = 0; j < count; j++) {
       float *position = out->data[pos];
 
-      debug_printf("%d) %p %p = [%f, %f, %f, %f]\n",
+      debug_printf("%d) io = %p, data = %p = [%f, %f, %f, %f]\n",
                    j, out, position, position[0], position[1], position[2], position[3]);
 
       out->clip[0] = position[0];
