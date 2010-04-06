@@ -1020,6 +1020,12 @@ _mesa_EGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (!ctx->Extensions.OES_EGL_image) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glEGLImageTargetRenderbufferStorageOES(unsupported)");
+      return;
+   }
+
    if (target != GL_RENDERBUFFER) {
       _mesa_error(ctx, GL_INVALID_ENUM, "EGLImageTargetRenderbufferStorageOES");
       return;

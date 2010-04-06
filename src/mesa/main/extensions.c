@@ -197,6 +197,9 @@ static const struct {
    { ON,  "GL_SGIS_texture_lod",               F(SGIS_texture_lod) },
    { ON,  "GL_SUN_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_S3_s3tc",                        F(S3_s3tc) },
+#if FEATURE_OES_EGL_image
+   { OFF, "GL_OES_EGL_image",                  F(OES_EGL_image) },
+#endif
 #if FEATURE_OES_draw_texture
    { OFF, "GL_OES_draw_texture",               F(OES_draw_texture) },
 #endif /* FEATURE_OES_draw_texture */

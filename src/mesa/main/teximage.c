@@ -2457,6 +2457,12 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   if (!ctx->Extensions.OES_EGL_image) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glEGLImageTargetTexture2DOES(unsupported)");
+      return;
+   }
+
    if (target != GL_TEXTURE_2D) {
       _mesa_error(ctx, GL_INVALID_ENUM,
 		  "glEGLImageTargetTexture2D(target=%d)", target);

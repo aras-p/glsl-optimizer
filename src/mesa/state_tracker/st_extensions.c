@@ -210,6 +210,9 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_vertex_program1_1 = GL_TRUE;
 #endif
 
+#if FEATURE_OES_EGL_image
+   ctx->Extensions.OES_EGL_image = GL_TRUE;
+#endif
 #if FEATURE_OES_draw_texture
    ctx->Extensions.OES_draw_texture = GL_TRUE;
 #endif

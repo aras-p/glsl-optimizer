@@ -63,6 +63,7 @@
 #define need_GL_ATI_envmap_bumpmap
 #define need_GL_NV_point_sprite
 #define need_GL_NV_vertex_program
+#define need_GL_OES_EGL_image
 #define need_GL_VERSION_2_0
 #define need_GL_VERSION_2_1
 
@@ -130,6 +131,9 @@ static const struct dri_extension card_extensions[] = {
    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
    { "GL_NV_vertex_program1_1",           NULL },
    { "GL_SGIS_generate_mipmap",           NULL },
+#if FEATURE_OES_EGL_image
+   { "GL_OES_EGL_image",                  GL_OES_EGL_image_functions },
+#endif
    { NULL, NULL }
 };
 
