@@ -65,6 +65,10 @@ COMMON_DRI_DRM_OBJECTS = [
 	dri_common_dri_util,
 ]
 
+drienv.AppendUnique(LIBS = [
+    'expat',
+])
+
 Export([
 	'drienv',
 	'COMMON_DRI_SW_OBJECTS',
