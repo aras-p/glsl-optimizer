@@ -54,6 +54,7 @@ public:
    virtual class ir_variable *          as_variable()         { return NULL; }
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
+   virtual class ir_loop *              as_loop()             { return NULL; }
    /*@}*/
 
 protected:
@@ -300,6 +301,11 @@ public:
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
+   }
+
+   virtual ir_loop *as_loop()
+   {
+      return this;
    }
 
    /**
