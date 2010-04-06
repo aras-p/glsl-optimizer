@@ -572,6 +572,15 @@ public:
    ast_expression *rest_expression;
 
    ast_node *body;
+
+private:
+   /**
+    * Generate IR from the condition of a loop
+    *
+    * This is factored out of ::hir because some loops have the condition
+    * test at the top (for and while), and others have it at the end (do-while).
+    */
+   void condition_to_hir(class ir_loop *, struct _mesa_glsl_parse_state *);
 };
 
 

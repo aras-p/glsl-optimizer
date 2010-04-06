@@ -2104,27 +2104,10 @@ ast_selection_statement::hir(exec_list *instructions,
 }
 
 
-ir_rvalue *
-ast_iteration_statement::hir(exec_list *instructions,
-			     struct _mesa_glsl_parse_state *state)
+void
+ast_iteration_statement::condition_to_hir(ir_loop *stmt,
+					  struct _mesa_glsl_parse_state *state)
 {
-   /* For loops start a new scope, but while and do-while loops do not.
-    */
-   if (mode == ast_for)
-      state->symbols->push_scope();
-
-   if (init_statement != NULL)
-      init_statement->hir(instructions, state);
-
-   ir_loop *const stmt = new ir_loop();
-   instructions->push_tail(stmt);
-
-   /* Track the current loop and / or switch-statement nesting.
-    */
-   ir_instruction *const nesting = state->loop_or_switch_nesting;
-   state->loop_or_switch_nesting = stmt;
-
-
    if (condition != NULL) {
       ir_rvalue *const cond =
 	 condition->hir(& stmt->body_instructions, state);
@@ -2152,6 +2135,31 @@ ast_iteration_statement::hir(exec_list *instructions,
 	 stmt->body_instructions.push_tail(if_stmt);
       }
    }
+}
+
+
+ir_rvalue *
+ast_iteration_statement::hir(exec_list *instructions,
+			     struct _mesa_glsl_parse_state *state)
+{
+   /* For loops start a new scope, but while and do-while loops do not.
+    */
+   if (mode == ast_for)
+      state->symbols->push_scope();
+
+   if (init_statement != NULL)
+      init_statement->hir(instructions, state);
+
+   ir_loop *const stmt = new ir_loop();
+   instructions->push_tail(stmt);
+
+   /* Track the current loop and / or switch-statement nesting.
+    */
+   ir_instruction *const nesting = state->loop_or_switch_nesting;
+   state->loop_or_switch_nesting = stmt;
+
+   if (mode != ast_do_while)
+      condition_to_hir(stmt, state);
 
    if (body != NULL) {
       ast_node *node = (ast_node *) body;
@@ -2163,6 +2171,9 @@ ast_iteration_statement::hir(exec_list *instructions,
 
    if (rest_expression != NULL)
       rest_expression->hir(& stmt->body_instructions, state);
+
+   if (mode == ast_do_while)
+      condition_to_hir(stmt, state);
 
    if (mode == ast_for)
       state->symbols->pop_scope();
