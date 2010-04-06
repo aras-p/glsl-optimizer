@@ -634,8 +634,7 @@ draw_llvm_generate(struct draw_llvm *llvm)
                      draw->vs.vertex_shader->info.num_outputs,
                      max_vertices);
 
-      io_itr = LLVMBuildAdd(builder, io_itr,
-                            LLVMConstInt(LLVMInt32Type(), 1, 0), "");
+      io_itr = LLVMBuildAdd(builder, io_itr, step, "");
    }
    lp_build_loop_end_cond(builder, end, step, LLVMIntUGE, &lp_loop);
 
