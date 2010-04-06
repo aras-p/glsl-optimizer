@@ -88,7 +88,14 @@ ir_constant_folding_visitor::visit(ir_swizzle *ir)
 void
 ir_constant_folding_visitor::visit(ir_dereference *ir)
 {
-   (void) ir;
+   if (ir->mode == ir_dereference::ir_reference_array) {
+      ir_constant *const_val = ir->selector.array_index->constant_expression_value();
+      if (const_val)
+	 ir->selector.array_index = const_val;
+      else
+	 ir->selector.array_index->accept(this);
+   }
+   ir->var->accept(this);
 }
 
 
