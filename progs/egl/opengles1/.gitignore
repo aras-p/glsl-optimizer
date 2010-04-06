@@ -1,12 +1,15 @@
 bindtex
-drawtex
+drawtex_x11
+drawtex_screen
 es1_info
 gears_x11
 gears_screen
 msaa
 pbuffer
 render_tex
-torus
+texture_from_pixmap
+torus_x11
+torus_screen
 tri_x11
 tri_screen
 two_win

@@ -22,7 +22,9 @@ ES1_LIBS = \
 EGLUT_DIR = $(TOP)/progs/egl/eglut
 
 EGLUT_DEMOS = \
+	drawtex \
 	gears \
+	torus \
 	tri
 
 EGLUT_X11_DEMOS := $(addsuffix _x11,$(EGLUT_DEMOS))
@@ -30,13 +32,11 @@ EGLUT_SCREEN_DEMOS := $(addsuffix _screen,$(EGLUT_DEMOS))
 
 PROGRAMS = \
 	bindtex \
-	drawtex \
 	es1_info \
 	msaa \
 	pbuffer \
 	render_tex \
 	texture_from_pixmap \
-	torus \
 	two_win
 
 
@@ -51,10 +51,6 @@ default: $(PROGRAMS) $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
 
 bindtex: bindtex.o $(ES1_LIB_DEPS)
 	$(CC) $(CFLAGS) bindtex.o $(ES1_LIBS) -o $@
-
-
-drawtex: drawtex.o $(ES1_LIB_DEPS)
-	$(CC) $(CFLAGS) drawtex.o $(ES1_LIBS) -o $@
 
 
 es1_info: es1_info.o $(ES1_LIB_DEPS)

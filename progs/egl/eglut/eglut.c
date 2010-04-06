@@ -195,6 +195,13 @@ eglutInit(int argc, char **argv)
    _eglut->init_time = _eglutNow();
 
    printf("EGL_VERSION = %s\n", eglQueryString(_eglut->dpy, EGL_VERSION));
+   if (_eglut->verbose) {
+      printf("EGL_VENDOR = %s\n", eglQueryString(_eglut->dpy, EGL_VENDOR));
+      printf("EGL_EXTENSIONS = %s\n",
+            eglQueryString(_eglut->dpy, EGL_EXTENSIONS));
+      printf("EGL_CLIENT_APIS = %s\n",
+            eglQueryString(_eglut->dpy, EGL_CLIENT_APIS));
+   }
 }
 
 int
@@ -247,14 +254,27 @@ _eglutFini(void)
    _eglutNativeFiniDisplay();
 }
 
+void
+eglutDestroyWindow(int win)
+{
+   struct eglut_window *window = _eglut->current;
+
+   if (window->index != win)
+      return;
+
+   /* XXX it causes some bug in st/egl KMS backend */
+   if ( _eglut->surface_type != EGL_SCREEN_BIT_MESA)
+      eglMakeCurrent(_eglut->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+   _eglutDestroyWindow(_eglut->current);
+}
+
 static void
 _eglutDefaultKeyboard(unsigned char key)
 {
    if (key == 27) {
-      /* XXX it causes some bug in st/egl KMS backend */
-      if ( _eglut->surface_type != EGL_SCREEN_BIT_MESA)
-         eglMakeCurrent(_eglut->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-      _eglutDestroyWindow(_eglut->current);
+      if (_eglut->current)
+         eglutDestroyWindow(_eglut->current->index);
       _eglutFini();
 
       exit(0);

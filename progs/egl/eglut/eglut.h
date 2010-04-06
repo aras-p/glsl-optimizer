@@ -55,6 +55,7 @@ void eglutPostRedisplay(void);
 void eglutMainLoop(void);
 
 int eglutCreateWindow(const char *title);
+void eglutDestroyWindow(int win);
 
 int eglutGetWindowWidth(void);
 int eglutGetWindowHeight(void);
