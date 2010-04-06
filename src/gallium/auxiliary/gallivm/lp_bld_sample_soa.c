@@ -211,7 +211,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
    const int dims = texture_dims(bld->static_state->target);
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    LLVMValueRef offset;
-   LLVMValueRef packed;
+   LLVMValueRef i, j;
    LLVMValueRef use_border = NULL;
 
    /* use_border = x < 0 || x >= width || y < 0 || y >= height */
@@ -249,6 +249,43 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
    }
 
    /*
+    * Describe the coordinates in terms of pixel blocks.
+    *
+    * TODO: pixel blocks are power of two. LLVM should convert rem/div to
+    * bit arithmetic. Verify this.
+    */
+
+   if (bld->format_desc->block.width == 1) {
+      i = bld->uint_coord_bld.zero;
+   }
+   else {
+      LLVMValueRef block_width = lp_build_const_int_vec(bld->uint_coord_bld.type, bld->format_desc->block.width);
+      i = LLVMBuildURem(bld->builder, x, block_width, "");
+      x = LLVMBuildUDiv(bld->builder, x, block_width, "");
+   }
+
+   if (bld->format_desc->block.height == 1) {
+      j = bld->uint_coord_bld.zero;
+   }
+   else {
+      LLVMValueRef block_height = lp_build_const_int_vec(bld->uint_coord_bld.type, bld->format_desc->block.height);
+      j = LLVMBuildURem(bld->builder, y, block_height, "");
+      y = LLVMBuildUDiv(bld->builder, y, block_height, "");
+   }
+
+   /* convert x,y,z coords to linear offset from start of texture, in bytes */
+   offset = lp_build_sample_offset(&bld->uint_coord_bld,
+                                   bld->format_desc,
+                                   x, y, z, y_stride, z_stride);
+
+   lp_build_fetch_rgba_soa(bld->builder,
+                           bld->format_desc,
+                           bld->texel_type,
+                           data_ptr, offset,
+                           i, j,
+                           texel);
+
+   /*
     * Note: if we find an app which frequently samples the texture border
     * we might want to implement a true conditional here to avoid sampling
     * the texture whenever possible (since that's quite a bit of code).
@@ -262,30 +299,6 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
     * As it is now, we always sample the texture, then selectively replace
     * the texel color results with the border color.
     */
-
-   /* convert x,y,z coords to linear offset from start of texture, in bytes */
-   offset = lp_build_sample_offset(&bld->uint_coord_bld,
-                                   bld->format_desc,
-                                   x, y, z, y_stride, z_stride);
-
-   assert(bld->format_desc->block.width == 1);
-   assert(bld->format_desc->block.height == 1);
-   assert(bld->format_desc->block.bits <= bld->texel_type.width);
-
-   /* gather the texels from the texture */
-   packed = lp_build_gather(bld->builder,
-                            bld->texel_type.length,
-                            bld->format_desc->block.bits,
-                            bld->texel_type.width,
-                            data_ptr, offset);
-
-   texel[0] = texel[1] = texel[2] = texel[3] = NULL;
-
-   /* convert texels to float rgba */
-   lp_build_unpack_rgba_soa(bld->builder,
-                            bld->format_desc,
-                            bld->texel_type,
-                            packed, texel);
 
    if (use_border) {
       /* select texel color or border color depending on use_border */

@@ -157,9 +157,10 @@ lp_build_gather(LLVMBuilderRef builder,
 
 
 /**
- * Compute the offset of a pixel.
+ * Compute the offset of a pixel block.
  *
- * x, y, z, y_stride, z_stride are vectors
+ * x, y, z, y_stride, z_stride are vectors, and they refer to pixel blocks, as
+ * per format description, and not individual pixels.
  */
 LLVMValueRef
 lp_build_sample_offset(struct lp_build_context *bld,

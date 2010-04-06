@@ -27,10 +27,14 @@
 
 
 #include "util/u_format.h"
+#include "util/u_memory.h"
+#include "util/u_string.h"
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_conv.h"
+#include "lp_bld_sample.h" /* for lp_build_gather */
+#include "lp_bld_init.h"
 #include "lp_bld_format.h"
 
 
@@ -239,4 +243,140 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
    }
 
    lp_build_format_swizzle_soa(format_desc, type, inputs, rgba);
+}
+
+
+/**
+ * Fetch a pixel into a SoA.
+ *
+ * i and j are the sub-block pixel coordinates.
+ */
+void
+lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
+                        const struct util_format_description *format_desc,
+                        struct lp_type type,
+                        LLVMValueRef base_ptr,
+                        LLVMValueRef offset,
+                        LLVMValueRef i,
+                        LLVMValueRef j,
+                        LLVMValueRef *rgba)
+{
+
+   if (format_desc->block.width == 1 &&
+       format_desc->block.height == 1 &&
+       format_desc->block.bits <= type.width)
+   {
+      /*
+       * The packed pixel fits into an element of the destination format. Put
+       * the packed pixels into a vector and estract each component for all
+       * vector elements in parallel.
+       */
+
+      LLVMValueRef packed;
+
+      /*
+       * gather the texels from the texture
+       */
+      packed = lp_build_gather(builder,
+                               type.length,
+                               format_desc->block.bits,
+                               type.width,
+                               base_ptr, offset);
+
+      /*
+       * convert texels to float rgba
+       */
+      lp_build_unpack_rgba_soa(builder,
+                               format_desc,
+                               type,
+                               packed, rgba);
+   }
+   else {
+      /*
+       * Fallback to calling util_format_description::fetch_float for each
+       * pixel.
+       *
+       * This is definitely not the most efficient way of fetching pixels, as
+       * we miss the opportunity to do vectorization, but this it is a
+       * convenient for formats or scenarios for which there was no opportunity
+       * or incentive to optimize.
+       */
+
+      LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
+      char name[256];
+      LLVMValueRef function;
+      LLVMValueRef tmp;
+      unsigned k, chan;
+
+      assert(type.floating);
+
+      util_snprintf(name, sizeof name, "util_format_%s_fetch_float", format_desc->short_name);
+
+      /*
+       * Declare and bind format_desc->fetch_float().
+       */
+
+      function = LLVMGetNamedFunction(module, name);
+      if (!function) {
+         LLVMTypeRef ret_type;
+         LLVMTypeRef arg_types[4];
+         LLVMTypeRef function_type;
+
+         ret_type = LLVMVoidType();
+         arg_types[0] = LLVMPointerType(LLVMFloatType(), 0);
+         arg_types[1] = LLVMPointerType(LLVMInt8Type(), 0);
+         arg_types[3] = arg_types[2] = LLVMIntType(sizeof(unsigned) * 8);
+         function_type = LLVMFunctionType(ret_type, arg_types, Elements(arg_types), 0);
+         function = LLVMAddFunction(module, name, function_type);
+
+         LLVMSetFunctionCallConv(function, LLVMCCallConv);
+         LLVMSetLinkage(function, LLVMExternalLinkage);
+
+         assert(LLVMIsDeclaration(function));
+
+         LLVMAddGlobalMapping(lp_build_engine, function, format_desc->fetch_float);
+      }
+
+      for (chan = 0; chan < 4; ++chan) {
+         rgba[chan] = lp_build_undef(type);
+      }
+
+      tmp = LLVMBuildArrayAlloca(builder,
+                                 LLVMFloatType(),
+                                 LLVMConstInt(LLVMInt32Type(), 4, 0),
+                                 "");
+
+      /*
+       * Invoke format_desc->fetch_float() for each pixel and insert the result
+       * in the SoA vectors.
+       */
+
+      for(k = 0; k < type.length; ++k) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), k, 0);
+         LLVMValueRef offset_elem;
+         LLVMValueRef ptr;
+         LLVMValueRef i_elem, j_elem;
+         LLVMValueRef args[4];
+
+         offset_elem = LLVMBuildExtractElement(builder, offset, index, "");
+         ptr = LLVMBuildGEP(builder, base_ptr, &offset_elem, 1, "");
+
+         i_elem = LLVMBuildExtractElement(builder, i, index, "");
+         j_elem = LLVMBuildExtractElement(builder, j, index, "");
+
+         args[0] = tmp;
+         args[1] = ptr;
+         args[2] = i_elem;
+         args[3] = j_elem;
+
+         LLVMBuildCall(builder, function, args, 4, "");
+
+         for (chan = 0; chan < 4; ++chan) {
+            LLVMValueRef chan_val = LLVMConstInt(LLVMInt32Type(), chan, 0),
+            tmp_chan = LLVMBuildGEP(builder, tmp, &chan_val, 1, "");
+            tmp_chan = LLVMBuildLoad(builder, tmp_chan, "");
+            rgba[chan] = LLVMBuildInsertElement(builder, rgba[chan], tmp_chan, index, "");
+         }
+      }
+   }
 }

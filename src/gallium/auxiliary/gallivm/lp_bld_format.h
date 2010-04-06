@@ -80,4 +80,15 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          LLVMValueRef *rgba);
 
 
+void
+lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
+                        const struct util_format_description *format_desc,
+                        struct lp_type type,
+                        LLVMValueRef base_ptr,
+                        LLVMValueRef offsets,
+                        LLVMValueRef i,
+                        LLVMValueRef j,
+                        LLVMValueRef *rgba);
+
+
 #endif /* !LP_BLD_FORMAT_H */
