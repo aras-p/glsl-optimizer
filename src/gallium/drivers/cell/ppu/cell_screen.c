@@ -138,6 +138,9 @@ cell_is_format_supported( struct pipe_screen *screen,
                           unsigned tex_usage, 
                           unsigned geom_flags )
 {
+
+   struct sw_winsys *winsys = cell_screen(screen)->winsys;
+
    if (tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
                     PIPE_TEXTURE_USAGE_SCANOUT |
                     PIPE_TEXTURE_USAGE_SHARED)) {
