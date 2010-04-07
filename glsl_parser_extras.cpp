@@ -71,6 +71,53 @@ _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
 }
 
 
+bool
+_mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
+			     const char *behavior, YYLTYPE *behavior_locp,
+			     _mesa_glsl_parse_state *state)
+{
+   enum {
+      extension_disable,
+      extension_enable,
+      extension_require,
+      extension_warn
+   } ext_mode;
+   bool error = false;
+
+   if (strcmp(behavior, "warn") == 0) {
+      ext_mode = extension_warn;
+   } else if (strcmp(behavior, "require") == 0) {
+      ext_mode = extension_require;
+   } else if (strcmp(behavior, "enable") == 0) {
+      ext_mode = extension_enable;
+   } else if (strcmp(behavior, "disable") == 0) {
+      ext_mode = extension_disable;
+   } else {
+      _mesa_glsl_error(behavior_locp, state,
+		       "Unknown extension behavior `%s'",
+		       behavior);
+      return false;
+   }
+
+   if (strcmp(name, "all") == 0) {
+      if ((ext_mode == extension_enable) || (ext_mode == extension_require)) {
+	 _mesa_glsl_error(name_locp, state, "Cannot %s all extensions",
+			  (ext_mode == extension_enable)
+			  ? "enable" : "require");
+	 return false;
+      }
+   } else {
+      if (ext_mode == extension_require) {
+	 _mesa_glsl_error(name_locp, state, "Unknown extension `%s'",
+			  name);
+	 return false;
+      }
+   }
+
+   return true;
+}
+
+
 ast_node::~ast_node()
 {
    /* empty */

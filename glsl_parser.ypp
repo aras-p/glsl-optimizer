@@ -190,13 +190,13 @@ translation_unit:
 	{
 	   _mesa_glsl_initialize_types(state);
 	}
-	external_declaration_list
+	extension_statement_list external_declaration_list
 	|
 	{
 	   state->language_version = 110;
 	   _mesa_glsl_initialize_types(state);
 	}
-	external_declaration_list
+	extension_statement_list external_declaration_list
 	;
 
 version_statement:
@@ -213,6 +213,20 @@ version_statement:
 	      _mesa_glsl_error(& @2, state, "Shading language version"
 			       "%u is not supported\n", $2);
 	      break;
+	   }
+	}
+	;
+
+extension_statement_list:
+
+	| extension_statement_list extension_statement
+	;
+
+extension_statement:
+	EXTENSION IDENTIFIER COLON IDENTIFIER EOL
+	{
+	   if (!_mesa_glsl_process_extension($2, & @2, $4, & @4, state)) {
+	      YYERROR;
 	   }
 	}
 	;

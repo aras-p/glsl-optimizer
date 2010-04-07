@@ -86,6 +86,18 @@ extern int _mesa_glsl_lex(union YYSTYPE *yylval, YYLTYPE *yylloc,
 extern int _mesa_glsl_parse(struct _mesa_glsl_parse_state *);
 
 /**
+ * Process elements of the #extension directive
+ *
+ * \return
+ * If \c name and \c behavior are valid, \c true is returned.  Otherwise
+ * \c false is returned.
+ */
+extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
+					 const char *behavior,
+					 YYLTYPE *behavior_locp,
+					 _mesa_glsl_parse_state *state);
+
+/**
  * Get the textual name of the specified shader target
  */
 extern const char *
