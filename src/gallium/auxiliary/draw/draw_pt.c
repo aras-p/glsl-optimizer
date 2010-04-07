@@ -140,7 +140,10 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.middle.fetch_shade_emit)
       return FALSE;
 
+#if DRAW_LLVM
    draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit_llvm( draw );
+#endif
+
    if (!draw->pt.middle.general)
       draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit( draw );
    if (!draw->pt.middle.general)
