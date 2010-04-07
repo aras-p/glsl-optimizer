@@ -126,6 +126,17 @@ struct exec_node {
       this->next->prev = after;
       this->next = after;
    }
+   /**
+    * Insert a node in the list before the current node
+    */
+   void insert_before(exec_node *before)
+   {
+      before->next = this;
+      before->prev = this->prev;
+
+      this->prev->next = before;
+      this->prev = before;
+   }
 #endif
 };
 

@@ -35,6 +35,7 @@
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 #include "ir_constant_folding.h"
+#include "ir_function_inlining.h"
 #include "ir_print_visitor.h"
 
 const char *
@@ -753,6 +754,8 @@ main(int argc, char **argv)
 
    /* Optimization passes */
    if (!state.error) {
+      do_function_inlining(&instructions);
+
       /* Constant folding */
       ir_constant_folding_visitor constant_folding;
       visit_exec_list(&instructions, &constant_folding);

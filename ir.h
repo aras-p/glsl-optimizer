@@ -55,6 +55,9 @@ public:
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
    virtual class ir_loop *              as_loop()             { return NULL; }
+   virtual class ir_assignment *        as_assignment()       { return NULL; }
+   virtual class ir_call *              as_call()             { return NULL; }
+   virtual class ir_return *            as_return()           { return NULL; }
    /*@}*/
 
 protected:
@@ -361,6 +364,11 @@ public:
       v->visit(this);
    }
 
+   virtual ir_assignment * as_assignment()
+   {
+      return this;
+   }
+
    /**
     * Left-hand side of the assignment.
     */
@@ -461,6 +469,8 @@ public:
       v->visit(this);
    }
 
+   ir_expression *clone();
+
    ir_expression_operation operation;
    ir_rvalue *operands[2];
 };
@@ -477,6 +487,11 @@ public:
       assert(callee->return_type != NULL);
       type = callee->return_type;
       actual_parameters->move_nodes_to(& this->actual_parameters);
+   }
+
+   virtual ir_call *as_call()
+   {
+      return this;
    }
 
    virtual void accept(ir_visitor *v)
@@ -504,6 +519,17 @@ public:
    {
       return callee->function_name();
    }
+
+   const ir_function_signature *get_callee()
+   {
+      return callee;
+   }
+
+   /**
+    * Generates an inline version of the function before @ir,
+    * returning the return value of the function.
+    */
+   ir_rvalue *generate_inline(ir_instruction *ir);
 
 private:
    ir_call()
@@ -545,6 +571,11 @@ public:
       : value(value)
    {
       /* empty */
+   }
+
+   virtual ir_return *as_return()
+   {
+      return this;
    }
 
    ir_rvalue *get_value() const
@@ -632,6 +663,17 @@ class ir_swizzle : public ir_rvalue {
 public:
    ir_swizzle(ir_rvalue *, unsigned x, unsigned y, unsigned z, unsigned w,
               unsigned count);
+   ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask)
+      : val(val), mask(mask)
+   {
+      /* empty */
+   }
+
+   ir_swizzle *clone()
+   {
+      return new ir_swizzle(this->val, this->mask);
+   }
+
    /**
     * Construct an ir_swizzle from the textual representation.  Can fail.
     */
@@ -701,6 +743,11 @@ public:
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
+   }
+
+   ir_constant *clone()
+   {
+      return new ir_constant(this->type, &this->value);
    }
 
    /**

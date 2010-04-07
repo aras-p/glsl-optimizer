@@ -29,7 +29,8 @@ glsl_SOURCES = symbol_table.c hash_table.c glsl_types.cpp \
 	ir.cpp hir_field_selection.cpp builtin_function.cpp \
 	ir_print_visitor.cpp ir_variable.cpp ir_function.cpp \
 	ir_constant_expression.cpp \
-	ir_constant_folding.cpp
+	ir_constant_folding.cpp \
+	ir_function_inlining.cpp
 
 BUILT_SOURCES = glsl_parser.h builtin_types.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)
