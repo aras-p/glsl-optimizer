@@ -90,6 +90,29 @@ init_globals(struct draw_llvm *llvm)
       LLVMTypeRef buffer_ptr = LLVMPointerType(LLVMIntType(8), 0);
       llvm->buffer_ptr_type = LLVMPointerType(buffer_ptr, 0);
    }
+   /* struct pipe_vertex_buffer */
+   {
+      LLVMTypeRef elem_types[4];
+      LLVMTypeRef vb_type;
+
+      elem_types[0] = LLVMInt32Type();
+      elem_types[1] = LLVMInt32Type();
+      elem_types[2] = LLVMInt32Type();
+      elem_types[3] = LLVMPointerType(LLVMOpaqueType(), 0); /* vs_constants */
+
+      vb_type = LLVMStructType(elem_types, Elements(elem_types), 0);
+
+      LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, stride,
+                             llvm->target, vb_type, 0);
+      LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, buffer_offset,
+                             llvm->target, vb_type, 2);
+      LP_CHECK_STRUCT_SIZE(struct pipe_vertex_buffer,
+                           llvm->target, vb_type);
+
+      LLVMAddTypeName(llvm->module, "pipe_vertex_buffer", vb_type);
+
+      llvm->vb_ptr_type = LLVMPointerType(vb_type, 0);
+   }
 }
 
 static LLVMTypeRef
@@ -241,7 +264,7 @@ generate_vs(struct draw_llvm *llvm,
    num_vs = 4;              /* number of vertices per block */
 #endif
 
-   tgsi_dump(tokens, 0);
+   /*tgsi_dump(tokens, 0);*/
    lp_build_tgsi_soa(builder,
                      tokens,
                      vs_type,
@@ -276,20 +299,22 @@ generate_fetch(LLVMBuilderRef builder,
                LLVMValueRef vbuffers_ptr,
                LLVMValueRef *res,
                struct pipe_vertex_element *velem,
-               struct pipe_vertex_buffer *vbuf,
+               LLVMValueRef vbuf,
                LLVMValueRef index)
 {
    LLVMValueRef indices = LLVMConstInt(LLVMInt64Type(), velem->vertex_buffer_index, 0);
    LLVMValueRef vbuffer_ptr = LLVMBuildGEP(builder, vbuffers_ptr,
                                            &indices, 1, "");
+   LLVMValueRef vb_stride = draw_jit_vbuffer_stride(builder, vbuf);
+   LLVMValueRef vb_buffer_offset = draw_jit_vbuffer_offset(builder, vbuf);
    LLVMValueRef stride = LLVMBuildMul(builder,
-                                      LLVMConstInt(LLVMInt32Type(), vbuf->stride, 0),
+                                      vb_stride,
                                       index, "");
 
    vbuffer_ptr = LLVMBuildLoad(builder, vbuffer_ptr, "vbuffer");
 
    stride = LLVMBuildAdd(builder, stride,
-                         LLVMConstInt(LLVMInt32Type(), vbuf->buffer_offset, 0),
+                         vb_buffer_offset,
                          "");
    stride = LLVMBuildAdd(builder, stride,
                          LLVMConstInt(LLVMInt32Type(), velem->src_offset, 0),
@@ -549,13 +574,13 @@ convert_to_aos(LLVMBuilderRef builder,
 static void
 draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 {
-   LLVMTypeRef arg_types[6];
+   LLVMTypeRef arg_types[7];
    LLVMTypeRef func_type;
    LLVMValueRef context_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef start, end, count, stride, step, io_itr;
-   LLVMValueRef io_ptr, vbuffers_ptr;
+   LLVMValueRef io_ptr, vbuffers_ptr, vb_ptr;
    struct draw_context *draw = llvm->draw;
    unsigned i, j;
    struct lp_build_context bld;
@@ -570,6 +595,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    arg_types[3] = LLVMInt32Type();                  /* start */
    arg_types[4] = LLVMInt32Type();                  /* count */
    arg_types[5] = LLVMInt32Type();                  /* stride */
+   arg_types[6] = llvm->vb_ptr_type;                /* pipe_vertex_buffer's */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -585,6 +611,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    start        = LLVMGetParam(variant->function, 3);
    count        = LLVMGetParam(variant->function, 4);
    stride       = LLVMGetParam(variant->function, 5);
+   vb_ptr       = LLVMGetParam(variant->function, 6);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(io_ptr, "io");
@@ -592,6 +619,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    lp_build_name(start, "start");
    lp_build_name(count, "count");
    lp_build_name(stride, "stride");
+   lp_build_name(vb_ptr, "vb");
 
    /*
     * Function body
@@ -631,10 +659,13 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
             LLVMConstInt(LLVMInt32Type(), i, 0), "");
          for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
-            struct pipe_vertex_buffer *vbuf = &draw->pt.vertex_buffer[
-               velem->vertex_buffer_index];
+            LLVMValueRef vb_index = LLVMConstInt(LLVMInt32Type(),
+                                                 velem->vertex_buffer_index,
+                                                 0);
+            LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr,
+                                           &vb_index, 0, "");
             generate_fetch(builder, vbuffers_ptr,
-                           &aos_attribs[j][i], velem, vbuf, true_index);
+                           &aos_attribs[j][i], velem, vb, true_index);
          }
       }
       convert_to_soa(builder, aos_attribs, inputs,
@@ -660,7 +691,6 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    /*
     * Translate the LLVM IR into machine code.
     */
-
 #ifdef DEBUG
    if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
       LLVMDumpValue(variant->function);
@@ -684,16 +714,13 @@ void
 draw_llvm_make_variant_key(struct draw_llvm *llvm,
                            struct draw_llvm_variant_key *key)
 {
-   key->nr_vertex_buffers = llvm->draw->pt.nr_vertex_buffers;
-   key->nr_vertex_elements = llvm->draw->pt.nr_vertex_elements;
+   memset(key, 0, sizeof(struct draw_llvm_variant_key));
 
-   memcpy(key->vertex_buffer,
-          llvm->draw->pt.vertex_buffer,
-          sizeof(struct pipe_vertex_buffer) * PIPE_MAX_ATTRIBS);
+   key->nr_vertex_elements = llvm->draw->pt.nr_vertex_elements;
 
    memcpy(key->vertex_element,
           llvm->draw->pt.vertex_element,
-          sizeof(struct pipe_vertex_element) * PIPE_MAX_ATTRIBS);
+          sizeof(struct pipe_vertex_element) * key->nr_vertex_elements);
 
    memcpy(&key->vs,
           &llvm->draw->vs.vertex_shader->state,

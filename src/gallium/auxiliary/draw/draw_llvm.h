@@ -74,54 +74,13 @@ struct draw_jit_context
 #define draw_jit_header_data(_builder, _ptr)            \
    lp_build_struct_get_ptr(_builder, _ptr, 2, "data")
 
-/* we are construction a function of the form:
 
-struct vertex_header {
-   uint32 vertex_id;
+#define draw_jit_vbuffer_stride(_builder, _ptr)         \
+   lp_build_struct_get(_builder, _ptr, 0, "stride")
 
-   float clip[4];
-   float data[][4];
-};
+#define draw_jit_vbuffer_offset(_builder, _ptr)                 \
+   lp_build_struct_get(_builder, _ptr, 2, "buffer_offset")
 
-struct draw_jit_context
-{
-   const float *vs_constants;
-   const float *gs_constants;
-
-   struct draw_jit_texture textures[PIPE_MAX_SAMPLERS];
-};
-
-void
-draw_shader(struct draw_jit_context *context,
-            struct vertex_header *io,
-            const void *vbuffers[PIPE_MAX_ATTRIBS],
-            unsigned start,
-            unsigned count,
-            unsigned stride)
-{
-  // do a fetch and a run vertex shader
-  for (int i = 0; i < count; ++i) {
-    struct vertex_header *header = &io[i];
-    header->vertex_id = 0xffff;
-    // follows code-genarted fetch/translate section
-    // for each vertex_element ...
-    codegened_translate(header->data[num_element],
-                       context->vertex_elements[num_element],
-                       context->vertex_buffers,
-                       context->vbuffers);
-
-    codegened_vertex_shader(header->data, context->vs_constants);
-  }
-
-  for (int i = 0; i < count; i += context->primitive_size) {
-     struct vertex_header *prim[MAX_PRIMITIVE_SIZE];
-     for (int j = 0; j < context->primitive_size; ++j) {
-       header[j] = &io[i + j];
-     }
-     codegened_geometry_shader(prim, gs_constants);
-  }
-}
-*/
 
 typedef void
 (*draw_jit_vert_func)(struct draw_jit_context *context,
@@ -129,7 +88,8 @@ typedef void
                       const char *vbuffers[PIPE_MAX_ATTRIBS],
                       unsigned start,
                       unsigned count,
-                      unsigned stride);
+                      unsigned stride,
+                      struct pipe_vertex_buffer *vertex_buffers);
 
 struct draw_llvm {
    struct draw_context *draw;
@@ -145,15 +105,13 @@ struct draw_llvm {
    LLVMTypeRef context_ptr_type;
    LLVMTypeRef vertex_header_ptr_type;
    LLVMTypeRef buffer_ptr_type;
+   LLVMTypeRef vb_ptr_type;
 };
-
 
 struct draw_llvm_variant_key
 {
-   struct pipe_vertex_buffer  vertex_buffer[PIPE_MAX_ATTRIBS];
-   unsigned nr_vertex_buffers;
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-   unsigned nr_vertex_elements;
+   unsigned                   nr_vertex_elements;
    struct pipe_shader_state   vs;
 };
 

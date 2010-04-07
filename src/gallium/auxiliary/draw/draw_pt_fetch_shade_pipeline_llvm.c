@@ -53,6 +53,7 @@ struct llvm_middle_end {
    struct draw_llvm *llvm;
    struct draw_llvm_variant *variants;
    struct draw_llvm_variant *current_variant;
+   int nr_variants;
 };
 
 
@@ -145,6 +146,7 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       variant = draw_llvm_prepare(fpme->llvm, nr);
       variant->next = fpme->variants;
       fpme->variants = variant;
+      ++fpme->nr_variants;
    }
    fpme->current_variant = variant;
 
@@ -271,7 +273,8 @@ static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
                                     (const char **)draw->pt.user.vbuffer,
                                     start,
                                     count,
-                                    fpme->vertex_size );
+                                    fpme->vertex_size,
+                                    draw->pt.vertex_buffer );
 
    if (draw_pt_post_vs_run( fpme->post_vs,
 			    pipeline_verts,
@@ -451,6 +454,7 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit_llvm( struct draw_cont
 
    fpme->variants = NULL;
    fpme->current_variant = NULL;
+   fpme->nr_variants = 0;
 
    return &fpme->base;
 
