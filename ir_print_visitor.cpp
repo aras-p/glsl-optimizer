@@ -148,10 +148,13 @@ void ir_print_visitor::visit(ir_expression *ir)
 
    printf("(expression ");
 
+   print_type(ir->type);
+
    assert((unsigned int)ir->operation <
 	  sizeof(operators) / sizeof(operators[0]));
 
-   printf("%s", operators[ir->operation]);
+   printf(" %s ", operators[ir->operation]);
+
    printf("(");
    if (ir->operands[0])
       ir->operands[0]->accept(this);
