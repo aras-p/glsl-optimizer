@@ -130,6 +130,9 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 	 _mesa_glsl_error(name_locp, state, "Unknown extension `%s'",
 			  name);
 	 return false;
+      } else {
+	 _mesa_glsl_warning(name_locp, state, "Unknown extension `%s'",
+			    name);
       }
    }
 
