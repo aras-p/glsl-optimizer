@@ -124,6 +124,13 @@ lp_build_loop_end(LLVMBuilderRef builder,
                   LLVMValueRef step,
                   struct lp_build_loop_state *state);
 
+void
+lp_build_loop_end_cond(LLVMBuilderRef builder,
+                       LLVMValueRef end,
+                       LLVMValueRef step,
+                       int cond, /* LLVM condition */
+                       struct lp_build_loop_state *state);
+
 
 
 

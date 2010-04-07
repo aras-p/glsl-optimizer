@@ -147,6 +147,7 @@ struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
 struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_middle_fse( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *draw);
+struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit_llvm(struct draw_context *draw);
 
 
 

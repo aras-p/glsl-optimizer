@@ -40,6 +40,9 @@
 
 #include "pipe/p_state.h"
 
+#ifdef DRAW_LLVM
+#include <llvm-c/ExecutionEngine.h>
+#endif
 
 struct pipe_context;
 struct draw_context;
@@ -197,6 +200,11 @@ boolean draw_need_pipeline(const struct draw_context *draw,
                            const struct pipe_rasterizer_state *rasterizer,
                            unsigned prim );
 
-
+#ifdef DRAW_LLVM
+/*******************************************************************************
+ * LLVM integration
+ */
+struct draw_context *draw_create_with_llvm(LLVMExecutionEngineRef engine);
+#endif
 
 #endif /* DRAW_CONTEXT_H */

@@ -44,6 +44,18 @@ struct draw_context *draw_create( void )
    if (draw == NULL)
       goto fail;
 
+   if (!draw_init(draw))
+      goto fail;
+
+   return draw;
+
+fail:
+   draw_destroy( draw );
+   return NULL;
+}
+
+boolean draw_init(struct draw_context *draw)
+{
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[2],  0, -1,  0, 1 );
@@ -57,22 +69,18 @@ struct draw_context *draw_create( void )
 
 
    if (!draw_pipeline_init( draw ))
-      goto fail;
+      return FALSE;
 
    if (!draw_pt_init( draw ))
-      goto fail;
+      return FALSE;
 
    if (!draw_vs_init( draw ))
-      goto fail;
+      return FALSE;
 
    if (!draw_gs_init( draw ))
-      goto fail;
+      return FALSE;
 
-   return draw;
-
-fail:
-   draw_destroy( draw );   
-   return NULL;
+   return TRUE;
 }
 
 
