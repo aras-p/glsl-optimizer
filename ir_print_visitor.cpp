@@ -238,10 +238,9 @@ void ir_print_visitor::visit(ir_constant *ir)
    const glsl_type *const base_type = ir->type->get_base_type();
 
    printf("(constant (");
-   print_type(base_type);
-   printf(") ");
+   print_type(ir->type);
+   printf(") (");
 
-   printf("(%d) (", ir->type->components());
    for (unsigned i = 0; i < ir->type->components(); i++) {
       if (i != 0)
 	 printf(", ");
