@@ -182,7 +182,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
     * Create drawing context and plug our rendering stage into it.
     */
 #if USE_DRAW_LLVM
-   llvmpipe->draw = draw_create_with_llvm(llvmscreen->engine);
+   llvmpipe->draw = draw_create_with_llvm();
 #else
    llvmpipe->draw = draw_create();
 #endif

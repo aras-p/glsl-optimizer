@@ -40,10 +40,6 @@
 
 #include "pipe/p_state.h"
 
-#ifdef DRAW_LLVM
-#include <llvm-c/ExecutionEngine.h>
-#endif
-
 struct pipe_context;
 struct draw_context;
 struct draw_stage;
@@ -204,7 +200,7 @@ boolean draw_need_pipeline(const struct draw_context *draw,
 /*******************************************************************************
  * LLVM integration
  */
-struct draw_context *draw_create_with_llvm(LLVMExecutionEngineRef engine);
+struct draw_context *draw_create_with_llvm(void);
 #endif
 
 #endif /* DRAW_CONTEXT_H */

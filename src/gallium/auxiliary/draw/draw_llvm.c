@@ -11,6 +11,7 @@
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_tgsi.h"
 #include "gallivm/lp_bld_printf.h"
+#include "gallivm/lp_bld_init.h"
 
 #include "util/u_cpu_detect.h"
 #include "tgsi/tgsi_dump.h"
@@ -199,12 +200,14 @@ draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs)
 }
 
 
-struct draw_context *draw_create_with_llvm(LLVMExecutionEngineRef engine)
+struct draw_context *draw_create_with_llvm(void)
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
       goto fail;
-   draw->engine = engine;
+
+   assert(lp_build_engine);
+   draw->engine = lp_build_engine;
 
    if (!draw_init(draw))
       goto fail;
