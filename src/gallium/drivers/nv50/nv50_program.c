@@ -4546,7 +4546,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 	so = so_new(10, 54, 0);
 
 	n = (m + 3) / 4;
-	assert(m <= 32);
+	assert(m <= 64);
 	if (vp->type == PIPE_SHADER_GEOMETRY) {
 		so_method(so, tesla, NV50TCL_GP_RESULT_MAP_SIZE, 1);
 		so_data  (so, m);
