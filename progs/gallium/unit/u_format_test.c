@@ -169,7 +169,9 @@ test_format_unpack_float(const struct util_format_description *format_desc,
    unsigned i, j, k;
    boolean success;
 
-   format_desc->unpack_float(&unpacked[0][0][0], sizeof unpacked[0], test->packed, 0, format_desc->block.width, format_desc->block.height);
+   format_desc->unpack_float(&unpacked[0][0][0], sizeof unpacked[0],
+                             test->packed, 0,
+                             format_desc->block.width, format_desc->block.height);
 
    success = TRUE;
    for (i = 0; i < format_desc->block.height; ++i) {
@@ -219,7 +221,9 @@ test_format_pack_float(const struct util_format_description *format_desc,
       }
    }
 
-   format_desc->pack_float(packed, 0, &unpacked[0][0][0], sizeof unpacked[0], format_desc->block.width, format_desc->block.height);
+   format_desc->pack_float(packed, 0,
+                           &unpacked[0][0][0], sizeof unpacked[0],
+                           format_desc->block.width, format_desc->block.height);
 
    success = TRUE;
    for (i = 0; i < format_desc->block.bits/8; ++i)
@@ -268,7 +272,9 @@ test_format_unpack_8unorm(const struct util_format_description *format_desc,
    unsigned i, j, k;
    boolean success;
 
-   format_desc->unpack_8unorm(&unpacked[0][0][0], sizeof unpacked[0], test->packed, 0, 1, 1);
+   format_desc->unpack_8unorm(&unpacked[0][0][0], sizeof unpacked[0],
+                              test->packed, 0,
+                              format_desc->block.width, format_desc->block.height);
 
    convert_float_to_8unorm(&expected[0][0][0], &test->unpacked[0][0][0]);
 
@@ -319,7 +325,9 @@ test_format_pack_8unorm(const struct util_format_description *format_desc,
 
    memset(packed, 0, sizeof packed);
 
-   format_desc->pack_8unorm(packed, 0, &unpacked[0][0][0], sizeof unpacked[0], 1, 1);
+   format_desc->pack_8unorm(packed, 0,
+                            &unpacked[0][0][0], sizeof unpacked[0],
+                            format_desc->block.width, format_desc->block.height);
 
    success = TRUE;
    for (i = 0; i < format_desc->block.bits/8; ++i)

@@ -611,12 +611,16 @@ def generate_format_fetch(format, dst_channel, dst_native_type, dst_suffix):
     print
 
 
+def is_format_hand_written(format):
+    return format.layout in ('s3tc', 'subsampled')
+
 def generate(formats):
     print
     print '#include "pipe/p_compiler.h"'
     print '#include "u_math.h"'
     print '#include "u_format.h"'
     print '#include "u_format_srgb.h"'
+    print '#include "u_format_yuv.h"'
     print '#include "u_half.h"'
     print
 
@@ -629,7 +633,7 @@ def generate(formats):
     suffix = 'float'
 
     for format in formats:
-        if format.layout != 's3tc':
+        if not is_format_hand_written(format):
             generate_format_unpack(format, channel, native_type, suffix)
             generate_format_pack(format, channel, native_type, suffix)
             generate_format_fetch(format, channel, native_type, suffix)
@@ -639,7 +643,7 @@ def generate(formats):
     suffix = '8unorm'
 
     for format in formats:
-        if format.layout != 's3tc':
+        if not is_format_hand_written(format):
             generate_format_unpack(format, channel, native_type, suffix)
             generate_format_pack(format, channel, native_type, suffix)
 
