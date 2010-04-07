@@ -73,6 +73,8 @@ class Channel:
         '''Maximum representable number.'''
         if self.type == FLOAT:
             return VERY_LARGE
+        if self.type == FIXED:
+            return (1 << (self.size/2)) - 1
         if self.norm:
             return 1
         if self.type == UNSIGNED:
@@ -85,6 +87,8 @@ class Channel:
         '''Minimum representable number.'''
         if self.type == FLOAT:
             return -VERY_LARGE
+        if self.type == FIXED:
+            return -(1 << (self.size/2))
         if self.type == UNSIGNED:
             return 0
         if self.norm:

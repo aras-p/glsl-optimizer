@@ -57,7 +57,7 @@ def generate_format_type(format):
                     print '      unsigned %s:%u;' % (channel.name, channel.size)
             elif channel.type == UNSIGNED:
                 print '      unsigned %s:%u;' % (channel.name, channel.size)
-            elif channel.type == SIGNED:
+            elif channel.type in (SIGNED, FIXED):
                 print '      int %s:%u;' % (channel.name, channel.size)
             elif channel.type == FLOAT:
                 if channel.size == 32:
@@ -111,7 +111,9 @@ def is_format_supported(format):
 
     for i in range(4):
         channel = format.channels[i]
-        if channel.type not in (VOID, UNSIGNED, SIGNED, FLOAT):
+        if channel.type not in (VOID, UNSIGNED, SIGNED, FLOAT, FIXED):
+            return False
+        if channel.type == FLOAT and channel.size not in (16, 32, 64):
             return False
 
     # We can only read a color from a depth/stencil format if the depth channel is present
@@ -133,7 +135,7 @@ def native_type(format):
             channel = format.channels[0]
             if channel.type in (UNSIGNED, VOID):
                 return 'uint%u_t' % channel.size
-            elif channel.type == SIGNED:
+            elif channel.type in (SIGNED, FIXED):
                 return 'int%u_t' % channel.size
             elif channel.type == FLOAT:
                 if channel.size == 16:
@@ -179,12 +181,35 @@ def get_one_shift(type):
     assert False
 
 
+def value_to_native(type, value):
+    '''Get the value of unity for this type.'''
+    if type.type == FLOAT:
+        return value
+    if type.type == FIXED:
+        return int(value * (1 << (type.size/2)))
+    if not type.norm:
+        return int(value)
+    if type.type == UNSIGNED:
+        return int(value * ((1 << type.size) - 1))
+    if type.type == SIGNED:
+        return int(value * ((1 << (type.size - 1)) - 1))
+    assert False
+
+
+def native_to_constant(type, value):
+    '''Get the value of unity for this type.'''
+    if type.type == FLOAT:
+        if type.size <= 32:
+            return "%ff" % value 
+        else:
+            return "%ff" % value 
+    else:
+        return str(int(value))
+
+
 def get_one(type):
     '''Get the value of unity for this type.'''
-    if type.type == 'FLOAT' or not type.norm:
-        return 1
-    else:
-        return (1 << get_one_shift(type)) - 1
+    return value_to_native(type, 1)
 
 
 def clamp_expr(src_channel, dst_channel, dst_native_type, value):
@@ -198,15 +223,19 @@ def clamp_expr(src_channel, dst_channel, dst_native_type, value):
     src_max = src_channel.max()
     dst_min = dst_channel.min()
     dst_max = dst_channel.max()
+    
+    # Translate the destination range to the src native value
+    dst_min_native = value_to_native(src_channel, dst_min)
+    dst_max_native = value_to_native(src_channel, dst_max)
 
     if src_min < dst_min and src_max > dst_max:
-        return 'CLAMP(%s, %s, %s)' % (value, dst_min, dst_max)
+        return 'CLAMP(%s, %s, %s)' % (value, dst_min_native, dst_max_native)
 
     if src_max > dst_max:
-        return 'MIN2(%s, %s)' % (value, dst_max)
+        return 'MIN2(%s, %s)' % (value, dst_max_native)
         
     if src_min < dst_min:
-        return 'MAX2(%s, %s)' % (value, dst_min)
+        return 'MAX2(%s, %s)' % (value, dst_min_native)
 
     return value
 
@@ -290,7 +319,7 @@ def conversion_expr(src_channel,
 
     # Promote to either float or double
     if src_type != FLOAT:
-        if src_norm:
+        if src_norm or src_type == FIXED:
             one = get_one(src_channel)
             if src_size <= 23:
                 value = '(%s * (1.0f/0x%x))' % (value, one)
@@ -314,7 +343,7 @@ def conversion_expr(src_channel,
 
     # Convert double or float to non-float
     if dst_channel.type != FLOAT:
-        if dst_channel.norm:
+        if dst_channel.norm or dst_channel.type == FIXED:
             dst_one = get_one(dst_channel)
             if dst_channel.size <= 23:
                 value = '(%s * 0x%x)' % (value, dst_one)
