@@ -12,9 +12,9 @@ main(int argc, char **argv)
    unsigned roundtrip_fails = 0;
    for(i = 0; i < 1 << 16; ++i)
    {
-      half h = (half) i;
+      uint16_t h = (uint16_t) i;
       union fi f;
-      half rh;
+      uint16_t rh;
       f.ui = util_half_to_floatui(h);
       rh = util_floatui_to_half(f.ui);
       if(h != rh)

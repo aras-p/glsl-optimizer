@@ -74,8 +74,6 @@ typedef unsigned char boolean;
 #define FALSE false
 #endif
 
-typedef unsigned short half;
-
 /* Function inlining */
 #ifndef INLINE
 #  ifdef __cplusplus
