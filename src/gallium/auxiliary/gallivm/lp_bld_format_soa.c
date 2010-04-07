@@ -113,7 +113,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
    unsigned start;
    unsigned chan;
 
-   /* FIXME: Support more pixel formats */
+   assert(format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN);
    assert(format_desc->block.width == 1);
    assert(format_desc->block.height == 1);
    assert(format_desc->block.bits <= type.width);
@@ -227,8 +227,17 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
          break;
 
       case UTIL_FORMAT_TYPE_FIXED:
-         assert(0);
-         input = lp_build_undef(type);
+         if (type.floating) {
+            double scale = 1.0 / ((1 << (format_desc->channel[chan].size/2)) - 1);
+            LLVMValueRef scale_val = lp_build_const_vec(type, scale);
+            input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(type), "");
+            input = LLVMBuildMul(builder, input, scale_val, "");
+         }
+         else {
+            /* FIXME */
+            assert(0);
+            input = lp_build_undef(type);
+         }
          break;
 
       default:
@@ -262,9 +271,14 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
                         LLVMValueRef *rgba)
 {
 
-   if (format_desc->block.width == 1 &&
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
+       (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
+        format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) &&
+       format_desc->block.width == 1 &&
        format_desc->block.height == 1 &&
-       format_desc->block.bits <= type.width)
+       format_desc->block.bits <= type.width &&
+       (format_desc->channel[0].type != UTIL_FORMAT_TYPE_FLOAT ||
+        format_desc->channel[0].size == 32))
    {
       /*
        * The packed pixel fits into an element of the destination format. Put
