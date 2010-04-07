@@ -14,6 +14,7 @@
 #include "gallivm/lp_bld_init.h"
 
 #include "util/u_cpu_detect.h"
+#include "util/u_string.h"
 #include "tgsi/tgsi_dump.h"
 
 #include <llvm-c/Transforms/Scalar.h>
@@ -99,7 +100,7 @@ create_vertex_header(struct draw_llvm *llvm, int data_elems)
    LLVMTypeRef vertex_header;
    char struct_name[24];
 
-   snprintf(struct_name, 23, "vertex_header%d", data_elems);
+   util_snprintf(struct_name, 23, "vertex_header%d", data_elems);
 
    elem_types[0]  = LLVMIntType(32);
    elem_types[1]  = LLVMArrayType(LLVMFloatType(), 4);
