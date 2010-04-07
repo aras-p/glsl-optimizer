@@ -37,7 +37,7 @@ glsl_SOURCES = \
 	ir_function_can_inline.cpp \
 	ir_function_inlining.cpp \
 	ir_if_simplification.cpp \
-	s_expression.cpp
+	ir_reader.cpp s_expression.cpp
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)

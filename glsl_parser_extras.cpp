@@ -39,6 +39,7 @@
 #include "ir_function_inlining.h"
 #include "ir_if_simplification.h"
 #include "ir_print_visitor.h"
+#include "ir_reader.h"
 
 const char *
 _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
@@ -715,7 +716,7 @@ main(int argc, char **argv)
    exec_list instructions;
 
    if (argc < 3) {
-      printf("Usage: %s [v|g|f] <shader_file>\n", argv[0]);
+      printf("Usage: %s [v|g|f|i] <shader_file>\n", argv[0]);
       return EXIT_FAILURE;
    }
 
@@ -731,8 +732,11 @@ main(int argc, char **argv)
    case 'f':
       state.target = fragment_shader;
       break;
+   case 'i':
+      state.target = ir_shader;
+      break;
    default:
-      printf("Usage: %s [v|g|f] <shader_file>\n", argv[0]);
+      printf("Usage: %s [v|g|f|i] <shader_file>\n", argv[0]);
       return EXIT_FAILURE;
    }
 
@@ -746,15 +750,19 @@ main(int argc, char **argv)
    state.loop_or_switch_nesting = NULL;
    state.ARB_texture_rectangle_enable = true;
 
-   _mesa_glsl_lexer_ctor(& state, shader, shader_len);
-   _mesa_glsl_parse(& state);
-   _mesa_glsl_lexer_dtor(& state);
+   if (state.target != ir_shader) {
+      _mesa_glsl_lexer_ctor(& state, shader, shader_len);
+      _mesa_glsl_parse(& state);
+      _mesa_glsl_lexer_dtor(& state);
 
-   foreach (ptr, & state.translation_unit) {
-      ((ast_node *)ptr)->print();
+      foreach (ptr, & state.translation_unit) {
+	 ((ast_node *)ptr)->print();
+      }
+
+      _mesa_ast_to_hir(&instructions, &state);
+   } else {
+      _mesa_glsl_read_ir(&state, &instructions, shader);
    }
-
-   _mesa_ast_to_hir(&instructions, &state);
 
    /* Optimization passes */
    if (!state.error) {
