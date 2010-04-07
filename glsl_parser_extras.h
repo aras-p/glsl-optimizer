@@ -85,4 +85,10 @@ extern int _mesa_glsl_lex(union YYSTYPE *yylval, YYLTYPE *yylloc,
 
 extern int _mesa_glsl_parse(struct _mesa_glsl_parse_state *);
 
+/**
+ * Get the textual name of the specified shader target
+ */
+extern const char *
+_mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
+
 #endif /* GLSL_PARSER_EXTRAS_H */

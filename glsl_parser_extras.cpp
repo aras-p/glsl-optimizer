@@ -37,6 +37,19 @@
 #include "ir_constant_folding.h"
 #include "ir_print_visitor.h"
 
+const char *
+_mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
+{
+   switch (target) {
+   case vertex_shader:   return "vertex";
+   case fragment_shader: return "fragment";
+   case geometry_shader: return "geometry";
+   }
+
+   assert(!"Should not get here.");
+}
+
+
 void
 _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		 const char *fmt, ...)
