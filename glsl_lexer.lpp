@@ -61,6 +61,7 @@
 ^[ \t]*#[ \t]*extension		{ BEGIN PP; return EXTENSION; }
 ^[ \t]*#[ \t]*line		{ BEGIN PP; return LINE; }
 ^[ \t]*#[ \t]*pragma		{ BEGIN PP; return PRAGMA; }
+<PP>\/\/[^\n]*			{ }
 <PP>:				return COLON;
 <PP>[_a-zA-Z][_a-zA-Z0-9]*	{
 				   yylval->identifier = strdup(yytext);
