@@ -34,13 +34,12 @@ generate_unop(exec_list *instructions,
 	      const glsl_type *type,
 	      enum ir_expression_operation op)
 {
-   ir_dereference *const retval = new ir_dereference(declarations[16]);
    ir_dereference *const arg = new ir_dereference(declarations[0]);
    ir_rvalue *result;
 
    result = new ir_expression(op, type, arg, NULL);
 
-   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   ir_instruction *inst = new ir_return(result);
    instructions->push_tail(inst);
 }
 
@@ -50,14 +49,13 @@ generate_binop(exec_list *instructions,
 	       const glsl_type *type,
 	       enum ir_expression_operation op)
 {
-   ir_dereference *const retval = new ir_dereference(declarations[16]);
    ir_dereference *const arg1 = new ir_dereference(declarations[0]);
    ir_dereference *const arg2 = new ir_dereference(declarations[1]);
    ir_rvalue *result;
 
    result = new ir_expression(op, type, arg1, arg2);
 
-   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   ir_instruction *inst = new ir_return(result);
    instructions->push_tail(inst);
 }
 
@@ -66,7 +64,6 @@ generate_radians(exec_list *instructions,
 		 ir_variable **declarations,
 		 const glsl_type *type)
 {
-   ir_dereference *const retval = new ir_dereference(declarations[16]);
    ir_dereference *const arg = new ir_dereference(declarations[0]);
    ir_rvalue *result;
 
@@ -74,7 +71,7 @@ generate_radians(exec_list *instructions,
 			      arg,
 			      new ir_constant((float)(M_PI / 180.0)));
 
-   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   ir_instruction *inst = new ir_return(result);
    instructions->push_tail(inst);
 }
 
@@ -83,7 +80,6 @@ generate_degrees(exec_list *instructions,
 		 ir_variable **declarations,
 		 const glsl_type *type)
 {
-   ir_dereference *const retval = new ir_dereference(declarations[16]);
    ir_dereference *const arg = new ir_dereference(declarations[0]);
    ir_rvalue *result;
 
@@ -91,7 +87,7 @@ generate_degrees(exec_list *instructions,
 			      arg,
 			      new ir_constant((float)(180.0 / M_PI)));
 
-   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   ir_instruction *inst = new ir_return(result);
    instructions->push_tail(inst);
 }
 
@@ -211,9 +207,9 @@ generate_function_instance(ir_function *f,
 			   const glsl_type *ret_type,
 			   const glsl_type *type)
 {
-   ir_variable *declarations[17];
+   ir_variable *declarations[16];
 
-   ir_function_signature *const sig = new ir_function_signature(type);
+   ir_function_signature *const sig = new ir_function_signature(ret_type);
    f->add_signature(sig);
 
    ir_label *const label = new ir_label(name, sig);
@@ -237,11 +233,6 @@ generate_function_instance(ir_function *f,
       sig->body.push_tail(var);
       declarations[i] = var;
    }
-
-   ir_variable *retval = new ir_variable(ret_type, "__retval");
-   sig->body.push_tail(retval);
-
-   declarations[16] = retval;
 
    generate(&sig->body, declarations, type);
 }
@@ -278,7 +269,6 @@ generate_length(exec_list *instructions,
 		ir_variable **declarations,
 		const glsl_type *type)
 {
-   ir_dereference *const retval = new ir_dereference(declarations[16]);
    ir_dereference *const arg = new ir_dereference(declarations[0]);
    ir_rvalue *result, *temp;
 
@@ -289,7 +279,7 @@ generate_length(exec_list *instructions,
    temp = new ir_expression(ir_binop_dot, glsl_type::float_type, arg, arg);
    result = new ir_expression(ir_unop_sqrt, glsl_type::float_type, temp, NULL);
 
-   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   ir_instruction *inst = new ir_return(result);
    instructions->push_tail(inst);
 }
 
@@ -321,7 +311,6 @@ generate_dot(exec_list *instructions,
 		ir_variable **declarations,
 		const glsl_type *type)
 {
-   ir_dereference *const retval = new ir_dereference(declarations[16]);
    ir_dereference *const arg = new ir_dereference(declarations[0]);
    ir_rvalue *result;
 
@@ -329,7 +318,7 @@ generate_dot(exec_list *instructions,
 
    result = new ir_expression(ir_binop_dot, glsl_type::float_type, arg, arg);
 
-   ir_instruction *inst = new ir_assignment(retval, result, NULL);
+   ir_instruction *inst = new ir_return(result);
    instructions->push_tail(inst);
 }
 
