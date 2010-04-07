@@ -204,11 +204,6 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
       var->mode = ir_var_in;
       signature->parameters.push_tail(var);
 
-      var = new ir_variable(parameter_type, names[i]);
-
-      var->mode = ir_var_in;
-      signature->body.push_tail(var);
-
       declarations[i] = var;
    }
 

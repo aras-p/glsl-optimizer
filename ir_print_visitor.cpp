@@ -67,6 +67,7 @@ void ir_print_visitor::visit(ir_variable *ir)
 void ir_print_visitor::visit(ir_label *ir)
 {
    printf("\n(label %s\n", ir->label);
+
    ir->signature->accept(this);
    printf(")");
 }
@@ -74,6 +75,15 @@ void ir_print_visitor::visit(ir_label *ir)
 
 void ir_print_visitor::visit(ir_function_signature *ir)
 {
+   printf("(paramaters\n");
+   foreach_iter(exec_list_iterator, iter, ir->parameters) {
+      ir_variable *const inst = (ir_variable *) iter.get();
+
+      inst->accept(this);
+      printf("\n");
+   }
+   printf(")\n");
+
    foreach_iter(exec_list_iterator, iter, ir->body) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 

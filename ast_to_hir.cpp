@@ -1925,13 +1925,9 @@ ast_function_definition::hir(exec_list *instructions,
     */
    state->symbols->push_scope();
    foreach_iter(exec_list_iterator, iter, signature->parameters) {
-      ir_variable *const proto = ((ir_instruction *) iter.get())->as_variable();
+      ir_variable *const var = ((ir_instruction *) iter.get())->as_variable();
 
-      assert(proto != NULL);
-
-      ir_variable *const var = proto->clone();
-
-      signature->body.push_tail(var);
+      assert(var != NULL);
 
       /* The only way a parameter would "exist" is if two parameters have
        * the same name.
