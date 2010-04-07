@@ -9,6 +9,7 @@
 struct nv50_transfer {
 	struct pipe_transfer base;
 	struct nouveau_bo *bo;
+	int map_refcnt;
 	unsigned level_offset;
 	unsigned level_tiling;
 	int level_pitch;
@@ -225,14 +226,19 @@ nv50_transfer_map(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 	unsigned flags = 0;
 	int ret;
 
+	if (tx->map_refcnt++)
+		return tx->bo->map;
+
 	if (ptx->usage & PIPE_TRANSFER_WRITE)
 		flags |= NOUVEAU_BO_WR;
 	if (ptx->usage & PIPE_TRANSFER_READ)
 		flags |= NOUVEAU_BO_RD;
 
 	ret = nouveau_bo_map(tx->bo, flags);
-	if (ret)
+	if (ret) {
+		tx->map_refcnt = 0;
 		return NULL;
+	}
 	return tx->bo->map;
 }
 
@@ -241,6 +247,8 @@ nv50_transfer_unmap(struct pipe_context *pcontext, struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 
+	if (--tx->map_refcnt)
+		return;
 	nouveau_bo_unmap(tx->bo);
 }
 
