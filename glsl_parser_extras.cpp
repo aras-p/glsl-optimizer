@@ -101,7 +101,6 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
       extension_require,
       extension_warn
    } ext_mode;
-   bool error = false;
 
    if (strcmp(behavior, "warn") == 0) {
       ext_mode = extension_warn;
@@ -118,6 +117,8 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
       return false;
    }
 
+   bool unsupported = false;
+
    if (strcmp(name, "all") == 0) {
       if ((ext_mode == extension_enable) || (ext_mode == extension_require)) {
 	 _mesa_glsl_error(name_locp, state, "Cannot %s all extensions",
@@ -126,13 +127,19 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 	 return false;
       }
    } else {
+      unsupported = true;
+   }
+
+   if (unsupported) {
+      static const char *const fmt = "extension `%s' unsupported in %s shader";
+
       if (ext_mode == extension_require) {
-	 _mesa_glsl_error(name_locp, state, "Unknown extension `%s'",
-			  name);
+	 _mesa_glsl_error(name_locp, state, fmt,
+			  name, _mesa_glsl_shader_target_name(state->target));
 	 return false;
       } else {
-	 _mesa_glsl_warning(name_locp, state, "Unknown extension `%s'",
-			    name);
+	 _mesa_glsl_warning(name_locp, state, fmt,
+			    name, _mesa_glsl_shader_target_name(state->target));
       }
    }
 
