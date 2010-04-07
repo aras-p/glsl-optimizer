@@ -88,6 +88,8 @@ if drawllvm:
         env.Tool('llvm')
         if not env.has_key('LLVM_VERSION'):
            drawllvm = False
+if drawllvm:
+        env.Append(CFLAGS = ['-DDRAW_LLVM=1'])
 
 # derived options
 x86 = machine == 'x86'
