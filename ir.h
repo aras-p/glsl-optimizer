@@ -157,6 +157,11 @@ public:
    unsigned array_lvalue:1;
 
    /**
+    * Emit a warning if this variable is accessed.
+    */
+   const char *warn_extension;
+
+   /**
     * Value assigned in the initializer of a variable declared "const"
     */
    ir_constant *constant_value;
