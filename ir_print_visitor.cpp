@@ -28,11 +28,11 @@ static void
 print_type(const glsl_type *t)
 {
    if (t->base_type == GLSL_TYPE_ARRAY) {
-      printf("array (");
+      printf("(array ");
       print_type(t->fields.array);
-      printf(") (%u))", t->length);
+      printf(" (%u))", t->length);
    } else if (t->base_type == GLSL_TYPE_STRUCT) {
-      printf("struct (%s %u ", t->name ? t->name : "@", t->length);
+      printf("(struct (%s %u ", t->name ? t->name : "@", t->length);
       printf("(FINISHME: structure fields go here) ");
       printf(")");
    } else {
@@ -56,9 +56,7 @@ void ir_print_visitor::visit(ir_variable *ir)
       printf("(%s%s%s%s) ",
 	     cent, inv, mode[ir->mode], interp[ir->interpolation]);
 
-      printf("(");
       print_type(ir->type);
-      printf(") ");
       printf("(%s)) ", ir->name);
    }
 }
@@ -237,9 +235,9 @@ void ir_print_visitor::visit(ir_constant *ir)
 {
    const glsl_type *const base_type = ir->type->get_base_type();
 
-   printf("(constant (");
+   printf("(constant ");
    print_type(ir->type);
-   printf(") (");
+   printf(" (");
 
    for (unsigned i = 0; i < ir->type->components(); i++) {
       if (i != 0)
