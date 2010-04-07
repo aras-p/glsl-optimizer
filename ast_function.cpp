@@ -38,7 +38,7 @@ process_parameters(exec_list *instructions, exec_list *actual_parameters,
    if (first != NULL) {
       simple_node *ptr = first;
       do {
-	 ir_instruction *const result =
+	 ir_rvalue *const result =
 	    ((ast_node *) ptr)->hir(instructions, state);
 	 ptr = ptr->next;
 
@@ -71,10 +71,8 @@ process_call(exec_list *instructions, ir_function *f,
       exec_list_iterator formal_iter = sig->parameters.iterator();
 
       while (actual_iter.has_next()) {
-	 ir_rvalue *actual =
-	    ((ir_instruction *) actual_iter.get())->as_rvalue();
-	 ir_variable *formal =
-	    ((ir_instruction *) formal_iter.get())->as_variable();
+	 ir_rvalue *actual = (ir_rvalue *) actual_iter.get();
+	 ir_variable *formal = (ir_variable *) formal_iter.get();
 
 	 assert(actual != NULL);
 	 assert(formal != NULL);

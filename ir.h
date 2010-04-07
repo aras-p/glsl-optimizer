@@ -204,7 +204,10 @@ public:
    const struct glsl_type *return_type;
 
    /**
-    * List of function parameters stored as ir_variable objects.
+    * List of ir_variable of function parameters.
+    *
+    * This represents the storage.  The paramaters passed in a particular
+    * call will be in ir_call::actual_paramaters.
     */
    struct exec_list parameters;
 
@@ -259,7 +262,7 @@ public:
 
 private:
    /**
-    * Set of overloaded functions with this name.
+    * List of ir_function_signature for each overloaded function with this name.
     */
    struct exec_list signatures;
 };
@@ -288,7 +291,9 @@ public:
    }
 
    ir_rvalue *condition;
+   /** List of ir_instruction for the body of the then branch */
    exec_list  then_instructions;
+   /** List of ir_instruction for the body of the else branch */
    exec_list  else_instructions;
 };
 
@@ -321,7 +326,7 @@ public:
       return body_instructions.iterator();
    }
 
-   /** List of instructions that make up the body of the loop. */
+   /** List of ir_instruction that make up the body of the loop. */
    exec_list body_instructions;
 
    /**
@@ -497,6 +502,8 @@ private:
    }
 
    const ir_function_signature *callee;
+
+   /* List of ir_rvalue of paramaters passed in this call. */
    exec_list actual_parameters;
 };
 
