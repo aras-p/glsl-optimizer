@@ -59,6 +59,14 @@ struct _mesa_glsl_parse_state {
 
    /** Loop or switch statement containing the current instructions. */
    class ir_instruction *loop_or_switch_nesting;
+
+   /**
+    * \name Enable bits for GLSL extensions
+    */
+   /*@{*/
+   unsigned ARB_draw_buffers_enable:1;
+   unsigned ARB_draw_buffers_warn:1;
+   /*@}*/
 };
 
 typedef struct YYLTYPE {

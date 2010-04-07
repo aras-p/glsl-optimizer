@@ -126,6 +126,15 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 			  ? "enable" : "require");
 	 return false;
       }
+   } if (strcmp(name, "GL_ARB_draw_buffers") == 0) {
+      /* This extension is only supported in fragment shaders.
+       */
+      if (state->target != fragment_shader) {
+	 unsupported = true;
+      } else {
+	 state->ARB_draw_buffers_enable = (ext_mode != extension_disable);
+	 state->ARB_draw_buffers_warn = (ext_mode == extension_warn);
+      }
    } else {
       unsupported = true;
    }

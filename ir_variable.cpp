@@ -30,7 +30,7 @@
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
-static void
+static ir_variable *
 add_variable(const char *name, enum ir_variable_mode mode,
 	     const glsl_type *type, exec_list *instructions,
 		     glsl_symbol_table *symtab)
@@ -48,6 +48,7 @@ add_variable(const char *name, enum ir_variable_mode mode,
    instructions->push_tail(var);
 
    symtab->add_variable(var->name, var);
+   return var;
 }
 
 
@@ -197,8 +198,6 @@ generate_110_fs_variables(exec_list *instructions,
    }
    generate_110_uniforms(instructions, symtab);
 
-   /* FINISHME: Add support for gl_FragData[GL_MAX_DRAW_BUFFERS]. */
-
    /* FINISHME: The size of this array is implementation dependent based on the
     * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
     * FINISHME: at least 2, so hard-code 2 for now.
@@ -212,14 +211,35 @@ generate_110_fs_variables(exec_list *instructions,
 		symtab);
 }
 
+
+static void
+generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
+				       glsl_symbol_table *symtab, bool warn)
+{
+   /* FINISHME: The size of this array is implementation dependent based on the
+    * FINISHME: value of GL_MAX_DRAW_BUFFERS.  GL_MAX_DRAW_BUFFERS must be
+    * FINISHME: at least 1, so hard-code 1 for now.
+    */
+   const glsl_type *const vec4_type =
+      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
+   const glsl_type *const vec4_array_type =
+      glsl_type::get_array_instance(vec4_type, 1);
+
+   ir_variable *const fd =
+      add_variable("gl_FragData", ir_var_out, vec4_array_type, instructions,
+		   symtab);
+
+   if (warn)
+      fd->warn_extension = "GL_ARB_draw_buffers";
+}
+
+
 static void
 generate_120_fs_variables(exec_list *instructions,
 			  glsl_symbol_table *symtab)
 {
-   /* GLSL version 1.20 did not add any built-in variables in the fragment
-    * shader.
-    */
    generate_110_fs_variables(instructions, symtab);
+   generate_ARB_draw_buffers_fs_variables(instructions, symtab, false);
 }
 
 static void
@@ -252,6 +272,17 @@ initialize_fs_variables(exec_list *instructions,
    case 130:
       generate_130_fs_variables(instructions, state->symbols);
       break;
+   }
+
+
+   /* Since GL_ARB_draw_buffers is included in GLSL 1.20 and later, we
+    * can basically ignore any extension settings for it.
+    */
+   if (state->language_version < 120) {
+      if (state->ARB_draw_buffers_enable) {
+	 generate_ARB_draw_buffers_fs_variables(instructions, state->symbols,
+						state->ARB_draw_buffers_warn);
+      }
    }
 }
 
