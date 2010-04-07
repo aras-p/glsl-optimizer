@@ -761,6 +761,11 @@ main(int argc, char **argv)
 
       _mesa_ast_to_hir(&instructions, &state);
    } else {
+      /* FINISHME: We should initialize this to the max GLSL version supported
+       * FINISHME: by the driver.  At the moment, we don't know what that is.
+       */
+      state.language_version = 130;
+
       _mesa_glsl_read_ir(&state, &instructions, shader);
    }
 
