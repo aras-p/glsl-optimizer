@@ -46,7 +46,7 @@ ir_expression::ir_expression(int op, const struct glsl_type *type,
 }
 
 unsigned int
-ir_expression::get_num_operands(void)
+ir_expression::get_num_operands(ir_expression_operation op)
 {
 /* Update ir_print_visitor.cpp when updating this list. */
    const int num_operands[] = {
@@ -105,7 +105,7 @@ ir_expression::get_num_operands(void)
 
    assert(sizeof(num_operands) / sizeof(num_operands[0]) == ir_binop_pow + 1);
 
-   return num_operands[this->operation];
+   return num_operands[op];
 }
 
 

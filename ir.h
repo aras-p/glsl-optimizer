@@ -471,7 +471,11 @@ public:
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
 
-   unsigned int get_num_operands(void);
+   static unsigned int get_num_operands(ir_expression_operation);
+   unsigned int get_num_operands()
+   {
+      return get_num_operands(operation);
+   }
 
    virtual void accept(ir_visitor *v)
    {
