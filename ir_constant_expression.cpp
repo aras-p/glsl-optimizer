@@ -355,6 +355,9 @@ ir_constant_visitor::visit(ir_expression *ir)
 	    case GLSL_TYPE_FLOAT:
 	       b[0] = b[0] && op[0]->value.f[c] == op[1]->value.f[c];
 	       break;
+	    case GLSL_TYPE_BOOL:
+	       b[0] = b[0] && op[0]->value.b[c] == op[1]->value.b[c];
+	       break;
 	    default:
 	       assert(0);
 	    }
@@ -375,6 +378,9 @@ ir_constant_visitor::visit(ir_expression *ir)
 	       break;
 	    case GLSL_TYPE_FLOAT:
 	       b[0] = b[0] || op[0]->value.f[c] != op[1]->value.f[c];
+	       break;
+	    case GLSL_TYPE_BOOL:
+	       b[0] = b[0] || op[0]->value.b[c] != op[1]->value.b[c];
 	       break;
 	    default:
 	       assert(0);
