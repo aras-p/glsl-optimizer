@@ -120,7 +120,7 @@ generate_110_vs_variables(exec_list *instructions,
     * FINISHME: at least 2, so hard-code 2 for now.
     */
    const glsl_type *const vec4_type =
-      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 0);
+      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
    const glsl_type *const vec4_array_type =
       glsl_type::get_array_instance(vec4_type, 2);
 
@@ -204,7 +204,7 @@ generate_110_fs_variables(exec_list *instructions,
     * FINISHME: at least 2, so hard-code 2 for now.
     */
    const glsl_type *const vec4_type =
-      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 0);
+      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
    const glsl_type *const vec4_array_type =
       glsl_type::get_array_instance(vec4_type, 2);
 
