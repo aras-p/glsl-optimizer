@@ -170,7 +170,7 @@ public:
 
 class ir_label : public ir_instruction {
 public:
-   ir_label(const char *label);
+   ir_label(const char *label, ir_function_signature *signature);
 
    virtual void accept(ir_visitor *v)
    {
@@ -178,11 +178,16 @@ public:
    }
 
    const char *label;
+
+   ir_function_signature *signature;
 };
 
 
 /*@{*/
 class ir_function_signature : public ir_instruction {
+   /* An ir_function_signature will be part of the list of signatures in
+    * an ir_function.
+    */
 public:
    ir_function_signature(const glsl_type *return_type);
 
@@ -215,6 +220,9 @@ public:
     * Pointer to the label that begins the function definition.
     */
    ir_label *definition;
+
+   /** Body of instructions in the function. */
+   struct exec_list body;
 
 private:
    /** Function of which this signature is one overload. */

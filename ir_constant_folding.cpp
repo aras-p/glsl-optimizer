@@ -46,14 +46,14 @@ ir_constant_folding_visitor::visit(ir_variable *ir)
 void
 ir_constant_folding_visitor::visit(ir_label *ir)
 {
-   (void) ir;
+   ir->signature->accept(this);
 }
 
 
 void
 ir_constant_folding_visitor::visit(ir_function_signature *ir)
 {
-   (void) ir;
+   visit_exec_list(&ir->body, this);
 }
 
 

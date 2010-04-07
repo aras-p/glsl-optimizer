@@ -1450,7 +1450,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	     * FINISHME: required or not.
 	     */
 
-	    if (var->type->array_size() <= earlier->max_array_access) {
+	    if (var->type->array_size() <= (int)earlier->max_array_access) {
 	       YYLTYPE loc = this->get_location();
 
 	       _mesa_glsl_error(& loc, state, "array size must be > %u due to "
@@ -1914,7 +1914,7 @@ ast_function_definition::hir(exec_list *instructions,
    assert(state->current_function == NULL);
    state->current_function = signature;
 
-   ir_label *label = new ir_label(signature->function_name());
+   ir_label *label = new ir_label(signature->function_name(), signature);
    if (signature->definition == NULL) {
       signature->definition = label;
    }
@@ -1931,7 +1931,7 @@ ast_function_definition::hir(exec_list *instructions,
 
       ir_variable *const var = proto->clone();
 
-      instructions->push_tail(var);
+      signature->body.push_tail(var);
 
       /* The only way a parameter would "exist" is if two parameters have
        * the same name.
@@ -1949,7 +1949,7 @@ ast_function_definition::hir(exec_list *instructions,
     * instructions to the list that currently consists of the function label
     * and the function parameters.
     */
-   this->body->hir(instructions, state);
+   this->body->hir(&signature->body, state);
 
    state->symbols->pop_scope();
 

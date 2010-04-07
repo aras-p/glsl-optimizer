@@ -110,8 +110,8 @@ ir_expression::get_num_operands(void)
    return num_operands[this->operation];
 }
 
-ir_label::ir_label(const char *label)
-   : ir_instruction(), label(label)
+ir_label::ir_label(const char *label, ir_function_signature *signature)
+   : ir_instruction(), label(label), signature(signature)
 {
    /* empty */
 }

@@ -180,7 +180,8 @@ glsl_type::generate_constructor_prototype(glsl_symbol_table *symtab) const
  */
 static ir_label *
 generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
-			   exec_list *parameters, exec_list *instructions,
+			   ir_function_signature *const signature,
+			   exec_list *instructions,
 			   ir_variable **declarations)
 {
    /* Names of parameters used in vector and matrix constructors
@@ -194,25 +195,25 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
 
    const glsl_type *const parameter_type = type->get_base_type();
 
-   ir_label *const label = new ir_label(type->name);
+   ir_label *const label = new ir_label(type->name, signature);
    instructions->push_tail(label);
 
    for (unsigned i = 0; i < parameter_count; i++) {
       ir_variable *var = new ir_variable(parameter_type, names[i]);
 
       var->mode = ir_var_in;
-      parameters->push_tail(var);
+      signature->parameters.push_tail(var);
 
       var = new ir_variable(parameter_type, names[i]);
 
       var->mode = ir_var_in;
-      instructions->push_tail(var);
+      signature->body.push_tail(var);
 
       declarations[i] = var;
    }
 
    ir_variable *retval = new ir_variable(type, "__retval");
-   instructions->push_tail(retval);
+   signature->body.push_tail(retval);
 
    declarations[16] = retval;
    return label;
@@ -453,11 +454,11 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
       f->add_signature(sig);
 
       sig->definition =
-	 generate_constructor_intro(& types[i], 1, & sig->parameters,
+	 generate_constructor_intro(& types[i], 1, sig,
 				    instructions, declarations);
 
       if (types[i].is_vector()) {
-	 generate_vec_body_from_scalar(instructions, declarations);
+	 generate_vec_body_from_scalar(&sig->body, declarations);
 
 	 ir_function_signature *const vec_sig =
 	    new ir_function_signature(& types[i]);
@@ -465,13 +466,13 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 
 	 vec_sig->definition =
 	    generate_constructor_intro(& types[i], types[i].vector_elements,
-				       & vec_sig->parameters, instructions,
+				       vec_sig, instructions,
 				       declarations);
-	 generate_vec_body_from_N_scalars(instructions, declarations);
+	 generate_vec_body_from_N_scalars(&sig->body, declarations);
       } else {
 	 assert(types[i].is_matrix());
 
-	 generate_mat_body_from_scalar(instructions, declarations);
+	 generate_mat_body_from_scalar(&sig->body, declarations);
 
 	 ir_function_signature *const mat_sig =
 	    new ir_function_signature(& types[i]);
@@ -481,7 +482,7 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 	    generate_constructor_intro(& types[i],
 				       (types[i].vector_elements
 					* types[i].matrix_columns),
-				       & mat_sig->parameters, instructions,
+				       mat_sig, instructions,
 				       declarations);
 	 generate_mat_body_from_N_scalars(instructions, declarations);
       }

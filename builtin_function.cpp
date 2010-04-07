@@ -216,7 +216,7 @@ generate_function_instance(ir_function *f,
    ir_function_signature *const sig = new ir_function_signature(type);
    f->add_signature(sig);
 
-   ir_label *const label = new ir_label(name);
+   ir_label *const label = new ir_label(name, sig);
    instructions->push_tail(label);
    sig->definition = label;
    static const char *arg_names[] = {
@@ -234,16 +234,16 @@ generate_function_instance(ir_function *f,
 
       var = new ir_variable(type, arg_names[i]);
       var->mode = ir_var_in;
-      instructions->push_tail(var);
+      sig->body.push_tail(var);
       declarations[i] = var;
    }
 
    ir_variable *retval = new ir_variable(ret_type, "__retval");
-   instructions->push_tail(retval);
+   sig->body.push_tail(retval);
 
    declarations[16] = retval;
 
-   generate(instructions, declarations, type);
+   generate(&sig->body, declarations, type);
 }
 
 void
