@@ -71,6 +71,25 @@ _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
 }
 
 
+void
+_mesa_glsl_warning(const YYLTYPE *locp, const _mesa_glsl_parse_state *state,
+		   const char *fmt, ...)
+{
+   char buf[1024];
+   int len;
+   va_list ap;
+
+   len = snprintf(buf, sizeof(buf), "%u:%u(%u): warning: ",
+		  locp->source, locp->first_line, locp->first_column);
+
+   va_start(ap, fmt);
+   vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
+   va_end(ap);
+
+   printf("%s\n", buf);
+}
+
+
 bool
 _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 			     const char *behavior, YYLTYPE *behavior_locp,
