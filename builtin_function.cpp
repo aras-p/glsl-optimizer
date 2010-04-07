@@ -311,12 +311,13 @@ generate_dot(exec_list *instructions,
 		ir_variable **declarations,
 		const glsl_type *type)
 {
-   ir_dereference *const arg = new ir_dereference(declarations[0]);
+   ir_dereference *const arg0 = new ir_dereference(declarations[0]);
+   ir_dereference *const arg1 = new ir_dereference(declarations[1]);
    ir_rvalue *result;
 
    (void)type;
 
-   result = new ir_expression(ir_binop_dot, glsl_type::float_type, arg, arg);
+   result = new ir_expression(ir_binop_dot, glsl_type::float_type, arg0, arg1);
 
    ir_instruction *inst = new ir_return(result);
    instructions->push_tail(inst);
@@ -335,13 +336,13 @@ generate_dot_functions(glsl_symbol_table *symtab, exec_list *instructions)
    bool added = symtab->add_function(name, f);
    assert(added);
 
-   generate_function_instance(f, name, instructions, 1, generate_dot,
+   generate_function_instance(f, name, instructions, 2, generate_dot,
 			      float_type, float_type);
-   generate_function_instance(f, name, instructions, 1, generate_dot,
+   generate_function_instance(f, name, instructions, 2, generate_dot,
 			      float_type, vec2_type);
-   generate_function_instance(f, name, instructions, 1, generate_dot,
+   generate_function_instance(f, name, instructions, 2, generate_dot,
 			      float_type, vec3_type);
-   generate_function_instance(f, name, instructions, 1, generate_dot,
+   generate_function_instance(f, name, instructions, 2, generate_dot,
 			      float_type, vec4_type);
 }
 
