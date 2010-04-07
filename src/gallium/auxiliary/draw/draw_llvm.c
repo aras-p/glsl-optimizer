@@ -666,13 +666,13 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 
    LLVMRunFunctionPassManager(llvm->pass, variant->function);
 
-   if (1) {
+   if (0) {
       LLVMDumpValue(variant->function);
       debug_printf("\n");
    }
    variant->jit_func = (draw_jit_vert_func)LLVMGetPointerToGlobal(llvm->draw->engine, variant->function);
 
-   if (1)
+   if (0)
       lp_disassemble(variant->jit_func);
 }
 
