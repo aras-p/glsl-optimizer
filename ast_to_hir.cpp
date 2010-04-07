@@ -1306,11 +1306,12 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (qual->centroid)
       var->centroid = 1;
 
-   if (qual->attribute && state->target == fragment_shader) {
+   if (qual->attribute && state->target != vertex_shader) {
       var->type = glsl_type::error_type;
       _mesa_glsl_error(loc, state,
 		       "`attribute' variables may not be declared in the "
-		       "fragment shader");
+		       "%s shader",
+		       _mesa_glsl_shader_target_name(state->target));
    }
 
    /* From page 25 (page 31 of the PDF) of the GLSL 1.10 spec:
@@ -1590,8 +1591,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	 if ((var->mode == ir_var_in) && (state->current_function == NULL)) {
 	    _mesa_glsl_error(& initializer_loc, state,
 			     "cannot initialize %s shader input / %s",
-			     (state->target == vertex_shader)
-			     ? "vertex" : "fragment",
+			     _mesa_glsl_shader_target_name(state->target),
 			     (state->target == vertex_shader)
 			     ? "attribute" : "varying");
 	 }
