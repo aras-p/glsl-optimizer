@@ -7,10 +7,7 @@
 #include "gallivm/lp_bld_interp.h"
 #include "gallivm/lp_bld_struct.h"
 #include "gallivm/lp_bld_type.h"
-#include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_debug.h"
-#include "gallivm/lp_bld_tgsi.h"
-#include "gallivm/lp_bld_printf.h"
 
 #include "util/u_memory.h"
 #include "pipe/p_state.h"

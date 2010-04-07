@@ -35,8 +35,6 @@
 #include "draw/draw_gs.h"
 #include "draw/draw_llvm.h"
 
-#include "translate/translate.h"
-
 
 struct llvm_middle_end {
    struct draw_pt_middle_end base;
