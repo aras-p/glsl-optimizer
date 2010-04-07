@@ -111,8 +111,6 @@ PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED , plain, 1, 1, f32,  u8  , x24 ,     , xy__,
 # http://www.fourcc.org/yuv.php#UYVY
 PIPE_FORMAT_UYVY                 , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, yuv
 # http://www.fourcc.org/yuv.php#YUYV (a.k.a http://www.fourcc.org/yuv.php#YUY2)
-# XXX: u_tile.c's ycbcr_get_tile_rgba actually interprets it as VYUY but the 
-# intent should be to match D3DFMT_YUY2
 PIPE_FORMAT_YUYV                 , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, yuv
 # same subsampling but with rgb channels
 PIPE_FORMAT_R8G8_B8G8_UNORM      , subsampled, 2, 1, x32 ,     ,     ,     , xyz1, rgb
