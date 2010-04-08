@@ -15,7 +15,6 @@
 
 #include "util/u_cpu_detect.h"
 #include "util/u_string.h"
-#include "tgsi/tgsi_dump.h"
 
 #include <llvm-c/Transforms/Scalar.h>
 
