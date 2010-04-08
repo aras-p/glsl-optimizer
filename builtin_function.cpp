@@ -300,6 +300,145 @@ make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
 }
 
 static void
+generate_vec_compare(exec_list *instructions,
+		     ir_variable **declarations,
+		     const glsl_type *type,
+		     enum ir_expression_operation op)
+{
+   ir_dereference *const x = new ir_dereference(declarations[0]);
+   ir_dereference *const y = new ir_dereference(declarations[1]);
+   ir_variable *temp;
+   const glsl_type *return_type;
+   int i;
+
+   return_type = glsl_type::get_instance(GLSL_TYPE_BOOL,
+					 type->vector_elements, 1);
+   temp = new ir_variable(return_type, "temp");
+
+   for (i = 0; i < type->vector_elements; i++) {
+      ir_assignment *assign;
+      ir_expression *compare;
+
+      compare = new ir_expression(op,
+				  glsl_type::get_instance(type->base_type,
+							  1, 1),
+				  new ir_swizzle(x, i, 0, 0, 0, 1),
+				  new ir_swizzle(y, i, 0, 0, 0, 1));
+      assign = new ir_assignment(new ir_swizzle(new ir_dereference(temp),
+						i, 0, 0, 0, 1),
+				 compare, NULL);
+      instructions->push_tail(assign);
+   }
+   ir_instruction *inst = new ir_return(new ir_dereference(temp));
+   instructions->push_tail(inst);
+}
+
+static void
+generate_lessThan(exec_list *instructions,
+		  ir_variable **declarations,
+		  const glsl_type *type)
+{
+   generate_vec_compare(instructions, declarations, type, ir_binop_less);
+}
+
+static void
+generate_lessThanEqual(exec_list *instructions,
+		       ir_variable **declarations,
+		       const glsl_type *type)
+{
+   generate_vec_compare(instructions, declarations, type, ir_binop_lequal);
+}
+
+static void
+generate_greaterThan(exec_list *instructions,
+		     ir_variable **declarations,
+		     const glsl_type *type)
+{
+   generate_vec_compare(instructions, declarations, type, ir_binop_greater);
+}
+
+static void
+generate_greaterThanEqual(exec_list *instructions,
+			  ir_variable **declarations,
+			  const glsl_type *type)
+{
+   generate_vec_compare(instructions, declarations, type, ir_binop_gequal);
+}
+
+static void
+generate_equal(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   generate_vec_compare(instructions, declarations, type, ir_binop_equal);
+}
+
+static void
+generate_notEqual(exec_list *instructions,
+		  ir_variable **declarations,
+		  const glsl_type *type)
+{
+   generate_vec_compare(instructions, declarations, type, ir_binop_nequal);
+}
+
+static void
+generate_vec_compare_function(glsl_symbol_table *symtab,
+			      exec_list *instructions,
+			      const char *name,
+			      void (*generate)(exec_list *instructions,
+					       ir_variable **declarations,
+					       const glsl_type *type),
+			      bool do_bool)
+{
+   ir_function *const f = new ir_function(name);
+   const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
+   const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
+   const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
+   const glsl_type *ivec2_type = glsl_type::get_instance(GLSL_TYPE_INT, 2, 1);
+   const glsl_type *ivec3_type = glsl_type::get_instance(GLSL_TYPE_INT, 3, 1);
+   const glsl_type *ivec4_type = glsl_type::get_instance(GLSL_TYPE_INT, 4, 1);
+   const glsl_type *uvec2_type = glsl_type::get_instance(GLSL_TYPE_UINT, 2, 1);
+   const glsl_type *uvec3_type = glsl_type::get_instance(GLSL_TYPE_UINT, 3, 1);
+   const glsl_type *uvec4_type = glsl_type::get_instance(GLSL_TYPE_UINT, 4, 1);
+   const glsl_type *bvec2_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 2, 1);
+   const glsl_type *bvec3_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 3, 1);
+   const glsl_type *bvec4_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 4, 1);
+
+   bool added = symtab->add_function(name, f);
+   assert(added);
+
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec2_type, vec2_type);
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec3_type, vec3_type);
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec4_type, vec4_type);
+
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec2_type, ivec2_type);
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec3_type, ivec3_type);
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec4_type, ivec4_type);
+
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec2_type, uvec2_type);
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec3_type, uvec3_type);
+   generate_function_instance(f, name, instructions, 2, generate,
+			      bvec4_type, uvec4_type);
+
+   if (do_bool) {
+      generate_function_instance(f, name, instructions, 2, generate,
+				 bvec2_type, bvec2_type);
+      generate_function_instance(f, name, instructions, 2, generate,
+				 bvec3_type, bvec3_type);
+      generate_function_instance(f, name, instructions, 2, generate,
+				 bvec4_type, bvec4_type);
+   }
+}
+
+static void
 generate_length(exec_list *instructions,
 		ir_variable **declarations,
 		const glsl_type *type)
@@ -633,12 +772,20 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: reflect() */
    /* FINISHME: refract() */
    /* FINISHME: matrixCompMult() */
-   /* FINISHME: lessThan() */
-   /* FINISHME: lessThanEqual() */
-   /* FINISHME: greaterThan() */
-   /* FINISHME: greaterThanEqual() */
-   /* FINISHME: equal() */
-   /* FINISHME: notEqual() */
+   generate_vec_compare_function(symtab, instructions,
+				 "lessThan", generate_lessThan, false);
+   generate_vec_compare_function(symtab, instructions,
+				 "lessThanEqual", generate_lessThanEqual,
+				 false);
+   generate_vec_compare_function(symtab, instructions,
+				 "greaterThan", generate_greaterThan, false);
+   generate_vec_compare_function(symtab, instructions,
+				 "greaterThanEqual", generate_greaterThanEqual,
+				 false);
+   generate_vec_compare_function(symtab, instructions,
+				 "equal", generate_equal, false);
+   generate_vec_compare_function(symtab, instructions,
+				 "notEqual", generate_notEqual, false);
    generate_any_functions(symtab, instructions);
    generate_all_functions(symtab, instructions);
    generate_not_functions(symtab, instructions);
