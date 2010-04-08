@@ -662,7 +662,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
                                                  velem->vertex_buffer_index,
                                                  0);
             LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr,
-                                           &vb_index, 0, "");
+                                           &vb_index, 1, "");
             generate_fetch(builder, vbuffers_ptr,
                            &aos_attribs[j][i], velem, vb, true_index);
          }
