@@ -247,8 +247,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
    GLuint buf;
    all = (cw == fb->Width && ch == fb->Height);
 
-   intel_prepare_render(intel);
-
    /* Loop over all renderbuffers */
    for (buf = 0; buf < BUFFER_COUNT && mask; buf++) {
       const GLbitfield bufBit = 1 << buf;

@@ -90,6 +90,10 @@ intelClear(GLcontext *ctx, GLbitfield mask)
       tri_mask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
    }
 
+   /* Make sure we have up to date buffers before we start looking at
+    * the tiling bits to determine how to clear. */
+   intel_prepare_render(intel);
+
    /* HW stencil */
    if (mask & BUFFER_BIT_STENCIL) {
       const struct intel_region *stencilRegion
