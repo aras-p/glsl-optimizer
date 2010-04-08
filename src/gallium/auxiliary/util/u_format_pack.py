@@ -657,22 +657,18 @@ def generate(formats):
         if is_format_supported(format):
             generate_format_type(format)
 
-    channel = Channel(FLOAT, False, 32)
-    native_type = 'float'
-    suffix = 'float'
-
-    for format in formats:
         if not is_format_hand_written(format):
+            channel = Channel(FLOAT, False, 32)
+            native_type = 'float'
+            suffix = 'float'
+
             generate_format_unpack(format, channel, native_type, suffix)
             generate_format_pack(format, channel, native_type, suffix)
             generate_format_fetch(format, channel, native_type, suffix)
 
-    channel = Channel(UNSIGNED, True, 8)
-    native_type = 'uint8_t'
-    suffix = '8unorm'
+            channel = Channel(UNSIGNED, True, 8)
+            native_type = 'uint8_t'
+            suffix = '8unorm'
 
-    for format in formats:
-        if not is_format_hand_written(format):
             generate_format_unpack(format, channel, native_type, suffix)
             generate_format_pack(format, channel, native_type, suffix)
-
