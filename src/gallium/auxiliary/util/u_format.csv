@@ -72,11 +72,13 @@ PIPE_FORMAT_B5G5R5A1_UNORM        , plain, 1, 1, un5 , un5 , un5 , un1 , zyxw, r
 PIPE_FORMAT_B4G4R4A4_UNORM        , plain, 1, 1, un4 , un4 , un4 , un4 , zyxw, rgb
 PIPE_FORMAT_B5G6R5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
 PIPE_FORMAT_R10G10B10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , xyzw, rgb
+PIPE_FORMAT_B10G10R10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , zyxw, rgb
 
 # Luminance/Intensity/Alpha formats
 PIPE_FORMAT_L8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , xxx1, rgb
 PIPE_FORMAT_A8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , 000x, rgb
 PIPE_FORMAT_I8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , xxxx, rgb
+PIPE_FORMAT_L4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , xxxy, rgb
 PIPE_FORMAT_L8A8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , xxxy, rgb
 PIPE_FORMAT_L16_UNORM             , plain, 1, 1, un16,     ,     ,     , xxx1, rgb
 
@@ -94,6 +96,7 @@ PIPE_FORMAT_X8R8G8B8_SRGB         , plain, 1, 1, x8  , un8 , un8 , un8 , yzw1, s
 
 # Mixed-sign formats (typically used for bump map textures)
 PIPE_FORMAT_R8SG8SB8UX8U_NORM     , plain, 1, 1, sn8 , sn8 , un8 , x8  , xyz1, rgb
+PIPE_FORMAT_R10SG10SB10SA2U_NORM  , plain, 1, 1, sn10, sn10, sn10, un2 , xyzw, rgb
 PIPE_FORMAT_R5SG5SB6U_NORM        , plain, 1, 1, sn5 , sn5 , un6 ,     , xyz1, rgb
 
 # Depth-stencil formats
@@ -121,6 +124,8 @@ PIPE_FORMAT_R10G10B10A2_USCALED   , plain,      1,  1, u10 , u10 , u10 , u2  , x
 PIPE_FORMAT_R11G11B10_FLOAT       , plain,      1,  1, f11 , f11 , f10 ,     , xyz1, rgb
 PIPE_FORMAT_R9G9B9E5_FLOAT        , other,      1,  1, x32 ,     ,     ,     , xyz1, rgb
 PIPE_FORMAT_R1_UNORM              , other,      8,  1, x8  ,     ,     ,     , x001, rgb
+# A.k.a. D3DFMT_CxV8U8
+PIPE_FORMAT_R8G8Bx_SNORM          , other,      1,  1, sn8 , sn8 ,     ,     , xyz1, rgb
 
 # Compressed formats
 # - http://en.wikipedia.org/wiki/S3_Texture_Compression
@@ -171,10 +176,6 @@ PIPE_FORMAT_R32_SSCALED           , plain, 1, 1, s32 ,     ,     ,     , x001, r
 PIPE_FORMAT_R32G32_SSCALED        , plain, 1, 1, s32 , s32 ,     ,     , xy01, rgb
 PIPE_FORMAT_R32G32B32_SSCALED     , plain, 1, 1, s32 , s32 , s32 ,     , xyz1, rgb
 PIPE_FORMAT_R32G32B32A32_SSCALED  , plain, 1, 1, s32 , s32 , s32 , s32 , xyzw, rgb
-PIPE_FORMAT_R32_FIXED             , plain, 1, 1, h32 ,     ,     ,     , x001, rgb
-PIPE_FORMAT_R32G32_FIXED          , plain, 1, 1, h32 , h32 ,     ,     , xy01, rgb
-PIPE_FORMAT_R32G32B32_FIXED       , plain, 1, 1, h32 , h32 , h32 ,     , xyz1, rgb
-PIPE_FORMAT_R32G32B32A32_FIXED    , plain, 1, 1, h32 , h32 , h32 , h32 , xyzw, rgb
 PIPE_FORMAT_R16_FLOAT             , plain, 1, 1, f16 ,     ,     ,     , x001, rgb
 PIPE_FORMAT_R16G16_FLOAT          , plain, 1, 1, f16 , f16 ,     ,     , xy01, rgb
 PIPE_FORMAT_R16G16B16_FLOAT       , plain, 1, 1, f16 , f16 , f16 ,     , xyz1, rgb
@@ -211,3 +212,18 @@ PIPE_FORMAT_R8_SSCALED            , plain, 1, 1, s8  ,     ,     ,     , x001, r
 PIPE_FORMAT_R8G8_SSCALED          , plain, 1, 1, s8  , s8  ,     ,     , xy01, rgb
 PIPE_FORMAT_R8G8B8_SSCALED        , plain, 1, 1, s8  , s8  , s8  ,     , xyz1, rgb
 PIPE_FORMAT_R8G8B8A8_SSCALED      , plain, 1, 1, s8  , s8  , s8  , s8  , xyzw, rgb
+
+# GL-specific vertex buffer element formats
+# A.k.a. GL_FIXED
+PIPE_FORMAT_R32_FIXED             , plain, 1, 1, h32 ,     ,     ,     , x001, rgb
+PIPE_FORMAT_R32G32_FIXED          , plain, 1, 1, h32 , h32 ,     ,     , xy01, rgb
+PIPE_FORMAT_R32G32B32_FIXED       , plain, 1, 1, h32 , h32 , h32 ,     , xyz1, rgb
+PIPE_FORMAT_R32G32B32A32_FIXED    , plain, 1, 1, h32 , h32 , h32 , h32 , xyzw, rgb
+
+# D3D9-specific vertex buffer element formats
+# See also:
+# - http://msdn.microsoft.com/en-us/library/bb172533.aspx
+# A.k.a. D3DDECLTYPE_UDEC3
+PIPE_FORMAT_R10G10B10X2_USCALED   , plain, 1, 1, u10 , u10 , u10  , x2 , xyz1, rgb
+# A.k.a. D3DDECLTYPE_DEC3N
+PIPE_FORMAT_R10G10B10X2_SNORM     , plain, 1, 1, sn10, sn10, sn10 , x2 , xyz1, rgb

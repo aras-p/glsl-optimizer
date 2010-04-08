@@ -641,13 +641,14 @@ def generate_format_fetch(format, dst_channel, dst_native_type, dst_suffix):
 
 
 def is_format_hand_written(format):
-    return format.layout in ('s3tc', 'subsampled')
+    return format.layout in ('s3tc', 'subsampled', 'other')
 
 def generate(formats):
     print
     print '#include "pipe/p_compiler.h"'
     print '#include "u_math.h"'
     print '#include "u_format.h"'
+    print '#include "u_format_other.h"'
     print '#include "u_format_srgb.h"'
     print '#include "u_format_yuv.h"'
     print '#include "u_half.h"'
