@@ -360,6 +360,206 @@ generate_dot_functions(glsl_symbol_table *symtab, exec_list *instructions)
 			      float_type, vec4_type);
 }
 
+static void
+generate_any_bvec2(exec_list *instructions,
+		   ir_variable **declarations,
+		   const glsl_type *type)
+{
+   ir_dereference *const arg0 = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   (void)type;
+
+   result = new ir_expression(ir_binop_logic_or, glsl_type::bool_type,
+			      new ir_swizzle(arg0, 0, 0, 0, 0, 1),
+			      new ir_swizzle(arg0, 1, 0, 0, 0, 1));
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+static void
+generate_any_bvec3(exec_list *instructions,
+		   ir_variable **declarations,
+		   const glsl_type *type)
+{
+   ir_dereference *const arg0 = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   (void)type;
+
+   result = new ir_expression(ir_binop_logic_or, glsl_type::bool_type,
+			      new ir_swizzle(arg0, 0, 0, 0, 0, 1),
+			      new ir_swizzle(arg0, 1, 0, 0, 0, 1));
+   result = new ir_expression(ir_binop_logic_or, glsl_type::bool_type,
+			      result,
+			      new ir_swizzle(arg0, 2, 0, 0, 0, 1));
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+static void
+generate_any_bvec4(exec_list *instructions,
+		   ir_variable **declarations,
+		   const glsl_type *type)
+{
+   ir_dereference *const arg0 = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   (void)type;
+
+   result = new ir_expression(ir_binop_logic_or, glsl_type::bool_type,
+			      new ir_swizzle(arg0, 0, 0, 0, 0, 1),
+			      new ir_swizzle(arg0, 1, 0, 0, 0, 1));
+   result = new ir_expression(ir_binop_logic_or, glsl_type::bool_type,
+			      result,
+			      new ir_swizzle(arg0, 2, 0, 0, 0, 1));
+   result = new ir_expression(ir_binop_logic_or, glsl_type::bool_type,
+			      result,
+			      new ir_swizzle(arg0, 3, 0, 0, 0, 1));
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+static void
+generate_all_bvec2(exec_list *instructions,
+		   ir_variable **declarations,
+		   const glsl_type *type)
+{
+   ir_dereference *const arg0 = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   (void)type;
+
+   result = new ir_expression(ir_binop_logic_and, glsl_type::bool_type,
+			      new ir_swizzle(arg0, 0, 0, 0, 0, 1),
+			      new ir_swizzle(arg0, 1, 0, 0, 0, 1));
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+static void
+generate_all_bvec3(exec_list *instructions,
+		   ir_variable **declarations,
+		   const glsl_type *type)
+{
+   ir_dereference *const arg0 = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   (void)type;
+
+   result = new ir_expression(ir_binop_logic_and, glsl_type::bool_type,
+			      new ir_swizzle(arg0, 0, 0, 0, 0, 1),
+			      new ir_swizzle(arg0, 1, 0, 0, 0, 1));
+   result = new ir_expression(ir_binop_logic_and, glsl_type::bool_type,
+			      result,
+			      new ir_swizzle(arg0, 2, 0, 0, 0, 1));
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+static void
+generate_all_bvec4(exec_list *instructions,
+		   ir_variable **declarations,
+		   const glsl_type *type)
+{
+   ir_dereference *const arg0 = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   (void)type;
+
+   result = new ir_expression(ir_binop_logic_and, glsl_type::bool_type,
+			      new ir_swizzle(arg0, 0, 0, 0, 0, 1),
+			      new ir_swizzle(arg0, 1, 0, 0, 0, 1));
+   result = new ir_expression(ir_binop_logic_and, glsl_type::bool_type,
+			      result,
+			      new ir_swizzle(arg0, 2, 0, 0, 0, 1));
+   result = new ir_expression(ir_binop_logic_and, glsl_type::bool_type,
+			      result,
+			      new ir_swizzle(arg0, 3, 0, 0, 0, 1));
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+static void
+generate_not(exec_list *instructions,
+	     ir_variable **declarations,
+	     const glsl_type *type)
+{
+   ir_dereference *const arg0 = new ir_dereference(declarations[0]);
+   ir_rvalue *result;
+
+   result = new ir_expression(ir_unop_logic_not, type, arg0, NULL);
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+void
+generate_any_functions(glsl_symbol_table *symtab, exec_list *instructions)
+{
+   const char *name = "any";
+   ir_function *const f = new ir_function(name);
+   const glsl_type *bvec2_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 2, 1);
+   const glsl_type *bvec3_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 3, 1);
+   const glsl_type *bvec4_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 4, 1);
+
+   bool added = symtab->add_function(name, f);
+   assert(added);
+
+   generate_function_instance(f, name, instructions, 1, generate_any_bvec2,
+			      glsl_type::bool_type, bvec2_type);
+   generate_function_instance(f, name, instructions, 1, generate_any_bvec3,
+			      glsl_type::bool_type, bvec3_type);
+   generate_function_instance(f, name, instructions, 1, generate_any_bvec4,
+			      glsl_type::bool_type, bvec4_type);
+}
+
+void
+generate_all_functions(glsl_symbol_table *symtab, exec_list *instructions)
+{
+   const char *name = "all";
+   ir_function *const f = new ir_function(name);
+   const glsl_type *bvec2_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 2, 1);
+   const glsl_type *bvec3_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 3, 1);
+   const glsl_type *bvec4_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 4, 1);
+
+   bool added = symtab->add_function(name, f);
+   assert(added);
+
+   generate_function_instance(f, name, instructions, 1, generate_all_bvec2,
+			      glsl_type::bool_type, bvec2_type);
+   generate_function_instance(f, name, instructions, 1, generate_all_bvec3,
+			      glsl_type::bool_type, bvec3_type);
+   generate_function_instance(f, name, instructions, 1, generate_all_bvec4,
+			      glsl_type::bool_type, bvec4_type);
+}
+
+void
+generate_not_functions(glsl_symbol_table *symtab, exec_list *instructions)
+{
+   const char *name = "not";
+   ir_function *const f = new ir_function(name);
+   const glsl_type *bvec2_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 2, 1);
+   const glsl_type *bvec3_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 3, 1);
+   const glsl_type *bvec4_type = glsl_type::get_instance(GLSL_TYPE_BOOL, 4, 1);
+
+   bool added = symtab->add_function(name, f);
+   assert(added);
+
+   generate_function_instance(f, name, instructions, 1, generate_not,
+			      bvec2_type, bvec2_type);
+   generate_function_instance(f, name, instructions, 1, generate_not,
+			      bvec3_type, bvec3_type);
+   generate_function_instance(f, name, instructions, 1, generate_not,
+			      bvec4_type, bvec4_type);
+}
+
 void
 generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
 {
@@ -418,9 +618,9 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: greaterThanEqual() */
    /* FINISHME: equal() */
    /* FINISHME: notEqual() */
-   /* FINISHME: any() */
-   /* FINISHME: all() */
-   /* FINISHME: not() */
+   generate_any_functions(symtab, instructions);
+   generate_all_functions(symtab, instructions);
+   generate_not_functions(symtab, instructions);
    /* FINISHME: texture*() */
    /* FINISHME: shadow*() */
    /* FINISHME: dFd[xy]() */
