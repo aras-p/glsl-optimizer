@@ -44,7 +44,6 @@
 #include "dri_context.h"
 #include "dri_drawable.h"
 #include "dri1_helper.h"
-#include "drisw.h"
 
 DEBUG_GET_ONCE_BOOL_OPTION(swrast_no_present, "SWRAST_NO_PRESENT", FALSE);
 static boolean swrast_no_present = FALSE;
@@ -133,7 +132,7 @@ drisw_copy_to_front(__DRIdrawable * dPriv,
  * Backend functions for st_framebuffer interface and swap_buffers.
  */
 
-void
+static void
 drisw_swap_buffers(__DRIdrawable *dPriv)
 {
    struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
@@ -250,7 +249,7 @@ static struct drisw_loader_funcs drisw_lf = {
    .put_image = drisw_put_image
 };
 
-const __DRIconfig **
+static const __DRIconfig **
 drisw_init_screen(__DRIscreen * sPriv)
 {
    const __DRIconfig **configs;
@@ -285,6 +284,24 @@ fail:
    FREE(screen);
    return NULL;
 }
+
+/**
+ * DRI driver virtual function table.
+ *
+ * DRI versions differ in their implementation of init_screen and swap_buffers.
+ */
+const struct __DriverAPIRec driDriverAPI = {
+   .DestroyScreen = dri_destroy_screen,
+   .CreateContext = dri_create_context,
+   .DestroyContext = dri_destroy_context,
+   .CreateBuffer = dri_create_buffer,
+   .DestroyBuffer = dri_destroy_buffer,
+   .MakeCurrent = dri_make_current,
+   .UnbindContext = dri_unbind_context,
+
+   .InitScreen = drisw_init_screen,
+   .SwapBuffers = drisw_swap_buffers,
+};
 
 /* This is the table of extensions that the loader will dlsym() for. */
 PUBLIC const __DRIextension *__driDriverExtensions[] = {

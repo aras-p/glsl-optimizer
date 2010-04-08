@@ -38,9 +38,6 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri2.h"
-
-#include "GL/internal/dri_interface.h"
 
 /**
  * DRI2 flush extension.
@@ -497,7 +494,7 @@ static const __DRIextension *dri_screen_extensions[] = {
  *
  * Returns the __GLcontextModes supported by this driver.
  */
-const __DRIconfig **
+static const __DRIconfig **
 dri2_init_screen(__DRIscreen * sPriv)
 {
    const __DRIconfig **configs;
@@ -533,6 +530,30 @@ fail:
    FREE(screen);
    return NULL;
 }
+
+/**
+ * DRI driver virtual function table.
+ *
+ * DRI versions differ in their implementation of init_screen and swap_buffers.
+ */
+const struct __DriverAPIRec driDriverAPI = {
+   .DestroyScreen = dri_destroy_screen,
+   .CreateContext = dri_create_context,
+   .DestroyContext = dri_destroy_context,
+   .CreateBuffer = dri_create_buffer,
+   .DestroyBuffer = dri_destroy_buffer,
+   .MakeCurrent = dri_make_current,
+   .UnbindContext = dri_unbind_context,
+
+   .GetSwapInfo = NULL,
+   .GetDrawableMSC = NULL,
+   .WaitForMSC = NULL,
+   .InitScreen2 = dri2_init_screen,
+
+   .InitScreen = NULL,
+   .SwapBuffers = NULL,
+   .CopySubBuffer = NULL,
+};
 
 /* This is the table of extensions that the loader will dlsym() for. */
 PUBLIC const __DRIextension *__driDriverExtensions[] = {

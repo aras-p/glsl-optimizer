@@ -132,6 +132,9 @@ dri_init_screen_helper(struct dri_screen *screen,
 void
 dri_destroy_screen_helper(struct dri_screen * screen);
 
+void
+dri_destroy_screen(__DRIscreen * sPriv);
+
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
