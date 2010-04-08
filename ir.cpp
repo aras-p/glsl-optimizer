@@ -108,6 +108,70 @@ ir_expression::get_num_operands(ir_expression_operation op)
    return num_operands[op];
 }
 
+static const char *const operator_strs[] = {
+   "~",
+   "!",
+   "-",
+   "abs",
+   "rcp",
+   "rsq",
+   "sqrt",
+   "exp",
+   "log",
+   "exp2",
+   "log2",
+   "f2i",
+   "i2f",
+   "f2b",
+   "b2f",
+   "i2b",
+   "b2i",
+   "u2f",
+   "trunc",
+   "ceil",
+   "floor",
+   "+",
+   "-",
+   "*",
+   "/",
+   "%",
+   "<",
+   ">",
+   "<=",
+   ">=",
+   "==",
+   "!=",
+   "<<",
+   ">>",
+   "&",
+   "^",
+   "|",
+   "&&",
+   "^^",
+   "||",
+   "dot",
+   "min",
+   "max",
+   "pow",
+};
+
+const char *ir_expression::operator_string()
+{
+   assert((unsigned int) operation <=
+	  sizeof(operator_strs) / sizeof(operator_strs[0]));
+   return operator_strs[operation];
+}
+
+ir_expression_operation
+ir_expression::get_operator(const char *str)
+{
+   const int operator_count = sizeof(operator_strs) / sizeof(operator_strs[0]);
+   for (int op = 0; op < operator_count; op++) {
+      if (strcmp(str, operator_strs[op]) == 0)
+	 return (ir_expression_operation) op;
+   }
+   return (ir_expression_operation) -1;
+}
 
 ir_constant::ir_constant(const struct glsl_type *type, const void *data)
 {

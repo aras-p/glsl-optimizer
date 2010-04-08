@@ -101,61 +101,11 @@ void ir_print_visitor::visit(ir_function *ir)
 
 void ir_print_visitor::visit(ir_expression *ir)
 {
-   static const char *const operators[] = {
-      "~",
-      "!",
-      "-",
-      "abs",
-      "rcp",
-      "rsq",
-      "sqrt",
-      "exp",
-      "log",
-      "exp2",
-      "log2",
-      "f2i",
-      "i2f",
-      "f2b",
-      "b2f",
-      "i2b",
-      "b2i",
-      "u2f",
-      "trunc",
-      "ceil",
-      "floor",
-      "+",
-      "-",
-      "*",
-      "/",
-      "%",
-      "<",
-      ">",
-      "<=",
-      ">=",
-      "==",
-      "!=",
-      "<<",
-      ">>",
-      "&",
-      "^",
-      "|",
-      "&&",
-      "^^",
-      "||",
-      "dot",
-      "min",
-      "max",
-      "pow",
-   };
-
    printf("(expression ");
 
    print_type(ir->type);
 
-   assert((unsigned int)ir->operation <
-	  sizeof(operators) / sizeof(operators[0]));
-
-   printf(" %s ", operators[ir->operation]);
+   printf(" %s ", ir->operator_string());
 
    if (ir->operands[0])
       ir->operands[0]->accept(this);

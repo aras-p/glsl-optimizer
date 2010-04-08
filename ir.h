@@ -415,9 +415,9 @@ public:
    ir_rvalue *condition;
 };
 
-/* Update ir_expression::num_operands() and ir_print_visitor.cpp when
+/* Update ir_expression::num_operands() and operator_strs when
  * updating this list.
-*/
+ */
 enum ir_expression_operation {
    ir_unop_bit_not,
    ir_unop_logic_not,
@@ -497,6 +497,16 @@ public:
    {
       return get_num_operands(operation);
    }
+
+   /**
+    * Return a string representing this expression's operator.
+    */
+   const char *operator_string();
+
+   /**
+    * Do a reverse-lookup to translate the given string into an operator.
+    */
+   static ir_expression_operation get_operator(const char *);
 
    virtual void accept(ir_visitor *v)
    {
