@@ -188,6 +188,23 @@ generate_max(exec_list *instructions,
 }
 
 static void
+generate_clamp(exec_list *instructions,
+	       ir_variable **declarations,
+	       const glsl_type *type)
+{
+   ir_dereference *const x = new ir_dereference(declarations[0]);
+   ir_dereference *const minval = new ir_dereference(declarations[1]);
+   ir_dereference *const maxval = new ir_dereference(declarations[2]);
+   ir_rvalue *result;
+
+   result = new ir_expression(ir_binop_min, type, x, maxval);
+   result = new ir_expression(ir_binop_max, type, result, minval);
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+static void
 generate_mix_vec(exec_list *instructions,
 		 ir_variable **declarations,
 		 const glsl_type *type)
@@ -750,7 +767,7 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: min(x, float y) */
    make_gentype_function(symtab, instructions, "max", 2, generate_max);
    /* FINISHME: max(x, float y) */
-   /* FINISHME: clamp() */
+   make_gentype_function(symtab, instructions, "clamp", 3, generate_clamp);
    /* FINISHME: clamp() */
    make_gentype_function(symtab, instructions, "mix", 3, generate_mix_vec);
    /* FINISHME: mix() */
