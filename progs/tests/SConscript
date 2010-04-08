@@ -89,6 +89,7 @@ progs = [
     'scissor-viewport',
     'seccolor',
     'shader_api',
+    'stencilreaddraw',
     'stencil_twoside',
     'stencil_wrap',
     'stencilwrap',

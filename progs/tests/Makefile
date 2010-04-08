@@ -90,6 +90,7 @@ SOURCES = \
 	seccolor.c \
 	shader_api.c \
 	sharedtex.c \
+	stencilreaddraw.c \
 	stencil_twoside.c \
 	stencilwrap.c \
 	stencil_wrap.c \
