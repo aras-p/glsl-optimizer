@@ -40,7 +40,6 @@
 #include "lp_context.h"
 #include "lp_flush.h"
 #include "lp_perf.h"
-#include "lp_screen.h"
 #include "lp_state.h"
 #include "lp_surface.h"
 #include "lp_query.h"
