@@ -167,8 +167,6 @@ done
 
 gen_sampler_type "3D"     "GLSL_SAMPLER_DIM_3D"   0 0 "GLSL_TYPE_FLOAT"
 gen_sampler_type "Cube"   "GLSL_SAMPLER_DIM_CUBE" 0 0 "GLSL_TYPE_FLOAT"
-gen_sampler_type "2DRect" "GLSL_SAMPLER_DIM_RECT" 0 0 "GLSL_TYPE_FLOAT"
-gen_sampler_type "2DRect" "GLSL_SAMPLER_DIM_RECT" 1 0 "GLSL_TYPE_FLOAT"
 
 gen_footer
 
@@ -326,6 +324,16 @@ gen_sampler_type "Cube"   "GLSL_SAMPLER_DIM_CUBE" 0 0 "GLSL_TYPE_UINT"
 gen_footer
 echo ''
 echo 'const glsl_type *const glsl_type::uint_type = & builtin_130_types['$uint_index'];'
+echo '/*@}*/'
+
+echo
+echo '/** \name Sampler types added by GL_ARB_texture_rectangle'
+echo ' */'
+echo '/*@{*/'
+gen_header "ARB_texture_rectangle"
+gen_sampler_type "2DRect" "GLSL_SAMPLER_DIM_RECT" 0 0 "GLSL_TYPE_FLOAT"
+gen_sampler_type "2DRect" "GLSL_SAMPLER_DIM_RECT" 1 0 "GLSL_TYPE_FLOAT"
+gen_footer
 echo '/*@}*/'
 
 echo

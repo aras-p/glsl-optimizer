@@ -135,6 +135,9 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 	 state->ARB_draw_buffers_enable = (ext_mode != extension_disable);
 	 state->ARB_draw_buffers_warn = (ext_mode == extension_warn);
       }
+   } if (strcmp(name, "GL_ARB_texture_rectangle") == 0) {
+      state->ARB_texture_rectangle_enable = (ext_mode != extension_disable);
+      state->ARB_texture_rectangle_warn = (ext_mode == extension_warn);
    } else {
       unsupported = true;
    }
@@ -736,6 +739,7 @@ main(int argc, char **argv)
    state.error = false;
    state.temp_index = 0;
    state.loop_or_switch_nesting = NULL;
+   state.ARB_texture_rectangle_enable = true;
 
    _mesa_glsl_lexer_ctor(& state, shader, shader_len);
    _mesa_glsl_parse(& state);
