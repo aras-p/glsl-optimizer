@@ -15,7 +15,7 @@ ARCH_FLAGS = -mmmx -msse -msse2 -mstackrealign
 DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DHAVE_UDIS86
 
 # override -std=c99
-CFLAGS += -std=gnu99
+CFLAGS += -std=gnu99 -D__STDC_CONSTANT_MACROS
 
 LLVM_VERSION := $(shell llvm-config --version)
 
