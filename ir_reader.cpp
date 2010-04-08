@@ -27,21 +27,331 @@
 #include "glsl_types.h"
 #include "s_expression.h"
 
+static void ir_read_error(s_expression *expr, const char *fmt, ...);
+static glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
+static ir_rvalue *read_rvalue(_mesa_glsl_parse_state *, s_expression *);
+static ir_assignment *read_assignment(_mesa_glsl_parse_state *, s_list *);
+static ir_expression *read_expression(_mesa_glsl_parse_state *, s_list *);
+static ir_swizzle *read_swizzle(_mesa_glsl_parse_state *, s_list *);
+static ir_constant *read_constant(_mesa_glsl_parse_state *, s_list *);
+
 void
 _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
 		   const char *src)
 {
    s_expression *expr = s_expression::read_expression(src);
    if (expr == NULL) {
-      printf("couldn't parse S-Expression.");
+      ir_read_error(NULL, "couldn't parse S-Expression.");
       state->error = true;
       return;
    }
    printf("S-Expression:\n");
    expr->print();
-   printf("\n");
+   printf("\n-------------\n");
    
-   // FINISHME: actually read the IR.
-   state->error = true;
+   _mesa_glsl_initialize_types(state);
+   _mesa_glsl_initialize_variables(instructions, state);
+   _mesa_glsl_initialize_constructors(instructions, state);
+   _mesa_glsl_initialize_functions(instructions, state);
+
+   // FINISHME: Only reading rvalues...for testing.
+   ir_instruction *ir = read_rvalue(state, SX_AS_LIST(expr));
+   if (ir == NULL) {
+      ir_read_error(NULL, "No IR\n");
+      state->error = true;
+      return;
+   }
+   instructions->push_tail(ir);
 }
 
+static void
+ir_read_error(s_expression *expr, const char *fmt, ...)
+{
+   char buf[1024];
+   int len;
+   va_list ap;
+
+   // FIXME: state->error = true;
+
+   len = snprintf(buf, sizeof(buf), "error: ");
+
+   va_start(ap, fmt);
+   vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
+   va_end(ap);
+
+   printf("%s\n", buf);
+}
+
+static glsl_type *
+read_type(_mesa_glsl_parse_state *st, s_expression *expr)
+{
+   s_list *list = SX_AS_LIST(expr);
+   if (list != NULL) {
+      s_symbol *type_sym = SX_AS_SYMBOL(list->subexpressions.get_head());
+      if (type_sym == NULL) {
+	 ir_read_error(expr, "expected type (array (...)) or (struct (...))");
+	 return NULL;
+      }
+      if (strcmp(type_sym->value(), "array") == 0)
+	 assert(false); // FINISHME
+      if (strcmp(type_sym->value(), "struct") == 0)
+	 assert(false); // FINISHME
+   }
+   
+   s_symbol *type_sym = SX_AS_SYMBOL(expr);
+   if (type_sym == NULL) {
+      ir_read_error(expr, "expected <type> (symbol or list)");
+      return NULL;
+   }
+
+   glsl_type *type = st->symbols->get_type(type_sym->value());
+   if (type == NULL)
+      ir_read_error(expr, "invalid type: %s", type_sym->value());
+
+   return type;
+}
+
+static ir_rvalue *
+read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
+{
+   s_list *list = SX_AS_LIST(expr);
+   if (list == NULL || list->subexpressions.is_empty())
+      return NULL;
+
+   s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.get_head());
+   if (tag == NULL) {
+      ir_read_error(expr, "expected rvalue tag");
+      return NULL;
+   }
+
+   ir_rvalue *rvalue = NULL;
+   if (strcmp(tag->value(), "swiz") == 0)
+      rvalue = read_swizzle(st, list);
+   else if (strcmp(tag->value(), "assign") == 0)
+      rvalue = read_assignment(st, list);
+   else if (strcmp(tag->value(), "expression") == 0)
+      rvalue = read_expression(st, list);
+   // FINISHME: ir_call
+   // FINISHME: dereference
+   else if (strcmp(tag->value(), "constant") == 0)
+      rvalue = read_constant(st, list);
+   else
+      ir_read_error(expr, "unrecognized rvalue tag: %s", tag->value());
+
+   return rvalue;
+}
+
+static ir_assignment *
+read_assignment(_mesa_glsl_parse_state *st, s_list *list)
+{
+   if (list->length() != 4) {
+      ir_read_error(list, "expected (assign <condition> <lhs> <rhs>)");
+      return NULL;
+   }
+
+   s_expression *cond_expr = (s_expression*) list->subexpressions.head->next;
+   s_expression *lhs_expr  = (s_expression*) cond_expr->next;
+   s_expression *rhs_expr  = (s_expression*) lhs_expr->next;
+
+   // FINISHME: Deal with "true" condition
+   ir_rvalue *condition = read_rvalue(st, cond_expr);
+   if (condition == NULL) {
+      ir_read_error(list, "when reading condition of assignment");
+      return NULL;
+   }
+
+   ir_rvalue *lhs = read_rvalue(st, lhs_expr);
+   if (lhs == NULL) {
+      ir_read_error(list, "when reading left-hand side of assignment");
+      return NULL;
+   }
+
+   ir_rvalue *rhs = read_rvalue(st, rhs_expr);
+   if (rhs == NULL) {
+      ir_read_error(list, "when reading right-hand side of assignment");
+      return NULL;
+   }
+
+   return new ir_assignment(lhs, rhs, condition);
+}
+
+
+static ir_expression *
+read_expression(_mesa_glsl_parse_state *st, s_list *list)
+{
+   const unsigned list_length = list->length();
+   if (list_length < 4) {
+      ir_read_error(list, "expected (expression <type> <operator> <operand> "
+			  "[<operand>])");
+      return NULL;
+   }
+
+   s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
+   glsl_type *type = read_type(st, type_expr);
+   if (type == NULL)
+      return NULL;
+
+   /* Read the operator */
+   s_symbol *op_sym = SX_AS_SYMBOL(type_expr->next);
+   if (op_sym == NULL) {
+      ir_read_error(list, "expected operator, found non-symbol");
+      return NULL;
+   }
+
+   ir_expression_operation op = ir_expression::get_operator(op_sym->value());
+   if (op == (ir_expression_operation) -1) {
+      ir_read_error(list, "invalid operator: %s", op_sym->value());
+      return NULL;
+   }
+    
+   /* Now that we know the operator, check for the right number of operands */ 
+   if (ir_expression::get_num_operands(op) == 2) {
+      if (list_length != 5) {
+	 ir_read_error(list, "expected (expression %s <operand1> <operand2>)",
+		       op_sym->value());
+	 return NULL;
+      }
+   } else {
+      if (list_length != 4) {
+	 ir_read_error(list, "expected (expression %s <operand>)",
+		       op_sym->value());
+	 return NULL;
+      }
+   }
+
+   s_expression *exp1 = (s_expression*) (op_sym->next);
+   ir_rvalue *arg1 = read_rvalue(st, exp1);
+   if (arg1 == NULL) {
+      ir_read_error(list, "when reading first operand of %s", op_sym->value());
+      return NULL;
+   }
+
+   ir_rvalue *arg2 = NULL;
+   if (ir_expression::get_num_operands(op) == 2) {
+      s_expression *exp2 = (s_expression*) (exp1->next);
+      arg2 = read_rvalue(st, exp2);
+      if (arg2 == NULL) {
+	 ir_read_error(list, "when reading second operand of %s",
+		       op_sym->value());
+	 return NULL;
+      }
+   }
+
+   return new ir_expression(op, type, arg1, arg2);
+}
+
+static ir_swizzle *
+read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
+{
+   if (list->length() != 3) {
+      ir_read_error(list, "expected (swiz <swizzle> <rvalue>)");
+      return NULL;
+   }
+
+   s_symbol *swiz = SX_AS_SYMBOL(list->subexpressions.head->next);
+   if (swiz == NULL) {
+      ir_read_error(list, "expected a valid swizzle; found non-symbol");
+      return NULL;
+   }
+
+   unsigned num_components = strlen(swiz->value());
+   if (num_components > 4) {
+      ir_read_error(list, "expected a valid swizzle; found %s", swiz->value());
+      return NULL;
+   }
+
+   s_expression *sub = (s_expression*) swiz->next;
+   if (sub == NULL) {
+      ir_read_error(list, "expected rvalue: (swizzle %s <rvalue>)", swiz->value());
+      return NULL;
+   }
+
+   ir_rvalue *rvalue = read_rvalue(st, sub);
+   if (rvalue == NULL)
+      return NULL;
+
+   return ir_swizzle::create(rvalue, swiz->value(), num_components);
+}
+
+static ir_constant *
+read_constant(_mesa_glsl_parse_state *st, s_list *list)
+{
+   if (list->length() != 3) {
+      ir_read_error(list, "expected (constant <type> (<num> ... <num>))");
+      return NULL;
+   }
+
+   s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
+   glsl_type *type = read_type(st, type_expr);
+   if (type == NULL)
+      return NULL;
+
+   s_list *values = SX_AS_LIST(type_expr->next);
+   if (values == NULL) {
+      ir_read_error(list, "expected (constant <type> (<num> ... <num>))");
+      return NULL;
+   }
+
+   const glsl_type *const base_type = type->get_base_type();
+
+   unsigned u[16];
+   int i[16];
+   float f[16];
+   bool b[16];
+
+   // Read in list of values (at most 16).
+   int k = 0;
+   foreach_iter(exec_list_iterator, it, values->subexpressions) {
+      if (k >= 16) {
+	 ir_read_error(values, "expected at most 16 numbers");
+	 return NULL;
+      }
+
+      s_expression *expr = (s_expression*) it.get();
+
+      if (base_type->base_type == GLSL_TYPE_FLOAT) {
+	 s_number *value = SX_AS_NUMBER(expr);
+	 if (value == NULL) {
+	    ir_read_error(values, "expected numbers");
+	    return NULL;
+	 }
+	 f[k] = value->fvalue();
+      } else {
+	 s_int *value = SX_AS_INT(expr);
+	 if (value == NULL) {
+	    ir_read_error(values, "expected integers");
+	    return NULL;
+	 }
+
+	 switch (base_type->base_type) {
+	 case GLSL_TYPE_UINT: {
+	    u[k] = value->value();
+	    break;
+	 }
+	 case GLSL_TYPE_INT: {
+	    i[k] = value->value();
+	    break;
+	 }
+	 case GLSL_TYPE_BOOL: {
+	    b[k] = value->value();
+	    break;
+	 }
+	 default:
+	    ir_read_error(values, "unsupported constant type");
+	    return NULL;
+	 }
+      }
+      ++k;
+   }
+   switch (base_type->base_type) {
+   case GLSL_TYPE_UINT:
+      return new ir_constant(type, u);
+   case GLSL_TYPE_INT:
+      return new ir_constant(type, i);
+   case GLSL_TYPE_BOOL:
+      return new ir_constant(type, b);
+   case GLSL_TYPE_FLOAT:
+      return new ir_constant(type, f);
+   }
+   return NULL; // should not be reached
+}
