@@ -151,7 +151,6 @@ util_format_s3tc_init(void)
    util_format_dxt5_rgba_fetch = (util_format_dxtn_fetch_t)fetch_2d_texel_rgba_dxt5;
    util_format_dxtn_pack = (util_format_dxtn_pack_t)tx_compress_dxtn;
    util_format_s3tc_enabled = TRUE;
-   util_dl_close(library);
 }
 
 
