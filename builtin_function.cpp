@@ -187,6 +187,26 @@ generate_max(exec_list *instructions,
    generate_binop(instructions, declarations, type, ir_binop_max);
 }
 
+static void
+generate_mix_vec(exec_list *instructions,
+		 ir_variable **declarations,
+		 const glsl_type *type)
+{
+   ir_dereference *const x = new ir_dereference(declarations[0]);
+   ir_dereference *const y = new ir_dereference(declarations[1]);
+   ir_dereference *const a = new ir_dereference(declarations[2]);
+   ir_rvalue *result, *temp;
+
+   temp = new ir_expression(ir_binop_sub, type, new ir_constant(1.0f), a);
+   result = new ir_expression(ir_binop_mul, type, x, temp);
+
+   temp = new ir_expression(ir_binop_mul, type, y, a);
+   result = new ir_expression(ir_binop_add, type, result, temp);
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
 
 static void
 generate_normalize(exec_list *instructions,
@@ -235,7 +255,8 @@ generate_function_instance(ir_function *f,
    sig->definition = label;
    static const char *arg_names[] = {
       "arg0",
-      "arg1"
+      "arg1",
+      "arg2"
    };
    int i;
 
@@ -592,7 +613,7 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: max(x, float y) */
    /* FINISHME: clamp() */
    /* FINISHME: clamp() */
-   /* FINISHME: mix() */
+   make_gentype_function(symtab, instructions, "mix", 3, generate_mix_vec);
    /* FINISHME: mix() */
    /* FINISHME: step() */
    /* FINISHME: step() */
