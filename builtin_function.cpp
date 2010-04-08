@@ -189,6 +189,24 @@ generate_max(exec_list *instructions,
 
 
 static void
+generate_normalize(exec_list *instructions,
+		   ir_variable **declarations,
+		   const glsl_type *type)
+{
+   ir_dereference *const arg = new ir_dereference(declarations[0]);
+   ir_rvalue *temp;
+   ir_rvalue *result;
+
+   temp = new ir_expression(ir_binop_dot, glsl_type::float_type, arg, arg);
+   temp = new ir_expression(ir_unop_rsq, glsl_type::float_type, temp, NULL);
+   result = new ir_expression(ir_binop_mul, type, arg, temp);
+
+   ir_instruction *inst = new ir_return(result);
+   instructions->push_tail(inst);
+}
+
+
+static void
 generate_pow(exec_list *instructions,
 	       ir_variable **declarations,
 	       const glsl_type *type)
@@ -386,6 +404,8 @@ generate_110_functions(glsl_symbol_table *symtab, exec_list *instructions)
    /* FINISHME: distance() */
    generate_dot_functions(symtab, instructions);
    /* FINISHME: cross() */
+   make_gentype_function(symtab, instructions, "normalize", 1,
+			 generate_normalize);
    /* FINISHME: normalize() */
    /* FINISHME: ftransform() */
    /* FINISHME: faceforward() */
