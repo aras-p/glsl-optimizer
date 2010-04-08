@@ -94,7 +94,7 @@ print_unpacked_doubl(const struct util_format_description *format_desc,
 static void
 print_unpacked_float(const struct util_format_description *format_desc,
                      const char *prefix,
-                     const float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
+                     float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
                      const char *suffix)
 {
    unsigned i, j;
@@ -115,7 +115,7 @@ print_unpacked_float(const struct util_format_description *format_desc,
 static void
 print_unpacked_8unorm(const struct util_format_description *format_desc,
                       const char *prefix,
-                      const uint8_t unpacked[][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
+                      uint8_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
                       const char *suffix)
 {
    unsigned i, j;
