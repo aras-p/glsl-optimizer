@@ -32,6 +32,9 @@
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
+#include "u_math.h"
+#include "u_memory.h"
+#include "u_rect.h"
 #include "u_format.h"
 
 
@@ -116,3 +119,167 @@ util_format_write_4ub(enum pipe_format format, const uint8_t *src, unsigned src_
    format_desc->pack_8unorm(dst_row, dst_stride, src_row, src_stride, w, h);
 }
 
+
+static INLINE boolean
+util_format_fits_8unorm(const struct util_format_description *format_desc)
+{
+   unsigned chan;
+
+   switch (format_desc->layout) {
+
+   case UTIL_FORMAT_LAYOUT_S3TC:
+   case UTIL_FORMAT_LAYOUT_RGTC:
+      /*
+       * These are straight forward.
+       */
+
+      return TRUE;
+
+   case UTIL_FORMAT_LAYOUT_PLAIN:
+      /*
+       * For these we can find a generic rule.
+       */
+
+      for (chan = 0; chan < format_desc->nr_channels; ++chan) {
+         switch (format_desc->channel[chan].type) {
+         case UTIL_FORMAT_TYPE_VOID:
+            break;
+         case UTIL_FORMAT_TYPE_UNSIGNED:
+            if (!format_desc->channel[chan].normalized ||
+                format_desc->channel[chan].size > 8) {
+               return FALSE;
+            }
+         default:
+            return FALSE;
+         }
+      }
+      return TRUE;
+
+   default:
+      /*
+       * Handle all others on a case by case basis.
+       */
+
+      switch (format_desc->format) {
+      case PIPE_FORMAT_R1_UNORM:
+      case PIPE_FORMAT_UYVY:
+      case PIPE_FORMAT_YUYV:
+      case PIPE_FORMAT_R8G8_B8G8_UNORM:
+      case PIPE_FORMAT_G8R8_G8B8_UNORM:
+         return TRUE;
+
+      default:
+         return FALSE;
+      }
+   }
+}
+
+
+void
+util_format_translate(enum pipe_format dst_format,
+                      void *dst, unsigned dst_stride,
+                      unsigned dst_x, unsigned dst_y,
+                      enum pipe_format src_format,
+                      const void *src, unsigned src_stride,
+                      unsigned src_x, unsigned src_y,
+                      unsigned width, unsigned height)
+{
+   const struct util_format_description *dst_format_desc;
+   const struct util_format_description *src_format_desc;
+   uint8_t *dst_row;
+   const uint8_t *src_row;
+   unsigned y_step;
+   unsigned dst_step;
+   unsigned src_step;
+
+   if (dst_format == src_format) {
+      /*
+       * Trivial case.
+       */
+
+      util_copy_rect(dst, dst_format, dst_stride,  dst_x, dst_y,
+                     width, height, src, (int)src_stride,
+                     src_x, src_y);
+      return;
+   }
+
+   dst_format_desc = util_format_description(dst_format);
+   src_format_desc = util_format_description(src_format);
+
+   assert(dst_x % dst_format_desc->block.width == 0);
+   assert(dst_y % dst_format_desc->block.height == 0);
+   assert(src_x % src_format_desc->block.width == 0);
+   assert(src_y % src_format_desc->block.height == 0);
+
+   dst_row = (uint8_t *)dst + dst_y*dst_stride + dst_x*(dst_format_desc->block.bits/8);
+   src_row = (const uint8_t *)src + src_y*src_stride + src_x*(src_format_desc->block.bits/8);
+
+   /*
+    * This works because all pixel formats have pixel blocks with power of two
+    * sizes.
+    */
+
+   y_step = MAX2(dst_format_desc->block.height, src_format_desc->block.height);
+   assert(y_step % dst_format_desc->block.height == 0);
+   assert(y_step % src_format_desc->block.height == 0);
+
+   dst_step = y_step / dst_format_desc->block.height * dst_stride;
+   src_step = y_step / src_format_desc->block.height * src_stride;
+
+   /*
+    * TODO: double formats will loose precision
+    * TODO: Add a special case for formats that are mere swizzles of each other
+    */
+
+   if (util_format_fits_8unorm(src_format_desc) ||
+       util_format_fits_8unorm(dst_format_desc)) {
+      unsigned tmp_stride;
+      uint8_t *tmp_row;
+
+      tmp_stride = width * 4 * sizeof *tmp_row;
+      tmp_row = MALLOC(y_step * tmp_stride);
+      if (!tmp_row)
+         return;
+
+      while (height >= y_step) {
+         src_format_desc->unpack_8unorm(tmp_row, tmp_stride, src_row, src_stride, width, y_step);
+         dst_format_desc->pack_8unorm(dst_row, dst_stride, tmp_row, tmp_stride, width, y_step);
+
+         dst_row += dst_step;
+         src_row += src_step;
+         height -= y_step;
+      }
+
+      if (height) {
+         src_format_desc->unpack_8unorm(tmp_row, tmp_stride, src_row, src_stride, width, height);
+         dst_format_desc->pack_8unorm(dst_row, dst_stride, tmp_row, tmp_stride, width, height);
+      }
+
+      FREE(tmp_row);
+   }
+   else {
+      unsigned tmp_stride;
+      float *tmp_row;
+
+      tmp_stride = width * 4 * sizeof *tmp_row;
+      tmp_row = MALLOC(y_step * tmp_stride);
+      if (!tmp_row)
+         return;
+
+      while (height >= y_step) {
+         src_format_desc->unpack_float(tmp_row, tmp_stride, src_row, src_stride, width, y_step);
+         dst_format_desc->pack_float(dst_row, dst_stride, tmp_row, tmp_stride, width, y_step);
+
+         dst_row += dst_step;
+         src_row += src_step;
+         height -= y_step;
+      }
+
+      if (height) {
+         src_format_desc->unpack_float(tmp_row, tmp_stride, src_row, src_stride, width, height);
+         dst_format_desc->pack_float(dst_row, dst_stride, tmp_row, tmp_stride, width, height);
+      }
+
+      FREE(tmp_row);
+   }
+}

@@ -530,6 +530,19 @@ util_format_write_4ub(enum pipe_format format,
                       void *dst, unsigned dst_stride, 
                       unsigned x, unsigned y, unsigned w, unsigned h);
 
+/*
+ * Generic format conversion;
+ */
+
+void
+util_format_translate(enum pipe_format dst_format,
+                      void *dst, unsigned dst_stride,
+                      unsigned dst_x, unsigned dst_y,
+                      enum pipe_format src_format,
+                      const void *src, unsigned src_stride,
+                      unsigned src_x, unsigned src_y,
+                      unsigned width, unsigned height);
+
 #ifdef __cplusplus
 } // extern "C" {
 #endif
