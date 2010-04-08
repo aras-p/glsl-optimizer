@@ -307,7 +307,7 @@ can_inline(ir_call *call)
 bool
 do_function_inlining(exec_list *instructions)
 {
-   bool progress;
+   bool progress = false;
 
    foreach_iter(exec_list_iterator, iter, *instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();

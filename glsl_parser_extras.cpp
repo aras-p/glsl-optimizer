@@ -754,11 +754,16 @@ main(int argc, char **argv)
 
    /* Optimization passes */
    if (!state.error) {
-      do_function_inlining(&instructions);
+      bool progress;
+      do {
+	 progress = false;
 
-      /* Constant folding */
-      ir_constant_folding_visitor constant_folding;
-      visit_exec_list(&instructions, &constant_folding);
+	 progress = do_function_inlining(&instructions) || progress;
+
+	 /* Constant folding */
+	 ir_constant_folding_visitor constant_folding;
+	 visit_exec_list(&instructions, &constant_folding);
+      } while (progress);
    }
 
    /* Print out the resulting IR */
