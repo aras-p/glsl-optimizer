@@ -200,8 +200,21 @@ ir_function_cloning_visitor::visit(ir_dereference *ir)
 
 	 this->result = new ir_dereference(this->result);
       }
+   } else if (ir->mode == ir_dereference::ir_reference_array) {
+      ir_instruction *variable;
+      ir_rvalue *index;
+
+      ir->var->accept(this);
+      variable = this->result;
+
+      ir->selector.array_index->accept(this);
+      index = this->result->as_rvalue();
+
+      this->result = new ir_dereference(variable, index);
    } else {
-      this->result = NULL;
+      assert(ir->mode == ir_dereference::ir_reference_record);
+      /* FINISHME: inlining of structure references */
+      assert(0);
    }
 }
 
