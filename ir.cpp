@@ -29,7 +29,6 @@
 
 ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
 			     ir_rvalue *condition)
-   : ir_rvalue()
 {
    this->lhs = lhs;
    this->rhs = rhs;
@@ -39,7 +38,6 @@ ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
 
 ir_expression::ir_expression(int op, const struct glsl_type *type,
 			     ir_rvalue *op0, ir_rvalue *op1)
-   : ir_rvalue()
 {
    this->type = type;
    this->operation = ir_expression_operation(op);
@@ -111,14 +109,13 @@ ir_expression::get_num_operands(void)
 }
 
 ir_label::ir_label(const char *label, ir_function_signature *signature)
-   : ir_instruction(), label(label), signature(signature)
+   : label(label), signature(signature)
 {
    /* empty */
 }
 
 
 ir_constant::ir_constant(const struct glsl_type *type, const void *data)
-   : ir_rvalue()
 {
    unsigned size = 0;
 
@@ -138,28 +135,24 @@ ir_constant::ir_constant(const struct glsl_type *type, const void *data)
 }
 
 ir_constant::ir_constant(float f)
-   : ir_rvalue()
 {
    this->type = glsl_type::float_type;
    this->value.f[0] = f;
 }
 
 ir_constant::ir_constant(unsigned int u)
-   : ir_rvalue()
 {
    this->type = glsl_type::uint_type;
    this->value.u[0] = u;
 }
 
 ir_constant::ir_constant(int i)
-   : ir_rvalue()
 {
    this->type = glsl_type::int_type;
    this->value.i[0] = i;
 }
 
 ir_constant::ir_constant(bool b)
-   : ir_rvalue()
 {
    this->type = glsl_type::bool_type;
    this->value.b[0] = b;
@@ -167,7 +160,6 @@ ir_constant::ir_constant(bool b)
 
 
 ir_dereference::ir_dereference(ir_instruction *var)
-   : ir_rvalue()
 {
    this->mode = ir_reference_variable;
    this->var = var;
@@ -177,8 +169,7 @@ ir_dereference::ir_dereference(ir_instruction *var)
 
 ir_dereference::ir_dereference(ir_instruction *var,
 			       ir_rvalue *array_index)
-   : ir_rvalue(), mode(ir_reference_array),
-     var(var)
+   : mode(ir_reference_array), var(var)
 {
    type = glsl_type::error_type;
 
@@ -347,14 +338,14 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name)
 
 
 ir_function_signature::ir_function_signature(const glsl_type *return_type)
-   : ir_instruction(), return_type(return_type), definition(NULL)
+   : return_type(return_type), definition(NULL)
 {
    /* empty */
 }
 
 
 ir_function::ir_function(const char *name)
-   : ir_instruction(), name(name)
+   : name(name)
 {
    /* empty */
 }

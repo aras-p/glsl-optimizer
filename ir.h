@@ -78,7 +78,10 @@ public:
    }
 
 protected:
-   ir_rvalue() : ir_instruction() { }
+   ir_rvalue()
+   {
+      /* empty */
+   }
 };
 
 
@@ -469,7 +472,7 @@ public:
 class ir_call : public ir_rvalue {
 public:
    ir_call(const ir_function_signature *callee, exec_list *actual_parameters)
-      : ir_rvalue(), callee(callee)
+      : callee(callee)
    {
       assert(callee->return_type != NULL);
       type = callee->return_type;
@@ -504,7 +507,7 @@ public:
 
 private:
    ir_call()
-      : ir_rvalue(), callee(NULL)
+      : callee(NULL)
    {
       /* empty */
    }
@@ -525,7 +528,6 @@ private:
 class ir_jump : public ir_instruction {
 protected:
    ir_jump()
-      : ir_instruction()
    {
       /* empty */
    }
