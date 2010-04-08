@@ -744,6 +744,8 @@ blend_fallback(struct quad_stage *qs,
 
    for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) 
    {
+      /* which blend/mask state index to use: */
+      const uint blend_buf = blend->independent_blend_enable ? cbuf : 0;
       float dest[4][QUAD_SIZE];
       struct softpipe_cached_tile *tile
          = sp_get_cached_tile(softpipe->cbuf_cache[cbuf],
@@ -771,11 +773,11 @@ blend_fallback(struct quad_stage *qs,
          if (blend->logicop_enable) {
             logicop_quad( qs, quadColor, dest );
          }
-         else if (blend->rt[cbuf].blend_enable) {
+         else if (blend->rt[blend_buf].blend_enable) {
             blend_quad( qs, quadColor, dest, cbuf );
          }
 
-         if (blend->rt[cbuf].colormask != 0xf)
+         if (blend->rt[blend_buf].colormask != 0xf)
             colormask_quad( blend->rt[cbuf].colormask, quadColor, dest);
    
          /* Output color values
