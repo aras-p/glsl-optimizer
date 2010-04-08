@@ -3,7 +3,7 @@
 '''
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -376,7 +376,7 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
 
     if format.is_bitmask():
         depth = format.block_size()
-        print '         uint%u_t value = *(uint%u_t *)src;' % (depth, depth) 
+        print '         uint%u_t value = *(const uint%u_t *)src;' % (depth, depth) 
 
         # Declare the intermediate variables
         for i in range(format.nr_channels()):
