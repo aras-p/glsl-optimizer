@@ -1110,6 +1110,13 @@ init_fbconfig_for_chooser(__GLcontextModes * config,
     }                                           \
   } while ( 0 )
 
+/* Test that all bits from a are contained in b */
+#define MATCH_MASK(param)			\
+  do {						\
+    if ((a->param & ~b->param) != 0)		\
+      return False;				\
+  } while (0);
+
 /**
  * Determine if two GLXFBConfigs are compatible.
  *
@@ -1148,11 +1155,8 @@ fbconfigs_compatible(const __GLcontextModes * const a,
    MATCH_DONT_CARE(stereoMode);
    MATCH_EXACT(level);
 
-   if (((a->drawableType & b->drawableType) == 0)
-       || ((a->renderType & b->renderType) == 0)) {
-      return False;
-   }
-
+   MATCH_MASK(drawableType);
+   MATCH_MASK(renderType);
 
    /* There is a bug in a few of the XFree86 DDX drivers.  They contain
     * visuals with a "transparent type" of 0 when they really mean GLX_NONE.
