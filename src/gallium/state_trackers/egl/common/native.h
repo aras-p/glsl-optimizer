@@ -34,6 +34,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
+#include "native_probe.h"
 #include "native_modeset.h"
 
 /**
@@ -55,27 +56,6 @@ enum native_param_type {
     * types.
     */
    NATIVE_PARAM_USE_NATIVE_BUFFER
-};
-
-/**
- * Enumerations for probe results.
- */
-enum native_probe_result {
-   NATIVE_PROBE_UNKNOWN,
-   NATIVE_PROBE_FALLBACK,
-   NATIVE_PROBE_SUPPORTED,
-   NATIVE_PROBE_EXACT,
-};
-
-/**
- * A probe object for display probe.
- */
-struct native_probe {
-   int magic;
-   EGLNativeDisplayType display;
-   void *data;
-
-   void (*destroy)(struct native_probe *nprobe);
 };
 
 struct native_surface {
@@ -222,22 +202,6 @@ native_attachment_mask_test(uint mask, enum native_attachment att)
 {
    return !!(mask & (1 << att));
 }
-
-/**
- * Return a probe object for the given display.
- *
- * Note that the returned object may be cached and used by different native
- * display modules.  It allows fast probing when multiple modules probe the
- * same display.
- */
-struct native_probe *
-native_create_probe(EGLNativeDisplayType dpy);
-
-/**
- * Probe the probe object.
- */
-enum native_probe_result
-native_get_probe_result(struct native_probe *nprobe);
 
 const char *
 native_get_name(void);
