@@ -286,9 +286,9 @@ struct util_format_description
     * Only defined for stencil formats.
     */
    void
-   (*unpack_s_32unorm)(uint8_t *dst, unsigned dst_stride,
-                       const uint8_t *src, unsigned src_stride,
-                       unsigned width, unsigned height);
+   (*unpack_s_8uscaled)(uint8_t *dst, unsigned dst_stride,
+                        const uint8_t *src, unsigned src_stride,
+                        unsigned width, unsigned height);
 
    /**
     * Pack pixels from S8_USCALED.

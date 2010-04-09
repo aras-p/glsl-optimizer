@@ -71,7 +71,7 @@ print_packed(const struct util_format_description *format_desc,
 
 
 static void
-print_unpacked_doubl(const struct util_format_description *format_desc,
+print_unpacked_rgba_doubl(const struct util_format_description *format_desc,
                      const char *prefix,
                      const double unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
                      const char *suffix)
@@ -92,7 +92,7 @@ print_unpacked_doubl(const struct util_format_description *format_desc,
 
 
 static void
-print_unpacked_float(const struct util_format_description *format_desc,
+print_unpacked_rgba_float(const struct util_format_description *format_desc,
                      const char *prefix,
                      float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
                      const char *suffix)
@@ -113,7 +113,7 @@ print_unpacked_float(const struct util_format_description *format_desc,
 
 
 static void
-print_unpacked_8unorm(const struct util_format_description *format_desc,
+print_unpacked_rgba_8unorm(const struct util_format_description *format_desc,
                       const char *prefix,
                       uint8_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH][4],
                       const char *suffix)
@@ -125,6 +125,67 @@ print_unpacked_8unorm(const struct util_format_description *format_desc,
    for (i = 0; i < format_desc->block.height; ++i) {
       for (j = 0; j < format_desc->block.width; ++j) {
          printf("%s{0x%02x, 0x%02x, 0x%02x, 0x%02x}", sep, unpacked[i][j][0], unpacked[i][j][1], unpacked[i][j][2], unpacked[i][j][3]);
+         sep = ", ";
+      }
+   }
+   printf("%s", suffix);
+}
+
+
+static void
+print_unpacked_z_float(const struct util_format_description *format_desc,
+                       const char *prefix,
+                       float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH],
+                       const char *suffix)
+{
+   unsigned i, j;
+   const char *sep = "";
+
+   printf("%s", prefix);
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         printf("%s%f", sep, unpacked[i][j]);
+         sep = ", ";
+      }
+      sep = ",\n";
+   }
+   printf("%s", suffix);
+}
+
+
+static void
+print_unpacked_z_32unorm(const struct util_format_description *format_desc,
+                         const char *prefix,
+                         uint32_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH],
+                         const char *suffix)
+{
+   unsigned i, j;
+   const char *sep = "";
+
+   printf("%s", prefix);
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         printf("%s0x%08x", sep, unpacked[i][j]);
+         sep = ", ";
+      }
+   }
+   printf("%s", suffix);
+}
+
+
+static void
+print_unpacked_s_8uscaled(const struct util_format_description *format_desc,
+                          const char *prefix,
+                          uint8_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH],
+                          const char *suffix)
+{
+   unsigned i, j;
+   const char *sep = "";
+
+   printf("%s", prefix);
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         printf("%s0x%02x", sep, unpacked[i][j]);
          sep = ", ";
       }
    }
@@ -153,8 +214,8 @@ test_format_fetch_rgba_float(const struct util_format_description *format_desc,
    }
 
    if (!success) {
-      print_unpacked_float(format_desc, "FAILED: ", unpacked, " obtained\n");
-      print_unpacked_doubl(format_desc, "        ", test->unpacked, " expected\n");
+      print_unpacked_rgba_float(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_rgba_doubl(format_desc, "        ", test->unpacked, " expected\n");
    }
 
    return success;
@@ -185,8 +246,8 @@ test_format_unpack_rgba_float(const struct util_format_description *format_desc,
    }
 
    if (!success) {
-      print_unpacked_float(format_desc, "FAILED: ", unpacked, " obtained\n");
-      print_unpacked_doubl(format_desc, "        ", test->unpacked, " expected\n");
+      print_unpacked_rgba_float(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_rgba_doubl(format_desc, "        ", test->unpacked, " expected\n");
    }
 
    return success;
@@ -194,7 +255,6 @@ test_format_unpack_rgba_float(const struct util_format_description *format_desc,
 
 
 static boolean
-
 test_format_pack_rgba_float(const struct util_format_description *format_desc,
                             const struct util_format_test_case *test)
 {
@@ -290,8 +350,8 @@ test_format_unpack_rgba_8unorm(const struct util_format_description *format_desc
    }
 
    if (!success) {
-      print_unpacked_8unorm(format_desc, "FAILED: ", unpacked, " obtained\n");
-      print_unpacked_8unorm(format_desc, "        ", expected, " expected\n");
+      print_unpacked_rgba_8unorm(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_rgba_8unorm(format_desc, "        ", expected, " expected\n");
    }
 
    return success;
@@ -328,6 +388,223 @@ test_format_pack_rgba_8unorm(const struct util_format_description *format_desc,
    format_desc->pack_rgba_8unorm(packed, 0,
                             &unpacked[0][0][0], sizeof unpacked[0],
                             format_desc->block.width, format_desc->block.height);
+
+   success = TRUE;
+   for (i = 0; i < format_desc->block.bits/8; ++i)
+      if ((test->packed[i] & test->mask[i]) != (packed[i] & test->mask[i]))
+         success = FALSE;
+
+   if (!success) {
+      print_packed(format_desc, "FAILED: ", packed, " obtained\n");
+      print_packed(format_desc, "        ", test->packed, " expected\n");
+   }
+
+   return success;
+}
+
+
+static boolean
+test_format_unpack_z_float(const struct util_format_description *format_desc,
+                              const struct util_format_test_case *test)
+{
+   float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH] = { { 0 } };
+   unsigned i, j;
+   boolean success;
+
+   format_desc->unpack_z_float(&unpacked[0][0], sizeof unpacked[0],
+                               test->packed, 0,
+                               format_desc->block.width, format_desc->block.height);
+
+   success = TRUE;
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         if (!compare_float(test->unpacked[i][j][0], unpacked[i][j])) {
+            success = FALSE;
+         }
+      }
+   }
+
+   if (!success) {
+      print_unpacked_z_float(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_rgba_doubl(format_desc, "        ", test->unpacked, " expected\n");
+   }
+
+   return success;
+}
+
+
+static boolean
+test_format_pack_z_float(const struct util_format_description *format_desc,
+                            const struct util_format_test_case *test)
+{
+   float unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH];
+   uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
+   unsigned i, j;
+   boolean success;
+
+   memset(packed, 0, sizeof packed);
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         unpacked[i][j] = (float) test->unpacked[i][j][0];
+         if (test->unpacked[i][j][1]) {
+            return TRUE;
+         }
+      }
+   }
+
+   format_desc->pack_z_float(packed, 0,
+                             &unpacked[0][0], sizeof unpacked[0],
+                             format_desc->block.width, format_desc->block.height);
+
+   success = TRUE;
+   for (i = 0; i < format_desc->block.bits/8; ++i)
+      if ((test->packed[i] & test->mask[i]) != (packed[i] & test->mask[i]))
+         success = FALSE;
+
+   if (!success) {
+      print_packed(format_desc, "FAILED: ", packed, " obtained\n");
+      print_packed(format_desc, "        ", test->packed, " expected\n");
+   }
+
+   return success;
+}
+
+
+static boolean
+test_format_unpack_z_32unorm(const struct util_format_description *format_desc,
+                               const struct util_format_test_case *test)
+{
+   uint32_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH] = { { 0 } };
+   uint32_t expected[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH] = { { 0 } };
+   unsigned i, j;
+   boolean success;
+
+   format_desc->unpack_z_32unorm(&unpacked[0][0], sizeof unpacked[0],
+                                 test->packed, 0,
+                                 format_desc->block.width, format_desc->block.height);
+
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         expected[i][j] = test->unpacked[i][j][0] * 0xffffffff;
+      }
+   }
+
+   success = TRUE;
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         if (expected[i][j] != unpacked[i][j]) {
+            success = FALSE;
+         }
+      }
+   }
+
+   if (!success) {
+      print_unpacked_z_32unorm(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_z_32unorm(format_desc, "        ", expected, " expected\n");
+   }
+
+   return success;
+}
+
+
+static boolean
+test_format_pack_z_32unorm(const struct util_format_description *format_desc,
+                             const struct util_format_test_case *test)
+{
+   uint32_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH];
+   uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
+   unsigned i, j;
+   boolean success;
+
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         unpacked[i][j] = test->unpacked[i][j][0] * 0xffffffff;
+         if (test->unpacked[i][j][1]) {
+            return TRUE;
+         }
+      }
+   }
+
+   memset(packed, 0, sizeof packed);
+
+   format_desc->pack_z_32unorm(packed, 0,
+                               &unpacked[0][0], sizeof unpacked[0],
+                               format_desc->block.width, format_desc->block.height);
+
+   success = TRUE;
+   for (i = 0; i < format_desc->block.bits/8; ++i)
+      if ((test->packed[i] & test->mask[i]) != (packed[i] & test->mask[i]))
+         success = FALSE;
+
+   if (!success) {
+      print_packed(format_desc, "FAILED: ", packed, " obtained\n");
+      print_packed(format_desc, "        ", test->packed, " expected\n");
+   }
+
+   return success;
+}
+
+
+static boolean
+test_format_unpack_s_8uscaled(const struct util_format_description *format_desc,
+                               const struct util_format_test_case *test)
+{
+   uint8_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH] = { { 0 } };
+   uint8_t expected[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH] = { { 0 } };
+   unsigned i, j;
+   boolean success;
+
+   format_desc->unpack_s_8uscaled(&unpacked[0][0], sizeof unpacked[0],
+                                  test->packed, 0,
+                                  format_desc->block.width, format_desc->block.height);
+
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         expected[i][j] = test->unpacked[i][j][1];
+      }
+   }
+
+   success = TRUE;
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         if (expected[i][j] != unpacked[i][j]) {
+            success = FALSE;
+         }
+      }
+   }
+
+   if (!success) {
+      print_unpacked_s_8uscaled(format_desc, "FAILED: ", unpacked, " obtained\n");
+      print_unpacked_s_8uscaled(format_desc, "        ", expected, " expected\n");
+   }
+
+   return success;
+}
+
+
+static boolean
+test_format_pack_s_8uscaled(const struct util_format_description *format_desc,
+                             const struct util_format_test_case *test)
+{
+   uint8_t unpacked[UTIL_FORMAT_MAX_UNPACKED_HEIGHT][UTIL_FORMAT_MAX_UNPACKED_WIDTH];
+   uint8_t packed[UTIL_FORMAT_MAX_PACKED_BYTES];
+   unsigned i, j;
+   boolean success;
+
+   for (i = 0; i < format_desc->block.height; ++i) {
+      for (j = 0; j < format_desc->block.width; ++j) {
+         unpacked[i][j] = test->unpacked[i][j][1];
+         if (test->unpacked[i][j][0]) {
+            return TRUE;
+         }
+      }
+   }
+
+   memset(packed, 0, sizeof packed);
+
+   format_desc->pack_s_8uscaled(packed, 0,
+                                &unpacked[0][0], sizeof unpacked[0],
+                                format_desc->block.width, format_desc->block.height);
 
    success = TRUE;
    for (i = 0; i < format_desc->block.bits/8; ++i)
@@ -404,6 +681,13 @@ test_all(void)
       TEST_ONE_FUNC(unpack_rgba_float);
       TEST_ONE_FUNC(pack_rgba_8unorm);
       TEST_ONE_FUNC(unpack_rgba_8unorm);
+
+      TEST_ONE_FUNC(unpack_z_32unorm);
+      TEST_ONE_FUNC(pack_z_32unorm);
+      TEST_ONE_FUNC(unpack_z_float);
+      TEST_ONE_FUNC(pack_z_float);
+      TEST_ONE_FUNC(unpack_s_8uscaled);
+      TEST_ONE_FUNC(pack_s_8uscaled);
 
 #     undef TEST_ONE_FUNC
    }
