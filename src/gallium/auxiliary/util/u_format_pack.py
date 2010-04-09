@@ -299,6 +299,13 @@ def conversion_expr(src_channel,
         value = 'util_half_to_float(%s)' % value
         src_size = 32
 
+    # Special case for float <-> ubytes for more accurate results
+    # Done before clamping since these functions already take care of that
+    if src_type == UNSIGNED and src_norm and src_size == 8 and dst_channel.type == FLOAT and dst_channel.size == 32:
+        return 'ubyte_to_float(%s)' % value
+    if src_type == FLOAT and src_type == 32 and dst_channel.type == UNSIGNED and dst_channel.norm and dst_channel.size == 8:
+        return 'float_to_ubyte(%s)' % value
+
     if clamp:
         if dst_channel.type != FLOAT or src_type != FLOAT:
             value = clamp_expr(src_channel, dst_channel, dst_native_type, value)
