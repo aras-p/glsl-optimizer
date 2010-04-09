@@ -251,16 +251,16 @@ def conversion_expr(src_channel,
                     dst_channel, dst_native_type, 
                     value, 
                     clamp=True, 
-                    src_colorspace = 'rgb', 
-                    dst_colorspace = 'rgb'):
+                    src_colorspace = RGB, 
+                    dst_colorspace = RGB):
     '''Generate the expression to convert a value between two types.'''
 
     if src_colorspace != dst_colorspace:
-        if src_colorspace == 'srgb':
+        if src_colorspace == SRGB:
             assert src_channel.type == UNSIGNED
             assert src_channel.norm
             assert src_channel.size == 8
-            assert dst_colorspace == 'rgb'
+            assert dst_colorspace == RGB
             if dst_channel.type == FLOAT:
                 return 'util_format_srgb_8unorm_to_linear_float(%s)' % value
             else:
@@ -268,11 +268,11 @@ def conversion_expr(src_channel,
                 assert dst_channel.norm
                 assert dst_channel.size == 8
                 return 'util_format_srgb_to_linear_8unorm(%s)' % value
-        elif dst_colorspace == 'srgb':
+        elif dst_colorspace == SRGB:
             assert dst_channel.type == UNSIGNED
             assert dst_channel.norm
             assert dst_channel.size == 8
-            assert src_colorspace == 'rgb'
+            assert src_colorspace == RGB
             if src_channel.type == FLOAT:
                 return 'util_format_linear_float_to_srgb_8unorm(%s)' % value
             else:
@@ -280,9 +280,9 @@ def conversion_expr(src_channel,
                 assert src_channel.norm
                 assert src_channel.size == 8
                 return 'util_format_linear_to_srgb_8unorm(%s)' % value
-        elif src_colorspace == 'zs':
+        elif src_colorspace == ZS:
             pass
-        elif dst_colorspace == 'zs':
+        elif dst_colorspace == ZS:
             pass
         else:
             assert 0
@@ -433,9 +433,9 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             if swizzle < 4:
                 src_channel = format.channels[swizzle]
                 src_colorspace = format.colorspace
-                if src_colorspace == 'srgb' and i == 3:
+                if src_colorspace == SRGB and i == 3:
                     # Alpha channel is linear
-                    src_colorspace = 'rgb'
+                    src_colorspace = RGB
                 value = src_channel.name 
                 value = conversion_expr(src_channel, 
                                         dst_channel, dst_native_type, 
@@ -461,9 +461,9 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
             if swizzle < 4:
                 src_channel = format.channels[swizzle]
                 src_colorspace = format.colorspace
-                if src_colorspace == 'srgb' and i == 3:
+                if src_colorspace == SRGB and i == 3:
                     # Alpha channel is linear
-                    src_colorspace = 'rgb'
+                    src_colorspace = RGB
                 value = 'pixel.chan.%s' % src_channel.name 
                 value = conversion_expr(src_channel, 
                                         dst_channel, dst_native_type, 
@@ -501,9 +501,9 @@ def generate_pack_kernel(format, src_channel, src_native_type):
             if inv_swizzle[i] is not None:
                 value ='src[%u]' % inv_swizzle[i]
                 dst_colorspace = format.colorspace
-                if dst_colorspace == 'srgb' and inv_swizzle[i] == 3:
+                if dst_colorspace == SRGB and inv_swizzle[i] == 3:
                     # Alpha channel is linear
-                    dst_colorspace = 'rgb'
+                    dst_colorspace = RGB
                 value = conversion_expr(src_channel, 
                                         dst_channel, dst_native_type, 
                                         value,
@@ -539,9 +539,9 @@ def generate_pack_kernel(format, src_channel, src_native_type):
             if inv_swizzle[i] is None:
                 continue
             dst_colorspace = format.colorspace
-            if dst_colorspace == 'srgb' and inv_swizzle[i] == 3:
+            if dst_colorspace == SRGB and inv_swizzle[i] == 3:
                 # Alpha channel is linear
-                dst_colorspace = 'rgb'
+                dst_colorspace = RGB
             value ='src[%u]' % inv_swizzle[i]
             value = conversion_expr(src_channel, 
                                     dst_channel, dst_native_type, 
