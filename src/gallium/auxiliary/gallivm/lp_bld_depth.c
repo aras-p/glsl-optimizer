@@ -116,7 +116,7 @@ lp_build_stencil_test_single(struct lp_build_context *bld,
       stencilVals = LLVMBuildAnd(bld->builder, stencilVals, valuemask, "");
    }
 
-   res = lp_build_cmp(bld, stencil->func, stencilVals, stencilRef);
+   res = lp_build_cmp(bld, stencil->func, stencilRef, stencilVals);
 
    return res;
 }
