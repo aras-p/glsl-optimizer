@@ -264,6 +264,26 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     FREE(r300screen);
 }
 
+static void r300_fence_reference(struct pipe_screen *screen,
+                                 struct pipe_fence_handle **ptr,
+                                 struct pipe_fence_handle *fence)
+{
+}
+
+static int r300_fence_signalled(struct pipe_screen *screen,
+                                struct pipe_fence_handle *fence,
+                                unsigned flags)
+{
+    return 0;
+}
+
+static int r300_fence_finish(struct pipe_screen *screen,
+                             struct pipe_fence_handle *fence,
+                             unsigned flags)
+{
+    return 0;
+}
+
 struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
 {
     struct r300_screen *r300screen = CALLOC_STRUCT(r300_screen);
@@ -289,6 +309,10 @@ struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
     r300screen->screen.get_paramf = r300_get_paramf;
     r300screen->screen.is_format_supported = r300_is_format_supported;
     r300screen->screen.context_create = r300_create_context;
+
+    r300screen->screen.fence_reference = r300_fence_reference;
+    r300screen->screen.fence_signalled = r300_fence_signalled;
+    r300screen->screen.fence_finish = r300_fence_finish;
 
     r300_init_screen_texture_functions(&r300screen->screen);
 
