@@ -303,7 +303,7 @@ def conversion_expr(src_channel,
     # Done before clamping since these functions already take care of that
     if src_type == UNSIGNED and src_norm and src_size == 8 and dst_channel.type == FLOAT and dst_channel.size == 32:
         return 'ubyte_to_float(%s)' % value
-    if src_type == FLOAT and src_type == 32 and dst_channel.type == UNSIGNED and dst_channel.norm and dst_channel.size == 8:
+    if src_type == FLOAT and src_size == 32 and dst_channel.type == UNSIGNED and dst_channel.norm and dst_channel.size == 8:
         return 'float_to_ubyte(%s)' % value
 
     if clamp:
