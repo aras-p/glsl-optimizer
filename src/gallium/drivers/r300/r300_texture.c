@@ -694,6 +694,9 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
         tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT,
                                                  tex->mip_macrotile[level]);
         height = align(height, tile_height);
+
+        /* This is needed for the kernel checker, unfortunately. */
+        height = util_next_power_of_two(height);
     }
 
     return util_format_get_nblocksy(tex->tex.format, height);
@@ -802,7 +805,7 @@ static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
 
     r300_setup_flags(tex);
     if (!(base->tex_usage & R300_TEXTURE_USAGE_TRANSFER) &&
-        !(tex->tex.tex_usage & PIPE_TEXTURE_USAGE_SCANOUT)) {
+        !(base->tex_usage & PIPE_TEXTURE_USAGE_SCANOUT)) {
         r300_setup_tiling(screen, tex);
     }
     r300_setup_miptree(rscreen, tex);
