@@ -46,7 +46,7 @@
 #include "lp_setup.h"
 
 
-#define USE_DRAW_LLVM 0
+#define USE_DRAW_LLVM 1
 
 
 static void llvmpipe_destroy( struct pipe_context *pipe )
