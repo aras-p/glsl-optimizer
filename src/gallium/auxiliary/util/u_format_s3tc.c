@@ -30,6 +30,8 @@
 
 #if defined(_WIN32) || defined(WIN32)
 #define DXTN_LIBNAME "dxtn.dll"
+#elif defined(__APPLE__)
+#define DXTN_LIBNAME "libtxc_dxtn.dylib"
 #else
 #define DXTN_LIBNAME "libtxc_dxtn.so"
 #endif
