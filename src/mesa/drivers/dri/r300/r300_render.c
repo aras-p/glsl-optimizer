@@ -386,6 +386,14 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 			WARN_ONCE("Fixme: can't handle spliting prim %d\n", prim);
 			return;
 		}
+
+		if (rmesa->radeon.radeonScreen->kernel_mm) {
+			BEGIN_BATCH_NO_AUTOSTATE(2);
+			OUT_BATCH_REGSEQ(R300_VAP_VF_MAX_VTX_INDX, 1);
+			OUT_BATCH(rmesa->radeon.tcl.aos[0].count);
+			END_BATCH();
+		}
+
 		r300_emit_scissor(rmesa->radeon.glCtx);
 		while (num_verts > 0) {
 			int nr;
