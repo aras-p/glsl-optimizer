@@ -379,8 +379,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	OUT_RING  (chan, 1);
 
 	/* activate all 32 lanes (threads) in a warp */
-	BEGIN_RING(chan, screen->tesla, NV50TCL_WARP_HALVES, 1);
-	OUT_RING  (chan, 2);
+	BEGIN_RING(chan, screen->tesla, NV50TCL_REG_MODE, 1);
+	OUT_RING  (chan, NV50TCL_REG_MODE_STRIPED);
 	BEGIN_RING(chan, screen->tesla, 0x1400, 1);
 	OUT_RING  (chan, 0xf);
 
