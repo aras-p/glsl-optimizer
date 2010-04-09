@@ -27,8 +27,6 @@
 #define _NATIVE_H_
 
 #include "EGL/egl.h"  /* for EGL native types */
-#include "GL/gl.h" /* for GL types needed by __GLcontextModes */
-#include "GL/internal/glcore.h"  /* for __GLcontextModes */
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_screen.h"
@@ -102,15 +100,28 @@ struct native_surface {
    void (*wait)(struct native_surface *nsurf);
 };
 
+/**
+ * Describe a native display config.
+ */
 struct native_config {
-   /* __GLcontextModes should go away some day */
-   __GLcontextModes mode;
+   /* available buffers and their format */
+   uint buffer_mask;
    enum pipe_format color_format;
    enum pipe_format depth_format;
    enum pipe_format stencil_format;
 
-   /* treat it as an additional flag to mode.drawableType */
+   /* supported surface types */
+   boolean window_bit;
+   boolean pixmap_bit;
    boolean scanout_bit;
+
+   int native_visual_id;
+   int native_visual_type;
+   int level;
+   int samples;
+   boolean slow_config;
+   boolean transparent_rgb;
+   int transparent_rgb_values[3];
 };
 
 /**
@@ -142,17 +153,13 @@ struct native_display {
    /**
     * Get the supported configs.  The configs are owned by the display, but
     * the returned array should be free()ed.
-    *
-    * The configs will be converted to EGL config by
-    * _eglConfigFromContextModesRec and validated by _eglValidateConfig.
-    * Those failing to pass the test will be skipped.
     */
    const struct native_config **(*get_configs)(struct native_display *ndpy,
                                                int *num_configs);
 
    /**
     * Test if a pixmap is supported by the given config.  Required unless no
-    * config has GLX_PIXMAP_BIT set.
+    * config has pixmap_bit set.
     *
     * This function is usually called to find a config that supports a given
     * pixmap.  Thus, it is usually called with the same pixmap in a row.
@@ -163,16 +170,14 @@ struct native_display {
 
 
    /**
-    * Create a window surface.  Required unless no config has GLX_WINDOW_BIT
-    * set.
+    * Create a window surface.  Required unless no config has window_bit set.
     */
    struct native_surface *(*create_window_surface)(struct native_display *ndpy,
                                                    EGLNativeWindowType win,
                                                    const struct native_config *nconf);
 
    /**
-    * Create a pixmap surface.  Required unless no config has GLX_PIXMAP_BIT
-    * set.
+    * Create a pixmap surface.  Required unless no config has pixmap_bit set.
     */
    struct native_surface *(*create_pixmap_surface)(struct native_display *ndpy,
                                                    EGLNativePixmapType pix,

@@ -587,8 +587,9 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
 
       nconf = &kdpy->config->base;
 
-      /* always double-buffered */
-      nconf->mode.doubleBufferMode = TRUE;
+      nconf->buffer_mask =
+         (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
+         (1 << NATIVE_ATTACHMENT_BACK_LEFT);
 
       format = PIPE_FORMAT_B8G8R8A8_UNORM;
       if (!kms_display_is_format_supported(&kdpy->base, format, TRUE)) {
@@ -600,11 +601,6 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
          return NULL;
 
       nconf->color_format = format;
-      nconf->mode.redBits = 8;
-      nconf->mode.greenBits = 8;
-      nconf->mode.blueBits = 8;
-      nconf->mode.alphaBits = 8;
-      nconf->mode.rgbBits = 32;
 
       format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
       if (!kms_display_is_format_supported(&kdpy->base, format, FALSE)) {
@@ -612,26 +608,10 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
          if (!kms_display_is_format_supported(&kdpy->base, format, FALSE))
             format = PIPE_FORMAT_NONE;
       }
-      if (format != PIPE_FORMAT_NONE) {
-         nconf->depth_format = format;
-         nconf->stencil_format = format;
-
-         nconf->mode.depthBits = 24;
-         nconf->mode.stencilBits = 8;
-         nconf->mode.haveDepthBuffer = TRUE;
-         nconf->mode.haveStencilBuffer = TRUE;
-      }
+      nconf->depth_format = format;
+      nconf->stencil_format = format;
 
       nconf->scanout_bit = TRUE;
-      nconf->mode.drawableType = GLX_PBUFFER_BIT;
-      nconf->mode.swapMethod = GLX_SWAP_EXCHANGE_OML;
-
-      nconf->mode.visualID = 0;
-      nconf->mode.visualType = EGL_NONE;
-
-      nconf->mode.renderType = GLX_RGBA_BIT;
-      nconf->mode.rgbMode = TRUE;
-      nconf->mode.xRenderable = FALSE;
    }
 
    configs = malloc(sizeof(*configs));

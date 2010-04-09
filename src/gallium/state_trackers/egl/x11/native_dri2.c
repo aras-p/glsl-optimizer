@@ -537,30 +537,22 @@ dri2_display_convert_config(struct native_display *ndpy,
    if (!mode->doubleBufferMode)
       return FALSE;
 
-   nconf->mode = *mode;
-   nconf->mode.renderType = GLX_RGBA_BIT;
-   nconf->mode.rgbMode = TRUE;
-   /* pbuffer is always supported */
-   nconf->mode.drawableType |= GLX_PBUFFER_BIT;
-   /* the swap method is always copy */
-   nconf->mode.swapMethod = GLX_SWAP_COPY_OML;
-
-   /* fix up */
-   nconf->mode.rgbBits =
-      nconf->mode.redBits + nconf->mode.greenBits +
-      nconf->mode.blueBits + nconf->mode.alphaBits;
-   if (!(nconf->mode.drawableType & GLX_WINDOW_BIT)) {
-      nconf->mode.visualID = 0;
-      nconf->mode.visualType = GLX_NONE;
-   }
-   if (!(nconf->mode.drawableType & GLX_PBUFFER_BIT)) {
-      nconf->mode.bindToTextureRgb = FALSE;
-      nconf->mode.bindToTextureRgba = FALSE;
-   }
+   /* only interested in native renderable configs */
+   if (!mode->xRenderable || !mode->drawableType)
+      return FALSE;
 
    nconf->color_format = PIPE_FORMAT_NONE;
    nconf->depth_format = PIPE_FORMAT_NONE;
    nconf->stencil_format = PIPE_FORMAT_NONE;
+
+   nconf->buffer_mask = 1 << NATIVE_ATTACHMENT_FRONT_LEFT;
+   if (mode->doubleBufferMode)
+      nconf->buffer_mask |= 1 << NATIVE_ATTACHMENT_BACK_LEFT;
+   if (mode->stereoMode) {
+      nconf->buffer_mask |= 1 << NATIVE_ATTACHMENT_FRONT_RIGHT;
+      if (mode->doubleBufferMode)
+         nconf->buffer_mask |= 1 << NATIVE_ATTACHMENT_BACK_RIGHT;
+   }
 
    /* choose color format */
    num_formats = choose_color_format(mode, formats);
@@ -582,9 +574,28 @@ dri2_display_convert_config(struct native_display *ndpy,
          break;
       }
    }
-   if ((nconf->mode.depthBits && nconf->depth_format == PIPE_FORMAT_NONE) ||
-       (nconf->mode.stencilBits && nconf->stencil_format == PIPE_FORMAT_NONE))
+   if ((mode->depthBits && nconf->depth_format == PIPE_FORMAT_NONE) ||
+       (mode->stencilBits && nconf->stencil_format == PIPE_FORMAT_NONE))
       return FALSE;
+
+   if (mode->drawableType & GLX_WINDOW_BIT)
+      nconf->window_bit = TRUE;
+   if (mode->drawableType & GLX_PIXMAP_BIT)
+      nconf->pixmap_bit = TRUE;
+
+   nconf->native_visual_id = mode->visualID;
+   nconf->native_visual_type = mode->visualType;
+   nconf->level = mode->level;
+   nconf->samples = mode->samples;
+
+   nconf->slow_config = (mode->visualRating == GLX_SLOW_CONFIG);
+
+   if (mode->transparentPixel == GLX_TRANSPARENT_RGB) {
+      nconf->transparent_rgb = TRUE;
+      nconf->transparent_rgb_values[0] = mode->transparentRed;
+      nconf->transparent_rgb_values[1] = mode->transparentGreen;
+      nconf->transparent_rgb_values[2] = mode->transparentBlue;
+   }
 
    return TRUE;
 }

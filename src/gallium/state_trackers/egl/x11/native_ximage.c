@@ -484,16 +484,15 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
       for (i = 0; i < num_visuals; i++) {
          for (j = 0; j < 2; j++) {
             struct ximage_config *xconf = &xdpy->configs[count];
-            __GLcontextModes *mode = &xconf->base.mode;
 
             xconf->visual = &visuals[i];
             xconf->base.color_format = choose_format(xconf->visual);
             if (xconf->base.color_format == PIPE_FORMAT_NONE)
                continue;
 
-            x11_screen_convert_visual(xdpy->xscr, xconf->visual, mode);
-            /* support double buffer mode */
-            mode->doubleBufferMode = TRUE;
+            xconf->base.buffer_mask =
+               (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
+               (1 << NATIVE_ATTACHMENT_BACK_LEFT);
 
             xconf->base.depth_format = PIPE_FORMAT_NONE;
             xconf->base.stencil_format = PIPE_FORMAT_NONE;
@@ -501,23 +500,19 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
             if (j == 1) {
                xconf->base.depth_format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
                xconf->base.stencil_format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
-               mode->depthBits = 24;
-               mode->stencilBits = 8;
-               mode->haveDepthBuffer = TRUE;
-               mode->haveStencilBuffer = TRUE;
             }
 
-            mode->maxPbufferWidth = 4096;
-            mode->maxPbufferHeight = 4096;
-            mode->maxPbufferPixels = 4096 * 4096;
-            mode->drawableType =
-               GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;
-            mode->swapMethod = GLX_SWAP_EXCHANGE_OML;
+            xconf->base.window_bit = TRUE;
+            xconf->base.pixmap_bit = TRUE;
 
-            if (mode->alphaBits)
-               mode->bindToTextureRgba = TRUE;
-            else
-               mode->bindToTextureRgb = TRUE;
+            xconf->base.native_visual_id = xconf->visual->visualid;
+#if defined(__cplusplus) || defined(c_plusplus)
+            xconf->base.native_visual_type = xconf->visual->c_class;
+#else
+            xconf->base.native_visual_type = xconf->visual->class;
+#endif
+
+            xconf->base.slow_config = TRUE;
 
             count++;
          }

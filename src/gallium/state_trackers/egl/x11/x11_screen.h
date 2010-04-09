@@ -29,6 +29,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/dri2tokens.h>
+#include "GL/gl.h" /* for GL types needed by __GLcontextModes */
+#include "GL/internal/glcore.h"  /* for __GLcontextModes */
 #include "pipe/p_compiler.h"
 #include "common/native.h"
 
@@ -64,10 +66,6 @@ x11_screen_support(struct x11_screen *xscr, enum x11_screen_extension ext);
 
 const XVisualInfo *
 x11_screen_get_visuals(struct x11_screen *xscr, int *num_visuals);
-
-void
-x11_screen_convert_visual(struct x11_screen *xscr, const XVisualInfo *visual,
-                          __GLcontextModes *mode);
 
 const __GLcontextModes *
 x11_screen_get_glx_configs(struct x11_screen *xscr);

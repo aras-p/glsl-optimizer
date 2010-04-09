@@ -177,63 +177,6 @@ x11_screen_get_visuals(struct x11_screen *xscr, int *num_visuals)
    return xscr->visuals;
 }
 
-void
-x11_screen_convert_visual(struct x11_screen *xscr, const XVisualInfo *visual,
-                          __GLcontextModes *mode)
-{
-   int r, g, b, a;
-   int visual_type;
-
-   r = util_bitcount(visual->red_mask);
-   g = util_bitcount(visual->green_mask);
-   b = util_bitcount(visual->blue_mask);
-   a = visual->depth - (r + g + b);
-#if defined(__cplusplus) || defined(c_plusplus)
-   visual_type = visual->c_class;
-#else
-   visual_type = visual->class;
-#endif
-
-   /* convert to GLX visual type */
-   switch (visual_type) {
-   case TrueColor:
-      visual_type = GLX_TRUE_COLOR;
-      break;
-   case DirectColor:
-      visual_type = GLX_DIRECT_COLOR;
-      break;
-   case PseudoColor:
-      visual_type = GLX_PSEUDO_COLOR;
-      break;
-   case StaticColor:
-      visual_type = GLX_STATIC_COLOR;
-      break;
-   case GrayScale:
-      visual_type = GLX_GRAY_SCALE;
-      break;
-   case StaticGray:
-      visual_type = GLX_STATIC_GRAY;
-      break;
-   default:
-      visual_type = GLX_NONE;
-      break;
-   }
-
-   mode->rgbBits = r + g + b + a;
-   mode->redBits = r;
-   mode->greenBits = g;
-   mode->blueBits = b;
-   mode->alphaBits = a;
-   mode->visualID = visual->visualid;
-   mode->visualType = visual_type;
-
-   /* sane defaults */
-   mode->renderType = GLX_RGBA_BIT;
-   mode->rgbMode = TRUE;
-   mode->visualRating = GLX_SLOW_CONFIG;
-   mode->xRenderable = TRUE;
-}
-
 /**
  * Return the GLX fbconfigs.
  */

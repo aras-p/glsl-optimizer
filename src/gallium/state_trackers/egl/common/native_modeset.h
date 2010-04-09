@@ -64,8 +64,8 @@ struct native_display_modeset {
                                            int *num_modes);
 
    /**
-    * Create a scan-out surface.  Required unless no config has
-    * GLX_SCREEN_BIT_MESA set.
+    * Create a scan-out surface.  Required unless no config has scanout_bit
+    * set.
     */
    struct native_surface *(*create_scanout_surface)(struct native_display *ndpy,
                                                     const struct native_config *nconf,

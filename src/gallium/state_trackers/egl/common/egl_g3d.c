@@ -30,9 +30,9 @@
 #include "util/u_memory.h"
 #include "util/u_rect.h"
 #include "util/u_inlines.h"
+#include "util/u_format.h"
 #include "egldriver.h"
 #include "eglcurrent.h"
-#include "eglconfigutil.h"
 #include "egllog.h"
 
 #include "native.h"
@@ -209,6 +209,100 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
 #endif /* EGL_MESA_screen_surface */
 
 /**
+ * Initialize and validate the EGL config attributes.
+ */
+static EGLBoolean
+init_config_attributes(_EGLConfig *conf, EGLint api_mask,
+                       const struct native_config *nconf)
+{
+   uint rgba[4], depth_stencil[2], buffer_size;
+   EGLint surface_type;
+   EGLint i;
+
+   /* get the color and depth/stencil component sizes */
+   assert(nconf->color_format != PIPE_FORMAT_NONE);
+   buffer_size = 0;
+   for (i = 0; i < 4; i++) {
+      rgba[i] = util_format_get_component_bits(nconf->color_format,
+            UTIL_FORMAT_COLORSPACE_RGB, i);
+      buffer_size += rgba[i];
+   }
+   for (i = 0; i < 2; i++) {
+      if (nconf->depth_format != PIPE_FORMAT_NONE) {
+         depth_stencil[i] = util_format_get_component_bits(nconf->depth_format,
+               UTIL_FORMAT_COLORSPACE_ZS, i);
+      }
+      else {
+         depth_stencil[i] = 0;
+      }
+   }
+
+   surface_type = 0x0;
+   if (nconf->window_bit)
+      surface_type |= EGL_WINDOW_BIT;
+   if (nconf->pixmap_bit)
+      surface_type |= EGL_PIXMAP_BIT;
+#ifdef EGL_MESA_screen_surface
+   if (nconf->scanout_bit)
+      surface_type |= EGL_SCREEN_BIT_MESA;
+#endif
+
+   if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_LEFT))
+      surface_type |= EGL_PBUFFER_BIT;
+
+   SET_CONFIG_ATTRIB(conf, EGL_CONFORMANT, api_mask);
+   SET_CONFIG_ATTRIB(conf, EGL_RENDERABLE_TYPE, api_mask);
+
+   SET_CONFIG_ATTRIB(conf, EGL_RED_SIZE, rgba[0]);
+   SET_CONFIG_ATTRIB(conf, EGL_GREEN_SIZE, rgba[1]);
+   SET_CONFIG_ATTRIB(conf, EGL_BLUE_SIZE, rgba[2]);
+   SET_CONFIG_ATTRIB(conf, EGL_ALPHA_SIZE, rgba[3]);
+   SET_CONFIG_ATTRIB(conf, EGL_BUFFER_SIZE, buffer_size);
+
+   SET_CONFIG_ATTRIB(conf, EGL_DEPTH_SIZE, depth_stencil[0]);
+   SET_CONFIG_ATTRIB(conf, EGL_STENCIL_SIZE, depth_stencil[1]);
+
+   SET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE, surface_type);
+
+   SET_CONFIG_ATTRIB(conf, EGL_NATIVE_RENDERABLE, EGL_TRUE);
+   if (surface_type & EGL_WINDOW_BIT) {
+      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_VISUAL_ID, nconf->native_visual_id);
+      SET_CONFIG_ATTRIB(conf, EGL_NATIVE_VISUAL_TYPE,
+            nconf->native_visual_type);
+   }
+
+   if (surface_type & EGL_PBUFFER_BIT) {
+      SET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGB, EGL_TRUE);
+      if (rgba[3])
+         SET_CONFIG_ATTRIB(conf, EGL_BIND_TO_TEXTURE_RGBA, EGL_TRUE);
+
+      SET_CONFIG_ATTRIB(conf, EGL_MAX_PBUFFER_WIDTH, 4096);
+      SET_CONFIG_ATTRIB(conf, EGL_MAX_PBUFFER_HEIGHT, 4096);
+      SET_CONFIG_ATTRIB(conf, EGL_MAX_PBUFFER_PIXELS, 4096 * 4096);
+   }
+
+   SET_CONFIG_ATTRIB(conf, EGL_LEVEL, nconf->level);
+   SET_CONFIG_ATTRIB(conf, EGL_SAMPLES, nconf->samples);
+   SET_CONFIG_ATTRIB(conf, EGL_SAMPLE_BUFFERS, 1);
+
+   if (nconf->slow_config)
+      SET_CONFIG_ATTRIB(conf, EGL_CONFIG_CAVEAT, EGL_SLOW_CONFIG);
+
+   if (nconf->transparent_rgb) {
+      rgba[0] = nconf->transparent_rgb_values[0];
+      rgba[1] = nconf->transparent_rgb_values[1];
+      rgba[2] = nconf->transparent_rgb_values[2];
+
+      SET_CONFIG_ATTRIB(conf, EGL_TRANSPARENT_TYPE, EGL_TRANSPARENT_RGB);
+      SET_CONFIG_ATTRIB(conf, EGL_TRANSPARENT_RED_VALUE, rgba[0]);
+      SET_CONFIG_ATTRIB(conf, EGL_TRANSPARENT_GREEN_VALUE, rgba[1]);
+      SET_CONFIG_ATTRIB(conf, EGL_TRANSPARENT_BLUE_VALUE, rgba[2]);
+   }
+
+   return _eglValidateConfig(conf, EGL_FALSE);
+}
+
+/**
  * Initialize an EGL config from the native config.
  */
 static EGLBoolean
@@ -217,25 +311,25 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
-   const __GLcontextModes *mode = &nconf->mode;
    EGLint buffer_mask, api_mask;
    EGLBoolean valid;
    EGLint i;
 
-   buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
-   if (mode->doubleBufferMode)
+   buffer_mask = 0x0;
+   if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_FRONT_LEFT))
+      buffer_mask |= ST_ATTACHMENT_FRONT_LEFT_MASK;
+   if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_LEFT))
       buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
-   if (mode->stereoMode) {
+   if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_FRONT_RIGHT))
       buffer_mask |= ST_ATTACHMENT_FRONT_RIGHT_MASK;
-      if (mode->doubleBufferMode)
-         buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
-   }
+   if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_RIGHT))
+      buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
 
    gconf->stvis.buffer_mask = buffer_mask;
    gconf->stvis.color_format = nconf->color_format;
    gconf->stvis.depth_stencil_format = nconf->depth_format;
    gconf->stvis.accum_format = PIPE_FORMAT_NONE;
-   gconf->stvis.samples = 0;
+   gconf->stvis.samples = nconf->samples;
 
    gconf->stvis.render_buffer = (buffer_mask & ST_ATTACHMENT_BACK_LEFT_MASK) ?
       ST_ATTACHMENT_BACK_LEFT : ST_ATTACHMENT_FRONT_LEFT;
@@ -249,29 +343,18 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
       }
    }
    /* this is required by EGL, not by OpenGL ES */
-   if ((mode->drawableType & GLX_WINDOW_BIT) && !mode->doubleBufferMode)
+   if (nconf->window_bit &&
+       gconf->stvis.render_buffer != ST_ATTACHMENT_BACK_LEFT)
       api_mask &= ~(EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT);
 
    if (!api_mask) {
       _eglLog(_EGL_DEBUG, "no state tracker supports config 0x%x",
-            mode->visualID);
+            nconf->native_visual_id);
    }
 
-   valid = _eglConfigFromContextModesRec(&gconf->base,
-         mode, api_mask, api_mask);
-   if (valid) {
-#ifdef EGL_MESA_screen_surface
-      /* check if scanout surface bit is set */
-      if (nconf->scanout_bit) {
-         EGLint val = GET_CONFIG_ATTRIB(&gconf->base, EGL_SURFACE_TYPE);
-         val |= EGL_SCREEN_BIT_MESA;
-         SET_CONFIG_ATTRIB(&gconf->base, EGL_SURFACE_TYPE, val);
-      }
-#endif
-      valid = _eglValidateConfig(&gconf->base, EGL_FALSE);
-   }
+   valid = init_config_attributes(&gconf->base, api_mask, nconf);
    if (!valid) {
-      _eglLog(_EGL_DEBUG, "skip invalid config 0x%x", mode->visualID);
+      _eglLog(_EGL_DEBUG, "skip invalid config 0x%x", nconf->native_visual_id);
       return EGL_FALSE;
    }
 
