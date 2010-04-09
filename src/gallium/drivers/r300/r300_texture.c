@@ -801,7 +801,8 @@ static struct pipe_texture* r300_texture_create(struct pipe_screen* screen,
     tex->tex.screen = screen;
 
     r300_setup_flags(tex);
-    if (!(base->tex_usage & R300_TEXTURE_USAGE_TRANSFER)) {
+    if (!(base->tex_usage & R300_TEXTURE_USAGE_TRANSFER) &&
+        !(tex->tex.tex_usage & PIPE_TEXTURE_USAGE_SCANOUT)) {
         r300_setup_tiling(screen, tex);
     }
     r300_setup_miptree(rscreen, tex);
