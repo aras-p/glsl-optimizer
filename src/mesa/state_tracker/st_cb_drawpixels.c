@@ -249,13 +249,13 @@ make_passthrough_vertex_shader(struct st_context *st,
                ureg_DECL_output( ureg, TGSI_SEMANTIC_POSITION, 0 ),
                ureg_DECL_vs_input( ureg, 0 ));
       
-      /* MOV result.texcoord0, vertex.texcoord0; */
+      /* MOV result.texcoord0, vertex.attr[1]; */
       ureg_MOV(ureg, 
                ureg_DECL_output( ureg, TGSI_SEMANTIC_GENERIC, 0 ),
                ureg_DECL_vs_input( ureg, 1 ));
       
       if (passColor) {
-         /* MOV result.color0, vertex.color0; */
+         /* MOV result.color0, vertex.attr[2]; */
          ureg_MOV(ureg, 
                   ureg_DECL_output( ureg, TGSI_SEMANTIC_COLOR, 0 ),
                   ureg_DECL_vs_input( ureg, 2 ));
@@ -451,7 +451,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       const GLfloat sLeft = 0.0f, sRight = maxXcoord;
       const GLfloat tTop = invertTex ? maxYcoord : 0.0f;
       const GLfloat tBot = invertTex ? 0.0f : maxYcoord;
-      GLuint tex, i;
+      GLuint i;
 
       /* upper-left */
       verts[0][0][0] = clip_x0;    /* v[0].attr[0].x */
@@ -469,32 +469,31 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       verts[3][0][0] = clip_x0;
       verts[3][0][1] = clip_y1;
 
-      tex = color ? 2 : 1;
-      verts[0][tex][0] = sLeft; /* v[0].attr[tex].s */
-      verts[0][tex][1] = tTop;  /* v[0].attr[tex].t */
-      verts[1][tex][0] = sRight;
-      verts[1][tex][1] = tTop;
-      verts[2][tex][0] = sRight;
-      verts[2][tex][1] = tBot;
-      verts[3][tex][0] = sLeft;
-      verts[3][tex][1] = tBot;
+      verts[0][1][0] = sLeft; /* v[0].attr[1].S */
+      verts[0][1][1] = tTop;  /* v[0].attr[1].T */
+      verts[1][1][0] = sRight;
+      verts[1][1][1] = tTop;
+      verts[2][1][0] = sRight;
+      verts[2][1][1] = tBot;
+      verts[3][1][0] = sLeft;
+      verts[3][1][1] = tBot;
 
       /* same for all verts: */
       if (color) {
          for (i = 0; i < 4; i++) {
-            verts[i][0][2] = z;   /*Z*/
-            verts[i][0][3] = 1.0f; /*W*/
-            verts[i][1][0] = color[0];
-            verts[i][1][1] = color[1];
-            verts[i][1][2] = color[2];
-            verts[i][1][3] = color[3];
-            verts[i][2][2] = 0.0f; /*R*/
-            verts[i][2][3] = 1.0f; /*Q*/
+            verts[i][0][2] = z;         /* v[i].attr[0].z */
+            verts[i][0][3] = 1.0f;      /* v[i].attr[0].w */
+            verts[i][2][0] = color[0];  /* v[i].attr[2].r */
+            verts[i][2][1] = color[1];  /* v[i].attr[2].g */
+            verts[i][2][2] = color[2];  /* v[i].attr[2].b */
+            verts[i][2][3] = color[3];  /* v[i].attr[2].a */
+            verts[i][1][2] = 0.0f;      /* v[i].attr[1].R */
+            verts[i][1][3] = 1.0f;      /* v[i].attr[1].Q */
          }
       }
       else {
          for (i = 0; i < 4; i++) {
-            verts[i][0][2] = z;   /*Z*/
+            verts[i][0][2] = z;    /*Z*/
             verts[i][0][3] = 1.0f; /*W*/
             verts[i][1][2] = 0.0f; /*R*/
             verts[i][1][3] = 1.0f; /*Q*/

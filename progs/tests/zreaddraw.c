@@ -102,6 +102,19 @@ static void Display(void)
 
    /* read back scaled depth image */
    glReadPixels(100, 0, 400, 400, GL_DEPTH_COMPONENT, GL_FLOAT, depth2);
+
+   /* debug */
+   if (0) {
+      int i;
+      float *z = depth2 + 400 * 200;
+      printf("z at y=200:\n");
+      for (i = 0; i < 400; i++) {
+         printf("%5.3f ", z[i]);
+         if ((i + 1) % 12 == 0)
+            printf("\n");
+      }
+   }
+
    /* draw as luminance */
    glPixelZoom(1.0, 1.0);
    glWindowPos2i(100, 0);
