@@ -625,7 +625,7 @@ replace_registers(struct prog_instruction *inst, GLuint numInst,
    GLuint i, j;
    for (i = 0; i < numInst; i++) {
       /* src regs */
-      for (j = 0; j < _mesa_num_inst_src_regs(inst->Opcode); j++) {
+      for (j = 0; j < _mesa_num_inst_src_regs(inst[i].Opcode); j++) {
          if (inst[i].SrcReg[j].File == oldFile &&
              inst[i].SrcReg[j].Index == oldIndex) {
             inst[i].SrcReg[j].File = newFile;
@@ -652,7 +652,7 @@ adjust_param_indexes(struct prog_instruction *inst, GLuint numInst,
 {
    GLuint i, j;
    for (i = 0; i < numInst; i++) {
-      for (j = 0; j < _mesa_num_inst_src_regs(inst->Opcode); j++) {
+      for (j = 0; j < _mesa_num_inst_src_regs(inst[i].Opcode); j++) {
          GLuint f = inst[i].SrcReg[j].File;
          if (f == PROGRAM_CONSTANT ||
              f == PROGRAM_UNIFORM ||
