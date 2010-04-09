@@ -483,36 +483,6 @@ choose_color_format(const __GLcontextModes *mode, enum pipe_format formats[32])
    return count;
 }
 
-static int
-choose_depth_stencil_format(const __GLcontextModes *mode,
-                            enum pipe_format formats[32])
-{
-   int count = 0;
-
-   switch (mode->depthBits) {
-   case 32:
-      formats[count++] = PIPE_FORMAT_Z32_UNORM;
-      break;
-   case 24:
-      if (mode->stencilBits) {
-         formats[count++] = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
-         formats[count++] = PIPE_FORMAT_S8_USCALED_Z24_UNORM;
-      }
-      else {
-         formats[count++] = PIPE_FORMAT_Z24X8_UNORM;
-         formats[count++] = PIPE_FORMAT_X8Z24_UNORM;
-      }
-      break;
-   case 16:
-      formats[count++] = PIPE_FORMAT_Z16_UNORM;
-      break;
-   default:
-      break;
-   }
-
-   return count;
-}
-
 static boolean
 is_format_supported(struct pipe_screen *screen,
                     enum pipe_format fmt, boolean is_color)
@@ -541,10 +511,6 @@ dri2_display_convert_config(struct native_display *ndpy,
    if (!mode->xRenderable || !mode->drawableType)
       return FALSE;
 
-   nconf->color_format = PIPE_FORMAT_NONE;
-   nconf->depth_format = PIPE_FORMAT_NONE;
-   nconf->stencil_format = PIPE_FORMAT_NONE;
-
    nconf->buffer_mask = 1 << NATIVE_ATTACHMENT_FRONT_LEFT;
    if (mode->doubleBufferMode)
       nconf->buffer_mask |= 1 << NATIVE_ATTACHMENT_BACK_LEFT;
@@ -563,19 +529,6 @@ dri2_display_convert_config(struct native_display *ndpy,
       }
    }
    if (nconf->color_format == PIPE_FORMAT_NONE)
-      return FALSE;
-
-   /* choose depth/stencil format */
-   num_formats = choose_depth_stencil_format(mode, formats);
-   for (i = 0; i < num_formats; i++) {
-      if (is_format_supported(ndpy->screen, formats[i], FALSE)) {
-         nconf->depth_format = formats[i];
-         nconf->stencil_format = formats[i];
-         break;
-      }
-   }
-   if ((mode->depthBits && nconf->depth_format == PIPE_FORMAT_NONE) ||
-       (mode->stencilBits && nconf->stencil_format == PIPE_FORMAT_NONE))
       return FALSE;
 
    if (mode->drawableType & GLX_WINDOW_BIT)

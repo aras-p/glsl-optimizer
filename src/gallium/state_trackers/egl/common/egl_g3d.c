@@ -212,8 +212,8 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
  * Initialize and validate the EGL config attributes.
  */
 static EGLBoolean
-init_config_attributes(_EGLConfig *conf, EGLint api_mask,
-                       const struct native_config *nconf)
+init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
+                       EGLint api_mask, enum pipe_format depth_stencil_format)
 {
    uint rgba[4], depth_stencil[2], buffer_size;
    EGLint surface_type;
@@ -228,8 +228,9 @@ init_config_attributes(_EGLConfig *conf, EGLint api_mask,
       buffer_size += rgba[i];
    }
    for (i = 0; i < 2; i++) {
-      if (nconf->depth_format != PIPE_FORMAT_NONE) {
-         depth_stencil[i] = util_format_get_component_bits(nconf->depth_format,
+      if (depth_stencil_format != PIPE_FORMAT_NONE) {
+         depth_stencil[i] =
+            util_format_get_component_bits(depth_stencil_format,
                UTIL_FORMAT_COLORSPACE_ZS, i);
       }
       else {
@@ -307,7 +308,8 @@ init_config_attributes(_EGLConfig *conf, EGLint api_mask,
  */
 static EGLBoolean
 egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
-                    _EGLConfig *conf, const struct native_config *nconf)
+                    _EGLConfig *conf, const struct native_config *nconf,
+                    enum pipe_format depth_stencil_format)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
@@ -327,7 +329,7 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
 
    gconf->stvis.buffer_mask = buffer_mask;
    gconf->stvis.color_format = nconf->color_format;
-   gconf->stvis.depth_stencil_format = nconf->depth_format;
+   gconf->stvis.depth_stencil_format = depth_stencil_format;
    gconf->stvis.accum_format = PIPE_FORMAT_NONE;
    gconf->stvis.samples = nconf->samples;
 
@@ -352,7 +354,8 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
             nconf->native_visual_id);
    }
 
-   valid = init_config_attributes(&gconf->base, api_mask, nconf);
+   valid = init_config_attributes(&gconf->base,
+         nconf, api_mask, depth_stencil_format);
    if (!valid) {
       _eglLog(_EGL_DEBUG, "skip invalid config 0x%x", nconf->native_visual_id);
       return EGL_FALSE;
@@ -364,6 +367,46 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 /**
+ * Get all interested depth/stencil formats of a display.
+ */
+static EGLint
+egl_g3d_fill_depth_stencil_formats(_EGLDisplay *dpy,
+                                   enum pipe_format formats[8])
+{
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   struct pipe_screen *screen = gdpy->native->screen;
+   const EGLint candidates[] = {
+      1, PIPE_FORMAT_Z16_UNORM,
+      1, PIPE_FORMAT_Z32_UNORM,
+      2, PIPE_FORMAT_Z24_UNORM_S8_USCALED, PIPE_FORMAT_S8_USCALED_Z24_UNORM,
+      2, PIPE_FORMAT_Z24X8_UNORM, PIPE_FORMAT_X8Z24_UNORM,
+      0
+   };
+   const EGLint *fmt = candidates;
+   EGLint count;
+
+   count = 0;
+   formats[count++] = PIPE_FORMAT_NONE;
+
+   while (*fmt) {
+      EGLint i, n = *fmt++;
+
+      /* pick the first supported format */
+      for (i = 0; i < n; i++) {
+         if (screen->is_format_supported(screen, fmt[i],
+                  PIPE_TEXTURE_2D, PIPE_BIND_DEPTH_STENCIL, 0)) {
+            formats[count++] = fmt[i];
+            break;
+         }
+      }
+
+      fmt += n;
+   }
+
+   return count;
+}
+
+/**
  * Add configs to display and return the next config ID.
  */
 static EGLint
@@ -371,7 +414,8 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    const struct native_config **native_configs;
-   int num_configs, i;
+   enum pipe_format depth_stencil_formats[8];
+   int num_formats, num_configs, i, j;
 
    native_configs = gdpy->native->get_configs(gdpy->native, &num_configs);
    if (!num_configs) {
@@ -380,19 +424,25 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
       return id;
    }
 
+   num_formats = egl_g3d_fill_depth_stencil_formats(dpy,
+         depth_stencil_formats);
+
    for (i = 0; i < num_configs; i++) {
-      struct egl_g3d_config *gconf;
+      for (j = 0; j < num_formats; j++) {
+         struct egl_g3d_config *gconf;
 
-      gconf = CALLOC_STRUCT(egl_g3d_config);
-      if (gconf) {
-         _eglInitConfig(&gconf->base, dpy, id);
-         if (!egl_g3d_init_config(drv, dpy, &gconf->base, native_configs[i])) {
-            free(gconf);
-            continue;
+         gconf = CALLOC_STRUCT(egl_g3d_config);
+         if (gconf) {
+            _eglInitConfig(&gconf->base, dpy, id);
+            if (!egl_g3d_init_config(drv, dpy, &gconf->base,
+                     native_configs[i], depth_stencil_formats[j])) {
+               free(gconf);
+               break;
+            }
+
+            _eglAddConfig(dpy, &gconf->base);
+            id++;
          }
-
-         _eglAddConfig(dpy, &gconf->base);
-         id++;
       }
    }
 

@@ -597,19 +597,13 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
          if (!kms_display_is_format_supported(&kdpy->base, format, TRUE))
             format = PIPE_FORMAT_NONE;
       }
-      if (format == PIPE_FORMAT_NONE)
+      if (format == PIPE_FORMAT_NONE) {
+         free(kdpy->config);
+         kdpy->config = NULL;
          return NULL;
+      }
 
       nconf->color_format = format;
-
-      format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
-      if (!kms_display_is_format_supported(&kdpy->base, format, FALSE)) {
-         format = PIPE_FORMAT_S8_USCALED_Z24_UNORM;
-         if (!kms_display_is_format_supported(&kdpy->base, format, FALSE))
-            format = PIPE_FORMAT_NONE;
-      }
-      nconf->depth_format = format;
-      nconf->stencil_format = format;
 
       nconf->scanout_bit = TRUE;
    }

@@ -466,7 +466,7 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
    /* first time */
    if (!xdpy->configs) {
       const XVisualInfo *visuals;
-      int num_visuals, count, j;
+      int num_visuals, count;
 
       visuals = x11_screen_get_visuals(xdpy->xscr, &num_visuals);
       if (!visuals)
@@ -482,40 +482,30 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
 
       count = 0;
       for (i = 0; i < num_visuals; i++) {
-         for (j = 0; j < 2; j++) {
-            struct ximage_config *xconf = &xdpy->configs[count];
+         struct ximage_config *xconf = &xdpy->configs[count];
 
-            xconf->visual = &visuals[i];
-            xconf->base.color_format = choose_format(xconf->visual);
-            if (xconf->base.color_format == PIPE_FORMAT_NONE)
-               continue;
+         xconf->visual = &visuals[i];
+         xconf->base.color_format = choose_format(xconf->visual);
+         if (xconf->base.color_format == PIPE_FORMAT_NONE)
+            continue;
 
-            xconf->base.buffer_mask =
-               (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
-               (1 << NATIVE_ATTACHMENT_BACK_LEFT);
+         xconf->base.buffer_mask =
+            (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
+            (1 << NATIVE_ATTACHMENT_BACK_LEFT);
 
-            xconf->base.depth_format = PIPE_FORMAT_NONE;
-            xconf->base.stencil_format = PIPE_FORMAT_NONE;
-            /* create the second config with depth/stencil buffer */
-            if (j == 1) {
-               xconf->base.depth_format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
-               xconf->base.stencil_format = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
-            }
+         xconf->base.window_bit = TRUE;
+         xconf->base.pixmap_bit = TRUE;
 
-            xconf->base.window_bit = TRUE;
-            xconf->base.pixmap_bit = TRUE;
-
-            xconf->base.native_visual_id = xconf->visual->visualid;
+         xconf->base.native_visual_id = xconf->visual->visualid;
 #if defined(__cplusplus) || defined(c_plusplus)
-            xconf->base.native_visual_type = xconf->visual->c_class;
+         xconf->base.native_visual_type = xconf->visual->c_class;
 #else
-            xconf->base.native_visual_type = xconf->visual->class;
+         xconf->base.native_visual_type = xconf->visual->class;
 #endif
 
-            xconf->base.slow_config = TRUE;
+         xconf->base.slow_config = TRUE;
 
-            count++;
-         }
+         count++;
       }
 
       xdpy->num_configs = count;

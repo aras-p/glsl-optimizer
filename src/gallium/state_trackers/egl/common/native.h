@@ -107,8 +107,6 @@ struct native_config {
    /* available buffers and their format */
    uint buffer_mask;
    enum pipe_format color_format;
-   enum pipe_format depth_format;
-   enum pipe_format stencil_format;
 
    /* supported surface types */
    boolean window_bit;
