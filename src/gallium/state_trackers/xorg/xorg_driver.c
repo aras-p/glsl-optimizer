@@ -676,10 +676,8 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     if (ms->screen) {
-	float maxf;
 	int max;
-	maxf = ms->screen->get_paramf(ms->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
-	max = (1 << (int)(maxf - 1.0f));
+	max = ms->screen->get_param(ms->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
 	max_width = max < max_width ? max : max_width;
 	max_height = max < max_height ? max : max_height;
     }
