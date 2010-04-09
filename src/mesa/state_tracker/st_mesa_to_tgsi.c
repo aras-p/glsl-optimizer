@@ -181,6 +181,7 @@ src_register( struct st_translate *t,
       ASSERT(index >= 0);
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_temporary( t->ureg );
+      assert(index < Elements(t->temps));
       return ureg_src(t->temps[index]);
 
    case PROGRAM_NAMED_PARAM:
@@ -197,9 +198,11 @@ src_register( struct st_translate *t,
          return t->constants[index];
 
    case PROGRAM_INPUT:
+      assert(t->inputMapping[index] < Elements(t->inputs));
       return t->inputs[t->inputMapping[index]];
 
    case PROGRAM_OUTPUT:
+      assert(t->outputMapping[index] < Elements(t->outputs));
       return ureg_src(t->outputs[t->outputMapping[index]]); /* not needed? */
 
    case PROGRAM_ADDRESS:
