@@ -236,7 +236,7 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
    gconf->stvis.accum_format = PIPE_FORMAT_NONE;
    gconf->stvis.samples = 0;
 
-   gconf->stvis.render_buffer = (buffer_mask & ST_ATTACHMENT_BACK_LEFT) ?
+   gconf->stvis.render_buffer = (buffer_mask & ST_ATTACHMENT_BACK_LEFT_MASK) ?
       ST_ATTACHMENT_BACK_LEFT : ST_ATTACHMENT_FRONT_LEFT;
 
    api_mask = 0;
