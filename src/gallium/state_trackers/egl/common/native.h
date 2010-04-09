@@ -197,14 +197,6 @@ struct native_display {
                                                    EGLNativePixmapType pix,
                                                    const struct native_config *nconf);
 
-   /**
-    * Create a pbuffer surface.  Required unless no config has GLX_PBUFFER_BIT
-    * set.
-    */
-   struct native_surface *(*create_pbuffer_surface)(struct native_display *ndpy,
-                                                    const struct native_config *nconf,
-                                                    uint width, uint height);
-
    const struct native_display_modeset *modeset;
 };
 

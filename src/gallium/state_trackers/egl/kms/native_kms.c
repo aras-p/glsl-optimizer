@@ -53,9 +53,8 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
       templ.height0 = ksurf->height;
       templ.depth0 = 1;
       templ.format = ksurf->color_format;
-      templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
-      if (ksurf->type == KMS_SURFACE_TYPE_SCANOUT)
-         templ.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
+      templ.tex_usage =
+         PIPE_TEXTURE_USAGE_RENDER_TARGET | PIPE_TEXTURE_USAGE_SCANOUT;
    }
 
    /* create textures */
@@ -155,10 +154,6 @@ kms_surface_flush_frontbuffer(struct native_surface *nsurf)
    struct kms_surface *ksurf = kms_surface(nsurf);
    struct kms_display *kdpy = ksurf->kdpy;
 
-   /* pbuffer is private */
-   if (ksurf->type == KMS_SURFACE_TYPE_PBUFFER)
-      return TRUE;
-
    if (ksurf->front_fb.is_passive)
       drmModeDirtyFB(kdpy->fd, ksurf->front_fb.buffer_id, NULL, 0);
 #endif
@@ -175,10 +170,6 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
    struct kms_framebuffer tmp_fb;
    struct pipe_texture *tmp_texture;
    int err;
-
-   /* pbuffer is private */
-   if (ksurf->type == KMS_SURFACE_TYPE_PBUFFER)
-      return TRUE;
 
    if (!ksurf->back_fb.buffer_id) {
       if (!kms_surface_init_framebuffers(&ksurf->base, TRUE))
@@ -244,7 +235,6 @@ kms_surface_destroy(struct native_surface *nsurf)
 
 static struct kms_surface *
 kms_display_create_surface(struct native_display *ndpy,
-                           enum kms_surface_type type,
                            const struct native_config *nconf,
                            uint width, uint height)
 {
@@ -257,7 +247,6 @@ kms_display_create_surface(struct native_display *ndpy,
       return NULL;
 
    ksurf->kdpy = kdpy;
-   ksurf->type = type;
    ksurf->color_format = kconf->base.color_format;
    ksurf->width = width;
    ksurf->height = height;
@@ -567,23 +556,9 @@ kms_display_create_scanout_surface(struct native_display *ndpy,
 {
    struct kms_surface *ksurf;
 
-   ksurf = kms_display_create_surface(ndpy,
-         KMS_SURFACE_TYPE_SCANOUT, nconf, width, height);
+   ksurf = kms_display_create_surface(ndpy, nconf, width, height);
    return &ksurf->base;
 }
-
-static struct native_surface *
-kms_display_create_pbuffer_surface(struct native_display *ndpy,
-                                   const struct native_config *nconf,
-                                   uint width, uint height)
-{
-   struct kms_surface *ksurf;
-
-   ksurf = kms_display_create_surface(ndpy,
-         KMS_SURFACE_TYPE_PBUFFER, nconf, width, height);
-   return &ksurf->base;
-}
-
 
 static boolean
 kms_display_is_format_supported(struct native_display *ndpy,
@@ -832,7 +807,6 @@ kms_create_display(EGLNativeDisplayType dpy,
    kdpy->base.destroy = kms_display_destroy;
    kdpy->base.get_param = kms_display_get_param;
    kdpy->base.get_configs = kms_display_get_configs;
-   kdpy->base.create_pbuffer_surface = kms_display_create_pbuffer_surface;
 
    kdpy->base.modeset = &kms_display_modeset;
 

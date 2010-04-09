@@ -524,9 +524,6 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    case EGL_PIXMAP_BIT:
       err = "eglCreatePixmapSurface";
       break;
-   case EGL_PBUFFER_BIT:
-      err = "eglCreatePBufferSurface";
-      break;
 #ifdef EGL_MESA_screen_surface
    case EGL_SCREEN_BIT_MESA:
       err = "eglCreateScreenSurface";
@@ -557,10 +554,6 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    case EGL_PIXMAP_BIT:
       nsurf = gdpy->native->create_pixmap_surface(gdpy->native,
             arg->u.pix, gconf->native);
-      break;
-   case EGL_PBUFFER_BIT:
-      nsurf = gdpy->native->create_pbuffer_surface(gdpy->native,
-            gconf->native, gsurf->base.Width, gsurf->base.Height);
       break;
 #ifdef EGL_MESA_screen_surface
    case EGL_SCREEN_BIT_MESA:
@@ -593,7 +586,7 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
 
    gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
    if (!gsurf->stfbi) {
-      gsurf->native->destroy(gsurf->native);
+      nsurf->destroy(nsurf);
       free(gsurf);
       return NULL;
    }
@@ -636,12 +629,29 @@ static _EGLSurface *
 egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLConfig *conf, const EGLint *attribs)
 {
-   struct egl_g3d_create_surface_arg arg;
+   struct egl_g3d_config *gconf = egl_g3d_config(conf);
+   struct egl_g3d_surface *gsurf;
 
-   memset(&arg, 0, sizeof(arg));
-   arg.type = EGL_PBUFFER_BIT;
+   gsurf = CALLOC_STRUCT(egl_g3d_surface);
+   if (!gsurf) {
+      _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
+      return NULL;
+   }
 
-   return egl_g3d_create_surface(drv, dpy, conf, &arg, attribs);
+   if (!_eglInitSurface(&gsurf->base, dpy, EGL_PBUFFER_BIT, conf, attribs)) {
+      free(gsurf);
+      return NULL;
+   }
+
+   gsurf->stvis = gconf->stvis;
+
+   gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
+   if (!gsurf->stfbi) {
+      free(gsurf);
+      return NULL;
+   }
+
+   return &gsurf->base;
 }
 
 /**
@@ -658,7 +668,8 @@ destroy_surface(_EGLDisplay *dpy, _EGLSurface *surf)
 
    pipe_texture_reference(&gsurf->render_texture, NULL);
    egl_g3d_destroy_st_framebuffer(gsurf->stfbi);
-   gsurf->native->destroy(gsurf->native);
+   if (gsurf->native)
+      gsurf->native->destroy(gsurf->native);
    free(gsurf);
 }
 
@@ -879,7 +890,9 @@ egl_g3d_wait_native(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
 
    if (ctx && ctx->DrawSurface) {
       struct egl_g3d_surface *gsurf = egl_g3d_surface(ctx->DrawSurface);
-      gsurf->native->wait(gsurf->native);
+
+      if (gsurf->native)
+         gsurf->native->wait(gsurf->native);
    }
 
    return EGL_TRUE;

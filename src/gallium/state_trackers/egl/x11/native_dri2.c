@@ -40,7 +40,6 @@
 enum dri2_surface_type {
    DRI2_SURFACE_TYPE_WINDOW,
    DRI2_SURFACE_TYPE_PIXMAP,
-   DRI2_SURFACE_TYPE_PBUFFER
 };
 
 struct dri2_display {
@@ -257,47 +256,8 @@ static boolean
 dri2_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
 {
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
-   struct dri2_display *dri2dpy = dri2surf->dri2dpy;
 
-   /* create textures for pbuffer */
-   if (dri2surf->type == DRI2_SURFACE_TYPE_PBUFFER) {
-      struct pipe_screen *screen = dri2dpy->base.screen;
-      struct pipe_texture templ;
-      uint new_valid = 0x0;
-      int att;
-
-      buffer_mask &= ~dri2surf->valid_mask;
-      if (!buffer_mask)
-         return TRUE;
-
-      memset(&templ, 0, sizeof(templ));
-      templ.target = PIPE_TEXTURE_2D;
-      templ.last_level = 0;
-      templ.width0 = dri2surf->width;
-      templ.height0 = dri2surf->height;
-      templ.depth0 = 1;
-      templ.format = dri2surf->color_format;
-      templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
-
-      for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
-         if (native_attachment_mask_test(buffer_mask, att)) {
-            assert(!dri2surf->textures[att]);
-
-            dri2surf->textures[att] = screen->texture_create(screen, &templ);
-            if (!dri2surf->textures[att])
-               break;
-
-            new_valid |= 1 << att;
-            if (new_valid == buffer_mask)
-               break;
-         }
-      }
-      dri2surf->valid_mask |= new_valid;
-      /* no need to update the stamps */
-   }
-   else {
-      dri2_surface_get_buffers(&dri2surf->base, buffer_mask);
-   }
+   dri2_surface_get_buffers(&dri2surf->base, buffer_mask);
 
    return ((dri2surf->valid_mask & buffer_mask) == buffer_mask);
 }
@@ -317,10 +277,6 @@ dri2_surface_flush_frontbuffer(struct native_surface *nsurf)
 {
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
-
-   /* pbuffer is private */
-   if (dri2surf->type == DRI2_SURFACE_TYPE_PBUFFER)
-      return TRUE;
 
    /* copy to real front buffer */
    if (dri2surf->have_fake)
@@ -343,10 +299,6 @@ dri2_surface_swap_buffers(struct native_surface *nsurf)
 {
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
-
-   /* pbuffer is private */
-   if (dri2surf->type == DRI2_SURFACE_TYPE_PBUFFER)
-      return TRUE;
 
    /* copy to front buffer */
    if (dri2surf->have_back)
@@ -504,22 +456,6 @@ dri2_display_create_pixmap_surface(struct native_display *ndpy,
    return (dri2surf) ? &dri2surf->base : NULL;
 }
 
-static struct native_surface *
-dri2_display_create_pbuffer_surface(struct native_display *ndpy,
-                                    const struct native_config *nconf,
-                                    uint width, uint height)
-{
-   struct dri2_surface *dri2surf;
-
-   dri2surf = dri2_display_create_surface(ndpy, DRI2_SURFACE_TYPE_PBUFFER,
-         (Drawable) None, nconf);
-   if (dri2surf) {
-      dri2surf->width = width;
-      dri2surf->height = height;
-   }
-   return (dri2surf) ? &dri2surf->base : NULL;
-}
-
 static int
 choose_color_format(const __GLcontextModes *mode, enum pipe_format formats[32])
 {
@@ -603,7 +539,7 @@ dri2_display_convert_config(struct native_display *ndpy,
    nconf->mode = *mode;
    nconf->mode.renderType = GLX_RGBA_BIT;
    nconf->mode.rgbMode = TRUE;
-   /* pbuffer is allocated locally and is always supported */
+   /* pbuffer is always supported */
    nconf->mode.drawableType |= GLX_PBUFFER_BIT;
    /* the swap method is always copy */
    nconf->mode.swapMethod = GLX_SWAP_COPY_OML;
@@ -877,7 +813,6 @@ x11_create_dri2_display(EGLNativeDisplayType dpy,
    dri2dpy->base.is_pixmap_supported = dri2_display_is_pixmap_supported;
    dri2dpy->base.create_window_surface = dri2_display_create_window_surface;
    dri2dpy->base.create_pixmap_surface = dri2_display_create_pixmap_surface;
-   dri2dpy->base.create_pbuffer_surface = dri2_display_create_pbuffer_surface;
 
    return &dri2dpy->base;
 }

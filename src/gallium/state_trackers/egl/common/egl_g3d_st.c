@@ -141,6 +141,53 @@ egl_g3d_destroy_st_manager(struct st_manager *smapi)
 }
 
 static boolean
+egl_g3d_st_framebuffer_flush_front_pbuffer(struct st_framebuffer_iface *stfbi,
+                                           enum st_attachment_type statt)
+{
+   return TRUE;
+}
+
+static boolean 
+egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
+                                        const enum st_attachment_type *statts,
+                                        unsigned count,
+                                        struct pipe_texture **out)
+{
+   _EGLSurface *surf = (_EGLSurface *) stfbi->st_manager_private;
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
+   struct pipe_texture templ;
+   unsigned i;
+
+   for (i = 0; i < count; i++) {
+      out[i] = NULL;
+
+      if (gsurf->stvis.render_buffer != statts[i])
+         continue;
+
+      if (!gsurf->render_texture) {
+         struct egl_g3d_display *gdpy =
+            egl_g3d_display(gsurf->base.Resource.Display);
+         struct pipe_screen *screen = gdpy->native->screen;
+
+         memset(&templ, 0, sizeof(templ));
+         templ.target = PIPE_TEXTURE_2D;
+         templ.last_level = 0;
+         templ.width0 = gsurf->base.Width;
+         templ.height0 = gsurf->base.Height;
+         templ.depth0 = 1;
+         templ.format = gsurf->stvis.color_format;
+         templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+
+         gsurf->render_texture = screen->texture_create(screen, &templ);
+      }
+
+      pipe_texture_reference(&out[i], gsurf->render_texture);
+   }
+
+   return TRUE;
+}
+
+static boolean
 egl_g3d_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
                                    enum st_attachment_type statt)
 {
@@ -246,8 +293,14 @@ egl_g3d_create_st_framebuffer(_EGLSurface *surf)
       return NULL;
 
    stfbi->visual = &gsurf->stvis;
-   stfbi->flush_front = egl_g3d_st_framebuffer_flush_front;
-   stfbi->validate = egl_g3d_st_framebuffer_validate;
+   if (gsurf->base.Type != EGL_PBUFFER_BIT) {
+      stfbi->flush_front = egl_g3d_st_framebuffer_flush_front;
+      stfbi->validate = egl_g3d_st_framebuffer_validate;
+   }
+   else {
+      stfbi->flush_front = egl_g3d_st_framebuffer_flush_front_pbuffer;
+      stfbi->validate = egl_g3d_st_framebuffer_validate_pbuffer;
+   }
    stfbi->st_manager_private = (void *) &gsurf->base;
 
    return stfbi;

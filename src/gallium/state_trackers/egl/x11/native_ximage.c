@@ -47,7 +47,6 @@
 enum ximage_surface_type {
    XIMAGE_SURFACE_TYPE_WINDOW,
    XIMAGE_SURFACE_TYPE_PIXMAP,
-   XIMAGE_SURFACE_TYPE_PBUFFER
 };
 
 struct ximage_display {
@@ -140,20 +139,19 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
    templ.depth0 = 1;
    templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
 
-   if (xsurf->type != XIMAGE_SURFACE_TYPE_PBUFFER) {
-      switch (which) {
-      case NATIVE_ATTACHMENT_FRONT_LEFT:
-      case NATIVE_ATTACHMENT_FRONT_RIGHT:
-         templ.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
-         break;
-      case NATIVE_ATTACHMENT_BACK_LEFT:
-      case NATIVE_ATTACHMENT_BACK_RIGHT:
-         templ.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
-         break;
-      default:
-         break;
-      }
+   switch (which) {
+   case NATIVE_ATTACHMENT_FRONT_LEFT:
+   case NATIVE_ATTACHMENT_FRONT_RIGHT:
+      templ.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
+      break;
+   case NATIVE_ATTACHMENT_BACK_LEFT:
+   case NATIVE_ATTACHMENT_BACK_RIGHT:
+      templ.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+      break;
+   default:
+      break;
    }
+
    xbuf->texture = screen->texture_create(screen, &templ);
    if (xbuf->texture) {
       xbuf->xdraw.visual = xsurf->visual.visual;
@@ -181,10 +179,6 @@ ximage_surface_update_geometry(struct native_surface *nsurf)
    int x, y;
    unsigned int w, h, border, depth;
    boolean updated = FALSE;
-
-   /* pbuffer has fixed geometry */
-   if (xsurf->type == XIMAGE_SURFACE_TYPE_PBUFFER)
-      return FALSE;
 
    ok = XGetGeometry(xsurf->xdpy->dpy, xsurf->drawable,
          &root, &x, &y, &w, &h, &border, &depth);
@@ -262,9 +256,6 @@ ximage_surface_draw_buffer(struct native_surface *nsurf,
    struct ximage_buffer *xbuf = &xsurf->buffers[which];
    struct pipe_screen *screen = xsurf->xdpy->base.screen;
    struct pipe_surface *psurf;
-
-   if (xsurf->type == XIMAGE_SURFACE_TYPE_PBUFFER)
-      return TRUE;
 
    assert(xsurf->drawable && xbuf->texture);
 
@@ -404,12 +395,10 @@ ximage_display_create_surface(struct native_display *ndpy,
    xsurf->color_format = xconf->base.color_format;
    xsurf->drawable = drawable;
 
-   if (xsurf->type != XIMAGE_SURFACE_TYPE_PBUFFER) {
-      xsurf->drawable = drawable;
-      xsurf->visual = *xconf->visual;
-      /* initialize the geometry */
-      ximage_surface_update_buffers(&xsurf->base, 0x0);
-   }
+   xsurf->drawable = drawable;
+   xsurf->visual = *xconf->visual;
+   /* initialize the geometry */
+   ximage_surface_update_buffers(&xsurf->base, 0x0);
 
    xsurf->base.destroy = ximage_surface_destroy;
    xsurf->base.swap_buffers = ximage_surface_swap_buffers;
@@ -441,22 +430,6 @@ ximage_display_create_pixmap_surface(struct native_display *ndpy,
 
    xsurf = ximage_display_create_surface(ndpy, XIMAGE_SURFACE_TYPE_PIXMAP,
          (Drawable) pix, nconf);
-   return (xsurf) ? &xsurf->base : NULL;
-}
-
-static struct native_surface *
-ximage_display_create_pbuffer_surface(struct native_display *ndpy,
-                                      const struct native_config *nconf,
-                                      uint width, uint height)
-{
-   struct ximage_surface *xsurf;
-
-   xsurf = ximage_display_create_surface(ndpy, XIMAGE_SURFACE_TYPE_PBUFFER,
-         (Drawable) None, nconf);
-   if (xsurf) {
-      xsurf->width = width;
-      xsurf->height = height;
-   }
    return (xsurf) ? &xsurf->base : NULL;
 }
 
@@ -718,7 +691,6 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
    xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;
    xdpy->base.create_window_surface = ximage_display_create_window_surface;
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
-   xdpy->base.create_pbuffer_surface = ximage_display_create_pbuffer_surface;
 
    return &xdpy->base;
 }

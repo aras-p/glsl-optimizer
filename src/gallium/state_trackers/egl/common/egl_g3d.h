@@ -70,8 +70,10 @@ struct egl_g3d_surface {
    struct st_visual stvis;
    struct st_framebuffer_iface *stfbi;
 
+   /* the native surface;  NULL for pbuffers */
    struct native_surface *native;
    struct pipe_texture *render_texture;
+
    unsigned int sequence_number;
 };
 

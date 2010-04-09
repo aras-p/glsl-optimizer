@@ -35,11 +35,6 @@
 
 #include "common/native.h"
 
-enum kms_surface_type {
-   KMS_SURFACE_TYPE_PBUFFER,
-   KMS_SURFACE_TYPE_SCANOUT
-};
-
 struct kms_config;
 struct kms_connector;
 struct kms_mode;
@@ -77,7 +72,6 @@ struct kms_framebuffer {
 
 struct kms_surface {
    struct native_surface base;
-   enum kms_surface_type type;
    enum pipe_format color_format;
    struct kms_display *kdpy;
    int width, height;
