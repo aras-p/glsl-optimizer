@@ -172,7 +172,6 @@ def write_format_table(formats):
         print "   case %s:" % format.name
         print "      return &util_format_%s_description;" % (format.short_name(),)
     print "   default:"
-    print "      assert(0);"
     print "      return NULL;"
     print "   }"
     print "}"

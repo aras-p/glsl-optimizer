@@ -349,31 +349,20 @@ typedef boolean
 
 
 static boolean
-test_one(test_func_t func, const char *suffix)
+test_one_func(const struct util_format_description *format_desc,
+              test_func_t func,
+              const char *suffix)
 {
-   enum pipe_format last_format = PIPE_FORMAT_NONE;
    unsigned i;
    bool success = TRUE;
 
+   printf("Testing util_format_%s_%s ...\n",
+          format_desc->short_name, suffix);
+
    for (i = 0; i < util_format_nr_test_cases; ++i) {
       const struct util_format_test_case *test = &util_format_test_cases[i];
-      const struct util_format_description *format_desc;
-      bool skip = FALSE;
 
-      format_desc = util_format_description(test->format);
-
-      if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC &&
-          !util_format_s3tc_enabled) {
-         skip = TRUE;
-      }
-
-      if (test->format != last_format) {
-         printf("%s util_format_%s_%s ...\n",
-                skip ? "Skipping" : "Testing", format_desc->short_name, suffix);
-         last_format = test->format;
-      }
-
-      if (!skip) {
+      if (test->format == format_desc->format) {
          if (!func(format_desc, &util_format_test_cases[i])) {
            success = FALSE;
          }
@@ -387,22 +376,37 @@ test_one(test_func_t func, const char *suffix)
 static boolean
 test_all(void)
 {
+   enum pipe_format format;
    bool success = TRUE;
 
-   if (!test_one(&test_format_fetch_rgba_float, "fetch_rgba_float"))
-     success = FALSE;
+   for (format = 1; format < PIPE_FORMAT_COUNT; ++format) {
+      const struct util_format_description *format_desc;
 
-   if (!test_one(&test_format_pack_rgba_float, "pack_rgba_float"))
-     success = FALSE;
+      format_desc = util_format_description(format);
+      if (!format_desc) {
+         continue;
+      }
 
-   if (!test_one(&test_format_unpack_rgba_float, "unpack_rgba_float"))
-     success = FALSE;
+      if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC &&
+          !util_format_s3tc_enabled) {
+         continue;
+      }
 
-   if (!test_one(&test_format_pack_rgba_8unorm, "pack_rgba_8unorm"))
-     success = FALSE;
+#     define TEST_ONE_FUNC(name) \
+      if (format_desc->name) { \
+         if (!test_one_func(format_desc, &test_format_##name, #name)) { \
+           success = FALSE; \
+         } \
+      }
 
-   if (!test_one(&test_format_unpack_rgba_8unorm, "unpack_rgba_8unorm"))
-     success = FALSE;
+      TEST_ONE_FUNC(fetch_rgba_float);
+      TEST_ONE_FUNC(pack_rgba_float);
+      TEST_ONE_FUNC(unpack_rgba_float);
+      TEST_ONE_FUNC(pack_rgba_8unorm);
+      TEST_ONE_FUNC(unpack_rgba_8unorm);
+
+#     undef TEST_ONE_FUNC
+   }
 
    return success;
 }
