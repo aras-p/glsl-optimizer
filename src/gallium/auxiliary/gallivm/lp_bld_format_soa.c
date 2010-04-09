@@ -307,7 +307,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
    }
    else {
       /*
-       * Fallback to calling util_format_description::fetch_float for each
+       * Fallback to calling util_format_description::fetch_rgba_float for each
        * pixel.
        *
        * This is definitely not the most efficient way of fetching pixels, as
@@ -324,10 +324,10 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
 
       assert(type.floating);
 
-      util_snprintf(name, sizeof name, "util_format_%s_fetch_float", format_desc->short_name);
+      util_snprintf(name, sizeof name, "util_format_%s_fetch_rgba_float", format_desc->short_name);
 
       /*
-       * Declare and bind format_desc->fetch_float().
+       * Declare and bind format_desc->fetch_rgba_float().
        */
 
       function = LLVMGetNamedFunction(module, name);
@@ -348,7 +348,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
 
          assert(LLVMIsDeclaration(function));
 
-         LLVMAddGlobalMapping(lp_build_engine, function, format_desc->fetch_float);
+         LLVMAddGlobalMapping(lp_build_engine, function, format_desc->fetch_rgba_float);
       }
 
       for (chan = 0; chan < 4; ++chan) {
@@ -361,7 +361,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
                                  "");
 
       /*
-       * Invoke format_desc->fetch_float() for each pixel and insert the result
+       * Invoke format_desc->fetch_rgba_float() for each pixel and insert the result
        * in the SoA vectors.
        */
 

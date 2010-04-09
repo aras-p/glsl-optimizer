@@ -129,11 +129,34 @@ def write_format_table(formats):
             print "      %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
         print "   },"
         print "   %s," % (colorspace_map(format.colorspace),)
-        print "   &util_format_%s_unpack_8unorm," % format.short_name() 
-        print "   &util_format_%s_pack_8unorm," % format.short_name() 
-        print "   &util_format_%s_unpack_float," % format.short_name() 
-        print "   &util_format_%s_pack_float," % format.short_name() 
-        print "   &util_format_%s_fetch_float" % format.short_name() 
+        if format.colorspace != ZS:
+            print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name() 
+            print "   &util_format_%s_pack_rgba_8unorm," % format.short_name() 
+            print "   &util_format_%s_unpack_rgba_float," % format.short_name() 
+            print "   &util_format_%s_pack_rgba_float," % format.short_name() 
+            print "   &util_format_%s_fetch_rgba_float," % format.short_name()
+        else:
+            print "   NULL, /* unpack_rgba_8unorm */" 
+            print "   NULL, /* pack_rgba_8unorm */" 
+            print "   NULL, /* unpack_rgba_float */" 
+            print "   NULL, /* pack_rgba_float */" 
+            print "   NULL, /* fetch_rgba_float */" 
+        if format.colorspace == ZS and format.swizzles[0] != SWIZZLE_NONE:
+            print "   &util_format_%s_unpack_z_32unorm," % format.short_name() 
+            print "   &util_format_%s_pack_z_32unorm," % format.short_name() 
+            print "   &util_format_%s_unpack_z_float," % format.short_name() 
+            print "   &util_format_%s_pack_z_float," % format.short_name() 
+        else:
+            print "   NULL, /* unpack_z_32unorm */" 
+            print "   NULL, /* pack_z_32unorm */" 
+            print "   NULL, /* unpack_z_float */" 
+            print "   NULL, /* pack_z_float */" 
+        if format.colorspace == ZS and format.swizzles[1] != SWIZZLE_NONE:
+            print "   &util_format_%s_unpack_s_8uscaled," % format.short_name() 
+            print "   &util_format_%s_pack_s_8uscaled" % format.short_name() 
+        else:
+            print "   NULL, /* unpack_s_8uscaled */" 
+            print "   NULL /* pack_s_8uscaled */" 
         print "};"
         print
         

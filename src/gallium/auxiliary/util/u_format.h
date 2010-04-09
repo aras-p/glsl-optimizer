@@ -192,43 +192,114 @@ struct util_format_description
 
    /**
     * Unpack pixel blocks to R8G8B8A8_UNORM.
+    *
+    * Only defined for non-depth-stencil formats.
     */
    void
-   (*unpack_8unorm)(uint8_t *dst, unsigned dst_stride,
-                    const uint8_t *src, unsigned src_stride,
-                    unsigned width, unsigned height);
+   (*unpack_rgba_8unorm)(uint8_t *dst, unsigned dst_stride,
+                         const uint8_t *src, unsigned src_stride,
+                         unsigned width, unsigned height);
 
    /**
     * Pack pixel blocks from R8G8B8A8_UNORM.
+    *
+    * Only defined for non-depth-stencil formats.
     */
    void
-   (*pack_8unorm)(uint8_t *dst, unsigned dst_stride,
-                  const uint8_t *src, unsigned src_stride,
-                  unsigned width, unsigned height);
+   (*pack_rgba_8unorm)(uint8_t *dst, unsigned dst_stride,
+                       const uint8_t *src, unsigned src_stride,
+                       unsigned width, unsigned height);
 
    /**
     * Unpack pixel blocks to R32G32B32A32_FLOAT.
+    *
+    * Only defined for non-depth-stencil formats.
     */
    void
-   (*unpack_float)(float *dst, unsigned dst_stride,
-                   const uint8_t *src, unsigned src_stride,
-                   unsigned width, unsigned height);
+   (*unpack_rgba_float)(float *dst, unsigned dst_stride,
+                        const uint8_t *src, unsigned src_stride,
+                        unsigned width, unsigned height);
 
    /**
     * Pack pixel blocks from R32G32B32A32_FLOAT.
+    *
+    * Only defined for non-depth-stencil formats.
     */
    void
-   (*pack_float)(uint8_t *dst, unsigned dst_stride,
-                 const float *src, unsigned src_stride,
-                 unsigned width, unsigned height);
+   (*pack_rgba_float)(uint8_t *dst, unsigned dst_stride,
+                      const float *src, unsigned src_stride,
+                      unsigned width, unsigned height);
 
    /**
     * Fetch a single pixel (i, j) from a block.
+    *
+    * Only defined for non-depth-stencil formats.
     */
    void
-   (*fetch_float)(float *dst,
-                  const uint8_t *src,
-                  unsigned i, unsigned j);
+   (*fetch_rgba_float)(float *dst,
+                       const uint8_t *src,
+                       unsigned i, unsigned j);
+
+   /**
+    * Unpack pixels to Z32_UNORM.
+    *
+    * Only defined for depth formats.
+    */
+   void
+   (*unpack_z_32unorm)(uint32_t *dst, unsigned dst_stride,
+                       const uint8_t *src, unsigned src_stride,
+                       unsigned width, unsigned height);
+
+   /**
+    * Pack pixels from Z32_FLOAT.
+    *
+    * Only defined for depth formats.
+    */
+   void
+   (*pack_z_32unorm)(uint8_t *dst, unsigned dst_stride,
+                     const uint32_t *src, unsigned src_stride,
+                     unsigned width, unsigned height);
+
+   /**
+    * Unpack pixels to Z32_FLOAT.
+    *
+    * Only defined for depth formats.
+    */
+   void
+   (*unpack_z_float)(float *dst, unsigned dst_stride,
+                     const uint8_t *src, unsigned src_stride,
+                     unsigned width, unsigned height);
+
+   /**
+    * Pack pixels from Z32_FLOAT.
+    *
+    * Only defined for depth formats.
+    */
+   void
+   (*pack_z_float)(uint8_t *dst, unsigned dst_stride,
+                   const float *src, unsigned src_stride,
+                   unsigned width, unsigned height);
+
+   /**
+    * Unpack pixels to S8_USCALED.
+    *
+    * Only defined for stencil formats.
+    */
+   void
+   (*unpack_s_32unorm)(uint8_t *dst, unsigned dst_stride,
+                       const uint8_t *src, unsigned src_stride,
+                       unsigned width, unsigned height);
+
+   /**
+    * Pack pixels from S8_USCALED.
+    *
+    * Only defined for stencil formats.
+    */
+   void
+   (*pack_s_8uscaled)(uint8_t *dst, unsigned dst_stride,
+                      const uint8_t *src, unsigned src_stride,
+                      unsigned width, unsigned height);
+
 };
 
 
