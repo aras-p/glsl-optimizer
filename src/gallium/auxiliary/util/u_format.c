@@ -149,6 +149,7 @@ util_format_fits_8unorm(const struct util_format_description *format_desc)
                 format_desc->channel[chan].size > 8) {
                return FALSE;
             }
+            break;
          default:
             return FALSE;
          }
