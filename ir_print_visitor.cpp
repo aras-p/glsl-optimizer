@@ -44,7 +44,7 @@ print_type(const glsl_type *t)
 void ir_print_visitor::visit(ir_variable *ir)
 {
    if (deref_depth) {
-      printf("(%s)", ir->name);
+      printf("%s", ir->name);
    } else {
       printf("(declare ");
 
@@ -57,7 +57,7 @@ void ir_print_visitor::visit(ir_variable *ir)
 	     cent, inv, mode[ir->mode], interp[ir->interpolation]);
 
       print_type(ir->type);
-      printf("(%s)) ", ir->name);
+      printf(" %s)", ir->name);
    }
 }
 
