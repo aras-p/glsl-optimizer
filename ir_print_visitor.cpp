@@ -267,6 +267,7 @@ ir_print_visitor::visit(ir_call *ir)
 
       inst->accept(this);
    }
+   printf(")\n");
 }
 
 
