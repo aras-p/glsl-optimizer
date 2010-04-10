@@ -1146,6 +1146,11 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
         if (vbo->max_index == ~0) {
             /* Bogus value from broken state tracker; hax it. */
+	    /* TODO - more hax - fixes doom3 from almos on irc */
+	    if (!vbo->stride) {
+		fprintf(stderr, "r300: got a VBO with stride 0 fixing up to stide 4\n");
+		vbo->stride = 4;
+	    }
             vbo->max_index =
                 (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
         }
