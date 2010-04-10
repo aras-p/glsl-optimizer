@@ -28,7 +28,7 @@
 #include "s_expression.h"
 
 static void ir_read_error(s_expression *expr, const char *fmt, ...);
-static glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
+static const glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
 
 static ir_instruction *read_instruction(_mesa_glsl_parse_state *,
 				        s_expression *);
@@ -98,20 +98,44 @@ ir_read_error(s_expression *expr, const char *fmt, ...)
    printf("%s\n", buf);
 }
 
-static glsl_type *
+static const glsl_type *
 read_type(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    s_list *list = SX_AS_LIST(expr);
    if (list != NULL) {
       s_symbol *type_sym = SX_AS_SYMBOL(list->subexpressions.get_head());
       if (type_sym == NULL) {
-	 ir_read_error(expr, "expected type (array (...)) or (struct (...))");
+	 ir_read_error(expr, "expected type (array ...) or (struct ...)");
 	 return NULL;
       }
-      if (strcmp(type_sym->value(), "array") == 0)
+      if (strcmp(type_sym->value(), "array") == 0) {
+	 if (list->length() != 3) {
+	    ir_read_error(expr, "expected type (array <type> <int>)");
+	    return NULL;
+	 }
+
+	 // Read base type
+	 s_expression *base_expr = (s_expression*) type_sym->next;
+	 const glsl_type *base_type = read_type(st, base_expr);
+	 if (base_type == NULL) {
+	    ir_read_error(expr, "when reading base type of array");
+	    return NULL;
+	 }
+
+	 // Read array size
+	 s_int *size = SX_AS_INT(base_expr->next);
+	 if (size == NULL) {
+	    ir_read_error(expr, "found non-integer array size");
+	    return NULL;
+	 }
+
+	 return glsl_type::get_array_instance(base_type, size->value());
+      } else if (strcmp(type_sym->value(), "struct") == 0) {
 	 assert(false); // FINISHME
-      if (strcmp(type_sym->value(), "struct") == 0)
-	 assert(false); // FINISHME
+      } else {
+	 ir_read_error(expr, "expected (array ...) or (struct ...); found (%s ...)", type_sym->value());
+	 return NULL;
+      }
    }
    
    s_symbol *type_sym = SX_AS_SYMBOL(expr);
@@ -120,7 +144,7 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
       return NULL;
    }
 
-   glsl_type *type = st->symbols->get_type(type_sym->value());
+   const glsl_type *type = st->symbols->get_type(type_sym->value());
    if (type == NULL)
       ir_read_error(expr, "invalid type: %s", type_sym->value());
 
@@ -168,7 +192,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    s_expression *type_expr = (s_expression*) quals->next;
-   glsl_type *type = read_type(st, type_expr);
+   const glsl_type *type = read_type(st, type_expr);
    if (type == NULL)
       return NULL;
 
@@ -319,7 +343,7 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
-   glsl_type *type = read_type(st, type_expr);
+   const glsl_type *type = read_type(st, type_expr);
    if (type == NULL)
       return NULL;
 
@@ -414,7 +438,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
-   glsl_type *type = read_type(st, type_expr);
+   const glsl_type *type = read_type(st, type_expr);
    if (type == NULL)
       return NULL;
 
