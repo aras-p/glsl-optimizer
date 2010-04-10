@@ -81,15 +81,6 @@ debug = env['debug']
 dri = env['dri']
 machine = env['machine']
 platform = env['platform']
-drawllvm = 'llvmpipe' in env['drivers']
-
-# LLVM support in the Draw module
-if drawllvm:
-        env.Tool('llvm')
-        if not env.has_key('LLVM_VERSION'):
-           drawllvm = False
-if drawllvm:
-        env.Append(CFLAGS = ['-DDRAW_LLVM=1'])
 
 # derived options
 x86 = machine == 'x86'
@@ -102,7 +93,6 @@ Export([
 	'x86', 
 	'ppc', 
 	'dri', 
-	'drawllvm',
 	'platform',
 	'gcc',
 	'msvc',
@@ -166,10 +156,6 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'pthread',
 		'dl',
 	])
-
-# LLVM support in the Draw module
-if drawllvm:
-    env.Append(CPPDEFINES = ['DRAW_LLVM'])
 
 # for debugging
 #print env.Dump()

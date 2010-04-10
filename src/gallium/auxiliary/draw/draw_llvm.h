@@ -1,5 +1,5 @@
-#ifndef DRAW_LLVM_H
-#define DRAW_LLVM_H
+#ifndef HAVE_LLVM_H
+#define HAVE_LLVM_H
 
 #include "draw/draw_private.h"
 

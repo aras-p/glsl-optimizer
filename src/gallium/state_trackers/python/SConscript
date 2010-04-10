@@ -46,7 +46,6 @@ if 'python' in env['statetrackers']:
 
     if 'llvmpipe' in env['drivers']:
         env.Append(CPPDEFINES = ['HAVE_LLVMPIPE'])
-        env.Tool('llvm')
         env.Prepend(LIBS = [llvmpipe])
     if 'softpipe' in env['drivers']:
         env.Append(CPPDEFINES = ['HAVE_SOFTPIPE'])

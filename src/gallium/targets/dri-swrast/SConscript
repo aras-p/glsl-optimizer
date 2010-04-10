@@ -25,11 +25,9 @@ if 'softpipe' in env['drivers']:
     env.Prepend(LIBS = [softpipe])
 
 if 'llvmpipe' in env['drivers']:
-    env.Tool('llvm')
-    if 'LLVM_VERSION' in env:
-        env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
-        env.Tool('udis86')
-        env.Prepend(LIBS = [llvmpipe])
+    env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
+    env.Tool('udis86')
+    env.Prepend(LIBS = [llvmpipe])
 
 swrastg_sources = [
     'swrast_drm_api.c'

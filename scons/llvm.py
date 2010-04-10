@@ -63,13 +63,14 @@ def generate(env):
     if env['platform'] == 'windows':
         # XXX: There is no llvm-config on Windows, so assume a standard layout
         if llvm_dir is None:
-            return
+            print 'scons: LLVM environment variable must be specified when building for windows'
+            env.Exit(1)
 
         # Try to determine the LLVM version from llvm/Config/config.h
         llvm_config = os.path.join(llvm_dir, 'include/llvm/Config/config.h')
         if not os.path.exists(llvm_config):
             print 'scons: could not find %s' % llvm_config
-            return
+            env.Exit(1)
         llvm_version_re = re.compile(r'^#define PACKAGE_VERSION "([^"]*)"')
         llvm_version = None
         for line in open(llvm_config, 'rt'):
@@ -80,7 +81,7 @@ def generate(env):
                 break
         if llvm_version is None:
             print 'scons: could not determine the LLVM version from %s' % llvm_config
-            return
+            env.Exit(1)
 
         env.Prepend(CPPPATH = [os.path.join(llvm_dir, 'include')])
         env.AppendUnique(CPPDEFINES = [
@@ -129,7 +130,11 @@ def generate(env):
                 # debug build we'll be linking against LIBCMTD, so disable
                 # that.
                 env.Append(LINKFLAGS = ['/nodefaultlib:LIBCMT'])
-    elif env.Detect('llvm-config'):
+    else:
+        if not env.Detect('llvm-config'):
+            print 'scons: llvm-config script not found' % llvm_version
+            env.Exit(1)
+
         llvm_version = env.backtick('llvm-config --version').rstrip()
         llvm_version = distutils.version.LooseVersion(llvm_version)
 
@@ -138,11 +143,10 @@ def generate(env):
             env.ParseConfig('llvm-config --libs jit interpreter nativecodegen bitwriter')
             env.ParseConfig('llvm-config --ldflags')
         except OSError:
-            print 'llvm-config version %s failed' % llvm_version
+            print 'scons: llvm-config version %s failed' % llvm_version
+            env.Exit(1)
         else:
             env['LINK'] = env['CXX']
-    else:
-        return
 
     assert llvm_version is not None
 

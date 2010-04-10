@@ -196,7 +196,7 @@ boolean draw_need_pipeline(const struct draw_context *draw,
                            const struct pipe_rasterizer_state *rasterizer,
                            unsigned prim );
 
-#ifdef DRAW_LLVM
+#ifdef HAVE_LLVM
 /*******************************************************************************
  * LLVM integration
  */

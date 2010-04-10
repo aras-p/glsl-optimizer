@@ -142,8 +142,6 @@ def generate(env):
     # configuration. See also http://www.scons.org/wiki/AdvancedBuildExample
     build_topdir = 'build'
     build_subdir = env['platform']
-    if env['llvm']:
-        build_subdir += "-llvm"
     if env['machine'] != 'generic':
         build_subdir += '-' + env['machine']
     if env['debug']:
@@ -470,6 +468,10 @@ def generate(env):
 
     # Default libs
     env.Append(LIBS = [])
+
+    # Load LLVM
+    if env['llvm']:
+        env.Tool('llvm')
 
     # Custom builders and methods
     env.Tool('custom')

@@ -38,9 +38,9 @@
 #include <llvm-c/Core.h>  
 
 
-/** Set version to 0 if missing to avoid #ifdef HAVE_LLVM everywhere */
+/** Ensure HAVE_LLVM is set to avoid #ifdef HAVE_LLVM everywhere */
 #ifndef HAVE_LLVM
-#define HAVE_LLVM 0x0207
+#error "HAVE_LLVM should be set with LLVM's version number, e.g. (0x0207 for 2.7)"
 #endif
 
 

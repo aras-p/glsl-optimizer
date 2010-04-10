@@ -46,7 +46,7 @@
 
 #include "tgsi/tgsi_scan.h"
 
-#ifdef DRAW_LLVM
+#ifdef HAVE_LLVM
 #include <llvm-c/ExecutionEngine.h>
 #endif
 
@@ -241,7 +241,7 @@ struct draw_context
 
    unsigned instance_id;
 
-#ifdef DRAW_LLVM
+#ifdef HAVE_LLVM
    LLVMExecutionEngineRef engine;
 #endif
    void *driver_private;

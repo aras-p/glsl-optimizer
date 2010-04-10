@@ -40,7 +40,7 @@
 
 #include "tgsi/tgsi_parse.h"
 
-#ifdef DRAW_LLVM
+#ifdef HAVE_LLVM
 
 struct draw_llvm_vertex_shader {
    struct draw_vertex_shader base;
