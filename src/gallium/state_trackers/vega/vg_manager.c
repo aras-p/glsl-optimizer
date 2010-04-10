@@ -32,6 +32,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_format.h"
 
 #include "vg_manager.h"
 #include "vg_context.h"
@@ -332,10 +333,7 @@ vg_api_is_visual_supported(struct st_api *stapi,
                            const struct st_visual *visual)
 {
    /* the impl requires a depth/stencil buffer */
-   if (visual->depth_stencil_format == PIPE_FORMAT_NONE)
-      return FALSE;
-
-   return TRUE;
+   return util_format_is_depth_and_stencil(visual->depth_stencil_format);
 }
 
 static st_proc_t
