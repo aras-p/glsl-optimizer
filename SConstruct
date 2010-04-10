@@ -167,16 +167,6 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'dl',
 	])
 
-# DRI
-if dri:
-	env.ParseConfig('pkg-config --cflags --libs libdrm')
-	env.Append(CPPDEFINES = [
-		('USE_EXTERNAL_DXTN_LIB', '1'), 
-		'IN_DRI_DRIVER',
-		'GLX_DIRECT_RENDERING',
-		'GLX_INDIRECT_RENDERING',
-	])
-
 # LLVM support in the Draw module
 if drawllvm:
     env.Append(CPPDEFINES = ['DRAW_LLVM'])

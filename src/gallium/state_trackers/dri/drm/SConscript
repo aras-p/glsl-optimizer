@@ -7,6 +7,8 @@ if env['dri']:
 
     env = env.Clone()
 
+    env.ParseConfig('pkg-config --cflags --libs libdrm')
+
     env.Append(CPPPATH = [
         '#/src/mesa',
 	'#/src/gallium/state_trackers/dri/common',
