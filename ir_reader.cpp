@@ -29,6 +29,11 @@
 
 static void ir_read_error(s_expression *expr, const char *fmt, ...);
 static glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
+
+static ir_instruction *read_instruction(_mesa_glsl_parse_state *,
+				        s_expression *);
+static ir_variable *read_declaration(_mesa_glsl_parse_state *, s_list *);
+
 static ir_rvalue *read_rvalue(_mesa_glsl_parse_state *, s_expression *);
 static ir_assignment *read_assignment(_mesa_glsl_parse_state *, s_list *);
 static ir_expression *read_expression(_mesa_glsl_parse_state *, s_list *);
@@ -54,14 +59,24 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
    _mesa_glsl_initialize_constructors(instructions, state);
    _mesa_glsl_initialize_functions(instructions, state);
 
-   // FINISHME: Only reading rvalues...for testing.
-   ir_instruction *ir = read_rvalue(state, SX_AS_LIST(expr));
-   if (ir == NULL) {
-      ir_read_error(NULL, "No IR\n");
+   // Read in a list of instructions
+   s_list *list = SX_AS_LIST(expr);
+   if (list == NULL) {
+      ir_read_error(expr, "Expected (<instruction> ...); found an atom.");
       state->error = true;
       return;
    }
-   instructions->push_tail(ir);
+
+   foreach_iter(exec_list_iterator, it, list->subexpressions) {
+      s_expression *sub = (s_expression*) it.get();
+      ir_instruction *ir = read_instruction(state, sub);
+      if (ir == NULL) {
+	 ir_read_error(sub, "Invalid instruction.\n");
+	 state->error = true;
+	 return;
+      }
+      instructions->push_tail(ir);
+   }
 }
 
 static void
@@ -110,6 +125,100 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
 
    return type;
 }
+
+
+static ir_instruction *
+read_instruction(_mesa_glsl_parse_state *st, s_expression *expr)
+{
+   s_list *list = SX_AS_LIST(expr);
+   if (list == NULL || list->subexpressions.is_empty())
+      return NULL;
+
+   s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.get_head());
+   if (tag == NULL) {
+      ir_read_error(expr, "expected instruction tag");
+      return NULL;
+   }
+
+   ir_instruction *inst = NULL;
+   if (strcmp(tag->value(), "declare") == 0)
+      inst = read_declaration(st, list);
+   else
+      ir_read_error(expr, "unrecognized instruction tag: %s", tag->value());
+
+   return inst;
+}
+
+
+static ir_variable *
+read_declaration(_mesa_glsl_parse_state *st, s_list *list)
+{
+   if (list->length() != 4) {
+      ir_read_error(list, "expected (declare (<qualifiers>) <type> <name>)");
+      return NULL;
+   }
+
+   s_list *quals = SX_AS_LIST(list->subexpressions.head->next);
+   if (quals == NULL) {
+      ir_read_error(list, "expected a list of variable qualifiers");
+      return NULL;
+   }
+
+   s_expression *type_expr = (s_expression*) quals->next;
+   glsl_type *type = read_type(st, type_expr);
+   if (type == NULL)
+      return NULL;
+
+   s_symbol *var_name = SX_AS_SYMBOL(type_expr->next);
+   if (var_name == NULL) {
+      ir_read_error(list, "expected variable name, found non-symbol");
+      return NULL;
+   }
+
+   ir_variable *var = new ir_variable(type, var_name->value());
+
+   foreach_iter(exec_list_iterator, it, quals->subexpressions) {
+      s_symbol *qualifier = SX_AS_SYMBOL(it.get());
+      if (qualifier == NULL) {
+	 ir_read_error(list, "qualifier list must contain only symbols");
+	 delete var;
+	 return NULL;
+      }
+
+      // FINISHME: Check for duplicate/conflicting qualifiers.
+      if (strcmp(qualifier->value(), "centroid") == 0) {
+	 var->centroid = 1;
+      } else if (strcmp(qualifier->value(), "invariant") == 0) {
+	 var->invariant = 1;
+      } else if (strcmp(qualifier->value(), "uniform") == 0) {
+	 var->mode = ir_var_uniform;
+      } else if (strcmp(qualifier->value(), "auto") == 0) {
+	 var->mode = ir_var_auto;
+      } else if (strcmp(qualifier->value(), "in") == 0) {
+	 var->mode = ir_var_in;
+      } else if (strcmp(qualifier->value(), "out") == 0) {
+	 var->mode = ir_var_out;
+      } else if (strcmp(qualifier->value(), "inout") == 0) {
+	 var->mode = ir_var_inout;
+      } else if (strcmp(qualifier->value(), "smooth") == 0) {
+	 var->interpolation = ir_var_smooth;
+      } else if (strcmp(qualifier->value(), "flat") == 0) {
+	 var->interpolation = ir_var_flat;
+      } else if (strcmp(qualifier->value(), "noperspective") == 0) {
+	 var->interpolation = ir_var_noperspective;
+      } else {
+	 ir_read_error(list, "unknown qualifier: %s", qualifier->value());
+	 delete var;
+	 return NULL;
+      }
+   }
+
+   // Add the variable to the symbol table
+   st->symbols->add_variable(var_name->value(), var);
+
+   return var;
+}
+
 
 static ir_rvalue *
 read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
