@@ -205,7 +205,10 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     boolean is_r400 = r300_screen(screen)->caps.is_r400;
     boolean is_z24 = format == PIPE_FORMAT_X8Z24_UNORM ||
                      format == PIPE_FORMAT_S8_USCALED_Z24_UNORM;
-    boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM;
+    boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM ||
+                              format == PIPE_FORMAT_R10G10B10X2_SNORM ||
+                              format == PIPE_FORMAT_B10G10R10A2_UNORM ||
+                              format == PIPE_FORMAT_R10SG10SB10SA2U_NORM;
     boolean is_ati1n = format == PIPE_FORMAT_RGTC1_UNORM ||
                        format == PIPE_FORMAT_RGTC1_SNORM;
     boolean is_ati2n = format == PIPE_FORMAT_RGTC2_UNORM ||

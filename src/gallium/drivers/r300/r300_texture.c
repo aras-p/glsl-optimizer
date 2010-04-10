@@ -97,6 +97,12 @@ static uint32_t r300_translate_texformat(enum pipe_format format)
         R300_TX_FORMAT_SIGNED_W,
     };
 
+    /* This is truly a special format.
+     * It stores R8G8 and B is computed using sqrt(1 - R^2 - G^2). */
+    if (format == PIPE_FORMAT_R8G8Bx_SNORM) {
+        return ~0; /* Unsupported. */
+    }
+
     desc = util_format_description(format);
 
     /* Colorspace (return non-RGB formats directly). */
@@ -340,10 +346,13 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /* 16-bit buffers. */
         case PIPE_FORMAT_B5G6R5_UNORM:
             return R300_COLOR_FORMAT_RGB565;
+
         case PIPE_FORMAT_B5G5R5A1_UNORM:
         case PIPE_FORMAT_B5G5R5X1_UNORM:
             return R300_COLOR_FORMAT_ARGB1555;
+
         case PIPE_FORMAT_B4G4R4A4_UNORM:
+        case PIPE_FORMAT_B4G4R4X4_UNORM:
             return R300_COLOR_FORMAT_ARGB4444;
 
         /* 32-bit buffers. */
@@ -354,9 +363,14 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_A8B8G8R8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
         case PIPE_FORMAT_X8B8G8R8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
             return R300_COLOR_FORMAT_ARGB8888;
+
         case PIPE_FORMAT_R10G10B10A2_UNORM:
+        case PIPE_FORMAT_R10G10B10X2_SNORM:
+        case PIPE_FORMAT_B10G10R10A2_UNORM:
+        case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
             return R500_COLOR_FORMAT_ARGB2101010;  /* R5xx-only? */
 
         /* 64-bit buffers. */
@@ -458,8 +472,10 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_B5G5R5A1_UNORM:
         case PIPE_FORMAT_B5G5R5X1_UNORM:
         case PIPE_FORMAT_B4G4R4A4_UNORM:
+        case PIPE_FORMAT_B4G4R4X4_UNORM:
         case PIPE_FORMAT_B8G8R8A8_UNORM:
         case PIPE_FORMAT_B8G8R8X8_UNORM:
+        case PIPE_FORMAT_B10G10R10A2_UNORM:
             return modifier |
                 R300_C0_SEL_B | R300_C1_SEL_G |
                 R300_C2_SEL_R | R300_C3_SEL_A;
@@ -479,9 +495,12 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
                 R300_C2_SEL_G | R300_C3_SEL_R;
 
         /* RGBA outputs. */
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
         case PIPE_FORMAT_R10G10B10A2_UNORM:
+        case PIPE_FORMAT_R10G10B10X2_SNORM:
+        case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
         //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
