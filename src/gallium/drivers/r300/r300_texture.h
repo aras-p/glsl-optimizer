@@ -25,9 +25,12 @@
 
 #include "util/u_format.h"
 
-#include "r300_reg.h"
-
 struct r300_texture;
+
+uint32_t r300_translate_texformat(enum pipe_format format,
+                                  const unsigned char *swizzle);
+
+uint32_t r500_tx_format_msb_bit(enum pipe_format format);
 
 unsigned r300_texture_get_stride(struct r300_screen* screen,
                                  struct r300_texture* tex, unsigned level);

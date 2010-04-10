@@ -456,74 +456,71 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
         (struct r300_textures_state*)r300->textures_state.state;
     struct r300_texture_sampler_state *texstate;
     struct r300_sampler_state *sampler;
-    struct pipe_sampler_view *view;
+    struct r300_sampler_view *view;
     struct r300_texture *tex;
     unsigned min_level, max_level, i, size;
-    unsigned count = MIN2(state->texture_count, state->sampler_count);
+    unsigned count = MIN2(state->sampler_view_count,
+                          state->sampler_state_count);
 
     state->tx_enable = 0;
     state->count = 0;
     size = 2;
 
     for (i = 0; i < count; i++) {
-        if (state->fragment_sampler_views[i] && state->sampler_states[i]) {
+        if (state->sampler_views[i] && state->sampler_states[i]) {
             state->tx_enable |= 1 << i;
 
-            view = state->fragment_sampler_views[i];
-            tex = r300_texture(view->texture);
+            view = state->sampler_views[i];
+            tex = r300_texture(view->base.texture);
             sampler = state->sampler_states[i];
 
-            assert(view->format == tex->b.b.format);
-
             texstate = &state->regs[i];
-            memcpy(texstate->format, &tex->state, sizeof(uint32_t)*3);
-            texstate->filter[0] = sampler->filter0;
-            texstate->filter[1] = sampler->filter1;
+            texstate->format = view->format;
+            texstate->filter0 = sampler->filter0;
+            texstate->filter1 = sampler->filter1;
             texstate->border_color = sampler->border_color;
-            texstate->tile_config = R300_TXO_MACRO_TILE(tex->macrotile) |
-                                    R300_TXO_MICRO_TILE(tex->microtile);
 
             /* to emulate 1D textures through 2D ones correctly */
             if (tex->b.b.target == PIPE_TEXTURE_1D) {
-                texstate->filter[0] &= ~R300_TX_WRAP_T_MASK;
-                texstate->filter[0] |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
+                texstate->filter0 &= ~R300_TX_WRAP_T_MASK;
+                texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
             }
 
             if (tex->uses_pitch) {
                 /* NPOT textures don't support mip filter, unfortunately.
                  * This prevents incorrect rendering. */
-                texstate->filter[0] &= ~R300_TX_MIN_FILTER_MIP_MASK;
+                texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
 
                 /* Set repeat or mirrored-repeat to clamp-to-edge. */
                 /* Wrap S. */
-                if ((texstate->filter[0] & R300_TX_WRAP_S_MASK) ==
+                if ((texstate->filter0 & R300_TX_WRAP_S_MASK) ==
                      R300_TX_WRAP_S(R300_TX_REPEAT) ||
-                    (texstate->filter[0] & R300_TX_WRAP_S_MASK) ==
+                    (texstate->filter0 & R300_TX_WRAP_S_MASK) ==
                      R300_TX_WRAP_S(R300_TX_MIRRORED)) {
-                    texstate->filter[0] &= ~R300_TX_WRAP_S_MASK;
-                    texstate->filter[0] |= R300_TX_WRAP_S(R300_TX_CLAMP_TO_EDGE);
+                    texstate->filter0 &= ~R300_TX_WRAP_S_MASK;
+                    texstate->filter0 |= R300_TX_WRAP_S(R300_TX_CLAMP_TO_EDGE);
                 }
 
                 /* Wrap T. */
-                if ((texstate->filter[0] & R300_TX_WRAP_T_MASK) ==
+                if ((texstate->filter0 & R300_TX_WRAP_T_MASK) ==
                      R300_TX_WRAP_T(R300_TX_REPEAT) ||
-                    (texstate->filter[0] & R300_TX_WRAP_T_MASK) ==
+                    (texstate->filter0 & R300_TX_WRAP_T_MASK) ==
                      R300_TX_WRAP_T(R300_TX_MIRRORED)) {
-                    texstate->filter[0] &= ~R300_TX_WRAP_T_MASK;
-                    texstate->filter[0] |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
+                    texstate->filter0 &= ~R300_TX_WRAP_T_MASK;
+                    texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
                 }
             } else {
                 /* determine min/max levels */
                 /* the MAX_MIP level is the largest (finest) one */
-                max_level = MIN3(sampler->max_lod + view->first_level,
-                                 tex->b.b.last_level, view->last_level);
-                min_level = MIN2(sampler->min_lod + view->first_level,
+                max_level = MIN3(sampler->max_lod + view->base.first_level,
+                                 tex->b.b.last_level, view->base.last_level);
+                min_level = MIN2(sampler->min_lod + view->base.first_level,
                                  max_level);
-                texstate->format[0] |= R300_TX_NUM_LEVELS(max_level);
-                texstate->filter[0] |= R300_TX_MAX_MIP_LEVEL(min_level);
+                texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);
+                texstate->filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
             }
 
-            texstate->filter[0] |= i << 28;
+            texstate->filter0 |= i << 28;
 
             size += 16;
             state->count = i+1;

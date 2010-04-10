@@ -37,6 +37,7 @@
 #include "r300_screen_buffer.h"
 #include "r300_state_inlines.h"
 #include "r300_fs.h"
+#include "r300_texture.h"
 #include "r300_vs.h"
 #include "r300_winsys.h"
 
@@ -938,7 +939,7 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     }
 
     memcpy(state->sampler_states, states, sizeof(void*) * count);
-    state->sampler_count = count;
+    state->sampler_state_count = count;
 
     r300->textures_state.dirty = TRUE;
 
@@ -980,9 +981,10 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     }
 
     for (i = 0; i < count; i++) {
-        if (state->fragment_sampler_views[i] != views[i]) {
-            pipe_sampler_view_reference(&state->fragment_sampler_views[i],
-                                        views[i]);
+        if (&state->sampler_views[i]->base != views[i]) {
+            pipe_sampler_view_reference(
+                    (struct pipe_sampler_view**)&state->sampler_views[i],
+                    views[i]);
 
             if (!views[i]) {
                 continue;
@@ -1002,13 +1004,14 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     }
 
     for (i = count; i < tex_units; i++) {
-        if (state->fragment_sampler_views[i]) {
-            pipe_sampler_view_reference(&state->fragment_sampler_views[i],
-                                        NULL);
+        if (state->sampler_views[i]) {
+            pipe_sampler_view_reference(
+                    (struct pipe_sampler_view**)&state->sampler_views[i],
+                    NULL);
         }
     }
 
-    state->texture_count = count;
+    state->sampler_view_count = count;
 
     r300->textures_state.dirty = TRUE;
 
@@ -1022,17 +1025,33 @@ r300_create_sampler_view(struct pipe_context *pipe,
                          struct pipe_resource *texture,
                          const struct pipe_sampler_view *templ)
 {
-   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+    struct r300_sampler_view *view = CALLOC_STRUCT(r300_sampler_view);
+    struct r300_texture *tex = r300_texture(texture);
+    unsigned char swizzle[4];
 
-   if (view) {
-      *view = *templ;
-      view->reference.count = 1;
-      view->texture = NULL;
-      pipe_resource_reference(&view->texture, texture);
-      view->context = pipe;
-   }
+    if (view) {
+        view->base = *templ;
+        view->base.reference.count = 1;
+        view->base.context = pipe;
+        view->base.texture = NULL;
+        pipe_resource_reference(&view->base.texture, texture);
 
-   return view;
+        swizzle[0] = templ->swizzle_r;
+        swizzle[1] = templ->swizzle_g;
+        swizzle[2] = templ->swizzle_b;
+        swizzle[3] = templ->swizzle_a;
+
+        /* XXX Enable swizzles when they become supported. Now we get RGBA
+         * everywhere. And do testing! */
+        view->format = tex->tx_format;
+        view->format.format1 |= r300_translate_texformat(templ->format,
+                                                         0); /*swizzle);*/
+        if (r300_screen(pipe->screen)->caps.is_r500) {
+            view->format.format2 |= r500_tx_format_msb_bit(templ->format);
+        }
+    }
+
+    return (struct pipe_sampler_view*)view;
 }
 
 static void

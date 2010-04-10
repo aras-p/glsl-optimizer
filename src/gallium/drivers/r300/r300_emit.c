@@ -159,7 +159,7 @@ static const float * get_shader_constant(
                 /* Factor for converting rectangle coords to
                  * normalized coords. Should only show up on non-r500. */
                 case RC_STATE_R300_TEXRECT_FACTOR:
-                    tex = texstate->fragment_sampler_views[constant->u.State[1]]->texture;
+                    tex = texstate->sampler_views[constant->u.State[1]]->base.texture;
                     vec[0] = 1.0 / tex->width0;
                     vec[1] = 1.0 / tex->height0;
                     break;
@@ -729,18 +729,18 @@ void r300_emit_textures_state(struct r300_context *r300,
         if ((1 << i) & allstate->tx_enable) {
             texstate = &allstate->regs[i];
 
-            OUT_CS_REG(R300_TX_FILTER0_0 + (i * 4), texstate->filter[0]);
-            OUT_CS_REG(R300_TX_FILTER1_0 + (i * 4), texstate->filter[1]);
+            OUT_CS_REG(R300_TX_FILTER0_0 + (i * 4), texstate->filter0);
+            OUT_CS_REG(R300_TX_FILTER1_0 + (i * 4), texstate->filter1);
             OUT_CS_REG(R300_TX_BORDER_COLOR_0 + (i * 4),
                        texstate->border_color);
 
-            OUT_CS_REG(R300_TX_FORMAT0_0 + (i * 4), texstate->format[0]);
-            OUT_CS_REG(R300_TX_FORMAT1_0 + (i * 4), texstate->format[1]);
-            OUT_CS_REG(R300_TX_FORMAT2_0 + (i * 4), texstate->format[2]);
+            OUT_CS_REG(R300_TX_FORMAT0_0 + (i * 4), texstate->format.format0);
+            OUT_CS_REG(R300_TX_FORMAT1_0 + (i * 4), texstate->format.format1);
+            OUT_CS_REG(R300_TX_FORMAT2_0 + (i * 4), texstate->format.format2);
 
             OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-            OUT_CS_TEX_RELOC(r300_texture(allstate->fragment_sampler_views[i]->texture),
-                             texstate->tile_config,
+            OUT_CS_TEX_RELOC(r300_texture(allstate->sampler_views[i]->base.texture),
+                             texstate->format.tile_config,
                              RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0, 0);
         }
     }
@@ -1022,7 +1022,7 @@ validate:
             continue;
         }
 
-        tex = r300_texture(texstate->fragment_sampler_views[i]->texture);
+        tex = r300_texture(texstate->sampler_views[i]->base.texture);
         if (!r300_add_texture(r300->rws, tex,
 			      RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0)) {
             r300->context.flush(&r300->context, 0, NULL);

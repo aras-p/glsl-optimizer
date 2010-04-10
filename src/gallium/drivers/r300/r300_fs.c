@@ -138,7 +138,7 @@ static void get_compare_state(
 
     memset(state, 0, sizeof(*state));
 
-    for (int i = 0; i < texstate->sampler_count; i++) {
+    for (int i = 0; i < texstate->sampler_state_count; i++) {
         struct r300_sampler_state* s = texstate->sampler_states[i];
 
         if (s && s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {

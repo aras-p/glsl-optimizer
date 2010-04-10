@@ -130,6 +130,15 @@ struct r300_texture_format_state {
     uint32_t format0; /* R300_TX_FORMAT0: 0x4480 */
     uint32_t format1; /* R300_TX_FORMAT1: 0x44c0 */
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
+    uint32_t tile_config; /* R300_TX_OFFSET (subset thereof) */
+};
+
+struct r300_sampler_view {
+    struct pipe_sampler_view base;
+
+    /* Copy of r300_texture::texture_format_state with format-specific bits
+     * added. */
+    struct r300_texture_format_state format;
 };
 
 struct r300_texture_fb_state {
@@ -144,20 +153,20 @@ struct r300_texture_fb_state {
 
 struct r300_textures_state {
     /* Textures. */
-    struct pipe_sampler_view *fragment_sampler_views[16];
-    int texture_count;
+    struct r300_sampler_view *sampler_views[16];
+    int sampler_view_count;
     /* Sampler states. */
     struct r300_sampler_state *sampler_states[16];
-    int sampler_count;
+    int sampler_state_count;
 
-    /* These is the merge of the texture and sampler states. */
+    /* This is the merge of the texture and sampler states. */
     unsigned count;
     uint32_t tx_enable;         /* R300_TX_ENABLE: 0x4101 */
     struct r300_texture_sampler_state {
-        uint32_t format[3];     /* R300_TX_FORMAT[0-2] */
-        uint32_t filter[2];     /* R300_TX_FILTER[0-1] */
+        struct r300_texture_format_state format;
+        uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
+        uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
         uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
-        uint32_t tile_config;   /* R300_TX_OFFSET (subset thereof) */
     } regs[16];
 };
 
@@ -266,7 +275,9 @@ struct r300_texture {
     struct r300_winsys_buffer *buffer;
 
     /* Registers carrying texture format data. */
-    struct r300_texture_format_state state;
+    /* Only format-independent bits should be filled in. */
+    struct r300_texture_format_state tx_format;
+    /* All bits should be filled in. */
     struct r300_texture_fb_state fb_state;
 
     /* Buffer tiling */
