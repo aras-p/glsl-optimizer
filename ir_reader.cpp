@@ -33,6 +33,7 @@ static glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
 static ir_instruction *read_instruction(_mesa_glsl_parse_state *,
 				        s_expression *);
 static ir_variable *read_declaration(_mesa_glsl_parse_state *, s_list *);
+static ir_return *read_return(_mesa_glsl_parse_state *, s_list *);
 
 static ir_rvalue *read_rvalue(_mesa_glsl_parse_state *, s_expression *);
 static ir_assignment *read_assignment(_mesa_glsl_parse_state *, s_list *);
@@ -143,6 +144,8 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr)
    ir_instruction *inst = NULL;
    if (strcmp(tag->value(), "declare") == 0)
       inst = read_declaration(st, list);
+   else if (strcmp(tag->value(), "return") == 0)
+      inst = read_return(st, list);
    else
       ir_read_error(expr, "unrecognized instruction tag: %s", tag->value());
 
@@ -217,6 +220,26 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
    st->symbols->add_variable(var_name->value(), var);
 
    return var;
+}
+
+
+static ir_return *
+read_return(_mesa_glsl_parse_state *st, s_list *list)
+{
+   if (list->length() != 2) {
+      ir_read_error(list, "expected (return <rvalue>)");
+      return NULL;
+   }
+
+   s_expression *expr = (s_expression*) list->subexpressions.head->next;
+
+   ir_rvalue *retval = read_rvalue(st, expr);
+   if (retval == NULL) {
+      ir_read_error(list, "when reading return value");
+      return NULL;
+   }
+
+   return new ir_return(retval);
 }
 
 
