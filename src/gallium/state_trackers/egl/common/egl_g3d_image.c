@@ -40,13 +40,13 @@
 /**
  * Reference and return the front left buffer of the native pixmap.
  */
-static struct pipe_texture *
+static struct pipe_resource *
 egl_g3d_reference_native_pixmap(_EGLDisplay *dpy, EGLNativePixmapType pix)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_config *gconf;
    struct native_surface *nsurf;
-   struct pipe_texture *textures[NUM_NATIVE_ATTACHMENTS];
+   struct pipe_resource *textures[NUM_NATIVE_ATTACHMENTS];
    enum native_attachment natt;
 
    gconf = egl_g3d_config(egl_g3d_find_pixmap_config(dpy, pix));
@@ -72,7 +72,7 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
                      EGLenum target, EGLClientBuffer buffer,
                      const EGLint *attribs)
 {
-   struct pipe_texture *ptex;
+   struct pipe_resource *ptex;
    struct egl_g3d_image *gimg;
    unsigned face = 0, level = 0, zslice = 0;
 
@@ -104,13 +104,13 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
 
    if (level > ptex->last_level) {
       _eglError(EGL_BAD_MATCH, "eglCreateEGLImageKHR");
-      pipe_texture_reference(&gimg->texture, NULL);
+      pipe_resource_reference(&gimg->texture, NULL);
       free(gimg);
       return NULL;
    }
    if (zslice > ptex->depth0) {
       _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
-      pipe_texture_reference(&gimg->texture, NULL);
+      pipe_resource_reference(&gimg->texture, NULL);
       free(gimg);
       return NULL;
    }
@@ -129,7 +129,7 @@ egl_g3d_destroy_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img)
 {
    struct egl_g3d_image *gimg = egl_g3d_image(img);
 
-   pipe_texture_reference(&gimg->texture, NULL);
+   pipe_resource_reference(&gimg->texture, NULL);
    free(gimg);
 
    return EGL_TRUE;

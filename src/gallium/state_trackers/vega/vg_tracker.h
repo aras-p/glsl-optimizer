@@ -90,7 +90,7 @@ int st_get_framebuffer_surface(struct st_framebuffer *stfb,
 
 PUBLIC
 int st_get_framebuffer_texture(struct st_framebuffer *stfb,
-                               uint surfIndex, struct pipe_texture **tex);
+                               uint surfIndex, struct pipe_resource **tex);
 
 PUBLIC
 void *st_framebuffer_private(struct st_framebuffer *stfb);

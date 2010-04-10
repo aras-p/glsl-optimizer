@@ -143,7 +143,7 @@ static void read_alpha_mask(void * data, VGint dataStride,
       struct pipe_surface *surf;
 
       surf = screen->get_tex_surface(screen, strb->texture,  0, 0, 0,
-                                     PIPE_BUFFER_USAGE_CPU_READ);
+                                     PIPE_BIND_TRANSFER_READ);
 
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
@@ -217,7 +217,7 @@ static void setup_mask_framebuffer(struct pipe_surface *surf,
 static void setup_mask_operation(VGMaskOperation operation)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_buffer **cbuf = &ctx->mask.cbuf;
+   struct pipe_resource **cbuf = &ctx->mask.cbuf;
    const VGint param_bytes = 4 * sizeof(VGfloat);
    const VGfloat ones[4] = {1.f, 1.f, 1.f, 1.f};
    void *shader = 0;
@@ -225,10 +225,10 @@ static void setup_mask_operation(VGMaskOperation operation)
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization.
     */
-   pipe_buffer_reference(cbuf, NULL);
+   pipe_resource_reference(cbuf, NULL);
 
-   *cbuf = pipe_buffer_create(ctx->pipe->screen, 1,
-                              PIPE_BUFFER_USAGE_CONSTANT,
+   *cbuf = pipe_buffer_create(ctx->pipe->screen, 
+                              PIPE_BIND_CONSTANT_BUFFER,
                               param_bytes);
    if (*cbuf) {
       st_no_flush_pipe_buffer_write(ctx, *cbuf,
@@ -318,16 +318,16 @@ static void setup_mask_samplers(struct pipe_sampler_view *umask)
 static void setup_mask_fill(const VGfloat color[4])
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_buffer **cbuf = &ctx->mask.cbuf;
+   struct pipe_resource **cbuf = &ctx->mask.cbuf;
    const VGint param_bytes = 4 * sizeof(VGfloat);
 
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization.
     */
-   pipe_buffer_reference(cbuf, NULL);
+   pipe_resource_reference(cbuf, NULL);
 
-   *cbuf = pipe_buffer_create(ctx->pipe->screen, 1,
-                              PIPE_BUFFER_USAGE_CONSTANT,
+   *cbuf = pipe_buffer_create(ctx->pipe->screen,
+                              PIPE_BIND_CONSTANT_BUFFER,
                               param_bytes);
    if (*cbuf) {
       st_no_flush_pipe_buffer_write(ctx, *cbuf, 0, param_bytes, color);
@@ -415,9 +415,9 @@ static void mask_using_texture(struct pipe_sampler_view *sampler_view,
                                VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_texture *texture = sampler_view->texture;
+   struct pipe_resource *texture = sampler_view->texture;
    struct pipe_surface *surface =
-      alpha_mask_surface(ctx, PIPE_BUFFER_USAGE_GPU_WRITE);
+      alpha_mask_surface(ctx, PIPE_BIND_RENDER_TARGET);
    VGint offsets[4], loc[4];
 
    if (!surface)
@@ -482,12 +482,12 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
    mask->height = height;
 
    {
-      struct pipe_texture pt;
+      struct pipe_resource pt;
       struct pipe_context *pipe = ctx->pipe;
       struct pipe_screen *screen = ctx->pipe->screen;
       struct pipe_sampler_view view_templ;
       struct pipe_sampler_view *view = NULL;
-      struct pipe_texture *texture;
+      struct pipe_resource *texture;
 
       memset(&pt, 0, sizeof(pt));
       pt.target = PIPE_TEXTURE_2D;
@@ -496,16 +496,16 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
       pt.width0 = width;
       pt.height0 = height;
       pt.depth0 = 1;
-      pt.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+      pt.bind = PIPE_BIND_SAMPLER_VIEW;
       pt.compressed = 0;
 
-      texture = screen->texture_create(screen, &pt);
+      texture = screen->resource_create(screen, &pt);
 
       if (texture) {
          u_sampler_view_default_template(&view_templ, texture, texture->format);
          view = pipe->create_sampler_view(pipe, texture, &view_templ);
       }
-      pipe_texture_reference(&texture, NULL);
+      pipe_resource_reference(&texture, NULL);
       mask->sampler_view = view;
    }
 
@@ -519,7 +519,7 @@ void mask_layer_destroy(struct vg_mask_layer *layer)
    struct vg_context *ctx = vg_current_context();
 
    vg_context_remove_object(ctx, VG_OBJECT_MASK, layer);
-   pipe_texture_release(&layer->texture);
+   pipe_resource_release(&layer->texture);
    free(layer);
 }
 
@@ -537,7 +537,7 @@ void mask_layer_fill(struct vg_mask_layer *layer,
    surface = ctx->pipe->screen->get_tex_surface(
       ctx->pipe->screen, layer->sampler_view->texture,
       0, 0, 0,
-      PIPE_BUFFER_USAGE_GPU_WRITE);
+      PIPE_BIND_RENDER_TARGET);
 
    surface_fill(surface,
                 layer->width, layer->height,
@@ -573,7 +573,7 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
    struct pipe_surface *surface;
 
    surface = screen->get_tex_surface(screen, layer->sampler_view->texture,  0, 0, 0,
-                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+                                     PIPE_BIND_RENDER_TARGET);
 
    cso_save_framebuffer(ctx->cso_context);
    cso_save_fragment_shader(ctx->cso_context);
@@ -664,7 +664,7 @@ void mask_fill(VGint x, VGint y, VGint width, VGint height,
    struct vg_context *ctx = vg_current_context();
    VGfloat alpha_color[4] = {.0f, .0f, .0f, value};
    struct pipe_surface *surf = alpha_mask_surface(
-      ctx, PIPE_BUFFER_USAGE_GPU_WRITE);
+      ctx, PIPE_BIND_RENDER_TARGET);
 
 #if DEBUG_MASKS
    debug_printf("mask_fill(%d, %d, %d, %d) with  rgba(%f, %f, %f, %f)\n",

@@ -43,40 +43,40 @@ static enum pipe_error generate_indices( struct svga_hwtnl *hwtnl,
                                          unsigned nr,
                                          unsigned index_size,
                                          u_generate_func generate,
-                                         struct pipe_buffer **out_buf )
+                                         struct pipe_resource **out_buf )
 {
-   struct pipe_screen *screen = hwtnl->svga->pipe.screen;
+   struct pipe_context *pipe = &hwtnl->svga->pipe;
+   struct pipe_transfer *transfer;
    unsigned size = index_size * nr;
-   struct pipe_buffer *dst = NULL;
+   struct pipe_resource *dst = NULL;
    void *dst_map = NULL;
 
-   dst = screen->buffer_create( screen, 32, 
-                                PIPE_BUFFER_USAGE_INDEX |
-                                PIPE_BUFFER_USAGE_CPU_WRITE |
-                                PIPE_BUFFER_USAGE_GPU_READ, 
-                                size );
+   dst = pipe_buffer_create( pipe->screen, 
+			     PIPE_BIND_INDEX_BUFFER, 
+			     size );
    if (dst == NULL)
       goto fail;
 
-   dst_map = pipe_buffer_map( screen, dst, PIPE_BUFFER_USAGE_CPU_WRITE );
+   dst_map = pipe_buffer_map( pipe, dst, PIPE_TRANSFER_WRITE,
+			      &transfer);
    if (dst_map == NULL)
       goto fail;
 
    generate( nr,
              dst_map );
 
-   pipe_buffer_unmap( screen, dst );
+   pipe_buffer_unmap( pipe, dst, transfer );
 
    *out_buf = dst;
    return PIPE_OK;
 
 fail:
    if (dst_map)
-      screen->buffer_unmap( screen, dst );
+      pipe_buffer_unmap( pipe, dst, transfer );
 
    if (dst)
-      screen->buffer_destroy( dst );
-
+      pipe->screen->resource_destroy( pipe->screen, dst );
+   
    return PIPE_ERROR_OUT_OF_MEMORY;
 }
 
@@ -96,7 +96,7 @@ static enum pipe_error retrieve_or_generate_indices( struct svga_hwtnl *hwtnl,
                                                      unsigned gen_nr,
                                                      unsigned gen_size,
                                                      u_generate_func generate,
-                                                     struct pipe_buffer **out_buf )
+                                                     struct pipe_resource **out_buf )
 {
    enum pipe_error ret = PIPE_OK;
    int i;
@@ -107,7 +107,7 @@ static enum pipe_error retrieve_or_generate_indices( struct svga_hwtnl *hwtnl,
       {
          if (compare(hwtnl->index_cache[prim][i].gen_nr, gen_nr, gen_type))
          {
-            pipe_buffer_reference( out_buf,
+            pipe_resource_reference( out_buf,
                                    hwtnl->index_cache[prim][i].buffer );
 
             if (DBG) 
@@ -117,7 +117,7 @@ static enum pipe_error retrieve_or_generate_indices( struct svga_hwtnl *hwtnl,
          }
          else if (gen_type == U_GENERATE_REUSABLE) 
          {
-            pipe_buffer_reference( &hwtnl->index_cache[prim][i].buffer,
+            pipe_resource_reference( &hwtnl->index_cache[prim][i].buffer,
                                    NULL );
 
             if (DBG) 
@@ -149,7 +149,7 @@ static enum pipe_error retrieve_or_generate_indices( struct svga_hwtnl *hwtnl,
 
       assert (smallest != IDX_CACHE_MAX);
 
-      pipe_buffer_reference( &hwtnl->index_cache[prim][smallest].buffer,
+      pipe_resource_reference( &hwtnl->index_cache[prim][smallest].buffer,
                              NULL );
 
       if (DBG)
@@ -171,7 +171,7 @@ static enum pipe_error retrieve_or_generate_indices( struct svga_hwtnl *hwtnl,
 
    hwtnl->index_cache[prim][i].generate = generate;
    hwtnl->index_cache[prim][i].gen_nr = gen_nr;
-   pipe_buffer_reference( &hwtnl->index_cache[prim][i].buffer,
+   pipe_resource_reference( &hwtnl->index_cache[prim][i].buffer,
                           *out_buf );
 
    if (DBG)
@@ -259,7 +259,7 @@ svga_hwtnl_draw_arrays( struct svga_hwtnl *hwtnl,
       return simple_draw_arrays( hwtnl, gen_prim, start, count );
    }
    else {
-      struct pipe_buffer *gen_buf = NULL;
+      struct pipe_resource *gen_buf = NULL;
 
       /* Need to draw as indexed primitive. 
        * Potentially need to run the gen func to build an index buffer.
@@ -288,7 +288,7 @@ svga_hwtnl_draw_arrays( struct svga_hwtnl *hwtnl,
 
    done:
       if (gen_buf)
-         pipe_buffer_reference( &gen_buf, NULL );
+         pipe_resource_reference( &gen_buf, NULL );
 
       return ret;
    }

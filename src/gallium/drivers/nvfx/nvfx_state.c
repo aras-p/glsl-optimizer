@@ -163,7 +163,7 @@ nvfx_set_fragment_sampler_views(struct pipe_context *pipe,
 
 static struct pipe_sampler_view *
 nvfx_create_sampler_view(struct pipe_context *pipe,
-			 struct pipe_texture *texture,
+			 struct pipe_resource *texture,
 			 const struct pipe_sampler_view *templ)
 {
 	struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
@@ -172,7 +172,7 @@ nvfx_create_sampler_view(struct pipe_context *pipe,
 		*view = *templ;
 		view->reference.count = 1;
 		view->texture = NULL;
-		pipe_texture_reference(&view->texture, texture);
+		pipe_resource_reference(&view->texture, texture);
 		view->context = pipe;
 	}
 
@@ -184,7 +184,7 @@ static void
 nvfx_sampler_view_destroy(struct pipe_context *pipe,
 			  struct pipe_sampler_view *view)
 {
-	pipe_texture_reference(&view->texture, NULL);
+	pipe_resource_reference(&view->texture, NULL);
 	FREE(view);
 }
 
@@ -499,12 +499,12 @@ nvfx_set_clip_state(struct pipe_context *pipe,
 
 static void
 nvfx_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-			 struct pipe_buffer *buf )
+			 struct pipe_resource *buf )
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 
 	nvfx->constbuf[shader] = buf;
-	nvfx->constbuf_nr[shader] = buf->size / (4 * sizeof(float));
+	nvfx->constbuf_nr[shader] = buf->width0 / (4 * sizeof(float));
 
 	if (shader == PIPE_SHADER_VERTEX) {
 		nvfx->dirty |= NVFX_NEW_VERTPROG;

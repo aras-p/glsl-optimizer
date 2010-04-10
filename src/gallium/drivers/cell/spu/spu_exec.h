@@ -75,7 +75,7 @@ struct softpipe_tile_cache;  /**< Opaque to TGSI */
 struct spu_sampler
 {
    const struct pipe_sampler_state *state;
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    /** Get samples for four fragments in a quad */
    void (*get_samples)(struct spu_sampler *sampler,
                        const float s[QUAD_SIZE],

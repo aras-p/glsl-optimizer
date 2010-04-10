@@ -40,11 +40,11 @@
 /* advertise OpenVG support */
 PUBLIC const int st_api_OpenVG = 1;
 
-static struct pipe_texture *
+static struct pipe_resource *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
                     VGint width, VGint height)
 {
-   struct pipe_texture templ;
+   struct pipe_resource templ;
 
    memset(&templ, 0, sizeof(templ));
 
@@ -62,21 +62,21 @@ create_texture(struct pipe_context *pipe, enum pipe_format format,
    templ.last_level = 0;
 
    if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
-      templ.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+      templ.bind = PIPE_BIND_DEPTH_STENCIL;
    } else {
-      templ.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                         PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                         PIPE_TEXTURE_USAGE_SAMPLER);
+      templ.bind = (PIPE_BIND_DISPLAY_TARGET |
+		    PIPE_BIND_RENDER_TARGET |
+		    PIPE_BIND_SAMPLER_VIEW);
    }
 
-   return pipe->screen->texture_create(pipe->screen, &templ);
+   return pipe->screen->resource_create(pipe->screen, &templ);
 }
 
 static struct pipe_sampler_view *
 create_tex_and_view(struct pipe_context *pipe, enum pipe_format format,
                     VGint width, VGint height)
 {
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *view;
 
@@ -88,7 +88,7 @@ create_tex_and_view(struct pipe_context *pipe, enum pipe_format format,
    u_sampler_view_default_template(&view_templ, texture, texture->format);
    view = pipe->create_sampler_view(pipe, texture, &view_templ);
    /* want the texture to go away if the view is freed */
-   pipe_texture_reference(&texture, NULL);
+   pipe_resource_reference(&texture, NULL);
 
    return view;
 }
@@ -129,13 +129,14 @@ st_renderbuffer_alloc_storage(struct vg_context * ctx,
    /* Free the old surface and texture
     */
    pipe_surface_reference(&strb->surface, NULL);
-   pipe_texture_reference(&strb->texture, NULL);
+   pipe_resource_reference(&strb->texture, NULL);
 
 
    /* Probably need dedicated flags for surface usage too:
     */
-   surface_usage = (PIPE_BUFFER_USAGE_GPU_READ  |
-                    PIPE_BUFFER_USAGE_GPU_WRITE);
+   surface_usage = (PIPE_BIND_RENDER_TARGET  |
+                    PIPE_BIND_BLIT_SOURCE |
+		    PIPE_BIND_BLIT_DESTINATION);
 
    strb->texture = create_texture(pipe, strb->format, width, height);
 
@@ -255,12 +256,13 @@ static void setup_new_alpha_mask(struct vg_context *ctx,
          pipe->screen,
          stfb->alpha_mask_view->texture,
          0, 0, 0,
-         PIPE_BUFFER_USAGE_GPU_WRITE);
+         PIPE_BIND_RENDER_TARGET |
+	 PIPE_BIND_BLIT_DESTINATION);
       struct pipe_surface *old_surface = pipe->screen->get_tex_surface(
          pipe->screen,
          old_sampler_view->texture,
          0, 0, 0,
-         PIPE_BUFFER_USAGE_GPU_READ);
+         PIPE_BIND_BLIT_SOURCE);
       if (pipe->surface_copy) {
          pipe->surface_copy(pipe,
                             surface,
@@ -360,11 +362,11 @@ void st_set_framebuffer_surface(struct st_framebuffer *stfb,
 
    /* unreference existing surfaces */
    pipe_surface_reference( &rb->surface, NULL );
-   pipe_texture_reference( &rb->texture, NULL );
+   pipe_resource_reference( &rb->texture, NULL );
 
    /* reference new ones */
    pipe_surface_reference( &rb->surface, surf );
-   pipe_texture_reference( &rb->texture, surf->texture );
+   pipe_resource_reference( &rb->texture, surf->texture );
 
    rb->width  = surf->width;
    rb->height = surf->height;
@@ -379,7 +381,7 @@ int st_get_framebuffer_surface(struct st_framebuffer *stfb,
 }
 
 int st_get_framebuffer_texture(struct st_framebuffer *stfb,
-                               uint surfIndex, struct pipe_texture **tex)
+                               uint surfIndex, struct pipe_resource **tex)
 {
    struct st_renderbuffer *rb = stfb->strb;
    *tex = rb->texture;

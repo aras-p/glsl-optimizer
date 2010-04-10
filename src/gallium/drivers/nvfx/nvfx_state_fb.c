@@ -1,14 +1,8 @@
 #include "nvfx_context.h"
+#include "nvfx_resource.h"
 #include "nouveau/nouveau_util.h"
 
-static struct pipe_buffer *
-nvfx_do_surface_buffer(struct pipe_surface *surface)
-{
-	struct nvfx_miptree *mt = (struct nvfx_miptree *)surface->texture;
-	return mt->buffer;
-}
 
-#define nvfx_surface_buffer(ps) nouveau_bo(nvfx_do_surface_buffer(ps))
 
 static boolean
 nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
@@ -53,10 +47,10 @@ nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
 	if (rt_enable & (NV34TCL_RT_ENABLE_COLOR0 | NV34TCL_RT_ENABLE_COLOR1 |
 		NV40TCL_RT_ENABLE_COLOR2 | NV40TCL_RT_ENABLE_COLOR3)) {
 		/* Render to at least a colour buffer */
-		if (!(rt[0]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+		if (!(rt[0]->base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR)) {
 			assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
 			for (i = 1; i < fb->nr_cbufs; i++)
-				assert(!(rt[i]->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
+				assert(!(rt[i]->base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR));
 
 			rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |
 				(log2i(rt[0]->base.width) << NV34TCL_RT_FORMAT_LOG2_WIDTH_SHIFT) |
@@ -68,7 +62,7 @@ nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
 		depth_only = 1;
 
 		/* Render to depth buffer only */
-		if (!(zeta->base.texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+		if (!(zeta->base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR)) {
 			assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
 
 			rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |

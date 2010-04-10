@@ -158,7 +158,7 @@ pb_debug_buffer_fill(struct pb_debug_buffer *buf)
 {
    uint8_t *map;
    
-   map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+   map = pb_map(buf->buffer, PB_USAGE_CPU_WRITE);
    assert(map);
    if(map) {
       fill_random_pattern(map, buf->underflow_size);
@@ -180,8 +180,8 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
    uint8_t *map;
    
    map = pb_map(buf->buffer,
-                PIPE_BUFFER_USAGE_CPU_READ |
-                PIPE_BUFFER_USAGE_UNSYNCHRONIZED);
+                PB_USAGE_CPU_READ |
+                PB_USAGE_UNSYNCHRONIZED);
    assert(map);
    if(map) {
       boolean underflow, overflow;
@@ -382,8 +382,8 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    
    real_size = mgr->underflow_size + size + mgr->overflow_size;
    real_desc = *desc;
-   real_desc.usage |= PIPE_BUFFER_USAGE_CPU_WRITE;
-   real_desc.usage |= PIPE_BUFFER_USAGE_CPU_READ;
+   real_desc.usage |= PB_USAGE_CPU_WRITE;
+   real_desc.usage |= PB_USAGE_CPU_READ;
 
    buf->buffer = mgr->provider->create_buffer(mgr->provider, 
                                               real_size, 

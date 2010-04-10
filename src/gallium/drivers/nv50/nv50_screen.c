@@ -24,6 +24,7 @@
 
 #include "nv50_context.h"
 #include "nv50_screen.h"
+#include "nv50_resource.h"
 
 #include "nouveau/nouveau_stateobj.h"
 
@@ -33,7 +34,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 				enum pipe_texture_target target,
 				unsigned tex_usage, unsigned geom_flags)
 {
-	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
+	if (tex_usage & PIPE_BIND_RENDER_TARGET) {
 		switch (format) {
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
@@ -48,7 +49,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 			break;
 		}
 	} else
-	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
+	if (tex_usage & PIPE_BIND_DEPTH_STENCIL) {
 		switch (format) {
 		case PIPE_FORMAT_Z32_FLOAT:
 		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
@@ -280,7 +281,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->is_format_supported = nv50_screen_is_format_supported;
 	pscreen->context_create = nv50_create;
 
-	nv50_screen_init_miptree_functions(pscreen);
+	nv50_screen_init_resource_functions(pscreen);
 
 	/* DMA engine object */
 	ret = nouveau_grobj_alloc(chan, 0xbeef5039,

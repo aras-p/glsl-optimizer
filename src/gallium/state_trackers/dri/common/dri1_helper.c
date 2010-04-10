@@ -84,7 +84,7 @@ dri1_swap_fences_clear(struct dri_drawable *drawable)
 }
 
 struct pipe_surface *
-dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_texture *ptex)
+dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_resource *ptex)
 {
    struct pipe_screen *pipe_screen = dri_screen(drawable->sPriv)->pipe_screen;
    struct pipe_surface *psurf = drawable->dri1_surface;
@@ -93,7 +93,7 @@ dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_texture *ptex)
       pipe_surface_reference(&drawable->dri1_surface, NULL);
 
       drawable->dri1_surface = pipe_screen->get_tex_surface(pipe_screen,
-            ptex, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
+            ptex, 0, 0, 0, PIPE_BIND_BLIT_SOURCE);
 
       psurf = drawable->dri1_surface;
    }

@@ -473,7 +473,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             tex = r300_texture(view->texture);
             sampler = state->sampler_states[i];
 
-            assert(view->format == tex->tex.format);
+            assert(view->format == tex->b.b.format);
 
             texstate = &state->regs[i];
             memcpy(texstate->format, &tex->state, sizeof(uint32_t)*3);
@@ -484,7 +484,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                                     R300_TXO_MICRO_TILE(tex->microtile);
 
             /* to emulate 1D textures through 2D ones correctly */
-            if (tex->tex.target == PIPE_TEXTURE_1D) {
+            if (tex->b.b.target == PIPE_TEXTURE_1D) {
                 texstate->filter[0] &= ~R300_TX_WRAP_T_MASK;
                 texstate->filter[0] |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
             }
@@ -497,7 +497,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 /* determine min/max levels */
                 /* the MAX_MIP level is the largest (finest) one */
                 max_level = MIN3(sampler->max_lod + view->first_level,
-                                 tex->tex.last_level, view->last_level);
+                                 tex->b.b.last_level, view->last_level);
                 min_level = MIN2(sampler->min_lod + view->first_level,
                                  max_level);
                 texstate->format[0] |= R300_TX_NUM_LEVELS(max_level);

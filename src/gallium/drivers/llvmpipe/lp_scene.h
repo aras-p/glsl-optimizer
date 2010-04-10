@@ -99,7 +99,7 @@ struct data_block_list {
 
 /** List of texture references */
 struct texture_ref {
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    struct texture_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
 };
 
@@ -168,10 +168,10 @@ unsigned lp_scene_data_size( const struct lp_scene *scene );
 unsigned lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y );
 
 void lp_scene_texture_reference( struct lp_scene *scene,
-                                 struct pipe_texture *texture );
+                                 struct pipe_resource *texture );
 
-boolean lp_scene_is_texture_referenced( const struct lp_scene *scene,
-                                        const struct pipe_texture *texture );
+boolean lp_scene_is_resource_referenced( const struct lp_scene *scene,
+                                        const struct pipe_resource *texture );
 
 
 /**

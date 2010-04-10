@@ -28,7 +28,7 @@
 #include "util/u_inlines.h"
 
 #include "svga_context.h"
-#include "svga_screen_texture.h"
+#include "svga_surface.h"
 
 
 static void svga_set_scissor_state( struct pipe_context *pipe,

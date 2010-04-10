@@ -44,15 +44,15 @@ struct llvmpipe_context;
 struct sw_displaytarget;
 
 
-struct llvmpipe_texture
+struct llvmpipe_resource
 {
-   struct pipe_texture base;
+   struct pipe_resource base;
 
    unsigned long level_offset[LP_MAX_TEXTURE_2D_LEVELS];
    unsigned stride[LP_MAX_TEXTURE_2D_LEVELS];
 
    /**
-    * Display target, for textures with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET
+    * Display target, for textures with the PIPE_BIND_DISPLAY_TARGET
     * usage.
     */
    struct sw_displaytarget *dt;
@@ -62,6 +62,7 @@ struct llvmpipe_texture
     */
    void *data;
 
+   boolean userBuffer;  /** Is this a user-space buffer? */
    unsigned timestamp;
 };
 
@@ -75,17 +76,17 @@ struct llvmpipe_transfer
 
 
 /** cast wrappers */
-static INLINE struct llvmpipe_texture *
-llvmpipe_texture(struct pipe_texture *pt)
+static INLINE struct llvmpipe_resource *
+llvmpipe_resource(struct pipe_resource *pt)
 {
-   return (struct llvmpipe_texture *) pt;
+   return (struct llvmpipe_resource *) pt;
 }
 
 
-static INLINE const struct llvmpipe_texture *
-llvmpipe_texture_const(const struct pipe_texture *pt)
+static INLINE const struct llvmpipe_resource *
+llvmpipe_resource_const(const struct pipe_resource *pt)
 {
-   return (const struct llvmpipe_texture *) pt;
+   return (const struct llvmpipe_resource *) pt;
 }
 
 
@@ -96,32 +97,31 @@ llvmpipe_transfer(struct pipe_transfer *pt)
 }
 
 
+void llvmpipe_init_screen_resource_funcs(struct pipe_screen *screen);
+void llvmpipe_init_context_resource_funcs(struct pipe_context *pipe);
+
 static INLINE unsigned
-llvmpipe_texture_stride(struct pipe_texture *texture,
+llvmpipe_resource_stride(struct pipe_resource *texture,
                         unsigned level)
 {
-   struct llvmpipe_texture *lpt = llvmpipe_texture(texture);
+   struct llvmpipe_resource *lpt = llvmpipe_resource(texture);
    assert(level < LP_MAX_TEXTURE_2D_LEVELS);
    return lpt->stride[level];
 }
 
 
 void *
-llvmpipe_texture_map(struct pipe_texture *texture,
-                     unsigned face,
-                     unsigned level,
-                     unsigned zslice);
+llvmpipe_resource_map(struct pipe_resource *texture,
+		      unsigned usage,
+		      unsigned face,
+		      unsigned level,
+		      unsigned zslice);
 
 void
-llvmpipe_texture_unmap(struct pipe_texture *texture,
+llvmpipe_resource_unmap(struct pipe_resource *texture,
                        unsigned face,
                        unsigned level,
                        unsigned zslice);
 
-extern void
-llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen);
-
-extern void
-llvmpipe_init_context_texture_funcs(struct pipe_context *pipe);
 
 #endif /* LP_TEXTURE_H */

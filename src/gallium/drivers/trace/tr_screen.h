@@ -48,7 +48,7 @@ struct tr_list {
  * without mapping/unmapping. This flag marks user buffers, so that their
  * contents can be dumpped before being used by the pipe context.
  */
-#define TRACE_BUFFER_USAGE_USER  (1 << 31)
+#define TRACE_FLAG_USER_BUFFER  (1 << 31)
 
 
 struct trace_screen
@@ -99,10 +99,6 @@ trace_enabled(void);
 
 struct trace_screen *
 trace_screen(struct pipe_screen *screen);
-
-void
-trace_screen_user_buffer_update(struct pipe_screen *screen,
-                                struct pipe_buffer *buffer);
 
 #define trace_screen_add_to_list(tr_scr, name, obj) \
    do {                                             \

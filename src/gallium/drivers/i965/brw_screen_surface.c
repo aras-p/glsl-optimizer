@@ -36,6 +36,7 @@
 #include "pipe/p_screen.h"
 #include "brw_screen.h"
 #include "brw_defines.h"
+#include "brw_resource.h"
 #include "brw_winsys.h"
 
 enum {
@@ -138,9 +139,9 @@ static struct brw_surface *create_in_place_view( struct brw_screen *brw_screen,
     */
    assert(id.bits.zslice == 0);
 
-   surface->base.format = tex->base.format;
-   surface->base.width = u_minify(tex->base.width0, id.bits.level);
-   surface->base.height = u_minify(tex->base.height0, id.bits.level);
+   surface->base.format = tex->b.b.format;
+   surface->base.width = u_minify(tex->b.b.width0, id.bits.level);
+   surface->base.height = u_minify(tex->b.b.height0, id.bits.level);
    surface->base.offset = tex->image_offset[id.bits.level][id.bits.face];
    surface->base.usage = usage;
    surface->base.zslice = id.bits.zslice;
@@ -152,7 +153,7 @@ static struct brw_surface *create_in_place_view( struct brw_screen *brw_screen,
    surface->tiling = tex->tiling;
 
    bo_reference( &surface->bo, tex->bo );
-   pipe_texture_reference( &surface->base.texture, &tex->base );
+   pipe_resource_reference( &surface->base.texture, &tex->b.b );
 
    surface->ss.ss0.surface_format = tex->ss.ss0.surface_format;
    surface->ss.ss0.surface_type = BRW_SURFACE_2D;
@@ -198,7 +199,7 @@ static struct brw_surface *create_in_place_view( struct brw_screen *brw_screen,
 /* Get a surface which is view into a texture 
  */
 static struct pipe_surface *brw_get_tex_surface(struct pipe_screen *screen,
-						struct pipe_texture *pt,
+						struct pipe_resource *pt,
 						unsigned face, unsigned level,
 						unsigned zslice,
 						unsigned usage )
@@ -246,7 +247,7 @@ static void brw_tex_surface_destroy( struct pipe_surface *surf )
     */
    remove_from_list(surface);
    bo_reference(&surface->bo, NULL);
-   pipe_texture_reference( &surface->base.texture, NULL );
+   pipe_resource_reference( &surface->base.texture, NULL );
 
 
    FREE(surface);

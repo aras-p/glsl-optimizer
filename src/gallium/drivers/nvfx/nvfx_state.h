@@ -58,26 +58,14 @@ struct nvfx_fragment_program {
 
 	struct nvfx_fragment_program_data *consts;
 	unsigned nr_consts;
-
-	struct pipe_buffer *buffer;
+	
+	/* XXX: just use a nouveau_bo for this? 
+	 */
+	struct pipe_resource *buffer;
 
 	uint32_t fp_control;
 	struct nouveau_stateobj *so;
 };
 
-#define NVFX_MAX_TEXTURE_LEVELS  16
-
-struct nvfx_miptree {
-	struct pipe_texture base;
-	struct nouveau_bo *bo;
-
-	struct pipe_buffer *buffer;
-	uint total_size;
-
-	struct {
-		uint pitch;
-		uint *image_offset;
-	} level[NVFX_MAX_TEXTURE_LEVELS];
-};
 
 #endif

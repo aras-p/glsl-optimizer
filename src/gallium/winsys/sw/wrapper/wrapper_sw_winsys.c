@@ -57,7 +57,7 @@ struct wrapper_sw_winsys
 struct wrapper_sw_displaytarget
 {
    struct wrapper_sw_winsys *winsys;
-   struct pipe_texture *tex;
+   struct pipe_resource *tex;
    struct pipe_transfer *transfer;
 
    unsigned width;
@@ -89,26 +89,26 @@ static boolean
 wsw_dt_get_stride(struct wrapper_sw_displaytarget *wdt, unsigned *stride)
 {
    struct pipe_context *pipe = wdt->winsys->pipe;
-   struct pipe_texture *tex = wdt->tex;
+   struct pipe_resource *tex = wdt->tex;
    struct pipe_transfer *tr;
 
-   tr = pipe->get_tex_transfer(pipe, tex, 0, 0, 0,
-                               PIPE_TRANSFER_READ_WRITE,
-                               0, 0, wdt->width, wdt->height);
+   tr = pipe_get_transfer(pipe, tex, 0, 0, 0,
+			  PIPE_TRANSFER_READ_WRITE,
+			  0, 0, wdt->width, wdt->height);
    if (!tr)
       return FALSE;
 
    *stride = tr->stride;
    wdt->stride = tr->stride;
 
-   pipe->tex_transfer_destroy(pipe, tr);
+   pipe->transfer_destroy(pipe, tr);
 
    return TRUE;
 }
 
 static struct sw_displaytarget *
 wsw_dt_wrap_texture(struct wrapper_sw_winsys *wsw,
-                    struct pipe_texture *tex, unsigned *stride)
+                    struct pipe_resource *tex, unsigned *stride)
 {
    struct wrapper_sw_displaytarget *wdt = CALLOC_STRUCT(wrapper_sw_displaytarget);
    if (!wdt)
@@ -125,21 +125,21 @@ wsw_dt_wrap_texture(struct wrapper_sw_winsys *wsw,
 err_free:
    FREE(wdt);
 err_unref:
-   pipe_texture_reference(&tex, NULL);
+   pipe_resource_reference(&tex, NULL);
    return NULL;
 }
 
 static struct sw_displaytarget *
 wsw_dt_create(struct sw_winsys *ws,
-              unsigned tex_usage,
+              unsigned bind,
               enum pipe_format format,
               unsigned width, unsigned height,
               unsigned alignment,
               unsigned *stride)
 {
    struct wrapper_sw_winsys *wsw = wrapper_sw_winsys(ws);
-   struct pipe_texture templ;
-   struct pipe_texture *tex;
+   struct pipe_resource templ;
+   struct pipe_resource *tex;
 
    /*
     * XXX Why don't we just get the template.
@@ -148,11 +148,11 @@ wsw_dt_create(struct sw_winsys *ws,
    templ.width0 = width;
    templ.height0 = height;
    templ.format = format;
-   templ.tex_usage = tex_usage;
+   templ.bind = bind;
 
    /* XXX alignment: we can't do anything about this */
 
-   tex = wsw->screen->texture_create(wsw->screen, &templ);
+   tex = wsw->screen->resource_create(wsw->screen, &templ);
    if (!tex)
       return NULL;
 
@@ -161,14 +161,14 @@ wsw_dt_create(struct sw_winsys *ws,
 
 static struct sw_displaytarget *
 wsw_dt_from_handle(struct sw_winsys *ws,
-                   const struct pipe_texture *templ,
+                   const struct pipe_resource *templ,
                    struct winsys_handle *whandle,
                    unsigned *stride)
 {
    struct wrapper_sw_winsys *wsw = wrapper_sw_winsys(ws);
-   struct pipe_texture *tex;
+   struct pipe_resource *tex;
 
-   tex = wsw->screen->texture_from_handle(wsw->screen, templ, whandle);
+   tex = wsw->screen->resource_from_handle(wsw->screen, templ, whandle);
    if (!tex)
       return NULL;
 
@@ -182,7 +182,7 @@ wsw_dt_map(struct sw_winsys *ws,
 {
    struct wrapper_sw_displaytarget *wdt = wrapper_sw_displaytarget(dt);
    struct pipe_context *pipe = wdt->winsys->pipe;
-   struct pipe_texture *tex = wdt->tex;
+   struct pipe_resource *tex = wdt->tex;
    struct pipe_transfer *tr;
    void *ptr;
 
@@ -190,9 +190,9 @@ wsw_dt_map(struct sw_winsys *ws,
 
       assert(!wdt->transfer);
 
-      tr = pipe->get_tex_transfer(pipe, tex, 0, 0, 0,
-                                  PIPE_TRANSFER_READ_WRITE,
-                                  0, 0, wdt->width, wdt->height);
+      tr = pipe_get_transfer(pipe, tex, 0, 0, 0,
+			     PIPE_TRANSFER_READ_WRITE,
+			     0, 0, wdt->width, wdt->height);
       if (!tr)
          return NULL;
 
@@ -212,7 +212,7 @@ wsw_dt_map(struct sw_winsys *ws,
    return wdt->ptr;
 
 err:
-   pipe->tex_transfer_destroy(pipe, tr);
+   pipe->transfer_destroy(pipe, tr);
    return NULL;
 }
 
@@ -231,7 +231,7 @@ wsw_dt_unmap(struct sw_winsys *ws,
       return;
 
    pipe->transfer_unmap(pipe, wdt->transfer);
-   pipe->tex_transfer_destroy(pipe, wdt->transfer);
+   pipe->transfer_destroy(pipe, wdt->transfer);
    wdt->transfer = NULL;
 }
 
@@ -241,7 +241,7 @@ wsw_dt_destroy(struct sw_winsys *ws,
 {
    struct wrapper_sw_displaytarget *wdt = wrapper_sw_displaytarget(dt);
 
-   pipe_texture_reference(&wdt->tex, NULL);
+   pipe_resource_reference(&wdt->tex, NULL);
 
    FREE(wdt);
 }

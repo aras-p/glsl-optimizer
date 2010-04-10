@@ -142,7 +142,7 @@ static int brw_emit_prim(struct brw_context *brw,
  */
 static int
 try_draw_range_elements(struct brw_context *brw,
-			struct pipe_buffer *index_buffer,
+			struct pipe_resource *index_buffer,
 			unsigned hw_prim, 
 			unsigned start, unsigned count)
 {
@@ -178,7 +178,7 @@ try_draw_range_elements(struct brw_context *brw,
 
 static void
 brw_draw_range_elements(struct pipe_context *pipe,
-			struct pipe_buffer *index_buffer,
+			struct pipe_resource *index_buffer,
 			unsigned index_size,
 			unsigned min_index,
 			unsigned max_index,
@@ -201,7 +201,7 @@ brw_draw_range_elements(struct pipe_context *pipe,
     */
    if (brw->curr.index_buffer != index_buffer ||
        brw->curr.index_size != index_size) {
-      pipe_buffer_reference( &brw->curr.index_buffer, index_buffer );
+      pipe_resource_reference( &brw->curr.index_buffer, index_buffer );
       brw->curr.index_size = index_size;
       brw->state.dirty.mesa |= PIPE_NEW_INDEX_BUFFER;
    }
@@ -232,7 +232,7 @@ brw_draw_range_elements(struct pipe_context *pipe,
 
 static void
 brw_draw_elements(struct pipe_context *pipe,
-		  struct pipe_buffer *index_buffer,
+		  struct pipe_resource *index_buffer,
 		  unsigned index_size,
 		  unsigned mode, 
 		  unsigned start, unsigned count)
@@ -263,17 +263,17 @@ boolean brw_draw_init( struct brw_context *brw )
 
    /* Create helpers for uploading data in user buffers:
     */
-   brw->vb.upload_vertex = u_upload_create( brw->base.screen,
+   brw->vb.upload_vertex = u_upload_create( &brw->base,
 					    128 * 1024,
 					    64,
-					    PIPE_BUFFER_USAGE_VERTEX );
+					    PIPE_BIND_VERTEX_BUFFER );
    if (brw->vb.upload_vertex == NULL)
       return FALSE;
 
-   brw->vb.upload_index = u_upload_create( brw->base.screen,
+   brw->vb.upload_index = u_upload_create( &brw->base,
 					   32 * 1024,
 					   64,
-					   PIPE_BUFFER_USAGE_INDEX );
+					   PIPE_BIND_INDEX_BUFFER );
    if (brw->vb.upload_index == NULL)
       return FALSE;
 

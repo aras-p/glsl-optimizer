@@ -83,7 +83,7 @@ gdi_llvmpipe_present(struct pipe_screen *screen,
     * other structs such as this stw_winsys as well...
     */
    gdi_sw_display(llvmpipe_screen(screen)->winsys,
-                  llvmpipe_texture(surface->texture)->dt,
+                  llvmpipe_resource(surface->texture)->dt,
                   hDC);
 }
 

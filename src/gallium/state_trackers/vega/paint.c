@@ -79,7 +79,7 @@ struct vg_paint {
    } pattern;
 
    /* XXX next 3 all unneded? */
-   struct pipe_buffer *cbuf;
+   struct pipe_resource *cbuf;
    struct pipe_shader_state fs_state;
    void *fs;
 };
@@ -143,12 +143,12 @@ static INLINE void create_gradient_data(const VGfloat *ramp_stops,
    data[size-1] = last_color;
 }
 
-static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
+static INLINE struct pipe_resource *create_gradient_texture(struct vg_paint *p)
 {
    struct pipe_context *pipe = p->base.ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture *tex = 0;
-   struct pipe_texture templ;
+   struct pipe_resource *tex = 0;
+   struct pipe_resource templ;
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_1D;
@@ -157,18 +157,18 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
    templ.width0 = 1024;
    templ.height0 = 1;
    templ.depth0 = 1;
-   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
-   tex = screen->texture_create(screen, &templ);
+   tex = screen->resource_create(screen, &templ);
 
    { /* upload color_data */
       struct pipe_transfer *transfer =
-         st_no_flush_get_tex_transfer(p->base.ctx, tex, 0, 0, 0,
+         st_no_flush_get_transfer(p->base.ctx, tex, 0, 0, 0,
                                       PIPE_TRANSFER_WRITE, 0, 0, 1024, 1);
       void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, p->gradient.color_data, sizeof(VGint)*1024);
       pipe->transfer_unmap(pipe, transfer);
-      pipe->tex_transfer_destroy(pipe, transfer);
+      pipe->transfer_destroy(pipe, transfer);
    }
 
    return tex;
@@ -177,7 +177,7 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
 static INLINE struct pipe_sampler_view *create_gradient_sampler_view(struct vg_paint *p)
 {
    struct pipe_context *pipe = p->base.ctx->pipe;
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *view;
 
@@ -189,7 +189,7 @@ static INLINE struct pipe_sampler_view *create_gradient_sampler_view(struct vg_p
    u_sampler_view_default_template(&view_templ, texture, texture->format);
    view = pipe->create_sampler_view(pipe, texture, &view_templ);
    /* want the texture to go away if the view is freed */
-   pipe_texture_reference(&texture, NULL);
+   pipe_resource_reference(&texture, NULL);
 
    return view;
 }

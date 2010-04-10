@@ -3,6 +3,7 @@
 
 #include "nouveau/nouveau_screen.h"
 #include "nv04_surface_2d.h"
+#include "nvfx_context.h"
 
 struct nvfx_screen {
 	struct nouveau_screen base;

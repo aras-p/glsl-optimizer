@@ -35,7 +35,6 @@
 #include "cell_context.h"
 #include "cell_screen.h"
 #include "cell_texture.h"
-#include "cell_buffer.h"
 #include "cell_public.h"
 
 #include "state_tracker/sw_winsys.h"
@@ -138,12 +137,11 @@ cell_is_format_supported( struct pipe_screen *screen,
                           unsigned tex_usage, 
                           unsigned geom_flags )
 {
-
    struct sw_winsys *winsys = cell_screen(screen)->winsys;
 
-   if (tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                    PIPE_TEXTURE_USAGE_SCANOUT |
-                    PIPE_TEXTURE_USAGE_SHARED)) {
+   if (tex_usage & (PIPE_BIND_DISPLAY_TARGET |
+                    PIPE_BIND_SCANOUT |
+                    PIPE_BIND_SHARED)) {
       if (!winsys->is_displaytarget_format_supported(winsys, tex_usage, format))
          return FALSE;
    }
@@ -201,7 +199,6 @@ cell_create_screen(struct sw_winsys *winsys)
    screen->base.context_create = cell_create_context;
 
    cell_init_screen_texture_funcs(&screen->base);
-   cell_init_screen_buffer_funcs(&screen->base);
 
    return &screen->base;
 }

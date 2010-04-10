@@ -35,7 +35,6 @@
 #include "pipe/p_context.h"
 #include "util/u_prim.h"
 
-#include "lp_buffer.h"
 #include "lp_context.h"
 #include "lp_state.h"
 
@@ -58,7 +57,7 @@ llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
  */
 void
 llvmpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_buffer *indexBuffer,
+                             struct pipe_resource *indexBuffer,
                              unsigned indexSize,
                              unsigned min_index,
                              unsigned max_index,
@@ -75,13 +74,13 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
     * Map vertex buffers
     */
    for (i = 0; i < lp->num_vertex_buffers; i++) {
-      void *buf = llvmpipe_buffer(lp->vertex_buffer[i].buffer)->data;
+      void *buf = llvmpipe_resource(lp->vertex_buffer[i].buffer)->data;
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes = llvmpipe_buffer(indexBuffer)->data;
+      void *mapped_indexes = llvmpipe_resource(indexBuffer)->data;
       draw_set_mapped_element_buffer_range(draw, indexSize,
                                            min_index,
                                            max_index,
@@ -117,7 +116,7 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
 
 void
 llvmpipe_draw_elements(struct pipe_context *pipe,
-                       struct pipe_buffer *indexBuffer,
+                       struct pipe_resource *indexBuffer,
                        unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count)
 {

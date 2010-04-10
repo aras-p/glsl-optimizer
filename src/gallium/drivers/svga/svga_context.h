@@ -190,7 +190,7 @@ struct svga_state
    struct svga_vertex_shader *vs;
 
    struct pipe_vertex_buffer vb[PIPE_MAX_ATTRIBS];
-   struct pipe_buffer *cb[PIPE_SHADER_TYPES];
+   struct pipe_resource *cb[PIPE_SHADER_TYPES];
 
    struct pipe_framebuffer_state framebuffer;
    float depthscale;
@@ -254,7 +254,7 @@ struct svga_hw_clear_state
 
 struct svga_hw_view_state
 {
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    struct svga_sampler_view *v;
    unsigned min_lod;
    unsigned max_lod;

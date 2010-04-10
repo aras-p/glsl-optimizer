@@ -16,7 +16,6 @@
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
 #include "nouveau/nouveau_stateobj.h"
-#include "nouveau/nouveau_context.h"
 
 #include "nv50_screen.h"
 #include "nv50_program.h"
@@ -101,27 +100,6 @@ get_tile_depth(uint32_t tile_mode)
         return 1 << (tile_mode >> 4);
 }
 
-struct nv50_miptree_level {
-	int *image_offset;
-	unsigned pitch;
-	unsigned tile_mode;
-};
-
-#define NV50_MAX_TEXTURE_LEVELS 16
-
-struct nv50_miptree {
-	struct nouveau_miptree base;
-
-	struct nv50_miptree_level level[NV50_MAX_TEXTURE_LEVELS];
-	int image_nr;
-	int total_size;
-};
-
-static INLINE struct nv50_miptree *
-nv50_miptree(struct pipe_texture *pt)
-{
-	return (struct nv50_miptree *)pt;
-}
 
 struct nv50_surface {
 	struct pipe_surface base;
@@ -165,7 +143,7 @@ struct nv50_context {
 	struct nv50_program *vertprog;
 	struct nv50_program *fragprog;
 	struct nv50_program *geomprog;
-	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+	struct pipe_resource *constbuf[PIPE_SHADER_TYPES];
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
 	struct nv50_vtxelt_stateobj *vtxelt;
@@ -206,12 +184,12 @@ extern void nv50_draw_arrays_instanced(struct pipe_context *, unsigned mode,
 					unsigned startInstance,
 					unsigned instanceCount);
 extern void nv50_draw_elements(struct pipe_context *pipe,
-				  struct pipe_buffer *indexBuffer,
+				  struct pipe_resource *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
 				  unsigned count);
 extern void nv50_draw_elements_instanced(struct pipe_context *pipe,
-					 struct pipe_buffer *indexBuffer,
+					 struct pipe_resource *indexBuffer,
 					 unsigned indexSize,
 					 unsigned mode, unsigned start,
 					 unsigned count,
@@ -222,7 +200,7 @@ extern struct nouveau_stateobj *nv50_vbo_validate(struct nv50_context *nv50);
 
 /* nv50_push.c */
 extern void
-nv50_push_elements_instanced(struct pipe_context *, struct pipe_buffer *,
+nv50_push_elements_instanced(struct pipe_context *, struct pipe_resource *,
 			     unsigned idxsize, unsigned mode, unsigned start,
 			     unsigned count, unsigned i_start,
 			     unsigned i_count);
@@ -258,13 +236,6 @@ extern boolean nv50_tex_construct(struct nv50_sampler_view *view);
 extern void nv50_tex_relocs(struct nv50_context *);
 extern struct nouveau_stateobj *nv50_tex_validate(struct nv50_context *);
 
-/* nv50_transfer.c */
-extern void
-nv50_upload_sifc(struct nv50_context *nv50,
-		 struct nouveau_bo *bo, unsigned dst_offset, unsigned reloc,
-		 unsigned dst_format, int dst_w, int dst_h, int dst_pitch,
-		 void *src, unsigned src_format, int src_pitch,
-		 int x, int y, int w, int h, int cpp);
 
 /* nv50_context.c */
 struct pipe_context *

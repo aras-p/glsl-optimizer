@@ -74,7 +74,7 @@ struct softpipe_tex_tile_cache
    struct pipe_transfer *transfer;
    void *transfer_map;
 
-   struct pipe_texture *texture;  /**< if caching a texture */
+   struct pipe_resource *texture;  /**< if caching a texture */
    unsigned timestamp;
 
    struct softpipe_tex_cached_tile entries[NUM_ENTRIES];

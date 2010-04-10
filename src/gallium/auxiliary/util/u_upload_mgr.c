@@ -31,7 +31,7 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
-#include "pipe/p_screen.h"
+#include "pipe/p_context.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
@@ -39,7 +39,7 @@
 
 
 struct u_upload_mgr {
-   struct pipe_screen *screen;
+   struct pipe_context *pipe;
 
    unsigned default_size;
    unsigned alignment;
@@ -47,21 +47,21 @@ struct u_upload_mgr {
 
    /* The active buffer:
     */
-   struct pipe_buffer *buffer;
+   struct pipe_resource *buffer;
    unsigned size;
    unsigned offset;
 };
 
 
-struct u_upload_mgr *u_upload_create( struct pipe_screen *screen,
+struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
                                       unsigned default_size,
                                       unsigned alignment,
                                       unsigned usage )
 {
    struct u_upload_mgr *upload = CALLOC_STRUCT( u_upload_mgr );
 
+   upload->pipe = pipe;
    upload->default_size = default_size;
-   upload->screen = screen;
    upload->alignment = alignment;
    upload->usage = usage;
    upload->buffer = NULL;
@@ -69,31 +69,44 @@ struct u_upload_mgr *u_upload_create( struct pipe_screen *screen,
    return upload;
 }
 
-
+/* Slightly specialized version of buffer_write designed to maximize
+ * chances of the driver consolidating successive writes into a single
+ * upload.
+ *
+ * dirty_size may be slightly greater than size to cope with
+ * alignment.  We don't want to leave holes between succesively mapped
+ * regions as that may prevent the driver from consolidating uploads.
+ * 
+ * Note that the 'data' pointer has probably come from the application
+ * and we cannot read even a byte past its end without risking
+ * segfaults, or at least complaints from valgrind..
+ */
 static INLINE enum pipe_error
-my_buffer_write(struct pipe_screen *screen,
-                struct pipe_buffer *buf,
+my_buffer_write(struct pipe_context *pipe,
+                struct pipe_resource *buf,
                 unsigned offset, unsigned size, unsigned dirty_size,
                 const void *data)
 {
+   struct pipe_transfer *transfer = NULL;
    uint8_t *map;
    
-   assert(offset < buf->size);
-   assert(offset + size <= buf->size);
+   assert(offset < buf->width0);
+   assert(offset + size <= buf->width0);
    assert(dirty_size >= size);
    assert(size);
 
-   map = pipe_buffer_map_range(screen, buf, offset, size, 
-                               PIPE_BUFFER_USAGE_CPU_WRITE |
-                               PIPE_BUFFER_USAGE_FLUSH_EXPLICIT |
-                               PIPE_BUFFER_USAGE_DISCARD |
-                               PIPE_BUFFER_USAGE_UNSYNCHRONIZED);
+   map = pipe_buffer_map_range(pipe, buf, offset, dirty_size,
+                               PIPE_TRANSFER_WRITE |
+                               PIPE_TRANSFER_FLUSH_EXPLICIT |
+                               PIPE_TRANSFER_DISCARD |
+                               PIPE_TRANSFER_UNSYNCHRONIZED,
+			       &transfer);
    if (map == NULL) 
       return PIPE_ERROR_OUT_OF_MEMORY;
 
    memcpy(map + offset, data, size);
-   pipe_buffer_flush_mapped_range(screen, buf, offset, dirty_size);
-   pipe_buffer_unmap(screen, buf);
+   pipe_buffer_flush_mapped_range(pipe, transfer, offset, dirty_size);
+   pipe_buffer_unmap(pipe, buf, transfer);
 
    return PIPE_OK;
 }
@@ -109,7 +122,7 @@ my_buffer_write(struct pipe_screen *screen,
  */
 void u_upload_flush( struct u_upload_mgr *upload )
 {
-   pipe_buffer_reference( &upload->buffer, NULL );
+   pipe_resource_reference( &upload->buffer, NULL );
    upload->size = 0;
 }
 
@@ -135,9 +148,8 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
     */
    size = align(MAX2(upload->default_size, min_size), 4096);
 
-   upload->buffer = pipe_buffer_create( upload->screen,
-                                        upload->alignment,
-                                        upload->usage | PIPE_BUFFER_USAGE_CPU_WRITE,
+   upload->buffer = pipe_buffer_create( upload->pipe->screen,
+                                        upload->usage,
                                         size );
    if (upload->buffer == NULL) 
       goto fail;
@@ -149,7 +161,7 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
 
 fail:
    if (upload->buffer)
-      pipe_buffer_reference( &upload->buffer, NULL );
+      pipe_resource_reference( &upload->buffer, NULL );
 
    return PIPE_ERROR_OUT_OF_MEMORY;
 }
@@ -159,7 +171,7 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
                                unsigned size,
                                const void *data,
                                unsigned *out_offset,
-                               struct pipe_buffer **outbuf )
+                               struct pipe_resource **outbuf )
 {
    unsigned alloc_size = align( size, upload->alignment );
    enum pipe_error ret = PIPE_OK;
@@ -172,7 +184,7 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
 
    /* Copy the data, using map_range if available:
     */
-   ret = my_buffer_write( upload->screen, 
+   ret = my_buffer_write( upload->pipe, 
                           upload->buffer,
                           upload->offset,
                           size, 
@@ -183,7 +195,7 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
 
    /* Emit the return values:
     */
-   pipe_buffer_reference( outbuf, upload->buffer );
+   pipe_resource_reference( outbuf, upload->buffer );
    *out_offset = upload->offset;
    upload->offset += alloc_size;
    return PIPE_OK;
@@ -198,15 +210,18 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
 enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
                                  unsigned offset,
                                  unsigned size,
-                                 struct pipe_buffer *inbuf,
+                                 struct pipe_resource *inbuf,
                                  unsigned *out_offset,
-                                 struct pipe_buffer **outbuf )
+                                 struct pipe_resource **outbuf )
 {
    enum pipe_error ret = PIPE_OK;
+   struct pipe_transfer *transfer = NULL;
    const char *map = NULL;
 
-   map = (const char *)pipe_buffer_map( 
-      upload->screen, inbuf, PIPE_BUFFER_USAGE_CPU_READ );
+   map = (const char *)pipe_buffer_map(upload->pipe,
+				       inbuf,
+				       PIPE_TRANSFER_READ,
+				       &transfer);
 
    if (map == NULL) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
@@ -226,7 +241,7 @@ enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
 
 done:
    if (map)
-      pipe_buffer_unmap( upload->screen, inbuf );
+      pipe_buffer_unmap( upload->pipe, inbuf, transfer );
 
    return ret;
 }

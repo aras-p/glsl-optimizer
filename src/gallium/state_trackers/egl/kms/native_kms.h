@@ -65,7 +65,7 @@ struct kms_display {
 };
 
 struct kms_framebuffer {
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    boolean is_passive;
 
    uint32_t buffer_id;
@@ -77,7 +77,7 @@ struct kms_surface {
    struct kms_display *kdpy;
    int width, height;
 
-   struct pipe_texture *textures[NUM_NATIVE_ATTACHMENTS];
+   struct pipe_resource *textures[NUM_NATIVE_ATTACHMENTS];
    unsigned int sequence_number;
    struct kms_framebuffer front_fb, back_fb;
 

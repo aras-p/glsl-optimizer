@@ -37,7 +37,7 @@ extern "C" {
 
    
 struct pipe_context;
-struct pipe_texture;
+struct pipe_resource;
 struct cso_context;
 
 struct gen_mipmap_state;

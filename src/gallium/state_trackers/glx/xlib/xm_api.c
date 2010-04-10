@@ -339,7 +339,7 @@ static enum pipe_format
 choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
 {
    const enum pipe_texture_target target = PIPE_TEXTURE_2D;
-   const unsigned tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+   const unsigned tex_usage = PIPE_BIND_DEPTH_STENCIL;
    const unsigned geom_flags = (PIPE_TEXTURE_GEOM_NON_SQUARE |
                                 PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO);
    enum pipe_format formats[8], fmt;

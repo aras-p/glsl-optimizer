@@ -30,7 +30,7 @@
 #include "vg_context.h"
 #include "pipe/p_state.h"
 
-struct pipe_texture;
+struct pipe_resource;
 struct array;
 struct vg_context;
 struct pipe_surface;

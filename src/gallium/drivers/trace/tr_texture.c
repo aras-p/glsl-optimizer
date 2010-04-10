@@ -35,51 +35,50 @@
 #include "tr_texture.h"
 
 
-struct pipe_texture *
-trace_texture_create(struct trace_screen *tr_scr,
-                     struct pipe_texture *texture)
+struct pipe_resource *
+trace_resource_create(struct trace_screen *tr_scr,
+                     struct pipe_resource *texture)
 {
-   struct trace_texture *tr_tex;
+   struct trace_resource *tr_tex;
 
    if(!texture)
       goto error;
 
    assert(texture->screen == tr_scr->screen);
 
-   tr_tex = CALLOC_STRUCT(trace_texture);
+   tr_tex = CALLOC_STRUCT(trace_resource);
    if(!tr_tex)
       goto error;
 
-   memcpy(&tr_tex->base, texture, sizeof(struct pipe_texture));
+   memcpy(&tr_tex->base, texture, sizeof(struct pipe_resource));
 
    pipe_reference_init(&tr_tex->base.reference, 1);
    tr_tex->base.screen = &tr_scr->base;
-   tr_tex->texture = texture;
+   tr_tex->resource = texture;
 
    trace_screen_add_to_list(tr_scr, textures, tr_tex);
 
    return &tr_tex->base;
 
 error:
-   pipe_texture_reference(&texture, NULL);
+   pipe_resource_reference(&texture, NULL);
    return NULL;
 }
 
 
 void
-trace_texture_destroy(struct trace_texture *tr_tex)
+trace_resource_destroy(struct trace_screen *tr_scr,
+		       struct trace_resource *tr_tex)
 {
-   struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
-
    trace_screen_remove_from_list(tr_scr, textures, tr_tex);
 
-   pipe_texture_reference(&tr_tex->texture, NULL);
+   pipe_resource_reference(&tr_tex->resource, NULL);
    FREE(tr_tex);
 }
 
 
 struct pipe_surface *
-trace_surface_create(struct trace_texture *tr_tex,
+trace_surface_create(struct trace_resource *tr_tex,
                      struct pipe_surface *surface)
 {
    struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
@@ -88,7 +87,7 @@ trace_surface_create(struct trace_texture *tr_tex,
    if(!surface)
       goto error;
 
-   assert(surface->texture == tr_tex->texture);
+   assert(surface->texture == tr_tex->resource);
 
    tr_surf = CALLOC_STRUCT(trace_surface);
    if(!tr_surf)
@@ -98,7 +97,7 @@ trace_surface_create(struct trace_texture *tr_tex,
 
    pipe_reference_init(&tr_surf->base.reference, 1);
    tr_surf->base.texture = NULL;
-   pipe_texture_reference(&tr_surf->base.texture, &tr_tex->base);
+   pipe_resource_reference(&tr_surf->base.texture, &tr_tex->base);
    tr_surf->surface = surface;
 
    trace_screen_add_to_list(tr_scr, surfaces, tr_surf);
@@ -118,7 +117,7 @@ trace_surface_destroy(struct trace_surface *tr_surf)
 
    trace_screen_remove_from_list(tr_scr, surfaces, tr_surf);
 
-   pipe_texture_reference(&tr_surf->base.texture, NULL);
+   pipe_resource_reference(&tr_surf->base.texture, NULL);
    pipe_surface_reference(&tr_surf->surface, NULL);
    FREE(tr_surf);
 }
@@ -126,7 +125,7 @@ trace_surface_destroy(struct trace_surface *tr_surf)
 
 struct pipe_transfer *
 trace_transfer_create(struct trace_context *tr_ctx,
-		      struct trace_texture *tr_tex,
+		      struct trace_resource *tr_tex,
 		      struct pipe_transfer *transfer)
 {
    struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
@@ -135,7 +134,7 @@ trace_transfer_create(struct trace_context *tr_ctx,
    if(!transfer)
       goto error;
 
-   assert(transfer->texture == tr_tex->texture);
+   assert(transfer->resource == tr_tex->resource);
 
    tr_trans = CALLOC_STRUCT(trace_transfer);
    if(!tr_trans)
@@ -143,18 +142,18 @@ trace_transfer_create(struct trace_context *tr_ctx,
 
    memcpy(&tr_trans->base, transfer, sizeof(struct pipe_transfer));
 
-   tr_trans->base.texture = NULL;
+   tr_trans->base.resource = NULL;
    tr_trans->transfer = transfer;
 
-   pipe_texture_reference(&tr_trans->base.texture, &tr_tex->base);
-   assert(tr_trans->base.texture == &tr_tex->base);
+   pipe_resource_reference(&tr_trans->base.resource, &tr_tex->base);
+   assert(tr_trans->base.resource == &tr_tex->base);
 
    trace_screen_add_to_list(tr_scr, transfers, tr_trans);
 
    return &tr_trans->base;
 
 error:
-   tr_ctx->pipe->tex_transfer_destroy(tr_ctx->pipe, transfer);
+   tr_ctx->pipe->transfer_destroy(tr_ctx->pipe, transfer);
    return NULL;
 }
 
@@ -169,8 +168,8 @@ trace_transfer_destroy(struct trace_context *tr_context,
 
    trace_screen_remove_from_list(tr_scr, transfers, tr_trans);
 
-   pipe_texture_reference(&tr_trans->base.texture, NULL);
-   context->tex_transfer_destroy(context, transfer);
+   pipe_resource_reference(&tr_trans->base.resource, NULL);
+   context->transfer_destroy(context, transfer);
    FREE(tr_trans);
 }
 

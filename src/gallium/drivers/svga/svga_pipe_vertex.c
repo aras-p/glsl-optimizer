@@ -30,7 +30,7 @@
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_screen.h"
-#include "svga_screen_buffer.h"
+#include "svga_resource_buffer.h"
 #include "svga_context.h"
 
 
@@ -49,13 +49,13 @@ static void svga_set_vertex_buffers(struct pipe_context *pipe,
 
    /* Adjust refcounts */
    for (i = 0; i < count; i++) {
-      pipe_buffer_reference(&svga->curr.vb[i].buffer, buffers[i].buffer);
+      pipe_resource_reference(&svga->curr.vb[i].buffer, buffers[i].buffer);
       if (svga_buffer_is_user_buffer(buffers[i].buffer))
          any_user_buffer = TRUE;
    }
 
    for ( ; i < svga->curr.num_vertex_buffers; i++)
-      pipe_buffer_reference(&svga->curr.vb[i].buffer, NULL);
+      pipe_resource_reference(&svga->curr.vb[i].buffer, NULL);
 
    /* Copy remaining data */
    memcpy(svga->curr.vb, buffers, count * sizeof buffers[0]);
@@ -102,7 +102,7 @@ void svga_cleanup_vertex_state( struct svga_context *svga )
    unsigned i;
    
    for (i = 0 ; i < svga->curr.num_vertex_buffers; i++)
-      pipe_buffer_reference(&svga->curr.vb[i].buffer, NULL);
+      pipe_resource_reference(&svga->curr.vb[i].buffer, NULL);
 }
 
 

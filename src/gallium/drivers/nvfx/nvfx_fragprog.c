@@ -9,6 +9,7 @@
 
 #include "nvfx_context.h"
 #include "nvfx_shader.h"
+#include "nvfx_resource.h"
 
 #define MAX_CONSTS 128
 #define MAX_IMM 32
@@ -826,12 +827,8 @@ static void
 nvfx_fragprog_upload(struct nvfx_context *nvfx,
 		     struct nvfx_fragment_program *fp)
 {
-	struct pipe_screen *pscreen = nvfx->pipe.screen;
+	struct pipe_context *pipe = &nvfx->pipe;
 	const uint32_t le = 1;
-	uint32_t *map;
-	int i;
-
-	map = pipe_buffer_map(pscreen, fp->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
 
 #if 0
 	for (i = 0; i < fp->insn_len; i++) {
@@ -842,25 +839,37 @@ nvfx_fragprog_upload(struct nvfx_context *nvfx,
 #endif
 
 	if ((*(const uint8_t *)&le)) {
-		for (i = 0; i < fp->insn_len; i++) {
-			map[i] = fp->insn[i];
-		}
+		/* Can do this with an inline transfer */
+		pipe_buffer_write(pipe,
+				  fp->buffer,
+				  0,
+				  fp->insn_len * sizeof fp->insn[0],
+				  fp->insn);
 	} else {
+		struct pipe_transfer *transfer;
+		uint32_t *map;
+		int i;
+
+		map = pipe_buffer_map(pipe, fp->buffer,
+				      PIPE_TRANSFER_WRITE,
+				      &transfer);
+	
 		/* Weird swapping for big-endian chips */
 		for (i = 0; i < fp->insn_len; i++) {
 			map[i] = ((fp->insn[i] & 0xffff) << 16) |
 				  ((fp->insn[i] >> 16) & 0xffff);
 		}
-	}
 
-	pipe_buffer_unmap(pscreen, fp->buffer);
+		pipe_buffer_unmap(pipe, fp->buffer, transfer);
+	}
 }
 
 static boolean
 nvfx_fragprog_validate(struct nvfx_context *nvfx)
 {
+	struct pipe_context *pipe = &nvfx->pipe;
 	struct nvfx_fragment_program *fp = nvfx->fragprog;
-	struct pipe_buffer *constbuf =
+	struct pipe_resource *constbuf =
 		nvfx->constbuf[PIPE_SHADER_FRAGMENT];
 	struct pipe_screen *pscreen = nvfx->pipe.screen;
 	struct nouveau_stateobj *so;
@@ -877,12 +886,16 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 		return FALSE;
 	}
 
-	fp->buffer = pscreen->buffer_create(pscreen, 0x100, 0, fp->insn_len * 4);
+	fp->buffer = pipe_buffer_create(pscreen,
+					/* XXX: no alignment, maybe use a priv bind flag
+					 * 0x100,
+					 */
+					0, fp->insn_len * 4);
 	nvfx_fragprog_upload(nvfx, fp);
 
 	so = so_new(4, 4, 1);
 	so_method(so, nvfx->screen->eng3d, NV34TCL_FP_ACTIVE_PROGRAM, 1);
-	so_reloc (so, nouveau_bo(fp->buffer), 0, NOUVEAU_BO_VRAM |
+	so_reloc (so, nvfx_resource(fp->buffer)->bo, 0, NOUVEAU_BO_VRAM |
 		      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
 		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
 		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
@@ -900,10 +913,18 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 
 update_constants:
 	if (fp->nr_consts) {
+		struct pipe_transfer *transfer;
 		float *map;
 
-		map = pipe_buffer_map(pscreen, constbuf,
-				      PIPE_BUFFER_USAGE_CPU_READ);
+		map = pipe_buffer_map(pipe, constbuf,
+				      PIPE_TRANSFER_READ,
+				      &transfer);
+
+		/* XXX: probably a bad idea to be reading back data
+		 * from a buffer the gpu has been using.  Not really
+		 * sure what this code is doing though, or how to
+		 * avoid it - kw.
+		 */
 		for (i = 0; i < fp->nr_consts; i++) {
 			struct nvfx_fragment_program_data *fpd = &fp->consts[i];
 			uint32_t *p = &fp->insn[fpd->offset];
@@ -914,7 +935,7 @@ update_constants:
 			memcpy(p, cb, 4 * sizeof(float));
 			new_consts = TRUE;
 		}
-		pipe_buffer_unmap(pscreen, constbuf);
+		pipe_buffer_unmap(pipe, constbuf, transfer);
 
 		if (new_consts)
 			nvfx_fragprog_upload(nvfx, fp);
@@ -933,7 +954,7 @@ nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 		      struct nvfx_fragment_program *fp)
 {
 	if (fp->buffer)
-		pipe_buffer_reference(&fp->buffer, NULL);
+		pipe_resource_reference(&fp->buffer, NULL);
 
 	if (fp->so)
 		so_ref(NULL, &fp->so);

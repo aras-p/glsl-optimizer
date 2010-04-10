@@ -310,13 +310,13 @@ static void
 nv50_sampler_view_destroy(struct pipe_context *pipe,
 			  struct pipe_sampler_view *view)
 {
-	pipe_texture_reference(&view->texture, NULL);
+	pipe_resource_reference(&view->texture, NULL);
 	FREE(nv50_sampler_view(view));
 }
 
 static struct pipe_sampler_view *
 nv50_create_sampler_view(struct pipe_context *pipe,
-			 struct pipe_texture *texture,
+			 struct pipe_resource *texture,
 			 const struct pipe_sampler_view *templ)
 {
 	struct nv50_sampler_view *view = CALLOC_STRUCT(nv50_sampler_view);
@@ -324,7 +324,7 @@ nv50_create_sampler_view(struct pipe_context *pipe,
 	view->pipe = *templ;
 	view->pipe.reference.count = 1;
 	view->pipe.texture = NULL;
-	pipe_texture_reference(&view->pipe.texture, texture);
+	pipe_resource_reference(&view->pipe.texture, texture);
 	view->pipe.context = pipe;
 
 	if (!nv50_tex_construct(view)) {
@@ -690,7 +690,7 @@ nv50_set_clip_state(struct pipe_context *pipe,
 
 static void
 nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-			 struct pipe_buffer *buf )
+			 struct pipe_resource *buf )
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 

@@ -50,7 +50,8 @@
 boolean
 util_create_rgba_surface(struct pipe_screen *screen,
                          uint width, uint height,
-                         struct pipe_texture **textureOut,
+			 uint bind,
+                         struct pipe_resource **textureOut,
                          struct pipe_surface **surfaceOut)
 {
    static const enum pipe_format rgbaFormats[] = {
@@ -60,15 +61,14 @@ util_create_rgba_surface(struct pipe_screen *screen,
       PIPE_FORMAT_NONE
    };
    const uint target = PIPE_TEXTURE_2D;
-   const uint usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
    enum pipe_format format = PIPE_FORMAT_NONE;
-   struct pipe_texture templ;
+   struct pipe_resource templ;
    uint i;
 
    /* Choose surface format */
    for (i = 0; rgbaFormats[i]; i++) {
       if (screen->is_format_supported(screen, rgbaFormats[i],
-                                      target, usage, 0)) {
+                                      target, bind, 0)) {
          format = rgbaFormats[i];
          break;
       }
@@ -84,16 +84,19 @@ util_create_rgba_surface(struct pipe_screen *screen,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
-   templ.tex_usage = usage;
+   templ.bind = bind;
 
-   *textureOut = screen->texture_create(screen, &templ);
+   *textureOut = screen->resource_create(screen, &templ);
    if (!*textureOut)
       return FALSE;
 
    /* create surface / view into texture */
-   *surfaceOut = screen->get_tex_surface(screen, *textureOut, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
+   *surfaceOut = screen->get_tex_surface(screen, 
+					 *textureOut,
+					 0, 0, 0,
+					 bind);
    if (!*surfaceOut) {
-      pipe_texture_reference(textureOut, NULL);
+      pipe_resource_reference(textureOut, NULL);
       return FALSE;
    }
 
@@ -105,11 +108,11 @@ util_create_rgba_surface(struct pipe_screen *screen,
  * Release the surface and texture from util_create_rgba_surface().
  */
 void
-util_destroy_rgba_surface(struct pipe_texture *texture,
+util_destroy_rgba_surface(struct pipe_resource *texture,
                           struct pipe_surface *surface)
 {
    pipe_surface_reference(&surface, NULL);
-   pipe_texture_reference(&texture, NULL);
+   pipe_resource_reference(&texture, NULL);
 }
 
 

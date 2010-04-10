@@ -1,6 +1,7 @@
 #include "util/u_format.h"
 #include "nvfx_context.h"
 #include "nvfx_tex.h"
+#include "nvfx_resource.h"
 
 void
 nv40_sampler_state_init(struct pipe_context *pipe,
@@ -110,8 +111,8 @@ nv40_fragtex_build(struct nvfx_context *nvfx, int unit)
 {
 	struct nvfx_sampler_state *ps = nvfx->tex_sampler[unit];
 	struct nvfx_miptree *nv40mt = (struct nvfx_miptree *)nvfx->fragment_sampler_views[unit]->texture;
-	struct nouveau_bo *bo = nouveau_bo(nv40mt->buffer);
-	struct pipe_texture *pt = &nv40mt->base;
+	struct nouveau_bo *bo = nv40mt->base.bo;
+	struct pipe_resource *pt = &nv40mt->base.base;
 	struct nv40_texture_format *tf;
 	struct nouveau_stateobj *so;
 	uint32_t txf, txs, txp;
@@ -146,7 +147,7 @@ nv40_fragtex_build(struct nvfx_context *nvfx, int unit)
 		return NULL;
 	}
 
-	if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+	if (!(pt->flags & NVFX_RESOURCE_FLAG_LINEAR)) {
 		txp = 0;
 	} else {
 		txp  = nv40mt->level[0].pitch;

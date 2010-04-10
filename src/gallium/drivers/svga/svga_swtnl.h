@@ -40,7 +40,7 @@ void svga_destroy_swtnl( struct svga_context *svga );
 
 enum pipe_error
 svga_swtnl_draw_range_elements(struct svga_context *svga,
-                               struct pipe_buffer *indexBuffer,
+                               struct pipe_resource *indexBuffer,
                                unsigned indexSize,
                                unsigned min_index,
                                unsigned max_index,

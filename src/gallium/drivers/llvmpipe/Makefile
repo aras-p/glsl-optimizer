@@ -6,7 +6,6 @@ LIBNAME = llvmpipe
 DEFINES += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 
 C_SOURCES = \
-	lp_buffer.c \
 	lp_clear.c \
 	lp_context.c \
 	lp_draw_arrays.c \

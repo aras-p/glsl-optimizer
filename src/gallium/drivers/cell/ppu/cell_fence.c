@@ -82,7 +82,7 @@ cell_fence_finish(const struct cell_context *cell,
 
 struct cell_buffer_node
 {
-   struct pipe_buffer *buffer;
+   struct pipe_resource *buffer;
    struct cell_buffer_node *next;
 };
 
@@ -90,12 +90,12 @@ struct cell_buffer_node
 static void
 cell_add_buffer_to_list(struct cell_context *cell,
                         struct cell_buffer_list *list,
-                        struct pipe_buffer *buffer)
+                        struct pipe_resource *buffer)
 {
    struct cell_buffer_node *node = CALLOC_STRUCT(cell_buffer_node);
    /* create new list node which references the buffer, insert at head */
    if (node) {
-      pipe_buffer_reference(&node->buffer, buffer);
+      pipe_resource_reference(&node->buffer, buffer);
       node->next = list->head;
       list->head = node;
    }
@@ -129,7 +129,7 @@ cell_free_fenced_buffers(struct cell_context *cell,
          if (node->buffer->reference.count == 1)
             printf("   Delete!\n");
 #endif
-         pipe_buffer_reference(&node->buffer, NULL);
+         pipe_resource_reference(&node->buffer, NULL);
          FREE(node);
          node = next;
       }
@@ -150,7 +150,7 @@ cell_add_fenced_textures(struct cell_context *cell)
    uint i;
 
    for (i = 0; i < cell->num_textures; i++) {
-      struct cell_texture *ct = cell->texture[i];
+      struct cell_resource *ct = cell->texture[i];
       if (ct) {
 #if 0
          printf("Adding texture %p buffer %p to list\n",

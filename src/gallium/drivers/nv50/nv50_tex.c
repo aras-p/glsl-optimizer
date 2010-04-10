@@ -22,6 +22,7 @@
 
 #include "nv50_context.h"
 #include "nv50_texture.h"
+#include "nv50_resource.h"
 
 #include "nouveau/nouveau_stateobj.h"
 #include "nouveau/nouveau_reloc.h"

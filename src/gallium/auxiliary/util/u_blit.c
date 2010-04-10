@@ -69,7 +69,7 @@ struct blit_state
    void *vs;
    void *fs[TGSI_WRITEMASK_XYZW + 1];
 
-   struct pipe_buffer *vbuf;  /**< quad vertices */
+   struct pipe_resource *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
 
    float vertices[4][2][4];   /**< vertex/texcoords for quad */
@@ -167,7 +167,7 @@ util_destroy_blit(struct blit_state *ctx)
       if (ctx->fs[i])
          pipe->delete_fs_state(pipe, ctx->fs[i]);
 
-   pipe_buffer_reference(&ctx->vbuf, NULL);
+   pipe_resource_reference(&ctx->vbuf, NULL);
 
    FREE(ctx);
 }
@@ -186,8 +186,7 @@ get_next_slot( struct blit_state *ctx )
 
    if (!ctx->vbuf) {
       ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
-                                     32,
-                                     PIPE_BUFFER_USAGE_VERTEX,
+                                     PIPE_BIND_VERTEX_BUFFER,
                                      max_slots * sizeof ctx->vertices);
    }
    
@@ -236,7 +235,7 @@ setup_vertex_data_tex(struct blit_state *ctx,
 
    offset = get_next_slot( ctx );
 
-   pipe_buffer_write_nooverlap(ctx->pipe->screen, ctx->vbuf,
+   pipe_buffer_write_nooverlap(ctx->pipe, ctx->vbuf,
                                offset, sizeof(ctx->vertices), ctx->vertices);
 
    return offset;
@@ -304,9 +303,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
           filter == PIPE_TEX_MIPFILTER_LINEAR);
 
    assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
+                                      PIPE_BIND_SAMPLER_VIEW, 0));
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
+                                      PIPE_BIND_RENDER_TARGET, 0));
 
    /* do the regions overlap? */
    overlap = util_same_surface(src, dst) &&
@@ -335,7 +334,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    }
    
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
+                                      PIPE_BIND_RENDER_TARGET, 0));
 
    /* Create a temporary texture when src and dest alias or when src
     * is anything other than a single-level 2d texture.
@@ -346,8 +345,8 @@ util_blit_pixels_writemask(struct blit_state *ctx,
        src->texture->target != PIPE_TEXTURE_2D ||
        src->texture->last_level != 0)
    {
-      struct pipe_texture texTemp;
-      struct pipe_texture *tex;
+      struct pipe_resource texTemp;
+      struct pipe_resource *tex;
       struct pipe_sampler_view sv_templ;
       struct pipe_surface *texSurf;
       const int srcLeft = MIN2(srcX0, srcX1);
@@ -376,7 +375,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       texTemp.height0 = srcH;
       texTemp.depth0 = 1;
 
-      tex = screen->texture_create(screen, &texTemp);
+      tex = screen->resource_create(screen, &texTemp);
       if (!tex)
          return;
 
@@ -384,12 +383,12 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
       sampler_view = ctx->pipe->create_sampler_view(ctx->pipe, tex, &sv_templ);
       if (!sampler_view) {
-         pipe_texture_reference(&tex, NULL);
+         pipe_resource_reference(&tex, NULL);
          return;
       }
 
       texSurf = screen->get_tex_surface(screen, tex, 0, 0, 0, 
-                                        PIPE_BUFFER_USAGE_GPU_WRITE);
+                                        PIPE_BIND_BLIT_DESTINATION);
 
       /* load temp texture */
       if (pipe->surface_copy) {
@@ -412,7 +411,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       t0 = 0.0f;
       t1 = 1.0f;
 
-      pipe_texture_reference(&tex, NULL);
+      pipe_resource_reference(&tex, NULL);
    }
    else {
       pipe_sampler_view_reference(&sampler_view, src_sampler_view);
@@ -540,7 +539,7 @@ util_blit_pixels(struct blit_state *ctx,
  */
 void util_blit_flush( struct blit_state *ctx )
 {
-   pipe_buffer_reference(&ctx->vbuf, NULL);
+   pipe_resource_reference(&ctx->vbuf, NULL);
    ctx->vbuf_slot = 0;
 } 
 
@@ -566,7 +565,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    struct pipe_framebuffer_state fb;
    float s0, t0, s1, t1;
    unsigned offset;
-   struct pipe_texture *tex = src_sampler_view->texture;
+   struct pipe_resource *tex = src_sampler_view->texture;
 
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
@@ -582,7 +581,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
 
    assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
                                                  PIPE_TEXTURE_2D,
-                                                 PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                                 PIPE_BIND_RENDER_TARGET,
                                                  0));
 
    /* save state (restored below) */

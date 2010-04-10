@@ -47,7 +47,7 @@ extern "C" {
 struct winsys_handle;
 struct pipe_screen;
 struct pipe_context;
-struct pipe_texture;
+struct pipe_resource;
 
 
 /**
@@ -81,7 +81,7 @@ struct sw_winsys
     * pools, or obtained directly from the windowing system.
     *  
     * This callback is invoked by the pipe_screen when creating a texture marked
-    * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag to get the underlying 
+    * with the PIPE_BIND_DISPLAY_TARGET flag to get the underlying 
     * storage.
     */
    struct sw_displaytarget *
@@ -97,7 +97,7 @@ struct sw_winsys
     */
    struct sw_displaytarget *
    (*displaytarget_from_handle)( struct sw_winsys *ws,
-                                 const struct pipe_texture *templat,
+                                 const struct pipe_resource *template,
                                  struct winsys_handle *whandle,
                                  unsigned *stride );
 
@@ -110,7 +110,7 @@ struct sw_winsys
                                 struct winsys_handle *whandle );
 
    /**
-    * \param flags  bitmask of PIPE_BUFFER_USAGE_x flags
+    * \param flags  bitmask of PIPE_TRANSFER_x flags
     */
    void *
    (*displaytarget_map)( struct sw_winsys *ws, 

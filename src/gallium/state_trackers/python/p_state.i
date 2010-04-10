@@ -114,7 +114,7 @@
          SWIG_exception(SWIG_ValueError, "index out of bounds");
       
       if(surface) {
-         _surface = st_pipe_surface(surface, PIPE_BUFFER_USAGE_GPU_WRITE);
+         _surface = st_pipe_surface(surface, PIPE_BIND_RENDER_TARGET);
          if(!_surface)
             SWIG_exception(SWIG_ValueError, "couldn't acquire surface for writing");
       }
@@ -131,7 +131,7 @@
       struct pipe_surface *_surface = NULL;
 
       if(surface) {
-         _surface = st_pipe_surface(surface, PIPE_BUFFER_USAGE_GPU_WRITE);
+         _surface = st_pipe_surface(surface, PIPE_BIND_DEPTH_STENCIL);
          if(!_surface)
             SWIG_exception(SWIG_ValueError, "couldn't acquire surface for writing");
       }

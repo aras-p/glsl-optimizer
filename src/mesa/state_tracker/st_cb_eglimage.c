@@ -79,7 +79,7 @@ st_egl_image_target_renderbuffer_storage(GLcontext *ctx,
    struct pipe_surface *ps;
    unsigned usage;
 
-   usage = PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
+   usage = PIPE_BIND_RENDER_TARGET | PIPE_BIND_BLIT_SOURCE | PIPE_BIND_BLIT_DESTINATION;
    ps = st_manager_get_egl_image_surface(st, (void *) image_handle, usage);
    if (ps) {
       strb->Base.Width = ps->width;
@@ -90,7 +90,7 @@ st_egl_image_target_renderbuffer_storage(GLcontext *ctx,
       strb->Base.InternalFormat = strb->Base._BaseFormat;
 
       pipe_surface_reference(&strb->surface, ps);
-      pipe_texture_reference(&strb->texture, ps->texture);
+      pipe_resource_reference(&strb->texture, ps->texture);
 
       pipe_surface_reference(&ps, NULL);
    }
@@ -128,7 +128,7 @@ st_bind_surface(GLcontext *ctx, GLenum target,
 
    stObj->pipe = ctx->st->pipe;
    /* FIXME create a non-default sampler view from the pipe_surface? */
-   pipe_texture_reference(&stImage->pt, ps->texture);
+   pipe_resource_reference(&stImage->pt, ps->texture);
 
    _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
 }
@@ -143,7 +143,7 @@ st_egl_image_target_texture_2d(GLcontext *ctx, GLenum target,
    struct pipe_surface *ps;
    unsigned usage;
 
-   usage = PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE;
+   usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_BLIT_DESTINATION | PIPE_BIND_BLIT_SOURCE;
    ps = st_manager_get_egl_image_surface(st, (void *) image_handle, usage);
    if (ps) {
       st_bind_surface(ctx, target, texObj, texImage, ps);

@@ -53,14 +53,14 @@ static Bool set_format_in_do_create_buffer;
 
 typedef struct {
     PixmapPtr pPixmap;
-    struct pipe_texture *tex;
+    struct pipe_resource *tex;
     struct pipe_fence_handle *fence;
 } *BufferPrivatePtr;
 
 static Bool
 dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int format)
 {
-    struct pipe_texture *tex = NULL;
+    struct pipe_resource *tex = NULL;
     ScreenPtr pScreen = pDraw->pScreen;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
@@ -101,9 +101,9 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
         /* Fall through */
     case DRI2BufferDepth:
 	if (exa_priv->depth_stencil_tex)
-	    pipe_texture_reference(&tex, exa_priv->depth_stencil_tex);
+	    pipe_resource_reference(&tex, exa_priv->depth_stencil_tex);
         else {
-	    struct pipe_texture template;
+	    struct pipe_resource template;
             unsigned depthBits = (format != 0) ? format : pDraw->depth;
 	    memset(&template, 0, sizeof(template));
 	    template.target = PIPE_TEXTURE_2D;
@@ -128,10 +128,10 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
 	    template.height0 = pDraw->height;
 	    template.depth0 = 1;
 	    template.last_level = 0;
-	    template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL |
-		PIPE_TEXTURE_USAGE_SHARED;
-	    tex = ms->screen->texture_create(ms->screen, &template);
-	    pipe_texture_reference(&exa_priv->depth_stencil_tex, tex);
+	    template.bind = PIPE_BIND_DEPTH_STENCIL |
+		PIPE_BIND_SHARED;
+	    tex = ms->screen->resource_create(ms->screen, &template);
+	    pipe_resource_reference(&exa_priv->depth_stencil_tex, tex);
 	}
 	break;
     }
@@ -157,7 +157,7 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
     memset(&whandle, 0, sizeof(whandle));
     whandle.type = DRM_API_HANDLE_TYPE_SHARED;
 
-    ms->screen->texture_get_handle(ms->screen, tex, &whandle);
+    ms->screen->resource_get_handle(ms->screen, tex, &whandle);
 
     buffer->name = whandle.handle;
     buffer->pitch = whandle.stride;
@@ -185,9 +185,9 @@ dri2_do_destroy_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer)
     BufferPrivatePtr private = buffer->driverPrivate;
     struct exa_pixmap_priv *exa_priv = exaGetPixmapDriverPrivate(private->pPixmap);
 
-    pipe_texture_reference(&private->tex, NULL);
+    pipe_resource_reference(&private->tex, NULL);
     ms->screen->fence_reference(ms->screen, &private->fence, NULL);
-    pipe_texture_reference(&exa_priv->depth_stencil_tex, NULL);
+    pipe_resource_reference(&exa_priv->depth_stencil_tex, NULL);
     (*pScreen->DestroyPixmap)(private->pPixmap);
 }
 
@@ -437,11 +437,11 @@ xorg_dri2_init(ScreenPtr pScreen)
     ms->d_depth_bits_last =
 	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24X8_UNORM,
 					 PIPE_TEXTURE_2D,
-					 PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+					 PIPE_BIND_DEPTH_STENCIL, 0);
     ms->ds_depth_bits_last =
 	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
 					 PIPE_TEXTURE_2D,
-					 PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+					 PIPE_BIND_DEPTH_STENCIL, 0);
 
     return DRI2ScreenInit(pScreen, &dri2info);
 }

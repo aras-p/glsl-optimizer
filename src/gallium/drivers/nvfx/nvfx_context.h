@@ -16,7 +16,6 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
-#include "nouveau/nouveau_context.h"
 #include "nouveau/nouveau_stateobj.h"
 
 #include "nvfx_state.h"
@@ -146,7 +145,7 @@ struct nvfx_context {
 	struct pipe_clip_state clip;
 	struct nvfx_vertex_program *vertprog;
 	struct nvfx_fragment_program *fragprog;
-	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+	struct pipe_resource *constbuf[PIPE_SHADER_TYPES];
 	unsigned constbuf_nr[PIPE_SHADER_TYPES];
 	struct nvfx_rasterizer_state *rasterizer;
 	struct nvfx_zsa_state *zsa;
@@ -155,7 +154,7 @@ struct nvfx_context {
 	struct pipe_stencil_ref stencil_ref;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
-	struct pipe_buffer *idxbuf;
+	struct pipe_resource *idxbuf;
 	unsigned idxbuf_format;
 	struct nvfx_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
@@ -210,7 +209,7 @@ extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 /* nvfx_draw.c */
 extern struct draw_stage *nvfx_draw_render_stage(struct nvfx_context *nvfx);
 extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
-					struct pipe_buffer *idxbuf,
+					struct pipe_resource *idxbuf,
 					unsigned ib_size, unsigned mode,
 					unsigned start, unsigned count);
 
@@ -252,7 +251,7 @@ extern void nvfx_init_transfer_functions(struct nvfx_context *nvfx);
 extern void nvfx_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
 extern void nvfx_draw_elements(struct pipe_context *pipe,
-				  struct pipe_buffer *indexBuffer,
+				  struct pipe_resource *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
 				  unsigned count);

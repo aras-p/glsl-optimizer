@@ -34,7 +34,7 @@
 #include "cell_context.h"
 #include "cell_state.h"
 #include "cell_gen_fp.h"
-#include "cell_buffer.h"
+#include "cell_texture.h"
 
 
 /** cast wrapper */
@@ -183,11 +183,11 @@ cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 static void
 cell_set_constant_buffer(struct pipe_context *pipe,
                          uint shader, uint index,
-                         struct pipe_buffer *constants)
+                         struct pipe_resource *constants)
 {
    struct cell_context *cell = cell_context(pipe);
-   unsigned size = constants ? constants->size : 0;
-   const void *data = constants ? cell_buffer(constants)->data : NULL;
+   unsigned size = constants ? constants->width0 : 0;
+   const void *data = constants ? cell_resource(constants)->data : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
@@ -198,7 +198,7 @@ cell_set_constant_buffer(struct pipe_context *pipe,
    draw_flush(cell->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&cell->constants[shader], constants);
+   pipe_resource_reference(&cell->constants[shader], constants);
 
    if(shader == PIPE_SHADER_VERTEX) {
       draw_set_mapped_constant_buffer(cell->draw, PIPE_SHADER_VERTEX, 0,

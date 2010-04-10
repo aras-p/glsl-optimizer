@@ -150,7 +150,7 @@ static void
 st_framebuffer_validate(struct st_framebuffer *stfb, struct st_context *st)
 {
    struct pipe_screen *screen = st->pipe->screen;
-   struct pipe_texture *textures[ST_ATTACHMENT_COUNT];
+   struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
    uint width, height;
    unsigned i;
    boolean changed = FALSE;
@@ -175,22 +175,22 @@ st_framebuffer_validate(struct st_framebuffer *stfb, struct st_context *st)
 
       idx = attachment_to_buffer_index(stfb->statts[i]);
       if (idx >= BUFFER_COUNT) {
-         pipe_texture_reference(&textures[i], NULL);
+         pipe_resource_reference(&textures[i], NULL);
          continue;
       }
 
       strb = st_renderbuffer(stfb->Base.Attachment[idx].Renderbuffer);
       assert(strb);
       if (strb->texture == textures[i]) {
-         pipe_texture_reference(&textures[i], NULL);
+         pipe_resource_reference(&textures[i], NULL);
          continue;
       }
 
       ps = screen->get_tex_surface(screen, textures[i], 0, 0, 0,
-            PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE);
+				   PIPE_BIND_RENDER_TARGET);
       if (ps) {
          pipe_surface_reference(&strb->surface, ps);
-         pipe_texture_reference(&strb->texture, ps->texture);
+         pipe_resource_reference(&strb->texture, ps->texture);
          /* ownership transfered */
          pipe_surface_reference(&ps, NULL);
 
@@ -203,7 +203,7 @@ st_framebuffer_validate(struct st_framebuffer *stfb, struct st_context *st)
          height = strb->Base.Height;
       }
 
-      pipe_texture_reference(&textures[i], NULL);
+      pipe_resource_reference(&textures[i], NULL);
    }
 
    if (changed) {
@@ -498,7 +498,7 @@ st_context_flush(struct st_context_iface *stctxi, unsigned flags,
 static boolean
 st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target,
                     int level, enum pipe_format internal_format,
-                    struct pipe_texture *tex, boolean mipmap)
+                    struct pipe_resource *tex, boolean mipmap)
 {
    struct st_context *st = (struct st_context *) stctxi;
    GLcontext *ctx = st->ctx;
@@ -557,7 +557,7 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    }
 
    stObj->pipe = st->pipe;
-   pipe_texture_reference(&stImage->pt, tex);
+   pipe_resource_reference(&stImage->pt, tex);
 
    _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
    _mesa_unlock_texture(ctx, texObj);
@@ -744,7 +744,7 @@ st_manager_get_egl_image_surface(struct st_context *st,
 
    ps = smapi->screen->get_tex_surface(smapi->screen,
          stimg.texture, stimg.face, stimg.level, stimg.zslice, usage);
-   pipe_texture_reference(&stimg.texture, NULL);
+   pipe_resource_reference(&stimg.texture, NULL);
 
    return ps;
 }

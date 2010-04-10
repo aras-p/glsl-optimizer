@@ -42,7 +42,7 @@
 
 static enum pipe_error
 retry_draw_range_elements( struct svga_context *svga,
-                           struct pipe_buffer *index_buffer,
+                           struct pipe_resource *index_buffer,
                            unsigned index_size,
                            unsigned min_index,
                            unsigned max_index,
@@ -150,7 +150,7 @@ retry:
 
 static void
 svga_draw_range_elements( struct pipe_context *pipe,
-                          struct pipe_buffer *index_buffer,
+                          struct pipe_resource *index_buffer,
                           unsigned index_size,
                           unsigned min_index,
                           unsigned max_index,
@@ -224,7 +224,7 @@ svga_draw_range_elements( struct pipe_context *pipe,
 
 static void
 svga_draw_elements( struct pipe_context *pipe,
-                    struct pipe_buffer *index_buffer,
+                    struct pipe_resource *index_buffer,
                     unsigned index_size,
                     unsigned prim, unsigned start, unsigned count)
 {

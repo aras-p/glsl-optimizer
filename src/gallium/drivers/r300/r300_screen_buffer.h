@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
+#include "util/u_transfer.h"
 #include "r300_screen.h"
 
 #include "r300_winsys.h"
@@ -18,7 +19,7 @@ struct r300_buffer_range {
 
 struct r300_buffer
 {
-    struct pipe_buffer base;
+    struct u_resource b;
 
     uint32_t magic;
 
@@ -32,7 +33,7 @@ struct r300_buffer
 };
 
 static INLINE struct r300_buffer *
-r300_buffer(struct pipe_buffer *buffer)
+r300_buffer(struct pipe_resource *buffer)
 {
     if (buffer) {
 	assert(((struct r300_buffer *)buffer)->magic == R300_BUFFER_MAGIC);
@@ -42,13 +43,13 @@ r300_buffer(struct pipe_buffer *buffer)
 }
 
 static INLINE boolean 
-r300_buffer_is_user_buffer(struct pipe_buffer *buffer)
+r300_buffer_is_user_buffer(struct pipe_resource *buffer)
 {
     return r300_buffer(buffer)->user_buffer ? true : false;
 }
 
 static INLINE boolean r300_add_buffer(struct r300_winsys_screen *rws,
-				      struct pipe_buffer *buffer,
+				      struct pipe_resource *buffer,
 				      int rd, int wr)
 {
     struct r300_buffer *buf = r300_buffer(buffer);
@@ -67,7 +68,6 @@ static INLINE boolean r300_add_texture(struct r300_winsys_screen *rws,
     return rws->add_buffer(rws, tex->buffer, rd, wr);
 }
 
-void r300_screen_init_buffer_functions(struct r300_screen *r300screen);
 
 static INLINE void r300_buffer_write_reloc(struct r300_winsys_screen *rws,
 				      struct r300_buffer *buf,
@@ -89,11 +89,18 @@ static INLINE void r300_texture_write_reloc(struct r300_winsys_screen *rws,
 int r300_upload_user_buffers(struct r300_context *r300);
 
 int r300_upload_index_buffer(struct r300_context *r300,
-			     struct pipe_buffer **index_buffer,
+			     struct pipe_resource **index_buffer,
 			     unsigned index_size,
 			     unsigned start,
 			     unsigned count);
 
-boolean r300_buffer_is_referenced(struct r300_context *r300,
-				  struct pipe_buffer *buf);
+
+struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
+					 const struct pipe_resource *template);
+
+struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
+					      void *ptr,
+					      unsigned bytes,
+					      unsigned usage);
+
 #endif

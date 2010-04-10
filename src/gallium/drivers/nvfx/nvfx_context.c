@@ -3,6 +3,7 @@
 
 #include "nvfx_context.h"
 #include "nvfx_screen.h"
+#include "nvfx_resource.h"
 
 static void
 nvfx_flush(struct pipe_context *pipe, unsigned flags,
@@ -65,9 +66,6 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.clear = nvfx_clear;
 	nvfx->pipe.flush = nvfx_flush;
 
-	nvfx->pipe.is_texture_referenced = nouveau_is_texture_referenced;
-	nvfx->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
-
 	screen->base.channel->user_private = nvfx;
 	screen->base.channel->flush_notify = nvfx_state_flush_notify;
 
@@ -76,7 +74,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx_init_query_functions(nvfx);
 	nvfx_init_surface_functions(nvfx);
 	nvfx_init_state_functions(nvfx);
-	nvfx_init_transfer_functions(nvfx);
+	nvfx_init_resource_functions(&nvfx->pipe);
 
 	/* Create, configure, and install fallback swtnl path */
 	nvfx->draw = draw_create();

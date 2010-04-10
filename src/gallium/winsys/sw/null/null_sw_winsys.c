@@ -91,7 +91,7 @@ null_sw_displaytarget_create(struct sw_winsys *winsys,
 
 static struct sw_displaytarget *
 null_sw_displaytarget_from_handle(struct sw_winsys *winsys,
-                                  const struct pipe_texture *templet,
+                                  const struct pipe_resource *templet,
                                   struct winsys_handle *whandle,
                                   unsigned *stride)
 {

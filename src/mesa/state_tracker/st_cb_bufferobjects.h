@@ -30,7 +30,7 @@
 
 struct st_context;
 struct gl_buffer_object;
-struct pipe_buffer;
+struct pipe_resource;
 
 /**
  * State_tracker vertex/pixel buffer object, derived from Mesa's
@@ -39,7 +39,8 @@ struct pipe_buffer;
 struct st_buffer_object
 {
    struct gl_buffer_object Base;
-   struct pipe_buffer *buffer;  
+   struct pipe_resource *buffer;     /* GPU storage */
+   struct pipe_transfer *transfer; /* In-progress map information */
 };
 
 

@@ -32,6 +32,7 @@
 #include "i915_context.h"
 #include "i915_reg.h"
 #include "i915_state.h"
+#include "i915_resource.h"
 
 
 /*
@@ -77,7 +78,7 @@ static void update_sampler(struct i915_context *i915,
 			   const struct i915_texture *tex,
 			   unsigned state[3] )
 {
-   const struct pipe_texture *pt = &tex->base;
+   const struct pipe_resource *pt = &tex->b.b;
    unsigned minlod, lastlod;
 
    /* Need to do this after updating the maps, which call the
@@ -149,7 +150,7 @@ void i915_update_samplers( struct i915_context *i915 )
       /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
       if (i915->fragment_sampler_views[unit]) {
-         struct i915_texture *texture = (struct i915_texture *)i915->fragment_sampler_views[unit]->texture;
+         struct i915_texture *texture = i915_texture(i915->fragment_sampler_views[unit]->texture);
 
 	 update_sampler( i915,
 	                 unit,
@@ -238,7 +239,7 @@ i915_update_texture(struct i915_context *i915,
                     const struct i915_sampler_state *sampler,
                     uint state[6])
 {
-   const struct pipe_texture *pt = &tex->base;
+   const struct pipe_resource *pt = &tex->b.b;
    uint format, pitch;
    const uint width = pt->width0, height = pt->height0, depth = pt->depth0;
    const uint num_levels = pt->last_level;
@@ -296,7 +297,7 @@ i915_update_textures(struct i915_context *i915)
       /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
       if (i915->fragment_sampler_views[unit]) {
-         struct i915_texture *texture = (struct i915_texture *)i915->fragment_sampler_views[unit]->texture;
+         struct i915_texture *texture = i915_texture(i915->fragment_sampler_views[unit]->texture);
 
 	 i915_update_texture( i915,
 	                      unit,

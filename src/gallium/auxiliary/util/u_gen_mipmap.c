@@ -67,7 +67,7 @@ struct gen_mipmap_state
    void *vs;
    void *fs2d, *fsCube;
 
-   struct pipe_buffer *vbuf;  /**< quad vertices */
+   struct pipe_resource *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
 
    float vertices[4][2][4];   /**< vertex/texcoords for quad */
@@ -1116,7 +1116,7 @@ reduce_3d(enum pipe_format pformat,
 
 static void
 make_1d_mipmap(struct gen_mipmap_state *ctx,
-               struct pipe_texture *pt,
+               struct pipe_resource *pt,
                uint face, uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = ctx->pipe;
@@ -1128,11 +1128,11 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_transfer *srcTrans, *dstTrans;
       void *srcMap, *dstMap;
       
-      srcTrans = pipe->get_tex_transfer(pipe, pt, face, srcLevel, zslice,
+      srcTrans = pipe_get_transfer(pipe, pt, face, srcLevel, zslice,
                                           PIPE_TRANSFER_READ, 0, 0,
                                           u_minify(pt->width0, srcLevel),
                                           u_minify(pt->height0, srcLevel));
-      dstTrans = pipe->get_tex_transfer(pipe, pt, face, dstLevel, zslice,
+      dstTrans = pipe_get_transfer(pipe, pt, face, dstLevel, zslice,
                                           PIPE_TRANSFER_WRITE, 0, 0,
                                           u_minify(pt->width0, dstLevel),
                                           u_minify(pt->height0, dstLevel));
@@ -1141,21 +1141,21 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       dstMap = (ubyte *) pipe->transfer_map(pipe, dstTrans);
 
       reduce_1d(pt->format,
-                srcTrans->width, srcMap,
-                dstTrans->width, dstMap);
+                srcTrans->box.width, srcMap,
+                dstTrans->box.width, dstMap);
 
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
 
-      pipe->tex_transfer_destroy(pipe, srcTrans);
-      pipe->tex_transfer_destroy(pipe, dstTrans);
+      pipe->transfer_destroy(pipe, srcTrans);
+      pipe->transfer_destroy(pipe, dstTrans);
    }
 }
 
 
 static void
 make_2d_mipmap(struct gen_mipmap_state *ctx,
-               struct pipe_texture *pt,
+               struct pipe_resource *pt,
                uint face, uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = ctx->pipe;
@@ -1170,36 +1170,36 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_transfer *srcTrans, *dstTrans;
       ubyte *srcMap, *dstMap;
       
-      srcTrans = pipe->get_tex_transfer(pipe, pt, face, srcLevel, zslice,
-                                          PIPE_TRANSFER_READ, 0, 0,
-                                          u_minify(pt->width0, srcLevel),
-                                          u_minify(pt->height0, srcLevel));
-      dstTrans = pipe->get_tex_transfer(pipe, pt, face, dstLevel, zslice,
-                                          PIPE_TRANSFER_WRITE, 0, 0,
-                                          u_minify(pt->width0, dstLevel),
-                                          u_minify(pt->height0, dstLevel));
+      srcTrans = pipe_get_transfer(pipe, pt, face, srcLevel, zslice,
+				   PIPE_TRANSFER_READ, 0, 0,
+				   u_minify(pt->width0, srcLevel),
+				   u_minify(pt->height0, srcLevel));
+      dstTrans = pipe_get_transfer(pipe, pt, face, dstLevel, zslice,
+				   PIPE_TRANSFER_WRITE, 0, 0,
+				   u_minify(pt->width0, dstLevel),
+				   u_minify(pt->height0, dstLevel));
 
       srcMap = (ubyte *) pipe->transfer_map(pipe, srcTrans);
       dstMap = (ubyte *) pipe->transfer_map(pipe, dstTrans);
 
       reduce_2d(pt->format,
-                srcTrans->width, srcTrans->height,
+                srcTrans->box.width, srcTrans->box.height,
                 srcTrans->stride, srcMap,
-                dstTrans->width, dstTrans->height,
+                dstTrans->box.width, dstTrans->box.height,
                 dstTrans->stride, dstMap);
 
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
 
-      pipe->tex_transfer_destroy(pipe, srcTrans);
-      pipe->tex_transfer_destroy(pipe, dstTrans);
+      pipe->transfer_destroy(pipe, srcTrans);
+      pipe->transfer_destroy(pipe, dstTrans);
    }
 }
 
 
 static void
 make_3d_mipmap(struct gen_mipmap_state *ctx,
-               struct pipe_texture *pt,
+               struct pipe_resource *pt,
                uint face, uint baseLevel, uint lastLevel)
 {
 #if 0
@@ -1215,11 +1215,11 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_transfer *srcTrans, *dstTrans;
       ubyte *srcMap, *dstMap;
       
-      srcTrans = pipe->get_tex_transfer(pipe, pt, face, srcLevel, zslice,
+      srcTrans = pipe->get_transfer(pipe, pt, face, srcLevel, zslice,
                                           PIPE_TRANSFER_READ, 0, 0,
                                           u_minify(pt->width0, srcLevel),
                                           u_minify(pt->height0, srcLevel));
-      dstTrans = pipe->get_tex_transfer(pipe, pt, face, dstLevel, zslice,
+      dstTrans = pipe->get_transfer(pipe, pt, face, dstLevel, zslice,
                                           PIPE_TRANSFER_WRITE, 0, 0,
                                           u_minify(pt->width0, dstLevel),
                                           u_minify(pt->height0, dstLevel));
@@ -1236,8 +1236,8 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
       pipe->transfer_unmap(pipe, srcTrans);
       pipe->transfer_unmap(pipe, dstTrans);
 
-      pipe->tex_transfer_destroy(pipe, srcTrans);
-      pipe->tex_transfer_destroy(pipe, dstTrans);
+      pipe->transfer_destroy(pipe, srcTrans);
+      pipe->transfer_destroy(pipe, dstTrans);
    }
 #else
    (void) reduce_3d;
@@ -1247,7 +1247,7 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
 
 static void
 fallback_gen_mipmap(struct gen_mipmap_state *ctx,
-                    struct pipe_texture *pt,
+                    struct pipe_resource *pt,
                     uint face, uint baseLevel, uint lastLevel)
 {
    switch (pt->target) {
@@ -1358,8 +1358,7 @@ get_next_slot(struct gen_mipmap_state *ctx)
 
    if (!ctx->vbuf) {
       ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
-                                     32,
-                                     PIPE_BUFFER_USAGE_VERTEX,
+                                     PIPE_BIND_VERTEX_BUFFER,
                                      max_slots * sizeof ctx->vertices);
    }
    
@@ -1420,7 +1419,7 @@ set_vertex_data(struct gen_mipmap_state *ctx,
 
    offset = get_next_slot( ctx );
 
-   pipe_buffer_write_nooverlap(ctx->pipe->screen, ctx->vbuf,
+   pipe_buffer_write_nooverlap(ctx->pipe, ctx->vbuf,
                                offset, sizeof(ctx->vertices), ctx->vertices);
 
    return offset;
@@ -1440,7 +1439,7 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
    pipe->delete_fs_state(pipe, ctx->fs2d);
    pipe->delete_fs_state(pipe, ctx->fsCube);
 
-   pipe_buffer_reference(&ctx->vbuf, NULL);
+   pipe_resource_reference(&ctx->vbuf, NULL);
 
    FREE(ctx);
 }
@@ -1452,7 +1451,7 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
  */
 void util_gen_mipmap_flush( struct gen_mipmap_state *ctx )
 {
-   pipe_buffer_reference(&ctx->vbuf, NULL);
+   pipe_resource_reference(&ctx->vbuf, NULL);
    ctx->vbuf_slot = 0;
 } 
 
@@ -1476,7 +1475,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_framebuffer_state fb;
-   struct pipe_texture *pt = psv->texture;
+   struct pipe_resource *pt = psv->texture;
    void *fs = (pt->target == PIPE_TEXTURE_CUBE) ? ctx->fsCube : ctx->fs2d;
    uint dstLevel;
    uint zslice = 0;
@@ -1495,7 +1494,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, psv->format, PIPE_TEXTURE_2D,
-                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
+                                    PIPE_BIND_RENDER_TARGET, 0)) {
       fallback_gen_mipmap(ctx, pt, face, baseLevel, lastLevel);
       return;
    }
@@ -1541,7 +1540,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       struct pipe_surface *surf = 
          screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
-                                 PIPE_BUFFER_USAGE_GPU_WRITE);
+                                 PIPE_BIND_RENDER_TARGET);
 
       /*
        * Setup framebuffer / dest surface

@@ -41,12 +41,12 @@ extern "C" {
 
 void
 u_sampler_view_default_template(struct pipe_sampler_view *view,
-                                const struct pipe_texture *texture,
+                                const struct pipe_resource *texture,
                                 enum pipe_format format);
 
 void
 u_sampler_view_default_dx9_template(struct pipe_sampler_view *view,
-                                    const struct pipe_texture *texture,
+                                    const struct pipe_resource *texture,
                                     enum pipe_format format);
 
 

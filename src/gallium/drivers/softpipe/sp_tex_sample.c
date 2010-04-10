@@ -547,7 +547,7 @@ compute_lambda_1d(const struct sp_sampler_varient *samp,
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE])
 {
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
    float rho = MAX2(dsdx, dsdy) * texture->width0;
@@ -562,7 +562,7 @@ compute_lambda_2d(const struct sp_sampler_varient *samp,
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE])
 {
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
    float dtdx = fabsf(t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]);
@@ -581,7 +581,7 @@ compute_lambda_3d(const struct sp_sampler_varient *samp,
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE])
 {
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
    float dtdx = fabsf(t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]);
@@ -651,7 +651,7 @@ static INLINE const float *
 get_texel_2d(const struct sp_sampler_varient *samp,
 	     union tex_tile_address addr, int x, int y)
 {
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    unsigned level = addr.bits.level;
 
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
@@ -744,7 +744,7 @@ static INLINE const float *
 get_texel_3d(const struct sp_sampler_varient *samp,
 	     union tex_tile_address addr, int x, int y, int z)
 {
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    unsigned level = addr.bits.level;
 
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
@@ -932,7 +932,7 @@ img_filter_1d_nearest(struct tgsi_sampler *tgsi_sampler,
                         float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    unsigned level0, j;
    int width;
    int x[4];
@@ -968,7 +968,7 @@ img_filter_2d_nearest(struct tgsi_sampler *tgsi_sampler,
                       float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    unsigned level0, j;
    int width, height;
    int x[4], y[4];
@@ -1016,7 +1016,7 @@ img_filter_cube_nearest(struct tgsi_sampler *tgsi_sampler,
                         float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    const unsigned *faces = samp->faces; /* zero when not cube-mapping */
    unsigned level0, j;
    int width, height;
@@ -1056,7 +1056,7 @@ img_filter_3d_nearest(struct tgsi_sampler *tgsi_sampler,
                       float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    unsigned level0, j;
    int width, height, depth;
    int x[4], y[4], z[4];
@@ -1098,7 +1098,7 @@ img_filter_1d_linear(struct tgsi_sampler *tgsi_sampler,
                      float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    unsigned level0, j;
    int width;
    int x0[4], x1[4];
@@ -1138,7 +1138,7 @@ img_filter_2d_linear(struct tgsi_sampler *tgsi_sampler,
                      float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    unsigned level0, j;
    int width, height;
    int x0[4], y0[4], x1[4], y1[4];
@@ -1185,7 +1185,7 @@ img_filter_cube_linear(struct tgsi_sampler *tgsi_sampler,
                        float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    const unsigned *faces = samp->faces; /* zero when not cube-mapping */
    unsigned level0, j;
    int width, height;
@@ -1234,7 +1234,7 @@ img_filter_3d_linear(struct tgsi_sampler *tgsi_sampler,
                      float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    const struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    unsigned level0, j;
    int width, height, depth;
    int x0[4], x1[4], y0[4], y1[4], z0[4], z1[4];
@@ -1310,7 +1310,7 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    int level0;
    float lambda;
    float lod[QUAD_SIZE];
@@ -1373,7 +1373,7 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
                    float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    float lambda;
    float lod[QUAD_SIZE];
 
@@ -1461,7 +1461,7 @@ mip_filter_linear_2d_linear_repeat_POT(
    float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
-   const struct pipe_texture *texture = samp->texture;
+   const struct pipe_resource *texture = samp->texture;
    int level0;
    float lambda;
    float lod[QUAD_SIZE];
@@ -1867,7 +1867,7 @@ get_img_filter(const union sp_sampler_key key,
 void
 sp_sampler_varient_bind_texture( struct sp_sampler_varient *samp,
                                  struct softpipe_tex_tile_cache *tex_cache,
-                                 const struct pipe_texture *texture )
+                                 const struct pipe_resource *texture )
 {
    const struct pipe_sampler_state *sampler = samp->sampler;
 

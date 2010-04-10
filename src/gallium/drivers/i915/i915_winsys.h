@@ -31,7 +31,7 @@
 struct i915_winsys;
 struct i915_winsys_buffer;
 struct i915_winsys_batchbuffer;
-struct pipe_texture;
+struct pipe_resource;
 struct pipe_fence_handle;
 struct winsys_handle;
 
@@ -133,7 +133,7 @@ struct i915_winsys {
 
    /**
     * Creates a buffer from a handle.
-    * Used to implement pipe_screen::texture_from_handle.
+    * Used to implement pipe_screen::resource_from_handle.
     * Also provides the stride information needed for the
     * texture via the stride argument.
     */
@@ -143,7 +143,7 @@ struct i915_winsys {
                             unsigned *stride);
 
    /**
-    * Used to implement pipe_screen::texture_get_handle.
+    * Used to implement pipe_screen::resource_get_handle.
     * The winsys might need the stride information.
     */
    boolean (*buffer_get_handle)(struct i915_winsys *iws,

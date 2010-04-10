@@ -123,7 +123,7 @@ st_DeleteTextureObject(GLcontext *ctx,
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
    if (stObj->pt)
-      pipe_texture_reference(&stObj->pt, NULL);
+      pipe_resource_reference(&stObj->pt, NULL);
    if (stObj->sampler_view) {
       if (stObj->sampler_view->context != ctx->st->pipe) {
          /* Take "ownership" of this texture sampler view by setting
@@ -148,7 +148,7 @@ st_FreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
    DBG("%s\n", __FUNCTION__);
 
    if (stImage->pt) {
-      pipe_texture_reference(&stImage->pt, NULL);
+      pipe_resource_reference(&stImage->pt, NULL);
    }
 
    if (texImage->Data) {
@@ -214,17 +214,17 @@ do_memcpy(void *dest, const void *src, size_t n)
 static GLuint
 default_usage(enum pipe_format fmt)
 {
-   GLuint usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   GLuint usage = PIPE_BIND_SAMPLER_VIEW;
    if (util_format_is_depth_or_stencil(fmt))
-      usage |= PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+      usage |= PIPE_BIND_DEPTH_STENCIL;
    else
-      usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
+      usage |= PIPE_BIND_RENDER_TARGET;
    return usage;
 }
 
 
 /**
- * Allocate a pipe_texture object for the given st_texture_object using
+ * Allocate a pipe_resource object for the given st_texture_object using
  * the given st_texture_image to guess the mipmap size/levels.
  *
  * [comments...]
@@ -387,8 +387,8 @@ compress_with_blit(GLcontext * ctx,
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
    gl_format mesa_format;
-   struct pipe_texture templ;
-   struct pipe_texture *src_tex;
+   struct pipe_resource templ;
+   struct pipe_resource *src_tex;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *src_view;
    struct pipe_surface *dst_surface;
@@ -403,7 +403,7 @@ compress_with_blit(GLcontext * ctx,
    /* get destination surface (in the compressed texture) */
    dst_surface = screen->get_tex_surface(screen, stImage->pt,
                                          stImage->face, stImage->level, 0,
-                                         PIPE_BUFFER_USAGE_GPU_WRITE);
+                                         PIPE_BIND_BLIT_DESTINATION);
    if (!dst_surface) {
       /* can't render into this format (or other problem) */
       return GL_FALSE;
@@ -425,8 +425,9 @@ compress_with_blit(GLcontext * ctx,
    templ.height0 = height;
    templ.depth0 = 1;
    templ.last_level = 0;
-   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
-   src_tex = screen->texture_create(screen, &templ);
+   templ._usage = PIPE_USAGE_DEFAULT;
+   templ.bind = PIPE_BIND_SAMPLER_VIEW;
+   src_tex = screen->resource_create(screen, &templ);
 
    if (!src_tex)
       return GL_FALSE;
@@ -437,7 +438,7 @@ compress_with_blit(GLcontext * ctx,
 					     0, 0, 0, /* face, level are zero */
 					     PIPE_TRANSFER_WRITE,
 					     0, 0, width, height); /* x, y, w, h */
-   map = pipe->transfer_map(pipe, tex_xfer);
+   map = pipe_transfer_map(pipe, tex_xfer);
 
    _mesa_texstore(ctx, 2, GL_RGBA, mesa_format,
                   map,              /* dest ptr */
@@ -449,8 +450,8 @@ compress_with_blit(GLcontext * ctx,
                   pixels,           /* source data */
                   unpack);          /* source data packing */
 
-   pipe->transfer_unmap(pipe, tex_xfer);
-   pipe->tex_transfer_destroy(pipe, tex_xfer);
+   pipe_transfer_unmap(pipe, tex_xfer);
+   pipe->transfer_destroy(pipe, tex_xfer);
 
    /* Create temporary sampler view */
    u_sampler_view_default_template(&view_templ,
@@ -472,7 +473,7 @@ compress_with_blit(GLcontext * ctx,
                         PIPE_TEX_MIPFILTER_NEAREST);
 
    pipe_surface_reference(&dst_surface, NULL);
-   pipe_texture_reference(&src_tex, NULL);
+   pipe_resource_reference(&src_tex, NULL);
    pipe_sampler_view_reference(&src_view, NULL);
 
    return GL_TRUE;
@@ -560,7 +561,7 @@ st_TexImage(GLcontext * ctx,
     * Release any old malloced memory.
     */
    if (stImage->pt) {
-      pipe_texture_reference(&stImage->pt, NULL);
+      pipe_resource_reference(&stImage->pt, NULL);
       assert(!texImage->Data);
    }
    else if (texImage->Data) {
@@ -577,7 +578,7 @@ st_TexImage(GLcontext * ctx,
           !st_texture_match_image(stObj->pt, &stImage->base,
                                   stImage->face, stImage->level)) {
          DBG("release it\n");
-         pipe_texture_reference(&stObj->pt, NULL);
+         pipe_resource_reference(&stObj->pt, NULL);
          assert(!stObj->pt);
          pipe_sampler_view_reference(&stObj->sampler_view, NULL);
          stObj->teximage_realloc = FALSE;
@@ -610,7 +611,7 @@ st_TexImage(GLcontext * ctx,
        st_texture_match_image(stObj->pt, &stImage->base,
                                  stImage->face, stImage->level)) {
 
-      pipe_texture_reference(&stImage->pt, stObj->pt);
+      pipe_resource_reference(&stImage->pt, stObj->pt);
       assert(stImage->pt);
    }
 
@@ -644,7 +645,7 @@ st_TexImage(GLcontext * ctx,
        screen->is_format_supported(screen,
                                    stImage->pt->format,
                                    stImage->pt->target,
-                                   PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
+                                   PIPE_BIND_RENDER_TARGET, 0)) {
       if (!pixels)
          goto done;
 
@@ -842,11 +843,14 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
    struct pipe_surface *dst_surface;
-   struct pipe_texture *dst_texture;
+   struct pipe_resource *dst_texture;
    struct pipe_transfer *tex_xfer;
+   unsigned bind = (PIPE_BIND_BLIT_DESTINATION |
+		    PIPE_BIND_RENDER_TARGET | /* util_blit may choose to render */
+		    PIPE_BIND_TRANSFER_READ);
 
    /* create temp / dest surface */
-   if (!util_create_rgba_surface(screen, width, height,
+   if (!util_create_rgba_surface(screen, width, height, bind,
                                  &dst_texture, &dst_surface)) {
       _mesa_problem(ctx, "util_create_rgba_surface() failed "
                     "in decompress_with_blit()");
@@ -855,7 +859,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
 
    /* blit/render/decompress */
    util_blit_pixels_tex(ctx->st->blit,
-                        src_view,      /* pipe_texture (src) */
+                        src_view,      /* pipe_resource (src) */
                         0, 0,             /* src x0, y0 */
                         width, height,    /* src x1, y1 */
                         dst_surface,      /* pipe_surface (dst) */
@@ -876,7 +880,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
    if (st_equal_formats(stImage->pt->format, format, type)) {
       /* memcpy */
       const uint bytesPerRow = width * util_format_get_blocksize(stImage->pt->format);
-      ubyte *map = pipe->transfer_map(pipe, tex_xfer);
+      ubyte *map = pipe_transfer_map(pipe, tex_xfer);
       GLuint row;
       for (row = 0; row < height; row++) {
          GLvoid *dest = _mesa_image_address2d(&ctx->Pack, pixels, width,
@@ -884,7 +888,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
          memcpy(dest, map, bytesPerRow);
          map += tex_xfer->stride;
       }
-      pipe->transfer_unmap(pipe, tex_xfer);
+      pipe_transfer_unmap(pipe, tex_xfer);
    }
    else {
       /* format translation via floats */
@@ -908,7 +912,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
 
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 
-   pipe->tex_transfer_destroy(pipe, tex_xfer);
+   pipe->transfer_destroy(pipe, tex_xfer);
 
    /* destroy the temp / dest surface */
    util_destroy_rgba_surface(dst_texture, dst_surface);
@@ -1069,7 +1073,7 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
        screen->is_format_supported(screen,
                                    stImage->pt->format,
                                    stImage->pt->target,
-                                   PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
+                                   PIPE_BIND_RENDER_TARGET, 0)) {
       if (compress_with_blit(ctx, target, level,
                              xoffset, yoffset, zoffset,
                              width, height, depth,
@@ -1392,7 +1396,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
    }
 
    st_texture_image_unmap(ctx->st, stImage);
-   pipe->tex_transfer_destroy(pipe, src_trans);
+   pipe->transfer_destroy(pipe, src_trans);
 }
 
 
@@ -1577,7 +1581,7 @@ st_copy_texsubimage(GLcontext *ctx,
          dest_surface = screen->get_tex_surface(screen, stImage->pt,
                                                 stImage->face, stImage->level,
                                                 destZ,
-                                                PIPE_BUFFER_USAGE_GPU_WRITE);
+                                                PIPE_BIND_BLIT_DESTINATION);
 
          /* for surface_copy(), y=0=top, always */
          pipe->surface_copy(pipe,
@@ -1596,11 +1600,11 @@ st_copy_texsubimage(GLcontext *ctx,
                texBaseFormat != GL_DEPTH_STENCIL &&
                screen->is_format_supported(screen, src_format,
                                            PIPE_TEXTURE_2D, 
-                                           PIPE_TEXTURE_USAGE_SAMPLER,
+                                           PIPE_BIND_SAMPLER_VIEW,
                                            0) &&
                screen->is_format_supported(screen, dest_format,
                                            PIPE_TEXTURE_2D, 
-                                           PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                           PIPE_BIND_RENDER_TARGET,
                                            0)) {
          /* draw textured quad to do the copy */
          GLint srcY0, srcY1;
@@ -1608,7 +1612,7 @@ st_copy_texsubimage(GLcontext *ctx,
          dest_surface = screen->get_tex_surface(screen, stImage->pt,
                                                 stImage->face, stImage->level,
                                                 destZ,
-                                                PIPE_BUFFER_USAGE_GPU_WRITE);
+                                                PIPE_BIND_BLIT_DESTINATION);
 
          if (do_flip) {
             srcY1 = strb->Base.Height - srcY - height;
@@ -1748,7 +1752,7 @@ copy_image_data_to_texture(struct st_context *st,
                             stImage->pt, /* src texture */
                             stImage->face);
 
-      pipe_texture_reference(&stImage->pt, NULL);
+      pipe_resource_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
       /* More straightforward upload.  
@@ -1770,7 +1774,7 @@ copy_image_data_to_texture(struct st_context *st,
       stImage->base.Data = NULL;
    }
 
-   pipe_texture_reference(&stImage->pt, stObj->pt);
+   pipe_resource_reference(&stImage->pt, stObj->pt);
 }
 
 
@@ -1816,7 +1820,7 @@ st_finalize_texture(GLcontext *ctx,
    if (firstImage->pt &&
        firstImage->pt != stObj->pt &&
        firstImage->pt->last_level >= stObj->lastLevel) {
-      pipe_texture_reference(&stObj->pt, firstImage->pt);
+      pipe_resource_reference(&stObj->pt, firstImage->pt);
       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
    }
 
@@ -1836,7 +1840,7 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->height0 != firstImage->base.Height2 ||
           stObj->pt->depth0 != firstImage->base.Depth2)
       {
-         pipe_texture_reference(&stObj->pt, NULL);
+         pipe_resource_reference(&stObj->pt, NULL);
          pipe_sampler_view_reference(&stObj->sampler_view, NULL);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;
       }

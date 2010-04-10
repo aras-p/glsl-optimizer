@@ -27,6 +27,7 @@
 
 #include "nouveau/nouveau_util.h"
 #include "nv50_context.h"
+#include "nv50_resource.h"
 
 static INLINE uint32_t
 nv50_vbo_type_to_hw(enum pipe_format format)
@@ -139,7 +140,7 @@ instance_init(struct nv50_context *nv50, struct instance *a, unsigned first)
 		if (a[i].divisor) {
 			vb = &nv50->vtxbuf[ve->vertex_buffer_index];
 
-			a[i].bo = nouveau_bo(vb->buffer);
+			a[i].bo = nv50_resource(vb->buffer)->bo;
 			a[i].stride = vb->stride;
 			a[i].step = first % a[i].divisor;
 			a[i].delta = vb->buffer_offset + ve->src_offset +
@@ -307,14 +308,14 @@ inline_edgeflag(void *priv, boolean enabled)
 
 static void
 nv50_draw_elements_inline(struct pipe_context *pipe,
-			  struct pipe_buffer *indexBuffer, unsigned indexSize,
+			  struct pipe_resource *indexBuffer, unsigned indexSize,
 			  unsigned mode, unsigned start, unsigned count,
 			  unsigned startInstance, unsigned instanceCount)
 {
-	struct pipe_screen *pscreen = pipe->screen;
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nouveau_channel *chan = nv50->screen->tesla->channel;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
+	struct pipe_transfer *transfer;
 	struct instance a[16];
 	struct inline_ctx ctx;
 	struct u_split_prim s;
@@ -337,7 +338,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 	s.edge = inline_edgeflag;
 
 	ctx.nv50 = nv50;
-	ctx.map = pipe_buffer_map(pscreen, indexBuffer, PIPE_BUFFER_USAGE_CPU_READ);
+	ctx.map = pipe_buffer_map(pipe, indexBuffer, PIPE_TRANSFER_READ, &transfer);
 	assert(ctx.map);
 	if (!ctx.map)
 		return;
@@ -380,12 +381,12 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 		nzi = TRUE;
 	}
 
-	pipe_buffer_unmap(pscreen, indexBuffer);
+	pipe_buffer_unmap(pipe, indexBuffer, transfer);
 }
 
 void
 nv50_draw_elements_instanced(struct pipe_context *pipe,
-			     struct pipe_buffer *indexBuffer,
+			     struct pipe_resource *indexBuffer,
 			     unsigned indexSize,
 			     unsigned mode, unsigned start, unsigned count,
 			     unsigned startInstance, unsigned instanceCount)
@@ -406,7 +407,7 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 					     instanceCount);
 		return;
 	} else
-	if (!(indexBuffer->usage & PIPE_BUFFER_USAGE_INDEX) || indexSize == 1) {
+	if (!(indexBuffer->bind & PIPE_BIND_INDEX_BUFFER) || indexSize == 1) {
 		nv50_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count, startInstance,
 					  instanceCount);
@@ -431,7 +432,8 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 		if (indexSize == 4) {
 			BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U32 | 0x30000, 0);
 			OUT_RING  (chan, count);
-			nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
+			nouveau_pushbuf_submit(chan, 
+					       nv50_resource(indexBuffer)->bo,
 					       start << 2, count << 2);
 		} else
 		if (indexSize == 2) {
@@ -443,7 +445,8 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 			OUT_RING  (chan, ((start & 1) << 31) | count);
 			BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16 | 0x30000, 0);
 			OUT_RING  (chan, dwords);
-			nouveau_pushbuf_submit(chan, nouveau_bo(indexBuffer),
+			nouveau_pushbuf_submit(chan,
+					       nv50_resource(indexBuffer)->bo,
 					       vb_start << 1, dwords << 2);
 			BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_U16_SETUP, 1);
 			OUT_RING  (chan, 0);
@@ -457,7 +460,7 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 
 void
 nv50_draw_elements(struct pipe_context *pipe,
-		   struct pipe_buffer *indexBuffer, unsigned indexSize,
+		   struct pipe_resource *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	nv50_draw_elements_instanced(pipe, indexBuffer, indexSize,
@@ -473,7 +476,7 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 {
 	struct nouveau_stateobj *so;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_bo *bo = nouveau_bo(vb->buffer);
+	struct nouveau_bo *bo = nv50_resource(vb->buffer)->bo;
 	float v[4];
 	int ret;
 	unsigned nr_components = util_format_get_nr_components(ve->src_format);
@@ -556,7 +559,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 	for (i = 0; i < nv50->vtxbuf_nr; i++) {
 		if (nv50->vtxbuf[i].stride &&
-		    !(nv50->vtxbuf[i].buffer->usage & PIPE_BUFFER_USAGE_VERTEX))
+		    !(nv50->vtxbuf[i].buffer->bind & PIPE_BIND_VERTEX_BUFFER))
 			nv50->vbo_fifo = 0xffff;
 	}
 
@@ -571,7 +574,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		struct pipe_vertex_element *ve = &nv50->vtxelt->pipe[i];
 		struct pipe_vertex_buffer *vb =
 			&nv50->vtxbuf[ve->vertex_buffer_index];
-		struct nouveau_bo *bo = nouveau_bo(vb->buffer);
+		struct nouveau_bo *bo = nv50_resource(vb->buffer)->bo;
 		uint32_t hw = nv50->vtxelt->hw[i];
 
 		if (!vb->stride &&
@@ -608,10 +611,10 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 		/* vertex array limits */
 		so_method(vtxbuf, tesla, NV50TCL_VERTEX_ARRAY_LIMIT_HIGH(i), 2);
-		so_reloc (vtxbuf, bo, vb->buffer->size - 1,
+		so_reloc (vtxbuf, bo, vb->buffer->width0 - 1,
 			  NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
 			  NOUVEAU_BO_HIGH, 0, 0);
-		so_reloc (vtxbuf, bo, vb->buffer->size - 1,
+		so_reloc (vtxbuf, bo, vb->buffer->width0 - 1,
 			  NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
 			  NOUVEAU_BO_LOW, 0, 0);
 	}

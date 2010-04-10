@@ -30,6 +30,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_draw_quad.h"
+#include "util/u_memory.h"
 
 
 /**
@@ -38,7 +39,7 @@
  */
 void 
 util_draw_vertex_buffer(struct pipe_context *pipe,
-                        struct pipe_buffer *vbuf,
+                        struct pipe_resource *vbuf,
                         uint offset,
                         uint prim_type,
                         uint num_verts,
@@ -66,60 +67,63 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
 
 /**
  * Draw screen-aligned textured quad.
- * Note: this function allocs/destroys a vertex buffer and isn't especially
- * efficient.
+ * Note: this isn't especially efficient.
  */
 void 
 util_draw_texquad(struct pipe_context *pipe,
                   float x0, float y0, float x1, float y1, float z)
 {
-   struct pipe_buffer *vbuf;
-   uint numAttribs = 2, vertexBytes, i, j;
+   uint numAttribs = 2, i, j;
+   uint vertexBytes = 4 * (4 * numAttribs * sizeof(float));
+   struct pipe_resource *vbuf = NULL;  
+   uint *v = NULL;
 
-   vertexBytes = 4 * (4 * numAttribs * sizeof(float));
+   v = MALLOC(vertexBytes);
+   if (v == NULL)
+      goto out;
 
-   /* XXX create one-time */
-   vbuf = pipe_buffer_create(pipe->screen, 32,
-                             PIPE_BUFFER_USAGE_VERTEX, vertexBytes);
-   if (vbuf) {
-      float *v = (float *) pipe_buffer_map(pipe->screen, vbuf,
-                                           PIPE_BUFFER_USAGE_CPU_WRITE);
-      if (v) {
-         /*
-          * Load vertex buffer
-          */
-         for (i = j = 0; i < 4; i++) {
-            v[j + 2] = z;   /* z */
-            v[j + 3] = 1.0; /* w */
-            v[j + 6] = 0.0; /* r */
-            v[j + 7] = 1.0; /* q */
-            j += 8;
-         }
-
-         v[0] = x0;
-         v[1] = y0;
-         v[4] = 0.0; /*s*/
-         v[5] = 0.0; /*t*/
-
-         v[8] = x1;
-         v[9] = y0;
-         v[12] = 1.0;
-         v[13] = 0.0;
-
-         v[16] = x1;
-         v[17] = y1;
-         v[20] = 1.0;
-         v[21] = 1.0;
-
-         v[24] = x0;
-         v[25] = y1;
-         v[28] = 0.0;
-         v[29] = 1.0;
-
-         pipe_buffer_unmap(pipe->screen, vbuf);
-         util_draw_vertex_buffer(pipe, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
-      }
-
-      pipe_buffer_reference(&vbuf, NULL);
+   /*
+    * Load vertex buffer
+    */
+   for (i = j = 0; i < 4; i++) {
+      v[j + 2] = z;   /* z */
+      v[j + 3] = 1.0; /* w */
+      v[j + 6] = 0.0; /* r */
+      v[j + 7] = 1.0; /* q */
+      j += 8;
    }
+
+   v[0] = x0;
+   v[1] = y0;
+   v[4] = 0.0; /*s*/
+   v[5] = 0.0; /*t*/
+
+   v[8] = x1;
+   v[9] = y0;
+   v[12] = 1.0;
+   v[13] = 0.0;
+
+   v[16] = x1;
+   v[17] = y1;
+   v[20] = 1.0;
+   v[21] = 1.0;
+
+   v[24] = x0;
+   v[25] = y1;
+   v[28] = 0.0;
+   v[29] = 1.0;
+	 
+   vbuf = pipe_user_buffer_create(pipe->screen, v, vertexBytes,
+				  PIPE_BIND_VERTEX_BUFFER);
+   if (!vbuf) 
+      goto out;
+
+   util_draw_vertex_buffer(pipe, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+
+out:
+   if (vbuf)
+      pipe_resource_reference(&vbuf, NULL);
+   
+   if (v)
+      FREE(v);
 }

@@ -28,6 +28,7 @@
 
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
+#include "util/u_inlines.h"
 
 #include "id_context.h"
 #include "id_objects.h"
@@ -61,19 +62,19 @@ identity_draw_arrays(struct pipe_context *_pipe,
 
 static void
 identity_draw_elements(struct pipe_context *_pipe,
-                       struct pipe_buffer *_indexBuffer,
+                       struct pipe_resource *_indexResource,
                        unsigned indexSize,
                        unsigned prim,
                        unsigned start,
                        unsigned count)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_buffer *id_buffer = identity_buffer(_indexBuffer);
+   struct identity_resource *id_resource = identity_resource(_indexResource);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_buffer *indexBuffer = id_buffer->buffer;
+   struct pipe_resource *indexResource = id_resource->resource;
 
    pipe->draw_elements(pipe,
-                       indexBuffer,
+                       indexResource,
                        indexSize,
                        prim,
                        start,
@@ -82,7 +83,7 @@ identity_draw_elements(struct pipe_context *_pipe,
 
 static void
 identity_draw_range_elements(struct pipe_context *_pipe,
-                             struct pipe_buffer *_indexBuffer,
+                             struct pipe_resource *_indexResource,
                              unsigned indexSize,
                              unsigned minIndex,
                              unsigned maxIndex,
@@ -91,12 +92,12 @@ identity_draw_range_elements(struct pipe_context *_pipe,
                              unsigned count)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_buffer *id_buffer = identity_buffer(_indexBuffer);
+   struct identity_resource *id_resource = identity_resource(_indexResource);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_buffer *indexBuffer = id_buffer->buffer;
+   struct pipe_resource *indexResource = id_resource->resource;
 
    pipe->draw_range_elements(pipe,
-                             indexBuffer,
+                             indexResource,
                              indexSize,
                              minIndex,
                              maxIndex,
@@ -450,23 +451,23 @@ static void
 identity_set_constant_buffer(struct pipe_context *_pipe,
                              uint shader,
                              uint index,
-                             struct pipe_buffer *_buffer)
+                             struct pipe_resource *_resource)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_buffer *unwrapped_buffer;
-   struct pipe_buffer *buffer = NULL;
+   struct pipe_resource *unwrapped_resource;
+   struct pipe_resource *resource = NULL;
 
    /* XXX hmm? unwrap the input state */
-   if (_buffer) {
-      unwrapped_buffer = identity_buffer_unwrap(_buffer);
-      buffer = unwrapped_buffer;
+   if (_resource) {
+      unwrapped_resource = identity_resource_unwrap(_resource);
+      resource = unwrapped_resource;
    }
 
    pipe->set_constant_buffer(pipe,
                              shader,
                              index,
-                             buffer);
+                             resource);
 }
 
 static void
@@ -587,7 +588,7 @@ identity_set_vertex_buffers(struct pipe_context *_pipe,
    if (num_buffers) {
       memcpy(unwrapped_buffers, _buffers, num_buffers * sizeof(*_buffers));
       for (i = 0; i < num_buffers; i++)
-         unwrapped_buffers[i].buffer = identity_buffer_unwrap(_buffers[i].buffer);
+         unwrapped_buffers[i].buffer = identity_resource_unwrap(_buffers[i].buffer);
       buffers = unwrapped_buffers;
    }
 
@@ -678,44 +679,31 @@ identity_flush(struct pipe_context *_pipe,
 }
 
 static unsigned int
-identity_is_texture_referenced(struct pipe_context *_pipe,
-                               struct pipe_texture *_texture,
+identity_is_resource_referenced(struct pipe_context *_pipe,
+                               struct pipe_resource *_resource,
                                unsigned face,
                                unsigned level)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_texture *id_texture = identity_texture(_texture);
+   struct identity_resource *id_resource = identity_resource(_resource);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_texture *texture = id_texture->texture;
+   struct pipe_resource *texture = id_resource->resource;
 
-   return pipe->is_texture_referenced(pipe,
+   return pipe->is_resource_referenced(pipe,
                                       texture,
                                       face,
                                       level);
 }
 
-static unsigned int
-identity_is_buffer_referenced(struct pipe_context *_pipe,
-                              struct pipe_buffer *_buffer)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_buffer *id_buffer = identity_buffer(_buffer);
-   struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_buffer *buffer = id_buffer->buffer;
-
-   return pipe->is_buffer_referenced(pipe,
-                                     buffer);
-}
-
 static struct pipe_sampler_view *
 identity_create_sampler_view(struct pipe_context *pipe,
-                             struct pipe_texture *texture,
+                             struct pipe_resource *texture,
                              const struct pipe_sampler_view *templ)
 {
    struct identity_context *id_pipe = identity_context(pipe);
-   struct identity_texture *id_texture = identity_texture(texture);
+   struct identity_resource *id_resource = identity_resource(texture);
    struct pipe_context *pipe_unwrapped = id_pipe->pipe;
-   struct pipe_texture *texture_unwrapped = id_texture->texture;
+   struct pipe_resource *texture_unwrapped = id_resource->resource;
    struct identity_sampler_view *view = malloc(sizeof(struct identity_sampler_view));
 
    view->sampler_view = pipe_unwrapped->create_sampler_view(pipe_unwrapped,
@@ -725,7 +713,7 @@ identity_create_sampler_view(struct pipe_context *pipe,
    view->base = *templ;
    view->base.reference.count = 1;
    view->base.texture = NULL;
-   pipe_texture_reference(&view->base.texture, texture);
+   pipe_resource_reference(&view->base.texture, texture);
    view->base.context = pipe;
 
    return &view->base;
@@ -743,47 +731,36 @@ identity_sampler_view_destroy(struct pipe_context *pipe,
    pipe_unwrapped->sampler_view_destroy(pipe_unwrapped,
                                         view_unwrapped);
 
-   pipe_texture_reference(&view->texture, NULL);
+   pipe_resource_reference(&view->texture, NULL);
    free(view);
 }
 
-
 static struct pipe_transfer *
-identity_context_get_tex_transfer(struct pipe_context *_context,
-				  struct pipe_texture *_texture,
-                                 unsigned face,
-                                 unsigned level,
-                                 unsigned zslice,
-                                 enum pipe_transfer_usage usage,
-                                 unsigned x,
-                                 unsigned y,
-                                 unsigned w,
-                                 unsigned h)
+identity_context_get_transfer(struct pipe_context *_context,
+			      struct pipe_resource *_resource,
+			      struct pipe_subresource sr,
+			      unsigned usage,
+			      const struct pipe_box *box)
 {
    struct identity_context *id_context = identity_context(_context);
-   struct identity_texture *id_texture = identity_texture(_texture);
+   struct identity_resource *id_resource = identity_resource(_resource);
    struct pipe_context *context = id_context->pipe;
-   struct pipe_texture *texture = id_texture->texture;
+   struct pipe_resource *texture = id_resource->resource;
    struct pipe_transfer *result;
 
-   result = context->get_tex_transfer(context,
-                                     texture,
-                                     face,
-                                     level,
-                                     zslice,
-                                     usage,
-                                     x,
-                                     y,
-                                     w,
-                                     h);
+   result = context->get_transfer(context,
+				  texture,
+				  sr,
+				  usage,
+				  box);
 
    if (result)
-      return identity_transfer_create(id_context, id_texture, result);
+      return identity_transfer_create(id_context, id_resource, result);
    return NULL;
 }
 
 static void
-identity_context_tex_transfer_destroy(struct pipe_context *_pipe,
+identity_context_transfer_destroy(struct pipe_context *_pipe,
                                       struct pipe_transfer *_transfer)
 {
    identity_transfer_destroy(identity_context(_pipe),
@@ -803,6 +780,24 @@ identity_context_transfer_map(struct pipe_context *_context,
 				transfer);
 }
 
+
+
+static void
+identity_context_transfer_flush_region( struct pipe_context *_context,
+					struct pipe_transfer *_transfer,
+					const struct pipe_box *box)
+{
+   struct identity_context *id_context = identity_context(_context);
+   struct identity_transfer *id_transfer = identity_transfer(_transfer);
+   struct pipe_context *context = id_context->pipe;
+   struct pipe_transfer *transfer = id_transfer->transfer;
+
+   context->transfer_flush_region(context,
+				  transfer,
+				  box);
+}
+
+
 static void
 identity_context_transfer_unmap(struct pipe_context *_context,
                                struct pipe_transfer *_transfer)
@@ -815,6 +810,33 @@ identity_context_transfer_unmap(struct pipe_context *_context,
    context->transfer_unmap(context,
                           transfer);
 }
+
+
+static void 
+identity_context_transfer_inline_write( struct pipe_context *_context,
+					struct pipe_resource *_resource,
+					struct pipe_subresource sr,
+					unsigned usage,
+					const struct pipe_box *box,
+					const void *data,
+					unsigned stride,
+					unsigned slice_stride)
+{
+   struct identity_context *id_context = identity_context(_context);
+   struct identity_resource *id_resource = identity_resource(_resource);
+   struct pipe_context *context = id_context->pipe;
+   struct pipe_resource *texture = id_resource->resource;
+
+   context->transfer_inline_write(context,
+				  texture,
+				  sr,
+				  usage,
+				  box,
+				  data,
+				  stride,
+				  slice_stride);
+}
+
 
 struct pipe_context *
 identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
@@ -878,14 +900,15 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.surface_fill = identity_surface_fill;
    id_pipe->base.clear = identity_clear;
    id_pipe->base.flush = identity_flush;
-   id_pipe->base.is_texture_referenced = identity_is_texture_referenced;
-   id_pipe->base.is_buffer_referenced = identity_is_buffer_referenced;
+   id_pipe->base.is_resource_referenced = identity_is_resource_referenced;
    id_pipe->base.create_sampler_view = identity_create_sampler_view;
    id_pipe->base.sampler_view_destroy = identity_sampler_view_destroy;
-   id_pipe->base.get_tex_transfer = identity_context_get_tex_transfer;
-   id_pipe->base.tex_transfer_destroy = identity_context_tex_transfer_destroy;
+   id_pipe->base.get_transfer = identity_context_get_transfer;
+   id_pipe->base.transfer_destroy = identity_context_transfer_destroy;
    id_pipe->base.transfer_map = identity_context_transfer_map;
    id_pipe->base.transfer_unmap = identity_context_transfer_unmap;
+   id_pipe->base.transfer_flush_region = identity_context_transfer_flush_region;
+   id_pipe->base.transfer_inline_write = identity_context_transfer_inline_write;
 
    id_pipe->pipe = pipe;
 

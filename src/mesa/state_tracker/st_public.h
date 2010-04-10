@@ -53,7 +53,7 @@ struct st_framebuffer;
 struct pipe_context;
 struct pipe_fence_handle;
 struct pipe_surface;
-struct pipe_texture;
+struct pipe_resource;
 
 
 PUBLIC
@@ -94,7 +94,7 @@ int st_get_framebuffer_surface(struct st_framebuffer *stfb,
 
 PUBLIC
 int st_get_framebuffer_texture(struct st_framebuffer *stfb,
-                               uint surfIndex, struct pipe_texture **texture);
+                               uint surfIndex, struct pipe_resource **texture);
 
 PUBLIC
 void *st_framebuffer_private( struct st_framebuffer *stfb );

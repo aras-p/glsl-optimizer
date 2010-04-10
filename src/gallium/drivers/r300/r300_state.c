@@ -1019,7 +1019,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
 
 static struct pipe_sampler_view *
 r300_create_sampler_view(struct pipe_context *pipe,
-                         struct pipe_texture *texture,
+                         struct pipe_resource *texture,
                          const struct pipe_sampler_view *templ)
 {
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
@@ -1028,7 +1028,7 @@ r300_create_sampler_view(struct pipe_context *pipe,
       *view = *templ;
       view->reference.count = 1;
       view->texture = NULL;
-      pipe_texture_reference(&view->texture, texture);
+      pipe_resource_reference(&view->texture, texture);
       view->context = pipe;
    }
 
@@ -1039,7 +1039,7 @@ static void
 r300_sampler_view_destroy(struct pipe_context *pipe,
                           struct pipe_sampler_view *view)
 {
-   pipe_texture_reference(&view->texture, NULL);
+   pipe_resource_reference(&view->texture, NULL);
    FREE(view);
 }
 
@@ -1133,7 +1133,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         vbo = (struct pipe_vertex_buffer*)&buffers[i];
 
         /* Reference our buffer. */
-        pipe_buffer_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
+        pipe_resource_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
 
         /* Skip NULL buffers */
         if (!buffers[i].buffer) {
@@ -1147,7 +1147,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         if (vbo->max_index == ~0) {
             /* Bogus value from broken state tracker; hax it. */
             vbo->max_index =
-                (vbo->buffer->size - vbo->buffer_offset) / vbo->stride;
+                (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
         }
 
         max_index = MIN2(vbo->max_index, max_index);
@@ -1155,7 +1155,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
     for (; i < r300->vertex_buffer_count; i++) {
         /* Dereference any old buffers. */
-        pipe_buffer_reference(&r300->vertex_buffer[i].buffer, NULL);
+        pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
     }
 
     memcpy(r300->vertex_buffer, buffers,
@@ -1344,20 +1344,21 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* shader)
 
 static void r300_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     struct pipe_buffer *buf)
+                                     struct pipe_resource *buf)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_transfer *tr;
     void *mapped;
     int max_size = 0;
 
-    if (buf == NULL || buf->size == 0 ||
-        (mapped = pipe_buffer_map(pipe->screen, buf, PIPE_BUFFER_USAGE_CPU_READ)) == NULL)
+    if (buf == NULL || buf->width0 == 0 ||
+        (mapped = pipe_buffer_map(pipe, buf, PIPE_TRANSFER_READ, &tr)) == NULL)
     {
         r300->shader_constants[shader].count = 0;
         return;
     }
 
-    assert((buf->size % 4 * sizeof(float)) == 0);
+    assert((buf->width0 % 4 * sizeof(float)) == 0);
 
     /* Check the size of the constant buffer. */
     switch (shader) {
@@ -1379,15 +1380,15 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     }
 
     /* XXX Subtract immediates and RC_STATE_* variables. */
-    if (buf->size > (sizeof(float) * 4 * max_size)) {
+    if (buf->width0 > (sizeof(float) * 4 * max_size)) {
         fprintf(stderr, "r300: Max size of the constant buffer is "
                       "%i*4 floats.\n", max_size);
         abort();
     }
 
-    memcpy(r300->shader_constants[shader].constants, mapped, buf->size);
-    r300->shader_constants[shader].count = buf->size / (4 * sizeof(float));
-    pipe_buffer_unmap(pipe->screen, buf);
+    memcpy(r300->shader_constants[shader].constants, mapped, buf->width0);
+    r300->shader_constants[shader].count = buf->width0 / (4 * sizeof(float));
+    pipe_buffer_unmap(pipe, buf, tr);
 
     if (shader == PIPE_SHADER_VERTEX) {
         if (r300->screen->caps.has_tcl) {
@@ -1396,7 +1397,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
         } else if (r300->draw) {
             draw_set_mapped_constant_buffer(r300->draw, PIPE_SHADER_VERTEX,
                 0, r300->shader_constants[PIPE_SHADER_VERTEX].constants,
-                buf->size);
+                buf->width0);
         }
     } else if (shader == PIPE_SHADER_FRAGMENT) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;

@@ -51,7 +51,7 @@ draw_clear_quad(struct vg_context *st,
                 const VGfloat color[4])
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_buffer *buf;
+   struct pipe_resource *buf;
    VGuint i;
 
    /* positions */
@@ -81,7 +81,8 @@ draw_clear_quad(struct vg_context *st,
    /* put vertex data into vbuf */
    buf =  pipe_user_buffer_create(pipe->screen,
                                   st->clear.vertices,
-                                  sizeof(st->clear.vertices));
+                                  sizeof(st->clear.vertices),
+				  PIPE_BIND_VERTEX_BUFFER);
 
 
    /* draw */
@@ -93,7 +94,7 @@ draw_clear_quad(struct vg_context *st,
                               4,  /* verts */
                               2); /* attribs/vert */
 
-      pipe_buffer_reference(&buf, NULL);
+      pipe_resource_reference(&buf, NULL);
    }
 }
 

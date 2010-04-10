@@ -58,7 +58,7 @@ struct polygon
    VGint    num_verts;
 
    VGboolean dirty;
-   struct pipe_buffer *vbuf;
+   struct pipe_resource *vbuf;
    struct pipe_screen *screen;
 };
 
@@ -110,7 +110,7 @@ struct polygon * polygon_create_from_data(float *data, int size)
 void polygon_destroy(struct polygon *poly)
 {
    if (poly->vbuf)
-      pipe_buffer_reference(&poly->vbuf, NULL);
+      pipe_resource_reference(&poly->vbuf, NULL);
 
    free(poly->data);
    free(poly);
@@ -272,13 +272,14 @@ static void draw_polygon(struct vg_context *ctx,
 
    if (poly->vbuf == NULL || poly->dirty) {
       if (poly->vbuf) {
-         pipe_buffer_reference(&poly->vbuf,
+         pipe_resource_reference(&poly->vbuf,
                                NULL);
       }
       poly->screen = pipe->screen;
       poly->vbuf= pipe_user_buffer_create(poly->screen,
                                           poly->data,
-                                          vert_size);
+                                          vert_size,
+					  PIPE_BIND_VERTEX_BUFFER);
       poly->dirty = VG_FALSE;
    }
 

@@ -39,6 +39,7 @@
 #include "brw_state.h"
 #include "brw_batchbuffer.h"
 #include "brw_winsys.h"
+#include "brw_resource.h"
 #include "brw_screen.h"
 
 
@@ -118,7 +119,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen,
    brw->sws = brw_screen(screen)->sws;
    brw->chipset = brw_screen(screen)->chipset;
 
-   brw_tex_init( brw );
+   brw_init_resource_functions( brw );
    brw_pipe_blend_init( brw );
    brw_pipe_depth_stencil_init( brw );
    brw_pipe_framebuffer_init( brw );

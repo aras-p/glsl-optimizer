@@ -34,23 +34,31 @@
 
 #include "r300_winsys.h"
 
-boolean r300_buffer_is_referenced(struct r300_context *r300,
-				  struct pipe_buffer *buf)
+static unsigned r300_buffer_is_referenced(struct pipe_context *context,
+					 struct pipe_resource *buf,
+					 unsigned face, unsigned level)
 {
+    struct r300_context *r300 = r300_context(context);
     struct r300_buffer *rbuf = r300_buffer(buf);
-    if (r300_buffer_is_user_buffer(buf))
-	return FALSE;
 
-    return r300->rws->is_buffer_referenced(r300->rws, rbuf->buf);
-    
+    if (r300_buffer_is_user_buffer(buf))
+ 	return PIPE_UNREFERENCED;
+
+    if (r300->rws->is_buffer_referenced(r300->rws, rbuf->buf))
+        return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+
+    return PIPE_UNREFERENCED;
 }
+
+/* External helper, not required to implent u_resource_vtbl:
+ */
 int r300_upload_index_buffer(struct r300_context *r300,
-			     struct pipe_buffer **index_buffer,
+			     struct pipe_resource **index_buffer,
 			     unsigned index_size,
 			     unsigned start,
 			     unsigned count)
 {
-   struct pipe_buffer *upload_buffer = NULL;
+   struct pipe_resource *upload_buffer = NULL;
    unsigned index_offset = start * index_size;
    int ret = 0;
 
@@ -68,10 +76,12 @@ int r300_upload_index_buffer(struct r300_context *r300,
     }
  done:
     //    if (upload_buffer)
-    //	pipe_buffer_reference(&upload_buffer, NULL);
+    //	pipe_resource_reference(&upload_buffer, NULL);
     return ret;
 }
 
+/* External helper, not required to implent u_resource_vtbl:
+ */
 int r300_upload_user_buffers(struct r300_context *r300)
 {
     enum pipe_error ret = PIPE_OK;
@@ -82,9 +92,9 @@ int r300_upload_user_buffers(struct r300_context *r300)
     for (i = 0; i < nr; i++) {
 
 	if (r300_buffer_is_user_buffer(r300->vertex_buffer[i].buffer)) {
-	    struct pipe_buffer *upload_buffer = NULL;
+	    struct pipe_resource *upload_buffer = NULL;
 	    unsigned offset = 0; /*r300->vertex_buffer[i].buffer_offset * 4;*/
-	    unsigned size = r300->vertex_buffer[i].buffer->size;
+	    unsigned size = r300->vertex_buffer[i].buffer->width0;
 	    unsigned upload_offset;
 	    ret = u_upload_buffer(r300->upload_vb,
 				  offset, size,
@@ -93,7 +103,7 @@ int r300_upload_user_buffers(struct r300_context *r300)
 	    if (ret)
 		return ret;
 
-	    pipe_buffer_reference(&r300->vertex_buffer[i].buffer, NULL);
+	    pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
 	    r300->vertex_buffer[i].buffer = upload_buffer;
 	    r300->vertex_buffer[i].buffer_offset = upload_offset;
 	}
@@ -125,70 +135,11 @@ static void r300_winsys_buffer_destroy(struct r300_screen *r300screen,
     }
 }
 
-static struct pipe_buffer *r300_buffer_create(struct pipe_screen *screen,
-					      unsigned alignment,
-					      unsigned usage,
-					      unsigned size)
+
+static void r300_buffer_destroy(struct pipe_screen *screen,
+				struct pipe_resource *buf)
 {
     struct r300_screen *r300screen = r300_screen(screen);
-    struct r300_buffer *rbuf;
-
-    rbuf = CALLOC_STRUCT(r300_buffer);
-    if (!rbuf)
-	goto error1;
-
-    rbuf->magic = R300_BUFFER_MAGIC;
-
-    pipe_reference_init(&rbuf->base.reference, 1);
-    rbuf->base.screen = screen;
-    rbuf->base.alignment = alignment;
-    rbuf->base.usage = usage;
-    rbuf->base.size = size;
-
-    rbuf->buf = r300_winsys_buffer_create(r300screen,
-					  alignment,
-					  usage,
-					  size);
-
-    if (!rbuf->buf)
-	goto error2;
-
-    return &rbuf->base;
-error2:
-    FREE(rbuf);
-error1:
-    return NULL;
-}
-
-
-static struct pipe_buffer *r300_user_buffer_create(struct pipe_screen *screen,
-						   void *ptr,
-						   unsigned bytes)
-{
-    struct r300_buffer *rbuf;
-
-    rbuf = CALLOC_STRUCT(r300_buffer);
-    if (!rbuf)
-	goto no_rbuf;
-
-    rbuf->magic = R300_BUFFER_MAGIC;
-
-    pipe_reference_init(&rbuf->base.reference, 1);
-    rbuf->base.screen = screen;
-    rbuf->base.alignment = 1;
-    rbuf->base.usage = 0;
-    rbuf->base.size = bytes;
-
-    rbuf->user_buffer = ptr;
-    return &rbuf->base;
-
-no_rbuf:
-    return NULL;
-}
-
-static void r300_buffer_destroy(struct pipe_buffer *buf)
-{
-    struct r300_screen *r300screen = r300_screen(buf->screen);
     struct r300_buffer *rbuf = r300_buffer(buf);
 
     r300_winsys_buffer_destroy(r300screen, rbuf);
@@ -197,7 +148,7 @@ static void r300_buffer_destroy(struct pipe_buffer *buf)
 
 static void *
 r300_buffer_map_range(struct pipe_screen *screen,
-		      struct pipe_buffer *buf,
+		      struct pipe_resource *buf,
 		      unsigned offset, unsigned length,
 		      unsigned usage )
 {
@@ -211,11 +162,12 @@ r300_buffer_map_range(struct pipe_screen *screen,
     if (rbuf->user_buffer)
 	return rbuf->user_buffer;
 
-    if (rbuf->base.usage & PIPE_BUFFER_USAGE_CONSTANT)
+    if (rbuf->b.b.bind & PIPE_BIND_CONSTANT_BUFFER) {
 	goto just_map;
+    }
 
     /* check if the mapping is to a range we already flushed */
-    if (usage & PIPE_BUFFER_USAGE_DISCARD) {
+    if (usage & PIPE_TRANSFER_DISCARD) {
 	for (i = 0; i < rbuf->num_ranges; i++) {
 
 	    if ((offset >= rbuf->ranges[i].start) &&
@@ -229,9 +181,9 @@ r300_buffer_map_range(struct pipe_screen *screen,
 		rbuf->num_ranges = 0;
 		rbuf->map = NULL;
 		rbuf->buf = r300_winsys_buffer_create(r300screen,
-						      rbuf->base.alignment,
-						      rbuf->base.usage,
-						      rbuf->base.size);
+						      16,
+						      rbuf->b.b.bind, /* XXX */
+						      rbuf->b.b.width0);
 		break;
 	    }
 	}
@@ -244,7 +196,7 @@ just_map:
 
 static void 
 r300_buffer_flush_mapped_range( struct pipe_screen *screen,
-				struct pipe_buffer *buf,
+				struct pipe_resource *buf,
 				unsigned offset,
 				unsigned length )
 {
@@ -254,7 +206,7 @@ r300_buffer_flush_mapped_range( struct pipe_screen *screen,
     if (rbuf->user_buffer)
 	return;
 
-    if (rbuf->base.usage & PIPE_BUFFER_USAGE_CONSTANT)
+    if (rbuf->b.b.bind & PIPE_BIND_CONSTANT_BUFFER)
 	return;
 
     /* mark the range as used */
@@ -271,27 +223,10 @@ r300_buffer_flush_mapped_range( struct pipe_screen *screen,
     rbuf->num_ranges++;
 }
 
-static void *
-r300_buffer_map(struct pipe_screen *screen,
-		struct pipe_buffer *buf,
-		unsigned usage)
-{
-    struct r300_screen *r300screen = r300_screen(screen);
-    struct r300_winsys_screen *rws = r300screen->rws;
-    struct r300_buffer *rbuf = r300_buffer(buf);
-    void *map;
-
-   if (rbuf->user_buffer)
-      return rbuf->user_buffer;
-
-    map = rws->buffer_map(rws, rbuf->buf, usage);
-
-    return map;
-}
 
 static void
 r300_buffer_unmap(struct pipe_screen *screen,
-		  struct pipe_buffer *buf)
+		  struct pipe_resource *buf)
 {
     struct r300_screen *r300screen = r300_screen(screen);
     struct r300_winsys_screen *rws = r300screen->rws;
@@ -302,13 +237,138 @@ r300_buffer_unmap(struct pipe_screen *screen,
     }
 }
 
-void r300_screen_init_buffer_functions(struct r300_screen *r300screen)
+
+
+
+/* As a first step, keep the original code intact, implement buffer
+ * transfers in terms of the old map/unmap functions.
+ *
+ * Utility functions for transfer create/destroy are hooked in and
+ * just record the arguments to those functions.
+ */
+static void *
+r300_buffer_transfer_map( struct pipe_context *pipe,
+			  struct pipe_transfer *transfer )
 {
-    r300screen->screen.buffer_create = r300_buffer_create;
-    r300screen->screen.user_buffer_create = r300_user_buffer_create;
-    r300screen->screen.buffer_map = r300_buffer_map;
-    r300screen->screen.buffer_map_range = r300_buffer_map_range;
-    r300screen->screen.buffer_flush_mapped_range = r300_buffer_flush_mapped_range;
-    r300screen->screen.buffer_unmap = r300_buffer_unmap;
-    r300screen->screen.buffer_destroy = r300_buffer_destroy;
+   uint8_t *map = r300_buffer_map_range( pipe->screen,
+					 transfer->resource,
+					 transfer->box.x,
+					 transfer->box.width,
+					 transfer->usage );
+   if (map == NULL)
+      return NULL;
+
+   /* map_buffer() returned a pointer to the beginning of the buffer,
+    * but transfers are expected to return a pointer to just the
+    * region specified in the box.
+    */
+   return map + transfer->box.x;
 }
+
+
+
+static void r300_buffer_transfer_flush_region( struct pipe_context *pipe,
+					       struct pipe_transfer *transfer,
+					       const struct pipe_box *box)
+{
+   assert(box->x + box->width <= transfer->box.width);
+
+   r300_buffer_flush_mapped_range(pipe->screen,
+				  transfer->resource,
+				  transfer->box.x + box->x,
+				  box->width);
+}
+
+static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
+			    struct pipe_transfer *transfer )
+{
+   r300_buffer_unmap(pipe->screen,
+		     transfer->resource);
+}
+
+
+
+
+struct u_resource_vtbl r300_buffer_vtbl = 
+{
+   u_default_resource_get_handle,      /* get_handle */
+   r300_buffer_destroy,		     /* resource_destroy */
+   r300_buffer_is_referenced,	     /* is_buffer_referenced */
+   u_default_get_transfer,	     /* get_transfer */
+   u_default_transfer_destroy,	     /* transfer_destroy */
+   r300_buffer_transfer_map,	     /* transfer_map */
+   r300_buffer_transfer_flush_region,  /* transfer_flush_region */
+   r300_buffer_transfer_unmap,	     /* transfer_unmap */
+   u_default_transfer_inline_write   /* transfer_inline_write */
+};
+
+
+
+
+struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
+					 const struct pipe_resource *template)
+{
+    struct r300_screen *r300screen = r300_screen(screen);
+    struct r300_buffer *rbuf;
+    unsigned alignment = 16;
+
+    rbuf = CALLOC_STRUCT(r300_buffer);
+    if (!rbuf)
+	goto error1;
+
+    rbuf->magic = R300_BUFFER_MAGIC;
+
+    rbuf->b.b = *template;
+    rbuf->b.vtbl = &r300_buffer_vtbl;
+    pipe_reference_init(&rbuf->b.b.reference, 1);
+    rbuf->b.b.screen = screen;
+
+    if (rbuf->b.b.bind & R300_BIND_OQBO)
+       alignment = 4096;
+
+    rbuf->buf = r300_winsys_buffer_create(r300screen,
+					  alignment,
+					  rbuf->b.b.bind,
+					  rbuf->b.b.width0);
+
+    if (!rbuf->buf)
+	goto error2;
+
+    return &rbuf->b.b;
+error2:
+    FREE(rbuf);
+error1:
+    return NULL;
+}
+
+
+struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
+					      void *ptr,
+					      unsigned bytes,
+					      unsigned bind)
+{
+    struct r300_buffer *rbuf;
+
+    rbuf = CALLOC_STRUCT(r300_buffer);
+    if (!rbuf)
+	goto no_rbuf;
+
+    rbuf->magic = R300_BUFFER_MAGIC;
+
+    pipe_reference_init(&rbuf->b.b.reference, 1);
+    rbuf->b.vtbl = &r300_buffer_vtbl;
+    rbuf->b.b.screen = screen;
+    rbuf->b.b.format = PIPE_FORMAT_R8_UNORM;
+    rbuf->b.b._usage = PIPE_USAGE_IMMUTABLE;
+    rbuf->b.b.bind = bind;
+    rbuf->b.b.width0 = bytes;
+    rbuf->b.b.height0 = 1;
+    rbuf->b.b.depth0 = 1;
+
+    rbuf->user_buffer = ptr;
+    return &rbuf->b.b;
+
+no_rbuf:
+    return NULL;
+}
+

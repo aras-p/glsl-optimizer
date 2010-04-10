@@ -25,6 +25,7 @@
 
 #include "nv50_context.h"
 #include "nv50_screen.h"
+#include "nv50_resource.h"
 
 static void
 nv50_flush(struct pipe_context *pipe, unsigned flags,
@@ -89,15 +90,12 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 
 	nv50->pipe.flush = nv50_flush;
 
-	nv50->pipe.is_texture_referenced = nouveau_is_texture_referenced;
-	nv50->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
-
 	screen->base.channel->user_private = nv50;
 
 	nv50_init_surface_functions(nv50);
 	nv50_init_state_functions(nv50);
 	nv50_init_query_functions(nv50);
-        nv50_init_transfer_functions(nv50);
+	nv50_init_resource_functions(&nv50->pipe);
 
 	nv50->draw = draw_create();
 	assert(nv50->draw);

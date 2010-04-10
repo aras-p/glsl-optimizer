@@ -30,7 +30,7 @@
 #include "svga_cmd.h"
 #include "svga_context.h"
 #include "svga_screen.h"
-#include "svga_screen_buffer.h"
+#include "svga_resource_buffer.h"
 #include "svga_winsys.h"
 #include "svga_debug.h"
 
@@ -89,7 +89,7 @@ static struct pipe_query *svga_create_query( struct pipe_context *pipe,
     
    sq->queryResult = (SVGA3dQueryResult *)sws->buffer_map(sws, 
                                                           sq->hwbuf, 
-                                                          PIPE_BUFFER_USAGE_CPU_WRITE);
+                                                          PIPE_TRANSFER_WRITE);
    if(!sq->queryResult)
       goto no_query_result;
 

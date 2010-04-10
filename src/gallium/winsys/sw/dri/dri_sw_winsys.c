@@ -148,7 +148,7 @@ dri_sw_displaytarget_unmap(struct sw_winsys *ws,
 
 static struct sw_displaytarget *
 dri_sw_displaytarget_from_handle(struct sw_winsys *winsys,
-                                 const struct pipe_texture *templ,
+                                 const struct pipe_resource *templ,
                                  struct winsys_handle *whandle,
                                  unsigned *stride)
 {

@@ -85,7 +85,6 @@
 #include "gallivm/lp_bld_swizzle.h"
 #include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_debug.h"
-#include "lp_buffer.h"
 #include "lp_context.h"
 #include "lp_debug.h"
 #include "lp_perf.h"
@@ -1044,11 +1043,11 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 void
 llvmpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             struct pipe_buffer *constants)
+                             struct pipe_resource *constants)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   unsigned size = constants ? constants->size : 0;
-   const void *data = constants ? llvmpipe_buffer(constants)->data : NULL;
+   unsigned size = constants ? constants->width0 : 0;
+   const void *data = constants ? llvmpipe_resource(constants)->data : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
@@ -1059,7 +1058,7 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    draw_flush(llvmpipe->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&llvmpipe->constants[shader], constants);
+   pipe_resource_reference(&llvmpipe->constants[shader], constants);
 
    if(shader == PIPE_SHADER_VERTEX) {
       draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX, 0,

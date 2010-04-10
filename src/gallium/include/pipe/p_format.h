@@ -192,24 +192,6 @@ enum pipe_format {
 };
 
 
-enum pipe_video_chroma_format
-{
-   PIPE_VIDEO_CHROMA_FORMAT_420,
-   PIPE_VIDEO_CHROMA_FORMAT_422,
-   PIPE_VIDEO_CHROMA_FORMAT_444
-};
-
-#if 0
-enum pipe_video_surface_format
-{
-   PIPE_VIDEO_SURFACE_FORMAT_NV12,  /**< Planar; Y plane, UV plane */
-   PIPE_VIDEO_SURFACE_FORMAT_YV12,  /**< Planar; Y plane, U plane, V plane */
-   PIPE_VIDEO_SURFACE_FORMAT_YUYV,  /**< Interleaved; Y,U,Y,V,Y,U,Y,V */
-   PIPE_VIDEO_SURFACE_FORMAT_UYVY,  /**< Interleaved; U,Y,V,Y,U,Y,V,Y */
-   PIPE_VIDEO_SURFACE_FORMAT_VUYA   /**< Packed; A31-24|Y23-16|U15-8|V7-0 */
-};
-#endif
-
 #ifdef __cplusplus
 }
 #endif

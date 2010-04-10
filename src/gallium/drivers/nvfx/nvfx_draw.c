@@ -234,11 +234,13 @@ nvfx_draw_render_stage(struct nvfx_context *nvfx)
 
 void
 nvfx_draw_elements_swtnl(struct pipe_context *pipe,
-			 struct pipe_buffer *idxbuf, unsigned idxbuf_size,
+			 struct pipe_resource *idxbuf, unsigned idxbuf_size,
 			 unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct pipe_screen *pscreen = pipe->screen;
+	struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
+	struct pipe_transfer *ib_transfer;
+	struct pipe_transfer *cb_transfer;
 	unsigned i;
 	void *map;
 
@@ -248,14 +250,16 @@ nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 	nvfx_state_emit(nvfx);
 
 	for (i = 0; i < nvfx->vtxbuf_nr; i++) {
-		map = pipe_buffer_map(pscreen, nvfx->vtxbuf[i].buffer,
-                                      PIPE_BUFFER_USAGE_CPU_READ);
+		map = pipe_buffer_map(pipe, nvfx->vtxbuf[i].buffer,
+                                      PIPE_TRANSFER_READ,
+				      &vb_transfer[i]);
 		draw_set_mapped_vertex_buffer(nvfx->draw, i, map);
 	}
 
 	if (idxbuf) {
-		map = pipe_buffer_map(pscreen, idxbuf,
-				      PIPE_BUFFER_USAGE_CPU_READ);
+		map = pipe_buffer_map(pipe, idxbuf,
+				      PIPE_TRANSFER_READ,
+				      &ib_transfer);
 		draw_set_mapped_element_buffer(nvfx->draw, idxbuf_size, map);
 	} else {
 		draw_set_mapped_element_buffer(nvfx->draw, 0, NULL);
@@ -264,9 +268,10 @@ nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 	if (nvfx->constbuf[PIPE_SHADER_VERTEX]) {
 		const unsigned nr = nvfx->constbuf_nr[PIPE_SHADER_VERTEX];
 
-		map = pipe_buffer_map(pscreen,
+		map = pipe_buffer_map(pipe,
 				      nvfx->constbuf[PIPE_SHADER_VERTEX],
-				      PIPE_BUFFER_USAGE_CPU_READ);
+				      PIPE_TRANSFER_READ,
+				      &cb_transfer);
 		draw_set_mapped_constant_buffer(nvfx->draw, PIPE_SHADER_VERTEX, 0,
                                                 map, nr);
 	}
@@ -274,13 +279,14 @@ nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 	draw_arrays(nvfx->draw, mode, start, count);
 
 	for (i = 0; i < nvfx->vtxbuf_nr; i++)
-		pipe_buffer_unmap(pscreen, nvfx->vtxbuf[i].buffer);
+		pipe_buffer_unmap(pipe, nvfx->vtxbuf[i].buffer, vb_transfer[i]);
 
 	if (idxbuf)
-		pipe_buffer_unmap(pscreen, idxbuf);
+		pipe_buffer_unmap(pipe, idxbuf, ib_transfer);
 
 	if (nvfx->constbuf[PIPE_SHADER_VERTEX])
-		pipe_buffer_unmap(pscreen, nvfx->constbuf[PIPE_SHADER_VERTEX]);
+		pipe_buffer_unmap(pipe, nvfx->constbuf[PIPE_SHADER_VERTEX],
+				  cb_transfer);
 
 	draw_flush(nvfx->draw);
 	pipe->flush(pipe, 0, NULL);

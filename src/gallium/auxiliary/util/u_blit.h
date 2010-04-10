@@ -37,7 +37,7 @@ extern "C" {
    
 struct pipe_context;
 struct pipe_surface;
-struct pipe_texture;
+struct pipe_resource;
 struct cso_context;
 
 

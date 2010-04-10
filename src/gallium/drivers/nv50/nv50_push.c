@@ -5,6 +5,7 @@
 
 #include "nouveau/nouveau_util.h"
 #include "nv50_context.h"
+#include "nv50_resource.h"
 
 struct push_context {
    struct nv50_context *nv50;
@@ -171,7 +172,7 @@ emit_verts(void *priv, unsigned start, unsigned count)
 
 void
 nv50_push_elements_instanced(struct pipe_context *pipe,
-                             struct pipe_buffer *idxbuf, unsigned idxsize,
+                             struct pipe_resource *idxbuf, unsigned idxsize,
                              unsigned mode, unsigned start, unsigned count,
                              unsigned i_start, unsigned i_count)
 {
@@ -199,7 +200,7 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
    for (i = 0; i < nv50->vtxelt->num_elements; i++) {
       struct pipe_vertex_element *ve = &nv50->vtxelt->pipe[i];
       struct pipe_vertex_buffer *vb = &nv50->vtxbuf[ve->vertex_buffer_index];
-      struct nouveau_bo *bo = nouveau_bo(vb->buffer);
+      struct nouveau_bo *bo = nv50_resource(vb->buffer)->bo;
       unsigned size, nr_components, n;
 
       if (!(nv50->vbo_fifo & (1 << i)))
@@ -260,7 +261,7 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
 
    /* map index buffer, if present */
    if (idxbuf) {
-      struct nouveau_bo *bo = nouveau_bo(idxbuf);
+      struct nouveau_bo *bo = nv50_resource(idxbuf)->bo;
 
       if (nouveau_bo_map(bo, NOUVEAU_BO_RD)) {
          assert(bo->map);

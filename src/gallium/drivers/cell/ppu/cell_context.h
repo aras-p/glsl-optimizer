@@ -122,11 +122,11 @@ struct cell_context
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
-   struct pipe_buffer *constants[2];
+   struct pipe_resource *constants[2];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct cell_texture *texture[PIPE_MAX_SAMPLERS];
+   struct cell_resource *texture[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    uint num_textures;
    struct pipe_viewport_state viewport;

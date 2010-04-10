@@ -115,7 +115,8 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
    struct cso_context *cso = ctx->st->cso_context;
-   struct pipe_buffer *vbuffer;
+   struct pipe_resource *vbuffer;
+   struct pipe_transfer *vbuffer_transfer;
    GLuint i, numTexCoords, numAttribs;
    GLboolean emitColor;
    uint semantic_names[2 + MAX_TEXTURE_UNITS];
@@ -145,7 +146,7 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
 
 
    /* create the vertex buffer */
-   vbuffer = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
+   vbuffer = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER,
                                 numAttribs * 4 * 4 * sizeof(GLfloat));
 
    /* load vertex buffer */
@@ -161,8 +162,9 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
       } while (0)
 
       const GLfloat x0 = x, y0 = y, x1 = x + width, y1 = y + height;
-      GLfloat *vbuf = (GLfloat *) pipe_buffer_map(pipe->screen, vbuffer,
-                                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+      GLfloat *vbuf = (GLfloat *) pipe_buffer_map(pipe, vbuffer,
+                                                  PIPE_TRANSFER_WRITE,
+                                                  &vbuffer_transfer);
       GLuint attr;
       
       z = CLAMP(z, 0.0f, 1.0f);
@@ -227,7 +229,7 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
          }
       }
 
-      pipe_buffer_unmap(pipe->screen, vbuffer);
+      pipe_buffer_unmap(pipe, vbuffer, vbuffer_transfer);
 
 #undef SET_ATTRIB
    }
@@ -277,7 +279,7 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
                            numAttribs); /* attribs/vert */
 
 
-   pipe_buffer_reference(&vbuffer, NULL);
+   pipe_resource_reference(&vbuffer, NULL);
 
    /* restore state */
    cso_restore_viewport(cso);

@@ -315,7 +315,7 @@ debug_memory_end(unsigned long beginning);
 struct pipe_context;
 struct pipe_surface;
 struct pipe_transfer;
-struct pipe_texture;
+struct pipe_resource;
 
 void debug_dump_image(const char *prefix,
                       unsigned format, unsigned cpp,
@@ -327,7 +327,7 @@ void debug_dump_surface(struct pipe_context *pipe,
                         struct pipe_surface *surface);   
 void debug_dump_texture(struct pipe_context *pipe,
 			const char *prefix,
-                        struct pipe_texture *texture);
+                        struct pipe_resource *texture);
 void debug_dump_surface_bmp(struct pipe_context *pipe,
                             const char *filename,
                             struct pipe_surface *surface);

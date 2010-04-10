@@ -30,7 +30,7 @@
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_context.h"
-#include "svga_screen_texture.h"
+#include "svga_resource_texture.h"
 
 #include "svga_debug.h"
 
@@ -178,7 +178,7 @@ static void svga_delete_sampler_state(struct pipe_context *pipe,
 
 static struct pipe_sampler_view *
 svga_create_sampler_view(struct pipe_context *pipe,
-                         struct pipe_texture *texture,
+                         struct pipe_resource *texture,
                          const struct pipe_sampler_view *templ)
 {
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
@@ -187,7 +187,7 @@ svga_create_sampler_view(struct pipe_context *pipe,
       *view = *templ;
       view->reference.count = 1;
       view->texture = NULL;
-      pipe_texture_reference(&view->texture, texture);
+      pipe_resource_reference(&view->texture, texture);
       view->context = pipe;
    }
 
@@ -199,7 +199,7 @@ static void
 svga_sampler_view_destroy(struct pipe_context *pipe,
                           struct pipe_sampler_view *view)
 {
-   pipe_texture_reference(&view->texture, NULL);
+   pipe_resource_reference(&view->texture, NULL);
    FREE(view);
 }
 

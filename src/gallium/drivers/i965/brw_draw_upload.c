@@ -38,6 +38,7 @@
 #include "brw_screen.h"
 #include "brw_batchbuffer.h"
 #include "brw_debug.h"
+#include "brw_resource.h"
 
 
 
@@ -67,7 +68,7 @@ static int brw_prepare_vertices(struct brw_context *brw)
    for (i = 0; i < brw->curr.num_vertex_buffers; i++) {
       struct pipe_vertex_buffer *vb = &brw->curr.vertex_buffer[i];
       struct brw_winsys_buffer *bo;
-      struct pipe_buffer *upload_buf = NULL;
+      struct pipe_resource *upload_buf = NULL;
       unsigned offset;
       
       if (BRW_DEBUG & DEBUG_VERTS)
@@ -75,7 +76,7 @@ static int brw_prepare_vertices(struct brw_context *brw)
 		      __FUNCTION__, i,
 		      brw_buffer_is_user_buffer(vb->buffer),
 		      vb->buffer_offset,
-		      vb->buffer->size,
+		      vb->buffer->width0,
 		      vb->stride);
 
       if (brw_buffer_is_user_buffer(vb->buffer)) {
@@ -85,8 +86,8 @@ static int brw_prepare_vertices(struct brw_context *brw)
 	  * add support for >1 constant buffer) instead.
 	  */
 	 unsigned size = (vb->stride == 0 ? 
-			  vb->buffer->size - vb->buffer_offset :
-			  MAX2(vb->buffer->size - vb->buffer_offset,
+			  vb->buffer->width0 - vb->buffer_offset :
+			  MAX2(vb->buffer->width0 - vb->buffer_offset,
 			       vb->stride * (max_index + 1 - min_index)));
 
 	 ret = u_upload_buffer( brw->vb.upload_vertex, 
@@ -123,7 +124,7 @@ static int brw_prepare_vertices(struct brw_context *brw)
       /* Don't need to retain this reference.  We have a reference on
        * the underlying winsys buffer:
        */
-      pipe_buffer_reference( &upload_buf, NULL );
+      pipe_resource_reference( &upload_buf, NULL );
    }
 
    brw->vb.nr_vb = i;
@@ -226,8 +227,8 @@ const struct brw_tracked_state brw_vertices = {
 
 static int brw_prepare_indices(struct brw_context *brw)
 {
-   struct pipe_buffer *index_buffer = brw->curr.index_buffer;
-   struct pipe_buffer *upload_buf = NULL;
+   struct pipe_resource *index_buffer = brw->curr.index_buffer;
+   struct pipe_resource *upload_buf = NULL;
    struct brw_winsys_buffer *bo = NULL;
    GLuint offset;
    GLuint index_size;
@@ -241,9 +242,9 @@ static int brw_prepare_indices(struct brw_context *brw)
       debug_printf("%s: index_size:%d index_buffer->size:%d\n",
 		   __FUNCTION__,
 		   brw->curr.index_size,
-		   brw->curr.index_buffer->size);
+		   brw->curr.index_buffer->width0);
 
-   ib_size = index_buffer->size;
+   ib_size = index_buffer->width0;
    index_size = brw->curr.index_size;
 
    /* Turn userbuffer into a proper hardware buffer?
@@ -297,7 +298,7 @@ static int brw_prepare_indices(struct brw_context *brw)
       brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    }
 
-   pipe_buffer_reference( &upload_buf, NULL );
+   pipe_resource_reference( &upload_buf, NULL );
    brw_add_validated_bo(brw, brw->ib.bo);
    return 0;
 }

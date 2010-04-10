@@ -89,7 +89,7 @@ drisw_put_image(struct dri_drawable *drawable,
 
 static INLINE void
 drisw_present_texture(__DRIdrawable *dPriv,
-                      struct pipe_texture *ptex)
+                      struct pipe_resource *ptex)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct dri_screen *screen = dri_screen(drawable->sPriv);
@@ -117,7 +117,7 @@ drisw_invalidate_drawable(__DRIdrawable *dPriv)
 
 static INLINE void
 drisw_copy_to_front(__DRIdrawable * dPriv,
-                    struct pipe_texture *ptex)
+                    struct pipe_resource *ptex)
 {
    drisw_present_texture(dPriv, ptex);
 
@@ -133,7 +133,7 @@ drisw_swap_buffers(__DRIdrawable *dPriv)
 {
    struct dri_context *ctx = dri_get_current();
    struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_texture *ptex;
+   struct pipe_resource *ptex;
 
    if (!ctx)
       return;
@@ -152,7 +152,7 @@ drisw_flush_frontbuffer(struct dri_drawable *drawable,
                         enum st_attachment_type statt)
 {
    struct dri_context *ctx = dri_get_current();
-   struct pipe_texture *ptex;
+   struct pipe_resource *ptex;
 
    if (!ctx)
       return;
@@ -180,7 +180,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
                         unsigned mask)
 {
    struct dri_screen *screen = dri_screen(drawable->sPriv);
-   struct pipe_texture templ;
+   struct pipe_resource templ;
    unsigned width, height;
    boolean resized;
    int i;
@@ -194,7 +194,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
    /* remove outdated textures */
    if (resized) {
       for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
-         pipe_texture_reference(&drawable->textures[i], NULL);
+         pipe_resource_reference(&drawable->textures[i], NULL);
    }
 
    memset(&templ, 0, sizeof(templ));
@@ -219,12 +219,12 @@ drisw_allocate_textures(struct dri_drawable *drawable,
       case ST_ATTACHMENT_FRONT_RIGHT:
       case ST_ATTACHMENT_BACK_RIGHT:
          format = drawable->stvis.color_format;
-         tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                     PIPE_TEXTURE_USAGE_RENDER_TARGET;
+         tex_usage = PIPE_BIND_DISPLAY_TARGET |
+                     PIPE_BIND_RENDER_TARGET;
          break;
       case ST_ATTACHMENT_DEPTH_STENCIL:
          format = drawable->stvis.depth_stencil_format;
-         tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+         tex_usage = PIPE_BIND_DEPTH_STENCIL;
          break;
       default:
          format = PIPE_FORMAT_NONE;
@@ -233,10 +233,10 @@ drisw_allocate_textures(struct dri_drawable *drawable,
 
       if (format != PIPE_FORMAT_NONE) {
          templ.format = format;
-         templ.tex_usage = tex_usage;
+         templ.bind = tex_usage;
 
          drawable->textures[i] =
-            screen->pipe_screen->texture_create(screen->pipe_screen, &templ);
+            screen->pipe_screen->resource_create(screen->pipe_screen, &templ);
       }
    }
 

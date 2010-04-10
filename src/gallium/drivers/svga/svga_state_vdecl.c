@@ -33,7 +33,7 @@
 #include "svga_draw.h"
 #include "svga_tgsi.h"
 #include "svga_screen.h"
-#include "svga_screen_buffer.h"
+#include "svga_resource_buffer.h"
 
 #include "svga_hw_reg.h"
 
@@ -59,8 +59,8 @@ upload_user_buffers( struct svga_context *svga )
          if (!buffer->uploaded.buffer) {
             ret = u_upload_buffer( svga->upload_vb,
                                    0,
-                                   buffer->base.size,
-                                   &buffer->base,
+                                   buffer->b.b.width0,
+                                   &buffer->b.b,
                                    &buffer->uploaded.offset,
                                    &buffer->uploaded.buffer );
             if (ret)
@@ -73,10 +73,10 @@ upload_user_buffers( struct svga_context *svga )
                             buffer,
                             buffer->uploaded.buffer,
                             buffer->uploaded.offset,
-                            buffer->base.size);
+                            buffer->b.b.width0);
          }
 
-         pipe_buffer_reference( &svga->curr.vb[i].buffer, buffer->uploaded.buffer );
+         pipe_resource_reference( &svga->curr.vb[i].buffer, buffer->uploaded.buffer );
          svga->curr.vb[i].buffer_offset = buffer->uploaded.offset;
       }
    }

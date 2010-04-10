@@ -51,7 +51,7 @@
  */
 void
 lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_texture *texture,
+                        const struct pipe_resource *texture,
                         const struct pipe_sampler_state *sampler)
 {
    memset(state, 0, sizeof *state);

@@ -103,7 +103,7 @@ llvmpipe_flush( struct pipe_context *pipe,
  */
 boolean
 llvmpipe_flush_texture(struct pipe_context *pipe,
-                       struct pipe_texture *texture,
+                       struct pipe_resource *texture,
                        unsigned face,
                        unsigned level,
                        unsigned flush_flags,
@@ -113,7 +113,7 @@ llvmpipe_flush_texture(struct pipe_context *pipe,
 {
    unsigned referenced;
 
-   referenced = pipe->is_texture_referenced(pipe, texture, face, level);
+   referenced = pipe->is_resource_referenced(pipe, texture, face, level);
 
    if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
        ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {

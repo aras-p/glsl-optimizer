@@ -23,6 +23,7 @@
 #include "util/u_format.h"
 
 #include "nv50_context.h"
+#include "nv50_resource.h"
 #include "nouveau/nouveau_stateobj.h"
 
 static struct nouveau_stateobj *
@@ -43,7 +44,7 @@ validate_fb(struct nv50_context *nv50)
 		  (4 << 16) | (5 << 19) | (6 << 22) | (7 << 25));
 
 	for (i = 0; i < fb->nr_cbufs; i++) {
-		struct pipe_texture *pt = fb->cbufs[i]->texture;
+		struct pipe_resource *pt = fb->cbufs[i]->texture;
 		struct nouveau_bo *bo = nv50_miptree(pt)->base.bo;
 
 		if (!gw) {
@@ -104,7 +105,7 @@ validate_fb(struct nv50_context *nv50)
 	}
 
 	if (fb->zsbuf) {
-		struct pipe_texture *pt = fb->zsbuf->texture;
+		struct pipe_resource *pt = fb->zsbuf->texture;
 		struct nouveau_bo *bo = nv50_miptree(pt)->base.bo;
 
 		if (!gw) {

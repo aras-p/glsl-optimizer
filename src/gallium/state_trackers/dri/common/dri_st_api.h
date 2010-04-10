@@ -35,7 +35,7 @@ struct dri_screen;
 struct dri_drawable;
 
 struct __DRIimageRec {
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    unsigned face;
    unsigned level;
    unsigned zslice;

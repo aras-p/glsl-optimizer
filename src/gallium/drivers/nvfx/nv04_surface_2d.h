@@ -16,7 +16,7 @@ struct nv04_surface_2d {
 	struct nouveau_grobj *blit;
 	struct nouveau_grobj *sifm;
 
-	struct pipe_buffer *(*buf)(struct pipe_surface *);
+	struct nouveau_bo *(*buf)(struct pipe_surface *);
 
 	void (*copy)(struct nv04_surface_2d *, struct pipe_surface *dst,
 		     int dx, int dy, struct pipe_surface *src, int sx, int sy,
@@ -33,5 +33,7 @@ nv04_surface_2d_takedown(struct nv04_surface_2d **);
 
 struct nv04_surface*
 nv04_surface_wrap_for_render(struct pipe_screen *pscreen, struct nv04_surface_2d* eng2d, struct nv04_surface* ns);
+
+#define NVFX_RESOURCE_FLAG_LINEAR (PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
 
 #endif

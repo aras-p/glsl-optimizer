@@ -31,7 +31,7 @@
 
 #include "svga_context.h"
 #include "svga_state.h"
-#include "svga_screen_texture.h"
+#include "svga_surface.h"
 
 
 static enum pipe_error

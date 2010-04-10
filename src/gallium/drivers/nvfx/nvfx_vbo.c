@@ -5,6 +5,7 @@
 
 #include "nvfx_context.h"
 #include "nvfx_state.h"
+#include "nvfx_resource.h"
 
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_pushbuf.h"
@@ -76,7 +77,7 @@ nvfx_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 }
 
 static boolean
-nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_buffer *ib,
+nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_resource *ib,
 		    unsigned ib_size)
 {
 	struct pipe_screen *pscreen = &nvfx->screen->base.base;
@@ -117,21 +118,22 @@ nvfx_vbo_static_attrib(struct nvfx_context *nvfx, struct nouveau_stateobj *so,
 		       int attrib, struct pipe_vertex_element *ve,
 		       struct pipe_vertex_buffer *vb)
 {
-	struct pipe_screen *pscreen = nvfx->pipe.screen;
+	struct pipe_context *pipe = &nvfx->pipe;
 	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
+	struct pipe_transfer *transfer;
 	unsigned type, ncomp;
-	void *map;
+	uint8_t *map;
 
 	if (nvfx_vbo_format_to_hw(ve->src_format, &type, &ncomp))
 		return FALSE;
 
-	map  = pipe_buffer_map(pscreen, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+	map  = pipe_buffer_map(pipe, vb->buffer, PIPE_TRANSFER_READ, &transfer);
 	map += vb->buffer_offset + ve->src_offset;
 
 	switch (type) {
 	case NV34TCL_VTXFMT_TYPE_FLOAT:
 	{
-		float *v = map;
+		float *v = (float *)map;
 
 		switch (ncomp) {
 		case 4:
@@ -157,17 +159,17 @@ nvfx_vbo_static_attrib(struct nvfx_context *nvfx, struct nouveau_stateobj *so,
 			so_data  (so, fui(v[0]));
 			break;
 		default:
-			pipe_buffer_unmap(pscreen, vb->buffer);
+			pipe_buffer_unmap(pipe, vb->buffer, transfer);
 			return FALSE;
 		}
 	}
 		break;
 	default:
-		pipe_buffer_unmap(pscreen, vb->buffer);
+		pipe_buffer_unmap(pipe, vb->buffer, transfer);
 		return FALSE;
 	}
 
-	pipe_buffer_unmap(pscreen, vb->buffer);
+	pipe_buffer_unmap(pipe, vb->buffer, transfer);
 	return TRUE;
 }
 
@@ -379,14 +381,14 @@ nvfx_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 
 static void
 nvfx_draw_elements_inline(struct pipe_context *pipe,
-			  struct pipe_buffer *ib, unsigned ib_size,
+			  struct pipe_resource *ib, unsigned ib_size,
 			  unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct pipe_screen *pscreen = pipe->screen;
+	struct pipe_transfer *transfer;
 	void *map;
 
-	map = pipe_buffer_map(pscreen, ib, PIPE_BUFFER_USAGE_CPU_READ);
+	map = pipe_buffer_map(pipe, ib, PIPE_TRANSFER_READ, &transfer);
 	if (!ib) {
 		NOUVEAU_ERR("failed mapping ib\n");
 		return;
@@ -407,7 +409,7 @@ nvfx_draw_elements_inline(struct pipe_context *pipe,
 		break;
 	}
 
-	pipe_buffer_unmap(pscreen, ib);
+	pipe_buffer_unmap(pipe, ib, transfer);
 }
 
 static void
@@ -465,7 +467,7 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 
 void
 nvfx_draw_elements(struct pipe_context *pipe,
-		   struct pipe_buffer *indexBuffer, unsigned indexSize,
+		   struct pipe_resource *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
@@ -493,7 +495,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_stateobj *vtxbuf, *vtxfmt, *sattr = NULL;
 	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
-	struct pipe_buffer *ib = nvfx->idxbuf;
+	struct pipe_resource *ib = nvfx->idxbuf;
 	unsigned ib_format = nvfx->idxbuf_format;
 	unsigned vb_flags = nvfx->screen->vertex_buffer_flags | NOUVEAU_BO_RD;
 	int hw;
@@ -529,7 +531,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 			return FALSE;
 		}
 
-		so_reloc(vtxbuf, nouveau_bo(vb->buffer),
+		so_reloc(vtxbuf, nvfx_resource(vb->buffer)->bo,
 				 vb->buffer_offset + ve->src_offset,
 				 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
 				 0, NV34TCL_VTXBUF_ADDRESS_DMA1);
@@ -538,7 +540,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 	}
 
 	if (ib) {
-		struct nouveau_bo *bo = nouveau_bo(ib);
+		struct nouveau_bo *bo = nvfx_resource(ib)->bo;
 
 		so_method(vtxbuf, eng3d, NV34TCL_IDXBUF_ADDRESS, 2);
 		so_reloc (vtxbuf, bo, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);

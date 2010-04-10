@@ -29,6 +29,7 @@
 #include "os/os_thread.h"
 #include "util/u_format.h"
 #include "util/u_string.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 #include "util/u_network.h"
@@ -38,7 +39,6 @@
 
 #include "tr_dump.h"
 #include "tr_state.h"
-#include "tr_buffer.h"
 #include "tr_texture.h"
 
 #include "rbug/rbug.h"
@@ -150,7 +150,7 @@ static int
 trace_rbug_texture_list(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
 {
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex = NULL;
+   struct trace_resource *tr_tex = NULL;
    struct tr_list *ptr;
    rbug_texture_t *texs;
    int i = 0;
@@ -158,7 +158,7 @@ trace_rbug_texture_list(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    pipe_mutex_lock(tr_scr->list_mutex);
    texs = MALLOC(tr_scr->num_textures * sizeof(rbug_texture_t));
    foreach(ptr, &tr_scr->textures) {
-      tr_tex = (struct trace_texture *)((char*)ptr - offsetof(struct trace_texture, list));
+      tr_tex = (struct trace_resource *)((char*)ptr - offsetof(struct trace_resource, list));
       texs[i++] = VOID2U64(tr_tex);
    }
    pipe_mutex_unlock(tr_scr->list_mutex);
@@ -173,14 +173,14 @@ static int
 trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, uint32_t serial)
 {
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex = NULL;
+   struct trace_resource *tr_tex = NULL;
    struct rbug_proto_texture_info *gpti = (struct rbug_proto_texture_info *)header;
    struct tr_list *ptr;
-   struct pipe_texture *t;
+   struct pipe_resource *t;
 
    pipe_mutex_lock(tr_scr->list_mutex);
    foreach(ptr, &tr_scr->textures) {
-      tr_tex = (struct trace_texture *)((char*)ptr - offsetof(struct trace_texture, list));
+      tr_tex = (struct trace_resource *)((char*)ptr - offsetof(struct trace_resource, list));
       if (gpti->texture == VOID2U64(tr_tex))
          break;
       tr_tex = NULL;
@@ -191,7 +191,7 @@ trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
       return -ESRCH;
    }
 
-   t = tr_tex->texture;
+   t = tr_tex->resource;
    rbug_send_texture_info_reply(tr_rbug->con, serial,
                                t->target, t->format,
                                &t->width0, 1,
@@ -202,7 +202,7 @@ trace_rbug_texture_info(struct trace_rbug *tr_rbug, struct rbug_header *header, 
                                util_format_get_blocksize(t->format),
                                t->last_level,
                                t->nr_samples,
-                               t->tex_usage,
+                               t->bind,
                                NULL);
 
    pipe_mutex_unlock(tr_scr->list_mutex);
@@ -216,18 +216,18 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    struct rbug_proto_texture_read *gptr = (struct rbug_proto_texture_read *)header;
 
    struct trace_screen *tr_scr = tr_rbug->tr_scr;
-   struct trace_texture *tr_tex = NULL;
+   struct trace_resource *tr_tex = NULL;
    struct tr_list *ptr;
 
    struct pipe_context *context = tr_scr->private_context;
-   struct pipe_texture *tex;
+   struct pipe_resource *tex;
    struct pipe_transfer *t;
 
    void *map;
 
    pipe_mutex_lock(tr_scr->list_mutex);
    foreach(ptr, &tr_scr->textures) {
-      tr_tex = (struct trace_texture *)((char*)ptr - offsetof(struct trace_texture, list));
+      tr_tex = (struct trace_resource *)((char*)ptr - offsetof(struct trace_resource, list));
       if (gptr->texture == VOID2U64(tr_tex))
          break;
       tr_tex = NULL;
@@ -238,8 +238,8 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
       return -ESRCH;
    }
 
-   tex = tr_tex->texture;
-   t = context->get_tex_transfer(context, tex,
+   tex = tr_tex->resource;
+   t = pipe_get_transfer(context, tex,
 				 gptr->face, gptr->level, gptr->zslice,
 				 PIPE_TRANSFER_READ,
 				 gptr->x, gptr->y, gptr->w, gptr->h);
@@ -247,17 +247,18 @@ trace_rbug_texture_read(struct trace_rbug *tr_rbug, struct rbug_header *header, 
    map = context->transfer_map(context, t);
 
    rbug_send_texture_read_reply(tr_rbug->con, serial,
-                                t->texture->format,
-                                util_format_get_blockwidth(t->texture->format),
-                                util_format_get_blockheight(t->texture->format),
-                                util_format_get_blocksize(t->texture->format),
+                                t->resource->format,
+                                util_format_get_blockwidth(t->resource->format),
+                                util_format_get_blockheight(t->resource->format),
+                                util_format_get_blocksize(t->resource->format),
                                 (uint8_t*)map,
-                                t->stride * util_format_get_nblocksy(t->texture->format, t->height),
+                                t->stride * util_format_get_nblocksy(t->resource->format,
+								     t->box.height),
                                 t->stride,
                                 NULL);
 
    context->transfer_unmap(context, t);
-   context->tex_transfer_destroy(context, t);
+   context->transfer_destroy(context, t);
 
    pipe_mutex_unlock(tr_scr->list_mutex);
 

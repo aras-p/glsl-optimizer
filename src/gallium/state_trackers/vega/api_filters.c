@@ -57,14 +57,14 @@ struct filter_info {
    struct pipe_sampler_view *extra_texture_view;
 };
 
-static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
+static INLINE struct pipe_resource *create_texture_1d(struct vg_context *ctx,
                                                      const VGuint *color_data,
                                                      const VGint color_data_len)
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture *tex = 0;
-   struct pipe_texture templ;
+   struct pipe_resource *tex = 0;
+   struct pipe_resource templ;
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_1D;
@@ -73,20 +73,20 @@ static INLINE struct pipe_texture *create_texture_1d(struct vg_context *ctx,
    templ.width0 = color_data_len;
    templ.height0 = 1;
    templ.depth0 = 1;
-   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
-   tex = screen->texture_create(screen, &templ);
+   tex = screen->resource_create(screen, &templ);
 
    { /* upload color_data */
       struct pipe_transfer *transfer =
-         pipe->get_tex_transfer(pipe, tex,
+         pipe_get_transfer(pipe, tex,
 				0, 0, 0,
 				PIPE_TRANSFER_READ_WRITE ,
 				0, 0, tex->width0, tex->height0);
       void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, color_data, sizeof(VGint)*color_data_len);
       pipe->transfer_unmap(pipe, transfer);
-      pipe->tex_transfer_destroy(pipe, transfer);
+      pipe->transfer_destroy(pipe, transfer);
    }
 
    return tex;
@@ -97,7 +97,7 @@ static INLINE struct pipe_sampler_view *create_texture_1d_view(struct vg_context
                                                                const VGint color_data_len)
 {
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *view;
 
@@ -109,7 +109,7 @@ static INLINE struct pipe_sampler_view *create_texture_1d_view(struct vg_context
    u_sampler_view_default_template(&view_templ, texture, texture->format);
    view = pipe->create_sampler_view(pipe, texture, &view_templ);
    /* want the texture to go away if the view is freed */
-   pipe_texture_reference(&texture, NULL);
+   pipe_resource_reference(&texture, NULL);
 
    return view;
 }
@@ -121,7 +121,7 @@ static INLINE struct pipe_surface * setup_framebuffer(struct vg_image *dst)
    struct pipe_framebuffer_state fb;
    struct pipe_surface *dst_surf = pipe->screen->get_tex_surface(
       pipe->screen, dst->sampler_view->texture, 0, 0, 0,
-      PIPE_BUFFER_USAGE_GPU_WRITE);
+      PIPE_BIND_RENDER_TARGET);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));
@@ -170,14 +170,14 @@ static void setup_constant_buffer(struct vg_context *ctx, const void *buffer,
                                   VGint param_bytes)
 {
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_buffer **cbuf = &ctx->filter.buffer;
+   struct pipe_resource **cbuf = &ctx->filter.buffer;
 
    /* We always need to get a new buffer, to keep the drivers simple and
     * avoid gratuitous rendering synchronization. */
-   pipe_buffer_reference(cbuf, NULL);
+   pipe_resource_reference(cbuf, NULL);
 
-   *cbuf = pipe_buffer_create(pipe->screen, 16,
-                              PIPE_BUFFER_USAGE_CONSTANT,
+   *cbuf = pipe_buffer_create(pipe->screen, 
+                              PIPE_BIND_CONSTANT_BUFFER,
                               param_bytes);
 
    if (*cbuf) {

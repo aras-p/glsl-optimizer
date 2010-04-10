@@ -39,7 +39,7 @@
 #include "cell_draw_arrays.h"
 #include "cell_state.h"
 #include "cell_flush.h"
-#include "cell_buffer.h"
+#include "cell_texture.h"
 
 #include "draw/draw_context.h"
 
@@ -57,7 +57,7 @@
  */
 static void
 cell_draw_range_elements(struct pipe_context *pipe,
-                         struct pipe_buffer *indexBuffer,
+                         struct pipe_resource *indexBuffer,
                          unsigned indexSize,
                          unsigned min_index,
                          unsigned max_index,
@@ -78,12 +78,12 @@ cell_draw_range_elements(struct pipe_context *pipe,
     * Map vertex buffers
     */
    for (i = 0; i < cell->num_vertex_buffers; i++) {
-      void *buf = cell_buffer(cell->vertex_buffer[i].buffer)->data;
+      void *buf = cell_resource(cell->vertex_buffer[i].buffer)->data;
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes = cell_buffer(indexBuffer)->data;
+      void *mapped_indexes = cell_resource(indexBuffer)->data;
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {
@@ -116,7 +116,7 @@ cell_draw_range_elements(struct pipe_context *pipe,
 
 static void
 cell_draw_elements(struct pipe_context *pipe,
-                   struct pipe_buffer *indexBuffer,
+                   struct pipe_resource *indexBuffer,
                    unsigned indexSize,
                    unsigned mode, unsigned start, unsigned count)
 {

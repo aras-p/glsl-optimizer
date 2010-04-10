@@ -441,9 +441,9 @@ void vgReadPixels(void * data, VGint dataStride,
    {
       struct pipe_transfer *transfer;
 
-      transfer = pipe->get_tex_transfer(pipe, strb->texture,  0, 0, 0,
-                                          PIPE_TRANSFER_READ,
-                                          0, 0, width, height);
+      transfer = pipe_get_transfer(pipe, strb->texture,  0, 0, 0,
+				   PIPE_TRANSFER_READ,
+				   0, 0, width, height);
 
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
@@ -457,7 +457,7 @@ void vgReadPixels(void * data, VGint dataStride,
          dst += dataStride;
       }
 
-      pipe->tex_transfer_destroy(pipe, transfer);
+      pipe->transfer_destroy(pipe, transfer);
    }
 }
 

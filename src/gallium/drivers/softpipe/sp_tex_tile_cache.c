@@ -69,10 +69,10 @@ sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc)
       /*assert(tc->entries[pos].x < 0);*/
    }
    if (tc->transfer) {
-      tc->pipe->tex_transfer_destroy(tc->pipe, tc->transfer);
+      tc->pipe->transfer_destroy(tc->pipe, tc->transfer);
    }
    if (tc->tex_trans) {
-      tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
+      tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
    }
 
    FREE( tc );
@@ -122,13 +122,13 @@ void
 sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
                                    struct pipe_sampler_view *view)
 {
-   struct pipe_texture *texture = view ? view->texture : NULL;
+   struct pipe_resource *texture = view ? view->texture : NULL;
    uint i;
 
    assert(!tc->transfer);
 
    if (tc->texture != texture) {
-      pipe_texture_reference(&tc->texture, texture);
+      pipe_resource_reference(&tc->texture, texture);
 
       if (tc->tex_trans) {
          if (tc->tex_trans_map) {
@@ -136,7 +136,7 @@ sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
             tc->tex_trans_map = NULL;
          }
 
-         tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
+         tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
          tc->tex_trans = NULL;
       }
 
@@ -239,18 +239,18 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
                tc->tex_trans_map = NULL;
             }
 
-            tc->pipe->tex_transfer_destroy(tc->pipe, tc->tex_trans);
+            tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
             tc->tex_trans = NULL;
          }
 
          tc->tex_trans = 
-            tc->pipe->get_tex_transfer(tc->pipe, tc->texture, 
-                                     addr.bits.face, 
-                                     addr.bits.level, 
-                                     addr.bits.z, 
-                                     PIPE_TRANSFER_READ, 0, 0,
-                                     u_minify(tc->texture->width0, addr.bits.level),
-                                     u_minify(tc->texture->height0, addr.bits.level));
+            pipe_get_transfer(tc->pipe, tc->texture, 
+			      addr.bits.face, 
+			      addr.bits.level, 
+			      addr.bits.z, 
+			      PIPE_TRANSFER_READ, 0, 0,
+			      u_minify(tc->texture->width0, addr.bits.level),
+			      u_minify(tc->texture->height0, addr.bits.level));
          
          tc->tex_trans_map = tc->pipe->transfer_map(tc->pipe, tc->tex_trans);
 

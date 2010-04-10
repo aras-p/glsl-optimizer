@@ -98,9 +98,9 @@ struct u_split_prim {
    unsigned p_start;
    unsigned p_end;
 
-   int repeat_first:1;
-   int close_first:1;
-   int edgeflag_off:1;
+   uint repeat_first:1;
+   uint close_first:1;
+   uint edgeflag_off:1;
 };
 
 static inline void

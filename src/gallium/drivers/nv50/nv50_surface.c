@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include "nouveau/nouveau_pushbuf.h"
 #include "nv50_context.h"
+#include "nv50_resource.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 

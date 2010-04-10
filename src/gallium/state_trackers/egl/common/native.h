@@ -93,7 +93,7 @@ struct native_surface {
     * behavior might change in the future.
     */
    boolean (*validate)(struct native_surface *nsurf, uint attachment_mask,
-                       unsigned int *seq_num, struct pipe_texture **textures,
+                       unsigned int *seq_num, struct pipe_resource **textures,
                        int *width, int *height);
 
    /**

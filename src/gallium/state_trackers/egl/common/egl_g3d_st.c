@@ -107,7 +107,7 @@ egl_g3d_st_manager_get_egl_image(struct st_manager *smapi,
    gimg = egl_g3d_image(img);
 
    stimg->texture = NULL;
-   pipe_texture_reference(&stimg->texture, gimg->texture);
+   pipe_resource_reference(&stimg->texture, gimg->texture);
    stimg->face = gimg->face;
    stimg->level = gimg->level;
    stimg->zslice = gimg->zslice;
@@ -152,11 +152,11 @@ static boolean
 egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
                                         const enum st_attachment_type *statts,
                                         unsigned count,
-                                        struct pipe_texture **out)
+                                        struct pipe_resource **out)
 {
    _EGLSurface *surf = (_EGLSurface *) stfbi->st_manager_private;
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
-   struct pipe_texture templ;
+   struct pipe_resource templ;
    unsigned i;
 
    for (i = 0; i < count; i++) {
@@ -177,12 +177,12 @@ egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
          templ.height0 = gsurf->base.Height;
          templ.depth0 = 1;
          templ.format = gsurf->stvis.color_format;
-         templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+         templ.bind = PIPE_BIND_RENDER_TARGET;
 
-         gsurf->render_texture = screen->texture_create(screen, &templ);
+         gsurf->render_texture = screen->resource_create(screen, &templ);
       }
 
-      pipe_texture_reference(&out[i], gsurf->render_texture);
+      pipe_resource_reference(&out[i], gsurf->render_texture);
    }
 
    return TRUE;
@@ -202,11 +202,11 @@ static boolean
 egl_g3d_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
                                 const enum st_attachment_type *statts,
                                 unsigned count,
-                                struct pipe_texture **out)
+                                struct pipe_resource **out)
 {
    _EGLSurface *surf = (_EGLSurface *) stfbi->st_manager_private;
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
-   struct pipe_texture *textures[NUM_NATIVE_ATTACHMENTS];
+   struct pipe_resource *textures[NUM_NATIVE_ATTACHMENTS];
    uint attachment_mask = 0;
    unsigned i;
 
@@ -241,7 +241,7 @@ egl_g3d_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
       return FALSE;
 
    for (i = 0; i < count; i++) {
-      struct pipe_texture *tex;
+      struct pipe_resource *tex;
       int natt;
 
       switch (statts[i]) {
@@ -266,7 +266,7 @@ egl_g3d_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
          tex = textures[natt];
 
          if (statts[i] == stfbi->visual->render_buffer)
-            pipe_texture_reference(&gsurf->render_texture, tex);
+            pipe_resource_reference(&gsurf->render_texture, tex);
 
          if (attachment_mask & (1 << natt)) {
             /* transfer the ownership to the caller */
@@ -275,7 +275,7 @@ egl_g3d_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
          }
          else {
             /* the attachment is listed more than once */
-            pipe_texture_reference(&out[i], tex);
+            pipe_resource_reference(&out[i], tex);
          }
       }
    }

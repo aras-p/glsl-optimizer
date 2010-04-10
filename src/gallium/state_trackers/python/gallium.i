@@ -72,9 +72,8 @@
 
 %rename(Device) st_device;
 %rename(Context) st_context;
-%rename(Texture) pipe_texture;
+%rename(Resource) pipe_resource;
 %rename(Surface) st_surface;
-%rename(Buffer) pipe_buffer;
 
 %rename(BlendColor) pipe_blend_color;
 %rename(Blend) pipe_blend_state;

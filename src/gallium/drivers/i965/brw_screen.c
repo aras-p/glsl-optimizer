@@ -35,6 +35,7 @@
 #include "brw_screen.h"
 #include "brw_winsys.h"
 #include "brw_debug.h"
+#include "brw_resource.h"
 
 #ifdef DEBUG
 static const struct debug_named_value debug_names[] = {
@@ -275,9 +276,9 @@ brw_is_format_supported(struct pipe_screen *screen,
    const enum pipe_format *list;
    uint i;
 
-   if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL)
+   if (tex_usage & PIPE_BIND_DEPTH_STENCIL)
       list = depth_supported;
-   else if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+   else if (tex_usage & PIPE_BIND_RENDER_TARGET)
       list = render_supported;
    else
       list = tex_supported;
@@ -406,9 +407,8 @@ brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
    bscreen->base.fence_signalled = brw_fence_signalled;
    bscreen->base.fence_finish = brw_fence_finish;
 
-   brw_screen_tex_init(bscreen);
+   brw_init_screen_resource_functions(bscreen);
    brw_screen_tex_surface_init(bscreen);
-   brw_screen_buffer_init(bscreen);
 
    bscreen->no_tiling = debug_get_option("BRW_NO_TILING", FALSE) != NULL;
    

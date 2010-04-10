@@ -4,12 +4,14 @@ include $(TOP)/configs/current
 LIBNAME = nv50
 
 C_SOURCES = \
+	nv50_buffer.c \
 	nv50_clear.c \
 	nv50_context.c \
 	nv50_draw.c \
 	nv50_miptree.c \
 	nv50_query.c \
 	nv50_program.c \
+	nv50_resource.c \
 	nv50_screen.c \
 	nv50_state.c \
 	nv50_state_validate.c \

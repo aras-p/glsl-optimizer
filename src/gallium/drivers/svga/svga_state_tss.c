@@ -27,7 +27,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 
-#include "svga_screen_texture.h"
+#include "svga_sampler_view.h"
 #include "svga_winsys.h"
 #include "svga_context.h"
 #include "svga_state.h"
@@ -45,7 +45,7 @@ void svga_cleanup_tss_binding(struct svga_context *svga)
 
       svga_sampler_view_reference(&view->v, NULL);
       pipe_sampler_view_reference( &svga->curr.sampler_views[i], NULL );
-      pipe_texture_reference( &view->texture, NULL );
+      pipe_resource_reference( &view->texture, NULL );
 
       view->dirty = 1;
    }
@@ -77,7 +77,7 @@ update_tss_binding(struct svga_context *svga,
    for (i = 0; i < count; i++) {
       const struct svga_sampler_state *s = svga->curr.sampler[i];
       struct svga_hw_view_state *view = &svga->state.hw_draw.views[i];
-      struct pipe_texture *texture = NULL;
+      struct pipe_resource *texture = NULL;
 
       /* get min max lod */
       if (svga->curr.sampler_views[i]) {
@@ -94,7 +94,7 @@ update_tss_binding(struct svga_context *svga,
           view->max_lod != max_lod) {
 
          svga_sampler_view_reference(&view->v, NULL);
-         pipe_texture_reference( &view->texture, texture );
+         pipe_resource_reference( &view->texture, texture );
 
          view->dirty = TRUE;
          view->min_lod = min_lod;
@@ -135,7 +135,7 @@ update_tss_binding(struct svga_context *svga,
             svga->swc->surface_relocation(svga->swc,
                                           &ts[i].value,
                                           queue.bind[i].view->v->handle,
-                                          PIPE_BUFFER_USAGE_GPU_READ);
+                                          SVGA_RELOC_READ);
          }
          else {
             ts[i].value = SVGA3D_INVALID_ID;

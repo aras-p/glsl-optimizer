@@ -36,7 +36,6 @@
 #include "sp_texture.h"
 #include "sp_screen.h"
 #include "sp_context.h"
-#include "sp_buffer.h"
 #include "sp_fence.h"
 #include "sp_public.h"
 
@@ -174,9 +173,9 @@ softpipe_is_format_supported( struct pipe_screen *screen,
       break;
    }
 
-   if(tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                   PIPE_TEXTURE_USAGE_SCANOUT |
-                   PIPE_TEXTURE_USAGE_SHARED)) {
+   if(tex_usage & (PIPE_BIND_DISPLAY_TARGET |
+                   PIPE_BIND_SCANOUT |
+                   PIPE_BIND_SHARED)) {
       if(!winsys->is_displaytarget_format_supported(winsys, tex_usage, format))
          return FALSE;
    }
@@ -209,7 +208,7 @@ softpipe_flush_frontbuffer(struct pipe_screen *_screen,
 {
    struct softpipe_screen *screen = softpipe_screen(_screen);
    struct sw_winsys *winsys = screen->winsys;
-   struct softpipe_texture *texture = softpipe_texture(surface->texture);
+   struct softpipe_resource *texture = softpipe_resource(surface->texture);
 
    assert(texture->dt);
    if (texture->dt)
@@ -244,7 +243,6 @@ softpipe_create_screen(struct sw_winsys *winsys)
    util_format_s3tc_init();
 
    softpipe_init_screen_texture_funcs(&screen->base);
-   softpipe_init_screen_buffer_funcs(&screen->base);
    softpipe_init_screen_fence_funcs(&screen->base);
 
    return &screen->base;

@@ -30,6 +30,7 @@
 #include "tgsi/tgsi_util.h"
 
 #include "nv50_context.h"
+#include "nv50_transfer.h"
 
 #define NV50_SU_MAX_TEMP 127
 #define NV50_SU_MAX_ADDR 4
@@ -4157,7 +4158,8 @@ nv50_program_upload_data(struct nv50_context *nv50, uint32_t *map,
 static void
 nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct pipe_screen *pscreen = nv50->pipe.screen;
+	struct pipe_context *pipe = &nv50->pipe;
+	struct pipe_transfer *transfer;
 
 	if (!p->data[0] && p->immd_nr) {
 		struct nouveau_resource *heap = nv50->screen->immd_heap[0];
@@ -4182,9 +4184,10 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 
 	if (p->param_nr) {
 		unsigned cb;
-		uint32_t *map = pipe_buffer_map(pscreen,
+		uint32_t *map = pipe_buffer_map(pipe,
 						nv50->constbuf[p->type],
-						PIPE_BUFFER_USAGE_CPU_READ);
+						PIPE_TRANSFER_READ,
+						&transfer);
 		switch (p->type) {
 		case PIPE_SHADER_GEOMETRY: cb = NV50_CB_PGP; break;
 		case PIPE_SHADER_FRAGMENT: cb = NV50_CB_PFP; break;
@@ -4195,7 +4198,8 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 		}
 
 		nv50_program_upload_data(nv50, map, 0, p->param_nr, cb);
-		pipe_buffer_unmap(pscreen, nv50->constbuf[p->type]);
+		pipe_buffer_unmap(pipe, nv50->constbuf[p->type],
+				  transfer);
 	}
 }
 

@@ -32,22 +32,24 @@
 
 struct pipe_transfer;
 
-
 /**
  * Clip tile against transfer dims.
+ *
+ * XXX: this only clips width and height!
+ *
  * \return TRUE if tile is totally clipped, FALSE otherwise
  */
 static INLINE boolean
-pipe_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_transfer *pt)
+u_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_box *box)
 {
-   if (x >= pt->width)
+   if (x >= box->width)
       return TRUE;
-   if (y >= pt->height)
+   if (y >= box->height)
       return TRUE;
-   if (x + *w > pt->width)
-      *w = pt->width - x;
-   if (y + *h > pt->height)
-      *h = pt->height - y;
+   if (x + *w > box->width)
+      *w = box->width - x;
+   if (y + *h > box->height)
+      *h = box->height - y;
    return FALSE;
 }
 

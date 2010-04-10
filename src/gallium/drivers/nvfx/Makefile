@@ -5,6 +5,7 @@ LIBNAME = nvfx
 
 C_SOURCES = \
 	nv04_surface_2d.c \
+	nvfx_buffer.c \
 	nvfx_context.c \
 	nvfx_clear.c \
 	nvfx_draw.c \
@@ -14,6 +15,7 @@ C_SOURCES = \
 	nv40_fragtex.c \
 	nvfx_miptree.c \
 	nvfx_query.c \
+	nvfx_resource.c \
 	nvfx_screen.c \
 	nvfx_state.c \
 	nvfx_state_blend.c \
@@ -28,5 +30,8 @@ C_SOURCES = \
 	nvfx_transfer.c \
 	nvfx_vbo.c \
 	nvfx_vertprog.c
+
+LIBRARY_INCLUDES = \
+	-I$(TOP)/src/gallium/drivers/nouveau/include
 
 include ../../Makefile.template

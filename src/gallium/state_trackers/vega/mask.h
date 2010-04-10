@@ -31,7 +31,7 @@
 
 struct path;
 struct vg_image;
-struct pipe_texture;
+struct pipe_resource;
 
 struct vg_mask_layer *mask_layer_create(VGint width, VGint height);
 void mask_layer_destroy(struct vg_mask_layer *layer);

@@ -1,10 +1,12 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
+#include "util/u_simple_screen.h"
 
 #include "nouveau/nouveau_screen.h"
 
 #include "nvfx_context.h"
 #include "nvfx_screen.h"
+#include "nvfx_resource.h"
 
 #define NV30TCL_CHIPSET_3X_MASK 0x00000003
 #define NV34TCL_CHIPSET_3X_MASK 0x00000010
@@ -122,7 +124,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 	struct pipe_surface *front = ((struct nouveau_winsys *) pscreen->winsys)->front;
 
-	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
+	if (tex_usage & PIPE_BIND_RENDER_TARGET) {
 		switch (format) {
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
 		case PIPE_FORMAT_B5G6R5_UNORM:
@@ -131,7 +133,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 			break;
 		}
 	} else
-	if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
+	if (tex_usage & PIPE_BIND_DEPTH_STENCIL) {
 		switch (format) {
 		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		case PIPE_FORMAT_X8Z24_UNORM:
@@ -172,13 +174,6 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 	return FALSE;
 }
 
-static struct pipe_buffer *
-nvfx_surface_buffer(struct pipe_surface *surf)
-{
-	struct nvfx_miptree *mt = (struct nvfx_miptree *)surf->texture;
-
-	return mt->buffer;
-}
 
 static void
 nvfx_screen_destroy(struct pipe_screen *pscreen)
@@ -380,8 +375,8 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
+	nvfx_screen_init_resource_functions(pscreen);
 	nvfx_screen_init_buffer_functions(screen);
-	nvfx_screen_init_miptree_functions(pscreen);
 
 	ret = nouveau_grobj_alloc(chan, 0xbeef3097, eng3d_class, &screen->eng3d);
 	if (ret) {

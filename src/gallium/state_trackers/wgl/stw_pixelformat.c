@@ -218,8 +218,8 @@ stw_pixelformat_init( void )
          const struct stw_pf_color_info *color = &stw_pf_color[j];
          
          if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D, 
-                                         PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                                         PIPE_TEXTURE_USAGE_DISPLAY_TARGET, 0))
+                                         PIPE_BIND_RENDER_TARGET |
+                                         PIPE_BIND_DISPLAY_TARGET, 0))
             continue;
          
          for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
@@ -229,7 +229,7 @@ stw_pixelformat_init( void )
                const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
                
                if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D, 
-                                               PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
+                                               PIPE_BIND_DEPTH_STENCIL, 0))
                   continue;
 
                stw_pixelformat_add( stw_dev, color, depth,  0, doublebuffer, samples );

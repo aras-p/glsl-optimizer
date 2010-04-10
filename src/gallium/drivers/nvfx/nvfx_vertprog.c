@@ -833,12 +833,13 @@ out_err:
 static boolean
 nvfx_vertprog_validate(struct nvfx_context *nvfx)
 {
-	struct pipe_screen *pscreen = nvfx->pipe.screen;
+	struct pipe_context *pipe = &nvfx->pipe;
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 	struct nvfx_vertex_program *vp;
-	struct pipe_buffer *constbuf;
+	struct pipe_resource *constbuf;
+	struct pipe_transfer *transfer;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
 
@@ -962,8 +963,9 @@ check_gpu_resources:
 		float *map = NULL;
 
 		if (constbuf) {
-			map = pipe_buffer_map(pscreen, constbuf,
-					      PIPE_BUFFER_USAGE_CPU_READ);
+			map = pipe_buffer_map(pipe, constbuf,
+					      PIPE_TRANSFER_READ,
+					      &transfer);
 		}
 
 		for (i = 0; i < vp->nr_consts; i++) {
@@ -984,7 +986,7 @@ check_gpu_resources:
 		}
 
 		if (constbuf)
-			pipe_buffer_unmap(pscreen, constbuf);
+			pipe_buffer_unmap(pipe, constbuf, transfer);
 	}
 
 	/* Upload vtxprog */

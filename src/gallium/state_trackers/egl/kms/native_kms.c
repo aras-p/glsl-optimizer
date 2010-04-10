@@ -37,13 +37,13 @@
 
 static boolean
 kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
-                     unsigned int *seq_num, struct pipe_texture **textures,
+                     unsigned int *seq_num, struct pipe_resource **textures,
                      int *width, int *height)
 {
    struct kms_surface *ksurf = kms_surface(nsurf);
    struct kms_display *kdpy = ksurf->kdpy;
    struct pipe_screen *screen = kdpy->base.screen;
-   struct pipe_texture templ, *ptex;
+   struct pipe_resource templ, *ptex;
    int att;
 
    if (attachment_mask) {
@@ -54,8 +54,7 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
       templ.height0 = ksurf->height;
       templ.depth0 = 1;
       templ.format = ksurf->color_format;
-      templ.tex_usage =
-         PIPE_TEXTURE_USAGE_RENDER_TARGET | PIPE_TEXTURE_USAGE_SCANOUT;
+      templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SCANOUT;
    }
 
    /* create textures */
@@ -66,13 +65,13 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
 
       ptex = ksurf->textures[att];
       if (!ptex) {
-         ptex = screen->texture_create(screen, &templ);
+         ptex = screen->resource_create(screen, &templ);
          ksurf->textures[att] = ptex;
       }
 
       if (textures) {
          textures[att] = NULL;
-         pipe_texture_reference(&textures[att], ptex);
+         pipe_resource_reference(&textures[att], ptex);
       }
    }
 
@@ -118,7 +117,7 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
          if (!ksurf->textures[natt])
             return FALSE;
 
-         pipe_texture_reference(&fb->texture, ksurf->textures[natt]);
+         pipe_resource_reference(&fb->texture, ksurf->textures[natt]);
       }
 
       /* already initialized */
@@ -131,7 +130,7 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
       memset(&whandle, 0, sizeof(whandle));
       whandle.type = DRM_API_HANDLE_TYPE_KMS;
 
-      if (!kdpy->base.screen->texture_get_handle(kdpy->base.screen,
+      if (!kdpy->base.screen->resource_get_handle(kdpy->base.screen,
                fb->texture, &whandle))
          return FALSE;
 
@@ -169,7 +168,7 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
    struct kms_crtc *kcrtc = &ksurf->current_crtc;
    struct kms_display *kdpy = ksurf->kdpy;
    struct kms_framebuffer tmp_fb;
-   struct pipe_texture *tmp_texture;
+   struct pipe_resource *tmp_texture;
    int err;
 
    if (!ksurf->back_fb.buffer_id) {
@@ -220,15 +219,15 @@ kms_surface_destroy(struct native_surface *nsurf)
 
    if (ksurf->front_fb.buffer_id)
       drmModeRmFB(ksurf->kdpy->fd, ksurf->front_fb.buffer_id);
-   pipe_texture_reference(&ksurf->front_fb.texture, NULL);
+   pipe_resource_reference(&ksurf->front_fb.texture, NULL);
 
    if (ksurf->back_fb.buffer_id)
       drmModeRmFB(ksurf->kdpy->fd, ksurf->back_fb.buffer_id);
-   pipe_texture_reference(&ksurf->back_fb.texture, NULL);
+   pipe_resource_reference(&ksurf->back_fb.texture, NULL);
 
    for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
-      struct pipe_texture *ptex = ksurf->textures[i];
-      pipe_texture_reference(&ptex, NULL);
+      struct pipe_resource *ptex = ksurf->textures[i];
+      pipe_resource_reference(&ptex, NULL);
    }
 
    free(ksurf);
@@ -567,8 +566,8 @@ kms_display_is_format_supported(struct native_display *ndpy,
 {
    return ndpy->screen->is_format_supported(ndpy->screen,
          fmt, PIPE_TEXTURE_2D,
-         (is_color) ? PIPE_TEXTURE_USAGE_RENDER_TARGET :
-         PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+         (is_color) ? PIPE_BIND_RENDER_TARGET :
+         PIPE_BIND_DEPTH_STENCIL, 0);
 }
 
 static const struct native_config **

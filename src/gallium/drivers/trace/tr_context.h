@@ -60,8 +60,8 @@ struct trace_context
       unsigned num_vert_sampler_views;
 
       unsigned nr_cbufs;
-      struct trace_texture *cbufs[PIPE_MAX_COLOR_BUFS];
-      struct trace_texture *zsbuf;
+      struct trace_resource *cbufs[PIPE_MAX_COLOR_BUFS];
+      struct trace_resource *zsbuf;
    } curr;
 
    struct {
@@ -69,7 +69,7 @@ struct trace_context
       struct trace_shader *vs;
 
       struct trace_sampler_view *sampler_view;
-      struct trace_texture *surf;
+      struct trace_resource *surf;
 
       int blocker;
    } draw_rule;

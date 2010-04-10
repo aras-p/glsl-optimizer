@@ -192,35 +192,6 @@ struct i915_velems_state {
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
-#define I915_MAX_TEXTURE_2D_LEVELS 11  /* max 1024x1024 */
-#define I915_MAX_TEXTURE_3D_LEVELS  8  /* max 128x128x128 */
-
-struct i915_texture {
-   struct pipe_texture base;
-
-   /* Derived from the above:
-    */
-   unsigned stride;
-   unsigned depth_stride;          /* per-image on i945? */
-   unsigned total_nblocksy;
-
-   unsigned sw_tiled; /**< tiled with software flags */
-   unsigned hw_tiled; /**< tiled with hardware fences */
-
-   unsigned nr_images[I915_MAX_TEXTURE_2D_LEVELS];
-
-   /* Explicitly store the offset of each image for each cube face or
-    * depth value.  Pretty much have to accept that hardware formats
-    * are going to be so diverse that there is no unified way to
-    * compute the offsets of depth/cube images within a mipmap level,
-    * so have to store them as a lookup table:
-    */
-   unsigned *image_offset[I915_MAX_TEXTURE_2D_LEVELS];   /**< array [depth] of offsets */
-
-   /* The data is held here:
-    */
-   struct i915_winsys_buffer *buffer;
-};
 
 struct i915_context
 {
@@ -243,7 +214,7 @@ struct i915_context
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
    /* XXX unneded */
-   struct pipe_buffer *constants[PIPE_SHADER_TYPES];
+   struct pipe_resource *constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
@@ -333,10 +304,8 @@ void i915_clear( struct pipe_context *pipe, unsigned buffers, const float *rgba,
 
 
 /***********************************************************************
- * i915_surface.c: 
+ * 
  */
-void i915_init_surface_functions( struct i915_context *i915 );
-
 void i915_init_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );
@@ -349,10 +318,6 @@ struct pipe_context *i915_create_context(struct pipe_screen *screen,
 					 void *priv);
 
 
-/***********************************************************************
- * i915_texture.c
- */
-void i915_init_texture_functions(struct i915_context *i915 );
 
 
 /***********************************************************************

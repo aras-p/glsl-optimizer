@@ -449,7 +449,7 @@ failover_delete_sampler_state(struct pipe_context *pipe, void *sampler)
 
 static struct pipe_sampler_view *
 failover_create_sampler_view(struct pipe_context *pipe,
-                             struct pipe_texture *texture,
+                             struct pipe_resource *texture,
                              const struct pipe_sampler_view *templ)
 {
    struct fo_sampler_view *view = malloc(sizeof(struct fo_sampler_view));
@@ -461,7 +461,7 @@ failover_create_sampler_view(struct pipe_context *pipe,
    view->base = *templ;
    view->base.reference.count = 1;
    view->base.texture = NULL;
-   pipe_texture_reference(&view->base.texture, texture);
+   pipe_resource_reference(&view->base.texture, texture);
    view->base.context = pipe;
 
    return &view->base;
@@ -477,7 +477,7 @@ failover_sampler_view_destroy(struct pipe_context *pipe,
    failover->sw->sampler_view_destroy(failover->sw, fo_view->sw);
    failover->hw->sampler_view_destroy(failover->hw, fo_view->hw);
 
-   pipe_texture_reference(&fo_view->base.texture, NULL);
+   pipe_resource_reference(&fo_view->base.texture, NULL);
    free(fo_view);
 }
 
@@ -572,15 +572,15 @@ failover_set_vertex_buffers(struct pipe_context *pipe,
 void
 failover_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             struct pipe_buffer *buf)
+                             struct pipe_resource *res)
 {
    struct failover_context *failover = failover_context(pipe);
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
-   failover->sw->set_constant_buffer(failover->sw, shader, index, buf);
-   failover->hw->set_constant_buffer(failover->hw, shader, index, buf);
+   failover->sw->set_constant_buffer(failover->sw, shader, index, res);
+   failover->hw->set_constant_buffer(failover->hw, shader, index, res);
 }
 
 

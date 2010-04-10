@@ -67,13 +67,13 @@ lp_rast_begin( struct lp_rasterizer *rast,
       rast->cbuf[i].format = cbuf->texture->format;
       rast->cbuf[i].width = cbuf->width;
       rast->cbuf[i].height = cbuf->height;
-      rast->cbuf[i].stride = llvmpipe_texture_stride(cbuf->texture, cbuf->level);
+      rast->cbuf[i].stride = llvmpipe_resource_stride(cbuf->texture, cbuf->level);
    }
 
    if (write_zstencil) {
       struct pipe_surface *zsbuf = scene->fb.zsbuf;
       rast->zsbuf.map = scene->zsbuf_map;
-      rast->zsbuf.stride = llvmpipe_texture_stride(zsbuf->texture, zsbuf->level);
+      rast->zsbuf.stride = llvmpipe_resource_stride(zsbuf->texture, zsbuf->level);
       rast->zsbuf.blocksize = 
          util_format_get_blocksize(zsbuf->texture->format);
    }

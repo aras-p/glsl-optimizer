@@ -47,7 +47,7 @@ void
 dri1_swap_fences_clear(struct dri_drawable *drawable);
 
 struct pipe_surface *
-dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_texture *ptex);
+dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_resource *ptex);
 
 void
 dri1_destroy_pipe_surface(struct dri_drawable *drawable);

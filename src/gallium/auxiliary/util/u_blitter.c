@@ -56,7 +56,7 @@ struct blitter_context_priv
    struct blitter_context blitter;
 
    struct pipe_context *pipe; /**< pipe context */
-   struct pipe_buffer *vbuf;  /**< quad */
+   struct pipe_resource *vbuf;  /**< quad */
 
    float vertices[4][2][4];   /**< {pos, color} or {pos, texcoord} */
 
@@ -215,8 +215,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 
    /* create the vertex buffer */
    ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
-                                  32,
-                                  PIPE_BUFFER_USAGE_VERTEX,
+                                  PIPE_BIND_VERTEX_BUFFER,
                                   sizeof(ctx->vertices));
 
    return &ctx->blitter;
@@ -259,7 +258,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
       pipe_sampler_view_reference(&ctx->sampler_view, NULL);
    }
 
-   pipe_buffer_reference(&ctx->vbuf, NULL);
+   pipe_resource_reference(&ctx->vbuf, NULL);
    FREE(ctx);
 }
 
@@ -451,7 +450,7 @@ static void blitter_draw_quad(struct blitter_context_priv *ctx)
    struct pipe_context *pipe = ctx->pipe;
 
    /* write vertices and draw them */
-   pipe_buffer_write(pipe->screen, ctx->vbuf,
+   pipe_buffer_write(pipe, ctx->vbuf,
                      0, sizeof(ctx->vertices), ctx->vertices);
 
    util_draw_vertex_buffer(pipe, ctx->vbuf, 0, PIPE_PRIM_TRIANGLE_FAN,
@@ -714,8 +713,8 @@ static void util_blitter_overlap_copy(struct blitter_context *blitter,
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
 
-   struct pipe_texture texTemp;
-   struct pipe_texture *texture;
+   struct pipe_resource texTemp;
+   struct pipe_resource *texture;
    struct pipe_surface *tex_surf;
 
    /* check whether the states are properly saved */
@@ -729,13 +728,13 @@ static void util_blitter_overlap_copy(struct blitter_context *blitter,
    texTemp.height0 = height;
    texTemp.depth0 = 1;
 
-   texture = screen->texture_create(screen, &texTemp);
+   texture = screen->resource_create(screen, &texTemp);
    if (!texture)
       return;
 
    tex_surf = screen->get_tex_surface(screen, texture, 0, 0, 0,
-				      PIPE_BUFFER_USAGE_GPU_READ | 
-				      PIPE_BUFFER_USAGE_GPU_WRITE);
+				      PIPE_BIND_BLIT_SOURCE | 
+				      PIPE_BIND_BLIT_DESTINATION);
 
    /* blit from the src to the temp */
    util_blitter_do_copy(blitter, tex_surf, 0, 0,
@@ -747,7 +746,7 @@ static void util_blitter_overlap_copy(struct blitter_context *blitter,
 			width, height,
 			FALSE);
    pipe_surface_reference(&tex_surf, NULL);
-   pipe_texture_reference(&texture, NULL);
+   pipe_resource_reference(&texture, NULL);
    blitter_restore_CSOs(ctx);
 }
 
@@ -781,8 +780,8 @@ void util_blitter_copy(struct blitter_context *blitter,
 		   
    is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
    is_stencil = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 1) != 0;
-   dst_tex_usage = is_depth || is_stencil ? PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
-                                            PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   dst_tex_usage = is_depth || is_stencil ? PIPE_BIND_DEPTH_STENCIL :
+                                            PIPE_BIND_RENDER_TARGET;
 
    /* check if we can sample from and render to the surfaces */
    /* (assuming copying a stencil buffer is not possible) */
@@ -790,7 +789,7 @@ void util_blitter_copy(struct blitter_context *blitter,
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
                                     dst_tex_usage, 0) ||
        !screen->is_format_supported(screen, src->format, src->texture->target,
-                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       util_surface_copy(pipe, FALSE, dst, dstx, dsty, src, srcx, srcy,
                         width, height);
       return;
@@ -827,7 +826,7 @@ void util_blitter_fill(struct blitter_context *blitter,
    /* check if we can render to the surface */
    if (util_format_is_depth_or_stencil(dst->format) || /* unlikely, but you never know */
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
-                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
+                                    PIPE_BIND_RENDER_TARGET, 0)) {
       util_surface_fill(pipe, dst, dstx, dsty, width, height, value);
       return;
    }

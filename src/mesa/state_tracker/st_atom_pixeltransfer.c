@@ -112,21 +112,21 @@ make_state_key(GLcontext *ctx,  struct state_key *key)
 }
 
 
-static struct pipe_texture *
+static struct pipe_resource *
 create_color_map_texture(GLcontext *ctx)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_texture *pt;
+   struct pipe_resource *pt;
    enum pipe_format format;
    const uint texSize = 256; /* simple, and usually perfect */
 
    /* find an RGBA texture format */
    format = st_choose_format(pipe->screen, GL_RGBA,
-                             PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER);
+                             PIPE_TEXTURE_2D, PIPE_BIND_SAMPLER_VIEW);
 
    /* create texture for color map/table */
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0,
-                          texSize, texSize, 1, PIPE_TEXTURE_USAGE_SAMPLER);
+                          texSize, texSize, 1, PIPE_BIND_SAMPLER_VIEW);
    return pt;
 }
 
@@ -135,7 +135,7 @@ create_color_map_texture(GLcontext *ctx)
  * Update the pixelmap texture with the contents of the R/G/B/A pixel maps.
  */
 static void
-load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
+load_color_map_texture(GLcontext *ctx, struct pipe_resource *pt)
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_transfer *transfer;
@@ -150,7 +150,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
    transfer = st_cond_flush_get_tex_transfer(st_context(ctx),
 					     pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
 					     0, 0, texSize, texSize);
-   dest = (uint *) pipe->transfer_map(pipe, transfer);
+   dest = (uint *) pipe_transfer_map(pipe, transfer);
 
    /* Pack four 1D maps into a 2D texture:
     * R map is placed horizontally, indexed by S, in channel 0
@@ -171,8 +171,8 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
       }
    }
 
-   pipe->transfer_unmap(pipe, transfer);
-   pipe->tex_transfer_destroy(pipe, transfer);
+   pipe_transfer_unmap(pipe, transfer);
+   pipe->transfer_destroy(pipe, transfer);
 }
 
 

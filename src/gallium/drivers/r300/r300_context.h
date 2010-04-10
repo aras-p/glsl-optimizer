@@ -29,6 +29,7 @@
 
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
+#include "util/u_transfer.h"
 
 #include "r300_defines.h"
 #include "r300_screen.h"
@@ -228,7 +229,7 @@ struct r300_query {
 
 struct r300_texture {
     /* Parent class */
-    struct pipe_texture tex;
+    struct u_resource b;
 
     /* Offsets into the buffer. */
     unsigned offset[R300_MAX_TEXTURE_LEVELS];
@@ -305,7 +306,7 @@ struct r300_context {
             unsigned mode, unsigned count);
 
     void (*emit_draw_elements)(
-            struct r300_context *r300, struct pipe_buffer* indexBuffer,
+            struct r300_context *r300, struct pipe_resource* indexBuffer,
             unsigned indexSize, unsigned minIndex, unsigned maxIndex,
             unsigned mode, unsigned start, unsigned count);
 
@@ -320,12 +321,12 @@ struct r300_context {
     struct blitter_context* blitter;
 
     /* Vertex buffer for rendering. */
-    struct pipe_buffer* vbo;
+    struct pipe_resource* vbo;
     /* Offset into the VBO. */
     size_t vbo_offset;
 
     /* Occlusion query buffer. */
-    struct pipe_buffer* oqbo;
+    struct pipe_resource* oqbo;
     /* Query list. */
     struct r300_query *query_current;
     struct r300_query query_list;
@@ -411,7 +412,7 @@ struct r300_context {
 };
 
 /* Convenience cast wrapper. */
-static INLINE struct r300_texture* r300_texture(struct pipe_texture* tex)
+static INLINE struct r300_texture* r300_texture(struct pipe_resource* tex)
 {
     return (struct r300_texture*)tex;
 }
@@ -428,8 +429,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
-void r300_init_surface_functions(struct r300_context* r300);
-void r300_init_tex_functions( struct pipe_context *pipe );
+void r300_init_resource_functions(struct r300_context* r300);
 
 static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {

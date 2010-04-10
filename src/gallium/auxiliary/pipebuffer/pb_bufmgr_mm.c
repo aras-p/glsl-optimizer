@@ -268,8 +268,8 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    mm->buffer = buffer; 
 
    mm->map = pb_map(mm->buffer, 
-		    PIPE_BUFFER_USAGE_CPU_READ |
-		    PIPE_BUFFER_USAGE_CPU_WRITE);
+		    PB_USAGE_CPU_READ |
+		    PB_USAGE_CPU_WRITE);
    if(!mm->map)
       goto failure;
 

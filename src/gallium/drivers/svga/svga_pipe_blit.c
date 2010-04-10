@@ -23,10 +23,11 @@
  *
  **********************************************************/
 
-#include "svga_screen_texture.h"
+#include "svga_resource_texture.h"
 #include "svga_context.h"
 #include "svga_debug.h"
 #include "svga_cmd.h"
+#include "svga_surface.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 

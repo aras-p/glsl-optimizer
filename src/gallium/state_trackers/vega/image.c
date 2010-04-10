@@ -81,7 +81,7 @@ static INLINE void vg_sync_size(VGfloat *src_loc, VGfloat *dst_loc)
 
 
 static void vg_copy_texture(struct vg_context *ctx,
-                            struct pipe_texture *dst, VGint dx, VGint dy,
+                            struct pipe_resource *dst, VGint dx, VGint dy,
                             struct pipe_sampler_view *src, VGint sx, VGint sy,
                             VGint width, VGint height)
 {
@@ -217,9 +217,9 @@ void vg_copy_surface(struct vg_context *ctx,
 
 }
 
-static struct pipe_texture *image_texture(struct vg_image *img)
+static struct pipe_resource *image_texture(struct vg_image *img)
 {
-   struct pipe_texture *tex = img->sampler_view->texture;
+   struct pipe_resource *tex = img->sampler_view->texture;
    return tex;
 }
 
@@ -251,7 +251,7 @@ struct vg_image * image_create(VGImageFormat format,
    struct pipe_context *pipe = ctx->pipe;
    struct vg_image *image = CALLOC_STRUCT(vg_image);
    enum pipe_format pformat = vg_format_to_pipe(format);
-   struct pipe_texture pt, *newtex;
+   struct pipe_resource pt, *newtex;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *view;
    struct pipe_screen *screen = ctx->pipe->screen;
@@ -270,7 +270,7 @@ struct vg_image * image_create(VGImageFormat format,
    image->sampler.normalized_coords = 1;
 
    assert(screen->is_format_supported(screen, pformat, PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
+                                      PIPE_BIND_SAMPLER_VIEW, 0));
 
    memset(&pt, 0, sizeof(pt));
    pt.target = PIPE_TEXTURE_2D;
@@ -279,16 +279,16 @@ struct vg_image * image_create(VGImageFormat format,
    pt.width0 = width;
    pt.height0 = height;
    pt.depth0 = 1;
-   pt.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   pt.bind = PIPE_BIND_SAMPLER_VIEW;
 
-   newtex = screen->texture_create(screen, &pt);
+   newtex = screen->resource_create(screen, &pt);
 
    debug_assert(newtex);
 
    u_sampler_view_default_template(&view_templ, newtex, newtex->format);
    view = pipe->create_sampler_view(pipe, newtex, &view_templ);
    /* want the texture to go away if the view is freed */
-   pipe_texture_reference(&newtex, NULL);
+   pipe_resource_reference(&newtex, NULL);
 
    image->sampler_view = view;
 
@@ -388,7 +388,7 @@ void image_sub_data(struct vg_image *image,
    VGint i;
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_texture *texture = image_texture(image);
+   struct pipe_resource *texture = image_texture(image);
    VGint xoffset = 0, yoffset = 0;
 
    if (x < 0) {
@@ -421,7 +421,7 @@ void image_sub_data(struct vg_image *image,
    }
 
    { /* upload color_data */
-      struct pipe_transfer *transfer = pipe->get_tex_transfer(
+      struct pipe_transfer *transfer = pipe_get_transfer(
          pipe, texture, 0, 0, 0,
          PIPE_TRANSFER_WRITE, 0, 0, texture->width0, texture->height0);
       src += (dataStride * yoffset);
@@ -431,7 +431,7 @@ void image_sub_data(struct vg_image *image,
          y += yStep;
          src += dataStride;
       }
-      pipe->tex_transfer_destroy(pipe, transfer);
+      pipe->transfer_destroy(pipe, transfer);
    }
 }
 
@@ -452,7 +452,7 @@ void image_get_sub_data(struct vg_image * image,
 
    {
       struct pipe_transfer *transfer =
-         pipe->get_tex_transfer(pipe,
+         pipe_get_transfer(pipe,
                                   image->sampler_view->texture,  0, 0, 0,
                                   PIPE_TRANSFER_READ,
                                   0, 0,
@@ -469,7 +469,7 @@ void image_get_sub_data(struct vg_image * image,
          dst += dataStride;
       }
 
-      pipe->tex_transfer_destroy(pipe, transfer);
+      pipe->transfer_destroy(pipe, transfer);
    }
 }
 
@@ -576,7 +576,7 @@ void image_set_pixels(VGint dx, VGint dy,
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    surf = screen->get_tex_surface(screen, image_texture(src),  0, 0, 0,
-                                  PIPE_BUFFER_USAGE_GPU_READ);
+                                  PIPE_BIND_BLIT_SOURCE);
 
    vg_copy_surface(ctx, strb->surface, dx, dy,
                    surf, sx+src->x, sy+src->y, width, height);
@@ -601,8 +601,8 @@ void image_get_pixels(struct vg_image *dst, VGint dx, VGint dy,
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    surf = screen->get_tex_surface(screen, image_texture(dst),  0, 0, 0,
-                                  PIPE_BUFFER_USAGE_GPU_WRITE |
-                                  PIPE_BUFFER_USAGE_GPU_READ);
+                                  PIPE_BIND_BLIT_SOURCE);
+
    vg_copy_surface(ctx, surf, dst->x + dx, dst->y + dy,
                    strb->surface, sx, sy, width, height);
 

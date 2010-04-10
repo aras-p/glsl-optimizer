@@ -128,7 +128,7 @@ st_BlitFramebuffer(GLcontext *ctx,
                                            srcAtt->CubeMapFace,
                                            srcAtt->TextureLevel,
                                            srcAtt->Zoffset,
-                                           PIPE_BUFFER_USAGE_GPU_READ);
+                                           PIPE_BIND_BLIT_SOURCE);
          if(!srcSurf)
             return;
 

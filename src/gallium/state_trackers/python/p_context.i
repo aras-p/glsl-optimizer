@@ -144,7 +144,7 @@ struct st_context {
    }
 
    void set_constant_buffer(unsigned shader, unsigned index,
-                            struct pipe_buffer *buffer ) 
+                            struct pipe_resource *buffer ) 
    {
       $self->pipe->set_constant_buffer($self->pipe, shader, index, buffer);
    }
@@ -168,7 +168,7 @@ struct st_context {
    }
 
    void set_fragment_sampler_texture(unsigned index,
-                                     struct pipe_texture *texture) {
+                                     struct pipe_resource *texture) {
       struct pipe_sampler_view templ;
 
       if(!texture)
@@ -186,7 +186,7 @@ struct st_context {
    }
 
    void set_vertex_sampler_texture(unsigned index,
-                                   struct pipe_texture *texture) {
+                                   struct pipe_resource *texture) {
       struct pipe_sampler_view templ;
 
       if(!texture)
@@ -208,7 +208,7 @@ struct st_context {
                           unsigned stride, 
                           unsigned max_index,
                           unsigned buffer_offset,
-                          struct pipe_buffer *buffer)
+                          struct pipe_resource *buffer)
    {
       unsigned i;
       struct pipe_vertex_buffer state;
@@ -252,7 +252,7 @@ struct st_context {
       $self->pipe->draw_arrays($self->pipe, mode, start, count);
    }
 
-   void draw_elements( struct pipe_buffer *indexBuffer,
+   void draw_elements( struct pipe_resource *indexBuffer,
                        unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count) 
    {
@@ -262,7 +262,7 @@ struct st_context {
                                  mode, start, count);
    }
 
-   void draw_range_elements( struct pipe_buffer *indexBuffer,
+   void draw_range_elements( struct pipe_resource *indexBuffer,
                              unsigned indexSize, unsigned minIndex, unsigned maxIndex,
                              unsigned mode, unsigned start, unsigned count)
    {
@@ -279,7 +279,8 @@ struct st_context {
    {
       struct pipe_context *pipe = $self->pipe;
       struct pipe_screen *screen = pipe->screen;
-      struct pipe_buffer *vbuf;
+      struct pipe_resource *vbuf;
+      struct pipe_transfer *transfer;
       struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
       struct pipe_vertex_buffer vbuffer;
       float *map;
@@ -289,17 +290,16 @@ struct st_context {
       size = num_verts * num_attribs * 4 * sizeof(float);
 
       vbuf = pipe_buffer_create(screen,
-                                32,
-                                PIPE_BUFFER_USAGE_VERTEX, 
+                                PIPE_BIND_VERTEX_BUFFER, 
                                 size);
       if(!vbuf)
          goto error1;
-      
-      map = pipe_buffer_map(screen, vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+      map = pipe_buffer_map(pipe, vbuf, PIPE_TRANSFER_WRITE, &transfer);
       if (!map)
          goto error2;
       memcpy(map, vertices, size);
-      pipe_buffer_unmap(screen, vbuf);
+      pipe_buffer_unmap(pipe, vbuf, transfer);
 
       cso_save_vertex_elements($self->cso);
 
@@ -326,7 +326,7 @@ struct st_context {
       cso_restore_vertex_elements($self->cso);
 
 error2:
-      pipe_buffer_reference(&vbuf, NULL);
+      pipe_resource_reference(&vbuf, NULL);
 error1:
       ;
    }
@@ -362,11 +362,11 @@ error1:
       struct pipe_surface *_dst = NULL;
       struct pipe_surface *_src = NULL;
       
-      _dst = st_pipe_surface(dst, PIPE_BUFFER_USAGE_GPU_WRITE);
+      _dst = st_pipe_surface(dst, PIPE_BIND_BLIT_DESTINATION);
       if(!_dst)
          SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
 
-      _src = st_pipe_surface(src, PIPE_BUFFER_USAGE_GPU_READ);
+      _src = st_pipe_surface(src, PIPE_BIND_BLIT_SOURCE);
       if(!_src)
          SWIG_exception(SWIG_ValueError, "couldn't acquire source surface for reading");
       
@@ -384,7 +384,7 @@ error1:
    {
       struct pipe_surface *_dst = NULL;
       
-      _dst = st_pipe_surface(dst, PIPE_BUFFER_USAGE_GPU_WRITE);
+      _dst = st_pipe_surface(dst, PIPE_BIND_BLIT_DESTINATION);
       if(!_dst)
          SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
 
@@ -400,7 +400,7 @@ error1:
                     unsigned x, unsigned y, unsigned w, unsigned h,
                     char **STRING, int *LENGTH)
    {
-      struct pipe_texture *texture = surface->texture;
+      struct pipe_resource *texture = surface->texture;
       struct pipe_context *pipe = $self->pipe;
       struct pipe_transfer *transfer;
       unsigned stride;
@@ -411,16 +411,16 @@ error1:
       if(!*STRING)
          return;
 
-      transfer = pipe->get_tex_transfer(pipe,
-                                          surface->texture,
-                                          surface->face,
-                                          surface->level,
-                                          surface->zslice,
-                                          PIPE_TRANSFER_READ,
-                                          x, y, w, h);
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
       if(transfer) {
          pipe_get_tile_raw(pipe, transfer, 0, 0, w, h, *STRING, stride);
-         pipe->tex_transfer_destroy(pipe, transfer);
+         pipe->transfer_destroy(pipe, transfer);
       }
    }
 
@@ -430,7 +430,7 @@ error1:
                      unsigned x, unsigned y, unsigned w, unsigned h,
                      const char *STRING, unsigned LENGTH, unsigned stride = 0)
    {
-      struct pipe_texture *texture = surface->texture;
+      struct pipe_resource *texture = surface->texture;
       struct pipe_context *pipe = $self->pipe;
       struct pipe_transfer *transfer;
 
@@ -440,18 +440,18 @@ error1:
       if(LENGTH < util_format_get_nblocksy(texture->format, h) * stride)
          SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
 
-      transfer = pipe->get_tex_transfer(pipe,
-                                          surface->texture,
-                                          surface->face,
-                                          surface->level,
-                                          surface->zslice,
-                                          PIPE_TRANSFER_WRITE,
-                                          x, y, w, h);
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_WRITE,
+                                   x, y, w, h);
       if(!transfer)
          SWIG_exception(SWIG_MemoryError, "couldn't initiate transfer");
 
       pipe_put_tile_raw(pipe, transfer, 0, 0, w, h, STRING, stride);
-      pipe->tex_transfer_destroy(pipe, transfer);
+      pipe->transfer_destroy(pipe, transfer);
 
    fail:
       return;
@@ -464,16 +464,16 @@ error1:
    {
       struct pipe_context *pipe = $self->pipe;
       struct pipe_transfer *transfer;
-      transfer = pipe->get_tex_transfer(pipe,
-                                          surface->texture,
-                                          surface->face,
-                                          surface->level,
-                                          surface->zslice,
-                                          PIPE_TRANSFER_READ,
-                                          x, y, w, h);
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
       if(transfer) {
          pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
-         pipe->tex_transfer_destroy(pipe, transfer);
+         pipe->transfer_destroy(pipe, transfer);
       }
    }
 
@@ -484,16 +484,16 @@ error1:
    {
       struct pipe_context *pipe = $self->pipe;
       struct pipe_transfer *transfer;
-      transfer = pipe->get_tex_transfer(pipe,
-                                          surface->texture,
-                                          surface->face,
-                                          surface->level,
-                                          surface->zslice,
-                                          PIPE_TRANSFER_WRITE,
-                                          x, y, w, h);
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_WRITE,
+                                   x, y, w, h);
       if(transfer) {
          pipe_put_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
-         pipe->tex_transfer_destroy(pipe, transfer);
+         pipe->transfer_destroy(pipe, transfer);
       }
    }
 
@@ -526,14 +526,13 @@ error1:
 
       rgba8 = (unsigned char *) *STRING;
 
-      transfer = pipe->get_tex_transfer(pipe,
-                                          surface->texture,
-                                          surface->face,
-                                          surface->level,
-                                          surface->zslice,
-                                          PIPE_TRANSFER_READ,
-                                          x, y,
-                                          w, h);
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
       if(transfer) {
          pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
          for(j = 0; j < h; ++j) {
@@ -541,7 +540,7 @@ error1:
                for(k = 0; k <4; ++k)
                   rgba8[j*w*4 + i*4 + k] = float_to_ubyte(rgba[j*w*4 + i*4 + k]);
          }
-         pipe->tex_transfer_destroy(pipe, transfer);
+         pipe->transfer_destroy(pipe, transfer);
       }
 
       free(rgba);
@@ -554,16 +553,16 @@ error1:
    {
       struct pipe_context *pipe = $self->pipe;
       struct pipe_transfer *transfer;
-      transfer = pipe->get_tex_transfer(pipe,
-                                          surface->texture,
-                                          surface->face,
-                                          surface->level,
-                                          surface->zslice,
-                                          PIPE_TRANSFER_READ,
-                                          x, y, w, h);
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
       if(transfer) {
          pipe_get_tile_z(pipe, transfer, 0, 0, w, h, z);
-         pipe->tex_transfer_destroy(pipe, transfer);
+         pipe->transfer_destroy(pipe, transfer);
       }
    }
 
@@ -574,16 +573,16 @@ error1:
    {
       struct pipe_context *pipe = $self->pipe;
       struct pipe_transfer *transfer;
-      transfer = pipe->get_tex_transfer(pipe,
-                                          surface->texture,
-                                          surface->face,
-                                          surface->level,
-                                          surface->zslice,
-                                          PIPE_TRANSFER_WRITE,
-                                          x, y, w, h);
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_WRITE,
+                                   x, y, w, h);
       if(transfer) {
          pipe_put_tile_z(pipe, transfer, 0, 0, w, h, z);
-         pipe->tex_transfer_destroy(pipe, transfer);
+         pipe->transfer_destroy(pipe, transfer);
       }
    }
 
@@ -611,20 +610,20 @@ error1:
       if(!rgba2)
          return ~0;
 
-      transfer = pipe->get_tex_transfer(pipe,
-                                          surface->texture,
-                                          surface->face,
-                                          surface->level,
-                                          surface->zslice,
-                                          PIPE_TRANSFER_READ,
-                                          x, y, w, h);
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
       if(!transfer) {
          FREE(rgba2);
          return ~0;
       }
 
       pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba2);
-      pipe->tex_transfer_destroy(pipe, transfer);
+      pipe->transfer_destroy(pipe, transfer);
 
       p1 = rgba;
       p2 = rgba2;

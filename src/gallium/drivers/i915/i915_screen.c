@@ -33,8 +33,8 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_screen.h"
-#include "i915_buffer.h"
-#include "i915_texture.h"
+#include "i915_surface.h"
+#include "i915_resource.h"
 #include "i915_winsys.h"
 
 
@@ -190,7 +190,7 @@ i915_is_format_supported(struct pipe_screen *screen,
    const enum pipe_format *list;
    uint i;
 
-   if(tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+   if(tex_usage & PIPE_BIND_RENDER_TARGET)
       list = surface_supported;
    else
       list = tex_supported;
@@ -308,8 +308,8 @@ i915_create_screen(struct i915_winsys *iws, uint pci_id)
    is->base.fence_signalled = i915_fence_signalled;
    is->base.fence_finish = i915_fence_finish;
 
-   i915_init_screen_texture_functions(is);
-   i915_init_screen_buffer_functions(is);
+   i915_init_screen_resource_functions(is);
+   i915_init_screen_surface_functions(is);
 
    return &is->base;
 }

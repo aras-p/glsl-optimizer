@@ -77,29 +77,13 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
       if (llvmpipe->constants[i]) {
-         pipe_buffer_reference(&llvmpipe->constants[i], NULL);
+         pipe_resource_reference(&llvmpipe->constants[i], NULL);
       }
    }
 
    align_free( llvmpipe );
 }
 
-static unsigned int
-llvmpipe_is_texture_referenced( struct pipe_context *pipe,
-				struct pipe_texture *texture,
-				unsigned face, unsigned level)
-{
-   struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
-
-   return lp_setup_is_texture_referenced(llvmpipe->setup, texture);
-}
-
-static unsigned int
-llvmpipe_is_buffer_referenced( struct pipe_context *pipe,
-			       struct pipe_buffer *buf)
-{
-   return PIPE_UNREFERENCED;
-}
 
 struct pipe_context *
 llvmpipe_create_context( struct pipe_screen *screen, void *priv )
@@ -171,11 +155,9 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = llvmpipe_flush;
 
-   llvmpipe->pipe.is_texture_referenced = llvmpipe_is_texture_referenced;
-   llvmpipe->pipe.is_buffer_referenced = llvmpipe_is_buffer_referenced;
 
    llvmpipe_init_query_funcs( llvmpipe );
-   llvmpipe_init_context_texture_funcs( &llvmpipe->pipe );
+   llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
 
    /*
     * Create drawing context and plug our rendering stage into it.

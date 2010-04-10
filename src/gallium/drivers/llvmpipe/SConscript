@@ -27,7 +27,6 @@ env.Depends('lp_tile_soa.c', [
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
-		'lp_buffer.c',
 		'lp_clear.c',
 		'lp_context.c',
 		'lp_draw_arrays.c',

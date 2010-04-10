@@ -374,7 +374,7 @@ default_deep_rgba_format(struct pipe_screen *screen,
    if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM, target, tex_usage, geom_flags)) {
       return PIPE_FORMAT_R16G16B16A16_SNORM;
    }
-   if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+   if (tex_usage & PIPE_BIND_RENDER_TARGET)
       return default_rgba_format(screen, target, tex_usage, geom_flags);
    else
       return PIPE_FORMAT_NONE;
@@ -410,8 +410,8 @@ default_depth_format(struct pipe_screen *screen,
  * Given an OpenGL internalFormat value for a texture or surface, return
  * the best matching PIPE_FORMAT_x, or PIPE_FORMAT_NONE if there's no match.
  * \param target  one of PIPE_TEXTURE_x
- * \param tex_usage  either PIPE_TEXTURE_USAGE_RENDER_TARGET
- *                   or PIPE_TEXTURE_USAGE_SAMPLER
+ * \param tex_usage  either PIPE_BIND_RENDER_TARGET
+ *                   or PIPE_BIND_SAMPLER_VIEW
  */
 enum pipe_format
 st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
@@ -432,7 +432,7 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_COMPRESSED_RGB:
       return default_rgb_format( screen, target, tex_usage, geom_flags );
    case GL_RGBA16:
-      if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+      if (tex_usage & PIPE_BIND_RENDER_TARGET)
          return default_deep_rgba_format( screen, target, tex_usage, geom_flags );
       else
          return default_rgba_format( screen, target, tex_usage, geom_flags );
@@ -645,9 +645,9 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
 {
    uint usage;
    if (is_depth_or_stencil_format(internalFormat))
-      usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+      usage = PIPE_BIND_DEPTH_STENCIL;
    else
-      usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+      usage = PIPE_BIND_RENDER_TARGET;
    return st_choose_format(screen, internalFormat, PIPE_TEXTURE_2D, usage);
 }
 
@@ -665,7 +665,7 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    (void) type;
 
    pFormat = st_choose_format(ctx->st->pipe->screen, internalFormat,
-                              PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER);
+                              PIPE_TEXTURE_2D, PIPE_BIND_SAMPLER_VIEW);
    if (pFormat == PIPE_FORMAT_NONE)
       return MESA_FORMAT_NONE;
 

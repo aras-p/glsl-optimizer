@@ -62,7 +62,7 @@ struct crtc_private
     drmModeCrtcPtr drm_crtc;
 
     /* hwcursor */
-    struct pipe_texture *cursor_tex;
+    struct pipe_resource *cursor_tex;
     struct kms_bo *cursor_bo;
 
     unsigned cursor_handle;
@@ -197,12 +197,12 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
     struct pipe_transfer *transfer;
 
     if (!crtcp->cursor_tex) {
-	struct pipe_texture templat;
+	struct pipe_resource templat;
 	struct winsys_handle whandle;
 
 	memset(&templat, 0, sizeof(templat));
-	templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
-	templat.tex_usage |= PIPE_TEXTURE_USAGE_SCANOUT;
+	templat.bind |= PIPE_BIND_RENDER_TARGET;
+	templat.bind |= PIPE_BIND_SCANOUT;
 	templat.target = PIPE_TEXTURE_2D;
 	templat.last_level = 0;
 	templat.depth0 = 1;
@@ -213,14 +213,14 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	memset(&whandle, 0, sizeof(whandle));
 	whandle.type = DRM_API_HANDLE_TYPE_KMS;
 
-	crtcp->cursor_tex = ms->screen->texture_create(ms->screen,
+	crtcp->cursor_tex = ms->screen->resource_create(ms->screen,
 						       &templat);
-	ms->screen->texture_get_handle(ms->screen, crtcp->cursor_tex, &whandle);
+	ms->screen->resource_get_handle(ms->screen, crtcp->cursor_tex, &whandle);
 
 	crtcp->cursor_handle = whandle.handle;
     }
 
-    transfer = ms->ctx->get_tex_transfer(ms->ctx, crtcp->cursor_tex,
+    transfer = pipe_get_transfer(ms->ctx, crtcp->cursor_tex,
                                          0, 0, 0,
                                          PIPE_TRANSFER_WRITE,
                                          0, 0, 64, 64);
@@ -229,7 +229,7 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 		   transfer->stride, 0, 0,
 		   64, 64, (void*)image, 64 * 4, 0, 0);
     ms->ctx->transfer_unmap(ms->ctx, transfer);
-    ms->ctx->tex_transfer_destroy(ms->ctx, transfer);
+    ms->ctx->transfer_destroy(ms->ctx, transfer);
 }
 
 #if HAVE_LIBKMS
@@ -329,7 +329,7 @@ xorg_crtc_cursor_destroy(xf86CrtcPtr crtc)
     struct crtc_private *crtcp = crtc->driver_private;
 
     if (crtcp->cursor_tex)
-	pipe_texture_reference(&crtcp->cursor_tex, NULL);
+	pipe_resource_reference(&crtcp->cursor_tex, NULL);
 #ifdef HAVE_LIBKMS
     if (crtcp->cursor_bo)
 	kms_bo_destroy(&crtcp->cursor_bo);

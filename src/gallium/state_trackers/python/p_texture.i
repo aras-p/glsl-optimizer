@@ -33,97 +33,144 @@
  */
 
 
-%nodefaultctor pipe_texture;
+%nodefaultctor pipe_resource;
 %nodefaultctor st_surface;
-%nodefaultctor pipe_buffer;
 
-%nodefaultdtor pipe_texture;
+%nodefaultdtor pipe_resource;
 %nodefaultdtor st_surface;
-%nodefaultdtor pipe_buffer;
 
-%ignore pipe_texture::screen;
+%ignore pipe_resource::screen;
 
 %immutable st_surface::texture;
 %immutable st_surface::face;
 %immutable st_surface::level;
 %immutable st_surface::zslice;
 
-%newobject pipe_texture::get_surface;
+%newobject pipe_resource::get_surface;
 
+/* Avoid naming conflict with p_inlines.h's pipe_buffer_read/write */ 
+%rename(read) read_; 
+%rename(write) write_; 
 
-%extend pipe_texture {
-   
-   ~pipe_texture() {
-      struct pipe_texture *ptr = $self;
-      pipe_texture_reference(&ptr, NULL);
+%extend pipe_resource {
+
+   ~pipe_resource() {
+      struct pipe_resource *ptr = $self;
+      pipe_resource_reference(&ptr, NULL);
    }
-   
+
    unsigned get_width(unsigned level=0) {
       return u_minify($self->width0, level);
    }
-   
+
    unsigned get_height(unsigned level=0) {
       return u_minify($self->height0, level);
    }
-   
+
    unsigned get_depth(unsigned level=0) {
       return u_minify($self->depth0, level);
    }
-  
+
    /** Get a surface which is a "view" into a texture */
    struct st_surface *
    get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0)
    {
       struct st_surface *surface;
-      
+
       if(face >= ($self->target == PIPE_TEXTURE_CUBE ? 6U : 1U))
          SWIG_exception(SWIG_ValueError, "face out of bounds");
       if(level > $self->last_level)
          SWIG_exception(SWIG_ValueError, "level out of bounds");
       if(zslice >= u_minify($self->depth0, level))
          SWIG_exception(SWIG_ValueError, "zslice out of bounds");
-      
+
       surface = CALLOC_STRUCT(st_surface);
       if(!surface)
          return NULL;
-      
-      pipe_texture_reference(&surface->texture, $self);
+
+      pipe_resource_reference(&surface->texture, $self);
       surface->face = face;
       surface->level = level;
       surface->zslice = zslice;
-      
+
       return surface;
 
    fail:
       return NULL;
    }
-   
+
+   unsigned __len__(void) 
+   {
+      assert($self->target == PIPE_BUFFER);
+      assert(p_atomic_read(&$self->reference.count) > 0);
+      return $self->width0;
+   }
+
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
+   void read_(char **STRING, int *LENGTH)
+   {
+      struct pipe_screen *screen = $self->screen;
+      /* XXX need context here not screen */
+
+      assert($self->target == PIPE_BUFFER);
+      assert(p_atomic_read(&$self->reference.count) > 0);
+
+      *LENGTH = $self->width0;
+      *STRING = (char *) malloc($self->width0);
+      if(!*STRING)
+         return;
+
+      pipe_buffer_read(screen, $self, 0, $self->width0, *STRING);
+   }
+
+   %cstring_input_binary(const char *STRING, unsigned LENGTH);
+   void write_(const char *STRING, unsigned LENGTH, unsigned offset = 0) 
+   {
+      struct pipe_screen *screen = $self->screen;
+      /* XXX need context here not screen */
+
+      assert($self->target == PIPE_BUFFER);
+      assert(p_atomic_read(&$self->reference.count) > 0);
+
+      if(offset > $self->width0)
+         SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
+
+      if(offset + LENGTH > $self->width0)
+         SWIG_exception(SWIG_ValueError, "data length must fit inside the buffer");
+
+      pipe_buffer_write(screen, $self, offset, LENGTH, STRING);
+
+fail:
+      return;
+   }
+
+
 };
 
 struct st_surface
 {
    %immutable;
-   
-   struct pipe_texture *texture;
+
+   struct pipe_resource *texture;
    unsigned face;
    unsigned level;
    unsigned zslice;
-   
+
 };
 
 %extend st_surface {
-   
+
    %immutable;
-   
+
    unsigned format;
    unsigned width;
    unsigned height;
-   
+
    ~st_surface() {
-      pipe_texture_reference(&$self->texture, NULL);
+      pipe_resource_reference(&$self->texture, NULL);
       FREE($self);
    }
-   
+
 
 };
 
@@ -146,55 +193,3 @@ struct st_surface
       return u_minify(surface->texture->height0, surface->level);
    }
 %}
-
-/* Avoid naming conflict with p_inlines.h's pipe_buffer_read/write */ 
-%rename(read) read_; 
-%rename(write) write_; 
-
-%extend pipe_buffer {
-   
-   ~pipe_buffer() {
-      struct pipe_buffer *ptr = $self;
-      pipe_buffer_reference(&ptr, NULL);
-   }
-   
-   unsigned __len__(void) 
-   {
-      assert(p_atomic_read(&$self->reference.count) > 0);
-      return $self->size;
-   }
-   
-   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
-   void read_(char **STRING, int *LENGTH)
-   {
-      struct pipe_screen *screen = $self->screen;
-      
-      assert(p_atomic_read(&$self->reference.count) > 0);
-      
-      *LENGTH = $self->size;
-      *STRING = (char *) malloc($self->size);
-      if(!*STRING)
-         return;
-      
-      pipe_buffer_read(screen, $self, 0, $self->size, *STRING);
-   }
-   
-   %cstring_input_binary(const char *STRING, unsigned LENGTH);
-   void write_(const char *STRING, unsigned LENGTH, unsigned offset = 0) 
-   {
-      struct pipe_screen *screen = $self->screen;
-      
-      assert(p_atomic_read(&$self->reference.count) > 0);
-      
-      if(offset > $self->size)
-         SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
-
-      if(offset + LENGTH > $self->size)
-         SWIG_exception(SWIG_ValueError, "data length must fit inside the buffer");
-
-      pipe_buffer_write(screen, $self, offset, LENGTH, STRING);
-
-fail:
-      return;
-   }
-};

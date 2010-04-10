@@ -40,7 +40,7 @@ struct st_winsys;
 
 struct st_surface
 {
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    unsigned face;
    unsigned level;
    unsigned zslice;
@@ -59,7 +59,7 @@ struct st_context
    void *fs;
    void *gs;
 
-   struct pipe_texture *default_texture;
+   struct pipe_resource *default_texture;
    struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
    
@@ -85,7 +85,7 @@ struct st_device
 static INLINE struct pipe_surface *
 st_pipe_surface(struct st_surface *surface, unsigned usage) 
 {
-   struct pipe_texture *texture = surface->texture;
+   struct pipe_resource *texture = surface->texture;
    struct pipe_screen *screen = texture->screen;
    return screen->get_tex_surface(screen, texture, surface->face, surface->level, surface->zslice, usage);
 }

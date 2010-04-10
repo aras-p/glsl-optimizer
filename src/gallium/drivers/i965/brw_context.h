@@ -561,8 +561,8 @@ struct brw_context
       struct pipe_stencil_ref stencil_ref;
       struct pipe_framebuffer_state fb;
       struct pipe_clip_state ucp;
-      struct pipe_buffer *vertex_constants;
-      struct pipe_buffer *fragment_constants;
+      struct pipe_resource *vertex_constants;
+      struct pipe_resource *fragment_constants;
 
       struct brw_blend_constant_color bcc;
       struct brw_cc1 cc1_stencil_ref;
@@ -574,7 +574,7 @@ struct brw_context
        *
        * Updates are signaled by PIPE_NEW_INDEX_BUFFER.
        */
-      struct pipe_buffer *index_buffer;
+      struct pipe_resource *index_buffer;
       unsigned index_size;
 
       /* Updates are signalled by PIPE_NEW_INDEX_RANGE:

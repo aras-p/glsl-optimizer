@@ -35,7 +35,7 @@
 #include "main/mtypes.h"
 
 struct pipe_context;
-struct pipe_texture;
+struct pipe_resource;
 
 
 struct st_texture_image
@@ -51,7 +51,7 @@ struct st_texture_image
     * Else if stImage->base.Data != NULL, image is stored there.
     * Else there is no image data.
     */
-   struct pipe_texture *pt;
+   struct pipe_resource *pt;
 
    struct pipe_transfer *transfer;
 };
@@ -69,7 +69,7 @@ struct st_texture_object
    /* On validation any active images held in main memory or in other
     * textures will be copied to this texture and the old storage freed.
     */
-   struct pipe_texture *pt;
+   struct pipe_resource *pt;
 
    /* Default sampler view attached to this texture object. Created lazily
     * on first binding.
@@ -100,7 +100,7 @@ st_texture_object(struct gl_texture_object *obj)
 }
 
 
-static INLINE struct pipe_texture *
+static INLINE struct pipe_resource *
 st_get_texobj_texture(struct gl_texture_object *texObj)
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
@@ -108,7 +108,7 @@ st_get_texobj_texture(struct gl_texture_object *texObj)
 }
 
 
-static INLINE struct pipe_texture *
+static INLINE struct pipe_resource *
 st_get_stobj_texture(struct st_texture_object *stObj)
 {
    return stObj ? stObj->pt : NULL;
@@ -117,7 +117,7 @@ st_get_stobj_texture(struct st_texture_object *stObj)
 
 static INLINE struct pipe_sampler_view *
 st_sampler_view_from_texture(struct pipe_context *pipe,
-                             struct pipe_texture *texture)
+                             struct pipe_resource *texture)
 {
    struct pipe_sampler_view templ;
 
@@ -144,7 +144,7 @@ st_get_stobj_sampler_view(struct st_texture_object *stObj)
 }
 
 
-extern struct pipe_texture *
+extern struct pipe_resource *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,
 		  enum pipe_format format,
@@ -158,7 +158,7 @@ st_texture_create(struct st_context *st,
 /* Check if an image fits into an existing texture object.
  */
 extern GLboolean
-st_texture_match_image(const struct pipe_texture *pt,
+st_texture_match_image(const struct pipe_resource *pt,
                        const struct gl_texture_image *image,
                        GLuint face, GLuint level);
 
@@ -182,17 +182,17 @@ st_texture_image_unmap(struct st_context *st,
  * value.
  */
 extern const GLuint *
-st_texture_depth_offsets(struct pipe_texture *pt, GLuint level);
+st_texture_depth_offsets(struct pipe_resource *pt, GLuint level);
 
 
 /* Return the linear offset of an image relative to the start of its region.
  */
 extern GLuint
-st_texture_image_offset(const struct pipe_texture *pt,
+st_texture_image_offset(const struct pipe_resource *pt,
                         GLuint face, GLuint level);
 
 extern GLuint
-st_texture_texel_offset(const struct pipe_texture * pt,
+st_texture_texel_offset(const struct pipe_resource * pt,
                         GLuint face, GLuint level,
                         GLuint col, GLuint row, GLuint img);
 
@@ -201,7 +201,7 @@ st_texture_texel_offset(const struct pipe_texture * pt,
  */
 extern void
 st_texture_image_data(struct st_context *st,
-                      struct pipe_texture *dst,
+                      struct pipe_resource *dst,
                       GLuint face, GLuint level, void *src,
                       GLuint src_row_pitch, GLuint src_image_pitch);
 
@@ -210,13 +210,13 @@ st_texture_image_data(struct st_context *st,
  */
 extern void
 st_texture_image_copy(struct pipe_context *pipe,
-                      struct pipe_texture *dst, GLuint dstLevel,
-                      struct pipe_texture *src,
+                      struct pipe_resource *dst, GLuint dstLevel,
+                      struct pipe_resource *src,
                       GLuint face);
 
 extern void
 st_teximage_flush_before_map(struct st_context *st,
-			     struct pipe_texture *pt,
+			     struct pipe_resource *pt,
 			     unsigned int face,
 			     unsigned int level,
 			     enum pipe_transfer_usage usage);

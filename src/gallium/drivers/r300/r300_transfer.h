@@ -28,6 +28,24 @@
 
 struct r300_context;
 
-void r300_init_transfer_functions(struct r300_context *r300ctx);
+struct pipe_transfer*
+r300_texture_get_transfer(struct pipe_context *ctx,
+			  struct pipe_resource *texture,
+			  struct pipe_subresource sr,
+			  unsigned usage,
+			  const struct pipe_box *box);
+
+void
+r300_texture_transfer_destroy(struct pipe_context *ctx,
+			      struct pipe_transfer *trans);
+
+void*
+r300_texture_transfer_map(struct pipe_context *ctx,
+			  struct pipe_transfer *transfer);
+
+void
+r300_texture_transfer_unmap(struct pipe_context *ctx,
+			    struct pipe_transfer *transfer);
+
 
 #endif

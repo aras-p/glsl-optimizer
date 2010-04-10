@@ -170,7 +170,7 @@ void llvmpipe_set_clip_state( struct pipe_context *,
 
 void llvmpipe_set_constant_buffer(struct pipe_context *,
                                   uint shader, uint index,
-                                  struct pipe_buffer *buf);
+                                  struct pipe_resource *buf);
 
 void *llvmpipe_create_fs_state(struct pipe_context *,
                                const struct pipe_shader_state *);
@@ -204,7 +204,7 @@ llvmpipe_set_vertex_sampler_views(struct pipe_context *,
 
 struct pipe_sampler_view *
 llvmpipe_create_sampler_view(struct pipe_context *pipe,
-                            struct pipe_texture *texture,
+                            struct pipe_resource *texture,
                             const struct pipe_sampler_view *templ);
 
 void
@@ -227,12 +227,12 @@ void llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 			     unsigned start, unsigned count);
 
 void llvmpipe_draw_elements(struct pipe_context *pipe,
-			       struct pipe_buffer *indexBuffer,
+			       struct pipe_resource *indexBuffer,
 			       unsigned indexSize,
 			       unsigned mode, unsigned start, unsigned count);
 void
 llvmpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_buffer *indexBuffer,
+                             struct pipe_resource *indexBuffer,
                              unsigned indexSize,
                              unsigned min_index,
                              unsigned max_index,

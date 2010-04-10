@@ -240,7 +240,7 @@ static void st_destroy_context_priv( struct st_context *st )
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i]) {
-         pipe_buffer_reference(&st->state.constants[i], NULL);
+         pipe_resource_reference(&st->state.constants[i], NULL);
       }
    }
 

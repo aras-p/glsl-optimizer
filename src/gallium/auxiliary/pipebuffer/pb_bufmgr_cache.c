@@ -242,7 +242,7 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
    if(!pb_check_usage(desc->usage, buf->base.base.usage))
       return FALSE;
 
-   map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_DONTBLOCK);
+   map = pb_map(buf->buffer, PB_USAGE_DONTBLOCK);
    if (!map) {
       return FALSE;
    }

@@ -52,9 +52,8 @@ struct lp_shader_input {
    unsigned src_index;          /* where to find values in incoming vertices */
 };
 
-struct pipe_texture;
+struct pipe_resource;
 struct pipe_surface;
-struct pipe_buffer;
 struct pipe_blend_color;
 struct pipe_screen;
 struct pipe_framebuffer_state;
@@ -105,7 +104,7 @@ lp_setup_set_fs_functions( struct lp_setup_context *setup,
 
 void
 lp_setup_set_fs_constants(struct lp_setup_context *setup,
-                          struct pipe_buffer *buffer);
+                          struct pipe_resource *buffer);
 
 
 void
@@ -130,8 +129,8 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                     struct pipe_sampler_view **views);
 
 unsigned
-lp_setup_is_texture_referenced( const struct lp_setup_context *setup,
-                                const struct pipe_texture *texture );
+lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
+                                const struct pipe_resource *texture );
 
 void
 lp_setup_set_flatshade_first( struct lp_setup_context *setup, 

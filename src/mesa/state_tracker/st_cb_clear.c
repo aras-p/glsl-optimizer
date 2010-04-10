@@ -99,7 +99,7 @@ st_destroy_clear(struct st_context *st)
       st->clear.vs = NULL;
    }
    if (st->clear.vbuf) {
-      pipe_buffer_reference(&st->clear.vbuf, NULL);
+      pipe_resource_reference(&st->clear.vbuf, NULL);
       st->clear.vbuf = NULL;
    }
 }
@@ -131,13 +131,13 @@ draw_quad(GLcontext *ctx,
    GLuint i;
 
    if (st->clear.vbuf_slot >= max_slots) {
-      pipe_buffer_reference(&st->clear.vbuf, NULL);
+      pipe_resource_reference(&st->clear.vbuf, NULL);
       st->clear.vbuf_slot = 0;
    }
 
    if (!st->clear.vbuf) {
-      st->clear.vbuf = pipe_buffer_create(pipe->screen, 32,
-                                          PIPE_BUFFER_USAGE_VERTEX,
+      st->clear.vbuf = pipe_buffer_create(pipe->screen,
+                                          PIPE_BIND_VERTEX_BUFFER,
                                           max_slots * sizeof(st->clear.vertices));
    }
 
@@ -435,7 +435,7 @@ st_flush_clear(struct st_context *st)
    /* Release vertex buffer to avoid synchronous rendering if we were
     * to map it in the next frame.
     */
-   pipe_buffer_reference(&st->clear.vbuf, NULL);
+   pipe_resource_reference(&st->clear.vbuf, NULL);
    st->clear.vbuf_slot = 0;
 }
  

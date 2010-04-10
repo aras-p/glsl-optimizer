@@ -75,7 +75,7 @@ struct pstip_stage
    struct draw_stage stage;
 
    void *sampler_cso;
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    struct pipe_sampler_view *sampler_view;
    uint num_samplers;
    uint num_sampler_views;
@@ -389,8 +389,8 @@ pstip_update_texture(struct pstip_stage *pstip)
     */
    pipe->flush( pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL );
 
-   transfer = pipe->get_tex_transfer(pipe, pstip->texture, 0, 0, 0,
-				     PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
+   transfer = pipe_get_transfer(pipe, pstip->texture, 0, 0, 0,
+				    PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
    data = pipe->transfer_map(pipe, transfer);
 
    /*
@@ -414,7 +414,7 @@ pstip_update_texture(struct pstip_stage *pstip)
 
    /* unmap */
    pipe->transfer_unmap(pipe, transfer);
-   pipe->tex_transfer_destroy(pipe, transfer);
+   pipe->transfer_destroy(pipe, transfer);
 }
 
 
@@ -426,7 +426,7 @@ pstip_create_texture(struct pstip_stage *pstip)
 {
    struct pipe_context *pipe = pstip->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture texTemp;
+   struct pipe_resource texTemp;
    struct pipe_sampler_view viewTempl;
 
    memset(&texTemp, 0, sizeof(texTemp));
@@ -437,7 +437,7 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.height0 = 32;
    texTemp.depth0 = 1;
 
-   pstip->texture = screen->texture_create(screen, &texTemp);
+   pstip->texture = screen->resource_create(screen, &texTemp);
    if (pstip->texture == NULL)
       return FALSE;
 
@@ -591,7 +591,7 @@ pstip_destroy(struct draw_stage *stage)
 
    pstip->pipe->delete_sampler_state(pstip->pipe, pstip->sampler_cso);
 
-   pipe_texture_reference(&pstip->texture, NULL);
+   pipe_resource_reference(&pstip->texture, NULL);
 
    if (pstip->sampler_view) {
       pipe_sampler_view_reference(&pstip->sampler_view, NULL);

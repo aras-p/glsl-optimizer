@@ -33,7 +33,6 @@
 #include "pipe/p_screen.h"
 
 #include "lp_texture.h"
-#include "lp_buffer.h"
 #include "lp_fence.h"
 #include "lp_jit.h"
 #include "lp_screen.h"
@@ -192,7 +191,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       break;
    }
 
-   if(tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
+   if(tex_usage & PIPE_BIND_RENDER_TARGET) {
       if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
@@ -205,14 +204,14 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          return FALSE;
    }
 
-   if(tex_usage & (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                   PIPE_TEXTURE_USAGE_SCANOUT |
-                   PIPE_TEXTURE_USAGE_SHARED)) {
+   if(tex_usage & (PIPE_BIND_DISPLAY_TARGET |
+                   PIPE_BIND_SCANOUT |
+                   PIPE_BIND_SHARED)) {
       if(!winsys->is_displaytarget_format_supported(winsys, tex_usage, format))
          return FALSE;
    }
 
-   if(tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL) {
+   if(tex_usage & PIPE_BIND_DEPTH_STENCIL) {
       if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
          return FALSE;
 
@@ -234,7 +233,7 @@ llvmpipe_flush_frontbuffer(struct pipe_screen *_screen,
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    struct sw_winsys *winsys = screen->winsys;
-   struct llvmpipe_texture *texture = llvmpipe_texture(surface->texture);
+   struct llvmpipe_resource *texture = llvmpipe_resource(surface->texture);
 
    assert(texture->dt);
    if (texture->dt)
@@ -289,8 +288,7 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
 
    util_format_s3tc_init();
 
-   llvmpipe_init_screen_texture_funcs(&screen->base);
-   llvmpipe_init_screen_buffer_funcs(&screen->base);
+   llvmpipe_init_screen_resource_funcs(&screen->base);
    llvmpipe_init_screen_fence_funcs(&screen->base);
 
    lp_jit_screen_init(screen);

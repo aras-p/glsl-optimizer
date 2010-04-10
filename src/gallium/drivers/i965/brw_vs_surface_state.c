@@ -82,7 +82,7 @@ brw_update_vs_constant_surface( struct brw_context *brw,
                                 GLuint surf)
 {
    struct brw_surface_key key;
-   struct pipe_buffer *cb = brw->curr.vs_constants;
+   struct pipe_resource *cb = brw->curr.vs_constants;
    enum pipe_error ret;
 
    assert(surf == 0);

@@ -99,8 +99,8 @@ static const struct debug_named_value cell_debug_flags[] = {
 };
 
 static unsigned int
-cell_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
+cell_is_resource_referenced( struct pipe_context *pipe,
+			    struct pipe_resource *texture,
 			    unsigned face, unsigned level)
 {
    /**
@@ -110,16 +110,6 @@ cell_is_texture_referenced( struct pipe_context *pipe,
    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
-static unsigned int
-cell_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
 
 struct pipe_context *
 cell_create_context(struct pipe_screen *screen,
@@ -144,8 +134,7 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.clear = cell_clear;
    cell->pipe.flush = cell_flush;
 
-   cell->pipe.is_texture_referenced = cell_is_texture_referenced;
-   cell->pipe.is_buffer_referenced = cell_is_buffer_referenced;
+   cell->pipe.is_resource_referenced = cell_is_resource_referenced;
 
 #if 0
    cell->pipe.begin_query = cell_begin_query;

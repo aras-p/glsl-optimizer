@@ -3,7 +3,9 @@ include $(TOP)/configs/current
 
 LIBNAME = nouveau
 
-C_SOURCES = nouveau_screen.c \
-	    nouveau_context.c
+LIBRARY_INCLUDES = \
+	-I$(TOP)/src/gallium/drivers/nouveau/include
+
+C_SOURCES = nouveau_screen.c 
 
 include ../../Makefile.template

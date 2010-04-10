@@ -546,22 +546,22 @@ st_sample_surface(struct pipe_context *pipe,
                   float *rgba,
                   boolean norm)
 {
-   struct pipe_texture *texture = surface->texture;
+   struct pipe_resource *texture = surface->texture;
    unsigned width = u_minify(texture->width0, surface->level);
    unsigned height = u_minify(texture->height0, surface->level);
    uint rgba_stride = width * 4;
    struct pipe_transfer *transfer;
    void *raw;
 
-   transfer = pipe->get_tex_transfer(pipe,
-                                     surface->texture,
-                                     surface->face,
-                                     surface->level,
-                                     surface->zslice,
-                                     PIPE_TRANSFER_WRITE,
-                                     0, 0,
-                                     width,
-                                     height);
+   transfer = pipe_get_transfer(pipe,
+                                surface->texture,
+                                surface->face,
+                                surface->level,
+                                surface->zslice,
+                                PIPE_TRANSFER_WRITE,
+                                0, 0,
+                                width,
+                                height);
    if (!transfer)
       return;
 
@@ -590,6 +590,6 @@ st_sample_surface(struct pipe_context *pipe,
 
       pipe->transfer_unmap(pipe, transfer);
    }
-   
-   pipe->tex_transfer_destroy(pipe, transfer);
+
+   pipe->transfer_destroy(pipe, transfer);
 }

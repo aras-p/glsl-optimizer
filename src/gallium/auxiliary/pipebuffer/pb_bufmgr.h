@@ -60,7 +60,6 @@ extern "C" {
 
 
 struct pb_desc;
-struct pipe_buffer;
 
 
 /** 

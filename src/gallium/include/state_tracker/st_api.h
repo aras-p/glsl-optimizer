@@ -119,7 +119,7 @@ enum st_context_resource_type {
 typedef void (*st_proc_t)(void);
 
 struct pipe_context;
-struct pipe_texture;
+struct pipe_resource;
 struct pipe_fence_handle;
 
 /**
@@ -132,7 +132,7 @@ struct st_context_resource
    void *resource;
 
    /* this is owned by the caller */
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
 };
 
 /**
@@ -145,7 +145,7 @@ struct st_egl_image
    void *egl_image;
 
    /* this is owned by the caller */
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
 
    unsigned face;
    unsigned level;
@@ -239,7 +239,7 @@ struct st_framebuffer_iface
    boolean (*validate)(struct st_framebuffer_iface *stfbi,
                        const enum st_attachment_type *statts,
                        unsigned count,
-                       struct pipe_texture **out);
+                       struct pipe_resource **out);
 };
 
 /**
@@ -292,7 +292,7 @@ struct st_context_iface
     */
    boolean (*teximage)(struct st_context_iface *stctxi, enum st_texture_type target,
                        int level, enum pipe_format internal_format,
-                       struct pipe_texture *tex, boolean mipmap);
+                       struct pipe_resource *tex, boolean mipmap);
 
    /**
     * Used to implement glXCopyContext.

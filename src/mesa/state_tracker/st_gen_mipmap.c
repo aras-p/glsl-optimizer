@@ -91,7 +91,7 @@ st_render_mipmap(struct st_context *st,
 
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
-                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
+                                    PIPE_BIND_RENDER_TARGET, 0)) {
       return FALSE;
    }
 
@@ -107,7 +107,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                          struct gl_texture_object *texObj)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_texture *pt = st_get_texobj_texture(texObj);
+   struct pipe_resource *pt = st_get_texobj_texture(texObj);
    const uint baseLevel = texObj->BaseLevel;
    const uint lastLevel = pt->last_level;
    const uint face = _mesa_tex_target_to_face(target), zslice = 0;
@@ -142,11 +142,11 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
 						u_minify(pt->width0, dstLevel),
 						u_minify(pt->height0, dstLevel));
 
-      srcData = (ubyte *) pipe->transfer_map(pipe, srcTrans);
-      dstData = (ubyte *) pipe->transfer_map(pipe, dstTrans);
+      srcData = (ubyte *) pipe_transfer_map(pipe, srcTrans);
+      dstData = (ubyte *) pipe_transfer_map(pipe, dstTrans);
 
-      srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->texture->format);
-      dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->texture->format);
+      srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->resource->format);
+      dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->resource->format);
 
       _mesa_generate_mipmap_level(target, datatype, comps,
                                   0 /*border*/,
@@ -161,11 +161,11 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                                   dstData,
                                   dstStride); /* stride in texels */
 
-      pipe->transfer_unmap(pipe, srcTrans);
-      pipe->transfer_unmap(pipe, dstTrans);
+      pipe_transfer_unmap(pipe, srcTrans);
+      pipe_transfer_unmap(pipe, dstTrans);
 
-      pipe->tex_transfer_destroy(pipe, srcTrans);
-      pipe->tex_transfer_destroy(pipe, dstTrans);
+      pipe->transfer_destroy(pipe, srcTrans);
+      pipe->transfer_destroy(pipe, dstTrans);
    }
 }
 
@@ -213,7 +213,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
 {
    struct st_context *st = ctx->st;
    struct st_texture_object *stObj = st_texture_object(texObj);
-   struct pipe_texture *pt = st_get_texobj_texture(texObj);
+   struct pipe_resource *pt = st_get_texobj_texture(texObj);
    const uint baseLevel = texObj->BaseLevel;
    uint lastLevel;
    uint dstLevel;
@@ -231,7 +231,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       /* The current gallium texture doesn't have space for all the
        * mipmap levels we need to generate.  So allocate a new texture.
        */
-      struct pipe_texture *oldTex = stObj->pt;
+      struct pipe_resource *oldTex = stObj->pt;
       GLboolean needFlush;
 
       /* create new texture with space for more levels */
@@ -242,7 +242,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
                                     oldTex->width0,
                                     oldTex->height0,
                                     oldTex->depth0,
-                                    oldTex->tex_usage);
+                                    oldTex->bind);
 
       /* The texture isn't in a "complete" state yet so set the expected
        * lastLevel here, since it won't get done in st_finalize_texture().
@@ -255,7 +255,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       st_finalize_texture(ctx, st->pipe, texObj, &needFlush);
 
       /* release the old tex (will likely be freed too) */
-      pipe_texture_reference(&oldTex, NULL);
+      pipe_resource_reference(&oldTex, NULL);
       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
       pt = stObj->pt;
@@ -299,6 +299,6 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       dstImage->TexFormat = srcImage->TexFormat;
 
       stImage = (struct st_texture_image *) dstImage;
-      pipe_texture_reference(&stImage->pt, pt);
+      pipe_resource_reference(&stImage->pt, pt);
    }
 }

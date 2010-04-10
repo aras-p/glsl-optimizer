@@ -145,7 +145,7 @@ static const float * get_shader_constant(
     struct r300_viewport_state* viewport = r300->viewport_state.state;
     struct r300_textures_state* texstate = r300->textures_state.state;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
-    struct pipe_texture *tex;
+    struct pipe_resource *tex;
 
     switch(constant->Type) {
         case RC_CONSTANT_EXTERNAL:
@@ -973,7 +973,7 @@ void r300_emit_texture_cache_inval(struct r300_context* r300, unsigned size, voi
 
 void r300_emit_buffer_validate(struct r300_context *r300,
                                boolean do_validate_vertex_buffers,
-                               struct pipe_buffer *index_buffer)
+                               struct pipe_resource *index_buffer)
 {
     struct pipe_framebuffer_state* fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
@@ -982,7 +982,7 @@ void r300_emit_buffer_validate(struct r300_context *r300,
     struct r300_texture* tex;
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
-    struct pipe_buffer *pbuf;
+    struct pipe_resource *pbuf;
     unsigned i;
     boolean invalid = FALSE;
 

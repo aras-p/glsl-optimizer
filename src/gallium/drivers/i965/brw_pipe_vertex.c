@@ -259,11 +259,11 @@ static void brw_set_vertex_buffers(struct pipe_context *pipe,
 
    /* Adjust refcounts */
    for (i = 0; i < count; i++) 
-      pipe_buffer_reference(&brw->curr.vertex_buffer[i].buffer, 
+      pipe_resource_reference(&brw->curr.vertex_buffer[i].buffer, 
                             buffers[i].buffer);
 
    for ( ; i < brw->curr.num_vertex_buffers; i++)
-      pipe_buffer_reference(&brw->curr.vertex_buffer[i].buffer,
+      pipe_resource_reference(&brw->curr.vertex_buffer[i].buffer,
                             NULL);
 
    /* Copy remaining data */

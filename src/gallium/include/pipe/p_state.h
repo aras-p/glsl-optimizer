@@ -71,19 +71,6 @@ struct pipe_reference
 };
 
 
-/**
- * The driver will certainly subclass this to include actual memory
- * management information.
- */
-struct pipe_buffer
-{
-   struct pipe_reference  reference;
-   unsigned               size;
-   struct pipe_screen    *screen;
-   unsigned               alignment;
-   unsigned               usage;
-};
-
 
 /**
  * Primitive (point/line/tri) rasterization info
@@ -285,18 +272,23 @@ struct pipe_sampler_state
 struct pipe_surface
 {
    struct pipe_reference reference;
+   struct pipe_resource *texture; /**< resource into which this is a view  */
    enum pipe_format format;
+
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
+
    unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
    unsigned offset;              /**< offset from start of buffer, in bytes */
-   unsigned usage;               /**< bitmask of PIPE_BUFFER_USAGE_x */
+   unsigned usage;               /**< bitmask of PIPE_BIND_x */
 
    unsigned zslice;
-   struct pipe_texture *texture; /**< texture into which this is a view  */
    unsigned face;
    unsigned level;
 };
+
+
+
 
 
 /**
@@ -306,7 +298,7 @@ struct pipe_sampler_view
 {
    struct pipe_reference reference;
    enum pipe_format format;      /**< typed PIPE_FORMAT_x */
-   struct pipe_texture *texture; /**< texture into which this is a view  */
+   struct pipe_resource *texture; /**< texture into which this is a view  */
    struct pipe_context *context; /**< context this view belongs to */
    unsigned first_level:8;       /**< first mipmap level */
    unsigned last_level:8;        /**< last mipmap level */
@@ -317,32 +309,22 @@ struct pipe_sampler_view
 };
 
 
-/**
- * Transfer object.  For data transfer to/from a texture.
- */
-struct pipe_transfer
+struct pipe_box
 {
-   unsigned x;                   /**< x offset from start of texture image */
-   unsigned y;                   /**< y offset from start of texture image */
-   unsigned width;               /**< logical width in pixels */
-   unsigned height;              /**< logical height in pixels */
-   unsigned stride;              /**< stride in bytes between rows of blocks */
-   enum pipe_transfer_usage usage; /**< PIPE_TRANSFER_*  */
-
-   struct pipe_texture *texture; /**< texture to transfer to/from  */
-   unsigned face;
-   unsigned level;
-   unsigned zslice;
+   unsigned x;
+   unsigned y;
+   unsigned z;
+   unsigned width;
+   unsigned height;
+   unsigned depth;
 };
 
 
-/**
- * Texture object.
- */
-struct pipe_texture
-{ 
-   struct pipe_reference reference;
 
+struct pipe_resource
+{
+   struct pipe_reference reference;
+   struct pipe_screen *screen; /**< screen that this texture belongs to */
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
@@ -351,13 +333,35 @@ struct pipe_texture
    unsigned depth0;
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
-
    unsigned nr_samples:8;    /**< for multisampled surfaces, nr of samples */
+   unsigned _usage:8;	       /* PIPE_USAGE_x (not a bitmask) */
 
-   unsigned tex_usage;       /**< bitmask of PIPE_TEXTURE_USAGE_* */
-
-   struct pipe_screen *screen; /**< screen that this texture belongs to */
+   unsigned bind;	       /* PIPE_BIND_x */
+   unsigned flags;	       /* PIPE_RESOURCE_FLAG_x */
 };
+
+
+struct pipe_subresource
+{
+   unsigned face:16;
+   unsigned level:16;
+};
+
+
+/**
+ * Transfer object.  For data transfer to/from a texture.
+ */
+struct pipe_transfer
+{
+   struct pipe_resource *resource; /**< resource to transfer to/from  */
+   struct pipe_subresource sr;
+   enum pipe_transfer_usage usage;
+   struct pipe_box box;
+   unsigned stride;
+   unsigned slice_stride;
+   void *data;
+};
+
 
 
 /**
@@ -370,7 +374,7 @@ struct pipe_vertex_buffer
    unsigned stride;    /**< stride to same attrib in next vertex, in bytes */
    unsigned max_index;   /**< number of vertices in this buffer */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
-   struct pipe_buffer *buffer;  /**< the actual buffer */
+   struct pipe_resource *buffer;  /**< the actual buffer */
 };
 
 

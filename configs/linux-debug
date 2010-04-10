@@ -5,5 +5,5 @@ include $(TOP)/configs/linux
 CONFIG_NAME = linux-debug
 
 OPT_FLAGS = -g
-CFLAGS += -pedantic
+#CFLAGS += -pedantic
 DEFINES += -DDEBUG -DDEBUG_MATH

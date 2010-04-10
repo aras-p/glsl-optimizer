@@ -35,7 +35,7 @@
 struct vg_paint;
 struct vg_image;
 struct pipe_sampler_state;
-struct pipe_texture;
+struct pipe_resource;
 
 struct vg_paint *paint_create(struct vg_context *ctx);
 void paint_destroy(struct vg_paint *paint);

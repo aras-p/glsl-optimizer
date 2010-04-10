@@ -117,7 +117,7 @@ softpipe_destroy( struct pipe_context *pipe )
 
       for (j = 0; j < PIPE_MAX_CONSTANT_BUFFERS; j++) {
          if (softpipe->constants[i][j]) {
-            pipe_buffer_reference(&softpipe->constants[i][j], NULL);
+            pipe_resource_reference(&softpipe->constants[i][j], NULL);
          }
       }
    }
@@ -135,13 +135,16 @@ softpipe_destroy( struct pipe_context *pipe )
  *    return PIPE_UNREFERENCED
  */
 static unsigned int
-softpipe_is_texture_referenced( struct pipe_context *pipe,
-				struct pipe_texture *texture,
+softpipe_is_resource_referenced( struct pipe_context *pipe,
+				struct pipe_resource *texture,
 				unsigned face, unsigned level)
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
    unsigned i;
 
+   if (texture->target == PIPE_BUFFER)
+      return PIPE_UNREFERENCED;
+   
    /* check if any of the bound drawing surfaces are this texture */
    if (softpipe->dirty_render_cache) {
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
@@ -172,12 +175,6 @@ softpipe_is_texture_referenced( struct pipe_context *pipe,
 }
 
 
-static unsigned int
-softpipe_is_buffer_referenced( struct pipe_context *pipe,
-			       struct pipe_buffer *buf)
-{
-   return PIPE_UNREFERENCED;
-}
 
 
 static void
@@ -274,8 +271,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
 
-   softpipe->pipe.is_texture_referenced = softpipe_is_texture_referenced;
-   softpipe->pipe.is_buffer_referenced = softpipe_is_buffer_referenced;
+   softpipe->pipe.is_resource_referenced = softpipe_is_resource_referenced;
 
    softpipe_init_query_funcs( softpipe );
    softpipe_init_texture_funcs( &softpipe->pipe );

@@ -218,7 +218,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     }
 
     /* Check sampler format support. */
-    if ((usage & PIPE_TEXTURE_USAGE_SAMPLER) &&
+    if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
         /* Z24 cannot be sampled from on non-r5xx. */
         (is_r500 || !is_z24) &&
         /* ATI1N is r5xx-only. */
@@ -226,28 +226,28 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         /* ATI2N is supported on r4xx-r5xx. */
         (is_r400 || is_r500 || !is_ati2n) &&
         r300_is_sampler_format_supported(format)) {
-        retval |= PIPE_TEXTURE_USAGE_SAMPLER;
+        retval |= PIPE_BIND_SAMPLER_VIEW;
     }
 
     /* Check colorbuffer format support. */
-    if ((usage & (PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                  PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                  PIPE_TEXTURE_USAGE_SCANOUT |
-                  PIPE_TEXTURE_USAGE_SHARED)) &&
+    if ((usage & (PIPE_BIND_RENDER_TARGET |
+                  PIPE_BIND_DISPLAY_TARGET |
+                  PIPE_BIND_SCANOUT |
+                  PIPE_BIND_SHARED)) &&
         /* 2101010 cannot be rendered to on non-r5xx. */
         (is_r500 || !is_color2101010) &&
         r300_is_colorbuffer_format_supported(format)) {
         retval |= usage &
-            (PIPE_TEXTURE_USAGE_RENDER_TARGET |
-             PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-             PIPE_TEXTURE_USAGE_SCANOUT |
-             PIPE_TEXTURE_USAGE_SHARED);
+            (PIPE_BIND_RENDER_TARGET |
+             PIPE_BIND_DISPLAY_TARGET |
+             PIPE_BIND_SCANOUT |
+             PIPE_BIND_SHARED);
     }
 
     /* Check depth-stencil format support. */
-    if (usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL &&
+    if (usage & PIPE_BIND_DEPTH_STENCIL &&
         r300_is_zs_format_supported(format)) {
-        retval |= PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+        retval |= PIPE_BIND_DEPTH_STENCIL;
     }
 
     return retval == usage;
@@ -314,9 +314,8 @@ struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
     r300screen->screen.fence_signalled = r300_fence_signalled;
     r300screen->screen.fence_finish = r300_fence_finish;
 
-    r300_init_screen_texture_functions(&r300screen->screen);
+    r300_init_screen_resource_functions(r300screen);
 
-    r300_screen_init_buffer_functions(r300screen);
     return &r300screen->screen;
 }
 

@@ -137,7 +137,8 @@ accum_accum(struct st_context *st, GLfloat value,
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
-   color_trans = st_cond_flush_get_tex_transfer(st, color_strb->texture,
+   color_trans = st_cond_flush_get_tex_transfer(st,
+						color_strb->texture,
 						0, 0, 0,
 						PIPE_TRANSFER_READ, xpos, ypos,
 						width, height);
@@ -165,7 +166,7 @@ accum_accum(struct st_context *st, GLfloat value,
    }
 
    free(buf);
-   pipe->tex_transfer_destroy(pipe, color_trans);
+   pipe->transfer_destroy(pipe, color_trans);
 }
 
 
@@ -213,7 +214,7 @@ accum_load(struct st_context *st, GLfloat value,
    }
 
    free(buf);
-   pipe->tex_transfer_destroy(pipe, color_trans);
+   pipe->transfer_destroy(pipe, color_trans);
 }
 
 
@@ -280,7 +281,7 @@ accum_return(GLcontext *ctx, GLfloat value,
    pipe_put_tile_rgba(pipe, color_trans, 0, 0, width, height, buf);
 
    free(buf);
-   pipe->tex_transfer_destroy(pipe, color_trans);
+   pipe->transfer_destroy(pipe, color_trans);
 }
 
 

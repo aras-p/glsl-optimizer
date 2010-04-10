@@ -8,7 +8,7 @@ struct pipe_screen;
 struct pipe_winsys;
 struct pipe_buffer;
 struct pipe_context;
-struct pipe_texture;
+struct pipe_resource;
 
 enum drm_create_screen_mode {
 	DRM_CREATE_NORMAL = 0,

@@ -82,7 +82,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 				       width, height);
 
    /* map the stencil buffer */
-   stmap = pipe->transfer_map(pipe, pt);
+   stmap = pipe_transfer_map(pipe, pt);
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
@@ -102,7 +102,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       }
 
       /* get stencil (and Z) values */
-      switch (pt->texture->format) {
+      switch (pt->resource->format) {
       case PIPE_FORMAT_S8_USCALED:
          {
             const ubyte *src = stmap + srcY * pt->stride;
@@ -162,8 +162,8 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    /* unmap the stencil buffer */
-   pipe->transfer_unmap(pipe, pt);
-   pipe->tex_transfer_destroy(pipe, pt);
+   pipe_transfer_unmap(pipe, pt);
+   pipe->transfer_destroy(pipe, pt);
 }
 
 
@@ -253,9 +253,9 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
          return GL_FALSE;
       }
 
-      map = pipe->transfer_map(pipe, trans);
+      map = pipe_transfer_map(pipe, trans);
       if (!map) {
-         pipe->tex_transfer_destroy(pipe, trans);
+         pipe->transfer_destroy(pipe, trans);
          return GL_FALSE;
       }
 
@@ -317,8 +317,8 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
          ; /* nothing */
       }
 
-      pipe->transfer_unmap(pipe, trans);
-      pipe->tex_transfer_destroy(pipe, trans);
+      pipe_transfer_unmap(pipe, trans);
+      pipe->transfer_destroy(pipe, trans);
    }
 
    return GL_TRUE;
@@ -437,8 +437,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       const GLint dstStride = _mesa_image_row_stride(&clippedPacking, width,
                                                      format, type);
 
-      if (trans->texture->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
-          trans->texture->format == PIPE_FORMAT_Z24X8_UNORM) {
+      if (trans->resource->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
+          trans->resource->format == PIPE_FORMAT_Z24X8_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
                GLuint ztemp[MAX_WIDTH];
@@ -469,8 +469,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             }
          }
       }
-      else if (trans->texture->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
-               trans->texture->format == PIPE_FORMAT_X8Z24_UNORM) {
+      else if (trans->resource->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
+               trans->resource->format == PIPE_FORMAT_X8Z24_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
                GLuint ztemp[MAX_WIDTH];
@@ -496,7 +496,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             }
          }
       }
-      else if (trans->texture->format == PIPE_FORMAT_Z16_UNORM) {
+      else if (trans->resource->format == PIPE_FORMAT_Z16_UNORM) {
          for (i = 0; i < height; i++) {
             GLushort ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
@@ -511,7 +511,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             dst += dstStride;
          }
       }
-      else if (trans->texture->format == PIPE_FORMAT_Z32_UNORM) {
+      else if (trans->resource->format == PIPE_FORMAT_Z32_UNORM) {
          for (i = 0; i < height; i++) {
             GLuint ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
@@ -542,7 +542,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       }
    }
 
-   pipe->tex_transfer_destroy(pipe, trans);
+   pipe->transfer_destroy(pipe, trans);
 
    _mesa_unmap_pbo_dest(ctx, &clippedPacking);
 }

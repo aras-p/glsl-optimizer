@@ -150,7 +150,7 @@ pb_ondemand_buffer_instantiate(struct pb_ondemand_buffer *buf)
       if(!buf->buffer)
          return PIPE_ERROR_OUT_OF_MEMORY;
       
-      map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+      map = pb_map(buf->buffer, PB_USAGE_CPU_READ);
       if(!map) {
          pb_reference(&buf->buffer, NULL);
          return PIPE_ERROR;

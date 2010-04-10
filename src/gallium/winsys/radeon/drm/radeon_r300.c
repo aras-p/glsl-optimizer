@@ -42,10 +42,10 @@ radeon_r300_winsys_buffer_create(struct r300_winsys_screen *rws,
     desc.alignment = alignment;
     desc.usage = usage;
 
-    if (usage & PIPE_BUFFER_USAGE_CONSTANT)
+    if (usage & PIPE_BIND_CONSTANT_BUFFER)
         provider = ws->mman;
-    else if ((usage & PIPE_BUFFER_USAGE_VERTEX) ||
-	     (usage & PIPE_BUFFER_USAGE_INDEX))
+    else if ((usage & PIPE_BIND_VERTEX_BUFFER) ||
+	     (usage & PIPE_BIND_INDEX_BUFFER))
 	provider = ws->cman;
     else
         provider = ws->kman;

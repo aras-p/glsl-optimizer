@@ -6,7 +6,7 @@ i915 = env.ConvenienceLibrary(
 	target = 'i915',
 	source = [
 		'i915_blit.c',
-		'i915_buffer.c',
+		'i915_resource_buffer.c',
 		'i915_clear.c',
 		'i915_context.c',
 		'i915_debug.c',
@@ -24,7 +24,8 @@ i915 = env.ConvenienceLibrary(
 		'i915_state_immediate.c',
 		'i915_state_sampler.c',
 		'i915_surface.c',
-		'i915_texture.c',
+		'i915_resource.c',
+		'i915_resource_texture.c',
 	])
 
 Export('i915')

@@ -3,6 +3,7 @@
 #include "nvfx_context.h"
 #include "nouveau/nouveau_util.h"
 #include "nvfx_tex.h"
+#include "nvfx_resource.h"
 
 void
 nv30_sampler_state_init(struct pipe_context *pipe,
@@ -92,8 +93,8 @@ nv30_fragtex_build(struct nvfx_context *nvfx, int unit)
 {
 	struct nvfx_sampler_state *ps = nvfx->tex_sampler[unit];
 	struct nvfx_miptree *nv30mt = (struct nvfx_miptree *)nvfx->fragment_sampler_views[unit]->texture;
-	struct pipe_texture *pt = &nv30mt->base;
-	struct nouveau_bo *bo = nouveau_bo(nv30mt->buffer);
+	struct pipe_resource *pt = &nv30mt->base.base;
+	struct nouveau_bo *bo = nv30mt->base.bo;
 	struct nv30_texture_format *tf;
 	struct nouveau_stateobj *so;
 	uint32_t txf, txs;

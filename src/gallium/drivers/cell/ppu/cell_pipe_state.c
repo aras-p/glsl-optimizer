@@ -271,12 +271,12 @@ cell_set_fragment_sampler_views(struct pipe_context *pipe,
       struct pipe_sampler_view *old_view = cell->fragment_sampler_views[i];
 
       if (old_view != new_view) {
-         struct pipe_texture *new_tex = new_view ? new_view->texture : NULL;
+         struct pipe_resource *new_tex = new_view ? new_view->texture : NULL;
 
          pipe_sampler_view_reference(&cell->fragment_sampler_views[i],
                                      views[i]);
-         pipe_texture_reference((struct pipe_texture **) &cell->texture[i],
-                                (struct pipe_texture *) new_tex);
+         pipe_resource_reference((struct pipe_resource **) &cell->texture[i],
+                                (struct pipe_resource *) new_tex);
 
          changed |= (1 << i);
       }
@@ -293,7 +293,7 @@ cell_set_fragment_sampler_views(struct pipe_context *pipe,
 
 static struct pipe_sampler_view *
 cell_create_sampler_view(struct pipe_context *pipe,
-                         struct pipe_texture *texture,
+                         struct pipe_resource *texture,
                          const struct pipe_sampler_view *templ)
 {
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
@@ -302,7 +302,7 @@ cell_create_sampler_view(struct pipe_context *pipe,
       *view = *templ;
       view->reference.count = 1;
       view->texture = NULL;
-      pipe_texture_reference(&view->texture, texture);
+      pipe_resource_reference(&view->texture, texture);
       view->context = pipe;
    }
 
@@ -314,7 +314,7 @@ static void
 cell_sampler_view_destroy(struct pipe_context *pipe,
                           struct pipe_sampler_view *view)
 {
-   pipe_texture_reference(&view->texture, NULL);
+   pipe_resource_reference(&view->texture, NULL);
    FREE(view);
 }
 
@@ -333,7 +333,7 @@ cell_map_surfaces(struct cell_context *cell)
    for (i = 0; i < 1; i++) {
       struct pipe_surface *ps = cell->framebuffer.cbufs[i];
       if (ps) {
-         struct cell_texture *ct = cell_texture(ps->texture);
+         struct cell_resource *ct = cell_resource(ps->texture);
 #if 0
          cell->cbuf_map[i] = screen->buffer_map(screen,
                                                 ct->buffer,
@@ -348,7 +348,7 @@ cell_map_surfaces(struct cell_context *cell)
    {
       struct pipe_surface *ps = cell->framebuffer.zsbuf;
       if (ps) {
-         struct cell_texture *ct = cell_texture(ps->texture);
+         struct cell_resource *ct = cell_resource(ps->texture);
 #if 0
          cell->zsbuf_map = screen->buffer_map(screen,
                                               ct->buffer,
@@ -374,7 +374,7 @@ cell_unmap_surfaces(struct cell_context *cell)
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       struct pipe_surface *ps = cell->framebuffer.cbufs[i];
       if (ps && cell->cbuf_map[i]) {
-         /*struct cell_texture *ct = cell_texture(ps->texture);*/
+         /*struct cell_resource *ct = cell_resource(ps->texture);*/
          assert(ps->texture);
          /*assert(ct->buffer);*/
 
@@ -386,7 +386,7 @@ cell_unmap_surfaces(struct cell_context *cell)
    {
       struct pipe_surface *ps = cell->framebuffer.zsbuf;
       if (ps && cell->zsbuf_map) {
-         /*struct cell_texture *ct = cell_texture(ps->texture);*/
+         /*struct cell_resource *ct = cell_resource(ps->texture);*/
          /*screen->buffer_unmap(screen, ct->buffer);*/
          cell->zsbuf_map = NULL;
       }

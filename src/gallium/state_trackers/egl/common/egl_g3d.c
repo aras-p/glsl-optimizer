@@ -667,7 +667,7 @@ destroy_surface(_EGLDisplay *dpy, _EGLSurface *surf)
    if (!dpy->Initialized)
       _eglLog(_EGL_FATAL, "destroy a surface with an unitialized display");
 
-   pipe_texture_reference(&gsurf->render_texture, NULL);
+   pipe_resource_reference(&gsurf->render_texture, NULL);
    egl_g3d_destroy_st_framebuffer(gsurf->stfbi);
    if (gsurf->native)
       gsurf->native->destroy(gsurf->native);
@@ -787,9 +787,10 @@ egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
  */
 static struct pipe_surface *
 get_pipe_surface(struct native_display *ndpy, struct native_surface *nsurf,
-                 enum native_attachment natt)
+                 enum native_attachment natt,
+		 unsigned bind)
 {
-   struct pipe_texture *textures[NUM_NATIVE_ATTACHMENTS];
+   struct pipe_resource *textures[NUM_NATIVE_ATTACHMENTS];
    struct pipe_surface *psurf;
 
    textures[natt] = NULL;
@@ -798,8 +799,8 @@ get_pipe_surface(struct native_display *ndpy, struct native_surface *nsurf,
       return NULL;
 
    psurf = ndpy->screen->get_tex_surface(ndpy->screen, textures[natt],
-         0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
-   pipe_texture_reference(&textures[natt], NULL);
+         0, 0, 0, bind);
+   pipe_resource_reference(&textures[natt], NULL);
 
    return psurf;
 }
@@ -843,12 +844,13 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
          return EGL_FALSE;
    }
 
-   psurf = get_pipe_surface(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
+   psurf = get_pipe_surface(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT,
+			    PIPE_BIND_BLIT_DESTINATION);
    if (psurf) {
       struct pipe_surface *psrc;
 
       psrc = screen->get_tex_surface(screen, gsurf->render_texture,
-            0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
+            0, 0, 0, PIPE_BIND_BLIT_SOURCE);
       if (psrc) {
          gdpy->pipe->surface_copy(gdpy->pipe, psurf, 0, 0,
                psrc, 0, 0, psurf->width, psurf->height);

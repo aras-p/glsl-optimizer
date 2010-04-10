@@ -62,7 +62,7 @@ brw_update_wm_constant_surface( struct brw_context *brw,
 {
    struct brw_surface_key key;
    struct brw_fragment_shader *fp = brw->curr.fragment_shader;
-   struct pipe_buffer *cbuf = brw->curr.fragment_constants;
+   struct pipe_resource *cbuf = brw->curr.fragment_constants;
    int pitch = cbuf->size / (4 * sizeof(float));
    enum pipe_error ret;
 

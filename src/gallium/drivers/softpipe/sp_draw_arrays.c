@@ -39,7 +39,7 @@
 #include "sp_context.h"
 #include "sp_query.h"
 #include "sp_state.h"
-#include "sp_buffer.h"
+#include "sp_texture.h"
 
 #include "draw/draw_context.h"
 
@@ -55,7 +55,7 @@
  */
 static void
 softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
-                                       struct pipe_buffer *indexBuffer,
+                                       struct pipe_resource *indexBuffer,
                                        unsigned indexSize,
                                        unsigned minIndex,
                                        unsigned maxIndex,
@@ -85,7 +85,7 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 
 void
 softpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_buffer *indexBuffer,
+                             struct pipe_resource *indexBuffer,
                              unsigned indexSize,
                              unsigned min_index,
                              unsigned max_index,
@@ -106,7 +106,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
 
 void
 softpipe_draw_elements(struct pipe_context *pipe,
-                       struct pipe_buffer *indexBuffer,
+                       struct pipe_resource *indexBuffer,
                        unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count)
 {
@@ -144,7 +144,7 @@ softpipe_draw_arrays_instanced(struct pipe_context *pipe,
 
 void
 softpipe_draw_elements_instanced(struct pipe_context *pipe,
-                                 struct pipe_buffer *indexBuffer,
+                                 struct pipe_resource *indexBuffer,
                                  unsigned indexSize,
                                  unsigned mode,
                                  unsigned start,
@@ -166,7 +166,7 @@ softpipe_draw_elements_instanced(struct pipe_context *pipe,
 
 static void
 softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
-                                       struct pipe_buffer *indexBuffer,
+                                       struct pipe_resource *indexBuffer,
                                        unsigned indexSize,
                                        unsigned minIndex,
                                        unsigned maxIndex,
@@ -193,13 +193,13 @@ softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
 
    /* Map vertex buffers */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
-      void *buf = softpipe_buffer(sp->vertex_buffer[i].buffer)->data;
+      void *buf = softpipe_resource(sp->vertex_buffer[i].buffer)->data;
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes = softpipe_buffer(indexBuffer)->data;
+      void *mapped_indexes = softpipe_resource(indexBuffer)->data;
       draw_set_mapped_element_buffer_range(draw,
                                            indexSize,
                                            minIndex,

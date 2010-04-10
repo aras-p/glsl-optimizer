@@ -47,7 +47,7 @@ static boolean
 dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
                             const enum st_attachment_type *statts,
                             unsigned count,
-                            struct pipe_texture **out)
+                            struct pipe_resource **out)
 {
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
@@ -100,7 +100,7 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
 
    for (i = 0; i < count; i++) {
       out[i] = NULL;
-      pipe_texture_reference(&out[i], drawable->textures[statts[i]]);
+      pipe_resource_reference(&out[i], drawable->textures[statts[i]]);
    }
 
    return TRUE;
@@ -157,7 +157,7 @@ dri_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi)
    int i;
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
-      pipe_texture_reference(&drawable->textures[i], NULL);
+      pipe_resource_reference(&drawable->textures[i], NULL);
 
    FREE(stfbi);
 }
@@ -242,7 +242,7 @@ dri_st_manager_get_egl_image(struct st_manager *smapi,
       return FALSE;
 
    stimg->texture = NULL;
-   pipe_texture_reference(&stimg->texture, img->texture);
+   pipe_resource_reference(&stimg->texture, img->texture);
    stimg->face = img->face;
    stimg->level = img->level;
    stimg->zslice = img->zslice;

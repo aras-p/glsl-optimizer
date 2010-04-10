@@ -239,9 +239,7 @@ Flushing
 Resource Busy Queries
 ^^^^^^^^^^^^^^^^^^^^^
 
-``is_texture_referenced``
-
-``is_buffer_referenced``
+``is_resource_referenced``
 
 
 
@@ -265,3 +263,51 @@ The interfaces to these calls are likely to change to make it easier
 for a driver to batch multiple blits with the same source and
 destination.
 
+
+Transfers
+^^^^^^^^^
+
+These methods are used to get data to/from a resource.
+
+``get_transfer`` creates a transfer object.
+
+``transfer_destroy`` destroys the transfer object. May cause
+data to be written to the resource at this point.
+
+``transfer_map`` creates a memory mapping for the transfer object.
+The returned map points to the start of the mapped range according to
+the box region, not the beginning of the resource.
+
+.. _transfer_flush_region:
+``transfer_flush_region`` If a transfer was created with TRANFER_FLUSH_EXPLICIT,
+only the region specified is guaranteed to be written to. This is relative to
+the mapped range, not the beginning of the resource.
+
+``transfer_unmap`` remove the memory mapping for the transfer object.
+Any pointers into the map should be considered invalid and discarded.
+
+``transfer_inline_write`` performs a simplified transfer for simple writes.
+Basically get_transfer, transfer_map, data write, transfer_unmap, and
+transfer_destroy all in one.
+
+.. _pipe_transfer:
+
+PIPE_TRANSFER
+^^^^^^^^^^^^^
+
+These flags control the behavior of a transfer object.
+
+* ``READ``: resource contents are read at transfer create time.
+* ``WRITE``: resource contents will be written back at transfer destroy time.
+* ``MAP_DIRECTLY``: a transfer should directly map the resource. May return
+  NULL if not supported.
+* ``DISCARD``: The memory within the mapped region is discarded.
+  Cannot be used with ``READ``.
+* ``DONTBLOCK``: Fail if the resource cannot be mapped immediately.
+* ``UNSYNCHRONIZED``: Do not synchronize pending operations on the resource
+  when mapping. The interaction of any writes to the map and any
+  operations pending on the resource are undefined. Cannot be used with
+  ``READ``.
+* ``FLUSH_EXPLICIT``: Written ranges will be notified later with
+  :ref:`transfer_flush_region`. Cannot be used with
+  ``READ``.

@@ -73,7 +73,7 @@ struct egl_g3d_surface {
 
    /* the native surface;  NULL for pbuffers */
    struct native_surface *native;
-   struct pipe_texture *render_texture;
+   struct pipe_resource *render_texture;
 
    unsigned int sequence_number;
 };
@@ -86,7 +86,7 @@ struct egl_g3d_config {
 
 struct egl_g3d_image {
    _EGLImage base;
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    unsigned face;
    unsigned level;
    unsigned zslice;

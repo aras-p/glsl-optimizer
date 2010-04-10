@@ -27,8 +27,6 @@ C_SOURCES = \
 	svga_pipe_vertex.c \
 	svga_pipe_vs.c \
 	svga_screen.c \
-	svga_screen_buffer.c \
-	svga_screen_texture.c \
 	svga_screen_cache.c \
 	svga_state.c \
 	svga_state_need_swtnl.c \
@@ -45,7 +43,14 @@ C_SOURCES = \
 	svga_tgsi.c \
 	svga_tgsi_decl_sm20.c \
 	svga_tgsi_decl_sm30.c \
-	svga_tgsi_insn.c
+	svga_tgsi_insn.c \
+	svga_sampler_view.c \
+	svga_surface.c \
+	svga_resource.c \
+	svga_resource_texture.c \
+	svga_resource_buffer.c \
+	svga_resource_buffer_upload.c 
+
 
 LIBRARY_INCLUDES = \
 	-I$(TOP)/src/gallium/drivers/svga/include

@@ -42,14 +42,16 @@ static INLINE void map_point(float *mat, float x, float y,
    }
 }
 
-static INLINE struct pipe_buffer *
+static INLINE struct pipe_resource *
 renderer_buffer_create(struct xorg_renderer *r)
 {
-   struct pipe_buffer *buf =
+   struct pipe_resource *buf =
       pipe_user_buffer_create(r->pipe->screen,
                               r->buffer,
                               sizeof(float)*
-                              r->buffer_size);
+                              r->buffer_size,
+/* XXX was: PIPE_BUFFER_USAGE_PIXEL/PIPE_BUFFER_USAGE_GPU_WRITE even though this is a vertex buffer??? */
+			      PIPE_BIND_VERTEX_BUFFER);
    r->buffer_size = 0;
 
    return buf;
@@ -59,7 +61,7 @@ static INLINE void
 renderer_draw(struct xorg_renderer *r)
 {
    struct pipe_context *pipe = r->pipe;
-   struct pipe_buffer *buf = 0;
+   struct pipe_resource *buf = 0;
    int num_verts = r->buffer_size/(r->attrs_per_vertex * NUM_COMPONENTS);
 
    if (!r->buffer_size)
@@ -76,7 +78,7 @@ renderer_draw(struct xorg_renderer *r)
                               num_verts,  /* verts */
                               r->attrs_per_vertex); /* attribs/vert */
 
-      pipe_buffer_reference(&buf, NULL);
+      pipe_resource_reference(&buf, NULL);
    }
 }
 
@@ -161,7 +163,7 @@ static void
 add_vertex_data1(struct xorg_renderer *r,
                  float srcX, float srcY,  float dstX, float dstY,
                  float width, float height,
-                 struct pipe_texture *src, float *src_matrix)
+                 struct pipe_resource *src, float *src_matrix)
 {
    float s0, t0, s1, t1, s2, t2, s3, t3;
    float pt0[2], pt1[2], pt2[2], pt3[2];
@@ -231,8 +233,8 @@ static void
 add_vertex_data2(struct xorg_renderer *r,
                  float srcX, float srcY, float maskX, float maskY,
                  float dstX, float dstY, float width, float height,
-                 struct pipe_texture *src,
-                 struct pipe_texture *mask,
+                 struct pipe_resource *src,
+                 struct pipe_resource *mask,
                  float *src_matrix, float *mask_matrix)
 {
    float src_s0, src_t0, src_s1, src_t1;
@@ -284,11 +286,11 @@ add_vertex_data2(struct xorg_renderer *r,
                    src_s0, src_t1, mask_s0, mask_t1);
 }
 
-static struct pipe_buffer *
+static struct pipe_resource *
 setup_vertex_data_yuv(struct xorg_renderer *r,
                       float srcX, float srcY, float srcW, float srcH,
                       float dstX, float dstY, float dstW, float dstH,
-                      struct pipe_texture **tex)
+                      struct pipe_resource **tex)
 {
    float s0, t0, s1, t1;
    float spt0[2], spt1[2];
@@ -390,14 +392,14 @@ struct xorg_renderer * renderer_create(struct pipe_context *pipe)
 
 void renderer_destroy(struct xorg_renderer *r)
 {
-   struct pipe_buffer **vsbuf = &r->vs_const_buffer;
-   struct pipe_buffer **fsbuf = &r->fs_const_buffer;
+   struct pipe_resource **vsbuf = &r->vs_const_buffer;
+   struct pipe_resource **fsbuf = &r->fs_const_buffer;
 
    if (*vsbuf)
-      pipe_buffer_reference(vsbuf, NULL);
+      pipe_resource_reference(vsbuf, NULL);
 
    if (*fsbuf)
-      pipe_buffer_reference(fsbuf, NULL);
+      pipe_resource_reference(fsbuf, NULL);
 
    if (r->shaders) {
       xorg_shaders_destroy(r->shaders);
@@ -420,17 +422,17 @@ void renderer_set_constants(struct xorg_renderer *r,
                             const float *params,
                             int param_bytes)
 {
-   struct pipe_buffer **cbuf =
+   struct pipe_resource **cbuf =
       (shader_type == PIPE_SHADER_VERTEX) ? &r->vs_const_buffer :
       &r->fs_const_buffer;
 
-   pipe_buffer_reference(cbuf, NULL);
-   *cbuf = pipe_buffer_create(r->pipe->screen, 16,
-                              PIPE_BUFFER_USAGE_CONSTANT,
+   pipe_resource_reference(cbuf, NULL);
+   *cbuf = pipe_buffer_create(r->pipe->screen,
+                              PIPE_BIND_CONSTANT_BUFFER,
                               param_bytes);
 
    if (*cbuf) {
-      pipe_buffer_write(r->pipe->screen, *cbuf,
+      pipe_buffer_write(r->pipe, *cbuf,
                         0, param_bytes, params);
    }
    r->pipe->set_constant_buffer(r->pipe, shader_type, 0, *cbuf);
@@ -439,7 +441,7 @@ void renderer_set_constants(struct xorg_renderer *r,
 
 void renderer_copy_prepare(struct xorg_renderer *r,
                            struct pipe_surface *dst_surface,
-                           struct pipe_texture *src_texture)
+                           struct pipe_resource *src_texture)
 {
    struct pipe_context *pipe = r->pipe;
    struct pipe_screen *screen = pipe->screen;
@@ -447,7 +449,7 @@ void renderer_copy_prepare(struct xorg_renderer *r,
 
    assert(screen->is_format_supported(screen, dst_surface->format,
                                       PIPE_TEXTURE_2D,
-                                      PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                      PIPE_BIND_RENDER_TARGET,
                                       0));
    (void) screen;
 
@@ -506,24 +508,24 @@ void renderer_copy_prepare(struct xorg_renderer *r,
    r->attrs_per_vertex = 2;
 }
 
-struct pipe_texture *
+struct pipe_resource *
 renderer_clone_texture(struct xorg_renderer *r,
-                       struct pipe_texture *src)
+                       struct pipe_resource *src)
 {
    enum pipe_format format;
    struct pipe_context *pipe = r->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture *pt;
-   struct pipe_texture templ;
+   struct pipe_resource *pt;
+   struct pipe_resource templ;
 
-   if (pipe->is_texture_referenced(pipe, src, 0, 0) &
+   if (pipe->is_resource_referenced(pipe, src, 0, 0) &
        PIPE_REFERENCED_FOR_WRITE)
       pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    /* the coming in texture should already have that invariance */
    debug_assert(screen->is_format_supported(screen, src->format,
                                             PIPE_TEXTURE_2D,
-                                            PIPE_TEXTURE_USAGE_SAMPLER, 0));
+                                            PIPE_BIND_SAMPLER_VIEW, 0));
 
    format = src->format;
 
@@ -534,9 +536,9 @@ renderer_clone_texture(struct xorg_renderer *r,
    templ.width0 = src->width0;
    templ.height0 = src->height0;
    templ.depth0 = 1;
-   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
-   pt = screen->texture_create(screen, &templ);
+   pt = screen->resource_create(screen, &templ);
 
    debug_assert(!pt || pipe_is_referenced(&pt->reference));
 
@@ -546,9 +548,9 @@ renderer_clone_texture(struct xorg_renderer *r,
    {
       /* copy source framebuffer surface into texture */
       struct pipe_surface *ps_read = screen->get_tex_surface(
-         screen, src, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ);
+         screen, src, 0, 0, 0, PIPE_BIND_BLIT_SOURCE);
       struct pipe_surface *ps_tex = screen->get_tex_surface(
-         screen, pt, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE );
+         screen, pt, 0, 0, 0, PIPE_BIND_BLIT_DESTINATION );
       if (pipe->surface_copy) {
          pipe->surface_copy(pipe,
                 ps_tex, /* dest */
@@ -608,10 +610,10 @@ void renderer_copy_pixmap(struct xorg_renderer *r,
 void renderer_draw_yuv(struct xorg_renderer *r,
                        int src_x, int src_y, int src_w, int src_h,
                        int dst_x, int dst_y, int dst_w, int dst_h,
-                       struct pipe_texture **textures)
+                       struct pipe_resource **textures)
 {
    struct pipe_context *pipe = r->pipe;
-   struct pipe_buffer *buf = 0;
+   struct pipe_resource *buf = 0;
 
    buf = setup_vertex_data_yuv(r,
                                src_x, src_y, src_w, src_h,
@@ -628,7 +630,7 @@ void renderer_draw_yuv(struct xorg_renderer *r,
                               4,  /* verts */
                               num_attribs); /* attribs/vert */
 
-      pipe_buffer_reference(&buf, NULL);
+      pipe_resource_reference(&buf, NULL);
    }
 }
 

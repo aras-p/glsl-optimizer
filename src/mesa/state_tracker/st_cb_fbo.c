@@ -96,13 +96,12 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       return strb->data != NULL;
    }
    else {
-      struct pipe_texture template;
-      unsigned surface_usage;
+      struct pipe_resource template;
     
       /* Free the old surface and texture
        */
       pipe_surface_reference( &strb->surface, NULL );
-      pipe_texture_reference( &strb->texture, NULL );
+      pipe_resource_reference( &strb->texture, NULL );
       pipe_sampler_view_reference(&strb->sampler_view, NULL);
 
       /* Setup new texture template.
@@ -116,23 +115,14 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       template.last_level = 0;
       template.nr_samples = rb->NumSamples;
       if (util_format_is_depth_or_stencil(format)) {
-         template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+         template.bind = PIPE_BIND_DEPTH_STENCIL;
       }
       else {
-         template.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                               PIPE_TEXTURE_USAGE_RENDER_TARGET);
+         template.bind = (PIPE_BIND_DISPLAY_TARGET |
+			  PIPE_BIND_RENDER_TARGET);
       }
 
-      /* Probably need dedicated flags for surface usage too: 
-       */
-      surface_usage = (PIPE_BUFFER_USAGE_GPU_READ |
-                       PIPE_BUFFER_USAGE_GPU_WRITE);
-#if 0
-                       PIPE_BUFFER_USAGE_CPU_READ |
-                       PIPE_BUFFER_USAGE_CPU_WRITE);
-#endif
-
-      strb->texture = screen->texture_create(screen, &template);
+      strb->texture = screen->resource_create(screen, &template);
 
       if (!strb->texture) 
          return FALSE;
@@ -140,7 +130,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       strb->surface = screen->get_tex_surface(screen,
                                               strb->texture,
                                               0, 0, 0,
-                                              surface_usage);
+                                              template.bind);
       if (strb->surface) {
          assert(strb->surface->texture);
          assert(strb->surface->format);
@@ -162,7 +152,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
-   pipe_texture_reference(&strb->texture, NULL);
+   pipe_resource_reference(&strb->texture, NULL);
    pipe_sampler_view_reference(&strb->sampler_view, NULL);
    free(strb->data);
    free(strb);
@@ -323,7 +313,7 @@ st_render_texture(GLcontext *ctx,
    struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
-   struct pipe_texture *pt = st_get_texobj_texture(att->Texture);
+   struct pipe_resource *pt = st_get_texobj_texture(att->Texture);
    struct st_texture_object *stObj;
    const struct gl_texture_image *texImage;
    GLint pt_level;
@@ -366,7 +356,7 @@ st_render_texture(GLcontext *ctx,
 
    /*printf("***** pipe texture %d x %d\n", pt->width0, pt->height0);*/
 
-   pipe_texture_reference( &strb->texture, pt );
+   pipe_resource_reference( &strb->texture, pt );
 
    pipe_surface_reference(&strb->surface, NULL);
 
@@ -380,8 +370,7 @@ st_render_texture(GLcontext *ctx,
                                            strb->rtt_face,
                                            strb->rtt_level,
                                            strb->rtt_slice,
-                                           PIPE_BUFFER_USAGE_GPU_READ |
-                                           PIPE_BUFFER_USAGE_GPU_WRITE);
+                                           PIPE_BIND_RENDER_TARGET);
 
    strb->format = pt->format;
 
@@ -479,20 +468,20 @@ st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
    if (!st_validate_attachment(screen,
 			       &fb->Attachment[BUFFER_DEPTH],
-			       PIPE_TEXTURE_USAGE_DEPTH_STENCIL)) {
+			       PIPE_BIND_DEPTH_STENCIL)) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
    }
    if (!st_validate_attachment(screen,
 			       &fb->Attachment[BUFFER_STENCIL],
-			       PIPE_TEXTURE_USAGE_DEPTH_STENCIL)) {
+			       PIPE_BIND_DEPTH_STENCIL)) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
    }
    for (i = 0; i < ctx->Const.MaxColorAttachments; i++) {
       if (!st_validate_attachment(screen,
 				  &fb->Attachment[BUFFER_COLOR0 + i],
-				  PIPE_TEXTURE_USAGE_RENDER_TARGET)) {
+				  PIPE_BIND_RENDER_TARGET)) {
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
 	 return;
       }

@@ -39,11 +39,12 @@ struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws);
 
 struct r300_winsys_buffer;
 
+/* XXX: this is just a bandaid on larger problems in
+ * r300_screen_buffer.h which doesn't seem to be fully ported to
+ * gallium-resources.
+ */
+#define R300_BIND_OQBO  (1<<21)
 
-boolean r300_get_texture_buffer(struct pipe_screen* screen,
-                                struct pipe_texture* texture,
-                                struct r300_winsys_buffer** buffer,
-                                unsigned *stride);
 
 enum r300_value_id {
     R300_VID_PCI_ID,
@@ -100,7 +101,7 @@ struct r300_winsys_screen {
 			       unsigned offset,
 			       unsigned length);
 
-    /* Add a pipe_buffer to the list of buffer objects to validate. */
+    /* Add a pipe_resource to the list of buffer objects to validate. */
     boolean (*add_buffer)(struct r300_winsys_screen *winsys,
                           struct r300_winsys_buffer *buf,
                           uint32_t rd,

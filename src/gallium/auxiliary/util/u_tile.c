@@ -53,9 +53,9 @@ pipe_get_tile_raw(struct pipe_context *pipe,
    const void *src;
 
    if (dst_stride == 0)
-      dst_stride = util_format_get_stride(pt->texture->format, w);
+      dst_stride = util_format_get_stride(pt->resource->format, w);
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
    src = pipe->transfer_map(pipe, pt);
@@ -63,7 +63,7 @@ pipe_get_tile_raw(struct pipe_context *pipe,
    if(!src)
       return;
 
-   util_copy_rect(dst, pt->texture->format, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
+   util_copy_rect(dst, pt->resource->format, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
 
    pipe->transfer_unmap(pipe, pt);
 }
@@ -79,12 +79,12 @@ pipe_put_tile_raw(struct pipe_context *pipe,
                   const void *src, int src_stride)
 {
    void *dst;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
    if (src_stride == 0)
       src_stride = util_format_get_stride(format, w);
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
    dst = pipe->transfer_map(pipe, pt);
@@ -285,9 +285,9 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
 {
    unsigned dst_stride = w * 4;
    void *packed;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
    packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
@@ -325,7 +325,7 @@ pipe_get_tile_swizzle(struct pipe_context *pipe,
    uint iy;
    float rgba01[6];
 
-   if (pipe_clip_tile(x, y, &w, &h, pt)) {
+   if (u_clip_tile(x, y, &w, &h, &pt->box)) {
       return;
    }
 
@@ -383,9 +383,9 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
 {
    unsigned src_stride = w * 4;
    void *packed;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
    packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
@@ -434,9 +434,9 @@ pipe_get_tile_z(struct pipe_context *pipe,
    ubyte *map;
    uint *pDest = z;
    uint i, j;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
    map = (ubyte *)pipe->transfer_map(pipe, pt);
@@ -519,9 +519,9 @@ pipe_put_tile_z(struct pipe_context *pipe,
    const uint *ptrc = zSrc;
    ubyte *map;
    uint i, j;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
    map = (ubyte *)pipe->transfer_map(pipe, pt);
@@ -544,7 +544,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
-         assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
+         //assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 24-bit Z, preserve stencil */
@@ -571,7 +571,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
-         assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
+         //assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 24-bit Z, preserve stencil */

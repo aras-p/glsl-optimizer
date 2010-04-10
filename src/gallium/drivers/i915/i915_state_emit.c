@@ -30,6 +30,7 @@
 #include "i915_context.h"
 #include "i915_batch.h"
 #include "i915_reg.h"
+#include "i915_resource.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -211,8 +212,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
       if (cbuf_surface) {
          unsigned ctile = BUF_3D_USE_FENCE;
-         struct i915_texture *tex = (struct i915_texture *)
-                                    cbuf_surface->texture;
+         struct i915_texture *tex = i915_texture(cbuf_surface->texture);
          assert(tex);
 
          if (tex && tex->sw_tiled) {
@@ -234,8 +234,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
        */
       if (depth_surface) {
          unsigned ztile = BUF_3D_USE_FENCE;
-         struct i915_texture *tex = (struct i915_texture *)
-                                    depth_surface->texture;
+         struct i915_texture *tex = i915_texture(depth_surface->texture);
          assert(tex);
 
          if (tex && tex->sw_tiled) {
@@ -290,7 +289,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
             OUT_BATCH(enabled);
             for (unit = 0; unit < I915_TEX_UNITS; unit++) {
                if (enabled & (1 << unit)) {
-                  struct i915_texture *texture = (struct i915_texture *)i915->fragment_sampler_views[unit]->texture;
+                  struct i915_texture *texture = i915_texture(i915->fragment_sampler_views[unit]->texture);
                   struct i915_winsys_buffer *buf = texture->buffer;
                   uint offset = 0;
                   assert(buf);

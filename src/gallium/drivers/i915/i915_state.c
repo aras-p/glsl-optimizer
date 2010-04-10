@@ -39,6 +39,7 @@
 #include "i915_reg.h"
 #include "i915_state_inlines.h"
 #include "i915_fpc.h"
+#include "i915_resource.h"
 
 /* The i915 (and related graphics cores) do not support GL_CLAMP.  The
  * Intel drivers for "other operating systems" implement GL_CLAMP as
@@ -523,10 +524,10 @@ static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     struct pipe_buffer *buf)
+                                     struct pipe_resource *buf)
 {
    struct i915_context *i915 = i915_context(pipe);
-   struct pipe_screen *screen = pipe->screen;
+   struct i915_buffer *ir = i915_buffer(buf);
    draw_flush(i915->draw);
 
    assert(shader < PIPE_SHADER_TYPES);
@@ -542,19 +543,14 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
     * N constants, leaving any extras from shader translation alone.
     */
    if (buf) {
-      void *mapped;
-      if (buf->size &&
-          (mapped = pipe_buffer_map(screen, buf,
-                                    PIPE_BUFFER_USAGE_CPU_READ))) {
-         memcpy(i915->current.constants[shader], mapped, buf->size);
-         pipe_buffer_unmap(screen, buf);
-         i915->current.num_user_constants[shader]
-            = buf->size / (4 * sizeof(float));
-      }
-      else {
-         i915->current.num_user_constants[shader] = 0;
-      }
+      memcpy(i915->current.constants[shader], ir->data, ir->b.b.width0);
+      i915->current.num_user_constants[shader] = (ir->b.b.width0 /
+						  4 * sizeof(float));
    }
+   else {
+      i915->current.num_user_constants[shader] = 0;
+   }
+
 
    i915->dirty |= I915_NEW_CONSTANTS;
 }
@@ -593,7 +589,7 @@ static void i915_set_fragment_sampler_views(struct pipe_context *pipe,
 
 static struct pipe_sampler_view *
 i915_create_sampler_view(struct pipe_context *pipe,
-                         struct pipe_texture *texture,
+                         struct pipe_resource *texture,
                          const struct pipe_sampler_view *templ)
 {
    struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
@@ -602,7 +598,7 @@ i915_create_sampler_view(struct pipe_context *pipe,
       *view = *templ;
       view->reference.count = 1;
       view->texture = NULL;
-      pipe_texture_reference(&view->texture, texture);
+      pipe_resource_reference(&view->texture, texture);
       view->context = pipe;
    }
 
@@ -614,7 +610,7 @@ static void
 i915_sampler_view_destroy(struct pipe_context *pipe,
                           struct pipe_sampler_view *view)
 {
-   pipe_texture_reference(&view->texture, NULL);
+   pipe_resource_reference(&view->texture, NULL);
    FREE(view);
 }
 
