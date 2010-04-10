@@ -65,8 +65,12 @@ sw_drm_create_screen(struct drm_api *_api, int drmFD,
    struct pipe_screen *screen;
 
    screen = api->create_screen(api, drmFD, arg);
+   if (!screen)
+      return NULL;
 
    sww = wrapper_sw_winsys_warp_pipe_screen(screen);
+   if (!sww)
+      return NULL;
 
    return softpipe_create_screen(sww);
 }
@@ -86,7 +90,10 @@ sw_drm_api_create(struct drm_api *api)
 {
    struct sw_drm_api *swapi = CALLOC_STRUCT(sw_drm_api);
 
-   swapi->base.name = "sw";
+   if (!swapi)
+      return api;
+
+   swapi->base.name = api->name;
    swapi->base.driver_name = api->driver_name;
    swapi->base.create_screen = sw_drm_create_screen;
    swapi->base.destroy = sw_drm_destroy;

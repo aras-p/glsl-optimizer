@@ -262,6 +262,9 @@ wrapper_sw_winsys_warp_pipe_screen(struct pipe_screen *screen)
 {
    struct wrapper_sw_winsys *wsw = CALLOC_STRUCT(wrapper_sw_winsys);
 
+   if (!wsw)
+      goto err;
+
    wsw->base.displaytarget_create = wsw_dt_create;
    wsw->base.displaytarget_from_handle = wsw_dt_from_handle;
    wsw->base.displaytarget_map = wsw_dt_map;
@@ -272,11 +275,12 @@ wrapper_sw_winsys_warp_pipe_screen(struct pipe_screen *screen)
    wsw->screen = screen;
    wsw->pipe = screen->context_create(screen, NULL);
    if (!wsw->pipe)
-      goto err;
+      goto err_free;
 
    return &wsw->base;
 
-err:
+err_free:
    FREE(wsw);
+err:
    return NULL;
 }
