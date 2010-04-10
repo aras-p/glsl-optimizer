@@ -216,18 +216,18 @@ void ir_print_visitor::visit(ir_dereference *ir)
 
 void ir_print_visitor::visit(ir_assignment *ir)
 {
-   printf("(assign (");
+   printf("(assign ");
 
    if (ir->condition)
       ir->condition->accept(this);
    else
       printf("true");
 
-   printf(") (");
+   printf(" ");
 
    ir->lhs->accept(this);
 
-   printf(") (");
+   printf(" ");
 
    ir->rhs->accept(this);
    printf(") ");
