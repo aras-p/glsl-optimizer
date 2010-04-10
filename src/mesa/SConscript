@@ -357,10 +357,9 @@ if env['platform'] != 'winddk':
 	)
 	Export('mesa')
 	
-	if not dri:
-		glapi = env.ConvenienceLibrary(
-			target = 'glapi',
-			source = glapi_sources,
-		)
-		Export('glapi')
+	glapi = env.ConvenienceLibrary(
+		target = 'glapi',
+		source = glapi_sources,
+	)
+	Export('glapi')
 
