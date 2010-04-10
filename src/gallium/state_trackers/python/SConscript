@@ -44,10 +44,10 @@ if 'python' in env['statetrackers']:
         gallium,
     ])
 
-    if 'llvmpipe' in env['drivers']:
+    if env['llvm']:
         env.Append(CPPDEFINES = ['HAVE_LLVMPIPE'])
         env.Prepend(LIBS = [llvmpipe])
-    if 'softpipe' in env['drivers']:
+    if True:
         env.Append(CPPDEFINES = ['HAVE_SOFTPIPE'])
         env.Prepend(LIBS = [softpipe])
 

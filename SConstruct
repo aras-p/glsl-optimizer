@@ -102,11 +102,15 @@ Export([
 #######################################################################
 # Environment setup
 
-# Always build trace and identity drivers
+# Always build trace, identity, softpipe, and llvmpipe (where possible)
 if 'trace' not in env['drivers']:
     env['drivers'].append('trace')
 if 'identity' not in env['drivers']:
     env['drivers'].append('identity')
+if 'softpipe' not in env['drivers']:
+    env['drivers'].append('softpipe')
+if env['llvm'] and 'llvmpipe' not in env['drivers']:
+    env['drivers'].append('llvmpipe')
 
 # Includes
 env.Append(CPPPATH = [

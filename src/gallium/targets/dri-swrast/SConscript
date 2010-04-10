@@ -1,9 +1,5 @@
 Import('*')
 
-if not set(('softpipe', 'llvmpipe')).intersection(env['drivers']):
-    print 'warning: no supported pipe driver: skipping build of swrastg_dri.so'
-    Return()
-
 env = drienv.Clone()
 
 env.Append(CPPPATH = [
@@ -20,11 +16,11 @@ env.Prepend(LIBS = [
     COMMON_DRI_SW_OBJECTS
 ])
 
-if 'softpipe' in env['drivers']:
+if True:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
     env.Prepend(LIBS = [softpipe])
 
-if 'llvmpipe' in env['drivers']:
+if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
     env.Tool('udis86')
     env.Prepend(LIBS = [llvmpipe])

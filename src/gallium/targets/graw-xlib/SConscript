@@ -6,10 +6,6 @@ Import('*')
 if env['platform'] != 'linux':
     Return()
 
-if not set(('softpipe', 'llvmpipe', 'cell')).intersection(env['drivers']):
-    print 'warning: no supported pipe driver: skipping build of xlib libGL.so'
-    Return()
-
 env = env.Clone()
 
 env.Prepend(LIBS = [
@@ -28,11 +24,11 @@ sources = [
     'graw_xlib.c',
 ]
 
-if 'softpipe' in env['drivers']:
+if True:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
     env.Prepend(LIBS = [softpipe])
 
-if 'llvmpipe' in env['drivers']:
+if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
     env.Tool('udis86')
     env.Prepend(LIBS = [llvmpipe])

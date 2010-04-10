@@ -12,17 +12,13 @@
 
 Import('*')
 
-if not set(('softpipe', 'llvmpipe', 'cell')).intersection(env['drivers']):
-    print 'warning: no supported pipe driver: skipping build of sw meta-driver'
-    Return()
-
 env = env.Clone()
 
-if 'softpipe' in env['drivers']:
+if True:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
     env.Prepend(LIBS = [softpipe])
 
-if 'llvmpipe' in env['drivers']:
+if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
     env.Tool('udis86')
     env.Prepend(LIBS = [llvmpipe])
