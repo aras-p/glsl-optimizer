@@ -67,7 +67,7 @@ static void nv50_buffer_transfer_unmap( struct pipe_context *pipe,
 
 
 
-struct u_resource_vtbl nv50_buffer_vtbl = 
+const struct u_resource_vtbl nv50_buffer_vtbl =
 {
 	u_default_resource_get_handle,      /* get_handle */
 	nv50_buffer_destroy,		    /* resource_destroy */

@@ -16,7 +16,7 @@ struct nouveau_bo;
  */
 struct nv50_resource {
 	struct pipe_resource base;
-	struct u_resource_vtbl *vtbl;
+	const struct u_resource_vtbl *vtbl;
 	struct nouveau_bo *bo;
 };
 

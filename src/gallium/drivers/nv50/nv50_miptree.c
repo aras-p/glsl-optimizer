@@ -111,7 +111,7 @@ nv50_miptree_get_handle(struct pipe_screen *pscreen,
 }
 
 
-struct u_resource_vtbl nv50_miptree_vtbl = 
+const struct u_resource_vtbl nv50_miptree_vtbl =
 {
    nv50_miptree_get_handle,	      /* get_handle */
    nv50_miptree_destroy,	      /* resource_destroy */
@@ -137,7 +137,11 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *tmp
 	uint32_t tile_flags;
 	int ret, i, l;
 
+	if (!mt)
+		return NULL;
+
 	*pt = *tmp;
+	mt->base.vtbl = &nv50_miptree_vtbl;
 	pipe_reference_init(&pt->reference, 1);
 	pt->screen = pscreen;
 
@@ -248,6 +252,7 @@ nv50_miptree_from_handle(struct pipe_screen *pscreen,
 
 
 	mt->base.base = *template;
+	mt->base.vtbl = &nv50_miptree_vtbl;
 	pipe_reference_init(&mt->base.base.reference, 1);
 	mt->base.base.screen = pscreen;
 	mt->image_nr = 1;
