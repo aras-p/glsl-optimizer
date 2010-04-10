@@ -493,6 +493,25 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 /* NPOT textures don't support mip filter, unfortunately.
                  * This prevents incorrect rendering. */
                 texstate->filter[0] &= ~R300_TX_MIN_FILTER_MIP_MASK;
+
+                /* Set repeat or mirrored-repeat to clamp-to-edge. */
+                /* Wrap S. */
+                if ((texstate->filter[0] & R300_TX_WRAP_S_MASK) ==
+                     R300_TX_WRAP_S(R300_TX_REPEAT) ||
+                    (texstate->filter[0] & R300_TX_WRAP_S_MASK) ==
+                     R300_TX_WRAP_S(R300_TX_MIRRORED)) {
+                    texstate->filter[0] &= ~R300_TX_WRAP_S_MASK;
+                    texstate->filter[0] |= R300_TX_WRAP_S(R300_TX_CLAMP_TO_EDGE);
+                }
+
+                /* Wrap T. */
+                if ((texstate->filter[0] & R300_TX_WRAP_T_MASK) ==
+                     R300_TX_WRAP_T(R300_TX_REPEAT) ||
+                    (texstate->filter[0] & R300_TX_WRAP_T_MASK) ==
+                     R300_TX_WRAP_T(R300_TX_MIRRORED)) {
+                    texstate->filter[0] &= ~R300_TX_WRAP_T_MASK;
+                    texstate->filter[0] |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
+                }
             } else {
                 /* determine min/max levels */
                 /* the MAX_MIP level is the largest (finest) one */
