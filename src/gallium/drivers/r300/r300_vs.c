@@ -80,11 +80,12 @@ static void r300_shader_read_vs_outputs(
 
             case TGSI_SEMANTIC_EDGEFLAG:
                 assert(index == 0);
-                fprintf(stderr, "r300 VP: cannot handle edgeflag output\n");
-                assert(0);
+                fprintf(stderr, "r300 VP: cannot handle edgeflag output.\n");
                 break;
+
             default:
-                assert(0);
+                fprintf(stderr, "r300 VP: unknown vertex output semantic: %i.\n",
+                        info->output_semantic_name[i]);
         }
     }
 
@@ -148,34 +149,32 @@ static void r300_init_vs_output_mapping(struct r300_vertex_shader* vs)
 
     /* Texture coordinates. */
     gen_count = 0;
-    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+    for (i = 0; i < ATTR_GENERIC_COUNT && gen_count < 8; i++) {
         if (vs_outputs->generic[i] != ATTR_UNUSED) {
             vap_out->vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << gen_count);
             vap_out->vap_out_vtx_fmt[1] |= (4 << (3 * gen_count));
 
-            assert(tabi < 16);
             stream_loc[tabi++] = 6 + gen_count;
             gen_count++;
         }
     }
 
     /* Fog coordinates. */
-    if (vs_outputs->fog != ATTR_UNUSED) {
+    if (gen_count < 8 && vs_outputs->fog != ATTR_UNUSED) {
         vap_out->vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << gen_count);
         vap_out->vap_out_vtx_fmt[1] |= (4 << (3 * gen_count));
 
-        assert(tabi < 16);
         stream_loc[tabi++] = 6 + gen_count;
         gen_count++;
     }
 
-    assert(gen_count <= 8);
-
     /* WPOS. */
-    vs->wpos_tex_output = gen_count;
-
-    assert(tabi < 16);
-    stream_loc[tabi++] = 6 + gen_count;
+    if (gen_count < 8) {
+        vs->wpos_tex_output = gen_count;
+        stream_loc[tabi++] = 6 + gen_count;
+    } else {
+        vs_outputs->wpos = ATTR_UNUSED;
+    }
 
     for (; tabi < 16;) {
         stream_loc[tabi++] = -1;
@@ -292,7 +291,9 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     compiler.SetHwInputOutput = &set_vertex_inputs_outputs;
 
     /* Insert the WPOS output. */
-    rc_copy_output(&compiler.Base, 0, vs->outputs.wpos);
+    if (vs->outputs.wpos != ATTR_UNUSED) {
+        rc_copy_output(&compiler.Base, 0, vs->outputs.wpos);
+    }
 
     /* Invoke the compiler */
     r3xx_compile_vertex_program(&compiler);
@@ -313,13 +314,15 @@ boolean r300_vertex_shader_setup_wpos(struct r300_context* r300)
     int tex_output = vs->wpos_tex_output;
     uint32_t tex_fmt = R300_INPUT_CNTL_TC0 << tex_output;
 
+    if (vs->outputs.wpos == ATTR_UNUSED) {
+        return FALSE;
+    }
+
     if (r300->fs->inputs.wpos != ATTR_UNUSED) {
         /* Enable WPOS in VAP. */
         if (!(vap_out->vap_vsm_vtx_assm & tex_fmt)) {
             vap_out->vap_vsm_vtx_assm |= tex_fmt;
             vap_out->vap_out_vtx_fmt[1] |= (4 << (3 * tex_output));
-
-            assert(tex_output < 8);
             return TRUE;
         }
     } else {

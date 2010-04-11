@@ -1114,10 +1114,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
         r300->dirty_state &= ~R300_NEW_VERTEX_SHADER_CONSTANTS;
     }
 
-    /* XXX
-    assert(r300->dirty_state == 0);
-    */
-
     /* Emit the VBO for SWTCL. */
     if (!r300screen->caps.has_tcl) {
         r300_emit_vertex_buffer(r300);

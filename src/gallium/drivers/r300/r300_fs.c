@@ -69,7 +69,8 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
                 break;
 
             default:
-                assert(0);
+                fprintf(stderr, "r300: FP: Unknown input semantic: %i\n",
+                        info->input_semantic_name[i]);
         }
     }
 }

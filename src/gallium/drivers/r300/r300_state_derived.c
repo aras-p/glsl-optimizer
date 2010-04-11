@@ -83,8 +83,10 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
     /* XXX Back-face colors. */
 
     /* Texture coordinates. */
+    /* Only 8 generic vertex attributes can be used. If there are more,
+     * they won't be rasterized. */
     gen_count = 0;
-    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+    for (i = 0; i < ATTR_GENERIC_COUNT && gen_count < 8; i++) {
         if (vs_outputs->generic[i] != ATTR_UNUSED) {
             r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
                                   vs_outputs->generic[i]);
@@ -93,13 +95,11 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
     }
 
     /* Fog coordinates. */
-    if (vs_outputs->fog != ATTR_UNUSED) {
+    if (gen_count < 8 && vs_outputs->fog != ATTR_UNUSED) {
         r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
                               vs_outputs->fog);
         gen_count++;
     }
-
-    assert(gen_count <= 8);
 }
 
 /* Update the PSC tables for SW TCL, using Draw. */
@@ -344,7 +344,7 @@ static void r300_update_rs_block(struct r300_context* r300,
 
     /* Rasterize WPOS. */
     /* If the FS doesn't need it, it's not written by the VS. */
-    if (fs_inputs->wpos != ATTR_UNUSED) {
+    if (vs_outputs->wpos != ATTR_UNUSED && fs_inputs->wpos != ATTR_UNUSED) {
         rX00_rs_tex(&rs, tex_count, tex_count, FALSE);
         rX00_rs_tex_write(&rs, tex_count, fp_offset);
 

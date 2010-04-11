@@ -1128,10 +1128,9 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         if (buffers[i].buffer) {
             if (buffers[i].stride % 4 != 0) {
                 // XXX Shouldn't we align the buffer?
-                fprintf(stderr, "r300_set_vertex_buffers: "
+                fprintf(stderr, "r300: set_vertex_buffers: "
                         "Unaligned buffer stride %i isn't supported.\n",
                         buffers[i].stride);
-                assert(0);
                 abort();
             }
         }
@@ -1193,7 +1192,11 @@ static void r300_vertex_psc(struct r300_vertex_element_state *velems)
     enum pipe_format format;
     unsigned i;
 
-    assert(velems->count <= 16);
+    if (velems->count > 16) {
+        fprintf(stderr, "r300: More than 16 vertex elements are not supported,"
+                " requested %i, using 16.\n", velems->count);
+        velems->count = 16;
+    }
 
     /* Vertex shaders have no semantics on their inputs,
      * so PSC should just route stuff based on the vertex elements,

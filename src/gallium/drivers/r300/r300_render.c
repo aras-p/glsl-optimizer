@@ -273,7 +273,11 @@ void r500_emit_draw_arrays(struct r300_context *r300,
     CS_LOCALS(r300);
 
     if (alt_num_verts) {
-        assert(count < (1 << 24));
+        if (count >= (1 << 24)) {
+            fprintf(stderr, "r300: Got a huge number of vertices: %i, "
+                    "refusing to render.\n", count);
+            return;
+        }
         BEGIN_CS(9);
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
     } else {
@@ -309,7 +313,11 @@ void r500_emit_draw_elements(struct r300_context *r300,
 #endif
     CS_LOCALS(r300);
 
-    assert(count < (1 << 24));
+    if (count >= (1 << 24)) {
+        fprintf(stderr, "r300: Got a huge number of vertices: %i, "
+                "refusing to render.\n", count);
+        return;
+    }
 
     maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
 
