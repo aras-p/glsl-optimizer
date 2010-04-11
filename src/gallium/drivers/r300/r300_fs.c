@@ -152,6 +152,32 @@ static void get_external_state(
             /* Fortunately, no need to translate this. */
             state->unit[i].texture_compare_func = s->state.compare_func;
         }
+
+        /* Should we ask the shader to handle wrapping modes for us? */
+        if (!s->state.normalized_coords) {
+            state->unit[i].non_normalized_coords = 1;
+
+            /* XXX this should probably take into account STR, not just S. */
+            switch (s->state.wrap_s) {
+                case PIPE_TEX_WRAP_REPEAT:
+                    state->unit[i].wrap_mode = RC_WRAP_REPEAT;
+                    break;
+                case PIPE_TEX_WRAP_CLAMP:
+                case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+                case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+                    state->unit[i].wrap_mode = RC_WRAP_CLAMP;
+                    break;
+                case PIPE_TEX_WRAP_MIRROR_REPEAT:
+                case PIPE_TEX_WRAP_MIRROR_CLAMP:
+                case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+                case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+                    state->unit[i].wrap_mode = RC_WRAP_MIRROR;
+                    break;
+                default:
+                    state->unit[i].wrap_mode = RC_WRAP_NONE;
+                    break;
+            }
+        }
     }
 }
 
