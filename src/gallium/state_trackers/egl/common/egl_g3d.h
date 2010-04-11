@@ -103,8 +103,4 @@ _EGL_DRIVER_STANDARD_TYPECASTS(egl_g3d)
 _EGL_DRIVER_TYPECAST(egl_g3d_screen, _EGLScreen, obj)
 _EGL_DRIVER_TYPECAST(egl_g3d_image, _EGLImage, obj)
 
-
-_EGLConfig *
-egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix);
-
 #endif /* _EGL_G3D_H_ */

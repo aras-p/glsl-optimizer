@@ -25,7 +25,6 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include <assert.h>
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_rect.h"
@@ -34,6 +33,7 @@
 
 #include "native.h"
 #include "egl_g3d.h"
+#include "egl_g3d_api.h"
 #include "egl_g3d_image.h"
 
 /**
