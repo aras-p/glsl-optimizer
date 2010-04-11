@@ -846,6 +846,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RV770_9456:
    case PCI_CHIP_RV770_945A:
    case PCI_CHIP_RV770_945B:
+   case PCI_CHIP_RV770_945E:
    case PCI_CHIP_RV790_9460:
    case PCI_CHIP_RV790_9462:
    case PCI_CHIP_RV770_946A:
@@ -860,6 +861,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RV730_9487:
    case PCI_CHIP_RV730_9488:
    case PCI_CHIP_RV730_9489:
+   case PCI_CHIP_RV730_948A:
    case PCI_CHIP_RV730_948F:
    case PCI_CHIP_RV730_9490:
    case PCI_CHIP_RV730_9491:
@@ -881,6 +883,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RV710_9553:
    case PCI_CHIP_RV710_9555:
    case PCI_CHIP_RV710_9557:
+   case PCI_CHIP_RV710_955F:
       screen->chip_family = CHIP_FAMILY_RV710;
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
