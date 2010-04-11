@@ -40,7 +40,7 @@ struct stw_st_framebuffer {
    struct stw_framebuffer *fb;
    struct st_visual stvis;
 
-   struct pipe_texture *textures[ST_ATTACHMENT_COUNT];
+   struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
    unsigned texture_width, texture_height;
    unsigned texture_mask;
 
@@ -62,7 +62,7 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
                                    unsigned mask)
 {
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
-   struct pipe_texture templ;
+   struct pipe_resource templ;
    unsigned i;
 
    /* remove outdated surface */
@@ -72,7 +72,7 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
    /* remove outdated textures */
    if (stwfb->texture_width != width || stwfb->texture_height != height) {
       for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
-         pipe_texture_reference(&stwfb->textures[i], NULL);
+         pipe_resource_reference(&stwfb->textures[i], NULL);
    }
 
    memset(&templ, 0, sizeof(templ));
@@ -84,7 +84,7 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
       enum pipe_format format;
-      unsigned tex_usage;
+      unsigned bind;
 
       /* the texture already exists or not requested */
       if (stwfb->textures[i] || !(mask & (1 << i))) {
@@ -98,12 +98,12 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
       case ST_ATTACHMENT_FRONT_LEFT:
       case ST_ATTACHMENT_BACK_LEFT:
          format = stwfb->stvis.color_format;
-         tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                     PIPE_TEXTURE_USAGE_RENDER_TARGET;
+         bind = PIPE_BIND_DISPLAY_TARGET |
+                PIPE_BIND_RENDER_TARGET;
          break;
       case ST_ATTACHMENT_DEPTH_STENCIL:
          format = stwfb->stvis.depth_stencil_format;
-         tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+         bind = PIPE_BIND_DEPTH_STENCIL;
          break;
       default:
          format = PIPE_FORMAT_NONE;
@@ -112,10 +112,10 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
 
       if (format != PIPE_FORMAT_NONE) {
          templ.format = format;
-         templ.tex_usage = tex_usage;
+         templ.bind = bind;
 
          stwfb->textures[i] =
-            stw_dev->screen->texture_create(stw_dev->screen, &templ);
+            stw_dev->screen->resource_create(stw_dev->screen, &templ);
       }
    }
 
@@ -128,7 +128,7 @@ static boolean
 stw_st_framebuffer_validate(struct st_framebuffer_iface *stfb,
                             const enum st_attachment_type *statts,
                             unsigned count,
-                            struct pipe_texture **out)
+                            struct pipe_resource **out)
 {
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
    unsigned statt_mask, i;
@@ -147,7 +147,7 @@ stw_st_framebuffer_validate(struct st_framebuffer_iface *stfb,
 
    for (i = 0; i < count; i++) {
       out[i] = NULL;
-      pipe_texture_reference(&out[i], stwfb->textures[statts[i]]);
+      pipe_resource_reference(&out[i], stwfb->textures[statts[i]]);
    }
 
    stw_framebuffer_release(stwfb->fb);
@@ -160,7 +160,7 @@ get_present_surface_locked(struct st_framebuffer_iface *stfb,
                            enum st_attachment_type statt)
 {
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
-   struct pipe_texture *ptex;
+   struct pipe_resource *ptex;
    struct pipe_surface *psurf, **cache;
    
    ptex = stwfb->textures[statt];
@@ -183,7 +183,9 @@ get_present_surface_locked(struct st_framebuffer_iface *stfb,
 
    if (!*cache) {
       *cache = stw_dev->screen->get_tex_surface(stw_dev->screen,
-            ptex, 0, 0, 0, PIPE_BUFFER_USAGE_CPU_READ);
+            ptex, 0, 0, 0,
+            PIPE_BIND_DISPLAY_TARGET |
+            PIPE_BIND_RENDER_TARGET);
    }
 
    if (psurf != *cache)
@@ -257,7 +259,7 @@ stw_st_destroy_framebuffer_locked(struct st_framebuffer_iface *stfb)
    pipe_surface_reference(&stwfb->back_surface, NULL);
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
-      pipe_texture_reference(&stwfb->textures[i], NULL);
+      pipe_resource_reference(&stwfb->textures[i], NULL);
 
    FREE(stwfb);
 }
@@ -270,7 +272,7 @@ stw_st_swap_framebuffer_locked(struct st_framebuffer_iface *stfb)
 {
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
    unsigned front = ST_ATTACHMENT_FRONT_LEFT, back = ST_ATTACHMENT_BACK_LEFT;
-   struct pipe_texture *ptex;
+   struct pipe_resource *ptex;
    struct pipe_surface *psurf;
    unsigned mask;
 
