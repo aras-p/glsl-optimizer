@@ -78,7 +78,7 @@ void r300_emit_invariant_state(struct r300_context* r300,
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(44 + (caps->has_tcl ? 7 : 0) +
+    BEGIN_CS(42 + (caps->has_tcl ? 7 : 0) +
              (caps->family >= CHIP_FAMILY_RV350 ? 4 : 0));
 
     if (caps->has_tcl) {
@@ -125,9 +125,5 @@ void r300_emit_invariant_state(struct r300_context* r300,
     OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
-
-    /* XXX */
-    OUT_CS_REG(R300_SC_CLIP_RULE, 0xFFFF);
-
     END_CS;
 }

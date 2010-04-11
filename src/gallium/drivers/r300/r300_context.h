@@ -105,6 +105,7 @@ struct r300_rs_state {
     uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
     uint32_t color_control;         /* R300_GA_COLOR_CONTROL: 0x4278 */
     uint32_t polygon_mode;          /* R300_GA_POLY_MODE: 0x4288 */
+    uint32_t clip_rule;             /* R300_SC_CLIP_RULE: 0x43D0 */
 };
 
 struct r300_rs_block {
@@ -410,8 +411,6 @@ struct r300_context {
     boolean polygon_offset_enabled;
     /* Z buffer bit depth. */
     uint32_t zbuffer_bpp;
-    /* Whether scissor is enabled. */
-    boolean scissor_enabled;
     /* Whether rendering is conditional and should be skipped. */
     boolean skip_rendering;
     /* Whether the two-sided stencil ref value is different for front and

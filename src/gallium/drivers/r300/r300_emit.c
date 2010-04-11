@@ -438,6 +438,17 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
                      0, RADEON_GEM_DOMAIN_VRAM, 0);
     }
 
+    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
+    if (r300->screen->caps.is_r500) {
+        OUT_CS(0);
+        OUT_CS(((fb->width  - 1) << R300_SCISSORS_X_SHIFT) |
+               ((fb->height - 1) << R300_SCISSORS_Y_SHIFT));
+    } else {
+        OUT_CS((1440 << R300_SCISSORS_X_SHIFT) |
+               (1440 << R300_SCISSORS_Y_SHIFT));
+        OUT_CS(((fb->width  + 1440-1) << R300_SCISSORS_X_SHIFT) |
+               ((fb->height + 1440-1) << R300_SCISSORS_Y_SHIFT));
+    }
     OUT_CS_REG(R300_GA_POINT_MINMAX,
         (MAX2(fb->width, fb->height) * 6) << R300_GA_POINT_MINMAX_MAX_SHIFT);
     END_CS;
@@ -608,6 +619,7 @@ void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
     OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, rs->line_stipple_config);
     OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, rs->line_stipple_value);
     OUT_CS_REG(R300_GA_POLY_MODE, rs->polygon_mode);
+    OUT_CS_REG(R300_SC_CLIP_RULE, rs->clip_rule);
     END_CS;
 }
 
@@ -656,61 +668,22 @@ void r300_emit_rs_block_state(struct r300_context* r300,
 void r300_emit_scissor_state(struct r300_context* r300,
                              unsigned size, void* state)
 {
-    unsigned minx, miny, maxx, maxy;
-    uint32_t top_left, bottom_right;
     struct pipe_scissor_state* scissor = (struct pipe_scissor_state*)state;
-    struct pipe_framebuffer_state* fb =
-        (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
-    minx = miny = 0;
-    maxx = fb->width;
-    maxy = fb->height;
-
-    if (r300->scissor_enabled) {
-        minx = MAX2(minx, scissor->minx);
-        miny = MAX2(miny, scissor->miny);
-        maxx = MIN2(maxx, scissor->maxx);
-        maxy = MIN2(maxy, scissor->maxy);
-    }
-
-    /* Special case for zero-area scissor.
-     *
-     * We can't allow the variables maxx and maxy to be zero because they are
-     * subtracted from later in the code, which would cause emitting ~0 and
-     * making the kernel checker angry.
-     *
-     * Let's consider we change maxx and maxy to 1, which is effectively
-     * a one-pixel area. We must then change minx and miny to a number which is
-     * greater than 1 to get the zero area back. */
-    if (!maxx || !maxy) {
-        minx = 2;
-        miny = 2;
-        maxx = 1;
-        maxy = 1;
-    }
-
-    if (r300->screen->caps.is_r500) {
-        top_left =
-            (minx << R300_SCISSORS_X_SHIFT) |
-            (miny << R300_SCISSORS_Y_SHIFT);
-        bottom_right =
-            ((maxx - 1) << R300_SCISSORS_X_SHIFT) |
-            ((maxy - 1) << R300_SCISSORS_Y_SHIFT);
-    } else {
-        /* Offset of 1440 in non-R500 chipsets. */
-        top_left =
-            ((minx + 1440) << R300_SCISSORS_X_SHIFT) |
-            ((miny + 1440) << R300_SCISSORS_Y_SHIFT);
-        bottom_right =
-            (((maxx - 1) + 1440) << R300_SCISSORS_X_SHIFT) |
-            (((maxy - 1) + 1440) << R300_SCISSORS_Y_SHIFT);
-    }
-
     BEGIN_CS(size);
-    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    OUT_CS(top_left);
-    OUT_CS(bottom_right);
+    OUT_CS_REG_SEQ(R300_SC_CLIPRECT_TL_0, 2);
+    if (r300->screen->caps.is_r500) {
+        OUT_CS((scissor->minx << R300_CLIPRECT_X_SHIFT) |
+               (scissor->miny << R300_CLIPRECT_Y_SHIFT));
+        OUT_CS(((scissor->maxx - 1) << R300_CLIPRECT_X_SHIFT) |
+               ((scissor->maxy - 1) << R300_CLIPRECT_Y_SHIFT));
+    } else {
+        OUT_CS(((scissor->minx + 1440) << R300_CLIPRECT_X_SHIFT) |
+               ((scissor->miny + 1440) << R300_CLIPRECT_Y_SHIFT));
+        OUT_CS(((scissor->maxx + 1440-1) << R300_CLIPRECT_X_SHIFT) |
+               ((scissor->maxy + 1440-1) << R300_CLIPRECT_Y_SHIFT));
+    }
     END_CS;
 }
 
