@@ -108,7 +108,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    struct pipe_vertex_buffer vbuffers[PIPE_MAX_SHADER_INPUTS];
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-   struct pipe_transfer *ib_transfer;
+   struct pipe_transfer *ib_transfer = NULL;
    struct pipe_transfer *cb_transfer;
    GLuint attr, i;
    ubyte *mapped_constants;
