@@ -108,6 +108,18 @@ typedef enum {
 } rc_compare_func;
 
 /**
+ * Coordinate wrapping modes.
+ *
+ * These are not quite the same as their GL counterparts yet.
+ */
+typedef enum {
+	RC_WRAP_NONE = 0,
+	RC_WRAP_CLAMP,
+	RC_WRAP_REPEAT,
+	RC_WRAP_MIRROR
+} rc_wrap_mode;
+
+/**
  * Stores state that influences the compilation of a fragment program.
  */
 struct r300_fragment_program_external_state {
@@ -127,11 +139,23 @@ struct r300_fragment_program_external_state {
 		 * this field specifies the compare function.
 		 *
 		 * Otherwise, this field is \ref RC_COMPARE_FUNC_NEVER (aka 0).
-		 *
-		 * Otherwise, this field is 0.
 		 * \sa rc_compare_func
 		 */
 		unsigned texture_compare_func : 3;
+
+		/**
+		 * If the sampler will be accessed with non-normalized coords,
+		 * this field is set.
+		 */
+		unsigned non_normalized_coords : 1;
+
+		/**
+		 * This field specifies wrapping modes for the sampler.
+		 *
+		 * If this field is \ref RC_WRAP_NONE (aka 0), no wrapping maths
+		 * will be performed on the coordinates.
+		 */
+		unsigned wrap_mode : 2;
 	} unit[16];
 };
 
