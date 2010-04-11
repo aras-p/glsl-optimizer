@@ -839,7 +839,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 	struct nouveau_grobj *eng3d = screen->eng3d;
 	struct nvfx_vertex_program *vp;
 	struct pipe_resource *constbuf;
-	struct pipe_transfer *transfer;
+	struct pipe_transfer *transfer = NULL;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
 
