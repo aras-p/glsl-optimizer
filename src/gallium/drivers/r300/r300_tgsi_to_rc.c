@@ -383,4 +383,3 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
 
     rc_calculate_inputs_outputs(ttr->compiler);
 }
-

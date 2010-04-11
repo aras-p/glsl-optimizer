@@ -49,11 +49,17 @@ void r300_emit_fragment_program_code(struct r300_context* r300,
 void r300_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);
 
+void r300_emit_fs_constant_rc_state(struct r300_context* r300,
+                                    struct rc_constant_list* constants);
+
 void r500_emit_fragment_program_code(struct r300_context* r300,
                                      struct rX00_fragment_program_code* generic_code);
 
 void r500_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);
+
+void r500_emit_fs_constant_rc_state(struct r300_context* r300,
+                                    struct rc_constant_list* constants);
 
 void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state);
 

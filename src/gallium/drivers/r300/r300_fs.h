@@ -41,6 +41,11 @@ struct r300_fragment_shader_code {
     /* Bits 0-15: TRUE if it's a shadow sampler, FALSE otherwise. */
     unsigned shadow_samplers;
 
+    /* Numbers of constants for each type. */
+    unsigned externals_count;
+    unsigned immediates_count;
+    unsigned rc_state_count;
+
     struct r300_fragment_program_external_state compare_state;
     struct rX00_fragment_program_code code;
 

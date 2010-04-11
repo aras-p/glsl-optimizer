@@ -192,6 +192,7 @@ static void r300_translate_fragment_shader(
     struct r300_fragment_program_compiler compiler;
     struct tgsi_to_rc ttr;
     int wpos;
+    unsigned i;
 
     tgsi_scan_shader(tokens, &shader->info);
     r300_shader_read_fs_inputs(&shader->info, &shader->inputs);
@@ -240,6 +241,7 @@ static void r300_translate_fragment_shader(
 
     /* Invoke the compiler */
     r3xx_compile_fragment_program(&compiler);
+
     if (compiler.Base.Error) {
         fprintf(stderr, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
                 " instead.\n", compiler.Base.ErrorMsg);
@@ -250,6 +252,24 @@ static void r300_translate_fragment_shader(
             abort();
         }
         r300_dummy_fragment_shader(r300, shader);
+    }
+
+    /* Initialize numbers of constants for each type. */
+    shader->externals_count = ttr.immediate_offset;
+    shader->immediates_count = 0;
+    shader->rc_state_count = 0;
+
+    for (i = shader->externals_count; i < shader->code.constants.Count; i++) {
+        switch (shader->code.constants.Constants[i].Type) {
+            case RC_CONSTANT_IMMEDIATE:
+                ++shader->immediates_count;
+                break;
+            case RC_CONSTANT_STATE:
+                ++shader->rc_state_count;
+                break;
+            default:
+                assert(0);
+        }
     }
 
     /* And, finally... */

@@ -237,12 +237,17 @@ void r300_emit_fragment_program_code(struct r300_context* r300,
                                      struct rX00_fragment_program_code* generic_code)
 {
     struct r300_fragment_program_code * code = &generic_code->code.r300;
-    int i;
+    unsigned i;
+    unsigned imm_count = r300->fs->shader->immediates_count;
+    unsigned imm_first = r300->fs->shader->externals_count;
+    unsigned imm_end = generic_code->constants.Count;
+    struct rc_constant *constants = generic_code->constants.Constants;
     CS_LOCALS(r300);
 
     BEGIN_CS(15 +
              code->alu.length * 4 +
-             (code->tex.length ? (1 + code->tex.length) : 0));
+             (code->tex.length ? (1 + code->tex.length) : 0) +
+             (imm_count ? imm_count * 5 : 0));
 
     OUT_CS_REG(R300_US_CONFIG, code->config);
     OUT_CS_REG(R300_US_PIXSIZE, code->pixsize);
@@ -274,28 +279,70 @@ void r300_emit_fragment_program_code(struct r300_context* r300,
             OUT_CS(code->tex.inst[i]);
     }
 
+    /* Emit immediates. */
+    if (imm_count) {
+        for(i = imm_first; i < imm_end; ++i) {
+            if (constants[i].Type == RC_CONSTANT_IMMEDIATE) {
+                const float *data = constants[i].u.Immediate;
+
+                OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
+                OUT_CS(pack_float24(data[0]));
+                OUT_CS(pack_float24(data[1]));
+                OUT_CS(pack_float24(data[2]));
+                OUT_CS(pack_float24(data[3]));
+            }
+        }
+    }
     END_CS;
 }
 
 void r300_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants)
 {
-    int i;
+    unsigned i, count = r300->fs->shader->externals_count;
     CS_LOCALS(r300);
 
-    if (constants->Count == 0)
+    if (count == 0)
         return;
 
-    BEGIN_CS(constants->Count * 4 + 1);
-    OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, constants->Count * 4);
-    for(i = 0; i < constants->Count; ++i) {
-        const float * data = get_shader_constant(r300,
-                                                 &constants->Constants[i],
-                                                 &r300->shader_constants[PIPE_SHADER_FRAGMENT]);
+    BEGIN_CS(count * 4 + 1);
+    OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, count * 4);
+    for(i = 0; i < count; ++i) {
+        assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
+        const float *data =
+            r300->shader_constants[PIPE_SHADER_FRAGMENT].constants[i];
         OUT_CS(pack_float24(data[0]));
         OUT_CS(pack_float24(data[1]));
         OUT_CS(pack_float24(data[2]));
         OUT_CS(pack_float24(data[3]));
+    }
+    END_CS;
+}
+
+void r300_emit_fs_constant_rc_state(struct r300_context* r300,
+                                    struct rc_constant_list* constants)
+{
+    unsigned i;
+    unsigned count = r300->fs->shader->rc_state_count;
+    unsigned first = r300->fs->shader->externals_count;
+    unsigned end = constants->Count;
+    CS_LOCALS(r300);
+
+    if (count == 0)
+        return;
+
+    BEGIN_CS(count * 5);
+    for(i = first; i < end; ++i) {
+        if (constants->Constants[i].Type == RC_CONSTANT_STATE) {
+            const float *data = get_shader_constant(r300,
+                                                    &constants->Constants[i], 0);
+
+            OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
+            OUT_CS(pack_float24(data[0]));
+            OUT_CS(pack_float24(data[1]));
+            OUT_CS(pack_float24(data[2]));
+            OUT_CS(pack_float24(data[3]));
+        }
     }
     END_CS;
 }
@@ -320,11 +367,16 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
                                      struct rX00_fragment_program_code* generic_code)
 {
     struct r500_fragment_program_code * code = &generic_code->code.r500;
-    int i;
+    unsigned i;
+    unsigned imm_count = r300->fs->shader->immediates_count;
+    unsigned imm_first = r300->fs->shader->externals_count;
+    unsigned imm_end = generic_code->constants.Count;
+    struct rc_constant *constants = generic_code->constants.Constants;
     CS_LOCALS(r300);
 
     BEGIN_CS(13 +
-             ((code->inst_end + 1) * 6));
+             ((code->inst_end + 1) * 6) +
+             (imm_count ? imm_count * 7 : 0));
     OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
     OUT_CS_REG(R500_US_PIXSIZE, code->max_temp_idx);
     OUT_CS_REG(R500_US_CODE_RANGE,
@@ -344,29 +396,78 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
         OUT_CS(code->inst[i].inst5);
     }
 
+    /* Emit immediates. */
+    if (imm_count) {
+        for(i = imm_first; i < imm_end; ++i) {
+            if (constants[i].Type == RC_CONSTANT_IMMEDIATE) {
+                const float *data = constants[i].u.Immediate;
+
+                OUT_CS_REG(R500_GA_US_VECTOR_INDEX,
+                           R500_GA_US_VECTOR_INDEX_TYPE_CONST |
+                           (i & R500_GA_US_VECTOR_INDEX_MASK));
+                OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, 4);
+                OUT_CS_32F(data[0]);
+                OUT_CS_32F(data[1]);
+                OUT_CS_32F(data[2]);
+                OUT_CS_32F(data[3]);
+            }
+        }
+    }
     END_CS;
 }
 
 void r500_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants)
 {
-    int i;
+    unsigned i, count = r300->fs->shader->externals_count;
     CS_LOCALS(r300);
 
-    if (constants->Count == 0)
+    if (count == 0)
         return;
 
-    BEGIN_CS(constants->Count * 4 + 3);
+    BEGIN_CS(count * 4 + 3);
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
-    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, constants->Count * 4);
-    for (i = 0; i < constants->Count; i++) {
-        const float * data = get_shader_constant(r300,
-                                                 &constants->Constants[i],
-                                                 &r300->shader_constants[PIPE_SHADER_FRAGMENT]);
+    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count * 4);
+    for(i = 0; i < count; ++i) {
+        assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
+        const float *data =
+            r300->shader_constants[PIPE_SHADER_FRAGMENT].constants[i];
+
         OUT_CS_32F(data[0]);
         OUT_CS_32F(data[1]);
         OUT_CS_32F(data[2]);
         OUT_CS_32F(data[3]);
+    }
+    END_CS;
+}
+
+void r500_emit_fs_constant_rc_state(struct r300_context* r300,
+                                    struct rc_constant_list* constants)
+{
+    unsigned i;
+    unsigned count = r300->fs->shader->rc_state_count;
+    unsigned first = r300->fs->shader->externals_count;
+    unsigned end = constants->Count;
+    CS_LOCALS(r300);
+
+    if (count == 0)
+        return;
+
+    BEGIN_CS(count * 7);
+    for(i = first; i < end; ++i) {
+        if (constants->Constants[i].Type == RC_CONSTANT_STATE) {
+            const float *data = get_shader_constant(r300,
+                                                    &constants->Constants[i], 0);
+
+            OUT_CS_REG(R500_GA_US_VECTOR_INDEX,
+                       R500_GA_US_VECTOR_INDEX_TYPE_CONST |
+                       (i & R500_GA_US_VECTOR_INDEX_MASK));
+            OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, 4);
+            OUT_CS_32F(data[0]);
+            OUT_CS_32F(data[1]);
+            OUT_CS_32F(data[2]);
+            OUT_CS_32F(data[3]);
+        }
     }
     END_CS;
 }
@@ -1099,9 +1200,13 @@ void r300_emit_dirty_state(struct r300_context* r300)
         if (r300screen->caps.is_r500) {
             r500_emit_fs_constant_buffer(r300,
                                          &r300->fs->shader->code.constants);
+            r500_emit_fs_constant_rc_state(r300,
+                                           &r300->fs->shader->code.constants);
         } else {
             r300_emit_fs_constant_buffer(r300,
                                          &r300->fs->shader->code.constants);
+            r300_emit_fs_constant_rc_state(r300,
+                                           &r300->fs->shader->code.constants);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
