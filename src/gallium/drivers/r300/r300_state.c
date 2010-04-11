@@ -679,9 +679,6 @@ static void* r300_create_fs_state(struct pipe_context* pipe,
     fs->state = *shader;
     fs->state.tokens = tgsi_dup_tokens(shader->tokens);
 
-    tgsi_scan_shader(shader->tokens, &fs->info);
-    r300_shader_read_fs_inputs(&fs->info, &fs->inputs);
-
     return (void*)fs;
 }
 
@@ -1103,7 +1100,7 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
     }
 
     r300->viewport_state.dirty = TRUE;
-    if (r300->fs && r300->fs->inputs.wpos != ATTR_UNUSED) {
+    if (r300->fs && r300->fs->shader->inputs.wpos != ATTR_UNUSED) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
 }

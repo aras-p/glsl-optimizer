@@ -31,6 +31,16 @@
 #include "r300_shader_semantics.h"
 
 struct r300_fragment_shader_code {
+    struct tgsi_shader_info info;
+    struct r300_shader_semantics inputs;
+
+    /* Whether the shader was replaced by a dummy one due to a shader
+     * compilation failure. */
+    boolean dummy;
+
+    /* Bits 0-15: TRUE if it's a shadow sampler, FALSE otherwise. */
+    unsigned shadow_samplers;
+
     struct r300_fragment_program_external_state compare_state;
     struct rX00_fragment_program_code code;
 
@@ -41,10 +51,8 @@ struct r300_fragment_shader {
     /* Parent class */
     struct pipe_shader_state state;
 
-    struct tgsi_shader_info info;
-    struct r300_shader_semantics inputs;
-
-    /* Bits 0-15: TRUE if it's a shadow sampler, FALSE otherwise. */
+    /* Bits 0-15: TRUE if it's a shadow sampler, FALSE otherwise.
+     * Initialized from the first compiled FS. */
     unsigned shadow_samplers;
 
     /* Currently-bound fragment shader. */

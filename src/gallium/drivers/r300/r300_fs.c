@@ -26,6 +26,7 @@
 #include "util/u_memory.h"
 
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_ureg.h"
 
 #include "r300_context.h"
 #include "r300_screen.h"
@@ -76,20 +77,20 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
 }
 
 static void find_output_registers(struct r300_fragment_program_compiler * compiler,
-                                  struct r300_fragment_shader * fs)
+                                  struct r300_fragment_shader_code *shader)
 {
     unsigned i, colorbuf_count = 0;
 
     /* Mark the outputs as not present initially */
-    compiler->OutputColor[0] = fs->info.num_outputs;
-    compiler->OutputColor[1] = fs->info.num_outputs;
-    compiler->OutputColor[2] = fs->info.num_outputs;
-    compiler->OutputColor[3] = fs->info.num_outputs;
-    compiler->OutputDepth = fs->info.num_outputs;
+    compiler->OutputColor[0] = shader->info.num_outputs;
+    compiler->OutputColor[1] = shader->info.num_outputs;
+    compiler->OutputColor[2] = shader->info.num_outputs;
+    compiler->OutputColor[3] = shader->info.num_outputs;
+    compiler->OutputDepth = shader->info.num_outputs;
 
     /* Now see where they really are. */
-    for(i = 0; i < fs->info.num_outputs; ++i) {
-        switch(fs->info.output_semantic_name[i]) {
+    for(i = 0; i < shader->info.num_outputs; ++i) {
+        switch(shader->info.output_semantic_name[i]) {
             case TGSI_SEMANTIC_COLOR:
                 compiler->OutputColor[colorbuf_count] = i;
                 colorbuf_count++;
@@ -155,12 +156,47 @@ static void get_compare_state(
 
 static void r300_translate_fragment_shader(
     struct r300_context* r300,
+    struct r300_fragment_shader_code* shader,
+    const struct tgsi_token *tokens);
+
+static void r300_dummy_fragment_shader(
+    struct r300_context* r300,
     struct r300_fragment_shader_code* shader)
 {
-    struct r300_fragment_shader* fs = r300->fs;
+    struct pipe_shader_state state;
+    struct ureg_program *ureg;
+    struct ureg_dst out;
+    struct ureg_src imm;
+
+    /* Make a simple fragment shader which outputs (0, 0, 0, 1) */
+    ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+    out = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
+    imm = ureg_imm4f(ureg, 0, 0, 0, 1);
+
+    ureg_MOV(ureg, out, imm);
+    ureg_END(ureg);
+
+    state.tokens = ureg_finalize(ureg);
+
+    shader->dummy = TRUE;
+    r300_translate_fragment_shader(r300, shader, state.tokens);
+
+    ureg_destroy(ureg);
+}
+
+static void r300_translate_fragment_shader(
+    struct r300_context* r300,
+    struct r300_fragment_shader_code* shader,
+    const struct tgsi_token *tokens)
+{
     struct r300_fragment_program_compiler compiler;
     struct tgsi_to_rc ttr;
-    int wpos = fs->inputs.wpos;
+    int wpos;
+
+    tgsi_scan_shader(tokens, &shader->info);
+    r300_shader_read_fs_inputs(&shader->info, &shader->inputs);
+
+    wpos = shader->inputs.wpos;
 
     /* Setup the compiler. */
     memset(&compiler, 0, sizeof(compiler));
@@ -172,23 +208,23 @@ static void r300_translate_fragment_shader(
     compiler.is_r500 = r300->screen->caps.is_r500;
     compiler.max_temp_regs = compiler.is_r500 ? 128 : 32;
     compiler.AllocateHwInputs = &allocate_hardware_inputs;
-    compiler.UserData = &fs->inputs;
+    compiler.UserData = &shader->inputs;
 
-    find_output_registers(&compiler, fs);
+    find_output_registers(&compiler, shader);
 
     if (compiler.Base.Debug) {
         debug_printf("r300: Initial fragment program\n");
-        tgsi_dump(fs->state.tokens, 0);
+        tgsi_dump(tokens, 0);
     }
 
     /* Translate TGSI to our internal representation */
     ttr.compiler = &compiler.Base;
-    ttr.info = &fs->info;
+    ttr.info = &shader->info;
     ttr.use_half_swizzles = TRUE;
 
-    r300_tgsi_to_rc(&ttr, fs->state.tokens);
+    r300_tgsi_to_rc(&ttr, tokens);
 
-    fs->shadow_samplers = compiler.Base.Program.ShadowSamplers;
+    shader->shadow_samplers = compiler.Base.Program.ShadowSamplers;
 
     /**
      * Transform the program to support WPOS.
@@ -205,10 +241,15 @@ static void r300_translate_fragment_shader(
     /* Invoke the compiler */
     r3xx_compile_fragment_program(&compiler);
     if (compiler.Base.Error) {
-        /* XXX failover maybe? */
-        fprintf(stderr, "r300 FP: Compiler Error:\n%s",
-                compiler.Base.ErrorMsg);
-        abort();
+        fprintf(stderr, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
+                " instead.\n", compiler.Base.ErrorMsg);
+
+        if (shader->dummy) {
+            fprintf(stderr, "r300 FP: Cannot compile the dummy shader! "
+                    "Giving up...\n");
+            abort();
+        }
+        r300_dummy_fragment_shader(r300, shader);
     }
 
     /* And, finally... */
@@ -229,7 +270,8 @@ boolean r300_pick_fragment_shader(struct r300_context* r300)
          * therefore we set ~0, which means it should look at all sampler
          * states. This choice doesn't have any impact on the correctness. */
         get_compare_state(r300, &fs->shader->compare_state, ~0);
-        r300_translate_fragment_shader(r300, fs->shader);
+        r300_translate_fragment_shader(r300, fs->shader, fs->state.tokens);
+        fs->shadow_samplers = fs->shader->shadow_samplers;
         return TRUE;
 
     } else if (fs->shadow_samplers) {
@@ -254,7 +296,7 @@ boolean r300_pick_fragment_shader(struct r300_context* r300)
             fs->first = fs->shader = ptr;
 
             ptr->compare_state = state;
-            r300_translate_fragment_shader(r300, ptr);
+            r300_translate_fragment_shader(r300, ptr, fs->state.tokens);
             return TRUE;
         }
     }

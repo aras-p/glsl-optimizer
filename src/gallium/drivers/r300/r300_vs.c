@@ -318,7 +318,7 @@ boolean r300_vertex_shader_setup_wpos(struct r300_context* r300)
         return FALSE;
     }
 
-    if (r300->fs->inputs.wpos != ATTR_UNUSED) {
+    if (r300->fs->shader->inputs.wpos != ATTR_UNUSED) {
         /* Enable WPOS in VAP. */
         if (!(vap_out->vap_vsm_vtx_assm & tex_fmt)) {
             vap_out->vap_vsm_vtx_assm |= tex_fmt;
