@@ -233,7 +233,7 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
    /* we should be able to do better... */
    if (xbufs && dri2surf->last_num_xbufs == num_outs &&
        memcmp(dri2surf->last_xbufs, xbufs, sizeof(*xbufs) * num_outs) == 0) {
-      free(xbufs);
+      FREE(xbufs);
       dri2surf->client_stamp = dri2surf->server_stamp;
       return;
    }
@@ -244,7 +244,7 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
    dri2surf->client_stamp = dri2surf->server_stamp;
 
    if (dri2surf->last_xbufs)
-      free(dri2surf->last_xbufs);
+      FREE(dri2surf->last_xbufs);
    dri2surf->last_xbufs = xbufs;
    dri2surf->last_num_xbufs = num_outs;
 }
@@ -379,7 +379,7 @@ dri2_surface_destroy(struct native_surface *nsurf)
    int i;
 
    if (dri2surf->last_xbufs)
-      free(dri2surf->last_xbufs);
+      FREE(dri2surf->last_xbufs);
 
    for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
       struct pipe_resource *ptex = dri2surf->textures[i];
@@ -393,7 +393,7 @@ dri2_surface_destroy(struct native_surface *nsurf)
       util_hash_table_remove(dri2surf->dri2dpy->surfaces,
             (void *) dri2surf->drawable);
    }
-   free(dri2surf);
+   FREE(dri2surf);
 }
 
 static struct dri2_surface *
@@ -570,7 +570,7 @@ dri2_display_get_configs(struct native_display *ndpy, int *num_configs)
          return NULL;
       num_modes = x11_context_modes_count(modes);
 
-      dri2dpy->configs = calloc(num_modes, sizeof(*dri2dpy->configs));
+      dri2dpy->configs = CALLOC(num_modes, sizeof(*dri2dpy->configs));
       if (!dri2dpy->configs)
          return NULL;
 
@@ -585,7 +585,7 @@ dri2_display_get_configs(struct native_display *ndpy, int *num_configs)
       dri2dpy->num_configs = count;
    }
 
-   configs = malloc(dri2dpy->num_configs * sizeof(*configs));
+   configs = MALLOC(dri2dpy->num_configs * sizeof(*configs));
    if (configs) {
       for (i = 0; i < dri2dpy->num_configs; i++)
          configs[i] = (const struct native_config *) &dri2dpy->configs[i];
@@ -636,7 +636,7 @@ dri2_display_destroy(struct native_display *ndpy)
    struct dri2_display *dri2dpy = dri2_display(ndpy);
 
    if (dri2dpy->configs)
-      free(dri2dpy->configs);
+      FREE(dri2dpy->configs);
 
    if (dri2dpy->base.screen)
       dri2dpy->base.screen->destroy(dri2dpy->base.screen);
@@ -650,7 +650,7 @@ dri2_display_destroy(struct native_display *ndpy)
       XCloseDisplay(dri2dpy->dpy);
    if (dri2dpy->api && dri2dpy->api->destroy)
       dri2dpy->api->destroy(dri2dpy->api);
-   free(dri2dpy);
+   FREE(dri2dpy);
 }
 
 static void

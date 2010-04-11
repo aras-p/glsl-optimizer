@@ -93,20 +93,20 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    }
 
    if (!_eglInitContext(&gctx->base, dpy, conf, attribs)) {
-      free(gctx);
+      FREE(gctx);
       return NULL;
    }
 
    gctx->stapi = egl_g3d_choose_st(drv, &gctx->base);
    if (!gctx->stapi) {
-      free(gctx);
+      FREE(gctx);
       return NULL;
    }
 
    gctx->stctxi = gctx->stapi->create_context(gctx->stapi, gdpy->smapi,
          &gconf->stvis, (gshare) ? gshare->stctxi : NULL);
    if (!gctx->stctxi) {
-      free(gctx);
+      FREE(gctx);
       return NULL;
    }
 
@@ -129,7 +129,7 @@ destroy_context(_EGLDisplay *dpy, _EGLContext *ctx)
 
    gctx->stctxi->destroy(gctx->stctxi);
 
-   free(gctx);
+   FREE(gctx);
 }
 
 static EGLBoolean
@@ -183,7 +183,7 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    }
 
    if (!_eglInitSurface(&gsurf->base, dpy, arg->type, conf, attribs)) {
-      free(gsurf);
+      FREE(gsurf);
       return NULL;
    }
 
@@ -211,14 +211,14 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    }
 
    if (!nsurf) {
-      free(gsurf);
+      FREE(gsurf);
       return NULL;
    }
    /* initialize the geometry */
    if (!nsurf->validate(nsurf, 0x0, &gsurf->sequence_number, NULL,
             &gsurf->base.Width, &gsurf->base.Height)) {
       nsurf->destroy(nsurf);
-      free(gsurf);
+      FREE(gsurf);
       return NULL;
    }
 
@@ -229,7 +229,7 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
    if (!gsurf->stfbi) {
       nsurf->destroy(nsurf);
-      free(gsurf);
+      FREE(gsurf);
       return NULL;
    }
 
@@ -281,7 +281,7 @@ egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
    }
 
    if (!_eglInitSurface(&gsurf->base, dpy, EGL_PBUFFER_BIT, conf, attribs)) {
-      free(gsurf);
+      FREE(gsurf);
       return NULL;
    }
 
@@ -289,7 +289,7 @@ egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
 
    gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
    if (!gsurf->stfbi) {
-      free(gsurf);
+      FREE(gsurf);
       return NULL;
    }
 
@@ -312,7 +312,7 @@ destroy_surface(_EGLDisplay *dpy, _EGLSurface *surf)
    egl_g3d_destroy_st_framebuffer(gsurf->stfbi);
    if (gsurf->native)
       gsurf->native->destroy(gsurf->native);
-   free(gsurf);
+   FREE(gsurf);
 }
 
 static EGLBoolean

@@ -150,7 +150,7 @@ struct native_display {
 
    /**
     * Get the supported configs.  The configs are owned by the display, but
-    * the returned array should be free()ed.
+    * the returned array should be FREE()ed.
     */
    const struct native_config **(*get_configs)(struct native_display *ndpy,
                                                int *num_configs);

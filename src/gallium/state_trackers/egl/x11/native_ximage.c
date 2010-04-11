@@ -23,10 +23,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <assert.h>
-#include <sys/ipc.h>
-#include <sys/types.h>
-#include <sys/shm.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "util/u_memory.h"
@@ -373,7 +369,7 @@ ximage_surface_destroy(struct native_surface *nsurf)
    for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++)
       ximage_surface_free_buffer(&xsurf->base, i);
 
-   free(xsurf);
+   FREE(xsurf);
 }
 
 static struct ximage_surface *
@@ -476,7 +472,7 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
        * Create two configs for each visual.
        * One with depth/stencil buffer; one without
        */
-      xdpy->configs = calloc(num_visuals * 2, sizeof(*xdpy->configs));
+      xdpy->configs = CALLOC(num_visuals * 2, sizeof(*xdpy->configs));
       if (!xdpy->configs)
          return NULL;
 
@@ -511,7 +507,7 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
       xdpy->num_configs = count;
    }
 
-   configs = malloc(xdpy->num_configs * sizeof(*configs));
+   configs = MALLOC(xdpy->num_configs * sizeof(*configs));
    if (configs) {
       for (i = 0; i < xdpy->num_configs; i++)
          configs[i] = (const struct native_config *) &xdpy->configs[i];
@@ -574,14 +570,14 @@ ximage_display_destroy(struct native_display *ndpy)
    struct ximage_display *xdpy = ximage_display(ndpy);
 
    if (xdpy->configs)
-      free(xdpy->configs);
+      FREE(xdpy->configs);
 
    xdpy->base.screen->destroy(xdpy->base.screen);
 
    x11_screen_destroy(xdpy->xscr);
    if (xdpy->own_dpy)
       XCloseDisplay(xdpy->dpy);
-   free(xdpy);
+   FREE(xdpy);
 }
 
 
@@ -652,7 +648,7 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
    if (!xdpy->dpy) {
       xdpy->dpy = XOpenDisplay(NULL);
       if (!xdpy->dpy) {
-         free(xdpy);
+         FREE(xdpy);
          return NULL;
       }
       xdpy->own_dpy = TRUE;
@@ -663,7 +659,7 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
    xdpy->xscr_number = DefaultScreen(xdpy->dpy);
    xdpy->xscr = x11_screen_create(xdpy->dpy, xdpy->xscr_number);
    if (!xdpy->xscr) {
-      free(xdpy);
+      FREE(xdpy);
       return NULL;
    }
 

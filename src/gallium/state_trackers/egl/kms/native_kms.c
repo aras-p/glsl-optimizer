@@ -23,14 +23,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_string.h"
 #include "egllog.h"
 
 #include "native_kms.h"
@@ -230,7 +228,7 @@ kms_surface_destroy(struct native_surface *nsurf)
       pipe_resource_reference(&ptex, NULL);
    }
 
-   free(ksurf);
+   FREE(ksurf);
 }
 
 static struct kms_surface *
@@ -464,7 +462,7 @@ kms_display_get_modes(struct native_display *ndpy,
    /* delete old data */
    if (kconn->connector) {
       drmModeFreeConnector(kconn->connector);
-      free(kconn->kms_modes);
+      FREE(kconn->kms_modes);
 
       kconn->connector = NULL;
       kconn->kms_modes = NULL;
@@ -477,7 +475,7 @@ kms_display_get_modes(struct native_display *ndpy,
       return NULL;
 
    count = kconn->connector->count_modes;
-   kconn->kms_modes = calloc(count, sizeof(*kconn->kms_modes));
+   kconn->kms_modes = CALLOC(count, sizeof(*kconn->kms_modes));
    if (!kconn->kms_modes) {
       drmModeFreeConnector(kconn->connector);
       kconn->connector = NULL;
@@ -500,7 +498,7 @@ kms_display_get_modes(struct native_display *ndpy,
          kmode->base.refresh_rate = (kmode->base.refresh_rate + 500) / 1000;
    }
 
-   nmodes_return = malloc(count * sizeof(*nmodes_return));
+   nmodes_return = MALLOC(count * sizeof(*nmodes_return));
    if (nmodes_return) {
       for (i = 0; i < count; i++)
          nmodes_return[i] = &kconn->kms_modes[i].base;
@@ -521,7 +519,7 @@ kms_display_get_connectors(struct native_display *ndpy, int *num_connectors,
 
    if (!kdpy->connectors) {
       kdpy->connectors =
-         calloc(kdpy->resources->count_connectors, sizeof(*kdpy->connectors));
+         CALLOC(kdpy->resources->count_connectors, sizeof(*kdpy->connectors));
       if (!kdpy->connectors)
          return NULL;
 
@@ -535,7 +533,7 @@ kms_display_get_connectors(struct native_display *ndpy, int *num_connectors,
       kdpy->num_connectors = kdpy->resources->count_connectors;
    }
 
-   connectors = malloc(kdpy->num_connectors * sizeof(*connectors));
+   connectors = MALLOC(kdpy->num_connectors * sizeof(*connectors));
    if (connectors) {
       for (i = 0; i < kdpy->num_connectors; i++)
          connectors[i] = &kdpy->connectors[i].base;
@@ -581,7 +579,7 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
       struct native_config *nconf;
       enum pipe_format format;
 
-      kdpy->config = calloc(1, sizeof(*kdpy->config));
+      kdpy->config = CALLOC(1, sizeof(*kdpy->config));
       if (!kdpy->config)
          return NULL;
 
@@ -598,7 +596,7 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
             format = PIPE_FORMAT_NONE;
       }
       if (format == PIPE_FORMAT_NONE) {
-         free(kdpy->config);
+         FREE(kdpy->config);
          kdpy->config = NULL;
          return NULL;
       }
@@ -608,7 +606,7 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
       nconf->scanout_bit = TRUE;
    }
 
-   configs = malloc(sizeof(*configs));
+   configs = MALLOC(sizeof(*configs));
    if (configs) {
       configs[0] = &kdpy->config->base;
       if (num_configs)
@@ -640,21 +638,21 @@ kms_display_destroy(struct native_display *ndpy)
    int i;
 
    if (kdpy->config)
-      free(kdpy->config);
+      FREE(kdpy->config);
 
    if (kdpy->connectors) {
       for (i = 0; i < kdpy->num_connectors; i++) {
          struct kms_connector *kconn = &kdpy->connectors[i];
          if (kconn->connector) {
             drmModeFreeConnector(kconn->connector);
-            free(kconn->kms_modes);
+            FREE(kconn->kms_modes);
          }
       }
-      free(kdpy->connectors);
+      FREE(kdpy->connectors);
    }
 
    if (kdpy->shown_surfaces)
-      free(kdpy->shown_surfaces);
+      FREE(kdpy->shown_surfaces);
 
    if (kdpy->saved_crtcs) {
       for (i = 0; i < kdpy->resources->count_crtcs; i++) {
@@ -670,7 +668,7 @@ kms_display_destroy(struct native_display *ndpy)
             drmModeFreeCrtc(kcrtc->crtc);
          }
       }
-      free(kdpy->saved_crtcs);
+      FREE(kdpy->saved_crtcs);
    }
 
    if (kdpy->resources)
@@ -684,7 +682,7 @@ kms_display_destroy(struct native_display *ndpy)
 
    if (kdpy->api)
       kdpy->api->destroy(kdpy->api);
-   free(kdpy);
+   FREE(kdpy);
 }
 
 /**
@@ -747,7 +745,7 @@ kms_create_display(EGLNativeDisplayType dpy,
    kdpy->api = api;
    if (!kdpy->api) {
       _eglLog(_EGL_WARNING, "failed to create DRM API");
-      free(kdpy);
+      FREE(kdpy);
       return NULL;
    }
 
@@ -765,14 +763,14 @@ kms_create_display(EGLNativeDisplayType dpy,
    }
 
    kdpy->saved_crtcs =
-      calloc(kdpy->resources->count_crtcs, sizeof(*kdpy->saved_crtcs));
+      CALLOC(kdpy->resources->count_crtcs, sizeof(*kdpy->saved_crtcs));
    if (!kdpy->saved_crtcs) {
       kms_display_destroy(&kdpy->base);
       return NULL;
    }
 
    kdpy->shown_surfaces =
-      calloc(kdpy->resources->count_crtcs, sizeof(*kdpy->shown_surfaces));
+      CALLOC(kdpy->resources->count_crtcs, sizeof(*kdpy->shown_surfaces));
    if (!kdpy->shown_surfaces) {
       kms_display_destroy(&kdpy->base);
       return NULL;
@@ -811,9 +809,9 @@ native_get_name(void)
       drm_api = drm_api_create();
 
    if (drm_api)
-      snprintf(kms_name, sizeof(kms_name), "KMS/%s", drm_api->name);
+      util_snprintf(kms_name, sizeof(kms_name), "KMS/%s", drm_api->name);
    else
-      snprintf(kms_name, sizeof(kms_name), "KMS");
+      util_snprintf(kms_name, sizeof(kms_name), "KMS");
 
    return kms_name;
 }

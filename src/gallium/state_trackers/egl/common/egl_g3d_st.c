@@ -138,7 +138,7 @@ void
 egl_g3d_destroy_st_manager(struct st_manager *smapi)
 {
    struct egl_g3d_st_manager *gsmapi = egl_g3d_st_manager(smapi);
-   free(gsmapi);
+   FREE(gsmapi);
 }
 
 static boolean
@@ -310,5 +310,5 @@ egl_g3d_create_st_framebuffer(_EGLSurface *surf)
 void
 egl_g3d_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi)
 {
-   free(stfbi);
+   FREE(stfbi);
 }

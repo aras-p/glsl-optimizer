@@ -14,12 +14,13 @@
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
  *    Chia-I Wu <olv@lunarg.com>
@@ -82,7 +83,7 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
    }
 
    if (!_eglInitImage(&gimg->base, dpy, attribs)) {
-      free(gimg);
+      FREE(gimg);
       return NULL;
    }
 
@@ -97,20 +98,20 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
    }
 
    if (!ptex) {
-      free(gimg);
+      FREE(gimg);
       return NULL;
    }
 
    if (level > ptex->last_level) {
       _eglError(EGL_BAD_MATCH, "eglCreateEGLImageKHR");
       pipe_resource_reference(&gimg->texture, NULL);
-      free(gimg);
+      FREE(gimg);
       return NULL;
    }
    if (zslice > ptex->depth0) {
       _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
       pipe_resource_reference(&gimg->texture, NULL);
-      free(gimg);
+      FREE(gimg);
       return NULL;
    }
 
@@ -129,7 +130,7 @@ egl_g3d_destroy_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img)
    struct egl_g3d_image *gimg = egl_g3d_image(img);
 
    pipe_resource_reference(&gimg->texture, NULL);
-   free(gimg);
+   FREE(gimg);
 
    return EGL_TRUE;
 }

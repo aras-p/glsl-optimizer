@@ -27,12 +27,11 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <xf86drm.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/XShm.h>
+
 #include "util/u_memory.h"
-#include "util/u_math.h"
-#include "util/u_format.h"
-#include "xf86drm.h"
 #include "egllog.h"
 
 #include "x11_screen.h"
@@ -110,7 +109,7 @@ x11_screen_destroy(struct x11_screen *xscr)
 
    if (xscr->visuals)
       XFree(xscr->visuals);
-   free(xscr);
+   FREE(xscr);
 }
 
 static boolean
@@ -379,7 +378,7 @@ x11_context_modes_create(unsigned count)
 
    next = &base;
    for (i = 0; i < count; i++) {
-      *next = (__GLcontextModes *) calloc(1, size);
+      *next = (__GLcontextModes *) CALLOC(1, size);
       if (*next == NULL) {
          x11_context_modes_destroy(base);
          base = NULL;
@@ -399,7 +398,7 @@ x11_context_modes_destroy(__GLcontextModes *modes)
 {
    while (modes != NULL) {
       __GLcontextModes *next = modes->next;
-      free(modes);
+      FREE(modes);
       modes = next;
    }
 }

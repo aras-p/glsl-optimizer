@@ -23,7 +23,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include "egldriver.h"
 #include "eglcurrent.h"
 #include "egllog.h"
@@ -31,6 +30,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
+#include "util/u_string.h"
 
 #include "egl_g3d.h"
 #include "egl_g3d_api.h"
@@ -115,7 +115,7 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
       gdpy->native->modeset->get_connectors(gdpy->native, &num_connectors, NULL);
    if (!num_connectors) {
       if (native_connectors)
-         free(native_connectors);
+         FREE(native_connectors);
       return;
    }
 
@@ -130,13 +130,13 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
          gdpy->native->modeset->get_modes(gdpy->native, nconn, &num_modes);
       if (!num_modes) {
          if (native_modes)
-            free(native_modes);
+            FREE(native_modes);
          continue;
       }
 
       gscr = CALLOC_STRUCT(egl_g3d_screen);
       if (!gscr) {
-         free(native_modes);
+         FREE(native_modes);
          continue;
       }
 
@@ -160,7 +160,7 @@ egl_g3d_add_screens(_EGLDriver *drv, _EGLDisplay *dpy)
       _eglAddScreen(dpy, &gscr->base);
    }
 
-   free(native_connectors);
+   FREE(native_connectors);
 }
 
 #endif /* EGL_MESA_screen_surface */
@@ -377,7 +377,7 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
    native_configs = gdpy->native->get_configs(gdpy->native, &num_configs);
    if (!num_configs) {
       if (native_configs)
-         free(native_configs);
+         FREE(native_configs);
       return id;
    }
 
@@ -393,7 +393,7 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
             _eglInitConfig(&gconf->base, dpy, id);
             if (!egl_g3d_init_config(drv, dpy, &gconf->base,
                      native_configs[i], depth_stencil_formats[j])) {
-               free(gconf);
+               FREE(gconf);
                break;
             }
 
@@ -403,7 +403,7 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
       }
    }
 
-   free(native_configs);
+   FREE(native_configs);
    return id;
 }
 
@@ -444,10 +444,10 @@ egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
    if (dpy->Screens) {
       for (i = 0; i < dpy->NumScreens; i++) {
          struct egl_g3d_screen *gscr = egl_g3d_screen(dpy->Screens[i]);
-         free(gscr->native_modes);
-         free(gscr);
+         FREE(gscr->native_modes);
+         FREE(gscr);
       }
-      free(dpy->Screens);
+      FREE(dpy->Screens);
    }
 
    if (gdpy->smapi)
@@ -456,7 +456,7 @@ egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
    if (gdpy->native)
       gdpy->native->destroy(gdpy->native);
 
-   free(gdpy);
+   FREE(gdpy);
    dpy->DriverData = NULL;
 
    return EGL_TRUE;
@@ -589,7 +589,7 @@ egl_g3d_unload(_EGLDriver *drv)
    }
 
    egl_g3d_destroy_probe(drv, NULL);
-   free(gdrv);
+   FREE(gdrv);
 }
 
 _EGLDriver *
@@ -598,7 +598,7 @@ _eglMain(const char *args)
    static char driver_name[64];
    struct egl_g3d_driver *gdrv;
 
-   snprintf(driver_name, sizeof(driver_name),
+   util_snprintf(driver_name, sizeof(driver_name),
          "Gallium/%s", native_get_name());
 
    gdrv = CALLOC_STRUCT(egl_g3d_driver);
