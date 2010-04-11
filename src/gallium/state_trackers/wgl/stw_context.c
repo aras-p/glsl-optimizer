@@ -320,7 +320,7 @@ stw_make_current(
    if (!stw_dev->stapi->make_current(stw_dev->stapi, ctx->st, fb->stfb, fb->stfb))
       goto fail;
 
-   stw_framebuffer_reference(&curctx->current_framebuffer, fb);
+   stw_framebuffer_reference(&ctx->current_framebuffer, fb);
 
 success:
    assert(fb);

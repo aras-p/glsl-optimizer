@@ -65,6 +65,10 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
    struct pipe_texture templ;
    unsigned i;
 
+   /* remove outdated surface */
+   pipe_surface_reference(&stwfb->front_surface, NULL);
+   pipe_surface_reference(&stwfb->back_surface, NULL);
+
    /* remove outdated textures */
    if (stwfb->texture_width != width || stwfb->texture_height != height) {
       for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
@@ -137,7 +141,7 @@ stw_st_framebuffer_validate(struct st_framebuffer_iface *stfb,
 
    if (stwfb->fb->must_resize || (statt_mask & ~stwfb->texture_mask)) {
       stw_st_framebuffer_validate_locked(&stwfb->base,
-            statt_mask, stwfb->fb->width, stwfb->fb->height);
+            stwfb->fb->width, stwfb->fb->height, statt_mask);
       stwfb->fb->must_resize = FALSE;
    }
 
