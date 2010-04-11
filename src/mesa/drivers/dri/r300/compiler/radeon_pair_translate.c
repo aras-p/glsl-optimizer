@@ -156,7 +156,6 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 	}
 
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
-	int nargs = opcode->NumSrcRegs;
 	int i;
 
 	for(i = 0; i < opcode->NumSrcRegs; ++i) {
