@@ -1290,10 +1290,13 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
 
     struct r300_vertex_shader* vs = CALLOC_STRUCT(r300_vertex_shader);
-    r300_vertex_shader_common_init(vs, shader);
+
+    /* Copy state directly into shader. */
+    vs->state = *shader;
+    vs->state.tokens = tgsi_dup_tokens(shader->tokens);
 
     if (r300->screen->caps.has_tcl) {
-        r300_translate_vertex_shader(r300, vs);
+        r300_translate_vertex_shader(r300, vs, vs->state.tokens);
     } else {
         vs->draw_vs = draw_create_vertex_shader(r300->draw, shader);
     }

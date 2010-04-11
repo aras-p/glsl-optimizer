@@ -31,6 +31,7 @@
 
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_ureg.h"
 
 #include "radeon_compiler.h"
 
@@ -250,23 +251,42 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     }
 }
 
-void r300_vertex_shader_common_init(struct r300_vertex_shader *vs,
-                                    const struct pipe_shader_state *shader)
+static void r300_dummy_vertex_shader(
+    struct r300_context* r300,
+    struct r300_vertex_shader* shader)
 {
-    /* Copy state directly into shader. */
-    vs->state = *shader;
-    vs->state.tokens = tgsi_dup_tokens(shader->tokens);
-    tgsi_scan_shader(shader->tokens, &vs->info);
+    struct pipe_shader_state state;
+    struct ureg_program *ureg;
+    struct ureg_dst dst;
+    struct ureg_src imm;
 
-    r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
-    r300_init_vs_output_mapping(vs);
+    /* Make a simple vertex shader which outputs (0, 0, 0, 1),
+     * effectively rendering nothing. */
+    ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
+    dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
+    imm = ureg_imm4f(ureg, 0, 0, 0, 1);
+
+    ureg_MOV(ureg, dst, imm);
+    ureg_END(ureg);
+
+    state.tokens = ureg_finalize(ureg);
+
+    shader->dummy = TRUE;
+    r300_translate_vertex_shader(r300, shader, state.tokens);
+
+    ureg_destroy(ureg);
 }
 
 void r300_translate_vertex_shader(struct r300_context* r300,
-                                  struct r300_vertex_shader* vs)
+                                  struct r300_vertex_shader* vs,
+                                  const struct tgsi_token *tokens)
 {
     struct r300_vertex_program_compiler compiler;
     struct tgsi_to_rc ttr;
+
+    tgsi_scan_shader(tokens, &vs->info);
+    r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
+    r300_init_vs_output_mapping(vs);
 
     /* Setup the compiler */
     rc_init(&compiler.Base);
@@ -277,7 +297,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     if (compiler.Base.Debug) {
         debug_printf("r300: Initial vertex program\n");
-        tgsi_dump(vs->state.tokens, 0);
+        tgsi_dump(tokens, 0);
     }
 
     /* Translate TGSI to our internal representation */
@@ -285,7 +305,7 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     ttr.info = &vs->info;
     ttr.use_half_swizzles = FALSE;
 
-    r300_tgsi_to_rc(&ttr, vs->state.tokens);
+    r300_tgsi_to_rc(&ttr, tokens);
 
     compiler.RequiredOutputs = ~(~0 << (vs->info.num_outputs+1));
     compiler.SetHwInputOutput = &set_vertex_inputs_outputs;
@@ -299,8 +319,15 @@ void r300_translate_vertex_shader(struct r300_context* r300,
     r3xx_compile_vertex_program(&compiler);
     if (compiler.Base.Error) {
         /* XXX We should fallback using Draw. */
-        fprintf(stderr, "r300 VP: Compiler error:\n%s", compiler.Base.ErrorMsg);
-        abort();
+        fprintf(stderr, "r300 VP: Compiler error:\n%sUsing a dummy shader"
+                " instead.\n", compiler.Base.ErrorMsg);
+
+        if (vs->dummy) {
+            fprintf(stderr, "r300 VP: Cannot compile the dummy shader! "
+                    "Giving up...\n");
+            abort();
+        }
+        r300_dummy_vertex_shader(r300, vs);
     }
 
     /* And, finally... */
