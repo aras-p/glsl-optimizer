@@ -130,20 +130,21 @@ static void allocate_hardware_inputs(
     }
 }
 
-static void get_compare_state(
+static void get_external_state(
     struct r300_context* r300,
-    struct r300_fragment_program_external_state* state,
-    unsigned shadow_samplers)
+    struct r300_fragment_program_external_state* state)
 {
-    struct r300_textures_state *texstate =
-        (struct r300_textures_state*)r300->textures_state.state;
+    struct r300_textures_state *texstate = r300->textures_state.state;
+    unsigned i;
 
-    memset(state, 0, sizeof(*state));
-
-    for (int i = 0; i < texstate->sampler_state_count; i++) {
+    for (i = 0; i < texstate->sampler_state_count; i++) {
         struct r300_sampler_state* s = texstate->sampler_states[i];
 
-        if (s && s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+        if (!s) {
+            continue;
+        }
+
+        if (s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
             /* XXX Gallium doesn't provide us with any information regarding
              * this mode, so we are screwed. I'm setting 0 = LUMINANCE. */
             state->unit[i].depth_texture_mode = 0;
@@ -279,24 +280,21 @@ static void r300_translate_fragment_shader(
 boolean r300_pick_fragment_shader(struct r300_context* r300)
 {
     struct r300_fragment_shader* fs = r300_fs(r300);
-    struct r300_fragment_program_external_state state;
+    struct r300_fragment_program_external_state state = {{{ 0 }}};
     struct r300_fragment_shader_code* ptr;
+
+    get_external_state(r300, &state);
 
     if (!fs->first) {
         /* Build the fragment shader for the first time. */
         fs->first = fs->shader = CALLOC_STRUCT(r300_fragment_shader_code);
 
-        /* BTW shadow samplers will be known after the first translation,
-         * therefore we set ~0, which means it should look at all sampler
-         * states. This choice doesn't have any impact on the correctness. */
-        get_compare_state(r300, &fs->shader->compare_state, ~0);
+        memcpy(&fs->shader->compare_state, &state,
+            sizeof(struct r300_fragment_program_external_state));
         r300_translate_fragment_shader(r300, fs->shader, fs->state.tokens);
-        fs->shadow_samplers = fs->shader->shadow_samplers;
         return TRUE;
 
-    } else if (fs->shadow_samplers) {
-        get_compare_state(r300, &state, fs->shadow_samplers);
-
+    } else {
         /* Check if the currently-bound shader has been compiled
          * with the texture-compare state we need. */
         if (memcmp(&fs->shader->compare_state, &state, sizeof(state)) != 0) {
