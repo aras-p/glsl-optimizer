@@ -41,8 +41,6 @@
 #include "svga_winsys.h"
 #include "svga_debug.h"
 
-#include <util/u_string.h>
-
 
 /* XXX: This isn't a real hardware flag, but just a hack for kernel to
  * know about primary surfaces. Find a better way to accomplish this.

@@ -32,7 +32,6 @@
 #include "svga_context.h"
 #include "svga_screen.h"
 #include "svga_resource_texture.h"
-#include "svga_resource_buffer.h"
 #include "svga_resource.h"
 #include "svga_debug.h"
 

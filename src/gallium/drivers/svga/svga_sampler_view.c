@@ -37,11 +37,8 @@
 #include "svga_context.h"
 #include "svga_resource_texture.h"
 #include "svga_sampler_view.h"
-#include "svga_winsys.h"
 #include "svga_debug.h"
 #include "svga_surface.h"
-
-#include <util/u_string.h>
 
 
 struct svga_sampler_view *

@@ -40,8 +40,6 @@
 #include "svga_winsys.h"
 #include "svga_debug.h"
 
-#include <util/u_string.h>
-
 
 void
 svga_texture_copy_handle(struct svga_context *svga,
