@@ -195,6 +195,15 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
    unsigned int dri2atts[NUM_NATIVE_ATTACHMENTS];
    int num_ins, num_outs, att;
    struct x11_drawable_buffer *xbufs;
+   /* XXX check if the server supports with format */
+   boolean with_format = FALSE;
+
+
+   /* We must get the front on servers which doesn't support with format
+    * due to a silly bug in core dri2. You can't copy to/from a buffer
+    * that you haven't requested and you recive BadValue errors */
+   if (!with_format)
+      buffer_mask |= (1 << NATIVE_ATTACHMENT_FRONT_LEFT);
 
    /* prepare the attachments */
    num_ins = 0;
@@ -228,7 +237,7 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
 
    xbufs = x11_drawable_get_buffers(dri2dpy->xscr, dri2surf->drawable,
                                     &dri2surf->width, &dri2surf->height,
-                                    dri2atts, FALSE, num_ins, &num_outs);
+                                    dri2atts, with_format, num_ins, &num_outs);
 
    /* we should be able to do better... */
    if (xbufs && dri2surf->last_num_xbufs == num_outs &&
