@@ -60,6 +60,9 @@ struct radeon_libdrm_winsys {
     /* Square tiling support. */
     boolean squaretiling;
 
+    /* Square tiling support. */
+    boolean tex3d_mip_bug;
+
     /* DRM FD */
     int fd;
 

@@ -100,6 +100,9 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
                            version->version_minor >= 1;
 #endif
 
+    /* XXX */
+    winsys->tex3d_mip_bug = TRUE;
+
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {

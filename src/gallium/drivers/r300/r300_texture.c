@@ -759,6 +759,29 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
     return util_format_get_nblocksy(tex->b.b.format, height);
 }
 
+static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
+                                           struct r300_texture *tex)
+{
+    /* The kernels <= 2.6.34-rc3 compute the size of mipmapped 3D textures
+     * incorrectly. This is a workaround to prevent CS from being rejected. */
+
+    unsigned i, size;
+
+    if (screen->rws->get_value(screen->rws, R300_VID_TEX3D_MIP_BUG) &&
+        tex->b.b.target == PIPE_TEXTURE_3D &&
+        tex->b.b.last_level > 0) {
+        size = 0;
+
+        for (i = 0; i <= tex->b.b.last_level; i++) {
+            size += r300_texture_get_stride(screen, tex, i) *
+                    r300_texture_get_nblocksy(tex, i);
+        }
+
+        size *= tex->b.b.depth0;
+        tex->size = size;
+    }
+}
+
 static void r300_setup_miptree(struct r300_screen* screen,
                                struct r300_texture* tex)
 {
@@ -930,6 +953,7 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
         r300_setup_tiling(screen, tex);
     }
     r300_setup_miptree(rscreen, tex);
+    r300_texture_3d_fix_mipmapping(rscreen, tex);
     r300_texture_setup_immutable_state(rscreen, tex);
     r300_texture_setup_fb_state(rscreen, tex);
 
