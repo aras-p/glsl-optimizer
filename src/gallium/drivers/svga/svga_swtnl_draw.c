@@ -44,8 +44,8 @@ svga_swtnl_draw_range_elements(struct svga_context *svga,
                                unsigned prim, unsigned start, unsigned count)
 {
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-   struct pipe_transfer *ib_transfer;
-   struct pipe_transfer *cb_transfer;
+   struct pipe_transfer *ib_transfer = NULL;
+   struct pipe_transfer *cb_transfer = NULL;
    struct draw_context *draw = svga->swtnl.draw;
    unsigned i;
    const void *map;
