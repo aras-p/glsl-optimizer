@@ -139,10 +139,13 @@ static void get_external_state(
 
     for (i = 0; i < texstate->sampler_state_count; i++) {
         struct r300_sampler_state* s = texstate->sampler_states[i];
+        struct r300_texture *t;
 
-        if (!s) {
+        if (!s || !texstate->sampler_views[i]) {
             continue;
         }
+
+        t = (struct r300_texture*)texstate->sampler_views[i]->base.texture;
 
         if (s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
             /* XXX Gallium doesn't provide us with any information regarding
@@ -153,30 +156,28 @@ static void get_external_state(
             state->unit[i].texture_compare_func = s->state.compare_func;
         }
 
-        /* Should we ask the shader to handle wrapping modes for us? */
-        if (!s->state.normalized_coords) {
-            state->unit[i].non_normalized_coords = 1;
+        state->unit[i].fake_npot = t->uses_pitch;
+        state->unit[i].non_normalized_coords = !s->state.normalized_coords;
 
-            /* XXX this should probably take into account STR, not just S. */
-            switch (s->state.wrap_s) {
-                case PIPE_TEX_WRAP_REPEAT:
-                    state->unit[i].wrap_mode = RC_WRAP_REPEAT;
-                    break;
-                case PIPE_TEX_WRAP_CLAMP:
-                case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-                case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-                    state->unit[i].wrap_mode = RC_WRAP_CLAMP;
-                    break;
-                case PIPE_TEX_WRAP_MIRROR_REPEAT:
-                case PIPE_TEX_WRAP_MIRROR_CLAMP:
-                case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-                case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-                    state->unit[i].wrap_mode = RC_WRAP_MIRROR;
-                    break;
-                default:
-                    state->unit[i].wrap_mode = RC_WRAP_NONE;
-                    break;
-            }
+        /* XXX this should probably take into account STR, not just S. */
+        switch (s->state.wrap_s) {
+            case PIPE_TEX_WRAP_REPEAT:
+                state->unit[i].wrap_mode = RC_WRAP_REPEAT;
+                break;
+            case PIPE_TEX_WRAP_CLAMP:
+            case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+            case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+                state->unit[i].wrap_mode = RC_WRAP_CLAMP;
+                break;
+            case PIPE_TEX_WRAP_MIRROR_REPEAT:
+            case PIPE_TEX_WRAP_MIRROR_CLAMP:
+            case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+            case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+                state->unit[i].wrap_mode = RC_WRAP_MIRROR;
+                break;
+            default:
+                state->unit[i].wrap_mode = RC_WRAP_NONE;
+                break;
         }
     }
 }

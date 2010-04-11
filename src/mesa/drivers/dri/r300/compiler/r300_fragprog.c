@@ -143,19 +143,59 @@ int r300_transform_TEX(
 	 * instead of [0..Width]x[0..Height].
 	 * Add a scaling instruction.
 	 */
-	if (inst->U.I.Opcode != RC_OPCODE_KIL && inst->U.I.TexSrcTarget == RC_TEXTURE_RECT) {
-		struct rc_instruction * inst_mul = rc_insert_new_instruction(c, inst->Prev);
+	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
+		(inst->U.I.TexSrcTarget == RC_TEXTURE_RECT ||
+			compiler->state.unit[inst->U.I.TexSrcUnit].fake_npot ||
+			compiler->state.unit[inst->U.I.TexSrcUnit].non_normalized_coords)) {
+		rc_wrap_mode wrapmode = compiler->state.unit[inst->U.I.TexSrcUnit].wrap_mode;
+		struct rc_instruction *inst_rect = NULL;
+		unsigned temp = rc_find_free_temporary(c);
 
-		inst_mul->U.I.Opcode = RC_OPCODE_MUL;
-		inst_mul->U.I.DstReg.File = RC_FILE_TEMPORARY;
-		inst_mul->U.I.DstReg.Index = rc_find_free_temporary(c);
-		inst_mul->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-		inst_mul->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
-		inst_mul->U.I.SrcReg[1].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_TEXRECT_FACTOR, inst->U.I.TexSrcUnit);
+		if (inst->U.I.TexSrcTarget == RC_TEXTURE_RECT ||
+			compiler->state.unit[inst->U.I.TexSrcUnit].non_normalized_coords) {
+			inst_rect = rc_insert_new_instruction(c, inst->Prev);
 
-		reset_srcreg(&inst->U.I.SrcReg[0]);
-		inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-		inst->U.I.SrcReg[0].Index = inst_mul->U.I.DstReg.Index;
+			inst_rect->U.I.Opcode = RC_OPCODE_MUL;
+			inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			inst_rect->U.I.DstReg.Index = temp;
+			inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+			inst_rect->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
+			inst_rect->U.I.SrcReg[1].Index =
+				rc_constants_add_state(&c->Program.Constants,
+					RC_STATE_R300_TEXRECT_FACTOR, inst->U.I.TexSrcUnit);
+
+			reset_srcreg(&inst->U.I.SrcReg[0]);
+			inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+			inst->U.I.SrcReg[0].Index = inst_rect->U.I.DstReg.Index;
+
+			inst->U.I.TexSrcTarget = RC_TEXTURE_2D;
+		}
+
+		if (compiler->state.unit[inst->U.I.TexSrcUnit].fake_npot &&
+			wrapmode != RC_WRAP_NONE && wrapmode != RC_WRAP_CLAMP) {
+			/* Repeat, with optional mirror */
+			inst_rect = rc_insert_new_instruction(c, inst->Prev);
+
+			inst_rect->U.I.Opcode = RC_OPCODE_FRC;
+			inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			inst_rect->U.I.DstReg.Index = temp;
+			inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+
+			if (wrapmode == RC_WRAP_MIRROR) {
+				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+
+				inst_rect->U.I.Opcode = RC_OPCODE_SUB;
+				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.DstReg.Index = temp;
+				inst_rect->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
+				inst_rect->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.SrcReg[1].Index = temp;
+			}
+
+			reset_srcreg(&inst->U.I.SrcReg[0]);
+			inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+			inst->U.I.SrcReg[0].Index = inst_rect->U.I.DstReg.Index;
+		}
 	}
 
 	/* Cannot write texture to output registers or with masks */

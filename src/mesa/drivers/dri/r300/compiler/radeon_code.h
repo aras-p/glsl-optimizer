@@ -144,7 +144,12 @@ struct r300_fragment_program_external_state {
 		unsigned texture_compare_func : 3;
 
 		/**
-		 * If the sampler will be accessed with non-normalized coords,
+		 * If the sampler needs to fake NPOT, this field is set.
+		 */
+		unsigned fake_npot : 1;
+
+		/**
+		 * If the sampler will recieve non-normalized coords,
 		 * this field is set.
 		 */
 		unsigned non_normalized_coords : 1;
