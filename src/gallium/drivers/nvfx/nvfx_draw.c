@@ -239,8 +239,8 @@ nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-	struct pipe_transfer *ib_transfer;
-	struct pipe_transfer *cb_transfer;
+	struct pipe_transfer *ib_transfer = NULL;
+	struct pipe_transfer *cb_transfer = NULL;
 	unsigned i;
 	void *map;
 
