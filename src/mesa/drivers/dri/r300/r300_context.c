@@ -61,6 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
+#include "r300_render.h"
 #include "r300_swtcl.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_buffer_objects.h"
@@ -226,6 +227,8 @@ static void r300_fallback(GLcontext *ctx, GLuint bit, GLboolean mode)
 		r300->radeon.Fallback |= bit;
 	else
 		r300->radeon.Fallback &= ~bit;
+
+	r300SwitchFallback(ctx, R300_FALLBACK_RADEON_COMMON, mode);
 }
 
 static void r300_emit_query_finish(radeonContextPtr radeon)
