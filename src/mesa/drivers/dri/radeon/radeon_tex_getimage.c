@@ -31,7 +31,6 @@
 
 #include "radeon_common_context.h"
 #include "radeon_texture.h"
-#include "radeon_mipmap_tree.h"
 
 #include "main/texgetimage.h"
 
