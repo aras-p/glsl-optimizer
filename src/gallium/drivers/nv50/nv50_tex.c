@@ -183,8 +183,10 @@ nv50_validate_textures(struct nv50_context *nv50, struct nouveau_stateobj *so,
 			struct nv50_miptree *mt =
 				nv50_miptree(view->pipe.texture);
 
+			tic2 &= ~NV50TIC_0_2_NORMALIZED_COORDS;
 			if (nv50->sampler[p][unit]->normalized)
 				tic2 |= NV50TIC_0_2_NORMALIZED_COORDS;
+			view->tic[2] = tic2;
 
 			so_data  (so, view->tic[0]);
 			so_reloc (so, mt->base.bo, 0, rll, 0, 0);
@@ -214,35 +216,37 @@ nv50_validate_textures(struct nv50_context *nv50, struct nouveau_stateobj *so,
 	return TRUE;
 }
 
+static void
+nv50_emit_texture_relocs(struct nv50_context *nv50, int prog)
+{
+	struct nouveau_channel *chan = nv50->screen->base.channel;
+	struct nouveau_bo *tic = nv50->screen->tic;
+	int unit;
+
+	for (unit = 0; unit < nv50->sampler_view_nr[prog]; unit++) {
+		struct nv50_sampler_view *view;
+		struct nv50_miptree *mt;
+		const unsigned base = ((prog * 32) + unit) * 32;
+
+		view = nv50_sampler_view(nv50->sampler_views[prog][unit]);
+		if (!view)
+			continue;
+		mt = nv50_miptree(view->pipe.texture);
+
+		nouveau_reloc_emit(chan, tic, base + 4, NULL, mt->base.bo, 0, 0,
+				   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+				   NOUVEAU_BO_LOW, 0, 0);
+		nouveau_reloc_emit(chan, tic, base + 8, NULL, mt->base.bo, 0, 0,
+				   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+				   NOUVEAU_BO_HIGH, view->tic[2], view->tic[2]);
+	}
+}
+
 void
 nv50_tex_relocs(struct nv50_context *nv50)
 {
-	struct nouveau_channel *chan = nv50->screen->tesla->channel;
-	int p, unit;
-
-	p = PIPE_SHADER_FRAGMENT;
-	for (unit = 0; unit < nv50->sampler_view_nr[p]; unit++) {
-		struct pipe_sampler_view *view = nv50->sampler_views[p][unit];
-		if (!view)
-			continue;
-		nouveau_reloc_emit(chan, nv50->screen->tic,
-				   ((p * 32) + unit) * 32, NULL,
-				   nv50_miptree(view->texture)->base.bo, 0, 0,
-				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
-				   NOUVEAU_BO_RD, 0, 0);
-	}
-
-	p = PIPE_SHADER_VERTEX;
-	for (unit = 0; unit < nv50->sampler_view_nr[p]; unit++) {
-		struct pipe_sampler_view *view = nv50->sampler_views[p][unit];
-		if (!view)
-			continue;
-		nouveau_reloc_emit(chan, nv50->screen->tic,
-				   ((p * 32) + unit) * 32, NULL,
-				   nv50_miptree(view->texture)->base.bo, 0, 0,
-				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
-				   NOUVEAU_BO_RD, 0, 0);
-	}
+	nv50_emit_texture_relocs(nv50, 2); /* FP */
+	nv50_emit_texture_relocs(nv50, 0); /* VP */
 }
 
 struct nouveau_stateobj *
