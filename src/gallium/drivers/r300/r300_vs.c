@@ -307,7 +307,10 @@ void r300_translate_vertex_shader(struct r300_context* r300,
 
     r300_tgsi_to_rc(&ttr, tokens);
 
-    compiler.RequiredOutputs = ~(~0 << (vs->info.num_outputs+1));
+    compiler.RequiredOutputs =
+        ~(~0 << (vs->info.num_outputs +
+                 (vs->outputs.wpos != ATTR_UNUSED ? 1 : 0)));
+
     compiler.SetHwInputOutput = &set_vertex_inputs_outputs;
 
     /* Insert the WPOS output. */
