@@ -31,7 +31,6 @@
 #include "util/u_rect.h"
 #include "util/u_inlines.h"
 #include "eglcurrent.h"
-#include "egllog.h"
 
 #include "native.h"
 #include "egl_g3d.h"
