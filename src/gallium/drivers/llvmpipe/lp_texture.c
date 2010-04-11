@@ -357,6 +357,7 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
       struct pipe_transfer *pt = &lpt->base;
       pipe_resource_reference(&pt->resource, resource);
       pt->box = *box;
+      pt->sr = sr;
       pt->stride = lptex->stride[sr.level];
       pt->usage = usage;
 
