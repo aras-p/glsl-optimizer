@@ -1,7 +1,6 @@
 
 
 #include "util/u_inlines.h"
-#include "util/u_memory.h"
 #include "util/u_transfer.h"
 
 static INLINE struct u_resource *
