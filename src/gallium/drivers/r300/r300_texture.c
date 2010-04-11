@@ -99,12 +99,6 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         R300_TX_FORMAT_SIGNED_W,
     };
 
-    /* This is truly a special format.
-     * It stores R8G8 and B is computed using sqrt(1 - R^2 - G^2). */
-    if (format == PIPE_FORMAT_R8G8Bx_SNORM) {
-        return ~0; /* Unsupported. */
-    }
-
     desc = util_format_description(format);
 
     /* Colorspace (return non-RGB formats directly). */
@@ -139,7 +133,15 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             result |= R300_TX_FORMAT_GAMMA;
             break;
 
-        default:;
+        default:
+            switch (format) {
+                /* Same as YUV but without the YUR->RGB conversion. */
+                case PIPE_FORMAT_R8G8_B8G8_UNORM:
+                    return R300_EASY_TX_FORMAT(X, Y, Z, ONE, YVYU422) | result;
+                case PIPE_FORMAT_G8R8_G8B8_UNORM:
+                    return R300_EASY_TX_FORMAT(X, Y, Z, ONE, VYUY422) | result;
+                default:;
+            }
     }
 
     /* Add swizzle. */
@@ -211,6 +213,13 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
             result |= sign_bit[i];
         }
+    }
+
+    /* This is truly a special format.
+     * It stores R8G8 and B is computed using sqrt(1 - R^2 - G^2)
+     * in the sampler unit. Also known as D3DFMT_CxV8U8. */
+    if (format == PIPE_FORMAT_R8G8Bx_SNORM) {
+        return R300_TX_FORMAT_CxV8U8 | result;
     }
 
     /* RGTC formats. */

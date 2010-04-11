@@ -1543,7 +1543,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_FORMAT_DXT1	    	    0xF
 #	define R300_TX_FORMAT_DXT3	    	    0x10
 #	define R300_TX_FORMAT_DXT5	    	    0x11
-#	define R300_TX_FORMAT_Y8           	    0x12
+#	define R300_TX_FORMAT_CxV8U8           	    0x12
 #	define R300_TX_FORMAT_AVYU444 	    	    0x13
 #	define R300_TX_FORMAT_VYUY422  	    	    0x14
 #	define R300_TX_FORMAT_YVYU422  	    	    0x15
