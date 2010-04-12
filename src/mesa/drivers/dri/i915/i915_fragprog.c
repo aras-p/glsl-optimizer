@@ -664,6 +664,7 @@ upload_program(struct i915_fragment_program *p)
 			 get_result_vector(p, inst),
 			 get_result_flags(inst), 0,
 			 swizzle(tmp, ZERO, ZERO, ZERO, ZERO), 0, 0);
+	 break;
 
       case OPCODE_POW:
          src0 = src_vector(p, &inst->SrcReg[0], program);
