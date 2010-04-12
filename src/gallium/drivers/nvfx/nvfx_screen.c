@@ -371,6 +371,8 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 
+	screen->force_swtnl = debug_get_bool_option("NOUVEAU_SWTNL", FALSE);
+
 	nvfx_screen_init_resource_functions(pscreen);
 	nvfx_screen_init_buffer_functions(screen);
 

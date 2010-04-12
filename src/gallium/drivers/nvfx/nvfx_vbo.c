@@ -11,15 +11,6 @@
 #include "nouveau/nouveau_pushbuf.h"
 #include "nouveau/nouveau_util.h"
 
-static boolean
-nvfx_force_swtnl(struct nvfx_context *nvfx)
-{
-	static int force_swtnl = -1;
-	if(force_swtnl < 0)
-		force_swtnl = debug_get_bool_option("NOUVEAU_SWTNL", 0);
-	return force_swtnl;
-}
-
 static INLINE int
 nvfx_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 {
@@ -166,7 +157,7 @@ nvfx_draw_arrays(struct pipe_context *pipe,
 	unsigned restart = 0;
 
 	nvfx_vbo_set_idxbuf(nvfx, NULL, 0);
-	if (nvfx_force_swtnl(nvfx) || !nvfx_state_validate(nvfx)) {
+	if (nvfx->screen->force_swtnl || !nvfx_state_validate(nvfx)) {
 		nvfx_draw_elements_swtnl(pipe, NULL, 0,
                                            mode, start, count);
                 return;
@@ -467,7 +458,7 @@ nvfx_draw_elements(struct pipe_context *pipe,
 	boolean idxbuf;
 
 	idxbuf = nvfx_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
-	if (nvfx_force_swtnl(nvfx) || !nvfx_state_validate(nvfx)) {
+	if (nvfx->screen->force_swtnl || !nvfx_state_validate(nvfx)) {
 		nvfx_draw_elements_swtnl(pipe, indexBuffer, indexSize,
                                            mode, start, count);
 		return;
