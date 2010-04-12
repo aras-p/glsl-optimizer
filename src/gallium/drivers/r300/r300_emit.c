@@ -334,8 +334,9 @@ void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     BEGIN_CS(size);
     OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, count * 4);
     for(i = 0; i < count; ++i) {
+        const float *data;
         assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
-        const float *data = buf->constants[i];
+        data = buf->constants[i];
         OUT_CS(pack_float24(data[0]));
         OUT_CS(pack_float24(data[1]));
         OUT_CS(pack_float24(data[2]));
@@ -454,8 +455,9 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count * 4);
     for(i = 0; i < count; ++i) {
+        const float *data;
         assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
-        const float *data = buf->constants[i];
+        data = buf->constants[i];
 
         OUT_CS_32F(data[0]);
         OUT_CS_32F(data[1]);
