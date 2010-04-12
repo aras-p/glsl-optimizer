@@ -298,16 +298,11 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
            return;
         }
 
-	/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
-	 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
-	 */
-	if ((src->offset & 63) || (dst->offset & 63) ||
-	    (src_pitch & 63) || (dst_pitch & 63)) {
-		nv04_surface_copy_m2mf(ctx, dst, dx, dy, src, sx, sy, w, h);
-		return;
-	}
-
-	nv04_surface_copy_blit(ctx, dst, dx, dy, src, sx, sy, w, h);
+        /* Use M2MF instead of the blitter since it always works
+         * Any possible performance drop is likely to be not very significant
+         * and dwarfed anyway by the current buffer management problems
+         */
+        nv04_surface_copy_m2mf(ctx, dst, dx, dy, src, sx, sy, w, h);
 }
 
 static void
