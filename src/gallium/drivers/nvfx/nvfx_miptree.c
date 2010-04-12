@@ -223,6 +223,7 @@ nvfx_miptree_from_handle(struct pipe_screen *pscreen,
 	}
 
 	mt->base.base = *template;
+	mt->base.vtbl = &nvfx_miptree_vtbl;
 	pipe_reference_init(&mt->base.base.reference, 1);
 	mt->base.base.screen = pscreen;
 	mt->level[0].pitch = stride;
