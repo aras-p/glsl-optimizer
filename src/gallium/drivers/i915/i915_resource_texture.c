@@ -138,7 +138,7 @@ i915_texture_set_image_offset(struct i915_texture *tex,
 
 
 /*
- * i915 layout functions, some used by i945
+ * Shared layout functions
  */
 
 
@@ -146,7 +146,7 @@ i915_texture_set_image_offset(struct i915_texture *tex,
  * Special case to deal with scanout textures.
  */
 static boolean
-i915_scanout_layout(struct i915_texture *tex)
+i9x5_scanout_layout(struct i915_texture *tex)
 {
    struct pipe_resource *pt = &tex->b.b;
 
@@ -181,7 +181,7 @@ i915_scanout_layout(struct i915_texture *tex)
  * Special case to deal with shared textures.
  */
 static boolean
-i915_display_target_layout(struct i915_texture *tex)
+i9x5_display_target_layout(struct i915_texture *tex)
 {
    struct pipe_resource *pt = &tex->b.b;
 
@@ -209,6 +209,12 @@ i915_display_target_layout(struct i915_texture *tex)
    return TRUE;
 }
 
+
+/*
+ * i915 layout functions
+ */
+
+
 static void
 i915_texture_layout_2d(struct i915_texture *tex)
 {
@@ -220,7 +226,7 @@ i915_texture_layout_2d(struct i915_texture *tex)
 
    /* used for scanouts that need special layouts */
    if (pt->bind & PIPE_BIND_SCANOUT)
-      if (i915_scanout_layout(tex))
+      if (i9x5_scanout_layout(tex))
          return;
 
    /* shared buffers needs to be compatible with X servers 
@@ -229,8 +235,8 @@ i915_texture_layout_2d(struct i915_texture *tex)
     * of core gallium, and probably move the flag to resource.flags,
     * rather than bindings.
     */
-   if (pt->bind & PIPE_BIND_SHARED)
-      if (i915_display_target_layout(tex))
+   if (pt->bind & (PIPE_BIND_SHARED | PIPE_BIND_DISPLAY_TARGET))
+      if (i9x5_display_target_layout(tex))
          return;
 
    tex->stride = align(util_format_get_stride(pt->format, pt->width0), 4);
@@ -375,12 +381,12 @@ i945_texture_layout_2d(struct i915_texture *tex)
 
    /* used for scanouts that need special layouts */
    if (tex->b.b.bind & PIPE_BIND_SCANOUT)
-      if (i915_scanout_layout(tex))
+      if (i9x5_scanout_layout(tex))
          return;
 
    /* shared buffers needs to be compatible with X servers */
-   if (tex->b.b.bind & PIPE_BIND_SHARED)
-      if (i915_display_target_layout(tex))
+   if (tex->b.b.bind & (PIPE_BIND_SHARED | PIPE_BIND_DISPLAY_TARGET))
+      if (i9x5_display_target_layout(tex))
          return;
 
    tex->stride = align(util_format_get_stride(pt->format, pt->width0), 4);
