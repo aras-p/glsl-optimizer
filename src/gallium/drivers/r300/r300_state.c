@@ -689,16 +689,17 @@ static void r300_mark_fs_code_dirty(struct r300_context *r300)
 
     r300->fs.dirty = TRUE;
     r300->fs_rc_constant_state.dirty = TRUE;
+    r300->fs_constants.dirty = TRUE;
 
     if (r300->screen->caps.is_r500) {
         r300->fs.size = r500_get_fs_atom_size(r300);
         r300->fs_rc_constant_state.size = fs->shader->rc_state_count * 7;
+        r300->fs_constants.size = fs->shader->externals_count * 4 + 3;
     } else {
         r300->fs.size = r300_get_fs_atom_size(r300);
         r300->fs_rc_constant_state.size = fs->shader->rc_state_count * 5;
+        r300->fs_constants.size = fs->shader->externals_count * 4 + 1;
     }
-
-    r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
 
 /* Bind fragment shader state. */
@@ -1379,25 +1380,18 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
                                      struct pipe_resource *buf)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_constant_buffer *cbuf;
     struct pipe_transfer *tr;
     void *mapped;
     int max_size = 0;
 
-    if (buf == NULL || buf->width0 == 0 ||
-        (mapped = pipe_buffer_map(pipe, buf, PIPE_TRANSFER_READ, &tr)) == NULL)
-    {
-        r300->shader_constants[shader].count = 0;
-        return;
-    }
-
-    assert((buf->width0 % 4 * sizeof(float)) == 0);
-
-    /* Check the size of the constant buffer. */
     switch (shader) {
         case PIPE_SHADER_VERTEX:
+            cbuf = &r300->shader_constants[PIPE_SHADER_VERTEX];
             max_size = 256;
             break;
         case PIPE_SHADER_FRAGMENT:
+            cbuf = (struct r300_constant_buffer*)r300->fs_constants.state;
             if (r300->screen->caps.is_r500) {
                 max_size = 256;
             } else {
@@ -1408,6 +1402,16 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             assert(0);
     }
 
+    if (buf == NULL || buf->width0 == 0 ||
+        (mapped = pipe_buffer_map(pipe, buf, PIPE_TRANSFER_READ, &tr)) == NULL)
+    {
+        cbuf->count = 0;
+        return;
+    }
+
+    assert((buf->width0 % 4 * sizeof(float)) == 0);
+
+    /* Check the size of the constant buffer. */
     /* XXX Subtract immediates and RC_STATE_* variables. */
     if (buf->width0 > (sizeof(float) * 4 * max_size)) {
         fprintf(stderr, "r300: Max size of the constant buffer is "
@@ -1415,8 +1419,8 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
         abort();
     }
 
-    memcpy(r300->shader_constants[shader].constants, mapped, buf->width0);
-    r300->shader_constants[shader].count = buf->width0 / (4 * sizeof(float));
+    memcpy(cbuf->constants, mapped, buf->width0);
+    cbuf->count = buf->width0 / (4 * sizeof(float));
     pipe_buffer_unmap(pipe, buf, tr);
 
     if (shader == PIPE_SHADER_VERTEX) {
@@ -1425,11 +1429,11 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             r300->pvs_flush.dirty = TRUE;
         } else if (r300->draw) {
             draw_set_mapped_constant_buffer(r300->draw, PIPE_SHADER_VERTEX,
-                0, r300->shader_constants[PIPE_SHADER_VERTEX].constants,
+                0, cbuf->constants,
                 buf->width0);
         }
     } else if (shader == PIPE_SHADER_FRAGMENT) {
-        r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+        r300->fs_constants.dirty = TRUE;
     }
 }
 

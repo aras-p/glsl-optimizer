@@ -360,6 +360,8 @@ struct r300_context {
     struct r300_atom fs;
     /* Fragment shader RC_CONSTANT_STATE variables. */
     struct r300_atom fs_rc_constant_state;
+    /* Fragment shader constant buffer. */
+    struct r300_atom fs_constants;
     /* Framebuffer state. */
     struct r300_atom fb_state;
     /* Rasterizer state. */

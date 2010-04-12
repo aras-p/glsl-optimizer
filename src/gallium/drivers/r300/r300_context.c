@@ -66,6 +66,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->vap_output_state.state);
     FREE(r300->viewport_state.state);
     FREE(r300->ztop_state.state);
+    FREE(r300->fs_constants.state);
     FREE(r300);
 }
 
@@ -117,11 +118,13 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(textures_state, 0);
     R300_INIT_ATOM(fs, 0);
     R300_INIT_ATOM(fs_rc_constant_state, 0);
+    R300_INIT_ATOM(fs_constants, 0);
 
     /* Replace emission functions for r500. */
     if (r300->screen->caps.is_r500) {
         r300->fs.emit = r500_emit_fs;
         r300->fs_rc_constant_state.emit = r500_emit_fs_rc_constant_state;
+        r300->fs_constants.emit = r500_emit_fs_constants;
     }
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
@@ -134,6 +137,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->vap_output_state.state = CALLOC_STRUCT(r300_vap_output_state);
     r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
+    r300->fs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

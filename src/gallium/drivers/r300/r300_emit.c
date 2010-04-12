@@ -320,22 +320,22 @@ void r300_emit_fs(struct r300_context* r300, unsigned size, void *state)
     END_CS;
 }
 
-void r300_emit_fs_constant_buffer(struct r300_context* r300,
-                                  struct rc_constant_list* constants)
+void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *state)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
+    struct rc_constant_list *constants = &fs->shader->code.constants;
+    struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
     unsigned i, count = fs->shader->externals_count;
     CS_LOCALS(r300);
 
     if (count == 0)
         return;
 
-    BEGIN_CS(count * 4 + 1);
+    BEGIN_CS(size);
     OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, count * 4);
     for(i = 0; i < count; ++i) {
         assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
-        const float *data =
-            r300->shader_constants[PIPE_SHADER_FRAGMENT].constants[i];
+        const float *data = buf->constants[i];
         OUT_CS(pack_float24(data[0]));
         OUT_CS(pack_float24(data[1]));
         OUT_CS(pack_float24(data[2]));
@@ -439,10 +439,11 @@ void r500_emit_fs(struct r300_context* r300, unsigned size, void *state)
     END_CS;
 }
 
-void r500_emit_fs_constant_buffer(struct r300_context* r300,
-                                  struct rc_constant_list* constants)
+void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *state)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
+    struct rc_constant_list *constants = &fs->shader->code.constants;
+    struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
     unsigned i, count = fs->shader->externals_count;
     CS_LOCALS(r300);
 
@@ -454,8 +455,7 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count * 4);
     for(i = 0; i < count; ++i) {
         assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
-        const float *data =
-            r300->shader_constants[PIPE_SHADER_FRAGMENT].constants[i];
+        const float *data = buf->constants[i];
 
         OUT_CS_32F(data[0]);
         OUT_CS_32F(data[1]);
@@ -1209,17 +1209,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
             atom->emit(r300, atom->size, atom->state);
             atom->dirty = FALSE;
         }
-    }
-
-    if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER_CONSTANTS) {
-        if (r300screen->caps.is_r500) {
-            r500_emit_fs_constant_buffer(r300,
-                                         &r300_fs(r300)->shader->code.constants);
-        } else {
-            r300_emit_fs_constant_buffer(r300,
-                                         &r300_fs(r300)->shader->code.constants);
-        }
-        r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
 
     if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS) {
