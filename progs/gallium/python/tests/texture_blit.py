@@ -131,14 +131,14 @@ class TextureColorSampleTest(TestCase):
         minz = 0.0
         maxz = 1.0
         
-        tex_usage = PIPE_TEXTURE_USAGE_SAMPLER
+        bind = PIPE_BIND_SAMPLER_VIEW
         geom_flags = 0
         if width != height:
             geom_flags |= PIPE_TEXTURE_GEOM_NON_SQUARE
         if not is_pot(width) or not is_pot(height) or not is_pot(depth):
             geom_flags |= PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO
         
-        if not dev.is_format_supported(format, target, tex_usage, geom_flags):
+        if not dev.is_format_supported(format, target, bind, geom_flags):
             raise TestSkip
         
         # disabled blending/masking
@@ -174,14 +174,14 @@ class TextureColorSampleTest(TestCase):
         ctx.set_fragment_sampler(0, sampler)
     
         #  texture 
-        texture = dev.texture_create(
+        texture = dev.resource_create(
             target = target,
             format = format, 
             width = width, 
             height = height,
             depth = depth, 
             last_level = last_level,
-            tex_usage = tex_usage,
+            bind = bind,
         )
         
         expected_rgba = FloatArray(height*width*4) 
@@ -225,11 +225,11 @@ class TextureColorSampleTest(TestCase):
         ctx.set_clip(clip)
 
         #  framebuffer 
-        cbuf_tex = dev.texture_create(
+        cbuf_tex = dev.resource_create(
             PIPE_FORMAT_B8G8R8A8_UNORM, 
             width, 
             height,
-            tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
+            bind = PIPE_BIND_RENDER_TARGET,
         )
 
         cbuf = cbuf_tex.get_surface()
@@ -349,14 +349,14 @@ class TextureDepthSampleTest(TestCase):
         minz = 0.0
         maxz = 1.0
         
-        tex_usage = PIPE_TEXTURE_USAGE_SAMPLER
+        bind = PIPE_BIND_SAMPLER_VIEW
         geom_flags = 0
         if width != height:
             geom_flags |= PIPE_TEXTURE_GEOM_NON_SQUARE
         if not is_pot(width) or not is_pot(height) or not is_pot(depth):
             geom_flags |= PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO
         
-        if not dev.is_format_supported(format, target, tex_usage, geom_flags):
+        if not dev.is_format_supported(format, target, bind, geom_flags):
             raise TestSkip
         
         # disabled blending/masking
@@ -411,14 +411,14 @@ class TextureDepthSampleTest(TestCase):
         ctx.set_fragment_sampler(0, sampler)
     
         #  texture 
-        texture = dev.texture_create(
+        texture = dev.resource_create(
             target = target,
             format = format, 
             width = width, 
             height = height,
             depth = depth, 
             last_level = last_level,
-            tex_usage = tex_usage,
+            bind = bind,
         )
         
         expected_rgba = FloatArray(height*width*4) 
@@ -446,18 +446,18 @@ class TextureDepthSampleTest(TestCase):
         ctx.set_clip(clip)
 
         #  framebuffer 
-        cbuf_tex = dev.texture_create(
+        cbuf_tex = dev.resource_create(
             PIPE_FORMAT_B8G8R8A8_UNORM, 
             width, 
             height,
-            tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
+            bind = PIPE_BIND_RENDER_TARGET,
         )
 
-        zsbuf_tex = dev.texture_create(
+        zsbuf_tex = dev.resource_create(
             PIPE_FORMAT_X8Z24_UNORM, 
             width, 
             height,
-            tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
+            bind = PIPE_BIND_RENDER_TARGET,
         )
 
         cbuf = cbuf_tex.get_surface()

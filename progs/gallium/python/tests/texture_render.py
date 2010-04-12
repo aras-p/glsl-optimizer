@@ -68,40 +68,40 @@ class TextureTest(TestCase):
         zslice = self.zslice
         
         #  textures
-        dst_texture = dev.texture_create(
+        dst_texture = dev.resource_create(
             target = target,
             format = format, 
             width = width, 
             height = height,
             depth = depth, 
             last_level = last_level,
-            tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
+            bind = PIPE_BIND_RENDER_TARGET,
         )
         if dst_texture is None:
             raise TestSkip
 
         dst_surface = dst_texture.get_surface(face = face, level = level, zslice = zslice)
         
-        ref_texture = dev.texture_create(
+        ref_texture = dev.resource_create(
             target = target,
             format = format, 
             width = dst_surface.width, 
             height = dst_surface.height,
             depth = 1, 
             last_level = 0,
-            tex_usage = PIPE_TEXTURE_USAGE_SAMPLER,
+            bind = PIPE_BIND_SAMPLER_VIEW,
         )
 
         ref_surface = ref_texture.get_surface()
         
-        src_texture = dev.texture_create(
+        src_texture = dev.resource_create(
             target = target,
             format = PIPE_FORMAT_B8G8R8A8_UNORM, 
             width = dst_surface.width, 
             height = dst_surface.height,
             depth = 1, 
             last_level = 0,
-            tex_usage = PIPE_TEXTURE_USAGE_SAMPLER,
+            bind = PIPE_BIND_SAMPLER_VIEW,
         )
 
         src_surface = src_texture.get_surface()
@@ -148,11 +148,11 @@ class TextureTest(TestCase):
         ctx.set_fragment_sampler_texture(0, src_texture)
 
         #  framebuffer 
-        cbuf_tex = dev.texture_create(
+        cbuf_tex = dev.resource_create(
             PIPE_FORMAT_B8G8R8A8_UNORM, 
             width, 
             height,
-            tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
+            bind = PIPE_BIND_RENDER_TARGET,
         )
 
         fb = Framebuffer()

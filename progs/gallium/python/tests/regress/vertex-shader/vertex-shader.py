@@ -113,10 +113,10 @@ def test(dev, name):
     ctx.set_clip(clip)
 
     # framebuffer
-    cbuf = dev.texture_create(
+    cbuf = dev.resource_create(
         PIPE_FORMAT_B8G8R8X8_UNORM,
         width, height,
-        tex_usage=PIPE_TEXTURE_USAGE_RENDER_TARGET,
+        bind=PIPE_BIND_RENDER_TARGET,
     ).get_surface()
     fb = Framebuffer()
     fb.width = width

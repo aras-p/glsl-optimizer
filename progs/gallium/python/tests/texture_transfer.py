@@ -72,20 +72,20 @@ class TextureTest(TestCase):
         level = self.level
         zslice = self.zslice
         
-        tex_usage = PIPE_TEXTURE_USAGE_SAMPLER
+        bind = PIPE_BIND_SAMPLER_VIEW
         geom_flags = 0
-        if not dev.is_format_supported(format, target, tex_usage, geom_flags):
+        if not dev.is_format_supported(format, target, bind, geom_flags):
             raise TestSkip
         
         #  textures
-        texture = dev.texture_create(
+        texture = dev.resource_create(
             target = target,
             format = format, 
             width = width, 
             height = height,
             depth = depth, 
             last_level = last_level,
-            tex_usage = tex_usage,
+            bind = bind,
         )
         
         surface = texture.get_surface(face, level, zslice)

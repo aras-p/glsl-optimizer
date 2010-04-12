@@ -109,6 +109,8 @@ struct_factories = {
     "pipe_vertex_element": gallium.VertexElement,
     "pipe_viewport_state": gallium.Viewport,
     #"pipe_texture": gallium.Texture,
+    'pipe_subresource': gallium.pipe_subresource,
+    'pipe_box': gallium.pipe_box,
 }
 
 
@@ -185,14 +187,8 @@ class Global(Object):
         self.interpreter = interpreter
         self.real = real
         
-    def pipe_winsys_create(self):
-        return Winsys(self.interpreter, gallium.Device())
-
-    def pipe_screen_create(self, winsys=None):
-        if winsys is None:
-            real = gallium.Device()
-        else:
-            real = winsys.real
+    def pipe_screen_create(self):
+        real = gallium.Device()
         return Screen(self.interpreter, real)
     
     def pipe_context_create(self, screen):
@@ -200,59 +196,13 @@ class Global(Object):
         return Context(self.interpreter, context)
 
     
-class Winsys(Object):
-    
-    def __init__(self, interpreter, real):
-        self.interpreter = interpreter
-        self.real = real
-
-    def get_name(self):
-        pass
-    
-    def user_buffer_create(self, data, size):
-        # We don't really care to distinguish between user and regular buffers
-        buffer = self.real.buffer_create(size, 
-                                         4, 
-                                         gallium.PIPE_BUFFER_USAGE_CPU_READ |
-                                         gallium.PIPE_BUFFER_USAGE_CPU_WRITE )
-        assert size == len(data)
-        buffer.write(data)
-        return buffer
-    
-    def buffer_create(self, alignment, usage, size):
-        return self.real.buffer_create(size, alignment, usage)
-    
-    def buffer_destroy(self, buffer):
-        pass
-    
-    def buffer_write(self, buffer, data, size):
-        assert size == len(data)
-        buffer.write(data)
-        
-    def fence_finish(self, fence, flags):
-        pass
-    
-    def fence_reference(self, dst, src):
-        pass
-    
-    def flush_frontbuffer(self, surface):
-        pass
-
-    def surface_alloc(self):
-        return None
-    
-    def surface_release(self, surface):
-        pass
-
-
 class Transfer:
 
-    def __init__(self, surface, x, y, w, h):
-        self.surface = surface
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
+    def __init__(self, resource, usage, subresource, box):
+        self.resource = resource
+        self.usage = usage
+        self.subresource = subresource
+        self.box = box
 
 
 class Screen(Object):
@@ -276,18 +226,18 @@ class Screen(Object):
         context = self.real.context_create()
         return Context(self.interpreter, context)
     
-    def is_format_supported(self, format, target, tex_usage, geom_flags):
-        return self.real.is_format_supported(format, target, tex_usage, geom_flags)
+    def is_format_supported(self, format, target, bind, geom_flags):
+        return self.real.is_format_supported(format, target, bind, geom_flags)
     
-    def texture_create(self, templat):
-        return self.real.texture_create(
+    def resource_create(self, templat):
+        return self.real.resource_create(
             format = templat.format,
             width = templat.width,
             height = templat.height,
             depth = templat.depth,
             last_level = templat.last_level,
             target = templat.target,
-            tex_usage = templat.tex_usage,
+            bind = templat.bind,
         )
 
     def texture_destroy(self, texture):
@@ -307,37 +257,9 @@ class Screen(Object):
     def tex_surface_release(self, surface):
         pass
 
-    def surface_write(self, surface, data, stride, size):
-        if surface is None:
-            return
-#        assert surface.nblocksy * stride == size 
-        surface.put_tile_raw(0, 0, surface.width, surface.height, data, stride)
-
-    def get_tex_transfer(self, texture, face, level, zslice, usage, x, y, w, h):
-        if texture is None:
-            return None
-        transfer = Transfer(texture.get_surface(face, level, zslice), x, y, w, h)
-        if transfer and usage & gallium.PIPE_TRANSFER_READ:
-            if self.interpreter.options.all:
-                self.interpreter.present(transfer.surface, 'transf_read', x, y, w, h)
-        return transfer
-    
-    def tex_transfer_destroy(self, transfer):
-        self.interpreter.unregister_object(transfer)
-
-    def transfer_write(self, transfer, stride, data, size):
-        if transfer is None:
-            return
-        transfer.surface.put_tile_raw(transfer.x, transfer.y, transfer.w, transfer.h, data, stride)
-        if self.interpreter.options.all:
-            self.interpreter.present(transfer.surface, 'transf_write', transfer.x, transfer.y, transfer.w, transfer.h)
-
-    def user_buffer_create(self, data, size):
+    def user_buffer_create(self, data, size, bind):
         # We don't really care to distinguish between user and regular buffers
-        buffer = self.real.buffer_create(size, 
-                                         4, 
-                                         gallium.PIPE_BUFFER_USAGE_CPU_READ |
-                                         gallium.PIPE_BUFFER_USAGE_CPU_WRITE )
+        buffer = self.real.buffer_create(size, bind)
         assert size == len(data)
         buffer.write(data)
         return buffer
@@ -348,10 +270,6 @@ class Screen(Object):
     def buffer_destroy(self, buffer):
         pass
     
-    def buffer_write(self, buffer, data, size, offset=0):
-        assert size == len(data)
-        buffer.write(data)
-        
     def fence_finish(self, fence, flags):
         pass
     
@@ -499,13 +417,23 @@ class Context(Object):
     def set_viewport_state(self, state):
         self.real.set_viewport(state)
 
-    def set_fragment_sampler_textures(self, num_textures, textures):
-        for i in range(num_textures):
-            self.real.set_fragment_sampler_texture(i, textures[i])
+    def create_sampler_view(self, texture, templ):
+        return self.real.create_sampler_view(texture,
+                       format = templ.format,
+                       first_level = templ.first_level,
+                       last_level = templ.last_level,
+                       swizzle_r = templ.swizzle_r,
+                       swizzle_g = templ.swizzle_r,
+                       swizzle_b = templ.swizzle_g,
+                       swizzle_a = templ.swizzle_a)
 
-    def set_vertex_sampler_textures(self, num_textures, textures):
-        for i in range(num_textures):
-            self.real.set_vertex_sampler_texture(i, textures[i])
+    def set_fragment_sampler_views(self, num, views):
+        for i in range(num):
+            self.real.set_fragment_sampler_view(i, views[i])
+
+    def set_vertex_sampler_views(self, num, views):
+        for i in range(num):
+            self.real.set_vertex_sampler_view(i, views[i])
 
     def set_vertex_buffers(self, num_buffers, buffers):
         self.vbufs = buffers[0:num_buffers]
@@ -518,12 +446,20 @@ class Context(Object):
                 buffer_offset = vbuf.buffer_offset,
                 buffer = vbuf.buffer,
             )
+            
+    def create_vertex_elements_state(self, num_elements, elements):
+        return elements[0:num_elements]
 
-    def set_vertex_elements(self, num_elements, elements):
-        self.velems = elements[0:num_elements]
+    def bind_vertex_elements_state(self, state):
+        elements = state
+        num_elements = len(elements)
+        self.velems = elements
         for i in range(num_elements):
             self.real.set_vertex_element(i, elements[i])
         self.real.set_vertex_elements(num_elements)
+
+    def delete_vertex_elements_state(self, state):
+        pass
 
     def dump_vertices(self, start, count):
         if not self.interpreter.verbosity(2):
@@ -630,6 +566,42 @@ class Context(Object):
         #return self.real.is_buffer_referenced(format, buf)
         pass
     
+    def buffer_write(self, buffer, data, size, offset=0):
+        assert size == len(data)
+        self.buffer_write(buffer, data)
+
+    def surface_write(self, surface, data, stride, size):
+        if surface is None:
+            return
+#        assert surface.nblocksy * stride == size 
+        surface.put_tile_raw(0, 0, surface.width, surface.height, data, stride)
+
+    def get_transfer(self, texture, sr, usage, box):
+        if texture is None:
+            return None
+        transfer = Transfer(texture, sr, usage, box)
+        if transfer and usage & gallium.PIPE_TRANSFER_READ:
+            if self.interpreter.options.all:
+                surface = texture.get_surface(sr.face, sr.level, box.z)
+                self.interpreter.present(transfer.surface, 'transf_read', box.x, box.y, box.w, box.h)
+        return transfer
+    
+    def tex_transfer_destroy(self, transfer):
+        self.interpreter.unregister_object(transfer)
+
+    def transfer_write(self, transfer, data, size):
+        if transfer is None:
+            return
+        self.real.transfer_inline_write(resource, sr, usage, box, data, stride, slice_stride)
+        self.transfertransfer.surface.put_tile_raw(transfer.x, transfer.y, transfer.w, transfer.h, data, transfer.stride)
+        if self.interpreter.options.all:
+            box = transfer.box
+            surface = transfer.resource.get_surface(sr.face, sr.level, box.z)
+            self.interpreter.present(transfer.surface, 'transf_write', box.x, box.y, box.w, box.h)
+
+    def transfer_inline_write(self, resource, sr, usage, box, stride, slice_stride, data):
+        self.real.transfer_inline_write(resource, sr, usage, box, data, stride, slice_stride)
+
     def _set_dirty(self):
         if self.interpreter.options.step:
             self._present()
