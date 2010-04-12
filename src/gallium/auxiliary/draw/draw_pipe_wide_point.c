@@ -113,7 +113,10 @@ static void set_texcoords(const struct widepoint_stage *wide,
       /* put gl_PointCoord into the extra vertex slot */
       uint slot = wide->stage.draw->extra_shader_outputs.slot;
       v->data[slot][0] = tc[0];
-      v->data[slot][1] = tc[1];
+      if (wide->texcoord_mode == PIPE_SPRITE_COORD_LOWER_LEFT)
+         v->data[slot][1] = 1.0f - tc[1];
+      else
+         v->data[slot][1] = tc[1];
       v->data[slot][2] = 0.0F;
       v->data[slot][3] = 1.0F;
    }

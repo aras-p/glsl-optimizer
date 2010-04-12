@@ -75,6 +75,7 @@ struct state_key {
       unsigned light_attenuated:1;
       unsigned texunit_really_enabled:1;
       unsigned texmat_enabled:1;
+      unsigned coord_replace:1;
       unsigned texgen_enabled:4;
       unsigned texgen_mode0:4;
       unsigned texgen_mode1:4;
@@ -224,6 +225,10 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
 
       if (texUnit->_ReallyEnabled)
 	 key->unit[i].texunit_really_enabled = 1;
+
+      if (ctx->Point.PointSprite)
+	 if (ctx->Point.CoordReplace[i])
+	    key->unit[i].coord_replace = 1;
 
       if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i))
 	 key->unit[i].texmat_enabled = 1;
@@ -1384,6 +1389,9 @@ static void build_texture_transform( struct tnl_program *p )
 
       if (!(p->state->fragprog_inputs_read & FRAG_BIT_TEX(i)))
 	 continue;
+
+      if (p->state->unit[i].coord_replace)
+  	 continue;
 
       if (p->state->unit[i].texgen_enabled ||
 	  p->state->unit[i].texmat_enabled) {
