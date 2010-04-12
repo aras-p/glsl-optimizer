@@ -106,45 +106,6 @@
       return $self->width0;
    }
 
-   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
-   void read_(char **STRING, int *LENGTH)
-   {
-      struct pipe_screen *screen = $self->screen;
-      /* XXX need context here not screen */
-
-      assert($self->target == PIPE_BUFFER);
-      assert(p_atomic_read(&$self->reference.count) > 0);
-
-      *LENGTH = $self->width0;
-      *STRING = (char *) malloc($self->width0);
-      if(!*STRING)
-         return;
-
-      pipe_buffer_read(screen, $self, 0, $self->width0, *STRING);
-   }
-
-   %cstring_input_binary(const char *STRING, unsigned LENGTH);
-   void write_(const char *STRING, unsigned LENGTH, unsigned offset = 0) 
-   {
-      struct pipe_screen *screen = $self->screen;
-      /* XXX need context here not screen */
-
-      assert($self->target == PIPE_BUFFER);
-      assert(p_atomic_read(&$self->reference.count) > 0);
-
-      if(offset > $self->width0)
-         SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
-
-      if(offset + LENGTH > $self->width0)
-         SWIG_exception(SWIG_ValueError, "data length must fit inside the buffer");
-
-      pipe_buffer_write(screen, $self, offset, LENGTH, STRING);
-
-fail:
-      return;
-   }
-
-
 };
 
 struct st_surface

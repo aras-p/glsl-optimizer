@@ -81,20 +81,20 @@ struct st_device {
    /**
     * Check if the given pipe_format is supported as a texture or
     * drawing surface.
-    * \param tex_usage bitmask of PIPE_BIND flags
+    * \param bind bitmask of PIPE_BIND flags
     */
    int is_format_supported( enum pipe_format format, 
                             enum pipe_texture_target target,
-                            unsigned tex_usage, 
+                            unsigned bind, 
                             unsigned geom_flags ) {
       /* We can't really display surfaces with the python statetracker so mask
        * out that usage */
-      tex_usage &= ~PIPE_BIND_DISPLAY_TARGET;
+      bind &= ~PIPE_BIND_DISPLAY_TARGET;
 
       return $self->screen->is_format_supported( $self->screen, 
                                                  format, 
                                                  target, 
-                                                 tex_usage, 
+                                                 bind, 
                                                  geom_flags );
    }
 
@@ -104,20 +104,20 @@ struct st_device {
    }
 
    struct pipe_resource * 
-   texture_create(
+   resource_create(
          enum pipe_format format,
          unsigned width,
          unsigned height,
          unsigned depth = 1,
          unsigned last_level = 0,
          enum pipe_texture_target target = PIPE_TEXTURE_2D,
-         unsigned tex_usage = 0
+         unsigned bind = 0
       ) {
       struct pipe_resource templat;
 
       /* We can't really display surfaces with the python statetracker so mask
        * out that usage */
-      tex_usage &= ~PIPE_BIND_DISPLAY_TARGET;
+      bind &= ~PIPE_BIND_DISPLAY_TARGET;
 
       memset(&templat, 0, sizeof(templat));
       templat.format = format;
@@ -126,7 +126,7 @@ struct st_device {
       templat.depth0 = depth;
       templat.last_level = last_level;
       templat.target = target;
-      templat.bind = tex_usage;
+      templat.bind = bind;
 
       return $self->screen->resource_create($self->screen, &templat);
    }
@@ -135,5 +135,4 @@ struct st_device {
    buffer_create(unsigned size, unsigned bind = 0) {
       return pipe_buffer_create($self->screen, bind, size);
    }
-
 };

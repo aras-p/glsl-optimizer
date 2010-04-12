@@ -127,6 +127,45 @@ struct st_context {
       $self->gs = gs;
    }
 
+   struct pipe_sampler_view *
+   create_sampler_view(struct pipe_resource *texture,
+                       enum pipe_format format = PIPE_FORMAT_NONE,
+                       unsigned first_level = 0,
+                       unsigned last_level = ~0,
+                       unsigned swizzle_r = 0,
+                       unsigned swizzle_g = 1,
+                       unsigned swizzle_b = 2,
+                       unsigned swizzle_a = 3)
+   {
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_sampler_view templat;
+
+      memset(&templat, 0, sizeof templat);
+      if (format == PIPE_FORMAT_NONE) {
+         templat.format = texture->format;
+      } else {
+         templat.format = format;
+      }
+      templat.last_level = MIN2(last_level, texture->last_level);
+      templat.first_level = first_level;
+      templat.last_level = last_level;
+      templat.swizzle_r = swizzle_r;
+      templat.swizzle_g = swizzle_g;
+      templat.swizzle_b = swizzle_b;
+      templat.swizzle_a = swizzle_a;
+
+      return pipe->create_sampler_view(pipe, texture, &templat);
+   }
+
+   void
+   sampler_view_destroy(struct pipe_context *ctx,
+                        struct pipe_sampler_view *view)
+   {
+      struct pipe_context *pipe = $self->pipe;
+
+      pipe->sampler_view_destroy(pipe, view);
+   }
+
    /*
     * Parameter-like state (or properties)
     */
@@ -165,6 +204,26 @@ struct st_context {
 
    void set_viewport(const struct pipe_viewport_state *state) {
       cso_set_viewport($self->cso, state);
+   }
+
+   void set_fragment_sampler_view(unsigned index,
+                                  struct pipe_sampler_view *view)
+   {
+      pipe_sampler_view_reference(&$self->fragment_sampler_views[index], view);
+
+      $self->pipe->set_fragment_sampler_views($self->pipe,
+                                              PIPE_MAX_SAMPLERS,
+                                              $self->fragment_sampler_views);
+   }
+
+   void set_vertex_sampler_view(unsigned index,
+                                struct pipe_sampler_view *view)
+   {
+      pipe_sampler_view_reference(&$self->vertex_sampler_views[index], view);
+
+      $self->pipe->set_vertex_sampler_views($self->pipe,
+                                            PIPE_MAX_VERTEX_SAMPLERS,
+                                            $self->vertex_sampler_views);
    }
 
    void set_fragment_sampler_texture(unsigned index,
@@ -641,6 +700,56 @@ error1:
       FREE(rgba2);
 
       return n;
+   }
+
+   %cstring_input_binary(const char *STRING, unsigned LENGTH);
+   void
+   transfer_inline_write(struct pipe_resource *resource,
+                         struct pipe_subresource *sr,
+                         unsigned usage,
+                         const struct pipe_box *box,
+                         const char *STRING, unsigned LENGTH,
+                         unsigned stride,
+                         unsigned slice_stride)
+   {
+      struct pipe_context *pipe = $self->pipe;
+
+      pipe->transfer_inline_write(pipe, resource, *sr, usage, box, STRING, stride, slice_stride);
+   }
+
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
+   void buffer_read(struct pipe_resource *buffer,
+                    char **STRING, int *LENGTH)
+   {
+      struct pipe_context *pipe = $self->pipe;
+
+      assert(buffer->target == PIPE_BUFFER);
+
+      *LENGTH = buffer->width0;
+      *STRING = (char *) malloc(buffer->width0);
+      if(!*STRING)
+         return;
+
+      pipe_buffer_read(pipe, buffer, 0, buffer->width0, *STRING);
+   }
+
+   void buffer_write(struct pipe_resource *buffer,
+                     const char *STRING, unsigned LENGTH, unsigned offset = 0)
+   {
+      struct pipe_context *pipe = $self->pipe;
+
+      assert(buffer->target == PIPE_BUFFER);
+
+      if(offset > buffer->width0)
+         SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
+
+      if(offset + LENGTH > buffer->width0)
+         SWIG_exception(SWIG_ValueError, "data length must fit inside the buffer");
+
+      pipe_buffer_write(pipe, buffer, offset, LENGTH, STRING);
+
+fail:
+      return;
    }
 
 };
