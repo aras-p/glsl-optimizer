@@ -155,6 +155,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
             base.last_level = 0;
             base.nr_samples = 0;
             base._usage = PIPE_USAGE_DYNAMIC;
+            base.bind = 0;
 	    base.flags = R300_RESOURCE_FLAG_TRANSFER;
 
             /* For texture reading, the temporary (detiled) texture is used as
