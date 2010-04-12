@@ -357,7 +357,7 @@ struct r300_context {
     /* Depth, stencil, and alpha state. */
     struct r300_atom dsa_state;
     /* Fragment shader. */
-    struct r300_fragment_shader* fs;
+    struct r300_atom fs;
     /* Framebuffer state. */
     struct r300_atom fb_state;
     /* Rasterizer state. */
@@ -432,6 +432,10 @@ static INLINE struct r300_context* r300_context(struct pipe_context* context)
     return (struct r300_context*)context;
 }
 
+static INLINE struct r300_fragment_shader *r300_fs(struct r300_context *r300)
+{
+    return (struct r300_fragment_shader*)r300->fs.state;
+}
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);

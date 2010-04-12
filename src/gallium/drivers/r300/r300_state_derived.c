@@ -376,7 +376,7 @@ static void r300_update_derived_shader_state(struct r300_context* r300)
 {
     struct r300_vertex_shader* vs = r300->vs_state.state;
 
-    r300_update_rs_block(r300, &vs->outputs, &r300->fs->shader->inputs);
+    r300_update_rs_block(r300, &vs->outputs, &r300_fs(r300)->shader->inputs);
 }
 
 static boolean r300_dsa_writes_depth_stencil(struct r300_dsa_state* dsa)
@@ -436,12 +436,12 @@ static void r300_update_ztop(struct r300_context* r300)
 
     /* ZS writes */
     if (r300_dsa_writes_depth_stencil(r300->dsa_state.state) &&
-           (r300_dsa_alpha_test_enabled(r300->dsa_state.state) ||/* (1) */
-            r300->fs->shader->info.uses_kill)) {                 /* (2) */
+           (r300_dsa_alpha_test_enabled(r300->dsa_state.state) ||  /* (1) */
+            r300_fs(r300)->shader->info.uses_kill)) {              /* (2) */
         ztop_state->z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300_fragment_shader_writes_depth(r300->fs)) {    /* (5) */
+    } else if (r300_fragment_shader_writes_depth(r300_fs(r300))) { /* (5) */
         ztop_state->z_buffer_top = R300_ZTOP_DISABLE;
-    } else if (r300->query_current) {                            /* (6) */
+    } else if (r300->query_current) {                              /* (6) */
         ztop_state->z_buffer_top = R300_ZTOP_DISABLE;
     } else {
         ztop_state->z_buffer_top = R300_ZTOP_ENABLE;

@@ -236,7 +236,7 @@ static uint32_t pack_float24(float f)
 static void r300_emit_fragment_depth_config(struct r300_context* r300)
 {
     CS_LOCALS(r300);
-    if (r300_fragment_shader_writes_depth(r300->fs)) {
+    if (r300_fragment_shader_writes_depth(r300_fs(r300))) {
         OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SHADER);
         OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W24 | R300_W_SRC_US);
     } else {
@@ -245,22 +245,31 @@ static void r300_emit_fragment_depth_config(struct r300_context* r300)
     }
 }
 
-void r300_emit_fragment_program_code(struct r300_context* r300,
-                                     struct rX00_fragment_program_code* generic_code)
+unsigned r300_get_fs_atom_size(struct r300_context *r300)
 {
+    struct r300_fragment_shader *fs = r300_fs(r300);
+    unsigned imm_count = fs->shader->immediates_count;
+    struct r300_fragment_program_code *code = &fs->shader->code.code.r300;
+
+    return 19 +
+           code->alu.length * 4 +
+           (code->tex.length ? (1 + code->tex.length) : 0) +
+           (imm_count ? imm_count * 5 : 0);
+}
+
+void r300_emit_fs(struct r300_context* r300, unsigned size, void *state)
+{
+    struct r300_fragment_shader *fs = r300_fs(r300);
+    struct rX00_fragment_program_code* generic_code = &fs->shader->code;
     struct r300_fragment_program_code * code = &generic_code->code.r300;
     unsigned i;
-    unsigned imm_count = r300->fs->shader->immediates_count;
-    unsigned imm_first = r300->fs->shader->externals_count;
+    unsigned imm_count = fs->shader->immediates_count;
+    unsigned imm_first = fs->shader->externals_count;
     unsigned imm_end = generic_code->constants.Count;
     struct rc_constant *constants = generic_code->constants.Constants;
     CS_LOCALS(r300);
 
-    BEGIN_CS(19 +
-             code->alu.length * 4 +
-             (code->tex.length ? (1 + code->tex.length) : 0) +
-             (imm_count ? imm_count * 5 : 0));
-
+    BEGIN_CS(size);
     OUT_CS_REG(R300_US_CONFIG, code->config);
     OUT_CS_REG(R300_US_PIXSIZE, code->pixsize);
     OUT_CS_REG(R300_US_CODE_OFFSET, code->code_offset);
@@ -314,7 +323,8 @@ void r300_emit_fragment_program_code(struct r300_context* r300,
 void r300_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants)
 {
-    unsigned i, count = r300->fs->shader->externals_count;
+    struct r300_fragment_shader *fs = r300_fs(r300);
+    unsigned i, count = fs->shader->externals_count;
     CS_LOCALS(r300);
 
     if (count == 0)
@@ -337,9 +347,10 @@ void r300_emit_fs_constant_buffer(struct r300_context* r300,
 void r300_emit_fs_constant_rc_state(struct r300_context* r300,
                                     struct rc_constant_list* constants)
 {
+    struct r300_fragment_shader *fs = r300_fs(r300);
     unsigned i;
-    unsigned count = r300->fs->shader->rc_state_count;
-    unsigned first = r300->fs->shader->externals_count;
+    unsigned count = fs->shader->rc_state_count;
+    unsigned first = fs->shader->externals_count;
     unsigned end = constants->Count;
     CS_LOCALS(r300);
 
@@ -362,20 +373,30 @@ void r300_emit_fs_constant_rc_state(struct r300_context* r300,
     END_CS;
 }
 
-void r500_emit_fragment_program_code(struct r300_context* r300,
-                                     struct rX00_fragment_program_code* generic_code)
+unsigned r500_get_fs_atom_size(struct r300_context *r300)
 {
+    struct r300_fragment_shader *fs = r300_fs(r300);
+    unsigned imm_count = fs->shader->immediates_count;
+    struct r500_fragment_program_code *code = &fs->shader->code.code.r500;
+
+    return 17 +
+           ((code->inst_end + 1) * 6) +
+           (imm_count ? imm_count * 7 : 0);
+}
+
+void r500_emit_fs(struct r300_context* r300, unsigned size, void *state)
+{
+    struct r300_fragment_shader *fs = r300_fs(r300);
+    struct rX00_fragment_program_code* generic_code = &fs->shader->code;
     struct r500_fragment_program_code * code = &generic_code->code.r500;
     unsigned i;
-    unsigned imm_count = r300->fs->shader->immediates_count;
-    unsigned imm_first = r300->fs->shader->externals_count;
+    unsigned imm_count = fs->shader->immediates_count;
+    unsigned imm_first = fs->shader->externals_count;
     unsigned imm_end = generic_code->constants.Count;
     struct rc_constant *constants = generic_code->constants.Constants;
     CS_LOCALS(r300);
 
-    BEGIN_CS(17 +
-             ((code->inst_end + 1) * 6) +
-             (imm_count ? imm_count * 7 : 0));
+    BEGIN_CS(size);
     OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
     OUT_CS_REG(R500_US_PIXSIZE, code->max_temp_idx);
     OUT_CS_REG(R500_US_CODE_RANGE,
@@ -421,7 +442,8 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
 void r500_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants)
 {
-    unsigned i, count = r300->fs->shader->externals_count;
+    struct r300_fragment_shader *fs = r300_fs(r300);
+    unsigned i, count = fs->shader->externals_count;
     CS_LOCALS(r300);
 
     if (count == 0)
@@ -446,9 +468,10 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
 void r500_emit_fs_constant_rc_state(struct r300_context* r300,
                                     struct rc_constant_list* constants)
 {
+    struct r300_fragment_shader *fs = r300_fs(r300);
     unsigned i;
-    unsigned count = r300->fs->shader->rc_state_count;
-    unsigned first = r300->fs->shader->externals_count;
+    unsigned count = fs->shader->rc_state_count;
+    unsigned first = fs->shader->externals_count;
     unsigned end = constants->Count;
     CS_LOCALS(r300);
 
@@ -1188,26 +1211,17 @@ void r300_emit_dirty_state(struct r300_context* r300)
         }
     }
 
-    if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
-        if (r300screen->caps.is_r500) {
-            r500_emit_fragment_program_code(r300, &r300->fs->shader->code);
-        } else {
-            r300_emit_fragment_program_code(r300, &r300->fs->shader->code);
-        }
-        r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER;
-    }
-
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER_CONSTANTS) {
         if (r300screen->caps.is_r500) {
             r500_emit_fs_constant_buffer(r300,
-                                         &r300->fs->shader->code.constants);
+                                         &r300_fs(r300)->shader->code.constants);
             r500_emit_fs_constant_rc_state(r300,
-                                           &r300->fs->shader->code.constants);
+                                           &r300_fs(r300)->shader->code.constants);
         } else {
             r300_emit_fs_constant_buffer(r300,
-                                         &r300->fs->shader->code.constants);
+                                         &r300_fs(r300)->shader->code.constants);
             r300_emit_fs_constant_rc_state(r300,
-                                           &r300->fs->shader->code.constants);
+                                           &r300_fs(r300)->shader->code.constants);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }

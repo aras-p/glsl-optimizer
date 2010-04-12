@@ -31,7 +31,6 @@
 #define R300_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV
 
 /* Non-atom dirty state flags. */
-#define R300_NEW_FRAGMENT_SHADER                0x00000020
 #define R300_NEW_FRAGMENT_SHADER_CONSTANTS      0x00000040
 #define R300_NEW_VERTEX_SHADER_CONSTANTS        0x10000000
 #define R300_NEW_QUERY                          0x40000000

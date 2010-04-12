@@ -43,8 +43,9 @@ void r300_emit_clip_state(struct r300_context* r300,
 void r300_emit_dsa_state(struct r300_context* r300,
                          unsigned size, void* state);
 
-void r300_emit_fragment_program_code(struct r300_context* r300,
-                                     struct rX00_fragment_program_code* generic_code);
+unsigned r300_get_fs_atom_size(struct r300_context *r300);
+
+void r300_emit_fs(struct r300_context* r300, unsigned size, void *state);
 
 void r300_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);
@@ -52,8 +53,9 @@ void r300_emit_fs_constant_buffer(struct r300_context* r300,
 void r300_emit_fs_constant_rc_state(struct r300_context* r300,
                                     struct rc_constant_list* constants);
 
-void r500_emit_fragment_program_code(struct r300_context* r300,
-                                     struct rX00_fragment_program_code* generic_code);
+unsigned r500_get_fs_atom_size(struct r300_context *r300);
+
+void r500_emit_fs(struct r300_context* r300, unsigned size, void *state);
 
 void r500_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);

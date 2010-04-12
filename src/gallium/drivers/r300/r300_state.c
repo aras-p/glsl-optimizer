@@ -32,6 +32,7 @@
 #include "pipe/p_config.h"
 
 #include "r300_context.h"
+#include "r300_emit.h"
 #include "r300_reg.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
@@ -682,6 +683,21 @@ static void* r300_create_fs_state(struct pipe_context* pipe,
     return (void*)fs;
 }
 
+static void r300_mark_fs_code_dirty(struct r300_context *r300)
+{
+    struct r300_fragment_shader* fs = r300_fs(r300);
+
+    r300->fs.dirty = TRUE;
+
+    if (r300->screen->caps.is_r500) {
+        r300->fs.size = r500_get_fs_atom_size(r300);
+    } else {
+        r300->fs.size = r300_get_fs_atom_size(r300);
+    }
+
+    r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+}
+
 /* Bind fragment shader state. */
 static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 {
@@ -689,20 +705,19 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     struct r300_fragment_shader* fs = (struct r300_fragment_shader*)shader;
 
     if (fs == NULL) {
-        r300->fs = NULL;
+        r300->fs.state = NULL;
         return;
     }
 
-    r300->fs = fs;
+    r300->fs.state = fs;
     r300_pick_fragment_shader(r300);
+    r300_mark_fs_code_dirty(r300);
 
     r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
 
     if (r300->vs_state.state && r300_vertex_shader_setup_wpos(r300)) {
         r300->vap_output_state.dirty = TRUE;
     }
-
-    r300->dirty_state |= R300_NEW_FRAGMENT_SHADER | R300_NEW_FRAGMENT_SHADER_CONSTANTS;
 }
 
 /* Delete fragment shader state. */
@@ -933,10 +948,9 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     r300->textures_state.dirty = TRUE;
 
     /* Pick a fragment shader based on the texture compare state. */
-    if (r300->fs && count) {
+    if (r300->fs.state && count) {
         if (r300_pick_fragment_shader(r300)) {
-            r300->dirty_state |= R300_NEW_FRAGMENT_SHADER |
-                                 R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+            r300_mark_fs_code_dirty(r300);
         }
     }
 }
@@ -1100,7 +1114,7 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
     }
 
     r300->viewport_state.dirty = TRUE;
-    if (r300->fs && r300->fs->shader->inputs.wpos != ATTR_UNUSED) {
+    if (r300->fs.state && r300_fs(r300)->shader->inputs.wpos != ATTR_UNUSED) {
         r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }
 }
@@ -1319,7 +1333,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     r300->vs_state.state = vs;
 
     // VS output mapping for HWTCL or stream mapping for SWTCL to the RS block
-    if (r300->fs) {
+    if (r300->fs.state) {
         r300_vertex_shader_setup_wpos(r300);
     }
     memcpy(r300->vap_output_state.state, &vs->vap_out,
