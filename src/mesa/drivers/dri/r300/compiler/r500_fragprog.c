@@ -138,7 +138,36 @@ int r500_transform_TEX(
 		}
 	}
 
-	/* Texture wrap modes don't work on NPOT textures or texrects. */
+	/* Texture wrap modes don't work on NPOT textures or texrects.
+	 *
+	 * The game plan is simple. We have two flags, fake_npot and
+	 * non_normalized_coords, as well as a tex target. The RECT tex target
+	 * will make the emitted code use non-scaled texcoords.
+	 *
+	 * Non-wrapped/clamped texcoords with NPOT are free in HW. Repeat and
+	 * mirroring are not. If we need to repeat, we do:
+	 *
+	 * MUL temp, texcoord, <scaling factor constant>
+	 * FRC temp, temp ; Discard integer portion of coords
+	 *
+	 * This gives us coords in [0, 1].
+	 *
+	 * Mirroring is trickier. We're going to start out like repeat:
+	 *
+	 * MUL temp0, texcoord, <scaling factor constant> ; De-mirror across axes
+	 * MUL temp0, abs(temp0), 0.5 ; Pattern repeats in [0, 2]
+	 *                            ; so scale to [0, 1]
+	 * FRC temp0, temp0 ; Make the pattern repeat
+	 * SGE temp1, temp0, 0.5 ; Select components that need to be "reflected"
+	 *                       ; across the mirror
+	 * MAD temp0, neg(0.5), temp1, temp0 ; Add -0.5 to the
+	 *                                   ; selected components
+	 * ADD temp0, temp0, temp0 ; Poor man's 2x to undo earlier MUL
+	 *
+	 * This gives us coords in [0, 1].
+	 *
+	 * ~ C.
+	 */
 	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
 		(inst->U.I.TexSrcTarget == RC_TEXTURE_RECT ||
 			compiler->state.unit[inst->U.I.TexSrcUnit].fake_npot ||
@@ -165,33 +194,83 @@ int r500_transform_TEX(
 
 				reset_srcreg(&inst->U.I.SrcReg[0]);
 				inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-				inst->U.I.SrcReg[0].Index = inst_rect->U.I.DstReg.Index;
+				inst->U.I.SrcReg[0].Index = temp;
 
 				inst->U.I.TexSrcTarget = RC_TEXTURE_2D;
 			}
 
-			/* Repeat, with optional mirror */
-			inst_rect = rc_insert_new_instruction(c, inst->Prev);
-
-			inst_rect->U.I.Opcode = RC_OPCODE_FRC;
-			inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_rect->U.I.DstReg.Index = temp;
-			inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-
-			if (wrapmode == RC_WRAP_MIRROR) {
+			if (wrapmode == RC_WRAP_REPEAT) {
 				inst_rect = rc_insert_new_instruction(c, inst->Prev);
 
-				inst_rect->U.I.Opcode = RC_OPCODE_SUB;
+				inst_rect->U.I.Opcode = RC_OPCODE_FRC;
 				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
 				inst_rect->U.I.DstReg.Index = temp;
-				inst_rect->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
+				inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+
+				reset_srcreg(&inst->U.I.SrcReg[0]);
+				inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+				inst->U.I.SrcReg[0].Index = temp;
+			} else if (wrapmode == RC_WRAP_MIRROR) {
+				unsigned temp1;
+				/*
+				 * MUL temp0, abs(temp0), 0.5
+				 * FRC temp0, temp0
+				 * SGE temp1, temp0, 0.5
+				 * MAD temp0, neg(0.5), temp1, temp0
+				 * ADD temp0, temp0, temp0
+				 */
+				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+
+				inst_rect->U.I.Opcode = RC_OPCODE_MUL;
+				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.DstReg.Index = temp;
+				inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+				inst_rect->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_HALF);
+
+				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+
+				inst_rect->U.I.Opcode = RC_OPCODE_FRC;
+				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.DstReg.Index = temp;
+				inst_rect->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.SrcReg[0].Index = temp;
+
+				temp1 = rc_find_free_temporary(c);
+				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+
+				inst_rect->U.I.Opcode = RC_OPCODE_SGE;
+				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.DstReg.Index = temp1;
+				inst_rect->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.SrcReg[0].Index = temp;
+				inst_rect->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_HALF);
+
+				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+
+				inst_rect->U.I.Opcode = RC_OPCODE_MAD;
+				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.DstReg.Index = temp;
+				inst_rect->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.SrcReg[0].Index = temp1;
+				inst_rect->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_HALF);
+				inst_rect->U.I.SrcReg[1].Negate = 1;
+				inst_rect->U.I.SrcReg[2].File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.SrcReg[2].Index = temp;
+
+				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+
+				inst_rect->U.I.Opcode = RC_OPCODE_ADD;
+				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.DstReg.Index = temp;
+				inst_rect->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+				inst_rect->U.I.SrcReg[0].Index = temp;
 				inst_rect->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
 				inst_rect->U.I.SrcReg[1].Index = temp;
-			}
 
-			reset_srcreg(&inst->U.I.SrcReg[0]);
-			inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-			inst->U.I.SrcReg[0].Index = inst_rect->U.I.DstReg.Index;
+				reset_srcreg(&inst->U.I.SrcReg[0]);
+				inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+				inst->U.I.SrcReg[0].Index = temp;
+			}
 		}
 	}
 
