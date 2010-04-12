@@ -70,9 +70,8 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 		return !!screen->is_nv4x;
 	case NOUVEAU_CAP_HW_VTXBUF:
-		return 0;
 	case NOUVEAU_CAP_HW_IDXBUF:
-		return 0;
+		return !screen->force_swtnl;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 16;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
