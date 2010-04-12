@@ -50,6 +50,8 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
+#include "util/u_math.h"
+#include "util/u_format.h"
 
 #include "tr_dump.h"
 #include "tr_screen.h"
@@ -471,13 +473,14 @@ void trace_dump_bytes(const void *data,
 }
 
 void trace_dump_box_bytes(const void *data,
-			  unsigned format,
+			  enum pipe_format format,
 			  const struct pipe_box *box,
 			  unsigned stride,
 			  unsigned slice_stride)
 {
-   //size_t size = util_format_get_nblocksy(transfer->resource->format, transfer->box.height) * transfer->stride;
-
+   size_t size = MAX2(util_format_get_nblocksy(format, box->height) * stride,
+                      box->depth * slice_stride);
+   trace_dump_bytes(data, size);
 }
 
 void trace_dump_string(const char *str)

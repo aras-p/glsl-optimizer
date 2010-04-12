@@ -35,6 +35,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
 
 struct pipe_buffer;
 struct pipe_resource;
@@ -93,7 +94,7 @@ void trace_dump_uint(long long unsigned value);
 void trace_dump_float(double value);
 void trace_dump_bytes(const void *data, size_t size);
 void trace_dump_box_bytes(const void *data,
-			  unsigned format,
+			  enum pipe_format format,
 			  const struct pipe_box *box,
 			  unsigned stride,
 			  unsigned slice_stride);
@@ -122,6 +123,13 @@ void trace_dump_transfer_ptr(struct pipe_transfer *_transfer);
    do { \
       trace_dump_arg_begin(#_arg); \
       trace_dump_##_type(_arg); \
+      trace_dump_arg_end(); \
+   } while(0)
+
+#define trace_dump_arg_struct(_type, _arg) \
+   do { \
+      trace_dump_arg_begin(#_arg); \
+      trace_dump_##_type(&_arg); \
       trace_dump_arg_end(); \
    } while(0)
 

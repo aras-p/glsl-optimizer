@@ -222,7 +222,7 @@ trace_screen_resource_create(struct pipe_screen *_screen,
    trace_dump_call_begin("pipe_screen", "resource_create");
 
    trace_dump_arg(ptr, screen);
-   trace_dump_arg(template, templat);
+   trace_dump_arg(resource_template, templat);
 
    result = screen->resource_create(screen, templat);
 

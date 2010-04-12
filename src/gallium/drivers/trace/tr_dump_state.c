@@ -44,7 +44,7 @@ void trace_dump_format(enum pipe_format format)
 }
 
 
-void trace_dump_template(const struct pipe_resource *templat)
+void trace_dump_resource_template(const struct pipe_resource *templat)
 {
    if (!trace_dumping_enabled_locked())
       return;
@@ -75,6 +75,48 @@ void trace_dump_template(const struct pipe_resource *templat)
    trace_dump_member(uint, templat, _usage);
    trace_dump_member(uint, templat, bind);
    trace_dump_member(uint, templat, flags);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_subresource(const struct pipe_subresource *subresource)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!subresource) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_subresource");
+
+   trace_dump_member(uint, subresource, face);
+   trace_dump_member(uint, subresource, level);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_box(const struct pipe_box *box)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!box) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_box");
+
+   trace_dump_member(uint, box, x);
+   trace_dump_member(uint, box, y);
+   trace_dump_member(uint, box, z);
+   trace_dump_member(uint, box, width);
+   trace_dump_member(uint, box, height);
+   trace_dump_member(uint, box, depth);
 
    trace_dump_struct_end();
 }
@@ -384,6 +426,30 @@ void trace_dump_sampler_state(const struct pipe_sampler_state *state)
    trace_dump_member(float, state, min_lod);
    trace_dump_member(float, state, max_lod);
    trace_dump_member_array(float, state, border_color);
+
+   trace_dump_struct_end();
+}
+
+
+void trace_dump_sampler_view_template(const struct pipe_sampler_view *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_sampler_view");
+
+   trace_dump_member(format, state, format);
+   trace_dump_member(uint, state, first_level);
+   trace_dump_member(uint, state, last_level);
+   trace_dump_member(uint, state, swizzle_r);
+   trace_dump_member(uint, state, swizzle_g);
+   trace_dump_member(uint, state, swizzle_b);
+   trace_dump_member(uint, state, swizzle_a);
 
    trace_dump_struct_end();
 }
