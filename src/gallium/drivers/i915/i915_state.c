@@ -527,7 +527,6 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
                                      struct pipe_resource *buf)
 {
    struct i915_context *i915 = i915_context(pipe);
-   struct i915_buffer *ir = i915_buffer(buf);
    draw_flush(i915->draw);
 
    assert(shader < PIPE_SHADER_TYPES);
@@ -543,6 +542,7 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
     * N constants, leaving any extras from shader translation alone.
     */
    if (buf) {
+      struct i915_buffer *ir = i915_buffer(buf);
       memcpy(i915->current.constants[shader], ir->data, ir->b.b.width0);
       i915->current.num_user_constants[shader] = (ir->b.b.width0 /
 						  4 * sizeof(float));
