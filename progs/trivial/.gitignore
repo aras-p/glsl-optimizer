@@ -1,5 +1,6 @@
 clear
 clear-fbo
+clear-fbo-scissor
 clear-fbo-tex
 clear-random
 clear-repeat
