@@ -72,7 +72,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, int param)
 	case NOUVEAU_CAP_HW_VTXBUF:
 		return !screen->force_swtnl;
 	case NOUVEAU_CAP_HW_IDXBUF:
-		return !screen->force_swtnl && nvfx->screen->eng3d->grclass == NV40TCL;
+		return !screen->force_swtnl && screen->eng3d->grclass == NV40TCL;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 16;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
