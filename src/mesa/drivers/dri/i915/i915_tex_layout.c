@@ -67,7 +67,8 @@ static GLint bottom_offsets[6] = {
 
 
 /**
- * Cube texture map layout for i830M-GM915.
+ * Cube texture map layout for i830M-GM915 and
+ * non-compressed cube texture map on GM945.
  *
  * Hardware layout looks like:
  *
@@ -258,7 +259,7 @@ i915_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt,
 
 
 /**
- * Cube texture map layout for GM945 and later.
+ * Compressed cube texture map layout for GM945 and later.
  *
  * The hardware layout looks like the 830-915 layout, except for the small
  * sizes.  A zoomed in view of the layout for 945 is:
