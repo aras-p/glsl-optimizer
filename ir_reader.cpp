@@ -36,6 +36,7 @@ static ir_instruction *read_instruction(_mesa_glsl_parse_state *,
 				        s_expression *);
 static ir_variable *read_declaration(_mesa_glsl_parse_state *, s_list *);
 static ir_if *read_if(_mesa_glsl_parse_state *, s_list *);
+static ir_loop *read_loop(_mesa_glsl_parse_state *st, s_list *list);
 static ir_return *read_return(_mesa_glsl_parse_state *, s_list *);
 
 static ir_rvalue *read_rvalue(_mesa_glsl_parse_state *, s_expression *);
@@ -184,6 +185,8 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr)
       inst = read_declaration(st, list);
    } else if (strcmp(tag->value(), "if") == 0) {
       inst = read_if(st, list);
+   } else if (strcmp(tag->value(), "loop") == 0) {
+      inst = read_loop(st, list);
    } else if (strcmp(tag->value(), "return") == 0) {
       inst = read_return(st, list);
    } else {
@@ -293,6 +296,33 @@ read_if(_mesa_glsl_parse_state *st, s_list *list)
       iff = NULL;
    }
    return iff;
+}
+
+
+static ir_loop *
+read_loop(_mesa_glsl_parse_state *st, s_list *list)
+{
+   if (list->length() != 6) {
+      ir_read_error(list, "expected (loop <counter> <from> <to> <increment> "
+			  "<body>)");
+      return NULL;
+   }
+
+   s_expression *count_expr = (s_expression*) list->subexpressions.head->next;
+   s_expression *from_expr  = (s_expression*) count_expr->next;
+   s_expression *to_expr    = (s_expression*) from_expr->next;
+   s_expression *inc_expr   = (s_expression*) to_expr->next;
+   s_expression *body_expr  = (s_expression*) inc_expr->next;
+
+   // FINISHME: actually read the count/from/to fields.
+
+   ir_loop *loop = new ir_loop;
+   read_instructions(st, &loop->body_instructions, body_expr);
+   if (st->error) {
+      delete loop;
+      loop = NULL;
+   }
+   return loop;
 }
 
 
