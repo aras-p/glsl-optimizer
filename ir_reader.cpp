@@ -177,15 +177,17 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr)
    }
 
    ir_instruction *inst = NULL;
-   if (strcmp(tag->value(), "declare") == 0)
+   if (strcmp(tag->value(), "declare") == 0) {
       inst = read_declaration(st, list);
-   else if (strcmp(tag->value(), "if") == 0)
+   } else if (strcmp(tag->value(), "if") == 0) {
       inst = read_if(st, list);
-   else if (strcmp(tag->value(), "return") == 0)
+   } else if (strcmp(tag->value(), "return") == 0) {
       inst = read_return(st, list);
-   else
-      ir_read_error(expr, "unrecognized instruction tag: %s", tag->value());
-
+   } else {
+      inst = read_rvalue(st, list);
+      if (inst == NULL)
+	 ir_read_error(list, "when reading instruction");
+   }
    return inst;
 }
 
