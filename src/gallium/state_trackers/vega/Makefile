@@ -27,7 +27,6 @@ VG_SOURCES = \
            vg_context.c \
            vg_manager.c \
            vg_state.c   \
-           vg_tracker.c \
            vg_translate.c \
            polygon.c    \
            bezier.c     \

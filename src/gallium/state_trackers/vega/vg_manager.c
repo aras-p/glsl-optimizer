@@ -282,16 +282,6 @@ vg_manager_flush_frontbuffer(struct vg_context *ctx)
    if (!stfb)
       return;
 
-   /* st_public.h is used */
-   if (!stfb->iface) {
-      struct pipe_screen *screen = ctx->pipe->screen;
-      if (screen->flush_frontbuffer) {
-         screen->flush_frontbuffer(screen,
-               stfb->strb->surface, ctx->pipe->priv);
-      }
-      return;
-   }
-
    switch (stfb->strb_att) {
    case ST_ATTACHMENT_FRONT_LEFT:
    case ST_ATTACHMENT_FRONT_RIGHT:
@@ -314,14 +304,6 @@ vg_manager_validate_framebuffer(struct vg_context *ctx)
    /* no binding surface */
    if (!stfb)
       return;
-
-   /* st_public.h is used */
-   if (!stfb->iface) {
-      struct pipe_screen *screen = ctx->pipe->screen;
-      if (screen->update_buffer)
-         screen->update_buffer(screen, ctx->pipe->priv);
-      return;
-   }
 
    if (!p_atomic_read(&ctx->draw_buffer_invalid))
       return;
