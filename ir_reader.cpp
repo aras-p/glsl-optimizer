@@ -31,11 +31,11 @@ static void ir_read_error(s_expression *expr, const char *fmt, ...);
 static const glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
 
 static void read_instructions(_mesa_glsl_parse_state *, exec_list *,
-			      s_expression *);
+			      s_expression *, ir_loop *);
 static ir_instruction *read_instruction(_mesa_glsl_parse_state *,
-				        s_expression *);
+				        s_expression *, ir_loop *);
 static ir_variable *read_declaration(_mesa_glsl_parse_state *, s_list *);
-static ir_if *read_if(_mesa_glsl_parse_state *, s_list *);
+static ir_if *read_if(_mesa_glsl_parse_state *, s_list *, ir_loop *);
 static ir_loop *read_loop(_mesa_glsl_parse_state *st, s_list *list);
 static ir_return *read_return(_mesa_glsl_parse_state *, s_list *);
 
@@ -67,7 +67,7 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
    _mesa_glsl_initialize_constructors(instructions, state);
    _mesa_glsl_initialize_functions(instructions, state);
 
-   read_instructions(state, instructions, expr);
+   read_instructions(state, instructions, expr, NULL);
 }
 
 static void
@@ -144,7 +144,7 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
 
 static void
 read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
-		  s_expression *expr)
+		  s_expression *expr, ir_loop *loop_ctx)
 {
    // Read in a list of instructions
    s_list *list = SX_AS_LIST(expr);
@@ -156,7 +156,7 @@ read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
 
    foreach_iter(exec_list_iterator, it, list->subexpressions) {
       s_expression *sub = (s_expression*) it.get();
-      ir_instruction *ir = read_instruction(st, sub);
+      ir_instruction *ir = read_instruction(st, sub, loop_ctx);
       if (ir == NULL) {
 	 ir_read_error(sub, "Invalid instruction.\n");
 	 st->error = true;
@@ -168,8 +168,17 @@ read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
 
 
 static ir_instruction *
-read_instruction(_mesa_glsl_parse_state *st, s_expression *expr)
+read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
+	         ir_loop *loop_ctx)
 {
+   s_symbol *symbol = SX_AS_SYMBOL(expr);
+   if (symbol != NULL) {
+      if (strcmp(symbol->value(), "break") == 0 && loop_ctx != NULL)
+	 return new ir_loop_jump(loop_ctx, ir_loop_jump::jump_break);
+      if (strcmp(symbol->value(), "continue") == 0 && loop_ctx != NULL)
+	 return new ir_loop_jump(loop_ctx, ir_loop_jump::jump_continue);
+   }
+
    s_list *list = SX_AS_LIST(expr);
    if (list == NULL || list->subexpressions.is_empty())
       return NULL;
@@ -184,7 +193,7 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr)
    if (strcmp(tag->value(), "declare") == 0) {
       inst = read_declaration(st, list);
    } else if (strcmp(tag->value(), "if") == 0) {
-      inst = read_if(st, list);
+      inst = read_if(st, list, loop_ctx);
    } else if (strcmp(tag->value(), "loop") == 0) {
       inst = read_loop(st, list);
    } else if (strcmp(tag->value(), "return") == 0) {
@@ -269,7 +278,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 
 
 static ir_if *
-read_if(_mesa_glsl_parse_state *st, s_list *list)
+read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 {
    if (list->length() != 4) {
       ir_read_error(list, "expected (if <condition> (<then> ...) "
@@ -289,8 +298,8 @@ read_if(_mesa_glsl_parse_state *st, s_list *list)
 
    ir_if *iff = new ir_if(condition);
 
-   read_instructions(st, &iff->then_instructions, then_expr);
-   read_instructions(st, &iff->else_instructions, else_expr);
+   read_instructions(st, &iff->then_instructions, then_expr, loop_ctx);
+   read_instructions(st, &iff->else_instructions, else_expr, loop_ctx);
    if (st->error) {
       delete iff;
       iff = NULL;
@@ -317,7 +326,7 @@ read_loop(_mesa_glsl_parse_state *st, s_list *list)
    // FINISHME: actually read the count/from/to fields.
 
    ir_loop *loop = new ir_loop;
-   read_instructions(st, &loop->body_instructions, body_expr);
+   read_instructions(st, &loop->body_instructions, body_expr, loop);
    if (st->error) {
       delete loop;
       loop = NULL;
