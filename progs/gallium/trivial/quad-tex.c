@@ -146,9 +146,9 @@ static void init_prog(struct program *p)
 		tmplt.height0 = HEIGHT;
 		tmplt.depth0 = 1;
 		tmplt.last_level = 0;
-		tmplt.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+		tmplt.bind = PIPE_BIND_RENDER_TARGET;
 
-		p->target = p->screen->texture_create(p->screen, &tmplt);
+		p->target = p->screen->resource_create(p->screen, &tmplt);
 	}
 
 	/* sampler texture */
@@ -165,9 +165,9 @@ static void init_prog(struct program *p)
 		t_tmplt.height0 = 2;
 		t_tmplt.depth0 = 1;
 		t_tmplt.last_level = 0;
-		t_tmplt.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+		t_tmplt.bind = PIPE_BIND_RENDER_TARGET;
 
-		p->tex = p->screen->texture_create(p->screen, &t_tmplt);
+		p->tex = p->screen->resource_create(p->screen, &t_tmplt);
 
 		t = p->pipe->get_tex_transfer(p->pipe, p->tex,
 		                              0, 0, 0, /* face, level, zslice */

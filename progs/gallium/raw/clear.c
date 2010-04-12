@@ -56,17 +56,17 @@ int main( int argc, char *argv[] )
    templat.depth0 = 1;
    templat.last_level = 0;
    templat.nr_samples = 1;
-   templat.tex_usage = (PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                        PIPE_TEXTURE_USAGE_DISPLAY_TARGET);
+   templat.bind = (PIPE_BIND_RENDER_TARGET |
+                        PIPE_BIND_DISPLAY_TARGET);
    
-   tex = screen->texture_create(screen,
+   tex = screen->resource_create(screen,
                                 &templat);
    if (tex == NULL)
       exit(4);
 
    surf = screen->get_tex_surface(screen, tex, 0, 0, 0,
-                                  PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                                  PIPE_TEXTURE_USAGE_DISPLAY_TARGET);
+                                  PIPE_BIND_RENDER_TARGET |
+                                  PIPE_BIND_DISPLAY_TARGET);
    if (surf == NULL)
       exit(5);
 

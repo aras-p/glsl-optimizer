@@ -137,9 +137,9 @@ static void init_prog(struct program *p)
 		tmplt.height0 = HEIGHT;
 		tmplt.depth0 = 1;
 		tmplt.last_level = 0;
-		tmplt.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+		tmplt.bind = PIPE_BIND_RENDER_TARGET;
 
-		p->target = p->screen->texture_create(p->screen, &tmplt);
+		p->target = p->screen->resource_create(p->screen, &tmplt);
 	}
 
 	/* disabled blending/masking */
