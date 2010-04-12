@@ -155,15 +155,12 @@ void ir_print_visitor::visit(ir_expression *ir)
 
    printf(" %s ", operators[ir->operation]);
 
-   printf("(");
    if (ir->operands[0])
       ir->operands[0]->accept(this);
-   printf(") ");
 
-   printf("(");
    if (ir->operands[1])
       ir->operands[1]->accept(this);
-   printf(")) ");
+   printf(") ");
 }
 
 
