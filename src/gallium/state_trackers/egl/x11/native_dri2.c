@@ -192,18 +192,19 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
 {
    struct dri2_surface *dri2surf = dri2_surface(nsurf);
    struct dri2_display *dri2dpy = dri2surf->dri2dpy;
-   unsigned int dri2atts[NUM_NATIVE_ATTACHMENTS];
+   unsigned int dri2atts[NUM_NATIVE_ATTACHMENTS * 2];
    int num_ins, num_outs, att;
    struct x11_drawable_buffer *xbufs;
-   /* XXX check if the server supports with format */
-   boolean with_format = FALSE;
-
+   uint bpp = util_format_get_blocksizebits(dri2surf->color_format);
+   boolean with_format = FALSE; /* never ask for depth/stencil */
 
    /* We must get the front on servers which doesn't support with format
     * due to a silly bug in core dri2. You can't copy to/from a buffer
     * that you haven't requested and you recive BadValue errors */
-   if (!with_format)
+   if (dri2surf->dri2dpy->dri_minor < 1) {
+      with_format = FALSE;
       buffer_mask |= (1 << NATIVE_ATTACHMENT_FRONT_LEFT);
+   }
 
    /* prepare the attachments */
    num_ins = 0;
@@ -230,10 +231,13 @@ dri2_surface_get_buffers(struct native_surface *nsurf, uint buffer_mask)
             break;
          }
 
-         dri2atts[num_ins] = dri2att;
-         num_ins++;
+         dri2atts[num_ins++] = dri2att;
+         if (with_format)
+            dri2atts[num_ins++] = bpp;
       }
    }
+   if (with_format)
+      num_ins /= 2;
 
    xbufs = x11_drawable_get_buffers(dri2dpy->xscr, dri2surf->drawable,
                                     &dri2surf->width, &dri2surf->height,
