@@ -195,7 +195,10 @@ nvfx_draw_arrays(struct pipe_context *pipe,
 
 		nvfx_state_emit(nvfx);
 
-		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
+		unsigned avail = AVAIL_RING(chan);
+		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
+
+		vc = nouveau_vbuf_split(avail, 6, 256,
 					mode, start, count, &restart);
 		if (!vc) {
 			FIRE_RING(chan);
@@ -249,7 +252,10 @@ nvfx_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 
 		nvfx_state_emit(nvfx);
 
-		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
+		unsigned avail = AVAIL_RING(chan);
+		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
+
+		vc = nouveau_vbuf_split(avail, 6, 2,
 					mode, start, count, &restart);
 		if (vc == 0) {
 			FIRE_RING(chan);
@@ -300,7 +306,10 @@ nvfx_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 
 		nvfx_state_emit(nvfx);
 
-		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 2,
+		unsigned avail = AVAIL_RING(chan);
+		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
+
+		vc = nouveau_vbuf_split(avail, 6, 2,
 					mode, start, count, &restart);
 		if (vc == 0) {
 			FIRE_RING(chan);
@@ -351,7 +360,10 @@ nvfx_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 
 		nvfx_state_emit(nvfx);
 
-		vc = nouveau_vbuf_split(AVAIL_RING(chan), 5, 1,
+		unsigned avail = AVAIL_RING(chan);
+		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
+
+		vc = nouveau_vbuf_split(avail, 5, 1,
 					mode, start, count, &restart);
 		if (vc == 0) {
 			FIRE_RING(chan);
@@ -427,7 +439,10 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 
 		nvfx_state_emit(nvfx);
 
-		vc = nouveau_vbuf_split(AVAIL_RING(chan), 6, 256,
+		unsigned avail = AVAIL_RING(chan);
+		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
+
+		vc = nouveau_vbuf_split(avail, 6, 256,
 					mode, start, count, &restart);
 		if (!vc) {
 			FIRE_RING(chan);
