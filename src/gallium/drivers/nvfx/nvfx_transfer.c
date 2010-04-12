@@ -41,10 +41,10 @@ static unsigned nvfx_transfer_bind_flags( unsigned transfer_usage )
 	unsigned bind = 0;
 
 	if (transfer_usage & PIPE_TRANSFER_WRITE)
-		bind |= PIPE_BIND_BLIT_DESTINATION;
+		bind |= PIPE_BIND_BLIT_SOURCE;
 
 	if (transfer_usage & PIPE_TRANSFER_READ)
-		bind |= PIPE_BIND_BLIT_SOURCE;
+		bind |= PIPE_BIND_BLIT_DESTINATION;
 
 	return bind;
 }
