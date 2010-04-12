@@ -38,7 +38,6 @@
 #include "st_context.h"
 #include "st_cb_accum.h"
 #include "st_cb_fbo.h"
-#include "st_public.h"
 #include "st_texture.h"
 #include "st_inlines.h"
 #include "pipe/p_context.h"

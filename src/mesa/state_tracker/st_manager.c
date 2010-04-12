@@ -710,14 +710,6 @@ st_manager_flush_frontbuffer(struct st_context *st)
    if (!strb)
       return;
 
-   /* st_public.h */
-   if (!stfb->iface) {
-      struct pipe_surface *front_surf = strb->surface;
-      st->pipe->screen->flush_frontbuffer(st->pipe->screen,
-            front_surf, st->winsys_drawable_handle);
-      return;
-   }
-
    stfb->iface->flush_front(stfb->iface, ST_ATTACHMENT_FRONT_LEFT);
 }
 
@@ -758,14 +750,6 @@ st_manager_validate_framebuffers(struct st_context *st)
    struct st_framebuffer *stdraw = st_ws_framebuffer(st->ctx->DrawBuffer);
    struct st_framebuffer *stread = st_ws_framebuffer(st->ctx->ReadBuffer);
 
-   /* st_public.h */
-   if ((stdraw && !stdraw->iface) || (stread && !stread->iface)) {
-      struct pipe_screen *screen = st->pipe->screen;
-      if (screen->update_buffer)
-         screen->update_buffer(screen, st->pipe->priv);
-      return;
-   }
-
    if (stdraw)
       st_framebuffer_validate(stdraw, st);
    if (stread && stread != stdraw)
@@ -781,8 +765,8 @@ st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
 {
    struct st_framebuffer *stfb = st_ws_framebuffer(fb);
 
-   /* FBO or st_public.h */
-   if (!stfb || !stfb->iface)
+   /* FBO */
+   if (!stfb)
       return FALSE;
 
    if (stfb->Base.Attachment[idx].Renderbuffer)

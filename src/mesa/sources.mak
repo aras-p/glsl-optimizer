@@ -214,7 +214,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_draw_feedback.c \
 	state_tracker/st_extensions.c \
 	state_tracker/st_format.c \
-	state_tracker/st_framebuffer.c \
 	state_tracker/st_gen_mipmap.c \
 	state_tracker/st_manager.c \
 	state_tracker/st_mesa_to_tgsi.c \

@@ -31,7 +31,6 @@
 #include "shader/shader_api.h"
 #include "glapi/glapi.h"
 #include "st_context.h"
-#include "st_public.h"
 #include "st_debug.h"
 #include "st_cb_accum.h"
 #include "st_cb_bitmap.h"
@@ -286,56 +285,6 @@ void st_destroy_context( struct st_context *st )
 
    free(ctx);
 }
-
-
-GLboolean
-st_make_current(struct st_context *st,
-                struct st_framebuffer *draw,
-                struct st_framebuffer *read,
-                void *winsys_drawable_handle )
-{
-   /* Call this periodically to detect when the user has begun using
-    * GL rendering from multiple threads.
-    */
-   _glapi_check_multithread();
-
-   if (st) {
-      if (!_mesa_make_current(st->ctx, &draw->Base, &read->Base)) {
-         st->pipe->priv = NULL;
-         return GL_FALSE;
-      }
-
-      _mesa_check_init_viewport(st->ctx, draw->InitWidth, draw->InitHeight);
-      st->winsys_drawable_handle = winsys_drawable_handle;
-
-      return GL_TRUE;
-   }
-   else {
-      return _mesa_make_current(NULL, NULL, NULL);
-   }
-}
-
-struct st_context *st_get_current(void)
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   return (ctx == NULL) ? NULL : ctx->st;
-}
-
-void st_copy_context_state(struct st_context *dst,
-                           struct st_context *src,
-                           uint mask)
-{
-   _mesa_copy_context(dst->ctx, src->ctx, mask);
-}
-
-
-
-st_proc st_get_proc_address(const char *procname)
-{
-   return (st_proc) _glapi_get_proc_address(procname);
-}
-
 
 
 void st_init_driver_functions(struct dd_function_table *functions)

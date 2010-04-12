@@ -46,12 +46,6 @@ struct blit_state;
 struct bitmap_cache;
 
 
-/** XXX we'd like to get rid of these */
-#define FRONT_STATUS_UNDEFINED    0
-#define FRONT_STATUS_DIRTY        1
-#define FRONT_STATUS_COPY_OF_BACK 2
-
-
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
 #define ST_NEW_VERTEX_PROGRAM          0x4
@@ -115,8 +109,6 @@ struct st_context
    struct {
       struct gl_fragment_program *fragment_program;
    } cb;
-
-   GLuint frontbuffer_status;  /**< one of FRONT_STATUS_ (XXX to be removed) */
 
    char vendor[100];
    char renderer[100];
@@ -258,6 +250,13 @@ st_fb_orientation(const struct gl_framebuffer *fb)
 
 extern int
 st_get_msaa(void);
+
+extern struct st_context *
+st_create_context(struct pipe_context *pipe, const __GLcontextModes *visual,
+                  struct st_context *share);
+
+extern void
+st_destroy_context(struct st_context *st);
 
 
 #endif

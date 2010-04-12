@@ -43,7 +43,6 @@
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
 #include "st_program.h"
-#include "st_public.h"
 #include "st_inlines.h"
 
 #include "pipe/p_context.h"

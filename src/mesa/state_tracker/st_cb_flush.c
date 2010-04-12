@@ -39,7 +39,6 @@
 #include "st_cb_flush.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
-#include "st_public.h"
 #include "st_manager.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -52,15 +51,10 @@
 static INLINE GLboolean
 is_front_buffer_dirty(struct st_context *st)
 {
-   if (st->frontbuffer_status == FRONT_STATUS_DIRTY) {
-      return GL_TRUE;
-   }
-   else {
-      GLframebuffer *fb = st->ctx->DrawBuffer;
-      struct st_renderbuffer *strb
-         = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-      return strb && strb->defined;
-   }
+   GLframebuffer *fb = st->ctx->DrawBuffer;
+   struct st_renderbuffer *strb
+      = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+   return strb && strb->defined;
 }
 
 
@@ -78,10 +72,6 @@ display_front_buffer(struct st_context *st)
       /* Hook for copying "fake" frontbuffer if necessary:
        */
       st_manager_flush_frontbuffer(st);
-
-      /*
-        st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
-      */
    }
 }
 

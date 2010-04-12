@@ -45,8 +45,8 @@
 #include "pipe/p_screen.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
+#include "st_cb_flush.h"
 #include "st_format.h"
-#include "st_public.h"
 #include "st_texture.h"
 #include "st_manager.h"
 
@@ -490,111 +490,6 @@ st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
 
 /**
- * Copy back color buffer to front color buffer.
- */
-static void
-copy_back_to_front(struct st_context *st,
-                   struct gl_framebuffer *fb,
-                   gl_buffer_index frontIndex,
-                   gl_buffer_index backIndex)
-
-{
-   struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
-   struct pipe_surface *surf_front, *surf_back;
-
-   (void) st_get_framebuffer_surface(stfb, frontIndex, &surf_front);
-   (void) st_get_framebuffer_surface(stfb, backIndex, &surf_back);
-
-   if (surf_front && surf_back) {
-      st->pipe->surface_copy(st->pipe,
-                             surf_front, 0, 0,  /* dest */
-                             surf_back, 0, 0,   /* src */
-                             fb->Width, fb->Height);
-   }
-}
-
-
-/**
- * Check if we're drawing into, or read from, a front color buffer.  If the
- * front buffer is missing, create it now.
- *
- * The back color buffer must exist since we'll use its format/samples info
- * for creating the front buffer.
- *
- * \param frontIndex  either BUFFER_FRONT_LEFT or BUFFER_FRONT_RIGHT
- * \param backIndex  either BUFFER_BACK_LEFT or BUFFER_BACK_RIGHT
- */
-static void
-check_create_front_buffer(GLcontext *ctx, struct gl_framebuffer *fb,
-                          gl_buffer_index frontIndex,
-                          gl_buffer_index backIndex)
-{
-   if (fb->Attachment[frontIndex].Renderbuffer == NULL) {
-      GLboolean create = GL_FALSE;
-
-      /* check if drawing to or reading from front buffer */
-      if (fb->_ColorReadBufferIndex == frontIndex) {
-         create = GL_TRUE;
-      }
-      else {
-         GLuint b;
-         for (b = 0; b < fb->_NumColorDrawBuffers; b++) {
-            if (fb->_ColorDrawBufferIndexes[b] == frontIndex) {
-               create = GL_TRUE;
-               break;
-            }
-         }
-      }
-
-      if (create) {
-         struct st_renderbuffer *back;
-         struct gl_renderbuffer *front;
-         enum pipe_format colorFormat;
-         uint samples;
-
-         if (0)
-            _mesa_debug(ctx, "Allocate new front buffer\n");
-
-         /* get back renderbuffer info */
-         back = st_renderbuffer(fb->Attachment[backIndex].Renderbuffer);
-         colorFormat = back->format;
-         samples = back->Base.NumSamples;
-
-         /* create front renderbuffer */
-         front = st_new_renderbuffer_fb(colorFormat, samples, FALSE);
-         _mesa_add_renderbuffer(fb, frontIndex, front);
-
-         /* alloc texture/surface for new front buffer */
-         front->AllocStorage(ctx, front, front->InternalFormat,
-                             fb->Width, fb->Height);
-
-         /* initialize the front color buffer contents by copying
-          * the back buffer.
-          */
-         copy_back_to_front(ctx->st, fb, frontIndex, backIndex);
-      }
-   }
-}
-
-
-/**
- * If front left/right color buffers are missing, create them now.
- */
-static void
-check_create_front_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
-{
-   /* check if we need to create the front left buffer now */
-   check_create_front_buffer(ctx, fb, BUFFER_FRONT_LEFT, BUFFER_BACK_LEFT);
-
-   if (fb->Visual.stereoMode) {
-      check_create_front_buffer(ctx, fb, BUFFER_FRONT_RIGHT, BUFFER_BACK_RIGHT);
-   }
-
-   st_invalidate_state(ctx, _NEW_BUFFERS);
-}
-
-
-/**
  * Called via glDrawBuffer.
  */
 static void
@@ -611,8 +506,6 @@ st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
       gl_buffer_index idx = fb->_ColorDrawBufferIndexes[i];
       st_manager_add_color_renderbuffer(ctx->st, fb, idx);
    }
-
-   check_create_front_buffers(ctx, ctx->DrawBuffer);
 }
 
 
@@ -628,7 +521,6 @@ st_ReadBuffer(GLcontext *ctx, GLenum buffer)
 
    /* add the renderbuffer on demand */
    st_manager_add_color_renderbuffer(ctx->st, fb, fb->_ColorReadBufferIndex);
-   check_create_front_buffers(ctx, fb);
 }
 
 

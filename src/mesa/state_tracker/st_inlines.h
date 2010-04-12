@@ -42,7 +42,7 @@
 
 #include "st_context.h"
 #include "st_texture.h"
-#include "st_public.h"
+#include "st_cb_flush.h"
 
 static INLINE struct pipe_transfer *
 st_cond_flush_get_tex_transfer(struct st_context *st,
