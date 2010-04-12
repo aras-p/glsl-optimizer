@@ -63,7 +63,7 @@ nvfx_miptree_transfer_new(struct pipe_context *pipe,
 	static int no_transfer = -1;
 	unsigned bind = nvfx_transfer_bind_flags(usage);
 	if(no_transfer < 0)
-		no_transfer = debug_get_bool_option("NOUVEAU_NO_TRANSFER", TRUE/*XXX:FALSE*/);
+		no_transfer = debug_get_bool_option("NOUVEAU_NO_TRANSFER", FALSE);
 
 
 	tx = CALLOC_STRUCT(nvfx_transfer);
