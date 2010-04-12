@@ -1385,9 +1385,6 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
         case PIPE_SHADER_FRAGMENT:
             if (r300->screen->caps.is_r500) {
                 max_size = 256;
-            /* XXX Implement emission of r400's extended constant buffer. */
-            /*} else if (r300->screen->caps.is_r400) {
-                max_size = 64;*/
             } else {
                 max_size = 32;
             }
