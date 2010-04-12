@@ -233,6 +233,18 @@ static uint32_t pack_float24(float f)
     return float24;
 }
 
+static void r300_emit_fragment_depth_config(struct r300_context* r300)
+{
+    CS_LOCALS(r300);
+    if (r300_fragment_shader_writes_depth(r300->fs)) {
+        OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SHADER);
+        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W24 | R300_W_SRC_US);
+    } else {
+        OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SCAN);
+        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0 | R300_W_SRC_US);
+    }
+}
+
 void r300_emit_fragment_program_code(struct r300_context* r300,
                                      struct rX00_fragment_program_code* generic_code)
 {
@@ -244,7 +256,7 @@ void r300_emit_fragment_program_code(struct r300_context* r300,
     struct rc_constant *constants = generic_code->constants.Constants;
     CS_LOCALS(r300);
 
-    BEGIN_CS(15 +
+    BEGIN_CS(19 +
              code->alu.length * 4 +
              (code->tex.length ? (1 + code->tex.length) : 0) +
              (imm_count ? imm_count * 5 : 0));
@@ -293,6 +305,9 @@ void r300_emit_fragment_program_code(struct r300_context* r300,
             }
         }
     }
+
+    r300_emit_fragment_depth_config(r300);
+    cs_count -= 4;
     END_CS;
 }
 
@@ -347,22 +362,6 @@ void r300_emit_fs_constant_rc_state(struct r300_context* r300,
     END_CS;
 }
 
-static void r300_emit_fragment_depth_config(struct r300_context* r300,
-                                            struct r300_fragment_shader* fs)
-{
-    CS_LOCALS(r300);
-
-    BEGIN_CS(4);
-    if (r300_fragment_shader_writes_depth(fs)) {
-        OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SHADER);
-        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W24 | R300_W_SRC_US);
-    } else {
-        OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SCAN);
-        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0 | R300_W_SRC_US);
-    }
-    END_CS;
-}
-
 void r500_emit_fragment_program_code(struct r300_context* r300,
                                      struct rX00_fragment_program_code* generic_code)
 {
@@ -374,7 +373,7 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
     struct rc_constant *constants = generic_code->constants.Constants;
     CS_LOCALS(r300);
 
-    BEGIN_CS(13 +
+    BEGIN_CS(17 +
              ((code->inst_end + 1) * 6) +
              (imm_count ? imm_count * 7 : 0));
     OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
@@ -413,6 +412,9 @@ void r500_emit_fragment_program_code(struct r300_context* r300,
             }
         }
     }
+
+    r300_emit_fragment_depth_config(r300);
+    cs_count -= 4;
     END_CS;
 }
 
@@ -1187,7 +1189,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
     }
 
     if (r300->dirty_state & R300_NEW_FRAGMENT_SHADER) {
-        r300_emit_fragment_depth_config(r300, r300->fs);
         if (r300screen->caps.is_r500) {
             r500_emit_fragment_program_code(r300, &r300->fs->shader->code);
         } else {
