@@ -22,3 +22,6 @@ if platform == 'windows':
 SConscript('winsys/SConscript')
 
 SConscript('targets/SConscript')
+
+SConscript('tests/unit/SConscript')
+#SConscript('tests/raw/SConscript')

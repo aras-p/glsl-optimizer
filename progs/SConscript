@@ -56,6 +56,4 @@ SConscript([
     'fp/SConscript',
     'wgl/SConscript',
     'perf/SConscript',
-    'gallium/unit/SConscript',
-#   'gallium/raw/SConscript',
 ])
