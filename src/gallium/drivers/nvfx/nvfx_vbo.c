@@ -90,7 +90,7 @@ nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_resource *ib,
 		return FALSE;
 	}
 
-	if (!pscreen->get_param(pscreen, NOUVEAU_CAP_HW_IDXBUF) || ib_size == 1)
+	if (nvfx->screen->eng3d->grclass != NV40TCL || ib_size == 1)
 		return FALSE;
 
 	switch (ib_size) {
