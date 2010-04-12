@@ -344,10 +344,10 @@ void r300_emit_fs_constant_buffer(struct r300_context* r300,
     END_CS;
 }
 
-void r300_emit_fs_constant_rc_state(struct r300_context* r300,
-                                    struct rc_constant_list* constants)
+void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, void *state)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
+    struct rc_constant_list *constants = &fs->shader->code.constants;
     unsigned i;
     unsigned count = fs->shader->rc_state_count;
     unsigned first = fs->shader->externals_count;
@@ -465,10 +465,10 @@ void r500_emit_fs_constant_buffer(struct r300_context* r300,
     END_CS;
 }
 
-void r500_emit_fs_constant_rc_state(struct r300_context* r300,
-                                    struct rc_constant_list* constants)
+void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, void *state)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
+    struct rc_constant_list *constants = &fs->shader->code.constants;
     unsigned i;
     unsigned count = fs->shader->rc_state_count;
     unsigned first = fs->shader->externals_count;
@@ -1215,13 +1215,9 @@ void r300_emit_dirty_state(struct r300_context* r300)
         if (r300screen->caps.is_r500) {
             r500_emit_fs_constant_buffer(r300,
                                          &r300_fs(r300)->shader->code.constants);
-            r500_emit_fs_constant_rc_state(r300,
-                                           &r300_fs(r300)->shader->code.constants);
         } else {
             r300_emit_fs_constant_buffer(r300,
                                          &r300_fs(r300)->shader->code.constants);
-            r300_emit_fs_constant_rc_state(r300,
-                                           &r300_fs(r300)->shader->code.constants);
         }
         r300->dirty_state &= ~R300_NEW_FRAGMENT_SHADER_CONSTANTS;
     }

@@ -688,11 +688,14 @@ static void r300_mark_fs_code_dirty(struct r300_context *r300)
     struct r300_fragment_shader* fs = r300_fs(r300);
 
     r300->fs.dirty = TRUE;
+    r300->fs_rc_constant_state.dirty = TRUE;
 
     if (r300->screen->caps.is_r500) {
         r300->fs.size = r500_get_fs_atom_size(r300);
+        r300->fs_rc_constant_state.size = fs->shader->rc_state_count * 7;
     } else {
         r300->fs.size = r300_get_fs_atom_size(r300);
+        r300->fs_rc_constant_state.size = fs->shader->rc_state_count * 5;
     }
 
     r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
@@ -999,9 +1002,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
             /* R300-specific - set the texrect factor in the fragment shader */
             texture = r300_texture(views[i]->texture);
             if (!is_r500 && texture->uses_pitch) {
-                /* XXX It would be nice to re-emit just 1 constant,
-                 * XXX not all of them */
-                r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+                r300->fs_rc_constant_state.dirty = TRUE;
             }
         }
     }
@@ -1115,7 +1116,7 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
 
     r300->viewport_state.dirty = TRUE;
     if (r300->fs.state && r300_fs(r300)->shader->inputs.wpos != ATTR_UNUSED) {
-        r300->dirty_state |= R300_NEW_FRAGMENT_SHADER_CONSTANTS;
+        r300->fs_rc_constant_state.dirty = TRUE;
     }
 }
 

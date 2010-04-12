@@ -116,10 +116,12 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(texture_cache_inval, 2);
     R300_INIT_ATOM(textures_state, 0);
     R300_INIT_ATOM(fs, 0);
+    R300_INIT_ATOM(fs_rc_constant_state, 0);
 
     /* Replace emission functions for r500. */
     if (r300->screen->caps.is_r500) {
         r300->fs.emit = r500_emit_fs;
+        r300->fs_rc_constant_state.emit = r500_emit_fs_rc_constant_state;
     }
 
     /* Some non-CSO atoms need explicit space to store the state locally. */

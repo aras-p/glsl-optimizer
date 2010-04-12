@@ -50,8 +50,7 @@ void r300_emit_fs(struct r300_context* r300, unsigned size, void *state);
 void r300_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);
 
-void r300_emit_fs_constant_rc_state(struct r300_context* r300,
-                                    struct rc_constant_list* constants);
+void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, void *state);
 
 unsigned r500_get_fs_atom_size(struct r300_context *r300);
 
@@ -60,8 +59,7 @@ void r500_emit_fs(struct r300_context* r300, unsigned size, void *state);
 void r500_emit_fs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants);
 
-void r500_emit_fs_constant_rc_state(struct r300_context* r300,
-                                    struct rc_constant_list* constants);
+void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, void *state);
 
 void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state);
 
