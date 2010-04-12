@@ -92,9 +92,9 @@ power_of_two(unsigned x)
 
 static void
 i915_texture_set_level_info(struct i915_texture *tex,
-                             unsigned level,
-                             unsigned nr_images,
-                             unsigned w, unsigned h, unsigned d)
+                            unsigned level,
+                            unsigned nr_images,
+                            unsigned w, unsigned h, unsigned d)
 {
    assert(level < Elements(tex->nr_images));
 
@@ -425,8 +425,7 @@ i945_texture_layout_2d(struct i915_texture *tex)
        */
       if (level == 1) {
          x += align(nblocksx, align_x);
-      }
-      else {
+      } else {
          y += nblocksy;
       }
 
@@ -696,19 +695,16 @@ i915_texture_transfer_map(struct pipe_context *pipe,
 
    if (resource->target == PIPE_TEXTURE_CUBE) {
       offset = tex->image_offset[sr.level][sr.face];
-   }
-   else if (resource->target == PIPE_TEXTURE_3D) {
+   } else if (resource->target == PIPE_TEXTURE_3D) {
       offset = tex->image_offset[sr.level][box->z];
-   }
-   else {
+   } else {
       offset = tex->image_offset[sr.level][0];
       assert(sr.face == 0);
       assert(box->z == 0);
    }
 
-   map = iws->buffer_map(iws,
-			 tex->buffer,
-			 (transfer->usage & PIPE_TRANSFER_WRITE) ? TRUE : FALSE);
+   map = iws->buffer_map(iws, tex->buffer,
+                         (transfer->usage & PIPE_TRANSFER_WRITE) ? TRUE : FALSE);
    if (map == NULL)
       return NULL;
 
