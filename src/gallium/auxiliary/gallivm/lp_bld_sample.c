@@ -51,9 +51,11 @@
  */
 void
 lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_resource *texture,
+                        const struct pipe_sampler_view *view,
                         const struct pipe_sampler_state *sampler)
 {
+   const struct pipe_resource *texture = view->texture;
+
    memset(state, 0, sizeof *state);
 
    if(!texture)
@@ -74,7 +76,7 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
     * regarding 1D/2D/3D/CUBE textures, wrap modes, etc.
     */
 
-   state->format            = texture->format;
+   state->format            = view->format;
    state->target            = texture->target;
    state->pot_width         = util_is_pot(texture->width0);
    state->pot_height        = util_is_pot(texture->height0);
@@ -104,6 +106,10 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->border_color[1]   = sampler->border_color[1];
    state->border_color[2]   = sampler->border_color[2];
    state->border_color[3]   = sampler->border_color[3];
+
+   /*
+    * FIXME: Handle the remainder of pipe_sampler_view.
+    */
 }
 
 

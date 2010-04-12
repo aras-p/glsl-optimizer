@@ -39,6 +39,7 @@
 #include "gallivm/lp_bld.h"
 
 struct pipe_resource;
+struct pipe_sampler_view;
 struct pipe_sampler_state;
 struct util_format_description;
 struct lp_type;
@@ -130,7 +131,7 @@ struct lp_sampler_dynamic_state
  */
 void
 lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_resource *texture,
+                        const struct pipe_sampler_view *view,
                         const struct pipe_sampler_state *sampler);
 
 
