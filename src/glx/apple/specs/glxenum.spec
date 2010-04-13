@@ -1,7 +1,10 @@
-# Copyright (C) 1991-2005 Silicon Graphics, Inc. All Rights Reserved.
+# Copyright (c) 1991-2005 Silicon Graphics, Inc. All Rights Reserved.
+# Copyright (c) 2006-2010 The Khronos Group, Inc.
 #
 # This document is licensed under the SGI Free Software B License Version
 # 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
+#
+# $Revision: 10796 $ on $Date: 2010-03-19 17:31:10 -0700 (Fri, 19 Mar 2010) $
 
 # This is the GLX enumerant registry.
 #
@@ -84,7 +87,7 @@ GLXSyncType enum:
 GLXEventMask enum:
 	PBUFFER_CLOBBER_MASK				= 0x08000000	# SelectEvent mask
 	BUFFER_CLOBBER_MASK_SGIX			= 0x08000000	# SelectEventSGIX mask
-#	INTEL_future_use				= 0x04000000	# SelectEvent mask (for GLX_INTEL_swap_event)
+	BUFFER_SWAP_COMPLETE_INTEL_MASK			= 0x04000000	# SelectEvent mask (for GLX_INTEL_swap_event)
 
 GLXPbufferClobberMask enum:
 	FRONT_LEFT_BUFFER_BIT				= 0x00000001	# PbufferClobberEvent mask
@@ -390,9 +393,12 @@ SUN_future_use: 0x8170-0x817F
 
 # INTEL: 0x8180 - 0x818F
 
-# INTEL_swap_event: 0x8180-??? (in process, see Khronos bug 5752)
+# INTEL_swap_event: 0x8180-0x8182
+#	EXCHANGE_COMPLETE_INTEL				= 0x8180
+#	COPY_COMPLETE_INTEL				= 0x8181
+#	FLIP_COMPLETE_INTEL				= 0x8182
 
-INTEL_future_use: 0x8180-0x818F
+INTEL_future_use: 0x8183-0x818F
 
 ###############################################################################
 ### Please remember that new GLX enum allocations must be obtained by request

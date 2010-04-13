@@ -284,10 +284,15 @@ Half16NV,*,*,			    GLhalfNV,*,*
 PixelDataRangeTargetNV,*,*,	    GLenum,*,*
 # Generic types for as-yet-unspecified enums
 TypeEnum,*,*,			    GLenum,*,*
+GLbitfield,*,*,			    GLbitfield,*,*
 GLenum,*,*,			    GLenum,*,*
+Int64,*,*,			    GLint64,*,*
+UInt64,*,*,			    GLuint64,*,*
+# Object handle & data pointers
 handleARB,*,*,			    GLhandleARB,*,*
 charARB,*,*,			    GLcharARB,*,*
 charPointerARB,*,*,		    GLcharARB*,*,*
+sync,*,*,			    GLsync,*,*,
 # EXT_timer_query
 Int64EXT,*,*,			    GLint64EXT,*,*
 UInt64EXT,*,*,			    GLuint64EXT,*,*

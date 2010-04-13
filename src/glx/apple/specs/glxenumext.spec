@@ -1,7 +1,10 @@
-# Copyright (C) 1991-2005 Silicon Graphics, Inc. All Rights Reserved.
+# Copyright (c) 1991-2005 Silicon Graphics, Inc. All Rights Reserved.
+# Copyright (c) 2006-2010 The Khronos Group, Inc.
 #
 # This document is licensed under the SGI Free Software B License Version
 # 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
+#
+# $Revision: 10796 $ on $Date: 2010-03-19 17:31:10 -0700 (Fri, 19 Mar 2010) $
 
 # List of GLX enumerants for glxext.h header
 #
@@ -22,9 +25,9 @@
 
 passthru:
 passthru: /* Header file version number, required by OpenGL ABI for Linux */
-passthru: /* glxext.h last updated 2009/10/08 */
+passthru: /* glxext.h last updated 2010/02/10 */
 passthru: /* Current version at http://www.opengl.org/registry/ */
-passthru: #define GLX_GLXEXT_VERSION 25
+passthru: #define GLX_GLXEXT_VERSION 27
 
 ###############################################################################
 #
@@ -501,3 +504,12 @@ EXT_swap_control enum:
 # No new tokens
 # Extension #376
 NV_copy_image enum:
+
+###############################################################################
+
+# Extension #384
+INTEL_swap_event enum:
+	BUFFER_SWAP_COMPLETE_INTEL_MASK			= 0x04000000
+	EXCHANGE_COMPLETE_INTEL				= 0x8180
+	COPY_COMPLETE_INTEL				= 0x8181
+	FLIP_COMPLETE_INTEL				= 0x8182

@@ -1,7 +1,10 @@
-# Copyright (C) 1991-2005 Silicon Graphics, Inc. All Rights Reserved.
+# Copyright (c) 1991-2005 Silicon Graphics, Inc. All Rights Reserved.
+# Copyright (c) 2006-2010 The Khronos Group, Inc.
 #
 # This document is licensed under the SGI Free Software B License Version
 # 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
+#
+# $Revision: 10796 $ on $Date: 2010-03-19 17:31:10 -0700 (Fri, 19 Mar 2010) $
 
 required-props:
 param:		retval retained

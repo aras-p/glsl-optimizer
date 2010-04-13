@@ -1,5 +1,7 @@
-# List of GL enumerants for glext.h header
+# enumext.spec - list of GL enumerants for glext.h header
 #
+# $Revision: 10971 $ on $Date: 2010-04-09 02:45:33 -0700 (Fri, 09 Apr 2010) $
+
 # This is derived from the master GL enumerant registry (enum.spec).
 #
 # Unlike enum.spec, enumext.spec is
@@ -14,8 +16,8 @@
 #   (4) Is processed by glextenum.pl, which has evolved
 #	from enum.pl - should merge back into one script.
 
-# glext.h version number - this should be automatically updated,
-#   when changing either enum or template spec files.
+# The release number encoded into glext.h is now defined in
+# glextrelease.txt.
 
 ###############################################################################
 #
@@ -1497,6 +1499,122 @@ passthru: /* Don't need to reuse tokens from ARB_vertex_array_bgra since they're
 
 ###############################################################################
 #
+# OpenGL 3.3 enums
+#
+###############################################################################
+
+VERSION_3_3 enum:
+passthru: /* Reuse tokens from ARB_blend_func_extended */
+	use ARB_blend_func_extended	    SRC1_COLOR
+	use ARB_blend_func_extended	    ONE_MINUS_SRC1_COLOR
+	use ARB_blend_func_extended	    ONE_MINUS_SRC1_ALPHA
+	use ARB_blend_func_extended	    MAX_DUAL_SOURCE_DRAW_BUFFERS
+passthru: /* Would reuse tokens from ARB_explicit_attrib_location, but it has none */
+passthru: /* Reuse tokens from ARB_occlusion_query2 */
+	use ARB_occlusion_query2	    ANY_SAMPLES_PASSED
+passthru: /* Reuse tokens from ARB_sampler_objects */
+	use ARB_sampler_objects		    SAMPLER_BINDING
+passthru: /* Would reuse tokens from ARB_shader_bit_encoding, but it has none */
+passthru: /* Reuse tokens from ARB_texture_rgb10_a2ui */
+	use ARB_texture_rgb10_a2ui	    RGB10_A2UI
+passthru: /* Reuse tokens from ARB_texture_swizzle */
+	use ARB_texture_swizzle		    TEXTURE_SWIZZLE_R
+	use ARB_texture_swizzle		    TEXTURE_SWIZZLE_G
+	use ARB_texture_swizzle		    TEXTURE_SWIZZLE_B
+	use ARB_texture_swizzle		    TEXTURE_SWIZZLE_A
+	use ARB_texture_swizzle		    TEXTURE_SWIZZLE_RGBA
+passthru: /* Reuse tokens from ARB_timer_query */
+	use ARB_timer_query		    TIME_ELAPSED
+	use ARB_timer_query		    TIMESTAMP
+passthru: /* Reuse tokens from ARB_vertex_type_2_10_10_10_rev */
+	use ARB_vertex_type_2_10_10_10_rev  INT_2_10_10_10_REV
+
+###############################################################################
+#
+# OpenGL 4.0 enums
+#
+###############################################################################
+
+VERSION_4_0 enum:
+passthru: /* Reuse tokens from ARB_draw_indirect */
+	use ARB_draw_indirect		    DRAW_INDIRECT_BUFFER
+	use ARB_draw_indirect		    DRAW_INDIRECT_BUFFER_BINDING
+passthru: /* Reuse tokens from ARB_gpu_shader5 */
+	use ARB_gpu_shader5		    GEOMETRY_SHADER_INVOCATIONS
+	use ARB_gpu_shader5		    MAX_GEOMETRY_SHADER_INVOCATIONS
+	use ARB_gpu_shader5		    MIN_FRAGMENT_INTERPOLATION_OFFSET
+	use ARB_gpu_shader5		    MAX_FRAGMENT_INTERPOLATION_OFFSET
+	use ARB_gpu_shader5		    FRAGMENT_INTERPOLATION_OFFSET_BITS
+	use ARB_gpu_shader5		    MAX_VERTEX_STREAMS
+passthru: /* Reuse tokens from ARB_gpu_shader_fp64 */
+	use ARB_gpu_shader_fp64		    DOUBLE_VEC2
+	use ARB_gpu_shader_fp64		    DOUBLE_VEC3
+	use ARB_gpu_shader_fp64		    DOUBLE_VEC4
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT2
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT3
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT4
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT2x3
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT2x4
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT3x2
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT3x4
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT4x2
+	use ARB_gpu_shader_fp64		    DOUBLE_MAT4x3
+passthru: /* Reuse tokens from ARB_shader_subroutine */
+	use ARB_shader_subroutine	    ACTIVE_SUBROUTINES
+	use ARB_shader_subroutine	    ACTIVE_SUBROUTINE_UNIFORMS
+	use ARB_shader_subroutine	    ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS
+	use ARB_shader_subroutine	    ACTIVE_SUBROUTINE_MAX_LENGTH
+	use ARB_shader_subroutine	    ACTIVE_SUBROUTINE_UNIFORM_MAX_LENGTH
+	use ARB_shader_subroutine	    MAX_SUBROUTINES
+	use ARB_shader_subroutine	    MAX_SUBROUTINE_UNIFORM_LOCATIONS
+	use ARB_shader_subroutine	    NUM_COMPATIBLE_SUBROUTINES
+	use ARB_shader_subroutine	    COMPATIBLE_SUBROUTINES
+passthru: /* Reuse tokens from ARB_tessellation_shader */
+	use ARB_tessellation_shader	    PATCHES
+	use ARB_tessellation_shader	    PATCH_VERTICES
+	use ARB_tessellation_shader	    PATCH_DEFAULT_INNER_LEVEL
+	use ARB_tessellation_shader	    PATCH_DEFAULT_OUTER_LEVEL
+	use ARB_tessellation_shader	    TESS_CONTROL_OUTPUT_VERTICES
+	use ARB_tessellation_shader	    TESS_GEN_MODE
+	use ARB_tessellation_shader	    TESS_GEN_SPACING
+	use ARB_tessellation_shader	    TESS_GEN_VERTEX_ORDER
+	use ARB_tessellation_shader	    TESS_GEN_POINT_MODE
+	use ARB_tessellation_shader	    ISOLINES
+	use ARB_tessellation_shader	    FRACTIONAL_ODD
+	use ARB_tessellation_shader	    FRACTIONAL_EVEN
+	use ARB_tessellation_shader	    MAX_PATCH_VERTICES
+	use ARB_tessellation_shader	    MAX_TESS_GEN_LEVEL
+	use ARB_tessellation_shader	    MAX_TESS_CONTROL_UNIFORM_COMPONENTS
+	use ARB_tessellation_shader	    MAX_TESS_EVALUATION_UNIFORM_COMPONENTS
+	use ARB_tessellation_shader	    MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS
+	use ARB_tessellation_shader	    MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS
+	use ARB_tessellation_shader	    MAX_TESS_CONTROL_OUTPUT_COMPONENTS
+	use ARB_tessellation_shader	    MAX_TESS_PATCH_COMPONENTS
+	use ARB_tessellation_shader	    MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS
+	use ARB_tessellation_shader	    MAX_TESS_EVALUATION_OUTPUT_COMPONENTS
+	use ARB_tessellation_shader	    MAX_TESS_CONTROL_UNIFORM_BLOCKS
+	use ARB_tessellation_shader	    MAX_TESS_EVALUATION_UNIFORM_BLOCKS
+	use ARB_tessellation_shader	    MAX_TESS_CONTROL_INPUT_COMPONENTS
+	use ARB_tessellation_shader	    MAX_TESS_EVALUATION_INPUT_COMPONENTS
+	use ARB_tessellation_shader	    MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS
+	use ARB_tessellation_shader	    MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS
+	use ARB_tessellation_shader	    UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER
+	use ARB_tessellation_shader	    UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER
+	use ARB_tessellation_shader	    TESS_EVALUATION_SHADER
+	use ARB_tessellation_shader	    TESS_CONTROL_SHADER
+passthru: /* Would reuse tokens from ARB_texture_buffer_object_rgb32, but it has none */
+passthru: /* Reuse tokens from ARB_transform_feedback2 */
+	use ARB_tessellation_shader	    TRANSFORM_FEEDBACK
+	use ARB_tessellation_shader	    TRANSFORM_FEEDBACK_BUFFER_PAUSED
+	use ARB_tessellation_shader	    TRANSFORM_FEEDBACK_BUFFER_ACTIVE
+	use ARB_tessellation_shader	    TRANSFORM_FEEDBACK_BINDING
+passthru: /* Reuse tokens from ARB_transform_feedback3 */
+	use ARB_tessellation_shader	    MAX_TRANSFORM_FEEDBACK_BUFFERS
+	use ARB_tessellation_shader	    MAX_VERTEX_STREAMS
+
+
+###############################################################################
+#
 # ARB extensions, in ARB extension order
 #
 ###############################################################################
@@ -2534,10 +2652,12 @@ ARB_vertex_array_bgra enum:
 # No new tokens
 # ARB Extension #69
 ARB_draw_buffers_blend enum:
+#@@@ Add ARB suffixes here & functions!
 
 ###############################################################################
 
 # ARB Extension #70
+#@@@ Add ARB suffixes here & functions!
 ARB_sample_shading enum:
 	SAMPLE_SHADING					= 0x8C36
 	MIN_SAMPLE_SHADING_VALUE			= 0x8C37
@@ -2545,6 +2665,7 @@ ARB_sample_shading enum:
 ###############################################################################
 
 # ARB Extension #71
+#@@@ Add ARB suffixes here & functions!
 ARB_texture_cube_map_array enum:
 	TEXTURE_CUBE_MAP_ARRAY				= 0x9009
 	TEXTURE_BINDING_CUBE_MAP_ARRAY			= 0x900A
@@ -2557,10 +2678,10 @@ ARB_texture_cube_map_array enum:
 ###############################################################################
 
 # ARB Extension #72
+#@@@ Add ARB suffixes here & functions!
 ARB_texture_gather enum:
-	MIN_PROGRAM_TEXTURE_GATHER_OFFSET		= 0x8E5E
-	MAX_PROGRAM_TEXTURE_GATHER_OFFSET		= 0x8E5F
-	MAX_PROGRAM_TEXTURE_GATHER_COMPONENTS		= 0x8F9F
+	MIN_PROGRAM_TEXTURE_GATHER_OFFSET_ARB		= 0x8E5E
+	MAX_PROGRAM_TEXTURE_GATHER_OFFSET_ARB		= 0x8E5F
 
 ###############################################################################
 
@@ -2573,6 +2694,206 @@ ARB_texture_query_lod enum:
 # No new tokens
 # ARB Extension #74 - WGL_ARB_create_context_profile
 # ARB Extension #75 - GLX_ARB_create_context_profile
+
+###############################################################################
+
+# ARB Extension #76
+ARB_shading_language_include enum:
+	SHADER_INCLUDE_ARB				= 0x8DAE
+	NAMED_STRING_LENGTH_ARB				= 0x8DE9
+	NAMED_STRING_TYPE_ARB				= 0x8DEA
+
+###############################################################################
+
+# ARB Extension #77
+ARB_texture_compression_bptc enum:
+	COMPRESSED_RGBA_BPTC_UNORM_ARB			= 0x8E8C
+	COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB		= 0x8E8D
+	COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB		= 0x8E8E
+	COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB		= 0x8E8F
+
+###############################################################################
+
+# ARB Extension #78
+ARB_blend_func_extended enum:
+	SRC1_COLOR					= 0x88F9
+	use VERSION_1_5_DEPRECATED	    SRC1_ALPHA
+	ONE_MINUS_SRC1_COLOR				= 0x88FA
+	ONE_MINUS_SRC1_ALPHA				= 0x88FB
+	MAX_DUAL_SOURCE_DRAW_BUFFERS			= 0x88FC
+
+###############################################################################
+
+# No new tokens
+# ARB Extension #79
+ARB_explicit_attrib_location enum:
+
+###############################################################################
+
+# ARB Extension #80
+ARB_occlusion_query2 enum:
+	ANY_SAMPLES_PASSED				= 0x8C2F
+
+###############################################################################
+
+# ARB Extension #81
+ARB_sampler_objects enum:
+	SAMPLER_BINDING					= 0x8919
+
+###############################################################################
+
+# No new tokens
+# ARB Extension #82
+ARB_shader_bit_encoding enum:
+
+###############################################################################
+
+# ARB Extension #83
+ARB_texture_rgb10_a2ui enum:
+	RGB10_A2UI					= 0x906F
+
+###############################################################################
+
+# ARB Extension #84
+ARB_texture_swizzle enum:
+	TEXTURE_SWIZZLE_R				= 0x8E42
+	TEXTURE_SWIZZLE_G				= 0x8E43
+	TEXTURE_SWIZZLE_B				= 0x8E44
+	TEXTURE_SWIZZLE_A				= 0x8E45
+	TEXTURE_SWIZZLE_RGBA				= 0x8E46
+
+###############################################################################
+
+# ARB Extension #85
+ARB_timer_query enum:
+	TIME_ELAPSED					= 0x88BF
+	TIMESTAMP					= 0x8E28
+
+###############################################################################
+
+# ARB Extension #86
+ARB_vertex_type_2_10_10_10_rev enum:
+	use VERSION_1_2			    UNSIGNED_INT_2_10_10_10_REV
+	INT_2_10_10_10_REV				= 0x8D9F
+
+###############################################################################
+
+# ARB Extension #87
+ARB_draw_indirect enum:
+	DRAW_INDIRECT_BUFFER				= 0x8F3F
+	DRAW_INDIRECT_BUFFER_BINDING			= 0x8F43
+
+###############################################################################
+
+# ARB Extension #88
+ARB_gpu_shader5 enum:
+	GEOMETRY_SHADER_INVOCATIONS			= 0x887F
+	MAX_GEOMETRY_SHADER_INVOCATIONS			= 0x8E5A
+	MIN_FRAGMENT_INTERPOLATION_OFFSET		= 0x8E5B
+	MAX_FRAGMENT_INTERPOLATION_OFFSET		= 0x8E5C
+	FRAGMENT_INTERPOLATION_OFFSET_BITS		= 0x8E5D
+	MAX_VERTEX_STREAMS				= 0x8E71
+
+###############################################################################
+
+# ARB Extension #89
+ARB_gpu_shader_fp64 enum:
+	use VERSION_1_1			    DOUBLE
+	DOUBLE_VEC2					= 0x8FFC
+	DOUBLE_VEC3					= 0x8FFD
+	DOUBLE_VEC4					= 0x8FFE
+	DOUBLE_MAT2					= 0x8F46
+	DOUBLE_MAT3					= 0x8F47
+	DOUBLE_MAT4					= 0x8F48
+	DOUBLE_MAT2x3					= 0x8F49
+	DOUBLE_MAT2x4					= 0x8F4A
+	DOUBLE_MAT3x2					= 0x8F4B
+	DOUBLE_MAT3x4					= 0x8F4C
+	DOUBLE_MAT4x2					= 0x8F4D
+	DOUBLE_MAT4x3					= 0x8F4E
+
+###############################################################################
+
+# ARB Extension #90
+ARB_shader_subroutine enum:
+	ACTIVE_SUBROUTINES				= 0x8DE5
+	ACTIVE_SUBROUTINE_UNIFORMS			= 0x8DE6
+	ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS		= 0x8E47
+	ACTIVE_SUBROUTINE_MAX_LENGTH			= 0x8E48
+	ACTIVE_SUBROUTINE_UNIFORM_MAX_LENGTH		= 0x8E49
+	MAX_SUBROUTINES					= 0x8DE7
+	MAX_SUBROUTINE_UNIFORM_LOCATIONS		= 0x8DE8
+	NUM_COMPATIBLE_SUBROUTINES			= 0x8E4A
+	COMPATIBLE_SUBROUTINES				= 0x8E4B
+	use ARB_uniform_buffer_object	    UNIFORM_SIZE
+	use ARB_uniform_buffer_object	    UNIFORM_NAME_LENGTH
+
+###############################################################################
+
+# ARB Extension #91
+ARB_tessellation_shader enum:
+	PATCHES						= 0x000E
+	PATCH_VERTICES					= 0x8E72
+	PATCH_DEFAULT_INNER_LEVEL			= 0x8E73
+	PATCH_DEFAULT_OUTER_LEVEL			= 0x8E74
+	TESS_CONTROL_OUTPUT_VERTICES			= 0x8E75
+	TESS_GEN_MODE					= 0x8E76
+	TESS_GEN_SPACING				= 0x8E77
+	TESS_GEN_VERTEX_ORDER				= 0x8E78
+	TESS_GEN_POINT_MODE				= 0x8E79
+	use VERSION_1_1			    TRIANGLES
+	use VERSION_1_1			    QUADS
+	ISOLINES					= 0x8E7A
+	use VERSION_1_1			    EQUAL
+	FRACTIONAL_ODD					= 0x8E7B
+	FRACTIONAL_EVEN					= 0x8E7C
+	use VERSION_1_1			    CCW
+	use VERSION_1_1			    CW
+	MAX_PATCH_VERTICES				= 0x8E7D
+	MAX_TESS_GEN_LEVEL				= 0x8E7E
+	MAX_TESS_CONTROL_UNIFORM_COMPONENTS		= 0x8E7F
+	MAX_TESS_EVALUATION_UNIFORM_COMPONENTS		= 0x8E80
+	MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS		= 0x8E81
+	MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS		= 0x8E82
+	MAX_TESS_CONTROL_OUTPUT_COMPONENTS		= 0x8E83
+	MAX_TESS_PATCH_COMPONENTS			= 0x8E84
+	MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS	= 0x8E85
+	MAX_TESS_EVALUATION_OUTPUT_COMPONENTS		= 0x8E86
+	MAX_TESS_CONTROL_UNIFORM_BLOCKS			= 0x8E89
+	MAX_TESS_EVALUATION_UNIFORM_BLOCKS		= 0x8E8A
+	MAX_TESS_CONTROL_INPUT_COMPONENTS		= 0x886C
+	MAX_TESS_EVALUATION_INPUT_COMPONENTS		= 0x886D
+	MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS	= 0x8E1E
+	MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS = 0x8E1F
+	UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER = 0x84F0
+	UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER = 0x84F1
+	TESS_EVALUATION_SHADER				= 0x8E87
+	TESS_CONTROL_SHADER				= 0x8E88
+
+###############################################################################
+
+# ARB Extension #92
+ARB_texture_buffer_object_rgb32 enum:
+	use VERSION_3_0			    RGB32F
+	use VERSION_3_0			    RGB32UI
+	use VERSION_3_0			    RGB32I
+
+###############################################################################
+
+# ARB Extension #93
+ARB_transform_feedback2 enum:
+	TRANSFORM_FEEDBACK				= 0x8E22
+	TRANSFORM_FEEDBACK_BUFFER_PAUSED		= 0x8E23
+	TRANSFORM_FEEDBACK_BUFFER_ACTIVE		= 0x8E24
+	TRANSFORM_FEEDBACK_BINDING			= 0x8E25
+
+###############################################################################
+
+# ARB Extension #94
+ARB_transform_feedback3 enum:
+	MAX_TRANSFORM_FEEDBACK_BUFFERS			= 0x8E70
+	MAX_VERTEX_STREAMS				= 0x8E71
+
 
 ###############################################################################
 #
@@ -5360,7 +5681,10 @@ NV_vertex_program3 enum:
 
 # Extension #307 - GLX_SGIX_hyperpipe
 # Extension #308 - GLX_MESA_agp_offset
+
 # Extension #309 - GL_EXT_texture_compression_dxt1 (OpenGL ES only, subset of _s3tc version)
+#	 use EXT_texture_compression_s3tc    COMPRESSED_RGB_S3TC_DXT1_EXT
+#	 use EXT_texture_compression_s3tc    COMPRESSED_RGBA_S3TC_DXT1_EXT
 
 ###############################################################################
 
@@ -6193,3 +6517,26 @@ NV_vertex_buffer_unified_memory enum:
 # No new tokens
 # Extension #381
 NV_texture_barrier enum:
+
+###############################################################################
+
+# No new tokens
+# Extension #382
+AMD_shader_stencil_export enum:
+
+###############################################################################
+
+# Extension #383
+AMD_seamless_cubemap_per_texture enum:
+    use ARB_seamless_cube_map		    TEXTURE_CUBE_MAP_SEAMLESS_ARB
+
+###############################################################################
+
+# Extension #384 - GLX_INTEL_swap_event
+
+###############################################################################
+
+# No new tokens
+# Extension #385
+AMD_conservative_depth enum:
+
