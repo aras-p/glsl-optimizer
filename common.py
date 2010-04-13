@@ -34,10 +34,15 @@ else:
 	default_machine = _platform.machine()
 default_machine = _machine_map.get(default_machine, 'generic')
 
-if 'LLVM' in os.environ or subprocess.call(['llvm-config', '--version'], stdout=subprocess.PIPE) == 0:
+if 'LLVM' in os.environ:
     default_llvm = 'yes'
 else:
     default_llvm = 'no'
+    try:
+        if subprocess.call(['llvm-config', '--version'], stdout=subprocess.PIPE) == 0:
+            default_llvm = 'yes'
+    except:
+        pass
 
 if default_platform in ('linux', 'freebsd'):
 	default_dri = 'yes'
