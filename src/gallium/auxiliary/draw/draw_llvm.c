@@ -641,7 +641,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    lp_build_loop_begin(builder, start, &lp_loop);
    {
       LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
-      LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+      LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS] = { { 0 } };
       LLVMValueRef io;
       const LLVMValueRef (*ptr_aos)[NUM_CHANNELS];
 
