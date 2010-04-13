@@ -81,8 +81,14 @@ util_dynarray_grow(struct util_dynarray *buf, int size)
 static INLINE void
 util_dynarray_trim(struct util_dynarray *buf)
 {
-   buf->data = REALLOC(buf->data, buf->capacity, buf->size);
-   buf->capacity = buf->size;
+   if(buf->size) {
+      buf->data = REALLOC(buf->data, buf->capacity, buf->size);
+      buf->capacity = buf->size;
+   } else {
+      FREE(buf->data);
+      buf->data = 0;
+      buf->capacity = 0;
+   }
 }
 
 #define util_dynarray_append(buf, type, v) do {type __v = (v); memcpy(util_dynarray_grow((buf), sizeof(type)), &__v, sizeof(type));} while(0)
