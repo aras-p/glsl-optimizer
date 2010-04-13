@@ -87,15 +87,16 @@ util_dynarray_grow(struct util_dynarray *buf, int diff)
 static INLINE void
 util_dynarray_trim(struct util_dynarray *buf)
 {
-   if(buf->size != buf->capacity)
-   {}
-   else if(buf->size) {
-      buf->data = REALLOC(buf->data, buf->capacity, buf->size);
-      buf->capacity = buf->size;
-   } else {
-      FREE(buf->data);
-      buf->data = 0;
-      buf->capacity = 0;
+   if (buf->size != buf->capacity) {
+      if (buf->size) {
+         buf->data = REALLOC(buf->data, buf->capacity, buf->size);
+         buf->capacity = buf->size;
+      }
+      else {
+         FREE(buf->data);
+         buf->data = 0;
+         buf->capacity = 0;
+      }
    }
 }
 
