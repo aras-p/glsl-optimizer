@@ -243,7 +243,7 @@ uint i915_emit_texld( struct i915_fp_compile *p,
    }
    else {
       assert(GET_UREG_TYPE(dest) != REG_TYPE_CONST);
-      assert(dest = UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
+      assert(dest == UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
 
       /* is the sampler coord a texcoord input reg? */
       if (GET_UREG_TYPE(coord) != REG_TYPE_T) {

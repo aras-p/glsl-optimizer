@@ -101,8 +101,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
       xDRI2BufferSwapComplete *awire = (xDRI2BufferSwapComplete *)wire;
       aevent->serial = _XSetLastRequestRead(dpy, (xGenericReply *) wire);
-      aevent->type =
-	  (glx_info->codes->first_event + GLX_BufferSwapComplete) & 0x75;
+      aevent->type = glx_info->codes->first_event + GLX_BufferSwapComplete;
       aevent->send_event = (awire->type & 0x80) != 0;
       aevent->display = dpy;
       aevent->drawable = awire->drawable;
