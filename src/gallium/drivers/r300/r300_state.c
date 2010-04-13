@@ -1432,6 +1432,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             break;
         default:
             assert(0);
+            cbuf = NULL;
     }
 
     if (buf == NULL || buf->width0 == 0 ||
