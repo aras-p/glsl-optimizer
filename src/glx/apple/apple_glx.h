@@ -31,10 +31,10 @@
 #define APPLE_GLX_H
 
 #include <stdbool.h>
-#include <OpenGL/CGLTypes.h>
 #include <GL/gl.h>
 #include <GL/glxint.h>
 #include <X11/Xlib.h>
+
 #define XP_NO_X_HEADERS
 #include <Xplugin.h>
 

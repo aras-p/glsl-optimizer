@@ -27,15 +27,32 @@
  prior written authorization.
 */
 
+/* Must be before OpenGL.framework is included.  Remove once fixed:
+ * <rdar://problem/7872773>
+ */
+#include <GL/gl.h>
+#include <GL/glext.h>
+#define __gltypes_h_ 1
+
+/* Must be first for:
+ * <rdar://problem/6953344>
+ */
+#include "apple_glx_context.h"
+#include "apple_glx_drawable.h"
+
 #include <stdlib.h>
 #include <pthread.h>
 #include <assert.h>
-#include <GL/glew.h>
 #include "apple_glx.h"
 #include "glcontextmodes.h"
-#include "apple_glx_context.h"
-#include "apple_glx_drawable.h"
 #include "apple_cgl.h"
+
+/* mesa defines in glew.h, Apple in glext.h.
+ * Due to namespace nightmares, just do it here.
+ */
+#ifndef GL_TEXTURE_RECTANGLE_EXT
+#define GL_TEXTURE_RECTANGLE_EXT 0x84F5
+#endif
 
 static bool pbuffer_make_current(struct apple_glx_context *ac,
                                  struct apple_glx_drawable *d);

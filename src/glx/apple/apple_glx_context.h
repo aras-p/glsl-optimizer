@@ -29,11 +29,19 @@
 #ifndef APPLE_GLX_CONTEXT_H
 #define APPLE_GLX_CONTEXT_H
 
+/* <rdar://problem/6953344> */
+#define glTexImage1D glTexImage1D_OSX
+#define glTexImage2D glTexImage2D_OSX
+#define glTexImage3D glTexImage3D_OSX
+#include <OpenGL/CGLTypes.h>
+#include <OpenGL/CGLContext.h>
+#undef glTexImage1D
+#undef glTexImage2D
+#undef glTexImage3D
+
 #include <stdbool.h>
 #include <X11/Xlib.h>
 #include <GL/glx.h>
-#include <OpenGL/CGLTypes.h>
-#include <OpenGL/CGLContext.h>
 #define XP_NO_X_HEADERS
 #include <Xplugin.h>
 #undef XP_NO_X_HEADERS

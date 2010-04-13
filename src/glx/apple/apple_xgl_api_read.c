@@ -34,10 +34,9 @@
  * drawable if they are different.
  */
 #include <stdbool.h>
-#include "apple_xgl_api_read.h"
-#include "apple_xgl_api.h"
-#include "apple_cgl.h"
+#include "glxclient.h"
 #include "apple_glx_context.h"
+#include "apple_xgl_api.h"
 
 extern struct apple_xgl_api __gl_api;
 

@@ -32,9 +32,18 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <GL/gl.h>
+
+/* <rdar://problem/6953344> */
+#define glTexImage1D glTexImage1D_OSX
+#define glTexImage2D glTexImage2D_OSX
+#define glTexImage3D glTexImage3D_OSX
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLContext.h>
 #include <OpenGL/CGLRenderers.h>
+#undef glTexImage1D
+#undef glTexImage2D
+#undef glTexImage3D
+
 #include "apple_cgl.h"
 #include "apple_visual.h"
 #include "apple_glx.h"

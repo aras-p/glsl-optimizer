@@ -29,6 +29,11 @@
 #ifndef APPLE_GLX_DRAWABLE_H
 #define APPLE_GLX_DRAWABLE_H
 
+/* Must be first for:
+ * <rdar://problem/6953344>
+ */
+#include "apple_glx_context.h"
+
 #include <pthread.h>
 #include <stdbool.h>
 #include <limits.h>
@@ -36,7 +41,6 @@
 #define XP_NO_X_HEADERS
 #include <Xplugin.h>
 #undef XP_NO_X_HEADERS
-#include "apple_glx_context.h"
 
 enum
 {

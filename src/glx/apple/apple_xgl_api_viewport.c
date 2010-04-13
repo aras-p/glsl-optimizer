@@ -26,9 +26,10 @@
  promote the sale, use or other dealings in this Software without
  prior written authorization.
 */
+
+#include "glxclient.h"
 #include "apple_glx_context.h"
 #include "apple_xgl_api.h"
-#include "apple_xgl_api_viewport.h"
 
 extern struct apple_xgl_api __gl_api;
 

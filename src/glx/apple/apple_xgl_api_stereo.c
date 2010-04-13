@@ -27,10 +27,19 @@
  prior written authorization.
 */
 
+/* This should be removed once stereo hardware bugs are fixed
+ * <rdar://problem/6729006>
+ */
+
 #include <stdbool.h>
-#include "apple_xgl_api_stereo.h"
-#include "apple_xgl_api.h"
+
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
+#include <GL/glext.h>
+
+#include "glxclient.h"
 #include "apple_glx_context.h"
+#include "apple_xgl_api.h"
 
 extern struct apple_xgl_api __gl_api;
 /* 
