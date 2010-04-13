@@ -38,9 +38,6 @@ struct r300_fragment_shader_code {
      * compilation failure. */
     boolean dummy;
 
-    /* Bits 0-15: TRUE if it's a shadow sampler, FALSE otherwise. */
-    unsigned shadow_samplers;
-
     /* Numbers of constants for each type. */
     unsigned externals_count;
     unsigned immediates_count;
@@ -55,10 +52,6 @@ struct r300_fragment_shader_code {
 struct r300_fragment_shader {
     /* Parent class */
     struct pipe_shader_state state;
-
-    /* Bits 0-15: TRUE if it's a shadow sampler, FALSE otherwise.
-     * Initialized from the first compiled FS. */
-    unsigned shadow_samplers;
 
     /* Currently-bound fragment shader. */
     struct r300_fragment_shader_code* shader;

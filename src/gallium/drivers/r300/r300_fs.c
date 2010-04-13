@@ -253,8 +253,6 @@ static void r300_translate_fragment_shader(
 
     r300_tgsi_to_rc(&ttr, tokens);
 
-    shader->shadow_samplers = compiler.Base.Program.ShadowSamplers;
-
     /**
      * Transform the program to support WPOS.
      *
