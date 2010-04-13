@@ -53,11 +53,6 @@ struct pipe_winsys
    const char *(*get_name)( struct pipe_winsys *ws );
 
    /**
-    * Do any special operations to ensure buffer size is correct
-    */
-   void (*update_buffer)( struct pipe_winsys *ws,
-                          void *context_private );
-   /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     */

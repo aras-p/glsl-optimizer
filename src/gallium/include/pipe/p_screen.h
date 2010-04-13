@@ -170,13 +170,6 @@ struct pipe_screen {
 					       unsigned bind_flags);
 
    /**
-    * Do any special operations to ensure buffer size is correct
-    * \param context_private  the private data of the calling context
-    */
-   void (*update_buffer)( struct pipe_screen *ws,
-                          void *context_private );
-
-   /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     * \param winsys_drawable_handle  an opaque handle that the calling context
