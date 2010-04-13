@@ -492,7 +492,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 	unsigned ib_format = nvfx->idxbuf_format;
 	int i;
 	int elements = MAX2(nvfx->vtxelt->num_elements, nvfx->hw_vtxelt_nr);
-	unsigned long vtxfmt[16];
+	uint32_t vtxfmt[16];
 	unsigned vb_flags = nvfx->screen->vertex_buffer_flags | NOUVEAU_BO_RD;
 
 	if (!elements)
