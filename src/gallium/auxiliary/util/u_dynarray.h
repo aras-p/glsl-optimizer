@@ -59,10 +59,10 @@ util_dynarray_fini(struct util_dynarray *buf)
    }
 }
 
+/* use util_dynarray_trim to reduce the allocated storage */
 static INLINE void *
-util_dynarray_grow(struct util_dynarray *buf, int size)
+util_dynarray_resize(struct util_dynarray *buf, unsigned newsize)
 {
-   unsigned newsize = buf->size + size;
    char *p;
    if(newsize > buf->capacity)
    {
@@ -76,6 +76,12 @@ util_dynarray_grow(struct util_dynarray *buf, int size)
    p = (char *)buf->data + buf->size;
    buf->size = newsize;
    return p;
+}
+
+static INLINE void *
+util_dynarray_grow(struct util_dynarray *buf, int diff)
+{
+   return util_dynarray_resize(buf, buf->size + diff);
 }
 
 static INLINE void
