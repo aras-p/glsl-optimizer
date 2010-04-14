@@ -31,6 +31,7 @@
 #include "r300_context.h"
 #include "r300_screen.h"
 #include "r300_fs.h"
+#include "r300_reg.h"
 #include "r300_tgsi_to_rc.h"
 
 #include "radeon_code.h"
@@ -296,6 +297,15 @@ static void r300_translate_fragment_shader(
             default:
                 assert(0);
         }
+    }
+
+    /* Setup shader depth output. */
+    if (shader->code.writes_depth) {
+        shader->fg_depth_src = R300_FG_DEPTH_SRC_SHADER;
+        shader->us_out_w = R300_W_FMT_W24 | R300_W_SRC_US;
+    } else {
+        shader->fg_depth_src = R300_FG_DEPTH_SRC_SCAN;
+        shader->us_out_w = R300_W_FMT_W0 | R300_W_SRC_US;
     }
 
     /* And, finally... */

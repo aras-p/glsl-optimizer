@@ -43,6 +43,10 @@ struct r300_fragment_shader_code {
     unsigned immediates_count;
     unsigned rc_state_count;
 
+    /* Registers for fragment depth output setup. */
+    uint32_t fg_depth_src;      /* R300_FG_DEPTH_SRC: 0x4bd8 */
+    uint32_t us_out_w;          /* R300_US_W_FMT:     0x46b4 */
+
     struct r300_fragment_program_external_state compare_state;
     struct rX00_fragment_program_code code;
 

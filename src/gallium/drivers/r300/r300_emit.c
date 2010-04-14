@@ -233,18 +233,6 @@ static uint32_t pack_float24(float f)
     return float24;
 }
 
-static void r300_emit_fragment_depth_config(struct r300_context* r300)
-{
-    CS_LOCALS(r300);
-    if (r300_fragment_shader_writes_depth(r300_fs(r300))) {
-        OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SHADER);
-        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W24 | R300_W_SRC_US);
-    } else {
-        OUT_CS_REG(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SCAN);
-        OUT_CS_REG(R300_US_W_FMT, R300_W_FMT_W0 | R300_W_SRC_US);
-    }
-}
-
 unsigned r300_get_fs_atom_size(struct r300_context *r300)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
@@ -315,8 +303,8 @@ void r300_emit_fs(struct r300_context* r300, unsigned size, void *state)
         }
     }
 
-    r300_emit_fragment_depth_config(r300);
-    cs_count -= 4;
+    OUT_CS_REG(R300_FG_DEPTH_SRC, fs->shader->fg_depth_src);
+    OUT_CS_REG(R300_US_W_FMT, fs->shader->us_out_w);
     END_CS;
 }
 
@@ -435,8 +423,8 @@ void r500_emit_fs(struct r300_context* r300, unsigned size, void *state)
         }
     }
 
-    r300_emit_fragment_depth_config(r300);
-    cs_count -= 4;
+    OUT_CS_REG(R300_FG_DEPTH_SRC, fs->shader->fg_depth_src);
+    OUT_CS_REG(R300_US_W_FMT, fs->shader->us_out_w);
     END_CS;
 }
 
