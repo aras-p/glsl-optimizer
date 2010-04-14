@@ -2,6 +2,8 @@ Import('*')
 
 env = env.Clone()
 
+env.ParseConfig('pkg-config --cflags libdrm')
+
 i915drm_sources = [
     'i915_drm_api.c',
     'i915_drm_batchbuffer.c',
