@@ -1380,13 +1380,6 @@ trace_context_transfer_flush_region( struct pipe_context *_context,
    struct pipe_context *context = tr_context->pipe;
    struct pipe_transfer *transfer = tr_transfer->transfer;
 
-   trace_dump_call_begin("pipe_context", "transfer_flush_region");
-
-   trace_dump_arg(ptr, context);
-   trace_dump_arg(ptr, transfer);
-   trace_dump_arg(box, box);
-   trace_dump_call_end();
-
    context->transfer_flush_region(context,
 				  transfer,
 				  box);
