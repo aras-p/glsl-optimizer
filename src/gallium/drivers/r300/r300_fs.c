@@ -278,7 +278,10 @@ static void r300_translate_fragment_shader(
                     "Giving up...\n");
             abort();
         }
+
+        rc_destroy(&compiler.Base);
         r300_dummy_fragment_shader(r300, shader);
+        return;
     }
 
     /* Initialize numbers of constants for each type. */

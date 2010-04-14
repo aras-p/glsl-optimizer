@@ -330,7 +330,10 @@ void r300_translate_vertex_shader(struct r300_context* r300,
                     "Giving up...\n");
             abort();
         }
+
+        rc_destroy(&compiler.Base);
         r300_dummy_vertex_shader(r300, vs);
+        return;
     }
 
     /* Initialize numbers of constants for each type. */
