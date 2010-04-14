@@ -198,8 +198,6 @@ void st_init_extensions(struct st_context *st)
 
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
 
-   ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
-
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
 
    ctx->Extensions.NV_blend_square = GL_TRUE;
@@ -247,6 +245,7 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_CLAMP) > 0) {
       ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
+      ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
