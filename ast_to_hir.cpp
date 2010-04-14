@@ -1358,7 +1358,7 @@ ast_declarator_list::hir(exec_list *instructions,
    struct simple_node *ptr;
    const struct glsl_type *decl_type;
    const char *type_name = NULL;
-
+   ir_rvalue *result = NULL;
 
    /* FINISHME: Handle vertex shader "invariant" declarations that do not
     * FINISHME: include a type.  These re-declare built-in variables to be
@@ -1619,8 +1619,8 @@ ast_declarator_list::hir(exec_list *instructions,
 	    bool temp = var->read_only;
 	    if (this->type->qualifier.constant)
 	       var->read_only = false;
-	    (void) do_assignment(instructions, state, lhs, rhs,
-				 this->get_location());
+	    result = do_assignment(instructions, state, lhs, rhs,
+				   this->get_location());
 	    var->read_only = temp;
 	 }
       }
@@ -1650,9 +1650,17 @@ ast_declarator_list::hir(exec_list *instructions,
       assert(added_variable);
    }
 
-   /* Variable declarations do not have r-values.
+
+   /* Generally, variable declarations do not have r-values.  However,
+    * one is used for the declaration in
+    *
+    * while (bool b = some_condition()) {
+    *   ...
+    * }
+    *
+    * so we return the rvalue from the last seen declaration here.
     */
-   return NULL;
+   return result;
 }
 
 
