@@ -362,8 +362,6 @@ struct r300_context {
     struct r300_atom blend_color_state;
     /* User clip planes. */
     struct r300_atom clip_state;
-    /* Shader constants. */
-    struct r300_constant_buffer shader_constants[PIPE_SHADER_TYPES];
     /* Depth, stencil, and alpha state. */
     struct r300_atom dsa_state;
     /* Fragment shader. */
@@ -388,6 +386,8 @@ struct r300_context {
     struct r300_atom vap_output_state;
     /* Vertex shader. */
     struct r300_atom vs_state;
+    /* Vertex shader constant buffer. */
+    struct r300_atom vs_constants;
     /* Viewport state. */
     struct r300_atom viewport_state;
     /* ZTOP state. */

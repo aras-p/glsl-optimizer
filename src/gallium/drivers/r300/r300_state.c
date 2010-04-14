@@ -1383,9 +1383,14 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
                 vs->code.length + 9 +
                 (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0);
 
-        r300->pvs_flush.dirty = TRUE;
+        if (vs->externals_count) {
+            r300->vs_constants.dirty = TRUE;
+            r300->vs_constants.size = vs->externals_count * 4 + 3;
+        } else {
+            r300->vs_constants.size = 0;
+        }
 
-        r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
+        r300->pvs_flush.dirty = TRUE;
     } else {
         draw_flush(r300->draw);
         draw_bind_vertex_shader(r300->draw,
@@ -1421,7 +1426,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 
     switch (shader) {
         case PIPE_SHADER_VERTEX:
-            cbuf = &r300->shader_constants[PIPE_SHADER_VERTEX];
+            cbuf = (struct r300_constant_buffer*)r300->vs_constants.state;
             max_size = 256;
             break;
         case PIPE_SHADER_FRAGMENT:
@@ -1434,7 +1439,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             break;
         default:
             assert(0);
-            cbuf = NULL;
+            return;
     }
 
     if (buf == NULL || buf->width0 == 0 ||
@@ -1460,7 +1465,9 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 
     if (shader == PIPE_SHADER_VERTEX) {
         if (r300->screen->caps.has_tcl) {
-            r300->dirty_state |= R300_NEW_VERTEX_SHADER_CONSTANTS;
+            if (r300->vs_constants.size) {
+                r300->vs_constants.dirty = TRUE;
+            }
             r300->pvs_flush.dirty = TRUE;
         } else if (r300->draw) {
             draw_set_mapped_constant_buffer(r300->draw, PIPE_SHADER_VERTEX,

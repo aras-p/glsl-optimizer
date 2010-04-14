@@ -65,7 +65,7 @@ static void r300_flush(struct pipe_context* pipe,
         /* Unmark HWTCL state for SWTCL. */
         if (!r300->screen->caps.has_tcl) {
             r300->vs_state.dirty = FALSE;
-            r300->dirty_state &= ~R300_NEW_VERTEX_SHADER_CONSTANTS;
+            r300->vs_constants.dirty = FALSE;
         }
     }
 

@@ -1025,21 +1025,25 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
     END_CS;
 }
 
-void r300_emit_vs_constant_buffer(struct r300_context* r300,
-                                  struct rc_constant_list* constants)
+void r300_emit_vs_constants(struct r300_context* r300,
+                            unsigned size, void *state)
 {
     unsigned i;
-    unsigned count = ((struct r300_vertex_shader*)r300->vs_state.state)->externals_count;
+    unsigned count =
+        ((struct r300_vertex_shader*)r300->vs_state.state)->externals_count;
+    struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
     CS_LOCALS(r300);
 
-    BEGIN_CS(count * 4 + 3);
+    if (!count)
+        return;
+
+    BEGIN_CS(size);
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
                (r300->screen->caps.is_r500 ?
                R500_PVS_CONST_START : R300_PVS_CONST_START));
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, count * 4);
     for (i = 0; i < count; i++) {
-        const float *data =
-                r300->shader_constants[PIPE_SHADER_VERTEX].constants[i];
+        const float *data = buf->constants[i];
         OUT_CS_32F(data[0]);
         OUT_CS_32F(data[1]);
         OUT_CS_32F(data[2]);
@@ -1225,14 +1229,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
             atom->emit(r300, atom->size, atom->state);
             atom->dirty = FALSE;
         }
-    }
-
-    if (r300->dirty_state & R300_NEW_VERTEX_SHADER_CONSTANTS) {
-        struct r300_vertex_shader* vs = r300->vs_state.state;
-        if (vs->code.constants.Count) {
-            r300_emit_vs_constant_buffer(r300, &vs->code.constants);
-        }
-        r300->dirty_state &= ~R300_NEW_VERTEX_SHADER_CONSTANTS;
     }
 
     /* Emit the VBO for SWTCL. */

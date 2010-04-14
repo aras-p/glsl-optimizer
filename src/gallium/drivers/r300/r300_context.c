@@ -67,6 +67,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->viewport_state.state);
     FREE(r300->ztop_state.state);
     FREE(r300->fs_constants.state);
+    FREE(r300->vs_constants.state);
     FREE(r300);
 }
 
@@ -114,6 +115,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(vap_output_state, 6);
     R300_INIT_ATOM(pvs_flush, 2);
     R300_INIT_ATOM(vs_state, 0);
+    R300_INIT_ATOM(vs_constants, 0);
     R300_INIT_ATOM(texture_cache_inval, 2);
     R300_INIT_ATOM(textures_state, 0);
     R300_INIT_ATOM(fs, 0);
@@ -138,6 +140,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
     r300->fs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
+    r300->vs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

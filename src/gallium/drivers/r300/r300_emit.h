@@ -84,8 +84,8 @@ void r300_emit_vertex_stream_state(struct r300_context* r300,
 void r300_emit_vap_output_state(struct r300_context* r300,
                                unsigned size, void* state);
 
-void r300_emit_vs_constant_buffer(struct r300_context* r300,
-                                  struct rc_constant_list* constants);
+void r300_emit_vs_constants(struct r300_context* r300,
+                            unsigned size, void *state);
 
 void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state);
 
