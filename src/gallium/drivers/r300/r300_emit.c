@@ -570,7 +570,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     END_CS;
 }
 
-void r300_emit_query_start(struct r300_context *r300)
+void r300_emit_query_start(struct r300_context *r300, unsigned size, void*state)
 {
     struct r300_query *query = r300->query_current;
     CS_LOCALS(r300);
@@ -578,7 +578,7 @@ void r300_emit_query_start(struct r300_context *r300)
     if (!query)
 	return;
 
-    BEGIN_CS(4);
+    BEGIN_CS(size);
     if (r300->screen->caps.family == CHIP_FAMILY_RV530) {
         OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     } else {
@@ -1149,7 +1149,7 @@ validate:
         }
     }
     /* ...occlusion query buffer... */
-    if (r300->dirty_state & R300_NEW_QUERY) {
+    if (r300->query_start.dirty) {
         if (!r300_add_buffer(r300->rws, r300->oqbo,
 			     0, RADEON_GEM_DOMAIN_GTT)) {
             r300->context.flush(&r300->context, 0, NULL);
@@ -1218,11 +1218,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = r300->screen;
     struct r300_atom* atom;
-
-    if (r300->dirty_state & R300_NEW_QUERY) {
-        r300_emit_query_start(r300);
-        r300->dirty_state &= ~R300_NEW_QUERY;
-    }
 
     foreach(atom, &r300->atom_list) {
         if (atom->dirty || atom->always_dirty) {

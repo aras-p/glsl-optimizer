@@ -372,6 +372,8 @@ struct r300_context {
     struct r300_atom fs_constants;
     /* Framebuffer state. */
     struct r300_atom fb_state;
+    /* Occlusion query. */
+    struct r300_atom query_start;
     /* Rasterizer state. */
     struct r300_atom rs_state;
     /* RS block state. */
@@ -417,8 +419,6 @@ struct r300_context {
 
     struct pipe_viewport_state viewport;
 
-    /* Bitmask of dirty state objects. */
-    uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
     uint32_t dirty_hw;
     /* Whether polygon offset is enabled. */

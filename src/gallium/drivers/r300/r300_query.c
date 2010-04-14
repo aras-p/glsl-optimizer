@@ -92,7 +92,7 @@ static void r300_begin_query(struct pipe_context* pipe,
 
     q->flushed = FALSE;
     r300->query_current = q;
-    r300->dirty_state |= R300_NEW_QUERY;
+    r300->query_start.dirty = TRUE;
 }
 
 static void r300_end_query(struct pipe_context* pipe,

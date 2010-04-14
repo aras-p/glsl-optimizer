@@ -101,6 +101,7 @@ static void r300_setup_atoms(struct r300_context* r300)
      * the size of 0 here. */
     make_empty_list(&r300->atom_list);
     R300_INIT_ATOM(invariant_state, 71);
+    R300_INIT_ATOM(query_start, 4);
     R300_INIT_ATOM(ztop_state, 2);
     R300_INIT_ATOM(blend_state, 8);
     R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);

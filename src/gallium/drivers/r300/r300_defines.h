@@ -30,10 +30,6 @@
 
 #define R300_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV
 
-/* Non-atom dirty state flags. */
-#define R300_NEW_QUERY                          0x40000000
-#define R300_NEW_KITCHEN_SINK                   0x7fffffff
-
 /* Tiling flags. */
 enum r300_buffer_tiling {
     R300_BUFFER_LINEAR = 0,
