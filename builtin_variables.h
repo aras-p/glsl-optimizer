@@ -42,7 +42,7 @@ static const builtin_variable builtin_core_fs_variables[] = {
 static const builtin_variable builtin_110_deprecated_fs_variables[] = {
    { ir_var_in,  "vec4",  "gl_Color" },
    { ir_var_in,  "vec4",  "gl_SecondaryColor" },
-   { ir_var_in,  "vec4",  "gl_FogFragCoord" },
+   { ir_var_in,  "float", "gl_FogFragCoord" },
 };
 
 static const builtin_variable builtin_110_deprecated_vs_variables[] = {
@@ -64,7 +64,7 @@ static const builtin_variable builtin_110_deprecated_vs_variables[] = {
    { ir_var_out, "vec4",  "gl_BackColor" },
    { ir_var_out, "vec4",  "gl_FrontSecondaryColor" },
    { ir_var_out, "vec4",  "gl_BackSecondaryColor" },
-   { ir_var_out, "vec4",  "gl_FogFragCoord" },
+   { ir_var_out, "float", "gl_FogFragCoord" },
 };
 
 static const builtin_variable builtin_130_vs_variables[] = {
