@@ -148,7 +148,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, dst_bo,
-	                 NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	                 NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_FORMAT, 1);
 	OUT_RING  (chan, nv04_surface_format(dst->format) |
@@ -171,7 +171,7 @@ nv04_surface_copy_swizzle(struct nv04_surface_2d *ctx,
 
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
 	    OUT_RELOCl(chan, dst_bo, dst->offset,
-                             NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+                             NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	    BEGIN_RING(chan, sifm, NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 9);
 	    OUT_RING  (chan, NV05_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
