@@ -137,60 +137,47 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
     END_CS;
 }
 
-static const float * get_shader_constant(
+static const float * get_rc_constant_state(
     struct r300_context * r300,
-    struct rc_constant * constant,
-    struct r300_constant_buffer * externals)
+    struct rc_constant * constant)
 {
     struct r300_viewport_state* viewport = r300->viewport_state.state;
     struct r300_textures_state* texstate = r300->textures_state.state;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct pipe_resource *tex;
 
-    switch(constant->Type) {
-        case RC_CONSTANT_EXTERNAL:
-            return externals->constants[constant->u.External];
+    assert(constant->Type == RC_CONSTANT_STATE);
 
-        case RC_CONSTANT_IMMEDIATE:
-            return constant->u.Immediate;
+    switch (constant->u.State[0]) {
+        /* Factor for converting rectangle coords to
+         * normalized coords. Should only show up on non-r500. */
+        case RC_STATE_R300_TEXRECT_FACTOR:
+            tex = texstate->sampler_views[constant->u.State[1]]->base.texture;
+            vec[0] = 1.0 / tex->width0;
+            vec[1] = 1.0 / tex->height0;
+            break;
 
-        case RC_CONSTANT_STATE:
-            switch (constant->u.State[0]) {
-                /* Factor for converting rectangle coords to
-                 * normalized coords. Should only show up on non-r500. */
-                case RC_STATE_R300_TEXRECT_FACTOR:
-                    tex = texstate->sampler_views[constant->u.State[1]]->base.texture;
-                    vec[0] = 1.0 / tex->width0;
-                    vec[1] = 1.0 / tex->height0;
-                    break;
+        /* Texture compare-fail value. Shouldn't ever show up, but if
+         * it does, we'll be ready. */
+        case RC_STATE_SHADOW_AMBIENT:
+            vec[3] = 0;
+            break;
 
-                /* Texture compare-fail value. Shouldn't ever show up, but if
-                 * it does, we'll be ready. */
-                case RC_STATE_SHADOW_AMBIENT:
-                    vec[3] = 0;
-                    break;
+        case RC_STATE_R300_VIEWPORT_SCALE:
+            vec[0] = viewport->xscale;
+            vec[1] = viewport->yscale;
+            vec[2] = viewport->zscale;
+            break;
 
-                case RC_STATE_R300_VIEWPORT_SCALE:
-                    vec[0] = viewport->xscale;
-                    vec[1] = viewport->yscale;
-                    vec[2] = viewport->zscale;
-                    break;
-
-                case RC_STATE_R300_VIEWPORT_OFFSET:
-                    vec[0] = viewport->xoffset;
-                    vec[1] = viewport->yoffset;
-                    vec[2] = viewport->zoffset;
-                    break;
-
-                default:
-                    fprintf(stderr, "r300: Implementation error: "
-                        "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
-            }
+        case RC_STATE_R300_VIEWPORT_OFFSET:
+            vec[0] = viewport->xoffset;
+            vec[1] = viewport->yoffset;
+            vec[2] = viewport->zoffset;
             break;
 
         default:
             fprintf(stderr, "r300: Implementation error: "
-                "Unhandled constant type %d\n", constant->Type);
+                "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
     }
 
     /* This should either be (0, 0, 0, 1), which should be a relatively safe
@@ -349,8 +336,8 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     BEGIN_CS(size);
     for(i = first; i < end; ++i) {
         if (constants->Constants[i].Type == RC_CONSTANT_STATE) {
-            const float *data = get_shader_constant(r300,
-                                                    &constants->Constants[i], 0);
+            const float *data =
+                    get_rc_constant_state(r300, &constants->Constants[i]);
 
             OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
             OUT_CS(pack_float24(data[0]));
@@ -471,8 +458,8 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     BEGIN_CS(size);
     for(i = first; i < end; ++i) {
         if (constants->Constants[i].Type == RC_CONSTANT_STATE) {
-            const float *data = get_shader_constant(r300,
-                                                    &constants->Constants[i], 0);
+            const float *data =
+                    get_rc_constant_state(r300, &constants->Constants[i]);
 
             OUT_CS_REG(R500_GA_US_VECTOR_INDEX,
                        R500_GA_US_VECTOR_INDEX_TYPE_CONST |
