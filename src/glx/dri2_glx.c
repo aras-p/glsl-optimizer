@@ -185,6 +185,7 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    pdraw->base.drawable = drawable;
    pdraw->base.psc = psc;
    pdraw->bufferCount = 0;
+   pdraw->swap_interval = 0;
 
    DRI2CreateDrawable(psc->dpy, xDrawable);
 
