@@ -83,31 +83,13 @@ swrast_create_screen(struct sw_winsys *winsys)
    return screen;
 }
 
-static struct pipe_screen *
-swrast_drm_create_screen(struct drm_api *api,
-                         int drmFD,
-                         struct drm_create_screen_arg *arg)
+struct pipe_screen *
+drisw_create_screen(struct drisw_loader_funcs *lf)
 {
    struct sw_winsys *winsys = NULL;
    struct pipe_screen *screen = NULL;
-   struct drisw_create_screen_arg *drisw;
 
-   (void) drmFD;
-
-   if (arg != NULL) {
-      switch(arg->mode) {
-      case DRM_CREATE_DRISW:
-         drisw = (struct drisw_create_screen_arg *)arg;
-         break;
-      default:
-         return NULL;
-      }
-   }
-   else {
-      return NULL;
-   }
-
-   winsys = dri_create_sw_winsys(drisw->lf);
+   winsys = dri_create_sw_winsys(lf);
    if (winsys == NULL)
       return NULL;
 
@@ -122,26 +104,6 @@ fail:
       winsys->destroy(winsys);
 
    return NULL;
-}
-
-static void
-swrast_drm_api_destroy(struct drm_api *api)
-{
-   return;
-}
-
-static struct drm_api swrast_drm_api =
-{
-   .name = "swrast",
-   .driver_name = "swrast",
-   .create_screen = swrast_drm_create_screen,
-   .destroy = swrast_drm_api_destroy,
-};
-
-struct drm_api *
-drm_api_create()
-{
-   return &swrast_drm_api;
 }
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

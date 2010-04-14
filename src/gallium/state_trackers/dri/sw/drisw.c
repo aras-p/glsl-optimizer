@@ -262,7 +262,6 @@ drisw_init_screen(__DRIscreen * sPriv)
    const __DRIconfig **configs;
    struct dri_screen *screen;
    struct pipe_screen *pscreen;
-   struct drisw_create_screen_arg arg;
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
@@ -275,10 +274,7 @@ drisw_init_screen(__DRIscreen * sPriv)
    sPriv->private = (void *)screen;
    sPriv->extensions = drisw_screen_extensions;
 
-   arg.base.mode = DRM_CREATE_DRISW;
-   arg.lf = &drisw_lf;
-
-   pscreen = screen->api->create_screen(screen->api, screen->fd, &arg.base);
+   pscreen = drisw_create_screen(&drisw_lf);
    /* dri_init_screen_helper checks pscreen for us */
 
    configs = dri_init_screen_helper(screen, pscreen, 32);

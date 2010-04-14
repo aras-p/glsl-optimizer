@@ -13,7 +13,6 @@ struct pipe_resource;
 enum drm_create_screen_mode {
 	DRM_CREATE_NORMAL = 0,
 	DRM_CREATE_DRI1,
-	DRM_CREATE_DRISW,
 	DRM_CREATE_DRIVER = 1024,
 	DRM_CREATE_MAX
 };
