@@ -762,6 +762,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    disp->Extensions.KHR_image_base = EGL_TRUE;
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
    disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
+   disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
 
    /* we're supporting EGL 1.4 */
    *major = 1;
