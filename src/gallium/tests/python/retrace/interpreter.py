@@ -43,7 +43,7 @@ except ImportError:
         return struct.unpack(fmt, buf[offset:offset + size])
 
 
-def make_image(surface, x=None, y=None, w=None, h=None):
+def make_image(ctx, surface, x=None, y=None, w=None, h=None):
     if x is None:
         x = 0
     if y is None:
@@ -52,18 +52,18 @@ def make_image(surface, x=None, y=None, w=None, h=None):
         w = surface.width - x
     if h is None:
         h = surface.height - y
-    data = surface.get_tile_rgba8(x, y, surface.width, surface.height)
+    data = ctx.surface_read_rgba8(surface, x, y, surface.width, surface.height)
 
     import Image
     outimage = Image.fromstring('RGBA', (w, h), data, "raw", 'RGBA', 0, 1)
     return outimage
 
-def save_image(filename, surface, x=None, y=None, w=None, h=None):
-    outimage = make_image(surface, x, y, w, h)
+def save_image(ctx, filename, surface, x=None, y=None, w=None, h=None):
+    outimage = make_image(ctx, surface, x, y, w, h)
     outimage.save(filename, "PNG")
 
-def show_image(surface, title, x=None, y=None, w=None, h=None):
-    outimage = make_image(surface, x, y, w, h)
+def show_image(ctx, surface, title, x=None, y=None, w=None, h=None):
+    outimage = make_image(ctx, surface, x, y, w, h)
     
     import Tkinter as tk
     from PIL import Image, ImageTk
@@ -207,6 +207,10 @@ class Transfer:
 
 class Screen(Object):
     
+    def __init__(self, interpreter, real):
+        Object.__init__(self, interpreter, real)
+        self.context = self.real.context_create()
+
     def destroy(self):
         pass
 
@@ -257,11 +261,12 @@ class Screen(Object):
     def tex_surface_release(self, surface):
         pass
 
-    def user_buffer_create(self, data, size, bind):
+    def user_buffer_create(self, data, size, usage):
+        bind = usage
         # We don't really care to distinguish between user and regular buffers
         buffer = self.real.buffer_create(size, bind)
         assert size == len(data)
-        buffer.write(data)
+        self.context.buffer_write(buffer, data)
         return buffer
     
     def buffer_create(self, alignment, usage, size):
@@ -547,7 +552,7 @@ class Context(Object):
     def surface_copy(self, dest, destx, desty, src, srcx, srcy, width, height):
         if dest is not None and src is not None:
             if self.interpreter.options.all:
-                self.interpreter.present(src, 'surface_copy_src', srcx, srcy, width, height)
+                self.interpreter.present(self.real, src, 'surface_copy_src', srcx, srcy, width, height)
             self.real.surface_copy(dest, destx, desty, src, srcx, srcy, width, height)
             if dest in self.cbufs:
                 self._set_dirty()
@@ -556,14 +561,10 @@ class Context(Object):
                 flags = 0
             self.flush(flags)
             if self.interpreter.options.all:
-                self.interpreter.present(dest, 'surface_copy_dest', destx, desty, width, height)
+                self.interpreter.present(self.real, dest, 'surface_copy_dest', destx, desty, width, height)
 
-    def is_texture_referenced(self, texture, face, level):
-        #return self.real.is_texture_referenced(format, texture, face, level)
-        pass
-    
-    def is_buffer_referenced(self, buf):
-        #return self.real.is_buffer_referenced(format, buf)
+    def is_resource_referenced(self, texture, face, level):
+        #return self.real.is_resource_referenced(format, texture, face, level)
         pass
     
     def buffer_write(self, buffer, data, size, offset=0):
@@ -583,7 +584,7 @@ class Context(Object):
         if transfer and usage & gallium.PIPE_TRANSFER_READ:
             if self.interpreter.options.all:
                 surface = texture.get_surface(sr.face, sr.level, box.z)
-                self.interpreter.present(transfer.surface, 'transf_read', box.x, box.y, box.w, box.h)
+                self.interpreter.present(self.real, transfer.surface, 'transf_read', box.x, box.y, box.w, box.h)
         return transfer
     
     def tex_transfer_destroy(self, transfer):
@@ -597,7 +598,7 @@ class Context(Object):
         if self.interpreter.options.all:
             box = transfer.box
             surface = transfer.resource.get_surface(sr.face, sr.level, box.z)
-            self.interpreter.present(transfer.surface, 'transf_write', box.x, box.y, box.w, box.h)
+            self.interpreter.present(self.real, transfer.surface, 'transf_write', box.x, box.y, box.w, box.h)
 
     def transfer_inline_write(self, resource, sr, usage, box, stride, slice_stride, data):
         self.real.transfer_inline_write(resource, sr, usage, box, data, stride, slice_stride)
@@ -626,10 +627,10 @@ class Context(Object):
         self.real.flush()
     
         if self.cbufs and self.cbufs[0]:
-            self.interpreter.present(self.cbufs[0], "cbuf")
+            self.interpreter.present(self.real, self.cbufs[0], "cbuf")
         if self.zsbuf:
             if self.interpreter.options.all:
-                self.interpreter.present(self.zsbuf, "zsbuf")
+                self.interpreter.present(self.real, self.zsbuf, "zsbuf")
     
 
 class Interpreter(parser.TraceDumper):
@@ -700,16 +701,16 @@ class Interpreter(parser.TraceDumper):
     def verbosity(self, level):
         return self.options.verbosity >= level
 
-    def present(self, surface, description, x=None, y=None, w=None, h=None):
+    def present(self, ctx, surface, description, x=None, y=None, w=None, h=None):
         if self.call_no < self.options.start:
             return
 
         if self.options.images:
             filename = '%04u_%s.png' % (self.call_no, description)
-            save_image(filename, surface, x, y, w, h)
+            save_image(ctx, filename, surface, x, y, w, h)
         else:
             title = '%u. %s' % (self.call_no, description)
-            show_image(surface, title, x, y, w, h)
+            show_image(ctx, surface, title, x, y, w, h)
     
 
 class Main(parser.Main):
