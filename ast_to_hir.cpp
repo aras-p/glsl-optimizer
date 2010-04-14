@@ -1864,7 +1864,14 @@ ast_function::hir(exec_list *instructions,
 	       iter_b.next();
 	    }
 
-	    /* FINISHME: Compare return types. */
+	    if (sig->return_type != return_type) {
+	       YYLTYPE loc = this->get_location();
+
+	       _mesa_glsl_error(& loc, state,
+				"function `%s' return type doesn't match "
+				"prototype",
+				name);
+	    }
 
 	    if (is_definition && (sig->definition != NULL)) {
 	       YYLTYPE loc = this->get_location();
