@@ -327,10 +327,10 @@ dri_destroy_screen(__DRIscreen * sPriv)
 
 const __DRIconfig **
 dri_init_screen_helper(struct dri_screen *screen,
-                       struct drm_create_screen_arg *arg,
+                       struct pipe_screen *pscreen,
                        unsigned pixel_bits)
 {
-   screen->pipe_screen = screen->api->create_screen(screen->api, screen->fd, arg);
+   screen->pipe_screen = pscreen;
    if (!screen->pipe_screen) {
       debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
       return NULL;

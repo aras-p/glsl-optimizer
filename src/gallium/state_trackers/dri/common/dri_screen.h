@@ -104,7 +104,7 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
 
 const __DRIconfig **
 dri_init_screen_helper(struct dri_screen *screen,
-                       struct drm_create_screen_arg *arg,
+                       struct pipe_screen *pscreen,
                        unsigned pixel_bits);
 
 void

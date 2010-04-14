@@ -261,13 +261,14 @@ drisw_init_screen(__DRIscreen * sPriv)
 {
    const __DRIconfig **configs;
    struct dri_screen *screen;
+   struct pipe_screen *pscreen;
    struct drisw_create_screen_arg arg;
 
    screen = CALLOC_STRUCT(dri_screen);
    if (!screen)
       return NULL;
 
-   screen->api = drm_api_create();
+   screen->api = NULL; /* not needed */
    screen->sPriv = sPriv;
    screen->fd = -1;
 
@@ -277,7 +278,10 @@ drisw_init_screen(__DRIscreen * sPriv)
    arg.base.mode = DRM_CREATE_DRISW;
    arg.lf = &drisw_lf;
 
-   configs = dri_init_screen_helper(screen, &arg.base, 32);
+   pscreen = screen->api->create_screen(screen->api, screen->fd, &arg.base);
+   /* dri_init_screen_helper checks pscreen for us */
+
+   configs = dri_init_screen_helper(screen, pscreen, 32);
    if (!configs)
       goto fail;
 

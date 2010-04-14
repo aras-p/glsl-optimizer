@@ -469,6 +469,7 @@ const __DRIconfig **
 dri1_init_screen(__DRIscreen * sPriv)
 {
    const __DRIconfig **configs;
+   struct pipe_screen *pscreen;
    struct dri_screen *screen;
    struct dri1_create_screen_arg arg;
 
@@ -500,7 +501,10 @@ dri1_init_screen(__DRIscreen * sPriv)
     * using.
     */
 
-   configs = dri_init_screen_helper(screen, &arg.base, sPriv->fbBPP);
+   pscreen = screen->api->create_screen(screen->api, screen->fd, &arg.base);
+   /* dri_init_screen_helper checks pscreen for us */
+
+   configs = dri_init_screen_helper(screen, pscreen, sPriv->fbBPP);
    if (!configs)
       goto fail;
 
