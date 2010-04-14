@@ -1207,9 +1207,6 @@ unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
         }
     }
 
-    /* XXX This is the compensation for the non-atomized states. */
-    dwords += 1024;
-
     return dwords;
 }
 
