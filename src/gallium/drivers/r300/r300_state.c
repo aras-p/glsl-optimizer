@@ -1379,7 +1379,9 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 
     if (r300->screen->caps.has_tcl) {
         r300->vs_state.dirty = TRUE;
-        r300->vs_state.size = vs->code.length + 9;
+        r300->vs_state.size =
+                vs->code.length + 9 +
+                (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0);
 
         r300->pvs_flush.dirty = TRUE;
 

@@ -333,6 +333,10 @@ void r300_translate_vertex_shader(struct r300_context* r300,
         r300_dummy_vertex_shader(r300, vs);
     }
 
+    /* Initialize numbers of constants for each type. */
+    vs->externals_count = ttr.immediate_offset;
+    vs->immediates_count = vs->code.constants.Count - vs->externals_count;
+
     /* And, finally... */
     rc_destroy(&compiler.Base);
 }

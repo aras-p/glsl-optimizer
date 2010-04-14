@@ -977,6 +977,10 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
                                   vtx_mem_size / output_count, 10);
     unsigned pvs_num_controllers = MIN2(vtx_mem_size / temp_count, 6);
 
+    unsigned imm_first = vs->externals_count;
+    unsigned imm_end = vs->code.constants.Count;
+    unsigned imm_count = vs->immediates_count;
+
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
@@ -1002,6 +1006,22 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
             R300_PVS_NUM_FPUS(r300screen->caps.num_vert_fpus) |
             R300_PVS_VF_MAX_VTX_NUM(12) |
             (r300screen->caps.is_r500 ? R500_TCL_STATE_OPTIMIZATION : 0));
+
+    /* Emit immediates. */
+    if (imm_count) {
+        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
+                   (r300->screen->caps.is_r500 ?
+                   R500_PVS_CONST_START : R300_PVS_CONST_START) +
+                   imm_first);
+        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, imm_count * 4);
+        for (i = imm_first; i < imm_end; i++) {
+            const float *data = vs->code.constants.Constants[i].u.Immediate;
+            OUT_CS_32F(data[0]);
+            OUT_CS_32F(data[1]);
+            OUT_CS_32F(data[2]);
+            OUT_CS_32F(data[3]);
+        }
+    }
     END_CS;
 }
 
@@ -1009,17 +1029,17 @@ void r300_emit_vs_constant_buffer(struct r300_context* r300,
                                   struct rc_constant_list* constants)
 {
     unsigned i;
+    unsigned count = ((struct r300_vertex_shader*)r300->vs_state.state)->externals_count;
     CS_LOCALS(r300);
 
-    BEGIN_CS(constants->Count * 4 + 3);
+    BEGIN_CS(count * 4 + 3);
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
                (r300->screen->caps.is_r500 ?
                R500_PVS_CONST_START : R300_PVS_CONST_START));
-    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, constants->Count * 4);
-    for (i = 0; i < constants->Count; i++) {
-        const float *data = get_shader_constant(r300,
-                                                &constants->Constants[i],
-                                                &r300->shader_constants[PIPE_SHADER_VERTEX]);
+    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, count * 4);
+    for (i = 0; i < count; i++) {
+        const float *data =
+                r300->shader_constants[PIPE_SHADER_VERTEX].constants[i];
         OUT_CS_32F(data[0]);
         OUT_CS_32F(data[1]);
         OUT_CS_32F(data[2]);

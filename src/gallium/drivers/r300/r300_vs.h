@@ -45,6 +45,10 @@ struct r300_vertex_shader {
      * compilation failure. */
     boolean dummy;
 
+    /* Numbers of constants for each type. */
+    unsigned externals_count;
+    unsigned immediates_count;
+
     /* Stream locations for SWTCL or if TCL is bypassed. */
     int stream_loc_notcl[16];
 
