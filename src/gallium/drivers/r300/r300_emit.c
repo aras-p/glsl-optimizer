@@ -346,7 +346,7 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     if (count == 0)
         return;
 
-    BEGIN_CS(count * 5);
+    BEGIN_CS(size);
     for(i = first; i < end; ++i) {
         if (constants->Constants[i].Type == RC_CONSTANT_STATE) {
             const float *data = get_shader_constant(r300,
@@ -439,7 +439,7 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     if (count == 0)
         return;
 
-    BEGIN_CS(count * 4 + 3);
+    BEGIN_CS(size);
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count * 4);
     for(i = 0; i < count; ++i) {
@@ -468,7 +468,7 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     if (count == 0)
         return;
 
-    BEGIN_CS(count * 7);
+    BEGIN_CS(size);
     for(i = first; i < end; ++i) {
         if (constants->Constants[i].Type == RC_CONSTANT_STATE) {
             const float *data = get_shader_constant(r300,
@@ -1202,7 +1202,7 @@ unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
     unsigned dwords = 0;
 
     foreach(atom, &r300->atom_list) {
-        if (atom->dirty || atom->always_dirty) {
+        if (atom->dirty) {
             dwords += atom->size;
         }
     }
@@ -1220,7 +1220,7 @@ void r300_emit_dirty_state(struct r300_context* r300)
     struct r300_atom* atom;
 
     foreach(atom, &r300->atom_list) {
-        if (atom->dirty || atom->always_dirty) {
+        if (atom->dirty) {
             atom->emit(r300, atom->size, atom->state);
             atom->dirty = FALSE;
         }

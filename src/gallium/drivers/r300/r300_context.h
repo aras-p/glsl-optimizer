@@ -53,8 +53,6 @@ struct r300_atom {
     unsigned size;
     /* Whether this atom should be emitted. */
     boolean dirty;
-    /* Another dirty flag that is never automatically cleared. */
-    boolean always_dirty;
 };
 
 struct r300_blend_state {
