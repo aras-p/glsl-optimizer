@@ -1,6 +1,6 @@
 # progs/gallium/simple/Makefile
 
-TOP = ../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 INCLUDES = \
