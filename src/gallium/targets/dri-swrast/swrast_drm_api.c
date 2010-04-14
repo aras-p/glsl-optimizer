@@ -68,16 +68,16 @@ swrast_create_screen(struct sw_winsys *winsys)
 #if defined(GALLIUM_CELL)
    if (screen == NULL && strcmp(driver, "cell") == 0)
       screen = cell_create_screen( winsys );
-#elif defined(GALLIUM_LLVMPIPE)
+#endif
+
+#if defined(GALLIUM_LLVMPIPE)
    if (screen == NULL && strcmp(driver, "llvmpipe") == 0)
       screen = llvmpipe_create_screen( winsys );
-#elif defined(GALLIUM_SOFTPIPE)
+#endif
+
+#if defined(GALLIUM_SOFTPIPE)
    if (screen == NULL)
       screen = softpipe_create_screen( winsys );
-
-   (void) driver;
-#else
-   (void) driver;
 #endif
 
    return screen;
