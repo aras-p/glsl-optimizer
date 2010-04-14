@@ -168,6 +168,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    sampler_state->wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler_state->wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler_state->wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler_state->normalized_coords = TRUE;
    /* The sampler state objects which sample from a specified mipmap level
     * are created on-demand. */
 
