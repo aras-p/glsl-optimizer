@@ -60,6 +60,10 @@ static const struct vertex_info *
 lp_setup_get_vertex_info(struct vbuf_render *vbr)
 {
    struct lp_setup_context *setup = lp_setup_context(vbr);
+
+   /* vertex size/info depends on the latest state */
+   lp_setup_update_state(setup);
+
    return setup->vertex_info;
 }
 
