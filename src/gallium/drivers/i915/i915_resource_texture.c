@@ -85,6 +85,7 @@ power_of_two(unsigned x)
    return value;
 }
 
+
 /*
  * More advanced helper funcs
  */
@@ -92,40 +93,24 @@ power_of_two(unsigned x)
 
 static void
 i915_texture_set_level_info(struct i915_texture *tex,
-                            unsigned level,
-                            unsigned nr_images,
-                            unsigned w, unsigned h, unsigned d)
+                            unsigned level, unsigned nr_images)
 {
    assert(level < Elements(tex->nr_images));
-
-   tex->nr_images[level] = nr_images;
-
-   /*
-   DBG("%s level %d size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
-       level, w, h, d, x, y, tex->level_offset[level]);
-   */
-
-   /* Not sure when this would happen, but anyway: 
-    */
-   if (tex->image_offset[level]) {
-      FREE(tex->image_offset[level]);
-      tex->image_offset[level] = NULL;
-   }
-
    assert(nr_images);
    assert(!tex->image_offset[level]);
 
+   tex->nr_images[level] = nr_images;
    tex->image_offset[level] = (unsigned *) MALLOC(nr_images * sizeof(unsigned));
    tex->image_offset[level][0] = 0;
 }
 
 static void
 i915_texture_set_image_offset(struct i915_texture *tex,
-                              unsigned level, unsigned img, unsigned x, unsigned y)
+                              unsigned level, unsigned img,
+                              unsigned x, unsigned y)
 {
-   if (img == 0 && level == 0)
-      assert(x == 0 && y == 0);
-
+   /* for the first image and level make sure offset is zero */
+   assert(!(img == 0 && level == 0) || (x == 0 && y == 0));
    assert(img < tex->nr_images[level]);
 
    tex->image_offset[level][img] = y * tex->stride + x * util_format_get_blocksize(tex->b.b.format);
@@ -153,10 +138,7 @@ i9x5_scanout_layout(struct i915_texture *tex)
    if (pt->last_level > 0 || util_format_get_blocksize(pt->format) != 4)
       return FALSE;
 
-   i915_texture_set_level_info(tex, 0, 1,
-                               pt->width0,
-                               pt->height0,
-                               1);
+   i915_texture_set_level_info(tex, 0, 1);
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
    if (pt->width0 >= 240) {
@@ -192,10 +174,7 @@ i9x5_display_target_layout(struct i915_texture *tex)
    if (pt->width0 < 240)
       return FALSE;
 
-   i915_texture_set_level_info(tex, 0, 1,
-                               pt->width0,
-                               pt->height0,
-                               1);
+   i915_texture_set_level_info(tex, 0, 1);
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
    tex->stride = power_of_two(util_format_get_stride(pt->format, pt->width0));
@@ -243,7 +222,7 @@ i915_texture_layout_2d(struct i915_texture *tex)
    tex->total_nblocksy = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
-      i915_texture_set_level_info(tex, level, 1, width, height, 1);
+      i915_texture_set_level_info(tex, level, 1);
       i915_texture_set_image_offset(tex, level, 0, 0, tex->total_nblocksy);
 
       nblocksy = align(MAX2(2, nblocksy), 2);
@@ -275,7 +254,7 @@ i915_texture_layout_3d(struct i915_texture *tex)
    /* XXX: hardware expects/requires 9 levels at minimum.
     */
    for (level = 0; level <= MAX2(8, pt->last_level); level++) {
-      i915_texture_set_level_info(tex, level, depth, width, height, depth);
+      i915_texture_set_level_info(tex, level, depth);
 
       stack_nblocksy += MAX2(2, nblocksy);
 
@@ -305,22 +284,18 @@ static void
 i915_texture_layout_cube(struct i915_texture *tex)
 {
    struct pipe_resource *pt = &tex->b.b;
-   unsigned width = pt->width0, height = pt->height0;
    const unsigned nblocks = util_format_get_nblocksx(pt->format, pt->width0);
    unsigned level;
    unsigned face;
 
-   assert(width == height); /* cubemap images are square */
+   assert(pt->width0 == pt->height0); /* cubemap images are square */
 
    /* double pitch for cube layouts */
    tex->stride = align(nblocks * util_format_get_blocksize(pt->format) * 2, 4);
    tex->total_nblocksy = nblocks * 4;
 
-   for (level = 0; level <= pt->last_level; level++) {
-      i915_texture_set_level_info(tex, level, 6, width, height, 1);
-      width /= 2;
-      height /= 2;
-   }
+   for (level = 0; level <= pt->last_level; level++)
+      i915_texture_set_level_info(tex, level, 6);
 
    for (face = 0; face < 6; face++) {
       unsigned x = initial_offsets[face][0] * nblocks;
@@ -411,7 +386,7 @@ i945_texture_layout_2d(struct i915_texture *tex)
    tex->total_nblocksy = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
-      i915_texture_set_level_info(tex, level, 1, width, height, 1);
+      i915_texture_set_level_info(tex, level, 1);
       i915_texture_set_image_offset(tex, level, 0, x, y);
 
       nblocksy = align(nblocksy, align_y);
@@ -460,7 +435,7 @@ i945_texture_layout_3d(struct i915_texture *tex)
       int y = 0;
       unsigned q, j;
 
-      i915_texture_set_level_info(tex, level, depth, width, height, depth);
+      i915_texture_set_level_info(tex, level, depth);
 
       for (q = 0; q < depth;) {
          for (j = 0; j < pack_x_nr && q < depth; j++, q++) {
@@ -496,17 +471,14 @@ i945_texture_layout_cube(struct i915_texture *tex)
 {
    struct pipe_resource *pt = &tex->b.b;
    unsigned level;
-
    const unsigned nblocks = util_format_get_nblocksx(pt->format, pt->width0);
    unsigned face;
-   unsigned width = pt->width0;
-   unsigned height = pt->height0;
 
    /*
    printf("%s %i, %i\n", __FUNCTION__, pt->width0, pt->height0);
    */
 
-   assert(width == height); /* cubemap images are square */
+   assert(pt->width0 == pt->height0); /* cubemap images are square */
 
    /*
     * XXX Should only be used for compressed formats. But lets
@@ -525,11 +497,8 @@ i945_texture_layout_cube(struct i915_texture *tex)
 
    /* Set all the levels to effectively occupy the whole rectangular region.
    */
-   for (level = 0; level <= pt->last_level; level++) {
-      i915_texture_set_level_info(tex, level, 6, width, height, 1);
-      width /= 2;
-      height /= 2;
-   }
+   for (level = 0; level <= pt->last_level; level++)
+      i915_texture_set_level_info(tex, level, 6);
 
    for (face = 0; face < 6; face++) {
       unsigned x = initial_offsets[face][0] * nblocks;
@@ -836,7 +805,7 @@ i915_texture_from_handle(struct pipe_screen * screen,
 
    tex->stride = stride;
 
-   i915_texture_set_level_info(tex, 0, 1, template->width0, template->height0, 1);
+   i915_texture_set_level_info(tex, 0, 1);
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
    tex->buffer = buffer;
