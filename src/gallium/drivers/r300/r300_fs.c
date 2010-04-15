@@ -140,13 +140,10 @@ static void get_external_state(
 
     for (i = 0; i < texstate->sampler_state_count; i++) {
         struct r300_sampler_state* s = texstate->sampler_states[i];
-        struct r300_texture *t;
 
-        if (!s || !texstate->sampler_views[i]) {
+        if (!s) {
             continue;
         }
-
-        t = (struct r300_texture*)texstate->sampler_views[i]->base.texture;
 
         if (s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
             /* XXX Gallium doesn't provide us with any information regarding
@@ -157,7 +154,12 @@ static void get_external_state(
             state->unit[i].texture_compare_func = s->state.compare_func;
         }
 
-        state->unit[i].fake_npot = t->uses_pitch;
+        if (texstate->sampler_views[i]) {
+            struct r300_texture *t;
+            t = (struct r300_texture*)texstate->sampler_views[i]->base.texture;
+
+            state->unit[i].fake_npot = t->uses_pitch;
+        }
         state->unit[i].non_normalized_coords = !s->state.normalized_coords;
 
         /* XXX this should probably take into account STR, not just S. */
