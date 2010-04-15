@@ -90,7 +90,7 @@ nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_resource *ib,
 		return FALSE;
 	}
 
-	if (nvfx->screen->eng3d->grclass != NV40TCL || ib_size == 1)
+	if (!nvfx->screen->index_buffer_reloc_flags || ib_size == 1)
 		return FALSE;
 
 	switch (ib_size) {
@@ -493,7 +493,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 	int i;
 	int elements = MAX2(nvfx->vtxelt->num_elements, nvfx->hw_vtxelt_nr);
 	uint32_t vtxfmt[16];
-	unsigned vb_flags = nvfx->screen->vertex_buffer_flags | NOUVEAU_BO_RD;
+	unsigned vb_flags = nvfx->screen->vertex_buffer_reloc_flags | NOUVEAU_BO_RD;
 
 	if (!elements)
 		return TRUE;
@@ -567,11 +567,14 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 	OUT_RING(chan, 0);
 
 	if (ib) {
+		unsigned ib_flags = nvfx->screen->index_buffer_reloc_flags | NOUVEAU_BO_RD;
 		struct nouveau_bo* bo = nvfx_resource(ib)->bo;
 
+		assert(nvfx->screen->index_buffer_reloc_flags);
+
 		OUT_RING(chan, RING_3D(NV34TCL_IDXBUF_ADDRESS, 2));
-		OUT_RELOC(chan, bo, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
-		OUT_RELOC(chan, bo, ib_format, vb_flags | NOUVEAU_BO_OR,
+		OUT_RELOC(chan, bo, 0, ib_flags | NOUVEAU_BO_LOW, 0, 0);
+		OUT_RELOC(chan, bo, ib_format, ib_flags | NOUVEAU_BO_OR,
 				  0, NV34TCL_IDXBUF_FORMAT_DMA1);
 	}
 
@@ -583,7 +586,7 @@ void
 nvfx_vbo_relocate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
-	unsigned vb_flags = nvfx->screen->vertex_buffer_flags | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
+	unsigned vb_flags = nvfx->screen->vertex_buffer_reloc_flags | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
 	int i;
 
 	MARK_RING(chan, 2 * 16 + 3, 2 * 16 + 3);
@@ -602,14 +605,17 @@ nvfx_vbo_relocate(struct nvfx_context *nvfx)
 
 	if(nvfx->idxbuf)
 	{
+		unsigned ib_flags = nvfx->screen->index_buffer_reloc_flags | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
 		struct nouveau_bo* bo = nvfx_resource(nvfx->idxbuf)->bo;
 
+		assert(nvfx->screen->index_buffer_reloc_flags);
+
 		OUT_RELOC(chan, bo, RING_3D(NV34TCL_IDXBUF_ADDRESS, 2),
-				vb_flags, 0, 0);
+				ib_flags, 0, 0);
 		OUT_RELOC(chan, bo, 0,
-				vb_flags | NOUVEAU_BO_LOW, 0, 0);
+				ib_flags | NOUVEAU_BO_LOW, 0, 0);
 		OUT_RELOC(chan, bo, nvfx->idxbuf_format,
-				vb_flags | NOUVEAU_BO_OR,
+				ib_flags | NOUVEAU_BO_OR,
 				0, NV34TCL_IDXBUF_FORMAT_DMA1);
 	}
 }

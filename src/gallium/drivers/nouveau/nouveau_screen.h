@@ -5,6 +5,11 @@ struct nouveau_screen {
 	struct pipe_screen base;
 	struct nouveau_device *device;
 	struct nouveau_channel *channel;
+
+	/* note that OpenGL doesn't distinguish between these, so
+	 * these almost always should be set to the same value */
+	unsigned vertex_buffer_flags;
+	unsigned index_buffer_flags;
 };
 
 static inline struct nouveau_screen *

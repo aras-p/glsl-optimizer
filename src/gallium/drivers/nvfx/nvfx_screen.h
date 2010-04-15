@@ -14,8 +14,9 @@ struct nvfx_screen {
 	struct nvfx_context *cur_ctx;
 
 	unsigned is_nv4x; /* either 0 or ~0 */
-	int vertex_buffer_flags;
 	boolean force_swtnl;
+	unsigned vertex_buffer_reloc_flags;
+	unsigned index_buffer_reloc_flags;
 
 	/* HW graphics objects */
 	struct nv04_surface_2d *eng2d;

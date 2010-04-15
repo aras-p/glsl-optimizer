@@ -69,10 +69,6 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, int param)
 		return 0;
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 		return !!screen->is_nv4x;
-	case NOUVEAU_CAP_HW_VTXBUF:
-		return !screen->force_swtnl;
-	case NOUVEAU_CAP_HW_IDXBUF:
-		return !screen->force_swtnl && screen->eng3d->grclass == NV40TCL;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
 		return 16;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -287,8 +283,8 @@ static void nv40_screen_init(struct nvfx_screen *screen)
 	OUT_RING(chan, 0x00000001);
 }
 
-static void
-nvfx_screen_init_buffer_functions(struct nvfx_screen* screen)
+static unsigned
+nvfx_screen_get_vertex_buffer_flags(struct nvfx_screen* screen)
 {
 	int vram_hack_default = 0;
 	int vram_hack;
@@ -314,7 +310,7 @@ nvfx_screen_init_buffer_functions(struct nvfx_screen* screen)
 	}
 #endif
 
-	screen->vertex_buffer_flags = vram_hack ? NOUVEAU_BO_VRAM : NOUVEAU_BO_GART;
+	return vram_hack ? NOUVEAU_BO_VRAM : NOUVEAU_BO_GART;
 }
 
 struct pipe_screen *
@@ -375,8 +371,16 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	screen->force_swtnl = debug_get_bool_option("NOUVEAU_SWTNL", FALSE);
 
+	screen->vertex_buffer_reloc_flags = nvfx_screen_get_vertex_buffer_flags(screen);
+
+	/* surely both nv3x and nv44 support index buffers too: find out how and test that */
+	if(eng3d_class == NV40TCL)
+		screen->index_buffer_reloc_flags = screen->vertex_buffer_reloc_flags;
+
+	if(!screen->force_swtnl && screen->vertex_buffer_reloc_flags == screen->index_buffer_reloc_flags)
+		screen->base.vertex_buffer_flags = screen->base.index_buffer_flags = screen->vertex_buffer_reloc_flags;
+
 	nvfx_screen_init_resource_functions(pscreen);
-	nvfx_screen_init_buffer_functions(screen);
 
 	ret = nouveau_grobj_alloc(chan, 0xbeef3097, eng3d_class, &screen->eng3d);
 	if (ret) {

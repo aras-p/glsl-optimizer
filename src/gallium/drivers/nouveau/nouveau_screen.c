@@ -44,14 +44,10 @@ nouveau_screen_bo_new(struct pipe_screen *pscreen, unsigned alignment,
 	uint32_t flags = NOUVEAU_BO_MAP, tile_mode = 0, tile_flags = 0;
 	int ret;
 
-	if (bind & PIPE_BIND_VERTEX_BUFFER) {
-		if (pscreen->get_param(pscreen, NOUVEAU_CAP_HW_VTXBUF))
-			flags |= NOUVEAU_BO_GART;
-	} else
-	if (usage & PIPE_BIND_INDEX_BUFFER) {
-		if (pscreen->get_param(pscreen, NOUVEAU_CAP_HW_IDXBUF))
-			flags |= NOUVEAU_BO_GART;
-	}
+	if (bind & PIPE_BIND_VERTEX_BUFFER)
+		flags |= nouveau_screen(pscreen)->vertex_buffer_flags;
+	else if (bind & PIPE_BIND_INDEX_BUFFER)
+		flags |= nouveau_screen(pscreen)->index_buffer_flags;
 
 	if (bind & (PIPE_BIND_RENDER_TARGET |
 			PIPE_BIND_DEPTH_STENCIL |

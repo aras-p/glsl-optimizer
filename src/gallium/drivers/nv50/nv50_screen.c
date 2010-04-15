@@ -134,10 +134,6 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 		return 1;
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 		return 1;
-	case NOUVEAU_CAP_HW_VTXBUF:
-		return screen->force_push ? 0 : 1;
-	case NOUVEAU_CAP_HW_IDXBUF:
-		return screen->force_push ? 0 : 1;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 		return 1;
 	case PIPE_CAP_INDEP_BLEND_FUNC:
@@ -501,6 +497,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	FIRE_RING (chan);
 
 	screen->force_push = debug_get_bool_option("NV50_ALWAYS_PUSH", FALSE);
+	if(!screen->force_push)
+		screen->base.vertex_buffer_flags = screen->base.index_buffer_flags = NOUVEAU_BO_GART;
 	return pscreen;
 }
 
