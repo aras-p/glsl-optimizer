@@ -36,6 +36,7 @@
 #include "glsl_parser.h"
 #include "ir_constant_folding.h"
 #include "ir_function_inlining.h"
+#include "ir_if_simplification.h"
 #include "ir_print_visitor.h"
 
 const char *
@@ -759,6 +760,7 @@ main(int argc, char **argv)
 	 progress = false;
 
 	 progress = do_function_inlining(&instructions) || progress;
+	 progress = do_if_simplification(&instructions) || progress;
 
 	 /* Constant folding */
 	 ir_constant_folding_visitor constant_folding;

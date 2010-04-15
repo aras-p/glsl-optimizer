@@ -58,6 +58,7 @@ public:
    virtual class ir_assignment *        as_assignment()       { return NULL; }
    virtual class ir_call *              as_call()             { return NULL; }
    virtual class ir_return *            as_return()           { return NULL; }
+   virtual class ir_if *                as_if()               { return NULL; }
    /*@}*/
 
 protected:
@@ -297,6 +298,11 @@ public:
       : condition(condition)
    {
       /* empty */
+   }
+
+   virtual ir_if *as_if()
+   {
+      return this;
    }
 
    virtual void accept(ir_visitor *v)
