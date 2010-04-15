@@ -514,22 +514,22 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                  * This prevents incorrect rendering. */
                 texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
 
-                /* Set repeat or mirrored-repeat to clamp-to-edge. */
-                /* Wrap S. */
-                if ((texstate->filter0 & R300_TX_WRAP_S_MASK) ==
-                     R300_TX_WRAP_S(R300_TX_REPEAT) ||
-                    (texstate->filter0 & R300_TX_WRAP_S_MASK) ==
-                     R300_TX_WRAP_S(R300_TX_MIRRORED)) {
-                    texstate->filter0 &= ~R300_TX_WRAP_S_MASK;
-                    texstate->filter0 |= R300_TX_WRAP_S(R300_TX_CLAMP_TO_EDGE);
+                /* Mask out the mirrored flag. */
+                if (texstate->filter0 & R300_TX_WRAP_S(R300_TX_MIRRORED)) {
+                    texstate->filter0 &= ~R300_TX_WRAP_S(R300_TX_MIRRORED);
+                }
+                if (texstate->filter0 & R300_TX_WRAP_T(R300_TX_MIRRORED)) {
+                    texstate->filter0 &= ~R300_TX_WRAP_T(R300_TX_MIRRORED);
                 }
 
-                /* Wrap T. */
+                /* Change repeat to clamp-to-edge.
+                 * (the repeat bit has a value of 0, no masking needed). */
+                if ((texstate->filter0 & R300_TX_WRAP_S_MASK) ==
+                    R300_TX_WRAP_S(R300_TX_REPEAT)) {
+                    texstate->filter0 |= R300_TX_WRAP_S(R300_TX_CLAMP_TO_EDGE);
+                }
                 if ((texstate->filter0 & R300_TX_WRAP_T_MASK) ==
-                     R300_TX_WRAP_T(R300_TX_REPEAT) ||
-                    (texstate->filter0 & R300_TX_WRAP_T_MASK) ==
-                     R300_TX_WRAP_T(R300_TX_MIRRORED)) {
-                    texstate->filter0 &= ~R300_TX_WRAP_T_MASK;
+                    R300_TX_WRAP_T(R300_TX_REPEAT)) {
                     texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
                 }
             } else {
