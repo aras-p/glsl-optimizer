@@ -200,6 +200,10 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
          goto fail;
    }
 
+   if (resource_is_texture(&lpt->base)) {
+      assert(lpt->layout[0][0]);
+   }
+
    lpt->id = id_counter++;
 
    return &lpt->base;
