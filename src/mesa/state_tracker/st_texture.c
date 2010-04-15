@@ -31,9 +31,6 @@
 #include "st_cb_fbo.h"
 #include "st_inlines.h"
 #include "main/enums.h"
-#include "main/texfetch.h"
-#include "main/teximage.h"
-#include "main/texobj.h"
 
 #undef Elements  /* fix re-defined macro warning */
 
