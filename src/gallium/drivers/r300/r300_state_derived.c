@@ -30,6 +30,7 @@
 #include "r300_fs.h"
 #include "r300_screen.h"
 #include "r300_shader_semantics.h"
+#include "r300_state.h"
 #include "r300_state_derived.h"
 #include "r300_state_inlines.h"
 #include "r300_vs.h"
@@ -550,16 +551,24 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     }
 
     r300->textures_state.size = size;
+
+    /* Pick a fragment shader based on either the texture compare state
+     * or the uses_pitch flag. */
+    if (r300->fs.state && count) {
+        if (r300_pick_fragment_shader(r300)) {
+            r300_mark_fs_code_dirty(r300);
+        }
+    }
 }
 
 void r300_update_derived_state(struct r300_context* r300)
 {
-    if (r300->rs_block_state.dirty) {
-        r300_update_derived_shader_state(r300);
-    }
-
     if (r300->textures_state.dirty) {
         r300_merge_textures_and_samplers(r300);
+    }
+
+    if (r300->rs_block_state.dirty) {
+        r300_update_derived_shader_state(r300);
     }
 
     if (r300->draw) {

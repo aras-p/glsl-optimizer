@@ -36,6 +36,7 @@
 #include "r300_reg.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
+#include "r300_state.h"
 #include "r300_state_inlines.h"
 #include "r300_fs.h"
 #include "r300_texture.h"
@@ -683,7 +684,7 @@ static void* r300_create_fs_state(struct pipe_context* pipe,
     return (void*)fs;
 }
 
-static void r300_mark_fs_code_dirty(struct r300_context *r300)
+void r300_mark_fs_code_dirty(struct r300_context *r300)
 {
     struct r300_fragment_shader* fs = r300_fs(r300);
 
@@ -982,13 +983,6 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     state->sampler_state_count = count;
 
     r300->textures_state.dirty = TRUE;
-
-    /* Pick a fragment shader based on the texture compare state. */
-    if (r300->fs.state && count) {
-        if (r300_pick_fragment_shader(r300)) {
-            r300_mark_fs_code_dirty(r300);
-        }
-    }
 }
 
 static void r300_lacks_vertex_textures(struct pipe_context* pipe,
@@ -1012,7 +1006,6 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     struct r300_texture *texture;
     unsigned i;
     unsigned tex_units = r300->screen->caps.num_tex_units;
-    boolean is_r500 = r300->screen->caps.is_r500;
     boolean dirty_tex = FALSE;
 
     if (count > tex_units) {
@@ -1032,9 +1025,10 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
             /* A new sampler view (= texture)... */
             dirty_tex = TRUE;
 
-            /* R300-specific - set the texrect factor in the fragment shader */
+            /* Set the texrect factor in the fragment shader.
+             * Needed for RECT and NPOT fallback. */
             texture = r300_texture(views[i]->texture);
-            if (!is_r500 && texture->uses_pitch) {
+            if (texture->uses_pitch) {
                 r300->fs_rc_constant_state.dirty = TRUE;
             }
         }

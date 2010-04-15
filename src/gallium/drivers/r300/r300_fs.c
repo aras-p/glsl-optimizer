@@ -342,8 +342,12 @@ boolean r300_pick_fragment_shader(struct r300_context* r300)
             ptr = fs->first;
             while (ptr) {
                 if (memcmp(&ptr->compare_state, &state, sizeof(state)) == 0) {
-                    fs->shader = ptr;
-                    return TRUE;
+                    if (fs->shader != ptr) {
+                        fs->shader = ptr;
+                        return TRUE;
+                    }
+                    /* The currently-bound one is OK. */
+                    return FALSE;
                 }
                 ptr = ptr->next;
             }
