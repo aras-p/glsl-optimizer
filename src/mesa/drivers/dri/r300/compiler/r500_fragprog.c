@@ -200,12 +200,22 @@ int r500_transform_TEX(
 			}
 
 			if (wrapmode == RC_WRAP_REPEAT) {
-				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+				/* Both instructions will be paired up. */
+				struct rc_instruction *inst_frc = rc_insert_new_instruction(c, inst->Prev);
+				struct rc_instruction *inst_mov = rc_insert_new_instruction(c, inst_frc);
 
-				inst_rect->U.I.Opcode = RC_OPCODE_FRC;
-				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.DstReg.Index = temp;
-				inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+				inst_frc->U.I.Opcode = RC_OPCODE_FRC;
+				inst_frc->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_frc->U.I.DstReg.Index = temp;
+				inst_frc->U.I.DstReg.WriteMask = RC_MASK_XYZ;
+				inst_frc->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+
+				/* Preserve W for TXP. */
+				inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+				inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_mov->U.I.DstReg.Index = temp;
+				inst_mov->U.I.DstReg.WriteMask = RC_MASK_W;
+				inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
 
 				reset_srcreg(&inst->U.I.SrcReg[0]);
 				inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;

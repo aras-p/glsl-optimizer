@@ -165,8 +165,7 @@ static void get_external_state(
                 switch (s->state.wrap_s) {
                     case PIPE_TEX_WRAP_REPEAT:
                         state->unit[i].wrap_mode = RC_WRAP_REPEAT;
-                        /* XXX Enable when REPEAT fallback works.
-                        state->unit[i].fake_npot = TRUE; */
+                        state->unit[i].fake_npot = TRUE;
                         break;
 
                     case PIPE_TEX_WRAP_MIRROR_REPEAT:
