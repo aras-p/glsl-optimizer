@@ -174,7 +174,7 @@ int r300_transform_TEX(
 		}
 
 		if (compiler->state.unit[inst->U.I.TexSrcUnit].fake_npot &&
-			wrapmode != RC_WRAP_NONE && wrapmode != RC_WRAP_CLAMP) {
+			wrapmode != RC_WRAP_NONE) {
 			if (wrapmode == RC_WRAP_REPEAT) {
 				inst_rect = rc_insert_new_instruction(c, inst->Prev);
 

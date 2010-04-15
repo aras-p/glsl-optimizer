@@ -114,7 +114,6 @@ typedef enum {
  */
 typedef enum {
 	RC_WRAP_NONE = 0,
-	RC_WRAP_CLAMP,
 	RC_WRAP_REPEAT,
 	RC_WRAP_MIRROR
 } rc_wrap_mode;

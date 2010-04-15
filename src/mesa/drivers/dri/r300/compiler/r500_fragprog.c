@@ -177,7 +177,7 @@ int r500_transform_TEX(
 		unsigned temp = rc_find_free_temporary(c);
 
 		if (compiler->state.unit[inst->U.I.TexSrcUnit].fake_npot &&
-			wrapmode != RC_WRAP_NONE && wrapmode != RC_WRAP_CLAMP) {
+			wrapmode != RC_WRAP_NONE) {
 
 			if ((inst->U.I.TexSrcTarget == RC_TEXTURE_RECT ||
 				compiler->state.unit[inst->U.I.TexSrcUnit].non_normalized_coords)) {
