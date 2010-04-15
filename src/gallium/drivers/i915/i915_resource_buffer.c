@@ -39,7 +39,6 @@
 
 #include "i915_context.h"
 #include "i915_resource.h"
-#include "i915_screen.h"
 
 
 
