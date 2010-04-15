@@ -188,6 +188,32 @@ i9x5_display_target_layout(struct i915_texture *tex)
    return TRUE;
 }
 
+/**
+ * Helper function for special layouts
+ */
+static boolean
+i9x5_special_layout(struct i915_texture *tex)
+{
+   struct pipe_resource *pt = &tex->b.b;
+
+   /* Scanouts needs special care */
+   if (pt->bind & PIPE_BIND_SCANOUT)
+      if (i9x5_scanout_layout(tex))
+         return TRUE;
+
+   /* Shared buffers needs to be compatible with X servers
+    *
+    * XXX: need a better name than shared for this if it is to be part
+    * of core gallium, and probably move the flag to resource.flags,
+    * rather than bindings.
+    */
+   if (pt->bind & (PIPE_BIND_SHARED | PIPE_BIND_DISPLAY_TARGET))
+      if (i9x5_display_target_layout(tex))
+         return TRUE;
+
+   return FALSE;
+}
+
 
 /*
  * i915 layout functions
@@ -203,21 +229,6 @@ i915_texture_layout_2d(struct i915_texture *tex)
    unsigned height = pt->height0;
    unsigned nblocksy = util_format_get_nblocksy(pt->format, pt->width0);
    unsigned align_y = 2;
-
-   /* used for scanouts that need special layouts */
-   if (pt->bind & PIPE_BIND_SCANOUT)
-      if (i9x5_scanout_layout(tex))
-         return;
-
-   /* shared buffers needs to be compatible with X servers 
-    * 
-    * XXX: need a better name than shared for this if it is to be part
-    * of core gallium, and probably move the flag to resource.flags,
-    * rather than bindings.
-    */
-   if (pt->bind & (PIPE_BIND_SHARED | PIPE_BIND_DISPLAY_TARGET))
-      if (i9x5_display_target_layout(tex))
-         return;
 
    if (util_format_is_s3tc(pt->format))
       align_y = 1;
@@ -321,7 +332,8 @@ i915_texture_layout(struct i915_texture * tex)
    switch (pt->target) {
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
-      i915_texture_layout_2d(tex);
+      if (!i9x5_special_layout(tex))
+         i915_texture_layout_2d(tex);
       break;
    case PIPE_TEXTURE_3D:
       i915_texture_layout_3d(tex);
@@ -355,16 +367,6 @@ i945_texture_layout_2d(struct i915_texture *tex)
    unsigned height = pt->height0;
    unsigned nblocksx = util_format_get_nblocksx(pt->format, pt->width0);
    unsigned nblocksy = util_format_get_nblocksy(pt->format, pt->height0);
-
-   /* used for scanouts that need special layouts */
-   if (tex->b.b.bind & PIPE_BIND_SCANOUT)
-      if (i9x5_scanout_layout(tex))
-         return;
-
-   /* shared buffers needs to be compatible with X servers */
-   if (tex->b.b.bind & (PIPE_BIND_SHARED | PIPE_BIND_DISPLAY_TARGET))
-      if (i9x5_display_target_layout(tex))
-         return;
 
    if (util_format_is_s3tc(pt->format)) {
       align_x = 1;
@@ -574,7 +576,8 @@ i945_texture_layout(struct i915_texture * tex)
    switch (pt->target) {
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
-      i945_texture_layout_2d(tex);
+      if (!i9x5_special_layout(tex))
+         i945_texture_layout_2d(tex);
       break;
    case PIPE_TEXTURE_3D:
       i945_texture_layout_3d(tex);
