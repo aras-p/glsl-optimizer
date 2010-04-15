@@ -64,7 +64,7 @@ st_texture_create(struct st_context *st,
    struct pipe_resource pt, *newtex;
    struct pipe_screen *screen = st->pipe->screen;
 
-   assert(target <= PIPE_TEXTURE_CUBE);
+   assert(target < PIPE_MAX_TEXTURE_TYPES);
    assert(width0 > 0);
    assert(height0 > 0);
    assert(depth0 > 0);
