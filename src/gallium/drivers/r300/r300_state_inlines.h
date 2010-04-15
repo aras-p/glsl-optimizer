@@ -255,7 +255,7 @@ static INLINE uint32_t r300_translate_wrap(int wrap)
         case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
             return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
         case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-            return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
+            return R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
         default:
             fprintf(stderr, "r300: Unknown texture wrap %d", wrap);
             assert(0);
