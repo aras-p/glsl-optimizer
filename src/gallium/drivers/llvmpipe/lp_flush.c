@@ -65,7 +65,8 @@ llvmpipe_flush( struct pipe_context *pipe,
    }
 
    /* ask the setup module to flush */
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_RENDER_CACHE)) {
+   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_RENDER_CACHE |
+                PIPE_FLUSH_TEXTURE_CACHE)) {
       lp_setup_flush(llvmpipe->setup, flags);
    }
 
