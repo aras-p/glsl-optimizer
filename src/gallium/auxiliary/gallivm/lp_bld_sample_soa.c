@@ -2008,11 +2008,6 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    LLVMValueRef t;
    LLVMValueRef r;
 
-   (void) lp_build_lod_selector;   /* temporary to silence warning */
-   (void) lp_build_nearest_mip_level;
-   (void) lp_build_linear_mip_levels;
-   (void) lp_build_minify;
-
    /* Setup our build context */
    memset(&bld, 0, sizeof bld);
    bld.builder = builder;
