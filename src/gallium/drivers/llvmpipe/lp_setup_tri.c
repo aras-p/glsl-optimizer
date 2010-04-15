@@ -272,6 +272,32 @@ alloc_triangle(struct lp_scene *scene, unsigned nr_inputs, unsigned *tri_size)
 }
 
 
+/**
+ * Print triangle vertex attribs (for debug).
+ */
+static void
+print_triangle(struct lp_setup_context *setup,
+               const float (*v1)[4],
+               const float (*v2)[4],
+               const float (*v3)[4])
+{
+   uint i;
+
+   debug_printf("llvmpipe triangle\n");
+   for (i = 0; i < setup->fs.nr_inputs; i++) {
+      debug_printf("  v1[%d]:  %f %f %f %f\n", i,
+                   v1[i][0], v1[i][1], v1[i][2], v1[i][3]);
+   }
+   for (i = 0; i < setup->fs.nr_inputs; i++) {
+      debug_printf("  v2[%d]:  %f %f %f %f\n", i,
+                   v2[i][0], v2[i][1], v2[i][2], v2[i][3]);
+   }
+   for (i = 0; i < setup->fs.nr_inputs; i++) {
+      debug_printf("  v3[%d]:  %f %f %f %f\n", i,
+                   v3[i][0], v3[i][1], v3[i][2], v3[i][3]);
+   }
+}
+
 
 /**
  * Do basic setup for triangle rasterization and determine which
@@ -299,6 +325,9 @@ do_triangle_ccw(struct lp_setup_context *setup,
    float oneoverarea;
    int minx, maxx, miny, maxy;
    unsigned tri_bytes;
+
+   if (0)
+      print_triangle(setup, v1, v2, v3);
 
    tri = alloc_triangle(scene, setup->fs.nr_inputs, &tri_bytes);
 
