@@ -19,6 +19,7 @@ LINKS = \
 	$(PROG_LINKS)
 
 SOURCES = \
+	pipe_barrier_test.c \
 	u_format_test.c \
 	u_half_test.c
 

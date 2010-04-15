@@ -5,6 +5,7 @@ env = env.Clone()
 env.Prepend(LIBS = [gallium])
 
 progs = [
+    'pipe_barrier_test',
     'u_format_test',
     'u_half_test'
 ]
