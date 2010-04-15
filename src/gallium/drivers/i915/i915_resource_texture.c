@@ -202,6 +202,7 @@ i915_texture_layout_2d(struct i915_texture *tex)
    unsigned width = pt->width0;
    unsigned height = pt->height0;
    unsigned nblocksy = util_format_get_nblocksy(pt->format, pt->width0);
+   unsigned align_y = 2;
 
    /* used for scanouts that need special layouts */
    if (pt->bind & PIPE_BIND_SCANOUT)
@@ -218,6 +219,9 @@ i915_texture_layout_2d(struct i915_texture *tex)
       if (i9x5_display_target_layout(tex))
          return;
 
+   if (util_format_is_s3tc(pt->format))
+      align_y = 1;
+
    tex->stride = align(util_format_get_stride(pt->format, pt->width0), 4);
    tex->total_nblocksy = 0;
 
@@ -225,13 +229,11 @@ i915_texture_layout_2d(struct i915_texture *tex)
       i915_texture_set_level_info(tex, level, 1);
       i915_texture_set_image_offset(tex, level, 0, 0, tex->total_nblocksy);
 
-      nblocksy = align(MAX2(2, nblocksy), 2);
-
       tex->total_nblocksy += nblocksy;
 
       width = u_minify(width, 1);
       height = u_minify(height, 1);
-      nblocksy = util_format_get_nblocksy(pt->format, height);
+      nblocksy = align(util_format_get_nblocksy(pt->format, height), align_y);
    }
 }
 
@@ -345,7 +347,7 @@ static void
 i945_texture_layout_2d(struct i915_texture *tex)
 {
    struct pipe_resource *pt = &tex->b.b;
-   const int align_x = 2, align_y = 4;
+   int align_x = 4, align_y = 2;
    unsigned level;
    unsigned x = 0;
    unsigned y = 0;
@@ -364,6 +366,11 @@ i945_texture_layout_2d(struct i915_texture *tex)
       if (i9x5_display_target_layout(tex))
          return;
 
+   if (util_format_is_s3tc(pt->format)) {
+      align_x = 1;
+      align_y = 1;
+   }
+
    tex->stride = align(util_format_get_stride(pt->format, pt->width0), 4);
 
    /* May need to adjust pitch to accomodate the placement of
@@ -372,9 +379,9 @@ i945_texture_layout_2d(struct i915_texture *tex)
     * 2nd mipmap level out past the width of its parent.
     */
    if (pt->last_level > 0) {
-      unsigned mip1_nblocksx 
-         = align(util_format_get_nblocksx(pt->format, u_minify(width, 1)), align_x)
-         + util_format_get_nblocksx(pt->format, u_minify(width, 2));
+      unsigned mip1_nblocksx =
+         align(util_format_get_nblocksx(pt->format, u_minify(pt->width0, 1)), align_x) +
+         util_format_get_nblocksx(pt->format, u_minify(pt->width0, 2));
 
       if (mip1_nblocksx > nblocksx)
          tex->stride = mip1_nblocksx * util_format_get_blocksize(pt->format);
@@ -389,8 +396,6 @@ i945_texture_layout_2d(struct i915_texture *tex)
       i915_texture_set_level_info(tex, level, 1);
       i915_texture_set_image_offset(tex, level, 0, x, y);
 
-      nblocksy = align(nblocksy, align_y);
-
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
        */
@@ -399,15 +404,15 @@ i945_texture_layout_2d(struct i915_texture *tex)
       /* Layout_below: step right after second mipmap level.
        */
       if (level == 1) {
-         x += align(nblocksx, align_x);
+         x += nblocksx;
       } else {
          y += nblocksy;
       }
 
       width  = u_minify(width, 1);
       height = u_minify(height, 1);
-      nblocksx = util_format_get_nblocksx(pt->format, width);
-      nblocksy = util_format_get_nblocksy(pt->format, height);
+      nblocksx = align(util_format_get_nblocksx(pt->format, width), align_x);
+      nblocksy = align(util_format_get_nblocksy(pt->format, height), align_y);
    }
 }
 
