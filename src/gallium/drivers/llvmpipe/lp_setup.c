@@ -37,6 +37,7 @@
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 #include "util/u_surface.h"
+#include "lp_context.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
 #include "lp_texture.h"
@@ -45,6 +46,7 @@
 #include "lp_rast.h"
 #include "lp_setup_context.h"
 #include "lp_screen.h"
+#include "lp_state.h"
 #include "state_tracker/sw_winsys.h"
 
 #include "draw/draw_context.h"
@@ -597,6 +599,20 @@ lp_setup_update_state( struct lp_setup_context *setup )
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    assert(setup->fs.current.jit_function);
+
+   /* Some of the 'draw' pipeline stages may have changed some driver state.
+    * Make sure we've processed those state changes before anything else.
+    *
+    * XXX this is the only place where llvmpipe_context is used in the
+    * setup code.  This may get refactored/changed...
+    */
+   {
+      struct llvmpipe_context *lp = llvmpipe_context(scene->pipe);
+      if (lp->dirty) {
+         llvmpipe_update_derived(lp);
+      }
+      assert(lp->dirty == 0);
+   }
 
    if(setup->dirty & LP_SETUP_NEW_BLEND_COLOR) {
       uint8_t *stored;
