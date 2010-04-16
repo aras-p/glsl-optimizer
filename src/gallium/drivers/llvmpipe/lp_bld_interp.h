@@ -42,10 +42,10 @@
 
 
 #include "gallivm/lp_bld.h"
+#include "gallivm/lp_bld_type.h"
 
 #include "tgsi/tgsi_exec.h"
 
-#include "lp_bld_type.h"
 
 
 struct tgsi_token;

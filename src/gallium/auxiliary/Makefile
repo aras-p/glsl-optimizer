@@ -156,7 +156,6 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_flow.c \
         gallivm/lp_bld_format_soa.c \
         gallivm/lp_bld_init.c \
-        gallivm/lp_bld_interp.c \
         gallivm/lp_bld_intr.c \
         gallivm/lp_bld_logic.c \
         gallivm/lp_bld_pack.c \

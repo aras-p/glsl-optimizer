@@ -38,10 +38,10 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"
-#include "lp_bld_debug.h"
-#include "lp_bld_const.h"
-#include "lp_bld_arit.h"
-#include "lp_bld_swizzle.h"
+#include "gallivm/lp_bld_debug.h"
+#include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_arit.h"
+#include "gallivm/lp_bld_swizzle.h"
 #include "lp_bld_interp.h"
 
 
