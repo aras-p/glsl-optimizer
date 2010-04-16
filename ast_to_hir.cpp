@@ -761,11 +761,8 @@ ast_expression::hir(exec_list *instructions,
       error_emitted = true;
       break;
 
-   case ast_logic_and:
-   case ast_logic_xor:
-   case ast_logic_or:
+   case ast_logic_and: {
       op[0] = this->subexpressions[0]->hir(instructions, state);
-      op[1] = this->subexpressions[1]->hir(instructions, state);
 
       if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
 	 YYLTYPE loc = this->subexpressions[0]->get_location();
@@ -775,6 +772,14 @@ ast_expression::hir(exec_list *instructions,
 	 error_emitted = true;
       }
 
+      ir_if *const stmt = new ir_if(op[0]);
+      instructions->push_tail(stmt);
+
+      ir_variable *const tmp = generate_temporary(glsl_type::bool_type,
+						  instructions, state);
+
+      op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
+
       if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
 	 YYLTYPE loc = this->subexpressions[1]->get_location();
 
@@ -782,6 +787,68 @@ ast_expression::hir(exec_list *instructions,
 			  operator_string(this->oper));
 	 error_emitted = true;
       }
+
+      ir_dereference *const then_deref = new ir_dereference(tmp);
+      ir_assignment *const then_assign =
+	 new ir_assignment(then_deref, op[1], NULL);
+      stmt->then_instructions.push_tail(then_assign);
+
+      ir_dereference *const else_deref = new ir_dereference(tmp);
+      ir_assignment *const else_assign =
+	 new ir_assignment(else_deref, new ir_constant(false), NULL);
+      stmt->else_instructions.push_tail(else_assign);
+
+      result = new ir_dereference(tmp);
+      type = tmp->type;
+      break;
+   }
+
+   case ast_logic_or: {
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+
+      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
+	 YYLTYPE loc = this->subexpressions[0]->get_location();
+
+	 _mesa_glsl_error(& loc, state, "LHS of `%s' must be scalar boolean",
+			  operator_string(this->oper));
+	 error_emitted = true;
+      }
+
+      ir_if *const stmt = new ir_if(op[0]);
+      instructions->push_tail(stmt);
+
+      ir_variable *const tmp = generate_temporary(glsl_type::bool_type,
+						  instructions, state);
+
+      op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
+
+      if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
+	 YYLTYPE loc = this->subexpressions[1]->get_location();
+
+	 _mesa_glsl_error(& loc, state, "RHS of `%s' must be scalar boolean",
+			  operator_string(this->oper));
+	 error_emitted = true;
+      }
+
+      ir_dereference *const then_deref = new ir_dereference(tmp);
+      ir_assignment *const then_assign =
+	 new ir_assignment(then_deref, new ir_constant(true), NULL);
+      stmt->then_instructions.push_tail(then_assign);
+
+      ir_dereference *const else_deref = new ir_dereference(tmp);
+      ir_assignment *const else_assign =
+	 new ir_assignment(else_deref, op[1], NULL);
+      stmt->else_instructions.push_tail(else_assign);
+
+      result = new ir_dereference(tmp);
+      type = tmp->type;
+      break;
+   }
+
+   case ast_logic_xor:
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
+
 
       result = new ir_expression(operations[this->oper], glsl_type::bool_type,
 				 op[0], op[1]);
