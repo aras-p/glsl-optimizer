@@ -53,6 +53,12 @@ st_buffer_object(struct gl_buffer_object *obj)
 
 
 extern void
+st_bufferobj_validate_usage(struct st_context *st,
+			    struct st_buffer_object *obj,
+			    unsigned usage);
+
+
+extern void
 st_init_bufferobject_functions(struct dd_function_table *functions);
 
 
