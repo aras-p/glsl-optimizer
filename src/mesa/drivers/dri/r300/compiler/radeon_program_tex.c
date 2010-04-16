@@ -41,6 +41,33 @@ static struct rc_src_register shadow_ambient(struct radeon_compiler * c, int tmu
 	return reg;
 }
 
+static void lower_texture_rect(struct r300_fragment_program_compiler *compiler,
+							   struct rc_instruction *inst)
+{
+	struct rc_instruction *inst_rect;
+	unsigned temp = rc_find_free_temporary(&compiler->Base);
+
+	if (inst->U.I.TexSrcTarget == RC_TEXTURE_RECT ||
+		compiler->state.unit[inst->U.I.TexSrcUnit].non_normalized_coords) {
+		inst_rect = rc_insert_new_instruction(&compiler->Base, inst->Prev);
+
+		inst_rect->U.I.Opcode = RC_OPCODE_MUL;
+		inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst_rect->U.I.DstReg.Index = temp;
+		inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+		inst_rect->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
+		inst_rect->U.I.SrcReg[1].Index =
+				rc_constants_add_state(&compiler->Base.Program.Constants,
+									   RC_STATE_R300_TEXRECT_FACTOR, inst->U.I.TexSrcUnit);
+
+		reset_srcreg(&inst->U.I.SrcReg[0]);
+		inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+		inst->U.I.SrcReg[0].Index = temp;
+
+		inst->U.I.TexSrcTarget = RC_TEXTURE_2D;
+	}
+}
+
 /**
  * Transform TEX, TXP, TXB, and KIL instructions in the following ways:
  *  - implement texture compare (shadow extensions)
@@ -176,32 +203,21 @@ int radeonTransformTEX(
 			compiler->state.unit[inst->U.I.TexSrcUnit].fake_npot ||
 			compiler->state.unit[inst->U.I.TexSrcUnit].non_normalized_coords)) {
 		rc_wrap_mode wrapmode = compiler->state.unit[inst->U.I.TexSrcUnit].wrap_mode;
-		struct rc_instruction *inst_rect = NULL;
-		unsigned temp = rc_find_free_temporary(c);
 
-		if (inst->U.I.TexSrcTarget == RC_TEXTURE_RECT ||
-			compiler->state.unit[inst->U.I.TexSrcUnit].non_normalized_coords) {
-			inst_rect = rc_insert_new_instruction(c, inst->Prev);
-
-			inst_rect->U.I.Opcode = RC_OPCODE_MUL;
-			inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_rect->U.I.DstReg.Index = temp;
-			inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-			inst_rect->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
-			inst_rect->U.I.SrcReg[1].Index =
-				rc_constants_add_state(&c->Program.Constants,
-					RC_STATE_R300_TEXRECT_FACTOR, inst->U.I.TexSrcUnit);
-
-			reset_srcreg(&inst->U.I.SrcReg[0]);
-			inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-			inst->U.I.SrcReg[0].Index = temp;
-
-			inst->U.I.TexSrcTarget = RC_TEXTURE_2D;
+		/* R300 cannot sample from rectangles. */
+		if (!compiler->is_r500) {
+			lower_texture_rect(compiler, inst);
 		}
 
 		if (compiler->state.unit[inst->U.I.TexSrcUnit].fake_npot &&
 			wrapmode != RC_WRAP_NONE) {
 			struct rc_instruction *inst_mov;
+			unsigned temp = rc_find_free_temporary(c);
+
+			/* For NPOT fallback, we need normalized coordinates anyway. */
+			if (compiler->is_r500) {
+				lower_texture_rect(compiler, inst);
+			}
 
 			if (wrapmode == RC_WRAP_REPEAT) {
 				/* Both instructions will be paired up. */
@@ -222,7 +238,7 @@ int radeonTransformTEX(
 				 * ADD temp0, temp0, temp0
 				 */
 
-				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+				struct rc_instruction *inst_rect = rc_insert_new_instruction(c, inst->Prev);
 
 				inst_rect->U.I.Opcode = RC_OPCODE_MUL;
 				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
@@ -286,9 +302,10 @@ int radeonTransformTEX(
 		}
 	}
 
-	/* Cannot write texture to output registers or with masks */
+	/* Cannot write texture to output registers (all chips) or with masks (non-r500) */
 	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
-		(inst->U.I.DstReg.File != RC_FILE_TEMPORARY || inst->U.I.DstReg.WriteMask != RC_MASK_XYZW)) {
+		(inst->U.I.DstReg.File != RC_FILE_TEMPORARY ||
+		 (!compiler->is_r500 && inst->U.I.DstReg.WriteMask != RC_MASK_XYZW))) {
 		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst);
 
 		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
