@@ -219,6 +219,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 
 	compiler.code = &fp->code;
 	compiler.state = fp->state;
+	compiler.enable_shadow_ambient = GL_TRUE;
 	compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ? GL_TRUE : GL_FALSE;
 	compiler.max_temp_regs = (compiler.is_r500) ? 128 : 32;
 	compiler.OutputDepth = FRAG_RESULT_DEPTH;

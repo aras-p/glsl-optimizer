@@ -31,13 +31,20 @@
 
 /* Series of transformations to be done on textures. */
 
-static struct rc_src_register shadow_ambient(struct radeon_compiler * c, int tmu)
+static struct rc_src_register shadow_ambient(struct r300_fragment_program_compiler *compiler,
+											 int tmu)
 {
 	struct rc_src_register reg = { 0, };
 
-	reg.File = RC_FILE_CONSTANT;
-	reg.Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_SHADOW_AMBIENT, tmu);
-	reg.Swizzle = RC_SWIZZLE_WWWW;
+	if (compiler->enable_shadow_ambient) {
+		reg.File = RC_FILE_CONSTANT;
+		reg.Index = rc_constants_add_state(&compiler->Base.Program.Constants,
+										   RC_STATE_SHADOW_AMBIENT, tmu);
+		reg.Swizzle = RC_SWIZZLE_WWWW;
+	} else {
+		reg.File = RC_FILE_NONE;
+		reg.Swizzle = RC_SWIZZLE_0000;
+	}
 	return reg;
 }
 
@@ -102,7 +109,7 @@ int radeonTransformTEX(
 				inst->U.I.SrcReg[0].File = RC_FILE_NONE;
 				inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
 			} else {
-				inst->U.I.SrcReg[0] = shadow_ambient(c, inst->U.I.TexSrcUnit);
+				inst->U.I.SrcReg[0] = shadow_ambient(compiler, inst->U.I.TexSrcUnit);
 			}
 
 			return 1;
@@ -164,7 +171,7 @@ int radeonTransformTEX(
 
 			inst_cmp->U.I.SrcReg[pass].File = RC_FILE_NONE;
 			inst_cmp->U.I.SrcReg[pass].Swizzle = RC_SWIZZLE_1111;
-			inst_cmp->U.I.SrcReg[fail] = shadow_ambient(c, inst->U.I.TexSrcUnit);
+			inst_cmp->U.I.SrcReg[fail] = shadow_ambient(compiler, inst->U.I.TexSrcUnit);
 		}
 	}
 

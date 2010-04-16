@@ -157,12 +157,6 @@ static const float * get_rc_constant_state(
             vec[1] = 1.0 / tex->height0;
             break;
 
-        /* Texture compare-fail value. Shouldn't ever show up, but if
-         * it does, we'll be ready. */
-        case RC_STATE_SHADOW_AMBIENT:
-            vec[3] = 0;
-            break;
-
         case RC_STATE_R300_VIEWPORT_SCALE:
             vec[0] = viewport->xscale;
             vec[1] = viewport->yscale;
