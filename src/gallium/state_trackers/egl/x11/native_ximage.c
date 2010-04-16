@@ -35,7 +35,6 @@
 #include "util/u_debug.h"
 #include "softpipe/sp_public.h"
 #include "llvmpipe/lp_public.h"
-#include "cell/ppu/cell_public.h"
 #include "egllog.h"
 
 #include "native_x11.h"
