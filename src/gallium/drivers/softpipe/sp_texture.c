@@ -51,9 +51,9 @@
  */
 static boolean
 softpipe_resource_layout(struct pipe_screen *screen,
-                        struct softpipe_resource * spt)
+                         struct softpipe_resource *spr)
 {
-   struct pipe_resource *pt = &spt->base;
+   struct pipe_resource *pt = &spr->base;
    unsigned level;
    unsigned width = pt->width0;
    unsigned height = pt->height0;
@@ -61,22 +61,22 @@ softpipe_resource_layout(struct pipe_screen *screen,
    unsigned buffer_size = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
-      spt->stride[level] = util_format_get_stride(pt->format, width);
+      spr->stride[level] = util_format_get_stride(pt->format, width);
 
-      spt->level_offset[level] = buffer_size;
+      spr->level_offset[level] = buffer_size;
 
       buffer_size += (util_format_get_nblocksy(pt->format, height) *
                       ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
-                      spt->stride[level]);
+                      spr->stride[level]);
 
       width  = u_minify(width, 1);
       height = u_minify(height, 1);
       depth = u_minify(depth, 1);
    }
 
-   spt->data = align_malloc(buffer_size, 16);
+   spr->data = align_malloc(buffer_size, 16);
 
-   return spt->data != NULL;
+   return spr->data != NULL;
 }
 
 
@@ -85,21 +85,21 @@ softpipe_resource_layout(struct pipe_screen *screen,
  */
 static boolean
 softpipe_displaytarget_layout(struct pipe_screen *screen,
-                              struct softpipe_resource * spt)
+                              struct softpipe_resource *spr)
 {
    struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
 
    /* Round up the surface size to a multiple of the tile size?
     */
-   spt->dt = winsys->displaytarget_create(winsys,
-                                          spt->base.bind,
-                                          spt->base.format,
-                                          spt->base.width0, 
-                                          spt->base.height0,
+   spr->dt = winsys->displaytarget_create(winsys,
+                                          spr->base.bind,
+                                          spr->base.format,
+                                          spr->base.width0, 
+                                          spr->base.height0,
                                           16,
-                                          &spt->stride[0] );
+                                          &spr->stride[0] );
 
-   return spt->dt != NULL;
+   return spr->dt != NULL;
 }
 
 
@@ -108,37 +108,37 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
  */
 static struct pipe_resource *
 softpipe_resource_create(struct pipe_screen *screen,
-                        const struct pipe_resource *templat)
+                         const struct pipe_resource *templat)
 {
-   struct softpipe_resource *spt = CALLOC_STRUCT(softpipe_resource);
-   if (!spt)
+   struct softpipe_resource *spr = CALLOC_STRUCT(softpipe_resource);
+   if (!spr)
       return NULL;
 
    assert(templat->format != PIPE_FORMAT_NONE);
 
-   spt->base = *templat;
-   pipe_reference_init(&spt->base.reference, 1);
-   spt->base.screen = screen;
+   spr->base = *templat;
+   pipe_reference_init(&spr->base.reference, 1);
+   spr->base.screen = screen;
 
-   spt->pot = (util_is_power_of_two(templat->width0) &&
+   spr->pot = (util_is_power_of_two(templat->width0) &&
                util_is_power_of_two(templat->height0) &&
                util_is_power_of_two(templat->depth0));
 
-   if (spt->base.bind & (PIPE_BIND_DISPLAY_TARGET |
+   if (spr->base.bind & (PIPE_BIND_DISPLAY_TARGET |
 			 PIPE_BIND_SCANOUT |
 			 PIPE_BIND_SHARED)) {
-      if (!softpipe_displaytarget_layout(screen, spt))
+      if (!softpipe_displaytarget_layout(screen, spr))
          goto fail;
    }
    else {
-      if (!softpipe_resource_layout(screen, spt))
+      if (!softpipe_resource_layout(screen, spr))
          goto fail;
    }
     
-   return &spt->base;
+   return &spr->base;
 
  fail:
-   FREE(spt);
+   FREE(spr);
    return NULL;
 }
 
@@ -148,73 +148,73 @@ softpipe_resource_destroy(struct pipe_screen *pscreen,
 			  struct pipe_resource *pt)
 {
    struct softpipe_screen *screen = softpipe_screen(pscreen);
-   struct softpipe_resource *spt = softpipe_resource(pt);
+   struct softpipe_resource *spr = softpipe_resource(pt);
 
-   if (spt->dt) {
+   if (spr->dt) {
       /* display target */
       struct sw_winsys *winsys = screen->winsys;
-      winsys->displaytarget_destroy(winsys, spt->dt);
+      winsys->displaytarget_destroy(winsys, spr->dt);
    }
-   else if (!spt->userBuffer) {
+   else if (!spr->userBuffer) {
       /* regular texture */
-      align_free(spt->data);
+      align_free(spr->data);
    }
 
-   FREE(spt);
+   FREE(spr);
 }
 
 
 static struct pipe_resource *
 softpipe_resource_from_handle(struct pipe_screen *screen,
-                             const struct pipe_resource *templat,
-                             struct winsys_handle *whandle)
+                              const struct pipe_resource *templat,
+                              struct winsys_handle *whandle)
 {
    struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
-   struct softpipe_resource *spt = CALLOC_STRUCT(softpipe_resource);
-   if (!spt)
+   struct softpipe_resource *spr = CALLOC_STRUCT(softpipe_resource);
+   if (!spr)
       return NULL;
 
-   spt->base = *templat;
-   pipe_reference_init(&spt->base.reference, 1);
-   spt->base.screen = screen;
+   spr->base = *templat;
+   pipe_reference_init(&spr->base.reference, 1);
+   spr->base.screen = screen;
 
-   spt->pot = (util_is_power_of_two(templat->width0) &&
+   spr->pot = (util_is_power_of_two(templat->width0) &&
                util_is_power_of_two(templat->height0) &&
                util_is_power_of_two(templat->depth0));
 
-   spt->dt = winsys->displaytarget_from_handle(winsys,
+   spr->dt = winsys->displaytarget_from_handle(winsys,
                                                templat,
                                                whandle,
-                                               &spt->stride[0]);
-   if (!spt->dt)
+                                               &spr->stride[0]);
+   if (!spr->dt)
       goto fail;
 
-   return &spt->base;
+   return &spr->base;
 
  fail:
-   FREE(spt);
+   FREE(spr);
    return NULL;
 }
 
 
 static boolean
 softpipe_resource_get_handle(struct pipe_screen *screen,
-                            struct pipe_resource *pt,
-                            struct winsys_handle *whandle)
+                             struct pipe_resource *pt,
+                             struct winsys_handle *whandle)
 {
    struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
-   struct softpipe_resource *spt = softpipe_resource(pt);
+   struct softpipe_resource *spr = softpipe_resource(pt);
 
-   assert(spt->dt);
-   if (!spt->dt)
+   assert(spr->dt);
+   if (!spr->dt)
       return FALSE;
 
-   return winsys->displaytarget_get_handle(winsys, spt->dt, whandle);
+   return winsys->displaytarget_get_handle(winsys, spr->dt, whandle);
 }
 
 
 /**
- * Get a pipe_surface "view" into a texture.
+ * Get a pipe_surface "view" into a texture resource.
  */
 static struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_screen *screen,
@@ -222,7 +222,7 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
                          unsigned face, unsigned level, unsigned zslice,
                          unsigned usage)
 {
-   struct softpipe_resource *spt = softpipe_resource(pt);
+   struct softpipe_resource *spr = softpipe_resource(pt);
    struct pipe_surface *ps;
 
    assert(level <= pt->last_level);
@@ -234,7 +234,7 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->format = pt->format;
       ps->width = u_minify(pt->width0, level);
       ps->height = u_minify(pt->height0, level);
-      ps->offset = spt->level_offset[level];
+      ps->offset = spr->level_offset[level];
       ps->usage = usage;
 
       ps->face = face;
@@ -243,11 +243,11 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
       if (pt->target == PIPE_TEXTURE_CUBE) {
          ps->offset += face * util_format_get_nblocksy(pt->format, u_minify(pt->height0, level)) *
-                       spt->stride[level];
+                       spr->stride[level];
       }
       else if (pt->target == PIPE_TEXTURE_3D) {
          ps->offset += zslice * util_format_get_nblocksy(pt->format, u_minify(pt->height0, level)) *
-                       spt->stride[level];
+                       spr->stride[level];
       }
       else {
          assert(face == 0);
@@ -276,15 +276,12 @@ softpipe_tex_surface_destroy(struct pipe_surface *surf)
 
 /**
  * Geta pipe_transfer object which is used for moving data in/out of
- * a texture object.
- * \param face  one of PIPE_TEX_FACE_x or 0
- * \param level  texture mipmap level
- * \param zslice  2D slice of a 3D texture
- * \param usage  one of PIPE_TRANSFER_READ/WRITE/READ_WRITE
- * \param x  X position of region to read/write
- * \param y  Y position of region to read/write
- * \param width  width of region to read/write
- * \param height  height of region to read/write
+ * a resource object.
+ * \param pipe  rendering context
+ * \param resource  the resource to transfer in/out of
+ * \param sr  indicates cube face or 3D texture slice
+ * \param usage  bitmask of PIPE_TRANSFER_x flags
+ * \param box  the 1D/2D/3D region of interest
  */
 static struct pipe_transfer *
 softpipe_get_transfer(struct pipe_context *pipe,
@@ -293,8 +290,8 @@ softpipe_get_transfer(struct pipe_context *pipe,
 		      unsigned usage,
 		      const struct pipe_box *box)
 {
-   struct softpipe_resource *sptex = softpipe_resource(resource);
-   struct softpipe_transfer *spt;
+   struct softpipe_resource *sprex = softpipe_resource(resource);
+   struct softpipe_transfer *spr;
 
    assert(resource);
    assert(sr.level <= resource->last_level);
@@ -304,9 +301,9 @@ softpipe_get_transfer(struct pipe_context *pipe,
    assert(box->y + box->height <= u_minify(resource->height0, sr.level));
    assert(box->z + box->depth <= u_minify(resource->depth0, sr.level));
 
-   spt = CALLOC_STRUCT(softpipe_transfer);
-   if (spt) {
-      struct pipe_transfer *pt = &spt->base;
+   spr = CALLOC_STRUCT(softpipe_transfer);
+   if (spr) {
+      struct pipe_transfer *pt = &spr->base;
       enum pipe_format format = resource->format;
       int nblocksy = util_format_get_nblocksy(resource->format, 
 					      u_minify(resource->height0, sr.level));
@@ -314,23 +311,23 @@ softpipe_get_transfer(struct pipe_context *pipe,
       pt->sr = sr;
       pt->usage = usage;
       pt->box = *box;
-      pt->stride = sptex->stride[sr.level];
+      pt->stride = sprex->stride[sr.level];
 
-      spt->offset = sptex->level_offset[sr.level];
+      spr->offset = sprex->level_offset[sr.level];
 
       if (resource->target == PIPE_TEXTURE_CUBE) {
-         spt->offset += sr.face * nblocksy * pt->stride;
+         spr->offset += sr.face * nblocksy * pt->stride;
       }
       else if (resource->target == PIPE_TEXTURE_3D) {
-         spt->offset += box->z * nblocksy * pt->stride;
+         spr->offset += box->z * nblocksy * pt->stride;
       }
       else {
          assert(sr.face == 0);
          assert(box->z == 0);
       }
       
-      spt->offset += 
-	 box->y / util_format_get_blockheight(format) * spt->base.stride +
+      spr->offset += 
+	 box->y / util_format_get_blockheight(format) * spr->base.stride +
 	 box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 
       return pt;
@@ -345,7 +342,7 @@ softpipe_get_transfer(struct pipe_context *pipe,
  */
 static void 
 softpipe_transfer_destroy(struct pipe_context *pipe,
-                              struct pipe_transfer *transfer)
+                          struct pipe_transfer *transfer)
 {
    pipe_resource_reference(&transfer->resource, NULL);
    FREE(transfer);
@@ -356,8 +353,8 @@ softpipe_transfer_destroy(struct pipe_context *pipe,
  * Create memory mapping for given pipe_transfer object.
  */
 static void *
-softpipe_transfer_map( struct pipe_context *pipe,
-                       struct pipe_transfer *transfer )
+softpipe_transfer_map(struct pipe_context *pipe,
+                      struct pipe_transfer *transfer)
 {
    struct softpipe_transfer *sp_transfer = softpipe_transfer(transfer);
    struct softpipe_resource *sp_resource = softpipe_resource(transfer->resource);
@@ -389,20 +386,20 @@ static void
 softpipe_transfer_unmap(struct pipe_context *pipe,
                         struct pipe_transfer *transfer)
 {
-   struct softpipe_resource *spt;
+   struct softpipe_resource *spr;
 
    assert(transfer->resource);
-   spt = softpipe_resource(transfer->resource);
+   spr = softpipe_resource(transfer->resource);
 
-   if (spt->dt) {
+   if (spr->dt) {
       /* display target */
       struct sw_winsys *winsys = softpipe_screen(pipe->screen)->winsys;
-      winsys->displaytarget_unmap(winsys, spt->dt);
+      winsys->displaytarget_unmap(winsys, spr->dt);
    }
 
    if (transfer->usage & PIPE_TRANSFER_WRITE) {
       /* Mark the texture as dirty to expire the tile caches. */
-      spt->timestamp++;
+      spr->timestamp++;
    }
 }
 
@@ -438,9 +435,6 @@ softpipe_user_buffer_create(struct pipe_screen *screen,
 }
 
 
-
-
-
 void
 softpipe_init_texture_funcs(struct pipe_context *pipe)
 {
@@ -452,6 +446,7 @@ softpipe_init_texture_funcs(struct pipe_context *pipe)
    pipe->transfer_flush_region = u_default_transfer_flush_region;
    pipe->transfer_inline_write = u_default_transfer_inline_write;
 }
+
 
 void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
@@ -465,6 +460,3 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->get_tex_surface = softpipe_get_tex_surface;
    screen->tex_surface_destroy = softpipe_tex_surface_destroy;
 }
-
-
-

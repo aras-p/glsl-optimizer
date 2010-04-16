@@ -41,6 +41,9 @@ struct pipe_screen;
 struct softpipe_context;
 
 
+/**
+ * Subclass of pipe_resource.
+ */
 struct softpipe_resource
 {
    struct pipe_resource base;
@@ -67,6 +70,10 @@ struct softpipe_resource
    unsigned timestamp;
 };
 
+
+/**
+ * Subclass of pipe_transfer.
+ */
 struct softpipe_transfer
 {
    struct pipe_transfer base;
@@ -93,7 +100,7 @@ softpipe_transfer(struct pipe_transfer *pt)
 extern void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 
-void
+extern void
 softpipe_init_texture_funcs(struct pipe_context *pipe);
 
 
