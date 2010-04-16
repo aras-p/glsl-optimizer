@@ -780,7 +780,6 @@ generate_fragment(struct llvmpipe_context *lp,
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
       LLVMValueRef out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS];
       LLVMValueRef depth_ptr_i;
-      int cbuf;
 
       if(i != 0)
          lp_build_interp_soa_update(&interp, i);
