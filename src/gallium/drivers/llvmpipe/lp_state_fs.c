@@ -1117,14 +1117,16 @@ make_variant_key(struct llvmpipe_context *lp,
       assert(format_desc->layout == UTIL_FORMAT_COLORSPACE_RGB ||
              format_desc->layout == UTIL_FORMAT_COLORSPACE_SRGB);
 
+      key->blend.rt[i].colormask = lp->blend->rt[i].colormask;
+
       /* mask out color channels not present in the color buffer.
        * Should be simple to incorporate per-cbuf writemasks:
        */
       for(chan = 0; chan < 4; ++chan) {
          enum util_format_swizzle swizzle = format_desc->swizzle[chan];
 
-         if(swizzle <= UTIL_FORMAT_SWIZZLE_W)
-            key->blend.rt[0].colormask |= (1 << chan);
+         if(swizzle > UTIL_FORMAT_SWIZZLE_W)
+            key->blend.rt[i].colormask &= ~(1 << chan);
       }
    }
 
