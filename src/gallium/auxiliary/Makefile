@@ -152,7 +152,6 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_const.c \
         gallivm/lp_bld_conv.c \
         gallivm/lp_bld_debug.c \
-        gallivm/lp_bld_depth.c \
         gallivm/lp_bld_flow.c \
         gallivm/lp_bld_format_soa.c \
         gallivm/lp_bld_init.c \

@@ -6,6 +6,7 @@ LIBNAME = llvmpipe
 DEFINES += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 
 C_SOURCES = \
+	lp_bld_depth.c \
 	lp_bld_interp.c \
 	lp_clear.c \
 	lp_context.c \
