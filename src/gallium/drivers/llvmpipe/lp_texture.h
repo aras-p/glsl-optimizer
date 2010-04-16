@@ -156,17 +156,17 @@ void llvmpipe_init_screen_resource_funcs(struct pipe_screen *screen);
 void llvmpipe_init_context_resource_funcs(struct pipe_context *pipe);
 
 static INLINE unsigned
-llvmpipe_resource_stride(struct pipe_resource *texture,
+llvmpipe_resource_stride(struct pipe_resource *resource,
                         unsigned level)
 {
-   struct llvmpipe_resource *lpt = llvmpipe_resource(texture);
+   struct llvmpipe_resource *lpr = llvmpipe_resource(resource);
    assert(level < LP_MAX_TEXTURE_2D_LEVELS);
-   return lpt->stride[level];
+   return lpr->stride[level];
 }
 
 
 void *
-llvmpipe_resource_map(struct pipe_resource *texture,
+llvmpipe_resource_map(struct pipe_resource *resource,
 		      unsigned face,
 		      unsigned level,
 		      unsigned zslice,
@@ -174,7 +174,7 @@ llvmpipe_resource_map(struct pipe_resource *texture,
                       enum lp_texture_layout layout);
 
 void
-llvmpipe_resource_unmap(struct pipe_resource *texture,
+llvmpipe_resource_unmap(struct pipe_resource *resource,
                        unsigned face,
                        unsigned level,
                        unsigned zslice);
@@ -185,7 +185,7 @@ llvmpipe_resource_data(struct pipe_resource *resource);
 
 
 void *
-llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpt,
+llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
                                     unsigned face, unsigned level,
                                     enum lp_texture_layout layout);
 
@@ -197,13 +197,13 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *resource,
 
 
 ubyte *
-llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpt,
+llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
                                   unsigned face, unsigned level,
                                   enum lp_texture_usage usage,
                                   unsigned x, unsigned y);
 
 ubyte *
-llvmpipe_get_texture_tile(struct llvmpipe_resource *lpt,
+llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
                            unsigned face, unsigned level,
                            enum lp_texture_usage usage,
                            unsigned x, unsigned y);
