@@ -33,11 +33,12 @@
 
 #include "pipe/p_state.h"
 
-#include "lp_bld_type.h"
-#include "lp_bld_const.h"
-#include "lp_bld_logic.h"
-#include "lp_bld_flow.h"
-#include "lp_bld_debug.h"
+#include "gallivm/lp_bld_type.h"
+#include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_logic.h"
+#include "gallivm/lp_bld_flow.h"
+#include "gallivm/lp_bld_debug.h"
+
 #include "lp_bld_alpha.h"
 
 

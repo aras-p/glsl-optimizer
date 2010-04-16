@@ -193,7 +193,6 @@ source = [
 
 if env['llvm']:
     source += [
-    'gallivm/lp_bld_alpha.c',
     'gallivm/lp_bld_arit.c',
     'gallivm/lp_bld_blend_aos.c',
     'gallivm/lp_bld_blend_logicop.c',

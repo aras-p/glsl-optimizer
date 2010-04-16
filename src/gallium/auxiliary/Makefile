@@ -144,7 +144,6 @@ C_SOURCES = \
 	#vl/vl_shader_build.c \
 
 GALLIVM_SOURCES = \
-        gallivm/lp_bld_alpha.c \
         gallivm/lp_bld_arit.c \
         gallivm/lp_bld_blend_aos.c \
         gallivm/lp_bld_blend_logicop.c \
