@@ -54,11 +54,13 @@ public:
    virtual class ir_variable *          as_variable()         { return NULL; }
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
+   virtual class ir_label *             as_label()            { return NULL; }
    virtual class ir_loop *              as_loop()             { return NULL; }
    virtual class ir_assignment *        as_assignment()       { return NULL; }
    virtual class ir_call *              as_call()             { return NULL; }
    virtual class ir_return *            as_return()           { return NULL; }
    virtual class ir_if *                as_if()               { return NULL; }
+   virtual class ir_swizzle *           as_swizzle()          { return NULL; }
    /*@}*/
 
 protected:
@@ -184,6 +186,11 @@ public:
 class ir_label : public ir_instruction {
 public:
    ir_label(const char *label, ir_function_signature *signature);
+
+   virtual ir_label *as_label()
+   {
+      return this;
+   }
 
    virtual void accept(ir_visitor *v)
    {
@@ -679,6 +686,11 @@ public:
       : val(val), mask(mask)
    {
       /* empty */
+   }
+
+   virtual ir_swizzle *as_swizzle()
+   {
+      return this;
    }
 
    ir_swizzle *clone()

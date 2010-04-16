@@ -35,6 +35,7 @@
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 #include "ir_constant_folding.h"
+#include "ir_dead_code.h"
 #include "ir_function_inlining.h"
 #include "ir_if_simplification.h"
 #include "ir_print_visitor.h"
@@ -761,6 +762,7 @@ main(int argc, char **argv)
 
 	 progress = do_function_inlining(&instructions) || progress;
 	 progress = do_if_simplification(&instructions) || progress;
+	 progress = do_dead_code_unlinked(&instructions) || progress;
 
 	 /* Constant folding */
 	 ir_constant_folding_visitor constant_folding;
