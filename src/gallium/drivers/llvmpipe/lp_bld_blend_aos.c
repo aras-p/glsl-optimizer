@@ -46,13 +46,14 @@
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
 
-#include "lp_bld_type.h"
-#include "lp_bld_const.h"
-#include "lp_bld_arit.h"
-#include "lp_bld_logic.h"
-#include "lp_bld_swizzle.h"
+#include "gallivm/lp_bld_type.h"
+#include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_arit.h"
+#include "gallivm/lp_bld_logic.h"
+#include "gallivm/lp_bld_swizzle.h"
+#include "gallivm/lp_bld_debug.h"
+
 #include "lp_bld_blend.h"
-#include "lp_bld_debug.h"
 
 
 /**

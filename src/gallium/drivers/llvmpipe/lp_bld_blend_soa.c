@@ -71,8 +71,8 @@
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
 
-#include "lp_bld_type.h"
-#include "lp_bld_arit.h"
+#include "gallivm/lp_bld_type.h"
+#include "gallivm/lp_bld_arit.h"
 #include "lp_bld_blend.h"
 
 
