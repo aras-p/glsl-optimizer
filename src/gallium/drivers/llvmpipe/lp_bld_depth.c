@@ -383,7 +383,7 @@ get_z_shift_and_mask(const struct util_format_description *format_desc,
 {
    const unsigned total_bits = format_desc->block.bits;
    unsigned z_swizzle;
-   int chan;
+   unsigned chan;
    unsigned padding_left, padding_right;
    
    assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS);
@@ -427,7 +427,7 @@ get_s_shift_and_mask(const struct util_format_description *format_desc,
                      unsigned *shift, unsigned *mask)
 {
    unsigned s_swizzle;
-   int chan, sz;
+   unsigned chan, sz;
 
    s_swizzle = format_desc->swizzle[1];
 
