@@ -221,11 +221,11 @@ static void widepoint_first_point( struct draw_stage *stage,
    const struct pipe_rasterizer_state *rast = draw->rasterizer;
    void *r;
 
-   wide->half_point_size = 0.5f * draw->rasterizer->point_size;
+   wide->half_point_size = 0.5f * rast->point_size;
    wide->xbias = 0.0;
    wide->ybias = 0.0;
 
-   if (draw->rasterizer->gl_rasterization_rules) {
+   if (rast->gl_rasterization_rules) {
       wide->xbias = 0.125;
    }
 
@@ -236,23 +236,23 @@ static void widepoint_first_point( struct draw_stage *stage,
    draw->suspend_flushing = FALSE;
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
-   if ((draw->rasterizer->point_size > draw->pipeline.wide_point_threshold) ||
-       (draw->rasterizer->sprite_coord_enable && draw->pipeline.point_sprite)) {
+   if ((rast->point_size > draw->pipeline.wide_point_threshold) ||
+       (rast->sprite_coord_enable && draw->pipeline.point_sprite)) {
       stage->point = widepoint_point;
    }
    else {
       stage->point = draw_pipe_passthrough_point;
    }
 
-   if (draw->rasterizer->sprite_coord_enable) {
+   if (rast->sprite_coord_enable) {
       /* find vertex shader texcoord outputs */
       const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       uint i, j = 0;
-      wide->texcoord_mode = draw->rasterizer->sprite_coord_mode;
+      wide->texcoord_mode = rast->sprite_coord_mode;
       for (i = 0; i < vs->info.num_outputs; i++) {
          if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
             wide->texcoord_slot[j] = i;
-            wide->texcoord_enable[j] = (draw->rasterizer->sprite_coord_enable >> j) & 1;
+            wide->texcoord_enable[j] = (rast->sprite_coord_enable >> j) & 1;
             j++;
          }
       }
@@ -272,7 +272,7 @@ static void widepoint_first_point( struct draw_stage *stage,
    }
 
    wide->psize_slot = -1;
-   if (draw->rasterizer->point_size_per_vertex) {
+   if (rast->point_size_per_vertex) {
       /* find PSIZ vertex output */
       const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       uint i;
