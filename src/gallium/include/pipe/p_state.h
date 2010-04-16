@@ -288,9 +288,6 @@ struct pipe_surface
 };
 
 
-
-
-
 /**
  * A view into a texture that can be bound to a shader stage.
  */
@@ -309,6 +306,9 @@ struct pipe_sampler_view
 };
 
 
+/**
+ * Subregion of 1D/2D/3D image resource.
+ */
 struct pipe_box
 {
    unsigned x;
@@ -320,7 +320,9 @@ struct pipe_box
 };
 
 
-
+/**
+ * A memory object/resource such as a vertex buffer or texture.
+ */
 struct pipe_resource
 {
    struct pipe_reference reference;
@@ -334,13 +336,16 @@ struct pipe_resource
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned nr_samples:8;    /**< for multisampled surfaces, nr of samples */
-   unsigned _usage:8;	       /* PIPE_USAGE_x (not a bitmask) */
+   unsigned _usage:8;	     /**< PIPE_USAGE_x (not a bitmask) */
 
-   unsigned bind;	       /* PIPE_BIND_x */
-   unsigned flags;	       /* PIPE_RESOURCE_FLAG_x */
+   unsigned bind;	     /**< bitmask of PIPE_BIND_x */
+   unsigned flags;	     /**< bitmask of PIPE_RESOURCE_FLAG_x */
 };
 
 
+/**
+ * Extra indexing info for (cube) texture resources.
+ */
 struct pipe_subresource
 {
    unsigned face:16;
@@ -349,7 +354,7 @@ struct pipe_subresource
 
 
 /**
- * Transfer object.  For data transfer to/from a texture.
+ * Transfer object.  For data transfer to/from a resource.
  */
 struct pipe_transfer
 {
