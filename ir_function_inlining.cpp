@@ -31,6 +31,7 @@
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_function_inlining.h"
+#include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
 class variable_remap : public exec_node {
@@ -305,9 +306,22 @@ can_inline(ir_call *call)
 }
 
 bool
+automatic_inlining_predicate(ir_instruction *ir)
+{
+   ir_call *call = ir->as_call();
+
+   if (call && can_inline(call))
+      return true;
+
+   return false;
+}
+
+bool
 do_function_inlining(exec_list *instructions)
 {
    bool progress = false;
+
+   do_expression_flattening(instructions, automatic_inlining_predicate);
 
    foreach_iter(exec_list_iterator, iter, *instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();

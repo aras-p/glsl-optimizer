@@ -30,6 +30,7 @@ glsl_SOURCES = symbol_table.c hash_table.c glsl_types.cpp \
 	ir_print_visitor.cpp ir_variable.cpp ir_function.cpp \
 	ir_constant_expression.cpp \
 	ir_constant_folding.cpp \
+	ir_expression_flattening.cpp \
 	ir_function_inlining.cpp \
 	ir_if_simplification.cpp
 
