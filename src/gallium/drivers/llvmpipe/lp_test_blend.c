@@ -38,8 +38,8 @@
 
 
 #include "gallivm/lp_bld_type.h"
-#include "gallivm/lp_bld_blend.h"
 #include "gallivm/lp_bld_debug.h"
+#include "lp_bld_blend.h"
 #include "lp_test.h"
 
 
