@@ -286,7 +286,6 @@ lp_build_blend_func(struct lp_build_context *bld,
    switch (func) {
    case PIPE_BLEND_ADD:
       return lp_build_add(bld, term1, term2);
-      break;
    case PIPE_BLEND_SUBTRACT:
       return lp_build_sub(bld, term1, term2);
    case PIPE_BLEND_REVERSE_SUBTRACT:
