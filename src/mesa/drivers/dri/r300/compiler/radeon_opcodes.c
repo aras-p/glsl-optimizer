@@ -412,15 +412,15 @@ void rc_compute_sources_for_writemask(
 			srcmasks[0] |= RC_MASK_XYZW;
 			break;
 		case RC_OPCODE_DST:
-			srcmasks[0] |= 0x6;
-			srcmasks[1] |= 0xa;
+			srcmasks[0] |= RC_MASK_Y | RC_MASK_Z;
+			srcmasks[1] |= RC_MASK_Y | RC_MASK_W;
 			break;
 		case RC_OPCODE_EXP:
 		case RC_OPCODE_LOG:
 			srcmasks[0] |= RC_MASK_XY;
 			break;
 		case RC_OPCODE_LIT:
-			srcmasks[0] |= 0xb;
+			srcmasks[0] |= RC_MASK_X | RC_MASK_Y | RC_MASK_W;
 			break;
 		default:
 			break;
