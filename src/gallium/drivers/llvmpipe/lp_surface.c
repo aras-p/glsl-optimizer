@@ -56,6 +56,10 @@ lp_surface_copy(struct pipe_context *pipe,
                 struct pipe_surface *src, unsigned srcx, unsigned srcy,
                 unsigned width, unsigned height)
 {
+   struct llvmpipe_resource *src_tex = llvmpipe_resource(src->texture);
+   struct llvmpipe_resource *dst_tex = llvmpipe_resource(dst->texture);
+   const enum pipe_format format = src_tex->base.format;
+
    llvmpipe_flush_texture(pipe,
                           dst->texture, dst->face, dst->level,
                           0, /* flush_flags */
@@ -70,90 +74,76 @@ lp_surface_copy(struct pipe_context *pipe,
                           FALSE, /* cpu_access */
                           FALSE); /* do_not_flush */
 
-   /* Look for special case in which we're copying from a tiled image
-    * to a linear image.
-    */
+   /*
+   printf("surface copy from %u to %u: %u,%u to %u,%u %u x %u\n",
+          src_tex->id, dst_tex->id,
+          srcx, srcy, dstx, dsty, width, height);
+   */
+
+   /* set src tiles to linear layout */
    {
-      struct llvmpipe_resource *src_tex = llvmpipe_resource(src->texture);
-      struct llvmpipe_resource *dst_tex = llvmpipe_resource(dst->texture);
-      enum pipe_format format = src_tex->base.format;
+      unsigned tx, ty, tw, th;
+      unsigned x, y;
 
-      /*
-      printf("surface copy from %u to %u: %u,%u to %u,%u %u x %u\n",
-             src_tex->id, dst_tex->id,
-             srcx, srcy, dstx, dsty, width, height);
-      */
+      adjust_to_tile_bounds(srcx, srcy, width, height, &tx, &ty, &tw, &th);
 
-      /* set src tiles to linear layout */
-      {
-         unsigned tx, ty, tw, th;
-         unsigned x, y;
-
-         adjust_to_tile_bounds(srcx, srcy, width, height, &tx, &ty, &tw, &th);
-
-         for (y = 0; y < th; y += TILE_SIZE) {
-            for (x = 0; x < tw; x += TILE_SIZE) {
-               (void) llvmpipe_get_texture_tile_linear(src_tex,
-                                                       src->face, src->level,
+      for (y = 0; y < th; y += TILE_SIZE) {
+         for (x = 0; x < tw; x += TILE_SIZE) {
+            (void) llvmpipe_get_texture_tile_linear(src_tex,
+                                                    src->face, src->level,
                                                        LP_TEX_USAGE_READ,
-                                                       tx + x, ty + y);
-            }
+                                                    tx + x, ty + y);
          }
       }
-
-      /* set dst tiles to linear layout */
-      {
-         unsigned tx, ty, tw, th;
-         unsigned x, y;
-         enum lp_texture_usage usage;
-
-         /* XXX for the tiles which are completely contained by the
-          * dest rectangle, we could set the usage mode to WRITE_ALL.
-          * Just test for the case of replacing the whole dest region for now.
-          */
-         if (width == dst_tex->base.width0 && height == dst_tex->base.height0)
-            usage = LP_TEX_USAGE_WRITE_ALL;
-         else
-            usage = LP_TEX_USAGE_READ_WRITE;
-
-         adjust_to_tile_bounds(dstx, dsty, width, height, &tx, &ty, &tw, &th);
-
-         for (y = 0; y < th; y += TILE_SIZE) {
-            for (x = 0; x < tw; x += TILE_SIZE) {
-               (void) llvmpipe_get_texture_tile_linear(dst_tex,
-                                                       dst->face, dst->level,
-                                                       usage,
-                                                       tx + x, ty + y);
-            }
-         }
-      }
-
-      /* copy */
-      {
-         const ubyte *src_linear_ptr
-            = llvmpipe_get_texture_image_address(src_tex, src->face,
-                                                 src->level,
-                                                 LP_TEX_LAYOUT_LINEAR);
-         ubyte *dst_linear_ptr
-            = llvmpipe_get_texture_image_address(dst_tex, dst->face,
-                                                 dst->level,
-                                                 LP_TEX_LAYOUT_LINEAR);
-
-         util_copy_rect(dst_linear_ptr, format,
-                        dst_tex->stride[dst->level],
-                        dstx, dsty,
-                        width, height,
-                        src_linear_ptr, src_tex->stride[src->level],
-                        srcx, srcy);
-      }
-      return;
    }
 
-   util_surface_copy(pipe, FALSE,
-                     dst, dstx, dsty,
-                     src, srcx, srcy,
-                     width, height);
+   /* set dst tiles to linear layout */
+   {
+      unsigned tx, ty, tw, th;
+      unsigned x, y;
+      enum lp_texture_usage usage;
+
+      /* XXX for the tiles which are completely contained by the
+       * dest rectangle, we could set the usage mode to WRITE_ALL.
+       * Just test for the case of replacing the whole dest region for now.
+       */
+      if (width == dst_tex->base.width0 && height == dst_tex->base.height0)
+         usage = LP_TEX_USAGE_WRITE_ALL;
+      else
+         usage = LP_TEX_USAGE_READ_WRITE;
+
+      adjust_to_tile_bounds(dstx, dsty, width, height, &tx, &ty, &tw, &th);
+
+      for (y = 0; y < th; y += TILE_SIZE) {
+         for (x = 0; x < tw; x += TILE_SIZE) {
+            (void) llvmpipe_get_texture_tile_linear(dst_tex,
+                                                    dst->face, dst->level,
+                                                    usage,
+                                                    tx + x, ty + y);
+         }
+      }
+   }
+
+   /* copy */
+   {
+      const ubyte *src_linear_ptr
+         = llvmpipe_get_texture_image_address(src_tex, src->face,
+                                              src->level,
+                                              LP_TEX_LAYOUT_LINEAR);
+      ubyte *dst_linear_ptr
+         = llvmpipe_get_texture_image_address(dst_tex, dst->face,
+                                              dst->level,
+                                              LP_TEX_LAYOUT_LINEAR);
+
+      util_copy_rect(dst_linear_ptr, format,
+                     dst_tex->stride[dst->level],
+                     dstx, dsty,
+                     width, height,
+                     src_linear_ptr, src_tex->stride[src->level],
+                     srcx, srcy);
+   }
 }
+
 
 void
 lp_init_surface_functions(struct llvmpipe_context *lp)
