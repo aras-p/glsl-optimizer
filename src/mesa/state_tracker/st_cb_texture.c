@@ -1213,10 +1213,11 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
    int srcBlockStride;
    int dstBlockStride;
    int y;
-   enum pipe_format pformat= stImage->pt->format;
+   enum pipe_format pformat;
 
    if (stImage->pt) {
       unsigned face = _mesa_tex_target_to_face(target);
+      pformat = stImage->pt->format;
 
       st_teximage_flush_before_map(ctx->st, stImage->pt, face, level,
 				   PIPE_TRANSFER_WRITE);
