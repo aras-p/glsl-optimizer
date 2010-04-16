@@ -26,6 +26,7 @@
  */
 
 #include "radeon_opcodes.h"
+#include "radeon_program.h"
 
 #include "radeon_program_constants.h"
 
@@ -371,10 +372,11 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 };
 
 void rc_compute_sources_for_writemask(
-		const struct rc_opcode_info * opcode,
+		const struct rc_instruction *inst,
 		unsigned int writemask,
 		unsigned int *srcmasks)
 {
+	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 	srcmasks[0] = 0;
 	srcmasks[1] = 0;
 	srcmasks[2] = 0;
@@ -406,10 +408,26 @@ void rc_compute_sources_for_writemask(
 			srcmasks[0] |= RC_MASK_XYZW;
 			srcmasks[1] |= RC_MASK_XYZW;
 			break;
-		case RC_OPCODE_TEX:
 		case RC_OPCODE_TXB:
 		case RC_OPCODE_TXP:
-			srcmasks[0] |= RC_MASK_XYZW;
+			srcmasks[0] |= RC_MASK_W;
+			/* Fall through */
+		case RC_OPCODE_TEX:
+			switch (inst->U.I.TexSrcTarget) {
+				case RC_TEXTURE_1D:
+					srcmasks[0] |= RC_MASK_X;
+					break;
+				case RC_TEXTURE_2D:
+				case RC_TEXTURE_RECT:
+				case RC_TEXTURE_1D_ARRAY:
+					srcmasks[0] |= RC_MASK_XY;
+					break;
+				case RC_TEXTURE_3D:
+				case RC_TEXTURE_CUBE:
+				case RC_TEXTURE_2D_ARRAY:
+					srcmasks[0] |= RC_MASK_XYZ;
+					break;
+			}
 			break;
 		case RC_OPCODE_DST:
 			srcmasks[0] |= RC_MASK_Y | RC_MASK_Z;

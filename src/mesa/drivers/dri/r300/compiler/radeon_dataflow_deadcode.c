@@ -162,7 +162,7 @@ static void update_instruction(struct deadcode_state * s, struct rc_instruction 
 	}
 
 	unsigned int srcmasks[3];
-	rc_compute_sources_for_writemask(opcode, usedmask, srcmasks);
+	rc_compute_sources_for_writemask(inst, usedmask, srcmasks);
 
 	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
 		unsigned int refmask = 0;
@@ -250,7 +250,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 	for(struct rc_instruction * inst = c->Program.Instructions.Next;
 	    inst != &c->Program.Instructions;
 	    inst = inst->Next, ++ip) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);\
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		int dead = 1;
 
 		if (!opcode->HasDstReg) {
@@ -281,7 +281,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 		else if (inst->U.I.WriteALUResult == RC_ALURESULT_W)
 			usemask |= RC_MASK_W;
 
-		rc_compute_sources_for_writemask(opcode, usemask, srcmasks);
+		rc_compute_sources_for_writemask(inst, usemask, srcmasks);
 
 		for(unsigned int src = 0; src < 3; ++src) {
 			for(unsigned int chan = 0; chan < 4; ++chan) {
