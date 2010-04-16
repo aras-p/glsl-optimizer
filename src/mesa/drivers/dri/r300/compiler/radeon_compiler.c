@@ -277,13 +277,13 @@ void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsig
 
 	inst_mad->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
 	inst_mad->U.I.SrcReg[0].Index = tempregi;
-	inst_mad->U.I.SrcReg[0].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
+	inst_mad->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZ0;
 
 	inst_mad->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
-	inst_mad->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
+	inst_mad->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_XYZ0;
 
 	inst_mad->U.I.SrcReg[2].File = RC_FILE_CONSTANT;
-	inst_mad->U.I.SrcReg[2].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_ZERO);
+	inst_mad->U.I.SrcReg[2].Swizzle = RC_SWIZZLE_XYZ0;
 
 	if (full_vtransform) {
 		inst_mad->U.I.SrcReg[1].Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_R300_VIEWPORT_SCALE, 0);
