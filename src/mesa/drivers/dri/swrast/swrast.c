@@ -602,12 +602,14 @@ dri_make_current(__DRIcontext * cPriv,
 
     if (cPriv) {
 	struct dri_context *ctx = dri_context(cPriv);
-	struct dri_drawable *draw = dri_drawable(driDrawPriv);
-	struct dri_drawable *read = dri_drawable(driReadPriv);
+	struct dri_drawable *draw;
+	struct dri_drawable *read;
 
 	if (!driDrawPriv || !driReadPriv)
 	    return GL_FALSE;
 
+	draw = dri_drawable(driDrawPriv);
+	read = dri_drawable(driReadPriv);
 	mesaCtx = &ctx->Base;
 	mesaDraw = &draw->Base;
 	mesaRead = &read->Base;
