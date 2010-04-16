@@ -42,6 +42,7 @@ struct renderer;
 struct shaders_cache;
 struct shader;
 struct vg_shader;
+struct mapi_table;
 
 struct st_renderbuffer {
    enum pipe_format   format;
@@ -90,6 +91,7 @@ enum dirty_state {
 struct vg_context
 {
    struct st_context_iface iface;
+   struct mapi_table *dispatch;
 
    struct pipe_context *pipe;
 

@@ -40,6 +40,7 @@
 #include "vg_context.h"
 #include "image.h"
 #include "mask.h"
+#include "api.h"
 
 static struct pipe_resource *
 create_texture(struct pipe_context *pipe, enum pipe_format format,
@@ -536,8 +537,7 @@ vg_api_is_visual_supported(struct st_api *stapi,
 static st_proc_t
 vg_api_get_proc_address(struct st_api *stapi, const char *procname)
 {
-   /* TODO */
-   return (st_proc_t) NULL;
+   return api_get_proc_address(procname);
 }
 
 static void

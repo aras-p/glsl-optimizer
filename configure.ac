@@ -1315,6 +1315,9 @@ yes)
             # mesa/es is required to build es state tracker
             CORE_DIRS="$CORE_DIRS mesa/es"
             ;;
+        vega)
+            CORE_DIRS="$CORE_DIRS mapi/vgapi"
+            ;;
         esac
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"

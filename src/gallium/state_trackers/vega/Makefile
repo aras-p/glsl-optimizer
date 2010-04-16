@@ -13,6 +13,7 @@ VG_TINY = 0
 ### Lists of source files, included by Makefiles
 
 VG_SOURCES = \
+           api.c           \
            api_context.c   \
            api_filters.c   \
            api_images.c    \
@@ -42,13 +43,14 @@ VG_SOURCES = \
 
 VG_OBJECTS = $(VG_SOURCES:.c=.o)
 
-VG_LIBS = $(GALLIUM_AUXILIARIES)
+VG_LIBS = $(GALLIUM_AUXILIARIES) $(TOP)/src/mapi/vgapi/libvgapi.a
 VG_LIB_DEPS = $(EXTRA_LIB_PATH) -lm
 
 ### Include directories
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary
 

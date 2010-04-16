@@ -33,6 +33,7 @@
 #include "asm_util.h"
 #include "st_inlines.h"
 #include "vg_manager.h"
+#include "api.h"
 
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
@@ -67,6 +68,7 @@ static void init_clear(struct vg_context *st)
 void vg_set_current_context(struct vg_context *ctx)
 {
    _vg_context = ctx;
+   api_make_dispatch_current((ctx) ? ctx->dispatch : NULL);
 }
 
 struct vg_context * vg_create_context(struct pipe_context *pipe,
@@ -79,6 +81,8 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
    ctx = CALLOC_STRUCT(vg_context);
 
    ctx->pipe = pipe;
+
+   ctx->dispatch = api_create_dispatch();
 
    vg_init_state(&ctx->state.vg);
    ctx->state.dirty = ALL_DIRTY;
@@ -184,6 +188,8 @@ void vg_destroy_context(struct vg_context *ctx)
    cso_hash_delete(ctx->owned_objects[VG_OBJECT_MASK]);
    cso_hash_delete(ctx->owned_objects[VG_OBJECT_FONT]);
    cso_hash_delete(ctx->owned_objects[VG_OBJECT_PATH]);
+
+   api_destroy_dispatch(ctx->dispatch);
 
    free(ctx);
 }

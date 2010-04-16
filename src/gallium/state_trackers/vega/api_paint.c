@@ -29,13 +29,14 @@
 #include "vg_context.h"
 #include "paint.h"
 #include "image.h"
+#include "api.h"
 
-VGPaint vgCreatePaint(void)
+VGPaint vegaCreatePaint(void)
 {
    return (VGPaint) paint_create(vg_current_context());
 }
 
-void vgDestroyPaint(VGPaint p)
+void vegaDestroyPaint(VGPaint p)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_paint *paint;
@@ -49,7 +50,7 @@ void vgDestroyPaint(VGPaint p)
    paint_destroy(paint);
 }
 
-void vgSetPaint(VGPaint paint, VGbitfield paintModes)
+void vegaSetPaint(VGPaint paint, VGbitfield paintModes)
 {
    struct vg_context *ctx = vg_current_context();
 
@@ -74,7 +75,7 @@ void vgSetPaint(VGPaint paint, VGbitfield paintModes)
    }
 }
 
-VGPaint vgGetPaint(VGPaintMode paintMode)
+VGPaint vegaGetPaint(VGPaintMode paintMode)
 {
    struct vg_context *ctx = vg_current_context();
    VGPaint paint = VG_INVALID_HANDLE;
@@ -95,7 +96,7 @@ VGPaint vgGetPaint(VGPaintMode paintMode)
    return paint;
 }
 
-void vgSetColor(VGPaint paint, VGuint rgba)
+void vegaSetColor(VGPaint paint, VGuint rgba)
 {
    struct vg_context *ctx = vg_current_context();
 
@@ -114,7 +115,7 @@ void vgSetColor(VGPaint paint, VGuint rgba)
    }
 }
 
-VGuint vgGetColor(VGPaint paint)
+VGuint vegaGetColor(VGPaint paint)
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_paint *p;
@@ -134,7 +135,7 @@ VGuint vgGetColor(VGPaint paint)
    return paint_colori(p);
 }
 
-void vgPaintPattern(VGPaint paint, VGImage pattern)
+void vegaPaintPattern(VGPaint paint, VGImage pattern)
 {
    struct vg_context *ctx = vg_current_context();
 

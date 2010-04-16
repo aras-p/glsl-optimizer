@@ -29,15 +29,16 @@
 #include "vg_context.h"
 
 #include "matrix.h"
+#include "api.h"
 
-void vgLoadIdentity(void)
+void vegaLoadIdentity(void)
 {
    struct vg_context *ctx = vg_current_context();
    struct  matrix *mat = vg_state_matrix(&ctx->state.vg);
    matrix_load_identity(mat);
 }
 
-void vgLoadMatrix(const VGfloat * m)
+void vegaLoadMatrix(const VGfloat * m)
 {
    struct vg_context *ctx = vg_current_context();
    struct  matrix *mat;
@@ -59,7 +60,7 @@ void vgLoadMatrix(const VGfloat * m)
    }
 }
 
-void vgGetMatrix(VGfloat * m)
+void vegaGetMatrix(VGfloat * m)
 {
    struct vg_context *ctx = vg_current_context();
    struct matrix *mat;
@@ -76,7 +77,7 @@ void vgGetMatrix(VGfloat * m)
    memcpy(m, mat->m, sizeof(VGfloat)*9);
 }
 
-void vgMultMatrix(const VGfloat * m)
+void vegaMultMatrix(const VGfloat * m)
 {
    struct vg_context *ctx = vg_current_context();
    struct matrix *dst, src;
@@ -99,28 +100,28 @@ void vgMultMatrix(const VGfloat * m)
 
 }
 
-void vgTranslate(VGfloat tx, VGfloat ty)
+void vegaTranslate(VGfloat tx, VGfloat ty)
 {
    struct vg_context *ctx = vg_current_context();
    struct matrix *dst = vg_state_matrix(&ctx->state.vg);
    matrix_translate(dst, tx, ty);
 }
 
-void vgScale(VGfloat sx, VGfloat sy)
+void vegaScale(VGfloat sx, VGfloat sy)
 {
    struct vg_context *ctx = vg_current_context();
    struct matrix *dst = vg_state_matrix(&ctx->state.vg);
    matrix_scale(dst, sx, sy);
 }
 
-void vgShear(VGfloat shx, VGfloat shy)
+void vegaShear(VGfloat shx, VGfloat shy)
 {
    struct vg_context *ctx = vg_current_context();
    struct matrix *dst = vg_state_matrix(&ctx->state.vg);
    matrix_shear(dst, shx, shy);
 }
 
-void vgRotate(VGfloat angle)
+void vegaRotate(VGfloat angle)
 {
    struct vg_context *ctx = vg_current_context();
    struct matrix *dst = vg_state_matrix(&ctx->state.vg);
