@@ -108,21 +108,21 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
  */
 static struct pipe_resource *
 softpipe_resource_create(struct pipe_screen *screen,
-                        const struct pipe_resource *template)
+                        const struct pipe_resource *templat)
 {
    struct softpipe_resource *spt = CALLOC_STRUCT(softpipe_resource);
    if (!spt)
       return NULL;
 
-   assert(template->format != PIPE_FORMAT_NONE);
+   assert(templat->format != PIPE_FORMAT_NONE);
 
-   spt->base = *template;
+   spt->base = *templat;
    pipe_reference_init(&spt->base.reference, 1);
    spt->base.screen = screen;
 
-   spt->pot = (util_is_power_of_two(template->width0) &&
-               util_is_power_of_two(template->height0) &&
-               util_is_power_of_two(template->depth0));
+   spt->pot = (util_is_power_of_two(templat->width0) &&
+               util_is_power_of_two(templat->height0) &&
+               util_is_power_of_two(templat->depth0));
 
    if (spt->base.bind & (PIPE_BIND_DISPLAY_TARGET |
 			 PIPE_BIND_SCANOUT |
@@ -166,7 +166,7 @@ softpipe_resource_destroy(struct pipe_screen *pscreen,
 
 static struct pipe_resource *
 softpipe_resource_from_handle(struct pipe_screen *screen,
-                             const struct pipe_resource *template,
+                             const struct pipe_resource *templat,
                              struct winsys_handle *whandle)
 {
    struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
@@ -174,16 +174,16 @@ softpipe_resource_from_handle(struct pipe_screen *screen,
    if (!spt)
       return NULL;
 
-   spt->base = *template;
+   spt->base = *templat;
    pipe_reference_init(&spt->base.reference, 1);
    spt->base.screen = screen;
 
-   spt->pot = (util_is_power_of_two(template->width0) &&
-               util_is_power_of_two(template->height0) &&
-               util_is_power_of_two(template->depth0));
+   spt->pot = (util_is_power_of_two(templat->width0) &&
+               util_is_power_of_two(templat->height0) &&
+               util_is_power_of_two(templat->depth0));
 
    spt->dt = winsys->displaytarget_from_handle(winsys,
-                                               template,
+                                               templat,
                                                whandle,
                                                &spt->stride[0]);
    if (!spt->dt)
