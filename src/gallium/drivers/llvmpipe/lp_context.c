@@ -183,6 +183,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    /* plug in AA line/point stages */
    draw_install_aaline_stage(llvmpipe->draw, &llvmpipe->pipe);
    draw_install_aapoint_stage(llvmpipe->draw, &llvmpipe->pipe);
+   draw_install_pstipple_stage(llvmpipe->draw, &llvmpipe->pipe);
 
    /* convert points and lines into triangles: */
    draw_wide_point_threshold(llvmpipe->draw, 0.0);
