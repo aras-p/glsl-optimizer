@@ -300,6 +300,7 @@ def generate_read(formats, dst_channel, dst_native_type, dst_suffix):
     print 'lp_tile_read_%s(enum pipe_format format, %s *dst, const void *src, unsigned src_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (dst_suffix, dst_native_type)
     print '{'
     print '   void (*func)(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0, unsigned w, unsigned h);' % dst_native_type
+    print '   tile_read_count += 1;'
     print '   switch(format) {'
     for format in formats:
         if is_format_supported(format):
@@ -327,6 +328,7 @@ def generate_write(formats, src_channel, src_native_type, src_suffix):
     
     print '{'
     print '   void (*func)(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h);' % src_native_type
+    print '   tile_write_count += 1;'
     print '   switch(format) {'
     for format in formats:
         if is_format_supported(format):
@@ -357,6 +359,8 @@ def main():
     print '#include "util/u_math.h"'
     print '#include "util/u_half.h"'
     print '#include "lp_tile_soa.h"'
+    print
+    print 'int tile_write_count=0, tile_read_count=0;'
     print
     print 'const unsigned char'
     print 'tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH] = {'

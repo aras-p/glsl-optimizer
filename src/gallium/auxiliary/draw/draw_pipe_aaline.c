@@ -407,6 +407,7 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.width0 = 1 << MAX_TEXTURE_LEVEL;
    texTemp.height0 = 1 << MAX_TEXTURE_LEVEL;
    texTemp.depth0 = 1;
+   texTemp.bind = PIPE_BIND_SAMPLER_VIEW;
 
    aaline->texture = screen->resource_create(screen, &texTemp);
    if (!aaline->texture)

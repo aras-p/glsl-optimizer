@@ -37,6 +37,10 @@
 #include "lp_setup.h"
 
 
+/**
+ * \param flags  bitmask of PIPE_FLUSH_x flags
+ * \param fence  if non-null, returns pointer to a fench which can be waited on
+ */
 void
 llvmpipe_flush( struct pipe_context *pipe,
 		unsigned flags,
@@ -60,14 +64,9 @@ llvmpipe_flush( struct pipe_context *pipe,
       }
    }
 
-   /* XXX the lp_setup_flush(flags) param is not a bool, and it's ignored
-    * at this time!
-    */
-   if (flags & PIPE_FLUSH_SWAPBUFFERS) {
-      lp_setup_flush( llvmpipe->setup, FALSE );
-   }
-   else if (flags & PIPE_FLUSH_RENDER_CACHE) {
-      lp_setup_flush( llvmpipe->setup, TRUE );
+   /* ask the setup module to flush */
+   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_RENDER_CACHE)) {
+      lp_setup_flush(llvmpipe->setup, flags);
    }
 
    /* Enable to dump BMPs of the color/depth buffers each frame */

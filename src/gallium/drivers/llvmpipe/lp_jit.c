@@ -58,10 +58,10 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       elem_types[LP_JIT_TEXTURE_DEPTH] = LLVMInt32Type();
       elem_types[LP_JIT_TEXTURE_LAST_LEVEL] = LLVMInt32Type();
       elem_types[LP_JIT_TEXTURE_ROW_STRIDE] =
-         LLVMArrayType(LLVMInt32Type(), LP_MAX_TEXTURE_2D_LEVELS);
+         LLVMArrayType(LLVMInt32Type(), LP_MAX_TEXTURE_LEVELS);
       elem_types[LP_JIT_TEXTURE_DATA] =
          LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0),
-                       LP_MAX_TEXTURE_2D_LEVELS);
+                       LP_MAX_TEXTURE_LEVELS);
 
       texture_type = LLVMStructType(elem_types, Elements(elem_types), 0);
 

@@ -74,13 +74,13 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
     * Map vertex buffers
     */
    for (i = 0; i < lp->num_vertex_buffers; i++) {
-      void *buf = llvmpipe_resource(lp->vertex_buffer[i].buffer)->data;
+      void *buf = llvmpipe_resource_data(lp->vertex_buffer[i].buffer);
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes = llvmpipe_resource(indexBuffer)->data;
+      void *mapped_indexes = llvmpipe_resource_data(indexBuffer);
       draw_set_mapped_element_buffer_range(draw, indexSize,
                                            min_index,
                                            max_index,

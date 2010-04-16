@@ -217,9 +217,6 @@ void lp_rast_clear_color( struct lp_rasterizer_task *,
 void lp_rast_clear_zstencil( struct lp_rasterizer_task *, 
                              const union lp_rast_cmd_arg );
 
-void lp_rast_load_color( struct lp_rasterizer_task *, 
-                         const union lp_rast_cmd_arg );
-
 void lp_rast_set_state( struct lp_rasterizer_task *, 
                         const union lp_rast_cmd_arg );
 
@@ -231,5 +228,9 @@ void lp_rast_shade_tile( struct lp_rasterizer_task *,
 
 void lp_rast_fence( struct lp_rasterizer_task *,
                     const union lp_rast_cmd_arg );
+
+void lp_rast_store_color( struct lp_rasterizer_task *,
+                          const union lp_rast_cmd_arg );
+
 
 #endif

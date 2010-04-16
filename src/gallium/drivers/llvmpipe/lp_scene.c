@@ -186,6 +186,9 @@ lp_scene_reset(struct lp_scene *scene )
       }
       make_empty_list(ref_list);
    }
+
+   scene->has_color_clear = FALSE;
+   scene->has_depth_clear = FALSE;
 }
 
 
@@ -390,6 +393,7 @@ end:
 }
 
 
+
 /**
  * Prepare this scene for the rasterizer.
  * Map the framebuffer surfaces.  Initialize the 'rast' state.
@@ -397,50 +401,12 @@ end:
 static boolean
 lp_scene_map_buffers( struct lp_scene *scene )
 {
-   struct pipe_surface *cbuf, *zsbuf;
-   unsigned usage;
-   int i;
-
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
-   /* XXX: try to improve on this:
-    */
-   usage = PIPE_TRANSFER_READ_WRITE;
-
-   /* Map all color buffers 
-    */
-   for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      cbuf = scene->fb.cbufs[i];
-      if (cbuf) {
-	 scene->cbuf_map[i] = llvmpipe_resource_map(cbuf->texture,
-						    usage,
-						    cbuf->face,
-						    cbuf->level,
-						    cbuf->zslice);
-	 if (!scene->cbuf_map[i])
-	    goto fail;
-      }
-   }
-
-   /* Map the zsbuffer
-    */
-   zsbuf = scene->fb.zsbuf;
-   if (zsbuf) {
-      scene->zsbuf_map = llvmpipe_resource_map(zsbuf->texture,
-					       usage,
-					       zsbuf->face,
-					       zsbuf->level,
-					       zsbuf->zslice);
-      if (!scene->zsbuf_map)
-	 goto fail;
-   }
+   /* XXX framebuffer surfaces are no longer mapped here */
+   /* XXX move all map/unmap stuff into rast module... */
 
    return TRUE;
-
-fail:
-   /* Unmap and release transfers?
-    */
-   return FALSE;
 }
 
 
@@ -454,6 +420,7 @@ fail:
 static void
 lp_scene_unmap_buffers( struct lp_scene *scene )
 {
+#if 0
    unsigned i;
 
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
@@ -475,6 +442,7 @@ lp_scene_unmap_buffers( struct lp_scene *scene )
                              zsbuf->zslice);
       scene->zsbuf_map = NULL;
    }
+#endif
 
    util_unreference_framebuffer_state( &scene->fb );
 }
@@ -510,7 +478,6 @@ void lp_scene_rasterize( struct lp_scene *scene,
          }
       }
    }
-
 
    scene->write_depth = (scene->fb.zsbuf != NULL &&
                          write_depth);

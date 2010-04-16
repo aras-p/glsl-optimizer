@@ -436,6 +436,7 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.width0 = 32;
    texTemp.height0 = 32;
    texTemp.depth0 = 1;
+   texTemp.bind = PIPE_BIND_SAMPLER_VIEW;
 
    pstip->texture = screen->resource_create(screen, &texTemp);
    if (pstip->texture == NULL)

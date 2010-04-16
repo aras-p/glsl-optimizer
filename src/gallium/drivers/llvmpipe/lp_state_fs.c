@@ -1047,7 +1047,7 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    unsigned size = constants ? constants->width0 : 0;
-   const void *data = constants ? llvmpipe_resource(constants)->data : NULL;
+   const void *data = constants ? llvmpipe_resource_data(constants) : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);

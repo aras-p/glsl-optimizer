@@ -50,11 +50,26 @@ tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH];
 #define TILE_X_STRIDE (NUM_CHANNELS * TILE_C_STRIDE) //64
 #define TILE_Y_STRIDE (TILE_VECTOR_HEIGHT * TILE_SIZE * NUM_CHANNELS) //1024
 
-#define TILE_PIXEL(_p, _x, _y, _c) \
-   ((_p)[((_y) / TILE_VECTOR_HEIGHT) * TILE_Y_STRIDE + \
-         ((_x) / TILE_VECTOR_WIDTH) * TILE_X_STRIDE + \
-         (_c) * TILE_C_STRIDE + \
-         tile_offset[(_y) % TILE_VECTOR_HEIGHT][(_x) % TILE_VECTOR_WIDTH]])
+
+extern int tile_write_count, tile_read_count;
+
+
+/**
+ * Return offset of the given pixel (and color channel) from the start
+ * of a tile, in bytes.
+ */
+static INLINE unsigned
+tile_pixel_offset(unsigned x, unsigned y, unsigned c)
+{
+   unsigned ix = (x / TILE_VECTOR_WIDTH) * TILE_X_STRIDE;
+   unsigned iy = (y / TILE_VECTOR_HEIGHT) * TILE_Y_STRIDE;
+   unsigned offset = iy + ix + c * TILE_C_STRIDE +
+      tile_offset[y % TILE_VECTOR_HEIGHT][x % TILE_VECTOR_WIDTH];
+   return offset;
+}
+
+
+#define TILE_PIXEL(_p, _x, _y, _c)   ((_p)[tile_pixel_offset(_x, _y, _c)])
 
 
 void

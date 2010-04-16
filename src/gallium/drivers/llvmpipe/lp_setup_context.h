@@ -99,7 +99,7 @@ struct lp_setup_context
       union lp_rast_cmd_arg zstencil; /**< lp_rast_clear_zstencil() cmd */
    } clear;
 
-   enum {
+   enum setup_state {
       SETUP_FLUSHED,
       SETUP_CLEARED,
       SETUP_ACTIVE

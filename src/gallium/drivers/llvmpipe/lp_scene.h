@@ -115,11 +115,6 @@ struct texture_ref {
 struct lp_scene {
    struct pipe_context *pipe;
 
-   /* Scene's buffers are mapped at the time the scene is enqueued:
-    */
-   void *cbuf_map[PIPE_MAX_COLOR_BUFS];
-   uint8_t *zsbuf_map;
-
    /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
 
@@ -127,6 +122,8 @@ struct lp_scene {
    struct texture_ref textures;
 
    boolean write_depth;
+   boolean has_color_clear;
+   boolean has_depth_clear;
 
    /**
     * Number of active tiles in each dimension.
@@ -303,6 +300,7 @@ lp_scene_bin_iter_begin( struct lp_scene *scene );
 
 struct cmd_bin *
 lp_scene_bin_iter_next( struct lp_scene *scene, int *bin_x, int *bin_y );
+
 
 void
 lp_scene_rasterize( struct lp_scene *scene,
