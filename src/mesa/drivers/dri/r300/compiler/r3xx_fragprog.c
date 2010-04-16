@@ -26,6 +26,7 @@
 
 #include "radeon_dataflow.h"
 #include "radeon_program_alu.h"
+#include "radeon_program_tex.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
@@ -90,35 +91,31 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	if (c->is_r500) {
 		struct radeon_program_transformation transformations[] = {
-			{ &r500_transform_TEX, c },
 			{ &r500_transform_IF, 0 },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformDeriv, 0 },
 			{ &radeonTransformTrigScale, 0 }
 		};
-		radeonLocalTransform(&c->Base, 5, transformations);
+		radeonLocalTransform(&c->Base, 4, transformations);
 
 		c->Base.SwizzleCaps = &r500_swizzle_caps;
 	} else {
 		struct radeon_program_transformation transformations[] = {
-			{ &r300_transform_TEX, c },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformTrigSimple, 0 }
 		};
-		radeonLocalTransform(&c->Base, 3, transformations);
+		radeonLocalTransform(&c->Base, 2, transformations);
 
 		c->Base.SwizzleCaps = &r300_swizzle_caps;
 	}
 
-	/* As a stopgap, run the ALU lowering sequence once again.
-	 *
-	 * The entire lowering sequence should be fixed so that these little
-	 * inter-dependent instructions aren't an issue. I suppose we'd need a
-	 * list of safe instructions first... */
-	struct radeon_program_transformation maths_lowering[] = {
+	/* Run the common transformations too.
+	 * Remember, lowering comes last! */
+	struct radeon_program_transformation common_transformations[] = {
+		{ &radeonTransformTEX, c },
 		{ &radeonTransformALU, 0 }
 	};
-	radeonLocalTransform(&c->Base, 1, maths_lowering);
+	radeonLocalTransform(&c->Base, 2, common_transformations);
 
 	if (c->Base.Debug) {
 		fprintf(stderr, "Fragment Program: After native rewrite:\n");

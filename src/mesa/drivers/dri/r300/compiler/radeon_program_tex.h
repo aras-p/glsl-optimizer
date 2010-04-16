@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Ben Skeggs.
+ * Copyright (C) 2010 Corbin Simpson
  *
  * All Rights Reserved.
  *
@@ -25,26 +25,15 @@
  *
  */
 
-/*
- * Authors:
- *   Ben Skeggs <darktama@iinet.net.au>
- *   Jerome Glisse <j.glisse@gmail.com>
- */
-#ifndef __R500_FRAGPROG_H_
-#define __R500_FRAGPROG_H_
+#ifndef __RADEON_PROGRAM_TEX_H_
+#define __RADEON_PROGRAM_TEX_H_
 
 #include "radeon_compiler.h"
-#include "radeon_swizzle.h"
+#include "radeon_program.h"
 
-extern void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
-
-extern void r500FragmentProgramDump(struct rX00_fragment_program_code *c);
-
-extern struct rc_swizzle_caps r500_swizzle_caps;
-
-extern int r500_transform_IF(
+int radeonTransformTEX(
 	struct radeon_compiler * c,
 	struct rc_instruction * inst,
 	void* data);
 
-#endif
+#endif /* __RADEON_PROGRAM_TEX_H_ */

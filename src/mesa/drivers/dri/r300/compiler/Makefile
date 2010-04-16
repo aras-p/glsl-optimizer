@@ -13,6 +13,7 @@ C_SOURCES = \
 		radeon_opcodes.c \
 		radeon_program_alu.c \
 		radeon_program_pair.c \
+		radeon_program_tex.c \
 		radeon_pair_translate.c \
 		radeon_pair_schedule.c \
 		radeon_pair_regalloc.c \
