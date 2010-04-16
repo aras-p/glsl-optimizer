@@ -4,7 +4,6 @@
 #include "draw_vs.h"
 
 #include "gallivm/lp_bld_arit.h"
-#include "gallivm/lp_bld_interp.h"
 #include "gallivm/lp_bld_struct.h"
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_flow.h"
@@ -12,6 +11,8 @@
 #include "gallivm/lp_bld_tgsi.h"
 #include "gallivm/lp_bld_printf.h"
 #include "gallivm/lp_bld_init.h"
+
+#include "tgsi/tgsi_exec.h"
 
 #include "util/u_cpu_detect.h"
 #include "util/u_string.h"
