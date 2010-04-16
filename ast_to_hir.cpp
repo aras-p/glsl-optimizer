@@ -2284,9 +2284,9 @@ ir_rvalue *
 ast_iteration_statement::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
-   /* For loops start a new scope, but while and do-while loops do not.
+   /* For-loops and while-loops start a new scope, but do-while loops do not.
     */
-   if (mode == ast_for)
+   if (mode != ast_do_while)
       state->symbols->push_scope();
 
    if (init_statement != NULL)
@@ -2317,7 +2317,7 @@ ast_iteration_statement::hir(exec_list *instructions,
    if (mode == ast_do_while)
       condition_to_hir(stmt, state);
 
-   if (mode == ast_for)
+   if (mode != ast_do_while)
       state->symbols->pop_scope();
 
    /* Restore previous nesting before returning.
