@@ -58,14 +58,14 @@ int radeonTransformTEX(
 		(struct r300_fragment_program_compiler*)data;
 
 	if (inst->U.I.Opcode != RC_OPCODE_TEX &&
-	    inst->U.I.Opcode != RC_OPCODE_TXB &&
-	    inst->U.I.Opcode != RC_OPCODE_TXP &&
-	    inst->U.I.Opcode != RC_OPCODE_KIL)
+		inst->U.I.Opcode != RC_OPCODE_TXB &&
+		inst->U.I.Opcode != RC_OPCODE_TXP &&
+		inst->U.I.Opcode != RC_OPCODE_KIL)
 		return 0;
 
 	/* ARB_shadow & EXT_shadow_funcs */
 	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
-	    c->Program.ShadowSamplers & (1 << inst->U.I.TexSrcUnit)) {
+		c->Program.ShadowSamplers & (1 << inst->U.I.TexSrcUnit)) {
 		rc_compare_func comparefunc = compiler->state.unit[inst->U.I.TexSrcUnit].texture_compare_func;
 
 		if (comparefunc == RC_COMPARE_FUNC_NEVER || comparefunc == RC_COMPARE_FUNC_ALWAYS) {
@@ -201,27 +201,17 @@ int radeonTransformTEX(
 
 		if (compiler->state.unit[inst->U.I.TexSrcUnit].fake_npot &&
 			wrapmode != RC_WRAP_NONE) {
+			struct rc_instruction *inst_mov;
+
 			if (wrapmode == RC_WRAP_REPEAT) {
 				/* Both instructions will be paired up. */
 				struct rc_instruction *inst_frc = rc_insert_new_instruction(c, inst->Prev);
-				struct rc_instruction *inst_mov = rc_insert_new_instruction(c, inst_frc);
 
 				inst_frc->U.I.Opcode = RC_OPCODE_FRC;
 				inst_frc->U.I.DstReg.File = RC_FILE_TEMPORARY;
 				inst_frc->U.I.DstReg.Index = temp;
 				inst_frc->U.I.DstReg.WriteMask = RC_MASK_XYZ;
 				inst_frc->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-
-				/* Preserve W for TXP. */
-				inst_mov->U.I.Opcode = RC_OPCODE_MOV;
-				inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
-				inst_mov->U.I.DstReg.Index = temp;
-				inst_mov->U.I.DstReg.WriteMask = RC_MASK_W;
-				inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-
-				reset_srcreg(&inst->U.I.SrcReg[0]);
-				inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-				inst->U.I.SrcReg[0].Index = temp;
 			} else if (wrapmode == RC_WRAP_MIRROR) {
 				unsigned temp1;
 				/*
@@ -279,17 +269,26 @@ int radeonTransformTEX(
 				inst_rect->U.I.SrcReg[0].Index = temp;
 				inst_rect->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
 				inst_rect->U.I.SrcReg[1].Index = temp;
-
-				reset_srcreg(&inst->U.I.SrcReg[0]);
-				inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-				inst->U.I.SrcReg[0].Index = temp;
 			}
+
+			/* Preserve W for TXP/TXB. */
+			inst_mov = rc_insert_new_instruction(c, inst->Prev);
+
+			inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+			inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			inst_mov->U.I.DstReg.Index = temp;
+			inst_mov->U.I.DstReg.WriteMask = RC_MASK_W;
+			inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+
+			reset_srcreg(&inst->U.I.SrcReg[0]);
+			inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+			inst->U.I.SrcReg[0].Index = temp;
 		}
 	}
 
 	/* Cannot write texture to output registers or with masks */
 	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
-	    (inst->U.I.DstReg.File != RC_FILE_TEMPORARY || inst->U.I.DstReg.WriteMask != RC_MASK_XYZW)) {
+		(inst->U.I.DstReg.File != RC_FILE_TEMPORARY || inst->U.I.DstReg.WriteMask != RC_MASK_XYZW)) {
 		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst);
 
 		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
@@ -301,7 +300,6 @@ int radeonTransformTEX(
 		inst->U.I.DstReg.Index = inst_mov->U.I.SrcReg[0].Index;
 		inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
 	}
-
 
 	/* Cannot read texture coordinate from constants file */
 	if (inst->U.I.SrcReg[0].File != RC_FILE_TEMPORARY && inst->U.I.SrcReg[0].File != RC_FILE_INPUT) {
