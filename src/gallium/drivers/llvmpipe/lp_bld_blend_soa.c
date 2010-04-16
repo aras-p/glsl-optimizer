@@ -262,6 +262,23 @@ lp_build_blend_soa(LLVMBuilderRef builder,
                   bld.term[k][i] = bld.term[k][j];
                else
                   bld.term[k][i] = lp_build_mul(&bld.base, bld.factor[k][0][i], bld.factor[k][1][i]);
+
+               if (src_factor == PIPE_BLENDFACTOR_ZERO &&
+                   (dst_factor == PIPE_BLENDFACTOR_DST_ALPHA ||
+                    dst_factor == PIPE_BLENDFACTOR_INV_DST_ALPHA)) {
+                  /* XXX special case these combos to work around an apparent
+                   * bug in LLVM.
+                   * This hack disables the check for multiplication by zero
+                   * in lp_bld_mul().  When we optimize away the multiplication,
+                   * something goes wrong during code generation and we segfault
+                   * at runtime.
+                   */
+                  LLVMValueRef zeroSave = bld.base.zero;
+                  bld.base.zero = NULL;
+                  bld.term[k][i] = lp_build_mul(&bld.base, bld.factor[k][0][i],
+                                                bld.factor[k][1][i]);
+                  bld.base.zero = zeroSave;
+               }
             }
 
             /*
