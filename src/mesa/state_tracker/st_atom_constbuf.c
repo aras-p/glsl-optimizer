@@ -84,10 +84,9 @@ void st_upload_constants( struct st_context *st,
       }
 
       /* load Mesa constants into the constant buffer */
-      if (cbuf)
-         st_no_flush_pipe_buffer_write(st, *cbuf,
-				       0, paramBytes,
-				       params->ParameterValues);
+      st_no_flush_pipe_buffer_write(st, *cbuf,
+				    0, paramBytes,
+				    params->ParameterValues);
 
       st->pipe->set_constant_buffer(st->pipe, shader_type, 0, *cbuf);
    }
