@@ -113,9 +113,11 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	 * Remember, lowering comes last! */
 	struct radeon_program_transformation common_transformations[] = {
 		{ &radeonTransformTEX, c },
-		{ &radeonTransformALU, 0 }
 	};
-	radeonLocalTransform(&c->Base, 2, common_transformations);
+	radeonLocalTransform(&c->Base, 1, common_transformations);
+
+	common_transformations[0].function = &radeonTransformALU;
+	radeonLocalTransform(&c->Base, 1, common_transformations);
 
 	if (c->Base.Debug) {
 		fprintf(stderr, "Fragment Program: After native rewrite:\n");
