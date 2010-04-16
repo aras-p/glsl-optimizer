@@ -1543,13 +1543,13 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
    const int dims = texture_dims(bld->static_state->target);
-   LLVMValueRef lod, lod_fpart;
-   LLVMValueRef ilevel0, ilevel1, ilevel0_vec, ilevel1_vec;
+   LLVMValueRef lod = NULL, lod_fpart = NULL;
+   LLVMValueRef ilevel0, ilevel1 = NULL, ilevel0_vec, ilevel1_vec = NULL;
    LLVMValueRef width0_vec = NULL, height0_vec = NULL, depth0_vec = NULL;
    LLVMValueRef width1_vec = NULL, height1_vec = NULL, depth1_vec = NULL;
    LLVMValueRef row_stride0_vec = NULL, row_stride1_vec = NULL;
    LLVMValueRef img_stride0_vec = NULL, img_stride1_vec = NULL;
-   LLVMValueRef data_ptr0, data_ptr1;
+   LLVMValueRef data_ptr0, data_ptr1 = NULL;
 
    /*
    printf("%s mip %d  min %d  mag %d\n", __FUNCTION__,
