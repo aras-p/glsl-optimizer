@@ -478,8 +478,16 @@ void trace_dump_box_bytes(const void *data,
 			  unsigned stride,
 			  unsigned slice_stride)
 {
-   size_t size = MAX2(util_format_get_nblocksy(format, box->height) * stride,
-                      box->depth * slice_stride);
+   size_t size;
+
+   if (slice_stride)
+      size = box->depth * slice_stride;
+   else if (stride)
+      size = util_format_get_nblocksy(format, box->height) * stride;
+   else {
+      size = util_format_get_nblocksx(format, box->width) * util_format_get_blocksize(format);
+   }
+
    trace_dump_bytes(data, size);
 }
 
