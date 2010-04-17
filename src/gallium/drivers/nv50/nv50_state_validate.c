@@ -237,7 +237,7 @@ static struct nouveau_stateobj *
 validate_stencil_ref(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	struct nouveau_stateobj *so = so = so_new(2, 2, 0);
+	struct nouveau_stateobj *so = so_new(2, 2, 0);
 
 	so_method(so, tesla, NV50TCL_STENCIL_FRONT_FUNC_REF, 1);
 	so_data  (so, nv50->stencil_ref.ref_value[0]);
