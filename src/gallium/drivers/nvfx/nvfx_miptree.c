@@ -9,8 +9,6 @@
 #include "nvfx_transfer.h"
 #include "nv04_surface_2d.h"
 
-#include "nouveau/nouveau_util.h"
-
 /* Currently using separate implementations for buffers and textures,
  * even though gallium has a unified abstraction of these objects.
  * Eventually these should be combined, and mechanisms like transfers

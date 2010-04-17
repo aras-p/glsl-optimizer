@@ -9,7 +9,6 @@
 
 #include "nvfx_context.h"
 #include "nvfx_shader.h"
-#include "nvfx_resource.h"
 
 #define MAX_CONSTS 128
 #define MAX_IMM 32

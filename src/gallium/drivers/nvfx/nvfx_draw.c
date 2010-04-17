@@ -9,8 +9,6 @@
 #include "draw/draw_pipe.h"
 
 #include "nvfx_context.h"
-#include "nv30_vertprog.h"
-#include "nv40_vertprog.h"
 
 /* Simple, but crappy, swtnl path, hopefully we wont need to hit this very
  * often at all.  Uses "quadro style" vertex submission + a fixed vertex

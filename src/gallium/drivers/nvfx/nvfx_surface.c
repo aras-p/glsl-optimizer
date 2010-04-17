@@ -29,7 +29,6 @@
 #include "nvfx_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
-#include "util/u_tile.h"
 
 static void
 nvfx_surface_copy(struct pipe_context *pipe,
