@@ -44,6 +44,8 @@
 #include "i915_winsys.h"
 
 
+#define DEBUG_TEXTURES 0
+
 /*
  * Helper function and arrays
  */
@@ -115,10 +117,11 @@ i915_texture_set_image_offset(struct i915_texture *tex,
 
    tex->image_offset[level][img] = y * tex->stride + x * util_format_get_blocksize(tex->b.b.format);
 
-   /*
-   printf("%s level %d img %d pos %d,%d image_offset %x\n",
-       __FUNCTION__, level, img, x, y, tex->image_offset[level][img]);
-   */
+#if DEBUG_TEXTURES
+   debug_printf("%s: %p level %u, img %u (%u, %u) %p\n", __FUNCTION__,
+                tex, level, img, x, y,
+                (void*)(uintptr_t)tex->image_offset[level][img]);
+#endif
 }
 
 
@@ -152,9 +155,11 @@ i9x5_scanout_layout(struct i915_texture *tex)
       return FALSE;
    }
 
+#if DEBUG_TEXTURE
    debug_printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
       pt->width0, pt->height0, util_format_get_blocksize(pt->format),
       tex->stride, tex->total_nblocksy, tex->stride * tex->total_nblocksy);
+#endif
 
    return TRUE;
 }
@@ -181,9 +186,11 @@ i9x5_display_target_layout(struct i915_texture *tex)
    tex->total_nblocksy = align(util_format_get_nblocksy(pt->format, pt->height0), 8);
    tex->hw_tiled = I915_TILE_X;
 
+#if DEBUG_TEXTURE
    debug_printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
       pt->width0, pt->height0, util_format_get_blocksize(pt->format),
       tex->stride, tex->total_nblocksy, tex->stride * tex->total_nblocksy);
+#endif
 
    return TRUE;
 }
@@ -622,10 +629,6 @@ i915_texture_destroy(struct pipe_screen *screen,
    struct i915_winsys *iws = i915_screen(screen)->iws;
    uint i;
 
-   /*
-     DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
-   */
-
    iws->buffer_destroy(iws, tex->buffer);
 
    for (i = 0; i < Elements(tex->image_offset); i++)
@@ -771,6 +774,13 @@ i915_texture_create(struct pipe_screen *screen,
       PIPE_BUFFER_USAGE_CPU_WRITE);
    memset(ptr, 0x80, tex_size);
    ws->buffer_unmap(ws, tex->buffer);
+#endif
+
+#if DEBUG_TEXTURES
+   debug_printf("%s: %p size %u, stride %u, blocks (%u, %u)\n", __func__,
+                tex, (unsigned int)tex_size, tex->stride,
+                tex->stride / util_format_get_blocksize(tex->b.b.format),
+                tex->total_nblocksy);
 #endif
 
    return &tex->b.b;
