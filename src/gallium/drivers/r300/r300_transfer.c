@@ -35,9 +35,6 @@ struct r300_transfer {
     /* Parent class */
     struct pipe_transfer transfer;
 
-    /* Pipe context. */
-    struct pipe_context *ctx;
-
     /* Offset from start of buffer. */
     unsigned offset;
 
@@ -137,7 +134,6 @@ r300_texture_get_transfer(struct pipe_context *ctx,
         trans->transfer.sr = sr;
         trans->transfer.usage = usage;
         trans->transfer.box = *box;
-        trans->ctx = ctx;
 
         /* If the texture is tiled, we must create a temporary detiled texture
          * for this transfer. */
@@ -208,7 +204,7 @@ void r300_texture_transfer_destroy(struct pipe_context *ctx,
 
     if (r300transfer->detiled_texture) {
         if (trans->usage & PIPE_TRANSFER_WRITE) {
-            r300_copy_into_tiled_texture(r300transfer->ctx, r300transfer);
+            r300_copy_into_tiled_texture(ctx, r300transfer);
         }
 
         pipe_resource_reference(
