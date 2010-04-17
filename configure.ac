@@ -1359,9 +1359,11 @@ AC_ARG_ENABLE([gallium-intel],
     [enable_gallium_intel="$enableval"],
     [enable_gallium_intel=auto])
 if test "x$enable_gallium_intel" = xyes; then
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
     gallium_check_st "i915/drm i965/drm" "dri-i915 dri-i965" "egl-i915 egl-i965" "xorg-i915 xorg-i965"
 elif test "x$enable_gallium_intel" = xauto; then
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
 fi
 
