@@ -100,6 +100,18 @@ power_of_two(unsigned x)
    return value;
 }
 
+static INLINE unsigned
+align_nblocksx(enum pipe_format format, unsigned width, unsigned align_to)
+{
+   return align(util_format_get_nblocksx(format, width), align_to);
+}
+
+static INLINE unsigned
+align_nblocksy(enum pipe_format format, unsigned width, unsigned align_to)
+{
+   return align(util_format_get_nblocksy(format, width), align_to);
+}
+
 
 /*
  * More advanced helper funcs
@@ -159,11 +171,11 @@ i9x5_scanout_layout(struct i915_texture *tex)
 
    if (pt->width0 >= 240) {
       tex->stride = power_of_two(util_format_get_stride(pt->format, pt->width0));
-      tex->total_nblocksy = align(util_format_get_nblocksy(pt->format, pt->height0), 8);
+      tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
       tex->hw_tiled = I915_TILE_X;
    } else if (pt->width0 == 64 && pt->height0 == 64) {
       tex->stride = power_of_two(util_format_get_stride(pt->format, pt->width0));
-      tex->total_nblocksy = align(util_format_get_nblocksy(pt->format, pt->height0), 8);
+      tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
    } else {
       return FALSE;
    }
@@ -196,7 +208,7 @@ i9x5_display_target_layout(struct i915_texture *tex)
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
    tex->stride = power_of_two(util_format_get_stride(pt->format, pt->width0));
-   tex->total_nblocksy = align(util_format_get_nblocksy(pt->format, pt->height0), 8);
+   tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
    tex->hw_tiled = I915_TILE_X;
 
 #if DEBUG_TEXTURE
@@ -298,7 +310,7 @@ i915_texture_layout_2d(struct i915_texture *tex)
 
       width = u_minify(width, 1);
       height = u_minify(height, 1);
-      nblocksy = align(util_format_get_nblocksy(pt->format, height), align_y);
+      nblocksy = align_nblocksy(pt->format, height, align_y);
    }
 }
 
@@ -405,7 +417,7 @@ i945_texture_layout_2d(struct i915_texture *tex)
     */
    if (pt->last_level > 0) {
       unsigned mip1_nblocksx =
-         align(util_format_get_nblocksx(pt->format, u_minify(pt->width0, 1)), align_x) +
+         align_nblocksx(pt->format, u_minify(pt->width0, 1), align_x) +
          util_format_get_nblocksx(pt->format, u_minify(pt->width0, 2));
 
       if (mip1_nblocksx > nblocksx)
@@ -436,8 +448,8 @@ i945_texture_layout_2d(struct i915_texture *tex)
 
       width  = u_minify(width, 1);
       height = u_minify(height, 1);
-      nblocksx = align(util_format_get_nblocksx(pt->format, width), align_x);
-      nblocksy = align(util_format_get_nblocksy(pt->format, height), align_y);
+      nblocksx = align_nblocksx(pt->format, width, align_x);
+      nblocksy = align_nblocksy(pt->format, height, align_y);
    }
 }
 
