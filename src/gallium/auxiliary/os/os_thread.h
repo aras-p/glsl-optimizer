@@ -299,22 +299,43 @@ static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
 
 #else
 
-typedef unsigned pipe_barrier;
+typedef struct {
+   unsigned count;
+   unsigned waiters;
+   pipe_mutex mutex;
+   pipe_condvar condvar;
+} pipe_barrier;
 
 static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
 {
-   /* XXX we could implement barriers with a mutex and condition var */
-   assert(0);
+   barrier->count = count;
+   barrier->waiters = 0;
+   pipe_mutex_init(barrier->mutex);
+   pipe_condvar_init(barrier->condvar);
 }
 
 static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
 {
-   assert(0);
+   assert(barrier->waiters == 0);
+   pipe_mutex_destroy(barrier->mutex);
+   pipe_condvar_destroy(barrier->condvar);
 }
 
 static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
 {
-   assert(0);
+   pipe_mutex_lock(barrier->mutex);
+
+   assert(barrier->waiters < barrier->count);
+   barrier->waiters++;
+
+   if (barrier->waiters < barrier->count) {
+      pipe_condvar_wait(barrier->condvar, barrier->mutex);
+   } else {
+      barrier->waiters = 0;
+      pipe_condvar_broadcast(barrier->condvar);
+   }
+
+   pipe_mutex_unlock(barrier->mutex);
 }
 
 
