@@ -27,8 +27,6 @@
 
 #include "radeon_program_tex.h"
 
-#include "../r300_reg.h"
-
 /* Series of transformations to be done on textures. */
 
 static struct rc_src_register shadow_ambient(struct r300_fragment_program_compiler *compiler,
