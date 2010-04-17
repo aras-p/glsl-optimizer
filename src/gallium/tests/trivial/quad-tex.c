@@ -89,9 +89,9 @@ struct program
 
 	float clear_color[4];
 
-	struct pipe_buffer *vbuf;
-	struct pipe_texture *target;
-	struct pipe_texture *tex;
+	struct pipe_resource *vbuf;
+	struct pipe_resource *target;
+	struct pipe_resource *tex;
 	struct pipe_sampler_view *view;
 };
 
@@ -132,13 +132,13 @@ static void init_prog(struct program *p)
 			}
 		};
 
-		p->vbuf = pipe_buffer_create(p->screen, 16, PIPE_BUFFER_USAGE_VERTEX, sizeof(vertices));
-		pipe_buffer_write(p->screen, p->vbuf, 0, sizeof(vertices), vertices);
+		p->vbuf = pipe_buffer_create(p->screen, PIPE_BIND_VERTEX_BUFFER, sizeof(vertices));
+		pipe_buffer_write(p->pipe, p->vbuf, 0, sizeof(vertices), vertices);
 	}
 
 	/* render target texture */
 	{
-		struct pipe_texture tmplt;
+		struct pipe_resource tmplt;
 		memset(&tmplt, 0, sizeof(tmplt));
 		tmplt.target = PIPE_TEXTURE_2D;
 		tmplt.format = PIPE_FORMAT_B8G8R8A8_UNORM; /* All drivers support this */
@@ -155,8 +155,10 @@ static void init_prog(struct program *p)
 	{
 		uint32_t *ptr;
 		struct pipe_transfer *t;
-		struct pipe_texture t_tmplt;
+		struct pipe_resource t_tmplt;
 		struct pipe_sampler_view v_tmplt;
+		struct pipe_subresource sub;
+		struct pipe_box box;
 
 		memset(&t_tmplt, 0, sizeof(t_tmplt));
 		t_tmplt.target = PIPE_TEXTURE_2D;
@@ -169,10 +171,12 @@ static void init_prog(struct program *p)
 
 		p->tex = p->screen->resource_create(p->screen, &t_tmplt);
 
-		t = p->pipe->get_tex_transfer(p->pipe, p->tex,
-		                              0, 0, 0, /* face, level, zslice */
-		                              PIPE_TRANSFER_WRITE,
-		                              0, 0, 2, 2); /* x, y, width, height */
+		memset(&sub, 0, sizeof(sub));
+		memset(&box, 0, sizeof(box));
+		box.width = 2;
+		box.height = 2;
+
+		t = p->pipe->get_transfer(p->pipe, p->tex, sub, PIPE_TRANSFER_WRITE, &box);
 
 		ptr = p->pipe->transfer_map(p->pipe, t);
 		ptr[0] = 0xffff0000;
@@ -181,7 +185,7 @@ static void init_prog(struct program *p)
 		ptr[3] = 0xffffff00;
 		p->pipe->transfer_unmap(p->pipe, t);
 
-		p->pipe->tex_transfer_destroy(p->pipe, t);
+		p->pipe->transfer_destroy(p->pipe, t);
 
 		u_sampler_view_default_template(&v_tmplt, p->tex, p->tex->format);
 
@@ -216,7 +220,7 @@ static void init_prog(struct program *p)
 	p->framebuffer.width = WIDTH;
 	p->framebuffer.height = HEIGHT;
 	p->framebuffer.nr_cbufs = 1;
-	p->framebuffer.cbufs[0] = p->screen->get_tex_surface(p->screen, p->target, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
+	p->framebuffer.cbufs[0] = p->screen->get_tex_surface(p->screen, p->target, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
 
 	/* viewport, depth isn't really needed */
 	{
@@ -284,9 +288,9 @@ static void close_prog(struct program *p)
 
 	pipe_surface_reference(&p->framebuffer.cbufs[0], NULL);
 	pipe_sampler_view_reference(&p->view, NULL);
-	pipe_texture_reference(&p->target, NULL);
-	pipe_texture_reference(&p->tex, NULL);
-	pipe_buffer_reference(&p->vbuf, NULL);
+	pipe_resource_reference(&p->target, NULL);
+	pipe_resource_reference(&p->tex, NULL);
+	pipe_resource_reference(&p->vbuf, NULL);
 
 	cso_destroy_context(p->cso);
 	p->pipe->destroy(p->pipe);

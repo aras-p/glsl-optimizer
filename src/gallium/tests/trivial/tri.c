@@ -86,8 +86,8 @@ struct program
 
 	float clear_color[4];
 
-	struct pipe_buffer *vbuf;
-	struct pipe_texture *target;
+	struct pipe_resource *vbuf;
+	struct pipe_resource *target;
 };
 
 static void init_prog(struct program *p)
@@ -123,13 +123,13 @@ static void init_prog(struct program *p)
 			}
 		};
 
-		p->vbuf = pipe_buffer_create(p->screen, 16, PIPE_BUFFER_USAGE_VERTEX, sizeof(vertices));
-		pipe_buffer_write(p->screen, p->vbuf, 0, sizeof(vertices), vertices);
+		p->vbuf = pipe_buffer_create(p->screen, PIPE_BIND_VERTEX_BUFFER, sizeof(vertices));
+		pipe_buffer_write(p->pipe, p->vbuf, 0, sizeof(vertices), vertices);
 	}
 
 	/* render target texture */
 	{
-		struct pipe_texture tmplt;
+		struct pipe_resource tmplt;
 		memset(&tmplt, 0, sizeof(tmplt));
 		tmplt.target = PIPE_TEXTURE_2D;
 		tmplt.format = PIPE_FORMAT_B8G8R8A8_UNORM; /* All drivers support this */
@@ -160,7 +160,7 @@ static void init_prog(struct program *p)
 	p->framebuffer.width = WIDTH;
 	p->framebuffer.height = HEIGHT;
 	p->framebuffer.nr_cbufs = 1;
-	p->framebuffer.cbufs[0] = p->screen->get_tex_surface(p->screen, p->target, 0, 0, 0, PIPE_BUFFER_USAGE_GPU_WRITE);
+	p->framebuffer.cbufs[0] = p->screen->get_tex_surface(p->screen, p->target, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
 
 	/* viewport, depth isn't really needed */
 	{
@@ -224,8 +224,8 @@ static void close_prog(struct program *p)
 	p->pipe->delete_fs_state(p->pipe, p->fs);
 
 	pipe_surface_reference(&p->framebuffer.cbufs[0], NULL);
-	pipe_texture_reference(&p->target, NULL);
-	pipe_buffer_reference(&p->vbuf, NULL);
+	pipe_resource_reference(&p->target, NULL);
+	pipe_resource_reference(&p->vbuf, NULL);
 
 	cso_destroy_context(p->cso);
 	p->pipe->destroy(p->pipe);

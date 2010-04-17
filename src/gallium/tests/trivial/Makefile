@@ -41,4 +41,4 @@ $(OBJECTS): %.o: %.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $(PROG_DEFINES) $< -o $@
 
 $(PROGS): %: %.o
-	$(CC) $(LDFLAGS) $< $(LINKS) -lm -lpthread -o $@
+	$(CC) $(LDFLAGS) $< $(LINKS) -lm -lpthread -ldl -o $@
