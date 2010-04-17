@@ -191,19 +191,17 @@ int radeonTransformTEX(
 	 *
 	 * Mirroring is trickier. We're going to start out like repeat:
 	 *
-	 * MUL temp0, texcoord, <scaling factor constant> ; De-mirror across axes
-	 * MUL temp0, abs(temp0), 0.5 ; Pattern repeats in [0, 2]
+	 * MUL temp, texcoord, <scaling factor constant> ; De-mirror across axes
+	 * MUL temp, temp, 0.5 ; Pattern repeats in [0, 2]
 	 *                            ; so scale to [0, 1]
-	 * FRC temp0, temp0 ; Make the pattern repeat
-	 * SGE temp1, temp0, 0.5 ; Select components that need to be "reflected"
-	 *                       ; across the mirror
-	 * MAD temp0, neg(0.5), temp1, temp0 ; Add -0.5 to the
-	 *                                   ; selected components
-	 * ADD temp0, temp0, temp0 ; Poor man's 2x to undo earlier MUL
+	 * FRC temp, temp ; Make the pattern repeat
+	 * MAD temp, temp, 2, -1 ; Move the pattern to [-1, 1]
+	 * ADD temp, 1, -abs(temp) ; Now comes a neat trick: use abs to mirror the pattern.
+	 *				; The pattern is backwards, so reverse it (1-x).
 	 *
 	 * This gives us coords in [0, 1].
 	 *
-	 * ~ C.
+	 * ~ C & M. ;)
 	 */
 	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
 		(inst->U.I.TexSrcTarget == RC_TEXTURE_RECT ||
@@ -236,62 +234,67 @@ int radeonTransformTEX(
 				inst_frc->U.I.DstReg.WriteMask = RC_MASK_XYZ;
 				inst_frc->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
 			} else if (wrapmode == RC_WRAP_MIRROR) {
-				unsigned temp1;
 				/*
-				 * MUL temp0, abs(temp0), 0.5
-				 * FRC temp0, temp0
-				 * SGE temp1, temp0, 0.5
-				 * MAD temp0, neg(0.5), temp1, temp0
-				 * ADD temp0, temp0, temp0
+				 * Function:
+				 *   f(v) = 1 - abs(frac(v * 0.5) * 2 - 1)
+				 *
+				 * Code:
+				 *   MUL temp, src0, 0.5
+				 *   FRC temp, temp
+				 *   MAD temp, temp, 2, -1
+				 *   ADD temp, 1, -abs(temp)
 				 */
 
-				struct rc_instruction *inst_rect = rc_insert_new_instruction(c, inst->Prev);
+				struct rc_instruction *inst_mul, *inst_frc, *inst_mad, *inst_add;
+				unsigned two, two_swizzle;
 
-				inst_rect->U.I.Opcode = RC_OPCODE_MUL;
-				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.DstReg.Index = temp;
-				inst_rect->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-				inst_rect->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_HALF);
+				inst_mul = rc_insert_new_instruction(c, inst->Prev);
 
-				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+				inst_mul->U.I.Opcode = RC_OPCODE_MUL;
+				inst_mul->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_mul->U.I.DstReg.Index = temp;
+				inst_mul->U.I.DstReg.WriteMask = RC_MASK_XYZ;
+				inst_mul->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+				inst_mul->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_HHHH;
 
-				inst_rect->U.I.Opcode = RC_OPCODE_FRC;
-				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.DstReg.Index = temp;
-				inst_rect->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.SrcReg[0].Index = temp;
+				inst_frc = rc_insert_new_instruction(c, inst->Prev);
 
-				temp1 = rc_find_free_temporary(c);
-				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+				inst_frc->U.I.Opcode = RC_OPCODE_FRC;
+				inst_frc->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_frc->U.I.DstReg.Index = temp;
+				inst_frc->U.I.DstReg.WriteMask = RC_MASK_XYZ;
+				inst_frc->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+				inst_frc->U.I.SrcReg[0].Index = temp;
+				inst_frc->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZ0;
 
-				inst_rect->U.I.Opcode = RC_OPCODE_SGE;
-				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.DstReg.Index = temp1;
-				inst_rect->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.SrcReg[0].Index = temp;
-				inst_rect->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_HALF);
+				two = rc_constants_add_immediate_scalar(&c->Program.Constants, 2, &two_swizzle);
+				inst_mad = rc_insert_new_instruction(c, inst->Prev);
 
-				inst_rect = rc_insert_new_instruction(c, inst->Prev);
+				inst_mad->U.I.Opcode = RC_OPCODE_MAD;
+				inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_mad->U.I.DstReg.Index = temp;
+				inst_mad->U.I.DstReg.WriteMask = RC_MASK_XYZ;
+				inst_mad->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+				inst_mad->U.I.SrcReg[0].Index = temp;
+				inst_mad->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XYZ0;
+				inst_mad->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
+				inst_mad->U.I.SrcReg[1].Index = two;
+				inst_mad->U.I.SrcReg[1].Swizzle = two_swizzle;
+				inst_mad->U.I.SrcReg[2].Swizzle = RC_SWIZZLE_1111;
+				inst_mad->U.I.SrcReg[2].Negate = RC_MASK_XYZ;
 
-				inst_rect->U.I.Opcode = RC_OPCODE_MAD;
-				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.DstReg.Index = temp;
-				inst_rect->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.SrcReg[0].Index = temp1;
-				inst_rect->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE_SMEAR(RC_SWIZZLE_HALF);
-				inst_rect->U.I.SrcReg[1].Negate = 1;
-				inst_rect->U.I.SrcReg[2].File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.SrcReg[2].Index = temp;
+				inst_add = rc_insert_new_instruction(c, inst->Prev);
 
-				inst_rect = rc_insert_new_instruction(c, inst->Prev);
-
-				inst_rect->U.I.Opcode = RC_OPCODE_ADD;
-				inst_rect->U.I.DstReg.File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.DstReg.Index = temp;
-				inst_rect->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.SrcReg[0].Index = temp;
-				inst_rect->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
-				inst_rect->U.I.SrcReg[1].Index = temp;
+				inst_add->U.I.Opcode = RC_OPCODE_ADD;
+				inst_add->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_add->U.I.DstReg.Index = temp;
+				inst_add->U.I.DstReg.WriteMask = RC_MASK_XYZ;
+				inst_add->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
+				inst_add->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
+				inst_add->U.I.SrcReg[1].Index = temp;
+				inst_add->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_XYZ0;
+				inst_add->U.I.SrcReg[1].Abs = 1;
+				inst_add->U.I.SrcReg[1].Negate = RC_MASK_XYZ;
 			}
 
 			/* Preserve W for TXP/TXB. */
