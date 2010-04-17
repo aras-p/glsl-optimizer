@@ -601,6 +601,9 @@ do_triangle_ccw(struct lp_setup_context *setup,
 }
 
 
+/**
+ * Draw triangle if it's CW, cull otherwise.
+ */
 static void triangle_cw( struct lp_setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
@@ -610,6 +613,9 @@ static void triangle_cw( struct lp_setup_context *setup,
 }
 
 
+/**
+ * Draw triangle if it's CCW, cull otherwise.
+ */
 static void triangle_ccw( struct lp_setup_context *setup,
 			 const float (*v0)[4],
 			 const float (*v1)[4],
@@ -619,6 +625,10 @@ static void triangle_ccw( struct lp_setup_context *setup,
 }
 
 
+
+/**
+ * Draw triangle whether it's CW or CCW.
+ */
 static void triangle_both( struct lp_setup_context *setup,
 			   const float (*v0)[4],
 			   const float (*v1)[4],
