@@ -233,7 +233,7 @@ int radeonTransformTEX(
 				inst_frc->U.I.DstReg.Index = temp;
 				inst_frc->U.I.DstReg.WriteMask = RC_MASK_XYZ;
 				inst_frc->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-			} else if (wrapmode == RC_WRAP_MIRROR) {
+			} else if (wrapmode == RC_WRAP_MIRRORED_REPEAT) {
 				/*
 				 * Function:
 				 *   f(v) = 1 - abs(frac(v * 0.5) * 2 - 1)
@@ -295,6 +295,22 @@ int radeonTransformTEX(
 				inst_add->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_XYZ0;
 				inst_add->U.I.SrcReg[1].Abs = 1;
 				inst_add->U.I.SrcReg[1].Negate = RC_MASK_XYZ;
+			} else if (wrapmode == RC_WRAP_MIRRORED_CLAMP) {
+				/*
+				 * Mirrored clamp modes are bloody simple, we just use abs
+				 * to mirror [0, 1] into [-1, 0]. This works for
+				 * all modes i.e. CLAMP, CLAMP_TO_EDGE, and CLAMP_TO_BORDER.
+				 */
+				struct rc_instruction *inst_mov;
+
+				inst_mov = rc_insert_new_instruction(c, inst->Prev);
+
+				inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+				inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_mov->U.I.DstReg.Index = temp;
+				inst_mov->U.I.DstReg.WriteMask = RC_MASK_XYZ;
+				inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+				inst_mov->U.I.SrcReg[0].Abs = 1;
 			}
 
 			/* Preserve W for TXP/TXB. */

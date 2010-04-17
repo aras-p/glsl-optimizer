@@ -169,10 +169,14 @@ static void get_external_state(
                         break;
 
                     case PIPE_TEX_WRAP_MIRROR_REPEAT:
+                        state->unit[i].wrap_mode = RC_WRAP_MIRRORED_REPEAT;
+                        state->unit[i].fake_npot = TRUE;
+                        break;
+
                     case PIPE_TEX_WRAP_MIRROR_CLAMP:
                     case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
                     case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-                        state->unit[i].wrap_mode = RC_WRAP_MIRROR;
+                        state->unit[i].wrap_mode = RC_WRAP_MIRRORED_CLAMP;
                         state->unit[i].fake_npot = TRUE;
                         break;
 
