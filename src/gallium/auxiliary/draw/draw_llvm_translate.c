@@ -5,7 +5,6 @@
 
 #include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_struct.h"
-#include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_debug.h"
 
 #include "util/u_memory.h"
