@@ -55,25 +55,38 @@
  * Initial offset for Cube map.
  */
 static const int initial_offsets[6][2] = {
-   {0, 0},
-   {0, 2},
-   {1, 0},
-   {1, 2},
-   {1, 1},
-   {1, 3}
+   [PIPE_TEX_FACE_POS_X] = {0, 0},
+   [PIPE_TEX_FACE_POS_Y] = {1, 0},
+   [PIPE_TEX_FACE_POS_Z] = {1, 1},
+   [PIPE_TEX_FACE_NEG_X] = {0, 2},
+   [PIPE_TEX_FACE_NEG_Y] = {1, 2},
+   [PIPE_TEX_FACE_NEG_Z] = {1, 3},
 };
 
 /**
  * Step offsets for Cube map.
  */
 static const int step_offsets[6][2] = {
-   {0, 2},
-   {0, 2},
-   {-1, 2},
-   {-1, 2},
-   {-1, 1},
-   {-1, 1}
+   [PIPE_TEX_FACE_POS_X] = { 0, 2},
+   [PIPE_TEX_FACE_POS_Y] = {-1, 2},
+   [PIPE_TEX_FACE_POS_Z] = {-1, 1},
+   [PIPE_TEX_FACE_NEG_X] = { 0, 2},
+   [PIPE_TEX_FACE_NEG_Y] = {-1, 2},
+   [PIPE_TEX_FACE_NEG_Z] = {-1, 1},
 };
+
+/**
+ * For compressed level 2
+ */
+static const int bottom_offsets[6] = {
+   [PIPE_TEX_FACE_POS_X] = 16 + 0 * 8,
+   [PIPE_TEX_FACE_POS_Y] = 16 + 1 * 8,
+   [PIPE_TEX_FACE_POS_Z] = 16 + 2 * 8,
+   [PIPE_TEX_FACE_NEG_X] = 16 + 3 * 8,
+   [PIPE_TEX_FACE_NEG_Y] = 16 + 4 * 8,
+   [PIPE_TEX_FACE_NEG_Z] = 16 + 5 * 8,
+};
+
 
 /* XXX really need twice the size if x is already pot?
    Otherwise just use util_next_power_of_two?
@@ -221,6 +234,40 @@ i9x5_special_layout(struct i915_texture *tex)
    return FALSE;
 }
 
+/**
+ * Cube layout used on i915 and for non-compressed textures on i945.
+ */
+static void
+i9x5_texture_layout_cube(struct i915_texture *tex)
+{
+   struct pipe_resource *pt = &tex->b.b;
+   const unsigned nblocks = util_format_get_nblocksx(pt->format, pt->width0);
+   unsigned level;
+   unsigned face;
+
+   assert(pt->width0 == pt->height0); /* cubemap images are square */
+
+   /* double pitch for cube layouts */
+   tex->stride = align(nblocks * util_format_get_blocksize(pt->format) * 2, 4);
+   tex->total_nblocksy = nblocks * 4;
+
+   for (level = 0; level <= pt->last_level; level++)
+      i915_texture_set_level_info(tex, level, 6);
+
+   for (face = 0; face < 6; face++) {
+      unsigned x = initial_offsets[face][0] * nblocks;
+      unsigned y = initial_offsets[face][1] * nblocks;
+      unsigned d = nblocks;
+
+      for (level = 0; level <= pt->last_level; level++) {
+         i915_texture_set_image_offset(tex, level, face, x, y);
+         d >>= 1;
+         x += step_offsets[face][0] * d;
+         y += step_offsets[face][1] * d;
+      }
+   }
+}
+
 
 /*
  * i915 layout functions
@@ -300,37 +347,6 @@ i915_texture_layout_3d(struct i915_texture *tex)
    tex->total_nblocksy = stack_nblocksy * pt->depth0;
 }
 
-static void
-i915_texture_layout_cube(struct i915_texture *tex)
-{
-   struct pipe_resource *pt = &tex->b.b;
-   const unsigned nblocks = util_format_get_nblocksx(pt->format, pt->width0);
-   unsigned level;
-   unsigned face;
-
-   assert(pt->width0 == pt->height0); /* cubemap images are square */
-
-   /* double pitch for cube layouts */
-   tex->stride = align(nblocks * util_format_get_blocksize(pt->format) * 2, 4);
-   tex->total_nblocksy = nblocks * 4;
-
-   for (level = 0; level <= pt->last_level; level++)
-      i915_texture_set_level_info(tex, level, 6);
-
-   for (face = 0; face < 6; face++) {
-      unsigned x = initial_offsets[face][0] * nblocks;
-      unsigned y = initial_offsets[face][1] * nblocks;
-      unsigned d = nblocks;
-
-      for (level = 0; level <= pt->last_level; level++) {
-         i915_texture_set_image_offset(tex, level, face, x, y);
-         d >>= 1;
-         x += step_offsets[face][0] * d;
-         y += step_offsets[face][1] * d;
-      }
-   }
-}
-
 static boolean
 i915_texture_layout(struct i915_texture * tex)
 {
@@ -346,7 +362,7 @@ i915_texture_layout(struct i915_texture * tex)
       i915_texture_layout_3d(tex);
       break;
    case PIPE_TEXTURE_CUBE:
-      i915_texture_layout_cube(tex);
+      i9x5_texture_layout_cube(tex);
       break;
    default:
       assert(0);
@@ -484,93 +500,94 @@ static void
 i945_texture_layout_cube(struct i915_texture *tex)
 {
    struct pipe_resource *pt = &tex->b.b;
-   unsigned level;
    const unsigned nblocks = util_format_get_nblocksx(pt->format, pt->width0);
+   const unsigned dim = pt->width0;
+   unsigned level;
    unsigned face;
 
-   /*
-   printf("%s %i, %i\n", __FUNCTION__, pt->width0, pt->height0);
-   */
-
    assert(pt->width0 == pt->height0); /* cubemap images are square */
+   assert(util_next_power_of_two(pt->width0) == pt->width0); /* npot only */
+   assert(util_format_is_s3tc(pt->format)); /* compressed only */
 
    /*
-    * XXX Should only be used for compressed formats. But lets
-    * keep this code active just in case.
-    *
     * Depending on the size of the largest images, pitch can be
     * determined either by the old-style packing of cubemap faces,
     * or the final row of 4x4, 2x2 and 1x1 faces below this.
+    *
+    * 64  * 2 / 4 = 32
+    * 14 * 2 = 28
     */
-   if (nblocks > 32)
-      tex->stride = align(nblocks * util_format_get_blocksize(pt->format) * 2, 4);
+   if (pt->width0 >= 64)
+      tex->stride = nblocks * 2 * util_format_get_blocksize(pt->format);
    else
-      tex->stride = 14 * 8 * util_format_get_blocksize(pt->format);
+      tex->stride = 14 * 2 * util_format_get_blocksize(pt->format);
 
-   tex->total_nblocksy = nblocks * 4;
+   /*
+    * Something similary apply for height as well.
+    */
+   if (pt->width0 >= 4)
+      tex->total_nblocksy = nblocks * 4 + 1;
+   else
+      tex->total_nblocksy = 1;
 
-   /* Set all the levels to effectively occupy the whole rectangular region.
-   */
+   /* Set all the levels to effectively occupy the whole rectangular region */
    for (level = 0; level <= pt->last_level; level++)
       i915_texture_set_level_info(tex, level, 6);
 
    for (face = 0; face < 6; face++) {
-      unsigned x = initial_offsets[face][0] * nblocks;
-      unsigned y = initial_offsets[face][1] * nblocks;
-      unsigned d = nblocks;
+      /* all calculations in pixels */
+      unsigned total_height = tex->total_nblocksy * 4;
+      unsigned x = initial_offsets[face][0] * dim;
+      unsigned y = initial_offsets[face][1] * dim;
+      unsigned d = dim;
 
-#if 0 /* Fix and enable this code for compressed formats */
-      if (nblocks == 4 && face >= 4) {
-         y = tex->total_height - 4;
+      if (dim == 4 && face >= 4) {
          x = (face - 4) * 8;
-      }
-      else if (nblocks < 4 && (face > 0)) {
-         y = tex->total_height - 4;
+         y = tex->total_nblocksy * 4 - 4; /* 4 = 1 block */
+      } else if (dim < 4 && (face > 0)) {
          x = face * 8;
+         y = total_height - 4;
       }
-#endif
 
       for (level = 0; level <= pt->last_level; level++) {
-         i915_texture_set_image_offset(tex, level, face, x, y);
+         i915_texture_set_image_offset(tex, level, face,
+                                       util_format_get_nblocksx(pt->format, x),
+                                       util_format_get_nblocksy(pt->format, y));
 
          d >>= 1;
 
-#if 0 /* Fix and enable this code for compressed formats */
          switch (d) {
-            case 4:
-               switch (face) {
-                  case PIPE_TEX_FACE_POS_X:
-                  case PIPE_TEX_FACE_NEG_X:
-                     x += step_offsets[face][0] * d;
-                     y += step_offsets[face][1] * d;
-                     break;
-                  case PIPE_TEX_FACE_POS_Y:
-                  case PIPE_TEX_FACE_NEG_Y:
-                     y += 12;
-                     x -= 8;
-                     break;
-                  case PIPE_TEX_FACE_POS_Z:
-                  case PIPE_TEX_FACE_NEG_Z:
-                     y = tex->total_height - 4;
-                     x = (face - 4) * 8;
-                     break;
-               }
-            case 2:
-               y = tex->total_height - 4;
-               x = 16 + face * 8;
-               break;
-
-            case 1:
-               x += 48;
-               break;
-            default:
-#endif
+         case 4:
+            switch (face) {
+            case PIPE_TEX_FACE_POS_X:
+            case PIPE_TEX_FACE_NEG_X:
                x += step_offsets[face][0] * d;
                y += step_offsets[face][1] * d;
-#if 0
                break;
+            case PIPE_TEX_FACE_POS_Y:
+            case PIPE_TEX_FACE_NEG_Y:
+               y += 12;
+               x -= 8;
+               break;
+            case PIPE_TEX_FACE_POS_Z:
+            case PIPE_TEX_FACE_NEG_Z:
+               y = total_height - 4;
+               x = (face - 4) * 8;
+               break;
+            }
+            break;
+         case 2:
+            y = total_height - 4;
+            x = bottom_offsets[face];
+            break;
+         case 1:
+            x += 48;
+            break;
+         default:
+            x += step_offsets[face][0] * d;
+            y += step_offsets[face][1] * d;
+            break;
          }
-#endif
       }
    }
 }
@@ -590,7 +607,10 @@ i945_texture_layout(struct i915_texture * tex)
       i945_texture_layout_3d(tex);
       break;
    case PIPE_TEXTURE_CUBE:
-      i945_texture_layout_cube(tex);
+      if (!util_format_is_s3tc(pt->format))
+         i9x5_texture_layout_cube(tex);
+      else
+         i945_texture_layout_cube(tex);
       break;
    default:
       assert(0);
