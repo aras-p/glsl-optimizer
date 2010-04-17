@@ -590,16 +590,6 @@ class Context(Object):
     def tex_transfer_destroy(self, transfer):
         self.interpreter.unregister_object(transfer)
 
-    def transfer_write(self, transfer, data, size):
-        if transfer is None:
-            return
-        self.real.transfer_inline_write(resource, sr, usage, box, data, stride, slice_stride)
-        self.transfertransfer.surface.put_tile_raw(transfer.x, transfer.y, transfer.w, transfer.h, data, transfer.stride)
-        if self.interpreter.options.all:
-            box = transfer.box
-            surface = transfer.resource.get_surface(sr.face, sr.level, box.z)
-            self.interpreter.present(self.real, transfer.surface, 'transf_write', box.x, box.y, box.w, box.h)
-
     def transfer_inline_write(self, resource, sr, usage, box, stride, slice_stride, data):
         self.real.transfer_inline_write(resource, sr, usage, box, data, stride, slice_stride)
 
