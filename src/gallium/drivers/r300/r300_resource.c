@@ -22,6 +22,7 @@
  *
  * Authors: Dave Airlie
  */
+
 #include <stdio.h>
 
 #include "util/u_inlines.h"
@@ -34,32 +35,28 @@
 #include "r300_texture.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
-
 #include "r300_winsys.h"
-
-
-
 
 static struct pipe_resource *
 r300_resource_create(struct pipe_screen *screen,
-                    const struct pipe_resource *template)
+                    const struct pipe_resource *templ)
 {
-   if (template->target == PIPE_BUFFER)
-      return r300_buffer_create(screen, template);
+   if (templ->target == PIPE_BUFFER)
+      return r300_buffer_create(screen, templ);
    else
-      return r300_texture_create(screen, template);
+      return r300_texture_create(screen, templ);
 
 }
 
 static struct pipe_resource *
 r300_resource_from_handle(struct pipe_screen * screen,
-			 const struct pipe_resource *template,
+			 const struct pipe_resource *templ,
 			 struct winsys_handle *whandle)
 {
-   if (template->target == PIPE_BUFFER)
+   if (templ->target == PIPE_BUFFER)
       return NULL;
    else
-      return r300_texture_from_handle(screen, template, whandle);
+      return r300_texture_from_handle(screen, templ, whandle);
 }
 
 

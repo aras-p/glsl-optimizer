@@ -96,7 +96,7 @@ int r300_upload_index_buffer(struct r300_context *r300,
 
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
-					 const struct pipe_resource *template);
+					 const struct pipe_resource *templ);
 
 struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr,

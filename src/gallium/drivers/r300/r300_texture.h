@@ -56,7 +56,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
 
 struct pipe_resource*
 r300_texture_create(struct pipe_screen* screen,
-		    const struct pipe_resource* template);
+		    const struct pipe_resource* templ);
 
 
 struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,

@@ -306,7 +306,7 @@ struct u_resource_vtbl r300_buffer_vtbl =
 
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
-					 const struct pipe_resource *template)
+					 const struct pipe_resource *templ)
 {
     struct r300_screen *r300screen = r300_screen(screen);
     struct r300_buffer *rbuf;
@@ -318,7 +318,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 
     rbuf->magic = R300_BUFFER_MAGIC;
 
-    rbuf->b.b = *template;
+    rbuf->b.b = *templ;
     rbuf->b.vtbl = &r300_buffer_vtbl;
     pipe_reference_init(&rbuf->b.b.reference, 1);
     rbuf->b.b.screen = screen;
