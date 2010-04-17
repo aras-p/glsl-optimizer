@@ -87,19 +87,6 @@ static const int bottom_offsets[6] = {
    [PIPE_TEX_FACE_NEG_Z] = 16 + 5 * 8,
 };
 
-
-/* XXX really need twice the size if x is already pot?
-   Otherwise just use util_next_power_of_two?
-*/
-static unsigned
-power_of_two(unsigned x)
-{
-   unsigned value = 1;
-   while (value < x)
-      value = value << 1;
-   return value;
-}
-
 static INLINE unsigned
 align_nblocksx(enum pipe_format format, unsigned width, unsigned align_to)
 {
@@ -112,6 +99,11 @@ align_nblocksy(enum pipe_format format, unsigned width, unsigned align_to)
    return align(util_format_get_nblocksy(format, width), align_to);
 }
 
+static INLINE unsigned
+get_pot_stride(enum pipe_format format, unsigned width)
+{
+   return util_next_power_of_two(util_format_get_stride(format, width));
+}
 
 /*
  * More advanced helper funcs
@@ -170,11 +162,11 @@ i9x5_scanout_layout(struct i915_texture *tex)
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
    if (pt->width0 >= 240) {
-      tex->stride = power_of_two(util_format_get_stride(pt->format, pt->width0));
+      tex->stride = get_pot_stride(pt->format, pt->width0);
       tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
       tex->hw_tiled = I915_TILE_X;
    } else if (pt->width0 == 64 && pt->height0 == 64) {
-      tex->stride = power_of_two(util_format_get_stride(pt->format, pt->width0));
+      tex->stride = get_pot_stride(pt->format, pt->width0);
       tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
    } else {
       return FALSE;
@@ -207,7 +199,7 @@ i9x5_display_target_layout(struct i915_texture *tex)
    i915_texture_set_level_info(tex, 0, 1);
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
-   tex->stride = power_of_two(util_format_get_stride(pt->format, pt->width0));
+   tex->stride = get_pot_stride(pt->format, pt->width0);
    tex->total_nblocksy = align_nblocksy(pt->format, pt->height0, 8);
    tex->hw_tiled = I915_TILE_X;
 
