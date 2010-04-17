@@ -549,7 +549,6 @@ brw_texture_from_handle(struct pipe_screen *screen,
    format = translate_tex_format(tex->b.b.format);
    assert(format != BRW_SURFACEFORMAT_INVALID);
    tex->ss.ss0.surface_format = format;
-   assert(tex->ss.ss0.surface_format != BRW_SURFACEFORMAT_INVALID);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
