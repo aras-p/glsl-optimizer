@@ -38,6 +38,10 @@
 #include "sp_quad_pipe.h"
 
 
+/** Do polygon stipple in the driver here, or in the draw module? */
+#define DO_PSTIPPLE_IN_DRAW_MODULE 1
+
+
 struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
@@ -126,6 +130,7 @@ struct softpipe_context {
       struct quad_stage *shade;
       struct quad_stage *depth_test;
       struct quad_stage *blend;
+      struct quad_stage *pstipple;
       struct quad_stage *first; /**< points to one of the above stages */
    } quad;
 

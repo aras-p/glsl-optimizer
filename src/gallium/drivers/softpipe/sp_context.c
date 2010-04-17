@@ -93,6 +93,7 @@ softpipe_destroy( struct pipe_context *pipe )
    softpipe->quad.shade->destroy( softpipe->quad.shade );
    softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
    softpipe->quad.blend->destroy( softpipe->quad.blend );
+   softpipe->quad.pstipple->destroy( softpipe->quad.pstipple );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       sp_destroy_tile_cache(softpipe->cbuf_cache[i]);
@@ -296,6 +297,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
    softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
+   softpipe->quad.pstipple = sp_quad_polygon_stipple_stage(softpipe);
 
 
    /*
@@ -330,7 +332,9 @@ softpipe_create_context( struct pipe_screen *screen,
    draw_install_aapoint_stage(softpipe->draw, &softpipe->pipe);
 
    /* Do polygon stipple w/ texture map + frag prog? */
+#if DO_PSTIPPLE_IN_DRAW_MODULE
    draw_install_pstipple_stage(softpipe->draw, &softpipe->pipe);
+#endif
 
    sp_init_surface_functions(softpipe);
 
