@@ -835,13 +835,14 @@ static void r300_setup_tiling(struct pipe_screen *screen,
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
     enum pipe_format format = tex->b.b.format;
     boolean rv350_mode = r300_screen(screen)->caps.family >= CHIP_FAMILY_RV350;
+    boolean is_zb = util_format_is_depth_or_stencil(format);
 
     if (!r300_format_is_plain(format)) {
         return;
     }
 
-    if (tex->b.b.width0 == 1 ||
-        tex->b.b.height0 == 1) {
+    /* If height == 1, disable microtiling except for zbuffer. */
+    if (!is_zb && tex->b.b.height0 == 1) {
         return;
     }
 
