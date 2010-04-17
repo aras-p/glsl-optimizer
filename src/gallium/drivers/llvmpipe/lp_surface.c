@@ -30,7 +30,6 @@
 #include "lp_flush.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
-#include "lp_tile_image.h"
 #include "lp_tile_size.h"
 
 
