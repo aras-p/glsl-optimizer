@@ -243,6 +243,7 @@ st_context_create(struct st_device *st_dev)
       templat.height0 = 1;
       templat.depth0 = 1;
       templat.last_level = 0;
+      templat.bind = PIPE_BIND_SAMPLER_VIEW;
    
       st_ctx->default_texture = screen->resource_create( screen, &templat );
       if(st_ctx->default_texture) {
