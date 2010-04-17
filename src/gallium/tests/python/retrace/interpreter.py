@@ -385,7 +385,7 @@ class Context(Object):
         if not self.interpreter.verbosity(2):
             return
 
-        data = buffer.read()
+        data = self.real.buffer_read(buffer)
         format = '4f'
         index = 0
         for offset in range(0, len(data), struct.calcsize(format)):
@@ -486,10 +486,11 @@ class Context(Object):
                     gallium.PIPE_FORMAT_R32G32B32A32_FLOAT: '4f',
                     gallium.PIPE_FORMAT_A8R8G8B8_UNORM: '4B',
                     gallium.PIPE_FORMAT_R8G8B8A8_UNORM: '4B',
+                    gallium.PIPE_FORMAT_B8G8R8A8_UNORM: '4B',
                     gallium.PIPE_FORMAT_R16G16B16_SNORM: '3h',
                 }[velem.src_format]
 
-                data = vbuf.buffer.read()
+                data = self.real.buffer_read(vbuf.buffer)
                 values = unpack_from(format, data, offset)
                 sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
             sys.stdout.write('\t},\n')
@@ -507,7 +508,7 @@ class Context(Object):
 
         assert struct.calcsize(format) == isize
 
-        data = ibuf.read()
+        data = self.real.buffer_read(ibuf)
         maxindex, minindex = 0, 0xffffffff
 
         sys.stdout.write('\t{\n')
