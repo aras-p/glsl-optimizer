@@ -316,6 +316,7 @@ nvfx_screen_get_vertex_buffer_flags(struct nvfx_screen* screen)
 struct pipe_screen *
 nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
+	static const unsigned query_sizes[] = {(4096 - 4 * 32) / 32, 3 * 1024 / 32, 2 * 1024 / 32, 1024 / 32};
 	struct nvfx_screen *screen = CALLOC_STRUCT(nvfx_screen);
 	struct nouveau_channel *chan;
 	struct pipe_screen *pscreen;
@@ -401,7 +402,6 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	/* Query objects */
-	unsigned query_sizes[] = {(4096 - 4 * 32) / 32, 3 * 1024 / 32, 2 * 1024 / 32, 1024 / 32};
 	for(i = 0; i < sizeof(query_sizes) / sizeof(query_sizes[0]); ++i)
 	{
 		ret = nouveau_notifier_alloc(chan, 0xbeef0302, query_sizes[i], &screen->query);

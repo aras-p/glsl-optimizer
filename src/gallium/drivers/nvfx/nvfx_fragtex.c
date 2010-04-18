@@ -40,11 +40,14 @@ nvfx_fragtex_relocate(struct nvfx_context *nvfx)
 
 	samplers = nvfx->hw_samplers;
 	while (samplers) {
+		struct nvfx_miptree* mt;
+		struct nouveau_bo *bo;
+
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		struct nvfx_miptree* mt = (struct nvfx_miptree*)nvfx->fragment_sampler_views[unit]->texture;
-		struct nouveau_bo *bo = mt->base.bo;
+		mt = (struct nvfx_miptree*)nvfx->fragment_sampler_views[unit]->texture;
+		bo = mt->base.bo;
 
 		MARK_RING(chan, 3, 3);
 		OUT_RELOC(chan, bo, RING_3D(NV34TCL_TX_OFFSET(unit), 2), tex_flags | NOUVEAU_BO_DUMMY, 0, 0);
