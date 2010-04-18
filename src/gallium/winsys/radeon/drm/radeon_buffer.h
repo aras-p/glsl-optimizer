@@ -86,5 +86,6 @@ void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr);
 boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
 				     struct winsys_handle *whandle);
 
-boolean radeon_drm_bufmgr_is_buffer_referenced(struct pb_buffer *_buf);
+boolean radeon_drm_bufmgr_is_buffer_referenced(struct pb_buffer *_buf,
+                                               enum r300_reference_domain domain);
 #endif

@@ -152,9 +152,9 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         if (!checked[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
 
-            if (r300->context.is_resource_referenced(&r300->context,
-						     vbuf->buffer,
-						     0, 0)) {
+            if (r300->rws->is_buffer_referenced(r300->rws,
+                                                r300_buffer(vbuf->buffer)->buf,
+                                                R300_REF_CS | R300_REF_HW)) {
                 /* It's a very bad idea to map it... */
                 return FALSE;
             }

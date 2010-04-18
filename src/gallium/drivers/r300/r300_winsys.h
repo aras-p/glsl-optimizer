@@ -42,6 +42,11 @@ enum r300_value_id {
     R300_VID_TEX3D_MIP_BUG,
 };
 
+enum r300_reference_domain { /* bitfield */
+    R300_REF_CS = 1,
+    R300_REF_HW = 2
+};
+
 struct r300_winsys_screen {
     void (*destroy)(struct r300_winsys_screen *ws);
     
@@ -160,9 +165,8 @@ struct r300_winsys_screen {
 				 struct winsys_handle *whandle);
 
     boolean (*is_buffer_referenced)(struct r300_winsys_screen *winsys,
-                                    struct r300_winsys_buffer *buffer);
-
-  
+                                    struct r300_winsys_buffer *buffer,
+                                    enum r300_reference_domain domain);
 };
 
 struct r300_winsys_screen *

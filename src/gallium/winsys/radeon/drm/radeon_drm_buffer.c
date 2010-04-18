@@ -381,13 +381,25 @@ void radeon_drm_bufmgr_write_reloc(struct pb_buffer *_buf,
     }
 }
 
-boolean radeon_drm_bufmgr_is_buffer_referenced(struct pb_buffer *_buf)
+boolean radeon_drm_bufmgr_is_buffer_referenced(struct pb_buffer *_buf,
+                                               enum r300_reference_domain domain)
 {
     struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
-    uint32_t domain;
+    uint32_t tmp;
 
-    return (radeon_bo_is_referenced_by_cs(buf->bo, buf->mgr->rws->cs) ||
-	    radeon_bo_is_busy(buf->bo, &domain));
+    if (domain & R300_REF_CS) {
+        if (radeon_bo_is_referenced_by_cs(buf->bo, buf->mgr->rws->cs)) {
+            return TRUE;
+        }
+    }
+
+    if (domain & R300_REF_HW) {
+        if (radeon_bo_is_busy(buf->bo, &tmp)) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
 
 

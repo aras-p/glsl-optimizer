@@ -111,11 +111,12 @@ static void radeon_r300_winsys_buffer_reference(struct r300_winsys_screen *rws,
 }
 
 static boolean radeon_r300_winsys_is_buffer_referenced(struct r300_winsys_screen *rws,
-						       struct r300_winsys_buffer *buf)
+						       struct r300_winsys_buffer *buf,
+                                                       enum r300_reference_domain domain)
 {
     struct pb_buffer *_buf = radeon_pb_buffer(buf);
 
-    return radeon_drm_bufmgr_is_buffer_referenced(_buf);
+    return radeon_drm_bufmgr_is_buffer_referenced(_buf, domain);
 }
 
 static struct r300_winsys_buffer *radeon_r300_winsys_buffer_from_handle(struct r300_winsys_screen *rws,

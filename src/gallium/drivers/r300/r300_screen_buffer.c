@@ -44,7 +44,7 @@ static unsigned r300_buffer_is_referenced(struct pipe_context *context,
     if (r300_buffer_is_user_buffer(buf))
  	return PIPE_UNREFERENCED;
 
-    if (r300->rws->is_buffer_referenced(r300->rws, rbuf->buf))
+    if (r300->rws->is_buffer_referenced(r300->rws, rbuf->buf, R300_REF_CS))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;

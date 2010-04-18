@@ -880,7 +880,7 @@ static unsigned r300_texture_is_referenced(struct pipe_context *context,
     struct r300_context *r300 = r300_context(context);
     struct r300_texture *rtex = (struct r300_texture *)texture;
 
-    if (r300->rws->is_buffer_referenced(r300->rws, rtex->buffer))
+    if (r300->rws->is_buffer_referenced(r300->rws, rtex->buffer, R300_REF_CS))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;
