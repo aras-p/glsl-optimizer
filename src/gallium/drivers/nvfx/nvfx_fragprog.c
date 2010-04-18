@@ -874,7 +874,10 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 		fp->bo_prog_idx = fp->progs_per_bo - 1;
 	}
 
-	if (nvfx->dirty & NVFX_NEW_FRAGCONST)
+	/* we must update constants even on "just" fragprog changes, because
+	   we don't check whether the current constant buffer matches the latest
+	   one bound to this fragment program */
+	if (nvfx->dirty & (NVFX_NEW_FRAGCONST | NVFX_NEW_FRAGPROG))
 		update = TRUE;
 
 	if(update) {
