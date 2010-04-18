@@ -387,6 +387,7 @@ setup_sort_vertices(struct setup_context *setup,
    /* We need to know if this is a front or back-facing triangle for:
     *  - the GLSL gl_FrontFacing fragment attribute (bool)
     *  - two-sided stencil test
+    * 0 = front-facing, 1 = back-facing
     */
    setup->facing = 
       ((det > 0.0) ^ 
@@ -664,7 +665,8 @@ setup_tri_coefficients(struct setup_context *setup)
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
+         /* convert 0 to 1.0 and 1 to -1.0 */
+         setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
@@ -1019,7 +1021,8 @@ setup_line_coefficients(struct setup_context *setup,
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
+         /* convert 0 to 1.0 and 1 to -1.0 */
+         setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
@@ -1265,7 +1268,8 @@ sp_setup_point(struct setup_context *setup,
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
+         /* convert 0 to 1.0 and 1 to -1.0 */
+         setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
