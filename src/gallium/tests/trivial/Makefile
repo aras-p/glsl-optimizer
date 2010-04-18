@@ -40,5 +40,5 @@ clean:
 $(OBJECTS): %.o: %.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $(PROG_DEFINES) $< -o $@
 
-$(PROGS): %: %.o
+$(PROGS): %: %.o $(LINKS)
 	$(CC) $(LDFLAGS) $< $(LINKS) -lm -lpthread -ldl -o $@
