@@ -25,10 +25,6 @@
 
 struct r300_context;
 
-unsigned r300_shader_key_hash(void* key);
-
-int r300_shader_key_compare(void* key1, void* key2);
-
 void r300_update_derived_state(struct r300_context* r300);
 
 #endif /* R300_STATE_DERIVED_H */
