@@ -96,8 +96,6 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 static int
 nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 {
-	struct nv50_screen *screen = nv50_screen(pscreen);
-
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
 		return 32;
