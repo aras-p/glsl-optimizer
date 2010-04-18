@@ -1192,14 +1192,13 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         }
 
         if (vbo->max_index == ~0) {
-            /* Bogus value from broken state tracker; hax it. */
-	    /* TODO - more hax - fixes doom3 from almos on irc */
-	    if (!vbo->stride) {
-		fprintf(stderr, "r300: got a VBO with stride 0 fixing up to stide 4\n");
-		vbo->stride = 4;
-	    }
-            vbo->max_index =
-                (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+	    /* if no VBO stride then only one vertex value so max index is 1 */
+	    /* should think about converting to VS constants like svga does */
+	    if (!vbo->stride)
+		vbo->max_index = 1;
+ 	    else
+            	vbo->max_index =
+               		 (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
         }
 
         max_index = MIN2(vbo->max_index, max_index);
