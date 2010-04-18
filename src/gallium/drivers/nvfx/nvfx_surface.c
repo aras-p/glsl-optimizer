@@ -250,11 +250,7 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 
 	static int copy_threshold = -1;
 	if(copy_threshold < 0)
-	{
-		copy_threshold = debug_get_num_option("NOUVEAU_COPY_THRESHOLD", 0);
-		if(copy_threshold < 0)
-			copy_threshold = 0;
-	}
+		copy_threshold = debug_get_num_option("NOUVEAU_COPY_THRESHOLD", 4);
 
 	int dst_to_gpu = dstr->usage != PIPE_USAGE_DYNAMIC && dstr->usage != PIPE_USAGE_STAGING;
 	int src_on_gpu = nvfx_resource_on_gpu(srcr);
