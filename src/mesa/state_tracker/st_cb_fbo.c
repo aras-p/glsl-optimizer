@@ -360,7 +360,7 @@ st_render_texture(GLcontext *ctx,
 
    pipe_surface_reference(&strb->surface, NULL);
 
-   pipe_sampler_view_reference(&strb->sampler_view, st_get_stobj_sampler_view(stObj));
+   pipe_sampler_view_reference(&strb->sampler_view, st_get_texture_sampler_view(stObj));
 
    assert(strb->rtt_level <= strb->texture->last_level);
 

@@ -130,7 +130,7 @@ st_sampler_view_from_texture(struct pipe_context *pipe,
 
 
 static INLINE struct pipe_sampler_view *
-st_get_stobj_sampler_view(struct st_texture_object *stObj)
+st_get_texture_sampler_view(struct st_texture_object *stObj)
 {
    if (!stObj || !stObj->pt) {
       return NULL;

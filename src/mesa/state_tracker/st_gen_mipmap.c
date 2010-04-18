@@ -84,7 +84,7 @@ st_render_mipmap(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_sampler_view *psv = st_get_stobj_sampler_view(stObj);
+   struct pipe_sampler_view *psv = st_get_texture_sampler_view(stObj);
    const uint face = _mesa_tex_target_to_face(target);
 
    assert(target != GL_TEXTURE_3D); /* not done yet */

@@ -838,7 +838,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
    struct pipe_screen *screen = pipe->screen;
    struct st_texture_image *stImage = st_texture_image(texImage);
    struct st_texture_object *stObj = st_texture_object(texObj);
-   struct pipe_sampler_view *src_view = st_get_stobj_sampler_view(stObj);
+   struct pipe_sampler_view *src_view = st_get_texture_sampler_view(stObj);
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
    struct pipe_surface *dst_surface;

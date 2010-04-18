@@ -84,7 +84,7 @@ update_textures(struct st_context *st)
 
          st->state.num_textures = su + 1;
 
-         sampler_view = st_get_stobj_sampler_view(stObj);
+         sampler_view = st_get_texture_sampler_view(stObj);
       }
 
       /*
