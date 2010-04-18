@@ -132,6 +132,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->blitter.saved_fb_state.nr_cbufs = ~0;
    ctx->blitter.saved_num_sampler_views = ~0;
    ctx->blitter.saved_num_sampler_states = ~0;
+   ctx->blitter.saved_num_vertex_buffers = ~0;
 
    /* blend state objects */
    memset(&blend, 0, sizeof(blend));
@@ -317,6 +318,13 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
                                        ctx->blitter.saved_num_sampler_views,
                                        ctx->blitter.saved_sampler_views);
       ctx->blitter.saved_num_sampler_views = ~0;
+   }
+
+   if (ctx->blitter.saved_num_vertex_buffers != ~0) {
+      pipe->set_vertex_buffers(pipe,
+                                       ctx->blitter.saved_num_vertex_buffers,
+                                       ctx->blitter.saved_vertex_buffers);
+      ctx->blitter.saved_num_vertex_buffers = ~0;
    }
 }
 

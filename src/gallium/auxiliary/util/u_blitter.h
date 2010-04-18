@@ -57,6 +57,9 @@ struct blitter_context
 
    int saved_num_sampler_views;
    struct pipe_sampler_view *saved_sampler_views[PIPE_MAX_SAMPLERS];
+
+   int saved_num_vertex_buffers;
+   struct pipe_vertex_buffer saved_vertex_buffers[PIPE_MAX_ATTRIBS];
 };
 
 /**
@@ -253,6 +256,19 @@ util_blitter_save_fragment_sampler_views(struct blitter_context *blitter,
    memcpy(blitter->saved_sampler_views,
           views,
           num_views * sizeof(struct pipe_sampler_view *));
+}
+
+static INLINE void
+util_blitter_save_vertex_buffers(struct blitter_context *blitter,
+                                         int num_vertex_buffers,
+                                         struct pipe_vertex_buffer *vertex_buffers)
+{
+   assert(num_vertex_buffers <= Elements(blitter->saved_vertex_buffers));
+
+   blitter->saved_num_vertex_buffers = num_vertex_buffers;
+   memcpy(blitter->saved_vertex_buffers,
+          vertex_buffers,
+          num_vertex_buffers * sizeof(struct pipe_vertex_buffer));
 }
 
 #ifdef __cplusplus
