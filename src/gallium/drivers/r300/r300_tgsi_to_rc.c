@@ -118,7 +118,7 @@ static unsigned translate_opcode(unsigned opcode)
         case TGSI_OPCODE_CEIL: return RC_OPCODE_CEIL;
      /* case TGSI_OPCODE_I2F: return RC_OPCODE_I2F; */
      /* case TGSI_OPCODE_NOT: return RC_OPCODE_NOT; */
-     /* case TGSI_OPCODE_TRUNC: return RC_OPCODE_TRUNC; */
+        case TGSI_OPCODE_TRUNC: return RC_OPCODE_FLR;
      /* case TGSI_OPCODE_SHL: return RC_OPCODE_SHL; */
      /* case TGSI_OPCODE_ISHR: return RC_OPCODE_SHR; */
      /* case TGSI_OPCODE_AND: return RC_OPCODE_AND; */
