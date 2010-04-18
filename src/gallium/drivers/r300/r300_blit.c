@@ -37,7 +37,9 @@ static void r300_blitter_save_states(struct r300_context* r300)
     util_blitter_save_viewport(r300->blitter, &r300->viewport);
     util_blitter_save_clip(r300->blitter, &r300->clip);
     util_blitter_save_vertex_elements(r300->blitter, r300->velems);
-    util_blitter_save_vertex_buffers(r300->blitter, r300->vertex_buffer_count, r300->vertex_buffer);
+    /* XXX this crashes the driver
+    util_blitter_save_vertex_buffers(r300->blitter, r300->vertex_buffer_count,
+                                     r300->vertex_buffer); */
 }
 
 /* Clear currently bound buffers. */
