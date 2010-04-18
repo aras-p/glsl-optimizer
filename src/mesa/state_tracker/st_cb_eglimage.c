@@ -126,7 +126,6 @@ st_bind_surface(GLcontext *ctx, GLenum target,
    texImage->TexFormat = st_pipe_format_to_mesa_format(ps->format);
    _mesa_set_fetch_functions(texImage, 2);
 
-   stObj->pipe = ctx->st->pipe;
    /* FIXME create a non-default sampler view from the pipe_surface? */
    pipe_resource_reference(&stImage->pt, ps->texture);
 

@@ -46,6 +46,7 @@
 static void 
 update_textures(struct st_context *st)
 {
+   struct pipe_context *pipe = st->pipe;
    struct gl_vertex_program *vprog = st->ctx->VertexProgram._Current;
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
    const GLbitfield samplersUsed = (vprog->Base.SamplersUsed |
@@ -84,7 +85,7 @@ update_textures(struct st_context *st)
 
          st->state.num_textures = su + 1;
 
-         sampler_view = st_get_texture_sampler_view(stObj);
+         sampler_view = st_get_texture_sampler_view(stObj, pipe);
       }
 
       /*

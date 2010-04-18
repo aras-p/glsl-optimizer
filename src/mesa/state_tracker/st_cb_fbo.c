@@ -310,6 +310,8 @@ st_render_texture(GLcontext *ctx,
                   struct gl_framebuffer *fb,
                   struct gl_renderbuffer_attachment *att)
 {
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
@@ -360,7 +362,8 @@ st_render_texture(GLcontext *ctx,
 
    pipe_surface_reference(&strb->surface, NULL);
 
-   pipe_sampler_view_reference(&strb->sampler_view, st_get_texture_sampler_view(stObj));
+   pipe_sampler_view_reference(&strb->sampler_view,
+                               st_get_texture_sampler_view(stObj, pipe));
 
    assert(strb->rtt_level <= strb->texture->last_level);
 
