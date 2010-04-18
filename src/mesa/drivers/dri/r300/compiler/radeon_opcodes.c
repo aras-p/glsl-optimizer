@@ -60,6 +60,13 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.HasDstReg = 1
 	},
 	{
+		.Opcode = RC_OPCODE_CEIL,
+		.Name = "CEIL",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1,
+		.IsComponentwise = 1
+	},
+	{
 		.Opcode = RC_OPCODE_CMP,
 		.Name = "CMP",
 		.NumSrcRegs = 3,
