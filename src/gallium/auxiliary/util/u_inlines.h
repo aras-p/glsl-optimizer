@@ -122,9 +122,8 @@ pipe_sampler_view_reference(struct pipe_sampler_view **ptr, struct pipe_sampler_
    *ptr = view;
 }
 
-/* you have to call pipe_reference_init(&ps->reference, 1) yourself if it is just allocated */
 static INLINE void
-pipe_surface_init(struct pipe_surface* ps, struct pipe_resource *pt,
+pipe_surface_reset(struct pipe_surface* ps, struct pipe_resource *pt,
 		unsigned face, unsigned level, unsigned zslice, unsigned flags)
 {
    pipe_resource_reference(&ps->texture, pt);
@@ -135,6 +134,15 @@ pipe_surface_init(struct pipe_surface* ps, struct pipe_resource *pt,
    ps->face = face;
    ps->level = level;
    ps->zslice = zslice;
+}
+
+static INLINE void
+pipe_surface_init(struct pipe_surface* ps, struct pipe_resource *pt,
+                unsigned face, unsigned level, unsigned zslice, unsigned flags)
+{
+   ps->texture = 0;
+   pipe_reference_init(&ps->reference, 1);
+   pipe_surface_reset(ps, pt, face, level, zslice, flags);
 }
 
 /*

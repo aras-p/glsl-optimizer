@@ -50,7 +50,6 @@ util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, str
    if(!ps)
       return NULL;
 
-   pipe_reference_init(&ps->reference, 1);
    pipe_surface_init(ps, pt, face, level, zslice, flags);
    ps->offset = ~0;
 
