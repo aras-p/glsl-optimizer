@@ -1657,6 +1657,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 if_depth++;
 	 break;
       case OPCODE_ELSE:
+	 assert(if_depth > 0);
 	 if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
 	 break;
       case OPCODE_ENDIF:
