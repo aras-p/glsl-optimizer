@@ -285,8 +285,6 @@ nv04_surface_copy(struct nv04_surface_2d *ctx, struct pipe_surface *dst,
 		  int dx, int dy, struct pipe_surface *src, int sx, int sy,
 		  int w, int h)
 {
-	unsigned src_pitch = ((struct nv04_surface *)src)->pitch;
-	unsigned dst_pitch = ((struct nv04_surface *)dst)->pitch;
 	int src_linear = src->texture->flags & NVFX_RESOURCE_FLAG_LINEAR;
 	int dst_linear = dst->texture->flags & NVFX_RESOURCE_FLAG_LINEAR;
 

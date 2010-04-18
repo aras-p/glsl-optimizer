@@ -81,7 +81,6 @@ static boolean
 nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_resource *ib,
 		    unsigned ib_size)
 {
-	struct pipe_screen *pscreen = &nvfx->screen->base.base;
 	unsigned type;
 
 	if (!ib) {
