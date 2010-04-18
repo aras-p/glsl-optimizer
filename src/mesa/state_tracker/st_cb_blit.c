@@ -146,7 +146,7 @@ st_BlitFramebuffer(GLcontext *ctx,
          struct st_renderbuffer *dstRb =
             st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
          struct pipe_surface *srcSurf = srcRb->surface;
-         struct pipe_sampler_view *srcView = st_renderbuffer_get_sampler_view(srcRb, pipe);
+         struct pipe_sampler_view *srcView = st_get_renderbuffer_sampler_view(srcRb, pipe);
          struct pipe_surface *dstSurf = dstRb->surface;
 
          util_blit_pixels(st->blit,
@@ -182,7 +182,7 @@ st_BlitFramebuffer(GLcontext *ctx,
       if ((mask & depthStencil) == depthStencil &&
           srcDepthSurf == srcStencilSurf &&
           dstDepthSurf == dstStencilSurf) {
-         struct pipe_sampler_view *srcView = st_renderbuffer_get_sampler_view(srcDepthRb, pipe);
+         struct pipe_sampler_view *srcView = st_get_renderbuffer_sampler_view(srcDepthRb, pipe);
 
          /* Blitting depth and stencil values between combined
           * depth/stencil buffers.  This is the ideal case for such buffers.

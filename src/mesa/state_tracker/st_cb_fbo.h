@@ -74,7 +74,7 @@ extern void
 st_init_fbo_functions(struct dd_function_table *functions);
 
 extern struct pipe_sampler_view *
-st_renderbuffer_get_sampler_view(struct st_renderbuffer *rb,
+st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
                                  struct pipe_context *pipe);
 
 
