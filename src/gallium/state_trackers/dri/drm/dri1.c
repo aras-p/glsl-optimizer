@@ -89,9 +89,17 @@ dri1_propagate_drawable_change(struct dri_context *ctx)
 {
    __DRIdrawable *dPriv = ctx->dPriv;
    __DRIdrawable *rPriv = ctx->rPriv;
-   struct dri_drawable *draw = dri_drawable(dPriv);
-   struct dri_drawable *read = dri_drawable(rPriv);
+   struct dri_drawable *draw;
+   struct dri_drawable *read;
    boolean flushed = FALSE;
+
+   if (dPriv) {
+      draw = dri_drawable(dPriv);
+   }
+
+   if (rPriv) {
+      read = dri_drawable(rPriv);
+   }
 
    if (dPriv && draw->texture_stamp != dPriv->lastStamp) {
       ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
