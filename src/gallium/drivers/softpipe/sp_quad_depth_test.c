@@ -520,6 +520,9 @@ depth_stencil_test_quad(struct quad_stage *qs,
       face = 0;
    }
 
+   /* 0 = front-face, 1 = back-face */
+   assert(face == 0 || face == 1);
+
    /* choose front or back face function, operator, etc */
    /* XXX we could do these initializations once per primitive */
    func    = softpipe->depth_stencil->stencil[face].func;
