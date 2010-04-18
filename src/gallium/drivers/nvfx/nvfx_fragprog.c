@@ -846,6 +846,8 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 
 	if (!fp->translated)
 	{
+		const int min_size = 4096;
+
 		nvfx_fragprog_translate(nvfx, fp);
 		if (!fp->translated) {
 			static unsigned dummy[8] = {1, 0, 0, 0, 1, 0, 0, 0};
@@ -866,7 +868,6 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 
 		fp->prog_size = (fp->insn_len * 4 + 63) & ~63;
 
-		int min_size = 4096;
 		if(fp->prog_size >= min_size)
 			fp->progs_per_bo = 1;
 		else
@@ -881,6 +882,8 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 		update = TRUE;
 
 	if(update) {
+		int offset;
+
 		++fp->bo_prog_idx;
 		if(fp->bo_prog_idx >= fp->progs_per_bo)
 		{
@@ -891,6 +894,8 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			else
 			{
 				struct nvfx_fragment_program_bo* fpbo = os_malloc_aligned(sizeof(struct nvfx_fragment_program) + fp->prog_size * fp->progs_per_bo, 16);
+				char *map, *buf;
+
 				if(fp->fpbo)
 				{
 					fpbo->next = fp->fpbo->next;
@@ -903,8 +908,8 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 				nouveau_bo_new(nvfx->screen->base.device, NOUVEAU_BO_VRAM | NOUVEAU_BO_MAP, 64, fp->prog_size * fp->progs_per_bo, &fpbo->bo);
 				nouveau_bo_map(fpbo->bo, NOUVEAU_BO_NOSYNC);
 
-				char* map = fpbo->bo->map;
-				char* buf = fpbo->insn;
+				map = fpbo->bo->map;
+				buf = fpbo->insn;
 				for(int i = 0; i < fp->progs_per_bo; ++i)
 				{
 					memcpy(buf, fp->insn, fp->insn_len * 4);
@@ -916,7 +921,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			fp->bo_prog_idx = 0;
 		}
 
-		int offset = fp->bo_prog_idx * fp->prog_size;
+		offset = fp->bo_prog_idx * fp->prog_size;
 
 		if(nvfx->constbuf[PIPE_SHADER_FRAGMENT]) {
 			struct pipe_resource* constbuf = nvfx->constbuf[PIPE_SHADER_FRAGMENT];
