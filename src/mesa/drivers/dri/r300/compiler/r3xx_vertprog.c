@@ -29,7 +29,7 @@
 #include "radeon_dataflow.h"
 #include "radeon_program_alu.h"
 #include "radeon_swizzle.h"
-
+#include "radeon_emulate_branches.h"
 
 /*
  * Take an already-setup and valid source then swizzle it appropriately to
@@ -566,6 +566,14 @@ static int swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 	return 1;
 }
 
+static void debug_program_log(struct r300_vertex_program_compiler* c, const char * where)
+{
+	if (c->Base.Debug) {
+		fprintf(stderr, "Vertex Program: %s\n", where);
+		rc_print_program(&c->Base.Program);
+	}
+}
+
 
 static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 	.IsNative = &swizzle_is_native,
@@ -579,6 +587,15 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	addArtificialOutputs(compiler);
 
+	debug_program_log(compiler, "before compilation");
+
+	/* XXX Ideally this should be done only for r3xx, but since
+	 * we don't have branching support for r5xx, we use the emulation
+	 * on all chipsets. */
+	rc_emulate_branches(&compiler->Base);
+
+	debug_program_log(compiler, "after emulate branches");
+
 	{
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
@@ -586,11 +603,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		radeonLocalTransform(&compiler->Base, 1, transformations);
 	}
 
-	if (compiler->Base.Debug) {
-		fprintf(stderr, "Vertex program after native rewrite:\n");
-		rc_print_program(&compiler->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(compiler, "after native rewrite");
 
 	{
 		/* Note: This pass has to be done seperately from ALU rewrite,
@@ -603,29 +616,17 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		radeonLocalTransform(&compiler->Base, 1, transformations);
 	}
 
-	if (compiler->Base.Debug) {
-		fprintf(stderr, "Vertex program after source conflict resolve:\n");
-		rc_print_program(&compiler->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(compiler, "after source conflict resolve");
 
 	rc_dataflow_deadcode(&compiler->Base, &dataflow_outputs_mark_used, compiler);
 
-	if (compiler->Base.Debug) {
-		fprintf(stderr, "Vertex program after deadcode:\n");
-		rc_print_program(&compiler->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(compiler, "after deadcode");
 
 	rc_dataflow_swizzles(&compiler->Base);
 
 	allocate_temporary_registers(compiler);
 
-	if (compiler->Base.Debug) {
-		fprintf(stderr, "Vertex program after dataflow:\n");
-		rc_print_program(&compiler->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(compiler, "after dataflow");
 
 	translate_vertex_program(compiler);
 
