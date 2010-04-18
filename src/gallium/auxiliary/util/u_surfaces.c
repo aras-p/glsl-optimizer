@@ -68,7 +68,7 @@ util_surfaces_do_detach(struct util_surfaces *us, struct pipe_surface *ps)
    struct pipe_resource *pt = ps->texture;
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
    {	/* or 2D array */
-      unsigned key = ((ps->zslice + ps->face) << 8) | ps->level;
+      void* key = (void*)(((ps->zslice + ps->face) << 8) | ps->level);
       util_hash_table_remove(us->u.table, key);
    }
    else
