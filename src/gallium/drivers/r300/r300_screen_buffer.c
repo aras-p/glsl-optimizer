@@ -22,6 +22,7 @@
  *
  * Authors: Dave Airlie
  */
+
 #include <stdio.h>
 
 #include "util/u_inlines.h"
@@ -31,7 +32,6 @@
 #include "util/u_math.h"
 
 #include "r300_screen_buffer.h"
-
 #include "r300_winsys.h"
 
 static unsigned r300_buffer_is_referenced(struct pipe_context *context,
@@ -80,7 +80,7 @@ int r300_upload_index_buffer(struct r300_context *r300,
     return ret;
 }
 
-/* External helper, not required to implent u_resource_vtbl:
+/* External helper, not required to implement u_resource_vtbl:
  */
 int r300_upload_user_buffers(struct r300_context *r300)
 {
@@ -90,7 +90,6 @@ int r300_upload_user_buffers(struct r300_context *r300)
     nr = r300->vertex_buffer_count;
 
     for (i = 0; i < nr; i++) {
-
 	if (r300_buffer_is_user_buffer(r300->vertex_buffer[i].buffer)) {
 	    struct pipe_resource *upload_buffer = NULL;
 	    unsigned offset = 0; /*r300->vertex_buffer[i].buffer_offset * 4;*/
@@ -134,7 +133,6 @@ static void r300_winsys_buffer_destroy(struct r300_screen *r300screen,
 	rbuf->buf = NULL;
     }
 }
-
 
 static void r300_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)
@@ -254,9 +252,6 @@ struct u_resource_vtbl r300_buffer_vtbl =
    u_default_transfer_inline_write   /* transfer_inline_write */
 };
 
-
-
-
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
 {
@@ -276,7 +271,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.screen = screen;
 
     if (rbuf->b.b.bind & R300_BIND_OQBO)
-       alignment = 4096;
+        alignment = 4096;
 
     rbuf->buf = r300_winsys_buffer_create(r300screen,
 					  alignment,
@@ -292,7 +287,6 @@ error2:
 error1:
     return NULL;
 }
-
 
 struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr,
@@ -323,4 +317,3 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 no_rbuf:
     return NULL;
 }
-

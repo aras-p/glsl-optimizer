@@ -74,7 +74,6 @@ static void r300_flush(struct pipe_context* pipe,
     }
 }
 
-
 void r300_init_flush_functions(struct r300_context* r300)
 {
     r300->context.flush = r300_flush;

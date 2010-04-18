@@ -23,8 +23,6 @@
 #ifndef R300_RENDER_H
 #define R300_RENDER_H
 
-uint32_t r300_translate_primitive(unsigned prim);
-
 void r500_emit_draw_arrays_immediate(struct r300_context *r300,
                                      unsigned mode,
                                      unsigned start,

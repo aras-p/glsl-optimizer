@@ -59,10 +59,7 @@ r300_resource_from_handle(struct pipe_screen * screen,
       return r300_texture_from_handle(screen, templ, whandle);
 }
 
-
-
-void
-r300_init_resource_functions(struct r300_context *r300)
+void r300_init_resource_functions(struct r300_context *r300)
 {
    r300->context.get_transfer = u_get_transfer_vtbl;
    r300->context.transfer_map = u_transfer_map_vtbl;
@@ -73,8 +70,7 @@ r300_init_resource_functions(struct r300_context *r300)
    r300->context.is_resource_referenced = u_is_resource_referenced_vtbl;
 }
 
-void
-r300_init_screen_resource_functions(struct r300_screen *r300screen)
+void r300_init_screen_resource_functions(struct r300_screen *r300screen)
 {
    r300screen->screen.resource_create = r300_resource_create;
    r300screen->screen.resource_from_handle = r300_resource_from_handle;

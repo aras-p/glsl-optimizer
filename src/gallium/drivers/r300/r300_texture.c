@@ -896,13 +896,9 @@ static void r300_texture_destroy(struct pipe_screen *screen,
     FREE(tex);
 }
 
-
-
-
-static boolean
-    r300_texture_get_handle(struct pipe_screen* screen,
-                            struct pipe_resource *texture,
-                            struct winsys_handle *whandle)
+static boolean r300_texture_get_handle(struct pipe_screen* screen,
+                                       struct pipe_resource *texture,
+                                       struct winsys_handle *whandle)
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
     struct r300_texture* tex = (struct r300_texture*)texture;
@@ -919,8 +915,6 @@ static boolean
     return TRUE;
 }
 
-
-
 struct u_resource_vtbl r300_texture_vtbl = 
 {
    r300_texture_get_handle,	      /* get_handle */
@@ -933,8 +927,6 @@ struct u_resource_vtbl r300_texture_vtbl =
    r300_texture_transfer_unmap,	      /* transfer_unmap */
    u_default_transfer_inline_write    /* transfer_inline_write */
 };
-
-
 
 /* Create a new texture. */
 struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
@@ -978,8 +970,6 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
 
     return (struct pipe_resource*)tex;
 }
-
-
 
 /* Not required to implement u_resource_vtbl, consider moving to another file:
  */
@@ -1097,4 +1087,3 @@ r300_texture_from_handle(struct pipe_screen* screen,
     }
     return (struct pipe_resource*)tex;
 }
-

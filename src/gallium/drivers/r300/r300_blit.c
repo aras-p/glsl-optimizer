@@ -56,21 +56,10 @@ void r300_clear(struct pipe_context* pipe,
      * 2) ZB_DEPTHCLEARVALUE is used to clear a zbuffer and Z Mask must be
      *    equal to 0.
      *
-     * 3) RB3D_COLOR_CLEAR_VALUE is used to clear a colorbuffer and
-     *    RB3D_COLOR_CHANNEL_MASK must be equal to 0.
-     *
-     * 4) ZB_CB_CLEAR can be used to make the ZB units help in clearing
-     *    the colorbuffer. The color clear value is supplied through both
-     *    RB3D_COLOR_CLEAR_VALUE and ZB_DEPTHCLEARVALUE, and the colorbuffer
-     *    must be set in ZB_DEPTHOFFSET and ZB_DEPTHPITCH in addition to
-     *    RB3D_COLOROFFSET and RB3D_COLORPITCH. It's obvious that the zbuffer
-     *    will not be cleared and multiple render targets cannot be cleared
-     *    this way either.
-     *
-     * 5) For 16-bit integer buffering, compression causes a hung with one or
+     * 3) For 16-bit integer buffering, compression causes a hung with one or
      *    two samples and should not be used.
      *
-     * 6) Fastfill must not be used if reading of compressed Z data is disabled
+     * 4) Fastfill must not be used if reading of compressed Z data is disabled
      *    and writing of compressed Z data is enabled (RD/WR_COMP_ENABLE),
      *    i.e. it cannot be used to compress the zbuffer.
      *    (what the hell does that mean and how does it fit in clearing

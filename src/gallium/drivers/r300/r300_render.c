@@ -44,7 +44,7 @@
 /* XXX The DRM rejects VAP_ALT_NUM_VERTICES.. */
 //#define ENABLE_ALT_NUM_VERTS
 
-uint32_t r300_translate_primitive(unsigned prim)
+static uint32_t r300_translate_primitive(unsigned prim)
 {
     switch (prim) {
         case PIPE_PRIM_POINTS:
