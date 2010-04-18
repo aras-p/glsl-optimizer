@@ -99,7 +99,7 @@ st_texture_object(struct gl_texture_object *obj)
 
 
 static INLINE struct pipe_resource *
-st_get_texobj_texture(struct gl_texture_object *texObj)
+st_get_texobj_resource(struct gl_texture_object *texObj)
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
    return stObj ? stObj->pt : NULL;

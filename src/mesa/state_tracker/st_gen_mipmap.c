@@ -107,7 +107,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                          struct gl_texture_object *texObj)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_resource *pt = st_get_texobj_texture(texObj);
+   struct pipe_resource *pt = st_get_texobj_resource(texObj);
    const uint baseLevel = texObj->BaseLevel;
    const uint lastLevel = pt->last_level;
    const uint face = _mesa_tex_target_to_face(target), zslice = 0;
@@ -213,7 +213,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
 {
    struct st_context *st = ctx->st;
    struct st_texture_object *stObj = st_texture_object(texObj);
-   struct pipe_resource *pt = st_get_texobj_texture(texObj);
+   struct pipe_resource *pt = st_get_texobj_resource(texObj);
    const uint baseLevel = texObj->BaseLevel;
    uint lastLevel;
    uint dstLevel;

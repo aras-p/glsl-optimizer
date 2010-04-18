@@ -315,7 +315,7 @@ st_render_texture(GLcontext *ctx,
    struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
-   struct pipe_resource *pt = st_get_texobj_texture(att->Texture);
+   struct pipe_resource *pt = st_get_texobj_resource(att->Texture);
    struct st_texture_object *stObj;
    const struct gl_texture_image *texImage;
    GLint pt_level;
