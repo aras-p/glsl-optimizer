@@ -1767,7 +1767,7 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_PRINT:
          {
-            if (inst->SrcReg[0].File != -1) {
+            if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
                GLfloat a[4];
                fetch_vector4(&inst->SrcReg[0], machine, a);
                printf("%s%g, %g, %g, %g\n", (const char *) inst->Data,
