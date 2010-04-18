@@ -512,8 +512,10 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 	unsigned mtCount = 0;
 	unsigned maxMtIndex = 0;
 	radeon_mipmap_tree *tmp;
+	unsigned int level;
+	int i;
 
-	for (unsigned level = firstLevel; level <= lastLevel; ++level) {
+	for (level = firstLevel; level <= lastLevel; ++level) {
 		radeon_texture_image *img = get_radeon_texture_image(texObj->base.Image[0][level]);
 		unsigned found = 0;
 		// TODO: why this hack??
@@ -523,7 +525,7 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 		if (!img->mt)
 			continue;
 
-		for (int i = 0; i < mtCount; ++i) {
+		for (i = 0; i < mtCount; ++i) {
 			if (mts[i] == img->mt) {
 				found = 1;
 				mtSizes[i] += img->mt->levels[img->mtlevel].size;
@@ -544,7 +546,7 @@ static radeon_mipmap_tree * get_biggest_matching_miptree(radeonTexObj *texObj,
 		return NULL;
 	}
 
-	for (int i = 1; i < mtCount; ++i) {
+	for (i = 1; i < mtCount; ++i) {
 		if (mtSizes[i] > mtSizes[maxMtIndex]) {
 			maxMtIndex = i;
 		}
