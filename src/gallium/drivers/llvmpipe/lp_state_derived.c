@@ -50,88 +50,87 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 {
    const struct lp_fragment_shader *lpfs = llvmpipe->fs;
    struct vertex_info *vinfo = &llvmpipe->vertex_info;
-   const uint num = draw_num_shader_outputs(llvmpipe->draw);
+   struct lp_shader_input inputs[1 + PIPE_MAX_SHADER_INPUTS];
+   unsigned vs_index;
    uint i;
 
-   /* Tell setup to tell the draw module to simply emit the whole
-    * post-xform vertex as-is.
-    *
-    * Not really sure if this is the best approach.
+   /*
+    * Match FS inputs against VS outputs, emitting the necessary attributes.
     */
-   vinfo->num_attribs = 0;
-   for (i = 0; i < num; i++) {
-      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, i);
-   }
-   draw_compute_vertex_size(vinfo);
 
+   vinfo->num_attribs = 0;
+
+   vs_index = draw_find_shader_output(llvmpipe->draw,
+                                       TGSI_SEMANTIC_POSITION,
+                                       0);
+
+   draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
+
+   for (i = 0; i < lpfs->info.num_inputs; i++) {
+      /*
+       * Search for each input in current vs output:
+       */
+
+      vs_index = draw_find_shader_output(llvmpipe->draw,
+                                         lpfs->info.input_semantic_name[i],
+                                         lpfs->info.input_semantic_index[i]);
+
+      /* This can be pre-computed, except for flatshade:
+       */
+      switch (lpfs->info.input_semantic_name[i]) {
+      case TGSI_SEMANTIC_FACE:
+         inputs[i].interp = LP_INTERP_FACING;
+         break;
+      case TGSI_SEMANTIC_POSITION:
+         /* Position was already emitted above
+          */
+         inputs[i].interp = LP_INTERP_POSITION;
+         inputs[i].src_index = 0;
+         continue;
+      case TGSI_SEMANTIC_COLOR:
+         /* Colors are linearly inputs[i].interpolated in the fragment shader
+          * even when flatshading is active.  This just tells the
+          * setup module to use coefficients with ddx==0 and
+          * ddy==0.
+          */
+         if (llvmpipe->rasterizer->flatshade)
+            inputs[i].interp = LP_INTERP_CONSTANT;
+         else
+            inputs[i].interp = LP_INTERP_LINEAR;
+         break;
+
+      default:
+         switch (lpfs->info.input_interpolate[i]) {
+         case TGSI_INTERPOLATE_CONSTANT:
+            inputs[i].interp = LP_INTERP_CONSTANT;
+            break;
+         case TGSI_INTERPOLATE_LINEAR:
+            inputs[i].interp = LP_INTERP_LINEAR;
+            break;
+         case TGSI_INTERPOLATE_PERSPECTIVE:
+            inputs[i].interp = LP_INTERP_PERSPECTIVE;
+            break;
+         default:
+            assert(0);
+            break;
+         }
+      }
+
+      /*
+       * Emit the requested fs attribute for all but position.
+       */
+
+      inputs[i].src_index = vinfo->num_attribs;
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
+   }
+
+   draw_compute_vertex_size(vinfo);
 
    lp_setup_set_vertex_info(llvmpipe->setup, vinfo);
 
-/*
-   llvmpipe->psize_slot = draw_find_vs_output(llvmpipe->draw,
-                                              TGSI_SEMANTIC_PSIZE, 0);
-*/
-
-   /* Now match FS inputs against emitted vertex data.  It's also
-    * entirely possible to just have a fixed layout for FS input,
-    * determined by the fragment shader itself, and adjust the draw
-    * outputs to match that.
-    */
-   {
-      struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
-
-      for (i = 0; i < lpfs->info.num_inputs; i++) {
-
-         /* This can be precomputed, except for flatshade:
-          */
-         switch (lpfs->info.input_semantic_name[i]) {
-         case TGSI_SEMANTIC_FACE:
-            inputs[i].interp = LP_INTERP_FACING;
-            break;
-         case TGSI_SEMANTIC_POSITION:
-            inputs[i].interp = LP_INTERP_POSITION;
-            break;
-         case TGSI_SEMANTIC_COLOR:
-            /* Colors are linearly interpolated in the fragment shader
-             * even when flatshading is active.  This just tells the
-             * setup module to use coefficients with ddx==0 and
-             * ddy==0.
-             */
-            if (llvmpipe->rasterizer->flatshade)
-               inputs[i].interp = LP_INTERP_CONSTANT;
-            else
-               inputs[i].interp = LP_INTERP_LINEAR;
-            break;
-
-         default:
-            switch (lpfs->info.input_interpolate[i]) {
-            case TGSI_INTERPOLATE_CONSTANT:
-               inputs[i].interp = LP_INTERP_CONSTANT;
-               break;
-            case TGSI_INTERPOLATE_LINEAR:
-               inputs[i].interp = LP_INTERP_LINEAR;
-               break;
-            case TGSI_INTERPOLATE_PERSPECTIVE:
-               inputs[i].interp = LP_INTERP_PERSPECTIVE;
-               break;
-            default:
-               assert(0);
-               break;
-            }
-         }
-
-         /* Search for each input in current vs output:
-          */
-         inputs[i].src_index = 
-            draw_find_shader_output(llvmpipe->draw,
-                                    lpfs->info.input_semantic_name[i],
-                                    lpfs->info.input_semantic_index[i]);
-      }
-
-      lp_setup_set_fs_inputs(llvmpipe->setup, 
-                             inputs,
-                             lpfs->info.num_inputs);
-   }
+   lp_setup_set_fs_inputs(llvmpipe->setup,
+                          inputs,
+                          lpfs->info.num_inputs);
 }
 
 
