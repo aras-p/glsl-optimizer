@@ -122,11 +122,12 @@ nvfx_vbo_static_attrib(struct nvfx_context *nvfx,
 	struct pipe_transfer *transfer;
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	void *map;
+	float *v;
 
 	map  = pipe_buffer_map(&nvfx->pipe, vb->buffer, PIPE_TRANSFER_READ, &transfer);
 	map = (uint8_t *) map + vb->buffer_offset + ve->src_offset;
 
-	float *v = map;
+	v = map;
 
 	switch (ncomp) {
 	case 4:
@@ -173,11 +174,11 @@ nvfx_draw_arrays(struct pipe_context *pipe,
 	}
 
 	while (count) {
-		unsigned vc, nr;
+		unsigned vc, nr, avail;
 
 		nvfx_state_emit(nvfx);
 
-		unsigned avail = AVAIL_RING(chan);
+		avail = AVAIL_RING(chan);
 		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
 
 		vc = nouveau_vbuf_split(avail, 6, 256,
@@ -229,11 +230,11 @@ nvfx_draw_elements_u08(struct nvfx_context *nvfx, void *ib,
 
 	while (count) {
 		uint8_t *elts = (uint8_t *)ib + start;
-		unsigned vc, push, restart = 0;
+		unsigned vc, push, restart = 0, avail;
 
 		nvfx_state_emit(nvfx);
 
-		unsigned avail = AVAIL_RING(chan);
+		avail = AVAIL_RING(chan);
 		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
 
 		vc = nouveau_vbuf_split(avail, 6, 2,
@@ -282,11 +283,11 @@ nvfx_draw_elements_u16(struct nvfx_context *nvfx, void *ib,
 
 	while (count) {
 		uint16_t *elts = (uint16_t *)ib + start;
-		unsigned vc, push, restart = 0;
+		unsigned vc, push, restart = 0, avail;
 
 		nvfx_state_emit(nvfx);
 
-		unsigned avail = AVAIL_RING(chan);
+		avail = AVAIL_RING(chan);
 		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
 
 		vc = nouveau_vbuf_split(avail, 6, 2,
@@ -335,11 +336,11 @@ nvfx_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 
 	while (count) {
 		uint32_t *elts = (uint32_t *)ib + start;
-		unsigned vc, push, restart = 0;
+		unsigned vc, push, restart = 0, avail;
 
 		nvfx_state_emit(nvfx);
 
-		unsigned avail = AVAIL_RING(chan);
+		avail = AVAIL_RING(chan);
 		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
 
 		vc = nouveau_vbuf_split(avail, 5, 1,
@@ -413,11 +414,11 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 	unsigned restart = 0;
 
 	while (count) {
-		unsigned nr, vc;
+		unsigned nr, vc, avail;
 
 		nvfx_state_emit(nvfx);
 
-		unsigned avail = AVAIL_RING(chan);
+		avail = AVAIL_RING(chan);
 		avail -= 16 + (avail >> 10); /* for the BEGIN_RING_NIs, conservatively assuming one every 1024, plus 16 for safety */
 
 		vc = nouveau_vbuf_split(avail, 6, 256,
