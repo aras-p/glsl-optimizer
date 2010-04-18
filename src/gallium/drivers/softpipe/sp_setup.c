@@ -691,7 +691,7 @@ static void setup_tri_edges( struct setup_context *setup )
 static void subtriangle( struct setup_context *setup,
 			 struct edge *eleft,
 			 struct edge *eright,
-			 unsigned lines )
+			 int lines )
 {
    const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
    const int minx = (int) cliprect->minx;
@@ -702,6 +702,7 @@ static void subtriangle( struct setup_context *setup,
    int sy = (int)eleft->sy;
 
    assert((int)eleft->sy == (int) eright->sy);
+   assert(lines >= 0);
 
    /* clip top/bottom */
    start_y = sy;
