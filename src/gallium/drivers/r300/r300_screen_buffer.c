@@ -34,9 +34,9 @@
 #include "r300_screen_buffer.h"
 #include "r300_winsys.h"
 
-static unsigned r300_buffer_is_referenced(struct pipe_context *context,
-					 struct pipe_resource *buf,
-					 unsigned face, unsigned level)
+unsigned r300_buffer_is_referenced(struct pipe_context *context,
+				   struct pipe_resource *buf,
+                                   enum r300_reference_domain domain)
 {
     struct r300_context *r300 = r300_context(context);
     struct r300_buffer *rbuf = r300_buffer(buf);
@@ -44,10 +44,17 @@ static unsigned r300_buffer_is_referenced(struct pipe_context *context,
     if (r300_buffer_is_user_buffer(buf))
  	return PIPE_UNREFERENCED;
 
-    if (r300->rws->is_buffer_referenced(r300->rws, rbuf->buf, R300_REF_CS))
+    if (r300->rws->is_buffer_referenced(r300->rws, rbuf->buf, domain))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;
+}
+
+static unsigned r300_buffer_is_referenced_by_cs(struct pipe_context *context,
+                                                struct pipe_resource *buf,
+                                                unsigned face, unsigned level)
+{
+    return r300_buffer_is_referenced(context, buf, R300_REF_CS);
 }
 
 /* External helper, not required to implent u_resource_vtbl:
@@ -174,7 +181,6 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
 		rws->buffer_reference(rws, &rbuf->buf, NULL);
 
 		rbuf->num_ranges = 0;
-		rbuf->map = NULL;
 		rbuf->buf = r300_winsys_buffer_create(r300screen,
 						      16,
 						      rbuf->b.b.bind, /* XXX */
@@ -243,7 +249,7 @@ struct u_resource_vtbl r300_buffer_vtbl =
 {
    u_default_resource_get_handle,      /* get_handle */
    r300_buffer_destroy,		     /* resource_destroy */
-   r300_buffer_is_referenced,	     /* is_buffer_referenced */
+   r300_buffer_is_referenced_by_cs,  /* is_buffer_referenced */
    u_default_get_transfer,	     /* get_transfer */
    u_default_transfer_destroy,	     /* transfer_destroy */
    r300_buffer_transfer_map,	     /* transfer_map */

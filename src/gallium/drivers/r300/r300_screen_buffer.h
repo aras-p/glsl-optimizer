@@ -55,8 +55,6 @@ struct r300_buffer
     void *user_buffer;
     struct r300_buffer_range ranges[R300_BUFFER_MAX_RANGES];
     unsigned num_ranges;
-
-    void *map;
 };
 
 /* Functions. */
@@ -76,6 +74,10 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr,
 					      unsigned bytes,
 					      unsigned usage);
+
+unsigned r300_buffer_is_referenced(struct pipe_context *context,
+				   struct pipe_resource *buf,
+                                   enum r300_reference_domain domain);
 
 /* Inline functions. */
 
