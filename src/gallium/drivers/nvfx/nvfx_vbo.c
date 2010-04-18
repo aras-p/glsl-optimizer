@@ -124,7 +124,7 @@ nvfx_vbo_static_attrib(struct nvfx_context *nvfx,
 	void *map;
 
 	map  = pipe_buffer_map(&nvfx->pipe, vb->buffer, PIPE_TRANSFER_READ, &transfer);
-	map += vb->buffer_offset + ve->src_offset;
+	map = (uint8_t *) map + vb->buffer_offset + ve->src_offset;
 
 	float *v = map;
 
