@@ -334,7 +334,7 @@ nvfx_vp_arith(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, int slot, int op,
 
 static INLINE struct nvfx_sreg
 tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
-	struct nvfx_sreg src;
+	struct nvfx_sreg src = { 0 };
 
 	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
@@ -365,7 +365,7 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 
 static INLINE struct nvfx_sreg
 tgsi_dst(struct nvfx_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
-	struct nvfx_sreg dst;
+	struct nvfx_sreg dst = { 0 };
 
 	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:

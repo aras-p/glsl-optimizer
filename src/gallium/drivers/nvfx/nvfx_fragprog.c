@@ -236,7 +236,7 @@ nvfx_fp_tex(struct nvfx_fpc *fpc, int sat, int op, int unit,
 static INLINE struct nvfx_sreg
 tgsi_src(struct nvfx_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 {
-	struct nvfx_sreg src;
+	struct nvfx_sreg src = { 0 };
 
 	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
@@ -304,7 +304,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 {
 	const struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
 	struct nvfx_sreg src[3], dst, tmp;
-	int mask, sat, unit;
+	int mask, sat, unit = 0;
 	int ai = -1, ci = -1, ii = -1;
 	int i;
 
