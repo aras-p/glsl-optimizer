@@ -32,7 +32,7 @@ validate_fb(struct nv50_context *nv50)
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so = so_new(32, 79, 18);
 	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
-	unsigned i, w, h, gw = 0;
+	unsigned i, w = 0, h = 0, gw = 0;
 
 	/* Set nr of active RTs and select RT for each colour output.
 	 * FP result 0 always goes to RT[0], bits 4 - 6 are ignored.

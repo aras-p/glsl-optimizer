@@ -1615,7 +1615,7 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	struct nv50_reg *zero = alloc_immd(pc, 0.0);
 	struct nv50_reg *neg128 = alloc_immd(pc, -127.999999);
 	struct nv50_reg *pos128 = alloc_immd(pc,  127.999999);
-	struct nv50_reg *tmp[4];
+	struct nv50_reg *tmp[4] = { 0 };
 	boolean allow32 = pc->allow32;
 
 	pc->allow32 = FALSE;
@@ -2553,7 +2553,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		     const struct tgsi_full_instruction *inst)
 {
 	struct nv50_reg *rdst[4], *dst[4], *brdc, *src[3][4], *temp;
-	unsigned mask, sat, unit;
+	unsigned mask, sat, unit = 0;
 	int i, c;
 
 	mask = inst->Dst[0].Register.WriteMask;
@@ -3531,7 +3531,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	struct tgsi_parse_context tp;
 	struct nv50_program *p = pc->p;
 	boolean ret = FALSE;
-	unsigned i, c, instance_id, vertex_id, flat_nr = 0;
+	unsigned i, c, instance_id = 0, vertex_id = 0, flat_nr = 0;
 
 	tgsi_parse_init(&tp, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&tp)) {
@@ -3729,7 +3729,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		copy_semantic_info(p);
 	} else
 	if (p->type == PIPE_SHADER_FRAGMENT) {
-		int rid, aid;
+		int rid = 0, aid;
 		unsigned n = 0, m = pc->attr_nr - flat_nr;
 
 		pc->allow32 = TRUE;
@@ -4601,7 +4601,7 @@ construct_vp_gp_mapping(uint32_t *map32, int m,
 	int i, j, c;
 
         for (i = 0; i < gp->cfg.in_nr; ++i) {
-                uint8_t oid, mv = 0, mg = gp->cfg.in[i].mask;
+                uint8_t oid = 0, mv = 0, mg = gp->cfg.in[i].mask;
 
                 for (j = 0; j < vp->cfg.out_nr; ++j) {
                         if (vp->cfg.out[j].sn == gp->cfg.in[i].sn &&
