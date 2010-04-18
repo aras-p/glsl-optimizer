@@ -156,7 +156,7 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
     unsigned i;
 
     if (rbuf->user_buffer)
-        return rbuf->user_buffer + transfer->box.x;
+        return (uint8_t *) rbuf->user_buffer + transfer->box.x;
 
     if (rbuf->b.b.bind & PIPE_BIND_CONSTANT_BUFFER) {
 	goto just_map;
