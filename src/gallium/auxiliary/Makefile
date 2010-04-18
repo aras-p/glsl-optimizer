@@ -129,6 +129,7 @@ C_SOURCES = \
 	util/u_simple_shaders.c \
 	util/u_snprintf.c \
 	util/u_surface.c \
+	util/u_surfaces.c \
 	util/u_texture.c \
 	util/u_tile.c \
 	util/u_transfer.c \
