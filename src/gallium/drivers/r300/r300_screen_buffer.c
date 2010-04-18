@@ -147,33 +147,30 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
 }
 
 static void *
-r300_buffer_map_range(struct pipe_screen *screen,
-		      struct pipe_resource *buf,
-		      unsigned offset, unsigned length,
-		      unsigned usage )
+r300_buffer_transfer_map( struct pipe_context *pipe,
+			  struct pipe_transfer *transfer )
 {
-    struct r300_screen *r300screen = r300_screen(screen);
+    struct r300_screen *r300screen = r300_screen(pipe->screen);
     struct r300_winsys_screen *rws = r300screen->rws;
-    struct r300_buffer *rbuf = r300_buffer(buf);
-    void *map;
-    int flush = 0;
-    int i;
+    struct r300_buffer *rbuf = r300_buffer(transfer->resource);
+    uint8_t *map;
+    boolean flush = FALSE;
+    unsigned i;
 
     if (rbuf->user_buffer)
-	return rbuf->user_buffer;
+        return rbuf->user_buffer + transfer->box.x;
 
     if (rbuf->b.b.bind & PIPE_BIND_CONSTANT_BUFFER) {
 	goto just_map;
     }
 
     /* check if the mapping is to a range we already flushed */
-    if (usage & PIPE_TRANSFER_DISCARD) {
+    if (transfer->usage & PIPE_TRANSFER_DISCARD) {
 	for (i = 0; i < rbuf->num_ranges; i++) {
+	    if ((transfer->box.x >= rbuf->ranges[i].start) &&
+		(transfer->box.x < rbuf->ranges[i].end))
+		flush = TRUE;
 
-	    if ((offset >= rbuf->ranges[i].start) &&
-		(offset < rbuf->ranges[i].end))
-		flush = 1;
-	    
 	    if (flush) {
 		/* unreference this hw buffer and allocate a new one */
 		rws->buffer_reference(rws, &rbuf->buf, NULL);
@@ -189,19 +186,28 @@ r300_buffer_map_range(struct pipe_screen *screen,
 	}
     }
 just_map:
-    map = rws->buffer_map(rws, rbuf->buf, usage);
-   
-    return map;
+    map = rws->buffer_map(rws, rbuf->buf, transfer->usage);
+
+    if (map == NULL)
+        return NULL;
+
+    /* map_buffer() returned a pointer to the beginning of the buffer,
+     * but transfers are expected to return a pointer to just the
+     * region specified in the box.
+     */
+    return map + transfer->box.x;
 }
 
-static void 
-r300_buffer_flush_mapped_range( struct pipe_screen *screen,
-				struct pipe_resource *buf,
-				unsigned offset,
-				unsigned length )
+static void r300_buffer_transfer_flush_region( struct pipe_context *pipe,
+					       struct pipe_transfer *transfer,
+					       const struct pipe_box *box)
 {
-    struct r300_buffer *rbuf = r300_buffer(buf);
-    int i;
+    struct r300_buffer *rbuf = r300_buffer(transfer->resource);
+    unsigned i;
+    unsigned offset = transfer->box.x + box->x;
+    unsigned length = box->width;
+
+    assert(box->x + box->width <= transfer->box.width);
 
     if (rbuf->user_buffer)
 	return;
@@ -211,7 +217,7 @@ r300_buffer_flush_mapped_range( struct pipe_screen *screen,
 
     /* mark the range as used */
     for(i = 0; i < rbuf->num_ranges; ++i) {
-	if(offset <= rbuf->ranges[i].end && rbuf->ranges[i].start <= (offset+length)) {
+	if(offset <= rbuf->ranges[i].end && rbuf->ranges[i].start <= (offset+box->width)) {
 	    rbuf->ranges[i].start = MIN2(rbuf->ranges[i].start, offset);
 	    rbuf->ranges[i].end   = MAX2(rbuf->ranges[i].end, (offset+length));
 	    return;
@@ -223,71 +229,17 @@ r300_buffer_flush_mapped_range( struct pipe_screen *screen,
     rbuf->num_ranges++;
 }
 
-
-static void
-r300_buffer_unmap(struct pipe_screen *screen,
-		  struct pipe_resource *buf)
+static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
+			    struct pipe_transfer *transfer )
 {
-    struct r300_screen *r300screen = r300_screen(screen);
+    struct r300_screen *r300screen = r300_screen(pipe->screen);
     struct r300_winsys_screen *rws = r300screen->rws;
-    struct r300_buffer *rbuf = r300_buffer(buf);
+    struct r300_buffer *rbuf = r300_buffer(transfer->resource);
 
     if (rbuf->buf) {
         rws->buffer_unmap(rws, rbuf->buf);
     }
 }
-
-
-
-
-/* As a first step, keep the original code intact, implement buffer
- * transfers in terms of the old map/unmap functions.
- *
- * Utility functions for transfer create/destroy are hooked in and
- * just record the arguments to those functions.
- */
-static void *
-r300_buffer_transfer_map( struct pipe_context *pipe,
-			  struct pipe_transfer *transfer )
-{
-   uint8_t *map = r300_buffer_map_range( pipe->screen,
-					 transfer->resource,
-					 transfer->box.x,
-					 transfer->box.width,
-					 transfer->usage );
-   if (map == NULL)
-      return NULL;
-
-   /* map_buffer() returned a pointer to the beginning of the buffer,
-    * but transfers are expected to return a pointer to just the
-    * region specified in the box.
-    */
-   return map + transfer->box.x;
-}
-
-
-
-static void r300_buffer_transfer_flush_region( struct pipe_context *pipe,
-					       struct pipe_transfer *transfer,
-					       const struct pipe_box *box)
-{
-   assert(box->x + box->width <= transfer->box.width);
-
-   r300_buffer_flush_mapped_range(pipe->screen,
-				  transfer->resource,
-				  transfer->box.x + box->x,
-				  box->width);
-}
-
-static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
-			    struct pipe_transfer *transfer )
-{
-   r300_buffer_unmap(pipe->screen,
-		     transfer->resource);
-}
-
-
-
 
 struct u_resource_vtbl r300_buffer_vtbl = 
 {
