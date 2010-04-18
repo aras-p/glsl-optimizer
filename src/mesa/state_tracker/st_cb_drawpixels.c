@@ -834,7 +834,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       struct pipe_resource *pt
          = make_texture(st, width, height, format, type, unpack, pixels);
       if (pt) {
-         struct pipe_sampler_view *sv = st_sampler_view_from_texture(st->pipe, pt);
+         struct pipe_sampler_view *sv = st_create_texture_sampler_view(st->pipe, pt);
 
          if (sv) {
             draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
@@ -1041,7 +1041,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (!pt)
       return;
 
-   sv = st_sampler_view_from_texture(st->pipe, pt);
+   sv = st_create_texture_sampler_view(st->pipe, pt);
    if (!sv) {
       pipe_resource_reference(&pt, NULL);
       return;

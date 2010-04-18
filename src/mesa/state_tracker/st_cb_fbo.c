@@ -546,7 +546,7 @@ st_renderbuffer_get_sampler_view(struct st_renderbuffer *rb,
                                  struct pipe_context *pipe)
 {
    if (!rb->sampler_view) {
-      rb->sampler_view = st_sampler_view_from_texture(pipe, rb->texture);
+      rb->sampler_view = st_create_texture_sampler_view(pipe, rb->texture);
    }
 
    return rb->sampler_view;

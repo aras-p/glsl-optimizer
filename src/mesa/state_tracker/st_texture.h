@@ -116,8 +116,8 @@ st_get_stobj_texture(struct st_texture_object *stObj)
 
 
 static INLINE struct pipe_sampler_view *
-st_sampler_view_from_texture(struct pipe_context *pipe,
-                             struct pipe_resource *texture)
+st_create_texture_sampler_view(struct pipe_context *pipe,
+                               struct pipe_resource *texture)
 {
    struct pipe_sampler_view templ;
 
@@ -137,7 +137,7 @@ st_get_texture_sampler_view(struct st_texture_object *stObj)
    }
 
    if (!stObj->sampler_view) {
-      stObj->sampler_view = st_sampler_view_from_texture(stObj->pipe, stObj->pt);
+      stObj->sampler_view = st_create_texture_sampler_view(stObj->pipe, stObj->pt);
    }
 
    return stObj->sampler_view;

@@ -622,7 +622,7 @@ st_flush_bitmap_cache(struct st_context *st)
             cache->trans = NULL;
          }
 
-         sv = st_sampler_view_from_texture(st->pipe, cache->texture);
+         sv = st_create_texture_sampler_view(st->pipe, cache->texture);
          if (sv) {
             draw_bitmap_quad(st->ctx,
                              cache->xpos,
@@ -756,7 +756,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    pt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
    if (pt) {
-      struct pipe_sampler_view *sv = st_sampler_view_from_texture(st->pipe, pt);
+      struct pipe_sampler_view *sv = st_create_texture_sampler_view(st->pipe, pt);
 
       assert(pt->target == PIPE_TEXTURE_2D);
 
