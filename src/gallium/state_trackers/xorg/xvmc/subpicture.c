@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/XvMClib.h>
+#include <xorg/fourcc.h>
 #include <vl_winsys.h>
 #include <pipe/p_screen.h>
 #include <pipe/p_video_context.h>
@@ -38,6 +39,93 @@
 
 #define FOURCC_RGB 0x0000003
 
+static enum pipe_format XvIDToPipe(int xvimage_id)
+{
+   switch (xvimage_id) {
+      case FOURCC_RGB:
+         return PIPE_FORMAT_B8G8R8X8_UNORM;
+      default:
+         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", xvimage_id);
+         return PIPE_FORMAT_NONE;
+   }
+}
+
+static int PipeToComponentOrder(enum pipe_format format, char *component_order)
+{
+   assert(component_order);
+
+   switch (format) {
+      case PIPE_FORMAT_B8G8R8X8_UNORM:
+         return 0;
+      default:
+         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized PIPE_FORMAT 0x%08X.\n", format);
+         component_order[0] = 0;
+         component_order[1] = 0;
+         component_order[2] = 0;
+         component_order[3] = 0;
+   }
+
+      return 0;
+}
+
+static Status Validate(Display *dpy, XvPortID port, int surface_type_id, int xvimage_id)
+{
+   XvImageFormatValues *subpictures;
+   int num_subpics;
+   unsigned int i;
+
+   subpictures = XvMCListSubpictureTypes(dpy, port, surface_type_id, &num_subpics);
+   if (num_subpics < 1) {
+      if (subpictures)
+         XFree(subpictures);
+      return BadMatch;
+   }
+   if (!subpictures)
+      return BadAlloc;
+
+   for (i = 0; i < num_subpics; ++i) {
+      if (subpictures[i].id == xvimage_id) {
+         XVMC_MSG(XVMC_TRACE, "[XvMC] Found requested subpicture format.\n" \
+                              "[XvMC]   port=%u\n" \
+                              "[XvMC]   surface id=0x%08X\n" \
+                              "[XvMC]   image id=0x%08X\n" \
+                              "[XvMC]   type=%08X\n" \
+                              "[XvMC]   byte order=%08X\n" \
+                              "[XvMC]   bits per pixel=%u\n" \
+                              "[XvMC]   format=%08X\n" \
+                              "[XvMC]   num planes=%d\n",
+                              port, surface_type_id, xvimage_id, subpictures[i].type, subpictures[i].byte_order,
+                              subpictures[i].bits_per_pixel, subpictures[i].format, subpictures[i].num_planes);
+         if (subpictures[i].type == XvRGB) {
+            XVMC_MSG(XVMC_TRACE, "[XvMC]   depth=%d\n" \
+                                 "[XvMC]   red mask=0x%08X\n" \
+                                 "[XvMC]   green mask=0x%08X\n" \
+                                 "[XvMC]   blue mask=0x%08X\n",
+                                 subpictures[i].depth, subpictures[i].red_mask, subpictures[i].green_mask, subpictures[i].blue_mask);
+         }
+         else if (subpictures[i].type == XvYUV) {
+            XVMC_MSG(XVMC_TRACE, "[XvMC]   y sample bits=0x%08X\n" \
+                                 "[XvMC]   u sample bits=0x%08X\n" \
+                                 "[XvMC]   v sample bits=0x%08X\n" \
+                                 "[XvMC]   horz y period=%u\n" \
+                                 "[XvMC]   horz u period=%u\n" \
+                                 "[XvMC]   horz v period=%u\n" \
+                                 "[XvMC]   vert y period=%u\n" \
+                                 "[XvMC]   vert u period=%u\n" \
+                                 "[XvMC]   vert v period=%u\n",
+                                 subpictures[i].y_sample_bits, subpictures[i].u_sample_bits, subpictures[i].v_sample_bits,
+                                 subpictures[i].horz_y_period, subpictures[i].horz_u_period, subpictures[i].horz_v_period,
+                                 subpictures[i].vert_y_period, subpictures[i].vert_u_period, subpictures[i].vert_v_period);
+         }
+         break;
+      }
+   }
+
+   XFree(subpictures);
+
+   return i < num_subpics ? Success : BadMatch;
+}
+
 Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *subpicture,
                             unsigned short width, unsigned short height, int xvimage_id)
 {
@@ -46,6 +134,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    struct pipe_video_context *vpipe;
    struct pipe_texture template;
    struct pipe_texture *tex;
+   Status ret;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating subpicture %p.\n", subpicture);
 
@@ -60,12 +149,13 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    if (!subpicture)
       return XvMCBadSubpicture;
 
-   /* TODO: Check against surface max width, height */
-   if (width > 2048 || height > 2048)
+   if (width > context_priv->subpicture_max_width ||
+       height > context_priv->subpicture_max_height)
       return BadValue;
 
-   if (xvimage_id != FOURCC_RGB)
-      return BadMatch;
+   ret = Validate(dpy, context->port, context->surface_type_id, xvimage_id);
+   if (ret != Success)
+      return ret;
 
    subpicture_priv = CALLOC(1, sizeof(XvMCSubpicturePrivate));
    if (!subpicture_priv)
@@ -73,9 +163,9 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 
    memset(&template, 0, sizeof(struct pipe_texture));
    template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
+   template.format = XvIDToPipe(xvimage_id);
    template.last_level = 0;
-   if (vpipe->screen->get_param(vpipe->screen, PIPE_CAP_NPOT_TEXTURES)) {
+   if (vpipe->get_param(vpipe, PIPE_CAP_NPOT_TEXTURES)) {
       template.width0 = width;
       template.height0 = height;
    }
@@ -92,8 +182,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
                                                          PIPE_BUFFER_USAGE_CPU_WRITE |
                                                          PIPE_BUFFER_USAGE_GPU_READ);
    pipe_texture_reference(&tex, NULL);
-   if (!subpicture_priv->sfc)
-   {
+   if (!subpicture_priv->sfc) {
       FREE(subpicture_priv);
       return BadAlloc;
    }
@@ -104,11 +193,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    subpicture->width = width;
    subpicture->height = height;
    subpicture->num_palette_entries = 0;
-   subpicture->entry_bytes = 0;
-   subpicture->component_order[0] = 0;
-   subpicture->component_order[1] = 0;
-   subpicture->component_order[2] = 0;
-   subpicture->component_order[3] = 0;
+   subpicture->entry_bytes = PipeToComponentOrder(template.format, subpicture->component_order);
    subpicture->privData = subpicture_priv;
 
    SyncHandle();
@@ -184,10 +269,9 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
       return BadAlloc;
    }
 
-   switch (image->id)
-   {
+   switch (image->id) {
       case FOURCC_RGB:
-         assert(subpicture_priv->sfc->format == PIPE_FORMAT_X8R8G8B8_UNORM);
+         assert(subpicture_priv->sfc->format == XvIDToPipe(image->id));
          for (y = 0; y < height; ++y) {
             for (x = 0; x < width; ++x, src += 3, dst += 4) {
                /* TODO: Confirm or fix */
@@ -198,7 +282,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
          }
          break;
       default:
-         assert(false);
+         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", image->id);
    }
 
    screen->transfer_unmap(screen, xfer);

@@ -40,7 +40,9 @@
 static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
                        unsigned int width, unsigned int height, int flags,
                        bool *found_port, int *screen, int *chroma_format,
-                       int *mc_type, int *surface_flags)
+                       int *mc_type, int *surface_flags,
+                       unsigned short *subpic_max_w,
+                       unsigned short *subpic_max_h)
 {
    bool found_surface = false;
    XvAdaptorInfo *adaptor_info;
@@ -55,6 +57,8 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
    assert(chroma_format);
    assert(mc_type);
    assert(surface_flags);
+   assert(subpic_max_w);
+   assert(subpic_max_h);
 
    *found_port = false;
 
@@ -88,16 +92,20 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id,
                *chroma_format = surface_info[l].chroma_format;
                *mc_type = surface_info[l].mc_type;
                *surface_flags = surface_info[l].flags;
+               *subpic_max_w = surface_info[l].subpicture_max_width;
+               *subpic_max_h = surface_info[l].subpicture_max_height;
                *screen = i;
 
-               XVMC_MSG(XVMC_TRACE, "[XvMC] Found suitable context surface format.\n" \
+               XVMC_MSG(XVMC_TRACE, "[XvMC] Found requested context surface format.\n" \
                                     "[XvMC]   screen=%u, port=%u\n" \
-                                    "[XvMC]   id: 0x%08X\n" \
+                                    "[XvMC]   id=0x%08X\n" \
                                     "[XvMC]   max width=%u, max height=%u\n" \
                                     "[XvMC]   chroma format=0x%08X\n" \
                                     "[XvMC]   acceleration level=0x%08X\n" \
-                                    "[XvMC]   flags=0x%08X\n",
-                                    i, port, surface_type_id, max_width, max_height, *chroma_format, *mc_type, *surface_flags);
+                                    "[XvMC]   flags=0x%08X\n" \
+                                    "[XvMC]   subpicture max width=%u, max height=%u\n",
+                                    i, port, surface_type_id, max_width, max_height, *chroma_format,
+                                    *mc_type, *surface_flags, *subpic_max_w, *subpic_max_h);
             }
 
             XFree(surface_info);
@@ -172,6 +180,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    int chroma_format;
    int mc_type;
    int surface_flags;
+   unsigned short subpic_max_w;
+   unsigned short subpic_max_h;
    Status ret;
    struct vl_screen *vscreen;
    struct vl_context *vctx;
@@ -186,7 +196,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return XvMCBadContext;
 
    ret = Validate(dpy, port, surface_type_id, width, height, flags,
-                  &found_port, &scrn, &chroma_format, &mc_type, &surface_flags);
+                  &found_port, &scrn, &chroma_format, &mc_type, &surface_flags,
+                  &subpic_max_w, &subpic_max_h);
 
    /* Success and XvBadPort have the same value */
    if (ret != Success || !found_port)
@@ -239,6 +250,8 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    vctx->vpipe->set_csc_matrix(vctx->vpipe, csc);
 
    context_priv->vctx = vctx;
+   context_priv->subpicture_max_width = subpic_max_w;
+   context_priv->subpicture_max_height = subpic_max_h;
 
    context->context_id = XAllocID(dpy);
    context->surface_type_id = surface_type_id;
