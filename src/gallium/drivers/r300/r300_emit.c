@@ -100,7 +100,6 @@ void r300_emit_clip_state(struct r300_context* r300,
         OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
         END_CS;
     }
-
 }
 
 void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
