@@ -59,6 +59,11 @@ struct edge {
 };
 
 
+/**
+ * Max number of quads (2x2 pixel blocks) to process per batch.
+ * This can't be arbitrarily increased since we depend on some 32-bit
+ * bitmasks (two bits per quad).
+ */
 #define MAX_QUADS 16
 
 
@@ -204,7 +209,7 @@ static INLINE int block_x( int x )
  */
 static void flush_spans( struct setup_context *setup )
 {
-   const int step = 16;
+   const int step = MAX_QUADS;
    const int xleft0 = setup->span.left[0];
    const int xleft1 = setup->span.left[1];
    const int xright0 = setup->span.right[0];
