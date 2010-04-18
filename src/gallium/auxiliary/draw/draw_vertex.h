@@ -142,7 +142,7 @@ void draw_dump_emitted_vertex(const struct vertex_info *vinfo,
                               const uint8_t *data);
 
 
-static INLINE unsigned draw_translate_vinfo_format(enum attrib_emit emit)
+static INLINE enum pipe_format draw_translate_vinfo_format(enum attrib_emit emit)
 {
    switch (emit) {
    case EMIT_OMIT:
@@ -166,7 +166,7 @@ static INLINE unsigned draw_translate_vinfo_format(enum attrib_emit emit)
    }
 }
 
-static INLINE unsigned draw_translate_vinfo_size(enum attrib_emit emit)
+static INLINE enum attrib_emit draw_translate_vinfo_size(enum attrib_emit emit)
 {
    switch (emit) {
    case EMIT_OMIT:

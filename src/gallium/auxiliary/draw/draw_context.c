@@ -56,6 +56,12 @@ fail:
 
 boolean draw_init(struct draw_context *draw)
 {
+   /*
+    * Note that several functions compute the clipmask of the predefined
+    * formats with hardcoded formulas instead of using these. So modifications
+    * here must be reflected there too.
+    */
+
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[2],  0, -1,  0, 1 );

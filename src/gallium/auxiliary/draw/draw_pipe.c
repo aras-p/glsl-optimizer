@@ -225,7 +225,7 @@ static void do_triangle( struct draw_context *draw,
 
 
 /**
- * Code to run the pipeline on a fairly arbitary collection of vertices.
+ * Code to run the pipeline on a fairly arbitrary collection of vertices.
  * For drawing indexed primitives.
  *
  * Vertex headers must be pre-initialized with the

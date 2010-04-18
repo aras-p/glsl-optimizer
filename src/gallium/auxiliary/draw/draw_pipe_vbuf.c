@@ -235,7 +235,7 @@ vbuf_start_prim( struct vbuf_stage *vbuf, uint prim )
    for (i = 0; i < vbuf->vinfo->num_attribs; i++) {
       unsigned emit_sz = 0;
       unsigned src_buffer = 0;
-      unsigned output_format;
+      enum pipe_format output_format;
       unsigned src_offset = (vbuf->vinfo->attrib[i].src_index * 4 * sizeof(float) );
 
       output_format = draw_translate_vinfo_format(vbuf->vinfo->attrib[i].emit);
