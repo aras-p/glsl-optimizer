@@ -836,13 +836,14 @@ static void r300_setup_tiling(struct pipe_screen *screen,
     enum pipe_format format = tex->b.b.format;
     boolean rv350_mode = r300_screen(screen)->caps.family >= CHIP_FAMILY_RV350;
     boolean is_zb = util_format_is_depth_or_stencil(format);
+    boolean dbg_no_tiling = SCREEN_DBG_ON(r300_screen(screen), DBG_NO_TILING);
 
     if (!r300_format_is_plain(format)) {
         return;
     }
 
     /* If height == 1, disable microtiling except for zbuffer. */
-    if (!is_zb && tex->b.b.height0 == 1) {
+    if (!is_zb && (tex->b.b.height0 == 1 || dbg_no_tiling)) {
         return;
     }
 
@@ -859,6 +860,10 @@ static void r300_setup_tiling(struct pipe_screen *screen,
                 tex->microtile = R300_BUFFER_SQUARETILED;
             }
             break;
+    }
+
+    if (dbg_no_tiling) {
+        return;
     }
 
     /* Set macrotiling. */

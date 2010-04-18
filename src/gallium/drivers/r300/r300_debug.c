@@ -32,13 +32,15 @@ struct debug_option {
 
 static struct debug_option debug_options[] = {
     { "help", DBG_HELP, "Helpful meta-information about the driver" },
-    { "fp", DBG_FP, "Fragment program handling" },
-    { "vp", DBG_VP, "Vertex program handling" },
-    { "cs", DBG_CS, "Command submissions" },
-    { "draw", DBG_DRAW, "Draw and emit" },
-    { "tex", DBG_TEX, "Textures" },
-    { "fall", DBG_FALL, "Fallbacks" },
-    { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking purposes only!)" },
+    { "fp", DBG_FP, "Fragment program handling (for debugging)" },
+    { "vp", DBG_VP, "Vertex program handling (for debugging)" },
+    { "cs", DBG_CS, "Command submissions (for debugging)" },
+    { "draw", DBG_DRAW, "Draw and emit (for debugging)" },
+    { "tex", DBG_TEX, "Textures (for debugging)" },
+    { "fall", DBG_FALL, "Fallbacks (for debugging)" },
+    { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },
+    { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
+    { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },
 
     { "all", ~0, "Convenience option that enables all debug flags" },
 

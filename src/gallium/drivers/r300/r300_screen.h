@@ -69,6 +69,8 @@ static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
 #define DBG_TEX     0x0000020
 #define DBG_FALL    0x0000040
 #define DBG_ANISOHQ 0x0000080
+#define DBG_NO_TILING 0x0000100
+#define DBG_NO_IMMD 0x0000200
 /*@}*/
 
 static INLINE boolean SCREEN_DBG_ON(struct r300_screen * screen, unsigned flags)
