@@ -4,7 +4,7 @@ TOP = ../..
 include $(TOP)/configs/current
 
 
-INCLUDE_DIRS = -I$(TOP)/include
+INCLUDE_DIRS = -I$(TOP)/include $(X11_CFLAGS)
 
 HEADERS = $(TOP)/include/GLES/egl.h
 LIB_DEP = $(TOP)/$(LIB_DIR)/libEGL.so
