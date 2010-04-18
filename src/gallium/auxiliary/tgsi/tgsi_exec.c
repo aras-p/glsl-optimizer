@@ -1796,6 +1796,12 @@ exec_declaration(struct tgsi_exec_machine *mach,
          last = decl->Range.Last;
          mask = decl->Declaration.UsageMask;
 
+         /* XXX we could remove this special-case code since
+          * mach->InterpCoefs[first].a0 should already have the
+          * front/back-face value.  But we should first update the
+          * ureg code to emit the right UsageMask value (WRITEMASK_X).
+          * Then, we could remove the tgsi_exec_machine::Face field.
+          */
          if (decl->Semantic.Name == TGSI_SEMANTIC_FACE) {
             uint i;
 
