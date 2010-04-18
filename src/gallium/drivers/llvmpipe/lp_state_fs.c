@@ -37,7 +37,7 @@
  * - early depth test
  * - fragment shader
  * - alpha test
- * - depth/stencil test (stencil TBI)
+ * - depth/stencil test
  * - blending
  *
  * This file has only the glue to assemble the fragment pipeline.  The actual
