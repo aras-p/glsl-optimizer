@@ -182,6 +182,44 @@ typedef unsigned char boolean;
 
 #endif
 
-
+/* You should use these macros to mark if blocks where the if condition
+ * is either likely to be true, or unlikely to be true.
+ *
+ * This will inform human readers of this fact, and will also inform
+ * the compiler, who will in turn inform the CPU.
+ *
+ * CPUs often start executing code inside the if or the else blocks
+ * without knowing whether the condition is true or not, and will have
+ * to throw the work away if they find out later they executed the
+ * wrong part of the if.
+ *
+ * If these macros are used, the CPU is more likely to correctly predict
+ * the right path, and will avoid speculatively executing the wrong branch,
+ * thus not throwing away work, resulting in better performance.
+ *
+ * In light of this, it is also a good idea to mark as "likely" a path
+ * which is not necessarily always more likely, but that will benefit much
+ * more from performance improvements since it is already much faster than
+ * the other path, or viceversa with "unlikely".
+ *
+ * Example usage:
+ * if(unlikely(do_we_need_a_software_fallback()))
+ *    do_software_fallback();
+ * else
+ *    render_with_gpu();
+ *
+ * The macros follow the Linux kernel convention, and more examples can
+ * be found there.
+ *
+ * Note that profile guided optimization can offer better results, but
+ * needs an appropriate coverage suite and does not inform human readers.
+ */
+#ifdef __GNUC__
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#define likely(x) !!(x)
+#define unlikely(x) !!(x)
+#endif
 
 #endif /* P_COMPILER_H */
