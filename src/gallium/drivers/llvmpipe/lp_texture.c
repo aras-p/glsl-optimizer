@@ -825,6 +825,7 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
    const unsigned width_t = align(width, TILE_SIZE) / TILE_SIZE;
    const unsigned height_t = align(height, TILE_SIZE) / TILE_SIZE;
    enum lp_texture_layout other_layout;
+   boolean only_allocate;
 
    assert(layout == LP_TEX_LAYOUT_NONE ||
           layout == LP_TEX_LAYOUT_TILED ||
@@ -833,6 +834,15 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
    assert(usage == LP_TEX_USAGE_READ ||
           usage == LP_TEX_USAGE_READ_WRITE ||
           usage == LP_TEX_USAGE_WRITE_ALL);
+
+   /* check for the special case of layout == LP_TEX_LAYOUT_NONE */
+   if (layout == LP_TEX_LAYOUT_NONE) {
+      only_allocate = TRUE;
+      layout = LP_TEX_LAYOUT_TILED;
+   }
+   else {
+      only_allocate = FALSE;
+   }
 
    if (lpr->dt) {
       assert(lpr->linear[level].data);
@@ -855,11 +865,7 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
 
    if (!target_data) {
       /* allocate memory for the target image now */
-      unsigned buffer_size;
-      if (layout == LP_TEX_LAYOUT_LINEAR)
-         buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
-      else
-         buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_TILED);
+      unsigned buffer_size = tex_image_size(lpr, level, layout);
       target_img->data = align_malloc(buffer_size, 16);
       target_data = target_img->data;
    }
@@ -874,7 +880,7 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
       }
    }
 
-   if (layout == LP_TEX_LAYOUT_NONE) {
+   if (only_allocate) {
       /* Just allocating tiled memory.  Don't initialize it from the the
        * linear data if it exists.
        */
