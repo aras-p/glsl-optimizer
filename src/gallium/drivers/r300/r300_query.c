@@ -25,10 +25,8 @@
 
 #include "r300_context.h"
 #include "r300_screen.h"
-#include "r300_cs.h"
 #include "r300_emit.h"
 #include "r300_query.h"
-#include "r300_reg.h"
 
 #include <stdio.h>
 
