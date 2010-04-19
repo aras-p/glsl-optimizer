@@ -246,6 +246,14 @@ ir_dereference::ir_dereference(ir_instruction *var,
    this->selector.array_index = array_index;
 }
 
+ir_dereference::ir_dereference(ir_instruction *variable, const char *field)
+   : mode(ir_reference_record), var(variable)
+{
+   this->selector.field = field;
+   this->type = (var != NULL)
+      ? var->type->field_type(field) : glsl_type::error_type;
+}
+
 bool
 ir_dereference::is_lvalue()
 {

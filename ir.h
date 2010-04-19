@@ -749,6 +749,8 @@ public:
 
    ir_dereference(ir_instruction *variable, ir_rvalue *array_index);
 
+   ir_dereference(ir_instruction *variable, const char *field);
+
    virtual ir_dereference *as_dereference()
    {
       return this;
