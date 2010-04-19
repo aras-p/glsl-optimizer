@@ -820,6 +820,24 @@ llvmpipe_set_texture_tile_layout(struct llvmpipe_resource *lpr,
 
 
 /**
+ * Set the layout mode for all tiles in a particular image.
+ */
+static INLINE void
+llvmpipe_set_texture_image_layout(struct llvmpipe_resource *lpr,
+                                  unsigned face_slice, unsigned level,
+                                  unsigned width_t, unsigned height_t,
+                                  enum lp_texture_layout layout)
+{
+   const unsigned start = face_slice * lpr->tiles_per_image[level];
+   unsigned i;
+
+   for (i = 0; i < width_t * height_t; i++) {
+      lpr->layout[level][start + i] = layout;
+   }
+}
+
+
+/**
  * Return pointer to texture image data (either linear or tiled layout)
  * for a particular cube face or 3D texture slice.
  *
@@ -910,15 +928,8 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
       /* Just allocating tiled memory.  Don't initialize it from the
        * linear data if it exists.
        */
-      {
-         unsigned x, y;
-         for (y = 0; y < height_t; y++) {
-            for (x = 0; x < width_t; x++) {
-               llvmpipe_set_texture_tile_layout(lpr, face_slice, level,
-                                                x, y, layout);
-            }
-         }
-      }
+      llvmpipe_set_texture_image_layout(lpr, face_slice, level,
+                                        width_t, height_t, layout);
 
       return target_data;
    }
@@ -961,13 +972,8 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
    }
    else {
       /* no other data */
-      unsigned x, y;
-      for (y = 0; y < height_t; y++) {
-         for (x = 0; x < width_t; x++) {
-            llvmpipe_set_texture_tile_layout(lpr, face_slice, level,
-                                             x, y, layout);
-         }
-      }
+      llvmpipe_set_texture_image_layout(lpr, face_slice, level,
+                                        width_t, height_t, layout);
    }
 
    assert(target_data);
