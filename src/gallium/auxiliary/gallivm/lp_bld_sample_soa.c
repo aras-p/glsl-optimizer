@@ -1534,7 +1534,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef height_vec,
                         LLVMValueRef depth_vec,
                         LLVMValueRef row_stride_array,
-                        LLVMValueRef img_stride_vec,
+                        LLVMValueRef img_stride_array,
                         LLVMValueRef data_array,
                         LLVMValueRef *colors_out)
 {
@@ -1602,8 +1602,9 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       row_stride0_vec = lp_build_get_level_stride_vec(bld, row_stride_array,
                                                       ilevel0);
       if (dims == 3 || bld->static_state->target == PIPE_TEXTURE_CUBE) {
-         img_stride0_vec = lp_build_mul(&bld->int_coord_bld,
-                                        row_stride0_vec, height0_vec);
+         img_stride0_vec = lp_build_get_level_stride_vec(bld,
+                                                         img_stride_array,
+                                                         ilevel0);
          if (dims == 3) {
             depth0_vec = lp_build_minify(bld, depth_vec, ilevel0_vec);
          }
@@ -1617,8 +1618,9 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
          row_stride1_vec = lp_build_get_level_stride_vec(bld, row_stride_array,
                                                          ilevel1);
          if (dims == 3 || bld->static_state->target == PIPE_TEXTURE_CUBE) {
-            img_stride1_vec = lp_build_mul(&bld->int_coord_bld,
-                                           row_stride1_vec, height1_vec);
+            img_stride1_vec = lp_build_get_level_stride_vec(bld,
+                                                            img_stride_array,
+                                                            ilevel1);
             if (dims ==3) {
                depth1_vec = lp_build_minify(bld, depth_vec, ilevel1_vec);
             }
@@ -2002,7 +2004,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    LLVMValueRef width, width_vec;
    LLVMValueRef height, height_vec;
    LLVMValueRef depth, depth_vec;
-   LLVMValueRef stride_array;
+   LLVMValueRef row_stride_array, img_stride_array;
    LLVMValueRef data_array;
    LLVMValueRef s;
    LLVMValueRef t;
@@ -2033,7 +2035,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    width = dynamic_state->width(dynamic_state, builder, unit);
    height = dynamic_state->height(dynamic_state, builder, unit);
    depth = dynamic_state->depth(dynamic_state, builder, unit);
-   stride_array = dynamic_state->row_stride(dynamic_state, builder, unit);
+   row_stride_array = dynamic_state->row_stride(dynamic_state, builder, unit);
+   img_stride_array = dynamic_state->img_stride(dynamic_state, builder, unit);
    data_array = dynamic_state->data_ptr(dynamic_state, builder, unit);
    /* Note that data_array is an array[level] of pointers to texture images */
 
@@ -2054,13 +2057,14 @@ lp_build_sample_soa(LLVMBuilderRef builder,
        is_simple_wrap_mode(static_state->wrap_t)) {
       /* special case */
       lp_build_sample_2d_linear_aos(&bld, s, t, width_vec, height_vec,
-                                    stride_array, data_array, texel);
+                                    row_stride_array, data_array, texel);
    }
    else {
       lp_build_sample_general(&bld, unit, s, t, r,
                               width, height, depth,
                               width_vec, height_vec, depth_vec,
-                              stride_array, NULL, data_array,
+                              row_stride_array, img_stride_array,
+                              data_array,
                               texel);
    }
 

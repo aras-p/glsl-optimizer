@@ -119,6 +119,11 @@ struct lp_sampler_dynamic_state
                   unsigned unit);
 
    LLVMValueRef
+   (*img_stride)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
+
+   LLVMValueRef
    (*data_ptr)( struct lp_sampler_dynamic_state *state,
                 LLVMBuilderRef builder,
                 unsigned unit);
