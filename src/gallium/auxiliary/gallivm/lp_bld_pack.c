@@ -263,8 +263,6 @@ lp_build_pack2(LLVMBuilderRef builder,
    LLVMValueRef shuffle;
    LLVMValueRef res;
 
-   dst_vec_type = lp_build_vec_type(dst_type);
-
    assert(!src_type.floating);
    assert(!dst_type.floating);
    assert(src_type.width == dst_type.width * 2);
