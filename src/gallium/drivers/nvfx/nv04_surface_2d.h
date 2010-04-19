@@ -1,6 +1,10 @@
 #ifndef __NV04_SURFACE_2D_H__
 #define __NV04_SURFACE_2D_H__
 
+#include "pipe/p_state.h"
+
+struct nouveau_screen;
+
 struct nv04_surface {
 	struct pipe_surface base;
 	unsigned pitch;
