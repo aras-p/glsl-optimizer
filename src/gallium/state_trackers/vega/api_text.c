@@ -27,6 +27,7 @@
 #include "VG/openvg.h"
 
 #include "vg_context.h"
+#include "api.h"
 
 #include "util/u_memory.h"
 
@@ -73,8 +74,8 @@ void vegaSetGlyphToPath(VGFont font,
                         VGuint glyphIndex,
                         VGPath path,
                         VGboolean isHinted,
-                        VGfloat glyphOrigin [2],
-                        VGfloat escapement[2])
+                        const VGfloat glyphOrigin[2],
+                        const VGfloat escapement[2])
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_object *pathObj;
@@ -109,8 +110,8 @@ void vegaSetGlyphToPath(VGFont font,
 void vegaSetGlyphToImage(VGFont font,
                          VGuint glyphIndex,
                          VGImage image,
-                         VGfloat glyphOrigin [2],
-                         VGfloat escapement[2])
+                         const VGfloat glyphOrigin[2],
+                         const VGfloat escapement[2])
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_object *img_obj;
@@ -213,9 +214,9 @@ void vegaDrawGlyph(VGFont font,
 
 void vegaDrawGlyphs(VGFont font,
                     VGint glyphCount,
-                    VGuint *glyphIndices,
-                    VGfloat *adjustments_x,
-                    VGfloat *adjustments_y,
+                    const VGuint *glyphIndices,
+                    const VGfloat *adjustments_x,
+                    const VGfloat *adjustments_y,
                     VGbitfield paintModes,
                     VGboolean allowAutoHinting)
 {

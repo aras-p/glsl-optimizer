@@ -38,6 +38,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_sampler.h"
 
 struct vg_mask_layer {
    struct vg_object base;
@@ -355,7 +356,6 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
       pt.height0 = height;
       pt.depth0 = 1;
       pt.bind = PIPE_BIND_SAMPLER_VIEW;
-      pt.compressed = 0;
 
       texture = screen->resource_create(screen, &pt);
 
@@ -377,7 +377,7 @@ void mask_layer_destroy(struct vg_mask_layer *layer)
    struct vg_context *ctx = vg_current_context();
 
    vg_context_remove_object(ctx, VG_OBJECT_MASK, layer);
-   pipe_resource_release(&layer->texture);
+   pipe_sampler_view_reference(&layer->sampler_view, NULL);
    FREE(layer);
 }
 

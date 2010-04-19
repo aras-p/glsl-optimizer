@@ -1,8 +1,8 @@
-/* $Revision: 6822 $ on $Date:: 2008-10-30 05:14:19 -0400 #$ */
+/* $Revision: 9203 $ on $Date:: 2009-10-07 02:21:52 -0700 #$ */
 
 /*------------------------------------------------------------------------
  *
- * OpenVG 1.0.1 Reference Implementation
+ * OpenVG 1.1 Reference Implementation
  * -------------------------------------
  *
  * Copyright (c) 2008 The Khronos Group Inc.
@@ -28,7 +28,7 @@
  *
  *//**
  * \file
- * \brief	OpenVG 1.0.1 API.
+ * \brief	OpenVG 1.1 API.
  *//*-------------------------------------------------------------------*/
 
 #ifndef _OPENVG_H
@@ -42,6 +42,7 @@ extern "C" {
 
 #define OPENVG_VERSION_1_0		1
 #define OPENVG_VERSION_1_0_1	1
+#define OPENVG_VERSION_1_1		2
 
 #ifndef VG_MAXSHORT
 #define VG_MAXSHORT 0x7FFF
@@ -55,10 +56,12 @@ extern "C" {
 #define VG_MAX_ENUM 0x7FFFFFFF
 #endif
 
-typedef long VGHandle;
+typedef VGuint VGHandle;
 
 typedef VGHandle VGPath;
 typedef VGHandle VGImage;
+typedef VGHandle VGMaskLayer;
+typedef VGHandle VGFont;
 typedef VGHandle VGPaint;
 
 #define VG_INVALID_HANDLE ((VGHandle)0)
@@ -96,6 +99,10 @@ typedef enum {
   /* Scissoring rectangles */
   VG_SCISSOR_RECTS                            = 0x1106,
 
+  /* Color Transformation */
+  VG_COLOR_TRANSFORM                          = 0x1170,
+  VG_COLOR_TRANSFORM_VALUES                   = 0x1171,
+
   /* Stroke parameters */
   VG_STROKE_LINE_WIDTH                        = 0x1110,
   VG_STROKE_CAP_STYLE                         = 0x1111,
@@ -110,6 +117,9 @@ typedef enum {
 
   /* Color for vgClear */
   VG_CLEAR_COLOR                              = 0x1121,
+
+  /* Glyph origin */
+  VG_GLYPH_ORIGIN                             = 0x1122,
 
   /* Enable/disable alpha masking and scissoring */
   VG_MASKING                                  = 0x1130,
@@ -165,6 +175,7 @@ typedef enum {
   VG_MATRIX_IMAGE_USER_TO_SURFACE             = 0x1401,
   VG_MATRIX_FILL_PAINT_TO_USER                = 0x1402,
   VG_MATRIX_STROKE_PAINT_TO_USER              = 0x1403,
+  VG_MATRIX_GLYPH_USER_TO_SURFACE             = 0x1404,
 
   VG_MATRIX_MODE_FORCE_SIZE                   = VG_MAX_ENUM
 } VGMatrixMode;
@@ -365,6 +376,8 @@ typedef enum {
   VG_lL_8                                     = 10,
   VG_A_8                                      = 11,
   VG_BW_1                                     = 12,
+  VG_A_1                                      = 13,
+  VG_A_4                                      = 14,
 
   /* {A,X}RGB channel ordering */
   VG_sXRGB_8888                               =  0 | (1 << 6),
@@ -447,6 +460,12 @@ typedef enum {
 
   VG_BLEND_MODE_FORCE_SIZE                    = VG_MAX_ENUM
 } VGBlendMode;
+
+typedef enum {
+  VG_FONT_NUM_GLYPHS                          = 0x2F00,
+
+  VG_FONT_PARAM_TYPE_FORCE_SIZE               = VG_MAX_ENUM
+} VGFontParamType;
 
 typedef enum {
   VG_IMAGE_FORMAT_QUERY                       = 0x2100,
@@ -541,8 +560,22 @@ VG_API_CALL void VG_API_ENTRY vgShear(VGfloat shx, VGfloat shy) VG_API_EXIT;
 VG_API_CALL void VG_API_ENTRY vgRotate(VGfloat angle) VG_API_EXIT;
 
 /* Masking and Clearing */
-VG_API_CALL void VG_API_ENTRY vgMask(VGImage mask, VGMaskOperation operation,
-                        VGint x, VGint y, VGint width, VGint height) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgMask(VGHandle mask, VGMaskOperation operation,
+                                     VGint x, VGint y,
+                                     VGint width, VGint height) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgRenderToMask(VGPath path,
+                                            VGbitfield paintModes,
+                                            VGMaskOperation operation) VG_API_EXIT;
+VG_API_CALL VGMaskLayer VG_API_ENTRY vgCreateMaskLayer(VGint width, VGint height) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgDestroyMaskLayer(VGMaskLayer maskLayer) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgFillMaskLayer(VGMaskLayer maskLayer,
+                                             VGint x, VGint y,
+                                             VGint width, VGint height,
+                                             VGfloat value) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgCopyMask(VGMaskLayer maskLayer,
+                                        VGint dx, VGint dy,
+                                        VGint sx, VGint sy,
+                                        VGint width, VGint height) VG_API_EXIT;
 VG_API_CALL void VG_API_ENTRY vgClear(VGint x, VGint y, VGint width, VGint height) VG_API_EXIT;
 
 /* Paths */
@@ -635,6 +668,33 @@ VG_API_CALL void VG_API_ENTRY vgReadPixels(void * data, VGint dataStride,
 VG_API_CALL void VG_API_ENTRY vgCopyPixels(VGint dx, VGint dy,
                               VGint sx, VGint sy,
                               VGint width, VGint height) VG_API_EXIT;
+
+/* Text */
+VG_API_CALL VGFont VG_API_ENTRY vgCreateFont(VGint glyphCapacityHint) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgDestroyFont(VGFont font) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgSetGlyphToPath(VGFont font,
+                                              VGuint glyphIndex,
+                                              VGPath path,
+                                              VGboolean isHinted,
+                                              const VGfloat glyphOrigin [2],
+                                              const VGfloat escapement[2]) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgSetGlyphToImage(VGFont font,
+                                               VGuint glyphIndex,
+                                               VGImage image,
+                                               const VGfloat glyphOrigin [2],
+                                               const VGfloat escapement[2]) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgClearGlyph(VGFont font,VGuint glyphIndex) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgDrawGlyph(VGFont font, 
+                                         VGuint glyphIndex,
+                                         VGbitfield paintModes,
+                                         VGboolean allowAutoHinting) VG_API_EXIT;
+VG_API_CALL void VG_API_ENTRY vgDrawGlyphs(VGFont font,
+                                          VGint glyphCount,
+                                          const VGuint *glyphIndices,
+                                          const VGfloat *adjustments_x,
+                                          const VGfloat *adjustments_y,
+                                          VGbitfield paintModes,
+                                          VGboolean allowAutoHinting) VG_API_EXIT;
 
 /* Image Filters */
 VG_API_CALL void VG_API_ENTRY vgColorMatrix(VGImage dst, VGImage src,
