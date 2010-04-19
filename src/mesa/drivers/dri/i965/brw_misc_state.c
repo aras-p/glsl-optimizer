@@ -248,7 +248,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
    if (intel->gen >= 6)
       len = 7;
-   else if (intel->is_g4x || intel->is_ironlake)
+   else if (intel->is_g4x || intel->gen == 5)
       len = 6;
    else
       len = 5;
@@ -262,7 +262,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (intel->is_g4x || intel->is_ironlake || intel->gen >= 6)
+      if (intel->is_g4x || intel->gen >= 5)
          OUT_BATCH(0);
 
       if (intel->gen >= 6)
@@ -306,7 +306,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (intel->is_g4x || intel->is_ironlake || intel->gen >= 6)
+      if (intel->is_g4x || intel->gen >= 5)
          OUT_BATCH(0);
 
       if (intel->gen >= 6)
@@ -608,7 +608,7 @@ static void upload_state_base_address( struct brw_context *brw )
        OUT_BATCH(1); /* Indirect object upper bound */
        OUT_BATCH(1); /* Instruction access upper bound */
        ADVANCE_BATCH();
-   } else if (intel->is_ironlake) {
+   } else if (intel->gen == 5) {
        BEGIN_BATCH(8);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */

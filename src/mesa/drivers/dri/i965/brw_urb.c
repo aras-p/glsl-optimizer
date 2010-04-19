@@ -148,7 +148,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
 
       brw->urb.constrained = 0;
 
-      if (intel->is_ironlake) {
+      if (intel->gen == 5) {
          brw->urb.nr_vs_entries = 128;
          brw->urb.nr_sf_entries = 48;
          if (check_urb_layout(brw)) {

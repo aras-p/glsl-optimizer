@@ -48,7 +48,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
-      if (intel->is_ironlake) {
+      if (intel->gen == 5) {
           GLuint align_h = 2, align_w = 4;
           GLuint level;
           GLuint x = 0;

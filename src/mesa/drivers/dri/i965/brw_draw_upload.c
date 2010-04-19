@@ -522,7 +522,7 @@ static void brw_emit_vertices(struct brw_context *brw)
       OUT_RELOC(input->bo,
 		I915_GEM_DOMAIN_VERTEX, 0,
 		input->offset);
-      if (intel->is_ironlake || intel->gen >= 6) {
+      if (intel->gen >= 5) {
 	 OUT_RELOC(input->bo,
 		   I915_GEM_DOMAIN_VERTEX, 0,
 		   input->bo->size - 1);
@@ -565,7 +565,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 		   (0 << BRW_VE0_SRC_OFFSET_SHIFT));
       }
 
-      if (intel->is_ironlake || intel->gen >= 6)
+      if (intel->gen >= 5)
           OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
                     (comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
                     (comp2 << BRW_VE1_COMPONENT_2_SHIFT) |

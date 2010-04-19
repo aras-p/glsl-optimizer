@@ -162,7 +162,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        jmpi = 2;
 
    brw_push_insn_state(p);
@@ -201,7 +201,7 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        jmpi = 2;
 
    brw_push_insn_state(p);

@@ -137,7 +137,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.thread1.depth_coef_urb_read_offset = 1;
    wm.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       wm.thread1.binding_table_entry_count = 0; /* hardware requirement */
    else
       wm.thread1.binding_table_entry_count = key->nr_surfaces;
@@ -157,7 +157,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
    wm.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       wm.wm4.sampler_count = 0; /* hardware requirement */
    else
       wm.wm4.sampler_count = (key->sampler_count + 1) / 4;

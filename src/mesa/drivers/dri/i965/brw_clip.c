@@ -72,7 +72,7 @@ static void compile_clip_prog( struct brw_context *brw,
     */
    c.header_position_offset = ATTR_SIZE;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        delta = 3 * REG_SIZE;
    else
        delta = REG_SIZE;
@@ -85,7 +85,7 @@ static void compile_clip_prog( struct brw_context *brw,
 
    c.nr_attrs = brw_count_bits(c.key.attrs);
    
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
        c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
@@ -162,7 +162,7 @@ static void upload_clip_prog(struct brw_context *brw)
    /* _NEW_TRANSFORM */
    key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        key.clip_mode = BRW_CLIPMODE_KERNEL_CLIP;
    else
        key.clip_mode = BRW_CLIPMODE_NORMAL;

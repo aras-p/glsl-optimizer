@@ -60,7 +60,7 @@ static void compile_gs_prog( struct brw_context *brw,
     */
    c.nr_attrs = brw_count_bits(c.key.attrs);
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
        c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */

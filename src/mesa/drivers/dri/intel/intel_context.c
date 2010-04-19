@@ -159,10 +159,10 @@ intelGetString(GLcontext * ctx, GLenum name)
          chipset = "Intel(R) B43";
          break;
       case PCI_CHIP_ILD_G:
-         chipset = "Intel(R) IGDNG_D";
+         chipset = "Intel(R) Ironlake Desktop";
          break;
       case PCI_CHIP_ILM_G:
-         chipset = "Intel(R) IGDNG_M";
+         chipset = "Intel(R) Ironlake Mobile";
          break;
       default:
          chipset = "Unknown Intel Chipset";
@@ -616,8 +616,16 @@ intelInitContext(struct intel_context *intel,
       intel->gen = 6;
       intel->needs_ff_sync = GL_TRUE;
       intel->has_luminance_srgb = GL_TRUE;
+   } else if (IS_GEN5(intel->intelScreen->deviceID)) {
+      intel->gen = 5;
+      intel->needs_ff_sync = GL_TRUE;
+      intel->has_luminance_srgb = GL_TRUE;
    } else if (IS_965(intel->intelScreen->deviceID)) {
       intel->gen = 4;
+      if (IS_G4X(intel->intelScreen->deviceID)) {
+	  intel->has_luminance_srgb = GL_TRUE;
+	  intel->is_g4x = GL_TRUE;
+      }
    } else if (IS_9XX(intel->intelScreen->deviceID)) {
       intel->gen = 3;
       if (IS_945(intel->intelScreen->deviceID)) {
@@ -625,15 +633,6 @@ intelInitContext(struct intel_context *intel,
       }
    } else {
       intel->gen = 2;
-   }
-
-   if (IS_IGDNG(intel->intelScreen->deviceID)) {
-      intel->is_ironlake = GL_TRUE;
-      intel->needs_ff_sync = GL_TRUE;
-      intel->has_luminance_srgb = GL_TRUE;
-   } else if (IS_G4X(intel->intelScreen->deviceID)) {
-      intel->has_luminance_srgb = GL_TRUE;
-      intel->is_g4x = GL_TRUE;
    }
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,

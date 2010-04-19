@@ -182,7 +182,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    if (intel->gen >= 6)
       mrf = 6;
-   else if (intel->is_ironlake)
+   else if (intel->gen == 5)
       mrf = 8;
    else
       mrf = 4;
@@ -283,7 +283,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    if (intel->gen >= 6)
       c->prog_data.urb_entry_size = (attributes_in_vue + 4 + 7) / 8;
-   else if (intel->is_ironlake)
+   else if (intel->gen == 5)
       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
@@ -1288,7 +1288,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       brw_MOV(p, offset(m0, 2), pos);
       brw_MOV(p, offset(m0, 5), pos);
       len_vertex_header = 4;
-   } else if (intel->is_ironlake) {
+   } else if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
        * dword 0-3 (m1) of the header is indices, point width, clip flags.
        * dword 4-7 (m2) is the ndc position (set above)
@@ -1684,7 +1684,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
             loop_depth--;
 
-	    if (intel->is_ironlake)
+	    if (intel->gen == 5)
 	       br = 2;
 
             inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);

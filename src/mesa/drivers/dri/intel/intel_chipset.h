@@ -93,7 +93,7 @@
 
 #define IS_ILD(devid)           (devid == PCI_CHIP_ILD_G)
 #define IS_ILM(devid)           (devid == PCI_CHIP_ILM_G)
-#define IS_IGDNG(devid)           (IS_ILD(devid) || IS_ILM(devid))
+#define IS_GEN5(devid)          (IS_ILD(devid) || IS_ILM(devid))
 
 #define IS_915(devid)		(devid == PCI_CHIP_I915_G || \
 				 devid == PCI_CHIP_E7221_G || \
@@ -118,7 +118,7 @@
 
 #define IS_965(devid)		(IS_GEN4(devid) || \
 				 IS_G4X(devid) || \
-				 IS_IGDNG(devid) || \
+				 IS_GEN5(devid) || \
 				 IS_GEN6(devid))
 
 #define IS_9XX(devid)		(IS_915(devid) || \

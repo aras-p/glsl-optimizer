@@ -2070,7 +2070,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
                   struct brw_instruction *inst0, *inst1;
                   GLuint br = 1;
 
-                  if (intel->is_ironlake)
+                  if (intel->gen == 5)
                      br = 2;
 
 		  assert(loop_depth > 0);

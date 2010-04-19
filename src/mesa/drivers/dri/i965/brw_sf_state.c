@@ -177,7 +177,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    sf.thread3.dispatch_grf_start_reg = 3;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        sf.thread3.urb_entry_read_offset = 3;
    else
        sf.thread3.urb_entry_read_offset = 1;
@@ -190,7 +190,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    /* Each SF thread produces 1 PUE, and there can be up to 24 (Pre-Ironlake) or
     * 48 (Ironlake) threads.
     */
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       chipset_max_threads = 48;
    else
       chipset_max_threads = 24;

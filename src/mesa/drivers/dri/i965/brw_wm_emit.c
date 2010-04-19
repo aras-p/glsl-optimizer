@@ -967,7 +967,7 @@ void emit_tex(struct brw_wm_compile *c,
    }
 
    /* Pre-Ironlake, the 8-wide sampler always took u,v,r. */
-   if (!intel->is_ironlake && c->dispatch_width == 8)
+   if (intel->gen < 5 && c->dispatch_width == 8)
       nr_texcoords = 3;
 
    /* For shadow comparisons, we have to supply u,v,r. */
@@ -985,7 +985,7 @@ void emit_tex(struct brw_wm_compile *c,
 
    /* Fill in the shadow comparison reference value. */
    if (shadow) {
-      if (intel->is_ironlake) {
+      if (intel->gen == 5) {
 	 /* Fill in the cube map array index value. */
 	 brw_MOV(p, brw_message_reg(cur_mrf), brw_imm_f(0));
 	 cur_mrf += mrf_per_channel;
@@ -998,11 +998,11 @@ void emit_tex(struct brw_wm_compile *c,
       cur_mrf += mrf_per_channel;
    }
 
-   if (intel->is_ironlake) {
+   if (intel->gen == 5) {
       if (shadow)
-	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG;
+	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
       else
-	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_IGDNG;
+	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
    } else {
       /* Note that G45 and older determines shadow compare and dispatch width
        * from message length for most messages.
@@ -1050,16 +1050,16 @@ void emit_txb(struct brw_wm_compile *c,
     * undefined, and trust the execution mask to keep the undefined pixels
     * from mattering.
     */
-   if (c->dispatch_width == 16 || !intel->is_ironlake) {
-      if (intel->is_ironlake)
-	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_IGDNG;
+   if (c->dispatch_width == 16 || intel->gen < 5) {
+      if (intel->gen == 5)
+	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
       else
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
       mrf_per_channel = 2;
       dst_retyped = retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW);
       response_length = 8;
    } else {
-      msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_IGDNG;
+      msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
       mrf_per_channel = 1;
       dst_retyped = retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW);
       response_length = 4;
