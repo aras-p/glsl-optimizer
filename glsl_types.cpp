@@ -657,3 +657,18 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
 
    return t;
 }
+
+
+const glsl_type *
+glsl_type::field_type(const char *name) const
+{
+   if (this->base_type != GLSL_TYPE_STRUCT)
+      return error_type;
+
+   for (unsigned i = 0; i < this->length; i++) {
+      if (strcmp(name, this->fields.structure[i].name) == 0)
+	 return this->fields.structure[i].type;
+   }
+
+   return error_type;
+}

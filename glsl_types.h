@@ -332,6 +332,17 @@ struct glsl_type {
 	 : error_type;
    }
 
+
+   /**
+    * Get the type of a structure field
+    *
+    * \return
+    * Pointer to the type of the named field.  If the type is not a structure
+    * or the named field does not exist, \c glsl_type::error_type is returned.
+    */
+   const glsl_type *field_type(const char *name) const;
+
+
    /**
     * Query the number of elements in an array type
     *
