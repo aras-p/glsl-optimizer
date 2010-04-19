@@ -22,7 +22,7 @@ struct pipe_surface *
 util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned face, unsigned level, unsigned zslice, unsigned flags)
 {
    struct pipe_surface *ps;
-   void *key;
+   void *key = NULL;
 
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
    {	/* or 2D array */
