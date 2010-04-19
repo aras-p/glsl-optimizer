@@ -86,6 +86,8 @@ struct vertex_header {
  */
 struct draw_context
 {
+   struct pipe_context *pipe;
+
    /** Drawing/primitive pipeline stages */
    struct {
       struct draw_stage *first;  /**< one of the following */
@@ -178,8 +180,14 @@ struct draw_context
 
    double mrd;  /**< minimum resolvable depth value, for polygon offset */
 
-   /* pipe state that we need: */
+   /** Current rasterizer state given to us by the driver */
    const struct pipe_rasterizer_state *rasterizer;
+   /** Driver CSO handle for the current rasterizer state */
+   void *rast_handle;
+
+   /** Rasterizer CSOs without culling/stipple/etc */
+   void *rasterizer_no_cull[2][2];
+
    struct pipe_viewport_state viewport;
    boolean identity_viewport;
 
@@ -355,6 +363,11 @@ void draw_pipeline_flush( struct draw_context *draw,
 void draw_do_flush( struct draw_context *draw, unsigned flags );
 
 
+
+void *
+draw_get_rasterizer_no_cull( struct draw_context *draw,
+                             boolean scissor,
+                             boolean flatshade );
 
 
 #endif /* DRAW_PRIVATE_H */

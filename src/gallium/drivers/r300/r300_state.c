@@ -889,7 +889,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     if (r300->draw) {
         draw_flush(r300->draw);
-        draw_set_rasterizer_state(r300->draw, &rs->rs);
+        draw_set_rasterizer_state(r300->draw, &rs->rs, state);
     }
 
     if (rs) {

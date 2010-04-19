@@ -186,7 +186,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
 
         /* Create a Draw. This is used for SW TCL. */
-        r300->draw = draw_create();
+        r300->draw = draw_create(&r300->context);
         /* Enable our renderer. */
         draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
         /* Enable Draw's clipping. */

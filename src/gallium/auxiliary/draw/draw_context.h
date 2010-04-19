@@ -48,7 +48,7 @@ struct draw_geometry_shader;
 struct tgsi_sampler;
 
 
-struct draw_context *draw_create( void );
+struct draw_context *draw_create( struct pipe_context *pipe );
 
 void draw_destroy( struct draw_context *draw );
 
@@ -59,7 +59,8 @@ void draw_set_clip_state( struct draw_context *pipe,
                           const struct pipe_clip_state *clip );
 
 void draw_set_rasterizer_state( struct draw_context *draw,
-                                const struct pipe_rasterizer_state *raster );
+                                const struct pipe_rasterizer_state *raster,
+                                void *rast_handle );
 
 void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage );

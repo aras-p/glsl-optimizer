@@ -70,7 +70,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx_init_resource_functions(&nvfx->pipe);
 
 	/* Create, configure, and install fallback swtnl path */
-	nvfx->draw = draw_create();
+	nvfx->draw = draw_create(&nvfx->pipe);
 	draw_wide_point_threshold(nvfx->draw, 9999999.0);
 	draw_wide_line_threshold(nvfx->draw, 9999999.0);
 	draw_enable_line_stipple(nvfx->draw, FALSE);

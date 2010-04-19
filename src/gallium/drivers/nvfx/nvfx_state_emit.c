@@ -159,7 +159,8 @@ nvfx_state_validate_swtnl(struct nvfx_context *nvfx)
 		draw_bind_vertex_shader(draw, nvfx->vertprog->draw);
 
 	if (nvfx->draw_dirty & NVFX_NEW_RAST)
-		draw_set_rasterizer_state(draw, &nvfx->rasterizer->pipe);
+           draw_set_rasterizer_state(draw, &nvfx->rasterizer->pipe,
+                                     nvfx->rasterizer);
 
 	if (nvfx->draw_dirty & NVFX_NEW_UCP)
 		draw_set_clip_state(draw, &nvfx->clip);

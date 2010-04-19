@@ -686,17 +686,17 @@ setup_tri_edges(struct setup_context *setup)
 
    setup->emaj.sy = ceilf(vmin_y);
    setup->emaj.lines = (int) ceilf(vmax_y - setup->emaj.sy);
-   setup->emaj.dxdy = setup->emaj.dx / setup->emaj.dy;
+   setup->emaj.dxdy = setup->emaj.dy ? setup->emaj.dx / setup->emaj.dy : .0f;
    setup->emaj.sx = vmin_x + (setup->emaj.sy - vmin_y) * setup->emaj.dxdy;
 
    setup->etop.sy = ceilf(vmid_y);
    setup->etop.lines = (int) ceilf(vmax_y - setup->etop.sy);
-   setup->etop.dxdy = setup->etop.dx / setup->etop.dy;
+   setup->etop.dxdy = setup->etop.dy ? setup->etop.dx / setup->etop.dy : .0f;
    setup->etop.sx = vmid_x + (setup->etop.sy - vmid_y) * setup->etop.dxdy;
 
    setup->ebot.sy = ceilf(vmin_y);
    setup->ebot.lines = (int) ceilf(vmid_y - setup->ebot.sy);
-   setup->ebot.dxdy = setup->ebot.dx / setup->ebot.dy;
+   setup->ebot.dxdy = setup->ebot.dy ? setup->ebot.dx / setup->ebot.dy : .0f;
    setup->ebot.sx = vmin_x + (setup->ebot.sy - vmin_y) * setup->ebot.dxdy;
 }
 

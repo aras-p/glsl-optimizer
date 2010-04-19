@@ -301,7 +301,7 @@ softpipe_create_context( struct pipe_screen *screen,
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   softpipe->draw = draw_create();
+   softpipe->draw = draw_create(&softpipe->pipe);
    if (!softpipe->draw) 
       goto fail;
 
