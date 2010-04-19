@@ -1,6 +1,8 @@
 #ifndef __NOUVEAU_SCREEN_H__
 #define __NOUVEAU_SCREEN_H__
 
+#include "pipe/p_screen.h"
+
 struct nouveau_screen {
 	struct pipe_screen base;
 	struct nouveau_device *device;
