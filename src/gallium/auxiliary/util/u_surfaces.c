@@ -98,7 +98,8 @@ util_surfaces_destroy(struct util_surfaces *us, struct pipe_resource *pt, void (
    {
       if(us->u.array)
       {
-	 for(unsigned i = 0; i < pt->last_level; ++i)
+	 unsigned i;
+	 for(i = 0; i < pt->last_level; ++i)
 	 {
 	    struct pipe_surface *ps = us->u.array[i];
 	    if(ps)
