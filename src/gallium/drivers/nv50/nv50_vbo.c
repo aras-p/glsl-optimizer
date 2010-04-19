@@ -387,7 +387,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 void
 nv50_draw_elements_instanced(struct pipe_context *pipe,
 			     struct pipe_resource *indexBuffer,
-			     unsigned indexSize,
+			     unsigned indexSize, int indexBias,
 			     unsigned mode, unsigned start, unsigned count,
 			     unsigned startInstance, unsigned instanceCount)
 {
@@ -400,6 +400,8 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 	instance_init(nv50, a, startInstance);
 	if (!nv50_state_validate(nv50, 13 + 16*3))
 		return;
+
+	assert(indexBias == 0);
 
 	if (nv50->vbo_fifo) {
 		nv50_push_elements_instanced(pipe, indexBuffer, indexSize,
@@ -460,10 +462,11 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 
 void
 nv50_draw_elements(struct pipe_context *pipe,
-		   struct pipe_resource *indexBuffer, unsigned indexSize,
+		   struct pipe_resource *indexBuffer,
+		   unsigned indexSize, int indexBias,
 		   unsigned mode, unsigned start, unsigned count)
 {
-	nv50_draw_elements_instanced(pipe, indexBuffer, indexSize,
+	nv50_draw_elements_instanced(pipe, indexBuffer, indexSize, indexBias,
 				     mode, start, count, 0, 1);
 }
 
