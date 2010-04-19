@@ -251,6 +251,7 @@ struct draw_context
 
 #ifdef HAVE_LLVM
    LLVMExecutionEngineRef engine;
+   bool use_llvm;
 #endif
    void *driver_private;
 };

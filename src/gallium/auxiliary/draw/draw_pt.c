@@ -123,6 +123,7 @@ boolean draw_pt_init( struct draw_context *draw )
 {
    draw->pt.test_fse = debug_get_bool_option("DRAW_FSE", FALSE);
    draw->pt.no_fse = debug_get_bool_option("DRAW_NO_FSE", FALSE);
+   draw->use_llvm = debug_get_bool_option("DRAW_USE_LLVM", TRUE);
 
    draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
@@ -141,7 +142,8 @@ boolean draw_pt_init( struct draw_context *draw )
       return FALSE;
 
 #if HAVE_LLVM
-   draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit_llvm( draw );
+   if (draw->use_llvm)
+      draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit_llvm( draw );
 #else
    draw->pt.middle.general = NULL;
 #endif
