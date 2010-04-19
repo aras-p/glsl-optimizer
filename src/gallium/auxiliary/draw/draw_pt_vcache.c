@@ -329,6 +329,7 @@ static INLINE void
 vcache_check_run( struct draw_pt_front_end *frontend, 
                   pt_elt_func get_elt,
                   const void *elts,
+                  int elt_bias,
                   unsigned draw_count )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend; 
@@ -362,8 +363,9 @@ vcache_check_run( struct draw_pt_front_end *frontend,
    }
 
 
-   if (min_index == 0 &&
-       index_size == 2) 
+   if (elt_bias <= 0 &&
+       min_index == (unsigned)-elt_bias &&
+       index_size == 2)
    {
       transformed_elts = (const ushort *)elts;
    }
@@ -373,7 +375,8 @@ vcache_check_run( struct draw_pt_front_end *frontend,
       if (!storage)
          goto fail;
       
-      if (min_index == 0) {
+      if (elt_bias <= 0 &&
+          min_index == (unsigned)-elt_bias) {
          switch(index_size) {
          case 1:
             translate_ubyte_elts( (const ubyte *)elts,
@@ -404,21 +407,21 @@ vcache_check_run( struct draw_pt_front_end *frontend,
          case 1:
             rebase_ubyte_elts( (const ubyte *)elts,
                                   draw_count,
-                                  0 - (int)min_index,
+                                  elt_bias - (int)min_index,
                                   storage );
             break;
 
          case 2:
             rebase_ushort_elts( (const ushort *)elts,
                                    draw_count,
-                                   0 - (int)min_index,
+                                   elt_bias - (int)min_index,
                                    storage );
             break;
 
          case 4:
             rebase_uint_elts( (const uint *)elts,
                                  draw_count,
-                                 0 - (int)min_index,
+                                 elt_bias - (int)min_index,
                                  storage );
             break;
 
@@ -447,7 +450,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
                 fetch_count, draw_count);
 
  fail:
-   vcache_run( frontend, get_elt, elts, draw_count );
+   vcache_run( frontend, get_elt, elts, elt_bias, draw_count );
 }
 
 
