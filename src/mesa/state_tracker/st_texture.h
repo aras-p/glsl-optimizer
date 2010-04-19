@@ -107,7 +107,7 @@ st_get_texobj_resource(struct gl_texture_object *texObj)
 
 
 static INLINE struct pipe_resource *
-st_get_stobj_texture(struct st_texture_object *stObj)
+st_get_stobj_resource(struct st_texture_object *stObj)
 {
    return stObj ? stObj->pt : NULL;
 }
