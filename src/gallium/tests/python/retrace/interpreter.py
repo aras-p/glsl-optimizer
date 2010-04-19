@@ -496,7 +496,7 @@ class Context(Object):
             sys.stdout.write('\t},\n')
         sys.stdout.flush()
 
-    def dump_indices(self, ibuf, isize, start, count):
+    def dump_indices(self, ibuf, isize, ibias, start, count):
         if not self.interpreter.verbosity(2):
             return
 
@@ -524,7 +524,7 @@ class Context(Object):
         sys.stdout.write('\t},\n')
         sys.stdout.flush()
 
-        return minindex, maxindex
+        return minindex + ibias, maxindex + ibias
 
     def draw_arrays(self, mode, start, count):
         self.dump_vertices(start, count)
@@ -532,22 +532,22 @@ class Context(Object):
         self.real.draw_arrays(mode, start, count)
         self._set_dirty()
     
-    def draw_elements(self, indexBuffer, indexSize, mode, start, count):
+    def draw_elements(self, indexBuffer, indexSize, indexBias, mode, start, count):
         if self.interpreter.verbosity(2):
-            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
+            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, indexBias, start, count)
             self.dump_vertices(minindex, maxindex - minindex)
 
-        self.real.draw_elements(indexBuffer, indexSize, mode, start, count)
+        self.real.draw_elements(indexBuffer, indexSize, indexBias, mode, start, count)
         self._set_dirty()
         
-    def draw_range_elements(self, indexBuffer, indexSize, minIndex, maxIndex, mode, start, count):
+    def draw_range_elements(self, indexBuffer, indexSize, indexBias, minIndex, maxIndex, mode, start, count):
         if self.interpreter.verbosity(2):
-            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
+            minindex, maxindex = self.dump_indices(indexBuffer, indexSize, indexBias, start, count)
             minindex = min(minindex, minIndex)
             maxindex = min(maxindex, maxIndex)
             self.dump_vertices(minindex, maxindex - minindex)
 
-        self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
+        self.real.draw_range_elements(indexBuffer, indexSize, indexBias, minIndex, maxIndex, mode, start, count)
         self._set_dirty()
         
     def surface_copy(self, dest, destx, desty, src, srcx, srcy, width, height):
