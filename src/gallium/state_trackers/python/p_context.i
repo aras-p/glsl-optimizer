@@ -312,22 +312,24 @@ struct st_context {
    }
 
    void draw_elements( struct pipe_resource *indexBuffer,
-                       unsigned indexSize,
+                       unsigned indexSize, int indexBias,
                        unsigned mode, unsigned start, unsigned count) 
    {
       $self->pipe->draw_elements($self->pipe, 
                                  indexBuffer, 
                                  indexSize, 
+                                 indexBias,
                                  mode, start, count);
    }
 
    void draw_range_elements( struct pipe_resource *indexBuffer,
-                             unsigned indexSize, unsigned minIndex, unsigned maxIndex,
+                             unsigned indexSize, int indexBias,
+                             unsigned minIndex, unsigned maxIndex,
                              unsigned mode, unsigned start, unsigned count)
    {
       $self->pipe->draw_range_elements($self->pipe, 
-                                       indexBuffer, 
-                                       indexSize, minIndex, maxIndex,
+                                       indexBuffer, indexSize, indexBias,
+                                       minIndex, maxIndex,
                                        mode, start, count);
    }
 
