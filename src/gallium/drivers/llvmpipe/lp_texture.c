@@ -120,8 +120,10 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
        */
       nblocksx = util_format_get_nblocksx(pt->format, align(width, TILE_SIZE));
 
-      lpr->stride[level] =
+      lpr->row_stride[level] =
          align(nblocksx * util_format_get_blocksize(pt->format), 16);
+
+      lpr->img_stride[level] = lpr->row_stride[level] * align(height, TILE_SIZE);
 
       lpr->tiles_per_row[level] = width_t;
       lpr->tiles_per_image[level] = width_t * height_t;
@@ -155,6 +157,7 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
    lpr->tiles_per_row[0] = width_t;
    lpr->tiles_per_image[0] = width_t * height_t;
    lpr->num_slices_faces[0] = 1;
+   lpr->img_stride[0] = 0;
 
    lpr->layout[0] = alloc_layout_array(1, width, height);
 
@@ -163,7 +166,7 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
                                           lpr->base.format,
                                           width, height,
                                           16,
-                                          &lpr->stride[0] );
+                                          &lpr->row_stride[0] );
 
    return lpr->dt != NULL;
 }
@@ -409,7 +412,7 @@ llvmpipe_resource_from_handle(struct pipe_screen *screen,
    lpr->dt = winsys->displaytarget_from_handle(winsys,
                                                template,
                                                whandle,
-                                               &lpr->stride[0]);
+                                               &lpr->row_stride[0]);
    if (!lpr->dt)
       goto fail;
 
@@ -496,7 +499,7 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
       pipe_resource_reference(&pt->resource, resource);
       pt->box = *box;
       pt->sr = sr;
-      pt->stride = lprex->stride[sr.level];
+      pt->stride = lprex->row_stride[sr.level];
       pt->usage = usage;
 
       return pt;
@@ -684,7 +687,7 @@ tex_image_face_size(const struct llvmpipe_resource *lpr, unsigned level,
       const enum pipe_format format = lpr->base.format;
       const unsigned nblocksy =
          util_format_get_nblocksy(format, align(height, TILE_SIZE));
-      const unsigned buffer_size = nblocksy * lpr->stride[level];
+      const unsigned buffer_size = nblocksy * lpr->row_stride[level];
       return buffer_size;
    }
 }
@@ -954,14 +957,14 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
                                      x * TILE_SIZE, y * TILE_SIZE,
                                      TILE_SIZE, TILE_SIZE,
                                      lpr->base.format,
-                                     lpr->stride[level]);
+                                     lpr->row_stride[level]);
                }
                else {
                   lp_tiled_to_linear(other_data, target_data,
                                      x * TILE_SIZE, y * TILE_SIZE,
                                      TILE_SIZE, TILE_SIZE,
                                      lpr->base.format,
-                                     lpr->stride[level]);
+                                     lpr->row_stride[level]);
                }
             }
 
@@ -1045,7 +1048,7 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
    if (convert) {
       lp_tiled_to_linear(tiled_img->data, linear_img->data,
                          x, y, TILE_SIZE, TILE_SIZE, lpr->base.format,
-                         lpr->stride[level]);
+                         lpr->row_stride[level]);
    }
 
    if (new_layout != cur_layout)
@@ -1094,7 +1097,7 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
    if (convert) {
       lp_linear_to_tiled(linear_img->data, tiled_img->data,
                          x, y, TILE_SIZE, TILE_SIZE, lpr->base.format,
-                         lpr->stride[level]);
+                         lpr->row_stride[level]);
    }
 
    if (new_layout != cur_layout)

@@ -92,7 +92,9 @@ struct llvmpipe_resource
    struct pipe_resource base;
 
    /** Row stride in bytes */
-   unsigned stride[LP_MAX_TEXTURE_LEVELS];
+   unsigned row_stride[LP_MAX_TEXTURE_LEVELS];
+   /** Image stride (for cube maps or 3D textures) in bytes */
+   unsigned img_stride[LP_MAX_TEXTURE_LEVELS];
    unsigned tiles_per_row[LP_MAX_TEXTURE_LEVELS];
    unsigned tiles_per_image[LP_MAX_TEXTURE_LEVELS];
    /** Number of 3D slices or cube faces per level */
@@ -164,7 +166,7 @@ llvmpipe_resource_stride(struct pipe_resource *resource,
 {
    struct llvmpipe_resource *lpr = llvmpipe_resource(resource);
    assert(level < LP_MAX_TEXTURE_2D_LEVELS);
-   return lpr->stride[level];
+   return lpr->row_stride[level];
 }
 
 

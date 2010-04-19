@@ -52,6 +52,7 @@ struct lp_jit_texture
    uint32_t depth;
    uint32_t last_level;
    uint32_t row_stride[LP_MAX_TEXTURE_LEVELS];
+   uint32_t img_stride[LP_MAX_TEXTURE_LEVELS];
    const void *data[LP_MAX_TEXTURE_LEVELS];
 };
 
@@ -62,7 +63,9 @@ enum {
    LP_JIT_TEXTURE_DEPTH,
    LP_JIT_TEXTURE_LAST_LEVEL,
    LP_JIT_TEXTURE_ROW_STRIDE,
-   LP_JIT_TEXTURE_DATA
+   LP_JIT_TEXTURE_IMG_STRIDE,
+   LP_JIT_TEXTURE_DATA,
+   LP_JIT_TEXTURE_NUM_FIELDS  /* number of fields above */
 };
 
 

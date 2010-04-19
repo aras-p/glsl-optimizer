@@ -51,13 +51,15 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
 
    /* struct lp_jit_texture */
    {
-      LLVMTypeRef elem_types[6];
+      LLVMTypeRef elem_types[LP_JIT_TEXTURE_NUM_FIELDS];
 
       elem_types[LP_JIT_TEXTURE_WIDTH]  = LLVMInt32Type();
       elem_types[LP_JIT_TEXTURE_HEIGHT] = LLVMInt32Type();
       elem_types[LP_JIT_TEXTURE_DEPTH] = LLVMInt32Type();
       elem_types[LP_JIT_TEXTURE_LAST_LEVEL] = LLVMInt32Type();
       elem_types[LP_JIT_TEXTURE_ROW_STRIDE] =
+         LLVMArrayType(LLVMInt32Type(), LP_MAX_TEXTURE_LEVELS);
+      elem_types[LP_JIT_TEXTURE_IMG_STRIDE] =
          LLVMArrayType(LLVMInt32Type(), LP_MAX_TEXTURE_LEVELS);
       elem_types[LP_JIT_TEXTURE_DATA] =
          LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0),
@@ -80,6 +82,9 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, row_stride,
                              screen->target, texture_type,
                              LP_JIT_TEXTURE_ROW_STRIDE);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, img_stride,
+                             screen->target, texture_type,
+                             LP_JIT_TEXTURE_IMG_STRIDE);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, data,
                              screen->target, texture_type,
                              LP_JIT_TEXTURE_DATA);

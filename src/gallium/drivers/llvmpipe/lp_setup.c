@@ -534,7 +534,8 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                   llvmpipe_get_texture_image_all(lp_tex, j, LP_TEX_USAGE_READ,
                                                  LP_TEX_LAYOUT_LINEAR);
 #endif
-               jit_tex->row_stride[j] = lp_tex->stride[j];
+               jit_tex->row_stride[j] = lp_tex->row_stride[j];
+               jit_tex->img_stride[j] = lp_tex->img_stride[j];
             }
          }
          else {
@@ -547,7 +548,8 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
             struct sw_winsys *winsys = screen->winsys;
             jit_tex->data[0] = winsys->displaytarget_map(winsys, lp_tex->dt,
 							 PIPE_TRANSFER_READ);
-            jit_tex->row_stride[0] = lp_tex->stride[0];
+            jit_tex->row_stride[0] = lp_tex->row_stride[0];
+            jit_tex->img_stride[0] = lp_tex->img_stride[0];
             assert(jit_tex->data[0]);
          }
       }
