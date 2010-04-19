@@ -404,7 +404,8 @@ _mesa_is_pow_two(int x)
 static INLINE int32_t
 _mesa_next_pow_two_32(uint32_t x)
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) && \
+	((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
 	uint32_t y = (x != 1);
 	return (1 + y) << ((__builtin_clz(x - y) ^ 31) );
 #else
@@ -422,7 +423,8 @@ _mesa_next_pow_two_32(uint32_t x)
 static INLINE int64_t
 _mesa_next_pow_two_64(uint64_t x)
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) && \
+	((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
 	uint64_t y = (x != 1);
 	if (sizeof(x) == sizeof(long))
 		return (1 + y) << ((__builtin_clzl(x - y) ^ 63));

@@ -185,7 +185,7 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    pdraw->base.drawable = drawable;
    pdraw->base.psc = psc;
    pdraw->bufferCount = 0;
-   pdraw->swap_interval = 0;
+   pdraw->swap_interval = 1;
 
    DRI2CreateDrawable(psc->dpy, xDrawable);
 
@@ -200,6 +200,11 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
       return NULL;
    }
 
+   /*
+    * Make sure server has the same swap interval we do for the new
+    * drawable.
+    */
+   DRI2SwapInterval(psc->dpy, xDrawable, pdraw->swap_interval);
    return &pdraw->base;
 }
 
