@@ -175,9 +175,10 @@ extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 /* nvfx_draw.c */
 extern struct draw_stage *nvfx_draw_render_stage(struct nvfx_context *nvfx);
 extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
-					struct pipe_resource *idxbuf,
-					unsigned ib_size, unsigned mode,
-					unsigned start, unsigned count);
+                                     struct pipe_resource *idxbuf,
+                                     unsigned ib_size, int ib_bias,
+                                     unsigned mode,
+                                     unsigned start, unsigned count);
 extern void nvfx_vtxfmt_validate(struct nvfx_context *nvfx);
 
 /* nvfx_fb.c */
@@ -237,10 +238,10 @@ extern void nvfx_vbo_relocate(struct nvfx_context *nvfx);
 extern void nvfx_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
 extern void nvfx_draw_elements(struct pipe_context *pipe,
-				  struct pipe_resource *indexBuffer,
-				  unsigned indexSize,
-				  unsigned mode, unsigned start,
-				  unsigned count);
+                               struct pipe_resource *indexBuffer,
+                               unsigned indexSize, int indexBias,
+                               unsigned mode, unsigned start,
+                               unsigned count);
 
 /* nvfx_vertprog.c */
 extern boolean nvfx_vertprog_validate(struct nvfx_context *nvfx);
