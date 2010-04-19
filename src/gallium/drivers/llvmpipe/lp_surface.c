@@ -135,10 +135,11 @@ lp_surface_copy(struct pipe_context *pipe,
                                               LP_TEX_LAYOUT_LINEAR);
 
       util_copy_rect(dst_linear_ptr, format,
-                     dst_tex->row_stride[dst->level],
+                     llvmpipe_resource_stride(&dst_tex->base, dst->level),
                      dstx, dsty,
                      width, height,
-                     src_linear_ptr, src_tex->row_stride[src->level],
+                     src_linear_ptr,
+                     llvmpipe_resource_stride(&src_tex->base, src->level),
                      srcx, srcy);
    }
 }
