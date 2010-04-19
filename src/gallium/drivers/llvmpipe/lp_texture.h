@@ -94,6 +94,9 @@ struct llvmpipe_resource
    /** Row stride in bytes */
    unsigned stride[LP_MAX_TEXTURE_LEVELS];
    unsigned tiles_per_row[LP_MAX_TEXTURE_LEVELS];
+   unsigned tiles_per_image[LP_MAX_TEXTURE_LEVELS];
+   /** Number of 3D slices or cube faces per level */
+   unsigned num_slices_faces[LP_MAX_TEXTURE_LEVELS];
 
    /**
     * Display target, for textures with the PIPE_BIND_DISPLAY_TARGET
@@ -112,8 +115,8 @@ struct llvmpipe_resource
     */
    void *data;
 
-   /** array [level][face or slice][tile] of layout values) */
-   enum lp_texture_layout *layout[LP_MAX_TEXTURE_LEVELS][PIPE_TEX_FACE_MAX];
+   /** array [level][face or slice][tile_y][tile_x] of layout values) */
+   enum lp_texture_layout *layout[LP_MAX_TEXTURE_LEVELS];
 
    boolean userBuffer;  /** Is this a user-space buffer? */
    unsigned timestamp;
@@ -195,6 +198,11 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *resource,
                             enum lp_texture_usage usage,
                             enum lp_texture_layout layout);
 
+void *
+llvmpipe_get_texture_image_all(struct llvmpipe_resource *lpr,
+                               unsigned level,
+                               enum lp_texture_usage usage,
+                               enum lp_texture_layout layout);
 
 ubyte *
 llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,

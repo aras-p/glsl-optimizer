@@ -162,7 +162,7 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
       assert(cbuf);
       lpt = llvmpipe_resource(cbuf->texture);
       task->color_tiles[buf] = llvmpipe_get_texture_tile(lpt,
-                                                         cbuf->face,
+                                                         cbuf->face + cbuf->zslice,
                                                          cbuf->level,
                                                          usage,
                                                          x, y);
@@ -184,7 +184,7 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
           * and update the tile's layout info.
           */
          (void) llvmpipe_get_texture_tile(lpt,
-                                          zsbuf->face,
+                                          zsbuf->face + zsbuf->zslice,
                                           zsbuf->level,
                                           usage,
                                           x, y);
@@ -344,7 +344,7 @@ lp_rast_load_color(struct lp_rasterizer_task *task,
       assert(cbuf);
       lpt = llvmpipe_texture(cbuf->texture);
       task->color_tiles[buf] = llvmpipe_get_texture_tile(lpt,
-                                                         cbuf->face,
+                                                         cbuf->face + cbuf->zslice,
                                                          cbuf->level,
                                                          usage,
                                                          task->x, task->y);
