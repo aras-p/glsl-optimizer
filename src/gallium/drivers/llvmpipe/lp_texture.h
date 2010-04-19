@@ -112,8 +112,8 @@ struct llvmpipe_resource
     */
    void *data;
 
-   /** per-tile layout info */
-   enum lp_texture_layout *layout[PIPE_TEX_FACE_MAX][LP_MAX_TEXTURE_LEVELS];
+   /** array [level][face or slice][tile] of layout values) */
+   enum lp_texture_layout *layout[LP_MAX_TEXTURE_LEVELS][PIPE_TEX_FACE_MAX];
 
    boolean userBuffer;  /** Is this a user-space buffer? */
    unsigned timestamp;
@@ -167,7 +167,7 @@ llvmpipe_resource_stride(struct pipe_resource *resource,
 
 void *
 llvmpipe_resource_map(struct pipe_resource *resource,
-		      unsigned face,
+		      unsigned face_slice,
 		      unsigned level,
 		      unsigned zslice,
                       enum lp_texture_usage tex_usage,
@@ -175,7 +175,7 @@ llvmpipe_resource_map(struct pipe_resource *resource,
 
 void
 llvmpipe_resource_unmap(struct pipe_resource *resource,
-                       unsigned face,
+                       unsigned face_slice,
                        unsigned level,
                        unsigned zslice);
 
@@ -186,25 +186,25 @@ llvmpipe_resource_data(struct pipe_resource *resource);
 
 void *
 llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
-                                    unsigned face, unsigned level,
+                                    unsigned face_slice, unsigned level,
                                     enum lp_texture_layout layout);
 
 void *
 llvmpipe_get_texture_image(struct llvmpipe_resource *resource,
-                            unsigned face, unsigned level,
+                            unsigned face_slice, unsigned level,
                             enum lp_texture_usage usage,
                             enum lp_texture_layout layout);
 
 
 ubyte *
 llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
-                                  unsigned face, unsigned level,
+                                  unsigned face_slice, unsigned level,
                                   enum lp_texture_usage usage,
                                   unsigned x, unsigned y);
 
 ubyte *
 llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
-                           unsigned face, unsigned level,
+                           unsigned face_slice, unsigned level,
                            enum lp_texture_usage usage,
                            unsigned x, unsigned y);
 

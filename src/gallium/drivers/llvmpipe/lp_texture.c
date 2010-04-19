@@ -117,7 +117,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
       lpr->tiles_per_row[level] = align(width, TILE_SIZE) / TILE_SIZE;
 
       for (face = 0; face < num_faces; face++) {
-         lpr->layout[face][level] = alloc_layout_array(width, height);
+         lpr->layout[level][face] = alloc_layout_array(width, height);
       }
 
       width = u_minify(width, 1);
@@ -250,8 +250,8 @@ llvmpipe_resource_destroy(struct pipe_screen *pscreen,
       /* free layout flag arrays */
       for (level = 0; level < Elements(lpr->tiled); level++) {
          for (face = 0; face < num_faces; face++) {
-            free(lpr->layout[face][level]);
-            lpr->layout[face][level] = NULL;
+            free(lpr->layout[level][face]);
+            lpr->layout[level][face] = NULL;
          }
       }
    }
@@ -798,6 +798,32 @@ llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
 }
 
 
+static INLINE enum lp_texture_layout
+llvmpipe_get_texture_tile_layout(const struct llvmpipe_resource *lpr,
+                                 unsigned face_slice, unsigned level,
+                                 unsigned x, unsigned y)
+{
+   uint i;
+   assert(resource_is_texture(&lpr->base));
+   assert(x < lpr->tiles_per_row[level]);
+   i = y * lpr->tiles_per_row[level] + x;
+   return lpr->layout[level][face_slice][i];
+}
+
+
+static INLINE void
+llvmpipe_set_texture_tile_layout(struct llvmpipe_resource *lpr,
+                                 unsigned face_slice, unsigned level,
+                                 unsigned x, unsigned y,
+                                 enum lp_texture_layout layout)
+{
+   uint i;
+   assert(resource_is_texture(&lpr->base));
+   assert(x < lpr->tiles_per_row[level]);
+   i = y * lpr->tiles_per_row[level] + x;
+   lpr->layout[level][face_slice][i] = layout;
+}
+
 
 /**
  * Return pointer to texture image data (either linear or tiled layout).
@@ -806,7 +832,7 @@ llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
  */
 void *
 llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
-                           unsigned face, unsigned level,
+                           unsigned face_slice, unsigned level,
                            enum lp_texture_usage usage,
                            enum lp_texture_layout layout)
 {
@@ -870,8 +896,15 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
       target_data = target_img->data;
    }
 
-   if (face > 0) {
-      unsigned offset = face * tex_image_face_size(lpr, level, layout);
+   if (face_slice > 0) {
+      unsigned offset;
+      if (layout == LP_TEX_LAYOUT_LINEAR)
+         offset = tex_image_face_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
+      else
+         offset = tex_image_face_size(lpr, level, LP_TEX_LAYOUT_TILED);
+
+      offset *= face_slice;
+
       if (target_data) {
          target_data = (uint8_t *) target_data + offset;
       }
@@ -890,12 +923,13 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
    if (other_data) {
       /* may need to convert other data to the requested layout */
       enum lp_texture_layout new_layout;
-      unsigned x, y, i = 0;
+      unsigned x, y;
 
       /* loop over all image tiles, doing layout conversion where needed */
       for (y = 0; y < height_t; y++) {
          for (x = 0; x < width_t; x++) {
-            enum lp_texture_layout cur_layout = lpr->layout[face][level][i];
+            enum lp_texture_layout cur_layout =
+               llvmpipe_get_texture_tile_layout(lpr, face_slice, level, x, y);
             boolean convert;
 
             layout_logic(cur_layout, layout, usage, &new_layout, &convert);
@@ -917,49 +951,25 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
                }
             }
 
-            lpr->layout[face][level][i] = new_layout;
-            i++;
+            llvmpipe_set_texture_tile_layout(lpr, face_slice, level, x, y,
+                                             new_layout);
          }
       }
    }
    else {
       /* no other data */
-      unsigned i;
-      for (i = 0; i < width_t * height_t; i++) {
-         lpr->layout[face][level][i] = layout;
+      unsigned x, y;
+      for (y = 0; y < height_t; y++) {
+         for (x = 0; x < width_t; x++) {
+            llvmpipe_set_texture_tile_layout(lpr, face_slice, level,
+                                             x, y, layout);
+         }
       }
    }
 
    assert(target_data);
 
    return target_data;
-}
-
-
-static INLINE enum lp_texture_layout
-llvmpipe_get_texture_tile_layout(const struct llvmpipe_resource *lpr,
-                                 unsigned face, unsigned level,
-                                 unsigned x, unsigned y)
-{
-   uint i;
-   assert(resource_is_texture(&lpr->base));
-   assert(x < lpr->tiles_per_row[level]);
-   i = y * lpr->tiles_per_row[level] + x;
-   return lpr->layout[face][level][i];
-}
-
-
-static INLINE void
-llvmpipe_set_texture_tile_layout(struct llvmpipe_resource *lpr,
-                                 unsigned face, unsigned level,
-                                 unsigned x, unsigned y,
-                                 enum lp_texture_layout layout)
-{
-   uint i;
-   assert(resource_is_texture(&lpr->base));
-   assert(x < lpr->tiles_per_row[level]);
-   i = y * lpr->tiles_per_row[level] + x;
-   lpr->layout[face][level][i] = layout;
 }
 
 
@@ -971,7 +981,7 @@ llvmpipe_set_texture_tile_layout(struct llvmpipe_resource *lpr,
  */
 ubyte *
 llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
-                                 unsigned face, unsigned level,
+                                 unsigned face_slice, unsigned level,
                                  enum lp_texture_usage usage,
                                  unsigned x, unsigned y)
 {
@@ -991,7 +1001,7 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
       linear_img->data = align_malloc(buffer_size, 16);
    }
 
-   cur_layout = llvmpipe_get_texture_tile_layout(lpr, face, level, tx, ty);
+   cur_layout = llvmpipe_get_texture_tile_layout(lpr, face_slice, level, tx, ty);
 
    layout_logic(cur_layout, LP_TEX_LAYOUT_LINEAR, usage,
                 &new_layout, &convert);
@@ -1003,11 +1013,11 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
    }
 
    if (new_layout != cur_layout)
-      llvmpipe_set_texture_tile_layout(lpr, face, level, tx, ty, new_layout);
+      llvmpipe_set_texture_tile_layout(lpr, face_slice, level, tx, ty, new_layout);
 
-   if (face > 0) {
+   if (face_slice > 0) {
       unsigned offset
-         = face * tex_image_face_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
+         = face_slice * tex_image_face_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
       return (ubyte *) linear_img->data + offset;
    }
    else {
@@ -1022,7 +1032,7 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
  */
 ubyte *
 llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
-                          unsigned face, unsigned level,
+                          unsigned face_slice, unsigned level,
                           enum lp_texture_usage usage,
                           unsigned x, unsigned y)
 {
@@ -1042,7 +1052,7 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
       tiled_img->data = align_malloc(buffer_size, 16);
    }
 
-   cur_layout = llvmpipe_get_texture_tile_layout(lpr, face, level, tx, ty);
+   cur_layout = llvmpipe_get_texture_tile_layout(lpr, face_slice, level, tx, ty);
 
    layout_logic(cur_layout, LP_TEX_LAYOUT_TILED, usage, &new_layout, &convert);
    if (convert) {
@@ -1052,11 +1062,11 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
    }
 
    if (new_layout != cur_layout)
-      llvmpipe_set_texture_tile_layout(lpr, face, level, tx, ty, new_layout);
+      llvmpipe_set_texture_tile_layout(lpr, face_slice, level, tx, ty, new_layout);
 
    /* compute, return address of the 64x64 tile */
    {
-      unsigned tiles_per_row, tile_offset, face_offset;
+      unsigned tiles_per_row, tile_offset, face_slice_offset;
 
       tiles_per_row = align(width, TILE_SIZE) / TILE_SIZE;
 
@@ -1067,11 +1077,11 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
 
       assert(tiled_img->data);
 
-      face_offset = (face > 0)
-         ? (face * tex_image_face_size(lpr, level, LP_TEX_LAYOUT_TILED))
+      face_slice_offset = (face_slice > 0)
+         ? (face_slice * tex_image_face_size(lpr, level, LP_TEX_LAYOUT_TILED))
          : 0;
 
-      return (ubyte *) tiled_img->data + face_offset + tile_offset;
+      return (ubyte *) tiled_img->data + face_slice_offset + tile_offset;
    }
 }
 
