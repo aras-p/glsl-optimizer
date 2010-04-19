@@ -153,6 +153,9 @@ vertex attributes.
 If ``indexBuffer`` is NULL, the sequential numbers are used directly
 as indices to fetch vertex attributes.
 
+``indexBias`` is a value which is added to every index read from the index 
+buffer before fetching vertex attributes.
+
 If a given vertex element has ``instance_divisor`` set to 0, it is said
 it contains per-vertex data and effective vertex attribute address needs
 to be recalculated for every index.
