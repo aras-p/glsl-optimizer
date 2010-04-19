@@ -99,12 +99,12 @@ enum pipe_error
 svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
                                        struct pipe_resource *index_buffer,
                                        unsigned index_size,
+                                       int index_bias,
                                        unsigned min_index,
                                        unsigned max_index,
                                        unsigned prim, 
                                        unsigned start,
-                                       unsigned count,
-                                       unsigned bias )
+                                       unsigned count )
 {
    struct pipe_resource *upload_buffer = NULL;
    SVGA3dPrimitiveRange range;
@@ -143,7 +143,7 @@ svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
    range.indexArray.offset = index_offset;
    range.indexArray.stride = index_size;
    range.indexWidth = index_size;
-   range.indexBias = bias;
+   range.indexBias = index_bias;
       
    ret = svga_hwtnl_prim( hwtnl, &range, min_index, max_index, index_buffer );
    if (ret)
@@ -163,10 +163,10 @@ enum pipe_error
 svga_hwtnl_draw_range_elements( struct svga_hwtnl *hwtnl,
                                 struct pipe_resource *index_buffer,
                                 unsigned index_size,
+                                int index_bias,
                                 unsigned min_index,
                                 unsigned max_index,
-                                unsigned prim, unsigned start, unsigned count,
-                                unsigned bias)
+                                unsigned prim, unsigned start, unsigned count)
 {
    unsigned gen_prim, gen_size, gen_nr, gen_type;
    u_translate_func gen_func;
@@ -204,9 +204,10 @@ svga_hwtnl_draw_range_elements( struct svga_hwtnl *hwtnl,
        */
       return svga_hwtnl_simple_draw_range_elements( hwtnl, index_buffer,
                                                     index_size,
+                                                    index_bias,
                                                     min_index,
                                                     max_index,
-                                                    gen_prim, start, count, bias );
+                                                    gen_prim, start, count );
    }
    else {
       struct pipe_resource *gen_buf = NULL;
@@ -231,12 +232,12 @@ svga_hwtnl_draw_range_elements( struct svga_hwtnl *hwtnl,
       ret = svga_hwtnl_simple_draw_range_elements( hwtnl,
                                                    gen_buf,
                                                    gen_size,
+                                                   index_bias,
                                                    min_index,
                                                    max_index,
                                                    gen_prim,
                                                    0,
-                                                   gen_nr,
-                                                   bias );
+                                                   gen_nr );
       if (ret)
          goto done;
 

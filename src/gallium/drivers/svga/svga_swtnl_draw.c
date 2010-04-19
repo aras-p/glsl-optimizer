@@ -39,6 +39,7 @@ enum pipe_error
 svga_swtnl_draw_range_elements(struct svga_context *svga,
                                struct pipe_resource *indexBuffer,
                                unsigned indexSize,
+                               int indexBias,
                                unsigned min_index,
                                unsigned max_index,
                                unsigned prim, unsigned start, unsigned count)
@@ -82,7 +83,7 @@ svga_swtnl_draw_range_elements(struct svga_context *svga,
 			    &ib_transfer);
 
       draw_set_mapped_element_buffer_range(draw, 
-                                           indexSize, 
+                                           indexSize, indexBias,
                                            min_index,
                                            max_index,
                                            map);
@@ -118,7 +119,7 @@ svga_swtnl_draw_range_elements(struct svga_context *svga,
 
    if (indexBuffer) {
       pipe_buffer_unmap(&svga->pipe, indexBuffer, ib_transfer);
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
    if (svga->curr.cb[PIPE_SHADER_VERTEX]) {

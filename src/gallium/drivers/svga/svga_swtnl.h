@@ -42,6 +42,7 @@ enum pipe_error
 svga_swtnl_draw_range_elements(struct svga_context *svga,
                                struct pipe_resource *indexBuffer,
                                unsigned indexSize,
+                               int indexBias,
                                unsigned min_index,
                                unsigned max_index,
                                unsigned prim, 

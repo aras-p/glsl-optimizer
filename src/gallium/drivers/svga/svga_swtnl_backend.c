@@ -247,7 +247,7 @@ svga_vbuf_render_draw( struct vbuf_render *render,
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
    struct svga_context *svga = svga_render->svga;
    struct pipe_screen *screen = svga->pipe.screen;
-   unsigned bias = (svga_render->vbuf_offset - svga_render->vdecl_offset) / svga_render->vertex_size;
+   int bias = (svga_render->vbuf_offset - svga_render->vdecl_offset) / svga_render->vertex_size;
    boolean ret;
    size_t size = 2 * nr_indices;
 
@@ -280,19 +280,21 @@ svga_vbuf_render_draw( struct vbuf_render *render,
    ret = svga_hwtnl_draw_range_elements(svga->hwtnl,
                                         svga_render->ibuf,
                                         2,
+                                        bias,
                                         svga_render->min_index,
                                         svga_render->max_index,
                                         svga_render->prim,
-                                        svga_render->ibuf_offset / 2, nr_indices, bias);
+                                        svga_render->ibuf_offset / 2, nr_indices);
    if(ret != PIPE_OK) {
       svga_context_flush(svga, NULL);
       ret = svga_hwtnl_draw_range_elements(svga->hwtnl,
                                            svga_render->ibuf,
                                            2,
+                                           bias,
                                            svga_render->min_index,
                                            svga_render->max_index,
                                            svga_render->prim,
-                                           svga_render->ibuf_offset / 2, nr_indices, bias);
+                                           svga_render->ibuf_offset / 2, nr_indices);
       svga->swtnl.new_vbuf = TRUE;
       assert(ret == PIPE_OK);
    }

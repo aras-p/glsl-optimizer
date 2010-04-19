@@ -69,12 +69,12 @@ enum pipe_error
 svga_hwtnl_draw_range_elements( struct svga_hwtnl *hwtnl,
                                 struct pipe_resource *indexBuffer,
                                 unsigned index_size,
+                                int index_bias,
                                 unsigned min_index,
                                 unsigned max_index,
                                 unsigned prim, 
                                 unsigned start, 
-                                unsigned count,
-                                unsigned bias );
+                                unsigned count );
 
 enum pipe_error
 svga_hwtnl_flush( struct svga_hwtnl *hwtnl );
