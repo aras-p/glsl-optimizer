@@ -84,7 +84,7 @@
 %token ISAMPLER1DARRAY ISAMPLER2DARRAY USAMPLER1D USAMPLER2D USAMPLER3D
 %token USAMPLERCUBE USAMPLER1DARRAY USAMPLER2DARRAY
 %token STRUCT VOID WHILE
-%token <identifier> IDENTIFIER TYPE_NAME
+%token <identifier> IDENTIFIER
 %token <real> FLOATCONSTANT
 %token <n> INTCONSTANT UINTCONSTANT BOOLCONSTANT
 %token <identifier> FIELD_SELECTION
@@ -941,7 +941,7 @@ type_specifier_nonarray:
 	   $$ = new ast_type_specifier($1);
 	   $$->set_location(yylloc);
 	}
-	| TYPE_NAME
+	| IDENTIFIER
 	{
 	   $$ = new ast_type_specifier($1);
 	   $$->set_location(yylloc);
