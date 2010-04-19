@@ -289,6 +289,9 @@ public:
    ast_struct_specifier(char *identifier, ast_node *declarator_list);
    virtual void print(void) const;
 
+   virtual ir_rvalue *hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state);
+
    char *name;
    struct simple_node declarations;
 };
@@ -377,6 +380,8 @@ public:
       const;
 
    virtual void print(void) const;
+
+   ir_rvalue *hir(exec_list *, struct _mesa_glsl_parse_state *);
 
    enum ast_types type_specifier;
 

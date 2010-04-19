@@ -1381,7 +1381,7 @@ ast_type_specifier::glsl_type(const char **name,
 {
    const struct glsl_type *type;
 
-   if (this->type_specifier == ast_struct) {
+   if ((this->type_specifier == ast_struct) && (this->type_name == NULL)) {
       /* FINISHME: Handle annonymous structures. */
       type = NULL;
    } else {
@@ -1476,6 +1476,11 @@ ast_declarator_list::hir(exec_list *instructions,
    const struct glsl_type *decl_type;
    const char *type_name = NULL;
    ir_rvalue *result = NULL;
+
+   /* The type specifier may contain a structure definition.  Process that
+    * before any of the variable declarations.
+    */
+   (void) this->type->specifier->hir(instructions, state);
 
    /* FINISHME: Handle vertex shader "invariant" declarations that do not
     * FINISHME: include a type.  These re-declare built-in variables to be
@@ -2253,6 +2258,81 @@ ast_iteration_statement::hir(exec_list *instructions,
    state->loop_or_switch_nesting = nesting;
 
    /* Loops do not have r-values.
+    */
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_type_specifier::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   if (this->structure != NULL)
+      return this->structure->hir(instructions, state);
+}
+
+
+ir_rvalue *
+ast_struct_specifier::hir(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   simple_node *ptr;
+   unsigned decl_count = 0;
+
+   /* Make an initial pass over the list of structure fields to determine how
+    * many there are.  Each element in this list is an ast_declarator_list.
+    * This means that we actually need to count the number of elements in the
+    * 'declarations' list in each of the elements.
+    */
+   foreach (ptr, & this->declarations) {
+      ast_declarator_list *decl_list = (ast_declarator_list *) ptr;
+      simple_node *decl_ptr;
+
+      foreach (decl_ptr, & decl_list->declarations) {
+	 decl_count++;
+      }
+   }
+
+
+   /* Allocate storage for the structure fields and process the field
+    * declarations.  As the declarations are processed, try to also convert
+    * the types to HIR.  This ensures that structure definitions embedded in
+    * other structure definitions are processed.
+    */
+   glsl_struct_field *const fields = (glsl_struct_field *)
+      malloc(sizeof(*fields) * decl_count);
+
+   unsigned i = 0;
+   foreach (ptr, & this->declarations) {
+      ast_declarator_list *decl_list = (ast_declarator_list *) ptr;
+      simple_node *decl_ptr;
+      const char *type_name;
+
+      decl_list->type->specifier->hir(instructions, state);
+
+      const glsl_type *decl_type =
+	 decl_list->type->specifier->glsl_type(& type_name, state);
+
+      foreach (decl_ptr, & decl_list->declarations) {
+	 ast_declaration *const decl = (ast_declaration *) decl_ptr;
+	 const struct glsl_type *const field_type =
+	    (decl->is_array)
+	    ? process_array_type(decl_type, decl->array_size, state)
+	    : decl_type;
+
+	 fields[i].type = field_type;
+	 fields[i].name = decl->identifier;
+	 i++;
+      }
+   }
+
+   assert(i == decl_count);
+
+   glsl_type *t = new glsl_type(fields, decl_count, this->name);
+
+   state->symbols->add_type(this->name, t);
+
+   /* Structure type definitions do not have r-values.
     */
    return NULL;
 }
