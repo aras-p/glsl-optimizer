@@ -564,7 +564,8 @@ _mesa_ffsll(int64_t val)
 unsigned int
 _mesa_bitcount(unsigned int n)
 {
-#if defined(__GNUC__)
+#if defined(__GNUC__) && \
+	((_GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
    return __builtin_popcount(n);
 #else
    unsigned int bits;
