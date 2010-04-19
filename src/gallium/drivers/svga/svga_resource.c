@@ -14,7 +14,7 @@ svga_resource_create(struct pipe_screen *screen,
    if (template->target == PIPE_BUFFER)
       return svga_buffer_create(screen, template);
    else
-      return svga_resource_create(screen, template);
+      return svga_texture_create(screen, template);
 
 }
 
