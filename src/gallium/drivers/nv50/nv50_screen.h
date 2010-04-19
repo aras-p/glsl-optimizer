@@ -2,7 +2,8 @@
 #define __NV50_SCREEN_H__
 
 #include "nouveau/nouveau_screen.h"
-#include "nv50_context.h"
+
+struct nv50_context;
 
 struct nv50_screen {
 	struct nouveau_screen base;
