@@ -516,6 +516,7 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    case PCI_CHIP_RV380_3150:
    case PCI_CHIP_RV380_3152:
    case PCI_CHIP_RV380_3154:
+   case PCI_CHIP_RV380_3155:
    case PCI_CHIP_RV380_3E50:
    case PCI_CHIP_RV380_3E54:
       screen->chip_family = CHIP_FAMILY_RV380;

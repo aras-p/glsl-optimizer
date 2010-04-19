@@ -108,6 +108,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x3150:
         case 0x3152:
         case 0x3154:
+        case 0x3155:
         case 0x3E50:
         case 0x3E54:
             caps->family = CHIP_FAMILY_RV380;
