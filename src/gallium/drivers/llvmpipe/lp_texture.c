@@ -665,17 +665,35 @@ static unsigned
 tex_image_face_size(const struct llvmpipe_resource *lpr, unsigned level,
                     enum lp_texture_layout layout)
 {
-   /* for tiled layout, force a 32bpp format */
-   enum pipe_format format = layout == LP_TEX_LAYOUT_TILED
-      ? PIPE_FORMAT_B8G8R8A8_UNORM : lpr->base.format;
+   const unsigned width = u_minify(lpr->base.width0, level);
    const unsigned height = u_minify(lpr->base.height0, level);
    const unsigned depth = u_minify(lpr->base.depth0, level);
-   const unsigned nblocksy =
-      util_format_get_nblocksy(format, align(height, TILE_SIZE));
-   const unsigned buffer_size =
-      nblocksy * lpr->stride[level] *
-      (lpr->base.target == PIPE_TEXTURE_3D ? depth : 1);
-   return buffer_size;
+
+   assert(layout == LP_TEX_LAYOUT_TILED ||
+          layout == LP_TEX_LAYOUT_LINEAR);
+
+   if (layout == LP_TEX_LAYOUT_TILED) {
+      /* for tiled layout, force a 32bpp format */
+      const enum pipe_format format = PIPE_FORMAT_B8G8R8A8_UNORM;
+      const unsigned block_size = util_format_get_blocksize(format);
+      const unsigned nblocksy =
+         util_format_get_nblocksy(format, align(height, TILE_SIZE));
+      const unsigned nblocksx =
+         util_format_get_nblocksx(format, align(width, TILE_SIZE));
+      const unsigned buffer_size =
+         block_size * nblocksy * nblocksx *
+         (lpr->base.target == PIPE_TEXTURE_3D ? depth : 1);
+      return buffer_size;
+   }
+   else {
+      const enum pipe_format format = lpr->base.format;
+      const unsigned nblocksy =
+         util_format_get_nblocksy(format, align(height, TILE_SIZE));
+      const unsigned buffer_size =
+         nblocksy * lpr->stride[level] *
+         (lpr->base.target == PIPE_TEXTURE_3D ? depth : 1);
+      return buffer_size;
+   }
 }
 
 
@@ -784,7 +802,7 @@ llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
 /**
  * Return pointer to texture image data (either linear or tiled layout).
  * \param usage  one of LP_TEX_USAGE_READ/WRITE_ALL/READ_WRITE
- * \param layout  either LP_TEX_LAYOUT_LINEAR or LP_TEX_LAYOUT_TILED
+ * \param layout  either LP_TEX_LAYOUT_LINEAR or _TILED or _NONE
  */
 void *
 llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
@@ -837,7 +855,11 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
 
    if (!target_data) {
       /* allocate memory for the target image now */
-      unsigned buffer_size = tex_image_size(lpr, level, layout);
+      unsigned buffer_size;
+      if (layout == LP_TEX_LAYOUT_LINEAR)
+         buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
+      else
+         buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_TILED);
       target_img->data = align_malloc(buffer_size, 16);
       target_data = target_img->data;
    }
@@ -853,7 +875,9 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
    }
 
    if (layout == LP_TEX_LAYOUT_NONE) {
-      /* just allocating memory */
+      /* Just allocating tiled memory.  Don't initialize it from the the
+       * linear data if it exists.
+       */
       return target_data;
    }
 
