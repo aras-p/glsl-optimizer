@@ -62,7 +62,13 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 			  expr->primary_expression.identifier);
       }
    } else if (op->type->base_type == GLSL_TYPE_STRUCT) {
-      /* FINISHME: Handle field selection from structures. */
+      result = new ir_dereference(op, expr->primary_expression.identifier);
+
+      if (result->type->is_error()) {
+	 _mesa_glsl_error(& loc, state, "Cannot access field `%s' of "
+			  "structure",
+			  expr->primary_expression.identifier);
+      }
    } else {
       _mesa_glsl_error(& loc, state, "Cannot access field `%s' of "
 		       "non-structure / non-vector.",
