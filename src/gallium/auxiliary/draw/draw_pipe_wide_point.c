@@ -52,6 +52,7 @@
  */
 
 
+#include "pipe/p_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "pipe/p_defines.h"
@@ -213,6 +214,9 @@ static void widepoint_first_point( struct draw_stage *stage,
 {
    struct widepoint_stage *wide = widepoint_stage(stage);
    struct draw_context *draw = stage->draw;
+   struct pipe_context *pipe = draw->pipe;
+   const struct pipe_rasterizer_state *rast = draw->rasterizer;
+   void *r;
 
    wide->half_point_size = 0.5f * draw->rasterizer->point_size;
    wide->xbias = 0.0;
@@ -221,6 +225,12 @@ static void widepoint_first_point( struct draw_stage *stage,
    if (draw->rasterizer->gl_rasterization_rules) {
       wide->xbias = 0.125;
    }
+
+   /* Disable triangle culling, stippling, unfilled mode etc. */
+   r = draw_get_rasterizer_no_cull(draw, rast->scissor, rast->flatshade);
+   draw->suspend_flushing = TRUE;
+   pipe->bind_rasterizer_state(pipe, r);
+   draw->suspend_flushing = FALSE;
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
    if ((draw->rasterizer->point_size > draw->pipeline.wide_point_threshold) ||
@@ -277,9 +287,19 @@ static void widepoint_first_point( struct draw_stage *stage,
 
 static void widepoint_flush( struct draw_stage *stage, unsigned flags )
 {
+   struct draw_context *draw = stage->draw;
+   struct pipe_context *pipe = draw->pipe;
+
    stage->point = widepoint_first_point;
    stage->next->flush( stage->next, flags );
    stage->draw->extra_shader_outputs.slot = 0;
+
+   /* restore original rasterizer state */
+   if (draw->rast_handle) {
+      draw->suspend_flushing = TRUE;
+      pipe->bind_rasterizer_state(pipe, draw->rast_handle);
+      draw->suspend_flushing = FALSE;
+   }
 }
 
 

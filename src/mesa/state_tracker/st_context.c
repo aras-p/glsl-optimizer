@@ -115,7 +115,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    _vbo_CreateContext(ctx);
 
 #if FEATURE_feedback || FEATURE_drawpix
-   st->draw = draw_create(); /* for selection/feedback */
+   st->draw = draw_create(pipe); /* for selection/feedback */
 
    /* Disable draw options that might convert points/lines to tris, etc.
     * as that would foul-up feedback/selection mode.

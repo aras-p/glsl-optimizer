@@ -210,7 +210,7 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   i915->draw = draw_create();
+   i915->draw = draw_create(&i915->base);
    assert(i915->draw);
    if (!debug_get_bool_option("I915_NO_VBUF", FALSE)) {
       draw_set_rasterize_stage(i915->draw, i915_draw_vbuf_stage(i915));

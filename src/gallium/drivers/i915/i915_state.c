@@ -714,7 +714,8 @@ static void i915_bind_rasterizer_state( struct pipe_context *pipe,
 
    /* pass-through to draw module */
    draw_set_rasterizer_state(i915->draw,
-                          (i915->rasterizer ? i915->rasterizer->templ : NULL));
+                           (i915->rasterizer ? i915->rasterizer->templ : NULL),
+                           raster);
 
    i915->dirty |= I915_NEW_RASTERIZER;
 }

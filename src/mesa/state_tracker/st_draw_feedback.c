@@ -134,7 +134,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    assert(draw);
    draw_set_viewport_state(draw, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
-   draw_set_rasterizer_state(draw, &st->state.rasterizer);
+   draw_set_rasterizer_state(draw, &st->state.rasterizer, NULL);
    draw_bind_vertex_shader(draw, st->vp_varient->draw_shader);
    set_feedback_vertex_format(ctx);
 

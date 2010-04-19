@@ -134,7 +134,7 @@ boolean svga_init_swtnl( struct svga_context *svga )
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   svga->swtnl.draw = draw_create();
+   svga->swtnl.draw = draw_create(&svga->pipe);
    if (svga->swtnl.draw == NULL)
       goto fail;
 

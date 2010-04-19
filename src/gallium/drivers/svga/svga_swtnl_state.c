@@ -113,7 +113,8 @@ static int update_swtnl_draw( struct svga_context *svga,
 
    if (dirty & SVGA_NEW_RAST)
       draw_set_rasterizer_state(svga->swtnl.draw,
-                                &svga->curr.rast->templ);
+                                &svga->curr.rast->templ,
+                                (void *) svga->curr.rast);
 
    if (dirty & SVGA_NEW_FRAME_BUFFER)
       draw_set_mrd(svga->swtnl.draw, 

@@ -113,8 +113,6 @@ struct aaline_stage
                                       void **);
    void (*driver_set_sampler_textures)(struct pipe_context *, unsigned,
                                        struct pipe_texture **);
-
-   struct pipe_context *pipe;
 };
 
 
@@ -339,6 +337,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
 static boolean
 generate_aaline_fs(struct aaline_stage *aaline)
 {
+   struct pipe_context *pipe = aaline->stage.draw->pipe;
    const struct pipe_shader_state *orig_fs = &aaline->fs->state;
    struct pipe_shader_state aaline_fs;
    struct aa_transform_context transform;
@@ -371,7 +370,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
    aaline->fs->sampler_unit = transform.freeSampler;
 
    aaline->fs->aaline_fs
-      = aaline->driver_create_fs_state(aaline->pipe, &aaline_fs);
+      = aaline->driver_create_fs_state(pipe, &aaline_fs);
    if (aaline->fs->aaline_fs == NULL)
       goto fail;
 
@@ -391,7 +390,7 @@ fail:
 static boolean
 aaline_create_texture(struct aaline_stage *aaline)
 {
-   struct pipe_context *pipe = aaline->pipe;
+   struct pipe_context *pipe = aaline->stage.draw->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_texture texTemp;
    uint level;
@@ -464,7 +463,7 @@ static boolean
 aaline_create_sampler(struct aaline_stage *aaline)
 {
    struct pipe_sampler_state sampler;
-   struct pipe_context *pipe = aaline->pipe;
+   struct pipe_context *pipe = aaline->stage.draw->pipe;
 
    memset(&sampler, 0, sizeof(sampler));
    sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -493,13 +492,14 @@ static boolean
 bind_aaline_fragment_shader(struct aaline_stage *aaline)
 {
    struct draw_context *draw = aaline->stage.draw;
+   struct pipe_context *pipe = draw->pipe;
 
    if (!aaline->fs->aaline_fs && 
        !generate_aaline_fs(aaline))
       return FALSE;
 
    draw->suspend_flushing = TRUE;
-   aaline->driver_bind_fs_state(aaline->pipe, aaline->fs->aaline_fs);
+   aaline->driver_bind_fs_state(pipe, aaline->fs->aaline_fs);
    draw->suspend_flushing = FALSE;
 
    return TRUE;
@@ -639,8 +639,10 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
 {
    auto struct aaline_stage *aaline = aaline_stage(stage);
    struct draw_context *draw = stage->draw;
-   struct pipe_context *pipe = aaline->pipe;
+   struct pipe_context *pipe = draw->pipe;
+   const struct pipe_rasterizer_state *rast = draw->rasterizer;
    uint num_samplers;
+   void *r;
 
    assert(draw->rasterizer->line_smooth);
 
@@ -679,6 +681,11 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    draw->suspend_flushing = TRUE;
    aaline->driver_bind_sampler_states(pipe, num_samplers, aaline->state.sampler);
    aaline->driver_set_sampler_textures(pipe, num_samplers, aaline->state.texture);
+
+   /* Disable triangle culling, stippling, unfilled mode etc. */
+   r = draw_get_rasterizer_no_cull(draw, rast->scissor, rast->flatshade);
+   pipe->bind_rasterizer_state(pipe, r);
+
    draw->suspend_flushing = FALSE;
 
    /* now really draw first line */
@@ -692,7 +699,7 @@ aaline_flush(struct draw_stage *stage, unsigned flags)
 {
    struct draw_context *draw = stage->draw;
    struct aaline_stage *aaline = aaline_stage(stage);
-   struct pipe_context *pipe = aaline->pipe;
+   struct pipe_context *pipe = draw->pipe;
 
    stage->line = aaline_first_line;
    stage->next->flush( stage->next, flags );
@@ -704,6 +711,12 @@ aaline_flush(struct draw_stage *stage, unsigned flags)
                                       aaline->state.sampler);
    aaline->driver_set_sampler_textures(pipe, aaline->num_textures,
                                        aaline->state.texture);
+
+   /* restore original rasterizer state */
+   if (draw->rast_handle) {
+      pipe->bind_rasterizer_state(pipe, draw->rast_handle);
+   }
+
    draw->suspend_flushing = FALSE;
 
    draw->extra_shader_outputs.slot = 0;
@@ -721,6 +734,7 @@ static void
 aaline_destroy(struct draw_stage *stage)
 {
    struct aaline_stage *aaline = aaline_stage(stage);
+   struct pipe_context *pipe = stage->draw->pipe;
    uint i;
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
@@ -728,7 +742,7 @@ aaline_destroy(struct draw_stage *stage)
    }
 
    if (aaline->sampler_cso)
-      aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
+      pipe->delete_sampler_state(pipe, aaline->sampler_cso);
 
    if (aaline->texture)
       pipe_texture_reference(&aaline->texture, NULL);
@@ -787,13 +801,14 @@ aaline_create_fs_state(struct pipe_context *pipe,
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    struct aaline_fragment_shader *aafs = CALLOC_STRUCT(aaline_fragment_shader);
+
    if (aafs == NULL)
       return NULL;
 
    aafs->state = *fs;
 
    /* pass-through */
-   aafs->driver_fs = aaline->driver_create_fs_state(aaline->pipe, fs);
+   aafs->driver_fs = aaline->driver_create_fs_state(pipe, fs);
 
    return aafs;
 }
@@ -808,8 +823,7 @@ aaline_bind_fs_state(struct pipe_context *pipe, void *fs)
    /* save current */
    aaline->fs = aafs;
    /* pass-through */
-   aaline->driver_bind_fs_state(aaline->pipe,
-                                (aafs ? aafs->driver_fs : NULL));
+   aaline->driver_bind_fs_state(pipe, (aafs ? aafs->driver_fs : NULL));
 }
 
 
@@ -818,11 +832,12 @@ aaline_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    struct aaline_fragment_shader *aafs = (struct aaline_fragment_shader *) fs;
+
    /* pass-through */
-   aaline->driver_delete_fs_state(aaline->pipe, aafs->driver_fs);
+   aaline->driver_delete_fs_state(pipe, aafs->driver_fs);
 
    if (aafs->aaline_fs)
-      aaline->driver_delete_fs_state(aaline->pipe, aafs->aaline_fs);
+      aaline->driver_delete_fs_state(pipe, aafs->aaline_fs);
 
    FREE(aafs);
 }
@@ -839,7 +854,7 @@ aaline_bind_sampler_states(struct pipe_context *pipe,
    aaline->num_samplers = num;
 
    /* pass-through */
-   aaline->driver_bind_sampler_states(aaline->pipe, num, sampler);
+   aaline->driver_bind_sampler_states(pipe, num, sampler);
 }
 
 
@@ -860,7 +875,7 @@ aaline_set_sampler_textures(struct pipe_context *pipe,
    aaline->num_textures = num;
 
    /* pass-through */
-   aaline->driver_set_sampler_textures(aaline->pipe, num, texture);
+   aaline->driver_set_sampler_textures(pipe, num, texture);
 }
 
 
@@ -882,8 +897,6 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    aaline = draw_aaline_stage( draw );
    if (!aaline)
       goto fail;
-
-   aaline->pipe = pipe;
 
    /* create special texture, sampler state */
    if (!aaline_create_texture(aaline))

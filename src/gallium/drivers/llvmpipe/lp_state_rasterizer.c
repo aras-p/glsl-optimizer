@@ -38,19 +38,26 @@ void *
 llvmpipe_create_rasterizer_state(struct pipe_context *pipe,
                                  const struct pipe_rasterizer_state *rast)
 {
+   /* We do nothing special with rasterizer state.
+    * The CSO handle is just a pointer to a pipe_rasterizer_state object.
+    */
    return mem_dup(rast, sizeof(*rast));
 }
 
-void llvmpipe_bind_rasterizer_state(struct pipe_context *pipe,
-                                    void *rasterizer)
+
+
+void
+llvmpipe_bind_rasterizer_state(struct pipe_context *pipe, void *handle)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   const struct pipe_rasterizer_state *rasterizer =
+      (const struct pipe_rasterizer_state *) handle;
 
    if (llvmpipe->rasterizer == rasterizer)
       return;
 
    /* pass-through to draw module */
-   draw_set_rasterizer_state(llvmpipe->draw, rasterizer);
+   draw_set_rasterizer_state(llvmpipe->draw, rasterizer, handle);
 
    llvmpipe->rasterizer = rasterizer;
 
@@ -67,6 +74,7 @@ void llvmpipe_bind_rasterizer_state(struct pipe_context *pipe,
 
    llvmpipe->dirty |= LP_NEW_RASTERIZER;
 }
+
 
 void llvmpipe_delete_rasterizer_state(struct pipe_context *pipe,
                                       void *rasterizer)

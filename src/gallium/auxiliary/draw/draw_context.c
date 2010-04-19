@@ -31,6 +31,7 @@
   */
 
 
+#include "pipe/p_context.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "draw_context.h"
@@ -38,7 +39,7 @@
 #include "draw_gs.h"
 
 
-struct draw_context *draw_create( void )
+struct draw_context *draw_create( struct pipe_context *pipe )
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
@@ -68,6 +69,8 @@ struct draw_context *draw_create( void )
    if (!draw_gs_init( draw ))
       goto fail;
 
+   draw->pipe = pipe;
+
    return draw;
 
 fail:
@@ -78,10 +81,21 @@ fail:
 
 void draw_destroy( struct draw_context *draw )
 {
+   struct pipe_context *pipe = draw->pipe;
+   int i, j;
+
    if (!draw)
       return;
 
-
+   /* free any rasterizer CSOs that we may have created.
+    */
+   for (i = 0; i < 2; i++) {
+      for (j = 0; j < 2; j++) {
+         if (draw->rasterizer_no_cull[i][j]) {
+            pipe->delete_rasterizer_state(pipe, draw->rasterizer_no_cull[i][j]);
+         }
+      }
+   }
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
@@ -123,12 +137,17 @@ void draw_set_mrd(struct draw_context *draw, double mrd)
  * This causes the drawing pipeline to be rebuilt.
  */
 void draw_set_rasterizer_state( struct draw_context *draw,
-                                const struct pipe_rasterizer_state *raster )
+                                const struct pipe_rasterizer_state *raster,
+                                void *rast_handle )
 {
-   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   if (!draw->suspend_flushing) {
+      draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
-   draw->rasterizer = raster;
-   draw->bypass_clipping = draw->driver.bypass_clipping;
+      draw->rasterizer = raster;
+      draw->rast_handle = rast_handle;
+
+      draw->bypass_clipping = draw->driver.bypass_clipping;
+   }
 }
 
 
@@ -480,4 +499,38 @@ draw_current_shader_position_output(const struct draw_context *draw)
    if (draw->gs.geometry_shader)
       return draw->gs.position_output;
    return draw->vs.position_output;
+}
+
+
+/**
+ * Return a pointer/handle for a driver/CSO rasterizer object which
+ * disabled culling, stippling, unfilled tris, etc.
+ * This is used by some pipeline stages (such as wide_point, aa_line
+ * and aa_point) which convert points/lines into triangles.  In those
+ * cases we don't want to accidentally cull the triangles.
+ *
+ * \param scissor  should the rasterizer state enable scissoring?
+ * \param flatshade  should the rasterizer state use flat shading?
+ * \return  rasterizer CSO handle
+ */
+void *
+draw_get_rasterizer_no_cull( struct draw_context *draw,
+                             boolean scissor,
+                             boolean flatshade )
+{
+   if (!draw->rasterizer_no_cull[scissor][flatshade]) {
+      /* create now */
+      struct pipe_context *pipe = draw->pipe;
+      struct pipe_rasterizer_state rast;
+
+      memset(&rast, 0, sizeof(rast));
+      rast.scissor = scissor;
+      rast.flatshade = flatshade;
+      rast.front_winding = PIPE_WINDING_CCW;
+      rast.gl_rasterization_rules = draw->rasterizer->gl_rasterization_rules;
+
+      draw->rasterizer_no_cull[scissor][flatshade] =
+         pipe->create_rasterizer_state(pipe, &rast);
+   }
+   return draw->rasterizer_no_cull[scissor][flatshade];
 }

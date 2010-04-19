@@ -129,7 +129,7 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 	nv50_init_state_functions(nv50);
 	nv50_init_query_functions(nv50);
 
-	nv50->draw = draw_create();
+	nv50->draw = draw_create(&nv50->pipe);
 	assert(nv50->draw);
 	draw_set_rasterize_stage(nv50->draw, nv50_draw_render_stage(nv50));
 
