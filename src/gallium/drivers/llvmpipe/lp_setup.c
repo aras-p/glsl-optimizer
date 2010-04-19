@@ -526,14 +526,9 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
             /* regular texture - setup array of mipmap level pointers */
             int j;
             for (j = 0; j <= tex->last_level; j++) {
-#if 0
-               jit_tex->data[j] =
-                  (ubyte *) lp_tex->data + lp_tex->level_offset[j];
-#else
                jit_tex->data[j] =
                   llvmpipe_get_texture_image_all(lp_tex, j, LP_TEX_USAGE_READ,
                                                  LP_TEX_LAYOUT_LINEAR);
-#endif
                jit_tex->row_stride[j] = lp_tex->row_stride[j];
                jit_tex->img_stride[j] = lp_tex->img_stride[j];
             }
