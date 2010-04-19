@@ -26,7 +26,7 @@ svga_resource_from_handle(struct pipe_screen * screen,
    if (template->target == PIPE_BUFFER)
       return NULL;
    else
-      return svga_resource_from_handle(screen, template, whandle);
+      return svga_texture_from_handle(screen, template, whandle);
 }
 
 
