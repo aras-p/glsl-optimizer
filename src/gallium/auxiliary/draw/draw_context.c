@@ -38,12 +38,20 @@
 #include "draw_vs.h"
 #include "draw_gs.h"
 
+#if HAVE_LLVM
+#include "gallivm/lp_bld_init.h"
+#endif
 
 struct draw_context *draw_create( struct pipe_context *pipe )
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
       goto fail;
+
+#if HAVE_LLVM
+   assert(lp_build_engine);
+   draw->engine = lp_build_engine;
+#endif
 
    if (!draw_init(draw))
       goto fail;

@@ -196,7 +196,7 @@ draw_llvm_create(struct draw_context *draw)
    init_globals(llvm);
 
 
-#if 1
+#if 0
    LLVMDumpModule(llvm->module);
 #endif
 
@@ -221,26 +221,6 @@ draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs)
    draw_llvm_generate(llvm, variant);
 
    return variant;
-}
-
-
-struct draw_context *draw_create_with_llvm(void)
-{
-   struct draw_context *draw = CALLOC_STRUCT( draw_context );
-   if (draw == NULL)
-      goto fail;
-
-   assert(lp_build_engine);
-   draw->engine = lp_build_engine;
-
-   if (!draw_init(draw))
-      goto fail;
-
-   return draw;
-
-fail:
-   draw_destroy( draw );
-   return NULL;
 }
 
 static void
