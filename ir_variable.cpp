@@ -38,9 +38,25 @@ add_variable(const char *name, enum ir_variable_mode mode,
    ir_variable *var = new ir_variable(type, name);
 
    var->mode = mode;
-   if (var->mode != ir_var_out)
+   switch (var->mode) {
+   case ir_var_in:
+      var->shader_in = true;
       var->read_only = true;
-
+      break;
+   case ir_var_inout:
+      var->shader_in = true;
+      var->shader_out = true;
+   case ir_var_out:
+      var->shader_out = true;
+      break;
+   case ir_var_uniform:
+      var->shader_in = true;
+      var->read_only = true;
+      break;
+   default:
+      assert(0);
+      break;
+   }
 
    /* Once the variable is created an initialized, add it to the symbol table
     * and add the declaration to the IR stream.

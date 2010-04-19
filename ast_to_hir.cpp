@@ -1446,6 +1446,15 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else
       var->mode = ir_var_auto;
 
+   if (qual->uniform)
+      var->shader_in = true;
+   if (qual->varying) {
+      if (qual->in)
+	 var->shader_in = true;
+      if (qual->out)
+	 var->shader_out = true;
+   }
+
    if (qual->flat)
       var->interpolation = ir_var_flat;
    else if (qual->noperspective)
