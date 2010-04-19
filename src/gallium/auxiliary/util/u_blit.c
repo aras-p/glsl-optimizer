@@ -374,6 +374,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       texTemp.width0 = srcW;
       texTemp.height0 = srcH;
       texTemp.depth0 = 1;
+      texTemp.bind = PIPE_BIND_SAMPLER_VIEW;
 
       tex = screen->resource_create(screen, &texTemp);
       if (!tex)
