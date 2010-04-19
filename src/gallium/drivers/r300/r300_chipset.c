@@ -371,4 +371,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             fprintf(stderr, "r300: Warning: Unknown chipset 0x%x\n",
                     caps->pci_id);
     }
+
+    caps->is_rv350 = caps->family >= CHIP_FAMILY_RV350;
 }

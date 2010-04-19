@@ -41,10 +41,9 @@ struct pipe_viewport_state r300_viewport_identity = {
 void r300_emit_invariant_state(struct r300_context* r300,
                                unsigned size, void* state)
 {
-    struct r300_capabilities* caps = &r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(12 + (caps->has_tcl ? 2: 0));
+    BEGIN_CS(12 + (r300->screen->caps.has_tcl ? 2 : 0));
 
     /*** Graphics Backend (GB) ***/
     /* Subpixel multisampling for AA
@@ -66,7 +65,7 @@ void r300_emit_invariant_state(struct r300_context* r300,
     /* Sign/normalize control */
     OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
     /* TCL-only stuff */
-    if (caps->has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         /* Amount of time to wait for vertex fetches in PVS */
         OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
     }
@@ -74,10 +73,10 @@ void r300_emit_invariant_state(struct r300_context* r300,
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(38 + (caps->has_tcl ? 7 : 0) +
-             (caps->family >= CHIP_FAMILY_RV350 ? 4 : 0));
+    BEGIN_CS(38 + (r300->screen->caps.has_tcl ? 7 : 0) +
+             (r300->screen->caps.is_rv350 ? 4 : 0));
 
-    if (caps->has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         /*Flushing PVS is required before the VAP_GB registers can be changed*/
         OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0);
         OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
@@ -107,7 +106,7 @@ void r300_emit_invariant_state(struct r300_context* r300,
     OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x00000000);
 
-    if (caps->family >= CHIP_FAMILY_RV350) {
+    if (r300->screen->caps.is_rv350) {
         OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);
         OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD, 0xFEFEFEFE);
     }
