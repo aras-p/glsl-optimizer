@@ -175,6 +175,8 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
 {
    __GLXDRIdrawablePrivate *pdraw;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
+   __GLXdisplayPrivate *dpyPriv;
+   __GLXDRIdisplayPrivate *pdp;
 
    pdraw = Xmalloc(sizeof(*pdraw));
    if (!pdraw)
@@ -189,6 +191,8 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
 
    DRI2CreateDrawable(psc->dpy, xDrawable);
 
+   dpyPriv = __glXInitialize(psc->dpy);
+   pdp = (__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;;
    /* Create a new drawable */
    pdraw->base.driDrawable =
       (*psc->dri2->createNewDrawable) (psc->__driScreen,
@@ -204,7 +208,9 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
     * Make sure server has the same swap interval we do for the new
     * drawable.
     */
-   DRI2SwapInterval(psc->dpy, xDrawable, pdraw->swap_interval);
+   if (pdp->swapAvailable)
+      DRI2SwapInterval(psc->dpy, xDrawable, pdraw->swap_interval);
+
    return &pdraw->base;
 }
 
