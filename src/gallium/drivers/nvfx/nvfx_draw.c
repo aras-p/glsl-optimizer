@@ -258,7 +258,7 @@ nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 		map = pipe_buffer_map(pipe, idxbuf,
 				      PIPE_TRANSFER_READ,
 				      &ib_transfer);
-		draw_set_mapped_element_buffer(nvfx->draw, idxbuf_size, idx_bufbias, map);
+		draw_set_mapped_element_buffer(nvfx->draw, idxbuf_size, idxbuf_bias, map);
 	} else {
 		draw_set_mapped_element_buffer(nvfx->draw, 0, 0, NULL);
 	}
