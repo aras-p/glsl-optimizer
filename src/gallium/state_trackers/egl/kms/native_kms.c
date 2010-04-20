@@ -692,7 +692,6 @@ static boolean
 kms_display_init_screen(struct native_display *ndpy)
 {
    struct kms_display *kdpy = kms_display(ndpy);
-   struct drm_create_screen_arg arg;
    int fd;
 
    fd = drmOpen(kdpy->api->driver_name, NULL);
@@ -708,9 +707,7 @@ kms_display_init_screen(struct native_display *ndpy)
    }
 #endif
 
-   memset(&arg, 0, sizeof(arg));
-   arg.mode = DRM_CREATE_NORMAL;
-   kdpy->base.screen = kdpy->api->create_screen(kdpy->api, fd, &arg);
+   kdpy->base.screen = kdpy->api->create_screen(kdpy->api, fd, NULL);
    if (!kdpy->base.screen) {
       _eglLog(_EGL_WARNING, "failed to create DRM screen");
       drmClose(fd);

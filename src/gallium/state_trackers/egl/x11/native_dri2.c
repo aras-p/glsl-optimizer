@@ -695,7 +695,6 @@ dri2_display_init_screen(struct native_display *ndpy)
 {
    struct dri2_display *dri2dpy = dri2_display(ndpy);
    const char *driver = dri2dpy->api->name;
-   struct drm_create_screen_arg arg;
    int fd;
 
    if (!x11_screen_support(dri2dpy->xscr, X11_SCREEN_EXTENSION_DRI2) ||
@@ -718,9 +717,7 @@ dri2_display_init_screen(struct native_display *ndpy)
    if (fd < 0)
       return FALSE;
 
-   memset(&arg, 0, sizeof(arg));
-   arg.mode = DRM_CREATE_NORMAL;
-   dri2dpy->base.screen = dri2dpy->api->create_screen(dri2dpy->api, fd, &arg);
+   dri2dpy->base.screen = dri2dpy->api->create_screen(dri2dpy->api, fd, NULL);
    if (!dri2dpy->base.screen) {
       _eglLog(_EGL_WARNING, "failed to create DRM screen");
       return FALSE;
