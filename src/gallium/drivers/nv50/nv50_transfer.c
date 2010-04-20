@@ -344,7 +344,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 			count -= nr;
 		}
 
-		src += src_pitch;
+		src = (uint8_t *) src + src_pitch;
 	}
 
 	BEGIN_RING(chan, tesla, NV50TCL_CODE_CB_FLUSH, 1);
