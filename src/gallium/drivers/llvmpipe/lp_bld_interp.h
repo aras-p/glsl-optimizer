@@ -56,8 +56,8 @@ struct lp_build_interp_soa_context
    struct lp_build_context base;
 
    unsigned num_attribs;
-   unsigned mask[1 + PIPE_MAX_SHADER_INPUTS];
-   unsigned mode[1 + PIPE_MAX_SHADER_INPUTS];
+   unsigned mask[1 + PIPE_MAX_SHADER_INPUTS]; /**< TGSI_WRITE_MASK_x */
+   unsigned interp[1 + PIPE_MAX_SHADER_INPUTS]; /**< TGSI_INTERPOLATE_x */
 
    LLVMValueRef a0  [1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
    LLVMValueRef dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];

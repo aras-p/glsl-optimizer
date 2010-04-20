@@ -100,8 +100,8 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
    unsigned chan;
 
    for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
-      unsigned mask = bld->mask[attrib];
-      unsigned mode = bld->mode[attrib];
+      const unsigned mask = bld->mask[attrib];
+      const unsigned interp = bld->interp[attrib];
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
          if(mask & (1 << chan)) {
             LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), attrib*NUM_CHANNELS + chan, 0);
@@ -109,7 +109,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             LLVMValueRef dadx = NULL;
             LLVMValueRef dady = NULL;
 
-            switch( mode ) {
+            switch( interp ) {
             case TGSI_INTERPOLATE_PERSPECTIVE:
                /* fall-through */
 
@@ -159,8 +159,8 @@ attribs_init(struct lp_build_interp_soa_context *bld)
    unsigned chan;
 
    for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
-      unsigned mask = bld->mask[attrib];
-      unsigned mode = bld->mode[attrib];
+      const unsigned mask = bld->mask[attrib];
+      const unsigned interp = bld->interp[attrib];
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
          if(mask & (1 << chan)) {
             LLVMValueRef a0   = bld->a0  [attrib][chan];
@@ -170,7 +170,7 @@ attribs_init(struct lp_build_interp_soa_context *bld)
 
             res = a0;
 
-            if (mode != TGSI_INTERPOLATE_CONSTANT) {
+            if (interp != TGSI_INTERPOLATE_CONSTANT) {
                /* res = res + x * dadx */
                res = lp_build_add(&bld->base, res, lp_build_mul(&bld->base, x, dadx));
                /* res = res + y * dady */
@@ -180,7 +180,7 @@ attribs_init(struct lp_build_interp_soa_context *bld)
             /* Keep the value of the attribue before perspective divide for faster updates */
             bld->attribs_pre[attrib][chan] = res;
 
-            if (mode == TGSI_INTERPOLATE_PERSPECTIVE) {
+            if (interp == TGSI_INTERPOLATE_PERSPECTIVE) {
                LLVMValueRef w = bld->pos[3];
                assert(attrib != 0);
                if(!oow)
@@ -211,10 +211,10 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
    assert(quad_index < 4);
 
    for(attrib = 0; attrib < bld->num_attribs; ++attrib) {
-      unsigned mask = bld->mask[attrib];
-      unsigned mode = bld->mode[attrib];
+      const unsigned mask = bld->mask[attrib];
+      const unsigned interp = bld->interp[attrib];
 
-      if (mode != TGSI_INTERPOLATE_CONSTANT) {
+      if (interp != TGSI_INTERPOLATE_CONSTANT) {
          for(chan = 0; chan < NUM_CHANNELS; ++chan) {
             if(mask & (1 << chan)) {
                LLVMValueRef dadx = bld->dadx[attrib][chan];
@@ -237,7 +237,7 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
                   res = lp_build_add(&bld->base, res, dady);
                }
 
-               if (mode == TGSI_INTERPOLATE_PERSPECTIVE) {
+               if (interp == TGSI_INTERPOLATE_PERSPECTIVE) {
                   LLVMValueRef w = bld->pos[3];
                   assert(attrib != 0);
                   if(!oow)
@@ -337,7 +337,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    /* Position */
    bld->num_attribs = 1;
    bld->mask[0] = TGSI_WRITEMASK_ZW;
-   bld->mode[0] = TGSI_INTERPOLATE_LINEAR;
+   bld->interp[0] = TGSI_INTERPOLATE_LINEAR;
 
    /* Inputs */
    tgsi_parse_init( &parse, tokens );
@@ -363,9 +363,9 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                 */
                if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
                    flatshade)
-                  bld->mode[1 + attrib] = TGSI_INTERPOLATE_CONSTANT;
+                  bld->interp[1 + attrib] = TGSI_INTERPOLATE_CONSTANT;
                else
-                  bld->mode[1 + attrib] = decl->Declaration.Interpolate;
+                  bld->interp[1 + attrib] = decl->Declaration.Interpolate;
             }
 
             bld->num_attribs = MAX2(bld->num_attribs, 1 + last + 1);
