@@ -103,6 +103,12 @@ _mesa_error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
                         "glReadPixels(no color buffer)");
             return GL_TRUE;
          }
+         /* We no longer support CI-mode color buffers so trying to read
+          * GL_COLOR_INDEX pixels is always an error.
+          */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadPixels(color buffer is RGB)");
+         return GL_TRUE;
       }
       break;
    case GL_STENCIL_INDEX:
