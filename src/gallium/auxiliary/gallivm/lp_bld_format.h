@@ -51,14 +51,6 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
                          const struct util_format_description *desc,
                          LLVMValueRef packed);
 
-
-LLVMValueRef
-lp_build_unpack_rgba8_aos(LLVMBuilderRef builder,
-                          const struct util_format_description *desc,
-                          struct lp_type type,
-                          LLVMValueRef packed);
-
-
 LLVMValueRef
 lp_build_pack_rgba_aos(LLVMBuilderRef builder,
                        const struct util_format_description *desc,
