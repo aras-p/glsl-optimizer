@@ -680,7 +680,7 @@ kms_display_destroy(struct native_display *ndpy)
    if (kdpy->fd >= 0)
       drmClose(kdpy->fd);
 
-   if (kdpy->api)
+   if (kdpy->api && kdpy->api->destroy)
       kdpy->api->destroy(kdpy->api);
    FREE(kdpy);
 }
