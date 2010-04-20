@@ -181,23 +181,14 @@ fail:
     return NULL;
 }
 
-static void radeon_drm_api_destroy(struct drm_api *api)
-{
-    return;
-}
-
-struct drm_api drm_api_hooks = {
+static struct drm_api radeon_drm_api_hooks = {
     .name = "radeon",
     .driver_name = "radeon",
     .create_screen = radeon_create_screen,
-    .destroy = radeon_drm_api_destroy,
+    .destroy = NULL;
 };
 
 struct drm_api* drm_api_create()
 {
-#ifdef DEBUG
-    return trace_drm_create(&drm_api_hooks);
-#else
-    return &drm_api_hooks;
-#endif
+    return trace_drm_create(&radeon_drm_api_hooks);
 }
