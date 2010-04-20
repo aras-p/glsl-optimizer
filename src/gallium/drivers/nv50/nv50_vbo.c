@@ -401,14 +401,17 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 	if (!nv50_state_validate(nv50, 13 + 16*3))
 		return;
 
-	assert(indexBias == 0);
-
 	if (nv50->vbo_fifo) {
 		nv50_push_elements_instanced(pipe, indexBuffer, indexSize,
 					     indexBias, mode, start, count,
 					     startInstance, instanceCount);
 		return;
-	} else
+	}
+
+	/* indices are uint32 internally, so large indexBias means negative */
+	BEGIN_RING(chan, tesla, NV50TCL_VB_ELEMENT_BASE, 1);
+	OUT_RING  (chan, indexBias);
+
 	if (!(indexBuffer->bind & PIPE_BIND_INDEX_BUFFER) || indexSize == 1) {
 		nv50_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count, startInstance,

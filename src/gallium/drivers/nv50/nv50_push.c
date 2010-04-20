@@ -13,6 +13,7 @@ struct push_context {
    unsigned vtx_size;
 
    void *idxbuf;
+   int32_t idxbias;
    unsigned idxsize;
 
    float edgeflag;
@@ -144,6 +145,16 @@ emit_elt08(void *priv, unsigned start, unsigned count)
 }
 
 static void
+emit_elt08_biased(void *priv, unsigned start, unsigned count)
+{
+   struct push_context *ctx = priv;
+   uint8_t *idxbuf = ctx->idxbuf;
+
+   while (count--)
+      emit_vertex(ctx, idxbuf[start++] + ctx->idxbias);
+}
+
+static void
 emit_elt16(void *priv, unsigned start, unsigned count)
 {
    struct push_context *ctx = priv;
@@ -154,6 +165,16 @@ emit_elt16(void *priv, unsigned start, unsigned count)
 }
 
 static void
+emit_elt16_biased(void *priv, unsigned start, unsigned count)
+{
+   struct push_context *ctx = priv;
+   uint16_t *idxbuf = ctx->idxbuf;
+
+   while (count--)
+      emit_vertex(ctx, idxbuf[start++] + ctx->idxbias);
+}
+
+static void
 emit_elt32(void *priv, unsigned start, unsigned count)
 {
    struct push_context *ctx = priv;
@@ -161,6 +182,16 @@ emit_elt32(void *priv, unsigned start, unsigned count)
 
    while (count--)
       emit_vertex(ctx, idxbuf[start++]);
+}
+
+static void
+emit_elt32_biased(void *priv, unsigned start, unsigned count)
+{
+   struct push_context *ctx = priv;
+   uint32_t *idxbuf = ctx->idxbuf;
+
+   while (count--)
+      emit_vertex(ctx, idxbuf[start++] + ctx->idxbias);
 }
 
 static void
@@ -269,8 +300,8 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
          return;
       }
       ctx.idxbuf = bo->map;
+      ctx.idxbias = idxbias;
       ctx.idxsize = idxsize;
-      assert(idxbias == 0);
       nouveau_bo_unmap(bo);
    }
 
@@ -278,12 +309,12 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
    s.edge = emit_edgeflag;
    if (idxbuf) {
       if (idxsize == 1)
-         s.emit = emit_elt08;
+         s.emit = idxbias ? emit_elt08_biased : emit_elt08;
       else
       if (idxsize == 2)
-         s.emit = emit_elt16;
+         s.emit = idxbias ? emit_elt16_biased : emit_elt16;
       else
-         s.emit = emit_elt32;
+         s.emit = idxbias ? emit_elt32_biased : emit_elt32;
    } else
       s.emit = emit_verts;
 
