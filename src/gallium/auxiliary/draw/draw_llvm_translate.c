@@ -5,9 +5,11 @@
 
 #include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_struct.h"
+#include "gallivm/lp_bld_format.h"
 #include "gallivm/lp_bld_debug.h"
 
 #include "util/u_memory.h"
+#include "util/u_format.h"
 #include "pipe/p_state.h"
 
 
@@ -408,9 +410,6 @@ struct draw_llvm_translate {
    {PIPE_FORMAT_R32G32_FIXED,       from_32_fixed, to_32_fixed, LL_Int32, 2},
    {PIPE_FORMAT_R32G32B32_FIXED,    from_32_fixed, to_32_fixed, LL_Int32, 3},
    {PIPE_FORMAT_R32G32B32A32_FIXED, from_32_fixed, to_32_fixed, LL_Int32, 4},
-
-   {PIPE_FORMAT_A8R8G8B8_UNORM, from_8_unorm, to_8_unorm, LL_Int8, 4},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, from_8_unorm, to_8_unorm, LL_Int8, 4},
 };
 
 
@@ -464,7 +463,14 @@ draw_llvm_translate_from(LLVMBuilderRef builder,
                          LLVMValueRef vbuffer,
                          enum pipe_format from_format)
 {
+   const struct util_format_description *format_desc;
    int i;
+
+   /*
+    * The above can only cope with straight arrays: no bitfields,
+    * swizzles, or half floats.
+    */
+
    for (i = 0; i < Elements(translates); ++i) {
       if (translates[i].format == from_format) {
          /*LLVMTypeRef type = ll_type_to_llvm(translates[i].type);*/
@@ -475,5 +481,15 @@ draw_llvm_translate_from(LLVMBuilderRef builder,
                       translates[i].from);
       }
    }
-   return LLVMGetUndef(LLVMVectorType(LLVMFloatType(), 4));
+
+
+   /*
+    * This doesn't handle anything bigger than 32bits, or half floats
+    * yet.
+    *
+    * TODO: unify all this code into lp_build_fetch_rgba_aos().
+    */
+
+   format_desc = util_format_description(from_format);
+   return lp_build_fetch_rgba_aos(builder, format_desc, vbuffer);
 }
