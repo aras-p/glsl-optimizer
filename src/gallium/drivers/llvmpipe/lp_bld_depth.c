@@ -608,12 +608,25 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
       }
 
       if (depth->writemask) {
-         if(z_bitmask)
-            z_bitmask = LLVMBuildAnd(builder, mask->value, z_bitmask, "");
-         else
-            z_bitmask = mask->value;
+         LLVMValueRef zselectmask = mask->value;
 
-         z_dst = lp_build_select(&bld, z_bitmask, z_src, z_dst);
+         /* mask off bits that failed Z test */
+         zselectmask = LLVMBuildAnd(builder, zselectmask, z_pass, "");
+
+         /* mask off bits that failed stencil test */
+         if (s_pass_mask) {
+            zselectmask = LLVMBuildAnd(builder, zselectmask, s_pass_mask, "");
+         }
+
+         /* if combined Z/stencil format, mask off the stencil bits */
+         if (z_bitmask) {
+            zselectmask = LLVMBuildAnd(builder, zselectmask, z_bitmask, "");
+         }
+
+         /* Mix the old and new Z buffer values.
+          * z_dst[i] = zselectmask[i] ? z_src[i] : z_dst[i]
+          */
+         z_dst = lp_build_select(&bld, zselectmask, z_src, z_dst);
       }
 
       if (stencil[0].enabled) {
