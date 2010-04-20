@@ -187,11 +187,6 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
       return util_format_s3tc_enabled;
-   case PIPE_FORMAT_R16_FLOAT:
-   case PIPE_FORMAT_R16G16_FLOAT:
-   case PIPE_FORMAT_R16G16B16_FLOAT:
-   case PIPE_FORMAT_R16G16B16A16_FLOAT:
-      return FALSE;
    default:
       break;
    }
