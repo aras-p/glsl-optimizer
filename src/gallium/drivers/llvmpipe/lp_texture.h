@@ -189,7 +189,7 @@ void *
 llvmpipe_resource_data(struct pipe_resource *resource);
 
 
-void *
+ubyte *
 llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
                                     unsigned face_slice, unsigned level,
                                     enum lp_texture_layout layout);
