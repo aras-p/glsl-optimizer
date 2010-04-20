@@ -931,9 +931,6 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
       /* Just allocating tiled memory.  Don't initialize it from the
        * linear data if it exists.
        */
-      llvmpipe_set_texture_image_layout(lpr, face_slice, level,
-                                        width_t, height_t, layout);
-
       return target_data;
    }
 
