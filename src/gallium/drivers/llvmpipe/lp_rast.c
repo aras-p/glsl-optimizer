@@ -376,7 +376,7 @@ lp_rast_store_color( struct lp_rasterizer_task *task,
       const unsigned face = cbuf->face, level = cbuf->level;
       struct llvmpipe_resource *lpt = llvmpipe_resource(cbuf->texture);
       /* this will convert the tiled data to linear if needed */
-      (void) llvmpipe_get_texture_tile_linear(lpt, face,level,
+      (void) llvmpipe_get_texture_tile_linear(lpt, face, level,
                                               LP_TEX_USAGE_READ,
                                               task->x, task->y);
    }
