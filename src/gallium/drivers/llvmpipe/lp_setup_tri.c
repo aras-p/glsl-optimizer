@@ -163,12 +163,17 @@ setup_fragcoord_coef(struct lp_setup_context *setup,
 }
 
 
+/**
+ * Setup the fragment input attribute with the front-facing value.
+ * \param frontface  is the triangle front facing?
+ */
 static void setup_facing_coef( struct lp_setup_context *setup,
                                struct lp_rast_triangle *tri,
                                unsigned slot,
                                boolean frontface )
 {
-   constant_coef( setup, tri, slot, 1.0f - frontface, 0 );
+   /* convert TRUE to 1.0 and FALSE to -1.0 */
+   constant_coef( setup, tri, slot, 2.0f * frontface - 1.0f, 0 );
    constant_coef( setup, tri, slot, 0.0f, 1 ); /* wasted */
    constant_coef( setup, tri, slot, 0.0f, 2 ); /* wasted */
    constant_coef( setup, tri, slot, 0.0f, 3 ); /* wasted */
