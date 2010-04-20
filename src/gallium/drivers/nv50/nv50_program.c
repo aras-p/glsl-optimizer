@@ -600,8 +600,8 @@ static void
 emit_interp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *iv,
 		unsigned mode)
 {
-	assert(dst->rhw != -1);
 	struct nv50_program_exec *e = exec(pc);
+	assert(dst->rhw != -1);
 
 	e->inst[0] |= 0x80000000;
 	set_dst(pc, dst, e);
