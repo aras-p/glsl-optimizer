@@ -347,7 +347,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
                        vcache->fetch_max,
                        draw_count);
       
-   if (max_index >= DRAW_PIPE_MAX_VERTICES ||
+   if (elt_bias + max_index >= DRAW_PIPE_MAX_VERTICES ||
        fetch_count >= UNDEFINED_VERTEX_ID ||
        fetch_count > draw_count) {
       if (0) debug_printf("fail\n");
@@ -362,6 +362,9 @@ vcache_check_run( struct draw_pt_front_end *frontend,
                                &vcache->fetch_max );
    }
 
+
+   assert((elt_bias >= 0 && min_index + elt_bias >= min_index) ||
+          (elt_bias <  0 && min_index + elt_bias <  min_index));
 
    if (elt_bias <= 0 &&
        min_index == (unsigned)-elt_bias &&
@@ -407,21 +410,21 @@ vcache_check_run( struct draw_pt_front_end *frontend,
          case 1:
             rebase_ubyte_elts( (const ubyte *)elts,
                                   draw_count,
-                                  elt_bias - (int)min_index,
+                                  -elt_bias - (int)min_index,
                                   storage );
             break;
 
          case 2:
             rebase_ushort_elts( (const ushort *)elts,
                                    draw_count,
-                                   elt_bias - (int)min_index,
+                                   -elt_bias - (int)min_index,
                                    storage );
             break;
 
          case 4:
             rebase_uint_elts( (const uint *)elts,
                                  draw_count,
-                                 elt_bias - (int)min_index,
+                                 -elt_bias - (int)min_index,
                                  storage );
             break;
 
@@ -436,7 +439,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
 
    if (fetch_count < UNDEFINED_VERTEX_ID)
       ok = vcache->middle->run_linear_elts( vcache->middle,
-                                            min_index, /* start */
+                                            min_index + elt_bias, /* start */
                                             fetch_count,
                                             transformed_elts,
                                             draw_count );
