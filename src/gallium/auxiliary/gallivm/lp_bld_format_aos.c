@@ -378,3 +378,35 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 
    return packed;
 }
+
+
+/**
+ * Fetch a pixel into a 4 float AoS.
+ */
+LLVMValueRef
+lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
+                        const struct util_format_description *format_desc,
+                        LLVMValueRef ptr)
+{
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
+       (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
+        format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) &&
+       format_desc->block.width == 1 &&
+       format_desc->block.height == 1 &&
+       format_desc->block.bits <= 32 &&
+       format_desc->channel[0].type != UTIL_FORMAT_TYPE_FLOAT)
+   {
+      LLVMValueRef packed;
+
+      ptr = LLVMBuildBitCast(builder, ptr,
+                             LLVMPointerType(LLVMIntType(format_desc->block.bits), 0) , "");
+
+      packed = LLVMBuildLoad(builder, ptr, "packed");
+
+      return lp_build_unpack_rgba_aos(builder, format_desc, packed);
+   }
+   else {
+      assert(0);
+      return LLVMGetUndef(LLVMVectorType(LLVMFloatType(), 4));
+   }
+}
