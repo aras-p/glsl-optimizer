@@ -36,7 +36,7 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
-	-I$(TOP)/src/gallium/winsys/common \
+	-I$(TOP)/src/gallium/winsys \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
