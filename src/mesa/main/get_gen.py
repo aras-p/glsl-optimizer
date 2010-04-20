@@ -1270,18 +1270,16 @@ def EmitGetFunction(stateVars, returnType, indexed):
 		# Do extension check
 		if extensions:
 			if len(extensions) == 1:
-				print ('         CHECK_EXT1(%s, "%s");' %
-					   (extensions[0], function))
+				print ('         CHECK_EXT1(%s);' % extensions[0])
 			elif len(extensions) == 2:
-				print ('         CHECK_EXT2(%s, %s, "%s");' %
-					   (extensions[0], extensions[1], function))
+				print ('         CHECK_EXT2(%s, %s);' % (extensions[0], extensions[1]))
 			elif len(extensions) == 3:
-				print ('         CHECK_EXT3(%s, %s, %s, "%s");' %
-					   (extensions[0], extensions[1], extensions[2], function))
+				print ('         CHECK_EXT3(%s, %s, %s);' %
+					   (extensions[0], extensions[1], extensions[2]))
 			else:
 				assert len(extensions) == 4
-				print ('         CHECK_EXT4(%s, %s, %s, %s, "%s");' %
-					   (extensions[0], extensions[1], extensions[2], extensions[3], function))
+				print ('         CHECK_EXT4(%s, %s, %s, %s);' %
+					   (extensions[0], extensions[1], extensions[2], extensions[3]))
 
 		# Do dirty state check
 		if dirtyFlags:
@@ -1314,8 +1312,12 @@ def EmitGetFunction(stateVars, returnType, indexed):
 		print "         break;"
 
 	print "      default:"
-	print '         _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(pname=0x%%x)", pname);' % function
+	print "         goto invalid_enum_error;"
 	print "   }"
+	print "   return;"
+	print ""
+	print "invalid_enum_error:"
+	print '   _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(pname=0x%%x)", pname);' % function
 	print "}"
 	if returnType == GLint64:
 		print "#endif /* FEATURE_ARB_sync */"
@@ -1360,39 +1362,35 @@ def EmitHeader():
 /*
  * Check if named extension is enabled, if not generate error and return.
  */
-#define CHECK_EXT1(EXT1, FUNC)                                         \\
+#define CHECK_EXT1(EXT1)                                               \\
    if (!ctx->Extensions.EXT1) {                                        \\
-      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \\
-      return;                                                          \\
+      goto invalid_enum_error;                                         \\
    }
 
 /*
  * Check if either of two extensions is enabled.
  */
-#define CHECK_EXT2(EXT1, EXT2, FUNC)                                   \\
+#define CHECK_EXT2(EXT1, EXT2)                                         \\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {               \\
-      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \\
-      return;                                                          \\
+      goto invalid_enum_error;                                         \\
    }
 
 /*
  * Check if either of three extensions is enabled.
  */
-#define CHECK_EXT3(EXT1, EXT2, EXT3, FUNC)                             \\
+#define CHECK_EXT3(EXT1, EXT2, EXT3)                                   \\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \\
        !ctx->Extensions.EXT3) {                                        \\
-      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \\
-      return;                                                          \\
+      goto invalid_enum_error;                                         \\
    }
 
 /*
  * Check if either of four extensions is enabled.
  */
-#define CHECK_EXT4(EXT1, EXT2, EXT3, EXT4, FUNC)                       \\
+#define CHECK_EXT4(EXT1, EXT2, EXT3, EXT4)                             \\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \\
        !ctx->Extensions.EXT3 && !ctx->Extensions.EXT4) {               \\
-      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \\
-      return;                                                          \\
+      goto invalid_enum_error;                                         \\
    }
 
 """
