@@ -201,7 +201,8 @@ extern struct nouveau_stateobj *nv50_vbo_validate(struct nv50_context *nv50);
 /* nv50_push.c */
 extern void
 nv50_push_elements_instanced(struct pipe_context *, struct pipe_resource *,
-			     unsigned idxsize, unsigned mode, unsigned start,
+			     unsigned idxsize, int idxbias,
+                             unsigned mode, unsigned start,
 			     unsigned count, unsigned i_start,
 			     unsigned i_count);
 

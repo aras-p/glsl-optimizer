@@ -189,7 +189,7 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 		return;
 
 	if (nv50->vbo_fifo) {
-		nv50_push_elements_instanced(pipe, NULL, 0, mode, start,
+		nv50_push_elements_instanced(pipe, NULL, 0, 0, mode, start,
 					     count, startInstance,
 					     instanceCount);
 		return;
@@ -405,8 +405,8 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 
 	if (nv50->vbo_fifo) {
 		nv50_push_elements_instanced(pipe, indexBuffer, indexSize,
-					     mode, start, count, startInstance,
-					     instanceCount);
+					     indexBias, mode, start, count,
+					     startInstance, instanceCount);
 		return;
 	} else
 	if (!(indexBuffer->bind & PIPE_BIND_INDEX_BUFFER) || indexSize == 1) {
