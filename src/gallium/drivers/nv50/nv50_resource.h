@@ -4,6 +4,8 @@
 
 #include "util/u_transfer.h"
 
+#include "nouveau/nouveau_winsys.h"
+
 struct pipe_resource;
 struct nouveau_bo;
 
@@ -49,6 +51,12 @@ struct nv50_resource *nv50_resource(struct pipe_resource *resource)
 	return (struct nv50_resource *)resource;
 }
 
+/* is resource mapped into the GPU's address space (i.e. VRAM or GART) ? */
+static INLINE boolean
+nv50_resource_mapped_by_gpu(struct pipe_resource *resource)
+{
+   return nv50_resource(resource)->bo->handle;
+}
 
 void
 nv50_init_resource_functions(struct pipe_context *pcontext);
