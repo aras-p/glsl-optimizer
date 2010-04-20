@@ -177,7 +177,9 @@ attribs_init(struct lp_build_interp_soa_context *bld)
                res = lp_build_add(&bld->base, res, lp_build_mul(&bld->base, y, dady));
             }
 
-            /* Keep the value of the attribue before perspective divide for faster updates */
+            /* Keep the value of the attribute before perspective divide
+             * for faster updates.
+             */
             bld->attribs_pre[attrib][chan] = res;
 
             if (interp == TGSI_INTERPOLATE_PERSPECTIVE) {
