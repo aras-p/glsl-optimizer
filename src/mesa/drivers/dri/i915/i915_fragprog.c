@@ -255,8 +255,10 @@ translate_tex_src_target(struct i915_fragment_program *p, GLubyte bit)
 #define EMIT_TEX( OP )						\
 do {								\
    GLuint dim = translate_tex_src_target( p, inst->TexSrcTarget );	\
+   const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current; \
+   GLuint unit = program->Base.SamplerUnits[inst->TexSrcUnit];	\
    GLuint sampler = i915_emit_decl(p, REG_TYPE_S,		\
-				  inst->TexSrcUnit, dim);	\
+				   unit, dim);			\
    GLuint coord = src_vector( p, &inst->SrcReg[0], program);	\
    /* Texel lookup */						\
 								\
