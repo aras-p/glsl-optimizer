@@ -78,16 +78,16 @@ static void FUNC( struct draw_pt_front_end *frontend,
             TRIANGLE( vcache,
                       DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL, 
                       get_elt(elts, i + 0) + elt_bias,
-                      get_elt(elts, i + 1 + (i&1) + elt_bias),
-                      get_elt(elts, i + 2 - (i&1) + elt_bias));
+                      get_elt(elts, i + 1 + (i&1)) + elt_bias,
+                      get_elt(elts, i + 2 - (i&1)) + elt_bias);
          }
       }
       else {
          for (i = 0; i+2 < count; i++) {
             TRIANGLE( vcache,
                       DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL, 
-                      get_elt(elts, i + 0 + (i&1) + elt_bias),
-                      get_elt(elts, i + 1 - (i&1) + elt_bias),
+                      get_elt(elts, i + 0 + (i&1)) + elt_bias,
+                      get_elt(elts, i + 1 - (i&1)) + elt_bias,
                       get_elt(elts, i + 2 ) + elt_bias);
          }
       }
