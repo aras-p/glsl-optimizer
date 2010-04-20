@@ -366,8 +366,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
    assert((elt_bias >= 0 && min_index + elt_bias >= min_index) ||
           (elt_bias <  0 && min_index + elt_bias <  min_index));
 
-   if (elt_bias <= 0 &&
-       min_index == (unsigned)-elt_bias &&
+   if (min_index == 0 &&
        index_size == 2)
    {
       transformed_elts = (const ushort *)elts;
@@ -378,8 +377,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
       if (!storage)
          goto fail;
       
-      if (elt_bias <= 0 &&
-          min_index == (unsigned)-elt_bias) {
+      if (min_index == 0) {
          switch(index_size) {
          case 1:
             translate_ubyte_elts( (const ubyte *)elts,
@@ -410,21 +408,21 @@ vcache_check_run( struct draw_pt_front_end *frontend,
          case 1:
             rebase_ubyte_elts( (const ubyte *)elts,
                                   draw_count,
-                                  -elt_bias - (int)min_index,
+                                  0 - (int)min_index,
                                   storage );
             break;
 
          case 2:
             rebase_ushort_elts( (const ushort *)elts,
                                    draw_count,
-                                   -elt_bias - (int)min_index,
+                                   0 - (int)min_index,
                                    storage );
             break;
 
          case 4:
             rebase_uint_elts( (const uint *)elts,
                                  draw_count,
-                                 -elt_bias - (int)min_index,
+                                 0 - (int)min_index,
                                  storage );
             break;
 
