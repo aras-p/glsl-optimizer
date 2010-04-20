@@ -6,6 +6,7 @@ include $(TOP)/configs/current
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
+	$(X11_CFLAGS)
 
 HEADERS = $(TOP)/include/GLES/egl.h
 
@@ -17,7 +18,7 @@ ES1_LIB_DEPS = \
 
 ES1_LIBS = \
 	-L$(TOP)/$(LIB_DIR) -lEGL \
-	-L$(TOP)/$(LIB_DIR) -lGLESv1_CM $(LIBDRM_LIB) -lX11
+	-L$(TOP)/$(LIB_DIR) -lGLESv1_CM $(LIBDRM_LIB) $(X11_LIBS)
 
 EGLUT_DIR = $(TOP)/progs/egl/eglut
 
@@ -91,7 +92,7 @@ $(foreach demo, $(EGLUT_DEMOS), $(eval $(call eglut-demo-rule,$(demo))))
 
 # build EGLUT demos
 $(EGLUT_X11_DEMOS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(ES1_LIBS) -lX11
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(ES1_LIBS) $(X11_LIBS)
 $(EGLUT_SCREEN_DEMOS):                                                
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(ES1_LIBS)
 

@@ -6,6 +6,7 @@ include $(TOP)/configs/current
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
+	$(X11_CFLAGS)
 
 HEADERS = $(TOP)/include/GLES/egl.h
 
@@ -17,7 +18,7 @@ ES2_LIB_DEPS = \
 
 ES2_LIBS = \
 	-L$(TOP)/$(LIB_DIR) -lEGL \
-	-L$(TOP)/$(LIB_DIR) -lGLESv2 $(LIBDRM_LIB) -lX11
+	-L$(TOP)/$(LIB_DIR) -lGLESv2 $(LIBDRM_LIB) $(X11_LIBS)
 
 PROGRAMS = \
 	es2_info \

@@ -4,7 +4,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 VG_LIBS=-lm -lEGL -lOpenVG -L$(TOP)/lib -L$(TOP)/lib/gallium
-INCLUDE_DIRS = -I$(TOP)/include
+INCLUDE_DIRS = -I$(TOP)/include $(X11_CFLAGS)
 
 EGLUT_DIR = $(TOP)/progs/egl/eglut
 
@@ -27,7 +27,7 @@ default: $(PROGRAMS) $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
 
 lion_x11: lion.o lion-render.o $(EGLUT_DIR)/libeglut-x11.a
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ lion.o lion-render.o \
-		-L$(EGLUT_DIR) -leglut-x11 $(VG_LIBS) -lX11
+		-L$(EGLUT_DIR) -leglut-x11 $(VG_LIBS) $(X11_LIBS)
 
 lion_screen: lion.o lion-render.o $(EGLUT_DIR)/libeglut-screen.a
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ lion.o lion-render.o \
@@ -45,7 +45,7 @@ $(foreach demo, $(EGLUT_DEMOS), $(eval $(call eglut-demo-rule,$(demo))))
 
 # build EGLUT demos
 $(EGLUT_X11_DEMOS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(VG_LIBS) -lX11
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(VG_LIBS) $(X11_LIBS)
 $(EGLUT_SCREEN_DEMOS):                                                
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(VG_LIBS)
 

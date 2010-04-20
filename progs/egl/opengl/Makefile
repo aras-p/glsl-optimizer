@@ -4,7 +4,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-INCLUDE_DIRS = -I$(TOP)/include
+INCLUDE_DIRS = -I$(TOP)/include $(X11_CFLAGS)
 
 HEADERS = $(TOP)/include/GLES/egl.h
 LIB_DEP = $(TOP)/$(LIB_DIR)/libEGL.so
@@ -73,7 +73,7 @@ $(foreach demo, $(EGLUT_DEMOS), $(eval $(call eglut-demo-rule,$(demo))))
 
 # build EGLUT demos
 $(EGLUT_X11_DEMOS):
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(LIBS) -lX11
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(LIBS) $(X11_LIBS)
 $(EGLUT_SCREEN_DEMOS):                                                
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(EGLUT_DIR) -leglut-$* $(LIBS)
 

@@ -4,7 +4,8 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 INCLUDES = \
-	-I$(TOP)/include
+	-I$(TOP)/include \
+	$(X11_CFLAGS)
 
 SOURCES = $(wildcard *.c)
 
