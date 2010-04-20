@@ -2328,9 +2328,22 @@ ast_struct_specifier::hir(exec_list *instructions,
 
    assert(i == decl_count);
 
-   glsl_type *t = new glsl_type(fields, decl_count, this->name);
+   const char *name;
+   if (this->name == NULL) {
+      static unsigned anon_count = 1;
+      char buf[32];
 
-   state->symbols->add_type(this->name, t);
+      snprintf(buf, sizeof(buf), "#anon_struct_%04x", anon_count);
+      anon_count++;
+
+      name = strdup(buf);
+   } else {
+      name = this->name;
+   }
+
+   glsl_type *t = new glsl_type(fields, decl_count, name);
+
+   state->symbols->add_type(name, t);
 
    /* Structure type definitions do not have r-values.
     */
