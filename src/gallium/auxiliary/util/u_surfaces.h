@@ -46,7 +46,7 @@ util_surfaces_detach(struct util_surfaces *us, struct pipe_surface *ps)
       return;
    }
 
-   return util_surfaces_do_detach(us, ps);
+   util_surfaces_do_detach(us, ps);
 }
 
 void util_surfaces_destroy(struct util_surfaces *us, struct pipe_resource *pt, void (*destroy_surface) (struct pipe_surface *));
