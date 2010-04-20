@@ -96,7 +96,7 @@ struct drm_api i965_libdrm_api =
    .name = "i965",
    .driver_name = "i915",
    .create_screen = i965_libdrm_create_screen,
-   .destroy = NULL;
+   .destroy = NULL,
 };
 
 struct drm_api *

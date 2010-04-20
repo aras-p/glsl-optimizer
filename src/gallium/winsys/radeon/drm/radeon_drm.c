@@ -185,7 +185,7 @@ static struct drm_api radeon_drm_api_hooks = {
     .name = "radeon",
     .driver_name = "radeon",
     .create_screen = radeon_create_screen,
-    .destroy = NULL;
+    .destroy = NULL,
 };
 
 struct drm_api* drm_api_create()

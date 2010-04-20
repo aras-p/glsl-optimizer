@@ -150,7 +150,7 @@ static struct drm_api nouveau_drm_api_hooks = {
 	.name = "nouveau",
 	.driver_name = "nouveau",
 	.create_screen = nouveau_drm_create_screen,
-	.destroy = NULL;
+	.destroy = NULL,
 };
 
 struct drm_api *

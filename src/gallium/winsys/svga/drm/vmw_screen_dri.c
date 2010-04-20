@@ -365,7 +365,7 @@ static struct drm_api vmw_drm_api_hooks = {
    .name = "vmwgfx",
    .driver_name = "vmwgfx",
    .create_screen = vmw_drm_create_screen,
-   .destroy = NULL;
+   .destroy = NULL,
 };
 
 struct drm_api* drm_api_create()

@@ -93,7 +93,7 @@ static struct drm_api i915_drm_api =
    .name = "i915",
    .driver_name = "i915",
    .create_screen = i915_drm_create_screen,
-   .destroy = NULL;
+   .destroy = NULL,
 };
 
 struct drm_api *
