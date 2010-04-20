@@ -237,8 +237,6 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
                   res = lp_build_add(&bld->base, res, dady);
                }
 
-               //XXX bld->attribs_pre[attrib][chan] = res;
-
                if (mode == TGSI_INTERPOLATE_PERSPECTIVE) {
                   LLVMValueRef w = bld->pos[3];
                   assert(attrib != 0);
