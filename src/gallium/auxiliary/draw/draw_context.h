@@ -140,12 +140,14 @@ void draw_set_vertex_elements(struct draw_context *draw,
 void
 draw_set_mapped_element_buffer_range( struct draw_context *draw,
                                       unsigned eltSize,
+                                      int eltBias,
                                       unsigned min_index,
                                       unsigned max_index,
                                       const void *elements );
 
 void draw_set_mapped_element_buffer( struct draw_context *draw,
                                      unsigned eltSize, 
+                                     int eltBias,
                                      const void *elements );
 
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,

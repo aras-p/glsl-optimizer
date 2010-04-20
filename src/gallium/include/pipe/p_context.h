@@ -67,6 +67,7 @@ struct pipe_context {
    void (*draw_elements)( struct pipe_context *pipe,
                           struct pipe_resource *indexBuffer,
                           unsigned indexSize,
+                          int indexBias,
                           unsigned mode, unsigned start, unsigned count);
 
    void (*draw_arrays_instanced)(struct pipe_context *pipe,
@@ -79,6 +80,7 @@ struct pipe_context {
    void (*draw_elements_instanced)(struct pipe_context *pipe,
                                    struct pipe_resource *indexBuffer,
                                    unsigned indexSize,
+                                   int indexBias,
                                    unsigned mode,
                                    unsigned start,
                                    unsigned count,
@@ -93,6 +95,7 @@ struct pipe_context {
    void (*draw_range_elements)( struct pipe_context *pipe,
                                 struct pipe_resource *indexBuffer,
                                 unsigned indexSize,
+                                int indexBias,
                                 unsigned minIndex,
                                 unsigned maxIndex,
                                 unsigned mode, 

@@ -168,7 +168,7 @@ nvfx_draw_arrays(struct pipe_context *pipe,
 
 	nvfx_vbo_set_idxbuf(nvfx, NULL, 0);
 	if (nvfx->screen->force_swtnl || !nvfx_state_validate(nvfx)) {
-		nvfx_draw_elements_swtnl(pipe, NULL, 0,
+		nvfx_draw_elements_swtnl(pipe, NULL, 0, 0,
                                            mode, start, count);
                 return;
 	}
@@ -373,7 +373,8 @@ nvfx_draw_elements_u32(struct nvfx_context *nvfx, void *ib,
 
 static void
 nvfx_draw_elements_inline(struct pipe_context *pipe,
-			  struct pipe_resource *ib, unsigned ib_size,
+			  struct pipe_resource *ib,
+			  unsigned ib_size, int ib_bias,
 			  unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
@@ -385,6 +386,8 @@ nvfx_draw_elements_inline(struct pipe_context *pipe,
 		NOUVEAU_ERR("failed mapping ib\n");
 		return;
 	}
+
+	assert(ib_bias == 0);
 
 	switch (ib_size) {
 	case 1:
@@ -461,7 +464,8 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 
 void
 nvfx_draw_elements(struct pipe_context *pipe,
-		   struct pipe_resource *indexBuffer, unsigned indexSize,
+		   struct pipe_resource *indexBuffer,
+		   unsigned indexSize, int indexBias,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
@@ -469,15 +473,17 @@ nvfx_draw_elements(struct pipe_context *pipe,
 
 	idxbuf = nvfx_vbo_set_idxbuf(nvfx, indexBuffer, indexSize);
 	if (nvfx->screen->force_swtnl || !nvfx_state_validate(nvfx)) {
-		nvfx_draw_elements_swtnl(pipe, indexBuffer, indexSize,
-                                           mode, start, count);
+		nvfx_draw_elements_swtnl(pipe,
+		                         indexBuffer, indexSize, indexBias,
+		                         mode, start, count);
 		return;
 	}
 
 	if (idxbuf) {
 		nvfx_draw_elements_vbo(pipe, mode, start, count);
 	} else {
-		nvfx_draw_elements_inline(pipe, indexBuffer, indexSize,
+		nvfx_draw_elements_inline(pipe,
+		                          indexBuffer, indexSize, indexBias,
 					  mode, start, count);
 	}
 

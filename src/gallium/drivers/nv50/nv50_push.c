@@ -172,7 +172,8 @@ emit_verts(void *priv, unsigned start, unsigned count)
 
 void
 nv50_push_elements_instanced(struct pipe_context *pipe,
-                             struct pipe_resource *idxbuf, unsigned idxsize,
+                             struct pipe_resource *idxbuf,
+                             unsigned idxsize, int idxbias,
                              unsigned mode, unsigned start, unsigned count,
                              unsigned i_start, unsigned i_count)
 {
@@ -269,6 +270,7 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
       }
       ctx.idxbuf = bo->map;
       ctx.idxsize = idxsize;
+      assert(idxbias == 0);
       nouveau_bo_unmap(bo);
    }
 

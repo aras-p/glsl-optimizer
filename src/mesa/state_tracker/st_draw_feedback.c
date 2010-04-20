@@ -229,16 +229,16 @@ st_feedback_draw_vbo(GLcontext *ctx,
          map = pipe_buffer_map(pipe, index_buffer_handle,
                                PIPE_TRANSFER_READ, &ib_transfer);
 
-         draw_set_mapped_element_buffer(draw, indexSize, map);
+         draw_set_mapped_element_buffer(draw, indexSize, 0, map);
       }
       else {
-         draw_set_mapped_element_buffer(draw, indexSize, (void *) ib->ptr);
+         draw_set_mapped_element_buffer(draw, indexSize, 0, (void *) ib->ptr);
 	 ib_transfer = NULL;
       }
    }
    else {
       /* no index/element buffer */
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
 
@@ -275,7 +275,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    }
    if (index_buffer_handle) {
       pipe_buffer_unmap(pipe, index_buffer_handle, ib_transfer);
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 }
 

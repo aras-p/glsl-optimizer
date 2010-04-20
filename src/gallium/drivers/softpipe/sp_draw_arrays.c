@@ -57,6 +57,7 @@ static void
 softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
                                        struct pipe_resource *indexBuffer,
                                        unsigned indexSize,
+                                       int indexBias,
                                        unsigned minIndex,
                                        unsigned maxIndex,
                                        unsigned mode,
@@ -74,6 +75,7 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                                           NULL,
                                           0,
                                           0,
+                                          0,
                                           0xffffffff,
                                           mode,
                                           start,
@@ -87,6 +89,7 @@ void
 softpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_resource *indexBuffer,
                              unsigned indexSize,
+                             int indexBias,
                              unsigned min_index,
                              unsigned max_index,
                              unsigned mode, unsigned start, unsigned count)
@@ -94,6 +97,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    softpipe_draw_range_elements_instanced(pipe,
                                           indexBuffer,
                                           indexSize,
+                                          indexBias,
                                           min_index,
                                           max_index,
                                           mode,
@@ -107,12 +111,13 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
 void
 softpipe_draw_elements(struct pipe_context *pipe,
                        struct pipe_resource *indexBuffer,
-                       unsigned indexSize,
+                       unsigned indexSize, int indexBias,
                        unsigned mode, unsigned start, unsigned count)
 {
    softpipe_draw_range_elements_instanced(pipe,
                                           indexBuffer,
                                           indexSize,
+                                          indexBias,
                                           0,
                                           0xffffffff,
                                           mode,
@@ -134,6 +139,7 @@ softpipe_draw_arrays_instanced(struct pipe_context *pipe,
                                           NULL,
                                           0,
                                           0,
+                                          0,
                                           0xffffffff,
                                           mode,
                                           start,
@@ -146,6 +152,7 @@ void
 softpipe_draw_elements_instanced(struct pipe_context *pipe,
                                  struct pipe_resource *indexBuffer,
                                  unsigned indexSize,
+                                 int indexBias,
                                  unsigned mode,
                                  unsigned start,
                                  unsigned count,
@@ -155,6 +162,7 @@ softpipe_draw_elements_instanced(struct pipe_context *pipe,
    softpipe_draw_range_elements_instanced(pipe,
                                           indexBuffer,
                                           indexSize,
+                                          indexBias,
                                           0,
                                           0xffffffff,
                                           mode,
@@ -168,6 +176,7 @@ static void
 softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
                                        struct pipe_resource *indexBuffer,
                                        unsigned indexSize,
+                                       int indexBias,
                                        unsigned minIndex,
                                        unsigned maxIndex,
                                        unsigned mode,
@@ -202,13 +211,14 @@ softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
       void *mapped_indexes = softpipe_resource(indexBuffer)->data;
       draw_set_mapped_element_buffer_range(draw,
                                            indexSize,
+                                           indexBias,
                                            minIndex,
                                            maxIndex,
                                            mapped_indexes);
    } else {
       /* no index/element buffer */
       draw_set_mapped_element_buffer_range(draw,
-                                           0,
+                                           0, 0,
                                            start,
                                            start + count - 1,
                                            NULL);
@@ -222,7 +232,7 @@ softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (indexBuffer) {
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
    /*

@@ -179,7 +179,7 @@ try_draw_range_elements(struct brw_context *brw,
 static void
 brw_draw_range_elements(struct pipe_context *pipe,
 			struct pipe_resource *index_buffer,
-			unsigned index_size,
+			unsigned index_size, int index_bias,
 			unsigned min_index,
 			unsigned max_index,
 			unsigned mode, unsigned start, unsigned count)
@@ -193,6 +193,8 @@ brw_draw_range_elements(struct pipe_context *pipe,
    if (BRW_DEBUG & DEBUG_PRIMS)
       debug_printf("PRIM: %s start %d count %d index_buffer %p\n",
                    u_prim_name(mode), start, count, (void *)index_buffer);
+
+   assert(index_bias == 0);
 
    /* Potentially trigger upload of new index buffer.
     *
@@ -233,12 +235,12 @@ brw_draw_range_elements(struct pipe_context *pipe,
 static void
 brw_draw_elements(struct pipe_context *pipe,
 		  struct pipe_resource *index_buffer,
-		  unsigned index_size,
+		  unsigned index_size, int index_bias,
 		  unsigned mode, 
 		  unsigned start, unsigned count)
 {
    brw_draw_range_elements( pipe, index_buffer,
-                            index_size,
+                            index_size, index_bias,
                             0, 0xffffffff,
                             mode, 
                             start, count );
@@ -248,7 +250,7 @@ static void
 brw_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
-   brw_draw_elements(pipe, NULL, 0, mode, start, count);
+   brw_draw_elements(pipe, NULL, 0, 0, mode, start, count);
 }
 
 

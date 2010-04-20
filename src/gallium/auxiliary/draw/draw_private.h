@@ -150,6 +150,7 @@ struct draw_context
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
          unsigned eltSize;
+         int eltBias;
          unsigned min_index;
          unsigned max_index;
          

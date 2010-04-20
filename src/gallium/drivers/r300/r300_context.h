@@ -327,7 +327,8 @@ struct r300_context {
 
     void (*emit_draw_elements)(
             struct r300_context *r300, struct pipe_resource* indexBuffer,
-            unsigned indexSize, unsigned minIndex, unsigned maxIndex,
+            unsigned indexSize, int indexBias,
+            unsigned minIndex, unsigned maxIndex,
             unsigned mode, unsigned start, unsigned count);
 
 

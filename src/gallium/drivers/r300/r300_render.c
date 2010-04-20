@@ -298,6 +298,7 @@ void r500_emit_draw_arrays(struct r300_context *r300,
 void r500_emit_draw_elements(struct r300_context *r300,
                              struct pipe_resource* indexBuffer,
                              unsigned indexSize,
+                             int indexBias,
                              unsigned minIndex,
                              unsigned maxIndex,
                              unsigned mode,
@@ -318,6 +319,8 @@ void r500_emit_draw_elements(struct r300_context *r300,
                 "refusing to render.\n", count);
         return;
     }
+
+    assert(indexBias == 0);
 
     maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
 
@@ -442,6 +445,7 @@ void r300_emit_draw_arrays(struct r300_context *r300,
 void r300_emit_draw_elements(struct r300_context *r300,
                              struct pipe_resource* indexBuffer,
                              unsigned indexSize,
+                             int indexBias,
                              unsigned minIndex,
                              unsigned maxIndex,
                              unsigned mode,
@@ -449,15 +453,15 @@ void r300_emit_draw_elements(struct r300_context *r300,
                              unsigned count)
 {
     if (!r300->stencil_ref_bf_fallback) {
-        r500_emit_draw_elements(r300, indexBuffer, indexSize, minIndex,
-                                maxIndex, mode, start, count);
+        r500_emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+                                minIndex, maxIndex, mode, start, count);
     } else {
         r300_begin_stencil_ref_fallback(r300);
-        r500_emit_draw_elements(r300, indexBuffer, indexSize, minIndex,
-                                maxIndex, mode, start, count);
+        r500_emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+                                minIndex, maxIndex, mode, start, count);
         r300_switch_stencil_ref_side(r300);
-        r500_emit_draw_elements(r300, indexBuffer, indexSize, minIndex,
-                                maxIndex, mode, start, count);
+        r500_emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+                                minIndex, maxIndex, mode, start, count);
         r300_end_stencil_ref_fallback(r300);
     }
 }
@@ -528,6 +532,7 @@ static void r300_align_ushort_elts(struct r300_context *r300,
 void r300_draw_range_elements(struct pipe_context* pipe,
                               struct pipe_resource* indexBuffer,
                               unsigned indexSize,
+                              int indexBias,
                               unsigned minIndex,
                               unsigned maxIndex,
                               unsigned mode,
@@ -574,13 +579,14 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     u_upload_flush(r300->upload_vb);
     u_upload_flush(r300->upload_ib);
     if (alt_num_verts || count <= 65535) {
-        r300->emit_draw_elements(r300, indexBuffer, indexSize, minIndex,
-                                 maxIndex, mode, start, count);
+        r300->emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+                                 minIndex, maxIndex, mode, start, count);
     } else {
         do {
             short_count = MIN2(count, 65534);
-            r300->emit_draw_elements(r300, indexBuffer, indexSize, minIndex,
-                                      maxIndex, mode, start, short_count);
+            r300->emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+                                     minIndex, maxIndex,
+                                     mode, start, short_count);
 
             start += short_count;
             count -= short_count;
@@ -602,13 +608,13 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 /* Simple helpers for context setup. Should probably be moved to util. */
 void r300_draw_elements(struct pipe_context* pipe,
                         struct pipe_resource* indexBuffer,
-                        unsigned indexSize, unsigned mode,
+                        unsigned indexSize, int indexBias, unsigned mode,
                         unsigned start, unsigned count)
 {
     struct r300_context *r300 = r300_context(pipe);
 
-    pipe->draw_range_elements(pipe, indexBuffer, indexSize, 0,
-                              r300->vertex_buffer_max_index,
+    pipe->draw_range_elements(pipe, indexBuffer, indexSize, indexBias,
+                              0, r300->vertex_buffer_max_index,
                               mode, start, count);
 }
 
@@ -698,7 +704,7 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
         draw_set_mapped_vertex_buffer(r300->draw, i, buf);
     }
 
-    draw_set_mapped_element_buffer(r300->draw, 0, NULL);
+    draw_set_mapped_element_buffer(r300->draw, 0, 0, NULL);
 
     draw_arrays(r300->draw, mode, start, count);
 
@@ -713,6 +719,7 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
 void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                        struct pipe_resource* indexBuffer,
                                        unsigned indexSize,
+                                       int indexBias,
                                        unsigned minIndex,
                                        unsigned maxIndex,
                                        unsigned mode,
@@ -743,7 +750,7 @@ void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 
     indices = pipe_buffer_map(pipe, indexBuffer,
                               PIPE_TRANSFER_READ, &ib_transfer);
-    draw_set_mapped_element_buffer_range(r300->draw, indexSize,
+    draw_set_mapped_element_buffer_range(r300->draw, indexSize, indexBias,
                                          minIndex, maxIndex, indices);
 
     draw_arrays(r300->draw, mode, start, count);
@@ -756,8 +763,9 @@ void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
 
     pipe_buffer_unmap(pipe, indexBuffer,
 		      ib_transfer);
-    draw_set_mapped_element_buffer_range(r300->draw, 0, start,
-                                         start + count - 1, NULL);
+    draw_set_mapped_element_buffer_range(r300->draw, 0, 0,
+                                         start, start + count - 1,
+                                         NULL);
 }
 
 /* Object for rendering using Draw. */

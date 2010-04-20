@@ -456,12 +456,14 @@ void draw_set_render( struct draw_context *draw,
 void
 draw_set_mapped_element_buffer_range( struct draw_context *draw,
                                       unsigned eltSize,
+                                      int eltBias,
                                       unsigned min_index,
                                       unsigned max_index,
                                       const void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;
+   draw->pt.user.eltBias = eltBias;
    draw->pt.user.min_index = min_index;
    draw->pt.user.max_index = max_index;
 }
@@ -470,10 +472,12 @@ draw_set_mapped_element_buffer_range( struct draw_context *draw,
 void
 draw_set_mapped_element_buffer( struct draw_context *draw,
                                 unsigned eltSize,
+                                int eltBias,
                                 const void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;
+   draw->pt.user.eltBias = eltBias;
    draw->pt.user.min_index = 0;
    draw->pt.user.max_index = 0xffffffff;
 }

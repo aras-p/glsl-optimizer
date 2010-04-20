@@ -111,6 +111,7 @@ draw_pt_arrays(struct draw_context *draw,
    frontend->run(frontend, 
                  draw_pt_elt_func(draw),
                  draw_pt_elt_ptr(draw, start),
+                 draw->pt.user.eltBias,
                  count);
 
    frontend->finish( frontend );
@@ -224,8 +225,11 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
             break;
          default:
             assert(0);
+            return;
          }
-         debug_printf("Element[%u + %u] -> Vertex %u:\n", start, i, ii);
+         ii += draw->pt.user.eltBias;
+         debug_printf("Element[%u + %u] + %i -> Vertex %u:\n", start, i,
+                      draw->pt.user.eltBias, ii);
       }
       else {
          /* non-indexed arrays */

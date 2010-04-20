@@ -232,7 +232,8 @@ nvfx_draw_render_stage(struct nvfx_context *nvfx)
 
 void
 nvfx_draw_elements_swtnl(struct pipe_context *pipe,
-			 struct pipe_resource *idxbuf, unsigned idxbuf_size,
+			 struct pipe_resource *idxbuf,
+			 unsigned idxbuf_size, int idxbuf_bias,
 			 unsigned mode, unsigned start, unsigned count)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
@@ -257,9 +258,9 @@ nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 		map = pipe_buffer_map(pipe, idxbuf,
 				      PIPE_TRANSFER_READ,
 				      &ib_transfer);
-		draw_set_mapped_element_buffer(nvfx->draw, idxbuf_size, map);
+		draw_set_mapped_element_buffer(nvfx->draw, idxbuf_size, idx_bufbias, map);
 	} else {
-		draw_set_mapped_element_buffer(nvfx->draw, 0, NULL);
+		draw_set_mapped_element_buffer(nvfx->draw, 0, 0, NULL);
 	}
 
 	if (nvfx->constbuf[PIPE_SHADER_VERTEX]) {

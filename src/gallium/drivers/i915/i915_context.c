@@ -48,6 +48,7 @@ static void
 i915_draw_range_elements(struct pipe_context *pipe,
                          struct pipe_resource *indexBuffer,
                          unsigned indexSize,
+                         int indexBias,
                          unsigned min_index,
                          unsigned max_index,
                          unsigned prim, unsigned start, unsigned count)
@@ -72,12 +73,12 @@ i915_draw_range_elements(struct pipe_context *pipe,
     */
    if (indexBuffer) {
       void *mapped_indexes = i915_buffer(indexBuffer)->data;
-      draw_set_mapped_element_buffer_range(draw, indexSize,
+      draw_set_mapped_element_buffer_range(draw, indexSize, indexBias,
                                            min_index,
                                            max_index,
                                            mapped_indexes);
    } else {
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
 
@@ -99,18 +100,18 @@ i915_draw_range_elements(struct pipe_context *pipe,
    }
 
    if (indexBuffer) {
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 }
 
 static void
 i915_draw_elements(struct pipe_context *pipe,
                    struct pipe_resource *indexBuffer,
-                   unsigned indexSize,
+                   unsigned indexSize, int indexBias,
                    unsigned prim, unsigned start, unsigned count)
 {
    i915_draw_range_elements(pipe, indexBuffer,
-                            indexSize,
+                            indexSize, indexBias,
                             0, 0xffffffff,
                             prim, start, count);
 }
@@ -119,7 +120,7 @@ static void
 i915_draw_arrays(struct pipe_context *pipe,
                  unsigned prim, unsigned start, unsigned count)
 {
-   i915_draw_elements(pipe, NULL, 0, prim, start, count);
+   i915_draw_elements(pipe, NULL, 0, 0, prim, start, count);
 }
 
 

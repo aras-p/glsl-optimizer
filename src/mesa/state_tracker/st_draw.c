@@ -676,7 +676,7 @@ st_draw_vbo(GLcontext *ctx,
          for (i = 0; i < nr_prims; i++) {
             prim = translate_prim( ctx, prims[i].mode );
 
-            pipe->draw_range_elements(pipe, indexBuf, indexSize,
+            pipe->draw_range_elements(pipe, indexBuf, indexSize, 0,
                                       min_index, max_index, prim,
                                       prims[i].start + indexOffset, prims[i].count);
          }
@@ -686,12 +686,12 @@ st_draw_vbo(GLcontext *ctx,
             prim = translate_prim( ctx, prims[i].mode );
             
             if (prims[i].num_instances == 1) {
-               pipe->draw_elements(pipe, indexBuf, indexSize, prim,
+               pipe->draw_elements(pipe, indexBuf, indexSize, 0, prim,
                                    prims[i].start + indexOffset,
                                    prims[i].count);
             }
             else {
-               pipe->draw_elements_instanced(pipe, indexBuf, indexSize, prim,
+               pipe->draw_elements_instanced(pipe, indexBuf, indexSize, 0, prim,
                                              prims[i].start + indexOffset,
                                              prims[i].count,
                                              0, prims[i].num_instances);

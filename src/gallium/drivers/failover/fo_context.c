@@ -53,6 +53,7 @@ void failover_fail_over( struct failover_context *failover )
 static void failover_draw_elements( struct pipe_context *pipe,
                                     struct pipe_resource *indexResource,
                                     unsigned indexSize,
+                                    int indexBias,
                                     unsigned prim, 
                                     unsigned start, 
                                     unsigned count)
@@ -72,6 +73,7 @@ static void failover_draw_elements( struct pipe_context *pipe,
       failover->hw->draw_elements( failover->hw, 
                                    indexResource, 
                                    indexSize, 
+                                   indexBias,
                                    prim, 
                                    start, 
                                    count );
@@ -89,6 +91,7 @@ static void failover_draw_elements( struct pipe_context *pipe,
       failover->sw->draw_elements( failover->sw, 
 				   indexResource, 
 				   indexSize, 
+				   indexBias,
 				   prim, 
 				   start, 
 				   count );
@@ -105,7 +108,7 @@ static void failover_draw_elements( struct pipe_context *pipe,
 static void failover_draw_arrays( struct pipe_context *pipe,
 				     unsigned prim, unsigned start, unsigned count)
 {
-   failover_draw_elements(pipe, NULL, 0, prim, start, count);
+   failover_draw_elements(pipe, NULL, 0, 0, prim, start, count);
 }
 
 static unsigned int
