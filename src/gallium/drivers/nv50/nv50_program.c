@@ -3822,7 +3822,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		for (rid = 0; i < pc->result_nr * 4; i++)
 			pc->result[i].rhw = rid++;
 		if (p->info.writes_z)
-			pc->result[2].rhw = rid;
+			pc->result[2].rhw = rid++;
 
 		p->cfg.high_result = rid;
 
