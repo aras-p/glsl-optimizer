@@ -464,6 +464,7 @@ draw_llvm_translate_from(LLVMBuilderRef builder,
                          enum pipe_format from_format)
 {
    const struct util_format_description *format_desc;
+   LLVMValueRef zero;
    int i;
 
    /*
@@ -491,5 +492,6 @@ draw_llvm_translate_from(LLVMBuilderRef builder,
     */
 
    format_desc = util_format_description(from_format);
-   return lp_build_fetch_rgba_aos(builder, format_desc, vbuffer);
+   zero = LLVMConstNull(LLVMInt32Type());
+   return lp_build_fetch_rgba_aos(builder, format_desc, vbuffer, zero, zero);
 }

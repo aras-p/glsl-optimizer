@@ -28,14 +28,15 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <float.h>
 
 #include "gallivm/lp_bld.h"
+#include "gallivm/lp_bld_init.h"
 #include <llvm-c/Analysis.h>
-#include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
-#include "util/u_cpu_detect.h"
+#include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_format_tests.h"
 #include "util/u_format_s3tc.h"
@@ -68,34 +69,41 @@ write_tsv_row(FILE *fp,
 }
 
 
-typedef void (*fetch_ptr_t)(const void *packed, float *);
+typedef void
+(*fetch_ptr_t)(float *, const void *packed,
+               unsigned i, unsigned j);
 
 
 static LLVMValueRef
-add_fetch_rgba_test(LLVMModuleRef module,
+add_fetch_rgba_test(LLVMModuleRef lp_build_module,
                     const struct util_format_description *desc)
 {
-   LLVMTypeRef args[2];
+   LLVMTypeRef args[4];
    LLVMValueRef func;
    LLVMValueRef packed_ptr;
    LLVMValueRef rgba_ptr;
+   LLVMValueRef i;
+   LLVMValueRef j;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef rgba;
 
-   args[0] = LLVMPointerType(LLVMInt8Type(), 0);
-   args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
+   args[0] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
+   args[1] = LLVMPointerType(LLVMInt8Type(), 0);
+   args[3] = args[2] = LLVMInt32Type();
 
-   func = LLVMAddFunction(module, "fetch", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
+   func = LLVMAddFunction(lp_build_module, "fetch", LLVMFunctionType(LLVMVoidType(), args, Elements(args), 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   packed_ptr = LLVMGetParam(func, 0);
-   rgba_ptr = LLVMGetParam(func, 1);
+   rgba_ptr = LLVMGetParam(func, 0);
+   packed_ptr = LLVMGetParam(func, 1);
+   i = LLVMGetParam(func, 2);
+   j = LLVMGetParam(func, 3);
 
    block = LLVMAppendBasicBlock(func, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   rgba = lp_build_fetch_rgba_aos(builder, desc, packed_ptr);
+   rgba = lp_build_fetch_rgba_aos(builder, desc, packed_ptr, i, j);
 
    LLVMBuildStore(builder, rgba, rgba_ptr);
 
@@ -112,37 +120,23 @@ test_format(unsigned verbose, FILE *fp,
             const struct util_format_description *desc,
             const struct util_format_test_case *test)
 {
-   LLVMModuleRef module = NULL;
    LLVMValueRef fetch = NULL;
-   LLVMExecutionEngineRef engine = NULL;
-   LLVMModuleProviderRef provider = NULL;
    LLVMPassManagerRef pass = NULL;
-   char *error = NULL;
    fetch_ptr_t fetch_ptr;
    float unpacked[4];
    boolean success;
    unsigned i;
 
-   module = LLVMModuleCreateWithName("test");
+   fetch = add_fetch_rgba_test(lp_build_module, desc);
 
-   fetch = add_fetch_rgba_test(module, desc);
-
-   if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
-      LLVMDumpModule(module);
-      abort();
-   }
-   LLVMDisposeMessage(error);
-
-   provider = LLVMCreateModuleProviderForExistingModule(module);
-   if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      fprintf(stderr, "%s\n", error);
-      LLVMDisposeMessage(error);
+   if (LLVMVerifyFunction(fetch, LLVMPrintMessageAction)) {
+      LLVMDumpValue(fetch);
       abort();
    }
 
 #if 0
    pass = LLVMCreatePassManager();
-   LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
+   LLVMAddTargetData(LLVMGetExecutionEngineTargetData(lp_build_engine), pass);
    /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
     * but there are more on SVN. */
    LLVMAddConstantPropagationPass(pass);
@@ -150,20 +144,20 @@ test_format(unsigned verbose, FILE *fp,
    LLVMAddPromoteMemoryToRegisterPass(pass);
    LLVMAddGVNPass(pass);
    LLVMAddCFGSimplificationPass(pass);
-   LLVMRunPassManager(pass, module);
+   LLVMRunPassManager(pass, lp_build_module);
 #else
    (void)pass;
 #endif
 
-   fetch_ptr  = (fetch_ptr_t) LLVMGetPointerToGlobal(engine, fetch);
+   fetch_ptr = (fetch_ptr_t) LLVMGetPointerToGlobal(lp_build_engine, fetch);
 
    memset(unpacked, 0, sizeof unpacked);
 
-   fetch_ptr(test->packed, unpacked);
+   fetch_ptr(unpacked, test->packed, 0, 0);
 
    success = TRUE;
    for(i = 0; i < 4; ++i)
-      if(test->unpacked[0][0][i] != unpacked[i])
+      if (fabs((float)test->unpacked[0][0][i] - unpacked[i]) > FLT_EPSILON)
          success = FALSE;
 
    if (!success) {
@@ -177,12 +171,12 @@ test_format(unsigned verbose, FILE *fp,
              test->unpacked[0][0][1],
              test->unpacked[0][0][2],
              test->unpacked[0][0][3]);
-      LLVMDumpModule(module);
+      LLVMDumpValue(fetch);
    }
 
-   LLVMFreeMachineCodeForFunction(engine, fetch);
+   LLVMFreeMachineCodeForFunction(lp_build_engine, fetch);
+   LLVMDeleteFunction(fetch);
 
-   LLVMDisposeExecutionEngine(engine);
    if(pass)
       LLVMDisposePassManager(pass);
 
@@ -235,20 +229,12 @@ test_all(unsigned verbose, FILE *fp)
       }
 
       /*
-       * XXX: copied from lp_build_fetch_rgba_aos()
        * TODO: test more
        */
 
-      if (!(format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
-            format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB &&
-            format_desc->block.width == 1 &&
-            format_desc->block.height == 1 &&
-            util_is_pot(format_desc->block.bits) &&
-            format_desc->block.bits <= 32 &&
-            format_desc->is_bitmask &&
-            !format_desc->is_mixed &&
-            (format_desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED ||
-             format_desc->channel[1].type == UTIL_FORMAT_TYPE_UNSIGNED))) {
+      if (format_desc->block.width != 1 ||
+          format_desc->block.height != 1 ||
+          format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
          continue;
       }
 

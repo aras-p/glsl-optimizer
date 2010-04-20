@@ -34,8 +34,11 @@
 
 
 #include "util/u_format.h"
+#include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_string.h"
 
+#include "lp_bld_init.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_swizzle.h"
@@ -295,12 +298,17 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 
 /**
  * Fetch a pixel into a 4 float AoS.
+ *
+ * i and j are the sub-block pixel coordinates.
  */
 LLVMValueRef
 lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
                         const struct util_format_description *format_desc,
-                        LLVMValueRef ptr)
+                        LLVMValueRef ptr,
+                        LLVMValueRef i,
+                        LLVMValueRef j)
 {
+
    if (format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
        (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
         format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) &&
@@ -309,7 +317,9 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
        util_is_pot(format_desc->block.bits) &&
        format_desc->block.bits <= 32 &&
        format_desc->is_bitmask &&
-       !format_desc->is_mixed)
+       !format_desc->is_mixed &&
+       (format_desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED ||
+        format_desc->channel[1].type == UTIL_FORMAT_TYPE_UNSIGNED))
    {
       LLVMValueRef packed;
 
@@ -320,6 +330,71 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
       packed = LLVMBuildLoad(builder, ptr, "packed");
 
       return lp_build_unpack_rgba_aos(builder, format_desc, packed);
+   }
+   else if (format_desc->fetch_rgba_float) {
+      /*
+       * Fallback to calling util_format_description::fetch_rgba_float.
+       *
+       * This is definitely not the most efficient way of fetching pixels, as
+       * we miss the opportunity to do vectorization, but this it is a
+       * convenient for formats or scenarios for which there was no opportunity
+       * or incentive to optimize.
+       */
+
+      LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
+      char name[256];
+      LLVMValueRef function;
+      LLVMValueRef tmp;
+      LLVMValueRef args[4];
+
+      util_snprintf(name, sizeof name, "util_format_%s_fetch_rgba_float",
+                    format_desc->short_name);
+
+      /*
+       * Declare and bind format_desc->fetch_rgba_float().
+       */
+
+      function = LLVMGetNamedFunction(module, name);
+      if (!function) {
+         LLVMTypeRef ret_type;
+         LLVMTypeRef arg_types[4];
+         LLVMTypeRef function_type;
+
+         ret_type = LLVMVoidType();
+         arg_types[0] = LLVMPointerType(LLVMFloatType(), 0);
+         arg_types[1] = LLVMPointerType(LLVMInt8Type(), 0);
+         arg_types[3] = arg_types[2] = LLVMIntType(sizeof(unsigned) * 8);
+         function_type = LLVMFunctionType(ret_type, arg_types, Elements(arg_types), 0);
+         function = LLVMAddFunction(module, name, function_type);
+
+         LLVMSetFunctionCallConv(function, LLVMCCallConv);
+         LLVMSetLinkage(function, LLVMExternalLinkage);
+
+         assert(LLVMIsDeclaration(function));
+
+         LLVMAddGlobalMapping(lp_build_engine, function, format_desc->fetch_rgba_float);
+      }
+
+      /*
+       * XXX: this should better go to the first block in the function
+       */
+
+      tmp = LLVMBuildAlloca(builder, LLVMVectorType(LLVMFloatType(), 4), "");
+
+      /*
+       * Invoke format_desc->fetch_rgba_float() for each pixel and insert the result
+       * in the SoA vectors.
+       */
+
+      args[0] = LLVMBuildBitCast(builder, tmp,
+                                 LLVMPointerType(LLVMFloatType(), 0), "");
+      args[1] = ptr;
+      args[2] = i;
+      args[3] = j;
+
+      LLVMBuildCall(builder, function, args, 4, "");
+
+      return LLVMBuildLoad(builder, tmp, "");
    }
    else {
       assert(0);

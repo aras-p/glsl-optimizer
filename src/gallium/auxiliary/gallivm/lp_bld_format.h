@@ -59,7 +59,9 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 LLVMValueRef
 lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
                         const struct util_format_description *format_desc,
-                        LLVMValueRef ptr);
+                        LLVMValueRef ptr,
+                        LLVMValueRef i,
+                        LLVMValueRef j);
 
 
 /*
