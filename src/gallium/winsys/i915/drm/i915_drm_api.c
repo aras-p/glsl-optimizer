@@ -88,22 +88,16 @@ i915_drm_create_screen(struct drm_api *api, int drmFD,
    return i915_create_screen(&idws->base, deviceID);
 }
 
-static void
-destroy(struct drm_api *api)
-{
-
-}
-
-struct drm_api intel_drm_api =
+static struct drm_api i915_drm_api =
 {
    .name = "i915",
    .driver_name = "i915",
    .create_screen = i915_drm_create_screen,
-   .destroy = destroy,
+   .destroy = NULL;
 };
 
 struct drm_api *
 drm_api_create()
 {
-   return trace_drm_create(&intel_drm_api);
+   return trace_drm_create(&i915_drm_api);
 }
