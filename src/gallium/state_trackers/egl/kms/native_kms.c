@@ -695,7 +695,7 @@ kms_display_init_screen(struct native_display *ndpy)
    struct drm_create_screen_arg arg;
    int fd;
 
-   fd = drmOpen(kdpy->api->name, NULL);
+   fd = drmOpen(kdpy->api->driver_name, NULL);
    if (fd < 0) {
       _eglLog(_EGL_WARNING, "failed to open DRM device");
       return FALSE;
