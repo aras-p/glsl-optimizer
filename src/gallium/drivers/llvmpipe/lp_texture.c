@@ -766,15 +766,16 @@ layout_logic(enum lp_texture_layout cur_layout,
 
 
 /**
- * Return pointer to a texture image.  No tiled/linear conversion is done.
+ * Return pointer to a 2D texture image/face/slice.
+ * No tiled/linear conversion is done.
  */
-void *
+ubyte *
 llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
-                                   unsigned face, unsigned level,
+                                   unsigned face_slice, unsigned level,
                                    enum lp_texture_layout layout)
 {
    struct llvmpipe_texture_image *img;
-   unsigned face_offset;
+   unsigned offset;
 
    if (layout == LP_TEX_LAYOUT_LINEAR) {
       img = &lpr->linear[level];
@@ -784,12 +785,12 @@ llvmpipe_get_texture_image_address(struct llvmpipe_resource *lpr,
       img = &lpr->tiled[level];
    }
 
-   if (face > 0)
-      face_offset = face * tex_image_face_size(lpr, level, layout);
+   if (face_slice > 0)
+      offset = face_slice * tex_image_face_size(lpr, level, layout);
    else
-      face_offset = 0;
+      offset = 0;
 
-   return (ubyte *) img->data + face_offset;
+   return (ubyte *) img->data + offset;
 }
 
 
@@ -1009,48 +1010,6 @@ llvmpipe_get_texture_image_all(struct llvmpipe_resource *lpr,
 
 
 /**
- * Return pointer to start of linear data for a particular 2D texture
- * image/face/slice.
- */
-static uint8_t *
-get_linear_image_address(struct llvmpipe_resource *lpr,
-                         unsigned face_slice, unsigned level)
-{
-   struct llvmpipe_texture_image *linear_img = &lpr->linear[level];
-
-   if (face_slice > 0) {
-      unsigned linear_offset =
-         face_slice * tex_image_face_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
-      return (uint8_t *) linear_img->data + linear_offset;
-   }
-   else {
-      return (uint8_t *) linear_img->data;
-   }
-}
-
-
-/**
- * Return pointer to start of tiled data for a particular 2D texture
- * image/face/slice.
- */
-static uint8_t *
-get_tiled_image_address(struct llvmpipe_resource *lpr,
-                        unsigned face_slice, unsigned level)
-{
-   struct llvmpipe_texture_image *tiled_img = &lpr->tiled[level];
-
-   if (face_slice > 0) {
-      unsigned tiled_offset =
-         face_slice * tex_image_face_size(lpr, level, LP_TEX_LAYOUT_TILED);
-      return (uint8_t *) tiled_img->data + tiled_offset;
-   }
-   else {
-      return (uint8_t *) tiled_img->data;
-   }
-}
-
-
-/**
  * Get pointer to a linear image (not the tile!) where the tile at (x,y)
  * is known to be in linear layout.
  * Conversion from tiled to linear will be done if necessary.
@@ -1079,10 +1038,12 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
    }
 
    /* compute address of the slice/face of the image that contains the tile */
-   tiled_image = get_tiled_image_address(lpr, face_slice, level);
-   linear_image = get_linear_image_address(lpr, face_slice, level);
+   tiled_image = llvmpipe_get_texture_image_address(lpr, face_slice, level,
+                                                    LP_TEX_LAYOUT_TILED);
+   linear_image = llvmpipe_get_texture_image_address(lpr, face_slice, level,
+                                                     LP_TEX_LAYOUT_LINEAR);
 
-
+   /* get current tile layout and determine if data conversion is needed */
    cur_layout = llvmpipe_get_texture_tile_layout(lpr, face_slice, level, tx, ty);
 
    layout_logic(cur_layout, LP_TEX_LAYOUT_LINEAR, usage,
@@ -1128,8 +1089,10 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
    }
 
    /* compute address of the slice/face of the image that contains the tile */
-   tiled_image = get_tiled_image_address(lpr, face_slice, level);
-   linear_image = get_linear_image_address(lpr, face_slice, level);
+   tiled_image = llvmpipe_get_texture_image_address(lpr, face_slice, level,
+                                                    LP_TEX_LAYOUT_TILED);
+   linear_image = llvmpipe_get_texture_image_address(lpr, face_slice, level,
+                                                     LP_TEX_LAYOUT_LINEAR);
 
    /* get current tile layout and see if we need to convert the data */
    cur_layout = llvmpipe_get_texture_tile_layout(lpr, face_slice, level, tx, ty);
