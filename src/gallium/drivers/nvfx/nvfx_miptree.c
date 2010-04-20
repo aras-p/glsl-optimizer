@@ -145,7 +145,7 @@ nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *pt)
 			PIPE_BIND_DEPTH_STENCIL))
 		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
 	else
-	if (pt->_usage == PIPE_USAGE_DYNAMIC)
+	if (pt->usage == PIPE_USAGE_DYNAMIC)
 		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
 	else {
 		switch (pt->format) {
@@ -185,7 +185,7 @@ nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *pt)
 	nvfx_miptree_layout(mt);
 
 	mt->base.bo = nouveau_screen_bo_new(pscreen, 256,
-            pt->_usage, pt->bind, mt->total_size);
+            pt->usage, pt->bind, mt->total_size);
 	if (!mt->base.bo) {
 		FREE(mt);
 		return NULL;

@@ -189,7 +189,7 @@ brw_user_buffer_create(struct pipe_screen *screen,
    buf->b.vtbl = &brw_buffer_vtbl;
    buf->b.b.screen = screen;
    buf->b.b.format = PIPE_FORMAT_R8_UNORM; /* ?? */
-   buf->b.b._usage = PIPE_USAGE_IMMUTABLE;
+   buf->b.b.usage = PIPE_USAGE_IMMUTABLE;
    buf->b.b.bind = bind;
    buf->b.b.width0 = bytes;
    buf->b.b.height0 = 1;

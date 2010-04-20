@@ -72,7 +72,7 @@ void trace_dump_resource_template(const struct pipe_resource *templat)
    trace_dump_member_end();
 
    trace_dump_member(uint, templat, last_level);
-   trace_dump_member(uint, templat, _usage);
+   trace_dump_member(uint, templat, usage);
    trace_dump_member(uint, templat, bind);
    trace_dump_member(uint, templat, flags);
 

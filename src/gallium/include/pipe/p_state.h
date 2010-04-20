@@ -336,7 +336,7 @@ struct pipe_resource
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned nr_samples:8;    /**< for multisampled surfaces, nr of samples */
-   unsigned _usage:8;	     /**< PIPE_USAGE_x (not a bitmask) */
+   unsigned usage:8;         /**< PIPE_USAGE_x (not a bitmask) */
 
    unsigned bind;	     /**< bitmask of PIPE_BIND_x */
    unsigned flags;	     /**< bitmask of PIPE_RESOURCE_FLAG_x */

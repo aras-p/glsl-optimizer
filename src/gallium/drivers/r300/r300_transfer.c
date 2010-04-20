@@ -150,7 +150,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
             base.depth0 = 0;
             base.last_level = 0;
             base.nr_samples = 0;
-            base._usage = PIPE_USAGE_DYNAMIC;
+            base.usage = PIPE_USAGE_DYNAMIC;
             base.bind = 0;
 	    base.flags = R300_RESOURCE_FLAG_TRANSFER;
 

@@ -146,7 +146,7 @@ i915_user_buffer_create(struct pipe_screen *screen,
    buf->b.vtbl = &i915_buffer_vtbl;
    buf->b.b.screen = screen;
    buf->b.b.format = PIPE_FORMAT_R8_UNORM; /* ?? */
-   buf->b.b._usage = PIPE_USAGE_IMMUTABLE;
+   buf->b.b.usage = PIPE_USAGE_IMMUTABLE;
    buf->b.b.bind = bind;
    buf->b.b.flags = 0;
    buf->b.b.width0 = bytes;

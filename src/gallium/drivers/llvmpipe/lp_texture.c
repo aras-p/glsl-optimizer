@@ -646,7 +646,7 @@ llvmpipe_user_buffer_create(struct pipe_screen *screen,
    buffer->base.screen = screen;
    buffer->base.format = PIPE_FORMAT_R8_UNORM; /* ?? */
    buffer->base.bind = bind_flags;
-   buffer->base._usage = PIPE_USAGE_IMMUTABLE;
+   buffer->base.usage = PIPE_USAGE_IMMUTABLE;
    buffer->base.flags = 0;
    buffer->base.width0 = bytes;
    buffer->base.height0 = 1;

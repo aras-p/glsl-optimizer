@@ -422,7 +422,7 @@ compress_with_blit(GLcontext * ctx,
    templ.height0 = height;
    templ.depth0 = 1;
    templ.last_level = 0;
-   templ._usage = PIPE_USAGE_DEFAULT;
+   templ.usage = PIPE_USAGE_DEFAULT;
    templ.bind = PIPE_BIND_SAMPLER_VIEW;
    src_tex = screen->resource_create(screen, &templ);
 

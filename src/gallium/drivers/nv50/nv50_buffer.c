@@ -100,7 +100,7 @@ nv50_buffer_create(struct pipe_screen *pscreen,
 
 	buffer->bo = nouveau_screen_bo_new(pscreen,
 					   16,
-					   buffer->base._usage,
+					   buffer->base.usage,
 					   buffer->base.bind,
 					   buffer->base.width0);
 
@@ -131,7 +131,7 @@ nv50_user_buffer_create(struct pipe_screen *pscreen,
 	buffer->vtbl = &nv50_buffer_vtbl;
 	buffer->base.screen = pscreen;
 	buffer->base.format = PIPE_FORMAT_R8_UNORM;
-	buffer->base._usage = PIPE_USAGE_IMMUTABLE;
+	buffer->base.usage = PIPE_USAGE_IMMUTABLE;
 	buffer->base.bind = bind;
 	buffer->base.width0 = bytes;
 	buffer->base.height0 = 1;

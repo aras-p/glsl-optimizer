@@ -280,7 +280,7 @@ util_dump_template(struct os_stream *stream, const struct pipe_resource *templat
    util_dump_member_end(stream);
 
    util_dump_member(stream, uint, templat, last_level);
-   util_dump_member(stream, uint, templat, _usage);
+   util_dump_member(stream, uint, templat, usage);
    util_dump_member(stream, uint, templat, bind);
    util_dump_member(stream, uint, templat, flags);
 

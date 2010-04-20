@@ -310,7 +310,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.vtbl = &r300_buffer_vtbl;
     rbuf->b.b.screen = screen;
     rbuf->b.b.format = PIPE_FORMAT_R8_UNORM;
-    rbuf->b.b._usage = PIPE_USAGE_IMMUTABLE;
+    rbuf->b.b.usage = PIPE_USAGE_IMMUTABLE;
     rbuf->b.b.bind = bind;
     rbuf->b.b.width0 = bytes;
     rbuf->b.b.height0 = 1;

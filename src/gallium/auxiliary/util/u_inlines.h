@@ -159,7 +159,7 @@ pipe_buffer_create( struct pipe_screen *screen,
    buffer.target = PIPE_BUFFER;
    buffer.format = PIPE_FORMAT_R8_UNORM; /* want TYPELESS or similar */
    buffer.bind = bind;
-   buffer._usage = PIPE_USAGE_DEFAULT;
+   buffer.usage = PIPE_USAGE_DEFAULT;
    buffer.flags = 0;
    buffer.width0 = size;
    buffer.height0 = 1;

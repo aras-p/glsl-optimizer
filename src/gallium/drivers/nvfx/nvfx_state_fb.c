@@ -67,7 +67,7 @@ nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
 		depth_only = 1;
 
 		/* Render to depth buffer only */
-		if (!(fb->zsbuf->texture->_usage & NVFX_RESOURCE_FLAG_LINEAR)) {
+		if (!(fb->zsbuf->texture->usage & NVFX_RESOURCE_FLAG_LINEAR)) {
 			assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
 
 			rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |

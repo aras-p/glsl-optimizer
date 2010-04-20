@@ -31,7 +31,7 @@ nvfx_compatible_transfer_tex(struct pipe_resource *pt, unsigned width, unsigned 
 	template->last_level = 0;
 	template->nr_samples = pt->nr_samples;
 	template->bind = bind;
-	template->_usage = PIPE_USAGE_DYNAMIC;
+	template->usage = PIPE_USAGE_DYNAMIC;
 	template->flags = NVFX_RESOURCE_FLAG_LINEAR;
 }
 
@@ -81,7 +81,7 @@ nvfx_miptree_transfer_new(struct pipe_context *pipe,
 	tx->base.stride = mt->level[sr.level].pitch;
 
 	/* Direct access to texture */
-	if ((pt->_usage == PIPE_USAGE_DYNAMIC ||
+	if ((pt->usage == PIPE_USAGE_DYNAMIC ||
 	     no_transfer) &&
 	    pt->flags & NVFX_RESOURCE_FLAG_LINEAR)
 	{
