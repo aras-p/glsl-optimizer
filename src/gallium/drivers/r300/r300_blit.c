@@ -126,7 +126,13 @@ void r300_surface_copy(struct pipe_context* pipe,
     enum pipe_format old_format = dst->texture->format;
     enum pipe_format new_format = old_format;
 
-    assert(dst->texture->format == src->texture->format);
+    if (dst->texture->format != src->texture->format) {
+        debug_printf("r300: Implementation error: Format mismatch in %s\n"
+            "    : src: %s dst: %s\n", __FUNCTION__,
+            util_format_name(src->texture->format),
+            util_format_name(dst->texture->format));
+        debug_assert(0);
+    }
 
     if (!pipe->screen->is_format_supported(pipe->screen,
                                            old_format, src->texture->target,
