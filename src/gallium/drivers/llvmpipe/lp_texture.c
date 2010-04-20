@@ -999,7 +999,7 @@ llvmpipe_get_texture_image_all(struct llvmpipe_resource *lpr,
 {
    const int slices = lpr->num_slices_faces[level];
    int slice;
-   void *map;
+   void *map = NULL;
 
    assert(slices > 0);
 
