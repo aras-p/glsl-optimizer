@@ -103,11 +103,13 @@ boolean draw_init(struct draw_context *draw)
 
 void draw_destroy( struct draw_context *draw )
 {
-   struct pipe_context *pipe = draw->pipe;
+   struct pipe_context *pipe;
    int i, j;
 
    if (!draw)
       return;
+
+   pipe = draw->pipe;
 
    /* free any rasterizer CSOs that we may have created.
     */
