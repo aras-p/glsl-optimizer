@@ -2320,7 +2320,8 @@ ast_struct_specifier::hir(exec_list *instructions,
 	    ? process_array_type(decl_type, decl->array_size, state)
 	    : decl_type;
 
-	 fields[i].type = field_type;
+	 fields[i].type = (field_type != NULL)
+	    ? field_type : glsl_type::error_type;
 	 fields[i].name = decl->identifier;
 	 i++;
       }
