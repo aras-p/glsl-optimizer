@@ -43,7 +43,6 @@ C_SOURCES = \
 	draw/draw_vs_aos_io.c \
 	draw/draw_vs_aos_machine.c \
 	draw/draw_vs_exec.c \
-	draw/draw_vs_llvm.c \
 	draw/draw_vs_ppc.c \
 	draw/draw_vs_sse.c \
 	indices/u_indices_gen.c \

@@ -163,10 +163,6 @@ struct draw_vertex_shader *
 draw_create_vs_ppc(struct draw_context *draw,
 		   const struct pipe_shader_state *templ);
 
-struct draw_vertex_shader *
-draw_create_vs_llvm(struct draw_context *draw,
-		    const struct pipe_shader_state *templ);
-
 
 
 struct draw_vs_varient_key;
