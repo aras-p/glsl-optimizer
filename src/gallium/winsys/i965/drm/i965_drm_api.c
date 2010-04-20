@@ -91,20 +91,12 @@ i965_libdrm_create_screen(struct drm_api *api, int drmFD,
    return brw_create_screen(&idws->base, deviceID);
 }
 
-
-static void
-destroy(struct drm_api *api)
-{
-   if (BRW_DUMP)
-      debug_printf("%s\n", __FUNCTION__);
-
-}
-
 struct drm_api i965_libdrm_api =
 {
    .name = "i965",
+   .driver_name = "i915",
    .create_screen = i965_libdrm_create_screen,
-   .destroy = destroy,
+   .destroy = NULL;
 };
 
 struct drm_api *
