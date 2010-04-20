@@ -146,14 +146,15 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 	return nvws->pscreen;
 }
 
-struct drm_api drm_api_hooks = {
+static struct drm_api nouveau_drm_api_hooks = {
 	.name = "nouveau",
 	.driver_name = "nouveau",
 	.create_screen = nouveau_drm_create_screen,
+	.destroy = NULL;
 };
 
 struct drm_api *
 drm_api_create() {
-	return &drm_api_hooks;
+	return &nouveau_drm_api_hooks;
 }
 
