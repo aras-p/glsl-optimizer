@@ -1111,12 +1111,12 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
                           enum lp_texture_usage usage,
                           unsigned x, unsigned y)
 {
-   const unsigned width = u_minify(lpr->base.width0, level);
    struct llvmpipe_texture_image *tiled_img = &lpr->tiled[level];
    enum lp_texture_layout cur_layout, new_layout;
    const unsigned tx = x / TILE_SIZE, ty = y / TILE_SIZE;
    boolean convert;
    uint8_t *tiled_image, *linear_image;
+   unsigned tile_offset;
 
    assert(x % TILE_SIZE == 0);
    assert(y % TILE_SIZE == 0);
@@ -1145,20 +1145,10 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
       llvmpipe_set_texture_tile_layout(lpr, face_slice, level, tx, ty, new_layout);
 
    /* compute, return address of the 64x64 tile */
-   {
-      unsigned tiles_per_row, tile_offset;
+   tile_offset = (ty * lpr->tiles_per_row[level] + tx)
+         * TILE_SIZE * TILE_SIZE * 4;
 
-      tiles_per_row = align(width, TILE_SIZE) / TILE_SIZE;
-
-      assert(tiles_per_row == lpr->tiles_per_row[level]);
-
-      tile_offset = ty * tiles_per_row + tx;
-      tile_offset *= TILE_SIZE * TILE_SIZE * 4;
-
-      assert(tiled_img->data);
-
-      return (ubyte *) tiled_image + tile_offset;
-   }
+   return (ubyte *) tiled_image + tile_offset;
 }
 
 
