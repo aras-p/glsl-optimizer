@@ -126,12 +126,18 @@ enum pipe_format
 st_mesa_format_to_pipe_format(gl_format mesaFormat)
 {
    switch (mesaFormat) {
-      /* fix this */
-   case MESA_FORMAT_ARGB8888_REV:
+   case MESA_FORMAT_RGBA8888:
+      return PIPE_FORMAT_A8B8G8R8_UNORM;
+   case MESA_FORMAT_RGBA8888_REV:
+      return PIPE_FORMAT_R8G8B8A8_UNORM;
    case MESA_FORMAT_ARGB8888:
       return PIPE_FORMAT_B8G8R8A8_UNORM;
+   case MESA_FORMAT_ARGB8888_REV:
+      return PIPE_FORMAT_A8R8G8B8_UNORM;
    case MESA_FORMAT_XRGB8888:
       return PIPE_FORMAT_B8G8R8X8_UNORM;
+   case MESA_FORMAT_XRGB8888_REV:
+      return PIPE_FORMAT_X8R8G8B8_UNORM;
    case MESA_FORMAT_ARGB1555:
       return PIPE_FORMAT_B5G5R5A1_UNORM;
    case MESA_FORMAT_ARGB4444:
@@ -190,7 +196,7 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
 #endif
    default:
       assert(0);
-      return 0;
+      return PIPE_FORMAT_NONE;
    }
 }
 
@@ -202,12 +208,16 @@ gl_format
 st_pipe_format_to_mesa_format(enum pipe_format format)
 {
    switch (format) {
+   case PIPE_FORMAT_A8B8G8R8_UNORM:
+      return MESA_FORMAT_RGBA8888;
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      return MESA_FORMAT_RGBA8888_REV;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       return MESA_FORMAT_ARGB8888;
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
-      return MESA_FORMAT_XRGB8888;
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       return MESA_FORMAT_ARGB8888_REV;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      return MESA_FORMAT_XRGB8888;
    case PIPE_FORMAT_X8R8G8B8_UNORM:
       return MESA_FORMAT_XRGB8888_REV;
    case PIPE_FORMAT_B5G5R5A1_UNORM:
