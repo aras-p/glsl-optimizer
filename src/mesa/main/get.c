@@ -63,12 +63,22 @@
       goto invalid_enum_error;                                         \
    }
 
+/*
+ * Check GL version.
+ */
+#define CHECK_VERSION(VERSION)                                         \
+   if (version < VERSION) {                                            \
+      goto invalid_enum_error;                                         \
+   }
+
 
 void GLAPIENTRY
 _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
@@ -1943,24 +1953,31 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTransformFeedbackSeparateComponents);
          break;
       case GL_NUM_EXTENSIONS:
+         CHECK_VERSION(30);
          params[0] = INT_TO_BOOLEAN(_mesa_get_extension_count(ctx));
          break;
       case GL_MAJOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = INT_TO_BOOLEAN(ctx->VersionMajor);
          break;
       case GL_MINOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = INT_TO_BOOLEAN(ctx->VersionMinor);
          break;
       case GL_CONTEXT_FLAGS:
+         CHECK_VERSION(30);
          params[0] = INT_TO_BOOLEAN(ctx->Const.ContextFlags);
          break;
       case GL_PRIMITIVE_RESTART:
+         CHECK_VERSION(31);
          params[0] = ctx->Array.PrimitiveRestart;
          break;
       case GL_PRIMITIVE_RESTART_INDEX:
+         CHECK_VERSION(31);
          params[0] = INT_TO_BOOLEAN(ctx->Array.RestartIndex);
          break;
       case GL_CONTEXT_PROFILE_MASK:
+         CHECK_VERSION(32);
          params[0] = INT_TO_BOOLEAN(ctx->Const.ProfileMask);
          break;
       default:
@@ -1976,7 +1993,9 @@ void GLAPIENTRY
 _mesa_GetFloatv( GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
@@ -3851,24 +3870,31 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->Const.MaxTransformFeedbackSeparateComponents);
          break;
       case GL_NUM_EXTENSIONS:
+         CHECK_VERSION(30);
          params[0] = (GLfloat)(_mesa_get_extension_count(ctx));
          break;
       case GL_MAJOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = (GLfloat)(ctx->VersionMajor);
          break;
       case GL_MINOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = (GLfloat)(ctx->VersionMinor);
          break;
       case GL_CONTEXT_FLAGS:
+         CHECK_VERSION(30);
          params[0] = (GLfloat)(ctx->Const.ContextFlags);
          break;
       case GL_PRIMITIVE_RESTART:
+         CHECK_VERSION(31);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.PrimitiveRestart);
          break;
       case GL_PRIMITIVE_RESTART_INDEX:
+         CHECK_VERSION(31);
          params[0] = (GLfloat)(ctx->Array.RestartIndex);
          break;
       case GL_CONTEXT_PROFILE_MASK:
+         CHECK_VERSION(32);
          params[0] = (GLfloat)(ctx->Const.ProfileMask);
          break;
       default:
@@ -3884,7 +3910,9 @@ void GLAPIENTRY
 _mesa_GetIntegerv( GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
@@ -5759,24 +5787,31 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->Const.MaxTransformFeedbackSeparateComponents;
          break;
       case GL_NUM_EXTENSIONS:
+         CHECK_VERSION(30);
          params[0] = _mesa_get_extension_count(ctx);
          break;
       case GL_MAJOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = ctx->VersionMajor;
          break;
       case GL_MINOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = ctx->VersionMinor;
          break;
       case GL_CONTEXT_FLAGS:
+         CHECK_VERSION(30);
          params[0] = ctx->Const.ContextFlags;
          break;
       case GL_PRIMITIVE_RESTART:
+         CHECK_VERSION(31);
          params[0] = BOOLEAN_TO_INT(ctx->Array.PrimitiveRestart);
          break;
       case GL_PRIMITIVE_RESTART_INDEX:
+         CHECK_VERSION(31);
          params[0] = ctx->Array.RestartIndex;
          break;
       case GL_CONTEXT_PROFILE_MASK:
+         CHECK_VERSION(32);
          params[0] = ctx->Const.ProfileMask;
          break;
       default:
@@ -5793,7 +5828,9 @@ void GLAPIENTRY
 _mesa_GetInteger64v( GLenum pname, GLint64 *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
@@ -7668,24 +7705,31 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = (GLint64)(ctx->Const.MaxTransformFeedbackSeparateComponents);
          break;
       case GL_NUM_EXTENSIONS:
+         CHECK_VERSION(30);
          params[0] = (GLint64)(_mesa_get_extension_count(ctx));
          break;
       case GL_MAJOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = (GLint64)(ctx->VersionMajor);
          break;
       case GL_MINOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = (GLint64)(ctx->VersionMinor);
          break;
       case GL_CONTEXT_FLAGS:
+         CHECK_VERSION(30);
          params[0] = (GLint64)(ctx->Const.ContextFlags);
          break;
       case GL_PRIMITIVE_RESTART:
+         CHECK_VERSION(31);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.PrimitiveRestart);
          break;
       case GL_PRIMITIVE_RESTART_INDEX:
+         CHECK_VERSION(31);
          params[0] = (GLint64)(ctx->Array.RestartIndex);
          break;
       case GL_CONTEXT_PROFILE_MASK:
+         CHECK_VERSION(32);
          params[0] = (GLint64)(ctx->Const.ProfileMask);
          break;
       default:
@@ -7725,7 +7769,9 @@ void GLAPIENTRY
 _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
@@ -7787,7 +7833,9 @@ void GLAPIENTRY
 _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
@@ -7850,7 +7898,9 @@ void GLAPIENTRY
 _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;

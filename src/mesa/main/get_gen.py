@@ -1140,20 +1140,24 @@ StateVars = [
 	  NoState, ["EXT_transform_feedback"] ),
 
 	# GL 3.0
-	( "GL_NUM_EXTENSIONS", GLint, ["_mesa_get_extension_count(ctx)"], "", NoState, NoExt ),
-	( "GL_MAJOR_VERSION", GLint, ["ctx->VersionMajor"], "", NoState, NoExt ),
-	( "GL_MINOR_VERSION", GLint, ["ctx->VersionMinor"], "", NoState, NoExt ),
-	( "GL_CONTEXT_FLAGS", GLint, ["ctx->Const.ContextFlags"], "", NoState, NoExt ),
+	( "GL_NUM_EXTENSIONS", GLint,
+	  ["_mesa_get_extension_count(ctx)"], "", NoState, "30" ),
+	( "GL_MAJOR_VERSION", GLint,
+	  ["ctx->VersionMajor"], "", NoState, "30" ),
+	( "GL_MINOR_VERSION", GLint,
+	  ["ctx->VersionMinor"], "", NoState, "30" ),
+	( "GL_CONTEXT_FLAGS", GLint,
+	  ["ctx->Const.ContextFlags"], "", NoState, "30" ),
 
     # GL 3.1
     ( "GL_PRIMITIVE_RESTART", GLboolean,
-      ["ctx->Array.PrimitiveRestart"], "", NoState, NoExt ),
+      ["ctx->Array.PrimitiveRestart"], "", NoState, "31" ),
     ( "GL_PRIMITIVE_RESTART_INDEX", GLint,
-      ["ctx->Array.RestartIndex"], "", NoState, NoExt ),
+      ["ctx->Array.RestartIndex"], "", NoState, "31" ),
  
 	# GL 3.2
 	( "GL_CONTEXT_PROFILE_MASK", GLint, ["ctx->Const.ProfileMask"], "",
-	  NoState, NoExt )
+	  NoState, "32" )
 
 ]
 
@@ -1257,7 +1261,9 @@ def EmitGetFunction(stateVars, returnType, indexed):
 		print "_mesa_%s( GLenum pname, %s *params )" % (function, strType)
 	print "{"
 	print "   GET_CURRENT_CONTEXT(ctx);"
+	print "   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;"
 	print "   ASSERT_OUTSIDE_BEGIN_END(ctx);"
+	print "   (void) version;"
 	print ""
 	print "   if (!params)"
 	print "      return;"
@@ -1280,7 +1286,9 @@ def EmitGetFunction(stateVars, returnType, indexed):
 
 		# Do extension check
 		if extensions:
-			if len(extensions) == 1:
+			if extensions == "30" or extensions == "31" or extensions == "32":
+				print ('         CHECK_VERSION(%s);' % extensions)
+			elif len(extensions) == 1:
 				print ('         CHECK_EXT1(%s);' % extensions[0])
 			elif len(extensions) == 2:
 				print ('         CHECK_EXT2(%s, %s);' % (extensions[0], extensions[1]))
@@ -1401,6 +1409,14 @@ def EmitHeader():
 #define CHECK_EXT4(EXT1, EXT2, EXT3, EXT4)                             \\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \\
        !ctx->Extensions.EXT3 && !ctx->Extensions.EXT4) {               \\
+      goto invalid_enum_error;                                         \\
+   }
+
+/*
+ * Check GL version.
+ */
+#define CHECK_VERSION(VERSION)                                         \\
+   if (version < VERSION) {                                            \\
       goto invalid_enum_error;                                         \\
    }
 
