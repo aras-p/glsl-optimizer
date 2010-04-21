@@ -566,6 +566,9 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxTransformFeedbackSeparateAttribs = MAX_FEEDBACK_ATTRIBS;
    ctx->Const.MaxTransformFeedbackSeparateComponents = 4 * MAX_FEEDBACK_ATTRIBS;
    ctx->Const.MaxTransformFeedbackInterleavedComponents = 4 * MAX_FEEDBACK_ATTRIBS;
+
+   /* GL 3.2: hard-coded for now: */
+   ctx->Const.ProfileMask = GL_CONTEXT_COMPATIBILITY_PROFILE_BIT;
 }
 
 

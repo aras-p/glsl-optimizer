@@ -1139,11 +1139,16 @@ StateVars = [
 	  ["ctx->Const.MaxTransformFeedbackSeparateComponents"], "",
 	  NoState, ["EXT_transform_feedback"] ),
 
-	# GL3
+	# GL 3.0
 	( "GL_NUM_EXTENSIONS", GLint, ["_mesa_get_extension_count(ctx)"], "", NoState, NoExt ),
 	( "GL_MAJOR_VERSION", GLint, ["ctx->VersionMajor"], "", NoState, NoExt ),
 	( "GL_MINOR_VERSION", GLint, ["ctx->VersionMinor"], "", NoState, NoExt ),
-	( "GL_CONTEXT_FLAGS", GLint, ["ctx->Const.ContextFlags"], "", NoState, NoExt )
+	( "GL_CONTEXT_FLAGS", GLint, ["ctx->Const.ContextFlags"], "", NoState, NoExt ),
+
+	# GL 3.2
+	( "GL_CONTEXT_PROFILE_MASK", GLint, ["ctx->Const.ProfileMask"], "",
+	  NoState, NoExt )
+
 ]
 
 

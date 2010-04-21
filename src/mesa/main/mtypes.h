@@ -2417,12 +2417,14 @@ struct gl_constants
     */
    GLuint64 MaxServerWaitTimeout;
 
-
-   /**< GL_EXT_provoking_vertex */
+   /** GL_EXT_provoking_vertex */
    GLboolean QuadsFollowProvokingVertexConvention;
 
-   /**< OpenGL version 3.x */
+   /** OpenGL version 3.0 */
    GLbitfield ContextFlags;  /**< Ex: GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT */
+
+   /** OpenGL version 3.2 */
+   GLbitfield ProfileMask;   /**< Mask of CONTEXT_x_PROFILE_BIT */
 
    /** GL_EXT_transform_feedback */
    GLuint MaxTransformFeedbackSeparateAttribs;
