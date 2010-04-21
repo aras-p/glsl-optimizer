@@ -260,22 +260,21 @@ ir_dereference::is_lvalue()
    if (var == NULL)
       return false;
 
+   ir_variable *const as_var = var->as_variable();
    if (mode == ir_reference_variable) {
-      ir_variable *const as_var = var->as_variable();
       if (as_var == NULL)
 	 return false;
 
       if (as_var->type->is_array() && !as_var->array_lvalue)
 	 return false;
-
-      return !as_var->read_only;
-   } else if (mode == ir_reference_array) {
-      /* FINISHME: Walk up the dereference chain and figure out if
-       * FINISHME: the variable is read-only.
-       */
    }
 
-   return true;
+   if (as_var != NULL)
+      return !as_var->read_only;
+
+   /* Walk up the dereference chain and figure out if the variable is read-only.
+    */
+   return this->var->as_rvalue()->is_lvalue();
 }
 
 ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
