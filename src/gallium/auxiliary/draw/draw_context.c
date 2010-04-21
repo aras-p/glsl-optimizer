@@ -49,6 +49,7 @@ struct draw_context *draw_create( struct pipe_context *pipe )
       goto fail;
 
 #if HAVE_LLVM
+   lp_build_init();
    assert(lp_build_engine);
    draw->engine = lp_build_engine;
 #endif
