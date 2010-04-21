@@ -111,6 +111,7 @@ struct draw_context
 
       float wide_point_threshold; /**< convert pnts to tris if larger than this */
       float wide_line_threshold;  /**< convert lines to tris if wider than this */
+      boolean wide_point_sprites; /**< convert points to tris for sprite mode */
       boolean line_stipple;       /**< do line stipple? */
       boolean point_sprite;       /**< convert points to quads for sprites? */
 

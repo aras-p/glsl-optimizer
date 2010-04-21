@@ -100,6 +100,11 @@ draw_need_pipeline(const struct draw_context *draw,
       if (rasterizer->point_size > draw->pipeline.wide_point_threshold)
          return TRUE;
 
+      /* sprite points */
+      if (rasterizer->point_quad_rasterization
+          && draw->pipeline.wide_point_sprites)
+         return TRUE;
+
       /* AA points */
       if (rasterizer->point_smooth && draw->pipeline.aapoint)
          return TRUE;
@@ -171,6 +176,8 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    else if (rast->point_smooth && draw->pipeline.aapoint)
       wide_points = FALSE;
    else if (rast->point_size > draw->pipeline.wide_point_threshold)
+      wide_points = TRUE;
+   else if (rast->point_quad_rasterization && draw->pipeline.wide_point_sprites)
       wide_points = TRUE;
    else
       wide_points = FALSE;

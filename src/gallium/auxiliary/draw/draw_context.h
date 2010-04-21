@@ -67,6 +67,8 @@ void draw_set_rasterize_stage( struct draw_context *draw,
 
 void draw_wide_point_threshold(struct draw_context *draw, float threshold);
 
+void draw_wide_point_sprites(struct draw_context *draw, boolean draw_sprite);
+
 void draw_wide_line_threshold(struct draw_context *draw, float threshold);
 
 void draw_enable_line_stipple(struct draw_context *draw, boolean enable);

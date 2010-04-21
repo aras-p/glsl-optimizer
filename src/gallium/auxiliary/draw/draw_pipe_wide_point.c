@@ -132,10 +132,9 @@ static void set_texcoords(const struct widepoint_stage *wide,
 static void widepoint_point( struct draw_stage *stage,
                              struct prim_header *header )
 {
-   /* XXX should take point_quad_rasterization into account? */
    const struct widepoint_stage *wide = widepoint_stage(stage);
    const unsigned pos = draw_current_shader_position_output(stage->draw);
-   const boolean sprite = (boolean) stage->draw->rasterizer->sprite_coord_enable;
+   const boolean sprite = (boolean) stage->draw->rasterizer->point_quad_rasterization;
    float half_size;
    float left_adj, right_adj, bot_adj, top_adj;
 
@@ -237,14 +236,14 @@ static void widepoint_first_point( struct draw_stage *stage,
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
    if ((rast->point_size > draw->pipeline.wide_point_threshold) ||
-       (rast->sprite_coord_enable && draw->pipeline.point_sprite)) {
+       (rast->point_quad_rasterization && draw->pipeline.point_sprite)) {
       stage->point = widepoint_point;
    }
    else {
       stage->point = draw_pipe_passthrough_point;
    }
 
-   if (rast->sprite_coord_enable) {
+   if (rast->point_quad_rasterization) {
       /* find vertex shader texcoord outputs */
       const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       uint i, j = 0;

@@ -304,6 +304,17 @@ draw_wide_point_threshold(struct draw_context *draw, float threshold)
 
 
 /**
+ * Should the draw module handle point->quad conversion for drawing sprites?
+ */
+void
+draw_wide_point_sprites(struct draw_context *draw, boolean draw_sprite)
+{
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   draw->pipeline.wide_point_sprites = draw_sprite;
+}
+
+
+/**
  * Tells the draw module to draw lines with triangles if their width
  * is greater than this threshold.
  */
