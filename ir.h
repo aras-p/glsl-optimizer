@@ -52,6 +52,7 @@ public:
     */
    /*@{*/
    virtual class ir_variable *          as_variable()         { return NULL; }
+   virtual class ir_function *          as_function()         { return NULL; }
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
    virtual class ir_label *             as_label()            { return NULL; }
@@ -242,6 +243,11 @@ private:
 class ir_function : public ir_instruction {
 public:
    ir_function(const char *name);
+
+   virtual ir_function *as_function()
+   {
+      return this;
+   }
 
    virtual void accept(ir_visitor *v)
    {

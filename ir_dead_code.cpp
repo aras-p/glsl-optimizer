@@ -62,7 +62,6 @@ public:
     */
    /*@{*/
    virtual void visit(ir_variable *);
-   virtual void visit(ir_label *);
    virtual void visit(ir_loop *);
    virtual void visit(ir_loop_jump *);
    virtual void visit(ir_function_signature *);
@@ -120,12 +119,6 @@ ir_dead_code_visitor::visit(ir_variable *ir)
    }
 }
 
-
-void
-ir_dead_code_visitor::visit(ir_label *ir)
-{
-   ir->signature->accept(this);
-}
 
 void
 ir_dead_code_visitor::visit(ir_loop *ir)
@@ -325,10 +318,14 @@ do_dead_code_unlinked(exec_list *instructions)
 
    foreach_iter(exec_list_iterator, iter, *instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
-      ir_label *label = ir->as_label();
-      if (label) {
-	 if (do_dead_code(&label->signature->body))
-	    progress = true;
+      ir_function *f = ir->as_function();
+      if (f) {
+	 foreach_iter(exec_list_iterator, sigiter, *f) {
+	    ir_function_signature *sig =
+	       (ir_function_signature *) sigiter.get();
+	    if (do_dead_code(&sig->body))
+	       progress = true;
+	 }
       }
    }
 
