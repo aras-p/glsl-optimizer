@@ -2269,6 +2269,8 @@ ast_type_specifier::hir(exec_list *instructions,
 {
    if (this->structure != NULL)
       return this->structure->hir(instructions, state);
+
+   return NULL;
 }
 
 
