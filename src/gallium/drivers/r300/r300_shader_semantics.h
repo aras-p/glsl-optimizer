@@ -25,7 +25,7 @@
 
 #define ATTR_UNUSED             (-1)
 #define ATTR_COLOR_COUNT        2
-#define ATTR_GENERIC_COUNT      16
+#define ATTR_GENERIC_COUNT      32
 
 /* This structure contains information about what attributes are written by VS
  * or read by FS. (but not both) It's much easier to work with than
