@@ -135,9 +135,6 @@ const glsl_type *glsl_type::get_base_type() const
 ir_function *
 glsl_type::generate_constructor_prototype(glsl_symbol_table *symtab) const
 {
-   /* FINISHME: Add support for non-array types. */
-   assert(base_type == GLSL_TYPE_ARRAY);
-
    /* Generate the function name and add it to the symbol table.
     */
    ir_function *const f = new ir_function(name);
@@ -153,7 +150,9 @@ glsl_type::generate_constructor_prototype(glsl_symbol_table *symtab) const
 
       snprintf(param_name, 10, "p%08X", i);
 
-      ir_variable *var = new ir_variable(fields.array, param_name);
+      ir_variable *var = (this->base_type == GLSL_TYPE_ARRAY)
+	 ? new ir_variable(fields.array, param_name)
+	 : new ir_variable(fields.structure[i].type, param_name);
 
       var->mode = ir_var_in;
       sig->parameters.push_tail(var);
