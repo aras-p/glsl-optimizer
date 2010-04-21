@@ -32,33 +32,6 @@
 extern const GLubyte * GLAPIENTRY _es_GetString(GLenum name);
 
 
-static const GLubyte *
-compute_es_version(void)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   static const char es_1_0[] = "OpenGL ES-CM 1.0";
-   static const char es_1_1[] = "OpenGL ES-CM 1.1";
-   /* OpenGL ES 1.0 is derived from OpenGL 1.3 */
-   const GLboolean ver_1_0 = (ctx->Extensions.ARB_multisample &&
-                              ctx->Extensions.ARB_multitexture &&
-                              ctx->Extensions.ARB_texture_compression &&
-                              ctx->Extensions.EXT_texture_env_add &&
-                              ctx->Extensions.ARB_texture_env_combine &&
-                              ctx->Extensions.ARB_texture_env_dot3);
-   /* OpenGL ES 1.1 is derived from OpenGL 1.5 */
-   const GLboolean ver_1_1 = (ver_1_0 &&
-                              ctx->Extensions.EXT_point_parameters &&
-                              ctx->Extensions.SGIS_generate_mipmap &&
-                              ctx->Extensions.ARB_vertex_buffer_object);
-   if (ver_1_1)
-      return (const GLubyte *) es_1_1;
-
-   if (!ver_1_0)
-      _mesa_problem(ctx, "Incomplete OpenGL ES 1.0 support.");
-   return (const GLubyte *) es_1_0;
-}
-
-
 static size_t
 append_extension(char **str, const char *ext)
 {
@@ -187,8 +160,6 @@ const GLubyte * GLAPIENTRY
 _es_GetString(GLenum name)
 {
    switch (name) {
-   case GL_VERSION:
-      return compute_es_version();
    case GL_EXTENSIONS:
       return compute_es_extensions();
    default:

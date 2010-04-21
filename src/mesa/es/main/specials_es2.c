@@ -32,34 +32,6 @@
 const GLubyte * GLAPIENTRY _es_GetString(GLenum name);
 
 
-static const GLubyte *
-compute_es_version(void)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   static const char es_2_0[] = "OpenGL ES 2.0";
-   /* OpenGL ES 2.0 is derived from OpenGL 2.0 */
-   const GLboolean ver_2_0 = (ctx->Extensions.ARB_multisample &&
-                              ctx->Extensions.ARB_multitexture &&
-                              ctx->Extensions.ARB_texture_compression &&
-                              ctx->Extensions.ARB_texture_cube_map &&
-                              ctx->Extensions.ARB_texture_mirrored_repeat &&
-                              ctx->Extensions.EXT_blend_color &&
-                              ctx->Extensions.EXT_blend_func_separate &&
-                              ctx->Extensions.EXT_blend_minmax &&
-                              ctx->Extensions.EXT_blend_subtract &&
-                              ctx->Extensions.EXT_stencil_wrap &&
-                              ctx->Extensions.ARB_vertex_buffer_object &&
-                              ctx->Extensions.ARB_shader_objects &&
-                              ctx->Extensions.ARB_vertex_shader &&
-                              ctx->Extensions.ARB_fragment_shader &&
-                              ctx->Extensions.ARB_texture_non_power_of_two &&
-                              ctx->Extensions.EXT_blend_equation_separate);
-   if (!ver_2_0)
-      _mesa_problem(ctx, "Incomplete OpenGL ES 2.0 support.");
-   return (const GLubyte *) es_2_0;
-}
-
-
 static size_t
 append_extension(char **str, const char *ext)
 {
@@ -157,8 +129,6 @@ const GLubyte * GLAPIENTRY
 _es_GetString(GLenum name)
 {
    switch (name) {
-   case GL_VERSION:
-      return compute_es_version();
    case GL_SHADING_LANGUAGE_VERSION:
       return (const GLubyte *) "OpenGL ES GLSL ES 1.0.16";
    case GL_EXTENSIONS:
