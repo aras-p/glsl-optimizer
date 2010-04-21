@@ -34,7 +34,6 @@
 #include "lp_bld_const.h"
 #include "lp_bld_conv.h"
 #include "lp_bld_sample.h" /* for lp_build_gather */
-#include "lp_bld_init.h"
 #include "lp_bld_format.h"
 
 
