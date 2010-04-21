@@ -223,7 +223,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
 #endif
    struct lp_build_flow_context *flow;
    struct lp_type i32_type;
-   LLVMTypeRef i32vec4_type, mask_type;
+   LLVMTypeRef i32vec4_type;
    LLVMValueRef c0_vec, c1_vec, c2_vec;
    LLVMValueRef in_out_mask;
 
@@ -238,8 +238,6 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    i32_type.length = 4;       /* 4 elements per vector */
 
    i32vec4_type = lp_build_int32_vec4_type();
-
-   mask_type = LLVMIntType(32 * 4);
 
    /*
     * Use a conditional here to do detailed pixel in/out testing.
