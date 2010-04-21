@@ -720,7 +720,12 @@ emit_declaration(
    return TRUE;
 }
 
-static int
+
+/**
+ * Emit LLVM for one TGSI instruction.
+ * \param return TRUE for success, FALSE otherwise
+ */
+static boolean
 emit_instruction(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst,
@@ -1168,7 +1173,7 @@ emit_instruction(
    case TGSI_OPCODE_RCC:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
 
    case TGSI_OPCODE_DPH:
       tmp0 = emit_fetch( bld, inst, 0, CHAN_X );
@@ -1220,23 +1225,23 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_PK2H:
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_PK2US:
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_PK4B:
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_PK4UB:
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_RFL:
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_SEQ:
@@ -1301,43 +1306,43 @@ emit_instruction(
 
    case TGSI_OPCODE_TXD:
       /* FIXME */
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_UP2H:
       /* deprecated */
       assert (0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_UP2US:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_UP4B:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_UP4UB:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_X2D:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_ARA:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
 #if 0
@@ -1355,17 +1360,17 @@ emit_instruction(
    case TGSI_OPCODE_BRA:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_CAL:
       /* FIXME */
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_RET:
       /* FIXME */
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_END:
@@ -1495,7 +1500,7 @@ emit_instruction(
    case TGSI_OPCODE_DIV:
       /* deprecated */
       assert( 0 );
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_DP2:
@@ -1533,7 +1538,7 @@ emit_instruction(
    case TGSI_OPCODE_BGNFOR:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_BGNLOOP:
@@ -1543,7 +1548,7 @@ emit_instruction(
    case TGSI_OPCODE_REP:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_ELSE:
@@ -1557,7 +1562,7 @@ emit_instruction(
    case TGSI_OPCODE_ENDFOR:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_ENDLOOP:
@@ -1567,19 +1572,19 @@ emit_instruction(
    case TGSI_OPCODE_ENDREP:
       /* deprecated */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_PUSHA:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_POPA:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_CEIL:
@@ -1592,13 +1597,13 @@ emit_instruction(
    case TGSI_OPCODE_I2F:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_NOT:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_TRUNC:
@@ -1611,55 +1616,55 @@ emit_instruction(
    case TGSI_OPCODE_SHL:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_ISHR:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_AND:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_OR:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_MOD:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_XOR:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_SAD:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_TXF:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_TXQ:
       /* deprecated? */
       assert(0);
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_CONT:
@@ -1667,18 +1672,18 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_EMIT:
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_ENDPRIM:
-      return 0;
+      return FALSE;
       break;
 
    case TGSI_OPCODE_NOP:
       break;
 
    default:
-      return 0;
+      return FALSE;
    }
    
    if(info->num_dst) {
@@ -1687,7 +1692,7 @@ emit_instruction(
       }
    }
 
-   return 1;
+   return TRUE;
 }
 
 
