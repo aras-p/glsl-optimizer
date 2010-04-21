@@ -2130,7 +2130,7 @@ ast_jump_statement::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state,
 			     "`return` with a value, in function `%s' "
 			     "returning void",
-			     state->current_function->definition->label);
+			     state->current_function->function_name());
 	 }
 
 	 ir_expression *const ret = (ir_expression *)
@@ -2150,7 +2150,7 @@ ast_jump_statement::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state,
 			     "`return' with no value, in function %s returning "
 			     "non-void",
-			     state->current_function->definition->label);
+			     state->current_function->function_name());
 	 }
 	 inst = new ir_return;
       }
