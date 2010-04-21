@@ -132,7 +132,7 @@ xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
 {
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
    struct pipe_resource templ;
-   unsigned i;
+   enum st_attachment_type i;
 
    /* remove outdated textures */
    if (xstfb->texture_width != width || xstfb->texture_height != height) {
