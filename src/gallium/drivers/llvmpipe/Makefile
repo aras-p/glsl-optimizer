@@ -61,5 +61,5 @@ lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxil
 
 LIBS += $(GL_LIB_DEPS) -L../../auxiliary/ -lgallium libllvmpipe.a
 
-$(PROGS): lp_test_main.o
+$(PROGS): lp_test_main.o libllvmpipe.a
 
