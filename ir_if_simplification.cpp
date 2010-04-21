@@ -55,7 +55,6 @@ public:
     */
    /*@{*/
    virtual void visit(ir_variable *);
-   virtual void visit(ir_label *);
    virtual void visit(ir_loop *);
    virtual void visit(ir_loop_jump *);
    virtual void visit(ir_function_signature *);
@@ -137,12 +136,6 @@ ir_if_simplification_visitor::visit(ir_variable *ir)
    (void) ir;
 }
 
-
-void
-ir_if_simplification_visitor::visit(ir_label *ir)
-{
-   ir->signature->accept(this);
-}
 
 void
 ir_if_simplification_visitor::visit(ir_loop *ir)

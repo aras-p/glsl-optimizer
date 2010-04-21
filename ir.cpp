@@ -108,12 +108,6 @@ ir_expression::get_num_operands(void)
    return num_operands[this->operation];
 }
 
-ir_label::ir_label(const char *label, ir_function_signature *signature)
-   : label(label), signature(signature)
-{
-   /* empty */
-}
-
 
 ir_constant::ir_constant(const struct glsl_type *type, const void *data)
 {

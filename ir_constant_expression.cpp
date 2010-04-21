@@ -63,7 +63,6 @@ public:
     */
    /*@{*/
    virtual void visit(ir_variable *);
-   virtual void visit(ir_label *);
    virtual void visit(ir_function_signature *);
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
@@ -101,14 +100,6 @@ ir_instruction::constant_expression_value()
 
 void
 ir_constant_visitor::visit(ir_variable *ir)
-{
-   (void) ir;
-   value = NULL;
-}
-
-
-void
-ir_constant_visitor::visit(ir_label *ir)
 {
    (void) ir;
    value = NULL;

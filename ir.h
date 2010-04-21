@@ -183,26 +183,6 @@ public:
 };
 
 
-class ir_label : public ir_instruction {
-public:
-   ir_label(const char *label, ir_function_signature *signature);
-
-   virtual ir_label *as_label()
-   {
-      return this;
-   }
-
-   virtual void accept(ir_visitor *v)
-   {
-      v->visit(this);
-   }
-
-   const char *label;
-
-   ir_function_signature *signature;
-};
-
-
 /*@{*/
 /**
  * The representation of a function instance; may be the full definition or

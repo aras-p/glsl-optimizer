@@ -64,15 +64,6 @@ void ir_print_visitor::visit(ir_variable *ir)
 }
 
 
-void ir_print_visitor::visit(ir_label *ir)
-{
-   printf("\n(label %s\n", ir->label);
-
-   ir->signature->accept(this);
-   printf(")");
-}
-
-
 void ir_print_visitor::visit(ir_function_signature *ir)
 {
    printf("(signature\n  (parameters\n");

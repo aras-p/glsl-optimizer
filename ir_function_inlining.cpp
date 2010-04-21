@@ -92,7 +92,6 @@ public:
     */
    /*@{*/
    virtual void visit(ir_variable *);
-   virtual void visit(ir_label *);
    virtual void visit(ir_loop *);
    virtual void visit(ir_loop_jump *);
    virtual void visit(ir_function_signature *);
@@ -118,13 +117,6 @@ ir_function_cloning_visitor::visit(ir_variable *ir)
    this->result = new_var;
 
    this->remap_variable(ir, new_var);
-}
-
-void
-ir_function_cloning_visitor::visit(ir_label *ir)
-{
-   (void)ir;
-   this->result = NULL;
 }
 
 void
@@ -451,12 +443,6 @@ ir_function_inlining_visitor::visit(ir_variable *ir)
    (void) ir;
 }
 
-
-void
-ir_function_inlining_visitor::visit(ir_label *ir)
-{
-   ir->signature->accept(this);
-}
 
 void
 ir_function_inlining_visitor::visit(ir_loop *ir)

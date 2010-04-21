@@ -48,7 +48,6 @@ public:
     */
    /*@{*/
    virtual void visit(ir_variable *);
-   virtual void visit(ir_label *);
    virtual void visit(ir_loop *);
    virtual void visit(ir_loop_jump *);
    virtual void visit(ir_function_signature *);
