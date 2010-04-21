@@ -336,6 +336,8 @@ softpipe_create_context( struct pipe_screen *screen,
    draw_install_pstipple_stage(softpipe->draw, &softpipe->pipe);
 #endif
 
+   draw_wide_point_sprites(softpipe->draw, TRUE);
+
    sp_init_surface_functions(softpipe);
 
    return &softpipe->pipe;
