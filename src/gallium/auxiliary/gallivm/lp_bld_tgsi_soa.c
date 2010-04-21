@@ -227,7 +227,7 @@ static void lp_exec_bgnloop(struct lp_exec_mask *mask)
 
    if (mask->cont_stack_size == 0)
       mask->cont_mask = LLVMConstAllOnes(mask->int_vec_type);
-   if (mask->cont_stack_size == 0)
+   if (mask->break_stack_size == 0)
       mask->break_mask = LLVMConstAllOnes(mask->int_vec_type);
    if (mask->cond_stack_size == 0)
       mask->cond_mask = LLVMConstAllOnes(mask->int_vec_type);
