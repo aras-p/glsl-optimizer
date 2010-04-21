@@ -160,6 +160,7 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
    lpr->img_stride[0] = 0;
 
    lpr->layout[0] = alloc_layout_array(1, width, height);
+   //lpr->layout[0][0] = LP_TEX_LAYOUT_LINEAR;
 
    lpr->dt = winsys->displaytarget_create(winsys,
                                           lpr->base.bind,
@@ -307,6 +308,7 @@ llvmpipe_resource_map(struct pipe_resource *resource,
       struct llvmpipe_screen *screen = llvmpipe_screen(resource->screen);
       struct sw_winsys *winsys = screen->winsys;
       unsigned dt_usage;
+      uint8_t *map2;
 
       if (tex_usage == LP_TEX_USAGE_READ) {
          dt_usage = PIPE_TRANSFER_READ;
@@ -325,11 +327,12 @@ llvmpipe_resource_map(struct pipe_resource *resource,
       /* install this linear image in texture data structure */
       lpr->linear[level].data = map;
 
-      map = llvmpipe_get_texture_image(lpr, face + zslice, level,
-                                       tex_usage, layout);
-      assert(map);
+      /* make sure tiled data gets converted to linear data */
+      map2 = llvmpipe_get_texture_image(lpr, 0, 0, tex_usage, layout);
+      if (layout == LP_TEX_LAYOUT_LINEAR)
+         assert(map == map2);
 
-      return map;
+      return map2;
    }
    else if (resource_is_texture(resource)) {
       /* regular texture */
@@ -842,6 +845,43 @@ llvmpipe_set_texture_image_layout(struct llvmpipe_resource *lpr,
 
 
 /**
+ * Allocate storage for a linear or tile texture image (all cube
+ * faces and all 3D slices.
+ */
+static void
+alloc_image_data(struct llvmpipe_resource *lpr, unsigned level,
+                 enum lp_texture_layout layout)
+{
+   if (lpr->dt)
+      assert(level == 0);
+
+   if (layout == LP_TEX_LAYOUT_TILED) {
+      /* tiled data is stored in regular memory */
+      uint buffer_size = tex_image_size(lpr, level, layout);
+      lpr->tiled[level].data = align_malloc(buffer_size, 16);
+   }
+   else {
+      assert(layout == LP_TEX_LAYOUT_LINEAR);
+      if (lpr->dt) {
+         /* we get the linear memory from the winsys */
+         struct llvmpipe_screen *screen = llvmpipe_screen(lpr->base.screen);
+         struct sw_winsys *winsys = screen->winsys;
+
+         lpr->linear[0].data =
+            winsys->displaytarget_map(winsys, lpr->dt,
+                                      PIPE_TRANSFER_READ_WRITE);
+      }
+      else {
+         /* not a display target - allocate regular memory */
+         uint buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
+         lpr->linear[level].data = align_malloc(buffer_size, 16);
+      }
+   }
+}
+
+
+
+/**
  * Return pointer to texture image data (either linear or tiled layout)
  * for a particular cube face or 3D texture slice.
  *
@@ -910,8 +950,7 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
 
    if (!target_data) {
       /* allocate memory for the target image now */
-      unsigned buffer_size = tex_image_size(lpr, level, layout);
-      target_img->data = align_malloc(buffer_size, 16);
+      alloc_image_data(lpr, level, layout);
       target_data = target_img->data;
    }
 
@@ -1032,9 +1071,8 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
    assert(y % TILE_SIZE == 0);
 
    if (!linear_img->data) {
-      /* allocate memory for the tiled image now */
-      unsigned buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
-      linear_img->data = align_malloc(buffer_size, 16);
+      /* allocate memory for the linear image now */
+      alloc_image_data(lpr, level, LP_TEX_LAYOUT_LINEAR);
    }
 
    /* compute address of the slice/face of the image that contains the tile */
@@ -1084,8 +1122,7 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
 
    if (!tiled_img->data) {
       /* allocate memory for the tiled image now */
-      unsigned buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_TILED);
-      tiled_img->data = align_malloc(buffer_size, 16);
+      alloc_image_data(lpr, level, LP_TEX_LAYOUT_TILED);
    }
 
    /* compute address of the slice/face of the image that contains the tile */
