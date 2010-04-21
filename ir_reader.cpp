@@ -27,7 +27,8 @@
 #include "glsl_types.h"
 #include "s_expression.h"
 
-static void ir_read_error(s_expression *expr, const char *fmt, ...);
+static void ir_read_error(_mesa_glsl_parse_state *, s_expression *,
+			  const char *fmt, ...);
 static const glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
 
 static void read_instructions(_mesa_glsl_parse_state *, exec_list *,
@@ -54,8 +55,7 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
 {
    s_expression *expr = s_expression::read_expression(src);
    if (expr == NULL) {
-      ir_read_error(NULL, "couldn't parse S-Expression.");
-      state->error = true;
+      ir_read_error(state, NULL, "couldn't parse S-Expression.");
       return;
    }
    printf("S-Expression:\n");
@@ -71,13 +71,14 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
 }
 
 static void
-ir_read_error(s_expression *expr, const char *fmt, ...)
+ir_read_error(_mesa_glsl_parse_state *state, s_expression *expr,
+	      const char *fmt, ...)
 {
    char buf[1024];
    int len;
    va_list ap;
 
-   // FIXME: state->error = true;
+   state->error = true;
 
    len = snprintf(buf, sizeof(buf), "error: ");
 
@@ -95,12 +96,12 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
    if (list != NULL) {
       s_symbol *type_sym = SX_AS_SYMBOL(list->subexpressions.get_head());
       if (type_sym == NULL) {
-	 ir_read_error(expr, "expected type (array ...) or (struct ...)");
+	 ir_read_error(st, expr, "expected type (array ...) or (struct ...)");
 	 return NULL;
       }
       if (strcmp(type_sym->value(), "array") == 0) {
 	 if (list->length() != 3) {
-	    ir_read_error(expr, "expected type (array <type> <int>)");
+	    ir_read_error(st, expr, "expected type (array <type> <int>)");
 	    return NULL;
 	 }
 
@@ -108,14 +109,14 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
 	 s_expression *base_expr = (s_expression*) type_sym->next;
 	 const glsl_type *base_type = read_type(st, base_expr);
 	 if (base_type == NULL) {
-	    ir_read_error(expr, "when reading base type of array");
+	    ir_read_error(st, expr, "when reading base type of array");
 	    return NULL;
 	 }
 
 	 // Read array size
 	 s_int *size = SX_AS_INT(base_expr->next);
 	 if (size == NULL) {
-	    ir_read_error(expr, "found non-integer array size");
+	    ir_read_error(st, expr, "found non-integer array size");
 	    return NULL;
 	 }
 
@@ -123,20 +124,21 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
       } else if (strcmp(type_sym->value(), "struct") == 0) {
 	 assert(false); // FINISHME
       } else {
-	 ir_read_error(expr, "expected (array ...) or (struct ...); found (%s ...)", type_sym->value());
+	 ir_read_error(st, expr, "expected (array ...) or (struct ...); "
+				 "found (%s ...)", type_sym->value());
 	 return NULL;
       }
    }
    
    s_symbol *type_sym = SX_AS_SYMBOL(expr);
    if (type_sym == NULL) {
-      ir_read_error(expr, "expected <type> (symbol or list)");
+      ir_read_error(st, expr, "expected <type> (symbol or list)");
       return NULL;
    }
 
    const glsl_type *type = st->symbols->get_type(type_sym->value());
    if (type == NULL)
-      ir_read_error(expr, "invalid type: %s", type_sym->value());
+      ir_read_error(st, expr, "invalid type: %s", type_sym->value());
 
    return type;
 }
@@ -149,8 +151,7 @@ read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
    // Read in a list of instructions
    s_list *list = SX_AS_LIST(expr);
    if (list == NULL) {
-      ir_read_error(expr, "Expected (<instruction> ...); found an atom.");
-      st->error = true;
+      ir_read_error(st, expr, "Expected (<instruction> ...); found an atom.");
       return;
    }
 
@@ -158,8 +159,7 @@ read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
       s_expression *sub = (s_expression*) it.get();
       ir_instruction *ir = read_instruction(st, sub, loop_ctx);
       if (ir == NULL) {
-	 ir_read_error(sub, "Invalid instruction.\n");
-	 st->error = true;
+	 ir_read_error(st, sub, "Invalid instruction.\n");
 	 return;
       }
       instructions->push_tail(ir);
@@ -185,7 +185,7 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
 
    s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.get_head());
    if (tag == NULL) {
-      ir_read_error(expr, "expected instruction tag");
+      ir_read_error(st, expr, "expected instruction tag");
       return NULL;
    }
 
@@ -201,7 +201,7 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
    } else {
       inst = read_rvalue(st, list);
       if (inst == NULL)
-	 ir_read_error(list, "when reading instruction");
+	 ir_read_error(st, list, "when reading instruction");
    }
    return inst;
 }
@@ -211,13 +211,14 @@ static ir_variable *
 read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 4) {
-      ir_read_error(list, "expected (declare (<qualifiers>) <type> <name>)");
+      ir_read_error(st, list, "expected (declare (<qualifiers>) <type> "
+			      "<name>)");
       return NULL;
    }
 
    s_list *quals = SX_AS_LIST(list->subexpressions.head->next);
    if (quals == NULL) {
-      ir_read_error(list, "expected a list of variable qualifiers");
+      ir_read_error(st, list, "expected a list of variable qualifiers");
       return NULL;
    }
 
@@ -228,7 +229,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 
    s_symbol *var_name = SX_AS_SYMBOL(type_expr->next);
    if (var_name == NULL) {
-      ir_read_error(list, "expected variable name, found non-symbol");
+      ir_read_error(st, list, "expected variable name, found non-symbol");
       return NULL;
    }
 
@@ -237,7 +238,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
    foreach_iter(exec_list_iterator, it, quals->subexpressions) {
       s_symbol *qualifier = SX_AS_SYMBOL(it.get());
       if (qualifier == NULL) {
-	 ir_read_error(list, "qualifier list must contain only symbols");
+	 ir_read_error(st, list, "qualifier list must contain only symbols");
 	 delete var;
 	 return NULL;
       }
@@ -264,7 +265,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
       } else if (strcmp(qualifier->value(), "noperspective") == 0) {
 	 var->interpolation = ir_var_noperspective;
       } else {
-	 ir_read_error(list, "unknown qualifier: %s", qualifier->value());
+	 ir_read_error(st, list, "unknown qualifier: %s", qualifier->value());
 	 delete var;
 	 return NULL;
       }
@@ -281,7 +282,7 @@ static ir_if *
 read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 {
    if (list->length() != 4) {
-      ir_read_error(list, "expected (if <condition> (<then> ...) "
+      ir_read_error(st, list, "expected (if <condition> (<then> ...) "
                           "(<else> ...))");
       return NULL;
    }
@@ -289,7 +290,7 @@ read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
    s_expression *cond_expr = (s_expression*) list->subexpressions.head->next;
    ir_rvalue *condition = read_rvalue(st, cond_expr);
    if (condition == NULL) {
-      ir_read_error(list, "when reading condition of (if ...)");
+      ir_read_error(st, list, "when reading condition of (if ...)");
       return NULL;
    }
 
@@ -312,8 +313,8 @@ static ir_loop *
 read_loop(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 6) {
-      ir_read_error(list, "expected (loop <counter> <from> <to> <increment> "
-			  "<body>)");
+      ir_read_error(st, list, "expected (loop <counter> <from> <to> "
+			      "<increment> <body>)");
       return NULL;
    }
 
@@ -339,7 +340,7 @@ static ir_return *
 read_return(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 2) {
-      ir_read_error(list, "expected (return <rvalue>)");
+      ir_read_error(st, list, "expected (return <rvalue>)");
       return NULL;
    }
 
@@ -347,7 +348,7 @@ read_return(_mesa_glsl_parse_state *st, s_list *list)
 
    ir_rvalue *retval = read_rvalue(st, expr);
    if (retval == NULL) {
-      ir_read_error(list, "when reading return value");
+      ir_read_error(st, list, "when reading return value");
       return NULL;
    }
 
@@ -364,7 +365,7 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
 
    s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.get_head());
    if (tag == NULL) {
-      ir_read_error(expr, "expected rvalue tag");
+      ir_read_error(st, expr, "expected rvalue tag");
       return NULL;
    }
 
@@ -385,7 +386,7 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
    } else if (strcmp(tag->value(), "record_ref") == 0) {
       rvalue = read_record_ref(st, list);
    } else {
-      ir_read_error(expr, "unrecognized rvalue tag: %s", tag->value());
+      ir_read_error(st, expr, "unrecognized rvalue tag: %s", tag->value());
    }
 
    return rvalue;
@@ -395,7 +396,7 @@ static ir_assignment *
 read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 4) {
-      ir_read_error(list, "expected (assign <condition> <lhs> <rhs>)");
+      ir_read_error(st, list, "expected (assign <condition> <lhs> <rhs>)");
       return NULL;
    }
 
@@ -406,19 +407,19 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
    // FINISHME: Deal with "true" condition
    ir_rvalue *condition = read_rvalue(st, cond_expr);
    if (condition == NULL) {
-      ir_read_error(list, "when reading condition of assignment");
+      ir_read_error(st, list, "when reading condition of assignment");
       return NULL;
    }
 
    ir_rvalue *lhs = read_rvalue(st, lhs_expr);
    if (lhs == NULL) {
-      ir_read_error(list, "when reading left-hand side of assignment");
+      ir_read_error(st, list, "when reading left-hand side of assignment");
       return NULL;
    }
 
    ir_rvalue *rhs = read_rvalue(st, rhs_expr);
    if (rhs == NULL) {
-      ir_read_error(list, "when reading right-hand side of assignment");
+      ir_read_error(st, list, "when reading right-hand side of assignment");
       return NULL;
    }
 
@@ -431,8 +432,8 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
 {
    const unsigned list_length = list->length();
    if (list_length < 4) {
-      ir_read_error(list, "expected (expression <type> <operator> <operand> "
-			  "[<operand>])");
+      ir_read_error(st, list, "expected (expression <type> <operator> "
+			      "<operand> [<operand>])");
       return NULL;
    }
 
@@ -444,26 +445,26 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
    /* Read the operator */
    s_symbol *op_sym = SX_AS_SYMBOL(type_expr->next);
    if (op_sym == NULL) {
-      ir_read_error(list, "expected operator, found non-symbol");
+      ir_read_error(st, list, "expected operator, found non-symbol");
       return NULL;
    }
 
    ir_expression_operation op = ir_expression::get_operator(op_sym->value());
    if (op == (ir_expression_operation) -1) {
-      ir_read_error(list, "invalid operator: %s", op_sym->value());
+      ir_read_error(st, list, "invalid operator: %s", op_sym->value());
       return NULL;
    }
     
    /* Now that we know the operator, check for the right number of operands */ 
    if (ir_expression::get_num_operands(op) == 2) {
       if (list_length != 5) {
-	 ir_read_error(list, "expected (expression %s <operand1> <operand2>)",
+	 ir_read_error(st, list, "expected (expression %s <operand> <operand>)",
 		       op_sym->value());
 	 return NULL;
       }
    } else {
       if (list_length != 4) {
-	 ir_read_error(list, "expected (expression %s <operand>)",
+	 ir_read_error(st, list, "expected (expression %s <operand>)",
 		       op_sym->value());
 	 return NULL;
       }
@@ -472,7 +473,8 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
    s_expression *exp1 = (s_expression*) (op_sym->next);
    ir_rvalue *arg1 = read_rvalue(st, exp1);
    if (arg1 == NULL) {
-      ir_read_error(list, "when reading first operand of %s", op_sym->value());
+      ir_read_error(st, list, "when reading first operand of %s",
+		    op_sym->value());
       return NULL;
    }
 
@@ -481,7 +483,7 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
       s_expression *exp2 = (s_expression*) (exp1->next);
       arg2 = read_rvalue(st, exp2);
       if (arg2 == NULL) {
-	 ir_read_error(list, "when reading second operand of %s",
+	 ir_read_error(st, list, "when reading second operand of %s",
 		       op_sym->value());
 	 return NULL;
       }
@@ -494,25 +496,27 @@ static ir_swizzle *
 read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 3) {
-      ir_read_error(list, "expected (swiz <swizzle> <rvalue>)");
+      ir_read_error(st, list, "expected (swiz <swizzle> <rvalue>)");
       return NULL;
    }
 
    s_symbol *swiz = SX_AS_SYMBOL(list->subexpressions.head->next);
    if (swiz == NULL) {
-      ir_read_error(list, "expected a valid swizzle; found non-symbol");
+      ir_read_error(st, list, "expected a valid swizzle; found non-symbol");
       return NULL;
    }
 
    unsigned num_components = strlen(swiz->value());
    if (num_components > 4) {
-      ir_read_error(list, "expected a valid swizzle; found %s", swiz->value());
+      ir_read_error(st, list, "expected a valid swizzle; found %s",
+		    swiz->value());
       return NULL;
    }
 
    s_expression *sub = (s_expression*) swiz->next;
    if (sub == NULL) {
-      ir_read_error(list, "expected rvalue: (swizzle %s <rvalue>)", swiz->value());
+      ir_read_error(st, list, "expected rvalue: (swizzle %s <rvalue>)",
+		    swiz->value());
       return NULL;
    }
 
@@ -527,7 +531,7 @@ static ir_constant *
 read_constant(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 3) {
-      ir_read_error(list, "expected (constant <type> (<num> ... <num>))");
+      ir_read_error(st, list, "expected (constant <type> (<num> ... <num>))");
       return NULL;
    }
 
@@ -538,7 +542,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 
    s_list *values = SX_AS_LIST(type_expr->next);
    if (values == NULL) {
-      ir_read_error(list, "expected (constant <type> (<num> ... <num>))");
+      ir_read_error(st, list, "expected (constant <type> (<num> ... <num>))");
       return NULL;
    }
 
@@ -553,7 +557,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
    int k = 0;
    foreach_iter(exec_list_iterator, it, values->subexpressions) {
       if (k >= 16) {
-	 ir_read_error(values, "expected at most 16 numbers");
+	 ir_read_error(st, values, "expected at most 16 numbers");
 	 return NULL;
       }
 
@@ -562,14 +566,14 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
       if (base_type->base_type == GLSL_TYPE_FLOAT) {
 	 s_number *value = SX_AS_NUMBER(expr);
 	 if (value == NULL) {
-	    ir_read_error(values, "expected numbers");
+	    ir_read_error(st, values, "expected numbers");
 	    return NULL;
 	 }
 	 f[k] = value->fvalue();
       } else {
 	 s_int *value = SX_AS_INT(expr);
 	 if (value == NULL) {
-	    ir_read_error(values, "expected integers");
+	    ir_read_error(st, values, "expected integers");
 	    return NULL;
 	 }
 
@@ -587,7 +591,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 	    break;
 	 }
 	 default:
-	    ir_read_error(values, "unsupported constant type");
+	    ir_read_error(st, values, "unsupported constant type");
 	    return NULL;
 	 }
       }
@@ -614,7 +618,7 @@ read_dereferencable(_mesa_glsl_parse_state *st, s_expression *expr)
    if (var_name != NULL) {
       ir_variable *var = st->symbols->get_variable(var_name->value());
       if (var == NULL) {
-	 ir_read_error(expr, "undeclared variable: %s", var_name->value());
+	 ir_read_error(st, expr, "undeclared variable: %s", var_name->value());
       }
       return var;
    } else {
@@ -626,7 +630,7 @@ read_dereferencable(_mesa_glsl_parse_state *st, s_expression *expr)
 	    return read_swizzle(st, list);
       }
    }
-   ir_read_error(expr, "expected variable name or (swiz ...)");
+   ir_read_error(st, expr, "expected variable name or (swiz ...)");
    return NULL;
 }
 
@@ -634,7 +638,7 @@ static ir_dereference *
 read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 2) {
-      ir_read_error(list, "expected (var_ref <variable name or (swiz)>)");
+      ir_read_error(st, list, "expected (var_ref <variable name or (swiz)>)");
       return NULL;
    }
    s_expression *subj_expr = (s_expression*) list->subexpressions.head->next;
@@ -648,7 +652,7 @@ static ir_dereference *
 read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 3) {
-      ir_read_error(list, "expected (array_ref <variable name or (swiz)> "
+      ir_read_error(st, list, "expected (array_ref <variable name or (swiz)> "
 			  "<rvalue>)");
       return NULL;
    }
@@ -666,6 +670,6 @@ read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 static ir_dereference *
 read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
-   ir_read_error(list, "FINISHME: record refs not yet supported.");
+   ir_read_error(st, list, "FINISHME: record refs not yet supported.");
    return NULL;
 }
