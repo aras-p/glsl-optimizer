@@ -204,6 +204,10 @@ public:
 
 
 /*@{*/
+/**
+ * The representation of a function instance; may be the full definition or
+ * simply a prototype.
+ */
 class ir_function_signature : public ir_instruction {
    /* An ir_function_signature will be part of the list of signatures in
     * an ir_function.
@@ -236,10 +240,8 @@ public:
     */
    struct exec_list parameters;
 
-   /**
-    * Pointer to the label that begins the function definition.
-    */
-   ir_label *definition;
+   /** Whether or not this function has a body (which may be empty). */
+   unsigned is_defined:1;
 
    /** Body of instructions in the function. */
    struct exec_list body;
@@ -253,7 +255,9 @@ private:
 
 
 /**
- * Header for tracking functions in the symbol table
+ * Header for tracking multiple overloaded functions with the same name.
+ * Contains a list of ir_function_signatures representing each of the
+ * actual functions.
  */
 class ir_function : public ir_instruction {
 public:

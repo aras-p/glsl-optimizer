@@ -1922,11 +1922,6 @@ ast_function::hir(exec_list *instructions,
    exec_list hir_parameters;
 
 
-   /* The prototype part of a function does not generate anything in the IR
-    * instruction stream.
-    */
-   (void) instructions;
-
    /* Convert the list of function parameters to HIR now so that they can be
     * used below to compare this function's signature with previously seen
     * signatures for functions with the same name.
@@ -1989,7 +1984,7 @@ ast_function::hir(exec_list *instructions,
 				name);
 	    }
 
-	    if (is_definition && (sig->definition != NULL)) {
+	    if (is_definition && sig->is_defined) {
 	       YYLTYPE loc = this->get_location();
 
 	       _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
@@ -2012,6 +2007,9 @@ ast_function::hir(exec_list *instructions,
    } else {
       f = new ir_function(name);
       state->symbols->add_function(f->name, f);
+
+      /* Emit the new function header */
+      instructions->push_tail(f);
    }
 
    /* Verify the return type of main() */
@@ -2068,12 +2066,6 @@ ast_function_definition::hir(exec_list *instructions,
    assert(state->current_function == NULL);
    state->current_function = signature;
 
-   ir_label *label = new ir_label(signature->function_name(), signature);
-   if (signature->definition == NULL) {
-      signature->definition = label;
-   }
-   instructions->push_tail(label);
-
    /* Duplicate parameters declared in the prototype as concrete variables.
     * Add these to the symbol table.
     */
@@ -2095,11 +2087,9 @@ ast_function_definition::hir(exec_list *instructions,
       }
    }
 
-   /* Convert the body of the function to HIR, and append the resulting
-    * instructions to the list that currently consists of the function label
-    * and the function parameters.
-    */
+   /* Convert the body of the function to HIR. */
    this->body->hir(&signature->body, state);
+   signature->is_defined = true;
 
    state->symbols->pop_scope();
 

@@ -481,7 +481,10 @@ ir_function_inlining_visitor::visit(ir_function_signature *ir)
 void
 ir_function_inlining_visitor::visit(ir_function *ir)
 {
-   (void) ir;
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_function_signature *const sig = (ir_function_signature *) iter.get();
+      sig->accept(this);
+   }
 }
 
 void

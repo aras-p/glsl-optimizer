@@ -173,15 +173,12 @@ glsl_type::generate_constructor_prototype(glsl_symbol_table *symtab) const
  *                     scalar parameters.
  * \param parameters   Storage for the list of parameters.  These are
  *                     typically stored in an \c ir_function_signature.
- * \param instructions Storage for the preamble and body of the function.
  * \param declarations Pointers to the variable declarations for the function
  *                     parameters.  These are used later to avoid having to use
  *                     the symbol table.
  */
-static ir_label *
+static ir_function_signature *
 generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
-			   ir_function_signature *const signature,
-			   exec_list *instructions,
 			   ir_variable **declarations)
 {
    /* Names of parameters used in vector and matrix constructors
@@ -195,8 +192,7 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
 
    const glsl_type *const parameter_type = type->get_base_type();
 
-   ir_label *const label = new ir_label(type->name, signature);
-   instructions->push_tail(label);
+   ir_function_signature *const signature = new ir_function_signature(type);
 
    for (unsigned i = 0; i < parameter_count; i++) {
       ir_variable *var = new ir_variable(parameter_type, names[i]);
@@ -211,7 +207,7 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
    signature->body.push_tail(retval);
 
    declarations[16] = retval;
-   return label;
+   return signature;
 }
 
 
@@ -420,13 +416,14 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
       if (types[i].is_scalar())
 	 continue;
 
-      /* Generate the function name and add it to the symbol table.
+      /* Generate the function block, add it to the symbol table, and emit it.
        */
       ir_function *const f = new ir_function(types[i].name);
 
       bool added = symtab->add_function(types[i].name, f);
       assert(added);
 
+      instructions->push_tail(f);
 
       /* Each type has several basic constructors.  The total number of forms
        * depends on the derived type.
@@ -445,24 +442,18 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
        * expectation is that the IR generator will generate a call to the
        * appropriate from-scalars constructor.
        */
-      ir_function_signature *const sig = new ir_function_signature(& types[i]);
+      ir_function_signature *const sig =
+         generate_constructor_intro(&types[i], 1, declarations);
       f->add_signature(sig);
-
-      sig->definition =
-	 generate_constructor_intro(& types[i], 1, sig,
-				    instructions, declarations);
 
       if (types[i].is_vector()) {
 	 generate_vec_body_from_scalar(&sig->body, declarations);
 
 	 ir_function_signature *const vec_sig =
-	    new ir_function_signature(& types[i]);
+	    generate_constructor_intro(&types[i], types[i].vector_elements,
+				       declarations);
 	 f->add_signature(vec_sig);
 
-	 vec_sig->definition =
-	    generate_constructor_intro(& types[i], types[i].vector_elements,
-				       vec_sig, instructions,
-				       declarations);
 	 generate_vec_body_from_N_scalars(&sig->body, declarations);
       } else {
 	 assert(types[i].is_matrix());
@@ -470,15 +461,12 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 	 generate_mat_body_from_scalar(&sig->body, declarations);
 
 	 ir_function_signature *const mat_sig =
-	    new ir_function_signature(& types[i]);
-	 f->add_signature(mat_sig);
-
-	 mat_sig->definition =
-	    generate_constructor_intro(& types[i],
+	    generate_constructor_intro(&types[i],
 				       (types[i].vector_elements
 					* types[i].matrix_columns),
-				       mat_sig, instructions,
 				       declarations);
+	 f->add_signature(mat_sig);
+
 	 generate_mat_body_from_N_scalars(instructions, declarations);
       }
    }

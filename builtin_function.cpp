@@ -267,9 +267,6 @@ generate_function_instance(ir_function *f,
    ir_function_signature *const sig = new ir_function_signature(ret_type);
    f->add_signature(sig);
 
-   ir_label *const label = new ir_label(name, sig);
-   instructions->push_tail(label);
-   sig->definition = label;
    static const char *arg_names[] = {
       "arg0",
       "arg1",
@@ -287,6 +284,7 @@ generate_function_instance(ir_function *f,
    }
 
    generate(&sig->body, declarations, type);
+   sig->is_defined = true;
 }
 
 void
@@ -305,6 +303,8 @@ make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
 
    bool added = symtab->add_function(name, f);
    assert(added);
+
+   instructions->push_tail(f);
 
    generate_function_instance(f, name, instructions, n_args, generate,
 			      float_type, float_type);
@@ -424,6 +424,8 @@ generate_vec_compare_function(glsl_symbol_table *symtab,
    bool added = symtab->add_function(name, f);
    assert(added);
 
+   instructions->push_tail(f);
+
    generate_function_instance(f, name, instructions, 2, generate,
 			      bvec2_type, vec2_type);
    generate_function_instance(f, name, instructions, 2, generate,
@@ -487,6 +489,8 @@ generate_length_functions(glsl_symbol_table *symtab, exec_list *instructions)
    bool added = symtab->add_function(name, f);
    assert(added);
 
+   instructions->push_tail(f);
+
    generate_function_instance(f, name, instructions, 1, generate_length,
 			      float_type, float_type);
    generate_function_instance(f, name, instructions, 1, generate_length,
@@ -526,6 +530,8 @@ generate_dot_functions(glsl_symbol_table *symtab, exec_list *instructions)
 
    bool added = symtab->add_function(name, f);
    assert(added);
+
+   instructions->push_tail(f);
 
    generate_function_instance(f, name, instructions, 2, generate_dot,
 			      float_type, float_type);
@@ -689,6 +695,8 @@ generate_any_functions(glsl_symbol_table *symtab, exec_list *instructions)
    bool added = symtab->add_function(name, f);
    assert(added);
 
+   instructions->push_tail(f);
+
    generate_function_instance(f, name, instructions, 1, generate_any_bvec2,
 			      glsl_type::bool_type, bvec2_type);
    generate_function_instance(f, name, instructions, 1, generate_any_bvec3,
@@ -709,6 +717,8 @@ generate_all_functions(glsl_symbol_table *symtab, exec_list *instructions)
    bool added = symtab->add_function(name, f);
    assert(added);
 
+   instructions->push_tail(f);
+
    generate_function_instance(f, name, instructions, 1, generate_all_bvec2,
 			      glsl_type::bool_type, bvec2_type);
    generate_function_instance(f, name, instructions, 1, generate_all_bvec3,
@@ -728,6 +738,8 @@ generate_not_functions(glsl_symbol_table *symtab, exec_list *instructions)
 
    bool added = symtab->add_function(name, f);
    assert(added);
+
+   instructions->push_tail(f);
 
    generate_function_instance(f, name, instructions, 1, generate_not,
 			      bvec2_type, bvec2_type);
