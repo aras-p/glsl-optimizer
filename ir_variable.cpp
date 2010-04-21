@@ -46,6 +46,7 @@ add_variable(const char *name, enum ir_variable_mode mode,
    case ir_var_inout:
       var->shader_in = true;
       var->shader_out = true;
+      break;
    case ir_var_out:
       var->shader_out = true;
       break;
