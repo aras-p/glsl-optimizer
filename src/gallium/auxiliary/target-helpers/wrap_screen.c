@@ -53,9 +53,8 @@ gallium_wrap_screen( struct pipe_screen *screen )
       screen = identity_screen_create(screen);
    }
 
-   if (debug_get_bool_option("GALLIUM_TRACE", FALSE)) {
-      screen = trace_screen_create( screen );
-   }
+   /* Trace does its own checking if it should run */
+   screen = trace_screen_create(screen);
 
    return screen;
 }
