@@ -454,7 +454,7 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 				       declarations);
 	 f->add_signature(vec_sig);
 
-	 generate_vec_body_from_N_scalars(&sig->body, declarations);
+	 generate_vec_body_from_N_scalars(&vec_sig->body, declarations);
       } else {
 	 assert(types[i].is_matrix());
 
@@ -467,7 +467,7 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 				       declarations);
 	 f->add_signature(mat_sig);
 
-	 generate_mat_body_from_N_scalars(instructions, declarations);
+	 generate_mat_body_from_N_scalars(&mat_sig->body, declarations);
       }
    }
 }
