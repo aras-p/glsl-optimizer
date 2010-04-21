@@ -44,7 +44,9 @@
 #include "glx_error.h"
 #else
 #include <sys/time.h>
+#ifdef XF86VIDMODE
 #include <X11/extensions/xf86vmode.h>
+#endif
 #include "xf86dri.h"
 #endif
 #else

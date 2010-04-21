@@ -626,8 +626,15 @@ dri)
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
+        dri_modules="x11 xext xdamage xfixes"
+
+        # add xf86vidmode if available
+        PKG_CHECK_MODULES([XF86VIDMODE], [xxf86vm], HAVE_XF86VIDMODE=yes, HAVE_XF86VIDMODE=no)
+        if test "$HAVE_XF86VIDMODE" = yes ; then
+            dri_modules="$dri_modules xxf86vm"
+        fi
+
         # add xcb modules if necessary
-        dri_modules="x11 xext xxf86vm xdamage xfixes"
         if test "$enable_xcb" = yes; then
             dri_modules="$dri_modules x11-xcb xcb-glx"
         fi
@@ -675,6 +682,8 @@ AC_SUBST([GLESv1_CM_PC_LIB_PRIV])
 AC_SUBST([GLESv2_LIB_DEPS])
 AC_SUBST([GLESv2_PC_LIB_PRIV])
 
+
+AC_SUBST([HAVE_XF86VIDMODE])
 
 dnl
 dnl More X11 setup
