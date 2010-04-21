@@ -181,7 +181,7 @@ void radeonRefillCurrentDmaRegion(radeonContextPtr rmesa, int size)
 	if (size > rmesa->dma.minimum_size)
 		rmesa->dma.minimum_size = (size + 15) & (~15);
 
-	radeon_print(RADEON_DMA, RADEON_NORMAL, "%s size %d minimum_size %d\n",
+	radeon_print(RADEON_DMA, RADEON_NORMAL, "%s size %d minimum_size %Zi\n",
 			__FUNCTION__, size, rmesa->dma.minimum_size);
 
 	if (is_empty_list(&rmesa->dma.free)
