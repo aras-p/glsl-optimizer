@@ -1547,6 +1547,10 @@ struct gl_array_attrib
    GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
    GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
 
+   /** GL 3.1 (slightly different from GL_NV_primitive_restart) */
+   GLboolean PrimitiveRestart;
+   GLuint RestartIndex;
+
    GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
 
 #if FEATURE_ARB_vertex_buffer_object

@@ -1145,6 +1145,12 @@ StateVars = [
 	( "GL_MINOR_VERSION", GLint, ["ctx->VersionMinor"], "", NoState, NoExt ),
 	( "GL_CONTEXT_FLAGS", GLint, ["ctx->Const.ContextFlags"], "", NoState, NoExt ),
 
+    # GL 3.1
+    ( "GL_PRIMITIVE_RESTART", GLboolean,
+      ["ctx->Array.PrimitiveRestart"], "", NoState, NoExt ),
+    ( "GL_PRIMITIVE_RESTART_INDEX", GLint,
+      ["ctx->Array.RestartIndex"], "", NoState, NoExt ),
+ 
 	# GL 3.2
 	( "GL_CONTEXT_PROFILE_MASK", GLint, ["ctx->Const.ProfileMask"], "",
 	  NoState, NoExt )

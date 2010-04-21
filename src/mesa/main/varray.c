@@ -1054,6 +1054,27 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
 
 
 /**
+ * GL 3.1 glPrimitiveRestartIndex().
+ */
+void GLAPIENTRY
+_mesa_PrimitiveRestartIndex(GLuint index)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glPrimitiveRestartIndex()");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+
+   ctx->Array.RestartIndex = index;
+}
+
+
+/**
  * Copy one client vertex array to another.
  */
 void

@@ -1954,6 +1954,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_CONTEXT_FLAGS:
          params[0] = INT_TO_BOOLEAN(ctx->Const.ContextFlags);
          break;
+      case GL_PRIMITIVE_RESTART:
+         params[0] = ctx->Array.PrimitiveRestart;
+         break;
+      case GL_PRIMITIVE_RESTART_INDEX:
+         params[0] = INT_TO_BOOLEAN(ctx->Array.RestartIndex);
+         break;
       case GL_CONTEXT_PROFILE_MASK:
          params[0] = INT_TO_BOOLEAN(ctx->Const.ProfileMask);
          break;
@@ -3855,6 +3861,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_CONTEXT_FLAGS:
          params[0] = (GLfloat)(ctx->Const.ContextFlags);
+         break;
+      case GL_PRIMITIVE_RESTART:
+         params[0] = BOOLEAN_TO_FLOAT(ctx->Array.PrimitiveRestart);
+         break;
+      case GL_PRIMITIVE_RESTART_INDEX:
+         params[0] = (GLfloat)(ctx->Array.RestartIndex);
          break;
       case GL_CONTEXT_PROFILE_MASK:
          params[0] = (GLfloat)(ctx->Const.ProfileMask);
@@ -5758,6 +5770,12 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_CONTEXT_FLAGS:
          params[0] = ctx->Const.ContextFlags;
          break;
+      case GL_PRIMITIVE_RESTART:
+         params[0] = BOOLEAN_TO_INT(ctx->Array.PrimitiveRestart);
+         break;
+      case GL_PRIMITIVE_RESTART_INDEX:
+         params[0] = ctx->Array.RestartIndex;
+         break;
       case GL_CONTEXT_PROFILE_MASK:
          params[0] = ctx->Const.ProfileMask;
          break;
@@ -7660,6 +7678,12 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          break;
       case GL_CONTEXT_FLAGS:
          params[0] = (GLint64)(ctx->Const.ContextFlags);
+         break;
+      case GL_PRIMITIVE_RESTART:
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.PrimitiveRestart);
+         break;
+      case GL_PRIMITIVE_RESTART_INDEX:
+         params[0] = (GLint64)(ctx->Array.RestartIndex);
          break;
       case GL_CONTEXT_PROFILE_MASK:
          params[0] = (GLint64)(ctx->Const.ProfileMask);
