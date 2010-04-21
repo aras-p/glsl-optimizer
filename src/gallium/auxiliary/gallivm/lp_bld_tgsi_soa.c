@@ -576,6 +576,9 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
 }
 
 
+/**
+ * Kill fragment if any of the src register values are negative.
+ */
 static void
 emit_kil(
    struct lp_build_tgsi_soa_context *bld,
@@ -606,6 +609,9 @@ emit_kil(
       if(terms[chan_index]) {
          LLVMValueRef chan_mask;
 
+         /*
+          * If term < 0 then mask = 0 else mask = ~0.
+          */
          chan_mask = lp_build_cmp(&bld->base, PIPE_FUNC_GEQUAL, terms[chan_index], bld->base.zero);
 
          if(mask)
@@ -617,6 +623,32 @@ emit_kil(
 
    if(mask)
       lp_build_mask_update(bld->mask, mask);
+}
+
+
+/**
+ * Predicated fragment kill.
+ * XXX Actually, we do an unconditional kill (as in tgsi_exec.c).
+ * The only predication is the execution mask which will apply if
+ * we're inside a loop or conditional.
+ */
+static void
+emit_kilp(struct lp_build_tgsi_soa_context *bld,
+          const struct tgsi_full_instruction *inst)
+{
+   LLVMValueRef mask;
+
+   /* For those channels which are "alive", disable fragment shader
+    * execution.
+    */
+   if (bld->exec_mask.has_mask) {
+      mask = LLVMBuildNot(bld->base.builder, bld->exec_mask.exec_mask, "kilp");
+   }
+   else {
+      mask = bld->base.zero;
+   }
+
+   lp_build_mask_update(bld->mask, mask);
 }
 
 
@@ -1179,8 +1211,7 @@ emit_instruction(
 
    case TGSI_OPCODE_KILP:
       /* predicated kill */
-      /* FIXME */
-      return 0;
+      emit_kilp( bld, inst );
       break;
 
    case TGSI_OPCODE_KIL:
