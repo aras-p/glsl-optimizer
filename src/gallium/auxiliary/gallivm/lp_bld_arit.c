@@ -1502,8 +1502,10 @@ lp_build_log2_approx(struct lp_build_context *bld,
       res = LLVMBuildAdd(bld->builder, logmant, logexp, "");
    }
 
-   if(p_exp)
+   if(p_exp) {
+      exp = LLVMConstBitCast(exp, vec_type);
       *p_exp = exp;
+   }
 
    if(p_floor_log2)
       *p_floor_log2 = logexp;
