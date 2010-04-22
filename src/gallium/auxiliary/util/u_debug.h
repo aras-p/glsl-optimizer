@@ -303,6 +303,39 @@ debug_get_flags_option(const char *name,
                        const struct debug_named_value *flags,
                        unsigned long dfault);
 
+#define DEBUG_GET_ONCE_BOOL_OPTION(sufix, name, dfault) \
+static boolean \
+debug_get_option_ ## sufix (void) \
+{ \
+   static boolean first = TRUE; \
+   static boolean value; \
+   if (first && !(first = FALSE)) \
+      value = debug_get_bool_option(name, dfault); \
+   return value; \
+}
+
+#define DEBUG_GET_ONCE_NUM_OPTION(sufix, name, dfault) \
+static long \
+debug_get_option_ ## sufix (void) \
+{ \
+   static boolean first = TRUE; \
+   static long value; \
+   if (first && !(first = FALSE)) \
+      value = debug_get_num_option(name, dfault); \
+   return value; \
+}
+
+#define DEBUG_GET_ONCE_FLAGS_OPTION(sufix, name, flags, dfault) \
+static unsigned long \
+debug_get_option_ ## sufix (void) \
+{ \
+   static boolean first = TRUE; \
+   static unsigned long value; \
+   if (first && !(first = FALSE)) \
+      value = debug_get_flags_option(name, flags, dfault); \
+   return value; \
+}
+
 
 unsigned long
 debug_memory_begin(void);
