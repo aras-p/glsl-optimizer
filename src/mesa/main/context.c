@@ -791,6 +791,7 @@ alloc_dispatch_table(void)
  * for debug flags.
  *
  * \param ctx the context to initialize
+ * \param api the GL API type to create the context for
  * \param visual describes the visual attributes for this context
  * \param share_list points to context to share textures, display lists,
  *        etc with, or NULL
@@ -799,11 +800,12 @@ alloc_dispatch_table(void)
  * \param driverContext pointer to driver-specific context data
  */
 GLboolean
-_mesa_initialize_context(GLcontext *ctx,
-                         const GLvisual *visual,
-                         GLcontext *share_list,
-                         const struct dd_function_table *driverFunctions,
-                         void *driverContext)
+_mesa_initialize_context_for_api(GLcontext *ctx,
+				 gl_api api,
+				 const GLvisual *visual,
+				 GLcontext *share_list,
+				 const struct dd_function_table *driverFunctions,
+				 void *driverContext)
 {
    struct gl_shared_state *shared;
 
@@ -814,6 +816,7 @@ _mesa_initialize_context(GLcontext *ctx,
    /* misc one-time initializations */
    one_time_init(ctx);
 
+   ctx->API = api;
    ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
@@ -892,6 +895,20 @@ _mesa_initialize_context(GLcontext *ctx,
    return GL_TRUE;
 }
 
+GLboolean
+_mesa_initialize_context(GLcontext *ctx,
+                         const GLvisual *visual,
+                         GLcontext *share_list,
+                         const struct dd_function_table *driverFunctions,
+                         void *driverContext)
+{
+   return _mesa_initialize_context_for_api(ctx,
+					   API_OPENGL,
+					   visual,
+					   share_list,
+					   driverFunctions,
+					   driverContext);
+}
 
 /**
  * Allocate and initialize a GLcontext structure.
@@ -899,6 +916,7 @@ _mesa_initialize_context(GLcontext *ctx,
  * we need to at least call driverFunctions->NewTextureObject to initialize
  * the rendering context.
  *
+ * \param api the GL API type to create the context for
  * \param visual a GLvisual pointer (we copy the struct contents)
  * \param share_list another context to share display lists with or NULL
  * \param driverFunctions points to the dd_function_table into which the
@@ -908,10 +926,11 @@ _mesa_initialize_context(GLcontext *ctx,
  * \return pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
-_mesa_create_context(const GLvisual *visual,
-                     GLcontext *share_list,
-                     const struct dd_function_table *driverFunctions,
-                     void *driverContext)
+_mesa_create_context_for_api(gl_api api,
+			     const GLvisual *visual,
+			     GLcontext *share_list,
+			     const struct dd_function_table *driverFunctions,
+			     void *driverContext)
 {
    GLcontext *ctx;
 
@@ -922,8 +941,8 @@ _mesa_create_context(const GLvisual *visual,
    if (!ctx)
       return NULL;
 
-   if (_mesa_initialize_context(ctx, visual, share_list,
-                                driverFunctions, driverContext)) {
+   if (_mesa_initialize_context_for_api(ctx, api, visual, share_list,
+					driverFunctions, driverContext)) {
       return ctx;
    }
    else {
@@ -932,6 +951,17 @@ _mesa_create_context(const GLvisual *visual,
    }
 }
 
+GLcontext *
+_mesa_create_context(const GLvisual *visual,
+		     GLcontext *share_list,
+		     const struct dd_function_table *driverFunctions,
+		     void *driverContext)
+{
+   return _mesa_create_context_for_api(API_OPENGL, visual,
+				       share_list,
+				       driverFunctions,
+				       driverContext);
+}
 
 /**
  * Free the data associated with the given context.
