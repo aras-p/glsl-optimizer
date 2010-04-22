@@ -1658,20 +1658,21 @@ void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
 				    (5 << R300_PVS_NUM_CNTLRS_SHIFT) |
 				    (5 << R300_VF_MAX_VTX_NUM_SHIFT));
 
-    if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
-	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
-    else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
-	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560) ||
-	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
+    if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300) ||
+	(rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R350))
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+    else if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530)
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (5 << R300_PVS_NUM_FPUS_SHIFT);
     else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV410) ||
 	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420))
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (6 << R300_PVS_NUM_FPUS_SHIFT);
     else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
-	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580))
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580) ||
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560) ||
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (8 << R300_PVS_NUM_FPUS_SHIFT);
     else
-	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
 
 }
 
