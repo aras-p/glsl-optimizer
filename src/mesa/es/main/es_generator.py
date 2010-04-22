@@ -667,9 +667,15 @@ for funcName in keys:
 
 # end for each function
 
-print "void"
-print "_mesa_init_exec_table(struct _glapi_table *exec)"
+print "struct _glapi_table *"
+print "_mesa_create_exec_table(void)"
 print "{"
+print "   struct _glapi_table *exec;"
+print "   exec = _mesa_alloc_dispatch_table(sizeof *exec);"
+print "   if (exec == NULL)"
+print "      return NULL;"
+print ""
+
 for func in keys:
     prefix = "_es_" if func not in allSpecials else "_check_"
     for spec in apiutil.Categories(func):
@@ -682,4 +688,6 @@ for func in keys:
             suffix = ext[0].split("_")[0]
             entry += suffix
         print "    SET_%s(exec, %s%s);" % (entry, prefix, entry)
+print ""
+print "   return exec;"
 print "}"

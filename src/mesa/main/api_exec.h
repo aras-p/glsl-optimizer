@@ -29,9 +29,11 @@
 
 struct _glapi_table;
 
+extern struct _glapi_table *
+_mesa_alloc_dispatch_table(int size);
 
-extern void
-_mesa_init_exec_table(struct _glapi_table *exec);
+extern struct _glapi_table *
+_mesa_create_exec_table(void);
 
 
 #endif

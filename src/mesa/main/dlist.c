@@ -8747,9 +8747,15 @@ exec_MultiModeDrawElementsIBM(const GLenum * mode,
  * initialized from _mesa_init_api_defaults and from the active vtxfmt
  * struct.
  */
-void
-_mesa_init_save_table(struct _glapi_table *table)
+struct _glapi_table *
+_mesa_create_save_table(void)
 {
+   struct _glapi_table *table;
+
+   table = _mesa_alloc_dispatch_table(sizeof *table);
+   if (table == NULL)
+      return NULL;
+
    _mesa_loopback_init_api_table(table);
 
    /* GL 1.0 */
@@ -9349,6 +9355,8 @@ _mesa_init_save_table(struct _glapi_table *table)
    (void) save_ClearBufferfv;
    (void) save_ClearBufferfi;
 #endif
+
+   return table;
 }
 
 

@@ -119,9 +119,15 @@
  * \param ctx  GL context to which \c exec belongs.
  * \param exec dispatch table.
  */
-void
-_mesa_init_exec_table(struct _glapi_table *exec)
+struct _glapi_table *
+_mesa_create_exec_table(void)
 {
+   struct _glapi_table *exec;
+
+   exec = _mesa_alloc_dispatch_table(sizeof *exec);
+   if (exec == NULL)
+      return NULL;
+
 #if _HAVE_FULL_GL
    _mesa_loopback_init_api_table( exec );
 #endif
@@ -777,4 +783,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_ObjectUnpurgeableAPPLE(exec, _mesa_ObjectUnpurgeableAPPLE);
    SET_GetObjectParameterivAPPLE(exec, _mesa_GetObjectParameterivAPPLE);
 #endif
+
+   return exec;
 }

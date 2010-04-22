@@ -129,8 +129,6 @@
 #include "version.h"
 #include "viewport.h"
 #include "vtxfmt.h"
-#include "glapi/glthread.h"
-#include "glapi/glapitable.h"
 #include "shader/program.h"
 #include "shader/prog_print.h"
 #include "shader/shader_api.h"
@@ -749,8 +747,8 @@ generic_nop(void)
 /**
  * Allocate and initialize a new dispatch table.
  */
-static struct _glapi_table *
-alloc_dispatch_table(void)
+struct _glapi_table *
+_mesa_alloc_dispatch_table(int size)
 {
    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
     * In practice, this'll be the same for stand-alone Mesa.  But for DRI
@@ -758,7 +756,7 @@ alloc_dispatch_table(void)
     * DRI drivers.
     */
    GLint numEntries = MAX2(_glapi_get_dispatch_table_size(),
-                           sizeof(struct _glapi_table) / sizeof(_glapi_proc));
+                           size / sizeof(_glapi_proc));
    struct _glapi_table *table =
       (struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
    if (table) {
@@ -853,22 +851,24 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
       return GL_FALSE;
    }
 
+#if FEATURE_dispatch
    /* setup the API dispatch tables */
-   ctx->Exec = alloc_dispatch_table();
-   ctx->Save = alloc_dispatch_table();
-   if (!ctx->Exec || !ctx->Save) {
+   ctx->Exec = _mesa_create_exec_table();
+   if (!ctx->Exec) {
       _mesa_release_shared_state(ctx, ctx->Shared);
-      if (ctx->Exec)
-         free(ctx->Exec);
       return GL_FALSE;
    }
-#if FEATURE_dispatch
-   _mesa_init_exec_table(ctx->Exec);
 #endif
    ctx->CurrentDispatch = ctx->Exec;
 
 #if FEATURE_dlist
-   _mesa_init_save_table(ctx->Save);
+   ctx->Save = _mesa_create_save_table();
+   if (!ctx->Save) {
+      _mesa_release_shared_state(ctx, ctx->Shared);
+      free(ctx->Exec);
+      return GL_FALSE;
+   }
+
    _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
 #endif
 
