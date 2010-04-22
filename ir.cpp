@@ -111,7 +111,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
 static const char *const operator_strs[] = {
    "~",
    "!",
-   "-",
+   "neg",
    "abs",
    "rcp",
    "rsq",
