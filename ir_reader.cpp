@@ -31,6 +31,12 @@ static void ir_read_error(_mesa_glsl_parse_state *, s_expression *,
 			  const char *fmt, ...);
 static const glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
 
+static void scan_for_prototypes(_mesa_glsl_parse_state *, exec_list *,
+			        s_expression *);
+static void read_prototypes(_mesa_glsl_parse_state *, exec_list *, s_list *);
+static ir_function_signature *read_prototype(_mesa_glsl_parse_state *,
+					     s_list *);
+
 static void read_instructions(_mesa_glsl_parse_state *, exec_list *,
 			      s_expression *, ir_loop *);
 static ir_instruction *read_instruction(_mesa_glsl_parse_state *,
@@ -68,6 +74,10 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
     * FINISHME: Once they're not, remake them by calling:
     * FINISHME: _mesa_glsl_initialize_constructors(instructions, state);
     */
+
+   scan_for_prototypes(state, instructions, expr);
+   if (state->error)
+      return;
 
    read_instructions(state, instructions, expr, NULL);
 }
@@ -145,6 +155,122 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
    return type;
 }
 
+
+static void
+scan_for_prototypes(_mesa_glsl_parse_state *st, exec_list *instructions,
+		    s_expression *expr)
+{
+   s_list *list = SX_AS_LIST(expr);
+   if (list == NULL) {
+      ir_read_error(st, expr, "Expected (<instruction> ...); found an atom.");
+      return;
+   }
+
+   foreach_iter(exec_list_iterator, it, list->subexpressions) {
+      s_list *sub = SX_AS_LIST(it.get());
+      if (sub == NULL)
+	 continue; // not a (function ...); ignore it.
+
+      s_symbol *tag = SX_AS_SYMBOL(sub->subexpressions.get_head());
+      if (tag == NULL || strcmp(tag->value(), "function") != 0)
+	 continue; // not a (function ...); ignore it.
+
+      read_prototypes(st, instructions, sub);
+      if (st->error)
+	 return;
+   }
+}
+
+static void
+read_prototypes(_mesa_glsl_parse_state *st, exec_list *instructions,
+	        s_list *list)
+{
+   if (list->length() < 3) {
+      ir_read_error(st, list, "Expected (function <name> (signature ...) ...)");
+      return;
+   }
+
+   s_symbol *name = SX_AS_SYMBOL(list->subexpressions.head->next);
+   if (name == NULL) {
+      ir_read_error(st, list, "Expected (function <name> ...)");
+      return;
+   }
+
+   ir_function *f = new ir_function(name->value());
+   bool added = st->symbols->add_function(name->value(), f);
+   if (!added) {
+      ir_read_error(st, list, "Function %s already exists.", name->value());
+      return;
+   }
+
+   instructions->push_tail(f);
+
+   exec_list_iterator it = list->subexpressions.iterator();
+   it.next(); // skip "function" tag
+   it.next(); // skip function name
+   for (/* nothing */; it.has_next(); it.next()) {
+      s_list *siglist = SX_AS_LIST(it.get());
+      if (siglist == NULL) {
+	 ir_read_error(st, list, "Expected (function (signature ...) ...)");
+	 return;
+      }
+
+      s_symbol *tag = SX_AS_SYMBOL(siglist->subexpressions.get_head());
+      if (tag == NULL || strcmp(tag->value(), "signature") != 0) {
+	 ir_read_error(st, siglist, "Expected (signature ...)");
+	 return;
+      }
+
+      ir_function_signature *sig = read_prototype(st, siglist);
+      if (sig == NULL)
+	 return;
+
+      f->add_signature(sig);
+   }
+}
+
+static ir_function_signature *
+read_prototype(_mesa_glsl_parse_state *st, s_list *list)
+{
+   if (list->length() != 4) {
+      ir_read_error(st, list, "Expected (signature <type> (parameters ...) "
+			      "(<instruction> ...))");
+      return NULL;
+   }
+
+   s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
+   const glsl_type *return_type = read_type(st, type_expr);
+   if (return_type == NULL)
+      return NULL;
+
+   s_list *paramlist = SX_AS_LIST(type_expr->next);
+   if (paramlist == NULL) {
+      ir_read_error(st, list, "Expected (signature %s (parameters ...) ...)",
+		    return_type->name);
+      return NULL;
+   }
+   s_symbol *paramtag = SX_AS_SYMBOL(paramlist->subexpressions.get_head());
+   if (paramtag == NULL || strcmp(paramtag->value(), "parameters") != 0) {
+      ir_read_error(st, paramlist, "Expected (parameters ...)");
+      return NULL;
+   }
+
+   ir_function_signature *sig = new ir_function_signature(return_type);
+
+   exec_list_iterator it = paramlist->subexpressions.iterator();
+   for (it.next() /* skip "parameters" */; it.has_next(); it.next()) {
+      s_list *decl = SX_AS_LIST(it.get());
+      ir_variable *var = read_declaration(st, decl);
+      if (var == NULL) {
+	 delete sig;
+	 return NULL;
+      }
+
+      sig->parameters.push_tail(var);
+   }
+
+   return sig;
+}
 
 static void
 read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
