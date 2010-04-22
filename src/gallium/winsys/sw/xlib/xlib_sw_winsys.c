@@ -48,6 +48,8 @@
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
 
+DEBUG_GET_ONCE_BOOL_OPTION(xlib_no_shm, "XLIB_NO_SHM", FALSE);
+
 /**
  * Display target for Xlib winsys.
  * Low-level OS/window system memory buffer
@@ -383,7 +385,7 @@ xm_displaytarget_create(struct sw_winsys *winsys,
    xm_dt->stride = align(util_format_get_stride(format, width), alignment);
    size = xm_dt->stride * nblocksy;
 
-   if (!debug_get_bool_option("XLIB_NO_SHM", FALSE))
+   if (!debug_get_option_xlib_no_shm())
    {
       xm_dt->data = alloc_shm(xm_dt, size);
       if(!xm_dt->data) {

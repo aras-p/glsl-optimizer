@@ -37,6 +37,13 @@
 #include "util/u_math.h"
 #include "util/u_prim.h"
 
+
+DEBUG_GET_ONCE_BOOL_OPTION(draw_fse, "DRAW_FSE", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(draw_no_fse, "DRAW_NO_FSE", FALSE);
+#ifdef HAVE_LLVM
+DEBUG_GET_ONCE_BOOL_OPTION(draw_use_llvm, "DRAW_USE_LLVM", TRUE);
+#endif
+
 static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
    if (count < first)
@@ -122,8 +129,8 @@ draw_pt_arrays(struct draw_context *draw,
 
 boolean draw_pt_init( struct draw_context *draw )
 {
-   draw->pt.test_fse = debug_get_bool_option("DRAW_FSE", FALSE);
-   draw->pt.no_fse = debug_get_bool_option("DRAW_NO_FSE", FALSE);
+   draw->pt.test_fse = debug_get_option_draw_fse();
+   draw->pt.no_fse = debug_get_option_draw_no_fse();
 
    draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
@@ -142,7 +149,7 @@ boolean draw_pt_init( struct draw_context *draw )
       return FALSE;
 
 #if HAVE_LLVM
-   draw->use_llvm = debug_get_bool_option("DRAW_USE_LLVM", TRUE);
+   draw->use_llvm = debug_get_option_draw_use_llvm();
    if (draw->use_llvm)
       draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit_llvm( draw );
 #else

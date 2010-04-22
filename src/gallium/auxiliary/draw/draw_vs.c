@@ -46,7 +46,7 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_exec.h"
 
-
+DEBUG_GET_ONCE_BOOL_OPTION(gallium_dump_vs, "GALLIUM_DUMP_VS", FALSE);
 
 void
 draw_vs_set_constants(struct draw_context *draw,
@@ -157,7 +157,7 @@ draw_delete_vertex_shader(struct draw_context *draw,
 boolean 
 draw_vs_init( struct draw_context *draw )
 {
-   draw->dump_vs = debug_get_bool_option("GALLIUM_DUMP_VS", FALSE);
+   draw->dump_vs = debug_get_option_gallium_dump_vs();
 
    draw->vs.machine = tgsi_exec_machine_create();
    if (!draw->vs.machine)
