@@ -46,6 +46,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_exec.h"
+#include "tgsi/tgsi_scan.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
@@ -126,6 +127,11 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
    LLVMValueRef addr[LP_MAX_TEMPS][NUM_CHANNELS];
+
+   /* we allocate an array of temps if we have indirect
+    * addressing and then the temps above is unused */
+   LLVMValueRef temps_array;
+   boolean has_indirect_addressing;
 
    struct lp_build_mask_context *mask;
    struct lp_exec_mask exec_mask;
@@ -358,6 +364,23 @@ emit_ddy(struct lp_build_tgsi_soa_context *bld,
    return lp_build_sub(&bld->base, src_top, src_bottom);
 }
 
+static LLVMValueRef
+get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
+             unsigned index,
+             unsigned swizzle,
+             boolean is_indirect,
+             LLVMValueRef addr)
+{
+   if (!bld->has_indirect_addressing) {
+      return bld->temps[index][swizzle];
+   } else {
+      LLVMValueRef lindex =
+         LLVMConstInt(LLVMInt32Type(), index*4 + swizzle, 0);
+      if (is_indirect)
+         lindex = lp_build_add(&bld->base, lindex, addr);
+      return LLVMBuildGEP(bld->base.builder, bld->temps_array, &lindex, 1, "");
+   }
+}
 
 /**
  * Register fetch.
@@ -392,6 +415,7 @@ emit_fetch(
          addr = LLVMBuildExtractElement(bld->base.builder,
                                         addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
                                         "");
+         addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
       }
 
       switch (reg->Register.File) {
@@ -402,7 +426,6 @@ emit_fetch(
          if (reg->Register.Indirect) {
             /*lp_build_printf(bld->base.builder,
               "\taddr = %d\n", addr);*/
-            addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
             index = lp_build_add(&bld->base, index, addr);
          }
          scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr, &index, 1, "");
@@ -422,11 +445,16 @@ emit_fetch(
          assert(res);
          break;
 
-      case TGSI_FILE_TEMPORARY:
-         res = LLVMBuildLoad(bld->base.builder, bld->temps[reg->Register.Index][swizzle], "");
+      case TGSI_FILE_TEMPORARY: {
+         LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
+                                              swizzle,
+                                              reg->Register.Indirect,
+                                              addr);
+         res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
          if(!res)
             return bld->base.undef;
          break;
+      }
 
       default:
          assert( 0 );
@@ -504,6 +532,7 @@ emit_store(
    LLVMValueRef value)
 {
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
+   LLVMValueRef addr;
 
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
@@ -523,16 +552,35 @@ emit_store(
       assert(0);
    }
 
+   if (reg->Register.Indirect) {
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
+      unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
+      addr = LLVMBuildLoad(bld->base.builder,
+                           bld->addr[reg->Indirect.Index][swizzle],
+                           "");
+      /* for indexing we want integers */
+      addr = LLVMBuildFPToSI(bld->base.builder, addr,
+                             int_vec_type, "");
+      addr = LLVMBuildExtractElement(bld->base.builder,
+                                     addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
+                                     "");
+      addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
+   }
+
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
       lp_exec_mask_store(&bld->exec_mask, value,
                          bld->outputs[reg->Register.Index][chan_index]);
       break;
 
-   case TGSI_FILE_TEMPORARY:
-      lp_exec_mask_store(&bld->exec_mask, value,
-                         bld->temps[reg->Register.Index][chan_index]);
+   case TGSI_FILE_TEMPORARY: {
+      LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
+                                           chan_index,
+                                           reg->Register.Indirect,
+                                           addr);
+      lp_exec_mask_store(&bld->exec_mask, value, temp_ptr);
       break;
+   }
 
    case TGSI_FILE_ADDRESS:
       lp_exec_mask_store(&bld->exec_mask, value,
@@ -691,30 +739,6 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
    lp_build_mask_update(bld->mask, mask);
 }
 
-
-/**
- * Check if inst src/dest regs use indirect addressing into temporary
- * register file.
- */
-static boolean
-indirect_temp_reference(const struct tgsi_full_instruction *inst)
-{
-   uint i;
-   for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      const struct tgsi_full_src_register *reg = &inst->Src[i];
-      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
-          reg->Register.Indirect)
-         return TRUE;
-   }
-   for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      const struct tgsi_full_dst_register *reg = &inst->Dst[i];
-      if (reg->Register.File == TGSI_FILE_TEMPORARY &&
-          reg->Register.Indirect)
-         return TRUE;
-   }
-   return FALSE;
-}
-
 static int
 emit_declaration(
    struct lp_build_tgsi_soa_context *bld,
@@ -740,8 +764,16 @@ emit_declaration(
    for (idx = first; idx <= last; ++idx) {
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
-         for (i = 0; i < NUM_CHANNELS; i++)
-            bld->temps[idx][i] = lp_build_alloca(&bld->base);
+         if (bld->has_indirect_addressing) {
+            LLVMValueRef val = LLVMConstInt(LLVMInt32Type(),
+                                            last*4 + 4, 0);
+            bld->temps_array = LLVMBuildArrayAlloca(bld->base.builder,
+                                                    lp_build_vec_type(bld->base.type),
+                                                    val, "");
+         } else {
+            for (i = 0; i < NUM_CHANNELS; i++)
+               bld->temps[idx][i] = lp_build_alloca(&bld->base);
+         }
          break;
 
       case TGSI_FILE_OUTPUT:
@@ -786,10 +818,6 @@ emit_instruction(
    LLVMValueRef tmp7 = NULL;
    LLVMValueRef res;
    LLVMValueRef dst0[NUM_CHANNELS];
-
-   /* we can't handle indirect addressing into temp register file yet */
-   if (indirect_temp_reference(inst))
-      return FALSE;
 
    /*
     * Stores and write masks are handled in a general fashion after the long
@@ -1742,7 +1770,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[NUM_CHANNELS],
                   LLVMValueRef (*outputs)[NUM_CHANNELS],
-                  struct lp_build_sampler_soa *sampler)
+                  struct lp_build_sampler_soa *sampler,
+                  struct tgsi_shader_info *info)
 {
    struct lp_build_tgsi_soa_context bld;
    struct tgsi_parse_context parse;
@@ -1758,6 +1787,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
    bld.sampler = sampler;
+   bld.has_indirect_addressing = info->opcode_count[TGSI_OPCODE_ARR] > 0 ||
+                                 info->opcode_count[TGSI_OPCODE_ARL] > 0;
 
    lp_exec_mask_init(&bld.exec_mask, &bld.base);
 

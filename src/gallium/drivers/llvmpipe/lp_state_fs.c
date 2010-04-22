@@ -474,7 +474,7 @@ generate_fs(struct llvmpipe_context *lp,
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
-                     outputs, sampler);
+                     outputs, sampler, &shader->info);
 
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {

@@ -252,7 +252,8 @@ generate_vs(struct draw_llvm *llvm,
                      NULL /*pos*/,
                      inputs,
                      outputs,
-                     NULL/*sampler*/);
+                     NULL/*sampler*/,
+                     &llvm->draw->vs.vertex_shader->info);
 }
 
 #if DEBUG_STORE
