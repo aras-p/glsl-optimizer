@@ -121,8 +121,8 @@ resources might be created and handled quite differently.
 * ``PIPE_BIND_DEPTH_STENCIL``: A depth (Z) buffer and/or stencil buffer. Any
   depth/stencil surface/resource attached to pipe_framebuffer_state::zsbuf must
   have this flag set.
-* ``PIPE_BIND_DISPLAY_TARGET``: A sharable buffer that can be given to another
-  process.
+* ``PIPE_BIND_DISPLAY_TARGET``: A surface that can be presented to screen. Arguments to
+  pipe_screen::flush_front_buffer must have this flag set.
 * ``PIPE_BIND_SAMPLER_VIEW``: A texture that may be sampled from in a fragment
   or vertex shader.
 * ``PIPE_BIND_VERTEX_BUFFER``: A vertex buffer.
@@ -135,7 +135,8 @@ resources might be created and handled quite differently.
 * ``PIPE_BIND_TRANSFER_READ``: A transfer object which will be read from.
 * ``PIPE_BIND_CUSTOM``:
 * ``PIPE_BIND_SCANOUT``: A front color buffer or scanout buffer.
-* ``PIPE_BIND_SHARED``:
+* ``PIPE_BIND_SHARED``: A sharable buffer that can be given to another
+  process.
 
 .. _pipe_usage:
 
