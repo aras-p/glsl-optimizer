@@ -51,6 +51,13 @@
 
 #include "xorg_tracker.h"
 
+struct output_private
+{
+    drmModeConnectorPtr drm_connector;
+
+    int c;
+};
+
 static char *output_enum_list[] = {
     "Unknown",
     "VGA",
@@ -82,22 +89,38 @@ output_dpms(xf86OutputPtr output, int mode)
 static xf86OutputStatus
 output_detect(xf86OutputPtr output)
 {
-    drmModeConnectorPtr drm_connector = output->driver_private;
+    modesettingPtr ms = modesettingPTR(output->scrn);
+    struct output_private *priv = output->driver_private;
+    drmModeConnectorPtr drm_connector;
+    xf86OutputStatus status;
+
+    drm_connector = drmModeGetConnector(ms->fd, priv->drm_connector->connector_id);
+    if (drm_connector) {
+	drmModeFreeConnector(priv->drm_connector);
+	priv->drm_connector = drm_connector;
+    } else {
+	drm_connector = priv->drm_connector;
+    }
 
     switch (drm_connector->connection) {
     case DRM_MODE_CONNECTED:
-	return XF86OutputStatusConnected;
+	status = XF86OutputStatusConnected;
+	break;
     case DRM_MODE_DISCONNECTED:
-	return XF86OutputStatusDisconnected;
+	status = XF86OutputStatusDisconnected;
+	break;
     default:
-	return XF86OutputStatusUnknown;
+	status = XF86OutputStatusUnknown;
     }
+
+    return status;
 }
 
 static DisplayModePtr
 output_get_modes(xf86OutputPtr output)
 {
-    drmModeConnectorPtr drm_connector = output->driver_private;
+    struct output_private *priv = output->driver_private;
+    drmModeConnectorPtr drm_connector = priv->drm_connector;
     drmModeModeInfoPtr drm_mode = NULL;
     DisplayModePtr modes = NULL, mode = NULL;
     int i;
@@ -161,7 +184,10 @@ output_get_property(xf86OutputPtr output, Atom property)
 static void
 output_destroy(xf86OutputPtr output)
 {
-    drmModeFreeConnector(output->driver_private);
+    struct output_private *priv = output->driver_private;
+    drmModeFreeConnector(priv->drm_connector);
+    xfree(priv);
+    output->driver_private = NULL;
 }
 
 static const xf86OutputFuncsRec output_funcs = {
@@ -188,6 +214,7 @@ xorg_output_init(ScrnInfoPtr pScrn)
     drmModeResPtr res;
     drmModeConnectorPtr drm_connector = NULL;
     drmModeEncoderPtr drm_encoder = NULL;
+    struct output_private *priv;
     char name[32];
     int c, v, p;
 
@@ -226,9 +253,16 @@ xorg_output_init(ScrnInfoPtr pScrn)
 		 drm_connector->connector_type_id);
 
 
-	output = xf86OutputCreate(pScrn, &output_funcs, name);
-	if (!output)
+	priv = xcalloc(sizeof(*priv), 1);
+	if (!priv) {
 	    continue;
+	}
+
+	output = xf86OutputCreate(pScrn, &output_funcs, name);
+	if (!output) {
+	    xfree(priv);
+	    continue;
+	}
 
 	drm_encoder = drmModeGetEncoder(ms->fd, drm_connector->encoders[0]);
 	if (drm_encoder) {
@@ -238,7 +272,9 @@ xorg_output_init(ScrnInfoPtr pScrn)
 	    output->possible_crtcs = 0;
 	    output->possible_clones = 0;
 	}
-	output->driver_private = drm_connector;
+	priv->c = c;
+	priv->drm_connector = drm_connector;
+	output->driver_private = priv;
 	output->subpixel_order = SubPixelHorizontalRGB;
 	output->interlaceAllowed = FALSE;
 	output->doubleScanAllowed = FALSE;
@@ -246,6 +282,13 @@ xorg_output_init(ScrnInfoPtr pScrn)
 
   out:
     drmModeFreeResources(res);
+}
+
+unsigned
+xorg_output_get_id(xf86OutputPtr output)
+{
+    struct output_private *priv = output->driver_private;
+    return priv->drm_connector->connector_id;
 }
 
 /* vim: set sw=4 ts=8 sts=4: */

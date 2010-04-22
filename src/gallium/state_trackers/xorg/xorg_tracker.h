@@ -192,6 +192,9 @@ xorg_crtc_cursor_destroy(xf86CrtcPtr crtc);
 void
 xorg_output_init(ScrnInfoPtr pScrn);
 
+unsigned
+xorg_output_get_id(xf86OutputPtr output);
+
 
 /***********************************************************************
  * xorg_xv.c

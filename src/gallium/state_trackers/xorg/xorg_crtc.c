@@ -90,11 +90,10 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     modesettingPtr ms = modesettingPTR(crtc->scrn);
     xf86OutputPtr output = NULL;
-    drmModeConnectorPtr drm_connector;
     struct crtc_private *crtcp = crtc->driver_private;
     drmModeCrtcPtr drm_crtc = crtcp->drm_crtc;
     drmModeModeInfo drm_mode;
-    int i, ret;
+    int i, ret, connector_id;
 
     for (i = 0; i < config->num_output; output = NULL, i++) {
 	output = config->output[i];
@@ -106,7 +105,7 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
     if (!output)
 	return FALSE;
 
-    drm_connector = output->driver_private;
+    connector_id = xorg_output_get_id(output);
 
     drm_mode.clock = mode->Clock;
     drm_mode.hdisplay = mode->HDisplay;
@@ -127,7 +126,7 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
     drm_mode.name[DRM_DISPLAY_MODE_LEN - 1] = '\0';
 
     ret = drmModeSetCrtc(ms->fd, drm_crtc->crtc_id, ms->fb_id, x, y,
-			 &drm_connector->connector_id, 1, &drm_mode);
+			 &connector_id, 1, &drm_mode);
 
     if (ret)
 	return FALSE;
