@@ -125,6 +125,7 @@ struct lp_build_tgsi_soa_context
 
    LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
+   LLVMValueRef addr[LP_MAX_TEMPS][NUM_CHANNELS];
 
    struct lp_build_mask_context *mask;
    struct lp_exec_mask exec_mask;
@@ -371,6 +372,7 @@ emit_fetch(
    const struct tgsi_full_src_register *reg = &inst->Src[index];
    unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    LLVMValueRef res;
+   LLVMValueRef addr;
 
    switch (swizzle) {
    case TGSI_SWIZZLE_X:
@@ -378,11 +380,34 @@ emit_fetch(
    case TGSI_SWIZZLE_Z:
    case TGSI_SWIZZLE_W:
 
+      if (reg->Register.Indirect) {
+         LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
+         unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
+         addr = LLVMBuildLoad(bld->base.builder,
+                              bld->addr[reg->Indirect.Index][swizzle],
+                              "");
+         /* for indexing we want integers */
+         addr = LLVMBuildFPToSI(bld->base.builder, addr,
+                                int_vec_type, "");
+         addr = LLVMBuildExtractElement(bld->base.builder,
+                                        addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
+                                        "");
+      }
+
       switch (reg->Register.File) {
       case TGSI_FILE_CONSTANT: {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->Register.Index*4 + swizzle, 0);
-         LLVMValueRef scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr, &index, 1, "");
-         LLVMValueRef scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
+         LLVMValueRef scalar, scalar_ptr;
+
+         if (reg->Register.Indirect) {
+            /*lp_build_printf(bld->base.builder,
+              "\taddr = %d\n", addr);*/
+            addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
+            index = lp_build_add(&bld->base, index, addr);
+         }
+         scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr, &index, 1, "");
+         scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
+
          res = lp_build_broadcast_scalar(&bld->base, scalar);
          break;
       }
@@ -510,8 +535,8 @@ emit_store(
       break;
 
    case TGSI_FILE_ADDRESS:
-      /* FIXME */
-      assert(0);
+      lp_exec_mask_store(&bld->exec_mask, value,
+                         bld->addr[reg->Indirect.Index][chan_index]);
       break;
 
    case TGSI_FILE_PREDICATE:
@@ -724,6 +749,11 @@ emit_declaration(
             bld->outputs[idx][i] = lp_build_alloca(&bld->base);
          break;
 
+      case TGSI_FILE_ADDRESS:
+         for (i = 0; i < NUM_CHANNELS; i++)
+            bld->addr[idx][i] = lp_build_alloca(&bld->base);
+         break;
+
       default:
          /* don't need to declare other vars */
          break;
@@ -780,17 +810,13 @@ emit_instruction(
    }
 
    switch (inst->Instruction.Opcode) {
-#if 0
    case TGSI_OPCODE_ARL:
-      /* FIXME */
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         emit_flr(bld, 0, 0);
-         emit_f2it( bld, 0 );
+         tmp0 = lp_build_floor(&bld->base, tmp0);
          dst0[chan_index] = tmp0;
       }
       break;
-#endif
 
    case TGSI_OPCODE_MOV:
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
@@ -1360,17 +1386,13 @@ emit_instruction(
       return FALSE;
       break;
 
-#if 0
    case TGSI_OPCODE_ARR:
-      /* FIXME */
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          tmp0 = emit_fetch( bld, inst, 0, chan_index );
-         emit_rnd( bld, 0, 0 );
-         emit_f2it( bld, 0 );
+         tmp0 = lp_build_round(&bld->base, tmp0);
          dst0[chan_index] = tmp0;
       }
       break;
-#endif
 
    case TGSI_OPCODE_BRA:
       /* deprecated */
