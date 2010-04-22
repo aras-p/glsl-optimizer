@@ -232,6 +232,8 @@ static void lp_exec_bgnloop(struct lp_exec_mask *mask)
       mask->break_mask = LLVMConstAllOnes(mask->int_vec_type);
    if (mask->cond_stack_size == 0)
       mask->cond_mask = LLVMConstAllOnes(mask->int_vec_type);
+
+   mask->break_stack[mask->break_stack_size++] = mask->break_mask;
    mask->loop_stack[mask->loop_stack_size++] = mask->loop_block;
    mask->loop_block = lp_build_insert_new_block(mask->bld->builder, "bgnloop");
    LLVMBuildBr(mask->bld->builder, mask->loop_block);
@@ -246,7 +248,6 @@ static void lp_exec_break(struct lp_exec_mask *mask)
                                          mask->exec_mask,
                                          "break");
 
-   mask->break_stack[mask->break_stack_size++] = mask->break_mask;
    if (mask->break_stack_size > 1) {
       mask->break_mask = LLVMBuildAnd(mask->bld->builder,
                                       mask->break_mask,
@@ -304,7 +305,7 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
       mask->cont_mask = mask->cont_stack[--mask->cont_stack_size];
    }
    if (mask->break_stack_size) {
-      mask->break_mask = mask->cont_stack[--mask->break_stack_size];
+      mask->break_mask = mask->break_stack[--mask->break_stack_size];
    }
 
    lp_exec_mask_update(mask);
