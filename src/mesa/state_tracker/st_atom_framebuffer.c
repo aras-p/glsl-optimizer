@@ -153,6 +153,16 @@ update_framebuffer_state( struct st_context *st )
          pipe_surface_reference(&framebuffer->zsbuf, NULL);
    }
 
+#ifdef DEBUG
+   /* Make sure the resource binding flags were set properly */
+   for (i = 0; i < framebuffer->nr_cbufs; i++) {
+      assert(framebuffer->cbufs[i]->texture->bind & PIPE_BIND_RENDER_TARGET);
+   }
+   if (framebuffer->zsbuf) {
+      assert(framebuffer->zsbuf->texture->bind & PIPE_BIND_DEPTH_STENCIL);
+   }
+#endif
+
    cso_set_framebuffer(st->cso_context, framebuffer);
 }
 
