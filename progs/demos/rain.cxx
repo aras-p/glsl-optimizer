@@ -158,7 +158,7 @@ static void printhelp(void)
   glRasterPos2i(60,240);
   printstring(GLUT_BITMAP_TIMES_ROMAN_24,"l - Increase rain length");
   glRasterPos2i(60,210);
-  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"k - Increase rain length");
+  printstring(GLUT_BITMAP_TIMES_ROMAN_24,"k - Decrease rain length");
 }
 
 static void drawrain(void)
