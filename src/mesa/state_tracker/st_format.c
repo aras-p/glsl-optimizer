@@ -420,6 +420,49 @@ default_depth_format(struct pipe_screen *screen,
 }
 
 
+static enum pipe_format
+default_depth_stencil_format(struct pipe_screen *screen, 
+                             enum pipe_texture_target target,
+                             unsigned tex_usage, 
+                             unsigned geom_flags)
+{
+   static const enum pipe_format zsFormats[] = {
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+      PIPE_FORMAT_S8_USCALED_Z24_UNORM
+   };
+   uint i;
+   for (i = 0; i < Elements(zsFormats); i++) {
+      if (screen->is_format_supported( screen, zsFormats[i], target,
+                                       tex_usage, geom_flags )) {
+         return zsFormats[i];
+      }
+   }
+   return PIPE_FORMAT_NONE;
+}
+
+
+static enum pipe_format
+default_stencil_format(struct pipe_screen *screen, 
+                       enum pipe_texture_target target,
+                       unsigned tex_usage, 
+                       unsigned geom_flags)
+{
+   static const enum pipe_format sFormats[] = {
+      PIPE_FORMAT_S8_USCALED,
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+      PIPE_FORMAT_S8_USCALED_Z24_UNORM
+   };
+   uint i;
+   for (i = 0; i < Elements(sFormats); i++) {
+      if (screen->is_format_supported( screen, sFormats[i], target,
+                                       tex_usage, geom_flags )) {
+         return sFormats[i];
+      }
+   }
+   return PIPE_FORMAT_NONE;
+}
+
+
 /**
  * Given an OpenGL internalFormat value for a texture or surface, return
  * the best matching PIPE_FORMAT_x, or PIPE_FORMAT_NONE if there's no match.
@@ -577,21 +620,11 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8_USCALED, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_S8_USCALED;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_Z24_UNORM_S8_USCALED;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8_USCALED_Z24_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_S8_USCALED_Z24_UNORM;
-      return PIPE_FORMAT_NONE;
+      return default_stencil_format(screen, target, tex_usage, geom_flags);
 
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_Z24_UNORM_S8_USCALED;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8_USCALED_Z24_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_S8_USCALED_Z24_UNORM;
-      return PIPE_FORMAT_NONE;
+      return default_depth_stencil_format(screen, target, tex_usage, geom_flags);
 
    case GL_SRGB_EXT:
    case GL_SRGB8_EXT:
