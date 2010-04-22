@@ -47,7 +47,12 @@
 #include "xf86drm.h"
 #include "dri2.h"
 #include "dri_common.h"
-#include "../../mesa/drivers/dri/common/dri_util.h"
+
+/* From xmlpool/options.h, user exposed so should be stable */
+#define DRI_CONF_VBLANK_NEVER 0
+#define DRI_CONF_VBLANK_DEF_INTERVAL_0 1
+#define DRI_CONF_VBLANK_DEF_INTERVAL_1 2
+#define DRI_CONF_VBLANK_ALWAYS_SYNC 3
 
 #undef DRI2_MINOR
 #define DRI2_MINOR 1
@@ -177,6 +182,7 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
    __GLXdisplayPrivate *dpyPriv;
    __GLXDRIdisplayPrivate *pdp;
+   GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
    pdraw = Xmalloc(sizeof(*pdraw));
    if (!pdraw)
@@ -187,7 +193,22 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    pdraw->base.drawable = drawable;
    pdraw->base.psc = psc;
    pdraw->bufferCount = 0;
-   pdraw->swap_interval = 1;
+   pdraw->swap_interval = 1; /* default may be overridden below */
+
+   if (psc->config)
+      psc->config->configQueryi(psc->__driScreen, "vblank_mode", &vblank_mode);
+
+   switch (vblank_mode) {
+   case DRI_CONF_VBLANK_NEVER:
+   case DRI_CONF_VBLANK_DEF_INTERVAL_0:
+      pdraw->swap_interval = 0;
+      break;
+   case DRI_CONF_VBLANK_DEF_INTERVAL_1:
+   case DRI_CONF_VBLANK_ALWAYS_SYNC:
+   default:
+      pdraw->swap_interval = 1;
+      break;
+   }
 
    DRI2CreateDrawable(psc->dpy, xDrawable);
 
@@ -474,7 +495,23 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
 static void
 dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
+   __GLXscreenConfigs *psc = pdraw->psc;
    __GLXDRIdrawablePrivate *priv =  (__GLXDRIdrawablePrivate *) pdraw;
+   GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
+
+   if (psc->config)
+      psc->config->configQueryi(psc->__driScreen, "vblank_mode", &vblank_mode);
+
+   switch (vblank_mode) {
+   case DRI_CONF_VBLANK_NEVER:
+      return;
+   case DRI_CONF_VBLANK_ALWAYS_SYNC:
+      if (interval <= 0)
+	 return;
+      break;
+   default:
+      break;
+   }
 
    DRI2SwapInterval(priv->base.psc->dpy, pdraw->xDrawable, interval);
    priv->swap_interval = interval;

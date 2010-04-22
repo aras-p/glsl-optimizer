@@ -31,6 +31,17 @@
 #include "dri_util.h"
 #include "drm_sarea.h"
 #include "utils.h"
+#include "vblank.h"
+#include "xmlpool.h"
+
+PUBLIC const char __dri2ConfigOptions[] =
+   DRI_CONF_BEGIN
+      DRI_CONF_SECTION_PERFORMANCE
+         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_1)
+      DRI_CONF_SECTION_END
+   DRI_CONF_END;
+
+static const uint __dri2NConfigOptions = 1;
 
 #ifndef GLX_OML_sync_control
 typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRIdrawable *drawable, int32_t *numerator, int32_t *denominator);
