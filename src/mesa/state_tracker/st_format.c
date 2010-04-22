@@ -303,6 +303,28 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
 
 
 /**
+ * Return first supported format from the given list.
+ */
+static enum pipe_format
+find_supported_format(struct pipe_screen *screen, 
+                      const enum pipe_format formats[],
+                      uint num_formats,
+                      enum pipe_texture_target target,
+                      unsigned tex_usage, 
+                      unsigned geom_flags)
+{
+   uint i;
+   for (i = 0; i < num_formats; i++) {
+      if (screen->is_format_supported(screen, formats[i], target,
+                                      tex_usage, geom_flags)) {
+         return formats[i];
+      }
+   }
+   return PIPE_FORMAT_NONE;
+}
+
+
+/**
  * Find an RGBA format supported by the context/winsys.
  */
 static enum pipe_format
@@ -317,14 +339,10 @@ default_rgba_format(struct pipe_screen *screen,
       PIPE_FORMAT_A8B8G8R8_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM
    };
-   uint i;
-   for (i = 0; i < Elements(colorFormats); i++) {
-      if (screen->is_format_supported( screen, colorFormats[i], target, tex_usage, geom_flags )) {
-         return colorFormats[i];
-      }
-   }
-   return PIPE_FORMAT_NONE;
+   return find_supported_format(screen, colorFormats, Elements(colorFormats),
+                                target, tex_usage, geom_flags);
 }
+
 
 /**
  * Find an RGB format supported by the context/winsys.
@@ -344,13 +362,8 @@ default_rgb_format(struct pipe_screen *screen,
       PIPE_FORMAT_A8B8G8R8_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM
    };
-   uint i;
-   for (i = 0; i < Elements(colorFormats); i++) {
-      if (screen->is_format_supported( screen, colorFormats[i], target, tex_usage, geom_flags )) {
-         return colorFormats[i];
-      }
-   }
-   return PIPE_FORMAT_NONE;
+   return find_supported_format(screen, colorFormats, Elements(colorFormats),
+                                target, tex_usage, geom_flags);
 }
 
 /**
@@ -367,14 +380,10 @@ default_srgba_format(struct pipe_screen *screen,
       PIPE_FORMAT_A8R8G8B8_SRGB,
       PIPE_FORMAT_A8B8G8R8_SRGB,
    };
-   uint i;
-   for (i = 0; i < Elements(colorFormats); i++) {
-      if (screen->is_format_supported( screen, colorFormats[i], target, tex_usage, geom_flags )) {
-         return colorFormats[i];
-      }
-   }
-   return PIPE_FORMAT_NONE;
+   return find_supported_format(screen, colorFormats, Elements(colorFormats),
+                                target, tex_usage, geom_flags);
 }
+
 
 /**
  * Search list of formats for first RGBA format with >8 bits/channel.
@@ -392,74 +401,6 @@ default_deep_rgba_format(struct pipe_screen *screen,
       return default_rgba_format(screen, target, tex_usage, geom_flags);
    else
       return PIPE_FORMAT_NONE;
-}
-
-
-/**
- * Find an Z format supported by the context/winsys.
- */
-static enum pipe_format
-default_depth_format(struct pipe_screen *screen, 
-                     enum pipe_texture_target target,
-                     unsigned tex_usage, 
-                     unsigned geom_flags)
-{
-   static const enum pipe_format zFormats[] = {
-      PIPE_FORMAT_Z16_UNORM,
-      PIPE_FORMAT_Z32_UNORM,
-      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
-      PIPE_FORMAT_S8_USCALED_Z24_UNORM
-   };
-   uint i;
-   for (i = 0; i < Elements(zFormats); i++) {
-      if (screen->is_format_supported( screen, zFormats[i], target, tex_usage, geom_flags )) {
-         return zFormats[i];
-      }
-   }
-   return PIPE_FORMAT_NONE;
-}
-
-
-static enum pipe_format
-default_depth_stencil_format(struct pipe_screen *screen, 
-                             enum pipe_texture_target target,
-                             unsigned tex_usage, 
-                             unsigned geom_flags)
-{
-   static const enum pipe_format zsFormats[] = {
-      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
-      PIPE_FORMAT_S8_USCALED_Z24_UNORM
-   };
-   uint i;
-   for (i = 0; i < Elements(zsFormats); i++) {
-      if (screen->is_format_supported( screen, zsFormats[i], target,
-                                       tex_usage, geom_flags )) {
-         return zsFormats[i];
-      }
-   }
-   return PIPE_FORMAT_NONE;
-}
-
-
-static enum pipe_format
-default_stencil_format(struct pipe_screen *screen, 
-                       enum pipe_texture_target target,
-                       unsigned tex_usage, 
-                       unsigned geom_flags)
-{
-   static const enum pipe_format sFormats[] = {
-      PIPE_FORMAT_S8_USCALED,
-      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
-      PIPE_FORMAT_S8_USCALED_Z24_UNORM
-   };
-   uint i;
-   for (i = 0; i < Elements(sFormats); i++) {
-      if (screen->is_format_supported( screen, sFormats[i], target,
-                                       tex_usage, geom_flags )) {
-         return sFormats[i];
-      }
-   }
-   return PIPE_FORMAT_NONE;
 }
 
 
@@ -613,18 +554,42 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
          return PIPE_FORMAT_Z32_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT:
-      return default_depth_format( screen, target, tex_usage, geom_flags );
+      {
+         static const enum pipe_format formats[] = {
+            PIPE_FORMAT_Z16_UNORM,
+            PIPE_FORMAT_Z32_UNORM,
+            PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+            PIPE_FORMAT_S8_USCALED_Z24_UNORM
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+                                      target, tex_usage, geom_flags);
+      }
 
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
-      return default_stencil_format(screen, target, tex_usage, geom_flags);
+      {
+         static const enum pipe_format formats[] = {
+            PIPE_FORMAT_S8_USCALED,
+            PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+            PIPE_FORMAT_S8_USCALED_Z24_UNORM
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+                                      target, tex_usage, geom_flags);
+      }
 
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      return default_depth_stencil_format(screen, target, tex_usage, geom_flags);
+      {
+         static const enum pipe_format formats[] = {
+            PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+            PIPE_FORMAT_S8_USCALED_Z24_UNORM
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+                                      target, tex_usage, geom_flags);
+      }
 
    case GL_SRGB_EXT:
    case GL_SRGB8_EXT:
