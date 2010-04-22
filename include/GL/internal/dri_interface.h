@@ -812,4 +812,18 @@ struct __DRIimageLookupExtensionRec {
 				  void *loaderPrivate);
 };
 
+/**
+ * This extension allows for common DRI2 options
+ */
+#define __DRI2_CONFIG_QUERY "DRI_CONFIG_QUERY"
+#define __DRI2_CONFIG_QUERY_VERSION 1
+
+typedef struct __DRI2configQueryExtensionRec __DRI2configQueryExtension;
+struct __DRI2configQueryExtensionRec {
+   __DRIextension base;
+
+   int (*configQueryb)(__DRIscreen *screen, const char *var, GLboolean *val);
+   int (*configQueryi)(__DRIscreen *screen, const char *var, GLint *val);
+   int (*configQueryf)(__DRIscreen *screen, const char *var, GLfloat *val);
+};
 #endif

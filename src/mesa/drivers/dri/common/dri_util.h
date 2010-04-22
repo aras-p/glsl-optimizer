@@ -51,6 +51,7 @@
 #include <drm.h>
 #include <drm_sarea.h>
 #include <xf86drm.h>
+#include "xmlconfig.h"
 #include "main/glheader.h"
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
@@ -70,6 +71,7 @@ extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
 extern const __DRIswapControlExtension driSwapControlExtension;
 extern const __DRIframeTrackingExtension driFrameTrackingExtension;
 extern const __DRImediaStreamCounterExtension driMediaStreamCounterExtension;
+extern const __DRI2configQueryExtension dri2ConfigQueryExtension;
 
 /**
  * Used by DRI_VALIDATE_DRAWABLE_INFO
@@ -527,6 +529,8 @@ struct __DRIscreenRec {
 
     /* The lock actually in use, old sarea or DRI2 */
     drmLock *lock;
+
+    driOptionCache optionCache;
 };
 
 extern void

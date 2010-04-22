@@ -403,6 +403,11 @@ dri2BindExtensions(__GLXscreenConfigs *psc)
 	 /* internal driver extension, no GL extension exposed */
       }
 #endif
+
+#ifdef __DRI2_CONFIG_QUERY
+      if ((strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0))
+	 psc->config = (__DRI2configQueryExtension *) extensions[i];
+#endif
    }
 }
 

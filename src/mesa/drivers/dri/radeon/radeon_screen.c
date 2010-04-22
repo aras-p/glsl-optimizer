@@ -1235,6 +1235,8 @@ radeonCreateScreen( __DRIscreen *sPriv )
    screen->extensions[i++] = &r600texOffsetExtension.base;
 #endif
 
+   screen->extensions[i++] = &dri2ConfigQueryExtension.base;
+
    screen->extensions[i++] = NULL;
    sPriv->extensions = screen->extensions;
 

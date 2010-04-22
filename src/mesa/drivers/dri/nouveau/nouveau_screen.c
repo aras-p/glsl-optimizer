@@ -236,6 +236,7 @@ static const struct __DRItexBufferExtensionRec nouveau_texbuffer_extension = {
 static const __DRIextension *nouveau_screen_extensions[] = {
     &nouveau_flush_extension.base,
     &nouveau_texbuffer_extension.base,
+    &dri2ConfigQueryExtension.base,
     NULL
 };
 

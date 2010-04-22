@@ -225,6 +225,7 @@ static const __DRIextension *intelScreenExtensions[] = {
     &intelTexBufferExtension.base,
     &intelFlushExtension.base,
     &intelImageExtension.base,
+    &dri2ConfigQueryExtension.base,
     NULL
 };
 
