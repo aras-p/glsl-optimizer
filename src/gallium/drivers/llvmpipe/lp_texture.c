@@ -55,14 +55,18 @@
 static INLINE boolean
 resource_is_texture(const struct pipe_resource *resource)
 {
-   const unsigned tex_binds = (PIPE_BIND_DISPLAY_TARGET |
-                               PIPE_BIND_SCANOUT |
-                               PIPE_BIND_SHARED |
-                               PIPE_BIND_DEPTH_STENCIL |
-                               PIPE_BIND_SAMPLER_VIEW);
-   const struct llvmpipe_resource *lpr = llvmpipe_resource_const(resource);
-
-   return (lpr->base.bind & tex_binds) ? TRUE : FALSE;
+   switch (resource->target) {
+   case PIPE_BUFFER:
+      return FALSE;
+   case PIPE_TEXTURE_1D:
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_3D:
+   case PIPE_TEXTURE_CUBE:
+      return TRUE;
+   default:
+      assert(0);
+      return FALSE;
+   }
 }
 
 
