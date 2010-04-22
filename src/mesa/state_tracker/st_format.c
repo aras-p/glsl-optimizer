@@ -160,6 +160,10 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_S8_USCALED_Z24_UNORM;
    case MESA_FORMAT_S8_Z24:
       return PIPE_FORMAT_Z24_UNORM_S8_USCALED;
+   case MESA_FORMAT_Z24_X8:
+      return PIPE_FORMAT_X8Z24_UNORM;
+   case MESA_FORMAT_X8_Z24:
+      return PIPE_FORMAT_Z24X8_UNORM;
    case MESA_FORMAT_YCBCR:
       return PIPE_FORMAT_UYVY;
 #if FEATURE_texture_s3tc
