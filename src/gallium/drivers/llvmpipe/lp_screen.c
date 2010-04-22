@@ -181,16 +181,6 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
 
-   switch(format) {
-   case PIPE_FORMAT_DXT1_RGB:
-   case PIPE_FORMAT_DXT1_RGBA:
-   case PIPE_FORMAT_DXT3_RGBA:
-   case PIPE_FORMAT_DXT5_RGBA:
-      return util_format_s3tc_enabled;
-   default:
-      break;
-   }
-
    if(tex_usage & PIPE_BIND_RENDER_TARGET) {
       if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
@@ -218,6 +208,16 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       /* FIXME: Temporary restriction. See lp_state_fs.c. */
       if(format_desc->block.bits != 32)
          return FALSE;
+   }
+
+   switch(format) {
+   case PIPE_FORMAT_DXT1_RGB:
+   case PIPE_FORMAT_DXT1_RGBA:
+   case PIPE_FORMAT_DXT3_RGBA:
+   case PIPE_FORMAT_DXT5_RGBA:
+      return util_format_s3tc_enabled;
+   default:
+      break;
    }
 
    return TRUE;
