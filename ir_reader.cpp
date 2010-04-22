@@ -600,13 +600,13 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
    /* Now that we know the operator, check for the right number of operands */ 
    if (ir_expression::get_num_operands(op) == 2) {
       if (list_length != 5) {
-	 ir_read_error(st, list, "expected (expression %s <operand> <operand>)",
-		       op_sym->value());
+	 ir_read_error(st, list, "expected (expression <type> %s <operand> "
+				 " <operand>)", op_sym->value());
 	 return NULL;
       }
    } else {
       if (list_length != 4) {
-	 ir_read_error(st, list, "expected (expression %s <operand>)",
+	 ir_read_error(st, list, "expected (expression <type> %s <operand>)",
 		       op_sym->value());
 	 return NULL;
       }
