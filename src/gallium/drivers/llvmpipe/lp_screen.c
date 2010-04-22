@@ -194,9 +194,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
          return FALSE;
    }
 
-   if(tex_usage & (PIPE_BIND_DISPLAY_TARGET |
-                   PIPE_BIND_SCANOUT |
-                   PIPE_BIND_SHARED)) {
+   if(tex_usage & PIPE_BIND_DISPLAY_TARGET) {
       if(!winsys->is_displaytarget_format_supported(winsys, tex_usage, format))
          return FALSE;
    }

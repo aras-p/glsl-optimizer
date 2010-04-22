@@ -193,20 +193,20 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
 
    assert(lpr->base.bind);
 
-   if (lpr->base.bind & (PIPE_BIND_DISPLAY_TARGET |
-                         PIPE_BIND_SCANOUT |
-                         PIPE_BIND_SHARED)) {
-      /* displayable surface */
-      if (!llvmpipe_displaytarget_layout(screen, lpr))
-         goto fail;
-      assert(lpr->layout[0][0] == LP_TEX_LAYOUT_NONE);
-   }
-   else if (lpr->base.bind & (PIPE_BIND_SAMPLER_VIEW |
-                              PIPE_BIND_DEPTH_STENCIL)) {
-      /* texture map */
-      if (!llvmpipe_texture_layout(screen, lpr))
-         goto fail;
-      assert(lpr->layout[0][0] == LP_TEX_LAYOUT_NONE);
+   if (resource_is_texture(&lpr->base)) {
+      if (lpr->base.bind & PIPE_BIND_DISPLAY_TARGET) {
+         /* displayable surface */
+         if (!llvmpipe_displaytarget_layout(screen, lpr))
+            goto fail;
+         assert(lpr->layout[0][0] == LP_TEX_LAYOUT_NONE);
+      }
+      else {
+         /* texture map */
+         if (!llvmpipe_texture_layout(screen, lpr))
+            goto fail;
+         assert(lpr->layout[0][0] == LP_TEX_LAYOUT_NONE);
+      }
+      assert(lpr->layout[0]);
    }
    else {
       /* other data (vertex buffer, const buffer, etc) */
@@ -219,10 +219,6 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
       lpr->data = align_malloc(bytes, 16);
       if (!lpr->data)
          goto fail;
-   }
-
-   if (resource_is_texture(&lpr->base)) {
-      assert(lpr->layout[0]);
    }
 
    lpr->id = id_counter++;
@@ -393,10 +389,7 @@ llvmpipe_resource_data(struct pipe_resource *resource)
 {
    struct llvmpipe_resource *lpr = llvmpipe_resource(resource);
 
-   assert((lpr->base.bind & (PIPE_BIND_DISPLAY_TARGET |
-                             PIPE_BIND_SCANOUT |
-                             PIPE_BIND_SHARED |
-                             PIPE_BIND_SAMPLER_VIEW)) == 0);
+   assert(!resource_is_texture(resource));
 
    return lpr->data;
 }
