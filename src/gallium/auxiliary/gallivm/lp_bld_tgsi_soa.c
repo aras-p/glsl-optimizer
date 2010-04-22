@@ -169,8 +169,7 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
 static void lp_exec_mask_update(struct lp_exec_mask *mask)
 {
    if (mask->loop_stack_size) {
-      /*for loops we need to update the entire mask at
-       * runtime */
+      /*for loops we need to update the entire mask at runtime */
       LLVMValueRef tmp;
       assert(mask->break_mask);
       tmp = LLVMBuildAnd(mask->bld->builder,
@@ -249,6 +248,10 @@ static void lp_exec_break(struct lp_exec_mask *mask)
                                          mask->exec_mask,
                                          "break");
 
+   /* mask->break_stack_size > 1 implies that we encountered a break
+    * statemant already and if that's the case we want to make sure
+    * our mask is a combination of the previous break and the current
+    * execution mask */
    if (mask->break_stack_size > 1) {
       mask->break_mask = LLVMBuildAnd(mask->bld->builder,
                                       mask->break_mask,
@@ -300,10 +303,11 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
    LLVMPositionBuilderAtEnd(mask->bld->builder, endloop);
 
    mask->loop_block = mask->loop_stack[--mask->loop_stack_size];
-   /* pop the break mask */
+   /* pop the cont mask */
    if (mask->cont_stack_size) {
       mask->cont_mask = mask->cont_stack[--mask->cont_stack_size];
    }
+   /* pop the break mask */
    if (mask->break_stack_size) {
       mask->break_mask = mask->break_stack[--mask->break_stack_size];
    }
@@ -311,6 +315,11 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
    lp_exec_mask_update(mask);
 }
 
+/* stores val into an address pointed to by dst.
+ * mask->exec_mask is used to figure out which bits of val
+ * should be stored into the address
+ * (0 means don't store this bit, 1 means do store).
+ */
 static void lp_exec_mask_store(struct lp_exec_mask *mask,
                                LLVMValueRef val,
                                LLVMValueRef dst)
