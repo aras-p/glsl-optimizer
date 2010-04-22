@@ -372,10 +372,7 @@ generate_mat_body_from_N_scalars(exec_list *instructions,
 	 ir_dereference *const row_access =
 	    new ir_dereference(declarations[16], row_index);
 
-	 ir_dereference *const component_access_ref =
-	    new ir_dereference(row_access);
-
-	 ir_swizzle *component_access = new ir_swizzle(component_access_ref,
+	 ir_swizzle *component_access = new ir_swizzle(row_access,
 	                                               j, 0, 0, 0, 1);
 
 	 const unsigned param = (i * row_type->vector_elements) + j;
