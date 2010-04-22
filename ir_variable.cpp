@@ -137,10 +137,8 @@ generate_110_vs_variables(exec_list *instructions,
     * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
     * FINISHME: at least 2, so hard-code 2 for now.
     */
-   const glsl_type *const vec4_type =
-      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(vec4_type, 2);
+      glsl_type::get_array_instance(glsl_type::vec4_type, 2);
 
    add_variable("gl_TexCoord", ir_var_out, vec4_array_type, instructions,
 		symtab);
@@ -219,10 +217,8 @@ generate_110_fs_variables(exec_list *instructions,
     * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
     * FINISHME: at least 2, so hard-code 2 for now.
     */
-   const glsl_type *const vec4_type =
-      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(vec4_type, 2);
+      glsl_type::get_array_instance(glsl_type::vec4_type, 2);
 
    add_variable("gl_TexCoord", ir_var_in, vec4_array_type, instructions,
 		symtab);
@@ -237,10 +233,8 @@ generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
     * FINISHME: value of GL_MAX_DRAW_BUFFERS.  GL_MAX_DRAW_BUFFERS must be
     * FINISHME: at least 1, so hard-code 1 for now.
     */
-   const glsl_type *const vec4_type =
-      glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(vec4_type, 1);
+      glsl_type::get_array_instance(glsl_type::vec4_type, 1);
 
    ir_variable *const fd =
       add_variable("gl_FragData", ir_var_out, vec4_array_type, instructions,

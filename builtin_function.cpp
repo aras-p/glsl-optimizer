@@ -296,10 +296,6 @@ make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
 				       const glsl_type *type))
 {
    ir_function *const f = new ir_function(name);
-   const glsl_type *float_type = glsl_type::float_type;
-   const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
-   const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
-   const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
 
    bool added = symtab->add_function(name, f);
    assert(added);
@@ -307,13 +303,13 @@ make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
    instructions->push_tail(f);
 
    generate_function_instance(f, name, instructions, n_args, generate,
-			      float_type, float_type);
+			      glsl_type::float_type, glsl_type::float_type);
    generate_function_instance(f, name, instructions, n_args, generate,
-			      vec2_type, vec2_type);
+			      glsl_type::vec2_type, glsl_type::vec2_type);
    generate_function_instance(f, name, instructions, n_args, generate,
-			      vec3_type, vec3_type);
+			      glsl_type::vec3_type, glsl_type::vec3_type);
    generate_function_instance(f, name, instructions, n_args, generate,
-			      vec4_type, vec4_type);
+			      glsl_type::vec4_type, glsl_type::vec4_type);
 }
 
 static void
@@ -409,9 +405,6 @@ generate_vec_compare_function(glsl_symbol_table *symtab,
 			      bool do_bool)
 {
    ir_function *const f = new ir_function(name);
-   const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
-   const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
-   const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
    const glsl_type *ivec2_type = glsl_type::get_instance(GLSL_TYPE_INT, 2, 1);
    const glsl_type *ivec3_type = glsl_type::get_instance(GLSL_TYPE_INT, 3, 1);
    const glsl_type *ivec4_type = glsl_type::get_instance(GLSL_TYPE_INT, 4, 1);
@@ -428,11 +421,11 @@ generate_vec_compare_function(glsl_symbol_table *symtab,
    instructions->push_tail(f);
 
    generate_function_instance(f, name, instructions, 2, generate,
-			      bvec2_type, vec2_type);
+			      bvec2_type, glsl_type::vec2_type);
    generate_function_instance(f, name, instructions, 2, generate,
-			      bvec3_type, vec3_type);
+			      bvec3_type, glsl_type::vec3_type);
    generate_function_instance(f, name, instructions, 2, generate,
-			      bvec4_type, vec4_type);
+			      bvec4_type, glsl_type::vec4_type);
 
    generate_function_instance(f, name, instructions, 2, generate,
 			      bvec2_type, ivec2_type);
@@ -482,10 +475,6 @@ generate_length_functions(glsl_symbol_table *symtab, exec_list *instructions)
 {
    const char *name = "length";
    ir_function *const f = new ir_function(name);
-   const glsl_type *float_type = glsl_type::float_type;
-   const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
-   const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
-   const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
 
    bool added = symtab->add_function(name, f);
    assert(added);
@@ -493,13 +482,13 @@ generate_length_functions(glsl_symbol_table *symtab, exec_list *instructions)
    instructions->push_tail(f);
 
    generate_function_instance(f, name, instructions, 1, generate_length,
-			      float_type, float_type);
+			      glsl_type::float_type, glsl_type::float_type);
    generate_function_instance(f, name, instructions, 1, generate_length,
-			      float_type, vec2_type);
+			      glsl_type::float_type, glsl_type::vec2_type);
    generate_function_instance(f, name, instructions, 1, generate_length,
-			      float_type, vec3_type);
+			      glsl_type::float_type, glsl_type::vec3_type);
    generate_function_instance(f, name, instructions, 1, generate_length,
-			      float_type, vec4_type);
+			      glsl_type::float_type, glsl_type::vec4_type);
 }
 
 static void
@@ -524,10 +513,6 @@ generate_dot_functions(glsl_symbol_table *symtab, exec_list *instructions)
 {
    const char *name = "dot";
    ir_function *const f = new ir_function(name);
-   const glsl_type *float_type = glsl_type::float_type;
-   const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
-   const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
-   const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
 
    bool added = symtab->add_function(name, f);
    assert(added);
@@ -535,13 +520,13 @@ generate_dot_functions(glsl_symbol_table *symtab, exec_list *instructions)
    instructions->push_tail(f);
 
    generate_function_instance(f, name, instructions, 2, generate_dot,
-			      float_type, float_type);
+			      glsl_type::float_type, glsl_type::float_type);
    generate_function_instance(f, name, instructions, 2, generate_dot,
-			      float_type, vec2_type);
+			      glsl_type::float_type, glsl_type::vec2_type);
    generate_function_instance(f, name, instructions, 2, generate_dot,
-			      float_type, vec3_type);
+			      glsl_type::float_type, glsl_type::vec3_type);
    generate_function_instance(f, name, instructions, 2, generate_dot,
-			      float_type, vec4_type);
+			      glsl_type::float_type, glsl_type::vec4_type);
 }
 
 static void
