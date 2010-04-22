@@ -172,6 +172,7 @@ static void lp_exec_mask_update(struct lp_exec_mask *mask)
       /*for loops we need to update the entire mask at
        * runtime */
       LLVMValueRef tmp;
+      assert(mask->break_mask);
       tmp = LLVMBuildAnd(mask->bld->builder,
                          mask->cont_mask,
                          mask->break_mask,
@@ -279,8 +280,12 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
    LLVMBasicBlockRef endloop;
    LLVMTypeRef reg_type = LLVMIntType(mask->bld->type.width*
                                       mask->bld->type.length);
+   LLVMValueRef i1cond;
+
+   assert(mask->break_mask);
+
    /* i1cond = (mask == 0) */
-   LLVMValueRef i1cond = LLVMBuildICmp(
+   i1cond = LLVMBuildICmp(
       mask->bld->builder,
       LLVMIntNE,
       LLVMBuildBitCast(mask->bld->builder, mask->break_mask, reg_type, ""),
