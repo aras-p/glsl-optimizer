@@ -26,38 +26,64 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "entry.h"
+#include <string.h>
+#include "u_execmem.h"
+#include "u_macros.h"
 
-#if defined(USE_X86_ASM) && defined(__GNUC__)
-#   ifdef GLX_USE_TLS
-#      include "entry_x86_tls.h"
-#   else                 
-#      include "entry_x86_tsd.h"
-#   endif
-#else
+#define X86_ENTRY_SIZE 32
 
-#include <stdlib.h>
-#include "u_current.h"
-#include "table.h"
+__asm__(".text");
 
-/* C version of the public entries */
-#define MAPI_TMP_PUBLIC_ENTRIES
+#define STUB_ASM_ENTRY(func)        \
+   ".globl " func "\n"              \
+   ".type " func ", @function\n"    \
+   ".balign 32\n"                   \
+   func ":"
+
+#define STUB_ASM_CODE(slot)         \
+   "movl _glapi_Dispatch, %eax\n\t" \
+   "testl %eax, %eax\n\t"           \
+   "je 1f\n\t"                      \
+   "jmp *(4 * " slot ")(%eax)\n"    \
+   "1:\n\t"                         \
+   "call _glapi_get_dispatch\n\t"   \
+   "jmp *(4 * " slot ")(%eax)"
+
+#define MAPI_TMP_STUB_ASM_GCC
 #include "mapi_tmp.h"
+
+__asm__(".balign 32\n"
+        "x86_entry_end:");
 
 void
 entry_patch_public(void)
 {
 }
 
-mapi_func
-entry_generate(int slot)
-{
-   return NULL;
-}
-
 void
 entry_patch(mapi_func entry, int slot)
 {
+   void *code = (void *) entry;
+
+   *((unsigned long *) (code + 11)) = slot * sizeof(mapi_func);
+   *((unsigned long *) (code + 22)) = slot * sizeof(mapi_func);
 }
 
-#endif /* asm */
+mapi_func
+entry_generate(int slot)
+{
+   extern const char x86_entry_end[];
+   const char *code_templ = x86_entry_end - X86_ENTRY_SIZE;
+   void *code;
+   mapi_func entry;
+
+   code = u_execmem_alloc(X86_ENTRY_SIZE);
+   if (!code)
+      return NULL;
+
+   memcpy(code, code_templ, X86_ENTRY_SIZE);
+   entry = (mapi_func) code;
+   entry_patch(entry, slot);
+
+   return entry;
+}

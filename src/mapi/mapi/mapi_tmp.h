@@ -184,3 +184,28 @@ const mapi_func table_noop_array[] = {
 #endif /* DEBUG */
 #undef MAPI_TMP_NOOP_ARRAY
 #endif /* MAPI_TMP_NOOP_ARRAY */
+
+
+#ifdef MAPI_TMP_STUB_ASM_GCC
+#   define STUB_ASM_ALIAS(func, to)    \
+      ".globl " func "\n"              \
+      ".set " func ", " to
+#   define STUB_ASM_HIDE(func)         \
+      ".hidden " func
+
+#   define MAPI_ABI_ENTRY(ret, name, params)                         \
+      __asm__(STUB_ASM_ENTRY(U_CONCAT_STR(MAPI_ABI_PREFIX, name)));
+#   define MAPI_ABI_CODE(ret, name, args)                            \
+      __asm__(STUB_ASM_CODE(U_STRINGIFY(MAPI_SLOT_ ## name)));
+#   define MAPI_ALIAS_ENTRY(alias, ret, name, params)                \
+      __asm__(STUB_ASM_ALIAS(U_CONCAT_STR(MAPI_ABI_PREFIX, name),    \
+            U_CONCAT_STR(MAPI_ABI_PREFIX, alias)));
+#   define MAPI_ABI_ENTRY_HIDDEN(ret, name, params)                  \
+      __asm__(STUB_ASM_HIDE(U_CONCAT_STR(MAPI_ABI_PREFIX, name)));   \
+      MAPI_ABI_ENTRY(ret, name, params);
+#   define MAPI_ALIAS_ENTRY_HIDDEN(alias, ret, name, params)         \
+      __asm__(STUB_ASM_HIDE(U_CONCAT_STR(MAPI_ABI_PREFIX, name)));   \
+      MAPI_ALIAS_ENTRY(alias, ret, name, params);
+#   include MAPI_ABI_HEADER
+#undef MAPI_TMP_STUB_ASM_GCC
+#endif /* MAPI_TMP_STUB_ASM_GCC */
