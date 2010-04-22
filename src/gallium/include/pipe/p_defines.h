@@ -291,10 +291,10 @@ enum pipe_transfer_usage {
 #define PIPE_BIND_TRANSFER_READ        (1 << 10) /* get_transfer */
 #define PIPE_BIND_CUSTOM               (1 << 16) /* state-tracker/winsys usages */
 
-/* The first two flags were previously part of the amorphous
+/* The first two flags above were previously part of the amorphous
  * TEXTURE_USAGE, most of which are now descriptions of the ways a
- * particular texture can be bound to the gallium pipeline.  These two
- * do not fit within that and probably need to be migrated to some
+ * particular texture can be bound to the gallium pipeline.  The two flags
+ * below do not fit within that and probably need to be migrated to some
  * other place.
  *
  * It seems like scanout is used by the Xorg state tracker to ask for
@@ -304,7 +304,7 @@ enum pipe_transfer_usage {
  *
  * The shared flag is quite underspecified, but certainly isn't a
  * binding flag - it seems more like a message to the winsys to create
- * a shareable allocation.  Could it mean that this texture is a valid argument for 
+ * a shareable allocation.
  */
 #define PIPE_BIND_SCANOUT     (1 << 14) /*  */
 #define PIPE_BIND_SHARED      (1 << 15) /* get_texture_handle ??? */
