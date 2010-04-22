@@ -87,19 +87,22 @@ static void
 ir_read_error(_mesa_glsl_parse_state *state, s_expression *expr,
 	      const char *fmt, ...)
 {
-   char buf[1024];
-   int len;
    va_list ap;
 
    state->error = true;
 
-   len = snprintf(buf, sizeof(buf), "error: ");
+   printf("error: ");
 
    va_start(ap, fmt);
-   vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
+   vprintf(fmt, ap);
    va_end(ap);
+   printf("\n");
 
-   printf("%s\n", buf);
+   if (expr != NULL) {
+      printf("...in this context:\n   ");
+      expr->print();
+      printf("\n\n");
+   }
 }
 
 static const glsl_type *
@@ -122,7 +125,7 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
 	 s_expression *base_expr = (s_expression*) type_sym->next;
 	 const glsl_type *base_type = read_type(st, base_expr);
 	 if (base_type == NULL) {
-	    ir_read_error(st, expr, "when reading base type of array");
+	    ir_read_error(st, NULL, "when reading base type of array");
 	    return NULL;
 	 }
 
@@ -340,7 +343,7 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
    } else {
       inst = read_rvalue(st, list);
       if (inst == NULL)
-	 ir_read_error(st, list, "when reading instruction");
+	 ir_read_error(st, NULL, "when reading instruction");
    }
    return inst;
 }
@@ -429,7 +432,7 @@ read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
    s_expression *cond_expr = (s_expression*) list->subexpressions.head->next;
    ir_rvalue *condition = read_rvalue(st, cond_expr);
    if (condition == NULL) {
-      ir_read_error(st, list, "when reading condition of (if ...)");
+      ir_read_error(st, NULL, "when reading condition of (if ...)");
       return NULL;
    }
 
@@ -487,7 +490,7 @@ read_return(_mesa_glsl_parse_state *st, s_list *list)
 
    ir_rvalue *retval = read_rvalue(st, expr);
    if (retval == NULL) {
-      ir_read_error(st, list, "when reading return value");
+      ir_read_error(st, NULL, "when reading return value");
       return NULL;
    }
 
@@ -546,19 +549,19 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
    // FINISHME: Deal with "true" condition
    ir_rvalue *condition = read_rvalue(st, cond_expr);
    if (condition == NULL) {
-      ir_read_error(st, list, "when reading condition of assignment");
+      ir_read_error(st, NULL, "when reading condition of assignment");
       return NULL;
    }
 
    ir_rvalue *lhs = read_rvalue(st, lhs_expr);
    if (lhs == NULL) {
-      ir_read_error(st, list, "when reading left-hand side of assignment");
+      ir_read_error(st, NULL, "when reading left-hand side of assignment");
       return NULL;
    }
 
    ir_rvalue *rhs = read_rvalue(st, rhs_expr);
    if (rhs == NULL) {
-      ir_read_error(st, list, "when reading right-hand side of assignment");
+      ir_read_error(st, NULL, "when reading right-hand side of assignment");
       return NULL;
    }
 
@@ -612,7 +615,7 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
    s_expression *exp1 = (s_expression*) (op_sym->next);
    ir_rvalue *arg1 = read_rvalue(st, exp1);
    if (arg1 == NULL) {
-      ir_read_error(st, list, "when reading first operand of %s",
+      ir_read_error(st, NULL, "when reading first operand of %s",
 		    op_sym->value());
       return NULL;
    }
@@ -622,7 +625,7 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
       s_expression *exp2 = (s_expression*) (exp1->next);
       arg2 = read_rvalue(st, exp2);
       if (arg2 == NULL) {
-	 ir_read_error(st, list, "when reading second operand of %s",
+	 ir_read_error(st, NULL, "when reading second operand of %s",
 		       op_sym->value());
 	 return NULL;
       }
