@@ -129,8 +129,6 @@ const GLubyte * GLAPIENTRY
 _es_GetString(GLenum name)
 {
    switch (name) {
-   case GL_SHADING_LANGUAGE_VERSION:
-      return (const GLubyte *) "OpenGL ES GLSL ES 1.0.16";
    case GL_EXTENSIONS:
       return compute_es_extensions();
    default:
