@@ -3955,7 +3955,7 @@
 	<function name="GetMaterialfv" template="GetMaterial" gltype="GLfloat"/>
 	<function name="GetMaterialxv" template="GetMaterial" gltype="GLfixed"/>
 
-	<function name="GetString" external="true" template="GetString"/>
+	<function name="GetString" template="GetString"/>
 
 	<function name="GetTexEnvfv" template="GetTexEnv" gltype="GLfloat"/>
 	<function name="GetTexEnviv" template="GetTexEnv" gltype="GLint"/>
@@ -4178,7 +4178,7 @@
 	<function name="GetFloatv" template="GetState" gltype="GLfloat"/>
 	<function name="GetIntegerv" template="GetState" gltype="GLint"/>
 
-	<function name="GetString" external="true" template="GetString"/>
+	<function name="GetString" template="GetString"/>
 
 	<function name="GetTexParameterfv" template="GetTexParameter" gltype="GLfloat"/>
 	<function name="GetTexParameteriv" template="GetTexParameter" gltype="GLint"/>
