@@ -74,6 +74,24 @@ void debug_print_blob( const char *name,
 #endif
 
 
+static boolean
+debug_get_option_should_print(void)
+{
+   static boolean first = TRUE;
+   static boolean value = FALSE;
+
+   if (!first)
+      return value;
+
+   /* Oh hey this will call into this function,
+    * but its cool since we set first to false
+    */
+   first = FALSE;
+   value = debug_get_bool_option("GALLIUM_PRINT_OPTIONS", TRUE);
+   /* XXX should we print this option? Currently it wont */
+   return value;
+}
+
 const char *
 debug_get_option(const char *name, const char *dfault)
 {
@@ -82,8 +100,9 @@ debug_get_option(const char *name, const char *dfault)
    result = os_get_option(name);
    if(!result)
       result = dfault;
-      
-   debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? result : "(null)");
+
+   if (debug_get_option_should_print())
+      debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? result : "(null)");
    
    return result;
 }
@@ -109,7 +128,8 @@ debug_get_bool_option(const char *name, boolean dfault)
    else
       result = TRUE;
 
-   debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? "TRUE" : "FALSE");
+   if (debug_get_option_should_print())
+      debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? "TRUE" : "FALSE");
    
    return result;
 }
@@ -142,8 +162,9 @@ debug_get_num_option(const char *name, long dfault)
       }
       result *= sign;
    }
-   
-   debug_printf("%s: %s = %li\n", __FUNCTION__, name, result);
+
+   if (debug_get_option_should_print())
+      debug_printf("%s: %s = %li\n", __FUNCTION__, name, result);
 
    return result;
 }
@@ -176,11 +197,12 @@ debug_get_flags_option(const char *name,
       }
    }
 
-   if (str) {
-      debug_printf("%s: %s = 0x%lx (%s)\n", __FUNCTION__, name, result, str);
-   }
-   else {
-      debug_printf("%s: %s = 0x%lx\n", __FUNCTION__, name, result);
+   if (debug_get_option_should_print()) {
+      if (str) {
+         debug_printf("%s: %s = 0x%lx (%s)\n", __FUNCTION__, name, result, str);
+      } else {
+         debug_printf("%s: %s = 0x%lx\n", __FUNCTION__, name, result);
+      }
    }
 
    return result;
