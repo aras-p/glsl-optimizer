@@ -63,9 +63,11 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
    printf("\n-------------\n");
    
    _mesa_glsl_initialize_types(state);
-   _mesa_glsl_initialize_variables(instructions, state);
-   _mesa_glsl_initialize_constructors(instructions, state);
-   _mesa_glsl_initialize_functions(instructions, state);
+
+   /* FINISHME: Constructors probably shouldn't be emitted as part of the IR.
+    * FINISHME: Once they're not, remake them by calling:
+    * FINISHME: _mesa_glsl_initialize_constructors(instructions, state);
+    */
 
    read_instructions(state, instructions, expr, NULL);
 }
