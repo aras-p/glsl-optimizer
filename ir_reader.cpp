@@ -645,8 +645,7 @@ read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   unsigned num_components = strlen(swiz->value());
-   if (num_components > 4) {
+   if (strlen(swiz->value()) > 4) {
       ir_read_error(st, list, "expected a valid swizzle; found %s",
 		    swiz->value());
       return NULL;
@@ -663,7 +662,8 @@ read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
    if (rvalue == NULL)
       return NULL;
 
-   return ir_swizzle::create(rvalue, swiz->value(), num_components);
+   return ir_swizzle::create(rvalue, swiz->value(),
+			     rvalue->type->vector_elements);
 }
 
 static ir_constant *
