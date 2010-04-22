@@ -55,7 +55,6 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
                          const struct util_format_description *desc,
                          LLVMValueRef packed)
 {
-   LLVMTypeRef type;
    LLVMValueRef shifted, casted, scaled, masked;
    LLVMValueRef shifts[4];
    LLVMValueRef masks[4];
@@ -73,8 +72,6 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
    assert(desc->block.width == 1);
    assert(desc->block.height == 1);
    assert(desc->block.bits <= 32);
-
-   type = LLVMIntType(desc->block.bits);
 
    /* Do the intermediate integer computations with 32bit integers since it
     * matches floating point size */
