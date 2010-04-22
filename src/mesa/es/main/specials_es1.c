@@ -195,24 +195,3 @@ _es_GetString(GLenum name)
       return _mesa_GetString(name);
    }
 }
-
-
-void
-_mesa_initialize_context_extra(GLcontext *ctx)
-{
-   GLuint i;
-
-   /**
-    * GL_OES_texture_cube_map says
-    * "Initially all texture generation modes are set to REFLECTION_MAP_OES"
-    */
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      texUnit->GenS.Mode = GL_REFLECTION_MAP_NV;
-      texUnit->GenT.Mode = GL_REFLECTION_MAP_NV;
-      texUnit->GenR.Mode = GL_REFLECTION_MAP_NV;
-      texUnit->GenS._ModeBit = TEXGEN_REFLECTION_MAP_NV;
-      texUnit->GenT._ModeBit = TEXGEN_REFLECTION_MAP_NV;
-      texUnit->GenR._ModeBit = TEXGEN_REFLECTION_MAP_NV;
-   }
-}

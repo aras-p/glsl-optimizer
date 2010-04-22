@@ -808,6 +808,7 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
 				 void *driverContext)
 {
    struct gl_shared_state *shared;
+   int i;
 
    /*ASSERT(driverContext);*/
    assert(driverFunctions->NewTextureObject);
@@ -886,9 +887,30 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
       ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
    }
 
-#if FEATURE_extra_context_init
-   _mesa_initialize_context_extra(ctx);
-#endif
+   switch (ctx->API) {
+   case API_OPENGL:
+      break;
+   case API_OPENGLES:
+      /**
+       * GL_OES_texture_cube_map says
+       * "Initially all texture generation modes are set to REFLECTION_MAP_OES"
+       */
+      for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+	 struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+	 texUnit->GenS.Mode = GL_REFLECTION_MAP_NV;
+	 texUnit->GenT.Mode = GL_REFLECTION_MAP_NV;
+	 texUnit->GenR.Mode = GL_REFLECTION_MAP_NV;
+	 texUnit->GenS._ModeBit = TEXGEN_REFLECTION_MAP_NV;
+	 texUnit->GenT._ModeBit = TEXGEN_REFLECTION_MAP_NV;
+	 texUnit->GenR._ModeBit = TEXGEN_REFLECTION_MAP_NV;
+      }
+      break;
+   case API_OPENGLES2:
+      ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+      ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
+      ctx->Point.PointSprite = GL_TRUE;  /* always on for ES 2.x */
+      break;
+   }
 
    ctx->FirstTimeCurrent = GL_TRUE;
 

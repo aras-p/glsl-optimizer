@@ -167,13 +167,3 @@ _es_GetString(GLenum name)
       return _mesa_GetString(name);
    }
 }
-
-
-void
-_mesa_initialize_context_extra(GLcontext *ctx)
-{
-   ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
-   ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
-
-   ctx->Point.PointSprite = GL_TRUE;  /* always on for ES 2.x */
-}
