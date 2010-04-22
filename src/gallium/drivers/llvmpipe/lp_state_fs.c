@@ -1112,8 +1112,8 @@ make_variant_key(struct llvmpipe_context *lp,
       unsigned chan;
 
       format_desc = util_format_description(lp->framebuffer.cbufs[i]->format);
-      assert(format_desc->layout == UTIL_FORMAT_COLORSPACE_RGB ||
-             format_desc->layout == UTIL_FORMAT_COLORSPACE_SRGB);
+      assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
+             format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB);
 
       key->blend.rt[i].colormask = lp->blend->rt[i].colormask;
 
