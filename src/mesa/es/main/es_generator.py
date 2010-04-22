@@ -209,6 +209,32 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 
 #include "main/dispatch.h"
 
+#if FEATURE_remap_table
+
+#include "main/remap.h"
+
+#ifdef IN_DRI_DRIVER
+#define _GLAPI_USE_REMAP_TABLE
+#endif
+
+#define need_MESA_remap_table
+#include "main/remap_helper.h"
+
+void
+_mesa_init_remap_table(void)
+{
+   _mesa_do_init_remap_table(_mesa_function_pool,
+                             driDispatchRemapTable_size,
+                             MESA_remap_table_functions);
+}
+
+void
+_mesa_map_static_functions(void)
+{
+}
+
+#endif
+
 typedef void (*_glapi_proc)(void); /* generic function pointer */
 """
 

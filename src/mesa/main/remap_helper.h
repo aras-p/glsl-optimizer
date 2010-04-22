@@ -26,11 +26,7 @@
  */
 
 #include "main/dispatch.h"
-
-struct gl_function_remap {
-   GLint func_index;
-   GLint dispatch_offset; /* for sanity check */
-};
+#include "main/remap.h"
 
 /* this is internal to remap.c */
 #ifdef need_MESA_remap_table
@@ -4427,10 +4423,7 @@ static const char _mesa_function_pool[] =
    ;
 
 /* these functions need to be remapped */
-static const struct {
-   GLint pool_index;
-   GLint remap_index;
-} MESA_remap_table_functions[] = {
+static const struct gl_function_pool_remap MESA_remap_table_functions[] = {
    {  1461, AttachShader_remap_index },
    {  8848, CreateProgram_remap_index },
    { 20883, CreateShader_remap_index },
