@@ -122,14 +122,15 @@ tile_4_4_uint16(const uint16_t *src, uint16_t *dst, unsigned src_stride)
 
 /**
  * Convert a tiled image into a linear image.
- * \param src_stride  source row stride in bytes (bytes per row of tiles)
  * \param dst_stride  dest row stride in bytes
  */
 void
 lp_tiled_to_linear(const void *src, void *dst,
                    unsigned x, unsigned y,
                    unsigned width, unsigned height,
-                   enum pipe_format format, unsigned dst_stride)
+                   enum pipe_format format,
+                   unsigned dst_stride,
+                   unsigned tiles_per_row)
 {
    assert(x % TILE_SIZE == 0);
    assert(y % TILE_SIZE == 0);
@@ -141,9 +142,7 @@ lp_tiled_to_linear(const void *src, void *dst,
     */
    if (util_format_is_depth_or_stencil(format)) {
       const uint bpp = util_format_get_blocksize(format);
-      const uint src_stride = dst_stride * TILE_VECTOR_WIDTH;
       const uint tile_w = TILE_VECTOR_WIDTH, tile_h = TILE_VECTOR_HEIGHT;
-      const uint tiles_per_row = src_stride / (tile_w * tile_h * bpp);
 
       dst_stride /= bpp;   /* convert from bytes to words */
 
@@ -191,8 +190,6 @@ lp_tiled_to_linear(const void *src, void *dst,
       const uint bpp = 4;
       const uint tile_w = TILE_SIZE, tile_h = TILE_SIZE;
       const uint bytes_per_tile = tile_w * tile_h * bpp;
-      const uint src_stride = dst_stride * tile_w;
-      const uint tiles_per_row = src_stride / bytes_per_tile;
       uint i, j;
 
       for (j = 0; j < height; j += tile_h) {
@@ -215,13 +212,14 @@ lp_tiled_to_linear(const void *src, void *dst,
 /**
  * Convert a linear image into a tiled image.
  * \param src_stride  source row stride in bytes
- * \param dst_stride  dest row stride in bytes (bytes per row of tiles)
  */
 void
 lp_linear_to_tiled(const void *src, void *dst,
                    unsigned x, unsigned y,
                    unsigned width, unsigned height,
-                   enum pipe_format format, unsigned src_stride)
+                   enum pipe_format format,
+                   unsigned src_stride,
+                   unsigned tiles_per_row)
 {
    assert(x % TILE_SIZE == 0);
    assert(y % TILE_SIZE == 0);
@@ -232,9 +230,7 @@ lp_linear_to_tiled(const void *src, void *dst,
 
    if (util_format_is_depth_or_stencil(format)) {
       const uint bpp = util_format_get_blocksize(format);
-      const uint dst_stride = src_stride * TILE_VECTOR_WIDTH;
       const uint tile_w = TILE_VECTOR_WIDTH, tile_h = TILE_VECTOR_HEIGHT;
-      const uint tiles_per_row = dst_stride / (tile_w * tile_h * bpp);
 
       src_stride /= bpp;   /* convert from bytes to words */
 
@@ -281,8 +277,6 @@ lp_linear_to_tiled(const void *src, void *dst,
       const uint bpp = 4;
       const uint tile_w = TILE_SIZE, tile_h = TILE_SIZE;
       const uint bytes_per_tile = tile_w * tile_h * bpp;
-      const uint dst_stride = src_stride * tile_w;
-      const uint tiles_per_row = dst_stride / bytes_per_tile;
       uint i, j;
 
       for (j = 0; j < height; j += TILE_SIZE) {
@@ -320,10 +314,10 @@ test_tiled_linear_conversion(void *data,
    /*unsigned tiled_stride = wt * TILE_SIZE * TILE_SIZE * 4;*/
 
    lp_linear_to_tiled(data, tiled, 0, 0, width, height, format,
-                      stride);
+                      stride, wt);
 
    lp_tiled_to_linear(tiled, data, 0, 0, width, height, format,
-                      stride);
+                      stride, wt);
 
    free(tiled);
 }

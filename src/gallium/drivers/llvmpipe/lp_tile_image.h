@@ -33,14 +33,18 @@ void
 lp_tiled_to_linear(const void *src, void *dst,
                    unsigned x, unsigned y,
                    unsigned width, unsigned height,
-                   enum pipe_format format, unsigned dst_stride);
+                   enum pipe_format format,
+                   unsigned dst_stride,
+                   unsigned tiles_per_row);
 
 
 void
 lp_linear_to_tiled(const void *src, void *dst,
                    unsigned x, unsigned y,
                    unsigned width, unsigned height,
-                   enum pipe_format format, unsigned src_stride);
+                   enum pipe_format format,
+                   unsigned src_stride,
+                   unsigned tiles_per_row);
 
 
 void

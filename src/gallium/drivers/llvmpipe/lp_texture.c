@@ -991,14 +991,16 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
                                      x * TILE_SIZE, y * TILE_SIZE,
                                      TILE_SIZE, TILE_SIZE,
                                      lpr->base.format,
-                                     lpr->row_stride[level]);
+                                     lpr->row_stride[level],
+                                     lpr->tiles_per_row[level]);
                }
                else {
                   lp_tiled_to_linear(other_data, target_data,
                                      x * TILE_SIZE, y * TILE_SIZE,
                                      TILE_SIZE, TILE_SIZE,
                                      lpr->base.format,
-                                     lpr->row_stride[level]);
+                                     lpr->row_stride[level],
+                                     lpr->tiles_per_row[level]);
                }
             }
 
@@ -1087,7 +1089,8 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
    if (convert) {
       lp_tiled_to_linear(tiled_image, linear_image,
                          x, y, TILE_SIZE, TILE_SIZE, lpr->base.format,
-                         lpr->row_stride[level]);
+                         lpr->row_stride[level],
+                         lpr->tiles_per_row[level]);
    }
 
    if (new_layout != cur_layout)
@@ -1135,7 +1138,8 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
    if (convert) {
       lp_linear_to_tiled(linear_image, tiled_image,
                          x, y, TILE_SIZE, TILE_SIZE, lpr->base.format,
-                         lpr->row_stride[level]);
+                         lpr->row_stride[level],
+                         lpr->tiles_per_row[level]);
    }
 
    if (new_layout != cur_layout)
