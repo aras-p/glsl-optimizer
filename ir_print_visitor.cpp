@@ -64,7 +64,9 @@ void ir_print_visitor::visit(ir_variable *ir)
 
 void ir_print_visitor::visit(ir_function_signature *ir)
 {
-   printf("(signature\n  (parameters\n");
+   printf("(signature ");
+   print_type(ir->return_type);
+   printf("\n  (parameters\n");
    foreach_iter(exec_list_iterator, iter, ir->parameters) {
       ir_variable *const inst = (ir_variable *) iter.get();
 
