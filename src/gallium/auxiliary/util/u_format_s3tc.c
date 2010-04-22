@@ -233,8 +233,12 @@ util_format_dxt5_rgba_fetch_rgba_float(float *dst, const uint8_t *src, unsigned 
  * Block decompression.
  */
 
-void
-util_format_dxt1_rgb_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+static INLINE void
+util_format_dxtn_rgb_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                        const uint8_t *src_row, unsigned src_stride,
+                                        unsigned width, unsigned height,
+                                        util_format_dxtn_fetch_t fetch,
+                                        unsigned block_size)
 {
    unsigned x, y, i, j;
    for(y = 0; y < height; y += 4) {
@@ -243,74 +247,65 @@ util_format_dxt1_rgb_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, c
          for(j = 0; j < 4; ++j) {
             for(i = 0; i < 4; ++i) {
                uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
-               util_format_dxt1_rgb_fetch(0, src, i, j, dst);
+               fetch(0, src, i, j, dst);
             }
          }
-         src += 8;
+         src += block_size;
       }
       src_row += src_stride;
    }
 }
 
 void
-util_format_dxt1_rgba_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt1_rgb_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                        const uint8_t *src_row, unsigned src_stride,
+                                        unsigned width, unsigned height)
 {
-   unsigned x, y, i, j;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
-      for(x = 0; x < width; x += 4) {
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
-               util_format_dxt1_rgba_fetch(0, src, i, j, dst);
-            }
-         }
-         src += 8;
-      }
-      src_row += src_stride;
-   }
+   util_format_dxtn_rgb_unpack_rgba_8unorm(dst_row, dst_stride,
+                                           src_row, src_stride,
+                                           width, height,
+                                           util_format_dxt1_rgb_fetch, 8);
 }
 
 void
-util_format_dxt3_rgba_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt1_rgba_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                         const uint8_t *src_row, unsigned src_stride,
+                                         unsigned width, unsigned height)
 {
-   unsigned x, y, i, j;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
-      for(x = 0; x < width; x += 4) {
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
-               util_format_dxt3_rgba_fetch(0, src, i, j, dst);
-            }
-         }
-         src += 16;
-      }
-      src_row += src_stride;
-   }
+   util_format_dxtn_rgb_unpack_rgba_8unorm(dst_row, dst_stride,
+                                           src_row, src_stride,
+                                           width, height,
+                                           util_format_dxt1_rgba_fetch, 8);
 }
 
 void
-util_format_dxt5_rgba_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt3_rgba_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                         const uint8_t *src_row, unsigned src_stride,
+                                         unsigned width, unsigned height)
 {
-   unsigned x, y, i, j;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
-      for(x = 0; x < width; x += 4) {
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
-               util_format_dxt5_rgba_fetch(0, src, i, j, dst);
-            }
-         }
-         src += 16;
-      }
-      src_row += src_stride;
-   }
+   util_format_dxtn_rgb_unpack_rgba_8unorm(dst_row, dst_stride,
+                                           src_row, src_stride,
+                                           width, height,
+                                           util_format_dxt3_rgba_fetch, 16);
 }
 
 void
-util_format_dxt1_rgb_unpack_rgba_float(float *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt5_rgba_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                         const uint8_t *src_row, unsigned src_stride,
+                                         unsigned width, unsigned height)
+{
+   util_format_dxtn_rgb_unpack_rgba_8unorm(dst_row, dst_stride,
+                                           src_row, src_stride,
+                                           width, height,
+                                           util_format_dxt5_rgba_fetch, 16);
+}
+
+void
+util_format_dxtn_rgb_unpack_rgba_float(float *dst_row, unsigned dst_stride,
+                                       const uint8_t *src_row, unsigned src_stride,
+                                       unsigned width, unsigned height,
+                                       util_format_dxtn_fetch_t fetch,
+                                       unsigned block_size)
 {
    unsigned x, y, i, j;
    for(y = 0; y < height; y += 4) {
@@ -320,89 +315,61 @@ util_format_dxt1_rgb_unpack_rgba_float(float *dst_row, unsigned dst_stride, cons
             for(i = 0; i < 4; ++i) {
                float *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
                uint8_t tmp[4];
-               util_format_dxt1_rgb_fetch(0, src, i, j, tmp);
-               dst[0] = ubyte_to_float(tmp[0]);
-               dst[1] = ubyte_to_float(tmp[1]);
-               dst[2] = ubyte_to_float(tmp[2]);
-               dst[3] = 1.0;
-            }
-         }
-         src += 8;
-      }
-      src_row += src_stride;
-   }
-}
-
-void
-util_format_dxt1_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
-{
-   unsigned x, y, i, j;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
-      for(x = 0; x < width; x += 4) {
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               float *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
-               uint8_t tmp[4];
-               util_format_dxt1_rgba_fetch(0, src, i, j, tmp);
+               fetch(0, src, i, j, tmp);
                dst[0] = ubyte_to_float(tmp[0]);
                dst[1] = ubyte_to_float(tmp[1]);
                dst[2] = ubyte_to_float(tmp[2]);
                dst[3] = ubyte_to_float(tmp[3]);
             }
          }
-         src += 8;
+         src += block_size;
       }
       src_row += src_stride;
    }
 }
 
 void
-util_format_dxt3_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt1_rgb_unpack_rgba_float(float *dst_row, unsigned dst_stride,
+                                       const uint8_t *src_row, unsigned src_stride,
+                                       unsigned width, unsigned height)
 {
-   unsigned x, y, i, j;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
-      for(x = 0; x < width; x += 4) {
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               float *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
-               uint8_t tmp[4];
-               util_format_dxt3_rgba_fetch(0, src, i, j, tmp);
-               dst[0] = ubyte_to_float(tmp[0]);
-               dst[1] = ubyte_to_float(tmp[1]);
-               dst[2] = ubyte_to_float(tmp[2]);
-               dst[3] = ubyte_to_float(tmp[3]);
-            }
-         }
-         src += 16;
-      }
-      src_row += src_stride;
-   }
+   util_format_dxtn_rgb_unpack_rgba_float(dst_row, dst_stride,
+                                          src_row, src_stride,
+                                          width, height,
+                                          util_format_dxt1_rgb_fetch, 8);
 }
 
 void
-util_format_dxt5_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt1_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride,
+                                        const uint8_t *src_row, unsigned src_stride,
+                                        unsigned width, unsigned height)
 {
-   unsigned x, y, i, j;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
-      for(x = 0; x < width; x += 4) {
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               float *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
-               uint8_t tmp[4];
-               util_format_dxt5_rgba_fetch(0, src, i, j, tmp);
-               dst[0] = ubyte_to_float(tmp[0]);
-               dst[1] = ubyte_to_float(tmp[1]);
-               dst[2] = ubyte_to_float(tmp[2]);
-               dst[3] = ubyte_to_float(tmp[3]);
-            }
-         }
-         src += 16;
-      }
-      src_row += src_stride;
-   }
+   util_format_dxtn_rgb_unpack_rgba_float(dst_row, dst_stride,
+                                          src_row, src_stride,
+                                          width, height,
+                                          util_format_dxt1_rgba_fetch, 8);
+}
+
+void
+util_format_dxt3_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride,
+                                        const uint8_t *src_row, unsigned src_stride,
+                                        unsigned width, unsigned height)
+{
+   util_format_dxtn_rgb_unpack_rgba_float(dst_row, dst_stride,
+                                          src_row, src_stride,
+                                          width, height,
+                                          util_format_dxt3_rgba_fetch, 16);
+}
+
+void
+util_format_dxt5_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride,
+                                        const uint8_t *src_row, unsigned src_stride,
+                                        unsigned width, unsigned height)
+{
+   util_format_dxtn_rgb_unpack_rgba_float(dst_row, dst_stride,
+                                          src_row, src_stride,
+                                          width, height,
+                                          util_format_dxt5_rgba_fetch, 16);
 }
 
 
@@ -411,7 +378,9 @@ util_format_dxt5_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride, con
  */
 
 void
-util_format_dxt1_rgb_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt1_rgb_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                      const uint8_t *src_row, unsigned src_stride,
+                                      unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
@@ -436,7 +405,9 @@ util_format_dxt1_rgb_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, con
 }
 
 void
-util_format_dxt1_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt1_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                       const uint8_t *src_row, unsigned src_stride,
+                                       unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
@@ -461,7 +432,9 @@ util_format_dxt1_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, co
 }
 
 void
-util_format_dxt3_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt3_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                       const uint8_t *src_row, unsigned src_stride,
+                                       unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
@@ -486,7 +459,9 @@ util_format_dxt3_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, co
 }
 
 void
-util_format_dxt5_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt5_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
+                                       const uint8_t *src_row, unsigned src_stride,
+                                       unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
@@ -511,7 +486,9 @@ util_format_dxt5_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, co
 }
 
 void
-util_format_dxt1_rgb_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt1_rgb_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
+                                     const float *src_row, unsigned src_stride,
+                                     unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
@@ -536,7 +513,9 @@ util_format_dxt1_rgb_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, cons
 }
 
 void
-util_format_dxt1_rgba_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt1_rgba_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
+                                      const float *src_row, unsigned src_stride,
+                                      unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
