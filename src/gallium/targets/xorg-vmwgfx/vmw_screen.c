@@ -91,6 +91,8 @@ vmw_screen_init(CustomizerPtr cust, int fd)
     vmw->fd = fd;
     vmw_screen_cursor_init(vmw);
 
+    vmw_ctrl_ext_init(vmw);
+
     /* if gallium is used then we don't need to do anything more. */
     if (xorg_has_gallium(vmw->pScrn))
 	return TRUE;

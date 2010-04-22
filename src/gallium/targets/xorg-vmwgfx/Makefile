@@ -7,6 +7,7 @@ CFILES = \
 	vmw_xorg.c \
 	vmw_video.c \
 	vmw_ioctl.c \
+	vmw_ctrl.c \
 	vmw_screen.c
 
 OBJECTS = $(patsubst %.c,%.o,$(CFILES))
