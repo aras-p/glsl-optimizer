@@ -331,6 +331,7 @@ generate_vec_compare(exec_list *instructions,
    return_type = glsl_type::get_instance(GLSL_TYPE_BOOL,
 					 type->vector_elements, 1);
    temp = new ir_variable(return_type, "temp");
+   instructions->push_tail(temp);
 
    for (i = 0; i < type->vector_elements; i++) {
       ir_assignment *assign;
