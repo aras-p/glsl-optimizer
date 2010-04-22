@@ -58,8 +58,9 @@ include ../../Makefile.template
 lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_pack.py ../../auxiliary/util/u_format.csv
 	python lp_tile_soa.py ../../auxiliary/util/u_format.csv > $@
 
-
-LIBS += $(GL_LIB_DEPS) -L../../auxiliary/ -lgallium libllvmpipe.a
+LDFLAGS += $(LLVM_LDFLAGS)
+LIBS += $(GL_LIB_DEPS) -L../../auxiliary/ -lgallium libllvmpipe.a $(LLVM_LIBS)
+LD=g++
 
 $(PROGS): lp_test_main.o libllvmpipe.a
 
