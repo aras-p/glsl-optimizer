@@ -85,7 +85,7 @@ alloc_layout_array(unsigned num_slices, unsigned width, unsigned height)
    assert(LP_TEX_LAYOUT_NONE == 0); /* calloc'ing LP_TEX_LAYOUT_NONE here */
 
    return (enum lp_texture_layout *)
-      calloc(num_slices * tx * ty, sizeof(enum lp_texture_layout));
+      CALLOC(num_slices * tx * ty, sizeof(enum lp_texture_layout));
 }
 
 
@@ -265,7 +265,7 @@ llvmpipe_resource_destroy(struct pipe_screen *pscreen,
 
       /* free layout flag arrays */
       for (level = 0; level < Elements(lpr->tiled); level++) {
-         free(lpr->layout[level]);
+         FREE(lpr->layout[level]);
          lpr->layout[level] = NULL;
       }
    }

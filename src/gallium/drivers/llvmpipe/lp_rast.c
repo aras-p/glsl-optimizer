@@ -123,8 +123,8 @@ lp_rast_end( struct lp_rasterizer *rast )
    rast->curr_scene = NULL;
 
    if (0)
-      printf("Post render scene: tile read: %d  tile write: %d\n",
-             tile_read_count, tile_write_count);
+      debug_printf("Post render scene: tile read: %d  tile write: %d\n",
+                   tile_read_count, tile_write_count);
 }
 
 
