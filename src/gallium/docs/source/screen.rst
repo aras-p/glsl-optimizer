@@ -3,16 +3,19 @@ Screen
 
 A screen is an object representing the context-independent part of a device.
 
-Useful Flags
-------------
+Flags and enumerations
+----------------------
+
+XXX some of these don't belong in this section.
+
 
 .. _pipe_cap:
 
-PIPE_CAP
-^^^^^^^^
+PIPE_CAP_*
+^^^^^^^^^^
 
-Pipe capabilities help expose hardware functionality not explicitly required
-by Gallium. For floating-point values, use :ref:`get_paramf`, and for boolean
+Capability queries return information about the features and limits of the
+driver/GPU.  For floating-point values, use :ref:`get_paramf`, and for boolean
 or integer values, use :ref:`get_param`.
 
 The integer capabilities:
@@ -56,6 +59,19 @@ The integer capabilities:
   to any shader stage using ``set_constant_buffer``. If 0 or 1, the pipe will
   only permit binding one constant buffer per shader, and the shaders will
   not permit two-dimensional access to constants.
+
+If a value greater than 0 is returned, the driver can have multiple
+constant buffers bound to shader stages. The CONST register file can
+be accessed with two-dimensional indices, like in the example below.
+
+DCL CONST[0][0..7]       # declare first 8 vectors of constbuf 0
+DCL CONST[3][0]          # declare first vector of constbuf 3
+MOV OUT[0], CONST[0][3]  # copy vector 3 of constbuf 0
+
+For backwards compatibility, one-dimensional access to CONST register
+file is still supported. In that case, the constbuf index is assumed
+to be 0.
+
 * ``MAX_CONST_BUFFER_SIZE``: Maximum byte size of a single constant buffer.
 * ``INDEP_BLEND_ENABLE``: Whether per-rendertarget blend enabling and channel
   masks are supported. If 0, then the first rendertarget's blend mask is
@@ -85,64 +101,54 @@ The floating-point capabilities:
 * ``GUARD_BAND_LEFT``, ``GUARD_BAND_TOP``, ``GUARD_BAND_RIGHT``,
   ``GUARD_BAND_BOTTOM``: XXX
 
-XXX Is there a better home for this? vvv
 
-If 0 is returned, the driver is not aware of multiple constant buffers,
-supports binding of only one constant buffer, and does not support
-two-dimensional CONST register file access in TGSI shaders.
-
-If a value greater than 0 is returned, the driver can have multiple
-constant buffers bound to shader stages. The CONST register file can
-be accessed with two-dimensional indices, like in the example below.
-
-DCL CONST[0][0..7]       # declare first 8 vectors of constbuf 0
-DCL CONST[3][0]          # declare first vector of constbuf 3
-MOV OUT[0], CONST[0][3]  # copy vector 3 of constbuf 0
-
-For backwards compatibility, one-dimensional access to CONST register
-file is still supported. In that case, the constbuf index is assumed
-to be 0.
 
 .. _pipe_bind:
 
-PIPE_BIND
-^^^^^^^^^
+PIPE_BIND_*
+^^^^^^^^^^^
 
-These flags control resource creation. Resources may be used in different roles
+These flags indicate how a resource will be used and are specified at resource
+creation time. Resources may be used in different roles
 during their lifecycle. Bind flags are cumulative and may be combined to create
-a resource which can be used as multiple things.
-Depending on the pipe driver's memory management, depending on these bind flags
+a resource which can be used for multiple things.
+Depending on the pipe driver's memory management and these bind flags,
 resources might be created and handled quite differently.
 
-* ``RENDER_TARGET``: A color buffer or pixel buffer which will be rendered to.
-* ``DISPLAY_TARGET``: A sharable buffer that can be given to another process.
-* ``DEPTH_STENCIL``: A depth (Z) buffer or stencil buffer.  Gallium does
-  not explicitly provide for stencil-only buffers, so any stencil buffer
-  validated here is implicitly also a depth buffer.
-* ``SAMPLER_VIEW``: A texture that may be sampled from in a fragment or vertex
-  shader.
-* ``VERTEX_BUFFER``: A vertex buffer.
-* ``INDEX_BUFFER``: An element buffer.
-* ``CONSTANT_BUFFER``: A buffer of shader constants.
-* ``BLIT_SOURCE``: A blit source, as given to surface_copy.
-* ``BLIT_DESTINATION``: A blit destination, as given to surface_copy and surface_fill.
-* ``TRANSFER_WRITE``: A transfer object which will be written to.
-* ``TRANSFER_READ``: A transfer object which will be read from.
-* ``CUSTOM``:
-* ``SCANOUT``: A front color buffer or scanout buffer.
-* ``SHARED``:
+* ``PIPE_BIND_RENDER_TARGET``: A color buffer or pixel buffer which will be
+  rendered to.  Any surface/resource attached to pipe_framebuffer_state::cbufs
+  must have this flag set.
+* ``PIPE_BIND_DEPTH_STENCIL``: A depth (Z) buffer and/or stencil buffer. Any
+  depth/stencil surface/resource attached to pipe_framebuffer_state::zsbuf must
+  have this flag set.
+* ``PIPE_BIND_DISPLAY_TARGET``: A sharable buffer that can be given to another
+  process.
+* ``PIPE_BIND_SAMPLER_VIEW``: A texture that may be sampled from in a fragment
+  or vertex shader.
+* ``PIPE_BIND_VERTEX_BUFFER``: A vertex buffer.
+* ``PIPE_BIND_INDEX_BUFFER``: An vertex index/element buffer.
+* ``PIPE_BIND_CONSTANT_BUFFER``: A buffer of shader constants.
+* ``PIPE_BIND_BLIT_SOURCE``: A blit source, as given to surface_copy.
+* ``PIPE_BIND_BLIT_DESTINATION``: A blit destination, as given to surface_copy
+  and surface_fill.
+* ``PIPE_BIND_TRANSFER_WRITE``: A transfer object which will be written to.
+* ``PIPE_BIND_TRANSFER_READ``: A transfer object which will be read from.
+* ``PIPE_BIND_CUSTOM``:
+* ``PIPE_BIND_SCANOUT``: A front color buffer or scanout buffer.
+* ``PIPE_BIND_SHARED``:
 
 .. _pipe_usage:
 
-PIPE_USAGE
-^^^^^^^^^^
+PIPE_USAGE_*
+^^^^^^^^^^^^
 
-The PIPE_USAGE enums are hints about the expected lifecycle of a resource.
-* ``DEFAULT``: Expect many uploads to the resource, intermixed with draws.
-* ``DYNAMIC``: Expect many uploads to the resource, intermixed with draws.
-* ``STATIC``: Same as immutable (?)
-* ``IMMUTABLE``: Resource will not be changed after first upload.
-* ``STREAM``: Upload will be followed by draw, followed by upload, ...
+The PIPE_USAGE enums are hints about the expected usage pattern of a resource.
+
+* ``PIPE_USAGE_DEFAULT``: Expect many uploads to the resource, intermixed with draws.
+* ``PIPE_USAGE_DYNAMIC``: Expect many uploads to the resource, intermixed with draws.
+* ``PIPE_USAGE_STATIC``: Same as immutable (?)
+* ``PIPE_USAGE_IMMUTABLE``: Resource will not be changed after first upload.
+* ``PIPE_USAGE_STREAM``: Upload will be followed by draw, followed by upload, ...
 
 
 
@@ -162,7 +168,7 @@ For example, a compressed format might only be used for POT textures.
 Methods
 -------
 
-XXX moar; got bored
+XXX to-do
 
 get_name
 ^^^^^^^^
@@ -204,9 +210,15 @@ and/or front-buffer rendering.
 is_format_supported
 ^^^^^^^^^^^^^^^^^^^
 
-See if a format can be used in a specific manner.
+Determine if a resource in the given format can be used in a specific manner.
 
-**tex_usage** is a bitmask of :ref:`PIPE_BIND` flags.
+**format** the resource format
+
+**target** one of the PIPE_TEXTURE_x flags
+
+**bindings** is a bitmask of :ref:`PIPE_BIND` flags.
+
+**geom_flags** is a bitmask of PIPE_TEXTURE_GEOM_x flags.
 
 Returns TRUE if all usages can be satisfied.
 
@@ -214,15 +226,35 @@ Returns TRUE if all usages can be satisfied.
 .. _resource_create:
 
 resource_create
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
-Given a template of texture setup, create a resource.
-The way a resource may be used is specifed by bind flags, :ref:`pipe_bind`.
-and hints are used to indicate to the driver what access pattern might be
-likely, :ref:`pipe_usage`.
+Create a new resource from a template.
+The following fields of the pipe_resource must be specified in the template:
+
+target
+
+format
+
+width0
+
+height0
+
+depth0
+
+last_level
+
+nr_samples
+
+usage
+
+bind
+
+flags
+
+
 
 resource_destroy
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
 
 Destroy a resource. A resource is destroyed if it has no more references.
 
