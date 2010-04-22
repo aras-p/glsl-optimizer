@@ -1215,10 +1215,10 @@ static void FETCH(signed_rgba8888)( const struct gl_texture_image *texImage,
 			            GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (s >> 24)        );
-   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (s >> 16) & 0xff );
-   texel[BCOMP] = BYTE_TO_FLOAT_TEX( (s >>  8) & 0xff );
-   texel[ACOMP] = BYTE_TO_FLOAT_TEX( (s      ) & 0xff );
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 24) );
+   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 16) );
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >>  8) );
+   texel[ACOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s      ) );
 }
 
 #if DIM == 3
@@ -1235,10 +1235,10 @@ static void FETCH(signed_rgba8888_rev)( const struct gl_texture_image *texImage,
                                         GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
-   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (s      ) & 0xff );
-   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (s >>  8) & 0xff );
-   texel[BCOMP] = BYTE_TO_FLOAT_TEX( (s >> 16) & 0xff );
-   texel[ACOMP] = BYTE_TO_FLOAT_TEX( (s >> 24)        );
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s      ) );
+   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >>  8) );
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 16) );
+   texel[ACOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 24) );
 }
 
 #if DIM == 3
