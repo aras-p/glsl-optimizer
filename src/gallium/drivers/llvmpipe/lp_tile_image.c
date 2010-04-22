@@ -142,7 +142,9 @@ lp_tiled_to_linear(const void *src, void *dst,
     */
    if (util_format_is_depth_or_stencil(format)) {
       const uint bpp = util_format_get_blocksize(format);
+      const uint src_stride = dst_stride * TILE_VECTOR_WIDTH;
       const uint tile_w = TILE_VECTOR_WIDTH, tile_h = TILE_VECTOR_HEIGHT;
+      const uint tiles_per_row = src_stride / (tile_w * tile_h * bpp);
 
       dst_stride /= bpp;   /* convert from bytes to words */
 
@@ -230,7 +232,9 @@ lp_linear_to_tiled(const void *src, void *dst,
 
    if (util_format_is_depth_or_stencil(format)) {
       const uint bpp = util_format_get_blocksize(format);
+      const uint dst_stride = src_stride * TILE_VECTOR_WIDTH;
       const uint tile_w = TILE_VECTOR_WIDTH, tile_h = TILE_VECTOR_HEIGHT;
+      const uint tiles_per_row = dst_stride / (tile_w * tile_h * bpp);
 
       src_stride /= bpp;   /* convert from bytes to words */
 
