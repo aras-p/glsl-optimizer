@@ -181,54 +181,16 @@ lp_build_sample_offset(struct lp_build_context *bld,
    LLVMValueRef offset;
 
    x_stride = lp_build_const_vec(bld->type, format_desc->block.bits/8);
+   offset = lp_build_mul(bld, x, x_stride);
 
-   if(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
-      LLVMValueRef x_lo, x_hi;
-      LLVMValueRef y_lo, y_hi;
-      LLVMValueRef x_stride_lo, x_stride_hi;
-      LLVMValueRef y_stride_lo, y_stride_hi;
-      LLVMValueRef x_offset_lo, x_offset_hi;
-      LLVMValueRef y_offset_lo, y_offset_hi;
-      LLVMValueRef offset_lo, offset_hi;
-
-      /* XXX 1D & 3D addressing not done yet */
-      assert(!z);
-      assert(!z_stride);
-
-      x_lo = LLVMBuildAnd(bld->builder, x, bld->one, "");
-      y_lo = LLVMBuildAnd(bld->builder, y, bld->one, "");
-
-      x_hi = LLVMBuildLShr(bld->builder, x, bld->one, "");
-      y_hi = LLVMBuildLShr(bld->builder, y, bld->one, "");
-
-      x_stride_lo = x_stride;
-      y_stride_lo = lp_build_const_vec(bld->type, 2*format_desc->block.bits/8);
-
-      x_stride_hi = lp_build_const_vec(bld->type, 4*format_desc->block.bits/8);
-      y_stride_hi = LLVMBuildShl(bld->builder, y_stride, bld->one, "");
-
-      x_offset_lo = lp_build_mul(bld, x_lo, x_stride_lo);
-      y_offset_lo = lp_build_mul(bld, y_lo, y_stride_lo);
-      offset_lo = lp_build_add(bld, x_offset_lo, y_offset_lo);
-
-      x_offset_hi = lp_build_mul(bld, x_hi, x_stride_hi);
-      y_offset_hi = lp_build_mul(bld, y_hi, y_stride_hi);
-      offset_hi = lp_build_add(bld, x_offset_hi, y_offset_hi);
-
-      offset = lp_build_add(bld, offset_hi, offset_lo);
+   if (y && y_stride) {
+      LLVMValueRef y_offset = lp_build_mul(bld, y, y_stride);
+      offset = lp_build_add(bld, offset, y_offset);
    }
-   else {
-      offset = lp_build_mul(bld, x, x_stride);
 
-      if (y && y_stride) {
-         LLVMValueRef y_offset = lp_build_mul(bld, y, y_stride);
-         offset = lp_build_add(bld, offset, y_offset);
-      }
-
-      if (z && z_stride) {
-         LLVMValueRef z_offset = lp_build_mul(bld, z, z_stride);
-         offset = lp_build_add(bld, offset, z_offset);
-      }
+   if (z && z_stride) {
+      LLVMValueRef z_offset = lp_build_mul(bld, z, z_stride);
+      offset = lp_build_add(bld, offset, z_offset);
    }
 
    return offset;
