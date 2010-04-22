@@ -260,13 +260,13 @@ void ir_print_visitor::visit(ir_constant *ir)
 void
 ir_print_visitor::visit(ir_call *ir)
 {
-   printf("(call (%s) ", ir->callee_name());
+   printf("(call %s (", ir->callee_name());
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
       inst->accept(this);
    }
-   printf(")\n");
+   printf("))\n");
 }
 
 
