@@ -31,7 +31,7 @@
 
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
-#include "lp_tile_size.h"
+#include "lp_limits.h"
 
 
 enum lp_texture_usage

@@ -28,9 +28,9 @@
 #include "util/u_rect.h"
 #include "lp_context.h"
 #include "lp_flush.h"
+#include "lp_limits.h"
 #include "lp_surface.h"
 #include "lp_texture.h"
-#include "lp_tile_size.h"
 
 
 /**

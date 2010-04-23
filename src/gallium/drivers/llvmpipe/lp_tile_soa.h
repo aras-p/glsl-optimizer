@@ -30,7 +30,7 @@
 
 #include "pipe/p_compiler.h"
 #include "tgsi/tgsi_exec.h" /* for NUM_CHANNELS */
-#include "lp_tile_size.h"
+#include "lp_limits.h"
 
 #ifdef __cplusplus
 extern "C" {

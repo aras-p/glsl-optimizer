@@ -25,8 +25,12 @@
  * 
  **************************************************************************/
 
-#ifndef LP_TILE_SIZE_H
-#define LP_TILE_SIZE_H
+/**
+ * Implementation limits for LLVMpipe driver.
+ */
+
+#ifndef LP_LIMITS_H
+#define LP_LIMITS_H
 
 
 /**
@@ -54,4 +58,4 @@
 #define MAXWIDTH  (1 << (LP_MAX_TEXTURE_LEVELS - 1))
 
 
-#endif
+#endif /* LP_LIMITS_H */

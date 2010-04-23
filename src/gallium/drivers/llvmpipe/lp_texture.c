@@ -47,7 +47,6 @@
 #include "lp_tile_image.h"
 #include "lp_texture.h"
 #include "lp_setup.h"
-#include "lp_tile_size.h"
 
 #include "state_tracker/sw_winsys.h"
 
