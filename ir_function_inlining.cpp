@@ -122,6 +122,9 @@ ir_function_cloning_visitor::visit(ir_variable *ir)
 void
 ir_function_cloning_visitor::visit(ir_loop *ir)
 {
+   /* FINISHME: Implement loop cloning. */
+   assert(0);
+
    (void)ir;
    this->result = NULL;
 }
@@ -129,6 +132,9 @@ ir_function_cloning_visitor::visit(ir_loop *ir)
 void
 ir_function_cloning_visitor::visit(ir_loop_jump *ir)
 {
+   /* FINISHME: Implement loop cloning. */
+   assert(0);
+
    (void) ir;
    this->result = NULL;
 }
@@ -137,6 +143,7 @@ ir_function_cloning_visitor::visit(ir_loop_jump *ir)
 void
 ir_function_cloning_visitor::visit(ir_function_signature *ir)
 {
+   assert(0);
    (void)ir;
    this->result = NULL;
 }
@@ -145,6 +152,7 @@ ir_function_cloning_visitor::visit(ir_function_signature *ir)
 void
 ir_function_cloning_visitor::visit(ir_function *ir)
 {
+   assert(0);
    (void) ir;
    this->result = NULL;
 }
@@ -274,29 +282,11 @@ ir_function_cloning_visitor::visit(ir_return *ir)
 void
 ir_function_cloning_visitor::visit(ir_if *ir)
 {
+   /* FINISHME: Implement if cloning. */
+   assert(0);
+
    (void) ir;
    result = NULL;
-}
-
-bool
-can_inline(ir_call *call)
-{
-   bool found_return = false;
-
-   /* FINISHME: Right now we only allow a single statement that is a return.
-    */
-   foreach_iter(exec_list_iterator, iter, call->get_callee()->body) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-      if (ir->get_next()->get_next() != NULL)
-	 return false;
-
-      if (!ir->as_return())
-	 return false;
-
-      found_return = true;
-   }
-
-   return found_return;
 }
 
 bool

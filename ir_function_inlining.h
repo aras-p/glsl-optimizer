@@ -64,3 +64,4 @@ public:
 };
 
 bool do_function_inlining(exec_list *instructions);
+bool can_inline(ir_call *call);

@@ -34,6 +34,7 @@ glsl_SOURCES = \
 	ir_constant_folding.cpp \
 	ir_dead_code.cpp \
 	ir_expression_flattening.cpp \
+	ir_function_can_inline.cpp \
 	ir_function_inlining.cpp \
 	ir_if_simplification.cpp
 
