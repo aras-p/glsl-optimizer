@@ -129,7 +129,7 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 			  ? "enable" : "require");
 	 return false;
       }
-   } if (strcmp(name, "GL_ARB_draw_buffers") == 0) {
+   } else if (strcmp(name, "GL_ARB_draw_buffers") == 0) {
       /* This extension is only supported in fragment shaders.
        */
       if (state->target != fragment_shader) {
@@ -138,7 +138,7 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 	 state->ARB_draw_buffers_enable = (ext_mode != extension_disable);
 	 state->ARB_draw_buffers_warn = (ext_mode == extension_warn);
       }
-   } if (strcmp(name, "GL_ARB_texture_rectangle") == 0) {
+   } else if (strcmp(name, "GL_ARB_texture_rectangle") == 0) {
       state->ARB_texture_rectangle_enable = (ext_mode != extension_disable);
       state->ARB_texture_rectangle_warn = (ext_mode == extension_warn);
    } else {
