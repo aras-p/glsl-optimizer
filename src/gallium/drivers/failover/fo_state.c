@@ -29,6 +29,7 @@
  */
 
 #include "util/u_inlines.h"
+#include "util/u_memory.h"
 
 #include "fo_context.h"
 
