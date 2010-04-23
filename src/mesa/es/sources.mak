@@ -7,7 +7,6 @@ LOCAL_ES1_SOURCES :=			\
 	main/drawtex.c			\
 	main/es_cpaltex.c		\
 	main/es_enable.c		\
-	main/es_fbo.c			\
 	main/es_query_matrix.c		\
 	main/es_texgen.c		\
 	glapi/glapi-es1/main/enums.c
@@ -28,7 +27,6 @@ LOCAL_ES1_INCLUDES :=			\
 LOCAL_ES2_SOURCES :=			\
 	main/get_es2.c			\
 	main/es_cpaltex.c		\
-	main/es_fbo.c			\
 	glapi/glapi-es2/main/enums.c
 
 LOCAL_ES2_GALLIUM_SOURCES :=		\

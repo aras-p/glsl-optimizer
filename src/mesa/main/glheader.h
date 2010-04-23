@@ -85,6 +85,10 @@ typedef void *GLeglImageOES;
 #define GL_PROGRAM_BINARY_LENGTH_OES 0x8741
 #endif
 
+/* GLES 2.0 token */
+#ifndef GL_RGB565
+#define GL_RGB565 0x8D62
+#endif
 
 /**
  * Special, internal token
