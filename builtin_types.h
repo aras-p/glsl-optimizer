@@ -79,9 +79,9 @@ const glsl_type *const glsl_type::mat4_type = & builtin_core_types[14];
 /*@{*/
 
 static const struct glsl_struct_field gl_DepthRangeParameters_fields[] = {
-   { & builtin_core_types[ 8], "near" },
-   { & builtin_core_types[ 8], "far" },
-   { & builtin_core_types[ 8], "diff" },
+   { glsl_type::float_type, "near" },
+   { glsl_type::float_type, "far" },
+   { glsl_type::float_type, "diff" },
 };
 
 static const struct glsl_type builtin_structure_types[] = {
@@ -96,58 +96,58 @@ static const struct glsl_type builtin_structure_types[] = {
 /*@{*/
 
 static const struct glsl_struct_field gl_PointParameters_fields[] = {
-   { & builtin_core_types[ 8], "size" },
-   { & builtin_core_types[ 8], "sizeMin" },
-   { & builtin_core_types[ 8], "sizeMax" },
-   { & builtin_core_types[ 8], "fadeThresholdSize" },
-   { & builtin_core_types[ 8], "distanceConstantAttenuation" },
-   { & builtin_core_types[ 8], "distanceLinearAttenuation" },
-   { & builtin_core_types[ 8], "distanceQuadraticAttenuation" },
+   { glsl_type::float_type, "size" },
+   { glsl_type::float_type, "sizeMin" },
+   { glsl_type::float_type, "sizeMax" },
+   { glsl_type::float_type, "fadeThresholdSize" },
+   { glsl_type::float_type, "distanceConstantAttenuation" },
+   { glsl_type::float_type, "distanceLinearAttenuation" },
+   { glsl_type::float_type, "distanceQuadraticAttenuation" },
 };
 
 static const struct glsl_struct_field gl_MaterialParameters_fields[] = {
-   { & builtin_core_types[11], "emission" },
-   { & builtin_core_types[11], "ambient" },
-   { & builtin_core_types[11], "diffuse" },
-   { & builtin_core_types[11], "specular" },
-   { & builtin_core_types[ 8], "shininess" },
+   { glsl_type::vec4_type, "emission" },
+   { glsl_type::vec4_type, "ambient" },
+   { glsl_type::vec4_type, "diffuse" },
+   { glsl_type::vec4_type, "specular" },
+   { glsl_type::float_type, "shininess" },
 };
 
 static const struct glsl_struct_field gl_LightSourceParameters_fields[] = {
-   { & builtin_core_types[11], "ambient" },
-   { & builtin_core_types[11], "diffuse" },
-   { & builtin_core_types[11], "specular" },
-   { & builtin_core_types[11], "position" },
-   { & builtin_core_types[11], "halfVector" },
-   { & builtin_core_types[10], "spotDirection" },
-   { & builtin_core_types[ 8], "spotExponent" },
-   { & builtin_core_types[ 8], "spotCutoff" },
-   { & builtin_core_types[ 8], "spotCosCutoff" },
-   { & builtin_core_types[ 8], "constantAttenuation" },
-   { & builtin_core_types[ 8], "linearAttenuation" },
-   { & builtin_core_types[ 8], "quadraticAttenuation" },
+   { glsl_type::vec4_type, "ambient" },
+   { glsl_type::vec4_type, "diffuse" },
+   { glsl_type::vec4_type, "specular" },
+   { glsl_type::vec4_type, "position" },
+   { glsl_type::vec4_type, "halfVector" },
+   { glsl_type::vec3_type, "spotDirection" },
+   { glsl_type::float_type, "spotExponent" },
+   { glsl_type::float_type, "spotCutoff" },
+   { glsl_type::float_type, "spotCosCutoff" },
+   { glsl_type::float_type, "constantAttenuation" },
+   { glsl_type::float_type, "linearAttenuation" },
+   { glsl_type::float_type, "quadraticAttenuation" },
 };
 
 static const struct glsl_struct_field gl_LightModelParameters_fields[] = {
-   { & builtin_core_types[11], "ambient" },
+   { glsl_type::vec4_type, "ambient" },
 };
 
 static const struct glsl_struct_field gl_LightModelProducts_fields[] = {
-   { & builtin_core_types[11], "sceneColor" },
+   { glsl_type::vec4_type, "sceneColor" },
 };
 
 static const struct glsl_struct_field gl_LightProducts_fields[] = {
-   { & builtin_core_types[11], "ambient" },
-   { & builtin_core_types[11], "diffuse" },
-   { & builtin_core_types[11], "specular" },
+   { glsl_type::vec4_type, "ambient" },
+   { glsl_type::vec4_type, "diffuse" },
+   { glsl_type::vec4_type, "specular" },
 };
 
 static const struct glsl_struct_field gl_FogParameters_fields[] = {
-   { & builtin_core_types[11], "color" },
-   { & builtin_core_types[ 8], "density" },
-   { & builtin_core_types[ 8], "start" },
-   { & builtin_core_types[ 8], "end" },
-   { & builtin_core_types[ 8], "scale" },
+   { glsl_type::vec4_type, "color" },
+   { glsl_type::float_type, "density" },
+   { glsl_type::float_type, "start" },
+   { glsl_type::float_type, "end" },
+   { glsl_type::float_type, "scale" },
 };
 
 static const struct glsl_type builtin_110_deprecated_structure_types[] = {
