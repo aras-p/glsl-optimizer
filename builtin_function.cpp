@@ -253,8 +253,6 @@ generate_pow(exec_list *instructions,
 
 void
 generate_function_instance(ir_function *f,
-			   const char *name,
-			   exec_list *instructions,
 			   int n_args,
 			   void (*generate)(exec_list *instructions,
 					    ir_variable **declarations,
@@ -302,13 +300,13 @@ make_gentype_function(glsl_symbol_table *symtab, exec_list *instructions,
 
    instructions->push_tail(f);
 
-   generate_function_instance(f, name, instructions, n_args, generate,
+   generate_function_instance(f, n_args, generate,
 			      glsl_type::float_type, glsl_type::float_type);
-   generate_function_instance(f, name, instructions, n_args, generate,
+   generate_function_instance(f, n_args, generate,
 			      glsl_type::vec2_type, glsl_type::vec2_type);
-   generate_function_instance(f, name, instructions, n_args, generate,
+   generate_function_instance(f, n_args, generate,
 			      glsl_type::vec3_type, glsl_type::vec3_type);
-   generate_function_instance(f, name, instructions, n_args, generate,
+   generate_function_instance(f, n_args, generate,
 			      glsl_type::vec4_type, glsl_type::vec4_type);
 }
 
@@ -420,33 +418,33 @@ generate_vec_compare_function(glsl_symbol_table *symtab,
 
    instructions->push_tail(f);
 
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec2_type, glsl_type::vec2_type);
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec3_type, glsl_type::vec3_type);
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec4_type, glsl_type::vec4_type);
 
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec2_type, ivec2_type);
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec3_type, ivec3_type);
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec4_type, ivec4_type);
 
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec2_type, uvec2_type);
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec3_type, uvec3_type);
-   generate_function_instance(f, name, instructions, 2, generate,
+   generate_function_instance(f, 2, generate,
 			      bvec4_type, uvec4_type);
 
    if (do_bool) {
-      generate_function_instance(f, name, instructions, 2, generate,
+      generate_function_instance(f, 2, generate,
 				 bvec2_type, bvec2_type);
-      generate_function_instance(f, name, instructions, 2, generate,
+      generate_function_instance(f, 2, generate,
 				 bvec3_type, bvec3_type);
-      generate_function_instance(f, name, instructions, 2, generate,
+      generate_function_instance(f, 2, generate,
 				 bvec4_type, bvec4_type);
    }
 }
@@ -481,13 +479,13 @@ generate_length_functions(glsl_symbol_table *symtab, exec_list *instructions)
 
    instructions->push_tail(f);
 
-   generate_function_instance(f, name, instructions, 1, generate_length,
+   generate_function_instance(f, 1, generate_length,
 			      glsl_type::float_type, glsl_type::float_type);
-   generate_function_instance(f, name, instructions, 1, generate_length,
+   generate_function_instance(f, 1, generate_length,
 			      glsl_type::float_type, glsl_type::vec2_type);
-   generate_function_instance(f, name, instructions, 1, generate_length,
+   generate_function_instance(f, 1, generate_length,
 			      glsl_type::float_type, glsl_type::vec3_type);
-   generate_function_instance(f, name, instructions, 1, generate_length,
+   generate_function_instance(f, 1, generate_length,
 			      glsl_type::float_type, glsl_type::vec4_type);
 }
 
@@ -519,13 +517,13 @@ generate_dot_functions(glsl_symbol_table *symtab, exec_list *instructions)
 
    instructions->push_tail(f);
 
-   generate_function_instance(f, name, instructions, 2, generate_dot,
+   generate_function_instance(f, 2, generate_dot,
 			      glsl_type::float_type, glsl_type::float_type);
-   generate_function_instance(f, name, instructions, 2, generate_dot,
+   generate_function_instance(f, 2, generate_dot,
 			      glsl_type::float_type, glsl_type::vec2_type);
-   generate_function_instance(f, name, instructions, 2, generate_dot,
+   generate_function_instance(f, 2, generate_dot,
 			      glsl_type::float_type, glsl_type::vec3_type);
-   generate_function_instance(f, name, instructions, 2, generate_dot,
+   generate_function_instance(f, 2, generate_dot,
 			      glsl_type::float_type, glsl_type::vec4_type);
 }
 
@@ -683,11 +681,11 @@ generate_any_functions(glsl_symbol_table *symtab, exec_list *instructions)
 
    instructions->push_tail(f);
 
-   generate_function_instance(f, name, instructions, 1, generate_any_bvec2,
+   generate_function_instance(f, 1, generate_any_bvec2,
 			      glsl_type::bool_type, bvec2_type);
-   generate_function_instance(f, name, instructions, 1, generate_any_bvec3,
+   generate_function_instance(f, 1, generate_any_bvec3,
 			      glsl_type::bool_type, bvec3_type);
-   generate_function_instance(f, name, instructions, 1, generate_any_bvec4,
+   generate_function_instance(f, 1, generate_any_bvec4,
 			      glsl_type::bool_type, bvec4_type);
 }
 
@@ -705,11 +703,11 @@ generate_all_functions(glsl_symbol_table *symtab, exec_list *instructions)
 
    instructions->push_tail(f);
 
-   generate_function_instance(f, name, instructions, 1, generate_all_bvec2,
+   generate_function_instance(f, 1, generate_all_bvec2,
 			      glsl_type::bool_type, bvec2_type);
-   generate_function_instance(f, name, instructions, 1, generate_all_bvec3,
+   generate_function_instance(f, 1, generate_all_bvec3,
 			      glsl_type::bool_type, bvec3_type);
-   generate_function_instance(f, name, instructions, 1, generate_all_bvec4,
+   generate_function_instance(f, 1, generate_all_bvec4,
 			      glsl_type::bool_type, bvec4_type);
 }
 
@@ -727,11 +725,11 @@ generate_not_functions(glsl_symbol_table *symtab, exec_list *instructions)
 
    instructions->push_tail(f);
 
-   generate_function_instance(f, name, instructions, 1, generate_not,
+   generate_function_instance(f, 1, generate_not,
 			      bvec2_type, bvec2_type);
-   generate_function_instance(f, name, instructions, 1, generate_not,
+   generate_function_instance(f, 1, generate_not,
 			      bvec3_type, bvec3_type);
-   generate_function_instance(f, name, instructions, 1, generate_not,
+   generate_function_instance(f, 1, generate_not,
 			      bvec4_type, bvec4_type);
 }
 
