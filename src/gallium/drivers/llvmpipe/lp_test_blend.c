@@ -154,7 +154,6 @@ add_blend_test(LLVMModuleRef module,
                enum vector_mode mode,
                struct lp_type type)
 {
-   LLVMTypeRef ret_type;
    LLVMTypeRef vec_type;
    LLVMTypeRef args[4];
    LLVMValueRef func;
@@ -165,7 +164,6 @@ add_blend_test(LLVMModuleRef module,
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
 
-   ret_type = LLVMInt64Type();
    vec_type = lp_build_vec_type(type);
 
    args[3] = args[2] = args[1] = args[0] = LLVMPointerType(vec_type, 0);
