@@ -259,7 +259,7 @@ generate_vec_body_from_N_scalars(exec_list *instructions,
       ir_dereference *const lhs_ref = new ir_dereference(declarations[16]);
       ir_dereference *const rhs = new ir_dereference(declarations[i]);
 
-      ir_swizzle *lhs = new ir_swizzle(lhs_ref, 1, 0, 0, 0, 1);
+      ir_swizzle *lhs = new ir_swizzle(lhs_ref, i, 0, 0, 0, 1);
 
       inst = new ir_assignment(lhs, rhs, NULL);
       instructions->push_tail(inst);
