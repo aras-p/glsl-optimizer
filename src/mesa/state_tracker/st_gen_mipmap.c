@@ -120,6 +120,12 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
 
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
+      const uint srcWidth = u_minify(pt->width0, srcLevel);
+      const uint srcHeight = u_minify(pt->height0, srcLevel);
+      const uint srcDepth = u_minify(pt->depth0, srcLevel);
+      const uint dstWidth = u_minify(pt->width0, dstLevel);
+      const uint dstHeight = u_minify(pt->height0, dstLevel);
+      const uint dstDepth = u_minify(pt->depth0, dstLevel);
       struct pipe_transfer *srcTrans, *dstTrans;
       const ubyte *srcData;
       ubyte *dstData;
@@ -128,14 +134,13 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       srcTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
 						srcLevel, zslice,
 						PIPE_TRANSFER_READ, 0, 0,
-						u_minify(pt->width0, srcLevel),
-						u_minify(pt->height0, srcLevel));
+                                                srcWidth, srcHeight);
+						
 
       dstTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
 						dstLevel, zslice,
 						PIPE_TRANSFER_WRITE, 0, 0,
-						u_minify(pt->width0, dstLevel),
-						u_minify(pt->height0, dstLevel));
+						dstWidth, dstHeight);
 
       srcData = (ubyte *) pipe_transfer_map(pipe, srcTrans);
       dstData = (ubyte *) pipe_transfer_map(pipe, dstTrans);
@@ -145,14 +150,10 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
 
       _mesa_generate_mipmap_level(target, datatype, comps,
                                   0 /*border*/,
-                                  u_minify(pt->width0, srcLevel),
-                                  u_minify(pt->height0, srcLevel),
-                                  u_minify(pt->depth0, srcLevel),
+                                  srcWidth, srcHeight, srcDepth,
                                   srcData,
                                   srcStride, /* stride in texels */
-                                  u_minify(pt->width0, dstLevel),
-                                  u_minify(pt->height0, dstLevel),
-                                  u_minify(pt->depth0, dstLevel),
+                                  dstWidth, dstHeight, dstDepth,
                                   dstData,
                                   dstStride); /* stride in texels */
 
