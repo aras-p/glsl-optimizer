@@ -27,27 +27,19 @@
 
 
 #include "main/imports.h"
-#include "main/macros.h"
 #include "main/mipmap.h"
 #include "main/teximage.h"
 #include "main/texformat.h"
-
-#include "shader/prog_instruction.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_gen_mipmap.h"
-#include "util/u_math.h"
-
-#include "cso_cache/cso_cache.h"
-#include "cso_cache/cso_context.h"
 
 #include "st_debug.h"
 #include "st_context.h"
 #include "st_gen_mipmap.h"
-#include "st_texture.h"
 #include "st_cb_texture.h"
 #include "st_inlines.h"
 
@@ -102,6 +94,9 @@ st_render_mipmap(struct st_context *st,
 }
 
 
+/**
+ * Software fallback for generate mipmap levels.
+ */
 static void
 fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                          struct gl_texture_object *texObj)
@@ -174,7 +169,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
  * Compute the expected number of mipmap levels in the texture given
  * the width/height/depth of the base image and the GL_TEXTURE_BASE_LEVEL/
  * GL_TEXTURE_MAX_LEVEL settings.  This will tell us how many mipmap
- * level should be generated.
+ * levels should be generated.
  */
 static GLuint
 compute_num_levels(GLcontext *ctx,
@@ -207,6 +202,9 @@ compute_num_levels(GLcontext *ctx,
 }
 
 
+/**
+ * Called via ctx->Driver.GenerateMipmap().
+ */
 void
 st_generate_mipmap(GLcontext *ctx, GLenum target,
                    struct gl_texture_object *texObj)
