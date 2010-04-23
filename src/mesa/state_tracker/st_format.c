@@ -651,28 +651,33 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
                        GLenum format, GLenum type)
 {
    enum pipe_format pFormat;
-   uint usage = PIPE_BIND_SAMPLER_VIEW;
+   uint bindings;
 
    (void) format;
    (void) type;
 
    /* GL textures may wind up being render targets, but we don't know
     * that in advance.  Specify potential render target flags now.
-    * An alternative would be to destroy and re-create a texture when
-    * we first start rendering to it.
     */
-   if (!_mesa_is_compressed_format(ctx, internalFormat)) {
-      if (_mesa_is_depth_format(internalFormat) ||
-          _mesa_is_depthstencil_format(internalFormat))
-         usage |= PIPE_BIND_DEPTH_STENCIL;
-      else 
-         usage |= PIPE_BIND_RENDER_TARGET;
-   }
+   if (_mesa_is_depth_format(internalFormat) ||
+       _mesa_is_depthstencil_format(internalFormat))
+      bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_DEPTH_STENCIL;
+   else 
+      bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
 
    pFormat = st_choose_format(ctx->st->pipe->screen, internalFormat,
-                              PIPE_TEXTURE_2D, usage);
-   if (pFormat == PIPE_FORMAT_NONE)
+                              PIPE_TEXTURE_2D, bindings);
+
+   if (pFormat == PIPE_FORMAT_NONE) {
+      /* try choosing format again, this time without render target bindings */
+      pFormat = st_choose_format(ctx->st->pipe->screen, internalFormat,
+                                 PIPE_TEXTURE_2D, PIPE_BIND_SAMPLER_VIEW);
+   }
+
+   if (pFormat == PIPE_FORMAT_NONE) {
+      /* no luck at all */
       return MESA_FORMAT_NONE;
+   }
 
    return st_pipe_format_to_mesa_format(pFormat);
 }
