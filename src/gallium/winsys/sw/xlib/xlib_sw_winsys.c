@@ -385,13 +385,12 @@ xm_displaytarget_create(struct sw_winsys *winsys,
 
    if (!debug_get_bool_option("XLIB_NO_SHM", FALSE))
    {
-      xm_dt->shminfo.shmid = -1;
-      xm_dt->shminfo.shmaddr = (char *) -1;
-      xm_dt->shm = TRUE;
-         
       xm_dt->data = alloc_shm(xm_dt, size);
-      if(!xm_dt->data)
-         goto no_data;
+      if(!xm_dt->data) {
+         xm_dt->shminfo.shmid = -1;
+         xm_dt->shminfo.shmaddr = (char *) -1;
+         xm_dt->shm = TRUE;
+      }
    }
 
    if(!xm_dt->data) {
