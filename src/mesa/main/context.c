@@ -394,7 +394,25 @@ one_time_init( GLcontext *ctx )
 
       _mesa_get_cpu_features();
 
-      _mesa_init_remap_table();
+      switch (ctx->API) {
+#if FEATURE_GL
+      case API_OPENGL:
+	 _mesa_init_remap_table();
+	 break;
+#endif
+#if FEATURE_ES1
+      case API_OPENGLES:
+	 _mesa_init_remap_table_es1();
+	 break;
+#endif
+#if FEATURE_ES2
+      case API_OPENGLES2:
+	 _mesa_init_remap_table_es2();
+	 break;
+#endif
+      default:
+	 break;
+      }
 
       _mesa_init_sqrt_table();
 
@@ -812,15 +830,15 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
    assert(driverFunctions->NewTextureObject);
    assert(driverFunctions->FreeTexImageData);
 
-   /* misc one-time initializations */
-   one_time_init(ctx);
-
    ctx->API = api;
    ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
    ctx->WinSysDrawBuffer = NULL;
    ctx->WinSysReadBuffer = NULL;
+
+   /* misc one-time initializations */
+   one_time_init(ctx);
 
    /* Plug in driver functions and context pointer here.
     * This is important because when we call alloc_shared_state() below
@@ -853,7 +871,27 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
 
 #if FEATURE_dispatch
    /* setup the API dispatch tables */
-   ctx->Exec = _mesa_create_exec_table();
+   switch (ctx->API) {
+#if FEATURE_GL
+   case API_OPENGL:
+      ctx->Exec = _mesa_create_exec_table();
+      break;
+#endif
+#if FEATURE_ES1
+   case API_OPENGLES:
+      ctx->Exec = _mesa_create_exec_table_es1();
+      break;
+#endif
+#if FEATURE_ES2
+   case API_OPENGLES2:
+      ctx->Exec = _mesa_create_exec_table_es2();
+      break;
+#endif
+   default:
+      _mesa_problem(ctx, "unknown or unsupported API");
+      break;
+   }
+
    if (!ctx->Exec) {
       _mesa_release_shared_state(ctx, ctx->Shared);
       return GL_FALSE;

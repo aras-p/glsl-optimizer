@@ -24,6 +24,12 @@ default: depend asm_subdirs glsl_builtin libmesa.a libmesagallium.a \
 	libglapi.a driver_subdirs
 
 
+main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
+	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES1.1 > $@
+
+main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
+	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES2.0 > $@
+
 
 ######################################################################
 # Helper libraries used by many drivers:

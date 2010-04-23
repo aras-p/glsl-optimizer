@@ -3,6 +3,8 @@
 MAIN_SOURCES = \
 	main/api_arrayelt.c \
 	main/api_exec.c \
+	main/api_exec_es1.c \
+	main/api_exec_es2.c \
 	main/api_loopback.c \
 	main/api_noop.c \
 	main/api_validate.c \
