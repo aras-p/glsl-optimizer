@@ -54,7 +54,6 @@ static INLINE struct wideline_stage *wideline_stage( struct draw_stage *stage )
 
 /**
  * Draw a wide line by drawing a quad (two triangles).
- * XXX need to disable polygon stipple.
  */
 static void wideline_line( struct draw_stage *stage,
                            struct prim_header *header )
