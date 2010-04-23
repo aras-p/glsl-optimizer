@@ -1581,7 +1581,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       struct gl_texture_image *dstImage;
       GLint srcWidth, srcHeight, srcDepth;
       GLint dstWidth, dstHeight, dstDepth;
-      GLint border, bytesPerTexel;
+      GLint border;
       GLboolean nextLevel;
 
       /* get src image parameters */
@@ -1623,33 +1623,24 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       dstImage->FetchTexelc = srcImage->FetchTexelc;
       dstImage->FetchTexelf = srcImage->FetchTexelf;
 
-      /* Alloc new teximage data buffer.
-       * Setup src and dest data pointers.
-       */
-      if (_mesa_is_format_compressed(dstImage->TexFormat)) {
-         GLuint dstCompressedSize = 
-            _mesa_format_image_size(dstImage->TexFormat, dstImage->Width,
-                                    dstImage->Height, dstImage->Depth);
-         ASSERT(dstCompressedSize > 0);
-
-         dstImage->Data = _mesa_alloc_texmemory(dstCompressedSize);
+      /* Alloc new teximage data buffer */
+      {
+         GLuint size = _mesa_format_image_size(dstImage->TexFormat,
+                                               dstWidth, dstHeight, dstDepth);
+         dstImage->Data = _mesa_alloc_texmemory(size);
          if (!dstImage->Data) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
             return;
          }
+      }
+
+      /* Setup src and dest data pointers */
+      if (_mesa_is_format_compressed(dstImage->TexFormat)) {
          /* srcData and dstData are already set */
          ASSERT(srcData);
          ASSERT(dstData);
       }
       else {
-         bytesPerTexel = _mesa_get_format_bytes(dstImage->TexFormat);
-         ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
-         dstImage->Data = _mesa_alloc_texmemory(dstWidth * dstHeight
-                                                * dstDepth * bytesPerTexel);
-         if (!dstImage->Data) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
-            return;
-         }
          srcData = (const GLubyte *) srcImage->Data;
          dstData = (GLubyte *) dstImage->Data;
       }
