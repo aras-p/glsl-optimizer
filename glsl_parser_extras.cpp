@@ -719,6 +719,8 @@ main(int argc, char **argv)
       return EXIT_FAILURE;
    }
 
+   memset(& state, 0, sizeof(state));
+
    switch (argv[1][0]) {
    case 'v':
       state.target = vertex_shader;
