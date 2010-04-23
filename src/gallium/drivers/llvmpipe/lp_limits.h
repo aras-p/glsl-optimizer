@@ -54,8 +54,8 @@
 /**
  * Max drawing surface size is the max texture size
  */
-#define MAXHEIGHT (1 << (LP_MAX_TEXTURE_LEVELS - 1))
-#define MAXWIDTH  (1 << (LP_MAX_TEXTURE_LEVELS - 1))
+#define LP_MAX_HEIGHT (1 << (LP_MAX_TEXTURE_LEVELS - 1))
+#define LP_MAX_WIDTH  (1 << (LP_MAX_TEXTURE_LEVELS - 1))
 
 
 #endif /* LP_LIMITS_H */

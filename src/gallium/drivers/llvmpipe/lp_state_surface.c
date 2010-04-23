@@ -52,8 +52,8 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
 
    boolean changed = !util_framebuffer_state_equal(&lp->framebuffer, fb);
 
-   assert(fb->width <= MAXWIDTH);
-   assert(fb->height <= MAXHEIGHT);
+   assert(fb->width <= LP_MAX_WIDTH);
+   assert(fb->height <= LP_MAX_HEIGHT);
 
    if (changed) {
 
