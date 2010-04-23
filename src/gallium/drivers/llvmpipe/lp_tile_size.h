@@ -36,4 +36,22 @@
 #define TILE_SIZE (1 << TILE_ORDER)
 
 
+/**
+ * Max texture sizes
+ */
+#define LP_MAX_TEXTURE_2D_LEVELS 12  /* 2K x 2K for now */
+#define LP_MAX_TEXTURE_3D_LEVELS 10  /* 512 x 512 x 512 for now */
+
+
+/** This must be the larger of LP_MAX_TEXTURE_2D/3D_LEVELS */
+#define LP_MAX_TEXTURE_LEVELS LP_MAX_TEXTURE_2D_LEVELS
+
+
+/**
+ * Max drawing surface size is the max texture size
+ */
+#define MAXHEIGHT (1 << (LP_MAX_TEXTURE_LEVELS - 1))
+#define MAXWIDTH  (1 << (LP_MAX_TEXTURE_LEVELS - 1))
+
+
 #endif

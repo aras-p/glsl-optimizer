@@ -44,8 +44,6 @@ struct lp_scene_queue;
 /* We're limited to 2K by 2K for 32bit fixed point rasterization.
  * Will need a 64-bit version for larger framebuffers.
  */
-#define MAXHEIGHT 2048
-#define MAXWIDTH 2048
 #define TILES_X (MAXWIDTH / TILE_SIZE)
 #define TILES_Y (MAXHEIGHT / TILE_SIZE)
 
