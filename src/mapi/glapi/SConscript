@@ -8,21 +8,29 @@ if env['platform'] != 'winddk':
 
 	env = env.Clone()
 	
+	env.Append(CPPDEFINES = [
+		'MAPI_GLAPI_CURRENT',
+	])
+
 	env.Append(CPPPATH = [
 		'#/src/mapi',
 		'#/src/mesa',
 	])
 	
 	glapi_sources = [
-		'glapi.c',
 		'glapi_dispatch.c',
 		'glapi_entrypoint.c',
-		'glapi_execmem.c',
 		'glapi_getproc.c',
 		'glapi_nop.c',
 		'glthread.c',
 	]
 	
+	glapi_sources += [
+		'../mapi/u_current.c',
+		'../mapi/u_execmem.c',
+		'../mapi/u_thread.c',
+	]
+
 	#
 	# Assembly sources
 	#

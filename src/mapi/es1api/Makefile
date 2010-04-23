@@ -8,53 +8,69 @@ ifeq ($(ES),)
 ES := es1
 endif
 
-ESAPI = $(ES)api
+TARGET = $(ES)api
 
-GLAPI := ../glapi
+GLAPI := $(TOP)/src/mapi/glapi
+MAPI := $(TOP)/src/mapi/mapi
+# directory for generated sources/headers
+GEN := glapi
+
 include $(GLAPI)/sources.mak
-ESAPI_SOURCES := $(addprefix $(GLAPI)/, $(GLAPI_SOURCES))
-ESAPI_OBJECTS := $(GLAPI_SOURCES:.c=.o)
-ESAPI_ASM_SOURCES := $(addprefix glapi/, $(GLAPI_ASM_SOURCES))
-ESAPI_ASM_OBJECTS := $(GLAPI_ASM_SOURCES:.S=.o)
+GLAPI_OBJECTS := $(GLAPI_SOURCES:.c=.o)
+GLAPI_SOURCES := $(addprefix $(GLAPI)/, $(GLAPI_SOURCES))
+GLAPI_ASM_OBJECTS := $(GLAPI_ASM_SOURCES:.S=.o)
+GLAPI_ASM_SOURCES := $(addprefix $(GEN)/, $(GLAPI_ASM_SOURCES))
+
+include $(MAPI)/sources.mak
+MAPI_GLAPI_OBJECTS := $(MAPI_GLAPI_SOURCES:.c=.o)
+MAPI_GLAPI_SOURCES := $(addprefix $(MAPI)/, $(MAPI_GLAPI_SOURCES))
+
+TARGET_OBJECTS = $(GLAPI_OBJECTS) $(GLAPI_ASM_OBJECTS) $(MAPI_GLAPI_OBJECTS)
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
-	-I$(TOP)/src/mapi/$(ESAPI) \
+	-I$(TOP)/src/mapi/$(TARGET) \
 	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa
 
 .PHONY: default
-default: depend lib$(ESAPI).a
+default: depend lib$(TARGET).a
 
-lib$(ESAPI).a: $(ESAPI_OBJECTS) $(ESAPI_ASM_OBJECTS)
-	@$(MKLIB) -o $(ESAPI) -static $(ESAPI_OBJECTS) $(ESAPI_ASM_OBJECTS)
+lib$(TARGET).a: $(TARGET_OBJECTS)
+	@$(MKLIB) -o $(TARGET) -static $(TARGET_OBJECTS)
 
-$(ESAPI_OBJECTS): %.o: $(GLAPI)/%.c
+$(GLAPI_OBJECTS): %.o: $(GLAPI)/%.c
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
-$(ESAPI_ASM_OBJECTS): %.o: glapi/%.S
+$(GLAPI_ASM_OBJECTS): %.o: $(GEN)/%.S
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
-$(ESAPI_SOURCES) $(ESAPI_ASM_SOURCES): | glapi-stamp
+$(MAPI_GLAPI_OBJECTS): %.o: $(MAPI)/%.c
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_GLAPI_CURRENT $< -o $@
+
+$(GLAPI_SOURCES) $(GLAPI_ASM_SOURCES): | glapi-stamp
 
 glapi-stamp:
+	@# generate sources/headers
 	@$(MAKE) -C $(GLAPI)/gen-es $(ES)
 	@touch $@
 
 .PHONY: clean
 clean:
-	-rm -f $(ESAPI_OBJECTS) $(ESAPI_ASM_OBJECTS)
-	-rm -f lib$(ESAPI).a
+	-rm -f lib$(TARGET).a
+	-rm -f $(TARGET_OBJECTS)
 	-rm -f depend depend.bak
-	@$(MAKE) -C $(GLAPI)/gen-es clean-$(ES)
 	-rm -f glapi-stamp
+	@# clean generated sources/headers
+	@$(MAKE) -C $(GLAPI)/gen-es clean-$(ES)
 
 # nothing to install
 install:
 
-depend: $(ESAPI_SOURCES)
+depend: $(GLAPI_SOURCES) $(MAPI_GLAPI_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
 	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(INCLUDE_DIRS) \
-		$(ESAPI_SOURCES) 2>/dev/null | \
-		sed -e 's,^$(GLAPI)/,,' > depend
+		-DMAPI_GLAPI_CURRENT $(GLAPI_SOURCES) $(MAPI_GLAPI_SOURCES) \
+		2>/dev/null | sed -e 's,^$(GLAPI)/,,' -e 's,^$(MAPI)/,,' \
+		> depend

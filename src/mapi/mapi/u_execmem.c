@@ -32,15 +32,9 @@
  */
 
 
-#ifdef HAVE_DIX_CONFIG_H
-#include <dix-config.h>
-#include "glapi/mesa.h"
-#else
-#include "main/compiler.h"
-#endif
-
-#include "glapi/glthread.h"
-#include "glapi/glapi_priv.h"
+#include "u_compiler.h"
+#include "u_thread.h"
+#include "u_execmem.h"
 
 
 #if defined(__linux__) || defined(__OpenBSD__) || defined(_NetBSD__) || defined(__sun)
@@ -60,7 +54,7 @@
 
 #define EXEC_MAP_SIZE (4*1024)
 
-_glthread_DECLARE_STATIC_MUTEX(exec_mutex);
+u_mutex_declare_static(exec_mutex);
 
 static unsigned int head = 0;
 
@@ -92,11 +86,11 @@ init_map(void)
 
 
 void *
-_glapi_exec_malloc(unsigned int size)
+u_execmem_alloc(unsigned int size)
 {
    void *addr = NULL;
 
-   _glthread_LOCK_MUTEX(exec_mutex);
+   u_mutex_lock(exec_mutex);
 
    if (!init_map())
       goto bail;
@@ -110,7 +104,7 @@ _glapi_exec_malloc(unsigned int size)
    head += size;
 
 bail:
-   _glthread_UNLOCK_MUTEX(exec_mutex);
+   u_mutex_unlock(exec_mutex);
 
    return addr;
 }
@@ -119,7 +113,7 @@ bail:
 #else
 
 void *
-_glapi_exec_malloc(unsigned int size)
+u_execmem_alloc(unsigned int size)
 {
    return malloc(size);
 }

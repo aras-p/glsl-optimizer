@@ -1,10 +1,8 @@
 # src/mapi/glapi/sources.mak
 
 GLAPI_SOURCES = \
-	glapi.c \
 	glapi_dispatch.c \
 	glapi_entrypoint.c \
-	glapi_execmem.c \
 	glapi_getproc.c \
 	glapi_nop.c \
 	glthread.c

@@ -41,12 +41,6 @@ extern void
 _glapi_check_table(const struct _glapi_table *table);
 
 
-/* execmem */
-
-extern void *
-_glapi_exec_malloc(unsigned int size);
-
-
 /* entrypoint */
 
 extern void

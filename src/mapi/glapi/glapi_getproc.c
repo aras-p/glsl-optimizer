@@ -387,7 +387,7 @@ set_entry_info( struct _glapi_function * entry, const char * signature, unsigned
  * the parameter signature of a static function.
  */
 
-PUBLIC int
+int
 _glapi_add_dispatch( const char * const * function_names,
 		     const char * parameter_signature )
 {
@@ -501,7 +501,7 @@ _glapi_add_dispatch( const char * const * function_names,
 /**
  * Return offset of entrypoint for named function within dispatch table.
  */
-PUBLIC GLint
+GLint
 _glapi_get_proc_offset(const char *funcName)
 {
    GLint offset;
@@ -522,7 +522,7 @@ _glapi_get_proc_offset(const char *funcName)
  * in the name of static functions, try generating a new API entrypoint on
  * the fly with assembly language.
  */
-PUBLIC _glapi_proc
+_glapi_proc
 _glapi_get_proc_address(const char *funcName)
 {
    _glapi_proc func;
@@ -598,7 +598,7 @@ _glapi_get_proc_name(GLuint offset)
  * Return size of dispatch table struct as number of functions (or
  * slots).
  */
-PUBLIC GLuint
+GLuint
 _glapi_get_dispatch_table_size(void)
 {
    return DISPATCH_TABLE_SIZE;
