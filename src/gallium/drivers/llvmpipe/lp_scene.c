@@ -35,6 +35,14 @@
 #include "lp_debug.h"
 
 
+/** List of texture references */
+struct texture_ref {
+   struct pipe_resource *texture;
+   struct texture_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
+};
+
+
+
 struct lp_scene *
 lp_scene_create( struct pipe_context *pipe,
                  struct lp_scene_queue *queue )
@@ -57,7 +65,7 @@ lp_scene_create( struct pipe_context *pipe,
    scene->data.head =
       scene->data.tail = CALLOC_STRUCT(data_block);
 
-   make_empty_list(&scene->textures);
+   make_empty_list(&scene->resources);
 
    pipe_mutex_init(scene->mutex);
 
@@ -178,10 +186,10 @@ lp_scene_reset(struct lp_scene *scene )
    /* Release texture refs
     */
    {
-      struct texture_ref *ref, *next, *ref_list = &scene->textures;
+      struct resource_ref *ref, *next, *ref_list = &scene->resources;
       for (ref = ref_list->next; ref != ref_list; ref = next) {
          next = next_elem(ref);
-         pipe_resource_reference(&ref->texture, NULL);
+         pipe_resource_reference(&ref->resource, NULL);
          FREE(ref);
       }
       make_empty_list(ref_list);
@@ -247,32 +255,32 @@ lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y )
 
 
 /**
- * Add a reference to a texture by the scene.
+ * Add a reference to a resource by the scene.
  */
 void
-lp_scene_texture_reference( struct lp_scene *scene,
-                            struct pipe_resource *texture )
+lp_scene_add_resource_reference(struct lp_scene *scene,
+                                struct pipe_resource *resource)
 {
-   struct texture_ref *ref = CALLOC_STRUCT(texture_ref);
+   struct resource_ref *ref = CALLOC_STRUCT(resource_ref);
    if (ref) {
-      struct texture_ref *ref_list = &scene->textures;
-      pipe_resource_reference(&ref->texture, texture);
+      struct resource_ref *ref_list = &scene->resources;
+      pipe_resource_reference(&ref->resource, resource);
       insert_at_tail(ref_list, ref);
    }
 }
 
 
 /**
- * Does this scene have a reference to the given texture?
+ * Does this scene have a reference to the given resource?
  */
 boolean
-lp_scene_is_resource_referenced( const struct lp_scene *scene,
-                                const struct pipe_resource *texture )
+lp_scene_is_resource_referenced(const struct lp_scene *scene,
+                                const struct pipe_resource *resource)
 {
-   const struct texture_ref *ref_list = &scene->textures;
-   const struct texture_ref *ref;
+   const struct resource_ref *ref_list = &scene->resources;
+   const struct resource_ref *ref;
    foreach (ref, ref_list) {
-      if (ref->texture == texture)
+      if (ref->resource == resource)
          return TRUE;
    }
    return FALSE;

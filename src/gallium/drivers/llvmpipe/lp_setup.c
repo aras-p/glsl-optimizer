@@ -715,7 +715,7 @@ lp_setup_update_state( struct lp_setup_context *setup )
           */
          for (i = 0; i < Elements(setup->fs.current_tex); i++) {
             if (setup->fs.current_tex[i])
-               lp_scene_texture_reference(scene, setup->fs.current_tex[i]);
+               lp_scene_add_resource_reference(scene, setup->fs.current_tex[i]);
          }
       }
    }

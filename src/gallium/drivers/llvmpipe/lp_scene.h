@@ -95,10 +95,10 @@ struct data_block_list {
 };
 
 
-/** List of texture references */
-struct texture_ref {
-   struct pipe_resource *texture;
-   struct texture_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
+/** List of resource references */
+struct resource_ref {
+   struct pipe_resource *resource;
+   struct resource_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
 };
 
 
@@ -116,8 +116,8 @@ struct lp_scene {
    /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
 
-   /** list of textures referenced by the scene commands */
-   struct texture_ref textures;
+   /** list of resources referenced by the scene commands */
+   struct resource_ref resources;
 
    boolean write_depth;
    boolean has_color_clear;
@@ -162,11 +162,11 @@ unsigned lp_scene_data_size( const struct lp_scene *scene );
 
 unsigned lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y );
 
-void lp_scene_texture_reference( struct lp_scene *scene,
-                                 struct pipe_resource *texture );
+void lp_scene_add_resource_reference(struct lp_scene *scene,
+                                     struct pipe_resource *resource);
 
-boolean lp_scene_is_resource_referenced( const struct lp_scene *scene,
-                                        const struct pipe_resource *texture );
+boolean lp_scene_is_resource_referenced(const struct lp_scene *scene,
+                                        const struct pipe_resource *resource );
 
 
 /**
