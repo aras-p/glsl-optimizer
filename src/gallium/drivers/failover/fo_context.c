@@ -39,7 +39,7 @@ static void failover_destroy( struct pipe_context *pipe )
 {
    struct failover_context *failover = failover_context( pipe );
 
-   free( failover );
+   FREE( failover );
 }
 
 

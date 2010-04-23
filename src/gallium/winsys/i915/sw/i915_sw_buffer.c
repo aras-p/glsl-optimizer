@@ -27,7 +27,7 @@ i915_sw_buffer_create(struct i915_winsys *iws,
    buf->magic = 0xDEAD1337;
    buf->name = name;
    buf->type = type;
-   buf->ptr = calloc(size, 1);
+   buf->ptr = CALLOC(size, 1);
 
    if (!buf->ptr)
       goto err;

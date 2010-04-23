@@ -73,7 +73,7 @@ trace_drm_destroy(struct drm_api *_api)
    if (api->destroy)
       api->destroy(api);
 
-   free(tr_api);
+   FREE(tr_api);
 }
 
 struct drm_api *

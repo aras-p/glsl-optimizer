@@ -1142,12 +1142,12 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
    trace_dump_arg_end();
 
    if (num_buffers) {
-      struct pipe_vertex_buffer *_buffers = malloc(num_buffers * sizeof(*_buffers));
+      struct pipe_vertex_buffer *_buffers = MALLOC(num_buffers * sizeof(*_buffers));
       memcpy(_buffers, buffers, num_buffers * sizeof(*_buffers));
       for (i = 0; i < num_buffers; i++)
          _buffers[i].buffer = trace_resource_unwrap(tr_ctx, buffers[i].buffer);
       pipe->set_vertex_buffers(pipe, num_buffers, _buffers);
-      free(_buffers);
+      FREE(_buffers);
    } else {
       pipe->set_vertex_buffers(pipe, num_buffers, NULL);
    }

@@ -74,7 +74,7 @@ lp_scene_create( struct pipe_context *pipe,
 
 
 /**
- * Free all data associated with the given scene, and free(scene).
+ * Free all data associated with the given scene, and the scene itself.
  */
 void
 lp_scene_destroy(struct lp_scene *scene)

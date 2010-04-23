@@ -68,7 +68,7 @@ identity_drm_destroy(struct drm_api *_api)
    struct drm_api *api = id_api->api;
    api->destroy(api);
 
-   free(id_api);
+   FREE(id_api);
 }
 
 struct drm_api *

@@ -105,7 +105,7 @@ util_surfaces_destroy(struct util_surfaces *us, struct pipe_resource *pt, void (
 	    if(ps)
 	       destroy_surface(ps);
 	 }
-	 free(us->u.array);
+	 FREE(us->u.array);
 	 us->u.array = NULL;
       }
    }

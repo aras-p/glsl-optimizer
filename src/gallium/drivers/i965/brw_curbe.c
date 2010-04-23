@@ -168,7 +168,7 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
 
    if (sz == 0) {
       if (brw->curbe.last_buf) {
-	 free(brw->curbe.last_buf);
+	 FREE(brw->curbe.last_buf);
 	 brw->curbe.last_buf = NULL;
 	 brw->curbe.last_bufsz  = 0;
       }

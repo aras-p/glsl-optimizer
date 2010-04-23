@@ -42,7 +42,7 @@ identity_destroy(struct pipe_context *_pipe)
 
    pipe->destroy(pipe);
 
-   free(id_pipe);
+   FREE(id_pipe);
 }
 
 static void
@@ -708,7 +708,7 @@ identity_create_sampler_view(struct pipe_context *pipe,
    struct identity_resource *id_resource = identity_resource(texture);
    struct pipe_context *pipe_unwrapped = id_pipe->pipe;
    struct pipe_resource *texture_unwrapped = id_resource->resource;
-   struct identity_sampler_view *view = malloc(sizeof(struct identity_sampler_view));
+   struct identity_sampler_view *view = MALLOC(sizeof(struct identity_sampler_view));
 
    view->sampler_view = pipe_unwrapped->create_sampler_view(pipe_unwrapped,
                                                             texture_unwrapped,
@@ -736,7 +736,7 @@ identity_sampler_view_destroy(struct pipe_context *pipe,
                                         view_unwrapped);
 
    pipe_resource_reference(&view->texture, NULL);
-   free(view);
+   FREE(view);
 }
 
 static struct pipe_transfer *
