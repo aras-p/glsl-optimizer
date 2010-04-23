@@ -751,6 +751,40 @@ _mesa_is_dudv_format(GLenum format)
 
 
 /**
+ * Test if an image format is a supported compressed format.
+ * \param format the internal format token provided by the user.
+ * \return GL_TRUE if compressed, GL_FALSE if uncompressed
+ */
+GLboolean
+_mesa_is_compressed_format(GLcontext *ctx, GLenum format)
+{
+   switch (format) {
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      return ctx->Extensions.EXT_texture_compression_s3tc;
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+      return ctx->Extensions.S3_s3tc;
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      return ctx->Extensions.EXT_texture_sRGB
+         && ctx->Extensions.EXT_texture_compression_s3tc;
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      return ctx->Extensions.TDFX_texture_compression_FXT1;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
  * Return the address of a specific pixel in an image (1D, 2D or 3D).
  *
  * Pixel unpacking/packing parameters are observed according to \p packing.

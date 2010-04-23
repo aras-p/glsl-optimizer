@@ -358,40 +358,6 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
 
 
 /**
- * Test if a texture format is a supported compressed format.
- * \param internalFormat the internal format token provided by the user.
- * \return GL_TRUE if compressed, GL_FALSE if uncompressed
- */
-static GLboolean
-is_compressed_format(GLcontext *ctx, GLenum internalFormat)
-{
-   switch (internalFormat) {
-   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return ctx->Extensions.EXT_texture_compression_s3tc;
-   case GL_RGB_S3TC:
-   case GL_RGB4_S3TC:
-   case GL_RGBA_S3TC:
-   case GL_RGBA4_S3TC:
-      return ctx->Extensions.S3_s3tc;
-   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
-   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-      return ctx->Extensions.EXT_texture_sRGB
-         && ctx->Extensions.EXT_texture_compression_s3tc;
-   case GL_COMPRESSED_RGB_FXT1_3DFX:
-   case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      return ctx->Extensions.TDFX_texture_compression_FXT1;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-/**
  * For cube map faces, return a face index in [0,5].
  * For other targets return 0;
  */
@@ -1355,7 +1321,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
    }
 
    /* additional checks for compressed textures */
-   if (is_compressed_format(ctx, internalFormat)) {
+   if (_mesa_is_compressed_format(ctx, internalFormat)) {
       if (!target_can_be_compressed(ctx, target) && !isProxy) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glTexImage%d(target)", dimensions);
@@ -1721,7 +1687,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   if (is_compressed_format(ctx, internalFormat)) {
+   if (_mesa_is_compressed_format(ctx, internalFormat)) {
       if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexImage%d(target)", dimensions);
@@ -3119,7 +3085,7 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
    maxTextureSize = 1 << (maxLevels - 1);
 
    /* This will detect any invalid internalFormat value */
-   if (!is_compressed_format(ctx, internalFormat))
+   if (!_mesa_is_compressed_format(ctx, internalFormat))
       return GL_INVALID_ENUM;
 
    /* This should really never fail */
@@ -3224,7 +3190,7 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
    maxTextureSize = 1 << (maxLevels - 1);
 
    /* this will catch any invalid compressed format token */
-   if (!is_compressed_format(ctx, format))
+   if (!_mesa_is_compressed_format(ctx, format))
       return GL_INVALID_ENUM;
 
    if (width < 1 || width > maxTextureSize)
