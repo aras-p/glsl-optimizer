@@ -204,12 +204,14 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
       return NULL;
    }
 
+#ifdef X_DRI2SwapInterval
    /*
     * Make sure server has the same swap interval we do for the new
     * drawable.
     */
    if (pdp->swapAvailable)
       DRI2SwapInterval(psc->dpy, xDrawable, pdraw->swap_interval);
+#endif
 
    return &pdraw->base;
 }
