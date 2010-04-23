@@ -214,7 +214,7 @@ ir_function_cloning_visitor::visit(ir_dereference *ir)
 void
 ir_function_cloning_visitor::visit(ir_assignment *ir)
 {
-   ir_rvalue *lhs, *rhs, *condition;
+   ir_rvalue *lhs, *rhs, *condition = NULL;
 
    ir->lhs->accept(this);
    lhs = this->result->as_rvalue();
@@ -222,8 +222,10 @@ ir_function_cloning_visitor::visit(ir_assignment *ir)
    ir->rhs->accept(this);
    rhs = this->result->as_rvalue();
 
-   ir->condition->accept(this);
-   condition = this->result->as_rvalue();
+   if (ir->condition) {
+      ir->condition->accept(this);
+      condition = this->result->as_rvalue();
+   }
 
    this->result = new ir_assignment(lhs, rhs, condition);
 }
