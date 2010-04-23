@@ -252,12 +252,15 @@ void r700UpdateShaderStates(GLcontext * ctx)
 
 static void r700SetDepthState(GLcontext * ctx)
 {
+	struct radeon_renderbuffer *rrb;
 	context_t *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
 
 	R600_STATECHANGE(context, db);
 
-    if (ctx->Depth.Test)
+	rrb = radeon_get_depthbuffer(&context->radeon);
+
+    if (ctx->Depth.Test && rrb && rrb->bo)
     {
         SETbit(r700->DB_DEPTH_CONTROL.u32All, Z_ENABLE_bit);
         if (ctx->Depth.Mask)
