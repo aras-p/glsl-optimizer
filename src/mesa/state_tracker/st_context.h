@@ -201,7 +201,6 @@ struct st_framebuffer
 {
    GLframebuffer Base;
    void *Private;
-   GLuint InitWidth, InitHeight;
 
    struct st_framebuffer_iface *iface;
    enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
