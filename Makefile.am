@@ -23,7 +23,9 @@
 AUTOMAKE_OPTIONS = foreign
 
 bin_PROGRAMS = glsl
-glsl_SOURCES = symbol_table.c hash_table.c glsl_types.cpp \
+glsl_SOURCES = \
+	builtin_types.h \
+	symbol_table.c hash_table.c glsl_types.cpp \
 	glsl_parser.ypp glsl_lexer.lpp glsl_parser_extras.cpp \
 	ast_expr.cpp ast_to_hir.cpp ast_function.cpp ast_type.cpp \
 	ir.cpp hir_field_selection.cpp builtin_function.cpp \
@@ -35,13 +37,10 @@ glsl_SOURCES = symbol_table.c hash_table.c glsl_types.cpp \
 	ir_function_inlining.cpp \
 	ir_if_simplification.cpp
 
-BUILT_SOURCES = glsl_parser.h builtin_types.h glsl_parser.cpp glsl_lexer.cpp
+BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)
 
 glsl_parser.h: glsl_parser.cpp
 
 .lpp.cpp:
 	$(LEXCOMPILE) --outfile="$@" $<
-
-builtin_types.h: builtin_types.sh
-	bash ./builtin_types.sh > builtin_types.h

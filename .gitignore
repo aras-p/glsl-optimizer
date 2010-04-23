@@ -14,7 +14,6 @@ stamp-h1
 Makefile
 *.o
 *~
-builtin_types.h
 glsl_lexer.cpp
 glsl_parser.output
 glsl_parser.cpp
