@@ -141,8 +141,6 @@ xorg_tracker_have_modesetting(ScrnInfoPtr pScrn, struct pci_device *device)
 
 static Bool drv_init_front_buffer_functions(ScrnInfoPtr pScrn);
 static Bool drv_close_screen(int scrnIndex, ScreenPtr pScreen);
-static Bool drv_save_hw_state(ScrnInfoPtr pScrn);
-static Bool drv_restore_hw_state(ScrnInfoPtr pScrn);
 
 
 /*
@@ -388,7 +386,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
 
     ms = modesettingPTR(pScrn);
-    ms->SaveGeneration = -1;
     ms->pEnt = pEnt;
     ms->cust = cust;
 
@@ -471,18 +468,13 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	ms->SWCursor = TRUE;
     }
 
-    drv_save_hw_state(pScrn);
-
     xorg_crtc_init(pScrn);
     xorg_output_init(pScrn);
 
     if (!xf86InitialConfiguration(pScrn, TRUE)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "No valid modes.\n");
-	drv_restore_hw_state(pScrn);
 	return FALSE;
     }
-
-    drv_restore_hw_state(pScrn);
 
     /*
      * If the driver can do gamma correction, it should call xf86SetGamma() here.
@@ -517,22 +509,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     if (!xf86LoadSubModule(pScrn, "dri2"))
 	return FALSE;
 #endif
-
-    return TRUE;
-}
-
-static Bool
-drv_save_hw_state(ScrnInfoPtr pScrn)
-{
-    /*xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);*/
-
-    return TRUE;
-}
-
-static Bool
-drv_restore_hw_state(ScrnInfoPtr pScrn)
-{
-    /*xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);*/
 
     return TRUE;
 }
@@ -848,8 +824,6 @@ drv_leave_vt(int scrnIndex, int flags)
     drmModeRmFB(ms->fd, ms->fb_id);
     ms->fb_id = -1;
 
-    drv_restore_hw_state(pScrn);
-
     if (drmDropMaster(ms->fd))
 	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		   "drmDropMaster failed: %s\n", strerror(errno));
@@ -876,15 +850,6 @@ drv_enter_vt(int scrnIndex, int flags)
 	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		       "drmSetMaster failed: %s\n", strerror(errno));
 	}
-    }
-
-    /*
-     * Only save state once per server generation since that's what most
-     * drivers do.  Could change this to save state at each VT enter.
-     */
-    if (ms->SaveGeneration != serverGeneration) {
-	ms->SaveGeneration = serverGeneration;
-	drv_save_hw_state(pScrn);
     }
 
     if (!ms->create_front_buffer(pScrn))

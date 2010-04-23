@@ -96,8 +96,6 @@ typedef struct _modesettingRec
     /* Broken-out options. */
     OptionInfoPtr Options;
 
-    unsigned int SaveGeneration;
-
     void (*blockHandler)(int, pointer, pointer, pointer);
     struct pipe_fence_handle *fence[XORG_NR_FENCES];
 
