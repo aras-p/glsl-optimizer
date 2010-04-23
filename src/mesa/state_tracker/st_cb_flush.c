@@ -115,7 +115,7 @@ void st_finish( struct st_context *st )
  */
 static void st_glFlush(GLcontext *ctx)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
 
    /* Don't call st_finish() here.  It is not the state tracker's
     * responsibilty to inject sleeps in the hope of avoiding buffer
@@ -135,7 +135,7 @@ static void st_glFlush(GLcontext *ctx)
  */
 static void st_glFinish(GLcontext *ctx)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
 
    st_finish(st);
 

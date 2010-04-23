@@ -858,7 +858,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                     GLint dstx, GLint dsty)
 {
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    enum pipe_transfer_usage usage;
    struct pipe_transfer *ptDraw;
    ubyte *drawMap;

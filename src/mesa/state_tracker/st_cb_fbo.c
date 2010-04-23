@@ -64,7 +64,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                               GLenum internalFormat,
                               GLuint width, GLuint height)
 {
-   struct pipe_screen *screen = ctx->st->pipe->screen;
+   struct st_context *st = st_context(ctx);
+   struct pipe_screen *screen = st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    enum pipe_format format;
 
@@ -312,9 +313,9 @@ st_render_texture(GLcontext *ctx,
                   struct gl_framebuffer *fb,
                   struct gl_renderbuffer_attachment *att)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = ctx->st->pipe->screen;
+   struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
    struct pipe_resource *pt = st_get_texobj_resource(att->Texture);
@@ -403,12 +404,13 @@ static void
 st_finish_render_texture(GLcontext *ctx,
                          struct gl_renderbuffer_attachment *att)
 {
+   struct st_context *st = st_context(ctx);
    struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
 
    if (!strb)
       return;
 
-   st_flush( ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL );
+   st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    strb->rtt = NULL;
 
@@ -455,7 +457,8 @@ st_validate_attachment(struct pipe_screen *screen,
 static void
 st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
-   struct pipe_screen *screen = ctx->st->pipe->screen;
+   struct st_context *st = st_context(ctx);
+   struct pipe_screen *screen = st->pipe->screen;
    const struct gl_renderbuffer *depthRb =
       fb->Attachment[BUFFER_DEPTH].Renderbuffer;
    const struct gl_renderbuffer *stencilRb =
@@ -496,6 +499,7 @@ st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 static void
 st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
 {
+   struct st_context *st = st_context(ctx);
    GLframebuffer *fb = ctx->DrawBuffer;
    GLuint i;
 
@@ -505,7 +509,7 @@ st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
    /* add the renderbuffers on demand */
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
       gl_buffer_index idx = fb->_ColorDrawBufferIndexes[i];
-      st_manager_add_color_renderbuffer(ctx->st, fb, idx);
+      st_manager_add_color_renderbuffer(st, fb, idx);
    }
 }
 
@@ -516,12 +520,13 @@ st_DrawBuffers(GLcontext *ctx, GLsizei count, const GLenum *buffers)
 static void
 st_ReadBuffer(GLcontext *ctx, GLenum buffer)
 {
+   struct st_context *st = st_context(ctx);
    GLframebuffer *fb = ctx->ReadBuffer;
 
    (void) buffer;
 
    /* add the renderbuffer on demand */
-   st_manager_add_color_renderbuffer(ctx->st, fb, fb->_ColorReadBufferIndex);
+   st_manager_add_color_renderbuffer(st, fb, fb->_ColorReadBufferIndex);
 }
 
 

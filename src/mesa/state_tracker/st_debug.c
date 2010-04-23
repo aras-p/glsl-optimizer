@@ -75,7 +75,7 @@ void
 st_print_current(void)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
 
 #if 0
    int i;

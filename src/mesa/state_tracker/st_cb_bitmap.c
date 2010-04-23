@@ -114,6 +114,7 @@ struct bitmap_cache
 static struct st_fragment_program *
 make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
 {
+   struct st_context *st = st_context(ctx);
    struct st_fragment_program *stfp;
    struct gl_program *p;
    GLuint ic = 0;
@@ -145,7 +146,7 @@ make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
    p->Instructions[ic].Opcode = OPCODE_KIL;
    p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
 
-   if (ctx->st->bitmap.tex_format == PIPE_FORMAT_L8_UNORM)
+   if (st->bitmap.tex_format == PIPE_FORMAT_L8_UNORM)
       p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_XXXX;
 
    p->Instructions[ic].SrcReg[0].Index = 0;
@@ -187,7 +188,7 @@ find_free_bit(uint bitfield)
 static struct st_fragment_program *
 combined_bitmap_fragment_program(GLcontext *ctx)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct st_fragment_program *stfp = st->fp;
 
    if (!stfp->bitmap_program) {
@@ -258,7 +259,8 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
                     const struct gl_pixelstore_attrib *unpack,
                     const GLubyte *bitmap)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    struct pipe_transfer *transfer;
    ubyte *dest;
    struct pipe_resource *pt;
@@ -272,7 +274,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    /**
     * Create texture to hold bitmap pattern.
     */
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, ctx->st->bitmap.tex_format,
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, st->bitmap.tex_format,
                           0, width, height, 1,
                           PIPE_BIND_SAMPLER_VIEW);
    if (!pt) {
@@ -280,7 +282,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       return NULL;
    }
 
-   transfer = st_no_flush_get_tex_transfer(st_context(ctx), pt, 0, 0, 0,
+   transfer = st_no_flush_get_tex_transfer(st, pt, 0, 0, 0,
 					   PIPE_TRANSFER_WRITE,
 					   0, 0, width, height);
 
@@ -288,7 +290,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
    /* Put image into texture transfer */
    memset(dest, 0xff, height * transfer->stride);
-   unpack_bitmap(ctx->st, 0, 0, width, height, unpack, bitmap,
+   unpack_bitmap(st, 0, 0, width, height, unpack, bitmap,
                  dest, transfer->stride);
 
    _mesa_unmap_pbo_source(ctx, unpack);
@@ -400,9 +402,9 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                  struct pipe_sampler_view *sv,
                  const GLfloat *color)
 {
-   struct st_context *st = ctx->st;
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct cso_context *cso = ctx->st->cso_context;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+   struct cso_context *cso = st->cso_context;
    struct st_fragment_program *stfp;
    GLuint maxSize;
    GLuint offset;
@@ -732,7 +734,7 @@ static void
 st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
           const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct pipe_resource *pt;
 
    if (width == 0 || height == 0)

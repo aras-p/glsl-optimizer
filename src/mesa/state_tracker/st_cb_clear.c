@@ -109,11 +109,10 @@ st_destroy_clear(struct st_context *st)
  * Coords are clip coords with y=0=bottom.
  */
 static void
-draw_quad(GLcontext *ctx,
+draw_quad(struct st_context *st,
           float x0, float y0, float x1, float y1, GLfloat z,
           const GLfloat color[4])
 {
-   struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
 
    /* XXX: Need to improve buffer_write to allow NO_WAIT (as well as
@@ -193,7 +192,7 @@ static void
 clear_with_quad(GLcontext *ctx,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
    const GLfloat fb_width = (GLfloat) fb->Width;
    const GLfloat fb_height = (GLfloat) fb->Height;
@@ -295,7 +294,7 @@ clear_with_quad(GLcontext *ctx,
    cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
-   draw_quad(ctx, x0, y0, x1, y1,
+   draw_quad(st, x0, y0, x1, y1,
              (GLfloat) ctx->Depth.Clear, ctx->Color.ClearColor);
 
    /* Restore pipe state */
@@ -448,7 +447,7 @@ st_Clear(GLcontext *ctx, GLbitfield mask)
 {
    static const GLbitfield BUFFER_BITS_DS
       = (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct gl_renderbuffer *depthRb
       = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    struct gl_renderbuffer *stencilRb
@@ -530,8 +529,8 @@ st_Clear(GLcontext *ctx, GLbitfield mask)
                       mask & BUFFER_BIT_DEPTH,
                       mask & BUFFER_BIT_STENCIL);
    } else if (clear_buffers)
-      ctx->st->pipe->clear(ctx->st->pipe, clear_buffers, ctx->Color.ClearColor,
-                           ctx->Depth.Clear, ctx->Stencil.Clear);
+      st->pipe->clear(st->pipe, clear_buffers, ctx->Color.ClearColor,
+                      ctx->Depth.Clear, ctx->Stencil.Clear);
 
    if (mask & BUFFER_BIT_ACCUM)
       st_clear_accum_buffer(ctx,

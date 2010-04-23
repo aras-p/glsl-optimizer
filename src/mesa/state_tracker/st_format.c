@@ -650,6 +650,7 @@ gl_format
 st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
                        GLenum format, GLenum type)
 {
+   struct pipe_screen *screen = st_context(ctx)->pipe->screen;
    enum pipe_format pFormat;
    uint bindings;
 
@@ -665,12 +666,12 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    else 
       bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
 
-   pFormat = st_choose_format(ctx->st->pipe->screen, internalFormat,
+   pFormat = st_choose_format(screen, internalFormat,
                               PIPE_TEXTURE_2D, bindings);
 
    if (pFormat == PIPE_FORMAT_NONE) {
       /* try choosing format again, this time without render target bindings */
-      pFormat = st_choose_format(ctx->st->pipe->screen, internalFormat,
+      pFormat = st_choose_format(screen, internalFormat,
                                  PIPE_TEXTURE_2D, PIPE_BIND_SAMPLER_VIEW);
    }
 

@@ -223,7 +223,7 @@ accum_return(GLcontext *ctx, GLfloat value,
              struct st_renderbuffer *acc_strb,
              struct st_renderbuffer *color_strb)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    const GLubyte *colormask = ctx->Color.ColorMask[0];
    enum pipe_transfer_usage usage;
    struct pipe_transfer *color_trans;
@@ -287,7 +287,7 @@ accum_return(GLcontext *ctx, GLfloat value,
 static void
 st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct st_renderbuffer *acc_strb
      = st_renderbuffer(ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
    struct st_renderbuffer *color_strb

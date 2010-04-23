@@ -61,7 +61,7 @@ st_NewQueryObject(GLcontext *ctx, GLuint id)
 static void
 st_DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
 
    if (stq->pq) {
@@ -76,7 +76,7 @@ st_DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
 static void
 st_BeginQuery(GLcontext *ctx, struct gl_query_object *q)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
 
    switch (q->Target) {
@@ -96,7 +96,7 @@ st_BeginQuery(GLcontext *ctx, struct gl_query_object *q)
 static void
 st_EndQuery(GLcontext *ctx, struct gl_query_object *q)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
 
    pipe->end_query(pipe, stq->pq);
@@ -106,7 +106,7 @@ st_EndQuery(GLcontext *ctx, struct gl_query_object *q)
 static void
 st_WaitQuery(GLcontext *ctx, struct gl_query_object *q)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
 
    /* this function should only be called if we don't have a ready result */
@@ -128,7 +128,7 @@ st_WaitQuery(GLcontext *ctx, struct gl_query_object *q)
 static void
 st_CheckQuery(GLcontext *ctx, struct gl_query_object *q)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
    assert(!q->Ready);   /* we should not get called if Ready is TRUE */
    q->Ready = pipe->get_query_result(pipe, stq->pq, FALSE, &q->Result);

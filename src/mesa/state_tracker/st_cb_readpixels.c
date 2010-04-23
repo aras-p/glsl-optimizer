@@ -63,7 +63,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                        GLvoid *pixels)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(fb->_StencilBuffer);
    struct pipe_transfer *pt;
    ubyte *stmap;
@@ -220,7 +220,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
    /*printf("st_fast_readpixels combo %d\n", (GLint) combo);*/
 
    {
-      struct pipe_context *pipe = ctx->st->pipe;
+      struct pipe_context *pipe = st_context(ctx)->pipe;
       struct pipe_transfer *trans;
       const GLubyte *map;
       GLubyte *dst;
@@ -322,7 +322,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               const struct gl_pixelstore_attrib *pack,
               GLvoid *dest)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    GLfloat temp[MAX_WIDTH][4];
    const GLbitfield transferOps = ctx->_ImageTransferState;
    GLsizei i, j;
@@ -337,7 +338,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    /* XXX convolution not done yet */
    assert((transferOps & IMAGE_CONVOLUTION_BIT) == 0);
 
-   st_validate_state(ctx->st);
+   st_validate_state(st);
 
    /* Do all needed clipping here, so that we can forget about it later */
    if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
@@ -349,7 +350,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (!dest)
       return;
 
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    if (format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_STENCIL) {

@@ -115,7 +115,8 @@ make_state_key(GLcontext *ctx,  struct state_key *key)
 static struct pipe_resource *
 create_color_map_texture(GLcontext *ctx)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    struct pipe_resource *pt;
    enum pipe_format format;
    const uint texSize = 256; /* simple, and usually perfect */
@@ -125,7 +126,7 @@ create_color_map_texture(GLcontext *ctx)
                              PIPE_TEXTURE_2D, PIPE_BIND_SAMPLER_VIEW);
 
    /* create texture for color map/table */
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0,
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
                           texSize, texSize, 1, PIPE_BIND_SAMPLER_VIEW);
    return pt;
 }
@@ -137,7 +138,8 @@ create_color_map_texture(GLcontext *ctx)
 static void
 load_color_map_texture(GLcontext *ctx, struct pipe_resource *pt)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    struct pipe_transfer *transfer;
    const GLuint rSize = ctx->PixelMaps.RtoR.Size;
    const GLuint gSize = ctx->PixelMaps.GtoG.Size;
@@ -185,7 +187,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_resource *pt)
 static struct gl_fragment_program *
 get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct prog_instruction inst[MAX_INST];
    struct gl_program_parameter_list *params;
    struct gl_fragment_program *fp;
@@ -256,8 +258,9 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
       /* create the colormap/texture now if not already done */
       if (!st->pixel_xfer.pixelmap_texture) {
          st->pixel_xfer.pixelmap_texture = create_color_map_texture(ctx);
-         st->pixel_xfer.pixelmap_sampler_view = st_create_texture_sampler_view(ctx->st->pipe,
-                                                                             st->pixel_xfer.pixelmap_texture);
+         st->pixel_xfer.pixelmap_sampler_view =
+            st_create_texture_sampler_view(st->pipe,
+                                           st->pixel_xfer.pixelmap_texture);
       }
 
       /* with a little effort, we can do four pixel map look-ups with

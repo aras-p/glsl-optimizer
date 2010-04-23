@@ -106,7 +106,7 @@ static void
 fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                          struct gl_texture_object *texObj)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st_context(ctx)->pipe;
    struct pipe_resource *pt = st_get_texobj_resource(texObj);
    const uint baseLevel = texObj->BaseLevel;
    const uint lastLevel = pt->last_level;
@@ -211,7 +211,7 @@ void
 st_generate_mipmap(GLcontext *ctx, GLenum target,
                    struct gl_texture_object *texObj)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct pipe_resource *pt = st_get_texobj_resource(texObj);
    const uint baseLevel = texObj->BaseLevel;

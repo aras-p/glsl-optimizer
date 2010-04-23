@@ -55,7 +55,7 @@ static void
 set_feedback_vertex_format(GLcontext *ctx)
 {
 #if 0
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct vertex_info vinfo;
    GLuint i;
 
@@ -99,7 +99,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
                      GLuint min_index,
                      GLuint max_index)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct draw_context *draw = st->draw;
    const struct st_vertex_program *vp;
@@ -115,13 +115,13 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
    assert(draw);
 
-   st_validate_state(ctx->st);
+   st_validate_state(st);
 
    if (!index_bounds_valid)
       vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
 
    /* must get these after state validation! */
-   vp = ctx->st->vp;
+   vp = st->vp;
    vs = &st->vp_varient->tgsi;
 
    if (!st->vp_varient->draw_shader) {

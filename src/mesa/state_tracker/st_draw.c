@@ -347,7 +347,8 @@ setup_interleaved_attribs(GLcontext *ctx,
                           struct pipe_vertex_buffer *vbuffer,
                           struct pipe_vertex_element velements[])
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    GLuint attr;
    const GLubyte *offset0 = NULL;
 
@@ -412,7 +413,8 @@ setup_non_interleaved_attribs(GLcontext *ctx,
                               struct pipe_vertex_buffer vbuffer[],
                               struct pipe_vertex_element velements[])
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    GLuint attr;
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
@@ -543,7 +545,8 @@ st_draw_vbo(GLcontext *ctx,
             GLuint min_index,
             GLuint max_index)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    const struct st_vertex_program *vp;
    const struct st_vp_varient *vpv;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
@@ -566,16 +569,16 @@ st_draw_vbo(GLcontext *ctx,
 
    vertDataEdgeFlags = arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj &&
                        arrays[VERT_ATTRIB_EDGEFLAG]->BufferObj->Name;
-   if (vertDataEdgeFlags != ctx->st->vertdata_edgeflags) {
-      ctx->st->vertdata_edgeflags = vertDataEdgeFlags;
-      ctx->st->dirty.st |= ST_NEW_EDGEFLAGS_DATA;
+   if (vertDataEdgeFlags != st->vertdata_edgeflags) {
+      st->vertdata_edgeflags = vertDataEdgeFlags;
+      st->dirty.st |= ST_NEW_EDGEFLAGS_DATA;
    }
 
-   st_validate_state(ctx->st);
+   st_validate_state(st);
 
    /* must get these after state validation! */
-   vp = ctx->st->vp;
-   vpv = ctx->st->vp_varient;
+   vp = st->vp;
+   vpv = st->vp_varient;
 
 #if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {
@@ -624,7 +627,7 @@ st_draw_vbo(GLcontext *ctx,
 #endif
 
    pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
-   cso_set_vertex_elements(ctx->st->cso_context, num_velements, velements);
+   cso_set_vertex_elements(st->cso_context, num_velements, velements);
 
    if (num_vbuffers == 0 || num_velements == 0)
       return;

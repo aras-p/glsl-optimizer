@@ -80,7 +80,7 @@ static void
 feedback_vertex(GLcontext *ctx, const struct draw_context *draw,
                 const struct vertex_header *v)
 {
-   const struct st_context *st = ctx->st;
+   const struct st_context *st = st_context(ctx);
    GLfloat win[4];
    const GLfloat *color, *texcoord;
    GLuint slot;
@@ -271,7 +271,7 @@ draw_glselect_stage(GLcontext *ctx, struct draw_context *draw)
 static void
 st_RenderMode(GLcontext *ctx, GLenum newMode )
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct draw_context *draw = st->draw;
 
    if (newMode == GL_RENDER) {

@@ -74,7 +74,7 @@ st_egl_image_target_renderbuffer_storage(GLcontext *ctx,
 					 struct gl_renderbuffer *rb,
 					 GLeglImageOES image_handle)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct pipe_surface *ps;
    unsigned usage;
@@ -138,7 +138,7 @@ st_egl_image_target_texture_2d(GLcontext *ctx, GLenum target,
 			       struct gl_texture_image *texImage,
 			       GLeglImageOES image_handle)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct pipe_surface *ps;
    unsigned usage;
 
