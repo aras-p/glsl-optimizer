@@ -271,11 +271,10 @@ process_array_constructor(exec_list *instructions,
    ir_function *f = state->symbols->get_function(constructor_type->name);
 
    /* If the constructor for this type of array does not exist, generate the
-    * prototype and add it to the symbol table.  The code will be generated
-    * later.
+    * prototype and add it to the symbol table.
     */
    if (f == NULL) {
-      f = constructor_type->generate_constructor_prototype(state->symbols);
+      f = constructor_type->generate_constructor(state->symbols);
    }
 
    ir_rvalue *const r =

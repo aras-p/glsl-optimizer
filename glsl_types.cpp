@@ -133,7 +133,7 @@ const glsl_type *glsl_type::get_base_type() const
 
 
 ir_function *
-glsl_type::generate_constructor_prototype(glsl_symbol_table *symtab) const
+glsl_type::generate_constructor(glsl_symbol_table *symtab) const
 {
    /* Generate the function name and add it to the symbol table.
     */
@@ -145,6 +145,8 @@ glsl_type::generate_constructor_prototype(glsl_symbol_table *symtab) const
    ir_function_signature *const sig = new ir_function_signature(this);
    f->add_signature(sig);
 
+   ir_variable **declarations =
+      (ir_variable **) malloc(sizeof(ir_variable *) * this->length);
    for (unsigned i = 0; i < length; i++) {
       char *const param_name = (char *) malloc(10);
 
@@ -155,8 +157,34 @@ glsl_type::generate_constructor_prototype(glsl_symbol_table *symtab) const
 	 : new ir_variable(fields.structure[i].type, param_name);
 
       var->mode = ir_var_in;
+      declarations[i] = var;
       sig->parameters.push_tail(var);
    }
+
+   /* Generate the body of the constructor.  The body assigns each of the
+    * parameters to a portion of a local variable called __retval that has
+    * the same type as the constructor.  After initializing __retval,
+    * __retval is returned.
+    */
+   ir_variable *retval = new ir_variable(this, "__retval");
+   sig->body.push_tail(retval);
+
+   for (unsigned i = 0; i < length; i++) {
+      ir_dereference *const lhs = (this->base_type == GLSL_TYPE_ARRAY)
+	 ? new ir_dereference(retval, new ir_constant(i))
+	 : new ir_dereference(retval, fields.structure[i].name);
+
+      ir_dereference *const rhs = new ir_dereference(declarations[i]);
+      ir_instruction *const assign = new ir_assignment(lhs, rhs, NULL);
+
+      sig->body.push_tail(assign);
+   }
+
+   free(declarations);
+
+   ir_dereference *const retref = new ir_dereference(retval);
+   ir_instruction *const inst = new ir_return(retref);
+   sig->body.push_tail(inst);
 
    return f;
 }
