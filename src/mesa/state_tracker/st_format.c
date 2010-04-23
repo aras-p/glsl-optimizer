@@ -387,25 +387,6 @@ default_srgba_format(struct pipe_screen *screen,
 
 
 /**
- * Search list of formats for first RGBA format with >8 bits/channel.
- */
-static enum pipe_format
-default_deep_rgba_format(struct pipe_screen *screen, 
-                         enum pipe_texture_target target,
-                         unsigned tex_usage, 
-                         unsigned geom_flags)
-{
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM, target, tex_usage, geom_flags)) {
-      return PIPE_FORMAT_R16G16B16A16_SNORM;
-   }
-   if (tex_usage & PIPE_BIND_RENDER_TARGET)
-      return default_rgba_format(screen, target, tex_usage, geom_flags);
-   else
-      return PIPE_FORMAT_NONE;
-}
-
-
-/**
  * Given an OpenGL internalFormat value for a texture or surface, return
  * the best matching PIPE_FORMAT_x, or PIPE_FORMAT_NONE if there's no match.
  * \param target  one of PIPE_TEXTURE_x
@@ -431,10 +412,7 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_COMPRESSED_RGB:
       return default_rgb_format( screen, target, tex_usage, geom_flags );
    case GL_RGBA16:
-      if (tex_usage & PIPE_BIND_RENDER_TARGET)
-         return default_deep_rgba_format( screen, target, tex_usage, geom_flags );
-      else
-         return default_rgba_format( screen, target, tex_usage, geom_flags );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_RGBA4:
    case GL_RGBA2:
