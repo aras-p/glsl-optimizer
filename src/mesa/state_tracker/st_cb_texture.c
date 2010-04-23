@@ -208,17 +208,25 @@ do_memcpy(void *dest, const void *src, size_t n)
 
 
 /**
- * Return default texture usage bitmask for the given texture format.
+ * Return default texture resource binding bitmask for the given format.
  */
 static GLuint
-default_usage(enum pipe_format fmt)
+default_bindings(struct st_context *st, enum pipe_format format)
 {
-   GLuint usage = PIPE_BIND_SAMPLER_VIEW;
-   if (util_format_is_depth_or_stencil(fmt))
-      usage |= PIPE_BIND_DEPTH_STENCIL;
+   struct pipe_screen *screen = st->pipe->screen;
+   const unsigned target = PIPE_TEXTURE_2D;
+   const unsigned geom = 0x0;
+   unsigned bindings;
+
+   if (util_format_is_depth_or_stencil(format))
+      bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_DEPTH_STENCIL;
    else
-      usage |= PIPE_BIND_RENDER_TARGET;
-   return usage;
+      bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+
+   if (screen->is_format_supported(screen, format, target, bindings, geom))
+      return bindings;
+   else
+      return PIPE_BIND_SAMPLER_VIEW;
 }
 
 
@@ -246,7 +254,7 @@ guess_and_alloc_texture(struct st_context *st,
    GLuint width = stImage->base.Width2;  /* size w/out border */
    GLuint height = stImage->base.Height2;
    GLuint depth = stImage->base.Depth2;
-   GLuint i, usage;
+   GLuint i, bindings;
    enum pipe_format fmt;
 
    DBG("%s\n", __FUNCTION__);
@@ -311,7 +319,7 @@ guess_and_alloc_texture(struct st_context *st,
 
    fmt = st_mesa_format_to_pipe_format(stImage->base.TexFormat);
 
-   usage = default_usage(fmt);
+   bindings = default_bindings(st, fmt);
 
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
@@ -320,7 +328,7 @@ guess_and_alloc_texture(struct st_context *st,
                                  width,
                                  height,
                                  depth,
-                                 usage);
+                                 bindings);
 
    DBG("%s - success\n", __FUNCTION__);
 }
@@ -1850,7 +1858,7 @@ st_finalize_texture(GLcontext *ctx,
    if (!stObj->pt) {
       const enum pipe_format fmt =
          st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
-      GLuint usage = default_usage(fmt);
+      GLuint bindings = default_bindings(ctx->st, fmt);
 
       stObj->pt = st_texture_create(ctx->st,
                                     gl_target_to_pipe(stObj->base.Target),
@@ -1859,7 +1867,7 @@ st_finalize_texture(GLcontext *ctx,
                                     firstImage->base.Width2,
                                     firstImage->base.Height2,
                                     firstImage->base.Depth2,
-                                    usage);
+                                    bindings);
 
       if (!stObj->pt) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
