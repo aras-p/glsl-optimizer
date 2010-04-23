@@ -422,23 +422,19 @@ st_finish_render_texture(GLcontext *ctx,
 
 
 /**
- * Validate a renderbuffer attachment for a particular usage.
+ * Validate a renderbuffer attachment for a particular set of bindings.
  */
-
 static GLboolean
 st_validate_attachment(struct pipe_screen *screen,
 		       const struct gl_renderbuffer_attachment *att,
-		       GLuint usage)
+		       unsigned bindings)
 {
-   const struct st_texture_object *stObj =
-      st_texture_object(att->Texture);
+   const struct st_texture_object *stObj = st_texture_object(att->Texture);
 
-   /**
-    * Only validate texture attachments for now, since
+   /* Only validate texture attachments for now, since
     * st_renderbuffer_alloc_storage makes sure that
     * the format is supported.
     */
-
    if (att->Type != GL_TEXTURE)
       return GL_TRUE;
 
@@ -446,9 +442,9 @@ st_validate_attachment(struct pipe_screen *screen,
       return GL_FALSE;
 
    return screen->is_format_supported(screen, stObj->pt->format,
-				      PIPE_TEXTURE_2D,
-				      usage, 0);
+				      PIPE_TEXTURE_2D, bindings, 0);
 }
+
 
 /**
  * Check that the framebuffer configuration is valid in terms of what
