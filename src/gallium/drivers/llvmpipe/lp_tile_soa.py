@@ -58,7 +58,7 @@ def is_format_supported(format):
         channel = format.channels[i]
         if channel.type not in (VOID, UNSIGNED, SIGNED, FLOAT):
             return False
-        if channel.type == FLOAT and channel.size not in (32 ,64):
+        if channel.type == FLOAT and channel.size not in (16, 32 ,64):
             return False
 
     if format.colorspace not in ('rgb', 'srgb'):
