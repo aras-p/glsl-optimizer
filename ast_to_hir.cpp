@@ -1476,6 +1476,7 @@ ast_declarator_list::hir(exec_list *instructions,
    const struct glsl_type *decl_type;
    const char *type_name = NULL;
    ir_rvalue *result = NULL;
+   YYLTYPE loc = this->get_location();
 
    /* The type specifier may contain a structure definition.  Process that
     * before any of the variable declarations.
@@ -1488,12 +1489,27 @@ ast_declarator_list::hir(exec_list *instructions,
     */
 
    decl_type = this->type->specifier->glsl_type(& type_name, state);
+   if (is_empty_list(&this->declarations)) {
+      /* There are only two valid cases where the declaration list can be
+       * empty.
+       *
+       * 1. The declaration is setting the default precision of a built-in
+       *    type (e.g., 'precision highp vec4;').
+       *
+       * 2. Adding 'invariant' to an existing vertex shader output.
+       */
+
+      if (this->type->qualifier.invariant) {
+      } else if (decl_type != NULL) {
+      } else {
+	    _mesa_glsl_error(& loc, state, "incomplete declaration");
+      }
+   }
 
    foreach (ptr, &this->declarations) {
       struct ast_declaration *const decl = (struct ast_declaration * )ptr;
       const struct glsl_type *var_type;
       struct ir_variable *var;
-      YYLTYPE loc = this->get_location();
 
       /* FINISHME: Emit a warning if a variable declaration shadows a
        * FINISHME: declaration at a higher scope.
