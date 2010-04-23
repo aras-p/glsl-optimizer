@@ -125,7 +125,7 @@ xmesa_st_framebuffer_copy_textures(struct st_framebuffer_iface *stfbi,
 /**
  * Remove outdated textures and create the requested ones.
  */
-static void
+static boolean
 xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
                                        unsigned width, unsigned height,
                                        unsigned mask)
@@ -183,12 +183,16 @@ xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
 
          xstfb->textures[i] =
             xstfb->screen->resource_create(xstfb->screen, &templ);
+         if (!xstfb->textures[i])
+            return FALSE;
       }
    }
 
    xstfb->texture_width = width;
    xstfb->texture_height = height;
    xstfb->texture_mask = mask;
+
+   return TRUE;
 }
 
 static boolean 
@@ -200,6 +204,7 @@ xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
    unsigned statt_mask, new_mask, i;
    boolean resized;
+   boolean ret;
 
    statt_mask = 0x0;
    for (i = 0; i < count; i++)
@@ -212,8 +217,10 @@ xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
 
    /* revalidate textures */
    if (resized || new_mask) {
-      xmesa_st_framebuffer_validate_textures(stfbi,
-            xstfb->buffer->width, xstfb->buffer->height, statt_mask);
+      ret = xmesa_st_framebuffer_validate_textures(stfbi,
+                  xstfb->buffer->width, xstfb->buffer->height, statt_mask);
+      if (!ret)
+         return ret;
 
       if (!resized) {
          enum st_attachment_type back, front;
