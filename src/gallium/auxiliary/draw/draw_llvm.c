@@ -205,7 +205,7 @@ draw_llvm_create(struct draw_context *draw)
 void
 draw_llvm_destroy(struct draw_llvm *llvm)
 {
-   free(llvm);
+   FREE(llvm);
 }
 
 struct draw_llvm_variant *
