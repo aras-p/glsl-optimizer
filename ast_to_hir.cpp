@@ -2346,7 +2346,20 @@ ast_struct_specifier::hir(exec_list *instructions,
 
    glsl_type *t = new glsl_type(fields, decl_count, name);
 
-   state->symbols->add_type(name, t);
+   YYLTYPE loc = this->get_location();
+   if (!state->symbols->add_type(name, t)) {
+      _mesa_glsl_error(& loc, state, "struct `%s' previously defined", name);
+   } else {
+      /* This logic is a bit tricky.  It is an error to declare a structure at
+       * global scope if there is also a function with the same name.
+       */
+      if ((state->current_function == NULL)
+	  && (state->symbols->get_function(name) != NULL)) {
+	 _mesa_glsl_error(& loc, state, "name `%s' previously defined", name);
+      } else {
+	 t->generate_constructor(state->symbols);
+      }
+   }
 
    /* Structure type definitions do not have r-values.
     */
