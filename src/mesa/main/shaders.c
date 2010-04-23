@@ -739,3 +739,31 @@ _mesa_ValidateProgramARB(GLhandleARB program)
    ctx->Driver.ValidateProgram(ctx, program);
 }
 
+#ifdef FEATURE_ES2
+
+void GLAPIENTRY
+_mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
+                               GLint* range, GLint* precision)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
+}
+
+
+void GLAPIENTRY
+_mesa_ReleaseShaderCompiler(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
+}
+
+
+void GLAPIENTRY
+_mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
+                   const void* binary, GLint length)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
+}
+
+#endif

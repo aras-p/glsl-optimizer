@@ -60,29 +60,6 @@ _vbo_Materialf(GLenum face, GLenum pname, GLfloat param)
 
 
 void GLAPIENTRY
-_mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
-                               GLint* range, GLint* precision)
-{
-   NEED_IMPLEMENT();
-}
-
-
-void GLAPIENTRY
-_mesa_ReleaseShaderCompiler(void)
-{
-   NEED_IMPLEMENT();
-}
-
-
-void GLAPIENTRY
-_mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
-                   const void* binary, GLint length)
-{
-   NEED_IMPLEMENT();
-}
-
-
-void GLAPIENTRY
 _vbo_VertexAttrib1f(GLuint indx, GLfloat x)
 {
    _vbo_VertexAttrib4f(indx, x, 0.0, 0.0, 1.0f);
