@@ -661,11 +661,13 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
     * An alternative would be to destroy and re-create a texture when
     * we first start rendering to it.
     */
-   if (_mesa_is_depth_format(internalFormat) ||
-       _mesa_is_depthstencil_format(internalFormat))
-      usage |= PIPE_BIND_DEPTH_STENCIL;
-   else 
-      usage |= PIPE_BIND_RENDER_TARGET;
+   if (!_mesa_is_compressed_format(ctx, internalFormat)) {
+      if (_mesa_is_depth_format(internalFormat) ||
+          _mesa_is_depthstencil_format(internalFormat))
+         usage |= PIPE_BIND_DEPTH_STENCIL;
+      else 
+         usage |= PIPE_BIND_RENDER_TARGET;
+   }
 
    pFormat = st_choose_format(ctx->st->pipe->screen, internalFormat,
                               PIPE_TEXTURE_2D, usage);
