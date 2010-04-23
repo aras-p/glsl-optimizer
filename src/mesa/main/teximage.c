@@ -358,30 +358,36 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
 
 
 /**
- * Test if it is a supported compressed format.
- * 
+ * Test if a texture format is a supported compressed format.
  * \param internalFormat the internal format token provided by the user.
- * 
- * \ret GL_TRUE if \p internalFormat is a supported compressed format, or
- * GL_FALSE otherwise.
- *
- * Currently only GL_COMPRESSED_RGB_FXT1_3DFX and GL_COMPRESSED_RGBA_FXT1_3DFX
- * are supported.
+ * \return GL_TRUE if compressed, GL_FALSE if uncompressed
  */
 static GLboolean
 is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 {
-   GLint supported[100]; /* 100 should be plenty */
-   GLuint i, n;
-
-   n = _mesa_get_compressed_formats(ctx, supported, GL_TRUE);
-   ASSERT(n < 100);
-   for (i = 0; i < n; i++) {
-      if ((GLint) internalFormat == supported[i]) {
-         return GL_TRUE;
-      }
+   switch (internalFormat) {
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      return ctx->Extensions.EXT_texture_compression_s3tc;
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+      return ctx->Extensions.S3_s3tc;
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      return ctx->Extensions.EXT_texture_sRGB
+         && ctx->Extensions.EXT_texture_compression_s3tc;
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      return ctx->Extensions.TDFX_texture_compression_FXT1;
+   default:
+      return GL_FALSE;
    }
-   return GL_FALSE;
 }
 
 
