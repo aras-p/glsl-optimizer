@@ -550,12 +550,14 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
        * To avoid that, internal_format is (wrongly) ignored here.  A sane fix
        * is to use a sampler view.
        */
-      if (util_format_get_component_bits(tex->format,
+      if (!st_sampler_compat_formats(tex->format, internal_format))
+	 internal_format = tex->format;
+     
+      if (util_format_get_component_bits(internal_format,
                UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
          internalFormat = GL_RGBA;
       else
          internalFormat = GL_RGB;
-
       _mesa_init_teximage_fields(ctx, target, texImage,
             tex->width0, tex->height0, 1, 0, internalFormat);
       texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,

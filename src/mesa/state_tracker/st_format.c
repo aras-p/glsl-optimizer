@@ -767,3 +767,36 @@ st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type)
       return GL_FALSE;
    }
 }
+
+GLboolean
+st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2)
+{
+   if (format1 == format2)
+      return GL_TRUE;
+
+   if (format1 == PIPE_FORMAT_B8G8R8A8_UNORM &&
+       format2 == PIPE_FORMAT_B8G8R8X8_UNORM)
+      return GL_TRUE;
+
+   if (format1 == PIPE_FORMAT_B8G8R8X8_UNORM &&
+       format2 == PIPE_FORMAT_B8G8R8A8_UNORM)
+      return GL_TRUE;
+
+   if (format1 == PIPE_FORMAT_A8B8G8R8_UNORM &&
+       format2 == PIPE_FORMAT_X8B8G8R8_UNORM)
+      return GL_TRUE;
+
+   if (format1 == PIPE_FORMAT_X8B8G8R8_UNORM &&
+       format2 == PIPE_FORMAT_A8B8G8R8_UNORM)
+      return GL_TRUE;
+
+   if (format1 == PIPE_FORMAT_A8R8G8B8_UNORM &&
+       format2 == PIPE_FORMAT_X8R8G8B8_UNORM)
+      return GL_TRUE;
+
+   if (format1 == PIPE_FORMAT_X8R8G8B8_UNORM &&
+       format2 == PIPE_FORMAT_A8R8G8B8_UNORM)
+      return GL_TRUE;
+
+   return GL_FALSE;
+}

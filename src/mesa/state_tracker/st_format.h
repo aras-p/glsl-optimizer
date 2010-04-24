@@ -62,5 +62,9 @@ st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
 extern GLboolean
 st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type);
 
+/* can we use a sampler view to translate these formats
+   only used to make TFP so far */
+extern GLboolean
+st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2);
 
 #endif /* ST_FORMAT_H */
