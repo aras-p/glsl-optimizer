@@ -192,6 +192,7 @@ struct util_format_description
 
    /**
     * Unpack pixel blocks to R8G8B8A8_UNORM.
+    * Note: strides are in bytes.
     *
     * Only defined for non-depth-stencil formats.
     */
@@ -202,6 +203,7 @@ struct util_format_description
 
    /**
     * Pack pixel blocks from R8G8B8A8_UNORM.
+    * Note: strides are in bytes.
     *
     * Only defined for non-depth-stencil formats.
     */
@@ -212,6 +214,7 @@ struct util_format_description
 
    /**
     * Unpack pixel blocks to R32G32B32A32_FLOAT.
+    * Note: strides are in bytes.
     *
     * Only defined for non-depth-stencil formats.
     */
@@ -222,6 +225,7 @@ struct util_format_description
 
    /**
     * Pack pixel blocks from R32G32B32A32_FLOAT.
+    * Note: strides are in bytes.
     *
     * Only defined for non-depth-stencil formats.
     */
@@ -242,6 +246,7 @@ struct util_format_description
 
    /**
     * Unpack pixels to Z32_UNORM.
+    * Note: strides are in bytes.
     *
     * Only defined for depth formats.
     */
@@ -252,6 +257,7 @@ struct util_format_description
 
    /**
     * Pack pixels from Z32_FLOAT.
+    * Note: strides are in bytes.
     *
     * Only defined for depth formats.
     */
@@ -262,6 +268,7 @@ struct util_format_description
 
    /**
     * Unpack pixels to Z32_FLOAT.
+    * Note: strides are in bytes.
     *
     * Only defined for depth formats.
     */
@@ -272,6 +279,7 @@ struct util_format_description
 
    /**
     * Pack pixels from Z32_FLOAT.
+    * Note: strides are in bytes.
     *
     * Only defined for depth formats.
     */
@@ -282,6 +290,7 @@ struct util_format_description
 
    /**
     * Unpack pixels to S8_USCALED.
+    * Note: strides are in bytes.
     *
     * Only defined for stencil formats.
     */
@@ -292,6 +301,7 @@ struct util_format_description
 
    /**
     * Pack pixels from S8_USCALED.
+    * Note: strides are in bytes.
     *
     * Only defined for stencil formats.
     */
