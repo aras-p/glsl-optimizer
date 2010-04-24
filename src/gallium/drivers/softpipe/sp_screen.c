@@ -159,7 +159,10 @@ softpipe_is_format_supported( struct pipe_screen *screen,
    case PIPE_FORMAT_DXT1_RGBA:
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
-      return util_format_s3tc_enabled;
+      if (tex_usage & PIPE_BIND_RENDER_TARGET)
+         return FALSE;
+      else
+         return util_format_s3tc_enabled;
 
    case PIPE_FORMAT_Z32_FLOAT:
    case PIPE_FORMAT_NONE:
