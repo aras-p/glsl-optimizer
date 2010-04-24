@@ -34,13 +34,4 @@
 const __DRIconfig **
 dri2_init_screen(__DRIscreen * sPriv);
 
-void
-dri2_flush_frontbuffer(struct dri_drawable *drawable,
-                       enum st_attachment_type statt);
-
-void
-dri2_allocate_textures(struct dri_drawable *drawable,
-                       const enum st_attachment_type *statts,
-                       unsigned count);
-
 #endif /* DRI2_H */

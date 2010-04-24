@@ -43,14 +43,6 @@ extern struct dri1_api *__dri1_api_hooks;
 const __DRIconfig **
 dri1_init_screen(__DRIscreen * sPriv);
 
-void
-dri1_flush_frontbuffer(struct dri_drawable *drawable,
-                       enum st_attachment_type statt);
-
-void
-dri1_allocate_textures(struct dri_drawable *drawable,
-                       unsigned mask);
-
 void dri1_swap_buffers(__DRIdrawable * dPriv);
 
 void

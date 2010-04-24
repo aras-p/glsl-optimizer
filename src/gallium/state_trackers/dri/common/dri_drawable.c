@@ -90,4 +90,32 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
    FREE(drawable);
 }
 
+/**
+ * Get the format and binding of an attachment.
+ */
+void
+dri_drawable_get_format(struct dri_drawable *drawable,
+                        enum st_attachment_type statt,
+                        enum pipe_format *format,
+                        unsigned *bind)
+{
+   switch (statt) {
+   case ST_ATTACHMENT_FRONT_LEFT:
+   case ST_ATTACHMENT_BACK_LEFT:
+   case ST_ATTACHMENT_FRONT_RIGHT:
+   case ST_ATTACHMENT_BACK_RIGHT:
+      *format = drawable->stvis.color_format;
+      *bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
+      break;
+   case ST_ATTACHMENT_DEPTH_STENCIL:
+      *format = drawable->stvis.depth_stencil_format;
+      *bind = PIPE_BIND_DEPTH_STENCIL; /* XXX sampler? */
+      break;
+   default:
+      *format = PIPE_FORMAT_NONE;
+      *bind = 0;
+      break;
+   }
+}
+
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

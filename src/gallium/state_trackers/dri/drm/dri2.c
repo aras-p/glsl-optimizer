@@ -346,7 +346,7 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
  * Backend functions for st_framebuffer interface.
  */
 
-void
+static void
 dri2_allocate_textures(struct dri_drawable *drawable,
                        const enum st_attachment_type *statts,
                        unsigned count)
@@ -358,7 +358,7 @@ dri2_allocate_textures(struct dri_drawable *drawable,
    dri2_drawable_process_buffers(drawable, buffers, num_buffers);
 }
 
-void
+static void
 dri2_flush_frontbuffer(struct dri_drawable *drawable,
                        enum st_attachment_type statt)
 {
@@ -513,6 +513,8 @@ dri2_init_screen(__DRIscreen * sPriv)
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
    screen->lookup_egl_image = dri2_lookup_egl_image;
+   screen->allocate_textures = dri2_allocate_textures;
+   screen->flush_frontbuffer = dri2_flush_frontbuffer;
 
    sPriv->private = (void *)screen;
    sPriv->extensions = dri_screen_extensions;

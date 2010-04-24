@@ -38,17 +38,6 @@
 const __DRIconfig **
 drisw_init_screen(__DRIscreen * sPriv);
 
-void
-drisw_update_drawable_info(struct dri_drawable *drawable);
-
-void
-drisw_flush_frontbuffer(struct dri_drawable *drawable,
-                        enum st_attachment_type statt);
-
-void
-drisw_allocate_textures(struct dri_drawable *drawable,
-                        unsigned mask);
-
 void drisw_swap_buffers(__DRIdrawable * dPriv);
 
 #endif /* DRISW_H */

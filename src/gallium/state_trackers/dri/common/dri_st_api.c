@@ -36,12 +36,6 @@
 #include "dri_context.h"
 #include "dri_drawable.h"
 #include "dri_st_api.h"
-#ifndef __NOT_HAVE_DRM_H
-#include "dri1.h"
-#include "dri2.h"
-#else
-#include "drisw.h"
-#endif
 
 static boolean
 dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
@@ -51,6 +45,7 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
 {
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
+   struct dri_screen *screen = dri_screen(drawable->sPriv);
    unsigned statt_mask, new_mask;
    boolean new_stamp;
    int i;
@@ -70,20 +65,10 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    new_stamp = (drawable->texture_stamp != drawable->dPriv->lastStamp);
 
    if (new_stamp || new_mask) {
+      if (new_stamp && screen->update_drawable_info)
+         screen->update_drawable_info(drawable);
 
-#ifndef __NOT_HAVE_DRM_H
-      if (__dri1_api_hooks) {
-         dri1_allocate_textures(drawable, statt_mask);
-      }
-      else {
-         dri2_allocate_textures(drawable, statts, count);
-      }
-#else
-      if (new_stamp)
-         drisw_update_drawable_info(drawable);
-
-      drisw_allocate_textures(drawable, statt_mask);
-#endif
+      screen->allocate_textures(drawable, statts, count);
 
       /* add existing textures */
       for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
@@ -112,17 +97,10 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
 {
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
+   struct dri_screen *screen = dri_screen(drawable->sPriv);
 
-#ifndef __NOT_HAVE_DRM_H
-   if (__dri1_api_hooks) {
-      dri1_flush_frontbuffer(drawable, statt);
-   }
-   else {
-      dri2_flush_frontbuffer(drawable, statt);
-   }
-#else
-   drisw_flush_frontbuffer(drawable, statt);
-#endif
+   /* XXX remove this and just set the correct one on the framebuffer */
+   screen->flush_frontbuffer(drawable, statt);
 
    return TRUE;
 }

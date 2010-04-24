@@ -42,6 +42,7 @@
 #include "state_tracker/drm_api.h"
 
 struct dri_context;
+struct dri_drawable;
 
 struct dri_screen
 {
@@ -59,6 +60,12 @@ struct dri_screen
 
    /* hooks filled in by dri1, dri2 & drisw */
    __DRIimage * (*lookup_egl_image)(struct dri_context *ctx, void *handle);
+   void (*allocate_textures)(struct dri_drawable *drawable,
+                             const enum st_attachment_type *statts,
+                             unsigned count);
+   void (*update_drawable_info)(struct dri_drawable *drawable);
+   void (*flush_frontbuffer)(struct dri_drawable *drawable,
+                             enum st_attachment_type statt);
 
    /* gallium */
    struct drm_api *api;

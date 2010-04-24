@@ -253,7 +253,7 @@ dri1_copy_to_front(struct dri_context *ctx,
  * Backend functions for st_framebuffer interface and swap_buffers.
  */
 
-void
+static void
 dri1_flush_frontbuffer(struct dri_drawable *draw,
                        enum st_attachment_type statt)
 {
@@ -342,9 +342,10 @@ dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
  * as they are requested. Unused attachments are not removed, not until the
  * framebuffer is resized or destroyed.
  */
-void
+static void
 dri1_allocate_textures(struct dri_drawable *drawable,
-                       unsigned mask)
+                       const enum st_attachment_type *statts,
+                       unsigned count)
 {
    struct dri_screen *screen = dri_screen(drawable->sPriv);
    struct pipe_resource templ;
@@ -371,40 +372,24 @@ dri1_allocate_textures(struct dri_drawable *drawable,
    templ.depth0 = 1;
    templ.last_level = 0;
 
-   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+   for (i = 0; i < count; i++) {
       enum pipe_format format;
-      unsigned tex_usage;
+      unsigned bind;
 
-      /* the texture already exists or not requested */
-      if (drawable->textures[i] || !(mask & (1 << i))) {
+      /* the texture already exists */
+      if (drawable->textures[statts[i]])
          continue;
-      }
 
-      switch (i) {
-      case ST_ATTACHMENT_FRONT_LEFT:
-      case ST_ATTACHMENT_BACK_LEFT:
-      case ST_ATTACHMENT_FRONT_RIGHT:
-      case ST_ATTACHMENT_BACK_RIGHT:
-         format = drawable->stvis.color_format;
-         tex_usage = PIPE_BIND_DISPLAY_TARGET |
-                     PIPE_BIND_RENDER_TARGET;
-         break;
-      case ST_ATTACHMENT_DEPTH_STENCIL:
-         format = drawable->stvis.depth_stencil_format;
-         tex_usage = PIPE_BIND_DEPTH_STENCIL;
-         break;
-      default:
-         format = PIPE_FORMAT_NONE;
-         break;
-      }
+      dri_drawable_get_format(drawable, statts[i], &format, &bind);
 
-      if (format != PIPE_FORMAT_NONE) {
-         templ.format = format;
-         templ.bind = tex_usage;
+      if (format == PIPE_FORMAT_NONE)
+         continue;
 
-         drawable->textures[i] =
-            screen->pipe_screen->resource_create(screen->pipe_screen, &templ);
-      }
+      templ.format = format;
+      templ.bind = bind;
+
+      drawable->textures[statts[i]] =
+         screen->pipe_screen->resource_create(screen->pipe_screen, &templ);
    }
 
    drawable->old_w = width;
@@ -489,6 +474,8 @@ dri1_init_screen(__DRIscreen * sPriv)
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
    screen->drmLock = (drmLock *) & sPriv->pSAREA->lock;
+   screen->allocate_textures = dri1_allocate_textures;
+   screen->flush_frontbuffer = dri1_flush_frontbuffer;
 
    sPriv->private = (void *)screen;
    sPriv->extensions = dri1_screen_extensions;

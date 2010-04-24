@@ -84,6 +84,12 @@ dri_create_buffer(__DRIscreen * sPriv,
 
 void dri_destroy_buffer(__DRIdrawable * dPriv);
 
+void
+dri_drawable_get_format(struct dri_drawable *drawable,
+                        enum st_attachment_type statt,
+                        enum pipe_format *format,
+                        unsigned *bind);
+
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
