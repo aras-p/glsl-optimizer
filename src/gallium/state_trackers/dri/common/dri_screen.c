@@ -304,9 +304,6 @@ dri_destroy_screen_helper(struct dri_screen * screen)
 {
    dri1_destroy_pipe_context(screen);
 
-   if (screen->smapi)
-      dri_destroy_st_manager(screen->smapi);
-
    if (screen->pipe_screen)
       screen->pipe_screen->destroy(screen->pipe_screen);
 
@@ -336,8 +333,7 @@ dri_init_screen_helper(struct dri_screen *screen,
       return NULL;
    }
 
-   screen->smapi = dri_create_st_manager(screen);
-   if (!screen->smapi)
+   if (!dri_init_st_manager(screen))
       return NULL;
 
    driParseOptionInfo(&screen->optionCache,

@@ -257,7 +257,7 @@ static void
 dri1_flush_frontbuffer(struct dri_drawable *draw,
                        enum st_attachment_type statt)
 {
-   struct dri_context *ctx = dri_get_current();
+   struct dri_context *ctx = dri_get_current(draw->sPriv);
    struct dri_screen *screen = dri_screen(draw->sPriv);
    struct pipe_screen *pipe_screen = screen->pipe_screen;
    struct pipe_fence_handle *dummy_fence;
@@ -280,8 +280,8 @@ dri1_flush_frontbuffer(struct dri_drawable *draw,
 void
 dri1_swap_buffers(__DRIdrawable * dPriv)
 {
-   struct dri_context *ctx = dri_get_current();
    struct dri_drawable *draw = dri_drawable(dPriv);
+   struct dri_context *ctx = dri_get_current(draw->sPriv);
    struct dri_screen *screen = dri_screen(draw->sPriv);
    struct pipe_screen *pipe_screen = screen->pipe_screen;
    struct pipe_fence_handle *fence;
@@ -309,7 +309,7 @@ dri1_swap_buffers(__DRIdrawable * dPriv)
 void
 dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
 {
-   struct dri_context *ctx = dri_get_current();
+   struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
    struct dri_screen *screen = dri_screen(dPriv->driScreenPriv);
    struct pipe_screen *pipe_screen = screen->pipe_screen;
    struct drm_clip_rect sub_bbox;

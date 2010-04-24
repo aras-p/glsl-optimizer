@@ -80,7 +80,7 @@ dri_make_current(__DRIcontext * driContextPriv,
 		 __DRIdrawable * driReadPriv);
 
 struct dri_context *
-dri_get_current(void);
+dri_get_current(__DRIscreen * driScreenPriv);
 
 boolean
 dri_create_context(const __GLcontextModes * visual,

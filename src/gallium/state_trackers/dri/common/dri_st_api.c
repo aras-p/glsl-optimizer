@@ -170,39 +170,6 @@ dri_st_framebuffer_validate_att(struct st_framebuffer_iface *stfbi,
    stfbi->validate(stfbi, statts, count, NULL);
 }
 
-/**
- * Reference counted st_api.
- */
-static struct {
-   int32_t refcnt;
-   struct st_api *stapi;
-} dri_st_api;
-
-/**
- * Add a reference to the st_api of the state tracker.
- */
-static void
-_dri_get_st_api(void)
-{
-   p_atomic_inc(&dri_st_api.refcnt);
-   if (p_atomic_read(&dri_st_api.refcnt) == 1)
-      dri_st_api.stapi = st_gl_api_create();
-}
-
-/**
- * Remove a reference to the st_api of the state tracker.
- */
-static void
-_dri_put_st_api(void)
-{
-   struct st_api *stapi = dri_st_api.stapi;
-
-   if (p_atomic_dec_zero(&dri_st_api.refcnt)) {
-      stapi->destroy(dri_st_api.stapi);
-      dri_st_api.stapi = NULL;
-   }
-}
-
 static boolean
 dri_st_manager_get_egl_image(struct st_manager *smapi,
                              struct st_egl_image *stimg)
@@ -231,37 +198,22 @@ dri_st_manager_get_egl_image(struct st_manager *smapi,
 /**
  * Create a state tracker manager from the given screen.
  */
-struct st_manager *
-dri_create_st_manager(struct dri_screen *screen)
+boolean
+dri_init_st_manager(struct dri_screen *screen)
 {
-   struct st_manager *smapi;
+   screen->base.screen = screen->pipe_screen;
+   screen->base.get_egl_image = dri_st_manager_get_egl_image;
+   screen->st_api = st_gl_api_create();
 
-   smapi = CALLOC_STRUCT(st_manager);
-   if (smapi) {
-      smapi->screen = screen->pipe_screen;
-      smapi->get_egl_image = dri_st_manager_get_egl_image;
-      _dri_get_st_api();
-   }
+   if (!screen->st_api)
+      return FALSE;
 
-   return smapi;
+   return TRUE;
 }
 
-/**
- * Destroy a state tracker manager.
- */
 void
-dri_destroy_st_manager(struct st_manager *smapi)
+dri_close_st_manager(struct dri_screen *screen)
 {
-   _dri_put_st_api();
-   FREE(smapi);
-}
-
-/**
- * Return the st_api of OpenGL state tracker.
- */
-struct st_api *
-dri_get_st_api(void)
-{
-   assert(dri_st_api.stapi);
-   return dri_st_api.stapi;
+   if (screen->st_api && screen->st_api->destroy)
+      screen->st_api->destroy(screen->st_api);
 }

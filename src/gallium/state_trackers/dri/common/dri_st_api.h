@@ -43,14 +43,11 @@ struct __DRIimageRec {
    void *loader_private;
 };
 
-struct st_api *
-dri_get_st_api(void);
-
-struct st_manager *
-dri_create_st_manager(struct dri_screen *screen);
+boolean
+dri_init_st_manager(struct dri_screen *screen);
 
 void
-dri_destroy_st_manager(struct st_manager *smapi);
+dri_close_st_manager(struct dri_screen *screen);
 
 struct st_framebuffer_iface *
 dri_create_st_framebuffer(struct dri_drawable *drawable);

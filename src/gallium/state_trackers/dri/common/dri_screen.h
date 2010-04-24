@@ -46,6 +46,10 @@ struct dri_drawable;
 
 struct dri_screen
 {
+   /* st_api */
+   struct st_manager base;
+   struct st_api *st_api;
+
    /* dri */
    __DRIscreen *sPriv;
 
@@ -74,8 +78,6 @@ struct dri_screen
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
-
-   struct st_manager *smapi;
 
    /* used only by DRI1 */
    struct pipe_context *dri1_pipe;

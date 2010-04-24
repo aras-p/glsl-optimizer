@@ -105,7 +105,7 @@ drisw_present_texture(__DRIdrawable *dPriv,
 static INLINE void
 drisw_invalidate_drawable(__DRIdrawable *dPriv)
 {
-   struct dri_context *ctx = dri_get_current();
+   struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
    struct dri_drawable *drawable = dri_drawable(dPriv);
 
    drawable->texture_stamp = dPriv->lastStamp - 1;
@@ -131,7 +131,7 @@ drisw_copy_to_front(__DRIdrawable * dPriv,
 void
 drisw_swap_buffers(__DRIdrawable *dPriv)
 {
-   struct dri_context *ctx = dri_get_current();
+   struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_resource *ptex;
 
@@ -151,7 +151,7 @@ static void
 drisw_flush_frontbuffer(struct dri_drawable *drawable,
                         enum st_attachment_type statt)
 {
-   struct dri_context *ctx = dri_get_current();
+   struct dri_context *ctx = dri_get_current(drawable->sPriv);
    struct pipe_resource *ptex;
 
    if (!ctx)

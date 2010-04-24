@@ -53,9 +53,9 @@ GLboolean
 dri_create_context(const __GLcontextModes * visual,
 		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
-   struct st_api *stapi = dri_get_st_api();
    __DRIscreen *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
+   struct st_api *stapi = screen->st_api;
    struct dri_context *ctx = NULL;
    struct st_context_iface *st_share = NULL;
    struct st_visual stvis;
@@ -77,7 +77,7 @@ dri_create_context(const __GLcontextModes * visual,
 		       &screen->optionCache, sPriv->myNum, "dri");
 
    dri_fill_st_visual(&stvis, screen, visual);
-   ctx->st = stapi->create_context(stapi, screen->smapi, &stvis, st_share);
+   ctx->st = stapi->create_context(stapi, &screen->base, &stvis, st_share);
    if (ctx->st == NULL)
       goto fail;
    ctx->st->st_manager_private = (void *) ctx;
@@ -119,7 +119,8 @@ dri_destroy_context(__DRIcontext * cPriv)
 GLboolean
 dri_unbind_context(__DRIcontext * cPriv)
 {
-   struct st_api *stapi = dri_get_st_api();
+   struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
+   struct st_api *stapi = screen->st_api;
 
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
@@ -140,7 +141,8 @@ dri_make_current(__DRIcontext * cPriv,
 		 __DRIdrawable * driDrawPriv,
 		 __DRIdrawable * driReadPriv)
 {
-   struct st_api *stapi = dri_get_st_api();
+   struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
+   struct st_api *stapi = screen->st_api;
 
    if (cPriv) {
       struct dri_context *ctx = dri_context(cPriv);
@@ -173,9 +175,10 @@ dri_make_current(__DRIcontext * cPriv,
 }
 
 struct dri_context *
-dri_get_current(void)
+dri_get_current(__DRIscreen *sPriv)
 {
-   struct st_api *stapi = dri_get_st_api();
+   struct dri_screen *screen = dri_screen(sPriv);
+   struct st_api *stapi = screen->st_api;
    struct st_context_iface *st;
 
    st = stapi->get_current(stapi);
