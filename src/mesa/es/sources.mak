@@ -5,7 +5,6 @@ include $(MESA)/sources.mak
 LOCAL_ES1_SOURCES :=			\
 	main/drawtex.c			\
 	main/es_query_matrix.c		\
-	main/es_texgen.c		\
 	glapi/glapi-es1/main/enums.c
 
 LOCAL_ES1_GALLIUM_SOURCES :=		\
