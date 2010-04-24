@@ -1185,16 +1185,6 @@ if test "x$enable_gallium" = xyes; then
     AC_CHECK_HEADER([udis86.h], [HAS_UDIS86="yes"],
                 [HAS_UDIS86="no"])
     AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
-    if test "x$LLVM_CONFIG" != xno; then
-	LLVM_VERSION=`$LLVM_CONFIG --version`
-	LLVM_CFLAGS=`$LLVM_CONFIG --cflags`
-	LLVM_LIBS="`$LLVM_CONFIG --libs jit interpreter nativecodegen bitwriter` -lstdc++"
-
-	if test "x$HAS_UDIS86" != xno; then
-		LLVM_LIBS="$LLVM_LIBS -ludis86"
-	fi
-	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
-    fi
 fi
 
 AC_SUBST([LLVM_CFLAGS])
@@ -1344,18 +1334,24 @@ AC_ARG_ENABLE([gallium-llvm],
     [enable_gallium_llvm="$enableval"],
     [enable_gallium_llvm=auto])
 if test "x$enable_gallium_llvm" = xyes; then
-	if test "x$LLVM_CONFIG" != xno; then
-		GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
-	        DEFINES="$DEFINES -DMESA_LLVM -D__STDC_CONSTANT_MACROS"
-		if test "x$HAS_UDIS86" != xno; then
-			DEFINES="$DEFINES -DHAVE_UDIS86"
-		fi
-		MESA_LLVM=1
-	else
-		MESA_LLVM=0
+    if test "x$LLVM_CONFIG" != xno; then
+	LLVM_VERSION=`$LLVM_CONFIG --version`
+	LLVM_CFLAGS=`$LLVM_CONFIG --cflags`
+	LLVM_LIBS="`$LLVM_CONFIG --libs jit interpreter nativecodegen bitwriter` -lstdc++"
+
+	if test "x$HAS_UDIS86" != xno; then
+	    LLVM_LIBS="$LLVM_LIBS -ludis86"
+	    DEFINES="$DEFINES -DHAVE_UDIS86"
 	fi
-else
+	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
+	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
+	DEFINES="$DEFINES -DMESA_LLVM -D__STDC_CONSTANT_MACROS"
+	MESA_LLVM=1
+    else
 	MESA_LLVM=0
+    fi
+else
+    MESA_LLVM=0
 fi
 
 dnl
