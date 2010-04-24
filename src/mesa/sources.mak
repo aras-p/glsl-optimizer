@@ -80,6 +80,7 @@ MAIN_SOURCES = \
 	main/texgetimage.c \
 	main/teximage.c \
 	main/texobj.c \
+	main/texpal.c \
 	main/texparam.c \
 	main/texrender.c \
 	main/texstate.c \

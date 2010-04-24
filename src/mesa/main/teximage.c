@@ -46,6 +46,7 @@
 #include "texfetch.h"
 #include "teximage.h"
 #include "texstate.h"
+#include "texpal.h"
 #include "mtypes.h"
 
 
@@ -3408,7 +3409,6 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
    }
 }
 
-
 void GLAPIENTRY
 _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
                               GLenum internalFormat, GLsizei width,
@@ -3423,6 +3423,24 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
                   _mesa_lookup_enum_by_nr(target), level,
                   _mesa_lookup_enum_by_nr(internalFormat),
                   width, height, border, imageSize, data);
+
+#if FEATURE_ES
+   switch (internalFormat) {
+   case GL_PALETTE4_RGB8_OES:
+   case GL_PALETTE4_RGBA8_OES:
+   case GL_PALETTE4_R5_G6_B5_OES:
+   case GL_PALETTE4_RGBA4_OES:
+   case GL_PALETTE4_RGB5_A1_OES:
+   case GL_PALETTE8_RGB8_OES:
+   case GL_PALETTE8_RGBA8_OES:
+   case GL_PALETTE8_R5_G6_B5_OES:
+   case GL_PALETTE8_RGBA4_OES:
+   case GL_PALETTE8_RGB5_A1_OES:
+      _mesa_cpal_compressed_teximage2d(target, level, internalFormat,
+				       width, height, imageSize, data);
+      return;
+   }
+#endif
 
    if (target == GL_TEXTURE_2D ||
        (ctx->Extensions.ARB_texture_cube_map &&

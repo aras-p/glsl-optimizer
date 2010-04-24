@@ -4040,7 +4040,7 @@
 
 	<!-- CompressedTexImage2D calls out to two different functions based on
 	     whether the image is a paletted image or not -->
-	<function name="CompressedTexImage2D" external="true" template="CompressedTexImage2D"/>
+	<function name="CompressedTexImage2D" template="CompressedTexImage2D"/>
 	<function name="CompressedTexSubImage2D" template="CompressedTexSubImage2D"/>
 
 	<function name="BlendFuncSeparateOES" template="BlendFuncSeparate"/>
@@ -4217,7 +4217,7 @@
 
 	<function name="SampleCoverage" template="SampleCoverage" gltype="GLclampf"/>
 
-	<function name="CompressedTexImage2D" external="true" template="CompressedTexImage2D"/>
+	<function name="CompressedTexImage2D" template="CompressedTexImage2D"/>
 	<function name="CompressedTexSubImage2D" template="CompressedTexSubImage2D"/>
 
 	<function name="BlendFuncSeparate" template="BlendFuncSeparate"/>
