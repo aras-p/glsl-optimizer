@@ -52,14 +52,10 @@ svga_translate_vertex_format(enum pipe_format format)
    case PIPE_FORMAT_R16G16B16A16_SNORM:   return SVGA3D_DECLTYPE_SHORT4N;
    case PIPE_FORMAT_R16G16_UNORM:         return SVGA3D_DECLTYPE_USHORT2N;
    case PIPE_FORMAT_R16G16B16A16_UNORM:   return SVGA3D_DECLTYPE_USHORT4N;
-
-   /* These formats don't exist yet:
-    * 
-   case PIPE_FORMAT_R10G10B10_USCALED:    return SVGA3D_DECLTYPE_UDEC3;
-   case PIPE_FORMAT_R10G10B10_SNORM:      return SVGA3D_DECLTYPE_DEC3N;
+   case PIPE_FORMAT_R10G10B10X2_USCALED:  return SVGA3D_DECLTYPE_UDEC3;
+   case PIPE_FORMAT_R10G10B10X2_SNORM:    return SVGA3D_DECLTYPE_DEC3N;
    case PIPE_FORMAT_R16G16_FLOAT:         return SVGA3D_DECLTYPE_FLOAT16_2;
    case PIPE_FORMAT_R16G16B16A16_FLOAT:   return SVGA3D_DECLTYPE_FLOAT16_4;
-   */
 
    default:
       /* There are many formats without hardware support.  This case
