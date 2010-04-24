@@ -95,6 +95,52 @@ st_render_mipmap(struct st_context *st,
 
 
 /**
+ * Helper function to decompress an image.  The result is a 32-bpp RGBA
+ * image with stride==width.
+ */
+static void
+decompress_image(enum pipe_format format,
+                 const uint8_t *src, uint8_t *dst,
+                 unsigned width, unsigned height)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   const uint bw = util_format_get_blockwidth(format);
+   const uint src_stride = align(width, bw) / util_format_get_blocksize(format);
+   const uint dst_stride = 4 * width;
+
+   /*
+   printf("decompress %s %d x %d  %d -> %d\n",
+          util_format_name(format), width, height, src_stride, dst_stride);
+   */
+
+   desc->unpack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
+}
+
+
+/**
+ * Helper function to compress an image.  The source is a 32-bpp RGBA image
+ * with stride==width.
+ */
+static void
+compress_image(enum pipe_format format,
+               const uint8_t *src, uint8_t *dst,
+               unsigned width, unsigned height)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   const uint bw = util_format_get_blockwidth(format);
+   const uint src_stride = 4 * width;
+   const uint dst_stride = align(width, bw) / util_format_get_blocksize(format);
+
+   /*
+   printf("compress %s %d x %d   %d -> %d\n",
+          util_format_name(format), width, height, src_stride, dst_stride);
+   */
+
+   desc->pack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
+}
+
+
+/**
  * Software fallback for generate mipmap levels.
  */
 static void
@@ -109,14 +155,25 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
    uint dstLevel;
    GLenum datatype;
    GLuint comps;
+   GLboolean compressed;
    
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
-   _mesa_format_to_type_and_comps(texObj->Image[face][baseLevel]->TexFormat,
-                                  &datatype, &comps);
+   compressed =
+      _mesa_is_format_compressed(texObj->Image[face][baseLevel]->TexFormat);
+
+   if (compressed) {
+      datatype = GL_UNSIGNED_BYTE;
+      comps = 4;
+   }
+   else {
+      _mesa_format_to_type_and_comps(texObj->Image[face][baseLevel]->TexFormat,
+                                     &datatype, &comps);
+      assert(comps > 0 && "bad texture format in fallback_generate_mipmap()");
+   }
 
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
@@ -148,14 +205,49 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->resource->format);
       dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->resource->format);
 
-      _mesa_generate_mipmap_level(target, datatype, comps,
-                                  0 /*border*/,
-                                  srcWidth, srcHeight, srcDepth,
-                                  srcData,
-                                  srcStride, /* stride in texels */
-                                  dstWidth, dstHeight, dstDepth,
-                                  dstData,
-                                  dstStride); /* stride in texels */
+      if (compressed) {
+         const enum pipe_format format = pt->format;
+         const uint bw = util_format_get_blockwidth(format);
+         const uint bh = util_format_get_blockheight(format);
+         const uint srcWidth2 = align(srcWidth, bw);
+         const uint srcHeight2 = align(srcHeight, bh);
+         const uint dstWidth2 = align(dstWidth, bw);
+         const uint dstHeight2 = align(dstHeight, bh);
+         uint8_t *srcTemp, *dstTemp;
+
+         assert(comps == 4);
+
+         srcTemp = malloc(srcWidth2 * srcHeight2 * comps + 000);
+         dstTemp = malloc(dstWidth2 * dstHeight2 * comps + 000);
+
+         /* decompress the src image: srcData -> srcTemp */
+         decompress_image(format, srcData, srcTemp, srcWidth, srcHeight);
+
+         _mesa_generate_mipmap_level(target, datatype, comps,
+                                     0 /*border*/,
+                                     srcWidth2, srcHeight2, srcDepth,
+                                     srcTemp,
+                                     srcWidth2, /* stride in texels */
+                                     dstWidth2, dstHeight2, dstDepth,
+                                     dstTemp,
+                                     dstWidth2); /* stride in texels */
+
+         /* compress the new image: dstTemp -> dstData */
+         compress_image(format, dstTemp, dstData, dstWidth2, dstHeight2);
+
+         free(srcTemp);
+         free(dstTemp);
+      }
+      else {
+         _mesa_generate_mipmap_level(target, datatype, comps,
+                                     0 /*border*/,
+                                     srcWidth, srcHeight, srcDepth,
+                                     srcData,
+                                     srcStride, /* stride in texels */
+                                     dstWidth, dstHeight, dstDepth,
+                                     dstData,
+                                     dstStride); /* stride in texels */
+      }
 
       pipe_transfer_unmap(pipe, srcTrans);
       pipe_transfer_unmap(pipe, dstTrans);
