@@ -48,7 +48,7 @@
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
 
-DEBUG_GET_ONCE_BOOL_OPTION(xlib_no_shm, "XLIB_NO_SHM", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(xlib_no_shm, "XLIB_NO_SHM", FALSE)
 
 /**
  * Display target for Xlib winsys.
