@@ -39,6 +39,8 @@ MAIN_SOURCES = \
 	main/formats.c \
 	main/framebuffer.c \
 	main/get.c \
+	main/get_es1.c \
+	main/get_es2.c \
 	main/getstring.c \
 	main/hash.c \
 	main/hint.c \

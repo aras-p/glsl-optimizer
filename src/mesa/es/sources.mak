@@ -3,7 +3,6 @@ include $(MESA)/sources.mak
 # LOCAL sources
 
 LOCAL_ES1_SOURCES :=			\
-	main/get_es1.c			\
 	main/drawtex.c			\
 	main/es_cpaltex.c		\
 	main/es_enable.c		\
@@ -25,7 +24,6 @@ LOCAL_ES1_INCLUDES :=			\
 	-I$(MESA)/state_tracker
 
 LOCAL_ES2_SOURCES :=			\
-	main/get_es2.c			\
 	main/es_cpaltex.c		\
 	glapi/glapi-es2/main/enums.c
 

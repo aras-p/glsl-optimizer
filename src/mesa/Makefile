@@ -30,6 +30,11 @@ main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py m
 main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
 	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES2.0 > $@
 
+main/get_es1.c: main/get_gen_es.py
+	$(PYTHON2) $(PYTHON_FLAGS) $< 1 > $@
+
+main/get_es2.c: main/get_gen_es.py
+	$(PYTHON2) $(PYTHON_FLAGS) $< 2 > $@
 
 ######################################################################
 # Helper libraries used by many drivers:
