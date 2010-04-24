@@ -243,7 +243,7 @@ lp_setup_flush( struct lp_setup_context *setup,
 
    if (setup->scene) {
       struct lp_scene *scene = lp_setup_get_current_scene(setup);
-      union lp_rast_cmd_arg dummy;
+      union lp_rast_cmd_arg dummy = {0};
 
       if (flags & (PIPE_FLUSH_SWAPBUFFERS |
                    PIPE_FLUSH_FRAME)) {
