@@ -50,7 +50,7 @@ common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa', 'python', 'xorg']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe']))
+                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe', 'nouveau']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
                      ['xlib', 'vmware', 'i915', 'i965', 'gdi', 'radeon', 'graw-xlib']))
 
