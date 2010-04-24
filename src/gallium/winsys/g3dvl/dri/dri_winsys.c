@@ -358,18 +358,18 @@ vl_video_create(struct vl_screen *vscreen,
    /* XXX: Is default visual correct/sufficient here? */
    driCreateContext(vl_dri_scrn->dri_screen, vl_dri_scrn->visual, &vl_dri_ctx->dri_context);
 
-   if (!vl_dri_scrn->api->create_video_context) {
+   if (!vscreen->pscreen->video_context_create) {
       debug_printf("[G3DVL] No video support found on %s/%s.\n",
-                   vl_dri_scrn->base.pscreen->get_vendor(vl_dri_scrn->base.pscreen),
-                   vl_dri_scrn->base.pscreen->get_name(vl_dri_scrn->base.pscreen));
+                   vscreen->pscreen->get_vendor(vscreen->pscreen),
+                   vscreen->pscreen->get_name(vscreen->pscreen));
       FREE(vl_dri_ctx);
       return NULL;
    }
 
-   vl_dri_ctx->base.vpipe = vl_dri_scrn->api->create_video_context(vl_dri_scrn->api,
-                                                                   vscreen->pscreen,
+   vl_dri_ctx->base.vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen,
                                                                    profile, chroma_format,
-                                                                   width, height);
+                                                                   width, height,
+                                                                   vl_dri_ctx->dri_context);
 
    if (!vl_dri_ctx->base.vpipe) {
       FREE(vl_dri_ctx);

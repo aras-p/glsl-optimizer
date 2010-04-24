@@ -12,9 +12,6 @@ DRIVER_DEFINES = $(shell pkg-config libdrm libdrm_nouveau --cflags-only-other)
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/winsys/drm/nouveau/drm/libnouveaudrm.a \
-	$(TOP)/src/gallium/drivers/nv04/libnv04.a \
-	$(TOP)/src/gallium/drivers/nv10/libnv10.a \
-	$(TOP)/src/gallium/drivers/nv20/libnv20.a \
 	$(TOP)/src/gallium/drivers/nv30/libnv30.a \
 	$(TOP)/src/gallium/drivers/nv40/libnv40.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \

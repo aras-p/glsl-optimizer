@@ -1,6 +1,7 @@
 #include "pipe/p_screen.h"
 
 #include "nv40_context.h"
+#include "nv40_video_context.h"
 #include "nv40_screen.h"
 
 #define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
@@ -199,6 +200,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_paramf = nv40_screen_get_paramf;
 	pscreen->is_format_supported = nv40_screen_surface_format_supported;
 	pscreen->context_create = nv40_create;
+	pscreen->video_context_create = nv40_video_create;
 
 	nv40_screen_init_miptree_functions(pscreen);
 	nv40_screen_init_transfer_functions(pscreen);
