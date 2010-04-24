@@ -9,13 +9,13 @@
 static unsigned
 hash(void *key)
 {
-   return (unsigned)key;
+   return (unsigned)(uintptr_t)key;
 }
 
 static int
 compare(void *key1, void *key2)
 {
-   return (unsigned)key1 - (unsigned)key2;
+   return (unsigned)(uintptr_t)key1 - (unsigned)(uintptr_t)key2;
 }
 
 struct pipe_surface *
@@ -67,7 +67,7 @@ util_surfaces_do_detach(struct util_surfaces *us, struct pipe_surface *ps)
    struct pipe_resource *pt = ps->texture;
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
    {	/* or 2D array */
-      void* key = (void*)(((ps->zslice + ps->face) << 8) | ps->level);
+      void* key = (void*)(uintptr_t)(((ps->zslice + ps->face) << 8) | ps->level);
       util_hash_table_remove(us->u.table, key);
    }
    else
