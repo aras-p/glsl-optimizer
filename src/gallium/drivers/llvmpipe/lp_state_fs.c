@@ -546,7 +546,6 @@ generate_blend(const struct pipe_blend_state *blend,
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask_ctx;
    LLVMTypeRef vec_type;
-   LLVMTypeRef int_vec_type;
    LLVMValueRef const_ptr;
    LLVMValueRef con[4];
    LLVMValueRef dst[4];
@@ -561,7 +560,6 @@ generate_blend(const struct pipe_blend_state *blend,
    lp_build_mask_begin(&mask_ctx, flow, type, mask);
 
    vec_type = lp_build_vec_type(type);
-   int_vec_type = lp_build_int_vec_type(type);
 
    const_ptr = lp_jit_context_blend_color(builder, context_ptr);
    const_ptr = LLVMBuildBitCast(builder, const_ptr,
