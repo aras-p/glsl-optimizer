@@ -171,15 +171,6 @@ lp_jit_screen_cleanup(struct llvmpipe_screen *screen)
 void
 lp_jit_screen_init(struct llvmpipe_screen *screen)
 {
-   util_cpu_detect();
-
-#if 0
-   /* For simulating less capable machines */
-   util_cpu_caps.has_sse3 = 0;
-   util_cpu_caps.has_ssse3 = 0;
-   util_cpu_caps.has_sse4_1 = 0;
-#endif
-
    lp_build_init();
 
    screen->module = lp_build_module;

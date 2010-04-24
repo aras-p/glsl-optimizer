@@ -27,6 +27,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "util/u_cpu_detect.h"
 #include "util/u_debug.h"
 #include "lp_bld_init.h"
 
@@ -62,6 +63,15 @@ lp_build_init(void)
 
    if (!lp_build_target)
       lp_build_target = LLVMGetExecutionEngineTargetData(lp_build_engine);
+
+   util_cpu_detect();
+
+#if 0
+   /* For simulating less capable machines */
+   util_cpu_caps.has_sse3 = 0;
+   util_cpu_caps.has_ssse3 = 0;
+   util_cpu_caps.has_sse4_1 = 0;
+#endif
 }
 
 
