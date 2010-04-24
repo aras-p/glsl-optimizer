@@ -842,6 +842,7 @@ lp_build_minify(struct lp_build_sample_context *bld,
  * \param s  vector of texcoord s values
  * \param t  vector of texcoord t values
  * \param r  vector of texcoord r values
+ * \param shader_lod_bias  vector float with the shader lod bias,
  * \param width  scalar int texture width
  * \param height  scalar int texture height
  * \param depth  scalar int texture depth
@@ -851,6 +852,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef s,
                       LLVMValueRef t,
                       LLVMValueRef r,
+                      LLVMValueRef shader_lod_bias,
                       LLVMValueRef width,
                       LLVMValueRef height,
                       LLVMValueRef depth)
@@ -865,8 +867,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
    else {
       const int dims = texture_dims(bld->static_state->target);
       struct lp_build_context *float_bld = &bld->float_bld;
-      LLVMValueRef lod_bias = LLVMConstReal(LLVMFloatType(),
-                                            bld->static_state->lod_bias);
+      LLVMValueRef sampler_lod_bias = LLVMConstReal(LLVMFloatType(),
+                                                    bld->static_state->lod_bias);
       LLVMValueRef min_lod = LLVMConstReal(LLVMFloatType(),
                                            bld->static_state->min_lod);
       LLVMValueRef max_lod = LLVMConstReal(LLVMFloatType(),
@@ -940,8 +942,14 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       /* compute lod = log2(rho) */
       lod = lp_build_log2(float_bld, rho);
 
-      /* add lod bias */
-      lod = LLVMBuildAdd(bld->builder, lod, lod_bias, "LOD bias");
+      /* add sampler lod bias */
+      lod = LLVMBuildAdd(bld->builder, lod, sampler_lod_bias, "sampler LOD bias");
+
+      /* add shader lod bias */
+      /* XXX for now we take only the first element since our lod is scalar */
+      shader_lod_bias = LLVMBuildExtractElement(bld->builder, shader_lod_bias,
+                                                LLVMConstInt(LLVMInt32Type(), 0, 0), "");
+      lod = LLVMBuildAdd(bld->builder, lod, shader_lod_bias, "shader LOD bias");
 
       /* clamp lod */
       lod = lp_build_clamp(float_bld, lod, min_lod, max_lod);
@@ -1527,6 +1535,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef s,
                         LLVMValueRef t,
                         LLVMValueRef r,
+                        LLVMValueRef lodbias,
                         LLVMValueRef width,
                         LLVMValueRef height,
                         LLVMValueRef depth,
@@ -1564,7 +1573,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
-      lod = lp_build_lod_selector(bld, s, t, r, width, height, depth);
+      lod = lp_build_lod_selector(bld, s, t, r, lodbias, width, height, depth);
    }
 
    /*
@@ -2060,7 +2069,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                                     row_stride_array, data_array, texel);
    }
    else {
-      lp_build_sample_general(&bld, unit, s, t, r,
+      lp_build_sample_general(&bld, unit, s, t, r, lodbias,
                               width, height, depth,
                               width_vec, height_vec, depth_vec,
                               row_stride_array, img_stride_array,
