@@ -120,30 +120,31 @@ static const __DRItexBufferExtension dri2TexBufferExtension = {
 };
 
 /**
- * Get the format of an attachment.
+ * Get the format and binding of an attachment.
  */
-static INLINE enum pipe_format
+static INLINE void
 dri2_drawable_get_format(struct dri_drawable *drawable,
-                         enum st_attachment_type statt)
+                         enum st_attachment_type statt,
+                         enum pipe_format *format,
+                         unsigned *bind)
 {
-   enum pipe_format format;
-
    switch (statt) {
    case ST_ATTACHMENT_FRONT_LEFT:
    case ST_ATTACHMENT_BACK_LEFT:
    case ST_ATTACHMENT_FRONT_RIGHT:
    case ST_ATTACHMENT_BACK_RIGHT:
-      format = drawable->stvis.color_format;
+      *format = drawable->stvis.color_format;
+      *bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
       break;
    case ST_ATTACHMENT_DEPTH_STENCIL:
-      format = drawable->stvis.depth_stencil_format;
+      *format = drawable->stvis.depth_stencil_format;
+      *bind = PIPE_BIND_DEPTH_STENCIL; /* XXX sampler? */
       break;
    default:
-      format = PIPE_FORMAT_NONE;
+      *format = PIPE_FORMAT_NONE;
+      *bind = 0;
       break;
    }
-
-   return format;
 }
 
 
@@ -174,9 +175,10 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
 
    for (i = 0; i < *count; i++) {
       enum pipe_format format;
+      unsigned bind;
       int att, bpp;
 
-      format = dri2_drawable_get_format(drawable, statts[i]);
+      dri2_drawable_get_format(drawable, statts[i], &format, &bind);
       if (format == PIPE_FORMAT_NONE)
          continue;
 
@@ -263,7 +265,7 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
    struct pipe_resource templ;
    struct winsys_handle whandle;
    boolean have_depth = FALSE;
-   unsigned i;
+   unsigned i, bind;
 
    if (drawable->old_num == count &&
        drawable->old_w == dri_drawable->w &&
@@ -275,7 +277,6 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
       pipe_resource_reference(&drawable->textures[i], NULL);
 
    memset(&templ, 0, sizeof(templ));
-   templ.bind = PIPE_BIND_RENDER_TARGET;
    templ.target = PIPE_TEXTURE_2D;
    templ.last_level = 0;
    templ.width0 = dri_drawable->w;
@@ -319,11 +320,12 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
          break;
       }
 
-      format = dri2_drawable_get_format(drawable, statt);
+      dri2_drawable_get_format(drawable, statt, &format, &bind);
       if (statt == ST_ATTACHMENT_INVALID || format == PIPE_FORMAT_NONE)
          continue;
 
       templ.format = format;
+      templ.bind = bind;
       whandle.handle = buf->name;
       whandle.stride = buf->pitch;
 
