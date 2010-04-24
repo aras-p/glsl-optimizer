@@ -259,7 +259,7 @@ dri1_flush_frontbuffer(struct dri_drawable *draw,
 {
    struct dri_context *ctx = dri_get_current(draw->sPriv);
    struct dri_screen *screen = dri_screen(draw->sPriv);
-   struct pipe_screen *pipe_screen = screen->pipe_screen;
+   struct pipe_screen *pipe_screen = screen->base.screen;
    struct pipe_fence_handle *dummy_fence;
    struct pipe_resource *ptex;
 
@@ -283,7 +283,7 @@ dri1_swap_buffers(__DRIdrawable * dPriv)
    struct dri_drawable *draw = dri_drawable(dPriv);
    struct dri_context *ctx = dri_get_current(draw->sPriv);
    struct dri_screen *screen = dri_screen(draw->sPriv);
-   struct pipe_screen *pipe_screen = screen->pipe_screen;
+   struct pipe_screen *pipe_screen = screen->base.screen;
    struct pipe_fence_handle *fence;
    struct pipe_resource *ptex;
 
@@ -311,7 +311,7 @@ dri1_copy_sub_buffer(__DRIdrawable * dPriv, int x, int y, int w, int h)
 {
    struct dri_context *ctx = dri_get_current(dPriv->driScreenPriv);
    struct dri_screen *screen = dri_screen(dPriv->driScreenPriv);
-   struct pipe_screen *pipe_screen = screen->pipe_screen;
+   struct pipe_screen *pipe_screen = screen->base.screen;
    struct drm_clip_rect sub_bbox;
    struct dri_drawable *draw = dri_drawable(dPriv);
    struct pipe_fence_handle *dummy_fence;
@@ -389,7 +389,7 @@ dri1_allocate_textures(struct dri_drawable *drawable,
       templ.bind = bind;
 
       drawable->textures[statts[i]] =
-         screen->pipe_screen->resource_create(screen->pipe_screen, &templ);
+         screen->base.screen->resource_create(screen->base.screen, &templ);
    }
 
    drawable->old_w = width;

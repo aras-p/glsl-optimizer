@@ -38,7 +38,6 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri_st_api.h"
 #include "dri1_helper.h"
 #ifndef __NOT_HAVE_DRM_H
 #include "dri1.h"
@@ -50,6 +49,7 @@
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_format.h"
+#include "state_tracker/st_gl_api.h" /* for st_gl_api_create */
 
 #include "util/u_debug.h"
 
@@ -79,7 +79,7 @@ dri_fill_in_modes(struct dri_screen *screen,
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
    unsigned msaa_samples_factor;
-   struct pipe_screen *p_screen = screen->pipe_screen;
+   struct pipe_screen *p_screen = screen->base.screen;
    boolean pf_r5g6b5, pf_a8r8g8b8, pf_x8r8g8b8;
    boolean pf_z16, pf_x8z24, pf_z24x8, pf_s8z24, pf_z24s8, pf_z32;
 
@@ -283,6 +283,31 @@ dri_get_swap_info(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
 
 #endif
 
+static boolean
+dri_get_egl_image(struct st_manager *smapi,
+                             struct st_egl_image *stimg)
+{
+   struct dri_context *ctx =
+      (struct dri_context *)stimg->stctxi->st_manager_private;
+   struct dri_screen *screen = dri_screen(ctx->sPriv);
+   __DRIimage *img = NULL;
+
+   if (screen->lookup_egl_image) {
+      img = screen->lookup_egl_image(ctx, stimg->egl_image);
+   }
+
+   if (!img)
+      return FALSE;
+
+   stimg->texture = NULL;
+   pipe_resource_reference(&stimg->texture, img->texture);
+   stimg->face = img->face;
+   stimg->level = img->level;
+   stimg->zslice = img->zslice;
+
+   return TRUE;
+}
+
 static void
 dri_destroy_option_cache(struct dri_screen * screen)
 {
@@ -304,8 +329,11 @@ dri_destroy_screen_helper(struct dri_screen * screen)
 {
    dri1_destroy_pipe_context(screen);
 
-   if (screen->pipe_screen)
-      screen->pipe_screen->destroy(screen->pipe_screen);
+   if (screen->st_api && screen->st_api->destroy)
+      screen->st_api->destroy(screen->st_api);
+
+   if (screen->base.screen)
+      screen->base.screen->destroy(screen->base.screen);
 
    dri_destroy_option_cache(screen);
 }
@@ -327,13 +355,16 @@ dri_init_screen_helper(struct dri_screen *screen,
                        struct pipe_screen *pscreen,
                        unsigned pixel_bits)
 {
-   screen->pipe_screen = pscreen;
-   if (!screen->pipe_screen) {
+   screen->base.screen = pscreen;
+   if (!screen->base.screen) {
       debug_printf("%s: failed to create pipe_screen\n", __FUNCTION__);
       return NULL;
    }
 
-   if (!dri_init_st_manager(screen))
+   screen->base.get_egl_image = dri_get_egl_image;
+   screen->st_api = st_gl_api_create();
+
+   if (!screen->st_api)
       return NULL;
 
    driParseOptionInfo(&screen->optionCache,

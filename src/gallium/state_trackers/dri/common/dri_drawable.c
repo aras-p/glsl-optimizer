@@ -32,13 +32,82 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri_st_api.h"
 #include "dri1_helper.h"
 
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_inlines.h"
  
+
+static boolean
+dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
+                            const enum st_attachment_type *statts,
+                            unsigned count,
+                            struct pipe_resource **out)
+{
+   struct dri_drawable *drawable =
+      (struct dri_drawable *) stfbi->st_manager_private;
+   struct dri_screen *screen = dri_screen(drawable->sPriv);
+   unsigned statt_mask, new_mask;
+   boolean new_stamp;
+   int i;
+
+   statt_mask = 0x0;
+   for (i = 0; i < count; i++)
+      statt_mask |= (1 << statts[i]);
+
+   /* record newly allocated textures */
+   new_mask = (statt_mask & ~drawable->texture_mask);
+
+   /*
+    * dPriv->pStamp is the server stamp.  It should be accessed with a lock, at
+    * least for DRI1.  dPriv->lastStamp is the client stamp.  It has the value
+    * of the server stamp when last checked.
+    */
+   new_stamp = (drawable->texture_stamp != drawable->dPriv->lastStamp);
+
+   if (new_stamp || new_mask) {
+      if (new_stamp && screen->update_drawable_info)
+         screen->update_drawable_info(drawable);
+
+      screen->allocate_textures(drawable, statts, count);
+
+      /* add existing textures */
+      for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+         if (drawable->textures[i])
+            statt_mask |= (1 << i);
+      }
+
+      drawable->texture_stamp = drawable->dPriv->lastStamp;
+      drawable->texture_mask = statt_mask;
+   }
+
+   if (!out)
+      return TRUE;
+
+   for (i = 0; i < count; i++) {
+      out[i] = NULL;
+      pipe_resource_reference(&out[i], drawable->textures[statts[i]]);
+   }
+
+   return TRUE;
+}
+
+static boolean
+dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
+                               enum st_attachment_type statt)
+{
+   struct dri_drawable *drawable =
+      (struct dri_drawable *) stfbi->st_manager_private;
+   struct dri_screen *screen = dri_screen(drawable->sPriv);
+
+   /* XXX remove this and just set the correct one on the framebuffer */
+   screen->flush_frontbuffer(drawable, statt);
+
+   return TRUE;
+}
+
 /**
  * This is called when we need to set up GL rendering to a new X window.
  */
@@ -58,7 +127,12 @@ dri_create_buffer(__DRIscreen * sPriv,
       goto fail;
 
    dri_fill_st_visual(&drawable->stvis, screen, visual);
-   dri_init_st_framebuffer(drawable);
+
+   /* setup the st_framebuffer_iface */
+   drawable->base.visual = &drawable->stvis;
+   drawable->base.flush_front = dri_st_framebuffer_flush_front;
+   drawable->base.validate = dri_st_framebuffer_validate;
+   drawable->base.st_manager_private = (void *) drawable;
 
    drawable->sPriv = sPriv;
    drawable->dPriv = dPriv;
@@ -76,16 +150,47 @@ void
 dri_destroy_buffer(__DRIdrawable * dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
+   int i;
 
    dri1_swap_fences_clear(drawable);
 
    dri1_destroy_pipe_surface(drawable);
 
-   dri_close_st_framebuffer(drawable);
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
+      pipe_resource_reference(&drawable->textures[i], NULL);
 
    drawable->desired_fences = 0;
 
    FREE(drawable);
+}
+
+/**
+ * Validate the texture at an attachment.  Allocate the texture if it does not
+ * exist.
+ */
+void
+dri_drawable_validate_att(struct dri_drawable *drawable,
+                          enum st_attachment_type statt)
+{
+   enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
+   unsigned i, count = 0;
+
+   /* check if buffer already exists */
+   if (drawable->texture_mask & (1 << statt))
+      return;
+
+   /* make sure DRI2 does not destroy existing buffers */
+   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+      if (drawable->texture_mask & (1 << i)) {
+         statts[count++] = i;
+      }
+   }
+   statts[count++] = statt;
+
+   drawable->texture_stamp = drawable->dPriv->lastStamp - 1;
+
+   /* this calles into the manager */
+   drawable->base.validate(&drawable->base, statts, count, NULL);
 }
 
 /**

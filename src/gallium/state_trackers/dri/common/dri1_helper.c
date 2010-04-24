@@ -42,7 +42,7 @@
 struct pipe_fence_handle *
 dri1_swap_fences_pop_front(struct dri_drawable *draw)
 {
-   struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
+   struct pipe_screen *screen = dri_screen(draw->sPriv)->base.screen;
    struct pipe_fence_handle *fence = NULL;
 
    if (draw->cur_fences >= draw->desired_fences) {
@@ -58,7 +58,7 @@ void
 dri1_swap_fences_push_back(struct dri_drawable *draw,
                            struct pipe_fence_handle *fence)
 {
-   struct pipe_screen *screen = dri_screen(draw->sPriv)->pipe_screen;
+   struct pipe_screen *screen = dri_screen(draw->sPriv)->base.screen;
 
    if (!fence)
       return;
@@ -74,7 +74,7 @@ dri1_swap_fences_push_back(struct dri_drawable *draw,
 void
 dri1_swap_fences_clear(struct dri_drawable *drawable)
 {
-   struct pipe_screen *screen = dri_screen(drawable->sPriv)->pipe_screen;
+   struct pipe_screen *screen = dri_screen(drawable->sPriv)->base.screen;
    struct pipe_fence_handle *fence;
 
    while (drawable->cur_fences) {
@@ -86,7 +86,7 @@ dri1_swap_fences_clear(struct dri_drawable *drawable)
 struct pipe_surface *
 dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_resource *ptex)
 {
-   struct pipe_screen *pipe_screen = dri_screen(drawable->sPriv)->pipe_screen;
+   struct pipe_screen *pipe_screen = dri_screen(drawable->sPriv)->base.screen;
    struct pipe_surface *psurf = drawable->dri1_surface;
 
    if (!psurf || psurf->texture != ptex) {
@@ -114,7 +114,7 @@ dri1_get_pipe_context(struct dri_screen *screen)
 
    if (!pipe) {
       screen->dri1_pipe =
-         screen->pipe_screen->context_create(screen->pipe_screen, NULL);
+         screen->base.screen->context_create(screen->base.screen, NULL);
       pipe = screen->dri1_pipe;
    }
 

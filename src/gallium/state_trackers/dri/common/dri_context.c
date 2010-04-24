@@ -34,7 +34,6 @@
 #include "dri_screen.h"
 #include "dri_drawable.h"
 #include "dri_context.h"
-#include "dri_st_api.h"
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"

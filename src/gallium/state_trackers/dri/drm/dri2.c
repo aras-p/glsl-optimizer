@@ -38,7 +38,6 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri_st_api.h"
 #include "dri2.h"
 
 #include "GL/internal/dri_interface.h"
@@ -81,7 +80,7 @@ dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_resource *pt;
 
-   dri_st_framebuffer_validate_att(drawable, ST_ATTACHMENT_FRONT_LEFT);
+   dri_drawable_validate_att(drawable, ST_ATTACHMENT_FRONT_LEFT);
 
    pt = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
 
@@ -332,7 +331,7 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
       whandle.stride = buf->pitch;
 
       drawable->textures[statt] =
-         screen->pipe_screen->resource_from_handle(screen->pipe_screen,
+         screen->base.screen->resource_from_handle(screen->base.screen,
                &templ, &whandle);
    }
 
@@ -435,7 +434,7 @@ dri2_create_image_from_name(__DRIcontext *context,
    whandle.handle = name;
    whandle.stride = pitch * util_format_get_blocksize(pf);
 
-   img->texture = screen->pipe_screen->resource_from_handle(screen->pipe_screen,
+   img->texture = screen->base.screen->resource_from_handle(screen->base.screen,
          &templ, &whandle);
    if (!img->texture) {
       FREE(img);

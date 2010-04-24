@@ -73,8 +73,6 @@ struct dri_screen
 
    /* gallium */
    struct drm_api *api;
-   struct pipe_winsys *pipe_winsys;
-   struct pipe_screen *pipe_screen;
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
@@ -89,6 +87,15 @@ dri_screen(__DRIscreen * sPriv)
 {
    return (struct dri_screen *)sPriv->private;
 }
+
+struct __DRIimageRec {
+   struct pipe_resource *texture;
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
+
+   void *loader_private;
+};
 
 #ifndef __NOT_HAVE_DRM_H
 

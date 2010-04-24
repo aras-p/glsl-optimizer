@@ -99,7 +99,7 @@ drisw_present_texture(__DRIdrawable *dPriv,
    if (!psurf)
       return;
 
-   screen->pipe_screen->flush_frontbuffer(screen->pipe_screen, psurf, drawable);
+   screen->base.screen->flush_frontbuffer(screen->base.screen, psurf, drawable);
 }
 
 static INLINE void
@@ -225,7 +225,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
       templ.bind = bind;
 
       drawable->textures[statts[i]] =
-         screen->pipe_screen->resource_create(screen->pipe_screen, &templ);
+         screen->base.screen->resource_create(screen->base.screen, &templ);
    }
 
    drawable->old_w = width;
