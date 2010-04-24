@@ -343,20 +343,25 @@ lp_setup_clear( struct lp_setup_context *setup,
 struct pipe_fence_handle *
 lp_setup_fence( struct lp_setup_context *setup )
 {
-   struct lp_scene *scene = lp_setup_get_current_scene(setup);
-   const unsigned rank = lp_scene_get_num_bins( scene ); /* xxx */
-   struct lp_fence *fence = lp_fence_create(rank);
+   if (setup->num_threads == 0) {
+      return NULL;
+   }
+   else {
+      struct lp_scene *scene = lp_setup_get_current_scene(setup);
+      const unsigned rank = lp_scene_get_num_bins( scene ); /* xxx */
+      struct lp_fence *fence = lp_fence_create(rank);
 
-   LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
+      LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
 
-   set_scene_state( setup, SETUP_ACTIVE );
+      set_scene_state( setup, SETUP_ACTIVE );
 
-   /* insert the fence into all command bins */
-   lp_scene_bin_everywhere( scene,
-			    lp_rast_fence,
-			    lp_rast_arg_fence(fence) );
+      /* insert the fence into all command bins */
+      lp_scene_bin_everywhere( scene,
+                               lp_rast_fence,
+                               lp_rast_arg_fence(fence) );
 
-   return (struct pipe_fence_handle *) fence;
+      return (struct pipe_fence_handle *) fence;
+   }
 }
 
 
