@@ -349,6 +349,7 @@ enum pipe_error cso_set_blend(struct cso_context *ctx,
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
+      memset(&cso->state, 0, sizeof cso->state);
       memcpy(&cso->state, templ, key_size);
       cso->data = ctx->pipe->create_blend_state(ctx->pipe, &cso->state);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_blend_state;
