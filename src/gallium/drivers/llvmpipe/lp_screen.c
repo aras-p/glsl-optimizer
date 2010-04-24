@@ -27,6 +27,8 @@
 
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
+#include "util/u_cpu_detect.h"
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "pipe/p_defines.h"
@@ -39,6 +41,7 @@
 #include "lp_context.h"
 #include "lp_debug.h"
 #include "lp_public.h"
+#include "lp_limits.h"
 
 #include "state_tracker/sw_winsys.h"
 
@@ -284,12 +287,26 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
 
-   util_format_s3tc_init();
-
    llvmpipe_init_screen_resource_funcs(&screen->base);
    llvmpipe_init_screen_fence_funcs(&screen->base);
 
    lp_jit_screen_init(screen);
+
+#ifdef PIPE_OS_WINDOWS
+   /* Multithreading not supported on windows until conditions and barriers are
+    * properly implemented. */
+   screen->num_threads = 0;
+#else
+#ifdef PIPE_OS_EMBEDDED
+   screen->num_threads = 0;
+#else
+   screen->num_threads = util_cpu_caps.nr_cpus;
+#endif
+   screen->num_threads = debug_get_num_option("LP_NUM_THREADS", screen->num_threads);
+   screen->num_threads = MIN2(screen->num_threads, LP_MAX_THREADS);
+#endif
+
+   util_format_s3tc_init();
 
    return &screen->base;
 }

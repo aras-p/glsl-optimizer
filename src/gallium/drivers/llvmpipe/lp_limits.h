@@ -58,4 +58,7 @@
 #define LP_MAX_WIDTH  (1 << (LP_MAX_TEXTURE_LEVELS - 1))
 
 
+#define LP_MAX_THREADS 8
+
+
 #endif /* LP_LIMITS_H */

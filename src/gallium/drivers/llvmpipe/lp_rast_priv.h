@@ -35,9 +35,7 @@
 #include "lp_scene.h"
 #include "lp_texture.h"
 #include "lp_tile_soa.h"
-
-
-#define MAX_THREADS 8  /* XXX probably temporary here */
+#include "lp_limits.h"
 
 
 struct lp_rasterizer;
@@ -113,10 +111,10 @@ struct lp_rasterizer
    struct lp_scene *curr_scene;
 
    /** A task object for each rasterization thread */
-   struct lp_rasterizer_task tasks[MAX_THREADS];
+   struct lp_rasterizer_task tasks[LP_MAX_THREADS];
 
    unsigned num_threads;
-   pipe_thread threads[MAX_THREADS];
+   pipe_thread threads[LP_MAX_THREADS];
 
    /** For synchronizing the rasterization threads */
    pipe_barrier barrier;

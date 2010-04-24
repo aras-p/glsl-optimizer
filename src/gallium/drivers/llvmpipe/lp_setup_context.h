@@ -80,6 +80,7 @@ struct lp_setup_context
     * create/install this itself now.
     */
    struct draw_stage *vbuf;
+   unsigned num_threads;
    struct lp_rasterizer *rast;
    struct lp_scene *scenes[MAX_SCENES];  /**< all the scenes */
    struct lp_scene *scene;               /**< current scene being built */

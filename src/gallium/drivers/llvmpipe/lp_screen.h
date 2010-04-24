@@ -58,6 +58,8 @@ struct llvmpipe_screen
 
    LLVMTypeRef context_ptr_type;
 
+   unsigned num_threads;
+
    /* Increments whenever textures are modified.  Contexts can track
     * this.
     */

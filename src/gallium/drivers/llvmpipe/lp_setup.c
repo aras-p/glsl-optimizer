@@ -765,8 +765,9 @@ struct lp_setup_context *
 lp_setup_create( struct pipe_context *pipe,
                  struct draw_context *draw )
 {
-   unsigned i;
+   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
    struct lp_setup_context *setup = CALLOC_STRUCT(lp_setup_context);
+   unsigned i;
 
    if (!setup)
       return NULL;
@@ -779,7 +780,8 @@ lp_setup_create( struct pipe_context *pipe,
 
    /* XXX: move this to the screen and share between contexts:
     */
-   setup->rast = lp_rast_create();
+   setup->num_threads = screen->num_threads;
+   setup->rast = lp_rast_create(screen->num_threads);
    if (!setup->rast) 
       goto fail;
 

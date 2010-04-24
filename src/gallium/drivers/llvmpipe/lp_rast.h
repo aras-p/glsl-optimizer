@@ -134,7 +134,7 @@ struct lp_rast_triangle {
 
 
 struct lp_rasterizer *
-lp_rast_create( void );
+lp_rast_create( unsigned num_threads );
 
 void
 lp_rast_destroy( struct lp_rasterizer * );

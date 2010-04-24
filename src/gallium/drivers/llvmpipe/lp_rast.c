@@ -869,20 +869,6 @@ create_rast_threads(struct lp_rasterizer *rast)
 {
    unsigned i;
 
-#ifdef PIPE_OS_WINDOWS
-   /* Multithreading not supported on windows until conditions and barriers are
-    * properly implemented. */
-   rast->num_threads = 0;
-#else
-#ifdef PIPE_OS_EMBEDDED
-   rast->num_threads = 0;
-#else
-   rast->num_threads = util_cpu_caps.nr_cpus;
-#endif
-   rast->num_threads = debug_get_num_option("LP_NUM_THREADS", rast->num_threads);
-   rast->num_threads = MIN2(rast->num_threads, MAX_THREADS);
-#endif
-
    /* NOTE: if num_threads is zero, we won't use any threads */
    for (i = 0; i < rast->num_threads; i++) {
       pipe_semaphore_init(&rast->tasks[i].work_ready, 0);
@@ -900,7 +886,7 @@ create_rast_threads(struct lp_rasterizer *rast)
  *               processing them.
  */
 struct lp_rasterizer *
-lp_rast_create( void )
+lp_rast_create( unsigned num_threads )
 {
    struct lp_rasterizer *rast;
    unsigned i;
@@ -916,6 +902,8 @@ lp_rast_create( void )
       task->rast = rast;
       task->thread_index = i;
    }
+
+   rast->num_threads = num_threads;
 
    create_rast_threads(rast);
 
