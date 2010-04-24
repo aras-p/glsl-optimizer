@@ -373,7 +373,7 @@ dri2_flush_frontbuffer(struct dri_drawable *drawable,
    }
 }
 
-__DRIimage *
+static __DRIimage *
 dri2_lookup_egl_image(struct dri_context *ctx, void *handle)
 {
    __DRIimageLookupExtension *loader = ctx->sPriv->dri2.image;
@@ -512,6 +512,7 @@ dri2_init_screen(__DRIscreen * sPriv)
    screen->api = drm_api_create();
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
+   screen->lookup_egl_image = dri2_lookup_egl_image;
 
    sPriv->private = (void *)screen;
    sPriv->extensions = dri_screen_extensions;

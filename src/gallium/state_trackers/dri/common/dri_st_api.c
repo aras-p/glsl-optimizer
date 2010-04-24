@@ -229,15 +229,15 @@ static boolean
 dri_st_manager_get_egl_image(struct st_manager *smapi,
                              struct st_egl_image *stimg)
 {
+   struct dri_context *ctx =
+      (struct dri_context *)stimg->stctxi->st_manager_private;
+   struct dri_screen *screen = dri_screen(ctx->sPriv);
    __DRIimage *img = NULL;
 
-#ifndef __NOT_HAVE_DRM_H
-   if (!__dri1_api_hooks) {
-      struct dri_context *ctx = (struct dri_context *)
-         stimg->stctxi->st_manager_private;
-      img = dri2_lookup_egl_image(ctx, stimg->egl_image);
+   if (screen->lookup_egl_image) {
+      img = screen->lookup_egl_image(ctx, stimg->egl_image);
    }
-#endif
+
    if (!img)
       return FALSE;
 

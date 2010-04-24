@@ -41,6 +41,8 @@
 #include "state_tracker/st_api.h"
 #include "state_tracker/drm_api.h"
 
+struct dri_context;
+
 struct dri_screen
 {
    /* dri */
@@ -54,6 +56,9 @@ struct dri_screen
    /* drm */
    int fd;
    drmLock *drmLock;
+
+   /* hooks filled in by dri1, dri2 & drisw */
+   __DRIimage * (*lookup_egl_image)(struct dri_context *ctx, void *handle);
 
    /* gallium */
    struct drm_api *api;
