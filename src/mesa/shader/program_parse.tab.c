@@ -5557,7 +5557,6 @@ make_error_string(const char *fmt, ...)
    char *str;
    va_list args;
 
-   va_start(args, fmt);
 
    /* Call vsnprintf once to determine how large the final string is.  Call it
     * again to do the actual formatting.  from the vsnprintf manual page:
@@ -5566,14 +5565,16 @@ make_error_string(const char *fmt, ...)
     *    characters printed  (not including the trailing '\0' used to end
     *    output to strings).
     */
+   va_start(args, fmt);
    length = 1 + vsnprintf(NULL, 0, fmt, args);
+   va_end(args);
 
    str = malloc(length);
    if (str) {
+      va_start(args, fmt);
       vsnprintf(str, length, fmt, args);
+      va_end(args);
    }
-
-   va_end(args);
 
    return str;
 }
