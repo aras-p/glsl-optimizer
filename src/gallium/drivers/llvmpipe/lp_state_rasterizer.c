@@ -71,6 +71,8 @@ llvmpipe_bind_rasterizer_state(struct pipe_context *pipe, void *handle)
                    llvmpipe->rasterizer->front_winding == PIPE_WINDING_CCW,
                    llvmpipe->rasterizer->scissor,
                    llvmpipe->rasterizer->gl_rasterization_rules);
+      lp_setup_set_flatshade_first( llvmpipe->setup,
+                   llvmpipe->rasterizer->flatshade_first);
    }
 
    llvmpipe->dirty |= LP_NEW_RASTERIZER;
