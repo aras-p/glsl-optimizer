@@ -309,8 +309,10 @@ debug_get_option_ ## sufix (void) \
 { \
    static boolean first = TRUE; \
    static boolean value; \
-   if (first && !(first = FALSE)) \
+   if (first) { \
+      first = FALSE; \
       value = debug_get_bool_option(name, dfault); \
+   } \
    return value; \
 }
 
@@ -320,8 +322,10 @@ debug_get_option_ ## sufix (void) \
 { \
    static boolean first = TRUE; \
    static long value; \
-   if (first && !(first = FALSE)) \
+   if (first) { \
+      first = FALSE; \
       value = debug_get_num_option(name, dfault); \
+   } \
    return value; \
 }
 
@@ -331,8 +335,10 @@ debug_get_option_ ## sufix (void) \
 { \
    static boolean first = TRUE; \
    static unsigned long value; \
-   if (first && !(first = FALSE)) \
+   if (first) { \
+      first = FALSE; \
       value = debug_get_flags_option(name, flags, dfault); \
+   } \
    return value; \
 }
 
