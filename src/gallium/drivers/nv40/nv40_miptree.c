@@ -223,57 +223,6 @@ nv40_miptree_surface_del(struct pipe_surface *ps)
 	FREE(ps);
 }
 
-static struct pipe_video_surface*
-nv40_video_surface_new(struct pipe_screen *screen,
-                       enum pipe_video_chroma_format chroma_format,
-                       unsigned width, unsigned height)
-{
-   struct nv40_video_surface *nv40_vsfc;
-   struct pipe_texture template;
-
-   assert(screen);
-   assert(width && height);
-
-   nv40_vsfc = CALLOC_STRUCT(nv40_video_surface);
-   if (!nv40_vsfc)
-      return NULL;
-
-   pipe_reference_init(&nv40_vsfc->base.reference, 1);
-   nv40_vsfc->base.screen = screen;
-   nv40_vsfc->base.chroma_format = chroma_format;
-   /*nv40_vsfc->base.surface_format = PIPE_VIDEO_SURFACE_FORMAT_VUYA;*/
-   nv40_vsfc->base.width = width;
-   nv40_vsfc->base.height = height;
-
-   memset(&template, 0, sizeof(struct pipe_texture));
-   template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_X8R8G8B8_UNORM;
-   template.last_level = 0;
-   /* vl_mpeg12_mc_renderer expects this when it's initialized with pot_buffers=true */
-   template.width0 = util_next_power_of_two(width);
-   template.height0 = util_next_power_of_two(height);
-   template.depth0 = 1;
-   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
-
-   nv40_vsfc->tex = screen->texture_create(screen, &template);
-   if (!nv40_vsfc->tex) {
-      FREE(nv40_vsfc);
-      return NULL;
-   }
-
-   return &nv40_vsfc->base;
-}
-
-
-static void
-nv40_video_surface_del(struct pipe_video_surface *vsfc)
-{
-   struct nv40_video_surface *nv40_vsfc = nv40_video_surface(vsfc);
-
-   pipe_texture_reference(&nv40_vsfc->tex, NULL);
-   FREE(nv40_vsfc);
-}
-
 void
 nv40_screen_init_miptree_functions(struct pipe_screen *pscreen)
 {
@@ -282,7 +231,5 @@ nv40_screen_init_miptree_functions(struct pipe_screen *pscreen)
 	pscreen->texture_destroy = nv40_miptree_destroy;
 	pscreen->get_tex_surface = nv40_miptree_surface_new;
 	pscreen->tex_surface_destroy = nv40_miptree_surface_del;
-        pscreen->video_surface_create = nv40_video_surface_new;
-        pscreen->video_surface_destroy = nv40_video_surface_del;
 }
 

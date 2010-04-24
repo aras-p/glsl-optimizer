@@ -87,16 +87,4 @@ struct nv40_miptree {
 	} level[PIPE_MAX_TEXTURE_LEVELS];
 };
 
-struct nv40_video_surface {
-	struct pipe_video_surface base;
-	struct pipe_texture *tex;
-};
-
-
-static INLINE struct nv40_video_surface*
-nv40_video_surface(struct pipe_video_surface *sfc)
-{
-   return (struct nv40_video_surface*)sfc;
-}
-
 #endif
