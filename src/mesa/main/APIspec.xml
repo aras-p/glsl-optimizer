@@ -3921,8 +3921,8 @@
 	<function name="ColorMask" template="ColorMask"/>
 	<function name="DepthMask" template="DepthMask"/>
 
-	<function name="Disable" external="true" template="Disable"/>
-	<function name="Enable" external="true" template="Enable"/>
+	<function name="Disable" template="Disable"/>
+	<function name="Enable" template="Enable"/>
 	<function name="Finish" template="Finish"/>
 	<function name="Flush" template="Flush"/>
 
@@ -3969,7 +3969,7 @@
 	<function name="GetTexParameteriv" template="GetTexParameter" gltype="GLint"/>
 	<function name="GetTexParameterxv" template="GetTexParameter" gltype="GLfixed"/>
 
-	<function name="IsEnabled" external="true" template="IsEnabled"/>
+	<function name="IsEnabled" template="IsEnabled"/>
 
 	<function name="DepthRangef" template="DepthRange" gltype="GLclampf"/>
 	<function name="DepthRangex" template="DepthRange" gltype="GLclampx"/>

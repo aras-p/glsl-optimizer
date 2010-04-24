@@ -1076,6 +1076,7 @@ typedef enum
 #define T_BIT 2
 #define R_BIT 4
 #define Q_BIT 8
+#define STR_BITS (S_BIT | T_BIT | R_BIT)
 /*@}*/
 
 

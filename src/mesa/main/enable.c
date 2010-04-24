@@ -682,6 +682,25 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          }
          break;
 
+#if FEATURE_ES1
+      case GL_TEXTURE_GEN_STR_OES:
+	 /* disable S, T, and R at the same time */
+	 {
+            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+               GLuint newenabled =
+		  texUnit->TexGenEnabled & ~STR_BITS;
+               if (state)
+                  newenabled |= STR_BITS;
+               if (texUnit->TexGenEnabled == newenabled)
+                  return;
+               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+               texUnit->TexGenEnabled = newenabled;
+            }
+         }
+         break;
+#endif
+
       /*
        * CLIENT STATE!!!
        */
@@ -1301,6 +1320,15 @@ _mesa_IsEnabled( GLenum cap )
             }
          }
          return GL_FALSE;
+#if FEATURE_ES1
+      case GL_TEXTURE_GEN_STR_OES:
+	 {
+            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
+            if (texUnit) {
+		    return (texUnit->TexGenEnabled & STR_BITS) == STR_BITS ? GL_TRUE : GL_FALSE;
+            }
+         }
+#endif
 
       /*
        * CLIENT STATE!!!
