@@ -106,38 +106,27 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
 }
 
 /**
- * Create a framebuffer from the given drawable.
+ * Init a framebuffer from the given drawable.
  */
-struct st_framebuffer_iface *
-dri_create_st_framebuffer(struct dri_drawable *drawable)
+void
+dri_init_st_framebuffer(struct dri_drawable *drawable)
 {
-   struct st_framebuffer_iface *stfbi;
-
-   stfbi = CALLOC_STRUCT(st_framebuffer_iface);
-   if (stfbi) {
-      stfbi->visual = &drawable->stvis;
-      stfbi->flush_front = dri_st_framebuffer_flush_front;
-      stfbi->validate = dri_st_framebuffer_validate;
-      stfbi->st_manager_private = (void *) drawable;
-   }
-
-   return stfbi;
+   drawable->base.visual = &drawable->stvis;
+   drawable->base.flush_front = dri_st_framebuffer_flush_front;
+   drawable->base.validate = dri_st_framebuffer_validate;
+   drawable->base.st_manager_private = (void *) drawable;
 }
 
 /**
  * Destroy a framebuffer.
  */
 void
-dri_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi)
+dri_close_st_framebuffer(struct dri_drawable *drawable)
 {
-   struct dri_drawable *drawable =
-      (struct dri_drawable *) stfbi->st_manager_private;
    int i;
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
       pipe_resource_reference(&drawable->textures[i], NULL);
-
-   FREE(stfbi);
 }
 
 /**
@@ -145,11 +134,9 @@ dri_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi)
  * exist.
  */
 void
-dri_st_framebuffer_validate_att(struct st_framebuffer_iface *stfbi,
+dri_st_framebuffer_validate_att(struct dri_drawable *drawable,
                                 enum st_attachment_type statt)
 {
-   struct dri_drawable *drawable =
-      (struct dri_drawable *) stfbi->st_manager_private;
    enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
    unsigned i, count = 0;
 
@@ -167,7 +154,8 @@ dri_st_framebuffer_validate_att(struct st_framebuffer_iface *stfbi,
 
    drawable->texture_stamp = drawable->dPriv->lastStamp - 1;
 
-   stfbi->validate(stfbi, statts, count, NULL);
+   /* this calles into the manager */
+   drawable->base.validate(&drawable->base, statts, count, NULL);
 }
 
 static boolean

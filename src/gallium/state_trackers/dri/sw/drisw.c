@@ -112,7 +112,7 @@ drisw_invalidate_drawable(__DRIdrawable *dPriv)
 
    /* check if swapping currently bound buffer */
    if (ctx && ctx->dPriv == dPriv)
-      ctx->st->notify_invalid_framebuffer(ctx->st, drawable->stfb);
+      ctx->st->notify_invalid_framebuffer(ctx->st, &drawable->base);
 }
 
 static INLINE void

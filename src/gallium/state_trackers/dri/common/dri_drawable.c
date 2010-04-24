@@ -58,9 +58,7 @@ dri_create_buffer(__DRIscreen * sPriv,
       goto fail;
 
    dri_fill_st_visual(&drawable->stvis, screen, visual);
-   drawable->stfb = dri_create_st_framebuffer(drawable);
-   if (drawable->stfb == NULL)
-      goto fail;
+   dri_init_st_framebuffer(drawable);
 
    drawable->sPriv = sPriv;
    drawable->dPriv = dPriv;
@@ -83,7 +81,7 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
 
    dri1_destroy_pipe_surface(drawable);
 
-   dri_destroy_st_framebuffer(drawable->stfb);
+   dri_close_st_framebuffer(drawable);
 
    drawable->desired_fences = 0;
 

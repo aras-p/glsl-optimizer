@@ -104,13 +104,13 @@ dri1_propagate_drawable_change(struct dri_context *ctx)
    if (dPriv && draw->texture_stamp != dPriv->lastStamp) {
       ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       flushed = TRUE;
-      ctx->st->notify_invalid_framebuffer(ctx->st, draw->stfb);
+      ctx->st->notify_invalid_framebuffer(ctx->st, &draw->base);
    }
 
    if (rPriv && dPriv != rPriv && read->texture_stamp != rPriv->lastStamp) {
       if (!flushed)
 	 ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-      ctx->st->notify_invalid_framebuffer(ctx->st, read->stfb);
+      ctx->st->notify_invalid_framebuffer(ctx->st, &read->base);
    }
 }
 

@@ -42,13 +42,12 @@ struct dri_context;
 
 struct dri_drawable
 {
+   struct st_framebuffer_iface base;
+   struct st_visual stvis;
+
    /* dri */
    __DRIdrawable *dPriv;
    __DRIscreen *sPriv;
-
-   /* gallium */
-   struct st_framebuffer_iface *stfb;
-   struct st_visual stvis;
 
    __DRIbuffer old[8];
    unsigned old_num;

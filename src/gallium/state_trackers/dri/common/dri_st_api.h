@@ -49,14 +49,14 @@ dri_init_st_manager(struct dri_screen *screen);
 void
 dri_close_st_manager(struct dri_screen *screen);
 
-struct st_framebuffer_iface *
-dri_create_st_framebuffer(struct dri_drawable *drawable);
+void
+dri_init_st_framebuffer(struct dri_drawable *drawable);
 
 void
-dri_destroy_st_framebuffer(struct st_framebuffer_iface *stfbi);
+dri_close_st_framebuffer(struct dri_drawable *drawable);
 
 void
-dri_st_framebuffer_validate_att(struct st_framebuffer_iface *stfbi,
+dri_st_framebuffer_validate_att(struct dri_drawable *drawable,
                                 enum st_attachment_type statt);
 
 #endif /* _DRI_ST_API_H_ */

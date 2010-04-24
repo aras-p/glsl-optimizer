@@ -61,7 +61,7 @@ dri2_invalidate_drawable(__DRIdrawable *dPriv)
    drawable->dPriv->lastStamp = *drawable->dPriv->pStamp;
 
    if (ctx)
-      ctx->st->notify_invalid_framebuffer(ctx->st, drawable->stfb);
+      ctx->st->notify_invalid_framebuffer(ctx->st, &drawable->base);
 }
 
 static const __DRI2flushExtension dri2FlushExtension = {
@@ -81,7 +81,7 @@ dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct pipe_resource *pt;
 
-   dri_st_framebuffer_validate_att(drawable->stfb, ST_ATTACHMENT_FRONT_LEFT);
+   dri_st_framebuffer_validate_att(drawable, ST_ATTACHMENT_FRONT_LEFT);
 
    pt = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
 

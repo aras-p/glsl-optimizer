@@ -165,7 +165,7 @@ dri_make_current(__DRIcontext * cPriv,
          read->texture_stamp = driReadPriv->lastStamp - 1;
       }
 
-      stapi->make_current(stapi, ctx->st, draw->stfb, read->stfb);
+      stapi->make_current(stapi, ctx->st, &draw->base, &read->base);
    }
    else {
       stapi->make_current(stapi, NULL, NULL, NULL);
