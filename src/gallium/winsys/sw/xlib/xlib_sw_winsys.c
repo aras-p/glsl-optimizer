@@ -124,6 +124,9 @@ static char *alloc_shm(struct xm_displaytarget *buf, unsigned size)
 {
    XShmSegmentInfo *const shminfo = & buf->shminfo;
 
+   shminfo->shmid = -1;
+   shminfo->shmaddr = (char *) -1;
+
    shminfo->shmid = shmget(IPC_PRIVATE, size, IPC_CREAT|0777);
    if (shminfo->shmid < 0) {
       return NULL;
@@ -385,12 +388,9 @@ xm_displaytarget_create(struct sw_winsys *winsys,
    xm_dt->stride = align(util_format_get_stride(format, width), alignment);
    size = xm_dt->stride * nblocksy;
 
-   if (!debug_get_option_xlib_no_shm())
-   {
+   if (!debug_get_option_xlib_no_shm()) {
       xm_dt->data = alloc_shm(xm_dt, size);
-      if(!xm_dt->data) {
-         xm_dt->shminfo.shmid = -1;
-         xm_dt->shminfo.shmaddr = (char *) -1;
+      if (xm_dt->data) {
          xm_dt->shm = TRUE;
       }
    }
