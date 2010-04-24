@@ -1354,7 +1354,6 @@ if test "x$enable_gallium_nouveau" = xyes; then
 fi
 
 dnl
-<<<<<<< HEAD
 dnl Gallium G3DVL configuration
 dnl
 AC_ARG_ENABLE([gallium-g3dvl],
@@ -1367,10 +1366,15 @@ if test "x$enable_gallium_g3dvl" = xyes; then
     for dir in $GALLIUM_WINSYS_DIRS; do
         vl_winsys_dirs="$vl_winsys_dirs g3dvl/$dir"
     done
+    # Hack, g3dvl dri state tracker is in winsys/g3dvl/dri
+    # and needs to be built before the drm bits
+    if test "$mesa_driver" = dri; then
+        vl_winsys_dirs="g3dvl/dri $vl_winsys_dirs"
+    fi
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $vl_winsys_dirs"
 fi
 
-=======
+dnl
 dnl Gallium swrast configuration
 dnl
 AC_ARG_ENABLE([gallium-swrast],
@@ -1384,7 +1388,6 @@ fi
 
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
->>>>>>> origin/master
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"

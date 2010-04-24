@@ -7,7 +7,7 @@ include $(TOP)/configs/current
 C_SOURCES =
 
 DRIVER_INCLUDES = $(shell pkg-config libdrm libdrm_nouveau --cflags-only-I) \
-                   -I$(TOP)/src/gallium/winsys/drm/nouveau \
+                   -I$(TOP)/src/gallium/winsys/drm/nouveau
 DRIVER_DEFINES = $(shell pkg-config libdrm libdrm_nouveau --cflags-only-other)
 
 PIPE_DRIVERS = \
