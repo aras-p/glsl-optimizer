@@ -28,7 +28,6 @@
 #include <limits.h>
 #include "util/u_memory.h"
 #include "util/u_math.h"
-#include "util/u_cpu_detect.h"
 #include "util/u_surface.h"
 
 #include "lp_scene_queue.h"
