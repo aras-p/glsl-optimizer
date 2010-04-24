@@ -546,26 +546,17 @@ vg_api_destroy(struct st_api *stapi)
    free(stapi);
 }
 
-static struct st_api *
-vg_module_create_api(void)
-{
-   struct st_api *stapi;
-
-   stapi = CALLOC_STRUCT(st_api);
-   if (stapi) {
-      stapi->destroy = vg_api_destroy;
-      stapi->get_proc_address = vg_api_get_proc_address;
-      stapi->is_visual_supported = vg_api_is_visual_supported;
-
-      stapi->create_context = vg_api_create_context;
-      stapi->make_current = vg_api_make_current;
-      stapi->get_current = vg_api_get_current;
-   }
-
-   return stapi;
-}
-
-PUBLIC const struct st_module st_module_OpenVG = {
-   .api = ST_API_OPENVG,
-   .create_api = vg_module_create_api,
+struct st_api st_vg_api = {
+   vg_api_destroy,
+   vg_api_get_proc_address,
+   vg_api_is_visual_supported,
+   vg_api_create_context,
+   vg_api_make_current,
+   vg_api_get_current,
 };
+
+struct st_api *
+st_api_create_OpenVG(void)
+{
+   return &st_vg_api;
+}

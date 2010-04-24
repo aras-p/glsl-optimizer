@@ -30,7 +30,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_debug.h"
-#include "state_tracker/st_manager.h" /* for st_manager_create_api */
+#include "state_tracker/st_gl_api.h" /* for st_gl_api_create */
 
 #include "dri_screen.h"
 #include "dri_context.h"
@@ -208,7 +208,7 @@ _dri_get_st_api(void)
 {
    p_atomic_inc(&dri_st_api.refcnt);
    if (p_atomic_read(&dri_st_api.refcnt) == 1)
-      dri_st_api.stapi = st_manager_create_api();
+      dri_st_api.stapi = st_gl_api_create();
 }
 
 /**

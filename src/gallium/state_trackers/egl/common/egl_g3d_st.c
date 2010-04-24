@@ -49,41 +49,42 @@ egl_g3d_st_manager(struct st_manager *smapi)
 struct st_api *
 egl_g3d_create_st_api(enum st_api_type api)
 {
-   const char *stmod_name;
    struct util_dl_library *lib;
-   const struct st_module *mod;
+   const char *proc_name;
+   struct st_api * (*proc)(void) = NULL;
 
    switch (api) {
    case ST_API_OPENGL:
-      stmod_name = ST_MODULE_OPENGL_SYMBOL;
+      proc_name = ST_CREATE_OPENGL_SYMBOL;
       break;
    case ST_API_OPENGL_ES1:
-      stmod_name = ST_MODULE_OPENGL_ES1_SYMBOL;
+      proc_name = ST_CREATE_OPENGL_ES1_SYMBOL;
       break;
    case ST_API_OPENGL_ES2:
-      stmod_name = ST_MODULE_OPENGL_ES2_SYMBOL;
+      proc_name = ST_CREATE_OPENGL_ES2_SYMBOL;
       break;
    case ST_API_OPENVG:
-      stmod_name = ST_MODULE_OPENVG_SYMBOL;
+      proc_name = ST_CREATE_OPENVG_SYMBOL;
       break;
    default:
-      stmod_name = NULL;
-      break;
+      assert(!"Unknown API Type\n");
+      return NULL;
    }
-   if (!stmod_name)
+
+   if (!proc_name)
       return NULL;
 
-   mod = NULL;
    lib = util_dl_open(NULL);
    if (lib) {
-      mod = (const struct st_module *)
-         util_dl_get_proc_address(lib, stmod_name);
+      proc = util_dl_get_proc_address(lib, proc_name);
+      debug_printf("%s: %s %p\n", __func__, proc_name, proc);
       util_dl_close(lib);
    }
-   if (!mod || mod->api != api)
+
+   if (!proc)
       return NULL;
 
-   return mod->create_api();
+   return proc();
 }
 
 static boolean

@@ -36,15 +36,15 @@
 #include "state_tracker/xlib_sw_winsys.h"
 #include "xm_public.h"
 
-#include "state_tracker/st_manager.h"
+#include "state_tracker/st_gl_api.h"
 
-/* advertise OpenGL support */
-PUBLIC const int st_api_OpenGL = 1;
+/* piggy back on this libGL for OpenGL support in EGL */
+struct st_api *
+st_api_create_OpenGL()
+{
+   return st_gl_api_create();
+}
 
-PUBLIC const struct st_module st_module_OpenGL = {
-   .api = ST_API_OPENGL,
-   .create_api = st_manager_create_api
-};
 
 /* Helper function to choose and instantiate one of the software rasterizers:
  * cell, llvmpipe, softpipe.
@@ -151,7 +151,7 @@ fail:
 static struct xm_driver xlib_driver = 
 {
    .create_pipe_screen = swrast_xlib_create_screen,
-   .create_st_api = st_manager_create_api,
+   .create_st_api = st_gl_api_create,
 };
 
 

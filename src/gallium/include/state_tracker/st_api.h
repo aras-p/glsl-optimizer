@@ -43,14 +43,6 @@
  */
 
 /**
- * The entry points of the state trackers.
- */
-#define ST_MODULE_OPENGL_SYMBOL      "st_module_OpenGL"
-#define ST_MODULE_OPENGL_ES1_SYMBOL  "st_module_OpenGL_ES1"
-#define ST_MODULE_OPENGL_ES2_SYMBOL  "st_module_OpenGL_ES2"
-#define ST_MODULE_OPENVG_SYMBOL      "st_module_OpenVG"
-
-/**
  * The supported rendering API of a state tracker.
  */
 enum st_api_type {
@@ -379,17 +371,6 @@ struct st_api
 };
 
 /**
- * Represent a state tracker.
- *
- * This is the entry point of a state tracker.
- */
-struct st_module
-{
-   enum st_api_type api;
-   struct st_api *(*create_api)(void);
-};
-
-/**
  * Return true if the visual has the specified buffers.
  */
 static INLINE boolean
@@ -399,9 +380,17 @@ st_visual_have_buffers(const struct st_visual *visual, unsigned mask)
 }
 
 /* these symbols may need to be dynamically lookup up */
-extern PUBLIC const struct st_module st_module_OpenGL;
-extern PUBLIC const struct st_module st_module_OpenGL_ES1;
-extern PUBLIC const struct st_module st_module_OpenGL_ES2;
-extern PUBLIC const struct st_module st_module_OpenVG;
+extern PUBLIC struct st_api * st_api_create_OpenGL(void);
+extern PUBLIC struct st_api * st_api_create_OpenGL_ES1(void);
+extern PUBLIC struct st_api * st_api_create_OpenGL_ES2(void);
+extern PUBLIC struct st_api * st_api_create_OpenVG(void);
+
+/**
+ * The entry points of the state trackers.
+ */
+#define ST_CREATE_OPENGL_SYMBOL      "st_api_create_OpenGL"
+#define ST_CREATE_OPENGL_ES1_SYMBOL  "st_api_create_OpenGL_ES1"
+#define ST_CREATE_OPENGL_ES2_SYMBOL  "st_api_create_OpenGL_ES2"
+#define ST_CREATE_OPENVG_SYMBOL      "st_api_create_OpenVG"
 
 #endif /* _ST_API_H_ */

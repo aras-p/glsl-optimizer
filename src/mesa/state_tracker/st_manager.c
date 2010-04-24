@@ -26,7 +26,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "state_tracker/st_api.h"
+#include "state_tracker/st_gl_api.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
@@ -692,7 +692,6 @@ st_api_get_proc_address(struct st_api *stapi, const char *procname)
 static void
 st_api_destroy(struct st_api *stapi)
 {
-   FREE(stapi);
 }
 
 /**
@@ -791,24 +790,22 @@ st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
    return TRUE;
 }
 
+struct st_api st_gl_api = {
+   st_api_destroy,
+   st_api_get_proc_address,
+   st_api_is_visual_supported,
+   st_api_create_context,
+   st_api_make_current,
+   st_api_get_current,
+};
+
 /**
- * Create an st_api to manage the state tracker.
+ * Return the st_api for this state tracker. This might either be GL, GLES1,
+ * GLES2 that mostly depends on the build and link options. But these
+ * functions remain the same either way.
  */
 struct st_api *
-st_manager_create_api(void)
+st_gl_api_create(void)
 {
-   struct st_api *stapi;
-
-   stapi = CALLOC_STRUCT(st_api);
-   if (stapi) {
-      stapi->destroy = st_api_destroy;
-      stapi->get_proc_address = st_api_get_proc_address;
-      stapi->is_visual_supported = st_api_is_visual_supported;
-
-      stapi->create_context = st_api_create_context;
-      stapi->make_current = st_api_make_current;
-      stapi->get_current = st_api_get_current;
-   }
-
-   return stapi;
+   return &st_gl_api;
 }
