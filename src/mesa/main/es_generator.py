@@ -293,6 +293,7 @@ for funcName in keys:
     passthroughFuncName = ""
     passthroughDeclarationString = ""
     passthroughCallString = ""
+    prefixOverride = None
     variables = []
     conversionCodeOutgoing = []
     conversionCodeIncoming = []
@@ -311,6 +312,9 @@ for funcName in keys:
         funcPrefix = "_es_"
         aliasprefix = apiutil.AliasPrefix(funcName)
     alias = apiutil.ConversionFunction(funcName)
+    prefixOverride = apiutil.FunctionPrefix(funcName)
+    if prefixOverride != "_mesa_":
+        aliasprefix = apiutil.FunctionPrefix(funcName)
     if not alias:
         # There may still be a Mesa alias for the function
         if apiutil.Alias(funcName):
