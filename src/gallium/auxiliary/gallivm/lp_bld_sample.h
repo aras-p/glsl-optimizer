@@ -54,8 +54,14 @@ struct lp_build_context;
  */
 struct lp_sampler_static_state
 {
-   /* pipe_texture's state */
+   /* pipe_sampler_view's state */
    enum pipe_format format;
+   unsigned swizzle_r:3;
+   unsigned swizzle_g:3;
+   unsigned swizzle_b:3;
+   unsigned swizzle_a:3;
+
+   /* pipe_texture's state */
    unsigned target:3;
    unsigned pot_width:1;
    unsigned pot_height:1;

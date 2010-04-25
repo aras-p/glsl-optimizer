@@ -185,6 +185,53 @@ texture_dims(enum pipe_texture_target tex)
 }
 
 
+static LLVMValueRef
+lp_build_swizzle_chan_soa(struct lp_type type,
+                          const LLVMValueRef *unswizzled,
+                          enum util_format_swizzle swizzle)
+{
+   switch (swizzle) {
+   case PIPE_SWIZZLE_RED:
+   case PIPE_SWIZZLE_GREEN:
+   case PIPE_SWIZZLE_BLUE:
+   case PIPE_SWIZZLE_ALPHA:
+      return unswizzled[swizzle];
+   case PIPE_SWIZZLE_ZERO:
+      return lp_build_zero(type);
+   case PIPE_SWIZZLE_ONE:
+      return lp_build_one(type);
+   default:
+      assert(0);
+      return lp_build_undef(type);
+   }
+}
+
+
+static void
+lp_build_swizzle_soa(struct lp_build_sample_context *bld,
+                     LLVMValueRef *texel)
+{
+   LLVMValueRef unswizzled[4];
+   unsigned char swizzles[4];
+   unsigned chan;
+
+   for (chan = 0; chan < 4; ++chan) {
+      unswizzled[chan] = texel[chan];
+   }
+
+   swizzles[0] = bld->static_state->swizzle_r;
+   swizzles[1] = bld->static_state->swizzle_g;
+   swizzles[2] = bld->static_state->swizzle_b;
+   swizzles[3] = bld->static_state->swizzle_a;
+
+   for (chan = 0; chan < 4; ++chan) {
+      unsigned swizzle = swizzles[chan];
+      texel[chan] = lp_build_swizzle_chan_soa(bld->texel_type,
+                                              unswizzled, swizzle);
+   }
+}
+
+
 
 /**
  * Generate code to fetch a texel from a texture at int coords (x, y, z).
@@ -284,6 +331,8 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                            data_ptr, offset,
                            i, j,
                            texel);
+
+   lp_build_swizzle_soa(bld, texel);
 
    /*
     * Note: if we find an app which frequently samples the texture border
@@ -1954,6 +2003,8 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    lp_build_format_swizzle_soa(bld->format_desc,
                                bld->texel_type, unswizzled,
                                texel);
+
+   lp_build_swizzle_soa(bld, texel);
 }
 
 

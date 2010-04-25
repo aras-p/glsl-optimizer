@@ -77,6 +77,11 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
     */
 
    state->format            = view->format;
+   state->swizzle_r         = view->swizzle_r;
+   state->swizzle_g         = view->swizzle_g;
+   state->swizzle_b         = view->swizzle_b;
+   state->swizzle_a         = view->swizzle_a;
+
    state->target            = texture->target;
    state->pot_width         = util_is_pot(texture->width0);
    state->pot_height        = util_is_pot(texture->height0);
