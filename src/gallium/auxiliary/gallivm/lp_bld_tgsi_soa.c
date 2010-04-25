@@ -1809,10 +1809,10 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       case TGSI_TOKEN_TYPE_INSTRUCTION:
          {
             unsigned opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
-            const struct tgsi_opcode_info *info = tgsi_get_opcode_info(opcode);
-            if (!emit_instruction( &bld, &parse.FullToken.FullInstruction, info ))
+            const struct tgsi_opcode_info *opcode_info = tgsi_get_opcode_info(opcode);
+            if (!emit_instruction( &bld, &parse.FullToken.FullInstruction, opcode_info ))
                _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
-                             info->mnemonic);
+                             opcode_info->mnemonic);
          }
 
          break;
