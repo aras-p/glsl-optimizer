@@ -75,7 +75,7 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
     src_native_type = native_type(format)
 
     print 'static void'
-    print 'lp_tile_%s_read_%s(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, dst_suffix, dst_native_type)
+    print 'lp_tile_%s_swizzle_%s(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, dst_suffix, dst_native_type)
     print '{'
     print '   unsigned x, y;'
     print '   const uint8_t *src_row = src + y0*src_stride;'
@@ -193,7 +193,7 @@ def pack_rgba(format, src_channel, r, g, b, a):
     return expr
 
 
-def emit_unrolled_write_code(format, src_channel):
+def emit_unrolled_unswizzle_code(format, src_channel):
     '''Emit code for writing a block based on unrolled loops.
     This is considerably faster than the TILE_PIXEL-based code below.
     '''
@@ -223,7 +223,7 @@ def emit_unrolled_write_code(format, src_channel):
     print '   }'
 
 
-def emit_tile_pixel_write_code(format, src_channel):
+def emit_tile_pixel_unswizzle_code(format, src_channel):
     '''Emit code for writing a block based on the TILE_PIXEL macro.'''
     dst_native_type = native_type(format)
 
@@ -273,7 +273,7 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
     name = format.short_name()
 
     print 'static void'
-    print 'lp_tile_%s_write_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, src_suffix, src_native_type)
+    print 'lp_tile_%s_unswizzle_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, src_suffix, src_native_type)
     print '{'
     if format.layout == PLAIN \
         and format.colorspace == 'rgb' \
@@ -282,14 +282,14 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
         and not format.is_mixed() \
         and (format.channels[0].type == UNSIGNED \
              or format.channels[1].type == UNSIGNED):
-        emit_unrolled_write_code(format, src_channel)
+        emit_unrolled_unswizzle_code(format, src_channel)
     else:
-        emit_tile_pixel_write_code(format, src_channel)
+        emit_tile_pixel_unswizzle_code(format, src_channel)
     print '}'
     print
     
 
-def generate_read(formats, dst_channel, dst_native_type, dst_suffix):
+def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
     '''Generate the dispatch function to read pixels from any format'''
 
     for format in formats:
@@ -297,15 +297,17 @@ def generate_read(formats, dst_channel, dst_native_type, dst_suffix):
             generate_format_read(format, dst_channel, dst_native_type, dst_suffix)
 
     print 'void'
-    print 'lp_tile_read_%s(enum pipe_format format, %s *dst, const void *src, unsigned src_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (dst_suffix, dst_native_type)
+    print 'lp_tile_swizzle_%s(enum pipe_format format, %s *dst, const void *src, unsigned src_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (dst_suffix, dst_native_type)
     print '{'
     print '   void (*func)(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0, unsigned w, unsigned h);' % dst_native_type
-    print '   tile_read_count += 1;'
+    print '#ifdef DEBUG'
+    print '   lp_tile_swizzle_count += 1;'
+    print '#endif'
     print '   switch(format) {'
     for format in formats:
         if is_format_supported(format):
             print '   case %s:' % format.name
-            print '      func = &lp_tile_%s_read_%s;' % (format.short_name(), dst_suffix)
+            print '      func = &lp_tile_%s_swizzle_%s;' % (format.short_name(), dst_suffix)
             print '      break;'
     print '   default:'
     print '      debug_printf("%s: unsupported format %s\\n", __FUNCTION__, util_format_name(format));'
@@ -316,7 +318,7 @@ def generate_read(formats, dst_channel, dst_native_type, dst_suffix):
     print
 
 
-def generate_write(formats, src_channel, src_native_type, src_suffix):
+def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
     '''Generate the dispatch function to write pixels to any format'''
 
     for format in formats:
@@ -324,16 +326,18 @@ def generate_write(formats, src_channel, src_native_type, src_suffix):
             generate_format_write(format, src_channel, src_native_type, src_suffix)
 
     print 'void'
-    print 'lp_tile_write_%s(enum pipe_format format, const %s *src, void *dst, unsigned dst_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (src_suffix, src_native_type)
+    print 'lp_tile_unswizzle_%s(enum pipe_format format, const %s *src, void *dst, unsigned dst_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (src_suffix, src_native_type)
     
     print '{'
     print '   void (*func)(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h);' % src_native_type
-    print '   tile_write_count += 1;'
+    print '#ifdef DEBUG'
+    print '   lp_tile_unswizzle_count += 1;'
+    print '#endif'
     print '   switch(format) {'
     for format in formats:
         if is_format_supported(format):
             print '   case %s:' % format.name
-            print '      func = &lp_tile_%s_write_%s;' % (format.short_name(), src_suffix)
+            print '      func = &lp_tile_%s_unswizzle_%s;' % (format.short_name(), src_suffix)
             print '      break;'
     print '   default:'
     print '      debug_printf("%s: unsupported format %s\\n", __FUNCTION__, util_format_name(format));'
@@ -360,7 +364,10 @@ def main():
     print '#include "util/u_half.h"'
     print '#include "lp_tile_soa.h"'
     print
-    print 'int tile_write_count=0, tile_read_count=0;'
+    print '#ifdef DEBUG'
+    print 'unsigned lp_tile_unswizzle_count = 0;'
+    print 'unsigned lp_tile_swizzle_count = 0;'
+    print '#endif'
     print
     print 'const unsigned char'
     print 'tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH] = {'
@@ -388,8 +395,8 @@ def main():
     native_type = 'uint8_t'
     suffix = '4ub'
 
-    generate_read(formats, channel, native_type, suffix)
-    generate_write(formats, channel, native_type, suffix)
+    generate_swizzle(formats, channel, native_type, suffix)
+    generate_unswizzle(formats, channel, native_type, suffix)
 
 
 if __name__ == '__main__':

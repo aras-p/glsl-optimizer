@@ -121,9 +121,11 @@ lp_rast_end( struct lp_rasterizer *rast )
 
    rast->curr_scene = NULL;
 
+#ifdef DEBUG
    if (0)
-      debug_printf("Post render scene: tile read: %d  tile write: %d\n",
-                   tile_read_count, tile_write_count);
+      debug_printf("Post render scene: tile unswizzle: %u tile swizzle: %u\n",
+                   lp_tile_unswizzle_count, lp_tile_swizzle_count);
+#endif
 }
 
 

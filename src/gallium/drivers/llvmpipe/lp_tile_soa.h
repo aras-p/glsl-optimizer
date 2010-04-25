@@ -51,7 +51,10 @@ tile_offset[TILE_VECTOR_HEIGHT][TILE_VECTOR_WIDTH];
 #define TILE_Y_STRIDE (TILE_VECTOR_HEIGHT * TILE_SIZE * NUM_CHANNELS) //1024
 
 
-extern int tile_write_count, tile_read_count;
+#ifdef DEBUG
+extern unsigned lp_tile_unswizzle_count;
+extern unsigned lp_tile_swizzle_count;
+#endif
 
 
 /**
@@ -73,14 +76,14 @@ tile_pixel_offset(unsigned x, unsigned y, unsigned c)
 
 
 void
-lp_tile_read_4ub(enum pipe_format format,
+lp_tile_swizzle_4ub(enum pipe_format format,
                  uint8_t *dst,
                  const void *src, unsigned src_stride,
                  unsigned x, unsigned y, unsigned w, unsigned h);
 
 
 void
-lp_tile_write_4ub(enum pipe_format format,
+lp_tile_unswizzle_4ub(enum pipe_format format,
                   const uint8_t *src,
                   void *dst, unsigned dst_stride,
                   unsigned x, unsigned y, unsigned w, unsigned h);

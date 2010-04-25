@@ -201,7 +201,7 @@ lp_tiled_to_linear(const void *src, void *dst,
             uint byte_offset = tile_offset * bytes_per_tile;
             const uint8_t *src_tile = (uint8_t *) src + byte_offset;
 
-            lp_tile_write_4ub(format,
+            lp_tile_unswizzle_4ub(format,
                               src_tile,
                               dst, dst_stride,
                               ii, jj, tile_w, tile_h);
@@ -290,7 +290,7 @@ lp_linear_to_tiled(const void *src, void *dst,
             uint byte_offset = tile_offset * bytes_per_tile;
             uint8_t *dst_tile = (uint8_t *) dst + byte_offset;
 
-            lp_tile_read_4ub(format,
+            lp_tile_swizzle_4ub(format,
                              dst_tile,
                              src, src_stride,
                              ii, jj, tile_w, tile_h);
