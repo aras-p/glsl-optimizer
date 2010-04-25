@@ -27,6 +27,7 @@
 
 
 #include "util/u_memory.h"
+#include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
@@ -144,42 +145,77 @@ static boolean
 softpipe_is_format_supported( struct pipe_screen *screen,
                               enum pipe_format format, 
                               enum pipe_texture_target target,
-                              unsigned tex_usage, 
+                              unsigned bind,
                               unsigned geom_flags )
 {
    struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
+   const struct util_format_description *format_desc;
 
    assert(target == PIPE_TEXTURE_1D ||
           target == PIPE_TEXTURE_2D ||
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
 
-   switch(format) {
-   case PIPE_FORMAT_DXT1_RGB:
-   case PIPE_FORMAT_DXT1_RGBA:
-   case PIPE_FORMAT_DXT3_RGBA:
-   case PIPE_FORMAT_DXT5_RGBA:
-      if (tex_usage & PIPE_BIND_RENDER_TARGET)
-         return FALSE;
-      else
-         return util_format_s3tc_enabled;
-
-   case PIPE_FORMAT_Z32_FLOAT:
-   case PIPE_FORMAT_NONE:
+   format_desc = util_format_description(format);
+   if (!format_desc)
       return FALSE;
 
-   default:
-      break;
-   }
-
-   if(tex_usage & (PIPE_BIND_DISPLAY_TARGET |
-                   PIPE_BIND_SCANOUT |
-                   PIPE_BIND_SHARED)) {
-      if(!winsys->is_displaytarget_format_supported(winsys, tex_usage, format))
+   if (bind & (PIPE_BIND_DISPLAY_TARGET |
+               PIPE_BIND_SCANOUT |
+               PIPE_BIND_SHARED)) {
+      if(!winsys->is_displaytarget_format_supported(winsys, bind, format))
          return FALSE;
    }
 
-   /* XXX: this is often a lie.  Pull in logic from llvmpipe to fix.
+   if (bind & PIPE_BIND_RENDER_TARGET) {
+      if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS)
+         return FALSE;
+
+      /*
+       * Although possible, it is unnatural to render into compressed or YUV
+       * surfaces. So disable these here to avoid going into weird paths
+       * inside the state trackers.
+       */
+      if (format_desc->block.width != 1 ||
+          format_desc->block.height != 1)
+         return FALSE;
+
+      /*
+       * TODO: Unfortunately we cannot render into anything more than 32 bits
+       * because we encode color clear values into a 32bit word.
+       */
+      if (format_desc->block.bits > 32)
+         return FALSE;
+   }
+
+   if (bind & PIPE_BIND_DEPTH_STENCIL) {
+      if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
+         return FALSE;
+
+      /*
+       * TODO: Unfortunately we cannot render into anything more than 32 bits
+       * because we encode depth and stencil clear values into a 32bit word.
+       */
+      if (format_desc->block.bits > 32)
+         return FALSE;
+
+      /*
+       * TODO: eliminate this restriction
+       */
+      if (format == PIPE_FORMAT_Z32_FLOAT)
+         return FALSE;
+   }
+
+   /*
+    * All other operations (sampling, transfer, etc).
+    */
+
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+      return util_format_s3tc_enabled;
+   }
+
+   /*
+    * Everything else should be supported by u_format.
     */
    return TRUE;
 }
