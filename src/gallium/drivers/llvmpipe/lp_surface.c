@@ -60,18 +60,18 @@ lp_surface_copy(struct pipe_context *pipe,
    const enum pipe_format format = src_tex->base.format;
 
    llvmpipe_flush_resource(pipe,
-                          dst->texture, dst->face, dst->level,
-                          0, /* flush_flags */
-                          FALSE, /* read_only */
-                          FALSE, /* cpu_access */
-                          FALSE); /* do_not_flush */
+                           dst->texture, dst->face, dst->level,
+                           0, /* flush_flags */
+                           FALSE, /* read_only */
+                           FALSE, /* cpu_access */
+                           FALSE); /* do_not_block */
 
    llvmpipe_flush_resource(pipe,
-                          src->texture, src->face, src->level,
-                          0, /* flush_flags */
-                          TRUE, /* read_only */
-                          FALSE, /* cpu_access */
-                          FALSE); /* do_not_flush */
+                           src->texture, src->face, src->level,
+                           0, /* flush_flags */
+                           TRUE, /* read_only */
+                           FALSE, /* cpu_access */
+                           FALSE); /* do_not_block */
 
    /*
    printf("surface copy from %u to %u: %u,%u to %u,%u %u x %u\n",

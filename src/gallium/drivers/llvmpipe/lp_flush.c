@@ -96,6 +96,9 @@ llvmpipe_flush( struct pipe_context *pipe,
 /**
  * Flush context if necessary.
  *
+ * Returns FALSE if it would have block, but do_not_block was set, TRUE
+ * otherwise.
+ *
  * TODO: move this logic to an auxiliary library?
  */
 boolean
@@ -106,7 +109,7 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
                         unsigned flush_flags,
                         boolean read_only,
                         boolean cpu_access,
-                        boolean do_not_flush)
+                        boolean do_not_block)
 {
    unsigned referenced;
 
@@ -114,9 +117,6 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
 
    if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
        ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {
-
-      if (do_not_flush)
-         return FALSE;
 
       /*
        * TODO: The semantics of these flush flags are too obtuse. They should
@@ -135,6 +135,9 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
           */
 
          struct pipe_fence_handle *fence = NULL;
+
+         if (do_not_block)
+            return FALSE;
 
          pipe->flush(pipe, flush_flags, &fence);
 

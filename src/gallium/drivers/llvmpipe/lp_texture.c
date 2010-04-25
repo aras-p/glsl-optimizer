@@ -492,6 +492,27 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
    assert(resource);
    assert(sr.level <= resource->last_level);
 
+   /*
+    * Transfers, like other pipe operations, must happen in order, so flush the
+    * context if necessary.
+    */
+   if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+      boolean read_only = !(usage & PIPE_TRANSFER_WRITE);
+      boolean do_not_block = !!(usage & PIPE_TRANSFER_DONTBLOCK);
+      if (!llvmpipe_flush_resource(pipe, resource,
+                                   sr.face, sr.level,
+                                   0, /* flush_flags */
+                                   read_only,
+                                   TRUE, /* cpu_access */
+                                   do_not_block)) {
+         /*
+          * It would have blocked, but state tracker requested no to.
+          */
+         assert(do_not_block);
+         return NULL;
+      }
+   }
+
    lpr = CALLOC_STRUCT(llvmpipe_transfer);
    if (lpr) {
       struct pipe_transfer *pt = &lpr->base;
@@ -561,19 +582,6 @@ llvmpipe_transfer_map( struct pipe_context *pipe,
    assert(transfer->resource);
    lpr = llvmpipe_resource(transfer->resource);
    format = lpr->base.format;
-
-   /*
-    * Transfers, like other pipe operations, must happen in order, so flush the
-    * context if necessary.
-    */
-   llvmpipe_flush_resource(pipe,
-                          transfer->resource,
-			  transfer->sr.face,
-			  transfer->sr.level,
-                          0, /* flush_flags */
-                          !(transfer->usage & PIPE_TRANSFER_WRITE), /* read_only */
-                          TRUE, /* cpu_access */
-                          FALSE); /* do_not_flush */
 
    map = llvmpipe_resource_map(transfer->resource,
 			       transfer->sr.face,
