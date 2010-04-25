@@ -566,7 +566,7 @@ llvmpipe_transfer_map( struct pipe_context *pipe,
     * Transfers, like other pipe operations, must happen in order, so flush the
     * context if necessary.
     */
-   llvmpipe_flush_texture(pipe,
+   llvmpipe_flush_resource(pipe,
                           transfer->resource,
 			  transfer->sr.face,
 			  transfer->sr.level,

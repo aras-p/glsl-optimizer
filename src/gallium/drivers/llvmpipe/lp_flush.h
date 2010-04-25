@@ -37,7 +37,7 @@ void llvmpipe_flush(struct pipe_context *pipe, unsigned flags,
                     struct pipe_fence_handle **fence);
 
 boolean
-llvmpipe_flush_texture(struct pipe_context *pipe,
+llvmpipe_flush_resource(struct pipe_context *pipe,
                        struct pipe_resource *texture,
                        unsigned face,
                        unsigned level,

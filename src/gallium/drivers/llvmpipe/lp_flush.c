@@ -97,19 +97,16 @@ llvmpipe_flush( struct pipe_context *pipe,
  * Flush context if necessary.
  *
  * TODO: move this logic to an auxiliary library?
- *
- * FIXME: We must implement DISCARD/DONTBLOCK/UNSYNCHRONIZED/etc for
- * textures to avoid blocking.
  */
 boolean
-llvmpipe_flush_texture(struct pipe_context *pipe,
-                       struct pipe_resource *texture,
-                       unsigned face,
-                       unsigned level,
-                       unsigned flush_flags,
-                       boolean read_only,
-                       boolean cpu_access,
-                       boolean do_not_flush)
+llvmpipe_flush_resource(struct pipe_context *pipe,
+                        struct pipe_resource *texture,
+                        unsigned face,
+                        unsigned level,
+                        unsigned flush_flags,
+                        boolean read_only,
+                        boolean cpu_access,
+                        boolean do_not_flush)
 {
    unsigned referenced;
 

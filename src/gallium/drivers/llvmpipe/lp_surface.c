@@ -59,14 +59,14 @@ lp_surface_copy(struct pipe_context *pipe,
    struct llvmpipe_resource *dst_tex = llvmpipe_resource(dst->texture);
    const enum pipe_format format = src_tex->base.format;
 
-   llvmpipe_flush_texture(pipe,
+   llvmpipe_flush_resource(pipe,
                           dst->texture, dst->face, dst->level,
                           0, /* flush_flags */
                           FALSE, /* read_only */
                           FALSE, /* cpu_access */
                           FALSE); /* do_not_flush */
 
-   llvmpipe_flush_texture(pipe,
+   llvmpipe_flush_resource(pipe,
                           src->texture, src->face, src->level,
                           0, /* flush_flags */
                           TRUE, /* read_only */
