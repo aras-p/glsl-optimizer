@@ -103,7 +103,7 @@ sp_create_tile_cache( struct pipe_context *pipe )
        * However, it breaks clearing in other situations (such as in
        * progs/tests/drawbuffers, see bug 24402).
        */
-#if 0 && TILE_CLEAR_OPTIMIZATION
+#if 0
       /* set flags to indicate all the tiles are cleared */
       memset(tc->clear_flags, 255, sizeof(tc->clear_flags));
 #endif
@@ -344,9 +344,7 @@ sp_flush_tile_cache(struct softpipe_tile_cache *tc)
          }
       }
 
-#if TILE_CLEAR_OPTIMIZATION
       sp_tile_cache_flush_clear(tc);
-#endif
    }
 
 #if 0
@@ -448,13 +446,8 @@ sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float *rgba,
 
    tc->clear_val = clearValue;
 
-#if TILE_CLEAR_OPTIMIZATION
    /* set flags to indicate all the tiles are cleared */
    memset(tc->clear_flags, 255, sizeof(tc->clear_flags));
-#else
-   /* disable the optimization */
-   memset(tc->clear_flags, 0, sizeof(tc->clear_flags));
-#endif
 
    for (pos = 0; pos < NUM_ENTRIES; pos++) {
       struct softpipe_cached_tile *tile = tc->entries + pos;
