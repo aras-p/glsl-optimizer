@@ -39,7 +39,7 @@ llvmpipe_flush(struct pipe_context *pipe, unsigned flags,
 
 boolean
 llvmpipe_flush_resource(struct pipe_context *pipe,
-                        struct pipe_resource *texture,
+                        struct pipe_resource *resource,
                         unsigned face,
                         unsigned level,
                         unsigned flush_flags,

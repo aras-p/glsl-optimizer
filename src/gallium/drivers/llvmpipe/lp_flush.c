@@ -103,7 +103,7 @@ llvmpipe_flush( struct pipe_context *pipe,
  */
 boolean
 llvmpipe_flush_resource(struct pipe_context *pipe,
-                        struct pipe_resource *texture,
+                        struct pipe_resource *resource,
                         unsigned face,
                         unsigned level,
                         unsigned flush_flags,
@@ -113,21 +113,23 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
 {
    unsigned referenced;
 
-   referenced = pipe->is_resource_referenced(pipe, texture, face, level);
+   referenced = pipe->is_resource_referenced(pipe, resource, face, level);
 
    if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
        ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {
 
-      /*
-       * TODO: The semantics of these flush flags are too obtuse. They should
-       * disappear and the pipe driver should just ensure that all visible
-       * side-effects happen when they need to happen.
-       */
-      if (referenced & PIPE_REFERENCED_FOR_WRITE)
-         flush_flags |= PIPE_FLUSH_RENDER_CACHE;
+      if (resource->target != PIPE_BUFFER) {
+         /*
+          * TODO: The semantics of these flush flags are too obtuse. They should
+          * disappear and the pipe driver should just ensure that all visible
+          * side-effects happen when they need to happen.
+          */
+         if (referenced & PIPE_REFERENCED_FOR_WRITE)
+            flush_flags |= PIPE_FLUSH_RENDER_CACHE;
 
-      if (referenced & PIPE_REFERENCED_FOR_READ)
-         flush_flags |= PIPE_FLUSH_TEXTURE_CACHE;
+         if (referenced & PIPE_REFERENCED_FOR_READ)
+            flush_flags |= PIPE_FLUSH_TEXTURE_CACHE;
+      }
 
       if (cpu_access) {
          /*
