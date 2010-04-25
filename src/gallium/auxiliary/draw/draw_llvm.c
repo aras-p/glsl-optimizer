@@ -286,10 +286,16 @@ generate_fetch(LLVMBuilderRef builder,
    LLVMValueRef vbuffer_ptr = LLVMBuildGEP(builder, vbuffers_ptr,
                                            &indices, 1, "");
    LLVMValueRef vb_stride = draw_jit_vbuffer_stride(builder, vbuf);
+   LLVMValueRef vb_max_index = draw_jit_vbuffer_max_index(builder, vbuf);
    LLVMValueRef vb_buffer_offset = draw_jit_vbuffer_offset(builder, vbuf);
-   LLVMValueRef stride = LLVMBuildMul(builder,
-                                      vb_stride,
-                                      index, "");
+   LLVMValueRef cond;
+   LLVMValueRef stride;
+
+   cond = LLVMBuildICmp(builder, LLVMIntULE, index, vb_max_index, "");
+
+   index = LLVMBuildSelect(builder, cond, index, vb_max_index, "");
+
+   stride = LLVMBuildMul(builder, vb_stride, index, "");
 
    vbuffer_ptr = LLVMBuildLoad(builder, vbuffer_ptr, "vbuffer");
 

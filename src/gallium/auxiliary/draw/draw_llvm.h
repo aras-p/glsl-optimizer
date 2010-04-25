@@ -78,7 +78,10 @@ struct draw_jit_context
 #define draw_jit_vbuffer_stride(_builder, _ptr)         \
    lp_build_struct_get(_builder, _ptr, 0, "stride")
 
-#define draw_jit_vbuffer_offset(_builder, _ptr)                 \
+#define draw_jit_vbuffer_max_index(_builder, _ptr)      \
+   lp_build_struct_get(_builder, _ptr, 1, "max_index")
+
+#define draw_jit_vbuffer_offset(_builder, _ptr)         \
    lp_build_struct_get(_builder, _ptr, 2, "buffer_offset")
 
 
