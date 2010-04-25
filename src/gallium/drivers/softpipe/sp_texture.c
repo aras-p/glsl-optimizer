@@ -39,6 +39,7 @@
 #include "util/u_transfer.h"
 
 #include "sp_context.h"
+#include "sp_flush.h"
 #include "sp_texture.h"
 #include "sp_screen.h"
 
@@ -300,6 +301,27 @@ softpipe_get_transfer(struct pipe_context *pipe,
    assert(box->x + box->width <= u_minify(resource->width0, sr.level));
    assert(box->y + box->height <= u_minify(resource->height0, sr.level));
    assert(box->z + box->depth <= u_minify(resource->depth0, sr.level));
+
+   /*
+    * Transfers, like other pipe operations, must happen in order, so flush the
+    * context if necessary.
+    */
+   if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+      boolean read_only = !(usage & PIPE_TRANSFER_WRITE);
+      boolean do_not_block = !!(usage & PIPE_TRANSFER_DONTBLOCK);
+      if (!softpipe_flush_resource(pipe, resource,
+                                   sr.face, sr.level,
+                                   0, /* flush_flags */
+                                   read_only,
+                                   TRUE, /* cpu_access */
+                                   do_not_block)) {
+         /*
+          * It would have blocked, but state tracker requested no to.
+          */
+         assert(do_not_block);
+         return NULL;
+      }
+   }
 
    spr = CALLOC_STRUCT(softpipe_transfer);
    if (spr) {
