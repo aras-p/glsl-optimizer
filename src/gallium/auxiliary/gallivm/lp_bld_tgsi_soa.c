@@ -1812,7 +1812,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
             const struct tgsi_opcode_info *info = tgsi_get_opcode_info(opcode);
             if (!emit_instruction( &bld, &parse.FullToken.FullInstruction, info ))
                _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
-                             info ? info->mnemonic : "<invalid>");
+                             info->mnemonic);
          }
 
          break;
