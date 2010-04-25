@@ -58,6 +58,7 @@ MAIN_SOURCES = \
 	main/points.c \
 	main/polygon.c \
 	main/queryobj.c \
+	main/querymatrix.c \
 	main/rastpos.c \
 	main/rbadaptors.c \
 	main/readpix.c \
