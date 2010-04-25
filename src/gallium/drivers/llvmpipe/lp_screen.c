@@ -168,7 +168,7 @@ static boolean
 llvmpipe_is_format_supported( struct pipe_screen *_screen,
                               enum pipe_format format, 
                               enum pipe_texture_target target,
-                              unsigned tex_usage, 
+                              unsigned bind,
                               unsigned geom_flags )
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
@@ -176,7 +176,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
    const struct util_format_description *format_desc;
 
    format_desc = util_format_description(format);
-   if(!format_desc)
+   if (!format_desc)
       return FALSE;
 
    assert(target == PIPE_TEXTURE_1D ||
@@ -184,43 +184,42 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
 
-   if(tex_usage & PIPE_BIND_RENDER_TARGET) {
-      if(format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
+   if (bind & PIPE_BIND_RENDER_TARGET) {
+      if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS)
          return FALSE;
 
-      if(format_desc->block.width != 1 ||
-         format_desc->block.height != 1)
+      if (format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
          return FALSE;
 
-      if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB &&
-         format_desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB)
-         return FALSE;
-   }
-
-   if(tex_usage & PIPE_BIND_DISPLAY_TARGET) {
-      if(!winsys->is_displaytarget_format_supported(winsys, tex_usage, format))
+      if (format_desc->block.width != 1 ||
+          format_desc->block.height != 1)
          return FALSE;
    }
 
-   if(tex_usage & PIPE_BIND_DEPTH_STENCIL) {
-      if(format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
+   if (bind & PIPE_BIND_DISPLAY_TARGET) {
+      if(!winsys->is_displaytarget_format_supported(winsys, bind, format))
+         return FALSE;
+   }
+
+   if (bind & PIPE_BIND_DEPTH_STENCIL) {
+      if (format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
+         return FALSE;
+
+      if (format_desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
          return FALSE;
 
       /* FIXME: Temporary restriction. See lp_state_fs.c. */
-      if(format_desc->block.bits != 32)
+      if (format_desc->block.bits != 32)
          return FALSE;
    }
 
-   switch(format) {
-   case PIPE_FORMAT_DXT1_RGB:
-   case PIPE_FORMAT_DXT1_RGBA:
-   case PIPE_FORMAT_DXT3_RGBA:
-   case PIPE_FORMAT_DXT5_RGBA:
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
       return util_format_s3tc_enabled;
-   default:
-      break;
    }
 
+   /*
+    * Everything else should be supported by u_format.
+    */
    return TRUE;
 }
 
