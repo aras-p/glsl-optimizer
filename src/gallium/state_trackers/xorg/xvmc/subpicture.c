@@ -126,6 +126,7 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id, int xvi
    return i < num_subpics ? Success : BadMatch;
 }
 
+PUBLIC
 Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *subpicture,
                             unsigned short width, unsigned short height, int xvimage_id)
 {
@@ -203,6 +204,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    return Success;
 }
 
+PUBLIC
 Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, short y,
                            unsigned short width, unsigned short height, unsigned int color)
 {
@@ -224,6 +226,7 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
    return Success;
 }
 
+PUBLIC
 Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage *image,
                                short srcx, short srcy, unsigned short width, unsigned short height,
                                short dstx, short dsty)
@@ -293,6 +296,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    return Success;
 }
 
+PUBLIC
 Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
 {
    XvMCSubpicturePrivate *subpicture_priv;
@@ -313,6 +317,7 @@ Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
    return Success;
 }
 
+PUBLIC
 Status XvMCSetSubpicturePalette(Display *dpy, XvMCSubpicture *subpicture, unsigned char *palette)
 {
    assert(dpy);
@@ -326,6 +331,7 @@ Status XvMCSetSubpicturePalette(Display *dpy, XvMCSubpicture *subpicture, unsign
    return BadMatch;
 }
 
+PUBLIC
 Status XvMCBlendSubpicture(Display *dpy, XvMCSurface *target_surface, XvMCSubpicture *subpicture,
                            short subx, short suby, unsigned short subw, unsigned short subh,
                            short surfx, short surfy, unsigned short surfw, unsigned short surfh)
@@ -367,6 +373,7 @@ Status XvMCBlendSubpicture(Display *dpy, XvMCSurface *target_surface, XvMCSubpic
    return Success;
 }
 
+PUBLIC
 Status XvMCBlendSubpicture2(Display *dpy, XvMCSurface *source_surface, XvMCSurface *target_surface,
                             XvMCSubpicture *subpicture, short subx, short suby, unsigned short subw, unsigned short subh,
                             short surfx, short surfy, unsigned short surfw, unsigned short surfh)
@@ -390,6 +397,7 @@ Status XvMCBlendSubpicture2(Display *dpy, XvMCSurface *source_surface, XvMCSurfa
    return Success;
 }
 
+PUBLIC
 Status XvMCSyncSubpicture(Display *dpy, XvMCSubpicture *subpicture)
 {
    assert(dpy);
@@ -400,6 +408,7 @@ Status XvMCSyncSubpicture(Display *dpy, XvMCSubpicture *subpicture)
    return Success;
 }
 
+PUBLIC
 Status XvMCFlushSubpicture(Display *dpy, XvMCSubpicture *subpicture)
 {
    assert(dpy);
@@ -410,6 +419,7 @@ Status XvMCFlushSubpicture(Display *dpy, XvMCSubpicture *subpicture)
    return Success;
 }
 
+PUBLIC
 Status XvMCGetSubpictureStatus(Display *dpy, XvMCSubpicture *subpicture, int *status)
 {
    assert(dpy);

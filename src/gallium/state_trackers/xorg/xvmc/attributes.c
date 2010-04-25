@@ -29,17 +29,21 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xvlib.h>
 #include <X11/extensions/XvMClib.h>
+#include <pipe/p_compiler.h>
 
+PUBLIC
 XvAttribute* XvMCQueryAttributes(Display *dpy, XvMCContext *context, int *number)
 {
    return NULL;
 }
 
+PUBLIC
 Status XvMCSetAttribute(Display *dpy, XvMCContext *context, Atom attribute, int value)
 {
    return BadImplementation;
 }
 
+PUBLIC
 Status XvMCGetAttribute(Display *dpy, XvMCContext *context, Atom attribute, int *value)
 {
    return BadImplementation;

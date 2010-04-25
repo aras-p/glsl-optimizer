@@ -31,6 +31,7 @@
 #include <util/u_memory.h>
 #include "xvmc_private.h"
 
+PUBLIC
 Status XvMCCreateBlocks(Display *dpy, XvMCContext *context, unsigned int num_blocks, XvMCBlockArray *blocks)
 {
    assert(dpy);
@@ -50,6 +51,7 @@ Status XvMCCreateBlocks(Display *dpy, XvMCContext *context, unsigned int num_blo
    return Success;
 }
 
+PUBLIC
 Status XvMCDestroyBlocks(Display *dpy, XvMCBlockArray *blocks)
 {
    assert(dpy);
@@ -59,6 +61,7 @@ Status XvMCDestroyBlocks(Display *dpy, XvMCBlockArray *blocks)
    return Success;
 }
 
+PUBLIC
 Status XvMCCreateMacroBlocks(Display *dpy, XvMCContext *context, unsigned int num_blocks, XvMCMacroBlockArray *blocks)
 {
    assert(dpy);
@@ -78,6 +81,7 @@ Status XvMCCreateMacroBlocks(Display *dpy, XvMCContext *context, unsigned int nu
    return Success;
 }
 
+PUBLIC
 Status XvMCDestroyMacroBlocks(Display *dpy, XvMCMacroBlockArray *blocks)
 {
    assert(dpy);

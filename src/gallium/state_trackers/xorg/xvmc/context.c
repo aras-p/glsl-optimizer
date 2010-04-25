@@ -172,6 +172,7 @@ static enum pipe_video_chroma_format FormatToPipe(int xvmc_format)
    return -1;
 }
 
+PUBLIC
 Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
                          int width, int height, int flags, XvMCContext *context)
 {
@@ -268,6 +269,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
    return Success;
 }
 
+PUBLIC
 Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
 {
    struct vl_screen *vscreen;

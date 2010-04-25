@@ -184,6 +184,7 @@ MacroBlocksToPipe(struct pipe_screen *screen,
    }
 }
 
+PUBLIC
 Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surface)
 {
    XvMCContextPrivate *context_priv;
@@ -261,6 +262,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    return Success;
 }
 
+PUBLIC
 Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int picture_structure,
                          XvMCSurface *target_surface, XvMCSurface *past_surface, XvMCSurface *future_surface,
                          unsigned int flags, unsigned int num_macroblocks, unsigned int first_macroblock,
@@ -334,6 +336,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    return Success;
 }
 
+PUBLIC
 Status XvMCFlushSurface(Display *dpy, XvMCSurface *surface)
 {
    assert(dpy);
@@ -344,6 +347,7 @@ Status XvMCFlushSurface(Display *dpy, XvMCSurface *surface)
    return Success;
 }
 
+PUBLIC
 Status XvMCSyncSurface(Display *dpy, XvMCSurface *surface)
 {
    assert(dpy);
@@ -354,6 +358,7 @@ Status XvMCSyncSurface(Display *dpy, XvMCSurface *surface)
    return Success;
 }
 
+PUBLIC
 Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
                       short srcx, short srcy, unsigned short srcw, unsigned short srch,
                       short destx, short desty, unsigned short destw, unsigned short desth,
@@ -442,6 +447,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    return Success;
 }
 
+PUBLIC
 Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
 {
    assert(dpy);
@@ -456,6 +462,7 @@ Status XvMCGetSurfaceStatus(Display *dpy, XvMCSurface *surface, int *status)
    return Success;
 }
 
+PUBLIC
 Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
 {
    XvMCSurfacePrivate *surface_priv;
@@ -477,6 +484,7 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
    return Success;
 }
 
+PUBLIC
 Status XvMCHideSurface(Display *dpy, XvMCSurface *surface)
 {
    assert(dpy);
