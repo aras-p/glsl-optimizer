@@ -31,7 +31,6 @@
 #include "dri_util.h"
 #include "drm_sarea.h"
 #include "utils.h"
-#include "vblank.h"
 #include "xmlpool.h"
 
 PUBLIC const char __dri2ConfigOptions[] =
