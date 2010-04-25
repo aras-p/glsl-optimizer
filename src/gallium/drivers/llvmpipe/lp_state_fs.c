@@ -404,7 +404,6 @@ generate_fs(struct llvmpipe_context *lp,
 {
    const struct tgsi_token *tokens = shader->base.tokens;
    LLVMTypeRef vec_type;
-   LLVMTypeRef int_vec_type;
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef z = interp->pos[2];
@@ -422,7 +421,6 @@ generate_fs(struct llvmpipe_context *lp,
    stencil_refs[1] = lp_jit_context_stencil_ref_back_value(builder, context_ptr);
 
    vec_type = lp_build_vec_type(type);
-   int_vec_type = lp_build_int_vec_type(type);
 
    consts_ptr = lp_jit_context_constants(builder, context_ptr);
 
