@@ -1271,6 +1271,7 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
 {
     struct r300_vertex_element_state *velems;
     unsigned i, size;
+    enum pipe_format *format;
 
     assert(count <= PIPE_MAX_ATTRIBS);
     velems = CALLOC_STRUCT(r300_vertex_element_state);
@@ -1281,13 +1282,46 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
         if (r300_screen(pipe->screen)->caps.has_tcl) {
             /* Check if the format is aligned to the size of DWORD. */
             for (i = 0; i < count; i++) {
-                size = util_format_get_blocksize(attribs[i].src_format);
+                format = &velems->velem[i].src_format;
+
+                /* Replace some formats with their aligned counterparts,
+                 * this is OK because we check for aligned strides too. */
+                /* XXX We need X instead of A in the format names. */
+                switch (*format) {
+                    case PIPE_FORMAT_R8G8B8_UNORM:
+                        *format = PIPE_FORMAT_R8G8B8X8_UNORM;
+                        continue;
+                    case PIPE_FORMAT_R8G8B8_SNORM:
+                        *format = PIPE_FORMAT_R8G8B8A8_SNORM;
+                        continue;
+                    case PIPE_FORMAT_R8G8B8_USCALED:
+                        *format = PIPE_FORMAT_R8G8B8A8_USCALED;
+                        continue;
+                    case PIPE_FORMAT_R8G8B8_SSCALED:
+                        *format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+                        continue;
+                    case PIPE_FORMAT_R16G16B16_UNORM:
+                        *format = PIPE_FORMAT_R16G16B16A16_UNORM;
+                        continue;
+                    case PIPE_FORMAT_R16G16B16_SNORM:
+                        *format = PIPE_FORMAT_R16G16B16A16_SNORM;
+                        continue;
+                    case PIPE_FORMAT_R16G16B16_USCALED:
+                        *format = PIPE_FORMAT_R16G16B16A16_USCALED;
+                        continue;
+                    case PIPE_FORMAT_R16G16B16_SSCALED:
+                        *format = PIPE_FORMAT_R16G16B16A16_SSCALED;
+                        continue;
+                    default:;
+                }
+
+                size = util_format_get_blocksize(*format);
 
                 if (size % 4 != 0) {
                     /* XXX Shouldn't we align the format? */
                     fprintf(stderr, "r300_create_vertex_elements_state: "
                             "Unaligned format %s:%i isn't supported\n",
-                            util_format_name(attribs[i].src_format), size);
+                            util_format_name(*format), size);
                     assert(0);
                     abort();
                 }

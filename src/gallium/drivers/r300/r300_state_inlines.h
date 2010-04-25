@@ -443,6 +443,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
 static INLINE uint16_t
 r300_translate_vertex_data_swizzle(enum pipe_format format) {
     const struct util_format_description *desc = util_format_description(format);
+    unsigned i, swizzle = 0;
 
     assert(format);
 
@@ -452,11 +453,12 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
         return 0;
     }
 
-    return ((desc->swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
-            (desc->swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
-            (desc->swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
-            (desc->swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT) |
-            (0xf << R300_WRITE_ENA_SHIFT));
+    for (i = 0; i < 4; i++) {
+        swizzle |=
+            MIN2(desc->swizzle[i], R300_SWIZZLE_SELECT_FP_ONE) << (3*i);
+    }
+
+    return swizzle | (0xf << R300_WRITE_ENA_SHIFT);
 }
 
 #endif /* R300_STATE_INLINES_H */
