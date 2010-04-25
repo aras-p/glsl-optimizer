@@ -257,7 +257,7 @@ def emit_tile_pixel_unswizzle_code(format, src_channel):
                     value = 'TILE_PIXEL(src, x, y, %u)' % inv_swizzle[i]
                     value = conversion_expr(src_channel, dst_channel, dst_native_type, value, clamp=False)
                     print '         *dst_pixel++ = %s;' % value
-                else:
+                elif dst_channel.size:
                     print '         ++dst_pixel;'
     else:
         assert False
