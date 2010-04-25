@@ -41,6 +41,8 @@
 #include "dri_st_api.h"
 #include "dri2.h"
 
+#include "GL/internal/dri_interface.h"
+
 /**
  * DRI2 flush extension.
  */
