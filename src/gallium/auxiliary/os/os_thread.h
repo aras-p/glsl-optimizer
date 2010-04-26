@@ -302,6 +302,7 @@ static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
 typedef struct {
    unsigned count;
    unsigned waiters;
+   uint64_t sequence;
    pipe_mutex mutex;
    pipe_condvar condvar;
 } pipe_barrier;
@@ -310,6 +311,7 @@ static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
 {
    barrier->count = count;
    barrier->waiters = 0;
+   barrier->sequence = 0;
    pipe_mutex_init(barrier->mutex);
    pipe_condvar_init(barrier->condvar);
 }
@@ -329,9 +331,14 @@ static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
    barrier->waiters++;
 
    if (barrier->waiters < barrier->count) {
-      pipe_condvar_wait(barrier->condvar, barrier->mutex);
+      uint64_t sequence = barrier->sequence;
+
+      do {
+         pipe_condvar_wait(barrier->condvar, barrier->mutex);
+      } while (sequence == barrier->sequence);
    } else {
       barrier->waiters = 0;
+      barrier->sequence++;
       pipe_condvar_broadcast(barrier->condvar);
    }
 
