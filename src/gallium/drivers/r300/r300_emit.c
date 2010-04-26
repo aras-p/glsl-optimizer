@@ -93,10 +93,7 @@ void r300_emit_clip_state(struct r300_context* r300,
                  R500_PVS_UCP_START : R300_PVS_UCP_START));
         OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 6 * 4);
         for (i = 0; i < 6; i++) {
-            OUT_CS_32F(clip->ucp[i][0]);
-            OUT_CS_32F(clip->ucp[i][1]);
-            OUT_CS_32F(clip->ucp[i][2]);
-            OUT_CS_32F(clip->ucp[i][3]);
+            OUT_CS_TABLE(clip->ucp[i], 4);
         }
         OUT_CS_REG(R300_VAP_CLIP_CNTL, ((1 << clip->nr) - 1) |
                 R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
@@ -244,8 +241,7 @@ void r300_emit_fs(struct r300_context* r300, unsigned size, void *state)
     OUT_CS_REG(R300_US_CODE_OFFSET, code->code_offset);
 
     OUT_CS_REG_SEQ(R300_US_CODE_ADDR_0, 4);
-    for(i = 0; i < 4; ++i)
-        OUT_CS(code->code_addr[i]);
+    OUT_CS_TABLE(code->code_addr, 4);
 
     OUT_CS_REG_SEQ(R300_US_ALU_RGB_INST_0, code->alu.length);
     for (i = 0; i < code->alu.length; i++)
@@ -265,8 +261,7 @@ void r300_emit_fs(struct r300_context* r300, unsigned size, void *state)
 
     if (code->tex.length) {
         OUT_CS_REG_SEQ(R300_US_TEX_INST_0, code->tex.length);
-        for(i = 0; i < code->tex.length; ++i)
-            OUT_CS(code->tex.inst[i]);
+        OUT_CS_TABLE(code->tex.inst, code->tex.length);
     }
 
     /* Emit immediates. */
@@ -396,10 +391,7 @@ void r500_emit_fs(struct r300_context* r300, unsigned size, void *state)
                            R500_GA_US_VECTOR_INDEX_TYPE_CONST |
                            (i & R500_GA_US_VECTOR_INDEX_MASK));
                 OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, 4);
-                OUT_CS_32F(data[0]);
-                OUT_CS_32F(data[1]);
-                OUT_CS_32F(data[2]);
-                OUT_CS_32F(data[3]);
+                OUT_CS_TABLE(data, 4);
             }
         }
     }
@@ -428,10 +420,7 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
         assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
         data = buf->constants[i];
 
-        OUT_CS_32F(data[0]);
-        OUT_CS_32F(data[1]);
-        OUT_CS_32F(data[2]);
-        OUT_CS_32F(data[3]);
+        OUT_CS_TABLE(data, 4);
     }
     END_CS;
 }
@@ -459,10 +448,7 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
                        R500_GA_US_VECTOR_INDEX_TYPE_CONST |
                        (i & R500_GA_US_VECTOR_INDEX_MASK));
             OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, 4);
-            OUT_CS_32F(data[0]);
-            OUT_CS_32F(data[1]);
-            OUT_CS_32F(data[2]);
-            OUT_CS_32F(data[3]);
+            OUT_CS_TABLE(data, 4);
         }
     }
     END_CS;
@@ -743,8 +729,8 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     } else {
         OUT_CS_REG_SEQ(R300_RS_IP_0, count);
     }
+    OUT_CS_TABLE(rs->ip, count);
     for (i = 0; i < count; i++) {
-        OUT_CS(rs->ip[i]);
         DBG(r300, DBG_DRAW, "    : ip %d: 0x%08x\n", i, rs->ip[i]);
     }
 
@@ -757,8 +743,8 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     } else {
         OUT_CS_REG_SEQ(R300_RS_INST_0, count);
     }
+    OUT_CS_TABLE(rs->inst, count);
     for (i = 0; i < count; i++) {
-        OUT_CS(rs->inst[i]);
         DBG(r300, DBG_DRAW, "    : inst %d: 0x%08x\n", i, rs->inst[i]);
     }
 
@@ -908,14 +894,14 @@ void r300_emit_vertex_stream_state(struct r300_context* r300,
 
     BEGIN_CS(size);
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, streams->count);
+    OUT_CS_TABLE(streams->vap_prog_stream_cntl, streams->count);
     for (i = 0; i < streams->count; i++) {
-        OUT_CS(streams->vap_prog_stream_cntl[i]);
         DBG(r300, DBG_DRAW, "    : prog_stream_cntl%d: 0x%08x\n", i,
                streams->vap_prog_stream_cntl[i]);
     }
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, streams->count);
+    OUT_CS_TABLE(streams->vap_prog_stream_cntl_ext, streams->count);
     for (i = 0; i < streams->count; i++) {
-        OUT_CS(streams->vap_prog_stream_cntl_ext[i]);
         DBG(r300, DBG_DRAW, "    : prog_stream_cntl_ext%d: 0x%08x\n", i,
                streams->vap_prog_stream_cntl_ext[i]);
     }
@@ -987,9 +973,7 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
 
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0);
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, code->length);
-    for (i = 0; i < code->length; i++) {
-        OUT_CS(code->body.d[i]);
-    }
+    OUT_CS_TABLE(code->body.d, code->length);
 
     OUT_CS_REG(R300_VAP_CNTL, R300_PVS_NUM_SLOTS(pvs_num_slots) |
             R300_PVS_NUM_CNTLRS(pvs_num_controllers) |
@@ -1006,10 +990,7 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, imm_count * 4);
         for (i = imm_first; i < imm_end; i++) {
             const float *data = vs->code.constants.Constants[i].u.Immediate;
-            OUT_CS_32F(data[0]);
-            OUT_CS_32F(data[1]);
-            OUT_CS_32F(data[2]);
-            OUT_CS_32F(data[3]);
+            OUT_CS_TABLE(data, 4);
         }
     }
     END_CS;
@@ -1034,10 +1015,7 @@ void r300_emit_vs_constants(struct r300_context* r300,
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, count * 4);
     for (i = 0; i < count; i++) {
         const float *data = buf->constants[i];
-        OUT_CS_32F(data[0]);
-        OUT_CS_32F(data[1]);
-        OUT_CS_32F(data[2]);
-        OUT_CS_32F(data[3]);
+        OUT_CS_TABLE(data, 4);
     }
     END_CS;
 }
