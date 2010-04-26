@@ -344,6 +344,10 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
             return;
     }
 
+    /* must be 0 on r7xx */
+    if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
+	    CLEARbit(cb_color0_info, BLEND_FLOAT32_bit);
+
     SETfield(cb_color0_info, format, CB_COLOR0_INFO__FORMAT_shift,
              CB_COLOR0_INFO__FORMAT_mask);
     SETfield(cb_color0_info, comp_swap, COMP_SWAP_shift, COMP_SWAP_mask);
