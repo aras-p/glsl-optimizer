@@ -15,6 +15,7 @@ common_OBJECTS = $(common_SOURCES:.c=.o)
 x11_INCLUDES = \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/glx \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	$(X11_CFLAGS) \
 	$(shell pkg-config --cflags-only-I libdrm)

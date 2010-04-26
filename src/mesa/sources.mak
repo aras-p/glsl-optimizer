@@ -96,15 +96,6 @@ MAIN_SOURCES = \
 	main/vtxfmt.c \
 	$(MAIN_ES_SOURCES)
 
-GLAPI_SOURCES = \
-	glapi/glapi.c \
-	glapi/glapi_dispatch.c \
-	glapi/glapi_entrypoint.c \
-	glapi/glapi_execmem.c \
-	glapi/glapi_getproc.c \
-	glapi/glapi_nop.c \
-	glapi/glthread.c
-
 MATH_SOURCES = \
 	math/m_debug_clip.c \
 	math/m_debug_norm.c \
@@ -307,22 +298,13 @@ X86_SOURCES =			\
 	x86/sse_normal.S	\
 	x86/read_rgba_span_x86.S
 
-X86_API =			\
-	glapi/glapi_x86.S
-
 X86-64_SOURCES =		\
 	x86-64/xform4.S
-
-X86-64_API =			\
-	glapi/glapi_x86-64.S
 
 SPARC_SOURCES =			\
 	sparc/clip.S		\
 	sparc/norm.S		\
 	sparc/xform.S
-
-SPARC_API =			\
-	glapi/glapi_sparc.S
 
 COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c	\
@@ -357,7 +339,6 @@ MESA_GALLIUM_SOURCES = \
 # All the core C sources, for dependency checking
 ALL_SOURCES = \
 	$(MESA_SOURCES)		\
-	$(GLAPI_SOURCES)	\
 	$(MESA_ASM_SOURCES)	\
 	$(STATETRACKER_SOURCES)
 
@@ -371,10 +352,6 @@ MESA_OBJECTS = \
 MESA_GALLIUM_OBJECTS = \
 	$(MESA_GALLIUM_SOURCES:.c=.o) \
 	$(MESA_ASM_SOURCES:.S=.o)
-
-GLAPI_OBJECTS = \
-	$(GLAPI_SOURCES:.c=.o) \
-	$(GLAPI_ASM_SOURCES:.S=.o)
 
 
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
@@ -392,5 +369,6 @@ GLSL_LIBS = \
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary

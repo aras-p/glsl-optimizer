@@ -1,11 +1,11 @@
 TOP = ../..
-MESA = $(TOP)/src/mesa
+MAPI = $(TOP)/src/mapi
 include $(TOP)/configs/current
-include $(MESA)/sources.mak
 
-GLESv1_CM_ASM := $(addprefix $(MESA)/es/glapi/glapi-es1/,$(GLAPI_ASM_SOURCES))
-GLESv2_ASM := $(addprefix $(MESA)/es/glapi/glapi-es2/,$(GLAPI_ASM_SOURCES))
-API_SOURCES := $(addprefix $(MESA)/,$(GLAPI_SOURCES))
+include $(MAPI)/glapi/sources.mak
+GLESv1_CM_ASM := $(addprefix $(MAPI)/es1api/glapi/,$(GLAPI_ASM_SOURCES))
+GLESv2_ASM := $(addprefix $(MAPI)/es2api/glapi/,$(GLAPI_ASM_SOURCES))
+API_SOURCES := $(addprefix $(MAPI)/glapi/,$(GLAPI_SOURCES))
 
 $(TOP)/$(LIB_DIR)/$(GLESv1_CM_LIB_NAME) : PREFIX = es1
 $(TOP)/$(LIB_DIR)/$(GLESv1_CM_LIB_NAME) : NAME = GLESv1_CM
@@ -13,7 +13,7 @@ $(TOP)/$(LIB_DIR)/$(GLESv1_CM_LIB_NAME) : NAME = GLESv1_CM
 $(TOP)/$(LIB_DIR)/$(GLESv2_LIB_NAME) : PREFIX = es2
 $(TOP)/$(LIB_DIR)/$(GLESv2_LIB_NAME) : NAME = GLESv2
 
-INCLUDES = -I$(TOP)/include -I$(MESA)/es/glapi/glapi-$(PREFIX) -I$(MESA)
+INCLUDES = -I$(TOP)/include -I$(MAPI)/$(PREFIX)api -I$(MAPI) -I$(TOP)/src/mesa
 
 OBJECTS = \
 	$(notdir $(GLAPI_ASM_SOURCES:%.S=%.o)) \
@@ -24,12 +24,12 @@ GLESv2_OBJECTS = $(addprefix es2-,$(OBJECTS))
 
 es1-%.o: $(dir $(GLESv1_CM_ASM))%.S
 	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-es1-%.o: $(MESA)/glapi/%.c
+es1-%.o: $(MAPI)/glapi/%.c
 	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 
 es2-%.o: $(dir $(GLESv2_ASM))%.S
 	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-es2-%.o: $(MESA)/glapi/%.c
+es2-%.o: $(MAPI)/glapi/%.c
 	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 
 default: depend \

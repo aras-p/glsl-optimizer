@@ -1,5 +1,5 @@
 TOP = ../../../..
-GLAPI = ../../glapi/gen
+GLAPI = ../gen
 include $(TOP)/configs/current
 
 OUTPUTS :=			\
@@ -18,8 +18,8 @@ COMMON := $(addprefix $(GLAPI)/, $(COMMON))
 
 ES1_APIXML := es1_API.xml
 ES2_APIXML := es2_API.xml
-ES1_OUTPUT_DIR := glapi-es1
-ES2_OUTPUT_DIR := glapi-es2
+ES1_OUTPUT_DIR := $(TOP)/src/mapi/es1api
+ES2_OUTPUT_DIR := $(TOP)/src/mapi/es2api
 
 ES1_DEPS = $(ES1_APIXML) base1_API.xml es1_EXT.xml es_EXT.xml \
 	   es1_COMPAT.xml es_COMPAT.xml
@@ -84,6 +84,13 @@ verify_xml:
 	@$(PYTHON2) $(PYTHON_FLAGS) gl_compare.py difference tmp.xml es2_API.xml
 	@rm -f tmp.xml
 
-clean:
-	-rm -rf $(ES1_OUTPUT_DIR) $(ES2_OUTPUT_DIR)
+clean-es1:
+	-rm -rf $(ES1_OUTPUT_DIR)/glapi
+	-rm -rf $(ES1_OUTPUT_DIR)/main
+
+clean-es2:
+	-rm -rf $(ES2_OUTPUT_DIR)/glapi
+	-rm -rf $(ES2_OUTPUT_DIR)/main
+
+clean: clean-es1 clean-es2
 	-rm -f *~ *.pyc *.pyo

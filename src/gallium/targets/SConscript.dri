@@ -9,6 +9,7 @@ drienv.Replace(CPPPATH = [
 	'#src/mesa/drivers/dri/common',
 	'#include',
 	'#include/GL/internal',
+	'#src/mapi',
 	'#src/gallium/include',
 	'#src/gallium/auxiliary',
 	'#src/gallium/drivers',

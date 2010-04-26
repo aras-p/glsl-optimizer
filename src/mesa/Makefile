@@ -21,15 +21,8 @@ CFLAGS += $(API_DEFINES)
 
 # Default: build dependencies, then asm_subdirs, GLSL built-in lib,
 # then convenience libs (.a) and finally the device drivers:
-default: depend es_glapi asm_subdirs glsl_builtin libmesa.a libmesagallium.a \
-	libglapi.a driver_subdirs
-
-es_glapi:
-	@for api in $(APIS) ; do			\
-	    case "$$api" in				\
-		es1|es2) $(MAKE) -C es/glapi $$api;;	\
-	    esac;					\
-	done
+default: depend asm_subdirs glsl_builtin libmesa.a libmesagallium.a \
+	driver_subdirs
 
 main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
 	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES1.1 > $@
@@ -54,13 +47,9 @@ libmesa.a: $(MESA_OBJECTS) $(GLSL_LIBS)
 libmesagallium.a: $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
 	@ $(MKLIB) -o mesagallium -static $(MESA_GALLIUM_OBJECTS) $(GLSL_LIBS)
 
-# Make archive of gl* API dispatcher functions only
-libglapi.a: $(GLAPI_OBJECTS)
-	@ $(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
-
 ######################################################################
 # Device drivers
-driver_subdirs: libmesa.a libglapi.a libmesagallium.a
+driver_subdirs: libmesa.a libmesagallium.a
 	@ (cd drivers && $(MAKE))
 
 
@@ -218,7 +207,7 @@ tags:
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
-	-rm -f depend depend.bak libmesa.a libglapi.a libmesagallium.a
+	-rm -f depend depend.bak libmesa.a libmesagallium.a
 	-rm -f drivers/*/*.o
 	-rm -f *.pc
 	-rm -f shader/slang/library/*_gc.h

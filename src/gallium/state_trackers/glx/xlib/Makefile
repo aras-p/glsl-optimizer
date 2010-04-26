@@ -5,6 +5,7 @@ LIBNAME = xlib
 
 LIBRARY_INCLUDES = \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	$(X11_CFLAGS)
 

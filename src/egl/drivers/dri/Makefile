@@ -11,9 +11,9 @@ INCLUDE_DIRS = \
 	$(shell pkg-config --cflags-only-I libdrm) \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
-	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/mesa/math \
 	-I$(TOP)/src/mesa/transform \
 	-I$(TOP)/src/mesa/shader \

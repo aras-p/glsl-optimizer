@@ -11,11 +11,12 @@ OBJECTS = \
 	glslcompiler.o \
 	../common/driverfuncs.o \
 	../../libmesa.a \
-	../../libglapi.a
+	$(TOP)/src/mapi/glapi/libglapi.a
 
 INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \

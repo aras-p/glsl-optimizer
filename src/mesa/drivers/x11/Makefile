@@ -40,11 +40,12 @@ OBJECTS = $(SOURCES:.c=.o)
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	$(X11_INCLUDES)
 
-CORE_MESA = $(TOP)/src/mesa/libmesa.a $(TOP)/src/mesa/libglapi.a
+CORE_MESA = $(TOP)/src/mesa/libmesa.a $(TOP)/src/mapi/glapi/libglapi.a
 
 
 

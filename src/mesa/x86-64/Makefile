@@ -12,7 +12,6 @@ INCLUDE_DIRS = \
 	-I.. \
 	-I../main \
 	-I../math \
-	-I../glapi \
 	-I../tnl
 
 

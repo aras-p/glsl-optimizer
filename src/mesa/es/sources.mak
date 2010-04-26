@@ -1,14 +1,10 @@
 include $(MESA)/sources.mak
 
-# always use local version of GLAPI_ASM_SOURCES
-LOCAL_ES1_API_ASM := $(addprefix glapi/glapi-es1/, $(GLAPI_ASM_SOURCES))
-
 LOCAL_ES1_INCLUDES :=			\
 	-I.				\
-	-I./glapi/glapi-es1		\
+	-I$(TOP)/src/mapi/es1api	\
 	-I$(MESA)/state_tracker
 
-LOCAL_ES2_API_ASM := $(subst es1,es2, $(LOCAL_ES1_API_ASM))
 LOCAL_ES2_INCLUDES := $(subst es1,es2, $(LOCAL_ES1_INCLUDES))
 
 # MESA sources
@@ -63,15 +59,11 @@ MESA_ES1_GALLIUM_SOURCES :=		\
 	x86/common_x86.c		\
 	$(SLANG_SOURCES)
 
-MESA_ES1_API_SOURCES :=			\
-	$(GLAPI_SOURCES)
-
 MESA_ES1_INCLUDES := $(INCLUDE_DIRS)
 
 # right now es2 and es1 share MESA sources
 MESA_ES2_SOURCES := $(MESA_ES1_SOURCES)
 MESA_ES2_GALLIUM_SOURCES := $(MESA_ES1_GALLIUM_SOURCES)
-MESA_ES2_API_SOURCES := $(MESA_ES1_API_SOURCES)
 
 MESA_ES2_INCLUDES := $(MESA_ES1_INCLUDES)
 
@@ -81,11 +73,9 @@ MESA_ES_ASM := $(MESA_ASM_SOURCES)
 # collect sources, adjust the pathes
 ES1_SOURCES := $(addprefix $(MESA)/,$(MESA_ES1_SOURCES))
 ES1_GALLIUM_SOURCES := $(addprefix $(MESA)/,$(MESA_ES1_GALLIUM_SOURCES))
-ES1_API_SOURCES := $(addprefix $(MESA)/,$(MESA_ES1_API_SOURCES))
 
 ES2_SOURCES := $(addprefix $(MESA)/,$(MESA_ES2_SOURCES))
 ES2_GALLIUM_SOURCES := $(addprefix $(MESA)/,$(MESA_ES2_GALLIUM_SOURCES))
-ES2_API_SOURCES := $(addprefix $(MESA)/,$(MESA_ES2_API_SOURCES))
 
 # collect includes
 ES1_INCLUDES := $(LOCAL_ES1_INCLUDES) $(MESA_ES1_INCLUDES)
@@ -100,10 +90,6 @@ ES1_GALLIUM_OBJECTS :=				\
 	$(MESA_ES1_GALLIUM_SOURCES:.c=.o)	\
 	$(MESA_ES_ASM:.S=.o)
 
-ES1_API_OBJECTS :=				\
-	$(LOCAL_ES1_API_ASM:.S=.o)		\
-	$(MESA_ES1_API_SOURCES:.c=.o)
-
 ES2_OBJECTS :=					\
 	$(MESA_ES2_SOURCES:.c=.o)		\
 	$(MESA_ES_ASM:.S=.o)
@@ -112,13 +98,9 @@ ES2_GALLIUM_OBJECTS :=				\
 	$(MESA_ES2_GALLIUM_SOURCES:.c=.o)	\
 	$(MESA_ES_ASM:.S=.o)
 
-ES2_API_OBJECTS :=				\
-	$(LOCAL_ES2_API_ASM:.S=.o)		\
-	$(MESA_ES2_API_SOURCES:.c=.o)
-
 # collect sources for makedepend
-ES1_ALL_SOURCES := $(ES1_SOURCES) $(ES1_GALLIUM_SOURCES) $(ES1_API_SOURCES)
-ES2_ALL_SOURCES := $(ES2_SOURCES) $(ES2_GALLIUM_SOURCES) $(ES2_API_SOURCES)
+ES1_ALL_SOURCES := $(ES1_SOURCES) $(ES1_GALLIUM_SOURCES)
+ES2_ALL_SOURCES := $(ES2_SOURCES) $(ES2_GALLIUM_SOURCES)
 
 # sort to remove duplicates
 ES1_ALL_SOURCES := $(sort $(ES1_ALL_SOURCES))

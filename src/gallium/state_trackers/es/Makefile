@@ -30,17 +30,18 @@ ES2_OBJECTS = st_es2.o
 
 ES1_LIBS = \
 	$(TOP)/src/mesa/es/libes1gallium.a \
-	$(TOP)/src/mesa/es/libes1api.a
+	$(TOP)/src/mapi/es1api/libes1api.a
 
 ES2_LIBS = \
 	$(TOP)/src/mesa/es/libes2gallium.a \
-	$(TOP)/src/mesa/es/libes2api.a
+	$(TOP)/src/mapi/es2api/libes2api.a
 
 SYS_LIBS = -lm -pthread
 
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/gallium/include
 

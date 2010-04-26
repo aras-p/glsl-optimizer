@@ -42,13 +42,13 @@ SHARED_INCLUDES = \
 	-Iserver \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/winsys \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
-	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/mesa/math \
 	-I$(TOP)/src/mesa/transform \
 	-I$(TOP)/src/mesa/shader \

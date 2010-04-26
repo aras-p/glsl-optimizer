@@ -8,7 +8,7 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 MESA_DIR = $(TOP)/src/mesa
-MESA_GLAPI_DIR = $(TOP)/src/mesa/glapi
+MESA_GLAPI_DIR = $(TOP)/src/mapi/glapi
 MESA_GLX_DIR = $(TOP)/src/glx
 
 MESA_GLAPI_OUTPUTS = \
@@ -153,8 +153,8 @@ $(MESA_GLAPI_DIR)/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
 
 $(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON) $(ES_API)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_API.xml \
-		-f $(MESA_DIR)/es/glapi/es1_API.xml \
-		-f $(MESA_DIR)/es/glapi/es2_API.xml > $@
+		-f $(MESA_GLAPI_DIR)/gen-es/es1_API.xml \
+		-f $(MESA_GLAPI_DIR)/gen-es/es2_API.xml > $@
 
 $(MESA_DIR)/main/remap_helper.h: remap_helper.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@

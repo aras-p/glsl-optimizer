@@ -26,6 +26,7 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-Iserver \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/egl/drivers/dri \

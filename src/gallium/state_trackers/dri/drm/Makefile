@@ -5,6 +5,7 @@ LIBNAME = dridrm
 
 LIBRARY_INCLUDES = \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/gallium/state_trackers/dri/common \
 	-I$(TOP)/src/mesa/drivers/dri/common \

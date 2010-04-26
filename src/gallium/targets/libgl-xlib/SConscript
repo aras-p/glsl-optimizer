@@ -17,6 +17,7 @@ if env['dri']:
 env = env.Clone()
 
 env.Append(CPPPATH = [
+    '#/src/mapi',
     '#/src/mesa',
     '#/src/mesa/main',
     '#src/gallium/state_trackers/glx/xlib',

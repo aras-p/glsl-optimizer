@@ -218,9 +218,9 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 #ifdef IN_DRI_DRIVER
 #define _GLAPI_USE_REMAP_TABLE
 #endif
-#include "es/glapi/glapi-%s/glapi/glapitable.h"
-#include "es/glapi/glapi-%s/glapi/glapioffsets.h"
-#include "es/glapi/glapi-%s/glapi/glapidispatch.h"
+#include "%sapi/glapi/glapitable.h"
+#include "%sapi/glapi/glapioffsets.h"
+#include "%sapi/glapi/glapidispatch.h"
 
 #if FEATURE_remap_table
 
@@ -230,7 +230,7 @@ int driDispatchRemapTable[driDispatchRemapTable_size];
 
 #define need_MESA_remap_table
 
-#include "es/glapi/glapi-%s/main/remap_helper.h"
+#include "%sapi/main/remap_helper.h"
 
 void
 _mesa_init_remap_table_%s(void)

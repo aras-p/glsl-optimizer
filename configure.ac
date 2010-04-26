@@ -463,7 +463,7 @@ dnl Driver specific build directories
 dnl
 
 dnl this variable will be prepended to SRC_DIRS and is not exported
-CORE_DIRS="glsl mesa"
+CORE_DIRS="mapi/glapi glsl mesa"
 
 SRC_DIRS="glew"
 GLU_DIRS="sgi"
@@ -763,6 +763,7 @@ if test "x$enable_gles2" = xyes; then
     APIS="$APIS es2"
 fi
 if test "x$enable_gles1" = xyes -o "x$enable_gles2" = xyes; then
+    CORE_DIRS="mapi/es1api mapi/es2api $CORE_DIRS"
     SRC_DIRS="$SRC_DIRS gles"
 fi
 AC_SUBST([API_DEFINES])
@@ -1308,6 +1309,9 @@ yes)
             HAVE_ST_XORG="yes"
             ;;
         es)
+            if test "x$enable_gles1" != xyes -a "x$enable_gles2" != xyes; then
+		CORE_DIRS="mapi/es1api mapi/es2api $CORE_DIRS"
+            fi
             # mesa/es is required to build es state tracker
             CORE_DIRS="$CORE_DIRS mesa/es"
             ;;

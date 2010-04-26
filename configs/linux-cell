@@ -37,7 +37,8 @@ CXXFLAGS = $(COMMON_C_CPP_FLAGS)
 
 
 # Omitting glw here:
-SRC_DIRS = glsl mesa gallium gallium/winsys gallium/targets glu glut/glx glew
+SRC_DIRS = glsl mapi/glapi mapi/vgapi mesa \
+	gallium gallium/winsys gallium/targets glu glut/glx glew
 
 # Build no traditional Mesa drivers:
 DRIVER_DIRS =

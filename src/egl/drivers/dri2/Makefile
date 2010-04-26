@@ -9,7 +9,7 @@ EGL_SOURCES = egl_dri2.c
 EGL_INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/egl/main \
-	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mapi \
 	-DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_SEARCH_DIR)\" \
 	$(EGL_DRI2_CFLAGS)
 

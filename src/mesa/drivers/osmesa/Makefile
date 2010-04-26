@@ -16,6 +16,7 @@ OBJECTS = $(SOURCES:.c=.o)
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main
 
@@ -23,7 +24,7 @@ INCLUDE_DIRS = \
 ifeq ($(DRIVER_DIRS), osmesa)
 CORE_MESA = \
 	$(TOP)/src/mesa/libmesa.a \
-	$(TOP)/src/mesa/libglapi.a \
+	$(TOP)/src/mapi/glapi/libglapi.a \
 	$(TOP)/src/glsl/cl/libglslcl.a \
 	$(TOP)/src/glsl/pp/libglslpp.a
 else
