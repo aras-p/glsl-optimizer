@@ -37,6 +37,8 @@
 #include "r300_state_invariant.h"
 #include "r300_winsys.h"
 
+#include <inttypes.h>
+
 static void r300_destroy_context(struct pipe_context* context)
 {
     struct r300_context* r300 = r300_context(context);
@@ -49,9 +51,9 @@ static void r300_destroy_context(struct pipe_context* context)
     /* Print stats, if enabled. */
     if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) {
         fprintf(stderr, "r300: Stats for context %p:\n", r300);
-        fprintf(stderr, "    : Flushes: %llu\n", r300->flush_counter);
+        fprintf(stderr, "    : Flushes: %" PRIu64 "\n", r300->flush_counter);
         foreach(atom, &r300->atom_list) {
-            fprintf(stderr, "    : %s: %llu emits\n",
+            fprintf(stderr, "    : %s: %" PRIu64 " emits\n",
                 atom->name, atom->counter);
         }
     }
