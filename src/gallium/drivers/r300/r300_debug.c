@@ -41,6 +41,7 @@ static struct debug_option debug_options[] = {
     { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },
     { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },
+    { "stats", DBG_STATS, "Gather statistics (for lulz)" },
 
     { "all", ~0, "Convenience option that enables all debug flags" },
 
