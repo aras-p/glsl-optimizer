@@ -823,7 +823,7 @@ void r300_emit_textures_state(struct r300_context *r300,
     END_CS;
 }
 
-void r300_emit_aos(struct r300_context* r300, unsigned offset)
+void r300_emit_aos(struct r300_context* r300, unsigned offset, boolean indexed)
 {
     struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
@@ -843,7 +843,7 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset)
 
     BEGIN_CS(2 + packet_size + aos_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
-    OUT_CS(aos_count);
+    OUT_CS(aos_count | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
 
     for (i = 0; i < aos_count - 1; i += 2) {
         vb1 = &vbuf[velem[i].vertex_buffer_index];

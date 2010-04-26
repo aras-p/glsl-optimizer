@@ -3377,7 +3377,7 @@ enum {
  * the last block is omitted.
  */
 #define R300_PACKET3_3D_LOAD_VBPNTR         0x00002F00
-
+#   define R300_VC_FORCE_PREFETCH  (1 << 5)
 #   define R300_VBPNTR_SIZE0(x)    ((x) >> 2)
 #   define R300_VBPNTR_STRIDE0(x)  (((x) >> 2) << 8)
 #   define R300_VBPNTR_SIZE1(x)    (((x) >> 2) << 16)

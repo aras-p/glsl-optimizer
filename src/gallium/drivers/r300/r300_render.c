@@ -574,7 +574,7 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
     r300_emit_buffer_validate(r300, TRUE, indexBuffer);
     r300_emit_dirty_state(r300);
-    r300_emit_aos(r300, 0);
+    r300_emit_aos(r300, 0, TRUE);
 
     u_upload_flush(r300->upload_vb);
     u_upload_flush(r300->upload_ib);
@@ -595,7 +595,7 @@ void r300_draw_range_elements(struct pipe_context* pipe,
             if (count && r300_reserve_cs_space(r300, 16)) {
                 r300_emit_buffer_validate(r300, TRUE, indexBuffer);
                 r300_emit_dirty_state(r300);
-                r300_emit_aos(r300, 0);
+                r300_emit_aos(r300, 0, TRUE);
             }
         } while (count);
     }
@@ -650,12 +650,12 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
         r300_emit_dirty_state(r300);
 
         if (alt_num_verts || count <= 65535) {
-            r300_emit_aos(r300, start);
+            r300_emit_aos(r300, start, FALSE);
             r300->emit_draw_arrays(r300, mode, count);
         } else {
             do {
                 short_count = MIN2(count, 65535);
-                r300_emit_aos(r300, start);
+                r300_emit_aos(r300, start, FALSE);
                 r300->emit_draw_arrays(r300, mode, short_count);
 
                 start += short_count;
