@@ -1601,11 +1601,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_BGNFOR:
-      /* deprecated */
-      assert(0);
-      return FALSE;
-      break;
-
+      /* fall through */
    case TGSI_OPCODE_BGNLOOP:
       lp_exec_bgnloop(&bld->exec_mask);
       break;
@@ -1625,11 +1621,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_ENDFOR:
-      /* deprecated */
-      assert(0);
-      return FALSE;
-      break;
-
+      /* fall-through */
    case TGSI_OPCODE_ENDLOOP:
       lp_exec_endloop(&bld->exec_mask);
       break;
