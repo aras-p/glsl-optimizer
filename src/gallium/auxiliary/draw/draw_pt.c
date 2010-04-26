@@ -97,12 +97,16 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_SHADE;
    }
       
-   if (opt == 0) 
-      middle = draw->pt.middle.fetch_emit;
-   else if (opt == PT_SHADE && !draw->pt.no_fse)
-      middle = draw->pt.middle.fetch_shade_emit;
-   else
-      middle = draw->pt.middle.general;
+   if (draw->pt.middle.llvm) {
+      middle = draw->pt.middle.llvm;
+   } else {
+      if (opt == 0)
+         middle = draw->pt.middle.fetch_emit;
+      else if (opt == PT_SHADE && !draw->pt.no_fse)
+         middle = draw->pt.middle.fetch_shade_emit;
+      else
+         middle = draw->pt.middle.general;
+   }
 
 
    /* Pick the right frontend
@@ -148,18 +152,14 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.middle.fetch_shade_emit)
       return FALSE;
 
-#if HAVE_LLVM
-   draw->use_llvm = debug_get_option_draw_use_llvm();
-   if (draw->use_llvm)
-      draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit_llvm( draw );
-#else
-   draw->pt.middle.general = NULL;
-#endif
-
-   if (!draw->pt.middle.general)
-      draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit( draw );
+   draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit( draw );
    if (!draw->pt.middle.general)
       return FALSE;
+
+#if HAVE_LLVM
+   if (debug_get_option_draw_use_llvm())
+      draw->pt.middle.llvm = draw_pt_fetch_pipeline_or_emit_llvm( draw );
+#endif
 
    return TRUE;
 }
@@ -167,6 +167,11 @@ boolean draw_pt_init( struct draw_context *draw )
 
 void draw_pt_destroy( struct draw_context *draw )
 {
+   if (draw->pt.middle.llvm) {
+      draw->pt.middle.llvm->destroy( draw->pt.middle.llvm );
+      draw->pt.middle.llvm = NULL;
+   }
+
    if (draw->pt.middle.general) {
       draw->pt.middle.general->destroy( draw->pt.middle.general );
       draw->pt.middle.general = NULL;

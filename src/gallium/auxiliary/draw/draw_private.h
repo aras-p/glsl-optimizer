@@ -132,6 +132,7 @@ struct draw_context
          struct draw_pt_middle_end *fetch_emit;
          struct draw_pt_middle_end *fetch_shade_emit;
          struct draw_pt_middle_end *general;
+         struct draw_pt_middle_end *llvm;
       } middle;
 
       struct {
@@ -253,8 +254,8 @@ struct draw_context
 
 #ifdef HAVE_LLVM
    LLVMExecutionEngineRef engine;
-   boolean use_llvm;
 #endif
+
    void *driver_private;
 };
 
