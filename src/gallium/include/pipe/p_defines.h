@@ -284,8 +284,6 @@ enum pipe_transfer_usage {
 #define PIPE_BIND_VERTEX_BUFFER        (1 << 3) /* set_vertex_buffers */
 #define PIPE_BIND_INDEX_BUFFER         (1 << 4) /* draw_elements */
 #define PIPE_BIND_CONSTANT_BUFFER      (1 << 5) /* set_constant_buffer */
-#define PIPE_BIND_BLIT_SOURCE          (1 << 6) /* surface_copy */
-#define PIPE_BIND_BLIT_DESTINATION     (1 << 7) /* surface_copy, fill */
 #define PIPE_BIND_DISPLAY_TARGET       (1 << 8) /* flush_front_buffer */
 #define PIPE_BIND_TRANSFER_WRITE       (1 << 9) /* get_transfer */
 #define PIPE_BIND_TRANSFER_READ        (1 << 10) /* get_transfer */

@@ -128,9 +128,6 @@ resources might be created and handled quite differently.
 * ``PIPE_BIND_VERTEX_BUFFER``: A vertex buffer.
 * ``PIPE_BIND_INDEX_BUFFER``: An vertex index/element buffer.
 * ``PIPE_BIND_CONSTANT_BUFFER``: A buffer of shader constants.
-* ``PIPE_BIND_BLIT_SOURCE``: A blit source, as given to surface_copy.
-* ``PIPE_BIND_BLIT_DESTINATION``: A blit destination, as given to surface_copy
-  and surface_fill.
 * ``PIPE_BIND_TRANSFER_WRITE``: A transfer object which will be written to.
 * ``PIPE_BIND_TRANSFER_READ``: A transfer object which will be read from.
 * ``PIPE_BIND_CUSTOM``:
@@ -223,6 +220,16 @@ Determine if a resource in the given format can be used in a specific manner.
 
 Returns TRUE if all usages can be satisfied.
 
+is_msaa_supported
+^^^^^^^^^^^^^^^^^
+
+Determine if a format supports multisampling with a given number of samples.
+
+**format** the resource format
+
+**sample_count** the number of samples. Valid query range is 2-32.
+
+Returns TRUE if sample_count number of samples is supported with this format.
 
 .. _resource_create:
 

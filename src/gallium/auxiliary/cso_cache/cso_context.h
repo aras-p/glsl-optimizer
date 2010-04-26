@@ -159,6 +159,8 @@ void cso_restore_viewport(struct cso_context *cso);
 enum pipe_error cso_set_blend_color(struct cso_context *cso,
                                     const struct pipe_blend_color *bc);
 
+enum pipe_error cso_set_sample_mask(struct cso_context *cso,
+                                    unsigned stencil_mask);
 
 enum pipe_error cso_set_stencil_ref(struct cso_context *cso,
                                     const struct pipe_stencil_ref *sr);
