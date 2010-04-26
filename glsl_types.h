@@ -114,6 +114,15 @@ struct glsl_type {
    static const glsl_type *const vec3_type;
    static const glsl_type *const vec4_type;
    static const glsl_type *const bool_type;
+   static const glsl_type *const mat2_type;
+   static const glsl_type *const mat2x3_type;
+   static const glsl_type *const mat2x4_type;
+   static const glsl_type *const mat3x2_type;
+   static const glsl_type *const mat3_type;
+   static const glsl_type *const mat3x4_type;
+   static const glsl_type *const mat4x2_type;
+   static const glsl_type *const mat4x3_type;
+   static const glsl_type *const mat4_type;
    /*@}*/
 
 
@@ -341,22 +350,6 @@ private:
     * Constructor for array types
     */
    glsl_type(const glsl_type *array, unsigned length);
-
-
-   /**
-    * \name Pointers to various private type singletons
-    */
-   /*@{*/
-   static const glsl_type *const mat2_type;
-   static const glsl_type *const mat2x3_type;
-   static const glsl_type *const mat2x4_type;
-   static const glsl_type *const mat3x2_type;
-   static const glsl_type *const mat3_type;
-   static const glsl_type *const mat3x4_type;
-   static const glsl_type *const mat4x2_type;
-   static const glsl_type *const mat4x3_type;
-   static const glsl_type *const mat4_type;
-   /*@}*/
 
    /** Hash table containing the known array types. */
    static struct hash_table *array_types;
