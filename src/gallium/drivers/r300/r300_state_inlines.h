@@ -374,6 +374,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
         fprintf(stderr, "r300: Bad format %s in %s:%d\n", util_format_name(format),
             __FUNCTION__, __LINE__);
         assert(0);
+        abort();
     }
 
     switch (desc->channel[0].type) {
@@ -395,6 +396,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     fprintf(stderr, "r300: Bad format %s in %s:%d\n",
                         util_format_name(format), __FUNCTION__, __LINE__);
                     assert(0);
+                    abort();
             }
             break;
         /* Unsigned ints */
@@ -418,12 +420,14 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     fprintf(stderr, "r300: desc->channel[0].size == %d\n",
                         desc->channel[0].size);
                     assert(0);
+                    abort();
             }
             break;
         default:
             fprintf(stderr, "r300: Bad format %s in %s:%d\n",
                 util_format_name(format), __FUNCTION__, __LINE__);
             assert(0);
+            abort();
     }
 
     if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
