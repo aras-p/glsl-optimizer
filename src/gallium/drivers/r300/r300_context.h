@@ -45,6 +45,8 @@ struct r300_atom {
     struct r300_atom *prev, *next;
     /* Name, for debugging. */
     const char* name;
+    /* Stat counter. */
+    uint64_t counter;
     /* Opaque state. */
     void* state;
     /* Emit the state to the context. */
@@ -435,6 +437,9 @@ struct r300_context {
     /* upload managers */
     struct u_upload_mgr *upload_vb;
     struct u_upload_mgr *upload_ib;
+
+    /* Stat counter. */
+    uint64_t flush_counter;
 };
 
 /* Convenience cast wrapper. */

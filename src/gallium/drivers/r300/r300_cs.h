@@ -157,6 +157,9 @@
         DBG(cs_context_copy, DBG_CS, "r300: FLUSH_CS in %s (%s:%d)\n\n", __FUNCTION__, \
                 __FILE__, __LINE__); \
     } \
+    if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) { \
+        r300->flush_counter++; \
+    } \
     cs_winsys->flush_cs(cs_winsys); \
 } while (0)
 

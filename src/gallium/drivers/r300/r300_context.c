@@ -41,9 +41,20 @@ static void r300_destroy_context(struct pipe_context* context)
 {
     struct r300_context* r300 = r300_context(context);
     struct r300_query* query, * temp;
+    struct r300_atom *atom;
 
     util_blitter_destroy(r300->blitter);
     draw_destroy(r300->draw);
+
+    /* Print stats, if enabled. */
+    if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) {
+        fprintf(stderr, "r300: Stats for context %p:\n", r300);
+        fprintf(stderr, "    : Flushes: %llu\n", r300->flush_counter);
+        foreach(atom, &r300->atom_list) {
+            fprintf(stderr, "    : %s: %llu emits\n",
+                atom->name, atom->counter);
+        }
+    }
 
     /* Free the OQ BO. */
     context->screen->resource_destroy(context->screen, r300->oqbo);

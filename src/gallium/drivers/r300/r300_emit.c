@@ -1187,6 +1187,9 @@ void r300_emit_dirty_state(struct r300_context* r300)
     foreach(atom, &r300->atom_list) {
         if (atom->dirty) {
             atom->emit(r300, atom->size, atom->state);
+            if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) {
+                atom->counter++;
+            }
             atom->dirty = FALSE;
         }
     }
