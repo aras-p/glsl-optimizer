@@ -95,10 +95,15 @@ generate_110_uniforms(exec_list *instructions,
 			   instructions, symtab);
    }
 
-   /* FINISHME: Add support for gl_TextureMatrix[].  The size of this array is
-    * FINISHME: implementation dependent based on the value of
-    * FINISHME: GL_MAX_TEXTURE_COORDS.
+   /* FINISHME: The size of this array is implementation dependent based on the
+    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
+    * FINISHME: at least 2, so hard-code 2 for now.
     */
+   const glsl_type *const mat4_array_type =
+      glsl_type::get_array_instance(glsl_type::mat4_type, 2);
+
+   add_variable("gl_TextureMatrix", ir_var_uniform, mat4_array_type,
+		instructions, symtab);
 
    /* FINISHME: Add support for gl_DepthRangeParameters */
    /* FINISHME: Add support for gl_ClipPlane[] */
