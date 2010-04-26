@@ -201,6 +201,13 @@ static void radeon_write_cs_dword(struct r300_winsys_screen *rws,
     radeon_cs_write_dword(ws->cs, dword);
 }
 
+static void radeon_write_cs_table(struct r300_winsys_screen *rws,
+                                  void *table, unsigned count)
+{
+    struct radeon_libdrm_winsys *ws = radeon_winsys_screen(rws);
+    radeon_cs_write_table(ws->cs, table, count);
+}
+
 static void radeon_write_cs_reloc(struct r300_winsys_screen *rws,
                                   struct r300_winsys_buffer *buf,
                                   uint32_t rd,
@@ -322,6 +329,7 @@ radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* ws)
     ws->base.check_cs = radeon_check_cs;
     ws->base.begin_cs = radeon_begin_cs;
     ws->base.write_cs_dword = radeon_write_cs_dword;
+    ws->base.write_cs_table = radeon_write_cs_table;
     ws->base.write_cs_reloc = radeon_write_cs_reloc;
     ws->base.end_cs = radeon_end_cs;
     ws->base.flush_cs = radeon_flush_cs;

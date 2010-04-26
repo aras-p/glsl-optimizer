@@ -104,6 +104,13 @@
     cs_count--; \
 } while (0)
 
+#define OUT_CS_TABLE(values, count) do { \
+    if (VERY_VERBOSE_REGISTERS) \
+        DBG(cs_context_copy, DBG_CS, "r300: writing table of %d dwords\n", count); \
+    cs_winsys->write_cs_table(cs_winsys, values, count); \
+    cs_count -= count; \
+} while (0)
+
 #define OUT_CS_BUF_RELOC(bo, offset, rd, wd, flags) do { \
     DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, offset %d, " \
             "domains (%d, %d, %d)\n", \
