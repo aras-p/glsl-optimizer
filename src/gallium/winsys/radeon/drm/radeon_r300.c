@@ -202,7 +202,7 @@ static void radeon_write_cs_dword(struct r300_winsys_screen *rws,
 }
 
 static void radeon_write_cs_table(struct r300_winsys_screen *rws,
-                                  void *table, unsigned count)
+                                  const void *table, unsigned count)
 {
     struct radeon_libdrm_winsys *ws = radeon_winsys_screen(rws);
     radeon_cs_write_table(ws->cs, table, count);
