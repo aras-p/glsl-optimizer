@@ -1100,11 +1100,22 @@ translate_program(struct i915_fragment_program *p)
 {
    struct i915_context *i915 = I915_CONTEXT(p->ctx);
 
+   if (INTEL_DEBUG & DEBUG_WM) {
+      printf("fp:\n");
+      _mesa_print_program(&p->ctx->FragmentProgram._Current->Base);
+      printf("\n");
+   }
+
    i915_init_program(i915, p);
    check_wpos(p);
    upload_program(p);
    fixup_depth_write(p);
    i915_fini_program(p);
+
+   if (INTEL_DEBUG & DEBUG_WM) {
+      printf("i915:\n");
+      i915_disassemble_program(i915->state.Program, i915->state.ProgramSize);
+   }
 
    p->translated = 1;
 }
