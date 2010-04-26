@@ -359,9 +359,10 @@ upload_program(struct i915_fragment_program *p)
    }
 
    if (program->Base.NumInstructions > I915_MAX_INSN) {
-       i915_program_error( p, "Exceeded max instructions" );
-       return;
-    }
+      i915_program_error(p, "Exceeded max instructions (%d out of %d)",
+			 program->Base.NumInstructions, I915_MAX_INSN);
+      return;
+   }
 
    /* Not always needed:
     */
