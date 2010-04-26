@@ -153,19 +153,24 @@ static int driBindContext(__DRIcontext *pcp,
 {
     __DRIscreen *psp = NULL;
 
-    /* Bind the drawable to the context */
+    /*
+    ** Assume error checking is done properly in glXMakeCurrent before
+    ** calling driUnbindContext.
+    */
 
-    if (pcp) {
-	psp = pcp->driScreenPriv;
-	pcp->driDrawablePriv = pdp;
-	pcp->driReadablePriv = prp;
-	if (pdp) {
-	    pdp->driContextPriv = pcp;
-    	    dri_get_drawable(pdp);
-	}
-	if ( prp && pdp != prp ) {
-    	    dri_get_drawable(prp);
-	}
+    if (!pcp)
+	return GL_FALSE;
+
+    /* Bind the drawable to the context */
+    psp = pcp->driScreenPriv;
+    pcp->driDrawablePriv = pdp;
+    pcp->driReadablePriv = prp;
+    if (pdp) {
+	pdp->driContextPriv = pcp;
+	dri_get_drawable(pdp);
+    }
+    if (prp && pdp != prp) {
+	dri_get_drawable(prp);
     }
 
     /*
@@ -173,7 +178,6 @@ static int driBindContext(__DRIcontext *pcp,
     ** initialize the drawable information if has not been done before.
     */
 
-    assert(psp);
     if (!psp->dri2.enabled) {
 	if (pdp && !pdp->pStamp) {
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
@@ -188,7 +192,6 @@ static int driBindContext(__DRIcontext *pcp,
     }
 
     /* Call device-specific MakeCurrent */
-
     return (*psp->DriverAPI.MakeCurrent)(pcp, pdp, prp);
 }
 
