@@ -1294,18 +1294,46 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                 /* Replace some formats with their aligned counterparts,
                  * this is OK because we check for aligned strides too. */
                 switch (*format) {
+                    /* Align to RGBA8. */
+                    case PIPE_FORMAT_R8_UNORM:
+                    case PIPE_FORMAT_R8G8_UNORM:
                     case PIPE_FORMAT_R8G8B8_UNORM:
-                        *format = PIPE_FORMAT_R8G8B8X8_UNORM;
+                        *format = PIPE_FORMAT_R8G8B8A8_UNORM;
                         continue;
+                    case PIPE_FORMAT_R8_SNORM:
+                    case PIPE_FORMAT_R8G8_SNORM:
                     case PIPE_FORMAT_R8G8B8_SNORM:
                         *format = PIPE_FORMAT_R8G8B8A8_SNORM;
                         continue;
+                    case PIPE_FORMAT_R8_USCALED:
+                    case PIPE_FORMAT_R8G8_USCALED:
                     case PIPE_FORMAT_R8G8B8_USCALED:
                         *format = PIPE_FORMAT_R8G8B8A8_USCALED;
                         continue;
+                    case PIPE_FORMAT_R8_SSCALED:
+                    case PIPE_FORMAT_R8G8_SSCALED:
                     case PIPE_FORMAT_R8G8B8_SSCALED:
                         *format = PIPE_FORMAT_R8G8B8A8_SSCALED;
                         continue;
+
+                    /* Align to RG16. */
+                    case PIPE_FORMAT_R16_UNORM:
+                        *format = PIPE_FORMAT_R16G16_UNORM;
+                        continue;
+                    case PIPE_FORMAT_R16_SNORM:
+                        *format = PIPE_FORMAT_R16G16_SNORM;
+                        continue;
+                    case PIPE_FORMAT_R16_USCALED:
+                        *format = PIPE_FORMAT_R16G16_USCALED;
+                        continue;
+                    case PIPE_FORMAT_R16_SSCALED:
+                        *format = PIPE_FORMAT_R16G16_SSCALED;
+                        continue;
+                    case PIPE_FORMAT_R16_FLOAT:
+                        *format = PIPE_FORMAT_R16G16_FLOAT;
+                        continue;
+
+                    /* Align to RGBA16. */
                     case PIPE_FORMAT_R16G16B16_UNORM:
                         *format = PIPE_FORMAT_R16G16B16A16_UNORM;
                         continue;
@@ -1318,6 +1346,10 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                     case PIPE_FORMAT_R16G16B16_SSCALED:
                         *format = PIPE_FORMAT_R16G16B16A16_SSCALED;
                         continue;
+                    case PIPE_FORMAT_R16G16B16_FLOAT:
+                        *format = PIPE_FORMAT_R16G16B16A16_FLOAT;
+                        continue;
+
                     default:;
                 }
 
