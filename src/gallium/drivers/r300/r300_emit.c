@@ -83,7 +83,6 @@ void r300_emit_clip_state(struct r300_context* r300,
                           unsigned size, void* state)
 {
     struct pipe_clip_state* clip = (struct pipe_clip_state*)state;
-    int i;
     CS_LOCALS(r300);
 
     if (r300->screen->caps.has_tcl) {
@@ -92,9 +91,7 @@ void r300_emit_clip_state(struct r300_context* r300,
                 (r300->screen->caps.is_r500 ?
                  R500_PVS_UCP_START : R300_PVS_UCP_START));
         OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 6 * 4);
-        for (i = 0; i < 6; i++) {
-            OUT_CS_TABLE(clip->ucp[i], 4);
-        }
+        OUT_CS_TABLE(clip->ucp, 6 * 4);
         OUT_CS_REG(R300_VAP_CLIP_CNTL, ((1 << clip->nr) - 1) |
                 R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
         END_CS;
@@ -416,12 +413,9 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count * 4);
     for(i = 0; i < count; ++i) {
-        const float *data;
         assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
-        data = buf->constants[i];
-
-        OUT_CS_TABLE(data, 4);
     }
+    OUT_CS_TABLE(buf->constants, count * 4);
     END_CS;
 }
 
@@ -999,7 +993,6 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
 void r300_emit_vs_constants(struct r300_context* r300,
                             unsigned size, void *state)
 {
-    unsigned i;
     unsigned count =
         ((struct r300_vertex_shader*)r300->vs_state.state)->externals_count;
     struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
@@ -1013,10 +1006,7 @@ void r300_emit_vs_constants(struct r300_context* r300,
                (r300->screen->caps.is_r500 ?
                R500_PVS_CONST_START : R300_PVS_CONST_START));
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, count * 4);
-    for (i = 0; i < count; i++) {
-        const float *data = buf->constants[i];
-        OUT_CS_TABLE(data, 4);
-    }
+    OUT_CS_TABLE(buf->constants, count * 4);
     END_CS;
 }
 
