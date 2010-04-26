@@ -2,6 +2,10 @@ Import('*')
 
 env = env.Clone()
 
+env.Append(CPPPATH = [
+    '#/src/gallium/drivers',
+])
+
 nvfx = env.ConvenienceLibrary(
     target = 'nvfx',
     source = [
