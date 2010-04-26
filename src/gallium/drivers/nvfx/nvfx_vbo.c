@@ -8,6 +8,7 @@
 #include "nvfx_resource.h"
 
 #include "nouveau/nouveau_channel.h"
+#include "nouveau/nouveau_class.h"
 #include "nouveau/nouveau_pushbuf.h"
 #include "nouveau/nouveau_util.h"
 
