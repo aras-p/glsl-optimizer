@@ -6511,13 +6511,30 @@ GLboolean Process_Vertex_Exports(r700_AssemblerBase *pR700AsmCode,
         {
             return GL_FALSE;
         }
-
+        export_starting_index++;
         export_count--;
+        }
 
-        pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst = SQ_CF_INST_EXPORT_DONE;
-	}
+    unBit = 1 << VERT_RESULT_PSIZ;
+    if(OutputsWritten & unBit)
+    {
+        if( GL_FALSE == Process_Export(pR700AsmCode,
+                                       SQ_EXPORT_POS,
+                                       export_starting_index,
+                                       1,
+                                       pR700AsmCode->ucVP_OutputMap[VERT_RESULT_PSIZ],
+                                       GL_FALSE) )
+        {
+            return GL_FALSE;
+        }
+        export_count--;
+    }
+
+    pR700AsmCode->cf_last_export_ptr->m_Word1.f.cf_inst = SQ_CF_INST_EXPORT_DONE;
+
 
     pR700AsmCode->number_of_exports = export_count;
+    export_starting_index = 0;
 
 	unBit = 1 << VERT_RESULT_COL0;
 	if(OutputsWritten & unBit)

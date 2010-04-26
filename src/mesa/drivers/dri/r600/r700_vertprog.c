@@ -628,6 +628,16 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
 
     R600_STATECHANGE(context, spi);
 
+    if(vp->mesa_program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
+        R600_STATECHANGE(context, cl);
+        SETbit(r700->PA_CL_VS_OUT_CNTL.u32All, USE_VTX_POINT_SIZE_bit);
+        SETbit(r700->PA_CL_VS_OUT_CNTL.u32All, VS_OUT_MISC_VEC_ENA_bit);
+    } else if (r700->PA_CL_VS_OUT_CNTL.u32All != 0) {
+        R600_STATECHANGE(context, cl);
+        CLEARbit(r700->PA_CL_VS_OUT_CNTL.u32All, USE_VTX_POINT_SIZE_bit);
+        CLEARbit(r700->PA_CL_VS_OUT_CNTL.u32All, VS_OUT_MISC_VEC_ENA_bit);
+    }
+
     SETfield(r700->SPI_VS_OUT_CONFIG.u32All,
 	     vp->r700Shader.nParamExports ? (vp->r700Shader.nParamExports - 1) : 0,
              VS_EXPORT_COUNT_shift, VS_EXPORT_COUNT_mask);
