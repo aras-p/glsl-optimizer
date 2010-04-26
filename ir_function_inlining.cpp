@@ -184,34 +184,25 @@ ir_function_cloning_visitor::visit(ir_swizzle *ir)
 void
 ir_function_cloning_visitor::visit(ir_dereference *ir)
 {
-   if (ir->mode == ir_dereference::ir_reference_variable) {
-      ir_variable *old_var = ir->var->as_variable();
+   ir_variable *old_var = ir->var->as_variable();
+   ir_instruction *var;
 
-      /* If it's a deref of a real variable, then we need to remap it if
-       * it was local to the function.
-       */
-      if (old_var) {
-	 ir_variable *new_var;
-
-	 new_var = this->get_remapped_variable(old_var);
-
-	 this->result = new ir_dereference(new_var);
-      } else {
-	 ir->var->accept(this);
-
-	 this->result = new ir_dereference(this->result);
-      }
-   } else if (ir->mode == ir_dereference::ir_reference_array) {
-      ir_instruction *variable;
-      ir_rvalue *index;
-
+   if (old_var)
+      var = this->get_remapped_variable(old_var);
+   else {
       ir->var->accept(this);
-      variable = this->result;
+      var = this->result;
+   }
+
+   if (ir->mode == ir_dereference::ir_reference_variable) {
+      this->result = new ir_dereference(var);
+   } else if (ir->mode == ir_dereference::ir_reference_array) {
+      ir_rvalue *index;
 
       ir->selector.array_index->accept(this);
       index = this->result->as_rvalue();
 
-      this->result = new ir_dereference(variable, index);
+      this->result = new ir_dereference(var, index);
    } else {
       assert(ir->mode == ir_dereference::ir_reference_record);
       /* FINISHME: inlining of structure references */
