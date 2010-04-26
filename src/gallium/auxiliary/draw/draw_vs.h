@@ -80,7 +80,8 @@ struct draw_vs_varient {
    void (*set_buffer)( struct draw_vs_varient *,
                       unsigned i,
                       const void *ptr,
-                      unsigned stride );
+                      unsigned stride,
+                      unsigned max_stride );
 
    void (PIPE_CDECL *run_linear)( struct draw_vs_varient *shader,
                                   unsigned start,

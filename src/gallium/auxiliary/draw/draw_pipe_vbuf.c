@@ -137,7 +137,7 @@ emit_vertex( struct vbuf_stage *vbuf,
        */
       /* Note: we really do want data[0] here, not data[pos]: 
        */
-      vbuf->translate->set_buffer(vbuf->translate, 0, vertex->data[0], 0);
+      vbuf->translate->set_buffer(vbuf->translate, 0, vertex->data[0], 0, ~0);
       vbuf->translate->run(vbuf->translate, 0, 1, 0, vbuf->vertex_ptr);
 
       if (0) draw_dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr);
@@ -271,7 +271,7 @@ vbuf_start_prim( struct vbuf_stage *vbuf, uint prim )
       translate_key_sanitize(&hw_key);
       vbuf->translate = translate_cache_find(vbuf->cache, &hw_key);
 
-      vbuf->translate->set_buffer(vbuf->translate, 1, &vbuf->point_size, 0);
+      vbuf->translate->set_buffer(vbuf->translate, 1, &vbuf->point_size, 0, ~0);
    }
 
    vbuf->point_size = vbuf->stage.draw->rasterizer->point_size;

@@ -171,12 +171,14 @@ void draw_pt_emit( struct pt_emit *emit,
    translate->set_buffer(translate, 
 			 0, 
 			 vertex_data,
-			 stride );
+			 stride,
+			 ~0);
 
    translate->set_buffer(translate, 
 			 1, 
 			 &draw->rasterizer->point_size,
-			 0);
+			 0,
+			 ~0);
 
    translate->run( translate,
 		   0, 
@@ -232,11 +234,11 @@ void draw_pt_emit_linear(struct pt_emit *emit,
       goto fail;
 
    translate->set_buffer(translate, 0,
-			 vertex_data, stride);
+			 vertex_data, stride, count - 1);
 
    translate->set_buffer(translate, 1,
 			 &draw->rasterizer->point_size,
-			 0);
+			 0, ~0);
 
    translate->run(translate,
                   0,

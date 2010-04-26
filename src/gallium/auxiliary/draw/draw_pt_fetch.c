@@ -149,7 +149,8 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
 	 fetch->translate->set_buffer(fetch->translate,
 				      draw->pt.nr_vertex_buffers,
 				      &vh,
-				      0);
+				      0,
+				      ~0);
       }
    }
 
@@ -172,7 +173,8 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			    i, 
 			    ((char *)draw->pt.user.vbuffer[i] + 
 			     draw->pt.vertex_buffer[i].buffer_offset),
-			    draw->pt.vertex_buffer[i].stride );
+			    draw->pt.vertex_buffer[i].stride,
+			    draw->pt.vertex_buffer[i].max_index);
    }
 
    translate->run_elts( translate,
@@ -198,7 +200,8 @@ void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
 			    i,
 			    ((char *)draw->pt.user.vbuffer[i] +
 			     draw->pt.vertex_buffer[i].buffer_offset),
-			    draw->pt.vertex_buffer[i].stride );
+			    draw->pt.vertex_buffer[i].stride,
+			    draw->pt.vertex_buffer[i].max_index);
    }
 
    translate->run( translate,

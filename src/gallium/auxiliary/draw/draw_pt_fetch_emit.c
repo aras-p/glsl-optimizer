@@ -168,7 +168,8 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       feme->translate->set_buffer(feme->translate, 
 				  draw->pt.nr_vertex_buffers, 
 				  &feme->point_size,
-				  0);
+				  0,
+				  ~0);
    }
    
    feme->point_size = draw->rasterizer->point_size;
@@ -178,7 +179,8 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                   i, 
                                   ((char *)draw->pt.user.vbuffer[i] + 
                                    draw->pt.vertex_buffer[i].buffer_offset),
-                                  draw->pt.vertex_buffer[i].stride );
+                                  draw->pt.vertex_buffer[i].stride,
+                                  draw->pt.vertex_buffer[i].max_index);
    }
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 
