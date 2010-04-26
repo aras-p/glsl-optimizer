@@ -27,7 +27,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "state_tracker/st_manager.h" /* for st_manager_create_api */
+#include "state_tracker/st_gl_api.h" /* for st_gl_api_create */
 
 #include "stw_st.h"
 #include "stw_device.h"
@@ -308,5 +308,5 @@ stw_st_swap_framebuffer_locked(struct st_framebuffer_iface *stfb)
 struct st_api *
 stw_st_create_api(void)
 {
-   return st_manager_create_api();
+   return st_gl_api_create();
 }
