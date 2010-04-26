@@ -24,6 +24,8 @@
 /* generates the draw jit function */
 static void
 draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *var);
+static void
+draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *var);
 
 static void
 init_globals(struct draw_llvm *llvm)
@@ -218,6 +220,7 @@ draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs)
    llvm->vertex_header_ptr_type = create_vertex_header(llvm, num_inputs);
 
    draw_llvm_generate(llvm, variant);
+   draw_llvm_generate_elts(llvm, variant);
 
    return variant;
 }
@@ -694,6 +697,144 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 
    if (0)
       lp_disassemble(variant->jit_func);
+}
+
+
+static void
+draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
+{
+   LLVMTypeRef arg_types[7];
+   LLVMTypeRef func_type;
+   LLVMValueRef context_ptr;
+   LLVMBasicBlockRef block;
+   LLVMBuilderRef builder;
+   LLVMValueRef fetch_elts, fetch_count, stride, step, io_itr;
+   LLVMValueRef io_ptr, vbuffers_ptr, vb_ptr;
+   struct draw_context *draw = llvm->draw;
+   unsigned i, j;
+   struct lp_build_context bld;
+   struct lp_build_loop_state lp_loop;
+   struct lp_type vs_type = lp_type_float_vec(32);
+   const int max_vertices = 4;
+   LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+
+   arg_types[0] = llvm->context_ptr_type;               /* context */
+   arg_types[1] = llvm->vertex_header_ptr_type;         /* vertex_header */
+   arg_types[2] = llvm->buffer_ptr_type;                /* vbuffers */
+   arg_types[3] = LLVMPointerType(LLVMInt32Type(), 0);  /* fetch_elts * */
+   arg_types[4] = LLVMInt32Type();                      /* fetch_count */
+   arg_types[5] = LLVMInt32Type();                      /* stride */
+   arg_types[6] = llvm->vb_ptr_type;                    /* pipe_vertex_buffer's */
+
+   func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
+
+   variant->function_elts = LLVMAddFunction(llvm->module, "draw_llvm_shader_elts", func_type);
+   LLVMSetFunctionCallConv(variant->function_elts, LLVMCCallConv);
+   for(i = 0; i < Elements(arg_types); ++i)
+      if(LLVMGetTypeKind(arg_types[i]) == LLVMPointerTypeKind)
+         LLVMAddAttribute(LLVMGetParam(variant->function_elts, i), LLVMNoAliasAttribute);
+
+   context_ptr  = LLVMGetParam(variant->function_elts, 0);
+   io_ptr       = LLVMGetParam(variant->function_elts, 1);
+   vbuffers_ptr = LLVMGetParam(variant->function_elts, 2);
+   fetch_elts   = LLVMGetParam(variant->function_elts, 3);
+   fetch_count  = LLVMGetParam(variant->function_elts, 4);
+   stride       = LLVMGetParam(variant->function_elts, 5);
+   vb_ptr       = LLVMGetParam(variant->function_elts, 6);
+
+   lp_build_name(context_ptr, "context");
+   lp_build_name(io_ptr, "io");
+   lp_build_name(vbuffers_ptr, "vbuffers");
+   lp_build_name(fetch_elts, "fetch_elts");
+   lp_build_name(fetch_count, "fetch_count");
+   lp_build_name(stride, "stride");
+   lp_build_name(vb_ptr, "vb");
+
+   /*
+    * Function body
+    */
+
+   block = LLVMAppendBasicBlock(variant->function_elts, "entry");
+   builder = LLVMCreateBuilder();
+   LLVMPositionBuilderAtEnd(builder, block);
+
+   lp_build_context_init(&bld, builder, vs_type);
+
+   step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
+
+   lp_build_loop_begin(builder, LLVMConstInt(LLVMInt32Type(), 0, 0), &lp_loop);
+   {
+      LLVMValueRef inputs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
+      LLVMValueRef aos_attribs[PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS] = { { 0 } };
+      LLVMValueRef io;
+      const LLVMValueRef (*ptr_aos)[NUM_CHANNELS];
+
+      io_itr = lp_loop.counter;
+      io = LLVMBuildGEP(builder, io_ptr, &io_itr, 1, "");
+#if DEBUG_STORE
+      lp_build_printf(builder, " --- io %d = %p, loop counter %d\n",
+                      io_itr, io, lp_loop.counter);
+#endif
+      for (i = 0; i < NUM_CHANNELS; ++i) {
+         LLVMValueRef true_index = LLVMBuildAdd(
+            builder,
+            lp_loop.counter,
+            LLVMConstInt(LLVMInt32Type(), i, 0), "");
+         LLVMValueRef fetch_ptr = LLVMBuildGEP(builder, fetch_elts,
+                                               &true_index, 1, "");
+         true_index = LLVMBuildLoad(builder, fetch_ptr, "fetch_elt");
+         for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
+            struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
+            LLVMValueRef vb_index = LLVMConstInt(LLVMInt32Type(),
+                                                 velem->vertex_buffer_index,
+                                                 0);
+            LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr,
+                                           &vb_index, 1, "");
+            generate_fetch(builder, vbuffers_ptr,
+                           &aos_attribs[j][i], velem, vb, true_index);
+         }
+      }
+      convert_to_soa(builder, aos_attribs, inputs,
+                     draw->pt.nr_vertex_elements);
+
+      ptr_aos = (const LLVMValueRef (*)[NUM_CHANNELS]) inputs;
+      generate_vs(llvm,
+                  builder,
+                  outputs,
+                  ptr_aos,
+                  context_ptr);
+
+      convert_to_aos(builder, io, outputs,
+                     draw->vs.vertex_shader->info.num_outputs,
+                     max_vertices);
+   }
+   lp_build_loop_end_cond(builder, fetch_count, step, LLVMIntUGE, &lp_loop);
+
+   LLVMBuildRetVoid(builder);
+
+   LLVMDisposeBuilder(builder);
+
+   /*
+    * Translate the LLVM IR into machine code.
+    */
+#ifdef DEBUG
+   if(LLVMVerifyFunction(variant->function_elts, LLVMPrintMessageAction)) {
+      LLVMDumpValue(variant->function_elts);
+      assert(0);
+   }
+#endif
+
+   LLVMRunFunctionPassManager(llvm->pass, variant->function_elts);
+
+   if (0) {
+      LLVMDumpValue(variant->function_elts);
+      debug_printf("\n");
+   }
+   variant->jit_func_elts = (draw_jit_vert_func_elts)LLVMGetPointerToGlobal(
+      llvm->draw->engine, variant->function_elts);
+
+   if (0)
+      lp_disassemble(variant->jit_func_elts);
 }
 
 void

@@ -94,6 +94,16 @@ typedef void
                       unsigned stride,
                       struct pipe_vertex_buffer *vertex_buffers);
 
+
+typedef void
+(*draw_jit_vert_func_elts)(struct draw_jit_context *context,
+                           struct vertex_header *io,
+                           const char *vbuffers[PIPE_MAX_ATTRIBS],
+                           const unsigned *fetch_elts,
+                           unsigned fetch_count,
+                           unsigned stride,
+                           struct pipe_vertex_buffer *vertex_buffers);
+
 struct draw_llvm {
    struct draw_context *draw;
 
@@ -122,7 +132,9 @@ struct draw_llvm_variant
 {
    struct draw_llvm_variant_key key;
    LLVMValueRef function;
+   LLVMValueRef function_elts;
    draw_jit_vert_func jit_func;
+   draw_jit_vert_func_elts jit_func_elts;
 
    struct draw_llvm_variant *next;
 };

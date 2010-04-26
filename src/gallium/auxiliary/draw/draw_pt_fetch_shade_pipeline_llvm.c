@@ -167,8 +167,6 @@ static void llvm_middle_end_run( struct draw_pt_middle_end *middle,
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *vshader = draw->vs.vertex_shader;
-   struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align( fetch_count, 4 );
 
@@ -182,35 +180,13 @@ static void llvm_middle_end_run( struct draw_pt_middle_end *middle,
       return;
    }
 
-   /* Fetch into our vertex buffer
-    */
-   draw_pt_fetch_run( fpme->fetch,
-		      fetch_elts,
-		      fetch_count,
-		      (char *)pipeline_verts );
-
-   /* Run the shader, note that this overwrites the data[] parts of
-    * the pipeline verts.  If there is no shader, eg if
-    * bypass_vs_clip_and_viewport, then the inputs == outputs, and are
-    * already in the correct place.*/
-   if (opt & PT_SHADE)
-   {
-      vshader->run_linear(vshader,
-                          (const float (*)[4])pipeline_verts->data,
-                          (      float (*)[4])pipeline_verts->data,
-                          draw->pt.user.vs_constants,
-                          fetch_count,
-                          fpme->vertex_size,
-                          fpme->vertex_size);
-      if (gshader)
-         draw_geometry_shader_run(gshader,
-                                  (const float (*)[4])pipeline_verts->data,
-                                  (      float (*)[4])pipeline_verts->data,
-                                  draw->pt.user.gs_constants,
-                                  fetch_count,
-                                  fpme->vertex_size,
-                                  fpme->vertex_size);
-   }
+   fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
+                                         pipeline_verts,
+                                         (const char **)draw->pt.user.vbuffer,
+                                         fetch_elts,
+                                         fetch_count,
+                                         fpme->vertex_size,
+                                         draw->pt.vertex_buffer );
 
    if (draw_pt_post_vs_run( fpme->post_vs,
 			    pipeline_verts,
