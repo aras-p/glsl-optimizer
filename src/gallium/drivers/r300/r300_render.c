@@ -166,6 +166,24 @@ static boolean immd_is_good_idea(struct r300_context *r300,
  * after resolving fallback issues (e.g. stencil ref two-sided).             *
  ****************************************************************************/
 
+static boolean r500_emit_index_offset(struct r300_context *r300, int indexBias)
+{
+    CS_LOCALS(r300);
+
+    if (r300->screen->caps.is_r500 &&
+        r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
+        BEGIN_CS(2);
+        OUT_CS_REG(R500_VAP_INDEX_OFFSET,
+                   (indexBias & 0xFFFFFF) | (indexBias < 0 ? 1<<24 : 0));
+        END_CS;
+    } else {
+        if (indexBias)
+            return FALSE; /* Can't do anything :( */
+    }
+
+    return TRUE;
+}
+
 void r500_emit_draw_arrays_immediate(struct r300_context *r300,
                                      unsigned mode,
                                      unsigned start,
@@ -221,6 +239,8 @@ void r500_emit_draw_arrays_immediate(struct r300_context *r300,
     r300_emit_buffer_validate(r300, FALSE, NULL);
     r300_emit_dirty_state(r300);
 
+    r500_emit_index_offset(r300, 0);
+
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
@@ -265,16 +285,17 @@ void r500_emit_draw_arrays(struct r300_context *r300,
     boolean alt_num_verts = count > 65535;
     CS_LOCALS(r300);
 
+    if (count >= (1 << 24)) {
+        fprintf(stderr, "r300: Got a huge number of vertices: %i, "
+                "refusing to render.\n", count);
+        return;
+    }
+
+    r500_emit_index_offset(r300, 0);
+
+    BEGIN_CS(7 + (alt_num_verts ? 2 : 0));
     if (alt_num_verts) {
-        if (count >= (1 << 24)) {
-            fprintf(stderr, "r300: Got a huge number of vertices: %i, "
-                    "refusing to render.\n", count);
-            return;
-        }
-        BEGIN_CS(9);
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
-    } else {
-        BEGIN_CS(7);
     }
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
@@ -309,18 +330,20 @@ void r500_emit_draw_elements(struct r300_context *r300,
         return;
     }
 
-    assert(indexBias == 0);
-
     maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
 
     DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
         count, minIndex, maxIndex);
 
+    if (!r500_emit_index_offset(r300, indexBias)) {
+        fprintf(stderr, "r300: Got a non-zero index bias, "
+                "refusing to render.\n");
+        return;
+    }
+
+    BEGIN_CS(13 + (alt_num_verts ? 2 : 0));
     if (alt_num_verts) {
-        BEGIN_CS(15);
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
-    } else {
-        BEGIN_CS(13);
     }
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
@@ -879,6 +902,8 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
 
+    r500_emit_index_offset(r300, 0);
+
     BEGIN_CS(2);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
@@ -900,6 +925,8 @@ static void r500_render_draw(struct vbuf_render* render,
     r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
     r300_emit_buffer_validate(r300, FALSE, NULL);
     r300_emit_dirty_state(r300);
+
+    r500_emit_index_offset(r300, 0);
 
     BEGIN_CS(dwords);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
