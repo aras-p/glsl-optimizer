@@ -41,9 +41,6 @@
 #include "r300_render.h"
 #include "r300_state_derived.h"
 
-/* XXX The DRM rejects VAP_ALT_NUM_VERTICES.. */
-//#define ENABLE_ALT_NUM_VERTS
-
 static uint32_t r300_translate_primitive(unsigned prim)
 {
     switch (prim) {
@@ -265,11 +262,7 @@ void r500_emit_draw_arrays(struct r300_context *r300,
                            unsigned mode,
                            unsigned count)
 {
-#if defined(ENABLE_ALT_NUM_VERTS)
     boolean alt_num_verts = count > 65535;
-#else
-    boolean alt_num_verts = FALSE;
-#endif
     CS_LOCALS(r300);
 
     if (alt_num_verts) {
@@ -307,11 +300,7 @@ void r500_emit_draw_elements(struct r300_context *r300,
 {
     uint32_t count_dwords;
     uint32_t offset_dwords = indexSize * start / sizeof(uint32_t);
-#if defined(ENABLE_ALT_NUM_VERTS)
     boolean alt_num_verts = count > 65535;
-#else
-    boolean alt_num_verts = FALSE;
-#endif
     CS_LOCALS(r300);
 
     if (count >= (1 << 24)) {
@@ -541,12 +530,9 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_resource* orgIndexBuffer = indexBuffer;
-#if defined(ENABLE_ALT_NUM_VERTS)
     boolean alt_num_verts = r300->screen->caps.is_r500 &&
-                            count > 65536;
-#else
-    boolean alt_num_verts = FALSE;
-#endif
+                            count > 65536 &&
+                            r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
 
     if (r300->skip_rendering) {
@@ -622,12 +608,9 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                       unsigned start, unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
-#if defined(ENABLE_ALT_NUM_VERTS)
     boolean alt_num_verts = r300->screen->caps.is_r500 &&
-                            count > 65536;
-#else
-    boolean alt_num_verts = FALSE;
-#endif
+                            count > 65536 &&
+                            r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
 
     if (r300->skip_rendering) {
