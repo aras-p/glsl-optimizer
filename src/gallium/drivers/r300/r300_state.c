@@ -1283,13 +1283,16 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
         memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
 
         if (r300_screen(pipe->screen)->caps.has_tcl) {
-            /* Check if the format is aligned to the size of DWORD. */
+            r300_vertex_psc(velems);
+
+            /* Check if the format is aligned to the size of DWORD.
+             * We only care about the blocksizes of the formats since
+             * swizzles are already set up. */
             for (i = 0; i < count; i++) {
                 format = &velems->velem[i].src_format;
 
                 /* Replace some formats with their aligned counterparts,
                  * this is OK because we check for aligned strides too. */
-                /* XXX We need X instead of A in the format names. */
                 switch (*format) {
                     case PIPE_FORMAT_R8G8B8_UNORM:
                         *format = PIPE_FORMAT_R8G8B8X8_UNORM;
@@ -1330,7 +1333,6 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                 }
             }
 
-            r300_vertex_psc(velems);
         }
     }
     return velems;
