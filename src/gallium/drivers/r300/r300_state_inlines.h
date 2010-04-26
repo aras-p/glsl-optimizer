@@ -453,9 +453,16 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
         return 0;
     }
 
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < desc->nr_channels; i++) {
         swizzle |=
             MIN2(desc->swizzle[i], R300_SWIZZLE_SELECT_FP_ONE) << (3*i);
+    }
+    /* Set (0,0,0,1) in unused components. */
+    for (; i < 3; i++) {
+        swizzle |= R300_SWIZZLE_SELECT_FP_ZERO << (3*i);
+    }
+    for (; i < 4; i++) {
+        swizzle |= R300_SWIZZLE_SELECT_FP_ONE << (3*i);
     }
 
     return swizzle | (0xf << R300_WRITE_ENA_SHIFT);
