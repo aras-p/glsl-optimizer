@@ -19,9 +19,9 @@ MESA_GLAPI_OUTPUTS = \
 	$(MESA_GLAPI_DIR)/glapidispatch.h
 
 MESA_GLAPI_ASM_OUTPUTS = \
-	$(MESA_DIR)/x86/glapi_x86.S \
-	$(MESA_DIR)/x86-64/glapi_x86-64.S \
-	$(MESA_DIR)/sparc/glapi_sparc.S
+	$(MESA_GLAPI_DIR)/glapi_x86.S \
+	$(MESA_GLAPI_DIR)/glapi_x86-64.S \
+	$(MESA_GLAPI_DIR)/glapi_sparc.S
 
 MESA_OUTPUTS = \
 	$(MESA_GLAPI_OUTPUTS) \
@@ -140,13 +140,13 @@ $(MESA_GLAPI_DIR)/glapidispatch.h: gl_table.py $(COMMON)
 
 ######################################################################
 
-$(MESA_DIR)/x86/glapi_x86.S: gl_x86_asm.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapi_x86.S: gl_x86_asm.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-$(MESA_DIR)/x86-64/glapi_x86-64.S: gl_x86-64_asm.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapi_x86-64.S: gl_x86-64_asm.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-$(MESA_DIR)/sparc/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
+$(MESA_GLAPI_DIR)/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
 ######################################################################

@@ -291,7 +291,7 @@ if env['platform'] != 'winddk':
 			'x86/read_rgba_span_x86.S',
 		]
 		glapi_sources += [
-			'x86/glapi_x86.S',
+			'glapi/glapi_x86.S',
 		]
 	elif gcc and env['machine'] == 'x86_64':
 		env.Append(CPPDEFINES = [
@@ -302,7 +302,7 @@ if env['platform'] != 'winddk':
 			'x86-64/xform4.S',
 		]
 		glapi_sources += [
-			'x86-64/glapi_x86-64.S'
+			'glapi/glapi_x86-64.S'
 		]
 	elif gcc and env['machine'] == 'ppc':
 		env.Append(CPPDEFINES = [
@@ -322,7 +322,7 @@ if env['platform'] != 'winddk':
 			'sparc/xform.S',
 		]
 		glapi_sources += [
-			'sparc/glapi_sparc.S'
+			'glapi/glapi_sparc.S'
 		]
 	else:
 		pass

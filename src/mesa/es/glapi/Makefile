@@ -8,9 +8,9 @@ OUTPUTS :=			\
 	glapi/glapitable.h	\
 	glapi/glapitemp.h	\
 	glapi/glprocs.h		\
-	sparc/glapi_sparc.S	\
-	x86-64/glapi_x86-64.S	\
-	x86/glapi_x86.S		\
+	glapi/glapi_sparc.S	\
+	glapi/glapi_x86-64.S	\
+	glapi/glapi_x86.S	\
 	main/remap_helper.h
 
 COMMON = gl_XML.py glX_XML.py license.py typeexpr.py
@@ -59,13 +59,13 @@ endef
 %/glprocs.h: $(GLAPI)/gl_procs.py $(COMMON)
 	$(call gen-glapi,-c)
 
-%/sparc/glapi_sparc.S: $(GLAPI)/gl_SPARC_asm.py $(COMMON)
+%/glapi_sparc.S: $(GLAPI)/gl_SPARC_asm.py $(COMMON)
 	$(call gen-glapi)
 
-%/x86-64/glapi_x86-64.S: $(GLAPI)/gl_x86-64_asm.py $(COMMON)
+%/glapi_x86-64.S: $(GLAPI)/gl_x86-64_asm.py $(COMMON)
 	$(call gen-glapi)
 
-%/x86/glapi_x86.S: $(GLAPI)/gl_x86_asm.py $(COMMON)
+%/glapi_x86.S: $(GLAPI)/gl_x86_asm.py $(COMMON)
 	$(call gen-glapi)
 
 %/main/remap_helper.h: $(GLAPI)/remap_helper.py $(COMMON)

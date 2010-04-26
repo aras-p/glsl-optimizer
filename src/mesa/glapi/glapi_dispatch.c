@@ -27,8 +27,8 @@
  * \file glapi_dispatch.c
  *
  * This file generates all the gl* function entrypoints.  This code is not
- * used if optimized assembly stubs are available (e.g., using x86/glapi_x86.S
- * on IA32 or sparc/glapi_sparc.S on SPARC).
+ * used if optimized assembly stubs are available (e.g., using
+ * glapi/glapi_x86.S on IA32 or glapi/glapi_sparc.S on SPARC).
  *
  * \note
  * This file is also used to build the client-side libGL that loads DRI-based

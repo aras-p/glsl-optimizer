@@ -308,13 +308,13 @@ X86_SOURCES =			\
 	x86/read_rgba_span_x86.S
 
 X86_API =			\
-	x86/glapi_x86.S
+	glapi/glapi_x86.S
 
 X86-64_SOURCES =		\
 	x86-64/xform4.S
 
 X86-64_API =			\
-	x86-64/glapi_x86-64.S
+	glapi/glapi_x86-64.S
 
 SPARC_SOURCES =			\
 	sparc/clip.S		\
@@ -322,7 +322,7 @@ SPARC_SOURCES =			\
 	sparc/xform.S
 
 SPARC_API =			\
-	sparc/glapi_sparc.S
+	glapi/glapi_sparc.S
 
 COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c	\
