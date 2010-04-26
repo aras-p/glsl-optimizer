@@ -39,7 +39,7 @@ enum r300_value_id {
     R300_VID_GB_PIPES,
     R300_VID_Z_PIPES,
     R300_VID_SQUARE_TILING_SUPPORT,
-    R300_VID_TEX3D_MIP_BUG,
+    R300_VID_DRM_2_3_0,
 };
 
 enum r300_reference_domain { /* bitfield */

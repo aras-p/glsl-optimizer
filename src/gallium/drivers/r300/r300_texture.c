@@ -762,12 +762,12 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
 static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
                                            struct r300_texture *tex)
 {
-    /* The kernels <= 2.6.34-rc3 compute the size of mipmapped 3D textures
+    /* The kernels <= 2.6.34-rc4 compute the size of mipmapped 3D textures
      * incorrectly. This is a workaround to prevent CS from being rejected. */
 
     unsigned i, size;
 
-    if (screen->rws->get_value(screen->rws, R300_VID_TEX3D_MIP_BUG) &&
+    if (screen->rws->get_value(screen->rws, R300_VID_DRM_2_3_0) &&
         tex->b.b.target == PIPE_TEXTURE_3D &&
         tex->b.b.last_level > 0) {
         size = 0;

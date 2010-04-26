@@ -43,15 +43,17 @@ void r300_emit_invariant_state(struct r300_context* r300,
 {
     CS_LOCALS(r300);
 
+    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
+        /* Subpixel multisampling for AA. */
+        BEGIN_CS(4);
+        OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
+        OUT_CS_REG(R300_GB_MSPOS1, 0x6666666);
+        END_CS;
+    }
+
     BEGIN_CS(12 + (r300->screen->caps.has_tcl ? 2 : 0));
 
     /*** Graphics Backend (GB) ***/
-    /* Subpixel multisampling for AA
-     * These are commented out because glisse's CS checker doesn't like them.
-     * I presume these will be re-enabled later.
-     * OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
-     * OUT_CS_REG(R300_GB_MSPOS1, 0x6666666);
-     */
     /* Source of fog depth */
     OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
 
