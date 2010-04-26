@@ -151,7 +151,7 @@ dri_make_current(__DRIcontext * cPriv,
 
       old_st = stapi->get_current(stapi);
       if (old_st && old_st != ctx->st)
-	 ctx->st->flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
+	 old_st->flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
       ++ctx->bind_count;
 
