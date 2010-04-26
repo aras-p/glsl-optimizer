@@ -61,6 +61,7 @@ typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
 struct translate_buffer {
    const void *base_ptr;
    unsigned stride;
+   unsigned max_index;
 };
 
 struct translate_buffer_varient {
@@ -423,6 +424,11 @@ static boolean init_inputs( struct translate_sse *p,
          } else {
             x86_mov(p->func, tmp_EAX, elt);
          }
+
+         /*
+          * TODO: Respect translate_buffer::max_index.
+          */
+
          x86_imul(p->func, tmp_EAX, buf_stride);
          x86_add(p->func, tmp_EAX, buf_base_ptr);
 
@@ -666,13 +672,15 @@ static boolean build_vertex_emit( struct translate_sse *p,
 static void translate_sse_set_buffer( struct translate *translate,
 				unsigned buf,
 				const void *ptr,
-				unsigned stride )
+				unsigned stride,
+				unsigned max_index )
 {
    struct translate_sse *p = (struct translate_sse *)translate;
 
    if (buf < p->nr_buffers) {
       p->buffer[buf].base_ptr = (char *)ptr;
       p->buffer[buf].stride = stride;
+      p->buffer[buf].max_index = max_index;
    }
 
    if (0) debug_printf("%s %d/%d: %p %d\n", 
