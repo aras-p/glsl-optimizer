@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "drawtex.h"
+#include "main/drawtex.h"
 #include "main/state.h"
 #include "main/imports.h"
 

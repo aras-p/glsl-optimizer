@@ -27,6 +27,7 @@ MAIN_SOURCES = \
 	main/dlist.c \
 	main/dlopen.c \
 	main/drawpix.c \
+	main/drawtex.c \
 	main/enable.c \
 	main/enums.c \
 	main/eval.c \

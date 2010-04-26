@@ -3,7 +3,6 @@ include $(MESA)/sources.mak
 # LOCAL sources
 
 LOCAL_ES1_SOURCES :=			\
-	main/drawtex.c			\
 	glapi/glapi-es1/main/enums.c
 
 LOCAL_ES1_GALLIUM_SOURCES :=		\
