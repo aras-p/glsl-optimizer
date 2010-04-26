@@ -71,9 +71,6 @@ egl_g3d_create_st_api(enum st_api_type api)
       return NULL;
    }
 
-   if (!proc_name)
-      return NULL;
-
    lib = util_dl_open(NULL);
    if (lib) {
       proc = util_dl_get_proc_address(lib, proc_name);
