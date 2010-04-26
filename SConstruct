@@ -113,8 +113,10 @@ if env['llvm'] and 'llvmpipe' not in env['drivers']:
     env['drivers'].append('llvmpipe')
 
 # Includes
-env.Append(CPPPATH = [
+env.Prepend(CPPPATH = [
 	'#/include',
+])
+env.Append(CPPPATH = [
 	'#/src/gallium/include',
 	'#/src/gallium/auxiliary',
 	'#/src/gallium/drivers',
