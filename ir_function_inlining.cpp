@@ -205,8 +205,7 @@ ir_function_cloning_visitor::visit(ir_dereference *ir)
       this->result = new ir_dereference(var, index);
    } else {
       assert(ir->mode == ir_dereference::ir_reference_record);
-      /* FINISHME: inlining of structure references */
-      assert(0);
+      this->result = new ir_dereference(var, strdup(ir->selector.field));
    }
 }
 
