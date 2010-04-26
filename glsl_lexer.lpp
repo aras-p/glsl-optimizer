@@ -21,6 +21,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#include <ctype.h>
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
@@ -43,6 +44,13 @@
 
 %x PP COMMENT
 
+DEC_INT		[1-9][0-9]*
+HEX_INT		0[xX][0-9a-fA-F]+
+OCT_INT		0[0-7]*
+INT		({DEC_INT}|{HEX_INT}|{OCT_INT})
+SPC		[ \t]*
+SPCP		[ \t]+
+HASH		^{SPC}#{SPC}
 %%
 
 "/*"			{ yy_push_state(COMMENT, yyscanner); }
@@ -59,7 +67,35 @@
 ^[ \t]*#[ \t]*$			;
 ^[ \t]*#[ \t]*version		{ BEGIN PP; return VERSION; }
 ^[ \t]*#[ \t]*extension		{ BEGIN PP; return EXTENSION; }
-^[ \t]*#[ \t]*line		{ BEGIN PP; return LINE; }
+{HASH}line{SPCP}{INT}{SPCP}{INT}{SPC}$ {
+				   /* Eat characters until the first digit is
+				    * encountered
+				    */
+				   char *ptr = yytext;
+				   while (!isdigit(*ptr))
+				      ptr++;
+
+				   /* Subtract one from the line number because
+				    * yylineno is zero-based instead of
+				    * one-based.
+				    */
+				   yylineno = strtol(ptr, &ptr, 0) - 1;
+				   yylloc->source = strtol(ptr, NULL, 0);
+				}
+{HASH}line{SPCP}{INT}{SPC}$	{
+				   /* Eat characters until the first digit is
+				    * encountered
+				    */
+				   char *ptr = yytext;
+				   while (!isdigit(*ptr))
+				      ptr++;
+
+				   /* Subtract one from the line number because
+				    * yylineno is zero-based instead of
+				    * one-based.
+				    */
+				   yylineno = strtol(ptr, &ptr, 0) - 1;
+				}
 ^[ \t]*#[ \t]*pragma		{ BEGIN PP; return PRAGMA; }
 <PP>\/\/[^\n]*			{ }
 <PP>[ \t\r]*			{ }
