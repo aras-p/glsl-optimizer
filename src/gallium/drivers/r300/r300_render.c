@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,6 +40,8 @@
 #include "r300_emit.h"
 #include "r300_reg.h"
 #include "r300_state_derived.h"
+
+#include <limits.h>
 
 static uint32_t r300_translate_primitive(unsigned prim)
 {
@@ -113,55 +116,100 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
     return color_control;
 }
 
-static void r500_emit_index_offset(struct r300_context *r300, int index_bias)
+static boolean index_bias_supported(struct r300_context *r300)
+{
+    return r300->screen->caps.is_r500 &&
+           r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
+}
+
+static void r500_emit_index_bias(struct r300_context *r300, int index_bias)
 {
     CS_LOCALS(r300);
 
-    if (r300->screen->caps.is_r500 &&
-        r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
-        BEGIN_CS(2);
-        OUT_CS_REG(R500_VAP_INDEX_OFFSET,
-                   (index_bias & 0xFFFFFF) | (index_bias < 0 ? 1<<24 : 0));
-        END_CS;
-    } else {
-        if (index_bias) {
-            fprintf(stderr, "r300: Non-zero index bias is unsupported "
-                            "on this hardware.\n");
-            assert(0);
+    BEGIN_CS(2);
+    OUT_CS_REG(R500_VAP_INDEX_OFFSET,
+               (index_bias & 0xFFFFFF) | (index_bias < 0 ? 1<<24 : 0));
+    END_CS;
+}
+
+/* This function splits the index bias value into two parts:
+ * - buffer_offset: the value that can be safely added to buffer offsets
+ *   in r300_emit_aos (it must yield a positive offset when added to
+ *   a vertex buffer offset)
+ * - index_offset: the value that must be manually subtracted from indices
+ *   in an index buffer to achieve negative offsets. */
+static void r300_split_index_bias(struct r300_context *r300, int index_bias,
+                                  int *buffer_offset, int *index_offset)
+{
+    struct pipe_vertex_buffer *vb, *vbufs = r300->vertex_buffer;
+    struct pipe_vertex_element *velem = r300->velems->velem;
+    unsigned i, size;
+    int max_neg_bias;
+
+    if (index_bias < 0) {
+        /* See how large index bias we may subtract. We must be careful
+         * here because negative buffer offsets are not allowed
+         * by the DRM API. */
+        max_neg_bias = INT_MAX;
+        for (i = 0; i < r300->velems->count; i++) {
+            vb = &vbufs[velem[i].vertex_buffer_index];
+            size = (vb->buffer_offset + velem[i].src_offset) / vb->stride;
+            max_neg_bias = MIN2(max_neg_bias, size);
         }
+
+        /* Now set the minimum allowed value. */
+        *buffer_offset = MAX2(-max_neg_bias, index_bias);
+    } else {
+        /* A positive index bias is OK. */
+        *buffer_offset = index_bias;
     }
+
+    *index_offset = index_bias - *buffer_offset;
 }
 
 enum r300_prepare_flags {
-    PREP_FIRST_DRAW     = (1 << 0),
-    PREP_VALIDATE_VBOS  = (1 << 1),
-    PREP_EMIT_AOS       = (1 << 2),
-    PREP_EMIT_AOS_SWTCL = (1 << 3),
-    PREP_INDEXED        = (1 << 4)
+    PREP_FIRST_DRAW     = (1 << 0), /* call emit_dirty_state and friends? */
+    PREP_VALIDATE_VBOS  = (1 << 1), /* validate VBOs? */
+    PREP_EMIT_AOS       = (1 << 2), /* call emit_aos? */
+    PREP_EMIT_AOS_SWTCL = (1 << 3), /* call emit_aos_swtcl? */
+    PREP_INDEXED        = (1 << 4)  /* is this draw_elements? */
 };
 
-/* Check if the requested number of dwords is available in the CS and
+/**
+ * Check if the requested number of dwords is available in the CS and
  * if not, flush. Then validate buffers and emit dirty state.
- * Return TRUE if flush occured. */
+ * \param r300          The context.
+ * \param flags         See r300_prepare_flags.
+ * \param index_buffer  The index buffer to validate. The parameter may be NULL.
+ * \param cs_dwords     The number of dwords to reserve in CS.
+ * \param aos_offset    The offset passed to emit_aos.
+ * \param index_bias    The index bias to emit.
+ * \param end_cs_dwords The number of free dwords which must be available
+ *                      at the end of CS after drawing in case the CS space
+ *                      management is performed by a draw_* function manually.
+ *                      The parameter may be NULL.
+ */
 static void r300_prepare_for_rendering(struct r300_context *r300,
                                        enum r300_prepare_flags flags,
                                        struct pipe_resource *index_buffer,
                                        unsigned cs_dwords,
-                                       unsigned aos_offset,
+                                       int aos_offset,
                                        int index_bias,
                                        unsigned *end_cs_dwords)
 {
-    boolean flushed = FALSE;
-    boolean first_draw = flags & PREP_FIRST_DRAW;
-    boolean emit_aos = flags & PREP_EMIT_AOS;
+    unsigned end_dwords    = 0;
+    boolean flushed        = FALSE;
+    boolean first_draw     = flags & PREP_FIRST_DRAW;
+    boolean emit_aos       = flags & PREP_EMIT_AOS;
     boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
-    unsigned end_dwords = 0;
+    boolean indexed        = flags & PREP_INDEXED;
+    boolean hw_index_bias  = index_bias_supported(r300);
 
     /* Add dirty state, index offset, and AOS. */
     if (first_draw) {
         cs_dwords += r300_get_num_dirty_dwords(r300);
 
-        if (r300->screen->caps.is_r500)
+        if (hw_index_bias)
             cs_dwords += 2; /* emit_index_offset */
 
         if (emit_aos)
@@ -186,11 +234,18 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
     if (first_draw || flushed) {
         r300_emit_buffer_validate(r300, flags & PREP_VALIDATE_VBOS, index_buffer);
         r300_emit_dirty_state(r300);
-        r500_emit_index_offset(r300, index_bias);
+        if (hw_index_bias) {
+            if (r300->screen->caps.has_tcl)
+                r500_emit_index_bias(r300, index_bias);
+            else
+                r500_emit_index_bias(r300, 0);
+        }
+
         if (emit_aos)
-            r300_emit_aos(r300, aos_offset, flags & PREP_INDEXED);
+            r300_emit_aos(r300, aos_offset, indexed);
+
         if (emit_aos_swtcl)
-            r300_emit_aos_swtcl(r300, flags & PREP_INDEXED);
+            r300_emit_aos_swtcl(r300, indexed);
     }
 
     if (end_cs_dwords)
@@ -429,6 +484,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 
 static void r300_shorten_ubyte_elts(struct r300_context* r300,
                                     struct pipe_resource** elts,
+                                    int index_bias,
                                     unsigned start,
                                     unsigned count)
 {
@@ -450,7 +506,7 @@ static void r300_shorten_ubyte_elts(struct r300_context* r300,
     in_map += start;
 
     for (i = 0; i < count; i++) {
-        *out_map = (unsigned short)*in_map;
+        *out_map = (unsigned short)(*in_map + index_bias);
         in_map++;
         out_map++;
     }
@@ -461,27 +517,69 @@ static void r300_shorten_ubyte_elts(struct r300_context* r300,
     *elts = new_elts;
 }
 
-static void r300_align_ushort_elts(struct r300_context *r300,
-                                   struct pipe_resource **elts,
-                                   unsigned start, unsigned count)
+static void r300_rebuild_ushort_elts(struct r300_context *r300,
+                                     struct pipe_resource **elts,
+                                     int index_bias,
+                                     unsigned start, unsigned count)
 {
-    struct pipe_context* context = &r300->context;
+    struct pipe_context *context = &r300->context;
     struct pipe_transfer *in_transfer = NULL;
     struct pipe_transfer *out_transfer = NULL;
-    struct pipe_resource* new_elts;
+    struct pipe_resource *new_elts;
     unsigned short *in_map;
     unsigned short *out_map;
+    unsigned i;
 
     new_elts = pipe_buffer_create(context->screen,
 				  PIPE_BIND_INDEX_BUFFER,
 				  2 * count);
 
     in_map = pipe_buffer_map(context, *elts,
-			     PIPE_TRANSFER_READ, &in_transfer);
+                             PIPE_TRANSFER_READ, &in_transfer);
     out_map = pipe_buffer_map(context, new_elts,
 			      PIPE_TRANSFER_WRITE, &out_transfer);
 
-    memcpy(out_map, in_map+start, 2 * count);
+    in_map += start;
+    for (i = 0; i < count; i++) {
+        *out_map = (unsigned short)(*in_map + index_bias);
+        in_map++;
+        out_map++;
+    }
+
+    pipe_buffer_unmap(context, *elts, in_transfer);
+    pipe_buffer_unmap(context, new_elts, out_transfer);
+
+    *elts = new_elts;
+}
+
+static void r300_rebuild_uint_elts(struct r300_context *r300,
+                                   struct pipe_resource **elts,
+                                   int index_bias,
+                                   unsigned start, unsigned count)
+{
+    struct pipe_context *context = &r300->context;
+    struct pipe_transfer *in_transfer = NULL;
+    struct pipe_transfer *out_transfer = NULL;
+    struct pipe_resource *new_elts;
+    unsigned int *in_map;
+    unsigned int *out_map;
+    unsigned i;
+
+    new_elts = pipe_buffer_create(context->screen,
+                                  PIPE_BIND_INDEX_BUFFER,
+                                  2 * count);
+
+    in_map = pipe_buffer_map(context, *elts,
+                             PIPE_TRANSFER_READ, &in_transfer);
+    out_map = pipe_buffer_map(context, new_elts,
+                              PIPE_TRANSFER_WRITE, &out_transfer);
+
+    in_map += start;
+    for (i = 0; i < count; i++) {
+        *out_map = (unsigned int)(*in_map + index_bias);
+        in_map++;
+        out_map++;
+    }
 
     pipe_buffer_unmap(context, *elts, in_transfer);
     pipe_buffer_unmap(context, new_elts, out_transfer);
@@ -506,6 +604,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
                             count > 65536 &&
                             r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
+    int buffer_offset = 0, index_offset = 0; /* for index bias emulation */
 
     if (r300->skip_rendering) {
         return;
@@ -515,13 +614,31 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         return;
     }
 
-    if (indexSize == 1) {
-        r300_shorten_ubyte_elts(r300, &indexBuffer, start, count);
-        indexSize = 2;
-        start = 0;
-    } else if (indexSize == 2 && start % 2 != 0) {
-        r300_align_ushort_elts(r300, &indexBuffer, start, count);
-        start = 0;
+    if (indexBias && !index_bias_supported(r300)) {
+        r300_split_index_bias(r300, indexBias, &buffer_offset, &index_offset);
+    }
+
+    /* Rebuild the index buffer if needed. */
+    switch (indexSize) {
+        case 1:
+            r300_shorten_ubyte_elts(r300, &indexBuffer, index_offset, start, count);
+            indexSize = 2;
+            start = 0;
+            break;
+
+        case 2:
+            if (start % 2 != 0 || index_offset) {
+                r300_rebuild_ushort_elts(r300, &indexBuffer, index_offset, start, count);
+                start = 0;
+            }
+            break;
+
+        case 4:
+            if (index_offset) {
+                r300_rebuild_uint_elts(r300, &indexBuffer, index_offset, start, count);
+                start = 0;
+            }
+            break;
     }
 
     r300_update_derived_state(r300);
@@ -530,7 +647,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     /* 15 dwords for emit_draw_elements */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-        indexBuffer, 15, 0, indexBias, NULL);
+        indexBuffer, 15, buffer_offset, indexBias, NULL);
 
     u_upload_flush(r300->upload_vb);
     u_upload_flush(r300->upload_ib);
@@ -551,7 +668,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
             if (count) {
                 r300_prepare_for_rendering(r300,
                     PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-                    indexBuffer, 15, 0, indexBias, NULL);
+                    indexBuffer, 15, buffer_offset, indexBias, NULL);
             }
         } while (count);
     }

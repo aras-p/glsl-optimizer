@@ -815,7 +815,7 @@ void r300_emit_textures_state(struct r300_context *r300,
     END_CS;
 }
 
-void r300_emit_aos(struct r300_context* r300, unsigned offset, boolean indexed)
+void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed)
 {
     struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
