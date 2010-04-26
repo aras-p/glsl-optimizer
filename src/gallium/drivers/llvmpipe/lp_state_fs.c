@@ -621,7 +621,6 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMTypeRef fs_vec_type;
    LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
-   LLVMTypeRef blend_int_vec_type;
    LLVMTypeRef arg_types[15];
    LLVMTypeRef func_type;
    LLVMTypeRef int32_vec4_type = lp_build_int32_vec4_type();
@@ -680,7 +679,6 @@ generate_fragment(struct llvmpipe_context *lp,
    fs_int_vec_type = lp_build_int_vec_type(fs_type);
 
    blend_vec_type = lp_build_vec_type(blend_type);
-   blend_int_vec_type = lp_build_int_vec_type(blend_type);
 
    arg_types[0] = screen->context_ptr_type;            /* context */
    arg_types[1] = LLVMInt32Type();                     /* x */
