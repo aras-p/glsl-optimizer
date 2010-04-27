@@ -399,7 +399,11 @@ test(GLenum type, GLint bits, const char *filename)
 
    /* sanity checks */
    glGetIntegerv(GL_RED_BITS, &cBits);
-   assert(cBits == bits);
+   if (cBits != bits) {
+      fprintf(stderr, "Unable to create %d-bit/channel renderbuffer.\n", bits);
+      fprintf(stderr, "May need to recompile Mesa with CHAN_BITS=16 or 32.\n");
+      return 0;
+   }
    glGetIntegerv(GL_GREEN_BITS, &cBits);
    assert(cBits == bits);
    glGetIntegerv(GL_BLUE_BITS, &cBits);
