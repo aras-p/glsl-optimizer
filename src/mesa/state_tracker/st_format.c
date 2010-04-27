@@ -660,27 +660,6 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 }
 
 
-static GLboolean
-is_depth_or_stencil_format(GLenum internalFormat)
-{
-   switch (internalFormat) {
-   case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_COMPONENT16:
-   case GL_DEPTH_COMPONENT24:
-   case GL_DEPTH_COMPONENT32:
-   case GL_STENCIL_INDEX:
-   case GL_STENCIL_INDEX1_EXT:
-   case GL_STENCIL_INDEX4_EXT:
-   case GL_STENCIL_INDEX8_EXT:
-   case GL_STENCIL_INDEX16_EXT:
-   case GL_DEPTH_STENCIL_EXT:
-   case GL_DEPTH24_STENCIL8_EXT:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
 /**
  * Called by FBO code to choose a PIPE_FORMAT_ for drawing surfaces.
  */
@@ -689,7 +668,7 @@ st_choose_renderbuffer_format(struct pipe_screen *screen,
                               GLenum internalFormat)
 {
    uint usage;
-   if (is_depth_or_stencil_format(internalFormat))
+   if (_mesa_is_depth_or_stencil_format(internalFormat))
       usage = PIPE_BIND_DEPTH_STENCIL;
    else
       usage = PIPE_BIND_RENDER_TARGET;
