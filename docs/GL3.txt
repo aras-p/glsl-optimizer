@@ -34,7 +34,7 @@ glGetStringi command                                  DONE, except for dispatch
 glTexParameterI, glGetTexParameterI commands          DONE, except for dispatch
 glVertexAttribI commands                              not started
 glBindFragDataLocation, glGetFragDataLocation cmds    not started
-glBindBufferRange, glBindBufferBase commands          not started
+glBindBufferRange, glBindBufferBase commands          DONE
 
 
 GL 3.1:
@@ -47,7 +47,7 @@ Primitive restart (GL_NV_primitive_restart)           not started
 Texture buffer objs (GL_ARB_textur_buffer_object)     not started
 Rectangular textures (GL_ARB_texture_rectangle)       DONE
 Uniform buffer objs (GL_ARB_uniform_buffer_object)    not started
-Signed normalized texture formats                     not started
+Signed normalized texture formats                     ~50% done
 
 
 GL 3.2:
