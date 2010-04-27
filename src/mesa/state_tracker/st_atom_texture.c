@@ -33,6 +33,7 @@
  
 
 #include "main/macros.h"
+#include "shader/prog_instruction.h"
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -42,6 +43,54 @@
 #include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
 
+static boolean check_sampler_swizzle(struct pipe_sampler_view *sv,
+				   uint32_t _swizzle)
+{
+   if ((sv->swizzle_r != GET_SWZ(_swizzle, 0)) ||
+       (sv->swizzle_g != GET_SWZ(_swizzle, 1)) ||
+       (sv->swizzle_b != GET_SWZ(_swizzle, 2)) ||
+       (sv->swizzle_a != GET_SWZ(_swizzle, 3)))
+      return true;
+   return false;
+}
+
+static INLINE struct pipe_sampler_view *
+st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
+					  struct st_texture_object *stObj)
+					  
+{
+   struct pipe_sampler_view templ;
+
+   u_sampler_view_default_template(&templ,
+                                   stObj->pt,
+                                   stObj->pt->format);
+
+   if (stObj->base._Swizzle != SWIZZLE_NOOP) {
+      templ.swizzle_r = GET_SWZ(stObj->base._Swizzle, 0);
+      templ.swizzle_g = GET_SWZ(stObj->base._Swizzle, 1);
+      templ.swizzle_b = GET_SWZ(stObj->base._Swizzle, 2);
+      templ.swizzle_a = GET_SWZ(stObj->base._Swizzle, 3);
+   }
+
+   return pipe->create_sampler_view(pipe, stObj->pt, &templ);
+}
+
+
+static INLINE struct pipe_sampler_view *
+st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
+				       struct pipe_context *pipe)
+
+{
+   if (!stObj || !stObj->pt) {
+      return NULL;
+   }
+
+   if (!stObj->sampler_view) {
+      stObj->sampler_view = st_create_texture_sampler_view_from_stobj(pipe, stObj);
+   }
+
+   return stObj->sampler_view;
+}
 
 static void 
 update_textures(struct st_context *st)
@@ -85,9 +134,13 @@ update_textures(struct st_context *st)
 
          st->state.num_textures = su + 1;
 
-         sampler_view = st_get_texture_sampler_view(stObj, pipe);
-      }
+	 /* if sampler view has changed dereference it */
+	 if (stObj->sampler_view)
+	    if (check_sampler_swizzle(stObj->sampler_view, stObj->base._Swizzle))
+	       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
+         sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe);
+      }
       pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
    }
 

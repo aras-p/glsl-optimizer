@@ -248,6 +248,10 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_draw_buffers = GL_TRUE;
    }
 
+   if (screen->get_param(screen, PIPE_CAP_TEXTURE_SWIZZLE) > 0) {
+      ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
+   }
+
    if (screen->get_param(screen, PIPE_CAP_GLSL)) {
       ctx->Extensions.ARB_fragment_shader = GL_TRUE;
       ctx->Extensions.ARB_vertex_shader = GL_TRUE;
