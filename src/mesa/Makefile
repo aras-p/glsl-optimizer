@@ -16,6 +16,7 @@ include sources.mak
 .S.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
+CFLAGS += $(API_DEFINES)
 
 
 # Default: build dependencies, then asm_subdirs, GLSL built-in lib,

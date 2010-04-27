@@ -711,6 +711,37 @@ if test "x$with_dri_drivers" = x; then
     with_dri_drivers=no
 fi
 
+dnl Determine which APIs to support
+AC_ARG_ENABLE([opengl],
+    [AS_HELP_STRING([--disable-opengl],
+        [disable support for standard OpenGL API @<:@default=no@:>@])],
+    [enable_opengl="$enableval"],
+    [enable_opengl=yes])
+AC_ARG_ENABLE([gles1],
+    [AS_HELP_STRING([--enable-gles1],
+        [enable support for OpenGL ES 1.x API @<:@default=no@:>@])],
+    [enable_gles1="$enableval"],
+    [enable_gles1=no])
+AC_ARG_ENABLE([gles2],
+    [AS_HELP_STRING([--enable-gles2],
+        [enable support for OpenGL ES 2.x API @<:@default=no@:>@])],
+    [enable_gles2="$enableval"],
+    [enable_gles2=no])
+
+API_DEFINES=""
+if test "x$enable_opengl" = xno; then
+    API_DEFINES="$API_DEFINES -DFEATURE_GL=0"
+else
+    API_DEFINES="$API_DEFINES -DFEATURE_GL=1"
+fi
+if test "x$enable_gles1" = xyes; then
+    API_DEFINES="$API_DEFINES -DFEATURE_ES1=1"
+fi
+if test "x$enable_gles2" = xyes; then
+    API_DEFINES="$API_DEFINES -DFEATURE_ES2=1"
+fi
+AC_SUBST([API_DEFINES])
+
 dnl If $with_dri_drivers is yes, directories will be added through
 dnl platform checks
 DRI_DIRS=""
