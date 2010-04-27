@@ -11,7 +11,6 @@ OUTPUTS :=			\
 	sparc/glapi_sparc.S	\
 	x86-64/glapi_x86-64.S	\
 	x86/glapi_x86.S		\
-	main/enums.c		\
 	main/remap_helper.h
 
 COMMON = gl_XML.py glX_XML.py license.py typeexpr.py
@@ -64,9 +63,6 @@ endef
 	$(call gen-glapi)
 
 %/x86/glapi_x86.S: $(GLAPI)/gl_x86_asm.py $(COMMON)
-	$(call gen-glapi)
-
-%/main/enums.c: $(GLAPI)/gl_enums.py $(COMMON)
 	$(call gen-glapi)
 
 %/main/remap_helper.h: $(GLAPI)/remap_helper.py $(COMMON)

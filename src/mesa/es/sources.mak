@@ -2,11 +2,7 @@ include $(MESA)/sources.mak
 
 # LOCAL sources
 
-LOCAL_ES1_SOURCES :=			\
-	glapi/glapi-es1/main/enums.c
-
 LOCAL_ES1_GALLIUM_SOURCES :=		\
-	$(LOCAL_ES1_SOURCES)		\
 	state_tracker/st_cb_drawtex.c
 
 # always use local version of GLAPI_ASM_SOURCES
@@ -18,12 +14,6 @@ LOCAL_ES1_INCLUDES :=			\
 	-I./state_tracker		\
 	-I$(MESA)/state_tracker
 
-LOCAL_ES2_SOURCES :=			\
-	glapi/glapi-es2/main/enums.c
-
-LOCAL_ES2_GALLIUM_SOURCES :=		\
-	$(LOCAL_ES2_SOURCES)
-
 LOCAL_ES2_API_ASM := $(subst es1,es2, $(LOCAL_ES1_API_ASM))
 LOCAL_ES2_INCLUDES := $(subst es1,es2, $(LOCAL_ES1_INCLUDES))
 
@@ -34,7 +24,6 @@ MAIN_OMITTED :=				\
 	main/api_exec.c			\
 	main/condrender.c		\
 	main/dlopen.c			\
-	main/enums.c			\
 	main/get.c
 MAIN_SOURCES := $(filter-out $(MAIN_OMITTED), $(MAIN_SOURCES))
 
@@ -86,7 +75,6 @@ MESA_ES1_API_SOURCES :=			\
 MESA_ES1_INCLUDES := $(INCLUDE_DIRS)
 
 # remove LOCAL sources from MESA sources
-MESA_ES1_SOURCES := $(filter-out $(LOCAL_ES1_SOURCES), $(MESA_ES1_SOURCES))
 MESA_ES1_GALLIUM_SOURCES := $(filter-out $(LOCAL_ES1_GALLIUM_SOURCES), $(MESA_ES1_GALLIUM_SOURCES))
 
 # right now es2 and es1 share MESA sources
@@ -100,12 +88,12 @@ MESA_ES2_INCLUDES := $(MESA_ES1_INCLUDES)
 MESA_ES_ASM := $(MESA_ASM_SOURCES)
 
 # collect sources, adjust the pathes
-ES1_SOURCES := $(LOCAL_ES1_SOURCES) $(addprefix $(MESA)/,$(MESA_ES1_SOURCES))
+ES1_SOURCES := $(addprefix $(MESA)/,$(MESA_ES1_SOURCES))
 ES1_GALLIUM_SOURCES := $(LOCAL_ES1_GALLIUM_SOURCES) $(addprefix $(MESA)/,$(MESA_ES1_GALLIUM_SOURCES))
 ES1_API_SOURCES := $(addprefix $(MESA)/,$(MESA_ES1_API_SOURCES))
 
-ES2_SOURCES := $(LOCAL_ES2_SOURCES) $(addprefix $(MESA)/,$(MESA_ES2_SOURCES))
-ES2_GALLIUM_SOURCES := $(LOCAL_ES2_GALLIUM_SOURCES) $(addprefix $(MESA)/,$(MESA_ES2_GALLIUM_SOURCES))
+ES2_SOURCES := $(addprefix $(MESA)/,$(MESA_ES2_SOURCES))
+ES2_GALLIUM_SOURCES := $(addprefix $(MESA)/,$(MESA_ES2_GALLIUM_SOURCES))
 ES2_API_SOURCES := $(addprefix $(MESA)/,$(MESA_ES2_API_SOURCES))
 
 # collect includes
@@ -114,7 +102,6 @@ ES2_INCLUDES := $(LOCAL_ES2_INCLUDES) $(MESA_ES2_INCLUDES)
 
 # collect objects, including asm
 ES1_OBJECTS :=					\
-	$(LOCAL_ES1_SOURCES:.c=.o)		\
 	$(MESA_ES1_SOURCES:.c=.o)		\
 	$(MESA_ES_ASM:.S=.o)
 
@@ -128,12 +115,10 @@ ES1_API_OBJECTS :=				\
 	$(MESA_ES1_API_SOURCES:.c=.o)
 
 ES2_OBJECTS :=					\
-	$(LOCAL_ES2_SOURCES:.c=.o)		\
 	$(MESA_ES2_SOURCES:.c=.o)		\
 	$(MESA_ES_ASM:.S=.o)
 
 ES2_GALLIUM_OBJECTS :=				\
-	$(LOCAL_ES2_GALLIUM_SOURCES:.c=.o)	\
 	$(MESA_ES2_GALLIUM_SOURCES:.c=.o)	\
 	$(MESA_ES_ASM:.S=.o)
 
