@@ -49,9 +49,7 @@ translate_opcode(
    case TGSI_OPCODE_DP2A:       return SVGA3DOP_DP2ADD;
    case TGSI_OPCODE_DP3:        return SVGA3DOP_DP3;
    case TGSI_OPCODE_DP4:        return SVGA3DOP_DP4;
-   case TGSI_OPCODE_ENDFOR:     return SVGA3DOP_ENDLOOP;
    case TGSI_OPCODE_FRC:        return SVGA3DOP_FRC;
-   case TGSI_OPCODE_BGNFOR:     return SVGA3DOP_LOOP;
    case TGSI_OPCODE_MAD:        return SVGA3DOP_MAD;
    case TGSI_OPCODE_MAX:        return SVGA3DOP_MAX;
    case TGSI_OPCODE_MIN:        return SVGA3DOP_MIN;
@@ -2686,7 +2684,6 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
 
    if (emit->info.opcode_count[TGSI_OPCODE_IF] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_BGNLOOP] >= 1 ||
-       emit->info.opcode_count[TGSI_OPCODE_BGNFOR] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_DDX] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_DDY] >= 1 ||
        emit->info.opcode_count[TGSI_OPCODE_SGE] >= 1 ||
