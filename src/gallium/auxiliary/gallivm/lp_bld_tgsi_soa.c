@@ -1589,16 +1589,8 @@ emit_instruction(
       lp_exec_mask_cond_push(&bld->exec_mask, tmp0);
       break;
 
-   case TGSI_OPCODE_BGNFOR:
-      /* fall through */
    case TGSI_OPCODE_BGNLOOP:
       lp_exec_bgnloop(&bld->exec_mask);
-      break;
-
-   case TGSI_OPCODE_REP:
-      /* deprecated */
-      assert(0);
-      return FALSE;
       break;
 
    case TGSI_OPCODE_ELSE:
@@ -1609,16 +1601,8 @@ emit_instruction(
       lp_exec_mask_cond_pop(&bld->exec_mask);
       break;
 
-   case TGSI_OPCODE_ENDFOR:
-      /* fall-through */
    case TGSI_OPCODE_ENDLOOP:
       lp_exec_endloop(&bld->exec_mask);
-      break;
-
-   case TGSI_OPCODE_ENDREP:
-      /* deprecated */
-      assert(0);
-      return FALSE;
       break;
 
    case TGSI_OPCODE_PUSHA:
