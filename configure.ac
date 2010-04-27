@@ -955,7 +955,7 @@ if test "x$enable_egl" = xyes; then
     fi
 
     if test "$with_demos" = yes; then
-        PROGRAM_DIRS="$PROGRAM_DIRS egl/opengl"
+        PROGRAM_DIRS="$PROGRAM_DIRS egl/eglut egl/opengl"
     fi
 fi
 AC_SUBST([EGL_LIB_DEPS])

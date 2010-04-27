@@ -62,9 +62,6 @@ xeglgears: xeglgears.o $(HEADERS) $(LIB_DEP)
 xeglthreads: xeglthreads.o $(HEADERS) $(LIB_DEP)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lpthread -lm $(X11_LIBS)
 
-$(EGLUT_DIR)/libeglut-x11.a $(EGLUT_DIR)/libeglut-screen.a:
-	@$(MAKE) -C $(EGLUT_DIR)
-
 # define the rules for EGLUT demos
 define eglut-demo-rule
 $(1)_x11 $(1)_screen: $(1)_%: $(1).o $(EGLUT_DIR)/libeglut-%.a $(LIB_DEP)
@@ -80,4 +77,3 @@ $(EGLUT_SCREEN_DEMOS):
 clean:
 	-rm -f *.o *~
 	-rm -f $(PROGRAMS) $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
-	@$(MAKE) -C $(EGLUT_DIR) clean
