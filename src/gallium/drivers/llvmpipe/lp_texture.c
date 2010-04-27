@@ -1160,6 +1160,27 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
 }
 
 
+/**
+ * Return size of resource in bytes
+ */
+unsigned
+llvmpipe_resource_size(const struct pipe_resource *resource)
+{
+   const struct llvmpipe_resource *lpr = llvmpipe_resource_const(resource);
+   unsigned lvl, size = 0;
+
+   for (lvl = 0; lvl <= lpr->base.last_level; lvl++) {
+      if (lpr->linear[lvl].data)
+         size += tex_image_size(lpr, lvl, LP_TEX_LAYOUT_LINEAR);
+
+      if (lpr->tiled[lvl].data)
+         size += tex_image_size(lpr, lvl, LP_TEX_LAYOUT_TILED);
+   }
+
+   return size;
+}
+
+
 void
 llvmpipe_init_screen_resource_funcs(struct pipe_screen *screen)
 {
