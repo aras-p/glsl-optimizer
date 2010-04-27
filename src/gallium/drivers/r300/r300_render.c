@@ -235,7 +235,7 @@ void r500_emit_draw_arrays_immediate(struct r300_context *r300,
 
     dwords = 9 + count * vertex_size;
 
-    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
+    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 2 + dwords);
     r300_emit_buffer_validate(r300, FALSE, NULL);
     r300_emit_dirty_state(r300);
 
