@@ -105,7 +105,7 @@ struct lp_rasterizer
     * (potentially) shared, these empty scenes should be returned to
     * the context which created them rather than retained here.
     */
-   struct lp_scene_queue *empty_scenes;
+   /*   struct lp_scene_queue *empty_scenes; */
 
    /** The scene currently being rasterized by the threads */
    struct lp_scene *curr_scene;
