@@ -43,6 +43,10 @@ struct texture_ref {
 
 
 
+/**
+ * Create a new scene object.
+ * \param queue  the queue to put newly rendered/emptied scenes into
+ */
 struct lp_scene *
 lp_scene_create( struct pipe_context *pipe,
                  struct lp_scene_queue *queue )
@@ -195,6 +199,8 @@ lp_scene_reset(struct lp_scene *scene )
       make_empty_list(ref_list);
    }
 
+   scene->scene_size = 0;
+
    scene->has_color_clear = FALSE;
    scene->has_depth_clear = FALSE;
 }
@@ -226,7 +232,10 @@ lp_bin_new_data_block( struct data_block_list *list )
 }
 
 
-/** Return number of bytes used for all bin data within a scene */
+/**
+ * Return number of bytes used for all bin data within a scene.
+ * This does not include resources (textures) referenced by the scene.
+ */
 unsigned
 lp_scene_data_size( const struct lp_scene *scene )
 {
@@ -267,6 +276,8 @@ lp_scene_add_resource_reference(struct lp_scene *scene,
       pipe_resource_reference(&ref->resource, resource);
       insert_at_tail(ref_list, ref);
    }
+
+   scene->scene_size += llvmpipe_resource_size(resource);
 }
 
 

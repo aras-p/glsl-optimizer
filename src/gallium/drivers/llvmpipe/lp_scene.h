@@ -119,6 +119,11 @@ struct lp_scene {
    /** list of resources referenced by the scene commands */
    struct resource_ref resources;
 
+   /** Approx memory used by the scene (in bytes).  This includes the
+    * shared and per-tile bins plus any referenced resources/textures.
+    */
+   unsigned scene_size;
+
    boolean write_depth;
    boolean has_color_clear;
    boolean has_depth_clear;
@@ -182,6 +187,8 @@ lp_scene_alloc( struct lp_scene *scene, unsigned size)
       lp_bin_new_data_block( list );
    }
 
+   scene->scene_size += size;
+
    {
       struct data_block *tail = list->tail;
       ubyte *data = tail->data + tail->used;
@@ -204,6 +211,8 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
       lp_bin_new_data_block( list );
    }
 
+   scene->scene_size += size;
+
    {
       struct data_block *tail = list->tail;
       ubyte *data = tail->data + tail->used;
@@ -220,6 +229,7 @@ static INLINE void
 lp_scene_putback_data( struct lp_scene *scene, unsigned size)
 {
    struct data_block_list *list = &scene->data;
+   scene->scene_size -= size;
    assert(list->tail->used >= size);
    list->tail->used -= size;
 }
@@ -308,5 +318,13 @@ lp_scene_rasterize( struct lp_scene *scene,
 void
 lp_scene_begin_binning( struct lp_scene *scene,
                         struct pipe_framebuffer_state *fb );
+
+
+static INLINE unsigned
+lp_scene_get_size(const struct lp_scene *scene)
+{
+   return scene->scene_size;
+}
+
 
 #endif /* LP_BIN_H */

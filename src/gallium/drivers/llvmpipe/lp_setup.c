@@ -74,6 +74,26 @@ lp_setup_get_current_scene(struct lp_setup_context *setup)
 }
 
 
+/**
+ * Check if the size of the current scene has exceeded the limit.
+ * If so, flush/render it.
+ */
+static void
+setup_check_scene_size_and_flush(struct lp_setup_context *setup)
+{
+   if (setup->scene) {
+      struct lp_scene *scene = lp_setup_get_current_scene(setup);
+      unsigned size = lp_scene_get_size(scene);
+
+      if (size > LP_MAX_SCENE_SIZE) {
+         /*printf("LLVMPIPE: scene size = %u, flushing.\n", size);*/
+         set_scene_state( setup, SETUP_FLUSHED );
+         /*assert(lp_scene_get_size(scene) == 0);*/
+      }
+   }
+}
+
+
 static void
 first_triangle( struct lp_setup_context *setup,
                 const float (*v0)[4],
@@ -596,9 +616,13 @@ lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
 void
 lp_setup_update_state( struct lp_setup_context *setup )
 {
-   struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   struct lp_scene *scene;
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   setup_check_scene_size_and_flush(setup);
+
+   scene = lp_setup_get_current_scene(setup);
 
    assert(setup->fs.current.jit_function);
 
