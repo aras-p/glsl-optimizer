@@ -600,8 +600,9 @@ void r300_draw_range_elements(struct pipe_context* pipe,
             start += short_count;
             count -= short_count;
 
-            /* 16 spare dwords are enough for emit_draw_elements. */
-            if (count && r300_reserve_cs_space(r300, 16)) {
+            /* 16 spare dwords are enough for emit_draw_elements.
+             * Also reserve some space for emit_query_end. */
+            if (count && r300_reserve_cs_space(r300, 74)) {
                 r300_emit_buffer_validate(r300, TRUE, indexBuffer);
                 r300_emit_dirty_state(r300);
                 r300_emit_aos(r300, 0, TRUE);
@@ -668,8 +669,9 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                 count -= short_count;
 
                 /* Again, we emit both AOS and draw_arrays so there should be
-                 * at least 128 spare dwords. */
-                if (count && r300_reserve_cs_space(r300, 128)) {
+                 * at least 128 spare dwords.
+                 * Also reserve some space for emit_query_end. */
+                if (count && r300_reserve_cs_space(r300, 186)) {
                     r300_emit_buffer_validate(r300, TRUE, NULL);
                     r300_emit_dirty_state(r300);
                 }

@@ -1165,6 +1165,11 @@ unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
         }
     }
 
+    /* emit_query_end is not atomized. */
+    dwords += 26;
+    /* let's reserve some more, just in case */
+    dwords += 32;
+
     return dwords;
 }
 
