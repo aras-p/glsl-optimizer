@@ -687,7 +687,8 @@ void brwInitVtbl( struct brw_context *brw );
 /*======================================================================
  * brw_context.c
  */
-GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
+GLboolean brwCreateContext( int api,
+			    const __GLcontextModes *mesaVis,
 			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate);
 

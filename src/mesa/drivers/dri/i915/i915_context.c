@@ -94,7 +94,8 @@ i915InitDriverFunctions(struct dd_function_table *functions)
 extern const struct tnl_pipeline_stage *intel_pipeline[];
 
 GLboolean
-i915CreateContext(const __GLcontextModes * mesaVis,
+i915CreateContext(int api,
+		  const __GLcontextModes * mesaVis,
                   __DRIcontext * driContextPriv,
                   void *sharedContextPrivate)
 {
@@ -114,7 +115,7 @@ i915CreateContext(const __GLcontextModes * mesaVis,
 
    i915InitDriverFunctions(&functions);
 
-   if (!intelInitContext(intel, mesaVis, driContextPriv,
+   if (!intelInitContext(intel, api, mesaVis, driContextPriv,
                          sharedContextPrivate, &functions)) {
       FREE(i915);
       return GL_FALSE;

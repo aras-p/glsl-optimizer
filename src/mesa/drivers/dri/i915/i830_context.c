@@ -63,7 +63,7 @@ i830CreateContext(const __GLcontextModes * mesaVis,
    i830InitVtbl(i830);
    i830InitDriverFunctions(&functions);
 
-   if (!intelInitContext(intel, mesaVis, driContextPriv,
+   if (!intelInitContext(intel, __DRI_API_OPENGL, mesaVis, driContextPriv,
                          sharedContextPrivate, &functions)) {
       FREE(i830);
       return GL_FALSE;
