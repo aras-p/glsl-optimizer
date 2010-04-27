@@ -228,6 +228,8 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 {
    GLcontext *ctx = &brw->intel.ctx;
    int unit;
+   char *last_entry_end = ((char*)&key->sampler_count) + 
+      sizeof(key->sampler_count);
 
    key->sampler_count = 0;
 
@@ -240,7 +242,9 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 struct gl_texture_image *firstImage =
 	    texObj->Image[0][intelObj->firstLevel];
 
-	 memset(entry, 0, sizeof(*entry));
+	 memset(last_entry_end, 0, 
+		(char*)entry - last_entry_end + sizeof(*entry));
+	 last_entry_end = ((char*)entry) + sizeof(*entry);
 
          entry->tex_target = texObj->Target;
 
@@ -280,6 +284,8 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 key->sampler_count = unit + 1;
       }
    }
+   struct wm_sampler_entry *entry = &key->sampler[key->sampler_count];
+   memset(last_entry_end, 0, (char*)entry - last_entry_end);
 }
 
 /* All samplers must be uploaded in a single contiguous array, which
