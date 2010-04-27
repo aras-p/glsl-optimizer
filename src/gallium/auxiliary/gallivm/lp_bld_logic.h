@@ -76,9 +76,6 @@ lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef b,
                     const boolean cond[4]);
 
-LLVMValueRef
-lp_build_alloca(struct lp_build_context *bld);
-
 
 LLVMValueRef
 lp_build_andc(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b);

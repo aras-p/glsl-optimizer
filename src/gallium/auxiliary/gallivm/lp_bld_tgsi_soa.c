@@ -744,22 +744,11 @@ emit_declaration(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_declaration *decl)
 {
+   LLVMTypeRef vec_type = lp_build_vec_type(bld->base.type);
+
    unsigned first = decl->Range.First;
    unsigned last = decl->Range.Last;
    unsigned idx, i;
-   LLVMBasicBlockRef current_block =
-      LLVMGetInsertBlock(bld->base.builder);
-   LLVMBasicBlockRef first_block =
-      LLVMGetEntryBasicBlock(
-         LLVMGetBasicBlockParent(current_block));
-   LLVMValueRef first_inst =
-      LLVMGetFirstInstruction(first_block);
-
-   /* we want alloca's to be the first instruction
-    * in the function so we need to rewind the builder
-    * to the very beginning */
-   LLVMPositionBuilderBefore(bld->base.builder,
-                             first_inst);
 
    for (idx = first; idx <= last; ++idx) {
       switch (decl->Declaration.File) {
@@ -767,23 +756,25 @@ emit_declaration(
          if (bld->has_indirect_addressing) {
             LLVMValueRef val = LLVMConstInt(LLVMInt32Type(),
                                             last*4 + 4, 0);
-            bld->temps_array = LLVMBuildArrayAlloca(bld->base.builder,
-                                                    lp_build_vec_type(bld->base.type),
-                                                    val, "");
+            bld->temps_array = lp_build_array_alloca(bld->base.builder,
+                                                     vec_type, val, "");
          } else {
             for (i = 0; i < NUM_CHANNELS; i++)
-               bld->temps[idx][i] = lp_build_alloca(&bld->base);
+               bld->temps[idx][i] = lp_build_alloca(bld->base.builder,
+                                                    vec_type, "");
          }
          break;
 
       case TGSI_FILE_OUTPUT:
          for (i = 0; i < NUM_CHANNELS; i++)
-            bld->outputs[idx][i] = lp_build_alloca(&bld->base);
+            bld->outputs[idx][i] = lp_build_alloca(bld->base.builder,
+                                                   vec_type, "");
          break;
 
       case TGSI_FILE_ADDRESS:
          for (i = 0; i < NUM_CHANNELS; i++)
-            bld->addr[idx][i] = lp_build_alloca(&bld->base);
+            bld->addr[idx][i] = lp_build_alloca(bld->base.builder,
+                                                vec_type, "");
          break;
 
       default:
@@ -792,8 +783,6 @@ emit_declaration(
       }
    }
 
-   LLVMPositionBuilderAtEnd(bld->base.builder,
-                            current_block);
    return TRUE;
 }
 

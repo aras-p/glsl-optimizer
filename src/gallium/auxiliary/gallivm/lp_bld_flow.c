@@ -792,3 +792,78 @@ lp_build_endif(struct lp_build_if_state *ctx)
    /* Resume building code at end of the ifthen->merge_block */
    LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
 }
+
+
+/**
+ * Allocate a scalar (or vector) variable.
+ *
+ * Although not strictly part of control flow, control flow has deep impact in
+ * how variables should be allocated.
+ *
+ * The mem2reg optimization pass is the recommended way to dealing with mutable
+ * variables, and SSA. It looks for allocas and if it can handle them, it
+ * promotes them, but only looks for alloca instructions in the entry block of
+ * the function. Being in the entry block guarantees that the alloca is only
+ * executed once, which makes analysis simpler.
+ *
+ * See also:
+ * - http://www.llvm.org/docs/tutorial/OCamlLangImpl7.html#memory
+ */
+LLVMValueRef
+lp_build_alloca(LLVMBuilderRef builder,
+                LLVMTypeRef type,
+                const char *name)
+{
+   LLVMBasicBlockRef current_block = LLVMGetInsertBlock(builder);
+   LLVMValueRef function = LLVMGetBasicBlockParent(current_block);
+   LLVMBasicBlockRef first_block = LLVMGetEntryBasicBlock(function);
+   LLVMValueRef first_instr = LLVMGetFirstInstruction(first_block);
+   LLVMBuilderRef first_builder = LLVMCreateBuilder();
+   LLVMValueRef res;
+
+   LLVMPositionBuilderAtEnd(first_builder, first_block);
+   LLVMPositionBuilderBefore(first_builder, first_instr);
+
+   res = LLVMBuildAlloca(first_builder, type, name);
+
+   LLVMDisposeBuilder(first_builder);
+
+   return res;
+}
+
+
+/**
+ * Allocate an array of scalars/vectors.
+ *
+ * mem2reg pass is not capable of promoting structs or arrays to registers, but
+ * we still put it in the first block anyway as failure to put allocas in the
+ * first block may prevent the X86 backend from successfully align the stack as
+ * required.
+ *
+ * Also the scalarrepl pass is supossedly more powerful and can promote
+ * arrays in many cases.
+ *
+ * See also:
+ * - http://www.llvm.org/docs/tutorial/OCamlLangImpl7.html#memory
+ */
+LLVMValueRef
+lp_build_array_alloca(LLVMBuilderRef builder,
+                      LLVMTypeRef type,
+                      LLVMValueRef count,
+                      const char *name)
+{
+   LLVMBasicBlockRef current_block = LLVMGetInsertBlock(builder);
+   LLVMValueRef function = LLVMGetBasicBlockParent(current_block);
+   LLVMBasicBlockRef first_block = LLVMGetEntryBasicBlock(function);
+   LLVMValueRef first_instr = LLVMGetFirstInstruction(first_block);
+   LLVMBuilderRef first_builder = LLVMCreateBuilder();
+   LLVMValueRef res;
+
+   LLVMPositionBuilderBefore(first_builder, first_instr);
+
+   res = LLVMBuildArrayAlloca(first_builder, type, count, name);
+
+   LLVMDisposeBuilder(first_builder);
+
+   return res;
+}
