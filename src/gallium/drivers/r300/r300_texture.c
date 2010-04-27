@@ -767,7 +767,7 @@ static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
 
     unsigned i, size;
 
-    if (screen->rws->get_value(screen->rws, R300_VID_DRM_2_3_0) &&
+    if (!screen->rws->get_value(screen->rws, R300_VID_DRM_2_3_0) &&
         tex->b.b.target == PIPE_TEXTURE_3D &&
         tex->b.b.last_level > 0) {
         size = 0;
