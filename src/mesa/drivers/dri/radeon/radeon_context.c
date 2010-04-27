@@ -206,9 +206,10 @@ static void r100_init_vtbl(radeonContextPtr radeon)
 /* Create the device specific context.
  */
 GLboolean
-r100CreateContext( const __GLcontextModes *glVisual,
-                     __DRIcontext *driContextPriv,
-                     void *sharedContextPrivate)
+r100CreateContext( gl_api api,
+		   const __GLcontextModes *glVisual,
+		   __DRIcontext *driContextPriv,
+		   void *sharedContextPrivate)
 {
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);

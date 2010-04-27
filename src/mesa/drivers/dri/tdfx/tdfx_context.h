@@ -937,7 +937,8 @@ struct tdfx_context {
 
 
 extern GLboolean
-tdfxCreateContext( const __GLcontextModes *mesaVis,
+tdfxCreateContext( gl_api api,
+		   const __GLcontextModes *mesaVis,
                    __DRIcontext *driContextPriv,
                    void *sharedContextPrivate );
 

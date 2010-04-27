@@ -86,7 +86,8 @@ static const struct dri_extension card_extensions[] =
 
 /* Create the device specific context.
   */
-GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
+GLboolean mach64CreateContext( gl_api api,
+			       const __GLcontextModes *glVisual,
 			       __DRIcontext *driContextPriv,
                                void *sharedContextPrivate )
 {

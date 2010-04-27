@@ -564,7 +564,8 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
 
     pcp->hHWContext = hwContext;
 
-    if ( !(*psp->DriverAPI.CreateContext)(&config->modes, pcp, shareCtx) ) {
+    if ( !(*psp->DriverAPI.CreateContext)(API_OPENGL,
+					  &config->modes, pcp, shareCtx) ) {
         free(pcp);
         return NULL;
     }
@@ -572,14 +573,61 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     return pcp;
 }
 
+static unsigned int
+dri2GetAPIMask(__DRIscreen *screen)
+{
+    return screen->api_mask;
+}
+
+static __DRIcontext *
+dri2CreateNewContextForAPI(__DRIscreen *screen, int api,
+			   const __DRIconfig *config,
+			   __DRIcontext *shared, void *data)
+{
+    __DRIcontext *context;
+    void *shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
+    gl_api mesa_api;
+
+    if (!(screen->api_mask & (1 << api)))
+	return NULL;
+
+    switch (api) {
+    case __DRI_API_OPENGL:
+	    mesa_api = API_OPENGL;
+	    break;
+    case __DRI_API_GLES:
+	    mesa_api = API_OPENGLES;
+	    break;
+    case __DRI_API_GLES2:
+	    mesa_api = API_OPENGLES2;
+	    break;
+    }
+
+    context = malloc(sizeof *context);
+    if (!context)
+	return NULL;
+
+    context->driScreenPriv = screen;
+    context->driDrawablePriv = NULL;
+    context->loaderPrivate = data;
+    
+    if (!(*screen->DriverAPI.CreateContext)(api, &config->modes,
+					    context, shareCtx) ) {
+        free(context);
+        return NULL;
+    }
+
+    return context;
+}
+
 
 static __DRIcontext *
 dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
 		      __DRIcontext *shared, void *data)
 {
-    return driCreateNewContext(screen, config, 0, shared, 0, data);
+   return dri2CreateNewContextForAPI(screen, __DRI_API_OPENGL,
+				     config, shared, data);
 }
-
 
 static int
 driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
@@ -718,6 +766,7 @@ driCreateNewScreen(int scrn,
     psp->dri2.enabled = GL_FALSE;
 
     psp->DriverAPI = driDriverAPI;
+    psp->api_mask = (1 << __DRI_API_OPENGL);
 
     *driver_modes = driDriverAPI.InitScreen(psp);
     if (*driver_modes == NULL) {
@@ -763,6 +812,7 @@ dri2CreateNewScreen(int scrn, int fd,
     psp->dri2.enabled = GL_TRUE;
 
     psp->DriverAPI = driDriverAPI;
+    psp->api_mask = (1 << __DRI_API_OPENGL);
     *driver_configs = driDriverAPI.InitScreen2(psp);
     if (*driver_configs == NULL) {
 	free(psp);
@@ -811,6 +861,8 @@ const __DRIdri2Extension driDRI2Extension = {
     dri2CreateNewScreen,
     dri2CreateNewDrawable,
     dri2CreateNewContext,
+    dri2GetAPIMask,
+    dri2CreateNewContextForAPI
 };
 
 static int

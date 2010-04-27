@@ -155,7 +155,8 @@ struct r600_context {
 #define R700_CONTEXT(ctx)		((context_t *)(ctx->DriverCtx))
 #define GL_CONTEXT(context)     ((GLcontext *)(context->radeon.glCtx))
 
-extern GLboolean r600CreateContext(const __GLcontextModes * glVisual,
+extern GLboolean r600CreateContext(gl_api api,
+				   const __GLcontextModes * glVisual,
 				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 

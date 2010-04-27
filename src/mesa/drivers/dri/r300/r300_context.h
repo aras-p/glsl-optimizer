@@ -543,7 +543,8 @@ struct r300_context {
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
 
 extern void r300DestroyContext(__DRIcontext * driContextPriv);
-extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
+extern GLboolean r300CreateContext(gl_api api,
+				   const __GLcontextModes * glVisual,
 				   __DRIcontext * driContextPriv,
 				   void *sharedContextPrivate);
 

@@ -364,7 +364,8 @@ extern GLboolean brwCreateContext(const __GLcontextModes * mesaVis,
 				  void *sharedContextPrivate);
 
 static GLboolean
-intelCreateContext(const __GLcontextModes * mesaVis,
+intelCreateContext(gl_api api,
+		   const __GLcontextModes * mesaVis,
                    __DRIcontext * driContextPriv,
                    void *sharedContextPrivate)
 {

@@ -224,7 +224,8 @@ struct r128_context {
 		(rmesa->r128Screen->chipset == R128_CARD_TYPE_R128_MOBILITY)
 
 
-extern GLboolean r128CreateContext( const __GLcontextModes *glVisual,
+extern GLboolean r128CreateContext( gl_api api,
+				    const __GLcontextModes *glVisual,
 				    __DRIcontext *driContextPriv,
                                     void *sharedContextPrivate );
 
