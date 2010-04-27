@@ -402,14 +402,12 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    switch (internalFormat) {
    case 4:
    case GL_RGBA:
-   case GL_COMPRESSED_RGBA:
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
       return default_rgba_format( screen, target, tex_usage, geom_flags );
    case 3:
    case GL_RGB:
-   case GL_COMPRESSED_RGB:
       return default_rgb_format( screen, target, tex_usage, geom_flags );
    case GL_RGBA16:
       return default_rgba_format( screen, target, tex_usage, geom_flags );
@@ -494,6 +492,26 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
          return PIPE_FORMAT_YUYV;
       }
       return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_RGB:
+      /* can only sample from compressed formats */
+      if (tex_usage & ~PIPE_BIND_SAMPLER_VIEW)
+         return PIPE_FORMAT_NONE;
+      else if (screen->is_format_supported(screen, PIPE_FORMAT_DXT1_RGB,
+                                           target, tex_usage, geom_flags))
+         return PIPE_FORMAT_DXT1_RGB;
+      else
+         return default_rgb_format(screen, target, tex_usage, geom_flags);
+
+   case GL_COMPRESSED_RGBA:
+      /* can only sample from compressed formats */
+      if (tex_usage & ~PIPE_BIND_SAMPLER_VIEW)
+         return PIPE_FORMAT_NONE;
+      else if (screen->is_format_supported(screen, PIPE_FORMAT_DXT3_RGBA,
+                                           target, tex_usage, geom_flags))
+         return PIPE_FORMAT_DXT3_RGBA;
+      else
+         return default_rgba_format(screen, target, tex_usage, geom_flags);
 
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
