@@ -98,7 +98,7 @@ struct cso_context {
    struct pipe_framebuffer_state fb, fb_saved;
    struct pipe_viewport_state vp, vp_saved;
    struct pipe_blend_color blend_color;
-   unsigned sample_mask sample_mask;
+   unsigned sample_mask;
    struct pipe_stencil_ref stencil_ref, stencil_ref_saved;
 };
 

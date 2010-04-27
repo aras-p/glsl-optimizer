@@ -265,8 +265,7 @@ struct pipe_context {
    void (*resource_fill_region)(struct pipe_context *pipe,
                                 struct pipe_resource *dst,
                                 struct pipe_subresource subdst,
-                                struct pipe_box *dstbox,
-                                unsigned srcx, unsigned srcy, unsigned srcz,
+                                unsigned dstx, unsigned dsty, unsigned dstz,
                                 unsigned width, unsigned height,
                                 unsigned value);
 
