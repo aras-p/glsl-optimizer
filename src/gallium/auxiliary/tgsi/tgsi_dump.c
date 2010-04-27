@@ -586,7 +586,6 @@ iter_instruction(
    /* update indentation */
    if (inst->Instruction.Opcode == TGSI_OPCODE_IF ||
        inst->Instruction.Opcode == TGSI_OPCODE_ELSE ||
-       inst->Instruction.Opcode == TGSI_OPCODE_BGNFOR ||
        inst->Instruction.Opcode == TGSI_OPCODE_BGNLOOP) {
       ctx->indentation += indent_spaces;
    }

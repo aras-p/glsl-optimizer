@@ -661,48 +661,12 @@ TGSI Instruction Specification
   TBD
 
 
-1.9.8  BGNFOR - Begin a For-Loop
-
-  dst.x = floor(src.x)
-  dst.y = floor(src.y)
-  dst.z = floor(src.z)
-
-  if (dst.y <= 0)
-    pc = [matching ENDFOR] + 1
-  endif
-
-  Note: The destination must be a loop register.
-        The source must be a constant register.
-
-
-1.9.9  REP - Repeat
-
-  TBD
-
-
 1.9.10  ELSE - Else
 
   TBD
 
 
 1.9.11  ENDIF - End If
-
-  TBD
-
-
-1.9.12  ENDFOR - End a For-Loop
-
-  dst.x = dst.x + dst.z
-  dst.y = dst.y - 1.0
-
-  if (dst.y > 0)
-    pc = [matching BGNFOR instruction] + 1
-  endif
-
-  Note: The destination must be a loop register.
-
-
-1.9.13  ENDREP - End Repeat
 
   TBD
 
