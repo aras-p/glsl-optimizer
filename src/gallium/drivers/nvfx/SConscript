@@ -2,7 +2,7 @@ Import('*')
 
 env = env.Clone()
 
-env.Append(CPPPATH = [
+env.PrependUnique(delete_existing=1, CPPPATH = [
     '#/src/gallium/drivers',
 ])
 
