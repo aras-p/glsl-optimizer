@@ -104,14 +104,8 @@ decompress_image(enum pipe_format format,
                  unsigned width, unsigned height)
 {
    const struct util_format_description *desc = util_format_description(format);
-   const uint bw = util_format_get_blockwidth(format);
-   const uint src_stride = align(width, bw) / util_format_get_blocksize(format);
    const uint dst_stride = 4 * width;
-
-   /*
-   printf("decompress %s %d x %d  %d -> %d\n",
-          util_format_name(format), width, height, src_stride, dst_stride);
-   */
+   const uint src_stride = util_format_get_stride(format, width);
 
    desc->unpack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
 }
@@ -127,14 +121,8 @@ compress_image(enum pipe_format format,
                unsigned width, unsigned height)
 {
    const struct util_format_description *desc = util_format_description(format);
-   const uint bw = util_format_get_blockwidth(format);
+   const uint dst_stride = util_format_get_stride(format, width);
    const uint src_stride = 4 * width;
-   const uint dst_stride = align(width, bw) / util_format_get_blocksize(format);
-
-   /*
-   printf("compress %s %d x %d   %d -> %d\n",
-          util_format_name(format), width, height, src_stride, dst_stride);
-   */
 
    desc->pack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
 }
