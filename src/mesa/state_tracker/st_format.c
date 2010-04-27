@@ -524,18 +524,34 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-      return PIPE_FORMAT_DXT1_RGB;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_DXT1_RGB,
+                                      target, tex_usage, geom_flags))
+         return PIPE_FORMAT_DXT1_RGB;
+      else
+         return PIPE_FORMAT_NONE;
 
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      return PIPE_FORMAT_DXT1_RGBA;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_DXT1_RGBA,
+                                      target, tex_usage, geom_flags))
+         return PIPE_FORMAT_DXT1_RGBA;
+      else
+         return PIPE_FORMAT_NONE;
 
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-      return PIPE_FORMAT_DXT3_RGBA;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_DXT3_RGBA,
+                                      target, tex_usage, geom_flags))
+         return PIPE_FORMAT_DXT3_RGBA;
+      else
+         return PIPE_FORMAT_NONE;
 
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return PIPE_FORMAT_DXT5_RGBA;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
+                                      target, tex_usage, geom_flags))
+         return PIPE_FORMAT_DXT5_RGBA;
+      else
+         return PIPE_FORMAT_NONE;
 
 #if 0
    case GL_COMPRESSED_RGB_FXT1_3DFX:
