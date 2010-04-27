@@ -124,7 +124,6 @@ struct lp_scene {
     */
    unsigned scene_size;
 
-   boolean write_depth;
    boolean has_color_clear;
    boolean has_depth_clear;
 
@@ -312,8 +311,7 @@ lp_scene_bin_iter_next( struct lp_scene *scene, int *bin_x, int *bin_y );
 
 void
 lp_scene_rasterize( struct lp_scene *scene,
-                    struct lp_rasterizer *rast,
-                    boolean write_depth );
+                    struct lp_rasterizer *rast );
 
 void
 lp_scene_begin_binning( struct lp_scene *scene,

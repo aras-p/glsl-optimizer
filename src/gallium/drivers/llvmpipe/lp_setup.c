@@ -152,14 +152,11 @@ static void reset_context( struct lp_setup_context *setup )
 
 /** Rasterize all scene's bins */
 static void
-lp_setup_rasterize_scene( struct lp_setup_context *setup,
-                          boolean write_depth )
+lp_setup_rasterize_scene( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
-   lp_scene_rasterize(scene,
-                      setup->rast,
-                      write_depth);
+   lp_scene_rasterize(scene, setup->rast);
 
    reset_context( setup );
 
@@ -210,7 +207,7 @@ execute_clears( struct lp_setup_context *setup )
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    begin_binning( setup );
-   lp_setup_rasterize_scene( setup, TRUE );
+   lp_setup_rasterize_scene( setup );
 }
 
 
@@ -241,7 +238,7 @@ set_scene_state( struct lp_setup_context *setup,
       if (old_state == SETUP_CLEARED)
          execute_clears( setup );
       else
-         lp_setup_rasterize_scene( setup, TRUE );
+         lp_setup_rasterize_scene( setup );
       break;
 
    default:

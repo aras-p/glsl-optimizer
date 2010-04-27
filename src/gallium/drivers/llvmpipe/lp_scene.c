@@ -427,8 +427,7 @@ void lp_scene_begin_binning( struct lp_scene *scene,
 
 
 void lp_scene_rasterize( struct lp_scene *scene,
-                         struct lp_rasterizer *rast,
-                         boolean write_depth )
+                         struct lp_rasterizer *rast )
 {
    if (0) {
       unsigned x, y;
@@ -441,9 +440,6 @@ void lp_scene_rasterize( struct lp_scene *scene,
          }
       }
    }
-
-   scene->write_depth = (scene->fb.zsbuf != NULL &&
-                         write_depth);
 
    /* Enqueue the scene for rasterization, then immediately wait for
     * it to finish.
