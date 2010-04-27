@@ -424,6 +424,7 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
 
    if (state & META_SCISSOR) {
       save->Scissor = ctx->Scissor; /* struct copy */
+      _mesa_set_enable(ctx, GL_SCISSOR_TEST, GL_FALSE);
    }
 
    if (state & META_SHADER) {
