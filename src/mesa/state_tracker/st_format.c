@@ -414,12 +414,14 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 
    case GL_RGBA4:
    case GL_RGBA2:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_B4G4R4A4_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B4G4R4A4_UNORM,
+                                       target, tex_usage, geom_flags ))
          return PIPE_FORMAT_B4G4R4A4_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_RGB5_A1:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G5R5A1_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G5R5A1_UNORM,
+                                       target, tex_usage, geom_flags ))
          return PIPE_FORMAT_B5G5R5A1_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
@@ -432,9 +434,11 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G6R5_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G6R5_UNORM,
+                                       target, tex_usage, geom_flags ))
          return PIPE_FORMAT_B5G6R5_UNORM;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G5R5A1_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B5G5R5A1_UNORM,
+                                       target, tex_usage, geom_flags ))
          return PIPE_FORMAT_B5G5R5A1_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
@@ -444,7 +448,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A8_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A8_UNORM, target,
+                                       tex_usage, geom_flags ))
          return PIPE_FORMAT_A8_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
@@ -455,7 +460,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_UNORM, target,
+                                       tex_usage, geom_flags ))
          return PIPE_FORMAT_L8_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
@@ -468,7 +474,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_L8A8_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_L8A8_UNORM, target,
+                                       tex_usage, geom_flags ))
          return PIPE_FORMAT_L8A8_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
@@ -478,7 +485,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_I8_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_I8_UNORM, target,
+                                       tex_usage, geom_flags ))
          return PIPE_FORMAT_I8_UNORM;
       return default_rgba_format( screen, target, tex_usage, geom_flags );
 
@@ -537,17 +545,21 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 #endif
 
    case GL_DEPTH_COMPONENT16:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z16_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported(screen, PIPE_FORMAT_Z16_UNORM, target,
+                                      tex_usage, geom_flags))
          return PIPE_FORMAT_Z16_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT24:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported(screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+                                      target, tex_usage, geom_flags))
          return PIPE_FORMAT_Z24_UNORM_S8_USCALED;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8_USCALED_Z24_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported(screen, PIPE_FORMAT_S8_USCALED_Z24_UNORM,
+                                      target, tex_usage, geom_flags))
          return PIPE_FORMAT_S8_USCALED_Z24_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT32:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z32_UNORM, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported(screen, PIPE_FORMAT_Z32_UNORM,
+                                      target, tex_usage, geom_flags))
          return PIPE_FORMAT_Z32_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT:
@@ -608,13 +620,15 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_SLUMINANCE8_ALPHA8_EXT:
    case GL_COMPRESSED_SLUMINANCE_EXT:
    case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_L8A8_SRGB, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported(screen, PIPE_FORMAT_L8A8_SRGB,
+                                      target, tex_usage, geom_flags))
          return PIPE_FORMAT_L8A8_SRGB;
       return default_srgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_SLUMINANCE_EXT:
    case GL_SLUMINANCE8_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_SRGB, target, tex_usage, geom_flags ))
+      if (screen->is_format_supported(screen, PIPE_FORMAT_L8_SRGB,
+                                      target, tex_usage, geom_flags))
          return PIPE_FORMAT_L8_SRGB;
       return default_srgba_format( screen, target, tex_usage, geom_flags );
 
