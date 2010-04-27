@@ -194,6 +194,7 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    pdraw->base.psc = psc;
    pdraw->bufferCount = 0;
    pdraw->swap_interval = 1; /* default may be overridden below */
+   pdraw->have_back = 0;
 
    if (psc->config)
       psc->config->configQueryi(psc->__driScreen, "vblank_mode", &vblank_mode);
