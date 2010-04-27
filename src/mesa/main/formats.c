@@ -637,6 +637,35 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       1, 1, 2
    },
+
+   /* Signed 8 bits / channel */
+   {
+      MESA_FORMAT_SIGNED_R8,        /* Name */
+      "MESA_FORMAT_SIGNED_R8",      /* StrName */
+      GL_RGBA,                      /* BaseFormat */
+      GL_SIGNED_NORMALIZED,         /* DataType */
+      8, 0, 0, 0,                   /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 0, 0,                /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 1                       /* BlockWidth/Height,Bytes */
+   },
+   {
+      MESA_FORMAT_SIGNED_RG88,
+      "MESA_FORMAT_SIGNED_RG88",
+      GL_RGBA,
+      GL_SIGNED_NORMALIZED,
+      8, 8, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 2
+   },
+   {
+      MESA_FORMAT_SIGNED_RGBX8888,
+      "MESA_FORMAT_SIGNED_RGBX8888",
+      GL_RGBA,
+      GL_SIGNED_NORMALIZED,
+      8, 8, 8, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 4                       /* 4 bpp, but no alpha */
+   },
    {
       MESA_FORMAT_SIGNED_RGBA8888,
       "MESA_FORMAT_SIGNED_RGBA8888",
@@ -654,6 +683,35 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       8, 8, 8, 8,
       0, 0, 0, 0, 0,
       1, 1, 4
+   },
+
+   /* Signed 16 bits / channel */
+   {
+      MESA_FORMAT_SIGNED_R_16,
+      "MESA_FORMAT_SIGNED_R_16",
+      GL_RGBA,
+      GL_SIGNED_NORMALIZED,
+      16, 0, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 2
+   },
+   {
+      MESA_FORMAT_SIGNED_RG_16,
+      "MESA_FORMAT_SIGNED_RG_16",
+      GL_RGBA,
+      GL_SIGNED_NORMALIZED,
+      16, 16, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 4
+   },
+   {
+      MESA_FORMAT_SIGNED_RGB_16,
+      "MESA_FORMAT_SIGNED_RGB_16",
+      GL_RGBA,
+      GL_SIGNED_NORMALIZED,
+      16, 16, 16, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 6
    },
    {
       MESA_FORMAT_SIGNED_RGBA_16,

@@ -1209,6 +1209,76 @@ static void FETCH(dudv8)(const struct gl_texture_image *texImage,
    texel[ACOMP] = 0;
 }
 
+
+/* MESA_FORMAT_SIGNED_R8 ***********************************************/
+
+static void FETCH(signed_r8)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLbyte s = *TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX( s );
+   texel[GCOMP] = 0.0F;
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = 1.0F;
+}
+
+#if DIM == 3
+static void store_texel_signed_r8(struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLbyte *rgba = (const GLbyte *) texel;
+   GLbyte *dst = TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
+   *dst = rgba[RCOMP];
+}
+#endif
+
+
+/* MESA_FORMAT_SIGNED_RG88 ***********************************************/
+
+static void FETCH(signed_rg88)( const struct gl_texture_image *texImage,
+                                GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort s = *TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 8) );
+   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s & 0xff) );
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = 1.0F;
+}
+
+#if DIM == 3
+static void store_texel_signed_rg88(struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLbyte *rg = (const GLbyte *) texel;
+   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 2);
+   *dst = PACK_COLOR_88(rg[RCOMP], rg[GCOMP]);
+}
+#endif
+
+
+/* MESA_FORMAT_SIGNED_RGBX8888 ***********************************************/
+
+static void FETCH(signed_rgbx8888)( const struct gl_texture_image *texImage,
+			            GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   texel[RCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 24) );
+   texel[GCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 16) );
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >>  8) );
+   texel[ACOMP] = 1.0f;
+}
+
+#if DIM == 3
+static void store_texel_signed_rgbx8888(struct gl_texture_image *texImage,
+                                        GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLbyte *rgba = (const GLbyte *) texel;
+   GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_8888(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], 255);
+}
+#endif
+
+
 /* MESA_FORMAT_SIGNED_RGBA8888 ***********************************************/
 
 static void FETCH(signed_rgba8888)( const struct gl_texture_image *texImage,
@@ -1248,6 +1318,113 @@ static void store_texel_signed_rgba8888_rev(struct gl_texture_image *texImage,
    const GLubyte *rgba = (const GLubyte *) texel;
    GLuint *dst = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
    *dst = PACK_COLOR_8888_REV(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
+}
+#endif
+
+
+
+/* MESA_FORMAT_SIGNED_R_16 ***********************************************/
+
+static void
+FETCH(signed_r_16)(const struct gl_texture_image *texImage,
+                   GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLshort s = *TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
+   texel[RCOMP] = SHORT_TO_FLOAT_TEX( s );
+   texel[GCOMP] = 0.0F;
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = 1.0F;
+}
+
+#if DIM == 3
+static void
+store_texel_signed_r_16(struct gl_texture_image *texImage,
+                        GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLshort *rgba = (const GLshort *) texel;
+   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
+   *dst = rgba[0];
+}
+#endif
+
+
+/* MESA_FORMAT_SIGNED_RG_16 ***********************************************/
+
+static void
+FETCH(signed_rg_16)(const struct gl_texture_image *texImage,
+                    GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 2);
+   texel[RCOMP] = SHORT_TO_FLOAT_TEX( s[0] );
+   texel[GCOMP] = SHORT_TO_FLOAT_TEX( s[1] );
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = 1.0F;
+}
+
+#if DIM == 3
+static void
+store_texel_signed_rg_16(struct gl_texture_image *texImage,
+                         GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLshort *rgba = (const GLshort *) texel;
+   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 2);
+   dst[0] = rgba[RCOMP];
+   dst[1] = rgba[GCOMP];
+}
+#endif
+
+
+/* MESA_FORMAT_SIGNED_RGB_16 ***********************************************/
+
+static void 
+FETCH(signed_rgb_16)(const struct gl_texture_image *texImage,
+                     GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 3);
+   texel[RCOMP] = SHORT_TO_FLOAT_TEX( s[0] );
+   texel[GCOMP] = SHORT_TO_FLOAT_TEX( s[1] );
+   texel[BCOMP] = SHORT_TO_FLOAT_TEX( s[3] );
+   texel[ACOMP] = 1.0F;
+}
+
+#if DIM == 3
+static void
+store_texel_signed_rgb_16(struct gl_texture_image *texImage,
+                          GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLshort *rgba = (const GLshort *) texel;
+   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 3);
+   dst[0] = rgba[RCOMP];
+   dst[1] = rgba[GCOMP];
+   dst[2] = rgba[BCOMP];
+}
+#endif
+
+
+/* MESA_FORMAT_SIGNED_RGB_16 ***********************************************/
+
+static void
+FETCH(signed_rgba_16)(const struct gl_texture_image *texImage,
+                      GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 4);
+   texel[RCOMP] = SHORT_TO_FLOAT_TEX( s[0] );
+   texel[GCOMP] = SHORT_TO_FLOAT_TEX( s[1] );
+   texel[BCOMP] = SHORT_TO_FLOAT_TEX( s[3] );
+   texel[ACOMP] = SHORT_TO_FLOAT_TEX( s[4] );
+}
+
+#if DIM == 3
+static void
+store_texel_signed_rgba_16(struct gl_texture_image *texImage,
+                           GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLshort *rgba = (const GLshort *) texel;
+   GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 4);
+   dst[0] = rgba[RCOMP];
+   dst[1] = rgba[GCOMP];
+   dst[2] = rgba[BCOMP];
+   dst[3] = rgba[ACOMP];
 }
 #endif
 
