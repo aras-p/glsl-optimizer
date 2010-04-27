@@ -412,61 +412,6 @@ end:
 }
 
 
-
-/**
- * Prepare this scene for the rasterizer.
- * Map the framebuffer surfaces.  Initialize the 'rast' state.
- */
-static boolean
-lp_scene_map_buffers( struct lp_scene *scene )
-{
-   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
-
-   /* XXX framebuffer surfaces are no longer mapped here */
-   /* XXX move all map/unmap stuff into rast module... */
-
-   return TRUE;
-}
-
-
-
-/**
- * Called after rasterizer as finished rasterizing a scene. 
- * 
- * We want to call this from the pipe_context's current thread to
- * avoid having to have mutexes on the transfer functions.
- */
-static void
-lp_scene_unmap_buffers( struct lp_scene *scene )
-{
-#if 0
-   unsigned i;
-
-   for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      if (scene->cbuf_map[i]) {
-         struct pipe_surface *cbuf = scene->fb.cbufs[i];
-         llvmpipe_resource_unmap(cbuf->texture,
-                                cbuf->face,
-                                cbuf->level,
-                                cbuf->zslice);
-         scene->cbuf_map[i] = NULL;
-      }
-   }
-
-   if (scene->zsbuf_map) {
-      struct pipe_surface *zsbuf = scene->fb.zsbuf;
-      llvmpipe_resource_unmap(zsbuf->texture,
-                             zsbuf->face,
-                             zsbuf->level,
-                             zsbuf->zslice);
-      scene->zsbuf_map = NULL;
-   }
-#endif
-
-   util_unreference_framebuffer_state( &scene->fb );
-}
-
-
 void lp_scene_begin_binning( struct lp_scene *scene,
                              struct pipe_framebuffer_state *fb )
 {
@@ -501,8 +446,6 @@ void lp_scene_rasterize( struct lp_scene *scene,
    scene->write_depth = (scene->fb.zsbuf != NULL &&
                          write_depth);
 
-   lp_scene_map_buffers( scene );
-
    /* Enqueue the scene for rasterization, then immediately wait for
     * it to finish.
     */
@@ -513,6 +456,9 @@ void lp_scene_rasterize( struct lp_scene *scene,
     * transfers become per-context:
     */
    lp_rast_finish( rast );
-   lp_scene_unmap_buffers( scene );
+
+   util_unreference_framebuffer_state( &scene->fb );
+
+   /* put scene into the empty list */
    lp_scene_enqueue( scene->empty_queue, scene );
 }
