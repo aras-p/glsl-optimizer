@@ -269,7 +269,7 @@ enum pipe_transfer_usage {
     * - pipe_context::transfer_flush_region
     * - OpenGL's ARB_map_buffer_range extension, MAP_FLUSH_EXPLICIT_BIT flag.
     */
-   PIPE_TRANSFER_FLUSH_EXPLICIT = (1 << 11),
+   PIPE_TRANSFER_FLUSH_EXPLICIT = (1 << 11)
 
 };
 
