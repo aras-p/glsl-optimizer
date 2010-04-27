@@ -737,7 +737,16 @@ intelInitContext(struct intel_context *intel,
 
    intel->RenderIndex = ~0;
 
-   intelInitExtensions(ctx);
+   switch (ctx->API) {
+   case API_OPENGL:
+      intelInitExtensions(ctx);
+      break;
+   case API_OPENGLES:
+      break;
+   case API_OPENGLES2:
+      intelInitExtensionsES2(ctx);
+      break;
+   }
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)
