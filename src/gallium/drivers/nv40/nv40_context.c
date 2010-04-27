@@ -76,7 +76,7 @@ nv40_create(struct pipe_screen *pscreen, void *priv)
 	nv40_init_state_functions(nv40);
 
 	/* Create, configure, and install fallback swtnl path */
-	nv40->draw = draw_create();
+	nv40->draw = draw_create(&nv40->pipe);
 	draw_wide_point_threshold(nv40->draw, 9999999.0);
 	draw_wide_line_threshold(nv40->draw, 9999999.0);
 	draw_enable_line_stipple(nv40->draw, FALSE);

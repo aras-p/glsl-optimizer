@@ -164,7 +164,7 @@ nv40_state_validate_swtnl(struct nv40_context *nv40)
 		draw_bind_vertex_shader(draw, nv40->vertprog->draw);
 
 	if (nv40->draw_dirty & NV40_NEW_RAST)
-		draw_set_rasterizer_state(draw, &nv40->rasterizer->pipe);
+		draw_set_rasterizer_state(draw, &nv40->rasterizer->pipe, nv40->rasterizer);
 
 	if (nv40->draw_dirty & NV40_NEW_UCP)
 		draw_set_clip_state(draw, &nv40->clip);
