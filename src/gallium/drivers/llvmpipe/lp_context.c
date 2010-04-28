@@ -112,18 +112,14 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.bind_vs_state   = llvmpipe_bind_vs_state;
    llvmpipe->pipe.delete_vs_state = llvmpipe_delete_vs_state;
 
-   llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
    llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
-   llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
-   llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-
-   llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = llvmpipe_flush;
 
    llvmpipe_init_blend_funcs(llvmpipe);
+   llvmpipe_init_clip_funcs(llvmpipe);
    llvmpipe_init_draw_funcs(llvmpipe);
    llvmpipe_init_sampler_funcs(llvmpipe);
    llvmpipe_init_query_funcs( llvmpipe );
