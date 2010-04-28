@@ -35,8 +35,8 @@ static void scan_for_prototypes(_mesa_glsl_parse_state *, exec_list *,
 			        s_expression *);
 static ir_function *read_function(_mesa_glsl_parse_state *, s_list *,
 				  bool skip_body);
-static ir_function_signature *read_function_sig(_mesa_glsl_parse_state *,
-						s_list *, bool skip_body);
+static void read_function_sig(_mesa_glsl_parse_state *, ir_function *,
+			      s_list *, bool skip_body);
 
 static void read_instructions(_mesa_glsl_parse_state *, exec_list *,
 			      s_expression *, ir_loop *);
@@ -223,65 +223,83 @@ read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
 	 return NULL;
       }
 
-      ir_function_signature *sig = read_function_sig(st, siglist, skip_body);
-      if (sig == NULL)
-	 return NULL;
-
-      f->add_signature(sig);
+      read_function_sig(st, f, siglist, skip_body);
    }
    return f;
 }
 
-static ir_function_signature *
-read_function_sig(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
+static void
+read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
+		  bool skip_body)
 {
    if (list->length() != 4) {
       ir_read_error(st, list, "Expected (signature <type> (parameters ...) "
 			      "(<instruction> ...))");
-      return NULL;
+      return;
    }
 
    s_expression *type_expr = (s_expression*) list->subexpressions.head->next;
    const glsl_type *return_type = read_type(st, type_expr);
    if (return_type == NULL)
-      return NULL;
+      return;
 
    s_list *paramlist = SX_AS_LIST(type_expr->next);
    s_list *body_list = SX_AS_LIST(paramlist->next);
    if (paramlist == NULL || body_list == NULL) {
       ir_read_error(st, list, "Expected (signature <type> (parameters ...) "
 			      "(<instruction> ...))");
-      return NULL;
+      return;
    }
    s_symbol *paramtag = SX_AS_SYMBOL(paramlist->subexpressions.get_head());
    if (paramtag == NULL || strcmp(paramtag->value(), "parameters") != 0) {
       ir_read_error(st, paramlist, "Expected (parameters ...)");
-      return NULL;
+      return;
    }
 
-   // FINISHME: Don't create a new one!  Look for the existing prototype first
-   ir_function_signature *sig = new ir_function_signature(return_type);
-
+   // Read the parameters list into a temporary place.
+   exec_list hir_parameters;
    st->symbols->push_scope();
 
    exec_list_iterator it = paramlist->subexpressions.iterator();
    for (it.next() /* skip "parameters" */; it.has_next(); it.next()) {
       s_list *decl = SX_AS_LIST(it.get());
       ir_variable *var = read_declaration(st, decl);
-      if (var == NULL) {
-	 delete sig;
-	 return NULL;
-      }
+      if (var == NULL)
+	 return;
 
-      sig->parameters.push_tail(var);
+      hir_parameters.push_tail(var);
    }
 
-   if (!skip_body)
+   ir_function_signature *sig = f->exact_matching_signature(&hir_parameters);
+   if (sig != NULL) {
+      const char *badvar = sig->qualifiers_match(&hir_parameters);
+      if (badvar != NULL) {
+	 ir_read_error(st, list, "function `%s' parameter `%s' qualifiers "
+		       "don't match prototype", f->name, badvar);
+	 return;
+      }
+
+      if (sig->return_type != return_type) {
+	 ir_read_error(st, list, "function `%s' return type doesn't "
+		       "match prototype", f->name);
+	 return;
+      }
+   } else {
+      sig = new ir_function_signature(return_type);
+      f->add_signature(sig);
+   }
+
+   sig->replace_parameters(&hir_parameters);
+
+   if (!skip_body) {
+      if (sig->is_defined) {
+	 ir_read_error(st, list, "function %s redefined", f->name);
+	 return;
+      }
       read_instructions(st, &sig->body, body_list, NULL);
+   }
 
    st->symbols->pop_scope();
-
-   return sig;
 }
 
 static void
