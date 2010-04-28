@@ -50,6 +50,7 @@ static ir_return *read_return(_mesa_glsl_parse_state *, s_list *);
 static ir_rvalue *read_rvalue(_mesa_glsl_parse_state *, s_expression *);
 static ir_assignment *read_assignment(_mesa_glsl_parse_state *, s_list *);
 static ir_expression *read_expression(_mesa_glsl_parse_state *, s_list *);
+static ir_call *read_call(_mesa_glsl_parse_state *, s_list *);
 static ir_swizzle *read_swizzle(_mesa_glsl_parse_state *, s_list *);
 static ir_constant *read_constant(_mesa_glsl_parse_state *, s_list *);
 static ir_dereference *read_var_ref(_mesa_glsl_parse_state *, s_list *);
@@ -536,7 +537,8 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
       rvalue = read_assignment(st, list);
    } else if (strcmp(tag->value(), "expression") == 0) {
       rvalue = read_expression(st, list);
-   // FINISHME: ir_call
+   } else if (strcmp(tag->value(), "call") == 0) {
+      rvalue = read_call(st, list);
    } else if (strcmp(tag->value(), "constant") == 0) {
       rvalue = read_constant(st, list);
    } else if (strcmp(tag->value(), "var_ref") == 0) {
@@ -586,6 +588,49 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
    return new ir_assignment(lhs, rhs, condition);
 }
 
+static ir_call *
+read_call(_mesa_glsl_parse_state *st, s_list *list)
+{
+   if (list->length() != 3) {
+      ir_read_error(st, list, "expected (call <name> (<param> ...))");
+      return NULL;
+   }
+
+   s_symbol *name = SX_AS_SYMBOL(list->subexpressions.head->next);
+   s_list *params = SX_AS_LIST(name->next);
+   if (name == NULL || params == NULL) {
+      ir_read_error(st, list, "expected (call <name> (<param> ...))");
+      return NULL;
+   }
+
+   exec_list parameters;
+
+   foreach_iter(exec_list_iterator, it, params->subexpressions) {
+      s_expression *expr = (s_expression*) it.get();
+      ir_rvalue *param = read_rvalue(st, expr);
+      if (param == NULL) {
+	 ir_read_error(st, list, "when reading parameter to function call");
+	 return NULL;
+      }
+      parameters.push_tail(param);
+   }
+
+   ir_function *f = st->symbols->get_function(name->value());
+   if (f == NULL) {
+      ir_read_error(st, list, "found call to undefined function %s",
+		    name->value());
+      return NULL;
+   }
+
+   const ir_function_signature *callee = f->matching_signature(&parameters);
+   if (callee == NULL) {
+      ir_read_error(st, list, "couldn't find matching signature for function "
+                    "%s", name->value());
+      return NULL;
+   }
+
+   return new ir_call(callee, &parameters);
+}
 
 static ir_expression *
 read_expression(_mesa_glsl_parse_state *st, s_list *list)
