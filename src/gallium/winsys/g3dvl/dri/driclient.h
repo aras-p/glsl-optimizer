@@ -2,9 +2,12 @@
 #define driclient_h
 
 #include <stdint.h>
+#include <X11/Xmd.h>
 #include <X11/Xlib.h>
 #include <drm_sarea.h>
+//#include <X11/extensions/dri2proto.h>
 #include "xf86dri.h"
+#include "dri2.h"
 
 /* TODO: Bring in DRI XML options */
 
@@ -92,6 +95,22 @@ do												\
 		DRM_LIGHT_LOCK(dri_screen->fd, &dri_screen->sarea->lock, hwContext);		\
 	}											\
 } while (0)
+
+int dri2CreateScreen(Display *display, int screen, dri_screen_t **dri_screen);
+int dri2DestroyScreen(dri_screen_t *dri_screen);
+int dri2CreateDrawable(dri_screen_t *dri_screen, XID drawable);
+int dri2DestroyDrawable(dri_screen_t *dri_screen, XID drawable);
+
+#define DRI_BUFFER_FRONT_LEFT		0
+#define DRI_BUFFER_BACK_LEFT		1
+#define DRI_BUFFER_FRONT_RIGHT		2
+#define DRI_BUFFER_BACK_RIGHT		3
+#define DRI_BUFFER_DEPTH		4
+#define DRI_BUFFER_STENCIL		5
+#define DRI_BUFFER_ACCUM		6
+#define DRI_BUFFER_FAKE_FRONT_LEFT	7
+#define DRI_BUFFER_FAKE_FRONT_RIGHT	8
+#define DRI_BUFFER_DEPTH_STENCIL	9  /**< Only available with DRI2 1.1 */
 
 #endif
 

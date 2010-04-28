@@ -1,6 +1,8 @@
 #include "driclient.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <X11/Xlibint.h>
 
 int driCreateScreen(Display *display, int screen, dri_screen_t **dri_screen, dri_framebuffer_t *dri_framebuf)
 {
@@ -222,12 +224,12 @@ int driUpdateDrawableInfo(dri_drawable_t *dri_drawable)
 		dri_drawable->dri_screen->display,
 		dri_drawable->dri_screen->num,
 		dri_drawable->x_drawable,
-    		&dri_drawable->sarea_index,
-    		&dri_drawable->last_sarea_stamp,
-    		&dri_drawable->x,
-    		&dri_drawable->y,
-    		&dri_drawable->w,
-    		&dri_drawable->h,
+		&dri_drawable->sarea_index,
+		&dri_drawable->last_sarea_stamp,
+		&dri_drawable->x,
+		&dri_drawable->y,
+		&dri_drawable->w,
+		&dri_drawable->h,
 		&dri_drawable->num_cliprects,
 		&dri_drawable->cliprects,
 		&dri_drawable->back_x,
@@ -306,5 +308,62 @@ int driDestroyContext(dri_context_t *dri_context)
 	XF86DRIDestroyContext(dri_context->dri_screen->display, dri_context->dri_screen->num, dri_context->id);
 	free(dri_context);
 
+	return 0;
+}
+
+int dri2CreateScreen(Display *display, int screen, dri_screen_t **dri_screen)
+{
+	dri_screen_t	*dri_scrn;
+	drm_magic_t	magic;
+	char		*drvName;
+	char		*devName;
+
+	dri_scrn = calloc(1, sizeof(dri_screen_t));
+
+	if (!dri_scrn)
+		return 1;
+
+	if (!DRI2Connect(display, XRootWindow(display, screen), &drvName, &devName))
+		goto free_screen;
+
+	dri_scrn->fd = open(devName, O_RDWR);
+	Xfree(drvName);
+	Xfree(devName);
+	if (dri_scrn->fd < 0)
+		goto free_screen;
+
+	if (drmGetMagic(dri_scrn->fd, &magic))
+		goto free_screen;
+
+	if (!DRI2Authenticate(display, RootWindow(display, screen), magic))
+		goto free_screen;
+
+	dri_scrn->display = display;
+	dri_scrn->num = screen;
+	*dri_screen = dri_scrn;
+
+	return 0;
+
+free_screen:
+	free(dri_scrn);
+
+	return 1;
+}
+
+int dri2DestroyScreen(dri_screen_t *dri_screen)
+{
+	/* Not much to do here apparently... */
+	return 0;
+}
+
+int dri2CreateDrawable(dri_screen_t *dri_screen, XID drawable)
+{
+	DRI2CreateDrawable(dri_screen->display, drawable);
+	return 0;
+}
+
+int dri2DestroyDrawable(dri_screen_t *dri_screen, XID drawable)
+{
+	DRI2DestroyDrawable(dri_screen->display, drawable);
 	return 0;
 }

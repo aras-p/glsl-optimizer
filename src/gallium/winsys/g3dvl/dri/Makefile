@@ -9,6 +9,7 @@ LIBRARY_INCLUDES = -I$(TOP)/src/gallium/winsys/g3dvl \
 C_SOURCES = \
 	driclient.c \
 	XF86dri.c \
+	dri2.c \
 	dri_winsys.c
 
 include ../../../Makefile.template
