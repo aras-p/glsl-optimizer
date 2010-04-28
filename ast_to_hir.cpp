@@ -1952,27 +1952,13 @@ ast_function::hir(exec_list *instructions,
 	  * definition.
 	  */
 	 if (parameter_lists_match(& hir_parameters, & sig->parameters)) {
-	    exec_list_iterator iter_a = hir_parameters.iterator();
-	    exec_list_iterator iter_b = sig->parameters.iterator();
+	    const char *mismatch = sig->qualifiers_match(&hir_parameters);
+	    if (mismatch != NULL) {
+	       YYLTYPE loc = this->get_location();
 
-	    /* check that the qualifiers match. */
-	    while (iter_a.has_next()) {
-	       ir_variable *a = (ir_variable *)iter_a.get();
-	       ir_variable *b = (ir_variable *)iter_b.get();
-
-	       if (a->read_only != b->read_only ||
-		   a->interpolation != b->interpolation ||
-		   a->centroid != b->centroid) {
-		  YYLTYPE loc = this->get_location();
-
-		  _mesa_glsl_error(& loc, state,
-				   "function `%s' parameter `%s' qualifiers "
-				   "don't match prototype",
-				   name, a->name);
-	       }
-
-	       iter_a.next();
-	       iter_b.next();
+	       _mesa_glsl_error(&loc, state, "function `%s' parameter `%s' "
+			        "qualifiers don't match prototype",
+			        name, mismatch);
 	    }
 
 	    if (sig->return_type != return_type) {

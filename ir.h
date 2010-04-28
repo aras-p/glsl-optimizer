@@ -207,6 +207,13 @@ public:
    const char *function_name() const;
 
    /**
+    * Check whether the qualifiers match between this signature's parameters
+    * and the supplied parameter list.  If not, returns the name of the first
+    * parameter with mismatched qualifiers (for use in error messages).
+    */
+   const char *qualifiers_match(exec_list *params);
+
+   /**
     * Function return type.
     *
     * \note This discards the optional precision qualifier.
