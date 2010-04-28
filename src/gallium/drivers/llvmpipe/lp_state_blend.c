@@ -40,15 +40,16 @@
 #include "lp_state.h"
 
 
-void *
+static void *
 llvmpipe_create_blend_state(struct pipe_context *pipe,
                             const struct pipe_blend_state *blend)
 {
    return mem_dup(blend, sizeof(*blend));
 }
 
-void llvmpipe_bind_blend_state( struct pipe_context *pipe,
-                                void *blend )
+
+static void
+llvmpipe_bind_blend_state(struct pipe_context *pipe, void *blend)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
@@ -62,15 +63,17 @@ void llvmpipe_bind_blend_state( struct pipe_context *pipe,
    llvmpipe->dirty |= LP_NEW_BLEND;
 }
 
-void llvmpipe_delete_blend_state(struct pipe_context *pipe,
-                                 void *blend)
+
+static void
+llvmpipe_delete_blend_state(struct pipe_context *pipe, void *blend)
 {
    FREE( blend );
 }
 
 
-void llvmpipe_set_blend_color( struct pipe_context *pipe,
-			     const struct pipe_blend_color *blend_color )
+static void
+llvmpipe_set_blend_color(struct pipe_context *pipe,
+                         const struct pipe_blend_color *blend_color)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
@@ -93,14 +96,15 @@ void llvmpipe_set_blend_color( struct pipe_context *pipe,
  */
 
 
-void *
+static void *
 llvmpipe_create_depth_stencil_state(struct pipe_context *pipe,
 				    const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
    return mem_dup(depth_stencil, sizeof(*depth_stencil));
 }
 
-void
+
+static void
 llvmpipe_bind_depth_stencil_state(struct pipe_context *pipe,
                                   void *depth_stencil)
 {
@@ -116,14 +120,17 @@ llvmpipe_bind_depth_stencil_state(struct pipe_context *pipe,
    llvmpipe->dirty |= LP_NEW_DEPTH_STENCIL_ALPHA;
 }
 
-void
+
+static void
 llvmpipe_delete_depth_stencil_state(struct pipe_context *pipe, void *depth)
 {
    FREE( depth );
 }
 
-void llvmpipe_set_stencil_ref( struct pipe_context *pipe,
-                               const struct pipe_stencil_ref *stencil_ref )
+
+static void
+llvmpipe_set_stencil_ref(struct pipe_context *pipe,
+                         const struct pipe_stencil_ref *stencil_ref)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
@@ -142,3 +149,18 @@ void llvmpipe_set_stencil_ref( struct pipe_context *pipe,
 }
 
 
+void
+llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.create_blend_state = llvmpipe_create_blend_state;
+   llvmpipe->pipe.bind_blend_state   = llvmpipe_bind_blend_state;
+   llvmpipe->pipe.delete_blend_state = llvmpipe_delete_blend_state;
+
+   llvmpipe->pipe.create_depth_stencil_alpha_state = llvmpipe_create_depth_stencil_state;
+   llvmpipe->pipe.bind_depth_stencil_alpha_state   = llvmpipe_bind_depth_stencil_state;
+   llvmpipe->pipe.delete_depth_stencil_alpha_state = llvmpipe_delete_depth_stencil_state;
+
+   llvmpipe->pipe.set_blend_color = llvmpipe_set_blend_color;
+
+   llvmpipe->pipe.set_stencil_ref = llvmpipe_set_stencil_ref;
+}

@@ -100,14 +100,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.destroy = llvmpipe_destroy;
 
    /* state setters */
-   llvmpipe->pipe.create_blend_state = llvmpipe_create_blend_state;
-   llvmpipe->pipe.bind_blend_state   = llvmpipe_bind_blend_state;
-   llvmpipe->pipe.delete_blend_state = llvmpipe_delete_blend_state;
-
-   llvmpipe->pipe.create_depth_stencil_alpha_state = llvmpipe_create_depth_stencil_state;
-   llvmpipe->pipe.bind_depth_stencil_alpha_state   = llvmpipe_bind_depth_stencil_state;
-   llvmpipe->pipe.delete_depth_stencil_alpha_state = llvmpipe_delete_depth_stencil_state;
-
    llvmpipe->pipe.create_rasterizer_state = llvmpipe_create_rasterizer_state;
    llvmpipe->pipe.bind_rasterizer_state   = llvmpipe_bind_rasterizer_state;
    llvmpipe->pipe.delete_rasterizer_state = llvmpipe_delete_rasterizer_state;
@@ -124,8 +116,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.bind_vertex_elements_state = llvmpipe_bind_vertex_elements_state;
    llvmpipe->pipe.delete_vertex_elements_state = llvmpipe_delete_vertex_elements_state;
 
-   llvmpipe->pipe.set_blend_color = llvmpipe_set_blend_color;
-   llvmpipe->pipe.set_stencil_ref = llvmpipe_set_stencil_ref;
    llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
    llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
@@ -144,6 +134,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.flush = llvmpipe_flush;
 
 
+   llvmpipe_init_blend_funcs(llvmpipe);
    llvmpipe_init_sampler_funcs(llvmpipe);
    llvmpipe_init_query_funcs( llvmpipe );
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );

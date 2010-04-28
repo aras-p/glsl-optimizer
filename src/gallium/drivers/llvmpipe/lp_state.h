@@ -123,20 +123,6 @@ struct lp_velems_state {
 
 
 void *
-llvmpipe_create_blend_state(struct pipe_context *,
-                            const struct pipe_blend_state *);
-void llvmpipe_bind_blend_state(struct pipe_context *,
-                               void *);
-void llvmpipe_delete_blend_state(struct pipe_context *,
-                                 void *);
-
-void *
-llvmpipe_create_depth_stencil_state(struct pipe_context *,
-                                    const struct pipe_depth_stencil_alpha_state *);
-void llvmpipe_bind_depth_stencil_state(struct pipe_context *, void *);
-void llvmpipe_delete_depth_stencil_state(struct pipe_context *, void *);
-
-void *
 llvmpipe_create_rasterizer_state(struct pipe_context *,
                                  const struct pipe_rasterizer_state *);
 void llvmpipe_bind_rasterizer_state(struct pipe_context *, void *);
@@ -144,12 +130,6 @@ void llvmpipe_delete_rasterizer_state(struct pipe_context *, void *);
 
 void llvmpipe_set_framebuffer_state( struct pipe_context *,
                                      const struct pipe_framebuffer_state * );
-
-void llvmpipe_set_blend_color( struct pipe_context *pipe,
-                               const struct pipe_blend_color *blend_color );
-
-void llvmpipe_set_stencil_ref( struct pipe_context *pipe,
-                               const struct pipe_stencil_ref *stencil_ref );
 
 void llvmpipe_set_clip_state( struct pipe_context *,
                               const struct pipe_clip_state * );
@@ -215,6 +195,9 @@ llvmpipe_unmap_texture_surfaces(struct llvmpipe_context *lp);
 
 void
 llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe);
 
 
 #endif
