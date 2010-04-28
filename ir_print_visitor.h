@@ -29,6 +29,9 @@
 #include "ir.h"
 #include "ir_visitor.h"
 
+extern void _mesa_print_ir(exec_list *instructions,
+			   struct _mesa_glsl_parse_state *state);
+
 /**
  * Abstract base class of visitors of IR instruction trees
  */

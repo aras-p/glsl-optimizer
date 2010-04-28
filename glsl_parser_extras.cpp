@@ -789,14 +789,7 @@ main(int argc, char **argv)
    printf("\n\n");
 
    if (!state.error) {
-      printf("(\n");
-      foreach_iter(exec_list_iterator, iter, instructions) {
-	 ir_print_visitor v;
-
-	 ((ir_instruction *)iter.get())->accept(& v);
-	 printf("\n");
-      }
-      printf("\n)");
+      _mesa_print_ir(&instructions, &state);
    }
 
    delete state.symbols;

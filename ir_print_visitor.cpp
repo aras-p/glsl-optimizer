@@ -24,6 +24,22 @@
 #include "ir_print_visitor.h"
 #include "glsl_types.h"
 
+void
+_mesa_print_ir(exec_list *instructions,
+	       struct _mesa_glsl_parse_state *state)
+{
+   (void) state;
+
+   printf("(\n");
+   foreach_iter(exec_list_iterator, iter, *instructions) {
+      ir_print_visitor v;
+
+      ((ir_instruction *)iter.get())->accept(& v);
+      printf("\n");
+   }
+   printf("\n)");
+}
+
 static void
 print_type(const glsl_type *t)
 {
