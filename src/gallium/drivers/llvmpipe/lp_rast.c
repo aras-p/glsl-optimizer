@@ -944,6 +944,8 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
    /* for synchronizing rasterization threads */
    pipe_barrier_destroy( &rast->barrier );
 
+   lp_scene_queue_destroy(rast->full_scenes);
+
    FREE(rast);
 }
 
