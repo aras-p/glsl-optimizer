@@ -778,6 +778,8 @@ lp_setup_destroy( struct lp_setup_context *setup )
       lp_scene_destroy(scene);
    }
 
+   lp_scene_queue_destroy(setup->empty_scenes);
+
    lp_rast_destroy( setup->rast );
 
    FREE( setup );
