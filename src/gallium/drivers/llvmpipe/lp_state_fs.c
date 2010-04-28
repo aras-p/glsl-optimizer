@@ -950,7 +950,7 @@ generate_variant(struct llvmpipe_context *lp,
 }
 
 
-void *
+static void *
 llvmpipe_create_fs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
@@ -975,7 +975,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
 }
 
 
-void
+static void
 llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -991,7 +991,7 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
-void
+static void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -1034,7 +1034,7 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 
 
 
-void
+static void
 llvmpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
                              struct pipe_resource *constants)
@@ -1181,4 +1181,16 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
                              variant->jit_function[RAST_WHOLE],
                              variant->jit_function[RAST_EDGE_TEST],
                              opaque);
+}
+
+
+
+void
+llvmpipe_init_fs_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.create_fs_state = llvmpipe_create_fs_state;
+   llvmpipe->pipe.bind_fs_state   = llvmpipe_bind_fs_state;
+   llvmpipe->pipe.delete_fs_state = llvmpipe_delete_fs_state;
+
+   llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
 }

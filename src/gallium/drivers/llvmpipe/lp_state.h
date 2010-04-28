@@ -131,19 +131,6 @@ void llvmpipe_delete_rasterizer_state(struct pipe_context *, void *);
 void llvmpipe_set_framebuffer_state( struct pipe_context *,
                                      const struct pipe_framebuffer_state * );
 
-void llvmpipe_set_constant_buffer(struct pipe_context *,
-                                  uint shader, uint index,
-                                  struct pipe_resource *buf);
-
-void *llvmpipe_create_fs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void llvmpipe_bind_fs_state(struct pipe_context *, void *);
-void llvmpipe_delete_fs_state(struct pipe_context *, void *);
-void *llvmpipe_create_vs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void llvmpipe_bind_vs_state(struct pipe_context *, void *);
-void llvmpipe_delete_vs_state(struct pipe_context *, void *);
-
 void llvmpipe_update_fs(struct llvmpipe_context *lp);
 
 void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe );
@@ -170,6 +157,12 @@ llvmpipe_init_draw_funcs(struct llvmpipe_context *llvmpipe);
 
 void
 llvmpipe_init_clip_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_fs_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_vs_funcs(struct llvmpipe_context *llvmpipe);
 
 
 #endif
