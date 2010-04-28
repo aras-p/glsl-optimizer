@@ -434,6 +434,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    struct intel_screen *intelScreen;
    GLenum fb_format[3];
    GLenum fb_type[3];
+   unsigned int api_mask;
 
    static const GLenum back_buffer_modes[] = {
        GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
@@ -459,6 +460,17 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))
       return GL_FALSE;
+
+   api_mask = (1 << __DRI_API_OPENGL);
+#if FEATURE_ES1
+   api_mask |= (1 << __DRI_API_GLES);
+#endif
+#if FEATURE_ES2
+   api_mask |= (1 << __DRI_API_GLES2);
+#endif
+
+   if (IS_9XX(intelScreen->deviceID) || IS_965(intelScreen->deviceID))
+      psp->api_mask = api_mask;
 
    if (!intel_init_bufmgr(intelScreen))
        return GL_FALSE;
