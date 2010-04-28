@@ -66,9 +66,6 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
       ir_read_error(state, NULL, "couldn't parse S-Expression.");
       return;
    }
-   printf("S-Expression:\n");
-   expr->print();
-   printf("\n-------------\n");
    
    _mesa_glsl_initialize_types(state);
 
