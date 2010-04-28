@@ -215,6 +215,35 @@ softpipe_resource_get_handle(struct pipe_screen *screen,
 
 
 /**
+ * Helper function to compute offset (in bytes) for a particular
+ * texture level/face/slice from the start of the buffer.
+ */
+static unsigned
+sp_get_tex_image_offset(const struct softpipe_resource *spr,
+                        unsigned level, unsigned face, unsigned zslice)
+{
+   const unsigned hgt = u_minify(spr->base.height0, level);
+   const unsigned nblocksy = util_format_get_nblocksy(spr->base.format, hgt);
+   unsigned offset = spr->level_offset[level];
+
+   if (spr->base.target == PIPE_TEXTURE_CUBE) {
+      assert(zslice == 0);
+      offset += face * nblocksy * spr->stride[level];
+   }
+   else if (spr->base.target == PIPE_TEXTURE_3D) {
+      assert(face == 0);
+      offset += zslice * nblocksy * spr->stride[level];
+   }
+   else {
+      assert(face == 0);
+      assert(zslice == 0);
+   }
+
+   return offset;
+}
+
+
+/**
  * Get a pipe_surface "view" into a texture resource.
  */
 static struct pipe_surface *
@@ -235,25 +264,12 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->format = pt->format;
       ps->width = u_minify(pt->width0, level);
       ps->height = u_minify(pt->height0, level);
-      ps->offset = spr->level_offset[level];
+      ps->offset = sp_get_tex_image_offset(spr, level, face, zslice);
       ps->usage = usage;
 
       ps->face = face;
       ps->level = level;
       ps->zslice = zslice;
-
-      if (pt->target == PIPE_TEXTURE_CUBE) {
-         ps->offset += face * util_format_get_nblocksy(pt->format, u_minify(pt->height0, level)) *
-                       spr->stride[level];
-      }
-      else if (pt->target == PIPE_TEXTURE_3D) {
-         ps->offset += zslice * util_format_get_nblocksy(pt->format, u_minify(pt->height0, level)) *
-                       spr->stride[level];
-      }
-      else {
-         assert(face == 0);
-         assert(zslice == 0);
-      }
    }
    return ps;
 }
@@ -327,27 +343,14 @@ softpipe_get_transfer(struct pipe_context *pipe,
    if (spt) {
       struct pipe_transfer *pt = &spt->base;
       enum pipe_format format = resource->format;
-      int nblocksy = util_format_get_nblocksy(resource->format, 
-					      u_minify(resource->height0, sr.level));
       pipe_resource_reference(&pt->resource, resource);
       pt->sr = sr;
       pt->usage = usage;
       pt->box = *box;
       pt->stride = spr->stride[sr.level];
 
-      spt->offset = spr->level_offset[sr.level];
-
-      if (resource->target == PIPE_TEXTURE_CUBE) {
-         spt->offset += sr.face * nblocksy * pt->stride;
-      }
-      else if (resource->target == PIPE_TEXTURE_3D) {
-         spt->offset += box->z * nblocksy * pt->stride;
-      }
-      else {
-         assert(sr.face == 0);
-         assert(box->z == 0);
-      }
-      
+      spt->offset = sp_get_tex_image_offset(spr, sr.level, sr.face, box->z);
+ 
       spt->offset += 
 	 box->y / util_format_get_blockheight(format) * spt->base.stride +
 	 box->x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
