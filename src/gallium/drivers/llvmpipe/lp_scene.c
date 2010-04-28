@@ -32,7 +32,6 @@
 #include "util/u_surface.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
-#include "lp_debug.h"
 
 
 /** List of texture references */
