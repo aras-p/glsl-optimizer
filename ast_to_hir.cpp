@@ -1973,20 +1973,9 @@ ast_function::hir(exec_list *instructions,
    if (sig == NULL) {
       sig = new ir_function_signature(return_type);
       f->add_signature(sig);
-   } else if (is_definition) {
-      /* Destroy all of the previous parameter information.  The previous
-       * parameter information comes from the function prototype, and it can
-       * either include invalid parameter names or may not have names at all.
-       */
-      foreach_iter(exec_list_iterator, iter, sig->parameters) {
-	 assert(((ir_instruction *) iter.get())->as_variable() != NULL);
-
-	 iter.remove();
-	 delete iter.get();
-      }
    }
 
-   hir_parameters.move_nodes_to(& sig->parameters);
+   sig->replace_parameters(&hir_parameters);
    signature = sig;
 
    /* Function declarations (prototypes) do not have r-values.

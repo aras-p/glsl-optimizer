@@ -214,6 +214,13 @@ public:
    const char *qualifiers_match(exec_list *params);
 
    /**
+    * Replace the current parameter list with the given one.  This is useful
+    * if the current information came from a prototype, and either has invalid
+    * or missing parameter names.
+    */
+   void replace_parameters(exec_list *new_params);
+
+   /**
     * Function return type.
     *
     * \note This discards the optional precision qualifier.

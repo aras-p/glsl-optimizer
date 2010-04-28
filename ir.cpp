@@ -364,6 +364,24 @@ ir_function_signature::qualifiers_match(exec_list *params)
 }
 
 
+void
+ir_function_signature::replace_parameters(exec_list *new_params)
+{
+   /* Destroy all of the previous parameter information.  If the previous
+    * parameter information comes from the function prototype, it may either
+    * specify incorrect parameter names or not have names at all.
+    */
+   foreach_iter(exec_list_iterator, iter, parameters) {
+      assert(((ir_instruction *) iter.get())->as_variable() != NULL);
+
+      iter.remove();
+      delete (ir_instruction*) iter.get();
+   }
+
+   new_params->move_nodes_to(&parameters);
+}
+
+
 ir_function::ir_function(const char *name)
    : name(name)
 {
