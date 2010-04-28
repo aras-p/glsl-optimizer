@@ -42,20 +42,12 @@
 
 
 
-void
-llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                     unsigned start, unsigned count)
-{
-   llvmpipe_draw_elements(pipe, NULL, 0, 0, mode, start, count);
-}
-
-
 /**
  * Draw vertex arrays, with optional indexing.
  * Basically, map the vertex buffers (and drawing surfaces), then hand off
  * the drawing to the 'draw' module.
  */
-void
+static void
 llvmpipe_draw_range_elements(struct pipe_context *pipe,
                              struct pipe_resource *indexBuffer,
                              unsigned indexSize,
@@ -115,7 +107,7 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
 }
 
 
-void
+static void
 llvmpipe_draw_elements(struct pipe_context *pipe,
                        struct pipe_resource *indexBuffer,
                        unsigned indexSize,
@@ -128,3 +120,19 @@ llvmpipe_draw_elements(struct pipe_context *pipe,
                                  mode, start, count );
 }
 
+
+static void
+llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
+                     unsigned start, unsigned count)
+{
+   llvmpipe_draw_elements(pipe, NULL, 0, 0, mode, start, count);
+}
+
+
+void
+llvmpipe_init_draw_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
+   llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
+   llvmpipe->pipe.draw_range_elements = llvmpipe_draw_range_elements;
+}

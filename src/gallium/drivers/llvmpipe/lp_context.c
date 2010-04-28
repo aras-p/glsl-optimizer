@@ -120,14 +120,11 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
 
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
-   llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
-   llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
-   llvmpipe->pipe.draw_range_elements = llvmpipe_draw_range_elements;
-
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = llvmpipe_flush;
 
    llvmpipe_init_blend_funcs(llvmpipe);
+   llvmpipe_init_draw_funcs(llvmpipe);
    llvmpipe_init_sampler_funcs(llvmpipe);
    llvmpipe_init_query_funcs( llvmpipe );
    llvmpipe_init_vertex_funcs(llvmpipe);

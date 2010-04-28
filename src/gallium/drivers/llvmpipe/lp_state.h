@@ -161,21 +161,6 @@ void llvmpipe_update_fs(struct llvmpipe_context *lp);
 void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe );
 
 
-void llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-			     unsigned start, unsigned count);
-
-void llvmpipe_draw_elements(struct pipe_context *pipe,
-			       struct pipe_resource *indexBuffer,
-			       unsigned indexSize, int indexBias,
-			       unsigned mode, unsigned start, unsigned count);
-void
-llvmpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_resource *indexBuffer,
-                             unsigned indexSize, int indexBias,
-                             unsigned min_index,
-                             unsigned max_index,
-                             unsigned mode, unsigned start, unsigned count);
-
 void
 llvmpipe_map_texture_surfaces(struct llvmpipe_context *lp);
 
@@ -191,5 +176,8 @@ llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe);
 
 void
 llvmpipe_init_vertex_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_draw_funcs(struct llvmpipe_context *llvmpipe);
 
 #endif
