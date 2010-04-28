@@ -1500,6 +1500,15 @@ fi
 echo "        Use XCB:         $enable_xcb"
 
 echo ""
+if test "x$MESA_LLVM" == x1; then
+    echo "        llvm:            yes"
+    echo "        llvm-config:     $LLVM_CONFIG"
+    echo "        llvm-version:    $LLVM_VERSION"
+else
+    echo "        llvm:            no"
+fi
+
+echo ""
 if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Gallium:         yes"
     echo "        Gallium dirs:    $GALLIUM_DIRS"
