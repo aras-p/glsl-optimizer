@@ -31,10 +31,6 @@ print_type(const glsl_type *t)
       printf("(array ");
       print_type(t->fields.array);
       printf(" %u)", t->length);
-   } else if (t->base_type == GLSL_TYPE_STRUCT) {
-      printf("(struct (%s %u ", t->name ? t->name : "@", t->length);
-      printf("(FINISHME: structure fields go here) ");
-      printf(")");
    } else {
       printf("%s", t->name);
    }
