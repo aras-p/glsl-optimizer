@@ -33,7 +33,7 @@
  *   Kristian Høgsberg (krh@redhat.com)
  */
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
 #include <unistd.h>
 #include <dlfcn.h>
