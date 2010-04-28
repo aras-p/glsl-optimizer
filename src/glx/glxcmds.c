@@ -887,7 +887,7 @@ glXCopyContext(Display * dpy, GLXContext source,
 static Bool
 __glXIsDirect(Display * dpy, GLXContextID contextID)
 {
-#ifndef GLX_USE_APPLEGL /* TODO: apple indirect */
+#ifdef GLX_USE_APPLEGL /* TODO: apple indirect */
    return GC_IS_DIRECT(gc);
 #else
 #if !defined(USE_XCB)
