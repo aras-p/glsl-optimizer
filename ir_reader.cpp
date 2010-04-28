@@ -725,8 +725,12 @@ read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
    if (rvalue == NULL)
       return NULL;
 
-   return ir_swizzle::create(rvalue, swiz->value(),
-			     rvalue->type->vector_elements);
+   ir_swizzle *ir = ir_swizzle::create(rvalue, swiz->value(),
+				       rvalue->type->vector_elements);
+   if (ir == NULL)
+      ir_read_error(st, list, "invalid swizzle");
+
+   return ir;
 }
 
 static ir_constant *
