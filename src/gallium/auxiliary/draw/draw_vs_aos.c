@@ -2089,6 +2089,13 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 }
 
 
+/** cast wrapper */
+static INLINE struct draw_vs_varient_aos_sse *
+draw_vs_varient_aos_sse(struct draw_vs_varient *varient)
+{
+   return (struct draw_vs_varient_aos_sse *) varient;
+}
+
 
 static void vaos_set_buffer( struct draw_vs_varient *varient,
                              unsigned buf,
@@ -2096,7 +2103,7 @@ static void vaos_set_buffer( struct draw_vs_varient *varient,
                              unsigned stride,
                              unsigned max_stride)
 {
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct draw_vs_varient_aos_sse *vaos = draw_vs_varient_aos_sse(varient);
 
    if (buf < vaos->nr_vb) {
       vaos->buffer[buf].base_ptr = (char *)ptr;
@@ -2113,7 +2120,7 @@ static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
                                       unsigned count,
                                       void *output_buffer )
 {
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct draw_vs_varient_aos_sse *vaos = draw_vs_varient_aos_sse(varient);
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
    unsigned i;
 
@@ -2137,7 +2144,7 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
                                         unsigned count,
                                         void *output_buffer )
 {
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct draw_vs_varient_aos_sse *vaos = draw_vs_varient_aos_sse(varient);
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
    unsigned i;
 
@@ -2166,7 +2173,7 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
 
 static void vaos_destroy( struct draw_vs_varient *varient )
 {
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct draw_vs_varient_aos_sse *vaos = draw_vs_varient_aos_sse(varient);
 
    FREE( vaos->buffer );
 
