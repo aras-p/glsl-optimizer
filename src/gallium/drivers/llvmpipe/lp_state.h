@@ -31,11 +31,10 @@
 #ifndef LP_STATE_H
 #define LP_STATE_H
 
-#include "gallivm/lp_bld.h"
-
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
 #include "lp_jit.h"
+#include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_sample.h" /* for struct lp_sampler_static_state */
 
 
@@ -95,11 +94,7 @@ struct lp_fragment_shader_variant
 };
 
 
-/**
- * Subclass of pipe_shader_state (though it doesn't really need to be).
- *
- * This is starting to look an awful lot like a quad pipeline stage...
- */
+/** Subclass of pipe_shader_state */
 struct lp_fragment_shader
 {
    struct pipe_shader_state base;
@@ -111,12 +106,16 @@ struct lp_fragment_shader
 
 
 /** Subclass of pipe_shader_state */
-struct lp_vertex_shader {
+struct lp_vertex_shader
+{
    struct pipe_shader_state shader;
    struct draw_vertex_shader *draw_data;
 };
 
-struct lp_velems_state {
+
+/** Vertex element state */
+struct lp_velems_state
+{
    unsigned count;
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
@@ -140,7 +139,7 @@ void
 llvmpipe_update_fs(struct llvmpipe_context *lp);
 
 void
-llvmpipe_update_derived( struct llvmpipe_context *llvmpipe );
+llvmpipe_update_derived(struct llvmpipe_context *llvmpipe);
 
 void
 llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe);
