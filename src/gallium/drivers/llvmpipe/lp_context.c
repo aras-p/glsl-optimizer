@@ -100,10 +100,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.destroy = llvmpipe_destroy;
 
    /* state setters */
-   llvmpipe->pipe.create_rasterizer_state = llvmpipe_create_rasterizer_state;
-   llvmpipe->pipe.bind_rasterizer_state   = llvmpipe_bind_rasterizer_state;
-   llvmpipe->pipe.delete_rasterizer_state = llvmpipe_delete_rasterizer_state;
-
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
 
    llvmpipe->pipe.clear = llvmpipe_clear;
@@ -117,6 +113,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe_init_vertex_funcs(llvmpipe);
    llvmpipe_init_fs_funcs(llvmpipe);
    llvmpipe_init_vs_funcs(llvmpipe);
+   llvmpipe_init_rasterizer_funcs(llvmpipe);
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
 
    /*

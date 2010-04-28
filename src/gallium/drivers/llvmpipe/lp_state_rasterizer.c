@@ -34,7 +34,7 @@
 
 
 
-void *
+static void *
 llvmpipe_create_rasterizer_state(struct pipe_context *pipe,
                                  const struct pipe_rasterizer_state *rast)
 {
@@ -46,7 +46,7 @@ llvmpipe_create_rasterizer_state(struct pipe_context *pipe,
 
 
 
-void
+static void
 llvmpipe_bind_rasterizer_state(struct pipe_context *pipe, void *handle)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -79,10 +79,19 @@ llvmpipe_bind_rasterizer_state(struct pipe_context *pipe, void *handle)
 }
 
 
-void llvmpipe_delete_rasterizer_state(struct pipe_context *pipe,
-                                      void *rasterizer)
+static void
+llvmpipe_delete_rasterizer_state(struct pipe_context *pipe,
+                                 void *rasterizer)
 {
    FREE( rasterizer );
 }
 
 
+
+void
+llvmpipe_init_rasterizer_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.create_rasterizer_state = llvmpipe_create_rasterizer_state;
+   llvmpipe->pipe.bind_rasterizer_state   = llvmpipe_bind_rasterizer_state;
+   llvmpipe->pipe.delete_rasterizer_state = llvmpipe_delete_rasterizer_state;
+}

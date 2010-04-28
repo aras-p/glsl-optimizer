@@ -121,16 +121,6 @@ struct lp_velems_state
 };
 
 
-void *
-llvmpipe_create_rasterizer_state(struct pipe_context *,
-                                 const struct pipe_rasterizer_state *);
-
-void
-llvmpipe_bind_rasterizer_state(struct pipe_context *, void *);
-
-void
-llvmpipe_delete_rasterizer_state(struct pipe_context *, void *);
-
 void
 llvmpipe_set_framebuffer_state(struct pipe_context *,
                                const struct pipe_framebuffer_state *);
@@ -161,6 +151,9 @@ llvmpipe_init_fs_funcs(struct llvmpipe_context *llvmpipe);
 
 void
 llvmpipe_init_vs_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_rasterizer_funcs(struct llvmpipe_context *llvmpipe);
 
 
 #endif
