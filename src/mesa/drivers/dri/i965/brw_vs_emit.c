@@ -49,7 +49,7 @@ brw_vs_arg_can_be_immediate(enum prog_opcode opcode, int arg)
       [OPCODE_DP3] = 2,
       [OPCODE_DP4] = 2,
       [OPCODE_DPH] = 2,
-      [OPCODE_MAX] = 1,
+      [OPCODE_MAX] = 2,
       [OPCODE_MIN] = 2,
       [OPCODE_MUL] = 2,
       [OPCODE_SEQ] = 2,
@@ -490,8 +490,8 @@ static void emit_max( struct brw_compile *p,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, arg1);
-   brw_SEL(p, dst, arg1, arg0);
+   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0, arg1);
+   brw_SEL(p, dst, arg0, arg1);
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
