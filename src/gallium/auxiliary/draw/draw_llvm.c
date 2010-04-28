@@ -713,10 +713,12 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    struct draw_context *draw = llvm->draw;
    unsigned i, j;
    struct lp_build_context bld;
+   struct lp_build_context bld_int;
    struct lp_build_loop_state lp_loop;
    struct lp_type vs_type = lp_type_float_vec(32);
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+   LLVMValueRef fetch_max;
 
    arg_types[0] = llvm->context_ptr_type;               /* context */
    arg_types[1] = llvm->vertex_header_ptr_type;         /* vertex_header */
@@ -759,8 +761,13 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    LLVMPositionBuilderAtEnd(builder, block);
 
    lp_build_context_init(&bld, builder, vs_type);
+   lp_build_context_init(&bld_int, builder, lp_type_int(32));
 
    step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
+
+   fetch_max = LLVMBuildSub(builder, fetch_count,
+                            LLVMConstInt(LLVMInt32Type(), 1, 0),
+                            "fetch_max");
 
    lp_build_loop_begin(builder, LLVMConstInt(LLVMInt32Type(), 0, 0), &lp_loop);
    {
@@ -780,8 +787,15 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
             builder,
             lp_loop.counter,
             LLVMConstInt(LLVMInt32Type(), i, 0), "");
-         LLVMValueRef fetch_ptr = LLVMBuildGEP(builder, fetch_elts,
-                                               &true_index, 1, "");
+         LLVMValueRef fetch_ptr;
+
+         /* make sure we're not out of bounds which can happen
+          * if fetch_count % 4 != 0, because on the last iteration
+          * a few of the 4 vertex fetches will be out of bounds */
+         true_index = lp_build_min(&bld_int, true_index, fetch_max);
+
+         fetch_ptr = LLVMBuildGEP(builder, fetch_elts,
+                                  &true_index, 1, "");
          true_index = LLVMBuildLoad(builder, fetch_ptr, "fetch_elt");
          for (j = 0; j < draw->pt.nr_vertex_elements; ++j) {
             struct pipe_vertex_element *velem = &draw->pt.vertex_element[j];
