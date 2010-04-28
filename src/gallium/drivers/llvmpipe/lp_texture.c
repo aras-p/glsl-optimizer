@@ -241,6 +241,8 @@ llvmpipe_resource_destroy(struct pipe_screen *pscreen,
       /* display target */
       struct sw_winsys *winsys = screen->winsys;
       winsys->displaytarget_destroy(winsys, lpr->dt);
+
+      FREE(lpr->layout[0]);
    }
    else if (resource_is_texture(pt)) {
       /* regular texture */
