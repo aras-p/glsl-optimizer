@@ -94,9 +94,6 @@ struct llvmpipe_context {
    /** Vertex format */
    struct vertex_info vertex_info;
 
-   /** Which vertex shader output slot contains point size */
-   int psize_slot;
-
    /** The tiling engine */
    struct lp_setup_context *setup;
 
