@@ -112,10 +112,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.bind_vs_state   = llvmpipe_bind_vs_state;
    llvmpipe->pipe.delete_vs_state = llvmpipe_delete_vs_state;
 
-   llvmpipe->pipe.create_vertex_elements_state = llvmpipe_create_vertex_elements_state;
-   llvmpipe->pipe.bind_vertex_elements_state = llvmpipe_bind_vertex_elements_state;
-   llvmpipe->pipe.delete_vertex_elements_state = llvmpipe_delete_vertex_elements_state;
-
    llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
    llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
@@ -124,8 +120,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
 
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
-   llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
-
    llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
    llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
    llvmpipe->pipe.draw_range_elements = llvmpipe_draw_range_elements;
@@ -133,10 +127,10 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = llvmpipe_flush;
 
-
    llvmpipe_init_blend_funcs(llvmpipe);
    llvmpipe_init_sampler_funcs(llvmpipe);
    llvmpipe_init_query_funcs( llvmpipe );
+   llvmpipe_init_vertex_funcs(llvmpipe);
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
 
    /*

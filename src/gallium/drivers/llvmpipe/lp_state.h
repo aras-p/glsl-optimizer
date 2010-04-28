@@ -147,12 +147,6 @@ void *llvmpipe_create_vs_state(struct pipe_context *,
 void llvmpipe_bind_vs_state(struct pipe_context *, void *);
 void llvmpipe_delete_vs_state(struct pipe_context *, void *);
 
-void *llvmpipe_create_vertex_elements_state(struct pipe_context *,
-                                            unsigned count,
-                                            const struct pipe_vertex_element *);
-void llvmpipe_bind_vertex_elements_state(struct pipe_context *, void *);
-void llvmpipe_delete_vertex_elements_state(struct pipe_context *, void *);
-
 void llvmpipe_set_polygon_stipple( struct pipe_context *,
                                    const struct pipe_poly_stipple * );
 
@@ -161,10 +155,6 @@ void llvmpipe_set_scissor_state( struct pipe_context *,
 
 void llvmpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );
-
-void llvmpipe_set_vertex_buffers(struct pipe_context *,
-                                 unsigned count,
-                                 const struct pipe_vertex_buffer *);
 
 void llvmpipe_update_fs(struct llvmpipe_context *lp);
 
@@ -199,5 +189,7 @@ llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe);
 void
 llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe);
 
+void
+llvmpipe_init_vertex_funcs(struct llvmpipe_context *llvmpipe);
 
 #endif
