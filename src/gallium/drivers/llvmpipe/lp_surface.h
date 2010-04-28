@@ -36,7 +36,7 @@ struct llvmpipe_context;
 
 
 extern void
-lp_init_surface_functions(struct llvmpipe_context *lp);
+llvmpipe_init_surface_functions(struct llvmpipe_context *lp);
 
 
 #endif /* LP_SURFACE_H */

@@ -97,11 +97,10 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.winsys = screen->winsys;
    llvmpipe->pipe.screen = screen;
    llvmpipe->pipe.priv = priv;
+
+   /* Init the pipe context methods */
    llvmpipe->pipe.destroy = llvmpipe_destroy;
-
-   /* state setters */
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
-
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = llvmpipe_flush;
 
@@ -115,6 +114,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe_init_vs_funcs(llvmpipe);
    llvmpipe_init_rasterizer_funcs(llvmpipe);
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
+   llvmpipe_init_surface_functions(llvmpipe);
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -146,8 +146,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    /* Do polygon stipple w/ texture map + frag prog? */
    draw_install_pstipple_stage(llvmpipe->draw, &llvmpipe->pipe);
 #endif
-
-   lp_init_surface_functions(llvmpipe);
 
    lp_reset_counters();
 
