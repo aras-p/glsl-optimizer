@@ -169,8 +169,9 @@ draw_create_vs_ppc(struct draw_context *draw,
 struct draw_vs_varient_key;
 struct draw_vertex_shader;
 
-struct draw_vs_varient *draw_vs_varient_aos_sse( struct draw_vertex_shader *vs,
-                                                 const struct draw_vs_varient_key *key );
+struct draw_vs_varient *
+draw_vs_create_varient_aos_sse( struct draw_vertex_shader *vs,
+                                const struct draw_vs_varient_key *key );
 
 
 
@@ -188,8 +189,9 @@ struct translate *draw_vs_get_fetch( struct draw_context *draw,
 struct translate *draw_vs_get_emit( struct draw_context *draw,
                                     struct translate_key *key );
 
-struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
-                                                 const struct draw_vs_varient_key *key );
+struct draw_vs_varient *
+draw_vs_create_varient_generic( struct draw_vertex_shader *vs,
+                                const struct draw_vs_varient_key *key );
 
 
 

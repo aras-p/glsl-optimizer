@@ -2242,13 +2242,14 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
 }
 
 
-struct draw_vs_varient *draw_vs_varient_aos_sse( struct draw_vertex_shader *vs,
-                                                 const struct draw_vs_varient_key *key )
+struct draw_vs_varient *
+draw_vs_create_varient_aos_sse( struct draw_vertex_shader *vs,
+                                const struct draw_vs_varient_key *key )
 {
    struct draw_vs_varient *varient = varient_aos_sse( vs, key );
 
    if (varient == NULL) {
-      varient = draw_vs_varient_generic( vs, key );
+      varient = draw_vs_create_varient_generic( vs, key );
    }
 
    return varient;
