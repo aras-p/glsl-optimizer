@@ -23,12 +23,29 @@
 #include <cstdio>
 #include "ir_print_visitor.h"
 #include "glsl_types.h"
+#include "glsl_parser_extras.h"
+
+static void print_type(const glsl_type *t);
 
 void
 _mesa_print_ir(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
 {
-   (void) state;
+   for (unsigned i = 0; i < state->num_user_structures; i++) {
+      const glsl_type *const s = state->user_structures[i];
+
+      printf("(structure (%s) (%s@%08x) (%u) (\n",
+	     s->name, s->name, (unsigned) s, s->length
+	     );
+
+      for (unsigned j = 0; j < s->length; j++) {
+	 printf("\t((");
+	 print_type(s->fields.structure[j].type);
+	 printf(")(%s))\n", s->fields.structure[j].name);
+      }
+
+      printf(")\n");
+   }
 
    printf("(\n");
    foreach_iter(exec_list_iterator, iter, *instructions) {
@@ -47,6 +64,9 @@ print_type(const glsl_type *t)
       printf("(array ");
       print_type(t->fields.array);
       printf(" %u)", t->length);
+   } else if ((t->base_type == GLSL_TYPE_STRUCT)
+	      && (strncmp("gl_", t->name, 3) != 0)) {
+      printf("%s@%08x", t->name, (unsigned) t);
    } else {
       printf("%s", t->name);
    }

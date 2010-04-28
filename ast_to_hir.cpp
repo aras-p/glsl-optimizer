@@ -2375,6 +2375,16 @@ ast_struct_specifier::hir(exec_list *instructions,
       } else {
 	 t->generate_constructor(state->symbols);
       }
+
+      const glsl_type **s = (const glsl_type **)
+	 realloc(state->user_structures,
+		 sizeof(state->user_structures[0]) *
+		 (state->num_user_structures + 1));
+      if (s != NULL) {
+	 s[state->num_user_structures] = t;
+	 state->user_structures = s;
+	 state->num_user_structures++;
+      }
    }
 
    /* Structure type definitions do not have r-values.
