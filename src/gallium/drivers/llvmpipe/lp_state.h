@@ -85,8 +85,6 @@ struct lp_fragment_shader_variant_key
 
 struct lp_fragment_shader_variant
 {
-   struct lp_fragment_shader *shader;
-
    struct lp_fragment_shader_variant_key key;
 
    LLVMValueRef function[2];
@@ -109,8 +107,6 @@ struct lp_fragment_shader
    struct tgsi_shader_info info;
 
    struct lp_fragment_shader_variant *variants;
-
-   struct lp_fragment_shader_variant *current;
 };
 
 

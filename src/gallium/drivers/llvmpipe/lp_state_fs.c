@@ -937,7 +937,6 @@ generate_variant(struct llvmpipe_context *lp,
    if(!variant)
       return NULL;
 
-   variant->shader = shader;
    memcpy(&variant->key, key, sizeof *key);
 
    generate_fragment(lp, shader, variant, 0);
@@ -1166,8 +1165,6 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       LP_COUNT_ADD(nr_llvm_compiles, 2);  /* emit vs. omit in/out test */
    }
 
-   shader->current = variant;
-
    /* TODO: put this in the variant */
    /* TODO: most of these can be relaxed, in particular the colormask */
    opaque = !key.blend.logicop_enable &&
@@ -1181,7 +1178,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
             ? TRUE : FALSE;
 
    lp_setup_set_fs_functions(lp->setup, 
-                             shader->current->jit_function[RAST_WHOLE],
-                             shader->current->jit_function[RAST_EDGE_TEST],
+                             variant->jit_function[RAST_WHOLE],
+                             variant->jit_function[RAST_EDGE_TEST],
                              opaque);
 }
