@@ -217,6 +217,12 @@ st_translate_vertex_program(struct st_context *st,
       num_outputs++;
    }
 
+   if (ST_DEBUG & DEBUG_MESA) {
+      _mesa_print_program(&stvp->Base.Base);
+      _mesa_print_program_parameters(st->ctx, &stvp->Base.Base);
+      debug_printf("\n");
+   }
+
    error = 
       st_translate_mesa_program(st->ctx,
                                 TGSI_PROCESSOR_VERTEX,
@@ -245,11 +251,6 @@ st_translate_vertex_program(struct st_context *st,
    ureg_destroy( ureg );
 
    vpv->driver_shader = pipe->create_vs_state(pipe, &vpv->tgsi);
-
-   if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
-      _mesa_print_program(&stvp->Base.Base);
-      debug_printf("\n");
-   }
 
    if (ST_DEBUG & DEBUG_TGSI) {
       tgsi_dump( vpv->tgsi.tokens, 0 );
@@ -423,6 +424,11 @@ st_translate_fragment_program(struct st_context *st,
    if (ureg == NULL)
       return;
 
+   if (ST_DEBUG & DEBUG_MESA) {
+      _mesa_print_program(&stfp->Base.Base);
+      _mesa_print_program_parameters(st->ctx, &stfp->Base.Base);
+      debug_printf("\n");
+   }
 
    error = 
       st_translate_mesa_program(st->ctx,
@@ -444,11 +450,6 @@ st_translate_fragment_program(struct st_context *st,
    stfp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
    ureg_destroy( ureg );
    stfp->driver_shader = pipe->create_fs_state(pipe, &stfp->tgsi);
-
-   if ((ST_DEBUG & DEBUG_TGSI) && (ST_DEBUG & DEBUG_MESA)) {
-      _mesa_print_program(&stfp->Base.Base);
-      debug_printf("\n");
-   }
 
    if (ST_DEBUG & DEBUG_TGSI) {
       tgsi_dump( stfp->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
