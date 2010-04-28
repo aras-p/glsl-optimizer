@@ -762,6 +762,8 @@ lp_setup_destroy( struct lp_setup_context *setup )
 
    reset_context( setup );
 
+   util_unreference_framebuffer_state(&setup->fb);
+
    for (i = 0; i < Elements(setup->fs.current_tex); i++) {
       pipe_resource_reference(&setup->fs.current_tex[i], NULL);
    }
