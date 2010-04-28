@@ -125,23 +125,22 @@ struct lp_velems_state {
 void *
 llvmpipe_create_rasterizer_state(struct pipe_context *,
                                  const struct pipe_rasterizer_state *);
-void llvmpipe_bind_rasterizer_state(struct pipe_context *, void *);
-void llvmpipe_delete_rasterizer_state(struct pipe_context *, void *);
-
-void llvmpipe_set_framebuffer_state( struct pipe_context *,
-                                     const struct pipe_framebuffer_state * );
-
-void llvmpipe_update_fs(struct llvmpipe_context *lp);
-
-void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe );
-
 
 void
-llvmpipe_map_texture_surfaces(struct llvmpipe_context *lp);
+llvmpipe_bind_rasterizer_state(struct pipe_context *, void *);
 
 void
-llvmpipe_unmap_texture_surfaces(struct llvmpipe_context *lp);
+llvmpipe_delete_rasterizer_state(struct pipe_context *, void *);
 
+void
+llvmpipe_set_framebuffer_state(struct pipe_context *,
+                               const struct pipe_framebuffer_state *);
+
+void
+llvmpipe_update_fs(struct llvmpipe_context *lp);
+
+void
+llvmpipe_update_derived( struct llvmpipe_context *llvmpipe );
 
 void
 llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe);
