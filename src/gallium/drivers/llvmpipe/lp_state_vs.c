@@ -28,11 +28,13 @@
 
 
 #include "pipe/p_defines.h"
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 #include "util/u_memory.h"
 #include "draw/draw_context.h"
 
 #include "lp_context.h"
+#include "lp_debug.h"
 #include "lp_state.h"
 
 
@@ -56,6 +58,11 @@ llvmpipe_create_vs_state(struct pipe_context *pipe,
    state->draw_data = draw_create_vertex_shader(llvmpipe->draw, templ);
    if (state->draw_data == NULL) 
       goto fail;
+
+   if (LP_DEBUG & DEBUG_TGSI) {
+      debug_printf("llvmpipe: Create vertex shader %p:\n", (void *) state);
+      tgsi_dump(templ->tokens, 0);
+   }
 
    return state;
 

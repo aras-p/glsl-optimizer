@@ -967,6 +967,11 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
 
+   if (LP_DEBUG & DEBUG_TGSI) {
+      debug_printf("llvmpipe: Create fragment shader %p:\n", (void *) shader);
+      tgsi_dump(templ->tokens, 0);
+   }
+
    return shader;
 }
 
