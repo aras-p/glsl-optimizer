@@ -974,7 +974,10 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                                             PIPE_TRANSFER_READ, 0, 0,
                                             stImage->base.Width,
                                             stImage->base.Height);
-      texImage->RowStride = stImage->transfer->stride / util_format_get_blocksize(stImage->pt->format);
+      /* compute stride in texels from stride in bytes */
+      texImage->RowStride = stImage->transfer->stride
+         * util_format_get_blockwidth(stImage->pt->format)
+         / util_format_get_blocksize(stImage->pt->format);
    }
    else {
       /* Otherwise, the image should actually be stored in
