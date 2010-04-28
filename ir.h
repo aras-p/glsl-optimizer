@@ -276,9 +276,16 @@ public:
    }
 
    /**
-    * Find a signature that matches a set of actual parameters.
+    * Find a signature that matches a set of actual parameters, taking implicit
+    * conversions into account.
     */
    const ir_function_signature *matching_signature(exec_list *actual_param);
+
+   /**
+    * Find a signature that exactly matches a set of actual parameters without
+    * any implicit type conversions.
+    */
+   ir_function_signature *exact_matching_signature(exec_list *actual_ps);
 
    /**
     * Name of the function.

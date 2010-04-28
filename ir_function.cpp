@@ -180,3 +180,46 @@ ir_function::matching_signature(exec_list *actual_parameters)
 
    return match;
 }
+
+
+static bool
+parameter_lists_match_exact(exec_list *list_a, exec_list *list_b)
+{
+   exec_list_iterator iter_a = list_a->iterator();
+   exec_list_iterator iter_b = list_b->iterator();
+
+   while (iter_a.has_next() && iter_b.has_next()) {
+      ir_variable *a = (ir_variable *)iter_a.get();
+      ir_variable *b = (ir_variable *)iter_b.get();
+
+      /* If the types of the parameters do not match, the parameters lists
+       * are different.
+       */
+      if (a->type != b->type)
+         return false;
+
+      iter_a.next();
+      iter_b.next();
+   }
+
+   /* Unless both lists are exhausted, they differ in length and, by
+    * definition, do not match.
+    */
+   if (iter_a.has_next() != iter_b.has_next())
+      return false;
+
+   return true;
+}
+
+ir_function_signature *
+ir_function::exact_matching_signature(exec_list *actual_parameters)
+{
+   foreach_iter(exec_list_iterator, iter, signatures) {
+      ir_function_signature *const sig =
+	 (ir_function_signature *) iter.get();
+
+      if (parameter_lists_match_exact(&sig->parameters, actual_parameters))
+	 return sig;
+   }
+   return NULL;
+}

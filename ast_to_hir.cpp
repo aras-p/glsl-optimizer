@@ -1883,36 +1883,6 @@ ast_parameter_declarator::parameters_to_hir(struct simple_node *ast_parameters,
 }
 
 
-static bool
-parameter_lists_match(exec_list *list_a, exec_list *list_b)
-{
-   exec_list_iterator iter_a = list_a->iterator();
-   exec_list_iterator iter_b = list_b->iterator();
-
-   while (iter_a.has_next() && iter_b.has_next()) {
-      ir_variable *a = (ir_variable *)iter_a.get();
-      ir_variable *b = (ir_variable *)iter_b.get();
-
-      /* If the types of the parameters do not match, the parameters lists
-       * are different.
-       */
-      if (a->type != b->type)
-	 return false;
-
-      iter_a.next();
-      iter_b.next();
-   }
-
-   /* Unless both lists are exhausted, they differ in length and, by
-    * definition, do not match.
-    */
-   if (iter_a.has_next() != iter_b.has_next())
-      return false;
-
-   return true;
-}
-
-
 ir_rvalue *
 ast_function::hir(exec_list *instructions,
 		  struct _mesa_glsl_parse_state *state)
@@ -1943,45 +1913,30 @@ ast_function::hir(exec_list *instructions,
    const char *const name = identifier;
    f = state->symbols->get_function(name);
    if (f != NULL) {
-      foreach_iter(exec_list_iterator, iter, *f) {
-	 sig = (struct ir_function_signature *) iter.get();
+      ir_function_signature *sig = f->exact_matching_signature(&hir_parameters);
+      if (sig != NULL) {
+	 const char *badvar = sig->qualifiers_match(&hir_parameters);
+	 if (badvar != NULL) {
+	    YYLTYPE loc = this->get_location();
 
-	 /* Compare the parameter list of the function being defined to the
-	  * existing function.  If the parameter lists match, then the return
-	  * type must also match and the existing function must not have a
-	  * definition.
-	  */
-	 if (parameter_lists_match(& hir_parameters, & sig->parameters)) {
-	    const char *mismatch = sig->qualifiers_match(&hir_parameters);
-	    if (mismatch != NULL) {
-	       YYLTYPE loc = this->get_location();
-
-	       _mesa_glsl_error(&loc, state, "function `%s' parameter `%s' "
-			        "qualifiers don't match prototype",
-			        name, mismatch);
-	    }
-
-	    if (sig->return_type != return_type) {
-	       YYLTYPE loc = this->get_location();
-
-	       _mesa_glsl_error(& loc, state,
-				"function `%s' return type doesn't match "
-				"prototype",
-				name);
-	    }
-
-	    if (is_definition && sig->is_defined) {
-	       YYLTYPE loc = this->get_location();
-
-	       _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
-	       sig = NULL;
-	       break;
-	    }
+	    _mesa_glsl_error(&loc, state, "function `%s' parameter `%s' "
+			     "qualifiers don't match prototype", name, badvar);
 	 }
 
-	 sig = NULL;
-      }
+	 if (sig->return_type != return_type) {
+	    YYLTYPE loc = this->get_location();
 
+	    _mesa_glsl_error(&loc, state, "function `%s' return type doesn't "
+			     "match prototype", name);
+	 }
+
+	 if (is_definition && sig->is_defined) {
+	    YYLTYPE loc = this->get_location();
+
+	    _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
+	    sig = NULL;
+	 }
+      }
    } else if (state->symbols->name_declared_this_scope(name)) {
       /* This function name shadows a non-function use of the same name.
        */
