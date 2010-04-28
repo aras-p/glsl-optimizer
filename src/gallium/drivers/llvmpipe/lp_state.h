@@ -131,16 +131,6 @@ void llvmpipe_delete_blend_state(struct pipe_context *,
                                  void *);
 
 void *
-llvmpipe_create_sampler_state(struct pipe_context *,
-                              const struct pipe_sampler_state *);
-void llvmpipe_bind_sampler_states(struct pipe_context *, unsigned, void **);
-void
-llvmpipe_bind_vertex_sampler_states(struct pipe_context *,
-                                    unsigned num_samplers,
-                                    void **samplers);
-void llvmpipe_delete_sampler_state(struct pipe_context *, void *);
-
-void *
 llvmpipe_create_depth_stencil_state(struct pipe_context *,
                                     const struct pipe_depth_stencil_alpha_state *);
 void llvmpipe_bind_depth_stencil_state(struct pipe_context *, void *);
@@ -189,24 +179,6 @@ void llvmpipe_set_polygon_stipple( struct pipe_context *,
 void llvmpipe_set_scissor_state( struct pipe_context *,
                                  const struct pipe_scissor_state * );
 
-void llvmpipe_set_fragment_sampler_views(struct pipe_context *,
-                                         unsigned num,
-                                         struct pipe_sampler_view **);
-
-void
-llvmpipe_set_vertex_sampler_views(struct pipe_context *,
-                                  unsigned num,
-                                  struct pipe_sampler_view **);
-
-struct pipe_sampler_view *
-llvmpipe_create_sampler_view(struct pipe_context *pipe,
-                            struct pipe_resource *texture,
-                            const struct pipe_sampler_view *templ);
-
-void
-llvmpipe_sampler_view_destroy(struct pipe_context *pipe,
-                              struct pipe_sampler_view *view);
-
 void llvmpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );
 
@@ -239,6 +211,10 @@ llvmpipe_map_texture_surfaces(struct llvmpipe_context *lp);
 
 void
 llvmpipe_unmap_texture_surfaces(struct llvmpipe_context *lp);
+
+
+void
+llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe);
 
 
 #endif

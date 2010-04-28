@@ -104,11 +104,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.bind_blend_state   = llvmpipe_bind_blend_state;
    llvmpipe->pipe.delete_blend_state = llvmpipe_delete_blend_state;
 
-   llvmpipe->pipe.create_sampler_state = llvmpipe_create_sampler_state;
-   llvmpipe->pipe.bind_fragment_sampler_states  = llvmpipe_bind_sampler_states;
-   llvmpipe->pipe.bind_vertex_sampler_states  = llvmpipe_bind_vertex_sampler_states;
-   llvmpipe->pipe.delete_sampler_state = llvmpipe_delete_sampler_state;
-
    llvmpipe->pipe.create_depth_stencil_alpha_state = llvmpipe_create_depth_stencil_state;
    llvmpipe->pipe.bind_depth_stencil_alpha_state   = llvmpipe_bind_depth_stencil_state;
    llvmpipe->pipe.delete_depth_stencil_alpha_state = llvmpipe_delete_depth_stencil_state;
@@ -136,10 +131,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
    llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
    llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-   llvmpipe->pipe.set_fragment_sampler_views = llvmpipe_set_fragment_sampler_views;
-   llvmpipe->pipe.set_vertex_sampler_views = llvmpipe_set_vertex_sampler_views;
-   llvmpipe->pipe.create_sampler_view = llvmpipe_create_sampler_view;
-   llvmpipe->pipe.sampler_view_destroy = llvmpipe_sampler_view_destroy;
+
    llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
@@ -152,6 +144,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.flush = llvmpipe_flush;
 
 
+   llvmpipe_init_sampler_funcs(llvmpipe);
    llvmpipe_init_query_funcs( llvmpipe );
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
 
