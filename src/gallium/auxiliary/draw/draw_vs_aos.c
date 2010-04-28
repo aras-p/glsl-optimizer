@@ -2093,7 +2093,8 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 static void vaos_set_buffer( struct draw_vs_varient *varient,
                              unsigned buf,
                              const void *ptr,
-                             unsigned stride )
+                             unsigned stride,
+                             unsigned max_stride)
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
