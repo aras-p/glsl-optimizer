@@ -483,7 +483,7 @@ i945_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt,
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE_ARB:
-      i945_miptree_layout_2d(intel, mt, tiling);
+      i945_miptree_layout_2d(intel, mt, tiling, 1);
       break;
    default:
       _mesa_problem(NULL, "Unexpected tex target in i945_miptree_layout()");
