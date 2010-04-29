@@ -257,6 +257,10 @@ struct r300_texture {
     /* A pitch for each mip-level */
     unsigned pitch[R300_MAX_TEXTURE_LEVELS];
 
+    /* A pitch multiplied by blockwidth as hardware wants
+     * the number of pixels instead of the number of blocks. */
+    unsigned hwpitch[R300_MAX_TEXTURE_LEVELS];
+
     /* Size of one zslice or face based on the texture target */
     unsigned layer_size[R300_MAX_TEXTURE_LEVELS];
 

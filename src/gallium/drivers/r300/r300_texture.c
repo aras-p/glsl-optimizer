@@ -558,7 +558,7 @@ static void r300_texture_setup_immutable_state(struct r300_screen* screen,
     if (tex->uses_pitch) {
         /* rectangles love this */
         f->format0 |= R300_TX_PITCH_EN;
-        f->format2 = (tex->pitch[0] - 1) & 0x1fff;
+        f->format2 = (tex->hwpitch[0] - 1) & 0x1fff;
     } else {
         /* power of two textures (3D, mipmaps, and no pitch) */
         f->format0 |= R300_TX_DEPTH(util_logbase2(pt->depth0) & 0xf);
@@ -599,7 +599,7 @@ static void r300_texture_setup_fb_state(struct r300_screen* screen,
     if (util_format_is_depth_or_stencil(tex->b.b.format)) {
         for (i = 0; i <= tex->b.b.last_level; i++) {
             tex->fb_state.depthpitch[i] =
-                tex->pitch[i] |
+                tex->hwpitch[i] |
                 R300_DEPTHMACROTILE(tex->mip_macrotile[i]) |
                 R300_DEPTHMICROTILE(tex->microtile);
         }
@@ -607,7 +607,7 @@ static void r300_texture_setup_fb_state(struct r300_screen* screen,
     } else {
         for (i = 0; i <= tex->b.b.last_level; i++) {
             tex->fb_state.colorpitch[i] =
-                tex->pitch[i] |
+                tex->hwpitch[i] |
                 r300_translate_colorformat(tex->b.b.format) |
                 R300_COLOR_TILE(tex->mip_macrotile[i]) |
                 R300_COLOR_MICROTILE(tex->microtile);
@@ -798,6 +798,8 @@ static void r300_setup_miptree(struct r300_screen* screen,
         tex->size = tex->offset[i] + size;
         tex->layer_size[i] = layer_size;
         tex->pitch[i] = stride / util_format_get_blocksize(base->format);
+        tex->hwpitch[i] =
+                tex->pitch[i] * util_format_get_blockwidth(base->format);
 
         SCREEN_DBG(screen, DBG_TEX, "r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes) %d bytes total, macrotiled %s\n",
