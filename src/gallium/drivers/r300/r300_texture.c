@@ -517,7 +517,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
-        //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
+        case PIPE_FORMAT_R16G16B16A16_FLOAT:
         case PIPE_FORMAT_R32G32B32A32_FLOAT:
             return modifier |
                 R300_C0_SEL_R | R300_C1_SEL_G |
