@@ -38,6 +38,7 @@ enum u_caps_check_enum {
    UTIL_CAPS_CHECK_INT,
    UTIL_CAPS_CHECK_FLOAT,
    UTIL_CAPS_CHECK_FORMAT,
+   UTIL_CAPS_CHECK_UNIMPLEMENTED,
 };
 
 #define UTIL_CHECK_CAP(cap) \
@@ -53,11 +54,14 @@ enum u_caps_check_enum {
 #define UTIL_CHECK_FORMAT(format) \
    UTIL_CAPS_CHECK_FORMAT, PIPE_FORMAT_##format
 
+#define UTIL_CHECK_UNIMPLEMENTED \
+   UTIL_CAPS_CHECK_UNIMPLEMENTED
+
 #define UTIL_CHECK_TERMINATE \
    UTIL_CAPS_CHECK_TERMINATE
 
-boolean util_check_caps(struct pipe_screen *screen, unsigned *list);
-boolean util_check_caps_out(struct pipe_screen *screen, unsigned *list, int *out);
-void util_caps_print_debug(struct pipe_screen *screen);
+boolean util_check_caps(struct pipe_screen *screen, const unsigned *list);
+boolean util_check_caps_out(struct pipe_screen *screen, const unsigned *list, int *out);
+void util_caps_demo_print(struct pipe_screen *screen);
 
 #endif

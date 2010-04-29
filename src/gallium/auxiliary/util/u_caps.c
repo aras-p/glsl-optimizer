@@ -30,8 +30,14 @@
 #include "util/u_debug.h"
 #include "u_caps.h"
 
+/**
+ * Iterates over a list of caps checks as defined in u_caps.h. Should
+ * all checks pass returns TRUE and out is set to the last element of
+ * the list (TERMINATE). Should any check fail returns FALSE and set
+ * out to the index of the start of the first failing check.
+ */
 boolean
-util_check_caps_out(struct pipe_screen *screen, unsigned *list, int *out)
+util_check_caps_out(struct pipe_screen *screen, const unsigned *list, int *out)
 {
    int i, tmpi;
    float tmpf;
@@ -40,21 +46,21 @@ util_check_caps_out(struct pipe_screen *screen, unsigned *list, int *out)
       switch(list[i++]) {
       case UTIL_CAPS_CHECK_CAP:
          if (!screen->get_param(screen, list[i++])) {
-	    *out = i - 2;
+            *out = i - 2;
             return FALSE;
          }
          break;
       case UTIL_CAPS_CHECK_INT:
          tmpi = screen->get_param(screen, list[i++]);
          if (tmpi < (int)list[i++]) {
-	    *out = i - 3;
+            *out = i - 3;
             return FALSE;
          }
          break;
       case UTIL_CAPS_CHECK_FLOAT:
          tmpf = screen->get_paramf(screen, list[i++]);
          if (tmpf < (float)list[i++]) {
-	    *out = i - 3;
+            *out = i - 3;
             return FALSE;
          }
          break;
@@ -64,24 +70,42 @@ util_check_caps_out(struct pipe_screen *screen, unsigned *list, int *out)
                                           PIPE_TEXTURE_2D,
                                           PIPE_BIND_SAMPLER_VIEW,
                                           0)) {
-	    *out = i - 2;
+            *out = i - 2;
             return FALSE;
          }
-         break;
+      case UTIL_CAPS_CHECK_UNIMPLEMENTED:
+         *out = i - 1;
+         return FALSE;
       default:
          assert(!"Unsupported check");
          return FALSE;
       }
    }
+
+   *out = i;
    return TRUE;
 }
 
+/**
+ * Iterates over a list of caps checks as defined in u_caps.h.
+ * Returns TRUE if all caps checks pass returns FALSE otherwise.
+ */
 boolean
-util_check_caps(struct pipe_screen *screen, unsigned *list)
+util_check_caps(struct pipe_screen *screen, const unsigned *list)
 {
    int out;
    return util_check_caps_out(screen, list, &out);
 }
+
+
+/*
+ * Below follows some demo lists.
+ *
+ * None of these lists are exhausting lists of what is
+ * actually needed to support said API and more here for
+ * as example on how to uses the above functions. Especially
+ * for DX10 and DX11 where Gallium is missing features.
+ */
 
 /* DX 9_1 */
 static unsigned caps_dx_9_1[] = {
@@ -128,10 +152,11 @@ static unsigned caps_dx_10[] = {
    UTIL_CHECK_INT(MAX_TEXTURE_3D_LEVELS, 12),    /* 2048 */
    UTIL_CHECK_INT(MAX_TEXTURE_CUBE_LEVELS, 14),  /* 8192 */
    UTIL_CHECK_FLOAT(MAX_TEXTURE_ANISOTROPY, 16),
+   UTIL_CHECK_UNIMPLEMENTED, /* XXX Unimplemented features in Gallium */
    UTIL_CHECK_TERMINATE
 };
 
-/* DX 11 */
+/* DX11 */
 static unsigned caps_dx_11[] = {
    UTIL_CHECK_CAP(SM3),
  //UTIL_CHECK_CAP(INSTANCING),
@@ -142,6 +167,7 @@ static unsigned caps_dx_11[] = {
    UTIL_CHECK_INT(MAX_TEXTURE_CUBE_LEVELS, 14),  /* 16384 */
    UTIL_CHECK_FLOAT(MAX_TEXTURE_ANISOTROPY, 16),
    UTIL_CHECK_FORMAT(B8G8R8A8_UNORM),
+   UTIL_CHECK_UNIMPLEMENTED, /* XXX Unimplemented features in Gallium */
    UTIL_CHECK_TERMINATE
 };
 
@@ -151,11 +177,18 @@ static unsigned caps_opengl_2_1[] = {
    UTIL_CHECK_CAP(OCCLUSION_QUERY),
    UTIL_CHECK_CAP(TWO_SIDED_STENCIL),
    UTIL_CHECK_CAP(BLEND_EQUATION_SEPARATE),
-   UTIL_CHECK_INT(MAX_RENDER_TARGETS, 2), /* XXX 4? */
+   UTIL_CHECK_INT(MAX_RENDER_TARGETS, 2),
    UTIL_CHECK_TERMINATE
 };
 
-void util_caps_print_debug(struct pipe_screen *screen)
+/* OpenGL 3.0 */
+/* UTIL_CHECK_INT(MAX_RENDER_TARGETS, 8), */
+
+
+/**
+ * Demo function which checks against theoretical caps needed for different APIs.
+ */
+void util_caps_demo_print(struct pipe_screen *screen)
 {
    struct {
       char* name;
@@ -167,37 +200,42 @@ void util_caps_print_debug(struct pipe_screen *screen)
       {"DX 10", caps_dx_10},
       {"DX 11", caps_dx_11},
       {"OpenGL 2.1", caps_opengl_2_1},
+/*    {"OpenGL 3.0", caps_opengl_3_0},*/
       {NULL, NULL}
    };
    int i, out = 0;
 
    for (i = 0; list[i].name; i++) {
       if (util_check_caps_out(screen, list[i].list, &out)) {
-         debug_printf("%s: %s yes\n", __func__, list[i].name);
+         debug_printf("%s: %s yes\n", __FUNCTION__, list[i].name);
          continue;
       }
       switch (list[i].list[out]) {
       case UTIL_CAPS_CHECK_CAP:
-         debug_printf("%s: %s no (cap %u not supported)\n", __func__,
+         debug_printf("%s: %s no (cap %u not supported)\n", __FUNCTION__,
                       list[i].name,
                       list[i].list[out + 1]);
          break;
       case UTIL_CAPS_CHECK_INT:
-         debug_printf("%s: %s no (cap %u less then %u)\n", __func__,
+         debug_printf("%s: %s no (cap %u less then %u)\n", __FUNCTION__,
                       list[i].name,
                       list[i].list[out + 1],
                       list[i].list[out + 2]);
          break;
       case UTIL_CAPS_CHECK_FLOAT:
-         debug_printf("%s: %s no (cap %u less then %f)\n", __func__,
+         debug_printf("%s: %s no (cap %u less then %f)\n", __FUNCTION__,
                       list[i].name,
                       list[i].list[out + 1],
-	              (double)(int)list[i].list[out + 2]);
+                      (double)(int)list[i].list[out + 2]);
          break;
       case UTIL_CAPS_CHECK_FORMAT:
-         debug_printf("%s: %s no (format %s not supported)\n", __func__,
+         debug_printf("%s: %s no (format %s not supported)\n", __FUNCTION__,
                       list[i].name,
                       util_format_name(list[i].list[out + 1]) + 12);
+         break;
+      case UTIL_CAPS_CHECK_UNIMPLEMENTED:
+         debug_printf("%s: %s no (not implemented in gallium or state tracker)\n",
+                      __FUNCTION__, list[i].name);
          break;
       default:
             assert(!"Unsupported check");
