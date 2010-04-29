@@ -43,6 +43,7 @@ enum r300_rs_swizzle {
     SWIZ_XYZW = 0,
     SWIZ_X001,
     SWIZ_XY01,
+    SWIZ_0001,
 };
 
 static void r300_draw_emit_attrib(struct r300_context* r300,
@@ -170,10 +171,10 @@ static void r300_swtcl_vertex_psc(struct r300_context *r300)
 }
 
 static void r300_rs_col(struct r300_rs_block* rs, int id, int ptr,
-                        boolean swizzle_0001)
+                        enum r300_rs_swizzle swiz)
 {
     rs->ip[id] |= R300_RS_COL_PTR(ptr);
-    if (swizzle_0001) {
+    if (swiz == SWIZ_0001) {
         rs->ip[id] |= R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
     } else {
         rs->ip[id] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
@@ -219,10 +220,10 @@ static void r300_rs_tex_write(struct r300_rs_block* rs, int id, int fp_offset)
 }
 
 static void r500_rs_col(struct r300_rs_block* rs, int id, int ptr,
-                        boolean swizzle_0001)
+                        enum r300_rs_swizzle swiz)
 {
     rs->ip[id] |= R500_RS_COL_PTR(ptr);
-    if (swizzle_0001) {
+    if (swiz == SWIZ_0001) {
         rs->ip[id] |= R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
     } else {
         rs->ip[id] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGBA);
@@ -277,7 +278,7 @@ static void r300_update_rs_block(struct r300_context* r300,
 {
     struct r300_rs_block rs = { { 0 } };
     int i, col_count = 0, tex_count = 0, fp_offset = 0, count;
-    void (*rX00_rs_col)(struct r300_rs_block*, int, int, boolean);
+    void (*rX00_rs_col)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
     void (*rX00_rs_tex)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_tex_write)(struct r300_rs_block*, int, int);
@@ -302,7 +303,7 @@ static void r300_update_rs_block(struct r300_context* r300,
             vs_outputs->color[1] != ATTR_UNUSED) {
             /* Always rasterize if it's written by the VS,
              * otherwise it locks up. */
-            rX00_rs_col(&rs, col_count, i, FALSE);
+            rX00_rs_col(&rs, col_count, col_count, SWIZ_XYZW);
 
             /* Write it to the FS input register if it's used by the FS. */
             if (fs_inputs->color[i] != ATTR_UNUSED) {
@@ -392,18 +393,19 @@ static void r300_update_rs_block(struct r300_context* r300,
     /* Rasterize WPOS. */
     /* If the FS doesn't need it, it's not written by the VS. */
     if (vs_outputs->wpos != ATTR_UNUSED && fs_inputs->wpos != ATTR_UNUSED) {
-        rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
+        rX00_rs_tex(&rs, tex_count, vs_tex_count, SWIZ_XYZW);
         rX00_rs_tex_write(&rs, tex_count, fp_offset);
 
         DBG(r300, DBG_RS, "r300: Rasterized WPOS written to FS.\n");
 
         fp_offset++;
         tex_count++;
+        vs_tex_count++;
     }
 
     /* Rasterize at least one color, or bad things happen. */
     if (col_count == 0 && tex_count == 0) {
-        rX00_rs_col(&rs, 0, 0, TRUE);
+        rX00_rs_col(&rs, 0, 0, SWIZ_0001);
         col_count++;
 
         DBG(r300, DBG_RS, "r300: Rasterized color 0 to prevent lockups.\n");
