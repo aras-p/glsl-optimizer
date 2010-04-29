@@ -34,9 +34,8 @@ _mesa_print_ir(exec_list *instructions,
    for (unsigned i = 0; i < state->num_user_structures; i++) {
       const glsl_type *const s = state->user_structures[i];
 
-      printf("(structure (%s) (%s@%08x) (%u) (\n",
-	     s->name, s->name, (unsigned) s, s->length
-	     );
+      printf("(structure (%s) (%s@%p) (%u) (\n",
+	     s->name, s->name, s, s->length);
 
       for (unsigned j = 0; j < s->length; j++) {
 	 printf("\t((");
@@ -66,7 +65,7 @@ print_type(const glsl_type *t)
       printf(" %u)", t->length);
    } else if ((t->base_type == GLSL_TYPE_STRUCT)
 	      && (strncmp("gl_", t->name, 3) != 0)) {
-      printf("%s@%08x", t->name, (unsigned) t);
+      printf("%s@%p", t->name, t);
    } else {
       printf("%s", t->name);
    }
