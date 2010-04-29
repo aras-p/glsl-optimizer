@@ -1830,6 +1830,11 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    LLVMValueRef unswizzled[4];
    LLVMValueRef stride;
 
+   assert(bld->static_state->target == PIPE_TEXTURE_2D);
+   assert(bld->static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR);
+   assert(bld->static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR);
+   assert(bld->static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE);
+
    lp_build_context_init(&i32, builder, lp_type_int_vec(32));
    lp_build_context_init(&h16, builder, lp_type_ufixed(16));
    lp_build_context_init(&u8n, builder, lp_type_unorm(8));
