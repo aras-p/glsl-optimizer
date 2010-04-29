@@ -308,6 +308,11 @@ static void r300_update_rs_block(struct r300_context* r300,
             if (fs_inputs->color[i] != ATTR_UNUSED) {
                 rX00_rs_col_write(&rs, col_count, fp_offset);
                 fp_offset++;
+
+                DBG(r300, DBG_RS,
+                    "r300: Rasterized color %i written to FS.\n", i);
+            } else {
+                DBG(r300, DBG_RS, "r300: Rasterized color %i unused.\n", i);
             }
             col_count++;
         } else {
@@ -315,6 +320,9 @@ static void r300_update_rs_block(struct r300_context* r300,
             /* If we try to set it to (0,0,0,1), it will lock up. */
             if (fs_inputs->color[i] != ATTR_UNUSED) {
                 fp_offset++;
+
+                DBG(r300, DBG_RS, "r300: FS input color %i unassigned%s.\n",
+                    i);
             }
         }
     }
@@ -332,9 +340,15 @@ static void r300_update_rs_block(struct r300_context* r300,
             /* Write it to the FS input register if it's used by the FS. */
             if (fs_inputs->generic[i] != ATTR_UNUSED) {
                 rX00_rs_tex_write(&rs, tex_count, fp_offset);
-                if (sprite_coord)
-                    debug_printf("r300: SpriteCoord (generic index %i) is being written to reg %i\n", i, fp_offset);
                 fp_offset++;
+
+                DBG(r300, DBG_RS,
+                    "r300: Rasterized generic %i written to FS%s.\n",
+                    i, sprite_coord ? " (sprite coord)" : "");
+            } else {
+                DBG(r300, DBG_RS,
+                    "r300: Rasterized generic %i unused%s.\n",
+                    i, sprite_coord ? " (sprite coord)" : "");
             }
             tex_count++;
         } else {
@@ -342,6 +356,9 @@ static void r300_update_rs_block(struct r300_context* r300,
             /* If we try to set it to (0,0,0,1), it will lock up. */
             if (fs_inputs->generic[i] != ATTR_UNUSED) {
                 fp_offset++;
+
+                DBG(r300, DBG_RS, "r300: FS input generic %i unassigned%s.\n",
+                    i, sprite_coord ? " (sprite coord)" : "");
             }
         }
     }
@@ -356,6 +373,10 @@ static void r300_update_rs_block(struct r300_context* r300,
         if (fs_inputs->fog != ATTR_UNUSED) {
             rX00_rs_tex_write(&rs, tex_count, fp_offset);
             fp_offset++;
+
+            DBG(r300, DBG_RS, "r300: Rasterized fog written to FS.\n");
+        } else {
+            DBG(r300, DBG_RS, "r300: Rasterized fog unused.\n");
         }
         tex_count++;
     } else {
@@ -363,6 +384,8 @@ static void r300_update_rs_block(struct r300_context* r300,
         /* If we try to set it to (0,0,0,1), it will lock up. */
         if (fs_inputs->fog != ATTR_UNUSED) {
             fp_offset++;
+
+            DBG(r300, DBG_RS, "r300: FS input fog unassigned.\n");
         }
     }
 
@@ -372,6 +395,8 @@ static void r300_update_rs_block(struct r300_context* r300,
         rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
         rX00_rs_tex_write(&rs, tex_count, fp_offset);
 
+        DBG(r300, DBG_RS, "r300: Rasterized WPOS written to FS.\n");
+
         fp_offset++;
         tex_count++;
     }
@@ -380,7 +405,12 @@ static void r300_update_rs_block(struct r300_context* r300,
     if (col_count == 0 && tex_count == 0) {
         rX00_rs_col(&rs, 0, 0, TRUE);
         col_count++;
+
+        DBG(r300, DBG_RS, "r300: Rasterized color 0 to prevent lockups.\n");
     }
+
+    DBG(r300, DBG_RS, "r300: --- Rasterizer status ---: colors: %i, "
+        "generics: %i.\n", col_count, tex_count);
 
     rs.count = (tex_count*4) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;

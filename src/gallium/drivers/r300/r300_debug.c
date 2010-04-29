@@ -38,6 +38,7 @@ static struct debug_option debug_options[] = {
     { "draw", DBG_DRAW, "Draw and emit (for debugging)" },
     { "tex", DBG_TEX, "Textures (for debugging)" },
     { "fall", DBG_FALL, "Fallbacks (for debugging)" },
+    { "rs", DBG_RS, "Rasterizer (for debugging)" },
     { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },
     { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },
