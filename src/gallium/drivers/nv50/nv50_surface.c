@@ -31,6 +31,27 @@
 #include "util/u_tile.h"
 #include "util/u_format.h"
 
+/* return TRUE for formats that can be converted among each other by NV50_2D */
+static INLINE boolean
+nv50_2d_format_faithful(enum pipe_format format)
+{
+	switch (format) {
+	case PIPE_FORMAT_B8G8R8A8_UNORM:
+	case PIPE_FORMAT_B8G8R8X8_UNORM:
+	case PIPE_FORMAT_B8G8R8A8_SRGB:
+	case PIPE_FORMAT_B8G8R8X8_SRGB:
+	case PIPE_FORMAT_B5G6R5_UNORM:
+	case PIPE_FORMAT_B5G5R5A1_UNORM:
+	case PIPE_FORMAT_B10G10R10A2_UNORM:
+	case PIPE_FORMAT_R8_UNORM:
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	case PIPE_FORMAT_R32G32B32_FLOAT:
+		return TRUE;
+	default:
+		return FALSE;
+	}
+}
+
 static INLINE int
 nv50_format(enum pipe_format format)
 {
@@ -47,9 +68,12 @@ nv50_format(enum pipe_format format)
 		return NV50_2D_DST_FORMAT_R5G6B5_UNORM;
 	case PIPE_FORMAT_B5G5R5A1_UNORM:
 		return NV50_2D_DST_FORMAT_A1R5G5B5_UNORM;
+	case PIPE_FORMAT_B10G10R10A2_UNORM:
+		return NV50_2D_DST_FORMAT_A2R10G10B10_UNORM;
 	case PIPE_FORMAT_A8_UNORM:
 	case PIPE_FORMAT_I8_UNORM:
 	case PIPE_FORMAT_L8_UNORM:
+	case PIPE_FORMAT_R8_UNORM:
 		return NV50_2D_DST_FORMAT_R8_UNORM;
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
 		return NV50_2D_DST_FORMAT_R32G32B32A32_FLOAT;
@@ -178,7 +202,9 @@ nv50_surface_copy(struct pipe_context *pipe,
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
 
-	assert(src->format == dest->format);
+	assert((src->format == dest->format) ||
+	       (nv50_2d_format_faithful(src->format) &&
+		nv50_2d_format_faithful(dest->format)));
 
 	nv50_surface_do_copy(screen, dest, destx, desty, src, srcx,
 				     srcy, width, height);
