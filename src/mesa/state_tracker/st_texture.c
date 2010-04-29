@@ -269,6 +269,9 @@ st_texture_image_copy(struct pipe_context *pipe,
    struct pipe_surface *dst_surface;
    GLuint i;
 
+   assert(src->width0 == dst->width0);
+   assert(src->height0 == dst->height0);
+
    for (i = 0; i < depth; i++) {
       GLuint srcLevel;
 

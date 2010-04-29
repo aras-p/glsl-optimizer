@@ -138,7 +138,6 @@ finalize_textures(struct st_context *st)
          const GLuint texUnit = fprog->Base.SamplerUnits[su];
          struct gl_texture_object *texObj
             = st->ctx->Texture.Unit[texUnit]._Current;
-         struct st_texture_object *stObj = st_texture_object(texObj);
 
          if (texObj) {
             GLboolean flush, retval;
@@ -149,8 +148,6 @@ finalize_textures(struct st_context *st)
                st->missing_textures = GL_TRUE;
                continue;
             }
-
-            stObj->teximage_realloc = TRUE;
          }
       }
    }

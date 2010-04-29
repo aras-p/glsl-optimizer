@@ -342,10 +342,10 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
 
    assert(lastLevel <= pt->last_level);
 
-   /* Recall that the Mesa BaseLevel image is stored in the gallium
-    * texture's level[0] position.  So pass baseLevel=0 here.
+   /* Try to generate the mipmap by rendering/texturing.  If that fails,
+    * use the software fallback.
     */
-   if (!st_render_mipmap(st, target, stObj, 0, lastLevel)) {
+   if (!st_render_mipmap(st, target, stObj, baseLevel, lastLevel)) {
       fallback_generate_mipmap(ctx, target, texObj);
    }
 
