@@ -393,14 +393,13 @@ static void r300_update_rs_block(struct r300_context* r300,
     /* Rasterize WPOS. */
     /* If the FS doesn't need it, it's not written by the VS. */
     if (vs_outputs->wpos != ATTR_UNUSED && fs_inputs->wpos != ATTR_UNUSED) {
-        rX00_rs_tex(&rs, tex_count, vs_tex_count, SWIZ_XYZW);
+        rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
         rX00_rs_tex_write(&rs, tex_count, fp_offset);
 
         DBG(r300, DBG_RS, "r300: Rasterized WPOS written to FS.\n");
 
         fp_offset++;
         tex_count++;
-        vs_tex_count++;
     }
 
     /* Rasterize at least one color, or bad things happen. */
