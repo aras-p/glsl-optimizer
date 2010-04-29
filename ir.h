@@ -737,6 +737,83 @@ private:
 /*@}*/
 
 
+/**
+ * Texture sampling opcodes used in ir_texture
+ */
+enum ir_texture_opcode {
+   ir_tex,		/* Regular texture look-up */
+   ir_txb,		/* Texture look-up with LOD bias */
+   ir_txl,		/* Texture look-up with explicit LOD */
+   ir_txd,		/* Texture look-up with partial derivatvies */
+   ir_txf		/* Texel fetch with explicit LOD */
+};
+
+
+/**
+ * IR instruction to sample a texture
+ *
+ * The specific form of the IR instruction depends on the \c mode value
+ * selected from \c ir_texture_opcodes.  In the printed IR, these will
+ * appear as:
+ *
+ *                              Texel offset
+ *                              |       Projection divisor
+ *                              |       |   Shadow comparitor
+ *                              |       |   |
+ *                              v       v   v
+ * (tex (sampler) (coordinate) (0 0 0) (1) ( ))
+ * (txb (sampler) (coordinate) (0 0 0) (1) ( ) (bias))
+ * (txl (sampler) (coordinate) (0 0 0) (1) ( ) (lod))
+ * (txd (sampler) (coordinate) (0 0 0) (1) ( ) (dPdx dPdy))
+ * (txf (sampler) (coordinate) (0 0 0)         (lod))
+ */
+class ir_texture : public ir_rvalue {
+public:
+   ir_texture(enum ir_texture_opcode op)
+      : op(op)
+   {
+      /* empty */
+   }
+
+   enum ir_texture_opcode op;
+
+   /** Sampler to use for the texture access. */
+   ir_dereference *sampler;
+
+   /** Texture coordinate to sample */
+   ir_rvalue *coordinate;
+
+   /**
+    * Value used for projective divide.
+    *
+    * If there is no projective divide (the common case), this will be
+    * \c NULL.  Optimization passes should check for this to point to a constant
+    * of 1.0 and replace that with \c NULL.
+    */
+   ir_rvalue *projector;
+
+   /**
+    * Coordinate used for comparison on shadow look-ups.
+    *
+    * If there is no shadow comparison, this will be \c NULL.  For the
+    * \c ir_txf opcode, this *must* be \c NULL.
+    */
+   ir_rvalue *shadow_comparitor;
+
+   /** Explicit texel offsets. */
+   signed char offsets[3];
+
+   union {
+      ir_rvalue *lod;		/**< Floating point LOD */
+      ir_rvalue *bias;		/**< Floating point LOD bias */
+      struct {
+	 ir_rvalue *dPdx;	/**< Partial derivative of coordinate wrt X */
+	 ir_rvalue *dPdy;	/**< Partial derivative of coordinate wrt Y */
+      } grad;
+   } lod_info;
+};
+
+
 struct ir_swizzle_mask {
    unsigned x:2;
    unsigned y:2;
