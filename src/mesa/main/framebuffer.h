@@ -91,4 +91,7 @@ _mesa_get_color_read_type(GLcontext *ctx);
 extern GLenum
 _mesa_get_color_read_format(GLcontext *ctx);
 
+extern void
+_mesa_print_framebuffer(const struct gl_framebuffer *fb);
+
 #endif /* FRAMEBUFFER_H */
