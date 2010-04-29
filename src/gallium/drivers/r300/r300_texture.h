@@ -28,7 +28,7 @@
 struct r300_texture;
 
 uint32_t r300_translate_texformat(enum pipe_format format,
-                                  const unsigned char *swizzle);
+                                  const unsigned char *swizzle_view);
 
 uint32_t r500_tx_format_msb_bit(enum pipe_format format);
 

@@ -1075,11 +1075,9 @@ r300_create_sampler_view(struct pipe_context *pipe,
         swizzle[2] = templ->swizzle_b;
         swizzle[3] = templ->swizzle_a;
 
-        /* XXX Enable swizzles when they become supported. Now we get RGBA
-         * everywhere. And do testing! */
         view->format = tex->tx_format;
         view->format.format1 |= r300_translate_texformat(templ->format,
-                                                         0); /*swizzle);*/
+                                                         swizzle);
         if (r300_screen(pipe->screen)->caps.is_r500) {
             view->format.format2 |= r500_tx_format_msb_bit(templ->format);
         }

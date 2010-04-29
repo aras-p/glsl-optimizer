@@ -74,7 +74,7 @@ static boolean r300_format_is_plain(enum pipe_format format)
  * The FORMAT specifies how the texture sampler will treat the texture, and
  * makes available X, Y, Z, W, ZERO, and ONE for swizzling. */
 uint32_t r300_translate_texformat(enum pipe_format format,
-                                  const unsigned char *swizzle)
+                                  const unsigned char *swizzle_view)
 {
     uint32_t result = 0;
     const struct util_format_description *desc;
@@ -98,6 +98,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         R300_TX_FORMAT_SIGNED_Z,
         R300_TX_FORMAT_SIGNED_W,
     };
+    unsigned char swizzle[4];
 
     desc = util_format_description(format);
 
@@ -144,25 +145,18 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    /* Add swizzle. */
-    if (!swizzle) {
-        swizzle = desc->swizzle;
-    } /*else {
-        if (swizzle[0] != desc->swizzle[0] ||
-            swizzle[1] != desc->swizzle[1] ||
-            swizzle[2] != desc->swizzle[2] ||
-            swizzle[3] != desc->swizzle[3])
-        {
-            const char n[6] = "RGBA01";
-            fprintf(stderr, "Got different swizzling! Format: %c%c%c%c, "
-                    "View: %c%c%c%c\n",
-                    n[desc->swizzle[0]], n[desc->swizzle[1]],
-                    n[desc->swizzle[2]], n[desc->swizzle[3]],
-                    n[swizzle[0]], n[swizzle[1]], n[swizzle[2]],
-                    n[swizzle[3]]);
+    /* Get swizzle. */
+    if (swizzle_view) {
+        /* Compose two sets of swizzles. */
+        for (i = 0; i < 4; i++) {
+            swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
+                         desc->swizzle[swizzle_view[i]] : swizzle_view[i];
         }
-    }*/
+    } else {
+        memcpy(swizzle, desc->swizzle, sizeof(swizzle));
+    }
 
+    /* Add swizzle. */
     for (i = 0; i < 4; i++) {
         switch (swizzle[i]) {
             case UTIL_FORMAT_SWIZZLE_X:
