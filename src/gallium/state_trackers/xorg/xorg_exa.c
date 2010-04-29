@@ -981,6 +981,8 @@ xorg_exa_close(ScrnInfoPtr pScrn)
 
    renderer_destroy(exa->renderer);
 
+   xorg_exa_finish(exa);
+
    if (exa->pipe)
       exa->pipe->destroy(exa->pipe);
    exa->pipe = NULL;

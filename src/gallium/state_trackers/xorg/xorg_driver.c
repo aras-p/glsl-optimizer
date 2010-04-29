@@ -334,17 +334,9 @@ static Bool
 drv_close_resource_management(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    int i;
 
     if (ms->screen) {
 	assert(ms->ctx == NULL);
-
-	for (i = 0; i < XORG_NR_FENCES; i++) {
-	    if (ms->fence[i]) {
-		ms->screen->fence_finish(ms->screen, ms->fence[i], 0);
-		ms->screen->fence_reference(ms->screen, &ms->fence[i], NULL);
-	    }
-	}
 	ms->screen->destroy(ms->screen);
     }
     ms->screen = NULL;
@@ -355,6 +347,22 @@ drv_close_resource_management(ScrnInfoPtr pScrn)
 #endif
 
     return TRUE;
+}
+
+static void
+drv_cleanup_fences(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+    int i;
+
+    assert(ms->screen);
+
+    for (i = 0; i < XORG_NR_FENCES; i++) {
+	if (ms->fence[i]) {
+	    ms->screen->fence_finish(ms->screen, ms->fence[i], 0);
+	    ms->screen->fence_reference(ms->screen, &ms->fence[i], NULL);
+	}
+    }
 }
 
 static Bool
@@ -824,6 +832,10 @@ drv_leave_vt(int scrnIndex, int flags)
     drmModeRmFB(ms->fd, ms->fb_id);
     ms->fb_id = -1;
 
+    /* idle hardware */
+    if (!ms->kms)
+	drv_cleanup_fences(pScrn);
+
     if (drmDropMaster(ms->fd))
 	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		   "drmDropMaster failed: %s\n", strerror(errno));
@@ -882,10 +894,6 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     modesettingPtr ms = modesettingPTR(pScrn);
     CustomizerPtr cust = ms->cust;
 
-    if (pScrn->vtSema) {
-	drv_leave_vt(scrnIndex, 0);
-    }
-
     if (ms->cursor) {
        FreeCursor(ms->cursor, None);
        ms->cursor = NULL;
@@ -916,6 +924,11 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
     if (ms->exa)
 	xorg_exa_close(pScrn);
     ms->exa = NULL;
+
+    /* calls drop master make sure we don't talk to 3D HW after that */
+    if (pScrn->vtSema) {
+	drv_leave_vt(scrnIndex, 0);
+    }
 
     drv_close_resource_management(pScrn);
 
