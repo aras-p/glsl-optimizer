@@ -34,9 +34,6 @@
 #include "r300_screen.h"
 #include "r300_winsys.h"
 
-/* XXX Enable float textures here. */
-/*#define ENABLE_FLOAT_TEXTURES*/
-
 #define TILE_WIDTH 0
 #define TILE_HEIGHT 1
 
@@ -310,7 +307,6 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
             return ~0;
 
-#if defined(ENABLE_FLOAT_TEXTURES)
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (desc->channel[0].size) {
                 case 16:
@@ -334,7 +330,6 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                             return R300_TX_FORMAT_32F_32F_32F_32F | result;
                     }
             }
-#endif
     }
 
     return ~0; /* Unsupported/unknown. */
@@ -399,16 +394,12 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /* 64-bit buffers. */
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
-#if defined(ENABLE_FLOAT_TEXTURES)
         case PIPE_FORMAT_R16G16B16A16_FLOAT:
-#endif
             return R300_COLOR_FORMAT_ARGB16161616;
 
         /* 128-bit buffers. */
-#if defined(ENABLE_FLOAT_TEXTURES)
         case PIPE_FORMAT_R32G32B32A32_FLOAT:
             return R300_COLOR_FORMAT_ARGB32323232;
-#endif
 
         /* YUV buffers. */
         case PIPE_FORMAT_UYVY:
