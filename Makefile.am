@@ -21,6 +21,7 @@
 # USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AUTOMAKE_OPTIONS = foreign
+AM_CPPFLAGS = -I mesa
 
 SUBDIRS = glcpp
 
@@ -57,9 +58,16 @@ glsl_SOURCES = \
 	ir_hierarchical_visitor.h \
 	ir_hierarchical_visitor.cpp \
 	ir_swizzle_swizzle.cpp \
+	ir_to_mesa.cpp \
+	ir_to_mesa.h \
 	ir_validate.cpp \
 	ir_vec_index_to_swizzle.cpp \
-	linker.cpp
+	linker.cpp \
+	mesa_codegen.cpp \
+	msea_codegen.h
+
+DISTFILES = \
+	mesa_codegen.brg
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)
@@ -70,3 +78,8 @@ glsl_parser.h: glsl_parser.cpp
 
 .lpp.cpp:
 	$(LEXCOMPILE) --outfile="$@" $<
+
+mesa_codegen.h: mesa_codegen.cpp
+
+mesa_codegen.cpp: mesa_codegen.brg
+	monoburg --no-glib -s $@ -d mesa_codegen.h $<

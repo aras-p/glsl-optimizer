@@ -1,0 +1,173 @@
+/*
+ * Copyright © 2010 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Eric Anholt <eric@anholt.net>
+ *
+ */
+
+/* DO NOT EDIT mesa_codegen.h.  It is a generated file produced
+ * from mesa_codegen.brg and will be overwritten.
+ */
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <stdio.h>
+
+/* Everything before the first %% is pasted at the start of the
+ * mesa_codegen.h header file.
+ */
+
+#include "ir_to_mesa.h"
+
+#define MBTREE_TYPE struct mbtree
+
+%%
+%term assign
+%term reference_vec4
+%term add_vec4_vec4
+%term sub_vec4_vec4
+%term mul_vec4_vec4
+%term div_vec4_vec4
+%term dp4_vec4_vec4
+%term dp3_vec4_vec4
+%term dp2_vec4_vec4
+%term sqrt_vec4
+%term swizzle_vec4
+
+%start stmt
+
+alloced_vec4: reference_vec4 0
+
+vec4: alloced_vec4 0
+alloced_vec4: vec4 1
+{
+	/* FINISHME */
+	tree->v->get_temp(tree);
+}
+
+stmt: assign(alloced_vec4, alloced_vec4) 1
+{
+	ir_to_mesa_emit_op1(tree, OPCODE_MOV,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->left->src_reg);
+}
+
+vec4: swizzle_vec4(alloced_vec4) 1
+{
+	ir_to_mesa_src_reg reg = tree->left->src_reg;
+	int swiz[4];
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		swiz[i] = GET_SWZ(tree->src_reg.swizzle, i);
+		if (swiz[i] >= SWIZZLE_X && swiz[i] <= SWIZZLE_Y) {
+			swiz[i] = GET_SWZ(tree->left->src_reg.swizzle, swiz[i]);
+		}
+	}
+	reg.swizzle = MAKE_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);
+
+	ir_to_mesa_emit_op1(tree, OPCODE_MOV,
+			   ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			   reg);
+}
+
+vec4: add_vec4_vec4(alloced_vec4, alloced_vec4) 1
+{
+	ir_to_mesa_emit_op2(tree, OPCODE_ADD,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->left->src_reg,
+			    tree->right->src_reg);
+}
+
+vec4: sub_vec4_vec4(alloced_vec4, alloced_vec4) 1
+{
+	ir_to_mesa_emit_op2(tree, OPCODE_SUB,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->left->src_reg,
+			    tree->right->src_reg);
+}
+
+vec4: mul_vec4_vec4(alloced_vec4, alloced_vec4) 1
+{
+	ir_to_mesa_emit_op2(tree, OPCODE_MUL,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->left->src_reg,
+			    tree->right->src_reg);
+}
+
+vec4: dp4_vec4_vec4(alloced_vec4, alloced_vec4) 1
+{
+	ir_to_mesa_emit_op2(tree, OPCODE_DP4,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->left->src_reg,
+			    tree->right->src_reg);
+	tree->src_reg.swizzle = SWIZZLE_XXXX;
+}
+
+vec4: dp3_vec4_vec4(alloced_vec4, alloced_vec4) 1
+{
+	ir_to_mesa_emit_op2(tree, OPCODE_DP3,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->left->src_reg,
+			    tree->right->src_reg);
+	tree->src_reg.swizzle = SWIZZLE_XXXX;
+}
+
+
+vec4: dp2_vec4_vec4(alloced_vec4, alloced_vec4) 1
+{
+	ir_to_mesa_emit_op2(tree, OPCODE_DP2,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->left->src_reg,
+			    tree->right->src_reg);
+	tree->src_reg.swizzle = SWIZZLE_XXXX;
+}
+
+vec4: div_vec4_vec4(alloced_vec4, alloced_vec4) 1
+{
+	/* FINISHME: Mesa RCP only uses the X channel, this node is for vec4. */
+	ir_to_mesa_emit_op1(tree, OPCODE_RCP,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->right->src_reg);
+
+	ir_to_mesa_emit_op2(tree, OPCODE_MUL,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->src_reg,
+			    tree->left->src_reg);
+}
+
+vec4: sqrt_vec4(alloced_vec4) 1
+{
+	/* FINISHME: Mesa RSQ only uses the X channel, this node is for vec4. */
+	ir_to_mesa_emit_op1(tree, OPCODE_RSQ,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->left->src_reg);
+
+	ir_to_mesa_emit_op1(tree, OPCODE_RCP,
+			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->src_reg);
+}
+
+%%

@@ -36,6 +36,8 @@
 #define MAX_DRAW_BUFFERS 8
 #define MAX_VARYING 16
 
+#include <GL/gl.h>
+
 /**
  * Indexes for vertex program attributes.
  * GL_NV_vertex_program aliases generic attributes over the conventional
@@ -217,5 +219,35 @@ typedef enum
    FRAG_RESULT_DATA0 = 2,
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 } gl_frag_result;
+
+/**
+ * Names of the various vertex/fragment program register files, etc.
+ *
+ * NOTE: first four tokens must fit into 2 bits (see t_vb_arbprogram.c)
+ * All values should fit in a 4-bit field.
+ *
+ * NOTE: PROGRAM_ENV_PARAM, PROGRAM_STATE_VAR, PROGRAM_NAMED_PARAM,
+ * PROGRAM_CONSTANT, and PROGRAM_UNIFORM can all be considered to
+ * be "uniform" variables since they can only be set outside glBegin/End.
+ * They're also all stored in the same Parameters array.
+ */
+typedef enum
+{
+   PROGRAM_TEMPORARY,   /**< machine->Temporary[] */
+   PROGRAM_INPUT,       /**< machine->Inputs[] */
+   PROGRAM_OUTPUT,      /**< machine->Outputs[] */
+   PROGRAM_VARYING,     /**< machine->Inputs[]/Outputs[] */
+   PROGRAM_LOCAL_PARAM, /**< gl_program->LocalParams[] */
+   PROGRAM_ENV_PARAM,   /**< gl_program->Parameters[] */
+   PROGRAM_STATE_VAR,   /**< gl_program->Parameters[] */
+   PROGRAM_NAMED_PARAM, /**< gl_program->Parameters[] */
+   PROGRAM_CONSTANT,    /**< gl_program->Parameters[] */
+   PROGRAM_UNIFORM,     /**< gl_program->Parameters[] */
+   PROGRAM_WRITE_ONLY,  /**< A dummy, write-only register */
+   PROGRAM_ADDRESS,     /**< machine->AddressReg */
+   PROGRAM_SAMPLER,     /**< for shader samplers, compile-time only */
+   PROGRAM_UNDEFINED,   /**< Invalid/TBD value */
+   PROGRAM_FILE_MAX
+} gl_register_file;
 
 #endif
