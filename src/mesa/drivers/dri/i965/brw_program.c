@@ -34,6 +34,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/program.h"
 #include "shader/programopt.h"
+#include "shader/shader_api.h"
 #include "tnl/tnl.h"
 
 #include "brw_context.h"
@@ -119,12 +120,28 @@ static GLboolean brwIsProgramNative( GLcontext *ctx,
    return GL_TRUE;
 }
 
+static void
+shader_error(GLcontext *ctx, struct gl_program *prog, const char *msg)
+{
+   struct gl_shader_program *shader;
+
+   shader = _mesa_lookup_shader_program(ctx, prog->Id);
+
+   if (shader) {
+      if (shader->InfoLog) {
+	 free(shader->InfoLog);
+      }
+      shader->InfoLog = _mesa_strdup(msg);
+      shader->LinkStatus = GL_FALSE;
+   }
+}
 
 static GLboolean brwProgramStringNotify( GLcontext *ctx,
                                          GLenum target,
                                          struct gl_program *prog )
 {
    struct brw_context *brw = brw_context(ctx);
+   int i;
 
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct gl_fragment_program *fprog = (struct gl_fragment_program *) prog;
@@ -160,7 +177,22 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
       _tnl_program_string(ctx, target, prog);
    }
 
-   /* XXX check if program is legal, within limits */
+   /* Reject programs with subroutines, which are totally broken at the moment
+    * (all program flows return when any program flow returns, and
+    * the VS also hangs if a function call calls a function.
+    *
+    * See piglit glsl-{vs,fs}-functions-[23] tests.
+    */
+   for (i = 0; i < prog->NumInstructions; i++) {
+      if (prog->Instructions[i].Opcode == OPCODE_CAL) {
+	 shader_error(ctx, prog,
+		      "i965 driver doesn't yet support uninlined function "
+		      "calls.  Move to using a single return statement at "
+		      "the end of the function to work around it.");
+	 return GL_FALSE;
+      }
+   }
+
    return GL_TRUE;
 }
 
