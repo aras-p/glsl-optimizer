@@ -101,6 +101,7 @@ C_SOURCES = \
 	util/u_blit.c \
 	util/u_blitter.c \
 	util/u_cache.c \
+	util/u_caps.c \
 	util/u_cpu_detect.c \
 	util/u_dl.c \
 	util/u_draw_quad.c \

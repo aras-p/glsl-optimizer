@@ -144,6 +144,7 @@ source = [
     'util/u_blit.c',
     'util/u_blitter.c',
     'util/u_cache.c',
+    'util/u_caps.c',
     'util/u_cpu_detect.c',
     'util/u_debug.c',
     'util/u_debug_memory.c',
