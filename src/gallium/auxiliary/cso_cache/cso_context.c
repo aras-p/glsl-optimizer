@@ -313,10 +313,13 @@ void cso_release_all( struct cso_context *ctx )
 }
 
 
+/**
+ * Free the CSO context.  NOTE: the state tracker should have previously called
+ * cso_release_all().
+ */
 void cso_destroy_context( struct cso_context *ctx )
 {
    if (ctx) {
-      /*cso_release_all( ctx );*/
       FREE( ctx );
    }
 }
