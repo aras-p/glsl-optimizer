@@ -142,42 +142,6 @@ st_texture_match_image(const struct pipe_resource *pt,
 }
 
 
-#if 000
-/* Although we use the image_offset[] array to store relative offsets
- * to cube faces, Mesa doesn't know anything about this and expects
- * each cube face to be treated as a separate image.
- *
- * These functions present that view to mesa:
- */
-const GLuint *
-st_texture_depth_offsets(struct pipe_resource *pt, GLuint level)
-{
-   static const GLuint zero = 0;
-
-   if (pt->target != PIPE_TEXTURE_3D || pt->level[level].nr_images == 1)
-      return &zero;
-   else
-      return pt->level[level].image_offset;
-}
-
-
-/**
- * Return the offset to the given mipmap texture image within the
- * texture memory buffer, in bytes.
- */
-GLuint
-st_texture_image_offset(const struct pipe_resource * pt,
-                        GLuint face, GLuint level)
-{
-   if (pt->target == PIPE_TEXTURE_CUBE)
-      return (pt->level[level].level_offset +
-              pt->level[level].image_offset[face] * pt->cpp);
-   else
-      return pt->level[level].level_offset;
-}
-#endif
-
-
 /**
  * Map a teximage in a mipmap texture.
  * \param row_stride  returns row stride in bytes

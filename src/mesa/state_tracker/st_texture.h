@@ -185,18 +185,6 @@ extern const GLuint *
 st_texture_depth_offsets(struct pipe_resource *pt, GLuint level);
 
 
-/* Return the linear offset of an image relative to the start of its region.
- */
-extern GLuint
-st_texture_image_offset(const struct pipe_resource *pt,
-                        GLuint face, GLuint level);
-
-extern GLuint
-st_texture_texel_offset(const struct pipe_resource * pt,
-                        GLuint face, GLuint level,
-                        GLuint col, GLuint row, GLuint img);
-
-
 /* Upload an image into a texture
  */
 extern void
