@@ -332,7 +332,7 @@ util_format_name(enum pipe_format format)
 
    assert(desc);
    if (!desc) {
-      return "???";
+      return "PIPE_FORMAT_???";
    }
 
    return desc->name;
