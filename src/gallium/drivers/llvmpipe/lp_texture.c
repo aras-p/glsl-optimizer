@@ -242,6 +242,11 @@ llvmpipe_resource_destroy(struct pipe_screen *pscreen,
       struct sw_winsys *winsys = screen->winsys;
       winsys->displaytarget_destroy(winsys, lpr->dt);
 
+      if (lpr->tiled[0].data) {
+         align_free(lpr->tiled[0].data);
+         lpr->tiled[0].data = NULL;
+      }
+
       FREE(lpr->layout[0]);
    }
    else if (resource_is_texture(pt)) {
