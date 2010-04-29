@@ -251,7 +251,10 @@ ir_dead_code_visitor::visit(ir_call *ir)
 void
 ir_dead_code_visitor::visit(ir_return *ir)
 {
-   ir->get_value()->accept(this);
+   ir_rvalue *val = ir->get_value();
+
+   if (val)
+      val->accept(this);
 }
 
 
