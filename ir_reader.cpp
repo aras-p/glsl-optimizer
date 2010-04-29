@@ -295,6 +295,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 	 return;
       }
       read_instructions(st, &sig->body, body_list, NULL);
+      sig->is_defined = true;
    }
 
    st->symbols->pop_scope();
