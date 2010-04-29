@@ -125,7 +125,7 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
        */
       shader->func(inputs_soa, outputs_soa, temps_soa,
 		   (float (*)[4]) shader->base.immediates,
-                   (const float (*)[4])constants[0],
+                   (float (*)[4])constants[0],
                    ppc_builtin_constants);
 
       /* convert (up to) four output verts from SoA back to AoS format */
