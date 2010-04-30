@@ -65,6 +65,8 @@ struct _mesa_glsl_parse_state {
    const glsl_type **user_structures;
    unsigned num_user_structures;
 
+   char *info_log;
+
    /**
     * \name Enable bits for GLSL extensions
     */
@@ -95,7 +97,7 @@ extern void _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
  * \sa _mesa_glsl_error
  */
 extern void _mesa_glsl_warning(const YYLTYPE *locp,
-			       const _mesa_glsl_parse_state *state,
+			       _mesa_glsl_parse_state *state,
 			       const char *fmt, ...);
 
 extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,

@@ -73,11 +73,15 @@ _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
    va_end(ap);
 
    printf("%s\n", buf);
+
+   if (state->info_log)
+      free(state->info_log);
+   state->info_log = strdup(buf);
 }
 
 
 void
-_mesa_glsl_warning(const YYLTYPE *locp, const _mesa_glsl_parse_state *state,
+_mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		   const char *fmt, ...)
 {
    char buf[1024];
@@ -92,6 +96,10 @@ _mesa_glsl_warning(const YYLTYPE *locp, const _mesa_glsl_parse_state *state,
    va_end(ap);
 
    printf("%s\n", buf);
+
+   if (!state->info_log) {
+      state->info_log = strdup(buf);
+   }
 }
 
 
