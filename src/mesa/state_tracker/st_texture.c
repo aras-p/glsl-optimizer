@@ -45,24 +45,6 @@
 
 #define DBG if(0) printf
 
-#if 0
-static GLenum
-target_to_target(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-      return GL_TEXTURE_CUBE_MAP_ARB;
-   default:
-      return target;
-   }
-}
-#endif
-
 
 /**
  * Allocate a new pipe_resource object
