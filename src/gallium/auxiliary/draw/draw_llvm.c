@@ -207,6 +207,8 @@ draw_llvm_create(struct draw_context *draw)
 void
 draw_llvm_destroy(struct draw_llvm *llvm)
 {
+   LLVMDisposePassManager(llvm->pass);
+
    FREE(llvm);
 }
 

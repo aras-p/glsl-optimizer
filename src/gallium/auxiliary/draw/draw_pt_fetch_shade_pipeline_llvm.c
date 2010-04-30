@@ -349,7 +349,31 @@ static void llvm_middle_end_finish( struct draw_pt_middle_end *middle )
 static void llvm_middle_end_destroy( struct draw_pt_middle_end *middle )
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
+   struct draw_context *draw = fpme->draw;
+   struct draw_llvm_variant *variant = NULL;
 
+   variant = fpme->variants;
+   while(variant) {
+      struct draw_llvm_variant *next = variant->next;
+
+      if (variant->function_elts) {
+         if (variant->function_elts)
+            LLVMFreeMachineCodeForFunction(draw->engine,
+                                           variant->function_elts);
+         LLVMDeleteFunction(variant->function_elts);
+      }
+
+      if (variant->function) {
+         if (variant->function)
+            LLVMFreeMachineCodeForFunction(draw->engine,
+                                           variant->function);
+         LLVMDeleteFunction(variant->function);
+      }
+
+      FREE(variant);
+
+      variant = next;
+   }
    if (fpme->fetch)
       draw_pt_fetch_destroy( fpme->fetch );
 
