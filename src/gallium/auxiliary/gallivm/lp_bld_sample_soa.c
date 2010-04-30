@@ -2049,6 +2049,24 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
 
 
 /**
+ * Just set texels to white instead of actually sampling the texture.
+ * For debugging.
+ */
+static void
+lp_build_sample_nop(struct lp_build_sample_context *bld,
+                    LLVMValueRef *texel)
+{
+   struct lp_build_context *texel_bld = &bld->texel_bld;
+   unsigned chan;
+
+   for (chan = 0; chan < 4; chan++) {
+      /*lp_bld_mov(texel_bld, texel, texel_bld->one);*/
+      texel[chan] = texel_bld->one;
+   }  
+}
+
+
+/**
  * Build texture sampling code.
  * 'texel' will return a vector of four LLVMValueRefs corresponding to
  * R, G, B, A.
@@ -2113,13 +2131,17 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    height_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, height);
    depth_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, depth);
 
-   if (util_format_is_rgba8_variant(bld.format_desc) &&
-       static_state->target == PIPE_TEXTURE_2D &&
-       static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
-       static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&
-       static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE &&
-       is_simple_wrap_mode(static_state->wrap_s) &&
-       is_simple_wrap_mode(static_state->wrap_t)) {
+   if (0) {
+      /* For debug: no-op texture sampling */
+      lp_build_sample_nop(&bld, texel);
+   }
+   else if (util_format_is_rgba8_variant(bld.format_desc) &&
+            static_state->target == PIPE_TEXTURE_2D &&
+            static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
+            static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&
+            static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE &&
+            is_simple_wrap_mode(static_state->wrap_s) &&
+            is_simple_wrap_mode(static_state->wrap_t)) {
       /* special case */
       lp_build_sample_2d_linear_aos(&bld, s, t, width_vec, height_vec,
                                     row_stride_array, data_array, texel);
