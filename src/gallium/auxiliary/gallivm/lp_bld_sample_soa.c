@@ -325,6 +325,18 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                                    bld->format_desc,
                                    x, y, z, y_stride, z_stride);
 
+   if (use_border) {
+      /* If we can sample the border color, it means that texcoords may
+       * lie outside the bounds of the texture image.  We need to do
+       * something to prevent reading out of bounds and causing a segfault.
+       *
+       * Simply AND the texture coords with !use_border.  This will cause
+       * coords which are out of bounds to become zero.  Zero's guaranteed
+       * to be inside the texture image.
+       */
+      offset = lp_build_andc(&bld->uint_coord_bld, offset, use_border);
+   }
+
    lp_build_fetch_rgba_soa(bld->builder,
                            bld->format_desc,
                            bld->texel_type,
