@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <stdio.h>
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"
 #include "ir.h"
@@ -314,6 +315,10 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
       break;
    case fragment_shader:
       initialize_fs_variables(instructions, state);
+      break;
+   case ir_shader:
+      fprintf(stderr, "ir reader has no builtin variables");
+      exit(1);
       break;
    }
 }
