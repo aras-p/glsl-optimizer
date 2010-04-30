@@ -249,7 +249,7 @@ static void require_extension(const char *ext)
 
 static void Init(void)
 {
-   const char *const ver_string = (const char *const) glGetString(GL_VERSION);
+   const char *const ver_string = (const char *) glGetString(GL_VERSION);
    unsigned i;
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));

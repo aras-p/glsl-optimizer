@@ -656,12 +656,12 @@ util_dump_transfer(struct os_stream *stream, const struct pipe_transfer *state)
    util_dump_struct_begin(stream, "pipe_transfer");
 
    util_dump_member(stream, ptr, state, resource);
-//   util_dump_member(stream, uint, state, box);
+   /*util_dump_member(stream, uint, state, box);*/
 
    util_dump_member(stream, uint, state, stride);
    util_dump_member(stream, uint, state, slice_stride);
 
-//   util_dump_member(stream, ptr, state, data);
+   /*util_dump_member(stream, ptr, state, data);*/
 
    util_dump_struct_end(stream);
 }

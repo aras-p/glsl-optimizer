@@ -22,6 +22,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "util/u_format.h"
+#include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
 
 #include "r300_context.h"
@@ -318,6 +319,8 @@ struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
     r300screen->screen.fence_finish = r300_fence_finish;
 
     r300_init_screen_resource_functions(r300screen);
+
+    util_format_s3tc_init();
 
     return &r300screen->screen;
 }

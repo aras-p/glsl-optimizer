@@ -118,17 +118,15 @@ dri_destroy_context(__DRIcontext * cPriv)
 GLboolean
 dri_unbind_context(__DRIcontext * cPriv)
 {
+   /* dri_util.c ensures cPriv is not null */
    struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
+   struct dri_context *ctx = dri_context(cPriv);
    struct st_api *stapi = screen->st_api;
 
-   if (cPriv) {
-      struct dri_context *ctx = dri_context(cPriv);
-
-      if (--ctx->bind_count == 0) {
-         if (ctx->st == stapi->get_current(stapi)) {
-            ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-            stapi->make_current(stapi, NULL, NULL, NULL);
-         }
+   if (--ctx->bind_count == 0) {
+      if (ctx->st == stapi->get_current(stapi)) {
+         ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+         stapi->make_current(stapi, NULL, NULL, NULL);
       }
    }
 
@@ -140,35 +138,29 @@ dri_make_current(__DRIcontext * cPriv,
 		 __DRIdrawable * driDrawPriv,
 		 __DRIdrawable * driReadPriv)
 {
+   /* dri_util.c ensures cPriv is not null */
    struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
+   struct dri_context *ctx = dri_context(cPriv);
    struct st_api *stapi = screen->st_api;
+   struct dri_drawable *draw = dri_drawable(driDrawPriv);
+   struct dri_drawable *read = dri_drawable(driReadPriv);
+   struct st_context_iface *old_st = stapi->get_current(stapi);
 
-   if (cPriv) {
-      struct dri_context *ctx = dri_context(cPriv);
-      struct dri_drawable *draw = dri_drawable(driDrawPriv);
-      struct dri_drawable *read = dri_drawable(driReadPriv);
-      struct st_context_iface *old_st;
+   if (old_st && old_st != ctx->st)
+      old_st->flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-      old_st = stapi->get_current(stapi);
-      if (old_st && old_st != ctx->st)
-	 ctx->st->flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   ++ctx->bind_count;
 
-      ++ctx->bind_count;
-
-      if (ctx->dPriv != driDrawPriv) {
-	 ctx->dPriv = driDrawPriv;
-         draw->texture_stamp = driDrawPriv->lastStamp - 1;
-      }
-      if (ctx->rPriv != driReadPriv) {
-	 ctx->rPriv = driReadPriv;
-         read->texture_stamp = driReadPriv->lastStamp - 1;
-      }
-
-      stapi->make_current(stapi, ctx->st, &draw->base, &read->base);
+   if (ctx->dPriv != driDrawPriv) {
+      ctx->dPriv = driDrawPriv;
+      draw->texture_stamp = driDrawPriv->lastStamp - 1;
    }
-   else {
-      stapi->make_current(stapi, NULL, NULL, NULL);
+   if (ctx->rPriv != driReadPriv) {
+      ctx->rPriv = driReadPriv;
+      read->texture_stamp = driReadPriv->lastStamp - 1;
    }
+
+   stapi->make_current(stapi, ctx->st, &draw->base, &read->base);
 
    return GL_TRUE;
 }

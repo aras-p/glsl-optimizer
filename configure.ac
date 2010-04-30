@@ -955,7 +955,7 @@ if test "x$enable_egl" = xyes; then
     fi
 
     if test "$with_demos" = yes; then
-        PROGRAM_DIRS="$PROGRAM_DIRS egl/opengl"
+        PROGRAM_DIRS="$PROGRAM_DIRS egl/eglut egl/opengl"
     fi
 fi
 AC_SUBST([EGL_LIB_DEPS])
@@ -1498,6 +1498,15 @@ fi
     echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
 fi
 echo "        Use XCB:         $enable_xcb"
+
+echo ""
+if test "x$MESA_LLVM" == x1; then
+    echo "        llvm:            yes"
+    echo "        llvm-config:     $LLVM_CONFIG"
+    echo "        llvm-version:    $LLVM_VERSION"
+else
+    echo "        llvm:            no"
+fi
 
 echo ""
 if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then

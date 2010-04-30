@@ -121,7 +121,7 @@ struct r300_winsys_screen {
 
     /* Write a table of dwords to the command buffer. */
     void (*write_cs_table)(struct r300_winsys_screen* winsys,
-                           void *dwords, unsigned count);
+                           const void *dwords, unsigned count);
 
     /* Write a relocated dword to the command buffer. */
     void (*write_cs_reloc)(struct r300_winsys_screen *winsys,

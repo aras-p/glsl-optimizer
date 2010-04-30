@@ -124,6 +124,10 @@ extern "C" {
 #define GLX_SAMPLES_ARB                    100001
 #endif
 
+#ifndef GLX_ARB_vertex_buffer_object
+#define GLX_CONTEXT_ALLOW_BUFFER_BYTE_ORDER_MISMATCH_ARB 0x2095
+#endif
+
 #ifndef GLX_ARB_fbconfig_float
 #define GLX_RGBA_FLOAT_TYPE_ARB            0x20B9
 #define GLX_RGBA_FLOAT_BIT_ARB             0x00000004

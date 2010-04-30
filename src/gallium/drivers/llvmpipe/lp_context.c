@@ -97,63 +97,24 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.winsys = screen->winsys;
    llvmpipe->pipe.screen = screen;
    llvmpipe->pipe.priv = priv;
+
+   /* Init the pipe context methods */
    llvmpipe->pipe.destroy = llvmpipe_destroy;
-
-   /* state setters */
-   llvmpipe->pipe.create_blend_state = llvmpipe_create_blend_state;
-   llvmpipe->pipe.bind_blend_state   = llvmpipe_bind_blend_state;
-   llvmpipe->pipe.delete_blend_state = llvmpipe_delete_blend_state;
-
-   llvmpipe->pipe.create_sampler_state = llvmpipe_create_sampler_state;
-   llvmpipe->pipe.bind_fragment_sampler_states  = llvmpipe_bind_sampler_states;
-   llvmpipe->pipe.bind_vertex_sampler_states  = llvmpipe_bind_vertex_sampler_states;
-   llvmpipe->pipe.delete_sampler_state = llvmpipe_delete_sampler_state;
-
-   llvmpipe->pipe.create_depth_stencil_alpha_state = llvmpipe_create_depth_stencil_state;
-   llvmpipe->pipe.bind_depth_stencil_alpha_state   = llvmpipe_bind_depth_stencil_state;
-   llvmpipe->pipe.delete_depth_stencil_alpha_state = llvmpipe_delete_depth_stencil_state;
-
-   llvmpipe->pipe.create_rasterizer_state = llvmpipe_create_rasterizer_state;
-   llvmpipe->pipe.bind_rasterizer_state   = llvmpipe_bind_rasterizer_state;
-   llvmpipe->pipe.delete_rasterizer_state = llvmpipe_delete_rasterizer_state;
-
-   llvmpipe->pipe.create_fs_state = llvmpipe_create_fs_state;
-   llvmpipe->pipe.bind_fs_state   = llvmpipe_bind_fs_state;
-   llvmpipe->pipe.delete_fs_state = llvmpipe_delete_fs_state;
-
-   llvmpipe->pipe.create_vs_state = llvmpipe_create_vs_state;
-   llvmpipe->pipe.bind_vs_state   = llvmpipe_bind_vs_state;
-   llvmpipe->pipe.delete_vs_state = llvmpipe_delete_vs_state;
-
-   llvmpipe->pipe.create_vertex_elements_state = llvmpipe_create_vertex_elements_state;
-   llvmpipe->pipe.bind_vertex_elements_state = llvmpipe_bind_vertex_elements_state;
-   llvmpipe->pipe.delete_vertex_elements_state = llvmpipe_delete_vertex_elements_state;
-
-   llvmpipe->pipe.set_blend_color = llvmpipe_set_blend_color;
-   llvmpipe->pipe.set_stencil_ref = llvmpipe_set_stencil_ref;
-   llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
-   llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
-   llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
-   llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
-   llvmpipe->pipe.set_fragment_sampler_views = llvmpipe_set_fragment_sampler_views;
-   llvmpipe->pipe.set_vertex_sampler_views = llvmpipe_set_vertex_sampler_views;
-   llvmpipe->pipe.create_sampler_view = llvmpipe_create_sampler_view;
-   llvmpipe->pipe.sampler_view_destroy = llvmpipe_sampler_view_destroy;
-   llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
-
-   llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
-
-   llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
-   llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
-   llvmpipe->pipe.draw_range_elements = llvmpipe_draw_range_elements;
-
    llvmpipe->pipe.clear = llvmpipe_clear;
    llvmpipe->pipe.flush = llvmpipe_flush;
 
-
+   llvmpipe_init_blend_funcs(llvmpipe);
+   llvmpipe_init_clip_funcs(llvmpipe);
+   llvmpipe_init_draw_funcs(llvmpipe);
+   llvmpipe_init_sampler_funcs(llvmpipe);
    llvmpipe_init_query_funcs( llvmpipe );
+   llvmpipe_init_vertex_funcs(llvmpipe);
+   llvmpipe_init_fs_funcs(llvmpipe);
+   llvmpipe_init_vs_funcs(llvmpipe);
+   llvmpipe_init_rasterizer_funcs(llvmpipe);
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
+   llvmpipe_init_surface_functions(llvmpipe);
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -185,8 +146,6 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    /* Do polygon stipple w/ texture map + frag prog? */
    draw_install_pstipple_stage(llvmpipe->draw, &llvmpipe->pipe);
 #endif
-
-   lp_init_surface_functions(llvmpipe);
 
    lp_reset_counters();
 

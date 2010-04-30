@@ -106,12 +106,12 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 2, 1, 0, 0, 0, "TXL", TGSI_OPCODE_TXL },
    { 0, 0, 0, 0, 0, 0, "BRK", TGSI_OPCODE_BRK },
    { 0, 1, 0, 1, 0, 1, "IF", TGSI_OPCODE_IF },
-   { 1, 1, 0, 0, 0, 1, "BGNFOR", TGSI_OPCODE_BGNFOR },
-   { 0, 1, 0, 0, 0, 1, "REP", TGSI_OPCODE_REP },
+   { 1, 1, 0, 0, 0, 1, "", 75 },      /* removed */
+   { 0, 1, 0, 0, 0, 1, "", 76 },      /* removed */
    { 0, 0, 0, 1, 1, 1, "ELSE", TGSI_OPCODE_ELSE },
    { 0, 0, 0, 0, 1, 0, "ENDIF", TGSI_OPCODE_ENDIF },
-   { 1, 0, 0, 0, 1, 0, "ENDFOR", TGSI_OPCODE_ENDFOR },
-   { 0, 0, 0, 0, 1, 0, "ENDREP", TGSI_OPCODE_ENDREP },
+   { 1, 0, 0, 0, 1, 0, "", 79 },      /* removed */
+   { 0, 0, 0, 0, 1, 0, "", 80 },      /* removed */
    { 0, 1, 0, 0, 0, 0, "PUSHA", TGSI_OPCODE_PUSHA },
    { 1, 0, 0, 0, 0, 0, "POPA", TGSI_OPCODE_POPA },
    { 1, 1, 0, 0, 0, 0, "CEIL", TGSI_OPCODE_CEIL },

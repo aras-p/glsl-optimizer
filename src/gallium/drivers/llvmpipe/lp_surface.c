@@ -146,7 +146,7 @@ lp_surface_copy(struct pipe_context *pipe,
 
 
 void
-lp_init_surface_functions(struct llvmpipe_context *lp)
+llvmpipe_init_surface_functions(struct llvmpipe_context *lp)
 {
    lp->pipe.surface_copy = lp_surface_copy;
    lp->pipe.surface_fill = util_surface_fill;

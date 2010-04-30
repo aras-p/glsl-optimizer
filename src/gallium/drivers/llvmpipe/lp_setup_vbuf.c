@@ -440,7 +440,12 @@ lp_setup_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 static void
 lp_setup_vbuf_destroy(struct vbuf_render *vbr)
 {
-   lp_setup_destroy(lp_setup_context(vbr));
+   struct lp_setup_context *setup = lp_setup_context(vbr);
+   if (setup->vertex_buffer) {
+      align_free(setup->vertex_buffer);
+      setup->vertex_buffer = NULL;
+   }
+   lp_setup_destroy(setup);
 }
 
 

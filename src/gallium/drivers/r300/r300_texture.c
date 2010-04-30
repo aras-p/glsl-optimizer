@@ -34,9 +34,6 @@
 #include "r300_screen.h"
 #include "r300_winsys.h"
 
-/* XXX Enable float textures here. */
-/*#define ENABLE_FLOAT_TEXTURES*/
-
 #define TILE_WIDTH 0
 #define TILE_HEIGHT 1
 
@@ -74,7 +71,7 @@ static boolean r300_format_is_plain(enum pipe_format format)
  * The FORMAT specifies how the texture sampler will treat the texture, and
  * makes available X, Y, Z, W, ZERO, and ONE for swizzling. */
 uint32_t r300_translate_texformat(enum pipe_format format,
-                                  const unsigned char *swizzle)
+                                  const unsigned char *swizzle_view)
 {
     uint32_t result = 0;
     const struct util_format_description *desc;
@@ -98,6 +95,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         R300_TX_FORMAT_SIGNED_Z,
         R300_TX_FORMAT_SIGNED_W,
     };
+    unsigned char swizzle[4];
 
     desc = util_format_description(format);
 
@@ -144,25 +142,18 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    /* Add swizzle. */
-    if (!swizzle) {
-        swizzle = desc->swizzle;
-    } /*else {
-        if (swizzle[0] != desc->swizzle[0] ||
-            swizzle[1] != desc->swizzle[1] ||
-            swizzle[2] != desc->swizzle[2] ||
-            swizzle[3] != desc->swizzle[3])
-        {
-            const char n[6] = "RGBA01";
-            fprintf(stderr, "Got different swizzling! Format: %c%c%c%c, "
-                    "View: %c%c%c%c\n",
-                    n[desc->swizzle[0]], n[desc->swizzle[1]],
-                    n[desc->swizzle[2]], n[desc->swizzle[3]],
-                    n[swizzle[0]], n[swizzle[1]], n[swizzle[2]],
-                    n[swizzle[3]]);
+    /* Get swizzle. */
+    if (swizzle_view) {
+        /* Compose two sets of swizzles. */
+        for (i = 0; i < 4; i++) {
+            swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
+                         desc->swizzle[swizzle_view[i]] : swizzle_view[i];
         }
-    }*/
+    } else {
+        memcpy(swizzle, desc->swizzle, sizeof(swizzle));
+    }
 
+    /* Add swizzle. */
     for (i = 0; i < 4; i++) {
         switch (swizzle[i]) {
             case UTIL_FORMAT_SWIZZLE_X:
@@ -316,7 +307,6 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
             return ~0;
 
-#if defined(ENABLE_FLOAT_TEXTURES)
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (desc->channel[0].size) {
                 case 16:
@@ -340,7 +330,6 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                             return R300_TX_FORMAT_32F_32F_32F_32F | result;
                     }
             }
-#endif
     }
 
     return ~0; /* Unsupported/unknown. */
@@ -405,16 +394,12 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /* 64-bit buffers. */
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
-#if defined(ENABLE_FLOAT_TEXTURES)
         case PIPE_FORMAT_R16G16B16A16_FLOAT:
-#endif
             return R300_COLOR_FORMAT_ARGB16161616;
 
         /* 128-bit buffers. */
-#if defined(ENABLE_FLOAT_TEXTURES)
         case PIPE_FORMAT_R32G32B32A32_FLOAT:
             return R300_COLOR_FORMAT_ARGB32323232;
-#endif
 
         /* YUV buffers. */
         case PIPE_FORMAT_UYVY:
@@ -532,7 +517,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
-        //case PIPE_FORMAT_R16G16B16A16_FLOAT: /* not in pipe_format */
+        case PIPE_FORMAT_R16G16B16A16_FLOAT:
         case PIPE_FORMAT_R32G32B32A32_FLOAT:
             return modifier |
                 R300_C0_SEL_R | R300_C1_SEL_G |
@@ -573,7 +558,7 @@ static void r300_texture_setup_immutable_state(struct r300_screen* screen,
     if (tex->uses_pitch) {
         /* rectangles love this */
         f->format0 |= R300_TX_PITCH_EN;
-        f->format2 = (tex->pitch[0] - 1) & 0x1fff;
+        f->format2 = (tex->hwpitch[0] - 1) & 0x1fff;
     } else {
         /* power of two textures (3D, mipmaps, and no pitch) */
         f->format0 |= R300_TX_DEPTH(util_logbase2(pt->depth0) & 0xf);
@@ -614,7 +599,7 @@ static void r300_texture_setup_fb_state(struct r300_screen* screen,
     if (util_format_is_depth_or_stencil(tex->b.b.format)) {
         for (i = 0; i <= tex->b.b.last_level; i++) {
             tex->fb_state.depthpitch[i] =
-                tex->pitch[i] |
+                tex->hwpitch[i] |
                 R300_DEPTHMACROTILE(tex->mip_macrotile[i]) |
                 R300_DEPTHMICROTILE(tex->microtile);
         }
@@ -622,7 +607,7 @@ static void r300_texture_setup_fb_state(struct r300_screen* screen,
     } else {
         for (i = 0; i <= tex->b.b.last_level; i++) {
             tex->fb_state.colorpitch[i] =
-                tex->pitch[i] |
+                tex->hwpitch[i] |
                 r300_translate_colorformat(tex->b.b.format) |
                 R300_COLOR_TILE(tex->mip_macrotile[i]) |
                 R300_COLOR_MICROTILE(tex->microtile);
@@ -767,7 +752,7 @@ static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
 
     unsigned i, size;
 
-    if (screen->rws->get_value(screen->rws, R300_VID_DRM_2_3_0) &&
+    if (!screen->rws->get_value(screen->rws, R300_VID_DRM_2_3_0) &&
         tex->b.b.target == PIPE_TEXTURE_3D &&
         tex->b.b.last_level > 0) {
         size = 0;
@@ -813,6 +798,8 @@ static void r300_setup_miptree(struct r300_screen* screen,
         tex->size = tex->offset[i] + size;
         tex->layer_size[i] = layer_size;
         tex->pitch[i] = stride / util_format_get_blocksize(base->format);
+        tex->hwpitch[i] =
+                tex->pitch[i] * util_format_get_blockwidth(base->format);
 
         SCREEN_DBG(screen, DBG_TEX, "r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes) %d bytes total, macrotiled %s\n",

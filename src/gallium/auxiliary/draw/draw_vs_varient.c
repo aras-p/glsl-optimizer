@@ -263,8 +263,9 @@ static void vsvg_destroy( struct draw_vs_varient *varient )
 }
 
 
-struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
-                                                 const struct draw_vs_varient_key *key )
+struct draw_vs_varient *
+draw_vs_create_varient_generic( struct draw_vertex_shader *vs,
+                                const struct draw_vs_varient_key *key )
 {
    unsigned i;
    struct translate_key fetch, emit;

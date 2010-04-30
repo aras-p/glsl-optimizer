@@ -60,4 +60,6 @@ extern GLboolean r600ValidateBuffers(GLcontext * ctx);
 
 extern void r600InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *functions);
 
+unsigned r600IsFormatRenderable(gl_format mesa_format);
+
 #endif				/* __r600_TEX_H__ */

@@ -7,7 +7,10 @@ INCLUDES = \
 	-I$(TOP)/include \
 	$(X11_CFLAGS)
 
-SOURCES = $(wildcard *.c)
+SOURCES = \
+	eglut.c \
+	eglut_screen.c \
+	eglut_x11.c
 
 EGLUT_X11_OBJECTS = eglut.o eglut_x11.o
 EGLUT_SCREEN_OBJECTS = eglut.o eglut_screen.o

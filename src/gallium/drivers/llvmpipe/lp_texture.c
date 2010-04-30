@@ -241,6 +241,13 @@ llvmpipe_resource_destroy(struct pipe_screen *pscreen,
       /* display target */
       struct sw_winsys *winsys = screen->winsys;
       winsys->displaytarget_destroy(winsys, lpr->dt);
+
+      if (lpr->tiled[0].data) {
+         align_free(lpr->tiled[0].data);
+         lpr->tiled[0].data = NULL;
+      }
+
+      FREE(lpr->layout[0]);
    }
    else if (resource_is_texture(pt)) {
       /* regular texture */
@@ -1157,6 +1164,27 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
          * TILE_SIZE * TILE_SIZE * 4;
 
    return (ubyte *) tiled_image + tile_offset;
+}
+
+
+/**
+ * Return size of resource in bytes
+ */
+unsigned
+llvmpipe_resource_size(const struct pipe_resource *resource)
+{
+   const struct llvmpipe_resource *lpr = llvmpipe_resource_const(resource);
+   unsigned lvl, size = 0;
+
+   for (lvl = 0; lvl <= lpr->base.last_level; lvl++) {
+      if (lpr->linear[lvl].data)
+         size += tex_image_size(lpr, lvl, LP_TEX_LAYOUT_LINEAR);
+
+      if (lpr->tiled[lvl].data)
+         size += tex_image_size(lpr, lvl, LP_TEX_LAYOUT_TILED);
+   }
+
+   return size;
 }
 
 

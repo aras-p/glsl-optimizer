@@ -1028,7 +1028,10 @@ _slang_link(GLcontext *ctx,
 
    if (!vertNotify || !fragNotify) {
       /* driver rejected one/both of the vertex/fragment programs */
-      link_error(shProg, "Vertex and/or fragment program rejected by driver\n");
+      if (!shProg->InfoLog) {
+	 link_error(shProg,
+		    "Vertex and/or fragment program rejected by driver\n");
+      }
    }
    else {
       shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);

@@ -1210,6 +1210,14 @@ LLVMValueRef
 lp_build_cos(struct lp_build_context *bld,
               LLVMValueRef a)
 {
+#ifdef PIPE_OS_WINDOWS
+   /*
+    * FIXME: X86 backend translates llvm.cos.v4f32 to 4 calls to CRT's cosf()
+    * which is neither efficient nor does the CRT linkage work on Windows
+    * causing segmentation fault. So simply disable the code for now.
+    */
+   return bld->one;
+#else
    const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    char intrinsic[32];
@@ -1220,6 +1228,7 @@ lp_build_cos(struct lp_build_context *bld,
    util_snprintf(intrinsic, sizeof intrinsic, "llvm.cos.v%uf%u", type.length, type.width);
 
    return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
+#endif
 }
 
 
@@ -1230,6 +1239,14 @@ LLVMValueRef
 lp_build_sin(struct lp_build_context *bld,
               LLVMValueRef a)
 {
+#ifdef PIPE_OS_WINDOWS
+   /*
+    * FIXME: X86 backend translates llvm.sin.v4f32 to 4 calls to CRT's sinf()
+    * which is neither efficient nor does the CRT linkage work on Windows
+    * causing segmentation fault. So simply disable the code for now.
+    */
+   return bld->zero;
+#else
    const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    char intrinsic[32];
@@ -1240,6 +1257,7 @@ lp_build_sin(struct lp_build_context *bld,
    util_snprintf(intrinsic, sizeof intrinsic, "llvm.sin.v%uf%u", type.length, type.width);
 
    return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
+#endif
 }
 
 

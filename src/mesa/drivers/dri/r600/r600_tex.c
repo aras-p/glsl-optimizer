@@ -392,6 +392,54 @@ static struct gl_texture_object *r600NewTextureObject(GLcontext * ctx,
 	return &t->base;
 }
 
+unsigned r600IsFormatRenderable(gl_format mesa_format)
+{
+	switch (mesa_format) {
+	case MESA_FORMAT_RGBA8888:
+	case MESA_FORMAT_SIGNED_RGBA8888:
+	case MESA_FORMAT_RGBA8888_REV:
+	case MESA_FORMAT_SIGNED_RGBA8888_REV:
+	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_XRGB8888:
+	case MESA_FORMAT_ARGB8888_REV:
+	case MESA_FORMAT_XRGB8888_REV:
+	case MESA_FORMAT_RGB565:
+	case MESA_FORMAT_RGB565_REV:
+	case MESA_FORMAT_ARGB4444:
+	case MESA_FORMAT_ARGB4444_REV:
+	case MESA_FORMAT_ARGB1555:
+	case MESA_FORMAT_ARGB1555_REV:
+	case MESA_FORMAT_AL88:
+	case MESA_FORMAT_AL88_REV:
+	case MESA_FORMAT_RGB332:
+	case MESA_FORMAT_A8:
+	case MESA_FORMAT_I8:
+	case MESA_FORMAT_CI8:
+	case MESA_FORMAT_L8:
+	case MESA_FORMAT_RGBA_FLOAT32:
+	case MESA_FORMAT_RGBA_FLOAT16:
+	case MESA_FORMAT_ALPHA_FLOAT32:
+	case MESA_FORMAT_ALPHA_FLOAT16:
+	case MESA_FORMAT_LUMINANCE_FLOAT32:
+	case MESA_FORMAT_LUMINANCE_FLOAT16:
+	case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+	case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
+	case MESA_FORMAT_INTENSITY_FLOAT32: /* X, X, X, X */
+	case MESA_FORMAT_INTENSITY_FLOAT16: /* X, X, X, X */
+	case MESA_FORMAT_X8_Z24:
+	case MESA_FORMAT_S8_Z24:
+	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z32:
+	case MESA_FORMAT_SRGBA8:
+	case MESA_FORMAT_SLA8:
+	case MESA_FORMAT_SL8:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 void r600InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *functions)
 {
 	/* Note: we only plug in the functions we implement in the driver

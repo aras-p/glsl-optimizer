@@ -424,6 +424,7 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
 
    if (state & META_SCISSOR) {
       save->Scissor = ctx->Scissor; /* struct copy */
+      _mesa_set_enable(ctx, GL_SCISSOR_TEST, GL_FALSE);
    }
 
    if (state & META_SHADER) {
@@ -1117,8 +1118,10 @@ blitframebuffer_texture(GLcontext *ctx,
          _mesa_BindTexture(target, texObj->Name);
          _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
          _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
-         _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
-         _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
+         if (target != GL_TEXTURE_RECTANGLE_ARB) {
+            _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
+            _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
+         }
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -1176,8 +1179,10 @@ blitframebuffer_texture(GLcontext *ctx,
           */
          _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
          _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
-         _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
-         _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+         if (target != GL_TEXTURE_RECTANGLE_ARB) {
+            _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
+            _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+         }
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
 

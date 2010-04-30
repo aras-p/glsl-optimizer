@@ -853,8 +853,11 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     rs->clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
+    /* XXX Disable point sprites until we know what's wrong with them. */
+    rs->rs.sprite_coord_enable = 0;
+
     /* Point sprites */
-    if (state->sprite_coord_enable) {
+    if (rs->rs.sprite_coord_enable) {
         rs->stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
 	for (i = 0; i < 8; i++) {
 	    if (state->sprite_coord_enable & (1 << i))
@@ -1072,11 +1075,9 @@ r300_create_sampler_view(struct pipe_context *pipe,
         swizzle[2] = templ->swizzle_b;
         swizzle[3] = templ->swizzle_a;
 
-        /* XXX Enable swizzles when they become supported. Now we get RGBA
-         * everywhere. And do testing! */
         view->format = tex->tx_format;
         view->format.format1 |= r300_translate_texformat(templ->format,
-                                                         0); /*swizzle);*/
+                                                         swizzle);
         if (r300_screen(pipe->screen)->caps.is_r500) {
             view->format.format2 |= r500_tx_format_msb_bit(templ->format);
         }
@@ -1280,26 +1281,57 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
         memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
 
         if (r300_screen(pipe->screen)->caps.has_tcl) {
-            /* Check if the format is aligned to the size of DWORD. */
+            r300_vertex_psc(velems);
+
+            /* Check if the format is aligned to the size of DWORD.
+             * We only care about the blocksizes of the formats since
+             * swizzles are already set up. */
             for (i = 0; i < count; i++) {
                 format = &velems->velem[i].src_format;
 
                 /* Replace some formats with their aligned counterparts,
                  * this is OK because we check for aligned strides too. */
-                /* XXX We need X instead of A in the format names. */
                 switch (*format) {
+                    /* Align to RGBA8. */
+                    case PIPE_FORMAT_R8_UNORM:
+                    case PIPE_FORMAT_R8G8_UNORM:
                     case PIPE_FORMAT_R8G8B8_UNORM:
-                        *format = PIPE_FORMAT_R8G8B8X8_UNORM;
+                        *format = PIPE_FORMAT_R8G8B8A8_UNORM;
                         continue;
+                    case PIPE_FORMAT_R8_SNORM:
+                    case PIPE_FORMAT_R8G8_SNORM:
                     case PIPE_FORMAT_R8G8B8_SNORM:
                         *format = PIPE_FORMAT_R8G8B8A8_SNORM;
                         continue;
+                    case PIPE_FORMAT_R8_USCALED:
+                    case PIPE_FORMAT_R8G8_USCALED:
                     case PIPE_FORMAT_R8G8B8_USCALED:
                         *format = PIPE_FORMAT_R8G8B8A8_USCALED;
                         continue;
+                    case PIPE_FORMAT_R8_SSCALED:
+                    case PIPE_FORMAT_R8G8_SSCALED:
                     case PIPE_FORMAT_R8G8B8_SSCALED:
                         *format = PIPE_FORMAT_R8G8B8A8_SSCALED;
                         continue;
+
+                    /* Align to RG16. */
+                    case PIPE_FORMAT_R16_UNORM:
+                        *format = PIPE_FORMAT_R16G16_UNORM;
+                        continue;
+                    case PIPE_FORMAT_R16_SNORM:
+                        *format = PIPE_FORMAT_R16G16_SNORM;
+                        continue;
+                    case PIPE_FORMAT_R16_USCALED:
+                        *format = PIPE_FORMAT_R16G16_USCALED;
+                        continue;
+                    case PIPE_FORMAT_R16_SSCALED:
+                        *format = PIPE_FORMAT_R16G16_SSCALED;
+                        continue;
+                    case PIPE_FORMAT_R16_FLOAT:
+                        *format = PIPE_FORMAT_R16G16_FLOAT;
+                        continue;
+
+                    /* Align to RGBA16. */
                     case PIPE_FORMAT_R16G16B16_UNORM:
                         *format = PIPE_FORMAT_R16G16B16A16_UNORM;
                         continue;
@@ -1312,6 +1344,10 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                     case PIPE_FORMAT_R16G16B16_SSCALED:
                         *format = PIPE_FORMAT_R16G16B16A16_SSCALED;
                         continue;
+                    case PIPE_FORMAT_R16G16B16_FLOAT:
+                        *format = PIPE_FORMAT_R16G16B16A16_FLOAT;
+                        continue;
+
                     default:;
                 }
 
@@ -1327,7 +1363,6 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                 }
             }
 
-            r300_vertex_psc(velems);
         }
     }
     return velems;

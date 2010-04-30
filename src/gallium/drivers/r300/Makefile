@@ -11,6 +11,7 @@ C_SOURCES = \
 	r300_emit.c \
 	r300_flush.c \
 	r300_fs.c \
+	r300_hyperz.c \
 	r300_query.c \
 	r300_render.c \
 	r300_resource.c \

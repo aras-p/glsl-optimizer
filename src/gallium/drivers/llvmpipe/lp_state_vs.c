@@ -28,15 +28,17 @@
 
 
 #include "pipe/p_defines.h"
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 #include "util/u_memory.h"
 #include "draw/draw_context.h"
 
 #include "lp_context.h"
+#include "lp_debug.h"
 #include "lp_state.h"
 
 
-void *
+static void *
 llvmpipe_create_vs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
@@ -57,6 +59,11 @@ llvmpipe_create_vs_state(struct pipe_context *pipe,
    if (state->draw_data == NULL) 
       goto fail;
 
+   if (LP_DEBUG & DEBUG_TGSI) {
+      debug_printf("llvmpipe: Create vertex shader %p:\n", (void *) state);
+      tgsi_dump(templ->tokens, 0);
+   }
+
    return state;
 
 fail:
@@ -69,7 +76,7 @@ fail:
 }
 
 
-void
+static void
 llvmpipe_bind_vs_state(struct pipe_context *pipe, void *_vs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -87,7 +94,7 @@ llvmpipe_bind_vs_state(struct pipe_context *pipe, void *_vs)
 }
 
 
-void
+static void
 llvmpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -98,4 +105,14 @@ llvmpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
    draw_delete_vertex_shader(llvmpipe->draw, state->draw_data);
    FREE( (void *)state->shader.tokens );
    FREE( state );
+}
+
+
+
+void
+llvmpipe_init_vs_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.create_vs_state = llvmpipe_create_vs_state;
+   llvmpipe->pipe.bind_vs_state   = llvmpipe_bind_vs_state;
+   llvmpipe->pipe.delete_vs_state = llvmpipe_delete_vs_state;
 }

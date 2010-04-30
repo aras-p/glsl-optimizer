@@ -5,7 +5,7 @@ include $(TOP)/configs/current
 
 INCDIR = $(TOP)/include
 
-OSMESA_LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -l$(OSMESA_LIB) $(APP_LIB_DEPS)
+OSMESA_LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(OSMESA_LIB) $(APP_LIB_DEPS)
 
 OSMESA16_LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -lOSMesa16 -l$(GLU_LIB) \
 	-l$(GL_LIB) $(APP_LIB_DEPS)

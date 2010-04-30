@@ -114,6 +114,19 @@ vmw_svga_winsys_context(struct svga_winsys_context *swc)
 }
 
 
+static INLINE unsigned
+vmw_translate_to_pb_flags(unsigned flags)
+{
+   unsigned f = 0;
+   if (flags & SVGA_RELOC_READ)
+      f |= PB_USAGE_GPU_READ;
+
+   if (flags & SVGA_RELOC_WRITE)
+      f |= PB_USAGE_GPU_WRITE;
+
+   return f;
+}
+
 static enum pipe_error
 vmw_swc_flush(struct svga_winsys_context *swc,
               struct pipe_fence_handle **pfence)
@@ -264,6 +277,7 @@ vmw_swc_region_relocation(struct svga_winsys_context *swc,
 {
    struct vmw_svga_winsys_context *vswc = vmw_svga_winsys_context(swc);
    struct vmw_region_relocation *reloc;
+   unsigned translated_flags;
    enum pipe_error ret;
    
    assert(vswc->region.staged < vswc->region.reserved);
@@ -275,7 +289,8 @@ vmw_swc_region_relocation(struct svga_winsys_context *swc,
 
    ++vswc->region.staged;
 
-   ret = pb_validate_add_buffer(vswc->validate, reloc->buffer, flags);
+   translated_flags = vmw_translate_to_pb_flags(flags);
+   ret = pb_validate_add_buffer(vswc->validate, reloc->buffer, translated_flags);
    /* TODO: Update pipebuffer to reserve buffers and not fail here */
    assert(ret == PIPE_OK);
 

@@ -71,6 +71,8 @@ softpipe_get_param(struct pipe_screen *screen, int param)
       return 1;
    case PIPE_CAP_GLSL:
       return 1;
+   case PIPE_CAP_SM3:
+      return 1;
    case PIPE_CAP_ANISOTROPIC_FILTER:
       return 0;
    case PIPE_CAP_POINT_SPRITE:

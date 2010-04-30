@@ -34,9 +34,6 @@ lion_screen: lion.o lion-render.o $(EGLUT_DIR)/libeglut-screen.a
 		-L$(EGLUT_DIR) -leglut-screen $(VG_LIBS) 
 
 
-$(EGLUT_DIR)/libeglut-x11.a $(EGLUT_DIR)/libeglut-screen.a:
-	@$(MAKE) -C $(EGLUT_DIR)
-
 # define the rules for EGLUT demos
 define eglut-demo-rule
 $(1)_x11 $(1)_screen: $(1)_%: $(1).o $(EGLUT_DIR)/libeglut-%.a
@@ -52,4 +49,3 @@ $(EGLUT_SCREEN_DEMOS):
 clean:
 	rm -f *.o *~
 	rm -f $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
-	@$(MAKE) -C $(EGLUT_DIR) clean

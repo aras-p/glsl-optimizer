@@ -240,13 +240,14 @@ util_format_dxtn_rgb_unpack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
                                         util_format_dxtn_fetch_t fetch,
                                         unsigned block_size)
 {
+   const unsigned bw = 4, bh = 4, comps = 4;
    unsigned x, y, i, j;
-   for(y = 0; y < height; y += 4) {
+   for(y = 0; y < height; y += bh) {
       const uint8_t *src = src_row;
-      for(x = 0; x < width; x += 4) {
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*4;
+      for(x = 0; x < width; x += bw) {
+         for(j = 0; j < bh; ++j) {
+            for(i = 0; i < bw; ++i) {
+               uint8_t *dst = dst_row + (y + j)*dst_stride/sizeof(*dst_row) + (x + i)*comps;
                fetch(0, src, i, j, dst);
             }
          }
@@ -379,212 +380,197 @@ util_format_dxt5_rgba_unpack_rgba_float(float *dst_row, unsigned dst_stride,
 
 void
 util_format_dxt1_rgb_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
-                                      const uint8_t *src_row, unsigned src_stride,
+                                      const uint8_t *src, unsigned src_stride,
                                       unsigned width, unsigned height)
 {
+   const unsigned bw = 4, bh = 4, bytes_per_block = 8;
    unsigned x, y, i, j, k;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
+   for(y = 0; y < height; y += bh) {
       uint8_t *dst = dst_row;
-      for(x = 0; x < width; x += 4) {
-         uint8_t tmp[4][4][3];
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
+      for(x = 0; x < width; x += bw) {
+         uint8_t tmp[4][4][3];  /* [bh][bw][comps] */
+         for(j = 0; j < bh; ++j) {
+            for(i = 0; i < bw; ++i) {
                for(k = 0; k < 3; ++k) {
-                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + i*4 + k];
+                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + (x + i)*4 + k];
                }
             }
          }
-         util_format_dxtn_pack(3, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT1_RGB, dst, dst_stride);
-         src += 4*4;
-         dst += 8;
+         util_format_dxtn_pack(3, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT1_RGB, dst, 0);
+         dst += bytes_per_block;
       }
-      src_row += src_stride;
-      dst_row += 4*dst_stride/sizeof(*dst_row);
+      dst_row += dst_stride / sizeof(*dst_row);
    }
 }
 
 void
 util_format_dxt1_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
-                                       const uint8_t *src_row, unsigned src_stride,
+                                       const uint8_t *src, unsigned src_stride,
                                        unsigned width, unsigned height)
 {
+   const unsigned bw = 4, bh = 4, comps = 4, bytes_per_block = 8;
    unsigned x, y, i, j, k;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
+   for(y = 0; y < height; y += bh) {
       uint8_t *dst = dst_row;
-      for(x = 0; x < width; x += 4) {
-         uint8_t tmp[4][4][4];
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               for(k = 0; k < 4; ++k) {
-                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + i*4 + k];
+      for(x = 0; x < width; x += bw) {
+         uint8_t tmp[4][4][4];  /* [bh][bw][comps] */
+         for(j = 0; j < bh; ++j) {
+            for(i = 0; i < bw; ++i) {
+               for(k = 0; k < comps; ++k) {
+                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + (x + i)*comps + k];
                }
             }
          }
-         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT1_RGBA, dst, dst_stride);
-         src += 4*4;
-         dst += 8;
+         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT1_RGBA, dst, 0);
+         dst += bytes_per_block;
       }
-      src_row += src_stride;
-      dst_row += 4*dst_stride/sizeof(*dst_row);
+      dst_row += dst_stride / sizeof(*dst_row);
    }
 }
 
 void
 util_format_dxt3_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
-                                       const uint8_t *src_row, unsigned src_stride,
+                                       const uint8_t *src, unsigned src_stride,
                                        unsigned width, unsigned height)
 {
+   const unsigned bw = 4, bh = 4, comps = 4, bytes_per_block = 16;
    unsigned x, y, i, j, k;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
+   for(y = 0; y < height; y += bh) {
       uint8_t *dst = dst_row;
-      for(x = 0; x < width; x += 4) {
-         uint8_t tmp[4][4][4];
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               for(k = 0; k < 4; ++k) {
-                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + i*4 + k];
+      for(x = 0; x < width; x += bw) {
+         uint8_t tmp[4][4][4];  /* [bh][bw][comps] */
+         for(j = 0; j < bh; ++j) {
+            for(i = 0; i < bw; ++i) {
+               for(k = 0; k < comps; ++k) {
+                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + (x + i)*comps + k];
                }
             }
          }
-         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT3_RGBA, dst, dst_stride);
-         src += 4*4;
-         dst += 16;
+         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT3_RGBA, dst, 0);
+         dst += bytes_per_block;
       }
-      src_row += src_stride;
-      dst_row += 4*dst_stride/sizeof(*dst_row);
+      dst_row += dst_stride / sizeof(*dst_row);
    }
 }
 
 void
 util_format_dxt5_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
-                                       const uint8_t *src_row, unsigned src_stride,
+                                       const uint8_t *src, unsigned src_stride,
                                        unsigned width, unsigned height)
 {
+   const unsigned bw = 4, bh = 4, comps = 4, bytes_per_block = 16;
    unsigned x, y, i, j, k;
-   for(y = 0; y < height; y += 4) {
-      const uint8_t *src = src_row;
+
+   for(y = 0; y < height; y += bh) {
       uint8_t *dst = dst_row;
-      for(x = 0; x < width; x += 4) {
-         uint8_t tmp[4][4][4];
-         for(j = 0; j < 4; ++j) {
-            for(i = 0; i < 4; ++i) {
-               for(k = 0; k < 4; ++k) {
-                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + i*4 + k];
+      for(x = 0; x < width; x += bw) {
+         uint8_t tmp[4][4][4];  /* [bh][bw][comps] */
+         for(j = 0; j < bh; ++j) {
+            for(i = 0; i < bw; ++i) {
+               for(k = 0; k < comps; ++k) {
+                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + (x + i)*comps + k];
                }
             }
          }
-         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT5_RGBA, dst, dst_stride);
-         src += 4*4;
-         dst += 16;
+         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT5_RGBA, dst, 0);
+         dst += bytes_per_block;
       }
-      src_row += src_stride;
-      dst_row += 4*dst_stride/sizeof(*dst_row);
+      dst_row += dst_stride / sizeof(*dst_row);
    }
 }
 
 void
 util_format_dxt1_rgb_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
-                                     const float *src_row, unsigned src_stride,
+                                     const float *src, unsigned src_stride,
                                      unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
-      const float *src = src_row;
       uint8_t *dst = dst_row;
       for(x = 0; x < width; x += 4) {
          uint8_t tmp[4][4][3];
          for(j = 0; j < 4; ++j) {
             for(i = 0; i < 4; ++i) {
                for(k = 0; k < 3; ++k) {
-                  tmp[j][i][k] = float_to_ubyte(src[(y + j)*src_stride/sizeof(*src) + i*4 + k]);
+                  tmp[j][i][k] = float_to_ubyte(src[(y + j)*src_stride/sizeof(*src) + (x+i)*4 + k]);
                }
             }
          }
-         util_format_dxtn_pack(3, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT1_RGB, dst, dst_stride);
-         src += 4*4;
+         util_format_dxtn_pack(3, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT1_RGB, dst, 0);
          dst += 8;
       }
-      src_row += src_stride;
       dst_row += 4*dst_stride/sizeof(*dst_row);
    }
 }
 
 void
 util_format_dxt1_rgba_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
-                                      const float *src_row, unsigned src_stride,
+                                      const float *src, unsigned src_stride,
                                       unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
-      const float *src = src_row;
       uint8_t *dst = dst_row;
       for(x = 0; x < width; x += 4) {
          uint8_t tmp[4][4][4];
          for(j = 0; j < 4; ++j) {
             for(i = 0; i < 4; ++i) {
                for(k = 0; k < 4; ++k) {
-                  tmp[j][i][k] = float_to_ubyte(src[(y + j)*src_stride/sizeof(*src) + i*4 + k]);
+                  tmp[j][i][k] = float_to_ubyte(src[(y + j)*src_stride/sizeof(*src) + (x+i)*4 + k]);
                }
             }
          }
-         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT1_RGBA, dst, dst_stride);
-         src += 4*4;
+         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT1_RGBA, dst, 0);
          dst += 8;
       }
-      src_row += src_stride;
       dst_row += 4*dst_stride/sizeof(*dst_row);
    }
 }
 
 void
-util_format_dxt3_rgba_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt3_rgba_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
+                                      const float *src, unsigned src_stride,
+                                      unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
-      const float *src = src_row;
       uint8_t *dst = dst_row;
       for(x = 0; x < width; x += 4) {
          uint8_t tmp[4][4][4];
          for(j = 0; j < 4; ++j) {
             for(i = 0; i < 4; ++i) {
                for(k = 0; k < 4; ++k) {
-                  tmp[j][i][k] = float_to_ubyte(src[(y + j)*src_stride/sizeof(*src) + i*4 + k]);
+                  tmp[j][i][k] = float_to_ubyte(src[(y + j)*src_stride/sizeof(*src) + (x+i)*4 + k]);
                }
             }
          }
-         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT3_RGBA, dst, dst_stride);
-         src += 4*4;
+         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT3_RGBA, dst, 0);
          dst += 16;
       }
-      src_row += src_stride;
       dst_row += 4*dst_stride/sizeof(*dst_row);
    }
 }
 
 void
-util_format_dxt5_rgba_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_dxt5_rgba_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride,
+                                      const float *src, unsigned src_stride,
+                                      unsigned width, unsigned height)
 {
    unsigned x, y, i, j, k;
    for(y = 0; y < height; y += 4) {
-      const float *src = src_row;
       uint8_t *dst = dst_row;
       for(x = 0; x < width; x += 4) {
          uint8_t tmp[4][4][4];
          for(j = 0; j < 4; ++j) {
             for(i = 0; i < 4; ++i) {
                for(k = 0; k < 4; ++k) {
-                  tmp[j][i][k] = float_to_ubyte(src[(y + j)*src_stride/sizeof(*src) + i*4 + k]);
+                  tmp[j][i][k] = float_to_ubyte(src[(y + j)*src_stride/sizeof(*src) + (x+i)*4 + k]);
                }
             }
          }
-         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT5_RGBA, dst, dst_stride);
-         src += 4*4;
+         util_format_dxtn_pack(4, 4, 4, &tmp[0][0][0], UTIL_FORMAT_DXT5_RGBA, dst, 0);
          dst += 16;
       }
-      src_row += src_stride;
       dst_row += 4*dst_stride/sizeof(*dst_row);
    }
 }

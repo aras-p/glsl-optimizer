@@ -130,13 +130,21 @@ typedef enum
    MESA_FORMAT_INTENSITY_FLOAT16,
    /*@}*/
 
+                                  /* msb <------ TEXEL BITS -----------> lsb */
+                                  /* ---- ---- ---- ---- ---- ---- ---- ---- */
    /**
     * \name Signed fixed point texture formats.
     */
    /*@{*/
-   MESA_FORMAT_DUDV8,
-   MESA_FORMAT_SIGNED_RGBA8888,
-   MESA_FORMAT_SIGNED_RGBA8888_REV,
+   MESA_FORMAT_DUDV8,             /*                     DUDU DUDU DVDV DVDV */
+   MESA_FORMAT_SIGNED_R8,         /*                               RRRR RRRR */
+   MESA_FORMAT_SIGNED_RG88,       /*                     RRRR RRRR GGGG GGGG */
+   MESA_FORMAT_SIGNED_RGBX8888,   /* RRRR RRRR GGGG GGGG BBBB BBBB xxxx xxxx */
+   MESA_FORMAT_SIGNED_RGBA8888,   /* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
+   MESA_FORMAT_SIGNED_RGBA8888_REV,/*AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_SIGNED_R_16,
+   MESA_FORMAT_SIGNED_RG_16,
+   MESA_FORMAT_SIGNED_RGB_16,
    MESA_FORMAT_SIGNED_RGBA_16,
    /*@}*/
 

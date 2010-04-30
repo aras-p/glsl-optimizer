@@ -108,11 +108,9 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_BRK: return RC_OPCODE_BRK; */
         case TGSI_OPCODE_IF: return RC_OPCODE_IF;
      /* case TGSI_OPCODE_LOOP: return RC_OPCODE_LOOP; */
-     /* case TGSI_OPCODE_REP: return RC_OPCODE_REP; */
         case TGSI_OPCODE_ELSE: return RC_OPCODE_ELSE;
         case TGSI_OPCODE_ENDIF: return RC_OPCODE_ENDIF;
      /* case TGSI_OPCODE_ENDLOOP: return RC_OPCODE_ENDLOOP; */
-     /* case TGSI_OPCODE_ENDREP: return RC_OPCODE_ENDREP; */
      /* case TGSI_OPCODE_PUSHA: return RC_OPCODE_PUSHA; */
      /* case TGSI_OPCODE_POPA: return RC_OPCODE_POPA; */
         case TGSI_OPCODE_CEIL: return RC_OPCODE_CEIL;

@@ -621,7 +621,6 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMTypeRef fs_vec_type;
    LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
-   LLVMTypeRef blend_int_vec_type;
    LLVMTypeRef arg_types[15];
    LLVMTypeRef func_type;
    LLVMTypeRef int32_vec4_type = lp_build_int32_vec4_type();
@@ -680,7 +679,6 @@ generate_fragment(struct llvmpipe_context *lp,
    fs_int_vec_type = lp_build_int_vec_type(fs_type);
 
    blend_vec_type = lp_build_vec_type(blend_type);
-   blend_int_vec_type = lp_build_int_vec_type(blend_type);
 
    arg_types[0] = screen->context_ptr_type;            /* context */
    arg_types[1] = LLVMInt32Type();                     /* x */
@@ -939,7 +937,6 @@ generate_variant(struct llvmpipe_context *lp,
    if(!variant)
       return NULL;
 
-   variant->shader = shader;
    memcpy(&variant->key, key, sizeof *key);
 
    generate_fragment(lp, shader, variant, 0);
@@ -953,7 +950,7 @@ generate_variant(struct llvmpipe_context *lp,
 }
 
 
-void *
+static void *
 llvmpipe_create_fs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
@@ -969,11 +966,16 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
 
+   if (LP_DEBUG & DEBUG_TGSI) {
+      debug_printf("llvmpipe: Create fragment shader %p:\n", (void *) shader);
+      tgsi_dump(templ->tokens, 0);
+   }
+
    return shader;
 }
 
 
-void
+static void
 llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -989,7 +991,7 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
-void
+static void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -1032,7 +1034,7 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 
 
 
-void
+static void
 llvmpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
                              struct pipe_resource *constants)
@@ -1163,8 +1165,6 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       LP_COUNT_ADD(nr_llvm_compiles, 2);  /* emit vs. omit in/out test */
    }
 
-   shader->current = variant;
-
    /* TODO: put this in the variant */
    /* TODO: most of these can be relaxed, in particular the colormask */
    opaque = !key.blend.logicop_enable &&
@@ -1178,7 +1178,19 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
             ? TRUE : FALSE;
 
    lp_setup_set_fs_functions(lp->setup, 
-                             shader->current->jit_function[RAST_WHOLE],
-                             shader->current->jit_function[RAST_EDGE_TEST],
+                             variant->jit_function[RAST_WHOLE],
+                             variant->jit_function[RAST_EDGE_TEST],
                              opaque);
+}
+
+
+
+void
+llvmpipe_init_fs_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.create_fs_state = llvmpipe_create_fs_state;
+   llvmpipe->pipe.bind_fs_state   = llvmpipe_bind_fs_state;
+   llvmpipe->pipe.delete_fs_state = llvmpipe_delete_fs_state;
+
+   llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
 }

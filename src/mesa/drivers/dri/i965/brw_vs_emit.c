@@ -37,6 +37,43 @@
 #include "brw_context.h"
 #include "brw_vs.h"
 
+/* Return the SrcReg index of the channels that can be immediate float operands
+ * instead of usage of PROGRAM_CONSTANT values through push/pull.
+ */
+static GLboolean
+brw_vs_arg_can_be_immediate(enum prog_opcode opcode, int arg)
+{
+   int opcode_array[] = {
+      [OPCODE_ADD] = 2,
+      [OPCODE_CMP] = 3,
+      [OPCODE_DP3] = 2,
+      [OPCODE_DP4] = 2,
+      [OPCODE_DPH] = 2,
+      [OPCODE_MAX] = 2,
+      [OPCODE_MIN] = 2,
+      [OPCODE_MUL] = 2,
+      [OPCODE_SEQ] = 2,
+      [OPCODE_SGE] = 2,
+      [OPCODE_SGT] = 2,
+      [OPCODE_SLE] = 2,
+      [OPCODE_SLT] = 2,
+      [OPCODE_SNE] = 2,
+      [OPCODE_XPD] = 2,
+   };
+
+   /* These opcodes get broken down in a way that allow two
+    * args to be immediates.
+    */
+   if (opcode == OPCODE_MAD || opcode == OPCODE_LRP) {
+      if (arg == 1 || arg == 2)
+	 return GL_TRUE;
+   }
+
+   if (opcode > ARRAY_SIZE(opcode_array))
+      return GL_FALSE;
+
+   return arg == opcode_array[opcode] - 1;
+}
 
 static struct brw_reg get_tmp( struct brw_vs_compile *c )
 {
@@ -453,8 +490,8 @@ static void emit_max( struct brw_compile *p,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, arg1);
-   brw_SEL(p, dst, arg1, arg0);
+   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0, arg1);
+   brw_SEL(p, dst, arg0, arg1);
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
@@ -982,6 +1019,55 @@ get_src_reg( struct brw_vs_compile *c,
    const GLuint file = inst->SrcReg[argIndex].File;
    const GLint index = inst->SrcReg[argIndex].Index;
    const GLboolean relAddr = inst->SrcReg[argIndex].RelAddr;
+
+   if (brw_vs_arg_can_be_immediate(inst->Opcode, argIndex)) {
+      const struct prog_src_register *src = &inst->SrcReg[argIndex];
+
+      if (src->Swizzle == MAKE_SWIZZLE4(SWIZZLE_ZERO,
+					SWIZZLE_ZERO,
+					SWIZZLE_ZERO,
+					SWIZZLE_ZERO)) {
+	  return brw_imm_f(0.0f);
+      } else if (src->Swizzle == MAKE_SWIZZLE4(SWIZZLE_ONE,
+					       SWIZZLE_ONE,
+					       SWIZZLE_ONE,
+					       SWIZZLE_ONE)) {
+	 if (src->Negate)
+	    return brw_imm_f(-1.0F);
+	 else
+	    return brw_imm_f(1.0F);
+      } else if (src->File == PROGRAM_CONSTANT) {
+	 const struct gl_program_parameter_list *params;
+	 float f;
+	 int component = -1;
+
+	 switch (src->Swizzle) {
+	 case SWIZZLE_XXXX:
+	    component = 0;
+	    break;
+	 case SWIZZLE_YYYY:
+	    component = 1;
+	    break;
+	 case SWIZZLE_ZZZZ:
+	    component = 2;
+	    break;
+	 case SWIZZLE_WWWW:
+	    component = 3;
+	    break;
+	 }
+
+	 if (component >= 0) {
+	    params = c->vp->program.Base.Parameters;
+	    f = params->ParameterValues[src->Index][component];
+
+	    if (src->Abs)
+	       f = fabs(f);
+	    if (src->Negate)
+	       f = -f;
+	    return brw_imm_f(f);
+	 }
+      }
+   }
 
    switch (file) {
    case PROGRAM_TEMPORARY:

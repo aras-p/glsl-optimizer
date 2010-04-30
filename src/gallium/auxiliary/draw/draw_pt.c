@@ -38,10 +38,10 @@
 #include "util/u_prim.h"
 
 
-DEBUG_GET_ONCE_BOOL_OPTION(draw_fse, "DRAW_FSE", FALSE);
-DEBUG_GET_ONCE_BOOL_OPTION(draw_no_fse, "DRAW_NO_FSE", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(draw_fse, "DRAW_FSE", FALSE)
+DEBUG_GET_ONCE_BOOL_OPTION(draw_no_fse, "DRAW_NO_FSE", FALSE)
 #ifdef HAVE_LLVM
-DEBUG_GET_ONCE_BOOL_OPTION(draw_use_llvm, "DRAW_USE_LLVM", TRUE);
+DEBUG_GET_ONCE_BOOL_OPTION(draw_use_llvm, "DRAW_USE_LLVM", TRUE)
 #endif
 
 static unsigned trim( unsigned count, unsigned first, unsigned incr )

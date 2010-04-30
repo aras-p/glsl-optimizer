@@ -734,6 +734,32 @@ _mesa_is_depthstencil_format(GLenum format)
    }
 }
 
+
+/**
+ * Test if the given image format is a depth or stencil format.
+ */
+GLboolean
+_mesa_is_depth_or_stencil_format(GLenum format)
+{
+   switch (format) {
+      case GL_DEPTH_COMPONENT:
+      case GL_DEPTH_COMPONENT16:
+      case GL_DEPTH_COMPONENT24:
+      case GL_DEPTH_COMPONENT32:
+      case GL_STENCIL_INDEX:
+      case GL_STENCIL_INDEX1_EXT:
+      case GL_STENCIL_INDEX4_EXT:
+      case GL_STENCIL_INDEX8_EXT:
+      case GL_STENCIL_INDEX16_EXT:
+      case GL_DEPTH_STENCIL_EXT:
+      case GL_DEPTH24_STENCIL8_EXT:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+   }
+}
+
+
 /**
  * Test if the given image format is a dudv format.
  */

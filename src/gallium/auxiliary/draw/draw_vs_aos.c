@@ -2089,13 +2089,21 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 }
 
 
+/** cast wrapper */
+static INLINE struct draw_vs_varient_aos_sse *
+draw_vs_varient_aos_sse(struct draw_vs_varient *varient)
+{
+   return (struct draw_vs_varient_aos_sse *) varient;
+}
+
 
 static void vaos_set_buffer( struct draw_vs_varient *varient,
                              unsigned buf,
                              const void *ptr,
-                             unsigned stride )
+                             unsigned stride,
+                             unsigned max_stride)
 {
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct draw_vs_varient_aos_sse *vaos = draw_vs_varient_aos_sse(varient);
 
    if (buf < vaos->nr_vb) {
       vaos->buffer[buf].base_ptr = (char *)ptr;
@@ -2112,7 +2120,7 @@ static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
                                       unsigned count,
                                       void *output_buffer )
 {
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct draw_vs_varient_aos_sse *vaos = draw_vs_varient_aos_sse(varient);
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
    unsigned i;
 
@@ -2136,7 +2144,7 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
                                         unsigned count,
                                         void *output_buffer )
 {
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct draw_vs_varient_aos_sse *vaos = draw_vs_varient_aos_sse(varient);
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
    unsigned i;
 
@@ -2165,7 +2173,7 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
 
 static void vaos_destroy( struct draw_vs_varient *varient )
 {
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct draw_vs_varient_aos_sse *vaos = draw_vs_varient_aos_sse(varient);
 
    FREE( vaos->buffer );
 
@@ -2241,13 +2249,14 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
 }
 
 
-struct draw_vs_varient *draw_vs_varient_aos_sse( struct draw_vertex_shader *vs,
-                                                 const struct draw_vs_varient_key *key )
+struct draw_vs_varient *
+draw_vs_create_varient_aos_sse( struct draw_vertex_shader *vs,
+                                const struct draw_vs_varient_key *key )
 {
    struct draw_vs_varient *varient = varient_aos_sse( vs, key );
 
    if (varient == NULL) {
-      varient = draw_vs_varient_generic( vs, key );
+      varient = draw_vs_create_varient_generic( vs, key );
    }
 
    return varient;

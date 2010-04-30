@@ -61,4 +61,10 @@
 #define LP_MAX_THREADS 8
 
 
+/**
+ * Max bytes per scene.  This may be replaced by a runtime parameter.
+ */
+#define LP_MAX_SCENE_SIZE (512 * 1024 * 1024)
+
+
 #endif /* LP_LIMITS_H */

@@ -882,9 +882,9 @@ create_rast_threads(struct lp_rasterizer *rast)
 
 
 /**
- * Create new lp_rasterizer.
- * \param empty  the queue to put empty scenes on after we've finished
- *               processing them.
+ * Create new lp_rasterizer.  If num_threads is zero, don't create any
+ * new threads, do rendering synchronously.
+ * \param num_threads  number of rasterizer threads to create
  */
 struct lp_rasterizer *
 lp_rast_create( unsigned num_threads )
@@ -943,6 +943,8 @@ void lp_rast_destroy( struct lp_rasterizer *rast )
 
    /* for synchronizing rasterization threads */
    pipe_barrier_destroy( &rast->barrier );
+
+   lp_scene_queue_destroy(rast->full_scenes);
 
    FREE(rast);
 }

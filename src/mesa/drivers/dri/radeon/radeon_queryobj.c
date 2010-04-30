@@ -31,6 +31,8 @@
 #include "main/imports.h"
 #include "main/simple_list.h"
 
+#include <inttypes.h>
+
 static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
@@ -65,7 +67,7 @@ static void radeonQueryGetResult(GLcontext *ctx, struct gl_query_object *q)
 
 			}
 			radeon_print(RADEON_STATE, RADEON_TRACE,
-				     "%d start: %llx, end: %llx %lld\n", i, start, end, end - start);
+				     "%d start: %" PRIu64 ", end: %" PRIu64 " %" PRIu64 "\n", i, start, end, end - start);
 		}
 	} else {
 		for (i = 0; i < query->curr_offset/sizeof(uint32_t); ++i) {

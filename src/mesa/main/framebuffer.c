@@ -35,6 +35,7 @@
 #include "buffers.h"
 #include "context.h"
 #include "depthstencil.h"
+#include "enums.h"
 #include "formats.h"
 #include "macros.h"
 #include "mtypes.h"
@@ -1017,5 +1018,45 @@ _mesa_get_color_read_type(GLcontext *ctx)
       return GL_UNSIGNED_SHORT_5_6_5_REV;
    default:
       return GL_UNSIGNED_BYTE;
+   }
+}
+
+
+/**
+ * Print framebuffer info to stderr, for debugging.
+ */
+void
+_mesa_print_framebuffer(const struct gl_framebuffer *fb)
+{
+   GLuint i;
+
+   fprintf(stderr, "Mesa Framebuffer %u at %p\n", fb->Name, (void *) fb);
+   fprintf(stderr, "  Size: %u x %u  Status: %s\n", fb->Width, fb->Height,
+           _mesa_lookup_enum_by_nr(fb->_Status));
+   fprintf(stderr, "  Attachments:\n");
+
+   for (i = 0; i < BUFFER_COUNT; i++) {
+      const struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
+      if (att->Type == GL_TEXTURE) {
+         const struct gl_texture_image *texImage;
+         fprintf(stderr,
+                 "  %2d: Texture %u, level %u, face %u, slice %u, complete %d\n",
+                 i, att->Texture->Name, att->TextureLevel, att->CubeMapFace,
+                 att->Zoffset, att->Complete);
+         texImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+         fprintf(stderr, "       Size: %u x %u x %u  Format %s\n",
+                 texImage->Width, texImage->Height, texImage->Depth,
+                 _mesa_get_format_name(texImage->TexFormat));
+      }
+      else if (att->Type == GL_RENDERBUFFER) {
+         fprintf(stderr, "  %2d: Renderbuffer %u, complete %d\n",
+                 i, att->Renderbuffer->Name, att->Complete);
+         fprintf(stderr, "       Size: %u x %u  Format %s\n",
+                 att->Renderbuffer->Width, att->Renderbuffer->Height,
+                 _mesa_get_format_name(att->Renderbuffer->Format));
+      }
+      else {
+         fprintf(stderr, "  %2d: none\n", i);
+      }
    }
 }

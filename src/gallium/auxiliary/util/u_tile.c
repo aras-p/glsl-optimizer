@@ -544,7 +544,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
-         //assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
+         /*assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);*/
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 24-bit Z, preserve stencil */
@@ -571,7 +571,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
-         //assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
+         /*assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);*/
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 24-bit Z, preserve stencil */

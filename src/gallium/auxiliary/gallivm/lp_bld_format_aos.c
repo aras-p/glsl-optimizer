@@ -40,6 +40,7 @@
 
 #include "lp_bld_init.h"
 #include "lp_bld_type.h"
+#include "lp_bld_flow.h"
 #include "lp_bld_format.h"
 
 
@@ -370,11 +371,7 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
          LLVMAddGlobalMapping(lp_build_engine, function, format_desc->fetch_rgba_float);
       }
 
-      /*
-       * XXX: this should better go to the first block in the function
-       */
-
-      tmp = LLVMBuildAlloca(builder, LLVMVectorType(LLVMFloatType(), 4), "");
+      tmp = lp_build_alloca(builder, LLVMVectorType(LLVMFloatType(), 4), "");
 
       /*
        * Invoke format_desc->fetch_rgba_float() for each pixel and insert the result

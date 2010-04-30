@@ -81,9 +81,6 @@ two_win: two_win.o $(ES1_LIB_DEPS)
 	$(CC) $(CFLAGS) two_win.o $(ES1_LIBS) -o $@
 
 
-$(EGLUT_DIR)/libeglut-x11.a $(EGLUT_DIR)/libeglut-screen.a:
-	@$(MAKE) -C $(EGLUT_DIR)
-
 # define the rules for EGLUT demos
 define eglut-demo-rule
 $(1)_x11 $(1)_screen: $(1)_%: $(1).o $(EGLUT_DIR)/libeglut-%.a $(ES1_LIB_DEPS)
@@ -100,4 +97,3 @@ $(EGLUT_SCREEN_DEMOS):
 clean:
 	-rm -f *.o *~
 	-rm -f $(PROGRAMS) $(EGLUT_X11_DEMOS) $(EGLUT_SCREEN_DEMOS)
-	@$(MAKE) -C $(EGLUT_DIR) clean

@@ -31,11 +31,10 @@
 #ifndef LP_STATE_H
 #define LP_STATE_H
 
-#include "gallivm/lp_bld.h"
-
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
 #include "lp_jit.h"
+#include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_sample.h" /* for struct lp_sampler_static_state */
 
 
@@ -85,8 +84,6 @@ struct lp_fragment_shader_variant_key
 
 struct lp_fragment_shader_variant
 {
-   struct lp_fragment_shader *shader;
-
    struct lp_fragment_shader_variant_key key;
 
    LLVMValueRef function[2];
@@ -97,11 +94,7 @@ struct lp_fragment_shader_variant
 };
 
 
-/**
- * Subclass of pipe_shader_state (though it doesn't really need to be).
- *
- * This is starting to look an awful lot like a quad pipeline stage...
- */
+/** Subclass of pipe_shader_state */
 struct lp_fragment_shader
 {
    struct pipe_shader_state base;
@@ -109,140 +102,58 @@ struct lp_fragment_shader
    struct tgsi_shader_info info;
 
    struct lp_fragment_shader_variant *variants;
-
-   struct lp_fragment_shader_variant *current;
 };
 
 
 /** Subclass of pipe_shader_state */
-struct lp_vertex_shader {
+struct lp_vertex_shader
+{
    struct pipe_shader_state shader;
    struct draw_vertex_shader *draw_data;
 };
 
-struct lp_velems_state {
+
+/** Vertex element state */
+struct lp_velems_state
+{
    unsigned count;
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 };
 
 
-void *
-llvmpipe_create_blend_state(struct pipe_context *,
-                            const struct pipe_blend_state *);
-void llvmpipe_bind_blend_state(struct pipe_context *,
-                               void *);
-void llvmpipe_delete_blend_state(struct pipe_context *,
-                                 void *);
-
-void *
-llvmpipe_create_sampler_state(struct pipe_context *,
-                              const struct pipe_sampler_state *);
-void llvmpipe_bind_sampler_states(struct pipe_context *, unsigned, void **);
 void
-llvmpipe_bind_vertex_sampler_states(struct pipe_context *,
-                                    unsigned num_samplers,
-                                    void **samplers);
-void llvmpipe_delete_sampler_state(struct pipe_context *, void *);
-
-void *
-llvmpipe_create_depth_stencil_state(struct pipe_context *,
-                                    const struct pipe_depth_stencil_alpha_state *);
-void llvmpipe_bind_depth_stencil_state(struct pipe_context *, void *);
-void llvmpipe_delete_depth_stencil_state(struct pipe_context *, void *);
-
-void *
-llvmpipe_create_rasterizer_state(struct pipe_context *,
-                                 const struct pipe_rasterizer_state *);
-void llvmpipe_bind_rasterizer_state(struct pipe_context *, void *);
-void llvmpipe_delete_rasterizer_state(struct pipe_context *, void *);
-
-void llvmpipe_set_framebuffer_state( struct pipe_context *,
-                                     const struct pipe_framebuffer_state * );
-
-void llvmpipe_set_blend_color( struct pipe_context *pipe,
-                               const struct pipe_blend_color *blend_color );
-
-void llvmpipe_set_stencil_ref( struct pipe_context *pipe,
-                               const struct pipe_stencil_ref *stencil_ref );
-
-void llvmpipe_set_clip_state( struct pipe_context *,
-                              const struct pipe_clip_state * );
-
-void llvmpipe_set_constant_buffer(struct pipe_context *,
-                                  uint shader, uint index,
-                                  struct pipe_resource *buf);
-
-void *llvmpipe_create_fs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void llvmpipe_bind_fs_state(struct pipe_context *, void *);
-void llvmpipe_delete_fs_state(struct pipe_context *, void *);
-void *llvmpipe_create_vs_state(struct pipe_context *,
-                               const struct pipe_shader_state *);
-void llvmpipe_bind_vs_state(struct pipe_context *, void *);
-void llvmpipe_delete_vs_state(struct pipe_context *, void *);
-
-void *llvmpipe_create_vertex_elements_state(struct pipe_context *,
-                                            unsigned count,
-                                            const struct pipe_vertex_element *);
-void llvmpipe_bind_vertex_elements_state(struct pipe_context *, void *);
-void llvmpipe_delete_vertex_elements_state(struct pipe_context *, void *);
-
-void llvmpipe_set_polygon_stipple( struct pipe_context *,
-                                   const struct pipe_poly_stipple * );
-
-void llvmpipe_set_scissor_state( struct pipe_context *,
-                                 const struct pipe_scissor_state * );
-
-void llvmpipe_set_fragment_sampler_views(struct pipe_context *,
-                                         unsigned num,
-                                         struct pipe_sampler_view **);
+llvmpipe_set_framebuffer_state(struct pipe_context *,
+                               const struct pipe_framebuffer_state *);
 
 void
-llvmpipe_set_vertex_sampler_views(struct pipe_context *,
-                                  unsigned num,
-                                  struct pipe_sampler_view **);
-
-struct pipe_sampler_view *
-llvmpipe_create_sampler_view(struct pipe_context *pipe,
-                            struct pipe_resource *texture,
-                            const struct pipe_sampler_view *templ);
+llvmpipe_update_fs(struct llvmpipe_context *lp);
 
 void
-llvmpipe_sampler_view_destroy(struct pipe_context *pipe,
-                              struct pipe_sampler_view *view);
-
-void llvmpipe_set_viewport_state( struct pipe_context *,
-                                  const struct pipe_viewport_state * );
-
-void llvmpipe_set_vertex_buffers(struct pipe_context *,
-                                 unsigned count,
-                                 const struct pipe_vertex_buffer *);
-
-void llvmpipe_update_fs(struct llvmpipe_context *lp);
-
-void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe );
-
-
-void llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-			     unsigned start, unsigned count);
-
-void llvmpipe_draw_elements(struct pipe_context *pipe,
-			       struct pipe_resource *indexBuffer,
-			       unsigned indexSize, int indexBias,
-			       unsigned mode, unsigned start, unsigned count);
-void
-llvmpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_resource *indexBuffer,
-                             unsigned indexSize, int indexBias,
-                             unsigned min_index,
-                             unsigned max_index,
-                             unsigned mode, unsigned start, unsigned count);
+llvmpipe_update_derived(struct llvmpipe_context *llvmpipe);
 
 void
-llvmpipe_map_texture_surfaces(struct llvmpipe_context *lp);
+llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe);
 
 void
-llvmpipe_unmap_texture_surfaces(struct llvmpipe_context *lp);
+llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_vertex_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_draw_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_clip_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_fs_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_vs_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_rasterizer_funcs(struct llvmpipe_context *llvmpipe);
 
 
 #endif

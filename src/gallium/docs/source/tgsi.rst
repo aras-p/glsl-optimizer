@@ -786,63 +786,12 @@ This instruction replicates its result.
   TBD
 
 
-.. opcode:: BGNFOR - Begin a For-Loop
-
-  dst.x = floor(src.x)
-  dst.y = floor(src.y)
-  dst.z = floor(src.z)
-
-  if (dst.y <= 0)
-    pc = [matching ENDFOR] + 1
-  endif
-
-  Note: The destination must be a loop register.
-        The source must be a constant register.
-
-.. note::
-
-   Considered for cleanup.
-
-.. note::
-
-   Considered for removal.
-
-
-.. opcode:: REP - Repeat
-
-  TBD
-
-
 .. opcode:: ELSE - Else
 
   TBD
 
 
 .. opcode:: ENDIF - End If
-
-  TBD
-
-
-.. opcode:: ENDFOR - End a For-Loop
-
-  dst.x = dst.x + dst.z
-  dst.y = dst.y - 1.0
-
-  if (dst.y > 0)
-    pc = [matching BGNFOR instruction] + 1
-  endif
-
-  Note: The destination must be a loop register.
-
-.. note::
-
-   Considered for cleanup.
-
-.. note::
-
-   Considered for removal.
-
-.. opcode:: ENDREP - End Repeat
 
   TBD
 

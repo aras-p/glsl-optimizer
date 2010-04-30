@@ -156,5 +156,15 @@ lp_build_endif(struct lp_build_if_state *ctx);
 LLVMBasicBlockRef
 lp_build_insert_new_block(LLVMBuilderRef builder, const char *name);
 
+LLVMValueRef
+lp_build_alloca(LLVMBuilderRef builder,
+                LLVMTypeRef type,
+                const char *name);
+
+LLVMValueRef
+lp_build_array_alloca(LLVMBuilderRef builder,
+                      LLVMTypeRef type,
+                      LLVMValueRef count,
+                      const char *name);
 
 #endif /* !LP_BLD_FLOW_H */

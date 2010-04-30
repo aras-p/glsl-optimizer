@@ -74,6 +74,26 @@ lp_setup_get_current_scene(struct lp_setup_context *setup)
 }
 
 
+/**
+ * Check if the size of the current scene has exceeded the limit.
+ * If so, flush/render it.
+ */
+static void
+setup_check_scene_size_and_flush(struct lp_setup_context *setup)
+{
+   if (setup->scene) {
+      struct lp_scene *scene = lp_setup_get_current_scene(setup);
+      unsigned size = lp_scene_get_size(scene);
+
+      if (size > LP_MAX_SCENE_SIZE) {
+         /*printf("LLVMPIPE: scene size = %u, flushing.\n", size);*/
+         set_scene_state( setup, SETUP_FLUSHED );
+         /*assert(lp_scene_get_size(scene) == 0);*/
+      }
+   }
+}
+
+
 static void
 first_triangle( struct lp_setup_context *setup,
                 const float (*v0)[4],
@@ -132,14 +152,11 @@ static void reset_context( struct lp_setup_context *setup )
 
 /** Rasterize all scene's bins */
 static void
-lp_setup_rasterize_scene( struct lp_setup_context *setup,
-                          boolean write_depth )
+lp_setup_rasterize_scene( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
 
-   lp_scene_rasterize(scene,
-                      setup->rast,
-                      write_depth);
+   lp_scene_rasterize(scene, setup->rast);
 
    reset_context( setup );
 
@@ -190,7 +207,7 @@ execute_clears( struct lp_setup_context *setup )
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    begin_binning( setup );
-   lp_setup_rasterize_scene( setup, TRUE );
+   lp_setup_rasterize_scene( setup );
 }
 
 
@@ -221,7 +238,7 @@ set_scene_state( struct lp_setup_context *setup,
       if (old_state == SETUP_CLEARED)
          execute_clears( setup );
       else
-         lp_setup_rasterize_scene( setup, TRUE );
+         lp_setup_rasterize_scene( setup );
       break;
 
    default:
@@ -596,9 +613,13 @@ lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
 void
 lp_setup_update_state( struct lp_setup_context *setup )
 {
-   struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   struct lp_scene *scene;
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   setup_check_scene_size_and_flush(setup);
+
+   scene = lp_setup_get_current_scene(setup);
 
    assert(setup->fs.current.jit_function);
 
@@ -741,6 +762,8 @@ lp_setup_destroy( struct lp_setup_context *setup )
 
    reset_context( setup );
 
+   util_unreference_framebuffer_state(&setup->fb);
+
    for (i = 0; i < Elements(setup->fs.current_tex); i++) {
       pipe_resource_reference(&setup->fs.current_tex[i], NULL);
    }
@@ -754,6 +777,8 @@ lp_setup_destroy( struct lp_setup_context *setup )
          break;
       lp_scene_destroy(scene);
    }
+
+   lp_scene_queue_destroy(setup->empty_scenes);
 
    lp_rast_destroy( setup->rast );
 
