@@ -190,9 +190,7 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_grobj_free(&screen->tesla);
 	nouveau_grobj_free(&screen->eng2d);
 	nouveau_grobj_free(&screen->m2mf);
-	nouveau_resource_destroy(&screen->immd_heap[0]);
-	nouveau_resource_destroy(&screen->parm_heap[0]);
-	nouveau_resource_destroy(&screen->parm_heap[1]);
+	nouveau_resource_destroy(&screen->immd_heap);
 	nouveau_screen_fini(&screen->base);
 	FREE(screen);
 }
@@ -242,7 +240,7 @@ nv50_screen_relocs(struct nv50_screen *screen)
 		OUT_RELOCh(chan, screen->constbuf_parm[i], 0, rl);
 		OUT_RELOCl(chan, screen->constbuf_parm[i], 0, rl);
 		OUT_RELOC (chan, screen->constbuf_parm[i],
-			   ((NV50_CB_PVP + i) << 16) | 0x0800, rl, 0, 0);
+			   ((NV50_CB_PVP + i) << 16) | 0x0000, rl, 0, 0);
 	}
 }
 
@@ -411,7 +409,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	OUT_RING  (chan, (NV50_CB_AUX << 16) | 0x0200);
 
 	for (i = 0; i < 3; i++) {
-		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (256 * 4) * 4,
+		ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 0, (4096 * 4) * 4,
 				     &screen->constbuf_parm[i]);
 		if (ret) {
 			nv50_screen_destroy(pscreen);
@@ -420,14 +418,12 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		BEGIN_RING(chan, screen->tesla, NV50TCL_CB_DEF_ADDRESS_HIGH, 3);
 		OUT_RELOCh(chan, screen->constbuf_parm[i], 0, rl);
 		OUT_RELOCl(chan, screen->constbuf_parm[i], 0, rl);
-		OUT_RING  (chan, ((NV50_CB_PVP + i) << 16) | 0x0800);
+		/* CB_DEF_SET_SIZE value of 0x0000 means 65536 */
+		OUT_RING  (chan, ((NV50_CB_PVP + i) << 16) | 0x0000);
 	}
 
-	if (nouveau_resource_init(&screen->immd_heap[0], 0, 128) ||
-	    nouveau_resource_init(&screen->parm_heap[0], 0, 512) ||
-	    nouveau_resource_init(&screen->parm_heap[1], 0, 512))
-	{
-		NOUVEAU_ERR("Error initialising constant buffers.\n");
+	if (nouveau_resource_init(&screen->immd_heap, 0, 128)) {
+		NOUVEAU_ERR("Error initialising shader immediates heap.\n");
 		nv50_screen_destroy(pscreen);
 		return NULL;
 	}
