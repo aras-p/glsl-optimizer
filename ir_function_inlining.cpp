@@ -389,15 +389,15 @@ ir_call::generate_inline(ir_instruction *next_ir)
       next_ir->insert_before(v.result);
    }
 
-   /* Generate the declarations for the parameters to our inlined code,
-    * and set up the mapping of real function body variables to ours.
+   /* Copy back the value of any 'out' parameters from the function body
+    * variables to our own.
     */
    i = 0;
    param_iter = this->actual_parameters.iterator();
    for (i = 0; i < num_parameters; i++) {
       ir_instruction *const param = (ir_instruction *) param_iter.get();
 
-      /* Move the actual param into our param variable if it's an 'in' type. */
+      /* Move our param variable into the actual param if it's an 'out' type. */
       if (parameters[i]->mode == ir_var_out ||
 	  parameters[i]->mode == ir_var_inout) {
 	 ir_assignment *assign;
