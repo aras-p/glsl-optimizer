@@ -887,9 +887,6 @@ glXCopyContext(Display * dpy, GLXContext source,
 static Bool
 __glXIsDirect(Display * dpy, GLXContextID contextID)
 {
-#ifdef GLX_USE_APPLEGL /* TODO: apple indirect */
-   return GC_IS_DIRECT(gc);
-#else
 #if !defined(USE_XCB)
    xGLXIsDirectReq *req;
    xGLXIsDirectReply reply;
@@ -925,7 +922,6 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
 
    return reply.isDirect;
 #endif /* USE_XCB */
-#endif /* GLX_USE_APPLEGL */
 }
 
 /**
@@ -943,7 +939,11 @@ glXIsDirect(Display * dpy, GLXContext gc)
    else if (GC_IS_DIRECT(gc)) {
       return GL_TRUE;
    }
+#ifdef GLX_USE_APPLEGL  /* TODO: indirect on darwin */
+      return GL_FALSE;
+#else
    return __glXIsDirect(dpy, gc->xid);
+#endif
 }
 
 PUBLIC GLXPixmap
