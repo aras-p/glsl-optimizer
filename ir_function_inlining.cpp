@@ -264,8 +264,7 @@ ir_function_cloning_visitor::visit(ir_return *ir)
    rval = this->result->as_rvalue();
    assert(rval);
 
-   result = new ir_assignment(new ir_dereference(this->retval),
-			      ir->get_value(), NULL);
+   result = new ir_assignment(new ir_dereference(this->retval), rval, NULL);
 }
 
 
