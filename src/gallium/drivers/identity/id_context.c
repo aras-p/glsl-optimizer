@@ -700,43 +700,31 @@ identity_is_resource_referenced(struct pipe_context *_pipe,
 }
 
 static struct pipe_sampler_view *
-identity_create_sampler_view(struct pipe_context *pipe,
-                             struct pipe_resource *resource,
-                             const struct pipe_sampler_view *templ)
+identity_context_create_sampler_view(struct pipe_context *_pipe,
+                                     struct pipe_resource *_resource,
+                                     const struct pipe_sampler_view *templ)
 {
-   struct identity_context *id_pipe = identity_context(pipe);
-   struct identity_resource *id_resource = identity_resource(resource);
-   struct pipe_context *pipe_unwrapped = id_pipe->pipe;
-   struct pipe_resource *resource_unwrapped = id_resource->resource;
-   struct identity_sampler_view *view = MALLOC(sizeof(struct identity_sampler_view));
+   struct identity_context *id_context = identity_context(_pipe);
+   struct identity_resource *id_resource = identity_resource(_resource);
+   struct pipe_context *pipe = id_context->pipe;
+   struct pipe_resource *resource = id_resource->resource;
+   struct pipe_sampler_view *result;
 
-   view->sampler_view = pipe_unwrapped->create_sampler_view(pipe_unwrapped,
-                                                            resource_unwrapped,
-                                                            templ);
+   result = pipe->create_sampler_view(pipe,
+                                      resource,
+                                      templ);
 
-   view->base = *templ;
-   view->base.reference.count = 1;
-   view->base.texture = NULL;
-   pipe_resource_reference(&view->base.texture, resource);
-   view->base.context = pipe;
-
-   return &view->base;
+   if (result)
+      return identity_sampler_view_create(id_context, id_resource, result);
+   return NULL;
 }
 
 static void
-identity_sampler_view_destroy(struct pipe_context *pipe,
-                              struct pipe_sampler_view *view)
+identity_context_sampler_view_destroy(struct pipe_context *_pipe,
+                                      struct pipe_sampler_view *_view)
 {
-   struct identity_context *id_pipe = identity_context(pipe);
-   struct identity_sampler_view *id_view = identity_sampler_view(view);
-   struct pipe_context *pipe_unwrapped = id_pipe->pipe;
-   struct pipe_sampler_view *view_unwrapped = id_view->sampler_view;
-
-   pipe_unwrapped->sampler_view_destroy(pipe_unwrapped,
-                                        view_unwrapped);
-
-   pipe_resource_reference(&view->texture, NULL);
-   FREE(view);
+   identity_sampler_view_destroy(identity_context(_pipe),
+                                 identity_sampler_view(_view));
 }
 
 static struct pipe_transfer *
@@ -905,8 +893,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.clear = identity_clear;
    id_pipe->base.flush = identity_flush;
    id_pipe->base.is_resource_referenced = identity_is_resource_referenced;
-   id_pipe->base.create_sampler_view = identity_create_sampler_view;
-   id_pipe->base.sampler_view_destroy = identity_sampler_view_destroy;
+   id_pipe->base.create_sampler_view = identity_context_create_sampler_view;
+   id_pipe->base.sampler_view_destroy = identity_context_sampler_view_destroy;
    id_pipe->base.get_transfer = identity_context_get_transfer;
    id_pipe->base.transfer_destroy = identity_context_transfer_destroy;
    id_pipe->base.transfer_map = identity_context_transfer_map;

@@ -154,6 +154,15 @@ identity_surface_create(struct identity_resource *id_resource,
 void
 identity_surface_destroy(struct identity_surface *id_surface);
 
+struct pipe_sampler_view *
+identity_sampler_view_create(struct identity_context *id_context,
+                             struct identity_resource *id_resource,
+                             struct pipe_sampler_view *view);
+
+void
+identity_sampler_view_destroy(struct identity_context *id_context,
+                              struct identity_sampler_view *id_sampler_view);
+
 struct pipe_transfer *
 identity_transfer_create(struct identity_context *id_context,
                          struct identity_resource *id_resource,
