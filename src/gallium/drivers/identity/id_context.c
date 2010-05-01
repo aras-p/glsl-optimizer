@@ -691,33 +691,33 @@ identity_is_resource_referenced(struct pipe_context *_pipe,
    struct identity_context *id_pipe = identity_context(_pipe);
    struct identity_resource *id_resource = identity_resource(_resource);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_resource *texture = id_resource->resource;
+   struct pipe_resource *resource = id_resource->resource;
 
    return pipe->is_resource_referenced(pipe,
-                                       texture,
+                                       resource,
                                        face,
                                        level);
 }
 
 static struct pipe_sampler_view *
 identity_create_sampler_view(struct pipe_context *pipe,
-                             struct pipe_resource *texture,
+                             struct pipe_resource *resource,
                              const struct pipe_sampler_view *templ)
 {
    struct identity_context *id_pipe = identity_context(pipe);
-   struct identity_resource *id_resource = identity_resource(texture);
+   struct identity_resource *id_resource = identity_resource(resource);
    struct pipe_context *pipe_unwrapped = id_pipe->pipe;
-   struct pipe_resource *texture_unwrapped = id_resource->resource;
+   struct pipe_resource *resource_unwrapped = id_resource->resource;
    struct identity_sampler_view *view = MALLOC(sizeof(struct identity_sampler_view));
 
    view->sampler_view = pipe_unwrapped->create_sampler_view(pipe_unwrapped,
-                                                            texture_unwrapped,
+                                                            resource_unwrapped,
                                                             templ);
 
    view->base = *templ;
    view->base.reference.count = 1;
    view->base.texture = NULL;
-   pipe_resource_reference(&view->base.texture, texture);
+   pipe_resource_reference(&view->base.texture, resource);
    view->base.context = pipe;
 
    return &view->base;
@@ -749,11 +749,11 @@ identity_context_get_transfer(struct pipe_context *_context,
    struct identity_context *id_context = identity_context(_context);
    struct identity_resource *id_resource = identity_resource(_resource);
    struct pipe_context *context = id_context->pipe;
-   struct pipe_resource *texture = id_resource->resource;
+   struct pipe_resource *resource = id_resource->resource;
    struct pipe_transfer *result;
 
    result = context->get_transfer(context,
-                                  texture,
+                                  resource,
                                   sr,
                                   usage,
                                   box);
@@ -829,10 +829,10 @@ identity_context_transfer_inline_write(struct pipe_context *_context,
    struct identity_context *id_context = identity_context(_context);
    struct identity_resource *id_resource = identity_resource(_resource);
    struct pipe_context *context = id_context->pipe;
-   struct pipe_resource *texture = id_resource->resource;
+   struct pipe_resource *resource = id_resource->resource;
 
    context->transfer_inline_write(context,
-                                  texture,
+                                  resource,
                                   sr,
                                   usage,
                                   box,

@@ -154,44 +154,44 @@ identity_screen_resource_from_handle(struct pipe_screen *_screen,
 
 static boolean
 identity_screen_resource_get_handle(struct pipe_screen *_screen,
-                                    struct pipe_resource *_texture,
+                                    struct pipe_resource *_resource,
                                     struct winsys_handle *handle)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_resource *id_resource = identity_resource(_texture);
+   struct identity_resource *id_resource = identity_resource(_resource);
    struct pipe_screen *screen = id_screen->screen;
-   struct pipe_resource *texture = id_resource->resource;
+   struct pipe_resource *resource = id_resource->resource;
 
    /* TODO trace call */
 
-   return screen->resource_get_handle(screen, texture, handle);
+   return screen->resource_get_handle(screen, resource, handle);
 }
 
 
 
 static void
 identity_screen_resource_destroy(struct pipe_screen *screen,
-                                 struct pipe_resource *_texture)
+                                 struct pipe_resource *_resource)
 {
-   identity_resource_destroy(identity_resource(_texture));
+   identity_resource_destroy(identity_resource(_resource));
 }
 
 static struct pipe_surface *
 identity_screen_get_tex_surface(struct pipe_screen *_screen,
-                                struct pipe_resource *_texture,
+                                struct pipe_resource *_resource,
                                 unsigned face,
                                 unsigned level,
                                 unsigned zslice,
                                 unsigned usage)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_resource *id_resource = identity_resource(_texture);
+   struct identity_resource *id_resource = identity_resource(_resource);
    struct pipe_screen *screen = id_screen->screen;
-   struct pipe_resource *texture = id_resource->resource;
+   struct pipe_resource *resource = id_resource->resource;
    struct pipe_surface *result;
 
    result = screen->get_tex_surface(screen,
-                                    texture,
+                                    resource,
                                     face,
                                     level,
                                     zslice,
