@@ -8,6 +8,7 @@ progs = [
       'convolutions',
       'deriv',
       'fragcoord',
+      'fsraytrace',
       'identity',
       'linktest',
       'mandelbrot',
@@ -27,6 +28,7 @@ progs = [
       'twoside',
       'vert-or-frag-only',
       'vert-tex',
+      'vsraytrace',
 ]
 
 for prog in progs:

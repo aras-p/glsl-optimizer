@@ -418,6 +418,7 @@ static void _save_wrap_buffers( GLcontext *ctx )
    save->prim[0].pad = 0;
    save->prim[0].start = 0;
    save->prim[0].count = 0;
+   save->prim[0].num_instances = 1;
    save->prim_count = 1;
 }
 
@@ -773,6 +774,7 @@ GLboolean vbo_save_NotifyBegin( GLcontext *ctx, GLenum mode )
    save->prim[i].pad = 0;
    save->prim[i].start = save->vert_count;
    save->prim[i].count = 0;   
+   save->prim[i].num_instances = 1;   
 
    _mesa_install_save_vtxfmt( ctx, &save->vtxfmt );      
    ctx->Driver.SaveNeedFlush = 1;

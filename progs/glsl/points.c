@@ -71,8 +71,8 @@ DrawPoints(GLboolean shaderPoints)
 
 
 /**
- * Top row of points rendered convetionally,
- * bottom row rendered with shaders.
+ * Top row of points is rendered conventionally with GL_POINT_SMOOTH.
+ * Bottom row is rendered with special vertex/fragment shaders (see Init()).
  */
 static void
 Redisplay(void)

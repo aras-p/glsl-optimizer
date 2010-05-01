@@ -1,0 +1,136 @@
+/**************************************************************************
+ *
+ * Copyright 2009, VMware, Inc.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+/*
+ * Author: Keith Whitwell <keithw@vmware.com>
+ * Author: Jakob Bornecrantz <wallbraker@gmail.com>
+ */
+
+#ifndef DRI_SCREEN_H
+#define DRI_SCREEN_H
+
+#include "dri_wrapper.h"
+#include "xmlconfig.h"
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_context.h"
+#include "pipe/p_state.h"
+#include "state_tracker/st_api.h"
+#include "state_tracker/drm_api.h"
+
+struct dri_context;
+struct dri_drawable;
+
+struct dri_screen
+{
+   /* st_api */
+   struct st_manager base;
+   struct st_api *st_api;
+
+   /* dri */
+   __DRIscreen *sPriv;
+
+   /**
+    * Configuration cache with default values for all contexts
+    */
+   driOptionCache optionCache;
+
+   /* drm */
+   int fd;
+   drmLock *drmLock;
+
+   /* hooks filled in by dri1, dri2 & drisw */
+   __DRIimage * (*lookup_egl_image)(struct dri_context *ctx, void *handle);
+   void (*allocate_textures)(struct dri_drawable *drawable,
+                             const enum st_attachment_type *statts,
+                             unsigned count);
+   void (*update_drawable_info)(struct dri_drawable *drawable);
+   void (*flush_frontbuffer)(struct dri_drawable *drawable,
+                             enum st_attachment_type statt);
+
+   /* gallium */
+   struct drm_api *api;
+   boolean d_depth_bits_last;
+   boolean sd_depth_bits_last;
+   boolean auto_fake_front;
+
+   /* used only by DRI1 */
+   struct pipe_context *dri1_pipe;
+};
+
+/** cast wrapper */
+static INLINE struct dri_screen *
+dri_screen(__DRIscreen * sPriv)
+{
+   return (struct dri_screen *)sPriv->private;
+}
+
+struct __DRIimageRec {
+   struct pipe_resource *texture;
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
+
+   void *loader_private;
+};
+
+#ifndef __NOT_HAVE_DRM_H
+
+static INLINE boolean
+dri_with_format(__DRIscreen * sPriv)
+{
+   const __DRIdri2LoaderExtension *loader = sPriv->dri2.loader;
+
+   return loader
+       && (loader->base.version >= 3)
+       && (loader->getBuffersWithFormat != NULL);
+}
+
+#else
+
+static INLINE boolean
+dri_with_format(__DRIscreen * sPriv)
+{
+   return TRUE;
+}
+
+#endif
+
+void
+dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
+                   const __GLcontextModes *mode);
+
+const __DRIconfig **
+dri_init_screen_helper(struct dri_screen *screen,
+                       struct pipe_screen *pscreen,
+                       unsigned pixel_bits);
+
+void
+dri_destroy_screen_helper(struct dri_screen * screen);
+
+#endif
+
+/* vim: set sw=3 ts=8 sts=3 expandtab: */

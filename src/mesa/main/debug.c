@@ -85,7 +85,7 @@ void
 _mesa_print_state( const char *msg, GLuint state )
 {
    _mesa_debug(NULL,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
 	   (state & _NEW_MODELVIEW)       ? "ctx->ModelView, " : "",
@@ -105,6 +105,7 @@ _mesa_print_state( const char *msg, GLuint state )
 	   (state & _NEW_POLYGON)         ? "ctx->Polygon, " : "",
 	   (state & _NEW_POLYGONSTIPPLE)  ? "ctx->PolygonStipple, " : "",
 	   (state & _NEW_SCISSOR)         ? "ctx->Scissor, " : "",
+	   (state & _NEW_STENCIL)         ? "ctx->Stencil, " : "",
 	   (state & _NEW_TEXTURE)         ? "ctx->Texture, " : "",
 	   (state & _NEW_TRANSFORM)       ? "ctx->Transform, " : "",
 	   (state & _NEW_VIEWPORT)        ? "ctx->Viewport, " : "",

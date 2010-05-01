@@ -37,7 +37,7 @@
 #define LP_BLD_INTR_H
 
 
-#include <llvm-c/Core.h>  
+#include "gallivm/lp_bld.h"
 
 
 /**

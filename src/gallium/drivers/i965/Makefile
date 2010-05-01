@@ -36,6 +36,7 @@ C_SOURCES = \
 	brw_pipe_vertex.c \
 	brw_pipe_clear.c \
 	brw_pipe_rast.c \
+	brw_resource.c \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
@@ -46,7 +47,6 @@ C_SOURCES = \
 	brw_structs_dump.c \
 	brw_swtnl.c \
 	brw_urb.c \
-	brw_util.c \
 	brw_vs.c \
 	brw_vs_emit.c \
 	brw_vs_state.c \
@@ -63,9 +63,9 @@ C_SOURCES = \
 	brw_wm_state.c \
 	brw_wm_surface_state.c \
 	brw_screen.c \
-	brw_screen_buffers.c \
-	brw_screen_tex_layout.c \
-	brw_screen_texture.c \
+	brw_resource_buffer.c \
+	brw_resource_texture.c \
+	brw_resource_texture_layout.c \
 	brw_screen_surface.c \
 	brw_batchbuffer.c \
 	brw_winsys_debug.c \

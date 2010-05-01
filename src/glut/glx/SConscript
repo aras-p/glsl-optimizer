@@ -78,6 +78,7 @@ if env['platform'] == 'windows':
         'glut.def',
     ]
 else:
+    env.Tool('x11')
     env.PrependUnique(LIBS = [
         'GLU',
         'GL',

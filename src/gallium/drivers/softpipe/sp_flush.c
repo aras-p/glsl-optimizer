@@ -50,10 +50,10 @@ softpipe_flush( struct pipe_context *pipe,
    draw_flush(softpipe->draw);
 
    if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-      for (i = 0; i < softpipe->num_textures; i++) {
+      for (i = 0; i < softpipe->num_sampler_views; i++) {
          sp_flush_tex_tile_cache(softpipe->tex_cache[i]);
       }
-      for (i = 0; i < softpipe->num_vertex_textures; i++) {
+      for (i = 0; i < softpipe->num_vertex_sampler_views; i++) {
          sp_flush_tex_tile_cache(softpipe->vertex_tex_cache[i]);
       }
    }
@@ -93,9 +93,9 @@ softpipe_flush( struct pipe_context *pipe,
       static unsigned frame_no = 1;
       static char filename[256];
       util_snprintf(filename, sizeof(filename), "cbuf_%u.bmp", frame_no);
-      debug_dump_surface_bmp(filename, softpipe->framebuffer.cbufs[0]);
+      debug_dump_surface_bmp(softpipe, filename, softpipe->framebuffer.cbufs[0]);
       util_snprintf(filename, sizeof(filename), "zsbuf_%u.bmp", frame_no);
-      debug_dump_surface_bmp(filename, softpipe->framebuffer.zsbuf);
+      debug_dump_surface_bmp(softpipe, filename, softpipe->framebuffer.zsbuf);
       ++frame_no;
    }
 #endif
@@ -104,3 +104,71 @@ softpipe_flush( struct pipe_context *pipe,
       *fence = NULL;
 }
 
+
+/**
+ * Flush context if necessary.
+ *
+ * Returns FALSE if it would have block, but do_not_block was set, TRUE
+ * otherwise.
+ *
+ * TODO: move this logic to an auxiliary library?
+ */
+boolean
+softpipe_flush_resource(struct pipe_context *pipe,
+                        struct pipe_resource *texture,
+                        unsigned face,
+                        unsigned level,
+                        unsigned flush_flags,
+                        boolean read_only,
+                        boolean cpu_access,
+                        boolean do_not_block)
+{
+   unsigned referenced;
+
+   referenced = pipe->is_resource_referenced(pipe, texture, face, level);
+
+   if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
+       ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {
+
+      /*
+       * TODO: The semantics of these flush flags are too obtuse. They should
+       * disappear and the pipe driver should just ensure that all visible
+       * side-effects happen when they need to happen.
+       */
+      if (referenced & PIPE_REFERENCED_FOR_WRITE)
+         flush_flags |= PIPE_FLUSH_RENDER_CACHE;
+
+      if (referenced & PIPE_REFERENCED_FOR_READ)
+         flush_flags |= PIPE_FLUSH_TEXTURE_CACHE;
+
+      if (cpu_access) {
+         /*
+          * Flush and wait.
+          */
+
+         struct pipe_fence_handle *fence = NULL;
+
+         if (do_not_block)
+            return FALSE;
+
+         pipe->flush(pipe, flush_flags, &fence);
+
+         if (fence) {
+            /*
+             * This is for illustrative purposes only, as softpipe does not
+             * have fences.
+             */
+            pipe->screen->fence_finish(pipe->screen, fence, 0);
+            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+         }
+      } else {
+         /*
+          * Just flush.
+          */
+
+         pipe->flush(pipe, flush_flags, NULL);
+      }
+   }
+
+   return TRUE;
+}

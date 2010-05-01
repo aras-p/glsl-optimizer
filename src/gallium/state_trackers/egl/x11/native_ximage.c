@@ -14,38 +14,35 @@
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
-#include <assert.h>
-#include <sys/ipc.h>
-#include <sys/types.h>
-#include <sys/shm.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/extensions/XShm.h>
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_format.h"
 #include "pipe/p_compiler.h"
-#include "util/u_simple_screen.h"
 #include "util/u_inlines.h"
-#include "softpipe/sp_winsys.h"
+#include "state_tracker/xlib_sw_winsys.h"
+#include "target-helpers/wrap_screen.h"
+#include "util/u_debug.h"
+#include "softpipe/sp_public.h"
+#include "llvmpipe/lp_public.h"
 #include "egllog.h"
 
-#include "sw_winsys.h"
 #include "native_x11.h"
 #include "x11_screen.h"
 
 enum ximage_surface_type {
    XIMAGE_SURFACE_TYPE_WINDOW,
    XIMAGE_SURFACE_TYPE_PIXMAP,
-   XIMAGE_SURFACE_TYPE_PBUFFER
 };
 
 struct ximage_display {
@@ -53,22 +50,18 @@ struct ximage_display {
    Display *dpy;
    boolean own_dpy;
 
+   struct native_event_handler *event_handler;
+
    struct x11_screen *xscr;
    int xscr_number;
 
-   boolean use_xshm;
-
-   struct pipe_winsys *winsys;
    struct ximage_config *configs;
    int num_configs;
 };
 
 struct ximage_buffer {
-   XImage *ximage;
-
-   struct pipe_texture *texture;
-   XShmSegmentInfo *shm_info;
-   boolean xshm_attached;
+   struct pipe_resource *texture;
+   struct xlib_drawable xdraw;
 };
 
 struct ximage_surface {
@@ -79,13 +72,13 @@ struct ximage_surface {
    XVisualInfo visual;
    struct ximage_display *xdpy;
 
-   GC gc;
-
    unsigned int server_stamp;
    unsigned int client_stamp;
    int width, height;
    struct ximage_buffer buffers[NUM_NATIVE_ATTACHMENTS];
    uint valid_mask;
+
+   struct pipe_surface *draw_surface;
 };
 
 struct ximage_config {
@@ -118,19 +111,7 @@ ximage_surface_free_buffer(struct native_surface *nsurf,
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    struct ximage_buffer *xbuf = &xsurf->buffers[which];
 
-   pipe_texture_reference(&xbuf->texture, NULL);
-
-   if (xbuf->shm_info) {
-      if (xbuf->xshm_attached)
-         XShmDetach(xsurf->xdpy->dpy, xbuf->shm_info);
-      if (xbuf->shm_info->shmaddr != (void *) -1)
-         shmdt(xbuf->shm_info->shmaddr);
-      if (xbuf->shm_info->shmid != -1)
-         shmctl(xbuf->shm_info->shmid, IPC_RMID, 0);
-
-      xbuf->shm_info->shmaddr = (void *) -1;
-      xbuf->shm_info->shmid = -1;
-   }
+   pipe_resource_reference(&xbuf->texture, NULL);
 }
 
 static boolean
@@ -140,7 +121,7 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    struct ximage_buffer *xbuf = &xsurf->buffers[which];
    struct pipe_screen *screen = xsurf->xdpy->base.screen;
-   struct pipe_texture templ;
+   struct pipe_resource templ;
 
    /* free old data */
    if (xbuf->texture)
@@ -152,42 +133,25 @@ ximage_surface_alloc_buffer(struct native_surface *nsurf,
    templ.width0 = xsurf->width;
    templ.height0 = xsurf->height;
    templ.depth0 = 1;
-   templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   templ.bind = PIPE_BIND_RENDER_TARGET;
 
-   if (xbuf->shm_info) {
-      struct pipe_buffer *pbuf;
-      unsigned stride, size;
-      void *addr = NULL;
-
-      stride = util_format_get_stride(xsurf->color_format, xsurf->width);
-      /* alignment should depend on visual? */
-      stride = align(stride, 4);
-      size = stride * xsurf->height;
-
-      /* create and attach shm object */
-      xbuf->shm_info->shmid = shmget(IPC_PRIVATE, size, 0755);
-      if (xbuf->shm_info->shmid != -1) {
-         xbuf->shm_info->shmaddr =
-            shmat(xbuf->shm_info->shmid, NULL, 0);
-         if (xbuf->shm_info->shmaddr != (void *) -1) {
-            if (XShmAttach(xsurf->xdpy->dpy, xbuf->shm_info)) {
-               addr = xbuf->shm_info->shmaddr;
-               xbuf->xshm_attached = TRUE;
-            }
-         }
-      }
-
-      if (addr) {
-         pbuf = screen->user_buffer_create(screen, addr, size);
-         if (pbuf) {
-            xbuf->texture =
-               screen->texture_blanket(screen, &templ, &stride, pbuf);
-            pipe_buffer_reference(&pbuf, NULL);
-         }
-      }
+   switch (which) {
+   case NATIVE_ATTACHMENT_FRONT_LEFT:
+   case NATIVE_ATTACHMENT_FRONT_RIGHT:
+      templ.bind |= PIPE_BIND_SCANOUT;
+      break;
+   case NATIVE_ATTACHMENT_BACK_LEFT:
+   case NATIVE_ATTACHMENT_BACK_RIGHT:
+      templ.bind |= PIPE_BIND_DISPLAY_TARGET;
+      break;
+   default:
+      break;
    }
-   else {
-      xbuf->texture = screen->texture_create(screen, &templ);
+   xbuf->texture = screen->resource_create(screen, &templ);
+   if (xbuf->texture) {
+      xbuf->xdraw.visual = xsurf->visual.visual;
+      xbuf->xdraw.depth = xsurf->visual.depth;
+      xbuf->xdraw.drawable = xsurf->drawable;
    }
 
    /* clean up the buffer if allocation failed */
@@ -211,10 +175,6 @@ ximage_surface_update_geometry(struct native_surface *nsurf)
    unsigned int w, h, border, depth;
    boolean updated = FALSE;
 
-   /* pbuffer has fixed geometry */
-   if (xsurf->type == XIMAGE_SURFACE_TYPE_PBUFFER)
-      return FALSE;
-
    ok = XGetGeometry(xsurf->xdpy->dpy, xsurf->drawable,
          &root, &x, &y, &w, &h, &border, &depth);
    if (ok && (xsurf->width != w || xsurf->height != h)) {
@@ -226,6 +186,16 @@ ximage_surface_update_geometry(struct native_surface *nsurf)
    }
 
    return updated;
+}
+
+static void
+ximage_surface_notify_invalid(struct native_surface *nsurf)
+{
+   struct ximage_surface *xsurf = ximage_surface(nsurf);
+   struct ximage_display *xdpy = xsurf->xdpy;
+
+   xdpy->event_handler->invalid_surface(&xdpy->base,
+         &xsurf->base, xsurf->server_stamp);
 }
 
 /**
@@ -257,17 +227,9 @@ ximage_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
    new_valid = 0x0;
    for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
       if (native_attachment_mask_test(buffer_mask, att)) {
-         struct ximage_buffer *xbuf = &xsurf->buffers[att];
-
          /* reallocate the texture */
          if (!ximage_surface_alloc_buffer(&xsurf->base, att))
             break;
-
-         /* update ximage */
-         if (xbuf->ximage) {
-            xbuf->ximage->width = xsurf->width;
-            xbuf->ximage->height = xsurf->height;
-         }
 
          new_valid |= (1 << att);
          if (buffer_mask == new_valid)
@@ -288,43 +250,23 @@ ximage_surface_draw_buffer(struct native_surface *nsurf,
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    struct ximage_buffer *xbuf = &xsurf->buffers[which];
    struct pipe_screen *screen = xsurf->xdpy->base.screen;
-   struct pipe_transfer *transfer;
+   struct pipe_surface *psurf;
 
-   if (xsurf->type == XIMAGE_SURFACE_TYPE_PBUFFER)
-      return TRUE;
+   assert(xsurf->drawable && xbuf->texture);
 
-   assert(xsurf->drawable && xbuf->ximage && xbuf->texture);
+   psurf = xsurf->draw_surface;
+   if (!psurf || psurf->texture != xbuf->texture) {
+      pipe_surface_reference(&xsurf->draw_surface, NULL);
 
-   transfer = screen->get_tex_transfer(screen, xbuf->texture,
-         0, 0, 0, PIPE_TRANSFER_READ, 0, 0, xsurf->width, xsurf->height);
-   if (!transfer)
-      return FALSE;
+      psurf = screen->get_tex_surface(screen,
+            xbuf->texture, 0, 0, 0, PIPE_BIND_DISPLAY_TARGET);
+      if (!psurf)
+         return FALSE;
 
-   xbuf->ximage->bytes_per_line = transfer->stride;
-   xbuf->ximage->data = screen->transfer_map(screen, transfer);
-   if (!xbuf->ximage->data) {
-      screen->tex_transfer_destroy(transfer);
-      return FALSE;
+      xsurf->draw_surface = psurf;
    }
 
-
-   if (xbuf->shm_info)
-      XShmPutImage(xsurf->xdpy->dpy, xsurf->drawable, xsurf->gc,
-            xbuf->ximage, 0, 0, 0, 0, xsurf->width, xsurf->height, False);
-   else
-      XPutImage(xsurf->xdpy->dpy, xsurf->drawable, xsurf->gc,
-            xbuf->ximage, 0, 0, 0, 0, xsurf->width, xsurf->height);
-
-   xbuf->ximage->data = NULL;
-   screen->transfer_unmap(screen, transfer);
-
-   /*
-    * softpipe allows the pipe transfer to be re-used, but we don't want to
-    * rely on that behavior.
-    */
-   screen->tex_transfer_destroy(transfer);
-
-   XSync(xsurf->xdpy->dpy, FALSE);
+   screen->flush_frontbuffer(screen, psurf, &xbuf->xdraw);
 
    return TRUE;
 }
@@ -339,6 +281,7 @@ ximage_surface_flush_frontbuffer(struct native_surface *nsurf)
          NATIVE_ATTACHMENT_FRONT_LEFT);
    /* force buffers to be updated in next validation call */
    xsurf->server_stamp++;
+   ximage_surface_notify_invalid(&xsurf->base);
 
    return ret;
 }
@@ -351,27 +294,28 @@ ximage_surface_swap_buffers(struct native_surface *nsurf)
    boolean ret;
 
    /* display the back buffer first */
-   ret = ximage_surface_draw_buffer(nsurf, NATIVE_ATTACHMENT_BACK_LEFT);
+   ret = ximage_surface_draw_buffer(&xsurf->base,
+         NATIVE_ATTACHMENT_BACK_LEFT);
    /* force buffers to be updated in next validation call */
    xsurf->server_stamp++;
+   ximage_surface_notify_invalid(&xsurf->base);
 
    xfront = &xsurf->buffers[NATIVE_ATTACHMENT_FRONT_LEFT];
    xback = &xsurf->buffers[NATIVE_ATTACHMENT_BACK_LEFT];
 
-   /* skip swapping so that the front buffer is allocated only when needed */
-   if (!xfront->texture)
-      return ret;
-
-   xtmp = *xfront;
-   *xfront = *xback;
-   *xback = xtmp;
+   /* skip swapping unless there is a front buffer */
+   if (xfront->texture) {
+      xtmp = *xfront;
+      *xfront = *xback;
+      *xback = xtmp;
+   }
 
    return ret;
 }
 
 static boolean
 ximage_surface_validate(struct native_surface *nsurf, uint attachment_mask,
-                        unsigned int *seq_num, struct pipe_texture **textures,
+                        unsigned int *seq_num, struct pipe_resource **textures,
                         int *width, int *height)
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
@@ -392,7 +336,7 @@ ximage_surface_validate(struct native_surface *nsurf, uint attachment_mask,
             struct ximage_buffer *xbuf = &xsurf->buffers[att];
 
             textures[att] = NULL;
-            pipe_texture_reference(&textures[att], xbuf->texture);
+            pipe_resource_reference(&textures[att], xbuf->texture);
          }
       }
    }
@@ -419,19 +363,12 @@ ximage_surface_destroy(struct native_surface *nsurf)
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    int i;
 
-   for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
-      struct ximage_buffer *xbuf = &xsurf->buffers[i];
-      ximage_surface_free_buffer(&xsurf->base, i);
-      /* xbuf->shm_info is owned by xbuf->ximage? */
-      if (xbuf->ximage) {
-         XDestroyImage(xbuf->ximage);
-         xbuf->ximage = NULL;
-      }
-   }
+   pipe_surface_reference(&xsurf->draw_surface, NULL);
 
-   if (xsurf->type != XIMAGE_SURFACE_TYPE_PBUFFER)
-      XFreeGC(xsurf->xdpy->dpy, xsurf->gc);
-   free(xsurf);
+   for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++)
+      ximage_surface_free_buffer(&xsurf->base, i);
+
+   FREE(xsurf);
 }
 
 static struct ximage_surface *
@@ -443,7 +380,6 @@ ximage_display_create_surface(struct native_display *ndpy,
    struct ximage_display *xdpy = ximage_display(ndpy);
    struct ximage_config *xconf = ximage_config(nconf);
    struct ximage_surface *xsurf;
-   int i;
 
    xsurf = CALLOC_STRUCT(ximage_surface);
    if (!xsurf)
@@ -454,56 +390,10 @@ ximage_display_create_surface(struct native_display *ndpy,
    xsurf->color_format = xconf->base.color_format;
    xsurf->drawable = drawable;
 
-   if (xsurf->type != XIMAGE_SURFACE_TYPE_PBUFFER) {
-      xsurf->drawable = drawable;
-      xsurf->visual = *xconf->visual;
-
-      xsurf->gc = XCreateGC(xdpy->dpy, xsurf->drawable, 0, NULL);
-      if (!xsurf->gc) {
-         free(xsurf);
-         return NULL;
-      }
-
-      /* initialize the geometry */
-      ximage_surface_update_buffers(&xsurf->base, 0x0);
-
-      for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
-         struct ximage_buffer *xbuf = &xsurf->buffers[i];
-
-         if (xdpy->use_xshm) {
-            xbuf->shm_info = calloc(1, sizeof(*xbuf->shm_info));
-            if (xbuf->shm_info) {
-               /* initialize shm info */
-               xbuf->shm_info->shmid = -1;
-               xbuf->shm_info->shmaddr = (void *) -1;
-               xbuf->shm_info->readOnly = TRUE;
-
-               xbuf->ximage = XShmCreateImage(xsurf->xdpy->dpy,
-                     xsurf->visual.visual,
-                     xsurf->visual.depth,
-                     ZPixmap, NULL,
-                     xbuf->shm_info,
-                     0, 0);
-            }
-         }
-         else {
-            xbuf->ximage = XCreateImage(xsurf->xdpy->dpy,
-                  xsurf->visual.visual,
-                  xsurf->visual.depth,
-                  ZPixmap, 0,   /* format, offset */
-                  NULL,         /* data */
-                  0, 0,         /* size */
-                  8,            /* bitmap_pad */
-                  0);           /* bytes_per_line */
-         }
-
-         if (!xbuf->ximage) {
-            XFreeGC(xdpy->dpy, xsurf->gc);
-            free(xsurf);
-            return NULL;
-         }
-      }
-   }
+   xsurf->drawable = drawable;
+   xsurf->visual = *xconf->visual;
+   /* initialize the geometry */
+   ximage_surface_update_buffers(&xsurf->base, 0x0);
 
    xsurf->base.destroy = ximage_surface_destroy;
    xsurf->base.swap_buffers = ximage_surface_swap_buffers;
@@ -535,22 +425,6 @@ ximage_display_create_pixmap_surface(struct native_display *ndpy,
 
    xsurf = ximage_display_create_surface(ndpy, XIMAGE_SURFACE_TYPE_PIXMAP,
          (Drawable) pix, nconf);
-   return (xsurf) ? &xsurf->base : NULL;
-}
-
-static struct native_surface *
-ximage_display_create_pbuffer_surface(struct native_display *ndpy,
-                                      const struct native_config *nconf,
-                                      uint width, uint height)
-{
-   struct ximage_surface *xsurf;
-
-   xsurf = ximage_display_create_surface(ndpy, XIMAGE_SURFACE_TYPE_PBUFFER,
-         (Drawable) None, nconf);
-   if (xsurf) {
-      xsurf->width = width;
-      xsurf->height = height;
-   }
    return (xsurf) ? &xsurf->base : NULL;
 }
 
@@ -587,7 +461,7 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
    /* first time */
    if (!xdpy->configs) {
       const XVisualInfo *visuals;
-      int num_visuals, count, j;
+      int num_visuals, count;
 
       visuals = x11_screen_get_visuals(xdpy->xscr, &num_visuals);
       if (!visuals)
@@ -597,57 +471,42 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
        * Create two configs for each visual.
        * One with depth/stencil buffer; one without
        */
-      xdpy->configs = calloc(num_visuals * 2, sizeof(*xdpy->configs));
+      xdpy->configs = CALLOC(num_visuals * 2, sizeof(*xdpy->configs));
       if (!xdpy->configs)
          return NULL;
 
       count = 0;
       for (i = 0; i < num_visuals; i++) {
-         for (j = 0; j < 2; j++) {
-            struct ximage_config *xconf = &xdpy->configs[count];
-            __GLcontextModes *mode = &xconf->base.mode;
+         struct ximage_config *xconf = &xdpy->configs[count];
 
-            xconf->visual = &visuals[i];
-            xconf->base.color_format = choose_format(xconf->visual);
-            if (xconf->base.color_format == PIPE_FORMAT_NONE)
-               continue;
+         xconf->visual = &visuals[i];
+         xconf->base.color_format = choose_format(xconf->visual);
+         if (xconf->base.color_format == PIPE_FORMAT_NONE)
+            continue;
 
-            x11_screen_convert_visual(xdpy->xscr, xconf->visual, mode);
-            /* support double buffer mode */
-            mode->doubleBufferMode = TRUE;
+         xconf->base.buffer_mask =
+            (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
+            (1 << NATIVE_ATTACHMENT_BACK_LEFT);
 
-            xconf->base.depth_format = PIPE_FORMAT_NONE;
-            xconf->base.stencil_format = PIPE_FORMAT_NONE;
-            /* create the second config with depth/stencil buffer */
-            if (j == 1) {
-               xconf->base.depth_format = PIPE_FORMAT_Z24S8_UNORM;
-               xconf->base.stencil_format = PIPE_FORMAT_Z24S8_UNORM;
-               mode->depthBits = 24;
-               mode->stencilBits = 8;
-               mode->haveDepthBuffer = TRUE;
-               mode->haveStencilBuffer = TRUE;
-            }
+         xconf->base.window_bit = TRUE;
+         xconf->base.pixmap_bit = TRUE;
 
-            mode->maxPbufferWidth = 4096;
-            mode->maxPbufferHeight = 4096;
-            mode->maxPbufferPixels = 4096 * 4096;
-            mode->drawableType =
-               GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT;
-            mode->swapMethod = GLX_SWAP_EXCHANGE_OML;
+         xconf->base.native_visual_id = xconf->visual->visualid;
+#if defined(__cplusplus) || defined(c_plusplus)
+         xconf->base.native_visual_type = xconf->visual->c_class;
+#else
+         xconf->base.native_visual_type = xconf->visual->class;
+#endif
 
-            if (mode->alphaBits)
-               mode->bindToTextureRgba = TRUE;
-            else
-               mode->bindToTextureRgb = TRUE;
+         xconf->base.slow_config = TRUE;
 
-            count++;
-         }
+         count++;
       }
 
       xdpy->num_configs = count;
    }
 
-   configs = malloc(xdpy->num_configs * sizeof(*configs));
+   configs = MALLOC(xdpy->num_configs * sizeof(*configs));
    if (configs) {
       for (i = 0; i < xdpy->num_configs; i++)
          configs[i] = (const struct native_config *) &xdpy->configs[i];
@@ -685,25 +544,98 @@ ximage_display_is_pixmap_supported(struct native_display *ndpy,
    return (fmt == nconf->color_format);
 }
 
+static int
+ximage_display_get_param(struct native_display *ndpy,
+                         enum native_param_type param)
+{
+   int val;
+
+   switch (param) {
+   case NATIVE_PARAM_USE_NATIVE_BUFFER:
+      /* private buffers are allocated */
+      val = FALSE;
+      break;
+   default:
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
 static void
 ximage_display_destroy(struct native_display *ndpy)
 {
    struct ximage_display *xdpy = ximage_display(ndpy);
 
    if (xdpy->configs)
-      free(xdpy->configs);
+      FREE(xdpy->configs);
 
    xdpy->base.screen->destroy(xdpy->base.screen);
-   free(xdpy->winsys);
 
    x11_screen_destroy(xdpy->xscr);
    if (xdpy->own_dpy)
       XCloseDisplay(xdpy->dpy);
-   free(xdpy);
+   FREE(xdpy);
 }
 
+
+/* Helper function to build a subset of a driver stack consisting of
+ * one of the software rasterizers (cell, llvmpipe, softpipe) and the
+ * xlib winsys.
+ *
+ * This function could be shared, but currently causes headaches for
+ * the build systems, particularly scons if we try.
+ *
+ * Long term, want to avoid having global #defines for things like
+ * GALLIUM_LLVMPIPE, GALLIUM_CELL, etc.  Scons already eliminates
+ * those #defines, so things that are painful for it now are likely to
+ * be painful for other build systems in the future.
+ */
+static struct pipe_screen *
+swrast_xlib_create_screen( Display *display )
+{
+   struct sw_winsys *winsys;
+   struct pipe_screen *screen = NULL;
+
+   /* Create the underlying winsys, which performs presents to Xlib
+    * drawables:
+    */
+   winsys = xlib_create_sw_winsys( display );
+   if (winsys == NULL)
+      return NULL;
+
+   /* Create a software rasterizer on top of that winsys.  Use
+    * llvmpipe if it is available.
+    */
+#if defined(GALLIUM_LLVMPIPE)
+   if (screen == NULL &&
+       !debug_get_bool_option("GALLIUM_NO_LLVM", FALSE))
+      screen = llvmpipe_create_screen( winsys );
+#endif
+
+   if (screen == NULL)
+      screen = softpipe_create_screen( winsys );
+
+   if (screen == NULL)
+      goto fail;
+
+   /* Inject any wrapping layers we want to here:
+    */
+   return gallium_wrap_screen( screen );
+
+fail:
+   if (winsys)
+      winsys->destroy( winsys );
+
+   return NULL;
+}
+
+
+
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm)
+x11_create_ximage_display(EGLNativeDisplayType dpy,
+                          struct native_event_handler *event_handler)
 {
    struct ximage_display *xdpy;
 
@@ -715,32 +647,30 @@ x11_create_ximage_display(EGLNativeDisplayType dpy, boolean use_xshm)
    if (!xdpy->dpy) {
       xdpy->dpy = XOpenDisplay(NULL);
       if (!xdpy->dpy) {
-         free(xdpy);
+         FREE(xdpy);
          return NULL;
       }
       xdpy->own_dpy = TRUE;
    }
 
+   xdpy->event_handler = event_handler;
+
    xdpy->xscr_number = DefaultScreen(xdpy->dpy);
    xdpy->xscr = x11_screen_create(xdpy->dpy, xdpy->xscr_number);
    if (!xdpy->xscr) {
-      free(xdpy);
+      FREE(xdpy);
       return NULL;
    }
 
-   xdpy->use_xshm =
-      (use_xshm && x11_screen_support(xdpy->xscr, X11_SCREEN_EXTENSION_XSHM));
-
-   xdpy->winsys = create_sw_winsys();
-   xdpy->base.screen = softpipe_create_screen(xdpy->winsys);
+   xdpy->base.screen = swrast_xlib_create_screen(xdpy->dpy);
 
    xdpy->base.destroy = ximage_display_destroy;
+   xdpy->base.get_param = ximage_display_get_param;
 
    xdpy->base.get_configs = ximage_display_get_configs;
    xdpy->base.is_pixmap_supported = ximage_display_is_pixmap_supported;
    xdpy->base.create_window_surface = ximage_display_create_window_surface;
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
-   xdpy->base.create_pbuffer_surface = ximage_display_create_pbuffer_surface;
 
    return &xdpy->base;
 }

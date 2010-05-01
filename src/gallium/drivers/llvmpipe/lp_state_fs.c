@@ -37,10 +37,10 @@
  * - early depth test
  * - fragment shader
  * - alpha test
- * - depth/stencil test (stencil TBI)
+ * - depth/stencil test
  * - blending
  *
- * This file has only the glue to assembly the fragment pipeline.  The actual
+ * This file has only the glue to assemble the fragment pipeline.  The actual
  * plumbing of converting Gallium state into LLVM IR is done elsewhere, in the
  * lp_bld_*.[ch] files, and in a complete generic and reusable way. Here we
  * muster the LLVM JIT execution engine to create a function that follows an
@@ -77,15 +77,15 @@
 #include "gallivm/lp_bld_conv.h"
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_logic.h"
-#include "gallivm/lp_bld_depth.h"
-#include "gallivm/lp_bld_interp.h"
 #include "gallivm/lp_bld_tgsi.h"
-#include "gallivm/lp_bld_alpha.h"
-#include "gallivm/lp_bld_blend.h"
 #include "gallivm/lp_bld_swizzle.h"
 #include "gallivm/lp_bld_flow.h"
 #include "gallivm/lp_bld_debug.h"
-#include "lp_buffer.h"
+
+#include "lp_bld_alpha.h"
+#include "lp_bld_blend.h"
+#include "lp_bld_depth.h"
+#include "lp_bld_interp.h"
 #include "lp_context.h"
 #include "lp_debug.h"
 #include "lp_perf.h"
@@ -93,6 +93,9 @@
 #include "lp_setup.h"
 #include "lp_state.h"
 #include "lp_tex_sample.h"
+
+
+#include <llvm-c/Analysis.h>
 
 
 static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
@@ -135,20 +138,22 @@ generate_pos0(LLVMBuilderRef builder,
 
 
 /**
- * Generate the depth test.
+ * Generate the depth /stencil test code.
  */
 static void
-generate_depth(LLVMBuilderRef builder,
-               const struct lp_fragment_shader_variant_key *key,
-               struct lp_type src_type,
-               struct lp_build_mask_context *mask,
-               LLVMValueRef src,
-               LLVMValueRef dst_ptr)
+generate_depth_stencil(LLVMBuilderRef builder,
+                       const struct lp_fragment_shader_variant_key *key,
+                       struct lp_type src_type,
+                       struct lp_build_mask_context *mask,
+                       LLVMValueRef stencil_refs[2],
+                       LLVMValueRef src,
+                       LLVMValueRef dst_ptr,
+                       LLVMValueRef facing)
 {
    const struct util_format_description *format_desc;
    struct lp_type dst_type;
 
-   if(!key->depth.enabled)
+   if (!key->depth.enabled && !key->stencil[0].enabled && !key->stencil[1].enabled)
       return;
 
    format_desc = util_format_description(key->zsbuf_format);
@@ -175,19 +180,22 @@ generate_depth(LLVMBuilderRef builder,
    assert(dst_type.width == src_type.width);
    assert(dst_type.length == src_type.length);
 
+   /* Convert fragment Z from float to integer */
    lp_build_conv(builder, src_type, dst_type, &src, 1, &src, 1);
 
    dst_ptr = LLVMBuildBitCast(builder,
                               dst_ptr,
                               LLVMPointerType(lp_build_vec_type(dst_type), 0), "");
-
-   lp_build_depth_test(builder,
-                       &key->depth,
-                       dst_type,
-                       format_desc,
-                       mask,
-                       src,
-                       dst_ptr);
+   lp_build_depth_stencil_test(builder,
+                               &key->depth,
+                               key->stencil,
+                               dst_type,
+                               format_desc,
+                               mask,
+                               stencil_refs,
+                               src,
+                               dst_ptr,
+                               facing);
 }
 
 
@@ -215,7 +223,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
 #endif
    struct lp_build_flow_context *flow;
    struct lp_type i32_type;
-   LLVMTypeRef i32vec4_type, mask_type;
+   LLVMTypeRef i32vec4_type;
    LLVMValueRef c0_vec, c1_vec, c2_vec;
    LLVMValueRef in_out_mask;
 
@@ -230,8 +238,6 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
    i32_type.length = 4;       /* 4 elements per vector */
 
    i32vec4_type = lp_build_int32_vec4_type();
-
-   mask_type = LLVMIntType(32 * 4);
 
    /*
     * Use a conditional here to do detailed pixel in/out testing.
@@ -249,7 +255,7 @@ generate_tri_edge_mask(LLVMBuilderRef builder,
                                    LLVMConstInt(LLVMInt32Type(), INT_MIN, 0),
                                    "");
 
-      in_out_mask = lp_build_int_const_scalar(i32_type, ~0);
+      in_out_mask = lp_build_const_int_vec(i32_type, ~0);
 
 
       lp_build_flow_scope_declare(flow, &in_out_mask);
@@ -364,7 +370,7 @@ build_int32_vec_const(int value)
    i32_type.norm = FALSE;     /* values are not normalized */
    i32_type.width = 32;       /* 32-bit int values */
    i32_type.length = 4;       /* 4 elements per vector */
-   return lp_build_int_const_scalar(i32_type, value);
+   return lp_build_const_int_vec(i32_type, value);
 }
 
 
@@ -387,6 +393,7 @@ generate_fs(struct llvmpipe_context *lp,
             LLVMValueRef *pmask,
             LLVMValueRef (*color)[4],
             LLVMValueRef depth_ptr,
+            LLVMValueRef facing,
             unsigned do_tri_test,
             LLVMValueRef c0,
             LLVMValueRef c1,
@@ -396,24 +403,24 @@ generate_fs(struct llvmpipe_context *lp,
             LLVMValueRef step2_ptr)
 {
    const struct tgsi_token *tokens = shader->base.tokens;
-   LLVMTypeRef elem_type;
    LLVMTypeRef vec_type;
-   LLVMTypeRef int_vec_type;
    LLVMValueRef consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef z = interp->pos[2];
+   LLVMValueRef stencil_refs[2];
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask;
-   boolean early_depth_test;
+   boolean early_depth_stencil_test;
    unsigned attrib;
    unsigned chan;
    unsigned cbuf;
 
    assert(i < 4);
 
-   elem_type = lp_build_elem_type(type);
+   stencil_refs[0] = lp_jit_context_stencil_ref_front_value(builder, context_ptr);
+   stencil_refs[1] = lp_jit_context_stencil_ref_back_value(builder, context_ptr);
+
    vec_type = lp_build_vec_type(type);
-   int_vec_type = lp_build_int_vec_type(type);
 
    consts_ptr = lp_jit_context_constants(builder, context_ptr);
 
@@ -450,20 +457,20 @@ generate_fs(struct llvmpipe_context *lp,
       lp_build_mask_update(&mask, smask);
    }
 
-   early_depth_test =
-      key->depth.enabled &&
+   early_depth_stencil_test =
+      (key->depth.enabled || key->stencil[0].enabled) &&
       !key->alpha.enabled &&
       !shader->info.uses_kill &&
       !shader->info.writes_z;
 
-   if(early_depth_test)
-      generate_depth(builder, key,
-                     type, &mask,
-                     z, depth_ptr);
+   if (early_depth_stencil_test)
+      generate_depth_stencil(builder, key,
+                             type, &mask,
+                             stencil_refs, z, depth_ptr, facing);
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
-                     outputs, sampler);
+                     outputs, sampler, &shader->info);
 
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
@@ -503,10 +510,10 @@ generate_fs(struct llvmpipe_context *lp,
       }
    }
 
-   if(!early_depth_test)
-      generate_depth(builder, key,
-                     type, &mask,
-                     z, depth_ptr);
+   if (!early_depth_stencil_test)
+      generate_depth_stencil(builder, key,
+                             type, &mask,
+                             stencil_refs, z, depth_ptr, facing);
 
    lp_build_mask_end(&mask);
 
@@ -535,7 +542,6 @@ generate_blend(const struct pipe_blend_state *blend,
    struct lp_build_flow_context *flow;
    struct lp_build_mask_context mask_ctx;
    LLVMTypeRef vec_type;
-   LLVMTypeRef int_vec_type;
    LLVMValueRef const_ptr;
    LLVMValueRef con[4];
    LLVMValueRef dst[4];
@@ -550,7 +556,6 @@ generate_blend(const struct pipe_blend_state *blend,
    lp_build_mask_begin(&mask_ctx, flow, type, mask);
 
    vec_type = lp_build_vec_type(type);
-   int_vec_type = lp_build_int_vec_type(type);
 
    const_ptr = lp_jit_context_blend_color(builder, context_ptr);
    const_ptr = LLVMBuildBitCast(builder, const_ptr,
@@ -582,6 +587,20 @@ generate_blend(const struct pipe_blend_state *blend,
 }
 
 
+/** casting function to avoid compiler warnings */
+static lp_jit_frag_func
+cast_voidptr_to_lp_jit_frag_func(void *p)
+{
+   union {
+      void *v;
+      lp_jit_frag_func f;
+   } tmp;
+   assert(sizeof(tmp.v) == sizeof(tmp.f));
+   tmp.v = p;
+   return tmp.f;
+}
+
+
 /**
  * Generate the runtime callable function for the whole fragment pipeline.
  * Note that the function which we generate operates on a block of 16
@@ -602,8 +621,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMTypeRef fs_vec_type;
    LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
-   LLVMTypeRef blend_int_vec_type;
-   LLVMTypeRef arg_types[14];
+   LLVMTypeRef arg_types[15];
    LLVMTypeRef func_type;
    LLVMTypeRef int32_vec4_type = lp_build_int32_vec4_type();
    LLVMValueRef context_ptr;
@@ -626,6 +644,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef blend_mask;
    LLVMValueRef blend_in_color[NUM_CHANNELS];
    LLVMValueRef function;
+   LLVMValueRef facing;
    unsigned num_fs;
    unsigned i;
    unsigned chan;
@@ -660,25 +679,25 @@ generate_fragment(struct llvmpipe_context *lp,
    fs_int_vec_type = lp_build_int_vec_type(fs_type);
 
    blend_vec_type = lp_build_vec_type(blend_type);
-   blend_int_vec_type = lp_build_int_vec_type(blend_type);
 
    arg_types[0] = screen->context_ptr_type;            /* context */
    arg_types[1] = LLVMInt32Type();                     /* x */
    arg_types[2] = LLVMInt32Type();                     /* y */
-   arg_types[3] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
-   arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
-   arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dady */
-   arg_types[6] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
-   arg_types[7] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
-   arg_types[8] = LLVMInt32Type();                     /* c0 */
-   arg_types[9] = LLVMInt32Type();                     /* c1 */
-   arg_types[10] = LLVMInt32Type();                    /* c2 */
+   arg_types[3] = LLVMFloatType();                     /* facing */
+   arg_types[4] = LLVMPointerType(fs_elem_type, 0);    /* a0 */
+   arg_types[5] = LLVMPointerType(fs_elem_type, 0);    /* dadx */
+   arg_types[6] = LLVMPointerType(fs_elem_type, 0);    /* dady */
+   arg_types[7] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
+   arg_types[8] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
+   arg_types[9] = LLVMInt32Type();                     /* c0 */
+   arg_types[10] = LLVMInt32Type();                    /* c1 */
+   arg_types[11] = LLVMInt32Type();                    /* c2 */
    /* Note: the step arrays are built as int32[16] but we interpret
     * them here as int32_vec4[4].
     */
-   arg_types[11] = LLVMPointerType(int32_vec4_type, 0);/* step0 */
-   arg_types[12] = LLVMPointerType(int32_vec4_type, 0);/* step1 */
-   arg_types[13] = LLVMPointerType(int32_vec4_type, 0);/* step2 */
+   arg_types[12] = LLVMPointerType(int32_vec4_type, 0);/* step0 */
+   arg_types[13] = LLVMPointerType(int32_vec4_type, 0);/* step1 */
+   arg_types[14] = LLVMPointerType(int32_vec4_type, 0);/* step2 */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -698,17 +717,18 @@ generate_fragment(struct llvmpipe_context *lp,
    context_ptr  = LLVMGetParam(function, 0);
    x            = LLVMGetParam(function, 1);
    y            = LLVMGetParam(function, 2);
-   a0_ptr       = LLVMGetParam(function, 3);
-   dadx_ptr     = LLVMGetParam(function, 4);
-   dady_ptr     = LLVMGetParam(function, 5);
-   color_ptr_ptr = LLVMGetParam(function, 6);
-   depth_ptr    = LLVMGetParam(function, 7);
-   c0           = LLVMGetParam(function, 8);
-   c1           = LLVMGetParam(function, 9);
-   c2           = LLVMGetParam(function, 10);
-   step0_ptr    = LLVMGetParam(function, 11);
-   step1_ptr    = LLVMGetParam(function, 12);
-   step2_ptr    = LLVMGetParam(function, 13);
+   facing       = LLVMGetParam(function, 3);
+   a0_ptr       = LLVMGetParam(function, 4);
+   dadx_ptr     = LLVMGetParam(function, 5);
+   dady_ptr     = LLVMGetParam(function, 6);
+   color_ptr_ptr = LLVMGetParam(function, 7);
+   depth_ptr    = LLVMGetParam(function, 8);
+   c0           = LLVMGetParam(function, 9);
+   c1           = LLVMGetParam(function, 10);
+   c2           = LLVMGetParam(function, 11);
+   step0_ptr    = LLVMGetParam(function, 12);
+   step1_ptr    = LLVMGetParam(function, 13);
+   step2_ptr    = LLVMGetParam(function, 14);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(x, "x");
@@ -750,7 +770,6 @@ generate_fragment(struct llvmpipe_context *lp,
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
       LLVMValueRef out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS];
       LLVMValueRef depth_ptr_i;
-      int cbuf;
 
       if(i != 0)
          lp_build_interp_soa_update(&interp, i);
@@ -767,6 +786,7 @@ generate_fragment(struct llvmpipe_context *lp,
                   &fs_mask[i], /* output */
                   out_color,
                   depth_ptr_i,
+                  facing,
                   do_tri_test,
                   c0, c1, c2,
                   step0_ptr, step1_ptr, step2_ptr);
@@ -842,10 +862,14 @@ generate_fragment(struct llvmpipe_context *lp,
    /*
     * Translate the LLVM IR into machine code.
     */
-   variant->jit_function[do_tri_test] = (lp_jit_frag_func)LLVMGetPointerToGlobal(screen->engine, function);
+   {
+      void *f = LLVMGetPointerToGlobal(screen->engine, function);
 
-   if (LP_DEBUG & DEBUG_ASM)
-      lp_disassemble(variant->jit_function[do_tri_test]);
+      variant->jit_function[do_tri_test] = cast_voidptr_to_lp_jit_frag_func(f);
+
+      if (LP_DEBUG & DEBUG_ASM)
+         lp_disassemble(f);
+   }
 }
 
 
@@ -913,7 +937,6 @@ generate_variant(struct llvmpipe_context *lp,
    if(!variant)
       return NULL;
 
-   variant->shader = shader;
    memcpy(&variant->key, key, sizeof *key);
 
    generate_fragment(lp, shader, variant, 0);
@@ -927,7 +950,7 @@ generate_variant(struct llvmpipe_context *lp,
 }
 
 
-void *
+static void *
 llvmpipe_create_fs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
@@ -943,11 +966,16 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
 
+   if (LP_DEBUG & DEBUG_TGSI) {
+      debug_printf("llvmpipe: Create fragment shader %p:\n", (void *) shader);
+      tgsi_dump(templ->tokens, 0);
+   }
+
    return shader;
 }
 
 
-void
+static void
 llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -963,7 +991,7 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
-void
+static void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
@@ -1006,14 +1034,14 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 
 
 
-void
+static void
 llvmpipe_set_constant_buffer(struct pipe_context *pipe,
                              uint shader, uint index,
-                             struct pipe_buffer *constants)
+                             struct pipe_resource *constants)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   unsigned size = constants ? constants->size : 0;
-   const void *data = constants ? llvmpipe_buffer(constants)->data : NULL;
+   unsigned size = constants ? constants->width0 : 0;
+   const void *data = constants ? llvmpipe_resource_data(constants) : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
@@ -1024,7 +1052,7 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    draw_flush(llvmpipe->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&llvmpipe->constants[shader], constants);
+   pipe_resource_reference(&llvmpipe->constants[shader], constants);
 
    if(shader == PIPE_SHADER_VERTEX) {
       draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX, 0,
@@ -1051,10 +1079,15 @@ make_variant_key(struct llvmpipe_context *lp,
 
    memset(key, 0, sizeof *key);
 
-   if(lp->framebuffer.zsbuf &&
-      lp->depth_stencil->depth.enabled) {
-      key->zsbuf_format = lp->framebuffer.zsbuf->format;
-      memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
+   if (lp->framebuffer.zsbuf) {
+      if (lp->depth_stencil->depth.enabled) {
+         key->zsbuf_format = lp->framebuffer.zsbuf->format;
+         memcpy(&key->depth, &lp->depth_stencil->depth, sizeof key->depth);
+      }
+      if (lp->depth_stencil->stencil[0].enabled) {
+         key->zsbuf_format = lp->framebuffer.zsbuf->format;
+         memcpy(&key->stencil, &lp->depth_stencil->stencil, sizeof key->stencil);
+      }
    }
 
    key->alpha.enabled = lp->depth_stencil->alpha.enabled;
@@ -1075,8 +1108,10 @@ make_variant_key(struct llvmpipe_context *lp,
       unsigned chan;
 
       format_desc = util_format_description(lp->framebuffer.cbufs[i]->format);
-      assert(format_desc->layout == UTIL_FORMAT_COLORSPACE_RGB ||
-             format_desc->layout == UTIL_FORMAT_COLORSPACE_SRGB);
+      assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
+             format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB);
+
+      key->blend.rt[i].colormask = lp->blend->rt[i].colormask;
 
       /* mask out color channels not present in the color buffer.
        * Should be simple to incorporate per-cbuf writemasks:
@@ -1084,14 +1119,14 @@ make_variant_key(struct llvmpipe_context *lp,
       for(chan = 0; chan < 4; ++chan) {
          enum util_format_swizzle swizzle = format_desc->swizzle[chan];
 
-         if(swizzle <= UTIL_FORMAT_SWIZZLE_W)
-            key->blend.rt[0].colormask |= (1 << chan);
+         if(swizzle > UTIL_FORMAT_SWIZZLE_W)
+            key->blend.rt[i].colormask &= ~(1 << chan);
       }
    }
 
    for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
       if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i))
-         lp_sampler_static_state(&key->sampler[i], lp->texture[i], lp->sampler[i]);
+         lp_sampler_static_state(&key->sampler[i], lp->fragment_sampler_views[i], lp->sampler[i]);
 }
 
 
@@ -1130,13 +1165,12 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       LP_COUNT_ADD(nr_llvm_compiles, 2);  /* emit vs. omit in/out test */
    }
 
-   shader->current = variant;
-
    /* TODO: put this in the variant */
    /* TODO: most of these can be relaxed, in particular the colormask */
    opaque = !key.blend.logicop_enable &&
             !key.blend.rt[0].blend_enable &&
             key.blend.rt[0].colormask == 0xf &&
+            !key.stencil[0].enabled &&
             !key.alpha.enabled &&
             !key.depth.enabled &&
             !key.scissor &&
@@ -1144,7 +1178,19 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
             ? TRUE : FALSE;
 
    lp_setup_set_fs_functions(lp->setup, 
-                             shader->current->jit_function[0],
-                             shader->current->jit_function[1],
+                             variant->jit_function[RAST_WHOLE],
+                             variant->jit_function[RAST_EDGE_TEST],
                              opaque);
+}
+
+
+
+void
+llvmpipe_init_fs_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.create_fs_state = llvmpipe_create_fs_state;
+   llvmpipe->pipe.bind_fs_state   = llvmpipe_bind_fs_state;
+   llvmpipe->pipe.delete_fs_state = llvmpipe_delete_fs_state;
+
+   llvmpipe->pipe.set_constant_buffer = llvmpipe_set_constant_buffer;
 }

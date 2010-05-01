@@ -181,6 +181,7 @@ src_register( struct st_translate *t,
       ASSERT(index >= 0);
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_temporary( t->ureg );
+      assert(index < Elements(t->temps));
       return ureg_src(t->temps[index]);
 
    case PROGRAM_NAMED_PARAM:
@@ -197,9 +198,11 @@ src_register( struct st_translate *t,
          return t->constants[index];
 
    case PROGRAM_INPUT:
+      assert(t->inputMapping[index] < Elements(t->inputs));
       return t->inputs[t->inputMapping[index]];
 
    case PROGRAM_OUTPUT:
+      assert(t->outputMapping[index] < Elements(t->outputs));
       return ureg_src(t->outputs[t->outputMapping[index]]); /* not needed? */
 
    case PROGRAM_ADDRESS:
@@ -739,6 +742,65 @@ emit_inverted_wpos( struct st_translate *t,
 
 
 /**
+ * Emit fragment position/ooordinate code.
+ */
+static void
+emit_wpos(struct st_context *st,
+          struct st_translate *t,
+          const struct gl_program *program,
+          struct ureg_program *ureg)
+{
+   const struct gl_fragment_program *fp =
+      (const struct gl_fragment_program *) program;
+   struct pipe_screen *pscreen = st->pipe->screen;
+   boolean invert = FALSE;
+
+   if (fp->OriginUpperLeft) {
+      if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT)) {
+      }
+      else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT)) {
+         ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
+         invert = TRUE;
+      }
+      else
+         assert(0);
+   }
+   else {
+      if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT))
+         ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
+      else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT))
+         invert = TRUE;
+      else
+         assert(0);
+   }
+   
+   if (fp->PixelCenterInteger) {
+      if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER))
+         ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
+      else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER))
+         emit_adjusted_wpos(t, program, invert ? 0.5f : -0.5f);
+      else
+         assert(0);
+   }
+   else {
+      if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER)) {
+      }
+      else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
+         ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
+         emit_adjusted_wpos(t, program, invert ? -0.5f : 0.5f);
+      }
+      else
+         assert(0);
+   }
+
+   /* we invert after adjustment so that we avoid the MOV to temporary,
+    * and reuse the adjustment ADD instead */
+   if (invert)
+      emit_inverted_wpos(t, program);
+}
+
+
+/**
  * OpenGL's fragment gl_FrontFace input is 1 for front-facing, 0 for back.
  * TGSI uses +1 for front, -1 for back.
  * This function converts the TGSI value to the GL value.  Simply clamping/
@@ -831,7 +893,6 @@ st_translate_mesa_program(
     * Declare input attributes.
     */
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
-      struct gl_fragment_program* fp = (struct gl_fragment_program*)program;
       for (i = 0; i < numInputs; i++) {
          if (program->InputFlags[0] & PROG_PARAM_BIT_CYL_WRAP) {
             t->inputs[i] = ureg_DECL_fs_input_cyl(ureg,
@@ -852,51 +913,7 @@ st_translate_mesa_program(
          /* Must do this after setting up t->inputs, and before
           * emitting constant references, below:
           */
-         struct pipe_screen* pscreen = st_context(ctx)->pipe->screen;
-         boolean invert = FALSE;
-
-         if (fp->OriginUpperLeft) {
-            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT)) {
-            }
-            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT)) {
-               ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
-               invert = TRUE;
-            }
-            else
-               assert(0);
-         }
-         else {
-            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT))
-               ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
-            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT))
-               invert = TRUE;
-            else
-               assert(0);
-         }
-
-         if (fp->PixelCenterInteger) {
-            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER))
-               ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
-            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER))
-               emit_adjusted_wpos(t, program, invert ? 0.5f : -0.5f);
-            else
-               assert(0);
-         }
-         else {
-            if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER)) {
-            }
-            else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
-               ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
-               emit_adjusted_wpos(t, program, invert ? -0.5f : 0.5f);
-            }
-            else
-               assert(0);
-         }
-
-         /* we invert after adjustment so that we avoid the MOV to temporary,
-          * and reuse the adjustment ADD instead */
-         if (invert)
-            emit_inverted_wpos(t, program);
+         emit_wpos(st_context(ctx), t, program, ureg);
       }
 
       if (program->InputsRead & FRAG_BIT_FACE) {
@@ -943,8 +960,9 @@ st_translate_mesa_program(
                * do this before emitting the constant decls below, or this
                * will be missed:
                */
-            unsigned pointSizeClampConst = _mesa_add_state_reference(program->Parameters,
-                                                                     pointSizeClampState);
+            unsigned pointSizeClampConst =
+               _mesa_add_state_reference(program->Parameters,
+                                         pointSizeClampState);
             struct ureg_dst psizregtemp = ureg_DECL_temporary( ureg );
             t->pointSizeConst = ureg_DECL_constant( ureg, pointSizeClampConst );
             t->psizregreal = t->outputs[i];
@@ -963,12 +981,10 @@ st_translate_mesa_program(
       t->address[0] = ureg_DECL_address( ureg );
    }
 
-
    /* Emit constants and immediates.  Mesa uses a single index space
     * for these, so we put all the translated regs in t->constants.
     */
    if (program->Parameters) {
-      
       t->constants = CALLOC( program->Parameters->NumParameters,
                              sizeof t->constants[0] );
       if (t->constants == NULL) {
@@ -1023,7 +1039,8 @@ st_translate_mesa_program(
          possible early return */
       if (t->prevInstWrotePsiz && program->Id) {
          set_insn_start( t, ureg_get_instruction_number( ureg ));
-         ureg_MAX( t->ureg, ureg_writemask(t->outputs[t->psizoutindex], WRITEMASK_X),
+         ureg_MAX( t->ureg,
+                   ureg_writemask(t->outputs[t->psizoutindex], WRITEMASK_X),
                    ureg_src(t->outputs[t->psizoutindex]),
                    ureg_swizzle(t->pointSizeConst, 1,1,1,1));
          ureg_MIN( t->ureg, ureg_writemask(t->psizregreal, WRITEMASK_X),

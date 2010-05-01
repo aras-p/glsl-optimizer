@@ -41,7 +41,7 @@ struct nouveau_texture {
 #define to_nouveau_texture(x) ((struct nouveau_texture *)(x))
 
 #define texture_dirty(t) \
-	to_nouveau_texture(t)->dirty = GL_TRUE;
+	to_nouveau_texture(t)->dirty = GL_TRUE
 
 void
 nouveau_set_texbuffer(__DRIcontext *dri_ctx,

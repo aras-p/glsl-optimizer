@@ -863,7 +863,7 @@ static boolean i915_debug_packet( struct debug_stream *stream )
 
 
 void
-i915_dump_batchbuffer( struct intel_batchbuffer *batch )
+i915_dump_batchbuffer( struct i915_winsys_batchbuffer *batch )
 {
    struct debug_stream stream;
    unsigned *start = (unsigned*)batch->map;

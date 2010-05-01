@@ -73,8 +73,13 @@ extern GLboolean
 _mesa_is_depthstencil_format(GLenum format);
 
 extern GLboolean
+_mesa_is_depth_or_stencil_format(GLenum format);
+
+extern GLboolean
 _mesa_is_dudv_format(GLenum format);
 
+extern GLboolean
+_mesa_is_compressed_format(GLcontext *ctx, GLenum format);
 
 extern GLvoid *
 _mesa_image_address( GLuint dimensions,
@@ -303,7 +308,7 @@ _mesa_clip_drawpixels(const GLcontext *ctx,
 
 extern GLboolean
 _mesa_clip_readpixels(const GLcontext *ctx,
-                      GLint *destX, GLint *destY,
+                      GLint *srcX, GLint *srcY,
                       GLsizei *width, GLsizei *height,
                       struct gl_pixelstore_attrib *pack);
 

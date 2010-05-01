@@ -183,26 +183,26 @@ static void brw_delete_sampler_state(struct pipe_context *pipe,
    FREE(cso);
 }
 
-static void brw_set_sampler_textures(struct pipe_context *pipe,
-				     unsigned num,
-				     struct pipe_texture **texture)
+static void brw_set_fragment_sampler_views(struct pipe_context *pipe,
+                                           unsigned num,
+                                           struct pipe_sampler_view **views)
 {
    struct brw_context *brw = brw_context(pipe);
    int i;
 
    for (i = 0; i < num; i++)
-      pipe_texture_reference(&brw->curr.texture[i], texture[i]);
+      pipe_sampler_view_reference(&brw->curr.fragment_sampler_views[i], views[i]);
 
-   for (i = num; i < brw->curr.num_textures; i++)
-      pipe_texture_reference(&brw->curr.texture[i], NULL);
+   for (i = num; i < brw->curr.num_fragment_sampler_views; i++)
+      pipe_sampler_view_reference(&brw->curr.fragment_sampler_views[i], NULL);
 
-   brw->curr.num_textures = num;
+   brw->curr.num_fragment_sampler_views = num;
    brw->state.dirty.mesa |= PIPE_NEW_BOUND_TEXTURES;
 }
 
-static void brw_set_vertex_sampler_textures(struct pipe_context *pipe,
-                                            unsigned num,
-                                            struct pipe_texture **texture)
+static void brw_set_vertex_sampler_views(struct pipe_context *pipe,
+                                         unsigned num,
+                                         struct pipe_sampler_view **views)
 {
 }
 
@@ -212,17 +212,47 @@ static void brw_bind_vertex_sampler_state(struct pipe_context *pipe,
 }
 
 
+static struct pipe_sampler_view *
+brw_create_sampler_view(struct pipe_context *pipe,
+                        struct pipe_resource *texture,
+                        const struct pipe_sampler_view *templ)
+{
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   if (view) {
+      *view = *templ;
+      view->reference.count = 1;
+      view->texture = NULL;
+      pipe_resource_reference(&view->texture, texture);
+      view->context = pipe;
+   }
+
+   return view;
+}
+
+
+static void
+brw_sampler_view_destroy(struct pipe_context *pipe,
+                         struct pipe_sampler_view *view)
+{
+   pipe_resource_reference(&view->texture, NULL);
+   FREE(view);
+}
+
+
 void brw_pipe_sampler_init( struct brw_context *brw )
 {
    brw->base.create_sampler_state = brw_create_sampler_state;
    brw->base.delete_sampler_state = brw_delete_sampler_state;
 
-   brw->base.set_fragment_sampler_textures = brw_set_sampler_textures;
+   brw->base.set_fragment_sampler_views = brw_set_fragment_sampler_views;
    brw->base.bind_fragment_sampler_states = brw_bind_sampler_state;
 
-   brw->base.set_vertex_sampler_textures = brw_set_vertex_sampler_textures;
+   brw->base.set_vertex_sampler_views = brw_set_vertex_sampler_views;
    brw->base.bind_vertex_sampler_states = brw_bind_vertex_sampler_state;
 
+   brw->base.create_sampler_view = brw_create_sampler_view;
+   brw->base.sampler_view_destroy = brw_sampler_view_destroy;
 }
 void brw_pipe_sampler_cleanup( struct brw_context *brw )
 {

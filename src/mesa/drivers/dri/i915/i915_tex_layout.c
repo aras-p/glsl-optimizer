@@ -67,7 +67,8 @@ static GLint bottom_offsets[6] = {
 
 
 /**
- * Cube texture map layout for i830M-GM915.
+ * Cube texture map layout for i830M-GM915 and
+ * non-compressed cube texture map on GM945.
  *
  * Hardware layout looks like:
  *
@@ -123,13 +124,12 @@ i915_miptree_layout_cube(struct intel_context *intel,
    assert(lvlWidth == lvlHeight); /* cubemap images are square */
 
    /* double pitch for cube layouts */
-   mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, dim * 2);
+   mt->total_width = dim * 2;
    mt->total_height = dim * 4;
 
    for (level = mt->first_level; level <= mt->last_level; level++) {
       intel_miptree_set_level_info(mt, level, 6,
 				   0, 0,
-				   /*OLD: mt->pitch, mt->total_height,*/
 				   lvlWidth, lvlHeight,
 				   1);
       lvlWidth /= 2;
@@ -167,7 +167,7 @@ i915_miptree_layout_3d(struct intel_context *intel,
    GLint level;
 
    /* Calculate the size of a single slice. */
-   mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, mt->width0);
+   mt->total_width = mt->width0;
 
    /* XXX: hardware expects/requires 9 levels at minimum. */
    for (level = mt->first_level; level <= MAX2(8, mt->last_level); level++) {
@@ -210,7 +210,7 @@ i915_miptree_layout_2d(struct intel_context *intel,
    GLuint img_height;
    GLint level;
 
-   mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, mt->width0);
+   mt->total_width = mt->width0;
    mt->total_height = 0;
 
    for (level = mt->first_level; level <= mt->last_level; level++) {
@@ -251,16 +251,15 @@ i915_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt,
       break;
    }
 
-   DBG("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__,
-       mt->pitch,
-       mt->total_height, mt->cpp, mt->pitch * mt->total_height * mt->cpp);
+   DBG("%s: %dx%dx%d\n", __FUNCTION__,
+       mt->total_width, mt->total_height, mt->cpp);
 
    return GL_TRUE;
 }
 
 
 /**
- * Cube texture map layout for GM945 and later.
+ * Compressed cube texture map layout for GM945 and later.
  *
  * The hardware layout looks like the 830-915 layout, except for the small
  * sizes.  A zoomed in view of the layout for 945 is:
@@ -336,9 +335,9 @@ i945_miptree_layout_cube(struct intel_context *intel,
     * or the final row of 4x4, 2x2 and 1x1 faces below this.
     */
    if (dim > 32)
-      mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, dim * 2);
+      mt->total_width = dim * 2;
    else
-      mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, 14 * 8);
+      mt->total_width = 14 * 8;
 
    if (dim >= 4)
       mt->total_height = dim * 4 + 4;
@@ -423,11 +422,11 @@ i945_miptree_layout_3d(struct intel_context *intel,
    GLuint pack_y_pitch;
    GLuint level;
 
-   mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, mt->width0);
+   mt->total_width = mt->width0;
    mt->total_height = 0;
 
    pack_y_pitch = MAX2(mt->height0, 2);
-   pack_x_pitch = mt->pitch;
+   pack_x_pitch = mt->total_width;
    pack_x_nr = 1;
 
    for (level = mt->first_level; level <= mt->last_level; level++) {
@@ -454,7 +453,7 @@ i945_miptree_layout_3d(struct intel_context *intel,
       if (pack_x_pitch > 4) {
 	 pack_x_pitch >>= 1;
 	 pack_x_nr <<= 1;
-	 assert(pack_x_pitch * pack_x_nr <= mt->pitch);
+	 assert(pack_x_pitch * pack_x_nr <= mt->total_width);
       }
 
       if (pack_y_pitch > 2) {
@@ -491,9 +490,8 @@ i945_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt,
       break;
    }
 
-   DBG("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__,
-       mt->pitch,
-       mt->total_height, mt->cpp, mt->pitch * mt->total_height * mt->cpp);
+   DBG("%s: %dx%dx%d\n", __FUNCTION__,
+       mt->total_width, mt->total_height, mt->cpp);
 
    return GL_TRUE;
 }

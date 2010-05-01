@@ -564,7 +564,8 @@ _mesa_ffsll(int64_t val)
 unsigned int
 _mesa_bitcount(unsigned int n)
 {
-#if defined(__GNUC__)
+#if defined(__GNUC__) && \
+	((_GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
    return __builtin_popcount(n);
 #else
    unsigned int bits;
@@ -795,18 +796,20 @@ _mesa_strdup( const char *s )
    }
 }
 
-/** Wrapper around strtod() */
-double
-_mesa_strtod( const char *s, char **end )
+/** Wrapper around strtof() */
+float
+_mesa_strtof( const char *s, char **end )
 {
 #ifdef _GNU_SOURCE
    static locale_t loc = NULL;
    if (!loc) {
       loc = newlocale(LC_CTYPE_MASK, "C", NULL);
    }
-   return strtod_l(s, end, loc);
+   return strtof_l(s, end, loc);
+#elif defined(_ISOC99_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+   return strtof(s, end);
 #else
-   return strtod(s, end);
+   return (float)strtod(s, end);
 #endif
 }
 

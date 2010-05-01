@@ -52,87 +52,92 @@ struct lp_shader_input {
    unsigned src_index;          /* where to find values in incoming vertices */
 };
 
-struct pipe_texture;
+struct pipe_resource;
 struct pipe_surface;
-struct pipe_buffer;
 struct pipe_blend_color;
 struct pipe_screen;
 struct pipe_framebuffer_state;
 struct lp_fragment_shader;
 struct lp_jit_context;
 
-struct setup_context *
+struct lp_setup_context *
 lp_setup_create( struct pipe_context *pipe,
                  struct draw_context *draw );
 
 void
-lp_setup_clear(struct setup_context *setup,
+lp_setup_clear(struct lp_setup_context *setup,
                const float *clear_color,
                double clear_depth,
                unsigned clear_stencil,
                unsigned flags);
 
 struct pipe_fence_handle *
-lp_setup_fence( struct setup_context *setup );
+lp_setup_fence( struct lp_setup_context *setup );
 
 
 void
-lp_setup_flush( struct setup_context *setup,
+lp_setup_flush( struct lp_setup_context *setup,
                 unsigned flags );
 
 
 void
-lp_setup_bind_framebuffer( struct setup_context *setup,
+lp_setup_bind_framebuffer( struct lp_setup_context *setup,
                            const struct pipe_framebuffer_state *fb );
 
 void 
-lp_setup_set_triangle_state( struct setup_context *setup,
+lp_setup_set_triangle_state( struct lp_setup_context *setup,
                              unsigned cullmode,
                              boolean front_is_ccw,
-                             boolean scissor );
+                             boolean scissor,
+                             boolean gl_rasterization_rules );
 
 void
-lp_setup_set_fs_inputs( struct setup_context *setup,
+lp_setup_set_fs_inputs( struct lp_setup_context *setup,
                         const struct lp_shader_input *interp,
                         unsigned nr );
 
 void
-lp_setup_set_fs_functions( struct setup_context *setup,
+lp_setup_set_fs_functions( struct lp_setup_context *setup,
                            lp_jit_frag_func jit_function0,
                            lp_jit_frag_func jit_function1,
                            boolean opaque );
 
 void
-lp_setup_set_fs_constants(struct setup_context *setup,
-                          struct pipe_buffer *buffer);
+lp_setup_set_fs_constants(struct lp_setup_context *setup,
+                          struct pipe_resource *buffer);
 
 
 void
-lp_setup_set_alpha_ref_value( struct setup_context *setup,
+lp_setup_set_alpha_ref_value( struct lp_setup_context *setup,
                               float alpha_ref_value );
 
 void
-lp_setup_set_blend_color( struct setup_context *setup,
+lp_setup_set_stencil_ref_values( struct lp_setup_context *setup,
+                                 const ubyte refs[2] );
+
+void
+lp_setup_set_blend_color( struct lp_setup_context *setup,
                           const struct pipe_blend_color *blend_color );
 
 void
-lp_setup_set_scissor( struct setup_context *setup,
+lp_setup_set_scissor( struct lp_setup_context *setup,
                       const struct pipe_scissor_state *scissor );
 
 void
-lp_setup_set_sampler_textures( struct setup_context *setup,
-                               unsigned num, struct pipe_texture **texture);
+lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views);
 
 unsigned
-lp_setup_is_texture_referenced( const struct setup_context *setup,
-                                const struct pipe_texture *texture );
+lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
+                                const struct pipe_resource *texture );
 
 void
-lp_setup_set_flatshade_first( struct setup_context *setup, 
+lp_setup_set_flatshade_first( struct lp_setup_context *setup, 
                               boolean flatshade_first );
 
 void
-lp_setup_set_vertex_info( struct setup_context *setup, 
+lp_setup_set_vertex_info( struct lp_setup_context *setup, 
                           struct vertex_info *info );
 
 

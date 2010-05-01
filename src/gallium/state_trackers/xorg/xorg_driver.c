@@ -676,10 +676,9 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     if (ms->screen) {
-	float maxf;
 	int max;
-	maxf = ms->screen->get_paramf(ms->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
-	max = (1 << (int)(maxf - 1.0f));
+	max = ms->screen->get_param(ms->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+	max = 1 << (max - 1);
 	max_width = max < max_width ? max : max_width;
 	max_height = max < max_height ? max : max_height;
     }
@@ -922,6 +921,11 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
 	drv_leave_vt(scrnIndex, 0);
     }
 
+    if (ms->cursor) {
+       FreeCursor(ms->cursor, None);
+       ms->cursor = NULL;
+    }
+
     if (cust && cust->winsys_screen_close)
 	cust->winsys_screen_close(cust);
 
@@ -981,7 +985,7 @@ drv_destroy_front_buffer_ga3d(ScrnInfoPtr pScrn)
 	ms->fb_id = -1;
     }
 
-    pipe_texture_reference(&ms->root_texture, NULL);
+    pipe_resource_reference(&ms->root_texture, NULL);
     return TRUE;
 }
 
@@ -989,8 +993,9 @@ static Bool
 drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-    unsigned handle, stride, fb_id;
-    struct pipe_texture *tex;
+    struct pipe_resource *tex;
+    struct winsys_handle whandle;
+    unsigned fb_id;
     int ret;
 
     ms->noEvict = TRUE;
@@ -1001,10 +1006,10 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
     if (!tex)
 	return FALSE;
 
-    if (!ms->api->local_handle_from_texture(ms->api, ms->screen,
-					    tex,
-					    &stride,
-					    &handle))
+    memset(&whandle, 0, sizeof(whandle));
+    whandle.type = DRM_API_HANDLE_TYPE_KMS;
+
+    if (!ms->screen->resource_get_handle(ms->screen, tex, &whandle))
 	goto err_destroy;
 
     ret = drmModeAddFB(ms->fd,
@@ -1012,8 +1017,8 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
 		       pScrn->virtualY,
 		       pScrn->depth,
 		       pScrn->bitsPerPixel,
-		       stride,
-		       handle,
+		       whandle.stride,
+		       whandle.handle,
 		       &fb_id);
     if (ret) {
 	debug_printf("%s: failed to create framebuffer (%i, %s)\n",
@@ -1028,14 +1033,14 @@ drv_create_front_buffer_ga3d(ScrnInfoPtr pScrn)
     pScrn->frameY0 = 0;
     drv_adjust_frame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
 
-    pipe_texture_reference(&ms->root_texture, tex);
-    pipe_texture_reference(&tex, NULL);
+    pipe_resource_reference(&ms->root_texture, tex);
+    pipe_resource_reference(&tex, NULL);
     ms->fb_id = fb_id;
 
     return TRUE;
 
 err_destroy:
-    pipe_texture_reference(&tex, NULL);
+    pipe_resource_reference(&tex, NULL);
     return FALSE;
 }
 
@@ -1045,7 +1050,7 @@ drv_bind_front_buffer_ga3d(ScrnInfoPtr pScrn)
     modesettingPtr ms = modesettingPTR(pScrn);
     ScreenPtr pScreen = pScrn->pScreen;
     PixmapPtr rootPixmap = pScreen->GetScreenPixmap(pScreen);
-    struct pipe_texture *check;
+    struct pipe_resource *check;
 
     xorg_exa_set_displayed_usage(rootPixmap);
     xorg_exa_set_shared_usage(rootPixmap);
@@ -1057,7 +1062,7 @@ drv_bind_front_buffer_ga3d(ScrnInfoPtr pScrn)
     if (ms->root_texture != check)
 	FatalError("Created new root texture\n");
 
-    pipe_texture_reference(&check, NULL);
+    pipe_resource_reference(&check, NULL);
     return TRUE;
 }
 

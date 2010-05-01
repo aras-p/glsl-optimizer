@@ -31,7 +31,7 @@
 
 #include "svga_context.h"
 #include "svga_state.h"
-#include "svga_screen_texture.h"
+#include "svga_surface.h"
 
 
 static enum pipe_error
@@ -63,7 +63,7 @@ try_clear(struct svga_context *svga,
    if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && fb->zsbuf) {
       flags |= SVGA3D_CLEAR_DEPTH;
 
-      if (svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_S8Z24_UNORM)
+      if (svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM)
          flags |= SVGA3D_CLEAR_STENCIL;
 
       rect.w = MAX2(rect.w, fb->zsbuf->width);

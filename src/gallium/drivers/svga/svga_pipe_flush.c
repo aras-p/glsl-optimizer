@@ -25,7 +25,7 @@
 
 #include "pipe/p_defines.h"
 #include "svga_screen.h"
-#include "svga_screen_texture.h"
+#include "svga_surface.h"
 #include "svga_context.h"
 #include "svga_debug.h"
 

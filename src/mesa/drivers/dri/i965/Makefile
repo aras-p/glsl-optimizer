@@ -54,6 +54,7 @@ DRIVER_SOURCES = \
 	brw_gs_emit.c \
 	brw_gs_state.c \
 	brw_misc_state.c \
+	brw_optimize.c \
 	brw_program.c \
 	brw_queryobj.c \
 	brw_sf.c \
@@ -99,7 +100,6 @@ DRIVER_SOURCES = \
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
-	$(MINIGLX_SOURCES) \
 	$(DRIVER_SOURCES)
 
 ASM_SOURCES = 

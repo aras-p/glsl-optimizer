@@ -12,6 +12,7 @@
 #define PCI_CHIP_RV380_3150		0x3150
 #define PCI_CHIP_RV380_3152		0x3152
 #define PCI_CHIP_RV380_3154		0x3154
+#define PCI_CHIP_RV380_3155		0x3155
 #define PCI_CHIP_RV380_3E50		0x3E50
 #define PCI_CHIP_RV380_3E54		0x3E54
 #define PCI_CHIP_RS100_4136		0x4136
@@ -357,6 +358,7 @@
 #define PCI_CHIP_RV770_9456             0x9456
 #define PCI_CHIP_RV770_945A             0x945A
 #define PCI_CHIP_RV770_945B             0x945B
+#define PCI_CHIP_RV770_945E             0x945E
 #define PCI_CHIP_RV790_9460             0x9460
 #define PCI_CHIP_RV790_9462             0x9462
 #define PCI_CHIP_RV770_946A             0x946A
@@ -368,6 +370,7 @@
 #define PCI_CHIP_RV730_9487             0x9487
 #define PCI_CHIP_RV730_9488             0x9488
 #define PCI_CHIP_RV730_9489             0x9489
+#define PCI_CHIP_RV730_948A             0x948A
 #define PCI_CHIP_RV730_948F             0x948F
 #define PCI_CHIP_RV730_9490             0x9490
 #define PCI_CHIP_RV730_9491             0x9491
@@ -386,6 +389,7 @@
 #define PCI_CHIP_RV710_9553             0x9553
 #define PCI_CHIP_RV710_9555             0x9555
 #define PCI_CHIP_RV710_9557             0x9557
+#define PCI_CHIP_RV710_955F             0x955F
 
 #define PCI_CHIP_RV740_94A0             0x94A0
 #define PCI_CHIP_RV740_94A1             0x94A1

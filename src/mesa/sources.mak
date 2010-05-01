@@ -80,6 +80,7 @@ MAIN_SOURCES = \
 	main/texrender.c \
 	main/texstate.c \
 	main/texstore.c \
+	main/transformfeedback.c \
 	main/varray.c \
 	main/version.c \
 	main/viewport.c \
@@ -88,6 +89,8 @@ MAIN_SOURCES = \
 GLAPI_SOURCES = \
 	glapi/glapi.c \
 	glapi/glapi_dispatch.c \
+	glapi/glapi_entrypoint.c \
+	glapi/glapi_execmem.c \
 	glapi/glapi_getproc.c \
 	glapi/glapi_nop.c \
 	glapi/glthread.c
@@ -196,6 +199,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_condrender.c \
 	state_tracker/st_cb_flush.c \
 	state_tracker/st_cb_drawpixels.c \
+	state_tracker/st_cb_eglimage.c \
 	state_tracker/st_cb_fbo.c \
 	state_tracker/st_cb_feedback.c \
 	state_tracker/st_cb_program.c \
@@ -210,8 +214,8 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_draw_feedback.c \
 	state_tracker/st_extensions.c \
 	state_tracker/st_format.c \
-	state_tracker/st_framebuffer.c \
 	state_tracker/st_gen_mipmap.c \
+	state_tracker/st_manager.c \
 	state_tracker/st_mesa_to_tgsi.c \
 	state_tracker/st_program.c \
 	state_tracker/st_texture.c

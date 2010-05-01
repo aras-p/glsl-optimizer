@@ -52,11 +52,11 @@ static void upload_S0S1(struct i915_context *i915)
 {
    unsigned LIS0, LIS1;
 
-   /* INTEL_NEW_VBO */
+   /* I915_NEW_VBO */
    /* TODO: re-use vertex buffers here? */
    LIS0 = i915->vbo_offset;
 
-   /* INTEL_NEW_VERTEX_SIZE -- do this where the vertex size is calculated! 
+   /* I915_NEW_VERTEX_SIZE -- do this where the vertex size is calculated! 
     */
    {
       unsigned vertex_size = i915->current.vertex_info.size;
@@ -65,7 +65,7 @@ static void upload_S0S1(struct i915_context *i915)
 	      (vertex_size << 16));
    }
 
-   /* INTEL_NEW_VBO */
+   /* I915_NEW_VBO */
    /* TODO: use a vertex generation number to track vbo changes */
    if (1 ||
        i915->current.immediate[I915_IMMEDIATE_S0] != LIS0 ||

@@ -200,6 +200,7 @@ static void r100_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.emit_query_finish = r100_emit_query_finish;
    radeon->vtbl.check_blit = r100_check_blit;
    radeon->vtbl.blit = r100_blit;
+   radeon->vtbl.is_format_renderable = radeonIsFormatRenderable;
 }
 
 /* Create the device specific context.

@@ -36,6 +36,7 @@ static int tex_width=64, tex_height=64, tex_depth=64;
 static float angx=0, angy=0, angz=0;
 static int texgen = 2, animate = 1, smooth = 1, wireframe = 0;
 static int CurTexture = NOISE_TEXTURE, CurObject = TORUS;
+static GLenum Filter = GL_LINEAR;
 
 
 static void
@@ -298,8 +299,6 @@ create3Dtexture(void)
    printf("setting up 3d texture...\n");
 
    glBindTexture(GL_TEXTURE_3D, NOISE_TEXTURE);
-   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
@@ -406,6 +405,9 @@ drawScene(void)
       glDisable(GL_TEXTURE_GEN_R);
    }
 
+   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, Filter);
+   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, Filter);
+
    glCallList(CurObject);
    glPopMatrix();
 
@@ -505,6 +507,12 @@ KeyHandler(unsigned char key, int x, int y)
       else
          CurObject = TORUS;
       break;
+   case 'f':
+      if (Filter == GL_LINEAR)
+         Filter = GL_NEAREST;
+      else
+         Filter = GL_LINEAR;
+      break;
    case 'i':
       if (CurTexture == NOISE_TEXTURE)
          CurTexture = GRADIENT_TEXTURE;
@@ -513,6 +521,7 @@ KeyHandler(unsigned char key, int x, int y)
       glBindTexture(GL_TEXTURE_3D, CurTexture);
       break;
    case 'a':
+   case ' ':
       animate = !animate;
       if (animate)
          glutIdleFunc(Idle);
@@ -559,8 +568,6 @@ create3Dgradient(void)
 
 
    glBindTexture(GL_TEXTURE_3D, GRADIENT_TEXTURE);
-   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);

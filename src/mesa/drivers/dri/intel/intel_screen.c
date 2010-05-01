@@ -96,11 +96,6 @@ const GLuint __driNConfigOptions = 11;
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE */
 
-static const __DRItexOffsetExtension intelTexOffsetExtension = {
-   { __DRI_TEX_OFFSET },
-   intelSetTexOffset,
-};
-
 static const __DRItexBufferExtension intelTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    intelSetTexBuffer,
@@ -227,10 +222,10 @@ static struct __DRIimageExtensionRec intelImageExtension = {
 
 static const __DRIextension *intelScreenExtensions[] = {
     &driReadDrawableExtension,
-    &intelTexOffsetExtension.base,
     &intelTexBufferExtension.base,
     &intelFlushExtension.base,
     &intelImageExtension.base,
+    &dri2ConfigQueryExtension.base,
     NULL
 };
 
@@ -318,18 +313,13 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       }
 
       if (mesaVis->depthBits == 24) {
-	 if (mesaVis->stencilBits == 8) {
-	    /* combined depth/stencil buffer */
-	    struct intel_renderbuffer *depthStencilRb
-	       = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
-	    /* note: bind RB to two attachment points */
-	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthStencilRb->Base);
-	    _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depthStencilRb->Base);
-	 } else {
-	    struct intel_renderbuffer *depthRb
-	       = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
-	    _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-	 }
+	 assert(mesaVis->stencilBits == 8);
+	 /* combined depth/stencil buffer */
+	 struct intel_renderbuffer *depthStencilRb
+	    = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
+	 /* note: bind RB to two attachment points */
+	 _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthStencilRb->Base);
+	 _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depthStencilRb->Base);
       }
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */

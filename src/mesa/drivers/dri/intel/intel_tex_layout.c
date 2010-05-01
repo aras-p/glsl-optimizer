@@ -74,14 +74,14 @@ void i945_miptree_layout_2d( struct intel_context *intel,
    GLuint width = mt->width0;
    GLuint height = mt->height0;
 
-   mt->pitch = mt->width0;
+   mt->total_width = mt->width0;
    intel_get_texture_alignment_unit(mt->internal_format, &align_w, &align_h);
 
    if (mt->compressed) {
-       mt->pitch = ALIGN(mt->width0, align_w);
+       mt->total_width = ALIGN(mt->width0, align_w);
    }
 
-   /* May need to adjust pitch to accomodate the placement of
+   /* May need to adjust width to accomodate the placement of
     * the 2nd mipmap.  This occurs when the alignment
     * constraints of mipmap placement push the right edge of the
     * 2nd mipmap out past the width of its parent.
@@ -97,15 +97,11 @@ void i945_miptree_layout_2d( struct intel_context *intel,
                + minify(minify(mt->width0));
        }
 
-       if (mip1_width > mt->pitch) {
-           mt->pitch = mip1_width;
+       if (mip1_width > mt->total_width) {
+           mt->total_width = mip1_width;
        }
    }
 
-   /* Pitch must be a whole number of dwords, even though we
-    * express it in texels.
-    */
-   mt->pitch = intel_miptree_pitch_align (intel, mt, tiling, mt->pitch);
    mt->total_height = 0;
 
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {

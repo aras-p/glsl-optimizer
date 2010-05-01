@@ -98,7 +98,7 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    else
       gs.thread4.max_threads = 0;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       gs.thread4.rendering_enable = 1;
 
    if (INTEL_DEBUG & DEBUG_STATS)

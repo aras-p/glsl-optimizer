@@ -43,6 +43,7 @@ struct cso_cache {
    struct cso_hash *vs_hash;
    struct cso_hash *rasterizer_hash;
    struct cso_hash *sampler_hash;
+   struct cso_hash *velements_hash;
    int    max_size;
 
    cso_sanitize_callback sanitize_cb;
@@ -108,6 +109,9 @@ static struct cso_hash *_cso_hash_for_type(struct cso_cache *sc, enum cso_cache_
    case CSO_VERTEX_SHADER:
       hash = sc->vs_hash;
       break;
+   case CSO_VELEMENTS:
+      hash = sc->velements_hash;
+      break;
    }
 
    return hash;
@@ -161,6 +165,13 @@ static void delete_vs_state(void *state, void *data)
    FREE(state);
 }
 
+static void delete_velements(void *state, void *data)
+{
+   struct cso_velements *cso = (struct cso_velements *)state;
+   if (cso->delete_state)
+      cso->delete_state(cso->context, cso->data);
+   FREE(state);
+}
 
 static INLINE void delete_cso(void *state, enum cso_cache_type type)
 {
@@ -182,6 +193,9 @@ static INLINE void delete_cso(void *state, enum cso_cache_type type)
       break;
    case CSO_VERTEX_SHADER:
       delete_vs_state(state, 0);
+      break;
+   case CSO_VELEMENTS:
+      delete_velements(state, 0);
       break;
    default:
       assert(0);
@@ -294,6 +308,7 @@ struct cso_cache *cso_cache_create(void)
    sc->rasterizer_hash    = cso_hash_create();
    sc->fs_hash            = cso_hash_create();
    sc->vs_hash            = cso_hash_create();
+   sc->velements_hash     = cso_hash_create();
    sc->sanitize_cb        = sanitize_cb;
    sc->sanitize_data      = 0;
 
@@ -325,6 +340,9 @@ void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
    case CSO_VERTEX_SHADER:
       hash = sc->vs_hash;
       break;
+   case CSO_VELEMENTS:
+      hash = sc->velements_hash;
+      break;
    }
 
    iter = cso_hash_first_node(hash);
@@ -351,6 +369,7 @@ void cso_cache_delete(struct cso_cache *sc)
    cso_for_each_state(sc, CSO_VERTEX_SHADER, delete_vs_state, 0);
    cso_for_each_state(sc, CSO_RASTERIZER, delete_rasterizer_state, 0);
    cso_for_each_state(sc, CSO_SAMPLER, delete_sampler_state, 0);
+   cso_for_each_state(sc, CSO_VELEMENTS, delete_velements, 0);
 
    cso_hash_delete(sc->blend_hash);
    cso_hash_delete(sc->sampler_hash);
@@ -358,6 +377,7 @@ void cso_cache_delete(struct cso_cache *sc)
    cso_hash_delete(sc->rasterizer_hash);
    cso_hash_delete(sc->fs_hash);
    cso_hash_delete(sc->vs_hash);
+   cso_hash_delete(sc->velements_hash);
    FREE(sc);
 }
 
@@ -372,6 +392,7 @@ void cso_set_maximum_cache_size(struct cso_cache *sc, int number)
    sanitize_hash(sc, sc->vs_hash, CSO_VERTEX_SHADER, sc->max_size);
    sanitize_hash(sc, sc->rasterizer_hash, CSO_RASTERIZER, sc->max_size);
    sanitize_hash(sc, sc->sampler_hash, CSO_SAMPLER, sc->max_size);
+   sanitize_hash(sc, sc->velements_hash, CSO_VELEMENTS, sc->max_size);
 }
 
 int cso_maximum_cache_size(const struct cso_cache *sc)

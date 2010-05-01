@@ -42,8 +42,8 @@
 #include "pipe/p_state.h"
 
 static INLINE struct pipe_transfer *
-st_cond_flush_get_tex_transfer(struct vg_context *st,
-			       struct pipe_texture *pt,
+st_cond_flush_get_transfer(struct vg_context *st,
+			       struct pipe_resource *pt,
 			       unsigned int face,
 			       unsigned int level,
 			       unsigned int zslice,
@@ -51,22 +51,15 @@ st_cond_flush_get_tex_transfer(struct vg_context *st,
 			       unsigned int x, unsigned int y,
 			       unsigned int w, unsigned int h)
 {
-   struct pipe_screen *screen = st->pipe->screen;
    struct pipe_context *pipe = st->pipe;
-   unsigned referenced =
-      pipe->is_texture_referenced(pipe, pt, face, level);
 
-   if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-		      (usage & PIPE_TRANSFER_WRITE)))
-      vgFlush();
-
-   return screen->get_tex_transfer(screen, pt, face, level, zslice, usage,
-				   x, y, w, h);
+   return pipe_get_transfer(pipe, pt, face, level, zslice, usage,
+			    x, y, w, h);
 }
 
 static INLINE struct pipe_transfer *
-st_no_flush_get_tex_transfer(struct vg_context *st,
-			     struct pipe_texture *pt,
+st_no_flush_get_transfer(struct vg_context *st,
+			     struct pipe_resource *pt,
 			     unsigned int face,
 			     unsigned int level,
 			     unsigned int zslice,
@@ -74,84 +67,55 @@ st_no_flush_get_tex_transfer(struct vg_context *st,
 			     unsigned int x, unsigned int y,
 			     unsigned int w, unsigned int h)
 {
-   struct pipe_screen *screen = st->pipe->screen;
-
-   return screen->get_tex_transfer(screen, pt, face, level,
-				   zslice, usage, x, y, w, h);
-}
-
-static INLINE void *
-st_cond_flush_pipe_buffer_map(struct vg_context *st,
-			      struct pipe_buffer *buf,
-			      unsigned int map_flags)
-{
    struct pipe_context *pipe = st->pipe;
-   unsigned int referenced = pipe->is_buffer_referenced(pipe, buf);
 
-   if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-		      (map_flags & PIPE_BUFFER_USAGE_CPU_WRITE)))
-      vgFlush();
-
-   return pipe_buffer_map(pipe->screen, buf, map_flags);
-}
-
-static INLINE void *
-st_no_flush_pipe_buffer_map(struct vg_context *st,
-			    struct pipe_buffer *buf,
-			    unsigned int map_flags)
-{
-   return pipe_buffer_map(st->pipe->screen, buf, map_flags);
+   return pipe_get_transfer(pipe, pt, face, level,
+			    zslice, usage, x, y, w, h);
 }
 
 
 static INLINE void
 st_cond_flush_pipe_buffer_write(struct vg_context *st,
-				struct pipe_buffer *buf,
+				struct pipe_resource *buf,
 				unsigned int offset,
 				unsigned int size,
 				const void * data)
 {
    struct pipe_context *pipe = st->pipe;
 
-   if (pipe->is_buffer_referenced(pipe, buf))
-      vgFlush();
-
-   pipe_buffer_write(pipe->screen, buf, offset, size, data);
+   pipe_buffer_write(pipe, buf, offset, size, data);
 }
 
 static INLINE void
 st_no_flush_pipe_buffer_write(struct vg_context *st,
-			      struct pipe_buffer *buf,
+			      struct pipe_resource *buf,
 			      unsigned int offset,
 			      unsigned int size,
 			      const void * data)
 {
-   pipe_buffer_write(st->pipe->screen, buf, offset, size, data);
+   pipe_buffer_write(st->pipe, buf, offset, size, data);
 }
 
 static INLINE void
 st_cond_flush_pipe_buffer_read(struct vg_context *st,
-			       struct pipe_buffer *buf,
+			       struct pipe_resource *buf,
 			       unsigned int offset,
 			       unsigned int size,
 			       void * data)
 {
    struct pipe_context *pipe = st->pipe;
 
-   if (pipe->is_buffer_referenced(pipe, buf) & PIPE_REFERENCED_FOR_WRITE)
-      vgFlush();
-
-   pipe_buffer_read(pipe->screen, buf, offset, size, data);
+   pipe_buffer_read(pipe, buf, offset, size, data);
 }
 
 static INLINE void
 st_no_flush_pipe_buffer_read(struct vg_context *st,
-			     struct pipe_buffer *buf,
+			     struct pipe_resource *buf,
 			     unsigned int offset,
 			     unsigned int size,
 			     void * data)
 {
-   pipe_buffer_read(st->pipe->screen, buf, offset, size, data);
+   pipe_buffer_read(st->pipe, buf, offset, size, data);
 }
 
 #endif

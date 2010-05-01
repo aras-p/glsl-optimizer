@@ -77,10 +77,27 @@ static int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom)
 	cnt = vpu_count(atom->cmd);
 
 	if (r300->radeon.radeonScreen->kernel_mm) {
-		extra = 5;
+		extra = 3;
 	}
 
 	return cnt ? (cnt * 4) + extra : 0;
+}
+
+static int check_vpp(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+    int cnt;
+    int extra = 1;
+
+    if (r300->radeon.radeonScreen->kernel_mm) {
+        cnt = r300->selected_vp->code.constants.Count * 4;
+        extra = 3;
+    } else {
+        cnt = vpu_count(atom->cmd);
+        extra = 1;
+    }
+
+    return cnt ? (cnt * 4) + extra : 0;
 }
 
 void r300_emit_vpu(struct r300_context *r300,
@@ -90,8 +107,7 @@ void r300_emit_vpu(struct r300_context *r300,
 {
     BATCH_LOCALS(&r300->radeon);
 
-    BEGIN_BATCH_NO_AUTOSTATE(5 + len);
-    OUT_BATCH_REGVAL(R300_VAP_PVS_STATE_FLUSH_REG, 0);
+    BEGIN_BATCH_NO_AUTOSTATE(3 + len);
     OUT_BATCH_REGVAL(R300_VAP_PVS_VECTOR_INDX_REG, addr);
     OUT_BATCH(CP_PACKET0(R300_VAP_PVS_UPLOAD_DATA, len-1) | RADEON_ONE_REG_WR);
     OUT_BATCH_TABLE(data, len);
@@ -102,13 +118,24 @@ static void emit_vpu_state(GLcontext *ctx, struct radeon_state_atom * atom)
 {
     r300ContextPtr r300 = R300_CONTEXT(ctx);
     drm_r300_cmd_header_t cmd;
-    uint32_t addr, ndw;
+    uint32_t addr;
 
     cmd.u = atom->cmd[0];
     addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
-    ndw = atom->check(ctx, atom);
 
     r300_emit_vpu(r300, &atom->cmd[1], vpu_count(atom->cmd) * 4, addr);
+}
+
+static void emit_vpp_state(GLcontext *ctx, struct radeon_state_atom * atom)
+{
+    r300ContextPtr r300 = R300_CONTEXT(ctx);
+    drm_r300_cmd_header_t cmd;
+    uint32_t addr;
+
+    cmd.u = atom->cmd[0];
+    addr = (cmd.vpu.adrhi << 8) | cmd.vpu.adrlo;
+
+    r300_emit_vpu(r300, &atom->cmd[1], r300->selected_vp->code.constants.Count * 4, addr);
 }
 
 void r500_emit_fp(struct r300_context *r300,
@@ -333,36 +360,37 @@ void r300_emit_cb_setup(struct r300_context *r300,
     assert(offset % 32 == 0);
 
     switch (format) {
-        case MESA_FORMAT_RGB565:
-            assert(_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_RGB565;
+        case MESA_FORMAT_SL8:
+        case MESA_FORMAT_A8:
+        case MESA_FORMAT_L8:
+        case MESA_FORMAT_I8:
+            cbpitch |= R300_COLOR_FORMAT_I8;
             break;
+        case MESA_FORMAT_RGB565:
         case MESA_FORMAT_RGB565_REV:
-            assert(!_mesa_little_endian());
             cbpitch |= R300_COLOR_FORMAT_RGB565;
             break;
         case MESA_FORMAT_ARGB4444:
-            assert(_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_ARGB4444;
-            break;
         case MESA_FORMAT_ARGB4444_REV:
-            assert(!_mesa_little_endian());
             cbpitch |= R300_COLOR_FORMAT_ARGB4444;
             break;
+        case MESA_FORMAT_RGBA5551:
         case MESA_FORMAT_ARGB1555:
-            assert(_mesa_little_endian());
+        case MESA_FORMAT_ARGB1555_REV:
             cbpitch |= R300_COLOR_FORMAT_ARGB1555;
             break;
-        case MESA_FORMAT_ARGB1555_REV:
-            assert(!_mesa_little_endian());
-            cbpitch |= R300_COLOR_FORMAT_ARGB1555;
+        case MESA_FORMAT_RGBA8888:
+        case MESA_FORMAT_RGBA8888_REV:
+        case MESA_FORMAT_XRGB8888:
+        case MESA_FORMAT_ARGB8888:
+        case MESA_FORMAT_XRGB8888_REV:
+        case MESA_FORMAT_ARGB8888_REV:
+        case MESA_FORMAT_SRGBA8:
+        case MESA_FORMAT_SARGB8:
+            cbpitch |= R300_COLOR_FORMAT_ARGB8888;
             break;
         default:
-            if (cpp == 4) {
-                cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-            } else {
-                _mesa_problem(r300->radeon.glCtx, "unexpected format in emit_cb_offset()");;
-            }
+            _mesa_problem(r300->radeon.glCtx, "unexpected format in emit_cb_offset()");
             break;
     }
 
@@ -778,24 +806,6 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	/* VPU only on TCL */
 	if (has_tcl) {
 		int i;
-		if (r300->radeon.radeonScreen->kernel_mm) {
-			ALLOC_STATE(vap_flush, always, 10, 0);
-			/* flush processing vertices */
-			r300->hw.vap_flush.cmd[0] = cmdpacket0(r300->radeon.radeonScreen, R300_SC_SCREENDOOR, 1);
-			r300->hw.vap_flush.cmd[1] = 0;
-			r300->hw.vap_flush.cmd[2] = cmdpacket0(r300->radeon.radeonScreen, R300_RB3D_DSTCACHE_CTLSTAT, 1);
-			r300->hw.vap_flush.cmd[3] = R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D;
-			r300->hw.vap_flush.cmd[4] = cmdpacket0(r300->radeon.radeonScreen, RADEON_WAIT_UNTIL, 1);
-			r300->hw.vap_flush.cmd[5] = RADEON_WAIT_3D_IDLECLEAN;
-			r300->hw.vap_flush.cmd[6] = cmdpacket0(r300->radeon.radeonScreen, R300_SC_SCREENDOOR, 1);
-			r300->hw.vap_flush.cmd[7] = 0xffffff;
-			r300->hw.vap_flush.cmd[8] = cmdpacket0(r300->radeon.radeonScreen, R300_VAP_PVS_STATE_FLUSH_REG, 1);
-			r300->hw.vap_flush.cmd[9] = 0;
-		} else {
-			ALLOC_STATE(vap_flush, never, 10, 0);
-		}
-
-
 		ALLOC_STATE(vpi, vpu, R300_VPI_CMDSIZE, 0);
 		r300->hw.vpi.cmd[0] =
 			cmdvpu(r300->radeon.radeonScreen, R300_PVS_CODE_START, 0);
@@ -803,11 +813,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 			r300->hw.vpi.emit = emit_vpu_state;
 
 		if (is_r500) {
-			ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+			ALLOC_STATE(vpp, vpp, R300_VPP_CMDSIZE, 0);
 			r300->hw.vpp.cmd[0] =
 				cmdvpu(r300->radeon.radeonScreen, R500_PVS_CONST_START, 0);
 			if (r300->radeon.radeonScreen->kernel_mm)
-				r300->hw.vpp.emit = emit_vpu_state;
+				r300->hw.vpp.emit = emit_vpp_state;
 
 			ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 			r300->hw.vps.cmd[0] =
@@ -824,11 +834,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 					r300->hw.vpucp[i].emit = emit_vpu_state;
 			}
 		} else {
-			ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+			ALLOC_STATE(vpp, vpp, R300_VPP_CMDSIZE, 0);
 			r300->hw.vpp.cmd[0] =
 				cmdvpu(r300->radeon.radeonScreen, R300_PVS_CONST_START, 0);
 			if (r300->radeon.radeonScreen->kernel_mm)
-				r300->hw.vpp.emit = emit_vpu_state;
+				r300->hw.vpp.emit = emit_vpp_state;
 
 			ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 			r300->hw.vps.cmd[0] =

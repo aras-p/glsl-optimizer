@@ -40,7 +40,7 @@ extern void r700UpdateShaderStates(GLcontext * ctx);
 extern void r700UpdateViewportOffset(GLcontext * ctx);
 
 extern void r700InitState (GLcontext * ctx);
-extern void r700InitStateFuncs (struct dd_function_table *functions);
+extern void r700InitStateFuncs (radeonContextPtr radeon, struct dd_function_table *functions);
 
 extern void r700SetScissor(context_t *context);
 

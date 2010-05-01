@@ -236,7 +236,7 @@ try_pbo_upload(struct intel_context *intel,
 				  intelImage->face, 0,
 				  &dst_x, &dst_y);
 
-   dst_stride = intelImage->mt->pitch;
+   dst_stride = intelImage->mt->region->pitch;
 
    if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
       intelFlush(&intel->ctx);
@@ -290,7 +290,7 @@ try_pbo_zcopy(struct intel_context *intel,
 				  intelImage->face, 0,
 				  &dst_x, &dst_y);
 
-   dst_stride = intelImage->mt->pitch;
+   dst_stride = intelImage->mt->region->pitch;
 
    if (src_stride != dst_stride || dst_x != 0 || dst_y != 0 ||
        src_offset != 0) {
@@ -704,29 +704,6 @@ intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 {
    intel_get_tex_image(ctx, target, level, 0, 0, pixels,
 		       texObj, texImage, GL_TRUE);
-}
-
-
-void
-intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
-		  unsigned long long offset, GLint depth, GLuint pitch)
-{
-   struct intel_context *intel = pDRICtx->driverPrivate;
-   struct gl_texture_object *tObj = _mesa_lookup_texture(&intel->ctx, texname);
-   struct intel_texture_object *intelObj = intel_texture_object(tObj);
-
-   if (!intelObj)
-      return;
-
-   if (intelObj->mt)
-      intel_miptree_release(intel, &intelObj->mt);
-
-   intelObj->imageOverride = GL_TRUE;
-   intelObj->depthOverride = depth;
-   intelObj->pitchOverride = pitch;
-
-   if (offset)
-      intelObj->textureOffset = offset;
 }
 
 void

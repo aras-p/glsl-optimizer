@@ -37,12 +37,16 @@
 
 enum pipe_error
 svga_swtnl_draw_range_elements(struct svga_context *svga,
-                               struct pipe_buffer *indexBuffer,
+                               struct pipe_resource *indexBuffer,
                                unsigned indexSize,
+                               int indexBias,
                                unsigned min_index,
                                unsigned max_index,
                                unsigned prim, unsigned start, unsigned count)
 {
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
+   struct pipe_transfer *ib_transfer = NULL;
+   struct pipe_transfer *cb_transfer = NULL;
    struct draw_context *draw = svga->swtnl.draw;
    unsigned i;
    const void *map;
@@ -64,34 +68,37 @@ svga_swtnl_draw_range_elements(struct svga_context *svga,
     * Map vertex buffers
     */
    for (i = 0; i < svga->curr.num_vertex_buffers; i++) {
-      map = pipe_buffer_map(svga->pipe.screen,
+      map = pipe_buffer_map(&svga->pipe,
                             svga->curr.vb[i].buffer,
-                            PIPE_BUFFER_USAGE_CPU_READ);
+                            PIPE_TRANSFER_READ,
+			    &vb_transfer[i]);
 
       draw_set_mapped_vertex_buffer(draw, i, map);
    }
 
    /* Map index buffer, if present */
    if (indexBuffer) {
-      map = pipe_buffer_map(svga->pipe.screen, indexBuffer,
-                            PIPE_BUFFER_USAGE_CPU_READ);
+      map = pipe_buffer_map(&svga->pipe, indexBuffer,
+                            PIPE_TRANSFER_READ,
+			    &ib_transfer);
 
       draw_set_mapped_element_buffer_range(draw, 
-                                           indexSize, 
+                                           indexSize, indexBias,
                                            min_index,
                                            max_index,
                                            map);
    }
    
    if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
-      map = pipe_buffer_map(svga->pipe.screen,
+      map = pipe_buffer_map(&svga->pipe,
                             svga->curr.cb[PIPE_SHADER_VERTEX],
-                            PIPE_BUFFER_USAGE_CPU_READ);
+                            PIPE_TRANSFER_READ,
+			    &cb_transfer);
       assert(map);
       draw_set_mapped_constant_buffer(
          draw, PIPE_SHADER_VERTEX, 0,
          map,
-         svga->curr.cb[PIPE_SHADER_VERTEX]->size);
+         svga->curr.cb[PIPE_SHADER_VERTEX]->width0);
    }
 
    draw_arrays(svga->swtnl.draw, prim, start, count);
@@ -105,18 +112,20 @@ svga_swtnl_draw_range_elements(struct svga_context *svga,
     * unmap vertex/index buffers
     */
    for (i = 0; i < svga->curr.num_vertex_buffers; i++) {
-      pipe_buffer_unmap(svga->pipe.screen, svga->curr.vb[i].buffer);
+      pipe_buffer_unmap(&svga->pipe, svga->curr.vb[i].buffer, 
+			vb_transfer[i]);
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
 
    if (indexBuffer) {
-      pipe_buffer_unmap(svga->pipe.screen, indexBuffer);
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      pipe_buffer_unmap(&svga->pipe, indexBuffer, ib_transfer);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
    if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
-      pipe_buffer_unmap(svga->pipe.screen,
-                        svga->curr.cb[PIPE_SHADER_VERTEX]);
+      pipe_buffer_unmap(&svga->pipe,
+                        svga->curr.cb[PIPE_SHADER_VERTEX],
+			cb_transfer);
    }
 
    return ret;
@@ -134,7 +143,7 @@ boolean svga_init_swtnl( struct svga_context *svga )
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   svga->swtnl.draw = draw_create();
+   svga->swtnl.draw = draw_create(&svga->pipe);
    if (svga->swtnl.draw == NULL)
       goto fail;
 

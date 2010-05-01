@@ -51,9 +51,11 @@
  */
 void
 lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_texture *texture,
+                        const struct pipe_sampler_view *view,
                         const struct pipe_sampler_state *sampler)
 {
+   const struct pipe_resource *texture = view->texture;
+
    memset(state, 0, sizeof *state);
 
    if(!texture)
@@ -62,7 +64,24 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    if(!sampler)
       return;
 
-   state->format            = texture->format;
+   /*
+    * We don't copy sampler state over unless it is actually enabled, to avoid
+    * spurious recompiles, as the sampler static state is part of the shader
+    * key.
+    *
+    * Ideally the state tracker or cso_cache module would make all state
+    * canonical, but until that happens it's better to be safe than sorry here.
+    *
+    * XXX: Actually there's much more than can be done here, especially
+    * regarding 1D/2D/3D/CUBE textures, wrap modes, etc.
+    */
+
+   state->format            = view->format;
+   state->swizzle_r         = view->swizzle_r;
+   state->swizzle_g         = view->swizzle_g;
+   state->swizzle_b         = view->swizzle_b;
+   state->swizzle_a         = view->swizzle_a;
+
    state->target            = texture->target;
    state->pot_width         = util_is_pot(texture->width0);
    state->pot_height        = util_is_pot(texture->height0);
@@ -72,17 +91,30 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->wrap_t            = sampler->wrap_t;
    state->wrap_r            = sampler->wrap_r;
    state->min_img_filter    = sampler->min_img_filter;
-   state->min_mip_filter    = sampler->min_mip_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
+   if (texture->last_level) {
+      state->min_mip_filter = sampler->min_mip_filter;
+   } else {
+      state->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   }
+
    state->compare_mode      = sampler->compare_mode;
+   if (sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
+      state->compare_func   = sampler->compare_func;
+   }
+
+   state->normalized_coords = sampler->normalized_coords;
+   state->lod_bias          = sampler->lod_bias;
+   state->min_lod           = sampler->min_lod;
+   state->max_lod           = sampler->max_lod;
    state->border_color[0]   = sampler->border_color[0];
    state->border_color[1]   = sampler->border_color[1];
    state->border_color[2]   = sampler->border_color[2];
    state->border_color[3]   = sampler->border_color[3];
-   if(sampler->compare_mode != PIPE_TEX_COMPARE_NONE) {
-      state->compare_func      = sampler->compare_func;
-   }
-   state->normalized_coords = sampler->normalized_coords;
+
+   /*
+    * FIXME: Handle the remainder of pipe_sampler_view.
+    */
 }
 
 
@@ -136,62 +168,34 @@ lp_build_gather(LLVMBuilderRef builder,
 
 
 /**
- * Compute the offset of a pixel.
+ * Compute the offset of a pixel block.
  *
- * x, y, y_stride are vectors
+ * x, y, z, y_stride, z_stride are vectors, and they refer to pixel blocks, as
+ * per format description, and not individual pixels.
  */
 LLVMValueRef
 lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
+                       LLVMValueRef z,
                        LLVMValueRef y_stride,
-                       LLVMValueRef data_ptr)
+                       LLVMValueRef z_stride)
 {
    LLVMValueRef x_stride;
    LLVMValueRef offset;
 
-   x_stride = lp_build_const_scalar(bld->type, format_desc->block.bits/8);
+   x_stride = lp_build_const_vec(bld->type, format_desc->block.bits/8);
+   offset = lp_build_mul(bld, x, x_stride);
 
-   if(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
-      LLVMValueRef x_lo, x_hi;
-      LLVMValueRef y_lo, y_hi;
-      LLVMValueRef x_stride_lo, x_stride_hi;
-      LLVMValueRef y_stride_lo, y_stride_hi;
-      LLVMValueRef x_offset_lo, x_offset_hi;
-      LLVMValueRef y_offset_lo, y_offset_hi;
-      LLVMValueRef offset_lo, offset_hi;
-
-      x_lo = LLVMBuildAnd(bld->builder, x, bld->one, "");
-      y_lo = LLVMBuildAnd(bld->builder, y, bld->one, "");
-
-      x_hi = LLVMBuildLShr(bld->builder, x, bld->one, "");
-      y_hi = LLVMBuildLShr(bld->builder, y, bld->one, "");
-
-      x_stride_lo = x_stride;
-      y_stride_lo = lp_build_const_scalar(bld->type, 2*format_desc->block.bits/8);
-
-      x_stride_hi = lp_build_const_scalar(bld->type, 4*format_desc->block.bits/8);
-      y_stride_hi = LLVMBuildShl(bld->builder, y_stride, bld->one, "");
-
-      x_offset_lo = lp_build_mul(bld, x_lo, x_stride_lo);
-      y_offset_lo = lp_build_mul(bld, y_lo, y_stride_lo);
-      offset_lo = lp_build_add(bld, x_offset_lo, y_offset_lo);
-
-      x_offset_hi = lp_build_mul(bld, x_hi, x_stride_hi);
-      y_offset_hi = lp_build_mul(bld, y_hi, y_stride_hi);
-      offset_hi = lp_build_add(bld, x_offset_hi, y_offset_hi);
-
-      offset = lp_build_add(bld, offset_hi, offset_lo);
+   if (y && y_stride) {
+      LLVMValueRef y_offset = lp_build_mul(bld, y, y_stride);
+      offset = lp_build_add(bld, offset, y_offset);
    }
-   else {
-      LLVMValueRef x_offset;
-      LLVMValueRef y_offset;
 
-      x_offset = lp_build_mul(bld, x, x_stride);
-      y_offset = lp_build_mul(bld, y, y_stride);
-
-      offset = lp_build_add(bld, x_offset, y_offset);
+   if (z && z_stride) {
+      LLVMValueRef z_offset = lp_build_mul(bld, z, z_stride);
+      offset = lp_build_add(bld, offset, z_offset);
    }
 
    return offset;

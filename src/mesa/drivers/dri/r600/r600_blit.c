@@ -344,6 +344,10 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
             return;
     }
 
+    /* must be 0 on r7xx */
+    if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
+	    CLEARbit(cb_color0_info, BLEND_FLOAT32_bit);
+
     SETfield(cb_color0_info, format, CB_COLOR0_INFO__FORMAT_shift,
              CB_COLOR0_INFO__FORMAT_mask);
     SETfield(cb_color0_info, comp_swap, COMP_SWAP_shift, COMP_SWAP_mask);
@@ -1533,25 +1537,21 @@ static GLboolean validate_buffers(context_t *rmesa,
 {
     int ret;
 
+    radeon_cs_space_reset_bos(rmesa->radeon.cmdbuf.cs);
+
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
-					src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
+					src_bo, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
     if (ret)
         return GL_FALSE;
 
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
-                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM);
+                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT);
     if (ret)
         return GL_FALSE;
 
     ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
 					rmesa->blit_bo,
 					RADEON_GEM_DOMAIN_GTT, 0);
-    if (ret)
-        return GL_FALSE;
-
-    ret = radeon_cs_space_check_with_bo(rmesa->radeon.cmdbuf.cs,
-                                        first_elem(&rmesa->radeon.dma.reserved)->bo,
-                                        RADEON_GEM_DOMAIN_GTT, 0);
     if (ret)
         return GL_FALSE;
 

@@ -43,6 +43,7 @@ struct blitter_context
    /* Private members, really. */
    void *saved_blend_state;   /**< blend state */
    void *saved_dsa_state;     /**< depth stencil alpha state */
+   void *saved_velem_state;   /**< vertex elements state */
    void *saved_rs_state;      /**< rasterizer state */
    void *saved_fs, *saved_vs; /**< fragment shader, vertex shader */
 
@@ -52,10 +53,13 @@ struct blitter_context
    struct pipe_clip_state saved_clip;
 
    int saved_num_sampler_states;
-   void *saved_sampler_states[32];
+   void *saved_sampler_states[PIPE_MAX_SAMPLERS];
 
-   int saved_num_textures;
-   struct pipe_texture *saved_textures[32]; /* is 32 enough? */
+   int saved_num_sampler_views;
+   struct pipe_sampler_view *saved_sampler_views[PIPE_MAX_SAMPLERS];
+
+   int saved_num_vertex_buffers;
+   struct pipe_vertex_buffer saved_vertex_buffers[PIPE_MAX_ATTRIBS];
 };
 
 /**
@@ -173,6 +177,13 @@ void util_blitter_save_depth_stencil_alpha(struct blitter_context *blitter,
 }
 
 static INLINE
+void util_blitter_save_vertex_elements(struct blitter_context *blitter,
+                                       void *state)
+{
+   blitter->saved_velem_state = state;
+}
+
+static INLINE
 void util_blitter_save_stencil_ref(struct blitter_context *blitter,
                                    const struct pipe_stencil_ref *state)
 {
@@ -234,17 +245,30 @@ void util_blitter_save_fragment_sampler_states(
           num_sampler_states * sizeof(void *));
 }
 
-static INLINE
-void util_blitter_save_fragment_sampler_textures(
-                  struct blitter_context *blitter,
-                  int num_textures,
-                  struct pipe_texture **textures)
+static INLINE void
+util_blitter_save_fragment_sampler_views(struct blitter_context *blitter,
+                                         int num_views,
+                                         struct pipe_sampler_view **views)
 {
-   assert(num_textures <= Elements(blitter->saved_textures));
+   assert(num_views <= Elements(blitter->saved_sampler_views));
 
-   blitter->saved_num_textures = num_textures;
-   memcpy(blitter->saved_textures, textures,
-          num_textures * sizeof(struct pipe_texture *));
+   blitter->saved_num_sampler_views = num_views;
+   memcpy(blitter->saved_sampler_views,
+          views,
+          num_views * sizeof(struct pipe_sampler_view *));
+}
+
+static INLINE void
+util_blitter_save_vertex_buffers(struct blitter_context *blitter,
+                                         int num_vertex_buffers,
+                                         struct pipe_vertex_buffer *vertex_buffers)
+{
+   assert(num_vertex_buffers <= Elements(blitter->saved_vertex_buffers));
+
+   blitter->saved_num_vertex_buffers = num_vertex_buffers;
+   memcpy(blitter->saved_vertex_buffers,
+          vertex_buffers,
+          num_vertex_buffers * sizeof(struct pipe_vertex_buffer));
 }
 
 #ifdef __cplusplus

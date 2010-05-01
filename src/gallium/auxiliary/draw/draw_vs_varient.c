@@ -66,14 +66,16 @@ struct draw_vs_varient_generic {
 static void vsvg_set_buffer( struct draw_vs_varient *varient,
                              unsigned buffer,
                              const void *ptr,
-                             unsigned stride )
+                             unsigned stride,
+                             unsigned max_index )
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
 
    vsvg->fetch->set_buffer(vsvg->fetch, 
                            buffer, 
                            ptr, 
-                           stride);
+                           stride,
+                           max_index );
 }
 
 
@@ -172,12 +174,14 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
    vsvg->emit->set_buffer( vsvg->emit,
                            0, 
                            temp_buffer,
-                           temp_vertex_stride );
+                           temp_vertex_stride,
+                           ~0 );
 
    vsvg->emit->set_buffer( vsvg->emit, 
                            1,
                            &vsvg->draw->rasterizer->point_size,
-                           0);
+                           0,
+                           ~0 );
 
    vsvg->emit->run( vsvg->emit,
                     0, count,
@@ -232,12 +236,14 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
    vsvg->emit->set_buffer( vsvg->emit,
                            0, 
                            temp_buffer,
-                           temp_vertex_stride );
+                           temp_vertex_stride,
+                           ~0 );
    
    vsvg->emit->set_buffer( vsvg->emit, 
                            1,
                            &vsvg->draw->rasterizer->point_size,
-                           0);
+                           0,
+                           ~0 );
    
    vsvg->emit->run( vsvg->emit,
                     0, count,
@@ -257,8 +263,9 @@ static void vsvg_destroy( struct draw_vs_varient *varient )
 }
 
 
-struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
-                                                 const struct draw_vs_varient_key *key )
+struct draw_vs_varient *
+draw_vs_create_varient_generic( struct draw_vertex_shader *vs,
+                                const struct draw_vs_varient_key *key )
 {
    unsigned i;
    struct translate_key fetch, emit;

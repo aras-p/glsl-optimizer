@@ -102,6 +102,13 @@ emit_hw_vertex( struct i915_context *i915,
          count += 4;
          break;
       case EMIT_4UB:
+         OUT_BATCH( pack_ub4(float_to_ubyte( attrib[0] ),
+                             float_to_ubyte( attrib[1] ),
+                             float_to_ubyte( attrib[2] ),
+                             float_to_ubyte( attrib[3] )) );
+         count += 1;
+         break;
+      case EMIT_4UB_BGRA:
          OUT_BATCH( pack_ub4(float_to_ubyte( attrib[2] ),
                              float_to_ubyte( attrib[1] ),
                              float_to_ubyte( attrib[0] ),

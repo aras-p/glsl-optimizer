@@ -30,7 +30,7 @@
  *   Kristian Høgsberg (krh@redhat.com)
  */
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
@@ -47,7 +47,12 @@
 #include "xf86drm.h"
 #include "dri2.h"
 #include "dri_common.h"
-#include "../../mesa/drivers/dri/common/dri_util.h"
+
+/* From xmlpool/options.h, user exposed so should be stable */
+#define DRI_CONF_VBLANK_NEVER 0
+#define DRI_CONF_VBLANK_DEF_INTERVAL_0 1
+#define DRI_CONF_VBLANK_DEF_INTERVAL_1 2
+#define DRI_CONF_VBLANK_ALWAYS_SYNC 3
 
 #undef DRI2_MINOR
 #define DRI2_MINOR 1
@@ -175,6 +180,9 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
 {
    __GLXDRIdrawablePrivate *pdraw;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
+   __GLXdisplayPrivate *dpyPriv;
+   __GLXDRIdisplayPrivate *pdp;
+   GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
    pdraw = Xmalloc(sizeof(*pdraw));
    if (!pdraw)
@@ -185,9 +193,28 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    pdraw->base.drawable = drawable;
    pdraw->base.psc = psc;
    pdraw->bufferCount = 0;
+   pdraw->swap_interval = 1; /* default may be overridden below */
+   pdraw->have_back = 0;
+
+   if (psc->config)
+      psc->config->configQueryi(psc->__driScreen, "vblank_mode", &vblank_mode);
+
+   switch (vblank_mode) {
+   case DRI_CONF_VBLANK_NEVER:
+   case DRI_CONF_VBLANK_DEF_INTERVAL_0:
+      pdraw->swap_interval = 0;
+      break;
+   case DRI_CONF_VBLANK_DEF_INTERVAL_1:
+   case DRI_CONF_VBLANK_ALWAYS_SYNC:
+   default:
+      pdraw->swap_interval = 1;
+      break;
+   }
 
    DRI2CreateDrawable(psc->dpy, xDrawable);
 
+   dpyPriv = __glXInitialize(psc->dpy);
+   pdp = (__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;;
    /* Create a new drawable */
    pdraw->base.driDrawable =
       (*psc->dri2->createNewDrawable) (psc->__driScreen,
@@ -199,8 +226,19 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
       return NULL;
    }
 
+#ifdef X_DRI2SwapInterval
+   /*
+    * Make sure server has the same swap interval we do for the new
+    * drawable.
+    */
+   if (pdp->swapAvailable)
+      DRI2SwapInterval(psc->dpy, xDrawable, pdraw->swap_interval);
+#endif
+
    return &pdraw->base;
 }
+
+#ifdef X_DRI2GetMSC
 
 static int
 dri2DrawableGetMSC(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
@@ -208,6 +246,11 @@ dri2DrawableGetMSC(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
 {
    return DRI2GetMSC(psc->dpy, pdraw->xDrawable, ust, msc, sbc);
 }
+
+#endif
+
+
+#ifdef X_DRI2WaitMSC
 
 static int
 dri2WaitForMSC(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
@@ -224,6 +267,8 @@ dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
    return DRI2WaitSBC(pdraw->psc->dpy, pdraw->xDrawable, target_sbc, ust, msc,
 		      sbc);
 }
+
+#endif /* X_DRI2WaitMSC */
 
 static void
 dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
@@ -320,7 +365,7 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 
    /* Old servers don't send invalidate events */
    if (!pdp->invalidateAvailable)
-       dri2InvalidateBuffers(priv->dpy, pdraw->base.xDrawable);
+       dri2InvalidateBuffers(priv->dpy, pdraw->base.drawable);
 
    dri2WaitGL(loaderPrivate);
 }
@@ -384,7 +429,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 
     /* Old servers don't send invalidate events */
     if (!pdp->invalidateAvailable)
-       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->xDrawable);
+       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->drawable);
 
     /* Old servers can't handle swapbuffers */
     if (!pdp->swapAvailable) {
@@ -448,10 +493,28 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
    return pdraw->buffers;
 }
 
+#ifdef X_DRI2SwapInterval
+
 static void
 dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
+   __GLXscreenConfigs *psc = pdraw->psc;
    __GLXDRIdrawablePrivate *priv =  (__GLXDRIdrawablePrivate *) pdraw;
+   GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
+
+   if (psc->config)
+      psc->config->configQueryi(psc->__driScreen, "vblank_mode", &vblank_mode);
+
+   switch (vblank_mode) {
+   case DRI_CONF_VBLANK_NEVER:
+      return;
+   case DRI_CONF_VBLANK_ALWAYS_SYNC:
+      if (interval <= 0)
+	 return;
+      break;
+   default:
+      break;
+   }
 
    DRI2SwapInterval(priv->base.psc->dpy, pdraw->xDrawable, interval);
    priv->swap_interval = interval;
@@ -464,6 +527,8 @@ dri2GetSwapInterval(__GLXDRIdrawable *pdraw)
 
   return priv->swap_interval;
 }
+
+#endif /* X_DRI2SwapInterval */
 
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
    {__DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION},
@@ -518,9 +583,6 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    psp = Xmalloc(sizeof *psp);
    if (psp == NULL)
       return NULL;
-
-   /* Initialize per screen dynamic client GLX extensions */
-   psc->ext_list_first_time = GL_TRUE;
 
    if (!DRI2Connect(psc->dpy, RootWindow(psc->dpy, screen),
 		    &driverName, &deviceName)) {
@@ -613,6 +675,9 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
 #ifdef X_DRI2SwapInterval
       psp->setSwapInterval = dri2SetSwapInterval;
       psp->getSwapInterval = dri2GetSwapInterval;
+#endif
+#if defined(X_DRI2GetMSC) && defined(X_DRI2WaitMSC) && defined(X_DRI2SwapInterval)
+      __glXEnableDirectExtension(psc, "GLX_OML_sync_control");
 #endif
    }
 

@@ -117,7 +117,9 @@ static void create_fragment_program(struct r300_context *r300)
     compiler.Base.Program.InputsRead = (1 << FRAG_ATTRIB_TEX0);
     compiler.OutputColor[0] = FRAG_RESULT_COLOR;
     compiler.OutputDepth = FRAG_RESULT_DEPTH;
+    compiler.enable_shadow_ambient = GL_TRUE;
     compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515);
+    compiler.max_temp_regs = (compiler.is_r500) ? 128 : 32;
     compiler.code = &r300->blit.fp_code;
     compiler.AllocateHwInputs = fp_allocate_hw_inputs;
 
@@ -381,19 +383,16 @@ static GLboolean validate_buffers(struct r300_context *r300,
                                   struct radeon_bo *dst_bo)
 {
     int ret;
+
+    radeon_cs_space_reset_bos(r300->radeon.cmdbuf.cs);
+
     ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
-                                        src_bo, RADEON_GEM_DOMAIN_VRAM, 0);
+                                        src_bo, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
     if (ret)
         return GL_FALSE;
 
     ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
-                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM);
-    if (ret)
-        return GL_FALSE;
-
-    ret = radeon_cs_space_check_with_bo(r300->radeon.cmdbuf.cs,
-                                        first_elem(&r300->radeon.dma.reserved)->bo,
-                                        RADEON_GEM_DOMAIN_GTT, 0);
+                                        dst_bo, 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT);
     if (ret)
         return GL_FALSE;
 
@@ -584,12 +583,6 @@ unsigned r300_blit(GLcontext *ctx,
     /* Make sure that colorbuffer has even width - hw limitation */
     if (dst_pitch % 2 > 0)
         ++dst_pitch;
-
-    /* Rendering to small buffer doesn't work.
-     * Looks like a hw limitation.
-     */
-    if (dst_pitch < 32)
-        return 0;
 
     /* Need to clamp the region size to make sure
      * we don't read outside of the source buffer

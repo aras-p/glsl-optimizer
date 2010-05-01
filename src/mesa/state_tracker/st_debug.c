@@ -47,6 +47,7 @@ int ST_DEBUG = 0;
 static const struct debug_named_value st_debug_flags[] = {
    { "mesa",     DEBUG_MESA },
    { "tgsi",     DEBUG_TGSI },
+   { "constants",DEBUG_CONSTANTS },
    { "pipe",     DEBUG_PIPE },
    { "tex",      DEBUG_TEX },
    { "fallback", DEBUG_FALLBACK },
@@ -75,7 +76,7 @@ void
 st_print_current(void)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
 
 #if 0
    int i;

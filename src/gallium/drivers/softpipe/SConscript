@@ -10,6 +10,7 @@ softpipe = env.ConvenienceLibrary(
 		'sp_clear.c',
 		'sp_context.c',
 		'sp_draw_arrays.c',
+		'sp_fence.c',
 		'sp_flush.c',
 		'sp_prim_vbuf.c',
 		'sp_setup.c',
@@ -33,8 +34,6 @@ softpipe = env.ConvenienceLibrary(
 		'sp_tex_tile_cache.c',
 		'sp_texture.c',
 		'sp_tile_cache.c',
-		'sp_video_context.c',
-		'sp_winsys.c'
 	])
 
 Export('softpipe')

@@ -55,7 +55,7 @@ static void
 set_feedback_vertex_format(GLcontext *ctx)
 {
 #if 0
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct vertex_info vinfo;
    GLuint i;
 
@@ -99,26 +99,29 @@ st_feedback_draw_vbo(GLcontext *ctx,
                      GLuint min_index,
                      GLuint max_index)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct draw_context *draw = st->draw;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
-   struct pipe_buffer *index_buffer_handle = 0;
+   struct pipe_resource *index_buffer_handle = 0;
    struct pipe_vertex_buffer vbuffers[PIPE_MAX_SHADER_INPUTS];
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
+   struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
+   struct pipe_transfer *ib_transfer = NULL;
+   struct pipe_transfer *cb_transfer;
    GLuint attr, i;
    ubyte *mapped_constants;
 
    assert(draw);
 
-   st_validate_state(ctx->st);
+   st_validate_state(st);
 
    if (!index_bounds_valid)
       vbo_get_minmax_index(ctx, prims, ib, &min_index, &max_index);
 
    /* must get these after state validation! */
-   vp = ctx->st->vp;
+   vp = st->vp;
    vs = &st->vp_varient->tgsi;
 
    if (!st->vp_varient->draw_shader) {
@@ -134,7 +137,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    assert(draw);
    draw_set_viewport_state(draw, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
-   draw_set_rasterizer_state(draw, &st->state.rasterizer);
+   draw_set_rasterizer_state(draw, &st->state.rasterizer, NULL);
    draw_bind_vertex_shader(draw, st->vp_varient->draw_shader);
    set_feedback_vertex_format(ctx);
 
@@ -155,7 +158,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
          assert(stobj->buffer);
 
          vbuffers[attr].buffer = NULL;
-         pipe_buffer_reference(&vbuffers[attr].buffer, stobj->buffer);
+         pipe_resource_reference(&vbuffers[attr].buffer, stobj->buffer);
          vbuffers[attr].buffer_offset = pointer_to_offset(arrays[0]->Ptr);
          velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
       }
@@ -168,7 +171,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
          /* wrap user data */
          vbuffers[attr].buffer
             = pipe_user_buffer_create(pipe->screen, (void *) arrays[mesaAttr]->Ptr,
-                                      bytes);
+                                      bytes,
+				      PIPE_BIND_VERTEX_BUFFER);
          vbuffers[attr].buffer_offset = 0;
          velements[attr].src_offset = 0;
       }
@@ -178,7 +182,6 @@ st_feedback_draw_vbo(GLcontext *ctx,
       vbuffers[attr].max_index = max_index;
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = attr;
-      velements[attr].nr_components = arrays[mesaAttr]->Size;
       velements[attr].src_format = 
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
                                arrays[mesaAttr]->Size,
@@ -192,8 +195,9 @@ st_feedback_draw_vbo(GLcontext *ctx,
 #endif
 
       /* map the attrib buffer */
-      map = pipe_buffer_map(pipe->screen, vbuffers[attr].buffer,
-                            PIPE_BUFFER_USAGE_CPU_READ);
+      map = pipe_buffer_map(pipe, vbuffers[attr].buffer,
+                            PIPE_TRANSFER_READ,
+			    &vb_transfer[attr]);
       draw_set_mapped_vertex_buffer(draw, attr, map);
    }
 
@@ -222,28 +226,30 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
          index_buffer_handle = stobj->buffer;
 
-         map = pipe_buffer_map(pipe->screen, index_buffer_handle,
-                               PIPE_BUFFER_USAGE_CPU_READ);
+         map = pipe_buffer_map(pipe, index_buffer_handle,
+                               PIPE_TRANSFER_READ, &ib_transfer);
 
-         draw_set_mapped_element_buffer(draw, indexSize, map);
+         draw_set_mapped_element_buffer(draw, indexSize, 0, map);
       }
       else {
-         draw_set_mapped_element_buffer(draw, indexSize, (void *) ib->ptr);
+         draw_set_mapped_element_buffer(draw, indexSize, 0, (void *) ib->ptr);
+	 ib_transfer = NULL;
       }
    }
    else {
       /* no index/element buffer */
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
 
    /* map constant buffers */
-   mapped_constants = pipe_buffer_map(pipe->screen,
+   mapped_constants = pipe_buffer_map(pipe,
                                       st->state.constants[PIPE_SHADER_VERTEX],
-                                      PIPE_BUFFER_USAGE_CPU_READ);
+                                      PIPE_TRANSFER_READ,
+				      &cb_transfer);
    draw_set_mapped_constant_buffer(st->draw, PIPE_SHADER_VERTEX, 0,
                                    mapped_constants,
-                                   st->state.constants[PIPE_SHADER_VERTEX]->size);
+                                   st->state.constants[PIPE_SHADER_VERTEX]->width0);
 
 
    /* draw here */
@@ -253,21 +259,23 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
 
    /* unmap constant buffers */
-   pipe_buffer_unmap(pipe->screen, st->state.constants[PIPE_SHADER_VERTEX]);
+   pipe_buffer_unmap(pipe, st->state.constants[PIPE_SHADER_VERTEX],
+		     cb_transfer);
 
    /*
     * unmap vertex/index buffers
     */
    for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (draw->pt.vertex_buffer[i].buffer) {
-         pipe_buffer_unmap(pipe->screen, draw->pt.vertex_buffer[i].buffer);
-         pipe_buffer_reference(&draw->pt.vertex_buffer[i].buffer, NULL);
+         pipe_buffer_unmap(pipe, draw->pt.vertex_buffer[i].buffer, 
+			   vb_transfer[i]);
+         pipe_resource_reference(&draw->pt.vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
    }
    if (index_buffer_handle) {
-      pipe_buffer_unmap(pipe->screen, index_buffer_handle);
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      pipe_buffer_unmap(pipe, index_buffer_handle, ib_transfer);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 }
 

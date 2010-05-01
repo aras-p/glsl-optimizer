@@ -51,7 +51,7 @@ struct st_context {
    void set_blend( const struct pipe_blend_state *state ) {
       cso_set_blend($self->cso, state);
    }
-   
+
    void set_fragment_sampler( unsigned index, const struct pipe_sampler_state *state ) {
       cso_single_sampler($self->cso, index, state);
       cso_single_sampler_done($self->cso);
@@ -127,6 +127,45 @@ struct st_context {
       $self->gs = gs;
    }
 
+   struct pipe_sampler_view *
+   create_sampler_view(struct pipe_resource *texture,
+                       enum pipe_format format = PIPE_FORMAT_NONE,
+                       unsigned first_level = 0,
+                       unsigned last_level = ~0,
+                       unsigned swizzle_r = 0,
+                       unsigned swizzle_g = 1,
+                       unsigned swizzle_b = 2,
+                       unsigned swizzle_a = 3)
+   {
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_sampler_view templat;
+
+      memset(&templat, 0, sizeof templat);
+      if (format == PIPE_FORMAT_NONE) {
+         templat.format = texture->format;
+      } else {
+         templat.format = format;
+      }
+      templat.last_level = MIN2(last_level, texture->last_level);
+      templat.first_level = first_level;
+      templat.last_level = last_level;
+      templat.swizzle_r = swizzle_r;
+      templat.swizzle_g = swizzle_g;
+      templat.swizzle_b = swizzle_b;
+      templat.swizzle_a = swizzle_a;
+
+      return pipe->create_sampler_view(pipe, texture, &templat);
+   }
+
+   void
+   sampler_view_destroy(struct pipe_context *ctx,
+                        struct pipe_sampler_view *view)
+   {
+      struct pipe_context *pipe = $self->pipe;
+
+      pipe->sampler_view_destroy(pipe, view);
+   }
+
    /*
     * Parameter-like state (or properties)
     */
@@ -144,7 +183,7 @@ struct st_context {
    }
 
    void set_constant_buffer(unsigned shader, unsigned index,
-                            struct pipe_buffer *buffer ) 
+                            struct pipe_resource *buffer ) 
    {
       $self->pipe->set_constant_buffer($self->pipe, shader, index, buffer);
    }
@@ -167,31 +206,68 @@ struct st_context {
       cso_set_viewport($self->cso, state);
    }
 
+   void set_fragment_sampler_view(unsigned index,
+                                  struct pipe_sampler_view *view)
+   {
+      pipe_sampler_view_reference(&$self->fragment_sampler_views[index], view);
+
+      $self->pipe->set_fragment_sampler_views($self->pipe,
+                                              PIPE_MAX_SAMPLERS,
+                                              $self->fragment_sampler_views);
+   }
+
+   void set_vertex_sampler_view(unsigned index,
+                                struct pipe_sampler_view *view)
+   {
+      pipe_sampler_view_reference(&$self->vertex_sampler_views[index], view);
+
+      $self->pipe->set_vertex_sampler_views($self->pipe,
+                                            PIPE_MAX_VERTEX_SAMPLERS,
+                                            $self->vertex_sampler_views);
+   }
+
    void set_fragment_sampler_texture(unsigned index,
-                                     struct pipe_texture *texture) {
+                                     struct pipe_resource *texture) {
+      struct pipe_sampler_view templ;
+
       if(!texture)
          texture = $self->default_texture;
-      pipe_texture_reference(&$self->fragment_sampler_textures[index], texture);
-      $self->pipe->set_fragment_sampler_textures($self->pipe,
-                                                 PIPE_MAX_SAMPLERS,
-                                                 $self->fragment_sampler_textures);
+      pipe_sampler_view_reference(&$self->fragment_sampler_views[index], NULL);
+      u_sampler_view_default_template(&templ,
+                                      texture,
+                                      texture->format);
+      $self->fragment_sampler_views[index] = $self->pipe->create_sampler_view($self->pipe,
+                                                                              texture,
+                                                                              &templ);
+      $self->pipe->set_fragment_sampler_views($self->pipe,
+                                              PIPE_MAX_SAMPLERS,
+                                              $self->fragment_sampler_views);
    }
 
    void set_vertex_sampler_texture(unsigned index,
-                                   struct pipe_texture *texture) {
+                                   struct pipe_resource *texture) {
+      struct pipe_sampler_view templ;
+
       if(!texture)
          texture = $self->default_texture;
-      pipe_texture_reference(&$self->vertex_sampler_textures[index], texture);
-      $self->pipe->set_vertex_sampler_textures($self->pipe,
-                                               PIPE_MAX_VERTEX_SAMPLERS,
-                                               $self->vertex_sampler_textures);
+      pipe_sampler_view_reference(&$self->vertex_sampler_views[index], NULL);
+      u_sampler_view_default_template(&templ,
+                                      texture,
+                                      texture->format);
+      $self->vertex_sampler_views[index] = $self->pipe->create_sampler_view($self->pipe,
+                                                                            texture,
+                                                                            &templ);
+      
+      $self->pipe->set_vertex_sampler_views($self->pipe,
+                                            PIPE_MAX_VERTEX_SAMPLERS,
+                                            $self->vertex_sampler_views);
    }
 
    void set_vertex_buffer(unsigned index,
                           unsigned stride, 
                           unsigned max_index,
                           unsigned buffer_offset,
-                          struct pipe_buffer *buffer)
+                          struct pipe_resource *buffer)
    {
       unsigned i;
       struct pipe_vertex_buffer state;
@@ -222,9 +298,9 @@ struct st_context {
    void set_vertex_elements(unsigned num) 
    {
       $self->num_vertex_elements = num;
-      $self->pipe->set_vertex_elements($self->pipe, 
-                                       $self->num_vertex_elements, 
-                                       $self->vertex_elements);
+      cso_set_vertex_elements($self->cso,
+                              $self->num_vertex_elements, 
+                              $self->vertex_elements);
    }
 
    /*
@@ -235,23 +311,25 @@ struct st_context {
       $self->pipe->draw_arrays($self->pipe, mode, start, count);
    }
 
-   void draw_elements( struct pipe_buffer *indexBuffer,
-                       unsigned indexSize,
+   void draw_elements( struct pipe_resource *indexBuffer,
+                       unsigned indexSize, int indexBias,
                        unsigned mode, unsigned start, unsigned count) 
    {
       $self->pipe->draw_elements($self->pipe, 
                                  indexBuffer, 
                                  indexSize, 
+                                 indexBias,
                                  mode, start, count);
    }
 
-   void draw_range_elements( struct pipe_buffer *indexBuffer,
-                             unsigned indexSize, unsigned minIndex, unsigned maxIndex,
+   void draw_range_elements( struct pipe_resource *indexBuffer,
+                             unsigned indexSize, int indexBias,
+                             unsigned minIndex, unsigned maxIndex,
                              unsigned mode, unsigned start, unsigned count)
    {
       $self->pipe->draw_range_elements($self->pipe, 
-                                       indexBuffer, 
-                                       indexSize, minIndex, maxIndex,
+                                       indexBuffer, indexSize, indexBias,
+                                       minIndex, maxIndex,
                                        mode, start, count);
    }
 
@@ -262,33 +340,65 @@ struct st_context {
    {
       struct pipe_context *pipe = $self->pipe;
       struct pipe_screen *screen = pipe->screen;
-      struct pipe_buffer *vbuf;
+      struct pipe_resource *vbuf;
+      struct pipe_transfer *transfer;
+      struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
+      struct pipe_vertex_buffer vbuffer;
       float *map;
       unsigned size;
+      unsigned i;
 
       size = num_verts * num_attribs * 4 * sizeof(float);
 
       vbuf = pipe_buffer_create(screen,
-                                32,
-                                PIPE_BUFFER_USAGE_VERTEX, 
+                                PIPE_BIND_VERTEX_BUFFER, 
                                 size);
       if(!vbuf)
          goto error1;
-      
-      map = pipe_buffer_map(screen, vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+      map = pipe_buffer_map(pipe, vbuf, PIPE_TRANSFER_WRITE, &transfer);
       if (!map)
          goto error2;
       memcpy(map, vertices, size);
-      pipe_buffer_unmap(screen, vbuf);
-      
-      util_draw_vertex_buffer(pipe, vbuf, 0, prim, num_verts, num_attribs);
-      
+      pipe_buffer_unmap(pipe, vbuf, transfer);
+
+      cso_save_vertex_elements($self->cso);
+
+      /* tell pipe about the vertex attributes */
+      for (i = 0; i < num_attribs; i++) {
+         velements[i].src_offset = i * 4 * sizeof(float);
+         velements[i].instance_divisor = 0;
+         velements[i].vertex_buffer_index = 0;
+         velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      }
+      cso_set_vertex_elements($self->cso, num_attribs, velements);
+
+      /* tell pipe about the vertex buffer */
+      memset(&vbuffer, 0, sizeof(vbuffer));
+      vbuffer.buffer = vbuf;
+      vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
+      vbuffer.buffer_offset = 0;
+      vbuffer.max_index = num_verts - 1;
+      pipe->set_vertex_buffers(pipe, 1, &vbuffer);
+
+      /* draw */
+      pipe->draw_arrays(pipe, prim, 0, num_verts);
+
+      cso_restore_vertex_elements($self->cso);
+
 error2:
-      pipe_buffer_reference(&vbuf, NULL);
+      pipe_resource_reference(&vbuf, NULL);
 error1:
       ;
    }
    
+   void
+   clear(unsigned buffers, const float *rgba, double depth = 0.0f,
+         unsigned stencil = 0)
+   {
+      $self->pipe->clear($self->pipe, buffers, rgba, depth, stencil);
+   }
+
    void
    flush(unsigned flags = 0) {
       struct pipe_fence_handle *fence = NULL; 
@@ -313,11 +423,11 @@ error1:
       struct pipe_surface *_dst = NULL;
       struct pipe_surface *_src = NULL;
       
-      _dst = st_pipe_surface(dst, PIPE_BUFFER_USAGE_GPU_WRITE);
+      _dst = st_pipe_surface(dst, PIPE_BIND_BLIT_DESTINATION);
       if(!_dst)
          SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
 
-      _src = st_pipe_surface(src, PIPE_BUFFER_USAGE_GPU_READ);
+      _src = st_pipe_surface(src, PIPE_BIND_BLIT_SOURCE);
       if(!_src)
          SWIG_exception(SWIG_ValueError, "couldn't acquire source surface for reading");
       
@@ -335,7 +445,7 @@ error1:
    {
       struct pipe_surface *_dst = NULL;
       
-      _dst = st_pipe_surface(dst, PIPE_BUFFER_USAGE_GPU_WRITE);
+      _dst = st_pipe_surface(dst, PIPE_BIND_BLIT_DESTINATION);
       if(!_dst)
          SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
 
@@ -345,10 +455,303 @@ error1:
       pipe_surface_reference(&_dst, NULL);
    }
 
-   void clear(unsigned buffers, const float *rgba, double depth = 0.0f,
-              unsigned stencil = 0)
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
+   void
+   surface_read_raw(struct st_surface *surface,
+                    unsigned x, unsigned y, unsigned w, unsigned h,
+                    char **STRING, int *LENGTH)
    {
-      $self->pipe->clear($self->pipe, buffers, rgba, depth, stencil);
+      struct pipe_resource *texture = surface->texture;
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_transfer *transfer;
+      unsigned stride;
+
+      stride = util_format_get_stride(texture->format, w);
+      *LENGTH = util_format_get_nblocksy(texture->format, h) * stride;
+      *STRING = (char *) malloc(*LENGTH);
+      if(!*STRING)
+         return;
+
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
+      if(transfer) {
+         pipe_get_tile_raw(pipe, transfer, 0, 0, w, h, *STRING, stride);
+         pipe->transfer_destroy(pipe, transfer);
+      }
+   }
+
+   %cstring_input_binary(const char *STRING, unsigned LENGTH);
+   void
+   surface_write_raw(struct st_surface *surface,
+                     unsigned x, unsigned y, unsigned w, unsigned h,
+                     const char *STRING, unsigned LENGTH, unsigned stride = 0)
+   {
+      struct pipe_resource *texture = surface->texture;
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_transfer *transfer;
+
+      if(stride == 0)
+         stride = util_format_get_stride(texture->format, w);
+
+      if(LENGTH < util_format_get_nblocksy(texture->format, h) * stride)
+         SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
+
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_WRITE,
+                                   x, y, w, h);
+      if(!transfer)
+         SWIG_exception(SWIG_MemoryError, "couldn't initiate transfer");
+
+      pipe_put_tile_raw(pipe, transfer, 0, 0, w, h, STRING, stride);
+      pipe->transfer_destroy(pipe, transfer);
+
+   fail:
+      return;
+   }
+
+   void
+   surface_read_rgba(struct st_surface *surface,
+                     unsigned x, unsigned y, unsigned w, unsigned h,
+                     float *rgba)
+   {
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_transfer *transfer;
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
+      if(transfer) {
+         pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
+         pipe->transfer_destroy(pipe, transfer);
+      }
+   }
+
+   void
+   surface_write_rgba(struct st_surface *surface,
+                      unsigned x, unsigned y, unsigned w, unsigned h,
+                      const float *rgba)
+   {
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_transfer *transfer;
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_WRITE,
+                                   x, y, w, h);
+      if(transfer) {
+         pipe_put_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
+         pipe->transfer_destroy(pipe, transfer);
+      }
+   }
+
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
+   void
+   surface_read_rgba8(struct st_surface *surface,
+                      unsigned x, unsigned y, unsigned w, unsigned h,
+                      char **STRING, int *LENGTH)
+   {
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_transfer *transfer;
+      float *rgba;
+      unsigned char *rgba8;
+      unsigned i, j, k;
+
+      *LENGTH = 0;
+      *STRING = NULL;
+
+      if (!surface)
+         return;
+
+      *LENGTH = h*w*4;
+      *STRING = (char *) malloc(*LENGTH);
+      if(!*STRING)
+         return;
+
+      rgba = malloc(h*w*4*sizeof(float));
+      if(!rgba)
+         return;
+
+      rgba8 = (unsigned char *) *STRING;
+
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
+      if(transfer) {
+         pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba);
+         for(j = 0; j < h; ++j) {
+            for(i = 0; i < w; ++i)
+               for(k = 0; k <4; ++k)
+                  rgba8[j*w*4 + i*4 + k] = float_to_ubyte(rgba[j*w*4 + i*4 + k]);
+         }
+         pipe->transfer_destroy(pipe, transfer);
+      }
+
+      free(rgba);
+   }
+
+   void
+   surface_read_z(struct st_surface *surface,
+                  unsigned x, unsigned y, unsigned w, unsigned h,
+                  unsigned *z)
+   {
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_transfer *transfer;
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
+      if(transfer) {
+         pipe_get_tile_z(pipe, transfer, 0, 0, w, h, z);
+         pipe->transfer_destroy(pipe, transfer);
+      }
+   }
+
+   void
+   surface_write_z(struct st_surface *surface,
+                   unsigned x, unsigned y, unsigned w, unsigned h,
+                   const unsigned *z)
+   {
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_transfer *transfer;
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_WRITE,
+                                   x, y, w, h);
+      if(transfer) {
+         pipe_put_tile_z(pipe, transfer, 0, 0, w, h, z);
+         pipe->transfer_destroy(pipe, transfer);
+      }
+   }
+
+   void
+   surface_sample_rgba(struct st_surface *surface,
+                       float *rgba,
+                       int norm = 0)
+   {
+      st_sample_surface($self->pipe, surface, rgba, norm != 0);
+   }
+
+   unsigned
+   surface_compare_rgba(struct st_surface *surface,
+                        unsigned x, unsigned y, unsigned w, unsigned h,
+                        const float *rgba, float tol = 0.0)
+   {
+      struct pipe_context *pipe = $self->pipe;
+      struct pipe_transfer *transfer;
+      float *rgba2;
+      const float *p1;
+      const float *p2;
+      unsigned i, j, n;
+
+      rgba2 = MALLOC(h*w*4*sizeof(float));
+      if(!rgba2)
+         return ~0;
+
+      transfer = pipe_get_transfer(pipe,
+                                   surface->texture,
+                                   surface->face,
+                                   surface->level,
+                                   surface->zslice,
+                                   PIPE_TRANSFER_READ,
+                                   x, y, w, h);
+      if(!transfer) {
+         FREE(rgba2);
+         return ~0;
+      }
+
+      pipe_get_tile_rgba(pipe, transfer, 0, 0, w, h, rgba2);
+      pipe->transfer_destroy(pipe, transfer);
+
+      p1 = rgba;
+      p2 = rgba2;
+      n = 0;
+      for(i = h*w; i; --i) {
+         unsigned differs = 0;
+         for(j = 4; j; --j) {
+            float delta = *p2++ - *p1++;
+            if (delta < -tol || delta > tol)
+                differs = 1;
+         }
+         n += differs;
+      }
+
+      FREE(rgba2);
+
+      return n;
+   }
+
+   %cstring_input_binary(const char *STRING, unsigned LENGTH);
+   void
+   transfer_inline_write(struct pipe_resource *resource,
+                         struct pipe_subresource *sr,
+                         unsigned usage,
+                         const struct pipe_box *box,
+                         const char *STRING, unsigned LENGTH,
+                         unsigned stride,
+                         unsigned slice_stride)
+   {
+      struct pipe_context *pipe = $self->pipe;
+
+      pipe->transfer_inline_write(pipe, resource, *sr, usage, box, STRING, stride, slice_stride);
+   }
+
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
+   void buffer_read(struct pipe_resource *buffer,
+                    char **STRING, int *LENGTH)
+   {
+      struct pipe_context *pipe = $self->pipe;
+
+      assert(buffer->target == PIPE_BUFFER);
+
+      *LENGTH = buffer->width0;
+      *STRING = (char *) malloc(buffer->width0);
+      if(!*STRING)
+         return;
+
+      pipe_buffer_read(pipe, buffer, 0, buffer->width0, *STRING);
+   }
+
+   void buffer_write(struct pipe_resource *buffer,
+                     const char *STRING, unsigned LENGTH, unsigned offset = 0)
+   {
+      struct pipe_context *pipe = $self->pipe;
+
+      assert(buffer->target == PIPE_BUFFER);
+
+      if(offset > buffer->width0)
+         SWIG_exception(SWIG_ValueError, "offset must be smaller than buffer size");
+
+      if(offset + LENGTH > buffer->width0)
+         SWIG_exception(SWIG_ValueError, "data length must fit inside the buffer");
+
+      pipe_buffer_write(pipe, buffer, offset, LENGTH, STRING);
+
+fail:
+      return;
    }
 
 };

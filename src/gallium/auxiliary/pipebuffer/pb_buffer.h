@@ -48,7 +48,6 @@
 #include "util/u_debug.h"
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_state.h"
 
 
 #ifdef __cplusplus
@@ -58,7 +57,22 @@ extern "C" {
 
 struct pb_vtbl;
 struct pb_validate;
+struct pipe_fence_handle;
 
+
+#define PB_USAGE_CPU_READ  (1 << 0)
+#define PB_USAGE_CPU_WRITE (1 << 1)
+#define PB_USAGE_GPU_READ  (1 << 2)
+#define PB_USAGE_GPU_WRITE (1 << 3)
+#define PB_USAGE_UNSYNCHRONIZED (1 << 10)
+#define PB_USAGE_DONTBLOCK (1 << 9)
+
+#define PB_USAGE_CPU_READ_WRITE \
+   ( PB_USAGE_CPU_READ | PB_USAGE_CPU_WRITE )
+#define PB_USAGE_GPU_READ_WRITE \
+   ( PB_USAGE_GPU_READ | PB_USAGE_GPU_WRITE )
+#define PB_USAGE_WRITE \
+   ( PB_USAGE_CPU_WRITE | PB_USAGE_GPU_WRITE )
 
 /**
  * Buffer description.
@@ -83,7 +97,14 @@ typedef unsigned pb_size;
  */
 struct pb_buffer 
 {
-   struct pipe_buffer base;
+   /* This used to be a pipe_buffer struct:
+    */
+   struct {
+      struct pipe_reference  reference;
+      unsigned               size;
+      unsigned               alignment;
+      unsigned               usage;
+   } base;
 
    /**
     * Pointer to the virtual function table.
@@ -106,7 +127,7 @@ struct pb_vtbl
 
    /** 
     * Map the entire data store of a buffer object into the client's address.
-    * flags is bitmask of PIPE_BUFFER_FLAG_READ/WRITE. 
+    * flags is bitmask of PB_USAGE_CPU_READ/WRITE. 
     */
    void *(*map)( struct pb_buffer *buf, 
                  unsigned flags );
@@ -137,23 +158,6 @@ struct pb_vtbl
    
 };
 
-
-static INLINE struct pipe_buffer *
-pb_pipe_buffer( struct pb_buffer *pbuf )
-{
-   assert(pbuf);
-   return &pbuf->base;
-}
-
-
-static INLINE struct pb_buffer *
-pb_buffer( struct pipe_buffer *buf )
-{
-   assert(buf);
-   /* Could add a magic cookie check on debug builds.
-    */
-   return (struct pb_buffer *)buf;
-}
 
 
 /* Accessor functions for pb->vtbl:

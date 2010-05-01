@@ -45,14 +45,14 @@ struct svga_constbuf
 
 static void svga_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     struct pipe_buffer *buf)
+                                     struct pipe_resource *buf)
 {
    struct svga_context *svga = svga_context(pipe);
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
-   pipe_buffer_reference( &svga->curr.cb[shader],
+   pipe_resource_reference( &svga->curr.cb[shader],
                           buf );
 
    if (shader == PIPE_SHADER_FRAGMENT)

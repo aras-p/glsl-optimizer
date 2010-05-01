@@ -66,6 +66,7 @@ boolean draw_pipeline_init( struct draw_context *draw )
    /* these defaults are oriented toward the needs of softpipe */
    draw->pipeline.wide_point_threshold = 1000000.0; /* infinity */
    draw->pipeline.wide_line_threshold = 1.0;
+   draw->pipeline.wide_point_sprites = FALSE;
    draw->pipeline.line_stipple = TRUE;
    draw->pipeline.point_sprite = TRUE;
 
@@ -225,7 +226,7 @@ static void do_triangle( struct draw_context *draw,
 
 
 /**
- * Code to run the pipeline on a fairly arbitary collection of vertices.
+ * Code to run the pipeline on a fairly arbitrary collection of vertices.
  * For drawing indexed primitives.
  *
  * Vertex headers must be pre-initialized with the

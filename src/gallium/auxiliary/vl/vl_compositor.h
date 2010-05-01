@@ -44,12 +44,13 @@ struct vl_compositor
    struct pipe_framebuffer_state fb_state;
    struct vertex2f fb_inv_size;
    void *sampler;
+   struct pipe_sampler_view *sampler_view;
    void *vertex_shader;
    void *fragment_shader;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buf;
-   struct pipe_vertex_element vertex_elems[2];
-   struct pipe_buffer *fs_const_buf;
+   void *vertex_elems_state;
+   struct pipe_resource *fs_const_buf;
 
    struct pipe_surface *bg;
    struct pipe_video_rect bg_src_rect;

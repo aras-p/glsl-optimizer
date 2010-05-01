@@ -31,6 +31,22 @@
 #include "r300_shader_semantics.h"
 
 struct r300_fragment_shader_code {
+    struct tgsi_shader_info info;
+    struct r300_shader_semantics inputs;
+
+    /* Whether the shader was replaced by a dummy one due to a shader
+     * compilation failure. */
+    boolean dummy;
+
+    /* Numbers of constants for each type. */
+    unsigned externals_count;
+    unsigned immediates_count;
+    unsigned rc_state_count;
+
+    /* Registers for fragment depth output setup. */
+    uint32_t fg_depth_src;      /* R300_FG_DEPTH_SRC: 0x4bd8 */
+    uint32_t us_out_w;          /* R300_US_W_FMT:     0x46b4 */
+
     struct r300_fragment_program_external_state compare_state;
     struct rX00_fragment_program_code code;
 
@@ -40,12 +56,6 @@ struct r300_fragment_shader_code {
 struct r300_fragment_shader {
     /* Parent class */
     struct pipe_shader_state state;
-
-    struct tgsi_shader_info info;
-    struct r300_shader_semantics inputs;
-
-    /* Bits 0-15: TRUE if it's a shadow sampler, FALSE otherwise. */
-    unsigned shadow_samplers;
 
     /* Currently-bound fragment shader. */
     struct r300_fragment_shader_code* shader;

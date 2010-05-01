@@ -45,27 +45,27 @@
  * Move raw block of pixels from transfer object to user memory.
  */
 void
-pipe_get_tile_raw(struct pipe_transfer *pt,
+pipe_get_tile_raw(struct pipe_context *pipe,
+                  struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   void *dst, int dst_stride)
 {
-   struct pipe_screen *screen = pt->texture->screen;
    const void *src;
 
    if (dst_stride == 0)
-      dst_stride = util_format_get_stride(pt->texture->format, w);
+      dst_stride = util_format_get_stride(pt->resource->format, w);
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
-   src = screen->transfer_map(screen, pt);
+   src = pipe->transfer_map(pipe, pt);
    assert(src);
    if(!src)
       return;
 
-   util_copy_rect(dst, pt->texture->format, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
+   util_copy_rect(dst, pt->resource->format, dst_stride, 0, 0, w, h, src, pt->stride, x, y);
 
-   screen->transfer_unmap(screen, pt);
+   pipe->transfer_unmap(pipe, pt);
 }
 
 
@@ -73,28 +73,28 @@ pipe_get_tile_raw(struct pipe_transfer *pt,
  * Move raw block of pixels from user memory to transfer object.
  */
 void
-pipe_put_tile_raw(struct pipe_transfer *pt,
+pipe_put_tile_raw(struct pipe_context *pipe,
+                  struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   const void *src, int src_stride)
 {
-   struct pipe_screen *screen = pt->texture->screen;
    void *dst;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
    if (src_stride == 0)
       src_stride = util_format_get_stride(format, w);
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
-   dst = screen->transfer_map(screen, pt);
+   dst = pipe->transfer_map(pipe, pt);
    assert(dst);
    if(!dst)
       return;
 
    util_copy_rect(dst, format, pt->stride, x, y, w, h, src, src_stride, 0, 0);
 
-   screen->transfer_unmap(screen, pt);
+   pipe->transfer_unmap(pipe, pt);
 }
 
 
@@ -105,387 +105,6 @@ pipe_put_tile_raw(struct pipe_transfer *pt,
 
 #define UNCLAMPED_FLOAT_TO_SHORT(us, f)  \
    us = ( (short) ( CLAMP((f), -1.0, 1.0) * 32767.0F) )
-
-
-
-/*** PIPE_FORMAT_B8G8R8A8_UNORM ***/
-
-static void
-a8r8g8b8_get_tile_rgba(const unsigned *src,
-                       unsigned w, unsigned h,
-                       float *p,
-                       unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         const unsigned pixel = *src++;
-         pRow[0] = ubyte_to_float((pixel >> 16) & 0xff);
-         pRow[1] = ubyte_to_float((pixel >>  8) & 0xff);
-         pRow[2] = ubyte_to_float((pixel >>  0) & 0xff);
-         pRow[3] = ubyte_to_float((pixel >> 24) & 0xff);
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-a8r8g8b8_put_tile_rgba(unsigned *dst,
-                       unsigned w, unsigned h,
-                       const float *p,
-                       unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, g, b, a;
-         r = float_to_ubyte(pRow[0]);
-         g = float_to_ubyte(pRow[1]);
-         b = float_to_ubyte(pRow[2]);
-         a = float_to_ubyte(pRow[3]);
-         *dst++ = (a << 24) | (r << 16) | (g << 8) | b;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_B8G8R8X8_UNORM ***/
-
-static void
-x8r8g8b8_get_tile_rgba(const unsigned *src,
-                       unsigned w, unsigned h,
-                       float *p,
-                       unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         const unsigned pixel = *src++;
-         pRow[0] = ubyte_to_float((pixel >> 16) & 0xff);
-         pRow[1] = ubyte_to_float((pixel >>  8) & 0xff);
-         pRow[2] = ubyte_to_float((pixel >>  0) & 0xff);
-         pRow[3] = 1.0F;
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-x8r8g8b8_put_tile_rgba(unsigned *dst,
-                       unsigned w, unsigned h,
-                       const float *p,
-                       unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, g, b;
-         r = float_to_ubyte(pRow[0]);
-         g = float_to_ubyte(pRow[1]);
-         b = float_to_ubyte(pRow[2]);
-         *dst++ = (0xff << 24) | (r << 16) | (g << 8) | b;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_A8R8G8B8_UNORM ***/
-
-static void
-b8g8r8a8_get_tile_rgba(const unsigned *src,
-                       unsigned w, unsigned h,
-                       float *p,
-                       unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         const unsigned pixel = *src++;
-         pRow[0] = ubyte_to_float((pixel >>  8) & 0xff);
-         pRow[1] = ubyte_to_float((pixel >> 16) & 0xff);
-         pRow[2] = ubyte_to_float((pixel >> 24) & 0xff);
-         pRow[3] = ubyte_to_float((pixel >>  0) & 0xff);
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-b8g8r8a8_put_tile_rgba(unsigned *dst,
-                       unsigned w, unsigned h,
-                       const float *p,
-                       unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, g, b, a;
-         r = float_to_ubyte(pRow[0]);
-         g = float_to_ubyte(pRow[1]);
-         b = float_to_ubyte(pRow[2]);
-         a = float_to_ubyte(pRow[3]);
-         *dst++ = (b << 24) | (g << 16) | (r << 8) | a;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_A8B8G8R8_UNORM ***/
-
-static void
-r8g8b8a8_get_tile_rgba(const unsigned *src,
-                       unsigned w, unsigned h,
-                       float *p,
-                       unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         const unsigned pixel = *src++;
-         pRow[0] = ubyte_to_float((pixel >> 24) & 0xff);
-         pRow[1] = ubyte_to_float((pixel >> 16) & 0xff);
-         pRow[2] = ubyte_to_float((pixel >>  8) & 0xff);
-         pRow[3] = ubyte_to_float((pixel >>  0) & 0xff);
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-r8g8b8a8_put_tile_rgba(unsigned *dst,
-                       unsigned w, unsigned h,
-                       const float *p,
-                       unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, g, b, a;
-         r = float_to_ubyte(pRow[0]);
-         g = float_to_ubyte(pRow[1]);
-         b = float_to_ubyte(pRow[2]);
-         a = float_to_ubyte(pRow[3]);
-         *dst++ = (r << 24) | (g << 16) | (b << 8) | a;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_B5G5R5A1_UNORM ***/
-
-static void
-a1r5g5b5_get_tile_rgba(const ushort *src,
-                       unsigned w, unsigned h,
-                       float *p,
-                       unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         const ushort pixel = *src++;
-         pRow[0] = ((pixel >> 10) & 0x1f) * (1.0f / 31.0f);
-         pRow[1] = ((pixel >>  5) & 0x1f) * (1.0f / 31.0f);
-         pRow[2] = ((pixel      ) & 0x1f) * (1.0f / 31.0f);
-         pRow[3] = ((pixel >> 15)       ) * 1.0f;
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-a1r5g5b5_put_tile_rgba(ushort *dst,
-                       unsigned w, unsigned h,
-                       const float *p,
-                       unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, g, b, a;
-         r = float_to_ubyte(pRow[0]);
-         g = float_to_ubyte(pRow[1]);
-         b = float_to_ubyte(pRow[2]);
-         a = float_to_ubyte(pRow[3]);
-         r = r >> 3;  /* 5 bits */
-         g = g >> 3;  /* 5 bits */
-         b = b >> 3;  /* 5 bits */
-         a = a >> 7;  /* 1 bit */
-         *dst++ = (a << 15) | (r << 10) | (g << 5) | b;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_B4G4R4A4_UNORM ***/
-
-static void
-a4r4g4b4_get_tile_rgba(const ushort *src,
-                       unsigned w, unsigned h,
-                       float *p,
-                       unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         const ushort pixel = *src++;
-         pRow[0] = ((pixel >>  8) & 0xf) * (1.0f / 15.0f);
-         pRow[1] = ((pixel >>  4) & 0xf) * (1.0f / 15.0f);
-         pRow[2] = ((pixel      ) & 0xf) * (1.0f / 15.0f);
-         pRow[3] = ((pixel >> 12)      ) * (1.0f / 15.0f);
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-a4r4g4b4_put_tile_rgba(ushort *dst,
-                       unsigned w, unsigned h,
-                       const float *p,
-                       unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, g, b, a;
-         r = float_to_ubyte(pRow[0]);
-         g = float_to_ubyte(pRow[1]);
-         b = float_to_ubyte(pRow[2]);
-         a = float_to_ubyte(pRow[3]);
-         r >>= 4;
-         g >>= 4;
-         b >>= 4;
-         a >>= 4;
-         *dst++ = (a << 12) | (r << 8) | (g << 4) | b;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_B5G6R5_UNORM ***/
-
-static void
-r5g6b5_get_tile_rgba(const ushort *src,
-                     unsigned w, unsigned h,
-                     float *p,
-                     unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         const ushort pixel = *src++;
-         pRow[0] = ((pixel >> 11) & 0x1f) * (1.0f / 31.0f);
-         pRow[1] = ((pixel >>  5) & 0x3f) * (1.0f / 63.0f);
-         pRow[2] = ((pixel      ) & 0x1f) * (1.0f / 31.0f);
-         pRow[3] = 1.0f;
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-r5g6b5_put_tile_rgba(ushort *dst,
-                     unsigned w, unsigned h,
-                     const float *p,
-                     unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         uint r = (uint) (CLAMP(pRow[0], 0.0, 1.0) * 31.0);
-         uint g = (uint) (CLAMP(pRow[1], 0.0, 1.0) * 63.0);
-         uint b = (uint) (CLAMP(pRow[2], 0.0, 1.0) * 31.0);
-         *dst++ = (r << 11) | (g << 5) | (b);
-      }
-      p += src_stride;
-   }
-}
-
-
-
-/*** PIPE_FORMAT_R8G8B8_UNORM ***/
-
-static void
-r8g8b8_get_tile_rgba(const ubyte *src,
-                     unsigned w, unsigned h,
-                     float *p,
-                     unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         pRow[0] = ubyte_to_float(src[0]);
-         pRow[1] = ubyte_to_float(src[1]);
-         pRow[2] = ubyte_to_float(src[2]);
-         pRow[3] = 1.0f;
-         src += 3;
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-r8g8b8_put_tile_rgba(ubyte *dst,
-                     unsigned w, unsigned h,
-                     const float *p,
-                     unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         dst[0] = float_to_ubyte(pRow[0]);
-         dst[1] = float_to_ubyte(pRow[1]);
-         dst[2] = float_to_ubyte(pRow[2]);
-         dst += 3;
-      }
-      p += src_stride;
-   }
-}
 
 
 
@@ -512,448 +131,6 @@ z16_get_tile_rgba(const ushort *src,
          pRow[3] = *src++ * scale;
       }
       p += dst_stride;
-   }
-}
-
-
-
-
-/*** PIPE_FORMAT_L8_UNORM ***/
-
-static void
-l8_get_tile_rgba(const ubyte *src,
-                 unsigned w, unsigned h,
-                 float *p,
-                 unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, src++, pRow += 4) {
-         pRow[0] =
-         pRow[1] =
-         pRow[2] = ubyte_to_float(*src);
-         pRow[3] = 1.0;
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-l8_put_tile_rgba(ubyte *dst,
-                 unsigned w, unsigned h,
-                 const float *p,
-                 unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r;
-         r = float_to_ubyte(pRow[0]);
-         *dst++ = (ubyte) r;
-      }
-      p += src_stride;
-   }
-}
-
-
-
-/*** PIPE_FORMAT_A8_UNORM ***/
-
-static void
-a8_get_tile_rgba(const ubyte *src,
-                 unsigned w, unsigned h,
-                 float *p,
-                 unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, src++, pRow += 4) {
-         pRow[0] =
-         pRow[1] =
-         pRow[2] = 0.0;
-         pRow[3] = ubyte_to_float(*src);
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-a8_put_tile_rgba(ubyte *dst,
-                 unsigned w, unsigned h,
-                 const float *p,
-                 unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned a;
-         a = float_to_ubyte(pRow[3]);
-         *dst++ = (ubyte) a;
-      }
-      p += src_stride;
-   }
-}
-
-
-
-/*** PIPE_FORMAT_R16_SNORM ***/
-
-static void
-r16_get_tile_rgba(const short *src,
-                  unsigned w, unsigned h,
-                  float *p,
-                  unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, src++, pRow += 4) {
-         pRow[0] = SHORT_TO_FLOAT(src[0]);
-         pRow[1] =
-         pRow[2] = 0.0;
-         pRow[3] = 1.0;
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-r16_put_tile_rgba(short *dst,
-                  unsigned w, unsigned h,
-                  const float *p,
-                  unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, dst++, pRow += 4) {
-         UNCLAMPED_FLOAT_TO_SHORT(dst[0], pRow[0]);
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_R16G16B16A16_SNORM ***/
-
-static void
-r16g16b16a16_get_tile_rgba(const short *src,
-                           unsigned w, unsigned h,
-                           float *p,
-                           unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, src += 4, pRow += 4) {
-         pRow[0] = SHORT_TO_FLOAT(src[0]);
-         pRow[1] = SHORT_TO_FLOAT(src[1]);
-         pRow[2] = SHORT_TO_FLOAT(src[2]);
-         pRow[3] = SHORT_TO_FLOAT(src[3]);
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-r16g16b16a16_put_tile_rgba(short *dst,
-                           unsigned w, unsigned h,
-                           const float *p,
-                           unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, dst += 4, pRow += 4) {
-         UNCLAMPED_FLOAT_TO_SHORT(dst[0], pRow[0]);
-         UNCLAMPED_FLOAT_TO_SHORT(dst[1], pRow[1]);
-         UNCLAMPED_FLOAT_TO_SHORT(dst[2], pRow[2]);
-         UNCLAMPED_FLOAT_TO_SHORT(dst[3], pRow[3]);
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_A8B8G8R8_SRGB ***/
-
-/**
- * Convert an 8-bit sRGB value from non-linear space to a
- * linear RGB value in [0, 1].
- * Implemented with a 256-entry lookup table.
- */
-static INLINE float
-srgb_to_linear(ubyte cs8)
-{
-   static float table[256];
-   static boolean tableReady = FALSE;
-   if (!tableReady) {
-      /* compute lookup table now */
-      uint i;
-      for (i = 0; i < 256; i++) {
-         const float cs = ubyte_to_float(i);
-         if (cs <= 0.04045) {
-            table[i] = cs / 12.92f;
-         }
-         else {
-            table[i] = (float) powf((cs + 0.055) / 1.055, 2.4);
-         }
-      }
-      tableReady = TRUE;
-   }
-   return table[cs8];
-}
-
-
-/**
- * Convert linear float in [0,1] to an srgb ubyte value in [0,255].
- * XXX this hasn't been tested (render to srgb surface).
- * XXX this needs optimization.
- */
-static INLINE ubyte
-linear_to_srgb(float cl)
-{
-   if (cl >= 1.0F)
-      return 255;
-   else if (cl >= 0.0031308F)
-      return float_to_ubyte(1.055F * powf(cl, 0.41666F) - 0.055F);
-   else if (cl > 0.0F)
-      return float_to_ubyte(12.92F * cl);
-   else
-      return 0.0;
-}
-
-
-static void
-a8r8g8b8_srgb_get_tile_rgba(const unsigned *src,
-                            unsigned w, unsigned h,
-                            float *p,
-                            unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         const unsigned pixel = *src++;
-         pRow[0] = srgb_to_linear((pixel >> 16) & 0xff);
-         pRow[1] = srgb_to_linear((pixel >>  8) & 0xff);
-         pRow[2] = srgb_to_linear((pixel >>  0) & 0xff);
-         pRow[3] = ubyte_to_float((pixel >> 24) & 0xff);
-      }
-      p += dst_stride;
-   }
-}
-
-static void
-a8r8g8b8_srgb_put_tile_rgba(unsigned *dst,
-                            unsigned w, unsigned h,
-                            const float *p,
-                            unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, g, b, a;
-         r = linear_to_srgb(pRow[0]);
-         g = linear_to_srgb(pRow[1]);
-         b = linear_to_srgb(pRow[2]);
-         a = float_to_ubyte(pRow[3]);
-         *dst++ = (a << 24) | (r << 16) | (g << 8) | b;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_L8A8_SRGB ***/
-
-static void
-a8l8_srgb_get_tile_rgba(const ushort *src,
-                        unsigned w, unsigned h,
-                        float *p,
-                        unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         ushort p = *src++;
-         pRow[0] =
-         pRow[1] =
-         pRow[2] = srgb_to_linear(p & 0xff);
-         pRow[3] = ubyte_to_float(p >> 8);
-      }
-      p += dst_stride;
-   }
-}
-
-static void
-a8l8_srgb_put_tile_rgba(ushort *dst,
-                        unsigned w, unsigned h,
-                        const float *p,
-                        unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, a;
-         r = linear_to_srgb(pRow[0]);
-         a = float_to_ubyte(pRow[3]);
-         *dst++ = (a << 8) | r;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_L8_SRGB ***/
-
-static void
-l8_srgb_get_tile_rgba(const ubyte *src,
-                      unsigned w, unsigned h,
-                      float *p,
-                      unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, src++, pRow += 4) {
-         pRow[0] =
-         pRow[1] =
-         pRow[2] = srgb_to_linear(*src);
-         pRow[3] = 1.0;
-      }
-      p += dst_stride;
-   }
-}
-
-static void
-l8_srgb_put_tile_rgba(ubyte *dst,
-                      unsigned w, unsigned h,
-                      const float *p,
-                      unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r;
-         r = linear_to_srgb(pRow[0]);
-         *dst++ = (ubyte) r;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_I8_UNORM ***/
-
-static void
-i8_get_tile_rgba(const ubyte *src,
-                 unsigned w, unsigned h,
-                 float *p,
-                 unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, src++, pRow += 4) {
-         pRow[0] =
-         pRow[1] =
-         pRow[2] =
-         pRow[3] = ubyte_to_float(*src);
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-i8_put_tile_rgba(ubyte *dst,
-                 unsigned w, unsigned h,
-                 const float *p,
-                 unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r;
-         r = float_to_ubyte(pRow[0]);
-         *dst++ = (ubyte) r;
-      }
-      p += src_stride;
-   }
-}
-
-
-/*** PIPE_FORMAT_L8A8_UNORM ***/
-
-static void
-a8l8_get_tile_rgba(const ushort *src,
-                   unsigned w, unsigned h,
-                   float *p,
-                   unsigned dst_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         ushort p = *src++;
-         pRow[0] =
-         pRow[1] =
-         pRow[2] = ubyte_to_float(p & 0xff);
-         pRow[3] = ubyte_to_float(p >> 8);
-      }
-      p += dst_stride;
-   }
-}
-
-
-static void
-a8l8_put_tile_rgba(ushort *dst,
-                   unsigned w, unsigned h,
-                   const float *p,
-                   unsigned src_stride)
-{
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      const float *pRow = p;
-      for (j = 0; j < w; j++, pRow += 4) {
-         unsigned r, a;
-         r = float_to_ubyte(pRow[0]);
-         a = float_to_ubyte(pRow[3]);
-         *dst++ = (a << 8) | r;
-      }
-      p += src_stride;
    }
 }
 
@@ -987,7 +164,7 @@ z32_get_tile_rgba(const unsigned *src,
 }
 
 
-/*** PIPE_FORMAT_Z24S8_UNORM ***/
+/*** PIPE_FORMAT_Z24_UNORM_S8_USCALED ***/
 
 /**
  * Return Z component as four float in [0,1].  Stencil part ignored.
@@ -1014,7 +191,7 @@ s8z24_get_tile_rgba(const unsigned *src,
 }
 
 
-/*** PIPE_FORMAT_S8Z24_UNORM ***/
+/*** PIPE_FORMAT_S8_USCALED_Z24_UNORM ***/
 
 /**
  * Return Z component as four float in [0,1].  Stencil part ignored.
@@ -1067,94 +244,6 @@ z32f_get_tile_rgba(const float *src,
 }
 
 
-/*** PIPE_FORMAT_UYVY / PIPE_FORMAT_YUYV ***/
-
-/**
- * Convert YCbCr (or YCrCb) to RGBA.
- */
-static void
-ycbcr_get_tile_rgba(const ushort *src,
-                    unsigned w, unsigned h,
-                    float *p,
-                    unsigned dst_stride,
-                    boolean rev)
-{
-   const float scale = 1.0f / 255.0f;
-   unsigned i, j;
-
-   for (i = 0; i < h; i++) {
-      float *pRow = p;
-      /* do two texels at a time */
-      for (j = 0; j < (w & ~1); j += 2, src += 2) {
-         const ushort t0 = src[0];
-         const ushort t1 = src[1];
-         const ubyte y0 = (t0 >> 8) & 0xff;  /* luminance */
-         const ubyte y1 = (t1 >> 8) & 0xff;  /* luminance */
-         ubyte cb, cr;
-         float r, g, b;
-
-         if (rev) {
-            cb = t1 & 0xff;         /* chroma U */
-            cr = t0 & 0xff;         /* chroma V */
-         }
-         else {
-            cb = t0 & 0xff;         /* chroma U */
-            cr = t1 & 0xff;         /* chroma V */
-         }
-
-         /* even pixel: y0,cr,cb */
-         r = 1.164f * (y0-16) + 1.596f * (cr-128);
-         g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
-         b = 1.164f * (y0-16) + 2.018f * (cb-128);
-         pRow[0] = r * scale;
-         pRow[1] = g * scale;
-         pRow[2] = b * scale;
-         pRow[3] = 1.0f;
-         pRow += 4;
-
-         /* odd pixel: use y1,cr,cb */
-         r = 1.164f * (y1-16) + 1.596f * (cr-128);
-         g = 1.164f * (y1-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
-         b = 1.164f * (y1-16) + 2.018f * (cb-128);
-         pRow[0] = r * scale;
-         pRow[1] = g * scale;
-         pRow[2] = b * scale;
-         pRow[3] = 1.0f;
-         pRow += 4;
-
-      }
-      /* do the last texel */
-      if (w & 1) {
-         const ushort t0 = src[0];
-         const ushort t1 = src[1];
-         const ubyte y0 = (t0 >> 8) & 0xff;  /* luminance */
-         ubyte cb, cr;
-         float r, g, b;
-
-         if (rev) {
-            cb = t1 & 0xff;         /* chroma U */
-            cr = t0 & 0xff;         /* chroma V */
-         }
-         else {
-            cb = t0 & 0xff;         /* chroma U */
-            cr = t1 & 0xff;         /* chroma V */
-         }
-
-         /* even pixel: y0,cr,cb */
-         r = 1.164f * (y0-16) + 1.596f * (cr-128);
-         g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
-         b = 1.164f * (y0-16) + 2.018f * (cb-128);
-         pRow[0] = r * scale;
-         pRow[1] = g * scale;
-         pRow[2] = b * scale;
-         pRow[3] = 1.0f;
-         pRow += 4;
-      }
-      p += dst_stride;
-   }
-}
-
-
 void
 pipe_tile_raw_to_rgba(enum pipe_format format,
                       void *src,
@@ -1162,79 +251,22 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
                       float *dst, unsigned dst_stride)
 {
    switch (format) {
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      a8r8g8b8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
-      x8r8g8b8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      b8g8r8a8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_A8B8G8R8_UNORM:
-      r8g8b8a8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_B5G5R5A1_UNORM:
-      a1r5g5b5_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_B4G4R4A4_UNORM:
-      a4r4g4b4_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_B5G6R5_UNORM:
-      r5g6b5_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_R8G8B8_UNORM:
-      r8g8b8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_L8_UNORM:
-      l8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_A8_UNORM:
-      a8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_I8_UNORM:
-      i8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_L8A8_UNORM:
-      a8l8_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_R16_SNORM:
-      r16_get_tile_rgba((short *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
-      r16g16b16a16_get_tile_rgba((short *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_B8G8R8A8_SRGB:
-      a8r8g8b8_srgb_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_L8A8_SRGB:
-      a8l8_srgb_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_L8_SRGB:
-      l8_srgb_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
-      break;
    case PIPE_FORMAT_Z16_UNORM:
       z16_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
       break;
    case PIPE_FORMAT_Z32_UNORM:
       z32_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
       s8z24_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       z24s8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
       break;
    case PIPE_FORMAT_Z32_FLOAT:
       z32f_get_tile_rgba((float *) src, w, h, dst, dst_stride);
-      break;
-   case PIPE_FORMAT_UYVY:
-      ycbcr_get_tile_rgba((ushort *) src, w, h, dst, dst_stride, FALSE);
-      break;
-   case PIPE_FORMAT_YUYV:
-      ycbcr_get_tile_rgba((ushort *) src, w, h, dst, dst_stride, TRUE);
       break;
    default:
       util_format_read_4f(format,
@@ -1246,15 +278,16 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
 
 
 void
-pipe_get_tile_rgba(struct pipe_transfer *pt,
+pipe_get_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    float *p)
 {
    unsigned dst_stride = w * 4;
    void *packed;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
    packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
@@ -1265,7 +298,7 @@ pipe_get_tile_rgba(struct pipe_transfer *pt,
    if(format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV)
       assert((x & 1) == 0);
 
-   pipe_get_tile_raw(pt, x, y, w, h, packed, 0);
+   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
 
    pipe_tile_raw_to_rgba(format, packed, w, h, p, dst_stride);
 
@@ -1274,15 +307,85 @@ pipe_get_tile_rgba(struct pipe_transfer *pt,
 
 
 void
-pipe_put_tile_rgba(struct pipe_transfer *pt,
+pipe_get_tile_swizzle(struct pipe_context *pipe,
+		      struct pipe_transfer *pt,
+                      uint x,
+                      uint y,
+                      uint w,
+                      uint h,
+                      uint swizzle_r,
+                      uint swizzle_g,
+                      uint swizzle_b,
+                      uint swizzle_a,
+                      enum pipe_format format,
+                      float *p)
+{
+   unsigned dst_stride = w * 4;
+   void *packed;
+   uint iy;
+   float rgba01[6];
+
+   if (u_clip_tile(x, y, &w, &h, &pt->box)) {
+      return;
+   }
+
+   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
+   if (!packed) {
+      return;
+   }
+
+   if (format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV) {
+      assert((x & 1) == 0);
+   }
+
+   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
+
+   pipe_tile_raw_to_rgba(format, packed, w, h, p, dst_stride);
+
+   FREE(packed);
+
+   if (swizzle_r == PIPE_SWIZZLE_RED &&
+       swizzle_g == PIPE_SWIZZLE_GREEN &&
+       swizzle_b == PIPE_SWIZZLE_BLUE &&
+       swizzle_a == PIPE_SWIZZLE_ALPHA) {
+      /* no-op, skip */
+      return;
+   }
+
+   rgba01[PIPE_SWIZZLE_ZERO] = 0.0f;
+   rgba01[PIPE_SWIZZLE_ONE] = 1.0f;
+
+   for (iy = 0; iy < h; iy++) {
+      float *row = p;
+      uint ix;
+
+      for (ix = 0; ix < w; ix++) {
+         rgba01[PIPE_SWIZZLE_RED] = row[0];
+         rgba01[PIPE_SWIZZLE_GREEN] = row[1];
+         rgba01[PIPE_SWIZZLE_BLUE] = row[2];
+         rgba01[PIPE_SWIZZLE_ALPHA] = row[3];
+
+         *row++ = rgba01[swizzle_r];
+         *row++ = rgba01[swizzle_g];
+         *row++ = rgba01[swizzle_b];
+         *row++ = rgba01[swizzle_a];
+      }
+      p += dst_stride;
+   }
+}
+
+
+void
+pipe_put_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    const float *p)
 {
    unsigned src_stride = w * 4;
    void *packed;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
    packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
@@ -1291,68 +394,17 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
       return;
 
    switch (format) {
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      a8r8g8b8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
-      x8r8g8b8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      b8g8r8a8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_A8B8G8R8_UNORM:
-      r8g8b8a8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_B5G5R5A1_UNORM:
-      a1r5g5b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_B5G6R5_UNORM:
-      r5g6b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_R8G8B8_UNORM:
-      r8g8b8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_B4G4R4A4_UNORM:
-      a4r4g4b4_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_L8_UNORM:
-      l8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_A8_UNORM:
-      a8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_I8_UNORM:
-      i8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_L8A8_UNORM:
-      a8l8_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_R16_SNORM:
-      r16_put_tile_rgba((short *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
-      r16g16b16a16_put_tile_rgba((short *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_B8G8R8A8_SRGB:
-      a8r8g8b8_srgb_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_L8A8_SRGB:
-      a8l8_srgb_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
-      break;
-   case PIPE_FORMAT_L8_SRGB:
-      l8_srgb_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);
-      break;
    case PIPE_FORMAT_Z16_UNORM:
       /*z16_put_tile_rgba((ushort *) packed, w, h, p, src_stride);*/
       break;
    case PIPE_FORMAT_Z32_UNORM:
       /*z32_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
       /*s8z24_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       /*z24s8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
@@ -1363,7 +415,7 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
                            0, 0, w, h);
    }
 
-   pipe_put_tile_raw(pt, x, y, w, h, packed, 0);
+   pipe_put_tile_raw(pipe, pt, x, y, w, h, packed, 0);
 
    FREE(packed);
 }
@@ -1373,21 +425,21 @@ pipe_put_tile_rgba(struct pipe_transfer *pt,
  * Get a block of Z values, converted to 32-bit range.
  */
 void
-pipe_get_tile_z(struct pipe_transfer *pt,
+pipe_get_tile_z(struct pipe_context *pipe,
+                struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 uint *z)
 {
-   struct pipe_screen *screen = pt->texture->screen;
    const uint dstStride = w;
    ubyte *map;
    uint *pDest = z;
    uint i, j;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
-   map = (ubyte *)screen->transfer_map(screen, pt);
+   map = (ubyte *)pipe->transfer_map(pipe, pt);
    if (!map) {
       assert(0);
       return;
@@ -1405,7 +457,7 @@ pipe_get_tile_z(struct pipe_transfer *pt,
          }
       }
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
    case PIPE_FORMAT_Z24X8_UNORM:
       {
          const uint *ptrc
@@ -1420,7 +472,7 @@ pipe_get_tile_z(struct pipe_transfer *pt,
          }
       }
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       {
          const uint *ptrc
@@ -1453,26 +505,26 @@ pipe_get_tile_z(struct pipe_transfer *pt,
       assert(0);
    }
 
-   screen->transfer_unmap(screen, pt);
+   pipe->transfer_unmap(pipe, pt);
 }
 
 
 void
-pipe_put_tile_z(struct pipe_transfer *pt,
+pipe_put_tile_z(struct pipe_context *pipe,
+                struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 const uint *zSrc)
 {
-   struct pipe_screen *screen = pt->texture->screen;
    const uint srcStride = w;
    const uint *ptrc = zSrc;
    ubyte *map;
    uint i, j;
-   enum pipe_format format = pt->texture->format;
+   enum pipe_format format = pt->resource->format;
 
-   if (pipe_clip_tile(x, y, &w, &h, pt))
+   if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
 
-   map = (ubyte *)screen->transfer_map(screen, pt);
+   map = (ubyte *)pipe->transfer_map(pipe, pt);
    if (!map) {
       assert(0);
       return;
@@ -1489,10 +541,10 @@ pipe_put_tile_z(struct pipe_transfer *pt,
          }
       }
       break;
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
-         assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
+         /*assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);*/
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 24-bit Z, preserve stencil */
@@ -1516,10 +568,10 @@ pipe_put_tile_z(struct pipe_transfer *pt,
          }
       }
       break;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       {
          uint *pDest = (uint *) (map + y * pt->stride + x*4);
-         assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);
+         /*assert((pt->usage & PIPE_TRANSFER_READ_WRITE) == PIPE_TRANSFER_READ_WRITE);*/
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 24-bit Z, preserve stencil */
@@ -1560,7 +612,7 @@ pipe_put_tile_z(struct pipe_transfer *pt,
       assert(0);
    }
 
-   screen->transfer_unmap(screen, pt);
+   pipe->transfer_unmap(pipe, pt);
 }
 
 

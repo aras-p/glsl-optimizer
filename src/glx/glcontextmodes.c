@@ -237,9 +237,11 @@ _gl_get_context_mode_data(const __GLcontextModes * mode, int attribute,
    case GLX_LEVEL:
       *value_return = mode->level;
       return 0;
+#ifndef GLX_USE_APPLEGL               /* This isn't supported by CGL. */
    case GLX_TRANSPARENT_TYPE_EXT:
       *value_return = mode->transparentPixel;
       return 0;
+#endif
    case GLX_TRANSPARENT_RED_VALUE:
       *value_return = mode->transparentRed;
       return 0;
@@ -285,6 +287,7 @@ _gl_get_context_mode_data(const __GLcontextModes * mode, int attribute,
    case GLX_MAX_PBUFFER_PIXELS:
       *value_return = mode->maxPbufferPixels;
       return 0;
+#ifndef GLX_USE_APPLEGL               /* These aren't supported by CGL. */
    case GLX_OPTIMAL_PBUFFER_WIDTH_SGIX:
       *value_return = mode->optimalPbufferWidth;
       return 0;
@@ -294,6 +297,7 @@ _gl_get_context_mode_data(const __GLcontextModes * mode, int attribute,
    case GLX_SWAP_METHOD_OML:
       *value_return = mode->swapMethod;
       return 0;
+#endif
    case GLX_SAMPLE_BUFFERS_SGIS:
       *value_return = mode->sampleBuffers;
       return 0;

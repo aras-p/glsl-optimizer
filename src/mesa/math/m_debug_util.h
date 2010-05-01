@@ -61,7 +61,7 @@ extern long counter_overhead;
  */
 extern char *mesa_profile;
 
-/* Modify the the number of tests if you like.
+/* Modify the number of tests if you like.
  * We take the minimum of all results, because every error should be
  * positive (time used by other processes, task switches etc).
  * It is assumed that all calculations are done in the cache.

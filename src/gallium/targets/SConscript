@@ -1,0 +1,27 @@
+Import('*')
+	
+if 'xlib' in env['winsys']:
+	SConscript([
+		'libgl-xlib/SConscript',
+	])
+
+if 'gdi' in env['winsys']:
+	SConscript([
+		'libgl-gdi/SConscript',
+	])
+
+if 'graw-xlib' in env['winsys']:
+	SConscript([
+		'graw-xlib/SConscript',
+	])
+
+if env['dri']:
+	SConscript([
+		'SConscript.dri'
+	])
+
+if 'xorg' in env['statetrackers']:
+	if 'vmware' in env['winsys']:
+		SConscript([
+			'xorg-vmwgfx/SConscript',
+		])

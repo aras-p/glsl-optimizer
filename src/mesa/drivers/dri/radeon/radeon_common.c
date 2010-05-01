@@ -1325,11 +1325,6 @@ void rcommonBeginBatch(radeonContextPtr rmesa, int n,
 		       const char *function,
 		       int line)
 {
-	if (!rmesa->cmdbuf.cs->cdw && dostate) {
-		radeon_print(RADEON_STATE, RADEON_NORMAL,
-				"Reemit state after flush (from %s)\n", function);
-		radeonEmitState(rmesa);
-	}
 	radeon_cs_begin(rmesa->cmdbuf.cs, n, file, function, line);
 
     radeon_print(RADEON_CS, RADEON_VERBOSE, "BEGIN_BATCH(%d) at %d, from %s:%i\n",

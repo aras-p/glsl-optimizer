@@ -32,23 +32,13 @@
 #include "util/u_format.h"
 #include "gallivm/lp_bld_debug.h"
 #include "lp_rast.h"
+#include "lp_scene.h"
+#include "lp_texture.h"
 #include "lp_tile_soa.h"
-
-
-#define MAX_THREADS 8  /* XXX probably temporary here */
+#include "lp_limits.h"
 
 
 struct lp_rasterizer;
-
-
-/**
- * A tile's color and depth memory.
- * We can choose whatever layout for the internal tile storage we prefer.
- */
-struct lp_rast_tile
-{
-   uint8_t *color[PIPE_MAX_COLOR_BUFS];
-};
 
 
 /**
@@ -56,9 +46,10 @@ struct lp_rast_tile
  */
 struct lp_rasterizer_task
 {
-   struct lp_rast_tile tile;   /** Tile color/z/stencil memory */
-
    unsigned x, y;          /**< Pos of this tile in framebuffer, in pixels */
+
+   uint8_t *color_tiles[PIPE_MAX_COLOR_BUFS];
+   uint8_t *depth_tile;
 
    const struct lp_rast_state *current_state;
 
@@ -86,9 +77,8 @@ struct lp_rasterizer
     */
    struct {
       void *map;
-      unsigned stride;
-      unsigned width;
-      unsigned height;
+      unsigned tiles_per_row;
+      unsigned blocksize;
       enum pipe_format format;
    } cbuf[PIPE_MAX_COLOR_BUFS];
 
@@ -100,8 +90,6 @@ struct lp_rasterizer
 
    struct {
       unsigned nr_cbufs;
-      boolean write_color;
-      boolean write_zstencil;
       unsigned clear_color;
       unsigned clear_depth;
       char clear_stencil;
@@ -117,16 +105,16 @@ struct lp_rasterizer
     * (potentially) shared, these empty scenes should be returned to
     * the context which created them rather than retained here.
     */
-   struct lp_scene_queue *empty_scenes;
+   /*   struct lp_scene_queue *empty_scenes; */
 
    /** The scene currently being rasterized by the threads */
    struct lp_scene *curr_scene;
 
    /** A task object for each rasterization thread */
-   struct lp_rasterizer_task tasks[MAX_THREADS];
+   struct lp_rasterizer_task tasks[LP_MAX_THREADS];
 
    unsigned num_threads;
-   pipe_thread threads[MAX_THREADS];
+   pipe_thread threads[LP_MAX_THREADS];
 
    /** For synchronizing the rasterization threads */
    pipe_barrier barrier;
@@ -140,17 +128,22 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
 
 
 /**
- * Get the pointer to the depth buffer for a block.
+ * Get the pointer to a 4x4 depth/stencil block.
+ * We'll map the z/stencil buffer on demand here.
+ * Note that this may be called even when there's no z/stencil buffer - return
+ * NULL in that case.
  * \param x, y location of 4x4 block in window coords
  */
 static INLINE void *
-lp_rast_depth_pointer( struct lp_rasterizer *rast,
-                       unsigned x, unsigned y )
+lp_rast_get_depth_block_pointer(const struct lp_rasterizer *rast,
+                                unsigned x, unsigned y)
 {
-   void * depth;
+   void *depth;
 
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
+
+   assert(rast->zsbuf.map || !rast->curr_scene->fb.zsbuf);
 
    if (!rast->zsbuf.map)
       return NULL;
@@ -161,6 +154,37 @@ lp_rast_depth_pointer( struct lp_rasterizer *rast,
 
    assert(lp_check_alignment(depth, 16));
    return depth;
+}
+
+
+/**
+ * Get the pointer to a 4x4 color block (within a 64x64 tile).
+ * We'll map the color buffer on demand here.
+ * Note that this may be called even when there's no color buffers - return
+ * NULL in that case.
+ * \param x, y location of 4x4 block in window coords
+ */
+static INLINE uint8_t *
+lp_rast_get_color_block_pointer(struct lp_rasterizer_task *task,
+                                unsigned buf, unsigned x, unsigned y)
+{
+   unsigned px, py, pixel_offset;
+   uint8_t *color;
+
+   assert((x % TILE_VECTOR_WIDTH) == 0);
+   assert((y % TILE_VECTOR_HEIGHT) == 0);
+
+   color = task->color_tiles[buf];
+   assert(color);
+
+   px = x % TILE_SIZE;
+   py = y % TILE_SIZE;
+   pixel_offset = tile_pixel_offset(px, py, 0);
+
+   color = color + pixel_offset;
+
+   assert(lp_check_alignment(color, 16));
+   return color;
 }
 
 
@@ -177,31 +201,27 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
 {
    struct lp_rasterizer *rast = task->rast;
    const struct lp_rast_state *state = task->current_state;
-   struct lp_rast_tile *tile = &task->tile;
-   const unsigned ix = x % TILE_SIZE, iy = y % TILE_SIZE;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;
-   unsigned block_offset, i;
-
-   /* offset of the containing 16x16 pixel block within the tile */
-   block_offset = (iy / 4) * (16 * 16) + (ix / 4) * 16;
+   unsigned i;
 
    /* color buffer */
    for (i = 0; i < rast->state.nr_cbufs; i++)
-      color[i] = tile->color[i] + 4 * block_offset;
+      color[i] = lp_rast_get_color_block_pointer(task, i, x, y);
 
-   depth = lp_rast_depth_pointer(rast, x, y);
+   depth = lp_rast_get_depth_block_pointer(rast, x, y);
 
-   /* run shader */
-   state->jit_function[0]( &state->jit_context,
-                           x, y,
-                           inputs->a0,
-                           inputs->dadx,
-                           inputs->dady,
-                           color,
-                           depth,
-                           INT_MIN, INT_MIN, INT_MIN,
-                           NULL, NULL, NULL );
+   /* run shader on 4x4 block */
+   state->jit_function[RAST_WHOLE]( &state->jit_context,
+                                    x, y,
+                                    inputs->facing,
+                                    inputs->a0,
+                                    inputs->dadx,
+                                    inputs->dady,
+                                    color,
+                                    depth,
+                                    INT_MIN, INT_MIN, INT_MIN,
+                                    NULL, NULL, NULL );
 }
 
 

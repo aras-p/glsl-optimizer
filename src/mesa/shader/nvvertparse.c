@@ -1096,7 +1096,7 @@ Parse_PrintInstruction(struct parse_state *parseState, struct prog_instruction *
       }
    }
    else {
-      srcReg->File = 0;
+      srcReg->File = PROGRAM_UNDEFINED;
    }
 
    /* semicolon */

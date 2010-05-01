@@ -76,7 +76,20 @@ static void upload_sf_vp(struct brw_context *brw)
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
     */
-   if (render_to_fbo) {
+
+   if (ctx->DrawBuffer->_Xmin == ctx->DrawBuffer->_Xmax ||
+       ctx->DrawBuffer->_Ymin == ctx->DrawBuffer->_Ymax) {
+      /* If the scissor was out of bounds and got clamped to 0
+       * width/height at the bounds, the subtraction of 1 from
+       * maximums could produce a negative number and thus not clip
+       * anything.  Instead, just provide a min > max scissor inside
+       * the bounds, which produces the expected no rendering.
+       */
+      sfv.scissor.xmin = 1;
+      sfv.scissor.xmax = 0;
+      sfv.scissor.ymin = 1;
+      sfv.scissor.ymax = 0;
+   } else if (render_to_fbo) {
       /* texmemory: Y=0=bottom */
       sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
       sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
@@ -177,7 +190,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    sf.thread3.dispatch_grf_start_reg = 3;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        sf.thread3.urb_entry_read_offset = 3;
    else
        sf.thread3.urb_entry_read_offset = 1;
@@ -190,7 +203,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    /* Each SF thread produces 1 PUE, and there can be up to 24 (Pre-Ironlake) or
     * 48 (Ironlake) threads.
     */
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       chipset_max_threads = 48;
    else
       chipset_max_threads = 24;

@@ -11,7 +11,16 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 
-static GLint WinWidth = 500, WinHeight = 500;
+
+#define ZWIDTH 100
+#define ZHEIGHT 100
+
+#define ZOOM 4
+
+#define ZWIDTH2 (ZOOM * ZWIDTH)
+#define ZHEIGHT2 (ZOOM * ZHEIGHT)
+
+static GLint WinWidth = ZWIDTH + ZWIDTH2, WinHeight = ZHEIGHT + ZHEIGHT2;
 static GLboolean Invert = GL_FALSE;
 static GLboolean TestPacking = GL_FALSE;
 static GLboolean TestList = GL_FALSE;
@@ -19,8 +28,8 @@ static GLboolean TestList = GL_FALSE;
 
 static void Display(void)
 {
-   GLfloat depth[100 * 100 * 2];
-   GLfloat depth2[400 * 400]; /* *2 to test pixelstore stuff */
+   GLfloat depth[ZWIDTH * ZHEIGHT * 2];
+   GLfloat depth2[ZWIDTH2 * ZHEIGHT2]; /* *2 to test pixelstore stuff */
    GLuint list;
    GLenum depthType = GL_FLOAT;
 
@@ -30,7 +39,7 @@ static void Display(void)
    glEnable(GL_DEPTH_TEST);
 
    /* draw a sphere */
-   glViewport(0, 0, 100, 100);
+   glViewport(0, 0, ZWIDTH, ZHEIGHT);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glOrtho(-1, 1, -1, 1, -1, 0);  /* clip away back half of sphere */
@@ -44,12 +53,12 @@ static void Display(void)
    }
 
    /* read the depth image */
-   glReadPixels(0, 0, 100, 100, GL_DEPTH_COMPONENT, depthType, depth);
+   glReadPixels(0, 0, ZWIDTH, ZHEIGHT, GL_DEPTH_COMPONENT, depthType, depth);
    if (depthType == GL_FLOAT) {
       GLfloat min, max;
       int i;
       min = max = depth[0];
-      for (i = 1; i < 100 * 100; i++) {
+      for (i = 1; i < ZWIDTH * ZHEIGHT; i++) {
          if (depth[i] < min)
             min = depth[i];
          if (depth[i] > max)
@@ -58,9 +67,22 @@ static void Display(void)
       printf("Depth value range: [%f, %f]\n", min, max);
    }
 
+   /* debug */
+   if (0) {
+      int i;
+      float *z = depth + ZWIDTH * 50;
+      printf("z at y=50:\n");
+      for (i = 0; i < ZWIDTH; i++) {
+         printf("%5.3f ", z[i]);
+         if ((i + 1) % 12 == 0)
+            printf("\n");
+      }
+      printf("\n");
+   }
+
    /* Draw the Z image as luminance above original rendering */
-   glWindowPos2i(0, 100);
-   glDrawPixels(100, 100, GL_LUMINANCE, depthType, depth);
+   glWindowPos2i(0, ZHEIGHT);
+   glDrawPixels(ZWIDTH, ZHEIGHT, GL_LUMINANCE, depthType, depth);
 
    if (TestPacking) {
       glPixelStorei(GL_PACK_ROW_LENGTH, 0);
@@ -70,9 +92,9 @@ static void Display(void)
    }
 
    /* draw depth image with scaling (into z buffer) */
-   glPixelZoom(4.0, 4.0);
+   glPixelZoom(ZOOM, ZOOM);
    glColor4f(1, 0, 0, 0);
-   glWindowPos2i(100, 0);
+   glWindowPos2i(ZWIDTH, 0);
    if (Invert) {
       glPixelTransferf(GL_DEPTH_SCALE, -1.0);
       glPixelTransferf(GL_DEPTH_BIAS, 1.0);
@@ -80,13 +102,13 @@ static void Display(void)
    if (TestList) {
       list = glGenLists(1);
       glNewList(list, GL_COMPILE);
-      glDrawPixels(100, 100, GL_DEPTH_COMPONENT, depthType, depth);
+      glDrawPixels(ZWIDTH, ZHEIGHT, GL_DEPTH_COMPONENT, depthType, depth);
       glEndList();
       glCallList(list);
       glDeleteLists(list, 1);
    }
    else {
-      glDrawPixels(100, 100, GL_DEPTH_COMPONENT, depthType, depth);
+      glDrawPixels(ZWIDTH, ZHEIGHT, GL_DEPTH_COMPONENT, depthType, depth);
    }
    if (Invert) {
       glPixelTransferf(GL_DEPTH_SCALE, 1.0);
@@ -101,11 +123,25 @@ static void Display(void)
    glDisable(GL_DEPTH_TEST);
 
    /* read back scaled depth image */
-   glReadPixels(100, 0, 400, 400, GL_DEPTH_COMPONENT, GL_FLOAT, depth2);
+   glReadPixels(ZWIDTH, 0, ZWIDTH2, ZHEIGHT2, GL_DEPTH_COMPONENT, GL_FLOAT, depth2);
+
+   /* debug */
+   if (0) {
+      int i;
+      float *z = depth2 + ZWIDTH2 * 200;
+      printf("z at y=200:\n");
+      for (i = 0; i < ZWIDTH2; i++) {
+         printf("%5.3f ", z[i]);
+         if ((i + 1) % 12 == 0)
+            printf("\n");
+      }
+      printf("\n");
+   }
+
    /* draw as luminance */
    glPixelZoom(1.0, 1.0);
-   glWindowPos2i(100, 0);
-   glDrawPixels(400, 400, GL_LUMINANCE, GL_FLOAT, depth2);
+   glWindowPos2i(ZWIDTH, 0);
+   glDrawPixels(ZWIDTH2, ZHEIGHT2, GL_LUMINANCE, GL_FLOAT, depth2);
 
    glutSwapBuffers();
 }
@@ -149,9 +185,13 @@ static void Init(void)
    const GLfloat gray[4] = {0.2, 0.2, 0.2, 1.0};
    const GLfloat white[4] = {1.0, 1.0, 1.0, 1.0};
    const GLfloat pos[4] = {0, 0, 10, 0};
+   GLint z;
+
+   glGetIntegerv(GL_DEPTH_BITS, &z);
 
    printf("GL_VERSION = %s\n", (char *) glGetString(GL_VERSION));
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
+   printf("GL_DEPTH_BITS = %d\n", z);
 
    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
    glLightfv(GL_LIGHT0, GL_AMBIENT, gray);

@@ -4,7 +4,6 @@ include $(TOP)/configs/current
 LIBNAME = trace
 
 C_SOURCES = \
-	tr_buffer.c \
 	tr_context.c \
 	tr_dump.c \
 	tr_dump_state.c \

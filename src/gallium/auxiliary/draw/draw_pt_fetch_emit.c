@@ -129,41 +129,16 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       unsigned input_offset = src->src_offset;
       unsigned output_format;
 
-      switch (vinfo->attrib[i].emit) {
-      case EMIT_4UB:
-	 output_format = PIPE_FORMAT_R8G8B8A8_UNORM;
-	 emit_sz = 4 * sizeof(unsigned char);
-         break;
-      case EMIT_4F:
-	 output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-	 emit_sz = 4 * sizeof(float);
-         break;
-      case EMIT_3F:
-	 output_format = PIPE_FORMAT_R32G32B32_FLOAT;
-	 emit_sz = 3 * sizeof(float);
-         break;
-      case EMIT_2F:
-	 output_format = PIPE_FORMAT_R32G32_FLOAT;
-	 emit_sz = 2 * sizeof(float);
-         break;
-      case EMIT_1F:
-	 output_format = PIPE_FORMAT_R32_FLOAT;
-	 emit_sz = 1 * sizeof(float);
-         break;
-      case EMIT_1F_PSIZE:
+      output_format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
+      emit_sz = draw_translate_vinfo_size(vinfo->attrib[i].emit);
+
+      if (vinfo->attrib[i].emit == EMIT_OMIT)
+	 continue;
+
+      if (vinfo->attrib[i].emit == EMIT_1F_PSIZE) {
 	 input_format = PIPE_FORMAT_R32_FLOAT;
 	 input_buffer = draw->pt.nr_vertex_buffers;
 	 input_offset = 0;
-	 output_format = PIPE_FORMAT_R32_FLOAT;
-	 emit_sz = 1 * sizeof(float);
-         break;
-      case EMIT_OMIT:
-         continue;
-      default:
-         assert(0);
-	 output_format = PIPE_FORMAT_NONE;
-	 emit_sz = 0;
-	 continue;
       }
 
       key.element[i].type = TRANSLATE_ELEMENT_NORMAL;
@@ -193,7 +168,8 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       feme->translate->set_buffer(feme->translate, 
 				  draw->pt.nr_vertex_buffers, 
 				  &feme->point_size,
-				  0);
+				  0,
+				  ~0);
    }
    
    feme->point_size = draw->rasterizer->point_size;
@@ -203,7 +179,8 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                   i, 
                                   ((char *)draw->pt.user.vbuffer[i] + 
                                    draw->pt.vertex_buffer[i].buffer_offset),
-                                  draw->pt.vertex_buffer[i].stride );
+                                  draw->pt.vertex_buffer[i].stride,
+                                  draw->pt.vertex_buffer[i].max_index);
    }
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 

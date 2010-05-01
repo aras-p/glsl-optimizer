@@ -28,6 +28,7 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
@@ -53,7 +54,6 @@ static INLINE struct wideline_stage *wideline_stage( struct draw_stage *stage )
 
 /**
  * Draw a wide line by drawing a quad (two triangles).
- * XXX need to disable polygon stipple.
  */
 static void wideline_line( struct draw_stage *stage,
                            struct prim_header *header )
@@ -142,9 +142,40 @@ static void wideline_line( struct draw_stage *stage,
 }
 
 
+static void wideline_first_line( struct draw_stage *stage, 
+                                 struct prim_header *header )
+{
+   struct draw_context *draw = stage->draw;
+   struct pipe_context *pipe = draw->pipe;
+   const struct pipe_rasterizer_state *rast = draw->rasterizer;
+   void *r;
+
+   /* Disable triangle culling, stippling, unfilled mode etc. */
+   r = draw_get_rasterizer_no_cull(draw, rast->scissor, rast->flatshade);
+   draw->suspend_flushing = TRUE;
+   pipe->bind_rasterizer_state(pipe, r);
+   draw->suspend_flushing = FALSE;
+
+   stage->line = wideline_line;
+
+   wideline_line(stage, header);
+}
+
+
 static void wideline_flush( struct draw_stage *stage, unsigned flags )
 {
+   struct draw_context *draw = stage->draw;
+   struct pipe_context *pipe = draw->pipe;
+
+   stage->line = wideline_first_line;
    stage->next->flush( stage->next, flags );
+
+   /* restore original rasterizer state */
+   if (draw->rast_handle) {
+      draw->suspend_flushing = TRUE;
+      pipe->bind_rasterizer_state(pipe, draw->rast_handle);
+      draw->suspend_flushing = FALSE;
+   }
 }
 
 
@@ -171,7 +202,7 @@ struct draw_stage *draw_wide_line_stage( struct draw_context *draw )
    wide->stage.name = "wide-line";
    wide->stage.next = NULL;
    wide->stage.point = draw_pipe_passthrough_point;
-   wide->stage.line = wideline_line;
+   wide->stage.line = wideline_first_line;
    wide->stage.tri = draw_pipe_passthrough_tri;
    wide->stage.flush = wideline_flush;
    wide->stage.reset_stipple_counter = wideline_reset_stipple_counter;

@@ -26,8 +26,7 @@
 #include "util/u_math.h"
 
 #include "r300_reg.h"
-
-#include "radeon_winsys.h"
+#include "r300_winsys.h"
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
@@ -51,7 +50,7 @@
 
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
-    struct radeon_winsys* cs_winsys = cs_context_copy->winsys; \
+    struct r300_winsys_screen *cs_winsys = cs_context_copy->rws; \
     int cs_count = 0; (void) cs_count;
 
 #define CHECK_CS(size) \
@@ -105,22 +104,41 @@
     cs_count--; \
 } while (0)
 
-#define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
+#define OUT_CS_TABLE(values, count) do { \
+    if (VERY_VERBOSE_REGISTERS) \
+        DBG(cs_context_copy, DBG_CS, "r300: writing table of %d dwords\n", count); \
+    cs_winsys->write_cs_table(cs_winsys, values, count); \
+    cs_count -= count; \
+} while (0)
+
+#define OUT_CS_BUF_RELOC(bo, offset, rd, wd, flags) do { \
     DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, offset %d, " \
             "domains (%d, %d, %d)\n", \
         bo, offset, rd, wd, flags); \
     assert(bo); \
     cs_winsys->write_cs_dword(cs_winsys, offset); \
-    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
+    r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
     cs_count -= 3; \
 } while (0)
 
-#define OUT_CS_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
+
+#define OUT_CS_TEX_RELOC(tex, offset, rd, wd, flags) do { \
+    DBG(cs_context_copy, DBG_CS, "r300: writing relocation for texture %p, offset %d, " \
+            "domains (%d, %d, %d)\n", \
+        tex, offset, rd, wd, flags); \
+    assert(tex); \
+    cs_winsys->write_cs_dword(cs_winsys, offset); \
+    r300_texture_write_reloc(cs_winsys, tex, rd, wd, flags);	\
+    cs_count -= 3; \
+} while (0)
+
+
+#define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
     DBG(cs_context_copy, DBG_CS, "r300: writing relocation for buffer %p, " \
             "domains (%d, %d, %d)\n", \
         bo, rd, wd, flags); \
     assert(bo); \
-    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
+    r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
     cs_count -= 2; \
 } while (0)
 
@@ -138,6 +156,9 @@
     if (VERY_VERBOSE_CS) { \
         DBG(cs_context_copy, DBG_CS, "r300: FLUSH_CS in %s (%s:%d)\n\n", __FUNCTION__, \
                 __FILE__, __LINE__); \
+    } \
+    if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) { \
+        r300->flush_counter++; \
     } \
     cs_winsys->flush_cs(cs_winsys); \
 } while (0)

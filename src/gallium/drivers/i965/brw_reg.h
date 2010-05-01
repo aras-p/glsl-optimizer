@@ -109,7 +109,7 @@ struct brw_chipset {
 /* XXX: hacks
  */
 #define VERT_RESULT_HPOS 0	/* not always true */
-#define VERT_RESULT_PSIZ 10000	/* disabled */
+#define VERT_RESULT_PSIZ 127	/* disabled */
 
 
 #endif

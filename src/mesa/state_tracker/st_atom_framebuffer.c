@@ -34,11 +34,9 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_cb_fbo.h"
-#include "st_public.h"
 #include "st_texture.h"
 #include "pipe/p_context.h"
 #include "cso_cache/cso_context.h"
-#include "util/u_rect.h"
 #include "util/u_math.h"
 #include "util/u_inlines.h"
 
@@ -46,7 +44,7 @@
 
 /**
  * When doing GL render to texture, we have to be sure that finalize_texture()
- * didn't yank out the pipe_texture that we earlier created a surface for.
+ * didn't yank out the pipe_resource that we earlier created a surface for.
  * Check for that here and create a new surface if needed.
  */
 static void
@@ -54,29 +52,30 @@ update_renderbuffer_surface(struct st_context *st,
                             struct st_renderbuffer *strb)
 {
    struct pipe_screen *screen = st->pipe->screen;
-   struct pipe_texture *texture = strb->rtt->pt;
+   struct pipe_resource *resource = strb->rtt->pt;
    int rtt_width = strb->Base.Width;
    int rtt_height = strb->Base.Height;
 
    if (!strb->surface ||
-       strb->surface->texture != texture ||
+       strb->surface->texture != resource ||
        strb->surface->width != rtt_width ||
        strb->surface->height != rtt_height) {
       GLuint level;
       /* find matching mipmap level size */
-      for (level = 0; level <= texture->last_level; level++) {
-         if (u_minify(texture->width0, level) == rtt_width &&
-             u_minify(texture->height0, level) == rtt_height) {
+      for (level = 0; level <= resource->last_level; level++) {
+         if (u_minify(resource->width0, level) == rtt_width &&
+             u_minify(resource->height0, level) == rtt_height) {
 
             pipe_surface_reference(&strb->surface, NULL);
 
             strb->surface = screen->get_tex_surface(screen,
-                                              texture,
-                                              strb->rtt_face,
-                                              level,
-                                              strb->rtt_slice,
-                                              PIPE_BUFFER_USAGE_GPU_READ |
-                                              PIPE_BUFFER_USAGE_GPU_WRITE);
+						    resource,
+						    strb->rtt_face,
+						    level,
+						    strb->rtt_slice,
+						    PIPE_BIND_RENDER_TARGET |
+						    PIPE_BIND_BLIT_SOURCE |
+						    PIPE_BIND_BLIT_DESTINATION );
 #if 0
             printf("-- alloc new surface %d x %d into tex %p\n",
                    strb->surface->width, strb->surface->height,
@@ -154,31 +153,17 @@ update_framebuffer_state( struct st_context *st )
          pipe_surface_reference(&framebuffer->zsbuf, NULL);
    }
 
-   cso_set_framebuffer(st->cso_context, framebuffer);
-
-   if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-      if (st->frontbuffer_status == FRONT_STATUS_COPY_OF_BACK) {
-         /* copy back color buffer to front color buffer */
-         struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
-	 struct pipe_surface *surf_front, *surf_back;
-         (void) st_get_framebuffer_surface(stfb, ST_SURFACE_FRONT_LEFT, &surf_front);
-         (void) st_get_framebuffer_surface(stfb, ST_SURFACE_BACK_LEFT, &surf_back);
-
-         if (st->pipe->surface_copy) {
-            st->pipe->surface_copy(st->pipe,
-                                   surf_front, 0, 0,  /* dest */
-                                   surf_back, 0, 0,   /* src */
-                                   fb->Width, fb->Height);
-         } else {
-            util_surface_copy(st->pipe, FALSE,
-                              surf_front, 0, 0,
-                              surf_back, 0, 0,
-                              fb->Width, fb->Height);
-         }
-      }
-      /* we're assuming we'll really draw to the front buffer */
-      st->frontbuffer_status = FRONT_STATUS_DIRTY;
+#ifdef DEBUG
+   /* Make sure the resource binding flags were set properly */
+   for (i = 0; i < framebuffer->nr_cbufs; i++) {
+      assert(framebuffer->cbufs[i]->texture->bind & PIPE_BIND_RENDER_TARGET);
    }
+   if (framebuffer->zsbuf) {
+      assert(framebuffer->zsbuf->texture->bind & PIPE_BIND_DEPTH_STENCIL);
+   }
+#endif
+
+   cso_set_framebuffer(st->cso_context, framebuffer);
 }
 
 

@@ -54,7 +54,8 @@ enum attrib_emit {
    EMIT_2F,
    EMIT_3F,
    EMIT_4F,
-   EMIT_4UB  /**< XXX may need variations for RGBA vs BGRA, etc */
+   EMIT_4UB, /**< is RGBA like the rest */
+   EMIT_4UB_BGRA
 };
 
 
@@ -141,9 +142,11 @@ void draw_dump_emitted_vertex(const struct vertex_info *vinfo,
                               const uint8_t *data);
 
 
-static INLINE unsigned draw_translate_vinfo_format(unsigned format )
+static INLINE enum pipe_format draw_translate_vinfo_format(enum attrib_emit emit)
 {
-   switch (format) {
+   switch (emit) {
+   case EMIT_OMIT:
+      return PIPE_FORMAT_NONE;
    case EMIT_1F:
    case EMIT_1F_PSIZE:
       return PIPE_FORMAT_R32_FLOAT;
@@ -155,10 +158,36 @@ static INLINE unsigned draw_translate_vinfo_format(unsigned format )
       return PIPE_FORMAT_R32G32B32A32_FLOAT;
    case EMIT_4UB:
       return PIPE_FORMAT_R8G8B8A8_UNORM;
+   case EMIT_4UB_BGRA:
+      return PIPE_FORMAT_B8G8R8A8_UNORM;
    default:
+      assert(!"unexpected format");
       return PIPE_FORMAT_NONE;
    }
 }
 
+static INLINE enum attrib_emit draw_translate_vinfo_size(enum attrib_emit emit)
+{
+   switch (emit) {
+   case EMIT_OMIT:
+      return 0;
+   case EMIT_1F:
+   case EMIT_1F_PSIZE:
+      return 1 * sizeof(float);
+   case EMIT_2F:
+      return 2 * sizeof(float);
+   case EMIT_3F:
+      return 3 * sizeof(float);
+   case EMIT_4F:
+      return 4 * sizeof(float);
+   case EMIT_4UB:
+      return 4 * sizeof(unsigned char);
+   case EMIT_4UB_BGRA:
+      return 4 * sizeof(unsigned char);
+   default:
+      assert(!"unexpected format");
+      return 0;
+   }
+}
 
 #endif /* DRAW_VERTEX_H */

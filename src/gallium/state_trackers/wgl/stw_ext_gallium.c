@@ -31,11 +31,6 @@
 #include "stw_winsys.h"
 #include "stw_ext_gallium.h"
 
-#ifdef DEBUG
-#include "trace/tr_screen.h"
-#include "trace/tr_context.h"
-#endif
-
 
 struct pipe_screen * APIENTRY
 wglGetGalliumScreenMESA(void)

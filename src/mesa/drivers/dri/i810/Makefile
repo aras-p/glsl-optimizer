@@ -5,9 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = i810_dri.so
 
-# Not yet
-# MINIGLX_SOURCES = server/i810_dri.c 
-
 DRIVER_SOURCES = \
 	i810context.c \
 	i810ioctl.c \

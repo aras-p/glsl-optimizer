@@ -41,6 +41,7 @@ SOURCES = \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
+	cva_huge.c \
 	cylwrap.c \
 	drawbuffers.c \
 	drawbuffers2.c \
@@ -89,6 +90,7 @@ SOURCES = \
 	seccolor.c \
 	shader_api.c \
 	sharedtex.c \
+	stencilreaddraw.c \
 	stencil_twoside.c \
 	stencilwrap.c \
 	stencil_wrap.c \

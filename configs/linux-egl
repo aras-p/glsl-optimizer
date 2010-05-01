@@ -47,11 +47,11 @@ GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 
 
 # Directories
-SRC_DIRS = gallium mesa gallium/winsys glu egl
-PROGRAM_DIRS = egl
+SRC_DIRS = gallium mesa gallium/winsys gallium/targets glu egl
+PROGRAM_DIRS = egl/eglut egl/opengl
 
 DRIVER_DIRS = dri
-WINDOW_SYSTEM = dri
 GALLIUM_WINSYS_DIRS = egl_drm
+GALLIUM_TARGET_DIRS =
 
 DRI_DIRS = intel 

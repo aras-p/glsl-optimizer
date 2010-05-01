@@ -210,6 +210,8 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 {
    int ret;
 
+   assert(delta < buffer->size);
+
    if (batch->ptr - batch->map > batch->buf->size)
     printf ("bad relocation ptr %p map %p offset %d size %lu\n",
 	    batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
@@ -233,6 +235,8 @@ intel_batchbuffer_emit_reloc_fenced(struct intel_batchbuffer *batch,
 				    uint32_t delta)
 {
    int ret;
+
+   assert(delta < buffer->size);
 
    if (batch->ptr - batch->map > batch->buf->size)
     printf ("bad relocation ptr %p map %p offset %d size %lu\n",

@@ -104,7 +104,7 @@ brw_update_vs_constant_surface( GLcontext *ctx,
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
-   if (vp->const_buffer == 0) {
+   if (vp->const_buffer == NULL) {
       drm_intel_bo_unreference(brw->vs.surf_bo[surf]);
       brw->vs.surf_bo[surf] = NULL;
       return;
@@ -132,7 +132,7 @@ brw_update_vs_constant_surface( GLcontext *ctx,
    brw->vs.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
-                                            &key.bo, key.bo ? 1 : 0,
+                                            &key.bo, 1,
                                             NULL);
    if (brw->vs.surf_bo[surf] == NULL) {
       brw->vs.surf_bo[surf] = brw_create_constant_surface(brw, &key);

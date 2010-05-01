@@ -62,6 +62,8 @@ static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire);
 static Status
 DRI2EventToWire(Display *dpy, XEvent *event, xEvent *wire);
+static int
+DRI2Error(Display *display, xError *err, XExtCodes *codes, int *ret_code);
 
 static /* const */ XExtensionHooks dri2ExtensionHooks = {
   NULL,                   /* create_gc */
@@ -73,7 +75,7 @@ static /* const */ XExtensionHooks dri2ExtensionHooks = {
   DRI2CloseDisplay,       /* close_display */
   DRI2WireToEvent,        /* wire_to_event */
   DRI2EventToWire,        /* event_to_wire */
-  NULL,                   /* error */
+  DRI2Error,              /* error */
   NULL,                   /* error_string */
 };
 
@@ -99,8 +101,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
       xDRI2BufferSwapComplete *awire = (xDRI2BufferSwapComplete *)wire;
       aevent->serial = _XSetLastRequestRead(dpy, (xGenericReply *) wire);
-      aevent->type =
-	  (glx_info->codes->first_event + GLX_BufferSwapComplete) & 0x75;
+      aevent->type = glx_info->codes->first_event + GLX_BufferSwapComplete;
       aevent->send_event = (awire->type & 0x80) != 0;
       aevent->display = dpy;
       aevent->drawable = awire->drawable;
@@ -109,7 +110,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 	 aevent->event_type = GLX_EXCHANGE_COMPLETE_INTEL;
 	 break;
       case DRI2_BLIT_COMPLETE:
-	 aevent->event_type = GLX_BLIT_COMPLETE_INTEL;
+	 aevent->event_type = GLX_COPY_COMPLETE_INTEL;
 	 break;
       case DRI2_FLIP_COMPLETE:
 	 aevent->event_type = GLX_FLIP_COMPLETE_INTEL;
@@ -158,6 +159,17 @@ DRI2EventToWire(Display *dpy, XEvent *event, xEvent *wire)
    }
 
    return Success;
+}
+
+static int
+DRI2Error(Display *display, xError *err, XExtCodes *codes, int *ret_code)
+{
+    if (err->majorCode == codes->major_opcode &&
+	err->errorCode == BadDrawable &&
+	err->minorCode == X_DRI2CopyRegion)
+	return True;
+
+    return False;
 }
 
 Bool

@@ -253,19 +253,19 @@ static void brw_set_math_message( struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (intel->is_ironlake) {
-       insn->bits3.math_igdng.function = function;
-       insn->bits3.math_igdng.int_type = integer_type;
-       insn->bits3.math_igdng.precision = low_precision;
-       insn->bits3.math_igdng.saturate = saturate;
-       insn->bits3.math_igdng.data_type = dataType;
-       insn->bits3.math_igdng.snapshot = 0;
-       insn->bits3.math_igdng.header_present = 0;
-       insn->bits3.math_igdng.response_length = response_length;
-       insn->bits3.math_igdng.msg_length = msg_length;
-       insn->bits3.math_igdng.end_of_thread = 0;
-       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_MATH;
-       insn->bits2.send_igdng.end_of_thread = 0;
+   if (intel->gen == 5) {
+       insn->bits3.math_gen5.function = function;
+       insn->bits3.math_gen5.int_type = integer_type;
+       insn->bits3.math_gen5.precision = low_precision;
+       insn->bits3.math_gen5.saturate = saturate;
+       insn->bits3.math_gen5.data_type = dataType;
+       insn->bits3.math_gen5.snapshot = 0;
+       insn->bits3.math_gen5.header_present = 0;
+       insn->bits3.math_gen5.response_length = response_length;
+       insn->bits3.math_gen5.msg_length = msg_length;
+       insn->bits3.math_gen5.end_of_thread = 0;
+       insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_MATH;
+       insn->bits2.send_gen5.end_of_thread = 0;
    } else {
        insn->bits3.math.function = function;
        insn->bits3.math.int_type = integer_type;
@@ -293,18 +293,18 @@ static void brw_set_ff_sync_message( struct brw_context *brw,
 {
 	brw_set_src1(insn, brw_imm_d(0));
 
-	insn->bits3.urb_igdng.opcode = 1;
-	insn->bits3.urb_igdng.offset = offset;
-	insn->bits3.urb_igdng.swizzle_control = swizzle_control;
-	insn->bits3.urb_igdng.allocate = allocate;
-	insn->bits3.urb_igdng.used = used;
-	insn->bits3.urb_igdng.complete = complete;
-	insn->bits3.urb_igdng.header_present = 1;
-	insn->bits3.urb_igdng.response_length = response_length;
-	insn->bits3.urb_igdng.msg_length = msg_length;
-	insn->bits3.urb_igdng.end_of_thread = end_of_thread;
-	insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_URB;
-	insn->bits2.send_igdng.end_of_thread = end_of_thread;
+	insn->bits3.urb_gen5.opcode = 1;
+	insn->bits3.urb_gen5.offset = offset;
+	insn->bits3.urb_gen5.swizzle_control = swizzle_control;
+	insn->bits3.urb_gen5.allocate = allocate;
+	insn->bits3.urb_gen5.used = used;
+	insn->bits3.urb_gen5.complete = complete;
+	insn->bits3.urb_gen5.header_present = 1;
+	insn->bits3.urb_gen5.response_length = response_length;
+	insn->bits3.urb_gen5.msg_length = msg_length;
+	insn->bits3.urb_gen5.end_of_thread = end_of_thread;
+	insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_URB;
+	insn->bits2.send_gen5.end_of_thread = end_of_thread;
 }
 
 static void brw_set_urb_message( struct brw_context *brw,
@@ -321,17 +321,17 @@ static void brw_set_urb_message( struct brw_context *brw,
     struct intel_context *intel = &brw->intel;
     brw_set_src1(insn, brw_imm_d(0));
 
-    if (intel->is_ironlake || intel->gen >= 6) {
-        insn->bits3.urb_igdng.opcode = 0;	/* ? */
-        insn->bits3.urb_igdng.offset = offset;
-        insn->bits3.urb_igdng.swizzle_control = swizzle_control;
-        insn->bits3.urb_igdng.allocate = allocate;
-        insn->bits3.urb_igdng.used = used;	/* ? */
-        insn->bits3.urb_igdng.complete = complete;
-        insn->bits3.urb_igdng.header_present = 1;
-        insn->bits3.urb_igdng.response_length = response_length;
-        insn->bits3.urb_igdng.msg_length = msg_length;
-        insn->bits3.urb_igdng.end_of_thread = end_of_thread;
+    if (intel->gen >= 5) {
+        insn->bits3.urb_gen5.opcode = 0;	/* ? */
+        insn->bits3.urb_gen5.offset = offset;
+        insn->bits3.urb_gen5.swizzle_control = swizzle_control;
+        insn->bits3.urb_gen5.allocate = allocate;
+        insn->bits3.urb_gen5.used = used;	/* ? */
+        insn->bits3.urb_gen5.complete = complete;
+        insn->bits3.urb_gen5.header_present = 1;
+        insn->bits3.urb_gen5.response_length = response_length;
+        insn->bits3.urb_gen5.msg_length = msg_length;
+        insn->bits3.urb_gen5.end_of_thread = end_of_thread;
 	if (intel->gen >= 6) {
 	   /* For SNB, the SFID bits moved to the condmod bits, and
 	    * EOT stayed in bits3 above.  Does the EOT bit setting
@@ -339,8 +339,8 @@ static void brw_set_urb_message( struct brw_context *brw,
 	    */
 	   insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_URB;
 	} else {
-	   insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_URB;
-	   insn->bits2.send_igdng.end_of_thread = end_of_thread;
+	   insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_URB;
+	   insn->bits2.send_gen5.end_of_thread = end_of_thread;
 	}
     } else {
         insn->bits3.urb.opcode = 0;	/* ? */
@@ -369,18 +369,18 @@ static void brw_set_dp_write_message( struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (intel->is_ironlake) {
-       insn->bits3.dp_write_igdng.binding_table_index = binding_table_index;
-       insn->bits3.dp_write_igdng.msg_control = msg_control;
-       insn->bits3.dp_write_igdng.pixel_scoreboard_clear = pixel_scoreboard_clear;
-       insn->bits3.dp_write_igdng.msg_type = msg_type;
-       insn->bits3.dp_write_igdng.send_commit_msg = 0;
-       insn->bits3.dp_write_igdng.header_present = 1;
-       insn->bits3.dp_write_igdng.response_length = response_length;
-       insn->bits3.dp_write_igdng.msg_length = msg_length;
-       insn->bits3.dp_write_igdng.end_of_thread = end_of_thread;
-       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
-       insn->bits2.send_igdng.end_of_thread = end_of_thread;
+   if (intel->gen == 5) {
+       insn->bits3.dp_write_gen5.binding_table_index = binding_table_index;
+       insn->bits3.dp_write_gen5.msg_control = msg_control;
+       insn->bits3.dp_write_gen5.pixel_scoreboard_clear = pixel_scoreboard_clear;
+       insn->bits3.dp_write_gen5.msg_type = msg_type;
+       insn->bits3.dp_write_gen5.send_commit_msg = 0;
+       insn->bits3.dp_write_gen5.header_present = 1;
+       insn->bits3.dp_write_gen5.response_length = response_length;
+       insn->bits3.dp_write_gen5.msg_length = msg_length;
+       insn->bits3.dp_write_gen5.end_of_thread = end_of_thread;
+       insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+       insn->bits2.send_gen5.end_of_thread = end_of_thread;
    } else {
        insn->bits3.dp_write.binding_table_index = binding_table_index;
        insn->bits3.dp_write.msg_control = msg_control;
@@ -407,18 +407,18 @@ static void brw_set_dp_read_message( struct brw_context *brw,
    struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (intel->is_ironlake) {
-       insn->bits3.dp_read_igdng.binding_table_index = binding_table_index;
-       insn->bits3.dp_read_igdng.msg_control = msg_control;
-       insn->bits3.dp_read_igdng.msg_type = msg_type;
-       insn->bits3.dp_read_igdng.target_cache = target_cache;
-       insn->bits3.dp_read_igdng.header_present = 1;
-       insn->bits3.dp_read_igdng.response_length = response_length;
-       insn->bits3.dp_read_igdng.msg_length = msg_length;
-       insn->bits3.dp_read_igdng.pad1 = 0;
-       insn->bits3.dp_read_igdng.end_of_thread = end_of_thread;
-       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_DATAPORT_READ;
-       insn->bits2.send_igdng.end_of_thread = end_of_thread;
+   if (intel->gen == 5) {
+       insn->bits3.dp_read_gen5.binding_table_index = binding_table_index;
+       insn->bits3.dp_read_gen5.msg_control = msg_control;
+       insn->bits3.dp_read_gen5.msg_type = msg_type;
+       insn->bits3.dp_read_gen5.target_cache = target_cache;
+       insn->bits3.dp_read_gen5.header_present = 1;
+       insn->bits3.dp_read_gen5.response_length = response_length;
+       insn->bits3.dp_read_gen5.msg_length = msg_length;
+       insn->bits3.dp_read_gen5.pad1 = 0;
+       insn->bits3.dp_read_gen5.end_of_thread = end_of_thread;
+       insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_READ;
+       insn->bits2.send_gen5.end_of_thread = end_of_thread;
    } else {
        insn->bits3.dp_read.binding_table_index = binding_table_index; /*0:7*/
        insn->bits3.dp_read.msg_control = msg_control;  /*8:11*/
@@ -447,17 +447,17 @@ static void brw_set_sampler_message(struct brw_context *brw,
    assert(eot == 0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (intel->is_ironlake) {
-      insn->bits3.sampler_igdng.binding_table_index = binding_table_index;
-      insn->bits3.sampler_igdng.sampler = sampler;
-      insn->bits3.sampler_igdng.msg_type = msg_type;
-      insn->bits3.sampler_igdng.simd_mode = simd_mode;
-      insn->bits3.sampler_igdng.header_present = header_present;
-      insn->bits3.sampler_igdng.response_length = response_length;
-      insn->bits3.sampler_igdng.msg_length = msg_length;
-      insn->bits3.sampler_igdng.end_of_thread = eot;
-      insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_SAMPLER;
-      insn->bits2.send_igdng.end_of_thread = eot;
+   if (intel->gen == 5) {
+      insn->bits3.sampler_gen5.binding_table_index = binding_table_index;
+      insn->bits3.sampler_gen5.sampler = sampler;
+      insn->bits3.sampler_gen5.msg_type = msg_type;
+      insn->bits3.sampler_gen5.simd_mode = simd_mode;
+      insn->bits3.sampler_gen5.header_present = header_present;
+      insn->bits3.sampler_gen5.response_length = response_length;
+      insn->bits3.sampler_gen5.msg_length = msg_length;
+      insn->bits3.sampler_gen5.end_of_thread = eot;
+      insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_SAMPLER;
+      insn->bits2.send_gen5.end_of_thread = eot;
    } else if (intel->is_g4x) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
       insn->bits3.sampler_g4x.sampler = sampler;
@@ -573,7 +573,7 @@ ALU2(DPH)
 ALU2(DP3)
 ALU2(DP2)
 ALU2(LINE)
-
+ALU2(PLN)
 
 
 
@@ -663,7 +663,7 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       br = 2;
 
    if (p->single_program_flow) {
@@ -705,7 +705,7 @@ void brw_ENDIF(struct brw_compile *p,
    struct intel_context *intel = &p->brw->intel;
    GLuint br = 1;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       br = 2; 
  
    if (p->single_program_flow) {
@@ -820,7 +820,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       br = 2;
 
    if (p->single_program_flow)
@@ -864,7 +864,7 @@ void brw_land_fwd_jump(struct brw_compile *p,
    struct brw_instruction *landing = &p->store[p->nr_insn];
    GLuint jmpi = 1;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
        jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
@@ -1290,7 +1290,7 @@ void brw_SAMPLE(struct brw_compile *p,
 		GLuint simd_mode)
 {
    GLboolean need_stall = 0;
-   
+
    if (writemask == 0) {
       /*printf("%s: zero writemask??\n", __FUNCTION__); */
       return;
@@ -1327,8 +1327,14 @@ void brw_SAMPLE(struct brw_compile *p,
          /* printf("need stall %x %x\n", newmask , writemask); */
       }
       else {
+	 GLboolean dispatch_16 = GL_FALSE;
+
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
-	 
+
+	 guess_execution_size(p->current, dest);
+	 if (p->current->header.execution_size == BRW_EXECUTE_16)
+	    dispatch_16 = GL_TRUE;
+
 	 newmask = ~newmask & WRITEMASK_XYZW;
 
 	 brw_push_insn_state(p);
@@ -1343,7 +1349,13 @@ void brw_SAMPLE(struct brw_compile *p,
 
   	 src0 = retype(brw_null_reg(), BRW_REGISTER_TYPE_UW); 
 	 dest = offset(dest, dst_offset);
-	 response_length = len * 2;
+
+	 /* For 16-wide dispatch, masked channels are skipped in the
+	  * response.  For 8-wide, masked channels still take up slots,
+	  * and are just not written to.
+	  */
+	 if (dispatch_16)
+	    response_length = len * 2;
       }
    }
 
@@ -1404,7 +1416,10 @@ void brw_urb_WRITE(struct brw_compile *p,
     * and the first message register index comes from src0.
     */
    if (intel->gen >= 6) {
+      brw_push_insn_state(p);
+      brw_set_mask_control( p, BRW_MASK_DISABLE );
       brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+      brw_pop_insn_state(p);
       src0 = brw_message_reg(msg_reg_nr);
    }
 

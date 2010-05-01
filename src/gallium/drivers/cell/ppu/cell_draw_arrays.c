@@ -33,48 +33,18 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
-#include "util/u_simple_screen.h"
 #include "util/u_inlines.h"
 
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
 #include "cell_state.h"
 #include "cell_flush.h"
+#include "cell_texture.h"
 
 #include "draw/draw_context.h"
 
 
 
-static void
-cell_map_constant_buffers(struct cell_context *sp)
-{
-   struct pipe_winsys *ws = sp->pipe.winsys;
-   uint i;
-   for (i = 0; i < 2; i++) {
-      if (sp->constants[i] && sp->constants[i]->size) {
-         sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i],
-                                                   PIPE_BUFFER_USAGE_CPU_READ);
-         cell_flush_buffer_range(sp, sp->mapped_constants[i], 
-                                 sp->constants[i]->size);
-      }
-   }
-
-   draw_set_mapped_constant_buffer(sp->draw, PIPE_SHADER_VERTEX, 0,
-                                   sp->mapped_constants[PIPE_SHADER_VERTEX],
-                                   sp->constants[PIPE_SHADER_VERTEX]->size);
-}
-
-static void
-cell_unmap_constant_buffers(struct cell_context *sp)
-{
-   struct pipe_winsys *ws = sp->pipe.winsys;
-   uint i;
-   for (i = 0; i < 2; i++) {
-      if (sp->constants[i] && sp->constants[i]->size)
-         ws->buffer_unmap(ws, sp->constants[i]);
-      sp->mapped_constants[i] = NULL;
-   }
-}
 
 
 
@@ -87,44 +57,39 @@ cell_unmap_constant_buffers(struct cell_context *sp)
  */
 static void
 cell_draw_range_elements(struct pipe_context *pipe,
-                         struct pipe_buffer *indexBuffer,
+                         struct pipe_resource *indexBuffer,
                          unsigned indexSize,
+                         int indexBias,
                          unsigned min_index,
                          unsigned max_index,
                          unsigned mode, unsigned start, unsigned count)
 {
-   struct cell_context *sp = cell_context(pipe);
-   struct draw_context *draw = sp->draw;
+   struct cell_context *cell = cell_context(pipe);
+   struct draw_context *draw = cell->draw;
    unsigned i;
 
-   if (sp->dirty)
-      cell_update_derived( sp );
+   if (cell->dirty)
+      cell_update_derived( cell );
 
 #if 0
-   cell_map_surfaces(sp);
+   cell_map_surfaces(cell);
 #endif
-   cell_map_constant_buffers(sp);
 
    /*
     * Map vertex buffers
     */
-   for (i = 0; i < sp->num_vertex_buffers; i++) {
-      void *buf = pipe_buffer_map(pipe->screen,
-                                           sp->vertex_buffer[i].buffer,
-                                           PIPE_BUFFER_USAGE_CPU_READ);
-      cell_flush_buffer_range(sp, buf, sp->vertex_buffer[i].buffer->size);
+   for (i = 0; i < cell->num_vertex_buffers; i++) {
+      void *buf = cell_resource(cell->vertex_buffer[i].buffer)->data;
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes = pipe_buffer_map(pipe->screen,
-                                                      indexBuffer,
-                                                      PIPE_BUFFER_USAGE_CPU_READ);
-      draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
+      void *mapped_indexes = cell_resource(indexBuffer)->data;
+      draw_set_mapped_element_buffer(draw, indexSize, indexBias, mapped_indexes);
    }
    else {
       /* no index/element buffer */
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
 
@@ -134,28 +99,30 @@ cell_draw_range_elements(struct pipe_context *pipe,
    /*
     * unmap vertex/index buffers - will cause draw module to flush
     */
-   for (i = 0; i < sp->num_vertex_buffers; i++) {
+   for (i = 0; i < cell->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
-      pipe_buffer_unmap(pipe->screen, sp->vertex_buffer[i].buffer);
    }
    if (indexBuffer) {
       draw_set_mapped_element_buffer(draw, 0, NULL);
-      pipe_buffer_unmap(pipe->screen, indexBuffer);
    }
 
-   /* Note: leave drawing surfaces mapped */
-   cell_unmap_constant_buffers(sp);
+   /*
+    * TODO: Flush only when a user vertex/index buffer is present
+    * (or even better, modify draw module to do this
+    * internally when this condition is seen?)
+    */
+   draw_flush(draw);
 }
 
 
 static void
 cell_draw_elements(struct pipe_context *pipe,
-                   struct pipe_buffer *indexBuffer,
-                   unsigned indexSize,
+                   struct pipe_resource *indexBuffer,
+                   unsigned indexSize, int indexBias,
                    unsigned mode, unsigned start, unsigned count)
 {
    cell_draw_range_elements( pipe, indexBuffer,
-                             indexSize,
+                             indexSize, indeBias,
                              0, 0xffffffff,
                              mode, start, count );
 }
@@ -165,7 +132,7 @@ static void
 cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
-   cell_draw_elements(pipe, NULL, 0, mode, start, count);
+   cell_draw_elements(pipe, NULL, 0, 0, mode, start, count);
 }
 
 

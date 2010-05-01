@@ -160,7 +160,6 @@ static GLfloat fixed_plane[6][4] = {
  */
 static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
 {
-   struct pipe_screen *screen = brw->base.screen;
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    enum pipe_error ret;
@@ -169,7 +168,7 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
 
    if (sz == 0) {
       if (brw->curbe.last_buf) {
-	 free(brw->curbe.last_buf);
+	 FREE(brw->curbe.last_buf);
 	 brw->curbe.last_buf = NULL;
 	 brw->curbe.last_bufsz  = 0;
       }
@@ -196,15 +195,11 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
       nr_const = fs->info.file_max[TGSI_FILE_CONSTANT] + 1;
 /*      nr_const = brw->wm.prog_data->nr_params; */
       if (nr_const) {
-         const GLfloat *value = screen->buffer_map( screen,
-                                                    brw->curr.fragment_constants,
-                                                    PIPE_BUFFER_USAGE_CPU_READ);
-
-         memcpy(&buf[offset], value,
-                nr_const * 4 * sizeof(float));
-         
-         screen->buffer_unmap( screen, 
-                               brw->curr.fragment_constants );
+	 pipe_buffer_read( &brw->base,
+			   brw->curr.fragment_constants,
+			   0,
+			   nr_const * 4 * sizeof(float),
+			   &buf[offset]);
       }
    }
 
@@ -258,15 +253,14 @@ static enum pipe_error prepare_curbe_buffer(struct brw_context *brw)
           * buffer objects.  If we want to keep on putting them into the
           * curbe, makes sense to treat constbuf's specially with malloc.
           */
-         const GLfloat *value = screen->buffer_map( screen,
-                                                    brw->curr.vertex_constants,
-                                                    PIPE_BUFFER_USAGE_CPU_READ);
          
          /* XXX: what if user's constant buffer is too small?
           */
-         memcpy(&buf[offset], value, nr_const * 4 * sizeof(float));
-         
-         screen->buffer_unmap( screen, brw->curr.vertex_constants );
+	 pipe_buffer_read(&brw->base,
+			  brw->curr.vertex_constants,
+			  0,
+			  nr_const * 4 * sizeof(float),
+			  &buf[offset]);
       }
    }
 

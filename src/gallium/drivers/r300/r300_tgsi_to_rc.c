@@ -25,11 +25,10 @@
 #include "radeon_compiler.h"
 #include "radeon_program.h"
 
+#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_util.h"
-
-#include "util/u_debug.h"
 
 static unsigned translate_opcode(unsigned opcode)
 {
@@ -109,17 +108,15 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_BRK: return RC_OPCODE_BRK; */
         case TGSI_OPCODE_IF: return RC_OPCODE_IF;
      /* case TGSI_OPCODE_LOOP: return RC_OPCODE_LOOP; */
-     /* case TGSI_OPCODE_REP: return RC_OPCODE_REP; */
         case TGSI_OPCODE_ELSE: return RC_OPCODE_ELSE;
         case TGSI_OPCODE_ENDIF: return RC_OPCODE_ENDIF;
      /* case TGSI_OPCODE_ENDLOOP: return RC_OPCODE_ENDLOOP; */
-     /* case TGSI_OPCODE_ENDREP: return RC_OPCODE_ENDREP; */
      /* case TGSI_OPCODE_PUSHA: return RC_OPCODE_PUSHA; */
      /* case TGSI_OPCODE_POPA: return RC_OPCODE_POPA; */
-     /* case TGSI_OPCODE_CEIL: return RC_OPCODE_CEIL; */
+        case TGSI_OPCODE_CEIL: return RC_OPCODE_CEIL;
      /* case TGSI_OPCODE_I2F: return RC_OPCODE_I2F; */
      /* case TGSI_OPCODE_NOT: return RC_OPCODE_NOT; */
-     /* case TGSI_OPCODE_TRUNC: return RC_OPCODE_TRUNC; */
+        case TGSI_OPCODE_TRUNC: return RC_OPCODE_FLR;
      /* case TGSI_OPCODE_SHL: return RC_OPCODE_SHL; */
      /* case TGSI_OPCODE_ISHR: return RC_OPCODE_SHR; */
      /* case TGSI_OPCODE_AND: return RC_OPCODE_AND; */
@@ -145,7 +142,7 @@ static unsigned translate_opcode(unsigned opcode)
         case TGSI_OPCODE_KIL: return RC_OPCODE_KIL;
     }
 
-    debug_printf("r300: Unknown TGSI/RC opcode: %i\n", opcode);
+    fprintf(stderr, "r300: Unknown TGSI/RC opcode: %s\n", tgsi_get_opcode_name(opcode));
     return RC_OPCODE_ILLEGAL_OPCODE;
 }
 
@@ -272,9 +269,6 @@ static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_inst
     struct rc_instruction * dst;
     int i;
 
-    if (src->Instruction.Opcode == TGSI_OPCODE_END)
-        return;
-
     dst = rc_insert_new_instruction(ttr->compiler, ttr->compiler->Program.Instructions.Prev);
     dst->U.I.Opcode = translate_opcode(src->Instruction.Opcode);
     dst->U.I.SaturateMode = translate_saturate(src->Instruction.Saturate);
@@ -333,6 +327,7 @@ static void handle_immediate(struct tgsi_to_rc * ttr,
 void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
                      const struct tgsi_token * tokens)
 {
+    struct tgsi_full_instruction *inst;
     struct tgsi_parse_context parser;
     unsigned imm_index = 0;
     int i;
@@ -367,7 +362,15 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
                 imm_index++;
                 break;
             case TGSI_TOKEN_TYPE_INSTRUCTION:
-                transform_instruction(ttr, &parser.FullToken.FullInstruction);
+                inst = &parser.FullToken.FullInstruction;
+                /* This hack with the RET opcode woudn't work with
+                 * conditionals. */
+                if (inst->Instruction.Opcode == TGSI_OPCODE_END ||
+                    inst->Instruction.Opcode == TGSI_OPCODE_RET) {
+                    break;
+                }
+
+                transform_instruction(ttr, inst);
                 break;
         }
     }
@@ -378,4 +381,3 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
 
     rc_calculate_inputs_outputs(ttr->compiler);
 }
-

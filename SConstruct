@@ -50,9 +50,9 @@ common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa', 'python', 'xorg']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe']))
+                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe', 'nouveau', 'nv50', 'nvfx']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
-                     ['xlib', 'vmware', 'intel', 'i965', 'gdi', 'radeon']))
+                     ['xlib', 'vmware', 'i915', 'i965', 'gdi', 'radeon', 'graw-xlib']))
 
 opts.Add(EnumVariable('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
 
@@ -81,13 +81,6 @@ debug = env['debug']
 dri = env['dri']
 machine = env['machine']
 platform = env['platform']
-drawllvm = 'llvmpipe' in env['drivers']
-
-# LLVM support in the Draw module
-if drawllvm:
-        env.Tool('llvm')
-        if not env.has_key('LLVM_VERSION'):
-           drawllvm = False
 
 # derived options
 x86 = machine == 'x86'
@@ -100,7 +93,6 @@ Export([
 	'x86', 
 	'ppc', 
 	'dri', 
-	'drawllvm',
 	'platform',
 	'gcc',
 	'msvc',
@@ -110,16 +102,25 @@ Export([
 #######################################################################
 # Environment setup
 
-# Always build trace driver
+# Always build trace, identity, softpipe, and llvmpipe (where possible)
 if 'trace' not in env['drivers']:
     env['drivers'].append('trace')
+if 'identity' not in env['drivers']:
+    env['drivers'].append('identity')
+if 'softpipe' not in env['drivers']:
+    env['drivers'].append('softpipe')
+if env['llvm'] and 'llvmpipe' not in env['drivers']:
+    env['drivers'].append('llvmpipe')
 
 # Includes
-env.Append(CPPPATH = [
+env.Prepend(CPPPATH = [
 	'#/include',
+])
+env.Append(CPPPATH = [
 	'#/src/gallium/include',
 	'#/src/gallium/auxiliary',
 	'#/src/gallium/drivers',
+	'#/src/gallium/winsys',
 ])
 
 if env['msvc']:
@@ -156,37 +157,10 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 	])
 	if platform == 'darwin':
 		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	env.Append(CPPPATH = ['/usr/X11R6/include'])
-	env.Append(LIBPATH = ['/usr/X11R6/lib'])
 	env.Append(LIBS = [
 		'm',
 		'pthread',
-		'expat',
 		'dl',
-	])
-
-# DRI
-if dri:
-	env.ParseConfig('pkg-config --cflags --libs libdrm')
-	env.Append(CPPDEFINES = [
-		('USE_EXTERNAL_DXTN_LIB', '1'), 
-		'IN_DRI_DRIVER',
-		'GLX_DIRECT_RENDERING',
-		'GLX_INDIRECT_RENDERING',
-	])
-
-# LLVM support in the Draw module
-if drawllvm:
-    env.Append(CPPDEFINES = ['DRAW_LLVM'])
-
-# libGL
-if platform in ('linux', 'freebsd', 'darwin'):
-	env.Append(LIBS = [
-		'X11',
-		'Xext',
-		'Xxf86vm',
-		'Xdamage',
-		'Xfixes',
 	])
 
 # for debugging

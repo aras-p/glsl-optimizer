@@ -35,7 +35,7 @@
 #define LP_BLD_FLOW_H
 
 
-#include <llvm-c/Core.h>  
+#include "gallivm/lp_bld.h"
 
 
 struct lp_type;
@@ -124,6 +124,13 @@ lp_build_loop_end(LLVMBuilderRef builder,
                   LLVMValueRef step,
                   struct lp_build_loop_state *state);
 
+void
+lp_build_loop_end_cond(LLVMBuilderRef builder,
+                       LLVMValueRef end,
+                       LLVMValueRef step,
+                       int cond, /* LLVM condition */
+                       struct lp_build_loop_state *state);
+
 
 
 
@@ -145,7 +152,19 @@ lp_build_else(struct lp_build_if_state *ctx);
 
 void
 lp_build_endif(struct lp_build_if_state *ctx);
-              
 
+LLVMBasicBlockRef
+lp_build_insert_new_block(LLVMBuilderRef builder, const char *name);
+
+LLVMValueRef
+lp_build_alloca(LLVMBuilderRef builder,
+                LLVMTypeRef type,
+                const char *name);
+
+LLVMValueRef
+lp_build_array_alloca(LLVMBuilderRef builder,
+                      LLVMTypeRef type,
+                      LLVMValueRef count,
+                      const char *name);
 
 #endif /* !LP_BLD_FLOW_H */

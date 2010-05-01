@@ -925,7 +925,7 @@ struct brw_gs_unit_state
    struct
    {
       GLuint pad0:8;
-      GLuint rendering_enable:1; /* for IGDNG */
+      GLuint rendering_enable:1; /* for Ironlake */
       GLuint pad4:1;
       GLuint stats_enable:1; 
       GLuint nr_urb_entries:7; 
@@ -1035,7 +1035,7 @@ struct brw_wm_unit_state
    GLfloat global_depth_offset_constant;  
    GLfloat global_depth_offset_scale;   
    
-   /* for IGDNG only */
+   /* for Ironlake only */
    struct {
       GLuint pad0:1;
       GLuint grf_reg_count_1:3; 
@@ -1448,7 +1448,7 @@ struct brw_instruction
            GLuint end_of_thread:1;
            GLuint pad1:1;
            GLuint sfid:4;
-       } send_igdng;  /* for IGDNG only */
+       } send_gen5;  /* for Ironlake only */
 
    } bits2;
 
@@ -1549,7 +1549,7 @@ struct brw_instruction
 	 GLuint msg_length:4;
 	 GLuint pad1:2;
 	 GLuint end_of_thread:1;
-      } math_igdng;
+      } math_gen5;
 
       struct {
 	 GLuint binding_table_index:8;
@@ -1585,7 +1585,7 @@ struct brw_instruction
 	 GLuint msg_length:4;
 	 GLuint pad1:2;
 	 GLuint end_of_thread:1;
-      } sampler_igdng;
+      } sampler_gen5;
 
       struct brw_urb_immediate urb;
 
@@ -1603,7 +1603,7 @@ struct brw_instruction
 	 GLuint msg_length:4;
 	 GLuint pad1:2;
 	 GLuint end_of_thread:1;
-      } urb_igdng;
+      } urb_gen5;
 
       struct {
 	 GLuint binding_table_index:8;
@@ -1628,7 +1628,7 @@ struct brw_instruction
 	 GLuint msg_length:4;
 	 GLuint pad1:2;
 	 GLuint end_of_thread:1;
-      } dp_read_igdng;
+      } dp_read_gen5;
 
       struct {
 	 GLuint binding_table_index:8;
@@ -1655,7 +1655,7 @@ struct brw_instruction
 	 GLuint msg_length:4;
 	 GLuint pad1:2;
 	 GLuint end_of_thread:1;
-      } dp_write_igdng;
+      } dp_write_gen5;
 
       struct {
 	 GLuint pad:16;
@@ -1673,7 +1673,7 @@ struct brw_instruction
 	 GLuint msg_length:4;
 	 GLuint pad1:2;
 	 GLuint end_of_thread:1;
-      } generic_igdng;
+      } generic_gen5;
 
       GLint d;
       GLuint ud;

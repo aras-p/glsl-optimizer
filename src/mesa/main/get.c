@@ -32,39 +32,43 @@
 /*
  * Check if named extension is enabled, if not generate error and return.
  */
-#define CHECK_EXT1(EXT1, FUNC)                                         \
+#define CHECK_EXT1(EXT1)                                               \
    if (!ctx->Extensions.EXT1) {                                        \
-      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \
-      return;                                                          \
+      goto invalid_enum_error;                                         \
    }
 
 /*
  * Check if either of two extensions is enabled.
  */
-#define CHECK_EXT2(EXT1, EXT2, FUNC)                                   \
+#define CHECK_EXT2(EXT1, EXT2)                                         \
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {               \
-      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \
-      return;                                                          \
+      goto invalid_enum_error;                                         \
    }
 
 /*
  * Check if either of three extensions is enabled.
  */
-#define CHECK_EXT3(EXT1, EXT2, EXT3, FUNC)                             \
+#define CHECK_EXT3(EXT1, EXT2, EXT3)                                   \
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \
        !ctx->Extensions.EXT3) {                                        \
-      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \
-      return;                                                          \
+      goto invalid_enum_error;                                         \
    }
 
 /*
  * Check if either of four extensions is enabled.
  */
-#define CHECK_EXT4(EXT1, EXT2, EXT3, EXT4, FUNC)                       \
+#define CHECK_EXT4(EXT1, EXT2, EXT3, EXT4)                             \
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2 &&               \
        !ctx->Extensions.EXT3 && !ctx->Extensions.EXT4) {               \
-      _mesa_error(ctx, GL_INVALID_ENUM, FUNC "(0x%x)", (int) pname);  \
-      return;                                                          \
+      goto invalid_enum_error;                                         \
+   }
+
+/*
+ * Check GL version.
+ */
+#define CHECK_VERSION(VERSION)                                         \
+   if (version < VERSION) {                                            \
+      goto invalid_enum_error;                                         \
    }
 
 
@@ -72,13 +76,12 @@ void GLAPIENTRY
 _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    if (ctx->Driver.GetBooleanv &&
        ctx->Driver.GetBooleanv(ctx, pname, params))
@@ -107,6 +110,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.AlphaBias);
          break;
       case GL_ALPHA_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.alphaBits);
          break;
       case GL_ALPHA_SCALE:
@@ -167,6 +172,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.BlueBias);
          break;
       case GL_BLUE_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.blueBits);
          break;
       case GL_BLUE_SCALE:
@@ -221,27 +228,21 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ENUM_TO_BOOLEAN(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][0]);
          params[1] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][1]);
          params[2] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][2]);
          params[3] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3]);
-         }
          break;
       case GL_CURRENT_INDEX:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0]);
-         }
          break;
       case GL_CURRENT_NORMAL:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][0]);
          params[1] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][1]);
          params[2] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][2]);
-         }
          break;
       case GL_CURRENT_RASTER_COLOR:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.RasterColor[0]);
@@ -334,10 +335,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ENUM_TO_BOOLEAN(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_EDGE_FLAG:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = (ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0);
-         }
          break;
       case GL_FEEDBACK_BUFFER_SIZE:
          params[0] = INT_TO_BOOLEAN(ctx->Feedback.BufferSize);
@@ -379,12 +378,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.GreenBias);
          break;
       case GL_GREEN_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.greenBits);
          break;
       case GL_GREEN_SCALE:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.GreenScale);
          break;
       case GL_INDEX_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.indexBits);
          break;
       case GL_INDEX_CLEAR_VALUE:
@@ -815,6 +818,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.RedBias);
          break;
       case GL_RED_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.redBits);
          break;
       case GL_RED_SCALE:
@@ -893,11 +898,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = _mesa_IsEnabled(GL_TEXTURE_3D);
          break;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetBooleanv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = _mesa_IsEnabled(GL_TEXTURE_1D_ARRAY_EXT);
          break;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetBooleanv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = _mesa_IsEnabled(GL_TEXTURE_2D_ARRAY_EXT);
          break;
       case GL_TEXTURE_BINDING_1D:
@@ -910,12 +915,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_3D_INDEX]->Name);
          break;
       case GL_TEXTURE_BINDING_1D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetBooleanv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_1D_ARRAY_INDEX]->Name);
          break;
       case GL_TEXTURE_BINDING_2D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetBooleanv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_2D_ARRAY_INDEX]->Name);
+         break;
+      case GL_MAX_ARRAY_TEXTURE_LAYERS_EXT:
+         CHECK_EXT1(MESA_texture_array);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxArrayTextureLayers);
          break;
       case GL_TEXTURE_GEN_S:
          params[0] = ((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & S_BIT) ? 1 : 0);
@@ -1086,27 +1095,27 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(0);
          break;
       case GL_MAX_TEXTURE_UNITS_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetBooleanv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTextureUnits);
          break;
       case GL_ACTIVE_TEXTURE_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetBooleanv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = INT_TO_BOOLEAN(GL_TEXTURE0_ARB + ctx->Texture.CurrentUnit);
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetBooleanv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = INT_TO_BOOLEAN(GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
          break;
       case GL_TEXTURE_CUBE_MAP_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetBooleanv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          break;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetBooleanv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_CUBE_INDEX]->Name);
          break;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetBooleanv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = INT_TO_BOOLEAN((1 << (ctx->Const.MaxCubeTextureLevels - 1)));
          break;
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
@@ -1125,11 +1134,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
-         CHECK_EXT1(EXT_compiled_vertex_array, "GetBooleanv");
+         CHECK_EXT1(EXT_compiled_vertex_array);
          params[0] = INT_TO_BOOLEAN(ctx->Array.LockFirst);
          break;
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
-         CHECK_EXT1(EXT_compiled_vertex_array, "GetBooleanv");
+         CHECK_EXT1(EXT_compiled_vertex_array);
          params[0] = INT_TO_BOOLEAN(ctx->Array.LockCount);
          break;
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
@@ -1268,132 +1277,128 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostColorMatrixBias[3]);
          break;
       case GL_CONVOLUTION_1D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.Convolution1DEnabled;
          break;
       case GL_CONVOLUTION_2D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.Convolution2DEnabled;
          break;
       case GL_SEPARABLE_2D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.Separable2DEnabled;
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostConvolutionScale[0]);
          break;
       case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostConvolutionScale[1]);
          break;
       case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostConvolutionScale[2]);
          break;
       case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostConvolutionScale[3]);
          break;
       case GL_POST_CONVOLUTION_RED_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostConvolutionBias[0]);
          break;
       case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostConvolutionBias[1]);
          break;
       case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostConvolutionBias[2]);
          break;
       case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetBooleanv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.PostConvolutionBias[3]);
          break;
       case GL_HISTOGRAM:
-         CHECK_EXT1(EXT_histogram, "GetBooleanv");
+         CHECK_EXT1(EXT_histogram);
          params[0] = ctx->Pixel.HistogramEnabled;
          break;
       case GL_MINMAX:
-         CHECK_EXT1(EXT_histogram, "GetBooleanv");
+         CHECK_EXT1(EXT_histogram);
          params[0] = ctx->Pixel.MinMaxEnabled;
          break;
       case GL_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetBooleanv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION];
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetBooleanv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION];
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetBooleanv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX];
          break;
       case GL_TEXTURE_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_texture_color_table, "GetBooleanv");
+         CHECK_EXT1(SGI_texture_color_table);
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled;
          break;
       case GL_COLOR_SUM_EXT:
-         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program, "GetBooleanv");
+         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program);
          params[0] = ctx->Fog.ColorSumEnabled;
          break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetBooleanv");
-         {
+         CHECK_EXT1(EXT_secondary_color);
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0]);
          params[1] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1]);
          params[2] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2]);
          params[3] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3]);
-         }
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetBooleanv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = ctx->Array.ArrayObj->SecondaryColor.Enabled;
          break;
       case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetBooleanv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = ENUM_TO_BOOLEAN(ctx->Array.ArrayObj->SecondaryColor.Type);
          break;
       case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetBooleanv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->SecondaryColor.Stride);
          break;
       case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetBooleanv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->SecondaryColor.Size);
          break;
       case GL_CURRENT_FOG_COORDINATE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetBooleanv");
-         {
+         CHECK_EXT1(EXT_fog_coord);
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Current.Attrib[VERT_ATTRIB_FOG][0]);
-         }
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetBooleanv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ctx->Array.ArrayObj->FogCoord.Enabled;
          break;
       case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetBooleanv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ENUM_TO_BOOLEAN(ctx->Array.ArrayObj->FogCoord.Type);
          break;
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetBooleanv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->FogCoord.Stride);
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetBooleanv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ENUM_TO_BOOLEAN(ctx->Fog.FogCoordinateSource);
          break;
       case GL_MAX_TEXTURE_LOD_BIAS_EXT:
-         CHECK_EXT1(EXT_texture_lod_bias, "GetBooleanv");
+         CHECK_EXT1(EXT_texture_lod_bias);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Const.MaxTextureLodBias);
          break;
       case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
-         CHECK_EXT1(EXT_texture_filter_anisotropic, "GetBooleanv");
+         CHECK_EXT1(EXT_texture_filter_anisotropic);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Const.MaxTextureMaxAnisotropy);
          break;
       case GL_MULTISAMPLE_ARB:
@@ -1421,195 +1426,195 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.samples);
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
-         CHECK_EXT1(IBM_rasterpos_clip, "GetBooleanv");
+         CHECK_EXT1(IBM_rasterpos_clip);
          params[0] = ctx->Transform.RasterPositionUnclipped;
          break;
       case GL_POINT_SPRITE_NV:
-         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetBooleanv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite);
          params[0] = ctx->Point.PointSprite;
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
-         CHECK_EXT1(NV_point_sprite, "GetBooleanv");
+         CHECK_EXT1(NV_point_sprite);
          params[0] = ENUM_TO_BOOLEAN(ctx->Point.SpriteRMode);
          break;
       case GL_POINT_SPRITE_COORD_ORIGIN:
-         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetBooleanv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite);
          params[0] = ENUM_TO_BOOLEAN(ctx->Point.SpriteOrigin);
          break;
       case GL_GENERATE_MIPMAP_HINT_SGIS:
-         CHECK_EXT1(SGIS_generate_mipmap, "GetBooleanv");
+         CHECK_EXT1(SGIS_generate_mipmap);
          params[0] = ENUM_TO_BOOLEAN(ctx->Hint.GenerateMipmap);
          break;
       case GL_VERTEX_PROGRAM_BINDING_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = INT_TO_BOOLEAN((ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0));
          break;
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[0].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[1].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY2_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[2].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY3_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[3].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[4].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY5_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[5].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY6_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[6].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY7_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[7].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY8_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[8].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY9_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[9].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY10_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[10].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY11_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[11].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY12_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[12].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY13_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[13].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY14_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[14].Enabled;
          break;
       case GL_VERTEX_ATTRIB_ARRAY15_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Array.ArrayObj->VertexAttrib[15].Enabled;
          break;
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[0];
          break;
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[1];
          break;
       case GL_MAP1_VERTEX_ATTRIB2_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[2];
          break;
       case GL_MAP1_VERTEX_ATTRIB3_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[3];
          break;
       case GL_MAP1_VERTEX_ATTRIB4_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[4];
          break;
       case GL_MAP1_VERTEX_ATTRIB5_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[5];
          break;
       case GL_MAP1_VERTEX_ATTRIB6_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[6];
          break;
       case GL_MAP1_VERTEX_ATTRIB7_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[7];
          break;
       case GL_MAP1_VERTEX_ATTRIB8_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[8];
          break;
       case GL_MAP1_VERTEX_ATTRIB9_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[9];
          break;
       case GL_MAP1_VERTEX_ATTRIB10_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[10];
          break;
       case GL_MAP1_VERTEX_ATTRIB11_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[11];
          break;
       case GL_MAP1_VERTEX_ATTRIB12_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[12];
          break;
       case GL_MAP1_VERTEX_ATTRIB13_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[13];
          break;
       case GL_MAP1_VERTEX_ATTRIB14_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[14];
          break;
       case GL_MAP1_VERTEX_ATTRIB15_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetBooleanv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = ctx->Eval.Map1Attrib[15];
          break;
       case GL_FRAGMENT_PROGRAM_NV:
-         CHECK_EXT1(NV_fragment_program, "GetBooleanv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = ctx->FragmentProgram.Enabled;
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
-         CHECK_EXT1(NV_fragment_program, "GetBooleanv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = INT_TO_BOOLEAN(ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0);
          break;
       case GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetBooleanv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = INT_TO_BOOLEAN(MAX_NV_FRAGMENT_PROGRAM_PARAMS);
          break;
       case GL_TEXTURE_RECTANGLE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetBooleanv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
          break;
       case GL_TEXTURE_BINDING_RECTANGLE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetBooleanv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_RECT_INDEX]->Name);
          break;
       case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetBooleanv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTextureRectSize);
          break;
       case GL_STENCIL_TEST_TWO_SIDE_EXT:
-         CHECK_EXT1(EXT_stencil_two_side, "GetBooleanv");
+         CHECK_EXT1(EXT_stencil_two_side);
          params[0] = ctx->Stencil.TestTwoSide;
          break;
       case GL_ACTIVE_STENCIL_FACE_EXT:
-         CHECK_EXT1(EXT_stencil_two_side, "GetBooleanv");
+         CHECK_EXT1(EXT_stencil_two_side);
          params[0] = ENUM_TO_BOOLEAN(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
       case GL_MAX_SHININESS_NV:
-         CHECK_EXT1(NV_light_max_exponent, "GetBooleanv");
+         CHECK_EXT1(NV_light_max_exponent);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Const.MaxShininess);
          break;
       case GL_MAX_SPOT_EXPONENT_NV:
-         CHECK_EXT1(NV_light_max_exponent, "GetBooleanv");
+         CHECK_EXT1(NV_light_max_exponent);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Const.MaxSpotExponent);
          break;
       case GL_ARRAY_BUFFER_BINDING_ARB:
@@ -1643,39 +1648,39 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->Array.ElementArrayBufferObj->Name);
          break;
       case GL_PIXEL_PACK_BUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_pixel_buffer_object, "GetBooleanv");
+         CHECK_EXT1(EXT_pixel_buffer_object);
          params[0] = INT_TO_BOOLEAN(ctx->Pack.BufferObj->Name);
          break;
       case GL_PIXEL_UNPACK_BUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_pixel_buffer_object, "GetBooleanv");
+         CHECK_EXT1(EXT_pixel_buffer_object);
          params[0] = INT_TO_BOOLEAN(ctx->Unpack.BufferObj->Name);
          break;
       case GL_VERTEX_PROGRAM_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetBooleanv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = ctx->VertexProgram.Enabled;
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetBooleanv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = ctx->VertexProgram.PointSizeEnabled;
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetBooleanv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = ctx->VertexProgram.TwoSideEnabled;
          break;
       case GL_MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetBooleanv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxProgramMatrixStackDepth);
          break;
       case GL_MAX_PROGRAM_MATRICES_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetBooleanv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxProgramMatrices);
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetBooleanv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = ctx->CurrentStack->Depth + 1;
          break;
       case GL_CURRENT_MATRIX_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program, "GetBooleanv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program);
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = FLOAT_TO_BOOLEAN(matrix[0]);
@@ -1697,7 +1702,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
       case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
-         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program, "GetBooleanv");
+         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program);
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = FLOAT_TO_BOOLEAN(matrix[0]);
@@ -1719,36 +1724,36 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
       case GL_MAX_VERTEX_ATTRIBS_ARB:
-         CHECK_EXT1(ARB_vertex_program, "GetBooleanv");
+         CHECK_EXT1(ARB_vertex_program);
          params[0] = INT_TO_BOOLEAN(ctx->Const.VertexProgram.MaxAttribs);
          break;
       case GL_PROGRAM_ERROR_POSITION_ARB:
-         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program, "GetBooleanv");
+         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program);
          params[0] = INT_TO_BOOLEAN(ctx->Program.ErrorPos);
          break;
       case GL_FRAGMENT_PROGRAM_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetBooleanv");
+         CHECK_EXT1(ARB_fragment_program);
          params[0] = ctx->FragmentProgram.Enabled;
          break;
       case GL_MAX_TEXTURE_COORDS_ARB:
-         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetBooleanv");
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTextureCoordUnits);
          break;
       case GL_MAX_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetBooleanv");
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTextureImageUnits);
          break;
       case GL_DEPTH_BOUNDS_TEST_EXT:
-         CHECK_EXT1(EXT_depth_bounds_test, "GetBooleanv");
+         CHECK_EXT1(EXT_depth_bounds_test);
          params[0] = ctx->Depth.BoundsTest;
          break;
       case GL_DEPTH_BOUNDS_EXT:
-         CHECK_EXT1(EXT_depth_bounds_test, "GetBooleanv");
+         CHECK_EXT1(EXT_depth_bounds_test);
          params[0] = FLOAT_TO_BOOLEAN(ctx->Depth.BoundsMin);
          params[1] = FLOAT_TO_BOOLEAN(ctx->Depth.BoundsMax);
          break;
       case GL_DEPTH_CLAMP:
-         CHECK_EXT1(ARB_depth_clamp, "GetBooleanv");
+         CHECK_EXT1(ARB_depth_clamp);
          params[0] = ctx->Transform.DepthClamp;
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
@@ -1791,43 +1796,47 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
-         CHECK_EXT1(OES_read_format, "GetBooleanv");
+         CHECK_EXT1(OES_read_format);
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
-         CHECK_EXT1(OES_read_format, "GetBooleanv");
+         CHECK_EXT1(OES_read_format);
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = INT_TO_BOOLEAN(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = INT_TO_BOOLEAN(6);
          break;
       case GL_NUM_FRAGMENT_CONSTANTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = INT_TO_BOOLEAN(8);
          break;
       case GL_NUM_PASSES_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = INT_TO_BOOLEAN(2);
          break;
       case GL_NUM_INSTRUCTIONS_PER_PASS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = INT_TO_BOOLEAN(8);
          break;
       case GL_NUM_INSTRUCTIONS_TOTAL_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = INT_TO_BOOLEAN(16);
          break;
       case GL_COLOR_ALPHA_PAIRING_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = GL_TRUE;
          break;
       case GL_NUM_LOOPBACK_COMPONENTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = INT_TO_BOOLEAN(3);
          break;
       case GL_NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = INT_TO_BOOLEAN(3);
          break;
       case GL_STENCIL_BACK_FUNC:
@@ -1852,102 +1861,144 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ENUM_TO_BOOLEAN(ctx->Stencil.ZPassFunc[1]);
          break;
       case GL_FRAMEBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetBooleanv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Name);
          break;
       case GL_RENDERBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetBooleanv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = INT_TO_BOOLEAN(ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0);
          break;
       case GL_MAX_COLOR_ATTACHMENTS_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetBooleanv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxColorAttachments);
          break;
       case GL_MAX_RENDERBUFFER_SIZE_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetBooleanv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxRenderbufferSize);
          break;
       case GL_READ_FRAMEBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_blit, "GetBooleanv");
+         CHECK_EXT1(EXT_framebuffer_blit);
          params[0] = INT_TO_BOOLEAN(ctx->ReadBuffer->Name);
          break;
       case GL_PROVOKING_VERTEX_EXT:
-         CHECK_EXT1(EXT_provoking_vertex, "GetBooleanv");
+         CHECK_EXT1(EXT_provoking_vertex);
          params[0] = ctx->Light.ProvokingVertex;
          break;
       case GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT:
-         CHECK_EXT1(EXT_provoking_vertex, "GetBooleanv");
+         CHECK_EXT1(EXT_provoking_vertex);
          params[0] = ctx->Const.QuadsFollowProvokingVertexConvention;
          break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
-         CHECK_EXT1(ARB_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ARB_fragment_shader);
          params[0] = INT_TO_BOOLEAN(ctx->Const.FragmentProgram.MaxUniformComponents);
          break;
       case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
-         CHECK_EXT1(ARB_fragment_shader, "GetBooleanv");
+         CHECK_EXT1(ARB_fragment_shader);
          params[0] = ENUM_TO_BOOLEAN(ctx->Hint.FragmentShaderDerivative);
          break;
       case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = INT_TO_BOOLEAN(ctx->Const.VertexProgram.MaxUniformComponents);
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxVarying * 4);
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxVertexTextureImageUnits);
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxCombinedTextureImageUnits);
          break;
       case GL_CURRENT_PROGRAM:
-         CHECK_EXT1(ARB_shader_objects, "GetBooleanv");
+         CHECK_EXT1(ARB_shader_objects);
          params[0] = INT_TO_BOOLEAN(ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0);
          break;
       case GL_MAX_SAMPLES:
-         CHECK_EXT1(ARB_framebuffer_object, "GetBooleanv");
+         CHECK_EXT1(ARB_framebuffer_object);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxSamples);
          break;
       case GL_VERTEX_ARRAY_BINDING_APPLE:
-         CHECK_EXT1(APPLE_vertex_array_object, "GetBooleanv");
+         CHECK_EXT1(APPLE_vertex_array_object);
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->Name);
          break;
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
-         CHECK_EXT1(ARB_seamless_cube_map, "GetBooleanv");
+         CHECK_EXT1(ARB_seamless_cube_map);
          params[0] = ctx->Texture.CubeMapSeamless;
          break;
       case GL_MAX_SERVER_WAIT_TIMEOUT:
-         CHECK_EXT1(ARB_sync, "GetBooleanv");
+         CHECK_EXT1(ARB_sync);
          params[0] = INT64_TO_BOOLEAN(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = INT_TO_BOOLEAN(ctx->TransformFeedback.CurrentBuffer->Name);
+         break;
+      case GL_RASTERIZER_DISCARD:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = ctx->TransformFeedback.RasterDiscard;
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTransformFeedbackInterleavedComponents);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTransformFeedbackSeparateAttribs);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxTransformFeedbackSeparateComponents);
+         break;
       case GL_NUM_EXTENSIONS:
+         CHECK_VERSION(30);
          params[0] = INT_TO_BOOLEAN(_mesa_get_extension_count(ctx));
          break;
       case GL_MAJOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = INT_TO_BOOLEAN(ctx->VersionMajor);
          break;
       case GL_MINOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = INT_TO_BOOLEAN(ctx->VersionMinor);
          break;
+      case GL_CONTEXT_FLAGS:
+         CHECK_VERSION(30);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.ContextFlags);
+         break;
+      case GL_PRIMITIVE_RESTART:
+         CHECK_VERSION(31);
+         params[0] = ctx->Array.PrimitiveRestart;
+         break;
+      case GL_PRIMITIVE_RESTART_INDEX:
+         CHECK_VERSION(31);
+         params[0] = INT_TO_BOOLEAN(ctx->Array.RestartIndex);
+         break;
+      case GL_CONTEXT_PROFILE_MASK:
+         CHECK_VERSION(32);
+         params[0] = INT_TO_BOOLEAN(ctx->Const.ProfileMask);
+         break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
+         goto invalid_enum_error;
    }
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
 }
 
 void GLAPIENTRY
 _mesa_GetFloatv( GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    if (ctx->Driver.GetFloatv &&
        ctx->Driver.GetFloatv(ctx, pname, params))
@@ -1976,6 +2027,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.AlphaBias;
          break;
       case GL_ALPHA_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.alphaBits);
          break;
       case GL_ALPHA_SCALE:
@@ -2036,6 +2089,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.BlueBias;
          break;
       case GL_BLUE_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.blueBits);
          break;
       case GL_BLUE_SCALE:
@@ -2090,27 +2145,21 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ENUM_TO_FLOAT(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][0];
          params[1] = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][1];
          params[2] = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][2];
          params[3] = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3];
-         }
          break;
       case GL_CURRENT_INDEX:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0];
-         }
          break;
       case GL_CURRENT_NORMAL:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = ctx->Current.Attrib[VERT_ATTRIB_NORMAL][0];
          params[1] = ctx->Current.Attrib[VERT_ATTRIB_NORMAL][1];
          params[2] = ctx->Current.Attrib[VERT_ATTRIB_NORMAL][2];
-         }
          break;
       case GL_CURRENT_RASTER_COLOR:
          params[0] = ctx->Current.RasterColor[0];
@@ -2203,10 +2252,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ENUM_TO_FLOAT(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_EDGE_FLAG:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = BOOLEAN_TO_FLOAT((ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0));
-         }
          break;
       case GL_FEEDBACK_BUFFER_SIZE:
          params[0] = (GLfloat)(ctx->Feedback.BufferSize);
@@ -2248,12 +2295,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.GreenBias;
          break;
       case GL_GREEN_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.greenBits);
          break;
       case GL_GREEN_SCALE:
          params[0] = ctx->Pixel.GreenScale;
          break;
       case GL_INDEX_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.indexBits);
          break;
       case GL_INDEX_CLEAR_VALUE:
@@ -2684,6 +2735,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.RedBias;
          break;
       case GL_RED_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.redBits);
          break;
       case GL_RED_SCALE:
@@ -2762,11 +2815,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(_mesa_IsEnabled(GL_TEXTURE_3D));
          break;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetFloatv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = BOOLEAN_TO_FLOAT(_mesa_IsEnabled(GL_TEXTURE_1D_ARRAY_EXT));
          break;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetFloatv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = BOOLEAN_TO_FLOAT(_mesa_IsEnabled(GL_TEXTURE_2D_ARRAY_EXT));
          break;
       case GL_TEXTURE_BINDING_1D:
@@ -2779,12 +2832,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_3D_INDEX]->Name);
          break;
       case GL_TEXTURE_BINDING_1D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetFloatv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_1D_ARRAY_INDEX]->Name);
          break;
       case GL_TEXTURE_BINDING_2D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetFloatv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_2D_ARRAY_INDEX]->Name);
+         break;
+      case GL_MAX_ARRAY_TEXTURE_LAYERS_EXT:
+         CHECK_EXT1(MESA_texture_array);
+         params[0] = (GLfloat)(ctx->Const.MaxArrayTextureLayers);
          break;
       case GL_TEXTURE_GEN_S:
          params[0] = BOOLEAN_TO_FLOAT(((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & S_BIT) ? 1 : 0));
@@ -2955,27 +3012,27 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(0);
          break;
       case GL_MAX_TEXTURE_UNITS_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetFloatv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = (GLfloat)(ctx->Const.MaxTextureUnits);
          break;
       case GL_ACTIVE_TEXTURE_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetFloatv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = (GLfloat)(GL_TEXTURE0_ARB + ctx->Texture.CurrentUnit);
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetFloatv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = (GLfloat)(GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
          break;
       case GL_TEXTURE_CUBE_MAP_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetFloatv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = BOOLEAN_TO_FLOAT(_mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB));
          break;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetFloatv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_CUBE_INDEX]->Name);
          break;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetFloatv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = (GLfloat)((1 << (ctx->Const.MaxCubeTextureLevels - 1)));
          break;
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
@@ -2994,11 +3051,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
-         CHECK_EXT1(EXT_compiled_vertex_array, "GetFloatv");
+         CHECK_EXT1(EXT_compiled_vertex_array);
          params[0] = (GLfloat)(ctx->Array.LockFirst);
          break;
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
-         CHECK_EXT1(EXT_compiled_vertex_array, "GetFloatv");
+         CHECK_EXT1(EXT_compiled_vertex_array);
          params[0] = (GLfloat)(ctx->Array.LockCount);
          break;
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
@@ -3137,132 +3194,128 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.PostColorMatrixBias[3];
          break;
       case GL_CONVOLUTION_1D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.Convolution1DEnabled);
          break;
       case GL_CONVOLUTION_2D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.Convolution2DEnabled);
          break;
       case GL_SEPARABLE_2D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.Separable2DEnabled);
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.PostConvolutionScale[0];
          break;
       case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.PostConvolutionScale[1];
          break;
       case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.PostConvolutionScale[2];
          break;
       case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.PostConvolutionScale[3];
          break;
       case GL_POST_CONVOLUTION_RED_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.PostConvolutionBias[0];
          break;
       case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.PostConvolutionBias[1];
          break;
       case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.PostConvolutionBias[2];
          break;
       case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetFloatv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = ctx->Pixel.PostConvolutionBias[3];
          break;
       case GL_HISTOGRAM:
-         CHECK_EXT1(EXT_histogram, "GetFloatv");
+         CHECK_EXT1(EXT_histogram);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.HistogramEnabled);
          break;
       case GL_MINMAX:
-         CHECK_EXT1(EXT_histogram, "GetFloatv");
+         CHECK_EXT1(EXT_histogram);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.MinMaxEnabled);
          break;
       case GL_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetFloatv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]);
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetFloatv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION]);
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetFloatv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX]);
          break;
       case GL_TEXTURE_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_texture_color_table, "GetFloatv");
+         CHECK_EXT1(SGI_texture_color_table);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled);
          break;
       case GL_COLOR_SUM_EXT:
-         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program, "GetFloatv");
+         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Fog.ColorSumEnabled);
          break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetFloatv");
-         {
+         CHECK_EXT1(EXT_secondary_color);
          FLUSH_CURRENT(ctx, 0);
          params[0] = ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0];
          params[1] = ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1];
          params[2] = ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2];
          params[3] = ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3];
-         }
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetFloatv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->SecondaryColor.Enabled);
          break;
       case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetFloatv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = ENUM_TO_FLOAT(ctx->Array.ArrayObj->SecondaryColor.Type);
          break;
       case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetFloatv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = (GLfloat)(ctx->Array.ArrayObj->SecondaryColor.Stride);
          break;
       case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetFloatv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = (GLfloat)(ctx->Array.ArrayObj->SecondaryColor.Size);
          break;
       case GL_CURRENT_FOG_COORDINATE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetFloatv");
-         {
+         CHECK_EXT1(EXT_fog_coord);
          FLUSH_CURRENT(ctx, 0);
          params[0] = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
-         }
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetFloatv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->FogCoord.Enabled);
          break;
       case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetFloatv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ENUM_TO_FLOAT(ctx->Array.ArrayObj->FogCoord.Type);
          break;
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetFloatv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = (GLfloat)(ctx->Array.ArrayObj->FogCoord.Stride);
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetFloatv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ENUM_TO_FLOAT(ctx->Fog.FogCoordinateSource);
          break;
       case GL_MAX_TEXTURE_LOD_BIAS_EXT:
-         CHECK_EXT1(EXT_texture_lod_bias, "GetFloatv");
+         CHECK_EXT1(EXT_texture_lod_bias);
          params[0] = ctx->Const.MaxTextureLodBias;
          break;
       case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
-         CHECK_EXT1(EXT_texture_filter_anisotropic, "GetFloatv");
+         CHECK_EXT1(EXT_texture_filter_anisotropic);
          params[0] = ctx->Const.MaxTextureMaxAnisotropy;
          break;
       case GL_MULTISAMPLE_ARB:
@@ -3290,195 +3343,195 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.samples);
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
-         CHECK_EXT1(IBM_rasterpos_clip, "GetFloatv");
+         CHECK_EXT1(IBM_rasterpos_clip);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Transform.RasterPositionUnclipped);
          break;
       case GL_POINT_SPRITE_NV:
-         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetFloatv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Point.PointSprite);
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
-         CHECK_EXT1(NV_point_sprite, "GetFloatv");
+         CHECK_EXT1(NV_point_sprite);
          params[0] = ENUM_TO_FLOAT(ctx->Point.SpriteRMode);
          break;
       case GL_POINT_SPRITE_COORD_ORIGIN:
-         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetFloatv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite);
          params[0] = ENUM_TO_FLOAT(ctx->Point.SpriteOrigin);
          break;
       case GL_GENERATE_MIPMAP_HINT_SGIS:
-         CHECK_EXT1(SGIS_generate_mipmap, "GetFloatv");
+         CHECK_EXT1(SGIS_generate_mipmap);
          params[0] = ENUM_TO_FLOAT(ctx->Hint.GenerateMipmap);
          break;
       case GL_VERTEX_PROGRAM_BINDING_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = (GLfloat)((ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0));
          break;
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[0].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[1].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY2_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[2].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY3_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[3].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[4].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY5_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[5].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY6_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[6].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY7_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[7].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY8_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[8].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY9_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[9].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY10_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[10].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY11_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[11].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY12_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[12].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY13_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[13].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY14_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[14].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY15_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Array.ArrayObj->VertexAttrib[15].Enabled);
          break;
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[0]);
          break;
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[1]);
          break;
       case GL_MAP1_VERTEX_ATTRIB2_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[2]);
          break;
       case GL_MAP1_VERTEX_ATTRIB3_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[3]);
          break;
       case GL_MAP1_VERTEX_ATTRIB4_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[4]);
          break;
       case GL_MAP1_VERTEX_ATTRIB5_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[5]);
          break;
       case GL_MAP1_VERTEX_ATTRIB6_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[6]);
          break;
       case GL_MAP1_VERTEX_ATTRIB7_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[7]);
          break;
       case GL_MAP1_VERTEX_ATTRIB8_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[8]);
          break;
       case GL_MAP1_VERTEX_ATTRIB9_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[9]);
          break;
       case GL_MAP1_VERTEX_ATTRIB10_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[10]);
          break;
       case GL_MAP1_VERTEX_ATTRIB11_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[11]);
          break;
       case GL_MAP1_VERTEX_ATTRIB12_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[12]);
          break;
       case GL_MAP1_VERTEX_ATTRIB13_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[13]);
          break;
       case GL_MAP1_VERTEX_ATTRIB14_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[14]);
          break;
       case GL_MAP1_VERTEX_ATTRIB15_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetFloatv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.Map1Attrib[15]);
          break;
       case GL_FRAGMENT_PROGRAM_NV:
-         CHECK_EXT1(NV_fragment_program, "GetFloatv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->FragmentProgram.Enabled);
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
-         CHECK_EXT1(NV_fragment_program, "GetFloatv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = (GLfloat)(ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0);
          break;
       case GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetFloatv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = (GLfloat)(MAX_NV_FRAGMENT_PROGRAM_PARAMS);
          break;
       case GL_TEXTURE_RECTANGLE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetFloatv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = BOOLEAN_TO_FLOAT(_mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV));
          break;
       case GL_TEXTURE_BINDING_RECTANGLE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetFloatv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_RECT_INDEX]->Name);
          break;
       case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetFloatv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = (GLfloat)(ctx->Const.MaxTextureRectSize);
          break;
       case GL_STENCIL_TEST_TWO_SIDE_EXT:
-         CHECK_EXT1(EXT_stencil_two_side, "GetFloatv");
+         CHECK_EXT1(EXT_stencil_two_side);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Stencil.TestTwoSide);
          break;
       case GL_ACTIVE_STENCIL_FACE_EXT:
-         CHECK_EXT1(EXT_stencil_two_side, "GetFloatv");
+         CHECK_EXT1(EXT_stencil_two_side);
          params[0] = ENUM_TO_FLOAT(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
       case GL_MAX_SHININESS_NV:
-         CHECK_EXT1(NV_light_max_exponent, "GetFloatv");
+         CHECK_EXT1(NV_light_max_exponent);
          params[0] = ctx->Const.MaxShininess;
          break;
       case GL_MAX_SPOT_EXPONENT_NV:
-         CHECK_EXT1(NV_light_max_exponent, "GetFloatv");
+         CHECK_EXT1(NV_light_max_exponent);
          params[0] = ctx->Const.MaxSpotExponent;
          break;
       case GL_ARRAY_BUFFER_BINDING_ARB:
@@ -3512,39 +3565,39 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->Array.ElementArrayBufferObj->Name);
          break;
       case GL_PIXEL_PACK_BUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_pixel_buffer_object, "GetFloatv");
+         CHECK_EXT1(EXT_pixel_buffer_object);
          params[0] = (GLfloat)(ctx->Pack.BufferObj->Name);
          break;
       case GL_PIXEL_UNPACK_BUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_pixel_buffer_object, "GetFloatv");
+         CHECK_EXT1(EXT_pixel_buffer_object);
          params[0] = (GLfloat)(ctx->Unpack.BufferObj->Name);
          break;
       case GL_VERTEX_PROGRAM_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetFloatv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->VertexProgram.Enabled);
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetFloatv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->VertexProgram.PointSizeEnabled);
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetFloatv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->VertexProgram.TwoSideEnabled);
          break;
       case GL_MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetFloatv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = (GLfloat)(ctx->Const.MaxProgramMatrixStackDepth);
          break;
       case GL_MAX_PROGRAM_MATRICES_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetFloatv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = (GLfloat)(ctx->Const.MaxProgramMatrices);
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetFloatv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->CurrentStack->Depth + 1);
          break;
       case GL_CURRENT_MATRIX_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program, "GetFloatv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program);
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = matrix[0];
@@ -3566,7 +3619,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          break;
       case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
-         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program, "GetFloatv");
+         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program);
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = matrix[0];
@@ -3588,36 +3641,36 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          break;
       case GL_MAX_VERTEX_ATTRIBS_ARB:
-         CHECK_EXT1(ARB_vertex_program, "GetFloatv");
+         CHECK_EXT1(ARB_vertex_program);
          params[0] = (GLfloat)(ctx->Const.VertexProgram.MaxAttribs);
          break;
       case GL_PROGRAM_ERROR_POSITION_ARB:
-         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program, "GetFloatv");
+         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program);
          params[0] = (GLfloat)(ctx->Program.ErrorPos);
          break;
       case GL_FRAGMENT_PROGRAM_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetFloatv");
+         CHECK_EXT1(ARB_fragment_program);
          params[0] = BOOLEAN_TO_FLOAT(ctx->FragmentProgram.Enabled);
          break;
       case GL_MAX_TEXTURE_COORDS_ARB:
-         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetFloatv");
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program);
          params[0] = (GLfloat)(ctx->Const.MaxTextureCoordUnits);
          break;
       case GL_MAX_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetFloatv");
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program);
          params[0] = (GLfloat)(ctx->Const.MaxTextureImageUnits);
          break;
       case GL_DEPTH_BOUNDS_TEST_EXT:
-         CHECK_EXT1(EXT_depth_bounds_test, "GetFloatv");
+         CHECK_EXT1(EXT_depth_bounds_test);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Depth.BoundsTest);
          break;
       case GL_DEPTH_BOUNDS_EXT:
-         CHECK_EXT1(EXT_depth_bounds_test, "GetFloatv");
+         CHECK_EXT1(EXT_depth_bounds_test);
          params[0] = ctx->Depth.BoundsMin;
          params[1] = ctx->Depth.BoundsMax;
          break;
       case GL_DEPTH_CLAMP:
-         CHECK_EXT1(ARB_depth_clamp, "GetFloatv");
+         CHECK_EXT1(ARB_depth_clamp);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Transform.DepthClamp);
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
@@ -3660,43 +3713,47 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
-         CHECK_EXT1(OES_read_format, "GetFloatv");
+         CHECK_EXT1(OES_read_format);
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
-         CHECK_EXT1(OES_read_format, "GetFloatv");
+         CHECK_EXT1(OES_read_format);
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLfloat)(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLfloat)(6);
          break;
       case GL_NUM_FRAGMENT_CONSTANTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLfloat)(8);
          break;
       case GL_NUM_PASSES_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLfloat)(2);
          break;
       case GL_NUM_INSTRUCTIONS_PER_PASS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLfloat)(8);
          break;
       case GL_NUM_INSTRUCTIONS_TOTAL_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLfloat)(16);
          break;
       case GL_COLOR_ALPHA_PAIRING_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = BOOLEAN_TO_FLOAT(GL_TRUE);
          break;
       case GL_NUM_LOOPBACK_COMPONENTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLfloat)(3);
          break;
       case GL_NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLfloat)(3);
          break;
       case GL_STENCIL_BACK_FUNC:
@@ -3721,102 +3778,144 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ENUM_TO_FLOAT(ctx->Stencil.ZPassFunc[1]);
          break;
       case GL_FRAMEBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetFloatv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = (GLfloat)(ctx->DrawBuffer->Name);
          break;
       case GL_RENDERBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetFloatv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = (GLfloat)(ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0);
          break;
       case GL_MAX_COLOR_ATTACHMENTS_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetFloatv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = (GLfloat)(ctx->Const.MaxColorAttachments);
          break;
       case GL_MAX_RENDERBUFFER_SIZE_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetFloatv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = (GLfloat)(ctx->Const.MaxRenderbufferSize);
          break;
       case GL_READ_FRAMEBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_blit, "GetFloatv");
+         CHECK_EXT1(EXT_framebuffer_blit);
          params[0] = (GLfloat)(ctx->ReadBuffer->Name);
          break;
       case GL_PROVOKING_VERTEX_EXT:
-         CHECK_EXT1(EXT_provoking_vertex, "GetFloatv");
+         CHECK_EXT1(EXT_provoking_vertex);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Light.ProvokingVertex);
          break;
       case GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT:
-         CHECK_EXT1(EXT_provoking_vertex, "GetFloatv");
+         CHECK_EXT1(EXT_provoking_vertex);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Const.QuadsFollowProvokingVertexConvention);
          break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
-         CHECK_EXT1(ARB_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ARB_fragment_shader);
          params[0] = (GLfloat)(ctx->Const.FragmentProgram.MaxUniformComponents);
          break;
       case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
-         CHECK_EXT1(ARB_fragment_shader, "GetFloatv");
+         CHECK_EXT1(ARB_fragment_shader);
          params[0] = ENUM_TO_FLOAT(ctx->Hint.FragmentShaderDerivative);
          break;
       case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = (GLfloat)(ctx->Const.VertexProgram.MaxUniformComponents);
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = (GLfloat)(ctx->Const.MaxVarying * 4);
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = (GLfloat)(ctx->Const.MaxVertexTextureImageUnits);
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = (GLfloat)(ctx->Const.MaxCombinedTextureImageUnits);
          break;
       case GL_CURRENT_PROGRAM:
-         CHECK_EXT1(ARB_shader_objects, "GetFloatv");
+         CHECK_EXT1(ARB_shader_objects);
          params[0] = (GLfloat)(ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0);
          break;
       case GL_MAX_SAMPLES:
-         CHECK_EXT1(ARB_framebuffer_object, "GetFloatv");
+         CHECK_EXT1(ARB_framebuffer_object);
          params[0] = (GLfloat)(ctx->Const.MaxSamples);
          break;
       case GL_VERTEX_ARRAY_BINDING_APPLE:
-         CHECK_EXT1(APPLE_vertex_array_object, "GetFloatv");
+         CHECK_EXT1(APPLE_vertex_array_object);
          params[0] = (GLfloat)(ctx->Array.ArrayObj->Name);
          break;
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
-         CHECK_EXT1(ARB_seamless_cube_map, "GetFloatv");
+         CHECK_EXT1(ARB_seamless_cube_map);
          params[0] = BOOLEAN_TO_FLOAT(ctx->Texture.CubeMapSeamless);
          break;
       case GL_MAX_SERVER_WAIT_TIMEOUT:
-         CHECK_EXT1(ARB_sync, "GetFloatv");
+         CHECK_EXT1(ARB_sync);
          params[0] = (GLfloat)(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = (GLfloat)(ctx->TransformFeedback.CurrentBuffer->Name);
+         break;
+      case GL_RASTERIZER_DISCARD:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = BOOLEAN_TO_FLOAT(ctx->TransformFeedback.RasterDiscard);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = (GLfloat)(ctx->Const.MaxTransformFeedbackInterleavedComponents);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = (GLfloat)(ctx->Const.MaxTransformFeedbackSeparateAttribs);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = (GLfloat)(ctx->Const.MaxTransformFeedbackSeparateComponents);
+         break;
       case GL_NUM_EXTENSIONS:
+         CHECK_VERSION(30);
          params[0] = (GLfloat)(_mesa_get_extension_count(ctx));
          break;
       case GL_MAJOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = (GLfloat)(ctx->VersionMajor);
          break;
       case GL_MINOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = (GLfloat)(ctx->VersionMinor);
          break;
+      case GL_CONTEXT_FLAGS:
+         CHECK_VERSION(30);
+         params[0] = (GLfloat)(ctx->Const.ContextFlags);
+         break;
+      case GL_PRIMITIVE_RESTART:
+         CHECK_VERSION(31);
+         params[0] = BOOLEAN_TO_FLOAT(ctx->Array.PrimitiveRestart);
+         break;
+      case GL_PRIMITIVE_RESTART_INDEX:
+         CHECK_VERSION(31);
+         params[0] = (GLfloat)(ctx->Array.RestartIndex);
+         break;
+      case GL_CONTEXT_PROFILE_MASK:
+         CHECK_VERSION(32);
+         params[0] = (GLfloat)(ctx->Const.ProfileMask);
+         break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
+         goto invalid_enum_error;
    }
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
 }
 
 void GLAPIENTRY
 _mesa_GetIntegerv( GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    if (ctx->Driver.GetIntegerv &&
        ctx->Driver.GetIntegerv(ctx, pname, params))
@@ -3845,6 +3944,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.AlphaBias);
          break;
       case GL_ALPHA_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = ctx->DrawBuffer->Visual.alphaBits;
          break;
       case GL_ALPHA_SCALE:
@@ -3905,6 +4006,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.BlueBias);
          break;
       case GL_BLUE_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = ctx->DrawBuffer->Visual.blueBits;
          break;
       case GL_BLUE_SCALE:
@@ -3959,27 +4062,21 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ENUM_TO_INT(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][0]);
          params[1] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][1]);
          params[2] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][2]);
          params[3] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3]);
-         }
          break;
       case GL_CURRENT_INDEX:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = IROUND(ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0]);
-         }
          break;
       case GL_CURRENT_NORMAL:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][0]);
          params[1] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][1]);
          params[2] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][2]);
-         }
          break;
       case GL_CURRENT_RASTER_COLOR:
          params[0] = FLOAT_TO_INT(ctx->Current.RasterColor[0]);
@@ -4072,10 +4169,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ENUM_TO_INT(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_EDGE_FLAG:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = BOOLEAN_TO_INT((ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0));
-         }
          break;
       case GL_FEEDBACK_BUFFER_SIZE:
          params[0] = ctx->Feedback.BufferSize;
@@ -4117,12 +4212,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.GreenBias);
          break;
       case GL_GREEN_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = ctx->DrawBuffer->Visual.greenBits;
          break;
       case GL_GREEN_SCALE:
          params[0] = IROUND(ctx->Pixel.GreenScale);
          break;
       case GL_INDEX_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = ctx->DrawBuffer->Visual.indexBits;
          break;
       case GL_INDEX_CLEAR_VALUE:
@@ -4553,6 +4652,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.RedBias);
          break;
       case GL_RED_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = ctx->DrawBuffer->Visual.redBits;
          break;
       case GL_RED_SCALE:
@@ -4631,11 +4732,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(_mesa_IsEnabled(GL_TEXTURE_3D));
          break;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetIntegerv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = BOOLEAN_TO_INT(_mesa_IsEnabled(GL_TEXTURE_1D_ARRAY_EXT));
          break;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetIntegerv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = BOOLEAN_TO_INT(_mesa_IsEnabled(GL_TEXTURE_2D_ARRAY_EXT));
          break;
       case GL_TEXTURE_BINDING_1D:
@@ -4648,12 +4749,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_3D_INDEX]->Name;
          break;
       case GL_TEXTURE_BINDING_1D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetIntegerv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_1D_ARRAY_INDEX]->Name;
          break;
       case GL_TEXTURE_BINDING_2D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetIntegerv");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_2D_ARRAY_INDEX]->Name;
+         break;
+      case GL_MAX_ARRAY_TEXTURE_LAYERS_EXT:
+         CHECK_EXT1(MESA_texture_array);
+         params[0] = ctx->Const.MaxArrayTextureLayers;
          break;
       case GL_TEXTURE_GEN_S:
          params[0] = BOOLEAN_TO_INT(((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & S_BIT) ? 1 : 0));
@@ -4824,27 +4929,27 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = 0;
          break;
       case GL_MAX_TEXTURE_UNITS_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetIntegerv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = ctx->Const.MaxTextureUnits;
          break;
       case GL_ACTIVE_TEXTURE_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetIntegerv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = GL_TEXTURE0_ARB + ctx->Texture.CurrentUnit;
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetIntegerv");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = GL_TEXTURE0_ARB + ctx->Array.ActiveTexture;
          break;
       case GL_TEXTURE_CUBE_MAP_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetIntegerv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = BOOLEAN_TO_INT(_mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB));
          break;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetIntegerv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_CUBE_INDEX]->Name;
          break;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetIntegerv");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = (1 << (ctx->Const.MaxCubeTextureLevels - 1));
          break;
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
@@ -4863,11 +4968,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
-         CHECK_EXT1(EXT_compiled_vertex_array, "GetIntegerv");
+         CHECK_EXT1(EXT_compiled_vertex_array);
          params[0] = ctx->Array.LockFirst;
          break;
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
-         CHECK_EXT1(EXT_compiled_vertex_array, "GetIntegerv");
+         CHECK_EXT1(EXT_compiled_vertex_array);
          params[0] = ctx->Array.LockCount;
          break;
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
@@ -5006,132 +5111,128 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.PostColorMatrixBias[3]);
          break;
       case GL_CONVOLUTION_1D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_INT(ctx->Pixel.Convolution1DEnabled);
          break;
       case GL_CONVOLUTION_2D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_INT(ctx->Pixel.Convolution2DEnabled);
          break;
       case GL_SEPARABLE_2D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_INT(ctx->Pixel.Separable2DEnabled);
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND(ctx->Pixel.PostConvolutionScale[0]);
          break;
       case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND(ctx->Pixel.PostConvolutionScale[1]);
          break;
       case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND(ctx->Pixel.PostConvolutionScale[2]);
          break;
       case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND(ctx->Pixel.PostConvolutionScale[3]);
          break;
       case GL_POST_CONVOLUTION_RED_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND(ctx->Pixel.PostConvolutionBias[0]);
          break;
       case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND(ctx->Pixel.PostConvolutionBias[1]);
          break;
       case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND(ctx->Pixel.PostConvolutionBias[2]);
          break;
       case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetIntegerv");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND(ctx->Pixel.PostConvolutionBias[3]);
          break;
       case GL_HISTOGRAM:
-         CHECK_EXT1(EXT_histogram, "GetIntegerv");
+         CHECK_EXT1(EXT_histogram);
          params[0] = BOOLEAN_TO_INT(ctx->Pixel.HistogramEnabled);
          break;
       case GL_MINMAX:
-         CHECK_EXT1(EXT_histogram, "GetIntegerv");
+         CHECK_EXT1(EXT_histogram);
          params[0] = BOOLEAN_TO_INT(ctx->Pixel.MinMaxEnabled);
          break;
       case GL_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetIntegerv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_INT(ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]);
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetIntegerv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_INT(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION]);
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetIntegerv");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_INT(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX]);
          break;
       case GL_TEXTURE_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_texture_color_table, "GetIntegerv");
+         CHECK_EXT1(SGI_texture_color_table);
          params[0] = BOOLEAN_TO_INT(ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled);
          break;
       case GL_COLOR_SUM_EXT:
-         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program, "GetIntegerv");
+         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Fog.ColorSumEnabled);
          break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetIntegerv");
-         {
+         CHECK_EXT1(EXT_secondary_color);
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0]);
          params[1] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1]);
          params[2] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2]);
          params[3] = FLOAT_TO_INT(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3]);
-         }
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetIntegerv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->SecondaryColor.Enabled);
          break;
       case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetIntegerv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = ENUM_TO_INT(ctx->Array.ArrayObj->SecondaryColor.Type);
          break;
       case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetIntegerv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = ctx->Array.ArrayObj->SecondaryColor.Stride;
          break;
       case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetIntegerv");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = ctx->Array.ArrayObj->SecondaryColor.Size;
          break;
       case GL_CURRENT_FOG_COORDINATE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetIntegerv");
-         {
+         CHECK_EXT1(EXT_fog_coord);
          FLUSH_CURRENT(ctx, 0);
          params[0] = IROUND(ctx->Current.Attrib[VERT_ATTRIB_FOG][0]);
-         }
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetIntegerv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->FogCoord.Enabled);
          break;
       case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetIntegerv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ENUM_TO_INT(ctx->Array.ArrayObj->FogCoord.Type);
          break;
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetIntegerv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ctx->Array.ArrayObj->FogCoord.Stride;
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetIntegerv");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ENUM_TO_INT(ctx->Fog.FogCoordinateSource);
          break;
       case GL_MAX_TEXTURE_LOD_BIAS_EXT:
-         CHECK_EXT1(EXT_texture_lod_bias, "GetIntegerv");
+         CHECK_EXT1(EXT_texture_lod_bias);
          params[0] = IROUND(ctx->Const.MaxTextureLodBias);
          break;
       case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
-         CHECK_EXT1(EXT_texture_filter_anisotropic, "GetIntegerv");
+         CHECK_EXT1(EXT_texture_filter_anisotropic);
          params[0] = IROUND(ctx->Const.MaxTextureMaxAnisotropy);
          break;
       case GL_MULTISAMPLE_ARB:
@@ -5159,195 +5260,195 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->DrawBuffer->Visual.samples;
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
-         CHECK_EXT1(IBM_rasterpos_clip, "GetIntegerv");
+         CHECK_EXT1(IBM_rasterpos_clip);
          params[0] = BOOLEAN_TO_INT(ctx->Transform.RasterPositionUnclipped);
          break;
       case GL_POINT_SPRITE_NV:
-         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetIntegerv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite);
          params[0] = BOOLEAN_TO_INT(ctx->Point.PointSprite);
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
-         CHECK_EXT1(NV_point_sprite, "GetIntegerv");
+         CHECK_EXT1(NV_point_sprite);
          params[0] = ENUM_TO_INT(ctx->Point.SpriteRMode);
          break;
       case GL_POINT_SPRITE_COORD_ORIGIN:
-         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetIntegerv");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite);
          params[0] = ENUM_TO_INT(ctx->Point.SpriteOrigin);
          break;
       case GL_GENERATE_MIPMAP_HINT_SGIS:
-         CHECK_EXT1(SGIS_generate_mipmap, "GetIntegerv");
+         CHECK_EXT1(SGIS_generate_mipmap);
          params[0] = ENUM_TO_INT(ctx->Hint.GenerateMipmap);
          break;
       case GL_VERTEX_PROGRAM_BINDING_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = (ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0);
          break;
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[0].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[1].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY2_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[2].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY3_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[3].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[4].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY5_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[5].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY6_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[6].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY7_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[7].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY8_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[8].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY9_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[9].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY10_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[10].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY11_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[11].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY12_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[12].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY13_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[13].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY14_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[14].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY15_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Array.ArrayObj->VertexAttrib[15].Enabled);
          break;
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[0]);
          break;
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[1]);
          break;
       case GL_MAP1_VERTEX_ATTRIB2_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[2]);
          break;
       case GL_MAP1_VERTEX_ATTRIB3_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[3]);
          break;
       case GL_MAP1_VERTEX_ATTRIB4_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[4]);
          break;
       case GL_MAP1_VERTEX_ATTRIB5_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[5]);
          break;
       case GL_MAP1_VERTEX_ATTRIB6_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[6]);
          break;
       case GL_MAP1_VERTEX_ATTRIB7_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[7]);
          break;
       case GL_MAP1_VERTEX_ATTRIB8_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[8]);
          break;
       case GL_MAP1_VERTEX_ATTRIB9_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[9]);
          break;
       case GL_MAP1_VERTEX_ATTRIB10_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[10]);
          break;
       case GL_MAP1_VERTEX_ATTRIB11_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[11]);
          break;
       case GL_MAP1_VERTEX_ATTRIB12_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[12]);
          break;
       case GL_MAP1_VERTEX_ATTRIB13_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[13]);
          break;
       case GL_MAP1_VERTEX_ATTRIB14_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[14]);
          break;
       case GL_MAP1_VERTEX_ATTRIB15_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetIntegerv");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->Eval.Map1Attrib[15]);
          break;
       case GL_FRAGMENT_PROGRAM_NV:
-         CHECK_EXT1(NV_fragment_program, "GetIntegerv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = BOOLEAN_TO_INT(ctx->FragmentProgram.Enabled);
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
-         CHECK_EXT1(NV_fragment_program, "GetIntegerv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0;
          break;
       case GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetIntegerv");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
          break;
       case GL_TEXTURE_RECTANGLE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetIntegerv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = BOOLEAN_TO_INT(_mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV));
          break;
       case GL_TEXTURE_BINDING_RECTANGLE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetIntegerv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_RECT_INDEX]->Name;
          break;
       case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetIntegerv");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = ctx->Const.MaxTextureRectSize;
          break;
       case GL_STENCIL_TEST_TWO_SIDE_EXT:
-         CHECK_EXT1(EXT_stencil_two_side, "GetIntegerv");
+         CHECK_EXT1(EXT_stencil_two_side);
          params[0] = BOOLEAN_TO_INT(ctx->Stencil.TestTwoSide);
          break;
       case GL_ACTIVE_STENCIL_FACE_EXT:
-         CHECK_EXT1(EXT_stencil_two_side, "GetIntegerv");
+         CHECK_EXT1(EXT_stencil_two_side);
          params[0] = ENUM_TO_INT(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
       case GL_MAX_SHININESS_NV:
-         CHECK_EXT1(NV_light_max_exponent, "GetIntegerv");
+         CHECK_EXT1(NV_light_max_exponent);
          params[0] = IROUND(ctx->Const.MaxShininess);
          break;
       case GL_MAX_SPOT_EXPONENT_NV:
-         CHECK_EXT1(NV_light_max_exponent, "GetIntegerv");
+         CHECK_EXT1(NV_light_max_exponent);
          params[0] = IROUND(ctx->Const.MaxSpotExponent);
          break;
       case GL_ARRAY_BUFFER_BINDING_ARB:
@@ -5381,39 +5482,39 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->Array.ElementArrayBufferObj->Name;
          break;
       case GL_PIXEL_PACK_BUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_pixel_buffer_object, "GetIntegerv");
+         CHECK_EXT1(EXT_pixel_buffer_object);
          params[0] = ctx->Pack.BufferObj->Name;
          break;
       case GL_PIXEL_UNPACK_BUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_pixel_buffer_object, "GetIntegerv");
+         CHECK_EXT1(EXT_pixel_buffer_object);
          params[0] = ctx->Unpack.BufferObj->Name;
          break;
       case GL_VERTEX_PROGRAM_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetIntegerv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->VertexProgram.Enabled);
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetIntegerv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->VertexProgram.PointSizeEnabled);
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetIntegerv");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->VertexProgram.TwoSideEnabled);
          break;
       case GL_MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetIntegerv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = ctx->Const.MaxProgramMatrixStackDepth;
          break;
       case GL_MAX_PROGRAM_MATRICES_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetIntegerv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = ctx->Const.MaxProgramMatrices;
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetIntegerv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_INT(ctx->CurrentStack->Depth + 1);
          break;
       case GL_CURRENT_MATRIX_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program, "GetIntegerv");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program);
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = IROUND(matrix[0]);
@@ -5435,7 +5536,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
       case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
-         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program, "GetIntegerv");
+         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program);
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = IROUND(matrix[0]);
@@ -5457,36 +5558,36 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
       case GL_MAX_VERTEX_ATTRIBS_ARB:
-         CHECK_EXT1(ARB_vertex_program, "GetIntegerv");
+         CHECK_EXT1(ARB_vertex_program);
          params[0] = ctx->Const.VertexProgram.MaxAttribs;
          break;
       case GL_PROGRAM_ERROR_POSITION_ARB:
-         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program, "GetIntegerv");
+         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program);
          params[0] = ctx->Program.ErrorPos;
          break;
       case GL_FRAGMENT_PROGRAM_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetIntegerv");
+         CHECK_EXT1(ARB_fragment_program);
          params[0] = BOOLEAN_TO_INT(ctx->FragmentProgram.Enabled);
          break;
       case GL_MAX_TEXTURE_COORDS_ARB:
-         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetIntegerv");
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program);
          params[0] = ctx->Const.MaxTextureCoordUnits;
          break;
       case GL_MAX_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetIntegerv");
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program);
          params[0] = ctx->Const.MaxTextureImageUnits;
          break;
       case GL_DEPTH_BOUNDS_TEST_EXT:
-         CHECK_EXT1(EXT_depth_bounds_test, "GetIntegerv");
+         CHECK_EXT1(EXT_depth_bounds_test);
          params[0] = BOOLEAN_TO_INT(ctx->Depth.BoundsTest);
          break;
       case GL_DEPTH_BOUNDS_EXT:
-         CHECK_EXT1(EXT_depth_bounds_test, "GetIntegerv");
+         CHECK_EXT1(EXT_depth_bounds_test);
          params[0] = IROUND(ctx->Depth.BoundsMin);
          params[1] = IROUND(ctx->Depth.BoundsMax);
          break;
       case GL_DEPTH_CLAMP:
-         CHECK_EXT1(ARB_depth_clamp, "GetIntegerv");
+         CHECK_EXT1(ARB_depth_clamp);
          params[0] = BOOLEAN_TO_INT(ctx->Transform.DepthClamp);
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
@@ -5529,43 +5630,47 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
-         CHECK_EXT1(OES_read_format, "GetIntegerv");
+         CHECK_EXT1(OES_read_format);
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = _mesa_get_color_read_type(ctx);
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
-         CHECK_EXT1(OES_read_format, "GetIntegerv");
+         CHECK_EXT1(OES_read_format);
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = _mesa_get_color_read_format(ctx);
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = 6;
          break;
       case GL_NUM_FRAGMENT_CONSTANTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = 8;
          break;
       case GL_NUM_PASSES_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = 2;
          break;
       case GL_NUM_INSTRUCTIONS_PER_PASS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = 8;
          break;
       case GL_NUM_INSTRUCTIONS_TOTAL_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = 16;
          break;
       case GL_COLOR_ALPHA_PAIRING_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = BOOLEAN_TO_INT(GL_TRUE);
          break;
       case GL_NUM_LOOPBACK_COMPONENTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = 3;
          break;
       case GL_NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = 3;
          break;
       case GL_STENCIL_BACK_FUNC:
@@ -5590,89 +5695,132 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ENUM_TO_INT(ctx->Stencil.ZPassFunc[1]);
          break;
       case GL_FRAMEBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetIntegerv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = ctx->DrawBuffer->Name;
          break;
       case GL_RENDERBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetIntegerv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0;
          break;
       case GL_MAX_COLOR_ATTACHMENTS_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetIntegerv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = ctx->Const.MaxColorAttachments;
          break;
       case GL_MAX_RENDERBUFFER_SIZE_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetIntegerv");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = ctx->Const.MaxRenderbufferSize;
          break;
       case GL_READ_FRAMEBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_blit, "GetIntegerv");
+         CHECK_EXT1(EXT_framebuffer_blit);
          params[0] = ctx->ReadBuffer->Name;
          break;
       case GL_PROVOKING_VERTEX_EXT:
-         CHECK_EXT1(EXT_provoking_vertex, "GetIntegerv");
+         CHECK_EXT1(EXT_provoking_vertex);
          params[0] = BOOLEAN_TO_INT(ctx->Light.ProvokingVertex);
          break;
       case GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT:
-         CHECK_EXT1(EXT_provoking_vertex, "GetIntegerv");
+         CHECK_EXT1(EXT_provoking_vertex);
          params[0] = BOOLEAN_TO_INT(ctx->Const.QuadsFollowProvokingVertexConvention);
          break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
-         CHECK_EXT1(ARB_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ARB_fragment_shader);
          params[0] = ctx->Const.FragmentProgram.MaxUniformComponents;
          break;
       case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
-         CHECK_EXT1(ARB_fragment_shader, "GetIntegerv");
+         CHECK_EXT1(ARB_fragment_shader);
          params[0] = ENUM_TO_INT(ctx->Hint.FragmentShaderDerivative);
          break;
       case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = ctx->Const.VertexProgram.MaxUniformComponents;
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = ctx->Const.MaxVarying * 4;
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = ctx->Const.MaxVertexTextureImageUnits;
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = ctx->Const.MaxCombinedTextureImageUnits;
          break;
       case GL_CURRENT_PROGRAM:
-         CHECK_EXT1(ARB_shader_objects, "GetIntegerv");
+         CHECK_EXT1(ARB_shader_objects);
          params[0] = ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0;
          break;
       case GL_MAX_SAMPLES:
-         CHECK_EXT1(ARB_framebuffer_object, "GetIntegerv");
+         CHECK_EXT1(ARB_framebuffer_object);
          params[0] = ctx->Const.MaxSamples;
          break;
       case GL_VERTEX_ARRAY_BINDING_APPLE:
-         CHECK_EXT1(APPLE_vertex_array_object, "GetIntegerv");
+         CHECK_EXT1(APPLE_vertex_array_object);
          params[0] = ctx->Array.ArrayObj->Name;
          break;
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
-         CHECK_EXT1(ARB_seamless_cube_map, "GetIntegerv");
+         CHECK_EXT1(ARB_seamless_cube_map);
          params[0] = BOOLEAN_TO_INT(ctx->Texture.CubeMapSeamless);
          break;
       case GL_MAX_SERVER_WAIT_TIMEOUT:
-         CHECK_EXT1(ARB_sync, "GetIntegerv");
+         CHECK_EXT1(ARB_sync);
          params[0] = INT64_TO_INT(ctx->Const.MaxServerWaitTimeout);
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = ctx->TransformFeedback.CurrentBuffer->Name;
+         break;
+      case GL_RASTERIZER_DISCARD:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = BOOLEAN_TO_INT(ctx->TransformFeedback.RasterDiscard);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = ctx->Const.MaxTransformFeedbackInterleavedComponents;
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = ctx->Const.MaxTransformFeedbackSeparateAttribs;
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = ctx->Const.MaxTransformFeedbackSeparateComponents;
+         break;
       case GL_NUM_EXTENSIONS:
+         CHECK_VERSION(30);
          params[0] = _mesa_get_extension_count(ctx);
          break;
       case GL_MAJOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = ctx->VersionMajor;
          break;
       case GL_MINOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = ctx->VersionMinor;
          break;
+      case GL_CONTEXT_FLAGS:
+         CHECK_VERSION(30);
+         params[0] = ctx->Const.ContextFlags;
+         break;
+      case GL_PRIMITIVE_RESTART:
+         CHECK_VERSION(31);
+         params[0] = BOOLEAN_TO_INT(ctx->Array.PrimitiveRestart);
+         break;
+      case GL_PRIMITIVE_RESTART_INDEX:
+         CHECK_VERSION(31);
+         params[0] = ctx->Array.RestartIndex;
+         break;
+      case GL_CONTEXT_PROFILE_MASK:
+         CHECK_VERSION(32);
+         params[0] = ctx->Const.ProfileMask;
+         break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
+         goto invalid_enum_error;
    }
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
 }
 
 #if FEATURE_ARB_sync
@@ -5680,13 +5828,12 @@ void GLAPIENTRY
 _mesa_GetInteger64v( GLenum pname, GLint64 *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
 
    if (ctx->Driver.GetInteger64v &&
        ctx->Driver.GetInteger64v(ctx, pname, params))
@@ -5715,6 +5862,8 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = IROUND64(ctx->Pixel.AlphaBias);
          break;
       case GL_ALPHA_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(ctx->DrawBuffer->Visual.alphaBits);
          break;
       case GL_ALPHA_SCALE:
@@ -5775,6 +5924,8 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = IROUND64(ctx->Pixel.BlueBias);
          break;
       case GL_BLUE_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(ctx->DrawBuffer->Visual.blueBits);
          break;
       case GL_BLUE_SCALE:
@@ -5829,27 +5980,21 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = ENUM_TO_INT64(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][0]);
          params[1] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][1]);
          params[2] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][2]);
          params[3] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3]);
-         }
          break;
       case GL_CURRENT_INDEX:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = IROUND64(ctx->Current.Attrib[VERT_ATTRIB_COLOR_INDEX][0]);
-         }
          break;
       case GL_CURRENT_NORMAL:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][0]);
          params[1] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][1]);
          params[2] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_NORMAL][2]);
-         }
          break;
       case GL_CURRENT_RASTER_COLOR:
          params[0] = FLOAT_TO_INT64(ctx->Current.RasterColor[0]);
@@ -5942,10 +6087,8 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = ENUM_TO_INT64(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_EDGE_FLAG:
-         {
          FLUSH_CURRENT(ctx, 0);
          params[0] = BOOLEAN_TO_INT64((ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0] == 1.0));
-         }
          break;
       case GL_FEEDBACK_BUFFER_SIZE:
          params[0] = (GLint64)(ctx->Feedback.BufferSize);
@@ -5987,12 +6130,16 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = IROUND64(ctx->Pixel.GreenBias);
          break;
       case GL_GREEN_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(ctx->DrawBuffer->Visual.greenBits);
          break;
       case GL_GREEN_SCALE:
          params[0] = IROUND64(ctx->Pixel.GreenScale);
          break;
       case GL_INDEX_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(ctx->DrawBuffer->Visual.indexBits);
          break;
       case GL_INDEX_CLEAR_VALUE:
@@ -6423,6 +6570,8 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = IROUND64(ctx->Pixel.RedBias);
          break;
       case GL_RED_BITS:
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(ctx->DrawBuffer->Visual.redBits);
          break;
       case GL_RED_SCALE:
@@ -6501,11 +6650,11 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_3D));
          break;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetInteger64v");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_1D_ARRAY_EXT));
          break;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetInteger64v");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_2D_ARRAY_EXT));
          break;
       case GL_TEXTURE_BINDING_1D:
@@ -6518,12 +6667,16 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = (GLint64)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_3D_INDEX]->Name);
          break;
       case GL_TEXTURE_BINDING_1D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetInteger64v");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = (GLint64)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_1D_ARRAY_INDEX]->Name);
          break;
       case GL_TEXTURE_BINDING_2D_ARRAY_EXT:
-         CHECK_EXT1(MESA_texture_array, "GetInteger64v");
+         CHECK_EXT1(MESA_texture_array);
          params[0] = (GLint64)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_2D_ARRAY_INDEX]->Name);
+         break;
+      case GL_MAX_ARRAY_TEXTURE_LAYERS_EXT:
+         CHECK_EXT1(MESA_texture_array);
+         params[0] = (GLint64)(ctx->Const.MaxArrayTextureLayers);
          break;
       case GL_TEXTURE_GEN_S:
          params[0] = BOOLEAN_TO_INT64(((ctx->Texture.Unit[ctx->Texture.CurrentUnit].TexGenEnabled & S_BIT) ? 1 : 0));
@@ -6694,27 +6847,27 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = (GLint64)(0);
          break;
       case GL_MAX_TEXTURE_UNITS_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetInteger64v");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = (GLint64)(ctx->Const.MaxTextureUnits);
          break;
       case GL_ACTIVE_TEXTURE_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetInteger64v");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = (GLint64)(GL_TEXTURE0_ARB + ctx->Texture.CurrentUnit);
          break;
       case GL_CLIENT_ACTIVE_TEXTURE_ARB:
-         CHECK_EXT1(ARB_multitexture, "GetInteger64v");
+         CHECK_EXT1(ARB_multitexture);
          params[0] = (GLint64)(GL_TEXTURE0_ARB + ctx->Array.ActiveTexture);
          break;
       case GL_TEXTURE_CUBE_MAP_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetInteger64v");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB));
          break;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetInteger64v");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = (GLint64)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_CUBE_INDEX]->Name);
          break;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         CHECK_EXT1(ARB_texture_cube_map, "GetInteger64v");
+         CHECK_EXT1(ARB_texture_cube_map);
          params[0] = (GLint64)((1 << (ctx->Const.MaxCubeTextureLevels - 1)));
          break;
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
@@ -6733,11 +6886,11 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
-         CHECK_EXT1(EXT_compiled_vertex_array, "GetInteger64v");
+         CHECK_EXT1(EXT_compiled_vertex_array);
          params[0] = (GLint64)(ctx->Array.LockFirst);
          break;
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
-         CHECK_EXT1(EXT_compiled_vertex_array, "GetInteger64v");
+         CHECK_EXT1(EXT_compiled_vertex_array);
          params[0] = (GLint64)(ctx->Array.LockCount);
          break;
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
@@ -6876,132 +7029,128 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = IROUND64(ctx->Pixel.PostColorMatrixBias[3]);
          break;
       case GL_CONVOLUTION_1D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_INT64(ctx->Pixel.Convolution1DEnabled);
          break;
       case GL_CONVOLUTION_2D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_INT64(ctx->Pixel.Convolution2DEnabled);
          break;
       case GL_SEPARABLE_2D_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = BOOLEAN_TO_INT64(ctx->Pixel.Separable2DEnabled);
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND64(ctx->Pixel.PostConvolutionScale[0]);
          break;
       case GL_POST_CONVOLUTION_GREEN_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND64(ctx->Pixel.PostConvolutionScale[1]);
          break;
       case GL_POST_CONVOLUTION_BLUE_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND64(ctx->Pixel.PostConvolutionScale[2]);
          break;
       case GL_POST_CONVOLUTION_ALPHA_SCALE_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND64(ctx->Pixel.PostConvolutionScale[3]);
          break;
       case GL_POST_CONVOLUTION_RED_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND64(ctx->Pixel.PostConvolutionBias[0]);
          break;
       case GL_POST_CONVOLUTION_GREEN_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND64(ctx->Pixel.PostConvolutionBias[1]);
          break;
       case GL_POST_CONVOLUTION_BLUE_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND64(ctx->Pixel.PostConvolutionBias[2]);
          break;
       case GL_POST_CONVOLUTION_ALPHA_BIAS_EXT:
-         CHECK_EXT1(EXT_convolution, "GetInteger64v");
+         CHECK_EXT1(EXT_convolution);
          params[0] = IROUND64(ctx->Pixel.PostConvolutionBias[3]);
          break;
       case GL_HISTOGRAM:
-         CHECK_EXT1(EXT_histogram, "GetInteger64v");
+         CHECK_EXT1(EXT_histogram);
          params[0] = BOOLEAN_TO_INT64(ctx->Pixel.HistogramEnabled);
          break;
       case GL_MINMAX:
-         CHECK_EXT1(EXT_histogram, "GetInteger64v");
+         CHECK_EXT1(EXT_histogram);
          params[0] = BOOLEAN_TO_INT64(ctx->Pixel.MinMaxEnabled);
          break;
       case GL_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetInteger64v");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_INT64(ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]);
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetInteger64v");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_INT64(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION]);
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_color_table, "GetInteger64v");
+         CHECK_EXT1(SGI_color_table);
          params[0] = BOOLEAN_TO_INT64(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX]);
          break;
       case GL_TEXTURE_COLOR_TABLE_SGI:
-         CHECK_EXT1(SGI_texture_color_table, "GetInteger64v");
+         CHECK_EXT1(SGI_texture_color_table);
          params[0] = BOOLEAN_TO_INT64(ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled);
          break;
       case GL_COLOR_SUM_EXT:
-         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program, "GetInteger64v");
+         CHECK_EXT2(EXT_secondary_color, ARB_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Fog.ColorSumEnabled);
          break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
-         {
+         CHECK_EXT1(EXT_secondary_color);
          FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][0]);
          params[1] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][1]);
          params[2] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][2]);
          params[3] = FLOAT_TO_INT64(ctx->Current.Attrib[VERT_ATTRIB_COLOR1][3]);
-         }
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->SecondaryColor.Enabled);
          break;
       case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->SecondaryColor.Type);
          break;
       case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = (GLint64)(ctx->Array.ArrayObj->SecondaryColor.Stride);
          break;
       case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
-         CHECK_EXT1(EXT_secondary_color, "GetInteger64v");
+         CHECK_EXT1(EXT_secondary_color);
          params[0] = (GLint64)(ctx->Array.ArrayObj->SecondaryColor.Size);
          break;
       case GL_CURRENT_FOG_COORDINATE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
-         {
+         CHECK_EXT1(EXT_fog_coord);
          FLUSH_CURRENT(ctx, 0);
          params[0] = IROUND64(ctx->Current.Attrib[VERT_ATTRIB_FOG][0]);
-         }
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->FogCoord.Enabled);
          break;
       case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ENUM_TO_INT64(ctx->Array.ArrayObj->FogCoord.Type);
          break;
       case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = (GLint64)(ctx->Array.ArrayObj->FogCoord.Stride);
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT:
-         CHECK_EXT1(EXT_fog_coord, "GetInteger64v");
+         CHECK_EXT1(EXT_fog_coord);
          params[0] = ENUM_TO_INT64(ctx->Fog.FogCoordinateSource);
          break;
       case GL_MAX_TEXTURE_LOD_BIAS_EXT:
-         CHECK_EXT1(EXT_texture_lod_bias, "GetInteger64v");
+         CHECK_EXT1(EXT_texture_lod_bias);
          params[0] = IROUND64(ctx->Const.MaxTextureLodBias);
          break;
       case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
-         CHECK_EXT1(EXT_texture_filter_anisotropic, "GetInteger64v");
+         CHECK_EXT1(EXT_texture_filter_anisotropic);
          params[0] = IROUND64(ctx->Const.MaxTextureMaxAnisotropy);
          break;
       case GL_MULTISAMPLE_ARB:
@@ -7029,195 +7178,195 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = (GLint64)(ctx->DrawBuffer->Visual.samples);
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
-         CHECK_EXT1(IBM_rasterpos_clip, "GetInteger64v");
+         CHECK_EXT1(IBM_rasterpos_clip);
          params[0] = BOOLEAN_TO_INT64(ctx->Transform.RasterPositionUnclipped);
          break;
       case GL_POINT_SPRITE_NV:
-         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetInteger64v");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite);
          params[0] = BOOLEAN_TO_INT64(ctx->Point.PointSprite);
          break;
       case GL_POINT_SPRITE_R_MODE_NV:
-         CHECK_EXT1(NV_point_sprite, "GetInteger64v");
+         CHECK_EXT1(NV_point_sprite);
          params[0] = ENUM_TO_INT64(ctx->Point.SpriteRMode);
          break;
       case GL_POINT_SPRITE_COORD_ORIGIN:
-         CHECK_EXT2(NV_point_sprite, ARB_point_sprite, "GetInteger64v");
+         CHECK_EXT2(NV_point_sprite, ARB_point_sprite);
          params[0] = ENUM_TO_INT64(ctx->Point.SpriteOrigin);
          break;
       case GL_GENERATE_MIPMAP_HINT_SGIS:
-         CHECK_EXT1(SGIS_generate_mipmap, "GetInteger64v");
+         CHECK_EXT1(SGIS_generate_mipmap);
          params[0] = ENUM_TO_INT64(ctx->Hint.GenerateMipmap);
          break;
       case GL_VERTEX_PROGRAM_BINDING_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = (GLint64)((ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0));
          break;
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[0].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[1].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY2_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[2].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY3_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[3].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[4].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY5_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[5].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY6_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[6].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY7_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[7].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY8_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[8].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY9_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[9].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY10_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[10].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY11_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[11].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY12_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[12].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY13_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[13].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY14_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[14].Enabled);
          break;
       case GL_VERTEX_ATTRIB_ARRAY15_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Array.ArrayObj->VertexAttrib[15].Enabled);
          break;
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[0]);
          break;
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[1]);
          break;
       case GL_MAP1_VERTEX_ATTRIB2_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[2]);
          break;
       case GL_MAP1_VERTEX_ATTRIB3_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[3]);
          break;
       case GL_MAP1_VERTEX_ATTRIB4_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[4]);
          break;
       case GL_MAP1_VERTEX_ATTRIB5_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[5]);
          break;
       case GL_MAP1_VERTEX_ATTRIB6_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[6]);
          break;
       case GL_MAP1_VERTEX_ATTRIB7_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[7]);
          break;
       case GL_MAP1_VERTEX_ATTRIB8_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[8]);
          break;
       case GL_MAP1_VERTEX_ATTRIB9_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[9]);
          break;
       case GL_MAP1_VERTEX_ATTRIB10_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[10]);
          break;
       case GL_MAP1_VERTEX_ATTRIB11_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[11]);
          break;
       case GL_MAP1_VERTEX_ATTRIB12_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[12]);
          break;
       case GL_MAP1_VERTEX_ATTRIB13_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[13]);
          break;
       case GL_MAP1_VERTEX_ATTRIB14_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[14]);
          break;
       case GL_MAP1_VERTEX_ATTRIB15_4_NV:
-         CHECK_EXT1(NV_vertex_program, "GetInteger64v");
+         CHECK_EXT1(NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->Eval.Map1Attrib[15]);
          break;
       case GL_FRAGMENT_PROGRAM_NV:
-         CHECK_EXT1(NV_fragment_program, "GetInteger64v");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = BOOLEAN_TO_INT64(ctx->FragmentProgram.Enabled);
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
-         CHECK_EXT1(NV_fragment_program, "GetInteger64v");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = (GLint64)(ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0);
          break;
       case GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV:
-         CHECK_EXT1(NV_fragment_program, "GetInteger64v");
+         CHECK_EXT1(NV_fragment_program);
          params[0] = (GLint64)(MAX_NV_FRAGMENT_PROGRAM_PARAMS);
          break;
       case GL_TEXTURE_RECTANGLE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetInteger64v");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = BOOLEAN_TO_INT64(_mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV));
          break;
       case GL_TEXTURE_BINDING_RECTANGLE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetInteger64v");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = (GLint64)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentTex[TEXTURE_RECT_INDEX]->Name);
          break;
       case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
-         CHECK_EXT1(NV_texture_rectangle, "GetInteger64v");
+         CHECK_EXT1(NV_texture_rectangle);
          params[0] = (GLint64)(ctx->Const.MaxTextureRectSize);
          break;
       case GL_STENCIL_TEST_TWO_SIDE_EXT:
-         CHECK_EXT1(EXT_stencil_two_side, "GetInteger64v");
+         CHECK_EXT1(EXT_stencil_two_side);
          params[0] = BOOLEAN_TO_INT64(ctx->Stencil.TestTwoSide);
          break;
       case GL_ACTIVE_STENCIL_FACE_EXT:
-         CHECK_EXT1(EXT_stencil_two_side, "GetInteger64v");
+         CHECK_EXT1(EXT_stencil_two_side);
          params[0] = ENUM_TO_INT64(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
       case GL_MAX_SHININESS_NV:
-         CHECK_EXT1(NV_light_max_exponent, "GetInteger64v");
+         CHECK_EXT1(NV_light_max_exponent);
          params[0] = IROUND64(ctx->Const.MaxShininess);
          break;
       case GL_MAX_SPOT_EXPONENT_NV:
-         CHECK_EXT1(NV_light_max_exponent, "GetInteger64v");
+         CHECK_EXT1(NV_light_max_exponent);
          params[0] = IROUND64(ctx->Const.MaxSpotExponent);
          break;
       case GL_ARRAY_BUFFER_BINDING_ARB:
@@ -7251,39 +7400,39 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = (GLint64)(ctx->Array.ElementArrayBufferObj->Name);
          break;
       case GL_PIXEL_PACK_BUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_pixel_buffer_object, "GetInteger64v");
+         CHECK_EXT1(EXT_pixel_buffer_object);
          params[0] = (GLint64)(ctx->Pack.BufferObj->Name);
          break;
       case GL_PIXEL_UNPACK_BUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_pixel_buffer_object, "GetInteger64v");
+         CHECK_EXT1(EXT_pixel_buffer_object);
          params[0] = (GLint64)(ctx->Unpack.BufferObj->Name);
          break;
       case GL_VERTEX_PROGRAM_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetInteger64v");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->VertexProgram.Enabled);
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetInteger64v");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->VertexProgram.PointSizeEnabled);
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_ARB:
-         CHECK_EXT2(ARB_vertex_program, NV_vertex_program, "GetInteger64v");
+         CHECK_EXT2(ARB_vertex_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->VertexProgram.TwoSideEnabled);
          break;
       case GL_MAX_PROGRAM_MATRIX_STACK_DEPTH_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetInteger64v");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = (GLint64)(ctx->Const.MaxProgramMatrixStackDepth);
          break;
       case GL_MAX_PROGRAM_MATRICES_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetInteger64v");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = (GLint64)(ctx->Const.MaxProgramMatrices);
          break;
       case GL_CURRENT_MATRIX_STACK_DEPTH_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program, "GetInteger64v");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_vertex_program);
          params[0] = BOOLEAN_TO_INT64(ctx->CurrentStack->Depth + 1);
          break;
       case GL_CURRENT_MATRIX_ARB:
-         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program, "GetInteger64v");
+         CHECK_EXT3(ARB_vertex_program, ARB_fragment_program, NV_fragment_program);
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = IROUND64(matrix[0]);
@@ -7305,7 +7454,7 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          }
          break;
       case GL_TRANSPOSE_CURRENT_MATRIX_ARB:
-         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program, "GetInteger64v");
+         CHECK_EXT2(ARB_vertex_program, ARB_fragment_program);
          {
          const GLfloat *matrix = ctx->CurrentStack->Top->m;
          params[0] = IROUND64(matrix[0]);
@@ -7327,36 +7476,36 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          }
          break;
       case GL_MAX_VERTEX_ATTRIBS_ARB:
-         CHECK_EXT1(ARB_vertex_program, "GetInteger64v");
+         CHECK_EXT1(ARB_vertex_program);
          params[0] = (GLint64)(ctx->Const.VertexProgram.MaxAttribs);
          break;
       case GL_PROGRAM_ERROR_POSITION_ARB:
-         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program, "GetInteger64v");
+         CHECK_EXT4(NV_vertex_program, ARB_vertex_program, NV_fragment_program, ARB_fragment_program);
          params[0] = (GLint64)(ctx->Program.ErrorPos);
          break;
       case GL_FRAGMENT_PROGRAM_ARB:
-         CHECK_EXT1(ARB_fragment_program, "GetInteger64v");
+         CHECK_EXT1(ARB_fragment_program);
          params[0] = BOOLEAN_TO_INT64(ctx->FragmentProgram.Enabled);
          break;
       case GL_MAX_TEXTURE_COORDS_ARB:
-         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetInteger64v");
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program);
          params[0] = (GLint64)(ctx->Const.MaxTextureCoordUnits);
          break;
       case GL_MAX_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT2(ARB_fragment_program, NV_fragment_program, "GetInteger64v");
+         CHECK_EXT2(ARB_fragment_program, NV_fragment_program);
          params[0] = (GLint64)(ctx->Const.MaxTextureImageUnits);
          break;
       case GL_DEPTH_BOUNDS_TEST_EXT:
-         CHECK_EXT1(EXT_depth_bounds_test, "GetInteger64v");
+         CHECK_EXT1(EXT_depth_bounds_test);
          params[0] = BOOLEAN_TO_INT64(ctx->Depth.BoundsTest);
          break;
       case GL_DEPTH_BOUNDS_EXT:
-         CHECK_EXT1(EXT_depth_bounds_test, "GetInteger64v");
+         CHECK_EXT1(EXT_depth_bounds_test);
          params[0] = IROUND64(ctx->Depth.BoundsMin);
          params[1] = IROUND64(ctx->Depth.BoundsMax);
          break;
       case GL_DEPTH_CLAMP:
-         CHECK_EXT1(ARB_depth_clamp, "GetInteger64v");
+         CHECK_EXT1(ARB_depth_clamp);
          params[0] = BOOLEAN_TO_INT64(ctx->Transform.DepthClamp);
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
@@ -7399,43 +7548,47 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          }
          break;
       case GL_IMPLEMENTATION_COLOR_READ_TYPE_OES:
-         CHECK_EXT1(OES_read_format, "GetInteger64v");
+         CHECK_EXT1(OES_read_format);
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(_mesa_get_color_read_type(ctx));
          break;
       case GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES:
-         CHECK_EXT1(OES_read_format, "GetInteger64v");
+         CHECK_EXT1(OES_read_format);
+         if (ctx->NewState & _NEW_BUFFERS)
+            _mesa_update_state(ctx);
          params[0] = (GLint64)(_mesa_get_color_read_format(ctx));
          break;
       case GL_NUM_FRAGMENT_REGISTERS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLint64)(6);
          break;
       case GL_NUM_FRAGMENT_CONSTANTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLint64)(8);
          break;
       case GL_NUM_PASSES_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLint64)(2);
          break;
       case GL_NUM_INSTRUCTIONS_PER_PASS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLint64)(8);
          break;
       case GL_NUM_INSTRUCTIONS_TOTAL_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLint64)(16);
          break;
       case GL_COLOR_ALPHA_PAIRING_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = BOOLEAN_TO_INT64(GL_TRUE);
          break;
       case GL_NUM_LOOPBACK_COMPONENTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLint64)(3);
          break;
       case GL_NUM_INPUT_INTERPOLATOR_COMPONENTS_ATI:
-         CHECK_EXT1(ATI_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ATI_fragment_shader);
          params[0] = (GLint64)(3);
          break;
       case GL_STENCIL_BACK_FUNC:
@@ -7460,89 +7613,132 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
          params[0] = ENUM_TO_INT64(ctx->Stencil.ZPassFunc[1]);
          break;
       case GL_FRAMEBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetInteger64v");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = (GLint64)(ctx->DrawBuffer->Name);
          break;
       case GL_RENDERBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetInteger64v");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = (GLint64)(ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0);
          break;
       case GL_MAX_COLOR_ATTACHMENTS_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetInteger64v");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = (GLint64)(ctx->Const.MaxColorAttachments);
          break;
       case GL_MAX_RENDERBUFFER_SIZE_EXT:
-         CHECK_EXT1(EXT_framebuffer_object, "GetInteger64v");
+         CHECK_EXT1(EXT_framebuffer_object);
          params[0] = (GLint64)(ctx->Const.MaxRenderbufferSize);
          break;
       case GL_READ_FRAMEBUFFER_BINDING_EXT:
-         CHECK_EXT1(EXT_framebuffer_blit, "GetInteger64v");
+         CHECK_EXT1(EXT_framebuffer_blit);
          params[0] = (GLint64)(ctx->ReadBuffer->Name);
          break;
       case GL_PROVOKING_VERTEX_EXT:
-         CHECK_EXT1(EXT_provoking_vertex, "GetInteger64v");
+         CHECK_EXT1(EXT_provoking_vertex);
          params[0] = BOOLEAN_TO_INT64(ctx->Light.ProvokingVertex);
          break;
       case GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION_EXT:
-         CHECK_EXT1(EXT_provoking_vertex, "GetInteger64v");
+         CHECK_EXT1(EXT_provoking_vertex);
          params[0] = BOOLEAN_TO_INT64(ctx->Const.QuadsFollowProvokingVertexConvention);
          break;
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
-         CHECK_EXT1(ARB_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ARB_fragment_shader);
          params[0] = (GLint64)(ctx->Const.FragmentProgram.MaxUniformComponents);
          break;
       case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
-         CHECK_EXT1(ARB_fragment_shader, "GetInteger64v");
+         CHECK_EXT1(ARB_fragment_shader);
          params[0] = ENUM_TO_INT64(ctx->Hint.FragmentShaderDerivative);
          break;
       case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = (GLint64)(ctx->Const.VertexProgram.MaxUniformComponents);
          break;
       case GL_MAX_VARYING_FLOATS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = (GLint64)(ctx->Const.MaxVarying * 4);
          break;
       case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = (GLint64)(ctx->Const.MaxVertexTextureImageUnits);
          break;
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
-         CHECK_EXT1(ARB_vertex_shader, "GetInteger64v");
+         CHECK_EXT1(ARB_vertex_shader);
          params[0] = (GLint64)(ctx->Const.MaxCombinedTextureImageUnits);
          break;
       case GL_CURRENT_PROGRAM:
-         CHECK_EXT1(ARB_shader_objects, "GetInteger64v");
+         CHECK_EXT1(ARB_shader_objects);
          params[0] = (GLint64)(ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0);
          break;
       case GL_MAX_SAMPLES:
-         CHECK_EXT1(ARB_framebuffer_object, "GetInteger64v");
+         CHECK_EXT1(ARB_framebuffer_object);
          params[0] = (GLint64)(ctx->Const.MaxSamples);
          break;
       case GL_VERTEX_ARRAY_BINDING_APPLE:
-         CHECK_EXT1(APPLE_vertex_array_object, "GetInteger64v");
+         CHECK_EXT1(APPLE_vertex_array_object);
          params[0] = (GLint64)(ctx->Array.ArrayObj->Name);
          break;
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
-         CHECK_EXT1(ARB_seamless_cube_map, "GetInteger64v");
+         CHECK_EXT1(ARB_seamless_cube_map);
          params[0] = BOOLEAN_TO_INT64(ctx->Texture.CubeMapSeamless);
          break;
       case GL_MAX_SERVER_WAIT_TIMEOUT:
-         CHECK_EXT1(ARB_sync, "GetInteger64v");
+         CHECK_EXT1(ARB_sync);
          params[0] = ctx->Const.MaxServerWaitTimeout;
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = (GLint64)(ctx->TransformFeedback.CurrentBuffer->Name);
+         break;
+      case GL_RASTERIZER_DISCARD:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = BOOLEAN_TO_INT64(ctx->TransformFeedback.RasterDiscard);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = (GLint64)(ctx->Const.MaxTransformFeedbackInterleavedComponents);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = (GLint64)(ctx->Const.MaxTransformFeedbackSeparateAttribs);
+         break;
+      case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
+         CHECK_EXT1(EXT_transform_feedback);
+         params[0] = (GLint64)(ctx->Const.MaxTransformFeedbackSeparateComponents);
+         break;
       case GL_NUM_EXTENSIONS:
+         CHECK_VERSION(30);
          params[0] = (GLint64)(_mesa_get_extension_count(ctx));
          break;
       case GL_MAJOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = (GLint64)(ctx->VersionMajor);
          break;
       case GL_MINOR_VERSION:
+         CHECK_VERSION(30);
          params[0] = (GLint64)(ctx->VersionMinor);
          break;
+      case GL_CONTEXT_FLAGS:
+         CHECK_VERSION(30);
+         params[0] = (GLint64)(ctx->Const.ContextFlags);
+         break;
+      case GL_PRIMITIVE_RESTART:
+         CHECK_VERSION(31);
+         params[0] = BOOLEAN_TO_INT64(ctx->Array.PrimitiveRestart);
+         break;
+      case GL_PRIMITIVE_RESTART_INDEX:
+         CHECK_VERSION(31);
+         params[0] = (GLint64)(ctx->Array.RestartIndex);
+         break;
+      case GL_CONTEXT_PROFILE_MASK:
+         CHECK_VERSION(32);
+         params[0] = (GLint64)(ctx->Const.ProfileMask);
+         break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64v(pname=0x%x)", pname);
+         goto invalid_enum_error;
    }
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64v(pname=0x%x)", pname);
 }
 #endif /* FEATURE_ARB_sync */
 
@@ -7573,70 +7769,128 @@ void GLAPIENTRY
 _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
 
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
    switch (pname) {
       case GL_BLEND:
-         CHECK_EXT1(EXT_draw_buffers2, "GetBooleanIndexedv");
+         CHECK_EXT1(EXT_draw_buffers2);
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+            return;
          }
          params[0] = INT_TO_BOOLEAN(((ctx->Color.BlendEnabled >> index) & 1));
          break;
       case GL_COLOR_WRITEMASK:
-         CHECK_EXT1(EXT_draw_buffers2, "GetBooleanIndexedv");
+         CHECK_EXT1(EXT_draw_buffers2);
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+            return;
          }
          params[0] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][RCOMP] ? 1 : 0);
          params[1] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][GCOMP] ? 1 : 0);
          params[2] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][BCOMP] ? 1 : 0);
          params[3] = INT_TO_BOOLEAN(ctx->Color.ColorMask[index][ACOMP] ? 1 : 0);
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_START:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT64_TO_BOOLEAN(ctx->TransformFeedback.Offset[index]);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT64_TO_BOOLEAN(ctx->TransformFeedback.Size[index]);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT_TO_BOOLEAN(ctx->TransformFeedback.Buffers[index]->Name);
+         break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanIndexedv(pname=0x%x)", pname);
+         goto invalid_enum_error;
    }
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanIndexedv(pname=0x%x)", pname);
 }
 
 void GLAPIENTRY
 _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
 
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
    switch (pname) {
       case GL_BLEND:
-         CHECK_EXT1(EXT_draw_buffers2, "GetIntegerIndexedv");
+         CHECK_EXT1(EXT_draw_buffers2);
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+            return;
          }
          params[0] = ((ctx->Color.BlendEnabled >> index) & 1);
          break;
       case GL_COLOR_WRITEMASK:
-         CHECK_EXT1(EXT_draw_buffers2, "GetIntegerIndexedv");
+         CHECK_EXT1(EXT_draw_buffers2);
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+            return;
          }
          params[0] = ctx->Color.ColorMask[index][RCOMP] ? 1 : 0;
          params[1] = ctx->Color.ColorMask[index][GCOMP] ? 1 : 0;
          params[2] = ctx->Color.ColorMask[index][BCOMP] ? 1 : 0;
          params[3] = ctx->Color.ColorMask[index][ACOMP] ? 1 : 0;
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_START:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT64_TO_INT(ctx->TransformFeedback.Offset[index]);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = INT64_TO_INT(ctx->TransformFeedback.Size[index]);
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = ctx->TransformFeedback.Buffers[index]->Name;
+         break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerIndexedv(pname=0x%x)", pname);
+         goto invalid_enum_error;
    }
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerIndexedv(pname=0x%x)", pname);
 }
 
 #if FEATURE_ARB_sync
@@ -7644,35 +7898,64 @@ void GLAPIENTRY
 _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   const GLuint version = ctx->VersionMajor * 10 + ctx->VersionMinor;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   (void) version;
 
    if (!params)
       return;
 
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
    switch (pname) {
       case GL_BLEND:
-         CHECK_EXT1(EXT_draw_buffers2, "GetInteger64Indexedv");
+         CHECK_EXT1(EXT_draw_buffers2);
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+            return;
          }
          params[0] = (GLint64)(((ctx->Color.BlendEnabled >> index) & 1));
          break;
       case GL_COLOR_WRITEMASK:
-         CHECK_EXT1(EXT_draw_buffers2, "GetInteger64Indexedv");
+         CHECK_EXT1(EXT_draw_buffers2);
          if (index >= ctx->Const.MaxDrawBuffers) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+            return;
          }
          params[0] = (GLint64)(ctx->Color.ColorMask[index][RCOMP] ? 1 : 0);
          params[1] = (GLint64)(ctx->Color.ColorMask[index][GCOMP] ? 1 : 0);
          params[2] = (GLint64)(ctx->Color.ColorMask[index][BCOMP] ? 1 : 0);
          params[3] = (GLint64)(ctx->Color.ColorMask[index][ACOMP] ? 1 : 0);
          break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_START:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = ctx->TransformFeedback.Offset[index];
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = ctx->TransformFeedback.Size[index];
+         break;
+      case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
+         CHECK_EXT1(EXT_transform_feedback);
+         if (index >= ctx->Const.MaxTransformFeedbackSeparateAttribs) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
+            return;
+         }
+         params[0] = (GLint64)(ctx->TransformFeedback.Buffers[index]->Name);
+         break;
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64Indexedv(pname=0x%x)", pname);
+         goto invalid_enum_error;
    }
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetInteger64Indexedv(pname=0x%x)", pname);
 }
 #endif /* FEATURE_ARB_sync */
 

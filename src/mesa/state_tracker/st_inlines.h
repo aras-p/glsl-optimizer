@@ -37,15 +37,16 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_box.h"
 #include "pipe/p_state.h"
 
 #include "st_context.h"
 #include "st_texture.h"
-#include "st_public.h"
+#include "st_cb_flush.h"
 
 static INLINE struct pipe_transfer *
 st_cond_flush_get_tex_transfer(struct st_context *st,
-			       struct pipe_texture *pt,
+			       struct pipe_resource *pt,
 			       unsigned int face,
 			       unsigned int level,
 			       unsigned int zslice,
@@ -53,16 +54,27 @@ st_cond_flush_get_tex_transfer(struct st_context *st,
 			       unsigned int x, unsigned int y,
 			       unsigned int w, unsigned int h)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_context *context = st->pipe;
+   struct pipe_subresource subresource;
+   struct pipe_box box;
+
+   subresource.face = face;
+   subresource.level = level;
+
+   u_box_2d_zslice(x, y, zslice, w, h, &box);
 
    st_teximage_flush_before_map(st, pt, face, level, usage);
-   return screen->get_tex_transfer(screen, pt, face, level, zslice, usage,
-				   x, y, w, h);
+
+   return context->get_transfer(context, 
+				pt,
+				subresource,
+				usage,
+				&box);
 }
 
 static INLINE struct pipe_transfer *
 st_no_flush_get_tex_transfer(struct st_context *st,
-			     struct pipe_texture *pt,
+			     struct pipe_resource *pt,
 			     unsigned int face,
 			     unsigned int level,
 			     unsigned int zslice,
@@ -70,94 +82,77 @@ st_no_flush_get_tex_transfer(struct st_context *st,
 			     unsigned int x, unsigned int y,
 			     unsigned int w, unsigned int h)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_context *context = st->pipe;
+   struct pipe_box box;
+   struct pipe_subresource subresource = u_subresource( face, level );
+   
+   u_box_2d_zslice( x, y, zslice, 
+		    w, h,
+		    &box );
 
-   return screen->get_tex_transfer(screen, pt, face, level,
-				   zslice, usage, x, y, w, h);
-}
-
-static INLINE void *
-st_cond_flush_pipe_buffer_map(struct st_context *st,
-			      struct pipe_buffer *buf,
-			      unsigned int map_flags)
-{
-   struct pipe_context *pipe = st->pipe;
-   unsigned int referenced = pipe->is_buffer_referenced(pipe, buf);
-
-   if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-		      (map_flags & PIPE_BUFFER_USAGE_CPU_WRITE)))
-      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   return pipe_buffer_map(pipe->screen, buf, map_flags);
-}
-
-static INLINE void *
-st_no_flush_pipe_buffer_map(struct st_context *st,
-			    struct pipe_buffer *buf,
-			    unsigned int map_flags)
-{
-   return pipe_buffer_map(st->pipe->screen, buf, map_flags);
+   return context->get_transfer(context,
+				pt,
+				subresource,
+				usage,
+				&box);
 }
 
 
 static INLINE void
 st_cond_flush_pipe_buffer_write(struct st_context *st,
-				struct pipe_buffer *buf,
+				struct pipe_resource *buf,
 				unsigned int offset,
 				unsigned int size,
 				const void * data)
 {
    struct pipe_context *pipe = st->pipe;
 
-   if (pipe->is_buffer_referenced(pipe, buf))
-      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   pipe_buffer_write(pipe->screen, buf, offset, size, data);
+   pipe_buffer_write(pipe, buf, offset, size, data);
 }
 
 static INLINE void
 st_no_flush_pipe_buffer_write(struct st_context *st,
-			      struct pipe_buffer *buf,
+			      struct pipe_resource *buf,
 			      unsigned int offset,
 			      unsigned int size,
 			      const void * data)
 {
-   pipe_buffer_write(st->pipe->screen, buf, offset, size, data);
+   pipe_buffer_write(st->pipe, buf, offset, size, data);
 }
 
 static INLINE void
 st_no_flush_pipe_buffer_write_nooverlap(struct st_context *st,
-                                        struct pipe_buffer *buf,
+                                        struct pipe_resource *buf,
                                         unsigned int offset,
                                         unsigned int size,
                                         const void * data)
 {
-   pipe_buffer_write_nooverlap(st->pipe->screen, buf, offset, size, data);
+   pipe_buffer_write_nooverlap(st->pipe, buf, offset, size, data);
 }
 
 static INLINE void
 st_cond_flush_pipe_buffer_read(struct st_context *st,
-			       struct pipe_buffer *buf,
+			       struct pipe_resource *buf,
 			       unsigned int offset,
 			       unsigned int size,
 			       void * data)
 {
    struct pipe_context *pipe = st->pipe;
 
-   if (pipe->is_buffer_referenced(pipe, buf) & PIPE_REFERENCED_FOR_WRITE)
+   if (pipe->is_resource_referenced(pipe, buf, 0, 0) & PIPE_REFERENCED_FOR_WRITE)
       st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-   pipe_buffer_read(pipe->screen, buf, offset, size, data);
+   pipe_buffer_read(pipe, buf, offset, size, data);
 }
 
 static INLINE void
 st_no_flush_pipe_buffer_read(struct st_context *st,
-			     struct pipe_buffer *buf,
+			     struct pipe_resource *buf,
 			     unsigned int offset,
 			     unsigned int size,
 			     void * data)
 {
-   pipe_buffer_read(st->pipe->screen, buf, offset, size, data);
+   pipe_buffer_read(st->pipe, buf, offset, size, data);
 }
 
 #endif

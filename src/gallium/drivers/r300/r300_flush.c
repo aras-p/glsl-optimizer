@@ -52,7 +52,6 @@ static void r300_flush(struct pipe_context* pipe,
 
     if (r300->dirty_hw) {
         FLUSH_CS;
-        r300->dirty_state = R300_NEW_KITCHEN_SINK;
         r300->dirty_hw = 0;
 
         /* New kitchen sink, baby. */
@@ -61,6 +60,12 @@ static void r300_flush(struct pipe_context* pipe,
                 atom->dirty = TRUE;
             }
         }
+
+        /* Unmark HWTCL state for SWTCL. */
+        if (!r300->screen->caps.has_tcl) {
+            r300->vs_state.dirty = FALSE;
+            r300->vs_constants.dirty = FALSE;
+        }
     }
 
     /* reset flushed query */
@@ -68,7 +73,6 @@ static void r300_flush(struct pipe_context* pipe,
         query->flushed = TRUE;
     }
 }
-
 
 void r300_init_flush_functions(struct r300_context* r300)
 {

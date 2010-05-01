@@ -32,7 +32,7 @@
 #include "pipe/p_screen.h"
 
 
-struct intel_winsys;
+struct i915_winsys;
 
 
 /**
@@ -42,7 +42,7 @@ struct i915_screen
 {
    struct pipe_screen base;
 
-   struct intel_winsys *iws;
+   struct i915_winsys *iws;
 
    boolean is_i945;
    uint pci_id;

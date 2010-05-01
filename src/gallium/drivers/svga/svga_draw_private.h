@@ -90,7 +90,7 @@ struct index_cache {
    /* If non-null, this buffer is filled by calling 
     *   generate(nr, map(buffer))
     */
-   struct pipe_buffer *buffer;
+   struct pipe_resource *buffer;
 };
 
 #define QSZ 32
@@ -99,11 +99,11 @@ struct draw_cmd {
    struct svga_winsys_context *swc;
 
    SVGA3dVertexDecl vdecl[SVGA3D_INPUTREG_MAX];
-   struct pipe_buffer *vdecl_vb[SVGA3D_INPUTREG_MAX];
+   struct pipe_resource *vdecl_vb[SVGA3D_INPUTREG_MAX];
    unsigned vdecl_count;
 
    SVGA3dPrimitiveRange prim[QSZ];
-   struct pipe_buffer *prim_ib[QSZ];
+   struct pipe_resource *prim_ib[QSZ];
    unsigned prim_count;
    unsigned min_index[QSZ];
    unsigned max_index[QSZ];
@@ -141,18 +141,18 @@ svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
                  const SVGA3dPrimitiveRange *range,
                  unsigned min_index,
                  unsigned max_index,
-                 struct pipe_buffer *ib );
+                 struct pipe_resource *ib );
 
 enum pipe_error
 svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
-                                       struct pipe_buffer *indexBuffer,
+                                       struct pipe_resource *indexBuffer,
                                        unsigned index_size,
+                                       int index_bias,
                                        unsigned min_index,
                                        unsigned max_index,
                                        unsigned prim, 
                                        unsigned start,
-                                       unsigned count,
-                                       unsigned bias );
+                                       unsigned count );
 
 
 #endif

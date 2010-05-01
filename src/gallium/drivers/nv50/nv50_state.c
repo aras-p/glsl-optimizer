@@ -238,6 +238,9 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 	return (void *)sso;
 }
 
+/* type == 0 for VPs, 1 for GPs, 2 for FPs, which is how the
+ * relevant tesla methods are indexed (NV50TCL_BIND_TSC etc.)
+ */
 static INLINE void
 nv50_sampler_state_bind(struct pipe_context *pipe, unsigned type,
 			unsigned nr, void **sampler)
@@ -253,13 +256,13 @@ nv50_sampler_state_bind(struct pipe_context *pipe, unsigned type,
 static void
 nv50_vp_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **s)
 {
-	nv50_sampler_state_bind(pipe, PIPE_SHADER_VERTEX, nr, s);
+	nv50_sampler_state_bind(pipe, 0, nr, s);
 }
 
 static void
 nv50_fp_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **s)
 {
-	nv50_sampler_state_bind(pipe, PIPE_SHADER_FRAGMENT, nr, s);
+	nv50_sampler_state_bind(pipe, 2, nr, s);
 }
 
 static void
@@ -269,40 +272,74 @@ nv50_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static INLINE void
-nv50_set_sampler_texture(struct pipe_context *pipe, unsigned type,
-			 unsigned nr, struct pipe_texture **pt)
+nv50_set_sampler_views(struct pipe_context *pipe, unsigned p,
+		       unsigned nr,
+		       struct pipe_sampler_view **views)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	unsigned i;
 
 	for (i = 0; i < nr; i++)
-		pipe_texture_reference((void *)&nv50->miptree[type][i], pt[i]);
-	for (i = nr; i < nv50->miptree_nr[type]; i++)
-		pipe_texture_reference((void *)&nv50->miptree[type][i], NULL);
+		pipe_sampler_view_reference(&nv50->sampler_views[p][i],
+					    views[i]);
 
-	nv50->miptree_nr[type] = nr;
+	for (i = nr; i < nv50->sampler_view_nr[p]; i++)
+		pipe_sampler_view_reference(&nv50->sampler_views[p][i], NULL);
+
+	nv50->sampler_view_nr[p] = nr;
 	nv50->dirty |= NV50_NEW_TEXTURE;
 }
 
 static void
-nv50_set_vp_sampler_textures(struct pipe_context *pipe,
-			     unsigned nr, struct pipe_texture **pt)
+nv50_set_vp_sampler_views(struct pipe_context *pipe,
+			  unsigned nr,
+			  struct pipe_sampler_view **views)
 {
-	nv50_set_sampler_texture(pipe, PIPE_SHADER_VERTEX, nr, pt);
+	nv50_set_sampler_views(pipe, 0, nr, views);
 }
 
 static void
-nv50_set_fp_sampler_textures(struct pipe_context *pipe,
-			     unsigned nr, struct pipe_texture **pt)
+nv50_set_fp_sampler_views(struct pipe_context *pipe,
+			  unsigned nr,
+			  struct pipe_sampler_view **views)
 {
-	nv50_set_sampler_texture(pipe, PIPE_SHADER_FRAGMENT, nr, pt);
+	nv50_set_sampler_views(pipe, 2, nr, views);
 }
+
+static void
+nv50_sampler_view_destroy(struct pipe_context *pipe,
+			  struct pipe_sampler_view *view)
+{
+	pipe_resource_reference(&view->texture, NULL);
+	FREE(nv50_sampler_view(view));
+}
+
+static struct pipe_sampler_view *
+nv50_create_sampler_view(struct pipe_context *pipe,
+			 struct pipe_resource *texture,
+			 const struct pipe_sampler_view *templ)
+{
+	struct nv50_sampler_view *view = CALLOC_STRUCT(nv50_sampler_view);
+
+	view->pipe = *templ;
+	view->pipe.reference.count = 1;
+	view->pipe.texture = NULL;
+	pipe_resource_reference(&view->pipe.texture, texture);
+	view->pipe.context = pipe;
+
+	if (!nv50_tex_construct(view)) {
+		nv50_sampler_view_destroy(pipe, &view->pipe);
+		return NULL;
+	}
+	return &view->pipe;
+}
+
 
 static void *
 nv50_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
-	struct nouveau_stateobj *so = so_new(15, 21, 0);
+	struct nouveau_stateobj *so = so_new(16, 22, 0);
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_rasterizer_stateobj *rso =
 		CALLOC_STRUCT(nv50_rasterizer_stateobj);
@@ -313,6 +350,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	- multisample
 	 * 	- point_sprite / sprite_coord_mode
 	 */
+
+	so_method(so, tesla, NV50TCL_SCISSOR_ENABLE(0), 1);
+	so_data  (so, cso->scissor);
 
 	so_method(so, tesla, NV50TCL_SHADE_MODEL, 1);
 	so_data  (so, cso->flatshade ? NV50TCL_SHADE_MODEL_FLAT :
@@ -650,7 +690,7 @@ nv50_set_clip_state(struct pipe_context *pipe,
 
 static void
 nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
-			 struct pipe_buffer *buf )
+			 struct pipe_resource *buf )
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
@@ -720,15 +760,34 @@ nv50_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	nv50->dirty |= NV50_NEW_ARRAYS;
 }
 
+static void *
+nv50_vtxelts_state_create(struct pipe_context *pipe,
+			  unsigned num_elements,
+			  const struct pipe_vertex_element *elements)
+{
+	struct nv50_vtxelt_stateobj *cso = CALLOC_STRUCT(nv50_vtxelt_stateobj);
+
+	assert(num_elements < 16); /* not doing fallbacks yet */
+	cso->num_elements = num_elements;
+	memcpy(cso->pipe, elements, num_elements * sizeof(*elements));
+
+	nv50_vtxelt_construct(cso);
+
+	return (void *)cso;
+}
+
 static void
-nv50_set_vertex_elements(struct pipe_context *pipe, unsigned count,
-			 const struct pipe_vertex_element *ve)
+nv50_vtxelts_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+	FREE(hwcso);
+}
+
+static void
+nv50_vtxelts_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
-	memcpy(nv50->vtxelt, ve, sizeof(*ve) * count);
-	nv50->vtxelt_nr = count;
-
+	nv50->vtxelt = hwcso;
 	nv50->dirty |= NV50_NEW_ARRAYS;
 }
 
@@ -743,8 +802,10 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.delete_sampler_state = nv50_sampler_state_delete;
 	nv50->pipe.bind_fragment_sampler_states = nv50_fp_sampler_state_bind;
 	nv50->pipe.bind_vertex_sampler_states   = nv50_vp_sampler_state_bind;
-	nv50->pipe.set_fragment_sampler_textures = nv50_set_fp_sampler_textures;
-	nv50->pipe.set_vertex_sampler_textures   = nv50_set_vp_sampler_textures;
+	nv50->pipe.set_fragment_sampler_views = nv50_set_fp_sampler_views;
+	nv50->pipe.set_vertex_sampler_views   = nv50_set_vp_sampler_views;
+	nv50->pipe.create_sampler_view = nv50_create_sampler_view;
+	nv50->pipe.sampler_view_destroy = nv50_sampler_view_destroy;
 
 	nv50->pipe.create_rasterizer_state = nv50_rasterizer_state_create;
 	nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;
@@ -778,7 +839,10 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.set_scissor_state = nv50_set_scissor_state;
 	nv50->pipe.set_viewport_state = nv50_set_viewport_state;
 
+	nv50->pipe.create_vertex_elements_state = nv50_vtxelts_state_create;
+	nv50->pipe.delete_vertex_elements_state = nv50_vtxelts_state_delete;
+	nv50->pipe.bind_vertex_elements_state = nv50_vtxelts_state_bind;
+
 	nv50->pipe.set_vertex_buffers = nv50_set_vertex_buffers;
-	nv50->pipe.set_vertex_elements = nv50_set_vertex_elements;
 }
 

@@ -79,21 +79,19 @@ svga_vbuf_render_allocate_vertices( struct vbuf_render *render,
       new_vbuf = TRUE;
 
    if (new_vbuf)
-      pipe_buffer_reference(&svga_render->vbuf, NULL);
+      pipe_resource_reference(&svga_render->vbuf, NULL);
    if (new_ibuf)
-      pipe_buffer_reference(&svga_render->ibuf, NULL);
+      pipe_resource_reference(&svga_render->ibuf, NULL);
 
    if (!svga_render->vbuf) {
       svga_render->vbuf_size = MAX2(size, svga_render->vbuf_alloc_size);
       svga_render->vbuf = pipe_buffer_create(screen,
-                                             16,
-                                             PIPE_BUFFER_USAGE_VERTEX,
+                                             PIPE_BIND_VERTEX_BUFFER,
                                              svga_render->vbuf_size);
       if(!svga_render->vbuf) {
          svga_context_flush(svga, NULL);
          svga_render->vbuf = pipe_buffer_create(screen,
-                                                16,
-                                                PIPE_BUFFER_USAGE_VERTEX,
+                                                PIPE_BIND_VERTEX_BUFFER,
                                                 svga_render->vbuf_size);
          assert(svga_render->vbuf);
       }
@@ -117,14 +115,14 @@ svga_vbuf_render_map_vertices( struct vbuf_render *render )
 {
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
    struct svga_context *svga = svga_render->svga;
-   struct pipe_screen *screen = svga->pipe.screen;
 
-   char *ptr = (char*)pipe_buffer_map(screen,
+   char *ptr = (char*)pipe_buffer_map(&svga->pipe,
                                       svga_render->vbuf,
-                                      PIPE_BUFFER_USAGE_CPU_WRITE | 
-                                      PIPE_BUFFER_USAGE_FLUSH_EXPLICIT |
-                                      PIPE_BUFFER_USAGE_DISCARD |
-                                      PIPE_BUFFER_USAGE_UNSYNCHRONIZED);
+                                      PIPE_TRANSFER_WRITE | 
+                                      PIPE_TRANSFER_FLUSH_EXPLICIT |
+                                      PIPE_TRANSFER_DISCARD |
+                                      PIPE_TRANSFER_UNSYNCHRONIZED,
+				      &svga_render->vbuf_transfer);
    return ptr + svga_render->vbuf_offset;
 }
 
@@ -135,14 +133,15 @@ svga_vbuf_render_unmap_vertices( struct vbuf_render *render,
 {
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
    struct svga_context *svga = svga_render->svga;
-   struct pipe_screen *screen = svga->pipe.screen;
    unsigned offset, length;
    size_t used = svga_render->vertex_size * ((size_t)max_index + 1);
 
    offset = svga_render->vbuf_offset + svga_render->vertex_size * min_index;
    length = svga_render->vertex_size * (max_index + 1 - min_index);
-   pipe_buffer_flush_mapped_range(screen, svga_render->vbuf, offset, length);
-   pipe_buffer_unmap(screen, svga_render->vbuf);
+   pipe_buffer_flush_mapped_range(&svga->pipe,
+				  svga_render->vbuf_transfer,
+				  offset, length);
+   pipe_buffer_unmap(&svga->pipe, svga_render->vbuf, svga_render->vbuf_transfer);
    svga_render->min_index = min_index;
    svga_render->max_index = max_index;
    svga_render->vbuf_used = MAX2(svga_render->vbuf_used, used);
@@ -248,26 +247,25 @@ svga_vbuf_render_draw( struct vbuf_render *render,
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
    struct svga_context *svga = svga_render->svga;
    struct pipe_screen *screen = svga->pipe.screen;
-   unsigned bias = (svga_render->vbuf_offset - svga_render->vdecl_offset) / svga_render->vertex_size;
+   int bias = (svga_render->vbuf_offset - svga_render->vdecl_offset) / svga_render->vertex_size;
    boolean ret;
    size_t size = 2 * nr_indices;
 
    assert(( svga_render->vbuf_offset - svga_render->vdecl_offset) % svga_render->vertex_size == 0);
    
    if (svga_render->ibuf_size < svga_render->ibuf_offset + size)
-      pipe_buffer_reference(&svga_render->ibuf, NULL);
+      pipe_resource_reference(&svga_render->ibuf, NULL);
 
    if (!svga_render->ibuf) {
       svga_render->ibuf_size = MAX2(size, svga_render->ibuf_alloc_size);
       svga_render->ibuf = pipe_buffer_create(screen,
-                                             2,
-                                             PIPE_BUFFER_USAGE_VERTEX,
+                                             PIPE_BIND_INDEX_BUFFER,
                                              svga_render->ibuf_size);
       svga_render->ibuf_offset = 0;
    }
 
-   pipe_buffer_write_nooverlap(screen, svga_render->ibuf,
-                                 svga_render->ibuf_offset, 2 * nr_indices, indices);
+   pipe_buffer_write_nooverlap(&svga->pipe, svga_render->ibuf,
+			       svga_render->ibuf_offset, 2 * nr_indices, indices);
 
 
    /* off to hardware */
@@ -282,19 +280,21 @@ svga_vbuf_render_draw( struct vbuf_render *render,
    ret = svga_hwtnl_draw_range_elements(svga->hwtnl,
                                         svga_render->ibuf,
                                         2,
+                                        bias,
                                         svga_render->min_index,
                                         svga_render->max_index,
                                         svga_render->prim,
-                                        svga_render->ibuf_offset / 2, nr_indices, bias);
+                                        svga_render->ibuf_offset / 2, nr_indices);
    if(ret != PIPE_OK) {
       svga_context_flush(svga, NULL);
       ret = svga_hwtnl_draw_range_elements(svga->hwtnl,
                                            svga_render->ibuf,
                                            2,
+                                           bias,
                                            svga_render->min_index,
                                            svga_render->max_index,
                                            svga_render->prim,
-                                           svga_render->ibuf_offset / 2, nr_indices, bias);
+                                           svga_render->ibuf_offset / 2, nr_indices);
       svga->swtnl.new_vbuf = TRUE;
       assert(ret == PIPE_OK);
    }
@@ -315,8 +315,8 @@ svga_vbuf_render_destroy( struct vbuf_render *render )
 {
    struct svga_vbuf_render *svga_render = svga_vbuf_render(render);
 
-   pipe_buffer_reference(&svga_render->vbuf, NULL);
-   pipe_buffer_reference(&svga_render->ibuf, NULL);
+   pipe_resource_reference(&svga_render->vbuf, NULL);
+   pipe_resource_reference(&svga_render->ibuf, NULL);
    FREE(svga_render);
 }
 

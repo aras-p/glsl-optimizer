@@ -31,8 +31,8 @@
 #include "svga_winsys.h"
 #include "svga_context.h"
 #include "svga_screen.h"
-#include "svga_screen_texture.h"
-#include "svga_screen_buffer.h"
+#include "svga_resource_texture.h"
+#include "svga_resource.h"
 #include "svga_debug.h"
 
 #include "svga3d_shaderdefs.h"
@@ -210,7 +210,7 @@ svga_translate_format_cap(enum pipe_format format)
 
    case PIPE_FORMAT_Z16_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D16;
-   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D24S8;
    case PIPE_FORMAT_X8Z24_UNORM:
       return SVGA3D_DEVCAP_SURFACEFMT_Z_D24X8;
@@ -248,7 +248,7 @@ svga_is_format_supported( struct pipe_screen *screen,
    assert(tex_usage);
 
    /* Override host capabilities */
-   if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
+   if (tex_usage & PIPE_BIND_RENDER_TARGET) {
       switch(format) { 
 
       /* Often unsupported/problematic. This means we end up with the same
@@ -278,11 +278,11 @@ svga_is_format_supported( struct pipe_screen *screen,
       SVGA3dSurfaceFormatCaps mask;
       
       mask.value = 0;
-      if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+      if (tex_usage & PIPE_BIND_RENDER_TARGET)
          mask.offscreenRenderTarget = 1;
-      if (tex_usage & PIPE_TEXTURE_USAGE_DEPTH_STENCIL)
+      if (tex_usage & PIPE_BIND_DEPTH_STENCIL)
          mask.zStencil = 1;
-      if (tex_usage & PIPE_TEXTURE_USAGE_SAMPLER)
+      if (tex_usage & PIPE_BIND_SAMPLER_VIEW)
          mask.texture = 1;
 
       if ((result.u & mask.value) == mask.value)
@@ -295,7 +295,7 @@ svga_is_format_supported( struct pipe_screen *screen,
     * duplicated list of supported formats which is prone to getting
     * out of sync:
     */
-   if(tex_usage & (PIPE_TEXTURE_USAGE_RENDER_TARGET | PIPE_TEXTURE_USAGE_DEPTH_STENCIL))
+   if(tex_usage & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_DEPTH_STENCIL))
       return svga_translate_format_render(format) != SVGA3D_FORMAT_INVALID;
    else
       return svga_translate_format(format) != SVGA3D_FORMAT_INVALID;
@@ -397,8 +397,7 @@ svga_screen_create(struct svga_winsys_screen *sws)
    screen->fence_finish = svga_fence_finish;
    svgascreen->sws = sws;
 
-   svga_screen_init_texture_functions(screen);
-   svga_screen_init_buffer_functions(screen);
+   svga_init_screen_resource_functions(svgascreen);
 
    svgascreen->use_ps30 =
       sws->get_cap(sws, SVGA3D_DEVCAP_FRAGMENT_SHADER_VERSION, &result) &&

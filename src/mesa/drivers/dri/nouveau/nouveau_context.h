@@ -85,6 +85,8 @@ struct nouveau_context {
 	BITSET_SET(to_nouveau_context(ctx)->dirty, NOUVEAU_STATE_##s)
 #define context_dirty_i(ctx, s, i) \
 	BITSET_SET(to_nouveau_context(ctx)->dirty, NOUVEAU_STATE_##s##0 + i)
+#define context_emit(ctx, s) \
+	context_drv(ctx)->emit[NOUVEAU_STATE_##s](ctx, NOUVEAU_STATE_##s)
 
 GLboolean
 nouveau_context_create(const __GLcontextModes *visual, __DRIcontext *dri_ctx,

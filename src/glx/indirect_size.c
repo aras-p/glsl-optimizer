@@ -48,7 +48,7 @@
 #  endif
 
 
-#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(__APPLE__)
+#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(GLX_USE_APPLEGL)
 #  undef HAVE_ALIAS
 #endif
 #ifdef HAVE_ALIAS

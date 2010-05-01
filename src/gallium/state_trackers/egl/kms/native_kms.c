@@ -14,35 +14,34 @@
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
-
-#include <stdio.h>
-#include <string.h>
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_string.h"
 #include "egllog.h"
 
 #include "native_kms.h"
 
 static boolean
 kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
-                     unsigned int *seq_num, struct pipe_texture **textures,
+                     unsigned int *seq_num, struct pipe_resource **textures,
                      int *width, int *height)
 {
    struct kms_surface *ksurf = kms_surface(nsurf);
    struct kms_display *kdpy = ksurf->kdpy;
    struct pipe_screen *screen = kdpy->base.screen;
-   struct pipe_texture templ, *ptex;
+   struct pipe_resource templ, *ptex;
    int att;
 
    if (attachment_mask) {
@@ -53,9 +52,7 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
       templ.height0 = ksurf->height;
       templ.depth0 = 1;
       templ.format = ksurf->color_format;
-      templ.tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
-      if (ksurf->type == KMS_SURFACE_TYPE_SCANOUT)
-         templ.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
+      templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SCANOUT;
    }
 
    /* create textures */
@@ -66,13 +63,13 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
 
       ptex = ksurf->textures[att];
       if (!ptex) {
-         ptex = screen->texture_create(screen, &templ);
+         ptex = screen->resource_create(screen, &templ);
          ksurf->textures[att] = ptex;
       }
 
       if (textures) {
          textures[att] = NULL;
-         pipe_texture_reference(&textures[att], ptex);
+         pipe_resource_reference(&textures[att], ptex);
       }
    }
 
@@ -100,7 +97,7 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
    for (i = 0; i < num_framebuffers; i++) {
       struct kms_framebuffer *fb;
       enum native_attachment natt;
-      unsigned int handle, stride;
+      struct winsys_handle whandle;
       uint block_bits;
 
       if (i == 0) {
@@ -118,7 +115,7 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
          if (!ksurf->textures[natt])
             return FALSE;
 
-         pipe_texture_reference(&fb->texture, ksurf->textures[natt]);
+         pipe_resource_reference(&fb->texture, ksurf->textures[natt]);
       }
 
       /* already initialized */
@@ -128,13 +125,17 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
       /* TODO detect the real value */
       fb->is_passive = TRUE;
 
-      if (!kdpy->api->local_handle_from_texture(kdpy->api,
-               kdpy->base.screen, fb->texture, &stride, &handle))
+      memset(&whandle, 0, sizeof(whandle));
+      whandle.type = DRM_API_HANDLE_TYPE_KMS;
+
+      if (!kdpy->base.screen->resource_get_handle(kdpy->base.screen,
+               fb->texture, &whandle))
          return FALSE;
 
       block_bits = util_format_get_blocksizebits(ksurf->color_format);
       err = drmModeAddFB(kdpy->fd, ksurf->width, ksurf->height,
-            block_bits, block_bits, stride, handle, &fb->buffer_id);
+            block_bits, block_bits, whandle.stride, whandle.handle,
+            &fb->buffer_id);
       if (err) {
          fb->buffer_id = 0;
          return FALSE;
@@ -151,10 +152,6 @@ kms_surface_flush_frontbuffer(struct native_surface *nsurf)
    struct kms_surface *ksurf = kms_surface(nsurf);
    struct kms_display *kdpy = ksurf->kdpy;
 
-   /* pbuffer is private */
-   if (ksurf->type == KMS_SURFACE_TYPE_PBUFFER)
-      return TRUE;
-
    if (ksurf->front_fb.is_passive)
       drmModeDirtyFB(kdpy->fd, ksurf->front_fb.buffer_id, NULL, 0);
 #endif
@@ -169,12 +166,8 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
    struct kms_crtc *kcrtc = &ksurf->current_crtc;
    struct kms_display *kdpy = ksurf->kdpy;
    struct kms_framebuffer tmp_fb;
-   struct pipe_texture *tmp_texture;
+   struct pipe_resource *tmp_texture;
    int err;
-
-   /* pbuffer is private */
-   if (ksurf->type == KMS_SURFACE_TYPE_PBUFFER)
-      return TRUE;
 
    if (!ksurf->back_fb.buffer_id) {
       if (!kms_surface_init_framebuffers(&ksurf->base, TRUE))
@@ -201,6 +194,8 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
 
    /* the front/back textures are swapped */
    ksurf->sequence_number++;
+   kdpy->event_handler->invalid_surface(&kdpy->base,
+         &ksurf->base, ksurf->sequence_number);
 
    return TRUE;
 }
@@ -222,23 +217,22 @@ kms_surface_destroy(struct native_surface *nsurf)
 
    if (ksurf->front_fb.buffer_id)
       drmModeRmFB(ksurf->kdpy->fd, ksurf->front_fb.buffer_id);
-   pipe_texture_reference(&ksurf->front_fb.texture, NULL);
+   pipe_resource_reference(&ksurf->front_fb.texture, NULL);
 
    if (ksurf->back_fb.buffer_id)
       drmModeRmFB(ksurf->kdpy->fd, ksurf->back_fb.buffer_id);
-   pipe_texture_reference(&ksurf->back_fb.texture, NULL);
+   pipe_resource_reference(&ksurf->back_fb.texture, NULL);
 
    for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
-      struct pipe_texture *ptex = ksurf->textures[i];
-      pipe_texture_reference(&ptex, NULL);
+      struct pipe_resource *ptex = ksurf->textures[i];
+      pipe_resource_reference(&ptex, NULL);
    }
 
-   free(ksurf);
+   FREE(ksurf);
 }
 
 static struct kms_surface *
 kms_display_create_surface(struct native_display *ndpy,
-                           enum kms_surface_type type,
                            const struct native_config *nconf,
                            uint width, uint height)
 {
@@ -251,7 +245,6 @@ kms_display_create_surface(struct native_display *ndpy,
       return NULL;
 
    ksurf->kdpy = kdpy;
-   ksurf->type = type;
    ksurf->color_format = kconf->base.color_format;
    ksurf->width = width;
    ksurf->height = height;
@@ -469,7 +462,7 @@ kms_display_get_modes(struct native_display *ndpy,
    /* delete old data */
    if (kconn->connector) {
       drmModeFreeConnector(kconn->connector);
-      free(kconn->kms_modes);
+      FREE(kconn->kms_modes);
 
       kconn->connector = NULL;
       kconn->kms_modes = NULL;
@@ -482,7 +475,7 @@ kms_display_get_modes(struct native_display *ndpy,
       return NULL;
 
    count = kconn->connector->count_modes;
-   kconn->kms_modes = calloc(count, sizeof(*kconn->kms_modes));
+   kconn->kms_modes = CALLOC(count, sizeof(*kconn->kms_modes));
    if (!kconn->kms_modes) {
       drmModeFreeConnector(kconn->connector);
       kconn->connector = NULL;
@@ -505,7 +498,7 @@ kms_display_get_modes(struct native_display *ndpy,
          kmode->base.refresh_rate = (kmode->base.refresh_rate + 500) / 1000;
    }
 
-   nmodes_return = malloc(count * sizeof(*nmodes_return));
+   nmodes_return = MALLOC(count * sizeof(*nmodes_return));
    if (nmodes_return) {
       for (i = 0; i < count; i++)
          nmodes_return[i] = &kconn->kms_modes[i].base;
@@ -526,7 +519,7 @@ kms_display_get_connectors(struct native_display *ndpy, int *num_connectors,
 
    if (!kdpy->connectors) {
       kdpy->connectors =
-         calloc(kdpy->resources->count_connectors, sizeof(*kdpy->connectors));
+         CALLOC(kdpy->resources->count_connectors, sizeof(*kdpy->connectors));
       if (!kdpy->connectors)
          return NULL;
 
@@ -540,7 +533,7 @@ kms_display_get_connectors(struct native_display *ndpy, int *num_connectors,
       kdpy->num_connectors = kdpy->resources->count_connectors;
    }
 
-   connectors = malloc(kdpy->num_connectors * sizeof(*connectors));
+   connectors = MALLOC(kdpy->num_connectors * sizeof(*connectors));
    if (connectors) {
       for (i = 0; i < kdpy->num_connectors; i++)
          connectors[i] = &kdpy->connectors[i].base;
@@ -561,23 +554,9 @@ kms_display_create_scanout_surface(struct native_display *ndpy,
 {
    struct kms_surface *ksurf;
 
-   ksurf = kms_display_create_surface(ndpy,
-         KMS_SURFACE_TYPE_SCANOUT, nconf, width, height);
+   ksurf = kms_display_create_surface(ndpy, nconf, width, height);
    return &ksurf->base;
 }
-
-static struct native_surface *
-kms_display_create_pbuffer_surface(struct native_display *ndpy,
-                                   const struct native_config *nconf,
-                                   uint width, uint height)
-{
-   struct kms_surface *ksurf;
-
-   ksurf = kms_display_create_surface(ndpy,
-         KMS_SURFACE_TYPE_PBUFFER, nconf, width, height);
-   return &ksurf->base;
-}
-
 
 static boolean
 kms_display_is_format_supported(struct native_display *ndpy,
@@ -585,8 +564,8 @@ kms_display_is_format_supported(struct native_display *ndpy,
 {
    return ndpy->screen->is_format_supported(ndpy->screen,
          fmt, PIPE_TEXTURE_2D,
-         (is_color) ? PIPE_TEXTURE_USAGE_RENDER_TARGET :
-         PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0);
+         (is_color) ? PIPE_BIND_RENDER_TARGET :
+         PIPE_BIND_DEPTH_STENCIL, 0);
 }
 
 static const struct native_config **
@@ -600,14 +579,15 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
       struct native_config *nconf;
       enum pipe_format format;
 
-      kdpy->config = calloc(1, sizeof(*kdpy->config));
+      kdpy->config = CALLOC(1, sizeof(*kdpy->config));
       if (!kdpy->config)
          return NULL;
 
       nconf = &kdpy->config->base;
 
-      /* always double-buffered */
-      nconf->mode.doubleBufferMode = TRUE;
+      nconf->buffer_mask =
+         (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
+         (1 << NATIVE_ATTACHMENT_BACK_LEFT);
 
       format = PIPE_FORMAT_B8G8R8A8_UNORM;
       if (!kms_display_is_format_supported(&kdpy->base, format, TRUE)) {
@@ -615,45 +595,18 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
          if (!kms_display_is_format_supported(&kdpy->base, format, TRUE))
             format = PIPE_FORMAT_NONE;
       }
-      if (format == PIPE_FORMAT_NONE)
+      if (format == PIPE_FORMAT_NONE) {
+         FREE(kdpy->config);
+         kdpy->config = NULL;
          return NULL;
+      }
 
       nconf->color_format = format;
-      nconf->mode.redBits = 8;
-      nconf->mode.greenBits = 8;
-      nconf->mode.blueBits = 8;
-      nconf->mode.alphaBits = 8;
-      nconf->mode.rgbBits = 32;
-
-      format = PIPE_FORMAT_Z24S8_UNORM;
-      if (!kms_display_is_format_supported(&kdpy->base, format, FALSE)) {
-         format = PIPE_FORMAT_S8Z24_UNORM;
-         if (!kms_display_is_format_supported(&kdpy->base, format, FALSE))
-            format = PIPE_FORMAT_NONE;
-      }
-      if (format != PIPE_FORMAT_NONE) {
-         nconf->depth_format = format;
-         nconf->stencil_format = format;
-
-         nconf->mode.depthBits = 24;
-         nconf->mode.stencilBits = 8;
-         nconf->mode.haveDepthBuffer = TRUE;
-         nconf->mode.haveStencilBuffer = TRUE;
-      }
 
       nconf->scanout_bit = TRUE;
-      nconf->mode.drawableType = GLX_PBUFFER_BIT;
-      nconf->mode.swapMethod = GLX_SWAP_EXCHANGE_OML;
-
-      nconf->mode.visualID = 0;
-      nconf->mode.visualType = EGL_NONE;
-
-      nconf->mode.renderType = GLX_RGBA_BIT;
-      nconf->mode.rgbMode = TRUE;
-      nconf->mode.xRenderable = FALSE;
    }
 
-   configs = malloc(sizeof(*configs));
+   configs = MALLOC(sizeof(*configs));
    if (configs) {
       configs[0] = &kdpy->config->base;
       if (num_configs)
@@ -663,6 +616,21 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
    return configs;
 }
 
+static int
+kms_display_get_param(struct native_display *ndpy,
+                      enum native_param_type param)
+{
+   int val;
+
+   switch (param) {
+   default:
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
 static void
 kms_display_destroy(struct native_display *ndpy)
 {
@@ -670,21 +638,21 @@ kms_display_destroy(struct native_display *ndpy)
    int i;
 
    if (kdpy->config)
-      free(kdpy->config);
+      FREE(kdpy->config);
 
    if (kdpy->connectors) {
       for (i = 0; i < kdpy->num_connectors; i++) {
          struct kms_connector *kconn = &kdpy->connectors[i];
          if (kconn->connector) {
             drmModeFreeConnector(kconn->connector);
-            free(kconn->kms_modes);
+            FREE(kconn->kms_modes);
          }
       }
-      free(kdpy->connectors);
+      FREE(kdpy->connectors);
    }
 
    if (kdpy->shown_surfaces)
-      free(kdpy->shown_surfaces);
+      FREE(kdpy->shown_surfaces);
 
    if (kdpy->saved_crtcs) {
       for (i = 0; i < kdpy->resources->count_crtcs; i++) {
@@ -700,7 +668,7 @@ kms_display_destroy(struct native_display *ndpy)
             drmModeFreeCrtc(kcrtc->crtc);
          }
       }
-      free(kdpy->saved_crtcs);
+      FREE(kdpy->saved_crtcs);
    }
 
    if (kdpy->resources)
@@ -712,9 +680,9 @@ kms_display_destroy(struct native_display *ndpy)
    if (kdpy->fd >= 0)
       drmClose(kdpy->fd);
 
-   if (kdpy->api)
+   if (kdpy->api && kdpy->api->destroy)
       kdpy->api->destroy(kdpy->api);
-   free(kdpy);
+   FREE(kdpy);
 }
 
 /**
@@ -724,10 +692,9 @@ static boolean
 kms_display_init_screen(struct native_display *ndpy)
 {
    struct kms_display *kdpy = kms_display(ndpy);
-   struct drm_create_screen_arg arg;
    int fd;
 
-   fd = drmOpen(kdpy->api->name, NULL);
+   fd = drmOpen(kdpy->api->driver_name, NULL);
    if (fd < 0) {
       _eglLog(_EGL_WARNING, "failed to open DRM device");
       return FALSE;
@@ -740,9 +707,7 @@ kms_display_init_screen(struct native_display *ndpy)
    }
 #endif
 
-   memset(&arg, 0, sizeof(arg));
-   arg.mode = DRM_CREATE_NORMAL;
-   kdpy->base.screen = kdpy->api->create_screen(kdpy->api, fd, &arg);
+   kdpy->base.screen = kdpy->api->create_screen(kdpy->api, fd, NULL);
    if (!kdpy->base.screen) {
       _eglLog(_EGL_WARNING, "failed to create DRM screen");
       drmClose(fd);
@@ -762,7 +727,9 @@ static struct native_display_modeset kms_display_modeset = {
 };
 
 static struct native_display *
-kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
+kms_create_display(EGLNativeDisplayType dpy,
+                   struct native_event_handler *event_handler,
+                   struct drm_api *api)
 {
    struct kms_display *kdpy;
 
@@ -770,10 +737,12 @@ kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
    if (!kdpy)
       return NULL;
 
+   kdpy->event_handler = event_handler;
+
    kdpy->api = api;
    if (!kdpy->api) {
       _eglLog(_EGL_WARNING, "failed to create DRM API");
-      free(kdpy);
+      FREE(kdpy);
       return NULL;
    }
 
@@ -791,22 +760,22 @@ kms_create_display(EGLNativeDisplayType dpy, struct drm_api *api)
    }
 
    kdpy->saved_crtcs =
-      calloc(kdpy->resources->count_crtcs, sizeof(*kdpy->saved_crtcs));
+      CALLOC(kdpy->resources->count_crtcs, sizeof(*kdpy->saved_crtcs));
    if (!kdpy->saved_crtcs) {
       kms_display_destroy(&kdpy->base);
       return NULL;
    }
 
    kdpy->shown_surfaces =
-      calloc(kdpy->resources->count_crtcs, sizeof(*kdpy->shown_surfaces));
+      CALLOC(kdpy->resources->count_crtcs, sizeof(*kdpy->shown_surfaces));
    if (!kdpy->shown_surfaces) {
       kms_display_destroy(&kdpy->base);
       return NULL;
    }
 
    kdpy->base.destroy = kms_display_destroy;
+   kdpy->base.get_param = kms_display_get_param;
    kdpy->base.get_configs = kms_display_get_configs;
-   kdpy->base.create_pbuffer_surface = kms_display_create_pbuffer_surface;
 
    kdpy->base.modeset = &kms_display_modeset;
 
@@ -837,15 +806,16 @@ native_get_name(void)
       drm_api = drm_api_create();
 
    if (drm_api)
-      snprintf(kms_name, sizeof(kms_name), "KMS/%s", drm_api->name);
+      util_snprintf(kms_name, sizeof(kms_name), "KMS/%s", drm_api->name);
    else
-      snprintf(kms_name, sizeof(kms_name), "KMS");
+      util_snprintf(kms_name, sizeof(kms_name), "KMS");
 
    return kms_name;
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy)
+native_create_display(EGLNativeDisplayType dpy,
+                      struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
 
@@ -853,7 +823,7 @@ native_create_display(EGLNativeDisplayType dpy)
       drm_api = drm_api_create();
 
    if (drm_api)
-      ndpy = kms_create_display(dpy, drm_api);
+      ndpy = kms_create_display(dpy, event_handler, drm_api);
 
    return ndpy;
 }

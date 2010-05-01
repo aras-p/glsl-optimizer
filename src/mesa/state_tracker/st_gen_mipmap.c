@@ -27,27 +27,19 @@
 
 
 #include "main/imports.h"
-#include "main/macros.h"
 #include "main/mipmap.h"
 #include "main/teximage.h"
 #include "main/texformat.h"
-
-#include "shader/prog_instruction.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_gen_mipmap.h"
-#include "util/u_math.h"
-
-#include "cso_cache/cso_cache.h"
-#include "cso_cache/cso_context.h"
 
 #include "st_debug.h"
 #include "st_context.h"
 #include "st_gen_mipmap.h"
-#include "st_texture.h"
 #include "st_cb_texture.h"
 #include "st_inlines.h"
 
@@ -79,52 +71,106 @@ st_destroy_generate_mipmap(struct st_context *st)
 static boolean
 st_render_mipmap(struct st_context *st,
                  GLenum target,
-                 struct pipe_texture *pt,
+                 struct st_texture_object *stObj,
                  uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
+   struct pipe_sampler_view *psv = st_get_texture_sampler_view(stObj, pipe);
    const uint face = _mesa_tex_target_to_face(target);
 
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, pt->format, pt->target,
-                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
+   if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
+                                    PIPE_BIND_RENDER_TARGET, 0)) {
       return FALSE;
    }
 
-   util_gen_mipmap(st->gen_mipmap, pt, face, baseLevel, lastLevel,
+   util_gen_mipmap(st->gen_mipmap, psv, face, baseLevel, lastLevel,
                    PIPE_TEX_FILTER_LINEAR);
 
    return TRUE;
 }
 
 
+/**
+ * Helper function to decompress an image.  The result is a 32-bpp RGBA
+ * image with stride==width.
+ */
+static void
+decompress_image(enum pipe_format format,
+                 const uint8_t *src, uint8_t *dst,
+                 unsigned width, unsigned height)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   const uint dst_stride = 4 * width;
+   const uint src_stride = util_format_get_stride(format, width);
+
+   desc->unpack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
+}
+
+
+/**
+ * Helper function to compress an image.  The source is a 32-bpp RGBA image
+ * with stride==width.
+ */
+static void
+compress_image(enum pipe_format format,
+               const uint8_t *src, uint8_t *dst,
+               unsigned width, unsigned height)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   const uint dst_stride = util_format_get_stride(format, width);
+   const uint src_stride = 4 * width;
+
+   desc->pack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
+}
+
+
+/**
+ * Software fallback for generate mipmap levels.
+ */
 static void
 fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                          struct gl_texture_object *texObj)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture *pt = st_get_texobj_texture(texObj);
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct pipe_resource *pt = st_get_texobj_resource(texObj);
    const uint baseLevel = texObj->BaseLevel;
    const uint lastLevel = pt->last_level;
    const uint face = _mesa_tex_target_to_face(target), zslice = 0;
    uint dstLevel;
    GLenum datatype;
    GLuint comps;
+   GLboolean compressed;
    
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
-   _mesa_format_to_type_and_comps(texObj->Image[face][baseLevel]->TexFormat,
-                                  &datatype, &comps);
+   compressed =
+      _mesa_is_format_compressed(texObj->Image[face][baseLevel]->TexFormat);
+
+   if (compressed) {
+      datatype = GL_UNSIGNED_BYTE;
+      comps = 4;
+   }
+   else {
+      _mesa_format_to_type_and_comps(texObj->Image[face][baseLevel]->TexFormat,
+                                     &datatype, &comps);
+      assert(comps > 0 && "bad texture format in fallback_generate_mipmap()");
+   }
 
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
+      const uint srcWidth = u_minify(pt->width0, srcLevel);
+      const uint srcHeight = u_minify(pt->height0, srcLevel);
+      const uint srcDepth = u_minify(pt->depth0, srcLevel);
+      const uint dstWidth = u_minify(pt->width0, dstLevel);
+      const uint dstHeight = u_minify(pt->height0, dstLevel);
+      const uint dstDepth = u_minify(pt->depth0, dstLevel);
       struct pipe_transfer *srcTrans, *dstTrans;
       const ubyte *srcData;
       ubyte *dstData;
@@ -133,39 +179,69 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       srcTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
 						srcLevel, zslice,
 						PIPE_TRANSFER_READ, 0, 0,
-						u_minify(pt->width0, srcLevel),
-						u_minify(pt->height0, srcLevel));
+                                                srcWidth, srcHeight);
+						
 
       dstTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
 						dstLevel, zslice,
 						PIPE_TRANSFER_WRITE, 0, 0,
-						u_minify(pt->width0, dstLevel),
-						u_minify(pt->height0, dstLevel));
+						dstWidth, dstHeight);
 
-      srcData = (ubyte *) screen->transfer_map(screen, srcTrans);
-      dstData = (ubyte *) screen->transfer_map(screen, dstTrans);
+      srcData = (ubyte *) pipe_transfer_map(pipe, srcTrans);
+      dstData = (ubyte *) pipe_transfer_map(pipe, dstTrans);
 
-      srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->texture->format);
-      dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->texture->format);
+      srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->resource->format);
+      dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->resource->format);
 
-      _mesa_generate_mipmap_level(target, datatype, comps,
-                                  0 /*border*/,
-                                  u_minify(pt->width0, srcLevel),
-                                  u_minify(pt->height0, srcLevel),
-                                  u_minify(pt->depth0, srcLevel),
-                                  srcData,
-                                  srcStride, /* stride in texels */
-                                  u_minify(pt->width0, dstLevel),
-                                  u_minify(pt->height0, dstLevel),
-                                  u_minify(pt->depth0, dstLevel),
-                                  dstData,
-                                  dstStride); /* stride in texels */
+      if (compressed) {
+         const enum pipe_format format = pt->format;
+         const uint bw = util_format_get_blockwidth(format);
+         const uint bh = util_format_get_blockheight(format);
+         const uint srcWidth2 = align(srcWidth, bw);
+         const uint srcHeight2 = align(srcHeight, bh);
+         const uint dstWidth2 = align(dstWidth, bw);
+         const uint dstHeight2 = align(dstHeight, bh);
+         uint8_t *srcTemp, *dstTemp;
 
-      screen->transfer_unmap(screen, srcTrans);
-      screen->transfer_unmap(screen, dstTrans);
+         assert(comps == 4);
 
-      screen->tex_transfer_destroy(srcTrans);
-      screen->tex_transfer_destroy(dstTrans);
+         srcTemp = malloc(srcWidth2 * srcHeight2 * comps + 000);
+         dstTemp = malloc(dstWidth2 * dstHeight2 * comps + 000);
+
+         /* decompress the src image: srcData -> srcTemp */
+         decompress_image(format, srcData, srcTemp, srcWidth, srcHeight);
+
+         _mesa_generate_mipmap_level(target, datatype, comps,
+                                     0 /*border*/,
+                                     srcWidth2, srcHeight2, srcDepth,
+                                     srcTemp,
+                                     srcWidth2, /* stride in texels */
+                                     dstWidth2, dstHeight2, dstDepth,
+                                     dstTemp,
+                                     dstWidth2); /* stride in texels */
+
+         /* compress the new image: dstTemp -> dstData */
+         compress_image(format, dstTemp, dstData, dstWidth2, dstHeight2);
+
+         free(srcTemp);
+         free(dstTemp);
+      }
+      else {
+         _mesa_generate_mipmap_level(target, datatype, comps,
+                                     0 /*border*/,
+                                     srcWidth, srcHeight, srcDepth,
+                                     srcData,
+                                     srcStride, /* stride in texels */
+                                     dstWidth, dstHeight, dstDepth,
+                                     dstData,
+                                     dstStride); /* stride in texels */
+      }
+
+      pipe_transfer_unmap(pipe, srcTrans);
+      pipe_transfer_unmap(pipe, dstTrans);
+
+      pipe->transfer_destroy(pipe, srcTrans);
+      pipe->transfer_destroy(pipe, dstTrans);
    }
 }
 
@@ -174,7 +250,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
  * Compute the expected number of mipmap levels in the texture given
  * the width/height/depth of the base image and the GL_TEXTURE_BASE_LEVEL/
  * GL_TEXTURE_MAX_LEVEL settings.  This will tell us how many mipmap
- * level should be generated.
+ * levels should be generated.
  */
 static GLuint
 compute_num_levels(GLcontext *ctx,
@@ -207,12 +283,16 @@ compute_num_levels(GLcontext *ctx,
 }
 
 
+/**
+ * Called via ctx->Driver.GenerateMipmap().
+ */
 void
 st_generate_mipmap(GLcontext *ctx, GLenum target,
                    struct gl_texture_object *texObj)
 {
-   struct st_context *st = ctx->st;
-   struct pipe_texture *pt = st_get_texobj_texture(texObj);
+   struct st_context *st = st_context(ctx);
+   struct st_texture_object *stObj = st_texture_object(texObj);
+   struct pipe_resource *pt = st_get_texobj_resource(texObj);
    const uint baseLevel = texObj->BaseLevel;
    uint lastLevel;
    uint dstLevel;
@@ -230,8 +310,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       /* The current gallium texture doesn't have space for all the
        * mipmap levels we need to generate.  So allocate a new texture.
        */
-      struct st_texture_object *stObj = st_texture_object(texObj);
-      struct pipe_texture *oldTex = stObj->pt;
+      struct pipe_resource *oldTex = stObj->pt;
       GLboolean needFlush;
 
       /* create new texture with space for more levels */
@@ -242,7 +321,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
                                     oldTex->width0,
                                     oldTex->height0,
                                     oldTex->depth0,
-                                    oldTex->tex_usage);
+                                    oldTex->bind);
 
       /* The texture isn't in a "complete" state yet so set the expected
        * lastLevel here, since it won't get done in st_finalize_texture().
@@ -255,7 +334,8 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       st_finalize_texture(ctx, st->pipe, texObj, &needFlush);
 
       /* release the old tex (will likely be freed too) */
-      pipe_texture_reference(&oldTex, NULL);
+      pipe_resource_reference(&oldTex, NULL);
+      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
       pt = stObj->pt;
    }
@@ -265,7 +345,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    /* Recall that the Mesa BaseLevel image is stored in the gallium
     * texture's level[0] position.  So pass baseLevel=0 here.
     */
-   if (!st_render_mipmap(st, target, pt, 0, lastLevel)) {
+   if (!st_render_mipmap(st, target, stObj, 0, lastLevel)) {
       fallback_generate_mipmap(ctx, target, texObj);
    }
 
@@ -297,7 +377,9 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
 
       dstImage->TexFormat = srcImage->TexFormat;
 
-      stImage = (struct st_texture_image *) dstImage;
-      pipe_texture_reference(&stImage->pt, pt);
+      stImage = st_texture_image(dstImage);
+      stImage->level = dstLevel;
+
+      pipe_resource_reference(&stImage->pt, pt);
    }
 }

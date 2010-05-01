@@ -31,18 +31,48 @@
   */
 
 
+#include "pipe/p_context.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "draw_context.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
 
+#if HAVE_LLVM
+#include "gallivm/lp_bld_init.h"
+#endif
 
-struct draw_context *draw_create( void )
+struct draw_context *draw_create( struct pipe_context *pipe )
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
       goto fail;
+
+#if HAVE_LLVM
+   lp_build_init();
+   assert(lp_build_engine);
+   draw->engine = lp_build_engine;
+#endif
+
+   if (!draw_init(draw))
+      goto fail;
+
+   draw->pipe = pipe;
+
+   return draw;
+
+fail:
+   draw_destroy( draw );
+   return NULL;
+}
+
+boolean draw_init(struct draw_context *draw)
+{
+   /*
+    * Note that several functions compute the clipmask of the predefined
+    * formats with hardcoded formulas instead of using these. So modifications
+    * here must be reflected there too.
+    */
 
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
@@ -57,31 +87,40 @@ struct draw_context *draw_create( void )
 
 
    if (!draw_pipeline_init( draw ))
-      goto fail;
+      return FALSE;
 
    if (!draw_pt_init( draw ))
-      goto fail;
+      return FALSE;
 
    if (!draw_vs_init( draw ))
-      goto fail;
+      return FALSE;
 
    if (!draw_gs_init( draw ))
-      goto fail;
+      return FALSE;
 
-   return draw;
-
-fail:
-   draw_destroy( draw );   
-   return NULL;
+   return TRUE;
 }
 
 
 void draw_destroy( struct draw_context *draw )
 {
+   struct pipe_context *pipe;
+   int i, j;
+
    if (!draw)
       return;
 
+   pipe = draw->pipe;
 
+   /* free any rasterizer CSOs that we may have created.
+    */
+   for (i = 0; i < 2; i++) {
+      for (j = 0; j < 2; j++) {
+         if (draw->rasterizer_no_cull[i][j]) {
+            pipe->delete_rasterizer_state(pipe, draw->rasterizer_no_cull[i][j]);
+         }
+      }
+   }
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
@@ -123,12 +162,17 @@ void draw_set_mrd(struct draw_context *draw, double mrd)
  * This causes the drawing pipeline to be rebuilt.
  */
 void draw_set_rasterizer_state( struct draw_context *draw,
-                                const struct pipe_rasterizer_state *raster )
+                                const struct pipe_rasterizer_state *raster,
+                                void *rast_handle )
 {
-   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   if (!draw->suspend_flushing) {
+      draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
-   draw->rasterizer = raster;
-   draw->bypass_clipping = draw->driver.bypass_clipping;
+      draw->rasterizer = raster;
+      draw->rast_handle = rast_handle;
+
+      draw->bypass_clipping = draw->driver.bypass_clipping;
+   }
 }
 
 
@@ -257,6 +301,17 @@ draw_wide_point_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
    draw->pipeline.wide_point_threshold = threshold;
+}
+
+
+/**
+ * Should the draw module handle point->quad conversion for drawing sprites?
+ */
+void
+draw_wide_point_sprites(struct draw_context *draw, boolean draw_sprite)
+{
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   draw->pipeline.wide_point_sprites = draw_sprite;
 }
 
 
@@ -413,12 +468,14 @@ void draw_set_render( struct draw_context *draw,
 void
 draw_set_mapped_element_buffer_range( struct draw_context *draw,
                                       unsigned eltSize,
+                                      int eltBias,
                                       unsigned min_index,
                                       unsigned max_index,
                                       const void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;
+   draw->pt.user.eltBias = eltBias;
    draw->pt.user.min_index = min_index;
    draw->pt.user.max_index = max_index;
 }
@@ -427,10 +484,12 @@ draw_set_mapped_element_buffer_range( struct draw_context *draw,
 void
 draw_set_mapped_element_buffer( struct draw_context *draw,
                                 unsigned eltSize,
+                                int eltBias,
                                 const void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;
+   draw->pt.user.eltBias = eltBias;
    draw->pt.user.min_index = 0;
    draw->pt.user.max_index = 0xffffffff;
 }
@@ -480,4 +539,38 @@ draw_current_shader_position_output(const struct draw_context *draw)
    if (draw->gs.geometry_shader)
       return draw->gs.position_output;
    return draw->vs.position_output;
+}
+
+
+/**
+ * Return a pointer/handle for a driver/CSO rasterizer object which
+ * disabled culling, stippling, unfilled tris, etc.
+ * This is used by some pipeline stages (such as wide_point, aa_line
+ * and aa_point) which convert points/lines into triangles.  In those
+ * cases we don't want to accidentally cull the triangles.
+ *
+ * \param scissor  should the rasterizer state enable scissoring?
+ * \param flatshade  should the rasterizer state use flat shading?
+ * \return  rasterizer CSO handle
+ */
+void *
+draw_get_rasterizer_no_cull( struct draw_context *draw,
+                             boolean scissor,
+                             boolean flatshade )
+{
+   if (!draw->rasterizer_no_cull[scissor][flatshade]) {
+      /* create now */
+      struct pipe_context *pipe = draw->pipe;
+      struct pipe_rasterizer_state rast;
+
+      memset(&rast, 0, sizeof(rast));
+      rast.scissor = scissor;
+      rast.flatshade = flatshade;
+      rast.front_winding = PIPE_WINDING_CCW;
+      rast.gl_rasterization_rules = draw->rasterizer->gl_rasterization_rules;
+
+      draw->rasterizer_no_cull[scissor][flatshade] =
+         pipe->create_rasterizer_state(pipe, &rast);
+   }
+   return draw->rasterizer_no_cull[scissor][flatshade];
 }

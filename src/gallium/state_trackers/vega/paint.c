@@ -37,6 +37,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_sampler.h"
 
 #include "cso_cache/cso_context.h"
 
@@ -61,7 +62,7 @@ struct vg_paint {
          VGfloat vals[5];
          VGint valsi[5];
       } radial;
-      struct pipe_texture *texture;
+      struct pipe_sampler_view *sampler_view;
       struct pipe_sampler_state sampler;
 
       VGfloat *ramp_stops;
@@ -72,13 +73,13 @@ struct vg_paint {
    } gradient;
 
    struct {
-      struct pipe_texture *texture;
+      struct pipe_sampler_view *sampler_view;
       VGTilingMode tiling_mode;
       struct pipe_sampler_state sampler;
    } pattern;
 
    /* XXX next 3 all unneded? */
-   struct pipe_buffer *cbuf;
+   struct pipe_resource *cbuf;
    struct pipe_shader_state fs_state;
    void *fs;
 };
@@ -142,12 +143,12 @@ static INLINE void create_gradient_data(const VGfloat *ramp_stops,
    data[size-1] = last_color;
 }
 
-static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
+static INLINE struct pipe_resource *create_gradient_texture(struct vg_paint *p)
 {
    struct pipe_context *pipe = p->base.ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture *tex = 0;
-   struct pipe_texture templ;
+   struct pipe_resource *tex = 0;
+   struct pipe_resource templ;
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_1D;
@@ -156,21 +157,41 @@ static INLINE struct pipe_texture *create_gradient_texture(struct vg_paint *p)
    templ.width0 = 1024;
    templ.height0 = 1;
    templ.depth0 = 1;
-   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
-   tex = screen->texture_create(screen, &templ);
+   tex = screen->resource_create(screen, &templ);
 
    { /* upload color_data */
       struct pipe_transfer *transfer =
-         st_no_flush_get_tex_transfer(p->base.ctx, tex, 0, 0, 0,
+         st_no_flush_get_transfer(p->base.ctx, tex, 0, 0, 0,
                                       PIPE_TRANSFER_WRITE, 0, 0, 1024, 1);
-      void *map = screen->transfer_map(screen, transfer);
+      void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, p->gradient.color_data, sizeof(VGint)*1024);
-      screen->transfer_unmap(screen, transfer);
-      screen->tex_transfer_destroy(transfer);
+      pipe->transfer_unmap(pipe, transfer);
+      pipe->transfer_destroy(pipe, transfer);
    }
 
    return tex;
+}
+
+static INLINE struct pipe_sampler_view *create_gradient_sampler_view(struct vg_paint *p)
+{
+   struct pipe_context *pipe = p->base.ctx->pipe;
+   struct pipe_resource *texture;
+   struct pipe_sampler_view view_templ;
+   struct pipe_sampler_view *view;
+
+   texture = create_gradient_texture(p);
+
+   if (!texture)
+      return NULL;
+
+   u_sampler_view_default_template(&view_templ, texture, texture->format);
+   view = pipe->create_sampler_view(pipe, texture, &view_templ);
+   /* want the texture to go away if the view is freed */
+   pipe_resource_reference(&texture, NULL);
+
+   return view;
 }
 
 struct vg_paint * paint_create(struct vg_context *ctx)
@@ -207,8 +228,9 @@ struct vg_paint * paint_create(struct vg_context *ctx)
 void paint_destroy(struct vg_paint *paint)
 {
    struct vg_context *ctx = paint->base.ctx;
-   if (paint->pattern.texture)
-      pipe_texture_reference(&paint->pattern.texture, NULL);
+   pipe_sampler_view_reference(&paint->gradient.sampler_view, NULL);
+   if (paint->pattern.sampler_view)
+      pipe_sampler_view_reference(&paint->pattern.sampler_view, NULL);
    if (ctx)
       vg_context_remove_object(ctx, VG_OBJECT_PAINT, paint);
 
@@ -329,8 +351,8 @@ static INLINE void  paint_pattern_buffer(struct vg_paint *paint, void *buffer)
 
    map[4] = 0.f;
    map[5] = 1.f;
-   map[6] = paint->pattern.texture->width0;
-   map[7] = paint->pattern.texture->height0;
+   map[6] = paint->pattern.sampler_view->texture->width0;
+   map[7] = paint->pattern.sampler_view->texture->height0;
    {
       struct matrix mat;
       memcpy(&mat, &ctx->state.vg.fill_paint_to_user_matrix,
@@ -394,12 +416,12 @@ void paint_set_ramp_stops(struct vg_paint *paint, const VGfloat *stops,
    create_gradient_data(stops, num / 5, paint->gradient.color_data,
                         1024);
 
-   if (paint->gradient.texture) {
-      pipe_texture_reference(&paint->gradient.texture, NULL);
-      paint->gradient.texture = 0;
+   if (paint->gradient.sampler_view) {
+      pipe_sampler_view_reference(&paint->gradient.sampler_view, NULL);
+      paint->gradient.sampler_view = NULL;
    }
 
-   paint->gradient.texture = create_gradient_texture(paint);
+   paint->gradient.sampler_view = create_gradient_sampler_view(paint);
 }
 
 void paint_set_colori(struct vg_paint *p,
@@ -459,12 +481,12 @@ void paint_set_radial_gradient(struct vg_paint *paint,
 void paint_set_pattern(struct vg_paint *paint,
                        struct vg_image *img)
 {
-   if (paint->pattern.texture)
-      pipe_texture_reference(&paint->pattern.texture, NULL);
+   if (paint->pattern.sampler_view)
+      pipe_sampler_view_reference(&paint->pattern.sampler_view, NULL);
 
-   paint->pattern.texture = 0;
-   pipe_texture_reference(&paint->pattern.texture,
-                          img->texture);
+   paint->pattern.sampler_view = NULL;
+   pipe_sampler_view_reference(&paint->pattern.sampler_view,
+                               img->sampler_view);
 }
 
 void paint_set_pattern_tiling(struct vg_paint *paint,
@@ -611,18 +633,18 @@ VGTilingMode paint_pattern_tiling(struct vg_paint *paint)
 }
 
 VGint paint_bind_samplers(struct vg_paint *paint, struct pipe_sampler_state **samplers,
-                          struct pipe_texture **textures)
+                          struct pipe_sampler_view **sampler_views)
 {
    struct vg_context *ctx = vg_current_context();
 
    switch(paint->type) {
    case VG_PAINT_TYPE_LINEAR_GRADIENT:
    case VG_PAINT_TYPE_RADIAL_GRADIENT: {
-      if (paint->gradient.texture) {
+      if (paint->gradient.sampler_view) {
          paint->gradient.sampler.min_img_filter = image_sampler_filter(ctx);
          paint->gradient.sampler.mag_img_filter = image_sampler_filter(ctx);
          samplers[0] = &paint->gradient.sampler;
-         textures[0] = paint->gradient.texture;
+         sampler_views[0] = paint->gradient.sampler_view;
          return 1;
       }
    }
@@ -634,14 +656,11 @@ VGint paint_bind_samplers(struct vg_paint *paint, struct pipe_sampler_state **sa
       paint->pattern.sampler.min_img_filter = image_sampler_filter(ctx);
       paint->pattern.sampler.mag_img_filter = image_sampler_filter(ctx);
       samplers[0] = &paint->pattern.sampler;
-      textures[0] = paint->pattern.texture;
+      sampler_views[0] = paint->pattern.sampler_view;
       return 1;
    }
       break;
    default:
-      samplers[0] = &paint->pattern.sampler; /* dummy */
-      textures[0] = 0;
-      return 0;
       break;
    }
    return 0;
@@ -650,7 +669,7 @@ VGint paint_bind_samplers(struct vg_paint *paint, struct pipe_sampler_state **sa
 void paint_resolve_type(struct vg_paint *paint)
 {
    if (paint->type == VG_PAINT_TYPE_PATTERN &&
-       !paint->pattern.texture) {
+       !paint->pattern.sampler_view) {
       paint->type = VG_PAINT_TYPE_COLOR;
    }
 }

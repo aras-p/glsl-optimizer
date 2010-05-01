@@ -32,6 +32,7 @@
 #include <util/u_format.h>
 #include <util/u_math.h>
 #include <util/u_memory.h>
+#include <util/u_sampler.h>
 #include <tgsi/tgsi_ureg.h>
 
 #define DEFAULT_BUF_ALIGNMENT 1
@@ -378,14 +379,23 @@ xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    for (i = 0; i < 3; ++i) {
-      r->tex_transfer[i] = r->pipe->screen->get_tex_transfer
+      struct pipe_box rect =
+      {
+         0, 0, 0,
+         r->textures.all[i]->width0,
+         r->textures.all[i]->height0,
+         0
+      };
+
+      r->tex_transfer[i] = r->pipe->get_transfer
       (
-         r->pipe->screen, r->textures.all[i],
-         0, 0, 0, PIPE_TRANSFER_WRITE, 0, 0,
-         r->textures.all[i]->width0, r->textures.all[i]->height0
+         r->pipe, r->textures.all[i],
+         u_subresource(0, 0),
+         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+         &rect
       );
 
-      r->texels[i] = r->pipe->screen->transfer_map(r->pipe->screen, r->tex_transfer[i]);
+      r->texels[i] = r->pipe->transfer_map(r->pipe, r->tex_transfer[i]);
    }
 }
 
@@ -397,8 +407,8 @@ xfer_buffers_unmap(struct vl_mpeg12_mc_renderer *r)
    assert(r);
 
    for (i = 0; i < 3; ++i) {
-      r->pipe->screen->transfer_unmap(r->pipe->screen, r->tex_transfer[i]);
-      r->pipe->screen->tex_transfer_destroy(r->tex_transfer[i]);
+      r->pipe->transfer_unmap(r->pipe, r->tex_transfer[i]);
+      r->pipe->transfer_destroy(r->pipe, r->tex_transfer[i]);
    }
 }
 
@@ -509,7 +519,9 @@ cleanup_shaders(struct vl_mpeg12_mc_renderer *r)
 static bool
 init_buffers(struct vl_mpeg12_mc_renderer *r)
 {
-   struct pipe_texture template;
+   struct pipe_resource template;
+   struct pipe_vertex_element vertex_elems[8];
+   struct pipe_sampler_view sampler_view;
 
    const unsigned mbw =
       align(r->picture_width, MACROBLOCK_WIDTH) / MACROBLOCK_WIDTH;
@@ -525,7 +537,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    r->num_macroblocks = 0;
    r->macroblock_buf = MALLOC(r->macroblocks_per_batch * sizeof(struct pipe_mpeg12_macroblock));
 
-   memset(&template, 0, sizeof(struct pipe_texture));
+   memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
    /* TODO: Accomodate HW that can't do this and also for cases when this isn't precise enough */
    template.format = PIPE_FORMAT_R16_SNORM;
@@ -535,9 +547,11 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    template.height0 = r->pot_buffers ?
       util_next_power_of_two(r->picture_height) : r->picture_height;
    template.depth0 = 1;
-   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_DYNAMIC;
+   template.usage = PIPE_USAGE_DYNAMIC;
+   template.bind = PIPE_BIND_SAMPLER_VIEW;
+   template.flags = 0;
 
-   r->textures.individual.y = r->pipe->screen->texture_create(r->pipe->screen, &template);
+   r->textures.individual.y = r->pipe->screen->resource_create(r->pipe->screen, &template);
 
    if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
       template.width0 = r->pot_buffers ?
@@ -553,18 +567,25 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
          r->picture_height / 2;
 
    r->textures.individual.cb =
-      r->pipe->screen->texture_create(r->pipe->screen, &template);
+      r->pipe->screen->resource_create(r->pipe->screen, &template);
    r->textures.individual.cr =
-      r->pipe->screen->texture_create(r->pipe->screen, &template);
+      r->pipe->screen->resource_create(r->pipe->screen, &template);
+
+   for (i = 0; i < 3; ++i) {
+      u_sampler_view_default_template(&sampler_view,
+                                      r->textures.all[i],
+                                      r->textures.all[i]->format);
+      r->sampler_views.all[i] = r->pipe->create_sampler_view(r->pipe, r->textures.all[i], &sampler_view);
+   }
 
    r->vertex_bufs.individual.ycbcr.stride = sizeof(struct vertex2f) * 4;
    r->vertex_bufs.individual.ycbcr.max_index = 24 * r->macroblocks_per_batch - 1;
    r->vertex_bufs.individual.ycbcr.buffer_offset = 0;
+   /* XXX: Create with usage DYNAMIC or STREAM */
    r->vertex_bufs.individual.ycbcr.buffer = pipe_buffer_create
    (
       r->pipe->screen,
-      DEFAULT_BUF_ALIGNMENT,
-      PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_DISCARD,
+      PIPE_BIND_VERTEX_BUFFER,
       sizeof(struct vertex2f) * 4 * 24 * r->macroblocks_per_batch
    );
 
@@ -572,76 +593,71 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
       r->vertex_bufs.all[i].stride = sizeof(struct vertex2f) * 2;
       r->vertex_bufs.all[i].max_index = 24 * r->macroblocks_per_batch - 1;
       r->vertex_bufs.all[i].buffer_offset = 0;
+      /* XXX: Create with usage DYNAMIC or STREAM */
       r->vertex_bufs.all[i].buffer = pipe_buffer_create
       (
          r->pipe->screen,
-         DEFAULT_BUF_ALIGNMENT,
-         PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_DISCARD,
+         PIPE_BIND_VERTEX_BUFFER,
          sizeof(struct vertex2f) * 2 * 24 * r->macroblocks_per_batch
       );
    }
 
    /* Position element */
-   r->vertex_elems[0].src_offset = 0;
-   r->vertex_elems[0].instance_divisor = 0;
-   r->vertex_elems[0].vertex_buffer_index = 0;
-   r->vertex_elems[0].nr_components = 2;
-   r->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[0].src_offset = 0;
+   vertex_elems[0].instance_divisor = 0;
+   vertex_elems[0].vertex_buffer_index = 0;
+   vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Luma, texcoord element */
-   r->vertex_elems[1].src_offset = sizeof(struct vertex2f);
-   r->vertex_elems[1].instance_divisor = 0;
-   r->vertex_elems[1].vertex_buffer_index = 0;
-   r->vertex_elems[1].nr_components = 2;
-   r->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[1].src_offset = sizeof(struct vertex2f);
+   vertex_elems[1].instance_divisor = 0;
+   vertex_elems[1].vertex_buffer_index = 0;
+   vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Chroma Cr texcoord element */
-   r->vertex_elems[2].src_offset = sizeof(struct vertex2f) * 2;
-   r->vertex_elems[2].instance_divisor = 0;
-   r->vertex_elems[2].vertex_buffer_index = 0;
-   r->vertex_elems[2].nr_components = 2;
-   r->vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[2].src_offset = sizeof(struct vertex2f) * 2;
+   vertex_elems[2].instance_divisor = 0;
+   vertex_elems[2].vertex_buffer_index = 0;
+   vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Chroma Cb texcoord element */
-   r->vertex_elems[3].src_offset = sizeof(struct vertex2f) * 3;
-   r->vertex_elems[3].instance_divisor = 0;
-   r->vertex_elems[3].vertex_buffer_index = 0;
-   r->vertex_elems[3].nr_components = 2;
-   r->vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[3].src_offset = sizeof(struct vertex2f) * 3;
+   vertex_elems[3].instance_divisor = 0;
+   vertex_elems[3].vertex_buffer_index = 0;
+   vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface top field texcoord element */
-   r->vertex_elems[4].src_offset = 0;
-   r->vertex_elems[4].instance_divisor = 0;
-   r->vertex_elems[4].vertex_buffer_index = 1;
-   r->vertex_elems[4].nr_components = 2;
-   r->vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[4].src_offset = 0;
+   vertex_elems[4].instance_divisor = 0;
+   vertex_elems[4].vertex_buffer_index = 1;
+   vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* First ref surface bottom field texcoord element */
-   r->vertex_elems[5].src_offset = sizeof(struct vertex2f);
-   r->vertex_elems[5].instance_divisor = 0;
-   r->vertex_elems[5].vertex_buffer_index = 1;
-   r->vertex_elems[5].nr_components = 2;
-   r->vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[5].src_offset = sizeof(struct vertex2f);
+   vertex_elems[5].instance_divisor = 0;
+   vertex_elems[5].vertex_buffer_index = 1;
+   vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface top field texcoord element */
-   r->vertex_elems[6].src_offset = 0;
-   r->vertex_elems[6].instance_divisor = 0;
-   r->vertex_elems[6].vertex_buffer_index = 2;
-   r->vertex_elems[6].nr_components = 2;
-   r->vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[6].src_offset = 0;
+   vertex_elems[6].instance_divisor = 0;
+   vertex_elems[6].vertex_buffer_index = 2;
+   vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* Second ref surface bottom field texcoord element */
-   r->vertex_elems[7].src_offset = sizeof(struct vertex2f);
-   r->vertex_elems[7].instance_divisor = 0;
-   r->vertex_elems[7].vertex_buffer_index = 2;
-   r->vertex_elems[7].nr_components = 2;
-   r->vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[7].src_offset = sizeof(struct vertex2f);
+   vertex_elems[7].instance_divisor = 0;
+   vertex_elems[7].vertex_buffer_index = 2;
+   vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   r->vertex_elems_state.individual.i = r->pipe->create_vertex_elements_state(r->pipe, 4, vertex_elems);
+   r->vertex_elems_state.individual.p = r->pipe->create_vertex_elements_state(r->pipe, 6, vertex_elems);
+   r->vertex_elems_state.individual.b = r->pipe->create_vertex_elements_state(r->pipe, 8, vertex_elems);
 
    r->vs_const_buf = pipe_buffer_create
    (
       r->pipe->screen,
-      DEFAULT_BUF_ALIGNMENT,
-      PIPE_BUFFER_USAGE_CONSTANT | PIPE_BUFFER_USAGE_DISCARD,
+      PIPE_BIND_CONSTANT_BUFFER,
       sizeof(struct vertex_shader_consts)
    );
 
@@ -655,13 +671,14 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
 
    assert(r);
 
-   pipe_buffer_reference(&r->vs_const_buf, NULL);
+   pipe_resource_reference(&r->vs_const_buf, NULL);
 
-   for (i = 0; i < 3; ++i)
-      pipe_buffer_reference(&r->vertex_bufs.all[i].buffer, NULL);
-
-   for (i = 0; i < 3; ++i)
-      pipe_texture_reference(&r->textures.all[i], NULL);
+   for (i = 0; i < 3; ++i) {
+      r->pipe->sampler_view_destroy(r->pipe, r->sampler_views.all[i]);
+      r->pipe->delete_vertex_elements_state(r->pipe, r->vertex_elems_state.all[i]);
+      pipe_resource_reference(&r->vertex_bufs.all[i].buffer, NULL);
+      pipe_resource_reference(&r->textures.all[i], NULL);
+   }
 
    FREE(r->macroblock_buf);
 }
@@ -940,6 +957,7 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
    unsigned offset[NUM_MACROBLOCK_TYPES];
    struct vert_stream_0 *ycbcr_vb;
    struct vertex2f *ref_vb[2];
+   struct pipe_transfer *buf_transfer[3];
    unsigned i;
 
    assert(r);
@@ -957,17 +975,19 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
 
    ycbcr_vb = (struct vert_stream_0 *)pipe_buffer_map
    (
-      r->pipe->screen,
+      r->pipe,
       r->vertex_bufs.individual.ycbcr.buffer,
-      PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &buf_transfer[0]
    );
 
    for (i = 0; i < 2; ++i)
       ref_vb[i] = (struct vertex2f *)pipe_buffer_map
       (
-         r->pipe->screen,
+         r->pipe,
          r->vertex_bufs.individual.ref[i].buffer,
-         PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
+         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+         &buf_transfer[i + 1]
       );
 
    for (i = 0; i < r->num_macroblocks; ++i) {
@@ -979,9 +999,9 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
       ++offset[mb_type];
    }
 
-   pipe_buffer_unmap(r->pipe->screen, r->vertex_bufs.individual.ycbcr.buffer);
+   pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.ycbcr.buffer, buf_transfer[0]);
    for (i = 0; i < 2; ++i)
-      pipe_buffer_unmap(r->pipe->screen, r->vertex_bufs.individual.ref[i].buffer);
+      pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.ref[i].buffer, buf_transfer[i + 1]);
 }
 
 static void
@@ -990,6 +1010,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    unsigned num_macroblocks[NUM_MACROBLOCK_TYPES] = { 0 };
    unsigned vb_start = 0;
    struct vertex_shader_consts *vs_consts;
+   struct pipe_transfer *buf_transfer;
    unsigned i;
 
    assert(r);
@@ -1004,22 +1025,23 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    vs_consts = pipe_buffer_map
    (
-      r->pipe->screen, r->vs_const_buf,
-      PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
+      r->pipe, r->vs_const_buf,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &buf_transfer
    );
 
    vs_consts->denorm.x = r->surface->width;
    vs_consts->denorm.y = r->surface->height;
 
-   pipe_buffer_unmap(r->pipe->screen, r->vs_const_buf);
+   pipe_buffer_unmap(r->pipe, r->vs_const_buf, buf_transfer);
 
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0,
                                 r->vs_const_buf);
 
    if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 1, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 4, r->vertex_elems);
-      r->pipe->set_fragment_sampler_textures(r->pipe, 3, r->textures.all);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.i);
+      r->pipe->set_fragment_sampler_views(r->pipe, 3, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 3, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->i_vs);
       r->pipe->bind_fs_state(r->pipe, r->i_fs);
@@ -1029,11 +1051,11 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0) {
+   if (false /*num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0*/) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->past->texture;
-      r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
+      r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
@@ -1045,9 +1067,9 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (false /*num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->past->texture;
-      r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
+      r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
@@ -1057,11 +1079,11 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0) {
+   if (false /*num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0*/) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->future->texture;
-      r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
+      r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
@@ -1071,11 +1093,11 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 24;
    }
 
-   if (false /*num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0 */ ) {
+   if (false /*num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0*/ ) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 6, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->future->texture;
-      r->pipe->set_fragment_sampler_textures(r->pipe, 4, r->textures.all);
+      r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
@@ -1085,12 +1107,12 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0) {
+   if (false /*num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0*/) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.b);
       r->textures.individual.ref[0] = r->past->texture;
       r->textures.individual.ref[1] = r->future->texture;
-      r->pipe->set_fragment_sampler_textures(r->pipe, 5, r->textures.all);
+      r->pipe->set_fragment_sampler_views(r->pipe, 5, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->b_vs[0]);
       r->pipe->bind_fs_state(r->pipe, r->b_fs[0]);
@@ -1102,10 +1124,10 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    if (false /*num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] > 0 */ ) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
-      r->pipe->set_vertex_elements(r->pipe, 8, r->vertex_elems);
+      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.b);
       r->textures.individual.ref[0] = r->past->texture;
       r->textures.individual.ref[1] = r->future->texture;
-      r->pipe->set_fragment_sampler_textures(r->pipe, 5, r->textures.all);
+      r->pipe->set_fragment_sampler_views(r->pipe, 5, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->b_vs[1]);
       r->pipe->bind_fs_state(r->pipe, r->b_fs[1]);
@@ -1172,7 +1194,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    assert(r);
    assert(blocks);
 
-   tex_pitch = r->tex_transfer[0]->stride / util_format_get_blocksize(r->tex_transfer[0]->texture->format);
+   tex_pitch = r->tex_transfer[0]->stride / util_format_get_blocksize(r->tex_transfer[0]->resource->format);
    texels = r->texels[0] + mbpy * tex_pitch + mbpx;
 
    for (y = 0; y < 2; ++y) {
@@ -1211,7 +1233,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
    mbpy /= 2;
 
    for (tb = 0; tb < 2; ++tb) {
-      tex_pitch = r->tex_transfer[tb + 1]->stride / util_format_get_blocksize(r->tex_transfer[tb + 1]->texture->format);
+      tex_pitch = r->tex_transfer[tb + 1]->stride / util_format_get_blocksize(r->tex_transfer[tb + 1]->resource->format);
       texels = r->texels[tb + 1] + mbpy * tex_pitch + mbpx;
 
       if ((cbp >> (1 - tb)) & 1) {

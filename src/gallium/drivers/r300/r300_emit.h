@@ -29,7 +29,7 @@
 struct rX00_fragment_program_code;
 struct r300_vertex_program_code;
 
-void r300_emit_aos(struct r300_context* r300, unsigned offset);
+void r300_emit_aos(struct r300_context* r300, unsigned offset, boolean indexed);
 
 void r300_emit_blend_state(struct r300_context* r300,
                            unsigned size, void* state);
@@ -43,22 +43,25 @@ void r300_emit_clip_state(struct r300_context* r300,
 void r300_emit_dsa_state(struct r300_context* r300,
                          unsigned size, void* state);
 
-void r300_emit_fragment_program_code(struct r300_context* r300,
-                                     struct rX00_fragment_program_code* generic_code);
+unsigned r300_get_fs_atom_size(struct r300_context *r300);
 
-void r300_emit_fs_constant_buffer(struct r300_context* r300,
-                                  struct rc_constant_list* constants);
+void r300_emit_fs(struct r300_context* r300, unsigned size, void *state);
 
-void r500_emit_fragment_program_code(struct r300_context* r300,
-                                     struct rX00_fragment_program_code* generic_code);
+void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *state);
 
-void r500_emit_fs_constant_buffer(struct r300_context* r300,
-                                  struct rc_constant_list* constants);
+void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, void *state);
+
+unsigned r500_get_fs_atom_size(struct r300_context *r300);
+
+void r500_emit_fs(struct r300_context* r300, unsigned size, void *state);
+
+void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *state);
+
+void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, void *state);
 
 void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state);
 
-void r300_emit_query_begin(struct r300_context* r300,
-                           struct r300_query* query);
+void r300_emit_query_start(struct r300_context *r300, unsigned size, void *state);
 
 void r300_emit_query_end(struct r300_context* r300);
 
@@ -81,8 +84,8 @@ void r300_emit_vertex_stream_state(struct r300_context* r300,
 void r300_emit_vap_output_state(struct r300_context* r300,
                                unsigned size, void* state);
 
-void r300_emit_vs_constant_buffer(struct r300_context* r300,
-                                  struct rc_constant_list* constants);
+void r300_emit_vs_constants(struct r300_context* r300,
+                            unsigned size, void *state);
 
 void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state);
 
@@ -103,6 +106,6 @@ void r300_emit_dirty_state(struct r300_context* r300);
 
 void r300_emit_buffer_validate(struct r300_context *r300,
                                boolean do_validate_vertex_buffers,
-                               struct pipe_buffer *index_buffer);
+                               struct pipe_resource *index_buffer);
 
 #endif /* R300_EMIT_H */

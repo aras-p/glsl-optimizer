@@ -74,6 +74,24 @@ void debug_print_blob( const char *name,
 #endif
 
 
+static boolean
+debug_get_option_should_print(void)
+{
+   static boolean first = TRUE;
+   static boolean value = FALSE;
+
+   if (!first)
+      return value;
+
+   /* Oh hey this will call into this function,
+    * but its cool since we set first to false
+    */
+   first = FALSE;
+   value = debug_get_bool_option("GALLIUM_PRINT_OPTIONS", TRUE);
+   /* XXX should we print this option? Currently it wont */
+   return value;
+}
+
 const char *
 debug_get_option(const char *name, const char *dfault)
 {
@@ -82,8 +100,9 @@ debug_get_option(const char *name, const char *dfault)
    result = os_get_option(name);
    if(!result)
       result = dfault;
-      
-   debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? result : "(null)");
+
+   if (debug_get_option_should_print())
+      debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? result : "(null)");
    
    return result;
 }
@@ -109,7 +128,8 @@ debug_get_bool_option(const char *name, boolean dfault)
    else
       result = TRUE;
 
-   debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? "TRUE" : "FALSE");
+   if (debug_get_option_should_print())
+      debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? "TRUE" : "FALSE");
    
    return result;
 }
@@ -142,8 +162,9 @@ debug_get_num_option(const char *name, long dfault)
       }
       result *= sign;
    }
-   
-   debug_printf("%s: %s = %li\n", __FUNCTION__, name, result);
+
+   if (debug_get_option_should_print())
+      debug_printf("%s: %s = %li\n", __FUNCTION__, name, result);
 
    return result;
 }
@@ -176,11 +197,12 @@ debug_get_flags_option(const char *name,
       }
    }
 
-   if (str) {
-      debug_printf("%s: %s = 0x%lx (%s)\n", __FUNCTION__, name, result, str);
-   }
-   else {
-      debug_printf("%s: %s = 0x%lx\n", __FUNCTION__, name, result);
+   if (debug_get_option_should_print()) {
+      if (str) {
+         debug_printf("%s: %s = 0x%lx (%s)\n", __FUNCTION__, name, result, str);
+      } else {
+         debug_printf("%s: %s = 0x%lx\n", __FUNCTION__, name, result);
+      }
    }
 
    return result;
@@ -421,45 +443,51 @@ void debug_dump_image(const char *prefix,
 #endif
 }
 
-void debug_dump_surface(const char *prefix,
+void debug_dump_surface(struct pipe_context *pipe,
+			const char *prefix,
                         struct pipe_surface *surface)     
 {
-   struct pipe_texture *texture;
-   struct pipe_screen *screen;
+   struct pipe_resource *texture;
    struct pipe_transfer *transfer;
    void *data;
 
    if (!surface)
       return;
 
+   /* XXX: this doesn't necessarily work, as the driver may be using
+    * temporary storage for the surface which hasn't been propagated
+    * back into the texture.  Need to nail down the semantics of views
+    * and transfers a bit better before we can say if extra work needs
+    * to be done here:
+    */
    texture = surface->texture;
-   screen = texture->screen;
 
-   transfer = screen->get_tex_transfer(screen, texture, surface->face,
-                                       surface->level, surface->zslice,
-                                       PIPE_TRANSFER_READ, 0, 0, surface->width,
-                                       surface->height);
+   transfer = pipe_get_transfer(pipe, texture, surface->face,
+				     surface->level, surface->zslice,
+				     PIPE_TRANSFER_READ, 0, 0, surface->width,
+				     surface->height);
    
-   data = screen->transfer_map(screen, transfer);
+   data = pipe->transfer_map(pipe, transfer);
    if(!data)
       goto error;
    
    debug_dump_image(prefix, 
                     texture->format,
                     util_format_get_blocksize(texture->format), 
-                    util_format_get_nblocksx(texture->format, transfer->width),
-                    util_format_get_nblocksy(texture->format, transfer->height),
+                    util_format_get_nblocksx(texture->format, surface->width),
+                    util_format_get_nblocksy(texture->format, surface->height),
                     transfer->stride,
                     data);
    
-   screen->transfer_unmap(screen, transfer);
+   pipe->transfer_unmap(pipe, transfer);
 error:
-   screen->tex_transfer_destroy(transfer);
+   pipe->transfer_destroy(pipe, transfer);
 }
 
 
-void debug_dump_texture(const char *prefix,
-                        struct pipe_texture *texture)
+void debug_dump_texture(struct pipe_context *pipe,
+                        const char *prefix,
+                        struct pipe_resource *texture)
 {
    struct pipe_surface *surface;
    struct pipe_screen *screen;
@@ -471,9 +499,9 @@ void debug_dump_texture(const char *prefix,
 
    /* XXX for now, just dump image for face=0, level=0 */
    surface = screen->get_tex_surface(screen, texture, 0, 0, 0,
-                                     PIPE_TEXTURE_USAGE_SAMPLER);
+                                     PIPE_BIND_SAMPLER_VIEW);
    if (surface) {
-      debug_dump_surface(prefix, surface);
+      debug_dump_surface(pipe, prefix, surface);
       screen->tex_surface_destroy(surface);
    }
 }
@@ -511,27 +539,28 @@ struct bmp_rgb_quad {
 };
 
 void
-debug_dump_surface_bmp(const char *filename,
+debug_dump_surface_bmp(struct pipe_context *pipe,
+		       const char *filename,
                        struct pipe_surface *surface)
 {
 #ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
    struct pipe_transfer *transfer;
-   struct pipe_texture *texture = surface->texture;
-   struct pipe_screen *screen = texture->screen;
+   struct pipe_resource *texture = surface->texture;
 
-   transfer = screen->get_tex_transfer(screen, texture, surface->face,
-                                       surface->level, surface->zslice,
-                                       PIPE_TRANSFER_READ, 0, 0, surface->width,
-                                       surface->height);
+   transfer = pipe_get_transfer(pipe, texture, surface->face,
+				surface->level, surface->zslice,
+				PIPE_TRANSFER_READ, 0, 0, surface->width,
+				surface->height);
 
-   debug_dump_transfer_bmp(filename, transfer);
+   debug_dump_transfer_bmp(pipe, filename, transfer);
 
-   screen->tex_transfer_destroy(transfer);
+   pipe->transfer_destroy(pipe, transfer);
 #endif
 }
 
 void
-debug_dump_transfer_bmp(const char *filename,
+debug_dump_transfer_bmp(struct pipe_context *pipe,
+                        const char *filename,
                         struct pipe_transfer *transfer)
 {
 #ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
@@ -540,17 +569,20 @@ debug_dump_transfer_bmp(const char *filename,
    if (!transfer)
       goto error1;
 
-   rgba = MALLOC(transfer->width*transfer->height*4*sizeof(float));
+   rgba = MALLOC(transfer->box.width *
+		 transfer->box.height *
+		 transfer->box.depth *
+		 4*sizeof(float));
    if(!rgba)
       goto error1;
 
-   pipe_get_tile_rgba(transfer, 0, 0,
-                      transfer->width, transfer->height,
+   pipe_get_tile_rgba(pipe, transfer, 0, 0,
+                      transfer->box.width, transfer->box.height,
                       rgba);
 
    debug_dump_float_rgba_bmp(filename,
-                             transfer->width, transfer->height,
-                             rgba, transfer->width);
+                             transfer->box.width, transfer->box.height,
+                             rgba, transfer->box.width);
 
    FREE(rgba);
 error1:

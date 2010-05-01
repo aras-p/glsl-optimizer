@@ -34,7 +34,7 @@ struct svga_hwtnl;
 struct svga_winsys_context;
 struct svga_screen;
 struct svga_context;
-struct pipe_buffer;
+struct pipe_resource;
 struct u_upload_mgr;
 
 struct svga_hwtnl *svga_hwtnl_create( struct svga_context *svga,
@@ -53,7 +53,7 @@ void svga_hwtnl_set_unfilled( struct svga_hwtnl *hwtnl,
 void svga_hwtnl_vdecl( struct svga_hwtnl *hwtnl,
                        unsigned i,
                        const SVGA3dVertexDecl *decl,
-                       struct pipe_buffer *vb);
+                       struct pipe_resource *vb);
 
 void svga_hwtnl_reset_vdecl( struct svga_hwtnl *hwtnl,
                              unsigned count );
@@ -67,14 +67,14 @@ svga_hwtnl_draw_arrays( struct svga_hwtnl *hwtnl,
 
 enum pipe_error
 svga_hwtnl_draw_range_elements( struct svga_hwtnl *hwtnl,
-                                struct pipe_buffer *indexBuffer,
+                                struct pipe_resource *indexBuffer,
                                 unsigned index_size,
+                                int index_bias,
                                 unsigned min_index,
                                 unsigned max_index,
                                 unsigned prim, 
                                 unsigned start, 
-                                unsigned count,
-                                unsigned bias );
+                                unsigned count );
 
 enum pipe_error
 svga_hwtnl_flush( struct svga_hwtnl *hwtnl );

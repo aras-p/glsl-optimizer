@@ -37,8 +37,8 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "intel_decode.h"
 

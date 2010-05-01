@@ -30,25 +30,25 @@
 
 
 void
-lp_tiled_to_linear(const uint8_t *src,
-                   uint8_t *dst,
+lp_tiled_to_linear(const void *src, void *dst,
+                   unsigned x, unsigned y,
                    unsigned width, unsigned height,
                    enum pipe_format format,
-                   unsigned src_stride,
-                   unsigned dst_stride);
+                   unsigned dst_stride,
+                   unsigned tiles_per_row);
 
 
 void
-lp_linear_to_tiled(const uint8_t *src,
-                   uint8_t *dst,
+lp_linear_to_tiled(const void *src, void *dst,
+                   unsigned x, unsigned y,
                    unsigned width, unsigned height,
                    enum pipe_format format,
                    unsigned src_stride,
-                   unsigned dst_stride);
+                   unsigned tiles_per_row);
 
 
 void
-test_tiled_linear_conversion(uint8_t *data,
+test_tiled_linear_conversion(void *data,
                              enum pipe_format format,
                              unsigned width, unsigned height,
                              unsigned stride);

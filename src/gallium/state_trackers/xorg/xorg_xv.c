@@ -9,6 +9,7 @@
 #include "xorg_exa_tgsi.h"
 
 #include "cso_cache/cso_context.h"
+#include "util/u_sampler.h"
 
 #include "pipe/p_screen.h"
 
@@ -90,7 +91,8 @@ struct xorg_xv_port_priv {
    int current_set;
    /* juggle two sets of seperate Y, U and V
     * textures */
-   struct pipe_texture *yuv[2][3];
+   struct pipe_resource *yuv[2][3];
+   struct pipe_sampler_view *yuv_views[2][3];
 };
 
 
@@ -154,13 +156,13 @@ query_best_size(ScrnInfoPtr pScrn,
    *p_h = drw_h;
 }
 
-static INLINE struct pipe_texture *
+static INLINE struct pipe_resource *
 create_component_texture(struct pipe_context *pipe,
                          int width, int height)
 {
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture *tex = 0;
-   struct pipe_texture templ;
+   struct pipe_resource *tex = 0;
+   struct pipe_resource templ;
 
    memset(&templ, 0, sizeof(templ));
    templ.target = PIPE_TEXTURE_2D;
@@ -169,9 +171,9 @@ create_component_texture(struct pipe_context *pipe,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
-   templ.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
-   tex = screen->texture_create(screen, &templ);
+   tex = screen->resource_create(screen, &templ);
 
    return tex;
 }
@@ -179,33 +181,61 @@ create_component_texture(struct pipe_context *pipe,
 static int
 check_yuv_textures(struct xorg_xv_port_priv *priv,  int width, int height)
 {
-   struct pipe_texture **dst = priv->yuv[priv->current_set];
+   struct pipe_resource **dst = priv->yuv[priv->current_set];
+   struct pipe_sampler_view **dst_view = priv->yuv_views[priv->current_set];
+   struct pipe_sampler_view view_templ;
+   struct pipe_context *pipe = priv->r->pipe;
+
    if (!dst[0] ||
        dst[0]->width0 != width ||
        dst[0]->height0 != height) {
-      pipe_texture_reference(&dst[0], NULL);
+      pipe_resource_reference(&dst[0], NULL);
+      pipe_sampler_view_reference(&dst_view[0], NULL);
    }
    if (!dst[1] ||
        dst[1]->width0 != width ||
        dst[1]->height0 != height) {
-      pipe_texture_reference(&dst[1], NULL);
+      pipe_resource_reference(&dst[1], NULL);
+      pipe_sampler_view_reference(&dst_view[1], NULL);
    }
    if (!dst[2] ||
        dst[2]->width0 != width ||
        dst[2]->height0 != height) {
-      pipe_texture_reference(&dst[2], NULL);
+      pipe_resource_reference(&dst[2], NULL);
+      pipe_sampler_view_reference(&dst_view[2], NULL);
    }
 
-   if (!dst[0])
+   if (!dst[0]) {
       dst[0] = create_component_texture(priv->r->pipe, width, height);
+      if (dst[0]) {
+         u_sampler_view_default_template(&view_templ,
+                                         dst[0],
+                                         dst[0]->format);
+         dst_view[0] = pipe->create_sampler_view(pipe, dst[0], &view_templ);
+      }
+   }
 
-   if (!dst[1])
+   if (!dst[1]) {
       dst[1] = create_component_texture(priv->r->pipe, width, height);
+      if (dst[1]) {
+         u_sampler_view_default_template(&view_templ,
+                                         dst[1],
+                                         dst[1]->format);
+         dst_view[1] = pipe->create_sampler_view(pipe, dst[1], &view_templ);
+      }
+   }
 
-   if (!dst[2])
+   if (!dst[2]) {
       dst[2] = create_component_texture(priv->r->pipe, width, height);
+      if (dst[2]) {
+         u_sampler_view_default_template(&view_templ,
+                                      dst[2],
+                                      dst[2]->format);
+         dst_view[2] = pipe->create_sampler_view(pipe, dst[2], &view_templ);
+      }
+   }
 
-   if (!dst[0] || !dst[1] || !dst[2])
+   if (!dst[0] || !dst[1] || !dst[2] || !dst_view[0] || !dst_view[1] || !dst_view[2] )
       return BadAlloc;
 
    return Success;
@@ -273,30 +303,30 @@ copy_packed_data(ScrnInfoPtr pScrn,
                  unsigned short w, unsigned short h)
 {
    int i, j;
-   struct pipe_texture **dst = port->yuv[port->current_set];
+   struct pipe_resource **dst = port->yuv[port->current_set];
    struct pipe_transfer *ytrans, *utrans, *vtrans;
-   struct pipe_screen *screen = port->r->pipe->screen;
+   struct pipe_context *pipe = port->r->pipe;
    char *ymap, *vmap, *umap;
    unsigned char y1, y2, u, v;
    int yidx, uidx, vidx;
    int y_array_size = w * h;
 
-   ytrans = screen->get_tex_transfer(screen, dst[0],
-                                     0, 0, 0,
-                                     PIPE_TRANSFER_WRITE,
-                                     left, top, w, h);
-   utrans = screen->get_tex_transfer(screen, dst[1],
-                                     0, 0, 0,
-                                     PIPE_TRANSFER_WRITE,
-                                     left, top, w, h);
-   vtrans = screen->get_tex_transfer(screen, dst[2],
-                                     0, 0, 0,
-                                     PIPE_TRANSFER_WRITE,
-                                     left, top, w, h);
+   ytrans = pipe_get_transfer(pipe, dst[0],
+                                   0, 0, 0,
+                                   PIPE_TRANSFER_WRITE,
+                                   left, top, w, h);
+   utrans = pipe_get_transfer(pipe, dst[1],
+                                   0, 0, 0,
+                                   PIPE_TRANSFER_WRITE,
+                                   left, top, w, h);
+   vtrans = pipe_get_transfer(pipe, dst[2],
+                                   0, 0, 0,
+                                   PIPE_TRANSFER_WRITE,
+                                   left, top, w, h);
 
-   ymap = (char*)screen->transfer_map(screen, ytrans);
-   umap = (char*)screen->transfer_map(screen, utrans);
-   vmap = (char*)screen->transfer_map(screen, vtrans);
+   ymap = (char*)pipe->transfer_map(pipe, ytrans);
+   umap = (char*)pipe->transfer_map(pipe, utrans);
+   vmap = (char*)pipe->transfer_map(pipe, vtrans);
 
    yidx = uidx = vidx = 0;
 
@@ -362,12 +392,12 @@ copy_packed_data(ScrnInfoPtr pScrn,
       break;
    }
 
-   screen->transfer_unmap(screen, ytrans);
-   screen->transfer_unmap(screen, utrans);
-   screen->transfer_unmap(screen, vtrans);
-   screen->tex_transfer_destroy(ytrans);
-   screen->tex_transfer_destroy(utrans);
-   screen->tex_transfer_destroy(vtrans);
+   pipe->transfer_unmap(pipe, ytrans);
+   pipe->transfer_unmap(pipe, utrans);
+   pipe->transfer_unmap(pipe, vtrans);
+   pipe->transfer_destroy(pipe, ytrans);
+   pipe->transfer_destroy(pipe, utrans);
+   pipe->transfer_destroy(pipe, vtrans);
 }
 
 
@@ -386,7 +416,7 @@ draw_yuv(struct xorg_xv_port_priv *port,
          int src_x, int src_y, int src_w, int src_h,
          int dst_x, int dst_y, int dst_w, int dst_h)
 {
-   struct pipe_texture **textures = port->yuv[port->current_set];
+   struct pipe_resource **textures = port->yuv[port->current_set];
 
    /*debug_printf("  draw_yuv([%d, %d, %d ,%d], [%d, %d, %d, %d])\n",
                 src_x, src_y, src_w, src_h,
@@ -431,12 +461,12 @@ bind_shaders(struct xorg_xv_port_priv *port)
 }
 
 static INLINE void
-conditional_flush(struct pipe_context *pipe, struct pipe_texture **tex,
+conditional_flush(struct pipe_context *pipe, struct pipe_resource **tex,
                   int num)
 {
    int i;
    for (i = 0; i < num; ++i) {
-      if (tex[i] && pipe->is_texture_referenced(pipe, tex[i], 0, 0) &
+      if (tex[i] && pipe->is_resource_referenced(pipe, tex[i], 0, 0) &
           PIPE_REFERENCED_FOR_WRITE) {
          pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
          return;
@@ -449,7 +479,8 @@ bind_samplers(struct xorg_xv_port_priv *port)
 {
    struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_state sampler;
-   struct pipe_texture **dst = port->yuv[port->current_set];
+   struct pipe_resource **dst = port->yuv[port->current_set];
+   struct pipe_sampler_view **dst_views = port->yuv_views[port->current_set];
 
    memset(&sampler, 0, sizeof(struct pipe_sampler_state));
 
@@ -469,8 +500,7 @@ bind_samplers(struct xorg_xv_port_priv *port)
 
    cso_set_samplers(port->r->cso, 3,
                     (const struct pipe_sampler_state **)samplers);
-   cso_set_sampler_textures(port->r->cso, 3,
-                            dst);
+   cso_set_fragment_sampler_views(port->r->cso, 3, dst_views);
 }
 
 static int

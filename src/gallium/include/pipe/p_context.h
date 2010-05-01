@@ -58,15 +58,16 @@ struct pipe_context {
    void (*destroy)( struct pipe_context * );
 
    /**
-    * VBO drawing (return false on fallbacks (temporary??))
+    * VBO drawing
     */
    /*@{*/
    void (*draw_arrays)( struct pipe_context *pipe,
                         unsigned mode, unsigned start, unsigned count);
 
    void (*draw_elements)( struct pipe_context *pipe,
-                          struct pipe_buffer *indexBuffer,
+                          struct pipe_resource *indexBuffer,
                           unsigned indexSize,
+                          int indexBias,
                           unsigned mode, unsigned start, unsigned count);
 
    void (*draw_arrays_instanced)(struct pipe_context *pipe,
@@ -77,8 +78,9 @@ struct pipe_context {
                                  unsigned instanceCount);
 
    void (*draw_elements_instanced)(struct pipe_context *pipe,
-                                   struct pipe_buffer *indexBuffer,
+                                   struct pipe_resource *indexBuffer,
                                    unsigned indexSize,
+                                   int indexBias,
                                    unsigned mode,
                                    unsigned start,
                                    unsigned count,
@@ -91,8 +93,9 @@ struct pipe_context {
     * module.
     */
    void (*draw_range_elements)( struct pipe_context *pipe,
-                                struct pipe_buffer *indexBuffer,
+                                struct pipe_resource *indexBuffer,
                                 unsigned indexSize,
+                                int indexBias,
                                 unsigned minIndex,
                                 unsigned maxIndex,
                                 unsigned mode, 
@@ -177,6 +180,12 @@ struct pipe_context {
    void   (*bind_gs_state)(struct pipe_context *, void *);
    void   (*delete_gs_state)(struct pipe_context *, void *);
 
+   void * (*create_vertex_elements_state)(struct pipe_context *,
+                                          unsigned num_elements,
+                                          const struct pipe_vertex_element *);
+   void   (*bind_vertex_elements_state)(struct pipe_context *, void *);
+   void   (*delete_vertex_elements_state)(struct pipe_context *, void *);
+
    /*@}*/
 
    /**
@@ -194,7 +203,7 @@ struct pipe_context {
 
    void (*set_constant_buffer)( struct pipe_context *,
                                 uint shader, uint index,
-                                struct pipe_buffer *buf );
+                                struct pipe_resource *buf );
 
    void (*set_framebuffer_state)( struct pipe_context *,
                                   const struct pipe_framebuffer_state * );
@@ -208,21 +217,18 @@ struct pipe_context {
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );
 
-   void (*set_fragment_sampler_textures)(struct pipe_context *,
-                                         unsigned num_textures,
-                                         struct pipe_texture **);
+   void (*set_fragment_sampler_views)(struct pipe_context *,
+                                      unsigned num_views,
+                                      struct pipe_sampler_view **);
 
-   void (*set_vertex_sampler_textures)(struct pipe_context *,
-                                       unsigned num_textures,
-                                       struct pipe_texture **);
+   void (*set_vertex_sampler_views)(struct pipe_context *,
+                                    unsigned num_views,
+                                    struct pipe_sampler_view **);
 
    void (*set_vertex_buffers)( struct pipe_context *,
                                unsigned num_buffers,
                                const struct pipe_vertex_buffer * );
 
-   void (*set_vertex_elements)( struct pipe_context *,
-                                unsigned num_elements,
-                                const struct pipe_vertex_element * );
    /*@}*/
 
 
@@ -288,21 +294,63 @@ struct pipe_context {
     * \param level  mipmap level.
     * \return mask of PIPE_REFERENCED_FOR_READ/WRITE or PIPE_UNREFERENCED
     */
-   unsigned int (*is_texture_referenced)(struct pipe_context *pipe,
-					 struct pipe_texture *texture,
-					 unsigned face, unsigned level);
+   unsigned int (*is_resource_referenced)(struct pipe_context *pipe,
+					  struct pipe_resource *texture,
+					  unsigned face, unsigned level);
 
    /**
-    * Check whether a buffer is referenced by an unflushed hw command.
-    * The state-tracker uses this function to avoid unnecessary flushes.
-    * It is safe (but wasteful) to always return
-    * PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE.
-    * \param pipe  context whose unflushed hw commands will be checked.
-    * \param buf  buffer to check.
-    * \return mask of PIPE_REFERENCED_FOR_READ/WRITE or PIPE_UNREFERENCED
+    * Create a view on a texture to be used by a shader stage.
     */
-   unsigned int (*is_buffer_referenced)(struct pipe_context *pipe,
-					struct pipe_buffer *buf);
+   struct pipe_sampler_view * (*create_sampler_view)(struct pipe_context *ctx,
+                                                     struct pipe_resource *texture,
+                                                     const struct pipe_sampler_view *templat);
+
+   void (*sampler_view_destroy)(struct pipe_context *ctx,
+                                struct pipe_sampler_view *view);
+
+
+   /**
+    * Get a transfer object for transferring data to/from a texture.
+    *
+    * Transfers are (by default) context-private and allow uploads to be
+    * interleaved with
+    */
+   struct pipe_transfer *(*get_transfer)(struct pipe_context *,
+					 struct pipe_resource *resource,
+					 struct pipe_subresource,
+					 unsigned usage,  /* a combination of PIPE_TRANSFER_x */
+					 const struct pipe_box *);
+
+   void (*transfer_destroy)(struct pipe_context *,
+                                struct pipe_transfer *);
+   
+   void *(*transfer_map)( struct pipe_context *,
+                          struct pipe_transfer *transfer );
+
+   /* If transfer was created with WRITE|FLUSH_EXPLICIT, only the
+    * regions specified with this call are guaranteed to be written to
+    * the resource.
+    */
+   void (*transfer_flush_region)( struct pipe_context *,
+				  struct pipe_transfer *transfer,
+				  const struct pipe_box *);
+
+   void (*transfer_unmap)( struct pipe_context *,
+                           struct pipe_transfer *transfer );
+
+
+   /* One-shot transfer operation with data supplied in a user
+    * pointer.  XXX: strides??
+    */
+   void (*transfer_inline_write)( struct pipe_context *,
+				  struct pipe_resource *,
+				  struct pipe_subresource,
+				  unsigned usage, /* a combination of PIPE_TRANSFER_x */
+				  const struct pipe_box *,
+				  const void *data,
+				  unsigned stride,
+				  unsigned slice_stride);
+
 };
 
 

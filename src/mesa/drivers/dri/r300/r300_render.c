@@ -386,6 +386,14 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 			WARN_ONCE("Fixme: can't handle spliting prim %d\n", prim);
 			return;
 		}
+
+		if (rmesa->radeon.radeonScreen->kernel_mm) {
+			BEGIN_BATCH_NO_AUTOSTATE(2);
+			OUT_BATCH_REGSEQ(R300_VAP_VF_MAX_VTX_INDX, 1);
+			OUT_BATCH(rmesa->radeon.tcl.aos[0].count);
+			END_BATCH();
+		}
+
 		r300_emit_scissor(rmesa->radeon.glCtx);
 		while (num_verts > 0) {
 			int nr;
@@ -400,8 +408,9 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	COMMIT_BATCH();
 }
 
-static const char *getFallbackString(uint32_t bit)
+static const char *getFallbackString(r300ContextPtr rmesa, uint32_t bit)
 {
+	static char common_fallback_str[32];
 	switch (bit) {
 		case R300_FALLBACK_VERTEX_PROGRAM :
 			return "vertex program";
@@ -421,6 +430,9 @@ static const char *getFallbackString(uint32_t bit)
 			return "render mode != GL_RENDER";
 		case R300_FALLBACK_FRAGMENT_PROGRAM:
 			return "fragment program";
+		case R300_FALLBACK_RADEON_COMMON:
+			snprintf(common_fallback_str, 32, "radeon common 0x%08x", rmesa->radeon.Fallback);
+			return common_fallback_str;
 		case R300_FALLBACK_AOS_LIMIT:
 			return "aos limit";
 		case R300_FALLBACK_INVALID_BUFFERS:
@@ -440,7 +452,7 @@ void r300SwitchFallback(GLcontext *ctx, uint32_t bit, GLboolean mode)
 	if (mode) {
 		if ((fallback_warn & bit) == 0) {
 			if (RADEON_DEBUG & RADEON_FALLBACKS)
-				fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(bit));
+				fprintf(stderr, "WARNING! Falling back to software for %s\n", getFallbackString(rmesa, bit));
 			fallback_warn |= bit;
 		}
 		rmesa->fallback |= bit;

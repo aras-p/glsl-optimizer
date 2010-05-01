@@ -153,6 +153,11 @@ make_extension_string(const GLcontext *ctx, char *str)
    if (ctx->Extensions.EXT_multi_draw_arrays)
       len += append_extension(&str, "GL_EXT_multi_draw_arrays");
 
+#if FEATURE_OES_EGL_image
+   if (ctx->Extensions.OES_EGL_image)
+      len += append_extension(&str, "GL_OES_EGL_image");
+#endif
+
    return len;
 }
 

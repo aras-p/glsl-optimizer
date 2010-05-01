@@ -37,10 +37,10 @@
 #define _SWRAST_SPANTEMP_ONCE
 
 static INLINE void
-PUT_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
+PUT_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLvoid *p )
 {
-    __DRIcontext *ctx = swrast_context(glCtx);
-    __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer);
+    __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
+    __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer)->dPriv;
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
@@ -53,8 +53,8 @@ PUT_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 static INLINE void
 GET_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 {
-    __DRIcontext *ctx = swrast_context(glCtx);
-    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer);
+    __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
+    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer)->dPriv;
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
@@ -65,8 +65,8 @@ GET_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 static INLINE void
 PUT_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
-    __DRIcontext *ctx = swrast_context(glCtx);
-    __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer);
+    __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
+    __DRIdrawable *draw = swrast_drawable(glCtx->DrawBuffer)->dPriv;
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
@@ -78,8 +78,8 @@ PUT_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 static INLINE void
 GET_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
-    __DRIcontext *ctx = swrast_context(glCtx);
-    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer);
+    __DRIcontext *ctx = swrast_context(glCtx)->cPriv;
+    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer)->dPriv;
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
@@ -168,7 +168,8 @@ NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
    if (mask) {
       for (i = 0; i < count; i++) {
          if (mask[i]) {
-            RB_TYPE pixel[4];
+            RB_TYPE row[4];
+            INIT_PIXEL_PTR(pixel, x, y);
             STORE_PIXEL(pixel, x + i, y, src[i]);
             PUT_PIXEL(ctx, x + i, YFLIP(xrb, y), pixel);
          }
@@ -200,7 +201,8 @@ NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
    if (mask) {
       for (i = 0; i < count; i++) {
          if (mask[i]) {
-            RB_TYPE pixel[4];
+            RB_TYPE row[4];
+            INIT_PIXEL_PTR(pixel, x, y);
 #ifdef STORE_PIXEL_RGB
             STORE_PIXEL_RGB(pixel, x + i, y, src[i]);
 #else
@@ -240,7 +242,8 @@ NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
    if (mask) {
       for (i = 0; i < count; i++) {
          if (mask[i]) {
-            RB_TYPE pixel[4];
+            RB_TYPE row[4];
+            INIT_PIXEL_PTR(pixel, x, y);
             STORE_PIXEL(pixel, x + i, y, src);
             PUT_PIXEL(ctx, x + i, YFLIP(xrb, y), pixel);
          }
@@ -272,7 +275,8 @@ NAME(put_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(mask);
    for (i = 0; i < count; i++) {
       if (mask[i]) {
-         RB_TYPE pixel[4];
+         RB_TYPE row[4];
+         INIT_PIXEL_PTR(pixel, x, y);
          STORE_PIXEL(pixel, x[i], y[i], src[i]);
          PUT_PIXEL(ctx, x[i], YFLIP(xrb, y[i]), pixel);
       }
@@ -294,7 +298,8 @@ NAME(put_mono_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(mask);
    for (i = 0; i < count; i++) {
       if (mask[i]) {
-         RB_TYPE pixel[4];
+         RB_TYPE row[4];
+         INIT_PIXEL_PTR(pixel, x, y);
          STORE_PIXEL(pixel, x[i], y[i], src);
          PUT_PIXEL(ctx, x[i], YFLIP(xrb, y[i]), pixel);
       }

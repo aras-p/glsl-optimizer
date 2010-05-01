@@ -52,6 +52,7 @@
  */
 
 
+#include "pipe/p_context.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "pipe/p_defines.h"
@@ -113,7 +114,10 @@ static void set_texcoords(const struct widepoint_stage *wide,
       /* put gl_PointCoord into the extra vertex slot */
       uint slot = wide->stage.draw->extra_shader_outputs.slot;
       v->data[slot][0] = tc[0];
-      v->data[slot][1] = tc[1];
+      if (wide->texcoord_mode == PIPE_SPRITE_COORD_LOWER_LEFT)
+         v->data[slot][1] = 1.0f - tc[1];
+      else
+         v->data[slot][1] = tc[1];
       v->data[slot][2] = 0.0F;
       v->data[slot][3] = 1.0F;
    }
@@ -128,10 +132,9 @@ static void set_texcoords(const struct widepoint_stage *wide,
 static void widepoint_point( struct draw_stage *stage,
                              struct prim_header *header )
 {
-   /* XXX should take point_quad_rasterization into account? */
    const struct widepoint_stage *wide = widepoint_stage(stage);
    const unsigned pos = draw_current_shader_position_output(stage->draw);
-   const boolean sprite = (boolean) stage->draw->rasterizer->sprite_coord_enable;
+   const boolean sprite = (boolean) stage->draw->rasterizer->point_quad_rasterization;
    float half_size;
    float left_adj, right_adj, bot_adj, top_adj;
 
@@ -213,33 +216,42 @@ static void widepoint_first_point( struct draw_stage *stage,
 {
    struct widepoint_stage *wide = widepoint_stage(stage);
    struct draw_context *draw = stage->draw;
+   struct pipe_context *pipe = draw->pipe;
+   const struct pipe_rasterizer_state *rast = draw->rasterizer;
+   void *r;
 
-   wide->half_point_size = 0.5f * draw->rasterizer->point_size;
+   wide->half_point_size = 0.5f * rast->point_size;
    wide->xbias = 0.0;
    wide->ybias = 0.0;
 
-   if (draw->rasterizer->gl_rasterization_rules) {
+   if (rast->gl_rasterization_rules) {
       wide->xbias = 0.125;
    }
 
+   /* Disable triangle culling, stippling, unfilled mode etc. */
+   r = draw_get_rasterizer_no_cull(draw, rast->scissor, rast->flatshade);
+   draw->suspend_flushing = TRUE;
+   pipe->bind_rasterizer_state(pipe, r);
+   draw->suspend_flushing = FALSE;
+
    /* XXX we won't know the real size if it's computed by the vertex shader! */
-   if ((draw->rasterizer->point_size > draw->pipeline.wide_point_threshold) ||
-       (draw->rasterizer->sprite_coord_enable && draw->pipeline.point_sprite)) {
+   if ((rast->point_size > draw->pipeline.wide_point_threshold) ||
+       (rast->point_quad_rasterization && draw->pipeline.point_sprite)) {
       stage->point = widepoint_point;
    }
    else {
       stage->point = draw_pipe_passthrough_point;
    }
 
-   if (draw->rasterizer->sprite_coord_enable) {
+   if (rast->point_quad_rasterization) {
       /* find vertex shader texcoord outputs */
       const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       uint i, j = 0;
-      wide->texcoord_mode = draw->rasterizer->sprite_coord_mode;
+      wide->texcoord_mode = rast->sprite_coord_mode;
       for (i = 0; i < vs->info.num_outputs; i++) {
          if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
             wide->texcoord_slot[j] = i;
-            wide->texcoord_enable[j] = (draw->rasterizer->sprite_coord_enable >> j) & 1;
+            wide->texcoord_enable[j] = (rast->sprite_coord_enable >> j) & 1;
             j++;
          }
       }
@@ -259,7 +271,7 @@ static void widepoint_first_point( struct draw_stage *stage,
    }
 
    wide->psize_slot = -1;
-   if (draw->rasterizer->point_size_per_vertex) {
+   if (rast->point_size_per_vertex) {
       /* find PSIZ vertex output */
       const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       uint i;
@@ -277,9 +289,19 @@ static void widepoint_first_point( struct draw_stage *stage,
 
 static void widepoint_flush( struct draw_stage *stage, unsigned flags )
 {
+   struct draw_context *draw = stage->draw;
+   struct pipe_context *pipe = draw->pipe;
+
    stage->point = widepoint_first_point;
    stage->next->flush( stage->next, flags );
    stage->draw->extra_shader_outputs.slot = 0;
+
+   /* restore original rasterizer state */
+   if (draw->rast_handle) {
+      draw->suspend_flushing = TRUE;
+      pipe->bind_rasterizer_state(pipe, draw->rast_handle);
+      draw->suspend_flushing = FALSE;
+   }
 }
 
 

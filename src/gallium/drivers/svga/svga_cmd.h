@@ -41,7 +41,6 @@
 #include "pipe/p_defines.h"
 
 
-struct pipe_buffer;
 struct pipe_surface;
 struct svga_transfer;
 struct svga_winsys_context;

@@ -119,7 +119,7 @@ void NAME(_gloffset_GetSeparableFilter) (GLenum target, GLenum format,
 {
    __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    if (gc->driContext) {
       CALL_GetSeparableFilter(GET_DISPATCH(),
                               (target, format, type, row, column, span));

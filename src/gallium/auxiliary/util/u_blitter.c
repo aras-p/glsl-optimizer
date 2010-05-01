@@ -45,6 +45,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_pack_color.h"
 #include "util/u_rect.h"
+#include "util/u_sampler.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_texture.h"
 
@@ -55,7 +56,7 @@ struct blitter_context_priv
    struct blitter_context blitter;
 
    struct pipe_context *pipe; /**< pipe context */
-   struct pipe_buffer *vbuf;  /**< quad */
+   struct pipe_resource *vbuf;  /**< quad */
 
    float vertices[4][2][4];   /**< {pos, color} or {pos, texcoord} */
 
@@ -88,11 +89,15 @@ struct blitter_context_priv
    void *dsa_write_depth_keep_stencil;
    void *dsa_keep_depth_stencil;
 
+   void *velem_state;
+
    /* Sampler state for clamping to a miplevel. */
    void *sampler_state[PIPE_MAX_TEXTURE_LEVELS];
 
    /* Rasterizer state. */
    void *rs_state;
+
+   struct pipe_sampler_view *sampler_view;
 
    /* Viewport state. */
    struct pipe_viewport_state viewport;
@@ -104,10 +109,11 @@ struct blitter_context_priv
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 {
    struct blitter_context_priv *ctx;
-   struct pipe_blend_state blend = { 0 };
-   struct pipe_depth_stencil_alpha_state dsa = { { 0 } };
-   struct pipe_rasterizer_state rs_state = { 0 };
+   struct pipe_blend_state blend;
+   struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_rasterizer_state rs_state;
    struct pipe_sampler_state *sampler_state;
+   struct pipe_vertex_element velem[2];
    unsigned i;
 
    ctx = CALLOC_STRUCT(blitter_context_priv);
@@ -122,17 +128,21 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->blitter.saved_rs_state = INVALID_PTR;
    ctx->blitter.saved_fs = INVALID_PTR;
    ctx->blitter.saved_vs = INVALID_PTR;
+   ctx->blitter.saved_velem_state = INVALID_PTR;
    ctx->blitter.saved_fb_state.nr_cbufs = ~0;
-   ctx->blitter.saved_num_textures = ~0;
+   ctx->blitter.saved_num_sampler_views = ~0;
    ctx->blitter.saved_num_sampler_states = ~0;
+   ctx->blitter.saved_num_vertex_buffers = ~0;
 
    /* blend state objects */
+   memset(&blend, 0, sizeof(blend));
    ctx->blend_keep_color = pipe->create_blend_state(pipe, &blend);
 
    blend.rt[0].colormask = PIPE_MASK_RGBA;
    ctx->blend_write_color = pipe->create_blend_state(pipe, &blend);
 
    /* depth stencil alpha state objects */
+   memset(&dsa, 0, sizeof(dsa));
    ctx->dsa_keep_depth_stencil =
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
@@ -159,6 +169,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    sampler_state->wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler_state->wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler_state->wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler_state->normalized_coords = TRUE;
    /* The sampler state objects which sample from a specified mipmap level
     * are created on-demand. */
 
@@ -169,6 +180,16 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    rs_state.gl_rasterization_rules = 1;
    rs_state.flatshade = 1;
    ctx->rs_state = pipe->create_rasterizer_state(pipe, &rs_state);
+
+   /* vertex elements state */
+   memset(&velem[0], 0, sizeof(velem[0]) * 2);
+   for (i = 0; i < 2; i++) {
+      velem[i].src_offset = i * 4 * sizeof(float);
+      velem[i].instance_divisor = 0;
+      velem[i].vertex_buffer_index = 0;
+      velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
+   ctx->velem_state = pipe->create_vertex_elements_state(pipe, 2, &velem[0]);
 
    /* fragment shaders are created on-demand */
 
@@ -196,8 +217,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 
    /* create the vertex buffer */
    ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
-                                  32,
-                                  PIPE_BUFFER_USAGE_VERTEX,
+                                  PIPE_BIND_VERTEX_BUFFER,
                                   sizeof(ctx->vertices));
 
    return &ctx->blitter;
@@ -219,6 +239,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs_col);
    pipe->delete_vs_state(pipe, ctx->vs_tex);
+   pipe->delete_vertex_elements_state(pipe, ctx->velem_state);
 
    for (i = 0; i < PIPE_MAX_TEXTURE_TYPES; i++) {
       if (ctx->fs_texfetch_col[i])
@@ -235,7 +256,11 @@ void util_blitter_destroy(struct blitter_context *blitter)
       if (ctx->sampler_state[i])
          pipe->delete_sampler_state(pipe, ctx->sampler_state[i]);
 
-   pipe_buffer_reference(&ctx->vbuf, NULL);
+   if (ctx->sampler_view) {
+      pipe_sampler_view_reference(&ctx->sampler_view, NULL);
+   }
+
+   pipe_resource_reference(&ctx->vbuf, NULL);
    FREE(ctx);
 }
 
@@ -246,7 +271,8 @@ static void blitter_check_saved_CSOs(struct blitter_context_priv *ctx)
           ctx->blitter.saved_dsa_state != INVALID_PTR &&
           ctx->blitter.saved_rs_state != INVALID_PTR &&
           ctx->blitter.saved_fs != INVALID_PTR &&
-          ctx->blitter.saved_vs != INVALID_PTR);
+          ctx->blitter.saved_vs != INVALID_PTR &&
+          ctx->blitter.saved_velem_state != INVALID_PTR);
 }
 
 static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
@@ -259,12 +285,14 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
    pipe->bind_rasterizer_state(pipe, ctx->blitter.saved_rs_state);
    pipe->bind_fs_state(pipe, ctx->blitter.saved_fs);
    pipe->bind_vs_state(pipe, ctx->blitter.saved_vs);
+   pipe->bind_vertex_elements_state(pipe, ctx->blitter.saved_velem_state);
 
    ctx->blitter.saved_blend_state = INVALID_PTR;
    ctx->blitter.saved_dsa_state = INVALID_PTR;
    ctx->blitter.saved_rs_state = INVALID_PTR;
    ctx->blitter.saved_fs = INVALID_PTR;
    ctx->blitter.saved_vs = INVALID_PTR;
+   ctx->blitter.saved_velem_state = INVALID_PTR;
 
    pipe->set_stencil_ref(pipe, &ctx->blitter.saved_stencil_ref);
 
@@ -285,11 +313,18 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
       ctx->blitter.saved_num_sampler_states = ~0;
    }
 
-   if (ctx->blitter.saved_num_textures != ~0) {
-      pipe->set_fragment_sampler_textures(pipe,
-                                          ctx->blitter.saved_num_textures,
-                                          ctx->blitter.saved_textures);
-      ctx->blitter.saved_num_textures = ~0;
+   if (ctx->blitter.saved_num_sampler_views != ~0) {
+      pipe->set_fragment_sampler_views(pipe,
+                                       ctx->blitter.saved_num_sampler_views,
+                                       ctx->blitter.saved_sampler_views);
+      ctx->blitter.saved_num_sampler_views = ~0;
+   }
+
+   if (ctx->blitter.saved_num_vertex_buffers != ~0) {
+      pipe->set_vertex_buffers(pipe,
+                                       ctx->blitter.saved_num_vertex_buffers,
+                                       ctx->blitter.saved_vertex_buffers);
+      ctx->blitter.saved_num_vertex_buffers = ~0;
    }
 }
 
@@ -424,7 +459,7 @@ static void blitter_draw_quad(struct blitter_context_priv *ctx)
    struct pipe_context *pipe = ctx->pipe;
 
    /* write vertices and draw them */
-   pipe_buffer_write(pipe->screen, ctx->vbuf,
+   pipe_buffer_write(pipe, ctx->vbuf,
                      0, sizeof(ctx->vertices), ctx->vertices);
 
    util_draw_vertex_buffer(pipe, ctx->vbuf, 0, PIPE_PRIM_TRIANGLE_FAN,
@@ -569,6 +604,7 @@ void util_blitter_clear(struct blitter_context *blitter,
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
 
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, num_cbufs));
    pipe->bind_vs_state(pipe, ctx->vs_col);
 
@@ -600,9 +636,10 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_framebuffer_state fb_state;
+   struct pipe_sampler_view viewTempl, *view;
 
    assert(blitter->saved_fb_state.nr_cbufs != ~0);
-   assert(blitter->saved_num_textures != ~0);
+   assert(blitter->saved_num_sampler_views != ~0);
    assert(blitter->saved_num_sampler_states != ~0);
    assert(src->texture->target < PIPE_MAX_TEXTURE_TYPES);
 
@@ -630,11 +667,24 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
       fb_state.zsbuf = 0;
    }
 
+   u_sampler_view_default_template(&viewTempl,
+                                   src->texture,
+                                   src->texture->format);
+   view = pipe->create_sampler_view(pipe,
+                                    src->texture,
+                                    &viewTempl);
+
+   if (ctx->sampler_view) {
+      pipe_sampler_view_reference(&ctx->sampler_view, NULL);
+   }
+   ctx->sampler_view = view;
+
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_vs_state(pipe, ctx->vs_tex);
    pipe->bind_fragment_sampler_states(pipe, 1,
       blitter_get_sampler_state(ctx, src->level));
-   pipe->set_fragment_sampler_textures(pipe, 1, &src->texture);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
+   pipe->set_fragment_sampler_views(pipe, 1, &view);
    pipe->set_framebuffer_state(pipe, &fb_state);
 
    /* set texture coordinates */
@@ -672,8 +722,8 @@ static void util_blitter_overlap_copy(struct blitter_context *blitter,
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
 
-   struct pipe_texture texTemp;
-   struct pipe_texture *texture;
+   struct pipe_resource texTemp;
+   struct pipe_resource *texture;
    struct pipe_surface *tex_surf;
 
    /* check whether the states are properly saved */
@@ -687,13 +737,13 @@ static void util_blitter_overlap_copy(struct blitter_context *blitter,
    texTemp.height0 = height;
    texTemp.depth0 = 1;
 
-   texture = screen->texture_create(screen, &texTemp);
+   texture = screen->resource_create(screen, &texTemp);
    if (!texture)
       return;
 
    tex_surf = screen->get_tex_surface(screen, texture, 0, 0, 0,
-				      PIPE_BUFFER_USAGE_GPU_READ | 
-				      PIPE_BUFFER_USAGE_GPU_WRITE);
+				      PIPE_BIND_BLIT_SOURCE | 
+				      PIPE_BIND_BLIT_DESTINATION);
 
    /* blit from the src to the temp */
    util_blitter_do_copy(blitter, tex_surf, 0, 0,
@@ -705,7 +755,7 @@ static void util_blitter_overlap_copy(struct blitter_context *blitter,
 			width, height,
 			FALSE);
    pipe_surface_reference(&tex_surf, NULL);
-   pipe_texture_reference(&texture, NULL);
+   pipe_resource_reference(&texture, NULL);
    blitter_restore_CSOs(ctx);
 }
 
@@ -739,8 +789,8 @@ void util_blitter_copy(struct blitter_context *blitter,
 		   
    is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
    is_stencil = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 1) != 0;
-   dst_tex_usage = is_depth || is_stencil ? PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
-                                            PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   dst_tex_usage = is_depth || is_stencil ? PIPE_BIND_DEPTH_STENCIL :
+                                            PIPE_BIND_RENDER_TARGET;
 
    /* check if we can sample from and render to the surfaces */
    /* (assuming copying a stencil buffer is not possible) */
@@ -748,7 +798,7 @@ void util_blitter_copy(struct blitter_context *blitter,
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
                                     dst_tex_usage, 0) ||
        !screen->is_format_supported(screen, src->format, src->texture->target,
-                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       util_surface_copy(pipe, FALSE, dst, dstx, dsty, src, srcx, srcy,
                         width, height);
       return;
@@ -785,7 +835,7 @@ void util_blitter_fill(struct blitter_context *blitter,
    /* check if we can render to the surface */
    if (util_format_is_depth_or_stencil(dst->format) || /* unlikely, but you never know */
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
-                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
+                                    PIPE_BIND_RENDER_TARGET, 0)) {
       util_surface_fill(pipe, dst, dstx, dsty, width, height, value);
       return;
    }
@@ -807,6 +857,7 @@ void util_blitter_fill(struct blitter_context *blitter,
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 1));
    pipe->bind_vs_state(pipe, ctx->vs_col);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
    fb_state.width = dst->width;

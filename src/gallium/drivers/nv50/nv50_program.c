@@ -30,6 +30,7 @@
 #include "tgsi/tgsi_util.h"
 
 #include "nv50_context.h"
+#include "nv50_transfer.h"
 
 #define NV50_SU_MAX_TEMP 127
 #define NV50_SU_MAX_ADDR 4
@@ -599,8 +600,8 @@ static void
 emit_interp(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *iv,
 		unsigned mode)
 {
-	assert(dst->rhw != -1);
 	struct nv50_program_exec *e = exec(pc);
+	assert(dst->rhw != -1);
 
 	e->inst[0] |= 0x80000000;
 	set_dst(pc, dst, e);
@@ -1614,7 +1615,7 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	struct nv50_reg *zero = alloc_immd(pc, 0.0);
 	struct nv50_reg *neg128 = alloc_immd(pc, -127.999999);
 	struct nv50_reg *pos128 = alloc_immd(pc,  127.999999);
-	struct nv50_reg *tmp[4];
+	struct nv50_reg *tmp[4] = { 0 };
 	boolean allow32 = pc->allow32;
 
 	pc->allow32 = FALSE;
@@ -2552,7 +2553,7 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		     const struct tgsi_full_instruction *inst)
 {
 	struct nv50_reg *rdst[4], *dst[4], *brdc, *src[3][4], *temp;
-	unsigned mask, sat, unit;
+	unsigned mask, sat, unit = 0;
 	int i, c;
 
 	mask = inst->Dst[0].Register.WriteMask;
@@ -3530,7 +3531,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	struct tgsi_parse_context tp;
 	struct nv50_program *p = pc->p;
 	boolean ret = FALSE;
-	unsigned i, c, instance_id, vertex_id, flat_nr = 0;
+	unsigned i, c, instance_id = 0, vertex_id = 0, flat_nr = 0;
 
 	tgsi_parse_init(&tp, pc->p->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&tp)) {
@@ -3728,7 +3729,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		copy_semantic_info(p);
 	} else
 	if (p->type == PIPE_SHADER_FRAGMENT) {
-		int rid, aid;
+		int rid = 0, aid;
 		unsigned n = 0, m = pc->attr_nr - flat_nr;
 
 		pc->allow32 = TRUE;
@@ -3762,7 +3763,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			p->cfg.in[n].hw = rid = aid;
 			i = p->cfg.in[n].id;
 
-			if (p->info.input_semantic_name[n] ==
+			if (p->info.input_semantic_name[i] ==
 			    TGSI_SEMANTIC_FACE) {
 				load_frontfacing(pc, &pc->attr[i * 4]);
 				continue;
@@ -3821,7 +3822,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		for (rid = 0; i < pc->result_nr * 4; i++)
 			pc->result[i].rhw = rid++;
 		if (p->info.writes_z)
-			pc->result[2].rhw = rid;
+			pc->result[2].rhw = rid++;
 
 		p->cfg.high_result = rid;
 
@@ -4157,7 +4158,8 @@ nv50_program_upload_data(struct nv50_context *nv50, uint32_t *map,
 static void
 nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct pipe_screen *pscreen = nv50->pipe.screen;
+	struct pipe_context *pipe = &nv50->pipe;
+	struct pipe_transfer *transfer;
 
 	if (!p->data[0] && p->immd_nr) {
 		struct nouveau_resource *heap = nv50->screen->immd_heap[0];
@@ -4182,9 +4184,10 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 
 	if (p->param_nr) {
 		unsigned cb;
-		uint32_t *map = pipe_buffer_map(pscreen,
+		uint32_t *map = pipe_buffer_map(pipe,
 						nv50->constbuf[p->type],
-						PIPE_BUFFER_USAGE_CPU_READ);
+						PIPE_TRANSFER_READ,
+						&transfer);
 		switch (p->type) {
 		case PIPE_SHADER_GEOMETRY: cb = NV50_CB_PGP; break;
 		case PIPE_SHADER_FRAGMENT: cb = NV50_CB_PFP; break;
@@ -4195,7 +4198,8 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 		}
 
 		nv50_program_upload_data(nv50, map, 0, p->param_nr, cb);
-		pipe_buffer_unmap(pscreen, nv50->constbuf[p->type]);
+		pipe_buffer_unmap(pipe, nv50->constbuf[p->type],
+				  transfer);
 	}
 }
 
@@ -4270,7 +4274,7 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	FREE(up);
 }
 
-void
+struct nouveau_stateobj *
 nv50_vertprog_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4285,6 +4289,9 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
+
+	if (!(nv50->dirty & NV50_NEW_VERTPROG))
+		return NULL;
 
 	so = so_new(5, 7, 2);
 	so_method(so, tesla, NV50TCL_VP_ADDRESS_HIGH, 2);
@@ -4301,11 +4308,10 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, NV50TCL_VP_START_ID, 1);
 	so_data  (so, 0); /* program start offset */
-	so_ref(so, &nv50->state.vertprog);
-	so_ref(NULL, &so);
+	return so;
 }
 
-void
+struct nouveau_stateobj *
 nv50_fragprog_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4320,6 +4326,9 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
+
+	if (!(nv50->dirty & NV50_NEW_FRAGPROG))
+		return NULL;
 
 	so = so_new(6, 7, 2);
 	so_method(so, tesla, NV50TCL_FP_ADDRESS_HIGH, 2);
@@ -4337,11 +4346,10 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.regs[3]);
 	so_method(so, tesla, NV50TCL_FP_START_ID, 1);
 	so_data  (so, 0); /* program start offset */
-	so_ref(so, &nv50->state.fragprog);
-	so_ref(NULL, &so);
+	return so;
 }
 
-void
+struct nouveau_stateobj *
 nv50_geomprog_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4356,6 +4364,9 @@ nv50_geomprog_validate(struct nv50_context *nv50)
 
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
+
+	if (!(nv50->dirty & NV50_NEW_GEOMPROG))
+		return NULL;
 
 	so = so_new(6, 7, 2);
 	so_method(so, tesla, NV50TCL_GP_ADDRESS_HIGH, 2);
@@ -4373,8 +4384,7 @@ nv50_geomprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.vert_count);
 	so_method(so, tesla, NV50TCL_GP_START_ID, 1);
 	so_data  (so, 0);
-	so_ref(so, &nv50->state.geomprog);
-	so_ref(NULL, &so);
+	return so;
 }
 
 static uint32_t
@@ -4454,7 +4464,7 @@ nv50_vec4_map(uint32_t *map32, int mid, uint8_t zval, uint32_t lin[4],
 	return mid;
 }
 
-void
+struct nouveau_stateobj *
 nv50_fp_linkage_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4540,7 +4550,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 	so = so_new(10, 54, 0);
 
 	n = (m + 3) / 4;
-	assert(m <= 32);
+	assert(m <= 64);
 	if (vp->type == PIPE_SHADER_GEOMETRY) {
 		so_method(so, tesla, NV50TCL_GP_RESULT_MAP_SIZE, 1);
 		so_data  (so, m);
@@ -4580,8 +4590,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_GP_ENABLE, 1);
 	so_data  (so, (vp->type == PIPE_SHADER_GEOMETRY) ? 1 : 0);
 
-	so_ref(so, &nv50->state.fp_linkage);
-	so_ref(NULL, &so);
+	return so;
 }
 
 static int
@@ -4592,7 +4601,7 @@ construct_vp_gp_mapping(uint32_t *map32, int m,
 	int i, j, c;
 
         for (i = 0; i < gp->cfg.in_nr; ++i) {
-                uint8_t oid, mv = 0, mg = gp->cfg.in[i].mask;
+                uint8_t oid = 0, mv = 0, mg = gp->cfg.in[i].mask;
 
                 for (j = 0; j < vp->cfg.out_nr; ++j) {
                         if (vp->cfg.out[j].sn == gp->cfg.in[i].sn &&
@@ -4615,7 +4624,7 @@ construct_vp_gp_mapping(uint32_t *map32, int m,
 	return m;
 }
 
-void
+struct nouveau_stateobj *
 nv50_gp_linkage_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
@@ -4625,10 +4634,8 @@ nv50_gp_linkage_validate(struct nv50_context *nv50)
 	uint32_t map[16];
 	int m = 0;
 
-	if (!gp) {
-		so_ref(NULL, &nv50->state.gp_linkage);
-		return;
-	}
+	if (!gp)
+		return NULL;
 	memset(map, 0, sizeof(map));
 
 	m = construct_vp_gp_mapping(map, m, vp, gp);
@@ -4646,8 +4653,7 @@ nv50_gp_linkage_validate(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_VP_RESULT_MAP(0), m);
 	so_datap (so, map, m);
 
-	so_ref(so, &nv50->state.gp_linkage);
-	so_ref(NULL, &so);
+	return so;
 }
 
 void

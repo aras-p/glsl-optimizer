@@ -42,6 +42,15 @@ _mesa_init_shader_state(GLcontext * ctx);
 extern void
 _mesa_free_shader_state(GLcontext *ctx);
 
+
+extern void
+_mesa_copy_string(GLchar *dst, GLsizei maxLength,
+                  GLsizei *length, const GLchar *src);
+
+extern GLint
+_mesa_sizeof_glsl_type(GLenum type);
+
+
 /*
 extern struct gl_shader_program *
 _mesa_new_shader_program(GLcontext *ctx, GLuint name);

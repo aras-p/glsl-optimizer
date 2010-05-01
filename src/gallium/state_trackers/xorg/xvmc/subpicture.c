@@ -133,8 +133,8 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    XvMCContextPrivate *context_priv;
    XvMCSubpicturePrivate *subpicture_priv;
    struct pipe_video_context *vpipe;
-   struct pipe_texture template;
-   struct pipe_texture *tex;
+   struct pipe_resource template;
+   struct pipe_resource *tex;
    Status ret;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating subpicture %p.\n", subpicture);
@@ -162,7 +162,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    if (!subpicture_priv)
       return BadAlloc;
 
-   memset(&template, 0, sizeof(struct pipe_texture));
+   memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
    template.format = XvIDToPipe(xvimage_id);
    template.last_level = 0;
@@ -175,14 +175,15 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
       template.height0 = util_next_power_of_two(height);
    }
    template.depth0 = 1;
-   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+   template.usage = PIPE_USAGE_DYNAMIC;
+   template.bind = PIPE_BIND_SAMPLER_VIEW;
+   template.flags = 0;
 
    subpicture_priv->context = context;
-   tex = vpipe->screen->texture_create(vpipe->screen, &template);
+   tex = vpipe->screen->resource_create(vpipe->screen, &template);
    subpicture_priv->sfc = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
-                                                         PIPE_BUFFER_USAGE_CPU_WRITE |
-                                                         PIPE_BUFFER_USAGE_GPU_READ);
-   pipe_texture_reference(&tex, NULL);
+                                                         PIPE_BIND_SAMPLER_VIEW);
+   pipe_resource_reference(&tex, NULL);
    if (!subpicture_priv->sfc) {
       FREE(subpicture_priv);
       return BadAlloc;
@@ -260,6 +261,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 
    /* TODO: Assert rects are within bounds? Or clip? */
 
+#if 0
    xfer = screen->get_tex_transfer(screen, subpicture_priv->sfc->texture, 0, 0, 0,
                                    PIPE_TRANSFER_WRITE, dstx, dsty, width, height);
    if (!xfer)
@@ -290,6 +292,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 
    screen->transfer_unmap(screen, xfer);
    screen->tex_transfer_destroy(xfer);
+#endif
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p composited.\n", subpicture);
 

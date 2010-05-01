@@ -1,0 +1,562 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  7.9
+ *
+ * Copyright 2009 VMware, Inc.  All Rights Reserved.
+ * Copyright (C) 2010 LunarG Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Chia-I Wu <olv@lunarg.com>
+ */
+
+#include "state_tracker/st_api.h"
+
+#include "pipe/p_context.h"
+#include "pipe/p_screen.h"
+#include "util/u_memory.h"
+#include "util/u_inlines.h"
+#include "util/u_format.h"
+#include "util/u_sampler.h"
+
+#include "vg_manager.h"
+#include "vg_context.h"
+#include "image.h"
+#include "mask.h"
+
+static struct pipe_resource *
+create_texture(struct pipe_context *pipe, enum pipe_format format,
+                    VGint width, VGint height)
+{
+   struct pipe_resource templ;
+
+   memset(&templ, 0, sizeof(templ));
+
+   if (format != PIPE_FORMAT_NONE) {
+      templ.format = format;
+   }
+   else {
+      templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
+   }
+
+   templ.target = PIPE_TEXTURE_2D;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
+   templ.last_level = 0;
+
+   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
+      templ.bind = PIPE_BIND_DEPTH_STENCIL;
+   } else {
+      templ.bind = (PIPE_BIND_DISPLAY_TARGET |
+                    PIPE_BIND_RENDER_TARGET |
+                    PIPE_BIND_SAMPLER_VIEW);
+   }
+
+   return pipe->screen->resource_create(pipe->screen, &templ);
+}
+
+static struct pipe_sampler_view *
+create_tex_and_view(struct pipe_context *pipe, enum pipe_format format,
+                    VGint width, VGint height)
+{
+   struct pipe_resource *texture;
+   struct pipe_sampler_view view_templ;
+   struct pipe_sampler_view *view;
+
+   texture = create_texture(pipe, format, width, height);
+
+   if (!texture)
+      return NULL;
+
+   u_sampler_view_default_template(&view_templ, texture, texture->format);
+   view = pipe->create_sampler_view(pipe, texture, &view_templ);
+   /* want the texture to go away if the view is freed */
+   pipe_resource_reference(&texture, NULL);
+
+   return view;
+}
+
+static void
+setup_new_alpha_mask(struct vg_context *ctx, struct st_framebuffer *stfb)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_sampler_view *old_sampler_view = stfb->alpha_mask_view;
+
+   /*
+     we use PIPE_FORMAT_B8G8R8A8_UNORM because we want to render to
+     this texture and use it as a sampler, so while this wastes some
+     space it makes both of those a lot simpler
+   */
+   stfb->alpha_mask_view = create_tex_and_view(pipe,
+         PIPE_FORMAT_B8G8R8A8_UNORM, stfb->width, stfb->height);
+
+   if (!stfb->alpha_mask_view) {
+      if (old_sampler_view)
+         pipe_sampler_view_reference(&old_sampler_view, NULL);
+      return;
+   }
+
+   /* XXX could this call be avoided? */
+   vg_validate_state(ctx);
+
+   /* alpha mask starts with 1.f alpha */
+   mask_fill(0, 0, stfb->width, stfb->height, 1.f);
+
+   /* if we had an old surface copy it over */
+   if (old_sampler_view) {
+      struct pipe_surface *surface = pipe->screen->get_tex_surface(
+         pipe->screen,
+         stfb->alpha_mask_view->texture,
+         0, 0, 0,
+         PIPE_BIND_RENDER_TARGET |
+         PIPE_BIND_BLIT_DESTINATION);
+      struct pipe_surface *old_surface = pipe->screen->get_tex_surface(
+         pipe->screen,
+         old_sampler_view->texture,
+         0, 0, 0,
+         PIPE_BIND_BLIT_SOURCE);
+      pipe->surface_copy(pipe,
+                         surface,
+                         0, 0,
+                         old_surface,
+                         0, 0,
+                         MIN2(old_surface->width, surface->width),
+                         MIN2(old_surface->height, surface->height));
+      if (surface)
+         pipe_surface_reference(&surface, NULL);
+      if (old_surface)
+         pipe_surface_reference(&old_surface, NULL);
+   }
+
+   /* Free the old texture
+    */
+   if (old_sampler_view)
+      pipe_sampler_view_reference(&old_sampler_view, NULL);
+}
+
+static boolean
+vg_context_update_depth_stencil_rb(struct vg_context * ctx,
+                                   uint width, uint height)
+{
+   struct st_renderbuffer *dsrb = ctx->draw_buffer->dsrb;
+   struct pipe_context *pipe = ctx->pipe;
+   unsigned surface_usage;
+
+   if ((dsrb->width == width && dsrb->height == height) && dsrb->texture)
+      return FALSE;
+
+   /* unreference existing ones */
+   pipe_surface_reference(&dsrb->surface, NULL);
+   pipe_resource_reference(&dsrb->texture, NULL);
+   dsrb->width = dsrb->height = 0;
+
+   /* Probably need dedicated flags for surface usage too:
+    */
+   surface_usage = (PIPE_BIND_RENDER_TARGET |
+                    PIPE_BIND_BLIT_SOURCE |
+                    PIPE_BIND_BLIT_DESTINATION);
+
+   dsrb->texture = create_texture(pipe, dsrb->format, width, height);
+   if (!dsrb->texture)
+      return TRUE;
+
+   dsrb->surface = pipe->screen->get_tex_surface(pipe->screen,
+                                                 dsrb->texture,
+                                                 0, 0, 0,
+                                                 surface_usage);
+   if (!dsrb->surface) {
+      pipe_resource_reference(&dsrb->texture, NULL);
+      return TRUE;
+   }
+
+   dsrb->width = width;
+   dsrb->height = height;
+
+   assert(dsrb->surface->width == width);
+   assert(dsrb->surface->height == height);
+
+   return TRUE;
+}
+
+static boolean
+vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
+{
+   struct st_renderbuffer *strb = ctx->draw_buffer->strb;
+   struct pipe_screen *screen = ctx->pipe->screen;
+
+   if (strb->texture == pt) {
+      pipe_resource_reference(&pt, NULL);
+      return FALSE;
+   }
+
+   /* unreference existing ones */
+   pipe_surface_reference(&strb->surface, NULL);
+   pipe_resource_reference(&strb->texture, NULL);
+   strb->width = strb->height = 0;
+
+   strb->texture = pt;
+   strb->surface = screen->get_tex_surface(screen, strb->texture, 0, 0, 0,
+         PIPE_BIND_RENDER_TARGET |
+         PIPE_BIND_BLIT_SOURCE |
+         PIPE_BIND_BLIT_DESTINATION);
+   if (!strb->surface) {
+      pipe_resource_reference(&strb->texture, NULL);
+      return TRUE;
+   }
+
+   strb->width = pt->width0;
+   strb->height = pt->height0;
+
+   return TRUE;
+}
+
+static void
+vg_context_update_draw_buffer(struct vg_context *ctx, struct pipe_resource *pt)
+{
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   boolean new_cbuf, new_zsbuf, new_size;
+
+   new_cbuf = vg_context_update_color_rb(ctx, pt);
+   new_zsbuf =
+      vg_context_update_depth_stencil_rb(ctx, pt->width0, pt->height0);
+
+   new_size = (stfb->width != pt->width0 || stfb->height != pt->height0);
+   stfb->width = pt->width0;
+   stfb->height = pt->height0;
+
+   if (new_cbuf || new_zsbuf || new_size) {
+      struct pipe_framebuffer_state *state = &ctx->state.g3d.fb;
+
+      memset(state, 0, sizeof(struct pipe_framebuffer_state));
+      state->width  = stfb->width;
+      state->height = stfb->height;
+      state->nr_cbufs = 1;
+      state->cbufs[0] = stfb->strb->surface;
+      state->zsbuf = stfb->dsrb->surface;
+
+      cso_set_framebuffer(ctx->cso_context, state);
+   }
+
+   if (new_zsbuf || new_size) {
+      ctx->state.dirty |= VIEWPORT_DIRTY;
+      ctx->state.dirty |= DEPTH_STENCIL_DIRTY;/*to reset the scissors*/
+
+      ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_DEPTHSTENCIL, NULL, 0.0, 0);
+
+      /* we need all the other state already set */
+
+      setup_new_alpha_mask(ctx, stfb);
+
+      pipe_sampler_view_reference( &stfb->blend_texture_view, NULL);
+      stfb->blend_texture_view = create_tex_and_view(ctx->pipe,
+            PIPE_FORMAT_B8G8R8A8_UNORM, stfb->width, stfb->height);
+   }
+}
+
+/**
+ * Flush the front buffer if the current context renders to the front buffer.
+ */
+void
+vg_manager_flush_frontbuffer(struct vg_context *ctx)
+{
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+
+   if (!stfb)
+      return;
+
+   switch (stfb->strb_att) {
+   case ST_ATTACHMENT_FRONT_LEFT:
+   case ST_ATTACHMENT_FRONT_RIGHT:
+      stfb->iface->flush_front(stfb->iface, stfb->strb_att);
+      break;
+   default:
+      break;
+   }
+}
+
+/**
+ * Re-validate the framebuffer.
+ */
+void
+vg_manager_validate_framebuffer(struct vg_context *ctx)
+{
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct pipe_resource *pt;
+
+   /* no binding surface */
+   if (!stfb)
+      return;
+
+   if (!p_atomic_read(&ctx->draw_buffer_invalid))
+      return;
+
+   /* validate the fb */
+   if (!stfb->iface->validate(stfb->iface, &stfb->strb_att, 1, &pt) || !pt)
+      return;
+
+   /*
+    * unset draw_buffer_invalid first because vg_context_update_draw_buffer
+    * will cause the framebuffer to be validated again because of a call to
+    * vg_validate_state
+    */
+   p_atomic_set(&ctx->draw_buffer_invalid, FALSE);
+   vg_context_update_draw_buffer(ctx, pt);
+}
+
+
+static void
+vg_context_notify_invalid_framebuffer(struct st_context_iface *stctxi,
+                                      struct st_framebuffer_iface *stfbi)
+{
+   struct vg_context *ctx = (struct vg_context *) stctxi;
+   p_atomic_set(&ctx->draw_buffer_invalid, TRUE);
+}
+
+static void
+vg_context_flush(struct st_context_iface *stctxi, unsigned flags,
+                 struct pipe_fence_handle **fence)
+{
+   struct vg_context *ctx = (struct vg_context *) stctxi;
+   ctx->pipe->flush(ctx->pipe, flags, fence);
+   if (flags & PIPE_FLUSH_RENDER_CACHE)
+      vg_manager_flush_frontbuffer(ctx);
+}
+
+static void
+vg_context_destroy(struct st_context_iface *stctxi)
+{
+   struct vg_context *ctx = (struct vg_context *) stctxi;
+   vg_destroy_context(ctx);
+}
+
+static struct st_context_iface *
+vg_api_create_context(struct st_api *stapi, struct st_manager *smapi,
+                      const struct st_visual *visual,
+                      struct st_context_iface *shared_stctxi)
+{
+   struct vg_context *shared_ctx = (struct vg_context *) shared_stctxi;
+   struct vg_context *ctx;
+   struct pipe_context *pipe;
+
+   pipe = smapi->screen->context_create(smapi->screen, NULL);
+   if (!pipe)
+      return NULL;
+   ctx = vg_create_context(pipe, NULL, shared_ctx);
+   if (!ctx) {
+      pipe->destroy(pipe);
+      return NULL;
+   }
+
+   ctx->iface.destroy = vg_context_destroy;
+
+   ctx->iface.notify_invalid_framebuffer =
+      vg_context_notify_invalid_framebuffer;
+   ctx->iface.flush = vg_context_flush;
+
+   ctx->iface.teximage = NULL;
+   ctx->iface.copy = NULL;
+
+   ctx->iface.st_context_private = (void *) smapi;
+
+   return &ctx->iface;
+}
+
+static struct st_renderbuffer *
+create_renderbuffer(enum pipe_format format)
+{
+   struct st_renderbuffer *strb;
+
+   strb = CALLOC_STRUCT(st_renderbuffer);
+   if (strb)
+      strb->format = format;
+
+   return strb;
+}
+
+static void
+destroy_renderbuffer(struct st_renderbuffer *strb)
+{
+   pipe_surface_reference(&strb->surface, NULL);
+   pipe_resource_reference(&strb->texture, NULL);
+   free(strb);
+}
+
+/**
+ * Decide the buffer to render to.
+ */
+static enum st_attachment_type
+choose_attachment(struct st_framebuffer_iface *stfbi)
+{
+   enum st_attachment_type statt;
+
+   statt = stfbi->visual->render_buffer;
+   if (statt != ST_ATTACHMENT_INVALID) {
+      /* use the buffer given by the visual, unless it is unavailable */
+      if (!st_visual_have_buffers(stfbi->visual, 1 << statt)) {
+         switch (statt) {
+         case ST_ATTACHMENT_BACK_LEFT:
+            statt = ST_ATTACHMENT_FRONT_LEFT;
+            break;
+         case ST_ATTACHMENT_BACK_RIGHT:
+            statt = ST_ATTACHMENT_FRONT_RIGHT;
+            break;
+         default:
+            break;
+         }
+
+         if (!st_visual_have_buffers(stfbi->visual, 1 << statt))
+            statt = ST_ATTACHMENT_INVALID;
+      }
+   }
+
+   return statt;
+}
+
+/**
+ * Bind the context to the given framebuffers.
+ */
+static boolean
+vg_context_bind_framebuffers(struct st_context_iface *stctxi,
+                             struct st_framebuffer_iface *stdrawi,
+                             struct st_framebuffer_iface *streadi)
+{
+   struct vg_context *ctx = (struct vg_context *) stctxi;
+   struct st_framebuffer *stfb;
+   enum st_attachment_type strb_att;
+
+   /* the draw and read framebuffers must be the same */
+   if (stdrawi != streadi)
+      return FALSE;
+
+   p_atomic_set(&ctx->draw_buffer_invalid, TRUE);
+
+   strb_att = (stdrawi) ? choose_attachment(stdrawi) : ST_ATTACHMENT_INVALID;
+
+   if (ctx->draw_buffer) {
+      stfb = ctx->draw_buffer;
+
+      /* free the existing fb */
+      if (!stdrawi ||
+          stfb->strb_att != strb_att ||
+          stfb->strb->format != stdrawi->visual->color_format ||
+          stfb->dsrb->format != stdrawi->visual->depth_stencil_format) {
+         destroy_renderbuffer(stfb->strb);
+         destroy_renderbuffer(stfb->dsrb);
+         free(stfb);
+
+         ctx->draw_buffer = NULL;
+      }
+   }
+
+   if (!stdrawi)
+      return TRUE;
+
+   if (strb_att == ST_ATTACHMENT_INVALID)
+      return FALSE;
+
+   /* create a new fb */
+   if (!ctx->draw_buffer) {
+      stfb = CALLOC_STRUCT(st_framebuffer);
+      if (!stfb)
+         return FALSE;
+
+      stfb->strb = create_renderbuffer(stdrawi->visual->color_format);
+      if (!stfb->strb) {
+         free(stfb);
+         return FALSE;
+      }
+
+      stfb->dsrb = create_renderbuffer(stdrawi->visual->depth_stencil_format);
+      if (!stfb->dsrb) {
+         free(stfb->strb);
+         free(stfb);
+         return FALSE;
+      }
+
+      stfb->width = 0;
+      stfb->height = 0;
+      stfb->strb_att = strb_att;
+
+      ctx->draw_buffer = stfb;
+   }
+
+   ctx->draw_buffer->iface = stdrawi;
+
+   return TRUE;
+}
+
+static boolean
+vg_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
+                    struct st_framebuffer_iface *stdrawi,
+                    struct st_framebuffer_iface *streadi)
+{
+   struct vg_context *ctx = (struct vg_context *) stctxi;
+
+   if (stctxi)
+      vg_context_bind_framebuffers(stctxi, stdrawi, streadi);
+   vg_set_current_context(ctx);
+
+   return TRUE;
+}
+
+static struct st_context_iface *
+vg_api_get_current(struct st_api *stapi)
+{
+   struct vg_context *ctx = vg_current_context();
+
+   return (ctx) ? &ctx->iface : NULL;
+}
+
+static boolean
+vg_api_is_visual_supported(struct st_api *stapi,
+                           const struct st_visual *visual)
+{
+   /* the impl requires a depth/stencil buffer */
+   return util_format_is_depth_and_stencil(visual->depth_stencil_format);
+}
+
+static st_proc_t
+vg_api_get_proc_address(struct st_api *stapi, const char *procname)
+{
+   /* TODO */
+   return (st_proc_t) NULL;
+}
+
+static void
+vg_api_destroy(struct st_api *stapi)
+{
+   free(stapi);
+}
+
+struct st_api st_vg_api = {
+   vg_api_destroy,
+   vg_api_get_proc_address,
+   vg_api_is_visual_supported,
+   vg_api_create_context,
+   vg_api_make_current,
+   vg_api_get_current,
+};
+
+struct st_api *
+st_api_create_OpenVG(void)
+{
+   return &st_vg_api;
+}

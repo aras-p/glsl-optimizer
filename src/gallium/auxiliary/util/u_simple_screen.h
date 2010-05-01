@@ -33,7 +33,7 @@
 struct pipe_screen;
 struct pipe_fence_handle;
 struct pipe_surface;
-struct pipe_buffer;
+struct pipe_resource;
 
 /**
  * Gallium3D drivers are (meant to be!) independent of both GL and the
@@ -53,11 +53,6 @@ struct pipe_winsys
    const char *(*get_name)( struct pipe_winsys *ws );
 
    /**
-    * Do any special operations to ensure buffer size is correct
-    */
-   void (*update_buffer)( struct pipe_winsys *ws,
-                          void *context_private );
-   /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     */
@@ -73,14 +68,13 @@ struct pipe_winsys
     * window systems must then implement that interface (rather than the
     * other way around...).
     *
-    * usage is a bitmask of PIPE_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
-    * usage argument is only an optimization hint, not a guarantee, therefore
-    * proper behavior must be observed in all circumstances.
+    * usage is a bitmask of PIPE_BIND_*.
+    * All possible usages must be present.
     *
     * alignment indicates the client's alignment requirements, eg for
     * SSE instructions.
     */
-   struct pipe_buffer *(*buffer_create)( struct pipe_winsys *ws,
+   struct pipe_resource *(*buffer_create)( struct pipe_winsys *ws,
                                          unsigned alignment,
                                          unsigned usage,
                                          unsigned size );
@@ -106,7 +100,7 @@ struct pipe_winsys
     * Note that ptr may be accessed at any time upto the time when the
     * buffer is destroyed, so the data must not be freed before then.
     */
-   struct pipe_buffer *(*user_buffer_create)(struct pipe_winsys *ws,
+   struct pipe_resource *(*user_buffer_create)(struct pipe_winsys *ws,
                                                     void *ptr,
                                                     unsigned bytes);
 
@@ -117,11 +111,11 @@ struct pipe_winsys
     * display targets) must be allocated with special characteristics, memory
     * pools, or obtained directly from the windowing system.
     *
-    * This callback is invoked by the pipe_screenwhen creating a texture marked
-    * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag  to get the underlying
+    * This callback is invoked by the pipe_screen when creating a texture marked
+    * with the PIPE_BIND_DISPLAY_TARGET flag  to get the underlying
     * buffer storage.
     */
-   struct pipe_buffer *(*surface_buffer_create)(struct pipe_winsys *ws,
+   struct pipe_resource *(*surface_buffer_create)(struct pipe_winsys *ws,
                                                 unsigned width, unsigned height,
                                                 enum pipe_format format,
                                                 unsigned usage,
@@ -134,13 +128,13 @@ struct pipe_winsys
     * flags is bitmask of PIPE_BUFFER_USAGE_CPU_READ/WRITE flags.
     */
    void *(*buffer_map)( struct pipe_winsys *ws,
-                        struct pipe_buffer *buf,
+                        struct pipe_resource *buf,
                         unsigned usage );
 
    void (*buffer_unmap)( struct pipe_winsys *ws,
-                         struct pipe_buffer *buf );
+                         struct pipe_resource *buf );
 
-   void (*buffer_destroy)( struct pipe_buffer *buf );
+   void (*buffer_destroy)( struct pipe_resource *buf );
 
 
    /** Set ptr = fence, with reference counting */

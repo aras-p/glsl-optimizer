@@ -539,6 +539,7 @@ struct radeon_context {
                         unsigned reg_width,
                         unsigned reg_height,
                         unsigned flip_y);
+	   unsigned (*is_format_renderable)(gl_format mesa_format);
    } vtbl;
 };
 

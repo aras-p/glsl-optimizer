@@ -9,7 +9,6 @@ glx_progs = [
     'getprocaddress',
     'jkrahntest',
     'sharedtex',
-    'texcompress2',
     'texobjshare',
 ]
 
@@ -45,6 +44,7 @@ progs = [
     'copypixrate',
     'crossbar',
     'cva',
+    'cva_huge',
     'cylwrap',
     'drawbuffers',
     'drawbuffers2',
@@ -89,6 +89,7 @@ progs = [
     'scissor-viewport',
     'seccolor',
     'shader_api',
+    'stencilreaddraw',
     'stencil_twoside',
     'stencil_wrap',
     'stencilwrap',

@@ -60,6 +60,7 @@
 void
 _swrast_span_default_attribs(GLcontext *ctx, SWspan *span)
 {
+   GLchan r, g, b, a;
    /* Z*/
    {
       const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
@@ -80,7 +81,6 @@ _swrast_span_default_attribs(GLcontext *ctx, SWspan *span)
    span->attrStepY[FRAG_ATTRIB_WPOS][3] = 0.0;
 
    /* primary color, or color index */
-   GLchan r, g, b, a;
    UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.RasterColor[0]);
    UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.RasterColor[1]);
    UNCLAMPED_FLOAT_TO_CHAN(b, ctx->Current.RasterColor[2]);

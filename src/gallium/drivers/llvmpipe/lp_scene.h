@@ -44,10 +44,8 @@ struct lp_scene_queue;
 /* We're limited to 2K by 2K for 32bit fixed point rasterization.
  * Will need a 64-bit version for larger framebuffers.
  */
-#define MAXHEIGHT 2048
-#define MAXWIDTH 2048
-#define TILES_X (MAXWIDTH / TILE_SIZE)
-#define TILES_Y (MAXHEIGHT / TILE_SIZE)
+#define TILES_X (LP_MAX_WIDTH / TILE_SIZE)
+#define TILES_Y (LP_MAX_HEIGHT / TILE_SIZE)
 
 
 #define CMD_BLOCK_MAX 128
@@ -97,10 +95,10 @@ struct data_block_list {
 };
 
 
-/** List of texture references */
-struct texture_ref {
-   struct pipe_texture *texture;
-   struct texture_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
+/** List of resource references */
+struct resource_ref {
+   struct pipe_resource *resource;
+   struct resource_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
 };
 
 
@@ -114,21 +112,20 @@ struct texture_ref {
  */
 struct lp_scene {
    struct pipe_context *pipe;
-   struct pipe_transfer *cbuf_transfer[PIPE_MAX_COLOR_BUFS];
-   struct pipe_transfer *zsbuf_transfer;
-
-   /* Scene's buffers are mapped at the time the scene is enqueued:
-    */
-   void *cbuf_map[PIPE_MAX_COLOR_BUFS];
-   uint8_t *zsbuf_map;
 
    /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
 
-   /** list of textures referenced by the scene commands */
-   struct texture_ref textures;
+   /** list of resources referenced by the scene commands */
+   struct resource_ref resources;
 
-   boolean write_depth;
+   /** Approx memory used by the scene (in bytes).  This includes the
+    * shared and per-tile bins plus any referenced resources/textures.
+    */
+   unsigned scene_size;
+
+   boolean has_color_clear;
+   boolean has_depth_clear;
 
    /**
     * Number of active tiles in each dimension.
@@ -169,11 +166,11 @@ unsigned lp_scene_data_size( const struct lp_scene *scene );
 
 unsigned lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y );
 
-void lp_scene_texture_reference( struct lp_scene *scene,
-                                 struct pipe_texture *texture );
+void lp_scene_add_resource_reference(struct lp_scene *scene,
+                                     struct pipe_resource *resource);
 
-boolean lp_scene_is_texture_referenced( const struct lp_scene *scene,
-                                        const struct pipe_texture *texture );
+boolean lp_scene_is_resource_referenced(const struct lp_scene *scene,
+                                        const struct pipe_resource *resource );
 
 
 /**
@@ -188,6 +185,8 @@ lp_scene_alloc( struct lp_scene *scene, unsigned size)
    if (list->tail->used + size > DATA_BLOCK_SIZE) {
       lp_bin_new_data_block( list );
    }
+
+   scene->scene_size += size;
 
    {
       struct data_block *tail = list->tail;
@@ -211,6 +210,8 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
       lp_bin_new_data_block( list );
    }
 
+   scene->scene_size += size;
+
    {
       struct data_block *tail = list->tail;
       ubyte *data = tail->data + tail->used;
@@ -227,6 +228,7 @@ static INLINE void
 lp_scene_putback_data( struct lp_scene *scene, unsigned size)
 {
    struct data_block_list *list = &scene->data;
+   scene->scene_size -= size;
    assert(list->tail->used >= size);
    list->tail->used -= size;
 }
@@ -306,13 +308,21 @@ lp_scene_bin_iter_begin( struct lp_scene *scene );
 struct cmd_bin *
 lp_scene_bin_iter_next( struct lp_scene *scene, int *bin_x, int *bin_y );
 
+
 void
 lp_scene_rasterize( struct lp_scene *scene,
-                    struct lp_rasterizer *rast,
-                    boolean write_depth );
+                    struct lp_rasterizer *rast );
 
 void
 lp_scene_begin_binning( struct lp_scene *scene,
                         struct pipe_framebuffer_state *fb );
+
+
+static INLINE unsigned
+lp_scene_get_size(const struct lp_scene *scene)
+{
+   return scene->scene_size;
+}
+
 
 #endif /* LP_BIN_H */

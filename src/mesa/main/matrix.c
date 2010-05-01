@@ -322,7 +322,7 @@ _mesa_LoadIdentity( void )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glLoadIdentity()");
+      _mesa_debug(ctx, "glLoadIdentity()\n");
 
    _math_matrix_set_identity( ctx->CurrentStack->Top );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;

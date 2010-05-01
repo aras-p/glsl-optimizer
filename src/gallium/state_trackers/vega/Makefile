@@ -25,8 +25,8 @@ VG_SOURCES = \
            api_transform.c \
            vgu.c        \
            vg_context.c \
+           vg_manager.c \
            vg_state.c   \
-           vg_tracker.c \
            vg_translate.c \
            polygon.c    \
            bezier.c     \
@@ -42,7 +42,8 @@ VG_SOURCES = \
 
 VG_OBJECTS = $(VG_SOURCES:.c=.o)
 
-VG_LIBS = $(GALLIUM_AUXILIARIES) -lm
+VG_LIBS = $(GALLIUM_AUXILIARIES)
+VG_LIB_DEPS = $(EXTRA_LIB_PATH) -lm
 
 ### Include directories
 
@@ -53,7 +54,7 @@ INCLUDE_DIRS = \
 
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(DEFINES) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 default: depend $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME)
 
@@ -64,7 +65,7 @@ $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME): $(VG_OBJECTS) $(VG_LIBS)
 		-minor $(VG_MINOR) \
 		-patch $(VG_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
-		$(VG_OBJECTS) $(VG_LIBS)
+		$(VG_OBJECTS) $(VG_LIBS) $(VG_LIB_DEPS)
 
 ######################################################################
 # Generic stuff

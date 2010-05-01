@@ -55,7 +55,7 @@ static boolean is_digit_alpha_underscore( const char *cur )
    return is_digit( cur ) || is_alpha_underscore( cur );
 }
 
-static boolean uprcase( char c )
+static char uprcase( char c )
 {
    if (c >= 'a' && c <= 'z')
       return c += 'A' - 'a';
@@ -76,7 +76,7 @@ streq_nocase_uprcase(const char *str1,
       str1++;
       str2++;
    }
-   return TRUE;
+   return *str1 == 0 && *str2 == 0;
 }
 
 static boolean str_match_no_case( const char **pcur, const char *str )

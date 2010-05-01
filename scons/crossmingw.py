@@ -176,7 +176,7 @@ def generate(env):
 
     # MinGW port of gdb does not handle well dwarf debug info which is the
     # default in recent gcc versions
-    env.AppendUnique(CFLAGS = ['-gstabs'])
+    env.AppendUnique(CCFLAGS = ['-gstabs'])
 
     env.AppendUnique(CPPDEFINES = [('__MSVCRT_VERSION__', '0x0700')])
     #env.AppendUnique(LIBS = ['iberty'])

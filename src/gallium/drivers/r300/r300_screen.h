@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,39 +28,25 @@
 
 #include "r300_chipset.h"
 
-struct radeon_winsys;
+#include <stdio.h>
 
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
 
-    struct radeon_winsys* radeon_winsys;
+    struct r300_winsys_screen *rws;
 
     /* Chipset capabilities */
-    struct r300_capabilities* caps;
+    struct r300_capabilities caps;
 
     /** Combination of DBG_xxx flags */
     unsigned debug;
 };
 
-struct r300_transfer {
-    /* Parent class */
-    struct pipe_transfer transfer;
-
-    /* Offset from start of buffer. */
-    unsigned offset;
-};
 
 /* Convenience cast wrapper. */
 static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
     return (struct r300_screen*)screen;
-}
-
-/* Convenience cast wrapper. */
-static INLINE struct r300_transfer*
-r300_transfer(struct pipe_transfer* transfer)
-{
-    return (struct r300_transfer*)transfer;
 }
 
 /* Debug functionality. */
@@ -81,6 +68,10 @@ r300_transfer(struct pipe_transfer* transfer)
 #define DBG_DRAW    0x0000010
 #define DBG_TEX     0x0000020
 #define DBG_FALL    0x0000040
+#define DBG_ANISOHQ 0x0000080
+#define DBG_NO_TILING 0x0000100
+#define DBG_NO_IMMD 0x0000200
+#define DBG_STATS   0x0000400
 /*@}*/
 
 static INLINE boolean SCREEN_DBG_ON(struct r300_screen * screen, unsigned flags)
@@ -94,12 +85,13 @@ static INLINE void SCREEN_DBG(struct r300_screen * screen, unsigned flags,
     if (SCREEN_DBG_ON(screen, flags)) {
         va_list va;
         va_start(va, fmt);
-        debug_vprintf(fmt, va);
+        vfprintf(stderr, fmt, va);
         va_end(va);
     }
 }
 
 void r300_init_debug(struct r300_screen* ctx);
 
-#endif /* R300_SCREEN_H */
+void r300_init_screen_resource_functions(struct r300_screen *r300screen);
 
+#endif /* R300_SCREEN_H */

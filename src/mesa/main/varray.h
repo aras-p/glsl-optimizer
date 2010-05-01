@@ -174,6 +174,9 @@ _mesa_DrawRangeElementsBaseVertex(GLenum mode, GLuint start, GLuint end,
 				  const GLvoid *indices,
 				  GLint basevertex);
 
+extern void GLAPIENTRY
+_mesa_PrimitiveRestartIndex(GLuint index);
+
 
 extern void
 _mesa_copy_client_array(GLcontext *ctx,

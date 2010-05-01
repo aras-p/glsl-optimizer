@@ -28,6 +28,7 @@ if env['platform'] in ['windows']:
         'stw_framebuffer.c',
         'stw_getprocaddress.c',
         'stw_pixelformat.c',
+        'stw_st.c',
         'stw_tls.c',
         'stw_wgl.c',
     ]

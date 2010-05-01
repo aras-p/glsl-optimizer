@@ -180,7 +180,7 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-VERSION=7.8-devel
+VERSION=7.9-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
@@ -215,7 +215,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/glx_mangle.h				\
 	$(DIRECTORY)/include/GL/glfbdev.h				\
 	$(DIRECTORY)/include/GL/mesa_wgl.h				\
-	$(DIRECTORY)/include/GL/mglmesa.h				\
 	$(DIRECTORY)/include/GL/osmesa.h				\
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
@@ -244,7 +243,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/*.[ch]			\
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
-	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.gc			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/Makefile		\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
@@ -322,9 +320,12 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/Makefile				\
 	$(DIRECTORY)/src/gallium/Makefile.template			\
 	$(DIRECTORY)/src/gallium/SConscript				\
+	$(DIRECTORY)/src/gallium/targets/Makefile.dri			\
+	$(DIRECTORY)/src/gallium/targets/Makefile.egl			\
 	$(DIRECTORY)/src/gallium/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/Makefile				\
+	$(DIRECTORY)/src/gallium/*/*/Makefile.egl			\
 	$(DIRECTORY)/src/gallium/*/*/Makefile.template			\
 	$(DIRECTORY)/src/gallium/*/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
@@ -380,15 +381,6 @@ SGI_GLU_FILES = \
 	$(DIRECTORY)/src/glu/sgi/libtess/*.[ch]				\
 	$(DIRECTORY)/src/glu/sgi/libutil/*.[ch]
 
-MESA_GLU_FILES = \
-	$(DIRECTORY)/src/glu/mesa/README[12]		\
-	$(DIRECTORY)/src/glu/mesa/Makefile*		\
-	$(DIRECTORY)/src/glu/mesa/descrip.mms		\
-	$(DIRECTORY)/src/glu/mesa/mms_depend		\
-	$(DIRECTORY)/src/glu/mesa/*.def			\
-	$(DIRECTORY)/src/glu/mesa/depend		\
-	$(DIRECTORY)/src/glu/mesa/*.[ch]
-
 GLW_FILES = \
 	$(DIRECTORY)/src/glw/*.[ch]			\
 	$(DIRECTORY)/src/glw/Makefile*			\
@@ -417,6 +409,18 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/demos/*.cxx			\
 	$(DIRECTORY)/progs/demos/*.dat			\
 	$(DIRECTORY)/progs/demos/README			\
+	$(DIRECTORY)/progs/egl/eglut/Makefile		\
+	$(DIRECTORY)/progs/egl/eglut/*.[ch]		\
+	$(DIRECTORY)/progs/egl/opengl/Makefile		\
+	$(DIRECTORY)/progs/egl/opengl/*.[ch]		\
+	$(DIRECTORY)/progs/egl/opengles1/Makefile	\
+	$(DIRECTORY)/progs/egl/opengles1/*.[ch]		\
+	$(DIRECTORY)/progs/egl/opengles2/Makefile	\
+	$(DIRECTORY)/progs/egl/opengles2/*.[ch]		\
+	$(DIRECTORY)/progs/egl/openvg/Makefile		\
+	$(DIRECTORY)/progs/egl/openvg/*.[ch]		\
+	$(DIRECTORY)/progs/egl/openvg/*/Makefile	\
+	$(DIRECTORY)/progs/egl/openvg/*/*.[ch]		\
 	$(DIRECTORY)/progs/fbdev/Makefile		\
 	$(DIRECTORY)/progs/fbdev/glfbdevtest.c		\
 	$(DIRECTORY)/progs/objviewer/*.[ch]		\
@@ -451,11 +455,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.cpp		\
-	$(DIRECTORY)/src/glut/beos/Makefile		\
-	$(DIRECTORY)/src/glut/fbdev/Makefile		\
-	$(DIRECTORY)/src/glut/fbdev/*[ch]		\
-	$(DIRECTORY)/src/glut/mini/*[ch]		\
-	$(DIRECTORY)/src/glut/mini/glut.pc.in		\
+	$(DIRECTORY)/src/glut/beos/Makefile
 
 DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\

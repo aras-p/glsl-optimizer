@@ -6,7 +6,12 @@ LIBNAME = llvmpipe
 DEFINES += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 
 C_SOURCES = \
-	lp_buffer.c \
+	lp_bld_alpha.c \
+	lp_bld_blend_aos.c \
+	lp_bld_blend_logicop.c \
+	lp_bld_blend_soa.c \
+	lp_bld_depth.c \
+	lp_bld_interp.c \
 	lp_clear.c \
 	lp_context.c \
 	lp_draw_arrays.c \
@@ -35,27 +40,27 @@ C_SOURCES = \
 	lp_state_vertex.c \
 	lp_state_vs.c \
 	lp_surface.c \
-	lp_tex_sample_llvm.c \
+	lp_tex_sample.c \
 	lp_texture.c \
 	lp_tile_image.c \
 	lp_tile_soa.c
 
 CPP_SOURCES = \
 
+PROGS := lp_test_format	\
+	 lp_test_blend	\
+	 lp_test_conv	\
+	 lp_test_printf
+
 
 include ../../Makefile.template
 
-lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_access.py ../../auxiliary/util/u_format.csv
+lp_tile_soa.c: lp_tile_soa.py ../../auxiliary/util/u_format_parse.py ../../auxiliary/util/u_format_pack.py ../../auxiliary/util/u_format.csv
 	python lp_tile_soa.py ../../auxiliary/util/u_format.csv > $@
 
+LDFLAGS += $(LLVM_LDFLAGS)
+LIBS += $(GL_LIB_DEPS) -L../../auxiliary/ -lgallium libllvmpipe.a $(LLVM_LIBS)
+LD=g++
 
-testprogs := lp_test_format	\
-	     lp_test_blend	\
-	     lp_test_conv
+$(PROGS): lp_test_main.o libllvmpipe.a
 
-LIBS += $(GL_LIB_DEPS) -L. -lllvmpipe -L../../auxiliary/ -lgallium
-
-$(testprogs): lp_test_% : lp_test_%.o lp_test_main.o libllvmpipe.a
-	$(LD) $(filter %.o,$^) -o $@ -Wl,--start-group  $(LIBS) -Wl,--end-group
-
-default: $(testprogs)

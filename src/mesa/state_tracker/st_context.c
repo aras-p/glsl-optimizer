@@ -30,9 +30,8 @@
 #include "vbo/vbo.h"
 #include "shader/shader_api.h"
 #include "glapi/glapi.h"
-#include "st_public.h"
-#include "st_debug.h"
 #include "st_context.h"
+#include "st_debug.h"
 #include "st_cb_accum.h"
 #include "st_cb_bitmap.h"
 #include "st_cb_blit.h"
@@ -46,6 +45,7 @@
 #if FEATURE_OES_draw_texture
 #include "st_cb_drawtex.h"
 #endif
+#include "st_cb_eglimage.h"
 #include "st_cb_fbo.h"
 #if FEATURE_feedback
 #include "st_cb_feedback.h"
@@ -63,6 +63,7 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
+#include "util/u_rect.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
@@ -97,6 +98,19 @@ st_get_msaa(void)
 }
 
 
+/** Default method for pipe_context::surface_copy() */
+static void
+st_surface_copy(struct pipe_context *pipe,
+                struct pipe_surface *dst,
+                unsigned dst_x, unsigned dst_y,
+                struct pipe_surface *src,
+                unsigned src_x, unsigned src_y, 
+                unsigned w, unsigned h)
+{
+   util_surface_copy(pipe, FALSE, dst, dst_x, dst_y, src, src_x, src_y, w, h);
+}
+
+
 static struct st_context *
 st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 {
@@ -115,7 +129,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    _vbo_CreateContext(ctx);
 
 #if FEATURE_feedback || FEATURE_drawpix
-   st->draw = draw_create(); /* for selection/feedback */
+   st->draw = draw_create(pipe); /* for selection/feedback */
 
    /* Disable draw options that might convert points/lines to tris, etc.
     * as that would foul-up feedback/selection mode.
@@ -141,6 +155,14 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       st->state.sampler_list[i] = &st->state.samplers[i];
 
+   for (i = 0; i < 3; i++) {
+      memset(&st->velems_util_draw[i], 0, sizeof(struct pipe_vertex_element));
+      st->velems_util_draw[i].src_offset = i * 4 * sizeof(float);
+      st->velems_util_draw[i].instance_divisor = 0;
+      st->velems_util_draw[i].vertex_buffer_index = 0;
+      st->velems_util_draw[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
+
    /* we want all vertex data to be placed in buffer objects */
    vbo_use_buffer_objects(ctx);
 
@@ -157,6 +179,10 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    /* GL limits and extensions */
    st_init_limits(st);
    st_init_extensions(st);
+
+   /* plug in helper driver functions if needed */
+   if (!pipe->surface_copy)
+      pipe->surface_copy = st_surface_copy;
 
    return st;
 }
@@ -207,13 +233,13 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_drawtex(st);
 #endif
 
-   for (i = 0; i < Elements(st->state.sampler_texture); i++) {
-      pipe_texture_reference(&st->state.sampler_texture[i], NULL);
+   for (i = 0; i < Elements(st->state.sampler_views); i++) {
+      pipe_sampler_view_reference(&st->state.sampler_views[i], NULL);
    }
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i]) {
-         pipe_buffer_reference(&st->state.constants[i], NULL);
+         pipe_resource_reference(&st->state.constants[i], NULL);
       }
    }
 
@@ -261,52 +287,6 @@ void st_destroy_context( struct st_context *st )
 }
 
 
-GLboolean
-st_make_current(struct st_context *st,
-                struct st_framebuffer *draw,
-                struct st_framebuffer *read)
-{
-   /* Call this periodically to detect when the user has begun using
-    * GL rendering from multiple threads.
-    */
-   _glapi_check_multithread();
-
-   if (st) {
-      if (!_mesa_make_current(st->ctx, &draw->Base, &read->Base))
-         return GL_FALSE;
-
-      _mesa_check_init_viewport(st->ctx, draw->InitWidth, draw->InitHeight);
-
-      return GL_TRUE;
-   }
-   else {
-      return _mesa_make_current(NULL, NULL, NULL);
-   }
-}
-
-struct st_context *st_get_current(void)
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   return (ctx == NULL) ? NULL : ctx->st;
-}
-
-void st_copy_context_state(struct st_context *dst,
-                           struct st_context *src,
-                           uint mask)
-{
-   _mesa_copy_context(dst->ctx, src->ctx, mask);
-}
-
-
-
-st_proc st_get_proc_address(const char *procname)
-{
-   return (st_proc) _glapi_get_proc_address(procname);
-}
-
-
-
 void st_init_driver_functions(struct dd_function_table *functions)
 {
    _mesa_init_glsl_driver_functions(functions);
@@ -328,6 +308,8 @@ void st_init_driver_functions(struct dd_function_table *functions)
 #if FEATURE_OES_draw_texture
    st_init_drawtex_functions(functions);
 #endif
+
+   st_init_eglimage_functions(functions);
 
    st_init_fbo_functions(functions);
 #if FEATURE_feedback

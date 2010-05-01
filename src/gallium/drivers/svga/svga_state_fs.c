@@ -158,10 +158,11 @@ static int make_fs_key( const struct svga_context *svga,
     *
     * SVGA_NEW_TEXTURE_BINDING | SVGA_NEW_SAMPLER
     */
-   for (i = 0; i < svga->curr.num_textures; i++) {
-      if (svga->curr.texture[i]) {
+   for (i = 0; i < svga->curr.num_sampler_views; i++) {
+      if (svga->curr.sampler_views[i]) {
          assert(svga->curr.sampler[i]);
-         key->tex[i].texture_target = svga->curr.texture[i]->target;
+         assert(svga->curr.sampler_views[i]->texture);
+         key->tex[i].texture_target = svga->curr.sampler_views[i]->texture->target;
          if (!svga->curr.sampler[i]->normalized_coords) {
             key->tex[i].width_height_idx = idx++;
             key->tex[i].unnormalized = TRUE;
@@ -169,7 +170,7 @@ static int make_fs_key( const struct svga_context *svga,
          }
       }
    }
-   key->num_textures = svga->curr.num_textures;
+   key->num_textures = svga->curr.num_sampler_views;
 
    idx = 0;
    for (i = 0; i < svga->curr.num_samplers; ++i) {

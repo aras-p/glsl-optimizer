@@ -28,10 +28,23 @@
 #ifndef SP_FLUSH_H
 #define SP_FLUSH_H
 
+#include "pipe/p_compiler.h"
+
 struct pipe_context;
 struct pipe_fence_handle;
 
-void softpipe_flush(struct pipe_context *pipe, unsigned flags,
-                    struct pipe_fence_handle **fence);
+void
+softpipe_flush(struct pipe_context *pipe, unsigned flags,
+               struct pipe_fence_handle **fence);
+
+boolean
+softpipe_flush_resource(struct pipe_context *pipe,
+                        struct pipe_resource *texture,
+                        unsigned face,
+                        unsigned level,
+                        unsigned flush_flags,
+                        boolean read_only,
+                        boolean cpu_access,
+                        boolean do_not_block);
 
 #endif

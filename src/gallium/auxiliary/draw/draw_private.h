@@ -46,6 +46,10 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#ifdef HAVE_LLVM
+#include <llvm-c/ExecutionEngine.h>
+#endif
+
 
 struct pipe_context;
 struct draw_vertex_shader;
@@ -82,6 +86,8 @@ struct vertex_header {
  */
 struct draw_context
 {
+   struct pipe_context *pipe;
+
    /** Drawing/primitive pipeline stages */
    struct {
       struct draw_stage *first;  /**< one of the following */
@@ -105,6 +111,7 @@ struct draw_context
 
       float wide_point_threshold; /**< convert pnts to tris if larger than this */
       float wide_line_threshold;  /**< convert lines to tris if wider than this */
+      boolean wide_point_sprites; /**< convert points to tris for sprite mode */
       boolean line_stipple;       /**< do line stipple? */
       boolean point_sprite;       /**< convert points to quads for sprites? */
 
@@ -125,6 +132,7 @@ struct draw_context
          struct draw_pt_middle_end *fetch_emit;
          struct draw_pt_middle_end *fetch_shade_emit;
          struct draw_pt_middle_end *general;
+         struct draw_pt_middle_end *llvm;
       } middle;
 
       struct {
@@ -144,6 +152,7 @@ struct draw_context
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
          unsigned eltSize;
+         int eltBias;
          unsigned min_index;
          unsigned max_index;
          
@@ -174,8 +183,14 @@ struct draw_context
 
    double mrd;  /**< minimum resolvable depth value, for polygon offset */
 
-   /* pipe state that we need: */
+   /** Current rasterizer state given to us by the driver */
    const struct pipe_rasterizer_state *rasterizer;
+   /** Driver CSO handle for the current rasterizer state */
+   void *rast_handle;
+
+   /** Rasterizer CSOs without culling/stipple/etc */
+   void *rasterizer_no_cull[2][2];
+
    struct pipe_viewport_state viewport;
    boolean identity_viewport;
 
@@ -237,9 +252,17 @@ struct draw_context
 
    unsigned instance_id;
 
+#ifdef HAVE_LLVM
+   LLVMExecutionEngineRef engine;
+#endif
+
    void *driver_private;
 };
 
+/*******************************************************************************
+ * Draw common initialization code
+ */
+boolean draw_init(struct draw_context *draw);
 
 /*******************************************************************************
  * Vertex shader code:
@@ -344,6 +367,11 @@ void draw_pipeline_flush( struct draw_context *draw,
 void draw_do_flush( struct draw_context *draw, unsigned flags );
 
 
+
+void *
+draw_get_rasterizer_no_cull( struct draw_context *draw,
+                             boolean scissor,
+                             boolean flatshade );
 
 
 #endif /* DRAW_PRIVATE_H */

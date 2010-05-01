@@ -150,19 +150,20 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
 	   ctx->Const.FragmentProgram.MaxEnvParams);
 
-   if (intel->is_ironlake || intel->is_g4x || intel->gen >= 6) {
+   if (intel->is_g4x || intel->gen >= 5) {
       brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_GM45;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
       brw->has_surface_tile_offset = GL_TRUE;
       brw->has_compr4 = GL_TRUE;
       brw->has_aa_line_parameters = GL_TRUE;
+      brw->has_pln = GL_TRUE;
   } else {
       brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_965;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;
    }
 
    /* WM maximum threads is number of EUs times number of threads per EU. */
-   if (intel->is_ironlake) {
+   if (intel->gen == 5) {
       brw->urb.size = 1024;
       brw->vs_max_threads = 72;
       brw->wm_max_threads = 12 * 6;

@@ -31,6 +31,7 @@
 #include "main/mtypes.h"
 #include "shader/prog_cache.h"
 #include "pipe/p_state.h"
+#include "state_tracker/st_api.h"
 
 
 struct st_context;
@@ -43,12 +44,6 @@ struct cso_blend;
 struct gen_mipmap_state;
 struct blit_state;
 struct bitmap_cache;
-
-
-/** XXX we'd like to get rid of these */
-#define FRONT_STATUS_UNDEFINED    0
-#define FRONT_STATUS_DIRTY        1
-#define FRONT_STATUS_COPY_OF_BACK 2
 
 
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
@@ -73,6 +68,8 @@ struct st_tracked_state {
 
 struct st_context
 {
+   struct st_context_iface iface;
+
    GLcontext *ctx;
 
    struct pipe_context *pipe;
@@ -92,9 +89,9 @@ struct st_context
       struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
       struct pipe_sampler_state             *sampler_list[PIPE_MAX_SAMPLERS];
       struct pipe_clip_state clip;
-      struct pipe_buffer *constants[2];
+      struct pipe_resource *constants[2];
       struct pipe_framebuffer_state framebuffer;
-      struct pipe_texture *sampler_texture[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;
 
@@ -112,8 +109,6 @@ struct st_context
    struct {
       struct gl_fragment_program *fragment_program;
    } cb;
-
-   GLuint frontbuffer_status;  /**< one of FRONT_STATUS_ (XXX to be removed) */
 
    char vendor[100];
    char renderer[100];
@@ -140,7 +135,8 @@ struct st_context
       GLuint user_prog_sn;  /**< user fragment program serial no. */
       struct st_fragment_program *combined_prog;
       GLuint combined_prog_sn;
-      struct pipe_texture *pixelmap_texture;
+      struct pipe_resource *pixelmap_texture;
+      struct pipe_sampler_view *pixelmap_sampler_view;
       boolean pixelmap_enabled;  /**< use the pixelmap texture? */
    } pixel_xfer;
 
@@ -151,7 +147,7 @@ struct st_context
       enum pipe_format tex_format;
       void *vs;
       float vertices[4][3][4];  /**< vertex pos + color + texcoord */
-      struct pipe_buffer *vbuf;
+      struct pipe_resource *vbuf;
       unsigned vbuf_slot;       /* next free slot in vbuf */
       struct bitmap_cache *cache;
    } bitmap;
@@ -170,9 +166,12 @@ struct st_context
       void *vs;
       void *fs;
       float vertices[4][2][4];  /**< vertex pos + color */
-      struct pipe_buffer *vbuf;
+      struct pipe_resource *vbuf;
       unsigned vbuf_slot;
    } clear;
+
+   /** used for anything using util_draw_vertex_buffer */
+   struct pipe_vertex_element velems_util_draw[3];
 
    void *passthrough_fs;  /**< simple pass-through frag shader */
 
@@ -182,6 +181,7 @@ struct st_context
    struct cso_context *cso_context;
 
    int force_msaa;
+   void *winsys_drawable_handle;
 };
 
 
@@ -201,7 +201,11 @@ struct st_framebuffer
 {
    GLframebuffer Base;
    void *Private;
-   GLuint InitWidth, InitHeight;
+
+   struct st_framebuffer_iface *iface;
+   enum st_attachment_type statts[ST_ATTACHMENT_COUNT];
+   unsigned num_statts;
+   int32_t revalidate;
 };
 
 
@@ -245,6 +249,13 @@ st_fb_orientation(const struct gl_framebuffer *fb)
 
 extern int
 st_get_msaa(void);
+
+extern struct st_context *
+st_create_context(struct pipe_context *pipe, const __GLcontextModes *visual,
+                  struct st_context *share);
+
+extern void
+st_destroy_context(struct st_context *st);
 
 
 #endif

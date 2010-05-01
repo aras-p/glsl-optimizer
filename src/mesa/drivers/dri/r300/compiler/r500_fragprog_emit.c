@@ -190,6 +190,17 @@ static unsigned int use_source(struct r500_fragment_program_code* code, struct r
 	return 0;
 }
 
+/**
+ * NOP the specified instruction if it is not a texture lookup.
+ */
+static void alu_nop(struct r300_fragment_program_compiler *c, int ip)
+{
+	PROG_CODE;
+
+	if ((code->inst[ip].inst0 & 0x3) != R500_INST_TYPE_TEX) {
+		code->inst[ip].inst0 |= R500_INST_NOP;
+	}
+}
 
 /**
  * Emit a paired ALU instruction.
@@ -204,6 +215,14 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	}
 
 	int ip = ++code->inst_end;
+
+	/* Quirk: MDH/MDV (DDX/DDY) need a NOP on previous non-TEX instructions. */
+	if (inst->RGB.Opcode == RC_OPCODE_DDX || inst->Alpha.Opcode == RC_OPCODE_DDX ||
+		inst->RGB.Opcode == RC_OPCODE_DDY || inst->Alpha.Opcode == RC_OPCODE_DDY) {
+		if (ip > 0) {
+			alu_nop(c, ip - 1);
+		}
+	}
 
 	code->inst[ip].inst5 = translate_rgb_op(c, inst->RGB.Opcode);
 	code->inst[ip].inst4 = translate_alpha_op(c, inst->Alpha.Opcode);
@@ -252,8 +271,8 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	code->inst[ip].inst4 |= translate_arg_alpha(inst, 1) << R500_ALPHA_SEL_B_SHIFT;
 	code->inst[ip].inst5 |= translate_arg_alpha(inst, 2) << R500_ALU_RGBA_ALPHA_SEL_C_SHIFT;
 
-    code->inst[ip].inst3 |= R500_ALU_RGB_TARGET(inst->RGB.Target);
-    code->inst[ip].inst4 |= R500_ALPHA_TARGET(inst->Alpha.Target);
+	code->inst[ip].inst3 |= R500_ALU_RGB_TARGET(inst->RGB.Target);
+	code->inst[ip].inst4 |= R500_ALPHA_TARGET(inst->Alpha.Target);
 
 	if (inst->WriteALUResult) {
 		code->inst[ip].inst3 |= R500_ALU_RGB_WMASK;
@@ -329,21 +348,6 @@ static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_inst
 	return 1;
 }
 
-static void grow_branches(struct emit_state * s)
-{
-	unsigned int newreserved = s->BranchesReserved * 2;
-	struct branch_info * newbranches;
-
-	if (!newreserved)
-		newreserved = 4;
-
-	newbranches = memory_pool_malloc(&s->C->Pool, newreserved*sizeof(struct branch_info));
-	memcpy(newbranches, s->Branches, s->CurrentBranchDepth*sizeof(struct branch_info));
-
-	s->Branches = newbranches;
-	s->BranchesReserved = newreserved;
-}
-
 static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst)
 {
 	if (s->Code->inst_end >= 511) {
@@ -361,8 +365,8 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 			return;
 		}
 
-		if (s->CurrentBranchDepth >= s->BranchesReserved)
-			grow_branches(s);
+		memory_pool_array_reserve(&s->C->Pool, struct branch_info,
+				s->Branches, s->CurrentBranchDepth, s->BranchesReserved, 1);
 
 		struct branch_info * branch = &s->Branches[s->CurrentBranchDepth++];
 		branch->If = newip;
@@ -469,9 +473,8 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 	if (compiler->Base.Error)
 		return;
 
-	assert(code->inst_end >= 0);
-
-	if ((code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {
+	if (code->inst_end == -1 ||
+	    (code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {
 		/* This may happen when dead-code elimination is disabled or
 		 * when most of the fragment program logic is leading to a KIL */
 		if (code->inst_end >= 511) {

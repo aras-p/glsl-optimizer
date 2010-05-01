@@ -28,23 +28,37 @@
 #ifndef CELL_TEXTURE_H
 #define CELL_TEXTURE_H
 
+#include "cell/common.h"
 
 struct cell_context;
-struct pipe_texture;
+struct pipe_resource;
 
 
 /**
- * Subclass of pipe_texture
+ * Subclass of pipe_resource
  */
-struct cell_texture
+struct cell_resource
 {
-   struct pipe_texture base;
+   struct pipe_resource base;
 
    unsigned long level_offset[CELL_MAX_TEXTURE_LEVELS];
    unsigned long stride[CELL_MAX_TEXTURE_LEVELS];
 
-   /** The tiled texture data is held in this buffer */
-   struct pipe_buffer *buffer;
+   /**
+    * Display target, for textures with the PIPE_BIND_DISPLAY_TARGET
+    * usage.
+    */
+   struct sw_displaytarget *dt;
+   unsigned dt_stride;
+
+   /**
+    * Malloc'ed data for regular textures, or a mapping to dt above.
+    */
+   void *data;
+   boolean userBuffer;
+
+   /* Size of the linear buffer??
+    */
    unsigned long buffer_size;
 
    /** The buffer above, mapped.  This is the memory from which the
@@ -64,10 +78,10 @@ struct cell_transfer
 
 
 /** cast wrapper */
-static INLINE struct cell_texture *
-cell_texture(struct pipe_texture *pt)
+static INLINE struct cell_resource *
+cell_resource(struct pipe_resource *pt)
 {
-   return (struct cell_texture *) pt;
+   return (struct cell_resource *) pt;
 }
 
 
@@ -82,5 +96,7 @@ cell_transfer(struct pipe_transfer *pt)
 extern void
 cell_init_screen_texture_funcs(struct pipe_screen *screen);
 
+extern void
+cell_init_texture_transfer_funcs(struct cell_context *cell);
 
 #endif /* CELL_TEXTURE_H */

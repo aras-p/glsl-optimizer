@@ -191,15 +191,24 @@ static int emit_rss( struct svga_context *svga,
       EMIT_RS( svga, svga->curr.stencil_ref.ref_value[0], STENCILREF, fail );
    }
 
-   if (dirty & SVGA_NEW_RAST)
+   if (dirty & (SVGA_NEW_RAST | SVGA_NEW_NEED_PIPELINE))
    {
       const struct svga_rasterizer_state *curr = svga->curr.rast; 
+      unsigned cullmode = curr->cullmode;
 
       /* Shademode: still need to rearrange index list to move
        * flat-shading PV first vertex.
        */
       EMIT_RS( svga, curr->shademode, SHADEMODE, fail );
-      EMIT_RS( svga, curr->cullmode, CULLMODE, fail );
+
+      /* Don't do culling while the software pipeline is active.  It
+       * does it for us, and additionally introduces potentially
+       * back-facing triangles.
+       */
+      if (svga->state.sw.need_pipeline)
+         cullmode = SVGA3D_FACE_NONE;
+
+      EMIT_RS( svga, cullmode, CULLMODE, fail );
       EMIT_RS( svga, curr->scissortestenable, SCISSORTESTENABLE, fail );
       EMIT_RS( svga, curr->multisampleantialias, MULTISAMPLEANTIALIAS, fail );
       EMIT_RS( svga, curr->lastpixel, LASTPIXEL, fail );

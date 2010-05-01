@@ -35,10 +35,11 @@
 #ifndef LP_BLD_TGSI_H
 #define LP_BLD_TGSI_H
 
-#include <llvm-c/Core.h>
+#include "gallivm/lp_bld.h"
 
 
 struct tgsi_token;
+struct tgsi_shader_info;
 struct lp_type;
 struct lp_build_context;
 struct lp_build_mask_context;
@@ -78,7 +79,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
-                  struct lp_build_sampler_soa *sampler);
+                  struct lp_build_sampler_soa *sampler,
+                  struct tgsi_shader_info *info);
 
 
 #endif /* LP_BLD_TGSI_H */

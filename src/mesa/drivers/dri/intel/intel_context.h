@@ -142,7 +142,6 @@ struct intel_context
     */
    int gen;
    GLboolean needs_ff_sync;
-   GLboolean is_ironlake;
    GLboolean is_g4x;
    GLboolean is_945;
    GLboolean has_luminance_srgb;
@@ -243,9 +242,6 @@ struct intel_context
    int driFd;
 
    __DRIcontext *driContext;
-   __DRIdrawable *driDrawable;
-   __DRIdrawable *driReadDrawable;
-   __DRIscreen *driScreen;
    struct intel_screen *intelScreen;
 
    /**
@@ -342,6 +338,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_WM        0x800000
 #define DEBUG_URB       0x1000000
 #define DEBUG_VS        0x2000000
+#define DEBUG_GLSL_FORCE 0x4000000
 
 #define DBG(...) do {						\
 	if (INTEL_DEBUG & FILE_DEBUG_FLAG)			\

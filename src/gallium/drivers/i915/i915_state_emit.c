@@ -30,6 +30,7 @@
 #include "i915_context.h"
 #include "i915_batch.h"
 #include "i915_reg.h"
+#include "i915_resource.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -50,7 +51,7 @@ static unsigned translate_format( enum pipe_format format )
 static unsigned translate_depth_format( enum pipe_format zformat )
 {
    switch (zformat) {
-   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       return DEPTH_FRMT_24_FIXED_8_OTHER;
    case PIPE_FORMAT_Z16_UNORM:
       return DEPTH_FRMT_16_FIXED;
@@ -182,7 +183,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       
       if(i915->vbo)
          OUT_RELOC(i915->vbo,
-                   INTEL_USAGE_VERTEX,
+                   I915_USAGE_VERTEX,
                    i915->current.immediate[I915_IMMEDIATE_S0]);
       else
          /* FIXME: we should not do this */
@@ -211,8 +212,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
       if (cbuf_surface) {
          unsigned ctile = BUF_3D_USE_FENCE;
-         struct i915_texture *tex = (struct i915_texture *)
-                                    cbuf_surface->texture;
+         struct i915_texture *tex = i915_texture(cbuf_surface->texture);
          assert(tex);
 
          if (tex && tex->sw_tiled) {
@@ -226,7 +226,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                    ctile);
 
          OUT_RELOC(tex->buffer,
-                   INTEL_USAGE_RENDER,
+                   I915_USAGE_RENDER,
                    cbuf_surface->offset);
       }
 
@@ -234,8 +234,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
        */
       if (depth_surface) {
          unsigned ztile = BUF_3D_USE_FENCE;
-         struct i915_texture *tex = (struct i915_texture *)
-                                    depth_surface->texture;
+         struct i915_texture *tex = i915_texture(depth_surface->texture);
          assert(tex);
 
          if (tex && tex->sw_tiled) {
@@ -250,7 +249,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                    ztile);
 
          OUT_RELOC(tex->buffer,
-                   INTEL_USAGE_RENDER,
+                   I915_USAGE_RENDER,
                    depth_surface->offset);
       }
    
@@ -290,13 +289,14 @@ i915_emit_hardware_state(struct i915_context *i915 )
             OUT_BATCH(enabled);
             for (unit = 0; unit < I915_TEX_UNITS; unit++) {
                if (enabled & (1 << unit)) {
-                  struct intel_buffer *buf = i915->texture[unit]->buffer;
+                  struct i915_texture *texture = i915_texture(i915->fragment_sampler_views[unit]->texture);
+                  struct i915_winsys_buffer *buf = texture->buffer;
                   uint offset = 0;
                   assert(buf);
 
                   count++;
 
-                  OUT_RELOC(buf, INTEL_USAGE_SAMPLER, offset);
+                  OUT_RELOC(buf, I915_USAGE_SAMPLER, offset);
                   OUT_BATCH(i915->current.texbuffer[unit][0]); /* MS3 */
                   OUT_BATCH(i915->current.texbuffer[unit][1]); /* MS4 */
                }

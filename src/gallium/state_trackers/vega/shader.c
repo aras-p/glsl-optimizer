@@ -51,7 +51,7 @@ struct shader {
    VGImageMode image_mode;
 
    float constants[MAX_CONSTANTS];
-   struct pipe_buffer *cbuf;
+   struct pipe_resource *cbuf;
    struct pipe_shader_state fs_state;
    void *fs;
 };
@@ -96,7 +96,7 @@ static void setup_constant_buffer(struct shader *shader)
 {
    struct vg_context *ctx = shader->context;
    struct pipe_context *pipe = shader->context->pipe;
-   struct pipe_buffer **cbuf = &shader->cbuf;
+   struct pipe_resource **cbuf = &shader->cbuf;
    VGint param_bytes = paint_constant_buffer_size(shader->paint);
    float temp_buf[MAX_CONSTANTS];
 
@@ -106,12 +106,13 @@ static void setup_constant_buffer(struct shader *shader)
    if (*cbuf == NULL ||
        memcmp(temp_buf, shader->constants, param_bytes) != 0)
    {
-      pipe_buffer_reference(cbuf, NULL);
+      pipe_resource_reference(cbuf, NULL);
 
       memcpy(shader->constants, temp_buf, param_bytes);
       *cbuf = pipe_user_buffer_create(pipe->screen,
                                       &shader->constants,
-                                      sizeof(shader->constants));
+                                      sizeof(shader->constants),
+				      PIPE_BIND_VERTEX_BUFFER);
    }
 
    ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
@@ -119,7 +120,7 @@ static void setup_constant_buffer(struct shader *shader)
 
 static VGint blend_bind_samplers(struct vg_context *ctx,
                                  struct pipe_sampler_state **samplers,
-                                 struct pipe_texture **textures)
+                                 struct pipe_sampler_view **sampler_views)
 {
    VGBlendMode bmode = ctx->state.vg.blend_mode;
 
@@ -132,15 +133,15 @@ static VGint blend_bind_samplers(struct vg_context *ctx,
       vg_prepare_blend_surface(ctx);
 
       samplers[2] = &ctx->blend_sampler;
-      textures[2] = stfb->blend_texture;
+      sampler_views[2] = stfb->blend_texture_view;
 
-      if (!samplers[0] || !textures[0]) {
+      if (!samplers[0] || !sampler_views[0]) {
          samplers[0] = samplers[2];
-         textures[0] = textures[2];
+         sampler_views[0] = sampler_views[2];
       }
-      if (!samplers[1] || !textures[1]) {
+      if (!samplers[1] || !sampler_views[1]) {
          samplers[1] = samplers[0];
-         textures[1] = textures[0];
+         sampler_views[1] = sampler_views[0];
       }
 
       return 1;
@@ -151,7 +152,7 @@ static VGint blend_bind_samplers(struct vg_context *ctx,
 static void setup_samplers(struct shader *shader)
 {
    struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-   struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
    struct vg_context *ctx = shader->context;
    /* a little wonky: we use the num as a boolean that just says
     * whether any sampler/textures have been set. the actual numbering
@@ -167,20 +168,20 @@ static void setup_samplers(struct shader *shader)
    samplers[1] = NULL;
    samplers[2] = NULL;
    samplers[3] = NULL;
-   textures[0] = NULL;
-   textures[1] = NULL;
-   textures[2] = NULL;
-   textures[3] = NULL;
+   sampler_views[0] = NULL;
+   sampler_views[1] = NULL;
+   sampler_views[2] = NULL;
+   sampler_views[3] = NULL;
 
-   num += paint_bind_samplers(shader->paint, samplers, textures);
-   num += mask_bind_samplers(samplers, textures);
-   num += blend_bind_samplers(ctx, samplers, textures);
+   num += paint_bind_samplers(shader->paint, samplers, sampler_views);
+   num += mask_bind_samplers(samplers, sampler_views);
+   num += blend_bind_samplers(ctx, samplers, sampler_views);
    if (shader->drawing_image && shader->image)
-      num += image_bind_samplers(shader->image, samplers, textures);
+      num += image_bind_samplers(shader->image, samplers, sampler_views);
 
    if (num) {
       cso_set_samplers(ctx->cso_context, 4, (const struct pipe_sampler_state **)samplers);
-      cso_set_sampler_textures(ctx->cso_context, 4, textures);
+      cso_set_fragment_sampler_views(ctx->cso_context, 4, sampler_views);
    }
 }
 

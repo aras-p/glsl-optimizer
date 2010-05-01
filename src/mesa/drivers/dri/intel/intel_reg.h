@@ -70,8 +70,10 @@
 
 /** @{
  * 915 definitions
+ *
+ * 915 documents say that bits 31:28 and 1 are "undefined, must be zero."
  */
-#define S0_VB_OFFSET_MASK		0xffffffc0
+#define S0_VB_OFFSET_MASK		0x0ffffffc
 #define S0_AUTO_CACHE_INV_DISABLE	(1<<0)
 /** @} */
 

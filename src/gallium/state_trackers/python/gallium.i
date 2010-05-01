@@ -49,6 +49,7 @@
 #include "util/u_format.h"
 #include "util/u_dump.h"
 #include "util/u_memory.h"
+#include "util/u_sampler.h"
 #include "cso_cache/cso_context.h"
 #include "tgsi/tgsi_text.h"
 #include "tgsi/tgsi_dump.h"
@@ -71,9 +72,8 @@
 
 %rename(Device) st_device;
 %rename(Context) st_context;
-%rename(Texture) pipe_texture;
+%rename(Resource) pipe_resource;
 %rename(Surface) st_surface;
-%rename(Buffer) pipe_buffer;
 
 %rename(BlendColor) pipe_blend_color;
 %rename(Blend) pipe_blend_state;
@@ -94,7 +94,7 @@
 
 
 %include "p_compiler.i"
-%include "p_defines.h";
+%include "p_defines.h"
 %include "p_format.h"
 
 %include "p_device.i"
@@ -102,3 +102,4 @@
 %include "p_texture.i"
 %include "p_state.i"
 
+%include "u_format.i"

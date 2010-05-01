@@ -78,7 +78,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       for (j = 0; j < 3; j++) {
 	 GLuint delta = c->nr_attrs*16 + 32;
 
-         if (intel->is_ironlake)
+         if (intel->gen == 5)
              delta = c->nr_attrs * 16 + 32 * 3;
 
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));

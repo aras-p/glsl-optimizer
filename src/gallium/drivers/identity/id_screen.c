@@ -118,62 +118,76 @@ identity_screen_context_create(struct pipe_screen *_screen,
    return NULL;
 }
 
-static struct pipe_texture *
-identity_screen_texture_create(struct pipe_screen *_screen,
-                               const struct pipe_texture *templat)
+static struct pipe_resource *
+identity_screen_resource_create(struct pipe_screen *_screen,
+                               const struct pipe_resource *templat)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
-   struct pipe_texture *result;
+   struct pipe_resource *result;
 
-   result = screen->texture_create(screen,
+   result = screen->resource_create(screen,
                                    templat);
 
    if (result)
-      return identity_texture_create(id_screen, result);
+      return identity_resource_create(id_screen, result);
    return NULL;
 }
 
-static struct pipe_texture *
-identity_screen_texture_blanket(struct pipe_screen *_screen,
-                                const struct pipe_texture *templat,
-                                const unsigned *stride,
-                                struct pipe_buffer *_buffer)
+static struct pipe_resource *
+identity_screen_resource_from_handle(struct pipe_screen *_screen,
+                                    const struct pipe_resource *templ,
+                                    struct winsys_handle *handle)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_buffer *id_buffer = identity_buffer(_buffer);
    struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *buffer = id_buffer->buffer;
-   struct pipe_texture *result;
+   struct pipe_resource *result;
 
-   result = screen->texture_blanket(screen,
-                                    templat,
-                                    stride,
-                                    buffer);
+   /* TODO trace call */
 
-   if (result)
-      return identity_texture_create(id_screen, result);
-   return NULL;
+   result = screen->resource_from_handle(screen, templ, handle);
+
+   result = identity_resource_create(identity_screen(_screen), result);
+
+   return result;
 }
 
-static void
-identity_screen_texture_destroy(struct pipe_texture *_texture)
+static boolean
+identity_screen_resource_get_handle(struct pipe_screen *_screen,
+                                   struct pipe_resource *_texture,
+                                   struct winsys_handle *handle)
 {
-   identity_texture_destroy(identity_texture(_texture));
+   struct identity_screen *id_screen = identity_screen(_screen);
+   struct identity_resource *id_resource = identity_resource(_texture);
+   struct pipe_screen *screen = id_screen->screen;
+   struct pipe_resource *texture = id_resource->resource;
+
+   /* TODO trace call */
+
+   return screen->resource_get_handle(screen, texture, handle);
+}
+
+
+
+static void
+identity_screen_resource_destroy(struct pipe_screen *screen,
+				 struct pipe_resource *_texture)
+{
+   identity_resource_destroy(identity_resource(_texture));
 }
 
 static struct pipe_surface *
 identity_screen_get_tex_surface(struct pipe_screen *_screen,
-                                struct pipe_texture *_texture,
+                                struct pipe_resource *_texture,
                                 unsigned face,
                                 unsigned level,
                                 unsigned zslice,
                                 unsigned usage)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_texture *id_texture = identity_texture(_texture);
+   struct identity_resource *id_resource = identity_resource(_texture);
    struct pipe_screen *screen = id_screen->screen;
-   struct pipe_texture *texture = id_texture->texture;
+   struct pipe_resource *texture = id_resource->resource;
    struct pipe_surface *result;
 
    result = screen->get_tex_surface(screen,
@@ -184,7 +198,7 @@ identity_screen_get_tex_surface(struct pipe_screen *_screen,
                                     usage);
 
    if (result)
-      return identity_surface_create(id_texture, result);
+      return identity_surface_create(id_resource, result);
    return NULL;
 }
 
@@ -194,205 +208,29 @@ identity_screen_tex_surface_destroy(struct pipe_surface *_surface)
    identity_surface_destroy(identity_surface(_surface));
 }
 
-static struct pipe_transfer *
-identity_screen_get_tex_transfer(struct pipe_screen *_screen,
-                                 struct pipe_texture *_texture,
-                                 unsigned face,
-                                 unsigned level,
-                                 unsigned zslice,
-                                 enum pipe_transfer_usage usage,
-                                 unsigned x,
-                                 unsigned y,
-                                 unsigned w,
-                                 unsigned h)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_texture *id_texture = identity_texture(_texture);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_texture *texture = id_texture->texture;
-   struct pipe_transfer *result;
 
-   result = screen->get_tex_transfer(screen,
-                                     texture,
-                                     face,
-                                     level,
-                                     zslice,
-                                     usage,
-                                     x,
-                                     y,
-                                     w,
-                                     h);
 
-   if (result)
-      return identity_transfer_create(id_texture, result);
-   return NULL;
-}
-
-static void
-identity_screen_tex_transfer_destroy(struct pipe_transfer *_transfer)
-{
-   identity_transfer_destroy(identity_transfer(_transfer));
-}
-
-static void *
-identity_screen_transfer_map(struct pipe_screen *_screen,
-                             struct pipe_transfer *_transfer)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_transfer *id_transfer = identity_transfer(_transfer);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_transfer *transfer = id_transfer->transfer;
-
-   return screen->transfer_map(screen,
-                               transfer);
-}
-
-static void
-identity_screen_transfer_unmap(struct pipe_screen *_screen,
-                               struct pipe_transfer *_transfer)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_transfer *id_transfer = identity_transfer(_transfer);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_transfer *transfer = id_transfer->transfer;
-
-   screen->transfer_unmap(screen,
-                          transfer);
-}
-
-static struct pipe_buffer *
-identity_screen_buffer_create(struct pipe_screen *_screen,
-                              unsigned alignment,
-                              unsigned usage,
-                              unsigned size)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *result;
-
-   result = screen->buffer_create(screen,
-                                  alignment,
-                                  usage,
-                                  size);
-
-   if (result)
-      return identity_buffer_create(id_screen, result);
-   return NULL;
-}
-
-static struct pipe_buffer *
+static struct pipe_resource *
 identity_screen_user_buffer_create(struct pipe_screen *_screen,
                                    void *ptr,
-                                   unsigned bytes)
+                                   unsigned bytes,
+				   unsigned usage)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *result;
+   struct pipe_resource *result;
 
    result = screen->user_buffer_create(screen,
                                        ptr,
-                                       bytes);
+                                       bytes,
+				       usage);
 
    if (result)
-      return identity_buffer_create(id_screen, result);
+      return identity_resource_create(id_screen, result);
    return NULL;
 }
 
-static struct pipe_buffer *
-identity_screen_surface_buffer_create(struct pipe_screen *_screen,
-                                      unsigned width,
-                                      unsigned height,
-                                      enum pipe_format format,
-                                      unsigned usage,
-                                      unsigned tex_usage,
-                                      unsigned *stride)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *result;
 
-   result = screen->surface_buffer_create(screen,
-                                          width,
-                                          height,
-                                          format,
-                                          usage,
-                                          tex_usage,
-                                          stride);
-
-   if (result)
-      return identity_buffer_create(id_screen, result);
-   return NULL;
-}
-
-static void *
-identity_screen_buffer_map(struct pipe_screen *_screen,
-                           struct pipe_buffer *_buffer,
-                           unsigned usage)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_buffer *id_buffer = identity_buffer(_buffer);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *buffer = id_buffer->buffer;
-
-   return screen->buffer_map(screen,
-                             buffer,
-                             usage);
-}
-
-static void *
-identity_screen_buffer_map_range(struct pipe_screen *_screen,
-                                 struct pipe_buffer *_buffer,
-                                 unsigned offset,
-                                 unsigned length,
-                                 unsigned usage)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_buffer *id_buffer = identity_buffer(_buffer);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *buffer = id_buffer->buffer;
-
-   return screen->buffer_map_range(screen,
-                                   buffer,
-                                   offset,
-                                   length,
-                                   usage);
-}
-
-static void
-identity_screen_buffer_flush_mapped_range(struct pipe_screen *_screen,
-                                          struct pipe_buffer *_buffer,
-                                          unsigned offset,
-                                          unsigned length)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_buffer *id_buffer = identity_buffer(_buffer);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *buffer = id_buffer->buffer;
-
-   screen->buffer_flush_mapped_range(screen,
-                                     buffer,
-                                     offset,
-                                     length);
-}
-
-static void
-identity_screen_buffer_unmap(struct pipe_screen *_screen,
-                             struct pipe_buffer *_buffer)
-{
-   struct identity_screen *id_screen = identity_screen(_screen);
-   struct identity_buffer *id_buffer = identity_buffer(_buffer);
-   struct pipe_screen *screen = id_screen->screen;
-   struct pipe_buffer *buffer = id_buffer->buffer;
-
-   screen->buffer_unmap(screen,
-                        buffer);
-}
-
-static void
-identity_screen_buffer_destroy(struct pipe_buffer *_buffer)
-{
-   identity_buffer_destroy(identity_buffer(_buffer));
-}
 
 static void
 identity_screen_flush_frontbuffer(struct pipe_screen *_screen,
@@ -467,27 +305,13 @@ identity_screen_create(struct pipe_screen *screen)
    id_screen->base.get_paramf = identity_screen_get_paramf;
    id_screen->base.is_format_supported = identity_screen_is_format_supported;
    id_screen->base.context_create = identity_screen_context_create;
-   id_screen->base.texture_create = identity_screen_texture_create;
-   id_screen->base.texture_blanket = identity_screen_texture_blanket;
-   id_screen->base.texture_destroy = identity_screen_texture_destroy;
+   id_screen->base.resource_create = identity_screen_resource_create;
+   id_screen->base.resource_from_handle = identity_screen_resource_from_handle;
+   id_screen->base.resource_get_handle = identity_screen_resource_get_handle;
+   id_screen->base.resource_destroy = identity_screen_resource_destroy;
    id_screen->base.get_tex_surface = identity_screen_get_tex_surface;
    id_screen->base.tex_surface_destroy = identity_screen_tex_surface_destroy;
-   id_screen->base.get_tex_transfer = identity_screen_get_tex_transfer;
-   id_screen->base.tex_transfer_destroy = identity_screen_tex_transfer_destroy;
-   id_screen->base.transfer_map = identity_screen_transfer_map;
-   id_screen->base.transfer_unmap = identity_screen_transfer_unmap;
-   id_screen->base.buffer_create = identity_screen_buffer_create;
    id_screen->base.user_buffer_create = identity_screen_user_buffer_create;
-   id_screen->base.surface_buffer_create = identity_screen_surface_buffer_create;
-   if (screen->buffer_map)
-      id_screen->base.buffer_map = identity_screen_buffer_map;
-   if (screen->buffer_map_range)
-      id_screen->base.buffer_map_range = identity_screen_buffer_map_range;
-   if (screen->buffer_flush_mapped_range)
-      id_screen->base.buffer_flush_mapped_range = identity_screen_buffer_flush_mapped_range;
-   if (screen->buffer_unmap)
-      id_screen->base.buffer_unmap = identity_screen_buffer_unmap;
-   id_screen->base.buffer_destroy = identity_screen_buffer_destroy;
    id_screen->base.flush_frontbuffer = identity_screen_flush_frontbuffer;
    id_screen->base.fence_reference = identity_screen_fence_reference;
    id_screen->base.fence_signalled = identity_screen_fence_signalled;

@@ -531,6 +531,7 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
       exec->vtx.prim[i].pad = 0;
       exec->vtx.prim[i].start = exec->vtx.vert_count;
       exec->vtx.prim[i].count = 0;
+      exec->vtx.prim[i].num_instances = 1;
 
       ctx->Driver.CurrentExecPrimitive = mode;
    }
@@ -849,8 +850,11 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
                                     NULL);
    }
 
-   /* Free the vertex buffer:
+   /* Free the vertex buffer.  Unmap first if needed.
     */
+   if (_mesa_bufferobj_mapped(exec->vtx.bufferobj)) {
+      ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER, exec->vtx.bufferobj);
+   }
    _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
 }
 

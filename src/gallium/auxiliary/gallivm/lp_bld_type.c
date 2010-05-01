@@ -58,7 +58,10 @@ LLVMTypeRef
 lp_build_vec_type(struct lp_type type)
 {
    LLVMTypeRef elem_type = lp_build_elem_type(type);
-   return LLVMVectorType(elem_type, type.length);
+   if (type.length == 1)
+      return elem_type;
+   else
+      return LLVMVectorType(elem_type, type.length);
 }
 
 
@@ -115,6 +118,9 @@ lp_check_vec_type(struct lp_type type, LLVMTypeRef vec_type)
    if(!vec_type)
       return FALSE;
 
+   if (type.length == 1)
+      return lp_check_elem_type(type, vec_type);
+
    if(LLVMGetTypeKind(vec_type) != LLVMVectorTypeKind)
       return FALSE;
 
@@ -153,7 +159,10 @@ LLVMTypeRef
 lp_build_int_vec_type(struct lp_type type)
 {
    LLVMTypeRef elem_type = lp_build_int_elem_type(type);
-   return LLVMVectorType(elem_type, type.length);
+   if (type.length == 1)
+      return elem_type;
+   else
+      return LLVMVectorType(elem_type, type.length);
 }
 
 

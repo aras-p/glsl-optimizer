@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
 #include <X11/Xlib.h>
 #include "glxclient.h"
@@ -53,12 +53,7 @@ struct __GLXDRIdrawablePrivateRec
 
    XVisualInfo *visinfo;
    XImage *ximage;
-   int bpp;
 };
-
-/**
- * swrast loader functions
- */
 
 static Bool
 XCreateDrawable(__GLXDRIdrawablePrivate * pdp,
@@ -79,20 +74,21 @@ XCreateDrawable(__GLXDRIdrawablePrivate * pdp,
    XChangeGC(dpy, pdp->swapgc, GCFunction, &gcvalues);
    XChangeGC(dpy, pdp->swapgc, GCGraphicsExposures, &gcvalues);
 
-   /* create XImage  */
+   /* visual */
    visTemp.screen = DefaultScreen(dpy);
    visTemp.visualid = visualid;
    visMask = (VisualScreenMask | VisualIDMask);
    pdp->visinfo = XGetVisualInfo(dpy, visMask, &visTemp, &num_visuals);
 
-   pdp->ximage = XCreateImage(dpy, pdp->visinfo->visual, pdp->visinfo->depth, ZPixmap, 0,       /* format, offset */
-                              NULL,     /* data */
-                              0, 0,     /* size */
-                              32,       /* bitmap_pad */
-                              0);       /* bytes_per_line */
-
-   /* get the true number of bits per pixel */
-   pdp->bpp = pdp->ximage->bits_per_pixel;
+   /* create XImage */
+   pdp->ximage = XCreateImage(dpy,
+                              pdp->visinfo->visual,
+                              pdp->visinfo->depth,
+                              ZPixmap, 0,             /* format, offset */
+                              NULL,                   /* data */
+                              0, 0,                   /* width, height */
+                              32,                     /* bitmap_pad */
+                              0);                     /* bytes_per_line */
 
    return True;
 }
@@ -107,9 +103,14 @@ XDestroyDrawable(__GLXDRIdrawablePrivate * pdp, Display * dpy, XID drawable)
    XFreeGC(dpy, pdp->swapgc);
 }
 
+/**
+ * swrast loader functions
+ */
+
 static void
 swrastGetDrawableInfo(__DRIdrawable * draw,
-                      int *x, int *y, int *w, int *h, void *loaderPrivate)
+                      int *x, int *y, int *w, int *h,
+                      void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *pdp = loaderPrivate;
    __GLXDRIdrawable *pdraw = &(pdp->base);
@@ -118,26 +119,42 @@ swrastGetDrawableInfo(__DRIdrawable * draw,
 
    Window root;
    Status stat;
-   unsigned int bw, depth;
+   unsigned uw, uh, bw, depth;
 
    drawable = pdraw->xDrawable;
 
    stat = XGetGeometry(dpy, drawable, &root,
-                       x, y, (unsigned int *) w, (unsigned int *) h,
-                       &bw, &depth);
+                       x, y, &uw, &uh, &bw, &depth);
+   *w = uw;
+   *h = uh;
 }
 
+/**
+ * Align renderbuffer pitch.
+ *
+ * This should be chosen by the driver and the loader (libGL, xserver/glx)
+ * should use the driver provided pitch.
+ *
+ * It seems that the xorg loader (that is the xserver loading swrast_dri for
+ * indirect rendering, not client-side libGL) requires that the pitch is
+ * exactly the image width padded to 32 bits. XXX
+ *
+ * The above restriction can probably be overcome by using ScratchPixmap and
+ * CopyArea in the xserver, similar to ShmPutImage, and setting the width of
+ * the scratch pixmap to 'pitch / cpp'.
+ */
 static inline int
-bytes_per_line(int w, int bpp, unsigned mul)
+bytes_per_line(unsigned pitch_bits, unsigned mul)
 {
    unsigned mask = mul - 1;
 
-   return ((w * bpp + mask) & ~mask) / 8;
+   return ((pitch_bits + mask) & ~mask) / 8;
 }
 
 static void
 swrastPutImage(__DRIdrawable * draw, int op,
-               int x, int y, int w, int h, char *data, void *loaderPrivate)
+               int x, int y, int w, int h,
+               char *data, void *loaderPrivate)
 {
    __GLXDRIdrawablePrivate *pdp = loaderPrivate;
    __GLXDRIdrawable *pdraw = &(pdp->base);
@@ -163,7 +180,7 @@ swrastPutImage(__DRIdrawable * draw, int op,
    ximage->data = data;
    ximage->width = w;
    ximage->height = h;
-   ximage->bytes_per_line = bytes_per_line(w, pdp->bpp, 32);
+   ximage->bytes_per_line = bytes_per_line(w * ximage->bits_per_pixel, 32);
 
    XPutImage(dpy, drawable, gc, ximage, 0, 0, x, y, w, h);
 
@@ -171,24 +188,25 @@ swrastPutImage(__DRIdrawable * draw, int op,
 }
 
 static void
-swrastGetImage(__DRIdrawable * draw,
-               int x, int y, int w, int h, char *data, void *loaderPrivate)
+swrastGetImage(__DRIdrawable * read,
+               int x, int y, int w, int h,
+               char *data, void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *pdp = loaderPrivate;
-   __GLXDRIdrawable *pdraw = &(pdp->base);
-   Display *dpy = pdraw->psc->dpy;
-   Drawable drawable;
+   __GLXDRIdrawablePrivate *prp = loaderPrivate;
+   __GLXDRIdrawable *pread = &(prp->base);
+   Display *dpy = pread->psc->dpy;
+   Drawable readable;
    XImage *ximage;
 
-   drawable = pdraw->xDrawable;
+   readable = pread->xDrawable;
 
-   ximage = pdp->ximage;
+   ximage = prp->ximage;
    ximage->data = data;
    ximage->width = w;
    ximage->height = h;
-   ximage->bytes_per_line = bytes_per_line(w, pdp->bpp, 32);
+   ximage->bytes_per_line = bytes_per_line(w * ximage->bits_per_pixel, 32);
 
-   XGetSubImage(dpy, drawable, x, y, w, h, ~0L, ZPixmap, ximage, 0, 0);
+   XGetSubImage(dpy, readable, x, y, w, h, ~0L, ZPixmap, ximage, 0, 0);
 
    ximage->data = NULL;
 }
@@ -334,10 +352,17 @@ driCreateDrawable(__GLXscreenConfigs * psc,
    return pdraw;
 }
 
-static void
-driSwapBuffers(__GLXDRIdrawable * pdraw)
+static int64_t
+driSwapBuffers(__GLXDRIdrawable * pdraw,
+               int64_t target_msc, int64_t divisor, int64_t remainder)
 {
+   (void) target_msc;
+   (void) divisor;
+   (void) remainder;
+
    (*pdraw->psc->core->swapBuffers) (pdraw->driDrawable);
+
+   return 0;
 }
 
 static void
@@ -350,6 +375,20 @@ driDestroyScreen(__GLXscreenConfigs * psc)
       dlclose(psc->driver);
 }
 
+static void *
+driOpenSwrast(void)
+{
+   void *driver = NULL;
+
+   if (driver == NULL)
+      driver = driOpenDriver("swrast");
+
+   if (driver == NULL)
+      driver = driOpenDriver("swrastg");
+
+   return driver;
+}
+
 static __GLXDRIscreen *
 driCreateScreen(__GLXscreenConfigs * psc, int screen,
                 __GLXdisplayPrivate * priv)
@@ -357,17 +396,13 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
    __GLXDRIscreen *psp;
    const __DRIconfig **driver_configs;
    const __DRIextension **extensions;
-   const char *driverName = "swrast";
    int i;
 
    psp = Xcalloc(1, sizeof *psp);
    if (psp == NULL)
       return NULL;
 
-   /* Initialize per screen dynamic client GLX extensions */
-   psc->ext_list_first_time = GL_TRUE;
-
-   psc->driver = driOpenDriver(driverName);
+   psc->driver = driOpenSwrast();
    if (psc->driver == NULL)
       goto handle_error;
 

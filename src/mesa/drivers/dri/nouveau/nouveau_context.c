@@ -43,19 +43,23 @@
 
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_fog_coord
+#define need_GL_EXT_secondary_color
 
 #include "main/remap_helper.h"
 
 static const struct dri_extension nouveau_extensions[] = {
 	{ "GL_ARB_multitexture",	NULL },
+	{ "GL_ARB_texture_env_add",	NULL },
 	{ "GL_ARB_texture_env_combine",	NULL },
 	{ "GL_ARB_texture_env_dot3",	NULL },
-	{ "GL_ARB_texture_env_add",	NULL },
-	{ "GL_EXT_texture_lod_bias",	NULL },
-	{ "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
 	{ "GL_ARB_texture_mirrored_repeat", NULL },
-	{ "GL_EXT_stencil_wrap",	NULL },
 	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
+	{ "GL_EXT_framebuffer_blit",	NULL },
+	{ "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
+	{ "GL_EXT_secondary_color",	GL_EXT_secondary_color_functions },
+	{ "GL_EXT_stencil_wrap",	NULL },
+	{ "GL_EXT_texture_lod_bias",	NULL },
+	{ "GL_NV_blend_square",         NULL },
 	{ "GL_SGIS_generate_mipmap",	NULL },
 	{ NULL,				NULL }
 };
@@ -66,8 +70,8 @@ nouveau_channel_flush_notify(struct nouveau_channel *chan)
 	struct nouveau_context *nctx = chan->user_private;
 	GLcontext *ctx = &nctx->base;
 
-	if (nctx->fallback < SWRAST && ctx->DrawBuffer)
-		nouveau_state_emit(&nctx->base);
+	if (nctx->fallback < SWRAST)
+		nouveau_bo_state_emit(ctx);
 }
 
 GLboolean
@@ -334,6 +338,8 @@ nouveau_validate_framebuffer(GLcontext *ctx)
 		update_framebuffer(dri_ctx, dri_read,
 				   &dri_ctx->dri2.read_stamp);
 
-	if (nouveau_next_dirty_state(ctx) >= 0)
+	if (nouveau_next_dirty_state(ctx) >= 0) {
+		nouveau_state_emit(ctx);
 		FIRE_RING(context_chan(ctx));
+	}
 }

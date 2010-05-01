@@ -39,25 +39,19 @@
 #endif
 
 #include "glapi/glapi.h"
-#include "glapi/glapioffsets.h"
+#include "glapi/glapi_priv.h"
 #include "glapi/glapitable.h"
+#include "glapi/glapioffsets.h"
 
 
-#if defined(USE_X64_64_ASM) && defined(GLX_USE_TLS)
-# define DISPATCH_FUNCTION_SIZE  16
-#elif defined(USE_X86_ASM)
-# if defined(THREADS) && !defined(GLX_USE_TLS)
-#  define DISPATCH_FUNCTION_SIZE  32
-# else
-#  define DISPATCH_FUNCTION_SIZE  16
-# endif
-#endif
+/**********************************************************************
+ * Static function management.
+ */
 
-#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server) && !defined(XGLServer)
+
+#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server)
 # define NEED_FUNCTION_POINTER
 #endif
-
-/* The code in this file is auto-generated with Python */
 #include "glapi/glprocs.h"
 
 
@@ -66,13 +60,13 @@
  * and return the corresponding glprocs_table_t entry.
  */
 static const glprocs_table_t *
-find_entry( const char * n )
+get_static_proc( const char * n )
 {
    GLuint i;
    for (i = 0; static_functions[i].Name_offset >= 0; i++) {
       const char *testName = gl_string_table + static_functions[i].Name_offset;
 #ifdef MANGLE
-      /* skip the "m" prefix on the name */
+      /* skip the prefix on the name */
       if (strcmp(testName, n + 1) == 0)
 #else
       if (strcmp(testName, n) == 0)
@@ -92,27 +86,16 @@ find_entry( const char * n )
 static GLint
 get_static_proc_offset(const char *funcName)
 {
-   const glprocs_table_t * const f = find_entry( funcName );
-   if (f) {
-      return f->Offset;
+   const glprocs_table_t * const f = get_static_proc( funcName );
+   if (f == NULL) {
+      return -1;
    }
-   return -1;
+
+   return f->Offset;
 }
 
 
-#ifdef USE_X86_ASM
-
-#if defined( GLX_USE_TLS )
-extern       GLubyte gl_dispatch_functions_start[];
-extern       GLubyte gl_dispatch_functions_end[];
-#else
-extern const GLubyte gl_dispatch_functions_start[];
-#endif
-
-#endif /* USE_X86_ASM */
-
-
-#if !defined(XFree86Server) && !defined(XGLServer)
+#if !defined(XFree86Server)
 
 /**
  * Return dispatch function address for the named static (built-in) function.
@@ -121,27 +104,32 @@ extern const GLubyte gl_dispatch_functions_start[];
 static _glapi_proc
 get_static_proc_address(const char *funcName)
 {
-   const glprocs_table_t * const f = find_entry( funcName );
-   if (f) {
-#if defined(DISPATCH_FUNCTION_SIZE) && defined(GLX_INDIRECT_RENDERING)
-      return (f->Address == NULL)
-	 ? (_glapi_proc) (gl_dispatch_functions_start
-			  + (DISPATCH_FUNCTION_SIZE * f->Offset))
-         : f->Address;
-#elif defined(DISPATCH_FUNCTION_SIZE)
-      return (_glapi_proc) (gl_dispatch_functions_start 
-                            + (DISPATCH_FUNCTION_SIZE * f->Offset));
-#else
-      return f->Address;
-#endif
-   }
-   else {
+   const glprocs_table_t * const f = get_static_proc( funcName );
+   if (f == NULL) {
       return NULL;
    }
+
+#if defined(DISPATCH_FUNCTION_SIZE) && defined(GLX_INDIRECT_RENDERING)
+   return (f->Address == NULL)
+      ? get_entrypoint_address(f->Offset)
+      : f->Address;
+#elif defined(DISPATCH_FUNCTION_SIZE)
+   return get_entrypoint_address(f->Offset);
+#else
+   return f->Address;
+#endif
 }
 
-#endif /* !defined(XFree86Server) && !defined(XGLServer) */
+#else
 
+static _glapi_proc
+get_static_proc_address(const char *funcName)
+{
+   (void) funcName;
+   return NULL;
+}
+
+#endif /* !defined(XFree86Server) */
 
 
 /**
@@ -159,172 +147,6 @@ get_static_proc_name( GLuint offset )
    }
    return NULL;
 }
-
-
-
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
-
-/**
- * Perform platform-specific GL API entry-point fixups.
- */
-static void
-init_glapi_relocs( void )
-{
-#if defined(USE_X86_ASM) && defined(GLX_USE_TLS) && !defined(GLX_X86_READONLY_TEXT)
-    extern unsigned long _x86_get_dispatch(void);
-    char run_time_patch[] = {
-       0x65, 0xa1, 0, 0, 0, 0 /* movl %gs:0,%eax */
-    };
-    GLuint *offset = (GLuint *) &run_time_patch[2]; /* 32-bits for x86/32 */
-    const GLubyte * const get_disp = (const GLubyte *) run_time_patch;
-    GLubyte * curr_func = (GLubyte *) gl_dispatch_functions_start;
-
-    *offset = _x86_get_dispatch();
-    while ( curr_func != (GLubyte *) gl_dispatch_functions_end ) {
-	(void) memcpy( curr_func, get_disp, sizeof(run_time_patch));
-	curr_func += DISPATCH_FUNCTION_SIZE;
-    }
-#endif
-#ifdef USE_SPARC_ASM
-    extern void __glapi_sparc_icache_flush(unsigned int *);
-    static const unsigned int template[] = {
-#ifdef GLX_USE_TLS
-	0x05000000, /* sethi %hi(_glapi_tls_Dispatch), %g2 */
-	0x8730e00a, /* srl %g3, 10, %g3 */
-	0x8410a000, /* or %g2, %lo(_glapi_tls_Dispatch), %g2 */
-#ifdef __arch64__
-	0xc259c002, /* ldx [%g7 + %g2], %g1 */
-	0xc2584003, /* ldx [%g1 + %g3], %g1 */
-#else
-	0xc201c002, /* ld [%g7 + %g2], %g1 */
-	0xc2004003, /* ld [%g1 + %g3], %g1 */
-#endif
-	0x81c04000, /* jmp %g1 */
-	0x01000000, /* nop  */
-#else
-#ifdef __arch64__
-	0x03000000, /* 64-bit 0x00 --> sethi %hh(_glapi_Dispatch), %g1 */
-	0x05000000, /* 64-bit 0x04 --> sethi %lm(_glapi_Dispatch), %g2 */
-	0x82106000, /* 64-bit 0x08 --> or %g1, %hm(_glapi_Dispatch), %g1 */
-	0x8730e00a, /* 64-bit 0x0c --> srl %g3, 10, %g3 */
-	0x83287020, /* 64-bit 0x10 --> sllx %g1, 32, %g1 */
-	0x82004002, /* 64-bit 0x14 --> add %g1, %g2, %g1 */
-	0xc2586000, /* 64-bit 0x18 --> ldx [%g1 + %lo(_glapi_Dispatch)], %g1 */
-#else
-	0x03000000, /* 32-bit 0x00 --> sethi %hi(_glapi_Dispatch), %g1 */
-	0x8730e00a, /* 32-bit 0x04 --> srl %g3, 10, %g3 */
-	0xc2006000, /* 32-bit 0x08 --> ld [%g1 + %lo(_glapi_Dispatch)], %g1 */
-#endif
-	0x80a06000, /*             --> cmp %g1, 0 */
-	0x02800005, /*             --> be +4*5 */
-	0x01000000, /*             -->  nop  */
-#ifdef __arch64__
-	0xc2584003, /* 64-bit      --> ldx [%g1 + %g3], %g1 */
-#else
-	0xc2004003, /* 32-bit      --> ld [%g1 + %g3], %g1 */
-#endif
-	0x81c04000, /*             --> jmp %g1 */
-	0x01000000, /*             --> nop  */
-#ifdef __arch64__
-	0x9de3bf80, /* 64-bit      --> save  %sp, -128, %sp */
-#else
-	0x9de3bfc0, /* 32-bit      --> save  %sp, -64, %sp */
-#endif
-	0xa0100003, /*             --> mov  %g3, %l0 */
-	0x40000000, /*             --> call _glapi_get_dispatch */
-	0x01000000, /*             -->  nop */
-	0x82100008, /*             --> mov %o0, %g1 */
-	0x86100010, /*             --> mov %l0, %g3 */
-	0x10bffff7, /*             --> ba -4*9 */
-	0x81e80000, /*             -->  restore  */
-#endif
-    };
-#ifdef GLX_USE_TLS
-    extern unsigned int __glapi_sparc_tls_stub;
-    extern unsigned long __glapi_sparc_get_dispatch(void);
-    unsigned int *code = &__glapi_sparc_tls_stub;
-    unsigned long dispatch = __glapi_sparc_get_dispatch();
-#else
-    extern unsigned int __glapi_sparc_pthread_stub;
-    unsigned int *code = &__glapi_sparc_pthread_stub;
-    unsigned long dispatch = (unsigned long) &_glapi_Dispatch;
-    unsigned long call_dest = (unsigned long ) &_glapi_get_dispatch;
-    int idx;
-#endif
-
-#if defined(GLX_USE_TLS)
-    code[0] = template[0] | (dispatch >> 10);
-    code[1] = template[1];
-    __glapi_sparc_icache_flush(&code[0]);
-    code[2] = template[2] | (dispatch & 0x3ff);
-    code[3] = template[3];
-    __glapi_sparc_icache_flush(&code[2]);
-    code[4] = template[4];
-    code[5] = template[5];
-    __glapi_sparc_icache_flush(&code[4]);
-    code[6] = template[6];
-    __glapi_sparc_icache_flush(&code[6]);
-#else
-#if defined(__arch64__)
-    code[0] = template[0] | (dispatch >> (32 + 10));
-    code[1] = template[1] | ((dispatch & 0xffffffff) >> 10);
-    __glapi_sparc_icache_flush(&code[0]);
-    code[2] = template[2] | ((dispatch >> 32) & 0x3ff);
-    code[3] = template[3];
-    __glapi_sparc_icache_flush(&code[2]);
-    code[4] = template[4];
-    code[5] = template[5];
-    __glapi_sparc_icache_flush(&code[4]);
-    code[6] = template[6] | (dispatch & 0x3ff);
-    idx = 7;
-#else
-    code[0] = template[0] | (dispatch >> 10);
-    code[1] = template[1];
-    __glapi_sparc_icache_flush(&code[0]);
-    code[2] = template[2] | (dispatch & 0x3ff);
-    idx = 3;
-#endif
-    code[idx + 0] = template[idx + 0];
-    __glapi_sparc_icache_flush(&code[idx - 1]);
-    code[idx + 1] = template[idx + 1];
-    code[idx + 2] = template[idx + 2];
-    __glapi_sparc_icache_flush(&code[idx + 1]);
-    code[idx + 3] = template[idx + 3];
-    code[idx + 4] = template[idx + 4];
-    __glapi_sparc_icache_flush(&code[idx + 3]);
-    code[idx + 5] = template[idx + 5];
-    code[idx + 6] = template[idx + 6];
-    __glapi_sparc_icache_flush(&code[idx + 5]);
-    code[idx + 7] = template[idx + 7];
-    code[idx + 8] = template[idx + 8] |
-	    (((call_dest - ((unsigned long) &code[idx + 8]))
-	      >> 2) & 0x3fffffff);
-    __glapi_sparc_icache_flush(&code[idx + 7]);
-    code[idx + 9] = template[idx + 9];
-    code[idx + 10] = template[idx + 10];
-    __glapi_sparc_icache_flush(&code[idx + 9]);
-    code[idx + 11] = template[idx + 11];
-    code[idx + 12] = template[idx + 12];
-    __glapi_sparc_icache_flush(&code[idx + 11]);
-    code[idx + 13] = template[idx + 13];
-    __glapi_sparc_icache_flush(&code[idx + 13]);
-#endif
-#endif
-}
-
-void
-init_glapi_relocs_once( void )
-{
-   static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-   pthread_once( & once_control, init_glapi_relocs );
-}
-
-#else
-
-void
-init_glapi_relocs_once( void ) { }
-
-#endif /* defined(PTHREADS) || defined(GLX_USE_TLS) */
 
 
 
@@ -381,107 +203,54 @@ struct _glapi_function {
 static struct _glapi_function ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 
-#ifdef USE_SPARC_ASM
-extern void __glapi_sparc_icache_flush(unsigned int *);
-#endif
 
-static void
-fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset);
-
-/**
- * Generate a dispatch function (entrypoint) which jumps through
- * the given slot number (offset) in the current dispatch table.
- * We need assembly language in order to accomplish this.
- */
-static _glapi_proc
-generate_entrypoint(GLuint functionOffset)
+static struct _glapi_function *
+get_extension_proc(const char *funcName)
 {
-#if defined(USE_X86_ASM)
-   /* 32 is chosen as something of a magic offset.  For x86, the dispatch
-    * at offset 32 is the first one where the offset in the
-    * "jmp OFFSET*4(%eax)" can't be encoded in a single byte.
-    */
-   const GLubyte * const template_func = gl_dispatch_functions_start 
-     + (DISPATCH_FUNCTION_SIZE * 32);
-   GLubyte * const code = (GLubyte *) malloc(DISPATCH_FUNCTION_SIZE);
-
-
-   if ( code != NULL ) {
-      (void) memcpy(code, template_func, DISPATCH_FUNCTION_SIZE);
-      fill_in_entrypoint_offset( (_glapi_proc) code, functionOffset );
+   GLuint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
+         return & ExtEntryTable[i];
+      }
    }
-
-   return (_glapi_proc) code;
-#elif defined(USE_SPARC_ASM)
-
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
-   static const unsigned int template[] = {
-      0x07000000, /* sethi %hi(0), %g3 */
-      0x8210000f, /* mov  %o7, %g1 */
-      0x40000000, /* call */
-      0x9e100001, /* mov  %g1, %o7 */
-   };
-#ifdef GLX_USE_TLS
-   extern unsigned int __glapi_sparc_tls_stub;
-   unsigned long call_dest = (unsigned long ) &__glapi_sparc_tls_stub;
-#else
-   extern unsigned int __glapi_sparc_pthread_stub;
-   unsigned long call_dest = (unsigned long ) &__glapi_sparc_pthread_stub;
-#endif
-   unsigned int *code = (unsigned int *) malloc(sizeof(template));
-   if (code) {
-      code[0] = template[0] | (functionOffset & 0x3fffff);
-      code[1] = template[1];
-      __glapi_sparc_icache_flush(&code[0]);
-      code[2] = template[2] |
-         (((call_dest - ((unsigned long) &code[2]))
-	   >> 2) & 0x3fffffff);
-      code[3] = template[3];
-      __glapi_sparc_icache_flush(&code[2]);
-   }
-   return (_glapi_proc) code;
-#endif
-
-#else
-   (void) functionOffset;
    return NULL;
-#endif /* USE_*_ASM */
 }
 
 
-/**
- * This function inserts a new dispatch offset into the assembly language
- * stub that was generated with the preceeding function.
- */
-static void
-fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
+static GLint
+get_extension_proc_offset(const char *funcName)
 {
-#if defined(USE_X86_ASM)
-   GLubyte * const code = (GLubyte *) entrypoint;
+   const struct _glapi_function * const f = get_extension_proc( funcName );
+   if (f == NULL) {
+      return -1;
+   }
 
-#if DISPATCH_FUNCTION_SIZE == 32
-   *((unsigned int *)(code + 11)) = 4 * offset;
-   *((unsigned int *)(code + 22)) = 4 * offset;
-#elif DISPATCH_FUNCTION_SIZE == 16 && defined( GLX_USE_TLS )
-   *((unsigned int *)(code +  8)) = 4 * offset;
-#elif DISPATCH_FUNCTION_SIZE == 16
-   *((unsigned int *)(code +  7)) = 4 * offset;
-#else
-# error Invalid DISPATCH_FUNCTION_SIZE!
-#endif
+   return f->dispatch_offset;
+}
 
-#elif defined(USE_SPARC_ASM)
-   unsigned int *code = (unsigned int *) entrypoint;
-   code[0] &= ~0x3fffff;
-   code[0] |= (offset * sizeof(void *)) & 0x3fffff;
-   __glapi_sparc_icache_flush(&code[0]);
-#else
 
-   /* an unimplemented architecture */
-   (void) entrypoint;
-   (void) offset;
+static _glapi_proc
+get_extension_proc_address(const char *funcName)
+{
+   const struct _glapi_function * const f = get_extension_proc( funcName );
+   if (f == NULL) {
+      return NULL;
+   }
 
-#endif /* USE_*_ASM */
+   return f->dispatch_stub;
+}
+
+
+static const char *
+get_extension_proc_name(GLuint offset)
+{
+   GLuint i;
+   for (i = 0; i < NumExtEntryPoints; i++) {
+      if (ExtEntryTable[i].dispatch_offset == offset) {
+         return ExtEntryTable[i].name;
+      }
+   }
+   return NULL;
 }
 
 
@@ -518,19 +287,54 @@ static struct _glapi_function *
 add_function_name( const char * funcName )
 {
    struct _glapi_function * entry = NULL;
-   
-   if (NumExtEntryPoints < MAX_EXTENSION_FUNCS) {
-      _glapi_proc entrypoint = generate_entrypoint(~0);
-      if (entrypoint != NULL) {
-	 entry = & ExtEntryTable[NumExtEntryPoints];
+   _glapi_proc entrypoint = NULL;
+   char * name_dup = NULL;
 
-	 ExtEntryTable[NumExtEntryPoints].name = str_dup(funcName);
-	 ExtEntryTable[NumExtEntryPoints].parameter_signature = NULL;
-	 ExtEntryTable[NumExtEntryPoints].dispatch_offset = ~0;
-	 ExtEntryTable[NumExtEntryPoints].dispatch_stub = entrypoint;
-	 NumExtEntryPoints++;
-      }
+   if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS)
+      return NULL;
+
+   if (funcName == NULL)
+      return NULL;
+
+   name_dup = str_dup(funcName);
+   if (name_dup == NULL)
+      return NULL;
+
+   entrypoint = generate_entrypoint(~0);
+
+   if (entrypoint == NULL) {
+      free(name_dup);
+      return NULL;
    }
+
+   entry = & ExtEntryTable[NumExtEntryPoints];
+   NumExtEntryPoints++;
+
+   entry->name = name_dup;
+   entry->parameter_signature = NULL;
+   entry->dispatch_offset = ~0;
+   entry->dispatch_stub = entrypoint;
+
+   return entry;
+}
+
+
+static struct _glapi_function *
+set_entry_info( struct _glapi_function * entry, const char * signature, unsigned offset )
+{
+   char * sig_dup = NULL;
+
+   if (signature == NULL)
+      return NULL;
+
+   sig_dup = str_dup(signature);
+   if (sig_dup == NULL)
+      return NULL;
+
+   fill_in_entrypoint_offset(entry->dispatch_stub, offset);
+
+   entry->parameter_signature = sig_dup;
+   entry->dispatch_offset = offset;
 
    return entry;
 }
@@ -593,88 +397,103 @@ _glapi_add_dispatch( const char * const * function_names,
    struct _glapi_function * entry[8];
    GLboolean is_static[8];
    unsigned i;
-   unsigned j;
    int offset = ~0;
-   int new_offset;
 
+   init_glapi_relocs_once();
 
    (void) memset( is_static, 0, sizeof( is_static ) );
    (void) memset( entry, 0, sizeof( entry ) );
 
+   /* Find the _single_ dispatch offset for all function names that already
+    * exist (and have a dispatch offset).
+    */
+
    for ( i = 0 ; function_names[i] != NULL ; i++ ) {
-      /* Do some trivial validation on the name of the function.
-       */
+      const char * funcName = function_names[i];
+      int static_offset;
+      int extension_offset;
 
-      if (!function_names[i] || function_names[i][0] != 'g' || function_names[i][1] != 'l')
+      if (funcName[0] != 'g' || funcName[1] != 'l')
          return -1;
-   
-      /* Determine if the named function already exists.  If the function does
-       * exist, it must have the same parameter signature as the function
-       * being added.
-       */
 
-      new_offset = get_static_proc_offset(function_names[i]);
-      if (new_offset >= 0) {
+      /* search built-in functions */
+      static_offset = get_static_proc_offset(funcName);
+
+      if (static_offset >= 0) {
+
+	 is_static[i] = GL_TRUE;
+
 	 /* FIXME: Make sure the parameter signatures match!  How do we get
 	  * FIXME: the parameter signature for static functions?
 	  */
 
-	 if ( (offset != ~0) && (new_offset != offset) ) {
+	 if ( (offset != ~0) && (static_offset != offset) ) {
 	    return -1;
 	 }
 
-	 is_static[i] = GL_TRUE;
-	 offset = new_offset;
+	 offset = static_offset;
+
+	 continue;
       }
-   
-   
-      for ( j = 0 ; j < NumExtEntryPoints ; j++ ) {
-	 if (strcmp(ExtEntryTable[j].name, function_names[i]) == 0) {
-	    /* The offset may be ~0 if the function name was added by
-	     * glXGetProcAddress but never filled in by the driver.
-	     */
 
-	    if (ExtEntryTable[j].dispatch_offset != ~0) {
-	       if (strcmp(real_sig, ExtEntryTable[j].parameter_signature) 
-		   != 0) {
-		  return -1;
-	       }
+      /* search added extension functions */
+      entry[i] = get_extension_proc(funcName);
 
-	       if ( (offset != ~0) && (ExtEntryTable[j].dispatch_offset != offset) ) {
-		  return -1;
-	       }
+      if (entry[i] != NULL) {
+	 extension_offset = entry[i]->dispatch_offset;
 
-	       offset = ExtEntryTable[j].dispatch_offset;
-	    }
-	    
-	    entry[i] = & ExtEntryTable[j];
-	    break;
+	 /* The offset may be ~0 if the function name was added by
+	  * glXGetProcAddress but never filled in by the driver.
+	  */
+
+	 if (extension_offset == ~0) {
+	    continue;
 	 }
+
+	 if (strcmp(real_sig, entry[i]->parameter_signature) != 0) {
+	    return -1;
+	 }
+
+	 if ( (offset != ~0) && (extension_offset != offset) ) {
+	    return -1;
+	 }
+
+	 offset = extension_offset;
       }
    }
+
+   /* If all function names are either new (or with no dispatch offset),
+    * allocate a new dispatch offset.
+    */
 
    if (offset == ~0) {
       offset = next_dynamic_offset;
       next_dynamic_offset++;
    }
 
-   for ( i = 0 ; function_names[i] != NULL ; i++ ) {
-      if (! is_static[i] ) {
-	 if (entry[i] == NULL) {
-	    entry[i] = add_function_name( function_names[i] );
-	    if (entry[i] == NULL) {
-	       /* FIXME: Possible memory leak here.
-		*/
-	       return -1;
-	    }
-	 }
+   /* Fill in the dispatch offset for the new function names (and those with
+    * no dispatch offset).
+    */
 
-	 entry[i]->parameter_signature = str_dup(real_sig);
-	 fill_in_entrypoint_offset(entry[i]->dispatch_stub, offset);
-	 entry[i]->dispatch_offset = offset;
+   for ( i = 0 ; function_names[i] != NULL ; i++ ) {
+      if (is_static[i]) {
+	 continue;
+      }
+
+      /* generate entrypoints for new function names */
+      if (entry[i] == NULL) {
+	 entry[i] = add_function_name( function_names[i] );
+	 if (entry[i] == NULL) {
+	    /* FIXME: Possible memory leak here. */
+	    return -1;
+	 }
+      }
+
+      if (entry[i]->dispatch_offset == ~0) {
+	 set_entry_info( entry[i], real_sig, offset );
       }
    }
-   
+
    return offset;
 }
 
@@ -685,13 +504,13 @@ _glapi_add_dispatch( const char * const * function_names,
 PUBLIC GLint
 _glapi_get_proc_offset(const char *funcName)
 {
+   GLint offset;
+
    /* search extension functions first */
-   GLuint i;
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
-         return ExtEntryTable[i].dispatch_offset;
-      }
-   }
+   offset = get_extension_proc_offset(funcName);
+   if (offset >= 0)
+      return offset;
+
    /* search static functions */
    return get_static_proc_offset(funcName);
 }
@@ -706,11 +525,14 @@ _glapi_get_proc_offset(const char *funcName)
 PUBLIC _glapi_proc
 _glapi_get_proc_address(const char *funcName)
 {
+   _glapi_proc func;
    struct _glapi_function * entry;
-   GLuint i;
+
+   init_glapi_relocs_once();
 
 #ifdef MANGLE
-   if (funcName[0] != 'm' || funcName[1] != 'g' || funcName[2] != 'l')
+   /* skip the prefix on the name */
+   if (funcName[1] != 'g' || funcName[2] != 'l')
       return NULL;
 #else
    if (funcName[0] != 'g' || funcName[1] != 'l')
@@ -718,23 +540,21 @@ _glapi_get_proc_address(const char *funcName)
 #endif
 
    /* search extension functions first */
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
-         return ExtEntryTable[i].dispatch_stub;
-      }
-   }
+   func = get_extension_proc_address(funcName);
+   if (func)
+      return func;
 
-#if !defined( XFree86Server ) && !defined( XGLServer )
    /* search static functions */
-   {
-      const _glapi_proc func = get_static_proc_address(funcName);
-      if (func)
-         return func;
-   }
-#endif /* !defined( XFree86Server ) */
+   func = get_static_proc_address(funcName);
+   if (func)
+      return func;
 
+   /* generate entrypoint, dispatch offset must be filled in by the driver */
    entry = add_function_name(funcName);
-   return (entry == NULL) ? NULL : entry->dispatch_stub;
+   if (entry == NULL)
+      return NULL;
+
+   return entry->dispatch_stub;
 }
 
 
@@ -746,7 +566,6 @@ _glapi_get_proc_address(const char *funcName)
 const char *
 _glapi_get_proc_name(GLuint offset)
 {
-   GLuint i;
    const char * n;
 
    /* search built-in functions */
@@ -756,14 +575,54 @@ _glapi_get_proc_name(GLuint offset)
    }
 
    /* search added extension functions */
-   for (i = 0; i < NumExtEntryPoints; i++) {
-      if (ExtEntryTable[i].dispatch_offset == offset) {
-         return ExtEntryTable[i].name;
-      }
-   }
-   return NULL;
+   return get_extension_proc_name(offset);
 }
 
+
+
+/**********************************************************************
+ * GL API table functions.
+ */
+
+
+/*
+ * The dispatch table size (number of entries) is the size of the
+ * _glapi_table struct plus the number of dynamic entries we can add.
+ * The extra slots can be filled in by DRI drivers that register new extension
+ * functions.
+ */
+#define DISPATCH_TABLE_SIZE (sizeof(struct _glapi_table) / sizeof(void *) + MAX_EXTENSION_FUNCS)
+
+
+/**
+ * Return size of dispatch table struct as number of functions (or
+ * slots).
+ */
+PUBLIC GLuint
+_glapi_get_dispatch_table_size(void)
+{
+   return DISPATCH_TABLE_SIZE;
+}
+
+
+/**
+ * Make sure there are no NULL pointers in the given dispatch table.
+ * Intended for debugging purposes.
+ */
+void
+_glapi_check_table_not_null(const struct _glapi_table *table)
+{
+#ifdef EXTRA_DEBUG /* set to DEBUG for extra DEBUG */
+   const GLuint entries = _glapi_get_dispatch_table_size();
+   const void **tab = (const void **) table;
+   GLuint i;
+   for (i = 1; i < entries; i++) {
+      assert(tab[i]);
+   }
+#else
+   (void) table;
+#endif
+}
 
 
 /**
@@ -773,7 +632,7 @@ _glapi_get_proc_name(GLuint offset)
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
-#if 0 /* enable this for extra DEBUG */
+#ifdef EXTRA_DEBUG /* set to DEBUG for extra DEBUG */
    {
       GLuint BeginOffset = _glapi_get_proc_offset("glBegin");
       char *BeginFunc = (char*) &table->Begin;

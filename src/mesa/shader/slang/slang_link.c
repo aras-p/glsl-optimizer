@@ -87,6 +87,107 @@ bits_agree(GLbitfield flags1, GLbitfield flags2, GLbitfield bit)
 
 
 /**
+ * Examine the outputs/varyings written by the vertex shader and
+ * append the names of those outputs onto the Varyings list.
+ * This will only capture the pre-defined/built-in varyings like
+ * gl_Position, not user-defined varyings.
+ */
+static void
+update_varying_var_list(GLcontext *ctx, struct gl_shader_program *shProg)
+{
+   if (shProg->VertexProgram) {
+      GLbitfield64 written = shProg->VertexProgram->Base.OutputsWritten;
+      GLuint i;
+      for (i = 0; written && i < VERT_RESULT_MAX; i++) {
+         if (written & BITFIELD64_BIT(i)) {
+            const char *name = _slang_vertex_output_name(i);            
+            if (name)
+               _mesa_add_varying(shProg->Varying, name, 1, GL_FLOAT_VEC4, 0x0);
+            written &= ~BITFIELD64_BIT(i);
+         }
+      }
+   }
+}
+
+
+/**
+ * Do link error checking related to transform feedback.
+ */
+static GLboolean
+link_transform_feedback(GLcontext *ctx, struct gl_shader_program *shProg)
+{
+   GLbitfield varyingMask;
+   GLuint totalComps, maxComps, i;
+
+   if (shProg->TransformFeedback.NumVarying == 0) {
+      /* nothing to do */
+      return GL_TRUE;
+   }
+
+   /* Check that there's a vertex shader */
+   if (shProg->TransformFeedback.NumVarying > 0 &&
+       !shProg->VertexProgram) {
+      link_error(shProg, "Transform feedback without vertex shader");
+      return GL_FALSE;
+   }
+
+   /* Check that all named variables exist, and that none are duplicated.
+    * Also, build a count of the number of varying components to feedback.
+    */
+   totalComps = 0;
+   varyingMask = 0x0;
+   for (i = 0; i < shProg->TransformFeedback.NumVarying; i++) {
+      const GLchar *name = shProg->TransformFeedback.VaryingNames[i];
+      GLint v = _mesa_lookup_parameter_index(shProg->Varying, -1, name);
+      struct gl_program_parameter *p;
+
+      if (v < 0) {
+         char msg[100];
+         _mesa_snprintf(msg, sizeof(msg),
+                        "vertex shader does not emit %s", name);
+         link_error(shProg, msg);
+         return GL_FALSE;
+      }
+
+      assert(v < MAX_VARYING);
+
+      /* already seen this varying name? */
+      if (varyingMask & (1 << v)) {
+         char msg[100];
+         _mesa_snprintf(msg, sizeof(msg),
+                        "duplicated transform feedback varying name: %s",
+                        name);
+         link_error(shProg, msg);
+         return GL_FALSE;
+      }
+
+      varyingMask |= (1 << v);
+
+      p = &shProg->Varying->Parameters[v];
+      
+      totalComps += _mesa_sizeof_glsl_type(p->DataType);
+   }
+
+   if (shProg->TransformFeedback.BufferMode == GL_INTERLEAVED_ATTRIBS)
+      maxComps = ctx->Const.MaxTransformFeedbackInterleavedComponents;
+   else
+      maxComps = ctx->Const.MaxTransformFeedbackSeparateComponents;
+
+   /* check max varying components against the limit */
+   if (totalComps > maxComps) {
+      char msg[100];
+      _mesa_snprintf(msg, sizeof(msg),
+                     "Too many feedback components: %u, max is %u",
+                     totalComps, maxComps);
+      link_error(shProg, msg);
+      return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+
+/**
  * Linking varying vars involves rearranging varying vars so that the
  * vertex program's output varyings matches the order of the fragment
  * program's input varyings.
@@ -157,7 +258,7 @@ link_varying_vars(GLcontext *ctx,
       else {
          /* not already in linked list */
          j = _mesa_add_varying(shProg->Varying, var->Name, var->Size,
-                               var->Flags);
+                               var->DataType, var->Flags);
       }
 
       if (shProg->Varying->NumParameters > ctx->Const.MaxVarying) {
@@ -866,6 +967,12 @@ _slang_link(GLcontext *ctx,
       }         
    }
 
+   update_varying_var_list(ctx, shProg);
+
+   /* checks related to transform feedback */
+   if (!link_transform_feedback(ctx, shProg)) {
+      return;
+   }
 
    if (fragProg && shProg->FragmentProgram) {
       /* Compute initial program's TexturesUsed info */

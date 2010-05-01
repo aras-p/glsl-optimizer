@@ -53,4 +53,7 @@ extern void r300InitTextureFuncs(radeonContextPtr radeon, struct dd_function_tab
 
 int32_t r300TranslateTexFormat(gl_format mesaFormat);
 
+unsigned r300IsFormatRenderable(gl_format mesaFormat);
+unsigned r500IsFormatRenderable(gl_format mesaFormat);
+
 #endif				/* __r300_TEX_H__ */

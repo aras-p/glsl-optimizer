@@ -134,6 +134,9 @@ void
 nv10_emit_tex_gen(GLcontext *ctx, int emit);
 
 void
+nv10_emit_tex_mat(GLcontext *ctx, int emit);
+
+void
 nv10_emit_tex_obj(GLcontext *ctx, int emit);
 
 /* nv10_state_tnl.c */

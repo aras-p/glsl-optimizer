@@ -22,6 +22,7 @@
 
 #include "r300_context.h"
 
+#include <stdio.h>
 
 struct debug_option {
     const char * name;
@@ -31,12 +32,16 @@ struct debug_option {
 
 static struct debug_option debug_options[] = {
     { "help", DBG_HELP, "Helpful meta-information about the driver" },
-    { "fp", DBG_FP, "Fragment program handling" },
-    { "vp", DBG_VP, "Vertex program handling" },
-    { "cs", DBG_CS, "Command submissions" },
-    { "draw", DBG_DRAW, "Draw and emit" },
-    { "tex", DBG_TEX, "Textures" },
-    { "fall", DBG_FALL, "Fallbacks" },
+    { "fp", DBG_FP, "Fragment program handling (for debugging)" },
+    { "vp", DBG_VP, "Vertex program handling (for debugging)" },
+    { "cs", DBG_CS, "Command submissions (for debugging)" },
+    { "draw", DBG_DRAW, "Draw and emit (for debugging)" },
+    { "tex", DBG_TEX, "Textures (for debugging)" },
+    { "fall", DBG_FALL, "Fallbacks (for debugging)" },
+    { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },
+    { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
+    { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },
+    { "stats", DBG_STATS, "Gather statistics (for lulz)" },
 
     { "all", ~0, "Convenience option that enables all debug flags" },
 
@@ -68,7 +73,7 @@ void r300_init_debug(struct r300_screen * screen)
             }
 
             if (!opt->name) {
-                debug_printf("Unknown debug option: %s\n", options);
+                fprintf(stderr, "Unknown debug option: %s\n", options);
                 printhint = TRUE;
             }
 
@@ -80,10 +85,13 @@ void r300_init_debug(struct r300_screen * screen)
     }
 
     if (printhint || screen->debug & DBG_HELP) {
-        debug_printf("You can enable debug output by setting the RADEON_DEBUG environment variable\n"
-                     "to a comma-separated list of debug options. Available options are:\n");
+        fprintf(stderr, "You can enable debug output by setting "
+                        "the RADEON_DEBUG environment variable\n"
+                        "to a comma-separated list of debug options. "
+                        "Available options are:\n");
+
         for(opt = debug_options; opt->name; ++opt) {
-            debug_printf("    %s: %s\n", opt->name, opt->description);
+            fprintf(stderr, "    %s: %s\n", opt->name, opt->description);
         }
     }
 }

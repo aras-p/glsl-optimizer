@@ -13,11 +13,14 @@ glxpixmap
 glxsnoop
 glxswapcontrol
 manywin
+msctest
 multictx
 offset
+omlsync
 overlay
-pbdemo
 pbinfo
+pbdemo
+shape
 sharedtex
 sharedtex_mt
 texture_from_pixmap
@@ -26,5 +29,3 @@ xdemo
 xfont
 xrotfontdemo
 yuvrect_client
-msctest
-omlsync

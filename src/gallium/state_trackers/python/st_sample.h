@@ -32,15 +32,22 @@
 
 #include "pipe/p_format.h"
 
+struct pipe_context;
+struct st_surface;
+
 
 void 
 st_sample_pixel_block(enum pipe_format format,
                       void *raw,
                       float *rgba, unsigned rgba_stride,
-                      unsigned w, unsigned h);
+                      unsigned w, unsigned h,
+                      boolean norm);
 
 void
-st_sample_surface(struct st_surface *surface, float *rgba);
+st_sample_surface(struct pipe_context *pipe,
+                  struct st_surface *surface,
+                  float *rgba,
+                  boolean norm);
 
 
 #endif /* ST_SAMPLE_H_ */

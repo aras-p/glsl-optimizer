@@ -227,11 +227,11 @@ stw_query_attrib(
       break;
 
    case WGL_SAMPLE_BUFFERS_ARB:
-      *pvalue = pfi->numSampleBuffers;
+      *pvalue = 1;
       break;
 
    case WGL_SAMPLES_ARB:
-      *pvalue = pfi->numSamples;
+      *pvalue = pfi->stvis.samples;
       break;
 
    default:

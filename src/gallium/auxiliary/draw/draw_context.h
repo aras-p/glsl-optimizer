@@ -40,7 +40,6 @@
 
 #include "pipe/p_state.h"
 
-
 struct pipe_context;
 struct draw_context;
 struct draw_stage;
@@ -49,7 +48,7 @@ struct draw_geometry_shader;
 struct tgsi_sampler;
 
 
-struct draw_context *draw_create( void );
+struct draw_context *draw_create( struct pipe_context *pipe );
 
 void draw_destroy( struct draw_context *draw );
 
@@ -60,12 +59,15 @@ void draw_set_clip_state( struct draw_context *pipe,
                           const struct pipe_clip_state *clip );
 
 void draw_set_rasterizer_state( struct draw_context *draw,
-                                const struct pipe_rasterizer_state *raster );
+                                const struct pipe_rasterizer_state *raster,
+                                void *rast_handle );
 
 void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage );
 
 void draw_wide_point_threshold(struct draw_context *draw, float threshold);
+
+void draw_wide_point_sprites(struct draw_context *draw, boolean draw_sprite);
 
 void draw_wide_line_threshold(struct draw_context *draw, float threshold);
 
@@ -140,12 +142,14 @@ void draw_set_vertex_elements(struct draw_context *draw,
 void
 draw_set_mapped_element_buffer_range( struct draw_context *draw,
                                       unsigned eltSize,
+                                      int eltBias,
                                       unsigned min_index,
                                       unsigned max_index,
                                       const void *elements );
 
 void draw_set_mapped_element_buffer( struct draw_context *draw,
                                      unsigned eltSize, 
+                                     int eltBias,
                                      const void *elements );
 
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,
@@ -196,7 +200,5 @@ void draw_set_force_passthrough( struct draw_context *draw,
 boolean draw_need_pipeline(const struct draw_context *draw,
                            const struct pipe_rasterizer_state *rasterizer,
                            unsigned prim );
-
-
 
 #endif /* DRAW_CONTEXT_H */

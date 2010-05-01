@@ -32,7 +32,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
@@ -647,9 +647,6 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
    psp = Xcalloc(1, sizeof *psp);
    if (psp == NULL)
       return NULL;
-
-   /* Initialize per screen dynamic client GLX extensions */
-   psc->ext_list_first_time = GL_TRUE;
 
    if (!driGetDriverName(priv->dpy, screen, &driverName)) {
       Xfree(psp);

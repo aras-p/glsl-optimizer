@@ -2,7 +2,8 @@
 #define __NV50_SCREEN_H__
 
 #include "nouveau/nouveau_screen.h"
-#include "nv50_context.h"
+
+struct nv50_context;
 
 struct nv50_screen {
 	struct nouveau_screen base;
@@ -22,12 +23,12 @@ struct nv50_screen {
 	struct nouveau_resource *immd_heap[1];
 	struct nouveau_resource *parm_heap[PIPE_SHADER_TYPES];
 
-	struct pipe_buffer *strm_vbuf[16];
+	struct pipe_resource *strm_vbuf[16];
 
 	struct nouveau_bo *tic;
 	struct nouveau_bo *tsc;
 
-	struct nouveau_stateobj *static_init;
+	boolean force_push;
 };
 
 static INLINE struct nv50_screen *
@@ -36,6 +37,6 @@ nv50_screen(struct pipe_screen *screen)
 	return (struct nv50_screen *)screen;
 }
 
-void nv50_transfer_init_screen_functions(struct pipe_screen *);
+extern void nv50_screen_relocs(struct nv50_screen *);
 
 #endif

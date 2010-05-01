@@ -11,6 +11,7 @@ include $(TOP)/configs/current
 LIBS = -L$(TOP)/$(LIB_DIR) -l $(GLEW_LIB) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
 
 SOURCES = \
+	clear-fbo-scissor.c \
 	clear-fbo-tex.c \
 	clear-fbo.c \
 	clear-scissor.c \

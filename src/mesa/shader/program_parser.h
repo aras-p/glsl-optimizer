@@ -62,7 +62,7 @@ struct asm_symbol {
     */
    unsigned param_binding_swizzle;
 
-   /* This is how many entries in the the program_parameter_list we take up
+   /* This is how many entries in the program_parameter_list we take up
     * with our state tokens or constants. Note that this is _not_ the same as
     * the number of param registers we eventually use.
     */

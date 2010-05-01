@@ -14,12 +14,13 @@
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #ifndef _X11_SCREEN_H_
@@ -28,6 +29,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/dri2tokens.h>
+#include "GL/gl.h" /* for GL types needed by __GLcontextModes */
+#include "GL/internal/glcore.h"  /* for __GLcontextModes */
 #include "pipe/p_compiler.h"
 #include "common/native.h"
 
@@ -63,10 +66,6 @@ x11_screen_support(struct x11_screen *xscr, enum x11_screen_extension ext);
 
 const XVisualInfo *
 x11_screen_get_visuals(struct x11_screen *xscr, int *num_visuals);
-
-void
-x11_screen_convert_visual(struct x11_screen *xscr, const XVisualInfo *visual,
-                          __GLcontextModes *mode);
 
 const __GLcontextModes *
 x11_screen_get_glx_configs(struct x11_screen *xscr);

@@ -32,9 +32,20 @@
 #include "util/u_surface.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
-#include "lp_debug.h"
 
 
+/** List of texture references */
+struct texture_ref {
+   struct pipe_resource *texture;
+   struct texture_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
+};
+
+
+
+/**
+ * Create a new scene object.
+ * \param queue  the queue to put newly rendered/emptied scenes into
+ */
 struct lp_scene *
 lp_scene_create( struct pipe_context *pipe,
                  struct lp_scene_queue *queue )
@@ -57,7 +68,7 @@ lp_scene_create( struct pipe_context *pipe,
    scene->data.head =
       scene->data.tail = CALLOC_STRUCT(data_block);
 
-   make_empty_list(&scene->textures);
+   make_empty_list(&scene->resources);
 
    pipe_mutex_init(scene->mutex);
 
@@ -66,7 +77,7 @@ lp_scene_create( struct pipe_context *pipe,
 
 
 /**
- * Free all data associated with the given scene, and free(scene).
+ * Free all data associated with the given scene, and the scene itself.
  */
 void
 lp_scene_destroy(struct lp_scene *scene)
@@ -178,14 +189,19 @@ lp_scene_reset(struct lp_scene *scene )
    /* Release texture refs
     */
    {
-      struct texture_ref *ref, *next, *ref_list = &scene->textures;
+      struct resource_ref *ref, *next, *ref_list = &scene->resources;
       for (ref = ref_list->next; ref != ref_list; ref = next) {
          next = next_elem(ref);
-         pipe_texture_reference(&ref->texture, NULL);
+         pipe_resource_reference(&ref->resource, NULL);
          FREE(ref);
       }
       make_empty_list(ref_list);
    }
+
+   scene->scene_size = 0;
+
+   scene->has_color_clear = FALSE;
+   scene->has_depth_clear = FALSE;
 }
 
 
@@ -215,7 +231,10 @@ lp_bin_new_data_block( struct data_block_list *list )
 }
 
 
-/** Return number of bytes used for all bin data within a scene */
+/**
+ * Return number of bytes used for all bin data within a scene.
+ * This does not include resources (textures) referenced by the scene.
+ */
 unsigned
 lp_scene_data_size( const struct lp_scene *scene )
 {
@@ -244,32 +263,34 @@ lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y )
 
 
 /**
- * Add a reference to a texture by the scene.
+ * Add a reference to a resource by the scene.
  */
 void
-lp_scene_texture_reference( struct lp_scene *scene,
-                            struct pipe_texture *texture )
+lp_scene_add_resource_reference(struct lp_scene *scene,
+                                struct pipe_resource *resource)
 {
-   struct texture_ref *ref = CALLOC_STRUCT(texture_ref);
+   struct resource_ref *ref = CALLOC_STRUCT(resource_ref);
    if (ref) {
-      struct texture_ref *ref_list = &scene->textures;
-      pipe_texture_reference(&ref->texture, texture);
+      struct resource_ref *ref_list = &scene->resources;
+      pipe_resource_reference(&ref->resource, resource);
       insert_at_tail(ref_list, ref);
    }
+
+   scene->scene_size += llvmpipe_resource_size(resource);
 }
 
 
 /**
- * Does this scene have a reference to the given texture?
+ * Does this scene have a reference to the given resource?
  */
 boolean
-lp_scene_is_texture_referenced( const struct lp_scene *scene,
-                                const struct pipe_texture *texture )
+lp_scene_is_resource_referenced(const struct lp_scene *scene,
+                                const struct pipe_resource *resource)
 {
-   const struct texture_ref *ref_list = &scene->textures;
-   const struct texture_ref *ref;
+   const struct resource_ref *ref_list = &scene->resources;
+   const struct resource_ref *ref;
    foreach (ref, ref_list) {
-      if (ref->texture == texture)
+      if (ref->resource == resource)
          return TRUE;
    }
    return FALSE;
@@ -390,112 +411,6 @@ end:
 }
 
 
-/**
- * Prepare this scene for the rasterizer.
- * Map the framebuffer surfaces.  Initialize the 'rast' state.
- */
-static boolean
-lp_scene_map_buffers( struct lp_scene *scene )
-{
-   struct pipe_screen *screen = scene->pipe->screen;
-   struct pipe_surface *cbuf, *zsbuf;
-   int i;
-
-   LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
-
-
-   /* Map all color buffers 
-    */
-   for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      cbuf = scene->fb.cbufs[i];
-      if (cbuf) {
-	 scene->cbuf_transfer[i] = screen->get_tex_transfer(screen,
-                                                          cbuf->texture,
-                                                          cbuf->face,
-                                                          cbuf->level,
-                                                          cbuf->zslice,
-                                                          PIPE_TRANSFER_READ_WRITE,
-                                                          0, 0,
-                                                          cbuf->width, 
-                                                          cbuf->height);
-	 if (!scene->cbuf_transfer[i])
-	    goto fail;
-
-	 scene->cbuf_map[i] = screen->transfer_map(screen, 
-                                                 scene->cbuf_transfer[i]);
-	 if (!scene->cbuf_map[i])
-	    goto fail;
-      }
-   }
-
-   /* Map the zsbuffer
-    */
-   zsbuf = scene->fb.zsbuf;
-   if (zsbuf) {
-      scene->zsbuf_transfer = screen->get_tex_transfer(screen,
-                                                       zsbuf->texture,
-                                                       zsbuf->face,
-                                                       zsbuf->level,
-                                                       zsbuf->zslice,
-                                                       PIPE_TRANSFER_READ_WRITE,
-                                                       0, 0,
-                                                       zsbuf->width,
-                                                       zsbuf->height);
-      if (!scene->zsbuf_transfer)
-         goto fail;
-
-      scene->zsbuf_map = screen->transfer_map(screen, 
-                                              scene->zsbuf_transfer);
-      if (!scene->zsbuf_map)
-	 goto fail;
-   }
-
-   return TRUE;
-
-fail:
-   /* Unmap and release transfers?
-    */
-   return FALSE;
-}
-
-
-
-/**
- * Called after rasterizer as finished rasterizing a scene. 
- * 
- * We want to call this from the pipe_context's current thread to
- * avoid having to have mutexes on the transfer functions.
- */
-static void
-lp_scene_unmap_buffers( struct lp_scene *scene )
-{
-   struct pipe_screen *screen = scene->pipe->screen;
-   unsigned i;
-
-   for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      if (scene->cbuf_map[i]) 
-	 screen->transfer_unmap(screen, scene->cbuf_transfer[i]);
-
-      if (scene->cbuf_transfer[i])
-	 screen->tex_transfer_destroy(scene->cbuf_transfer[i]);
-
-      scene->cbuf_transfer[i] = NULL;
-      scene->cbuf_map[i] = NULL;
-   }
-
-   if (scene->zsbuf_map) 
-      screen->transfer_unmap(screen, scene->zsbuf_transfer);
-
-   if (scene->zsbuf_transfer)
-      screen->tex_transfer_destroy(scene->zsbuf_transfer);
-
-   scene->zsbuf_transfer = NULL;
-   scene->zsbuf_map = NULL;
-
-   util_unreference_framebuffer_state( &scene->fb );
-}
-
-
 void lp_scene_begin_binning( struct lp_scene *scene,
                              struct pipe_framebuffer_state *fb )
 {
@@ -505,12 +420,14 @@ void lp_scene_begin_binning( struct lp_scene *scene,
 
    scene->tiles_x = align(fb->width, TILE_SIZE) / TILE_SIZE;
    scene->tiles_y = align(fb->height, TILE_SIZE) / TILE_SIZE;
+
+   assert(scene->tiles_x <= TILES_X);
+   assert(scene->tiles_y <= TILES_Y);
 }
 
 
 void lp_scene_rasterize( struct lp_scene *scene,
-                         struct lp_rasterizer *rast,
-                         boolean write_depth )
+                         struct lp_rasterizer *rast )
 {
    if (0) {
       unsigned x, y;
@@ -524,12 +441,6 @@ void lp_scene_rasterize( struct lp_scene *scene,
       }
    }
 
-
-   scene->write_depth = (scene->fb.zsbuf != NULL &&
-                         write_depth);
-
-   lp_scene_map_buffers( scene );
-
    /* Enqueue the scene for rasterization, then immediately wait for
     * it to finish.
     */
@@ -540,6 +451,9 @@ void lp_scene_rasterize( struct lp_scene *scene,
     * transfers become per-context:
     */
    lp_rast_finish( rast );
-   lp_scene_unmap_buffers( scene );
+
+   util_unreference_framebuffer_state( &scene->fb );
+
+   /* put scene into the empty list */
    lp_scene_enqueue( scene->empty_queue, scene );
 }

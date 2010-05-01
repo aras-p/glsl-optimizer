@@ -69,11 +69,6 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
 
          util_pack_color(rgba, ps->format, &uc);
          sp_tile_cache_clear(softpipe->cbuf_cache[i], rgba, uc.ui);
-
-#if !TILE_CLEAR_OPTIMIZATION
-         /* non-cached surface */
-         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, uc.ui);
-#endif
       }
    }
 
@@ -83,11 +78,6 @@ softpipe_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
 
       cv = util_pack_z_stencil(ps->format, depth, stencil);
       sp_tile_cache_clear(softpipe->zsbuf_cache, zero, cv);
-
-#if !TILE_CLEAR_OPTIMIZATION
-      /* non-cached surface */
-      pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, cv);
-#endif
    }
 
    softpipe->dirty_render_cache = TRUE;

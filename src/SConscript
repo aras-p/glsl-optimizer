@@ -1,13 +1,12 @@
 Import('*')
 
 SConscript('glsl/SConscript')
-SConscript('gallium/SConscript')
 
 if 'mesa' in env['statetrackers']:
-	SConscript('mesa/SConscript')
+    SConscript('mesa/SConscript')
 
-SConscript('gallium/winsys/SConscript')
+SConscript('gallium/SConscript')
 
 if platform != 'embedded':
-	SConscript('glut/glx/SConscript')
-	SConscript('glew/SConscript')
+    SConscript('glut/glx/SConscript')
+    SConscript('glew/SConscript')

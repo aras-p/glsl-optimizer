@@ -144,9 +144,9 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
 #endif
 
          if(shift > 0)
-            tmp = LLVMBuildLShr(bld->builder, a, lp_build_int_const_scalar(type4, shift*type.width), "");
+            tmp = LLVMBuildLShr(bld->builder, a, lp_build_const_int_vec(type4, shift*type.width), "");
          if(shift < 0)
-            tmp = LLVMBuildShl(bld->builder, a, lp_build_int_const_scalar(type4, -shift*type.width), "");
+            tmp = LLVMBuildShl(bld->builder, a, lp_build_const_int_vec(type4, -shift*type.width), "");
 
          assert(tmp);
          if(tmp)

@@ -137,10 +137,11 @@ enum pipe_error {
 
 /** Texture types */
 enum pipe_texture_target {
-   PIPE_TEXTURE_1D   = 0,
-   PIPE_TEXTURE_2D   = 1,
-   PIPE_TEXTURE_3D   = 2,
-   PIPE_TEXTURE_CUBE = 3,
+   PIPE_BUFFER       = 0,
+   PIPE_TEXTURE_1D   = 1,
+   PIPE_TEXTURE_2D   = 2,
+   PIPE_TEXTURE_3D   = 3,
+   PIPE_TEXTURE_CUBE = 4,
    PIPE_MAX_TEXTURE_TYPES
 };
 
@@ -175,21 +176,10 @@ enum pipe_texture_target {
 #define PIPE_TEX_COMPARE_NONE          0
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
 
-#define PIPE_TEXTURE_USAGE_RENDER_TARGET   0x1
-#define PIPE_TEXTURE_USAGE_DISPLAY_TARGET  0x2 /* ie a backbuffer */
-#define PIPE_TEXTURE_USAGE_PRIMARY         0x4 /* ie a frontbuffer */
-#define PIPE_TEXTURE_USAGE_DEPTH_STENCIL   0x8
-#define PIPE_TEXTURE_USAGE_SAMPLER         0x10
-#define PIPE_TEXTURE_USAGE_DYNAMIC         0x20
-/** Pipe driver custom usage flags should be greater or equal to this value */
-#define PIPE_TEXTURE_USAGE_CUSTOM          (1 << 16)
-
-#define PIPE_TEXTURE_GEOM_NON_SQUARE       0x1
-#define PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO 0x2
-
 
 /**
- * Surface layout
+ * Surface layout -- a hint?  Or some driver-internal poking out into
+ * the interface?
  */
 #define PIPE_SURFACE_LAYOUT_LINEAR  0
 
@@ -207,10 +197,23 @@ enum pipe_texture_target {
  * Transfer object usage flags
  */
 enum pipe_transfer_usage {
+   /**
+    * Resource contents read back (or accessed directly) at transfer
+    * create time.
+    */
    PIPE_TRANSFER_READ = (1 << 0),
+   
+   /**
+    * Resource contents will be written back at transfer_destroy
+    * time (or modified as a result of being accessed directly).
+    */
    PIPE_TRANSFER_WRITE = (1 << 1),
-   /** Read/modify/write */
+
+   /**
+    * Read/modify/write
+    */
    PIPE_TRANSFER_READ_WRITE = PIPE_TRANSFER_READ | PIPE_TRANSFER_WRITE,
+
    /** 
     * The transfer should map the texture storage directly. The driver may
     * return NULL if that isn't possible, and the state tracker needs to cope
@@ -220,89 +223,116 @@ enum pipe_transfer_usage {
     * does read/modify/write cycles on them directly, and a more complicated
     * path which uses minimal read and write transfers.
     */
-   PIPE_TRANSFER_MAP_DIRECTLY = (1 << 2)
+   PIPE_TRANSFER_MAP_DIRECTLY = (1 << 2),
+
+   /**
+    * Discards the memory within the mapped region.
+    *
+    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    *
+    * See also:
+    * - OpenGL's ARB_map_buffer_range extension, MAP_INVALIDATE_RANGE_BIT flag.
+    * - Direct3D's D3DLOCK_DISCARD flag.
+    */
+   PIPE_TRANSFER_DISCARD = (1 << 8),
+
+   /**
+    * Fail if the resource cannot be mapped immediately.
+    *
+    * See also:
+    * - Direct3D's D3DLOCK_DONOTWAIT flag.
+    * - Mesa3D's MESA_MAP_NOWAIT_BIT flag.
+    * - WDDM's D3DDDICB_LOCKFLAGS.DonotWait flag.
+    */
+   PIPE_TRANSFER_DONTBLOCK = (1 << 9),
+
+   /**
+    * Do not attempt to synchronize pending operations on the resource when mapping.
+    *
+    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    *
+    * See also:
+    * - OpenGL's ARB_map_buffer_range extension, MAP_UNSYNCHRONIZED_BIT flag.
+    * - Direct3D's D3DLOCK_NOOVERWRITE flag.
+    * - WDDM's D3DDDICB_LOCKFLAGS.IgnoreSync flag.
+    */
+   PIPE_TRANSFER_UNSYNCHRONIZED = (1 << 10),
+   PIPE_TRANSFER_NOOVERWRITE = (1 << 10), /* are these really the same?? */
+
+   /**
+    * Written ranges will be notified later with
+    * pipe_context::transfer_flush_region.
+    *
+    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    *
+    * See also:
+    * - pipe_context::transfer_flush_region
+    * - OpenGL's ARB_map_buffer_range extension, MAP_FLUSH_EXPLICIT_BIT flag.
+    */
+   PIPE_TRANSFER_FLUSH_EXPLICIT = (1 << 11)
+
 };
 
 
 /*
- * Buffer usage flags
+ * Resource binding flags -- state tracker must specify in advance all
+ * the ways a resource might be used.
  */
+#define PIPE_BIND_DEPTH_STENCIL        (1 << 0) /* get_tex_surface */
+#define PIPE_BIND_RENDER_TARGET        (1 << 1) /* get_tex_surface */
+#define PIPE_BIND_SAMPLER_VIEW         (1 << 2) /* get_sampler_view */
+#define PIPE_BIND_VERTEX_BUFFER        (1 << 3) /* set_vertex_buffers */
+#define PIPE_BIND_INDEX_BUFFER         (1 << 4) /* draw_elements */
+#define PIPE_BIND_CONSTANT_BUFFER      (1 << 5) /* set_constant_buffer */
+#define PIPE_BIND_BLIT_SOURCE          (1 << 6) /* surface_copy */
+#define PIPE_BIND_BLIT_DESTINATION     (1 << 7) /* surface_copy, fill */
+#define PIPE_BIND_DISPLAY_TARGET       (1 << 8) /* flush_front_buffer */
+#define PIPE_BIND_TRANSFER_WRITE       (1 << 9) /* get_transfer */
+#define PIPE_BIND_TRANSFER_READ        (1 << 10) /* get_transfer */
+#define PIPE_BIND_CUSTOM               (1 << 16) /* state-tracker/winsys usages */
 
-#define PIPE_BUFFER_USAGE_CPU_READ  (1 << 0)
-#define PIPE_BUFFER_USAGE_CPU_WRITE (1 << 1)
-#define PIPE_BUFFER_USAGE_GPU_READ  (1 << 2)
-#define PIPE_BUFFER_USAGE_GPU_WRITE (1 << 3)
-#define PIPE_BUFFER_USAGE_PIXEL     (1 << 4)
-#define PIPE_BUFFER_USAGE_VERTEX    (1 << 5)
-#define PIPE_BUFFER_USAGE_INDEX     (1 << 6)
-#define PIPE_BUFFER_USAGE_CONSTANT  (1 << 7)
-
-/*
- * CPU access flags.
+/* The first two flags above were previously part of the amorphous
+ * TEXTURE_USAGE, most of which are now descriptions of the ways a
+ * particular texture can be bound to the gallium pipeline.  The two flags
+ * below do not fit within that and probably need to be migrated to some
+ * other place.
  *
- * These flags should only be used for texture transfers or when mapping
- * buffers.
+ * It seems like scanout is used by the Xorg state tracker to ask for
+ * a texture suitable for actual scanout (hence the name), which
+ * implies extra layout constraints on some hardware.  It may also
+ * have some special meaning regarding mouse cursor images.
  *
- * Note that the PIPE_BUFFER_USAGE_CPU_xxx flags above are also used for
- * mapping. Either PIPE_BUFFER_USAGE_CPU_READ or PIPE_BUFFER_USAGE_CPU_WRITE
- * must be set.
+ * The shared flag is quite underspecified, but certainly isn't a
+ * binding flag - it seems more like a message to the winsys to create
+ * a shareable allocation.
  */
+#define PIPE_BIND_SCANOUT     (1 << 14) /*  */
+#define PIPE_BIND_SHARED      (1 << 15) /* get_texture_handle ??? */
 
-/**
- * Discards the memory within the mapped region.
- *
- * It should not be used with PIPE_BUFFER_USAGE_CPU_READ.
- *
- * See also:
- * - OpenGL's ARB_map_buffer_range extension, MAP_INVALIDATE_RANGE_BIT flag.
- * - Direct3D's D3DLOCK_DISCARD flag.
+
+/* Flags for the driver about resource behaviour:
  */
-#define PIPE_BUFFER_USAGE_DISCARD   (1 << 8)
+#define PIPE_RESOURCE_FLAG_GEN_MIPS    (1 << 0)  /* Driver performs autogen mips */
+#define PIPE_RESOURCE_FLAG_DRV_PRIV    (1 << 16) /* driver/winsys private */
+#define PIPE_RESOURCE_FLAG_ST_PRIV     (1 << 24) /* state-tracker/winsys private */
 
-/**
- * Fail if the resource cannot be mapped immediately.
- *
- * See also:
- * - Direct3D's D3DLOCK_DONOTWAIT flag.
- * - Mesa3D's MESA_MAP_NOWAIT_BIT flag.
- * - WDDM's D3DDDICB_LOCKFLAGS.DonotWait flag.
+/* Hint about the expected lifecycle of a resource.
  */
-#define PIPE_BUFFER_USAGE_DONTBLOCK (1 << 9)
+#define PIPE_USAGE_DEFAULT        0 /* many uploads, draws intermixed */
+#define PIPE_USAGE_DYNAMIC        1 /* many uploads, draws intermixed */
+#define PIPE_USAGE_STATIC         2 /* same as immutable?? */
+#define PIPE_USAGE_IMMUTABLE      3 /* no change after first upload */
+#define PIPE_USAGE_STREAM         4 /* upload, draw, upload, draw */
 
-/**
- * Do not attempt to synchronize pending operations on the resource when mapping.
+
+/* These are intended to be used in calls to is_format_supported, but
+ * no driver actually uses these flags, and only the glx/xlib state
+ * tracker issues them.
  *
- * It should not be used with PIPE_BUFFER_USAGE_CPU_READ.
- *
- * See also:
- * - OpenGL's ARB_map_buffer_range extension, MAP_UNSYNCHRONIZED_BIT flag.
- * - Direct3D's D3DLOCK_NOOVERWRITE flag.
- * - WDDM's D3DDDICB_LOCKFLAGS.IgnoreSync flag.
+ * Deprecate?
  */
-#define PIPE_BUFFER_USAGE_UNSYNCHRONIZED (1 << 10)
-
-/**
- * Written ranges will be notified later with
- * pipe_screen::buffer_flush_mapped_range.
- *
- * It should not be used with PIPE_BUFFER_USAGE_CPU_READ.
- *
- * See also:
- * - pipe_screen::buffer_flush_mapped_range
- * - OpenGL's ARB_map_buffer_range extension, MAP_FLUSH_EXPLICIT_BIT flag.
- */
-#define PIPE_BUFFER_USAGE_FLUSH_EXPLICIT (1 << 11)
-
-/** Pipe driver custom usage flags should be greater or equal to this value */
-#define PIPE_BUFFER_USAGE_CUSTOM    (1 << 16)
-
-/* Convenient shortcuts */
-#define PIPE_BUFFER_USAGE_CPU_READ_WRITE \
-   ( PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE )
-#define PIPE_BUFFER_USAGE_GPU_READ_WRITE \
-   ( PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE )
-#define PIPE_BUFFER_USAGE_WRITE \
-   ( PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_GPU_WRITE )
+#define PIPE_TEXTURE_GEOM_NON_SQUARE       0x1
+#define PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO 0x2
 
 
 /** 
@@ -369,6 +399,17 @@ enum pipe_transfer_usage {
 
 
 /**
+ * Texture swizzles
+ */
+#define PIPE_SWIZZLE_RED   0
+#define PIPE_SWIZZLE_GREEN 1
+#define PIPE_SWIZZLE_BLUE  2
+#define PIPE_SWIZZLE_ALPHA 3
+#define PIPE_SWIZZLE_ZERO  4
+#define PIPE_SWIZZLE_ONE   5
+
+
+/**
  * Implementation capabilities/limits which are queried through
  * pipe_screen::get_param() and pipe_screen::get_paramf().
  */
@@ -422,7 +463,6 @@ enum pipe_transfer_usage {
 #define PIPE_REFERENCED_FOR_READ  (1 << 0)
 #define PIPE_REFERENCED_FOR_WRITE (1 << 1)
 
-
 enum pipe_video_codec
 {
    PIPE_VIDEO_CODEC_UNKNOWN = 0,
@@ -446,6 +486,7 @@ enum pipe_video_profile
    PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN,
    PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH
 };
+
 
 #ifdef __cplusplus
 }

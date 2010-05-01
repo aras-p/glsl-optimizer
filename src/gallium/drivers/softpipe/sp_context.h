@@ -38,6 +38,10 @@
 #include "sp_quad_pipe.h"
 
 
+/** Do polygon stipple in the driver here, or in the draw module? */
+#define DO_PSTIPPLE_IN_DRAW_MODULE 1
+
+
 struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
@@ -45,6 +49,7 @@ struct softpipe_tile_cache;
 struct softpipe_tex_tile_cache;
 struct sp_fragment_shader;
 struct sp_vertex_shader;
+struct sp_velems_state;
 
 
 struct softpipe_context {
@@ -59,26 +64,25 @@ struct softpipe_context {
    struct sp_fragment_shader *fs;
    struct sp_vertex_shader *vs;
    struct sp_geometry_shader *gs;
+   struct sp_velems_state *velems;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
-   struct pipe_buffer *constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
+   struct pipe_resource *constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
-   struct pipe_texture *vertex_textures[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
 
    unsigned num_samplers;
-   unsigned num_textures;
+   unsigned num_sampler_views;
    unsigned num_vertex_samplers;
-   unsigned num_vertex_textures;
-   unsigned num_vertex_elements;
+   unsigned num_vertex_sampler_views;
    unsigned num_vertex_buffers;
 
    unsigned dirty; /**< Mask of SP_NEW_x flags */
@@ -93,7 +97,7 @@ struct softpipe_context {
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
 
    /** Mapped constant buffers */
-   void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
+   const void *mapped_constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
 
    /** Vertex format */
    struct vertex_info vertex_info;
@@ -126,6 +130,7 @@ struct softpipe_context {
       struct quad_stage *shade;
       struct quad_stage *depth_test;
       struct quad_stage *blend;
+      struct quad_stage *pstipple;
       struct quad_stage *first; /**< points to one of the above stages */
    } quad;
 

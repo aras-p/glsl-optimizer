@@ -63,7 +63,7 @@ int INTEL_DEBUG = (0);
 #endif
 
 
-#define DRIVER_DATE                     "20091221 DEVELOPMENT"
+#define DRIVER_DATE                     "20100330 DEVELOPMENT"
 #define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
 
 
@@ -159,10 +159,10 @@ intelGetString(GLcontext * ctx, GLenum name)
          chipset = "Intel(R) B43";
          break;
       case PCI_CHIP_ILD_G:
-         chipset = "Intel(R) IGDNG_D";
+         chipset = "Intel(R) Ironlake Desktop";
          break;
       case PCI_CHIP_ILM_G:
-         chipset = "Intel(R) IGDNG_M";
+         chipset = "Intel(R) Ironlake Mobile";
          break;
       default:
          chipset = "Unknown Intel Chipset";
@@ -389,7 +389,7 @@ intel_prepare_render(struct intel_context *intel)
    __DRIcontext *driContext = intel->driContext;
    __DRIdrawable *drawable;
 
-   drawable = intel->driDrawable;
+   drawable = driContext->driDrawablePriv;
    if (drawable->dri2.stamp != driContext->dri2.draw_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
@@ -397,7 +397,7 @@ intel_prepare_render(struct intel_context *intel)
       driContext->dri2.draw_stamp = drawable->dri2.stamp;
    }
 
-   drawable = intel->driReadDrawable;
+   drawable = driContext->driReadablePriv;
    if (drawable->dri2.stamp != driContext->dri2.read_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
@@ -444,6 +444,7 @@ static const struct dri_debug_control debug_control[] = {
    { "sing",  DEBUG_SINGLE_THREAD },
    { "thre",  DEBUG_SINGLE_THREAD },
    { "wm",    DEBUG_WM },
+   { "glsl_force", DEBUG_GLSL_FORCE },
    { "urb",   DEBUG_URB },
    { "vs",    DEBUG_VS },
    { NULL,    0 }
@@ -471,6 +472,7 @@ void
 intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 {
    struct intel_context *intel = intel_context(ctx);
+    __DRIcontext *driContext = intel->driContext;
 
    if (intel->Fallback)
       _swrast_flush(ctx);
@@ -487,9 +489,10 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
       if (screen->dri2.loader &&
           (screen->dri2.loader->base.version >= 2)
 	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
-          intel->driDrawable && intel->driDrawable->loaderPrivate) {
-	 (*screen->dri2.loader->flushFrontBuffer)(intel->driDrawable,
-						  intel->driDrawable->loaderPrivate);
+          driContext->driDrawablePriv &&
+	  driContext->driDrawablePriv->loaderPrivate) {
+	 (*screen->dri2.loader->flushFrontBuffer)(driContext->driDrawablePriv,
+						  driContext->driDrawablePriv->loaderPrivate);
 
 	 /* Only clear the dirty bit if front-buffer rendering is no longer
 	  * enabled.  This is done so that the dirty bit can only be set in
@@ -606,7 +609,6 @@ intelInitContext(struct intel_context *intel,
 
    driContextPriv->driverPrivate = intel;
    intel->intelScreen = intelScreen;
-   intel->driScreen = sPriv;
    intel->driContext = driContextPriv;
    intel->driFd = sPriv->fd;
 
@@ -614,8 +616,16 @@ intelInitContext(struct intel_context *intel,
       intel->gen = 6;
       intel->needs_ff_sync = GL_TRUE;
       intel->has_luminance_srgb = GL_TRUE;
+   } else if (IS_GEN5(intel->intelScreen->deviceID)) {
+      intel->gen = 5;
+      intel->needs_ff_sync = GL_TRUE;
+      intel->has_luminance_srgb = GL_TRUE;
    } else if (IS_965(intel->intelScreen->deviceID)) {
       intel->gen = 4;
+      if (IS_G4X(intel->intelScreen->deviceID)) {
+	  intel->has_luminance_srgb = GL_TRUE;
+	  intel->is_g4x = GL_TRUE;
+      }
    } else if (IS_9XX(intel->intelScreen->deviceID)) {
       intel->gen = 3;
       if (IS_945(intel->intelScreen->deviceID)) {
@@ -625,18 +635,8 @@ intelInitContext(struct intel_context *intel,
       intel->gen = 2;
    }
 
-   if (IS_IGDNG(intel->intelScreen->deviceID)) {
-      intel->is_ironlake = GL_TRUE;
-      intel->needs_ff_sync = GL_TRUE;
-      intel->has_luminance_srgb = GL_TRUE;
-   } else if (IS_G4X(intel->intelScreen->deviceID)) {
-      intel->has_luminance_srgb = GL_TRUE;
-      intel->is_g4x = GL_TRUE;
-   }
-
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
-                       intel->driScreen->myNum,
-		       (intel->gen >= 4) ? "i965" : "i915");
+                       sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
    if (intelScreen->deviceID == PCI_CHIP_I865_G)
       intel->maxBatchSize = 4096;
    else
@@ -844,14 +844,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 GLboolean
 intelUnbindContext(__DRIcontext * driContextPriv)
 {
-   struct intel_context *intel =
-      (struct intel_context *) driContextPriv->driverPrivate;
-
-   /* Deassociate the context with the drawables.
-    */
-   intel->driDrawable = NULL;
-   intel->driReadDrawable = NULL;
-
    return GL_TRUE;
 }
 
@@ -880,12 +872,10 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       struct gl_framebuffer *fb = driDrawPriv->driverPrivate;
       struct gl_framebuffer *readFb = driReadPriv->driverPrivate;
 
-      _mesa_make_current(&intel->ctx, fb, readFb);
-      intel->driReadDrawable = driReadPriv;
-      intel->driDrawable = driDrawPriv;
       driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
       driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
       intel_prepare_render(intel);
+      _mesa_make_current(&intel->ctx, fb, readFb);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

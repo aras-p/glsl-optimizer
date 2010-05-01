@@ -43,7 +43,7 @@ svga_translate_vertex_format(enum pipe_format format)
    case PIPE_FORMAT_R32G32_FLOAT:         return SVGA3D_DECLTYPE_FLOAT2;
    case PIPE_FORMAT_R32G32B32_FLOAT:      return SVGA3D_DECLTYPE_FLOAT3;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:   return SVGA3D_DECLTYPE_FLOAT4;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:       return SVGA3D_DECLTYPE_D3DCOLOR;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:       return SVGA3D_DECLTYPE_D3DCOLOR;
    case PIPE_FORMAT_R8G8B8A8_USCALED:     return SVGA3D_DECLTYPE_UBYTE4;
    case PIPE_FORMAT_R16G16_SSCALED:       return SVGA3D_DECLTYPE_SHORT2;
    case PIPE_FORMAT_R16G16B16A16_SSCALED: return SVGA3D_DECLTYPE_SHORT4;
@@ -52,14 +52,10 @@ svga_translate_vertex_format(enum pipe_format format)
    case PIPE_FORMAT_R16G16B16A16_SNORM:   return SVGA3D_DECLTYPE_SHORT4N;
    case PIPE_FORMAT_R16G16_UNORM:         return SVGA3D_DECLTYPE_USHORT2N;
    case PIPE_FORMAT_R16G16B16A16_UNORM:   return SVGA3D_DECLTYPE_USHORT4N;
-
-   /* These formats don't exist yet:
-    * 
-   case PIPE_FORMAT_R10G10B10_USCALED:    return SVGA3D_DECLTYPE_UDEC3;
-   case PIPE_FORMAT_R10G10B10_SNORM:      return SVGA3D_DECLTYPE_DEC3N;
+   case PIPE_FORMAT_R10G10B10X2_USCALED:  return SVGA3D_DECLTYPE_UDEC3;
+   case PIPE_FORMAT_R10G10B10X2_SNORM:    return SVGA3D_DECLTYPE_DEC3N;
    case PIPE_FORMAT_R16G16_FLOAT:         return SVGA3D_DECLTYPE_FLOAT16_2;
    case PIPE_FORMAT_R16G16B16A16_FLOAT:   return SVGA3D_DECLTYPE_FLOAT16_4;
-   */
 
    default:
       /* There are many formats without hardware support.  This case
@@ -76,8 +72,13 @@ static int update_need_swvfetch( struct svga_context *svga,
    unsigned i;
    boolean need_swvfetch = FALSE;
 
-   for (i = 0; i < svga->curr.num_vertex_elements; i++) {
-      svga->state.sw.ve_format[i] = svga_translate_vertex_format(svga->curr.ve[i].src_format);
+   if (!svga->curr.velems) {
+      /* No vertex elements bound. */
+      return 0;
+   }
+
+   for (i = 0; i < svga->curr.velems->count; i++) {
+      svga->state.sw.ve_format[i] = svga_translate_vertex_format(svga->curr.velems->velem[i].src_format);
       if (svga->state.sw.ve_format[i] == SVGA3D_DECLTYPE_MAX) {
          need_swvfetch = TRUE;
          break;

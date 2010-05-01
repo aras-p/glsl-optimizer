@@ -28,7 +28,7 @@ logicop_enable
 logicop_func
    The logic operation to use if logic ops are enabled. One of PIPE_LOGICOP.
 dither
-   Whether dithering is enabled.
+   Whether dithering is enabled. Note: Dithering is implementation-dependent.
 rt
    Contains the per-rendertarget blend state.
 

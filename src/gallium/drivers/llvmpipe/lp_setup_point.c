@@ -31,14 +31,14 @@
 
 #include "lp_setup_context.h"
 
-static void point_nop( struct setup_context *setup,
+static void point_nop( struct lp_setup_context *setup,
                        const float (*v0)[4] )
 {
 }
 
 
 void 
-lp_setup_choose_point( struct setup_context *setup )
+lp_setup_choose_point( struct lp_setup_context *setup )
 {
    setup->point = point_nop;
 }

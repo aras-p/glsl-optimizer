@@ -618,8 +618,7 @@ static int bo_vram_validate(struct radeon_bo_int *bo,
 
     assert(bo_legacy->tobj->base.memBlock);
 
-    if (bo_legacy->tobj)
-	driUpdateTextureLRU(&bo_legacy->tobj->base);
+    driUpdateTextureLRU(&bo_legacy->tobj->base);
 
     if (bo_legacy->dirty || bo_legacy->tobj->base.dirty_images[0]) {
 	    if (IS_R600_CLASS(boml->screen)) {

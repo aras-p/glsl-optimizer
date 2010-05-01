@@ -226,11 +226,11 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 			stack = self.get_stack_size(f)
 			alt = "%s@%u" % (name, stack)
 
-			if f.is_static_entry_point(f.name):
-				for n in f.entry_points:
+			for n in f.entry_points:
+				if f.is_static_entry_point(n):
 					if n != f.name:
 						alt2 = "%s@%u" % (n, stack)
-						text = '\tGL_STUB_ALIAS(%s, _gloffset_%s, %s, %s, %s)' % (n, f.name, alt2, f.name, alt)
+						text = '\tGL_STUB_ALIAS(%s, _gloffset_%s, %s, %s, %s)' % (n, f.name, alt2, name, alt)
 
 						if f.has_different_protocol(n):
 							print '#ifndef GLX_INDIRECT_RENDERING'

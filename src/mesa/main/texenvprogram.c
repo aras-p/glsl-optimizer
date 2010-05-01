@@ -1415,6 +1415,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    struct texenv_fragment_program p;
    GLuint unit;
    struct ureg cf, out;
+   int i;
 
    memset(&p, 0, sizeof(p));
    p.state = key;
@@ -1436,7 +1437,13 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.program->Base.NumAddressRegs = 0;
    p.program->Base.Parameters = _mesa_new_parameter_list();
    p.program->Base.InputsRead = 0x0;
-   p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
+
+   if (ctx->DrawBuffer->_NumColorDrawBuffers == 1)
+      p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
+   else {
+      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++)
+	 p.program->Base.OutputsWritten |= (1 << (FRAG_RESULT_DATA0 + i));
+   }
 
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       p.src_texture[unit] = undef;
@@ -1485,22 +1492,28 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    }
 
    cf = get_source( &p, SRC_PREVIOUS, 0 );
-   out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLOR );
 
-   if (key->separate_specular) {
-      /* Emit specular add.
-       */
-      struct ureg s = register_input(&p, FRAG_ATTRIB_COL1);
-      emit_arith( &p, OPCODE_ADD, out, WRITEMASK_XYZ, 0, cf, s, undef );
-      emit_arith( &p, OPCODE_MOV, out, WRITEMASK_W, 0, cf, undef, undef );
-   }
-   else if (memcmp(&cf, &out, sizeof(cf)) != 0) {
-      /* Will wind up in here if no texture enabled or a couple of
-       * other scenarios (GL_REPLACE for instance).
-       */
-      emit_arith( &p, OPCODE_MOV, out, WRITEMASK_XYZW, 0, cf, undef, undef );
-   }
+   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+      if (ctx->DrawBuffer->_NumColorDrawBuffers == 1)
+	 out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLOR );
+      else {
+	 out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i );
+      }
 
+      if (key->separate_specular) {
+	 /* Emit specular add.
+	  */
+	 struct ureg s = register_input(&p, FRAG_ATTRIB_COL1);
+	 emit_arith( &p, OPCODE_ADD, out, WRITEMASK_XYZ, 0, cf, s, undef );
+	 emit_arith( &p, OPCODE_MOV, out, WRITEMASK_W, 0, cf, undef, undef );
+      }
+      else if (memcmp(&cf, &out, sizeof(cf)) != 0) {
+	 /* Will wind up in here if no texture enabled or a couple of
+	  * other scenarios (GL_REPLACE for instance).
+	  */
+	 emit_arith( &p, OPCODE_MOV, out, WRITEMASK_XYZW, 0, cf, undef, undef );
+      }
+   }
    /* Finish up:
     */
    emit_arith( &p, OPCODE_END, undef, WRITEMASK_XYZW, 0, undef, undef, undef);

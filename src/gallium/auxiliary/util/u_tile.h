@@ -32,22 +32,24 @@
 
 struct pipe_transfer;
 
-
 /**
  * Clip tile against transfer dims.
+ *
+ * XXX: this only clips width and height!
+ *
  * \return TRUE if tile is totally clipped, FALSE otherwise
  */
 static INLINE boolean
-pipe_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_transfer *pt)
+u_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_box *box)
 {
-   if (x >= pt->width)
+   if (x >= box->width)
       return TRUE;
-   if (y >= pt->height)
+   if (y >= box->height)
       return TRUE;
-   if (x + *w > pt->width)
-      *w = pt->width - x;
-   if (y + *h > pt->height)
-      *h = pt->height - y;
+   if (x + *w > box->width)
+      *w = box->width - x;
+   if (y + *h > box->height)
+      *h = box->height - y;
    return FALSE;
 }
 
@@ -56,34 +58,54 @@ extern "C" {
 #endif
 
 void
-pipe_get_tile_raw(struct pipe_transfer *pt,
+pipe_get_tile_raw(struct pipe_context *pipe,
+                  struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride);
 
 void
-pipe_put_tile_raw(struct pipe_transfer *pt,
+pipe_put_tile_raw(struct pipe_context *pipe,
+                  struct pipe_transfer *pt,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride);
 
 
 void
-pipe_get_tile_rgba(struct pipe_transfer *pt,
+pipe_get_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    float *p);
 
 void
-pipe_put_tile_rgba(struct pipe_transfer *pt,
+pipe_get_tile_swizzle(struct pipe_context *pipe,
+		      struct pipe_transfer *pt,
+                      uint x,
+                      uint y,
+                      uint w,
+                      uint h,
+                      uint swizzle_r,
+                      uint swizzle_g,
+                      uint swizzle_b,
+                      uint swizzle_a,
+                      enum pipe_format format,
+                      float *p);
+
+void
+pipe_put_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_transfer *pt,
                    uint x, uint y, uint w, uint h,
                    const float *p);
 
 
 void
-pipe_get_tile_z(struct pipe_transfer *pt,
+pipe_get_tile_z(struct pipe_context *pipe,
+                struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 uint *z);
 
 void
-pipe_put_tile_z(struct pipe_transfer *pt,
+pipe_put_tile_z(struct pipe_context *pipe,
+                struct pipe_transfer *pt,
                 uint x, uint y, uint w, uint h,
                 const uint *z);
 

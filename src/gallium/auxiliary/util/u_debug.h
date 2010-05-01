@@ -303,6 +303,45 @@ debug_get_flags_option(const char *name,
                        const struct debug_named_value *flags,
                        unsigned long dfault);
 
+#define DEBUG_GET_ONCE_BOOL_OPTION(sufix, name, dfault) \
+static boolean \
+debug_get_option_ ## sufix (void) \
+{ \
+   static boolean first = TRUE; \
+   static boolean value; \
+   if (first) { \
+      first = FALSE; \
+      value = debug_get_bool_option(name, dfault); \
+   } \
+   return value; \
+}
+
+#define DEBUG_GET_ONCE_NUM_OPTION(sufix, name, dfault) \
+static long \
+debug_get_option_ ## sufix (void) \
+{ \
+   static boolean first = TRUE; \
+   static long value; \
+   if (first) { \
+      first = FALSE; \
+      value = debug_get_num_option(name, dfault); \
+   } \
+   return value; \
+}
+
+#define DEBUG_GET_ONCE_FLAGS_OPTION(sufix, name, flags, dfault) \
+static unsigned long \
+debug_get_option_ ## sufix (void) \
+{ \
+   static boolean first = TRUE; \
+   static unsigned long value; \
+   if (first) { \
+      first = FALSE; \
+      value = debug_get_flags_option(name, flags, dfault); \
+   } \
+   return value; \
+}
+
 
 unsigned long
 debug_memory_begin(void);
@@ -312,30 +351,35 @@ debug_memory_end(unsigned long beginning);
 
 
 #ifdef DEBUG
+struct pipe_context;
 struct pipe_surface;
 struct pipe_transfer;
-struct pipe_texture;
+struct pipe_resource;
 
 void debug_dump_image(const char *prefix,
                       unsigned format, unsigned cpp,
                       unsigned width, unsigned height,
                       unsigned stride,
                       const void *data);
-void debug_dump_surface(const char *prefix,
+void debug_dump_surface(struct pipe_context *pipe,
+			const char *prefix,
                         struct pipe_surface *surface);   
-void debug_dump_texture(const char *prefix,
-                        struct pipe_texture *texture);
-void debug_dump_surface_bmp(const char *filename,
+void debug_dump_texture(struct pipe_context *pipe,
+			const char *prefix,
+                        struct pipe_resource *texture);
+void debug_dump_surface_bmp(struct pipe_context *pipe,
+                            const char *filename,
                             struct pipe_surface *surface);
-void debug_dump_transfer_bmp(const char *filename,
+void debug_dump_transfer_bmp(struct pipe_context *pipe,
+                             const char *filename,
                              struct pipe_transfer *transfer);
 void debug_dump_float_rgba_bmp(const char *filename,
                                unsigned width, unsigned height,
                                float *rgba, unsigned stride);
 #else
 #define debug_dump_image(prefix, format, cpp, width, height, stride, data) ((void)0)
-#define debug_dump_surface(prefix, surface) ((void)0)
-#define debug_dump_surface_bmp(filename, surface) ((void)0)
+#define debug_dump_surface(pipe, prefix, surface) ((void)0)
+#define debug_dump_surface_bmp(pipe, filename, surface) ((void)0)
 #define debug_dump_transfer_bmp(filename, transfer) ((void)0)
 #define debug_dump_float_rgba_bmp(filename, width, height, rgba, stride) ((void)0)
 #endif

@@ -50,7 +50,7 @@ static uint32_t st_random(void) {
 
    seed = UINT64_C(134775813) * seed + UINT64_C(1);
    
-   return (uint16_t)(seed >> 32); 
+   return (uint32_t)(seed >> 32);
 }
 
 
@@ -470,25 +470,42 @@ static INLINE void
 st_sample_generic_pixel_block(enum pipe_format format, 
                               uint8_t *raw,
                               float *rgba, unsigned rgba_stride,
-                              unsigned w, unsigned h)
+                              unsigned w, unsigned h,
+                              boolean norm)
 {
    unsigned i;
    unsigned x, y, ch;
    int blocksize = util_format_get_blocksize(format);
    
-   for(i = 0; i < blocksize; ++i)
-      raw[i] = (uint8_t)st_random();
-   
-   
-   pipe_tile_raw_to_rgba(format,
-                         raw,
-                         w, h,
-                         rgba, rgba_stride);
- 
-   if(format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV) {
-      for(y = 0; y < h; ++y) {
-         for(x = 0; x < w; ++x) {
-            for(ch = 0; ch < 4; ++ch) {
+   if (norm) {
+      for (y = 0; y < h; ++y) {
+         for (x = 0; x < w; ++x) {
+            for (ch = 0; ch < 4; ++ch) {
+               unsigned offset = y*rgba_stride + x*4 + ch;
+               rgba[offset] = (st_random() & 0xff) / (double)0xff;
+            }
+         }
+      }
+
+      util_format_write_4f(format,
+                           rgba, rgba_stride * sizeof(float),
+                           raw, util_format_get_stride(format, w),
+                           0, 0, w, h);
+
+   } else {
+      for (i = 0; i < blocksize; ++i)
+         raw[i] = (uint8_t)st_random();
+   }
+
+   util_format_read_4f(format,
+                       rgba, rgba_stride * sizeof(float),
+                       raw, util_format_get_stride(format, w),
+                       0, 0, w, h);
+
+   if (format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV) {
+      for (y = 0; y < h; ++y) {
+         for (x = 0; x < w; ++x) {
+            for (ch = 0; ch < 4; ++ch) {
                unsigned offset = y*rgba_stride + x*4 + ch;
                rgba[offset] = CLAMP(rgba[offset], 0.0f, 1.0f);
             }
@@ -505,7 +522,8 @@ void
 st_sample_pixel_block(enum pipe_format format,
                       void *raw,
                       float *rgba, unsigned rgba_stride,
-                      unsigned w, unsigned h)
+                      unsigned w, unsigned h,
+                      boolean norm)
 {
    switch(format) {
    case PIPE_FORMAT_DXT1_RGB:
@@ -516,36 +534,38 @@ st_sample_pixel_block(enum pipe_format format,
       break;
 
    default:
-      st_sample_generic_pixel_block(format, raw, rgba, rgba_stride, w, h);
+      st_sample_generic_pixel_block(format, raw, rgba, rgba_stride, w, h, norm);
       break;
    }
 }
 
 
 void
-st_sample_surface(struct st_surface *surface, float *rgba) 
+st_sample_surface(struct pipe_context *pipe,
+                  struct st_surface *surface,
+                  float *rgba,
+                  boolean norm)
 {
-   struct pipe_texture *texture = surface->texture;
-   struct pipe_screen *screen = texture->screen;
+   struct pipe_resource *texture = surface->texture;
    unsigned width = u_minify(texture->width0, surface->level);
    unsigned height = u_minify(texture->height0, surface->level);
    uint rgba_stride = width * 4;
    struct pipe_transfer *transfer;
    void *raw;
 
-   transfer = screen->get_tex_transfer(screen,
-                                       surface->texture,
-                                       surface->face,
-                                       surface->level,
-                                       surface->zslice,
-                                       PIPE_TRANSFER_WRITE,
-                                       0, 0,
-                                       width,
-                                       height);
+   transfer = pipe_get_transfer(pipe,
+                                surface->texture,
+                                surface->face,
+                                surface->level,
+                                surface->zslice,
+                                PIPE_TRANSFER_WRITE,
+                                0, 0,
+                                width,
+                                height);
    if (!transfer)
       return;
 
-   raw = screen->transfer_map(screen, transfer);
+   raw = pipe->transfer_map(pipe, transfer);
    if (raw) {
       enum pipe_format format = texture->format;
       uint x, y;
@@ -563,12 +583,13 @@ st_sample_surface(struct st_surface *surface, float *rgba)
                                   rgba + y * blockheight * rgba_stride + x * blockwidth * 4,
                                   rgba_stride,
                                   MIN2(blockwidth, width - x*blockwidth),
-                                  MIN2(blockheight, height - y*blockheight));
+                                  MIN2(blockheight, height - y*blockheight),
+                                  norm);
          }
       }
 
-      screen->transfer_unmap(screen, transfer);
+      pipe->transfer_unmap(pipe, transfer);
    }
-   
-   screen->tex_transfer_destroy(transfer);
+
+   pipe->transfer_destroy(pipe, transfer);
 }

@@ -50,10 +50,12 @@ extern "C" {
 
 
 /** Opaque type */
+struct winsys_handle;
+/** Opaque type */
 struct pipe_fence_handle;
 struct pipe_winsys;
-struct pipe_buffer;
 struct pipe_texture;
+struct pipe_resource;
 struct pipe_surface;
 struct pipe_transfer;
 
@@ -96,40 +98,48 @@ struct pipe_screen {
    /**
     * Check if the given pipe_format is supported as a texture or
     * drawing surface.
-    * \param tex_usage  bitmask of PIPE_TEXTURE_USAGE_*
+    * \param bindings  bitmask of PIPE_BIND_*
     * \param geom_flags  bitmask of PIPE_TEXTURE_GEOM_*
     */
    boolean (*is_format_supported)( struct pipe_screen *,
                                    enum pipe_format format,
                                    enum pipe_texture_target target,
-                                   unsigned tex_usage, 
+                                   unsigned bindings, 
                                    unsigned geom_flags );
 
    /**
     * Create a new texture object, using the given template info.
     */
-   struct pipe_texture * (*texture_create)(struct pipe_screen *,
-                                           const struct pipe_texture *templat);
+   struct pipe_resource * (*resource_create)(struct pipe_screen *,
+					     const struct pipe_resource *templat);
 
    /**
-    * Create a new texture object, using the given template info, but on top of
-    * existing memory.
-    * 
-    * It is assumed that the buffer data is layed out according to the expected
-    * by the hardware. NULL will be returned if any inconsistency is found.  
+    * Create a texture from a winsys_handle. The handle is often created in
+    * another process by first creating a pipe texture and then calling
+    * texture_get_handle.
     */
-   struct pipe_texture * (*texture_blanket)(struct pipe_screen *,
-                                            const struct pipe_texture *templat,
-                                            const unsigned *stride,
-                                            struct pipe_buffer *buffer);
+   struct pipe_resource * (*resource_from_handle)(struct pipe_screen *,
+						  const struct pipe_resource *templat,
+						  struct winsys_handle *handle);
 
-   void (*texture_destroy)(struct pipe_texture *pt);
+   /**
+    * Get a winsys_handle from a texture. Some platforms/winsys requires
+    * that the texture is created with a special usage flag like
+    * DISPLAYTARGET or PRIMARY.
+    */
+   boolean (*resource_get_handle)(struct pipe_screen *,
+				  struct pipe_resource *tex,
+				  struct winsys_handle *handle);
+
+
+   void (*resource_destroy)(struct pipe_screen *,
+			    struct pipe_resource *pt);
 
    /** Get a 2D surface which is a "view" into a texture
-    * \param usage  bitmaks of PIPE_BUFFER_USAGE_* read/write flags
+    * \param usage  bitmaks of PIPE_BIND_* flags
     */
    struct pipe_surface *(*get_tex_surface)(struct pipe_screen *,
-                                           struct pipe_texture *texture,
+                                           struct pipe_resource *resource,
                                            unsigned face, unsigned level,
                                            unsigned zslice,
                                            unsigned usage );
@@ -137,34 +147,6 @@ struct pipe_screen {
    void (*tex_surface_destroy)(struct pipe_surface *);
    
 
-   /** Get a transfer object for transferring data to/from a texture */
-   struct pipe_transfer *(*get_tex_transfer)(struct pipe_screen *,
-                                             struct pipe_texture *texture,
-                                             unsigned face, unsigned level,
-                                             unsigned zslice,
-                                             enum pipe_transfer_usage usage,
-                                             unsigned x, unsigned y,
-                                             unsigned w, unsigned h);
-
-   void (*tex_transfer_destroy)(struct pipe_transfer *);
-   
-   void *(*transfer_map)( struct pipe_screen *,
-                          struct pipe_transfer *transfer );
-
-   void (*transfer_unmap)( struct pipe_screen *,
-                           struct pipe_transfer *transfer );
-
-
-   /**
-    * Create a new buffer.
-    * \param alignment  buffer start address alignment in bytes
-    * \param usage  bitmask of PIPE_BUFFER_USAGE_x
-    * \param size  size in bytes
-    */
-   struct pipe_buffer *(*buffer_create)( struct pipe_screen *screen,
-                                         unsigned alignment,
-                                         unsigned usage,
-                                         unsigned size );
 
    /**
     * Create a buffer that wraps user-space data.
@@ -187,96 +169,20 @@ struct pipe_screen {
     * Note that ptr may be accessed at any time upto the time when the
     * buffer is destroyed, so the data must not be freed before then.
     */
-   struct pipe_buffer *(*user_buffer_create)(struct pipe_screen *screen,
-                                             void *ptr,
-                                             unsigned bytes);
-
-   /**
-    * Allocate storage for a display target surface.
-    *
-    * Often surfaces which are meant to be blitted to the front screen (i.e.,
-    * display targets) must be allocated with special characteristics, memory
-    * pools, or obtained directly from the windowing system.
-    *
-    * This callback is invoked by the pipe_screenwhen creating a texture marked
-    * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag  to get the underlying
-    * buffer storage.
-    */
-   struct pipe_buffer *(*surface_buffer_create)(struct pipe_screen *screen,
-						unsigned width, unsigned height,
-						enum pipe_format format,
-						unsigned usage,
-						unsigned tex_usage,
-						unsigned *stride);
-
-
-   /**
-    * Map the entire data store of a buffer object into the client's address.
-    * flags is bitmask of PIPE_BUFFER_USAGE_CPU_READ/WRITE flags.
-    */
-   void *(*buffer_map)( struct pipe_screen *screen,
-			struct pipe_buffer *buf,
-			unsigned usage );
-   /**
-    * Map a subrange of the buffer data store into the client's address space.
-    *
-    * The returned pointer is always relative to buffer start, regardless of 
-    * the specified range. This is different from the ARB_map_buffer_range
-    * semantics because we don't forbid multiple mappings of the same buffer
-    * (yet).
-    */
-   void *(*buffer_map_range)( struct pipe_screen *screen,
-                              struct pipe_buffer *buf,
-                              unsigned offset,
-                              unsigned length,
-                              unsigned usage);
-
-   /**
-    * Notify a range that was actually written into.
-    * 
-    * Can only be used if the buffer was mapped with the 
-    * PIPE_BUFFER_USAGE_CPU_WRITE and PIPE_BUFFER_USAGE_FLUSH_EXPLICIT flags 
-    * set.
-    * 
-    * The range is relative to the buffer start, regardless of the range 
-    * specified to buffer_map_range. This is different from the 
-    * ARB_map_buffer_range semantics because we don't forbid multiple mappings 
-    * of the same buffer (yet).
-    * 
-    */
-   void (*buffer_flush_mapped_range)( struct pipe_screen *screen,
-                                      struct pipe_buffer *buf,
-                                      unsigned offset,
-                                      unsigned length);
-
-   /**
-    * Unmap buffer.
-    * 
-    * If the buffer was mapped with PIPE_BUFFER_USAGE_CPU_WRITE flag but not
-    * PIPE_BUFFER_USAGE_FLUSH_EXPLICIT then the pipe driver will
-    * assume that the whole buffer was written. This is mostly for backward 
-    * compatibility purposes and may affect performance -- the state tracker 
-    * should always specify exactly what got written while the buffer was 
-    * mapped.
-    */
-   void (*buffer_unmap)( struct pipe_screen *screen,
-                         struct pipe_buffer *buf );
-
-   void (*buffer_destroy)( struct pipe_buffer *buf );
-
-   /**
-    * Do any special operations to ensure buffer size is correct
-    */
-   void (*update_buffer)( struct pipe_screen *ws,
-                          void *context_private );
+   struct pipe_resource *(*user_buffer_create)(struct pipe_screen *screen,
+					       void *ptr,
+					       unsigned bytes,
+					       unsigned bind_flags);
 
    /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
+    * \param winsys_drawable_handle  an opaque handle that the calling context
+    *                                gets out-of-band
     */
    void (*flush_frontbuffer)( struct pipe_screen *screen,
                               struct pipe_surface *surf,
-                              void *context_private );
+                              void *winsys_drawable_handle );
 
 
 

@@ -41,22 +41,19 @@ struct pipe_viewport_state r300_viewport_identity = {
 void r300_emit_invariant_state(struct r300_context* r300,
                                unsigned size, void* state)
 {
-    struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
     CS_LOCALS(r300);
 
-    BEGIN_CS(14 + (caps->has_tcl ? 2: 0));
+    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
+        /* Subpixel multisampling for AA. */
+        BEGIN_CS(4);
+        OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
+        OUT_CS_REG(R300_GB_MSPOS1, 0x6666666);
+        END_CS;
+    }
+
+    BEGIN_CS(12 + (r300->screen->caps.has_tcl ? 2 : 0));
 
     /*** Graphics Backend (GB) ***/
-    /* Various GB enables */
-    OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
-                               R300_GB_LINE_STUFF_ENABLE  |
-                               R300_GB_TRIANGLE_STUFF_ENABLE);
-    /* Subpixel multisampling for AA
-     * These are commented out because glisse's CS checker doesn't like them.
-     * I presume these will be re-enabled later.
-     * OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
-     * OUT_CS_REG(R300_GB_MSPOS1, 0x6666666);
-     */
     /* Source of fog depth */
     OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
 
@@ -70,7 +67,7 @@ void r300_emit_invariant_state(struct r300_context* r300,
     /* Sign/normalize control */
     OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
     /* TCL-only stuff */
-    if (caps->has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         /* Amount of time to wait for vertex fetches in PVS */
         OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
     }
@@ -78,10 +75,10 @@ void r300_emit_invariant_state(struct r300_context* r300,
     END_CS;
 
     /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(44 + (caps->has_tcl ? 7 : 0) +
-             (caps->family >= CHIP_FAMILY_RV350 ? 4 : 0));
+    BEGIN_CS(38 + (r300->screen->caps.has_tcl ? 7 : 0) +
+             (r300->screen->caps.is_rv350 ? 4 : 0));
 
-    if (caps->has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         /*Flushing PVS is required before the VAP_GB registers can be changed*/
         OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0);
         OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
@@ -90,11 +87,6 @@ void r300_emit_invariant_state(struct r300_context* r300,
         OUT_CS_32F(1.0);
         OUT_CS_32F(1.0);
     }
-    /* XXX point tex stuffing */
-    OUT_CS_REG_SEQ(R300_GA_POINT_S0, 1);
-    OUT_CS_32F(0.0);
-    OUT_CS_REG_SEQ(R300_GA_POINT_S1, 1);
-    OUT_CS_32F(1.0);
     /* XXX line tex stuffing */
     OUT_CS_REG_SEQ(R300_GA_LINE_S0, 1);
     OUT_CS_32F(0.0);
@@ -116,7 +108,7 @@ void r300_emit_invariant_state(struct r300_context* r300,
     OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x00000000);
 
-    if (caps->family >= CHIP_FAMILY_RV350) {
+    if (r300->screen->caps.is_rv350) {
         OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);
         OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD, 0xFEFEFEFE);
     }
@@ -125,9 +117,5 @@ void r300_emit_invariant_state(struct r300_context* r300,
     OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
     OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
-
-    /* XXX */
-    OUT_CS_REG(R300_SC_CLIP_RULE, 0xaaaa);
-
     END_CS;
 }

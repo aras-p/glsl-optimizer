@@ -98,7 +98,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     */
    vs.thread1.single_program_flow = 0;
 
-   if (intel->is_ironlake)
+   if (intel->gen == 5)
       vs.thread1.binding_table_entry_count = 0; /* hardware requirement */
    else
       vs.thread1.binding_table_entry_count = key->nr_surfaces;
@@ -109,7 +109,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    vs.thread3.urb_entry_read_offset = 0;
    vs.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   if (intel->is_ironlake) {
+   if (intel->gen == 5) {
       switch (key->nr_urb_entries) {
       case 8:
       case 12:
@@ -150,7 +150,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 
    /* No samplers for ARB_vp programs:
     */
-   /* It has to be set to 0 for IGDNG
+   /* It has to be set to 0 for Ironlake
     */
    vs.vs5.sampler_count = 0;
 

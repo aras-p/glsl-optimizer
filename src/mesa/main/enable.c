@@ -42,9 +42,7 @@
 
 #define CHECK_EXTENSION(EXTNAME, CAP)					\
    if (!ctx->Extensions.EXTNAME) {					\
-      _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(0x%x)",	\
-                  state ? "Enable" : "Disable", CAP);			\
-      return;								\
+      goto invalid_enum_error;						\
    }
 
 
@@ -127,9 +125,7 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
 #endif /* FEATURE_NV_vertex_program */
 
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM,
-                      "glEnable/DisableClientState(0x%x)", cap);
-         return;
+         goto invalid_enum_error;
    }
 
    if (*var == state)
@@ -150,6 +146,12 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
    if (ctx->Driver.Enable) {
       ctx->Driver.Enable( ctx, cap, state );
    }
+
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(0x%x)",
+               state ? "Enable" : "Disable", cap);
 }
 
 
@@ -188,16 +190,12 @@ _mesa_DisableClientState( GLenum cap )
 #undef CHECK_EXTENSION
 #define CHECK_EXTENSION(EXTNAME, CAP)					\
    if (!ctx->Extensions.EXTNAME) {					\
-      _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",			\
-                  state ? "Enable" : "Disable", CAP);			\
-      return;								\
+      goto invalid_enum_error;						\
    }
 
 #define CHECK_EXTENSION2(EXT1, EXT2, CAP)				\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {		\
-      _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",			\
-                  state ? "Enable" : "Disable", CAP);			\
-      return;								\
+      goto invalid_enum_error;						\
    }
 
 
@@ -982,15 +980,40 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	 ctx->Texture.CubeMapSeamless = state;
 	 break;
 
+#if FEATURE_EXT_transform_feedback
+      case GL_RASTERIZER_DISCARD:
+	 CHECK_EXTENSION(EXT_transform_feedback, cap);
+         if (ctx->TransformFeedback.RasterDiscard != state) {
+            ctx->TransformFeedback.RasterDiscard = state;
+            FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+         }
+         break;
+#endif
+
+      /* GL 3.1 primitive restart */
+      case GL_PRIMITIVE_RESTART:
+	 if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+            goto invalid_enum_error;
+         }
+         if (ctx->Array.PrimitiveRestart != state) {
+            FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+            ctx->Array.PrimitiveRestart = state;
+         }
+         break;
+
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "%s(0x%x)", state ? "glEnable" : "glDisable", cap);
-         return;
+         goto invalid_enum_error;
    }
 
    if (ctx->Driver.Enable) {
       ctx->Driver.Enable( ctx, cap, state );
    }
+
+   return;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",
+               state ? "Enable" : "Disable", cap);
 }
 
 
@@ -1033,7 +1056,7 @@ _mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
    switch (cap) {
    case GL_BLEND:
       if (!ctx->Extensions.EXT_draw_buffers2) {
-         goto bad_cap_error;
+         goto invalid_enum_error;
       }
       if (index >= ctx->Const.MaxDrawBuffers) {
          _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)",
@@ -1049,11 +1072,11 @@ _mesa_set_enablei(GLcontext *ctx, GLenum cap, GLuint index, GLboolean state)
       }
       break;
    default:
-      goto bad_cap_error;
+      goto invalid_enum_error;
    }
    return;
 
-bad_cap_error:
+invalid_enum_error:
     _mesa_error(ctx, GL_INVALID_ENUM, "%s(cap=%s)",
                 state ? "glEnablei" : "glDisablei",
                 _mesa_lookup_enum_by_nr(cap));
@@ -1103,15 +1126,13 @@ _mesa_IsEnabledIndexed( GLenum cap, GLuint index )
 #undef CHECK_EXTENSION
 #define CHECK_EXTENSION(EXTNAME)			\
    if (!ctx->Extensions.EXTNAME) {			\
-      _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");	\
-      return GL_FALSE;					\
+      goto invalid_enum_error;				\
    }
 
 #undef CHECK_EXTENSION2
 #define CHECK_EXTENSION2(EXT1, EXT2)				\
    if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {	\
-      _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");		\
-      return GL_FALSE;						\
+      goto invalid_enum_error;					\
    }
 
 
@@ -1493,8 +1514,26 @@ _mesa_IsEnabled( GLenum cap )
 	 CHECK_EXTENSION(ARB_seamless_cube_map);
 	 return ctx->Texture.CubeMapSeamless;
 
+#if FEATURE_EXT_transform_feedback
+      case GL_RASTERIZER_DISCARD:
+	 CHECK_EXTENSION(EXT_transform_feedback);
+         return ctx->TransformFeedback.RasterDiscard;
+#endif
+
+      /* GL 3.1 primitive restart */
+      case GL_PRIMITIVE_RESTART:
+	 if (ctx->VersionMajor * 10 + ctx->VersionMinor < 31) {
+            goto invalid_enum_error;
+         }
+         return ctx->Array.PrimitiveRestart;
+
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
-	 return GL_FALSE;
+         goto invalid_enum_error;
    }
+
+   return GL_FALSE;
+
+invalid_enum_error:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
+   return GL_FALSE;
 }

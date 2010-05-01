@@ -752,7 +752,6 @@ static const struct input_info fragInputs[] = {
    { "gl_Color", FRAG_ATTRIB_COL0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_SecondaryColor", FRAG_ATTRIB_COL1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_TexCoord", FRAG_ATTRIB_TEX0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   /* note: we're packing several quantities into the fogcoord vector */
    { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, GL_FLOAT, SWIZZLE_XXXX },
    { "gl_FrontFacing", FRAG_ATTRIB_FACE, GL_FLOAT, SWIZZLE_XXXX },
    { "gl_PointCoord", FRAG_ATTRIB_PNTC, GL_FLOAT_VEC2, SWIZZLE_XYZW },
@@ -839,27 +838,28 @@ struct output_info
 {
    const char *Name;
    GLuint Attrib;
+   GLenum Type;
 };
 
 /** Predefined vertex shader outputs */
 static const struct output_info vertOutputs[] = {
-   { "gl_Position", VERT_RESULT_HPOS },
-   { "gl_FrontColor", VERT_RESULT_COL0 },
-   { "gl_BackColor", VERT_RESULT_BFC0 },
-   { "gl_FrontSecondaryColor", VERT_RESULT_COL1 },
-   { "gl_BackSecondaryColor", VERT_RESULT_BFC1 },
-   { "gl_TexCoord", VERT_RESULT_TEX0 },
-   { "gl_FogFragCoord", VERT_RESULT_FOGC },
-   { "gl_PointSize", VERT_RESULT_PSIZ },
-   { NULL, 0 }
+   { "gl_Position", VERT_RESULT_HPOS, GL_FLOAT_VEC4 },
+   { "gl_FrontColor", VERT_RESULT_COL0, GL_FLOAT_VEC4 },
+   { "gl_BackColor", VERT_RESULT_BFC0, GL_FLOAT_VEC4 },
+   { "gl_FrontSecondaryColor", VERT_RESULT_COL1, GL_FLOAT_VEC4 },
+   { "gl_BackSecondaryColor", VERT_RESULT_BFC1, GL_FLOAT_VEC4 },
+   { "gl_TexCoord", VERT_RESULT_TEX0, GL_FLOAT_VEC4 },
+   { "gl_FogFragCoord", VERT_RESULT_FOGC, GL_FLOAT },
+   { "gl_PointSize", VERT_RESULT_PSIZ, GL_FLOAT },
+   { NULL, 0, GL_NONE }
 };
 
 /** Predefined fragment shader outputs */
 static const struct output_info fragOutputs[] = {
-   { "gl_FragColor", FRAG_RESULT_COLOR },
-   { "gl_FragDepth", FRAG_RESULT_DEPTH },
-   { "gl_FragData", FRAG_RESULT_DATA0 },
-   { NULL, 0 }
+   { "gl_FragColor", FRAG_RESULT_COLOR, GL_FLOAT_VEC4 },
+   { "gl_FragDepth", FRAG_RESULT_DEPTH, GL_FLOAT },
+   { "gl_FragData", FRAG_RESULT_DATA0, GL_FLOAT_VEC4 },
+   { NULL, 0, GL_NONE }
 };
 
 
@@ -894,4 +894,44 @@ _slang_output_index(const char *name, GLenum target)
       }
    }
    return -1;
+}
+
+
+/**
+ * Given a VERT_RESULT_x index, return the corresponding string name.
+ */
+const char *
+_slang_vertex_output_name(gl_vert_result index)
+{
+   if (index < Elements(vertOutputs))
+      return vertOutputs[index].Name;
+   else
+      return NULL;
+}
+
+
+/**
+ * Given a FRAG_RESULT_x index, return the corresponding string name.
+ */
+const char *
+_slang_fragment_output_name(gl_frag_result index)
+{
+   if (index < Elements(fragOutputs))
+      return fragOutputs[index].Name;
+   else
+      return NULL;
+}
+
+
+/**
+ * Given a VERT_RESULT_x index, return the corresponding varying
+ * var's datatype.
+ */
+GLenum
+_slang_vertex_output_type(gl_vert_result index)
+{
+   if (index < Elements(vertOutputs))
+      return vertOutputs[index].Type;
+   else
+      return GL_NONE;
 }

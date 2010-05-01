@@ -35,11 +35,11 @@
 #include "pipe/p_defines.h"
 
 struct pipe_screen;
-struct pipe_buffer;
+struct pipe_resource;
 struct u_upload_mgr;
 
 
-struct u_upload_mgr *u_upload_create( struct pipe_screen *screen,
+struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
                                       unsigned default_size,
                                       unsigned alignment,
                                       unsigned usage );
@@ -61,15 +61,15 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
                                unsigned size,
                                const void *data,
                                unsigned *out_offset,
-                               struct pipe_buffer **outbuf );
+                               struct pipe_resource **outbuf );
 
 
 enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
                                  unsigned offset,
                                  unsigned size,
-                                 struct pipe_buffer *inbuf,
+                                 struct pipe_resource *inbuf,
                                  unsigned *out_offset,
-                                 struct pipe_buffer **outbuf );
+                                 struct pipe_resource **outbuf );
 
 
 

@@ -40,6 +40,8 @@
 
 
 struct pipe_screen;
+struct st_api;
+struct st_manager;
 struct stw_framebuffer;
 
 struct stw_device
@@ -48,9 +50,8 @@ struct stw_device
    
    struct pipe_screen *screen;
    
-#ifdef DEBUG
-   boolean trace_running;
-#endif
+   struct st_api *stapi;
+   struct st_manager *smapi;
 
    LUID AdapterLuid;
 

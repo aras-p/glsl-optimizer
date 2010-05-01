@@ -29,9 +29,19 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "lp_debug.h"
 #include "lp_fence.h"
 
 
+/**
+ * Create a new fence object.
+ *
+ * The rank will be the number of bins in the scene.  Whenever a rendering
+ * thread hits a fence command, it'll increment the fence counter.  When
+ * the counter == the rank, the fence is finished.
+ *
+ * \param rank  the expected finished value of the fence counter.
+ */
 struct lp_fence *
 lp_fence_create(unsigned rank)
 {
@@ -48,6 +58,7 @@ lp_fence_create(unsigned rank)
 }
 
 
+/** Destroy a fence.  Called when refcount hits zero. */
 static void
 lp_fence_destroy(struct lp_fence *fence)
 {
@@ -57,6 +68,10 @@ lp_fence_destroy(struct lp_fence *fence)
 }
 
 
+/**
+ * For reference counting.
+ * This is a Gallium API function.
+ */
 static void
 llvmpipe_fence_reference(struct pipe_screen *screen,
                          struct pipe_fence_handle **ptr,
@@ -71,6 +86,10 @@ llvmpipe_fence_reference(struct pipe_screen *screen,
 }
 
 
+/**
+ * Has the fence been executed/finished?
+ * This is a Gallium API function.
+ */
 static int
 llvmpipe_fence_signalled(struct pipe_screen *screen,
                          struct pipe_fence_handle *fence,
@@ -82,6 +101,10 @@ llvmpipe_fence_signalled(struct pipe_screen *screen,
 }
 
 
+/**
+ * Wait for the fence to finish.
+ * This is a Gallium API function.
+ */
 static int
 llvmpipe_fence_finish(struct pipe_screen *screen,
                       struct pipe_fence_handle *fence_handle,
@@ -99,6 +122,25 @@ llvmpipe_fence_finish(struct pipe_screen *screen,
 }
 
 
+/**
+ * Called by the rendering threads to increment the fence counter.
+ * When the counter == the rank, the fence is finished.
+ */
+void
+lp_fence_signal(struct lp_fence *fence)
+{
+   pipe_mutex_lock(fence->mutex);
+
+   fence->count++;
+   assert(fence->count <= fence->rank);
+
+   LP_DBG(DEBUG_RAST, "%s count=%u rank=%u\n", __FUNCTION__,
+          fence->count, fence->rank);
+
+   pipe_condvar_signal(fence->signalled);
+
+   pipe_mutex_unlock(fence->mutex);
+}
 
 
 void

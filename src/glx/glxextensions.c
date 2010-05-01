@@ -75,34 +75,72 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(ARB_multisample),             VER(1,4), Y, Y, N, N },
    { GLX(ARB_render_texture),          VER(0,0), N, N, N, N },
    { GLX(ATI_pixel_format_float),      VER(0,0), N, N, N, N },
+#ifdef GLX_USE_APPLEGL
+   { GLX(EXT_import_context),          VER(0,0), N, N, N, N },
+   { GLX(EXT_visual_info),             VER(0,0), N, N, N, N },
+#else
    { GLX(EXT_import_context),          VER(0,0), Y, Y, N, N },
    { GLX(EXT_visual_info),             VER(0,0), Y, Y, N, N },
+#endif
    { GLX(EXT_visual_rating),           VER(0,0), Y, Y, N, N },
+#ifdef GLX_USE_APPLEGL
+   { GLX(MESA_agp_offset),             VER(0,0), N, N, N, N }, /* Deprecated */
+   { GLX(MESA_allocate_memory),        VER(0,0), N, N, N, N },
+   { GLX(MESA_copy_sub_buffer),        VER(0,0), N, N, N, N },
+#else
    { GLX(MESA_agp_offset),             VER(0,0), N, N, N, Y }, /* Deprecated */
    { GLX(MESA_allocate_memory),        VER(0,0), Y, N, N, Y },
    { GLX(MESA_copy_sub_buffer),        VER(0,0), Y, N, N, N },
+#endif
    { GLX(MESA_pixmap_colormap),        VER(0,0), N, N, N, N }, /* Deprecated */
    { GLX(MESA_release_buffers),        VER(0,0), N, N, N, N }, /* Deprecated */
+#ifdef GLX_USE_APPLEGL
+   { GLX(MESA_swap_control),           VER(0,0), N, N, N, N },
+   { GLX(MESA_swap_frame_usage),       VER(0,0), N, N, N, N },
+#else
    { GLX(MESA_swap_control),           VER(0,0), Y, N, N, Y },
    { GLX(MESA_swap_frame_usage),       VER(0,0), Y, N, N, Y },
+#endif
    { GLX(NV_float_buffer),             VER(0,0), N, N, N, N },
    { GLX(NV_render_depth_texture),     VER(0,0), N, N, N, N },
    { GLX(NV_render_texture_rectangle), VER(0,0), N, N, N, N },
+#ifdef GLX_USE_APPLEGL
+   { GLX(NV_vertex_array_range),       VER(0,0), N, N, N, N }, /* Deprecated */
+   { GLX(OML_swap_method),             VER(0,0), N, N, N, N },
+   { GLX(OML_sync_control),            VER(0,0), N, N, N, N },
+   { GLX(SGI_make_current_read),       VER(1,3), N, N, N, N },
+   { GLX(SGI_swap_control),            VER(0,0), N, N, N, N },
+   { GLX(SGI_video_sync),              VER(0,0), N, N, N, N },
+#else
    { GLX(NV_vertex_array_range),       VER(0,0), N, N, N, Y }, /* Deprecated */
    { GLX(OML_swap_method),             VER(0,0), Y, Y, N, N },
    { GLX(OML_sync_control),            VER(0,0), Y, N, N, Y },
    { GLX(SGI_make_current_read),       VER(1,3), Y, N, N, N },
    { GLX(SGI_swap_control),            VER(0,0), Y, N, N, N },
    { GLX(SGI_video_sync),              VER(0,0), Y, N, N, Y },
+#endif
    { GLX(SGIS_blended_overlay),        VER(0,0), N, N, N, N },
    { GLX(SGIS_color_range),            VER(0,0), N, N, N, N },
+#ifdef GLX_USE_APPLEGL
+   { GLX(SGIS_multisample),            VER(0,0), N, N, N, N },
+#else
    { GLX(SGIS_multisample),            VER(0,0), Y, Y, N, N },
+#endif
    { GLX(SGIX_fbconfig),               VER(1,3), Y, Y, N, N },
+#ifdef GLX_USE_APPLEGL
+   { GLX(SGIX_pbuffer),                VER(1,3), N, N, N, N },
+#else
    { GLX(SGIX_pbuffer),                VER(1,3), Y, Y, N, N },
+#endif
    { GLX(SGIX_swap_barrier),           VER(0,0), N, N, N, N },
    { GLX(SGIX_swap_group),             VER(0,0), N, N, N, N },
+#ifdef GLX_USE_APPLEGL
+   { GLX(SGIX_visual_select_group),    VER(0,0), N, N, N, N },
+   { GLX(EXT_texture_from_pixmap),     VER(0,0), N, N, N, N },
+#else
    { GLX(SGIX_visual_select_group),    VER(0,0), Y, Y, N, N },
    { GLX(EXT_texture_from_pixmap),     VER(0,0), Y, N, N, N },
+#endif
    { GLX(INTEL_swap_event),            VER(1,4), Y, Y, N, N },
    { NULL }
 };

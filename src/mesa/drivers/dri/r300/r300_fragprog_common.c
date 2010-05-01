@@ -219,7 +219,9 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 
 	compiler.code = &fp->code;
 	compiler.state = fp->state;
+	compiler.enable_shadow_ambient = GL_TRUE;
 	compiler.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ? GL_TRUE : GL_FALSE;
+	compiler.max_temp_regs = (compiler.is_r500) ? 128 : 32;
 	compiler.OutputDepth = FRAG_RESULT_DEPTH;
 	memset(compiler.OutputColor, 0, 4 * sizeof(unsigned));
 	compiler.OutputColor[0] = FRAG_RESULT_COLOR;
@@ -255,6 +257,19 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	fp->error = compiler.Base.Error;
 
 	fp->InputsRead = compiler.Base.Program.InputsRead;
+
+	/* Clear the fog/wpos_attr if code accessing these
+	 * attributes has been removed during compilation
+	 */
+	if (fp->fog_attr != FRAG_ATTRIB_MAX) {
+		if (!(fp->InputsRead & (1 << fp->fog_attr)))
+			fp->fog_attr = FRAG_ATTRIB_MAX;
+	}
+
+	if (fp->wpos_attr != FRAG_ATTRIB_MAX) {
+		if (!(fp->InputsRead & (1 << fp->wpos_attr)))
+			fp->wpos_attr = FRAG_ATTRIB_MAX;
+	}
 
 	rc_destroy(&compiler.Base);
 }

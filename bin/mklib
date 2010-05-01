@@ -494,13 +494,16 @@ case $ARCH in
 		OPTS="${OPTS} -Wl,-Mmapfile.scope"
 	    fi
 
-	    # Check if objects are SPARC v9
+	    # Check if objects are 64-bit
 	    # file says: ELF 64-bit MSB relocatable SPARCV9 Version 1
 	    set ${OBJECTS}
 	    if [ ${LINK} = "cc" -o ${LINK} = "CC" ] ; then
-		SPARCV9=`file $1 | grep SPARCV9`
-		if [ "${SPARCV9}" ] ; then
-		    OPTS="${OPTS} -xarch=v9"
+		ABI64=`file $1 | grep "ELF 64-bit"`
+		if [ "${ABI64}" ] ; then
+		    case `uname -p` in
+			sparc)	    OPTS="${OPTS} -xarch=v9" ;;
+			i386)	    OPTS="${OPTS} -xarch=amd64" ;;
+		    esac
 		fi
 	    fi
             if [ "${ALTOPTS}" ] ; then

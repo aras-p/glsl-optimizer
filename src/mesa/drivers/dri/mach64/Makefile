@@ -5,9 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = mach64_dri.so
 
-# Not yet
-# MINIGLX_SOURCES = server/mach64_dri.c 
-
 DRIVER_SOURCES = \
 	mach64_context.c \
 	mach64_ioctl.c \

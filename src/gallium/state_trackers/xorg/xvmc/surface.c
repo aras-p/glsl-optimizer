@@ -99,8 +99,8 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
                          struct pipe_surface **backbuffer)
 {
    struct pipe_video_context *vpipe;
-   struct pipe_texture template;
-   struct pipe_texture *tex;
+   struct pipe_resource template;
+   struct pipe_resource *tex;
 
    assert(vctx);
 
@@ -113,22 +113,24 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
          return true;
    }
 
-   memset(&template, 0, sizeof(struct pipe_texture));
+   memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
    template.format = vctx->vscreen->format;
    template.last_level = 0;
    template.width0 = width;
    template.height0 = height;
    template.depth0 = 1;
-   template.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+   template.usage = PIPE_USAGE_DEFAULT;
+   template.bind = PIPE_BIND_RENDER_TARGET;
+   template.flags = 0;
 
-   tex = vpipe->screen->texture_create(vpipe->screen, &template);
+   tex = vpipe->screen->resource_create(vpipe->screen, &template);
    if (!tex)
       return false;
 
    *backbuffer = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
-                                                PIPE_BUFFER_USAGE_GPU_READ_WRITE);
-   pipe_texture_reference(&tex, NULL);
+                                                PIPE_BIND_RENDER_TARGET | PIPE_BIND_BLIT_SOURCE);
+   pipe_resource_reference(&tex, NULL);
 
    if (!*backbuffer)
       return false;
@@ -190,8 +192,8 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    XvMCContextPrivate *context_priv;
    struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
-   struct pipe_texture template;
-   struct pipe_texture *vsfc_tex;
+   struct pipe_resource template;
+   struct pipe_resource *vsfc_tex;
    struct pipe_surface *vsfc;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating surface %p.\n", surface);
@@ -210,36 +212,36 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    if (!surface_priv)
       return BadAlloc;
 
-   memset(&template, 0, sizeof(struct pipe_texture));
+   memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
    template.format = (enum pipe_format)vpipe->get_param(vpipe, PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
    template.last_level = 0;
    if (vpipe->is_format_supported(vpipe, template.format,
-                                  PIPE_TEXTURE_USAGE_SAMPLER |
-                                  PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                  PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
                                   PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)) {
       template.width0 = context->width;
       template.height0 = context->height;
    }
    else {
       assert(vpipe->is_format_supported(vpipe, template.format,
-                                       PIPE_TEXTURE_USAGE_SAMPLER |
-                                       PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                       PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
                                        PIPE_TEXTURE_GEOM_NON_SQUARE));
       template.width0 = util_next_power_of_two(context->width);
       template.height0 = util_next_power_of_two(context->height);
    }
    template.depth0 = 1;
-   template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
-   vsfc_tex = vpipe->screen->texture_create(vpipe->screen, &template);
+   template.usage = PIPE_USAGE_DEFAULT;
+   template.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   template.flags = 0;
+   vsfc_tex = vpipe->screen->resource_create(vpipe->screen, &template);
    if (!vsfc_tex) {
       FREE(surface_priv);
       return BadAlloc;
    }
 
    vsfc = vpipe->screen->get_tex_surface(vpipe->screen, vsfc_tex, 0, 0, 0,
-                                         PIPE_BUFFER_USAGE_GPU_READ_WRITE);
-   pipe_texture_reference(&vsfc_tex, NULL);
+                                         PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
+   pipe_resource_reference(&vsfc_tex, NULL);
    if (!vsfc) {
       FREE(surface_priv);
       return BadAlloc;

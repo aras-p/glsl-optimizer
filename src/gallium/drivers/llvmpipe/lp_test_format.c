@@ -28,66 +28,21 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <float.h>
 
-#include <llvm-c/Core.h>
+#include "gallivm/lp_bld.h"
+#include "gallivm/lp_bld_init.h"
 #include <llvm-c/Analysis.h>
-#include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/Transforms/Scalar.h>
 
-#include "util/u_cpu_detect.h"
+#include "util/u_memory.h"
 #include "util/u_format.h"
+#include "util/u_format_tests.h"
+#include "util/u_format_s3tc.h"
 
 #include "gallivm/lp_bld_format.h"
 #include "lp_test.h"
-
-
-struct pixel_test_case
-{
-   enum pipe_format format;
-   uint32_t packed;
-   double unpacked[4];
-};
-
-
-struct pixel_test_case test_cases[] =
-{
-   {PIPE_FORMAT_B5G6R5_UNORM,   0x0000, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B5G6R5_UNORM,   0x001f, {0.0, 0.0, 1.0, 1.0}},
-   {PIPE_FORMAT_B5G6R5_UNORM,   0x07e0, {0.0, 1.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B5G6R5_UNORM,   0xf800, {1.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B5G6R5_UNORM,   0xffff, {1.0, 1.0, 1.0, 1.0}},
-
-   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x0000, {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x001f, {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x03e0, {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x7c00, {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, 0x8000, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B5G5R5A1_UNORM, 0xffff, {1.0, 1.0, 1.0, 1.0}},
-
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x000000ff, {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x0000ff00, {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0x00ff0000, {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0xff000000, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_B8G8R8A8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
-
-#if 0
-   {PIPE_FORMAT_R8G8B8A8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, 0x000000ff, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, 0x0000ff00, {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, 0x00ff0000, {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, 0xff000000, {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_R8G8B8A8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
-#endif
-
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x00000000, {0.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x000000ff, {0.0, 0.0, 0.0, 1.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x0000ff00, {1.0, 0.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0x00ff0000, {0.0, 1.0, 0.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0xff000000, {0.0, 0.0, 1.0, 0.0}},
-   {PIPE_FORMAT_A8R8G8B8_UNORM, 0xffffffff, {1.0, 1.0, 1.0, 1.0}},
-};
 
 
 void
@@ -114,37 +69,41 @@ write_tsv_row(FILE *fp,
 }
 
 
-typedef void (*load_ptr_t)(const uint32_t packed, float *);
+typedef void
+(*fetch_ptr_t)(float *, const void *packed,
+               unsigned i, unsigned j);
 
 
 static LLVMValueRef
-add_load_rgba_test(LLVMModuleRef module,
-                   const struct util_format_description *desc)
+add_fetch_rgba_test(LLVMModuleRef lp_build_module,
+                    const struct util_format_description *desc)
 {
-   LLVMTypeRef args[2];
+   LLVMTypeRef args[4];
    LLVMValueRef func;
-   LLVMValueRef packed;
+   LLVMValueRef packed_ptr;
    LLVMValueRef rgba_ptr;
+   LLVMValueRef i;
+   LLVMValueRef j;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef rgba;
 
-   args[0] = LLVMInt32Type();
-   args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
+   args[0] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
+   args[1] = LLVMPointerType(LLVMInt8Type(), 0);
+   args[3] = args[2] = LLVMInt32Type();
 
-   func = LLVMAddFunction(module, "load", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
+   func = LLVMAddFunction(lp_build_module, "fetch", LLVMFunctionType(LLVMVoidType(), args, Elements(args), 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   packed = LLVMGetParam(func, 0);
-   rgba_ptr = LLVMGetParam(func, 1);
+   rgba_ptr = LLVMGetParam(func, 0);
+   packed_ptr = LLVMGetParam(func, 1);
+   i = LLVMGetParam(func, 2);
+   j = LLVMGetParam(func, 3);
 
    block = LLVMAppendBasicBlock(func, "entry");
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   if(desc->block.bits < 32)
-      packed = LLVMBuildTrunc(builder, packed, LLVMIntType(desc->block.bits), "");
-
-   rgba = lp_build_unpack_rgba_aos(builder, desc, packed);
+   rgba = lp_build_fetch_rgba_aos(builder, desc, packed_ptr, i, j);
 
    LLVMBuildStore(builder, rgba, rgba_ptr);
 
@@ -155,93 +114,29 @@ add_load_rgba_test(LLVMModuleRef module,
 }
 
 
-typedef void (*store_ptr_t)(uint32_t *, const float *);
-
-
-static LLVMValueRef
-add_store_rgba_test(LLVMModuleRef module,
-                    const struct util_format_description *desc)
-{
-   LLVMTypeRef args[2];
-   LLVMValueRef func;
-   LLVMValueRef packed_ptr;
-   LLVMValueRef rgba_ptr;
-   LLVMBasicBlockRef block;
-   LLVMBuilderRef builder;
-   LLVMValueRef rgba;
-   LLVMValueRef packed;
-
-   args[0] = LLVMPointerType(LLVMInt32Type(), 0);
-   args[1] = LLVMPointerType(LLVMVectorType(LLVMFloatType(), 4), 0);
-
-   func = LLVMAddFunction(module, "store", LLVMFunctionType(LLVMVoidType(), args, 2, 0));
-   LLVMSetFunctionCallConv(func, LLVMCCallConv);
-   packed_ptr = LLVMGetParam(func, 0);
-   rgba_ptr = LLVMGetParam(func, 1);
-
-   block = LLVMAppendBasicBlock(func, "entry");
-   builder = LLVMCreateBuilder();
-   LLVMPositionBuilderAtEnd(builder, block);
-
-   rgba = LLVMBuildLoad(builder, rgba_ptr, "");
-
-   packed = lp_build_pack_rgba_aos(builder, desc, rgba);
-
-   if(desc->block.bits < 32)
-      packed = LLVMBuildZExt(builder, packed, LLVMInt32Type(), "");
-
-   LLVMBuildStore(builder, packed, packed_ptr);
-
-   LLVMBuildRetVoid(builder);
-
-   LLVMDisposeBuilder(builder);
-   return func;
-}
-
-
 PIPE_ALIGN_STACK
 static boolean
-test_format(unsigned verbose, FILE *fp, const struct pixel_test_case *test)
+test_format(unsigned verbose, FILE *fp,
+            const struct util_format_description *desc,
+            const struct util_format_test_case *test)
 {
-   LLVMModuleRef module = NULL;
-   LLVMValueRef load = NULL;
-   LLVMValueRef store = NULL;
-   LLVMExecutionEngineRef engine = NULL;
-   LLVMModuleProviderRef provider = NULL;
+   LLVMValueRef fetch = NULL;
    LLVMPassManagerRef pass = NULL;
-   char *error = NULL;
-   const struct util_format_description *desc;
-   load_ptr_t load_ptr;
-   store_ptr_t store_ptr;
+   fetch_ptr_t fetch_ptr;
    float unpacked[4];
-   unsigned packed;
    boolean success;
    unsigned i;
 
-   desc = util_format_description(test->format);
-   fprintf(stderr, "%s\n", desc->name);
+   fetch = add_fetch_rgba_test(lp_build_module, desc);
 
-   module = LLVMModuleCreateWithName("test");
-
-   load = add_load_rgba_test(module, desc);
-   store = add_store_rgba_test(module, desc);
-
-   if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
-      LLVMDumpModule(module);
-      abort();
-   }
-   LLVMDisposeMessage(error);
-
-   provider = LLVMCreateModuleProviderForExistingModule(module);
-   if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      fprintf(stderr, "%s\n", error);
-      LLVMDisposeMessage(error);
+   if (LLVMVerifyFunction(fetch, LLVMPrintMessageAction)) {
+      LLVMDumpValue(fetch);
       abort();
    }
 
 #if 0
    pass = LLVMCreatePassManager();
-   LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
+   LLVMAddTargetData(LLVMGetExecutionEngineTargetData(lp_build_engine), pass);
    /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
     * but there are more on SVN. */
    LLVMAddConstantPropagationPass(pass);
@@ -249,40 +144,39 @@ test_format(unsigned verbose, FILE *fp, const struct pixel_test_case *test)
    LLVMAddPromoteMemoryToRegisterPass(pass);
    LLVMAddGVNPass(pass);
    LLVMAddCFGSimplificationPass(pass);
-   LLVMRunPassManager(pass, module);
+   LLVMRunPassManager(pass, lp_build_module);
 #else
    (void)pass;
 #endif
 
-   load_ptr  = (load_ptr_t) LLVMGetPointerToGlobal(engine, load);
-   store_ptr = (store_ptr_t)LLVMGetPointerToGlobal(engine, store);
+   fetch_ptr = (fetch_ptr_t) LLVMGetPointerToGlobal(lp_build_engine, fetch);
 
    memset(unpacked, 0, sizeof unpacked);
-   packed = 0;
 
-   load_ptr(test->packed, unpacked);
-   store_ptr(&packed, unpacked);
+   fetch_ptr(unpacked, test->packed, 0, 0);
 
    success = TRUE;
-   if(test->packed != packed)
-      success = FALSE;
    for(i = 0; i < 4; ++i)
-      if(test->unpacked[i] != unpacked[i])
+      if (fabs((float)test->unpacked[0][0][i] - unpacked[i]) > FLT_EPSILON)
          success = FALSE;
 
    if (!success) {
       printf("FAILED\n");
-      printf("  Packed: %08x\n", test->packed);
-      printf("          %08x\n", packed);
-      printf("  Unpacked: %f %f %f %f\n", unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
-      printf("            %f %f %f %f\n", test->unpacked[0], test->unpacked[1], test->unpacked[2], test->unpacked[3]);
-      LLVMDumpModule(module);
+      printf("  Packed: %02x %02x %02x %02x\n",
+             test->packed[0], test->packed[1], test->packed[2], test->packed[3]);
+      printf("  Unpacked: %f %f %f %f obtained\n",
+             unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
+      printf("            %f %f %f %f expected\n",
+             test->unpacked[0][0][0],
+             test->unpacked[0][0][1],
+             test->unpacked[0][0][2],
+             test->unpacked[0][0][3]);
+      LLVMDumpValue(fetch);
    }
 
-   LLVMFreeMachineCodeForFunction(engine, store);
-   LLVMFreeMachineCodeForFunction(engine, load);
+   LLVMFreeMachineCodeForFunction(lp_build_engine, fetch);
+   LLVMDeleteFunction(fetch);
 
-   LLVMDisposeExecutionEngine(engine);
    if(pass)
       LLVMDisposePassManager(pass);
 
@@ -293,15 +187,66 @@ test_format(unsigned verbose, FILE *fp, const struct pixel_test_case *test)
 }
 
 
-boolean
-test_all(unsigned verbose, FILE *fp)
+
+static boolean
+test_one(unsigned verbose, FILE *fp,
+         const struct util_format_description *format_desc)
 {
    unsigned i;
    bool success = TRUE;
 
-   for (i = 0; i < sizeof(test_cases)/sizeof(test_cases[0]); ++i)
-      if(!test_format(verbose, fp, &test_cases[i]))
-        success = FALSE;
+   printf("Testing %s ...\n",
+          format_desc->name);
+
+   for (i = 0; i < util_format_nr_test_cases; ++i) {
+      const struct util_format_test_case *test = &util_format_test_cases[i];
+
+      if (test->format == format_desc->format) {
+
+         if (!test_format(verbose, fp, format_desc, test)) {
+           success = FALSE;
+         }
+
+      }
+   }
+
+   return success;
+}
+
+
+boolean
+test_all(unsigned verbose, FILE *fp)
+{
+   enum pipe_format format;
+   bool success = TRUE;
+
+   for (format = 1; format < PIPE_FORMAT_COUNT; ++format) {
+      const struct util_format_description *format_desc;
+
+      format_desc = util_format_description(format);
+      if (!format_desc) {
+         continue;
+      }
+
+      /*
+       * TODO: test more
+       */
+
+      if (format_desc->block.width != 1 ||
+          format_desc->block.height != 1 ||
+          format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+         continue;
+      }
+
+      if (format_desc->layout == UTIL_FORMAT_LAYOUT_S3TC &&
+          !util_format_s3tc_enabled) {
+         continue;
+      }
+
+      if (!test_one(verbose, fp, format_desc)) {
+           success = FALSE;
+      }
+   }
 
    return success;
 }

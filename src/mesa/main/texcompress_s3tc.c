@@ -48,7 +48,7 @@
 #if FEATURE_texture_s3tc
 
 
-#ifdef __MINGW32__
+#if defined(_WIN32) || defined(WIN32)
 #define DXTN_LIBNAME "dxtn.dll"
 #define RTLD_LAZY 0
 #define RTLD_GLOBAL 0

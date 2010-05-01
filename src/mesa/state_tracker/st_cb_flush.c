@@ -39,7 +39,7 @@
 #include "st_cb_flush.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
-#include "st_public.h"
+#include "st_manager.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
@@ -51,15 +51,10 @@
 static INLINE GLboolean
 is_front_buffer_dirty(struct st_context *st)
 {
-   if (st->frontbuffer_status == FRONT_STATUS_DIRTY) {
-      return GL_TRUE;
-   }
-   else {
-      GLframebuffer *fb = st->ctx->DrawBuffer;
-      struct st_renderbuffer *strb
-         = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-      return strb && strb->defined;
-   }
+   GLframebuffer *fb = st->ctx->DrawBuffer;
+   struct st_renderbuffer *strb
+      = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+   return strb && strb->defined;
 }
 
 
@@ -74,16 +69,9 @@ display_front_buffer(struct st_context *st)
       = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
 
    if (strb) {
-      struct pipe_surface *front_surf = strb->surface;
-      
       /* Hook for copying "fake" frontbuffer if necessary:
        */
-      st->pipe->screen->flush_frontbuffer( st->pipe->screen, front_surf,
-                                           st->pipe->priv );
-
-      /*
-        st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
-      */
+      st_manager_flush_frontbuffer(st);
    }
 }
 
@@ -127,7 +115,7 @@ void st_finish( struct st_context *st )
  */
 static void st_glFlush(GLcontext *ctx)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
 
    /* Don't call st_finish() here.  It is not the state tracker's
     * responsibilty to inject sleeps in the hope of avoiding buffer
@@ -147,7 +135,7 @@ static void st_glFlush(GLcontext *ctx)
  */
 static void st_glFinish(GLcontext *ctx)
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
 
    st_finish(st);
 

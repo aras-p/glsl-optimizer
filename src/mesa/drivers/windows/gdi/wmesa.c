@@ -248,16 +248,6 @@ static void wmesa_flush(GLcontext *ctx)
  */
 
 /*
- * Set the color index used to clear the color buffer.
- */
-static void clear_index(GLcontext *ctx, GLuint index)
-{
-    WMesaContext pwc = wmesa_context(ctx);
-    /* Note that indexed mode is not supported yet */
-    pwc->clearColorRef = RGB(0,0,0);
-}
-
-/*
  * Set the color used to clear the color buffer.
  */
 static void clear_color(GLcontext *ctx, const GLfloat color[4])
@@ -482,7 +472,7 @@ static void write_rgba_span_front(const GLcontext *ctx,
       };
    } BGRA;
    BGRA *bgra, c;
-   int i;
+   GLuint i;
 
    if (n < 16) {   // the value 16 is just guessed
       y=FLIP(y);
@@ -827,9 +817,9 @@ static void read_rgba_span_32(const GLcontext *ctx,
     lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y)) + x;
     for (i=0; i<n; i++) {
 	pixel = lpdw[i];
-	rgba[i][RCOMP] = (pixel & 0x00ff0000) >> 16;
-	rgba[i][GCOMP] = (pixel & 0x0000ff00) >> 8;
-	rgba[i][BCOMP] = (pixel & 0x000000ff);
+	rgba[i][RCOMP] = (GLubyte)((pixel & 0x00ff0000) >> 16);
+	rgba[i][GCOMP] = (GLubyte)((pixel & 0x0000ff00) >> 8);
+	rgba[i][BCOMP] = (GLubyte)(pixel & 0x000000ff);
 	rgba[i][ACOMP] = 255;
     }
 }
@@ -851,9 +841,9 @@ static void read_rgba_pixels_32(const GLcontext *ctx,
 	GLint y2 = FLIP(y[i]);
 	lpdw = ((LPDWORD)(pwfb->pbPixels + pwfb->ScanWidth * y2)) + x[i];
 	pixel = *lpdw;
-	rgba[i][RCOMP] = (pixel & 0x00ff0000) >> 16;
-	rgba[i][GCOMP] = (pixel & 0x0000ff00) >> 8;
-	rgba[i][BCOMP] = (pixel & 0x000000ff);
+	rgba[i][RCOMP] = (GLubyte)((pixel & 0x00ff0000) >> 16);
+	rgba[i][GCOMP] = (GLubyte)((pixel & 0x0000ff00) >> 8);
+	rgba[i][BCOMP] = (GLubyte)(pixel & 0x000000ff);
 	rgba[i][ACOMP] = 255;
   }
 }
@@ -1271,7 +1261,7 @@ wmesa_renderbuffer_storage(GLcontext *ctx,
  * on if we're drawing to the front or back color buffer.
  */
 void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
-                                  BYTE cColorBits, int double_buffer)
+                                  int cColorBits, int double_buffer)
 {
     if (double_buffer) {
         /* back buffer */
@@ -1483,7 +1473,6 @@ WMesaContext WMesaCreateContext(HDC hDC,
     functions.GetBufferSize = wmesa_get_buffer_size;
     functions.Flush = wmesa_flush;
     functions.Clear = clear;
-    functions.ClearIndex = clear_index;
     functions.ClearColor = clear_color;
     functions.ResizeBuffers = wmesa_resize_buffers;
     functions.Viewport = wmesa_viewport;

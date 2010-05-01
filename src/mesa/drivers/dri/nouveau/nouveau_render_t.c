@@ -254,7 +254,7 @@ get_scratch_vbo(GLcontext *ctx, unsigned size, struct nouveau_bo **bo,
  */
 static inline unsigned
 get_max_vertices(GLcontext *ctx, const struct _mesa_index_buffer *ib,
-		 unsigned n)
+		 int n)
 {
 	struct nouveau_render_state *render = to_render_state(ctx);
 

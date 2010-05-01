@@ -39,6 +39,7 @@
 #include <xf86.h>
 #include <xf86i2c.h>
 #include <xf86Crtc.h>
+#include <cursorstr.h>
 #include "xorg_tracker.h"
 #include "xf86Modes.h"
 
@@ -61,7 +62,7 @@ struct crtc_private
     drmModeCrtcPtr drm_crtc;
 
     /* hwcursor */
-    struct pipe_texture *cursor_tex;
+    struct pipe_resource *cursor_tex;
     struct kms_bo *cursor_bo;
 
     unsigned cursor_handle;
@@ -196,12 +197,12 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
     struct pipe_transfer *transfer;
 
     if (!crtcp->cursor_tex) {
-	struct pipe_texture templat;
-	unsigned pitch;
+	struct pipe_resource templat;
+	struct winsys_handle whandle;
 
 	memset(&templat, 0, sizeof(templat));
-	templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
-	templat.tex_usage |= PIPE_TEXTURE_USAGE_PRIMARY;
+	templat.bind |= PIPE_BIND_RENDER_TARGET;
+	templat.bind |= PIPE_BIND_SCANOUT;
 	templat.target = PIPE_TEXTURE_2D;
 	templat.last_level = 0;
 	templat.depth0 = 1;
@@ -209,25 +210,26 @@ crtc_load_cursor_argb_ga3d(xf86CrtcPtr crtc, CARD32 * image)
 	templat.width0 = 64;
 	templat.height0 = 64;
 
-	crtcp->cursor_tex = ms->screen->texture_create(ms->screen,
+	memset(&whandle, 0, sizeof(whandle));
+	whandle.type = DRM_API_HANDLE_TYPE_KMS;
+
+	crtcp->cursor_tex = ms->screen->resource_create(ms->screen,
 						       &templat);
-	ms->api->local_handle_from_texture(ms->api,
-					   ms->screen,
-					   crtcp->cursor_tex,
-					   &pitch,
-					   &crtcp->cursor_handle);
+	ms->screen->resource_get_handle(ms->screen, crtcp->cursor_tex, &whandle);
+
+	crtcp->cursor_handle = whandle.handle;
     }
 
-    transfer = ms->screen->get_tex_transfer(ms->screen, crtcp->cursor_tex,
-					    0, 0, 0,
-					    PIPE_TRANSFER_WRITE,
-					    0, 0, 64, 64);
-    ptr = ms->screen->transfer_map(ms->screen, transfer);
+    transfer = pipe_get_transfer(ms->ctx, crtcp->cursor_tex,
+                                         0, 0, 0,
+                                         PIPE_TRANSFER_WRITE,
+                                         0, 0, 64, 64);
+    ptr = ms->ctx->transfer_map(ms->ctx, transfer);
     util_copy_rect(ptr, crtcp->cursor_tex->format,
 		   transfer->stride, 0, 0,
 		   64, 64, (void*)image, 64 * 4, 0, 0);
-    ms->screen->transfer_unmap(ms->screen, transfer);
-    ms->screen->tex_transfer_destroy(transfer);
+    ms->ctx->transfer_unmap(ms->ctx, transfer);
+    ms->ctx->transfer_destroy(ms->ctx, transfer);
 }
 
 #if HAVE_LIBKMS
@@ -275,7 +277,21 @@ err_bo_destroy:
 static void
 crtc_load_cursor_argb(xf86CrtcPtr crtc, CARD32 * image)
 {
+    xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     modesettingPtr ms = modesettingPTR(crtc->scrn);
+
+    /* Older X servers have cursor reference counting bugs leading to use of
+     * freed memory and consequently random crashes. Should be fixed as of
+     * xserver 1.8, but this workaround shouldn't hurt anyway.
+     */
+    if (config->cursor)
+       config->cursor->refcnt++;
+
+    if (ms->cursor)
+       FreeCursor(ms->cursor, None);
+
+    ms->cursor = config->cursor;
+
     if (ms->screen)
 	crtc_load_cursor_argb_ga3d(crtc, image);
 #ifdef HAVE_LIBKMS
@@ -313,7 +329,7 @@ xorg_crtc_cursor_destroy(xf86CrtcPtr crtc)
     struct crtc_private *crtcp = crtc->driver_private;
 
     if (crtcp->cursor_tex)
-	pipe_texture_reference(&crtcp->cursor_tex, NULL);
+	pipe_resource_reference(&crtcp->cursor_tex, NULL);
 #ifdef HAVE_LIBKMS
     if (crtcp->cursor_bo)
 	kms_bo_destroy(&crtcp->cursor_bo);

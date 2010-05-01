@@ -26,18 +26,53 @@
  * 
  **************************************************************************/
 
-/**
- * @file
- * Softpipe support. 
- * 
- * @author Keith Whitwell
- * @author Brian Paul
- * @author Jose Fonseca
- */
-
-#include "softpipe/sp_winsys.h"
+#include "util/u_debug.h"
+#include "softpipe/sp_public.h"
+#include "llvmpipe/lp_public.h"
+#include "state_tracker/sw_winsys.h"
+#include "sw/null/null_sw_winsys.h"
 #include "st_winsys.h"
 
-const struct st_winsys st_softpipe_winsys = {
-   &softpipe_create_screen_malloc
-};
+
+struct pipe_screen *
+st_software_screen_create(const char *driver)
+{
+   struct sw_winsys *ws;
+   struct pipe_screen *screen = NULL;
+
+   if (!driver) {
+      const char *default_driver;
+
+#if defined(HAVE_LLVMPIPE)
+      default_driver = "llvmpipe";
+#elif defined(HAVE_SOFTPIPE)
+      default_driver = "softpipe";
+#else
+      default_driver = "";
+#endif
+
+      driver = debug_get_option("GALLIUM_DRIVER", default_driver);
+   }
+
+   ws = null_sw_create();
+   if(!ws)
+      return NULL;
+
+#ifdef HAVE_LLVMPIPE
+   if (strcmp(driver, "llvmpipe") == 0) {
+      screen = llvmpipe_create_screen(ws);
+   }
+#endif
+
+#ifdef HAVE_SOFTPIPE
+   if (strcmp(driver, "softpipe") == 0) {
+      screen = softpipe_create_screen(ws);
+   }
+#endif
+
+   if (!screen) {
+      ws->destroy(ws);
+   }
+
+   return screen;
+}

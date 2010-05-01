@@ -150,6 +150,7 @@ nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 		break;
 	case GL_COLOR_SUM_EXT:
 		context_dirty(ctx, FRAG);
+		context_dirty(ctx, LIGHT_MODEL);
 		break;
 	case GL_CULL_FACE:
 		context_dirty(ctx, CULL_FACE);
@@ -188,6 +189,7 @@ nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	case GL_LIGHTING:
 		context_dirty(ctx, FRAG);
 		context_dirty(ctx, MODELVIEW);
+		context_dirty(ctx, LIGHT_MODEL);
 		context_dirty(ctx, LIGHT_ENABLE);
 
 		for (i = 0; i < MAX_LIGHTS; i++) {
@@ -230,8 +232,16 @@ nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	case GL_TEXTURE_1D:
 	case GL_TEXTURE_2D:
 	case GL_TEXTURE_3D:
+	case GL_TEXTURE_RECTANGLE:
 		context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
 		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
+		break;
+	case GL_TEXTURE_GEN_S:
+	case GL_TEXTURE_GEN_T:
+	case GL_TEXTURE_GEN_R:
+	case GL_TEXTURE_GEN_Q:
+		context_dirty_i(ctx, TEX_GEN, ctx->Texture.CurrentUnit);
+		context_dirty(ctx, MODELVIEW);
 		break;
 	}
 }
@@ -367,7 +377,15 @@ static void
 nouveau_tex_gen(GLcontext *ctx, GLenum coord, GLenum pname,
 		const GLfloat *params)
 {
-	context_dirty_i(ctx, TEX_GEN, ctx->Texture.CurrentUnit);
+	switch (pname) {
+	case GL_TEXTURE_GEN_MODE:
+		context_dirty_i(ctx, TEX_GEN, ctx->Texture.CurrentUnit);
+		context_dirty(ctx, MODELVIEW);
+		break;
+	default:
+		context_dirty_i(ctx, TEX_GEN, ctx->Texture.CurrentUnit);
+		break;
+	}
 }
 
 static void
@@ -453,11 +471,18 @@ nouveau_state_emit(GLcontext *ctx)
 static void
 nouveau_update_state(GLcontext *ctx, GLbitfield new_state)
 {
+	int i;
+
 	if (new_state & (_NEW_PROJECTION | _NEW_MODELVIEW))
 		context_dirty(ctx, PROJECTION);
 
 	if (new_state & _NEW_MODELVIEW)
 		context_dirty(ctx, MODELVIEW);
+
+	if (new_state & _NEW_TEXTURE_MATRIX) {
+		for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
+			context_dirty_i(ctx, TEX_MAT, i);
+	}
 
 	if (new_state & _NEW_CURRENT_ATTRIB &&
 	    new_state & _NEW_LIGHT) {

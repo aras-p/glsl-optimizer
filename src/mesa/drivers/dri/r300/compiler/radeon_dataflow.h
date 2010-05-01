@@ -36,13 +36,17 @@ struct rc_swizzle_caps;
 
 
 /**
- * Help analyze the register accesses of instructions.
+ * Help analyze and modify the register accesses of instructions.
  */
 /*@{*/
 typedef void (*rc_read_write_fn)(void * userdata, struct rc_instruction * inst,
 			rc_register_file file, unsigned int index, unsigned int chan);
 void rc_for_all_reads(struct rc_instruction * inst, rc_read_write_fn cb, void * userdata);
 void rc_for_all_writes(struct rc_instruction * inst, rc_read_write_fn cb, void * userdata);
+
+typedef void (*rc_remap_register_fn)(void * userdata, struct rc_instruction * inst,
+			rc_register_file * pfile, unsigned int * pindex);
+void rc_remap_registers(struct rc_instruction * inst, rc_remap_register_fn cb, void * userdata);
 /*@}*/
 
 

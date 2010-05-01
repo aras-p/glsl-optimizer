@@ -308,7 +308,7 @@ lp_build_flow_scope_end(struct lp_build_flow_context *flow)
  * Note: this function has no dependencies on the flow code and could
  * be used elsewhere.
  */
-static LLVMBasicBlockRef
+LLVMBasicBlockRef
 lp_build_insert_new_block(LLVMBuilderRef builder, const char *name)
 {
    LLVMBasicBlockRef current_block;
@@ -570,6 +570,35 @@ lp_build_loop_end(LLVMBuilderRef builder,
    LLVMPositionBuilderAtEnd(builder, after_block);
 }
 
+void
+lp_build_loop_end_cond(LLVMBuilderRef builder,
+                       LLVMValueRef end,
+                       LLVMValueRef step,
+                       int llvm_cond,
+                       struct lp_build_loop_state *state)
+{
+   LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
+   LLVMValueRef function = LLVMGetBasicBlockParent(block);
+   LLVMValueRef next;
+   LLVMValueRef cond;
+   LLVMBasicBlockRef after_block;
+
+   if (!step)
+      step = LLVMConstInt(LLVMTypeOf(end), 1, 0);
+
+   next = LLVMBuildAdd(builder, state->counter, step, "");
+
+   cond = LLVMBuildICmp(builder, llvm_cond, next, end, "");
+
+   after_block = LLVMAppendBasicBlock(function, "");
+
+   LLVMBuildCondBr(builder, cond, after_block, state->block);
+
+   LLVMAddIncoming(state->counter, &next, &block, 1);
+
+   LLVMPositionBuilderAtEnd(builder, after_block);
+}
+
 
 
 /*
@@ -648,7 +677,9 @@ lp_build_if(struct lp_build_if_state *ctx,
       ifthen->phi[i] = LLVMBuildPhi(builder, LLVMTypeOf(*flow->variables[i]), "");
 
       /* add add the initial value of the var from the entry block */
-      LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->entry_block, 1);
+      if (!LLVMIsUndef(*flow->variables[i]))
+         LLVMAddIncoming(ifthen->phi[i], flow->variables[i],
+                         &ifthen->entry_block, 1);
    }
 
    /* create/insert true_block before merge_block */
@@ -695,18 +726,21 @@ lp_build_endif(struct lp_build_if_state *ctx)
 {
    struct lp_build_flow_context *flow = ctx->flow;
    struct lp_build_flow_if *ifthen;
+   LLVMBasicBlockRef curBlock = LLVMGetInsertBlock(ctx->builder);
    unsigned i;
 
    ifthen = &lp_build_flow_pop(flow, LP_BUILD_FLOW_IF)->ifthen;
    assert(ifthen);
+
+   /* Insert branch to the merge block from current block */
+   LLVMBuildBr(ctx->builder, ifthen->merge_block);
 
    if (ifthen->false_block) {
       LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
       /* for each variable, update the Phi node with a (variable, block) pair */
       for (i = 0; i < flow->num_variables; i++) {
          assert(*flow->variables[i]);
-         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &ifthen->false_block, 1);
-
+         LLVMAddIncoming(ifthen->phi[i], flow->variables[i], &curBlock, 1);
          /* replace the variable ref with the phi function */
          *flow->variables[i] = ifthen->phi[i];
       }
@@ -742,16 +776,94 @@ lp_build_endif(struct lp_build_if_state *ctx)
                       ifthen->true_block, ifthen->merge_block);
    }
 
-   /* Append an unconditional Br(anch) instruction on the true_block */
-   LLVMPositionBuilderAtEnd(ctx->builder, ifthen->true_block);
-   LLVMBuildBr(ctx->builder, ifthen->merge_block);
+   /* Insert branch from end of true_block to merge_block */
    if (ifthen->false_block) {
-      /* Append an unconditional Br(anch) instruction on the false_block */
-      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->false_block);
+      /* Append an unconditional Br(anch) instruction on the true_block */
+      LLVMPositionBuilderAtEnd(ctx->builder, ifthen->true_block);
       LLVMBuildBr(ctx->builder, ifthen->merge_block);
    }
-
+   else {
+      /* No else clause.
+       * Note that we've already inserted the branch at the end of
+       * true_block.  See the very first LLVMBuildBr() call in this function.
+       */
+   }
 
    /* Resume building code at end of the ifthen->merge_block */
    LLVMPositionBuilderAtEnd(ctx->builder, ifthen->merge_block);
+}
+
+
+/**
+ * Allocate a scalar (or vector) variable.
+ *
+ * Although not strictly part of control flow, control flow has deep impact in
+ * how variables should be allocated.
+ *
+ * The mem2reg optimization pass is the recommended way to dealing with mutable
+ * variables, and SSA. It looks for allocas and if it can handle them, it
+ * promotes them, but only looks for alloca instructions in the entry block of
+ * the function. Being in the entry block guarantees that the alloca is only
+ * executed once, which makes analysis simpler.
+ *
+ * See also:
+ * - http://www.llvm.org/docs/tutorial/OCamlLangImpl7.html#memory
+ */
+LLVMValueRef
+lp_build_alloca(LLVMBuilderRef builder,
+                LLVMTypeRef type,
+                const char *name)
+{
+   LLVMBasicBlockRef current_block = LLVMGetInsertBlock(builder);
+   LLVMValueRef function = LLVMGetBasicBlockParent(current_block);
+   LLVMBasicBlockRef first_block = LLVMGetEntryBasicBlock(function);
+   LLVMValueRef first_instr = LLVMGetFirstInstruction(first_block);
+   LLVMBuilderRef first_builder = LLVMCreateBuilder();
+   LLVMValueRef res;
+
+   LLVMPositionBuilderAtEnd(first_builder, first_block);
+   LLVMPositionBuilderBefore(first_builder, first_instr);
+
+   res = LLVMBuildAlloca(first_builder, type, name);
+
+   LLVMDisposeBuilder(first_builder);
+
+   return res;
+}
+
+
+/**
+ * Allocate an array of scalars/vectors.
+ *
+ * mem2reg pass is not capable of promoting structs or arrays to registers, but
+ * we still put it in the first block anyway as failure to put allocas in the
+ * first block may prevent the X86 backend from successfully align the stack as
+ * required.
+ *
+ * Also the scalarrepl pass is supossedly more powerful and can promote
+ * arrays in many cases.
+ *
+ * See also:
+ * - http://www.llvm.org/docs/tutorial/OCamlLangImpl7.html#memory
+ */
+LLVMValueRef
+lp_build_array_alloca(LLVMBuilderRef builder,
+                      LLVMTypeRef type,
+                      LLVMValueRef count,
+                      const char *name)
+{
+   LLVMBasicBlockRef current_block = LLVMGetInsertBlock(builder);
+   LLVMValueRef function = LLVMGetBasicBlockParent(current_block);
+   LLVMBasicBlockRef first_block = LLVMGetEntryBasicBlock(function);
+   LLVMValueRef first_instr = LLVMGetFirstInstruction(first_block);
+   LLVMBuilderRef first_builder = LLVMCreateBuilder();
+   LLVMValueRef res;
+
+   LLVMPositionBuilderBefore(first_builder, first_instr);
+
+   res = LLVMBuildArrayAlloca(first_builder, type, count, name);
+
+   LLVMDisposeBuilder(first_builder);
+
+   return res;
 }

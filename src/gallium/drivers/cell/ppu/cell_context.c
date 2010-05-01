@@ -36,7 +36,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
-#include "util/u_simple_screen.h"
 #include "pipe/p_screen.h"
 
 #include "draw/draw_context.h"
@@ -100,8 +99,8 @@ static const struct debug_named_value cell_debug_flags[] = {
 };
 
 static unsigned int
-cell_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
+cell_is_resource_referenced( struct pipe_context *pipe,
+			    struct pipe_resource *texture,
 			    unsigned face, unsigned level)
 {
    /**
@@ -111,16 +110,6 @@ cell_is_texture_referenced( struct pipe_context *pipe,
    return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
-static unsigned int
-cell_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-{
-   /**
-    * FIXME: Optimize.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
 
 struct pipe_context *
 cell_create_context(struct pipe_screen *screen,
@@ -137,7 +126,7 @@ cell_create_context(struct pipe_screen *screen,
    memset(cell, 0, sizeof(*cell));
 
    cell->winsys = NULL;		/* XXX: fixme - get this from screen? */
-   cell->pipe.winsys = screen->winsys;
+   cell->pipe.winsys = NULL;
    cell->pipe.screen = screen;
    cell->pipe.priv = priv;
    cell->pipe.destroy = cell_destroy_context;
@@ -145,8 +134,7 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.clear = cell_clear;
    cell->pipe.flush = cell_flush;
 
-   cell->pipe.is_texture_referenced = cell_is_texture_referenced;
-   cell->pipe.is_buffer_referenced = cell_is_buffer_referenced;
+   cell->pipe.is_resource_referenced = cell_is_resource_referenced;
 
 #if 0
    cell->pipe.begin_query = cell_begin_query;
@@ -159,6 +147,7 @@ cell_create_context(struct pipe_screen *screen,
    cell_init_shader_functions(cell);
    cell_init_surface_functions(cell);
    cell_init_vertex_functions(cell);
+   cell_init_texture_transfer_funcs(cell);
 
    cell->draw = cell_draw_create(cell);
 

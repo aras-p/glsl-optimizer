@@ -89,4 +89,13 @@ void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t);
 GLuint radeon_miptree_image_offset(radeon_mipmap_tree *mt,
 				   GLuint face, GLuint level);
 uint32_t get_base_teximage_offset(radeonTexObj *texObj);
+
+unsigned get_texture_image_row_stride(radeonContextPtr rmesa, gl_format format, unsigned width, unsigned tiling);
+
+unsigned get_texture_image_size(
+		gl_format format,
+		unsigned rowStride,
+		unsigned height,
+		unsigned depth,
+		unsigned tiling);
 #endif /* __RADEON_MIPMAP_TREE_H_ */

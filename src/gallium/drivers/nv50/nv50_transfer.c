@@ -5,10 +5,13 @@
 #include "util/u_math.h"
 
 #include "nv50_context.h"
+#include "nv50_transfer.h"
+#include "nv50_resource.h"
 
 struct nv50_transfer {
 	struct pipe_transfer base;
 	struct nouveau_bo *bo;
+	int map_refcnt;
 	unsigned level_offset;
 	unsigned level_tiling;
 	int level_pitch;
@@ -120,43 +123,51 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 	}
 }
 
-static struct pipe_transfer *
-nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
-		  unsigned face, unsigned level, unsigned zslice,
-		  enum pipe_transfer_usage usage,
-		  unsigned x, unsigned y, unsigned w, unsigned h)
+struct pipe_transfer *
+nv50_miptree_transfer_new(struct pipe_context *pcontext,
+			  struct pipe_resource *pt,
+			  struct pipe_subresource sr,
+			  unsigned usage,
+			  const struct pipe_box *box)
 {
+        struct pipe_screen *pscreen = pcontext->screen;
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nv50_miptree *mt = nv50_miptree(pt);
-	struct nv50_miptree_level *lvl = &mt->level[level];
+	struct nv50_miptree_level *lvl = &mt->level[sr.level];
 	struct nv50_transfer *tx;
 	unsigned nx, ny, image = 0;
 	int ret;
 
 	if (pt->target == PIPE_TEXTURE_CUBE)
-		image = face;
+		image = sr.face;
 
 	tx = CALLOC_STRUCT(nv50_transfer);
 	if (!tx)
 		return NULL;
 
-	pipe_texture_reference(&tx->base.texture, pt);
-	tx->nblocksx = util_format_get_nblocksx(pt->format, u_minify(pt->width0, level));
-	tx->nblocksy = util_format_get_nblocksy(pt->format, u_minify(pt->height0, level));
-	tx->base.width = w;
-	tx->base.height = h;
+	/* Don't handle 3D transfers yet.
+	 */
+	assert(box->depth == 1);
+
+
+	pipe_resource_reference(&tx->base.resource, pt);
+	tx->base.sr = sr;
+	tx->base.usage = usage;
+	tx->base.box = *box;
+	tx->nblocksx = util_format_get_nblocksx(pt->format, u_minify(pt->width0, sr.level));
+	tx->nblocksy = util_format_get_nblocksy(pt->format, u_minify(pt->height0, sr.level));
 	tx->base.stride = tx->nblocksx * util_format_get_blocksize(pt->format);
 	tx->base.usage = usage;
 
 	tx->level_pitch = lvl->pitch;
-	tx->level_width = u_minify(mt->base.base.width0, level);
-	tx->level_height = u_minify(mt->base.base.height0, level);
-	tx->level_depth = u_minify(mt->base.base.depth0, level);
+	tx->level_width = u_minify(mt->base.base.width0, sr.level);
+	tx->level_height = u_minify(mt->base.base.height0, sr.level);
+	tx->level_depth = u_minify(mt->base.base.depth0, sr.level);
 	tx->level_offset = lvl->image_offset[image];
 	tx->level_tiling = lvl->tile_mode;
-	tx->level_z = zslice;
-	tx->level_x = util_format_get_nblocksx(pt->format, x);
-	tx->level_y = util_format_get_nblocksy(pt->format, y);
+	tx->level_z = box->z;
+	tx->level_x = util_format_get_nblocksx(pt->format, box->x);
+	tx->level_y = util_format_get_nblocksy(pt->format, box->y);
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
 			     tx->nblocksy * tx->base.stride, &tx->bo);
 	if (ret) {
@@ -165,12 +176,12 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	}
 
 	if (usage & PIPE_TRANSFER_READ) {
-		nx = util_format_get_nblocksx(pt->format, tx->base.width);
-		ny = util_format_get_nblocksy(pt->format, tx->base.height);
+		nx = util_format_get_nblocksx(pt->format, box->width);
+		ny = util_format_get_nblocksy(pt->format, box->height);
 
 		nv50_transfer_rect_m2mf(pscreen, mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
-					x, y, zslice,
+					box->x, box->y, box->z,
 					tx->nblocksx, tx->nblocksy,
 					tx->level_depth,
 					tx->bo, 0,
@@ -185,18 +196,19 @@ nv50_transfer_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	return &tx->base;
 }
 
-static void
-nv50_transfer_del(struct pipe_transfer *ptx)
+void
+nv50_miptree_transfer_del(struct pipe_context *pcontext,
+			  struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
-	struct nv50_miptree *mt = nv50_miptree(ptx->texture);
-	struct pipe_texture *pt = ptx->texture;
+	struct nv50_miptree *mt = nv50_miptree(ptx->resource);
+	struct pipe_resource *pt = ptx->resource;
 
-	unsigned nx = util_format_get_nblocksx(pt->format, tx->base.width);
-	unsigned ny = util_format_get_nblocksy(pt->format, tx->base.height);
+	unsigned nx = util_format_get_nblocksx(pt->format, tx->base.box.width);
+	unsigned ny = util_format_get_nblocksy(pt->format, tx->base.box.height);
 
 	if (ptx->usage & PIPE_TRANSFER_WRITE) {
-		struct pipe_screen *pscreen = pt->screen;
+		struct pipe_screen *pscreen = pcontext->screen;
 
 		nv50_transfer_rect_m2mf(pscreen, tx->bo, 0,
 					tx->base.stride, tx->bo->tile_mode,
@@ -213,16 +225,20 @@ nv50_transfer_del(struct pipe_transfer *ptx)
 	}
 
 	nouveau_bo_ref(NULL, &tx->bo);
-	pipe_texture_reference(&ptx->texture, NULL);
+	pipe_resource_reference(&ptx->resource, NULL);
 	FREE(ptx);
 }
 
-static void *
-nv50_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
+void *
+nv50_miptree_transfer_map(struct pipe_context *pcontext,
+			  struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 	unsigned flags = 0;
 	int ret;
+
+	if (tx->map_refcnt++)
+		return tx->bo->map;
 
 	if (ptx->usage & PIPE_TRANSFER_WRITE)
 		flags |= NOUVEAU_BO_WR;
@@ -230,27 +246,24 @@ nv50_transfer_map(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
 		flags |= NOUVEAU_BO_RD;
 
 	ret = nouveau_bo_map(tx->bo, flags);
-	if (ret)
+	if (ret) {
+		tx->map_refcnt = 0;
 		return NULL;
+	}
 	return tx->bo->map;
 }
 
-static void
-nv50_transfer_unmap(struct pipe_screen *pscreen, struct pipe_transfer *ptx)
+void
+nv50_miptree_transfer_unmap(struct pipe_context *pcontext,
+			    struct pipe_transfer *ptx)
 {
 	struct nv50_transfer *tx = (struct nv50_transfer *)ptx;
 
+	if (--tx->map_refcnt)
+		return;
 	nouveau_bo_unmap(tx->bo);
 }
 
-void
-nv50_transfer_init_screen_functions(struct pipe_screen *pscreen)
-{
-	pscreen->get_tex_transfer = nv50_transfer_new;
-	pscreen->tex_transfer_destroy = nv50_transfer_del;
-	pscreen->transfer_map = nv50_transfer_map;
-	pscreen->transfer_unmap = nv50_transfer_unmap;
-}
 
 void
 nv50_upload_sifc(struct nv50_context *nv50,
@@ -331,7 +344,7 @@ nv50_upload_sifc(struct nv50_context *nv50,
 			count -= nr;
 		}
 
-		src += src_pitch;
+		src = (uint8_t *) src + src_pitch;
 	}
 
 	BEGIN_RING(chan, tesla, NV50TCL_CODE_CB_FLUSH, 1);

@@ -35,7 +35,6 @@
 #include "pipe/p_context.h"
 #include "util/u_prim.h"
 
-#include "lp_buffer.h"
 #include "lp_context.h"
 #include "lp_state.h"
 
@@ -43,23 +42,16 @@
 
 
 
-void
-llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                     unsigned start, unsigned count)
-{
-   llvmpipe_draw_elements(pipe, NULL, 0, mode, start, count);
-}
-
-
 /**
  * Draw vertex arrays, with optional indexing.
  * Basically, map the vertex buffers (and drawing surfaces), then hand off
  * the drawing to the 'draw' module.
  */
-void
+static void
 llvmpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_buffer *indexBuffer,
+                             struct pipe_resource *indexBuffer,
                              unsigned indexSize,
+                             int indexBias,
                              unsigned min_index,
                              unsigned max_index,
                              unsigned mode, unsigned start, unsigned count)
@@ -75,21 +67,21 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
     * Map vertex buffers
     */
    for (i = 0; i < lp->num_vertex_buffers; i++) {
-      void *buf = llvmpipe_buffer(lp->vertex_buffer[i].buffer)->data;
+      void *buf = llvmpipe_resource_data(lp->vertex_buffer[i].buffer);
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
 
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes = llvmpipe_buffer(indexBuffer)->data;
-      draw_set_mapped_element_buffer_range(draw, indexSize,
+      void *mapped_indexes = llvmpipe_resource_data(indexBuffer);
+      draw_set_mapped_element_buffer_range(draw, indexSize, indexBias,
                                            min_index,
                                            max_index,
                                            mapped_indexes);
    }
    else {
       /* no index/element buffer */
-      draw_set_mapped_element_buffer_range(draw, 0, start,
+      draw_set_mapped_element_buffer_range(draw, 0, 0, start,
                                            start + count - 1, NULL);
    }
 
@@ -103,7 +95,7 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (indexBuffer) {
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
    /*
@@ -115,15 +107,32 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
 }
 
 
-void
+static void
 llvmpipe_draw_elements(struct pipe_context *pipe,
-                       struct pipe_buffer *indexBuffer,
+                       struct pipe_resource *indexBuffer,
                        unsigned indexSize,
+                       int indexBias,
                        unsigned mode, unsigned start, unsigned count)
 {
    llvmpipe_draw_range_elements( pipe, indexBuffer,
-                                 indexSize,
+                                 indexSize, indexBias,
                                  0, 0xffffffff,
                                  mode, start, count );
 }
 
+
+static void
+llvmpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
+                     unsigned start, unsigned count)
+{
+   llvmpipe_draw_elements(pipe, NULL, 0, 0, mode, start, count);
+}
+
+
+void
+llvmpipe_init_draw_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
+   llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
+   llvmpipe->pipe.draw_range_elements = llvmpipe_draw_range_elements;
+}

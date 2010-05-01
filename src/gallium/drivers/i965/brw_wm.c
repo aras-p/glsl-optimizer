@@ -35,6 +35,7 @@
 #include "brw_wm.h"
 #include "brw_state.h"
 #include "brw_debug.h"
+#include "brw_resource.h"
 #include "brw_pipe_rast.h"
 
 
@@ -251,13 +252,13 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
 
    /* PIPE_NEW_BOUND_TEXTURES */
-   for (i = 0; i < brw->curr.num_textures; i++) {
-      const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
+   for (i = 0; i < brw->curr.num_fragment_sampler_views; i++) {
+      const struct brw_texture *tex = brw_texture(brw->curr.fragment_sampler_views[i]->texture);
 	 
-      if (tex->base.format == PIPE_FORMAT_UYVY)
+      if (tex->b.b.format == PIPE_FORMAT_UYVY)
 	 key->yuvtex_mask |= 1 << i;
 
-      if (tex->base.format == PIPE_FORMAT_YUYV)
+      if (tex->b.b.format == PIPE_FORMAT_YUYV)
 	 key->yuvtex_swap_mask |= 1 << i;
 
       /* XXX: shadow texture

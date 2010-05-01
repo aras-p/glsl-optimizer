@@ -550,6 +550,7 @@
 #define BRW_OPCODE_DP2        87
 #define BRW_OPCODE_DPA2       88
 #define BRW_OPCODE_LINE       89
+#define BRW_OPCODE_PLN        90
 #define BRW_OPCODE_NOP        126
 
 #define BRW_PREDICATE_NONE             0
@@ -674,12 +675,12 @@
 #define BRW_SAMPLER_MESSAGE_SIMD8_LD                  3
 #define BRW_SAMPLER_MESSAGE_SIMD16_LD                 3
 
-#define BRW_SAMPLER_MESSAGE_SAMPLE_IGDNG            0
-#define BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_IGDNG       1
-#define BRW_SAMPLER_MESSAGE_SAMPLE_LOD_IGDNG        2
-#define BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG    3
+#define BRW_SAMPLER_MESSAGE_SAMPLE_GEN5            0
+#define BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5       1
+#define BRW_SAMPLER_MESSAGE_SAMPLE_LOD_GEN5        2
+#define BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5    3
 
-/* for IGDNG only */
+/* for GEN5 only */
 #define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0
 #define BRW_SAMPLER_SIMD_MODE_SIMD8                     1
 #define BRW_SAMPLER_SIMD_MODE_SIMD16                    2
@@ -830,8 +831,8 @@
 #define CMD_URB					0x7805 /* GEN6+ */
 # define GEN6_URB_VS_SIZE_SHIFT				16
 # define GEN6_URB_VS_ENTRIES_SHIFT			0
-# define GEN6_URB_GS_SIZE_SHIFT				8
-# define GEN6_URB_GS_ENTRIES_SHIFT			0
+# define GEN6_URB_GS_ENTRIES_SHIFT			8
+# define GEN6_URB_GS_SIZE_SHIFT				0
 
 #define CMD_VIEWPORT_STATE_POINTERS			0x780d /* GEN6+ */
 # define GEN6_CC_VIEWPORT_MODIFY			(1 << 12)

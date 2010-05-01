@@ -456,7 +456,7 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
 {
    char *end = NULL;
 
-   *number = (GLfloat) _mesa_strtod((const char *) parseState->pos, &end);
+   *number = (GLfloat) _mesa_strtof((const char *) parseState->pos, &end);
 
    if (end && end > (char *) parseState->pos) {
       /* got a number */

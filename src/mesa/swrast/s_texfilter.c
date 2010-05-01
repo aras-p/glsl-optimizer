@@ -488,14 +488,15 @@ tex_array_slice(GLfloat coord, GLsizei size)
 
 /**
  * Compute nearest integer texcoords for given texobj and coordinate.
+ * NOTE: only used for depth texture sampling.
  */
 static INLINE void
 nearest_texcoord(const struct gl_texture_object *texObj,
+                 GLuint level,
                  const GLfloat texcoord[4],
                  GLint *i, GLint *j, GLint *k)
 {
-   const GLint baseLevel = texObj->BaseLevel;
-   const struct gl_texture_image *img = texObj->Image[0][baseLevel];
+   const struct gl_texture_image *img = texObj->Image[0][level];
    const GLint width = img->Width;
    const GLint height = img->Height;
    const GLint depth = img->Depth;
@@ -534,15 +535,16 @@ nearest_texcoord(const struct gl_texture_object *texObj,
 
 /**
  * Compute linear integer texcoords for given texobj and coordinate.
+ * NOTE: only used for depth texture sampling.
  */
 static INLINE void
 linear_texcoord(const struct gl_texture_object *texObj,
+                GLuint level,
                 const GLfloat texcoord[4],
                 GLint *i0, GLint *i1, GLint *j0, GLint *j1, GLint *slice,
                 GLfloat *wi, GLfloat *wj)
 {
-   const GLint baseLevel = texObj->BaseLevel;
-   const struct gl_texture_image *img = texObj->Image[0][baseLevel];
+   const struct gl_texture_image *img = texObj->Image[0][level];
    const GLint width = img->Width;
    const GLint height = img->Height;
    const GLint depth = img->Depth;
@@ -2963,7 +2965,26 @@ shadow_compare4(GLenum function, GLfloat coord,
 
 
 /**
- * Sample a shadow/depth texture.
+ * Choose the mipmap level to use when sampling from a depth texture.
+ */
+static int
+choose_depth_texture_level(const struct gl_texture_object *tObj, GLfloat lambda)
+{
+   GLint level;
+
+   lambda = CLAMP(lambda, tObj->MinLod, tObj->MaxLod);
+
+   level = (GLint) lambda;
+
+   level = CLAMP(level, tObj->BaseLevel, tObj->_MaxLevel);
+
+   return level;
+}
+
+
+/**
+ * Sample a shadow/depth texture.  This function is incomplete.  It doesn't
+ * check for minification vs. magnification, etc.
  */
 static void
 sample_depth_texture( GLcontext *ctx,
@@ -2971,8 +2992,8 @@ sample_depth_texture( GLcontext *ctx,
                       const GLfloat texcoords[][4], const GLfloat lambda[],
                       GLfloat texel[][4] )
 {
-   const GLint baseLevel = tObj->BaseLevel;
-   const struct gl_texture_image *img = tObj->Image[0][baseLevel];
+   const GLint level = choose_depth_texture_level(tObj, lambda[0]);
+   const struct gl_texture_image *img = tObj->Image[0][level];
    const GLint width = img->Width;
    const GLint height = img->Height;
    const GLint depth = img->Depth;
@@ -2981,8 +3002,6 @@ sample_depth_texture( GLcontext *ctx,
    GLfloat ambient;
    GLenum function;
    GLfloat result;
-
-   (void) lambda;
 
    ASSERT(img->_BaseFormat == GL_DEPTH_COMPONENT ||
           img->_BaseFormat == GL_DEPTH_STENCIL_EXT);
@@ -3006,7 +3025,7 @@ sample_depth_texture( GLcontext *ctx,
          GLfloat depthSample;
          GLint col, row, slice;
 
-         nearest_texcoord(tObj, texcoords[i], &col, &row, &slice);
+         nearest_texcoord(tObj, level, texcoords[i], &col, &row, &slice);
 
          if (col >= 0 && row >= 0 && col < width && row < height && 
              slice >= 0 && slice < depth) {
@@ -3044,7 +3063,7 @@ sample_depth_texture( GLcontext *ctx,
          GLfloat wi, wj;
          GLuint useBorderTexel;
 
-         linear_texcoord(tObj, texcoords[i], &i0, &i1, &j0, &j1, &slice,
+         linear_texcoord(tObj, level, texcoords[i], &i0, &i1, &j0, &j1, &slice,
                          &wi, &wj);
 
          useBorderTexel = 0;

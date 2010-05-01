@@ -33,7 +33,7 @@
  *   Kristian Høgsberg (krh@redhat.com)
  */
 
-#ifdef GLX_DIRECT_RENDERING
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
 #include <unistd.h>
 #include <dlfcn.h>
@@ -402,6 +402,11 @@ dri2BindExtensions(__GLXscreenConfigs *psc)
 	 psc->f = (__DRI2flushExtension *) extensions[i];
 	 /* internal driver extension, no GL extension exposed */
       }
+#endif
+
+#ifdef __DRI2_CONFIG_QUERY
+      if ((strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0))
+	 psc->config = (__DRI2configQueryExtension *) extensions[i];
 #endif
    }
 }

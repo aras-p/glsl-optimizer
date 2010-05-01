@@ -23,11 +23,12 @@ struct xorg_renderer {
 
    int fb_width;
    int fb_height;
-   struct pipe_buffer *vs_const_buffer;
-   struct pipe_buffer *fs_const_buffer;
+   struct pipe_resource *vs_const_buffer;
+   struct pipe_resource *fs_const_buffer;
 
    float buffer[BUF_SIZE];
    int buffer_size;
+   struct pipe_vertex_element velems[3];
 
    /* number of attributes per vertex for the current
     * draw operation */
@@ -55,7 +56,7 @@ void renderer_set_constants(struct xorg_renderer *r,
 void renderer_draw_yuv(struct xorg_renderer *r,
                        int src_x, int src_y, int src_w, int src_h,
                        int dst_x, int dst_y, int dst_w, int dst_h,
-                       struct pipe_texture **textures);
+                       struct pipe_resource **textures);
 
 void renderer_begin_solid(struct xorg_renderer *r);
 void renderer_solid(struct xorg_renderer *r,
@@ -64,25 +65,25 @@ void renderer_solid(struct xorg_renderer *r,
                     float *color);
 
 void renderer_begin_textures(struct xorg_renderer *r,
-                             struct pipe_texture **textures,
                              int num_textures);
+
 void renderer_texture(struct xorg_renderer *r,
                       int *pos,
                       int width, int height,
-                      struct pipe_texture **textures,
+                      struct pipe_sampler_view **textures,
                       int num_textures,
                       float *src_matrix,
                       float *mask_matrix);
 
 void renderer_draw_flush(struct xorg_renderer *r);
 
-struct pipe_texture *
+struct pipe_resource *
 renderer_clone_texture(struct xorg_renderer *r,
-                       struct pipe_texture *src);
+                       struct pipe_resource *src);
 
 void renderer_copy_prepare(struct xorg_renderer *r,
                            struct pipe_surface *dst_surface,
-                           struct pipe_texture *src_texture);
+                           struct pipe_resource *src_texture);
 
 void renderer_copy_pixmap(struct xorg_renderer *r,
                           int dx, int dy,

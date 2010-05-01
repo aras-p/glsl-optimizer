@@ -77,6 +77,7 @@ static void Draw(void)
    glStencilFunc(GL_ALWAYS, 1, 1);
    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
+   /* red triangle (setting stencil to 1) */
    glColor3ub(200, 0, 0);
    glBegin(GL_POLYGON);        
    glVertex3i(-4, -4, 0);
@@ -88,6 +89,7 @@ static void Draw(void)
    glStencilFunc(GL_EQUAL, 1, 1);
    glStencilOp(GL_INCR, GL_KEEP, GL_DECR);
 
+   /* green quad (if over red, decr stencil to 0, else incr to 1) */
    glColor3ub(0, 200, 0);
    glBegin(GL_POLYGON);
    glVertex3i(3, 3, 0);
@@ -101,6 +103,7 @@ static void Draw(void)
    glStencilFunc(GL_EQUAL, 1, 1);
    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
+   /* blue quad (where stencil == 1) */
    glColor3ub(0, 0, 200);
    glBegin(GL_POLYGON);
    glVertex3f(2.5, 2.5, 0);

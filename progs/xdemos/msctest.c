@@ -45,18 +45,11 @@ void (*wait_sync)(Display *dpy, Window winGL, int64_t target_msc, int64_t diviso
 
 static int GLXExtensionSupported(Display *dpy, const char *extension)
 {
-	const char *extensionsString, *client_extensions, *pos;
+	const char *extensionsString, *pos;
 
 	extensionsString = glXQueryExtensionsString(dpy, DefaultScreen(dpy));
-	client_extensions = glXGetClientString(dpy, GLX_EXTENSIONS);
 
 	pos = strstr(extensionsString, extension);
-
-	if (pos != NULL && (pos == extensionsString || pos[-1] == ' ') &&
-	    (pos[strlen(extension)] == ' ' || pos[strlen(extension)] == '\0'))
-		return 1;
-
-	pos = strstr(client_extensions, extension);
 
 	if (pos != NULL && (pos == extensionsString || pos[-1] == ' ') &&
 	    (pos[strlen(extension)] == ' ' || pos[strlen(extension)] == '\0'))
@@ -167,8 +160,8 @@ int main(int argc, char *argv[])
 
 	glXMakeCurrent(disp, winGL, context);
 
-	get_sync_values = glXGetProcAddress((unsigned char *)"glXGetSyncValuesOML");
-	wait_sync = glXGetProcAddress((unsigned char *)"glXWaitForMscOML");
+	get_sync_values = (void *)glXGetProcAddress((unsigned char *)"glXGetSyncValuesOML");
+	wait_sync = (void *)glXGetProcAddress((unsigned char *)"glXWaitForMscOML");
 
 	if (!get_sync_values || !wait_sync) {
 		fprintf(stderr, "failed to get sync values function\n");

@@ -6,11 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include "readtex.h"
 
 #define TEST_CLAMP 0
 #define TEST_MIPMAPS 0
+#define TEST_GEN_COMPRESSED_MIPMAPS 0
 
 #define MAX_TEXTURES 8
 
@@ -304,6 +306,69 @@ LoadTextures(GLuint n, const char *files[])
                          GL_RGBA, GL_UNSIGNED_BYTE, image);
          }
       }
+#elif TEST_GEN_COMPRESSED_MIPMAPS
+      {
+         GLenum intFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+         int f;
+         GLenum format;
+         GLubyte *img = LoadRGBImage(files[i], &w, &h, &format);
+         GLboolean write_compressed = GL_FALSE;
+         GLboolean read_compressed = GL_FALSE;
+
+         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+         glTexImage2D(GL_TEXTURE_2D, 0, intFormat, w, h, 0,
+                      format, GL_UNSIGNED_BYTE, img);
+         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+         free(img);
+
+         glGetTexLevelParameteriv(GL_TEXTURE_2D, i,
+                                  GL_TEXTURE_INTERNAL_FORMAT, &f);
+         printf("actual internal format 0x%x\n", f);
+
+         if (write_compressed) {
+            GLint i, sz, w, h;
+            int num_levels = 8;
+            for (i = 0; i < num_levels; i++) {
+               char name[20], *buf;
+               FILE *f;
+               glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_WIDTH, &w);
+               glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_HEIGHT, &h);
+               glGetTexLevelParameteriv(GL_TEXTURE_2D, i,
+                                        GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &sz);
+               printf("Writing level %d: %d x %d  bytes: %d\n", i, w, h, sz);
+               buf = malloc(sz);
+               glGetCompressedTexImageARB(GL_TEXTURE_2D, i, buf);
+               sprintf(name, "comp%d", i);
+               f = fopen(name, "w");
+               fwrite(buf, 1, sz, f);
+               fclose(f);
+               free(buf);
+            }
+         }
+
+         if (read_compressed) {
+            GLint i, sz, w, h;
+            int num_levels = 8;
+            for (i = 01; i < num_levels; i++) {
+               char name[20], *buf;
+               FILE *f;
+               glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_WIDTH, &w);
+               glGetTexLevelParameteriv(GL_TEXTURE_2D, i, GL_TEXTURE_HEIGHT, &h);
+               glGetTexLevelParameteriv(GL_TEXTURE_2D, i,
+                                        GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &sz);
+               buf = malloc(sz);
+               sprintf(name, "comp%d", i);
+               printf("Reading level %d: %d x %d  bytes: %d from %s\n",
+                      i, w, h, sz, name);
+               f = fopen(name, "r");
+               fread(buf, 1, sz, f);
+               fclose(f);
+               glCompressedTexImage2DARB(GL_TEXTURE_2D, i, intFormat,
+                                         w, h, 0, sz, buf);
+               free(buf);
+            }
+         }
+      }
 #else
       if (!LoadRGBMipmaps2(files[i], GL_TEXTURE_2D, GL_RGB, &w, &h)) {
          printf("Error: couldn't load %s\n", files[i]);
@@ -360,6 +425,7 @@ main(int argc, char *argv[])
    glutInit(&argc, argv);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    Win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);

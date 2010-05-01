@@ -135,7 +135,7 @@ cell_thread_function(void *arg)
 
 /**
  * Create the SPU threads.  This is done once during driver initialization.
- * This involves setting the the "init" message which is sent to each SPU.
+ * This involves setting the "init" message which is sent to each SPU.
  * The init message specifies an SPU id, total number of SPUs, location
  * and number of batch buffers, etc.
  */

@@ -33,7 +33,7 @@
 #include "svga_draw.h"
 #include "svga_tgsi.h"
 #include "svga_screen.h"
-#include "svga_screen_buffer.h"
+#include "svga_resource_buffer.h"
 
 #include "svga_hw_reg.h"
 
@@ -59,8 +59,8 @@ upload_user_buffers( struct svga_context *svga )
          if (!buffer->uploaded.buffer) {
             ret = u_upload_buffer( svga->upload_vb,
                                    0,
-                                   buffer->base.size,
-                                   &buffer->base,
+                                   buffer->b.b.width0,
+                                   &buffer->b.b,
                                    &buffer->uploaded.offset,
                                    &buffer->uploaded.buffer );
             if (ret)
@@ -73,10 +73,10 @@ upload_user_buffers( struct svga_context *svga )
                             buffer,
                             buffer->uploaded.buffer,
                             buffer->uploaded.offset,
-                            buffer->base.size);
+                            buffer->b.b.width0);
          }
 
-         pipe_buffer_reference( &svga->curr.vb[i].buffer, buffer->uploaded.buffer );
+         pipe_resource_reference( &svga->curr.vb[i].buffer, buffer->uploaded.buffer );
          svga->curr.vb[i].buffer_offset = buffer->uploaded.offset;
       }
    }
@@ -95,17 +95,17 @@ upload_user_buffers( struct svga_context *svga )
 static int emit_hw_vs_vdecl( struct svga_context *svga,
                              unsigned dirty )
 {
-   const struct pipe_vertex_element *ve = svga->curr.ve;
+   const struct pipe_vertex_element *ve = svga->curr.velems->velem;
    SVGA3dVertexDecl decl;
    unsigned i;
 
-   assert(svga->curr.num_vertex_elements >=
+   assert(svga->curr.velems->count >=
           svga->curr.vs->base.info.file_count[TGSI_FILE_INPUT]);
 
    svga_hwtnl_reset_vdecl( svga->hwtnl, 
-                           svga->curr.num_vertex_elements );
+                           svga->curr.velems->count );
 
-   for (i = 0; i < svga->curr.num_vertex_elements; i++) {
+   for (i = 0; i < svga->curr.velems->count; i++) {
       const struct pipe_vertex_buffer *vb = &svga->curr.vb[ve[i].vertex_buffer_index];
       unsigned usage, index;
 

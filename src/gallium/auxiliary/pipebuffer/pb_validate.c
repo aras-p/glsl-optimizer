@@ -69,9 +69,9 @@ pb_validate_add_buffer(struct pb_validate *vl,
    if(!buf)
       return PIPE_ERROR;
 
-   assert(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE);
-   assert(!(flags & ~PIPE_BUFFER_USAGE_GPU_READ_WRITE));
-   flags &= PIPE_BUFFER_USAGE_GPU_READ_WRITE;
+   assert(flags & PB_USAGE_GPU_READ_WRITE);
+   assert(!(flags & ~PB_USAGE_GPU_READ_WRITE));
+   flags &= PB_USAGE_GPU_READ_WRITE;
 
    /* We only need to store one reference for each buffer, so avoid storing
     * consecutive references for the same buffer. It might not be the most 

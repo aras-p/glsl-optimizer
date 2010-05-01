@@ -424,18 +424,21 @@ _mesa_meta_begin(GLcontext *ctx, GLbitfield state)
 
    if (state & META_SCISSOR) {
       save->Scissor = ctx->Scissor; /* struct copy */
+      _mesa_set_enable(ctx, GL_SCISSOR_TEST, GL_FALSE);
    }
 
    if (state & META_SHADER) {
       if (ctx->Extensions.ARB_vertex_program) {
          save->VertexProgramEnabled = ctx->VertexProgram.Enabled;
-         save->VertexProgram = ctx->VertexProgram.Current;
+         _mesa_reference_vertprog(ctx, &save->VertexProgram,
+				  ctx->VertexProgram.Current);
          _mesa_set_enable(ctx, GL_VERTEX_PROGRAM_ARB, GL_FALSE);
       }
 
       if (ctx->Extensions.ARB_fragment_program) {
          save->FragmentProgramEnabled = ctx->FragmentProgram.Enabled;
-         save->FragmentProgram = ctx->FragmentProgram.Current;
+         _mesa_reference_fragprog(ctx, &save->FragmentProgram,
+				  ctx->FragmentProgram.Current);
          _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_FALSE);
       }
 
@@ -663,6 +666,7 @@ _mesa_meta_end(GLcontext *ctx)
                           save->VertexProgramEnabled);
          _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, 
                                   save->VertexProgram);
+	 _mesa_reference_vertprog(ctx, &save->VertexProgram, NULL);
       }
 
       if (ctx->Extensions.ARB_fragment_program) {
@@ -670,6 +674,7 @@ _mesa_meta_end(GLcontext *ctx)
                           save->FragmentProgramEnabled);
          _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
                                   save->FragmentProgram);
+	 _mesa_reference_fragprog(ctx, &save->FragmentProgram, NULL);
       }
 
       if (ctx->Extensions.ARB_shader_objects) {
@@ -720,6 +725,7 @@ _mesa_meta_end(GLcontext *ctx)
       for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
          _mesa_reference_texobj(&ctx->Texture.Unit[0].CurrentTex[tgt],
                                 save->CurrentTexture[tgt]);
+         _mesa_reference_texobj(&save->CurrentTexture[tgt], NULL);
       }
 
       /* Re-enable textures, texgen */
@@ -1112,8 +1118,10 @@ blitframebuffer_texture(GLcontext *ctx,
          _mesa_BindTexture(target, texObj->Name);
          _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
          _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
-         _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
-         _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
+         if (target != GL_TEXTURE_RECTANGLE_ARB) {
+            _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
+            _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
+         }
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
          _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -1171,8 +1179,10 @@ blitframebuffer_texture(GLcontext *ctx,
           */
          _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
          _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
-         _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
-         _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+         if (target != GL_TEXTURE_RECTANGLE_ARB) {
+            _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
+            _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+         }
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, wrapTSave);
 
@@ -1895,7 +1905,7 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
       _mesa_BindProgram(GL_FRAGMENT_PROGRAM_ARB, drawpix->StencilFP);
       _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
 
-      for (bit = 0; bit < ctx->Visual.stencilBits; bit++) {
+      for (bit = 0; bit < ctx->DrawBuffer->Visual.stencilBits; bit++) {
          const GLuint mask = 1 << bit;
          if (mask & origStencilMask) {
             _mesa_StencilFunc(GL_ALWAYS, mask, mask);
@@ -2062,8 +2072,10 @@ _mesa_meta_Bitmap(GLcontext *ctx,
    }
 
    bitmap1 = _mesa_map_pbo_source(ctx, &unpackSave, bitmap1);
-   if (!bitmap1)
+   if (!bitmap1) {
+      _mesa_meta_end(ctx);
       return;
+   }
 
    bitmap8 = (GLubyte *) calloc(1, width * height);
    if (bitmap8) {

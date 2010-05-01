@@ -27,12 +27,13 @@
 
 #include <windows.h>
 
-#include "main/mtypes.h"
-#include "main/context.h"
 #include "pipe/p_compiler.h"
 #include "pipe/p_context.h"
+#include "state_tracker/st_api.h"
+
+/* for _mesa_share_state */
 #include "state_tracker/st_context.h"
-#include "state_tracker/st_public.h"
+#include "main/context.h"
 
 #include "stw_icd.h"
 #include "stw_device.h"
@@ -44,25 +45,13 @@
 
 
 static INLINE struct stw_context *
-stw_context(GLcontext *glctx)
-{
-   if(!glctx)
-      return NULL;
-   assert(glctx->DriverCtx);
-   return (struct stw_context *)glctx->DriverCtx;
-}
-
-static INLINE struct stw_context *
 stw_current_context(void)
 {
-   /* We must check if multiple threads are being used or GET_CURRENT_CONTEXT 
-    * might return the current context of the thread first seen. */
-   _glapi_check_multithread();
+   struct st_context_iface *st;
 
-   {
-      GET_CURRENT_CONTEXT( glctx );
-      return stw_context(glctx);
-   }
+   st = (stw_dev) ? stw_dev->stapi->get_current(stw_dev->stapi) : NULL;
+
+   return (struct stw_context *) ((st) ? st->st_manager_private : NULL);
 }
 
 BOOL APIENTRY
@@ -114,26 +103,16 @@ DrvShareLists(
    ctx2 = stw_lookup_context_locked( dhglrc2 );
 
    if (ctx1 && ctx2) {
-      ret = _mesa_share_state(ctx2->st->ctx, ctx1->st->ctx);
+      struct st_context *st1, *st2;
+
+      st1 = (struct st_context *) ctx1->st;
+      st2 = (struct st_context *) ctx2->st;
+      ret = _mesa_share_state(st2->ctx, st1->ctx);
    }
 
    pipe_mutex_unlock( stw_dev->ctx_mutex );
    
    return ret;
-}
-
-static void
-stw_viewport(GLcontext * glctx, GLint x, GLint y,
-             GLsizei width, GLsizei height)
-{
-   struct stw_context *ctx = (struct stw_context *)glctx->DriverCtx;
-   struct stw_framebuffer *fb;
-   
-   fb = stw_framebuffer_from_hdc( ctx->hdc );
-   if(fb) {
-      stw_framebuffer_update(fb);
-      stw_framebuffer_release(fb);
-   }
 }
 
 DHGLRC APIENTRY
@@ -150,9 +129,7 @@ DrvCreateLayerContext(
 {
    int iPixelFormat;
    const struct stw_pixelformat_info *pfi;
-   GLvisual visual;
    struct stw_context *ctx = NULL;
-   struct pipe_context *pipe = NULL;
    
    if(!stw_dev)
       return 0;
@@ -165,7 +142,6 @@ DrvCreateLayerContext(
       return 0;
    
    pfi = stw_pixelformat_get_info( iPixelFormat - 1 );
-   stw_pixelformat_visual(&visual, pfi);
    
    ctx = CALLOC_STRUCT( stw_context );
    if (ctx == NULL)
@@ -174,18 +150,12 @@ DrvCreateLayerContext(
    ctx->hdc = hdc;
    ctx->iPixelFormat = iPixelFormat;
 
-   /* priv == hdc, pass to stw_flush_frontbuffer as context_private
-    */
-   pipe = stw_dev->screen->context_create( stw_dev->screen, hdc );
-   if (pipe == NULL) 
-      goto no_pipe;
-
-   ctx->st = st_create_context( pipe, &visual, NULL );
+   ctx->st = stw_dev->stapi->create_context(stw_dev->stapi,
+         stw_dev->smapi, &pfi->stvis, NULL);
    if (ctx->st == NULL) 
       goto no_st_ctx;
 
-   ctx->st->ctx->DriverCtx = ctx;
-   ctx->st->ctx->Driver.Viewport = stw_viewport;
+   ctx->st->st_manager_private = (void *) ctx;
 
    pipe_mutex_lock( stw_dev->ctx_mutex );
    ctx->dhglrc = handle_table_add(stw_dev->ctx_table, ctx);
@@ -196,11 +166,8 @@ DrvCreateLayerContext(
    return ctx->dhglrc;
 
 no_hglrc:
-   st_destroy_context(ctx->st);
-   goto no_pipe; /* st_context_destroy already destroys pipe */
+   ctx->st->destroy(ctx->st);
 no_st_ctx:
-   pipe->destroy( pipe );
-no_pipe:
    FREE(ctx);
 no_ctx:
    return 0;
@@ -226,9 +193,9 @@ DrvDeleteContext(
       
       /* Unbind current if deleting current context. */
       if (curctx == ctx)
-         st_make_current( NULL, NULL, NULL );
+         stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);
 
-      st_destroy_context(ctx->st);
+      ctx->st->destroy(ctx->st);
       FREE(ctx);
 
       ret = TRUE;
@@ -306,7 +273,7 @@ stw_make_current(
    curctx = stw_current_context();
    if (curctx != NULL) {
       if (curctx->dhglrc != dhglrc)
-	 st_flush(curctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+         curctx->st->flush(curctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
       
       /* Return if already current. */
       if (curctx->dhglrc == dhglrc && curctx->hdc == hdc) {
@@ -314,10 +281,12 @@ stw_make_current(
          fb = stw_framebuffer_from_hdc( hdc );
          goto success;
       }
+
+      stw_framebuffer_reference(&curctx->current_framebuffer, NULL);
    }
 
    if (hdc == NULL || dhglrc == 0) {
-      return st_make_current( NULL, NULL, NULL );
+      return stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);
    }
 
    pipe_mutex_lock( stw_dev->ctx_mutex ); 
@@ -327,7 +296,10 @@ stw_make_current(
       goto fail;
 
    fb = stw_framebuffer_from_hdc( hdc );
-   if(!fb) { 
+   if (fb) {
+      stw_framebuffer_update(fb);
+   }
+   else {
       /* Applications should call SetPixelFormat before creating a context,
        * but not all do, and the opengl32 runtime seems to use a default pixel
        * format in some cases, so we must create a framebuffer for those here
@@ -342,23 +314,17 @@ stw_make_current(
    if(fb->iPixelFormat != ctx->iPixelFormat)
       goto fail;
 
-   /* Lazy allocation of the frame buffer */
-   if(!stw_framebuffer_allocate(fb))
-      goto fail;
-
    /* Bind the new framebuffer */
    ctx->hdc = hdc;
    
-   /* pass to stw_flush_frontbuffer as context_private */
-   ctx->st->pipe->priv = hdc;
-   
-   if(!st_make_current( ctx->st, fb->stfb, fb->stfb ))
+   if (!stw_dev->stapi->make_current(stw_dev->stapi, ctx->st, fb->stfb, fb->stfb))
       goto fail;
+
+   stw_framebuffer_reference(&ctx->current_framebuffer, fb);
 
 success:
    assert(fb);
    if(fb) {
-      stw_framebuffer_update(fb);
       stw_framebuffer_release(fb);
    }
    
@@ -367,8 +333,37 @@ success:
 fail:
    if(fb)
       stw_framebuffer_release(fb);
-   st_make_current( NULL, NULL, NULL );
+   stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);
    return FALSE;
+}
+
+/**
+ * Flush the current context if it is bound to the framebuffer.
+ */
+void
+stw_flush_current_locked( struct stw_framebuffer *fb )
+{
+   struct stw_context *ctx = stw_current_context();
+
+   if (ctx && ctx->current_framebuffer == fb) {
+      ctx->st->flush(ctx->st,
+            PIPE_FLUSH_RENDER_CACHE | 
+            PIPE_FLUSH_SWAPBUFFERS |
+            PIPE_FLUSH_FRAME,
+            NULL);
+   }
+}
+
+/**
+ * Notify the current context that the framebuffer has become invalid.
+ */
+void
+stw_notify_current_locked( struct stw_framebuffer *fb )
+{
+   struct stw_context *ctx = stw_current_context();
+
+   if (ctx && ctx->current_framebuffer == fb)
+      ctx->st->notify_invalid_framebuffer(ctx->st, fb->stfb);
 }
 
 /**

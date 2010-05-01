@@ -186,13 +186,15 @@ static int update_zero_stride( struct svga_context *svga,
    svga->curr.zero_stride_vertex_elements = 0;
    svga->curr.num_zero_stride_vertex_elements = 0;
 
-   for (i = 0; i < svga->curr.num_vertex_elements; i++) {
-      const struct pipe_vertex_element *vel = &svga->curr.ve[i];
+   for (i = 0; i < svga->curr.velems->count; i++) {
+      const struct pipe_vertex_element *vel = &svga->curr.velems->velem[i];
       const struct pipe_vertex_buffer *vbuffer = &svga->curr.vb[
          vel->vertex_buffer_index];
+
       if (vbuffer->stride == 0) {
          unsigned const_idx =
             svga->curr.num_zero_stride_vertex_elements;
+	 struct pipe_transfer *transfer;
          struct translate *translate;
          struct translate_key key;
          void *mapped_buffer;
@@ -218,19 +220,23 @@ static int update_zero_stride( struct svga_context *svga,
 
          assert(vel->src_offset == 0);
          
-         mapped_buffer = pipe_buffer_map_range(svga->pipe.screen, 
+         mapped_buffer = pipe_buffer_map_range(&svga->pipe, 
                                                vbuffer->buffer,
                                                vel->src_offset,
                                                util_format_get_blocksize(vel->src_format),
-                                               PIPE_BUFFER_USAGE_CPU_READ);
+                                               PIPE_TRANSFER_READ,
+					       &transfer);
+
          translate->set_buffer(translate, vel->vertex_buffer_index,
                                mapped_buffer,
-                               vbuffer->stride);
+                               vbuffer->stride, vbuffer->max_index);
          translate->run(translate, 0, 1, 0,
                         svga->curr.zero_stride_constants);
 
-         pipe_buffer_unmap(svga->pipe.screen,
-                           vbuffer->buffer);
+         pipe_buffer_unmap(&svga->pipe,
+                           vbuffer->buffer,
+			   transfer);
+
          translate->release(translate);
       }
    }

@@ -255,8 +255,10 @@ translate_tex_src_target(struct i915_fragment_program *p, GLubyte bit)
 #define EMIT_TEX( OP )						\
 do {								\
    GLuint dim = translate_tex_src_target( p, inst->TexSrcTarget );	\
+   const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current; \
+   GLuint unit = program->Base.SamplerUnits[inst->TexSrcUnit];	\
    GLuint sampler = i915_emit_decl(p, REG_TYPE_S,		\
-				  inst->TexSrcUnit, dim);	\
+				   unit, dim);			\
    GLuint coord = src_vector( p, &inst->SrcReg[0], program);	\
    /* Texel lookup */						\
 								\
@@ -357,9 +359,10 @@ upload_program(struct i915_fragment_program *p)
    }
 
    if (program->Base.NumInstructions > I915_MAX_INSN) {
-       i915_program_error( p, "Exceeded max instructions" );
-       return;
-    }
+      i915_program_error(p, "Exceeded max instructions (%d out of %d)",
+			 program->Base.NumInstructions, I915_MAX_INSN);
+      return;
+   }
 
    /* Not always needed:
     */
@@ -664,6 +667,7 @@ upload_program(struct i915_fragment_program *p)
 			 get_result_vector(p, inst),
 			 get_result_flags(inst), 0,
 			 swizzle(tmp, ZERO, ZERO, ZERO, ZERO), 0, 0);
+	 break;
 
       case OPCODE_POW:
          src0 = src_vector(p, &inst->SrcReg[0], program);
@@ -1096,11 +1100,22 @@ translate_program(struct i915_fragment_program *p)
 {
    struct i915_context *i915 = I915_CONTEXT(p->ctx);
 
+   if (INTEL_DEBUG & DEBUG_WM) {
+      printf("fp:\n");
+      _mesa_print_program(&p->ctx->FragmentProgram._Current->Base);
+      printf("\n");
+   }
+
    i915_init_program(i915, p);
    check_wpos(p);
    upload_program(p);
    fixup_depth_write(p);
    i915_fini_program(p);
+
+   if (INTEL_DEBUG & DEBUG_WM) {
+      printf("i915:\n");
+      i915_disassemble_program(i915->state.Program, i915->state.ProgramSize);
+   }
 
    p->translated = 1;
 }

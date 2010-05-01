@@ -18,7 +18,7 @@ struct exa_context
    struct pipe_screen *scrn;
    struct xorg_renderer *renderer;
 
-   struct pipe_texture *bound_textures[MAX_EXA_SAMPLERS];
+   struct pipe_sampler_view *bound_sampler_views[MAX_EXA_SAMPLERS];
    int num_bound_samplers;
 
    float solid_color[4];
@@ -43,7 +43,7 @@ struct exa_context
       struct pipe_surface *src_surface;
       struct pipe_surface *dst_surface;
 
-      struct pipe_texture *src_texture;
+      struct pipe_resource *src_texture;
    } copy;
 };
 
@@ -56,8 +56,8 @@ struct exa_pixmap_priv
 
    int picture_format;
 
-   struct pipe_texture *tex;
-   struct pipe_texture *depth_stencil_tex;
+   struct pipe_resource *tex;
+   struct pipe_resource *depth_stencil_tex;
 
    struct pipe_transfer *map_transfer;
    unsigned map_count;

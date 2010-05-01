@@ -194,6 +194,7 @@ static bool
 init_buffers(struct vl_compositor *c)
 {
    struct fragment_shader_consts fsc;
+   struct pipe_vertex_element vertex_elems[2];
 
    assert(c);
 
@@ -203,34 +204,33 @@ init_buffers(struct vl_compositor *c)
    c->vertex_buf.stride = sizeof(struct vertex4f);
    c->vertex_buf.max_index = (VL_COMPOSITOR_MAX_LAYERS + 2) * 6 - 1;
    c->vertex_buf.buffer_offset = 0;
+   /* XXX: Create with DYNAMIC or STREAM */
    c->vertex_buf.buffer = pipe_buffer_create
    (
       c->pipe->screen,
-      1,
-      PIPE_BUFFER_USAGE_VERTEX,
+      PIPE_BIND_VERTEX_BUFFER,
       sizeof(struct vertex4f) * (VL_COMPOSITOR_MAX_LAYERS + 2) * 6
    );
 
-   c->vertex_elems[0].src_offset = 0;
-   c->vertex_elems[0].instance_divisor = 0;
-   c->vertex_elems[0].vertex_buffer_index = 0;
-   c->vertex_elems[0].nr_components = 2;
-   c->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
-   c->vertex_elems[1].src_offset = sizeof(struct vertex2f);
-   c->vertex_elems[1].instance_divisor = 0;
-   c->vertex_elems[1].vertex_buffer_index = 0;
-   c->vertex_elems[1].nr_components = 2;
-   c->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[0].src_offset = 0;
+   vertex_elems[0].instance_divisor = 0;
+   vertex_elems[0].vertex_buffer_index = 0;
+   vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[1].src_offset = sizeof(struct vertex2f);
+   vertex_elems[1].instance_divisor = 0;
+   vertex_elems[1].vertex_buffer_index = 0;
+   vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   c->vertex_elems_state = c->pipe->create_vertex_elements_state(c->pipe, 2, vertex_elems);
 
    /*
     * Create our fragment shader's constant buffer
     * Const buffer contains the color conversion matrix and bias vectors
     */
+   /* XXX: Create with IMMUTABLE/STATIC... although it does change every once in a long while... */
    c->fs_const_buf = pipe_buffer_create
    (
       c->pipe->screen,
-      1,
-      PIPE_BUFFER_USAGE_CONSTANT,
+      PIPE_BIND_CONSTANT_BUFFER,
       sizeof(struct fragment_shader_consts)
    );
 
@@ -246,8 +246,9 @@ cleanup_buffers(struct vl_compositor *c)
 {
    assert(c);
 
-   pipe_buffer_reference(&c->vertex_buf.buffer, NULL);
-   pipe_buffer_reference(&c->fs_const_buf, NULL);
+   c->pipe->delete_vertex_elements_state(c->pipe, c->vertex_elems_state);
+   pipe_resource_reference(&c->vertex_buf.buffer, NULL);
+   pipe_resource_reference(&c->fs_const_buf, NULL);
 }
 
 bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe)
@@ -391,6 +392,7 @@ static unsigned gen_data(struct vl_compositor *c,
                          struct pipe_surface **textures)
 {
    void *vb;
+   struct pipe_transfer *buf_transfer;
    unsigned num_rects = 0;
    unsigned i;
 
@@ -400,8 +402,9 @@ static unsigned gen_data(struct vl_compositor *c,
    assert(dst_rect);
    assert(textures);
 
-   vb = pipe_buffer_map(c->pipe->screen, c->vertex_buf.buffer,
-                        PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD);
+   vb = pipe_buffer_map(c->pipe, c->vertex_buf.buffer,
+                        PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+                        &buf_transfer);
 
    if (!vb)
       return 0;
@@ -434,7 +437,7 @@ static unsigned gen_data(struct vl_compositor *c,
       }
    }
 
-   pipe_buffer_unmap(c->pipe->screen, c->vertex_buf.buffer);
+   pipe_buffer_unmap(c->pipe, c->vertex_buf.buffer, buf_transfer);
 
    return num_rects;
 }
@@ -456,7 +459,7 @@ static void draw_layers(struct vl_compositor *c,
    num_rects = gen_data(c, src_surface, src_rect, dst_rect, src_surfaces);
 
    for (i = 0; i < num_rects; ++i) {
-      c->pipe->set_fragment_sampler_textures(c->pipe, 1, &src_surfaces[i]->texture);
+      //c->pipe->set_fragment_sampler_views(c->pipe, 1, &src_surfaces[i]->texture);
       c->pipe->draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
    }
 }
@@ -506,7 +509,7 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->pipe->bind_vs_state(compositor->pipe, compositor->vertex_shader);
    compositor->pipe->bind_fs_state(compositor->pipe, compositor->fragment_shader);
    compositor->pipe->set_vertex_buffers(compositor->pipe, 1, &compositor->vertex_buf);
-   compositor->pipe->set_vertex_elements(compositor->pipe, 2, compositor->vertex_elems);
+   compositor->pipe->bind_vertex_elements_state(compositor->pipe, compositor->vertex_elems_state);
    compositor->pipe->set_constant_buffer(compositor->pipe, PIPE_SHADER_FRAGMENT, 0, compositor->fs_const_buf);
 
    draw_layers(compositor, src_surface, src_area, dst_area);
@@ -517,15 +520,19 @@ void vl_compositor_render(struct vl_compositor          *compositor,
 
 void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float *mat)
 {
+   struct pipe_transfer *buf_transfer;
+
    assert(compositor);
 
    memcpy
    (
-      pipe_buffer_map(compositor->pipe->screen, compositor->fs_const_buf,
-                      PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD),
+      pipe_buffer_map(compositor->pipe, compositor->fs_const_buf,
+                      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+                      &buf_transfer),
       mat,
       sizeof(struct fragment_shader_consts)
    );
 
-   pipe_buffer_unmap(compositor->pipe->screen, compositor->fs_const_buf);
+   pipe_buffer_unmap(compositor->pipe, compositor->fs_const_buf,
+                     buf_transfer);
 }

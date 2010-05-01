@@ -108,14 +108,15 @@ do_blit_copypixels(GLcontext * ctx,
                    GLint dstx, GLint dsty, GLenum type)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst = intel_drawbuf_region(intel);
-   struct intel_region *src = copypix_src_region(intel, type);
+   struct intel_region *dst;
+   struct intel_region *src;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct gl_framebuffer *read_fb = ctx->ReadBuffer;
    GLint orig_dstx;
    GLint orig_dsty;
    GLint orig_srcx;
    GLint orig_srcy;
+   GLboolean flip = GL_FALSE;
 
    if (type == GL_DEPTH || type == GL_STENCIL) {
       if (INTEL_DEBUG & DEBUG_FALLBACKS)
@@ -133,14 +134,15 @@ do_blit_copypixels(GLcontext * ctx,
        ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F)
       return GL_FALSE;
 
+   intel_prepare_render(intel);
+
+   dst = intel_drawbuf_region(intel);
+   src = copypix_src_region(intel, type);
+
    if (!src || !dst)
       return GL_FALSE;
 
    intelFlush(&intel->ctx);
-
-   intel_prepare_render(intel);
-
-   /* XXX: We fail to handle different inversion between read and draw framebuffer. */
 
    /* Clip to destination buffer. */
    orig_dstx = dstx;
@@ -164,23 +166,23 @@ do_blit_copypixels(GLcontext * ctx,
    dstx += srcx - orig_srcx;
    dsty += srcy - orig_srcy;
 
-   /* Convert from GL to hardware coordinates: */
+   /* Flip dest Y if it's a window system framebuffer. */
    if (fb->Name == 0) {
-      /* copypixels to a system framebuffer */
+      /* copypixels to a window system framebuffer */
       dsty = fb->Height - dsty - height;
-   } else {
-      /* copypixels to a user framebuffer object */
-      dsty = dsty;
+      flip = !flip;
    }
 
-   /* Flip source Y if it's a system framebuffer. */
-   if (read_fb->Name == 0)
-      srcy = fb->Height - srcy - height;
+   /* Flip source Y if it's a window system framebuffer. */
+   if (read_fb->Name == 0) {
+      srcy = read_fb->Height - srcy - height;
+      flip = !flip;
+   }
 
    if (!intel_region_copy(intel,
 			  dst, 0, dstx, dsty,
 			  src, 0, srcx, srcy,
-			  width, height,
+			  width, height, flip,
 			  ctx->Color.ColorLogicOpEnabled ?
 			  ctx->Color.LogicOp : GL_COPY)) {
       DBG("%s: blit failure\n", __FUNCTION__);

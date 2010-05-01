@@ -104,9 +104,9 @@ I915_DBG(
 #endif
 
 
-struct intel_batchbuffer;
+struct i915_winsys_batchbuffer;
 
-void i915_dump_batchbuffer( struct intel_batchbuffer *i915 );
+void i915_dump_batchbuffer( struct i915_winsys_batchbuffer *i915 );
 
 void i915_debug_init( struct i915_context *i915 );
 

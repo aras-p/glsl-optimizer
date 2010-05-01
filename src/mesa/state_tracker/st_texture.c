@@ -27,14 +27,10 @@
 
 #include "st_context.h"
 #include "st_format.h"
-#include "st_public.h"
 #include "st_texture.h"
 #include "st_cb_fbo.h"
 #include "st_inlines.h"
 #include "main/enums.h"
-#include "main/texfetch.h"
-#include "main/teximage.h"
-#include "main/texobj.h"
 
 #undef Elements  /* fix re-defined macro warning */
 
@@ -69,12 +65,12 @@ target_to_target(GLenum target)
 
 
 /**
- * Allocate a new pipe_texture object
+ * Allocate a new pipe_resource object
  * width0, height0, depth0 are the dimensions of the level 0 image
  * (the highest resolution).  last_level indicates how many mipmap levels
  * to allocate storage for.  For non-mipmapped textures, this will be zero.
  */
-struct pipe_texture *
+struct pipe_resource *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,
 		  enum pipe_format format,
@@ -82,9 +78,9 @@ st_texture_create(struct st_context *st,
 		  GLuint width0,
 		  GLuint height0,
 		  GLuint depth0,
-                  GLuint usage )
+                  GLuint bind )
 {
-   struct pipe_texture pt, *newtex;
+   struct pipe_resource pt, *newtex;
    struct pipe_screen *screen = st->pipe->screen;
 
    assert(target <= PIPE_TEXTURE_CUBE);
@@ -95,7 +91,7 @@ st_texture_create(struct st_context *st,
 
    assert(format);
    assert(screen->is_format_supported(screen, format, target, 
-                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
+                                      PIPE_BIND_SAMPLER_VIEW, 0));
 
    memset(&pt, 0, sizeof(pt));
    pt.target = target;
@@ -104,9 +100,11 @@ st_texture_create(struct st_context *st,
    pt.width0 = width0;
    pt.height0 = height0;
    pt.depth0 = depth0;
-   pt.tex_usage = usage;
+   pt.usage = PIPE_USAGE_DEFAULT;
+   pt.bind = bind;
+   pt.flags = 0;
 
-   newtex = screen->texture_create(screen, &pt);
+   newtex = screen->resource_create(screen, &pt);
 
    assert(!newtex || pipe_is_referenced(&newtex->reference));
 
@@ -118,7 +116,7 @@ st_texture_create(struct st_context *st,
  * Check if a texture image can be pulled into a unified mipmap texture.
  */
 GLboolean
-st_texture_match_image(const struct pipe_texture *pt,
+st_texture_match_image(const struct pipe_resource *pt,
                        const struct gl_texture_image *image,
                        GLuint face, GLuint level)
 {
@@ -152,7 +150,7 @@ st_texture_match_image(const struct pipe_texture *pt,
  * These functions present that view to mesa:
  */
 const GLuint *
-st_texture_depth_offsets(struct pipe_texture *pt, GLuint level)
+st_texture_depth_offsets(struct pipe_resource *pt, GLuint level)
 {
    static const GLuint zero = 0;
 
@@ -168,7 +166,7 @@ st_texture_depth_offsets(struct pipe_texture *pt, GLuint level)
  * texture memory buffer, in bytes.
  */
 GLuint
-st_texture_image_offset(const struct pipe_texture * pt,
+st_texture_image_offset(const struct pipe_resource * pt,
                         GLuint face, GLuint level)
 {
    if (pt->target == PIPE_TEXTURE_CUBE)
@@ -192,8 +190,7 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
                      GLuint x, GLuint y, GLuint w, GLuint h)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_texture *pt = stImage->pt;
+   struct pipe_resource *pt = stImage->pt;
 
    DBG("%s \n", __FUNCTION__);
 
@@ -202,7 +199,7 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 						    usage, x, y, w, h);
 
    if (stImage->transfer)
-      return screen->transfer_map(screen, stImage->transfer);
+      return pipe_transfer_map(pipe, stImage->transfer);
    else
       return NULL;
 }
@@ -212,13 +209,13 @@ void
 st_texture_image_unmap(struct st_context *st,
                        struct st_texture_image *stImage)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_context *pipe = st->pipe;
 
    DBG("%s\n", __FUNCTION__);
 
-   screen->transfer_unmap(screen, stImage->transfer);
+   pipe_transfer_unmap(pipe, stImage->transfer);
 
-   screen->tex_transfer_destroy(stImage->transfer);
+   pipe->transfer_destroy(pipe, stImage->transfer);
 }
 
 
@@ -238,19 +235,18 @@ st_surface_data(struct pipe_context *pipe,
 		const void *src, unsigned src_stride,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   struct pipe_screen *screen = pipe->screen;
-   void *map = screen->transfer_map(screen, dst);
+   void *map = pipe_transfer_map(pipe, dst);
 
-   assert(dst->texture);
+   assert(dst->resource);
    util_copy_rect(map,
-                  dst->texture->format,
+                  dst->resource->format,
                   dst->stride,
                   dstx, dsty, 
                   width, height, 
                   src, src_stride, 
                   srcx, srcy);
 
-   screen->transfer_unmap(screen, dst);
+   pipe_transfer_unmap(pipe, dst);
 }
 
 
@@ -258,14 +254,13 @@ st_surface_data(struct pipe_context *pipe,
  */
 void
 st_texture_image_data(struct st_context *st,
-                      struct pipe_texture *dst,
+                      struct pipe_resource *dst,
                       GLuint face,
                       GLuint level,
                       void *src,
                       GLuint src_row_stride, GLuint src_image_stride)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    GLuint depth = u_minify(dst->depth0, level);
    GLuint i;
    const GLubyte *srcUB = src;
@@ -287,7 +282,7 @@ st_texture_image_data(struct st_context *st,
 		      u_minify(dst->width0, level),
                       u_minify(dst->height0, level));      /* width, height */
 
-      screen->tex_transfer_destroy(dst_transfer);
+      pipe->transfer_destroy(pipe, dst_transfer);
 
       srcUB += src_image_stride;
    }
@@ -298,8 +293,8 @@ st_texture_image_data(struct st_context *st,
  */
 void
 st_texture_image_copy(struct pipe_context *pipe,
-                      struct pipe_texture *dst, GLuint dstLevel,
-                      struct pipe_texture *src,
+                      struct pipe_resource *dst, GLuint dstLevel,
+                      struct pipe_resource *src,
                       GLuint face)
 {
    struct pipe_screen *screen = pipe->screen;
@@ -340,26 +335,17 @@ st_texture_image_copy(struct pipe_context *pipe,
 #endif
 
       dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i,
-                                            PIPE_BUFFER_USAGE_GPU_WRITE);
+                                            PIPE_BIND_BLIT_DESTINATION);
 
       src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
-                                            PIPE_BUFFER_USAGE_GPU_READ);
+                                            PIPE_BIND_BLIT_SOURCE);
 
-      if (pipe->surface_copy) {
-         pipe->surface_copy(pipe,
-			    dst_surface,
-			    0, 0, /* destX, Y */
-			    src_surface,
-			    0, 0, /* srcX, Y */
-			    width, height);
-      } else {
-         util_surface_copy(pipe, FALSE,
-			   dst_surface,
-			   0, 0, /* destX, Y */
-			   src_surface,
-			   0, 0, /* srcX, Y */
-			   width, height);
-      }
+      pipe->surface_copy(pipe,
+                         dst_surface,
+                         0, 0, /* destX, Y */
+                         src_surface,
+                         0, 0, /* srcX, Y */
+                         width, height);
 
       pipe_surface_reference(&src_surface, NULL);
       pipe_surface_reference(&dst_surface, NULL);
@@ -367,226 +353,16 @@ st_texture_image_copy(struct pipe_context *pipe,
 }
 
 
-/**
- * Bind a pipe surface to a texture object.  After the call,
- * the texture object is marked dirty and will be (re-)validated.
- *
- * If this is the first surface bound, the texture object is said to
- * switch from normal to surface based.  It will be cleared first in
- * this case.
- *
- * \param ps      pipe surface to be unbound
- * \param target  texture target
- * \param level   image level
- * \param format  internal format of the texture
- */
-int
-st_bind_texture_surface(struct pipe_surface *ps, int target, int level,
-                        enum pipe_format format)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   const GLuint unit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
-   struct st_texture_object *stObj;
-   struct st_texture_image *stImage;
-   GLenum internalFormat;
-
-   switch (target) {
-   case ST_TEXTURE_2D:
-      target = GL_TEXTURE_2D;
-      break;
-   case ST_TEXTURE_RECT:
-      target = GL_TEXTURE_RECTANGLE_ARB;
-      break;
-   default:
-      return 0;
-   }
-
-   /* map pipe format to base format for now */
-   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
-      internalFormat = GL_RGBA;
-   else
-      internalFormat = GL_RGB;
-
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   _mesa_lock_texture(ctx, texObj);
-
-   stObj = st_texture_object(texObj);
-   /* switch to surface based */
-   if (!stObj->surface_based) {
-      _mesa_clear_texture_object(ctx, texObj);
-      stObj->surface_based = GL_TRUE;
-   }
-
-   texImage = _mesa_get_tex_image(ctx, texObj, target, level);
-   stImage = st_texture_image(texImage);
-
-   _mesa_init_teximage_fields(ctx, target, texImage,
-                              ps->width, ps->height, 1, 0, internalFormat);
-   texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
-                                                GL_RGBA, GL_UNSIGNED_BYTE);
-   _mesa_set_fetch_functions(texImage, 2);
-   pipe_texture_reference(&stImage->pt, ps->texture);
-
-   _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
-   _mesa_unlock_texture(ctx, texObj);
-   
-   return 1;
-}
-
-
-/**
- * Unbind a pipe surface from a texture object.  After the call,
- * the texture object is marked dirty and will be (re-)validated.
- *
- * \param ps      pipe surface to be unbound
- * \param target  texture target
- * \param level   image level
- */
-int
-st_unbind_texture_surface(struct pipe_surface *ps, int target, int level)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   const GLuint unit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
-   struct st_texture_object *stObj;
-   struct st_texture_image *stImage;
-
-   switch (target) {
-   case ST_TEXTURE_2D:
-      target = GL_TEXTURE_2D;
-      break;
-   case ST_TEXTURE_RECT:
-      target = GL_TEXTURE_RECTANGLE_ARB;
-      break;
-   default:
-      return 0;
-   }
-
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-
-   _mesa_lock_texture(ctx, texObj);
-
-   texImage = _mesa_get_tex_image(ctx, texObj, target, level);
-   stObj = st_texture_object(texObj);
-   stImage = st_texture_image(texImage);
-
-   /* Make sure the pipe surface is still bound.  The texture object is still
-    * considered surface based even if this is the last bound surface. */
-   if (stImage->pt == ps->texture) {
-      pipe_texture_reference(&stImage->pt, NULL);
-      _mesa_clear_texture_image(ctx, texImage);
-
-      _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
-   }
-
-   _mesa_unlock_texture(ctx, texObj);
-   
-   return 1;
-}
-
-
-/** Redirect rendering into stfb's surface to a texture image */
-int
-st_bind_teximage(struct st_framebuffer *stfb, uint surfIndex,
-                 int target, int format, int level)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct st_context *st = ctx->st;
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   const GLuint unit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
-   struct st_texture_image *stImage;
-   struct st_renderbuffer *strb;
-   GLint face = 0, slice = 0;
-
-   assert(surfIndex <= ST_SURFACE_DEPTH);
-
-   strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
-
-   if (strb->texture_save || strb->surface_save) {
-      /* Error! */
-      return 0;
-   }
-
-   if (target == ST_TEXTURE_2D) {
-      texObj = texUnit->CurrentTex[TEXTURE_2D_INDEX];
-      texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, level);
-      stImage = st_texture_image(texImage);
-   }
-   else {
-      /* unsupported target */
-      return 0;
-   }
-
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   /* save the renderbuffer's surface/texture info */
-   pipe_texture_reference(&strb->texture_save, strb->texture);
-   pipe_surface_reference(&strb->surface_save, strb->surface);
-
-   /* plug in new surface/texture info */
-   pipe_texture_reference(&strb->texture, stImage->pt);
-   strb->surface = screen->get_tex_surface(screen, strb->texture,
-                                           face, level, slice,
-                                           (PIPE_BUFFER_USAGE_GPU_READ |
-                                            PIPE_BUFFER_USAGE_GPU_WRITE));
-
-   st->dirty.st |= ST_NEW_FRAMEBUFFER;
-
-   return 1;
-}
-
-
-/** Undo surface-to-texture binding */
-int
-st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
-                    int target, int format, int level)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct st_context *st = ctx->st;
-   struct st_renderbuffer *strb;
-
-   assert(surfIndex <= ST_SURFACE_DEPTH);
-
-   strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
-
-   if (!strb->texture_save || !strb->surface_save) {
-      /* Error! */
-      return 0;
-   }
-
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   /* free tex surface, restore original */
-   pipe_surface_reference(&strb->surface, strb->surface_save);
-   pipe_texture_reference(&strb->texture, strb->texture_save);
-
-   pipe_surface_reference(&strb->surface_save, NULL);
-   pipe_texture_reference(&strb->texture_save, NULL);
-
-   st->dirty.st |= ST_NEW_FRAMEBUFFER;
-
-   return 1;
-}
-
 void
 st_teximage_flush_before_map(struct st_context *st,
-			     struct pipe_texture *pt,
+			     struct pipe_resource *pt,
 			     unsigned int face,
 			     unsigned int level,
 			     enum pipe_transfer_usage usage)
 {
    struct pipe_context *pipe = st->pipe;
    unsigned referenced =
-      pipe->is_texture_referenced(pipe, pt, face, level);
+      pipe->is_resource_referenced(pipe, pt, face, level);
 
    if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
 		      (usage & PIPE_TRANSFER_WRITE)))

@@ -46,4 +46,35 @@ void memory_pool_init(struct memory_pool * pool);
 void memory_pool_destroy(struct memory_pool * pool);
 void * memory_pool_malloc(struct memory_pool * pool, unsigned int bytes);
 
+
+/**
+ * Generic helper for growing an array that has separate size/count
+ * and reserved counters to accomodate up to num new element.
+ *
+ *  type * Array;
+ *  unsigned int Size;
+ *  unsigned int Reserved;
+ *
+ * memory_pool_array_reserve(pool, type, Array, Size, Reserved, k);
+ * assert(Size + k < Reserved);
+ *
+ * \note Size is not changed by this macro.
+ *
+ * \warning Array, Size, Reserved have to be lvalues and may be evaluated
+ * several times.
+ */
+#define memory_pool_array_reserve(pool, type, array, size, reserved, num) do { \
+	unsigned int _num = (num); \
+	if ((size) + _num > (reserved)) { \
+		unsigned int newreserve = (reserved) * 2; \
+		type * newarray; \
+		if (newreserve < _num) \
+			newreserve = 4 * _num; /* arbitrary heuristic */ \
+		newarray = memory_pool_malloc((pool), newreserve * sizeof(type)); \
+		memcpy(newarray, (array), (size) * sizeof(type)); \
+		(array) = newarray; \
+		(reserved) = newreserve; \
+	} \
+} while(0)
+
 #endif /* MEMORY_POOL_H */

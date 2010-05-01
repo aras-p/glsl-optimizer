@@ -560,21 +560,22 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         CLEARbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
     }
 
-    /* see if we need any point_sprite replacements */
-    for (i = VERT_RESULT_TEX0; i<= VERT_RESULT_TEX7; i++)
+    /* see if we need any point_sprite replacements, also increase num_interp
+     * as there's no vp output for them */
+    for (i = FRAG_ATTRIB_TEX0; i<= FRAG_ATTRIB_TEX7; i++)
     {
-        if(ctx->Point.CoordReplace[i - VERT_RESULT_TEX0] == GL_TRUE)
+        if(ctx->Point.CoordReplace[i - FRAG_ATTRIB_TEX0] == GL_TRUE) {
+            ui++;
             point_sprite = GL_TRUE;
+        }
     }
+
+    if( mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC))
+        ui++;
 
     if ((mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC)) || point_sprite)
     {
-        /* for FRAG_ATTRIB_PNTC we need to increase num_interp */
-        if(mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC))
-        {
-            ui++;
-            SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
-        }
+        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
         SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
         SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_S, PNT_SPRITE_OVRD_X_shift, PNT_SPRITE_OVRD_X_mask);
         SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_T, PNT_SPRITE_OVRD_Y_shift, PNT_SPRITE_OVRD_Y_mask);
@@ -669,7 +670,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     for(i=0; i<8; i++)
     {
 	    unBit = 1 << (VERT_RESULT_TEX0 + i);
-	    if(OutputsWritten & unBit)
+	    if((OutputsWritten & unBit) || (ctx->Point.CoordReplace[i] == GL_TRUE))
 	    {
 		    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i];
 		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);

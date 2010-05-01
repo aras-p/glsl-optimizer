@@ -260,4 +260,23 @@ nvgl_filter_mode(unsigned filter)
 	}
 }
 
+static inline unsigned
+nvgl_texgen_mode(unsigned mode)
+{
+	switch (mode) {
+	case GL_EYE_LINEAR:
+		return 0x2400;
+	case GL_OBJECT_LINEAR:
+		return 0x2401;
+	case GL_SPHERE_MAP:
+		return 0x2402;
+	case GL_NORMAL_MAP:
+		return 0x8511;
+	case GL_REFLECTION_MAP:
+		return 0x8512;
+	default:
+		assert(0);
+	}
+}
+
 #endif

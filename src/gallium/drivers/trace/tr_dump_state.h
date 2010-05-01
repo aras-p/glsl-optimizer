@@ -35,7 +35,11 @@
 
 void trace_dump_format(enum pipe_format format);
 
-void trace_dump_template(const struct pipe_texture *templat);
+void trace_dump_resource_template(const struct pipe_resource *templat);
+
+void trace_dump_subresource(const struct pipe_subresource *subresource);
+
+void trace_dump_box(const struct pipe_box *box);
 
 void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state);
 
@@ -62,6 +66,8 @@ void trace_dump_stencil_ref(const struct pipe_stencil_ref *state);
 void trace_dump_framebuffer_state(const struct pipe_framebuffer_state *state);
 
 void trace_dump_sampler_state(const struct pipe_sampler_state *state);
+
+void trace_dump_sampler_view_template(const struct pipe_sampler_view *view);
 
 void trace_dump_surface(const struct pipe_surface *state);
 

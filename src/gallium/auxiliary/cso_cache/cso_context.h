@@ -103,24 +103,11 @@ void
 cso_single_vertex_sampler_done(struct cso_context *cso);
 
 
-
-enum pipe_error cso_set_sampler_textures( struct cso_context *cso,
-                                          uint count,
-                                          struct pipe_texture **textures );
-void cso_save_sampler_textures( struct cso_context *cso );
-void cso_restore_sampler_textures( struct cso_context *cso );
-
-
-
-enum pipe_error
-cso_set_vertex_sampler_textures(struct cso_context *cso,
-                                uint count,
-                                struct pipe_texture **textures);
-void
-cso_save_vertex_sampler_textures(struct cso_context *cso);
-void
-cso_restore_vertex_sampler_textures(struct cso_context *cso);
-
+enum pipe_error cso_set_vertex_elements(struct cso_context *ctx,
+                                        unsigned count,
+                                        const struct pipe_vertex_element *states);
+void cso_save_vertex_elements(struct cso_context *ctx);
+void cso_restore_vertex_elements(struct cso_context *ctx);
 
 
 /* These aren't really sensible -- most of the time the api provides
@@ -157,7 +144,6 @@ void cso_save_geometry_shader(struct cso_context *cso);
 void cso_restore_geometry_shader(struct cso_context *cso);
 
 
-
 enum pipe_error cso_set_framebuffer(struct cso_context *cso,
                                     const struct pipe_framebuffer_state *fb);
 void cso_save_framebuffer(struct cso_context *cso);
@@ -191,6 +177,34 @@ cso_save_clip(struct cso_context *cso);
 
 void
 cso_restore_clip(struct cso_context *cso);
+
+
+/* fragment sampler view state */
+
+void
+cso_set_fragment_sampler_views(struct cso_context *cso,
+                               uint count,
+                               struct pipe_sampler_view **views);
+
+void
+cso_save_fragment_sampler_views(struct cso_context *cso);
+
+void
+cso_restore_fragment_sampler_views(struct cso_context *cso);
+
+
+/* vertex sampler view state */
+
+void
+cso_set_vertex_sampler_views(struct cso_context *cso,
+                             uint count,
+                             struct pipe_sampler_view **views);
+
+void
+cso_save_vertex_sampler_views(struct cso_context *cso);
+
+void
+cso_restore_vertex_sampler_views(struct cso_context *cso);
 
 
 #ifdef	__cplusplus

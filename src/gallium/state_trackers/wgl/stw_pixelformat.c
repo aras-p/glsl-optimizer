@@ -96,8 +96,8 @@ stw_pf_depth_stencil[] = {
    { PIPE_FORMAT_Z24X8_UNORM, {24, 0} },
    { PIPE_FORMAT_Z16_UNORM,   {16, 0} },
    /* combined depth-stencil */
-   { PIPE_FORMAT_Z24S8_UNORM, {24, 8} },
-   { PIPE_FORMAT_S8Z24_UNORM, {24, 8} }
+   { PIPE_FORMAT_Z24_UNORM_S8_USCALED, {24, 8} },
+   { PIPE_FORMAT_S8_USCALED_Z24_UNORM, {24, 8} }
 };
 
 
@@ -142,9 +142,6 @@ stw_pixelformat_add(
    
    memset(pfi, 0, sizeof *pfi);
    
-   pfi->color_format = color->format;
-   pfi->depth_stencil_format = depth->format;
-   
    pfi->pfd.nSize = sizeof pfi->pfd;
    pfi->pfd.nVersion = 1;
 
@@ -184,11 +181,22 @@ stw_pixelformat_add(
    pfi->pfd.dwVisibleMask = 0;
    pfi->pfd.dwDamageMask = 0;
 
-   if(samples) {
-      pfi->numSampleBuffers = 1;
-      pfi->numSamples = samples;
-      extended = TRUE;
-   }
+   /*
+    * since state trackers can allocate depth/stencil/accum buffers, we provide
+    * only color buffers here
+    */
+   pfi->stvis.buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
+   if (doublebuffer)
+      pfi->stvis.buffer_mask = ST_ATTACHMENT_BACK_LEFT_MASK;
+
+   pfi->stvis.color_format = color->format;
+   pfi->stvis.depth_stencil_format = depth->format;
+
+   pfi->stvis.accum_format = (accum) ?
+      PIPE_FORMAT_R16G16B16A16_SNORM : PIPE_FORMAT_NONE;
+
+   pfi->stvis.samples = samples;
+   pfi->stvis.render_buffer = ST_ATTACHMENT_INVALID;
    
    ++stw_dev->pixelformat_extended_count;
    
@@ -218,8 +226,8 @@ stw_pixelformat_init( void )
          const struct stw_pf_color_info *color = &stw_pf_color[j];
          
          if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D, 
-                                         PIPE_TEXTURE_USAGE_RENDER_TARGET |
-                                         PIPE_TEXTURE_USAGE_DISPLAY_TARGET, 0))
+                                         PIPE_BIND_RENDER_TARGET |
+                                         PIPE_BIND_DISPLAY_TARGET, 0))
             continue;
          
          for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
@@ -229,7 +237,7 @@ stw_pixelformat_init( void )
                const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
                
                if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D, 
-                                               PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0))
+                                               PIPE_BIND_DEPTH_STENCIL, 0))
                   continue;
 
                stw_pixelformat_add( stw_dev, color, depth,  0, doublebuffer, samples );
@@ -261,29 +269,6 @@ stw_pixelformat_get_info( uint index )
    assert( index < stw_dev->pixelformat_extended_count );
 
    return &stw_dev->pixelformats[index];
-}
-
-
-void
-stw_pixelformat_visual(GLvisual *visual, 
-                       const struct stw_pixelformat_info *pfi )
-{
-   memset(visual, 0, sizeof *visual);
-   _mesa_initialize_visual(
-      visual,
-      (pfi->pfd.dwFlags & PFD_DOUBLEBUFFER) ? GL_TRUE : GL_FALSE,
-      (pfi->pfd.dwFlags & PFD_STEREO) ? GL_TRUE : GL_FALSE,
-      pfi->pfd.cRedBits,
-      pfi->pfd.cGreenBits,
-      pfi->pfd.cBlueBits,
-      pfi->pfd.cAlphaBits,
-      pfi->pfd.cDepthBits,
-      pfi->pfd.cStencilBits,
-      pfi->pfd.cAccumRedBits,
-      pfi->pfd.cAccumGreenBits,
-      pfi->pfd.cAccumBlueBits,
-      pfi->pfd.cAccumAlphaBits,
-      pfi->numSamples );
 }
 
 

@@ -107,8 +107,6 @@ struct aapoint_stage
                                     const struct pipe_shader_state *);
    void (*driver_bind_fs_state)(struct pipe_context *, void *);
    void (*driver_delete_fs_state)(struct pipe_context *, void *);
-
-   struct pipe_context *pipe;
 };
 
 
@@ -499,6 +497,7 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
    struct pipe_shader_state aapoint_fs;
    struct aa_transform_context transform;
    const uint newLen = tgsi_num_tokens(orig_fs->tokens) + NUM_NEW_TOKENS;
+   struct pipe_context *pipe = aapoint->stage.draw->pipe;
 
    aapoint_fs = *orig_fs; /* copy to init */
    aapoint_fs.tokens = tgsi_alloc_tokens(newLen);
@@ -527,7 +526,7 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
 #endif
 
    aapoint->fs->aapoint_fs
-      = aapoint->driver_create_fs_state(aapoint->pipe, &aapoint_fs);
+      = aapoint->driver_create_fs_state(pipe, &aapoint_fs);
    if (aapoint->fs->aapoint_fs == NULL)
       goto fail;
 
@@ -549,13 +548,14 @@ static boolean
 bind_aapoint_fragment_shader(struct aapoint_stage *aapoint)
 {
    struct draw_context *draw = aapoint->stage.draw;
+   struct pipe_context *pipe = draw->pipe;
 
    if (!aapoint->fs->aapoint_fs &&
        !generate_aapoint_fs(aapoint))
       return FALSE;
 
    draw->suspend_flushing = TRUE;
-   aapoint->driver_bind_fs_state(aapoint->pipe, aapoint->fs->aapoint_fs);
+   aapoint->driver_bind_fs_state(pipe, aapoint->fs->aapoint_fs);
    draw->suspend_flushing = FALSE;
 
    return TRUE;
@@ -679,6 +679,9 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
 {
    auto struct aapoint_stage *aapoint = aapoint_stage(stage);
    struct draw_context *draw = stage->draw;
+   struct pipe_context *pipe = draw->pipe;
+   const struct pipe_rasterizer_state *rast = draw->rasterizer;
+   void *r;
 
    assert(draw->rasterizer->point_smooth);
 
@@ -716,6 +719,14 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
       }
    }
 
+   draw->suspend_flushing = TRUE;
+
+   /* Disable triangle culling, stippling, unfilled mode etc. */
+   r = draw_get_rasterizer_no_cull(draw, rast->scissor, rast->flatshade);
+   pipe->bind_rasterizer_state(pipe, r);
+
+   draw->suspend_flushing = FALSE;
+
    /* now really draw first point */
    stage->point = aapoint_point;
    stage->point(stage, header);
@@ -727,7 +738,7 @@ aapoint_flush(struct draw_stage *stage, unsigned flags)
 {
    struct draw_context *draw = stage->draw;
    struct aapoint_stage *aapoint = aapoint_stage(stage);
-   struct pipe_context *pipe = aapoint->pipe;
+   struct pipe_context *pipe = draw->pipe;
 
    stage->point = aapoint_first_point;
    stage->next->flush( stage->next, flags );
@@ -735,6 +746,12 @@ aapoint_flush(struct draw_stage *stage, unsigned flags)
    /* restore original frag shader */
    draw->suspend_flushing = TRUE;
    aapoint->driver_bind_fs_state(pipe, aapoint->fs->driver_fs);
+
+   /* restore original rasterizer state */
+   if (draw->rast_handle) {
+      pipe->bind_rasterizer_state(pipe, draw->rast_handle);
+   }
+
    draw->suspend_flushing = FALSE;
 
    draw->extra_shader_outputs.slot = 0;
@@ -811,7 +828,7 @@ aapoint_create_fs_state(struct pipe_context *pipe,
    aafs->state = *fs;
 
    /* pass-through */
-   aafs->driver_fs = aapoint->driver_create_fs_state(aapoint->pipe, fs);
+   aafs->driver_fs = aapoint->driver_create_fs_state(pipe, fs);
 
    return aafs;
 }
@@ -825,7 +842,7 @@ aapoint_bind_fs_state(struct pipe_context *pipe, void *fs)
    /* save current */
    aapoint->fs = aafs;
    /* pass-through */
-   aapoint->driver_bind_fs_state(aapoint->pipe,
+   aapoint->driver_bind_fs_state(pipe,
                                  (aafs ? aafs->driver_fs : NULL));
 }
 
@@ -837,10 +854,10 @@ aapoint_delete_fs_state(struct pipe_context *pipe, void *fs)
    struct aapoint_fragment_shader *aafs = (struct aapoint_fragment_shader *) fs;
 
    /* pass-through */
-   aapoint->driver_delete_fs_state(aapoint->pipe, aafs->driver_fs);
+   aapoint->driver_delete_fs_state(pipe, aafs->driver_fs);
 
    if (aafs->aapoint_fs)
-      aapoint->driver_delete_fs_state(aapoint->pipe, aafs->aapoint_fs);
+      aapoint->driver_delete_fs_state(pipe, aafs->aapoint_fs);
 
    FREE(aafs);
 }
@@ -857,16 +874,12 @@ draw_install_aapoint_stage(struct draw_context *draw,
 {
    struct aapoint_stage *aapoint;
 
-   pipe->draw = (void *) draw;
-
    /*
     * Create / install AA point drawing / prim stage
     */
    aapoint = draw_aapoint_stage( draw );
    if (aapoint == NULL)
       return FALSE;
-
-   aapoint->pipe = pipe;
 
    /* save original driver functions */
    aapoint->driver_create_fs_state = pipe->create_fs_state;

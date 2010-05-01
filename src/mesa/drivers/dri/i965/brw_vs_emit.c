@@ -182,7 +182,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    if (intel->gen >= 6)
       mrf = 6;
-   else if (intel->is_ironlake)
+   else if (intel->gen == 5)
       mrf = 8;
    else
       mrf = 4;
@@ -283,7 +283,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    if (intel->gen >= 6)
       c->prog_data.urb_entry_size = (attributes_in_vue + 4 + 7) / 8;
-   else if (intel->is_ironlake)
+   else if (intel->gen == 5)
       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
@@ -1288,7 +1288,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       brw_MOV(p, offset(m0, 2), pos);
       brw_MOV(p, offset(m0, 5), pos);
       len_vertex_header = 4;
-   } else if (intel->is_ironlake) {
+   } else if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
        * dword 0-3 (m1) of the header is indices, point width, clip flags.
        * dword 4-7 (m2) is the ndc position (set above)
@@ -1358,31 +1358,6 @@ static void emit_vertex_write( struct brw_vs_compile *c)
                     1,              /* writes complete */
                     BRW_MAX_MRF-1,  /* urb destination offset */
                     BRW_URB_SWIZZLE_INTERLEAVE);
-   }
-}
-
-
-/**
- * Called after code generation to resolve subroutine calls and the
- * END instruction.
- * \param end_inst  points to brw code for END instruction
- * \param last_inst  points to last instruction emitted before vertex write
- */
-static void 
-post_vs_emit( struct brw_vs_compile *c,
-              struct brw_instruction *end_inst,
-              struct brw_instruction *last_inst )
-{
-   GLint offset;
-
-   brw_resolve_cals(&c->func);
-
-   /* patch up the END code to jump past subroutines, etc */
-   offset = last_inst - end_inst;
-   if (offset > 1) {
-      brw_set_src1(end_inst, brw_imm_d(offset * 16));
-   } else {
-      end_inst->header.opcode = BRW_OPCODE_NOP;
    }
 }
 
@@ -1466,8 +1441,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
    struct intel_context *intel = &brw->intel;
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_depth = 0, loop_depth = 0;
-   GLuint end_offset = 0;
-   struct brw_instruction *end_inst, *last_inst;
    struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH] = { 0 };
    const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
@@ -1684,6 +1657,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 if_depth++;
 	 break;
       case OPCODE_ELSE:
+	 assert(if_depth > 0);
 	 if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
 	 break;
       case OPCODE_ENDIF:
@@ -1710,18 +1684,20 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
             loop_depth--;
 
-	    if (intel->is_ironlake)
+	    if (intel->gen == 5)
 	       br = 2;
 
             inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
             /* patch all the BREAK/CONT instructions from last BEGINLOOP */
             while (inst0 > loop_inst[loop_depth]) {
                inst0--;
-               if (inst0->header.opcode == BRW_OPCODE_BREAK) {
+               if (inst0->header.opcode == BRW_OPCODE_BREAK &&
+		   inst0->bits3.if_else.jump_count == 0) {
                   inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
                   inst0->bits3.if_else.pop_count = 0;
                }
-               else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
+               else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
+			inst0->bits3.if_else.jump_count == 0) {
                   inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
                   inst0->bits3.if_else.pop_count = 0;
                }
@@ -1749,12 +1725,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
          brw_MOV(p, brw_ip_reg(), deref_1d(stack_index, 0));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
 	 break;
-      case OPCODE_END:	
-         end_offset = p->nr_insn;
-         /* this instruction will get patched later to jump past subroutine
-          * code, etc.
-          */
-         brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
+      case OPCODE_END:
+	 emit_vertex_write(c);
          break;
       case OPCODE_PRINT:
          /* no-op */
@@ -1815,13 +1787,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
       release_tmps(c);
    }
 
-   end_inst = &p->store[end_offset];
-   last_inst = &p->store[p->nr_insn];
+   brw_resolve_cals(p);
 
-   /* The END instruction will be patched to jump to this code */
-   emit_vertex_write(c);
-
-   post_vs_emit(c, end_inst, last_inst);
+   brw_optimize(p);
 
    if (INTEL_DEBUG & DEBUG_VS) {
       int i;

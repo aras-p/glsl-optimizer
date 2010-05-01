@@ -889,7 +889,7 @@ _math_matrix_rotate( GLmatrix *mat,
        *  Y-axis to bring the axis vector parallel with the X-axis.  The
        *  rotation about the X-axis is then performed.  Ry and Rz are
        *  simply the respective inverse transforms to bring the arbitrary
-       *  axis back to it's original orientation.  The first transforms
+       *  axis back to its original orientation.  The first transforms
        *  Rz' and Ry' are considered inverses, since the data from the
        *  arbitrary axis gives you info on how to get to it, not how
        *  to get away from it, and an inverse must be applied.

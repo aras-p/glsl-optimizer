@@ -34,12 +34,13 @@
 
 #include "tr_screen.h"
 
+struct trace_context;
 
-struct trace_texture
+struct trace_resource
 {
-   struct pipe_texture base;
+   struct pipe_resource base;
 
-   struct pipe_texture *texture;
+   struct pipe_resource *resource;
 
    struct tr_list list;
 };
@@ -55,11 +56,20 @@ struct trace_surface
 };
 
 
+struct trace_sampler_view
+{
+   struct pipe_sampler_view base;
+
+   struct pipe_sampler_view *sampler_view;
+};
+
+
 struct trace_transfer
 {
    struct pipe_transfer base;
 
    struct pipe_transfer *transfer;
+   struct pipe_context *pipe;
 
    struct tr_list list;
 
@@ -67,13 +77,13 @@ struct trace_transfer
 };
 
 
-static INLINE struct trace_texture *
-trace_texture(struct pipe_texture *texture)
+static INLINE struct trace_resource *
+trace_resource(struct pipe_resource *texture)
 {
    if(!texture)
       return NULL;
    (void)trace_screen(texture->screen);
-   return (struct trace_texture *)texture;
+   return (struct trace_resource *)texture;
 }
 
 
@@ -82,8 +92,17 @@ trace_surface(struct pipe_surface *surface)
 {
    if(!surface)
       return NULL;
-   (void)trace_texture(surface->texture);
+   (void)trace_resource(surface->texture);
    return (struct trace_surface *)surface;
+}
+
+
+static INLINE struct trace_sampler_view *
+trace_sampler_view(struct pipe_sampler_view *sampler_view)
+{
+   if (!sampler_view)
+      return NULL;
+   return (struct trace_sampler_view *)sampler_view;
 }
 
 
@@ -92,31 +111,34 @@ trace_transfer(struct pipe_transfer *transfer)
 {
    if(!transfer)
       return NULL;
-   (void)trace_texture(transfer->texture);
+   (void)trace_resource(transfer->resource);
    return (struct trace_transfer *)transfer;
 }
 
 
-struct pipe_texture *
-trace_texture_create(struct trace_screen *tr_scr,
-                     struct pipe_texture *texture);
+struct pipe_resource *
+trace_resource_create(struct trace_screen *tr_scr,
+                     struct pipe_resource *texture);
 
 void
-trace_texture_destroy(struct trace_texture *tr_tex);
+trace_resource_destroy(struct trace_screen *tr_scr,
+		       struct trace_resource *tr_tex);
 
 struct pipe_surface *
-trace_surface_create(struct trace_texture *tr_tex,
+trace_surface_create(struct trace_resource *tr_tex,
                      struct pipe_surface *surface);
 
 void
 trace_surface_destroy(struct trace_surface *tr_surf);
 
 struct pipe_transfer *
-trace_transfer_create(struct trace_texture *tr_tex,
-                      struct pipe_transfer *transfer);
+trace_transfer_create(struct trace_context *tr_ctx,
+		      struct trace_resource *tr_tex,
+		      struct pipe_transfer *transfer);
 
 void
-trace_transfer_destroy(struct trace_transfer *tr_trans);
+trace_transfer_destroy(struct trace_context *tr_ctx,
+                       struct trace_transfer *tr_trans);
 
 
 #endif /* TR_TEXTURE_H_ */

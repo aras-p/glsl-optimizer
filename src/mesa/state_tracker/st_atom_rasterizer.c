@@ -209,7 +209,7 @@ static void update_raster_state( struct st_context *st )
     */
    if (vertProg) {
       if (vertProg->Base.Id == 0) {
-         if (vertProg->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
+         if (vertProg->Base.OutputsWritten & BITFIELD64_BIT(VERT_RESULT_PSIZ)) {
             /* generated program which emits point size */
             raster->point_size_per_vertex = TRUE;
          }

@@ -7,7 +7,7 @@ include $(TOP)/configs/current
 EGL_MAJOR = 1
 EGL_MINOR = 0
 
-INCLUDE_DIRS = -I$(TOP)/include
+INCLUDE_DIRS = -I$(TOP)/include $(X11_CFLAGS)
 
 HEADERS = \
 	eglcompiler.h \

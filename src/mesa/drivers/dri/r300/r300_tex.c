@@ -308,6 +308,45 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	return &t->base;
 }
 
+unsigned r300IsFormatRenderable(gl_format mesa_format)
+{
+	switch (mesa_format)
+	{
+		case MESA_FORMAT_RGB565:
+		case MESA_FORMAT_RGBA5551:
+		case MESA_FORMAT_RGBA8888:
+		case MESA_FORMAT_RGB565_REV:
+		case MESA_FORMAT_RGBA8888_REV:
+		case MESA_FORMAT_ARGB4444:
+		case MESA_FORMAT_ARGB1555:
+		case MESA_FORMAT_XRGB8888:
+		case MESA_FORMAT_ARGB8888:
+		case MESA_FORMAT_ARGB4444_REV:
+		case MESA_FORMAT_ARGB1555_REV:
+		case MESA_FORMAT_XRGB8888_REV:
+		case MESA_FORMAT_ARGB8888_REV:
+		case MESA_FORMAT_SRGBA8:
+		case MESA_FORMAT_SARGB8:
+		case MESA_FORMAT_SL8:
+		case MESA_FORMAT_A8:
+		case MESA_FORMAT_L8:
+		case MESA_FORMAT_I8:
+		case MESA_FORMAT_Z16:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+unsigned r500IsFormatRenderable(gl_format mesa_format)
+{
+	if (mesa_format == MESA_FORMAT_S8_Z24) {
+		return 1;
+	} else {
+		return r300IsFormatRenderable(mesa_format);
+	}
+}
+
 void r300InitTextureFuncs(radeonContextPtr radeon, struct dd_function_table *functions)
 {
 	/* Note: we only plug in the functions we implement in the driver

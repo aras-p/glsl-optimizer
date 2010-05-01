@@ -25,7 +25,9 @@
 #include <stdio.h>
 
 #include "radeon_dataflow.h"
+#include "radeon_emulate_branches.h"
 #include "radeon_program_alu.h"
+#include "radeon_program_tex.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
@@ -84,91 +86,96 @@ static void rewrite_depth_out(struct r300_fragment_program_compiler * c)
 	}
 }
 
+static void debug_program_log(struct r300_fragment_program_compiler* c, const char * where)
+{
+	if (c->Base.Debug) {
+		fprintf(stderr, "Fragment Program: %s\n", where);
+		rc_print_program(&c->Base.Program);
+	}
+}
+
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
 	rewrite_depth_out(c);
 
+	debug_program_log(c, "before compilation");
+
+	/* XXX Ideally this should be done only for r3xx, but since
+	 * we don't have branching support for r5xx, we use the emulation
+	 * on all chipsets. */
+	rc_emulate_branches(&c->Base);
+
+	debug_program_log(c, "after emulate branches");
+
 	if (c->is_r500) {
 		struct radeon_program_transformation transformations[] = {
-			{ &r500_transform_TEX, c },
 			{ &r500_transform_IF, 0 },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformDeriv, 0 },
 			{ &radeonTransformTrigScale, 0 }
 		};
-		radeonLocalTransform(&c->Base, 5, transformations);
+		radeonLocalTransform(&c->Base, 4, transformations);
+
+		debug_program_log(c, "after native rewrite part 1");
 
 		c->Base.SwizzleCaps = &r500_swizzle_caps;
 	} else {
 		struct radeon_program_transformation transformations[] = {
-			{ &r300_transform_TEX, c },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformTrigSimple, 0 }
 		};
-		radeonLocalTransform(&c->Base, 3, transformations);
+		radeonLocalTransform(&c->Base, 2, transformations);
+
+		debug_program_log(c, "after native rewrite part 1");
 
 		c->Base.SwizzleCaps = &r300_swizzle_caps;
 	}
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Fragment Program: After native rewrite:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	/* Run the common transformations too.
+	 * Remember, lowering comes last! */
+	struct radeon_program_transformation common_transformations[] = {
+		{ &radeonTransformTEX, c },
+	};
+	radeonLocalTransform(&c->Base, 1, common_transformations);
+
+	common_transformations[0].function = &radeonTransformALU;
+	radeonLocalTransform(&c->Base, 1, common_transformations);
+
+	if (c->Base.Error)
+		return;
+
+	debug_program_log(c, "after native rewrite part 2");
 
 	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Fragment Program: After deadcode:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after deadcode");
 
 	rc_dataflow_swizzles(&c->Base);
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after dataflow passes:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after dataflow passes");
 
 	rc_pair_translate(c);
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair translate:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after pair translate");
 
 	rc_pair_schedule(c);
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair scheduling:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after pair scheduling");
 
-	if (c->is_r500)
-		rc_pair_regalloc(c, 128);
-	else
-		rc_pair_regalloc(c, R300_PFS_NUM_TEMP_REGS);
+	rc_pair_regalloc(c, c->max_temp_regs);
 
 	if (c->Base.Error)
 		return;
 
-	if (c->Base.Debug) {
-		fprintf(stderr, "Compiler: after pair register allocation:\n");
-		rc_print_program(&c->Base.Program);
-		fflush(stderr);
-	}
+	debug_program_log(c, "after register allocation");
 
 	if (c->is_r500) {
 		r500BuildFragmentProgramHwCode(c);

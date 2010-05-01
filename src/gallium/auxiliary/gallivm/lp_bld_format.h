@@ -34,7 +34,7 @@
  * Pixel format helpers.
  */
 
-#include <llvm-c/Core.h>  
+#include "gallivm/lp_bld.h"
 
 #include "pipe/p_format.h"
 
@@ -42,9 +42,31 @@ struct util_format_description;
 struct lp_type;
 
 
-boolean
-lp_format_is_rgba8(const struct util_format_description *desc);
+/*
+ * AoS
+ */
 
+LLVMValueRef
+lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
+                         const struct util_format_description *desc,
+                         LLVMValueRef packed);
+
+LLVMValueRef
+lp_build_pack_rgba_aos(LLVMBuilderRef builder,
+                       const struct util_format_description *desc,
+                       LLVMValueRef rgba);
+
+LLVMValueRef
+lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
+                        const struct util_format_description *format_desc,
+                        LLVMValueRef ptr,
+                        LLVMValueRef i,
+                        LLVMValueRef j);
+
+
+/*
+ * SoA
+ */
 
 void
 lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
@@ -52,32 +74,23 @@ lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
                             const LLVMValueRef *unswizzled,
                             LLVMValueRef *swizzled);
 
-
-LLVMValueRef
-lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
-                         const struct util_format_description *desc,
-                         LLVMValueRef packed);
-
-
-LLVMValueRef
-lp_build_unpack_rgba8_aos(LLVMBuilderRef builder,
-                          const struct util_format_description *desc,
-                          struct lp_type type,
-                          LLVMValueRef packed);
-
-
-LLVMValueRef
-lp_build_pack_rgba_aos(LLVMBuilderRef builder,
-                       const struct util_format_description *desc,
-                       LLVMValueRef rgba);
-
-
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          const struct util_format_description *format_desc,
                          struct lp_type type,
                          LLVMValueRef packed,
                          LLVMValueRef *rgba);
+
+
+void
+lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
+                        const struct util_format_description *format_desc,
+                        struct lp_type type,
+                        LLVMValueRef base_ptr,
+                        LLVMValueRef offsets,
+                        LLVMValueRef i,
+                        LLVMValueRef j,
+                        LLVMValueRef *rgba);
 
 
 #endif /* !LP_BLD_FORMAT_H */

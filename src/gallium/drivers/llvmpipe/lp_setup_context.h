@@ -65,7 +65,7 @@ struct lp_scene_queue;
  * Subclass of vbuf_render, plugged directly into the draw module as
  * the rendering backend.
  */
-struct setup_context
+struct lp_setup_context
 {
    struct vbuf_render base;
 
@@ -80,6 +80,7 @@ struct setup_context
     * create/install this itself now.
     */
    struct draw_stage *vbuf;
+   unsigned num_threads;
    struct lp_rasterizer *rast;
    struct lp_scene *scenes[MAX_SCENES];  /**< all the scenes */
    struct lp_scene *scene;               /**< current scene being built */
@@ -89,6 +90,7 @@ struct setup_context
    boolean ccw_is_frontface;
    boolean scissor_test;
    unsigned cullmode;
+   float pixel_offset;
 
    struct pipe_framebuffer_state fb;
 
@@ -98,7 +100,7 @@ struct setup_context
       union lp_rast_cmd_arg zstencil; /**< lp_rast_clear_zstencil() cmd */
    } clear;
 
-   enum {
+   enum setup_state {
       SETUP_FLUSHED,
       SETUP_CLEARED,
       SETUP_ACTIVE
@@ -110,11 +112,12 @@ struct setup_context
 
       const struct lp_rast_state *stored; /**< what's in the scene */
       struct lp_rast_state current;  /**< currently set state */
+      struct pipe_resource *current_tex[PIPE_MAX_SAMPLERS];
    } fs;
 
    /** fragment shader constants */
    struct {
-      struct pipe_buffer *current;
+      struct pipe_resource *current;
       unsigned stored_size;
       const void *stored_data;
    } constants;
@@ -131,29 +134,29 @@ struct setup_context
 
    unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */
 
-   void (*point)( struct setup_context *,
+   void (*point)( struct lp_setup_context *,
                   const float (*v0)[4]);
 
-   void (*line)( struct setup_context *,
+   void (*line)( struct lp_setup_context *,
                  const float (*v0)[4],
                  const float (*v1)[4]);
 
-   void (*triangle)( struct setup_context *,
+   void (*triangle)( struct lp_setup_context *,
                      const float (*v0)[4],
                      const float (*v1)[4],
                      const float (*v2)[4]);
 };
 
-void lp_setup_choose_triangle( struct setup_context *setup );
-void lp_setup_choose_line( struct setup_context *setup );
-void lp_setup_choose_point( struct setup_context *setup );
+void lp_setup_choose_triangle( struct lp_setup_context *setup );
+void lp_setup_choose_line( struct lp_setup_context *setup );
+void lp_setup_choose_point( struct lp_setup_context *setup );
 
-struct lp_scene *lp_setup_get_current_scene(struct setup_context *setup);
+struct lp_scene *lp_setup_get_current_scene(struct lp_setup_context *setup);
 
-void lp_setup_init_vbuf(struct setup_context *setup);
+void lp_setup_init_vbuf(struct lp_setup_context *setup);
 
-void lp_setup_update_state( struct setup_context *setup );
+void lp_setup_update_state( struct lp_setup_context *setup );
 
-void lp_setup_destroy( struct setup_context *setup );
+void lp_setup_destroy( struct lp_setup_context *setup );
 
 #endif

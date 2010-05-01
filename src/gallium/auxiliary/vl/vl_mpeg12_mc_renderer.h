@@ -62,9 +62,13 @@ struct vl_mpeg12_mc_renderer
    unsigned macroblocks_per_batch;
 
    struct pipe_viewport_state viewport;
-   struct pipe_buffer *vs_const_buf;
+   struct pipe_resource *vs_const_buf;
    struct pipe_framebuffer_state fb_state;
-   struct pipe_vertex_element vertex_elems[8];
+   union
+   {
+      void *all[3];
+      struct { void *i, *p, *b; } individual;
+   } vertex_elems_state;
 
    union
    {
@@ -72,13 +76,19 @@ struct vl_mpeg12_mc_renderer
       struct { void *y, *cb, *cr, *ref[2]; } individual;
    } samplers;
 
+   union
+   {
+      struct pipe_sampler_view *all[5];
+      struct { struct pipe_sampler_view *y, *cb, *cr, *ref[2]; } individual;
+   } sampler_views;
+
    void *i_vs, *p_vs[2], *b_vs[2];
    void *i_fs, *p_fs[2], *b_fs[2];
 
    union
    {
-      struct pipe_texture *all[5];
-      struct { struct pipe_texture *y, *cb, *cr, *ref[2]; } individual;
+      struct pipe_resource *all[5];
+      struct { struct pipe_resource *y, *cb, *cr, *ref[2]; } individual;
    } textures;
 
    union

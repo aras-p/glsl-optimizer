@@ -37,7 +37,7 @@
 #define LP_BLD_LOGIC_H
 
 
-#include <llvm-c/Core.h>  
+#include "gallivm/lp_bld.h"
 
 #include "pipe/p_defines.h" /* For PIPE_FUNC_xxx */
 
@@ -76,7 +76,9 @@ lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef b,
                     const boolean cond[4]);
 
+
 LLVMValueRef
-lp_build_alloca(struct lp_build_context *bld);
+lp_build_andc(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b);
+
 
 #endif /* !LP_BLD_LOGIC_H */

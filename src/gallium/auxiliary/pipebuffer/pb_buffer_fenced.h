@@ -59,7 +59,6 @@ extern "C" {
 #endif
 
 
-struct pipe_buffer;
 struct pipe_fence_handle;
 
 

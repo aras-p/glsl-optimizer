@@ -32,8 +32,9 @@
 #include "draw/draw_context.h"
 
 
-void llvmpipe_set_clip_state( struct pipe_context *pipe,
-			     const struct pipe_clip_state *clip )
+static void
+llvmpipe_set_clip_state(struct pipe_context *pipe,
+                        const struct pipe_clip_state *clip)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
@@ -42,8 +43,9 @@ void llvmpipe_set_clip_state( struct pipe_context *pipe,
 }
 
 
-void llvmpipe_set_viewport_state( struct pipe_context *pipe,
-                                  const struct pipe_viewport_state *viewport )
+static void
+llvmpipe_set_viewport_state(struct pipe_context *pipe,
+                            const struct pipe_viewport_state *viewport)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
@@ -55,8 +57,9 @@ void llvmpipe_set_viewport_state( struct pipe_context *pipe,
 }
 
 
-void llvmpipe_set_scissor_state( struct pipe_context *pipe,
-                                 const struct pipe_scissor_state *scissor )
+static void
+llvmpipe_set_scissor_state(struct pipe_context *pipe,
+                           const struct pipe_scissor_state *scissor)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
@@ -67,8 +70,9 @@ void llvmpipe_set_scissor_state( struct pipe_context *pipe,
 }
 
 
-void llvmpipe_set_polygon_stipple( struct pipe_context *pipe,
-                                   const struct pipe_poly_stipple *stipple )
+static void
+llvmpipe_set_polygon_stipple(struct pipe_context *pipe,
+                             const struct pipe_poly_stipple *stipple)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
@@ -76,4 +80,15 @@ void llvmpipe_set_polygon_stipple( struct pipe_context *pipe,
 
    llvmpipe->poly_stipple = *stipple; /* struct copy */
    llvmpipe->dirty |= LP_NEW_STIPPLE;
+}
+
+
+
+void
+llvmpipe_init_clip_funcs(struct llvmpipe_context *llvmpipe)
+{
+   llvmpipe->pipe.set_clip_state = llvmpipe_set_clip_state;
+   llvmpipe->pipe.set_polygon_stipple = llvmpipe_set_polygon_stipple;
+   llvmpipe->pipe.set_scissor_state = llvmpipe_set_scissor_state;
+   llvmpipe->pipe.set_viewport_state = llvmpipe_set_viewport_state;
 }

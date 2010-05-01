@@ -123,6 +123,12 @@ check_valid_to_render(GLcontext *ctx, const char *function)
    return GL_TRUE;
 }
 
+
+/**
+ * Do bounds checking on array element indexes.  Check that the vertices
+ * pointed to by the indices don't lie outside buffer object bounds.
+ * \return GL_TRUE if OK, GL_FALSE if any indexed vertex goes is out of bounds
+ */
 static GLboolean
 check_index_bounds(GLcontext *ctx, GLsizei count, GLenum type,
 		   const GLvoid *indices, GLint basevertex)
@@ -150,13 +156,14 @@ check_index_bounds(GLcontext *ctx, GLsizei count, GLenum type,
    if ((int)(min + basevertex) < 0 ||
        max + basevertex > ctx->Array.ArrayObj->_MaxElement) {
       /* the max element is out of bounds of one or more enabled arrays */
-      _mesa_warning(ctx, "glDrawElements() index=%u is "
-		    "out of bounds (max=%u)", max, ctx->Array.ArrayObj->_MaxElement);
+      _mesa_warning(ctx, "glDrawElements() index=%u is out of bounds (max=%u)",
+                    max, ctx->Array.ArrayObj->_MaxElement);
       return GL_FALSE;
    }
 
    return GL_TRUE;
 }
+
 
 /**
  * Error checking for glDrawElements().  Includes parameter checking
@@ -168,7 +175,7 @@ _mesa_validate_DrawElements(GLcontext *ctx,
 			    GLenum mode, GLsizei count, GLenum type,
 			    const GLvoid *indices, GLint basevertex)
 {
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx,  GL_FALSE);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    if (count <= 0) {
       if (count < 0)
@@ -304,6 +311,111 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
       if (start + count > (GLint) ctx->Array.ArrayObj->_MaxElement)
          return GL_FALSE;
    }
+
+   return GL_TRUE;
+}
+
+
+GLboolean
+_mesa_validate_DrawArraysInstanced(GLcontext *ctx, GLenum mode, GLint first,
+                                   GLsizei count, GLsizei primcount)
+{
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+
+   if (count <= 0) {
+      if (count < 0)
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glDrawArraysInstanced(count=%d)", count);
+      return GL_FALSE;
+   }
+
+   if (mode > GL_POLYGON) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glDrawArraysInstanced(mode=0x%x)", mode);
+      return GL_FALSE;
+   }
+
+   if (primcount <= 0) {
+      if (primcount < 0)
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glDrawArraysInstanced(primcount=%d)", primcount);
+      return GL_FALSE;
+   }
+
+   if (!check_valid_to_render(ctx, "glDrawArraysInstanced(invalid to render)"))
+      return GL_FALSE;
+
+   if (ctx->CompileFlag) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glDrawArraysInstanced(display list");
+      return GL_FALSE;
+   }
+
+   if (ctx->Const.CheckArrayBounds) {
+      if (first + count > (GLint) ctx->Array.ArrayObj->_MaxElement)
+         return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+
+GLboolean
+_mesa_validate_DrawElementsInstanced(GLcontext *ctx,
+                                     GLenum mode, GLsizei count, GLenum type,
+                                     const GLvoid *indices, GLsizei primcount)
+{
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+
+   if (count <= 0) {
+      if (count < 0)
+	 _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glDrawElementsInstanced(count=%d)", count);
+      return GL_FALSE;
+   }
+
+   if (mode > GL_POLYGON) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glDrawElementsInstanced(mode = 0x%x)", mode);
+      return GL_FALSE;
+   }
+
+   if (type != GL_UNSIGNED_INT &&
+       type != GL_UNSIGNED_BYTE &&
+       type != GL_UNSIGNED_SHORT) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glDrawElementsInstanced(type=0x%x)", type);
+      return GL_FALSE;
+   }
+
+   if (primcount <= 0) {
+      if (primcount < 0)
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glDrawElementsInstanced(primcount=%d)", primcount);
+      return GL_FALSE;
+   }
+
+   if (!check_valid_to_render(ctx, "glDrawElementsInstanced"))
+      return GL_FALSE;
+
+   /* Vertex buffer object tests */
+   if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj)) {
+      /* use indices in the buffer object */
+      /* make sure count doesn't go outside buffer bounds */
+      if (index_bytes(type, count) > ctx->Array.ElementArrayBufferObj->Size) {
+         _mesa_warning(ctx,
+                       "glDrawElementsInstanced index out of buffer bounds");
+         return GL_FALSE;
+      }
+   }
+   else {
+      /* not using a VBO */
+      if (!indices)
+         return GL_FALSE;
+   }
+
+   if (!check_index_bounds(ctx, count, type, indices, 0))
+      return GL_FALSE;
 
    return GL_TRUE;
 }

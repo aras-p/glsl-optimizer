@@ -1,7 +1,8 @@
 Import('*')
 
 progs = [
-    'clear-fbo-tex',
+	'clear-fbo-scissor',
+	'clear-fbo-tex',
 	'clear-fbo',
 	'clear-scissor',
 	'clear-undefined',

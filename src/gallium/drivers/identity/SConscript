@@ -5,9 +5,10 @@ env = env.Clone()
 identity = env.ConvenienceLibrary(
 	target = 'identity',
 	source = [
-		'id_screen.c',
 		'id_context.c',
+		'id_drm.c',
 		'id_objects.c',
+		'id_screen.c',
 	])
 
 Export('identity')

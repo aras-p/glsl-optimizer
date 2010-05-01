@@ -87,7 +87,7 @@ void x86_print_reg( struct x86_reg reg )
       foo++;                                    \
    if  (*foo)                                   \
       foo++;                                    \
-   debug_printf( "\n% 4x% 15s ", p->csr - p->store, foo );             \
+   debug_printf( "\n%4x %14s ", p->csr - p->store, foo );             \
 } while (0)
 
 #define DUMP_I( I ) do {                        \

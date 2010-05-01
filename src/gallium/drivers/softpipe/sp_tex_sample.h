@@ -85,7 +85,7 @@ struct sp_sampler_varient
 
    /* Currently bound texture:
     */
-   const struct pipe_texture *texture;
+   const struct pipe_resource *texture;
    struct softpipe_tex_tile_cache *cache;
 
    unsigned processor;
@@ -129,7 +129,7 @@ sp_create_sampler_varient( const struct pipe_sampler_state *sampler,
 
 void sp_sampler_varient_bind_texture( struct sp_sampler_varient *varient,
                                       struct softpipe_tex_tile_cache *tex_cache,
-                                      const struct pipe_texture *tex );
+                                      const struct pipe_resource *tex );
 
 void sp_sampler_varient_destroy( struct sp_sampler_varient * );
 

@@ -1,9 +1,9 @@
 
+#include "brw_context.h"
+#include "brw_batchbuffer.h"
+
 #include "util/u_upload_mgr.h"
 
-#include "brw_context.h"
-#include "brw_screen.h"
-#include "brw_batchbuffer.h"
 
 
 
@@ -46,35 +46,9 @@ brw_flush( struct pipe_context *pipe,
       *fence = NULL;
 }
 
-static unsigned brw_is_buffer_referenced(struct pipe_context *pipe,
-                                  struct pipe_buffer *buffer)
-{
-   struct brw_context *brw = brw_context(pipe);
-   struct brw_screen *bscreen = brw_screen(brw->base.screen);
-
-   return brw_is_buffer_referenced_by_bo( bscreen,
-                                          buffer,
-                                          brw->batch->buf );
-}
-
-static unsigned brw_is_texture_referenced(struct pipe_context *pipe,
-                                   struct pipe_texture *texture,
-                                   unsigned face,
-                                   unsigned level)
-{
-   struct brw_context *brw = brw_context(pipe);
-   struct brw_screen *bscreen = brw_screen(brw->base.screen);
-
-   return brw_is_texture_referenced_by_bo( bscreen,
-                                           texture, face, level,
-                                           brw->batch->buf );
-}
-
 void brw_pipe_flush_init( struct brw_context *brw )
 {
    brw->base.flush = brw_flush;
-   brw->base.is_buffer_referenced = brw_is_buffer_referenced;
-   brw->base.is_texture_referenced = brw_is_texture_referenced;
 }
 
 

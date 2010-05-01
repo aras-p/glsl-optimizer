@@ -59,5 +59,10 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp_push_quad_first( sp, sp->quad.depth_test );
       sp_push_quad_first( sp, sp->quad.shade );
    }
+
+#if !DO_PSTIPPLE_IN_DRAW_MODULE
+   if (sp->rasterizer->poly_stipple_enable)
+      sp_push_quad_first( sp, sp->quad.pstipple );
+#endif
 }
 

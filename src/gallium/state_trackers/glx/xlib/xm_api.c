@@ -35,10 +35,6 @@
  * corner of the window.  Therefore, most drawing functions in this
  * file have to flip Y coordinates.
  *
- * Define USE_XSHM in the Makefile with -DUSE_XSHM if you want to compile
- * in support for the MIT Shared Memory extension.  If enabled, when you
- * use an Ximage for the back buffer in double buffered mode, the "swap"
- * operation will be faster.  You must also link with -lXext.
  *
  * Byte swapping:  If the Mesa host and the X display use a different
  * byte order then there's some trickiness to be aware of when using
@@ -58,20 +54,14 @@
 #endif
 
 #include "xm_api.h"
-#include "main/context.h"
-#include "main/framebuffer.h"
+#include "xm_st.h"
 
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
+#include "main/context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 
-#include "trace/tr_screen.h"
-#include "trace/tr_context.h"
-#include "trace/tr_texture.h"
-
-#include "xm_winsys.h"
+#include "xm_public.h"
 #include <GL/glx.h>
 
 
@@ -80,20 +70,78 @@
  * global.
  */
 static struct xm_driver driver;
+static struct st_api *stapi;
 
 void xmesa_set_driver( const struct xm_driver *templ )
 {
    driver = *templ;
+   stapi = driver.create_st_api();
 }
 
-/**
- * Global X driver lock
+
+/*
+ * XXX replace this with a linked list, or better yet, try to attach the
+ * gallium/mesa extra bits to the X Display object with XAddExtension().
  */
-pipe_mutex _xmesa_lock;
+#define MAX_DISPLAYS 10
+static struct xmesa_display Displays[MAX_DISPLAYS];
+static int NumDisplays = 0;
 
-static struct pipe_screen *_screen = NULL;
-static struct pipe_screen *screen = NULL;
 
+static XMesaDisplay
+xmesa_init_display( Display *display )
+{
+   pipe_static_mutex(init_mutex);
+   XMesaDisplay xmdpy;
+   int i;
+
+   pipe_mutex_lock(init_mutex);
+
+   /* Look for XMesaDisplay which corresponds to 'display' */
+   for (i = 0; i < NumDisplays; i++) {
+      if (Displays[i].display == display) {
+         /* Found it */
+         pipe_mutex_unlock(init_mutex);
+         return &Displays[i];
+      }
+   }
+
+   /* Create new XMesaDisplay */
+
+   assert(NumDisplays < MAX_DISPLAYS);
+   xmdpy = &Displays[NumDisplays];
+   NumDisplays++;
+
+   if (!xmdpy->display && display) {
+      xmdpy->display = display;
+      xmdpy->screen = driver.create_pipe_screen(display);
+      xmdpy->smapi = CALLOC_STRUCT(st_manager);
+      if (xmdpy->smapi)
+         xmdpy->smapi->screen = xmdpy->screen;
+
+      if (xmdpy->screen && xmdpy->smapi) {
+         pipe_mutex_init(xmdpy->mutex);
+      }
+      else {
+         if (xmdpy->screen) {
+            xmdpy->screen->destroy(xmdpy->screen);
+            xmdpy->screen = NULL;
+         }
+         if (xmdpy->smapi) {
+            FREE(xmdpy->smapi);
+            xmdpy->smapi = NULL;
+         }
+
+         xmdpy->display = NULL;
+      }
+   }
+   if (!xmdpy->display || xmdpy->display != display)
+      xmdpy = NULL;
+
+   pipe_mutex_unlock(init_mutex);
+
+   return xmdpy;
+}
 
 /**********************************************************************/
 /*****                     X Utility Functions                    *****/
@@ -111,41 +159,6 @@ static int host_byte_order( void )
 }
 
 
-/**
- * Check if the X Shared Memory extension is available.
- * Return:  0 = not available
- *          1 = shared XImage support available
- *          2 = shared Pixmap support available also
- */
-int xmesa_check_for_xshm( Display *display )
-{
-#if defined(USE_XSHM)
-   int major, minor, ignore;
-   Bool pixmaps;
-
-   if (getenv("SP_NO_RAST")) 
-      return 0;
-
-   if (getenv("MESA_NOSHM")) {
-      return 0;
-   }
-
-   if (XQueryExtension( display, "MIT-SHM", &ignore, &ignore, &ignore )) {
-      if (XShmQueryVersion( display, &major, &minor, &pixmaps )==True) {
-	 return (pixmaps==True) ? 2 : 1;
-      }
-      else {
-	 return 0;
-      }
-   }
-   else {
-      return 0;
-   }
-#else
-   /* No  XSHM support */
-   return 0;
-#endif
-}
 
 
 /**
@@ -238,12 +251,13 @@ void
 xmesa_get_window_size(Display *dpy, XMesaBuffer b,
                       GLuint *width, GLuint *height)
 {
+   XMesaDisplay xmdpy = xmesa_init_display(dpy);
    Status stat;
 
-   pipe_mutex_lock(_xmesa_lock);
+   pipe_mutex_lock(xmdpy->mutex);
    XSync(b->xm_visual->display, 0); /* added for Chromium */
-   stat = get_drawable_size(dpy, b->drawable, width, height);
-   pipe_mutex_unlock(_xmesa_lock);
+   stat = get_drawable_size(dpy, b->ws.drawable, width, height);
+   pipe_mutex_unlock(xmdpy->mutex);
 
    if (!stat) {
       /* probably querying a window that's recently been destroyed */
@@ -313,53 +327,51 @@ choose_pixel_format(XMesaVisual v)
       return PIPE_FORMAT_B5G6R5_UNORM;
    }
 
-   assert(0);
-   return 0;
+   return PIPE_FORMAT_NONE;
 }
 
 
-
 /**
- * Query the default gallium screen for a Z/Stencil format that
- * at least matches the given depthBits and stencilBits.
+ * Choose a depth/stencil format that satisfies the given depth and
+ * stencil sizes.
  */
-static void
-xmesa_choose_z_stencil_format(int depthBits, int stencilBits,
-                              enum pipe_format *depthFormat,
-                              enum pipe_format *stencilFormat)
+static enum pipe_format
+choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
 {
    const enum pipe_texture_target target = PIPE_TEXTURE_2D;
-   const unsigned tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+   const unsigned tex_usage = PIPE_BIND_DEPTH_STENCIL;
    const unsigned geom_flags = (PIPE_TEXTURE_GEOM_NON_SQUARE |
                                 PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO);
-   static enum pipe_format formats[] = {
-      PIPE_FORMAT_S8Z24_UNORM,
-      PIPE_FORMAT_Z24S8_UNORM,
-      PIPE_FORMAT_Z16_UNORM,
-      PIPE_FORMAT_Z32_UNORM
-   };
-   int i;
+   enum pipe_format formats[8], fmt;
+   int count, i;
 
-   assert(screen);
+   count = 0;
 
-   *depthFormat = *stencilFormat = PIPE_FORMAT_NONE;
+   if (depth <= 16 && stencil == 0) {
+      formats[count++] = PIPE_FORMAT_Z16_UNORM;
+   }
+   if (depth <= 24 && stencil == 0) {
+      formats[count++] = PIPE_FORMAT_X8Z24_UNORM;
+      formats[count++] = PIPE_FORMAT_Z24X8_UNORM;
+   }
+   if (depth <= 24 && stencil <= 8) {
+      formats[count++] = PIPE_FORMAT_S8_USCALED_Z24_UNORM;
+      formats[count++] = PIPE_FORMAT_Z24_UNORM_S8_USCALED;
+   }
+   if (depth <= 32 && stencil == 0) {
+      formats[count++] = PIPE_FORMAT_Z32_UNORM;
+   }
 
-   /* search for supported format */
-   for (i = 0; i < Elements(formats); i++) {
-      if (screen->is_format_supported(screen, formats[i],
+   fmt = PIPE_FORMAT_NONE;
+   for (i = 0; i < count; i++) {
+      if (xmdpy->screen->is_format_supported(xmdpy->screen, formats[i],
                                       target, tex_usage, geom_flags)) {
-         *depthFormat = formats[i];
+         fmt = formats[i];
          break;
       }
    }
 
-   if (stencilBits) {
-      *stencilFormat = *depthFormat;
-   }
-
-   /* XXX we should check that he chosen format has at least as many bits
-    * as what was requested.
-    */
+   return fmt;
 }
 
 
@@ -368,7 +380,7 @@ xmesa_choose_z_stencil_format(int depthBits, int stencilBits,
 /*****                Linked list of XMesaBuffers                 *****/
 /**********************************************************************/
 
-XMesaBuffer XMesaBufferList = NULL;
+static XMesaBuffer XMesaBufferList = NULL;
 
 
 /**
@@ -386,53 +398,33 @@ static XMesaBuffer
 create_xmesa_buffer(Drawable d, BufferType type,
                     XMesaVisual vis, Colormap cmap)
 {
+   XMesaDisplay xmdpy = xmesa_init_display(vis->display);
    XMesaBuffer b;
-   GLframebuffer *fb;
-   enum pipe_format colorFormat, depthFormat, stencilFormat;
    uint width, height;
 
    ASSERT(type == WINDOW || type == PIXMAP || type == PBUFFER);
+
+   if (!xmdpy)
+      return NULL;
 
    b = (XMesaBuffer) CALLOC_STRUCT(xmesa_buffer);
    if (!b)
       return NULL;
 
-   b->drawable = d;
+   b->ws.drawable = d;
+   b->ws.visual = vis->visinfo->visual;
+   b->ws.depth = vis->visinfo->depth;
 
    b->xm_visual = vis;
    b->type = type;
    b->cmap = cmap;
-
-   /* determine PIPE_FORMATs for buffers */
-   colorFormat = choose_pixel_format(vis);
-
-   xmesa_choose_z_stencil_format(vis->mesa_visual.depthBits,
-                                 vis->mesa_visual.stencilBits,
-                                 &depthFormat, &stencilFormat);
-
 
    get_drawable_size(vis->display, d, &width, &height);
 
    /*
     * Create framebuffer, but we'll plug in our own renderbuffers below.
     */
-   b->stfb = st_create_framebuffer(&vis->mesa_visual,
-                                   colorFormat, depthFormat, stencilFormat,
-                                   width, height,
-                                   (void *) b);
-   fb = &b->stfb->Base;
-
-   /*
-    * Create scratch XImage for xmesa_display_surface()
-    */
-   b->tempImage = XCreateImage(vis->display,
-                               vis->visinfo->visual,
-                               vis->visinfo->depth,
-                               ZPixmap, 0,   /* format, offset */
-                               NULL,         /* data */
-                               0, 0,         /* size */
-                               32,           /* bitmap_pad */
-                               0);           /* bytes_per_line */
+   b->stfb = xmesa_create_st_framebuffer(xmdpy, b);
 
    /* GLX_EXT_texture_from_pixmap */
    b->TextureTarget = 0;
@@ -476,29 +468,21 @@ xmesa_free_buffer(XMesaBuffer buffer)
 
    for (b = XMesaBufferList; b; b = b->Next) {
       if (b == buffer) {
-         struct gl_framebuffer *fb = &buffer->stfb->Base;
-
          /* unlink buffer from list */
          if (prev)
             prev->Next = buffer->Next;
          else
             XMesaBufferList = buffer->Next;
 
-         /* mark as delete pending */
-         fb->DeletePending = GL_TRUE;
-
          /* Since the X window for the XMesaBuffer is going away, we don't
           * want to dereference this pointer in the future.
           */
-         b->drawable = 0;
+         b->ws.drawable = 0;
 
-         buffer->tempImage->data = NULL;
-         XDestroyImage(buffer->tempImage);
-
-         /* Unreference.  If count = zero we'll really delete the buffer */
-         _mesa_reference_framebuffer(&fb, NULL);
-
-         XFreeGC(b->xm_visual->display, b->gc);
+         /* XXX we should move the buffer to a delete-pending list and destroy
+          * the buffer until it is no longer current.
+          */
+         xmesa_destroy_st_framebuffer(buffer->stfb);
 
          free(buffer);
 
@@ -574,21 +558,6 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
       printf("X/Mesa level = %d\n", v->mesa_visual.level);
       printf("X/Mesa depth = %d\n", v->visinfo->depth);
       printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
-   }
-
-   if (b && window) {
-      /* these should have been set in create_xmesa_buffer */
-      ASSERT(b->drawable == window);
-
-      /* Setup for single/double buffering */
-      if (v->mesa_visual.doubleBufferMode) {
-         /* Double buffered */
-         b->shm = xmesa_check_for_xshm( v->display );
-      }
-
-      /* X11 graphics context */
-      b->gc = XCreateGC( v->display, window, 0, NULL );
-      XSetFunction( v->display, b->gc, GXcopy );
    }
 
    return GL_TRUE;
@@ -670,10 +639,12 @@ XMesaVisual XMesaCreateVisual( Display *display,
                                GLint level,
                                GLint visualCaveat )
 {
+   XMesaDisplay xmdpy = xmesa_init_display(display);
    XMesaVisual v;
    GLint red_bits, green_bits, blue_bits, alpha_bits;
 
-   xmesa_init();
+   if (!xmdpy)
+      return NULL;
 
    /* For debugging only */
    if (_mesa_getenv("MESA_XSYNC")) {
@@ -755,6 +726,32 @@ XMesaVisual XMesaCreateVisual( Display *display,
                             accum_blue_size, accum_alpha_size,
                             0 );
 
+   v->stvis.buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
+   if (db_flag)
+      v->stvis.buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
+   if (stereo_flag) {
+      v->stvis.buffer_mask |= ST_ATTACHMENT_FRONT_RIGHT_MASK;
+      if (db_flag)
+         v->stvis.buffer_mask |= ST_ATTACHMENT_BACK_RIGHT_MASK;
+   }
+
+   v->stvis.color_format = choose_pixel_format(v);
+   if (v->stvis.color_format == PIPE_FORMAT_NONE) {
+      FREE(v->visinfo);
+      FREE(v);
+      return NULL;
+   }
+
+   v->stvis.depth_stencil_format =
+      choose_depth_stencil_format(xmdpy, depth_size, stencil_size);
+
+   v->stvis.accum_format = (accum_red_size +
+         accum_green_size + accum_blue_size + accum_alpha_size) ?
+      PIPE_FORMAT_R16G16B16A16_SNORM : PIPE_FORMAT_NONE;
+
+   v->stvis.samples = num_samples;
+   v->stvis.render_buffer = ST_ATTACHMENT_INVALID;
+
    /* XXX minor hack */
    v->mesa_visual.level = level;
    return v;
@@ -770,18 +767,12 @@ void XMesaDestroyVisual( XMesaVisual v )
 
 
 /**
- * Do one-time initializations.
+ * Do per-display initializations.
  */
 void
-xmesa_init(void)
+xmesa_init( Display *display )
 {
-   static GLboolean firstTime = GL_TRUE;
-   if (firstTime) {
-      pipe_mutex_init(_xmesa_lock);
-      _screen = driver.create_pipe_screen();
-      screen = trace_screen_create( _screen );
-      firstTime = GL_FALSE;
-   }
+   xmesa_init_display(display);
 }
 
 
@@ -795,51 +786,33 @@ xmesa_init(void)
 PUBLIC
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
-   struct pipe_context *pipe = NULL;
+   XMesaDisplay xmdpy = xmesa_init_display(v->display);
    XMesaContext c;
-   GLcontext *mesaCtx;
-   uint pf;
 
-   xmesa_init();
+   if (!xmdpy)
+      return NULL;
 
    /* Note: the XMesaContext contains a Mesa GLcontext struct (inheritance) */
    c = (XMesaContext) CALLOC_STRUCT(xmesa_context);
    if (!c)
       return NULL;
 
-   pf = choose_pixel_format(v);
-   assert(pf);
-
    c->xm_visual = v;
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->xm_read_buffer = NULL;
 
-   if (screen == NULL)
-      goto fail;
-
-   /* Trace screen knows how to properly wrap context creation in the
-    * wrapped screen, so nothing special to do here:
-    */
-   pipe = screen->context_create(screen, (void *) c);
-   if (pipe == NULL)
-      goto fail;
-
-   c->st = st_create_context(pipe, 
-                             &v->mesa_visual,
-                             share_list ? share_list->st : NULL);
+   c->st = stapi->create_context(stapi, xmdpy->smapi,
+         &v->stvis, (share_list) ? share_list->st : NULL);
    if (c->st == NULL)
       goto fail;
 
-   mesaCtx = c->st->ctx;
-   c->st->ctx->DriverCtx = c;
+   c->st->st_manager_private = (void *) c;
 
    return c;
 
 fail:
    if (c->st)
-      st_destroy_context(c->st);
-   else if (pipe)
-      pipe->destroy(pipe);
+      c->st->destroy(c->st);
 
    free(c);
    return NULL;
@@ -850,7 +823,7 @@ fail:
 PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
-   st_destroy_context(c->st);
+   c->st->destroy(c->st);
 
    /* FIXME: We should destroy the screen here, but if we do so, surfaces may 
     * outlive it, causing segfaults
@@ -956,7 +929,6 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
 {
    GET_CURRENT_CONTEXT(ctx);
    XMesaBuffer b;
-   GLuint width, height;
 
    assert(v);
 
@@ -964,19 +936,18 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
    if (!b)
       return NULL;
 
-   /* get pixmap size, update framebuffer/renderbuffer dims */
-   xmesa_get_window_size(v->display, b, &width, &height);
-   _mesa_resize_framebuffer(NULL, &(b->stfb->Base), width, height);
+   /* get pixmap size */
+   xmesa_get_window_size(v->display, b, &b->width, &b->height);
 
    if (target == 0) {
       /* examine dims */
       if (ctx->Extensions.ARB_texture_non_power_of_two) {
          target = GLX_TEXTURE_2D_EXT;
       }
-      else if (   _mesa_bitcount(width)  == 1
-               && _mesa_bitcount(height) == 1) {
+      else if (   _mesa_bitcount(b->width)  == 1
+               && _mesa_bitcount(b->height) == 1) {
          /* power of two size */
-         if (height == 1) {
+         if (b->height == 1) {
             target = GLX_TEXTURE_1D_EXT;
          }
          else {
@@ -1049,23 +1020,20 @@ XMesaDestroyBuffer(XMesaBuffer b)
 
 
 /**
- * Query the current window size and update the corresponding GLframebuffer
- * and all attached renderbuffers.
- * Called when:
- *  1. the first time a buffer is bound to a context.
- *  2. SwapBuffers.  XXX probabaly from xm_flush_frontbuffer() too...
- * Note: it's possible (and legal) for xmctx to be NULL.  That can happen
- * when resizing a buffer when no rendering context is bound.
+ * Query the current drawable size and notify the binding context.
  */
 void
-xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer)
+xmesa_check_buffer_size(XMesaBuffer b)
 {
-   GLuint width, height;
-   xmesa_get_window_size(drawBuffer->xm_visual->display, drawBuffer, &width, &height);
-   st_resize_framebuffer(drawBuffer->stfb, width, height);
+   XMesaContext xmctx = XMesaGetCurrentContext();
+
+   if (b->type == PBUFFER)
+      return;
+
+   xmesa_get_window_size(b->xm_visual->display, b, &b->width, &b->height);
+   if (xmctx && xmctx->xm_buffer == b)
+      xmctx->st->notify_invalid_framebuffer(xmctx->st, b->stfb);
 }
-
-
 
 
 /*
@@ -1092,21 +1060,21 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
 	  c->xm_read_buffer == readBuffer)
 	 return GL_TRUE;
 
+      xmesa_check_buffer_size(drawBuffer);
+      if (readBuffer != drawBuffer)
+         xmesa_check_buffer_size(readBuffer);
+
       c->xm_buffer = drawBuffer;
       c->xm_read_buffer = readBuffer;
 
-      st_make_current(c->st, drawBuffer->stfb, readBuffer->stfb);
-
-      xmesa_check_and_update_buffer_size(c, drawBuffer);
-      if (readBuffer != drawBuffer)
-         xmesa_check_and_update_buffer_size(c, readBuffer);
+      stapi->make_current(stapi, c->st, drawBuffer->stfb, readBuffer->stfb);
 
       /* Solution to Stephane Rehel's problem with glXReleaseBuffersMESA(): */
       drawBuffer->wasCurrent = GL_TRUE;
    }
    else {
       /* Detach */
-      st_make_current( NULL, NULL, NULL );
+      stapi->make_current(stapi, NULL, NULL, NULL);
 
    }
    return GL_TRUE;
@@ -1125,14 +1093,8 @@ GLboolean XMesaUnbindContext( XMesaContext c )
 
 XMesaContext XMesaGetCurrentContext( void )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   if (ctx) {
-      XMesaContext xmesa = xmesa_context(ctx);
-      return xmesa;
-   }
-   else {
-      return 0;
-   }
+   struct st_context_iface *st = stapi->get_current(stapi);
+   return (XMesaContext) (st) ? st->st_manager_private : NULL;
 }
 
 
@@ -1144,21 +1106,17 @@ XMesaContext XMesaGetCurrentContext( void )
 PUBLIC
 void XMesaSwapBuffers( XMesaBuffer b )
 {
-   struct pipe_surface *frontLeftSurf;
+   XMesaContext xmctx = XMesaGetCurrentContext();
 
-   st_swapbuffers(b->stfb, &frontLeftSurf, NULL);
-
-   if (frontLeftSurf) {
-      if (_screen != screen) {
-         struct trace_surface *tr_surf = trace_surface( frontLeftSurf );
-         struct pipe_surface *surf = tr_surf->surface;
-         frontLeftSurf = surf;
-      }
-
-      driver.display_surface(b, frontLeftSurf);
+   if (xmctx && xmctx->xm_buffer == b) {
+      xmctx->st->flush( xmctx->st,
+            PIPE_FLUSH_RENDER_CACHE | 
+            PIPE_FLUSH_SWAPBUFFERS |
+            PIPE_FLUSH_FRAME,
+            NULL);
    }
 
-   xmesa_check_and_update_buffer_size(NULL, b);
+   xmesa_swap_st_framebuffer(b->stfb);
 }
 
 
@@ -1168,21 +1126,9 @@ void XMesaSwapBuffers( XMesaBuffer b )
  */
 void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
 {
-   struct pipe_surface *surf_front;
-   struct pipe_surface *surf_back;
-   struct pipe_context *pipe = NULL; /* XXX fix */
-
-   st_get_framebuffer_surface(b->stfb, ST_SURFACE_FRONT_LEFT, &surf_front);
-   st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT, &surf_back);
-
-   if (!surf_front || !surf_back)
-      return;
-
-   assert(pipe);
-   pipe->surface_copy(pipe,
-                      surf_front, x, y,  /* dest */
-                      surf_back, x, y,   /* src */
-                      width, height);
+   xmesa_copy_st_framebuffer(b->stfb,
+         ST_ATTACHMENT_BACK_LEFT, ST_ATTACHMENT_FRONT_LEFT,
+         x, y, width, height);
 }
 
 
@@ -1190,7 +1136,14 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
 void XMesaFlush( XMesaContext c )
 {
    if (c && c->xm_visual->display) {
-      st_finish(c->st);
+      XMesaDisplay xmdpy = xmesa_init_display(c->xm_visual->display);
+      struct pipe_fence_handle *fence = NULL;
+
+      c->st->flush(c->st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
+      if (fence) {
+         xmdpy->screen->fence_finish(xmdpy->screen, fence, 0);
+         xmdpy->screen->fence_reference(xmdpy->screen, &fence, NULL);
+      }
       XSync( c->xm_visual->display, False );
    }
 }
@@ -1203,7 +1156,7 @@ XMesaBuffer XMesaFindBuffer( Display *dpy, Drawable d )
 {
    XMesaBuffer b;
    for (b = XMesaBufferList; b; b = b->Next) {
-      if (b->drawable == d && b->xm_visual->display == dpy) {
+      if (b->ws.drawable == d && b->xm_visual->display == dpy) {
          return b;
       }
    }
@@ -1237,10 +1190,10 @@ void XMesaGarbageCollect( void )
       next = b->Next;
       if (b->xm_visual &&
           b->xm_visual->display &&
-          b->drawable &&
+          b->ws.drawable &&
           b->type == WINDOW) {
          XSync(b->xm_visual->display, False);
-         if (!window_exists( b->xm_visual->display, b->drawable )) {
+         if (!window_exists( b->xm_visual->display, b->ws.drawable )) {
             /* found a dead window, free the ancillary info */
             XMesaDestroyBuffer( b );
          }
@@ -1264,3 +1217,10 @@ XMesaReleaseTexImage(Display *dpy, XMesaBuffer drawable, int buffer)
 {
 }
 
+
+void
+XMesaCopyContext(XMesaContext src, XMesaContext dst, unsigned long mask)
+{
+   if (dst->st->copy)
+      dst->st->copy(dst->st, src->st, mask);
+}

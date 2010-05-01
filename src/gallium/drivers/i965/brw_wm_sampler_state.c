@@ -35,7 +35,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "brw_screen.h"
+#include "brw_resource.h"
 
 
 /* Samplers aren't strictly wm state from the hardware's perspective,
@@ -78,11 +78,11 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 
    memset(key, 0, sizeof(*key));
 
-   key->sampler_count = MIN2(brw->curr.num_textures,
+   key->sampler_count = MIN2(brw->curr.num_fragment_sampler_views,
 			    brw->curr.num_samplers);
 
    for (i = 0; i < key->sampler_count; i++) {
-      const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
+      const struct brw_texture *tex = brw_texture(brw->curr.fragment_sampler_views[i]->texture);
       const struct brw_sampler *sampler = brw->curr.sampler[i];
       struct brw_sampler_state *entry = &key->sampler[i];
 
@@ -94,7 +94,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
       /* Cube-maps on 965 and later must use the same wrap mode for all 3
        * coordinate dimensions.  Futher, only CUBE and CLAMP are valid.
        */
-      if (tex->base.target == PIPE_TEXTURE_CUBE) {
+      if (tex->b.b.target == PIPE_TEXTURE_CUBE) {
 	 if (FALSE &&
 	     (sampler->ss0.min_filter != BRW_MAPFILTER_NEAREST || 
 	      sampler->ss0.mag_filter != BRW_MAPFILTER_NEAREST)) {
@@ -106,7 +106,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	    entry->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
 	    entry->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
 	 }
-      } else if (tex->base.target == PIPE_TEXTURE_1D) {
+      } else if (tex->b.b.target == PIPE_TEXTURE_1D) {
 	 /* There's a bug in 1D texture sampling - it actually pays
 	  * attention to the wrap_t value, though it should not.
 	  * Override the wrap_t value here to GL_REPEAT to keep
@@ -122,12 +122,12 @@ static enum pipe_error
 brw_wm_sampler_update_default_colors(struct brw_context *brw)
 {
    enum pipe_error ret;
-   int nr = MIN2(brw->curr.num_textures,
+   int nr = MIN2(brw->curr.num_fragment_sampler_views,
 		 brw->curr.num_samplers);
    int i;
 
    for (i = 0; i < nr; i++) {
-      const struct brw_texture *tex = brw_texture(brw->curr.texture[i]);
+      const struct brw_texture *tex = brw_texture(brw->curr.fragment_sampler_views[i]->texture);
       const struct brw_sampler *sampler = brw->curr.sampler[i];
       const float *bc;
       float bordercolor[4] = {
@@ -137,7 +137,7 @@ brw_wm_sampler_update_default_colors(struct brw_context *brw)
          sampler->border_color[0]
       };
       
-      if (util_format_is_depth_or_stencil(tex->base.format)) {
+      if (util_format_is_depth_or_stencil(tex->b.b.format)) {
          bc = bordercolor;
       }
       else {

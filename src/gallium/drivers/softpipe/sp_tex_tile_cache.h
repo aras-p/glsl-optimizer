@@ -70,11 +70,11 @@ struct softpipe_tex_cached_tile
 
 struct softpipe_tex_tile_cache
 {
-   struct pipe_screen *screen;
+   struct pipe_context *pipe;
    struct pipe_transfer *transfer;
    void *transfer_map;
 
-   struct pipe_texture *texture;  /**< if caching a texture */
+   struct pipe_resource *texture;  /**< if caching a texture */
    unsigned timestamp;
 
    struct softpipe_tex_cached_tile entries[NUM_ENTRIES];
@@ -83,12 +83,18 @@ struct softpipe_tex_tile_cache
    void *tex_trans_map;
    int tex_face, tex_level, tex_z;
 
+   unsigned swizzle_r;
+   unsigned swizzle_g;
+   unsigned swizzle_b;
+   unsigned swizzle_a;
+   unsigned format;
+
    struct softpipe_tex_cached_tile *last_tile;  /**< most recently retrieved tile */
 };
 
 
 extern struct softpipe_tex_tile_cache *
-sp_create_tex_tile_cache( struct pipe_screen *screen );
+sp_create_tex_tile_cache( struct pipe_context *pipe );
 
 extern void
 sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc);
@@ -101,8 +107,8 @@ extern void
 sp_tex_tile_cache_unmap_transfers(struct softpipe_tex_tile_cache *tc);
 
 extern void
-sp_tex_tile_cache_set_texture(struct softpipe_tex_tile_cache *tc,
-                          struct pipe_texture *texture);
+sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
+                                   struct pipe_sampler_view *view);
 
 void
 sp_tex_tile_cache_validate_texture(struct softpipe_tex_tile_cache *tc);

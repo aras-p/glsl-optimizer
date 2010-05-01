@@ -102,10 +102,10 @@ clip_unit_create_from_key(struct brw_context *brw,
        */
       assert(key->nr_urb_entries % 2 == 0);
       
-      /* Although up to 16 concurrent Clip threads are allowed on IGDNG, 
+      /* Although up to 16 concurrent Clip threads are allowed on Ironlake,
        * only 2 threads can output VUEs at a time.
        */
-      if (intel->is_ironlake)
+      if (intel->gen == 5)
          clip.thread4.max_threads = 16 - 1;        
       else
          clip.thread4.max_threads = 2 - 1;

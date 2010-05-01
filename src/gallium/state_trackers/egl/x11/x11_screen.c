@@ -14,24 +14,24 @@
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <xf86drm.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/XShm.h>
+
 #include "util/u_memory.h"
-#include "util/u_math.h"
-#include "util/u_format.h"
-#include "xf86drm.h"
 #include "egllog.h"
 
 #include "x11_screen.h"
@@ -109,7 +109,7 @@ x11_screen_destroy(struct x11_screen *xscr)
 
    if (xscr->visuals)
       XFree(xscr->visuals);
-   free(xscr);
+   FREE(xscr);
 }
 
 static boolean
@@ -174,63 +174,6 @@ x11_screen_get_visuals(struct x11_screen *xscr, int *num_visuals)
    if (num_visuals)
       *num_visuals = xscr->num_visuals;
    return xscr->visuals;
-}
-
-void
-x11_screen_convert_visual(struct x11_screen *xscr, const XVisualInfo *visual,
-                          __GLcontextModes *mode)
-{
-   int r, g, b, a;
-   int visual_type;
-
-   r = util_bitcount(visual->red_mask);
-   g = util_bitcount(visual->green_mask);
-   b = util_bitcount(visual->blue_mask);
-   a = visual->depth - (r + g + b);
-#if defined(__cplusplus) || defined(c_plusplus)
-   visual_type = visual->c_class;
-#else
-   visual_type = visual->class;
-#endif
-
-   /* convert to GLX visual type */
-   switch (visual_type) {
-   case TrueColor:
-      visual_type = GLX_TRUE_COLOR;
-      break;
-   case DirectColor:
-      visual_type = GLX_DIRECT_COLOR;
-      break;
-   case PseudoColor:
-      visual_type = GLX_PSEUDO_COLOR;
-      break;
-   case StaticColor:
-      visual_type = GLX_STATIC_COLOR;
-      break;
-   case GrayScale:
-      visual_type = GLX_GRAY_SCALE;
-      break;
-   case StaticGray:
-      visual_type = GLX_STATIC_GRAY;
-      break;
-   default:
-      visual_type = GLX_NONE;
-      break;
-   }
-
-   mode->rgbBits = r + g + b + a;
-   mode->redBits = r;
-   mode->greenBits = g;
-   mode->blueBits = b;
-   mode->alphaBits = a;
-   mode->visualID = visual->visualid;
-   mode->visualType = visual_type;
-
-   /* sane defaults */
-   mode->renderType = GLX_RGBA_BIT;
-   mode->rgbMode = TRUE;
-   mode->visualRating = GLX_SLOW_CONFIG;
-   mode->xRenderable = TRUE;
 }
 
 /**
@@ -435,7 +378,7 @@ x11_context_modes_create(unsigned count)
 
    next = &base;
    for (i = 0; i < count; i++) {
-      *next = (__GLcontextModes *) calloc(1, size);
+      *next = (__GLcontextModes *) CALLOC(1, size);
       if (*next == NULL) {
          x11_context_modes_destroy(base);
          base = NULL;
@@ -455,7 +398,7 @@ x11_context_modes_destroy(__GLcontextModes *modes)
 {
    while (modes != NULL) {
       __GLcontextModes *next = modes->next;
-      free(modes);
+      FREE(modes);
       modes = next;
    }
 }

@@ -133,7 +133,7 @@ rastpos_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct rastpos_stage *rs = rastpos_stage(stage);
    GLcontext *ctx = rs->ctx;
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    const GLfloat height = (GLfloat) ctx->DrawBuffer->Height;
    const GLuint *outputMapping = st->vertex_result_to_slot;
    const GLfloat *pos;
@@ -221,7 +221,7 @@ new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
 static void
 st_RasterPos(GLcontext *ctx, const GLfloat v[4])
 {
-   struct st_context *st = ctx->st;
+   struct st_context *st = st_context(ctx);
    struct draw_context *draw = st->draw;
    struct rastpos_stage *rs;
 
@@ -239,7 +239,7 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
    draw_set_rasterize_stage(st->draw, st->rastpos_stage);
 
    /* make sure everything's up to date */
-   st_validate_state(ctx->st);
+   st_validate_state(st);
 
    /* This will get set only if rastpos_point(), above, gets called */
    ctx->Current.RasterPosValid = GL_FALSE;

@@ -30,11 +30,10 @@
 
 #include <windows.h>
 
-#include "main/mtypes.h"
-
 #include "os/os_thread.h"
 
 struct pipe_surface;
+struct st_framebuffer_iface;
 struct stw_pixelformat_info;
 
 /**
@@ -45,7 +44,7 @@ struct stw_framebuffer
    /**
     * This mutex has two purposes:
     * - protect the access to the mutable data members below
-    * - prevent the the framebuffer from being deleted while being accessed.
+    * - prevent the framebuffer from being deleted while being accessed.
     * 
     * It is OK to lock this mutex while holding the stw_device::fb_mutex lock, 
     * but the opposite must never happen.
@@ -64,13 +63,15 @@ struct stw_framebuffer
 
    int iPixelFormat;
    const struct stw_pixelformat_info *pfi;
-   GLvisual visual;
+
+   struct st_framebuffer_iface *stfb;
 
    /*
     * Mutable members. 
     */
 
-   struct st_framebuffer *stfb;
+   unsigned refcnt;
+
    
    /* FIXME: Make this work for multiple contexts bound to the same framebuffer */
    boolean must_resize;
@@ -114,6 +115,11 @@ stw_framebuffer_create(
    HDC hdc,
    int iPixelFormat );
 
+void
+stw_framebuffer_reference(
+   struct stw_framebuffer **ptr,
+   struct stw_framebuffer *fb);
+
 /**
  * Search a framebuffer with a matching HWND.
  * 
@@ -133,10 +139,6 @@ stw_framebuffer_from_hwnd(
 struct stw_framebuffer *
 stw_framebuffer_from_hdc(
    HDC hdc );
-
-BOOL
-stw_framebuffer_allocate(
-   struct stw_framebuffer *fb );
 
 BOOL
 stw_framebuffer_present_locked(HDC hdc,

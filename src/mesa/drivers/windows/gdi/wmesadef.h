@@ -27,7 +27,7 @@ struct wmesa_framebuffer
     HDC                 hDC;
     int			pixelformat;
     GLuint		ScanWidth;
-    BYTE		cColorBits;
+    int			cColorBits;
     /* back buffer DIB fields */
     HDC                 dib_hDC;
     BITMAPINFO          bmi;

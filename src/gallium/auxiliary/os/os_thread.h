@@ -40,7 +40,7 @@
 #include "util/u_debug.h" /* for assert */
 
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
 
 #include <pthread.h> /* POSIX threads headers */
 #include <stdio.h> /* for perror() */
@@ -257,7 +257,7 @@ typedef unsigned pipe_condvar;
  * pipe_barrier
  */
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_HAIKU)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
 
 typedef pthread_barrier_t pipe_barrier;
 
@@ -299,22 +299,50 @@ static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
 
 #else
 
-typedef unsigned pipe_barrier;
+typedef struct {
+   unsigned count;
+   unsigned waiters;
+   uint64_t sequence;
+   pipe_mutex mutex;
+   pipe_condvar condvar;
+} pipe_barrier;
 
 static INLINE void pipe_barrier_init(pipe_barrier *barrier, unsigned count)
 {
-   /* XXX we could implement barriers with a mutex and condition var */
-   assert(0);
+   barrier->count = count;
+   barrier->waiters = 0;
+   barrier->sequence = 0;
+   pipe_mutex_init(barrier->mutex);
+   pipe_condvar_init(barrier->condvar);
 }
 
 static INLINE void pipe_barrier_destroy(pipe_barrier *barrier)
 {
-   assert(0);
+   assert(barrier->waiters == 0);
+   pipe_mutex_destroy(barrier->mutex);
+   pipe_condvar_destroy(barrier->condvar);
 }
 
 static INLINE void pipe_barrier_wait(pipe_barrier *barrier)
 {
-   assert(0);
+   pipe_mutex_lock(barrier->mutex);
+
+   assert(barrier->waiters < barrier->count);
+   barrier->waiters++;
+
+   if (barrier->waiters < barrier->count) {
+      uint64_t sequence = barrier->sequence;
+
+      do {
+         pipe_condvar_wait(barrier->condvar, barrier->mutex);
+      } while (sequence == barrier->sequence);
+   } else {
+      barrier->waiters = 0;
+      barrier->sequence++;
+      pipe_condvar_broadcast(barrier->condvar);
+   }
+
+   pipe_mutex_unlock(barrier->mutex);
 }
 
 
@@ -377,7 +405,7 @@ pipe_semaphore_wait(pipe_semaphore *sema)
  */
 
 typedef struct {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
    pthread_key_t key;
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    DWORD key;
@@ -392,7 +420,7 @@ typedef struct {
 static INLINE void
 pipe_tsd_init(pipe_tsd *tsd)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
    if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
       perror("pthread_key_create(): failed to allocate key for thread specific data");
       exit(-1);
@@ -409,7 +437,7 @@ pipe_tsd_get(pipe_tsd *tsd)
    if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
       pipe_tsd_init(tsd);
    }
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
    return pthread_getspecific(tsd->key);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    assert(0);
@@ -426,7 +454,7 @@ pipe_tsd_set(pipe_tsd *tsd, void *value)
    if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
       pipe_tsd_init(tsd);
    }
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
    if (pthread_setspecific(tsd->key, value) != 0) {
       perror("pthread_set_specific() failed");
       exit(-1);

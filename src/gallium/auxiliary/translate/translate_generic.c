@@ -31,6 +31,7 @@
   */
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "pipe/p_state.h"
 #include "translate.h"
 
@@ -58,6 +59,7 @@ struct translate_generic {
       
       char *input_ptr;
       unsigned input_stride;
+      unsigned max_index;
 
    } attrib[PIPE_MAX_ATTRIBS];
 
@@ -393,10 +395,10 @@ static fetch_func get_fetch_func( enum pipe_format format )
       return &fetch_R8G8B8A8_SSCALED;
 
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return &fetch_A8R8G8B8_UNORM;
+      return &fetch_B8G8R8A8_UNORM;
 
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return &fetch_B8G8R8A8_UNORM;
+      return &fetch_A8R8G8B8_UNORM;
 
    case PIPE_FORMAT_R32_FIXED:
       return &fetch_R32_FIXED;
@@ -552,10 +554,10 @@ static emit_func get_emit_func( enum pipe_format format )
       return &emit_R8G8B8A8_SSCALED;
 
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return &emit_A8R8G8B8_UNORM;
+      return &emit_B8G8R8A8_UNORM;
 
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return &emit_B8G8R8A8_UNORM;
+      return &emit_A8R8G8B8_UNORM;
 
    default:
       assert(0); 
@@ -588,18 +590,21 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
          const char *src;
+         unsigned index;
 
 	 char *dst = (vert + 
 		      tg->attrib[attr].output_offset);
 
          if (tg->attrib[attr].instance_divisor) {
-            src = tg->attrib[attr].input_ptr +
-                  tg->attrib[attr].input_stride *
-                  (instance_id / tg->attrib[attr].instance_divisor);
+            index = instance_id / tg->attrib[attr].instance_divisor;
          } else {
-            src = tg->attrib[attr].input_ptr +
-                  tg->attrib[attr].input_stride * elt;
+            index = elt;
          }
+
+         index = MIN2(index, tg->attrib[attr].max_index);
+
+         src = tg->attrib[attr].input_ptr +
+               tg->attrib[attr].input_stride * index;
 
 	 tg->attrib[attr].fetch( src, data );
 
@@ -670,7 +675,8 @@ static void PIPE_CDECL generic_run( struct translate *translate,
 static void generic_set_buffer( struct translate *translate,
 				unsigned buf,
 				const void *ptr,
-				unsigned stride )
+				unsigned stride,
+				unsigned max_index )
 {
    struct translate_generic *tg = translate_generic(translate);
    unsigned i;
@@ -680,6 +686,7 @@ static void generic_set_buffer( struct translate *translate,
 	 tg->attrib[i].input_ptr = ((char *)ptr +
 				    tg->attrib[i].input_offset);
 	 tg->attrib[i].input_stride = stride;
+         tg->attrib[i].max_index = max_index;
       }
    }
 }

@@ -31,7 +31,7 @@
 
 #include "lp_setup_context.h"
 
-static void line_nop( struct setup_context *setup,
+static void line_nop( struct lp_setup_context *setup,
                       const float (*v0)[4],
                       const float (*v1)[4] )
 {
@@ -39,7 +39,7 @@ static void line_nop( struct setup_context *setup,
 
 
 void 
-lp_setup_choose_line( struct setup_context *setup )
+lp_setup_choose_line( struct lp_setup_context *setup )
 {
    setup->line = line_nop;
 }

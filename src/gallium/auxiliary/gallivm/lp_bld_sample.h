@@ -36,9 +36,10 @@
 #define LP_BLD_SAMPLE_H
 
 
-#include <llvm-c/Core.h>
+#include "gallivm/lp_bld.h"
 
-struct pipe_texture;
+struct pipe_resource;
+struct pipe_sampler_view;
 struct pipe_sampler_state;
 struct util_format_description;
 struct lp_type;
@@ -48,14 +49,20 @@ struct lp_build_context;
 /**
  * Sampler static state.
  *
- * These are the bits of state from pipe_texture and pipe_sampler_state that
+ * These are the bits of state from pipe_resource and pipe_sampler_state that
  * are embedded in the generated code.
  */
 struct lp_sampler_static_state
 {
-   /* pipe_texture's state */
+   /* pipe_sampler_view's state */
    enum pipe_format format;
-   unsigned target:2;
+   unsigned swizzle_r:3;
+   unsigned swizzle_g:3;
+   unsigned swizzle_b:3;
+   unsigned swizzle_a:3;
+
+   /* pipe_texture's state */
+   unsigned target:3;
    unsigned pot_width:1;
    unsigned pot_height:1;
    unsigned pot_depth:1;
@@ -70,6 +77,7 @@ struct lp_sampler_static_state
    unsigned compare_mode:1;
    unsigned compare_func:3;
    unsigned normalized_coords:1;
+   float lod_bias, min_lod, max_lod;
    float border_color[4];
 };
 
@@ -77,7 +85,7 @@ struct lp_sampler_static_state
 /**
  * Sampler dynamic state.
  *
- * These are the bits of state from pipe_texture and pipe_sampler_state that
+ * These are the bits of state from pipe_resource and pipe_sampler_state that
  * are computed in runtime.
  *
  * There are obtained through callbacks, as we don't want to tie the texture
@@ -99,10 +107,27 @@ struct lp_sampler_dynamic_state
               LLVMBuilderRef builder,
               unsigned unit);
 
+   /** Obtain the base texture depth. */
    LLVMValueRef
-   (*stride)( struct lp_sampler_dynamic_state *state,
-              LLVMBuilderRef builder,
-              unsigned unit);
+   (*depth)( struct lp_sampler_dynamic_state *state,
+             LLVMBuilderRef builder,
+             unsigned unit);
+
+   /** Obtain the number of mipmap levels (minus one). */
+   LLVMValueRef
+   (*last_level)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
+
+   LLVMValueRef
+   (*row_stride)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
+
+   LLVMValueRef
+   (*img_stride)( struct lp_sampler_dynamic_state *state,
+                  LLVMBuilderRef builder,
+                  unsigned unit);
 
    LLVMValueRef
    (*data_ptr)( struct lp_sampler_dynamic_state *state,
@@ -117,7 +142,7 @@ struct lp_sampler_dynamic_state
  */
 void
 lp_sampler_static_state(struct lp_sampler_static_state *state,
-                        const struct pipe_texture *texture,
+                        const struct pipe_sampler_view *view,
                         const struct pipe_sampler_state *sampler);
 
 
@@ -135,8 +160,9 @@ lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
+                       LLVMValueRef z,
                        LLVMValueRef y_stride,
-                       LLVMValueRef data_ptr);
+                       LLVMValueRef z_stride);
 
 
 void

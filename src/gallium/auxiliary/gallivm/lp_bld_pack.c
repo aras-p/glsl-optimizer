@@ -164,7 +164,7 @@ lp_build_unpack2(LLVMBuilderRef builder,
 
    if(dst_type.sign && src_type.sign) {
       /* Replicate the sign bit in the most significant bits */
-      msb = LLVMBuildAShr(builder, src, lp_build_int_const_scalar(src_type, src_type.width - 1), "");
+      msb = LLVMBuildAShr(builder, src, lp_build_const_int_vec(src_type, src_type.width - 1), "");
    }
    else
       /* Most significant bits always zero */
@@ -256,12 +256,12 @@ lp_build_pack2(LLVMBuilderRef builder,
                LLVMValueRef lo,
                LLVMValueRef hi)
 {
+#if HAVE_LLVM < 0x0207
    LLVMTypeRef src_vec_type = lp_build_vec_type(src_type);
+#endif
    LLVMTypeRef dst_vec_type = lp_build_vec_type(dst_type);
    LLVMValueRef shuffle;
    LLVMValueRef res;
-
-   dst_vec_type = lp_build_vec_type(dst_type);
 
    assert(!src_type.floating);
    assert(!dst_type.floating);
@@ -272,11 +272,14 @@ lp_build_pack2(LLVMBuilderRef builder,
       switch(src_type.width) {
       case 32:
          if(dst_type.sign) {
+#if HAVE_LLVM >= 0x0207
+            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", dst_vec_type, lo, hi);
+#else
             res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packssdw.128", src_vec_type, lo, hi);
+#endif
          }
          else {
             if (util_cpu_caps.has_sse4_1) {
-               /* PACKUSDW is the only instrinsic with a consistent signature */
                return lp_build_intrinsic_binary(builder, "llvm.x86.sse41.packusdw", dst_vec_type, lo, hi);
             }
             else {
@@ -288,9 +291,17 @@ lp_build_pack2(LLVMBuilderRef builder,
 
       case 16:
          if(dst_type.sign)
+#if HAVE_LLVM >= 0x0207
+            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packsswb.128", dst_vec_type, lo, hi);
+#else
             res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packsswb.128", src_vec_type, lo, hi);
+#endif
          else
+#if HAVE_LLVM >= 0x0207
+            res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128", dst_vec_type, lo, hi);
+#else
             res = lp_build_intrinsic_binary(builder, "llvm.x86.sse2.packuswb.128", src_vec_type, lo, hi);
+#endif
          break;
 
       default:
@@ -348,7 +359,7 @@ lp_build_packs2(LLVMBuilderRef builder,
    if(clamp) {
       struct lp_build_context bld;
       unsigned dst_bits = dst_type.sign ? dst_type.width - 1 : dst_type.width;
-      LLVMValueRef dst_max = lp_build_int_const_scalar(src_type, ((unsigned long long)1 << dst_bits) - 1);
+      LLVMValueRef dst_max = lp_build_const_int_vec(src_type, ((unsigned long long)1 << dst_bits) - 1);
       lp_build_context_init(&bld, builder, src_type);
       lo = lp_build_min(&bld, lo, dst_max);
       hi = lp_build_min(&bld, hi, dst_max);

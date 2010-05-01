@@ -2533,27 +2533,11 @@ emit_instruction(
       return 0;
       break;
 
-   case TGSI_OPCODE_BGNFOR:
-      return 0;
-      break;
-
-   case TGSI_OPCODE_REP:
-      return 0;
-      break;
-
    case TGSI_OPCODE_ELSE:
       return 0;
       break;
 
    case TGSI_OPCODE_ENDIF:
-      return 0;
-      break;
-
-   case TGSI_OPCODE_ENDFOR:
-      return 0;
-      break;
-
-   case TGSI_OPCODE_ENDREP:
       return 0;
       break;
 

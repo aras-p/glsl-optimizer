@@ -50,12 +50,14 @@ struct {
     [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_MACH] = { .name = "mach", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_PLN] = { .name = "pln", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SAD2] = { .name = "sad2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SADA2] = { .name = "sada2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP4] = { .name = "dp4", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DPH] = { .name = "dph", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP3] = { .name = "dp3", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP2] = { .name = "dp2", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_MATH] = { .name = "math", .nsrc = 2, .ndst = 1 },
 
     [BRW_OPCODE_AVG] = { .name = "avg", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_ADD] = { .name = "add", .nsrc = 2, .ndst = 1 },
@@ -73,10 +75,10 @@ struct {
     [BRW_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
     [BRW_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_IF] = { .name = "if", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_IFF] = { .name = "iff", .nsrc = 1, .ndst = 01 },
-    [BRW_OPCODE_WHILE] = { .name = "while", .nsrc = 1, .ndst = 0 },
+    [BRW_OPCODE_IFF] = { .name = "iff", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_WHILE] = { .name = "while", .nsrc = 2, .ndst = 0 },
     [BRW_OPCODE_ELSE] = { .name = "else", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_BREAK] = { .name = "break", .nsrc = 1, .ndst = 0 },
+    [BRW_OPCODE_BREAK] = { .name = "break", .nsrc = 2, .ndst = 0 },
     [BRW_OPCODE_CONTINUE] = { .name = "cont", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_HALT] = { .name = "halt", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_MSAVE] = { .name = "msave", .nsrc = 1, .ndst = 1 },
@@ -796,7 +798,11 @@ int brw_disasm (FILE *file, struct brw_instruction *inst)
     err |= control (file, "saturate", saturate, inst->header.saturate, NULL);
     err |= control (file, "debug control", debug_ctrl, inst->header.debug_control, NULL);
 
-    if (inst->header.opcode != BRW_OPCODE_SEND)
+    if (inst->header.opcode == BRW_OPCODE_MATH) {
+	string (file, " ");
+	err |= control (file, "function", math_function,
+			inst->header.destreg__conditionalmod, NULL);
+    } else if (inst->header.opcode != BRW_OPCODE_SEND)
 	err |= control (file, "conditional modifier", conditional_modifier,
 			inst->header.destreg__conditionalmod, NULL);
 

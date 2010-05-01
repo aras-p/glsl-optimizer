@@ -1158,7 +1158,7 @@ static void emit_decl_range( struct ureg_program *ureg,
    out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
    out[0].decl.NrTokens = 2;
    out[0].decl.File = file;
-   out[0].decl.UsageMask = 0xf;
+   out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW;
    out[0].decl.Interpolate = TGSI_INTERPOLATE_CONSTANT;
    out[0].decl.Semantic = 0;
 
@@ -1180,7 +1180,7 @@ emit_decl_range2D(struct ureg_program *ureg,
    out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
    out[0].decl.NrTokens = 3;
    out[0].decl.File = file;
-   out[0].decl.UsageMask = 0xf;
+   out[0].decl.UsageMask = TGSI_WRITEMASK_XYZW;
    out[0].decl.Interpolate = TGSI_INTERPOLATE_CONSTANT;
    out[0].decl.Dimension = 1;
 

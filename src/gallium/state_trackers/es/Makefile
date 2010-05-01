@@ -22,6 +22,8 @@ GLES_2_LIB = GLESv2
 GLES_2_LIB_NAME = lib$(GLES_2_LIB).so
 
 
+# These two objects indirectly reference all public functions thanks to the use
+# of _glapi_get_proc_address.
 ES1_OBJECTS = st_es1.o
 ES2_OBJECTS = st_es2.o
 
@@ -38,6 +40,8 @@ SYS_LIBS = -lm -pthread
 
 
 INCLUDE_DIRS = \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/gallium/include
 
 .c.o:
@@ -54,9 +58,7 @@ $(TOP)/$(LIB_DIR)/$(GLES_1_LIB_NAME): $(ES1_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXIL
 		-minor $(GLES_1_VERSION_MINOR) \
 		-patch $(GLES_1_VERSION_PATCH) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-		$(ES1_OBJECTS) \
-		-Wl,--whole-archive $(ES1_LIBS) -Wl,--no-whole-archive \
-		$(GALLIUM_AUXILIARIES) $(SYS_LIBS)
+		$(ES1_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXILIARIES) $(SYS_LIBS)
 
 $(TOP)/$(LIB_DIR)/$(GLES_2_LIB_NAME): $(ES2_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXILIARIES)
 	$(MKLIB) -o $(GLES_2_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
@@ -64,9 +66,7 @@ $(TOP)/$(LIB_DIR)/$(GLES_2_LIB_NAME): $(ES2_OBJECTS) $(ES1_LIBS) $(GALLIUM_AUXIL
 		-minor $(GLES_2_VERSION_MINOR) \
 		-patch $(GLES_2_VERSION_PATCH) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-		$(ES2_OBJECTS) \
-		-Wl,--whole-archive $(ES2_LIBS) -Wl,--no-whole-archive \
-		$(GALLIUM_AUXILIARIES) $(SYS_LIBS)
+		$(ES2_OBJECTS) $(ES2_LIBS) $(GALLIUM_AUXILIARIES) $(SYS_LIBS)
 
 install: default
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GLES

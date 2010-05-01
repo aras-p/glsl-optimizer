@@ -30,7 +30,7 @@
  * it (via \c glPopClientAttrib).  After popping, the state of the VAO is
  * examined.
  * 
- * According the the APPLE_vertex_array_object spec, the contents of the VAO
+ * According to the APPLE_vertex_array_object spec, the contents of the VAO
  * should be restored to the values that they had when pushed.
  * 
  * \author Ian Romanick <idr@us.ibm.com>

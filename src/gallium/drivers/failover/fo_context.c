@@ -27,7 +27,6 @@
 
 
 #include "pipe/p_defines.h"
-#include "util/u_simple_screen.h"
 #include "util/u_memory.h"
 #include "pipe/p_context.h"
 
@@ -40,7 +39,7 @@ static void failover_destroy( struct pipe_context *pipe )
 {
    struct failover_context *failover = failover_context( pipe );
 
-   free( failover );
+   FREE( failover );
 }
 
 
@@ -52,8 +51,9 @@ void failover_fail_over( struct failover_context *failover )
 
 
 static void failover_draw_elements( struct pipe_context *pipe,
-                                    struct pipe_buffer *indexBuffer,
+                                    struct pipe_resource *indexResource,
                                     unsigned indexSize,
+                                    int indexBias,
                                     unsigned prim, 
                                     unsigned start, 
                                     unsigned count)
@@ -71,8 +71,9 @@ static void failover_draw_elements( struct pipe_context *pipe,
     */
    if (failover->mode == FO_HW) {
       failover->hw->draw_elements( failover->hw, 
-                                   indexBuffer, 
+                                   indexResource, 
                                    indexSize, 
+                                   indexBias,
                                    prim, 
                                    start, 
                                    count );
@@ -88,8 +89,9 @@ static void failover_draw_elements( struct pipe_context *pipe,
       }
 
       failover->sw->draw_elements( failover->sw, 
-				   indexBuffer, 
+				   indexResource, 
 				   indexSize, 
+				   indexBias,
 				   prim, 
 				   start, 
 				   count );
@@ -106,30 +108,19 @@ static void failover_draw_elements( struct pipe_context *pipe,
 static void failover_draw_arrays( struct pipe_context *pipe,
 				     unsigned prim, unsigned start, unsigned count)
 {
-   failover_draw_elements(pipe, NULL, 0, prim, start, count);
+   failover_draw_elements(pipe, NULL, 0, 0, prim, start, count);
 }
 
 static unsigned int
-failover_is_texture_referenced( struct pipe_context *_pipe,
-				struct pipe_texture *texture,
-				unsigned face, unsigned level)
+failover_is_resource_referenced( struct pipe_context *_pipe,
+				 struct pipe_resource *resource,
+				 unsigned face, unsigned level)
 {
    struct failover_context *failover = failover_context( _pipe );
    struct pipe_context *pipe = (failover->mode == FO_HW) ?
       failover->hw : failover->sw;
 
-   return pipe->is_texture_referenced(pipe, texture, face, level);
-}
-
-static unsigned int
-failover_is_buffer_referenced( struct pipe_context *_pipe,
-			       struct pipe_buffer *buf)
-{
-   struct failover_context *failover = failover_context( _pipe );
-   struct pipe_context *pipe = (failover->mode == FO_HW) ?
-      failover->hw : failover->sw;
-
-   return pipe->is_buffer_referenced(pipe, buf);
+   return pipe->is_resource_referenced(pipe, resource, face, level);
 }
 
 struct pipe_context *failover_create( struct pipe_context *hw,
@@ -176,8 +167,7 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 #endif
 
    failover->pipe.flush = hw->flush;
-   failover->pipe.is_texture_referenced = failover_is_texture_referenced;
-   failover->pipe.is_buffer_referenced = failover_is_buffer_referenced;
+   failover->pipe.is_resource_referenced = failover_is_resource_referenced;
 
    failover->dirty = 0;
 

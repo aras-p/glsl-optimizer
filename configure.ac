@@ -22,6 +22,8 @@ LIBDRM_REQUIRED=2.4.15
 LIBDRM_RADEON_REQUIRED=2.4.17
 DRI2PROTO_REQUIRED=2.1
 GLPROTO_REQUIRED=1.4.11
+LIBDRM_XORG_REQUIRED=2.4.17
+LIBKMS_XORG_REQUIRED=1.0.0
 
 dnl Check for progs
 AC_PROG_CPP
@@ -457,23 +459,22 @@ CORE_DIRS="glsl mesa"
 
 SRC_DIRS="glew"
 GLU_DIRS="sgi"
-WINDOW_SYSTEM=""
 GALLIUM_DIRS="auxiliary drivers state_trackers"
-GALLIUM_WINSYS_DIRS=""
-GALLIUM_WINSYS_DRM_DIRS=""
+GALLIUM_TARGET_DIRS=""
+GALLIUM_WINSYS_DIRS="sw"
 GALLIUM_DRIVERS_DIRS="softpipe failover trace identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
 case "$mesa_driver" in
 xlib)
     DRIVER_DIRS="x11"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS xlib"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS libgl-xlib"
     ;;
 dri)
     SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
-    WINDOW_SYSTEM="dri"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS drm"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib sw/dri sw/drm"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -482,12 +483,12 @@ esac
 AC_SUBST([SRC_DIRS])
 AC_SUBST([GLU_DIRS])
 AC_SUBST([DRIVER_DIRS])
-AC_SUBST([WINDOW_SYSTEM])
 AC_SUBST([GALLIUM_DIRS])
+AC_SUBST([GALLIUM_TARGET_DIRS])
 AC_SUBST([GALLIUM_WINSYS_DIRS])
-AC_SUBST([GALLIUM_WINSYS_DRM_DIRS])
 AC_SUBST([GALLIUM_DRIVERS_DIRS])
 AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
+AC_SUBST([MESA_LLVM])
 
 dnl
 dnl User supplied program configuration
@@ -545,8 +546,14 @@ else
     x11_pkgconfig=no
 fi
 dnl Use the autoconf macro if no pkg-config files
-if test "$x11_pkgconfig" = no; then
+if test "$x11_pkgconfig" = yes; then
+    PKG_CHECK_MODULES([X11], [x11])
+else
     AC_PATH_XTRA
+    test -z "$X11_CFLAGS" && X11_CFLAGS="$X_CFLAGS"
+    test -z "$X11_LIBS" && X11_LIBS="$X_LIBS -lX11"
+    AC_SUBST([X11_CFLAGS])
+    AC_SUBST([X11_LIBS])
 fi
 
 dnl Try to tell the user that the --x-* options are only used when
@@ -948,7 +955,7 @@ if test "x$enable_egl" = xyes; then
     fi
 
     if test "$with_demos" = yes; then
-        PROGRAM_DIRS="$PROGRAM_DIRS egl"
+        PROGRAM_DIRS="$PROGRAM_DIRS egl/eglut egl/opengl"
     fi
 fi
 AC_SUBST([EGL_LIB_DEPS])
@@ -1174,8 +1181,16 @@ AC_ARG_ENABLE([gallium],
     [enable_gallium="$enableval"],
     [enable_gallium=yes])
 if test "x$enable_gallium" = xyes; then
-    SRC_DIRS="$SRC_DIRS gallium gallium/winsys"
+    SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
+    AC_CHECK_HEADER([udis86.h], [HAS_UDIS86="yes"],
+                [HAS_UDIS86="no"])
+    AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
 fi
+
+AC_SUBST([LLVM_CFLAGS])
+AC_SUBST([LLVM_LIBS])
+AC_SUBST([LLVM_LDFLAGS])
+AC_SUBST([LLVM_VERSION])
 
 dnl
 dnl Gallium state trackers configuration
@@ -1199,13 +1214,15 @@ yes)
         ;;
     dri)
         GALLIUM_STATE_TRACKERS_DIRS="dri"
+        HAVE_ST_DRI="yes"
         if test "x$enable_egl" = xyes; then
             GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS egl"
+            HAVE_ST_EGL="yes"
         fi
         # Have only tested st/xorg on 1.6.0 servers
-        PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0],
-            HAVE_XORG="yes"; GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg",
-            HAVE_XORG="no")
+        PKG_CHECK_MODULES(XORG, [xorg-server >= 1.6.0 libdrm >= $LIBDRM_XORG_REQUIRED libkms >= $LIBKMS_XORG_REQUIRED],
+            HAVE_ST_XORG="yes"; GALLIUM_STATE_TRACKERS_DIRS="$GALLIUM_STATE_TRACKERS_DIRS xorg",
+            HAVE_ST_XORG="no")
         ;;
     esac
     ;;
@@ -1217,15 +1234,22 @@ yes)
             AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
 
         case "$tracker" in
+        dri)
+            if test "x$mesa_driver" != xdri; then
+                AC_MSG_ERROR([cannot build dri state tracker without mesa driver set to dri])
+            fi
+            HAVE_ST_DRI="yes"
+            ;;
         egl)
             if test "x$enable_egl" != xyes; then
                 AC_MSG_ERROR([cannot build egl state tracker without EGL library])
             fi
+            HAVE_ST_EGL="yes"
             ;;
         xorg)
-	    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
-                  HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
-                  HAVE_XEXTPROTO_71="no")
+            PKG_CHECK_MODULES([LIBDRM_XORG], [libdrm >= $LIBDRM_XORG_REQUIRED])
+            PKG_CHECK_MODULES([LIBKMS_XORG], [libkms >= $LIBKMS_XORG_REQUIRED])
+            HAVE_ST_XORG="yes"
             ;;
         es)
             # mesa/es is required to build es state tracker
@@ -1236,6 +1260,12 @@ yes)
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
 esac
+
+if test "x$HAVE_ST_XORG" = xyes; then
+    PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
+        HAVE_XEXTPROTO_71="yes"; DEFINES="$DEFINES -DHAVE_XEXTPROTO_71",
+        HAVE_XEXTPROTO_71="no")
+fi
 
 AC_ARG_WITH([egl-displays],
     [AS_HELP_STRING([--with-egl-displays@<:@=DIRS...@:>@],
@@ -1296,6 +1326,54 @@ AC_ARG_WITH([max-height],
 )
 
 dnl
+dnl Gallium LLVM
+dnl
+AC_ARG_ENABLE([gallium-llvm],
+    [AS_HELP_STRING([--enable-gallium-llvm],
+        [build gallium LLVM support @<:@default=disabled@:>@])],
+    [enable_gallium_llvm="$enableval"],
+    [enable_gallium_llvm=auto])
+if test "x$enable_gallium_llvm" = xyes; then
+    if test "x$LLVM_CONFIG" != xno; then
+	LLVM_VERSION=`$LLVM_CONFIG --version`
+	LLVM_CFLAGS=`$LLVM_CONFIG --cflags`
+	LLVM_LIBS="`$LLVM_CONFIG --libs jit interpreter nativecodegen bitwriter` -lstdc++"
+
+	if test "x$HAS_UDIS86" != xno; then
+	    LLVM_LIBS="$LLVM_LIBS -ludis86"
+	    DEFINES="$DEFINES -DHAVE_UDIS86"
+	fi
+	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
+	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
+	DEFINES="$DEFINES -DMESA_LLVM -D__STDC_CONSTANT_MACROS"
+	MESA_LLVM=1
+    else
+	MESA_LLVM=0
+    fi
+else
+    MESA_LLVM=0
+fi
+
+dnl
+dnl Gallium helper functions
+dnl
+gallium_check_st() {
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes; then
+         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
+    fi
+    if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $2"
+    fi
+    if test "x$HAVE_ST_EGL" = xyes && test "x$3" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
+    fi
+    if test "x$HAVE_ST_XORG" = xyes && test "x$4" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
+    fi
+}
+
+
+dnl
 dnl Gallium SVGA configuration
 dnl
 AC_ARG_ENABLE([gallium-svga],
@@ -1304,8 +1382,8 @@ AC_ARG_ENABLE([gallium-svga],
     [enable_gallium_svga="$enableval"],
     [enable_gallium_svga=auto])
 if test "x$enable_gallium_svga" = xyes; then
-    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS vmware"
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
+    gallium_check_st "svga/drm" "dri-vmwgfx" "egl-vmwgfx" "xorg-vmwgfx"
 elif test "x$enable_gallium_svga" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
 fi
@@ -1319,9 +1397,11 @@ AC_ARG_ENABLE([gallium-intel],
     [enable_gallium_intel="$enableval"],
     [enable_gallium_intel=auto])
 if test "x$enable_gallium_intel" = xyes; then
-    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS intel i965"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
+    gallium_check_st "i915/drm i965/drm" "dri-i915 dri-i965" "egl-i915 egl-i965" "xorg-i915 xorg-i965"
 elif test "x$enable_gallium_intel" = xauto; then
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
 fi
 
@@ -1334,8 +1414,8 @@ AC_ARG_ENABLE([gallium-radeon],
     [enable_gallium_radeon="$enableval"],
     [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xyes; then
-    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS radeon"
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
+    gallium_check_st "radeon/drm" "dri-radeong" "egl-radeon" "xorg-radeon"
 elif test "x$enable_gallium_radeon" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 fi
@@ -1349,8 +1429,8 @@ AC_ARG_ENABLE([gallium-nouveau],
     [enable_gallium_nouveau="$enableval"],
     [enable_gallium_nouveau=no])
 if test "x$enable_gallium_nouveau" = xyes; then
-    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS nouveau"
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nv30 nv40 nv50"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50"
+    gallium_check_st "nouveau/drm" "dri-nouveau" "egl-nouveau" "xorg-nouveau"
 fi
 
 dnl
@@ -1379,11 +1459,16 @@ dnl Gallium swrast configuration
 dnl
 AC_ARG_ENABLE([gallium-swrast],
     [AS_HELP_STRING([--enable-gallium-swrast],
-        [build gallium swrast @<:@default=disabled@:>@])],
+        [build gallium swrast @<:@default=auto@:>@])],
     [enable_gallium_swrast="$enableval"],
     [enable_gallium_swrast=auto])
-if test "x$enable_gallium_swrast" = xyes; then
-    GALLIUM_WINSYS_DRM_DIRS="$GALLIUM_WINSYS_DRM_DIRS swrast"
+if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xauto; then
+    if test "x$HAVE_ST_DRI" = xyes; then
+        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
+    fi
+    if test "x$HAVE_ST_EGL" = xyes; then
+        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-swrast"
+    fi
 fi
 
 dnl prepend CORE_DIRS to SRC_DIRS
@@ -1436,11 +1521,20 @@ fi
 echo "        Use XCB:         $enable_xcb"
 
 echo ""
+if test "x$MESA_LLVM" == x1; then
+    echo "        llvm:            yes"
+    echo "        llvm-config:     $LLVM_CONFIG"
+    echo "        llvm-version:    $LLVM_VERSION"
+else
+    echo "        llvm:            no"
+fi
+
+echo ""
 if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Gallium:         yes"
     echo "        Gallium dirs:    $GALLIUM_DIRS"
+    echo "        Target dirs:     $GALLIUM_TARGET_DIRS"
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
-    echo "        Winsys drm dirs:$GALLIUM_WINSYS_DRM_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
 else

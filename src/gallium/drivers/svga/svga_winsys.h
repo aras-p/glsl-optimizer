@@ -49,12 +49,18 @@ struct svga_winsys_buffer;
 struct pipe_screen;
 struct pipe_context;
 struct pipe_fence_handle;
-struct pipe_texture;
+struct pipe_resource;
 struct svga_region;
+struct winsys_handle;
 
 
-#define SVGA_BUFFER_USAGE_PINNED  (PIPE_BUFFER_USAGE_CUSTOM << 0)
-#define SVGA_BUFFER_USAGE_WRAPPED (PIPE_BUFFER_USAGE_CUSTOM << 1)
+#define SVGA_BUFFER_USAGE_PINNED  (1 << 0)
+#define SVGA_BUFFER_USAGE_WRAPPED (1 << 1)
+
+
+#define SVGA_RELOC_WRITE 0x1
+#define SVGA_RELOC_READ  0x2
+
 
 
 /** Opaque surface handle */
@@ -187,6 +193,25 @@ struct svga_winsys_screen
                      uint32 numMipLevels);
 
    /**
+    * Creates a surface from a winsys handle.
+    * Used to implement pipe_screen::resource_from_handle.
+    */
+   struct svga_winsys_surface *
+   (*surface_from_handle)(struct svga_winsys_screen *sws,
+                          struct winsys_handle *whandle,
+                          SVGA3dSurfaceFormat *format);
+
+   /**
+    * Get a winsys_handle from a surface.
+    * Used to implement pipe_screen::resource_get_handle.
+    */
+   boolean
+   (*surface_get_handle)(struct svga_winsys_screen *sws,
+                         struct svga_winsys_surface *surface,
+                         unsigned stride,
+                         struct winsys_handle *whandle);
+
+   /**
     * Whether this surface is sitting in a validate list
     */
    boolean
@@ -205,13 +230,7 @@ struct svga_winsys_screen
    /**
     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
     *
-    * Remember that gallium gets to choose the interface it needs, and the
-    * window systems must then implement that interface (rather than the
-    * other way around...).
-    *
-    * usage is a bitmask of PIPE_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
-    * usage argument is only an optimization hint, not a guarantee, therefore 
-    * proper behavior must be observed in all circumstances.
+    * XXX usage seems to be a bitmask of SVGA_BUFFER_USAGE_* flags.
     *
     * alignment indicates the client's alignment requirements, eg for
     * SSE instructions.
@@ -225,9 +244,9 @@ struct svga_winsys_screen
    /** 
     * Map the entire data store of a buffer object into the client's address.
     * flags is a bitmask of:
-    * - PIPE_BUFFER_USAGE_CPU_READ/WRITE
-    * - PIPE_BUFFER_USAGE_DONTBLOCK
-    * - PIPE_BUFFER_USAGE_UNSYNCHRONIZED
+    * - PB_USAGE_CPU_READ/WRITE
+    * - PB_USAGE_DONTBLOCK
+    * - PB_USAGE_UNSYNCHRONIZED
     */
    void *
    (*buffer_map)( struct svga_winsys_screen *sws, 
@@ -278,25 +297,12 @@ svga_screen_create(struct svga_winsys_screen *sws);
 struct svga_winsys_screen *
 svga_winsys_screen(struct pipe_screen *screen);
 
-struct pipe_buffer *
+struct pipe_resource *
 svga_screen_buffer_wrap_surface(struct pipe_screen *screen,
 				enum SVGA3dSurfaceFormat format,
 				struct svga_winsys_surface *srf);
 
 struct svga_winsys_surface *
-svga_screen_texture_get_winsys_surface(struct pipe_texture *texture);
-struct svga_winsys_surface *
-svga_screen_buffer_get_winsys_surface(struct pipe_buffer *buffer);
-
-boolean
-svga_screen_buffer_from_texture(struct pipe_texture *texture,
-				struct pipe_buffer **buffer,
-				unsigned *stride);
-
-struct pipe_texture *
-svga_screen_texture_wrap_surface(struct pipe_screen *screen,
-				 struct pipe_texture *base,
-				 enum SVGA3dSurfaceFormat format,
-				 struct svga_winsys_surface *srf);
+svga_screen_buffer_get_winsys_surface(struct pipe_resource *buffer);
 
 #endif /* SVGA_WINSYS_H_ */

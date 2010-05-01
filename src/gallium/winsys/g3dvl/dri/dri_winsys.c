@@ -279,7 +279,7 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
    unsigned int attachments[1] = {DRI_BUFFER_FRONT_LEFT};
    int count;
    DRI2Buffer *dri2_front;
-   struct pipe_texture template, *front_tex;
+   struct pipe_resource template, *front_tex;
    struct pipe_surface *front_surf = NULL;
 
    assert(vl_dri_scrn);
@@ -287,13 +287,18 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
    dri2_front = DRI2GetBuffers(vl_dri_scrn->dri_screen->display,
                                drawable, &w, &h, attachments, 1, &count);
    if (dri2_front) {
-      front_tex = vl_dri_scrn->api->texture_from_shared_handle(vl_dri_scrn->api, vl_dri_scrn->base.pscreen,
-                                                               &template, "", dri2_front->pitch, dri2_front->name);
+      struct winsys_handle dri2_front_handle =
+      {
+         .type = DRM_API_HANDLE_TYPE_SHARED,
+         .handle = dri2_front->name,
+         .stride = dri2_front->pitch
+      };
+      front_tex = vl_dri_scrn->base.pscreen->resource_from_handle(vl_dri_scrn->base.pscreen, &template, &dri2_front_handle);
       if (front_tex)
          front_surf = vl_dri_scrn->base.pscreen->get_tex_surface(vl_dri_scrn->base.pscreen,
                                                                  front_tex, 0, 0, 0,
-                                                                 PIPE_BUFFER_USAGE_GPU_READ_WRITE);
-      pipe_texture_reference(&front_tex, NULL);
+                                                                 /*PIPE_BIND_RENDER_TARGET*/ PIPE_BIND_BLIT_DESTINATION);
+      pipe_resource_reference(&front_tex, NULL);
    }
 
    return front_surf;

@@ -30,7 +30,7 @@
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_context.h"
-#include "svga_screen_texture.h"
+#include "svga_resource_texture.h"
 
 #include "svga_debug.h"
 
@@ -155,7 +155,7 @@ static void svga_bind_sampler_states(struct pipe_context *pipe,
    /* Check for no-op */
    if (num == svga->curr.num_samplers &&
        !memcmp(svga->curr.sampler, sampler, num * sizeof(void *))) {
-      debug_printf("sampler noop\n");
+      if (0) debug_printf("sampler noop\n");
       return;
    }
 
@@ -176,9 +176,36 @@ static void svga_delete_sampler_state(struct pipe_context *pipe,
 }
 
 
-static void svga_set_sampler_textures(struct pipe_context *pipe,
-                                      unsigned num,
-                                      struct pipe_texture **texture)
+static struct pipe_sampler_view *
+svga_create_sampler_view(struct pipe_context *pipe,
+                         struct pipe_resource *texture,
+                         const struct pipe_sampler_view *templ)
+{
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   if (view) {
+      *view = *templ;
+      view->reference.count = 1;
+      view->texture = NULL;
+      pipe_resource_reference(&view->texture, texture);
+      view->context = pipe;
+   }
+
+   return view;
+}
+
+
+static void
+svga_sampler_view_destroy(struct pipe_context *pipe,
+                          struct pipe_sampler_view *view)
+{
+   pipe_resource_reference(&view->texture, NULL);
+   FREE(view);
+}
+
+static void svga_set_sampler_views(struct pipe_context *pipe,
+                                   unsigned num,
+                                   struct pipe_sampler_view **views)
 {
    struct svga_context *svga = svga_context(pipe);
    unsigned flag_1d = 0;
@@ -188,31 +215,31 @@ static void svga_set_sampler_textures(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == svga->curr.num_textures &&
-       !memcmp(svga->curr.texture, texture, num * sizeof(struct pipe_texture *))) {
+   if (num == svga->curr.num_sampler_views &&
+       !memcmp(svga->curr.sampler_views, views, num * sizeof(struct pipe_sampler_view *))) {
       if (0) debug_printf("texture noop\n");
       return;
    }
 
    for (i = 0; i < num; i++) {
-      pipe_texture_reference(&svga->curr.texture[i],
-                             texture[i]);
+      pipe_sampler_view_reference(&svga->curr.sampler_views[i],
+                                  views[i]);
 
-      if (!texture[i])
+      if (!views[i])
          continue;
 
-      if (texture[i]->format == PIPE_FORMAT_B8G8R8A8_SRGB)
+      if (views[i]->texture->format == PIPE_FORMAT_B8G8R8A8_SRGB)
          flag_srgb |= 1 << i;
 
-      if (texture[i]->target == PIPE_TEXTURE_1D)
+      if (views[i]->texture->target == PIPE_TEXTURE_1D)
          flag_1d |= 1 << i;
    }
 
-   for (i = num; i < svga->curr.num_textures; i++)
-      pipe_texture_reference(&svga->curr.texture[i],
-                             NULL);
+   for (i = num; i < svga->curr.num_sampler_views; i++)
+      pipe_sampler_view_reference(&svga->curr.sampler_views[i],
+                                  NULL);
 
-   svga->curr.num_textures = num;
+   svga->curr.num_sampler_views = num;
    svga->dirty |= SVGA_NEW_TEXTURE_BINDING;
 
    if (flag_srgb != svga->curr.tex_flags.flag_srgb ||
@@ -231,7 +258,9 @@ void svga_init_sampler_functions( struct svga_context *svga )
    svga->pipe.create_sampler_state = svga_create_sampler_state;
    svga->pipe.bind_fragment_sampler_states = svga_bind_sampler_states;
    svga->pipe.delete_sampler_state = svga_delete_sampler_state;
-   svga->pipe.set_fragment_sampler_textures = svga_set_sampler_textures;
+   svga->pipe.set_fragment_sampler_views = svga_set_sampler_views;
+   svga->pipe.create_sampler_view = svga_create_sampler_view;
+   svga->pipe.sampler_view_destroy = svga_sampler_view_destroy;
 }
 
 

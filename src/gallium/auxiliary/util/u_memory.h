@@ -88,7 +88,7 @@ mem_dup(const void *src, uint size)
 /**
  * Offset of a field in a struct, in bytes.
  */
-#define Offset(TYPE, MEMBER) ((unsigned)&(((TYPE *)NULL)->MEMBER))
+#define Offset(TYPE, MEMBER) ((uintptr_t)&(((TYPE *)NULL)->MEMBER))
 
 
 

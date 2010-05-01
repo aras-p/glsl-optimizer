@@ -76,7 +76,8 @@ struct translate {
    void (*set_buffer)( struct translate *,
 		       unsigned i,
 		       const void *ptr,
-		       unsigned stride );
+		       unsigned stride,
+		       unsigned max_index );
 
    void (PIPE_CDECL *run_elts)( struct translate *,
                                 const unsigned *elts,

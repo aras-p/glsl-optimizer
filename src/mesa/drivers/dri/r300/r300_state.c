@@ -46,13 +46,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/simple_list.h"
 #include "main/api_arrayelt.h"
 
+#include "drivers/common/meta.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
-#include "tnl/t_vp_build.h"
 
 #include "r300_context.h"
 #include "r300_state.h"
@@ -366,7 +366,6 @@ static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
 	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
 	ip = (GLint *)ctx->Transform._ClipUserPlane[p];
 
-	R300_STATECHANGE( rmesa, vap_flush );
 	R300_STATECHANGE( rmesa, vpucp[p] );
 	rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
 	rmesa->hw.vpucp[p].cmd[R300_VPUCP_Y] = ip[1];
@@ -590,7 +589,7 @@ static void r300SetDepthState(GLcontext * ctx)
 					    R500_STENCIL_REFMASK_FRONT_BACK);
 	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_Z_FUNC_SHIFT);
 
-	if (ctx->Depth.Test) {
+	if (ctx->Depth.Test && ctx->DrawBuffer->_DepthBuffer) {
 		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_ENABLE;
 		if (ctx->Depth.Mask)
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_WRITE_ENABLE;
@@ -794,12 +793,14 @@ static void r300PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * pa
 		R300_STATECHANGE(r300, ga_point_minmax);
 		r300->hw.ga_point_minmax.cmd[1] &= ~R300_GA_POINT_MINMAX_MIN_MASK;
 		r300->hw.ga_point_minmax.cmd[1] |= (GLuint)(ctx->Point.MinSize * 6.0);
+		r300PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_SIZE_MAX:
 		R300_STATECHANGE(r300, ga_point_minmax);
 		r300->hw.ga_point_minmax.cmd[1] &= ~R300_GA_POINT_MINMAX_MAX_MASK;
 		r300->hw.ga_point_minmax.cmd[1] |= (GLuint)(ctx->Point.MaxSize * 6.0)
 			<< R300_GA_POINT_MINMAX_MAX_SHIFT;
+		r300PointSize(ctx, ctx->Point.Size);
 		break;
 	case GL_POINT_DISTANCE_ATTENUATION:
 		break;
@@ -1657,20 +1658,21 @@ void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
 				    (5 << R300_PVS_NUM_CNTLRS_SHIFT) |
 				    (5 << R300_VF_MAX_VTX_NUM_SHIFT));
 
-    if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
-	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
-    else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
-	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560) ||
-	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
+    if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300) ||
+	(rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R350))
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+    else if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530)
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (5 << R300_PVS_NUM_FPUS_SHIFT);
     else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV410) ||
 	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420))
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (6 << R300_PVS_NUM_FPUS_SHIFT);
     else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
-	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580))
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580) ||
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560) ||
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
 	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (8 << R300_PVS_NUM_FPUS_SHIFT);
     else
-	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
 
 }
 
@@ -1761,8 +1763,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	if (RADEON_DEBUG & RADEON_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	radeon_firevertices(&r300->radeon);
 
 	r300ColorMask(ctx,
 		      ctx->Color.ColorMask[0][RCOMP],
@@ -1984,23 +1984,6 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 
 	if (rmesa->options.hw_tcl_enabled) {
 		struct r300_vertex_program *vp;
-
-		if (rmesa->radeon.NewGLState) {
-			int i;
-			for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-				rmesa->temp_attrib[i] =
-				    TNL_CONTEXT(ctx)->vb.AttribPtr[i];
-				TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-				    &rmesa->dummy_attrib[i];
-			}
-
-			_tnl_UpdateFixedFunctionProgram(ctx);
-
-			for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-				TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-				    rmesa->temp_attrib[i];
-			}
-		}
 
 		vp = r300SelectAndTranslateVertexShader(ctx);
 
@@ -2255,6 +2238,68 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	}
 }
 
+#define EASY_US_OUT_FMT(comps, c0, c1, c2, c3) \
+	(R500_OUT_FMT_##comps | R500_C0_SEL_##c0 | R500_C1_SEL_##c1 | \
+	 R500_C2_SEL_##c2 | R500_C3_SEL_##c3)
+static void r300SetupUsOutputFormat(GLcontext *ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	uint32_t hw_format;
+	struct radeon_renderbuffer *rrb = radeon_get_colorbuffer(&rmesa->radeon);
+
+	if (!rrb) {
+		return;
+	}
+	
+	switch (rrb->base.Format)
+	{
+		case MESA_FORMAT_RGBA5551:
+		case MESA_FORMAT_RGBA8888:
+			hw_format = EASY_US_OUT_FMT(C4_8, A, B, G, R);
+			break;
+		case MESA_FORMAT_RGB565_REV:
+		case MESA_FORMAT_RGBA8888_REV:
+			hw_format = EASY_US_OUT_FMT(C4_8, R, G, B, A);
+			break;
+		case MESA_FORMAT_RGB565:
+		case MESA_FORMAT_ARGB4444:
+		case MESA_FORMAT_ARGB1555:
+		case MESA_FORMAT_XRGB8888:
+		case MESA_FORMAT_ARGB8888:
+			hw_format = EASY_US_OUT_FMT(C4_8, B, G, R, A);
+			break;
+		case MESA_FORMAT_ARGB4444_REV:
+		case MESA_FORMAT_ARGB1555_REV:
+		case MESA_FORMAT_XRGB8888_REV:
+		case MESA_FORMAT_ARGB8888_REV:
+			hw_format = EASY_US_OUT_FMT(C4_8, A, R, G, B);
+			break;
+		case MESA_FORMAT_SRGBA8:
+			hw_format = EASY_US_OUT_FMT(C4_10_GAMMA, A, B, G, R);
+			break;
+		case MESA_FORMAT_SARGB8:
+			hw_format = EASY_US_OUT_FMT(C4_10_GAMMA, B, G, R, A);
+			break;
+		case MESA_FORMAT_SL8:
+			hw_format = EASY_US_OUT_FMT(C4_10_GAMMA, A, A, R, A);
+			break;
+		case MESA_FORMAT_A8:
+			hw_format = EASY_US_OUT_FMT(C4_8, A, A, A, A);
+			break;
+		case MESA_FORMAT_L8:
+		case MESA_FORMAT_I8:
+			hw_format = EASY_US_OUT_FMT(C4_8, A, A, R, A);
+			break;
+		default:
+			assert(!"Unsupported format");
+			break;
+	}
+
+	R300_STATECHANGE(rmesa, us_out_fmt);
+	rmesa->hw.us_out_fmt.cmd[1] = hw_format;
+}
+#undef EASY_US_OUT_FMT
+
 /**
  * Called by Mesa after an internal state update.
  */
@@ -2284,6 +2329,10 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 			r300->hw.shade2.cmd[1] &= ~R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST;
 	}
 
+	if (new_state & _NEW_BUFFERS) {
+		r300SetupUsOutputFormat(ctx);
+	}
+
 	r300->radeon.NewGLState |= new_state;
 }
 
@@ -2305,7 +2354,7 @@ static void r300RenderMode(GLcontext * ctx, GLenum mode)
 /**
  * Initialize driver's state callback functions
  */
-void r300InitStateFuncs(struct dd_function_table *functions)
+void r300InitStateFuncs(radeonContextPtr radeon, struct dd_function_table *functions)
 {
 
 	functions->UpdateState = r300InvalidateState;
@@ -2344,8 +2393,13 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->ClipPlane = r300ClipPlane;
 	functions->Scissor = radeonScissor;
 
-	functions->DrawBuffer		= radeonDrawBuffer;
-	functions->ReadBuffer		= radeonReadBuffer;
+	functions->DrawBuffer = radeonDrawBuffer;
+	functions->ReadBuffer = radeonReadBuffer;
+
+	functions->CopyPixels = _mesa_meta_CopyPixels;
+	functions->DrawPixels = _mesa_meta_DrawPixels;
+	if (radeon->radeonScreen->kernel_mm)
+		functions->ReadPixels = radeonReadPixels;
 }
 
 void r300InitShaderFunctions(r300ContextPtr r300)

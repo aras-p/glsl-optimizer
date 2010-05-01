@@ -80,6 +80,7 @@ struct visual_attribs
 
    /* GL visual attribs */
    int supportsGL;
+   int drawableType;
    int transparentType;
    int transparentRedValue;
    int transparentGreenValue;
@@ -585,6 +586,28 @@ visual_class_name(int cls)
    }
 }
 
+static const char *
+visual_drawable_type(int type)
+{
+   static char buffer[256], *p;
+   const static struct { int bit; const char *name; } bits[] = {
+      { GLX_WINDOW_BIT, "window" },
+      { GLX_PIXMAP_BIT, "pixmap" },
+      { GLX_PBUFFER_BIT, "pbuffer" }
+   };
+   int i;
+
+   p = buffer;
+   for (i = 0; i < 3; i++) {
+      if (p > buffer)
+	 *p++ = ',';
+      if (type & bits[i].bit)
+	 strcpy(p, bits[i].name);
+      p += strlen(bits[i].name);
+   }
+
+   return buffer;
+}
 
 static const char *
 visual_class_abbrev(int cls)
@@ -655,6 +678,7 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    else
       attribs->render_type = GLX_COLOR_INDEX_BIT;
    
+   glXGetConfig(dpy, vInfo, GLX_DRAWABLE_TYPE, &attribs->drawableType);
    glXGetConfig(dpy, vInfo, GLX_DOUBLEBUFFER, &attribs->doubleBuffer);
    glXGetConfig(dpy, vInfo, GLX_STEREO, &attribs->stereo);
    glXGetConfig(dpy, vInfo, GLX_AUX_BUFFERS, &attribs->auxBuffers);
@@ -753,6 +777,7 @@ get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_X_VISUAL_TYPE, &visual_type);
    attribs->klass = glx_token_to_visual_class(visual_type);
 
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_DRAWABLE_TYPE, &attribs->drawableType);
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_BUFFER_SIZE, &attribs->bufferSize);
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_LEVEL, &attribs->level);
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_RENDER_TYPE, &attribs->render_type);
@@ -798,8 +823,9 @@ get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
 static void
 print_visual_attribs_verbose(const struct visual_attribs *attribs)
 {
-   printf("Visual ID: %x  depth=%d  class=%s\n",
-          attribs->id, attribs->depth, visual_class_name(attribs->klass));
+   printf("Visual ID: %x  depth=%d  class=%s, type=%s\n",
+          attribs->id, attribs->depth, visual_class_name(attribs->klass),
+	  visual_drawable_type(attribs->drawableType));
    printf("    bufferSize=%d level=%d renderType=%s doubleBuffer=%d stereo=%d\n",
           attribs->bufferSize, attribs->level,
 	  visual_render_type_name(attribs->render_type),

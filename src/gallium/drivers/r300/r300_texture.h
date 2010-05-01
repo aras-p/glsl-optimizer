@@ -23,14 +23,14 @@
 #ifndef R300_TEXTURE_H
 #define R300_TEXTURE_H
 
-#include "pipe/p_video_state.h"
 #include "util/u_format.h"
-
-#include "r300_reg.h"
 
 struct r300_texture;
 
-void r300_init_screen_texture_functions(struct pipe_screen* screen);
+uint32_t r300_translate_texformat(enum pipe_format format,
+                                  const unsigned char *swizzle);
+
+uint32_t r500_tx_format_msb_bit(enum pipe_format format);
 
 unsigned r300_texture_get_stride(struct r300_screen* screen,
                                  struct r300_texture* tex, unsigned level);
@@ -39,7 +39,7 @@ unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
                                  unsigned zslice, unsigned face);
 
 void r300_texture_reinterpret_format(struct pipe_screen *screen,
-                                     struct pipe_texture *tex,
+                                     struct pipe_resource *tex,
                                      enum pipe_format new_format);
 
 boolean r300_is_colorbuffer_format_supported(enum pipe_format format);
@@ -48,25 +48,24 @@ boolean r300_is_zs_format_supported(enum pipe_format format);
 
 boolean r300_is_sampler_format_supported(enum pipe_format format);
 
-struct r300_video_surface
-{
-    struct pipe_video_surface   base;
-    struct pipe_texture         *tex;
-};
 
-static INLINE struct r300_video_surface *
-r300_video_surface(struct pipe_video_surface *pvs)
-{
-    return (struct r300_video_surface *)pvs;
-}
+struct pipe_resource*
+r300_texture_from_handle(struct pipe_screen* screen,
+			 const struct pipe_resource* base,
+			 struct winsys_handle *whandle);
 
-#ifndef R300_WINSYS_H
+struct pipe_resource*
+r300_texture_create(struct pipe_screen* screen,
+		    const struct pipe_resource* templ);
 
-boolean r300_get_texture_buffer(struct pipe_screen* screen,
-                                struct pipe_texture* texture,
-                                struct pipe_buffer** buffer,
-                                unsigned* stride);
 
-#endif /* R300_WINSYS_H */
+struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
+					  struct pipe_resource* texture,
+					  unsigned face,
+					  unsigned level,
+					  unsigned zslice,
+					  unsigned flags);
+
+void r300_tex_surface_destroy(struct pipe_surface* s);
 
 #endif /* R300_TEXTURE_H */

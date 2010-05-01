@@ -142,7 +142,7 @@ static void CheckOrientation( GLUtesselator *tess )
   GLUhalfEdge *e;
 
   /* When we compute the normal automatically, we choose the orientation
-   * so that the the sum of the signed areas of all contours is non-negative.
+   * so that the sum of the signed areas of all contours is non-negative.
    */
   area = 0;
   for( f = fHead->next; f != fHead; f = f->next ) {

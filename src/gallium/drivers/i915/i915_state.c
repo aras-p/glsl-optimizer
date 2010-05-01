@@ -39,6 +39,7 @@
 #include "i915_reg.h"
 #include "i915_state_inlines.h"
 #include "i915_fpc.h"
+#include "i915_resource.h"
 
 /* The i915 (and related graphics cores) do not support GL_CLAMP.  The
  * Intel drivers for "other operating systems" implement GL_CLAMP as
@@ -523,10 +524,9 @@ static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
-                                     struct pipe_buffer *buf)
+                                     struct pipe_resource *buf)
 {
    struct i915_context *i915 = i915_context(pipe);
-   struct pipe_screen *screen = pipe->screen;
    draw_flush(i915->draw);
 
    assert(shader < PIPE_SHADER_TYPES);
@@ -542,27 +542,23 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
     * N constants, leaving any extras from shader translation alone.
     */
    if (buf) {
-      void *mapped;
-      if (buf->size &&
-          (mapped = pipe_buffer_map(screen, buf,
-                                    PIPE_BUFFER_USAGE_CPU_READ))) {
-         memcpy(i915->current.constants[shader], mapped, buf->size);
-         pipe_buffer_unmap(screen, buf);
-         i915->current.num_user_constants[shader]
-            = buf->size / (4 * sizeof(float));
-      }
-      else {
-         i915->current.num_user_constants[shader] = 0;
-      }
+      struct i915_buffer *ir = i915_buffer(buf);
+      memcpy(i915->current.constants[shader], ir->data, ir->b.b.width0);
+      i915->current.num_user_constants[shader] = (ir->b.b.width0 /
+						  4 * sizeof(float));
    }
+   else {
+      i915->current.num_user_constants[shader] = 0;
+   }
+
 
    i915->dirty |= I915_NEW_CONSTANTS;
 }
 
 
-static void i915_set_sampler_textures(struct pipe_context *pipe,
-                                      unsigned num,
-                                      struct pipe_texture **texture)
+static void i915_set_fragment_sampler_views(struct pipe_context *pipe,
+                                            unsigned num,
+                                            struct pipe_sampler_view **views)
 {
    struct i915_context *i915 = i915_context(pipe);
    uint i;
@@ -570,26 +566,53 @@ static void i915_set_sampler_textures(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == i915->num_textures &&
-       !memcmp(i915->texture, texture, num * sizeof(struct pipe_texture *)))
+   if (num == i915->num_fragment_sampler_views &&
+       !memcmp(i915->fragment_sampler_views, views, num * sizeof(struct pipe_sampler_view *)))
       return;
 
    /* Fixes wrong texture in texobj with VBUF */
    draw_flush(i915->draw);
 
    for (i = 0; i < num; i++)
-      pipe_texture_reference((struct pipe_texture **) &i915->texture[i],
-                             texture[i]);
+      pipe_sampler_view_reference(&i915->fragment_sampler_views[i],
+                                  views[i]);
 
-   for (i = num; i < i915->num_textures; i++)
-      pipe_texture_reference((struct pipe_texture **) &i915->texture[i],
-                             NULL);
+   for (i = num; i < i915->num_fragment_sampler_views; i++)
+      pipe_sampler_view_reference(&i915->fragment_sampler_views[i],
+                                  NULL);
 
-   i915->num_textures = num;
+   i915->num_fragment_sampler_views = num;
 
-   i915->dirty |= I915_NEW_TEXTURE;
+   i915->dirty |= I915_NEW_SAMPLER_VIEW;
 }
 
+
+static struct pipe_sampler_view *
+i915_create_sampler_view(struct pipe_context *pipe,
+                         struct pipe_resource *texture,
+                         const struct pipe_sampler_view *templ)
+{
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   if (view) {
+      *view = *templ;
+      view->reference.count = 1;
+      view->texture = NULL;
+      pipe_resource_reference(&view->texture, texture);
+      view->context = pipe;
+   }
+
+   return view;
+}
+
+
+static void
+i915_sampler_view_destroy(struct pipe_context *pipe,
+                          struct pipe_sampler_view *view)
+{
+   pipe_resource_reference(&view->texture, NULL);
+   FREE(view);
+}
 
 
 static void i915_set_framebuffer_state(struct pipe_context *pipe,
@@ -714,7 +737,8 @@ static void i915_bind_rasterizer_state( struct pipe_context *pipe,
 
    /* pass-through to draw module */
    draw_set_rasterizer_state(i915->draw,
-                          (i915->rasterizer ? i915->rasterizer->templ : NULL));
+                           (i915->rasterizer ? i915->rasterizer->templ : NULL),
+                           raster);
 
    i915->dirty |= I915_NEW_RASTERIZER;
 }
@@ -742,21 +766,45 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
    draw_set_vertex_buffers(i915->draw, count, buffers);
 }
 
-static void i915_set_vertex_elements(struct pipe_context *pipe,
-                                     unsigned count,
-                                     const struct pipe_vertex_element *elements)
+static void *
+i915_create_vertex_elements_state(struct pipe_context *pipe,
+                                  unsigned count,
+                                  const struct pipe_vertex_element *attribs)
+{
+   struct i915_velems_state *velems;
+   assert(count <= PIPE_MAX_ATTRIBS);
+   velems = (struct i915_velems_state *) MALLOC(sizeof(struct i915_velems_state));
+   if (velems) {
+      velems->count = count;
+      memcpy(velems->velem, attribs, sizeof(*attribs) * count);
+   }
+   return velems;
+}
+
+static void
+i915_bind_vertex_elements_state(struct pipe_context *pipe,
+                                void *velems)
 {
    struct i915_context *i915 = i915_context(pipe);
+   struct i915_velems_state *i915_velems = (struct i915_velems_state *) velems;
+
    /* Because we change state before the draw_set_vertex_buffers call
     * we need a flush here, just to be sure.
     */
    draw_flush(i915->draw);
 
-   i915->num_vertex_elements = count;
    /* pass-through to draw module */
-   draw_set_vertex_elements(i915->draw, count, elements);
+   if (i915_velems) {
+      draw_set_vertex_elements(i915->draw,
+            i915_velems->count, i915_velems->velem);
+   }
 }
 
+static void
+i915_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
+{
+   FREE( velems );
+}
 
 void
 i915_init_state_functions( struct i915_context *i915 )
@@ -782,6 +830,9 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.create_vs_state = i915_create_vs_state;
    i915->base.bind_vs_state = i915_bind_vs_state;
    i915->base.delete_vs_state = i915_delete_vs_state;
+   i915->base.create_vertex_elements_state = i915_create_vertex_elements_state;
+   i915->base.bind_vertex_elements_state = i915_bind_vertex_elements_state;
+   i915->base.delete_vertex_elements_state = i915_delete_vertex_elements_state;
 
    i915->base.set_blend_color = i915_set_blend_color;
    i915->base.set_stencil_ref = i915_set_stencil_ref;
@@ -791,8 +842,9 @@ i915_init_state_functions( struct i915_context *i915 )
 
    i915->base.set_polygon_stipple = i915_set_polygon_stipple;
    i915->base.set_scissor_state = i915_set_scissor_state;
-   i915->base.set_fragment_sampler_textures = i915_set_sampler_textures;
+   i915->base.set_fragment_sampler_views = i915_set_fragment_sampler_views;
+   i915->base.create_sampler_view = i915_create_sampler_view;
+   i915->base.sampler_view_destroy = i915_sampler_view_destroy;
    i915->base.set_viewport_state = i915_set_viewport_state;
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
-   i915->base.set_vertex_elements = i915_set_vertex_elements;
 }

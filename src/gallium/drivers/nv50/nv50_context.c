@@ -25,6 +25,7 @@
 
 #include "nv50_context.h"
 #include "nv50_screen.h"
+#include "nv50_resource.h"
 
 static void
 nv50_flush(struct pipe_context *pipe, unsigned flags,
@@ -46,43 +47,13 @@ static void
 nv50_destroy(struct pipe_context *pipe)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
+	int i;
 
-        if (nv50->state.fb)
-		so_ref(NULL, &nv50->state.fb);
-	if (nv50->state.blend)
-		so_ref(NULL, &nv50->state.blend);
-	if (nv50->state.blend_colour)
-		so_ref(NULL, &nv50->state.blend_colour);
-	if (nv50->state.zsa)
-		so_ref(NULL, &nv50->state.zsa);
-	if (nv50->state.rast)
-		so_ref(NULL, &nv50->state.rast);
-	if (nv50->state.stipple)
-		so_ref(NULL, &nv50->state.stipple);
-	if (nv50->state.scissor)
-		so_ref(NULL, &nv50->state.scissor);
-	if (nv50->state.viewport)
-		so_ref(NULL, &nv50->state.viewport);
-	if (nv50->state.tsc_upload)
-		so_ref(NULL, &nv50->state.tsc_upload);
-	if (nv50->state.tic_upload)
-		so_ref(NULL, &nv50->state.tic_upload);
-	if (nv50->state.vertprog)
-		so_ref(NULL, &nv50->state.vertprog);
-	if (nv50->state.fragprog)
-		so_ref(NULL, &nv50->state.fragprog);
-	if (nv50->state.geomprog)
-		so_ref(NULL, &nv50->state.geomprog);
-	if (nv50->state.fp_linkage)
-		so_ref(NULL, &nv50->state.fp_linkage);
-	if (nv50->state.gp_linkage)
-		so_ref(NULL, &nv50->state.gp_linkage);
-	if (nv50->state.vtxfmt)
-		so_ref(NULL, &nv50->state.vtxfmt);
-	if (nv50->state.vtxbuf)
-		so_ref(NULL, &nv50->state.vtxbuf);
-	if (nv50->state.vtxattr)
-		so_ref(NULL, &nv50->state.vtxattr);
+	for (i = 0; i < 64; i++) {
+		if (!nv50->state.hw[i])
+			continue;
+		so_ref(NULL, &nv50->state.hw[i]);
+	}
 
 	draw_destroy(nv50->draw);
 
@@ -119,17 +90,14 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 
 	nv50->pipe.flush = nv50_flush;
 
-	nv50->pipe.is_texture_referenced = nouveau_is_texture_referenced;
-	nv50->pipe.is_buffer_referenced = nouveau_is_buffer_referenced;
-
 	screen->base.channel->user_private = nv50;
-	screen->base.channel->flush_notify = nv50_state_flush_notify;
 
 	nv50_init_surface_functions(nv50);
 	nv50_init_state_functions(nv50);
 	nv50_init_query_functions(nv50);
+	nv50_init_resource_functions(&nv50->pipe);
 
-	nv50->draw = draw_create();
+	nv50->draw = draw_create(&nv50->pipe);
 	assert(nv50->draw);
 	draw_set_rasterize_stage(nv50->draw, nv50_draw_render_stage(nv50));
 

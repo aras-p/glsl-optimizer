@@ -30,15 +30,17 @@ PrintString(const char *s)
 
 
 static void
-doPolygon( GLint verts, GLfloat radius, GLfloat z )
+doPolygon( GLenum mode, GLint verts, GLfloat radius, GLfloat z )
 {
    int i;
+   glBegin(mode);
    for (i = 0; i < verts; i++) {
       float a = (i * 2.0 * 3.14159) / verts;
       float x = radius * cos(a);
       float y = radius * sin(a);
       glVertex3f(x, y, z);
    }
+   glEnd();
 }
 
 
@@ -47,35 +49,23 @@ DrawObject( void )
 {
    glLineWidth(3.0);
    glColor3f(1, 1, 1);
-   glBegin(GL_LINE_LOOP);
-   doPolygon(12, 1.2, 0);
-   glEnd();
+   doPolygon(GL_LINE_LOOP, 12, 1.2, 0);
 
    glLineWidth(1.0);
    glColor3f(1, 1, 1);
-   glBegin(GL_LINE_LOOP);
-   doPolygon(12, 1.1, 0);
-   glEnd();
+   doPolygon(GL_LINE_LOOP, 12, 1.1, 0);
 
    glColor3f(1, 0, 0);
-   glBegin(GL_POLYGON);
-   doPolygon(12, 0.4, 0.3);
-   glEnd();
+   doPolygon(GL_POLYGON, 12, 0.4, 0.3);
 
    glColor3f(0, 1, 0);
-   glBegin(GL_POLYGON);
-   doPolygon(12, 0.6, 0.2);
-   glEnd();
+   doPolygon(GL_POLYGON, 12, 0.6, 0.2);
 
    glColor3f(0, 0, 1);
-   glBegin(GL_POLYGON);
-   doPolygon(12, 0.8, 0.1);
-   glEnd();
+   doPolygon(GL_POLYGON, 12, 0.8, 0.1);
 
    glColor3f(1, 1, 1);
-   glBegin(GL_POLYGON);
-   doPolygon(12, 1.0, 0);
-   glEnd();
+   doPolygon(GL_POLYGON, 12, 1.0, 0);
 }
 
 
@@ -85,36 +75,38 @@ Display( void )
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    glColor3f(1, 1, 1);
+
+   glRasterPos2f(-3.1, -1.6);
+   PrintString("No antialiasing");
+
+   glRasterPos2f(-0.8, -1.6);
    if (HaveMultisample) {
-      glRasterPos2f(-3.1, -1.6);
       if (DoMultisample)
-         PrintString("MULTISAMPLE");
+         PrintString("  MULTISAMPLE");
       else
          PrintString("MULTISAMPLE (off)");
    }
-   glRasterPos2f(-0.8, -1.6);
-   PrintString("No antialiasing");
+   else
+      PrintString("MULTISAMPLE (N/A)");
+
    glRasterPos2f(1.6, -1.6);
    PrintString("GL_POLYGON_SMOOTH");
 
-   /* multisample */
-   if (HaveMultisample) {
-      glEnable(GL_DEPTH_TEST);
-      if (DoMultisample)
-         glEnable(GL_MULTISAMPLE_ARB);
-      glPushMatrix();
-      glTranslatef(-2.5, 0, 0);
-      glPushMatrix();
-      glRotatef(Zrot, 0, 0, 1);
-      DrawObject();
-      glPopMatrix();
-      glPopMatrix();
-      glDisable(GL_MULTISAMPLE_ARB);
-      glDisable(GL_DEPTH_TEST);
-   }
-
    /* non-aa */
    glEnable(GL_DEPTH_TEST);
+   glPushMatrix();
+   glTranslatef(-2.5, 0, 0);
+   glPushMatrix();
+   glRotatef(Zrot, 0, 0, 1);
+   DrawObject();
+   glPopMatrix();
+   glPopMatrix();
+   glDisable(GL_DEPTH_TEST);
+
+   /* multisample */
+   glEnable(GL_DEPTH_TEST);
+   if (HaveMultisample && DoMultisample)
+      glEnable(GL_MULTISAMPLE_ARB);
    glPushMatrix();
    glTranslatef(0, 0, 0);
    glPushMatrix();
@@ -122,6 +114,7 @@ Display( void )
    DrawObject();
    glPopMatrix();
    glPopMatrix();
+   glDisable(GL_MULTISAMPLE_ARB);
    glDisable(GL_DEPTH_TEST);
 
    /* polygon smooth */

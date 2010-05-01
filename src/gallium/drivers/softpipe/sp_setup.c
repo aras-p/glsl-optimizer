@@ -47,6 +47,7 @@
 #define DEBUG_VERTS 0
 #define DEBUG_FRAGS 0
 
+
 /**
  * Triangle edge info
  */
@@ -59,11 +60,16 @@ struct edge {
 };
 
 
+/**
+ * Max number of quads (2x2 pixel blocks) to process per batch.
+ * This can't be arbitrarily increased since we depend on some 32-bit
+ * bitmasks (two bits per quad).
+ */
 #define MAX_QUADS 16
 
 
 /**
- * Triangle setup info (derived from draw_stage).
+ * Triangle setup info.
  * Also used for line drawing (taking some liberties).
  */
 struct setup_context {
@@ -140,7 +146,7 @@ cull_tri(const struct setup_context *setup, float det)
  * Clip setup->quad against the scissor/surface bounds.
  */
 static INLINE void
-quad_clip( struct setup_context *setup, struct quad_header *quad )
+quad_clip(struct setup_context *setup, struct quad_header *quad)
 {
    const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
    const int minx = (int) cliprect->minx;
@@ -171,7 +177,7 @@ quad_clip( struct setup_context *setup, struct quad_header *quad )
  * Emit a quad (pass to next stage) with clipping.
  */
 static INLINE void
-clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
+clip_emit_quad(struct setup_context *setup, struct quad_header *quad)
 {
    quad_clip( setup, quad );
 
@@ -188,12 +194,15 @@ clip_emit_quad( struct setup_context *setup, struct quad_header *quad )
  * Given an X or Y coordinate, return the block/quad coordinate that it
  * belongs to.
  */
-static INLINE int block( int x )
+static INLINE int
+block(int x)
 {
    return x & ~(2-1);
 }
 
-static INLINE int block_x( int x )
+
+static INLINE int
+block_x(int x)
 {
    return x & ~(16-1);
 }
@@ -202,9 +211,10 @@ static INLINE int block_x( int x )
 /**
  * Render a horizontal span of quads
  */
-static void flush_spans( struct setup_context *setup )
+static void
+flush_spans(struct setup_context *setup)
 {
-   const int step = 16;
+   const int step = MAX_QUADS;
    const int xleft0 = setup->span.left[0];
    const int xleft1 = setup->span.left[1];
    const int xright0 = setup->span.right[0];
@@ -265,8 +275,9 @@ static void flush_spans( struct setup_context *setup )
 
 
 #if DEBUG_VERTS
-static void print_vertex(const struct setup_context *setup,
-                         const float (*v)[4])
+static void
+print_vertex(const struct setup_context *setup,
+             const float (*v)[4])
 {
    int i;
    debug_printf("   Vertex: (%p)\n", (void *) v);
@@ -280,16 +291,18 @@ static void print_vertex(const struct setup_context *setup,
 }
 #endif
 
+
 /**
  * Sort the vertices from top to bottom order, setting up the triangle
  * edge fields (ebot, emaj, etop).
  * \return FALSE if coords are inf/nan (cull the tri), TRUE otherwise
  */
-static boolean setup_sort_vertices( struct setup_context *setup,
-                                    float det,
-                                    const float (*v0)[4],
-                                    const float (*v1)[4],
-                                    const float (*v2)[4] )
+static boolean
+setup_sort_vertices(struct setup_context *setup,
+                    float det,
+                    const float (*v0)[4],
+                    const float (*v1)[4],
+                    const float (*v2)[4])
 {
    setup->vprovoke = v2;
 
@@ -374,6 +387,7 @@ static boolean setup_sort_vertices( struct setup_context *setup,
    /* We need to know if this is a front or back-facing triangle for:
     *  - the GLSL gl_FrontFacing fragment attribute (bool)
     *  - two-sided stencil test
+    * 0 = front-facing, 1 = back-facing
     */
    setup->facing = 
       ((det > 0.0) ^ 
@@ -446,9 +460,10 @@ tri_apply_cylindrical_wrap(float v0,
  * \param slot  which attribute slot
  * \param i  which component of the slot (0..3)
  */
-static void const_coeff( struct setup_context *setup,
-                         struct tgsi_interp_coef *coef,
-                         uint vertSlot, uint i)
+static void
+const_coeff(struct setup_context *setup,
+            struct tgsi_interp_coef *coef,
+            uint vertSlot, uint i)
 {
    assert(i <= 3);
 
@@ -590,7 +605,8 @@ setup_fragcoord_coeff(struct setup_context *setup, uint slot)
  * Compute the setup->coef[] array dadx, dady, a0 values.
  * Must be called after setup->vmin,vmid,vmax,vprovoke are initialized.
  */
-static void setup_tri_coefficients( struct setup_context *setup )
+static void
+setup_tri_coefficients(struct setup_context *setup)
 {
    struct softpipe_context *softpipe = setup->softpipe;
    const struct sp_fragment_shader *spfs = softpipe->fs;
@@ -649,7 +665,8 @@ static void setup_tri_coefficients( struct setup_context *setup )
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
+         /* convert 0 to 1.0 and 1 to -1.0 */
+         setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
@@ -657,8 +674,8 @@ static void setup_tri_coefficients( struct setup_context *setup )
 }
 
 
-
-static void setup_tri_edges( struct setup_context *setup )
+static void
+setup_tri_edges(struct setup_context *setup)
 {
    float vmin_x = setup->vmin[0][0] + setup->pixel_offset;
    float vmid_x = setup->vmid[0][0] + setup->pixel_offset;
@@ -669,17 +686,17 @@ static void setup_tri_edges( struct setup_context *setup )
 
    setup->emaj.sy = ceilf(vmin_y);
    setup->emaj.lines = (int) ceilf(vmax_y - setup->emaj.sy);
-   setup->emaj.dxdy = setup->emaj.dx / setup->emaj.dy;
+   setup->emaj.dxdy = setup->emaj.dy ? setup->emaj.dx / setup->emaj.dy : .0f;
    setup->emaj.sx = vmin_x + (setup->emaj.sy - vmin_y) * setup->emaj.dxdy;
 
    setup->etop.sy = ceilf(vmid_y);
    setup->etop.lines = (int) ceilf(vmax_y - setup->etop.sy);
-   setup->etop.dxdy = setup->etop.dx / setup->etop.dy;
+   setup->etop.dxdy = setup->etop.dy ? setup->etop.dx / setup->etop.dy : .0f;
    setup->etop.sx = vmid_x + (setup->etop.sy - vmid_y) * setup->etop.dxdy;
 
    setup->ebot.sy = ceilf(vmin_y);
    setup->ebot.lines = (int) ceilf(vmid_y - setup->ebot.sy);
-   setup->ebot.dxdy = setup->ebot.dx / setup->ebot.dy;
+   setup->ebot.dxdy = setup->ebot.dy ? setup->ebot.dx / setup->ebot.dy : .0f;
    setup->ebot.sx = vmin_x + (setup->ebot.sy - vmin_y) * setup->ebot.dxdy;
 }
 
@@ -688,10 +705,11 @@ static void setup_tri_edges( struct setup_context *setup )
  * Render the upper or lower half of a triangle.
  * Scissoring/cliprect is applied here too.
  */
-static void subtriangle( struct setup_context *setup,
-			 struct edge *eleft,
-			 struct edge *eright,
-			 unsigned lines )
+static void
+subtriangle(struct setup_context *setup,
+            struct edge *eleft,
+            struct edge *eright,
+            int lines)
 {
    const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
    const int minx = (int) cliprect->minx;
@@ -702,6 +720,7 @@ static void subtriangle( struct setup_context *setup,
    int sy = (int)eleft->sy;
 
    assert((int)eleft->sy == (int) eright->sy);
+   assert(lines >= 0);
 
    /* clip top/bottom */
    start_y = sy;
@@ -764,9 +783,9 @@ static void subtriangle( struct setup_context *setup,
  * calculate it here.
  */
 static float
-calc_det( const float (*v0)[4],
-          const float (*v1)[4],
-          const float (*v2)[4] )
+calc_det(const float (*v0)[4],
+         const float (*v1)[4],
+         const float (*v2)[4])
 {
    /* edge vectors e = v0 - v2, f = v1 - v2 */
    const float ex = v0[0][0] - v2[0][0];
@@ -782,10 +801,11 @@ calc_det( const float (*v0)[4],
 /**
  * Do setup for triangle rasterization, then render the triangle.
  */
-void sp_setup_tri( struct setup_context *setup,
-                const float (*v0)[4],
-                const float (*v1)[4],
-                const float (*v2)[4] )
+void
+sp_setup_tri(struct setup_context *setup,
+             const float (*v0)[4],
+             const float (*v1)[4],
+             const float (*v2)[4])
 {
    float det;
 
@@ -925,7 +945,7 @@ line_persp_coeff(const struct setup_context *setup,
  * Compute the setup->coef[] array dadx, dady, a0 values.
  * Must be called after setup->vmin,vmax are initialized.
  */
-static INLINE boolean
+static boolean
 setup_line_coefficients(struct setup_context *setup,
                         const float (*v0)[4],
                         const float (*v1)[4])
@@ -1001,7 +1021,8 @@ setup_line_coefficients(struct setup_context *setup,
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
+         /* convert 0 to 1.0 and 1 to -1.0 */
+         setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
@@ -1046,8 +1067,8 @@ plot(struct setup_context *setup, int x, int y)
  */
 void
 sp_setup_line(struct setup_context *setup,
-           const float (*v0)[4],
-           const float (*v1)[4])
+              const float (*v0)[4],
+              const float (*v1)[4])
 {
    int x0 = (int) v0[0][0];
    int x1 = (int) v1[0][0];
@@ -1175,8 +1196,8 @@ point_persp_coeff(const struct setup_context *setup,
  * XXX could optimize a lot for 1-pixel points.
  */
 void
-sp_setup_point( struct setup_context *setup,
-             const float (*v0)[4] )
+sp_setup_point(struct setup_context *setup,
+               const float (*v0)[4])
 {
    struct softpipe_context *softpipe = setup->softpipe;
    const struct sp_fragment_shader *spfs = softpipe->fs;
@@ -1247,7 +1268,8 @@ sp_setup_point( struct setup_context *setup,
       }
 
       if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FACE) {
-         setup->coef[fragSlot].a0[0] = 1.0f - setup->facing;
+         /* convert 0 to 1.0 and 1 to -1.0 */
+         setup->coef[fragSlot].a0[0] = setup->facing * -2.0f + 1.0f;
          setup->coef[fragSlot].dadx[0] = 0.0;
          setup->coef[fragSlot].dady[0] = 0.0;
       }
@@ -1376,7 +1398,12 @@ sp_setup_point( struct setup_context *setup,
    }
 }
 
-void sp_setup_prepare( struct setup_context *setup )
+
+/**
+ * Called by vbuf code just before we start buffering primitives.
+ */
+void
+sp_setup_prepare(struct setup_context *setup)
 {
    struct softpipe_context *sp = setup->softpipe;
 
@@ -1402,8 +1429,8 @@ void sp_setup_prepare( struct setup_context *setup )
 }
 
 
-
-void sp_setup_destroy_context( struct setup_context *setup )
+void
+sp_setup_destroy_context(struct setup_context *setup)
 {
    FREE( setup );
 }
@@ -1412,7 +1439,8 @@ void sp_setup_destroy_context( struct setup_context *setup )
 /**
  * Create a new primitive setup/render stage.
  */
-struct setup_context *sp_setup_create_context( struct softpipe_context *softpipe )
+struct setup_context *
+sp_setup_create_context(struct softpipe_context *softpipe)
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
    unsigned i;
@@ -1429,4 +1457,3 @@ struct setup_context *sp_setup_create_context( struct softpipe_context *softpipe
 
    return setup;
 }
-

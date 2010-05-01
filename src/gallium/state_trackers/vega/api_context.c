@@ -26,6 +26,7 @@
 
 #include "VG/openvg.h"
 
+#include "vg_manager.h"
 #include "vg_context.h"
 
 #include "pipe/p_context.h"
@@ -55,6 +56,8 @@ void vgFlush(void)
 
    pipe = ctx->pipe;
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+   vg_manager_flush_frontbuffer(ctx);
 }
 
 void vgFinish(void)

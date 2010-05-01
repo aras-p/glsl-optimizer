@@ -140,6 +140,7 @@ static const struct dri_extension card_extensions[] = {
   {"GL_NV_blend_square",		NULL},
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},
+  {"GL_ARB_pixel_buffer_object",        NULL},
   {NULL,				NULL}
   /* *INDENT-ON* */
 };
@@ -238,6 +239,7 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 	radeon->vtbl.emit_query_finish = r600_emit_query_finish;
 	radeon->vtbl.check_blit = r600_check_blit;
 	radeon->vtbl.blit = r600_blit;
+	radeon->vtbl.is_format_renderable = r600IsFormatRenderable;
 }
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
@@ -382,7 +384,7 @@ GLboolean r600CreateContext(const __GLcontextModes * glVisual,
 	 */
 	_mesa_init_driver_functions(&functions);
 
-	r700InitStateFuncs(&functions);
+	r700InitStateFuncs(&r600->radeon, &functions);
 	r600InitTextureFuncs(&r600->radeon, &functions);
 	r700InitShaderFuncs(&functions);
 	radeonInitQueryObjFunctions(&functions);

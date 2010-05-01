@@ -202,7 +202,7 @@ util_cache_destroy(struct util_cache *cache)
       double stddev = sqrt(mean);
       unsigned i;
       for(i = 0; i < cache->size; ++i) {
-         double z = fabs(cache->count - mean)/stddev;
+         double z = fabs(cache->entries[i].count - mean)/stddev;
          /* This assert should not fail 99.9999998027% of the times, unless 
           * the hash function is a poor one */
          assert(z <= 6.0);

@@ -47,6 +47,9 @@ typedef enum {
 	 * dst.x = floor(src.x), where dst must be an address register */
 	RC_OPCODE_ARL,
 
+	/** vec4 instruction: dst.c = ceil(src0.c) */
+	RC_OPCODE_CEIL,
+
 	/** vec4 instruction: dst.c = src0.c < 0.0 ? src1.c : src2.c */
 	RC_OPCODE_CMP,
 
@@ -227,8 +230,10 @@ static inline const struct rc_opcode_info * rc_get_opcode_info(rc_opcode opcode)
 	return &rc_opcodes[opcode];
 }
 
+struct rc_instruction;
+
 void rc_compute_sources_for_writemask(
-		const struct rc_opcode_info * opcode,
+		const struct rc_instruction *inst,
 		unsigned int writemask,
 		unsigned int *srcmasks);
 

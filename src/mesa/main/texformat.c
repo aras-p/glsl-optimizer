@@ -294,6 +294,32 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->VersionMajor * 10 + ctx->VersionMinor >= 31) {
+      switch (internalFormat) {
+         case GL_RED_SNORM:
+         case GL_R8_SNORM:
+            return MESA_FORMAT_SIGNED_R8;
+         case GL_RG_SNORM:
+         case GL_RG8_SNORM:
+            return MESA_FORMAT_SIGNED_RG88;
+         case GL_RGB_SNORM:
+         case GL_RGB8_SNORM:
+            return MESA_FORMAT_SIGNED_RGBX8888;
+         case GL_RGBA_SNORM:
+         case GL_RGBA8_SNORM:
+            return MESA_FORMAT_SIGNED_RGBA8888;
+         case GL_R16_SNORM:
+            return MESA_FORMAT_SIGNED_R_16;
+         case GL_RG16_SNORM:
+            return MESA_FORMAT_SIGNED_RG_16;
+         case GL_RGB16_SNORM:
+            return MESA_FORMAT_SIGNED_RGB_16;
+         case GL_RGBA16_SNORM:
+            return MESA_FORMAT_SIGNED_RGBA_16;
+         default:
+            ; /* fall-through */
+      }
+   }
 
 #if FEATURE_EXT_texture_sRGB
    if (ctx->Extensions.EXT_texture_sRGB) {

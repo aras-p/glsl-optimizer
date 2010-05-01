@@ -1,11 +1,10 @@
 Import('*')
 
-env = env.Clone()
-
-env.Tool('llvm')
-if not env.has_key('LLVM_VERSION'):
-    print 'warning: LLVM not found: not building llvmpipe'
+if not env['llvm']:
+    print 'warning: LLVM disabled: not building llvmpipe'
     Return()
+
+env = env.Clone()
 
 env.Tool('udis86')
 
@@ -22,13 +21,17 @@ env.CodeGenerate(
 env.Depends('lp_tile_soa.c', [
     '#src/gallium/auxiliary/util/u_format_parse.py', 
     '#src/gallium/auxiliary/util/u_format_pack.py', 
-    '#src/gallium/auxiliary/util/u_format_access.py',
 ])
 
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
-		'lp_buffer.c',
+		'lp_bld_alpha.c',
+		'lp_bld_blend_aos.c',
+		'lp_bld_blend_logicop.c',
+		'lp_bld_blend_soa.c',
+		'lp_bld_depth.c',
+		'lp_bld_interp.c',
 		'lp_clear.c',
 		'lp_context.c',
 		'lp_draw_arrays.c',
@@ -57,7 +60,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_state_vertex.c',
 		'lp_state_vs.c',
 		'lp_surface.c',
-		'lp_tex_sample_llvm.c',
+		'lp_tex_sample.c',
 		'lp_texture.c',
 		'lp_tile_image.c',
 		'lp_tile_soa.c',

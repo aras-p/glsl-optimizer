@@ -9,7 +9,7 @@ CONFIG_NAME = default
 
 # Version info
 MESA_MAJOR=7
-MESA_MINOR=8
+MESA_MINOR=9
 MESA_TINY=0
 MESA_VERSION = $(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY)
 
@@ -86,7 +86,7 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = glsl mesa gallium egl gallium/winsys glu glut/glx glew glw
+SRC_DIRS = glsl mesa gallium egl gallium/winsys gallium/targets glu glut/glx glew glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 # Which subdirs under $(TOP)/progs/ to enter:
@@ -98,10 +98,10 @@ EGL_DRIVERS_DIRS = glx
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
 GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a
-GALLIUM_DRIVERS_DIRS = softpipe failover svga i915 i965 r300 trace identity
+GALLIUM_DRIVERS_DIRS = softpipe trace identity i915 i965 svga r300 nvfx nv50 failover
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
-GALLIUM_WINSYS_DIRS = drm xlib
-GALLIUM_WINSYS_DRM_DIRS = swrast
+GALLIUM_WINSYS_DIRS = sw sw/xlib
+GALLIUM_TARGET_DIRS = libgl-xlib
 GALLIUM_STATE_TRACKERS_DIRS = glx vega
 
 # native displays EGL should support
@@ -119,7 +119,7 @@ APP_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LI
 
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
-
+X11_LIBS = -lX11
 
 # Installation directories (for make install)
 INSTALL_DIR = /usr/local

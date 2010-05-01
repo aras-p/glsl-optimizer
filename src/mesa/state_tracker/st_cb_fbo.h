@@ -37,8 +37,9 @@
 struct st_renderbuffer
 {
    struct gl_renderbuffer Base;
-   struct pipe_texture *texture;
+   struct pipe_resource *texture;
    struct pipe_surface *surface; /* temporary view into texture */
+   struct pipe_sampler_view *sampler_view;
    enum pipe_format format;  /** preferred format, or PIPE_FORMAT_NONE */
    GLboolean defined;        /**< defined contents? */
 
@@ -53,8 +54,9 @@ struct st_renderbuffer
    int rtt_level, rtt_face, rtt_slice;
 
    /** Render to texture state */
-   struct pipe_texture *texture_save;
+   struct pipe_resource *texture_save;
    struct pipe_surface *surface_save;
+   struct pipe_sampler_view *sampler_view_save;
 };
 
 
@@ -70,6 +72,10 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw);
 
 extern void
 st_init_fbo_functions(struct dd_function_table *functions);
+
+extern struct pipe_sampler_view *
+st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
+                                 struct pipe_context *pipe);
 
 
 #endif /* ST_CB_FBO_H */

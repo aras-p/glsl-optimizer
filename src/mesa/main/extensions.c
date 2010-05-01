@@ -50,6 +50,7 @@ static const struct {
    { OFF, "GL_ARB_depth_clamp",                F(ARB_depth_clamp) },
    { ON,  "GL_ARB_draw_buffers",               F(ARB_draw_buffers) },
    { OFF, "GL_ARB_draw_elements_base_vertex",  F(ARB_draw_elements_base_vertex) },
+   { OFF, "GL_ARB_draw_instanced",             F(ARB_draw_instanced) },
    { OFF, "GL_ARB_fragment_coord_conventions", F(ARB_fragment_coord_conventions) },
    { OFF, "GL_ARB_fragment_program",           F(ARB_fragment_program) },
    { OFF, "GL_ARB_fragment_program_shadow",    F(ARB_fragment_program_shadow) },
@@ -106,6 +107,7 @@ static const struct {
    { ON,  "GL_EXT_copy_texture",               F(EXT_copy_texture) },
    { OFF, "GL_EXT_depth_bounds_test",          F(EXT_depth_bounds_test) },
    { OFF, "GL_EXT_draw_buffers2",              F(EXT_draw_buffers2) },
+   { OFF, "GL_EXT_draw_instanced",             F(ARB_draw_instanced) },
    { ON,  "GL_EXT_draw_range_elements",        F(EXT_draw_range_elements) },
    { OFF, "GL_EXT_framebuffer_blit",           F(EXT_framebuffer_blit) },
    { OFF, "GL_EXT_framebuffer_multisample",    F(EXT_framebuffer_multisample) },
@@ -146,6 +148,7 @@ static const struct {
    { OFF, "GL_EXT_texture_sRGB",               F(EXT_texture_sRGB) },
    { OFF, "GL_EXT_texture_swizzle",            F(EXT_texture_swizzle) },
    { OFF, "GL_EXT_timer_query",                F(EXT_timer_query) },
+   { OFF, "GL_EXT_transform_feedback",         F(EXT_transform_feedback) },
    { ON,  "GL_EXT_vertex_array",               F(EXT_vertex_array) },
    { OFF, "GL_EXT_vertex_array_bgra",          F(EXT_vertex_array_bgra) },
    { OFF, "GL_EXT_vertex_array_set",           F(EXT_vertex_array_set) },
@@ -153,6 +156,7 @@ static const struct {
    { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) },
    { ON,  "GL_APPLE_packed_pixels",            F(APPLE_packed_pixels) },
    { OFF, "GL_APPLE_vertex_array_object",      F(APPLE_vertex_array_object) },
+   { OFF, "GL_APPLE_object_purgeable",         F(APPLE_object_purgeable) },
    { OFF, "GL_ATI_blend_equation_separate",    F(EXT_blend_equation_separate) },
    { OFF, "GL_ATI_envmap_bumpmap",             F(ATI_envmap_bumpmap) },
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
@@ -193,6 +197,9 @@ static const struct {
    { ON,  "GL_SGIS_texture_lod",               F(SGIS_texture_lod) },
    { ON,  "GL_SUN_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_S3_s3tc",                        F(S3_s3tc) },
+#if FEATURE_OES_EGL_image
+   { OFF, "GL_OES_EGL_image",                  F(OES_EGL_image) },
+#endif
 #if FEATURE_OES_draw_texture
    { OFF, "GL_OES_draw_texture",               F(OES_draw_texture) },
 #endif /* FEATURE_OES_draw_texture */
@@ -265,6 +272,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_sync = GL_TRUE;
 #endif
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
+#if FEATURE_APPLE_object_purgeable
+   ctx->Extensions.APPLE_object_purgeable = GL_TRUE;
+#endif
    ctx->Extensions.ATI_envmap_bumpmap = GL_TRUE;
 #if FEATURE_ATI_fragment_shader
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
@@ -315,6 +325,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
 #endif
    ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
+#if FEATURE_EXT_transform_feedback
+   /*ctx->Extensions.EXT_transform_feedback = GL_TRUE;*/
+#endif
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
    /*ctx->Extensions.IBM_multimode_draw_arrays = GL_TRUE;*/
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
@@ -476,7 +489,7 @@ _mesa_enable_2_1_extensions(GLcontext *ctx)
 #if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
 #endif
-#ifdef FEATURE_ARB_shading_language_120
+#if FEATURE_ARB_shading_language_120
    ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
 #endif
 }

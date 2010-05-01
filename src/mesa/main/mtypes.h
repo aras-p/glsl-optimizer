@@ -1244,6 +1244,7 @@ struct gl_texture_object
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
    GLboolean _Complete;		/**< Is texture object complete? */
    GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
+   GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -1439,6 +1440,7 @@ struct gl_buffer_object
    GLsizeiptr Length;   /**< Mapped length */
    /*@}*/
    GLboolean Written;   /**< Ever written to? (for debugging) */
+   GLboolean Purgeable; /**< Is the buffer purgeable under memory pressure? */
 };
 
 
@@ -1544,6 +1546,10 @@ struct gl_array_attrib
    GLint ActiveTexture;		/**< Client Active Texture */
    GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
    GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
+
+   /** GL 3.1 (slightly different from GL_NV_primitive_restart) */
+   GLboolean PrimitiveRestart;
+   GLuint RestartIndex;
 
    GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
 
@@ -1908,6 +1914,11 @@ struct gl_query_state
 
    /** GL_NV_conditional_render */
    struct gl_query_object *CondRenderQuery;
+
+   /** GL_EXT_transform_feedback */
+   struct gl_query_object *PrimitivesGenerated;
+   struct gl_query_object *PrimitivesWritten;
+
    GLenum CondRenderMode;
 };
 
@@ -1974,6 +1985,13 @@ struct gl_shader_program
    /** User-defined attribute bindings (glBindAttribLocation) */
    struct gl_program_parameter_list *Attributes;
 
+   /** Transform feedback varyings */
+   struct {
+      GLenum BufferMode;
+      GLuint NumVarying;
+      GLchar **VaryingNames;  /**< Array [NumVarying] of char * */
+   } TransformFeedback;
+
    /* post-link info: */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
@@ -2012,6 +2030,29 @@ struct gl_shader_state
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };
+
+
+/**
+ * Context state for transform feedback.
+ */
+struct gl_transform_feedback
+{
+   GLboolean Active;  /**< Is transform feedback enabled? */
+   GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
+   /** Start of feedback data in dest buffer */
+   GLintptr Offset[MAX_FEEDBACK_ATTRIBS];
+   /** Max data to put into dest buffer (in bytes) */
+   GLsizeiptr Size[MAX_FEEDBACK_ATTRIBS];
+   GLboolean RasterDiscard;  /**< GL_RASTERIZER_DISCARD */
+
+   /** The general binding point (GL_TRANSFORM_FEEDBACK_BUFFER) */
+   struct gl_buffer_object *CurrentBuffer;
+
+   /** The feedback buffers */
+   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
+   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
+};
+
 
 
 /**
@@ -2104,6 +2145,7 @@ struct gl_renderbuffer
    GLuint Name;
    GLint RefCount;
    GLuint Width, Height;
+   GLboolean Purgeable;   /**< Is the buffer purgeable under memory pressure? */
 
    GLenum InternalFormat; /**< The user-specified format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
@@ -2379,9 +2421,19 @@ struct gl_constants
     */
    GLuint64 MaxServerWaitTimeout;
 
-
-   /**< GL_EXT_provoking_vertex */
+   /** GL_EXT_provoking_vertex */
    GLboolean QuadsFollowProvokingVertexConvention;
+
+   /** OpenGL version 3.0 */
+   GLbitfield ContextFlags;  /**< Ex: GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT */
+
+   /** OpenGL version 3.2 */
+   GLbitfield ProfileMask;   /**< Mask of CONTEXT_x_PROFILE_BIT */
+
+   /** GL_EXT_transform_feedback */
+   GLuint MaxTransformFeedbackSeparateAttribs;
+   GLuint MaxTransformFeedbackSeparateComponents;
+   GLuint MaxTransformFeedbackInterleavedComponents;
 };
 
 
@@ -2397,6 +2449,7 @@ struct gl_extensions
    GLboolean ARB_depth_clamp;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_draw_elements_base_vertex;
+   GLboolean ARB_draw_instanced;
    GLboolean ARB_fragment_coord_conventions;
    GLboolean ARB_fragment_program;
    GLboolean ARB_fragment_program_shadow;
@@ -2483,6 +2536,7 @@ struct gl_extensions
    GLboolean EXT_texture_mirror_clamp;
    GLboolean EXT_texture_sRGB;
    GLboolean EXT_texture_swizzle;
+   GLboolean EXT_transform_feedback;
    GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array;
    GLboolean EXT_vertex_array_bgra;
@@ -2491,6 +2545,7 @@ struct gl_extensions
    GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;
    GLboolean APPLE_vertex_array_object;
+   GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
@@ -2524,6 +2579,9 @@ struct gl_extensions
    GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
+#if FEATURE_OES_EGL_image
+   GLboolean OES_EGL_image;
+#endif
 #if FEATURE_OES_draw_texture
    GLboolean OES_draw_texture;
 #endif /* FEATURE_OES_draw_texture */
@@ -2948,6 +3006,8 @@ struct __GLcontextRec
    struct gl_shader_state Shader; /**< GLSL shader object state */
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
+
+   struct gl_transform_feedback TransformFeedback;
 
    struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
    struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */

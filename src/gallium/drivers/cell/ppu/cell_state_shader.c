@@ -28,13 +28,13 @@
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "util/u_simple_screen.h"
 #include "draw/draw_context.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "cell_context.h"
 #include "cell_state.h"
 #include "cell_gen_fp.h"
+#include "cell_texture.h"
 
 
 /** cast wrapper */
@@ -183,17 +183,29 @@ cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 static void
 cell_set_constant_buffer(struct pipe_context *pipe,
                          uint shader, uint index,
-                         struct pipe_buffer *buf)
+                         struct pipe_resource *constants)
 {
    struct cell_context *cell = cell_context(pipe);
+   unsigned size = constants ? constants->width0 : 0;
+   const void *data = constants ? cell_resource(constants)->data : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
+   if (cell->constants[shader] == constants)
+      return;
+
    draw_flush(cell->draw);
 
    /* note: reference counting */
-   pipe_buffer_reference(&cell->constants[shader], buf);
+   pipe_resource_reference(&cell->constants[shader], constants);
+
+   if(shader == PIPE_SHADER_VERTEX) {
+      draw_set_mapped_constant_buffer(cell->draw, PIPE_SHADER_VERTEX, 0,
+                                      data, size);
+   }
+
+   cell->mapped_constants[shader] = data;
 
    if (shader == PIPE_SHADER_VERTEX)
       cell->dirty |= CELL_NEW_VS_CONSTANTS;

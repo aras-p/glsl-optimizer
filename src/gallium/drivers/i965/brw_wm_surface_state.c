@@ -34,7 +34,7 @@
 #include "brw_batchbuffer.h"
 #include "brw_context.h"
 #include "brw_state.h"
-#include "brw_screen.h"
+#include "brw_resource.h"
 
 
 
@@ -242,9 +242,9 @@ static enum pipe_error prepare_wm_surfaces(struct brw_context *brw )
 
    /* PIPE_NEW_TEXTURE 
     */
-   for (i = 0; i < brw->curr.num_textures; i++) {
+   for (i = 0; i < brw->curr.num_fragment_sampler_views; i++) {
       ret = brw_update_texture_surface(brw, 
-                                       brw_texture(brw->curr.texture[i]),
+                                       brw_texture(brw->curr.fragment_sampler_views[i]->texture),
                                        &brw->wm.surf_bo[BTI_TEXTURE(i)]);
       if (ret)
          return ret;
@@ -261,7 +261,7 @@ static enum pipe_error prepare_wm_surfaces(struct brw_context *brw )
       bo_reference(&brw->wm.surf_bo[BTI_FRAGMENT_CONSTANTS], NULL);      
 
    /* XXX: no pipe_max_textures define?? */
-   for (i = brw->curr.num_textures; i < PIPE_MAX_SAMPLERS; i++)
+   for (i = brw->curr.num_fragment_sampler_views; i < PIPE_MAX_SAMPLERS; i++)
       bo_reference(&brw->wm.surf_bo[BTI_TEXTURE(i)], NULL);
 
    if (brw->wm.nr_surfaces != nr_surfaces) {

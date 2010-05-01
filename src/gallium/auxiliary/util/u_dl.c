@@ -78,3 +78,16 @@ util_dl_close(struct util_dl_library *library)
    (void)library;
 #endif
 }
+
+
+const char *
+util_dl_error(void)
+{
+#if defined(PIPE_OS_UNIX)
+   return dlerror();
+#elif defined(PIPE_OS_WINDOWS)
+   return "unknown error";
+#else
+   return "unknown error";
+#endif
+}

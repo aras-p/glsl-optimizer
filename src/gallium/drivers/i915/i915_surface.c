@@ -25,10 +25,15 @@
  * 
  **************************************************************************/
 
-#include "i915_context.h"
+#include "i915_surface.h"
+#include "i915_resource.h"
 #include "i915_blit.h"
+#include "i915_screen.h"
 #include "pipe/p_defines.h"
+#include "util/u_inlines.h"
+#include "util/u_math.h"
 #include "util/u_format.h"
+#include "util/u_memory.h"
 
 
 /* Assumes all values are within bounds -- no checking at this level -
@@ -41,10 +46,10 @@ i915_surface_copy(struct pipe_context *pipe,
 		  struct pipe_surface *src,
 		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   struct i915_texture *dst_tex = (struct i915_texture *)dst->texture;
-   struct i915_texture *src_tex = (struct i915_texture *)src->texture;
-   struct pipe_texture *dpt = &dst_tex->base;
-   struct pipe_texture *spt = &src_tex->base;
+   struct i915_texture *dst_tex = i915_texture(dst->texture);
+   struct i915_texture *src_tex = i915_texture(src->texture);
+   struct pipe_resource *dpt = &dst_tex->b.b;
+   struct pipe_resource *spt = &src_tex->b.b;
 
    assert( dst != src );
    assert( util_format_get_blocksize(dpt->format) == util_format_get_blocksize(spt->format) );
@@ -68,8 +73,8 @@ i915_surface_fill(struct pipe_context *pipe,
 		  unsigned dstx, unsigned dsty,
 		  unsigned width, unsigned height, unsigned value)
 {
-   struct i915_texture *tex = (struct i915_texture *)dst->texture;
-   struct pipe_texture *pt = &tex->base;
+   struct i915_texture *tex = i915_texture(dst->texture);
+   struct pipe_resource *pt = &tex->b.b;
 
    assert(util_format_get_blockwidth(pt->format) == 1);
    assert(util_format_get_blockheight(pt->format) == 1);
@@ -84,9 +89,68 @@ i915_surface_fill(struct pipe_context *pipe,
 }
 
 
+/*
+ * Screen surface functions
+ */
+
+
+static struct pipe_surface *
+i915_get_tex_surface(struct pipe_screen *screen,
+                     struct pipe_resource *pt,
+                     unsigned face, unsigned level, unsigned zslice,
+                     unsigned flags)
+{
+   struct i915_texture *tex = i915_texture(pt);
+   struct pipe_surface *ps;
+   unsigned offset;  /* in bytes */
+
+   if (pt->target == PIPE_TEXTURE_CUBE) {
+      offset = tex->image_offset[level][face];
+   }
+   else if (pt->target == PIPE_TEXTURE_3D) {
+      offset = tex->image_offset[level][zslice];
+   }
+   else {
+      offset = tex->image_offset[level][0];
+      assert(face == 0);
+      assert(zslice == 0);
+   }
+
+   ps = CALLOC_STRUCT(pipe_surface);
+   if (ps) {
+      pipe_reference_init(&ps->reference, 1);
+      pipe_resource_reference(&ps->texture, pt);
+      ps->format = pt->format;
+      ps->width = u_minify(pt->width0, level);
+      ps->height = u_minify(pt->height0, level);
+      ps->offset = offset;
+      ps->usage = flags;
+   }
+   return ps;
+}
+
+static void
+i915_tex_surface_destroy(struct pipe_surface *surf)
+{
+   pipe_resource_reference(&surf->texture, NULL);
+   FREE(surf);
+}
+
+
+/* Probably going to make blits work on textures rather than surfaces.
+ */
 void
 i915_init_surface_functions(struct i915_context *i915)
 {
    i915->base.surface_copy = i915_surface_copy;
    i915->base.surface_fill = i915_surface_fill;
+}
+
+/* No good reason for these to be in the screen.
+ */
+void
+i915_init_screen_surface_functions(struct i915_screen *is)
+{
+   is->base.get_tex_surface = i915_get_tex_surface;
+   is->base.tex_surface_destroy = i915_tex_surface_destroy;
 }

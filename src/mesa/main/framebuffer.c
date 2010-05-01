@@ -986,6 +986,10 @@ _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format)
    return GL_TRUE;
 }
 
+
+/**
+ * Used to answer the GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES query.
+ */
 GLenum
 _mesa_get_color_read_format(GLcontext *ctx)
 {
@@ -999,6 +1003,10 @@ _mesa_get_color_read_format(GLcontext *ctx)
    }
 }
 
+
+/**
+ * Used to answer the GL_IMPLEMENTATION_COLOR_READ_TYPE_OES query.
+ */
 GLenum
 _mesa_get_color_read_type(GLcontext *ctx)
 {

@@ -28,7 +28,6 @@
 
 #include "util/u_memory.h"
 #include "util/u_simple_screen.h"
-#include "util/u_simple_screen.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
@@ -36,7 +35,9 @@
 #include "cell_context.h"
 #include "cell_screen.h"
 #include "cell_texture.h"
-#include "cell_winsys.h"
+#include "cell_public.h"
+
+#include "state_tracker/sw_winsys.h"
 
 
 static const char *
@@ -95,6 +96,8 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 0;
+   case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+      return 1;
    default:
       return 0;
    }
@@ -134,19 +137,33 @@ cell_is_format_supported( struct pipe_screen *screen,
                           unsigned tex_usage, 
                           unsigned geom_flags )
 {
-   /* cell supports most formats, XXX for now anyway */
-   if (format == PIPE_FORMAT_DXT5_RGBA ||
-       format == PIPE_FORMAT_A8B8G8R8_SRGB)
-      return FALSE;
-   else
+   struct sw_winsys *winsys = cell_screen(screen)->winsys;
+
+   if (tex_usage & (PIPE_BIND_DISPLAY_TARGET |
+                    PIPE_BIND_SCANOUT |
+                    PIPE_BIND_SHARED)) {
+      if (!winsys->is_displaytarget_format_supported(winsys, tex_usage, format))
+         return FALSE;
+   }
+
+   /* only a few formats are known to work at this time */
+   switch (format) {
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_I8_UNORM:
       return TRUE;
+   default:
+      return FALSE;
+   }
 }
 
 
 static void
 cell_destroy_screen( struct pipe_screen *screen )
 {
-   struct pipe_winsys *winsys = screen->winsys;
+   struct cell_screen *sp_screen = cell_screen(screen);
+   struct sw_winsys *winsys = sp_screen->winsys;
 
    if(winsys->destroy)
       winsys->destroy(winsys);
@@ -155,32 +172,33 @@ cell_destroy_screen( struct pipe_screen *screen )
 }
 
 
+
 /**
  * Create a new pipe_screen object
  * Note: we're not presently subclassing pipe_screen (no cell_screen) but
  * that would be the place to put SPU thread/context info...
  */
 struct pipe_screen *
-cell_create_screen(struct pipe_winsys *winsys)
+cell_create_screen(struct sw_winsys *winsys)
 {
-   struct pipe_screen *screen = CALLOC_STRUCT(pipe_screen);
+   struct cell_screen *screen = CALLOC_STRUCT(cell_screen);
 
    if (!screen)
       return NULL;
 
    screen->winsys = winsys;
+   screen->base.winsys = NULL;
 
-   screen->destroy = cell_destroy_screen;
+   screen->base.destroy = cell_destroy_screen;
 
-   screen->get_name = cell_get_name;
-   screen->get_vendor = cell_get_vendor;
-   screen->get_param = cell_get_param;
-   screen->get_paramf = cell_get_paramf;
-   screen->is_format_supported = cell_is_format_supported;
-   screen->context_create = cell_create_context;
+   screen->base.get_name = cell_get_name;
+   screen->base.get_vendor = cell_get_vendor;
+   screen->base.get_param = cell_get_param;
+   screen->base.get_paramf = cell_get_paramf;
+   screen->base.is_format_supported = cell_is_format_supported;
+   screen->base.context_create = cell_create_context;
 
-   cell_init_screen_texture_funcs(screen);
-   u_simple_screen_init(screen);
+   cell_init_screen_texture_funcs(&screen->base);
 
-   return screen;
+   return &screen->base;
 }

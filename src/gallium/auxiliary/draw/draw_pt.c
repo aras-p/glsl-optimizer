@@ -37,6 +37,13 @@
 #include "util/u_math.h"
 #include "util/u_prim.h"
 
+
+DEBUG_GET_ONCE_BOOL_OPTION(draw_fse, "DRAW_FSE", FALSE)
+DEBUG_GET_ONCE_BOOL_OPTION(draw_no_fse, "DRAW_NO_FSE", FALSE)
+#ifdef HAVE_LLVM
+DEBUG_GET_ONCE_BOOL_OPTION(draw_use_llvm, "DRAW_USE_LLVM", TRUE)
+#endif
+
 static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
    if (count < first)
@@ -90,12 +97,16 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_SHADE;
    }
       
-   if (opt == 0) 
-      middle = draw->pt.middle.fetch_emit;
-   else if (opt == PT_SHADE && !draw->pt.no_fse)
-      middle = draw->pt.middle.fetch_shade_emit;
-   else
-      middle = draw->pt.middle.general;
+   if (draw->pt.middle.llvm) {
+      middle = draw->pt.middle.llvm;
+   } else {
+      if (opt == 0)
+         middle = draw->pt.middle.fetch_emit;
+      else if (opt == PT_SHADE && !draw->pt.no_fse)
+         middle = draw->pt.middle.fetch_shade_emit;
+      else
+         middle = draw->pt.middle.general;
+   }
 
 
    /* Pick the right frontend
@@ -111,6 +122,7 @@ draw_pt_arrays(struct draw_context *draw,
    frontend->run(frontend, 
                  draw_pt_elt_func(draw),
                  draw_pt_elt_ptr(draw, start),
+                 draw->pt.user.eltBias,
                  count);
 
    frontend->finish( frontend );
@@ -121,8 +133,8 @@ draw_pt_arrays(struct draw_context *draw,
 
 boolean draw_pt_init( struct draw_context *draw )
 {
-   draw->pt.test_fse = debug_get_bool_option("DRAW_FSE", FALSE);
-   draw->pt.no_fse = debug_get_bool_option("DRAW_NO_FSE", FALSE);
+   draw->pt.test_fse = debug_get_option_draw_fse();
+   draw->pt.no_fse = debug_get_option_draw_no_fse();
 
    draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
@@ -144,12 +156,22 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.middle.general)
       return FALSE;
 
+#if HAVE_LLVM
+   if (debug_get_option_draw_use_llvm())
+      draw->pt.middle.llvm = draw_pt_fetch_pipeline_or_emit_llvm( draw );
+#endif
+
    return TRUE;
 }
 
 
 void draw_pt_destroy( struct draw_context *draw )
 {
+   if (draw->pt.middle.llvm) {
+      draw->pt.middle.llvm->destroy( draw->pt.middle.llvm );
+      draw->pt.middle.llvm = NULL;
+   }
+
    if (draw->pt.middle.general) {
       draw->pt.middle.general->destroy( draw->pt.middle.general );
       draw->pt.middle.general = NULL;
@@ -215,8 +237,11 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
             break;
          default:
             assert(0);
+            return;
          }
-         debug_printf("Element[%u + %u] -> Vertex %u:\n", start, i, ii);
+         ii += draw->pt.user.eltBias;
+         debug_printf("Element[%u + %u] + %i -> Vertex %u:\n", start, i,
+                      draw->pt.user.eltBias, ii);
       }
       else {
          /* non-indexed arrays */
@@ -307,9 +332,8 @@ draw_arrays_instanced(struct draw_context *draw,
       tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
       debug_printf("Elements:\n");
       for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
-         debug_printf("  format=%s comps=%u\n",
-                      util_format_name(draw->pt.vertex_element[i].src_format),
-                      draw->pt.vertex_element[i].nr_components);
+         debug_printf("  format=%s\n",
+                      util_format_name(draw->pt.vertex_element[i].src_format));
       }
       debug_printf("Buffers:\n");
       for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {

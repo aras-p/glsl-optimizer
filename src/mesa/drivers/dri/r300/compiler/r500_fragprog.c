@@ -31,144 +31,6 @@
 
 #include "../r300_reg.h"
 
-static struct rc_src_register shadow_ambient(struct radeon_compiler * c, int tmu)
-{
-	struct rc_src_register reg = { 0, };
-
-	reg.File = RC_FILE_CONSTANT;
-	reg.Index = rc_constants_add_state(&c->Program.Constants, RC_STATE_SHADOW_AMBIENT, tmu);
-	reg.Swizzle = RC_SWIZZLE_WWWW;
-	return reg;
-}
-
-/**
- * Transform TEX, TXP, TXB, and KIL instructions in the following way:
- *  - implement texture compare (shadow extensions)
- *  - extract non-native source / destination operands
- */
-int r500_transform_TEX(
-	struct radeon_compiler * c,
-	struct rc_instruction * inst,
-	void* data)
-{
-	struct r300_fragment_program_compiler *compiler =
-		(struct r300_fragment_program_compiler*)data;
-
-	if (inst->U.I.Opcode != RC_OPCODE_TEX &&
-	    inst->U.I.Opcode != RC_OPCODE_TXB &&
-	    inst->U.I.Opcode != RC_OPCODE_TXP &&
-	    inst->U.I.Opcode != RC_OPCODE_KIL)
-		return 0;
-
-	/* ARB_shadow & EXT_shadow_funcs */
-	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
-	    c->Program.ShadowSamplers & (1 << inst->U.I.TexSrcUnit)) {
-		rc_compare_func comparefunc = compiler->state.unit[inst->U.I.TexSrcUnit].texture_compare_func;
-
-		if (comparefunc == RC_COMPARE_FUNC_NEVER || comparefunc == RC_COMPARE_FUNC_ALWAYS) {
-			inst->U.I.Opcode = RC_OPCODE_MOV;
-
-			if (comparefunc == RC_COMPARE_FUNC_ALWAYS) {
-				inst->U.I.SrcReg[0].File = RC_FILE_NONE;
-				inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
-			} else {
-				inst->U.I.SrcReg[0] = shadow_ambient(c, inst->U.I.TexSrcUnit);
-			}
-
-			return 1;
-		} else {
-			rc_compare_func comparefunc = compiler->state.unit[inst->U.I.TexSrcUnit].texture_compare_func;
-			unsigned int depthmode = compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_mode;
-			struct rc_instruction * inst_rcp = rc_insert_new_instruction(c, inst);
-			struct rc_instruction * inst_mad = rc_insert_new_instruction(c, inst_rcp);
-			struct rc_instruction * inst_cmp = rc_insert_new_instruction(c, inst_mad);
-			int pass, fail;
-
-			inst_rcp->U.I.Opcode = RC_OPCODE_RCP;
-			inst_rcp->U.I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_rcp->U.I.DstReg.Index = rc_find_free_temporary(c);
-			inst_rcp->U.I.DstReg.WriteMask = RC_MASK_W;
-			inst_rcp->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-			inst_rcp->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
-
-			inst_cmp->U.I.DstReg = inst->U.I.DstReg;
-			inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
-			inst->U.I.DstReg.Index = rc_find_free_temporary(c);
-			inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
-
-			inst_mad->U.I.Opcode = RC_OPCODE_MAD;
-			inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_mad->U.I.DstReg.Index = rc_find_free_temporary(c);
-			inst_mad->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-			inst_mad->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_ZZZZ;
-			inst_mad->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
-			inst_mad->U.I.SrcReg[1].Index = inst_rcp->U.I.DstReg.Index;
-			inst_mad->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
-			inst_mad->U.I.SrcReg[2].File = RC_FILE_TEMPORARY;
-			inst_mad->U.I.SrcReg[2].Index = inst->U.I.DstReg.Index;
-			if (depthmode == 0) /* GL_LUMINANCE */
-				inst_mad->U.I.SrcReg[2].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_Z);
-			else if (depthmode == 2) /* GL_ALPHA */
-				inst_mad->U.I.SrcReg[2].Swizzle = RC_SWIZZLE_WWWW;
-
-			/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
-			 *   r  < tex  <=>      -tex+r < 0
-			 *   r >= tex  <=> not (-tex+r < 0 */
-			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GEQUAL)
-				inst_mad->U.I.SrcReg[2].Negate = inst_mad->U.I.SrcReg[2].Negate ^ RC_MASK_XYZW;
-			else
-				inst_mad->U.I.SrcReg[0].Negate = inst_mad->U.I.SrcReg[0].Negate ^ RC_MASK_XYZW;
-
-			inst_cmp->U.I.Opcode = RC_OPCODE_CMP;
-			/* DstReg has been filled out above */
-			inst_cmp->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-			inst_cmp->U.I.SrcReg[0].Index = inst_mad->U.I.DstReg.Index;
-
-			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GREATER) {
-				pass = 1;
-				fail = 2;
-			} else {
-				pass = 2;
-				fail = 1;
-			}
-
-			inst_cmp->U.I.SrcReg[pass].File = RC_FILE_NONE;
-			inst_cmp->U.I.SrcReg[pass].Swizzle = RC_SWIZZLE_1111;
-			inst_cmp->U.I.SrcReg[fail] = shadow_ambient(c, inst->U.I.TexSrcUnit);
-		}
-	}
-
-	/* Cannot write texture to output registers */
-	if (inst->U.I.Opcode != RC_OPCODE_KIL && inst->U.I.DstReg.File != RC_FILE_TEMPORARY) {
-		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst);
-
-		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
-		inst_mov->U.I.DstReg = inst->U.I.DstReg;
-		inst_mov->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-		inst_mov->U.I.SrcReg[0].Index = rc_find_free_temporary(c);
-
-		inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
-		inst->U.I.DstReg.Index = inst_mov->U.I.SrcReg[0].Index;
-		inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
-	}
-
-	/* Cannot read texture coordinate from constants file */
-	if (inst->U.I.SrcReg[0].File != RC_FILE_TEMPORARY && inst->U.I.SrcReg[0].File != RC_FILE_INPUT) {
-		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst->Prev);
-
-		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
-		inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
-		inst_mov->U.I.DstReg.Index = rc_find_free_temporary(c);
-		inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-
-		reset_srcreg(&inst->U.I.SrcReg[0]);
-		inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
-		inst->U.I.SrcReg[0].Index = inst_mov->U.I.DstReg.Index;
-	}
-
-	return 1;
-}
-
 /**
  * Rewrite IF instructions to use the ALU result special register.
  */
@@ -433,19 +295,20 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
 	      (inst >> 30));
       fprintf(stderr,"\t3 RGB_INST:  0x%08x:", code->inst[n].inst3);
       inst = code->inst[n].inst3;
-      fprintf(stderr,"rgb_A_src:%d %s/%s/%s %d rgb_B_src:%d %s/%s/%s %d\n",
+      fprintf(stderr,"rgb_A_src:%d %s/%s/%s %d rgb_B_src:%d %s/%s/%s %d targ: %d\n",
 	      (inst) & 0x3, toswiz((inst >> 2) & 0x7), toswiz((inst >> 5) & 0x7), toswiz((inst >> 8) & 0x7),
 	      (inst >> 11) & 0x3,
 	      (inst >> 13) & 0x3, toswiz((inst >> 15) & 0x7), toswiz((inst >> 18) & 0x7), toswiz((inst >> 21) & 0x7),
-	      (inst >> 24) & 0x3);
+	      (inst >> 24) & 0x3, (inst >> 29) & 0x3);
 
 
       fprintf(stderr,"\t4 ALPHA_INST:0x%08x:", code->inst[n].inst4);
       inst = code->inst[n].inst4;
-      fprintf(stderr,"%s dest:%d%s alp_A_src:%d %s %d alp_B_src:%d %s %d w:%d\n", to_alpha_op(inst & 0xf),
+      fprintf(stderr,"%s dest:%d%s alp_A_src:%d %s %d alp_B_src:%d %s %d targ %d w:%d\n", to_alpha_op(inst & 0xf),
 	      (inst >> 4) & 0x7f, inst & (1<<11) ? "(rel)":"",
 	      (inst >> 12) & 0x3, toswiz((inst >> 14) & 0x7), (inst >> 17) & 0x3,
 	      (inst >> 19) & 0x3, toswiz((inst >> 21) & 0x7), (inst >> 24) & 0x3,
+	      (inst >> 29) & 0x3,
 	      (inst >> 31) & 0x1);
 
       fprintf(stderr,"\t5 RGBA_INST: 0x%08x:", code->inst[n].inst5);

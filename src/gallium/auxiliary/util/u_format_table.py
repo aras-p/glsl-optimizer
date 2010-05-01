@@ -3,7 +3,7 @@
 '''
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -33,6 +33,7 @@
 import sys
 
 from u_format_parse import *
+import u_format_pack
 
 
 def layout_map(layout):
@@ -85,30 +86,22 @@ def write_format_table(formats):
     print __doc__.strip()
     print
     print '#include "u_format.h"'
+    print '#include "u_format_s3tc.h"'
     print
-    print 'const struct util_format_description'
-    print 'util_format_none_description = {'
-    print "   PIPE_FORMAT_NONE,"
-    print "   \"PIPE_FORMAT_NONE\","
-    print "   {0, 0, 0},"
-    print "   0,"
-    print "   0,"
-    print "   0,"
-    print "   0,"
-    print "   {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},"
-    print "   {0, 0, 0, 0},"
-    print "   0"
-    print "};"
-    print
+    
+    u_format_pack.generate(formats)
+    
     for format in formats:
         print 'const struct util_format_description'
         print 'util_format_%s_description = {' % (format.short_name(),)
         print "   %s," % (format.name,)
         print "   \"%s\"," % (format.name,)
+        print "   \"%s\"," % (format.short_name(),)
         print "   {%u, %u, %u},\t/* block */" % (format.block_width, format.block_height, format.block_size())
         print "   %s," % (layout_map(format.layout),)
         print "   %u,\t/* nr_channels */" % (format.nr_channels(),)
         print "   %s,\t/* is_array */" % (bool_map(format.is_array()),)
+        print "   %s,\t/* is_bitmask */" % (bool_map(format.is_bitmask()),)
         print "   %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),)
         print "   {"
         for i in range(4):
@@ -136,8 +129,37 @@ def write_format_table(formats):
             print "      %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
         print "   },"
         print "   %s," % (colorspace_map(format.colorspace),)
+        if format.colorspace != ZS:
+            print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name() 
+            print "   &util_format_%s_pack_rgba_8unorm," % format.short_name() 
+            print "   &util_format_%s_unpack_rgba_float," % format.short_name() 
+            print "   &util_format_%s_pack_rgba_float," % format.short_name() 
+            print "   &util_format_%s_fetch_rgba_float," % format.short_name()
+        else:
+            print "   NULL, /* unpack_rgba_8unorm */" 
+            print "   NULL, /* pack_rgba_8unorm */" 
+            print "   NULL, /* unpack_rgba_float */" 
+            print "   NULL, /* pack_rgba_float */" 
+            print "   NULL, /* fetch_rgba_float */" 
+        if format.colorspace == ZS and format.swizzles[0] != SWIZZLE_NONE:
+            print "   &util_format_%s_unpack_z_32unorm," % format.short_name() 
+            print "   &util_format_%s_pack_z_32unorm," % format.short_name() 
+            print "   &util_format_%s_unpack_z_float," % format.short_name() 
+            print "   &util_format_%s_pack_z_float," % format.short_name() 
+        else:
+            print "   NULL, /* unpack_z_32unorm */" 
+            print "   NULL, /* pack_z_32unorm */" 
+            print "   NULL, /* unpack_z_float */" 
+            print "   NULL, /* pack_z_float */" 
+        if format.colorspace == ZS and format.swizzles[1] != SWIZZLE_NONE:
+            print "   &util_format_%s_unpack_s_8uscaled," % format.short_name() 
+            print "   &util_format_%s_pack_s_8uscaled" % format.short_name() 
+        else:
+            print "   NULL, /* unpack_s_8uscaled */" 
+            print "   NULL /* pack_s_8uscaled */" 
         print "};"
         print
+        
     print "const struct util_format_description *"
     print "util_format_description(enum pipe_format format)"
     print "{"
@@ -146,13 +168,10 @@ def write_format_table(formats):
     print "   }"
     print
     print "   switch (format) {"
-    print "   case PIPE_FORMAT_NONE:"
-    print "      return &util_format_none_description;"
     for format in formats:
         print "   case %s:" % format.name
         print "      return &util_format_%s_description;" % (format.short_name(),)
     print "   default:"
-    print "      assert(0);"
     print "      return NULL;"
     print "   }"
     print "}"

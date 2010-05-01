@@ -84,8 +84,8 @@ void brw_clear_batch_cache( struct brw_context *brw )
 
    while (item) {
       struct brw_cached_batch_item *next = item->next;
-      free((void *)item->header);
-      free(item);
+      FREE((void *)item->header);
+      FREE(item);
       item = next;
    }
 

@@ -151,7 +151,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    for (i = 0; i < c->nr_attrs; i++) {
       GLuint delta = i*16 + 32;
 
-      if (intel->is_ironlake)
+      if (intel->gen == 5)
           delta = i * 16 + 32 * 3;
 
       if (delta == c->offset[VERT_RESULT_EDGE]) {
@@ -185,7 +185,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    if (i & 1) {
       GLuint delta = i*16 + 32;
 
-      if (intel->is_ironlake)
+      if (intel->gen == 5)
           delta = i * 16 + 32 * 3;
 
       brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(0));

@@ -5,9 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = tdfx_dri.so
 
-# not yet
-# MINIGLX_SOURCES = server/tdfx_dri.c 
-
 DRIVER_SOURCES = \
 	tdfx_context.c \
 	tdfx_dd.c \

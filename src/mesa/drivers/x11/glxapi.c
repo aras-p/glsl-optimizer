@@ -1113,7 +1113,7 @@ glXGetAGPOffsetMESA( const GLvoid *pointer )
 
 /*** GLX_MESA_allocate_memory */
 
-void *
+void PUBLIC *
 glXAllocateMemoryMESA(Display *dpy, int scrn, size_t size,
                       float readfreq, float writefreq, float priority)
 {
@@ -1121,14 +1121,14 @@ glXAllocateMemoryMESA(Display *dpy, int scrn, size_t size,
    return NULL;
 }
 
-void
+void PUBLIC
 glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer)
 {
    /* dummy */
 }
 
 
-GLuint
+GLuint PUBLIC
 glXGetMemoryOffsetMESA(Display *dpy, int scrn, const void *pointer)
 {
    /* dummy */
@@ -1138,7 +1138,7 @@ glXGetMemoryOffsetMESA(Display *dpy, int scrn, const void *pointer)
 
 /*** GLX_EXT_texture_from_pixmap */
 
-void
+void PUBLIC
 glXBindTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer,
                    const int *attrib_list)
 {
@@ -1148,7 +1148,7 @@ glXBindTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer,
       t->BindTexImageEXT(dpy, drawable, buffer, attrib_list);
 }
 
-void
+void PUBLIC
 glXReleaseTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer)
 {
    struct _glxapi_table *t;
@@ -1426,7 +1426,7 @@ _glxapi_get_proc_address(const char *funcName)
  * This function does not get dispatched through the dispatch table
  * since it's really a "meta" function.
  */
-__GLXextFuncPtr
+__GLXextFuncPtr PUBLIC
 glXGetProcAddressARB(const GLubyte *procName)
 {
    __GLXextFuncPtr f;
@@ -1442,7 +1442,8 @@ glXGetProcAddressARB(const GLubyte *procName)
 
 
 /* GLX 1.4 */
-void (*glXGetProcAddress(const GLubyte *procName))()
+void PUBLIC
+(*glXGetProcAddress(const GLubyte *procName))()
 {
    return glXGetProcAddressARB(procName);
 }

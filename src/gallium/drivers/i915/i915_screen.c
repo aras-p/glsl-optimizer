@@ -33,9 +33,9 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_screen.h"
-#include "i915_buffer.h"
-#include "i915_texture.h"
-#include "intel_winsys.h"
+#include "i915_surface.h"
+#include "i915_resource.h"
+#include "i915_winsys.h"
 
 
 /*
@@ -116,11 +116,11 @@ i915_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 11; /* max 1024x1024 */
+      return I915_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
+      return I915_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 11; /* max 1024x1024 */
+      return I915_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
       return 1;
@@ -165,8 +165,12 @@ i915_is_format_supported(struct pipe_screen *screen,
                          unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
-      PIPE_FORMAT_A8B8G8R8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_B8G8R8X8_UNORM,
+      PIPE_FORMAT_R8G8B8A8_UNORM,
+#if 0
+      PIPE_FORMAT_R8G8B8X8_UNORM,
+#endif
       PIPE_FORMAT_B5G6R5_UNORM,
       PIPE_FORMAT_L8_UNORM,
       PIPE_FORMAT_A8_UNORM,
@@ -174,19 +178,19 @@ i915_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_L8A8_UNORM,
       PIPE_FORMAT_UYVY,
       PIPE_FORMAT_YUYV,
-      PIPE_FORMAT_Z24S8_UNORM,
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format surface_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM,
-      PIPE_FORMAT_Z24S8_UNORM,
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
    uint i;
 
-   if(tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+   if(tex_usage & PIPE_BIND_RENDER_TARGET)
       list = surface_supported;
    else
       list = tex_supported;
@@ -256,7 +260,7 @@ i915_destroy_screen(struct pipe_screen *screen)
  * Create a new i915_screen object
  */
 struct pipe_screen *
-i915_create_screen(struct intel_winsys *iws, uint pci_id)
+i915_create_screen(struct i915_winsys *iws, uint pci_id)
 {
    struct i915_screen *is = CALLOC_STRUCT(i915_screen);
 
@@ -304,8 +308,8 @@ i915_create_screen(struct intel_winsys *iws, uint pci_id)
    is->base.fence_signalled = i915_fence_signalled;
    is->base.fence_finish = i915_fence_finish;
 
-   i915_init_screen_texture_functions(is);
-   i915_init_screen_buffer_functions(is);
+   i915_init_screen_resource_functions(is);
+   i915_init_screen_surface_functions(is);
 
    return &is->base;
 }

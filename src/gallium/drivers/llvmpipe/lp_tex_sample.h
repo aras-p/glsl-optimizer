@@ -29,7 +29,7 @@
 #define LP_TEX_SAMPLE_H
 
 
-#include <llvm-c/Core.h>
+#include "gallivm/lp_bld.h"
 
 
 struct lp_sampler_static_state;

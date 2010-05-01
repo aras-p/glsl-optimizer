@@ -180,8 +180,12 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
       return &fb->Attachment[BUFFER_COLOR0 + i];
    case GL_DEPTH_STENCIL_ATTACHMENT:
       /* fall-through */
+   case GL_DEPTH_BUFFER:
+      /* fall-through / new in GL 3.0 */
    case GL_DEPTH_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_DEPTH];
+   case GL_STENCIL_BUFFER:
+      /* fall-through / new in GL 3.0 */
    case GL_STENCIL_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_STENCIL];
    default:
@@ -625,7 +629,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       }
    }
 
-#ifndef FEATURE_OES_framebuffer_object
+#if !FEATURE_OES_framebuffer_object
    /* Check that all DrawBuffers are present */
    for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
       if (fb->ColorDrawBuffer[j] != GL_NONE) {
@@ -1015,6 +1019,12 @@ _mesa_EGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image)
    struct gl_renderbuffer *rb;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (!ctx->Extensions.OES_EGL_image) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glEGLImageTargetRenderbufferStorageOES(unsupported)");
+      return;
+   }
 
    if (target != GL_RENDERBUFFER) {
       _mesa_error(ctx, GL_INVALID_ENUM, "EGLImageTargetRenderbufferStorageOES");
@@ -1549,6 +1559,7 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
       texObj = _mesa_lookup_texture(ctx, texture);
       if (texObj != NULL) {
          if (textarget == 0) {
+            /* XXX what's the purpose of this? */
             err = (texObj->Target != GL_TEXTURE_3D) &&
                 (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT) &&
                 (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT);
@@ -1558,6 +1569,13 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
                 ? !IS_CUBE_FACE(textarget)
                 : (texObj->Target != textarget);
          }
+      }
+      else {
+         /* can't render to a non-existant texture */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glFramebufferTexture%sEXT(non existant texture)",
+                     caller);
+         return;
       }
 
       if (err) {

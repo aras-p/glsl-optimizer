@@ -34,8 +34,9 @@
 
 #include "svga_context.h"
 #include "svga_screen.h"
-#include "svga_screen_texture.h"
-#include "svga_screen_buffer.h"
+#include "svga_resource_texture.h"
+#include "svga_resource_buffer.h"
+#include "svga_resource.h"
 #include "svga_winsys.h"
 #include "svga_swtnl.h"
 #include "svga_draw.h"
@@ -66,64 +67,11 @@ static void svga_destroy( struct pipe_context *pipe )
    util_bitmask_destroy( svga->fs_bm );
 
    for(shader = 0; shader < PIPE_SHADER_TYPES; ++shader)
-      pipe_buffer_reference( &svga->curr.cb[shader], NULL );
+      pipe_resource_reference( &svga->curr.cb[shader], NULL );
 
    FREE( svga );
 }
 
-static unsigned int
-svga_is_texture_referenced( struct pipe_context *pipe,
-			    struct pipe_texture *texture,
-			    unsigned face, unsigned level)
-{
-   struct svga_texture *tex = svga_texture(texture);
-   struct svga_screen *ss = svga_screen(pipe->screen);
-
-   /**
-    * The screen does not cache texture writes.
-    */
-
-   if (!tex->handle || ss->sws->surface_is_flushed(ss->sws, tex->handle))
-      return PIPE_UNREFERENCED;
-
-   /**
-    * sws->surface_is_flushed() does not distinguish between read references
-    * and write references. So assume a reference is both.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-static unsigned int
-svga_is_buffer_referenced( struct pipe_context *pipe,
-			   struct pipe_buffer *buf)
-
-{
-   struct svga_screen *ss = svga_screen(pipe->screen);
-   struct svga_buffer *sbuf = svga_buffer(buf);
-
-   /**
-    * XXX: Check this.
-    * The screen may cache buffer writes, but when we map, we map out
-    * of those cached writes, so we don't need to set a
-    * PIPE_REFERENCED_FOR_WRITE flag for cached buffers.
-    */
-
-   if (!sbuf->handle || ss->sws->surface_is_flushed(ss->sws, sbuf->handle))
-     return PIPE_UNREFERENCED;
-
-   /**
-    * sws->surface_is_flushed() does not distinguish between read references
-    * and write references. So assume a reference is both,
-    * however, we make an exception for index- and vertex buffers, to avoid
-    * a flush in st_bufferobj_get_subdata, during display list replay.
-    */
-
-   if (sbuf->base.usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_INDEX))
-      return PIPE_REFERENCED_FOR_READ;
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
 
 
 struct pipe_context *svga_context_create( struct pipe_screen *screen,
@@ -143,13 +91,11 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    svga->pipe.destroy = svga_destroy;
    svga->pipe.clear = svga_clear;
 
-   svga->pipe.is_texture_referenced = svga_is_texture_referenced;
-   svga->pipe.is_buffer_referenced = svga_is_buffer_referenced;
-
    svga->swc = svgascreen->sws->context_create(svgascreen->sws);
    if(!svga->swc)
       goto no_swc;
 
+   svga_init_resource_functions(svga);
    svga_init_blend_functions(svga);
    svga_init_blit_functions(svga);
    svga_init_depth_stencil_functions(svga);
@@ -163,6 +109,7 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    svga_init_vertex_functions(svga);
    svga_init_constbuffer_functions(svga);
    svga_init_query_functions(svga);
+
 
    /* debug */
    svga->debug.no_swtnl = debug_get_bool_option("SVGA_NO_SWTNL", FALSE);
@@ -181,17 +128,17 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    if (svga->vs_bm == NULL)
       goto no_vs_bm;
 
-   svga->upload_ib = u_upload_create( svga->pipe.screen,
+   svga->upload_ib = u_upload_create( &svga->pipe,
                                       32 * 1024,
                                       16,
-                                      PIPE_BUFFER_USAGE_INDEX );
+                                      PIPE_BIND_INDEX_BUFFER );
    if (svga->upload_ib == NULL)
       goto no_upload_ib;
 
-   svga->upload_vb = u_upload_create( svga->pipe.screen,
+   svga->upload_vb = u_upload_create( &svga->pipe,
                                       128 * 1024,
                                       16,
-                                      PIPE_BUFFER_USAGE_VERTEX );
+                                      PIPE_BIND_VERTEX_BUFFER );
    if (svga->upload_vb == NULL)
       goto no_upload_vb;
 
