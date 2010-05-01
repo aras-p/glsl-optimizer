@@ -186,7 +186,7 @@ static int set_parameter_batch( GLsizei count, GLfloat * param,
 
 static void Init( void )
 {
-   const char * const ver_string = (const char * const)
+   const char * const ver_string = (const char *)
        glGetString( GL_VERSION );
    int pass = 1;
    GLfloat * params;
