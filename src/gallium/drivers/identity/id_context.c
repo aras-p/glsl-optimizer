@@ -684,9 +684,9 @@ identity_flush(struct pipe_context *_pipe,
 
 static unsigned int
 identity_is_resource_referenced(struct pipe_context *_pipe,
-                               struct pipe_resource *_resource,
-                               unsigned face,
-                               unsigned level)
+                                struct pipe_resource *_resource,
+                                unsigned face,
+                                unsigned level)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct identity_resource *id_resource = identity_resource(_resource);
@@ -694,9 +694,9 @@ identity_is_resource_referenced(struct pipe_context *_pipe,
    struct pipe_resource *texture = id_resource->resource;
 
    return pipe->is_resource_referenced(pipe,
-                                      texture,
-                                      face,
-                                      level);
+                                       texture,
+                                       face,
+                                       level);
 }
 
 static struct pipe_sampler_view *
@@ -741,10 +741,10 @@ identity_sampler_view_destroy(struct pipe_context *pipe,
 
 static struct pipe_transfer *
 identity_context_get_transfer(struct pipe_context *_context,
-			      struct pipe_resource *_resource,
-			      struct pipe_subresource sr,
-			      unsigned usage,
-			      const struct pipe_box *box)
+                              struct pipe_resource *_resource,
+                              struct pipe_subresource sr,
+                              unsigned usage,
+                              const struct pipe_box *box)
 {
    struct identity_context *id_context = identity_context(_context);
    struct identity_resource *id_resource = identity_resource(_resource);
@@ -753,10 +753,10 @@ identity_context_get_transfer(struct pipe_context *_context,
    struct pipe_transfer *result;
 
    result = context->get_transfer(context,
-				  texture,
-				  sr,
-				  usage,
-				  box);
+                                  texture,
+                                  sr,
+                                  usage,
+                                  box);
 
    if (result)
       return identity_transfer_create(id_context, id_resource, result);
@@ -765,7 +765,7 @@ identity_context_get_transfer(struct pipe_context *_context,
 
 static void
 identity_context_transfer_destroy(struct pipe_context *_pipe,
-                                      struct pipe_transfer *_transfer)
+                                  struct pipe_transfer *_transfer)
 {
    identity_transfer_destroy(identity_context(_pipe),
                              identity_transfer(_transfer));
@@ -773,7 +773,7 @@ identity_context_transfer_destroy(struct pipe_context *_pipe,
 
 static void *
 identity_context_transfer_map(struct pipe_context *_context,
-                             struct pipe_transfer *_transfer)
+                              struct pipe_transfer *_transfer)
 {
    struct identity_context *id_context = identity_context(_context);
    struct identity_transfer *id_transfer = identity_transfer(_transfer);
@@ -781,15 +781,15 @@ identity_context_transfer_map(struct pipe_context *_context,
    struct pipe_transfer *transfer = id_transfer->transfer;
 
    return context->transfer_map(context,
-				transfer);
+                                transfer);
 }
 
 
 
 static void
-identity_context_transfer_flush_region( struct pipe_context *_context,
-					struct pipe_transfer *_transfer,
-					const struct pipe_box *box)
+identity_context_transfer_flush_region(struct pipe_context *_context,
+                                       struct pipe_transfer *_transfer,
+                                       const struct pipe_box *box)
 {
    struct identity_context *id_context = identity_context(_context);
    struct identity_transfer *id_transfer = identity_transfer(_transfer);
@@ -797,14 +797,14 @@ identity_context_transfer_flush_region( struct pipe_context *_context,
    struct pipe_transfer *transfer = id_transfer->transfer;
 
    context->transfer_flush_region(context,
-				  transfer,
-				  box);
+                                  transfer,
+                                  box);
 }
 
 
 static void
 identity_context_transfer_unmap(struct pipe_context *_context,
-                               struct pipe_transfer *_transfer)
+                                struct pipe_transfer *_transfer)
 {
    struct identity_context *id_context = identity_context(_context);
    struct identity_transfer *id_transfer = identity_transfer(_transfer);
@@ -812,19 +812,19 @@ identity_context_transfer_unmap(struct pipe_context *_context,
    struct pipe_transfer *transfer = id_transfer->transfer;
 
    context->transfer_unmap(context,
-                          transfer);
+                           transfer);
 }
 
 
 static void 
-identity_context_transfer_inline_write( struct pipe_context *_context,
-					struct pipe_resource *_resource,
-					struct pipe_subresource sr,
-					unsigned usage,
-					const struct pipe_box *box,
-					const void *data,
-					unsigned stride,
-					unsigned slice_stride)
+identity_context_transfer_inline_write(struct pipe_context *_context,
+                                       struct pipe_resource *_resource,
+                                       struct pipe_subresource sr,
+                                       unsigned usage,
+                                       const struct pipe_box *box,
+                                       const void *data,
+                                       unsigned stride,
+                                       unsigned slice_stride)
 {
    struct identity_context *id_context = identity_context(_context);
    struct identity_resource *id_resource = identity_resource(_resource);
@@ -832,13 +832,13 @@ identity_context_transfer_inline_write( struct pipe_context *_context,
    struct pipe_resource *texture = id_resource->resource;
 
    context->transfer_inline_write(context,
-				  texture,
-				  sr,
-				  usage,
-				  box,
-				  data,
-				  stride,
-				  slice_stride);
+                                  texture,
+                                  sr,
+                                  usage,
+                                  box,
+                                  data,
+                                  stride,
+                                  slice_stride);
 }
 
 

@@ -142,7 +142,7 @@ identity_transfer_unwrap(struct pipe_transfer *_transfer)
 
 struct pipe_resource *
 identity_resource_create(struct identity_screen *id_screen,
-                        struct pipe_resource *resource);
+                         struct pipe_resource *resource);
 
 void
 identity_resource_destroy(struct identity_resource *id_resource);
@@ -156,7 +156,7 @@ identity_surface_destroy(struct identity_surface *id_surface);
 
 struct pipe_transfer *
 identity_transfer_create(struct identity_context *id_context,
-			 struct identity_resource *id_resource,
+                         struct identity_resource *id_resource,
                          struct pipe_transfer *transfer);
 
 void
