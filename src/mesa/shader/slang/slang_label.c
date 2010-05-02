@@ -37,7 +37,7 @@ _slang_label_new_unique(const char *name)
          free(l);
          return NULL;
       }
-      sprintf(l->Name, "%s_%d", name, id);
+      _mesa_snprintf(l->Name, strlen(name) + 10, "%s_%d", name, id);
       id++;
       l->Location = -1;
    }
