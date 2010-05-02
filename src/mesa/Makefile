@@ -106,6 +106,12 @@ install: default
 	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
 	    *)      $(MAKE) install-libgl || exit 1 ;; \
 	  esac ; \
+	done; \
+	for api in $(APIS) ; do \
+	  case "$$api" in \
+	    es1) $(MAKE) install-es1 || exit 1;; \
+	    es2) $(MAKE) install-es2 || exit 1;; \
+	  esac; \
 	done
 
 pcedit = \

@@ -743,21 +743,26 @@ AC_ARG_ENABLE([gles2],
     [enable_gles2=no])
 
 API_DEFINES=""
+APIS=""
 if test "x$enable_opengl" = xno; then
     API_DEFINES="$API_DEFINES -DFEATURE_GL=0"
 else
     API_DEFINES="$API_DEFINES -DFEATURE_GL=1"
+    APIS="$APIS gl"
 fi
 if test "x$enable_gles1" = xyes; then
     API_DEFINES="$API_DEFINES -DFEATURE_ES1=1"
+    APIS="$APIS es1"
 fi
 if test "x$enable_gles2" = xyes; then
     API_DEFINES="$API_DEFINES -DFEATURE_ES2=1"
+    APIS="$APIS es2"
 fi
 if test "x$enable_gles1" = xyes -o "x$enable_gles2"; then
     SRC_DIRS="$SRC_DIRS gles"
 fi
 AC_SUBST([API_DEFINES])
+AC_SUBST([APIS])
 
 dnl If $with_dri_drivers is yes, directories will be added through
 dnl platform checks
