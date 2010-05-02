@@ -551,7 +551,7 @@ static void r300_fb_set_tiling_flags(struct r300_context *r300,
         level = new_state->cbufs[i]->level;
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                                        tex->pitch[level],
+                                        tex->pitch[0],
                                         tex->microtile,
                                         tex->mip_macrotile[level]);
     }
@@ -560,7 +560,7 @@ static void r300_fb_set_tiling_flags(struct r300_context *r300,
         level = new_state->zsbuf->level;
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                                        tex->pitch[level],
+                                        tex->pitch[0],
                                         tex->microtile,
                                         tex->mip_macrotile[level]);
     }
