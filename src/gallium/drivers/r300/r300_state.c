@@ -686,10 +686,6 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     r300_mark_fs_code_dirty(r300);
 
     r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
-
-    if (r300->vs_state.state && r300_vertex_shader_setup_wpos(r300)) {
-        r300->vap_output_state.dirty = TRUE;
-    }
 }
 
 /* Delete fragment shader state. */
@@ -1394,14 +1390,6 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
         return;
     }
     r300->vs_state.state = vs;
-
-    // VS output mapping for HWTCL or stream mapping for SWTCL to the RS block
-    if (r300->fs.state) {
-        r300_vertex_shader_setup_wpos(r300);
-    }
-    memcpy(r300->vap_output_state.state, &vs->vap_out,
-           sizeof(struct r300_vap_output_state));
-    r300->vap_output_state.dirty = TRUE;
 
     /* The majority of the RS block bits is dependent on the vertex shader. */
     r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */

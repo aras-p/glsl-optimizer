@@ -717,6 +717,13 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     DBG(r300, DBG_DRAW, "r300: RS emit:\n");
 
     BEGIN_CS(size);
+    OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
+    OUT_CS(rs->vap_vtx_state_cntl);
+    OUT_CS(rs->vap_vsm_vtx_assm);
+    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+    OUT_CS(rs->vap_out_vtx_fmt[0]);
+    OUT_CS(rs->vap_out_vtx_fmt[1]);
+
     if (r300->screen->caps.is_r500) {
         OUT_CS_REG_SEQ(R500_RS_IP_0, count);
     } else {
@@ -898,25 +905,6 @@ void r300_emit_vertex_stream_state(struct r300_context* r300,
         DBG(r300, DBG_DRAW, "    : prog_stream_cntl_ext%d: 0x%08x\n", i,
                streams->vap_prog_stream_cntl_ext[i]);
     }
-    END_CS;
-}
-
-void r300_emit_vap_output_state(struct r300_context* r300,
-                               unsigned size, void* state)
-{
-    struct r300_vap_output_state *vap_out_state =
-        (struct r300_vap_output_state*)state;
-    CS_LOCALS(r300);
-
-    DBG(r300, DBG_DRAW, "r300: VAP emit:\n");
-
-    BEGIN_CS(size);
-    OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
-    OUT_CS(vap_out_state->vap_vtx_state_cntl);
-    OUT_CS(vap_out_state->vap_vsm_vtx_assm);
-    OUT_CS_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-    OUT_CS(vap_out_state->vap_out_vtx_fmt[0]);
-    OUT_CS(vap_out_state->vap_out_vtx_fmt[1]);
     END_CS;
 }
 

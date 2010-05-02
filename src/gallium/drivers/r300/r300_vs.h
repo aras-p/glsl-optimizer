@@ -39,7 +39,6 @@ struct r300_vertex_shader {
 
     struct tgsi_shader_info info;
     struct r300_shader_semantics outputs;
-    struct r300_vap_output_state vap_out;
 
     /* Whether the shader was replaced by a dummy one due to a shader
      * compilation failure. */
@@ -48,12 +47,6 @@ struct r300_vertex_shader {
     /* Numbers of constants for each type. */
     unsigned externals_count;
     unsigned immediates_count;
-
-    /* Stream locations for SWTCL or if TCL is bypassed. */
-    int stream_loc_notcl[16];
-
-    /* Output stream location for WPOS. */
-    int wpos_tex_output;
 
     /* HWTCL-specific.  */
     /* Machine code (if translated) */
@@ -66,8 +59,5 @@ struct r300_vertex_shader {
 void r300_translate_vertex_shader(struct r300_context* r300,
                                   struct r300_vertex_shader* vs,
                                   const struct tgsi_token *tokens);
-
-/* Return TRUE if VAP (hwfmt) needs to be re-emitted. */
-boolean r300_vertex_shader_setup_wpos(struct r300_context* r300);
 
 #endif /* R300_VS_H */

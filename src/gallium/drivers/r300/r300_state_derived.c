@@ -115,12 +115,11 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 static void r300_swtcl_vertex_psc(struct r300_context *r300)
 {
     struct r300_vertex_stream_state *vstream = r300->vertex_stream_state.state;
-    struct r300_vertex_shader* vs = r300->vs_state.state;
-    struct vertex_info* vinfo = &r300->vertex_info;
+        struct vertex_info* vinfo = &r300->vertex_info;
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i, attrib_count;
-    int* vs_output_tab = vs->stream_loc_notcl;
+    int* vs_output_tab = r300->stream_loc_notcl;
 
     /* XXX hax */
     memset(vstream, 0, sizeof(struct r300_vertex_stream_state));
@@ -269,22 +268,29 @@ static void r500_rs_tex_write(struct r300_rs_block* rs, int id, int fp_offset)
 
 /* Set up the RS block.
  *
- * This is the part of the chipset that actually does the rasterization
- * of vertices into fragments. This is also the part of the chipset that
- * locks up if any part of it is even slightly wrong. */
+ * This is the part of the chipset that is responsible for linking vertex
+ * and fragment shaders and stuffed texture coordinates.
+ *
+ * The rasterizer reads data from VAP, which produces vertex shader outputs,
+ * and GA, which produces stuffed texture coordinates. VAP outputs have
+ * precedence over GA. All outputs must be rasterized otherwise it locks up.
+ * If there are more outputs rasterized than is set in VAP/GA, it locks up
+ * too. The funky part is that this info has been pretty much obtained by trial
+ * and error. */
 static void r300_update_rs_block(struct r300_context *r300)
 {
     struct r300_vertex_shader *vs = r300->vs_state.state;
     struct r300_shader_semantics *vs_outputs = &vs->outputs;
     struct r300_shader_semantics *fs_inputs = &r300_fs(r300)->shader->inputs;
-    struct r300_rs_block rs = { { 0 } };
-    int i, col_count = 0, tex_count = 0, fp_offset = 0, count;
+    struct r300_rs_block rs = {0};
+    int i, col_count = 0, tex_count = 0, fp_offset = 0, count, loc = 0;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
     void (*rX00_rs_tex)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_tex_write)(struct r300_rs_block*, int, int);
     boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
                               vs_outputs->bcolor[1] != ATTR_UNUSED;
+    int *stream_loc_notcl = r300->stream_loc_notcl;
 
     if (r300->screen->caps.is_r500) {
         rX00_rs_col       = r500_rs_col;
@@ -298,15 +304,31 @@ static void r300_update_rs_block(struct r300_context *r300)
         rX00_rs_tex_write = r300_rs_tex_write;
     }
 
-    /* Rasterize colors. */
+    /* The position is always present in VAP. */
+    rs.vap_vsm_vtx_assm |= R300_INPUT_CNTL_POS;
+    rs.vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+    stream_loc_notcl[loc++] = 0;
+
+    /* Set up the point size in VAP. */
+    if (vs_outputs->psize != ATTR_UNUSED) {
+        rs.vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
+        stream_loc_notcl[loc++] = 1;
+    }
+
+    /* Set up and rasterize colors. */
     for (i = 0; i < ATTR_COLOR_COUNT; i++) {
         if (vs_outputs->color[i] != ATTR_UNUSED || any_bcolor_used ||
             vs_outputs->color[1] != ATTR_UNUSED) {
-            /* Always rasterize if it's written by the VS,
-             * otherwise it locks up. */
+            /* Set up the color in VAP. */
+            rs.vap_vsm_vtx_assm |= R300_INPUT_CNTL_COLOR;
+            rs.vap_out_vtx_fmt[0] |=
+                    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << i;
+            stream_loc_notcl[loc++] = 2 + i;
+
+            /* Rasterize it. */
             rX00_rs_col(&rs, col_count, col_count, SWIZ_XYZW);
 
-            /* Write it to the FS input register if it's used by the FS. */
+            /* Write it to the FS input register if it's needed by the FS. */
             if (fs_inputs->color[i] != ATTR_UNUSED) {
                 rX00_rs_col_write(&rs, col_count, fp_offset);
                 fp_offset++;
@@ -329,17 +351,33 @@ static void r300_update_rs_block(struct r300_context *r300)
         }
     }
 
+    /* Set up back-face colors. The rasterizer will do the color selection
+     * automatically. */
+    if (any_bcolor_used) {
+        for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+            rs.vap_vsm_vtx_assm |= R300_INPUT_CNTL_COLOR;
+            rs.vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << (2+i);
+            stream_loc_notcl[loc++] = 4 + i;
+        }
+    }
+
     /* Rasterize texture coordinates. */
-    for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
+    for (i = 0; i < ATTR_GENERIC_COUNT && tex_count < 8; i++) {
 	bool sprite_coord = !!(r300->sprite_coord_enable & (1 << i));
 
         if (vs_outputs->generic[i] != ATTR_UNUSED || sprite_coord) {
-            /* Always rasterize if it's written by the VS,
-             * otherwise it locks up. */
+            if (!sprite_coord) {
+                /* Set up the texture coordinates in VAP. */
+                rs.vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << tex_count);
+                rs.vap_out_vtx_fmt[1] |= (4 << (3 * tex_count));
+                stream_loc_notcl[loc++] = 6 + tex_count;
+            }
+
+            /* Rasterize it. */
             rX00_rs_tex(&rs, tex_count, tex_count,
 			sprite_coord ? SWIZ_XY01 : SWIZ_XYZW);
 
-            /* Write it to the FS input register if it's used by the FS. */
+            /* Write it to the FS input register if it's needed by the FS. */
             if (fs_inputs->generic[i] != ATTR_UNUSED) {
                 rX00_rs_tex_write(&rs, tex_count, fp_offset);
                 fp_offset++;
@@ -366,12 +404,16 @@ static void r300_update_rs_block(struct r300_context *r300)
     }
 
     /* Rasterize fog coordinates. */
-    if (vs_outputs->fog != ATTR_UNUSED) {
-        /* Always rasterize if it's written by the VS,
-         * otherwise it locks up. */
+    if (vs_outputs->fog != ATTR_UNUSED && tex_count < 8) {
+        /* Set up the fog coordinates in VAP. */
+        rs.vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << tex_count);
+        rs.vap_out_vtx_fmt[1] |= (4 << (3 * tex_count));
+        stream_loc_notcl[loc++] = 6 + tex_count;
+
+        /* Rasterize it. */
         rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_X001);
 
-        /* Write it to the FS input register if it's used by the FS. */
+        /* Write it to the FS input register if it's needed by the FS. */
         if (fs_inputs->fog != ATTR_UNUSED) {
             rX00_rs_tex_write(&rs, tex_count, fp_offset);
             fp_offset++;
@@ -392,15 +434,28 @@ static void r300_update_rs_block(struct r300_context *r300)
     }
 
     /* Rasterize WPOS. */
-    /* If the FS doesn't need it, it's not written by the VS. */
-    if (vs_outputs->wpos != ATTR_UNUSED && fs_inputs->wpos != ATTR_UNUSED) {
+    /* Don't set it in VAP if the FS doesn't need it. */
+    if (fs_inputs->wpos != ATTR_UNUSED && tex_count < 8) {
+        /* Set up the WPOS coordinates in VAP. */
+        rs.vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << tex_count);
+        rs.vap_out_vtx_fmt[1] |= (4 << (3 * tex_count));
+        stream_loc_notcl[loc++] = 6 + tex_count;
+
+        /* Rasterize it. */
         rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
+
+        /* Write it to the FS input register. */
         rX00_rs_tex_write(&rs, tex_count, fp_offset);
 
         DBG(r300, DBG_RS, "r300: Rasterized WPOS written to FS.\n");
 
         fp_offset++;
         tex_count++;
+    }
+
+    /* Invalidate the rest of the no-TCL (GA) stream locations. */
+    for (; loc < 16;) {
+        stream_loc_notcl[loc++] = -1;
     }
 
     /* Rasterize at least one color, or bad things happen. */
@@ -423,7 +478,7 @@ static void r300_update_rs_block(struct r300_context *r300)
     /* Now, after all that, see if we actually need to update the state. */
     if (memcmp(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block))) {
         memcpy(r300->rs_block_state.state, &rs, sizeof(struct r300_rs_block));
-        r300->rs_block_state.size = 5 + count*2;
+        r300->rs_block_state.size = 11 + count*2;
     }
 }
 

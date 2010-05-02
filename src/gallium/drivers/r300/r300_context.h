@@ -119,6 +119,10 @@ struct r300_rs_state {
 };
 
 struct r300_rs_block {
+    uint32_t vap_vtx_state_cntl;  /* R300_VAP_VTX_STATE_CNTL: 0x2180 */
+    uint32_t vap_vsm_vtx_assm;    /* R300_VAP_VSM_VTX_ASSM: 0x2184 */
+    uint32_t vap_out_vtx_fmt[2];  /* R300_VAP_OUTPUT_VTX_FMT_[0-1]: 0x2090 */
+
     uint32_t ip[8]; /* R300_RS_IP_[0-7], R500_RS_IP_[0-7] */
     uint32_t count; /* R300_RS_COUNT */
     uint32_t inst_count; /* R300_RS_INST_COUNT */
@@ -188,12 +192,6 @@ struct r300_vertex_stream_state {
     uint32_t vap_prog_stream_cntl_ext[8];
 
     unsigned count;
-};
-
-struct r300_vap_output_state {
-    uint32_t vap_vtx_state_cntl;  /* R300_VAP_VTX_STATE_CNTL: 0x2180 */
-    uint32_t vap_vsm_vtx_assm;    /* R300_VAP_VSM_VTX_ASSM: 0x2184 */
-    uint32_t vap_out_vtx_fmt[2];  /* R300_VAP_OUTPUT_VTX_FMT_[0-1]: 0x2090 */
 };
 
 struct r300_viewport_state {
@@ -381,7 +379,7 @@ struct r300_context {
     struct r300_atom query_start;
     /* Rasterizer state. */
     struct r300_atom rs_state;
-    /* RS block state. */
+    /* RS block state + VAP (vertex shader) output mapping state. */
     struct r300_atom rs_block_state;
     /* Scissor state. */
     struct r300_atom scissor_state;
@@ -389,8 +387,6 @@ struct r300_context {
     struct r300_atom textures_state;
     /* Vertex stream formatting state. */
     struct r300_atom vertex_stream_state;
-    /* VAP (vertex shader) output mapping state. */
-    struct r300_atom vap_output_state;
     /* Vertex shader. */
     struct r300_atom vs_state;
     /* Vertex shader constant buffer. */
@@ -423,6 +419,9 @@ struct r300_context {
     struct pipe_clip_state clip;
 
     struct pipe_viewport_state viewport;
+
+    /* Stream locations for SWTCL. */
+    int stream_loc_notcl[16];
 
     /* Flag indicating whether or not the HW is dirty. */
     uint32_t dirty_hw;
