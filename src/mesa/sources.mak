@@ -1,10 +1,16 @@
 ### Lists of source files, included by Makefiles
 
+ES1_SOURCES = \
+	main/api_exec_es1.c \
+	main/get_es1.c
+
+ES2_SOURCES = \
+	main/api_exec_es2.c \
+	main/get_es2.c
+
 MAIN_SOURCES = \
 	main/api_arrayelt.c \
 	main/api_exec.c \
-	main/api_exec_es1.c \
-	main/api_exec_es2.c \
 	main/api_loopback.c \
 	main/api_noop.c \
 	main/api_validate.c \
@@ -40,8 +46,6 @@ MAIN_SOURCES = \
 	main/formats.c \
 	main/framebuffer.c \
 	main/get.c \
-	main/get_es1.c \
-	main/get_es2.c \
 	main/getstring.c \
 	main/hash.c \
 	main/hint.c \
@@ -91,7 +95,8 @@ MAIN_SOURCES = \
 	main/varray.c \
 	main/version.c \
 	main/viewport.c \
-	main/vtxfmt.c
+	main/vtxfmt.c \
+	$(ES_SOURCES)
 
 GLAPI_SOURCES = \
 	glapi/glapi.c \
