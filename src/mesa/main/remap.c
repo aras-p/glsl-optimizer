@@ -36,6 +36,8 @@
  * a dynamic entry, or the corresponding static entry, in glapi.
  */
 
+#include "mfeatures.h"
+
 #if FEATURE_remap_table
 
 #include "remap.h"
