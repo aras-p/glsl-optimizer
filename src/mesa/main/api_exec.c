@@ -107,6 +107,8 @@
 #endif
 #include "main/dispatch.h"
 
+#ifdef _GLAPI_USE_REMAP_TABLE
+
 #define need_MESA_remap_table
 #include "main/remap.h"
 #include "main/remap_helper.h"
@@ -141,6 +143,8 @@ _mesa_init_remap_table(void)
 			     driDispatchRemapTable_size,
 			     MESA_remap_table_functions);
 }
+
+#endif /* _GLAPI_USE_REMAP_TABLE */
 
 
 /**

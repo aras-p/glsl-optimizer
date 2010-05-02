@@ -36,12 +36,11 @@
  * a dynamic entry, or the corresponding static entry, in glapi.
  */
 
+#if FEATURE_remap_table
+
 #include "remap.h"
 #include "imports.h"
 #include "glapi/glapi.h"
-
-#if FEATURE_remap_table
-
 
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 #define MAX_ENTRY_POINTS 16
