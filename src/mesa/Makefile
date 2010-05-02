@@ -108,12 +108,15 @@ install: default
 	  esac ; \
 	done
 
-
-gl_pcedit = sed \
+pcedit = \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
 	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
 	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
+
+
+gl_pcedit = sed \
+	$(pcedit) \
 	-e 's,@GL_PC_REQ_PRIV@,$(GL_PC_REQ_PRIV),' \
 	-e 's,@GL_PC_LIB_PRIV@,$(GL_PC_LIB_PRIV),' \
 	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),' \
@@ -122,11 +125,24 @@ gl_pcedit = sed \
 gl.pc: gl.pc.in
 	$(gl_pcedit) $< > $@
 
+glesv2_pcedit = sed \
+	$(pcedit) \
+	-e 's,@GLESv2_PC_LIB_PRIV@,$(GLESv2_PC_LIB_PRIV),' \
+	-e 's,@GLESv2_LIB@,$(GLESv2_LIB),'
+
+glesv2.pc: glesv2.pc.in
+	$(glesv2_pcedit) $< > $@
+
+glesv1_cm_pcedit = sed \
+	$(pcedit) \
+	-e 's,@GLESv1_CM_PC_LIB_PRIV@,$(GLESv1_CM_PC_LIB_PRIV),' \
+	-e 's,@GLESv1_CM_LIB@,$(GLESv1_CM_LIB),'
+
+glesv1_cm.pc: glesv1_cm.pc.in
+	$(glesv1_cm_pcedit) $< > $@
+
 osmesa_pcedit = sed \
-	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
-	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
-	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
-	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
+	$(pcedit) \
 	-e 's,@OSMESA_LIB@,$(OSMESA_LIB),' \
 	-e 's,@OSMESA_PC_REQ@,$(OSMESA_PC_REQ),' \
 	-e 's,@OSMESA_PC_LIB_PRIV@,$(OSMESA_PC_LIB_PRIV),'
