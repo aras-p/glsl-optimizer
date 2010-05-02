@@ -181,7 +181,7 @@ static boolean radeon_check_cs(struct r300_winsys_screen *rws, int size)
     struct radeon_libdrm_winsys *ws = radeon_winsys_screen(rws);
     struct radeon_cs *cs = ws->cs;
 
-    return radeon_validate(rws) && cs->cdw + size <= cs->ndw;
+    return cs->cdw + size <= cs->ndw;
 }
 
 static void radeon_begin_cs(struct r300_winsys_screen *rws,
