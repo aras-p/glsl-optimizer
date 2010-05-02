@@ -763,7 +763,7 @@ if test "x$enable_gles2" = xyes; then
     APIS="$APIS es2"
     ES2_SOURCES='$(ES2_SOURCES)'
 fi
-if test "x$enable_gles1" = xyes -o "x$enable_gles2"; then
+if test "x$enable_gles1" = xyes -o "x$enable_gles2" = xyes; then
     SRC_DIRS="$SRC_DIRS gles"
 fi
 AC_SUBST([API_DEFINES])
