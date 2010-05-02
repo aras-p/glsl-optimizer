@@ -7725,7 +7725,7 @@ execute_list(GLcontext *ctx, GLuint list)
          default:
             {
                char msg[1000];
-               sprintf(msg, "Error in execute_list: opcode=%d",
+               _mesa_snprintf(msg, sizeof(msg), "Error in execute_list: opcode=%d",
                              (int) opcode);
                _mesa_problem(ctx, msg);
             }

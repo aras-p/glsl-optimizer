@@ -416,7 +416,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
     */
    if ((baseLevel < 0) || (baseLevel >= MAX_TEXTURE_LEVELS)) {
       char s[100];
-      sprintf(s, "base level = %d is invalid", baseLevel);
+      _mesa_snprintf(s, sizeof(s), "base level = %d is invalid", baseLevel);
       incomplete(t, s);
       t->_Complete = GL_FALSE;
       return;
@@ -425,7 +425,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Always need the base level image */
    if (!t->Image[0][baseLevel]) {
       char s[100];
-      sprintf(s, "Image[baseLevel=%d] == NULL", baseLevel);
+      _mesa_snprintf(s, sizeof(s), "Image[baseLevel=%d] == NULL", baseLevel);
       incomplete(t, s);
       t->_Complete = GL_FALSE;
       return;

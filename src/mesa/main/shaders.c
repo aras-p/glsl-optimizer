@@ -485,7 +485,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
 
       checksum = _mesa_str_checksum(source);
 
-      sprintf(filename, "newshader_%d", checksum);
+      _mesa_snprintf(filename, sizeof(filename), "newshader_%d", checksum);
 
       newSource = _mesa_read_shader(filename);
       if (newSource) {
