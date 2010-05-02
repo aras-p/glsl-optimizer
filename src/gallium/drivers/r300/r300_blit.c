@@ -137,7 +137,8 @@ void r300_surface_copy(struct pipe_context* pipe,
     if (!pipe->screen->is_format_supported(pipe->screen,
                                            old_format, src->texture->target,
                                            PIPE_BIND_RENDER_TARGET |
-                                           PIPE_BIND_SAMPLER_VIEW, 0)) {
+                                           PIPE_BIND_SAMPLER_VIEW, 0) &&
+        util_format_description(old_format)->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
         switch (util_format_get_blocksize(old_format)) {
             case 1:
                 new_format = PIPE_FORMAT_I8_UNORM;
