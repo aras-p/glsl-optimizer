@@ -78,7 +78,8 @@ typedef struct {
 
 
 extern GLboolean
-i810CreateContext( const __GLcontextModes *mesaVis,
+i810CreateContext( gl_api api,
+		   const __GLcontextModes *mesaVis,
                    __DRIcontext *driContextPriv,
                    void *sharedContextPrivate );
 

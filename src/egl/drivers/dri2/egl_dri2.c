@@ -254,9 +254,8 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       _eglSetConfigKey(&base,
 		       EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
 
-   /* EGL_OPENGL_ES_BIT, EGL_OPENVG_BIT, EGL_OPENGL_ES2_BIT */
-   _eglSetConfigKey(&base, EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT);
-   _eglSetConfigKey(&base, EGL_CONFORMANT, EGL_OPENGL_BIT);
+   _eglSetConfigKey(&base, EGL_RENDERABLE_TYPE, disp->ClientAPIsMask);
+   _eglSetConfigKey(&base, EGL_CONFORMANT, disp->ClientAPIsMask);
 
    if (!_eglValidateConfig(&base, EGL_FALSE)) {
       _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", id);
@@ -643,6 +642,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    const __DRIextension **extensions;
    struct dri2_egl_display *dri2_dpy;
    char path[PATH_MAX], *search_paths, *p, *next, *end;
+   unsigned int api_mask;
 
    dri2_dpy = malloc(sizeof *dri2_dpy);
    if (!dri2_dpy)
@@ -685,6 +685,8 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
       snprintf(path, sizeof path,
 	       dri_driver_format, (int) (next - p), p, dri2_dpy->driver_name);
       dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+      if (dri2_dpy->driver == NULL)
+	 _eglLog(_EGL_DEBUG, "failed to open %s: %s\n", path, dlerror());
    }
 
    if (dri2_dpy->driver == NULL) {
@@ -754,12 +756,24 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
       goto cleanup_dri_screen;
 
+   if (dri2_dpy->dri2->base.version >= 2)
+      api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
+   else
+      api_mask = __DRI_API_OPENGL;
+
+   disp->ClientAPIsMask = 0;
+   if (api_mask & (1 <<__DRI_API_OPENGL))
+      disp->ClientAPIsMask |= EGL_OPENGL_BIT;
+   if (api_mask & (1 <<__DRI_API_GLES))
+      disp->ClientAPIsMask |= EGL_OPENGL_ES_BIT;
+   if (api_mask & (1 << __DRI_API_GLES2))
+      disp->ClientAPIsMask |= EGL_OPENGL_ES2_BIT;
+
    if (dri2_dpy->conn) {
       if (!dri2_add_configs_for_visuals(dri2_dpy, disp))
 	 goto cleanup_configs;
    }
 
-   disp->ClientAPIsMask = EGL_OPENGL_BIT;
    disp->Extensions.KHR_image_base = EGL_TRUE;
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
    disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
@@ -822,6 +836,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_context *dri2_ctx_shared = dri2_egl_context(share_list);
    struct dri2_egl_config *dri2_config = dri2_egl_config(conf);
+   int api;
 
    dri2_ctx = malloc(sizeof *dri2_ctx);
    if (!dri2_ctx) {
@@ -832,12 +847,46 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    if (!_eglInitContext(&dri2_ctx->base, disp, conf, attrib_list))
       goto cleanup;
 
-   dri2_ctx->dri_context =
-      dri2_dpy->dri2->createNewContext(dri2_dpy->dri_screen,
-				       dri2_config->dri_config,
-				       dri2_ctx_shared ? 
-				       dri2_ctx_shared->dri_context : NULL,
-				       dri2_ctx);
+   switch (dri2_ctx->base.ClientAPI) {
+   case EGL_OPENGL_ES_API:
+      switch (dri2_ctx->base.ClientVersion) {
+      case 1:
+         api = __DRI_API_GLES;
+         break;
+      case 2:
+         api = __DRI_API_GLES2;
+         break;
+      default:
+	 _eglError(EGL_BAD_PARAMETER, "eglCreateContext");
+	 return NULL;
+      }
+      break;
+   case EGL_OPENGL_API:
+      api = __DRI_API_OPENGL;
+      break;
+   default:
+      _eglError(EGL_BAD_PARAMETER, "eglCreateContext");
+      return NULL;
+   }
+
+   if (dri2_dpy->dri2->base.version >= 2) {
+      dri2_ctx->dri_context =
+	 dri2_dpy->dri2->createNewContextForAPI(dri2_dpy->dri_screen,
+						api,
+						dri2_config->dri_config,
+						dri2_ctx_shared ? 
+						dri2_ctx_shared->dri_context : NULL,
+						dri2_ctx);
+   } else if (api == __DRI_API_OPENGL) {
+      dri2_ctx->dri_context =
+	 dri2_dpy->dri2->createNewContext(dri2_dpy->dri_screen,
+					  dri2_config->dri_config,
+					  dri2_ctx_shared ? 
+					  dri2_ctx_shared->dri_context : NULL,
+					  dri2_ctx);
+   } else {
+      /* fail */
+   }
 
    if (!dri2_ctx->dri_context)
       goto cleanup;

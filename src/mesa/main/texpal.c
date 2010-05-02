@@ -15,21 +15,16 @@
  */
 
 
-#include "GLES/gl.h"
-#include "GLES/glext.h"
+#include "glheader.h"
+#include "compiler.h" /* for ASSERT */
+#include "context.h"
+#include "mtypes.h"
+#include "imports.h"
+#include "pixelstore.h"
+#include "teximage.h"
+#include "texpal.h"
 
-#include "main/compiler.h" /* for ASSERT */
-
-
-void GL_APIENTRY _es_CompressedTexImage2DARB(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
-
-void GL_APIENTRY _mesa_GetIntegerv(GLenum pname, GLint *params);
-void GL_APIENTRY _mesa_PixelStorei(GLenum pname, GLint param);
-void GL_APIENTRY _mesa_TexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-void GL_APIENTRY _mesa_CompressedTexImage2DARB(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
-
-void *_mesa_get_current_context(void);
-void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
+#if FEATURE_ES
 
 
 static const struct cpal_format_info {
@@ -141,15 +136,17 @@ cpal_get_info(GLint level, GLenum internalFormat,
  * Convert a call to glCompressedTexImage2D() where internalFormat is a
  *  compressed palette format into a regular GLubyte/RGBA glTexImage2D() call.
  */
-static void
-cpal_compressed_teximage2d(GLenum target, GLint level, GLenum internalFormat,
-                           GLsizei width, GLsizei height, GLsizei imageSize,
-                           const void *palette)
+void
+_mesa_cpal_compressed_teximage2d(GLenum target, GLint level,
+				 GLenum internalFormat,
+				 GLsizei width, GLsizei height,
+				 GLsizei imageSize, const void *palette)
 {
    const struct cpal_format_info *info;
    GLint lvl, num_levels;
    const GLubyte *indices;
    GLint saved_align, align;
+   GET_CURRENT_CONTEXT(ctx);
 
    info = cpal_get_info(level, internalFormat, width, height, imageSize);
    if (!info)
@@ -162,7 +159,7 @@ cpal_compressed_teximage2d(GLenum target, GLint level, GLenum internalFormat,
    /* first image follows the palette */
    indices = (const GLubyte *) palette + info->palette_size * info->size;
 
-   _mesa_GetIntegerv(GL_UNPACK_ALIGNMENT, &saved_align);
+   saved_align = ctx->Unpack.Alignment;
    align = saved_align;
 
    for (lvl = 0; lvl < num_levels; lvl++) {
@@ -204,28 +201,4 @@ cpal_compressed_teximage2d(GLenum target, GLint level, GLenum internalFormat,
       _mesa_PixelStorei(GL_UNPACK_ALIGNMENT, saved_align);
 }
 
-
-void GL_APIENTRY
-_es_CompressedTexImage2DARB(GLenum target, GLint level, GLenum internalFormat,
-                            GLsizei width, GLsizei height, GLint border,
-                            GLsizei imageSize, const GLvoid *data)
-{
-   switch (internalFormat) {
-   case GL_PALETTE4_RGB8_OES:
-   case GL_PALETTE4_RGBA8_OES:
-   case GL_PALETTE4_R5_G6_B5_OES:
-   case GL_PALETTE4_RGBA4_OES:
-   case GL_PALETTE4_RGB5_A1_OES:
-   case GL_PALETTE8_RGB8_OES:
-   case GL_PALETTE8_RGBA8_OES:
-   case GL_PALETTE8_R5_G6_B5_OES:
-   case GL_PALETTE8_RGBA4_OES:
-   case GL_PALETTE8_RGB5_A1_OES:
-      cpal_compressed_teximage2d(target, level, internalFormat,
-                                 width, height, imageSize, data);
-      break;
-   default:
-      _mesa_CompressedTexImage2DARB(target, level, internalFormat,
-                                    width, height, border, imageSize, data);
-   }
-}
+#endif

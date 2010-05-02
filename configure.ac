@@ -279,6 +279,8 @@ GLUT_LIB_NAME='lib$(GLUT_LIB).'${LIB_EXTENSION}
 GLW_LIB_NAME='lib$(GLW_LIB).'${LIB_EXTENSION}
 OSMESA_LIB_NAME='lib$(OSMESA_LIB).'${LIB_EXTENSION}
 EGL_LIB_NAME='lib$(EGL_LIB).'${LIB_EXTENSION}
+GLESv1_CM_LIB_NAME='lib$(GLESv1_CM_LIB).'${LIB_EXTENSION}
+GLESv2_LIB_NAME='lib$(GLESv2_LIB).'${LIB_EXTENSION}
 
 GL_LIB_GLOB='lib$(GL_LIB).*'${LIB_EXTENSION}'*'
 GLU_LIB_GLOB='lib$(GLU_LIB).*'${LIB_EXTENSION}'*'
@@ -286,6 +288,8 @@ GLUT_LIB_GLOB='lib$(GLUT_LIB).*'${LIB_EXTENSION}'*'
 GLW_LIB_GLOB='lib$(GLW_LIB).*'${LIB_EXTENSION}'*'
 OSMESA_LIB_GLOB='lib$(OSMESA_LIB).*'${LIB_EXTENSION}'*'
 EGL_LIB_GLOB='lib$(EGL_LIB).*'${LIB_EXTENSION}'*'
+GLESv1_CM_LIB_GLOB='lib$(GLESv1_CM_LIB).*'${LIB_EXTENSION}'*'
+GLESv2_LIB_GLOB='lib$(GLESv2_LIB).*'${LIB_EXTENSION}'*'
 
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
@@ -293,6 +297,8 @@ AC_SUBST([GLUT_LIB_NAME])
 AC_SUBST([GLW_LIB_NAME])
 AC_SUBST([OSMESA_LIB_NAME])
 AC_SUBST([EGL_LIB_NAME])
+AC_SUBST([GLESv1_CM_LIB_NAME])
+AC_SUBST([GLESv2_LIB_NAME])
 
 AC_SUBST([GL_LIB_GLOB])
 AC_SUBST([GLU_LIB_GLOB])
@@ -300,6 +306,8 @@ AC_SUBST([GLUT_LIB_GLOB])
 AC_SUBST([GLW_LIB_GLOB])
 AC_SUBST([OSMESA_LIB_GLOB])
 AC_SUBST([EGL_LIB_GLOB])
+AC_SUBST([GLESv1_CM_LIB_GLOB])
+AC_SUBST([GLESv2_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
@@ -654,6 +662,10 @@ dri)
     # need DRM libs, -lpthread, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
     GL_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"
+    GLESv1_CM_LIB_DEPS="$LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
+    GLESv1_CM_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"
+    GLESv2_LIB_DEPS="$LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
+    GLESv2_PC_LIB_PRIV="-lm -lpthread $DLOPEN_LIBS"
     ;;
 osmesa)
     # No libGL for osmesa
@@ -665,6 +677,8 @@ AC_SUBST([GL_PC_REQ_PRIV])
 AC_SUBST([GL_PC_LIB_PRIV])
 AC_SUBST([GL_PC_CFLAGS])
 AC_SUBST([DRI_PC_REQ_PRIV])
+AC_SUBST([GLESv1_LIB_DEPS])
+AC_SUBST([GLESv2_LIB_DEPS])
 
 dnl
 dnl More X11 setup
@@ -711,6 +725,45 @@ AC_ARG_WITH([dri-drivers],
 if test "x$with_dri_drivers" = x; then
     with_dri_drivers=no
 fi
+
+dnl Determine which APIs to support
+AC_ARG_ENABLE([opengl],
+    [AS_HELP_STRING([--disable-opengl],
+        [disable support for standard OpenGL API @<:@default=no@:>@])],
+    [enable_opengl="$enableval"],
+    [enable_opengl=yes])
+AC_ARG_ENABLE([gles1],
+    [AS_HELP_STRING([--enable-gles1],
+        [enable support for OpenGL ES 1.x API @<:@default=no@:>@])],
+    [enable_gles1="$enableval"],
+    [enable_gles1=no])
+AC_ARG_ENABLE([gles2],
+    [AS_HELP_STRING([--enable-gles2],
+        [enable support for OpenGL ES 2.x API @<:@default=no@:>@])],
+    [enable_gles2="$enableval"],
+    [enable_gles2=no])
+
+API_DEFINES=""
+APIS=""
+if test "x$enable_opengl" = xno; then
+    API_DEFINES="$API_DEFINES -DFEATURE_GL=0"
+else
+    API_DEFINES="$API_DEFINES -DFEATURE_GL=1"
+    APIS="$APIS gl"
+fi
+if test "x$enable_gles1" = xyes; then
+    API_DEFINES="$API_DEFINES -DFEATURE_ES1=1"
+    APIS="$APIS es1"
+fi
+if test "x$enable_gles2" = xyes; then
+    API_DEFINES="$API_DEFINES -DFEATURE_ES2=1"
+    APIS="$APIS es2"
+fi
+if test "x$enable_gles1" = xyes -o "x$enable_gles2"; then
+    SRC_DIRS="$SRC_DIRS gles"
+fi
+AC_SUBST([API_DEFINES])
+AC_SUBST([APIS])
 
 dnl If $with_dri_drivers is yes, directories will be added through
 dnl platform checks

@@ -82,24 +82,6 @@ libes1api.a: $(ES1_API_OBJECTS)
 libes2api.a: $(ES2_API_OBJECTS)
 	@$(MKLIB) -o es2api -static $(ES2_API_OBJECTS)
 
-GENERATED_SOURCES :=		\
-	main/api_exec_es1.c	\
-	main/api_exec_es2.c	\
-	main/get_es1.c		\
-	main/get_es2.c
-
-main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
-	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES1.1 > $@
-
-main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
-	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES2.0 > $@
-
-main/get_es1.c: main/get_gen.py
-	$(PYTHON2) $(PYTHON_FLAGS) $< 1 > $@
-
-main/get_es2.c: main/get_gen.py
-	$(PYTHON2) $(PYTHON_FLAGS) $< 2 > $@
-
 .PHONY: clean
 clean:
 	-rm -f $(ES1_LIBS) $(ES2_LIBS)

@@ -357,15 +357,18 @@ extern GLboolean i830CreateContext(const __GLcontextModes * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
 
-extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean i915CreateContext(int api,
+				   const __GLcontextModes * mesaVis,
                                    __DRIcontext * driContextPriv,
                                    void *sharedContextPrivate);
-extern GLboolean brwCreateContext(const __GLcontextModes * mesaVis,
+extern GLboolean brwCreateContext(int api,
+				  const __GLcontextModes * mesaVis,
 				  __DRIcontext * driContextPriv,
 				  void *sharedContextPrivate);
 
 static GLboolean
-intelCreateContext(const __GLcontextModes * mesaVis,
+intelCreateContext(gl_api api,
+		   const __GLcontextModes * mesaVis,
                    __DRIcontext * driContextPriv,
                    void *sharedContextPrivate)
 {
@@ -375,7 +378,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 #ifdef I915
    if (IS_9XX(intelScreen->deviceID)) {
       if (!IS_965(intelScreen->deviceID)) {
-	 return i915CreateContext(mesaVis, driContextPriv,
+	 return i915CreateContext(api, mesaVis, driContextPriv,
 				  sharedContextPrivate);
       }
    } else {
@@ -384,7 +387,8 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    }
 #else
    if (IS_965(intelScreen->deviceID))
-      return brwCreateContext(mesaVis, driContextPriv, sharedContextPrivate);
+      return brwCreateContext(api, mesaVis,
+			      driContextPriv, sharedContextPrivate);
 #endif
    fprintf(stderr, "Unrecognized deviceID %x\n", intelScreen->deviceID);
    return GL_FALSE;
@@ -431,6 +435,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    struct intel_screen *intelScreen;
    GLenum fb_format[3];
    GLenum fb_type[3];
+   unsigned int api_mask;
 
    static const GLenum back_buffer_modes[] = {
        GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
@@ -456,6 +461,17 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))
       return GL_FALSE;
+
+   api_mask = (1 << __DRI_API_OPENGL);
+#if FEATURE_ES1
+   api_mask |= (1 << __DRI_API_GLES);
+#endif
+#if FEATURE_ES2
+   api_mask |= (1 << __DRI_API_GLES2);
+#endif
+
+   if (IS_9XX(intelScreen->deviceID) || IS_965(intelScreen->deviceID))
+      psp->api_mask = api_mask;
 
    if (!intel_init_bufmgr(intelScreen))
        return GL_FALSE;

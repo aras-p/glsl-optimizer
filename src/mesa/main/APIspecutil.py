@@ -222,6 +222,13 @@ def Parameters(funcname):
     return params
 
 
+def FunctionPrefix(funcname):
+    """Return function specific prefix."""
+    func = __functions[funcname]
+
+    return func.prefix
+
+
 def FindParamIndex(params, paramname):
     """Find the index of a named parameter."""
     for i in xrange(len(params)):

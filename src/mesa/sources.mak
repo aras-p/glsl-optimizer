@@ -3,6 +3,8 @@
 MAIN_SOURCES = \
 	main/api_arrayelt.c \
 	main/api_exec.c \
+	main/api_exec_es1.c \
+	main/api_exec_es2.c \
 	main/api_loopback.c \
 	main/api_noop.c \
 	main/api_validate.c \
@@ -25,6 +27,7 @@ MAIN_SOURCES = \
 	main/dlist.c \
 	main/dlopen.c \
 	main/drawpix.c \
+	main/drawtex.c \
 	main/enable.c \
 	main/enums.c \
 	main/eval.c \
@@ -37,6 +40,8 @@ MAIN_SOURCES = \
 	main/formats.c \
 	main/framebuffer.c \
 	main/get.c \
+	main/get_es1.c \
+	main/get_es2.c \
 	main/getstring.c \
 	main/hash.c \
 	main/hint.c \
@@ -54,6 +59,7 @@ MAIN_SOURCES = \
 	main/points.c \
 	main/polygon.c \
 	main/queryobj.c \
+	main/querymatrix.c \
 	main/rastpos.c \
 	main/rbadaptors.c \
 	main/readpix.c \
@@ -76,6 +82,7 @@ MAIN_SOURCES = \
 	main/texgetimage.c \
 	main/teximage.c \
 	main/texobj.c \
+	main/texpal.c \
 	main/texparam.c \
 	main/texrender.c \
 	main/texstate.c \
@@ -199,6 +206,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_condrender.c \
 	state_tracker/st_cb_flush.c \
 	state_tracker/st_cb_drawpixels.c \
+	state_tracker/st_cb_drawtex.c \
 	state_tracker/st_cb_eglimage.c \
 	state_tracker/st_cb_fbo.c \
 	state_tracker/st_cb_feedback.c \

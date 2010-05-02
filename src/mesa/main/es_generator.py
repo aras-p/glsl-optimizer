@@ -103,11 +103,13 @@ VersionSpecificValues = {
         'description' : 'GLES1.1 functions',
         'header' : 'GLES/gl.h',
         'extheader' : 'GLES/glext.h',
+        'shortname' : 'es1'
     },
     'GLES2.0': {
         'description' : 'GLES2.0 functions',
         'header' : 'GLES2/gl2.h',
         'extheader' : 'GLES2/gl2ext.h',
+        'shortname' : 'es2'
     }
 }
 
@@ -164,6 +166,7 @@ if not VersionSpecificValues.has_key(version):
 # Grab the version-specific items we need to use
 versionHeader = VersionSpecificValues[version]['header']
 versionExtHeader = VersionSpecificValues[version]['extheader']
+shortname = VersionSpecificValues[version]['shortname']
 
 # If we get to here, we're good to go.  The "version" parameter
 # directs GetDispatchedFunctions to only allow functions from
@@ -206,11 +209,39 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 
 #include "main/compiler.h"
 #include "main/api_exec.h"
+#include "main/remap.h"
 
-#include "main/dispatch.h"
+#ifdef IN_DRI_DRIVER
+#define _GLAPI_USE_REMAP_TABLE
+#endif
+
+#include "es/glapi/glapi-%s/glapi/glapitable.h"
+#include "es/glapi/glapi-%s/glapi/glapioffsets.h"
+#include "es/glapi/glapi-%s/glapi/glapidispatch.h"
+
+#if FEATURE_remap_table
+
+#define need_MESA_remap_table
+
+#include "es/glapi/glapi-%s/main/remap_helper.h"
+
+void
+_mesa_init_remap_table_%s(void)
+{
+   _mesa_do_init_remap_table(_mesa_function_pool,
+                             driDispatchRemapTable_size,
+                             MESA_remap_table_functions);
+}
+
+void
+_mesa_map_static_functions_%s(void)
+{
+}
+
+#endif
 
 typedef void (*_glapi_proc)(void); /* generic function pointer */
-"""
+""" % (shortname, shortname, shortname, shortname, shortname, shortname);
 
 # Finally we get to the all-important functions
 print """/*************************************************************
@@ -262,6 +293,7 @@ for funcName in keys:
     passthroughFuncName = ""
     passthroughDeclarationString = ""
     passthroughCallString = ""
+    prefixOverride = None
     variables = []
     conversionCodeOutgoing = []
     conversionCodeIncoming = []
@@ -280,6 +312,9 @@ for funcName in keys:
         funcPrefix = "_es_"
         aliasprefix = apiutil.AliasPrefix(funcName)
     alias = apiutil.ConversionFunction(funcName)
+    prefixOverride = apiutil.FunctionPrefix(funcName)
+    if prefixOverride != "_mesa_":
+        aliasprefix = apiutil.FunctionPrefix(funcName)
     if not alias:
         # There may still be a Mesa alias for the function
         if apiutil.Alias(funcName):
@@ -667,9 +702,17 @@ for funcName in keys:
 
 # end for each function
 
-print "void"
-print "_mesa_init_exec_table(struct _glapi_table *exec)"
-print "{"
+print """
+struct _glapi_table *
+_mesa_create_exec_table_%s(void)
+{
+   struct _glapi_table *exec;
+   exec = _mesa_alloc_dispatch_table(sizeof *exec);
+   if (exec == NULL)
+      return NULL;
+
+""" % shortname
+
 for func in keys:
     prefix = "_es_" if func not in allSpecials else "_check_"
     for spec in apiutil.Categories(func):
@@ -682,4 +725,6 @@ for func in keys:
             suffix = ext[0].split("_")[0]
             entry += suffix
         print "    SET_%s(exec, %s%s);" % (entry, prefix, entry)
+print ""
+print "   return exec;"
 print "}"

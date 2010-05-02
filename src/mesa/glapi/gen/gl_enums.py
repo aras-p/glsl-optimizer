@@ -151,8 +151,10 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 		return
 
 
-	def printBody(self, api):
-		self.process_enums( api )
+	def printBody(self, api_list):
+		self.enum_table = {}
+		for api in api_list:
+			self.process_enums( api )
 
 		keys = self.enum_table.keys()
 		keys.sort()
@@ -209,16 +211,20 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 
 
 	def process_enums(self, api):
-		self.enum_table = {}
-		
 		for obj in api.enumIterateByName():
 			if obj.value not in self.enum_table:
 				self.enum_table[ obj.value ] = []
 
 
+			enum = self.enum_table[ obj.value ]
 			name = "GL_" + obj.name
 			priority = obj.priority()
-			self.enum_table[ obj.value ].append( [name, priority] )
+			already_in = False;
+			for n, p in enum:
+				if n == name:
+					already_in = True
+			if not already_in:
+				enum.append( [name, priority] )
 
 
 def show_usage():
@@ -226,18 +232,16 @@ def show_usage():
 	sys.exit(1)
 
 if __name__ == '__main__':
-	file_name = "gl_API.xml"
-
 	try:
 		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
 	except Exception,e:
 		show_usage()
 
+	api_list = []
 	for (arg,val) in args:
 		if arg == "-f":
-			file_name = val
-
-	api = gl_XML.parse_GL_API( file_name )
+			api = gl_XML.parse_GL_API( val )
+			api_list.append(api);
 
 	printer = PrintGlEnums()
-	printer.Print( api )
+	printer.Print( api_list )

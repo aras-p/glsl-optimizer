@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.8
  *
- * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2010  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,23 +23,16 @@
  */
 
 
-#ifndef API_EXEC_H
-#define API_EXEC_H
+#ifndef TEXPAL_H
+#define TEXPAL_H
 
 
-struct _glapi_table;
-
-extern struct _glapi_table *
-_mesa_alloc_dispatch_table(int size);
-
-extern struct _glapi_table *
-_mesa_create_exec_table(void);
-
-extern struct _glapi_table *
-_mesa_create_exec_table_es1(void);
-
-extern struct _glapi_table *
-_mesa_create_exec_table_es2(void);
+#include "main/glheader.h"
+extern void
+_mesa_cpal_compressed_teximage2d(GLenum target, GLint level,
+				 GLenum internalFormat,
+				 GLsizei width, GLsizei height,
+				 GLsizei imageSize, const void *palette);
 
 
-#endif
+#endif /* TEXPAL_H */

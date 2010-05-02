@@ -75,7 +75,8 @@ nouveau_channel_flush_notify(struct nouveau_channel *chan)
 }
 
 GLboolean
-nouveau_context_create(const __GLcontextModes *visual, __DRIcontext *dri_ctx,
+nouveau_context_create(gl_api api,
+		       const __GLcontextModes *visual, __DRIcontext *dri_ctx,
 		       void *share_ctx)
 {
 	__DRIscreen *dri_screen = dri_ctx->driScreenPriv;

@@ -16,6 +16,7 @@ include sources.mak
 .S.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
+CFLAGS += $(API_DEFINES)
 
 
 # Default: build dependencies, then asm_subdirs, GLSL built-in lib,
@@ -24,6 +25,17 @@ default: depend asm_subdirs glsl_builtin libmesa.a libmesagallium.a \
 	libglapi.a driver_subdirs
 
 
+main/api_exec_es1.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
+	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES1.1 > $@
+
+main/api_exec_es2.c: main/APIspec.xml main/es_generator.py main/APIspecutil.py main/APIspec.py
+	$(PYTHON2) $(PYTHON_FLAGS) main/es_generator.py -S main/APIspec.xml -V GLES2.0 > $@
+
+main/get_es1.c: main/get_gen_es.py
+	$(PYTHON2) $(PYTHON_FLAGS) $< 1 > $@
+
+main/get_es2.c: main/get_gen_es.py
+	$(PYTHON2) $(PYTHON_FLAGS) $< 2 > $@
 
 ######################################################################
 # Helper libraries used by many drivers:
@@ -94,14 +106,23 @@ install: default
 	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
 	    *)      $(MAKE) install-libgl || exit 1 ;; \
 	  esac ; \
+	done; \
+	for api in $(APIS) ; do \
+	  case "$$api" in \
+	    es1) $(MAKE) install-es1 || exit 1;; \
+	    es2) $(MAKE) install-es2 || exit 1;; \
+	  esac; \
 	done
 
-
-gl_pcedit = sed \
+pcedit = \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
 	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
 	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
+
+
+gl_pcedit = sed \
+	$(pcedit) \
 	-e 's,@GL_PC_REQ_PRIV@,$(GL_PC_REQ_PRIV),' \
 	-e 's,@GL_PC_LIB_PRIV@,$(GL_PC_LIB_PRIV),' \
 	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),' \
@@ -110,11 +131,24 @@ gl_pcedit = sed \
 gl.pc: gl.pc.in
 	$(gl_pcedit) $< > $@
 
+glesv2_pcedit = sed \
+	$(pcedit) \
+	-e 's,@GLESv2_PC_LIB_PRIV@,$(GLESv2_PC_LIB_PRIV),' \
+	-e 's,@GLESv2_LIB@,$(GLESv2_LIB),'
+
+glesv2.pc: glesv2.pc.in
+	$(glesv2_pcedit) $< > $@
+
+glesv1_cm_pcedit = sed \
+	$(pcedit) \
+	-e 's,@GLESv1_CM_PC_LIB_PRIV@,$(GLESv1_CM_PC_LIB_PRIV),' \
+	-e 's,@GLESv1_CM_LIB@,$(GLESv1_CM_LIB),'
+
+glesv1_cm.pc: glesv1_cm.pc.in
+	$(glesv1_cm_pcedit) $< > $@
+
 osmesa_pcedit = sed \
-	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
-	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
-	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
-	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
+	$(pcedit) \
 	-e 's,@OSMESA_LIB@,$(OSMESA_LIB),' \
 	-e 's,@OSMESA_PC_REQ@,$(OSMESA_PC_REQ),' \
 	-e 's,@OSMESA_PC_LIB_PRIV@,$(OSMESA_PC_LIB_PRIV),'
@@ -133,6 +167,30 @@ install-libgl: default gl.pc install-headers
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+
+install-headers-es1:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GLES
+	$(INSTALL) -m 644 $(TOP)/include/GLES/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/GLES
+
+install-es1: default glesv1_cm.pc install-headers-es1
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLESv1_CM_LIB_GLOB) \
+		$(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -m 644 glesv1_cm.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+
+install-headers-es2:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GLES2
+	$(INSTALL) -m 644 $(TOP)/include/GLES2/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/GLES2
+
+install-es2: default glesv2.pc install-headers-es2
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLESv2_LIB_GLOB) \
+		$(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -m 644 glesv2.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-osmesa: default osmesa.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)

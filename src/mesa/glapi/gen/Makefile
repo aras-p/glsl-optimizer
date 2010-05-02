@@ -151,8 +151,10 @@ $(MESA_DIR)/sparc/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
 
 ######################################################################
 
-$(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON)
-	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
+$(MESA_DIR)/main/enums.c: gl_enums.py $(COMMON) $(ES_API)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_API.xml \
+		-f $(MESA_DIR)/es/glapi/es1_API.xml \
+		-f $(MESA_DIR)/es/glapi/es2_API.xml > $@
 
 $(MESA_DIR)/main/remap_helper.h: remap_helper.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@

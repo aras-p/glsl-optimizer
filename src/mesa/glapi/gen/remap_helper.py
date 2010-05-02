@@ -65,17 +65,12 @@ class PrintGlRemap(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print '#include "main/dispatch.h"'
+		print '#include "main/remap.h"'
 		print ''
 		return
 
 
 	def printBody(self, api):
-		print 'struct gl_function_remap {'
-		print '   GLint func_index;'
-		print '   GLint dispatch_offset; /* for sanity check */'
-		print '};'
-		print ''
-
 		pool_indices = {}
 
 		print '/* this is internal to remap.c */'
@@ -108,10 +103,7 @@ class PrintGlRemap(gl_XML.gl_print_base):
 		print ''
 
 		print '/* these functions need to be remapped */'
-		print 'static const struct {'
-		print '   GLint pool_index;'
-		print '   GLint remap_index;'
-		print '} MESA_remap_table_functions[] = {'
+		print 'static const struct gl_function_pool_remap MESA_remap_table_functions[] = {'
 		# output all functions that need to be remapped
 		# iterate by offsets so that they are sorted by remap indices
 		for f in api.functionIterateByOffset():
