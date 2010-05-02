@@ -272,10 +272,11 @@ static void r500_rs_tex_write(struct r300_rs_block* rs, int id, int fp_offset)
  * This is the part of the chipset that actually does the rasterization
  * of vertices into fragments. This is also the part of the chipset that
  * locks up if any part of it is even slightly wrong. */
-static void r300_update_rs_block(struct r300_context* r300,
-                                 struct r300_shader_semantics* vs_outputs,
-                                 struct r300_shader_semantics* fs_inputs)
+static void r300_update_rs_block(struct r300_context *r300)
 {
+    struct r300_vertex_shader *vs = r300->vs_state.state;
+    struct r300_shader_semantics *vs_outputs = &vs->outputs;
+    struct r300_shader_semantics *fs_inputs = &r300_fs(r300)->shader->inputs;
     struct r300_rs_block rs = { { 0 } };
     int i, col_count = 0, tex_count = 0, fp_offset = 0, count;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
@@ -426,14 +427,6 @@ static void r300_update_rs_block(struct r300_context* r300,
     }
 }
 
-/* Update the shader-dependant states. */
-static void r300_update_derived_shader_state(struct r300_context* r300)
-{
-    struct r300_vertex_shader* vs = r300->vs_state.state;
-
-    r300_update_rs_block(r300, &vs->outputs, &r300_fs(r300)->shader->inputs);
-}
-
 static void r300_merge_textures_and_samplers(struct r300_context* r300)
 {
     struct r300_textures_state *state =
@@ -529,7 +522,7 @@ void r300_update_derived_state(struct r300_context* r300)
     }
 
     if (r300->rs_block_state.dirty) {
-        r300_update_derived_shader_state(r300);
+        r300_update_rs_block(r300);
     }
 
     if (r300->draw) {
