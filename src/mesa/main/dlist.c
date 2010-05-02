@@ -32,6 +32,7 @@
 #include "glheader.h"
 #include "imports.h"
 #include "api_arrayelt.h"
+#include "api_exec.h"
 #include "api_loopback.h"
 #include "config.h"
 #include "mfeatures.h"
