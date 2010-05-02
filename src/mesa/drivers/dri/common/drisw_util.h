@@ -36,7 +36,7 @@
 #ifndef _DRISW_UTIL_H
 #define _DRISW_UTIL_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #include <GL/gl.h>
 #include <GL/internal/glcore.h>
