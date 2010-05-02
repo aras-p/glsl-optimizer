@@ -347,8 +347,6 @@ svga_destroy_screen( struct pipe_screen *screen )
    pipe_mutex_destroy(svgascreen->swc_mutex);
    pipe_mutex_destroy(svgascreen->tex_mutex);
 
-   svgascreen->swc->destroy(svgascreen->swc);
-   
    svgascreen->sws->destroy(svgascreen->sws);
    
    FREE(svgascreen);
@@ -418,10 +416,6 @@ svga_screen_create(struct svga_winsys_screen *sws)
       svgascreen->use_vs30 = svgascreen->use_ps30 = FALSE;
 #endif
 
-   svgascreen->swc = sws->context_create(sws);
-   if(!svgascreen->swc)
-      goto error2;
-
    pipe_mutex_init(svgascreen->tex_mutex);
    pipe_mutex_init(svgascreen->swc_mutex);
 
@@ -432,25 +426,6 @@ error2:
    FREE(svgascreen);
 error1:
    return NULL;
-}
-
-void svga_screen_flush( struct svga_screen *svgascreen, 
-                        struct pipe_fence_handle **pfence )
-{
-   struct pipe_fence_handle *fence = NULL;
-
-   SVGA_DBG(DEBUG_PERF, "%s\n", __FUNCTION__);
-   
-   pipe_mutex_lock(svgascreen->swc_mutex);
-   svgascreen->swc->flush(svgascreen->swc, &fence);
-   pipe_mutex_unlock(svgascreen->swc_mutex);
-   
-   svga_screen_cache_flush(svgascreen, fence);
-   
-   if(pfence)
-      *pfence = fence;
-   else
-      svgascreen->sws->fence_reference(svgascreen->sws, &fence, NULL);
 }
 
 struct svga_winsys_screen *

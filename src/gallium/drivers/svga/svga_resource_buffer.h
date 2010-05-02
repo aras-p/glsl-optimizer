@@ -238,7 +238,7 @@ void
 svga_context_flush_buffers(struct svga_context *svga);
 
 struct svga_winsys_buffer *
-svga_winsys_buffer_create(struct svga_screen *ss,
+svga_winsys_buffer_create(struct svga_context *svga,
                           unsigned alignment, 
                           unsigned usage,
                           unsigned size);

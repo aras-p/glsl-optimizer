@@ -68,6 +68,7 @@ static boolean svga_get_query_result(struct pipe_context *pipe,
 static struct pipe_query *svga_create_query( struct pipe_context *pipe,
                                              unsigned query_type )
 {
+   struct svga_context *svga = svga_context( pipe );
    struct svga_screen *svgascreen = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = svgascreen->sws;
    struct svga_query *sq;
@@ -80,7 +81,7 @@ static struct pipe_query *svga_create_query( struct pipe_context *pipe,
 
    sq->type = SVGA3D_QUERYTYPE_OCCLUSION;
 
-   sq->hwbuf = svga_winsys_buffer_create(svgascreen, 
+   sq->hwbuf = svga_winsys_buffer_create(svga,
                                          1,
                                          SVGA_BUFFER_USAGE_PINNED,
                                          sizeof *sq->queryResult);
