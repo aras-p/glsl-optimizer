@@ -816,11 +816,8 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     rs->clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
-    /* XXX Disable point sprites until we know what's wrong with them. */
-    rs->rs.sprite_coord_enable = 0;
-
     /* Point sprites */
-    if (rs->rs.sprite_coord_enable) {
+    if (state->sprite_coord_enable) {
         rs->stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
 	for (i = 0; i < 8; i++) {
 	    if (state->sprite_coord_enable & (1 << i))
