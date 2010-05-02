@@ -34,6 +34,7 @@
 #include "svga_resource_texture.h"
 #include "svga_resource.h"
 #include "svga_debug.h"
+#include "svga_surface.h"
 
 #include "svga3d_shaderdefs.h"
 
