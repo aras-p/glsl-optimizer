@@ -22,7 +22,6 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_vs.h"
-#include "r300_fs.h"
 
 #include "r300_context.h"
 #include "r300_screen.h"
