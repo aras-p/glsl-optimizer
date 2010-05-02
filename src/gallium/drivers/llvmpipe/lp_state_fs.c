@@ -1062,6 +1062,34 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
 
 
 /**
+ * Return the blend factor equivalent to a destination alpha of one.
+ */
+static INLINE unsigned
+force_dst_alpha_one(unsigned factor, boolean alpha)
+{
+   switch(factor) {
+   case PIPE_BLENDFACTOR_DST_ALPHA:
+      return PIPE_BLENDFACTOR_ONE;
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+      return PIPE_BLENDFACTOR_ZERO;
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+      return PIPE_BLENDFACTOR_ZERO;
+   }
+
+   if (alpha) {
+      switch(factor) {
+      case PIPE_BLENDFACTOR_DST_COLOR:
+         return PIPE_BLENDFACTOR_ONE;
+      case PIPE_BLENDFACTOR_INV_DST_COLOR:
+         return PIPE_BLENDFACTOR_ZERO;
+      }
+   }
+
+   return factor;
+}
+
+
+/**
  * We need to generate several variants of the fragment pipeline to match
  * all the combinations of the contributing state atoms.
  *
@@ -1102,6 +1130,7 @@ make_variant_key(struct llvmpipe_context *lp,
 
    key->nr_cbufs = lp->framebuffer.nr_cbufs;
    for (i = 0; i < lp->framebuffer.nr_cbufs; i++) {
+      struct pipe_rt_blend_state *blend_rt = &key->blend.rt[i];
       const struct util_format_description *format_desc;
       unsigned chan;
 
@@ -1109,7 +1138,7 @@ make_variant_key(struct llvmpipe_context *lp,
       assert(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
              format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB);
 
-      key->blend.rt[i].colormask = lp->blend->rt[i].colormask;
+      blend_rt->colormask = lp->blend->rt[i].colormask;
 
       /* mask out color channels not present in the color buffer.
        * Should be simple to incorporate per-cbuf writemasks:
@@ -1118,7 +1147,27 @@ make_variant_key(struct llvmpipe_context *lp,
          enum util_format_swizzle swizzle = format_desc->swizzle[chan];
 
          if(swizzle > UTIL_FORMAT_SWIZZLE_W)
-            key->blend.rt[i].colormask &= ~(1 << chan);
+            blend_rt->colormask &= ~(1 << chan);
+      }
+
+      /*
+       * Our swizzled render tiles always have an alpha channel, but the linear
+       * render target format often does not, so force here the dst alpha to be
+       * one.
+       *
+       * This is not a mere optimization. Wrong results will be produced if the
+       * dst alpha is used, the dst format does not have alpha, and the previous
+       * rendering was not flushed from the swizzled to linear buffer. For
+       * example, NonPowTwo DCT.
+       *
+       * TODO: This should be generalized to all channels for better
+       * performance, but only alpha causes correctness issues.
+       */
+      if (format_desc->swizzle[3] > UTIL_FORMAT_SWIZZLE_W) {
+         blend_rt->rgb_src_factor = force_dst_alpha_one(blend_rt->rgb_src_factor, FALSE);
+         blend_rt->rgb_dst_factor = force_dst_alpha_one(blend_rt->rgb_dst_factor, FALSE);
+         blend_rt->alpha_src_factor = force_dst_alpha_one(blend_rt->alpha_src_factor, TRUE);
+         blend_rt->alpha_dst_factor = force_dst_alpha_one(blend_rt->alpha_dst_factor, TRUE);
       }
    }
 
