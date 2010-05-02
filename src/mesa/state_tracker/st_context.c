@@ -199,14 +199,14 @@ struct st_context *st_create_context(struct pipe_context *pipe,
    memset(&funcs, 0, sizeof(funcs));
    st_init_driver_functions(&funcs);
 
-#if FEATURE_ES1
+#if FEATURE_GL
+   ctx = _mesa_create_context_for_api(API_OPENGL,
+				      visual, shareCtx, &funcs, NULL);
+#elif FEATURE_ES1
    ctx = _mesa_create_context_for_api(API_OPENGLES,
 				      visual, shareCtx, &funcs, NULL);
 #elif FEATURE_ES2
    ctx = _mesa_create_context_for_api(API_OPENGLES2,
-				      visual, shareCtx, &funcs, NULL);
-#else
-   ctx = _mesa_create_context_for_api(API_OPENGL,
 				      visual, shareCtx, &funcs, NULL);
 #endif
 
