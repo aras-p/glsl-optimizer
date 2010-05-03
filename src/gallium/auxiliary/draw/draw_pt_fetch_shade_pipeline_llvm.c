@@ -66,7 +66,6 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
-   struct draw_geometry_shader *gs = draw->gs.geometry_shader;
    struct draw_llvm_variant_key key;
    struct draw_llvm_variant *variant = NULL;
    unsigned i;
@@ -95,17 +94,6 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
     * viewport code in draw_pt_post_vs.c.
     */
    fpme->vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
-
-
-
-   draw_pt_fetch_prepare( fpme->fetch,
-                          vs->info.num_inputs,
-                          fpme->vertex_size,
-                          instance_id_index );
-   if (opt & PT_SHADE) {
-      vs->prepare(vs, draw);
-      draw_geometry_shader_prepare(gs, draw);
-   }
 
 
    /* XXX: it's not really gl rasterization rules we care about here,
