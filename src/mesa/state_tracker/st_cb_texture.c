@@ -526,7 +526,6 @@ st_TexImage(GLcontext * ctx,
    struct pipe_screen *screen = st->pipe->screen;
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
-   GLint postConvWidth, postConvHeight;
    GLint texelBytes, sizeInBytes;
    GLuint dstRowStride = 0;
    struct gl_pixelstore_attrib unpackNB;
@@ -558,9 +557,6 @@ st_TexImage(GLcontext * ctx,
       border = 0;
    }
 
-   postConvWidth = width;
-   postConvHeight = height;
-
    stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
 
@@ -572,15 +568,6 @@ st_TexImage(GLcontext * ctx,
    }
    else {
       texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-      
-      /* Minimum pitch of 32 bytes */
-      if (postConvWidth * texelBytes < 32) {
-	 postConvWidth = 32 / texelBytes;
-	 texImage->RowStride = postConvWidth;
-      }
-      
-      /* we'll set RowStride elsewhere when the texture is a "mapped" state */
-      /*assert(texImage->RowStride == postConvWidth);*/
    }
 
    /* Release the reference to a potentially orphaned buffer.   
@@ -704,8 +691,8 @@ st_TexImage(GLcontext * ctx,
          assert(dims != 3);
       }
       else {
-         dstRowStride = postConvWidth * texelBytes;
-         sizeInBytes = depth * dstRowStride * postConvHeight;
+         dstRowStride = width * texelBytes;
+         sizeInBytes = depth * dstRowStride * height;
       }
 
       texImage->Data = _mesa_align_malloc(sizeInBytes, 16);
