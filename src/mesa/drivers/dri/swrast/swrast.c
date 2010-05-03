@@ -501,7 +501,8 @@ swrast_init_driver_functions(struct dd_function_table *driver)
  */
 
 static GLboolean
-dri_create_context(const __GLcontextModes * visual,
+dri_create_context(gl_api api,
+		   const __GLcontextModes * visual,
 		   __DRIcontext * cPriv, void *sharedContextPrivate)
 {
     struct dri_context *ctx = NULL;
