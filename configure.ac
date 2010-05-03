@@ -62,10 +62,6 @@ else
 	WARN=""
 fi
 
-if test "x$GCC" = xyes ; then
-	CFLAGS="$CFLAGS -std=c89 -ansi -pedantic"
-fi
-
 CFLAGS="$CFLAGS $WARN"
 CXXFLAGS="$CXXFLAGS $WARN"
 YFLAGS="-d -v"
