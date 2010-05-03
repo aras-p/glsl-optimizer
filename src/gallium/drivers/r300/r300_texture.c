@@ -46,18 +46,6 @@ static const unsigned microblock_table[5][3][2] = {
     {{ 2, 1}, {0, 0}, {0, 0}}  /* 128 bits per pixel */
 };
 
-/* Return true for non-compressed and non-YUV formats. */
-static boolean r300_format_is_plain(enum pipe_format format)
-{
-    const struct util_format_description *desc = util_format_description(format);
-
-    if (!format) {
-        return FALSE;
-    }
-
-    return desc->layout == UTIL_FORMAT_LAYOUT_PLAIN;
-}
-
 /* Translate a pipe_format into a useful texture format for sampling.
  *
  * Some special formats are translated directly using R300_EASY_TX_FORMAT,
@@ -620,7 +608,7 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
     struct r300_screen *r300screen = r300_screen(screen);
 
     SCREEN_DBG(r300screen, DBG_TEX, "r300: texture_reinterpret_format: %s -> %s\n",
-               util_format_name(tex->format), util_format_name(new_format));
+               util_format_short_name(tex->format), util_format_short_name(new_format));
 
     tex->format = new_format;
 
@@ -711,7 +699,7 @@ unsigned r300_texture_get_stride(struct r300_screen* screen,
 
     width = u_minify(tex->b.b.width0, level);
 
-    if (r300_format_is_plain(tex->b.b.format)) {
+    if (util_format_is_plain(tex->b.b.format)) {
         tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH,
                                                 tex->mip_macrotile[level]);
         width = align(width, tile_width);
@@ -729,7 +717,7 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
 
     height = u_minify(tex->b.b.height0, level);
 
-    if (r300_format_is_plain(tex->b.b.format)) {
+    if (util_format_is_plain(tex->b.b.format)) {
         tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT,
                                                  tex->mip_macrotile[level]);
         height = align(height, tile_height);
@@ -772,7 +760,7 @@ static void r300_setup_miptree(struct r300_screen* screen,
     boolean rv350_mode = screen->caps.is_rv350;
 
     SCREEN_DBG(screen, DBG_TEXALLOC, "r300: Making miptree for texture, format %s\n",
-               util_format_name(base->format));
+               util_format_short_name(base->format));
 
     for (i = 0; i <= base->last_level; i++) {
         /* Let's see if this miplevel can be macrotiled. */
@@ -822,7 +810,7 @@ static void r300_setup_tiling(struct pipe_screen *screen,
     boolean is_zb = util_format_is_depth_or_stencil(format);
     boolean dbg_no_tiling = SCREEN_DBG_ON(r300_screen(screen), DBG_NO_TILING);
 
-    if (!r300_format_is_plain(format)) {
+    if (!util_format_is_plain(format)) {
         return;
     }
 
@@ -957,7 +945,7 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
                tex->microtile ? "YES" : " NO",
                tex->hwpitch[0],
                base->width0, base->height0, base->depth0, base->last_level,
-               util_format_name(base->format));
+               util_format_short_name(base->format));
 
     tex->buffer = rws->buffer_create(rws, 2048,
 				     PIPE_BIND_SAMPLER_VIEW, /* XXX */
@@ -1063,7 +1051,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
                tex->microtile ? "YES" : " NO",
                stride / util_format_get_blocksize(base->format),
                base->width0, base->height0,
-               util_format_name(base->format));
+               util_format_short_name(base->format));
 
     /* Enforce microtiled zbuffer. */
     override_zb_flags = util_format_is_depth_or_stencil(base->format) &&

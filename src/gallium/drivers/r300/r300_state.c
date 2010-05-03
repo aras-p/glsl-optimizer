@@ -1317,7 +1317,7 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                     /* XXX Shouldn't we align the format? */
                     fprintf(stderr, "r300_create_vertex_elements_state: "
                             "Unaligned format %s:%i isn't supported\n",
-                            util_format_name(*format), size);
+                            util_format_short_name(*format), size);
                     assert(0);
                     abort();
                 }
