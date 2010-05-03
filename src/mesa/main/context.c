@@ -652,6 +652,9 @@ check_context_limits(GLcontext *ctx)
 
    assert(ctx->Const.MaxDrawBuffers <= MAX_DRAW_BUFFERS);
 
+   /* if this fails, add more enum values to gl_buffer_index */
+   assert(BUFFER_COLOR0 + MAX_DRAW_BUFFERS <= BUFFER_COUNT);
+
    /* XXX probably add more tests */
 }
 
