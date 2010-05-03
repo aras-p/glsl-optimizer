@@ -202,7 +202,8 @@ static const char *file_strings[TGSI_FILE_COUNT+1] = {
    "SAMPLER",
    "ADDR",
    "IMM",
-   "LOOP",
+   "PRED",
+   "SV",
    "PAYLOAD"
 };
 

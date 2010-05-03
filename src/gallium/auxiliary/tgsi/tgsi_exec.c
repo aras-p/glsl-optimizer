@@ -1346,13 +1346,6 @@ store_dest(struct tgsi_exec_machine *mach,
       dst = &mach->Addrs[index].xyzw[chan_index];
       break;
 
-   case TGSI_FILE_LOOP:
-      assert(reg->Register.Index == 0);
-      assert(mach->LoopCounterStackTop > 0);
-      assert(chan_index == CHAN_X);
-      dst = &mach->LoopCounterStack[mach->LoopCounterStackTop - 1].xyzw[chan_index];
-      break;
-
    case TGSI_FILE_PREDICATE:
       index = reg->Register.Index;
       assert(index < TGSI_EXEC_NUM_PREDS);

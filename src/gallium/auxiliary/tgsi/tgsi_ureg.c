@@ -74,7 +74,6 @@ struct ureg_tokens {
 #define UREG_MAX_IMMEDIATE 32
 #define UREG_MAX_TEMP 256
 #define UREG_MAX_ADDR 2
-#define UREG_MAX_LOOP 1
 #define UREG_MAX_PRED 1
 
 struct const_decl {
@@ -151,7 +150,6 @@ struct ureg_program
 
    unsigned nr_addrs;
    unsigned nr_preds;
-   unsigned nr_loops;
    unsigned nr_instructions;
 
    struct ureg_tokens domain[2];
@@ -535,19 +533,6 @@ struct ureg_dst ureg_DECL_address( struct ureg_program *ureg )
 
    assert( 0 );
    return ureg_dst_register( TGSI_FILE_ADDRESS, 0 );
-}
-
-/* Allocate a new loop register.
- */
-struct ureg_dst
-ureg_DECL_loop(struct ureg_program *ureg)
-{
-   if (ureg->nr_loops < UREG_MAX_LOOP) {
-      return ureg_dst_register(TGSI_FILE_LOOP, ureg->nr_loops++);
-   }
-
-   assert(0);
-   return ureg_dst_register(TGSI_FILE_LOOP, 0);
 }
 
 /* Allocate a new predicate register.
@@ -1354,13 +1339,6 @@ static void emit_decls( struct ureg_program *ureg )
       emit_decl_range( ureg,
                        TGSI_FILE_ADDRESS,
                        0, ureg->nr_addrs );
-   }
-
-   if (ureg->nr_loops) {
-      emit_decl_range(ureg,
-                      TGSI_FILE_LOOP,
-                      0,
-                      ureg->nr_loops);
    }
 
    if (ureg->nr_preds) {
