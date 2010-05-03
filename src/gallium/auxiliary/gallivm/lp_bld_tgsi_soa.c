@@ -54,11 +54,8 @@
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
 #include "lp_bld_tgsi.h"
+#include "lp_bld_limits.h"
 #include "lp_bld_debug.h"
-
-
-#define LP_MAX_TEMPS 256
-#define LP_MAX_IMMEDIATES 256
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -84,7 +81,6 @@
 #define QUAD_BOTTOM_LEFT  2
 #define QUAD_BOTTOM_RIGHT 3
 
-#define LP_TGSI_MAX_NESTING 16
 
 struct lp_exec_mask {
    struct lp_build_context *bld;
@@ -93,19 +89,19 @@ struct lp_exec_mask {
 
    LLVMTypeRef int_vec_type;
 
-   LLVMValueRef cond_stack[LP_TGSI_MAX_NESTING];
+   LLVMValueRef cond_stack[LP_MAX_TGSI_NESTING];
    int cond_stack_size;
    LLVMValueRef cond_mask;
 
-   LLVMValueRef break_stack[LP_TGSI_MAX_NESTING];
+   LLVMValueRef break_stack[LP_MAX_TGSI_NESTING];
    int break_stack_size;
    LLVMValueRef break_mask;
 
-   LLVMValueRef cont_stack[LP_TGSI_MAX_NESTING];
+   LLVMValueRef cont_stack[LP_MAX_TGSI_NESTING];
    int cont_stack_size;
    LLVMValueRef cont_mask;
 
-   LLVMBasicBlockRef loop_stack[LP_TGSI_MAX_NESTING];
+   LLVMBasicBlockRef loop_stack[LP_MAX_TGSI_NESTING];
    int loop_stack_size;
    LLVMBasicBlockRef loop_block;
 
@@ -124,9 +120,9 @@ struct lp_build_tgsi_soa_context
 
    struct lp_build_sampler_soa *sampler;
 
-   LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
-   LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
-   LLVMValueRef addr[LP_MAX_TEMPS][NUM_CHANNELS];
+   LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES][NUM_CHANNELS];
+   LLVMValueRef temps[LP_MAX_TGSI_TEMPS][NUM_CHANNELS];
+   LLVMValueRef addr[LP_MAX_TGSI_ADDRS][NUM_CHANNELS];
 
    /* we allocate an array of temps if we have indirect
     * addressing and then the temps above is unused */
@@ -198,6 +194,7 @@ static void lp_exec_mask_update(struct lp_exec_mask *mask)
 static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
                                    LLVMValueRef val)
 {
+   assert(mask->cond_stack_size < LP_MAX_TGSI_NESTING);
    mask->cond_stack[mask->cond_stack_size++] = mask->cond_mask;
    mask->cond_mask = LLVMBuildBitCast(mask->bld->builder, val,
                                       mask->int_vec_type, "");
@@ -238,6 +235,10 @@ static void lp_exec_bgnloop(struct lp_exec_mask *mask)
       mask->break_mask = LLVMConstAllOnes(mask->int_vec_type);
    if (mask->cond_stack_size == 0)
       mask->cond_mask = LLVMConstAllOnes(mask->int_vec_type);
+
+   assert(mask->break_stack_size < LP_MAX_TGSI_NESTING);
+   assert(mask->cont_stack_size < LP_MAX_TGSI_NESTING);
+   assert(mask->break_stack_size < LP_MAX_TGSI_NESTING);
 
    mask->break_stack[mask->break_stack_size++] = mask->break_mask;
    mask->cont_stack[mask->cont_stack_size++] = mask->cont_mask;
@@ -750,6 +751,7 @@ emit_declaration(
    for (idx = first; idx <= last; ++idx) {
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
+         assert(idx < LP_MAX_TGSI_TEMPS);
          if (bld->has_indirect_addressing) {
             LLVMValueRef val = LLVMConstInt(LLVMInt32Type(),
                                             last*4 + 4, 0);
@@ -769,6 +771,7 @@ emit_declaration(
          break;
 
       case TGSI_FILE_ADDRESS:
+         assert(idx < LP_MAX_TGSI_ADDRS);
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->addr[idx][i] = lp_build_alloca(bld->base.builder,
                                                 vec_type, "");
@@ -1783,7 +1786,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          {
             const uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
             assert(size <= 4);
-            assert(num_immediates < LP_MAX_IMMEDIATES);
+            assert(num_immediates < LP_MAX_TGSI_IMMEDIATES);
             for( i = 0; i < size; ++i )
                bld.immediates[num_immediates][i] =
                   lp_build_const_vec(type, parse.FullToken.FullImmediate.u[i].Float);
