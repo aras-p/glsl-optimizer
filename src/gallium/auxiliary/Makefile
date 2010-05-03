@@ -113,6 +113,7 @@ C_SOURCES = \
 	util/u_format_tests.c \
 	util/u_format_yuv.c \
 	util/u_format_zs.c \
+	util/u_framebuffer.c \
 	util/u_gen_mipmap.c \
 	util/u_half.c \
 	util/u_handle_table.c \

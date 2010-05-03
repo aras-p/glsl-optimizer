@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.  All Rights Reserved.
+ * Copyright 2009-2010 VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -25,41 +25,25 @@
  **************************************************************************/
 
 
-#ifndef U_SURFACE_H
-#define U_SURFACE_H
+#ifndef U_FRAMEBUFFER_H
+#define U_FRAMEBUFFER_H
 
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 
 
-/**
- * Are s1 and s2 the same surface?
- * Surfaces are basically views into textures so check if the two surfaces
- * name the same part of the same texture.
- */
-static INLINE boolean
-util_same_surface(const struct pipe_surface *s1, const struct pipe_surface *s2)
-{
-   return (s1->texture == s2->texture &&
-           s1->face == s2->face &&
-           s1->level == s2->level &&
-           s1->zslice == s2->zslice);
-}
-
-
-
-
 extern boolean
-util_create_rgba_surface(struct pipe_screen *screen,
-                         uint width, uint height, uint bind,
-                         struct pipe_resource **textureOut,
-                         struct pipe_surface **surfaceOut);
+util_framebuffer_state_equal(const struct pipe_framebuffer_state *dst,
+                             const struct pipe_framebuffer_state *src);
+
+extern void
+util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
+                            const struct pipe_framebuffer_state *src);
 
 
 extern void
-util_destroy_rgba_surface(struct pipe_resource *texture,
-                          struct pipe_surface *surface);
+util_unreference_framebuffer_state(struct pipe_framebuffer_state *fb);
 
 
-#endif /* U_SURFACE_H */
+#endif /* U_FRAMEBUFFER_H */
