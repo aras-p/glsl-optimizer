@@ -107,30 +107,6 @@ ir_to_mesa_visitor::create_tree(int op, struct mbtree *left, struct mbtree *righ
    return tree;
 }
 
-const char *
-produce_swizzle(int8_t *swizzle, const char *reg_name,
-		const char **swizzle_reg_name)
-{
-   if (swizzle[0] == 0 &&
-       swizzle[1] == 1 &&
-       swizzle[2] == 2 &&
-       swizzle[3] == 3)
-   {
-      *swizzle_reg_name = reg_name;
-   } else {
-      char swizzle_letters[4] = { 'x', 'y', 'z', 'w' };
-      char *temp;
-      asprintf(&temp, "%s.%c%c%c%c",
-	       reg_name,
-	       swizzle_letters[swizzle[0]],
-	       swizzle_letters[swizzle[1]],
-	       swizzle_letters[swizzle[2]],
-	       swizzle_letters[swizzle[3]]);
-      *swizzle_reg_name = temp;
-   }
-   return *swizzle_reg_name;
-}
-
 /**
  * In the initial pass of codegen, we assign temporary numbers to
  * intermediate results.  (not SSA -- variable assignments will reuse

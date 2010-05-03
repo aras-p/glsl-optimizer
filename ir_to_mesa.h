@@ -61,8 +61,6 @@ struct mbtree {
    struct mbtree *right;
    void *state;
    uint16_t op;
-   const char *reg_name;
-   const char *swizzle_reg_name;
    class ir_to_mesa_visitor *v;
 
    /**
