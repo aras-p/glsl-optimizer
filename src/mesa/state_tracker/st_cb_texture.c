@@ -1888,7 +1888,7 @@ st_finalize_texture(GLcontext *ctx,
    if (stObj->pt) {
       if (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
           stObj->pt->format != firstImageFormat ||
-          stObj->pt->last_level != stObj->lastLevel ||
+          stObj->pt->last_level < stObj->lastLevel ||
           stObj->pt->width0 != stObj->width0 ||
           stObj->pt->height0 != stObj->height0 ||
           stObj->pt->depth0 != stObj->depth0)
