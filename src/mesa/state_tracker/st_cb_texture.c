@@ -555,6 +555,11 @@ st_TexImage(GLcontext * ctx,
       texImage->Border = 0;
       border = 0;
    }
+   else {
+      assert(texImage->Width == width);
+      assert(texImage->Height == height);
+      assert(texImage->Depth == depth);
+   }
 
    stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
@@ -666,32 +671,17 @@ st_TexImage(GLcontext * ctx,
          transfer_usage = PIPE_TRANSFER_WRITE;
 
       texImage->Data = st_texture_image_map(st, stImage, 0,
-                                            transfer_usage, 0, 0,
-                                            stImage->base.Width,
-                                            stImage->base.Height);
+                                            transfer_usage, 0, 0, width, height);
       if(stImage->transfer)
          dstRowStride = stImage->transfer->stride;
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
-      GLint sizeInBytes;
+      GLuint imageSize = _mesa_format_image_size(texImage->TexFormat,
+                                                 width, height, depth);
+      dstRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
 
-      if (_mesa_is_format_compressed(texImage->TexFormat)) {
-         sizeInBytes = _mesa_format_image_size(texImage->TexFormat,
-                                               texImage->Width,
-                                               texImage->Height,
-                                               texImage->Depth);
-         dstRowStride = _mesa_format_row_stride(texImage->TexFormat, width);
-         assert(dims != 3);
-      }
-      else {
-         GLint texelBytes;
-         texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-         dstRowStride = width * texelBytes;
-         sizeInBytes = depth * dstRowStride * height;
-      }
-
-      texImage->Data = _mesa_align_malloc(sizeInBytes, 16);
+      texImage->Data = _mesa_align_malloc(imageSize, 16);
    }
 
    if (!texImage->Data) {
@@ -754,8 +744,7 @@ st_TexImage(GLcontext * ctx,
             /* map next slice of 3D texture */
 	    texImage->Data = st_texture_image_map(st, stImage, i + 1,
                                                   transfer_usage, 0, 0,
-                                                  stImage->base.Width,
-                                                  stImage->base.Height);
+                                                  width, height);
 	    src += srcImageStride;
 	 }
       }
