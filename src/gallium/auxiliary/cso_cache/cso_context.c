@@ -36,6 +36,7 @@
   */
 
 #include "pipe/p_state.h"
+#include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -100,10 +101,6 @@ struct cso_context {
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref, stencil_ref_saved;
 };
-
-
-static void
-free_framebuffer_state(struct pipe_framebuffer_state *fb);
 
 
 static boolean delete_blend_state(struct cso_context *ctx, void *state)
@@ -303,8 +300,8 @@ void cso_release_all( struct cso_context *ctx )
       pipe_sampler_view_reference(&ctx->vertex_sampler_views_saved[i], NULL);
    }
 
-   free_framebuffer_state(&ctx->fb);
-   free_framebuffer_state(&ctx->fb_saved);
+   util_unreference_framebuffer_state(&ctx->fb);
+   util_unreference_framebuffer_state(&ctx->fb_saved);
 
    if (ctx->cache) {
       cso_cache_delete( ctx->cache );
@@ -896,42 +893,11 @@ void cso_restore_vertex_shader(struct cso_context *ctx)
 }
 
 
-/**
- * Copy framebuffer state from src to dst with refcounting of surfaces.
- */
-static void
-copy_framebuffer_state(struct pipe_framebuffer_state *dst,
-                       const struct pipe_framebuffer_state *src)
-{
-   uint i;
-
-   dst->width = src->width;
-   dst->height = src->height;
-   dst->nr_cbufs = src->nr_cbufs;
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
-   }
-   pipe_surface_reference(&dst->zsbuf, src->zsbuf);
-}
-
-
-static void
-free_framebuffer_state(struct pipe_framebuffer_state *fb)
-{
-   uint i;
-
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      pipe_surface_reference(&fb->cbufs[i], NULL);
-   }
-   pipe_surface_reference(&fb->zsbuf, NULL);
-}
-
-
 enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
                                     const struct pipe_framebuffer_state *fb)
 {
    if (memcmp(&ctx->fb, fb, sizeof(*fb)) != 0) {
-      copy_framebuffer_state(&ctx->fb, fb);
+      util_copy_framebuffer_state(&ctx->fb, fb);
       ctx->pipe->set_framebuffer_state(ctx->pipe, fb);
    }
    return PIPE_OK;
@@ -939,15 +905,15 @@ enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
 
 void cso_save_framebuffer(struct cso_context *ctx)
 {
-   copy_framebuffer_state(&ctx->fb_saved, &ctx->fb);
+   util_copy_framebuffer_state(&ctx->fb_saved, &ctx->fb);
 }
 
 void cso_restore_framebuffer(struct cso_context *ctx)
 {
    if (memcmp(&ctx->fb, &ctx->fb_saved, sizeof(ctx->fb))) {
-      copy_framebuffer_state(&ctx->fb, &ctx->fb_saved);
+      util_copy_framebuffer_state(&ctx->fb, &ctx->fb_saved);
       ctx->pipe->set_framebuffer_state(ctx->pipe, &ctx->fb);
-      free_framebuffer_state(&ctx->fb_saved);
+      util_unreference_framebuffer_state(&ctx->fb_saved);
    }
 }
 
