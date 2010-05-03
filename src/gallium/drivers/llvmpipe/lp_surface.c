@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "util/u_rect.h"
+#include "util/u_surface.h"
 #include "lp_context.h"
 #include "lp_flush.h"
 #include "lp_limits.h"

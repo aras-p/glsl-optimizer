@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "util/u_rect.h"
+#include "util/u_surface.h"
 #include "sp_context.h"
 #include "sp_surface.h"
 

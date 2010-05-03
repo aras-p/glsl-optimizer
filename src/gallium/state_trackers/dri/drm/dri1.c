@@ -33,6 +33,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_rect.h"
+#include "util/u_surface.h"
 #include "util/u_inlines.h"
 #include "pipe/p_context.h"
 #include "state_tracker/dri1_api.h"

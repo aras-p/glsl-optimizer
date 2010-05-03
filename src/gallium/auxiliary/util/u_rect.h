@@ -37,9 +37,6 @@
 
 #include "pipe/p_format.h"
 
-struct pipe_context;
-struct pipe_surface;
-
 
 extern void
 util_copy_rect(ubyte * dst, enum pipe_format format,
@@ -51,22 +48,6 @@ extern void
 util_fill_rect(ubyte * dst, enum pipe_format format,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
                unsigned width, unsigned height, uint32_t value);
-
-
-extern void
-util_surface_copy(struct pipe_context *pipe,
-                  boolean do_flip,
-                  struct pipe_surface *dst,
-                  unsigned dst_x, unsigned dst_y,
-                  struct pipe_surface *src,
-                  unsigned src_x, unsigned src_y, 
-                  unsigned w, unsigned h);
-
-extern void
-util_surface_fill(struct pipe_context *pipe,
-                  struct pipe_surface *dst,
-                  unsigned dstx, unsigned dsty,
-                  unsigned width, unsigned height, unsigned value);
 
 
 #endif /* U_RECT_H */
