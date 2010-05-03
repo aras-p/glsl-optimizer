@@ -85,18 +85,22 @@ struct draw_vertex_shader *
 draw_create_vertex_shader(struct draw_context *draw,
                           const struct pipe_shader_state *shader)
 {
-   struct draw_vertex_shader *vs;
+   struct draw_vertex_shader *vs = NULL;
 
    if (draw->dump_vs) {
       tgsi_dump(shader->tokens, 0);
    }
 
-   vs = draw_create_vs_sse( draw, shader );
-   if (!vs) {
+   if (!draw->pt.middle.llvm) {
+#if defined(PIPE_ARCH_X86)
+      vs = draw_create_vs_sse( draw, shader );
+#elif defined(PIPE_ARCH_PPC)
       vs = draw_create_vs_ppc( draw, shader );
-      if (!vs) {
-         vs = draw_create_vs_exec( draw, shader );
-      }
+#endif
+   }
+
+   if (!vs) {
+      vs = draw_create_vs_exec( draw, shader );
    }
 
    if (vs)
