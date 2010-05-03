@@ -22,7 +22,9 @@
  */
 
 #include "ir.h"
+extern "C" {
 #include "shader/prog_instruction.h"
+};
 
 /**
  * \file ir_to_mesa.h

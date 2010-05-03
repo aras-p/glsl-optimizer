@@ -64,8 +64,11 @@ glsl_SOURCES = \
 	ir_vec_index_to_swizzle.cpp \
 	linker.cpp \
 	mesa_codegen.cpp \
-	mesa_codegen.h \
-	mesa/shader/prog_instruction.h
+	msea_codegen.h \
+	mesa/shader/prog_instruction.c \
+	mesa/shader/prog_instruction.h \
+	mesa/shader/prog_print.c \
+	mesa/shader/prog_print.h
 
 DISTFILES = \
 	mesa_codegen.brg

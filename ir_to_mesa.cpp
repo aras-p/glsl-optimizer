@@ -45,7 +45,10 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
+extern "C" {
 #include "shader/prog_instruction.h"
+#include "shader/prog_print.h"
+}
 
 ir_to_mesa_src_reg ir_to_mesa_undef = {
    PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP
@@ -512,6 +515,7 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    struct prog_src_register mesa_reg;
 
    mesa_reg.File = reg.file;
+   assert(reg.index < (1 << INST_INDEX_BITS) - 1);
    mesa_reg.Index = reg.index;
 
    return mesa_reg;
@@ -543,6 +547,9 @@ do_ir_to_mesa(exec_list *instructions)
       mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src_reg[0]);
       mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src_reg[1]);
       mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src_reg[2]);
+
+      _mesa_print_instruction(mesa_inst);
+
       mesa_inst++;
    }
 }
