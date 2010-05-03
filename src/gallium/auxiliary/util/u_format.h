@@ -338,6 +338,19 @@ util_format_name(enum pipe_format format)
    return desc->name;
 }
 
+static INLINE const char *
+util_format_short_name(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(desc);
+   if (!desc) {
+      return "???";
+   }
+
+   return desc->short_name;
+}
+
 /**
  * Whether this format is plain, see UTIL_FORMAT_LAYOUT_PLAIN for more info.
  */
