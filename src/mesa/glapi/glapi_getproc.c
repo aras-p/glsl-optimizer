@@ -265,8 +265,7 @@ str_dup(const char *str)
    copy = (char*) malloc(strlen(str) + 1);
    if (!copy)
       return NULL;
-   strncpy(copy, str, strlen(str));
-   copy[strlen(str)] = '\0';
+   strcpy(copy, str);
    return copy;
 }
 
