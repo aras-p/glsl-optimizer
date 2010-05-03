@@ -544,6 +544,8 @@ do_ir_to_mesa(exec_list *instructions)
       mesa_inst->Opcode = inst->op;
       mesa_inst->DstReg.File = inst->dst_reg.file;
       mesa_inst->DstReg.Index = inst->dst_reg.index;
+      mesa_inst->DstReg.CondMask = COND_TR;
+      mesa_inst->DstReg.WriteMask = WRITEMASK_XYZW;
       mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src_reg[0]);
       mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src_reg[1]);
       mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src_reg[2]);
