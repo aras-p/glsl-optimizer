@@ -700,22 +700,22 @@ st_TexImage(GLcontext * ctx,
     * conversion and copy:
     */
    if (compressed_src) {
-      const GLuint srcImageStride = _mesa_format_row_stride(texImage->TexFormat, width);
-      if(dstRowStride == srcImageStride)
+      const GLuint srcRowStride =
+         _mesa_format_row_stride(texImage->TexFormat, width);
+      if (dstRowStride == srcRowStride) {
          memcpy(texImage->Data, pixels, imageSize);
-      else
-      {
+      }
+      else {
          char *dst = texImage->Data;
          const char *src = pixels;
          GLuint i, bw, bh, lines;
          _mesa_get_format_block_size(texImage->TexFormat, &bw, &bh);
          lines = (height + bh - 1) / bh;
 
-         for(i = 0; i < lines; ++i)
-         {
-            memcpy(dst, src, srcImageStride);
+         for (i = 0; i < lines; ++i) {
+            memcpy(dst, src, srcRowStride);
             dst += dstRowStride;
-            src += srcImageStride;
+            src += srcRowStride;
          }
       }
    }
