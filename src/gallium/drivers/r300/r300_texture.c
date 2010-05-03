@@ -585,9 +585,6 @@ static void r300_texture_setup_immutable_state(struct r300_screen* screen,
 
     f->tile_config = R300_TXO_MACRO_TILE(tex->macrotile) |
                      R300_TXO_MICRO_TILE(tex->microtile);
-
-    SCREEN_DBG(screen, DBG_TEX, "r300: Set texture state (%dx%d, %d levels)\n",
-               pt->width0, pt->height0, pt->last_level);
 }
 
 static void r300_texture_setup_fb_state(struct r300_screen* screen,
@@ -622,7 +619,7 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
 {
     struct r300_screen *r300screen = r300_screen(screen);
 
-    SCREEN_DBG(r300screen, DBG_TEX, "r300: Reinterpreting format: %s -> %s\n",
+    SCREEN_DBG(r300screen, DBG_TEX, "r300: texture_reinterpret_format: %s -> %s\n",
                util_format_name(tex->format), util_format_name(new_format));
 
     tex->format = new_format;
@@ -774,7 +771,7 @@ static void r300_setup_miptree(struct r300_screen* screen,
     unsigned stride, size, layer_size, nblocksy, i;
     boolean rv350_mode = screen->caps.is_rv350;
 
-    SCREEN_DBG(screen, DBG_TEX, "r300: Making miptree for texture, format %s\n",
+    SCREEN_DBG(screen, DBG_TEXALLOC, "r300: Making miptree for texture, format %s\n",
                util_format_name(base->format));
 
     for (i = 0; i <= base->last_level; i++) {
@@ -801,7 +798,7 @@ static void r300_setup_miptree(struct r300_screen* screen,
         tex->hwpitch[i] =
                 tex->pitch[i] * util_format_get_blockwidth(base->format);
 
-        SCREEN_DBG(screen, DBG_TEX, "r300: Texture miptree: Level %d "
+        SCREEN_DBG(screen, DBG_TEXALLOC, "r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes) %d bytes total, macrotiled %s\n",
                 i, u_minify(base->width0, i), u_minify(base->height0, i),
                 u_minify(base->depth0, i), stride, tex->size,
@@ -942,6 +939,15 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
     r300_texture_setup_immutable_state(rscreen, tex);
     r300_texture_setup_fb_state(rscreen, tex);
 
+    SCREEN_DBG(rscreen, DBG_TEX,
+               "r300: texture_create: Macro: %s, Micro: %s, Pitch: %i, "
+               "Dim: %ix%ix%i, LastLevel: %i, Format: %s\n",
+               tex->macrotile ? "YES" : " NO",
+               tex->microtile ? "YES" : " NO",
+               tex->hwpitch[0],
+               base->width0, base->height0, base->depth0, base->last_level,
+               util_format_name(base->format));
+
     tex->buffer = rws->buffer_create(rws, 2048,
 				     PIPE_BIND_SAMPLER_VIEW, /* XXX */
 				     tex->size);
@@ -1039,6 +1045,14 @@ r300_texture_from_handle(struct pipe_screen* screen,
 
     rws->buffer_get_tiling(rws, buffer, &tex->microtile, &tex->macrotile);
     r300_setup_flags(tex);
+    SCREEN_DBG(rscreen, DBG_TEX,
+               "r300: texture_from_handle: Macro: %s, Micro: %s, "
+               "Pitch: % 4i, Dim: %ix%i, Format: %s\n",
+               tex->macrotile ? "YES" : " NO",
+               tex->microtile ? "YES" : " NO",
+               stride / util_format_get_blocksize(base->format),
+               base->width0, base->height0,
+               util_format_name(base->format));
 
     /* Enforce microtiled zbuffer. */
     override_zb_flags = util_format_is_depth_or_stencil(base->format) &&
