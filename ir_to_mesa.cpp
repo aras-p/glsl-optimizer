@@ -339,10 +339,10 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    struct mbtree *tree;
    int size_swizzles[4] = {
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
+      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
+      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
+      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
    };
 
    ir_variable *var = ir->var->as_variable();
@@ -493,6 +493,7 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    mesa_reg.File = reg.file;
    assert(reg.index < (1 << INST_INDEX_BITS) - 1);
    mesa_reg.Index = reg.index;
+   mesa_reg.Swizzle = reg.swizzle;
 
    return mesa_reg;
 }
