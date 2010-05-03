@@ -88,15 +88,6 @@ update_textures(struct st_context *st)
          sampler_view = st_get_texture_sampler_view(stObj, pipe);
       }
 
-      /*
-      if (pt) {
-         printf("%s su=%u non-null\n", __FUNCTION__, su);
-      }
-      else {
-         printf("%s su=%u null\n", __FUNCTION__, su);
-      }
-      */
-
       pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
    }
 
