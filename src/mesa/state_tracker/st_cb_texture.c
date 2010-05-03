@@ -312,10 +312,11 @@ guess_and_alloc_texture(struct st_context *st,
     * the level=0 mipmap image.
     */
 
-   /* Guess a reasonable value for lastLevel.  This is probably going
-    * to be wrong fairly often and might mean that we have to look at
-    * resizable buffers, or require that buffers implement lazy
-    * pagetable arrangements.
+   /* Guess a reasonable value for lastLevel.  With OpenGL we have no
+    * idea how many mipmap levels will be in a texture until we start
+    * to render with it.  Make an educated guess here but be prepared
+    * to re-allocating a texture buffer with space for more (or fewer)
+    * mipmap levels later.
     */
    if ((stObj->base.MinFilter == GL_NEAREST ||
         stObj->base.MinFilter == GL_LINEAR ||
