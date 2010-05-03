@@ -51,6 +51,8 @@ glsl_SOURCES = \
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)
 
+builtin_function.cpp: builtins/*/*
+	./builtins/tools/generate_builtins.pl > builtin_function.cpp
 glsl_parser.h: glsl_parser.cpp
 
 .lpp.cpp:
