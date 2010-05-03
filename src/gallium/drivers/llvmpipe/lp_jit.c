@@ -185,6 +185,8 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
       /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
        * but there are more on SVN. */
       /* TODO: Add more passes */
+      LLVMAddCFGSimplificationPass(screen->pass);
+      LLVMAddPromoteMemoryToRegisterPass(screen->pass);
       LLVMAddConstantPropagationPass(screen->pass);
       if(util_cpu_caps.has_sse4_1) {
          /* FIXME: There is a bug in this pass, whereby the combination of fptosi
@@ -193,9 +195,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
           */
          LLVMAddInstructionCombiningPass(screen->pass);
       }
-      LLVMAddPromoteMemoryToRegisterPass(screen->pass);
       LLVMAddGVNPass(screen->pass);
-      LLVMAddCFGSimplificationPass(screen->pass);
    }
 
    lp_jit_init_globals(screen);
