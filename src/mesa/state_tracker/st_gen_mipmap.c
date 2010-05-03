@@ -311,7 +311,6 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
        * mipmap levels we need to generate.  So allocate a new texture.
        */
       struct pipe_resource *oldTex = stObj->pt;
-      GLboolean needFlush;
 
       /* create new texture with space for more levels */
       stObj->pt = st_texture_create(st,
@@ -331,7 +330,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       /* This will copy the old texture's base image into the new texture
        * which we just allocated.
        */
-      st_finalize_texture(ctx, st->pipe, texObj, &needFlush);
+      st_finalize_texture(ctx, st->pipe, texObj);
 
       /* release the old tex (will likely be freed too) */
       pipe_resource_reference(&oldTex, NULL);

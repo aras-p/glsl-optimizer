@@ -1812,8 +1812,7 @@ copy_image_data_to_texture(struct st_context *st,
 GLboolean
 st_finalize_texture(GLcontext *ctx,
 		    struct pipe_context *pipe,
-		    struct gl_texture_object *tObj,
-		    GLboolean *needFlush)
+		    struct gl_texture_object *tObj)
 {
    struct st_context *st = st_context(ctx);
    struct st_texture_object *stObj = st_texture_object(tObj);
@@ -1821,8 +1820,6 @@ st_finalize_texture(GLcontext *ctx,
    GLuint face;
    struct st_texture_image *firstImage;
    enum pipe_format firstImageFormat;
-
-   *needFlush = GL_FALSE;
 
    if (stObj->base._Complete) {
       /* The texture is complete and we know exactly how many mipmap levels
@@ -1908,7 +1905,6 @@ st_finalize_texture(GLcontext *ctx,
           */
          if (stImage && stObj->pt != stImage->pt) {
             copy_image_data_to_texture(st, stObj, level, stImage);
-	    *needFlush = GL_TRUE;
          }
       }
    }

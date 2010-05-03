@@ -62,7 +62,7 @@ update_textures(struct st_context *st)
       if (samplersUsed & (1 << su)) {
          struct gl_texture_object *texObj;
          struct st_texture_object *stObj;
-         GLboolean flush, retval;
+         GLboolean retval;
          GLuint texUnit;
 
          if (fprog->Base.SamplersUsed & (1 << su))
@@ -77,7 +77,7 @@ update_textures(struct st_context *st)
          }
          stObj = st_texture_object(texObj);
 
-         retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
+         retval = st_finalize_texture(st->ctx, st->pipe, texObj);
          if (!retval) {
             /* out of mem */
             continue;
@@ -140,9 +140,9 @@ finalize_textures(struct st_context *st)
             = st->ctx->Texture.Unit[texUnit]._Current;
 
          if (texObj) {
-            GLboolean flush, retval;
+            GLboolean retval;
 
-            retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
+            retval = st_finalize_texture(st->ctx, st->pipe, texObj);
             if (!retval) {
                /* out of mem */
                st->missing_textures = GL_TRUE;
