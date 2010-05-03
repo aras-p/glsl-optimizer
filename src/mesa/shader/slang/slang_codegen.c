@@ -4187,11 +4187,10 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
    slang_atom name = oper->var ? oper->var->a_name : oper->a_id;
    slang_variable *var = _slang_variable_locate(oper->locals, name, GL_TRUE);
    slang_ir_node *n;
-   if (!var) {
+   if (!var || !var->declared) {
       slang_info_log_error(A->log, "undefined variable '%s'", (char *) name);
       return NULL;
    }
-   assert(var->declared);
    n = new_var(A, var);
    return n;
 }
