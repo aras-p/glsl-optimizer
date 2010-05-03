@@ -282,6 +282,13 @@ static void Init( int argc, char *argv[] )
       }
    }
 
+   if (convolve && !glutExtensionSupported("GL_ARB_imaging")) {
+      fprintf(stderr,
+              "GL_ARB_imaging is not supported, disabling convolution.\n");
+      exit(1);
+   }
+
+
    if (fullscreen)
       glutFullScreen();
 
