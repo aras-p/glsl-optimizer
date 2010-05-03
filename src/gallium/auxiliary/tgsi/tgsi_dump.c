@@ -493,6 +493,30 @@ iter_instruction(
       TXT( "  " );
    ctx->indent += info->post_indent;
    
+   if (inst->Instruction.Predicate) {
+      CHR( '(' );
+
+      if (inst->Predicate.Negate)
+         CHR( '!' );
+
+      TXT( "PRED[" );
+      SID( inst->Predicate.Index );
+      CHR( ']' );
+
+      if (inst->Predicate.SwizzleX != TGSI_SWIZZLE_X ||
+          inst->Predicate.SwizzleY != TGSI_SWIZZLE_Y ||
+          inst->Predicate.SwizzleZ != TGSI_SWIZZLE_Z ||
+          inst->Predicate.SwizzleW != TGSI_SWIZZLE_W) {
+         CHR( '.' );
+         ENM( inst->Predicate.SwizzleX, swizzle_names );
+         ENM( inst->Predicate.SwizzleY, swizzle_names );
+         ENM( inst->Predicate.SwizzleZ, swizzle_names );
+         ENM( inst->Predicate.SwizzleW, swizzle_names );
+      }
+
+      TXT( ") " );
+   }
+
    TXT( info->mnemonic );
 
    switch (inst->Instruction.Saturate) {
