@@ -606,6 +606,14 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    unsigned num_coords;
    unsigned i;
 
+   if (!bld->sampler) {
+      _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
+      for (i = 0; i < 4; i++) {
+         texel[i] = bld->base.undef;
+      }
+      return;
+   }
+
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
       num_coords = 1;
