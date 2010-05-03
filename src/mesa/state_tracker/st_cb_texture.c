@@ -526,7 +526,6 @@ st_TexImage(GLcontext * ctx,
    struct pipe_screen *screen = st->pipe->screen;
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
-   GLint texelBytes, sizeInBytes;
    GLuint dstRowStride = 0;
    struct gl_pixelstore_attrib unpackNB;
    enum pipe_transfer_usage transfer_usage = 0;
@@ -561,14 +560,6 @@ st_TexImage(GLcontext * ctx,
    stImage->level = level;
 
    _mesa_set_fetch_functions(texImage, dims);
-
-   if (_mesa_is_format_compressed(texImage->TexFormat)) {
-      /* must be a compressed format */
-      texelBytes = 0;
-   }
-   else {
-      texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
-   }
 
    /* Release the reference to a potentially orphaned buffer.   
     * Release any old malloced memory.
@@ -667,6 +658,7 @@ st_TexImage(GLcontext * ctx,
    }
 
    if (stImage->pt) {
+      /* Store the image in the gallium texture memory buffer */
       if (format == GL_DEPTH_COMPONENT &&
           util_format_is_depth_and_stencil(stImage->pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
@@ -682,6 +674,8 @@ st_TexImage(GLcontext * ctx,
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
+      GLint sizeInBytes;
+
       if (_mesa_is_format_compressed(texImage->TexFormat)) {
          sizeInBytes = _mesa_format_image_size(texImage->TexFormat,
                                                texImage->Width,
@@ -691,6 +685,8 @@ st_TexImage(GLcontext * ctx,
          assert(dims != 3);
       }
       else {
+         GLint texelBytes;
+         texelBytes = _mesa_get_format_bytes(texImage->TexFormat);
          dstRowStride = width * texelBytes;
          sizeInBytes = depth * dstRowStride * height;
       }
@@ -707,7 +703,7 @@ st_TexImage(GLcontext * ctx,
       goto done;
 
    DBG("Upload image %dx%dx%d row_len %x pitch %x\n",
-       width, height, depth, width * texelBytes, dstRowStride);
+       width, height, depth, width, dstRowStride);
 
    /* Copy data.  Would like to know when it's ok for us to eg. use
     * the blitter to copy.  Or, use the hardware to do the format
