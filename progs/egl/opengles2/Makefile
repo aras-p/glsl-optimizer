@@ -6,7 +6,9 @@ include $(TOP)/configs/current
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
-	$(X11_CFLAGS)
+	-I$(TOP)/progs/egl/eglut \
+	$(X11_CFLAGS) \
+
 
 HEADERS = $(TOP)/include/GLES/egl.h
 
@@ -18,11 +20,12 @@ ES2_LIB_DEPS = \
 
 ES2_LIBS = \
 	-L$(TOP)/$(LIB_DIR) -lEGL \
-	-L$(TOP)/$(LIB_DIR) -lGLESv2 $(LIBDRM_LIB) $(X11_LIBS)
+	-L$(TOP)/$(LIB_DIR) -lGLESv2 $(LIBDRM_LIB) $(X11_LIBS) \
 
 PROGRAMS = \
 	es2_info \
-	tri
+	tri \
+	es2gears
 
 
 .c.o:
@@ -43,7 +46,8 @@ es2_info: es2_info.o $(ES2_LIB_DEPS)
 tri: tri.o $(ES2_LIB_DEPS)
 	$(CC) $(CFLAGS) tri.o $(ES2_LIBS) -o $@
 
-
+es2gears: es2gears.o $(ES2_LIB_DEPS)
+	$(CC) $(CFLAGS) es2gears.o ../eglut/libeglut-x11.a $(ES2_LIBS) -lm -o $@
 
 clean:
 	rm -f *.o *~
