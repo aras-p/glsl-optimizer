@@ -255,7 +255,6 @@ get_texture_dims(GLenum target)
  *
  * We use the given st_texture_image as a clue to determine the size of the
  * mipmap image at level=0.
- *
  */
 static void
 guess_and_alloc_texture(struct st_context *st,
@@ -614,9 +613,13 @@ st_TexImage(GLcontext * ctx,
 
    assert(!stImage->pt);
 
+   /* Check if this texture image can live inside the texture object's buffer.
+    * If so, store the image there.  Otherwise the image will temporarily live
+    * in its own buffer.
+    */
    if (stObj->pt &&
        st_texture_match_image(stObj->pt, &stImage->base,
-                                 stImage->face, stImage->level)) {
+                              stImage->face, stImage->level)) {
 
       pipe_resource_reference(&stImage->pt, stObj->pt);
       assert(stImage->pt);
@@ -625,9 +628,11 @@ st_TexImage(GLcontext * ctx,
    if (!stImage->pt)
       DBG("XXX: Image did not fit into texture - storing in local memory!\n");
 
-   /* st_CopyTexImage calls this function with pixels == NULL, with
-    * the expectation that the texture will be set up but nothing
-    * more will be done.  This is where those calls return:
+   /* Pixel data may come from regular user memory or a PBO.  For the later,
+    * do bounds checking and map the PBO to read pixels data from it.
+    *
+    * XXX we should try to use a GPU-accelerated path to copy the image data
+    * from the PBO to the texture.
     */
    if (compressed_src) {
       pixels = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, pixels,
@@ -639,10 +644,6 @@ st_TexImage(GLcontext * ctx,
 					   format, type,
 					   pixels, unpack, "glTexImage");
    }
-
-   /* Note: we can't check for pixels==NULL until after we've allocated
-    * memory for the texture.
-    */
 
    /* See if we can do texture compression with a blit/render.
     */
@@ -662,6 +663,10 @@ st_TexImage(GLcontext * ctx,
       }
    }
 
+   /*
+    * Prepare to store the texture data.  Either map the gallium texture buffer
+    * memory or malloc space for it.
+    */
    if (stImage->pt) {
       /* Store the image in the gallium texture memory buffer */
       if (format == GL_DEPTH_COMPONENT &&
@@ -689,15 +694,15 @@ st_TexImage(GLcontext * ctx,
       return;
    }
 
-   if (!pixels)
+   if (!pixels) {
+      /* We've allocated texture memory, but have no pixel data - all done. */
       goto done;
+   }
 
    DBG("Upload image %dx%dx%d row_len %x pitch %x\n",
        width, height, depth, width, dstRowStride);
 
-   /* Copy data.  Would like to know when it's ok for us to eg. use
-    * the blitter to copy.  Or, use the hardware to do the format
-    * conversion and copy:
+   /* Copy user texture image into the texture buffer.
     */
    if (compressed_src) {
       const GLuint srcRowStride =
