@@ -579,7 +579,6 @@ emit_store(
 
    case TGSI_FILE_PREDICATE:
       /* FIXME */
-      assert(0);
       break;
 
    default:
@@ -729,7 +728,7 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
    lp_build_mask_update(bld->mask, mask);
 }
 
-static int
+static void
 emit_declaration(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_declaration *decl)
@@ -767,13 +766,15 @@ emit_declaration(
                                                 vec_type, "");
          break;
 
+      case TGSI_FILE_PREDICATE:
+         _debug_printf("warning: predicate registers not yet implemented\n");
+         break;
+
       default:
          /* don't need to declare other vars */
          break;
       }
    }
-
-   return TRUE;
 }
 
 
@@ -1755,10 +1756,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
          /* Inputs already interpolated */
-         {
-            if (!emit_declaration( &bld, &parse.FullToken.FullDeclaration ))
-               _debug_printf("warning: failed to define LLVM variable\n");
-         }
+         emit_declaration( &bld, &parse.FullToken.FullDeclaration );
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
