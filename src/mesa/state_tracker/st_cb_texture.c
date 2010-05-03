@@ -27,9 +27,6 @@
 
 #include "main/mfeatures.h"
 #include "main/bufferobj.h"
-#if FEATURE_convolve
-#include "main/convolve.h"
-#endif
 #include "main/enums.h"
 #include "main/fbobject.h"
 #include "main/formats.h"
@@ -538,6 +535,12 @@ st_TexImage(GLcontext * ctx,
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
 
+   /* The Mesa/Gallium state tracker does not implement the imaging extensions
+    * such as convolution.
+    */
+   assert(!ctx->Extensions.ARB_imaging);
+   assert(!ctx->Extensions.EXT_convolution);
+
    /* switch to "normal" */
    if (stObj->surface_based) {
       _mesa_clear_texture_object(ctx, texObj);
@@ -560,13 +563,6 @@ st_TexImage(GLcontext * ctx,
 
    stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
-
-#if FEATURE_convolve
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-      _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
-                                         &postConvHeight);
-   }
-#endif
 
    _mesa_set_fetch_functions(texImage, dims);
 
