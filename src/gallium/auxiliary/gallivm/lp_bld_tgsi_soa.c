@@ -255,16 +255,9 @@ static void lp_exec_break(struct lp_exec_mask *mask)
                                          mask->exec_mask,
                                          "break");
 
-   /* mask->break_stack_size > 1 implies that we encountered a break
-    * statemant already and if that's the case we want to make sure
-    * our mask is a combination of the previous break and the current
-    * execution mask */
-   if (mask->break_stack_size > 1) {
-      mask->break_mask = LLVMBuildAnd(mask->bld->builder,
-                                      mask->break_mask,
-                                      exec_mask, "break_full");
-   } else
-      mask->break_mask = exec_mask;
+   mask->break_mask = LLVMBuildAnd(mask->bld->builder,
+                                   mask->break_mask,
+                                   exec_mask, "break_full");
 
    lp_exec_mask_update(mask);
 }
@@ -275,12 +268,9 @@ static void lp_exec_continue(struct lp_exec_mask *mask)
                                          mask->exec_mask,
                                          "");
 
-   if (mask->cont_stack_size > 1) {
-      mask->cont_mask = LLVMBuildAnd(mask->bld->builder,
-                                     mask->cont_mask,
-                                     exec_mask, "");
-   } else
-      mask->cont_mask = exec_mask;
+   mask->cont_mask = LLVMBuildAnd(mask->bld->builder,
+                                  mask->cont_mask,
+                                  exec_mask, "");
 
    lp_exec_mask_update(mask);
 }
