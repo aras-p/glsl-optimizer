@@ -924,6 +924,17 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
         return NULL;
     }
 
+    /* Refuse to create a texture with size 0. */
+    if (!base->width0 ||
+        (!base->height0 && (base->target == PIPE_TEXTURE_2D ||
+                            base->target == PIPE_TEXTURE_CUBE)) ||
+        (!base->depth0 && base->target == PIPE_TEXTURE_3D)) {
+        fprintf(stderr, "r300: texture_create: "
+                "Got invalid texture dimensions: %ix%ix%i\n",
+                base->width0, base->height0, base->depth0);
+        return NULL;
+    }
+
     tex->b.b = *base;
     tex->b.vtbl = &r300_texture_vtbl;
     pipe_reference_init(&tex->b.b.reference, 1);
