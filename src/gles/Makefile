@@ -13,7 +13,7 @@ $(TOP)/$(LIB_DIR)/$(GLESv1_CM_LIB_NAME) : NAME = GLESv1_CM
 $(TOP)/$(LIB_DIR)/$(GLESv2_LIB_NAME) : PREFIX = es2
 $(TOP)/$(LIB_DIR)/$(GLESv2_LIB_NAME) : NAME = GLESv2
 
-INCLUDES = -I$(MESA)/es/glapi/glapi-$(PREFIX) -I$(MESA)
+INCLUDES = -I$(TOP)/include -I$(MESA)/es/glapi/glapi-$(PREFIX) -I$(MESA)
 
 OBJECTS = \
 	$(notdir $(GLAPI_ASM_SOURCES:%.S=%.o)) \
