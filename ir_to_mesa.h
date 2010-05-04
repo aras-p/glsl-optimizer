@@ -54,6 +54,8 @@ public:
    enum prog_opcode op;
    ir_to_mesa_dst_reg dst_reg;
    ir_to_mesa_src_reg src_reg[3];
+   /** Pointer to the ir source this tree came from for debugging */
+   ir_instruction *ir;
 };
 
 struct mbtree {
@@ -62,6 +64,9 @@ struct mbtree {
    void *state;
    uint16_t op;
    class ir_to_mesa_visitor *v;
+
+   /** Pointer to the ir source this tree came from for debugging */
+   ir_instruction *ir;
 
    /**
     * This is the representation of this tree node's results as a
@@ -102,6 +107,7 @@ public:
    void get_temp_for_var(ir_variable *var, struct mbtree *tree);
 
    struct mbtree *create_tree(int op,
+			      ir_instruction *ir,
 			      struct mbtree *left,
 			      struct mbtree *right);
 

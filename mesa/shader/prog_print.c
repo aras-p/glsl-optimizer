@@ -833,7 +833,7 @@ void
 _mesa_print_instruction(const struct prog_instruction *inst)
 {
    /* note: 4th param should be ignored for PROG_PRINT_DEBUG */
-   _mesa_fprint_instruction_opt(stderr, inst, 0, PROG_PRINT_DEBUG, NULL);
+   _mesa_fprint_instruction_opt(stdout, inst, 0, PROG_PRINT_DEBUG, NULL);
 }
 
 #if 0

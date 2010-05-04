@@ -68,6 +68,7 @@ ir_to_mesa_emit_op3(struct mbtree *tree, enum prog_opcode op,
    inst->src_reg[0] = src0;
    inst->src_reg[1] = src1;
    inst->src_reg[2] = src2;
+   inst->ir = tree->ir;
 
    tree->v->instructions.push_tail(inst);
 
@@ -94,15 +95,20 @@ ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op,
 }
 
 struct mbtree *
-ir_to_mesa_visitor::create_tree(int op, struct mbtree *left, struct mbtree *right)
+ir_to_mesa_visitor::create_tree(int op,
+				ir_instruction *ir,
+				struct mbtree *left, struct mbtree *right)
 {
    struct mbtree *tree = (struct mbtree *)calloc(sizeof(struct mbtree), 1);
+
+   assert(ir);
 
    tree->op = op;
    tree->left = left;
    tree->right = right;
    tree->v = this;
    tree->src_reg.swizzle = SWIZZLE_XYZW;
+   tree->ir = ir;
 
    return tree;
 }
@@ -249,31 +255,34 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_binop_add:
-      this->result = this->create_tree(MB_TERM_add_vec4_vec4, op[0], op[1]);
+      this->result = this->create_tree(MB_TERM_add_vec4_vec4, ir, op[0], op[1]);
       break;
    case ir_binop_sub:
-      this->result = this->create_tree(MB_TERM_sub_vec4_vec4, op[0], op[1]);
+      this->result = this->create_tree(MB_TERM_sub_vec4_vec4, ir, op[0], op[1]);
       break;
    case ir_binop_mul:
-      this->result = this->create_tree(MB_TERM_mul_vec4_vec4, op[0], op[1]);
+      this->result = this->create_tree(MB_TERM_mul_vec4_vec4, ir, op[0], op[1]);
       break;
    case ir_binop_div:
-      this->result = this->create_tree(MB_TERM_div_vec4_vec4, op[0], op[1]);
+      this->result = this->create_tree(MB_TERM_div_vec4_vec4, ir, op[0], op[1]);
       break;
    case ir_binop_dot:
       if (ir->operands[0]->type == vec4_type) {
 	 assert(ir->operands[1]->type == vec4_type);
-	 this->result = this->create_tree(MB_TERM_dp4_vec4_vec4, op[0], op[1]);
+	 this->result = this->create_tree(MB_TERM_dp4_vec4_vec4,
+					  ir, op[0], op[1]);
       } else if (ir->operands[0]->type == vec3_type) {
 	 assert(ir->operands[1]->type == vec3_type);
-	 this->result = this->create_tree(MB_TERM_dp3_vec4_vec4, op[0], op[1]);
+	 this->result = this->create_tree(MB_TERM_dp3_vec4_vec4,
+					  ir, op[0], op[1]);
       } else if (ir->operands[0]->type == vec2_type) {
 	 assert(ir->operands[1]->type == vec2_type);
-	 this->result = this->create_tree(MB_TERM_dp2_vec4_vec4, op[0], op[1]);
+	 this->result = this->create_tree(MB_TERM_dp2_vec4_vec4,
+					  ir, op[0], op[1]);
       }
       break;
    case ir_unop_sqrt:
-      this->result = this->create_tree(MB_TERM_sqrt_vec4, op[0], op[1]);
+      this->result = this->create_tree(MB_TERM_sqrt_vec4, ir, op[0], op[1]);
       break;
    default:
       break;
@@ -299,7 +308,7 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    ir->val->accept(this);
    assert(this->result);
 
-   tree = this->create_tree(MB_TERM_swizzle_vec4, this->result, NULL);
+   tree = this->create_tree(MB_TERM_swizzle_vec4, ir, this->result, NULL);
 
    for (i = 0; i < 4; i++) {
       if (i < ir->type->vector_elements) {
@@ -391,7 +400,9 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    assert(strcmp(var->name, "gl_TexCoord") == 0);
 
    asprintf(&name, "fragment.texcoord[%d]", index->value.i[0]);
-   tree = this->create_tree(MB_TERM_reference_vec4, NULL, NULL);
+   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
+   tree->src_reg.file = PROGRAM_INPUT;
+   tree->src_reg.index = FRAG_ATTRIB_TEX0 + index->value.i[0];
    tree->reg_name = name;
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
@@ -421,7 +432,7 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 
    assert(!ir->condition);
 
-   t = this->create_tree(MB_TERM_assign, l, r);
+   t = this->create_tree(MB_TERM_assign, ir, l, r);
    mono_burg_label(t, NULL);
    reduce(t, MB_NTERM_stmt);
 }
@@ -434,7 +445,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    assert(!ir->type->is_matrix());
 
-   tree = this->create_tree(MB_TERM_reference_vec4, NULL, NULL);
+   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
    assert(ir->type->base_type == GLSL_TYPE_FLOAT);
 
@@ -503,6 +514,7 @@ do_ir_to_mesa(exec_list *instructions)
 {
    ir_to_mesa_visitor v;
    struct prog_instruction *mesa_instructions, *mesa_inst;
+   ir_instruction *last_ir = NULL;
 
    visit_exec_list(instructions, &v);
 
@@ -518,6 +530,14 @@ do_ir_to_mesa(exec_list *instructions)
    mesa_inst = mesa_instructions;
    foreach_iter(exec_list_iterator, iter, v.instructions) {
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+
+      if (last_ir != inst->ir) {
+	 ir_print_visitor print;
+	 inst->ir->accept(&print);
+	 printf("\n");
+	 last_ir = inst->ir;
+      }
+
       mesa_inst->Opcode = inst->op;
       mesa_inst->DstReg.File = inst->dst_reg.file;
       mesa_inst->DstReg.Index = inst->dst_reg.index;
