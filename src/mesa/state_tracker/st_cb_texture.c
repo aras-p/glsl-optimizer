@@ -255,8 +255,10 @@ get_texture_dims(GLenum target)
  *
  * We use the given st_texture_image as a clue to determine the size of the
  * mipmap image at level=0.
+ *
+ * \return GL_TRUE for success, GL_FALSE if out of memory.
  */
-static void
+static GLboolean
 guess_and_alloc_texture(struct st_context *st,
 			struct st_texture_object *stObj,
 			const struct st_texture_image *stImage)
@@ -287,7 +289,8 @@ guess_and_alloc_texture(struct st_context *st,
            (dims >= 3 && depth == 1) ) {
          /* we can't determine the image size at level=0 */
          stObj->width0 = stObj->height0 = stObj->depth0 = 0;
-         return;
+         /* this is not an out of memory error */
+         return GL_TRUE;
       }
    }
 
@@ -349,7 +352,9 @@ guess_and_alloc_texture(struct st_context *st,
                                  depth,
                                  bindings);
 
-   DBG("%s - success\n", __FUNCTION__);
+   DBG("%s returning %d\n", __FUNCTION__, (stObj->pt != NULL));
+
+   return stObj->pt != NULL;
 }
 
 
@@ -597,14 +602,12 @@ st_TexImage(GLcontext * ctx,
    }
 
    if (!stObj->pt) {
-      guess_and_alloc_texture(st, stObj, stImage);
-      if (!stObj->pt) {
+      if (!guess_and_alloc_texture(st, stObj, stImage)) {
          /* Probably out of memory.
           * Try flushing any pending rendering, then retry.
           */
          st_finish(st);
-         guess_and_alloc_texture(st, stObj, stImage);
-         if (!stObj->pt) {
+         if (!guess_and_alloc_texture(st, stObj, stImage)) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
             return;
          }
