@@ -30,14 +30,20 @@ glsl_SOURCES = \
 	ast_expr.cpp ast_to_hir.cpp ast_function.cpp ast_type.cpp \
 	ir.cpp hir_field_selection.cpp builtin_function.cpp \
 	ir_print_visitor.cpp ir_variable.cpp ir_function.cpp \
+	ir_basic_block.cpp \
+	ir_basic_block.h \
 	ir_constant_expression.cpp \
 	ir_constant_folding.cpp \
+	ir_copy_propagation.cpp \
+	ir_copy_propagation.h \
 	ir_dead_code.cpp \
 	ir_expression_flattening.cpp \
 	ir_function_can_inline.cpp \
 	ir_function_inlining.cpp \
 	ir_if_simplification.cpp \
-	ir_reader.cpp s_expression.cpp
+	ir_reader.cpp s_expression.cpp \
+	ir_visit_tree.cpp \
+	ir_visit_tree.h
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)

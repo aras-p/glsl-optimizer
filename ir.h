@@ -62,6 +62,7 @@ public:
    virtual class ir_return *            as_return()           { return NULL; }
    virtual class ir_if *                as_if()               { return NULL; }
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
+   virtual class ir_constant *          as_constant()         { return NULL; }
    /*@}*/
 
 protected:
@@ -786,6 +787,11 @@ public:
    ir_constant(unsigned int u);
    ir_constant(int i);
    ir_constant(float f);
+
+   virtual ir_constant *as_constant()
+   {
+      return this;
+   }
 
    virtual void accept(ir_visitor *v)
    {
