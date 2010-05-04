@@ -56,6 +56,9 @@ GLEW_LIB = GLEW
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
 EGL_LIB = EGL
+GLESv1_CM_LIB = GLESv1_CM
+GLESv2_LIB = GLESv2
+VG_LIB = OpenVG
 
 
 # Library names (actual file names)
@@ -66,6 +69,9 @@ GLEW_LIB_NAME = lib$(GLEW_LIB).a
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 EGL_LIB_NAME = lib$(EGL_LIB).so
+GLESv1_CM_LIB_NAME = lib$(GLESv1_CM_LIB).so
+GLESv2_LIB_NAME = lib$(GLESv2_LIB).so
+VG_LIB_NAME = lib$(VG_LIB).so
 
 # globs used to install the lib and all symlinks
 GL_LIB_GLOB = $(GL_LIB_NAME)*
@@ -74,6 +80,9 @@ GLUT_LIB_GLOB = $(GLUT_LIB_NAME)*
 GLW_LIB_GLOB = $(GLW_LIB_NAME)*
 OSMESA_LIB_GLOB = $(OSMESA_LIB_NAME)*
 EGL_LIB_GLOB = $(EGL_LIB_NAME)*
+GLESv1_CM_LIB_GLOB = $(GLESv1_CM_LIB_NAME)*
+GLESv2_LIB_GLOB = $(GLESv2_LIB_NAME)*
+VG_LIB_GLOB = $(VG_LIB_NAME)*
 
 # Optional assembly language optimization files for libGL
 MESA_ASM_SOURCES = 
@@ -117,6 +126,9 @@ GLU_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
 GLUT_LIB_DEPS   = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXmu -lXi -lm
 GLW_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lXt -lX11
 APP_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
+GLESv1_CM_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
+GLESv2_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
+VG_LIB_DEPS    = $(EXTRA_LIB_PATH) -lpthread
 
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
@@ -154,3 +166,12 @@ GLW_PC_LIB_PRIV =
 GLW_PC_CFLAGS =
 OSMESA_PC_REQ =
 OSMESA_PC_LIB_PRIV =
+GLESv1_CM_PC_REQ_PRIV =
+GLESv1_CM_PC_LIB_PRIV =
+GLESv1_CM_PC_CFLAGS =
+GLESv2_PC_REQ_PRIV =
+GLESv2_PC_LIB_PRIV =
+GLESv2_PC_CFLAGS =
+VG_PC_REQ_PRIV =
+VG_PC_LIB_PRIV =
+VG_PC_CFLAGS =

@@ -281,6 +281,7 @@ OSMESA_LIB_NAME='lib$(OSMESA_LIB).'${LIB_EXTENSION}
 EGL_LIB_NAME='lib$(EGL_LIB).'${LIB_EXTENSION}
 GLESv1_CM_LIB_NAME='lib$(GLESv1_CM_LIB).'${LIB_EXTENSION}
 GLESv2_LIB_NAME='lib$(GLESv2_LIB).'${LIB_EXTENSION}
+VG_LIB_NAME='lib$(VG_LIB).'${LIB_EXTENSION}
 
 GL_LIB_GLOB='lib$(GL_LIB).*'${LIB_EXTENSION}'*'
 GLU_LIB_GLOB='lib$(GLU_LIB).*'${LIB_EXTENSION}'*'
@@ -290,6 +291,7 @@ OSMESA_LIB_GLOB='lib$(OSMESA_LIB).*'${LIB_EXTENSION}'*'
 EGL_LIB_GLOB='lib$(EGL_LIB).*'${LIB_EXTENSION}'*'
 GLESv1_CM_LIB_GLOB='lib$(GLESv1_CM_LIB).*'${LIB_EXTENSION}'*'
 GLESv2_LIB_GLOB='lib$(GLESv2_LIB).*'${LIB_EXTENSION}'*'
+VG_LIB_GLOB='lib$(VG_LIB).*'${LIB_EXTENSION}'*'
 
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
@@ -299,6 +301,7 @@ AC_SUBST([OSMESA_LIB_NAME])
 AC_SUBST([EGL_LIB_NAME])
 AC_SUBST([GLESv1_CM_LIB_NAME])
 AC_SUBST([GLESv2_LIB_NAME])
+AC_SUBST([VG_LIB_NAME])
 
 AC_SUBST([GL_LIB_GLOB])
 AC_SUBST([GLU_LIB_GLOB])
@@ -308,6 +311,7 @@ AC_SUBST([OSMESA_LIB_GLOB])
 AC_SUBST([EGL_LIB_GLOB])
 AC_SUBST([GLESv1_CM_LIB_GLOB])
 AC_SUBST([GLESv2_LIB_GLOB])
+AC_SUBST([VG_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
@@ -1249,6 +1253,8 @@ AC_SUBST([LLVM_LIBS])
 AC_SUBST([LLVM_LDFLAGS])
 AC_SUBST([LLVM_VERSION])
 
+VG_LIB_DEPS=""
+
 dnl
 dnl Gallium state trackers configuration
 dnl
@@ -1317,12 +1323,15 @@ yes)
             ;;
         vega)
             CORE_DIRS="$CORE_DIRS mapi/vgapi"
+            VG_LIB_DEPS="$VG_LIB_DEPS -lpthread"
             ;;
         esac
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
 esac
+
+AC_SUBST([VG_LIB_DEPS])
 
 if test "x$HAVE_ST_XORG" = xyes; then
     PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
