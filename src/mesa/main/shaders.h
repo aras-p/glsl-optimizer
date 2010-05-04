@@ -232,5 +232,16 @@ extern void GLAPIENTRY
 _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value);
 
+/* GLES 2.0 */
+extern void GLAPIENTRY
+_mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
+                               GLint* range, GLint* precision);
+
+extern void GLAPIENTRY
+_mesa_ReleaseShaderCompiler(void);
+
+extern void GLAPIENTRY
+_mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
+                   const void* binary, GLint length);
 
 #endif /* SHADERS_H */

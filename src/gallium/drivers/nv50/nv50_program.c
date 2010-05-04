@@ -3169,14 +3169,15 @@ nv50_program_tx_insn(struct nv50_pc *pc,
 		if (pc->p->type == PIPE_SHADER_FRAGMENT)
 			nv50_fp_move_results(pc);
 
-		/* last insn must be long so it can have the exit bit set */
-		if (!is_long(pc->p->exec_tail))
-			convert_to_long(pc, pc->p->exec_tail);
-		else
-		if (is_immd(pc->p->exec_tail) ||
+		if (!pc->p->exec_tail ||
+		    is_immd(pc->p->exec_tail) ||
 		    is_join(pc->p->exec_tail) ||
 		    is_control_flow(pc->p->exec_tail))
 			emit_nop(pc);
+
+		/* last insn must be long so it can have the exit bit set */
+		if (!is_long(pc->p->exec_tail))
+			convert_to_long(pc, pc->p->exec_tail);
 
 		pc->p->exec_tail->inst[1] |= 1; /* set exit bit */
 
@@ -4162,7 +4163,7 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 	struct pipe_transfer *transfer;
 
 	if (!p->data[0] && p->immd_nr) {
-		struct nouveau_resource *heap = nv50->screen->immd_heap[0];
+		struct nouveau_resource *heap = nv50->screen->immd_heap;
 
 		if (nouveau_resource_alloc(heap, p->immd_nr, p, &p->data[0])) {
 			while (heap->next && heap->size < p->immd_nr) {
@@ -4180,7 +4181,7 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 					 p->immd_nr, NV50_CB_PMISC);
 	}
 
-	assert(p->param_nr <= 512);
+	assert(p->param_nr <= 16384);
 
 	if (p->param_nr) {
 		unsigned cb;

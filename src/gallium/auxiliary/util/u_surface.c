@@ -32,12 +32,14 @@
  */
 
 
+#include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
-#include "pipe/p_defines.h"
-#include "util/u_inlines.h"
 
+#include "util/u_format.h"
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_rect.h"
 #include "util/u_surface.h"
 
 
@@ -118,70 +120,150 @@ util_destroy_rgba_surface(struct pipe_resource *texture,
 
 
 /**
- * Compare pipe_framebuffer_state objects.
- * \return TRUE if same, FALSE if different
+ * Fallback function for pipe->surface_copy().
+ * Note: (X,Y)=(0,0) is always the upper-left corner.
+ * if do_flip, flip the image vertically on its way from src rect to dst rect.
  */
-boolean
-util_framebuffer_state_equal(const struct pipe_framebuffer_state *dst,
-                             const struct pipe_framebuffer_state *src)
+void
+util_surface_copy(struct pipe_context *pipe,
+                  boolean do_flip,
+                  struct pipe_surface *dst,
+                  unsigned dst_x, unsigned dst_y,
+                  struct pipe_surface *src,
+                  unsigned src_x, unsigned src_y, 
+                  unsigned w, unsigned h)
 {
-   unsigned i;
+   struct pipe_transfer *src_trans, *dst_trans;
+   void *dst_map;
+   const void *src_map;
+   enum pipe_format src_format, dst_format;
 
-   if (dst->width != src->width ||
-       dst->height != src->height)
-      return FALSE;
+   assert(src->texture && dst->texture);
+   if (!src->texture || !dst->texture)
+      return;
 
-   for (i = 0; i < Elements(src->cbufs); i++) {
-      if (dst->cbufs[i] != src->cbufs[i]) {
-         return FALSE;
-      }
+   src_format = src->texture->format;
+   dst_format = dst->texture->format;
+
+   src_trans = pipe_get_transfer(pipe,
+				 src->texture,
+				 src->face,
+				 src->level,
+				 src->zslice,
+				 PIPE_TRANSFER_READ,
+				 src_x, src_y, w, h);
+
+   dst_trans = pipe_get_transfer(pipe,
+				 dst->texture,
+				 dst->face,
+				 dst->level,
+				 dst->zslice,
+				 PIPE_TRANSFER_WRITE,
+				 dst_x, dst_y, w, h);
+
+   assert(util_format_get_blocksize(dst_format) == util_format_get_blocksize(src_format));
+   assert(util_format_get_blockwidth(dst_format) == util_format_get_blockwidth(src_format));
+   assert(util_format_get_blockheight(dst_format) == util_format_get_blockheight(src_format));
+
+   src_map = pipe->transfer_map(pipe, src_trans);
+   dst_map = pipe->transfer_map(pipe, dst_trans);
+
+   assert(src_map);
+   assert(dst_map);
+
+   if (src_map && dst_map) {
+      /* If do_flip, invert src_y position and pass negative src stride */
+      util_copy_rect(dst_map,
+                     dst_format,
+                     dst_trans->stride,
+                     0, 0,
+                     w, h,
+                     src_map,
+                     do_flip ? -(int) src_trans->stride : src_trans->stride,
+                     0,
+                     do_flip ? h - 1 : 0);
    }
 
-   if (dst->nr_cbufs != src->nr_cbufs) {
-      return FALSE;
-   }
+   pipe->transfer_unmap(pipe, src_trans);
+   pipe->transfer_unmap(pipe, dst_trans);
 
-   if (dst->zsbuf != src->zsbuf) {
-      return FALSE;
-   }
-
-   return TRUE;
+   pipe->transfer_destroy(pipe, src_trans);
+   pipe->transfer_destroy(pipe, dst_trans);
 }
+
+
+
+#define UBYTE_TO_USHORT(B) ((B) | ((B) << 8))
 
 
 /**
- * Copy framebuffer state from src to dst, updating refcounts.
+ * Fallback for pipe->surface_fill() function.
  */
 void
-util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
-                            const struct pipe_framebuffer_state *src)
+util_surface_fill(struct pipe_context *pipe,
+                  struct pipe_surface *dst,
+                  unsigned dstx, unsigned dsty,
+                  unsigned width, unsigned height, unsigned value)
 {
-   unsigned i;
+   struct pipe_transfer *dst_trans;
+   void *dst_map;
 
-   dst->width = src->width;
-   dst->height = src->height;
+   assert(dst->texture);
+   if (!dst->texture)
+      return;
+   dst_trans = pipe_get_transfer(pipe,
+				 dst->texture,
+				 dst->face,
+				 dst->level,
+				 dst->zslice,
+				 PIPE_TRANSFER_WRITE,
+				 dstx, dsty, width, height);
 
-   for (i = 0; i < Elements(src->cbufs); i++) {
-      pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
+   dst_map = pipe->transfer_map(pipe, dst_trans);
+
+   assert(dst_map);
+
+   if (dst_map) {
+      assert(dst_trans->stride > 0);
+
+      switch (util_format_get_blocksize(dst->texture->format)) {
+      case 1:
+      case 2:
+      case 4:
+         util_fill_rect(dst_map, dst->texture->format,
+			dst_trans->stride,
+                        0, 0, width, height, value);
+         break;
+      case 8:
+      {
+	 /* expand the 4-byte clear value to an 8-byte value */
+	 ushort *row = (ushort *) dst_map;
+	 ushort val0 = UBYTE_TO_USHORT((value >>  0) & 0xff);
+	 ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
+	 ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);
+	 ushort val3 = UBYTE_TO_USHORT((value >> 24) & 0xff);
+	 unsigned i, j;
+	 val0 = (val0 << 8) | val0;
+	 val1 = (val1 << 8) | val1;
+	 val2 = (val2 << 8) | val2;
+	 val3 = (val3 << 8) | val3;
+	 for (i = 0; i < height; i++) {
+	    for (j = 0; j < width; j++) {
+	       row[j*4+0] = val0;
+	       row[j*4+1] = val1;
+	       row[j*4+2] = val2;
+	       row[j*4+3] = val3;
+	    }
+	    row += dst_trans->stride/2;
+	 }
+      }
+      break;
+      default:
+         assert(0);
+         break;
+      }
    }
 
-   dst->nr_cbufs = src->nr_cbufs;
-
-   pipe_surface_reference(&dst->zsbuf, src->zsbuf);
-}
-
-
-void
-util_unreference_framebuffer_state(struct pipe_framebuffer_state *fb)
-{
-   unsigned i;
-
-   for (i = 0; i < fb->nr_cbufs; i++) {
-      pipe_surface_reference(&fb->cbufs[i], NULL);
-   }
-
-   pipe_surface_reference(&fb->zsbuf, NULL);
-
-   fb->width = fb->height = 0;
-   fb->nr_cbufs = 0;
+   pipe->transfer_unmap(pipe, dst_trans);
+   pipe->transfer_destroy(pipe, dst_trans);
 }

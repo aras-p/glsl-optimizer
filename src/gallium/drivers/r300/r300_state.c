@@ -538,46 +538,12 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
 }
 
 /* This switcheroo is needed just because of goddamned MACRO_SWITCH. */
-static void r300_fb_update_tiling_flags(struct r300_context *r300,
+static void r300_fb_set_tiling_flags(struct r300_context *r300,
                                const struct pipe_framebuffer_state *old_state,
                                const struct pipe_framebuffer_state *new_state)
 {
     struct r300_texture *tex;
-    unsigned i, j, level;
-
-    /* Reset tiling flags for old surfaces to default values. */
-    for (i = 0; i < old_state->nr_cbufs; i++) {
-        for (j = 0; j < new_state->nr_cbufs; j++) {
-            if (old_state->cbufs[i]->texture == new_state->cbufs[j]->texture) {
-                break;
-            }
-        }
-        /* If not binding the surface again... */
-        if (j != new_state->nr_cbufs) {
-            continue;
-        }
-
-        tex = r300_texture(old_state->cbufs[i]->texture);
-
-        if (tex) {
-            r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                                            tex->pitch[0],
-                                            tex->microtile,
-                                            tex->macrotile);
-        }
-    }
-    if (old_state->zsbuf &&
-        (!new_state->zsbuf ||
-         old_state->zsbuf->texture != new_state->zsbuf->texture)) {
-        tex = r300_texture(old_state->zsbuf->texture);
-
-        if (tex) {
-            r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                                            tex->pitch[0],
-                                            tex->microtile,
-                                            tex->macrotile);
-        }
-    }
+    unsigned i, level;
 
     /* Set tiling flags for new surfaces. */
     for (i = 0; i < new_state->nr_cbufs; i++) {
@@ -585,7 +551,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
         level = new_state->cbufs[i]->level;
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                                        tex->pitch[level],
+                                        tex->pitch[0],
                                         tex->microtile,
                                         tex->mip_macrotile[level]);
     }
@@ -594,7 +560,7 @@ static void r300_fb_update_tiling_flags(struct r300_context *r300,
         level = new_state->zsbuf->level;
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                                        tex->pitch[level],
+                                        tex->pitch[0],
                                         tex->microtile,
                                         tex->mip_macrotile[level]);
     }
@@ -644,7 +610,8 @@ static void
         r300->dsa_state.dirty = TRUE;
     }
 
-    r300_fb_update_tiling_flags(r300, r300->fb_state.state, state);
+    /* The tiling flags are dependent on the surface miplevel, unfortunately. */
+    r300_fb_set_tiling_flags(r300, r300->fb_state.state, state);
 
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
@@ -719,10 +686,6 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     r300_mark_fs_code_dirty(r300);
 
     r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
-
-    if (r300->vs_state.state && r300_vertex_shader_setup_wpos(r300)) {
-        r300->vap_output_state.dirty = TRUE;
-    }
 }
 
 /* Delete fragment shader state. */
@@ -853,11 +816,8 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     rs->clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
-    /* XXX Disable point sprites until we know what's wrong with them. */
-    rs->rs.sprite_coord_enable = 0;
-
     /* Point sprites */
-    if (rs->rs.sprite_coord_enable) {
+    if (state->sprite_coord_enable) {
         rs->stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
 	for (i = 0; i < 8; i++) {
 	    if (state->sprite_coord_enable & (1 << i))
@@ -1357,7 +1317,7 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                     /* XXX Shouldn't we align the format? */
                     fprintf(stderr, "r300_create_vertex_elements_state: "
                             "Unaligned format %s:%i isn't supported\n",
-                            util_format_name(*format), size);
+                            util_format_short_name(*format), size);
                     assert(0);
                     abort();
                 }
@@ -1427,14 +1387,6 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
         return;
     }
     r300->vs_state.state = vs;
-
-    // VS output mapping for HWTCL or stream mapping for SWTCL to the RS block
-    if (r300->fs.state) {
-        r300_vertex_shader_setup_wpos(r300);
-    }
-    memcpy(r300->vap_output_state.state, &vs->vap_out,
-           sizeof(struct r300_vap_output_state));
-    r300->vap_output_state.dirty = TRUE;
 
     /* The majority of the RS block bits is dependent on the vertex shader. */
     r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */

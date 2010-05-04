@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "drawtex.h"
+#include "main/drawtex.h"
 #include "main/state.h"
 #include "main/imports.h"
 
@@ -129,20 +129,5 @@ _mesa_DrawTexxv(const GLfixed *coords)
                 (GLfloat) coords[3] / 65536.0f,
                 (GLfloat) coords[4] / 65536.0f);
 }
-
-
-void
-_mesa_init_drawtex_dispatch(struct _glapi_table *disp)
-{
-   SET_DrawTexfOES(disp, _mesa_DrawTexf);
-   SET_DrawTexfvOES(disp, _mesa_DrawTexfv);
-   SET_DrawTexiOES(disp, _mesa_DrawTexi);
-   SET_DrawTexivOES(disp, _mesa_DrawTexiv);
-   SET_DrawTexsOES(disp, _mesa_DrawTexs);
-   SET_DrawTexsvOES(disp, _mesa_DrawTexsv);
-   SET_DrawTexxOES(disp, _mesa_DrawTexx);
-   SET_DrawTexxvOES(disp, _mesa_DrawTexxv);
-}
-
 
 #endif /* FEATURE_OES_draw_texture */

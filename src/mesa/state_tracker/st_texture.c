@@ -45,24 +45,6 @@
 
 #define DBG if(0) printf
 
-#if 0
-static GLenum
-target_to_target(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-      return GL_TEXTURE_CUBE_MAP_ARB;
-   default:
-      return target;
-   }
-}
-#endif
-
 
 /**
  * Allocate a new pipe_resource object
@@ -143,10 +125,12 @@ st_texture_match_image(const struct pipe_resource *pt,
 
 
 /**
- * Map a teximage in a mipmap texture.
- * \param row_stride  returns row stride in bytes
- * \param image_stride  returns image stride in bytes (for 3D textures).
- * \return address of mapping
+ * Map a texture image and return the address for a particular 2D face/slice/
+ * layer.  The stImage indicates the cube face and mipmap level.  The slice
+ * of the 3D texture is passed in 'zoffset'.
+ * \param usage  one of the PIPE_TRANSFER_x values
+ * \param x, y, w, h  the region of interest of the 2D image.
+ * \return address of mapping or NULL if any error
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
@@ -268,6 +252,9 @@ st_texture_image_copy(struct pipe_context *pipe,
    struct pipe_surface *src_surface;
    struct pipe_surface *dst_surface;
    GLuint i;
+
+   assert(src->width0 == dst->width0);
+   assert(src->height0 == dst->height0);
 
    for (i = 0; i < depth; i++) {
       GLuint srcLevel;

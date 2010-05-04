@@ -33,6 +33,7 @@
 #include "pipe/p_state.h"
 #include "util/u_pack_color.h"
 #include "util/u_rect.h"
+#include "util/u_surface.h"
 
 
 /**

@@ -8,7 +8,8 @@ DRIVER_DEFINES = -D__NOT_HAVE_DRM_H -DGALLIUM_SOFTPIPE
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/sw/libdrisw.a \
 	$(TOP)/src/gallium/winsys/sw/dri/libswdri.a \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
+	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
+	$(TOP)/src/gallium/drivers/trace/libtrace.a
 
 SWRAST_COMMON_GALLIUM_SOURCES = \
 	$(TOP)/src/mesa/drivers/dri/common/utils.c \

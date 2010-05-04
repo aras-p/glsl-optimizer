@@ -30,6 +30,30 @@
 #include "enums.h"
 #include "extensions.h"
 
+static const GLubyte *
+shading_laguage_version(GLcontext *ctx)
+{
+   switch (ctx->API) {
+#if FEATURE_ARB_shading_language_100
+   case API_OPENGL:
+      if (ctx->Extensions.ARB_shading_language_120)
+	 return (const GLubyte *) "1.20";
+      else if (ctx->Extensions.ARB_shading_language_100)
+	 return (const GLubyte *) "1.10";
+      goto error;
+#endif
+
+   case API_OPENGLES2:
+      return (const GLubyte *) "OpenGL ES GLSL ES 1.0.16";
+
+   case API_OPENGLES:
+   default:
+   error:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
+      return (const GLubyte *) 0;
+   }
+}
+
 
 /**
  * Query string-valued state.  The return value should _not_ be freed by
@@ -74,13 +98,9 @@ _mesa_GetString( GLenum name )
          if (!ctx->Extensions.String)
             ctx->Extensions.String = _mesa_make_extension_string(ctx);
          return (const GLubyte *) ctx->Extensions.String;
-#if FEATURE_ARB_shading_language_100
-      case GL_SHADING_LANGUAGE_VERSION_ARB:
-         if (ctx->Extensions.ARB_shading_language_120)
-            return (const GLubyte *) "1.20";
-         else if (ctx->Extensions.ARB_shading_language_100)
-            return (const GLubyte *) "1.10";
-         goto error;
+#if FEATURE_ARB_shading_language_100 || FEATURE_ES2
+      case GL_SHADING_LANGUAGE_VERSION:
+	 return shading_laguage_version(ctx);
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
     FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
@@ -92,9 +112,6 @@ _mesa_GetString( GLenum name )
             return (const GLubyte *) ctx->Program.ErrorString;
          }
          /* FALL-THROUGH */
-#endif
-#if FEATURE_ARB_shading_language_100
-      error:
 #endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );

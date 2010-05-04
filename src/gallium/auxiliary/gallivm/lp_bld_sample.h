@@ -173,7 +173,10 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     unsigned unit,
                     unsigned num_coords,
                     const LLVMValueRef *coords,
-                    LLVMValueRef lodbias,
+                    const LLVMValueRef *ddx,
+                    const LLVMValueRef *ddy,
+                    LLVMValueRef lod_bias,
+                    LLVMValueRef explicit_lod,
                     LLVMValueRef *texel);
 
 

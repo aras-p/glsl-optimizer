@@ -231,9 +231,6 @@ struct ureg_dst
 ureg_DECL_address( struct ureg_program * );
 
 struct ureg_dst
-ureg_DECL_loop( struct ureg_program * );
-
-struct ureg_dst
 ureg_DECL_predicate(struct ureg_program *);
 
 /* Supply an index to the sampler declaration as this is the hook to

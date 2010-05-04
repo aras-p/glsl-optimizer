@@ -89,7 +89,8 @@ struct nouveau_context {
 	context_drv(ctx)->emit[NOUVEAU_STATE_##s](ctx, NOUVEAU_STATE_##s)
 
 GLboolean
-nouveau_context_create(const __GLcontextModes *visual, __DRIcontext *dri_ctx,
+nouveau_context_create(gl_api api,
+		       const __GLcontextModes *visual, __DRIcontext *dri_ctx,
 		       void *share_ctx);
 
 GLboolean

@@ -736,7 +736,11 @@ struct __DRIdri2LoaderExtensionRec {
  * constructors for DRI2.
  */
 #define __DRI_DRI2 "DRI_DRI2"
-#define __DRI_DRI2_VERSION 1
+#define __DRI_DRI2_VERSION 2
+
+#define __DRI_API_OPENGL	0
+#define __DRI_API_GLES		1
+#define __DRI_API_GLES2		2
 
 struct __DRIdri2ExtensionRec {
     __DRIextension base;
@@ -755,6 +759,14 @@ struct __DRIdri2ExtensionRec {
 				      __DRIcontext *shared,
 				      void *loaderPrivate);
 
+   /* Since version 2 */
+   unsigned int (*getAPIMask)(__DRIscreen *screen);
+
+   __DRIcontext *(*createNewContextForAPI)(__DRIscreen *screen,
+					   int api,
+					   const __DRIconfig *config,
+					   __DRIcontext *shared,
+					   void *data);
 };
 
 

@@ -115,6 +115,20 @@ sp_tex_tile_cache_validate_texture(struct softpipe_tex_tile_cache *tc)
    }
 }
 
+static boolean
+sp_tex_tile_is_compat_view(struct softpipe_tex_tile_cache *tc,
+                           struct pipe_sampler_view *view)
+{
+   if (!view)
+      return FALSE;
+   return (tc->texture == view->texture &&
+           tc->format == view->format &&
+           tc->swizzle_r == view->swizzle_r &&
+           tc->swizzle_g == view->swizzle_g &&
+           tc->swizzle_b == view->swizzle_b &&
+           tc->swizzle_a == view->swizzle_a);
+}
+
 /**
  * Specify the sampler view to cache.
  */
@@ -127,7 +141,7 @@ sp_tex_tile_cache_set_sampler_view(struct softpipe_tex_tile_cache *tc,
 
    assert(!tc->transfer);
 
-   if (tc->texture != texture) {
+   if (!sp_tex_tile_is_compat_view(tc, view)) {
       pipe_resource_reference(&tc->texture, texture);
 
       if (tc->tex_trans) {

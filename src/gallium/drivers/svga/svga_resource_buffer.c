@@ -125,8 +125,6 @@ svga_buffer_map_range( struct pipe_screen *screen,
    }
 
    if(map) {
-      pipe_mutex_lock(ss->swc_mutex);
-
       ++sbuf->map.count;
 
       if (usage & PIPE_TRANSFER_WRITE) {
@@ -135,8 +133,6 @@ svga_buffer_map_range( struct pipe_screen *screen,
          if (usage & PIPE_TRANSFER_FLUSH_EXPLICIT)
             sbuf->map.flush_explicit = TRUE;
       }
-      
-      pipe_mutex_unlock(ss->swc_mutex);
    }
    
    return map;

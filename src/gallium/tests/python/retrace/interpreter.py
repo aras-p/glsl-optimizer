@@ -432,6 +432,9 @@ class Context(Object):
                        swizzle_b = templ.swizzle_g,
                        swizzle_a = templ.swizzle_a)
 
+    def sampler_view_destroy(self, view):
+        pass
+
     def set_fragment_sampler_views(self, num, views):
         for i in range(num):
             self.real.set_fragment_sampler_view(i, views[i])
@@ -456,6 +459,10 @@ class Context(Object):
         return elements[0:num_elements]
 
     def bind_vertex_elements_state(self, state):
+        if state is None:
+            self.real.set_vertex_elements(0)
+            return
+
         elements = state
         num_elements = len(elements)
         self.velems = elements

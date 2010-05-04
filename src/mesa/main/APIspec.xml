@@ -3921,8 +3921,8 @@
 	<function name="ColorMask" template="ColorMask"/>
 	<function name="DepthMask" template="DepthMask"/>
 
-	<function name="Disable" external="true" template="Disable"/>
-	<function name="Enable" external="true" template="Enable"/>
+	<function name="Disable" template="Disable"/>
+	<function name="Enable" template="Enable"/>
 	<function name="Finish" template="Finish"/>
 	<function name="Flush" template="Flush"/>
 
@@ -3939,15 +3939,15 @@
 	<function name="PixelStorei" template="PixelStore" gltype="GLint"/>
 	<function name="ReadPixels" template="ReadPixels"/>
 
-	<function name="GetBooleanv" template="GetState" gltype="GLboolean"/>
+	<function name="GetBooleanv" default_prefix="_es1_" template="GetState" gltype="GLboolean"/>
 
 	<function name="GetClipPlanef" template="GetClipPlane" gltype="GLfloat"/>
 	<function name="GetClipPlanex" template="GetClipPlane" gltype="GLfixed"/>
 
 	<function name="GetError" template="GetError"/>
-	<function name="GetFloatv" template="GetState" gltype="GLfloat"/>
-	<function name="GetFixedv" template="GetState" gltype="GLfixed"/>
-	<function name="GetIntegerv" template="GetState" gltype="GLint"/>
+	<function name="GetFloatv" default_prefix="_es1_" template="GetState" gltype="GLfloat"/>
+	<function name="GetFixedv" default_prefix="_es1_" template="GetState" gltype="GLfixed"/>
+	<function name="GetIntegerv" default_prefix="_es1_" template="GetState" gltype="GLint"/>
 
 	<function name="GetLightfv" template="GetLight" gltype="GLfloat"/>
 	<function name="GetLightxv" template="GetLight" gltype="GLfixed"/>
@@ -3955,7 +3955,7 @@
 	<function name="GetMaterialfv" template="GetMaterial" gltype="GLfloat"/>
 	<function name="GetMaterialxv" template="GetMaterial" gltype="GLfixed"/>
 
-	<function name="GetString" external="true" template="GetString"/>
+	<function name="GetString" template="GetString"/>
 
 	<function name="GetTexEnvfv" template="GetTexEnv" gltype="GLfloat"/>
 	<function name="GetTexEnviv" template="GetTexEnv" gltype="GLint"/>
@@ -3969,7 +3969,7 @@
 	<function name="GetTexParameteriv" template="GetTexParameter" gltype="GLint"/>
 	<function name="GetTexParameterxv" template="GetTexParameter" gltype="GLfixed"/>
 
-	<function name="IsEnabled" external="true" template="IsEnabled"/>
+	<function name="IsEnabled" template="IsEnabled"/>
 
 	<function name="DepthRangef" template="DepthRange" gltype="GLclampf"/>
 	<function name="DepthRangex" template="DepthRange" gltype="GLclampx"/>
@@ -4040,7 +4040,7 @@
 
 	<!-- CompressedTexImage2D calls out to two different functions based on
 	     whether the image is a paletted image or not -->
-	<function name="CompressedTexImage2D" external="true" template="CompressedTexImage2D"/>
+	<function name="CompressedTexImage2D" template="CompressedTexImage2D"/>
 	<function name="CompressedTexSubImage2D" template="CompressedTexSubImage2D"/>
 
 	<function name="BlendFuncSeparateOES" template="BlendFuncSeparate"/>
@@ -4173,12 +4173,12 @@
 	<function name="PixelStorei" template="PixelStore" gltype="GLint"/>
 	<function name="ReadPixels" template="ReadPixels"/>
 
-	<function name="GetBooleanv" template="GetState" gltype="GLboolean"/>
+	<function name="GetBooleanv" default_prefix="_es2_" template="GetState" gltype="GLboolean"/>
 	<function name="GetError" template="GetError"/>
-	<function name="GetFloatv" template="GetState" gltype="GLfloat"/>
-	<function name="GetIntegerv" template="GetState" gltype="GLint"/>
+	<function name="GetFloatv" default_prefix="_es2_" template="GetState" gltype="GLfloat"/>
+	<function name="GetIntegerv" default_prefix="_es2_" template="GetState" gltype="GLint"/>
 
-	<function name="GetString" external="true" template="GetString"/>
+	<function name="GetString" template="GetString"/>
 
 	<function name="GetTexParameterfv" template="GetTexParameter" gltype="GLfloat"/>
 	<function name="GetTexParameteriv" template="GetTexParameter" gltype="GLint"/>
@@ -4217,7 +4217,7 @@
 
 	<function name="SampleCoverage" template="SampleCoverage" gltype="GLclampf"/>
 
-	<function name="CompressedTexImage2D" external="true" template="CompressedTexImage2D"/>
+	<function name="CompressedTexImage2D" template="CompressedTexImage2D"/>
 	<function name="CompressedTexSubImage2D" template="CompressedTexSubImage2D"/>
 
 	<function name="BlendFuncSeparate" template="BlendFuncSeparate"/>

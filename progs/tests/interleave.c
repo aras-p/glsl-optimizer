@@ -352,7 +352,7 @@ static void ModeMenu( int entry )
 
 static void Init( void )
 {
-   const char * const ver_string = (const char * const)
+   const char * const ver_string = (const char *)
        glGetString( GL_VERSION );
    const GLubyte tex[16] = {
       0xff, 0x00, 0xff, 0x00, 

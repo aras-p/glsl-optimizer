@@ -166,7 +166,8 @@ static const struct dri_debug_control debug_control[] =
 };
 
 GLboolean
-i810CreateContext( const __GLcontextModes *mesaVis,
+i810CreateContext( gl_api api,
+		   const __GLcontextModes *mesaVis,
                    __DRIcontext *driContextPriv,
                    void *sharedContextPrivate )
 {

@@ -176,7 +176,7 @@ static void SpecialKey( int key, int x, int y )
 static void Init( void )
 {
    GLfloat maxBias;
-   const char * const ver_string = (const char * const)
+   const char * const ver_string = (const char *)
        glGetString( GL_VERSION );
 
    printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));

@@ -62,17 +62,22 @@ util_destroy_rgba_surface(struct pipe_resource *texture,
                           struct pipe_surface *surface);
 
 
-extern boolean
-util_framebuffer_state_equal(const struct pipe_framebuffer_state *dst,
-                             const struct pipe_framebuffer_state *src);
 
 extern void
-util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
-                            const struct pipe_framebuffer_state *src);
-
+util_surface_copy(struct pipe_context *pipe,
+                  boolean do_flip,
+                  struct pipe_surface *dst,
+                  unsigned dst_x, unsigned dst_y,
+                  struct pipe_surface *src,
+                  unsigned src_x, unsigned src_y, 
+                  unsigned w, unsigned h);
 
 extern void
-util_unreference_framebuffer_state(struct pipe_framebuffer_state *fb);
+util_surface_fill(struct pipe_context *pipe,
+                  struct pipe_surface *dst,
+                  unsigned dstx, unsigned dsty,
+                  unsigned width, unsigned height, unsigned value);
+
 
 
 #endif /* U_SURFACE_H */

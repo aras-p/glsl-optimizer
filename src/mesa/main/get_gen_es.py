@@ -565,7 +565,7 @@ def ConversionFunc(fromType, toType):
 		return fromStr + "_TO_" + toStr
 
 
-def EmitGetFunction(stateVars, returnType):
+def EmitGetFunction(stateVars, returnType, API):
 	"""Emit the code to implement glGetBooleanv, glGetIntegerv or glGetFloatv."""
 	assert (returnType == GLboolean or
 			returnType == GLint or
@@ -575,13 +575,13 @@ def EmitGetFunction(stateVars, returnType):
 	strType = TypeStrings[returnType]
 	# Capitalize first letter of return type
 	if returnType == GLint:
-		function = "_mesa_GetIntegerv"
+		function = "_es%d_GetIntegerv" % API
 	elif returnType == GLboolean:
-		function = "_mesa_GetBooleanv"
+		function = "_es%d_GetBooleanv" % API
 	elif returnType == GLfloat:
-		function = "_mesa_GetFloatv"
+		function = "_es%d_GetFloatv" % API
 	elif returnType == GLfixed:
-		function = "_mesa_GetFixedv"
+		function = "_es%d_GetFixedv" % API
 	else:
 		abort()
 
@@ -773,20 +773,17 @@ static GLenum compressed_formats[] = {
 
 #define ARRAY_SIZE(A)  (sizeof(A) / sizeof(A[0]))
 
-void GLAPIENTRY
-_mesa_GetFixedv( GLenum pname, GLfixed *params );
-
 """
 	return
 
 
 def EmitAll(stateVars, API):
 	EmitHeader()
-	EmitGetFunction(stateVars, GLboolean)
-	EmitGetFunction(stateVars, GLfloat)
-	EmitGetFunction(stateVars, GLint)
+	EmitGetFunction(stateVars, GLboolean, API)
+	EmitGetFunction(stateVars, GLfloat, API)
+	EmitGetFunction(stateVars, GLint, API)
 	if API == 1:
-		EmitGetFunction(stateVars, GLfixed)
+		EmitGetFunction(stateVars, GLfixed, API)
 
 
 def main(args):

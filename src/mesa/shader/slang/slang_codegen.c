@@ -1560,7 +1560,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    char name[200];
 
    prevFuncEndLabel = A->curFuncEndLabel;
-   sprintf(name, "__endOfFunc_%s_", (char *) fun->header.a_name);
+   _mesa_snprintf(name, sizeof(name), "__endOfFunc_%s_", (char *) fun->header.a_name);
    A->curFuncEndLabel = _slang_label_new(name);
    assert(A->curFuncEndLabel);
 
@@ -4187,11 +4187,10 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
    slang_atom name = oper->var ? oper->var->a_name : oper->a_id;
    slang_variable *var = _slang_variable_locate(oper->locals, name, GL_TRUE);
    slang_ir_node *n;
-   if (!var) {
+   if (!var || !var->declared) {
       slang_info_log_error(A->log, "undefined variable '%s'", (char *) name);
       return NULL;
    }
-   assert(var->declared);
    n = new_var(A, var);
    return n;
 }

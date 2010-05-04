@@ -812,7 +812,7 @@ trace_context_delete_vertex_elements_state(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   trace_dump_call_begin("pipe_context", "delete_verte_elements_state");
+   trace_dump_call_begin("pipe_context", "delete_vertex_elements_state");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, state);

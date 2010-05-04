@@ -40,6 +40,7 @@
 #include "util/u_memory.h"
 #include "util/u_rect.h"
 #include "util/u_sampler.h"
+#include "util/u_surface.h"
 
 #include "cso_cache/cso_context.h"
 

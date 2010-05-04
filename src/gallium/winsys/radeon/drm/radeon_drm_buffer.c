@@ -22,6 +22,8 @@ struct radeon_drm_buffer {
 
     boolean flinked;
     uint32_t flink;
+    uint32_t tileflags;
+    uint32_t pitch;
 
     struct radeon_drm_buffer *next, *prev;
 };
@@ -318,6 +320,9 @@ void radeon_drm_bufmgr_get_tiling(struct pb_buffer *_buf,
 
     radeon_bo_get_tiling(buf->bo, &flags, &pitch);
 
+    buf->tileflags = flags;
+    buf->pitch = pitch;
+
     *microtiled = R300_BUFFER_LINEAR;
     *macrotiled = R300_BUFFER_LINEAR;
     if (flags & RADEON_BO_FLAGS_MICRO_TILE)
@@ -333,7 +338,7 @@ void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf,
                                   uint32_t pitch)
 {
     struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
-    uint32_t flags = 0, old_flags, old_pitch;
+    uint32_t flags = 0;
     if (microtiled == R300_BUFFER_TILED)
         flags |= RADEON_BO_FLAGS_MICRO_TILE;
 /* XXX Remove this ifdef when libdrm version 2.4.19 becomes mandatory. */
@@ -344,17 +349,15 @@ void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf,
     if (macrotiled == R300_BUFFER_TILED)
         flags |= RADEON_BO_FLAGS_MACRO_TILE;
 
-    radeon_bo_get_tiling(buf->bo, &old_flags, &old_pitch);
-
-    if (flags != old_flags || pitch != old_pitch) {
+    if (flags != buf->tileflags || pitch != buf->pitch) {
         /* Tiling determines how DRM treats the buffer data.
          * We must flush CS when changing it if the buffer is referenced. */
         if (radeon_bo_is_referenced_by_cs(buf->bo,  buf->mgr->rws->cs)) {
 	    buf->mgr->rws->flush_cb(buf->mgr->rws->flush_data);
         }
-    }
-    radeon_bo_set_tiling(buf->bo, flags, pitch);
 
+        radeon_bo_set_tiling(buf->bo, flags, pitch);
+    }
 }
 
 boolean radeon_drm_bufmgr_add_buffer(struct pb_buffer *_buf,

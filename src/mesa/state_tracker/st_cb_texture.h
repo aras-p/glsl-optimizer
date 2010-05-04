@@ -33,8 +33,7 @@
 extern GLboolean
 st_finalize_texture(GLcontext *ctx,
 		    struct pipe_context *pipe, 
-		    struct gl_texture_object *tObj,
-		    GLboolean *needFlush);
+		    struct gl_texture_object *tObj);
 
 
 extern struct gl_texture_object *

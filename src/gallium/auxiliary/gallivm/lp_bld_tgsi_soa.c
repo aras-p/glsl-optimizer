@@ -54,11 +54,8 @@
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
 #include "lp_bld_tgsi.h"
+#include "lp_bld_limits.h"
 #include "lp_bld_debug.h"
-
-
-#define LP_MAX_TEMPS 256
-#define LP_MAX_IMMEDIATES 256
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -84,7 +81,6 @@
 #define QUAD_BOTTOM_LEFT  2
 #define QUAD_BOTTOM_RIGHT 3
 
-#define LP_TGSI_MAX_NESTING 16
 
 struct lp_exec_mask {
    struct lp_build_context *bld;
@@ -93,19 +89,19 @@ struct lp_exec_mask {
 
    LLVMTypeRef int_vec_type;
 
-   LLVMValueRef cond_stack[LP_TGSI_MAX_NESTING];
+   LLVMValueRef cond_stack[LP_MAX_TGSI_NESTING];
    int cond_stack_size;
    LLVMValueRef cond_mask;
 
-   LLVMValueRef break_stack[LP_TGSI_MAX_NESTING];
+   LLVMValueRef break_stack[LP_MAX_TGSI_NESTING];
    int break_stack_size;
    LLVMValueRef break_mask;
 
-   LLVMValueRef cont_stack[LP_TGSI_MAX_NESTING];
+   LLVMValueRef cont_stack[LP_MAX_TGSI_NESTING];
    int cont_stack_size;
    LLVMValueRef cont_mask;
 
-   LLVMBasicBlockRef loop_stack[LP_TGSI_MAX_NESTING];
+   LLVMBasicBlockRef loop_stack[LP_MAX_TGSI_NESTING];
    int loop_stack_size;
    LLVMBasicBlockRef loop_block;
 
@@ -124,9 +120,9 @@ struct lp_build_tgsi_soa_context
 
    struct lp_build_sampler_soa *sampler;
 
-   LLVMValueRef immediates[LP_MAX_IMMEDIATES][NUM_CHANNELS];
-   LLVMValueRef temps[LP_MAX_TEMPS][NUM_CHANNELS];
-   LLVMValueRef addr[LP_MAX_TEMPS][NUM_CHANNELS];
+   LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES][NUM_CHANNELS];
+   LLVMValueRef temps[LP_MAX_TGSI_TEMPS][NUM_CHANNELS];
+   LLVMValueRef addr[LP_MAX_TGSI_ADDRS][NUM_CHANNELS];
 
    /* we allocate an array of temps if we have indirect
     * addressing and then the temps above is unused */
@@ -198,6 +194,7 @@ static void lp_exec_mask_update(struct lp_exec_mask *mask)
 static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
                                    LLVMValueRef val)
 {
+   assert(mask->cond_stack_size < LP_MAX_TGSI_NESTING);
    mask->cond_stack[mask->cond_stack_size++] = mask->cond_mask;
    mask->cond_mask = LLVMBuildBitCast(mask->bld->builder, val,
                                       mask->int_vec_type, "");
@@ -239,6 +236,10 @@ static void lp_exec_bgnloop(struct lp_exec_mask *mask)
    if (mask->cond_stack_size == 0)
       mask->cond_mask = LLVMConstAllOnes(mask->int_vec_type);
 
+   assert(mask->break_stack_size < LP_MAX_TGSI_NESTING);
+   assert(mask->cont_stack_size < LP_MAX_TGSI_NESTING);
+   assert(mask->break_stack_size < LP_MAX_TGSI_NESTING);
+
    mask->break_stack[mask->break_stack_size++] = mask->break_mask;
    mask->cont_stack[mask->cont_stack_size++] = mask->cont_mask;
    mask->loop_stack[mask->loop_stack_size++] = mask->loop_block;
@@ -255,16 +256,9 @@ static void lp_exec_break(struct lp_exec_mask *mask)
                                          mask->exec_mask,
                                          "break");
 
-   /* mask->break_stack_size > 1 implies that we encountered a break
-    * statemant already and if that's the case we want to make sure
-    * our mask is a combination of the previous break and the current
-    * execution mask */
-   if (mask->break_stack_size > 1) {
-      mask->break_mask = LLVMBuildAnd(mask->bld->builder,
-                                      mask->break_mask,
-                                      exec_mask, "break_full");
-   } else
-      mask->break_mask = exec_mask;
+   mask->break_mask = LLVMBuildAnd(mask->bld->builder,
+                                   mask->break_mask,
+                                   exec_mask, "break_full");
 
    lp_exec_mask_update(mask);
 }
@@ -275,12 +269,9 @@ static void lp_exec_continue(struct lp_exec_mask *mask)
                                          mask->exec_mask,
                                          "");
 
-   if (mask->cont_stack_size > 1) {
-      mask->cont_mask = LLVMBuildAnd(mask->bld->builder,
-                                     mask->cont_mask,
-                                     exec_mask, "");
-   } else
-      mask->cont_mask = exec_mask;
+   mask->cont_mask = LLVMBuildAnd(mask->bld->builder,
+                                  mask->cont_mask,
+                                  exec_mask, "");
 
    lp_exec_mask_update(mask);
 }
@@ -589,7 +580,6 @@ emit_store(
 
    case TGSI_FILE_PREDICATE:
       /* FIXME */
-      assert(0);
       break;
 
    default:
@@ -602,20 +592,36 @@ emit_store(
  * High-level instruction translators.
  */
 
+enum tex_modifier {
+   TEX_MODIFIER_NONE = 0,
+   TEX_MODIFIER_PROJECTED,
+   TEX_MODIFIER_LOD_BIAS,
+   TEX_MODIFIER_EXPLICIT_LOD,
+   TEX_MODIFIER_EXPLICIT_DERIV
+};
 
 static void
 emit_tex( struct lp_build_tgsi_soa_context *bld,
           const struct tgsi_full_instruction *inst,
-          boolean apply_lodbias,
-          boolean projected,
+          enum tex_modifier modifier,
           LLVMValueRef *texel)
 {
-   const uint unit = inst->Src[1].Register.Index;
-   LLVMValueRef lodbias;
+   unsigned unit;
+   LLVMValueRef lod_bias, explicit_lod;
    LLVMValueRef oow = NULL;
    LLVMValueRef coords[3];
+   LLVMValueRef ddx[3];
+   LLVMValueRef ddy[3];
    unsigned num_coords;
    unsigned i;
+
+   if (!bld->sampler) {
+      _debug_printf("warning: found texture instruction but no sampler generator supplied\n");
+      for (i = 0; i < 4; i++) {
+         texel[i] = bld->base.undef;
+      }
+      return;
+   }
 
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
@@ -637,29 +643,57 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
-   if(apply_lodbias)
-      lodbias = emit_fetch( bld, inst, 0, 3 );
-   else
-      lodbias = bld->base.zero;
+   if (modifier == TEX_MODIFIER_LOD_BIAS) {
+      lod_bias = emit_fetch( bld, inst, 0, 3 );
+      explicit_lod = NULL;
+   }
+   else if (modifier == TEX_MODIFIER_EXPLICIT_LOD) {
+      lod_bias = NULL;
+      explicit_lod = emit_fetch( bld, inst, 0, 3 );
+   }
+   else {
+      lod_bias = NULL;
+      explicit_lod = NULL;
+   }
 
-   if (projected) {
+   if (modifier == TEX_MODIFIER_PROJECTED) {
       oow = emit_fetch( bld, inst, 0, 3 );
       oow = lp_build_rcp(&bld->base, oow);
    }
 
    for (i = 0; i < num_coords; i++) {
       coords[i] = emit_fetch( bld, inst, 0, i );
-      if (projected)
+      if (modifier == TEX_MODIFIER_PROJECTED)
          coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
    for (i = num_coords; i < 3; i++) {
       coords[i] = bld->base.undef;
    }
 
+   if (modifier == TEX_MODIFIER_EXPLICIT_DERIV) {
+      for (i = 0; i < num_coords; i++) {
+         ddx[i] = emit_fetch( bld, inst, 1, i );
+         ddy[i] = emit_fetch( bld, inst, 2, i );
+      }
+      unit = inst->Src[3].Register.Index;
+   }  else {
+      for (i = 0; i < num_coords; i++) {
+         ddx[i] = emit_ddx( bld, coords[i] );
+         ddy[i] = emit_ddy( bld, coords[i] );
+      }
+      unit = inst->Src[1].Register.Index;
+   }
+   for (i = num_coords; i < 3; i++) {
+      ddx[i] = bld->base.undef;
+      ddy[i] = bld->base.undef;
+   }
+
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->base.builder,
                                   bld->base.type,
-                                  unit, num_coords, coords, lodbias,
+                                  unit, num_coords, coords,
+                                  ddx, ddy,
+                                  lod_bias, explicit_lod,
                                   texel);
 }
 
@@ -739,7 +773,7 @@ emit_kilp(struct lp_build_tgsi_soa_context *bld,
    lp_build_mask_update(bld->mask, mask);
 }
 
-static int
+static void
 emit_declaration(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_declaration *decl)
@@ -753,6 +787,7 @@ emit_declaration(
    for (idx = first; idx <= last; ++idx) {
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
+         assert(idx < LP_MAX_TGSI_TEMPS);
          if (bld->has_indirect_addressing) {
             LLVMValueRef val = LLVMConstInt(LLVMInt32Type(),
                                             last*4 + 4, 0);
@@ -772,9 +807,14 @@ emit_declaration(
          break;
 
       case TGSI_FILE_ADDRESS:
+         assert(idx < LP_MAX_TGSI_ADDRS);
          for (i = 0; i < NUM_CHANNELS; i++)
             bld->addr[idx][i] = lp_build_alloca(bld->base.builder,
                                                 vec_type, "");
+         break;
+
+      case TGSI_FILE_PREDICATE:
+         _debug_printf("warning: predicate registers not yet implemented\n");
          break;
 
       default:
@@ -782,8 +822,6 @@ emit_declaration(
          break;
       }
    }
-
-   return TRUE;
 }
 
 
@@ -1359,12 +1397,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      emit_tex( bld, inst, FALSE, FALSE, dst0 );
+      emit_tex( bld, inst, TEX_MODIFIER_NONE, dst0 );
       break;
 
    case TGSI_OPCODE_TXD:
-      /* FIXME */
-      return FALSE;
+      emit_tex( bld, inst, TEX_MODIFIER_EXPLICIT_DERIV, dst0 );
       break;
 
    case TGSI_OPCODE_UP2H:
@@ -1466,7 +1503,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXB:
-      emit_tex( bld, inst, TRUE, FALSE, dst0 );
+      emit_tex( bld, inst, TEX_MODIFIER_LOD_BIAS, dst0 );
       break;
 
    case TGSI_OPCODE_NRM:
@@ -1571,11 +1608,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      emit_tex( bld, inst, TRUE, FALSE, dst0 );
+      emit_tex( bld, inst, TEX_MODIFIER_EXPLICIT_LOD, dst0 );
       break;
 
    case TGSI_OPCODE_TXP:
-      emit_tex( bld, inst, FALSE, TRUE, dst0 );
+      emit_tex( bld, inst, TEX_MODIFIER_PROJECTED, dst0 );
       break;
 
    case TGSI_OPCODE_BRK:
@@ -1765,10 +1802,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
          /* Inputs already interpolated */
-         {
-            if (!emit_declaration( &bld, &parse.FullToken.FullDeclaration ))
-               _debug_printf("warning: failed to define LLVM variable\n");
-         }
+         emit_declaration( &bld, &parse.FullToken.FullDeclaration );
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
@@ -1787,7 +1821,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          {
             const uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
             assert(size <= 4);
-            assert(num_immediates < LP_MAX_IMMEDIATES);
+            assert(num_immediates < LP_MAX_TGSI_IMMEDIATES);
             for( i = 0; i < size; ++i )
                bld.immediates[num_immediates][i] =
                   lp_build_const_vec(type, parse.FullToken.FullImmediate.u[i].Float);

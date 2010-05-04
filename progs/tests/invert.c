@@ -126,7 +126,7 @@ static void Key( unsigned char key, int x, int y )
 
 static void Init( void )
 {
-   const char * const ver_string = (const char * const)
+   const char * const ver_string = (const char *)
        glGetString( GL_VERSION );
    const float ver = strtod( ver_string, NULL );
 

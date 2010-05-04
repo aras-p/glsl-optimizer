@@ -53,6 +53,7 @@
 #include <xf86drm.h>
 #include "xmlconfig.h"
 #include "main/glheader.h"
+#include "main/mtypes.h"
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
 
@@ -148,8 +149,9 @@ struct __DriverAPIRec {
     /**
      * Context creation callback
      */	    	    
-    GLboolean (*CreateContext)(const __GLcontextModes *glVis,
-                               __DRIcontext *driContextPriv,
+    GLboolean (*CreateContext)(gl_api api,
+			       const __GLcontextModes *glVis,
+			       __DRIcontext *driContextPriv,
                                void *sharedContextPrivate);
 
     /**
@@ -531,6 +533,7 @@ struct __DRIscreenRec {
     drmLock *lock;
 
     driOptionCache optionCache;
+   unsigned int api_mask;
 };
 
 extern void

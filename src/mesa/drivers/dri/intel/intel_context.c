@@ -586,6 +586,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 
 GLboolean
 intelInitContext(struct intel_context *intel,
+		 int api,
                  const __GLcontextModes * mesaVis,
                  __DRIcontext * driContextPriv,
                  void *sharedContextPrivate,
@@ -601,8 +602,8 @@ intelInitContext(struct intel_context *intel,
    if (intelScreen->bufmgr == NULL)
       return GL_FALSE;
 
-   if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
-                                 functions, (void *) intel)) {
+   if (!_mesa_initialize_context_for_api(&intel->ctx, api, mesaVis, shareCtx,
+					 functions, (void *) intel)) {
       printf("%s: failed to init mesa context\n", __FUNCTION__);
       return GL_FALSE;
    }
@@ -736,7 +737,16 @@ intelInitContext(struct intel_context *intel,
 
    intel->RenderIndex = ~0;
 
-   intelInitExtensions(ctx);
+   switch (ctx->API) {
+   case API_OPENGL:
+      intelInitExtensions(ctx);
+      break;
+   case API_OPENGLES:
+      break;
+   case API_OPENGLES2:
+      intelInitExtensionsES2(ctx);
+      break;
+   }
 
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
    if (INTEL_DEBUG & DEBUG_BUFMGR)

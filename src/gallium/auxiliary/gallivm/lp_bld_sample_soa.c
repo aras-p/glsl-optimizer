@@ -30,6 +30,7 @@
  * Texture sampling -- SoA.
  *
  * @author Jose Fonseca <jfonseca@vmware.com>
+ * @author Brian Paul <brianp@vmware.com>
  */
 
 #include "pipe/p_defines.h"
@@ -324,6 +325,18 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
    offset = lp_build_sample_offset(&bld->uint_coord_bld,
                                    bld->format_desc,
                                    x, y, z, y_stride, z_stride);
+
+   if (use_border) {
+      /* If we can sample the border color, it means that texcoords may
+       * lie outside the bounds of the texture image.  We need to do
+       * something to prevent reading out of bounds and causing a segfault.
+       *
+       * Simply AND the texture coords with !use_border.  This will cause
+       * coords which are out of bounds to become zero.  Zero's guaranteed
+       * to be inside the texture image.
+       */
+      offset = lp_build_andc(&bld->uint_coord_bld, offset, use_border);
+   }
 
    lp_build_fetch_rgba_soa(bld->builder,
                            bld->format_desc,
@@ -891,17 +904,24 @@ lp_build_minify(struct lp_build_sample_context *bld,
  * \param s  vector of texcoord s values
  * \param t  vector of texcoord t values
  * \param r  vector of texcoord r values
- * \param shader_lod_bias  vector float with the shader lod bias,
+ * \param lod_bias  optional float vector with the shader lod bias
+ * \param explicit_lod  optional float vector with the explicit lod
  * \param width  scalar int texture width
  * \param height  scalar int texture height
  * \param depth  scalar int texture depth
+ *
+ * XXX: The resulting lod is scalar, so ignore all but the first element of
+ * derivatives, lod_bias, etc that are passed by the shader.
  */
 static LLVMValueRef
 lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef s,
                       LLVMValueRef t,
                       LLVMValueRef r,
-                      LLVMValueRef shader_lod_bias,
+                      const LLVMValueRef *ddx,
+                      const LLVMValueRef *ddy,
+                      LLVMValueRef lod_bias, /* optional */
+                      LLVMValueRef explicit_lod, /* optional */
                       LLVMValueRef width,
                       LLVMValueRef height,
                       LLVMValueRef depth)
@@ -914,7 +934,6 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       return LLVMConstReal(LLVMFloatType(), bld->static_state->min_lod);
    }
    else {
-      const int dims = texture_dims(bld->static_state->target);
       struct lp_build_context *float_bld = &bld->float_bld;
       LLVMValueRef sampler_lod_bias = LLVMConstReal(LLVMFloatType(),
                                                     bld->static_state->lod_bias);
@@ -922,83 +941,76 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                                            bld->static_state->min_lod);
       LLVMValueRef max_lod = LLVMConstReal(LLVMFloatType(),
                                            bld->static_state->max_lod);
-
       LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
-      LLVMValueRef index1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
-      LLVMValueRef index2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
+      LLVMValueRef lod;
 
-      LLVMValueRef s0, s1, s2;
-      LLVMValueRef t0, t1, t2;
-      LLVMValueRef r0, r1, r2;
-      LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
-      LLVMValueRef rho, lod;
-
-      /*
-       * dsdx = abs(s[1] - s[0]);
-       * dsdy = abs(s[2] - s[0]);
-       * dtdx = abs(t[1] - t[0]);
-       * dtdy = abs(t[2] - t[0]);
-       * drdx = abs(r[1] - r[0]);
-       * drdy = abs(r[2] - r[0]);
-       * XXX we're assuming a four-element quad in 2x2 layout here.
-       */
-      s0 = LLVMBuildExtractElement(bld->builder, s, index0, "s0");
-      s1 = LLVMBuildExtractElement(bld->builder, s, index1, "s1");
-      s2 = LLVMBuildExtractElement(bld->builder, s, index2, "s2");
-      dsdx = LLVMBuildSub(bld->builder, s1, s0, "");
-      dsdx = lp_build_abs(float_bld, dsdx);
-      dsdy = LLVMBuildSub(bld->builder, s2, s0, "");
-      dsdy = lp_build_abs(float_bld, dsdy);
-      if (dims > 1) {
-         t0 = LLVMBuildExtractElement(bld->builder, t, index0, "t0");
-         t1 = LLVMBuildExtractElement(bld->builder, t, index1, "t1");
-         t2 = LLVMBuildExtractElement(bld->builder, t, index2, "t2");
-         dtdx = LLVMBuildSub(bld->builder, t1, t0, "");
-         dtdx = lp_build_abs(float_bld, dtdx);
-         dtdy = LLVMBuildSub(bld->builder, t2, t0, "");
-         dtdy = lp_build_abs(float_bld, dtdy);
-         if (dims > 2) {
-            r0 = LLVMBuildExtractElement(bld->builder, r, index0, "r0");
-            r1 = LLVMBuildExtractElement(bld->builder, r, index1, "r1");
-            r2 = LLVMBuildExtractElement(bld->builder, r, index2, "r2");
-            drdx = LLVMBuildSub(bld->builder, r1, r0, "");
-            drdx = lp_build_abs(float_bld, drdx);
-            drdy = LLVMBuildSub(bld->builder, r2, r0, "");
-            drdy = lp_build_abs(float_bld, drdy);
-         }
+      if (explicit_lod) {
+         lod = LLVMBuildExtractElement(bld->builder, explicit_lod,
+                                       index0, "");
       }
+      else {
+         const int dims = texture_dims(bld->static_state->target);
+         LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
+         LLVMValueRef rho;
 
-      /* Compute rho = max of all partial derivatives scaled by texture size.
-       * XXX this could be vectorized somewhat
-       */
-      rho = LLVMBuildMul(bld->builder,
-                         lp_build_max(float_bld, dsdx, dsdy),
-                         lp_build_int_to_float(float_bld, width), "");
-      if (dims > 1) {
-         LLVMValueRef max;
-         max = LLVMBuildMul(bld->builder,
-                            lp_build_max(float_bld, dtdx, dtdy),
-                            lp_build_int_to_float(float_bld, height), "");
-         rho = lp_build_max(float_bld, rho, max);
-         if (dims > 2) {
+         /*
+          * dsdx = abs(s[1] - s[0]);
+          * dsdy = abs(s[2] - s[0]);
+          * dtdx = abs(t[1] - t[0]);
+          * dtdy = abs(t[2] - t[0]);
+          * drdx = abs(r[1] - r[0]);
+          * drdy = abs(r[2] - r[0]);
+          */
+         dsdx = LLVMBuildExtractElement(bld->builder, ddx[0], index0, "dsdx");
+         dsdx = lp_build_abs(float_bld, dsdx);
+         dsdy = LLVMBuildExtractElement(bld->builder, ddy[0], index0, "dsdy");
+         dsdy = lp_build_abs(float_bld, dsdy);
+         if (dims > 1) {
+            dtdx = LLVMBuildExtractElement(bld->builder, ddx[1], index0, "dtdx");
+            dtdx = lp_build_abs(float_bld, dtdx);
+            dtdy = LLVMBuildExtractElement(bld->builder, ddy[1], index0, "dtdy");
+            dtdy = lp_build_abs(float_bld, dtdy);
+            if (dims > 2) {
+               drdx = LLVMBuildExtractElement(bld->builder, ddx[2], index0, "drdx");
+               drdx = lp_build_abs(float_bld, drdx);
+               drdy = LLVMBuildExtractElement(bld->builder, ddy[2], index0, "drdy");
+               drdy = lp_build_abs(float_bld, drdy);
+            }
+         }
+
+         /* Compute rho = max of all partial derivatives scaled by texture size.
+          * XXX this could be vectorized somewhat
+          */
+         rho = LLVMBuildMul(bld->builder,
+                            lp_build_max(float_bld, dsdx, dsdy),
+                            lp_build_int_to_float(float_bld, width), "");
+         if (dims > 1) {
+            LLVMValueRef max;
             max = LLVMBuildMul(bld->builder,
-                               lp_build_max(float_bld, drdx, drdy),
-                               lp_build_int_to_float(float_bld, depth), "");
+                               lp_build_max(float_bld, dtdx, dtdy),
+                               lp_build_int_to_float(float_bld, height), "");
             rho = lp_build_max(float_bld, rho, max);
+            if (dims > 2) {
+               max = LLVMBuildMul(bld->builder,
+                                  lp_build_max(float_bld, drdx, drdy),
+                                  lp_build_int_to_float(float_bld, depth), "");
+               rho = lp_build_max(float_bld, rho, max);
+            }
+         }
+
+         /* compute lod = log2(rho) */
+         lod = lp_build_log2(float_bld, rho);
+
+         /* add shader lod bias */
+         if (lod_bias) {
+            lod_bias = LLVMBuildExtractElement(bld->builder, lod_bias,
+                                               index0, "");
+            lod = LLVMBuildAdd(bld->builder, lod, lod_bias, "shader_lod_bias");
          }
       }
-
-      /* compute lod = log2(rho) */
-      lod = lp_build_log2(float_bld, rho);
 
       /* add sampler lod bias */
-      lod = LLVMBuildAdd(bld->builder, lod, sampler_lod_bias, "sampler LOD bias");
-
-      /* add shader lod bias */
-      /* XXX for now we take only the first element since our lod is scalar */
-      shader_lod_bias = LLVMBuildExtractElement(bld->builder, shader_lod_bias,
-                                                LLVMConstInt(LLVMInt32Type(), 0, 0), "");
-      lod = LLVMBuildAdd(bld->builder, lod, shader_lod_bias, "shader LOD bias");
+      lod = LLVMBuildAdd(bld->builder, lod, sampler_lod_bias, "sampler_lod_bias");
 
       /* clamp lod */
       lod = lp_build_clamp(float_bld, lod, min_lod, max_lod);
@@ -1584,7 +1596,10 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef s,
                         LLVMValueRef t,
                         LLVMValueRef r,
-                        LLVMValueRef lodbias,
+                        const LLVMValueRef *ddx,
+                        const LLVMValueRef *ddy,
+                        LLVMValueRef lod_bias, /* optional */
+                        LLVMValueRef explicit_lod, /* optional */
                         LLVMValueRef width,
                         LLVMValueRef height,
                         LLVMValueRef depth,
@@ -1622,7 +1637,9 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
-      lod = lp_build_lod_selector(bld, s, t, r, lodbias, width, height, depth);
+      lod = lp_build_lod_selector(bld, s, t, r, ddx, ddy,
+                                  lod_bias, explicit_lod,
+                                  width, height, depth);
    }
 
    /*
@@ -2049,6 +2066,24 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
 
 
 /**
+ * Just set texels to white instead of actually sampling the texture.
+ * For debugging.
+ */
+static void
+lp_build_sample_nop(struct lp_build_sample_context *bld,
+                    LLVMValueRef *texel)
+{
+   struct lp_build_context *texel_bld = &bld->texel_bld;
+   unsigned chan;
+
+   for (chan = 0; chan < 4; chan++) {
+      /*lp_bld_mov(texel_bld, texel, texel_bld->one);*/
+      texel[chan] = texel_bld->one;
+   }  
+}
+
+
+/**
  * Build texture sampling code.
  * 'texel' will return a vector of four LLVMValueRefs corresponding to
  * R, G, B, A.
@@ -2062,7 +2097,10 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     unsigned unit,
                     unsigned num_coords,
                     const LLVMValueRef *coords,
-                    LLVMValueRef lodbias,
+                    const LLVMValueRef *ddx,
+                    const LLVMValueRef *ddy,
+                    LLVMValueRef lod_bias, /* optional */
+                    LLVMValueRef explicit_lod, /* optional */
                     LLVMValueRef *texel)
 {
    struct lp_build_sample_context bld;
@@ -2113,19 +2151,24 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    height_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, height);
    depth_vec = lp_build_broadcast_scalar(&bld.uint_coord_bld, depth);
 
-   if (util_format_is_rgba8_variant(bld.format_desc) &&
-       static_state->target == PIPE_TEXTURE_2D &&
-       static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
-       static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&
-       static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE &&
-       is_simple_wrap_mode(static_state->wrap_s) &&
-       is_simple_wrap_mode(static_state->wrap_t)) {
+   if (0) {
+      /* For debug: no-op texture sampling */
+      lp_build_sample_nop(&bld, texel);
+   }
+   else if (util_format_is_rgba8_variant(bld.format_desc) &&
+            static_state->target == PIPE_TEXTURE_2D &&
+            static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
+            static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&
+            static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE &&
+            is_simple_wrap_mode(static_state->wrap_s) &&
+            is_simple_wrap_mode(static_state->wrap_t)) {
       /* special case */
       lp_build_sample_2d_linear_aos(&bld, s, t, width_vec, height_vec,
                                     row_stride_array, data_array, texel);
    }
    else {
-      lp_build_sample_general(&bld, unit, s, t, r, lodbias,
+      lp_build_sample_general(&bld, unit, s, t, r, ddx, ddy,
+                              lod_bias, explicit_lod,
                               width, height, depth,
                               width_vec, height_vec, depth_vec,
                               row_stride_array, img_stride_array,

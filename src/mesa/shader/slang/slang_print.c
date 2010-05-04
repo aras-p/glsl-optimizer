@@ -813,7 +813,7 @@ static const char *
 slang_fq_type_string(const slang_fully_specified_type *t)
 {
    static char str[1000];
-   sprintf(str, "%s %s", slang_type_qual_string(t->qualifier),
+   _mesa_snprintf(str, sizeof(str), "%s %s", slang_type_qual_string(t->qualifier),
       slang_type_string(t->specifier.type));
    return str;
 }
@@ -832,9 +832,9 @@ static char *
 slang_var_string(const slang_variable *v)
 {
    static char str[1000];
-   sprintf(str, "%s : %s",
-           (char *) v->a_name,
-           slang_fq_type_string(&v->type));
+   _mesa_snprintf(str, sizeof(str), "%s : %s",
+                  (char *) v->a_name,
+                  slang_fq_type_string(&v->type));
    return str;
 }
 #endif

@@ -340,13 +340,13 @@ storage_string(const slang_ir_storage *st)
    assert(Elements(files) == PROGRAM_FILE_MAX);
 #if 0
    if (st->Size == 1)
-      sprintf(s, "%s[%d]", files[st->File], st->Index);
+      _mesa_snprintf(s, "%s[%d]", files[st->File], st->Index);
    else
-      sprintf(s, "%s[%d..%d]", files[st->File], st->Index,
-              st->Index + st->Size - 1);
+      _mesa_snprintf(s, "%s[%d..%d]", files[st->File], st->Index,
+                     st->Index + st->Size - 1);
 #endif
    assert(st->File < (GLint) (sizeof(files) / sizeof(files[0])));
-   sprintf(s, "%s[%d]", files[st->File], st->Index);
+   _mesa_snprintf(s, sizeof(s), "%s[%d]", files[st->File], st->Index);
    return s;
 }
 

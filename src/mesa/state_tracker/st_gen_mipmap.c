@@ -311,7 +311,6 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
        * mipmap levels we need to generate.  So allocate a new texture.
        */
       struct pipe_resource *oldTex = stObj->pt;
-      GLboolean needFlush;
 
       /* create new texture with space for more levels */
       stObj->pt = st_texture_create(st,
@@ -331,7 +330,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       /* This will copy the old texture's base image into the new texture
        * which we just allocated.
        */
-      st_finalize_texture(ctx, st->pipe, texObj, &needFlush);
+      st_finalize_texture(ctx, st->pipe, texObj);
 
       /* release the old tex (will likely be freed too) */
       pipe_resource_reference(&oldTex, NULL);
@@ -342,10 +341,10 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
 
    assert(lastLevel <= pt->last_level);
 
-   /* Recall that the Mesa BaseLevel image is stored in the gallium
-    * texture's level[0] position.  So pass baseLevel=0 here.
+   /* Try to generate the mipmap by rendering/texturing.  If that fails,
+    * use the software fallback.
     */
-   if (!st_render_mipmap(st, target, stObj, 0, lastLevel)) {
+   if (!st_render_mipmap(st, target, stObj, baseLevel, lastLevel)) {
       fallback_generate_mipmap(ctx, target, texObj);
    }
 

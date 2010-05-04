@@ -11,7 +11,6 @@ OUTPUTS :=			\
 	sparc/glapi_sparc.S	\
 	x86-64/glapi_x86-64.S	\
 	x86/glapi_x86.S		\
-	main/enums.c		\
 	main/remap_helper.h
 
 COMMON = gl_XML.py glX_XML.py license.py typeexpr.py
@@ -30,7 +29,10 @@ ES2_DEPS = $(ES2_APIXML) base2_API.xml es2_EXT.xml es_EXT.xml \
 ES1_OUTPUTS := $(addprefix $(ES1_OUTPUT_DIR)/, $(OUTPUTS))
 ES2_OUTPUTS := $(addprefix $(ES2_OUTPUT_DIR)/, $(OUTPUTS))
 
-all: $(ES1_OUTPUTS) $(ES2_OUTPUTS)
+all: es1 es2
+
+es1: $(ES1_OUTPUTS)
+es2: $(ES2_OUTPUTS)
 
 $(ES1_OUTPUTS): APIXML := $(ES1_APIXML)
 $(ES2_OUTPUTS): APIXML := $(ES2_APIXML)
@@ -64,9 +66,6 @@ endef
 	$(call gen-glapi)
 
 %/x86/glapi_x86.S: $(GLAPI)/gl_x86_asm.py $(COMMON)
-	$(call gen-glapi)
-
-%/main/enums.c: $(GLAPI)/gl_enums.py $(COMMON)
 	$(call gen-glapi)
 
 %/main/remap_helper.h: $(GLAPI)/remap_helper.py $(COMMON)

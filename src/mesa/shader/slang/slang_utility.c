@@ -120,7 +120,7 @@ slang_string_pushi (slang_string *self, GLint i)
 {
    char buffer[12];
 
-   sprintf (buffer, "%d", i);
+   _mesa_snprintf (buffer, sizeof(buffer), "%d", i);
    slang_string_pushs (self, buffer, strlen (buffer));
 }
 

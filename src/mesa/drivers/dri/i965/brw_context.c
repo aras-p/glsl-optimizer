@@ -68,7 +68,8 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
    functions->Viewport = intel_viewport;
 }
 
-GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
+GLboolean brwCreateContext( int api,
+			    const __GLcontextModes *mesaVis,
 			    __DRIcontext *driContextPriv,
 			    void *sharedContextPrivate)
 {
@@ -85,7 +86,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    brwInitVtbl( brw );
    brwInitDriverFunctions( &functions );
 
-   if (!intelInitContext( intel, mesaVis, driContextPriv,
+   if (!intelInitContext( intel, api, mesaVis, driContextPriv,
 			  sharedContextPrivate, &functions )) {
       printf("%s: failed to init intel context\n", __FUNCTION__);
       FREE(brw);

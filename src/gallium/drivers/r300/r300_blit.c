@@ -129,15 +129,16 @@ void r300_surface_copy(struct pipe_context* pipe,
     if (dst->texture->format != src->texture->format) {
         debug_printf("r300: Implementation error: Format mismatch in %s\n"
             "    : src: %s dst: %s\n", __FUNCTION__,
-            util_format_name(src->texture->format),
-            util_format_name(dst->texture->format));
+            util_format_short_name(src->texture->format),
+            util_format_short_name(dst->texture->format));
         debug_assert(0);
     }
 
     if (!pipe->screen->is_format_supported(pipe->screen,
                                            old_format, src->texture->target,
                                            PIPE_BIND_RENDER_TARGET |
-                                           PIPE_BIND_SAMPLER_VIEW, 0)) {
+                                           PIPE_BIND_SAMPLER_VIEW, 0) &&
+        util_format_is_plain(old_format)) {
         switch (util_format_get_blocksize(old_format)) {
             case 1:
                 new_format = PIPE_FORMAT_I8_UNORM;
@@ -154,7 +155,7 @@ void r300_surface_copy(struct pipe_context* pipe,
             default:
                 debug_printf("r300: surface_copy: Unhandled format: %s. Falling back to software.\n"
                              "r300: surface_copy: Software fallback doesn't work for tiled textures.\n",
-                             util_format_name(old_format));
+                             util_format_short_name(old_format));
         }
     }
 

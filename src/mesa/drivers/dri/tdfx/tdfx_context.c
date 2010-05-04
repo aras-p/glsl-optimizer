@@ -164,7 +164,8 @@ static const struct dri_debug_control debug_control[] =
     { NULL,    0 }
 };
 
-GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
+GLboolean tdfxCreateContext( gl_api api,
+			     const __GLcontextModes *mesaVis,
 			     __DRIcontext *driContextPriv,
                              void *sharedContextPrivate )
 {

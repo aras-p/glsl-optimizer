@@ -65,7 +65,10 @@ struct lp_build_sampler_soa
                         unsigned unit,
                         unsigned num_coords,
                         const LLVMValueRef *coords,
-                        LLVMValueRef lodbias,
+                        const LLVMValueRef *ddx,
+                        const LLVMValueRef *ddy,
+                        LLVMValueRef lod_bias, /* optional */
+                        LLVMValueRef explicit_lod, /* optional */
                         LLVMValueRef *texel);
 };
 

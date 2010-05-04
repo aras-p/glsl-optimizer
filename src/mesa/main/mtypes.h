@@ -1076,6 +1076,7 @@ typedef enum
 #define T_BIT 2
 #define R_BIT 4
 #define Q_BIT 8
+#define STR_BITS (S_BIT | T_BIT | R_BIT)
 /*@}*/
 
 
@@ -2869,6 +2870,14 @@ struct gl_dlist_state
    } Current;
 };
 
+/**
+ * Enum for the OpenGL APIs we know about and may support.
+ */
+typedef enum {
+   API_OPENGL,
+   API_OPENGLES,
+   API_OPENGLES2,
+} gl_api;
 
 /**
  * Mesa rendering context.
@@ -2887,6 +2896,7 @@ struct __GLcontextRec
 
    /** \name API function pointer tables */
    /*@{*/
+   gl_api API;
    struct _glapi_table *Save;	/**< Display list save functions */
    struct _glapi_table *Exec;	/**< Execute functions */
    struct _glapi_table *CurrentDispatch;  /**< == Save or Exec !! */

@@ -1110,7 +1110,22 @@ _mesa_RenderbufferStorageMultisample(GLenum target, GLsizei samples,
    renderbuffer_storage(target, internalFormat, width, height, samples);
 }
 
+void GLAPIENTRY
+_es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
+			   GLsizei width, GLsizei height)
+{
+   switch (internalFormat) {
+   case GL_RGB565:
+      /* XXX this confuses GL_RENDERBUFFER_INTERNAL_FORMAT_OES */
+      /* choose a closest format */
+      internalFormat = GL_RGB5;
+      break;
+   default:
+      break;
+   }
 
+   renderbuffer_storage(target, internalFormat, width, height, 0);
+}
 
 void GLAPIENTRY
 _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)

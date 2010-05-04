@@ -59,17 +59,9 @@ _mesa_DrawTexx(GLfixed x, GLfixed y, GLfixed z, GLfixed width, GLfixed height);
 extern void GLAPIENTRY
 _mesa_DrawTexxv(const GLfixed *coords);
 
-extern void
-_mesa_init_drawtex_dispatch(struct _glapi_table *disp);
-
 #else /* FEATURE_OES_draw_texture */
 
 #define _MESA_INIT_DRAWTEX_FUNCTIONS(driver, impl) do { } while (0)
-
-static INLINE void
-_mesa_init_drawtex_dispatch(struct _glapi_table *disp)
-{
-}
 
 #endif /* FEATURE_OES_draw_texture */
 

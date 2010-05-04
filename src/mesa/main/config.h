@@ -250,7 +250,7 @@
 
 /** For GL_ARB_draw_buffers */
 /*@{*/
-#define MAX_DRAW_BUFFERS 4
+#define MAX_DRAW_BUFFERS 8
 /*@}*/
 
 

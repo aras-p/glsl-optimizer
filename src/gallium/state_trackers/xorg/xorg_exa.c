@@ -46,6 +46,7 @@
 #include "util/u_math.h"
 #include "util/u_debug.h"
 #include "util/u_format.h"
+#include "util/u_surface.h"
 
 #define DEBUG_PRINT 0
 #define ROUND_UP_TEXTURES 1

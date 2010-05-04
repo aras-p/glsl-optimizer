@@ -495,7 +495,6 @@ _mesa_enable_2_1_extensions(GLcontext *ctx)
 }
 
 
-
 /**
  * Either enable or disable the named extension.
  * \return GL_TRUE for success, GL_FALSE if invalid extension name
@@ -681,8 +680,8 @@ _mesa_init_extensions( GLcontext *ctx )
  * Construct the GL_EXTENSIONS string.  Called the first time that
  * glGetString(GL_EXTENSIONS) is called.
  */
-GLubyte *
-_mesa_make_extension_string( GLcontext *ctx )
+static GLubyte *
+compute_extensions( GLcontext *ctx )
 {
    const char *extraExt = get_extension_override(ctx);
    GLuint extStrLen = 0;
@@ -727,6 +726,206 @@ _mesa_make_extension_string( GLcontext *ctx )
    return (GLubyte *) s;
 }
 
+static size_t
+append_extension(GLubyte **str, const char *ext)
+{
+   GLubyte *s = *str;
+   size_t len = strlen(ext);
+
+   if (s) {
+      memcpy(s, ext, len);
+      s[len++] = ' ';
+      s[len] = '\0';
+
+      *str += len;
+   }
+   else {
+      len++;
+   }
+
+   return len;
+}
+
+
+static size_t
+make_extension_string_es1(const GLcontext *ctx, GLubyte *str)
+{
+   size_t len = 0;
+
+   /* Core additions */
+   len += append_extension(&str, "GL_OES_byte_coordinates");
+   len += append_extension(&str, "GL_OES_fixed_point");
+   len += append_extension(&str, "GL_OES_single_precision");
+   len += append_extension(&str, "GL_OES_matrix_get");
+
+   /* 1.1 required extensions */
+   len += append_extension(&str, "GL_OES_read_format");
+   len += append_extension(&str, "GL_OES_compressed_paletted_texture");
+   len += append_extension(&str, "GL_OES_point_size_array");
+   len += append_extension(&str, "GL_OES_point_sprite");
+
+   /* 1.1 deprecated extensions */
+   len += append_extension(&str, "GL_OES_query_matrix");
+
+#if FEATURE_OES_draw_texture
+   if (ctx->Extensions.OES_draw_texture)
+      len += append_extension(&str, "GL_OES_draw_texture");
+#endif
+
+   if (ctx->Extensions.EXT_blend_equation_separate)
+      len += append_extension(&str, "GL_OES_blend_equation_separate");
+   if (ctx->Extensions.EXT_blend_func_separate)
+      len += append_extension(&str, "GL_OES_blend_func_separate");
+   if (ctx->Extensions.EXT_blend_subtract)
+      len += append_extension(&str, "GL_OES_blend_subtract");
+
+   if (ctx->Extensions.EXT_stencil_wrap)
+      len += append_extension(&str, "GL_OES_stencil_wrap");
+
+   if (ctx->Extensions.ARB_texture_cube_map)
+      len += append_extension(&str, "GL_OES_texture_cube_map");
+   if (ctx->Extensions.ARB_texture_env_crossbar)
+      len += append_extension(&str, "GL_OES_texture_env_crossbar");
+   if (ctx->Extensions.ARB_texture_mirrored_repeat)
+      len += append_extension(&str, "GL_OES_texture_mirrored_repeat");
+
+   if (ctx->Extensions.ARB_framebuffer_object) {
+      len += append_extension(&str, "GL_OES_framebuffer_object");
+      len += append_extension(&str, "GL_OES_depth24");
+      len += append_extension(&str, "GL_OES_depth32");
+      len += append_extension(&str, "GL_OES_fbo_render_mipmap");
+      len += append_extension(&str, "GL_OES_rgb8_rgba8");
+      len += append_extension(&str, "GL_OES_stencil1");
+      len += append_extension(&str, "GL_OES_stencil4");
+      len += append_extension(&str, "GL_OES_stencil8");
+   }
+
+   if (ctx->Extensions.EXT_vertex_array)
+      len += append_extension(&str, "GL_OES_element_index_uint");
+   if (ctx->Extensions.ARB_vertex_buffer_object)
+      len += append_extension(&str, "GL_OES_mapbuffer");
+   if (ctx->Extensions.EXT_texture_filter_anisotropic)
+      len += append_extension(&str, "GL_EXT_texture_filter_anisotropic");
+
+   /* some applications check this for NPOT support */
+   if (ctx->Extensions.ARB_texture_non_power_of_two)
+      len += append_extension(&str, "GL_ARB_texture_non_power_of_two");
+
+   if (ctx->Extensions.EXT_texture_compression_s3tc)
+      len += append_extension(&str, "GL_EXT_texture_compression_dxt1");
+   if (ctx->Extensions.EXT_texture_lod_bias)
+      len += append_extension(&str, "GL_EXT_texture_lod_bias");
+   if (ctx->Extensions.EXT_blend_minmax)
+      len += append_extension(&str, "GL_EXT_blend_minmax");
+   if (ctx->Extensions.EXT_multi_draw_arrays)
+      len += append_extension(&str, "GL_EXT_multi_draw_arrays");
+
+#if FEATURE_OES_EGL_image
+   if (ctx->Extensions.OES_EGL_image)
+      len += append_extension(&str, "GL_OES_EGL_image");
+#endif
+
+   return len;
+}
+
+
+static GLubyte *
+compute_extensions_es1(const GLcontext *ctx)
+{
+   GLubyte *s;
+   unsigned int len;
+   
+   len = make_extension_string_es1(ctx, NULL);
+   s = malloc(len + 1);
+   if (!s)
+      return NULL;
+   make_extension_string_es1(ctx, s);
+   
+   return s;
+}
+
+static size_t
+make_extension_string_es2(const GLcontext *ctx, GLubyte *str)
+{
+   size_t len = 0;
+
+   len += append_extension(&str, "GL_OES_compressed_paletted_texture");
+
+   if (ctx->Extensions.ARB_framebuffer_object) {
+      len += append_extension(&str, "GL_OES_depth24");
+      len += append_extension(&str, "GL_OES_depth32");
+      len += append_extension(&str, "GL_OES_fbo_render_mipmap");
+      len += append_extension(&str, "GL_OES_rgb8_rgba8");
+      len += append_extension(&str, "GL_OES_stencil1");
+      len += append_extension(&str, "GL_OES_stencil4");
+   }
+
+   if (ctx->Extensions.EXT_vertex_array)
+      len += append_extension(&str, "GL_OES_element_index_uint");
+   if (ctx->Extensions.ARB_vertex_buffer_object)
+      len += append_extension(&str, "GL_OES_mapbuffer");
+
+   if (ctx->Extensions.EXT_texture3D)
+      len += append_extension(&str, "GL_OES_texture_3D");
+   if (ctx->Extensions.ARB_texture_non_power_of_two)
+      len += append_extension(&str, "GL_OES_texture_npot");
+   if (ctx->Extensions.EXT_texture_filter_anisotropic)
+      len += append_extension(&str, "GL_EXT_texture_filter_anisotropic");
+
+   len += append_extension(&str, "GL_EXT_texture_type_2_10_10_10_REV");
+   if (ctx->Extensions.ARB_depth_texture)
+      len += append_extension(&str, "GL_OES_depth_texture");
+   if (ctx->Extensions.EXT_packed_depth_stencil)
+      len += append_extension(&str, "GL_OES_packed_depth_stencil");
+   if (ctx->Extensions.ARB_fragment_shader)
+      len += append_extension(&str, "GL_OES_standard_derivatives");
+
+   if (ctx->Extensions.EXT_texture_compression_s3tc)
+      len += append_extension(&str, "GL_EXT_texture_compression_dxt1");
+   if (ctx->Extensions.EXT_blend_minmax)
+      len += append_extension(&str, "GL_EXT_blend_minmax");
+   if (ctx->Extensions.EXT_multi_draw_arrays)
+      len += append_extension(&str, "GL_EXT_multi_draw_arrays");
+
+#if FEATURE_OES_EGL_image
+   if (ctx->Extensions.OES_EGL_image)
+      len += append_extension(&str, "GL_OES_EGL_image");
+#endif
+
+   return len;
+}
+
+static GLubyte *
+compute_extensions_es2(GLcontext *ctx)
+{
+   GLubyte *s;
+   unsigned int len;
+
+   len = make_extension_string_es2(ctx, NULL);
+   s = malloc(len + 1);
+   if (!s)
+      return NULL;
+   make_extension_string_es2(ctx, s);
+   
+   return s;
+}
+
+
+GLubyte *
+_mesa_make_extension_string(GLcontext *ctx)
+{
+   switch (ctx->API) {
+   case API_OPENGL:
+      return compute_extensions(ctx);
+   case API_OPENGLES2:
+      return compute_extensions_es2(ctx);
+   case API_OPENGLES:
+      return compute_extensions_es1(ctx);
+   default:
+      assert(0);
+      return NULL;
+   }
+}
 
 /**
  * Return number of enabled extensions.

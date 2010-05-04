@@ -31,6 +31,7 @@
 #include "state_tracker/drm_api.h"
 #include "state_tracker/sw_winsys.h"
 #include "dri_sw_winsys.h"
+#include "trace/tr_public.h"
 
 /* Copied from targets/libgl-xlib */
 
@@ -80,7 +81,7 @@ swrast_create_screen(struct sw_winsys *winsys)
       screen = softpipe_create_screen( winsys );
 #endif
 
-   return screen;
+   return trace_screen_create(screen);;
 }
 
 struct pipe_screen *

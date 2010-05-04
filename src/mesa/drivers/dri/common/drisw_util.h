@@ -36,6 +36,8 @@
 #ifndef _DRISW_UTIL_H
 #define _DRISW_UTIL_H
 
+#include "main/mtypes.h"
+
 #include <GL/gl.h>
 #include <GL/internal/glcore.h>
 #include <GL/internal/dri_interface.h>
@@ -57,7 +59,8 @@ struct __DriverAPIRec {
 
     void (*DestroyScreen)(__DRIscreen *driScrnPriv);
 
-    GLboolean (*CreateContext)(const __GLcontextModes *glVis,
+    GLboolean (*CreateContext)(gl_api glapi,
+                               const __GLcontextModes *glVis,
                                __DRIcontext *driContextPriv,
                                void *sharedContextPrivate);
 

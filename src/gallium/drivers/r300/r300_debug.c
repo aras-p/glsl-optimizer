@@ -37,6 +37,7 @@ static struct debug_option debug_options[] = {
     { "cs", DBG_CS, "Command submissions (for debugging)" },
     { "draw", DBG_DRAW, "Draw and emit (for debugging)" },
     { "tex", DBG_TEX, "Textures (for debugging)" },
+    { "texalloc", DBG_TEXALLOC, "Texture allocation (for debugging)" },
     { "fall", DBG_FALL, "Fallbacks (for debugging)" },
     { "rs", DBG_RS, "Rasterizer (for debugging)" },
     { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },

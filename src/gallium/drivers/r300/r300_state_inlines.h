@@ -371,7 +371,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
     desc = util_format_description(format);
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-        fprintf(stderr, "r300: Bad format %s in %s:%d\n", util_format_name(format),
+        fprintf(stderr, "r300: Bad format %s in %s:%d\n", util_format_short_name(format),
             __FUNCTION__, __LINE__);
         assert(0);
         abort();
@@ -394,7 +394,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     break;
                 default:
                     fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                        util_format_name(format), __FUNCTION__, __LINE__);
+                        util_format_short_name(format), __FUNCTION__, __LINE__);
                     assert(0);
                     abort();
             }
@@ -416,7 +416,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     break;
                 default:
                     fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                        util_format_name(format), __FUNCTION__, __LINE__);
+                        util_format_short_name(format), __FUNCTION__, __LINE__);
                     fprintf(stderr, "r300: desc->channel[0].size == %d\n",
                         desc->channel[0].size);
                     assert(0);
@@ -425,7 +425,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
             break;
         default:
             fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                util_format_name(format), __FUNCTION__, __LINE__);
+                util_format_short_name(format), __FUNCTION__, __LINE__);
             assert(0);
             abort();
     }
@@ -449,7 +449,7 @@ r300_translate_vertex_data_swizzle(enum pipe_format format) {
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
         fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-            util_format_name(format), __FUNCTION__, __LINE__);
+            util_format_short_name(format), __FUNCTION__, __LINE__);
         return 0;
     }
 

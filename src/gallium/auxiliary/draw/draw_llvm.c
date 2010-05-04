@@ -182,6 +182,8 @@ draw_llvm_create(struct draw_context *draw)
    /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
     * but there are more on SVN. */
    /* TODO: Add more passes */
+   LLVMAddCFGSimplificationPass(llvm->pass);
+   LLVMAddPromoteMemoryToRegisterPass(llvm->pass);
    LLVMAddConstantPropagationPass(llvm->pass);
    if(util_cpu_caps.has_sse4_1) {
       /* FIXME: There is a bug in this pass, whereby the combination of fptosi
@@ -190,9 +192,7 @@ draw_llvm_create(struct draw_context *draw)
        */
       LLVMAddInstructionCombiningPass(llvm->pass);
    }
-   LLVMAddPromoteMemoryToRegisterPass(llvm->pass);
    LLVMAddGVNPass(llvm->pass);
-   LLVMAddCFGSimplificationPass(llvm->pass);
 
    init_globals(llvm);
 
@@ -207,6 +207,8 @@ draw_llvm_create(struct draw_context *draw)
 void
 draw_llvm_destroy(struct draw_llvm *llvm)
 {
+   LLVMDisposePassManager(llvm->pass);
+
    FREE(llvm);
 }
 

@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "util/u_rect.h"
+#include "util/u_surface.h"
 #include "cell_context.h"
 #include "cell_surface.h"
 

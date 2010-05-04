@@ -30,6 +30,7 @@
 
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
+#include "util/u_framebuffer.h"
 #include "util/u_surface.h"
 #include "lp_context.h"
 #include "lp_scene.h"

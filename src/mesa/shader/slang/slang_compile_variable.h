@@ -41,7 +41,7 @@ typedef struct slang_variable_
    GLuint size;                     /**< Variable's size in bytes */
    GLboolean is_global;
    GLboolean isTemp;                /**< a named temporary (__resultTmp) */
-   GLboolean declared;              /**< for debug */
+   GLboolean declared;              /**< has the var been declared? */
    struct slang_ir_storage_ *store; /**< Storage for this var */
 } slang_variable;
 

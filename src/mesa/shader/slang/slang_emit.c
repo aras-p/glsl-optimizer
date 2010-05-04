@@ -652,30 +652,30 @@ storage_annotation(const slang_ir_node *n, const struct gl_program *prog)
       if (st->Index >= 0) {
          const GLfloat *val = prog->Parameters->ParameterValues[st->Index];
          if (st->Swizzle == SWIZZLE_NOOP)
-            sprintf(s, "{%g, %g, %g, %g}", val[0], val[1], val[2], val[3]);
+            _mesa_snprintf(s, sizeof(s), "{%g, %g, %g, %g}", val[0], val[1], val[2], val[3]);
          else {
-            sprintf(s, "%g", val[GET_SWZ(st->Swizzle, 0)]);
+            _mesa_snprintf(s, sizeof(s), "%g", val[GET_SWZ(st->Swizzle, 0)]);
          }
       }
       break;
    case PROGRAM_TEMPORARY:
       if (n->Var)
-         sprintf(s, "%s", (char *) n->Var->a_name);
+         _mesa_snprintf(s, sizeof(s), "%s", (char *) n->Var->a_name);
       else
-         sprintf(s, "t[%d]", st->Index);
+         _mesa_snprintf(s, sizeof(s), "t[%d]", st->Index);
       break;
    case PROGRAM_STATE_VAR:
    case PROGRAM_UNIFORM:
-      sprintf(s, "%s", prog->Parameters->Parameters[st->Index].Name);
+      _mesa_snprintf(s, sizeof(s), "%s", prog->Parameters->Parameters[st->Index].Name);
       break;
    case PROGRAM_VARYING:
-      sprintf(s, "%s", prog->Varying->Parameters[st->Index].Name);
+      _mesa_snprintf(s, sizeof(s), "%s", prog->Varying->Parameters[st->Index].Name);
       break;
    case PROGRAM_INPUT:
-      sprintf(s, "input[%d]", st->Index);
+      _mesa_snprintf(s, sizeof(s), "input[%d]", st->Index);
       break;
    case PROGRAM_OUTPUT:
-      sprintf(s, "output[%d]", st->Index);
+      _mesa_snprintf(s, sizeof(s), "output[%d]", st->Index);
       break;
    default:
       s[0] = 0;
@@ -752,9 +752,8 @@ instruction_annotation(gl_inst_opcode opcode, char *dstAnnot,
    }
 
    s = (char *) malloc(len);
-   sprintf(s, "%s = %s %s %s %s", dstAnnot,
-           srcAnnot0, operator, srcAnnot1, srcAnnot2);
-   assert(strlen(s) < len);
+   _mesa_snprintf(s, len, "%s = %s %s %s %s", dstAnnot,
+                  srcAnnot0, operator, srcAnnot1, srcAnnot2);
 
    free(dstAnnot);
    free(srcAnnot0);
@@ -2274,11 +2273,11 @@ emit_var_decl(slang_emit_info *emitInfo, slang_ir_node *n)
    if (emitInfo->EmitComments) {
       /* emit NOP with comment describing the variable's storage location */
       char s[1000];
-      sprintf(s, "TEMP[%d]%s = variable %s (size %d)",
-              n->Store->Index,
-              _mesa_swizzle_string(n->Store->Swizzle, 0, GL_FALSE), 
-              (n->Var ? (char *) n->Var->a_name : "anonymous"),
-              n->Store->Size);
+      _mesa_snprintf(s, sizeof(s), "TEMP[%d]%s = variable %s (size %d)",
+                     n->Store->Index,
+                     _mesa_swizzle_string(n->Store->Swizzle, 0, GL_FALSE), 
+                     (n->Var ? (char *) n->Var->a_name : "anonymous"),
+                     n->Store->Size);
       emit_comment(emitInfo, s);
    }
    return NULL;

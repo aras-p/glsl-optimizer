@@ -1177,9 +1177,34 @@ lp_build_rcp(struct lp_build_context *bld,
    if(LLVMIsConstant(a))
       return LLVMConstFDiv(bld->one, a);
 
-   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4)
-      /* FIXME: improve precision */
+   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4) {
+      /*
+       * XXX: Added precision is not always necessary, so only enable this
+       * when we have a better system in place to track minimum precision.
+       */
+
+#if 0
+      /*
+       * Do one Newton-Raphson step to improve precision:
+       *
+       *   x1 = (2 - a * rcp(a)) * rcp(a)
+       */
+
+      LLVMValueRef two = lp_build_const_vec(bld->type, 2.0);
+      LLVMValueRef rcp_a;
+      LLVMValueRef res;
+
+      rcp_a = lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rcp.ps", lp_build_vec_type(type), a);
+
+      res = LLVMBuildMul(bld->builder, a, rcp_a, "");
+      res = LLVMBuildSub(bld->builder, two, res, "");
+      res = LLVMBuildMul(bld->builder, res, rcp_a, "");
+
+      return rcp_a;
+#else
       return lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rcp.ps", lp_build_vec_type(type), a);
+#endif
+   }
 
    return LLVMBuildFDiv(bld->builder, bld->one, a, "");
 }
