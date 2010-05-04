@@ -707,11 +707,7 @@ class ir_swizzle : public ir_rvalue {
 public:
    ir_swizzle(ir_rvalue *, unsigned x, unsigned y, unsigned z, unsigned w,
               unsigned count);
-   ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask)
-      : val(val), mask(mask)
-   {
-      /* empty */
-   }
+   ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask);
 
    virtual ir_swizzle *as_swizzle()
    {

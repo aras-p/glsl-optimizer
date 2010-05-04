@@ -307,6 +307,14 @@ ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
    type = glsl_type::get_instance(val->type->base_type, mask.num_components, 1);
 }
 
+ir_swizzle::ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask)
+{
+   this->val = val;
+   this->mask = mask;
+   this->type = glsl_type::get_instance(val->type->base_type,
+					mask.num_components, 1);
+}
+
 #define X 1
 #define R 5
 #define S 9
