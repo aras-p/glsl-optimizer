@@ -68,6 +68,7 @@ static const char *es2_extensions[] = {
    "GL_EXT_texture_filter_anisotropic",
    "GL_ARB_depth_texture",
    "GL_EXT_packed_depth_stencil",
+   "GL_EXT_framebuffer_object",
 
 #if FEATURE_OES_EGL_image
    "GL_OES_EGL_image",
