@@ -76,25 +76,10 @@
 # produced at the cost of "cost".  We measure "cost" in approximate
 # instruction count.  The BURG should then more or less minimize the
 # number of instructions.
-#
-# A reference of a variable has an allocated register already, so it
-# can be used as an argument for pretty much anything.
-alloced_vec4: reference_vec4 0
 
-# If something produces a vec4 with a location already, then we don't need
-# to allocate a temp reg for it.
-vec4: alloced_vec4 0
-
-# If something produces a vec4 result that needs a place to live,
-# then there's a cost with allocating a temporary for it.  We
-# approximate that as one instruction's cost, even though sometimes
-# that temp might not be a newly-allocated temp due to later
-# live-dead analysis.
-alloced_vec4: vec4 1
-{
-	/* FINISHME */
-	tree->v->get_temp(tree);
-}
+# A reference of a variable is just a vec4 register location,
+# so it can be used as an argument for pretty much anything.
+vec4: reference_vec4 0
 
 # Here's the rule everyone will hit: Moving the result of an
 # expression into a variable-dereference register location.
@@ -102,14 +87,14 @@ alloced_vec4: vec4 1
 # Note that this is likely a gratuitous move.  We could make variants
 # of each of the following rules, e.g:
 #
-# vec4: add_vec4_vec4(alloced_vec4, alloced_vec4) 1
+# vec4: add_vec4_vec4(vec4, vec4) 1
 # {
 #         emit(ADD, tree, tree->left, tree->right);
 # }
 #
 # becoming
 #
-# vec4: assign(alloced_vec4_vec4, add_vec4_vec4(alloced_vec4, alloced_vec4) 1
+# vec4: assign(vec4_vec4, add_vec4_vec4(vec4, vec4) 1
 # {
 #         emit(ADD, tree->left, tree->right->left, tree->right->right);
 # }
@@ -117,7 +102,7 @@ alloced_vec4: vec4 1
 # But it seems like a lot of extra typing and duped code, when we
 # probably want copy propagation and dead code after codegen anyway,
 # which would clean these up.
-stmt: assign(alloced_vec4, alloced_vec4) 1
+stmt: assign(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op1(tree, OPCODE_MOV,
 			    ir_to_mesa_dst_reg_from_src(tree->left->src_reg),
@@ -126,7 +111,7 @@ stmt: assign(alloced_vec4, alloced_vec4) 1
 
 # Perform a swizzle by composing our swizzle with the swizzle
 # required to get at the src reg.
-vec4: swizzle_vec4(alloced_vec4) 1
+vec4: swizzle_vec4(vec4) 1
 {
 	ir_to_mesa_src_reg reg = tree->left->src_reg;
 	int swiz[4];
@@ -145,7 +130,7 @@ vec4: swizzle_vec4(alloced_vec4) 1
 			   reg);
 }
 
-vec4: add_vec4_vec4(alloced_vec4, alloced_vec4) 1
+vec4: add_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_ADD,
 			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
@@ -153,7 +138,7 @@ vec4: add_vec4_vec4(alloced_vec4, alloced_vec4) 1
 			    tree->right->src_reg);
 }
 
-vec4: sub_vec4_vec4(alloced_vec4, alloced_vec4) 1
+vec4: sub_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_SUB,
 			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
@@ -161,7 +146,7 @@ vec4: sub_vec4_vec4(alloced_vec4, alloced_vec4) 1
 			    tree->right->src_reg);
 }
 
-vec4: mul_vec4_vec4(alloced_vec4, alloced_vec4) 1
+vec4: mul_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_MUL,
 			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
@@ -169,7 +154,7 @@ vec4: mul_vec4_vec4(alloced_vec4, alloced_vec4) 1
 			    tree->right->src_reg);
 }
 
-vec4: dp4_vec4_vec4(alloced_vec4, alloced_vec4) 1
+vec4: dp4_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_DP4,
 			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
@@ -178,7 +163,7 @@ vec4: dp4_vec4_vec4(alloced_vec4, alloced_vec4) 1
 	tree->src_reg.swizzle = SWIZZLE_XXXX;
 }
 
-vec4: dp3_vec4_vec4(alloced_vec4, alloced_vec4) 1
+vec4: dp3_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_DP3,
 			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
@@ -188,7 +173,7 @@ vec4: dp3_vec4_vec4(alloced_vec4, alloced_vec4) 1
 }
 
 
-vec4: dp2_vec4_vec4(alloced_vec4, alloced_vec4) 1
+vec4: dp2_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_DP2,
 			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
@@ -197,7 +182,7 @@ vec4: dp2_vec4_vec4(alloced_vec4, alloced_vec4) 1
 	tree->src_reg.swizzle = SWIZZLE_XXXX;
 }
 
-vec4: div_vec4_vec4(alloced_vec4, alloced_vec4) 1
+vec4: div_vec4_vec4(vec4, vec4) 1
 {
 	/* FINISHME: Mesa RCP only uses the X channel, this node is for vec4. */
 	ir_to_mesa_emit_op1(tree, OPCODE_RCP,
@@ -210,7 +195,7 @@ vec4: div_vec4_vec4(alloced_vec4, alloced_vec4) 1
 			    tree->left->src_reg);
 }
 
-vec4: sqrt_vec4(alloced_vec4) 1
+vec4: sqrt_vec4(vec4) 1
 {
 	/* FINISHME: Mesa RSQ only uses the X channel, this node is for vec4. */
 	ir_to_mesa_emit_op1(tree, OPCODE_RSQ,

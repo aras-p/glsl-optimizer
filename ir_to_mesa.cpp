@@ -293,6 +293,9 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       ir->accept(&v);
       exit(1);
    }
+
+   /* Allocate a temporary for the result. */
+   this->get_temp(this->result);
 }
 
 
@@ -309,6 +312,7 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    assert(this->result);
 
    tree = this->create_tree(MB_TERM_swizzle_vec4, ir, this->result, NULL);
+   this->get_temp(tree);
 
    for (i = 0; i < 4; i++) {
       if (i < ir->type->vector_elements) {
