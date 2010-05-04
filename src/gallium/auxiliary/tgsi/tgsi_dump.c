@@ -56,7 +56,7 @@ dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
    va_list ap;
    (void)ctx;
    va_start(ap, format);
-   debug_vprintf(format, ap);
+   _debug_vprintf(format, ap);
    va_end(ap);
 }
 
