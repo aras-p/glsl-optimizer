@@ -107,32 +107,55 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
    assert(LP_MAX_TEXTURE_3D_LEVELS <= LP_MAX_TEXTURE_LEVELS);
 
    for (level = 0; level <= pt->last_level; level++) {
-      const unsigned width_t = align(width, TILE_SIZE) / TILE_SIZE;
-      const unsigned height_t = align(height, TILE_SIZE) / TILE_SIZE;
-      unsigned nblocksx, num_slices;
 
-      if (lpr->base.target == PIPE_TEXTURE_CUBE)
-         num_slices = 6;
-      else if (lpr->base.target == PIPE_TEXTURE_3D)
-         num_slices = depth;
-      else
-         num_slices = 1;
+      /* Row stride and image stride (for linear layout) */
+      {
+         unsigned alignment, nblocksx, nblocksy, block_size;
 
-      /* Allocate storage for whole quads. This is particularly important
-       * for depth surfaces, which are currently stored in a swizzled format.
-       */
-      nblocksx = util_format_get_nblocksx(pt->format, align(width, TILE_SIZE));
+         /* For non-compressed formats we need to align the texture size
+          * to the tile size to facilitate render-to-texture.
+          */
+         if (util_format_is_compressed(pt->format))
+            alignment = 1;
+         else
+            alignment = TILE_SIZE;
 
-      lpr->row_stride[level] =
-         align(nblocksx * util_format_get_blocksize(pt->format), 16);
+         nblocksx = util_format_get_nblocksx(pt->format,
+                                             align(width, alignment));
+         nblocksy = util_format_get_nblocksy(pt->format,
+                                             align(height, alignment));
+         block_size = util_format_get_blocksize(pt->format);
 
-      lpr->img_stride[level] = lpr->row_stride[level] * align(height, TILE_SIZE);
+         lpr->row_stride[level] = align(nblocksx * block_size, 16);
 
-      lpr->tiles_per_row[level] = width_t;
-      lpr->tiles_per_image[level] = width_t * height_t;
-      lpr->num_slices_faces[level] = num_slices;
-      lpr->layout[level] = alloc_layout_array(num_slices, width, height);
+         lpr->img_stride[level] = lpr->row_stride[level] * nblocksy * block_size;
+      }
 
+      /* Size of the image in tiles (for tiled layout) */
+      {
+         const unsigned width_t = align(width, TILE_SIZE) / TILE_SIZE;
+         const unsigned height_t = align(height, TILE_SIZE) / TILE_SIZE;
+         lpr->tiles_per_row[level] = width_t;
+         lpr->tiles_per_image[level] = width_t * height_t;
+      }
+
+      /* Number of 3D image slices or cube faces */
+      {
+         unsigned num_slices;
+
+         if (lpr->base.target == PIPE_TEXTURE_CUBE)
+            num_slices = 6;
+         else if (lpr->base.target == PIPE_TEXTURE_3D)
+            num_slices = depth;
+         else
+            num_slices = 1;
+
+         lpr->num_slices_faces[level] = num_slices;
+
+         lpr->layout[level] = alloc_layout_array(num_slices, width, height);
+      }
+
+      /* Compute size of next mipmap level */
       width = u_minify(width, 1);
       height = u_minify(height, 1);
       depth = u_minify(depth, 1);
@@ -698,11 +721,8 @@ tex_image_face_size(const struct llvmpipe_resource *lpr, unsigned level,
       return buffer_size;
    }
    else {
-      const enum pipe_format format = lpr->base.format;
-      const unsigned nblocksy =
-         util_format_get_nblocksy(format, align(height, TILE_SIZE));
-      const unsigned buffer_size = nblocksy * lpr->row_stride[level];
-      return buffer_size;
+      /* we already computed this */
+      return lpr->img_stride[level];
    }
 }
 
