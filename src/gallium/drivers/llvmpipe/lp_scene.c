@@ -210,25 +210,31 @@ lp_scene_reset(struct lp_scene *scene )
 
 
 
-void
+struct cmd_block *
 lp_bin_new_cmd_block( struct cmd_block_list *list )
 {
    struct cmd_block *block = MALLOC_STRUCT(cmd_block);
-   list->tail->next = block;
-   list->tail = block;
-   block->next = NULL;
-   block->count = 0;
+   if (block) {
+      list->tail->next = block;
+      list->tail = block;
+      block->next = NULL;
+      block->count = 0;
+   }
+   return block;
 }
 
 
-void
+struct data_block *
 lp_bin_new_data_block( struct data_block_list *list )
 {
    struct data_block *block = MALLOC_STRUCT(data_block);
-   list->tail->next = block;
-   list->tail = block;
-   block->next = NULL;
-   block->used = 0;
+   if (block) {
+      list->tail->next = block;
+      list->tail = block;
+      block->next = NULL;
+      block->used = 0;
+   }
+   return block;
 }
 
 

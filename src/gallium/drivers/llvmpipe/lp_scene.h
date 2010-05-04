@@ -158,9 +158,9 @@ boolean lp_scene_is_empty(struct lp_scene *scene );
 void lp_scene_reset(struct lp_scene *scene );
 
 
-void lp_bin_new_data_block( struct data_block_list *list );
+struct data_block *lp_bin_new_data_block( struct data_block_list *list );
 
-void lp_bin_new_cmd_block( struct cmd_block_list *list );
+struct cmd_block *lp_bin_new_cmd_block( struct cmd_block_list *list );
 
 unsigned lp_scene_data_size( const struct lp_scene *scene );
 
@@ -181,15 +181,19 @@ static INLINE void *
 lp_scene_alloc( struct lp_scene *scene, unsigned size)
 {
    struct data_block_list *list = &scene->data;
+   struct data_block *tail = list->tail;
 
-   if (list->tail->used + size > DATA_BLOCK_SIZE) {
-      lp_bin_new_data_block( list );
+   if (tail->used + size > DATA_BLOCK_SIZE) {
+      tail = lp_bin_new_data_block( list );
+      if (!tail) {
+         /* out of memory */
+         return NULL;
+      }
    }
 
    scene->scene_size += size;
 
    {
-      struct data_block *tail = list->tail;
       ubyte *data = tail->data + tail->used;
       tail->used += size;
       return data;
@@ -205,15 +209,17 @@ lp_scene_alloc_aligned( struct lp_scene *scene, unsigned size,
 			unsigned alignment )
 {
    struct data_block_list *list = &scene->data;
+   struct data_block *tail = list->tail;
 
-   if (list->tail->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
-      lp_bin_new_data_block( list );
+   if (tail->used + size + alignment - 1 > DATA_BLOCK_SIZE) {
+      tail = lp_bin_new_data_block( list );
+      if (!tail)
+         return NULL;
    }
 
    scene->scene_size += size;
 
    {
-      struct data_block *tail = list->tail;
       ubyte *data = tail->data + tail->used;
       unsigned offset = (((uintptr_t)data + alignment - 1) & ~(alignment - 1)) - (uintptr_t)data;
       tail->used += offset + size;
@@ -257,16 +263,20 @@ lp_scene_bin_command( struct lp_scene *scene,
 {
    struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
    struct cmd_block_list *list = &bin->commands;
+   struct cmd_block *tail = list->tail;
 
    assert(x < scene->tiles_x);
    assert(y < scene->tiles_y);
 
-   if (list->tail->count == CMD_BLOCK_MAX) {
-      lp_bin_new_cmd_block( list );
+   if (tail->count == CMD_BLOCK_MAX) {
+      tail = lp_bin_new_cmd_block( list );
+      if (!tail) {
+         /* out of memory - simply ignore this command (for now) */
+         return;
+      }
    }
 
    {
-      struct cmd_block *tail = list->tail;
       unsigned i = tail->count;
       tail->cmd[i] = cmd;
       tail->arg[i] = arg;
