@@ -175,9 +175,17 @@ static void emit_poly( struct draw_stage *stage,
    header.pad = 0;
 
    for (i = 2; i < n; i++, header.flags = edge_middle) {
-      header.v[0] = inlist[i-1];
-      header.v[1] = inlist[i];
-      header.v[2] = inlist[0];	/* keep in v[2] for flatshading */
+      /* keep in provoking vertex for flatshading */
+      if (stage->draw->rasterizer->flatshade_first) {
+         header.v[0] = inlist[0];
+         header.v[1] = inlist[i-1];
+         header.v[2] = inlist[i];
+      }
+      else {
+         header.v[0] = inlist[i-1];
+         header.v[1] = inlist[i];
+         header.v[2] = inlist[0];
+      }
 
       if (i == n-1)
          header.flags |= edge_last;
@@ -293,11 +301,20 @@ do_clip_tri( struct draw_stage *stage,
 
    /* If flat-shading, copy color to new provoking vertex.
     */
-   if (clipper->flat && inlist[0] != header->v[2]) {
-      inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
+   if (stage->draw->rasterizer->flatshade_first) {
+      if (clipper->flat && inlist[0] != header->v[0]) {
+         inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
 
-      copy_colors(stage, inlist[0], header->v[2]);
+         copy_colors(stage, inlist[0], header->v[0]);
+      }
+   } else {
+      if (clipper->flat && inlist[0] != header->v[2]) {
+         inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
+
+         copy_colors(stage, inlist[0], header->v[2]);
+      }
    }
+
 
    /* Emit the polygon as triangles to the setup stage:
     */

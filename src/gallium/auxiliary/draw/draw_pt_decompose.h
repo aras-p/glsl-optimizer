@@ -47,19 +47,10 @@ static void FUNC( ARGS,
 
    case PIPE_PRIM_TRIANGLES:
       for (i = 0; i+2 < count; i += 3) {
-         if (flatfirst) {
-            /* put provoking vertex in last pos for clipper */
-            TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
-                      (i + 1),
-                      (i + 2),
-                      (i + 0 ));
-         }
-         else {
-            TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
-                      (i + 0),
-                      (i + 1),
-                      (i + 2 ));
-         }
+         TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
+                   (i + 0),
+                   (i + 1),
+                   (i + 2 ));
       }
       break;
 
@@ -67,9 +58,9 @@ static void FUNC( ARGS,
       if (flatfirst) {
          for (i = 0; i+2 < count; i++) {
             TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
+                      (i + 0),
                       (i + 1 + (i&1)),
-                      (i + 2 - (i&1)),
-                      (i + 0) );
+                      (i + 2 - (i&1)) );
          }
       }
       else {
@@ -87,9 +78,9 @@ static void FUNC( ARGS,
          if (flatfirst) {
             for (i = 0; i+2 < count; i++) {
                TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
+                         (i + 1),
                          (i + 2),
-                         0,
-                         (i + 1) );
+                         0 );
             }
          }
          else {
