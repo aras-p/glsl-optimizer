@@ -154,7 +154,7 @@ dst_register( struct st_translate *t,
       return t->temps[index];
 
    case PROGRAM_OUTPUT:
-      if (index == t->psizoutindex)
+      if (index == VERT_RESULT_PSIZ)
          t->prevInstWrotePsiz = GL_TRUE;
       return t->outputs[t->outputMapping[index]];
 
