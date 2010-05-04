@@ -901,18 +901,6 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
    }
 #endif
    ctx->CurrentDispatch = ctx->Exec;
-
-#if FEATURE_dlist
-   ctx->Save = _mesa_create_save_table();
-   if (!ctx->Save) {
-      _mesa_release_shared_state(ctx, ctx->Shared);
-      free(ctx->Exec);
-      return GL_FALSE;
-   }
-
-   _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
-#endif
-
    /* Neutral tnl module stuff */
    _mesa_init_exec_vtxfmt( ctx ); 
    ctx->TnlModule.Current = NULL;
@@ -930,6 +918,16 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
 
    switch (ctx->API) {
    case API_OPENGL:
+#if FEATURE_dlist
+      ctx->Save = _mesa_create_save_table();
+      if (!ctx->Save) {
+	 _mesa_release_shared_state(ctx, ctx->Shared);
+	 free(ctx->Exec);
+	 return GL_FALSE;
+      }
+
+      _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
+#endif
       break;
    case API_OPENGLES:
       /**
