@@ -170,6 +170,8 @@ lp_llvm_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *base,
                                      unsigned unit,
                                      unsigned num_coords,
                                      const LLVMValueRef *coords,
+                                     const LLVMValueRef *ddx,
+                                     const LLVMValueRef *ddy,
                                      LLVMValueRef lodbias,
                                      LLVMValueRef *texel)
 {
@@ -182,9 +184,8 @@ lp_llvm_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *base,
                        &sampler->dynamic_state.base,
                        type,
                        unit,
-                       num_coords,
-                       coords,
-                       lodbias,
+                       num_coords, coords,
+                       ddx, ddy, lodbias,
                        texel);
 }
 

@@ -45,6 +45,9 @@ struct lp_build_context;
 struct lp_build_mask_context;
 
 
+#define LP_BLD_SAMPLER_EXPLICIT_DERIVATIVES 1
+
+
 /**
  * Sampler code generation interface.
  *
@@ -65,6 +68,8 @@ struct lp_build_sampler_soa
                         unsigned unit,
                         unsigned num_coords,
                         const LLVMValueRef *coords,
+                        const LLVMValueRef *ddx,
+                        const LLVMValueRef *ddy,
                         LLVMValueRef lodbias,
                         LLVMValueRef *texel);
 };

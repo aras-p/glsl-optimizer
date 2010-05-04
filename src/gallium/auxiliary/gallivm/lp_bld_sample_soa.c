@@ -913,6 +913,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                       LLVMValueRef s,
                       LLVMValueRef t,
                       LLVMValueRef r,
+                      const LLVMValueRef *ddx,
+                      const LLVMValueRef *ddy,
                       LLVMValueRef shader_lod_bias,
                       LLVMValueRef width,
                       LLVMValueRef height,
@@ -936,12 +938,6 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
                                            bld->static_state->max_lod);
 
       LLVMValueRef index0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
-      LLVMValueRef index1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
-      LLVMValueRef index2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
-
-      LLVMValueRef s0, s1, s2;
-      LLVMValueRef t0, t1, t2;
-      LLVMValueRef r0, r1, r2;
       LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
       LLVMValueRef rho, lod;
 
@@ -952,30 +948,20 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
        * dtdy = abs(t[2] - t[0]);
        * drdx = abs(r[1] - r[0]);
        * drdy = abs(r[2] - r[0]);
-       * XXX we're assuming a four-element quad in 2x2 layout here.
        */
-      s0 = LLVMBuildExtractElement(bld->builder, s, index0, "s0");
-      s1 = LLVMBuildExtractElement(bld->builder, s, index1, "s1");
-      s2 = LLVMBuildExtractElement(bld->builder, s, index2, "s2");
-      dsdx = LLVMBuildSub(bld->builder, s1, s0, "");
+      dsdx = LLVMBuildExtractElement(bld->builder, ddx[0], index0, "dsdx");
       dsdx = lp_build_abs(float_bld, dsdx);
-      dsdy = LLVMBuildSub(bld->builder, s2, s0, "");
+      dsdy = LLVMBuildExtractElement(bld->builder, ddy[0], index0, "dsdy");
       dsdy = lp_build_abs(float_bld, dsdy);
       if (dims > 1) {
-         t0 = LLVMBuildExtractElement(bld->builder, t, index0, "t0");
-         t1 = LLVMBuildExtractElement(bld->builder, t, index1, "t1");
-         t2 = LLVMBuildExtractElement(bld->builder, t, index2, "t2");
-         dtdx = LLVMBuildSub(bld->builder, t1, t0, "");
+         dtdx = LLVMBuildExtractElement(bld->builder, ddx[1], index0, "dsdx");
          dtdx = lp_build_abs(float_bld, dtdx);
-         dtdy = LLVMBuildSub(bld->builder, t2, t0, "");
+         dtdy = LLVMBuildExtractElement(bld->builder, ddy[1], index0, "dtdy");
          dtdy = lp_build_abs(float_bld, dtdy);
          if (dims > 2) {
-            r0 = LLVMBuildExtractElement(bld->builder, r, index0, "r0");
-            r1 = LLVMBuildExtractElement(bld->builder, r, index1, "r1");
-            r2 = LLVMBuildExtractElement(bld->builder, r, index2, "r2");
-            drdx = LLVMBuildSub(bld->builder, r1, r0, "");
+            drdx = LLVMBuildExtractElement(bld->builder, ddx[2], index0, "dsdx");
             drdx = lp_build_abs(float_bld, drdx);
-            drdy = LLVMBuildSub(bld->builder, r2, r0, "");
+            drdy = LLVMBuildExtractElement(bld->builder, ddy[2], index0, "drdy");
             drdy = lp_build_abs(float_bld, drdy);
          }
       }
@@ -1596,6 +1582,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef s,
                         LLVMValueRef t,
                         LLVMValueRef r,
+                        const LLVMValueRef *ddx,
+                        const LLVMValueRef *ddy,
                         LLVMValueRef lodbias,
                         LLVMValueRef width,
                         LLVMValueRef height,
@@ -1634,7 +1622,8 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
-      lod = lp_build_lod_selector(bld, s, t, r, lodbias, width, height, depth);
+      lod = lp_build_lod_selector(bld, s, t, r, ddx, ddy, lodbias,
+                                  width, height, depth);
    }
 
    /*
@@ -2092,6 +2081,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     unsigned unit,
                     unsigned num_coords,
                     const LLVMValueRef *coords,
+                    const LLVMValueRef *ddx,
+                    const LLVMValueRef *ddy,
                     LLVMValueRef lodbias,
                     LLVMValueRef *texel)
 {
@@ -2159,7 +2150,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                                     row_stride_array, data_array, texel);
    }
    else {
-      lp_build_sample_general(&bld, unit, s, t, r, lodbias,
+      lp_build_sample_general(&bld, unit, s, t, r, ddx, ddy, lodbias,
                               width, height, depth,
                               width_vec, height_vec, depth_vec,
                               row_stride_array, img_stride_array,

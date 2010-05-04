@@ -592,18 +592,26 @@ emit_store(
  * High-level instruction translators.
  */
 
+enum tex_modifier {
+   TEX_MODIFIER_NONE = 0,
+   TEX_MODIFIER_PROJECTED,
+   TEX_MODIFIER_LOD_BIAS,
+   TEX_MODIFIER_EXPLICIT_LOD,
+   TEX_MODIFIER_EXPLICIT_DERIV
+};
 
 static void
 emit_tex( struct lp_build_tgsi_soa_context *bld,
           const struct tgsi_full_instruction *inst,
-          boolean apply_lodbias,
-          boolean projected,
+          enum tex_modifier modifier,
           LLVMValueRef *texel)
 {
-   const uint unit = inst->Src[1].Register.Index;
+   unsigned unit;
    LLVMValueRef lodbias;
    LLVMValueRef oow = NULL;
    LLVMValueRef coords[3];
+   LLVMValueRef ddx[3];
+   LLVMValueRef ddy[3];
    unsigned num_coords;
    unsigned i;
 
@@ -635,29 +643,45 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
-   if(apply_lodbias)
+   /* FIXME: Treat TEX_MODIFIER_EXPLICIT_LOD correctly */
+   if (modifier == TEX_MODIFIER_LOD_BIAS || TEX_MODIFIER_EXPLICIT_LOD)
       lodbias = emit_fetch( bld, inst, 0, 3 );
    else
       lodbias = bld->base.zero;
 
-   if (projected) {
+   if (modifier == TEX_MODIFIER_PROJECTED) {
       oow = emit_fetch( bld, inst, 0, 3 );
       oow = lp_build_rcp(&bld->base, oow);
    }
 
    for (i = 0; i < num_coords; i++) {
       coords[i] = emit_fetch( bld, inst, 0, i );
-      if (projected)
+      if (modifier == TEX_MODIFIER_PROJECTED)
          coords[i] = lp_build_mul(&bld->base, coords[i], oow);
    }
    for (i = num_coords; i < 3; i++) {
       coords[i] = bld->base.undef;
    }
 
+   if (modifier == TEX_MODIFIER_EXPLICIT_DERIV) {
+      for (i = 0; i < num_coords; i++) {
+         ddx[i] = emit_fetch( bld, inst, 1, i );
+         ddy[i] = emit_fetch( bld, inst, 2, i );
+      }
+      unit = inst->Src[3].Register.Index;
+   }  else {
+      for (i = 0; i < num_coords; i++) {
+         ddx[i] = emit_ddx( bld, coords[i] );
+         ddy[i] = emit_ddy( bld, coords[i] );
+      }
+      unit = inst->Src[1].Register.Index;
+   }
+
    bld->sampler->emit_fetch_texel(bld->sampler,
                                   bld->base.builder,
                                   bld->base.type,
-                                  unit, num_coords, coords, lodbias,
+                                  unit, num_coords, coords,
+                                  ddx, ddy, lodbias,
                                   texel);
 }
 
@@ -1361,12 +1385,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      emit_tex( bld, inst, FALSE, FALSE, dst0 );
+      emit_tex( bld, inst, TEX_MODIFIER_NONE, dst0 );
       break;
 
    case TGSI_OPCODE_TXD:
-      /* FIXME */
-      return FALSE;
+      emit_tex( bld, inst, TEX_MODIFIER_EXPLICIT_DERIV, dst0 );
       break;
 
    case TGSI_OPCODE_UP2H:
@@ -1468,7 +1491,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXB:
-      emit_tex( bld, inst, TRUE, FALSE, dst0 );
+      emit_tex( bld, inst, TEX_MODIFIER_LOD_BIAS, dst0 );
       break;
 
    case TGSI_OPCODE_NRM:
@@ -1573,11 +1596,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXL:
-      emit_tex( bld, inst, TRUE, FALSE, dst0 );
+      emit_tex( bld, inst, TEX_MODIFIER_EXPLICIT_LOD, dst0 );
       break;
 
    case TGSI_OPCODE_TXP:
-      emit_tex( bld, inst, FALSE, TRUE, dst0 );
+      emit_tex( bld, inst, TEX_MODIFIER_PROJECTED, dst0 );
       break;
 
    case TGSI_OPCODE_BRK:
