@@ -607,7 +607,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
           LLVMValueRef *texel)
 {
    unsigned unit;
-   LLVMValueRef lodbias;
+   LLVMValueRef lod_bias, explicit_lod;
    LLVMValueRef oow = NULL;
    LLVMValueRef coords[3];
    LLVMValueRef ddx[3];
@@ -643,11 +643,18 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       return;
    }
 
-   /* FIXME: Treat TEX_MODIFIER_EXPLICIT_LOD correctly */
-   if (modifier == TEX_MODIFIER_LOD_BIAS || modifier == TEX_MODIFIER_EXPLICIT_LOD)
-      lodbias = emit_fetch( bld, inst, 0, 3 );
-   else
-      lodbias = bld->base.zero;
+   if (modifier == TEX_MODIFIER_LOD_BIAS) {
+      lod_bias = emit_fetch( bld, inst, 0, 3 );
+      explicit_lod = NULL;
+   }
+   else if (modifier == TEX_MODIFIER_EXPLICIT_LOD) {
+      lod_bias = NULL;
+      explicit_lod = emit_fetch( bld, inst, 0, 3 );
+   }
+   else {
+      lod_bias = NULL;
+      explicit_lod = NULL;
+   }
 
    if (modifier == TEX_MODIFIER_PROJECTED) {
       oow = emit_fetch( bld, inst, 0, 3 );
@@ -685,7 +692,8 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
                                   bld->base.builder,
                                   bld->base.type,
                                   unit, num_coords, coords,
-                                  ddx, ddy, lodbias,
+                                  ddx, ddy,
+                                  lod_bias, explicit_lod,
                                   texel);
 }
 

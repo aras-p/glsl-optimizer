@@ -67,7 +67,8 @@ struct lp_build_sampler_soa
                         const LLVMValueRef *coords,
                         const LLVMValueRef *ddx,
                         const LLVMValueRef *ddy,
-                        LLVMValueRef lodbias,
+                        LLVMValueRef lod_bias, /* optional */
+                        LLVMValueRef explicit_lod, /* optional */
                         LLVMValueRef *texel);
 };
 
