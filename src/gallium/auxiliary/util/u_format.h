@@ -367,6 +367,26 @@ util_format_is_plain(enum pipe_format format)
 }
 
 static INLINE boolean 
+util_format_is_compressed(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+
+   assert(desc);
+   if (!desc) {
+      return FALSE;
+   }
+
+   switch (desc->layout) {
+   case UTIL_FORMAT_LAYOUT_S3TC:
+   case UTIL_FORMAT_LAYOUT_RGTC:
+      /* XXX add other formats in the future */
+      return TRUE;
+   default:
+      return FALSE;
+   }
+}
+
+static INLINE boolean 
 util_format_is_s3tc(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
