@@ -280,7 +280,7 @@ print_center_pixel(struct pipe_context *pipe, struct pipe_resource *src)
 void
 st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *dst, GLuint dstLevel,
-                      struct pipe_resource *src,
+                      struct pipe_resource *src, GLuint srcLevel,
                       GLuint face)
 {
    struct pipe_screen *screen = pipe->screen;
@@ -289,12 +289,11 @@ st_texture_image_copy(struct pipe_context *pipe,
    GLuint depth = u_minify(dst->depth0, dstLevel); 
    struct pipe_surface *src_surface;
    struct pipe_surface *dst_surface;
-   const GLuint srcLevel = 0;
    GLuint i;
 
-   assert(src->width0 == width);
-   assert(src->height0 == height);
-   assert(src->depth0 == depth);
+   assert(u_minify(src->width0, srcLevel) == width);
+   assert(u_minify(src->height0, srcLevel) == height);
+   assert(u_minify(src->depth0, srcLevel) == depth);
 
    /* Loop over 3D image slices */
    for (i = 0; i < depth; i++) {

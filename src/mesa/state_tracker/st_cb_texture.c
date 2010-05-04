@@ -1778,7 +1778,7 @@ copy_image_data_to_texture(struct st_context *st,
        */
       st_texture_image_copy(st->pipe,
                             stObj->pt, dstLevel,  /* dest texture, level */
-                            stImage->pt, /* src texture */
+                            stImage->pt, stImage->level, /* src texture, level */
                             stImage->face);
 
       pipe_resource_reference(&stImage->pt, NULL);

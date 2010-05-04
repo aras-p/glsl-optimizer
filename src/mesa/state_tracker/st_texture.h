@@ -205,7 +205,7 @@ st_texture_image_data(struct st_context *st,
 extern void
 st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *dst, GLuint dstLevel,
-                      struct pipe_resource *src,
+                      struct pipe_resource *src, GLuint srcLevel,
                       GLuint face);
 
 extern void
