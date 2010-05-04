@@ -954,12 +954,12 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       dsdy = LLVMBuildExtractElement(bld->builder, ddy[0], index0, "dsdy");
       dsdy = lp_build_abs(float_bld, dsdy);
       if (dims > 1) {
-         dtdx = LLVMBuildExtractElement(bld->builder, ddx[1], index0, "dsdx");
+         dtdx = LLVMBuildExtractElement(bld->builder, ddx[1], index0, "dtdx");
          dtdx = lp_build_abs(float_bld, dtdx);
          dtdy = LLVMBuildExtractElement(bld->builder, ddy[1], index0, "dtdy");
          dtdy = lp_build_abs(float_bld, dtdy);
          if (dims > 2) {
-            drdx = LLVMBuildExtractElement(bld->builder, ddx[2], index0, "dsdx");
+            drdx = LLVMBuildExtractElement(bld->builder, ddx[2], index0, "drdx");
             drdx = lp_build_abs(float_bld, drdx);
             drdy = LLVMBuildExtractElement(bld->builder, ddy[2], index0, "drdy");
             drdy = lp_build_abs(float_bld, drdy);

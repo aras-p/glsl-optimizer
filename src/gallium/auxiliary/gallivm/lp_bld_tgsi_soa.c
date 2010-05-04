@@ -644,7 +644,7 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
    }
 
    /* FIXME: Treat TEX_MODIFIER_EXPLICIT_LOD correctly */
-   if (modifier == TEX_MODIFIER_LOD_BIAS || TEX_MODIFIER_EXPLICIT_LOD)
+   if (modifier == TEX_MODIFIER_LOD_BIAS || modifier == TEX_MODIFIER_EXPLICIT_LOD)
       lodbias = emit_fetch( bld, inst, 0, 3 );
    else
       lodbias = bld->base.zero;
@@ -675,6 +675,10 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
          ddy[i] = emit_ddy( bld, coords[i] );
       }
       unit = inst->Src[1].Register.Index;
+   }
+   for (i = num_coords; i < 3; i++) {
+      ddx[i] = bld->base.undef;
+      ddy[i] = bld->base.undef;
    }
 
    bld->sampler->emit_fetch_texel(bld->sampler,

@@ -45,9 +45,6 @@ struct lp_build_context;
 struct lp_build_mask_context;
 
 
-#define LP_BLD_SAMPLER_EXPLICIT_DERIVATIVES 1
-
-
 /**
  * Sampler code generation interface.
  *
