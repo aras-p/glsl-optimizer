@@ -901,10 +901,6 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
    }
 #endif
    ctx->CurrentDispatch = ctx->Exec;
-   /* Neutral tnl module stuff */
-   _mesa_init_exec_vtxfmt( ctx ); 
-   ctx->TnlModule.Current = NULL;
-   ctx->TnlModule.SwapCount = 0;
 
    ctx->FragmentProgram._MaintainTexEnvProgram
       = (_mesa_getenv("MESA_TEX_PROG") != NULL);
@@ -918,6 +914,11 @@ _mesa_initialize_context_for_api(GLcontext *ctx,
 
    switch (ctx->API) {
    case API_OPENGL:
+      /* Neutral tnl module stuff */
+      _mesa_init_exec_vtxfmt( ctx ); 
+      ctx->TnlModule.Current = NULL;
+      ctx->TnlModule.SwapCount = 0;
+
 #if FEATURE_dlist
       ctx->Save = _mesa_create_save_table();
       if (!ctx->Save) {
