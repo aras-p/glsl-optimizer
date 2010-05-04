@@ -644,16 +644,19 @@ lp_setup_update_state( struct lp_setup_context *setup )
 
       stored = lp_scene_alloc_aligned(scene, 4 * 16, 16);
 
-      /* smear each blend color component across 16 ubyte elements */
-      for (i = 0; i < 4; ++i) {
-         uint8_t c = float_to_ubyte(setup->blend_color.current.color[i]);
-         for (j = 0; j < 16; ++j)
-            stored[i*16 + j] = c;
+      if (stored) {
+         /* smear each blend color component across 16 ubyte elements */
+         for (i = 0; i < 4; ++i) {
+            uint8_t c = float_to_ubyte(setup->blend_color.current.color[i]);
+            for (j = 0; j < 16; ++j)
+               stored[i*16 + j] = c;
+         }
+
+         setup->blend_color.stored = stored;
+
+         setup->fs.current.jit_context.blend_color = setup->blend_color.stored;
       }
 
-      setup->blend_color.stored = stored;
-
-      setup->fs.current.jit_context.blend_color = setup->blend_color.stored;
       setup->dirty |= LP_SETUP_NEW_FS;
    }
 
@@ -662,17 +665,19 @@ lp_setup_update_state( struct lp_setup_context *setup )
 
       stored = lp_scene_alloc_aligned(scene, 4 * sizeof(int32_t), 16);
 
-      stored[0] = (float) setup->scissor.current.minx;
-      stored[1] = (float) setup->scissor.current.miny;
-      stored[2] = (float) setup->scissor.current.maxx;
-      stored[3] = (float) setup->scissor.current.maxy;
+      if (stored) {
+         stored[0] = (float) setup->scissor.current.minx;
+         stored[1] = (float) setup->scissor.current.miny;
+         stored[2] = (float) setup->scissor.current.maxx;
+         stored[3] = (float) setup->scissor.current.maxy;
 
-      setup->scissor.stored = stored;
+         setup->scissor.stored = stored;
 
-      setup->fs.current.jit_context.scissor_xmin = stored[0];
-      setup->fs.current.jit_context.scissor_ymin = stored[1];
-      setup->fs.current.jit_context.scissor_xmax = stored[2];
-      setup->fs.current.jit_context.scissor_ymax = stored[3];
+         setup->fs.current.jit_context.scissor_xmin = stored[0];
+         setup->fs.current.jit_context.scissor_ymin = stored[1];
+         setup->fs.current.jit_context.scissor_xmax = stored[2];
+         setup->fs.current.jit_context.scissor_ymax = stored[3];
+      }
 
       setup->dirty |= LP_SETUP_NEW_FS;
    }
