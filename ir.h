@@ -449,6 +449,14 @@ enum ir_expression_operation {
    ir_unop_floor,
    /*@}*/
 
+   /**
+    * \name Trigonometric operations.
+    */
+   /*@{*/
+   ir_unop_sin,
+   ir_unop_cos,
+   /*@}*/
+
    ir_binop_add,
    ir_binop_sub,
    ir_binop_mul,
