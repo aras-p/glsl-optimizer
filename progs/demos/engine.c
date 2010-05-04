@@ -832,6 +832,7 @@ DrawBox(void)
 
    glDisable(GL_LIGHTING);
    glDisable(GL_TEXTURE_2D);
+   glLineWidth(1.0);
 
    glColor3f(1, 1, 1);
 
