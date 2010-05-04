@@ -92,12 +92,7 @@ public:
 
 class ir_to_mesa_visitor : public ir_visitor {
 public:
-   ir_to_mesa_visitor()
-   {
-      result = NULL;
-      next_temp = 0;
-      next_constant = 0;
-   }
+   ir_to_mesa_visitor();
 
    int next_temp;
    int next_constant;

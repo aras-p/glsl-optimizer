@@ -496,6 +496,13 @@ ir_to_mesa_visitor::visit(ir_if *ir)
    exit(1);
 }
 
+ir_to_mesa_visitor::ir_to_mesa_visitor()
+{
+   result = NULL;
+   next_temp = 1;
+   next_constant = 0;
+}
+
 static struct prog_src_register
 mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
 {
