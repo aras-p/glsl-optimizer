@@ -44,6 +44,8 @@
 #define MBTREE_TYPE struct mbtree
 
 %%
+# The list of terminals is the set of things that ir_to_mesa.cpp will
+# generate in its trees.
 %term assign
 %term reference_vec4
 %term add_vec4_vec4
@@ -56,17 +58,65 @@
 %term sqrt_vec4
 %term swizzle_vec4
 
+# Each tree will produce stmt.  Currently, the only production for
+# stmt is from an assign rule -- every statement tree from
+# ir_to_mesa.cpp assigns a result to a register.
+
 %start stmt
 
+# Now comes all the rules for code generation.  Each rule is of the
+# general form
+#
+# produced: term(term, term) cost
+# {
+#	code_run_when_we_choose_this_rule();
+# }
+#
+# where choosing this rule means we turn term(term, term) into
+# produced at the cost of "cost".  We measure "cost" in approximate
+# instruction count.  The BURG should then more or less minimize the
+# number of instructions.
+#
+# A reference of a variable has an allocated register already, so it
+# can be used as an argument for pretty much anything.
 alloced_vec4: reference_vec4 0
 
+# If something produces a vec4 with a location already, then we don't need
+# to allocate a temp reg for it.
 vec4: alloced_vec4 0
+
+# If something produces a vec4 result that needs a place to live,
+# then there's a cost with allocating a temporary for it.  We
+# approximate that as one instruction's cost, even though sometimes
+# that temp might not be a newly-allocated temp due to later
+# live-dead analysis.
 alloced_vec4: vec4 1
 {
 	/* FINISHME */
 	tree->v->get_temp(tree);
 }
 
+# Here's the rule everyone will hit: Moving the result of an
+# expression into a variable-dereference register location.
+#
+# Note that this is likely a gratuitous move.  We could make variants
+# of each of the following rules, e.g:
+#
+# vec4: add_vec4_vec4(alloced_vec4, alloced_vec4) 1
+# {
+#         emit(ADD, tree, tree->left, tree->right);
+# }
+#
+# becoming
+#
+# vec4: assign(alloced_vec4_vec4, add_vec4_vec4(alloced_vec4, alloced_vec4) 1
+# {
+#         emit(ADD, tree->left, tree->right->left, tree->right->right);
+# }
+#
+# But it seems like a lot of extra typing and duped code, when we
+# probably want copy propagation and dead code after codegen anyway,
+# which would clean these up.
 stmt: assign(alloced_vec4, alloced_vec4) 1
 {
 	ir_to_mesa_emit_op1(tree, OPCODE_MOV,
@@ -74,6 +124,8 @@ stmt: assign(alloced_vec4, alloced_vec4) 1
 			    tree->left->src_reg);
 }
 
+# Perform a swizzle by composing our swizzle with the swizzle
+# required to get at the src reg.
 vec4: swizzle_vec4(alloced_vec4) 1
 {
 	ir_to_mesa_src_reg reg = tree->left->src_reg;
