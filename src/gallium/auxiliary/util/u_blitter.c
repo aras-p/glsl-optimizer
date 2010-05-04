@@ -70,8 +70,8 @@ struct blitter_context_priv
    void *vs_tex; /**< Vertex shader which passes {pos, texcoord} to the output.*/
 
    /* Fragment shaders. */
-   /* FS which outputs a color to multiple color buffers. */
-   void *fs_col[PIPE_MAX_COLOR_BUFS];
+   /* The shader at index i outputs color to color buffers 0,1,...,i-1. */
+   void *fs_col[PIPE_MAX_COLOR_BUFS+1];
 
    /* FS which outputs a color from a texture,
       where the index is PIPE_TEXTURE_* to be sampled. */
@@ -249,7 +249,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
          pipe->delete_fs_state(pipe, ctx->fs_texfetch_depth[i]);
    }
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS && ctx->fs_col[i]; i++)
+   for (i = 0; i <= PIPE_MAX_COLOR_BUFS && ctx->fs_col[i]; i++)
       if (ctx->fs_col[i])
          pipe->delete_fs_state(pipe, ctx->fs_col[i]);
 
@@ -496,15 +496,14 @@ static INLINE
 void *blitter_get_fs_col(struct blitter_context_priv *ctx, unsigned num_cbufs)
 {
    struct pipe_context *pipe = ctx->pipe;
-   unsigned index = num_cbufs ? num_cbufs - 1 : 0;
 
    assert(num_cbufs <= PIPE_MAX_COLOR_BUFS);
 
-   if (!ctx->fs_col[index])
-      ctx->fs_col[index] =
+   if (!ctx->fs_col[num_cbufs])
+      ctx->fs_col[num_cbufs] =
          util_make_fragment_clonecolor_shader(pipe, num_cbufs);
 
-   return ctx->fs_col[index];
+   return ctx->fs_col[num_cbufs];
 }
 
 static INLINE
