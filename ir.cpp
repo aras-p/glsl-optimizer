@@ -53,6 +53,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
       1, /* ir_unop_logic_not */
       1, /* ir_unop_neg */
       1, /* ir_unop_abs */
+      1, /* ir_unop_sign */
       1, /* ir_unop_rcp */
       1, /* ir_unop_rsq */
       1, /* ir_unop_sqrt */
@@ -112,6 +113,7 @@ static const char *const operator_strs[] = {
    "!",
    "neg",
    "abs",
+   "sign",
    "rcp",
    "rsq",
    "sqrt",

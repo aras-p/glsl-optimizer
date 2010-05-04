@@ -1,0 +1,34 @@
+((function sign
+   (signature int
+     (parameters
+       (declare (in) int x))
+     ((return (expression int / (var_ref x) (expression int abs (var_ref x))))))
+
+   (signature ivec2
+     (parameters
+       (declare (in) ivec2 x))
+     ((declare () ivec2 t)
+      (assign (constant bool (1)) (swiz x (var_ref t)) (expression int sign (swiz x (var_ref x))))
+      (assign (constant bool (1)) (swiz y (var_ref t)) (expression int sign (swiz y (var_ref x))))
+      (return (var_ref t))))
+
+   (signature ivec3
+     (parameters
+       (declare (in) ivec3 x))
+     ((declare () ivec3 t)
+      (assign (constant bool (1)) (swiz x (var_ref t)) (expression int sign (swiz x (var_ref x))))
+      (assign (constant bool (1)) (swiz y (var_ref t)) (expression int sign (swiz y (var_ref x))))
+      (assign (constant bool (1)) (swiz z (var_ref t)) (expression int sign (swiz z (var_ref x))))
+      (return (var_ref t))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) ivec4 x))
+     ((declare () ivec4 t)
+      (assign (constant bool (1)) (swiz x (var_ref t)) (expression int sign (swiz x (var_ref x))))
+      (assign (constant bool (1)) (swiz y (var_ref t)) (expression int sign (swiz y (var_ref x))))
+      (assign (constant bool (1)) (swiz z (var_ref t)) (expression int sign (swiz z (var_ref x))))
+      (assign (constant bool (1)) (swiz w (var_ref t)) (expression int sign (swiz w (var_ref x))))
+      (return (var_ref t))))
+))
+

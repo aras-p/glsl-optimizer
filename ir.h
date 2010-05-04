@@ -424,6 +424,7 @@ enum ir_expression_operation {
    ir_unop_logic_not,
    ir_unop_neg,
    ir_unop_abs,
+   ir_unop_sign,
    ir_unop_rcp,
    ir_unop_rsq,
    ir_unop_sqrt,
