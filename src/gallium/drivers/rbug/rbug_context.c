@@ -1,0 +1,908 @@
+/**************************************************************************
+ *
+ * Copyright 2010 VMware, Inc.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
+
+#include "pipe/p_context.h"
+#include "util/u_memory.h"
+#include "util/u_inlines.h"
+
+#include "rbug_context.h"
+#include "rbug_objects.h"
+
+
+static void
+rbug_destroy(struct pipe_context *_pipe)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->destroy(pipe);
+
+   FREE(rb_pipe);
+}
+
+static void
+rbug_draw_arrays(struct pipe_context *_pipe,
+                 unsigned prim,
+                 unsigned start,
+                 unsigned count)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->draw_arrays(pipe,
+                     prim,
+                     start,
+                     count);
+}
+
+static void
+rbug_draw_elements(struct pipe_context *_pipe,
+                   struct pipe_resource *_indexResource,
+                   unsigned indexSize,
+                   int indexBias,
+                   unsigned prim,
+                   unsigned start,
+                   unsigned count)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_resource *rb_resource = rbug_resource(_indexResource);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_resource *indexResource = rb_resource->resource;
+
+   pipe->draw_elements(pipe,
+                       indexResource,
+                       indexSize,
+                       indexBias,
+                       prim,
+                       start,
+                       count);
+}
+
+static void
+rbug_draw_range_elements(struct pipe_context *_pipe,
+                         struct pipe_resource *_indexResource,
+                         unsigned indexSize,
+                         int indexBias,
+                         unsigned minIndex,
+                         unsigned maxIndex,
+                         unsigned mode,
+                         unsigned start,
+                         unsigned count)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_resource *rb_resource = rbug_resource(_indexResource);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_resource *indexResource = rb_resource->resource;
+
+   pipe->draw_range_elements(pipe,
+                             indexResource,
+                             indexSize,
+                             indexBias,
+                             minIndex,
+                             maxIndex,
+                             mode,
+                             start,
+                             count);
+}
+
+static struct pipe_query *
+rbug_create_query(struct pipe_context *_pipe,
+                  unsigned query_type)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->create_query(pipe,
+                             query_type);
+}
+
+static void
+rbug_destroy_query(struct pipe_context *_pipe,
+                   struct pipe_query *query)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->destroy_query(pipe,
+                       query);
+}
+
+static void
+rbug_begin_query(struct pipe_context *_pipe,
+                 struct pipe_query *query)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->begin_query(pipe,
+                     query);
+}
+
+static void
+rbug_end_query(struct pipe_context *_pipe,
+               struct pipe_query *query)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->end_query(pipe,
+                   query);
+}
+
+static boolean
+rbug_get_query_result(struct pipe_context *_pipe,
+                      struct pipe_query *query,
+                      boolean wait,
+                      uint64_t *result)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->get_query_result(pipe,
+                                 query,
+                                 wait,
+                                 result);
+}
+
+static void *
+rbug_create_blend_state(struct pipe_context *_pipe,
+                        const struct pipe_blend_state *blend)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->create_blend_state(pipe,
+                                   blend);
+}
+
+static void
+rbug_bind_blend_state(struct pipe_context *_pipe,
+                      void *blend)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->bind_blend_state(pipe,
+                              blend);
+}
+
+static void
+rbug_delete_blend_state(struct pipe_context *_pipe,
+                        void *blend)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->delete_blend_state(pipe,
+                            blend);
+}
+
+static void *
+rbug_create_sampler_state(struct pipe_context *_pipe,
+                          const struct pipe_sampler_state *sampler)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->create_sampler_state(pipe,
+                                     sampler);
+}
+
+static void
+rbug_bind_fragment_sampler_states(struct pipe_context *_pipe,
+                                  unsigned num_samplers,
+                                  void **samplers)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->bind_fragment_sampler_states(pipe,
+                                      num_samplers,
+                                      samplers);
+}
+
+static void
+rbug_bind_vertex_sampler_states(struct pipe_context *_pipe,
+                                unsigned num_samplers,
+                                void **samplers)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->bind_vertex_sampler_states(pipe,
+                                    num_samplers,
+                                    samplers);
+}
+
+static void
+rbug_delete_sampler_state(struct pipe_context *_pipe,
+                          void *sampler)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->delete_sampler_state(pipe,
+                              sampler);
+}
+
+static void *
+rbug_create_rasterizer_state(struct pipe_context *_pipe,
+                             const struct pipe_rasterizer_state *rasterizer)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->create_rasterizer_state(pipe,
+                                        rasterizer);
+}
+
+static void
+rbug_bind_rasterizer_state(struct pipe_context *_pipe,
+                           void *rasterizer)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->bind_rasterizer_state(pipe,
+                               rasterizer);
+}
+
+static void
+rbug_delete_rasterizer_state(struct pipe_context *_pipe,
+                             void *rasterizer)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->delete_rasterizer_state(pipe,
+                                 rasterizer);
+}
+
+static void *
+rbug_create_depth_stencil_alpha_state(struct pipe_context *_pipe,
+                                      const struct pipe_depth_stencil_alpha_state *depth_stencil_alpha)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->create_depth_stencil_alpha_state(pipe,
+                                                 depth_stencil_alpha);
+}
+
+static void
+rbug_bind_depth_stencil_alpha_state(struct pipe_context *_pipe,
+                                    void *depth_stencil_alpha)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->bind_depth_stencil_alpha_state(pipe,
+                                        depth_stencil_alpha);
+}
+
+static void
+rbug_delete_depth_stencil_alpha_state(struct pipe_context *_pipe,
+                                      void *depth_stencil_alpha)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->delete_depth_stencil_alpha_state(pipe,
+                                          depth_stencil_alpha);
+}
+
+static void *
+rbug_create_fs_state(struct pipe_context *_pipe,
+                     const struct pipe_shader_state *fs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->create_fs_state(pipe,
+                                fs);
+}
+
+static void
+rbug_bind_fs_state(struct pipe_context *_pipe,
+                   void *fs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->bind_fs_state(pipe,
+                       fs);
+}
+
+static void
+rbug_delete_fs_state(struct pipe_context *_pipe,
+                     void *fs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->delete_fs_state(pipe,
+                         fs);
+}
+
+static void *
+rbug_create_vs_state(struct pipe_context *_pipe,
+                     const struct pipe_shader_state *vs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->create_vs_state(pipe,
+                                vs);
+}
+
+static void
+rbug_bind_vs_state(struct pipe_context *_pipe,
+                   void *vs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->bind_vs_state(pipe,
+                       vs);
+}
+
+static void
+rbug_delete_vs_state(struct pipe_context *_pipe,
+                     void *vs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->delete_vs_state(pipe,
+                         vs);
+}
+
+
+static void *
+rbug_create_vertex_elements_state(struct pipe_context *_pipe,
+                                  unsigned num_elements,
+                                  const struct pipe_vertex_element *vertex_elements)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   return pipe->create_vertex_elements_state(pipe,
+                                             num_elements,
+                                             vertex_elements);
+}
+
+static void
+rbug_bind_vertex_elements_state(struct pipe_context *_pipe,
+                                void *velems)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->bind_vertex_elements_state(pipe,
+                                    velems);
+}
+
+static void
+rbug_delete_vertex_elements_state(struct pipe_context *_pipe,
+                                  void *velems)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->delete_vertex_elements_state(pipe,
+                                      velems);
+}
+
+static void
+rbug_set_blend_color(struct pipe_context *_pipe,
+                     const struct pipe_blend_color *blend_color)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->set_blend_color(pipe,
+                         blend_color);
+}
+
+static void
+rbug_set_stencil_ref(struct pipe_context *_pipe,
+                     const struct pipe_stencil_ref *stencil_ref)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->set_stencil_ref(pipe,
+                         stencil_ref);
+}
+
+static void
+rbug_set_clip_state(struct pipe_context *_pipe,
+                    const struct pipe_clip_state *clip)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->set_clip_state(pipe,
+                        clip);
+}
+
+static void
+rbug_set_constant_buffer(struct pipe_context *_pipe,
+                         uint shader,
+                         uint index,
+                         struct pipe_resource *_resource)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_resource *unwrapped_resource;
+   struct pipe_resource *resource = NULL;
+
+   /* XXX hmm? unwrap the input state */
+   if (_resource) {
+      unwrapped_resource = rbug_resource_unwrap(_resource);
+      resource = unwrapped_resource;
+   }
+
+   pipe->set_constant_buffer(pipe,
+                             shader,
+                             index,
+                             resource);
+}
+
+static void
+rbug_set_framebuffer_state(struct pipe_context *_pipe,
+                           const struct pipe_framebuffer_state *_state)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_framebuffer_state unwrapped_state;
+   struct pipe_framebuffer_state *state = NULL;
+   unsigned i;
+
+   /* unwrap the input state */
+   if (_state) {
+      memcpy(&unwrapped_state, _state, sizeof(unwrapped_state));
+      for(i = 0; i < _state->nr_cbufs; i++)
+         unwrapped_state.cbufs[i] = rbug_surface_unwrap(_state->cbufs[i]);
+      for (; i < PIPE_MAX_COLOR_BUFS; i++)
+         unwrapped_state.cbufs[i] = NULL;
+      unwrapped_state.zsbuf = rbug_surface_unwrap(_state->zsbuf);
+      state = &unwrapped_state;
+   }
+
+   pipe->set_framebuffer_state(pipe,
+                               state);
+}
+
+static void
+rbug_set_polygon_stipple(struct pipe_context *_pipe,
+                         const struct pipe_poly_stipple *poly_stipple)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->set_polygon_stipple(pipe,
+                             poly_stipple);
+}
+
+static void
+rbug_set_scissor_state(struct pipe_context *_pipe,
+                       const struct pipe_scissor_state *scissor)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->set_scissor_state(pipe,
+                           scissor);
+}
+
+static void
+rbug_set_viewport_state(struct pipe_context *_pipe,
+                        const struct pipe_viewport_state *viewport)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->set_viewport_state(pipe,
+                            viewport);
+}
+
+static void
+rbug_set_fragment_sampler_views(struct pipe_context *_pipe,
+                                unsigned num,
+                                struct pipe_sampler_view **_views)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view **views = NULL;
+   unsigned i;
+
+   if (_views) {
+      for (i = 0; i < num; i++)
+         unwrapped_views[i] = rbug_sampler_view_unwrap(_views[i]);
+      for (; i < PIPE_MAX_SAMPLERS; i++)
+         unwrapped_views[i] = NULL;
+
+      views = unwrapped_views;
+   }
+
+   pipe->set_fragment_sampler_views(pipe, num, views);
+}
+
+static void
+rbug_set_vertex_sampler_views(struct pipe_context *_pipe,
+                              unsigned num,
+                              struct pipe_sampler_view **_views)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_VERTEX_SAMPLERS];
+   struct pipe_sampler_view **views = NULL;
+   unsigned i;
+
+   if (_views) {
+      for (i = 0; i < num; i++)
+         unwrapped_views[i] = rbug_sampler_view_unwrap(_views[i]);
+      for (; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
+         unwrapped_views[i] = NULL;
+
+      views = unwrapped_views;
+   }
+
+   pipe->set_vertex_sampler_views(pipe, num, views);
+}
+
+static void
+rbug_set_vertex_buffers(struct pipe_context *_pipe,
+                        unsigned num_buffers,
+                        const struct pipe_vertex_buffer *_buffers)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_vertex_buffer unwrapped_buffers[PIPE_MAX_SHADER_INPUTS];
+   struct pipe_vertex_buffer *buffers = NULL;
+   unsigned i;
+
+   if (num_buffers) {
+      memcpy(unwrapped_buffers, _buffers, num_buffers * sizeof(*_buffers));
+      for (i = 0; i < num_buffers; i++)
+         unwrapped_buffers[i].buffer = rbug_resource_unwrap(_buffers[i].buffer);
+      buffers = unwrapped_buffers;
+   }
+
+   pipe->set_vertex_buffers(pipe,
+                            num_buffers,
+                            buffers);
+}
+static void
+rbug_surface_copy(struct pipe_context *_pipe,
+                  struct pipe_surface *_dst,
+                  unsigned dstx,
+                  unsigned dsty,
+                  struct pipe_surface *_src,
+                  unsigned srcx,
+                  unsigned srcy,
+                  unsigned width,
+                  unsigned height)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_surface *rb_surface_dst = rbug_surface(_dst);
+   struct rbug_surface *rb_surface_src = rbug_surface(_src);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_surface *dst = rb_surface_dst->surface;
+   struct pipe_surface *src = rb_surface_src->surface;
+
+   pipe->surface_copy(pipe,
+                      dst,
+                      dstx,
+                      dsty,
+                      src,
+                      srcx,
+                      srcy,
+                      width,
+                      height);
+}
+
+static void
+rbug_surface_fill(struct pipe_context *_pipe,
+                  struct pipe_surface *_dst,
+                  unsigned dstx,
+                  unsigned dsty,
+                  unsigned width,
+                  unsigned height,
+                  unsigned value)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_surface *rb_surface_dst = rbug_surface(_dst);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_surface *dst = rb_surface_dst->surface;
+
+   pipe->surface_fill(pipe,
+                      dst,
+                      dstx,
+                      dsty,
+                      width,
+                      height,
+                      value);
+}
+
+static void
+rbug_clear(struct pipe_context *_pipe,
+           unsigned buffers,
+           const float *rgba,
+           double depth,
+           unsigned stencil)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->clear(pipe,
+               buffers,
+               rgba,
+               depth,
+               stencil);
+}
+
+static void
+rbug_flush(struct pipe_context *_pipe,
+           unsigned flags,
+           struct pipe_fence_handle **fence)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->flush(pipe,
+               flags,
+               fence);
+}
+
+static unsigned int
+rbug_is_resource_referenced(struct pipe_context *_pipe,
+                            struct pipe_resource *_resource,
+                            unsigned face,
+                            unsigned level)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_resource *rb_resource = rbug_resource(_resource);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_resource *resource = rb_resource->resource;
+
+   return pipe->is_resource_referenced(pipe,
+                                       resource,
+                                       face,
+                                       level);
+}
+
+static struct pipe_sampler_view *
+rbug_context_create_sampler_view(struct pipe_context *_pipe,
+                                 struct pipe_resource *_resource,
+                                 const struct pipe_sampler_view *templ)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_resource *rb_resource = rbug_resource(_resource);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_resource *resource = rb_resource->resource;
+   struct pipe_sampler_view *result;
+
+   result = pipe->create_sampler_view(pipe,
+                                      resource,
+                                      templ);
+
+   if (result)
+      return rbug_sampler_view_create(rb_pipe, rb_resource, result);
+   return NULL;
+}
+
+static void
+rbug_context_sampler_view_destroy(struct pipe_context *_pipe,
+                                  struct pipe_sampler_view *_view)
+{
+   rbug_sampler_view_destroy(rbug_context(_pipe),
+                             rbug_sampler_view(_view));
+}
+
+static struct pipe_transfer *
+rbug_context_get_transfer(struct pipe_context *_context,
+                          struct pipe_resource *_resource,
+                          struct pipe_subresource sr,
+                          unsigned usage,
+                          const struct pipe_box *box)
+{
+   struct rbug_context *rb_pipe = rbug_context(_context);
+   struct rbug_resource *rb_resource = rbug_resource(_resource);
+   struct pipe_context *context = rb_pipe->pipe;
+   struct pipe_resource *resource = rb_resource->resource;
+   struct pipe_transfer *result;
+
+   result = context->get_transfer(context,
+                                  resource,
+                                  sr,
+                                  usage,
+                                  box);
+
+   if (result)
+      return rbug_transfer_create(rb_pipe, rb_resource, result);
+   return NULL;
+}
+
+static void
+rbug_context_transfer_destroy(struct pipe_context *_pipe,
+                              struct pipe_transfer *_transfer)
+{
+   rbug_transfer_destroy(rbug_context(_pipe),
+                             rbug_transfer(_transfer));
+}
+
+static void *
+rbug_context_transfer_map(struct pipe_context *_context,
+                          struct pipe_transfer *_transfer)
+{
+   struct rbug_context *rb_pipe = rbug_context(_context);
+   struct rbug_transfer *rb_transfer = rbug_transfer(_transfer);
+   struct pipe_context *context = rb_pipe->pipe;
+   struct pipe_transfer *transfer = rb_transfer->transfer;
+
+   return context->transfer_map(context,
+                                transfer);
+}
+
+
+
+static void
+rbug_context_transfer_flush_region(struct pipe_context *_context,
+                                   struct pipe_transfer *_transfer,
+                                   const struct pipe_box *box)
+{
+   struct rbug_context *rb_pipe = rbug_context(_context);
+   struct rbug_transfer *rb_transfer = rbug_transfer(_transfer);
+   struct pipe_context *context = rb_pipe->pipe;
+   struct pipe_transfer *transfer = rb_transfer->transfer;
+
+   context->transfer_flush_region(context,
+                                  transfer,
+                                  box);
+}
+
+
+static void
+rbug_context_transfer_unmap(struct pipe_context *_context,
+                            struct pipe_transfer *_transfer)
+{
+   struct rbug_context *rb_pipe = rbug_context(_context);
+   struct rbug_transfer *rb_transfer = rbug_transfer(_transfer);
+   struct pipe_context *context = rb_pipe->pipe;
+   struct pipe_transfer *transfer = rb_transfer->transfer;
+
+   context->transfer_unmap(context,
+                           transfer);
+}
+
+
+static void
+rbug_context_transfer_inline_write(struct pipe_context *_context,
+                                   struct pipe_resource *_resource,
+                                   struct pipe_subresource sr,
+                                   unsigned usage,
+                                   const struct pipe_box *box,
+                                   const void *data,
+                                   unsigned stride,
+                                   unsigned slice_stride)
+{
+   struct rbug_context *rb_pipe = rbug_context(_context);
+   struct rbug_resource *rb_resource = rbug_resource(_resource);
+   struct pipe_context *context = rb_pipe->pipe;
+   struct pipe_resource *resource = rb_resource->resource;
+
+   context->transfer_inline_write(context,
+                                  resource,
+                                  sr,
+                                  usage,
+                                  box,
+                                  data,
+                                  stride,
+                                  slice_stride);
+}
+
+
+struct pipe_context *
+rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
+{
+   struct rbug_context *rb_pipe;
+   (void)rbug_screen(_screen);
+
+   rb_pipe = CALLOC_STRUCT(rbug_context);
+   if (!rb_pipe) {
+      return NULL;
+   }
+
+   rb_pipe->base.winsys = NULL;
+   rb_pipe->base.screen = _screen;
+   rb_pipe->base.priv = pipe->priv; /* expose wrapped data */
+   rb_pipe->base.draw = NULL;
+
+   rb_pipe->base.destroy = rbug_destroy;
+   rb_pipe->base.draw_arrays = rbug_draw_arrays;
+   rb_pipe->base.draw_elements = rbug_draw_elements;
+   rb_pipe->base.draw_range_elements = rbug_draw_range_elements;
+   rb_pipe->base.create_query = rbug_create_query;
+   rb_pipe->base.destroy_query = rbug_destroy_query;
+   rb_pipe->base.begin_query = rbug_begin_query;
+   rb_pipe->base.end_query = rbug_end_query;
+   rb_pipe->base.get_query_result = rbug_get_query_result;
+   rb_pipe->base.create_blend_state = rbug_create_blend_state;
+   rb_pipe->base.bind_blend_state = rbug_bind_blend_state;
+   rb_pipe->base.delete_blend_state = rbug_delete_blend_state;
+   rb_pipe->base.create_sampler_state = rbug_create_sampler_state;
+   rb_pipe->base.bind_fragment_sampler_states = rbug_bind_fragment_sampler_states;
+   rb_pipe->base.bind_vertex_sampler_states = rbug_bind_vertex_sampler_states;
+   rb_pipe->base.delete_sampler_state = rbug_delete_sampler_state;
+   rb_pipe->base.create_rasterizer_state = rbug_create_rasterizer_state;
+   rb_pipe->base.bind_rasterizer_state = rbug_bind_rasterizer_state;
+   rb_pipe->base.delete_rasterizer_state = rbug_delete_rasterizer_state;
+   rb_pipe->base.create_depth_stencil_alpha_state = rbug_create_depth_stencil_alpha_state;
+   rb_pipe->base.bind_depth_stencil_alpha_state = rbug_bind_depth_stencil_alpha_state;
+   rb_pipe->base.delete_depth_stencil_alpha_state = rbug_delete_depth_stencil_alpha_state;
+   rb_pipe->base.create_fs_state = rbug_create_fs_state;
+   rb_pipe->base.bind_fs_state = rbug_bind_fs_state;
+   rb_pipe->base.delete_fs_state = rbug_delete_fs_state;
+   rb_pipe->base.create_vs_state = rbug_create_vs_state;
+   rb_pipe->base.bind_vs_state = rbug_bind_vs_state;
+   rb_pipe->base.delete_vs_state = rbug_delete_vs_state;
+   rb_pipe->base.create_vertex_elements_state = rbug_create_vertex_elements_state;
+   rb_pipe->base.bind_vertex_elements_state = rbug_bind_vertex_elements_state;
+   rb_pipe->base.delete_vertex_elements_state = rbug_delete_vertex_elements_state;
+   rb_pipe->base.set_blend_color = rbug_set_blend_color;
+   rb_pipe->base.set_stencil_ref = rbug_set_stencil_ref;
+   rb_pipe->base.set_clip_state = rbug_set_clip_state;
+   rb_pipe->base.set_constant_buffer = rbug_set_constant_buffer;
+   rb_pipe->base.set_framebuffer_state = rbug_set_framebuffer_state;
+   rb_pipe->base.set_polygon_stipple = rbug_set_polygon_stipple;
+   rb_pipe->base.set_scissor_state = rbug_set_scissor_state;
+   rb_pipe->base.set_viewport_state = rbug_set_viewport_state;
+   rb_pipe->base.set_fragment_sampler_views = rbug_set_fragment_sampler_views;
+   rb_pipe->base.set_vertex_sampler_views = rbug_set_vertex_sampler_views;
+   rb_pipe->base.set_vertex_buffers = rbug_set_vertex_buffers;
+   rb_pipe->base.surface_copy = rbug_surface_copy;
+   rb_pipe->base.surface_fill = rbug_surface_fill;
+   rb_pipe->base.clear = rbug_clear;
+   rb_pipe->base.flush = rbug_flush;
+   rb_pipe->base.is_resource_referenced = rbug_is_resource_referenced;
+   rb_pipe->base.create_sampler_view = rbug_context_create_sampler_view;
+   rb_pipe->base.sampler_view_destroy = rbug_context_sampler_view_destroy;
+   rb_pipe->base.get_transfer = rbug_context_get_transfer;
+   rb_pipe->base.transfer_destroy = rbug_context_transfer_destroy;
+   rb_pipe->base.transfer_map = rbug_context_transfer_map;
+   rb_pipe->base.transfer_unmap = rbug_context_transfer_unmap;
+   rb_pipe->base.transfer_flush_region = rbug_context_transfer_flush_region;
+   rb_pipe->base.transfer_inline_write = rbug_context_transfer_inline_write;
+
+   rb_pipe->pipe = pipe;
+
+   return &rb_pipe->base;
+}
