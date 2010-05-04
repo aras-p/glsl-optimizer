@@ -760,19 +760,22 @@ get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
 		     struct visual_attribs *attribs)
 {
    int visual_type;
+   XVisualInfo *vInfo;
 
    memset(attribs, 0, sizeof(struct visual_attribs));
 
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_FBCONFIG_ID, &attribs->id);
 
-#if 0
-   attribs->depth = vInfo->depth;
-   attribs->redMask = vInfo->red_mask;
-   attribs->greenMask = vInfo->green_mask;
-   attribs->blueMask = vInfo->blue_mask;
-   attribs->colormapSize = vInfo->colormap_size;
-   attribs->bitsPerRGB = vInfo->bits_per_rgb;
-#endif
+   vInfo = glXGetVisualFromFBConfig(dpy, fbconfig);
+
+   if (vInfo != NULL) {
+      attribs->depth = vInfo->depth;
+      attribs->redMask = vInfo->red_mask;
+      attribs->greenMask = vInfo->green_mask;
+      attribs->blueMask = vInfo->blue_mask;
+      attribs->colormapSize = vInfo->colormap_size;
+      attribs->bitsPerRGB = vInfo->bits_per_rgb;
+   }
 
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_X_VISUAL_TYPE, &visual_type);
    attribs->klass = glx_token_to_visual_class(visual_type);
