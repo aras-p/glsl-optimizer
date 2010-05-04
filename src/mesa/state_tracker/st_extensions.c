@@ -67,6 +67,7 @@ void st_init_limits(struct st_context *st)
 {
    struct pipe_screen *screen = st->pipe->screen;
    struct gl_constants *c = &st->ctx->Const;
+   struct gl_program_constants *pc;
 
    c->MaxTextureLevels
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
@@ -140,6 +141,96 @@ void st_init_limits(struct st_context *st)
 
    /* Quads always follow GL provoking rules. */
    c->QuadsFollowProvokingVertexConvention = GL_FALSE;
+
+   if (screen->get_param(screen, PIPE_CAP_GLSL)) {
+      /*
+       * In the lack of more fine grained capabilities, if the pipe driver supports
+       * GLSL then assume native limits match Mesa software limits.
+       */
+
+      pc = &c->FragmentProgram;
+      pc->MaxNativeInstructions      = pc->MaxInstructions;
+      pc->MaxNativeAluInstructions   = pc->MaxAluInstructions;
+      pc->MaxNativeTexInstructions   = pc->MaxTexInstructions;
+      pc->MaxNativeTexIndirections   = pc->MaxTexIndirections;
+      pc->MaxNativeAttribs           = pc->MaxAttribs;
+      pc->MaxNativeTemps             = pc->MaxTemps;
+      pc->MaxNativeAddressRegs       = pc->MaxAddressRegs;
+      pc->MaxNativeParameters        = pc->MaxParameters;
+
+      pc = &c->VertexProgram;
+      pc->MaxNativeInstructions      = pc->MaxInstructions;
+      pc->MaxNativeAluInstructions   = pc->MaxAluInstructions;
+      pc->MaxNativeTexInstructions   = pc->MaxTexInstructions;
+      pc->MaxNativeTexIndirections   = pc->MaxTexIndirections;
+      pc->MaxNativeAttribs           = pc->MaxAttribs;
+      pc->MaxNativeTemps             = pc->MaxTemps;
+      pc->MaxNativeAddressRegs       = pc->MaxAddressRegs;
+      pc->MaxNativeParameters        = pc->MaxParameters;
+   } else if (screen->get_param(screen, PIPE_CAP_SM3)) {
+      /*
+       * Assume the hardware meets the minimum requirements
+       * for Shader Model 3.
+       *
+       * See also:
+       * - http://msdn.microsoft.com/en-us/library/bb172920(VS.85).aspx
+       * - http://msdn.microsoft.com/en-us/library/bb172963(VS.85).aspx
+       */
+
+      pc = &c->FragmentProgram;
+      pc->MaxNativeInstructions      = 512; /* D3DMIN30SHADERINSTRUCTIONS */
+      pc->MaxNativeAluInstructions   = pc->MaxNativeInstructions;
+      pc->MaxNativeTexInstructions   = pc->MaxNativeInstructions;
+      pc->MaxNativeTexIndirections   = pc->MaxNativeTexInstructions;
+      pc->MaxNativeAttribs           = 10;
+      pc->MaxNativeTemps             = 32;
+      pc->MaxNativeAddressRegs       = 1; /* aL */
+      pc->MaxNativeParameters        = 224;
+
+      pc = &c->VertexProgram;
+      pc->MaxNativeInstructions      = 512; /* D3DMIN30SHADERINSTRUCTIONS */
+      pc->MaxNativeAluInstructions   = pc->MaxNativeInstructions;
+      pc->MaxNativeTexInstructions   = pc->MaxNativeInstructions;
+      pc->MaxNativeTexIndirections   = pc->MaxNativeTexInstructions;
+      pc->MaxNativeAttribs           = 16;
+      pc->MaxNativeTemps             = 32;
+      pc->MaxNativeAddressRegs       = 2; /* a0 and aL */
+      pc->MaxNativeParameters        = 256;
+   } else {
+      /*
+       * Assume the hardware meets the minimum requirements
+       * for Shader Model 2.
+       *
+       * See also:
+       * - http://msdn.microsoft.com/en-us/library/bb172918(VS.85).aspx
+       * - http://msdn.microsoft.com/en-us/library/bb172961(VS.85).aspx
+       */
+
+      pc = &c->FragmentProgram;
+      pc->MaxNativeInstructions      = 96; /* D3DPS20_MIN_NUMINSTRUCTIONSLOTS */
+      pc->MaxNativeAluInstructions   = 64;
+      pc->MaxNativeTexInstructions   = 32;
+      pc->MaxNativeTexIndirections   = pc->MaxNativeTexInstructions;
+      pc->MaxNativeAttribs           = 10; /* 2 color + 8 texture coord */
+      pc->MaxNativeTemps             = 12; /* D3DPS20_MIN_NUMTEMPS */
+      pc->MaxNativeAddressRegs       = 0;
+      pc->MaxNativeParameters        = 16;
+
+      pc = &c->VertexProgram;
+      pc->MaxNativeInstructions      = 256;
+      pc->MaxNativeAluInstructions   = 256;
+      pc->MaxNativeTexInstructions   = 0;
+      pc->MaxNativeTexIndirections   = 0;
+      pc->MaxNativeAttribs           = 16;
+      pc->MaxNativeTemps             = 12; /* D3DVS20_MIN_NUMTEMPS */
+      pc->MaxNativeAddressRegs       = 2; /* a0 and aL */
+      pc->MaxNativeParameters        = 256;
+   }
+
+   if (!screen->get_param(screen, PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS)) {
+      c->VertexProgram.MaxNativeTexInstructions = 0;
+      c->VertexProgram.MaxNativeTexIndirections = 0;
+   }
 }
 
 
