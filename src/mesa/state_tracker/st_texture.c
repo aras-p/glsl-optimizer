@@ -66,6 +66,9 @@ st_texture_create(struct st_context *st,
    struct pipe_screen *screen = st->pipe->screen;
 
    assert(target <= PIPE_TEXTURE_CUBE);
+   assert(width0 > 0);
+   assert(height0 > 0);
+   assert(depth0 > 0);
 
    DBG("%s target %s format %s last_level %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
@@ -237,7 +240,42 @@ st_texture_image_data(struct st_context *st,
 }
 
 
-/* Copy mipmap image between textures
+/**
+ * For debug only: get/print center pixel in the src resource.
+ */
+static void
+print_center_pixel(struct pipe_context *pipe, struct pipe_resource *src)
+{
+   struct pipe_subresource rect;
+   struct pipe_transfer *xfer;
+   struct pipe_box region;
+   ubyte *map;
+
+   rect.face = 0;
+   rect.level = 0;
+
+   region.x = src->width0 / 2;
+   region.y = src->height0 / 2;
+   region.z = 0;
+   region.width = 1;
+   region.height = 1;
+   region.depth = 1;
+
+   xfer = pipe->get_transfer(pipe, src, rect, PIPE_TRANSFER_READ, &region);
+   map = pipe->transfer_map(pipe, xfer);
+
+   printf("center pixel: %d %d %d %d\n", map[0], map[1], map[2], map[3]);
+
+   pipe->transfer_unmap(pipe, xfer);
+   pipe->transfer_destroy(pipe, xfer);
+}
+
+
+/**
+ * Copy the image at level=0 in 'src' to the 'dst' resource at 'dstLevel'.
+ * This is used to copy mipmap images from one texture buffer to another.
+ * This typically happens when our initial guess at the total texture size
+ * is incorrect (see the guess_and_alloc_texture() function).
  */
 void
 st_texture_image_copy(struct pipe_context *pipe,
@@ -251,39 +289,19 @@ st_texture_image_copy(struct pipe_context *pipe,
    GLuint depth = u_minify(dst->depth0, dstLevel); 
    struct pipe_surface *src_surface;
    struct pipe_surface *dst_surface;
+   const GLuint srcLevel = 0;
    GLuint i;
 
-   assert(src->width0 == dst->width0);
-   assert(src->height0 == dst->height0);
+   assert(src->width0 == width);
+   assert(src->height0 == height);
+   assert(src->depth0 == depth);
 
+   /* Loop over 3D image slices */
    for (i = 0; i < depth; i++) {
-      GLuint srcLevel;
 
-      /* find src texture level of needed size */
-      for (srcLevel = 0; srcLevel <= src->last_level; srcLevel++) {
-         if (u_minify(src->width0, srcLevel) == width &&
-             u_minify(src->height0, srcLevel) == height) {
-            break;
-         }
+      if (0)  {
+         print_center_pixel(pipe, src);
       }
-      assert(u_minify(src->width0, srcLevel) == width);
-      assert(u_minify(src->height0, srcLevel) == height);
-
-#if 0
-      {
-         src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
-                                               PIPE_BUFFER_USAGE_CPU_READ);
-         ubyte *map = screen->surface_map(screen, src_surface, PIPE_BUFFER_USAGE_CPU_READ);
-         map += src_surface->width * src_surface->height * 4 / 2;
-         printf("%s center pixel: %d %d %d %d (pt %p[%d] -> %p[%d])\n",
-                __FUNCTION__,
-                map[0], map[1], map[2], map[3],
-                src, srcLevel, dst, dstLevel);
-
-         screen->surface_unmap(screen, src_surface);
-         pipe_surface_reference(&src_surface, NULL);
-      }
-#endif
 
       dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i,
                                             PIPE_BIND_BLIT_DESTINATION);
