@@ -44,7 +44,6 @@
 #include "util/u_blitter.h"
 #include "util/u_draw_quad.h"
 #include "util/u_pack_color.h"
-#include "util/u_rect.h"
 #include "util/u_sampler.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_surface.h"

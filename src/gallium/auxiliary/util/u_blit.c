@@ -48,7 +48,6 @@
 #include "util/u_sampler.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_surface.h"
-#include "util/u_rect.h"
 
 #include "cso_cache/cso_context.h"
 
