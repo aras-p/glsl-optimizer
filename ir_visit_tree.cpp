@@ -136,6 +136,7 @@ ir_tree_visitor::visit(ir_dereference *ir)
    if (ir->mode == ir_dereference::ir_reference_array) {
       ir->selector.array_index->accept(this);
    }
+   ir->var->accept(this);
 }
 
 void
