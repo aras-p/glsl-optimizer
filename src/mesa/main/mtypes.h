@@ -2876,7 +2876,7 @@ struct gl_dlist_state
 typedef enum {
    API_OPENGL,
    API_OPENGLES,
-   API_OPENGLES2,
+   API_OPENGLES2
 } gl_api;
 
 /**
