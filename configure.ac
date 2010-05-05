@@ -768,7 +768,6 @@ if test "x$enable_gles2" = xyes; then
 fi
 if test "x$enable_gles1" = xyes -o "x$enable_gles2" = xyes; then
     CORE_DIRS="mapi/es1api mapi/es2api $CORE_DIRS"
-    SRC_DIRS="$SRC_DIRS gles"
 fi
 AC_SUBST([API_DEFINES])
 AC_SUBST([APIS])

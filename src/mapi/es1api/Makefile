@@ -3,12 +3,28 @@
 TOP := ../../..
 include $(TOP)/configs/current
 
-# this Makefile can build both libes1api.a and libes2api.a
+# this Makefile can build both OpenGL ES 1.1 and 2.0
 ifeq ($(ES),)
 ES := es1
+
+GLES_LIB := $(GLESv1_CM_LIB)
+GLES_LIB_NAME := $(GLESv1_CM_LIB_NAME)
+GLES_LIB_GLOB := $(GLESv1_CM_LIB_GLOB)
+GLES_LIB_DEPS := $(GLESv1_CM_LIB_DEPS)
+GLES_LIB_MAJOR := 1
+GLES_LIB_MINOR := 1
+GLES_LIB_PATCH := 0
+else
+GLES_LIB := $(GLESv2_LIB)
+GLES_LIB_NAME := $(GLESv2_LIB_NAME)
+GLES_LIB_GLOB := $(GLESv2_LIB_GLOB)
+GLES_LIB_DEPS := $(GLESv2_LIB_DEPS)
+GLES_LIB_MAJOR := 2
+GLES_LIB_MINOR := 0
+GLES_LIB_PATCH := 0
 endif
 
-TARGET = $(ES)api
+ESAPI = $(ES)api
 
 GLAPI := $(TOP)/src/mapi/glapi
 MAPI := $(TOP)/src/mapi/mapi
@@ -25,19 +41,29 @@ include $(MAPI)/sources.mak
 MAPI_GLAPI_OBJECTS := $(MAPI_GLAPI_SOURCES:.c=.o)
 MAPI_GLAPI_SOURCES := $(addprefix $(MAPI)/, $(MAPI_GLAPI_SOURCES))
 
-TARGET_OBJECTS = $(GLAPI_OBJECTS) $(GLAPI_ASM_OBJECTS) $(MAPI_GLAPI_OBJECTS)
+ESAPI_OBJECTS = $(GLAPI_OBJECTS) $(GLAPI_ASM_OBJECTS) $(MAPI_GLAPI_OBJECTS)
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
-	-I$(TOP)/src/mapi/$(TARGET) \
+	-I$(TOP)/src/mapi/$(ESAPI) \
 	-I$(TOP)/src/mapi \
 	-I$(TOP)/src/mesa
 
 .PHONY: default
-default: depend lib$(TARGET).a
+default: depend $(TOP)/$(LIB_DIR)/$(GLES_LIB_NAME)
 
-lib$(TARGET).a: $(TARGET_OBJECTS)
-	@$(MKLIB) -o $(TARGET) -static $(TARGET_OBJECTS)
+$(TOP)/$(LIB_DIR)/$(GLES_LIB_NAME): $(ESAPI_OBJECTS)
+	$(MKLIB) -o $(GLES_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major $(GLES_LIB_MAJOR) \
+		-minor $(GLES_LIB_MINOR) \
+		-patch $(GLES_LIB_PATCH) \
+		-id $(INSTALL_LIB_DIR)/lib$(GLES_LIB).$(GLES_LIB_MAJOR).dylib \
+		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
+		$(ESAPI_OBJECTS) $(GLES_LIB_DEPS)
+
+# not used, but kept for completeness
+lib$(ESAPI).a: $(ESAPI_OBJECTS)
+	@$(MKLIB) -o $(ESAPI) -static $(ESAPI_OBJECTS)
 
 $(GLAPI_OBJECTS): %.o: $(GLAPI)/%.c
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
@@ -57,15 +83,16 @@ glapi-stamp:
 
 .PHONY: clean
 clean:
-	-rm -f lib$(TARGET).a
-	-rm -f $(TARGET_OBJECTS)
+	-rm -f $(TOP)/$(LIB_DIR)/$(GLES_LIB_NAME)
+	-rm -f lib$(ESAPI).a
+	-rm -f $(ESAPI_OBJECTS)
 	-rm -f depend depend.bak
 	-rm -f glapi-stamp
 	@# clean generated sources/headers
 	@$(MAKE) -C $(GLAPI)/gen-es clean-$(ES)
 
-# nothing to install
-install:
+install: default
+	$(MAKE) -C $(TOP)/src/mesa install-$(ES)
 
 depend: $(GLAPI_SOURCES) $(MAPI_GLAPI_SOURCES)
 	@echo "running $(MKDEP)"
