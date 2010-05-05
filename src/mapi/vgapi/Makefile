@@ -3,6 +3,10 @@
 TOP := ../../..
 include $(TOP)/configs/current
 
+VG_LIB_MAJOR = 1
+VG_LIB_MINOR = 0
+VG_LIB_PATCH = 0
+
 MAPI := $(TOP)/src/mapi/mapi
 
 include $(MAPI)/sources.mak
@@ -18,8 +22,18 @@ INCLUDE_DIRS := \
 	-I$(TOP)/src/mapi
 
 .PHONY: default
-default: depend libvgapi.a
+default: depend $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME)
 
+$(TOP)/$(LIB_DIR)/$(VG_LIB_NAME): $(VGAPI_OBJECTS)
+	$(MKLIB) -o $(VG_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major $(VG_LIB_MAJOR) \
+		-minor $(VG_LIB_MINOR) \
+		-patch $(VG_LIB_PATCH) \
+		-id $(INSTALL_LIB_DIR)/lib$(VG_LIB).$(VG_LIB_MAJOR).dylib \
+		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
+		$(VGAPI_OBJECTS) $(VG_LIB_DEPS)
+
+# not used, but kept for completeness
 libvgapi.a: $(VGAPI_OBJECTS)
 	@$(MKLIB) -o vgapi -static $(VGAPI_OBJECTS)
 
@@ -34,13 +48,20 @@ vgapi_tmp.h: vgapi.csv $(MAPI)/mapi_abi.py
 
 .PHONY: clean
 clean:
+	-rm -f $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME)
 	-rm -f libvgapi.a
 	-rm -f $(VGAPI_OBJECTS)
 	-rm -f depend depend.bak
 	-rm -f $(GENERATED_SOURCES)
 
-# nothing to install
-install:
+install-headers:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/VG
+	$(INSTALL) -m 644 $(TOP)/include/VG/*.h $(DESTDIR)$(INSTALL_INC_DIR)/VG
+
+install: default install-headers
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(VG_LIB_GLOB) \
+		$(DESTDIR)$(INSTALL_LIB_DIR)
 
 depend: $(VGAPI_SOURCES)
 	@echo "running $(MKDEP)"
