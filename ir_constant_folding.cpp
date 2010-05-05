@@ -29,12 +29,48 @@
 #define NULL 0
 #include "ir.h"
 #include "ir_visitor.h"
-#include "ir_constant_folding.h"
+#include "ir_optimization.h"
 #include "glsl_types.h"
 
 /**
  * Visitor class for replacing expressions with ir_constant values.
  */
+
+class ir_constant_folding_visitor : public ir_visitor {
+public:
+   ir_constant_folding_visitor()
+   {
+      /* empty */
+   }
+
+   virtual ~ir_constant_folding_visitor()
+   {
+      /* empty */
+   }
+
+   /**
+    * \name Visit methods
+    *
+    * As typical for the visitor pattern, there must be one \c visit method for
+    * each concrete subclass of \c ir_instruction.  Virtual base classes within
+    * the hierarchy should not have \c visit methods.
+    */
+   /*@{*/
+   virtual void visit(ir_variable *);
+   virtual void visit(ir_function_signature *);
+   virtual void visit(ir_function *);
+   virtual void visit(ir_expression *);
+   virtual void visit(ir_swizzle *);
+   virtual void visit(ir_dereference *);
+   virtual void visit(ir_assignment *);
+   virtual void visit(ir_constant *);
+   virtual void visit(ir_call *);
+   virtual void visit(ir_return *);
+   virtual void visit(ir_if *);
+   virtual void visit(ir_loop *);
+   virtual void visit(ir_loop_jump *);
+   /*@}*/
+};
 
 void
 ir_constant_folding_visitor::visit(ir_variable *ir)
@@ -151,4 +187,15 @@ void
 ir_constant_folding_visitor::visit(ir_loop_jump *ir)
 {
    (void) ir;
+}
+
+bool
+do_constant_folding(exec_list *instructions)
+{
+   ir_constant_folding_visitor constant_folding;
+
+   visit_exec_list(instructions, &constant_folding);
+
+   /* FINISHME: Return real progress. */
+   return false;
 }

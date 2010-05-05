@@ -37,7 +37,7 @@
 #include "ir_visitor.h"
 #include "ir_print_visitor.h"
 #include "ir_basic_block.h"
-#include "ir_copy_propagation.h"
+#include "ir_optimization.h"
 #include "glsl_types.h"
 
 class acp_entry : public exec_node

@@ -34,6 +34,42 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
+class ir_function_inlining_visitor : public ir_visitor {
+public:
+   ir_function_inlining_visitor()
+   {
+      /* empty */
+   }
+
+   virtual ~ir_function_inlining_visitor()
+   {
+      /* empty */
+   }
+
+   /**
+    * \name Visit methods
+    *
+    * As typical for the visitor pattern, there must be one \c visit method for
+    * each concrete subclass of \c ir_instruction.  Virtual base classes within
+    * the hierarchy should not have \c visit methods.
+    */
+   /*@{*/
+   virtual void visit(ir_variable *);
+   virtual void visit(ir_loop *);
+   virtual void visit(ir_loop_jump *);
+   virtual void visit(ir_function_signature *);
+   virtual void visit(ir_function *);
+   virtual void visit(ir_expression *);
+   virtual void visit(ir_swizzle *);
+   virtual void visit(ir_dereference *);
+   virtual void visit(ir_assignment *);
+   virtual void visit(ir_constant *);
+   virtual void visit(ir_call *);
+   virtual void visit(ir_return *);
+   virtual void visit(ir_if *);
+   /*@}*/
+};
+
 class variable_remap : public exec_node {
 public:
    variable_remap(const ir_variable *old_var, ir_variable *new_var)
