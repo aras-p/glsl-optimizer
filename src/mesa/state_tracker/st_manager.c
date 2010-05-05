@@ -508,6 +508,7 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    struct st_texture_object *stObj;
    struct st_texture_image *stImage;
    GLenum internalFormat;
+   GLuint width, height, depth;
 
    switch (target) {
    case ST_TEXTURE_1D:
@@ -527,12 +528,6 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
       break;
    }
 
-   if (util_format_get_component_bits(internal_format,
-            UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
-      internalFormat = GL_RGBA;
-   else
-      internalFormat = GL_RGB;
-
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
    _mesa_lock_texture(ctx, texObj);
 
@@ -546,17 +541,42 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    stImage = st_texture_image(texImage);
    if (tex) {
+      if (util_format_get_component_bits(internal_format,
+               UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
+         internalFormat = GL_RGBA;
+      else
+         internalFormat = GL_RGB;
+
       _mesa_init_teximage_fields(ctx, target, texImage,
             tex->width0, tex->height0, 1, 0, internalFormat);
       texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
             GL_RGBA, GL_UNSIGNED_BYTE);
       _mesa_set_fetch_functions(texImage, 2);
+
+      width = tex->width0;
+      height = tex->height0;
+      depth = tex->depth0;
+
+      /* grow the image size until we hit level = 0 */
+      while (level > 0) {
+         if (width != 1)
+            width <<= 1;
+         if (height != 1)
+            height <<= 1;
+         if (depth != 1)
+            depth <<= 1;
+         level--;
+      }
    }
    else {
       _mesa_clear_texture_image(ctx, texImage);
+      width = height = depth = 0;
    }
 
    pipe_resource_reference(&stImage->pt, tex);
+   stObj->width0 = width;
+   stObj->height0 = height;
+   stObj->depth0 = depth;
 
    _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
    _mesa_unlock_texture(ctx, texObj);

@@ -129,6 +129,10 @@ st_bind_surface(GLcontext *ctx, GLenum target,
    /* FIXME create a non-default sampler view from the pipe_surface? */
    pipe_resource_reference(&stImage->pt, ps->texture);
 
+   stObj->width0 = ps->width;
+   stObj->height0 = ps->height;
+   stObj->depth0 = 1;
+
    _mesa_dirty_texobj(ctx, texObj, GL_TRUE);
 }
 
