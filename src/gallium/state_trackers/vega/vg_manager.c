@@ -36,6 +36,7 @@
 #include "util/u_format.h"
 #include "util/u_sampler.h"
 
+#include "vg_api.h"
 #include "vg_manager.h"
 #include "vg_context.h"
 #include "image.h"
@@ -543,10 +544,9 @@ vg_api_get_proc_address(struct st_api *stapi, const char *procname)
 static void
 vg_api_destroy(struct st_api *stapi)
 {
-   free(stapi);
 }
 
-struct st_api st_vg_api = {
+static const struct st_api vg_api = {
    vg_api_destroy,
    vg_api_get_proc_address,
    vg_api_is_visual_supported,
@@ -555,8 +555,8 @@ struct st_api st_vg_api = {
    vg_api_get_current,
 };
 
-struct st_api *
-st_api_create_OpenVG(void)
+const struct st_api *
+vg_api_get(void)
 {
-   return &st_vg_api;
+   return &vg_api;
 }

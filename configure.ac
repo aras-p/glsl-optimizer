@@ -749,6 +749,11 @@ AC_ARG_ENABLE([gles2],
         [enable support for OpenGL ES 2.x API @<:@default=no@:>@])],
     [enable_gles2="$enableval"],
     [enable_gles2=no])
+AC_ARG_ENABLE([gles-overlay],
+    [AS_HELP_STRING([--enable-gles-overlay],
+        [build separate OpenGL ES only libraries @<:@default=no@:>@])],
+    [enable_gles_overlay="$enableval"],
+    [enable_gles_overlay=no])
 
 API_DEFINES=""
 APIS=""
@@ -766,8 +771,12 @@ if test "x$enable_gles2" = xyes; then
     API_DEFINES="$API_DEFINES -DFEATURE_ES2=1"
     APIS="$APIS es2"
 fi
-if test "x$enable_gles1" = xyes -o "x$enable_gles2" = xyes; then
+if test "x$enable_gles_overlay" = xyes -o \
+    "x$enable_gles1" = xyes -o "x$enable_gles2" = xyes; then
     CORE_DIRS="mapi/es1api mapi/es2api $CORE_DIRS"
+    if test "x$enable_gles_overlay" = xyes; then
+        CORE_DIRS="$CORE_DIRS mesa/es"
+    fi
 fi
 AC_SUBST([API_DEFINES])
 AC_SUBST([APIS])
@@ -1253,6 +1262,10 @@ AC_SUBST([LLVM_LDFLAGS])
 AC_SUBST([LLVM_VERSION])
 
 VG_LIB_DEPS=""
+EGL_CLIENT_APIS='$(GL_LIB)'
+if test "x$enable_gles_overlay" = xyes; then
+    EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GLESv1_CM_LIB) $(GLESv2_LIB)'
+fi
 
 dnl
 dnl Gallium state trackers configuration
@@ -1290,11 +1303,9 @@ yes)
     ;;
 *)
     # verify the requested state tracker exist
-    state_trackers=`IFS=', '; echo $with_state_trackers`
-    for tracker in $state_trackers; do
-        test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
-            AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
-
+    state_trackers=""
+    _state_trackers=`IFS=', '; echo $with_state_trackers`
+    for tracker in $_state_trackers; do
         case "$tracker" in
         dri)
             if test "x$mesa_driver" != xdri; then
@@ -1314,23 +1325,44 @@ yes)
             HAVE_ST_XORG="yes"
             ;;
         es)
-            if test "x$enable_gles1" != xyes -a "x$enable_gles2" != xyes; then
-		CORE_DIRS="mapi/es1api mapi/es2api $CORE_DIRS"
+            AC_MSG_WARN([state tracker 'es' has been replaced by --enable-gles-overlay])
+
+            if test "x$enable_gles_overlay" != xyes; then
+                if test "x$enable_gles1" != xyes -a "x$enable_gles2" != xyes; then
+                    CORE_DIRS="mapi/es1api mapi/es2api $CORE_DIRS"
+                fi
+                CORE_DIRS="$CORE_DIRS mesa/es"
+                EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GLESv1_CM_LIB) $(GLESv2_LIB)'
             fi
-            # mesa/es is required to build es state tracker
-            CORE_DIRS="$CORE_DIRS mesa/es"
+	    tracker=""
             ;;
         vega)
             CORE_DIRS="$CORE_DIRS mapi/vgapi"
             VG_LIB_DEPS="$VG_LIB_DEPS -lpthread"
+            EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
             ;;
         esac
+
+	if test -n "$tracker"; then
+            test -d "$srcdir/src/gallium/state_trackers/$tracker" || \
+                AC_MSG_ERROR([state tracker '$tracker' doesn't exist])
+            if test -n "$state_trackers"; then
+                state_trackers="$state_trackers $tracker"
+            else
+                state_trackers="$tracker"
+            fi
+        fi
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
     ;;
 esac
 
 AC_SUBST([VG_LIB_DEPS])
+AC_SUBST([EGL_CLIENT_APIS])
+
+if test "x$HAVE_ST_EGL" = xyes; then
+	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-apis"
+fi
 
 if test "x$HAVE_ST_XORG" = xyes; then
     PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
@@ -1587,6 +1619,9 @@ if echo "$SRC_DIRS" | grep 'gallium' >/dev/null 2>&1; then
     echo "        Winsys dirs:     $GALLIUM_WINSYS_DIRS"
     echo "        Driver dirs:     $GALLIUM_DRIVERS_DIRS"
     echo "        Trackers dirs:   $GALLIUM_STATE_TRACKERS_DIRS"
+    if test "x$HAVE_ST_EGL" = xyes; then
+        echo "        EGL client APIs: $EGL_CLIENT_APIS"
+    fi
 else
     echo "        Gallium:         no"
 fi
@@ -1597,6 +1632,7 @@ echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
 if test "$enable_egl" = yes; then
     echo "        EGL:             $EGL_DRIVERS_DIRS"
+    echo "        EGL displays:    $EGL_DISPLAYS"
 else
     echo "        EGL:             no"
 fi

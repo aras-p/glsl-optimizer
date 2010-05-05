@@ -116,6 +116,7 @@ GALLIUM_STATE_TRACKERS_DIRS = glx vega
 
 # native displays EGL should support
 EGL_DISPLAYS = x11
+EGL_CLIENT_APIS = $(GL_LIB)
 
 # Library dependencies
 #EXTRA_LIB_PATH ?=
