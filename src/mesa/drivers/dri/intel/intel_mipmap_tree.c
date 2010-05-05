@@ -116,17 +116,16 @@ intel_miptree_create(struct intel_context *intel,
 		     GLboolean expect_accelerated_upload)
 {
    struct intel_mipmap_tree *mt;
-   uint32_t tiling;
+   uint32_t tiling = I915_TILING_NONE;
 
    if (intel->use_texture_tiling && compress_byte == 0) {
       if (intel->gen >= 4 &&
 	  (base_format == GL_DEPTH_COMPONENT ||
 	   base_format == GL_DEPTH_STENCIL_EXT))
 	 tiling = I915_TILING_Y;
-      else
+      else if (width0 >= 64)
 	 tiling = I915_TILING_X;
-   } else
-      tiling = I915_TILING_NONE;
+   }
 
    mt = intel_miptree_create_internal(intel, target, internal_format,
 				      first_level, last_level, width0,
