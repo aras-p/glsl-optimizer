@@ -26,7 +26,7 @@ int main( int argc, char *argv[] )
    struct pipe_context *pipe;
    struct pipe_surface *surf;
    struct pipe_framebuffer_state fb;
-   struct pipe_texture *tex, templat;
+   struct pipe_resource *tex, templat;
    void *window = NULL;
    float clear_color[4] = {1,0,1,1};
    int i;

@@ -1,5 +1,8 @@
 Import('*')
 
+if 'graw-xlib' not in env['winsys']:
+    Return()
+
 env = env.Clone()
 
 env.Prepend(LIBPATH = [graw.dir])

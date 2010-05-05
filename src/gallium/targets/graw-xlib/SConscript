@@ -8,6 +8,8 @@ if env['platform'] != 'linux':
 
 env = env.Clone()
 
+env.Tool('x11')
+
 env.Prepend(LIBS = [
     ws_xlib,
     trace,
@@ -40,11 +42,9 @@ env.Prepend(LIBS = [gallium])
 
 # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
 graw = env.SharedLibrary(
-    target ='graw',
+    target ='#lib/graw',
     source = sources,
 )
-
-env.InstallSharedLibrary(graw, version=(1, 0))
 
 graw = env.FindIxes(graw, 'SHLIBPREFIX', 'SHLIBSUFFIX')
 

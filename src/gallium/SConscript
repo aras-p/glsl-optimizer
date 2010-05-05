@@ -25,4 +25,4 @@ SConscript('targets/SConscript')
 
 if platform != 'embedded':
 	SConscript('tests/unit/SConscript')
-	#SConscript('tests/raw/SConscript')
+	SConscript('tests/raw/SConscript')
