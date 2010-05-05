@@ -42,9 +42,11 @@ env.Prepend(LIBS = [gallium])
 
 # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
 graw = env.SharedLibrary(
-    target ='#lib/graw',
+    target ='graw',
     source = sources,
 )
+
+env.InstallSharedLibrary(graw, version=(1, 0))
 
 graw = env.FindIxes(graw, 'SHLIBPREFIX', 'SHLIBSUFFIX')
 
