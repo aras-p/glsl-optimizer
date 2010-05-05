@@ -950,7 +950,7 @@ validate_spot_exp_table( struct gl_light *l )
 
    for (i = EXP_TABLE_SIZE - 1; i > 0 ;i--) {
       if (clamp == 0) {
-	 tmp = _mesa_pow(i / (GLdouble) (EXP_TABLE_SIZE - 1), exponent);
+	 tmp = pow(i / (GLdouble) (EXP_TABLE_SIZE - 1), exponent);
 	 if (tmp < FLT_MIN * 100.0) {
 	    tmp = 0.0;
 	    clamp = 1;
@@ -1012,7 +1012,7 @@ validate_shine_table( GLcontext *ctx, GLuint side, GLfloat shininess )
             GLdouble t, x = j / (GLfloat) (SHINE_TABLE_SIZE - 1);
             if (x < 0.005) /* underflow check */
                x = 0.005;
-            t = _mesa_pow(x, shininess);
+            t = pow(x, shininess);
 	    if (t > 1e-20)
 	       m[j] = (GLfloat) t;
 	    else

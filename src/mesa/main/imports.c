@@ -486,15 +486,6 @@ _mesa_inv_sqrtf(float n)
 #endif
 }
 
-
-/** Wrapper around pow() */
-double
-_mesa_pow(double x, double y)
-{
-   return pow(x, y);
-}
-
-
 /**
  * Find the first bit set in a word.
  */

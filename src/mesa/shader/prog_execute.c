@@ -876,7 +876,7 @@ _mesa_execute_program(GLcontext * ctx,
                 * result.z = result.x * APPX(result.y)
                 * We do what the ARB extension says.
                 */
-               q[2] = (GLfloat) _mesa_pow(2.0, t[0]);
+               q[2] = (GLfloat) pow(2.0, t[0]);
             }
             q[1] = t[0] - floor_t0;
             q[3] = 1.0F;
@@ -887,7 +887,7 @@ _mesa_execute_program(GLcontext * ctx,
          {
             GLfloat a[4], result[4], val;
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            val = (GLfloat) _mesa_pow(2.0, a[0]);
+            val = (GLfloat) pow(2.0, a[0]);
             /*
             if (IS_INF_OR_NAN(val))
                val = 1.0e10;
@@ -1009,7 +1009,7 @@ _mesa_execute_program(GLcontext * ctx,
                if (a[1] == 0.0 && a[3] == 0.0)
                   result[2] = 1.0F;
                else
-                  result[2] = (GLfloat) _mesa_pow(a[1], a[3]);
+                  result[2] = (GLfloat) pow(a[1], a[3]);
             }
             else {
                result[2] = 0.0F;
@@ -1336,7 +1336,7 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_vector1(&inst->SrcReg[0], machine, a);
             fetch_vector1(&inst->SrcReg[1], machine, b);
             result[0] = result[1] = result[2] = result[3]
-               = (GLfloat) _mesa_pow(a[0], b[0]);
+               = (GLfloat) pow(a[0], b[0]);
             store_vector4(inst, machine, result);
          }
          break;

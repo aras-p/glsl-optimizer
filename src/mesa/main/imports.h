@@ -548,9 +548,6 @@ _mesa_inv_sqrtf(float x);
 extern void
 _mesa_init_sqrt_table(void);
 
-extern double
-_mesa_pow(double x, double y);
-
 extern int
 _mesa_ffs(int32_t i);
 

@@ -210,7 +210,7 @@ gamma_adjust( GLfloat gamma, GLint value, GLint max )
    }
    else {
       double x = (double) value / (double) max;
-      return IROUND_POS((GLfloat) max * _mesa_pow(x, 1.0F/gamma));
+      return IROUND_POS((GLfloat) max * pow(x, 1.0F/gamma));
    }
 }
 
@@ -846,19 +846,19 @@ setup_8bit_hpcr(XMesaVisual v)
 
    g = 1.0 / v->RedGamma;
    for (i=0; i<256; i++) {
-      GLint red = IROUND_POS(255.0 * _mesa_pow( hpcr_rgbTbl[0][i]/255.0, g ));
+      GLint red = IROUND_POS(255.0 * pow( hpcr_rgbTbl[0][i]/255.0, g ));
       v->hpcr_rgbTbl[0][i] = CLAMP( red, 16, 239 );
    }
 
    g = 1.0 / v->GreenGamma;
    for (i=0; i<256; i++) {
-      GLint green = IROUND_POS(255.0 * _mesa_pow( hpcr_rgbTbl[1][i]/255.0, g ));
+      GLint green = IROUND_POS(255.0 * pow( hpcr_rgbTbl[1][i]/255.0, g ));
       v->hpcr_rgbTbl[1][i] = CLAMP( green, 16, 239 );
    }
 
    g = 1.0 / v->BlueGamma;
    for (i=0; i<256; i++) {
-      GLint blue = IROUND_POS(255.0 * _mesa_pow( hpcr_rgbTbl[2][i]/255.0, g ));
+      GLint blue = IROUND_POS(255.0 * pow( hpcr_rgbTbl[2][i]/255.0, g ));
       v->hpcr_rgbTbl[2][i] = CLAMP( blue, 32, 223 );
    }
    v->undithered_pf = PF_HPCR;  /* can't really disable dithering for now */

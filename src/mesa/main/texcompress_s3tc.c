@@ -78,7 +78,7 @@ nonlinear_to_linear(GLubyte cs8)
             table[i] = cs / 12.92f;
          }
          else {
-            table[i] = (GLfloat) _mesa_pow((cs + 0.055) / 1.055, 2.4);
+            table[i] = (GLfloat) pow((cs + 0.055) / 1.055, 2.4);
          }
       }
       tableReady = GL_TRUE;

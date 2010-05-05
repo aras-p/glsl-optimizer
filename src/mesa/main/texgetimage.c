@@ -224,7 +224,7 @@ linear_to_nonlinear(GLfloat cl)
       cs = 12.92f * cl;
    }
    else {
-      cs = (GLfloat)(1.055 * _mesa_pow(cl, 0.41666) - 0.055);
+      cs = (GLfloat)(1.055 * pow(cl, 0.41666) - 0.055);
    }
    return cs;
 }
