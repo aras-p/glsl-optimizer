@@ -653,6 +653,21 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
 
 
 /**
+ * Invoke a callback function on each EGL search path.
+ *
+ * The first argument of the callback function is the name of the search path.
+ * The second argument is the length of the name.
+ */
+void
+_eglSearchPathForEach(EGLBoolean (*callback)(const char *, size_t, void *),
+                      void *callback_data)
+{
+   const char *search_path = _eglGetSearchPath();
+   _eglPreloadForEach(search_path, callback, callback_data);
+}
+
+
+/**
  * Set the probe cache at the given key.
  *
  * A key, instead of a _EGLDriver, is used to allow the probe cache to be share

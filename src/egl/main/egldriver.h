@@ -89,6 +89,11 @@ _eglInitDriverFallbacks(_EGLDriver *drv);
 
 
 PUBLIC void
+_eglSearchPathForEach(EGLBoolean (*callback)(const char *, size_t, void *),
+                      void *callback_data);
+
+
+PUBLIC void
 _eglSetProbeCache(EGLint key, const void *val);
 
 
