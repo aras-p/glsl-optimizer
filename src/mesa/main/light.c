@@ -162,7 +162,7 @@ _mesa_light(GLcontext *ctx, GLuint lnum, GLenum pname, const GLfloat *params)
          return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       light->SpotCutoff = params[0];
-      light->_CosCutoffNeg = (GLfloat) (_mesa_cos(light->SpotCutoff * DEG2RAD));
+      light->_CosCutoffNeg = (GLfloat) (cos(light->SpotCutoff * DEG2RAD));
       if (light->_CosCutoffNeg < 0)
          light->_CosCutoff = 0;
       else

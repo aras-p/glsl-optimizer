@@ -762,7 +762,7 @@ _mesa_execute_program(GLcontext * ctx,
             GLfloat a[4], result[4];
             fetch_vector1(&inst->SrcReg[0], machine, a);
             result[0] = result[1] = result[2] = result[3]
-               = (GLfloat) _mesa_cos(a[0]);
+               = (GLfloat) cos(a[0]);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1393,8 +1393,8 @@ _mesa_execute_program(GLcontext * ctx,
          {
             GLfloat a[4], result[4];
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            result[0] = (GLfloat) _mesa_cos(a[0]);
-            result[1] = (GLfloat) _mesa_sin(a[0]);
+            result[0] = (GLfloat) cos(a[0]);
+            result[1] = (GLfloat) sin(a[0]);
             result[2] = 0.0;    /* undefined! */
             result[3] = 0.0;    /* undefined! */
             store_vector4(inst, machine, result);
@@ -1465,7 +1465,7 @@ _mesa_execute_program(GLcontext * ctx,
             GLfloat a[4], result[4];
             fetch_vector1(&inst->SrcReg[0], machine, a);
             result[0] = result[1] = result[2] = result[3]
-               = (GLfloat) _mesa_sin(a[0]);
+               = (GLfloat) sin(a[0]);
             store_vector4(inst, machine, result);
          }
          break;

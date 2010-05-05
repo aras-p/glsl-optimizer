@@ -522,21 +522,6 @@ extern void
 _mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
 
 extern double
-_mesa_sin(double a);
-
-extern float
-_mesa_sinf(float a);
-
-extern double
-_mesa_cos(double a);
-
-extern float
-_mesa_asinf(float x);
-
-extern float
-_mesa_atanf(float x);
-
-extern double
 _mesa_sqrtd(double x);
 
 extern float
