@@ -17,23 +17,17 @@
 #include "main/bufferobj.h"
 #include "main/drawtex.h"
 #include "main/macros.h"
-#include "main/state.h"
-#include "main/texformat.h"
 #include "shader/program.h"
-#include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 
 #include "st_context.h"
 #include "st_atom.h"
-#include "st_atom_constbuf.h"
-#include "st_draw.h"
 #include "st_cb_drawtex.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "pipe/p_shader_tokens.h"
-#include "util/u_tile.h"
 #include "util/u_draw_quad.h"
 #include "util/u_simple_shaders.h"
 
