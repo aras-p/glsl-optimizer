@@ -32,7 +32,6 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 #include "draw/draw_vs.h"
-#include "draw/draw_gs.h"
 #include "draw/draw_llvm.h"
 
 
