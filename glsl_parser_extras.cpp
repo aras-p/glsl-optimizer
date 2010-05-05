@@ -39,6 +39,7 @@
 #include "ir_dead_code.h"
 #include "ir_function_inlining.h"
 #include "ir_if_simplification.h"
+#include "ir_optimization.h"
 #include "ir_print_visitor.h"
 #include "ir_reader.h"
 
@@ -788,6 +789,7 @@ main(int argc, char **argv)
 	 progress = do_function_inlining(&instructions) || progress;
 	 progress = do_if_simplification(&instructions) || progress;
 	 progress = do_copy_propagation(&instructions) || progress;
+	 progress = do_dead_code_local(&instructions) || progress;
 	 progress = do_dead_code_unlinked(&instructions) || progress;
 
 	 /* Constant folding */

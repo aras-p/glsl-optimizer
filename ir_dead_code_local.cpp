@@ -1,0 +1,222 @@
+/*
+ * Copyright © 2010 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file ir_dead_code_local.cpp
+ *
+ * Eliminates local dead assignments from the code.
+ *
+ * This operates on basic blocks, tracking assignments and finding if
+ * they're used before the variable is completely reassigned.
+ *
+ * Compare this to ir_dead_code.cpp, which operates globally looking
+ * for assignments to variables that are never read.
+ */
+
+#include <stdio.h>
+#include "ir.h"
+#include "ir_visitor.h"
+#include "ir_print_visitor.h"
+#include "ir_basic_block.h"
+#include "ir_visit_tree.h"
+#include "ir_optimization.h"
+#include "glsl_types.h"
+
+static bool debug = false;
+
+class assignment_entry : public exec_node
+{
+public:
+   assignment_entry(ir_variable *lhs, ir_instruction *ir)
+   {
+      assert(lhs);
+      assert(ir);
+      this->lhs = lhs;
+      this->ir = ir;
+   }
+
+   ir_variable *lhs;
+   ir_instruction *ir;
+};
+
+static void
+ir_kill_for_derefs_callback(ir_instruction *ir, void *data)
+{
+   exec_list *assignments = (exec_list *)data;
+   ir_variable *var = ir->as_variable();
+
+   if (!var)
+      return;
+
+   foreach_iter(exec_list_iterator, iter, *assignments) {
+      assignment_entry *entry = (assignment_entry *)iter.get();
+
+      if (entry->lhs == var) {
+	 if (debug)
+	    printf("kill %s\n", entry->lhs->name);
+	 entry->remove();
+      }
+   }
+}
+
+static void
+kill_for_derefs(ir_instruction *ir, exec_list *assignments)
+{
+   ir_visit_tree(ir, ir_kill_for_derefs_callback, assignments);
+}
+
+/**
+ * Adds an entry to the available copy list if it's a plain assignment
+ * of a variable to a variable.
+ */
+static bool
+process_assignment(ir_assignment *ir, exec_list *assignments)
+{
+   ir_variable *var = NULL;
+   bool progress = false;
+   ir_instruction *current;
+
+   /* Kill assignment entries for things used to produce this assignment. */
+   kill_for_derefs(ir->rhs, assignments);
+   if (ir->condition) {
+      kill_for_derefs(ir->condition, assignments);
+   }
+
+   /* Walk down the dereference chain to find the variable at the end
+    * of it that we're actually modifying.  Kill assignment enties used as
+    * array indices, too.
+    */
+   for (current = ir->lhs; current != NULL;) {
+      ir_swizzle *swiz;
+      ir_dereference *deref;
+
+      if ((swiz = current->as_swizzle())) {
+	 current = swiz->val;
+      } else if ((deref = current->as_dereference())) {
+	 if (deref->mode == ir_dereference::ir_reference_array)
+	    kill_for_derefs(deref->selector.array_index, assignments);
+	 current = deref->var;
+      } else {
+	 var = current->as_variable();
+
+	 current = NULL;
+	 break;
+      }
+   }
+
+   assert(var);
+
+   bool always_assign = true;
+   if (ir->condition) {
+      ir_constant *condition = ir->condition->as_constant();
+      if (!condition || !condition->value.b[0])
+	 always_assign = false;
+   }
+
+   /* Now, check if we did a whole-variable assignment. */
+   ir_dereference *lhs_deref = ir->lhs->as_dereference();
+   if (always_assign &&
+       lhs_deref &&
+       lhs_deref->mode == ir_dereference::ir_reference_variable) {
+      /* We did a whole-variable assignment.  So, any instruction in
+       * the assignment list with the same LHS is dead.
+       */
+      if (debug)
+	 printf("looking for %s to remove\n", var->name);
+      foreach_iter(exec_list_iterator, iter, *assignments) {
+	 assignment_entry *entry = (assignment_entry *)iter.get();
+
+	 if (entry->lhs == var) {
+	    if (debug)
+	       printf("removing %s\n", var->name);
+	    entry->ir->remove();
+	    entry->remove();
+	    progress = true;
+	 }
+      }
+   }
+
+   /* Add this instruction to the assignment list. */
+   assignment_entry *entry = new assignment_entry(var, ir);
+   assignments->push_tail(entry);
+
+   if (debug) {
+      printf("add %s\n", var->name);
+
+      printf("current entries\n");
+      foreach_iter(exec_list_iterator, iter, *assignments) {
+	 assignment_entry *entry = (assignment_entry *)iter.get();
+
+	 printf("    %s\n", entry->lhs->name);
+      }
+   }
+
+   return progress;
+}
+
+static void
+dead_code_local_basic_block(ir_instruction *first,
+			     ir_instruction *last,
+			     void *data)
+{
+   ir_instruction *ir, *ir_next;
+   /* List of avaialble_copy */
+   exec_list assignments;
+   bool *out_progress = (bool *)data;
+   bool progress = false;
+
+   /* Safe looping, since process_assignment */
+   for (ir = first, ir_next = (ir_instruction *)first->next;;
+	ir = ir_next, ir_next = (ir_instruction *)ir->next) {
+      ir_assignment *ir_assign = ir->as_assignment();
+
+      if (debug) {
+	 ir_print_visitor v;
+	 ir->accept(&v);
+	 printf("\n");
+      }
+
+      if (ir_assign) {
+	 progress = process_assignment(ir_assign, &assignments) || progress;
+      } else {
+	 kill_for_derefs(ir, &assignments);
+      }
+
+      if (ir == last)
+	 break;
+   }
+   *out_progress = progress;
+}
+
+/**
+ * Does a copy propagation pass on the code present in the instruction stream.
+ */
+bool
+do_dead_code_local(exec_list *instructions)
+{
+   bool progress = false;
+
+   call_for_basic_blocks(instructions, dead_code_local_basic_block, &progress);
+
+   return progress;
+}

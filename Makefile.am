@@ -37,10 +37,13 @@ glsl_SOURCES = \
 	ir_copy_propagation.cpp \
 	ir_copy_propagation.h \
 	ir_dead_code.cpp \
+	ir_dead_code.h \
+	ir_dead_code_local.cpp \
 	ir_expression_flattening.cpp \
 	ir_function_can_inline.cpp \
 	ir_function_inlining.cpp \
 	ir_if_simplification.cpp \
+	ir_optimization.h \
 	ir_reader.cpp s_expression.cpp \
 	ir_visit_tree.cpp \
 	ir_visit_tree.h
