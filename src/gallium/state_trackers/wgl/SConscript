@@ -22,6 +22,7 @@ sources = [
     'stw_device.c',
     'stw_ext_extensionsstring.c',
     'stw_ext_gallium.c',
+    'stw_ext_pbuffer.c',
     'stw_ext_pixelformat.c',
     'stw_ext_swapinterval.c',
     'stw_framebuffer.c',

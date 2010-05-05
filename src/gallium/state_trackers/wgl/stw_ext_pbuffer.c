@@ -1,7 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2009 VMware, Inc.
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,7 +18,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -34,27 +33,48 @@
 #include <GL/wglext.h>
 
 
-static const char *stw_extension_string = 
-   "WGL_ARB_extensions_string "
-   "WGL_ARB_multisample "
-   "WGL_ARB_pbuffer "
-   "WGL_ARB_pixel_format "
-/*   "WGL_EXT_swap_interval " */
-   "WGL_EXT_extensions_string";
-
-
-WINGDIAPI const char * APIENTRY
-wglGetExtensionsStringARB(
-   HDC hdc )
+HPBUFFERARB WINAPI
+wglCreatePbufferARB(HDC hDC,
+                    int iPixelFormat,
+                    int iWidth,
+                    int iHeight,
+                    const int *piAttribList)
 {
-   (void) hdc;
-
-   return stw_extension_string;
+   /* FIXME */
+   return NULL;
 }
 
 
-WINGDIAPI const char * APIENTRY
-wglGetExtensionsStringEXT( void )
+HDC WINAPI
+wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
 {
-   return stw_extension_string;
+   /* FIXME */
+   return NULL;
+}
+
+
+int WINAPI
+wglReleasePbufferDCARB(HPBUFFERARB hPbuffer,
+                       HDC hDC)
+{
+   /* FIXME */
+   return 0;
+}
+
+
+BOOL WINAPI
+wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
+{
+   /* FIXME */
+   return FALSE;
+}
+
+
+BOOL WINAPI
+wglQueryPbufferARB(HPBUFFERARB hPbuffer,
+                   int iAttribute,
+                   int *piValue)
+{
+   /* FIXME */
+   return FALSE;
 }
