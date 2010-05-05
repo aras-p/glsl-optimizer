@@ -69,6 +69,16 @@ fpclassify(double x)
             return FP_NAN;
     }
 }
+
+#elif !defined(_XOPEN_SOURCE) || _XOPEN_SOURCE < 600
+
+enum {FP_NAN, FP_INFINITE, FP_ZERO, FP_SUBNORMAL, FP_NORMAL}
+fpclassify(double x)
+{
+   /* XXX do something better someday */
+   return FP_NORMAL;
+}
+
 #endif
 
 extern GLbitfield GL_APIENTRY _es_QueryMatrixxOES(GLfixed mantissa[16], GLint exponent[16]);
