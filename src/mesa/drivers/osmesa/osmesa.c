@@ -1061,7 +1061,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    struct dd_function_table functions;
    GLint rind, gind, bind, aind;
    GLint redBits = 0, greenBits = 0, blueBits = 0, alphaBits =0;
-   GLenum type = CHAN_TYPE;
 
    rind = gind = bind = aind = 0;
    if (format==OSMESA_RGBA) {
