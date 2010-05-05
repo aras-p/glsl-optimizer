@@ -274,6 +274,7 @@ lp_scene_bin_command( struct lp_scene *scene,
          /* out of memory - simply ignore this command (for now) */
          return;
       }
+      assert(tail->count == 0);
    }
 
    {
