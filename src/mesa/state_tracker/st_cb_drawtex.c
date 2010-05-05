@@ -42,7 +42,6 @@
 
 struct cached_shader
 {
-   //struct pipe_shader_state shader;
    void *handle;
 
    uint num_attribs;
