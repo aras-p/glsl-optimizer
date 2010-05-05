@@ -50,10 +50,6 @@
 #include "renderbuffer.h"
 
 
-/* 32-bit color index format.  Not a public format. */
-#define COLOR_INDEX32 0x424243
-
-
 /*
  * Routines for get/put values in common buffer formats follow.
  * Someday add support for arbitrary row stride to make them more
@@ -1088,21 +1084,6 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutValues = put_values_uint;
       rb->PutMonoValues = put_mono_values_uint;
       pixelSize = sizeof(GLuint);
-      break;
-   case GL_COLOR_INDEX8_EXT:
-   case GL_COLOR_INDEX16_EXT:
-   case COLOR_INDEX32:
-      rb->Format = MESA_FORMAT_CI8;
-      rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_ubyte;
-      rb->GetRow = get_row_ubyte;
-      rb->GetValues = get_values_ubyte;
-      rb->PutRow = put_row_ubyte;
-      rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_ubyte;
-      rb->PutValues = put_values_ubyte;
-      rb->PutMonoValues = put_mono_values_ubyte;
-      pixelSize = sizeof(GLubyte);
       break;
    default:
       _mesa_problem(ctx, "Bad internalFormat in _mesa_soft_renderbuffer_storage");
