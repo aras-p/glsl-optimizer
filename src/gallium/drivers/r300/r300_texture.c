@@ -925,6 +925,7 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
         fprintf(stderr, "r300: texture_create: "
                 "Got invalid texture dimensions: %ix%ix%i\n",
                 base->width0, base->height0, base->depth0);
+        FREE(tex);
         return NULL;
     }
 
