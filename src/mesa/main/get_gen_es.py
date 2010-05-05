@@ -584,6 +584,7 @@ def EmitGetFunction(stateVars, returnType, API):
 		function = "_es%d_GetFixedv" % API
 	else:
 		abort()
+	mesa_function = "_mesa_" + function[5:]
 
 	print "void GLAPIENTRY"
 	print "%s( GLenum pname, %s *params )" % (function, strType)
@@ -634,11 +635,20 @@ def EmitGetFunction(stateVars, returnType, API):
 	print "   }"
 	print "}"
 	print ""
+
+	print "#if !FEATURE_GL"
+	print "/* define _mesa_ version for internal use */"
+	print "void GLAPIENTRY"
+	print "%s( GLenum pname, %s *params )" % (mesa_function, strType)
+	print "{"
+	print "   %s(pname, params);" % (function)
+	print "}"
+	print "#endif /* !FEATURE_GL */"
 	return
 
 
 
-def EmitHeader():
+def EmitHeader(API):
 	"""Print the get.c file header."""
 	print """
 /***
@@ -656,8 +666,11 @@ def EmitHeader():
 #include "main/state.h"
 #include "main/texcompress.h"
 #include "main/framebuffer.h"
+"""
 
+	print "#if FEATURE_ES%d" % (API)
 
+	print """
 /* ES1 tokens that should be in gl.h but aren't */
 #define GL_MAX_ELEMENTS_INDICES             0x80E9
 #define GL_MAX_ELEMENTS_VERTICES            0x80E8
@@ -778,12 +791,15 @@ static GLenum compressed_formats[] = {
 
 
 def EmitAll(stateVars, API):
-	EmitHeader()
+	EmitHeader(API)
 	EmitGetFunction(stateVars, GLboolean, API)
 	EmitGetFunction(stateVars, GLfloat, API)
 	EmitGetFunction(stateVars, GLint, API)
 	if API == 1:
 		EmitGetFunction(stateVars, GLfixed, API)
+
+        # close the #if emitted in EmitHeader
+	print "#endif /* FEATURE_ES%d */" % (API)
 
 
 def main(args):

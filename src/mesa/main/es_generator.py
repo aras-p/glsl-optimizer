@@ -190,7 +190,10 @@ print """/* DO NOT EDIT *************************************************
 print """
 #include "%s"
 #include "%s"
-""" % (versionHeader, versionExtHeader)
+#include "main/mfeatures.h"
+
+#if FEATURE_%s
+""" % (versionHeader, versionExtHeader, shortname.upper())
 
 # Everyone needs these types.
 print """
@@ -211,15 +214,19 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 #include "main/api_exec.h"
 #include "main/remap.h"
 
+/* cannot include main/dispatch.h here */
 #ifdef IN_DRI_DRIVER
 #define _GLAPI_USE_REMAP_TABLE
 #endif
-
 #include "es/glapi/glapi-%s/glapi/glapitable.h"
 #include "es/glapi/glapi-%s/glapi/glapioffsets.h"
 #include "es/glapi/glapi-%s/glapi/glapidispatch.h"
 
 #if FEATURE_remap_table
+
+#if !FEATURE_GL
+int driDispatchRemapTable[driDispatchRemapTable_size];
+#endif
 
 #define need_MESA_remap_table
 
@@ -728,3 +735,6 @@ for func in keys:
 print ""
 print "   return exec;"
 print "}"
+
+print """
+#endif /* FEATURE_%s */""" % (shortname.upper())
