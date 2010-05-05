@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include "ir.h"
 #include "ir_visitor.h"
+#include "ir_print_visitor.h"
 #include "ir_basic_block.h"
 #include "ir_copy_propagation.h"
 #include "glsl_types.h"
@@ -226,23 +227,33 @@ propagate_copies(ir_instruction *ir, exec_list *acp)
 static void
 kill_invalidated_copies(ir_assignment *ir, exec_list *acp)
 {
-   ir_dereference *lhs_deref = ir->lhs->as_dereference();
+   ir_instruction *current = ir->lhs;
 
-   /* Only handle simple dereferences for now. */
-   if (lhs_deref &&
-       lhs_deref->mode == ir_dereference::ir_reference_variable) {
-      ir_variable *var = lhs_deref->var->as_variable();
+   /* Walk down the dereference chain to find the variable at the end
+    * of it that we're actually modifying.
+    */
+   while (current != NULL) {
+      ir_swizzle *swiz;
+      ir_dereference *deref;
 
-      foreach_iter(exec_list_iterator, iter, *acp) {
-	 acp_entry *entry = (acp_entry *)iter.get();
+      if ((swiz = current->as_swizzle())) {
+	 current = swiz->val;
+      } else if ((deref = current->as_dereference())) {
+	 current = deref->var;
+      } else {
+	 ir_variable *var = current->as_variable();
+	 assert(var);
 
-	 if (entry->lhs == var || entry->rhs == var) {
-	    entry->remove();
+	 foreach_iter(exec_list_iterator, iter, *acp) {
+	    acp_entry *entry = (acp_entry *)iter.get();
+
+	    if (entry->lhs == var || entry->rhs == var) {
+	       entry->remove();
+	    }
 	 }
+	 current = NULL;
+	 break;
       }
-   } else {
-      /* FINISHME: Only clear out the entries we overwrote here. */
-      acp->make_empty();
    }
 }
 
