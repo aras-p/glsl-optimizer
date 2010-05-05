@@ -5,6 +5,7 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_format_s3tc.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -247,6 +248,8 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 	pscreen->fence_reference = nouveau_screen_fence_ref;
 	pscreen->fence_signalled = nouveau_screen_fence_signalled;
 	pscreen->fence_finish = nouveau_screen_fence_finish;
+
+	util_format_s3tc_init();
 
 	return 0;
 }

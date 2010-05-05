@@ -1,5 +1,6 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
+#include "util/u_format_s3tc.h"
 #include "util/u_simple_screen.h"
 
 #include "nouveau/nouveau_screen.h"
@@ -145,6 +146,17 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 		}
 	} else {
 		switch (format) {
+		if (tex_usage & PIPE_BIND_SAMPLER_VIEW) {
+			switch (format) {
+			case PIPE_FORMAT_DXT1_RGB:
+			case PIPE_FORMAT_DXT1_RGBA:
+			case PIPE_FORMAT_DXT3_RGBA:
+			case PIPE_FORMAT_DXT5_RGBA:
+				return util_format_s3tc_enabled;
+			default:
+				break;
+			}
+		}
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_B5G5R5A1_UNORM:
@@ -156,10 +168,6 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_L8A8_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
 		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-		case PIPE_FORMAT_DXT1_RGB:
-		case PIPE_FORMAT_DXT1_RGBA:
-		case PIPE_FORMAT_DXT3_RGBA:
-		case PIPE_FORMAT_DXT5_RGBA:
 			return TRUE;
 		/* TODO: does nv30 support this? */
 		case PIPE_FORMAT_R16_SNORM:

@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
 
 #include "nv50_context.h"
@@ -60,6 +61,17 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 			break;
 		}
 	} else {
+		if (tex_usage & PIPE_BIND_SAMPLER_VIEW) {
+			switch (format) {
+			case PIPE_FORMAT_DXT1_RGB:
+			case PIPE_FORMAT_DXT1_RGBA:
+			case PIPE_FORMAT_DXT3_RGBA:
+			case PIPE_FORMAT_DXT5_RGBA:
+				return util_format_s3tc_enabled;
+			default:
+				break;
+			}
+		}
 		switch (format) {
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
@@ -72,10 +84,6 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_A8_UNORM:
 		case PIPE_FORMAT_I8_UNORM:
 		case PIPE_FORMAT_L8A8_UNORM:
-		case PIPE_FORMAT_DXT1_RGB:
-		case PIPE_FORMAT_DXT1_RGBA:
-		case PIPE_FORMAT_DXT3_RGBA:
-		case PIPE_FORMAT_DXT5_RGBA:
 		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		case PIPE_FORMAT_Z32_FLOAT:
