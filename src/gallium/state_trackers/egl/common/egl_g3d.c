@@ -50,8 +50,8 @@ egl_g3d_init_st(_EGLDriver *drv)
    if (gdrv->api_mask)
       return;
 
+   egl_g3d_init_st_apis(gdrv->stapis);
    for (i = 0; i < ST_API_COUNT; i++) {
-      gdrv->stapis[i] = egl_g3d_create_st_api(i);
       if (gdrv->stapis[i])
          gdrv->api_mask |= egl_g3d_st_api_bit(i);
    }
@@ -581,13 +581,8 @@ static void
 egl_g3d_unload(_EGLDriver *drv)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   EGLint i;
 
-   for (i = 0; i < ST_API_COUNT; i++) {
-      if (gdrv->stapis[i])
-         gdrv->stapis[i]->destroy(gdrv->stapis[i]);
-   }
-
+   egl_g3d_destroy_st_apis();
    egl_g3d_destroy_probe(drv, NULL);
    FREE(gdrv);
 }
