@@ -205,8 +205,14 @@ static void setup_tri_coefficients( struct lp_setup_context *setup,
 
       switch (setup->fs.input[slot].interp) {
       case LP_INTERP_CONSTANT:
-         for (i = 0; i < NUM_CHANNELS; i++)
-            constant_coef(setup, tri, slot+1, v3[vert_attr][i], i);
+         if (setup->flatshade_first) {
+            for (i = 0; i < NUM_CHANNELS; i++)
+               constant_coef(setup, tri, slot+1, v1[vert_attr][i], i);
+         }
+         else {
+            for (i = 0; i < NUM_CHANNELS; i++)
+               constant_coef(setup, tri, slot+1, v3[vert_attr][i], i);
+         }
          break;
 
       case LP_INTERP_LINEAR:
