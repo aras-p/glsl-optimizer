@@ -22,9 +22,14 @@
  */
 
 /**
- * \file ir_dead_code.cpp
+ * \file ir_copy_propagation.cpp
  *
- * Eliminates dead assignments and variable declarations from the code.
+ * Moves usage of recently-copied variables to the previous copy of
+ * the variable within basic blocks.
+ *
+ * This should reduce the number of MOV instructions in the generated
+ * programs unless copy propagation is also done on the LIR, and may
+ * help anyway by triggering other optimizations that live in the HIR.
  */
 
 #include <stdio.h>
