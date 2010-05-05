@@ -78,7 +78,6 @@ if env['platform'] != 'winddk':
 		'main/polygon.c',
 		'main/queryobj.c',
 		'main/rastpos.c',
-		'main/rbadaptors.c',
 		'main/readpix.c',
 		'main/remap.c',
 		'main/renderbuffer.c',

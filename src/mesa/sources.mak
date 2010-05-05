@@ -64,7 +64,6 @@ MAIN_SOURCES = \
 	main/queryobj.c \
 	main/querymatrix.c \
 	main/rastpos.c \
-	main/rbadaptors.c \
 	main/readpix.c \
 	main/remap.c \
 	main/renderbuffer.c \
