@@ -42,7 +42,9 @@
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
-
+#ifndef I915
+#include "brw_state.h"
+#endif
 
 #define FILE_DEBUG_FLAG DEBUG_FBO
 
@@ -280,7 +282,8 @@ intel_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 
 void
-intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
+intel_renderbuffer_set_region(struct intel_context *intel,
+			      struct intel_renderbuffer *rb,
 			      struct intel_region *region)
 {
    struct intel_region *old;
@@ -288,6 +291,12 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
    old = rb->region;
    rb->region = NULL;
    intel_region_reference(&rb->region, region);
+#ifndef I915
+   if (old) {
+      brw_state_cache_bo_delete(&brw_context(&intel->ctx)->surface_cache,
+				old->buffer);
+   }
+#endif
    intel_region_release(&old);
 }
 

@@ -167,7 +167,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
    irb = intel_create_renderbuffer(MESA_FORMAT_ARGB8888);
    irb->Base.Width = depth_irb->Base.Width;
    irb->Base.Height = depth_irb->Base.Height;
-   intel_renderbuffer_set_region(irb, depth_irb->region);
+   intel_renderbuffer_set_region(intel, irb, depth_irb->region);
 
    /* Create a name for our renderbuffer, which lets us use other mesa
     * rb functions for convenience.

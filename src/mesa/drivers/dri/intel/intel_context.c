@@ -362,7 +362,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        if (buffers[i].attachment == __DRI_BUFFER_DEPTH)
 	  depth_region = region;
 
-       intel_renderbuffer_set_region(rb, region);
+       intel_renderbuffer_set_region(intel, rb, region);
        intel_region_release(&region);
 
        if (buffers[i].attachment == __DRI_BUFFER_DEPTH_STENCIL) {
@@ -374,7 +374,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 		   continue;
 
 	     intel_region_reference(&stencil_region, region);
-	     intel_renderbuffer_set_region(rb, stencil_region);
+	     intel_renderbuffer_set_region(intel, rb, stencil_region);
 	     intel_region_release(&stencil_region);
 	  }
        }

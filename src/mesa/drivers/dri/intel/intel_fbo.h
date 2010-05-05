@@ -82,7 +82,8 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, int attIndex)
 
 
 extern void
-intel_renderbuffer_set_region(struct intel_renderbuffer *irb,
+intel_renderbuffer_set_region(struct intel_context *intel,
+			      struct intel_renderbuffer *irb,
 			      struct intel_region *region);
 
 
