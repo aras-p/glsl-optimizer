@@ -151,9 +151,8 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       screen->context_ptr_type = LLVMPointerType(context_type, 0);
    }
 
-#ifdef DEBUG
-   LLVMDumpModule(screen->module);
-#endif
+   if (LP_DEBUG & DEBUG_JIT)
+      LLVMDumpModule(screen->module);
 }
 
 
