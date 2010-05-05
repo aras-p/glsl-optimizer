@@ -84,8 +84,10 @@ _eglutChooseConfig(void)
    renderable_type = 0x0;
    if (_eglut->api_mask & EGLUT_OPENGL_BIT)
       renderable_type |= EGL_OPENGL_BIT;
-   if (_eglut->api_mask & (EGLUT_OPENGL_ES1_BIT | EGLUT_OPENGL_ES2_BIT))
+   if (_eglut->api_mask & EGLUT_OPENGL_ES1_BIT)
       renderable_type |= EGL_OPENGL_ES_BIT;
+   if (_eglut->api_mask & EGLUT_OPENGL_ES2_BIT)
+      renderable_type |= EGL_OPENGL_ES2_BIT;
    if (_eglut->api_mask & EGLUT_OPENVG_BIT)
       renderable_type |= EGL_OPENVG_BIT;
    config_attribs[i++] = renderable_type;
