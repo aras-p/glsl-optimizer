@@ -37,7 +37,6 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
-#include "util/u_surface.h"
 #include "lp_context.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"

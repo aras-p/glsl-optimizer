@@ -30,7 +30,6 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_simple_list.h"
-#include "util/u_surface.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
 
