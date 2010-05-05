@@ -70,6 +70,10 @@ fpclassify(double x)
     }
 }
 
+#elif defined(__APPLE__)
+
+/* fpclassify is available. */
+
 #elif !defined(_XOPEN_SOURCE) || _XOPEN_SOURCE < 600
 
 enum {FP_NAN, FP_INFINITE, FP_ZERO, FP_SUBNORMAL, FP_NORMAL}
