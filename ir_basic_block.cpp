@@ -61,7 +61,9 @@ has_call_callback(ir_instruction *ir, void *data)
  */
 void call_for_basic_blocks(exec_list *instructions,
 			   void (*callback)(ir_instruction *first,
-					    ir_instruction *last))
+					    ir_instruction *last,
+					    void *data),
+			   void *data)
 {
    ir_instruction *leader = NULL;
    ir_instruction *last = NULL;
@@ -76,17 +78,17 @@ void call_for_basic_blocks(exec_list *instructions,
 	 leader = ir;
 
       if ((ir_if = ir->as_if())) {
-	 callback(leader, ir);
+	 callback(leader, ir, data);
 	 leader = NULL;
 
-	 call_for_basic_blocks(&ir_if->then_instructions, callback);
-	 call_for_basic_blocks(&ir_if->else_instructions, callback);
+	 call_for_basic_blocks(&ir_if->then_instructions, callback, data);
+	 call_for_basic_blocks(&ir_if->else_instructions, callback, data);
       } else if ((ir_loop = ir->as_loop())) {
-	 callback(leader, ir);
+	 callback(leader, ir, data);
 	 leader = NULL;
-	 call_for_basic_blocks(&ir_loop->body_instructions, callback);
+	 call_for_basic_blocks(&ir_loop->body_instructions, callback, data);
       } else if (ir->as_return() || ir->as_call()) {
-	 callback(leader, ir);
+	 callback(leader, ir, data);
 	 leader = NULL;
       } else if ((ir_function = ir->as_function())) {
 	 /* A function definition doesn't interrupt our basic block
@@ -103,7 +105,7 @@ void call_for_basic_blocks(exec_list *instructions,
 
 	    ir_sig = (ir_function_signature *)fun_iter.get();
 
-	    call_for_basic_blocks(&ir_sig->body, callback);
+	    call_for_basic_blocks(&ir_sig->body, callback, data);
 	 }
       } else if (ir->as_assignment()) {
 	 bool has_call = false;
@@ -124,13 +126,13 @@ void call_for_basic_blocks(exec_list *instructions,
 	 ir_visit_tree(ir, has_call_callback, &has_call);
 
 	 if (has_call) {
-	    callback(leader, ir);
+	    callback(leader, ir, data);
 	    leader = NULL;
 	 }
       }
       last = ir;
    }
    if (leader) {
-      callback(leader, last);
+      callback(leader, last, data);
    }
 }

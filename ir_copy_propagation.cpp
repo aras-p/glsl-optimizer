@@ -216,12 +216,14 @@ ir_copy_propagation_visitor::visit(ir_if *ir)
    ir->condition->accept(this);
 }
 
-static void
+static bool
 propagate_copies(ir_instruction *ir, exec_list *acp)
 {
    ir_copy_propagation_visitor v(acp);
 
    ir->accept(&v);
+
+   return v.progress;
 }
 
 static void
@@ -288,16 +290,19 @@ add_copy(ir_assignment *ir, exec_list *acp)
 
 static void
 copy_propagation_basic_block(ir_instruction *first,
-			     ir_instruction *last)
+			     ir_instruction *last,
+			     void *data)
 {
    ir_instruction *ir;
    /* List of avaialble_copy */
    exec_list acp;
+   bool *out_progress = (bool *)data;
+   bool progress = false;
 
    for (ir = first;; ir = (ir_instruction *)ir->next) {
       ir_assignment *ir_assign = ir->as_assignment();
 
-      propagate_copies(ir, &acp);
+      progress = propagate_copies(ir, &acp) || progress;
 
       if (ir_assign) {
 	 kill_invalidated_copies(ir_assign, &acp);
@@ -307,6 +312,7 @@ copy_propagation_basic_block(ir_instruction *first,
       if (ir == last)
 	 break;
    }
+   *out_progress = progress;
 }
 
 /**
@@ -317,8 +323,7 @@ do_copy_propagation(exec_list *instructions)
 {
    bool progress = false;
 
-   call_for_basic_blocks(instructions, copy_propagation_basic_block);
+   call_for_basic_blocks(instructions, copy_propagation_basic_block, &progress);
 
-   /* FINISHME: Return a legit progress value. */
    return progress;
 }
