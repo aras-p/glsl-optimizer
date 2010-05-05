@@ -131,7 +131,7 @@ static INLINE const_float4_ptr get_vert( const void *vertex_buffer,
  * draw elements / indexed primitives
  */
 static void
-lp_setup_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
+lp_setup_draw_elements(struct vbuf_render *vbr, const ushort *indices, uint nr)
 {
    struct lp_setup_context *setup = lp_setup_context(vbr);
    const unsigned stride = setup->vertex_info->size * sizeof(float);
@@ -543,7 +543,7 @@ lp_setup_init_vbuf(struct lp_setup_context *setup)
    setup->base.map_vertices = lp_setup_map_vertices;
    setup->base.unmap_vertices = lp_setup_unmap_vertices;
    setup->base.set_primitive = lp_setup_set_primitive;
-   setup->base.draw = lp_setup_draw;
+   setup->base.draw_elements = lp_setup_draw_elements;
    setup->base.draw_arrays = lp_setup_draw_arrays;
    setup->base.release_vertices = lp_setup_release_vertices;
    setup->base.destroy = lp_setup_vbuf_destroy;

@@ -190,9 +190,9 @@ void draw_pt_emit( struct pt_emit *emit,
                            0, 
                            vertex_count - 1 );
 
-   render->draw(render,
-		elts,
-		count);
+   render->draw_elements(render,
+                         elts,
+                         count);
 
    render->release_vertices(render);
 }

@@ -254,9 +254,9 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
     */
-   draw->render->draw( draw->render, 
-                       draw_elts, 
-                       draw_count );
+   draw->render->draw_elements( draw->render, 
+                                draw_elts, 
+                                draw_count );
 
    /* Done -- that was easy, wasn't it: 
     */
@@ -363,9 +363,9 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
     */
-   draw->render->draw( draw->render, 
-                       draw_elts, 
-                       draw_count );
+   draw->render->draw_elements( draw->render, 
+                                draw_elts, 
+                                draw_count );
 
    /* Done -- that was easy, wasn't it:
     */

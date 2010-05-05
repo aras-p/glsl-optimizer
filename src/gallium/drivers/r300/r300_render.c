@@ -913,9 +913,9 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
     END_CS;
 }
 
-static void r500_render_draw(struct vbuf_render* render,
-                             const ushort* indices,
-                             uint count)
+static void r500_render_draw_elements(struct vbuf_render* render,
+                                      const ushort* indices,
+                                      uint count)
 {
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
@@ -960,19 +960,19 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     }
 }
 
-static void r300_render_draw(struct vbuf_render* render,
-                             const ushort* indices,
-                             uint count)
+static void r300_render_draw_elements(struct vbuf_render* render,
+                                      const ushort* indices,
+                                      uint count)
 {
     struct r300_context* r300 = r300_render(render)->r300;
 
     if (!r300->stencil_ref_bf_fallback) {
-        r500_render_draw(render, indices, count);
+        r500_render_draw_elements(render, indices, count);
     } else {
         r300_begin_stencil_ref_fallback(r300);
-        r500_render_draw(render, indices, count);
+        r500_render_draw_elements(render, indices, count);
         r300_switch_stencil_ref_side(r300);
-        r500_render_draw(render, indices, count);
+        r500_render_draw_elements(render, indices, count);
         r300_end_stencil_ref_fallback(r300);
     }
 }
@@ -998,10 +998,10 @@ static struct vbuf_render* r300_render_create(struct r300_context* r300)
     r300render->base.unmap_vertices = r300_render_unmap_vertices;
     r300render->base.set_primitive = r300_render_set_primitive;
     if (r300->screen->caps.is_r500) {
-        r300render->base.draw = r500_render_draw;
+        r300render->base.draw_elements = r500_render_draw_elements;
         r300render->base.draw_arrays = r500_render_draw_arrays;
     } else {
-        r300render->base.draw = r300_render_draw;
+        r300render->base.draw_elements = r300_render_draw_elements;
         r300render->base.draw_arrays = r300_render_draw_arrays;
     }
     r300render->base.release_vertices = r300_render_release_vertices;

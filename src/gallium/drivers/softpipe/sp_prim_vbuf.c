@@ -158,7 +158,7 @@ static INLINE cptrf4 get_vert( const void *vertex_buffer,
  * draw elements / indexed primitives
  */
 static void
-sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
+sp_vbuf_draw_elements(struct vbuf_render *vbr, const ushort *indices, uint nr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
@@ -572,7 +572,7 @@ sp_create_vbuf_backend(struct softpipe_context *sp)
    cvbr->base.map_vertices = sp_vbuf_map_vertices;
    cvbr->base.unmap_vertices = sp_vbuf_unmap_vertices;
    cvbr->base.set_primitive = sp_vbuf_set_primitive;
-   cvbr->base.draw = sp_vbuf_draw;
+   cvbr->base.draw_elements = sp_vbuf_draw_elements;
    cvbr->base.draw_arrays = sp_vbuf_draw_arrays;
    cvbr->base.release_vertices = sp_vbuf_release_vertices;
    cvbr->base.destroy = sp_vbuf_destroy;

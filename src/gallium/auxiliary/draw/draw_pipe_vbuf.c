@@ -324,9 +324,9 @@ vbuf_flush_vertices( struct vbuf_stage *vbuf )
 
       if (vbuf->nr_indices) 
       {
-         vbuf->render->draw(vbuf->render, 
-                            vbuf->indices, 
-                            vbuf->nr_indices );
+         vbuf->render->draw_elements(vbuf->render, 
+                                     vbuf->indices, 
+                                     vbuf->nr_indices );
    
          vbuf->nr_indices = 0;
       }

@@ -544,9 +544,9 @@ draw_calc_nr_indices(uint nr_indices, unsigned type)
 }
 
 static void 
-i915_vbuf_render_draw(struct vbuf_render *render,
-                      const ushort *indices,
-                      uint nr_indices)
+i915_vbuf_render_draw_elements(struct vbuf_render *render,
+                               const ushort *indices,
+                               uint nr_indices)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
@@ -638,7 +638,7 @@ i915_vbuf_render_create(struct i915_context *i915)
    i915_render->base.map_vertices = i915_vbuf_render_map_vertices;
    i915_render->base.unmap_vertices = i915_vbuf_render_unmap_vertices;
    i915_render->base.set_primitive = i915_vbuf_render_set_primitive;
-   i915_render->base.draw = i915_vbuf_render_draw;
+   i915_render->base.draw_elements = i915_vbuf_render_draw_elements;
    i915_render->base.draw_arrays = i915_vbuf_render_draw_arrays;
    i915_render->base.release_vertices = i915_vbuf_render_release_vertices;
    i915_render->base.destroy = i915_vbuf_render_destroy;
