@@ -1900,7 +1900,7 @@ st_finalize_texture(GLcontext *ctx,
     */
    for (face = 0; face < nr_faces; face++) {
       GLuint level;
-      for (level = 0; level <= stObj->lastLevel; level++) {
+      for (level = stObj->base.BaseLevel; level <= stObj->lastLevel; level++) {
          struct st_texture_image *stImage =
             st_texture_image(stObj->base.Image[face][level]);
 
