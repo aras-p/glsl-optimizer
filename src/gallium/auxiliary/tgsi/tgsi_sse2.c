@@ -2816,6 +2816,37 @@ static void soa_to_aos( struct x86_function *func,
    x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
 }
 
+
+/**
+ * Check if the instructions dst register is the same as any src
+ * register and warn if there's a posible SOA dependency.
+ */
+static void
+check_soa_dependencies(const struct tgsi_full_instruction *inst)
+{
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_XPD:
+      /* OK */
+      break;
+   default:
+      if (tgsi_check_soa_dependencies(inst)) {
+         uint opcode = inst->Instruction.Opcode;
+
+         /* XXX: we only handle src/dst aliasing in a few opcodes
+          * currently.  Need to use an additional temporay to hold
+          * the result in the cases where the code is too opaque to
+          * fix.
+          */
+         if (opcode != TGSI_OPCODE_MOV) {
+            debug_printf("Warning: src/dst aliasing in instruction"
+                         " is not handled:\n");
+            tgsi_dump_instruction(inst, 1);
+         }
+      }
+   }
+}
+
+
 /**
  * Translate a TGSI vertex/fragment shader to SSE2 code.
  * Slightly different things are done for vertex vs. fragment shaders.
@@ -2905,27 +2936,14 @@ tgsi_emit_sse2(
 
 	 if (!ok) {
             uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
+            uint proc = parse.FullHeader.Processor.Processor;
 	    debug_printf("failed to translate tgsi opcode %d (%s) to SSE (%s)\n", 
 			 opcode,
                          tgsi_get_opcode_name(opcode),
-                         parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX ?
-                         "vertex shader" : "fragment shader");
+                         tgsi_get_processor_name(proc));
 	 }
 
-         if (tgsi_check_soa_dependencies(&parse.FullToken.FullInstruction)) {
-            uint opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
-
-            /* XXX: we only handle src/dst aliasing in a few opcodes
-             * currently.  Need to use an additional temporay to hold
-             * the result in the cases where the code is too opaque to
-             * fix.
-             */
-            if (opcode != TGSI_OPCODE_MOV) {
-               debug_printf("Warning: src/dst aliasing in instruction"
-                            " is not handled:\n");
-               tgsi_dump_instruction(&parse.FullToken.FullInstruction, 1);
-            }
-         }
+         check_soa_dependencies(&parse.FullToken.FullInstruction);
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
