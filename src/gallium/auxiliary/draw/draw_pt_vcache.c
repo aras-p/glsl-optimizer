@@ -183,8 +183,16 @@ vcache_quad( struct vcache_frontend *vcache,
              unsigned i2,
              unsigned i3 )
 {
-   vcache_triangle( vcache, i0, i1, i3 );
-   vcache_triangle( vcache, i1, i2, i3 );
+   if (vcache->draw->rasterizer->flatshade_first) {
+      /* pass last quad vertex as first triangle vertex */
+      vcache_triangle( vcache, i3, i0, i1 );
+      vcache_triangle( vcache, i3, i1, i2 );
+   }
+   else {
+      /* pass last quad vertex as last triangle vertex */
+      vcache_triangle( vcache, i0, i1, i3 );
+      vcache_triangle( vcache, i1, i2, i3 );
+   }
 }
 
 static INLINE void 
@@ -195,6 +203,7 @@ vcache_ef_quad( struct vcache_frontend *vcache,
                 unsigned i3 )
 {
    if (vcache->draw->rasterizer->flatshade_first) {
+      /* pass last quad vertex as first triangle vertex */
       vcache_triangle_flags( vcache,
                              ( DRAW_PIPE_RESET_STIPPLE |
                                DRAW_PIPE_EDGE_FLAG_0 |
@@ -207,6 +216,7 @@ vcache_ef_quad( struct vcache_frontend *vcache,
                              i3, i1, i2 );
    }
    else {
+      /* pass last quad vertex as last triangle vertex */
       vcache_triangle_flags( vcache,
                              ( DRAW_PIPE_RESET_STIPPLE |
                                DRAW_PIPE_EDGE_FLAG_0 |

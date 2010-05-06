@@ -142,20 +142,21 @@ static void FUNC( struct draw_pt_front_end *frontend,
          /* These bitflags look a little odd because we submit the
           * vertices as (1,2,0) to satisfy flatshade requirements.  
           */
-         const ushort edge_first  = DRAW_PIPE_EDGE_FLAG_2;
-         const ushort edge_middle = DRAW_PIPE_EDGE_FLAG_0;
-         const ushort edge_last   = DRAW_PIPE_EDGE_FLAG_1;
          ushort edge_next, edge_finish;
 
          if (flatfirst) {
-            flags = DRAW_PIPE_RESET_STIPPLE | edge_middle | edge_last;
-            edge_next = edge_last;
-            edge_finish = edge_first;
+            flags = (DRAW_PIPE_RESET_STIPPLE |
+                     DRAW_PIPE_EDGE_FLAG_1 |
+                     DRAW_PIPE_EDGE_FLAG_2);
+            edge_next = DRAW_PIPE_EDGE_FLAG_2;
+            edge_finish = DRAW_PIPE_EDGE_FLAG_0;
          }
          else {
-            flags = DRAW_PIPE_RESET_STIPPLE | edge_first | edge_middle;
-            edge_next = edge_middle;
-            edge_finish = edge_last;
+            flags = (DRAW_PIPE_RESET_STIPPLE |
+                     DRAW_PIPE_EDGE_FLAG_2 |
+                     DRAW_PIPE_EDGE_FLAG_0);
+            edge_next = DRAW_PIPE_EDGE_FLAG_0;
+            edge_finish = DRAW_PIPE_EDGE_FLAG_1;
          }
 
 	 for (i = 0; i+2 < count; i++, flags = edge_next) {
