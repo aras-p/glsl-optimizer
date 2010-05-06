@@ -108,7 +108,7 @@ ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
 			   ir_to_mesa_src_reg src0)
 {
    int i, j;
-   int done_mask = 0;
+   int done_mask = ~dst.writemask;
 
    /* Mesa RCP is a scalar operation splatting results to all channels,
     * like ARB_fp/vp.  So emit as many RCPs as necessary to cover our
@@ -124,7 +124,7 @@ ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
 
       int src_swiz = GET_SWZ(src.swizzle, i);
       for (j = i + 1; j < 4; j++) {
-	 if (GET_SWZ(src.swizzle, j) == src_swiz) {
+	 if (!(done_mask & (1 << j)) && GET_SWZ(src.swizzle, j) == src_swiz) {
 	    this_mask |= (1 << j);
 	 }
       }
@@ -179,16 +179,17 @@ ir_to_mesa_visitor::create_tree(int op,
 void
 ir_to_mesa_visitor::get_temp(struct mbtree *tree, int size)
 {
-   int swizzle = 0;
+   int swizzle[4];
    int i;
 
    ir_to_mesa_set_tree_reg(tree, PROGRAM_TEMPORARY, this->next_temp++);
 
    for (i = 0; i < size; i++)
-      swizzle |= 1 << i;
+      swizzle[i] = i;
    for (; i < 4; i++)
-      swizzle |= 1 << (size - 1);
-   tree->src_reg.swizzle = swizzle;
+      swizzle[i] = size - 1;
+   tree->src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
+					 swizzle[2], swizzle[3]);
    tree->dst_reg.writemask = (1 << size) - 1;
 }
 
