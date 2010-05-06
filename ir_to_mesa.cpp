@@ -465,17 +465,23 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
    };
-
-   ir_variable *var = ir->array->as_variable();
-   ir_constant *index = ir->array_index->constant_expression_value();
+   ir_variable *var = ir->var->as_variable();
+   ir_constant *index = ir->selector.array_index->constant_expression_value();
+   int file = PROGRAM_UNDEFINED;
+   int base_index = 0;
 
    assert(var);
    assert(index);
-   assert(strcmp(var->name, "gl_TexCoord") == 0);
+   if (strcmp(var->name, "gl_TexCoord") == 0) {
+      file = PROGRAM_INPUT;
+      base_index = FRAG_ATTRIB_TEX0;
+   } else if (strcmp(var->name, "gl_FragData") == 0) {
+      file = PROGRAM_OUTPUT;
+      base_index = FRAG_RESULT_DATA0;
+   }
 
    tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
-   ir_to_mesa_set_tree_reg(tree, PROGRAM_INPUT,
-			   FRAG_ATTRIB_TEX0 + index->value.i[0]);
+   ir_to_mesa_set_tree_reg(tree, file, base_index + index->value.i[0]);
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
    tree->src_reg.swizzle = size_swizzles[ir->type->vector_elements - 1];
