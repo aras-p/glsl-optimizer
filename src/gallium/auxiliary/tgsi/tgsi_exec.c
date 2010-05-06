@@ -635,6 +635,23 @@ tgsi_exec_machine_bind_shader(
    mach->Tokens = tokens;
    mach->Samplers = samplers;
 
+   if (!tokens) {
+      /* unbind and free all */
+      if (mach->Declarations) {
+         FREE( mach->Declarations );
+      }
+      mach->Declarations = NULL;
+      mach->NumDeclarations = 0;
+
+      if (mach->Instructions) {
+         FREE( mach->Instructions );
+      }
+      mach->Instructions = NULL;
+      mach->NumInstructions = 0;
+
+      return;
+   }
+
    k = tgsi_parse_init (&parse, mach->Tokens);
    if (k != TGSI_PARSE_OK) {
       debug_printf( "Problem parsing!\n" );
@@ -792,7 +809,9 @@ void
 tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach)
 {
    if (mach) {
-      FREE(mach->Instructions);
+      if (mach->Instructions)
+         FREE(mach->Instructions);
+      if (mach->Declarations)
       FREE(mach->Declarations);
    }
 
