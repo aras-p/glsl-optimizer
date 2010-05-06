@@ -57,6 +57,7 @@ static void FUNC( ARGS,
    case PIPE_PRIM_TRIANGLE_STRIP:
       if (flatfirst) {
          for (i = 0; i+2 < count; i++) {
+            /* Emit first triangle vertex as first triangle vertex */
             TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                       (i + 0),
                       (i + 1 + (i&1)),
@@ -65,6 +66,7 @@ static void FUNC( ARGS,
       }
       else {
          for (i = 0; i+2 < count; i++) {
+            /* Emit last triangle vertex as last triangle vertex */
             TRIANGLE( DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                       (i + 0 + (i&1)),
                       (i + 1 - (i&1)),
@@ -96,24 +98,52 @@ static void FUNC( ARGS,
 
 
    case PIPE_PRIM_QUADS:
-      for (i = 0; i+3 < count; i += 4) {
-         QUAD( (i + 0),
-               (i + 1),
-               (i + 2),
-               (i + 3));
+      /* GL quads don't follow provoking vertex convention */
+      if (flatfirst) {
+         for (i = 0; i+3 < count; i += 4) {
+            /* emit last quad vertex as first triangle vertex */
+            QUAD_FIRST_PV( (i + 3),
+                           (i + 0),
+                           (i + 1),
+                           (i + 2) );
+         }
+      }
+      else {
+         for (i = 0; i+3 < count; i += 4) {
+            /* emit last quad vertex as last triangle vertex */
+            QUAD_LAST_PV( (i + 0),
+                          (i + 1),
+                          (i + 2),
+                          (i + 3) );
+         }
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      for (i = 0; i+3 < count; i += 2) {
-         QUAD( (i + 2),
-               (i + 0),
-               (i + 1),
-               (i + 3));
+      /* GL quad strips don't follow provoking vertex convention */
+      if (flatfirst) {
+         for (i = 0; i+3 < count; i += 2) {
+            /* emit last quad vertex as first triangle vertex */
+            QUAD_FIRST_PV( (i + 3),
+                           (i + 2),
+                           (i + 0),
+                           (i + 1) );
+
+         }
+      }
+      else {
+         for (i = 0; i+3 < count; i += 2) {
+            /* emit last quad vertex as last triangle vertex */
+            QUAD_LAST_PV( (i + 2),
+                          (i + 0),
+                          (i + 1),
+                          (i + 3) );
+         }
       }
       break;
 
    case PIPE_PRIM_POLYGON:
+      /* GL polygons don't follow provoking vertex convention */
       {
          /* These bitflags look a little odd because we submit the
           * vertices as (1,2,0) to satisfy flatshade requirements.
@@ -129,10 +159,20 @@ static void FUNC( ARGS,
             if (i + 3 == count)
                flags |= edge_last;
 
-	    TRIANGLE( flags,
-                      (i + 1),
-                      (i + 2),
-                      (0));
+            if (flatfirst) {
+               /* emit first polygon vertex as first triangle vertex */
+               TRIANGLE( flags,
+                         (0),
+                         (i + 1),
+                         (i + 2) );
+            }
+            else {
+               /* emit first polygon vertex as last triangle vertex */
+               TRIANGLE( flags,
+                         (i + 1),
+                         (i + 2),
+                         (0));
+            }
 	 }
       }
       break;
@@ -147,7 +187,8 @@ static void FUNC( ARGS,
 
 
 #undef TRIANGLE
-#undef QUAD
+#undef QUAD_FIRST_PV
+#undef QUAD_LAST_PV
 #undef POINT
 #undef LINE
 #undef FUNC

@@ -199,12 +199,12 @@ vcache_ef_quad( struct vcache_frontend *vcache,
                              ( DRAW_PIPE_RESET_STIPPLE |
                                DRAW_PIPE_EDGE_FLAG_0 |
                                DRAW_PIPE_EDGE_FLAG_1 ),
-                             i0, i1, i2 );
+                             i3, i0, i1 );
 
       vcache_triangle_flags( vcache,
-                             ( DRAW_PIPE_EDGE_FLAG_2 |
-                               DRAW_PIPE_EDGE_FLAG_1 ),
-                             i0, i2, i3 );
+                             ( DRAW_PIPE_EDGE_FLAG_1 |
+                               DRAW_PIPE_EDGE_FLAG_2 ),
+                             i3, i1, i2 );
    }
    else {
       vcache_triangle_flags( vcache,
