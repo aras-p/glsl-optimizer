@@ -18,7 +18,7 @@
 #include "sw/sw_public.h"
 #include "sw/sw.c"
 
-#include "graw.h"
+#include "state_tracker/graw.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
