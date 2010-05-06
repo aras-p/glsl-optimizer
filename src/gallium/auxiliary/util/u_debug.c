@@ -123,7 +123,11 @@ debug_get_bool_option(const char *name, boolean dfault)
       result = FALSE;
    else if(!util_strcmp(str, "f"))
       result = FALSE;
+   else if(!util_strcmp(str, "F"))
+      result = FALSE;
    else if(!util_strcmp(str, "false"))
+      result = FALSE;
+   else if(!util_strcmp(str, "FALSE"))
       result = FALSE;
    else
       result = TRUE;
