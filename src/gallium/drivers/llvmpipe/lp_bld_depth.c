@@ -72,6 +72,7 @@
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_flow.h"
+#include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_swizzle.h"
 
@@ -445,6 +446,42 @@ get_s_shift_and_mask(const struct util_format_description *format_desc,
 }
 
 
+/**
+ * Perform the occlusion test and increase the counter.
+ * Test the depth mask. Add the number of channel which has none zero mask
+ * into the occlusion counter. e.g. maskvalue is {-1, -1, -1, -1}.
+ * The counter will add 4.
+ *
+ * \param type holds element type of the mask vector.
+ * \param maskvalue is the depth test mask.
+ * \param counter is a pointer of the uint32 counter.
+ */
+static void
+lp_build_occlusion_count(LLVMBuilderRef builder,
+                         struct lp_type type,
+                         LLVMValueRef maskvalue,
+                         LLVMValueRef counter)
+{
+   LLVMValueRef countmask = lp_build_const_int_vec(type, 1);
+   LLVMValueRef countv = LLVMBuildAnd(builder, maskvalue, countmask, "countv");
+   LLVMTypeRef i8v16 = LLVMVectorType(LLVMInt8Type(), 16);
+   LLVMValueRef counti = LLVMBuildBitCast(builder, countv, i8v16, "counti");
+   LLVMValueRef maskarray[4] = {
+      LLVMConstInt(LLVMInt32Type(), 0, 0),
+      LLVMConstInt(LLVMInt32Type(), 4, 0),
+      LLVMConstInt(LLVMInt32Type(), 8, 0),
+      LLVMConstInt(LLVMInt32Type(), 12, 0),
+   };
+   LLVMValueRef shufflemask = LLVMConstVector(maskarray, 4);
+   LLVMValueRef shufflev =  LLVMBuildShuffleVector(builder, counti, LLVMGetUndef(i8v16), shufflemask, "shufflev");
+   LLVMValueRef shuffle = LLVMBuildBitCast(builder, shufflev, LLVMInt32Type(), "shuffle");
+   LLVMValueRef count = lp_build_intrinsic_unary(builder, "llvm.ctpop.i32", LLVMInt32Type(), shuffle);
+   LLVMValueRef orig = LLVMBuildLoad(builder, counter, "orig");
+   LLVMValueRef incr = LLVMBuildAdd(builder, orig, count, "incr");
+   LLVMBuildStore(builder, incr, counter);
+}
+
+
 
 /**
  * Generate code for performing depth and/or stencil tests.
@@ -470,7 +507,8 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
                             LLVMValueRef stencil_refs[2],
                             LLVMValueRef z_src,
                             LLVMValueRef zs_dst_ptr,
-                            LLVMValueRef face)
+                            LLVMValueRef face,
+                            LLVMValueRef counter)
 {
    struct lp_build_context bld;
    struct lp_build_context sbld;
@@ -682,4 +720,7 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
 
    if (depth->enabled && stencil[0].enabled)
       lp_build_mask_update(mask, z_pass);
+
+   if (counter)
+      lp_build_occlusion_count(builder, type, mask->value, counter);
 }

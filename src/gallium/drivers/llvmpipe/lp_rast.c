@@ -34,6 +34,7 @@
 #include "lp_debug.h"
 #include "lp_fence.h"
 #include "lp_perf.h"
+#include "lp_query.h"
 #include "lp_rast.h"
 #include "lp_rast_priv.h"
 #include "lp_tile_soa.h"
@@ -442,7 +443,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
                                           color,
                                           depth,
                                           INT_MIN, INT_MIN, INT_MIN,
-                                          NULL, NULL, NULL );
+                                          NULL, NULL, NULL, &task->vis_counter);
       }
    }
 }
@@ -502,7 +503,8 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
                                         c1, c2, c3,
                                         inputs->step[0],
                                         inputs->step[1],
-                                        inputs->step[2]);
+                                        inputs->step[2],
+					&task->vis_counter);
 }
 
 
@@ -602,6 +604,60 @@ lp_rast_fence(struct lp_rasterizer_task *task,
 }
 
 
+/**
+ * Begin a new occlusion query.
+ * This is a bin command put in all bins.
+ * Called per thread.
+ */
+void
+lp_rast_begin_query(struct lp_rasterizer_task *task,
+                    const union lp_rast_cmd_arg arg)
+{
+   /* Reset the the per-task counter */
+   task->vis_counter = 0;
+}
+ 
+
+/**
+ * End the current occlusion query.
+ * This is a bin command put in all bins.
+ * Called per thread.
+ */
+void
+lp_rast_end_query(struct lp_rasterizer_task *task,
+                  const union lp_rast_cmd_arg arg)
+{
+   struct llvmpipe_query *pq = arg.query_obj;
+
+   pipe_mutex_lock(pq->mutex);
+   {
+      /* Accumulate the visible fragment counter from this tile in
+       * the query object.
+       */
+      pq->count[task->thread_index] += task->vis_counter;
+
+      /* check if this is the last tile in the scene */
+      pq->tile_count++;
+      if (pq->tile_count == pq->num_tiles) {
+         uint i;
+
+         /* sum the per-thread counters for the query */
+         pq->result = 0;
+         for (i = 0; i < LP_MAX_THREADS; i++) {
+            pq->result += pq->count[i];
+         }
+
+         /* reset counters (in case this query is re-used in the scene) */
+         memset(pq->count, 0, sizeof(pq->count));
+
+         pq->tile_count = 0;
+         pq->binned = FALSE;
+         pq->done = TRUE;
+      }
+   }
+   pipe_mutex_unlock(pq->mutex);
+}
+
 
 
 /**
@@ -650,6 +706,8 @@ static struct {
    RAST(set_state),
    RAST(store_color),
    RAST(fence),
+   RAST(begin_query),
+   RAST(end_query),
 };
 
 static void
@@ -956,3 +1014,5 @@ lp_rast_get_num_threads( struct lp_rasterizer *rast )
 {
    return rast->num_threads;
 }
+
+

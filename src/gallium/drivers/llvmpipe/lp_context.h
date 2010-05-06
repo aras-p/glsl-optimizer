@@ -82,11 +82,7 @@ struct llvmpipe_context {
 
    unsigned dirty; /**< Mask of LP_NEW_x flags */
 
-   /* Counter for occlusion queries.  Note this supports overlapping
-    * queries.
-    */
-   uint64_t occlusion_count;
-   unsigned active_query_count;
+   int active_query_count;
 
    /** Mapped vertex buffers */
    ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];

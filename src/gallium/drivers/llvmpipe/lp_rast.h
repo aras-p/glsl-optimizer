@@ -157,6 +157,7 @@ union lp_rast_cmd_arg {
    uint8_t clear_color[4];
    unsigned clear_zstencil;
    struct lp_fence *fence;
+   struct llvmpipe_query *query_obj;
 };
 
 
@@ -231,6 +232,13 @@ void lp_rast_fence( struct lp_rasterizer_task *,
 
 void lp_rast_store_color( struct lp_rasterizer_task *,
                           const union lp_rast_cmd_arg );
+
+
+void lp_rast_begin_query(struct lp_rasterizer_task *,
+                         const union lp_rast_cmd_arg );
+
+void lp_rast_end_query(struct lp_rasterizer_task *,
+                       const union lp_rast_cmd_arg );
 
 
 #endif

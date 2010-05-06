@@ -32,6 +32,8 @@
  * lp_setup_flush().
  */
 
+#include <limits.h>
+
 #include "pipe/p_defines.h"
 #include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
@@ -43,11 +45,13 @@
 #include "lp_texture.h"
 #include "lp_debug.h"
 #include "lp_fence.h"
+#include "lp_query.h"
 #include "lp_rast.h"
 #include "lp_setup_context.h"
 #include "lp_screen.h"
 #include "lp_state.h"
 #include "state_tracker/sw_winsys.h"
+#include "lp_rast_priv.h"
 
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
@@ -856,3 +860,40 @@ fail:
    return NULL;
 }
 
+
+/**
+ * Put a BeginQuery command into all bins.
+ */
+void
+lp_setup_begin_query(struct lp_setup_context *setup,
+                     struct llvmpipe_query *pq)
+{
+   struct lp_scene * scene = lp_setup_get_current_scene(setup);
+   union lp_rast_cmd_arg cmd_arg;
+
+   /* init the query to its beginning state */
+   pq->done = FALSE;
+   pq->tile_count = 0;
+   pq->num_tiles = scene->tiles_x * scene->tiles_y;
+   assert(pq->num_tiles > 0);
+
+   memset(pq->count, 0, sizeof(pq->count));  /* reset all counters */
+
+   cmd_arg.query_obj = pq;
+   lp_scene_bin_everywhere(scene, lp_rast_begin_query, cmd_arg);
+   pq->binned = TRUE;
+}
+
+
+/**
+ * Put an EndQuery command into all bins.
+ */
+void
+lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
+{
+   struct lp_scene * scene = lp_setup_get_current_scene(setup);
+   union lp_rast_cmd_arg cmd_arg;
+
+   cmd_arg.query_obj = pq;
+   lp_scene_bin_everywhere(scene, lp_rast_end_query, cmd_arg);
+}

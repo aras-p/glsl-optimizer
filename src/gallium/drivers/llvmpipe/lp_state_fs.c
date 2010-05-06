@@ -148,7 +148,8 @@ generate_depth_stencil(LLVMBuilderRef builder,
                        LLVMValueRef stencil_refs[2],
                        LLVMValueRef src,
                        LLVMValueRef dst_ptr,
-                       LLVMValueRef facing)
+                       LLVMValueRef facing,
+                       LLVMValueRef counter)
 {
    const struct util_format_description *format_desc;
    struct lp_type dst_type;
@@ -195,7 +196,8 @@ generate_depth_stencil(LLVMBuilderRef builder,
                                stencil_refs,
                                src,
                                dst_ptr,
-                               facing);
+                               facing,
+                               counter);
 }
 
 
@@ -400,7 +402,8 @@ generate_fs(struct llvmpipe_context *lp,
             LLVMValueRef c2,
             LLVMValueRef step0_ptr,
             LLVMValueRef step1_ptr,
-            LLVMValueRef step2_ptr)
+            LLVMValueRef step2_ptr,
+            LLVMValueRef counter)
 {
    const struct tgsi_token *tokens = shader->base.tokens;
    LLVMTypeRef vec_type;
@@ -466,7 +469,7 @@ generate_fs(struct llvmpipe_context *lp,
    if (early_depth_stencil_test)
       generate_depth_stencil(builder, key,
                              type, &mask,
-                             stencil_refs, z, depth_ptr, facing);
+                             stencil_refs, z, depth_ptr, facing, counter);
 
    lp_build_tgsi_soa(builder, tokens, type, &mask,
                      consts_ptr, interp->pos, interp->inputs,
@@ -513,7 +516,7 @@ generate_fs(struct llvmpipe_context *lp,
    if (!early_depth_stencil_test)
       generate_depth_stencil(builder, key,
                              type, &mask,
-                             stencil_refs, z, depth_ptr, facing);
+                             stencil_refs, z, depth_ptr, facing, counter);
 
    lp_build_mask_end(&mask);
 
@@ -620,7 +623,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMTypeRef fs_elem_type;
    LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
-   LLVMTypeRef arg_types[15];
+   LLVMTypeRef arg_types[16];
    LLVMTypeRef func_type;
    LLVMTypeRef int32_vec4_type = lp_build_int32_vec4_type();
    LLVMValueRef context_ptr;
@@ -631,7 +634,7 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef dady_ptr;
    LLVMValueRef color_ptr_ptr;
    LLVMValueRef depth_ptr;
-   LLVMValueRef c0, c1, c2, step0_ptr, step1_ptr, step2_ptr;
+   LLVMValueRef c0, c1, c2, step0_ptr, step1_ptr, step2_ptr, counter = NULL;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    LLVMValueRef x0;
@@ -696,6 +699,7 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[12] = LLVMPointerType(int32_vec4_type, 0);/* step0 */
    arg_types[13] = LLVMPointerType(int32_vec4_type, 0);/* step1 */
    arg_types[14] = LLVMPointerType(int32_vec4_type, 0);/* step2 */
+   arg_types[15] = LLVMPointerType(LLVMInt32Type(), 0);/* counter */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
@@ -743,6 +747,11 @@ generate_fragment(struct llvmpipe_context *lp,
    lp_build_name(step1_ptr, "step1");
    lp_build_name(step2_ptr, "step2");
 
+   if (key->occlusion_count) {
+      counter = LLVMGetParam(function, 15);
+      lp_build_name(counter, "counter");
+   }
+
    /*
     * Function body
     */
@@ -787,7 +796,7 @@ generate_fragment(struct llvmpipe_context *lp,
                   facing,
                   do_tri_test,
                   c0, c1, c2,
-                  step0_ptr, step1_ptr, step2_ptr);
+                  step0_ptr, step1_ptr, step2_ptr, counter);
 
       for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++)
 	 for(chan = 0; chan < NUM_CHANNELS; ++chan)
@@ -1123,6 +1132,9 @@ make_variant_key(struct llvmpipe_context *lp,
 
    key->flatshade = lp->rasterizer->flatshade;
    key->scissor = lp->rasterizer->scissor;
+   if (lp->active_query_count) {
+      key->occlusion_count = TRUE;
+   }
 
    if (lp->framebuffer.nr_cbufs) {
       memcpy(&key->blend, lp->blend, sizeof key->blend);

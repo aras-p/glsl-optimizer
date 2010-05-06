@@ -163,7 +163,8 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                           LP_NEW_DEPTH_STENCIL_ALPHA |
                           LP_NEW_RASTERIZER |
                           LP_NEW_SAMPLER |
-                          LP_NEW_SAMPLER_VIEW))
+                          LP_NEW_SAMPLER_VIEW |
+                          LP_NEW_QUERY))
       llvmpipe_update_fs( llvmpipe );
 
    if (llvmpipe->dirty & LP_NEW_BLEND_COLOR)

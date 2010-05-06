@@ -53,12 +53,15 @@ struct lp_shader_input {
 };
 
 struct pipe_resource;
+struct pipe_query;
 struct pipe_surface;
 struct pipe_blend_color;
 struct pipe_screen;
 struct pipe_framebuffer_state;
 struct lp_fragment_shader;
 struct lp_jit_context;
+struct llvmpipe_query;
+
 
 struct lp_setup_context *
 lp_setup_create( struct pipe_context *pipe,
@@ -140,5 +143,12 @@ void
 lp_setup_set_vertex_info( struct lp_setup_context *setup, 
                           struct vertex_info *info );
 
+void
+lp_setup_begin_query(struct lp_setup_context *setup,
+                     struct llvmpipe_query *pq);
+
+void
+lp_setup_end_query(struct lp_setup_context *setup,
+                   struct llvmpipe_query *pq);
 
 #endif

@@ -146,7 +146,8 @@ enum {
    lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_BLEND_COLOR, "blend_color")
 
 #define lp_jit_context_textures(_builder, _ptr) \
-   lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CONTEXT_TEXTURES, "textures")
+   lp_build_struct_get_ptr(_builder, _ptr, LP_JIT_CTX_TEXTURES, "textures")
+
 
 
 /** Indexes into jit_function[] array */
@@ -169,7 +170,8 @@ typedef void
                     const int32_t c3,
                     const int32_t *step1,
                     const int32_t *step2,
-                    const int32_t *step3);
+                    const int32_t *step3,
+                    uint32_t *counter);
 
 
 void

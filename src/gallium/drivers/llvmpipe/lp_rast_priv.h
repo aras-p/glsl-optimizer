@@ -59,6 +59,9 @@ struct lp_rasterizer_task
    /** "my" index */
    unsigned thread_index;
 
+   /* occlude counter for visiable pixels */
+   uint32_t vis_counter;
+
    pipe_semaphore work_ready;
    pipe_semaphore work_done;
 };
@@ -221,7 +224,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
                                     color,
                                     depth,
                                     INT_MIN, INT_MIN, INT_MIN,
-                                    NULL, NULL, NULL );
+                                    NULL, NULL, NULL, &task->vis_counter );
 }
 
 
