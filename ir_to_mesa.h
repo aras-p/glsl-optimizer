@@ -100,7 +100,7 @@ public:
    int next_temp;
    int next_constant;
 
-   void get_temp(struct mbtree *tree);
+   void get_temp(struct mbtree *tree, int size);
 
    void get_temp_for_var(ir_variable *var, struct mbtree *tree);
 

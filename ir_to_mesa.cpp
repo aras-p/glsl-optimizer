@@ -177,9 +177,19 @@ ir_to_mesa_visitor::create_tree(int op,
  * pass over the Mesa IR later.
  */
 void
-ir_to_mesa_visitor::get_temp(struct mbtree *tree)
+ir_to_mesa_visitor::get_temp(struct mbtree *tree, int size)
 {
+   int swizzle = 0;
+   int i;
+
    ir_to_mesa_set_tree_reg(tree, PROGRAM_TEMPORARY, this->next_temp++);
+
+   for (i = 0; i < size; i++)
+      swizzle |= 1 << i;
+   for (; i < 4; i++)
+      swizzle |= 1 << (size - 1);
+   tree->src_reg.swizzle = swizzle;
+   tree->dst_reg.writemask = (1 << size) - 1;
 }
 
 void
@@ -349,7 +359,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    }
 
    /* Allocate a temporary for the result. */
-   this->get_temp(this->result);
+   this->get_temp(this->result, ir->type->vector_elements);
 }
 
 
@@ -369,7 +379,7 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    assert(this->result);
 
    tree = this->create_tree(MB_TERM_swizzle_vec4, ir, this->result, NULL);
-   this->get_temp(tree);
+   this->get_temp(tree, 4);
 
    for (i = 0; i < 4; i++) {
       if (i < ir->type->vector_elements) {
