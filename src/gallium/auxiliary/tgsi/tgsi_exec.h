@@ -37,8 +37,6 @@ extern "C" {
 #endif
 
 
-#define MAX_LABELS (4 * 1024)  /**< basically, max instructions */
-
 #define NUM_CHANNELS 4  /* R,G,B,A */
 #define QUAD_SIZE    4  /* 4 pixel/quad */
 
@@ -92,16 +90,6 @@ struct tgsi_sampler
                        enum tgsi_sampler_control control,
                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
 };
-
-/**
- * For branching/calling subroutines.
- */
-struct tgsi_exec_labels
-{
-   unsigned labels[MAX_LABELS][2];
-   unsigned count;
-};
-
 
 #define TGSI_EXEC_NUM_TEMPS       128
 #define TGSI_EXEC_NUM_IMMEDIATES  256
@@ -324,7 +312,6 @@ struct tgsi_exec_machine
    struct tgsi_full_declaration *Declarations;
    uint NumDeclarations;
 
-   struct tgsi_exec_labels Labels;
 };
 
 struct tgsi_exec_machine *

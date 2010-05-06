@@ -621,12 +621,10 @@ tgsi_exec_machine_bind_shader(
 {
    uint k;
    struct tgsi_parse_context parse;
-   struct tgsi_exec_labels *labels = &mach->Labels;
    struct tgsi_full_instruction *instructions;
    struct tgsi_full_declaration *declarations;
    uint maxInstructions = 10, numInstructions = 0;
    uint maxDeclarations = 10, numDeclarations = 0;
-   uint instno = 0;
 
 #if 0
    tgsi_dump(tokens, 0);
@@ -645,7 +643,6 @@ tgsi_exec_machine_bind_shader(
 
    mach->Processor = parse.FullHeader.Processor.Processor;
    mach->ImmLimit = 0;
-   labels->count = 0;
 
    declarations = (struct tgsi_full_declaration *)
       MALLOC( maxDeclarations * sizeof(struct tgsi_full_declaration) );
@@ -663,7 +660,6 @@ tgsi_exec_machine_bind_shader(
    }
 
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      uint pointer = parse.Position;
       uint i;
 
       tgsi_parse_token( &parse );
@@ -707,11 +703,6 @@ tgsi_exec_machine_bind_shader(
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         assert( labels->count < MAX_LABELS );
-
-         labels->labels[labels->count][0] = instno;
-         labels->labels[labels->count][1] = pointer;
-         labels->count++;
 
          /* save expanded instruction */
          if (numInstructions == maxInstructions) {
