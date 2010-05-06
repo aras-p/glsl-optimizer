@@ -106,7 +106,10 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    if (pq->binned) {
       struct pipe_fence_handle *fence;
       pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &fence);
-      pipe->screen->fence_finish(pipe->screen, fence, 0);
+      if (fence) {
+         pipe->screen->fence_finish(pipe->screen, fence, 0);
+         pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+      }
    }
 
    lp_setup_begin_query(llvmpipe->setup, pq);
