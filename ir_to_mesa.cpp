@@ -465,8 +465,8 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
    };
-   ir_variable *var = ir->var->as_variable();
-   ir_constant *index = ir->selector.array_index->constant_expression_value();
+   ir_variable *var = ir->variable_referenced();
+   ir_constant *index = ir->array_index->constant_expression_value();
    int file = PROGRAM_UNDEFINED;
    int base_index = 0;
 
