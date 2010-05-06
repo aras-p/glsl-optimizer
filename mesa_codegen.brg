@@ -184,10 +184,9 @@ vec4: dp2_vec4_vec4(vec4, vec4) 1
 
 vec4: div_vec4_vec4(vec4, vec4) 1
 {
-	/* FINISHME: Mesa RCP only uses the X channel, this node is for vec4. */
-	ir_to_mesa_emit_op1(tree, OPCODE_RCP,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
-			    tree->right->src_reg);
+	ir_to_mesa_emit_scalar_op1(tree, OPCODE_RCP,
+				   ir_to_mesa_dst_reg_from_src(tree->src_reg),
+				   tree->left->src_reg);
 
 	ir_to_mesa_emit_op2(tree, OPCODE_MUL,
 			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
@@ -197,10 +196,9 @@ vec4: div_vec4_vec4(vec4, vec4) 1
 
 vec4: sqrt_vec4(vec4) 1
 {
-	/* FINISHME: Mesa RSQ only uses the X channel, this node is for vec4. */
-	ir_to_mesa_emit_op1(tree, OPCODE_RSQ,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
-			    tree->left->src_reg);
+	ir_to_mesa_emit_scalar_op1(tree, OPCODE_RSQ,
+				   ir_to_mesa_dst_reg_from_src(tree->src_reg),
+				   tree->left->src_reg);
 
 	ir_to_mesa_emit_op1(tree, OPCODE_RCP,
 			    ir_to_mesa_dst_reg_from_src(tree->src_reg),

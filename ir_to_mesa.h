@@ -45,6 +45,7 @@ typedef struct ir_to_mesa_src_reg {
 typedef struct ir_to_mesa_dst_reg {
    int file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
+   int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
 } ir_to_mesa_dst_reg;
 
 extern ir_to_mesa_src_reg ir_to_mesa_undef;
@@ -159,6 +160,11 @@ ir_to_mesa_emit_op3(struct mbtree *tree, enum prog_opcode op,
 		    ir_to_mesa_src_reg src1,
 		    ir_to_mesa_src_reg src2);
 
+void
+ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
+			   ir_to_mesa_dst_reg dst,
+			   ir_to_mesa_src_reg src0);
+
 inline ir_to_mesa_dst_reg
 ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
 {
@@ -166,6 +172,7 @@ ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
 
    dst_reg.file = reg.file;
    dst_reg.index = reg.index;
+   dst_reg.writemask = WRITEMASK_XYZW;
 
    return dst_reg;
 }

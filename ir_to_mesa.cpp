@@ -94,6 +94,51 @@ ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op,
 			      dst, src0, ir_to_mesa_undef, ir_to_mesa_undef);
 }
 
+/**
+ * Emits Mesa scalar opcodes to produce unique answers across channels.
+ *
+ * Some Mesa opcodes are scalar-only, like ARB_fp/vp.  The src X
+ * channel determines the result across all channels.  So to do a vec4
+ * of this operation, we want to emit a scalar per source channel used
+ * to produce dest channels.
+ */
+void
+ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
+			   ir_to_mesa_dst_reg dst,
+			   ir_to_mesa_src_reg src0)
+{
+   int i, j;
+   int done_mask = 0;
+
+   /* Mesa RCP is a scalar operation splatting results to all channels,
+    * like ARB_fp/vp.  So emit as many RCPs as necessary to cover our
+    * dst channels.
+    */
+   for (i = 0; i < 4; i++) {
+      int this_mask = (1 << i);
+      ir_to_mesa_instruction *inst;
+      ir_to_mesa_src_reg src = src0;
+
+      if (done_mask & this_mask)
+	 continue;
+
+      int src_swiz = GET_SWZ(src.swizzle, i);
+      for (j = i + 1; j < 4; j++) {
+	 if (GET_SWZ(src.swizzle, j) == src_swiz) {
+	    this_mask |= (1 << j);
+	 }
+      }
+      src.swizzle = MAKE_SWIZZLE4(src_swiz, src_swiz,
+				  src_swiz, src_swiz);
+
+      inst = ir_to_mesa_emit_op1(tree, op,
+				 dst,
+				 src);
+      inst->dst_reg.writemask = this_mask;
+      done_mask |= this_mask;
+   }
+}
+
 struct mbtree *
 ir_to_mesa_visitor::create_tree(int op,
 				ir_instruction *ir,
@@ -553,7 +598,7 @@ do_ir_to_mesa(exec_list *instructions)
       mesa_inst->DstReg.File = inst->dst_reg.file;
       mesa_inst->DstReg.Index = inst->dst_reg.index;
       mesa_inst->DstReg.CondMask = COND_TR;
-      mesa_inst->DstReg.WriteMask = WRITEMASK_XYZW;
+      mesa_inst->DstReg.WriteMask = inst->dst_reg.writemask;
       mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src_reg[0]);
       mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src_reg[1]);
       mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src_reg[2]);
