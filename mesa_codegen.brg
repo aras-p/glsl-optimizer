@@ -105,7 +105,7 @@ vec4: reference_vec4 0
 stmt: assign(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op1(tree, OPCODE_MOV,
-			    ir_to_mesa_dst_reg_from_src(tree->left->src_reg),
+			    tree->left->dst_reg,
 			    tree->right->src_reg);
 }
 
@@ -126,14 +126,14 @@ vec4: swizzle_vec4(vec4) 1
 	reg.swizzle = MAKE_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);
 
 	ir_to_mesa_emit_op1(tree, OPCODE_MOV,
-			   ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			   tree->dst_reg,
 			   reg);
 }
 
 vec4: add_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_ADD,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->dst_reg,
 			    tree->left->src_reg,
 			    tree->right->src_reg);
 }
@@ -141,7 +141,7 @@ vec4: add_vec4_vec4(vec4, vec4) 1
 vec4: sub_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_SUB,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->dst_reg,
 			    tree->left->src_reg,
 			    tree->right->src_reg);
 }
@@ -149,7 +149,7 @@ vec4: sub_vec4_vec4(vec4, vec4) 1
 vec4: mul_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_MUL,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->dst_reg,
 			    tree->left->src_reg,
 			    tree->right->src_reg);
 }
@@ -157,7 +157,7 @@ vec4: mul_vec4_vec4(vec4, vec4) 1
 vec4: dp4_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_DP4,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->dst_reg,
 			    tree->left->src_reg,
 			    tree->right->src_reg);
 	tree->src_reg.swizzle = SWIZZLE_XXXX;
@@ -166,7 +166,7 @@ vec4: dp4_vec4_vec4(vec4, vec4) 1
 vec4: dp3_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_DP3,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->dst_reg,
 			    tree->left->src_reg,
 			    tree->right->src_reg);
 	tree->src_reg.swizzle = SWIZZLE_XXXX;
@@ -176,7 +176,7 @@ vec4: dp3_vec4_vec4(vec4, vec4) 1
 vec4: dp2_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_op2(tree, OPCODE_DP2,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->dst_reg,
 			    tree->left->src_reg,
 			    tree->right->src_reg);
 	tree->src_reg.swizzle = SWIZZLE_XXXX;
@@ -185,11 +185,11 @@ vec4: dp2_vec4_vec4(vec4, vec4) 1
 vec4: div_vec4_vec4(vec4, vec4) 1
 {
 	ir_to_mesa_emit_scalar_op1(tree, OPCODE_RCP,
-				   ir_to_mesa_dst_reg_from_src(tree->src_reg),
+				   tree->dst_reg,
 				   tree->left->src_reg);
 
 	ir_to_mesa_emit_op2(tree, OPCODE_MUL,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->dst_reg,
 			    tree->src_reg,
 			    tree->left->src_reg);
 }
@@ -197,11 +197,11 @@ vec4: div_vec4_vec4(vec4, vec4) 1
 vec4: sqrt_vec4(vec4) 1
 {
 	ir_to_mesa_emit_scalar_op1(tree, OPCODE_RSQ,
-				   ir_to_mesa_dst_reg_from_src(tree->src_reg),
+				   tree->dst_reg,
 				   tree->left->src_reg);
 
 	ir_to_mesa_emit_op1(tree, OPCODE_RCP,
-			    ir_to_mesa_dst_reg_from_src(tree->src_reg),
+			    tree->dst_reg,
 			    tree->src_reg);
 }
 

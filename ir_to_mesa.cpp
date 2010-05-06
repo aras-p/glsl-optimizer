@@ -139,6 +139,16 @@ ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
    }
 }
 
+static void
+ir_to_mesa_set_tree_reg(struct mbtree *tree, int file, int index)
+{
+   tree->dst_reg.file = file;
+   tree->dst_reg.index = index;
+
+   tree->src_reg.file = file;
+   tree->src_reg.index = index;
+}
+
 struct mbtree *
 ir_to_mesa_visitor::create_tree(int op,
 				ir_instruction *ir,
@@ -153,6 +163,8 @@ ir_to_mesa_visitor::create_tree(int op,
    tree->right = right;
    tree->v = this;
    tree->src_reg.swizzle = SWIZZLE_XYZW;
+   tree->dst_reg.writemask = WRITEMASK_XYZW;
+   ir_to_mesa_set_tree_reg(tree, PROGRAM_UNDEFINED, 0);
    tree->ir = ir;
 
    return tree;
@@ -167,8 +179,7 @@ ir_to_mesa_visitor::create_tree(int op,
 void
 ir_to_mesa_visitor::get_temp(struct mbtree *tree)
 {
-   tree->src_reg.file = PROGRAM_TEMPORARY;
-   tree->src_reg.index = this->next_temp++;
+   ir_to_mesa_set_tree_reg(tree, PROGRAM_TEMPORARY, this->next_temp++);
 }
 
 void
@@ -180,8 +191,7 @@ ir_to_mesa_visitor::get_temp_for_var(ir_variable *var, struct mbtree *tree)
       entry = (temp_entry *)iter.get();
 
       if (entry->var == var) {
-	 tree->src_reg.file = entry->file;
-	 tree->src_reg.index = entry->index;
+	 ir_to_mesa_set_tree_reg(tree, entry->file, entry->index);
 	 return;
       }
    }
@@ -189,8 +199,7 @@ ir_to_mesa_visitor::get_temp_for_var(ir_variable *var, struct mbtree *tree)
    entry = new temp_entry(var, PROGRAM_TEMPORARY, this->next_temp++);
    this->variable_storage.push_tail(entry);
 
-   tree->src_reg.file = entry->file;
-   tree->src_reg.index = entry->index;
+   ir_to_mesa_set_tree_reg(tree, entry->file, entry->index);
 }
 
 static void
@@ -351,7 +360,10 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    int i;
    int swizzle[4];
 
-   /* FINISHME: Handle swizzles on the left side of an assignment. */
+   /* Note that this is only swizzles in expressions, not those on the left
+    * hand side of an assignment, which do write masking.  See ir_assignment
+    * for that.
+    */
 
    ir->val->accept(this);
    assert(this->result);
@@ -410,12 +422,11 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
     */
    assert(!var->type->is_matrix());
 
-   tree = this->create_tree(MB_TERM_reference_vec4, NULL, NULL);
+   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
    if (strncmp(var->name, "gl_", 3) == 0) {
       if (strcmp(var->name, "gl_FragColor") == 0) {
-	 tree->src_reg.file = PROGRAM_INPUT;
-	 tree->src_reg.index = FRAG_ATTRIB_COL0;
+	 ir_to_mesa_set_tree_reg(tree, PROGRAM_INPUT, FRAG_ATTRIB_COL0);
       } else {
 	 assert(0);
       }
@@ -442,22 +453,47 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 
    ir_variable *var = ir->array->as_variable();
    ir_constant *index = ir->array_index->constant_expression_value();
-   char *name;
 
    assert(var);
    assert(index);
    assert(strcmp(var->name, "gl_TexCoord") == 0);
 
-   asprintf(&name, "fragment.texcoord[%d]", index->value.i[0]);
    tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
-   tree->src_reg.file = PROGRAM_INPUT;
-   tree->src_reg.index = FRAG_ATTRIB_TEX0 + index->value.i[0];
-   tree->reg_name = name;
+   ir_to_mesa_set_tree_reg(tree, PROGRAM_INPUT,
+			   FRAG_ATTRIB_TEX0 + index->value.i[0]);
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
    tree->src_reg.swizzle = size_swizzles[ir->type->vector_elements - 1];
 
    this->result = tree;
+}
+
+static struct mbtree *
+get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
+{
+   struct mbtree *tree = NULL;
+   ir_dereference *deref;
+   ir_swizzle *swiz;
+
+   if ((deref = ir->as_dereference())) {
+      ir->accept(v);
+      tree = v->result;
+   } else if ((swiz = ir->as_swizzle())) {
+      tree = get_assignment_lhs(swiz->val, v);
+      tree->dst_reg.writemask = 0;
+      if (swiz->mask.num_components >= 1)
+	 tree->dst_reg.writemask |= (1 << swiz->mask.x);
+      if (swiz->mask.num_components >= 2)
+	 tree->dst_reg.writemask |= (1 << swiz->mask.y);
+      if (swiz->mask.num_components >= 3)
+	 tree->dst_reg.writemask |= (1 << swiz->mask.z);
+      if (swiz->mask.num_components >= 4)
+	 tree->dst_reg.writemask |= (1 << swiz->mask.w);
+   }
+
+   assert(tree);
+
+   return tree;
 }
 
 void
@@ -472,8 +508,8 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 {
    struct mbtree *l, *r, *t;
 
-   ir->lhs->accept(this);
-   l = this->result;
+   l = get_assignment_lhs(ir->lhs, this);
+
    ir->rhs->accept(this);
    r = this->result;
    assert(l);
@@ -504,8 +540,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
     */
    /* FINISHME: Do something with the constant values for now.
     */
-   tree->src_reg.file = PROGRAM_CONSTANT;
-   tree->src_reg.index = this->next_constant++;
+   ir_to_mesa_set_tree_reg(tree, PROGRAM_CONSTANT, this->next_constant++);
    tree->src_reg.swizzle = SWIZZLE_NOOP;
 
    this->result = tree;

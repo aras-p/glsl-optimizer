@@ -69,6 +69,8 @@ struct mbtree {
    /** Pointer to the ir source this tree came from for debugging */
    ir_instruction *ir;
 
+   ir_to_mesa_dst_reg dst_reg;
+
    /**
     * This is the representation of this tree node's results as a
     * source register for its consumer.
