@@ -33,6 +33,10 @@
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#endif
+
 struct ir_program {
    void *bong_hits;
 };

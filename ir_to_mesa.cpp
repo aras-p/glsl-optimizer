@@ -418,6 +418,51 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    this->result = tree;
 }
 
+/* This list should match up with builtin_variables.h */
+static const struct {
+   const char *name;
+   int file;
+   int index;
+} builtin_var_to_mesa_reg[] = {
+   /* core_vs */
+   {"gl_Position", PROGRAM_OUTPUT, VERT_RESULT_HPOS},
+   {"gl_PointSize", PROGRAM_OUTPUT, VERT_RESULT_PSIZ},
+
+   /* core_fs */
+   {"gl_FragCoord", PROGRAM_INPUT, FRAG_ATTRIB_WPOS},
+   {"gl_FrontFacing", PROGRAM_INPUT, FRAG_ATTRIB_FACE},
+   {"gl_FragColor", PROGRAM_INPUT, FRAG_ATTRIB_COL0},
+   {"gl_FragDepth", PROGRAM_UNDEFINED, FRAG_ATTRIB_WPOS}, /* FINISHME: WPOS.z */
+
+   /* 110_deprecated_fs */
+   {"gl_Color", PROGRAM_INPUT, FRAG_ATTRIB_COL0},
+   {"gl_SecondaryColor", PROGRAM_INPUT, FRAG_ATTRIB_COL1},
+   {"gl_FogFragCoord", PROGRAM_INPUT, FRAG_ATTRIB_FOGC},
+
+   /* 110_deprecated_vs */
+   {"gl_Vertex", PROGRAM_INPUT, VERT_ATTRIB_POS},
+   {"gl_Normal", PROGRAM_INPUT, VERT_ATTRIB_NORMAL},
+   {"gl_Color", PROGRAM_INPUT, VERT_ATTRIB_COLOR0},
+   {"gl_SecondaryColor", PROGRAM_INPUT, VERT_ATTRIB_COLOR1},
+   {"gl_MultiTexCoord0", PROGRAM_INPUT, VERT_ATTRIB_TEX0},
+   {"gl_MultiTexCoord1", PROGRAM_INPUT, VERT_ATTRIB_TEX1},
+   {"gl_MultiTexCoord2", PROGRAM_INPUT, VERT_ATTRIB_TEX2},
+   {"gl_MultiTexCoord3", PROGRAM_INPUT, VERT_ATTRIB_TEX3},
+   {"gl_MultiTexCoord4", PROGRAM_INPUT, VERT_ATTRIB_TEX4},
+   {"gl_MultiTexCoord5", PROGRAM_INPUT, VERT_ATTRIB_TEX5},
+   {"gl_MultiTexCoord6", PROGRAM_INPUT, VERT_ATTRIB_TEX6},
+   {"gl_MultiTexCoord7", PROGRAM_INPUT, VERT_ATTRIB_TEX7},
+   {"gl_FogCoord", PROGRAM_INPUT, VERT_RESULT_FOGC},
+   /*{"gl_ClipVertex", PROGRAM_OUTPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
+   {"gl_FrontColor", PROGRAM_OUTPUT, VERT_RESULT_COL0},
+   {"gl_BackColor", PROGRAM_OUTPUT, VERT_RESULT_BFC0},
+   {"gl_FrontSecondaryColor", PROGRAM_OUTPUT, VERT_RESULT_COL1},
+   {"gl_BackSecondaryColor", PROGRAM_OUTPUT, VERT_RESULT_BFC1},
+   {"gl_FogFragCoord", PROGRAM_OUTPUT, VERT_RESULT_FOGC},
+
+   /* 130_vs */
+   /*{"gl_VertexID", PROGRAM_INPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
+};
 
 void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
@@ -432,7 +477,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 
    ir_variable *var = ir->var->as_variable();
 
-   /* By the time we make it to this stage, matric`es should be broken down
+   /* By the time we make it to this stage, matrices should be broken down
     * to vectors.
     */
    assert(!var->type->is_matrix());
@@ -440,14 +485,15 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
    if (strncmp(var->name, "gl_", 3) == 0) {
-      if (strcmp(var->name, "gl_FragColor") == 0) {
-	 ir_to_mesa_set_tree_reg(tree, PROGRAM_INPUT, FRAG_ATTRIB_COL0);
-      } else if (strcmp(var->name, "gl_Position") == 0) {
-	 ir_to_mesa_set_tree_reg(tree, PROGRAM_OUTPUT,
-				 VERT_RESULT_HPOS);
-      } else {
-	 assert(0);
+      unsigned int i;
+
+      for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
+	 if (strcmp(var->name, builtin_var_to_mesa_reg[i].name) == 0)
+	    break;
       }
+      assert(i != ARRAY_SIZE(builtin_var_to_mesa_reg));
+      ir_to_mesa_set_tree_reg(tree, builtin_var_to_mesa_reg[i].file,
+			      builtin_var_to_mesa_reg[i].index);
    } else {
       this->get_temp_for_var(var, tree);
    }
