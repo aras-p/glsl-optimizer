@@ -79,6 +79,7 @@ st_render_mipmap(struct st_context *st,
    struct pipe_sampler_view *psv = st_get_texture_sampler_view(stObj, pipe);
    const uint face = _mesa_tex_target_to_face(target);
 
+   assert(psv->texture == stObj->pt);
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
@@ -261,7 +262,6 @@ compute_num_levels(GLcontext *ctx,
       return 1;
    }
    else {
-      const GLuint maxLevels = texObj->MaxLevel - texObj->BaseLevel + 1;
       const struct gl_texture_image *baseImage = 
          _mesa_get_tex_image(ctx, texObj, target, texObj->BaseLevel);
       GLuint size, numLevels;
@@ -269,14 +269,16 @@ compute_num_levels(GLcontext *ctx,
       size = MAX2(baseImage->Width2, baseImage->Height2);
       size = MAX2(size, baseImage->Depth2);
 
-      numLevels = 0;
+      numLevels = texObj->BaseLevel;
 
       while (size > 0) {
          numLevels++;
          size >>= 1;
       }
 
-      numLevels = MIN2(numLevels, maxLevels);
+      numLevels = MIN2(numLevels, texObj->MaxLevel + 1);
+
+      assert(numLevels >= 1);
 
       return numLevels;
    }
@@ -300,7 +302,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    if (!pt)
       return;
 
-   /* find expected last mipmap level */
+   /* find expected last mipmap level to generate */
    lastLevel = compute_num_levels(ctx, texObj, target) - 1;
 
    if (lastLevel == 0)
@@ -339,7 +341,7 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       pt = stObj->pt;
    }
 
-   assert(lastLevel <= pt->last_level);
+   assert(pt->last_level >= lastLevel);
 
    /* Try to generate the mipmap by rendering/texturing.  If that fails,
     * use the software fallback.
