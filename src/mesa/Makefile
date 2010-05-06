@@ -101,12 +101,6 @@ install: default
 	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
 	    *)      $(MAKE) install-libgl || exit 1 ;; \
 	  esac ; \
-	done; \
-	for api in $(APIS) ; do \
-	  case "$$api" in \
-	    es1) $(MAKE) install-es1 || exit 1;; \
-	    es2) $(MAKE) install-es2 || exit 1;; \
-	  esac; \
 	done
 
 pcedit = \
@@ -125,22 +119,6 @@ gl_pcedit = sed \
 
 gl.pc: gl.pc.in
 	$(gl_pcedit) $< > $@
-
-glesv2_pcedit = sed \
-	$(pcedit) \
-	-e 's,@GLESv2_PC_LIB_PRIV@,$(GLESv2_PC_LIB_PRIV),' \
-	-e 's,@GLESv2_LIB@,$(GLESv2_LIB),'
-
-glesv2.pc: glesv2.pc.in
-	$(glesv2_pcedit) $< > $@
-
-glesv1_cm_pcedit = sed \
-	$(pcedit) \
-	-e 's,@GLESv1_CM_PC_LIB_PRIV@,$(GLESv1_CM_PC_LIB_PRIV),' \
-	-e 's,@GLESv1_CM_LIB@,$(GLESv1_CM_LIB),'
-
-glesv1_cm.pc: glesv1_cm.pc.in
-	$(glesv1_cm_pcedit) $< > $@
 
 osmesa_pcedit = sed \
 	$(pcedit) \
@@ -162,30 +140,6 @@ install-libgl: default gl.pc install-headers
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-
-install-headers-es1:
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GLES
-	$(INSTALL) -m 644 $(TOP)/include/GLES/*.h \
-		$(DESTDIR)$(INSTALL_INC_DIR)/GLES
-
-install-es1: default glesv1_cm.pc install-headers-es1
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLESv1_CM_LIB_GLOB) \
-		$(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) -m 644 glesv1_cm.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-
-install-headers-es2:
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GLES2
-	$(INSTALL) -m 644 $(TOP)/include/GLES2/*.h \
-		$(DESTDIR)$(INSTALL_INC_DIR)/GLES2
-
-install-es2: default glesv2.pc install-headers-es2
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLESv2_LIB_GLOB) \
-		$(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) -m 644 glesv2.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-osmesa: default osmesa.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
