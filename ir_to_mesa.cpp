@@ -361,6 +361,9 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_sqrt:
       this->result = this->create_tree(MB_TERM_sqrt_vec4, ir, op[0], op[1]);
       break;
+   case ir_unop_rsq:
+      this->result = this->create_tree(MB_TERM_rsq_vec4, ir, op[0], op[1]);
+      break;
    case ir_unop_i2f:
       /* Mesa IR lacks types, ints are stored as floats. */
       this->result = op[0];
