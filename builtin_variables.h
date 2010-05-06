@@ -33,8 +33,8 @@ static const builtin_variable builtin_core_vs_variables[] = {
 };
 
 static const builtin_variable builtin_core_fs_variables[] = {
-   { ir_var_out, "vec4",  "gl_FragCoord" },
-   { ir_var_out, "bool",  "gl_FrontFacing" },
+   { ir_var_in, "vec4",  "gl_FragCoord" },
+   { ir_var_in, "bool",  "gl_FrontFacing" },
    { ir_var_out, "vec4",  "gl_FragColor" },
    { ir_var_out, "float", "gl_FragDepth" },
 };
