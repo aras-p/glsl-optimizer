@@ -205,3 +205,18 @@ tgsi_get_opcode_name( uint opcode )
    return info->mnemonic;
 }
 
+
+const char *
+tgsi_get_processor_name( uint processor )
+{
+   switch (processor) {
+   case TGSI_PROCESSOR_VERTEX:
+      return "vertex shader";
+   case TGSI_PROCESSOR_FRAGMENT:
+      return "fragment shader";
+   case TGSI_PROCESSOR_GEOMETRY:
+      return "geometry shader";
+   default:
+      return "unknown shader type!";
+   }
+}

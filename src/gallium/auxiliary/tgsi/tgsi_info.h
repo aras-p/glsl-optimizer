@@ -52,6 +52,9 @@ tgsi_get_opcode_info( uint opcode );
 const char *
 tgsi_get_opcode_name( uint opcode );
 
+const char *
+tgsi_get_processor_name( uint processor );
+
 
 #if defined __cplusplus
 }
