@@ -7,9 +7,9 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include <unistd.h>             /* for sleep() */
 
 #include "util/u_debug.h"       /* debug_dump_surface_bmp() */
+#include "os/os_time.h"       /* os_time_sleep() */
 
 enum pipe_format formats[] = {
    PIPE_FORMAT_R8G8B8A8_UNORM,
@@ -90,6 +90,7 @@ int main( int argc, char *argv[] )
 
    screen->flush_frontbuffer(screen, surf, window);
 
-   sleep(100);
+   os_time_sleep(100*1000*100);
+
    return 0;
 }
