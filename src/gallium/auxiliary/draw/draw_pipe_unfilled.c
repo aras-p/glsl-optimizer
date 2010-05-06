@@ -105,6 +105,23 @@ static void lines( struct draw_stage *stage,
 }
 
 
+/** For debugging */
+static void
+print_header_flags(unsigned flags)
+{
+   debug_printf("header->flags = ");
+   if (flags & DRAW_PIPE_RESET_STIPPLE)
+      debug_printf("RESET_STIPPLE ");
+   if (flags & DRAW_PIPE_EDGE_FLAG_0)
+      debug_printf("EDGE_FLAG_0 ");
+   if (flags & DRAW_PIPE_EDGE_FLAG_1)
+      debug_printf("EDGE_FLAG_1 ");
+   if (flags & DRAW_PIPE_EDGE_FLAG_2)
+      debug_printf("EDGE_FLAG_2 ");
+   debug_printf("\n");
+}
+
+
 /* Unfilled tri:  
  *
  * Note edgeflags in the vertex struct is not sufficient as we will
@@ -119,6 +136,9 @@ static void unfilled_tri( struct draw_stage *stage,
    struct unfilled_stage *unfilled = unfilled_stage(stage);
    unsigned mode = unfilled->mode[header->det >= 0.0];
   
+   if (0)
+      print_header_flags(header->flags);
+
    switch (mode) {
    case PIPE_POLYGON_MODE_FILL:
       stage->next->tri( stage->next, header );
