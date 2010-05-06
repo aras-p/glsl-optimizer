@@ -442,6 +442,9 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    if (strncmp(var->name, "gl_", 3) == 0) {
       if (strcmp(var->name, "gl_FragColor") == 0) {
 	 ir_to_mesa_set_tree_reg(tree, PROGRAM_INPUT, FRAG_ATTRIB_COL0);
+      } else if (strcmp(var->name, "gl_Position") == 0) {
+	 ir_to_mesa_set_tree_reg(tree, PROGRAM_OUTPUT,
+				 VERT_RESULT_HPOS);
       } else {
 	 assert(0);
       }
