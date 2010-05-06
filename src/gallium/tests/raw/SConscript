@@ -1,12 +1,15 @@
 Import('*')
 
-if 'graw-xlib' not in env['winsys']:
+try:
+    graw
+except NameError:
+    print 'warning: graw library not avaiable: skipping build of graw test'
     Return()
 
 env = env.Clone()
 
 env.Prepend(LIBPATH = [graw.dir])
-env.Prepend(LIBS = [graw.name])
+env.Prepend(LIBS = ['graw'])
 
 progs = [
     'clear'
