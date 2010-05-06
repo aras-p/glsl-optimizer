@@ -15,7 +15,9 @@ if env['platform'] == 'linux' and 'xlib' in env['winsys'] and 'graw-xlib' in env
 		'graw-xlib/SConscript',
 	])
 else:
-    SConscript('graw-null/SConscript')
+    if not env['msvc']:
+        # XXX: disable until MSVC can link correctly
+        SConscript('graw-null/SConscript')
 
 
 if env['dri']:
