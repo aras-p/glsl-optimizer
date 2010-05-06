@@ -2,6 +2,8 @@ Import('*')
 
 env = env.Clone()
 
+env.ParseConfig('pkg-config --cflags libdrm')
+
 if env['gcc']:
 	env.Append(CCFLAGS = ['-fvisibility=hidden'])
 	env.Append(CPPDEFINES = [
