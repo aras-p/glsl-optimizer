@@ -365,8 +365,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       this->result = this->create_tree(MB_TERM_rsq_vec4, ir, op[0], op[1]);
       break;
    case ir_unop_i2f:
-      /* Mesa IR lacks types, ints are stored as floats. */
+      /* Mesa IR lacks types, ints are stored as truncated floats. */
       this->result = op[0];
+      break;
+   case ir_unop_f2i:
+      this->result = this->create_tree(MB_TERM_trunc_vec4, ir, op[0], NULL);
       break;
    default:
       break;
