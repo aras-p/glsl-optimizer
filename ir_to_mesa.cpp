@@ -349,6 +349,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_sqrt:
       this->result = this->create_tree(MB_TERM_sqrt_vec4, ir, op[0], op[1]);
       break;
+   case ir_unop_i2f:
+      /* Mesa IR lacks types, ints are stored as floats. */
+      this->result = op[0];
+      break;
    default:
       break;
    }
@@ -543,7 +547,10 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
-   assert(ir->type->base_type == GLSL_TYPE_FLOAT);
+   assert(ir->type->base_type == GLSL_TYPE_FLOAT ||
+	  ir->type->base_type == GLSL_TYPE_UINT ||
+	  ir->type->base_type == GLSL_TYPE_INT ||
+	  ir->type->base_type == GLSL_TYPE_BOOL);
 
    /* FINISHME: This will end up being _mesa_add_unnamed_constant,
     * which handles sharing values and sharing channels of vec4
