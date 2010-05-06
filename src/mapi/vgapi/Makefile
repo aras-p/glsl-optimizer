@@ -48,17 +48,35 @@ vgapi_tmp.h: vgapi.csv $(MAPI)/mapi_abi.py
 
 .PHONY: clean
 clean:
+	-rm -f vg.pc
 	-rm -f $(TOP)/$(LIB_DIR)/$(VG_LIB_NAME)
 	-rm -f libvgapi.a
 	-rm -f $(VGAPI_OBJECTS)
 	-rm -f depend depend.bak
 	-rm -f $(GENERATED_SOURCES)
 
+pcedit = \
+	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
+	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
+	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
+	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
+	-e 's,@VG_PC_REQ_PRIV@,$(VG_PC_REQ_PRIV),' \
+	-e 's,@VG_PC_LIB_PRIV@,$(VG_PC_LIB_PRIV),' \
+	-e 's,@VG_PC_CFLAGS@,$(VG_PC_CFLAGS),' \
+	-e 's,@VG_LIB@,$(VG_LIB),'
+
+vg.pc: vg.pc.in
+	@sed $(pcedit) $< > $@
+
+install-pc: vg.pc
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(INSTALL) -m 644 $< $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+
 install-headers:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/VG
 	$(INSTALL) -m 644 $(TOP)/include/VG/*.h $(DESTDIR)$(INSTALL_INC_DIR)/VG
 
-install: default install-headers
+install: default install-headers install-pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(VG_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
