@@ -50,8 +50,8 @@
 struct quad_shade_stage
 {
    struct quad_stage stage;  /**< base class */
-   struct tgsi_exec_machine *machine;
-   struct tgsi_exec_vector *inputs, *outputs;
+
+   /* no other fields at this time */
 };
 
 
@@ -70,9 +70,8 @@ quad_shade_stage(struct quad_stage *qs)
 static INLINE boolean
 shade_quad(struct quad_stage *qs, struct quad_header *quad)
 {
-   struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
-   struct tgsi_exec_machine *machine = qss->machine;
+   struct tgsi_exec_machine *machine = softpipe->fs_machine;
 
    /* run shader */
    return softpipe->fs->run( softpipe->fs, machine, quad );
@@ -108,9 +107,8 @@ shade_quads(struct quad_stage *qs,
             struct quad_header *quads[],
             unsigned nr)
 {
-   struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
-   struct tgsi_exec_machine *machine = qss->machine;
+   struct tgsi_exec_machine *machine = softpipe->fs_machine;
    unsigned i, pass = 0;
 
    for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
@@ -139,11 +137,10 @@ shade_quads(struct quad_stage *qs,
 static void
 shade_begin(struct quad_stage *qs)
 {
-   struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
 
    softpipe->fs->prepare( softpipe->fs, 
-			  qss->machine,
+			  softpipe->fs_machine,
 			  (struct tgsi_sampler **)
                              softpipe->tgsi.frag_samplers_list );
 
@@ -154,10 +151,6 @@ shade_begin(struct quad_stage *qs)
 static void
 shade_destroy(struct quad_stage *qs)
 {
-   struct quad_shade_stage *qss = (struct quad_shade_stage *) qs;
-
-   tgsi_exec_machine_destroy(qss->machine);
-
    FREE( qs );
 }
 
@@ -174,16 +167,9 @@ sp_quad_shade_stage( struct softpipe_context *softpipe )
    qss->stage.run = shade_quads;
    qss->stage.destroy = shade_destroy;
 
-   qss->machine = tgsi_exec_machine_create();
-   if (!qss->machine)
-      goto fail;
-
    return &qss->stage;
 
 fail:
-   if (qss && qss->machine)
-      tgsi_exec_machine_destroy(qss->machine);
-
    FREE(qss);
    return NULL;
 }

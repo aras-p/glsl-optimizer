@@ -36,6 +36,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "tgsi/tgsi_exec.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
@@ -122,6 +123,8 @@ softpipe_destroy( struct pipe_context *pipe )
          }
       }
    }
+
+   tgsi_exec_machine_destroy(softpipe->fs_machine);
 
    FREE( softpipe );
 }
@@ -292,6 +295,8 @@ softpipe_create_context( struct pipe_screen *screen,
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
       softpipe->vertex_tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
    }
+
+   softpipe->fs_machine = tgsi_exec_machine_create();
 
    /* setup quad rendering stages */
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);

@@ -140,6 +140,8 @@ struct softpipe_context {
       struct sp_sampler_varient *frag_samplers_list[PIPE_MAX_SAMPLERS];
    } tgsi;
 
+   struct tgsi_exec_machine *fs_machine;
+
    /** The primitive drawing context */
    struct draw_context *draw;
 
