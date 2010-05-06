@@ -1,5 +1,3 @@
 u_format_srgb.c
 u_format_table.c
 u_half.c
-u_indices_gen.c
-u_unfilled_gen.c
