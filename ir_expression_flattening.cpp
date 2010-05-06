@@ -59,6 +59,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_if *);
    virtual ir_visitor_status visit_enter(ir_loop *);
    virtual ir_visitor_status visit_leave(ir_expression *);
+   virtual ir_visitor_status visit_leave(ir_swizzle *);
 
    bool (*predicate)(ir_instruction *ir);
    ir_instruction *base_ir;
@@ -74,6 +75,24 @@ do_expression_flattening(exec_list *instructions,
       ir_expression_flattening_visitor v(ir, predicate);
       ir->accept(&v);
    }
+}
+
+
+static ir_rvalue *
+operand_to_temp(ir_instruction *base_ir, ir_rvalue *ir)
+{
+   ir_variable *var;
+   ir_assignment *assign;
+
+   var = new ir_variable(ir->type, "flattening_tmp");
+   base_ir->insert_before(var);
+
+   assign = new ir_assignment(new ir_dereference_variable(var),
+			      ir,
+			      NULL);
+   base_ir->insert_before(assign);
+
+   return new ir_dereference_variable(var);
 }
 
 ir_visitor_status
@@ -113,24 +132,23 @@ ir_expression_flattening_visitor::visit_leave(ir_expression *ir)
        * value to a temporary and deref the temporary as the operand.
        */
       if (this->predicate(ir->operands[operand])) {
-	 ir_variable *var;
-	 ir_assignment *assign;
-
-	 var = new ir_variable(ir->operands[operand]->type, "flattening_tmp");
-	 this->base_ir->insert_before(var);
-
-	 assign = new ir_assignment(new ir_dereference_variable(var),
-				    ir->operands[operand],
-				    NULL);
-	 this->base_ir->insert_before(assign);
-
-	 ir->operands[operand] = new ir_dereference_variable(var);
+	 ir->operands[operand] = operand_to_temp(base_ir,
+						 ir->operands[operand]);
       }
    }
 
    return visit_continue;
 }
 
+ir_visitor_status
+ir_expression_flattening_visitor::visit_leave(ir_swizzle *ir)
+{
+   if (this->predicate(ir->val)) {
+      ir->val = operand_to_temp(this->base_ir, ir->val);
+   }
+
+   return visit_continue;
+}
 
 ir_visitor_status
 ir_expression_flattening_visitor::visit_enter(ir_call *ir)
