@@ -266,7 +266,16 @@ llvmpipe_destroy_screen( struct pipe_screen *_screen )
 struct pipe_screen *
 llvmpipe_create_screen(struct sw_winsys *winsys)
 {
-   struct llvmpipe_screen *screen = CALLOC_STRUCT(llvmpipe_screen);
+   struct llvmpipe_screen *screen;
+
+#ifdef PIPE_ARCH_X86
+   /* require SSE2 due to LLVM PR6960. */
+   util_cpu_detect();
+   if (!util_cpu_caps.has_sse2)
+       return NULL;
+#endif
+
+   screen = CALLOC_STRUCT(llvmpipe_screen);
 
 #ifdef DEBUG
    LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );

@@ -161,9 +161,16 @@ create_vertex_header(struct draw_llvm *llvm, int data_elems)
 struct draw_llvm *
 draw_llvm_create(struct draw_context *draw)
 {
-   struct draw_llvm *llvm = CALLOC_STRUCT( draw_llvm );
+   struct draw_llvm *llvm;
 
+#ifdef PIPE_ARCH_X86
    util_cpu_detect();
+   /* require SSE2 due to LLVM PR6960. */
+   if (!util_cpu_caps.has_sse2)
+       return NULL;
+#endif
+
+   llvm = CALLOC_STRUCT( draw_llvm );
 
    llvm->draw = draw;
    llvm->engine = draw->engine;
