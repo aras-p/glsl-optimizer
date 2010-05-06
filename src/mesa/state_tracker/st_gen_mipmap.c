@@ -105,10 +105,32 @@ decompress_image(enum pipe_format format,
                  unsigned width, unsigned height)
 {
    const struct util_format_description *desc = util_format_description(format);
-   const uint dst_stride = 4 * width;
+   const uint bw = util_format_get_blockwidth(format);
+   const uint bh = util_format_get_blockheight(format);
+   const uint dst_stride = 4 * MAX2(width, bw);
    const uint src_stride = util_format_get_stride(format, width);
 
    desc->unpack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
+
+   if (width < bw || height < bh) {
+      /* We're decompressing an image smaller than the compression
+       * block size.  We don't want garbage pixel values in the region
+       * outside (width x height) so replicate pixels from the (width
+       * x height) region to fill out the (bw x bh) block size.
+       */
+      uint x, y;
+      for (y = 0; y < bh; y++) {
+         for (x = 0; x < bw; x++) {
+            if (x >= width || y >= height) {
+               uint p = (y * bw + x) * 4;
+               dst[p + 0] = dst[0];
+               dst[p + 1] = dst[1];
+               dst[p + 2] = dst[2];
+               dst[p + 3] = dst[3];
+            }
+         }
+      }
+   }
 }
 
 
@@ -222,7 +244,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                                      dstWidth2); /* stride in texels */
 
          /* compress the new image: dstTemp -> dstData */
-         compress_image(format, dstTemp, dstData, dstWidth2, dstHeight2);
+         compress_image(format, dstTemp, dstData, dstWidth, dstHeight);
 
          free(srcTemp);
          free(dstTemp);
