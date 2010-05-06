@@ -319,6 +319,18 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    this->result = NULL;
 
    switch (ir->operation) {
+   case ir_unop_exp:
+      this->result = this->create_tree(MB_TERM_exp_vec4, ir, op[0], NULL);
+      break;
+   case ir_unop_exp2:
+      this->result = this->create_tree(MB_TERM_exp2_vec4, ir, op[0], NULL);
+      break;
+   case ir_unop_log:
+      this->result = this->create_tree(MB_TERM_log_vec4, ir, op[0], NULL);
+      break;
+   case ir_unop_log2:
+      this->result = this->create_tree(MB_TERM_log2_vec4, ir, op[0], NULL);
+      break;
    case ir_binop_add:
       this->result = this->create_tree(MB_TERM_add_vec4_vec4, ir, op[0], op[1]);
       break;

@@ -48,6 +48,10 @@
 # generate in its trees.
 %term assign
 %term reference_vec4
+%term exp_vec4
+%term exp2_vec4
+%term log_vec4
+%term log2_vec4
 %term add_vec4_vec4
 %term sub_vec4_vec4
 %term mul_vec4_vec4
@@ -203,6 +207,34 @@ vec4: sqrt_vec4(vec4) 1
 	ir_to_mesa_emit_op1(tree, OPCODE_RCP,
 			    tree->dst_reg,
 			    tree->src_reg);
+}
+
+vec4: exp_vec4(vec4) 1
+{
+	ir_to_mesa_emit_scalar_op1(tree, OPCODE_EXP,
+				   tree->dst_reg,
+				   tree->left->src_reg);
+}
+
+vec4: exp2_vec4(vec4) 1
+{
+	ir_to_mesa_emit_scalar_op1(tree, OPCODE_EX2,
+				   tree->dst_reg,
+				   tree->left->src_reg);
+}
+
+vec4: log_vec4(vec4) 1
+{
+	ir_to_mesa_emit_scalar_op1(tree, OPCODE_LOG,
+				   tree->dst_reg,
+				   tree->left->src_reg);
+}
+
+vec4: log2_vec4(vec4) 1
+{
+	ir_to_mesa_emit_scalar_op1(tree, OPCODE_LG2,
+				   tree->dst_reg,
+				   tree->left->src_reg);
 }
 
 %%
