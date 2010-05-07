@@ -1929,11 +1929,17 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_MUL:
+      /* do all fetches and adds, storing results in temp regs */
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-         FETCH( func, *inst, 0, 0, chan_index );
-         FETCH( func, *inst, 1, 1, chan_index );
-         emit_mul( func, 0, 1 );
-         STORE( func, *inst, 0, 0, chan_index );
+         int r = chan_index + 1;
+         FETCH( func, *inst, 0, 0, chan_index ); /* load xmm[0] */
+         FETCH( func, *inst, r, 1, chan_index ); /* load xmm[r] */
+         emit_mul( func, r, 0 );   /* xmm[r] = xmm[r] * xmm[0] */
+      }
+      /* do all stores of the temp regs */
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         int r = chan_index + 1;
+         STORE( func, *inst, r, 0, chan_index ); /* store xmm[r] */
       }
       break;
 
@@ -2833,6 +2839,7 @@ check_soa_dependencies(const struct tgsi_full_instruction *inst)
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ADD:
    case TGSI_OPCODE_MOV:
+   case TGSI_OPCODE_MUL:
    case TGSI_OPCODE_XPD:
       /* OK - these opcodes correctly handle SOA dependencies */
       break;
