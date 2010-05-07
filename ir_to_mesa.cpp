@@ -297,18 +297,37 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 void
 ir_to_mesa_visitor::visit(ir_loop *ir)
 {
-   (void)ir;
+   assert(!ir->from);
+   assert(!ir->to);
+   assert(!ir->increment);
+   assert(!ir->counter);
 
-   printf("Can't support loops, should be flattened before here\n");
-   exit(1);
+   ir_to_mesa_emit_op1_full(this, NULL,
+			    OPCODE_BGNLOOP, ir_to_mesa_undef_dst,
+			    ir_to_mesa_undef);
+
+   visit_exec_list(&ir->body_instructions, this);
+
+   ir_to_mesa_emit_op1_full(this, NULL,
+			    OPCODE_ENDLOOP, ir_to_mesa_undef_dst,
+			    ir_to_mesa_undef);
 }
 
 void
 ir_to_mesa_visitor::visit(ir_loop_jump *ir)
 {
-   (void) ir;
-   printf("Can't support loops, should be flattened before here\n");
-   exit(1);
+   switch (ir->mode) {
+   case ir_loop_jump::jump_break:
+      ir_to_mesa_emit_op1_full(this, NULL,
+			       OPCODE_BRK, ir_to_mesa_undef_dst,
+			       ir_to_mesa_undef);
+      break;
+   case ir_loop_jump::jump_continue:
+      ir_to_mesa_emit_op1_full(this, NULL,
+			       OPCODE_CONT, ir_to_mesa_undef_dst,
+			       ir_to_mesa_undef);
+      break;
+   }
 }
 
 
@@ -805,32 +824,66 @@ static void
 set_branchtargets(struct prog_instruction *mesa_instructions,
 		  int num_instructions)
 {
-   int if_count = 0;
-   struct prog_instruction **if_stack;
-   int if_stack_pos = 0;
-   int i;
-
-   for (i = 0; i < num_instructions; i++) {
-      if (mesa_instructions[i].Opcode == OPCODE_IF)
-	 if_count++;
-   }
-
-   if_stack = (struct prog_instruction **)calloc(if_count, sizeof(*if_stack));
+   int if_count = 0, loop_count;
+   int *if_stack, *loop_stack;
+   int if_stack_pos = 0, loop_stack_pos = 0;
+   int i, j;
 
    for (i = 0; i < num_instructions; i++) {
       switch (mesa_instructions[i].Opcode) {
       case OPCODE_IF:
-	 if_stack[if_stack_pos] = mesa_instructions + i;
+	 if_count++;
+	 break;
+      case OPCODE_BGNLOOP:
+	 loop_count++;
+	 break;
+      case OPCODE_BRK:
+      case OPCODE_CONT:
+	 mesa_instructions[i].BranchTarget = -1;
+	 break;
+      default:
+	 break;
+      }
+   }
+
+   if_stack = (int *)calloc(if_count, sizeof(*if_stack));
+   loop_stack = (int *)calloc(loop_count, sizeof(*loop_stack));
+
+   for (i = 0; i < num_instructions; i++) {
+      switch (mesa_instructions[i].Opcode) {
+      case OPCODE_IF:
+	 if_stack[if_stack_pos] = i;
 	 if_stack_pos++;
 	 break;
       case OPCODE_ELSE:
-	 if_stack[if_stack_pos - 1]->BranchTarget = i;
-	 if_stack[if_stack_pos - 1] = mesa_instructions + i;
+	 mesa_instructions[if_stack[if_stack_pos - 1]].BranchTarget = i;
+	 if_stack[if_stack_pos - 1] = i;
 	 break;
       case OPCODE_ENDIF:
-	 if_stack[if_stack_pos - 1]->BranchTarget = i;
+	 mesa_instructions[if_stack[if_stack_pos - 1]].BranchTarget = i;
 	 if_stack_pos--;
 	 break;
+      case OPCODE_BGNLOOP:
+	 loop_stack[loop_stack_pos] = i;
+	 loop_stack_pos++;
+	 break;
+      case OPCODE_ENDLOOP:
+	 loop_stack_pos--;
+	 /* Rewrite any breaks/conts at this nesting level (haven't
+	  * already had a BranchTarget assigned) to point to the end
+	  * of the loop.
+	  */
+	 for (j = loop_stack[loop_stack_pos]; j < i; j++) {
+	    if (mesa_instructions[j].Opcode == OPCODE_BRK ||
+		mesa_instructions[j].Opcode == OPCODE_CONT) {
+	       if (mesa_instructions[j].BranchTarget == -1) {
+		  mesa_instructions[j].BranchTarget = i;
+	       }
+	    }
+	 }
+	 /* The loop ends point at each other. */
+	 mesa_instructions[i].BranchTarget = loop_stack[loop_stack_pos];
+	 mesa_instructions[loop_stack[loop_stack_pos]].BranchTarget = i;
       default:
 	 break;
       }
@@ -851,7 +904,7 @@ print_program(struct prog_instruction *mesa_instructions,
       struct prog_instruction *mesa_inst = mesa_instructions + i;
       ir_instruction *ir = mesa_instruction_annotation[i];
 
-      if (last_ir != ir) {
+      if (last_ir != ir && ir) {
 	 ir_print_visitor print;
 	 ir->accept(&print);
 	 printf("\n");
