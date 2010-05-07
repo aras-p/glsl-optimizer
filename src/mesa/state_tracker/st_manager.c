@@ -541,7 +541,16 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    stImage = st_texture_image(texImage);
    if (tex) {
-      if (util_format_get_component_bits(internal_format,
+      /*
+       * XXX When internal_format and tex->format differ, st_finalize_texture
+       * needs to allocate a new texture with internal_format and copy the
+       * texture here into the new one.  It will result in surface_copy being
+       * called on surfaces whose formats differ.
+       *
+       * To avoid that, internal_format is (wrongly) ignored here.  A sane fix
+       * is to use a sampler view.
+       */
+      if (util_format_get_component_bits(tex->format,
                UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
          internalFormat = GL_RGBA;
       else
