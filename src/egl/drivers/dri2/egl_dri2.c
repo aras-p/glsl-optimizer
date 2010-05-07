@@ -165,7 +165,7 @@ EGLint dri2_to_egl_attribute_map[] = {
    0,				/* __DRI_ATTRIB_BIND_TO_TEXTURE_RGBA */
    0,				/* __DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE */
    0,				/* __DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS */
-   0,				/* __DRI_ATTRIB_YINVERTED */
+   EGL_Y_INVERTED_NOK,		/* __DRI_ATTRIB_YINVERTED */
 };
 
 static void
@@ -781,6 +781,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
    disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
    disp->Extensions.NOK_swap_region = EGL_TRUE;
+   disp->Extensions.NOK_texture_from_pixmap = EGL_TRUE;
 
    /* we're supporting EGL 1.4 */
    *major = 1;
@@ -1229,19 +1230,8 @@ dri2_bind_tex_image(_EGLDriver *drv,
    ctx = _eglGetCurrentContext();
    dri2_ctx = dri2_egl_context(ctx);
 
-   if (buffer != EGL_BACK_BUFFER) {
-      _eglError(EGL_BAD_PARAMETER, "eglBindTexImage");
+   if (!_eglBindTexImage(drv, disp, surf, buffer))
       return EGL_FALSE;
-   }
-
-   /* We allow binding pixmaps too... Not conformat, but we can do it
-    * for free and it's useful for X compositors.  Supposedly there's
-    * a EGL_NOKIA_texture_from_pixmap extension that allows that, but
-    * I couldn't find it at this time. */
-   if ((dri2_surf->base.Type & (EGL_PBUFFER_BIT | EGL_PIXMAP_BIT)) == 0) {
-      _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
-      return EGL_FALSE;
-   }
 
    switch (dri2_surf->base.TextureFormat) {
    case EGL_TEXTURE_RGB:
@@ -1251,8 +1241,7 @@ dri2_bind_tex_image(_EGLDriver *drv,
       format = __DRI_TEXTURE_FORMAT_RGBA;
       break;
    default:
-      _eglError(EGL_BAD_MATCH, "eglBindTexImage");
-      return EGL_FALSE;
+      assert(0);
    }
 
    switch (dri2_surf->base.TextureTarget) {
@@ -1260,15 +1249,14 @@ dri2_bind_tex_image(_EGLDriver *drv,
       target = GL_TEXTURE_2D;
       break;
    default:
-      _eglError(EGL_BAD_PARAMETER, "eglBindTexImage");
-      return EGL_FALSE;
+      assert(0);
    }
 
    (*dri2_dpy->tex_buffer->setTexBuffer2)(dri2_ctx->dri_context,
 					  target, format,
 					  dri2_surf->dri_drawable);
 
-   return dri2_surf->base.BoundToTexture = EGL_TRUE;
+   return EGL_TRUE;
 }
 
 static EGLBoolean

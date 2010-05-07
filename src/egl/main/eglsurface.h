@@ -83,7 +83,7 @@ extern EGLBoolean
 _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint attribute, EGLint value);
 
 
-extern EGLBoolean
+PUBLIC extern EGLBoolean
 _eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint buffer);
 
 

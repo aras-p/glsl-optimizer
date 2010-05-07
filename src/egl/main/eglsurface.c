@@ -36,11 +36,16 @@ _eglClampSwapInterval(_EGLSurface *surf, EGLint interval)
 static EGLint
 _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
 {
+   _EGLDisplay *dpy = surf->Resource.Display;
    EGLint type = surf->Type;
+   EGLint texture_type = EGL_PBUFFER_BIT;
    EGLint i, err = EGL_SUCCESS;
 
    if (!attrib_list)
       return EGL_SUCCESS;
+
+   if (dpy->Extensions.NOK_texture_from_pixmap)
+      texture_type |= EGL_PIXMAP_BIT;
 
    for (i = 0; attrib_list[i] != EGL_NONE; i++) {
       EGLint attr = attrib_list[i++];
@@ -125,7 +130,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          surf->LargestPbuffer = !!val;
          break;
       case EGL_TEXTURE_FORMAT:
-         if (type != EGL_PBUFFER_BIT) {
+         if (!(type & texture_type)) {
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
@@ -143,7 +148,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          surf->TextureFormat = val;
          break;
       case EGL_TEXTURE_TARGET:
-         if (type != EGL_PBUFFER_BIT) {
+         if (!(type & texture_type)) {
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
@@ -160,7 +165,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          surf->TextureTarget = val;
          break;
       case EGL_MIPMAP_TEXTURE:
-         if (type != EGL_PBUFFER_BIT) {
+         if (!(type & texture_type)) {
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
@@ -452,16 +457,26 @@ EGLBoolean
 _eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
                  EGLint buffer)
 {
+   EGLint texture_type = EGL_PBUFFER_BIT;
+
    /* Just do basic error checking and return success/fail.
     * Drivers must implement the real stuff.
     */
 
-   if (surface->Type != EGL_PBUFFER_BIT) {
+   if (dpy->Extensions.NOK_texture_from_pixmap)
+      texture_type |= EGL_PIXMAP_BIT;
+
+   if (!(surface->Type & texture_type)) {
       _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
       return EGL_FALSE;
    }
 
    if (surface->TextureFormat == EGL_NO_TEXTURE) {
+      _eglError(EGL_BAD_MATCH, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (surface->TextureTarget == EGL_NO_TEXTURE) {
       _eglError(EGL_BAD_MATCH, "eglBindTexImage");
       return EGL_FALSE;
    }

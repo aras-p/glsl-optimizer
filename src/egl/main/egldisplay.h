@@ -47,6 +47,7 @@ struct _egl_extensions
    EGLBoolean KHR_gl_texture_3D_image;
    EGLBoolean KHR_gl_renderbuffer_image;
    EGLBoolean NOK_swap_region;
+   EGLBoolean NOK_texture_from_pixmap;
 
    char String[_EGL_MAX_EXTENSIONS_LEN];
 };

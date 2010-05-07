@@ -223,7 +223,12 @@ static const struct {
                                     0 },
    { EGL_NONE,                      ATTRIB_TYPE_PSEUDO,
                                     ATTRIB_CRITERION_IGNORE,
-                                    0 }
+                                    0 },
+
+   { EGL_Y_INVERTED_NOK,            ATTRIB_TYPE_BOOLEAN,
+                                    ATTRIB_CRITERION_EXACT,
+                                    EGL_DONT_CARE },
+
 };
 
 
@@ -492,6 +497,8 @@ _eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
    case EGL_MATCH_NATIVE_PIXMAP:
 #endif
       return EGL_FALSE;
+   case EGL_Y_INVERTED_NOK:
+      return conf->Display->Extensions.NOK_texture_from_pixmap;
    default:
       break;
    }

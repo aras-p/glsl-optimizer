@@ -239,6 +239,13 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLSWAPBUFFERSREGIONNOK) (EGLDisplay dpy, EG
 #endif
 
 
+#ifndef EGL_NOK_texture_from_pixmap
+#define EGL_NOK_texture_from_pixmap 1
+
+#define EGL_Y_INVERTED_NOK			0x307F
+#endif /* EGL_NOK_texture_from_pixmap */
+
+
 #ifdef __cplusplus
 }
 #endif
