@@ -51,6 +51,8 @@
 #include "eglsurface.h"
 #include "eglimage.h"
 
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
 struct dri2_egl_driver
 {
    _EGLDriver base;
@@ -778,6 +780,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
    disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
    disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
+   disp->Extensions.NOK_swap_region = EGL_TRUE;
 
    /* we're supporting EGL 1.4 */
    *major = 1;
@@ -1067,7 +1070,8 @@ dri2_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *disp,
 }
 
 static EGLBoolean
-dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
+dri2_copy_region(_EGLDriver *drv, _EGLDisplay *disp,
+		 _EGLSurface *draw, xcb_xfixes_region_t region)
 {
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
@@ -1099,12 +1103,50 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 
    cookie = xcb_dri2_copy_region_unchecked(dri2_dpy->conn,
 					   dri2_surf->drawable,
-					   dri2_surf->region,
+					   region,
 					   XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT,
 					   XCB_DRI2_ATTACHMENT_BUFFER_FAKE_FRONT_LEFT);
    free(xcb_dri2_copy_region_reply(dri2_dpy->conn, cookie, NULL));
 
    return EGL_TRUE;
+}
+
+static EGLBoolean
+dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
+{
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
+
+   return dri2_copy_region(drv, disp, draw, dri2_surf->region);
+}
+
+static EGLBoolean
+dri2_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
+			 EGLint numRects, const EGLint *rects)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
+   EGLBoolean ret;
+   xcb_xfixes_region_t region;
+   xcb_rectangle_t rectangles[16];
+   int i;
+
+   if (numRects > ARRAY_SIZE(rectangles))
+      return dri2_copy_region(drv, disp, draw, dri2_surf->region);
+
+   /* FIXME: Invert y here? */
+   for (i = 0; i < numRects; i++) {
+      rectangles[i].x = rects[i * 4];
+      rectangles[i].y = rects[i * 4 + 1];
+      rectangles[i].width = rects[i * 4 + 2];
+      rectangles[i].height = rects[i * 4 + 3];
+   }
+
+   region = xcb_generate_id(dri2_dpy->conn);
+   xcb_xfixes_create_region(dri2_dpy->conn, region, numRects, rectangles);
+   ret = dri2_copy_region(drv, disp, draw, region);
+   xcb_xfixes_destroy_region(dri2_dpy->conn, region);
+
+   return ret;
 }
 
 /*
@@ -1415,6 +1457,7 @@ _eglMain(const char *args)
    dri2_drv->base.API.ReleaseTexImage = dri2_release_tex_image;
    dri2_drv->base.API.CreateImageKHR = dri2_create_image_khr;
    dri2_drv->base.API.DestroyImageKHR = dri2_destroy_image_khr;
+   dri2_drv->base.API.SwapBuffersRegionNOK = dri2_swap_buffers_region;
 
    dri2_drv->base.Name = "DRI2";
    dri2_drv->base.Unload = dri2_unload;

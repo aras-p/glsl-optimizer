@@ -227,6 +227,18 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLCOPYCONTEXTMESA) (EGLDisplay dpy, EGLCont
 #define EGL_CONTEXT_PRIORITY_LOW_IMG		0x3103
 #endif
 
+
+#ifndef EGL_NOK_swap_region
+#define EGL_NOK_swap_region 1
+
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglSwapBuffersRegionNOK(EGLDisplay dpy, EGLSurface surface, EGLint numRects, const EGLint* rects);
+#endif
+
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSWAPBUFFERSREGIONNOK) (EGLDisplay dpy, EGLSurface surface, EGLint numRects, const EGLint* rects);
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif

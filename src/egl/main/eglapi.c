@@ -838,6 +838,9 @@ eglGetProcAddress(const char *procname)
       { "eglCreateImageKHR", (_EGLProc) eglCreateImageKHR },
       { "eglDestroyImageKHR", (_EGLProc) eglDestroyImageKHR },
 #endif /* EGL_KHR_image_base */
+#ifdef EGL_NOK_swap_region
+      { "eglSwapBuffersRegionNOK", (_EGLProc) eglSwapBuffersRegionNOK },
+#endif
       { NULL, NULL }
    };
    EGLint i;
@@ -1246,3 +1249,32 @@ eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 
 
 #endif /* EGL_KHR_image_base */
+
+
+#ifdef EGL_NOK_swap_region
+
+EGLBoolean
+eglSwapBuffersRegionNOK(EGLDisplay dpy, EGLSurface surface,
+			EGLint numRects, const EGLint *rects)
+{
+   _EGLContext *ctx = _eglGetCurrentContext();
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLSurface *surf = _eglLookupSurface(surface, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
+
+   /* surface must be bound to current context in EGL 1.4 */
+   if (!ctx || !_eglIsContextLinked(ctx) || surf != ctx->DrawSurface)
+      RETURN_EGL_ERROR(disp, EGL_BAD_SURFACE, EGL_FALSE);
+
+   if (drv->API.SwapBuffersRegionNOK)
+      ret = drv->API.SwapBuffersRegionNOK(drv, disp, surf, numRects, rects);
+   else
+      ret = drv->API.SwapBuffers(drv, disp, surf);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+#endif /* EGL_NOK_swap_region */

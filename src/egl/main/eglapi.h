@@ -76,6 +76,9 @@ typedef _EGLImage *(*CreateImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLCo
 typedef EGLBoolean (*DestroyImageKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *image);
 #endif /* EGL_KHR_image_base */
 
+#ifdef EGL_NOK_swap_region
+typedef EGLBoolean (*SwapBuffersRegionNOK_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint numRects, const EGLint *rects);
+#endif
 
 /**
  * The API dispatcher jumps through these functions
@@ -134,6 +137,10 @@ struct _egl_api
    CreateImageKHR_t CreateImageKHR;
    DestroyImageKHR_t DestroyImageKHR;
 #endif /* EGL_KHR_image_base */
+
+#ifdef EGL_NOK_swap_region
+   SwapBuffersRegionNOK_t SwapBuffersRegionNOK;
+#endif
 };
 
 #endif /* EGLAPI_INCLUDED */

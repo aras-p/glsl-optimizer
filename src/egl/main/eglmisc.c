@@ -96,6 +96,7 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(KHR_gl_texture_3D_image);
    _EGL_CHECK_EXTENSION(KHR_gl_renderbuffer_image);
 
+   _EGL_CHECK_EXTENSION(NOK_swap_region);
 #undef _EGL_CHECK_EXTENSION
 }
 
