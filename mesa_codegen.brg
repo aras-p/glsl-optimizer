@@ -56,6 +56,12 @@
 %term sub_vec4_vec4
 %term mul_vec4_vec4
 %term div_vec4_vec4
+%term slt_vec4_vec4
+%term sgt_vec4_vec4
+%term sle_vec4_vec4
+%term sge_vec4_vec4
+%term seq_vec4_vec4
+%term sne_vec4_vec4
 %term dp4_vec4_vec4
 %term dp3_vec4_vec4
 %term dp2_vec4_vec4
@@ -170,6 +176,13 @@ vec4: div_vec4_vec4(vec4, vec4) 1
 				 tree->src_reg,
 				 tree->left->src_reg);
 }
+
+vec4: slt_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_SLT); }
+vec4: sgt_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_SGT); }
+vec4: sle_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_SLE); }
+vec4: sge_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_SGE); }
+vec4: sne_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_SNE); }
+vec4: seq_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_SEQ); }
 
 vec4: sqrt_vec4(vec4) 1
 {

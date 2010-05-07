@@ -162,6 +162,9 @@ ir_to_mesa_emit_op2_full(struct mbtree *tree, enum prog_opcode op,
 			 ir_to_mesa_src_reg src1);
 
 ir_to_mesa_instruction *
+ir_to_mesa_emit_simple_op2(struct mbtree *tree, enum prog_opcode op);
+
+ir_to_mesa_instruction *
 ir_to_mesa_emit_op3(struct mbtree *tree, enum prog_opcode op,
 		    ir_to_mesa_dst_reg dst,
 		    ir_to_mesa_src_reg src0,

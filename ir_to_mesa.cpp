@@ -360,6 +360,26 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_div:
       this->result = this->create_tree(MB_TERM_div_vec4_vec4, ir, op[0], op[1]);
       break;
+
+   case ir_binop_less:
+      this->result = this->create_tree(MB_TERM_slt_vec4_vec4, ir, op[0], op[1]);
+      break;
+   case ir_binop_greater:
+      this->result = this->create_tree(MB_TERM_sgt_vec4_vec4, ir, op[0], op[1]);
+      break;
+   case ir_binop_lequal:
+      this->result = this->create_tree(MB_TERM_sle_vec4_vec4, ir, op[0], op[1]);
+      break;
+   case ir_binop_gequal:
+      this->result = this->create_tree(MB_TERM_sge_vec4_vec4, ir, op[0], op[1]);
+      break;
+   case ir_binop_equal:
+      this->result = this->create_tree(MB_TERM_seq_vec4_vec4, ir, op[0], op[1]);
+      break;
+   case ir_binop_nequal:
+      this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir, op[0], op[1]);
+      break;
+
    case ir_binop_dot:
       if (ir->operands[0]->type == vec4_type) {
 	 assert(ir->operands[1]->type == vec4_type);
