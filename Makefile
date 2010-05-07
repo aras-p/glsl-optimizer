@@ -186,6 +186,14 @@ LIB_NAME = MesaLib-$(VERSION)
 DEMO_NAME = MesaDemos-$(VERSION)
 GLUT_NAME = MesaGLUT-$(VERSION)
 
+# This is part of MAIN_FILES
+MAIN_ES_FILES = \
+	$(DIRECTORY)/src/mesa/es/Makefile				\
+	$(DIRECTORY)/src/mesa/es/sources.mak				\
+	$(DIRECTORY)/src/mesa/main/*.xml				\
+	$(DIRECTORY)/src/mesa/main/*.py					\
+	$(DIRECTORY)/src/mesa/main/*.dtd
+
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
 	$(DIRECTORY)/configure						\
@@ -219,8 +227,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
-	$(DIRECTORY)/include/VG/*.h					\
-	$(DIRECTORY)/include/KHR/*.h					\
 	$(DIRECTORY)/src/glsl/Makefile					\
 	$(DIRECTORY)/src/glsl/Makefile.template				\
 	$(DIRECTORY)/src/glsl/SConscript				\
@@ -233,9 +239,9 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/gl.pc.in					\
 	$(DIRECTORY)/src/mesa/osmesa.pc.in				\
 	$(DIRECTORY)/src/mesa/depend					\
+	$(MAIN_ES_FILES)						\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
-	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/shader/*.[chly]				\
@@ -289,31 +295,40 @@ MAIN_FILES = \
 	$(DIRECTORY)/progs/util/sampleMakefile				\
 	$(DIRECTORY)/windows/VC8/
 
-ES_FILES = \
+MAPI_FILES = \
 	$(DIRECTORY)/include/GLES/*.h					\
 	$(DIRECTORY)/include/GLES2/*.h					\
-	$(DIRECTORY)/src/mesa/glapi/gen/*.xml				\
-	$(DIRECTORY)/src/mesa/glapi/gen/*.py				\
-	$(DIRECTORY)/src/mesa/glapi/gen/*.dtd				\
-	$(DIRECTORY)/src/mesa/es/glapi/Makefile				\
-	$(DIRECTORY)/src/mesa/es/glapi/*.xml				\
-	$(DIRECTORY)/src/mesa/es/glapi/*.py				\
-	$(DIRECTORY)/src/mesa/es/state_tracker/*.[ch]			\
-	$(DIRECTORY)/src/mesa/es/main/*.[ch]				\
-	$(DIRECTORY)/src/mesa/es/main/*.xml				\
-	$(DIRECTORY)/src/mesa/es/main/*.py				\
-	$(DIRECTORY)/src/mesa/es/main/*.dtd				\
-	$(DIRECTORY)/src/mesa/es/Makefile				\
-	$(DIRECTORY)/src/mesa/es/sources.mak				\
+	$(DIRECTORY)/include/VG/*.h					\
+	$(DIRECTORY)/src/mapi/es?api/Makefile				\
+	$(DIRECTORY)/src/mapi/es?api/*.pc.in				\
+	$(DIRECTORY)/src/mapi/glapi/gen/Makefile			\
+	$(DIRECTORY)/src/mapi/glapi/gen/*.xml				\
+	$(DIRECTORY)/src/mapi/glapi/gen/*.py				\
+	$(DIRECTORY)/src/mapi/glapi/gen/*.dtd				\
+	$(DIRECTORY)/src/mapi/glapi/gen-es/Makefile			\
+	$(DIRECTORY)/src/mapi/glapi/gen-es/*.xml			\
+	$(DIRECTORY)/src/mapi/glapi/gen-es/*.py				\
+	$(DIRECTORY)/src/mapi/glapi/Makefile				\
+	$(DIRECTORY)/src/mapi/glapi/SConscript				\
+	$(DIRECTORY)/src/mapi/glapi/sources.mak				\
+	$(DIRECTORY)/src/mapi/glapi/*.[chS]				\
+	$(DIRECTORY)/src/mapi/mapi/mapi_abi.py				\
+	$(DIRECTORY)/src/mapi/mapi/sources.mak				\
+	$(DIRECTORY)/src/mapi/mapi/*.[ch]				\
+	$(DIRECTORY)/src/mapi/vgapi/Makefile				\
+	$(DIRECTORY)/src/mapi/vgapi/vgapi.csv				\
+	$(DIRECTORY)/src/mapi/vgapi/vg.pc.in				\
+	$(DIRECTORY)/src/mapi/vgapi/*.h
 
 EGL_FILES = \
+	$(DIRECTORY)/include/KHR/*.h					\
 	$(DIRECTORY)/include/EGL/*.h					\
 	$(DIRECTORY)/src/egl/Makefile					\
 	$(DIRECTORY)/src/egl/*/Makefile					\
 	$(DIRECTORY)/src/egl/*/Makefile.template			\
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
 	$(DIRECTORY)/src/egl/*/*/Makefile				\
-	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
+	$(DIRECTORY)/src/egl/*/*/*.[ch]
 
 GALLIUM_FILES = \
 	$(DIRECTORY)/src/mesa/state_tracker/*[ch]			\
@@ -325,8 +340,6 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/Makefile				\
-	$(DIRECTORY)/src/gallium/*/*/Makefile.egl			\
-	$(DIRECTORY)/src/gallium/*/*/Makefile.template			\
 	$(DIRECTORY)/src/gallium/*/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/*.[ch]				\
 	$(DIRECTORY)/src/gallium/*/*/*.py				\
@@ -334,9 +347,7 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/*/*/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/*/*/SConscript			\
 	$(DIRECTORY)/src/gallium/*/*/*/*.[ch]				\
-	$(DIRECTORY)/src/gallium/*/*/*/*.py				\
-	$(DIRECTORY)/src/gallium/*/*/*/*/Makefile			\
-	$(DIRECTORY)/src/gallium/*/*/*/*/*.[ch]				\
+	$(DIRECTORY)/src/gallium/*/*/*/*.py
 
 
 DRI_FILES = \
@@ -467,6 +478,7 @@ DEPEND_FILES = \
 
 LIB_FILES = \
 	$(MAIN_FILES)		\
+	$(MAPI_FILES)		\
 	$(ES_FILES)		\
 	$(EGL_FILES)		\
 	$(GALLIUM_FILES)	\
