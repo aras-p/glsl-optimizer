@@ -556,6 +556,29 @@ static void transform_r300_vertex_CMP(struct radeon_compiler* c,
 	rc_remove_instruction(inst);
 }
 
+static void transform_r300_vertex_fix_LIT(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	int tempreg = rc_find_free_temporary(c);
+	unsigned constant_swizzle;
+	int constant = rc_constants_add_immediate_scalar(&c->Program.Constants,
+							 0.0000000000000000001,
+							 &constant_swizzle);
+
+	/* MOV dst, src */
+	emit1(c, inst->Prev, RC_OPCODE_MOV, 0,
+		dstreg(RC_FILE_TEMPORARY, tempreg),
+		inst->U.I.SrcReg[0]);
+
+	/* MAX dst.z, src, 0.00...001 */
+	emit2(c, inst->Prev, RC_OPCODE_MAX, 0,
+		dstregtmpmask(tempreg, RC_MASK_Y),
+		srcreg(RC_FILE_TEMPORARY, tempreg),
+		srcregswz(RC_FILE_CONSTANT, constant, constant_swizzle));
+
+	inst->U.I.SrcReg[0] = srcreg(RC_FILE_TEMPORARY, tempreg);
+}
+
 /**
  * For use with radeonLocalTransform, this transforms non-native ALU
  * instructions of the r300 up to r500 vertex engine.
@@ -572,6 +595,7 @@ int r300_transform_vertex_alu(
 	case RC_OPCODE_DP3: transform_DP3(c, inst); return 1;
 	case RC_OPCODE_DPH: transform_DPH(c, inst); return 1;
 	case RC_OPCODE_FLR: transform_FLR(c, inst); return 1;
+	case RC_OPCODE_LIT: transform_r300_vertex_fix_LIT(c, inst); return 1;
 	case RC_OPCODE_LRP: transform_LRP(c, inst); return 1;
 	case RC_OPCODE_SUB: transform_SUB(c, inst); return 1;
 	case RC_OPCODE_SWZ: transform_SWZ(c, inst); return 1;
