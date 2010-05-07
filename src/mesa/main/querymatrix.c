@@ -70,7 +70,7 @@ fpclassify(double x)
     }
 }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__CYGWIN__)
 
 /* fpclassify is available. */
 
