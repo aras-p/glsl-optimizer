@@ -410,6 +410,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_equal:
       this->result = this->create_tree(MB_TERM_seq_vec4_vec4, ir, op[0], op[1]);
       break;
+   case ir_binop_logic_xor:
    case ir_binop_nequal:
       this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir, op[0], op[1]);
       break;
