@@ -37,6 +37,15 @@
 #include "u_execmem.h"
 
 
+#define EXEC_MAP_SIZE (4*1024)
+
+u_mutex_declare_static(exec_mutex);
+
+static unsigned int head = 0;
+
+static unsigned char *exec_mem = (unsigned char *)0;
+
+
 #if defined(__linux__) || defined(__OpenBSD__) || defined(_NetBSD__) || defined(__sun)
 
 #include <unistd.h>
@@ -50,15 +59,6 @@
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
-
-
-#define EXEC_MAP_SIZE (4*1024)
-
-u_mutex_declare_static(exec_mutex);
-
-static unsigned int head = 0;
-
-static unsigned char *exec_mem = NULL;
 
 
 /*
@@ -85,6 +85,37 @@ init_map(void)
 }
 
 
+#elif defined(_WIN32)
+
+#include <windows.h>
+
+
+/*
+ * Avoid Data Execution Prevention.
+ */
+
+static int
+init_map(void)
+{
+   exec_mem = VirtualAlloc(NULL, EXEC_MAP_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+
+   return (exec_mem != NULL);
+}
+
+
+#else
+
+static int
+init_map(void)
+{
+   exec_mem = malloc(EXEC_MAP_SIZE);
+
+   return (exec_mem != NULL);
+}
+
+
+#endif
+
 void *
 u_execmem_alloc(unsigned int size)
 {
@@ -110,29 +141,3 @@ bail:
 }
 
 
-#elif defined(_WIN32)
-
-#include <windows.h>
-
-
-/*
- * Avoid Data Execution Prevention.
- */
-
-void *
-u_execmem_alloc(unsigned int size)
-{
-   return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-}
-
-
-#else
-
-void *
-u_execmem_alloc(unsigned int size)
-{
-   return malloc(size);
-}
-
-
-#endif
