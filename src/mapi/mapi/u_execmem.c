@@ -110,6 +110,22 @@ bail:
 }
 
 
+#elif defined(_WIN32)
+
+#include <windows.h>
+
+
+/*
+ * Avoid Data Execution Prevention.
+ */
+
+void *
+u_execmem_alloc(unsigned int size)
+{
+   return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+}
+
+
 #else
 
 void *
