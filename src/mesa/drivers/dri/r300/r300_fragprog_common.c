@@ -50,7 +50,7 @@ static GLuint build_dts(GLuint depthmode)
 {
 	switch(depthmode) {
 	default:
-	case GL_LUMINANCE: return RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_Z);
+	case GL_LUMINANCE: return RC_SWIZZLE_XYZZ;
 	case GL_INTENSITY: return RC_SWIZZLE_XYZW;
 	case GL_ALPHA: return RC_SWIZZLE_WWWW;
 	}

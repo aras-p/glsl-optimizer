@@ -813,7 +813,7 @@ int radeonTransformDeriv(struct radeon_compiler* c,
 	if (inst->U.I.Opcode != RC_OPCODE_DDX && inst->U.I.Opcode != RC_OPCODE_DDY)
 		return 0;
 
-	inst->U.I.SrcReg[1].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_ONE, RC_SWIZZLE_ONE, RC_SWIZZLE_ONE, RC_SWIZZLE_ONE);
+	inst->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_1111;
 	inst->U.I.SrcReg[1].Negate = RC_MASK_XYZW;
 
 	return 1;
