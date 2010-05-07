@@ -473,7 +473,7 @@ static struct pipe_surface *
 llvmpipe_get_tex_surface(struct pipe_screen *screen,
                          struct pipe_resource *pt,
                          unsigned face, unsigned level, unsigned zslice,
-                         enum lp_texture_usage usage)
+                         unsigned usage)
 {
    struct pipe_surface *ps;
 
