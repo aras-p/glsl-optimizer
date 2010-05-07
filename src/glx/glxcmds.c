@@ -1766,6 +1766,15 @@ static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
 	 unsigned i;
 
          _XRead(dpy, (char *) propList, nPropListBytes);
+
+	 /* Look up screen first so we can look up visuals/fbconfigs later */
+         pProp = propList;
+         for (i = 0; i < numValues; i++, pProp += 2)
+	     if (pProp[0] == GLX_SCREEN) {
+		 ctx->screen = pProp[1];
+		 ctx->psc = GetGLXScreenConfigs(dpy, ctx->screen);
+	     }
+
          pProp = propList;
          for (i = 0; i < numValues; i++) {
             switch (*pProp++) {
@@ -1776,9 +1785,6 @@ static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
                ctx->mode =
                   _gl_context_modes_find_visual(ctx->psc->visuals, *pProp++);
                break;
-            case GLX_SCREEN:
-               ctx->screen = *pProp++;
-               break;
             case GLX_FBCONFIG_ID:
                ctx->mode =
                   _gl_context_modes_find_fbconfig(ctx->psc->configs,
@@ -1787,6 +1793,7 @@ static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
             case GLX_RENDER_TYPE:
                ctx->renderType = *pProp++;
                break;
+            case GLX_SCREEN:
             default:
                pProp++;
                continue;
