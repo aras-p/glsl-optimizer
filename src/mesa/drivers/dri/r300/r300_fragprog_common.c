@@ -46,13 +46,13 @@
 #include "radeon_mesa_to_rc.h"
 
 
-static GLuint build_dtm(GLuint depthmode)
+static GLuint build_dts(GLuint depthmode)
 {
 	switch(depthmode) {
 	default:
-	case GL_LUMINANCE: return 0;
-	case GL_INTENSITY: return 1;
-	case GL_ALPHA: return 2;
+	case GL_LUMINANCE: return RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_Z);
+	case GL_INTENSITY: return RC_SWIZZLE_XYZW;
+	case GL_ALPHA: return RC_SWIZZLE_WWWW;
 	}
 }
 
@@ -78,7 +78,7 @@ static void build_state(
 		if (fp->Base.ShadowSamplers & (1 << unit)) {
 			struct gl_texture_object* tex = r300->radeon.glCtx->Texture.Unit[unit]._Current;
 
-			state->unit[unit].depth_texture_mode = build_dtm(tex->DepthMode);
+			state->unit[unit].depth_texture_swizzle = build_dts(tex->DepthMode);
 			state->unit[unit].texture_compare_func = build_func(tex->CompareFunc);
 		}
 	}

@@ -147,8 +147,8 @@ static void get_external_state(
 
         if (s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
             /* XXX Gallium doesn't provide us with any information regarding
-             * this mode, so we are screwed. I'm setting 0 = LUMINANCE. */
-            state->unit[i].depth_texture_mode = 0;
+             * this mode, so we are screwed. Let's set INTENSITY for now. */
+            state->unit[i].depth_texture_swizzle = RC_SWIZZLE_XYZW;
 
             /* Fortunately, no need to translate this. */
             state->unit[i].texture_compare_func = s->state.compare_func;

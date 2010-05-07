@@ -132,7 +132,7 @@ struct r300_fragment_program_external_state {
 		 *  2 - GL_ALPHA
 		 * depending on the depth texture mode.
 		 */
-		unsigned depth_texture_mode : 2;
+		unsigned depth_texture_swizzle:12;
 
 		/**
 		 * If the sampler is used as a shadow sampler,

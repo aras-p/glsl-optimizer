@@ -113,7 +113,6 @@ int radeonTransformTEX(
 			return 1;
 		} else {
 			rc_compare_func comparefunc = compiler->state.unit[inst->U.I.TexSrcUnit].texture_compare_func;
-			unsigned int depthmode = compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_mode;
 			struct rc_instruction * inst_rcp = rc_insert_new_instruction(c, inst);
 			struct rc_instruction * inst_mad = rc_insert_new_instruction(c, inst_rcp);
 			struct rc_instruction * inst_cmp = rc_insert_new_instruction(c, inst_mad);
@@ -141,10 +140,7 @@ int radeonTransformTEX(
 			inst_mad->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
 			inst_mad->U.I.SrcReg[2].File = RC_FILE_TEMPORARY;
 			inst_mad->U.I.SrcReg[2].Index = inst->U.I.DstReg.Index;
-			if (depthmode == 0) /* GL_LUMINANCE */
-				inst_mad->U.I.SrcReg[2].Swizzle = RC_MAKE_SWIZZLE(RC_SWIZZLE_X, RC_SWIZZLE_Y, RC_SWIZZLE_Z, RC_SWIZZLE_Z);
-			else if (depthmode == 2) /* GL_ALPHA */
-				inst_mad->U.I.SrcReg[2].Swizzle = RC_SWIZZLE_WWWW;
+			inst_mad->U.I.SrcReg[2].Swizzle = compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_swizzle;
 
 			/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
 			 *   r  < tex  <=>      -tex+r < 0
