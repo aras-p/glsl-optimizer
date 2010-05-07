@@ -172,10 +172,6 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glGetPointerv %s\n", _mesa_lookup_enum_by_nr(pname));
 
-   if (ctx->Driver.GetPointerv
-       && (*ctx->Driver.GetPointerv)(ctx, pname, params))
-      return;
-
    switch (pname) {
       case GL_VERTEX_ARRAY_POINTER:
          *params = (GLvoid *) ctx->Array.ArrayObj->Vertex.Ptr;

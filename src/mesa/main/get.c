@@ -83,10 +83,6 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
    if (!params)
       return;
 
-   if (ctx->Driver.GetBooleanv &&
-       ctx->Driver.GetBooleanv(ctx, pname, params))
-      return;
-
    switch (pname) {
       case GL_ACCUM_RED_BITS:
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.accumRedBits);
@@ -1998,10 +1994,6 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
    (void) version;
 
    if (!params)
-      return;
-
-   if (ctx->Driver.GetFloatv &&
-       ctx->Driver.GetFloatv(ctx, pname, params))
       return;
 
    switch (pname) {
@@ -3917,10 +3909,6 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
    if (!params)
       return;
 
-   if (ctx->Driver.GetIntegerv &&
-       ctx->Driver.GetIntegerv(ctx, pname, params))
-      return;
-
    switch (pname) {
       case GL_ACCUM_RED_BITS:
          params[0] = ctx->DrawBuffer->Visual.accumRedBits;
@@ -5833,10 +5821,6 @@ _mesa_GetInteger64v( GLenum pname, GLint64 *params )
    (void) version;
 
    if (!params)
-      return;
-
-   if (ctx->Driver.GetInteger64v &&
-       ctx->Driver.GetInteger64v(ctx, pname, params))
       return;
 
    switch (pname) {

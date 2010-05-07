@@ -178,14 +178,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->TexParameter = NULL;
    driver->Viewport = NULL;
 
-   /* state queries */
-   driver->GetBooleanv = NULL;
-   driver->GetDoublev = NULL;
-   driver->GetFloatv = NULL;
-   driver->GetIntegerv = NULL;
-   driver->GetInteger64v = NULL;
-   driver->GetPointerv = NULL;
-   
    /* buffer objects */
    _mesa_init_buffer_object_functions(driver);
 

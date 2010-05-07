@@ -706,27 +706,6 @@ struct dd_function_table {
    /*@}*/
 
 
-   /** 
-    * \name State-query functions
-    *
-    * Return GL_TRUE if query was completed, GL_FALSE otherwise.
-    */
-   /*@{*/
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetBooleanv)(GLcontext *ctx, GLenum pname, GLboolean *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetDoublev)(GLcontext *ctx, GLenum pname, GLdouble *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetFloatv)(GLcontext *ctx, GLenum pname, GLfloat *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetIntegerv)(GLcontext *ctx, GLenum pname, GLint *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetInteger64v)(GLcontext *ctx, GLenum pname, GLint64 *result);
-   /** Return the value or values of a selected parameter */
-   GLboolean (*GetPointerv)(GLcontext *ctx, GLenum pname, GLvoid **result);
-   /*@}*/
-   
-
    /**
     * \name Vertex/pixel buffer object functions
     */

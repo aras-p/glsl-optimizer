@@ -1268,11 +1268,6 @@ def EmitGetFunction(stateVars, returnType, indexed):
 	print "   if (!params)"
 	print "      return;"
 	print ""
-	if indexed == 0:
-		print "   if (ctx->Driver.%s &&" % function
-		print "       ctx->Driver.%s(ctx, pname, params))" % function
-		print "      return;"
-		print ""
 	print "   switch (pname) {"
 
 	for state in stateVars:
