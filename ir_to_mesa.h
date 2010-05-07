@@ -108,6 +108,7 @@ public:
 			      ir_instruction *ir,
 			      struct mbtree *left,
 			      struct mbtree *right);
+   struct mbtree *create_tree_for_float(ir_instruction *ir, float val);
 
    /**
     * \name Visit methods

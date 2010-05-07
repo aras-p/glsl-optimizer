@@ -195,6 +195,27 @@ ir_to_mesa_visitor::create_tree(int op,
    return tree;
 }
 
+struct mbtree *
+ir_to_mesa_visitor::create_tree_for_float(ir_instruction *ir, float val)
+{
+   struct mbtree *tree = (struct mbtree *)calloc(sizeof(struct mbtree), 1);
+
+   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
+
+   /* FINISHME: This will end up being _mesa_add_unnamed_constant,
+    * which handles sharing values and sharing channels of vec4
+    * constants for small values.
+    */
+   /* FINISHME: Do something with the constant values for now.
+    */
+   (void)val;
+   ir_to_mesa_set_tree_reg(tree, PROGRAM_CONSTANT, this->next_constant++);
+   tree->src_reg.swizzle = SWIZZLE_NOOP;
+
+   this->result = tree;
+   return tree;
+}
+
 /**
  * In the initial pass of codegen, we assign temporary numbers to
  * intermediate results.  (not SSA -- variable assignments will reuse
@@ -344,6 +365,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    this->result = NULL;
 
    switch (ir->operation) {
+   case ir_unop_logic_not:
+      this->result = this->create_tree_for_float(ir, 0.0);
+      this->result = this->create_tree(MB_TERM_seq_vec4_vec4, ir,
+				       op[0], this->result);
+      break;
    case ir_unop_exp:
       this->result = this->create_tree(MB_TERM_exp_vec4, ir, op[0], NULL);
       break;
@@ -415,6 +441,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_f2i:
       this->result = this->create_tree(MB_TERM_trunc_vec4, ir, op[0], NULL);
+      break;
+   case ir_unop_f2b:
+      this->result = this->create_tree_for_float(ir, 0.0);
+      this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir,
+				       op[0], this->result);
       break;
    default:
       break;
