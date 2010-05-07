@@ -77,21 +77,38 @@ ir_to_mesa_emit_op3(struct mbtree *tree, enum prog_opcode op,
 
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op2(struct mbtree *tree, enum prog_opcode op,
-		    ir_to_mesa_dst_reg dst,
-		    ir_to_mesa_src_reg src0,
-		    ir_to_mesa_src_reg src1)
+ir_to_mesa_emit_op2_full(struct mbtree *tree, enum prog_opcode op,
+			 ir_to_mesa_dst_reg dst,
+			 ir_to_mesa_src_reg src0,
+			 ir_to_mesa_src_reg src1)
 {
    return ir_to_mesa_emit_op3(tree, op, dst, src0, src1, ir_to_mesa_undef);
 }
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op,
-		    ir_to_mesa_dst_reg dst,
-		    ir_to_mesa_src_reg src0)
+ir_to_mesa_emit_op2(struct mbtree *tree, enum prog_opcode op)
+{
+   return ir_to_mesa_emit_op2_full(tree, op,
+				   tree->dst_reg,
+				   tree->left->src_reg,
+				   tree->right->src_reg);
+}
+
+ir_to_mesa_instruction *
+ir_to_mesa_emit_op1_full(struct mbtree *tree, enum prog_opcode op,
+			 ir_to_mesa_dst_reg dst,
+			 ir_to_mesa_src_reg src0)
 {
    return ir_to_mesa_emit_op3(tree, op,
 			      dst, src0, ir_to_mesa_undef, ir_to_mesa_undef);
+}
+
+ir_to_mesa_instruction *
+ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op)
+{
+   return ir_to_mesa_emit_op1_full(tree, op,
+				   tree->dst_reg,
+				   tree->left->src_reg);
 }
 
 /**
@@ -131,9 +148,9 @@ ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
       src.swizzle = MAKE_SWIZZLE4(src_swiz, src_swiz,
 				  src_swiz, src_swiz);
 
-      inst = ir_to_mesa_emit_op1(tree, op,
-				 dst,
-				 src);
+      inst = ir_to_mesa_emit_op1_full(tree, op,
+				      dst,
+				      src);
       inst->dst_reg.writemask = this_mask;
       done_mask |= this_mask;
    }
