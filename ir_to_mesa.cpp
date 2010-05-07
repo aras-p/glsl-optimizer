@@ -415,6 +415,19 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir, op[0], op[1]);
       break;
 
+   case ir_binop_logic_or:
+      /* This could be a saturated add. */
+      this->result = this->create_tree(MB_TERM_add_vec4_vec4, ir, op[0], op[1]);
+      this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir,
+				       this->create_tree_for_float(ir, 0.0),
+				       this->result);
+      break;
+
+   case ir_binop_logic_and:
+      /* the bool args are stored as float 0.0 or 1.0, so "mul" gives us "and". */
+      this->result = this->create_tree(MB_TERM_mul_vec4_vec4, ir, op[0], op[1]);
+      break;
+
    case ir_binop_dot:
       if (ir->operands[0]->type == vec4_type) {
 	 assert(ir->operands[1]->type == vec4_type);
