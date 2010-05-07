@@ -12,14 +12,15 @@
 #
 
 
-EGL_DRIVER_PATH = $(TOP)/$(LIB_DIR)/$(EGL_DRIVER)
+EGL_DRIVER_PATH = $(TOP)/$(LIB_DIR)/egl/$(EGL_DRIVER)
 EGL_OBJECTS = $(EGL_SOURCES:.c=.o)
 
 
 default: depend $(EGL_DRIVER_PATH)
 
 $(EGL_DRIVER_PATH): $(EGL_DRIVER)
-	$(INSTALL) $< $(TOP)/$(LIB_DIR)
+	@$(INSTALL) -d $(TOP)/$(LIB_DIR)/egl
+	$(INSTALL) $< $(TOP)/$(LIB_DIR)/egl
 
 $(EGL_DRIVER): $(EGL_OBJECTS) Makefile $(TOP)/src/egl/drivers/Makefile.template
 	@$(MKLIB) -o $(EGL_DRIVER) -noprefix \
