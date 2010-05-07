@@ -148,7 +148,8 @@ ir_to_mesa_instruction *
 ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op);
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op1_full(struct mbtree *tree, enum prog_opcode op,
+ir_to_mesa_emit_op1_full(ir_to_mesa_visitor *v, ir_instruction *ir,
+			 enum prog_opcode op,
 			 ir_to_mesa_dst_reg dst,
 			 ir_to_mesa_src_reg src0);
 
@@ -156,7 +157,8 @@ ir_to_mesa_instruction *
 ir_to_mesa_emit_op2(struct mbtree *tree, enum prog_opcode op);
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op2_full(struct mbtree *tree, enum prog_opcode op,
+ir_to_mesa_emit_op2_full(ir_to_mesa_visitor *v, ir_instruction *ir,
+			 enum prog_opcode op,
 			 ir_to_mesa_dst_reg dst,
 			 ir_to_mesa_src_reg src0,
 			 ir_to_mesa_src_reg src1);
@@ -165,7 +167,8 @@ ir_to_mesa_instruction *
 ir_to_mesa_emit_simple_op2(struct mbtree *tree, enum prog_opcode op);
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op3(struct mbtree *tree, enum prog_opcode op,
+ir_to_mesa_emit_op3(ir_to_mesa_visitor *v, ir_instruction *ir,
+		    enum prog_opcode op,
 		    ir_to_mesa_dst_reg dst,
 		    ir_to_mesa_src_reg src0,
 		    ir_to_mesa_src_reg src1,

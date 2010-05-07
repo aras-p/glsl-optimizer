@@ -116,7 +116,7 @@ vec4: reference_vec4 0
 # which would clean these up.
 stmt: assign(vec4, vec4) 1
 {
-	ir_to_mesa_emit_op1_full(tree, OPCODE_MOV,
+	ir_to_mesa_emit_op1_full(tree->v, tree->ir, OPCODE_MOV,
 				 tree->left->dst_reg,
 				 tree->right->src_reg);
 }
@@ -137,7 +137,7 @@ vec4: swizzle_vec4(vec4) 1
 	}
 	reg.swizzle = MAKE_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);
 
-	ir_to_mesa_emit_op1_full(tree, OPCODE_MOV,
+	ir_to_mesa_emit_op1_full(tree->v, tree->ir, OPCODE_MOV,
 				 tree->dst_reg,
 				 reg);
 }
@@ -171,7 +171,7 @@ vec4: div_vec4_vec4(vec4, vec4) 1
 				   tree->dst_reg,
 				   tree->right->src_reg);
 
-	ir_to_mesa_emit_op2_full(tree, OPCODE_MUL,
+	ir_to_mesa_emit_op2_full(tree->v, tree->ir, OPCODE_MUL,
 				 tree->dst_reg,
 				 tree->src_reg,
 				 tree->left->src_reg);
@@ -190,7 +190,7 @@ vec4: sqrt_vec4(vec4) 1
 				   tree->dst_reg,
 				   tree->left->src_reg);
 
-	ir_to_mesa_emit_op1_full(tree, OPCODE_RCP,
+	ir_to_mesa_emit_op1_full(tree->v, tree->ir, OPCODE_RCP,
 				 tree->dst_reg,
 				 tree->src_reg);
 }

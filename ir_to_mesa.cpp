@@ -54,8 +54,13 @@ ir_to_mesa_src_reg ir_to_mesa_undef = {
    PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP
 };
 
+ir_to_mesa_dst_reg ir_to_mesa_undef_dst = {
+   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP
+};
+
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op3(struct mbtree *tree, enum prog_opcode op,
+ir_to_mesa_emit_op3(ir_to_mesa_visitor *v, ir_instruction *ir,
+		    enum prog_opcode op,
 		    ir_to_mesa_dst_reg dst,
 		    ir_to_mesa_src_reg src0,
 		    ir_to_mesa_src_reg src1,
@@ -68,45 +73,48 @@ ir_to_mesa_emit_op3(struct mbtree *tree, enum prog_opcode op,
    inst->src_reg[0] = src0;
    inst->src_reg[1] = src1;
    inst->src_reg[2] = src2;
-   inst->ir = tree->ir;
+   inst->ir = ir;
 
-   tree->v->instructions.push_tail(inst);
+   v->instructions.push_tail(inst);
 
    return inst;
 }
 
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op2_full(struct mbtree *tree, enum prog_opcode op,
+ir_to_mesa_emit_op2_full(ir_to_mesa_visitor *v, ir_instruction *ir,
+			 enum prog_opcode op,
 			 ir_to_mesa_dst_reg dst,
 			 ir_to_mesa_src_reg src0,
 			 ir_to_mesa_src_reg src1)
 {
-   return ir_to_mesa_emit_op3(tree, op, dst, src0, src1, ir_to_mesa_undef);
+   return ir_to_mesa_emit_op3(v, ir,
+			      op, dst, src0, src1, ir_to_mesa_undef);
 }
 
 ir_to_mesa_instruction *
 ir_to_mesa_emit_op2(struct mbtree *tree, enum prog_opcode op)
 {
-   return ir_to_mesa_emit_op2_full(tree, op,
+   return ir_to_mesa_emit_op2_full(tree->v, tree->ir, op,
 				   tree->dst_reg,
 				   tree->left->src_reg,
 				   tree->right->src_reg);
 }
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op1_full(struct mbtree *tree, enum prog_opcode op,
+ir_to_mesa_emit_op1_full(ir_to_mesa_visitor *v, ir_instruction *ir,
+			 enum prog_opcode op,
 			 ir_to_mesa_dst_reg dst,
 			 ir_to_mesa_src_reg src0)
 {
-   return ir_to_mesa_emit_op3(tree, op,
+   return ir_to_mesa_emit_op3(v, ir, op,
 			      dst, src0, ir_to_mesa_undef, ir_to_mesa_undef);
 }
 
 ir_to_mesa_instruction *
 ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op)
 {
-   return ir_to_mesa_emit_op1_full(tree, op,
+   return ir_to_mesa_emit_op1_full(tree->v, tree->ir, op,
 				   tree->dst_reg,
 				   tree->left->src_reg);
 }
@@ -148,7 +156,7 @@ ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
       src.swizzle = MAKE_SWIZZLE4(src_swiz, src_swiz,
 				  src_swiz, src_swiz);
 
-      inst = ir_to_mesa_emit_op1_full(tree, op,
+      inst = ir_to_mesa_emit_op1_full(tree->v, tree->ir, op,
 				      dst,
 				      src);
       inst->dst_reg.writemask = this_mask;
@@ -703,9 +711,29 @@ ir_to_mesa_visitor::visit(ir_return *ir)
 void
 ir_to_mesa_visitor::visit(ir_if *ir)
 {
-   (void)ir;
-   printf("Can't support conditionals, should be flattened before here.\n");
-   exit(1);
+   ir_to_mesa_instruction *if_inst, *else_inst = NULL;
+
+   ir->condition->accept(this);
+   assert(this->result);
+
+   if_inst = ir_to_mesa_emit_op1_full(this, ir->condition,
+				      OPCODE_IF, ir_to_mesa_undef_dst,
+				      this->result->src_reg);
+
+   this->instructions.push_tail(if_inst);
+
+   visit_exec_list(&ir->then_instructions, this);
+
+   if (!ir->else_instructions.is_empty()) {
+      else_inst = ir_to_mesa_emit_op1_full(this, ir->condition,
+					   OPCODE_ELSE, ir_to_mesa_undef_dst,
+					   ir_to_mesa_undef);
+      visit_exec_list(&ir->then_instructions, this);
+   }
+
+   if_inst = ir_to_mesa_emit_op1_full(this, ir->condition,
+				      OPCODE_ENDIF, ir_to_mesa_undef_dst,
+				      ir_to_mesa_undef);
 }
 
 ir_to_mesa_visitor::ir_to_mesa_visitor()
@@ -728,12 +756,74 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    return mesa_reg;
 }
 
+static void
+set_branchtargets(struct prog_instruction *mesa_instructions,
+		  int num_instructions)
+{
+   int if_count = 0;
+   struct prog_instruction **if_stack;
+   int if_stack_pos = 0;
+   int i;
+
+   for (i = 0; i < num_instructions; i++) {
+      if (mesa_instructions[i].Opcode == OPCODE_IF)
+	 if_count++;
+   }
+
+   if_stack = (struct prog_instruction **)calloc(if_count, sizeof(*if_stack));
+
+   for (i = 0; i < num_instructions; i++) {
+      switch (mesa_instructions[i].Opcode) {
+      case OPCODE_IF:
+	 if_stack[if_stack_pos] = mesa_instructions + i;
+	 if_stack_pos++;
+	 break;
+      case OPCODE_ELSE:
+	 if_stack[if_stack_pos - 1]->BranchTarget = i;
+	 if_stack[if_stack_pos - 1] = mesa_instructions + i;
+	 break;
+      case OPCODE_ENDIF:
+	 if_stack[if_stack_pos - 1]->BranchTarget = i;
+	 if_stack_pos--;
+	 break;
+      default:
+	 break;
+      }
+   }
+
+   free(if_stack);
+}
+
+static void
+print_program(struct prog_instruction *mesa_instructions,
+	      ir_instruction **mesa_instruction_annotation,
+	      int num_instructions)
+{
+   ir_instruction *last_ir = NULL;
+   int i;
+
+   for (i = 0; i < num_instructions; i++) {
+      struct prog_instruction *mesa_inst = mesa_instructions + i;
+      ir_instruction *ir = mesa_instruction_annotation[i];
+
+      if (last_ir != ir) {
+	 ir_print_visitor print;
+	 ir->accept(&print);
+	 printf("\n");
+	 last_ir = ir;
+      }
+
+      _mesa_print_instruction(mesa_inst);
+   }
+}
+
 void
 do_ir_to_mesa(exec_list *instructions)
 {
    ir_to_mesa_visitor v;
    struct prog_instruction *mesa_instructions, *mesa_inst;
-   ir_instruction *last_ir = NULL;
+   ir_instruction **mesa_instruction_annotation;
+   int i;
 
    visit_exec_list(instructions, &v);
 
@@ -745,17 +835,14 @@ do_ir_to_mesa(exec_list *instructions)
    mesa_instructions =
       (struct prog_instruction *)calloc(num_instructions,
 					sizeof(*mesa_instructions));
+   mesa_instruction_annotation =
+      (ir_instruction **)calloc(num_instructions,
+				sizeof(*mesa_instruction_annotation));
 
    mesa_inst = mesa_instructions;
+   i = 0;
    foreach_iter(exec_list_iterator, iter, v.instructions) {
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
-
-      if (last_ir != inst->ir) {
-	 ir_print_visitor print;
-	 inst->ir->accept(&print);
-	 printf("\n");
-	 last_ir = inst->ir;
-      }
 
       mesa_inst->Opcode = inst->op;
       mesa_inst->DstReg.File = inst->dst_reg.file;
@@ -765,9 +852,14 @@ do_ir_to_mesa(exec_list *instructions)
       mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src_reg[0]);
       mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src_reg[1]);
       mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src_reg[2]);
-
-      _mesa_print_instruction(mesa_inst);
+      mesa_instruction_annotation[i] = inst->ir;
 
       mesa_inst++;
+      i++;
    }
+
+   set_branchtargets(mesa_instructions, num_instructions);
+   print_program(mesa_instructions, mesa_instruction_annotation, num_instructions);
+
+   free(mesa_instruction_annotation);
 }
