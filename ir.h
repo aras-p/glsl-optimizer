@@ -756,9 +756,9 @@ public:
    };
 
    ir_loop_jump(jump_mode mode)
-      : mode(mode)
    {
-      /* empty */
+      this->mode = mode;
+      this->loop = loop;
    }
 
    virtual ir_instruction *clone(struct hash_table *) const;
@@ -780,9 +780,11 @@ public:
       return mode == jump_continue;
    }
 
-private:
    /** Mode selector for the jump instruction. */
    enum jump_mode mode;
+private:
+   /** Loop containing this break instruction. */
+   ir_loop *loop;
 };
 /*@}*/
 
