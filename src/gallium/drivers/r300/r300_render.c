@@ -114,16 +114,79 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
     return color_control;
 }
 
-/* Check if the requested number of dwords is available in the CS and
- * if not, flush. Return TRUE if the flush occured. */
-static boolean r300_reserve_cs_space(struct r300_context *r300,
-                                     unsigned dwords)
+static void r500_emit_index_offset(struct r300_context *r300, int index_bias)
 {
-    if (!r300->rws->check_cs(r300->rws, dwords)) {
-        r300->context.flush(&r300->context, 0, NULL);
-        return TRUE;
+    CS_LOCALS(r300);
+
+    if (r300->screen->caps.is_r500 &&
+        r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
+        BEGIN_CS(2);
+        OUT_CS_REG(R500_VAP_INDEX_OFFSET,
+                   (index_bias & 0xFFFFFF) | (index_bias < 0 ? 1<<24 : 0));
+        END_CS;
+    } else {
+        if (index_bias) {
+            fprintf(stderr, "r300: Non-zero index bias is unsupported "
+                            "on this hardware.\n");
+            assert(0);
+        }
     }
-    return FALSE;
+}
+
+enum r300_prepare_flags {
+    PREP_FIRST_DRAW     = (1 << 0),
+    PREP_VALIDATE_VBOS  = (1 << 1),
+    PREP_EMIT_AOS       = (1 << 2),
+    PREP_INDEXED        = (1 << 3)
+};
+
+/* Check if the requested number of dwords is available in the CS and
+ * if not, flush. Then validate buffers and emit dirty state.
+ * Return TRUE if flush occured. */
+static void r300_prepare_for_rendering(struct r300_context *r300,
+                                       enum r300_prepare_flags flags,
+                                       struct pipe_resource *index_buffer,
+                                       unsigned cs_dwords,
+                                       unsigned aos_offset,
+                                       int index_bias)
+{
+    boolean flushed = FALSE;
+    boolean first_draw = flags & PREP_FIRST_DRAW;
+    boolean emit_aos = flags & PREP_EMIT_AOS;
+
+    /* Stencil ref fallback. */
+    if (r300->stencil_ref_bf_fallback) {
+        cs_dwords = cs_dwords * 2 + 10;
+    }
+
+    /* Add dirty state, index offset, and AOS. */
+    if (first_draw) {
+        cs_dwords += r300_get_num_dirty_dwords(r300);
+
+        if (r300->screen->caps.is_r500)
+            cs_dwords += 2; /* emit_index_offset */
+
+        if (emit_aos)
+            cs_dwords += 55; /* emit_aos */
+    }
+
+    /* Emitted in flush. */
+    cs_dwords += 26; /* emit_query_end */
+
+    /* Reserve requested CS space. */
+    if (!r300->rws->check_cs(r300->rws, cs_dwords)) {
+        r300->context.flush(&r300->context, 0, NULL);
+        flushed = TRUE;
+    }
+
+    /* Validate buffers and emit dirty state if needed. */
+    if (first_draw || flushed) {
+        r300_emit_buffer_validate(r300, flags & PREP_VALIDATE_VBOS, index_buffer);
+        r300_emit_dirty_state(r300);
+        r500_emit_index_offset(r300, index_bias);
+        if (emit_aos)
+            r300_emit_aos(r300, aos_offset, flags & PREP_INDEXED);
+    }
 }
 
 static boolean immd_is_good_idea(struct r300_context *r300,
@@ -165,24 +228,6 @@ static boolean immd_is_good_idea(struct r300_context *r300,
  * The emission of draw packets for r500. Older GPUs may use these functions *
  * after resolving fallback issues (e.g. stencil ref two-sided).             *
  ****************************************************************************/
-
-static boolean r500_emit_index_offset(struct r300_context *r300, int indexBias)
-{
-    CS_LOCALS(r300);
-
-    if (r300->screen->caps.is_r500 &&
-        r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
-        BEGIN_CS(2);
-        OUT_CS_REG(R500_VAP_INDEX_OFFSET,
-                   (indexBias & 0xFFFFFF) | (indexBias < 0 ? 1<<24 : 0));
-        END_CS;
-    } else {
-        if (indexBias)
-            return FALSE; /* Can't do anything :( */
-    }
-
-    return TRUE;
-}
 
 void r500_emit_draw_arrays_immediate(struct r300_context *r300,
                                      unsigned mode,
@@ -235,11 +280,7 @@ void r500_emit_draw_arrays_immediate(struct r300_context *r300,
 
     dwords = 9 + count * vertex_size;
 
-    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 2 + dwords);
-    r300_emit_buffer_validate(r300, FALSE, NULL);
-    r300_emit_dirty_state(r300);
-
-    r500_emit_index_offset(r300, 0);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
 
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
@@ -291,8 +332,6 @@ void r500_emit_draw_arrays(struct r300_context *r300,
         return;
     }
 
-    r500_emit_index_offset(r300, 0);
-
     BEGIN_CS(7 + (alt_num_verts ? 2 : 0));
     if (alt_num_verts) {
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
@@ -312,7 +351,6 @@ void r500_emit_draw_arrays(struct r300_context *r300,
 void r500_emit_draw_elements(struct r300_context *r300,
                              struct pipe_resource* indexBuffer,
                              unsigned indexSize,
-                             int indexBias,
                              unsigned minIndex,
                              unsigned maxIndex,
                              unsigned mode,
@@ -334,12 +372,6 @@ void r500_emit_draw_elements(struct r300_context *r300,
 
     DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
         count, minIndex, maxIndex);
-
-    if (!r500_emit_index_offset(r300, indexBias)) {
-        fprintf(stderr, "r300: Got a non-zero index bias, "
-                "refusing to render.\n");
-        return;
-    }
 
     BEGIN_CS(13 + (alt_num_verts ? 2 : 0));
     if (alt_num_verts) {
@@ -457,7 +489,6 @@ void r300_emit_draw_arrays(struct r300_context *r300,
 void r300_emit_draw_elements(struct r300_context *r300,
                              struct pipe_resource* indexBuffer,
                              unsigned indexSize,
-                             int indexBias,
                              unsigned minIndex,
                              unsigned maxIndex,
                              unsigned mode,
@@ -465,14 +496,14 @@ void r300_emit_draw_elements(struct r300_context *r300,
                              unsigned count)
 {
     if (!r300->stencil_ref_bf_fallback) {
-        r500_emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+        r500_emit_draw_elements(r300, indexBuffer, indexSize,
                                 minIndex, maxIndex, mode, start, count);
     } else {
         r300_begin_stencil_ref_fallback(r300);
-        r500_emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+        r500_emit_draw_elements(r300, indexBuffer, indexSize,
                                 minIndex, maxIndex, mode, start, count);
         r300_switch_stencil_ref_side(r300);
-        r500_emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+        r500_emit_draw_elements(r300, indexBuffer, indexSize,
                                 minIndex, maxIndex, mode, start, count);
         r300_end_stencil_ref_fallback(r300);
     }
@@ -576,36 +607,33 @@ void r300_draw_range_elements(struct pipe_context* pipe,
     }
 
     r300_update_derived_state(r300);
-
     r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count);
 
-    /* 128 dwords for emit_aos and emit_draw_elements */
-    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
-    r300_emit_buffer_validate(r300, TRUE, indexBuffer);
-    r300_emit_dirty_state(r300);
-    r300_emit_aos(r300, 0, TRUE);
+    /* 15 dwords for emit_draw_elements */
+    r300_prepare_for_rendering(r300,
+        PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
+        indexBuffer, 15, 0, indexBias);
 
     u_upload_flush(r300->upload_vb);
     u_upload_flush(r300->upload_ib);
     if (alt_num_verts || count <= 65535) {
-        r300->emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+        r300->emit_draw_elements(r300, indexBuffer, indexSize,
                                  minIndex, maxIndex, mode, start, count);
     } else {
         do {
             short_count = MIN2(count, 65534);
-            r300->emit_draw_elements(r300, indexBuffer, indexSize, indexBias,
+            r300->emit_draw_elements(r300, indexBuffer, indexSize,
                                      minIndex, maxIndex,
                                      mode, start, short_count);
 
             start += short_count;
             count -= short_count;
 
-            /* 16 spare dwords are enough for emit_draw_elements.
-             * Also reserve some space for emit_query_end. */
-            if (count && r300_reserve_cs_space(r300, 74)) {
-                r300_emit_buffer_validate(r300, TRUE, indexBuffer);
-                r300_emit_dirty_state(r300);
-                r300_emit_aos(r300, 0, TRUE);
+            /* 15 dwords for emit_draw_elements */
+            if (count) {
+                r300_prepare_for_rendering(r300,
+                    PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
+                    indexBuffer, 15, 0, indexBias);
             }
         } while (count);
     }
@@ -650,30 +678,25 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     if (immd_is_good_idea(r300, count)) {
         r300->emit_draw_arrays_immediate(r300, mode, start, count);
     } else {
-        /* Make sure there are at least 128 spare dwords in the command buffer.
-         * (most of it being consumed by emit_aos) */
-        r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 128);
-        r300_emit_buffer_validate(r300, TRUE, NULL);
-        r300_emit_dirty_state(r300);
+        /* 9 spare dwords for emit_draw_arrays. */
+        r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
+                               NULL, 9, start, 0);
 
         if (alt_num_verts || count <= 65535) {
-            r300_emit_aos(r300, start, FALSE);
             r300->emit_draw_arrays(r300, mode, count);
         } else {
             do {
                 short_count = MIN2(count, 65535);
-                r300_emit_aos(r300, start, FALSE);
                 r300->emit_draw_arrays(r300, mode, short_count);
 
                 start += short_count;
                 count -= short_count;
 
-                /* Again, we emit both AOS and draw_arrays so there should be
-                 * at least 128 spare dwords.
-                 * Also reserve some space for emit_query_end. */
-                if (count && r300_reserve_cs_space(r300, 186)) {
-                    r300_emit_buffer_validate(r300, TRUE, NULL);
-                    r300_emit_dirty_state(r300);
+                /* 9 spare dwords for emit_draw_arrays. */
+                if (count) {
+                    r300_prepare_for_rendering(r300,
+                        PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
+                        start, 0);
                 }
             } while (count);
         }
@@ -898,13 +921,9 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + 2);
-    r300_emit_buffer_validate(r300, FALSE, NULL);
-    r300_emit_dirty_state(r300);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, 2, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
-
-    r500_emit_index_offset(r300, 0);
 
     BEGIN_CS(2);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
@@ -924,11 +943,7 @@ static void r500_render_draw_elements(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    r300_reserve_cs_space(r300, r300_get_num_dirty_dwords(r300) + dwords);
-    r300_emit_buffer_validate(r300, FALSE, NULL);
-    r300_emit_dirty_state(r300);
-
-    r500_emit_index_offset(r300, 0);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
 
     BEGIN_CS(dwords);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
