@@ -113,13 +113,13 @@ int radeonTransformTEX(
 			return 1;
 		} else {
 			rc_compare_func comparefunc = compiler->state.unit[inst->U.I.TexSrcUnit].texture_compare_func;
-			struct rc_instruction * inst_rcp = rc_insert_new_instruction(c, inst);
-			struct rc_instruction * inst_mad = rc_insert_new_instruction(c, inst_rcp);
-			struct rc_instruction * inst_cmp = rc_insert_new_instruction(c, inst_mad);
-			unsigned tmp_recip_w = rc_find_free_temporary(c);
+			struct rc_instruction * inst_rcp = NULL;
+			struct rc_instruction * inst_mad;
+			struct rc_instruction * inst_cmp;
 			unsigned tmp_texsample = rc_find_free_temporary(c);
 			unsigned tmp_sum = rc_find_free_temporary(c);
-			int pass, fail;
+			unsigned tmp_recip_w;
+			int pass, fail, tex;
 
 			/* Save the output register. */
 			struct rc_dst_register output_reg = inst->U.I.DstReg;
@@ -129,28 +129,40 @@ int radeonTransformTEX(
 			inst->U.I.DstReg.Index = tmp_texsample;
 			inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
 
-			/* Compute 1/W. */
-			inst_rcp->U.I.Opcode = RC_OPCODE_RCP;
-			inst_rcp->U.I.DstReg.File = RC_FILE_TEMPORARY;
-			inst_rcp->U.I.DstReg.Index = tmp_recip_w;
-			inst_rcp->U.I.DstReg.WriteMask = RC_MASK_W;
-			inst_rcp->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
-			inst_rcp->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
+			if (inst->U.I.Opcode == RC_OPCODE_TXP) {
+				tmp_recip_w = rc_find_free_temporary(c);
 
-			/* Perspective-divide r (=depth) by W and add the texture sample (see below). */
-			inst_mad->U.I.Opcode = RC_OPCODE_MAD;
+				/* Compute 1/W. */
+				inst_rcp = rc_insert_new_instruction(c, inst);
+				inst_rcp->U.I.Opcode = RC_OPCODE_RCP;
+				inst_rcp->U.I.DstReg.File = RC_FILE_TEMPORARY;
+				inst_rcp->U.I.DstReg.Index = tmp_recip_w;
+				inst_rcp->U.I.DstReg.WriteMask = RC_MASK_W;
+				inst_rcp->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+				inst_rcp->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
+			}
+
+			/* Perspective-divide r by W (if it's TXP) and add the texture sample (see below). */
+			inst_mad = rc_insert_new_instruction(c, inst_rcp ? inst_rcp : inst);
 			inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
 			inst_mad->U.I.DstReg.Index = tmp_sum;
 			inst_mad->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
 			inst_mad->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_ZZZZ;
-			inst_mad->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
-			inst_mad->U.I.SrcReg[1].Index = tmp_recip_w;
-			inst_mad->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
-			inst_mad->U.I.SrcReg[2].File = RC_FILE_TEMPORARY;
-			inst_mad->U.I.SrcReg[2].Index = tmp_texsample;
-			inst_mad->U.I.SrcReg[2].Swizzle = compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_swizzle;
+			if (inst->U.I.Opcode == RC_OPCODE_TXP) {
+				inst_mad->U.I.Opcode = RC_OPCODE_MAD;
+				inst_mad->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
+				inst_mad->U.I.SrcReg[1].Index = tmp_recip_w;
+				inst_mad->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
+				tex = 2;
+			} else {
+				inst_mad->U.I.Opcode = RC_OPCODE_ADD;
+				tex = 1;
+			}
+			inst_mad->U.I.SrcReg[tex].File = RC_FILE_TEMPORARY;
+			inst_mad->U.I.SrcReg[tex].Index = tmp_texsample;
+			inst_mad->U.I.SrcReg[tex].Swizzle = compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_swizzle;
 
-			/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
+			/* Recall that SrcReg[0] is r, SrcReg[tex] is tex and:
 			 *   LESS:    r  < tex  <=>      -tex+r < 0
 			 *   GEQUAL:  r >= tex  <=> not (-tex+r < 0)
 			 *   GREATER: r  > tex  <=>       tex-r < 0
@@ -158,7 +170,7 @@ int radeonTransformTEX(
 			 *
 			 * This negates either r or tex: */
 			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GEQUAL)
-				inst_mad->U.I.SrcReg[2].Negate = inst_mad->U.I.SrcReg[2].Negate ^ RC_MASK_XYZW;
+				inst_mad->U.I.SrcReg[tex].Negate = inst_mad->U.I.SrcReg[tex].Negate ^ RC_MASK_XYZW;
 			else
 				inst_mad->U.I.SrcReg[0].Negate = inst_mad->U.I.SrcReg[0].Negate ^ RC_MASK_XYZW;
 
@@ -171,6 +183,7 @@ int radeonTransformTEX(
 				fail = 1;
 			}
 
+			inst_cmp = rc_insert_new_instruction(c, inst_mad);
 			inst_cmp->U.I.Opcode = RC_OPCODE_CMP;
 			inst_cmp->U.I.DstReg = output_reg;
 			inst_cmp->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
