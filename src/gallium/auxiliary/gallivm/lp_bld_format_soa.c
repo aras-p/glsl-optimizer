@@ -26,6 +26,8 @@
  **************************************************************************/
 
 
+#include "pipe/p_defines.h"
+
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -33,51 +35,38 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_conv.h"
+#include "lp_bld_swizzle.h"
 #include "lp_bld_sample.h" /* for lp_build_gather */
 #include "lp_bld_format.h"
 
 
-static LLVMValueRef
-lp_build_format_swizzle_chan_soa(struct lp_type type,
-                                 const LLVMValueRef *unswizzled,
-                                 enum util_format_swizzle swizzle)
-{
-   switch (swizzle) {
-   case UTIL_FORMAT_SWIZZLE_X:
-   case UTIL_FORMAT_SWIZZLE_Y:
-   case UTIL_FORMAT_SWIZZLE_Z:
-   case UTIL_FORMAT_SWIZZLE_W:
-      return unswizzled[swizzle];
-   case UTIL_FORMAT_SWIZZLE_0:
-      return lp_build_zero(type);
-   case UTIL_FORMAT_SWIZZLE_1:
-      return lp_build_one(type);
-   case UTIL_FORMAT_SWIZZLE_NONE:
-      return lp_build_undef(type);
-   default:
-      assert(0);
-      return lp_build_undef(type);
-   }
-}
-
-
 void
 lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
-                            struct lp_type type,
+                            struct lp_build_context *bld,
                             const LLVMValueRef *unswizzled,
                             LLVMValueRef *swizzled)
 {
-   if(format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+   assert(UTIL_FORMAT_SWIZZLE_0 == PIPE_SWIZZLE_ZERO);
+   assert(UTIL_FORMAT_SWIZZLE_1 == PIPE_SWIZZLE_ONE);
+
+   if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+      /*
+       * Return zzz1 for depth-stencil formats.
+       *
+       * XXX: Allow to control the depth swizzle with an additional parameter,
+       * as the caller may wish another depth swizzle, or retain the stencil
+       * value.
+       */
       enum util_format_swizzle swizzle = format_desc->swizzle[0];
-      LLVMValueRef depth = lp_build_format_swizzle_chan_soa(type, unswizzled, swizzle);
+      LLVMValueRef depth = lp_build_swizzle_soa_channel(bld, unswizzled, swizzle);
       swizzled[2] = swizzled[1] = swizzled[0] = depth;
-      swizzled[3] = lp_build_one(type);
+      swizzled[3] = bld->one;
    }
    else {
       unsigned chan;
       for (chan = 0; chan < 4; ++chan) {
          enum util_format_swizzle swizzle = format_desc->swizzle[chan];
-         swizzled[chan] = lp_build_format_swizzle_chan_soa(type, unswizzled, swizzle);
+         swizzled[chan] = lp_build_swizzle_soa_channel(bld, unswizzled, swizzle);
       }
    }
 }
@@ -108,6 +97,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          LLVMValueRef packed,
                          LLVMValueRef *rgba)
 {
+   struct lp_build_context bld;
    LLVMValueRef inputs[4];
    unsigned start;
    unsigned chan;
@@ -119,6 +109,8 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
    /* FIXME: Support more output types */
    assert(type.floating);
    assert(type.width == 32);
+
+   lp_build_context_init(&bld, builder, type);
 
    /* Decode the input vector components */
    start = 0;
@@ -250,7 +242,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
       start = stop;
    }
 
-   lp_build_format_swizzle_soa(format_desc, type, inputs, rgba);
+   lp_build_format_swizzle_soa(format_desc, &bld, inputs, rgba);
 }
 
 

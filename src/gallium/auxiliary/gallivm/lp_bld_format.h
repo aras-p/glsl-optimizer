@@ -40,6 +40,7 @@
 
 struct util_format_description;
 struct lp_type;
+struct lp_build_context;
 
 
 /*
@@ -70,7 +71,7 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
 
 void
 lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
-                            struct lp_type type,
+                            struct lp_build_context *bld,
                             const LLVMValueRef *unswizzled,
                             LLVMValueRef *swizzled);
 
