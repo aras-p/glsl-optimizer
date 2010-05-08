@@ -1953,7 +1953,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       LLVMValueRef function = LLVMGetBasicBlockParent(block);
       debug_printf("11111111111111111111111111111 \n");
       tgsi_dump(tokens, 0);
-      LLVMDumpValue(function);
+      lp_debug_dump_value(function);
       debug_printf("2222222222222222222222222222 \n");
    }
    tgsi_parse_free( &parse );

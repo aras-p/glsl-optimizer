@@ -205,7 +205,7 @@ draw_llvm_create(struct draw_context *draw)
 
 
 #if 0
-   LLVMDumpModule(llvm->module);
+   LLVMDumpModule(lp_build_module);
 #endif
 
    return llvm;
@@ -691,7 +691,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
     */
 #ifdef DEBUG
    if(LLVMVerifyFunction(variant->function, LLVMPrintMessageAction)) {
-      LLVMDumpValue(variant->function);
+      lp_debug_dump_value(variant->function);
       assert(0);
    }
 #endif
@@ -699,7 +699,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    LLVMRunFunctionPassManager(llvm->pass, variant->function);
 
    if (0) {
-      LLVMDumpValue(variant->function);
+      lp_debug_dump_value(variant->function);
       debug_printf("\n");
    }
    variant->jit_func = (draw_jit_vert_func)LLVMGetPointerToGlobal(llvm->draw->engine, variant->function);
@@ -842,7 +842,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
     */
 #ifdef DEBUG
    if(LLVMVerifyFunction(variant->function_elts, LLVMPrintMessageAction)) {
-      LLVMDumpValue(variant->function_elts);
+      lp_debug_dump_value(variant->function_elts);
       assert(0);
    }
 #endif
@@ -850,7 +850,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    LLVMRunFunctionPassManager(llvm->pass, variant->function_elts);
 
    if (0) {
-      LLVMDumpValue(variant->function_elts);
+      lp_debug_dump_value(variant->function_elts);
       debug_printf("\n");
    }
    variant->jit_func_elts = (draw_jit_vert_func_elts)LLVMGetPointerToGlobal(

@@ -205,6 +205,7 @@ if env['llvm']:
     'gallivm/lp_bld_intr.c',
     'gallivm/lp_bld_logic.c',
     'gallivm/lp_bld_init.c',
+    'gallivm/lp_bld_misc.cpp',
     'gallivm/lp_bld_pack.c',
     'gallivm/lp_bld_printf.c',
     'gallivm/lp_bld_sample.c',

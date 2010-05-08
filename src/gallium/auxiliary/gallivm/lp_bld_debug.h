@@ -53,6 +53,10 @@ lp_build_name(LLVMValueRef val, const char *format, ...)
 }
 
 
+void
+lp_debug_dump_value(LLVMValueRef value);
+
+
 boolean
 lp_check_alignment(const void *ptr, unsigned alignment);
 

@@ -168,7 +168,8 @@ GALLIVM_SOURCES = \
         draw/draw_pt_fetch_shade_pipeline_llvm.c \
         draw/draw_llvm_translate.c
 
-GALLIVM_CPP_SOURCES =
+GALLIVM_CPP_SOURCES = \
+    gallivm/lp_bld_misc.cpp
 
 GENERATED_SOURCES = \
 	indices/u_indices_gen.c \

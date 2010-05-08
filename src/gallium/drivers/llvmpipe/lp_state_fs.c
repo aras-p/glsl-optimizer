@@ -851,7 +851,7 @@ generate_fragment(struct llvmpipe_context *lp,
 #ifdef DEBUG
    if(LLVMVerifyFunction(function, LLVMPrintMessageAction)) {
       if (1)
-         LLVMDumpValue(function);
+         lp_debug_dump_value(function);
       abort();
    }
 #endif
@@ -862,7 +862,7 @@ generate_fragment(struct llvmpipe_context *lp,
 
    if (LP_DEBUG & DEBUG_JIT) {
       /* Print the LLVM IR to stderr */
-      LLVMDumpValue(function);
+      lp_debug_dump_value(function);
       debug_printf("\n");
    }
 
