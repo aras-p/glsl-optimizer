@@ -42,6 +42,8 @@
 
 #define LP_MAX_TGSI_IMMEDIATES 256
 
+#define LP_MAX_TGSI_PREDS 16
+
 /**
  * Maximum control flow nesting
  *

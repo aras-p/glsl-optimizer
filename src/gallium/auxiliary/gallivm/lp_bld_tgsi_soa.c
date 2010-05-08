@@ -113,6 +113,9 @@ struct lp_build_tgsi_soa_context
 {
    struct lp_build_context base;
 
+   /* Builder for integer masks and indices */
+   struct lp_build_context int_bld;
+
    LLVMValueRef consts_ptr;
    const LLVMValueRef *pos;
    const LLVMValueRef (*inputs)[NUM_CHANNELS];
@@ -123,6 +126,7 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TGSI_TEMPS][NUM_CHANNELS];
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS][NUM_CHANNELS];
+   LLVMValueRef preds[LP_MAX_TGSI_PREDS][NUM_CHANNELS];
 
    /* we allocate an array of temps if we have indirect
     * addressing and then the temps above is unused */
@@ -319,15 +323,25 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
  * (0 means don't store this bit, 1 means do store).
  */
 static void lp_exec_mask_store(struct lp_exec_mask *mask,
+                               LLVMValueRef pred,
                                LLVMValueRef val,
                                LLVMValueRef dst)
 {
+   /* Mix the predicate and execution mask */
    if (mask->has_mask) {
+      if (pred) {
+         LLVMBuildAnd(mask->bld->builder, pred, mask->exec_mask, "");
+      } else {
+         pred = mask->exec_mask;
+      }
+   }
+
+   if (pred) {
       LLVMValueRef real_val, dst_val;
 
       dst_val = LLVMBuildLoad(mask->bld->builder, dst, "");
       real_val = lp_build_select(mask->bld,
-                                 mask->exec_mask,
+                                 pred,
                                  val, dst_val);
 
       LLVMBuildStore(mask->bld->builder, real_val, dst);
@@ -512,6 +526,73 @@ emit_fetch_deriv(
 
 
 /**
+ * Predicate.
+ */
+static void
+emit_fetch_predicate(
+   struct lp_build_tgsi_soa_context *bld,
+   const struct tgsi_full_instruction *inst,
+   LLVMValueRef *pred)
+{
+   unsigned index;
+   unsigned char swizzles[4];
+   LLVMValueRef unswizzled[4] = {NULL, NULL, NULL, NULL};
+   LLVMValueRef value;
+   unsigned chan;
+
+   if (!inst->Instruction.Predicate) {
+      FOR_EACH_CHANNEL( chan ) {
+         pred[chan] = NULL;
+      }
+      return;
+   }
+
+   swizzles[0] = inst->Predicate.SwizzleX;
+   swizzles[1] = inst->Predicate.SwizzleY;
+   swizzles[2] = inst->Predicate.SwizzleZ;
+   swizzles[3] = inst->Predicate.SwizzleW;
+
+   index = inst->Predicate.Index;
+   assert(index < LP_MAX_TGSI_PREDS);
+
+   FOR_EACH_CHANNEL( chan ) {
+      unsigned swizzle = swizzles[chan];
+
+      /*
+       * Only fetch the predicate register channels that are actually listed
+       * in the swizzles
+       */
+      if (!unswizzled[swizzle]) {
+         value = LLVMBuildLoad(bld->base.builder,
+                               bld->preds[index][swizzle], "");
+
+         /*
+          * Convert the value to an integer mask.
+          *
+          * TODO: Short-circuit this comparison -- a D3D setp_xx instructions
+          * is needlessly causing two comparisons due to storing the intermediate
+          * result as float vector instead of an integer mask vector.
+          */
+         value = lp_build_compare(bld->base.builder,
+                                  bld->base.type,
+                                  PIPE_FUNC_NOTEQUAL,
+                                  value,
+                                  bld->base.zero);
+         if (inst->Predicate.Negate) {
+            value = LLVMBuildNot(bld->base.builder, value, "");
+         }
+
+         unswizzled[swizzle] = value;
+      } else {
+         value = unswizzled[swizzle];
+      }
+
+      pred[chan] = value;
+   }
+}
+
+
+/**
  * Register store.
  */
 static void
@@ -520,6 +601,7 @@ emit_store(
    const struct tgsi_full_instruction *inst,
    unsigned index,
    unsigned chan_index,
+   LLVMValueRef pred,
    LLVMValueRef value)
 {
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
@@ -560,7 +642,7 @@ emit_store(
 
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
-      lp_exec_mask_store(&bld->exec_mask, value,
+      lp_exec_mask_store(&bld->exec_mask, pred, value,
                          bld->outputs[reg->Register.Index][chan_index]);
       break;
 
@@ -569,17 +651,18 @@ emit_store(
                                            chan_index,
                                            reg->Register.Indirect,
                                            addr);
-      lp_exec_mask_store(&bld->exec_mask, value, temp_ptr);
+      lp_exec_mask_store(&bld->exec_mask, pred, value, temp_ptr);
       break;
    }
 
    case TGSI_FILE_ADDRESS:
-      lp_exec_mask_store(&bld->exec_mask, value,
+      lp_exec_mask_store(&bld->exec_mask, pred, value,
                          bld->addr[reg->Indirect.Index][chan_index]);
       break;
 
    case TGSI_FILE_PREDICATE:
-      /* FIXME */
+      lp_exec_mask_store(&bld->exec_mask, pred, value,
+                         bld->preds[index][chan_index]);
       break;
 
    default:
@@ -814,7 +897,10 @@ emit_declaration(
          break;
 
       case TGSI_FILE_PREDICATE:
-         _debug_printf("warning: predicate registers not yet implemented\n");
+         assert(idx < LP_MAX_TGSI_PREDS);
+         for (i = 0; i < NUM_CHANNELS; i++)
+            bld->preds[idx][i] = lp_build_alloca(bld->base.builder,
+                                                 vec_type, "");
          break;
 
       default:
@@ -858,7 +944,7 @@ emit_instruction(
     */
 
    assert(info->num_dst <= 1);
-   if(info->num_dst) {
+   if (info->num_dst) {
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
          dst0[chan_index] = bld->base.undef;
       }
@@ -1754,8 +1840,12 @@ emit_instruction(
    }
    
    if(info->num_dst) {
+      LLVMValueRef pred[NUM_CHANNELS];
+
+      emit_fetch_predicate( bld, inst, pred );
+
       FOR_EACH_DST0_ENABLED_CHANNEL( inst, chan_index ) {
-         emit_store( bld, inst, 0, chan_index, dst0[chan_index]);
+         emit_store( bld, inst, 0, chan_index, pred[chan_index], dst0[chan_index]);
       }
    }
 
@@ -1783,6 +1873,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
    lp_build_context_init(&bld.base, builder, type);
+   lp_build_context_init(&bld.int_bld, builder, lp_int_type(type));
    bld.mask = mask;
    bld.pos = pos;
    bld.inputs = inputs;
