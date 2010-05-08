@@ -93,18 +93,17 @@ struct lp_exec_mask {
    int cond_stack_size;
    LLVMValueRef cond_mask;
 
-   LLVMValueRef break_stack[LP_MAX_TGSI_NESTING];
-   int break_stack_size;
-   LLVMValueRef break_mask;
-
-   LLVMValueRef cont_stack[LP_MAX_TGSI_NESTING];
-   int cont_stack_size;
-   LLVMValueRef cont_mask;
-
-   LLVMBasicBlockRef loop_stack[LP_MAX_TGSI_NESTING];
-   int loop_stack_size;
    LLVMBasicBlockRef loop_block;
-
+   LLVMValueRef cont_mask;
+   LLVMValueRef break_mask;
+   LLVMValueRef break_var;
+   struct {
+      LLVMBasicBlockRef loop_block;
+      LLVMValueRef cont_mask;
+      LLVMValueRef break_mask;
+      LLVMValueRef break_var;
+   } loop_stack[LP_MAX_TGSI_NESTING];
+   int loop_stack_size;
 
    LLVMValueRef exec_mask;
 };
@@ -167,10 +166,10 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
    mask->has_mask = FALSE;
    mask->cond_stack_size = 0;
    mask->loop_stack_size = 0;
-   mask->break_stack_size = 0;
-   mask->cont_stack_size = 0;
 
    mask->int_vec_type = lp_build_int_vec_type(mask->bld->type);
+   mask->break_mask = mask->cont_mask = mask->cond_mask =
+         LLVMConstAllOnes(mask->int_vec_type);
 }
 
 static void lp_exec_mask_update(struct lp_exec_mask *mask)
@@ -199,24 +198,28 @@ static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
                                    LLVMValueRef val)
 {
    assert(mask->cond_stack_size < LP_MAX_TGSI_NESTING);
+   if (mask->cond_stack_size == 0) {
+      assert(mask->cond_mask == LLVMConstAllOnes(mask->int_vec_type));
+   }
    mask->cond_stack[mask->cond_stack_size++] = mask->cond_mask;
-   mask->cond_mask = LLVMBuildBitCast(mask->bld->builder, val,
-                                      mask->int_vec_type, "");
+   assert(LLVMTypeOf(val) == mask->int_vec_type);
+   mask->cond_mask = val;
 
    lp_exec_mask_update(mask);
 }
 
 static void lp_exec_mask_cond_invert(struct lp_exec_mask *mask)
 {
-   LLVMValueRef prev_mask = mask->cond_stack[mask->cond_stack_size - 1];
-   LLVMValueRef inv_mask = LLVMBuildNot(mask->bld->builder,
-                                        mask->cond_mask, "");
+   LLVMValueRef prev_mask;
+   LLVMValueRef inv_mask;
 
-   /* means that we didn't have any mask before and that
-    * we were fully enabled */
-   if (mask->cond_stack_size <= 1) {
-      prev_mask = LLVMConstAllOnes(mask->int_vec_type);
+   assert(mask->cond_stack_size);
+   prev_mask = mask->cond_stack[mask->cond_stack_size - 1];
+   if (mask->cond_stack_size == 1) {
+      assert(prev_mask == LLVMConstAllOnes(mask->int_vec_type));
    }
+
+   inv_mask = LLVMBuildNot(mask->bld->builder, mask->cond_mask, "");
 
    mask->cond_mask = LLVMBuildAnd(mask->bld->builder,
                                   inv_mask,
@@ -226,30 +229,36 @@ static void lp_exec_mask_cond_invert(struct lp_exec_mask *mask)
 
 static void lp_exec_mask_cond_pop(struct lp_exec_mask *mask)
 {
+   assert(mask->cond_stack_size);
    mask->cond_mask = mask->cond_stack[--mask->cond_stack_size];
    lp_exec_mask_update(mask);
 }
 
 static void lp_exec_bgnloop(struct lp_exec_mask *mask)
 {
+   if (mask->loop_stack_size == 0) {
+      assert(mask->loop_block == NULL);
+      assert(mask->cont_mask == LLVMConstAllOnes(mask->int_vec_type));
+      assert(mask->break_mask == LLVMConstAllOnes(mask->int_vec_type));
+      assert(mask->break_var == NULL);
+   }
 
-   if (mask->cont_stack_size == 0)
-      mask->cont_mask = LLVMConstAllOnes(mask->int_vec_type);
-   if (mask->break_stack_size == 0)
-      mask->break_mask = LLVMConstAllOnes(mask->int_vec_type);
-   if (mask->cond_stack_size == 0)
-      mask->cond_mask = LLVMConstAllOnes(mask->int_vec_type);
+   assert(mask->loop_stack_size < LP_MAX_TGSI_NESTING);
 
-   assert(mask->break_stack_size < LP_MAX_TGSI_NESTING);
-   assert(mask->cont_stack_size < LP_MAX_TGSI_NESTING);
-   assert(mask->break_stack_size < LP_MAX_TGSI_NESTING);
+   mask->loop_stack[mask->loop_stack_size].loop_block = mask->loop_block;
+   mask->loop_stack[mask->loop_stack_size].cont_mask = mask->cont_mask;
+   mask->loop_stack[mask->loop_stack_size].break_mask = mask->break_mask;
+   mask->loop_stack[mask->loop_stack_size].break_var = mask->break_var;
+   ++mask->loop_stack_size;
 
-   mask->break_stack[mask->break_stack_size++] = mask->break_mask;
-   mask->cont_stack[mask->cont_stack_size++] = mask->cont_mask;
-   mask->loop_stack[mask->loop_stack_size++] = mask->loop_block;
+   mask->break_var = lp_build_alloca(mask->bld->builder, mask->int_vec_type, "");
+   LLVMBuildStore(mask->bld->builder, mask->break_mask, mask->break_var);
+
    mask->loop_block = lp_build_insert_new_block(mask->bld->builder, "bgnloop");
    LLVMBuildBr(mask->bld->builder, mask->loop_block);
    LLVMPositionBuilderAtEnd(mask->bld->builder, mask->loop_block);
+
+   mask->break_mask = LLVMBuildLoad(mask->bld->builder, mask->break_var, "");
 
    lp_exec_mask_update(mask);
 }
@@ -290,11 +299,24 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
 
    assert(mask->break_mask);
 
+   /*
+    * Restore the cont_mask, but don't pop
+    */
+   assert(mask->loop_stack_size);
+   mask->cont_mask = mask->loop_stack[mask->loop_stack_size - 1].cont_mask;
+   lp_exec_mask_update(mask);
+
+   /*
+    * Unlike the continue mask, the break_mask must be preserved across loop
+    * iterations
+    */
+   LLVMBuildStore(mask->bld->builder, mask->break_mask, mask->break_var);
+
    /* i1cond = (mask == 0) */
    i1cond = LLVMBuildICmp(
       mask->bld->builder,
       LLVMIntNE,
-      LLVMBuildBitCast(mask->bld->builder, mask->break_mask, reg_type, ""),
+      LLVMBuildBitCast(mask->bld->builder, mask->exec_mask, reg_type, ""),
       LLVMConstNull(reg_type), "");
 
    endloop = lp_build_insert_new_block(mask->bld->builder, "endloop");
@@ -304,15 +326,12 @@ static void lp_exec_endloop(struct lp_exec_mask *mask)
 
    LLVMPositionBuilderAtEnd(mask->bld->builder, endloop);
 
-   mask->loop_block = mask->loop_stack[--mask->loop_stack_size];
-   /* pop the cont mask */
-   if (mask->cont_stack_size) {
-      mask->cont_mask = mask->cont_stack[--mask->cont_stack_size];
-   }
-   /* pop the break mask */
-   if (mask->break_stack_size) {
-      mask->break_mask = mask->break_stack[--mask->break_stack_size];
-   }
+   assert(mask->loop_stack_size);
+   --mask->loop_stack_size;
+   mask->loop_block = mask->loop_stack[mask->loop_stack_size].loop_block;
+   mask->cont_mask = mask->loop_stack[mask->loop_stack_size].cont_mask;
+   mask->break_mask = mask->loop_stack[mask->loop_stack_size].break_mask;
+   mask->break_var = mask->loop_stack[mask->loop_stack_size].break_var;
 
    lp_exec_mask_update(mask);
 }
