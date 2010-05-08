@@ -442,6 +442,8 @@ struct r300_context {
     boolean stencil_ref_bf_fallback;
     /* Point sprites texcoord index,  1 bit per texcoord */
     int sprite_coord_enable;
+    /* Whether two-sided color selection is enabled (AKA light_twoside). */
+    boolean two_sided_color;
 
     /* upload managers */
     struct u_upload_mgr *upload_vb;

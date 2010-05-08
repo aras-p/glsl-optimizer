@@ -355,10 +355,26 @@ static void r300_update_rs_block(struct r300_context *r300)
     /* Set up back-face colors. The rasterizer will do the color selection
      * automatically. */
     if (any_bcolor_used) {
-        for (i = 0; i < ATTR_COLOR_COUNT; i++) {
-            rs.vap_vsm_vtx_assm |= R300_INPUT_CNTL_COLOR;
-            rs.vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << (2+i);
-            stream_loc_notcl[loc++] = 4 + i;
+        if (r300->two_sided_color) {
+            /* Rasterize as back-face colors. */
+            for (i = 0; i < ATTR_COLOR_COUNT; i++) {
+                rs.vap_vsm_vtx_assm |= R300_INPUT_CNTL_COLOR;
+                rs.vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT << (2+i);
+                stream_loc_notcl[loc++] = 4 + i;
+            }
+        } else {
+            /* Rasterize two fake texcoords to prevent from the two-sided color
+             * selection. */
+            /* XXX Consider recompiling the vertex shader to save 2 RS units. */
+            for (i = 0; i < 2; i++) {
+                rs.vap_vsm_vtx_assm |= (R300_INPUT_CNTL_TC0 << tex_count);
+                rs.vap_out_vtx_fmt[1] |= (4 << (3 * tex_count));
+                stream_loc_notcl[loc++] = 6 + tex_count;
+
+                /* Rasterize it. */
+                rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
+                tex_count++;
+            }
         }
     }
 

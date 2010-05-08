@@ -870,6 +870,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     struct r300_context* r300 = r300_context(pipe);
     struct r300_rs_state* rs = (struct r300_rs_state*)state;
     int last_sprite_coord_enable = r300->sprite_coord_enable;
+    boolean last_two_sided_color = r300->two_sided_color;
 
     if (r300->draw) {
         draw_flush(r300->draw);
@@ -879,15 +880,18 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     if (rs) {
         r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
         r300->sprite_coord_enable = rs->rs.sprite_coord_enable;
+        r300->two_sided_color = rs->rs.light_twoside;
     } else {
         r300->polygon_offset_enabled = FALSE;
         r300->sprite_coord_enable = 0;
+        r300->two_sided_color = FALSE;
     }
 
     UPDATE_STATE(state, r300->rs_state);
     r300->rs_state.size = 27 + (r300->polygon_offset_enabled ? 5 : 0);
 
-    if (last_sprite_coord_enable != r300->sprite_coord_enable) {
+    if (last_sprite_coord_enable != r300->sprite_coord_enable ||
+        last_two_sided_color != r300->two_sided_color) {
         r300->rs_block_state.dirty = TRUE;
     }
 }
