@@ -125,7 +125,7 @@ test_format(unsigned verbose, FILE *fp,
    fetch_ptr_t fetch_ptr;
    float unpacked[4];
    boolean success;
-   unsigned i;
+   unsigned i, j, k;
 
    fetch = add_fetch_rgba_test(lp_build_module, desc);
 
@@ -151,28 +151,36 @@ test_format(unsigned verbose, FILE *fp,
 
    fetch_ptr = (fetch_ptr_t) LLVMGetPointerToGlobal(lp_build_engine, fetch);
 
-   memset(unpacked, 0, sizeof unpacked);
+   for (i = 0; i < desc->block.height; ++i) {
+      for (j = 0; j < desc->block.width; ++j) {
 
-   fetch_ptr(unpacked, test->packed, 0, 0);
+         memset(unpacked, 0, sizeof unpacked);
 
-   success = TRUE;
-   for(i = 0; i < 4; ++i)
-      if (fabs((float)test->unpacked[0][0][i] - unpacked[i]) > FLT_EPSILON)
-         success = FALSE;
+         fetch_ptr(unpacked, test->packed, j, i);
 
-   if (!success) {
-      printf("FAILED\n");
-      printf("  Packed: %02x %02x %02x %02x\n",
-             test->packed[0], test->packed[1], test->packed[2], test->packed[3]);
-      printf("  Unpacked: %f %f %f %f obtained\n",
-             unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
-      printf("            %f %f %f %f expected\n",
-             test->unpacked[0][0][0],
-             test->unpacked[0][0][1],
-             test->unpacked[0][0][2],
-             test->unpacked[0][0][3]);
-      LLVMDumpValue(fetch);
+         success = TRUE;
+         for(k = 0; k < 4; ++k)
+            if (fabs((float)test->unpacked[i][j][k] - unpacked[k]) > FLT_EPSILON)
+               success = FALSE;
+
+         if (!success) {
+            printf("FAILED\n");
+            printf("  Packed: %02x %02x %02x %02x\n",
+                   test->packed[0], test->packed[1], test->packed[2], test->packed[3]);
+            printf("  Unpacked (%u,%u): %f %f %f %f obtained\n",
+                   j, i,
+                   unpacked[0], unpacked[1], unpacked[2], unpacked[3]);
+            printf("                  %f %f %f %f expected\n",
+                   test->unpacked[i][j][0],
+                   test->unpacked[i][j][1],
+                   test->unpacked[i][j][2],
+                   test->unpacked[i][j][3]);
+         }
+      }
    }
+
+   if (!success)
+      LLVMDumpValue(fetch);
 
    LLVMFreeMachineCodeForFunction(lp_build_engine, fetch);
    LLVMDeleteFunction(fetch);
@@ -193,20 +201,23 @@ test_one(unsigned verbose, FILE *fp,
          const struct util_format_description *format_desc)
 {
    unsigned i;
+   bool first = TRUE;
    bool success = TRUE;
-
-   printf("Testing %s ...\n",
-          format_desc->name);
 
    for (i = 0; i < util_format_nr_test_cases; ++i) {
       const struct util_format_test_case *test = &util_format_test_cases[i];
 
       if (test->format == format_desc->format) {
 
+         if (first) {
+            printf("Testing %s ...\n",
+                   format_desc->name);
+            first = FALSE;
+         }
+
          if (!test_format(verbose, fp, format_desc, test)) {
            success = FALSE;
          }
-
       }
    }
 
@@ -232,9 +243,7 @@ test_all(unsigned verbose, FILE *fp)
        * TODO: test more
        */
 
-      if (format_desc->block.width != 1 ||
-          format_desc->block.height != 1 ||
-          format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+      if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
          continue;
       }
 
