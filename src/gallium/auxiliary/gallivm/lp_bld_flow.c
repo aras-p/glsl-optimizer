@@ -821,8 +821,11 @@ lp_build_alloca(LLVMBuilderRef builder,
    LLVMBuilderRef first_builder = LLVMCreateBuilder();
    LLVMValueRef res;
 
-   LLVMPositionBuilderAtEnd(first_builder, first_block);
-   LLVMPositionBuilderBefore(first_builder, first_instr);
+   if (first_instr) {
+      LLVMPositionBuilderBefore(first_builder, first_instr);
+   } else {
+      LLVMPositionBuilderAtEnd(first_builder, first_block);
+   }
 
    res = LLVMBuildAlloca(first_builder, type, name);
 
@@ -859,7 +862,11 @@ lp_build_array_alloca(LLVMBuilderRef builder,
    LLVMBuilderRef first_builder = LLVMCreateBuilder();
    LLVMValueRef res;
 
-   LLVMPositionBuilderBefore(first_builder, first_instr);
+   if (first_instr) {
+      LLVMPositionBuilderBefore(first_builder, first_instr);
+   } else {
+      LLVMPositionBuilderAtEnd(first_builder, first_block);
+   }
 
    res = LLVMBuildArrayAlloca(first_builder, type, count, name);
 
