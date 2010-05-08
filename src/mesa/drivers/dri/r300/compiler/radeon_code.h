@@ -144,6 +144,12 @@ struct r300_fragment_program_external_state {
 		unsigned texture_compare_func : 3;
 
 		/**
+		 * No matter what the sampler type is,
+		 * this field turns it into a shadow sampler.
+		 */
+		unsigned compare_mode_enabled : 1;
+
+		/**
 		 * If the sampler needs to fake NPOT, this field is set.
 		 */
 		unsigned fake_npot : 1;
