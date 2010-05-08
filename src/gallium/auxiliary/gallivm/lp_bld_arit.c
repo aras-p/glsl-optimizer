@@ -54,6 +54,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
+#include "lp_bld_init.h" /* for lp_build_engine */
 #include "lp_bld_logic.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_debug.h"
@@ -1228,6 +1229,82 @@ lp_build_rsqrt(struct lp_build_context *bld,
 }
 
 
+#ifdef PIPE_OS_WINDOWS
+
+/*
+ * XXX: X86 backend translates llvm.cos.v4f32 to 4 calls to CRT's cosf()
+ * which is neither efficient nor does the CRT linkage work on Windows
+ * causing segmentation fault.
+ *
+ * XXX: With LLVM 2.7 both schemes cause an assertion failure.
+ */
+static LLVMValueRef
+lp_build_sincos(struct lp_build_context *bld,
+                const char *name,
+                float (*func)(float),
+                LLVMValueRef a)
+{
+   LLVMModuleRef module =
+         LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(bld->builder)));
+   LLVMValueRef function;
+   LLVMValueRef res;
+   unsigned i;
+
+   assert(bld->type.floating);
+   assert(bld->type.width == 32);
+
+   function = LLVMGetNamedFunction(module, name);
+   if (!function) {
+      LLVMTypeRef ret_type;
+      LLVMTypeRef arg_types[1];
+      LLVMTypeRef function_type;
+
+      ret_type = LLVMFloatType();
+      arg_types[0] = LLVMFloatType();
+      function_type = LLVMFunctionType(ret_type, arg_types, Elements(arg_types), 0);
+      function = LLVMAddFunction(module, name, function_type);
+
+      LLVMSetFunctionCallConv(function, LLVMCCallConv);
+      LLVMSetLinkage(function, LLVMPrivateLinkage);
+
+      assert(LLVMIsDeclaration(function));
+
+      LLVMAddGlobalMapping(lp_build_engine, function, func);
+   }
+
+   res = bld->undef;
+
+   for (i = 0; i < bld->type.length; ++i) {
+      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+      LLVMValueRef args[1];
+      LLVMValueRef tmp;
+
+      args[0] = LLVMBuildExtractElement(bld->builder, a, index, "");
+
+      tmp = LLVMBuildCall(bld->builder, function, args, Elements(args), "");
+
+      res = LLVMBuildInsertElement(bld->builder, res, tmp, index, "");
+   }
+
+   return res;
+}
+
+LLVMValueRef
+lp_build_cos(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   return lp_build_sincos(bld, "cosf", &cosf, a);
+}
+
+LLVMValueRef
+lp_build_sin(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   return lp_build_sincos(bld, "sinf", &sinf, a);
+}
+
+#else /* !PIPE_OS_WINDOWS */
+
 /**
  * Generate cos(a)
  */
@@ -1235,14 +1312,6 @@ LLVMValueRef
 lp_build_cos(struct lp_build_context *bld,
               LLVMValueRef a)
 {
-#ifdef PIPE_OS_WINDOWS
-   /*
-    * FIXME: X86 backend translates llvm.cos.v4f32 to 4 calls to CRT's cosf()
-    * which is neither efficient nor does the CRT linkage work on Windows
-    * causing segmentation fault. So simply disable the code for now.
-    */
-   return bld->one;
-#else
    const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    char intrinsic[32];
@@ -1253,7 +1322,6 @@ lp_build_cos(struct lp_build_context *bld,
    util_snprintf(intrinsic, sizeof intrinsic, "llvm.cos.v%uf%u", type.length, type.width);
 
    return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
-#endif
 }
 
 
@@ -1264,14 +1332,6 @@ LLVMValueRef
 lp_build_sin(struct lp_build_context *bld,
               LLVMValueRef a)
 {
-#ifdef PIPE_OS_WINDOWS
-   /*
-    * FIXME: X86 backend translates llvm.sin.v4f32 to 4 calls to CRT's sinf()
-    * which is neither efficient nor does the CRT linkage work on Windows
-    * causing segmentation fault. So simply disable the code for now.
-    */
-   return bld->zero;
-#else
    const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    char intrinsic[32];
@@ -1282,8 +1342,9 @@ lp_build_sin(struct lp_build_context *bld,
    util_snprintf(intrinsic, sizeof intrinsic, "llvm.sin.v%uf%u", type.length, type.width);
 
    return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
-#endif
 }
+
+#endif /* !PIPE_OS_WINDOWS */
 
 
 /**
