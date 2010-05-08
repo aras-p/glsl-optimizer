@@ -744,10 +744,21 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
 
     /* Point size clamping. */
-    psiz = pipe->screen->get_paramf(pipe->screen,
-                                    PIPE_CAP_MAX_POINT_WIDTH);
-    rs->point_minmax =
-        (pack_float_16_6x(psiz)) << R300_GA_POINT_MINMAX_MAX_SHIFT;
+    if (state->point_size_per_vertex) {
+        /* Per-vertex point size.
+         * Clamp to [0, max FB size] */
+        psiz = pipe->screen->get_paramf(pipe->screen,
+                                        PIPE_CAP_MAX_POINT_WIDTH);
+        rs->point_minmax =
+            pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MAX_SHIFT;
+    } else {
+        /* We cannot disable the point-size vertex output,
+         * so clamp it. */
+        psiz = state->point_size;
+        rs->point_minmax =
+            (pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
+            (pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MAX_SHIFT);
+    }
 
     /* Line control. */
     rs->line_control = pack_float_16_6x(state->line_width) |
