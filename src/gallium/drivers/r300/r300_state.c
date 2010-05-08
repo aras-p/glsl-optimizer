@@ -616,7 +616,7 @@ static void
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
     r300->fb_state.size = (10 * state->nr_cbufs) + (2 * (4 - state->nr_cbufs)) +
-                          (state->zsbuf ? 10 : 0) + 11;
+                          (state->zsbuf ? 10 : 0) + 9;
 
     /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {
@@ -722,6 +722,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 {
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
     int i;
+    float psiz;
 
     /* Copy rasterizer state for Draw. */
     rs->rs = *state;
@@ -737,9 +738,18 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         rs->vap_control_status |= R300_VAP_TCL_BYPASS;
     }
 
-    rs->point_size = pack_float_16_6x(state->point_size) |
+    /* Point size width and height. */
+    rs->point_size =
+        pack_float_16_6x(state->point_size) |
         (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
 
+    /* Point size clamping. */
+    psiz = pipe->screen->get_paramf(pipe->screen,
+                                    PIPE_CAP_MAX_POINT_WIDTH);
+    rs->point_minmax =
+        (pack_float_16_6x(psiz)) << R300_GA_POINT_MINMAX_MAX_SHIFT;
+
+    /* Line control. */
     rs->line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 
@@ -864,7 +874,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     UPDATE_STATE(state, r300->rs_state);
-    r300->rs_state.size = 26 + (r300->polygon_offset_enabled ? 5 : 0);
+    r300->rs_state.size = 27 + (r300->polygon_offset_enabled ? 5 : 0);
 
     if (last_sprite_coord_enable != r300->sprite_coord_enable) {
         r300->rs_block_state.dirty = TRUE;

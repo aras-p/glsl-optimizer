@@ -525,8 +525,6 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS(((fb->width  + 1440-1) << R300_SCISSORS_X_SHIFT) |
                ((fb->height + 1440-1) << R300_SCISSORS_Y_SHIFT));
     }
-    OUT_CS_REG(R300_GA_POINT_MINMAX,
-        (MAX2(fb->width, fb->height) * 6) << R300_GA_POINT_MINMAX_MAX_SHIFT);
     END_CS;
 }
 
@@ -667,7 +665,9 @@ void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
     OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
 
     OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
-    OUT_CS_REG(R300_GA_LINE_CNTL, rs->line_control);
+    OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
+    OUT_CS(rs->point_minmax);
+    OUT_CS(rs->line_control);
 
     if (rs->polygon_offset_enable) {
         scale = rs->depth_scale * 12;
