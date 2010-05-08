@@ -162,6 +162,13 @@ int radeonTransformTEX(
 			inst_mad->U.I.SrcReg[tex].Index = tmp_texsample;
 			inst_mad->U.I.SrcReg[tex].Swizzle = compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_swizzle;
 
+			/* Fake EQUAL/NOTEQUAL, it seems to pass some tests suprisingly. */
+			if (comparefunc == RC_COMPARE_FUNC_EQUAL) {
+				comparefunc = RC_COMPARE_FUNC_GEQUAL;
+			} else if (comparefunc == RC_COMPARE_FUNC_NOTEQUAL) {
+				comparefunc = RC_COMPARE_FUNC_LESS;
+			}
+
 			/* Recall that SrcReg[0] is r, SrcReg[tex] is tex and:
 			 *   LESS:    r  < tex  <=>      -tex+r < 0
 			 *   GEQUAL:  r >= tex  <=> not (-tex+r < 0)
