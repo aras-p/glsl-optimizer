@@ -1438,17 +1438,31 @@ lp_build_polynomial(struct lp_build_context *bld,
 
 
 /**
- * Minimax polynomial fit of 2**x, in range [-0.5, 0.5[
+ * Minimax polynomial fit of 2**x, in range [0, 1[
  */
 const double lp_build_exp2_polynomial[] = {
 #if EXP_POLY_DEGREE == 5
-   9.9999994e-1, 6.9315308e-1, 2.4015361e-1, 5.5826318e-2, 8.9893397e-3, 1.8775767e-3
+   0.999999999690134838155,
+   0.583974334321735217258,
+   0.164553105719676828492,
+   0.0292811063701710962255,
+   0.00354944426657875141846,
+   0.000296253726543423377365
 #elif EXP_POLY_DEGREE == 4
-   1.0000026, 6.9300383e-1, 2.4144275e-1, 5.2011464e-2, 1.3534167e-2
+   1.00000001502262084505,
+   0.563586057338685991394,
+   0.150436017652442413623,
+   0.0243220604213317927308,
+   0.0025359088446580436489
 #elif EXP_POLY_DEGREE == 3
-   9.9992520e-1, 6.9583356e-1, 2.2606716e-1, 7.8024521e-2
+   0.999925218562710312959,
+   0.695833540494823811697,
+   0.226067155427249155588,
+   0.0780245226406372992967
 #elif EXP_POLY_DEGREE == 2
-   1.0017247, 6.5763628e-1, 3.3718944e-1
+   1.00172476321474503578,
+   0.657636275736077639316,
+   0.33718943461968720704
 #else
 #error
 #endif
@@ -1482,17 +1496,16 @@ lp_build_exp2_approx(struct lp_build_context *bld,
       x = lp_build_min(bld, x, lp_build_const_vec(type,  129.0));
       x = lp_build_max(bld, x, lp_build_const_vec(type, -126.99999));
 
-      /* ipart = int(x - 0.5) */
-      ipart = LLVMBuildSub(bld->builder, x, lp_build_const_vec(type, 0.5f), "");
-      ipart = LLVMBuildFPToSI(bld->builder, ipart, int_vec_type, "");
+      /* ipart = floor(x) */
+      ipart = lp_build_floor(bld, x);
 
       /* fpart = x - ipart */
-      fpart = LLVMBuildSIToFP(bld->builder, ipart, vec_type, "");
-      fpart = LLVMBuildSub(bld->builder, x, fpart, "");
+      fpart = LLVMBuildSub(bld->builder, x, ipart, "");
    }
 
    if(p_exp2_int_part || p_exp2) {
       /* expipart = (float) (1 << ipart) */
+      ipart = LLVMBuildFPToSI(bld->builder, ipart, int_vec_type, "");
       expipart = LLVMBuildAdd(bld->builder, ipart, lp_build_const_int_vec(type, 127), "");
       expipart = LLVMBuildShl(bld->builder, expipart, lp_build_const_int_vec(type, 23), "");
       expipart = LLVMBuildBitCast(bld->builder, expipart, vec_type, "");
@@ -1533,13 +1546,27 @@ lp_build_exp2(struct lp_build_context *bld,
  */
 const double lp_build_log2_polynomial[] = {
 #if LOG_POLY_DEGREE == 6
-   3.11578814719469302614, -3.32419399085241980044, 2.59883907202499966007, -1.23152682416275988241, 0.318212422185251071475, -0.0344359067839062357313
+   3.11578814719469302614,
+   -3.32419399085241980044,
+   2.59883907202499966007,
+   -1.23152682416275988241,
+   0.318212422185251071475,
+   -0.0344359067839062357313
 #elif LOG_POLY_DEGREE == 5
-   2.8882704548164776201, -2.52074962577807006663, 1.48116647521213171641, -0.465725644288844778798, 0.0596515482674574969533
+   2.8882704548164776201,
+   -2.52074962577807006663,
+   1.48116647521213171641,
+   -0.465725644288844778798,
+   0.0596515482674574969533
 #elif LOG_POLY_DEGREE == 4
-   2.61761038894603480148, -1.75647175389045657003, 0.688243882994381274313, -0.107254423828329604454
+   2.61761038894603480148,
+   -1.75647175389045657003,
+   0.688243882994381274313,
+   -0.107254423828329604454
 #elif LOG_POLY_DEGREE == 3
-   2.28330284476918490682, -1.04913055217340124191, 0.204446009836232697516
+   2.28330284476918490682,
+   -1.04913055217340124191,
+   0.204446009836232697516
 #else
 #error
 #endif
