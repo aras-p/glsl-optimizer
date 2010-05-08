@@ -384,7 +384,7 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
       args[2] = i;
       args[3] = j;
 
-      LLVMBuildCall(builder, function, args, 4, "");
+      LLVMBuildCall(builder, function, args, Elements(args), "");
 
       return LLVMBuildLoad(builder, tmp, "");
    }
