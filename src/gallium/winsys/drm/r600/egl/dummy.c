@@ -1,0 +1,1 @@
+/* mklib expects at least one object file */
