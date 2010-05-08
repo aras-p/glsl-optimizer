@@ -71,6 +71,8 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
    LLVMValueRef res;
    unsigned i;
 
+   assert(lp_check_elem_type(type, LLVMTypeOf(scalar)));
+
    res = bld->undef;
    for(i = 0; i < type.length; ++i) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);

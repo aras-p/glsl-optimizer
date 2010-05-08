@@ -301,6 +301,9 @@ lp_build_const_vec(struct lp_type type,
       elems[0] = LLVMConstInt(elem_type, val*dscale + 0.5, 0);
    }
 
+   if (type.length == 1)
+      return elems[0];
+
    for(i = 1; i < type.length; ++i)
       elems[i] = elems[0];
 
@@ -320,6 +323,9 @@ lp_build_const_int_vec(struct lp_type type,
 
    for(i = 0; i < type.length; ++i)
       elems[i] = LLVMConstInt(elem_type, val, type.sign ? 1 : 0);
+
+   if (type.length == 1)
+      return elems[0];
 
    return LLVMConstVector(elems, type.length);
 }
