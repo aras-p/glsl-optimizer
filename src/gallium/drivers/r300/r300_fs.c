@@ -137,6 +137,7 @@ static void get_external_state(
 {
     struct r300_textures_state *texstate = r300->textures_state.state;
     unsigned i;
+    unsigned char *swizzle;
 
     for (i = 0; i < texstate->sampler_state_count; i++) {
         struct r300_sampler_state* s = texstate->sampler_states[i];
@@ -148,9 +149,16 @@ static void get_external_state(
         if (s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
             state->unit[i].compare_mode_enabled = 1;
 
-            /* XXX Gallium doesn't provide us with any information regarding
-             * this mode, so we are screwed. Let's set INTENSITY for now. */
-            state->unit[i].depth_texture_swizzle = RC_SWIZZLE_XYZW;
+            /* Pass depth texture swizzling to the compiler. */
+            if (texstate->sampler_views[i]) {
+                swizzle = texstate->sampler_views[i]->swizzle;
+
+                state->unit[i].depth_texture_swizzle =
+                    RC_MAKE_SWIZZLE(swizzle[0], swizzle[1],
+                                    swizzle[2], swizzle[3]);
+            } else {
+                state->unit[i].depth_texture_swizzle = RC_SWIZZLE_XYZW;
+            }
 
             /* Fortunately, no need to translate this. */
             state->unit[i].texture_compare_func = s->state.compare_func;

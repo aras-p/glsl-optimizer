@@ -151,6 +151,10 @@ struct r300_texture_format_state {
 struct r300_sampler_view {
     struct pipe_sampler_view base;
 
+    /* Swizzles in the UTIL_FORMAT_SWIZZLE_* representation,
+     * derived from base. */
+    unsigned char swizzle[4];
+
     /* Copy of r300_texture::texture_format_state with format-specific bits
      * added. */
     struct r300_texture_format_state format;
@@ -166,6 +170,13 @@ struct r300_texture_fb_state {
     uint32_t zb_format; /* R300_ZB_FORMAT */
 };
 
+struct r300_texture_sampler_state {
+    struct r300_texture_format_state format;
+    uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
+    uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
+    uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
+};
+
 struct r300_textures_state {
     /* Textures. */
     struct r300_sampler_view *sampler_views[16];
@@ -177,12 +188,7 @@ struct r300_textures_state {
     /* This is the merge of the texture and sampler states. */
     unsigned count;
     uint32_t tx_enable;         /* R300_TX_ENABLE: 0x4101 */
-    struct r300_texture_sampler_state {
-        struct r300_texture_format_state format;
-        uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
-        uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
-        uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
-    } regs[16];
+    struct r300_texture_sampler_state regs[16];
 };
 
 struct r300_vertex_stream_state {

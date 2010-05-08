@@ -1021,7 +1021,6 @@ r300_create_sampler_view(struct pipe_context *pipe,
 {
     struct r300_sampler_view *view = CALLOC_STRUCT(r300_sampler_view);
     struct r300_texture *tex = r300_texture(texture);
-    unsigned char swizzle[4];
 
     if (view) {
         view->base = *templ;
@@ -1030,14 +1029,14 @@ r300_create_sampler_view(struct pipe_context *pipe,
         view->base.texture = NULL;
         pipe_resource_reference(&view->base.texture, texture);
 
-        swizzle[0] = templ->swizzle_r;
-        swizzle[1] = templ->swizzle_g;
-        swizzle[2] = templ->swizzle_b;
-        swizzle[3] = templ->swizzle_a;
+        view->swizzle[0] = templ->swizzle_r;
+        view->swizzle[1] = templ->swizzle_g;
+        view->swizzle[2] = templ->swizzle_b;
+        view->swizzle[3] = templ->swizzle_a;
 
         view->format = tex->tx_format;
         view->format.format1 |= r300_translate_texformat(templ->format,
-                                                         swizzle);
+                                                         view->swizzle);
         if (r300_screen(pipe->screen)->caps.is_r500) {
             view->format.format2 |= r500_tx_format_msb_bit(templ->format);
         }

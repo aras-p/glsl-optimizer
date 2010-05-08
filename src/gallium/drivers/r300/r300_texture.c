@@ -47,6 +47,60 @@ static const unsigned microblock_table[5][3][2] = {
     {{ 2, 1}, {0, 0}, {0, 0}}  /* 128 bits per pixel */
 };
 
+unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
+                                   const unsigned char *swizzle_view)
+{
+    unsigned i;
+    unsigned char swizzle[4];
+    unsigned result = 0;
+    const uint32_t swizzle_shift[4] = {
+        R300_TX_FORMAT_R_SHIFT,
+        R300_TX_FORMAT_G_SHIFT,
+        R300_TX_FORMAT_B_SHIFT,
+        R300_TX_FORMAT_A_SHIFT
+    };
+    const uint32_t swizzle_bit[4] = {
+        R300_TX_FORMAT_X,
+        R300_TX_FORMAT_Y,
+        R300_TX_FORMAT_Z,
+        R300_TX_FORMAT_W
+    };
+
+    if (swizzle_view) {
+        /* Combine two sets of swizzles. */
+        for (i = 0; i < 4; i++) {
+            swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
+                         swizzle_format[swizzle_view[i]] : swizzle_view[i];
+        }
+    } else {
+        memcpy(swizzle, swizzle_format, 4);
+    }
+
+    /* Get swizzle. */
+    for (i = 0; i < 4; i++) {
+        switch (swizzle[i]) {
+            case UTIL_FORMAT_SWIZZLE_Y:
+                result |= swizzle_bit[1] << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_Z:
+                result |= swizzle_bit[2] << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_W:
+                result |= swizzle_bit[3] << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_0:
+                result |= R300_TX_FORMAT_ZERO << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_1:
+                result |= R300_TX_FORMAT_ONE << swizzle_shift[i];
+                break;
+            default: /* UTIL_FORMAT_SWIZZLE_X */
+                result |= swizzle_bit[0] << swizzle_shift[i];
+        }
+    }
+    return result;
+}
+
 /* Translate a pipe_format into a useful texture format for sampling.
  *
  * Some special formats are translated directly using R300_EASY_TX_FORMAT,
@@ -66,38 +120,26 @@ uint32_t r300_translate_texformat(enum pipe_format format,
     const struct util_format_description *desc;
     unsigned i;
     boolean uniform = TRUE;
-    const uint32_t swizzle_shift[4] = {
-        R300_TX_FORMAT_R_SHIFT,
-        R300_TX_FORMAT_G_SHIFT,
-        R300_TX_FORMAT_B_SHIFT,
-        R300_TX_FORMAT_A_SHIFT
-    };
-    const uint32_t swizzle_bit[4] = {
-        R300_TX_FORMAT_X,
-        R300_TX_FORMAT_Y,
-        R300_TX_FORMAT_Z,
-        R300_TX_FORMAT_W
-    };
     const uint32_t sign_bit[4] = {
         R300_TX_FORMAT_SIGNED_X,
         R300_TX_FORMAT_SIGNED_Y,
         R300_TX_FORMAT_SIGNED_Z,
         R300_TX_FORMAT_SIGNED_W,
     };
-    unsigned char swizzle[4];
 
     desc = util_format_description(format);
 
     /* Colorspace (return non-RGB formats directly). */
     switch (desc->colorspace) {
-        /* Depth stencil formats. */
+        /* Depth stencil formats.
+         * Swizzles are added in r300_merge_textures_and_samplers. */
         case UTIL_FORMAT_COLORSPACE_ZS:
             switch (format) {
                 case PIPE_FORMAT_Z16_UNORM:
-                    return R300_EASY_TX_FORMAT(X, X, X, X, X16);
+                    return R300_TX_FORMAT_X16;
                 case PIPE_FORMAT_X8Z24_UNORM:
                 case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-                    return R300_EASY_TX_FORMAT(X, X, X, X, W24_FP);
+                    return R300_TX_FORMAT_W24_FP;
                 default:
                     return ~0; /* Unsupported. */
             }
@@ -131,43 +173,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    /* Get swizzle. */
-    if (swizzle_view) {
-        /* Compose two sets of swizzles. */
-        for (i = 0; i < 4; i++) {
-            swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
-                         desc->swizzle[swizzle_view[i]] : swizzle_view[i];
-        }
-    } else {
-        memcpy(swizzle, desc->swizzle, sizeof(swizzle));
-    }
-
-    /* Add swizzle. */
-    for (i = 0; i < 4; i++) {
-        switch (swizzle[i]) {
-            case UTIL_FORMAT_SWIZZLE_X:
-            case UTIL_FORMAT_SWIZZLE_NONE:
-                result |= swizzle_bit[0] << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_Y:
-                result |= swizzle_bit[1] << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_Z:
-                result |= swizzle_bit[2] << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_W:
-                result |= swizzle_bit[3] << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_0:
-                result |= R300_TX_FORMAT_ZERO << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_1:
-                result |= R300_TX_FORMAT_ONE << swizzle_shift[i];
-                break;
-            default:
-                return ~0; /* Unsupported. */
-        }
-    }
+    result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view);
 
     /* S3TC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {

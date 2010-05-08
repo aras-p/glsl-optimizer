@@ -34,6 +34,7 @@
 #include "r300_state.h"
 #include "r300_state_derived.h"
 #include "r300_state_inlines.h"
+#include "r300_texture.h"
 #include "r300_vs.h"
 
 /* r300_state_derived: Various bits of state which are dependent upon
@@ -493,6 +494,12 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     unsigned min_level, max_level, i, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
+    unsigned char depth_swizzle[4] = {
+        UTIL_FORMAT_SWIZZLE_X,
+        UTIL_FORMAT_SWIZZLE_X,
+        UTIL_FORMAT_SWIZZLE_X,
+        UTIL_FORMAT_SWIZZLE_X
+    };
 
     state->tx_enable = 0;
     state->count = 0;
@@ -511,6 +518,20 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             texstate->filter0 = sampler->filter0;
             texstate->filter1 = sampler->filter1;
             texstate->border_color = sampler->border_color;
+
+            /* If compare mode is disabled, the sampler view swizzles
+             * are stored in the format.
+             * Otherwise, swizzles must be applied after the compare mode
+             * in the fragment shader. */
+            if (util_format_is_depth_or_stencil(tex->b.b.format)) {
+                if (sampler->state.compare_mode == PIPE_TEX_COMPARE_NONE) {
+                    texstate->format.format1 |=
+                        r300_get_swizzle_combined(depth_swizzle, view->swizzle);
+                } else {
+                    texstate->format.format1 |=
+                        r300_get_swizzle_combined(depth_swizzle, 0);
+                }
+            }
 
             /* to emulate 1D textures through 2D ones correctly */
             if (tex->b.b.target == PIPE_TEXTURE_1D) {
