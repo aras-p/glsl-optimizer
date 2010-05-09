@@ -74,6 +74,9 @@ const char *
 util_dump_func(unsigned value, boolean shortened);
 
 const char *
+util_dump_stencil_op(unsigned value, boolean shortened);
+
+const char *
 util_dump_tex_target(unsigned value, boolean shortened);
 
 const char *

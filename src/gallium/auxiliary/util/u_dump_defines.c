@@ -187,6 +187,33 @@ DEFINE_UTIL_DUMP_CONTINUOUS(func)
 
 
 static const char *
+util_dump_stencil_op_names[] = {
+   "PIPE_STENCIL_OP_KEEP",
+   "PIPE_STENCIL_OP_ZERO",
+   "PIPE_STENCIL_OP_REPLACE",
+   "PIPE_STENCIL_OP_INCR",
+   "PIPE_STENCIL_OP_DECR",
+   "PIPE_STENCIL_OP_INCR_WRAP",
+   "PIPE_STENCIL_OP_DECR_WRAP",
+   "PIPE_STENCIL_OP_INVERT"
+};
+
+static const char *
+util_dump_stencil_op_short_names[] = {
+   "keep",
+   "zero",
+   "replace",
+   "incr",
+   "decr",
+   "incr_wrap",
+   "decr_wrap",
+   "invert"
+};
+
+DEFINE_UTIL_DUMP_CONTINUOUS(stencil_op)
+
+
+static const char *
 util_dump_tex_target_names[] = {
    "PIPE_TEXTURE_1D",
    "PIPE_TEXTURE_2D",
