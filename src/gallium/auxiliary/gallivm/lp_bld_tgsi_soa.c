@@ -349,7 +349,7 @@ static void lp_exec_mask_store(struct lp_exec_mask *mask,
    /* Mix the predicate and execution mask */
    if (mask->has_mask) {
       if (pred) {
-         LLVMBuildAnd(mask->bld->builder, pred, mask->exec_mask, "");
+         pred = LLVMBuildAnd(mask->bld->builder, pred, mask->exec_mask, "");
       } else {
          pred = mask->exec_mask;
       }
