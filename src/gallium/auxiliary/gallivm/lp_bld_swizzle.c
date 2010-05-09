@@ -68,18 +68,20 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
                           LLVMValueRef scalar)
 {
    const struct lp_type type = bld->type;
-   LLVMValueRef res;
-   unsigned i;
 
    assert(lp_check_elem_type(type, LLVMTypeOf(scalar)));
 
-   res = bld->undef;
-   for(i = 0; i < type.length; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      res = LLVMBuildInsertElement(bld->builder, res, scalar, index, "");
+   if (type.length == 1) {
+      return scalar;
    }
-
-   return res;
+   else {
+      LLVMValueRef res;
+      res = LLVMBuildInsertElement(bld->builder, bld->undef, scalar,
+                                   LLVMConstInt(LLVMInt32Type(), 0, 0), "");
+      res = LLVMBuildShuffleVector(bld->builder, res, bld->undef,
+                                   lp_build_const_int_vec(type, 0), "");
+      return res;
+   }
 }
 
 
