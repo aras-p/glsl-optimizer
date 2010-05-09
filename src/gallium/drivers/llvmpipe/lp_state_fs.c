@@ -912,6 +912,16 @@ generate_variant(struct llvmpipe_context *lp,
          debug_printf("depth.func = %s\n", util_dump_func(key->depth.func, TRUE));
          debug_printf("depth.writemask = %u\n", key->depth.writemask);
       }
+      for (i = 0; i < 2; ++i) {
+         if(key->stencil[i].enabled) {
+            debug_printf("stencil[%u].func = %s\n", i, util_dump_func(key->stencil[i].func, TRUE));
+            debug_printf("stencil[%u].fail_op = %s\n", i, util_dump_stencil_op(key->stencil[i].fail_op, TRUE));
+            debug_printf("stencil[%u].zpass_op = %s\n", i, util_dump_stencil_op(key->stencil[i].zpass_op, TRUE));
+            debug_printf("stencil[%u].zfail_op = %s\n", i, util_dump_stencil_op(key->stencil[i].zfail_op, TRUE));
+            debug_printf("stencil[%u].valuemask = 0x%x\n", i, key->stencil[i].valuemask);
+            debug_printf("stencil[%u].writemask = 0x%x\n", i, key->stencil[i].writemask);
+         }
+      }
       if(key->alpha.enabled) {
          debug_printf("alpha.func = %s\n", util_dump_func(key->alpha.func, TRUE));
          debug_printf("alpha.ref_value = %f\n", key->alpha.ref_value);
