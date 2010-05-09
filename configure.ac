@@ -1442,16 +1442,7 @@ AC_ARG_ENABLE([gallium-g3dvl],
     [enable_gallium_g3dvl="$enableval"],
     [enable_gallium_g3dvl=no])
 if test "x$enable_gallium_g3dvl" = xyes; then
-    vl_winsys_dirs=""
-    for dir in $GALLIUM_WINSYS_DIRS; do
-        vl_winsys_dirs="$vl_winsys_dirs g3dvl/$dir"
-    done
-    # Hack, g3dvl dri state tracker is in winsys/g3dvl/dri
-    # and needs to be built before the drm bits
-    if test "$mesa_driver" = dri; then
-        vl_winsys_dirs="g3dvl/dri $vl_winsys_dirs"
-    fi
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $vl_winsys_dirs"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
 fi
 
 dnl

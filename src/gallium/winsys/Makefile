@@ -2,7 +2,7 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-SUBDIRS = $(GALLIUM_WINSYS_DIRS) g3dvl
+SUBDIRS = $(GALLIUM_WINSYS_DIRS)
 
 default install clean:
 	@for dir in $(SUBDIRS) ; do \

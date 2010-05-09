@@ -437,12 +437,14 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    vl_video_bind_drawable(context_priv->vctx, drawable);
 
+#if 0
    vpipe->screen->flush_frontbuffer
    (
       vpipe->screen,
       context_priv->backbuffer,
       vpipe->priv
    );
+#endif
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Pushed surface %p to front buffer.\n", surface);
 

@@ -19,7 +19,7 @@ C_SOURCES = \
 	sp_quad_fs.c \
 	sp_quad_blend.c \
 	sp_screen.c \
-        sp_setup.c \
+	sp_setup.c \
 	sp_state_blend.c \
 	sp_state_clip.c \
 	sp_state_derived.c \
@@ -32,6 +32,7 @@ C_SOURCES = \
 	sp_tex_sample.c \
 	sp_tex_tile_cache.c \
 	sp_tile_cache.c \
-	sp_surface.c
+	sp_surface.c \
+	sp_video_context.c
 
 include ../../Makefile.template

@@ -33,7 +33,7 @@
 #include <util/u_memory.h>
 #include <util/u_rect.h>
 #include <util/u_video.h>
-#include "sp_winsys.h"
+#include "sp_public.h"
 #include "sp_texture.h"
 
 static void
