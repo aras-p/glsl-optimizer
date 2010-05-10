@@ -156,6 +156,16 @@ dst_register( struct st_translate *t,
    case PROGRAM_OUTPUT:
       if (index == VERT_RESULT_PSIZ)
          t->prevInstWrotePsiz = GL_TRUE;
+
+      if (t->procType == TGSI_PROCESSOR_VERTEX)
+         assert(index < VERT_RESULT_MAX);
+      else if (t->procType == TGSI_PROCESSOR_FRAGMENT)
+         assert(index < FRAG_RESULT_MAX);
+      else
+         assert(0 && "geom shaders not handled in dst_register() yet");
+
+      assert(t->outputMapping[index] < Elements(t->outputs));
+
       return t->outputs[t->outputMapping[index]];
 
    case PROGRAM_ADDRESS:
