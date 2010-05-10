@@ -33,8 +33,8 @@
  * Blending in SoA is much faster than AoS, especially when separate rgb/alpha
  * factors/functions are used, since no channel masking/shuffling is necessary
  * and we can achieve the full throughput of the SIMD operations. Furthermore
- * the fragment shader output is also in SoA, so it fits nicely with the rest of
- * the fragment pipeline.
+ * the fragment shader output is also in SoA, so it fits nicely with the rest
+ * of the fragment pipeline.
  *
  * The drawback is that to be displayed the color buffer needs to be in AoS
  * layout, so we need to tile/untile the color buffer before/after rendering.
@@ -77,7 +77,7 @@
 
 
 /**
- * We may the same values several times, so we keep them here to avoid
+ * We may use the same values several times, so we keep them here to avoid
  * recomputing them. Also reusing the values allows us to do simplifications
  * that LLVM optimization passes wouldn't normally be able to do.
  */
@@ -98,16 +98,22 @@ struct lp_build_blend_soa_context
    /**
     * We store all factors in a table in order to eliminate redundant
     * multiplications later.
+    * Indexes are: factor[src,dst][color,term][r,g,b,a]
     */
    LLVMValueRef factor[2][2][4];
 
    /**
     * Table with all terms.
+    * Indexes are: term[src,dst][r,g,b,a]
     */
    LLVMValueRef term[2][4];
 };
 
 
+/**
+ * Build a single SOA blend factor for a color channel.
+ * \param i  the color channel in [0,3]
+ */
 static LLVMValueRef
 lp_build_blend_soa_factor(struct lp_build_blend_soa_context *bld,
                           unsigned factor, unsigned i)
@@ -218,6 +224,7 @@ lp_build_blend_soa(LLVMBuilderRef builder,
    }
 
    for (i = 0; i < 4; ++i) {
+      /* only compute blending for the color channels enabled for writing */
       if (blend->rt[0].colormask & (1 << i)) {
          if (blend->logicop_enable) {
             if(!type.floating) {
@@ -269,9 +276,9 @@ lp_build_blend_soa(LLVMBuilderRef builder,
                   /* XXX special case these combos to work around an apparent
                    * bug in LLVM.
                    * This hack disables the check for multiplication by zero
-                   * in lp_bld_mul().  When we optimize away the multiplication,
-                   * something goes wrong during code generation and we segfault
-                   * at runtime.
+                   * in lp_bld_mul().  When we optimize away the
+                   * multiplication, something goes wrong during code
+                   * generation and we segfault at runtime.
                    */
                   LLVMValueRef zeroSave = bld.base.zero;
                   bld.base.zero = NULL;

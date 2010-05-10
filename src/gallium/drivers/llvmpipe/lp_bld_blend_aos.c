@@ -243,6 +243,9 @@ lp_build_blend_factor(struct lp_build_blend_aos_context *bld,
 }
 
 
+/**
+ * Is (a OP b) == (b OP a)?
+ */
 boolean
 lp_build_blend_func_commutative(unsigned func)
 {
