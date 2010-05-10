@@ -127,6 +127,9 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #define CLAMPED_FLOAT_TO_USHORT(us, f)  \
         us = ( (GLushort) IROUND( (f) * 65535.0F) )
 
+#define UNCLAMPED_FLOAT_TO_SHORT(s, f)  \
+        s = ( (GLshort) IROUND( CLAMP((f), -1.0F, 1.0F) * 32767.0F) )
+
 /*@}*/
 
 
