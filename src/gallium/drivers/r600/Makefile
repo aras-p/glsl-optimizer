@@ -13,6 +13,7 @@ C_SOURCES = \
 	r600_blit.c \
 	r600_helper.c \
 	r600_query.c \
+	r600_resource.c \
 	r600_screen.c \
 	r600_state.c \
 	r600_texture.c \

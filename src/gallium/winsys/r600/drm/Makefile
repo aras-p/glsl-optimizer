@@ -1,4 +1,5 @@
-TOP = ../../../../../..
+
+TOP = ../../../../..
 include $(TOP)/configs/current
 
 LIBNAME = r600winsys
@@ -17,6 +18,6 @@ C_SOURCES = \
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/r600 \
 		   $(shell pkg-config libdrm --cflags-only-I)
 
-LIBRARY_DEFINES = $(shell pkg-config libdrm --cflags-only-other)
+include ../../../Makefile.template
 
-include ../../../../Makefile.template
+symlinks:

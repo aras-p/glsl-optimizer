@@ -29,16 +29,21 @@
 #include <xf86drm.h>
 #include <radeon_drm.h>
 #include "radeon.h"
+#include "util/u_transfer.h"
 
 #define r600_screen(s) ((struct r600_screen*)s)
 
+/* Texture transfer. */
 struct r600_transfer {
+	/* Base class. */
 	struct pipe_transfer		transfer;
+	/* Buffer transfer. */
+	struct pipe_transfer		*buffer_transfer;
 	unsigned			offset;
 };
 
-struct r600_pipe_buffer {
-	struct pipe_buffer		base;
+struct r600_buffer {
+	struct u_resource		b;
 	struct radeon_bo		*bo;
 	u32				domain;
 	u32				flink;
@@ -50,7 +55,33 @@ struct r600_screen {
 	struct radeon			*rw;
 };
 
-void r600_screen_init_buffer_functions(struct pipe_screen *screen);
+/* Buffer functions. */
+struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
+					 const struct pipe_resource *templ);
+struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
+					      void *ptr, unsigned bytes,
+					      unsigned bind);
+unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
+					 struct pipe_resource *buf,
+					 unsigned face, unsigned level);
+struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
+					      struct winsys_handle *whandle);
+
+/* Texture transfer functions. */
+struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
+						struct pipe_resource *texture,
+						struct pipe_subresource sr,
+						unsigned usage,
+						const struct pipe_box *box);
+void r600_texture_transfer_destroy(struct pipe_context *ctx,
+				   struct pipe_transfer *trans);
+void* r600_texture_transfer_map(struct pipe_context *ctx,
+				struct pipe_transfer* transfer);
+void r600_texture_transfer_unmap(struct pipe_context *ctx,
+				 struct pipe_transfer* transfer);
+
+
+/* Blit functions. */
 void r600_clear(struct pipe_context *ctx,
 		unsigned buffers,
 		const float *rgba,

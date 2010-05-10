@@ -270,8 +270,6 @@ static unsigned tgsi_file_to_c_file(unsigned file)
 		return C_FILE_ADDRESS;
 	case TGSI_FILE_IMMEDIATE:
 		return C_FILE_IMMEDIATE;
-	case TGSI_FILE_LOOP:
-		return C_FILE_LOOP;
 	case TGSI_FILE_PREDICATE:
 		return C_FILE_PREDICATE;
 	case TGSI_FILE_SYSTEM_VALUE:
@@ -533,23 +531,11 @@ static int tgsi_opcode_to_c_opcode(unsigned opcode, unsigned *copcode)
 	case TGSI_OPCODE_IF:
 		*copcode = C_OPCODE_IF;
 		return 0;
-	case TGSI_OPCODE_BGNFOR:
-		*copcode = C_OPCODE_BGNFOR;
-		return 0;
-	case TGSI_OPCODE_REP:
-		*copcode = C_OPCODE_REP;
-		return 0;
 	case TGSI_OPCODE_ELSE:
 		*copcode = C_OPCODE_ELSE;
 		return 0;
 	case TGSI_OPCODE_ENDIF:
 		*copcode = C_OPCODE_ENDIF;
-		return 0;
-	case TGSI_OPCODE_ENDFOR:
-		*copcode = C_OPCODE_ENDFOR;
-		return 0;
-	case TGSI_OPCODE_ENDREP:
-		*copcode = C_OPCODE_ENDREP;
 		return 0;
 	case TGSI_OPCODE_PUSHA:
 		*copcode = C_OPCODE_PUSHA;

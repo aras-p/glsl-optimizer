@@ -29,6 +29,7 @@
 #include <util/u_format.h>
 #include <util/u_memory.h>
 #include <util/u_blitter.h>
+#include "r600_resource.h"
 #include "r600_screen.h"
 #include "r600_texture.h"
 #include "r600_context.h"
@@ -38,21 +39,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	struct r600_context *rctx = (struct r600_context*)context;
 
 	FREE(rctx);
-}
-
-static unsigned int r600_is_texture_referenced(struct pipe_context *context,
-						struct pipe_texture *texture,
-						unsigned face, unsigned level)
-{
-	struct pipe_buffer *buffer = NULL;
-
-	r600_get_texture_buffer(context->screen, texture, &buffer, NULL);
-	return context->is_buffer_referenced(context, buffer);
-}
-
-static unsigned int r600_is_buffer_referenced(struct pipe_context *context, struct pipe_buffer *buffer)
-{
-	return 0;
 }
 
 static void r600_flush(struct pipe_context *ctx, unsigned flags,
@@ -90,11 +76,10 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	rctx->context.draw_arrays = r600_draw_arrays;
 	rctx->context.draw_elements = r600_draw_elements;
 	rctx->context.draw_range_elements = r600_draw_range_elements;
-	rctx->context.is_texture_referenced = r600_is_texture_referenced;
-	rctx->context.is_buffer_referenced = r600_is_buffer_referenced;
 	rctx->context.flush = r600_flush;
 	r600_init_query_functions(rctx);
 	r600_init_state_functions(rctx);
+	r600_init_context_resource_functions(rctx);
 #if 0
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {

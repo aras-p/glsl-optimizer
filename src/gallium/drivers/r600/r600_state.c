@@ -91,7 +91,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_texture *rtex;
-	struct r600_pipe_buffer *rbuffer;
+	struct r600_buffer *rbuffer;
 	struct radeon_state *rstate;
 	unsigned level = state->cbufs[0]->level;
 	unsigned pitch, slice;
@@ -100,7 +100,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 	rtex = (struct r600_texture*)state->cbufs[0]->texture;
-	rbuffer = (struct r600_pipe_buffer*)rtex->buffer;
+	rbuffer = (struct r600_buffer*)rtex->buffer;
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->bo[2] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
@@ -217,9 +217,31 @@ static void r600_bind_sampler_states(struct pipe_context *ctx,
 {
 }
 
-static void r600_set_sampler_textures(struct pipe_context *ctx,
-					unsigned count,
-					struct pipe_texture **texture)
+static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *ctx,
+							  struct pipe_resource *texture,
+							  const struct pipe_sampler_view *templ)
+{
+	struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+	*view = *templ;
+	return view;
+}
+
+static void r600_sampler_view_destroy(struct pipe_context *ctx,
+				      struct pipe_sampler_view *view)
+{
+	FREE(view);
+}
+
+static void r600_set_fragment_sampler_views(struct pipe_context *ctx,
+					    unsigned count,
+					    struct pipe_sampler_view **views)
+{
+}
+
+static void r600_set_vertex_sampler_views(struct pipe_context *ctx,
+					  unsigned count,
+					  struct pipe_sampler_view **views)
 {
 }
 
@@ -298,14 +320,37 @@ static void r600_set_vertex_buffers(struct pipe_context *ctx,
 	rctx->nvertex_buffer = count;
 }
 
-static void r600_set_vertex_elements(struct pipe_context *ctx,
-					unsigned count,
-					const struct pipe_vertex_element *elements)
+/* XXX move this to a more appropriate place */
+struct r600_vertex_elements_state
+{
+	unsigned count;
+	struct pipe_vertex_element elements[32];
+};
+
+static void *r600_create_vertex_elements_state(struct pipe_context *ctx,
+					       unsigned count,
+					       const struct pipe_vertex_element *elements)
+{
+	struct r600_vertex_elements_state *v = CALLOC_STRUCT(r600_vertex_elements_state);
+
+	assert(count < 32);
+	v->count = count;
+	memcpy(v->elements, elements, count * sizeof(struct pipe_vertex_element));
+	return v;
+}
+
+static void r600_bind_vertex_elements_state(struct pipe_context *ctx, void *state)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_vertex_elements_state *v = (struct r600_vertex_elements_state*)state;
 
-	memcpy(rctx->vertex_element, elements, sizeof(struct pipe_vertex_element) * count);
-	rctx->nvertex_element = count;
+	memcpy(rctx->vertex_element, v->elements, v->count * sizeof(struct pipe_vertex_element));
+	rctx->nvertex_element = v->count;
+}
+
+static void r600_delete_vertex_elements_state(struct pipe_context *ctx, void *state)
+{
+	FREE(state);
 }
 
 static void *r600_create_dsa_state(struct pipe_context *ctx,
@@ -347,13 +392,14 @@ static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 }
 
 static void r600_set_constant_buffer(struct pipe_context *ctx,
-					uint shader, uint index,
-					struct pipe_buffer *buffer)
+				     uint shader, uint index,
+				     struct pipe_resource *buffer)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	unsigned nconstant = 0, i, type, id;
 	struct radeon_state *rstate;
+	struct pipe_transfer *transfer;
 	u32 *ptr;
 
 	switch (shader) {
@@ -369,9 +415,9 @@ static void r600_set_constant_buffer(struct pipe_context *ctx,
 		fprintf(stderr, "%s:%d unsupported %d\n", __func__, __LINE__, shader);
 		return;
 	}
-	if (buffer && buffer->size > 0) {
-		nconstant = buffer->size / 16;
-		ptr = pipe_buffer_map(ctx->screen, buffer, PIPE_BUFFER_USAGE_CPU_READ);
+	if (buffer && buffer->width0 > 0) {
+		nconstant = buffer->width0 / 16;
+		ptr = pipe_buffer_map(ctx, buffer, PIPE_TRANSFER_READ, &transfer);
 		if (ptr == NULL)
 			return;
 		for (i = 0; i < nconstant; i++) {
@@ -387,7 +433,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx,
 			if (radeon_draw_set_new(rctx->draw, rstate))
 				return;
 		}
-		pipe_buffer_unmap(ctx->screen, buffer);
+		pipe_buffer_unmap(ctx, buffer, transfer);
 	}
 }
 
@@ -421,11 +467,16 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.bind_fragment_sampler_states = r600_bind_sampler_states;
 	rctx->context.bind_vertex_sampler_states = r600_bind_sampler_states;
 	rctx->context.delete_sampler_state = r600_delete_state;
-	rctx->context.set_fragment_sampler_textures = r600_set_sampler_textures;
+	rctx->context.create_sampler_view = r600_create_sampler_view;
+	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
+	rctx->context.set_fragment_sampler_views = r600_set_fragment_sampler_views;
+	rctx->context.set_vertex_sampler_views = r600_set_vertex_sampler_views;
 	rctx->context.set_scissor_state = r600_set_scissor_state;
 	rctx->context.set_viewport_state = r600_set_viewport_state;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
-	rctx->context.set_vertex_elements = r600_set_vertex_elements;
+	rctx->context.create_vertex_elements_state = r600_create_vertex_elements_state;
+	rctx->context.bind_vertex_elements_state = r600_bind_vertex_elements_state;
+	rctx->context.delete_vertex_elements_state = r600_delete_vertex_elements_state;
 	rctx->context.create_vs_state = r600_create_vs_state;
 	rctx->context.bind_vs_state = r600_bind_vs_state;
 	rctx->context.delete_vs_state = r600_delete_state;

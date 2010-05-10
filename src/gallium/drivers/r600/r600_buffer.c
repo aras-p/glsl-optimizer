@@ -29,89 +29,108 @@
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
+#include "state_tracker/drm_api.h"
 #include "r600_screen.h"
-#include "r600_texture.h"
 #include "r600_context.h"
+
+extern struct u_resource_vtbl r600_buffer_vtbl;
 
 static u32 r600_domain_from_usage(unsigned usage)
 {
 	u32 domain = RADEON_GEM_DOMAIN_GTT;
 
-	if (usage & PIPE_BUFFER_USAGE_GPU_WRITE) {
-		domain |= RADEON_GEM_DOMAIN_VRAM;
+	if (usage & PIPE_BIND_RENDER_TARGET) {
+	    domain |= RADEON_GEM_DOMAIN_VRAM;
 	}
-	if (usage & PIPE_BUFFER_USAGE_PIXEL) {
-		domain |= RADEON_GEM_DOMAIN_VRAM;
+	if (usage & PIPE_BIND_DEPTH_STENCIL) {
+	    domain |= RADEON_GEM_DOMAIN_VRAM;
 	}
-	if (usage & PIPE_BUFFER_USAGE_VERTEX) {
-		domain |= RADEON_GEM_DOMAIN_GTT;
+	if (usage & PIPE_BIND_SAMPLER_VIEW) {
+	    domain |= RADEON_GEM_DOMAIN_VRAM;
 	}
-	if (usage & PIPE_BUFFER_USAGE_INDEX) {
-		domain |= RADEON_GEM_DOMAIN_GTT;
+	/* also need BIND_BLIT_SOURCE/DESTINATION ? */
+	if (usage & PIPE_BIND_VERTEX_BUFFER) {
+	    domain |= RADEON_GEM_DOMAIN_GTT;
 	}
+	if (usage & PIPE_BIND_INDEX_BUFFER) {
+	    domain |= RADEON_GEM_DOMAIN_GTT;
+	}
+
 	return domain;
 }
 
-static struct pipe_buffer *r600_buffer_create(struct pipe_screen *screen,
-						unsigned alignment,
-						unsigned usage,
-						unsigned size)
+struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
+					 const struct pipe_resource *templ)
 {
 	struct r600_screen *rscreen = r600_screen(screen);
-	struct r600_pipe_buffer *rbuffer;
+	struct r600_buffer *rbuffer;
 	struct radeon_bo *bo;
 	struct pb_desc desc;
+	/* XXX We probably want a different alignment for buffers and textures. */
+	unsigned alignment = 4096;
 
-	rbuffer = CALLOC_STRUCT(r600_pipe_buffer);
+	rbuffer = CALLOC_STRUCT(r600_buffer);
 	if (rbuffer == NULL)
 		return NULL;
 
-	pipe_reference_init(&rbuffer->base.reference, 1);
-	rbuffer->base.screen = screen;
-	rbuffer->base.alignment = alignment;
-	rbuffer->base.usage = usage;
-	rbuffer->base.size = size;
+	pipe_reference_init(&rbuffer->b.b.reference, 1);
+	rbuffer->b.b = *templ;
+	rbuffer->b.b.screen = screen;
+	rbuffer->b.vtbl = &r600_buffer_vtbl;
 
-	if (usage & PIPE_BUFFER_USAGE_CONSTANT) {
+	if (rbuffer->b.b.bind & PIPE_BIND_CONSTANT_BUFFER) {
 		desc.alignment = alignment;
-		desc.usage = usage;
-		rbuffer->pb = pb_malloc_buffer_create(size, &desc);
+		desc.usage = rbuffer->b.b.bind;
+		rbuffer->pb = pb_malloc_buffer_create(rbuffer->b.b.width0,
+						      &desc);
 		if (rbuffer->pb == NULL) {
 			free(rbuffer);
 			return NULL;
 		}
-		return &rbuffer->base;
+		return &rbuffer->b.b;
 	}
-	rbuffer->domain = r600_domain_from_usage(usage);
-	bo = radeon_bo(rscreen->rw, 0, size, alignment, NULL);
+	rbuffer->domain = r600_domain_from_usage(rbuffer->b.b.bind);
+	bo = radeon_bo(rscreen->rw, 0, rbuffer->b.b.width0, alignment, NULL);
 	if (bo == NULL) {
 		FREE(rbuffer);
 		return NULL;
 	}
 	rbuffer->bo = bo;
-	return &rbuffer->base;
+	return &rbuffer->b.b;
 }
 
-static struct pipe_buffer *r600_user_buffer_create(struct pipe_screen *screen,
-							void *ptr, unsigned bytes)
+struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
+					      void *ptr, unsigned bytes,
+					      unsigned bind)
 {
-	struct r600_pipe_buffer *rbuffer;
+	struct r600_buffer *rbuffer;
 	struct r600_screen *rscreen = r600_screen(screen);
+	struct pipe_resource templ;
 
-	rbuffer = (struct r600_pipe_buffer*)r600_buffer_create(screen, 0, 0, bytes);
+	memset(&templ, 0, sizeof(struct pipe_resource));
+	templ.target = PIPE_BUFFER;
+	templ.format = PIPE_FORMAT_R8_UNORM;
+	templ.usage = PIPE_USAGE_IMMUTABLE;
+	templ.bind = bind;
+	templ.width0 = bytes;
+	templ.height0 = 1;
+	templ.depth0 = 1;
+
+	rbuffer = (struct r600_buffer*)r600_buffer_create(screen, &templ);
 	if (rbuffer == NULL) {
 		return NULL;
 	}
 	radeon_bo_map(rscreen->rw, rbuffer->bo);
 	memcpy(rbuffer->bo->data, ptr, bytes);
 	radeon_bo_unmap(rscreen->rw, rbuffer->bo);
-	return &rbuffer->base;
+	return &rbuffer->b.b;
 }
 
-static void r600_buffer_destroy(struct pipe_buffer *buffer)
+static void r600_buffer_destroy(struct pipe_screen *screen,
+				struct pipe_resource *buf)
 {
-	struct r600_pipe_buffer *rbuffer = (struct r600_pipe_buffer*)buffer;
-	struct r600_screen *rscreen = r600_screen(buffer->screen);
+	struct r600_buffer *rbuffer = (struct r600_buffer*)buf;
+	struct r600_screen *rscreen = r600_screen(screen);
 
 	if (rbuffer->pb) {
 		pipe_reference_init(&rbuffer->pb->base.reference, 0);
@@ -124,34 +143,33 @@ static void r600_buffer_destroy(struct pipe_buffer *buffer)
 	FREE(rbuffer);
 }
 
-static void *r600_buffer_map_range(struct pipe_screen *screen,
-					struct pipe_buffer *buffer,
-					unsigned offset, unsigned length,
-					unsigned usage)
+static void *r600_buffer_transfer_map(struct pipe_context *pipe,
+				      struct pipe_transfer *transfer)
 {
-	struct r600_pipe_buffer *rbuffer = (struct r600_pipe_buffer*)buffer;
-	struct r600_screen *rscreen = r600_screen(buffer->screen);
+	struct r600_buffer *rbuffer = (struct r600_buffer*)transfer->resource;
+	struct r600_screen *rscreen = r600_screen(pipe->screen);
 	int write = 0;
 
 	if (rbuffer->pb) {
-		return pb_map(rbuffer->pb, usage);
+		return pb_map(rbuffer->pb, transfer->usage) + transfer->box.x;
 	}
-	if (usage & PIPE_BUFFER_USAGE_DONTBLOCK) {
+	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
 		/* FIXME */
 	}
-	if (usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
+	if (transfer->usage & PIPE_TRANSFER_WRITE) {
 		write = 1;
 	}
 	if (radeon_bo_map(rscreen->rw, rbuffer->bo)) {
 		return NULL;
 	}
-	return rbuffer->bo->data;
+	return rbuffer->bo->data + transfer->box.x;
 }
 
-static void r600_buffer_unmap( struct pipe_screen *screen, struct pipe_buffer *buffer)
+static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
+				       struct pipe_transfer *transfer)
 {
-	struct r600_pipe_buffer *rbuffer = (struct r600_pipe_buffer*)buffer;
-	struct r600_screen *rscreen = r600_screen(buffer->screen);
+	struct r600_buffer *rbuffer = (struct r600_buffer*)transfer->resource;
+	struct r600_screen *rscreen = r600_screen(pipe->screen);
 
 	if (rbuffer->pb) {
 		pb_unmap(rbuffer->pb);
@@ -160,18 +178,55 @@ static void r600_buffer_unmap( struct pipe_screen *screen, struct pipe_buffer *b
 	}
 }
 
-static void r600_buffer_flush_mapped_range(struct pipe_screen *screen,
-						struct pipe_buffer *buf,
-						unsigned offset, unsigned length)
+static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
+					      struct pipe_transfer *transfer,
+					      const struct pipe_box *box)
 {
 }
 
-void r600_screen_init_buffer_functions(struct pipe_screen *screen)
+unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
+					 struct pipe_resource *buf,
+					 unsigned face, unsigned level)
 {
-	screen->buffer_create = r600_buffer_create;
-	screen->user_buffer_create = r600_user_buffer_create;
-	screen->buffer_map_range = r600_buffer_map_range;
-	screen->buffer_flush_mapped_range = r600_buffer_flush_mapped_range;
-	screen->buffer_unmap = r600_buffer_unmap;
-	screen->buffer_destroy = r600_buffer_destroy;
+	/* XXX */
+	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
+
+struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
+					      struct winsys_handle *whandle)
+{
+	struct radeon *rw = (struct radeon*)screen->winsys;
+	struct r600_buffer *rbuffer;
+	struct radeon_bo *bo = NULL;
+
+	bo = radeon_bo(rw, whandle->handle, 0, 0, NULL);
+	if (bo == NULL) {
+		return NULL;
+	}
+
+	rbuffer = CALLOC_STRUCT(r600_buffer);
+	if (rbuffer == NULL) {
+		radeon_bo_decref(rw, bo);
+		return NULL;
+	}
+
+	pipe_reference_init(&rbuffer->b.b.reference, 1);
+	rbuffer->b.b.target = PIPE_BUFFER;
+	rbuffer->b.b.screen = screen;
+	rbuffer->b.vtbl = &r600_buffer_vtbl;
+	rbuffer->bo = bo;
+	return &rbuffer->b.b;
+}
+
+struct u_resource_vtbl r600_buffer_vtbl =
+{
+	u_default_resource_get_handle,		/* get_handle */
+	r600_buffer_destroy,			/* resource_destroy */
+	r600_buffer_is_referenced_by_cs,	/* is_buffer_referenced */
+	u_default_get_transfer,			/* get_transfer */
+	u_default_transfer_destroy,		/* transfer_destroy */
+	r600_buffer_transfer_map,		/* transfer_map */
+	r600_buffer_transfer_flush_region,	/* transfer_flush_region */
+	r600_buffer_transfer_unmap,		/* transfer_unmap */
+	u_default_transfer_inline_write		/* transfer_inline_write */
+};

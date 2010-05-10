@@ -51,7 +51,7 @@ static int r600_draw_common(struct r600_draw *draw)
 	struct r600_context *rctx = (struct r600_context*)draw->ctx;
 	struct r600_screen *rscreen = (struct r600_screen*)draw->ctx->screen;
 	struct radeon_state *vs_resource;
-	struct r600_pipe_buffer *rbuffer;
+	struct r600_buffer *rbuffer;
 	unsigned i, j, offset, format, prim;
 	u32 vgt_dma_index_type, vgt_draw_initiator;
 	int r;
@@ -101,7 +101,7 @@ static int r600_draw_common(struct r600_draw *draw)
 
 	for (i = 0 ; i < rctx->nvertex_element; i++) {
 		j = rctx->vertex_element[i].vertex_buffer_index;
-		rbuffer = (struct r600_pipe_buffer*)rctx->vertex_buffer[j].buffer;
+		rbuffer = (struct r600_buffer*)rctx->vertex_buffer[j].buffer;
 		offset = rctx->vertex_element[i].src_offset + rctx->vertex_buffer[j].buffer_offset;
 		r = r600_conv_pipe_format(rctx->vertex_element[i].src_format, &format);
 		if (r)
@@ -132,7 +132,7 @@ static int r600_draw_common(struct r600_draw *draw)
 	draw->draw->states[R600_DRAW__VGT_NUM_INDICES] = draw->count;
 	draw->draw->states[R600_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
 	if (draw->index_buffer) {
-		rbuffer = (struct r600_pipe_buffer*)draw->index_buffer;
+		rbuffer = (struct r600_buffer*)draw->index_buffer;
 		draw->draw->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		draw->draw->placement[0] = RADEON_GEM_DOMAIN_GTT;
 		draw->draw->placement[1] = RADEON_GEM_DOMAIN_GTT;
@@ -168,11 +168,12 @@ static int r600_draw_common(struct r600_draw *draw)
 
 void r600_draw_range_elements(struct pipe_context *ctx,
 		struct pipe_buffer *index_buffer,
-		unsigned index_size, unsigned min_index,
+		unsigned index_size, unsigned index_bias, unsigned min_index,
 		unsigned max_index, unsigned mode,
 		unsigned start, unsigned count)
 {
 	struct r600_draw draw;
+	assert(index_bias == 0);
 
 	draw.ctx = ctx;
 	draw.mode = mode;
@@ -186,10 +187,11 @@ printf("index_size %d min %d max %d  start %d  count %d\n", index_size, min_inde
 
 void r600_draw_elements(struct pipe_context *ctx,
 		struct pipe_buffer *index_buffer,
-		unsigned index_size, unsigned mode,
+		unsigned index_size, unsigned index_bias, unsigned mode,
 		unsigned start, unsigned count)
 {
 	struct r600_draw draw;
+	assert(index_bias == 0);
 
 	draw.ctx = ctx;
 	draw.mode = mode;

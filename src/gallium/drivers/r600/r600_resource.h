@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Jerome Glisse <glisse@freedesktop.org>
+ * Copyright 2010 Marek Olšák <maraeo@gmail.com
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,34 +20,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef R600_TEXTURE_H
-#define R600_TEXTURE_H
 
-#include <pipe/p_state.h>
+#ifndef R600_RESOURCE_H
+#define R600_RESOURCE_H
 
-struct r600_texture {
-	struct u_resource		b;
-	unsigned long			offset[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			pitch[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			stride[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			layer_size[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned long			stride_override;
-	unsigned long			size;
-	struct pipe_resource		*buffer;
-};
+struct r600_context;
+struct r600_screen;
 
-struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
-					  const struct pipe_resource *templ);
-unsigned long r600_texture_get_offset(struct r600_texture *rtex, unsigned level, unsigned zslice, unsigned face);
-struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
-					       const struct pipe_resource *base,
-					       struct winsys_handle *whandle);
-void r600_init_screen_texture_functions(struct pipe_screen *screen);
-
-/* This should be implemented by winsys. */
-boolean r600_buffer_get_handle(struct radeon *rw,
-			       struct pipe_resource *buf,
-			       struct winsys_handle *whandle);
-
+void r600_init_context_resource_functions(struct r600_context *r600);
+void r600_init_screen_resource_functions(struct r600_screen *r600screen);
 
 #endif

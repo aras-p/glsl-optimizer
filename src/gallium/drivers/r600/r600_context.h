@@ -76,12 +76,12 @@ void r600_draw_arrays(struct pipe_context *ctx, unsigned mode,
 			unsigned start, unsigned count);
 void r600_draw_elements(struct pipe_context *ctx,
 		struct pipe_buffer *index_buffer,
-		unsigned index_size, unsigned mode,
+		unsigned index_size, unsigned index_bias, unsigned mode,
 		unsigned start, unsigned count);
 void r600_draw_range_elements(struct pipe_context *ctx,
 		struct pipe_buffer *index_buffer,
-		unsigned indexSize, unsigned minIndex,
-		unsigned maxIndex, unsigned mode,
+		unsigned index_size, unsigned index_bias, unsigned min_index,
+		unsigned max_index, unsigned mode,
 		unsigned start, unsigned count);
 
 void r600_state_destroy_common(struct r600_state *state);
