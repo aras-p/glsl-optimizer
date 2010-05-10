@@ -27,30 +27,46 @@
 
 #include "glcpp.h"
 
-#define YYSTYPE int
+#define YYLEX_PARAM parser->scanner
 
 void
 yyerror (void *scanner, const char *error);
 
 %}
 
-%parse-param {void *scanner}
+%parse-param {glcpp_parser_t *parser}
 %lex-param {void *scanner}
 
+%token DEFINE
+%token DEFVAL
+%token IDENTIFIER
 %token TOKEN
 
 %%
 
 input:		/* empty */
-	|	tokens
+	|	content
 ;
 
-
-tokens:		token
-	|	tokens token
+content:	token
+	|	directive
+	|	content token
+	|	content directive
 ;
 
-token:		TOKEN
+directive:	DEFINE IDENTIFIER DEFVAL {
+	hash_table_insert (parser->defines, $3, $2);
+}
+;
+
+token:		TOKEN {
+	char *value = hash_table_find (parser->defines, $1);
+	if (value)
+		printf ("%s", value);
+	else
+		printf ("%s", $1);
+	free ($1);
+}
 ;
 
 %%
@@ -59,4 +75,25 @@ void
 yyerror (void *scanner, const char *error)
 {
 	fprintf (stderr, "Parse error: %s\n", error);
+}
+
+void
+glcpp_parser_init (glcpp_parser_t *parser)
+{
+	yylex_init (&parser->scanner);
+	parser->defines = hash_table_ctor (32, hash_table_string_hash,
+					   hash_table_string_compare);
+}
+
+int
+glcpp_parser_parse (glcpp_parser_t *parser)
+{
+	return yyparse (parser);
+}
+
+void
+glcpp_parser_fini (glcpp_parser_t *parser)
+{
+	yylex_destroy (parser->scanner);
+	hash_table_dtor (parser->defines);
 }

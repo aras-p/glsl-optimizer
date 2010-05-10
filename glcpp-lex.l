@@ -31,12 +31,27 @@
 
 %option reentrant noyywrap
 
+%x ST_DEFINE
+%x ST_DEFVAL
+
+SPACE		[[:space:]]
+NONSPACE	[^[:space:]]
+NOTNEWLINE	[^\n]
+HSPACE		[ \t]
+HASH		^{HSPACE}*#
+IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
+DEFVAL		{NONSPACE}{NOTNEWLINE}*
 %%
 
-	/* Silently eat all whitespace. */
-[[:space:]]+
+{HASH}define		{ BEGIN ST_DEFINE; return DEFINE; }
 
-	/* Any non-whitespace is a token. */
-[^[:space:]]+			{ return TOKEN; }
+<ST_DEFINE>{HSPACE}+
+<ST_DEFINE>{IDENTIFIER}	{ BEGIN ST_DEFVAL; yylval = strdup (yytext); return IDENTIFIER; }
+
+<ST_DEFVAL>{SPACE}+
+<ST_DEFVAL>{DEFVAL}	{ BEGIN INITIAL; yylval = strdup (yytext); return DEFVAL; }
+
+	/* Anything we don't specifically recognize is a stream of tokens */
+{NONSPACE}+		{ yylval = strdup (yytext); return TOKEN; }
 
 %%

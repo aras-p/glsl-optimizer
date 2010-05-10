@@ -26,12 +26,14 @@
 int
 main (void)
 {
+	glcpp_parser_t parser;
 	int ret;
-	void *scanner;
 
-	yylex_init (&scanner);
-	ret = yyparse (scanner);
-	yylex_destroy (scanner);
+	glcpp_parser_init (&parser);
+
+	ret = glcpp_parser_parse (&parser);
+
+	glcpp_parser_fini (&parser);
 
 	return ret;
 }
