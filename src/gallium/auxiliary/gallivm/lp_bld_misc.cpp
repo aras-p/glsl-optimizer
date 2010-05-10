@@ -36,6 +36,7 @@
 
 #include "llvm-c/Core.h"
 
+#include "pipe/p_config.h"
 #include "util/u_debug.h"
 
 
