@@ -2171,21 +2171,11 @@ ast_selection_statement::hir(exec_list *instructions,
 
    ir_if *const stmt = new ir_if(condition);
 
-   if (then_statement != NULL) {
-      ast_node *node = (ast_node *) then_statement;
-      do {
-	 node->hir(& stmt->then_instructions, state);
-	 node = (ast_node *) node->next;
-      } while (node != then_statement);
-   }
+   if (then_statement != NULL)
+      then_statement->hir(& stmt->then_instructions, state);
 
-   if (else_statement != NULL) {
-      ast_node *node = (ast_node *) else_statement;
-      do {
-	 node->hir(& stmt->else_instructions, state);
-	 node = (ast_node *) node->next;
-      } while (node != else_statement);
-   }
+   if (else_statement != NULL)
+      else_statement->hir(& stmt->else_instructions, state);
 
    instructions->push_tail(stmt);
 
@@ -2252,13 +2242,8 @@ ast_iteration_statement::hir(exec_list *instructions,
    if (mode != ast_do_while)
       condition_to_hir(stmt, state);
 
-   if (body != NULL) {
-      ast_node *node = (ast_node *) body;
-      do {
-	 node->hir(& stmt->body_instructions, state);
-	 node = (ast_node *) node->next;
-      } while (node != body);
-   }
+   if (body != NULL)
+      body->hir(& stmt->body_instructions, state);
 
    if (rest_expression != NULL)
       rest_expression->hir(& stmt->body_instructions, state);
