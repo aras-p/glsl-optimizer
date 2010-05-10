@@ -337,4 +337,14 @@ struct exec_list {
 #endif
 };
 
+#define foreach_list(__node, __list)			\
+   for (exec_node * __node = (__list)->head		\
+	; (__node)->next != NULL 			\
+	; (__node) = (__node)->next)
+
+#define foreach_list_const(__node, __list)		\
+   for (const exec_node * __node = (__list)->head	\
+	; (__node)->next != NULL 			\
+	; (__node) = (__node)->next)
+
 #endif /* LIST_CONTAINER_H */
