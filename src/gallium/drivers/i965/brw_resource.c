@@ -12,7 +12,7 @@ brw_resource_create(struct pipe_screen *screen,
    if (template->target == PIPE_BUFFER)
       return brw_buffer_create(screen, template);
    else
-      return brw_resource_create(screen, template);
+      return brw_texture_create(screen, template);
 
 }
 
