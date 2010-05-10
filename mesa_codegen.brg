@@ -48,6 +48,7 @@
 # generate in its trees.
 %term assign
 %term reference_vec4
+%term array_reference_vec4_vec4
 %term exp_vec4
 %term exp2_vec4
 %term log_vec4
@@ -92,6 +93,20 @@
 # A reference of a variable is just a vec4 register location,
 # so it can be used as an argument for pretty much anything.
 vec4: reference_vec4 0
+
+# A reference of a variable is just a vec4 register location,
+# so it can be used as an argument for pretty much anything.
+vec4: array_reference_vec4_vec4 1
+{
+	ir_to_mesa_dst_reg address_reg = {PROGRAM_ADDRESS, 0, WRITEMASK_X};
+
+	ir_to_mesa_emit_op1_full(tree->v, tree->ir, OPCODE_ARL,
+				 address_reg,
+				 tree->right->src_reg);
+	ir_to_mesa_emit_op1_full(tree->v, tree->ir, OPCODE_MOV,
+				 tree->dst_reg,
+				 tree->left->src_reg);
+}
 
 # Here's the rule everyone will hit: Moving the result of an
 # expression into a variable-dereference register location.

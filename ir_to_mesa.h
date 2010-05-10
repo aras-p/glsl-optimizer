@@ -40,6 +40,7 @@ typedef struct ir_to_mesa_src_reg {
    int file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    int swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
+   bool reladdr; /**< Register index should be offset by address reg. */
 } ir_to_mesa_src_reg;
 
 typedef struct ir_to_mesa_dst_reg {
@@ -144,6 +145,9 @@ public:
    /** List of ir_to_mesa_instruction */
    exec_list instructions;
 };
+
+extern ir_to_mesa_src_reg ir_to_mesa_undef;
+extern ir_to_mesa_dst_reg ir_to_mesa_undef_dst;
 
 ir_to_mesa_instruction *
 ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op);

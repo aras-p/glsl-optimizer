@@ -51,7 +51,7 @@ extern "C" {
 }
 
 ir_to_mesa_src_reg ir_to_mesa_undef = {
-   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP
+   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, false,
 };
 
 ir_to_mesa_dst_reg ir_to_mesa_undef_dst = {
@@ -659,13 +659,11 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
     */
    assert(!var->type->is_matrix());
 
-   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
-
    if (strncmp(var->name, "gl_", 3) == 0) {
       unsigned int i;
       unsigned int offset = 0;
 
-      assert(index); /* FINISHME: Handle variable indexing of builtins. */
+      tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
       offset = index->value.i[0];
 
@@ -677,11 +675,24 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       ir_to_mesa_set_tree_reg(tree, builtin_var_to_mesa_reg[i].file,
 			      builtin_var_to_mesa_reg[i].index + offset);
    } else {
+      tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
       this->get_temp_for_var(var, tree);
-      assert(index); /* FINISHME: Handle variable indexing. */
 
-      tree->src_reg.index += index->value.i[0];
-      tree->dst_reg.index += index->value.i[0];
+      if (index) {
+	 tree->src_reg.index += index->value.i[0];
+	 tree->dst_reg.index += index->value.i[0];
+      } else {
+	 /* Variable index array dereference.  It eats the "vec4" of the
+	  * base of the array and an index that offsets the Mesa register
+	  * index.
+	  */
+	 ir->array_index->accept(this);
+
+	 tree->src_reg.reladdr = true;
+	 tree = this->create_tree(MB_TERM_array_reference_vec4_vec4,
+				  ir, tree, this->result);
+	 this->get_temp(tree, ir->type->vector_elements);
+      }
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
@@ -841,6 +852,7 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    assert(reg.index < (1 << INST_INDEX_BITS) - 1);
    mesa_reg.Index = reg.index;
    mesa_reg.Swizzle = reg.swizzle;
+   mesa_reg.RelAddr = reg.reladdr;
 
    return mesa_reg;
 }
