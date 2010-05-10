@@ -28,9 +28,12 @@
 #define YYSTYPE int
 
 void
-yyerror (const char *error);
+yyerror (const char *error, void *scanner);
 
 %}
+
+%parse-param {void *scanner}
+%lex-param {void *scanner}
 
 %token TOKEN
 
@@ -51,7 +54,7 @@ token:		TOKEN
 %%
 
 void
-yyerror (const char *error)
+yyerror (const char *error, void *scanner)
 {
 	fprintf (stderr, "Parse error: %s\n", error);
 }

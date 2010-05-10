@@ -24,5 +24,12 @@
 int
 main (void)
 {
-	return yyparse ();
+	int ret;
+	void *scanner;
+
+	yylex_init (&scanner);
+	ret = yyparse (scanner);
+	yylex_destroy (scanner);
+
+	return ret;
 }

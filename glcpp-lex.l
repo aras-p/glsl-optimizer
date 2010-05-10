@@ -28,7 +28,7 @@
 #include "glcpp-parse.h"
 %}
 
-%option noyywrap
+%option reentrant noyywrap
 
 %%
 
