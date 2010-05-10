@@ -1208,7 +1208,7 @@ intelFallback(struct intel_context *intel, GLbitfield bit, GLboolean mode)
    if (mode) {
       intel->Fallback |= bit;
       if (oldfallback == 0) {
-         intelFlush(ctx);
+         intel_flush(ctx);
          if (INTEL_DEBUG & DEBUG_FALLBACKS)
             fprintf(stderr, "ENTER FALLBACK %x: %s\n",
                     bit, getFallbackString(bit));
