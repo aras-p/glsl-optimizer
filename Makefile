@@ -1,6 +1,6 @@
 override CFLAGS += -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wno-unused
 
-glcpp: glcpp.o glcpp-lex.o glcpp-parse.o
+glcpp: glcpp.o glcpp-lex.o glcpp-parse.o hash_table.o
 
 %.c %.h: %.y
 	bison --defines=$*.h --output=$*.c $^
