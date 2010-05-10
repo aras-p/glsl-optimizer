@@ -1374,7 +1374,7 @@ store_texel_signed_rg_16(struct gl_texture_image *texImage,
 #endif
 
 
-/* MESA_FORMAT_SIGNED_RGB_16 ***********************************************/
+/* MESA_FORMAT_SIGNED_RGBA_16 ***********************************************/
 
 static void 
 FETCH(signed_rgb_16)(const struct gl_texture_image *texImage,
@@ -1421,6 +1421,35 @@ store_texel_signed_rgba_16(struct gl_texture_image *texImage,
 {
    const GLshort *rgba = (const GLshort *) texel;
    GLshort *dst = TEXEL_ADDR(GLshort, texImage, i, j, k, 4);
+   dst[0] = rgba[RCOMP];
+   dst[1] = rgba[GCOMP];
+   dst[2] = rgba[BCOMP];
+   dst[3] = rgba[ACOMP];
+}
+#endif
+
+
+
+/* MESA_FORMAT_RGBA_16 ***********************************************/
+
+static void
+FETCH(rgba_16)(const struct gl_texture_image *texImage,
+               GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLushort *s = TEXEL_ADDR(GLushort, texImage, i, j, k, 4);
+   texel[RCOMP] = USHORT_TO_FLOAT( s[0] );
+   texel[GCOMP] = USHORT_TO_FLOAT( s[1] );
+   texel[BCOMP] = USHORT_TO_FLOAT( s[2] );
+   texel[ACOMP] = USHORT_TO_FLOAT( s[3] );
+}
+
+#if DIM == 3
+static void
+store_texel_rgba_16(struct gl_texture_image *texImage,
+                    GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLushort *rgba = (const GLushort *) texel;
+   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 4);
    dst[0] = rgba[RCOMP];
    dst[1] = rgba[GCOMP];
    dst[2] = rgba[BCOMP];

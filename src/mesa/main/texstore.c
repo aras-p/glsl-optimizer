@@ -2225,6 +2225,70 @@ _mesa_texstore_al1616(TEXSTORE_PARAMS)
 
 
 static GLboolean
+_mesa_texstore_rgba_16(TEXSTORE_PARAMS)
+{
+   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_RGBA_16);
+   ASSERT(texelBytes == 8);
+
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       baseInternalFormat == GL_RGBA &&
+       srcFormat == GL_RGBA &&
+       srcType == GL_UNSIGNED_SHORT) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
+      /* general path */
+      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+      const GLfloat *src = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            GLushort *dstUS = (GLushort *) dstRow;
+            for (col = 0; col < srcWidth; col++) {
+               GLushort r, g, b, a;
+
+               UNCLAMPED_FLOAT_TO_USHORT(r, src[0]);
+               UNCLAMPED_FLOAT_TO_USHORT(g, src[1]);
+               UNCLAMPED_FLOAT_TO_USHORT(b, src[2]);
+               UNCLAMPED_FLOAT_TO_USHORT(a, src[3]);
+               dstUS[col*4+0] = r;
+               dstUS[col*4+1] = g;
+               dstUS[col*4+2] = b;
+               dstUS[col*4+3] = a;
+               src += 4;
+            }
+            dstRow += dstRowStride;
+         }
+      }
+      free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
+
+
+static GLboolean
 _mesa_texstore_signed_rgba_16(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
@@ -3420,7 +3484,8 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_SIGNED_R_16, _mesa_texstore_signed_rgba_16 },
    { MESA_FORMAT_SIGNED_RG_16, _mesa_texstore_signed_rgba_16 },
    { MESA_FORMAT_SIGNED_RGB_16, _mesa_texstore_signed_rgba_16 },
-   { MESA_FORMAT_SIGNED_RGBA_16, _mesa_texstore_signed_rgba_16 }
+   { MESA_FORMAT_SIGNED_RGBA_16, _mesa_texstore_signed_rgba_16 },
+   { MESA_FORMAT_RGBA_16, _mesa_texstore_rgba_16 }
 };
 
 

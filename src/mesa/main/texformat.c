@@ -61,12 +61,9 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
    (void) type;
 
    switch (internalFormat) {
-      /* RGBA formats */
+      /* shallow RGBA formats */
       case 4:
       case GL_RGBA:
-      case GL_RGB10_A2:
-      case GL_RGBA12:
-      case GL_RGBA16:
       case GL_RGBA8:
          return MESA_FORMAT_RGBA8888;
       case GL_RGB5_A1:
@@ -76,12 +73,15 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       case GL_RGBA4:
          return MESA_FORMAT_ARGB4444;
 
-      /* RGB formats */
+      /* deep RGBA formats */
+      case GL_RGB10_A2:
+      case GL_RGBA12:
+      case GL_RGBA16:
+         return MESA_FORMAT_RGBA_16;
+
+      /* shallow RGB formats */
       case 3:
       case GL_RGB:
-      case GL_RGB10:
-      case GL_RGB12:
-      case GL_RGB16:
       case GL_RGB8:
          return MESA_FORMAT_RGB888;
       case GL_R3_G3_B2:
@@ -90,6 +90,12 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          return MESA_FORMAT_RGB565_REV; /* just to test another format */
       case GL_RGB5:
          return MESA_FORMAT_RGB565;
+
+      /* deep RGB formats */
+      case GL_RGB10:
+      case GL_RGB12:
+      case GL_RGB16:
+         return MESA_FORMAT_RGBA_16;
 
       /* Alpha formats */
       case GL_ALPHA:

@@ -146,6 +146,7 @@ typedef enum
    MESA_FORMAT_SIGNED_RG_16,      /* ushort[0]=R, ushort[1]=G */
    MESA_FORMAT_SIGNED_RGB_16,     /* ushort[0]=R, ushort[1]=G, ushort[2]=B */
    MESA_FORMAT_SIGNED_RGBA_16,    /* ... */
+   MESA_FORMAT_RGBA_16,           /* ... */
    /*@}*/
 
    MESA_FORMAT_COUNT

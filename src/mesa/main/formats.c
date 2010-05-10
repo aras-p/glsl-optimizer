@@ -721,6 +721,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       16, 16, 16, 16,
       0, 0, 0, 0, 0,
       1, 1, 8
+   },
+   {
+      MESA_FORMAT_RGBA_16,
+      "MESA_FORMAT_RGBA_16",
+      GL_RGBA,
+      GL_UNSIGNED_NORMALIZED,
+      16, 16, 16, 16,
+      0, 0, 0, 0, 0,
+      1, 1, 8
    }
 };
 

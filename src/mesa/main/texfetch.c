@@ -622,6 +622,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_signed_rgba_16,
       store_texel_signed_rgba_16
    },
+   {
+      MESA_FORMAT_RGBA_16,
+      fetch_texel_1d_rgba_16,
+      fetch_texel_2d_rgba_16,
+      fetch_texel_3d_rgba_16,
+      store_texel_rgba_16
+   }
 };
 
 
