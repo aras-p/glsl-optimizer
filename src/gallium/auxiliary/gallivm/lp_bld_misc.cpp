@@ -34,13 +34,14 @@
 #define __STDC_CONSTANT_MACROS
 #endif
 
-#include "llvm/Support/raw_ostream.h"
 #include "llvm-c/Core.h"
 
 #include "util/u_debug.h"
 
 
-#if defined(PIPE_OS_WINDOWS) || defined(PIPE_OS_EMBDDED)
+#if (defined(PIPE_OS_WINDOWS) && !defined(PIPE_CC_MSVC)) || defined(PIPE_OS_EMBDDED)
+
+#include "llvm/Support/raw_ostream.h"
 
 class raw_debug_ostream :
    public llvm::raw_ostream
