@@ -1009,7 +1009,7 @@ new_osmesa_renderbuffer(GLcontext *ctx, GLenum format, GLenum type)
          rb->Format = MESA_FORMAT_RGBA8888;
          break;
       case GL_UNSIGNED_SHORT:
-         rb->Format = MESA_FORMAT_SIGNED_RGBA_16;
+         rb->Format = MESA_FORMAT_RGBA_16;
          break;
       case GL_FLOAT:
          rb->Format = MESA_FORMAT_RGBA_FLOAT32;
