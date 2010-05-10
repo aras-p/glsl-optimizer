@@ -25,10 +25,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "glcpp.h"
+
 #define YYSTYPE int
 
 void
-yyerror (const char *error, void *scanner);
+yyerror (void *scanner, const char *error);
 
 %}
 
@@ -54,7 +56,7 @@ token:		TOKEN
 %%
 
 void
-yyerror (const char *error, void *scanner)
+yyerror (void *scanner, const char *error)
 {
 	fprintf (stderr, "Parse error: %s\n", error);
 }

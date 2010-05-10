@@ -21,6 +21,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "glcpp.h"
+
 int
 main (void)
 {

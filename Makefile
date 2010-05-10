@@ -1,3 +1,5 @@
+override CFLAGS += -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wno-unused
+
 glcpp: glcpp.o glcpp-lex.o glcpp-parse.o
 
 %.c %.h: %.y
