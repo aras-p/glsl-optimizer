@@ -403,6 +403,13 @@ intel_prepare_render(struct intel_context *intel)
 	 intel_update_renderbuffers(driContext, drawable);
       driContext->dri2.read_stamp = drawable->dri2.stamp;
    }
+
+   /* If we're currently rendering to the front buffer, the rendering
+    * that will happen next will probably dirty the front buffer.  So
+    * mark it as dirty here.
+    */
+   if (intel->is_front_buffer_rendering)
+      intel->front_buffer_dirty = GL_TRUE;
 }
 
 void
@@ -494,15 +501,7 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 	 (*screen->dri2.loader->flushFrontBuffer)(driContext->driDrawablePriv,
 						  driContext->driDrawablePriv->loaderPrivate);
 
-	 /* Only clear the dirty bit if front-buffer rendering is no longer
-	  * enabled.  This is done so that the dirty bit can only be set in
-	  * glDrawBuffer.  Otherwise the dirty bit would have to be set at
-	  * each of N places that do rendering.  This has worse performances,
-	  * but it is much easier to get correct.
-	  */
-	 if (!intel->is_front_buffer_rendering) {
-	    intel->front_buffer_dirty = GL_FALSE;
-	 }
+	 intel->front_buffer_dirty = GL_FALSE;
       }
    }
 }
