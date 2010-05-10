@@ -35,6 +35,17 @@
 #define LP_BLD_H
 
 
+/**
+ * @file
+ * LLVM IR building helpers interfaces.
+ *
+ * We use LLVM-C bindings for now. They are not documented, but follow the C++
+ * interfaces very closely, and appear to be complete enough for code
+ * genration. See
+ * http://npcontemplation.blogspot.com/2008/06/secret-of-llvm-c-bindings.html
+ * for a standalone example.
+ */
+
 #include <llvm-c/Core.h>  
 
 
