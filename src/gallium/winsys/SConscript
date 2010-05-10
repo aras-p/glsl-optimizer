@@ -1,5 +1,10 @@
 Import('*')
 
+
+SConscript([
+	'sw/wrapper/SConscript',
+])
+
 if 'xlib' in env['winsys']:
 	SConscript([
 		'sw/xlib/SConscript',
