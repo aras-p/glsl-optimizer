@@ -986,6 +986,7 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       pixelSize = 4 * sizeof(GLubyte);
       break;
    case GL_RGBA16:
+   case GL_RGBA16_SNORM:
       /* for accum buffer */
       rb->Format = MESA_FORMAT_SIGNED_RGBA_16;
       rb->DataType = GL_SHORT;
@@ -1756,7 +1757,7 @@ _mesa_add_accum_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    }
 
    rb->Format = MESA_FORMAT_SIGNED_RGBA_16;
-   rb->InternalFormat = GL_RGBA16;
+   rb->InternalFormat = GL_RGBA16_SNORM;
    rb->AllocStorage = _mesa_soft_renderbuffer_storage;
    _mesa_add_renderbuffer(fb, BUFFER_ACCUM, rb);
 

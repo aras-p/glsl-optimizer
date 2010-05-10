@@ -887,6 +887,7 @@ _mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat)
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
+   case GL_RGBA16_SNORM:
       return GL_RGBA;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
