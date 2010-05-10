@@ -359,14 +359,6 @@ dri2WaitGL(__GLXDRIdrawable * pdraw)
 static void
 dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
-   __GLXdisplayPrivate *priv = __glXInitialize(pdraw->base.psc->dpy);
-   __GLXDRIdisplayPrivate *pdp = (__GLXDRIdisplayPrivate *)priv->dri2Display;
-
-   /* Old servers don't send invalidate events */
-   if (!pdp->invalidateAvailable)
-       dri2InvalidateBuffers(priv->dpy, pdraw->base.drawable);
-
    dri2WaitGL(loaderPrivate);
 }
 
@@ -427,15 +419,15 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
     	(*pdraw->psc->f->flush)(pdraw->driDrawable);
 #endif
 
-    /* Old servers don't send invalidate events */
-    if (!pdp->invalidateAvailable)
-       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->drawable);
-
     /* Old servers can't handle swapbuffers */
     if (!pdp->swapAvailable) {
        dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
        return 0;
     }
+
+    /* Old servers don't send invalidate events */
+    if (!pdp->invalidateAvailable)
+       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->drawable);
 
 #ifdef X_DRI2SwapBuffers
     DRI2SwapBuffers(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
