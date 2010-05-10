@@ -33,6 +33,7 @@ svga_resource_from_handle(struct pipe_screen * screen,
 void
 svga_init_resource_functions(struct svga_context *svga)
 {
+   svga->pipe.is_resource_referenced = u_is_resource_referenced_vtbl;
    svga->pipe.get_transfer = u_get_transfer_vtbl;
    svga->pipe.transfer_map = u_transfer_map_vtbl;
    svga->pipe.transfer_flush_region = u_transfer_flush_region_vtbl;
