@@ -1383,7 +1383,7 @@ FETCH(signed_rgb_16)(const struct gl_texture_image *texImage,
    const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 3);
    texel[RCOMP] = SHORT_TO_FLOAT_TEX( s[0] );
    texel[GCOMP] = SHORT_TO_FLOAT_TEX( s[1] );
-   texel[BCOMP] = SHORT_TO_FLOAT_TEX( s[3] );
+   texel[BCOMP] = SHORT_TO_FLOAT_TEX( s[2] );
    texel[ACOMP] = 1.0F;
 }
 
@@ -1401,7 +1401,7 @@ store_texel_signed_rgb_16(struct gl_texture_image *texImage,
 #endif
 
 
-/* MESA_FORMAT_SIGNED_RGB_16 ***********************************************/
+/* MESA_FORMAT_SIGNED_RGBA_16 ***********************************************/
 
 static void
 FETCH(signed_rgba_16)(const struct gl_texture_image *texImage,
@@ -1410,8 +1410,8 @@ FETCH(signed_rgba_16)(const struct gl_texture_image *texImage,
    const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 4);
    texel[RCOMP] = SHORT_TO_FLOAT_TEX( s[0] );
    texel[GCOMP] = SHORT_TO_FLOAT_TEX( s[1] );
-   texel[BCOMP] = SHORT_TO_FLOAT_TEX( s[3] );
-   texel[ACOMP] = SHORT_TO_FLOAT_TEX( s[4] );
+   texel[BCOMP] = SHORT_TO_FLOAT_TEX( s[2] );
+   texel[ACOMP] = SHORT_TO_FLOAT_TEX( s[3] );
 }
 
 #if DIM == 3
