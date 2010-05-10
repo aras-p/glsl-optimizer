@@ -29,15 +29,14 @@
 
 static unsigned
 process_parameters(exec_list *instructions, exec_list *actual_parameters,
-		   simple_node *parameters,
+		   exec_list *parameters,
 		   struct _mesa_glsl_parse_state *state)
 {
-   simple_node *ptr;
    unsigned count = 0;
 
-   foreach (ptr, parameters) {
-      ir_rvalue *const result =
-	 ((ast_node *) ptr)->hir(instructions, state);
+   foreach_list (n, parameters) {
+      ast_node *const ast = exec_node_data(ast_node, n, link);
+      ir_rvalue *const result = ast->hir(instructions, state);
 
       actual_parameters->push_tail(result);
       count++;
@@ -107,7 +106,7 @@ process_call(exec_list *instructions, ir_function *f,
 
 static ir_rvalue *
 match_function_by_name(exec_list *instructions, const char *name,
-		       YYLTYPE *loc, simple_node *parameters,
+		       YYLTYPE *loc, exec_list *parameters,
 		       struct _mesa_glsl_parse_state *state)
 {
    ir_function *f = state->symbols->get_function(name);
@@ -216,7 +215,7 @@ dereference_component(ir_rvalue *src, unsigned component)
 static ir_rvalue *
 process_array_constructor(exec_list *instructions,
 			  const glsl_type *constructor_type,
-			  YYLTYPE *loc, simple_node *parameters,
+			  YYLTYPE *loc, exec_list *parameters,
 			  struct _mesa_glsl_parse_state *state)
 {
    /* Array constructors come in two forms: sized and unsized.  Sized array
@@ -358,12 +357,12 @@ ast_function_expression::hir(exec_list *instructions,
 	 unsigned nonmatrix_parameters = 0;
 	 exec_list actual_parameters;
 
-	 assert(!is_empty_list(&this->expressions));
+	 assert(!this->expressions.is_empty());
 
-	 simple_node *ptr;
-	 foreach (ptr, &this->expressions) {
+	 foreach_list (n, &this->expressions) {
+	    ast_node *ast = exec_node_data(ast_node, n, link);
 	    ir_rvalue *const result =
-	       ((ast_node *) ptr)->hir(instructions, state)->as_rvalue();
+	       ast->hir(instructions, state)->as_rvalue();
 
 	    /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
 	     *

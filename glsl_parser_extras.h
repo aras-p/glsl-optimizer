@@ -26,7 +26,6 @@
 #define GLSL_PARSER_EXTRAS_H
 
 #include <cstdlib>
-#include "main/simple_list.h"
 #include "glsl_symbol_table.h"
 
 enum _mesa_glsl_parser_targets {
@@ -38,7 +37,7 @@ enum _mesa_glsl_parser_targets {
 
 struct _mesa_glsl_parse_state {
    void *scanner;
-   struct simple_node translation_unit;
+   exec_list translation_unit;
    glsl_symbol_table *symbols;
 
    unsigned language_version;

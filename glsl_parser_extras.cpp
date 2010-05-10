@@ -222,7 +222,7 @@ ast_node::print(void) const
 
 ast_node::ast_node(void)
 {
-   make_empty_list(this);
+   /* empty */
 }
 
 
@@ -243,12 +243,11 @@ ast_opt_array_size_print(bool is_array, const ast_expression *array_size)
 void
 ast_compound_statement::print(void) const
 {
-   const struct simple_node *ptr;
-
    printf("{\n");
    
-   foreach(ptr, & statements) {
-      ((ast_node *)ptr)->print();
+   foreach_list_const(n, &this->statements) {
+      ast_node *ast = exec_node_data(ast_node, n, link);
+      ast->print();
    }
 
    printf("}\n");
@@ -259,16 +258,9 @@ ast_compound_statement::ast_compound_statement(int new_scope,
 					       ast_node *statements)
 {
    this->new_scope = new_scope;
-   make_empty_list(& this->statements);
 
    if (statements != NULL) {
-      /* This seems odd, but it works.  The simple_list is,
-       * basically, a circular list.  insert_at_tail adds
-       * the specified node to the list before the current
-       * head.
-       */
-      insert_at_tail((struct simple_node *) statements,
-		     & this->statements);
+      this->statements.push_degenerate_list_at_head(&statements->link);
    }
 }
 
@@ -333,10 +325,11 @@ ast_expression::print(void) const
       subexpressions[0]->print();
       printf("( ");
 
-      struct simple_node *ptr;
-      foreach (ptr, &this->expressions) {
+      foreach_list_const (n, &this->expressions) {
 	 printf(", ");
-	 ((ast_node *)ptr)->print();
+
+	 ast_node *ast = exec_node_data(ast_node, n, link);
+	 ast->print();
       }
 
       printf(") ");
@@ -366,15 +359,13 @@ ast_expression::print(void) const
       break;
 
    case ast_sequence: {
-      struct simple_node *ptr;
-      struct simple_node *const head = first_elem(& expressions);
-      
       printf("( ");
-      foreach (ptr, & expressions) {
-	 if (ptr != head)
+      foreach_list_const(n, & this->expressions) {
+	 if (n != this->expressions.get_head())
 	    printf(", ");
 
-	 ((ast_node *)ptr)->print();
+	 ast_node *ast = exec_node_data(ast_node, n, link);
+	 ast->print();
       }
       printf(") ");
       break;
@@ -395,7 +386,6 @@ ast_expression::ast_expression(int oper,
    this->subexpressions[0] = ex0;
    this->subexpressions[1] = ex1;
    this->subexpressions[2] = ex2;
-   make_empty_list(& expressions);
 }
 
 
@@ -419,13 +409,12 @@ ast_expression_statement::ast_expression_statement(ast_expression *ex) :
 void
 ast_function::print(void) const
 {
-   struct simple_node *ptr;
-
    return_type->print();
    printf(" %s (", identifier);
 
-   foreach(ptr, & parameters) {
-      ((ast_node *)ptr)->print();
+   foreach_list_const(n, & this->parameters) {
+      ast_node *ast = exec_node_data(ast_node, n, link);
+      ast->print();
    }
 
    printf(")");
@@ -435,7 +424,7 @@ ast_function::print(void) const
 ast_function::ast_function(void)
    : is_definition(false), signature(NULL)
 {
-   make_empty_list(& parameters);
+   /* empty */
 }
 
 
@@ -492,9 +481,6 @@ ast_declaration::ast_declaration(char *identifier, int is_array,
 void
 ast_declarator_list::print(void) const
 {
-   struct simple_node *head;
-   struct simple_node *ptr;
-
    assert(type || invariant);
 
    if (type)
@@ -502,12 +488,12 @@ ast_declarator_list::print(void) const
    else
       printf("invariant ");
 
-   head = first_elem(& declarations);
-   foreach (ptr, & declarations) {
-      if (ptr != head)
+   foreach_list_const (ptr, & this->declarations) {
+      if (ptr != this->declarations.get_head())
 	 printf(", ");
 
-      ((ast_node *)ptr)->print();
+      ast_node *ast = exec_node_data(ast_node, ptr, link);
+      ast->print();
    }
 
    printf("; ");
@@ -517,7 +503,6 @@ ast_declarator_list::print(void) const
 ast_declarator_list::ast_declarator_list(ast_fully_specified_type *type)
 {
    this->type = type;
-   make_empty_list(& this->declarations);
 }
 
 void
@@ -638,11 +623,10 @@ ast_iteration_statement::ast_iteration_statement(int mode,
 void
 ast_struct_specifier::print(void) const
 {
-   struct simple_node *ptr;
-
    printf("struct %s { ", name);
-   foreach (ptr, & declarations) {
-      ((ast_node *)ptr)->print();
+   foreach_list_const(n, &this->declarations) {
+      ast_node *ast = exec_node_data(ast_node, n, link);
+      ast->print();
    }
    printf("} ");
 }
@@ -652,14 +636,7 @@ ast_struct_specifier::ast_struct_specifier(char *identifier,
 					   ast_node *declarator_list)
 {
    name = identifier;
-
-   /* This seems odd, but it works.  The simple_list is,
-    * basically, a circular list.  insert_at_tail adds
-    * the specified node to the list before the current
-    * head.
-    */
-   insert_at_tail((struct simple_node *) declarator_list,
-		  & declarations);
+   this->declarations.push_degenerate_list_at_head(&declarator_list->link);
 }
 
 
@@ -712,7 +689,6 @@ main(int argc, char **argv)
    struct _mesa_glsl_parse_state state;
    char *shader;
    size_t shader_len;
-   struct simple_node *ptr;
    exec_list instructions;
 
    if (argc < 3) {
@@ -743,7 +719,7 @@ main(int argc, char **argv)
    shader = load_text_file(argv[2], & shader_len);
 
    state.scanner = NULL;
-   make_empty_list(& state.translation_unit);
+   state.translation_unit.make_empty();
    state.symbols = new glsl_symbol_table;
    state.error = false;
    state.temp_index = 0;
@@ -755,8 +731,9 @@ main(int argc, char **argv)
       _mesa_glsl_parse(& state);
       _mesa_glsl_lexer_dtor(& state);
 
-      foreach (ptr, & state.translation_unit) {
-	 ((ast_node *)ptr)->print();
+      foreach_list_const(n, &state.translation_unit) {
+	 ast_node *ast = exec_node_data(ast_node, n, link);
+	 ast->print();
       }
 
       _mesa_ast_to_hir(&instructions, &state);

@@ -234,13 +234,11 @@ extension_statement:
 external_declaration_list:
 	external_declaration
 	{
-	   insert_at_tail(& state->translation_unit,
-			  (struct simple_node *) $1);
+	   state->translation_unit.push_tail(& $1->link);
 	}
 	| external_declaration_list external_declaration
 	{
-	   insert_at_tail(& state->translation_unit,
-			  (struct simple_node *) $2);
+	   state->translation_unit.push_tail(& $2->link);
 	}
 	;
 
@@ -352,13 +350,13 @@ function_call_header_with_parameters:
 	{
 	   $$ = $1;
 	   $$->set_location(yylloc);
-	   insert_at_tail(& $$->expressions, (struct simple_node *) $2);
+	   $$->expressions.push_tail(& $2->link);
 	}
 	| function_call_header_with_parameters ',' assignment_expression
 	{
 	   $$ = $1;
 	   $$->set_location(yylloc);
-	   insert_at_tail(& $$->expressions, (struct simple_node *) $3);
+	   $$->expressions.push_tail(& $3->link);
 	}
 	;
 
@@ -598,12 +596,12 @@ expression:
 	   if ($1->oper != ast_sequence) {
 	      $$ = new ast_expression(ast_sequence, NULL, NULL, NULL);
 	      $$->set_location(yylloc);
-	      insert_at_tail(& $$->expressions, $1);
+	      $$->expressions.push_tail(& $1->link);
 	   } else {
 	      $$ = $1;
 	   }
 
-	   insert_at_tail(& $$->expressions, $3);
+	   $$->expressions.push_tail(& $3->link);
 	}
 	;
 
@@ -639,14 +637,12 @@ function_header_with_parameters:
 	function_header parameter_declaration
 	{
 	   $$ = $1;
-	   insert_at_tail(& $$->parameters,
-			  (struct simple_node *) $2);
+	   $$->parameters.push_tail(& $2->link);
 	}
 	| function_header_with_parameters ',' parameter_declaration
 	{
 	   $$ = $1;
-	   insert_at_tail(& $$->parameters,
-			  (struct simple_node *) $3);
+	   $$->parameters.push_tail(& $3->link);
 	}
 	;
 
@@ -735,8 +731,7 @@ init_declarator_list:
 	   decl->set_location(yylloc);
 
 	   $$ = $1;
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| init_declarator_list ',' IDENTIFIER '[' ']'
 	{
@@ -744,8 +739,7 @@ init_declarator_list:
 	   decl->set_location(yylloc);
 
 	   $$ = $1;
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| init_declarator_list ',' IDENTIFIER '[' constant_expression ']'
 	{
@@ -753,8 +747,7 @@ init_declarator_list:
 	   decl->set_location(yylloc);
 
 	   $$ = $1;
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| init_declarator_list ',' IDENTIFIER '[' ']' '=' initializer
 	{
@@ -762,8 +755,7 @@ init_declarator_list:
 	   decl->set_location(yylloc);
 
 	   $$ = $1;
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| init_declarator_list ',' IDENTIFIER '[' constant_expression ']' '=' initializer
 	{
@@ -771,8 +763,7 @@ init_declarator_list:
 	   decl->set_location(yylloc);
 
 	   $$ = $1;
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| init_declarator_list ',' IDENTIFIER '=' initializer
 	{
@@ -780,8 +771,7 @@ init_declarator_list:
 	   decl->set_location(yylloc);
 
 	   $$ = $1;
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	;
 
@@ -798,8 +788,7 @@ single_declaration:
 
 	   $$ = new ast_declarator_list($1);
 	   $$->set_location(yylloc);
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| fully_specified_type IDENTIFIER '[' ']'
 	{
@@ -807,8 +796,7 @@ single_declaration:
 
 	   $$ = new ast_declarator_list($1);
 	   $$->set_location(yylloc);
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| fully_specified_type IDENTIFIER '[' constant_expression ']'
 	{
@@ -816,8 +804,7 @@ single_declaration:
 
 	   $$ = new ast_declarator_list($1);
 	   $$->set_location(yylloc);
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| fully_specified_type IDENTIFIER '[' ']' '=' initializer
 	{
@@ -825,8 +812,7 @@ single_declaration:
 
 	   $$ = new ast_declarator_list($1);
 	   $$->set_location(yylloc);
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| fully_specified_type IDENTIFIER '[' constant_expression ']' '=' initializer
 	{
@@ -834,8 +820,7 @@ single_declaration:
 
 	   $$ = new ast_declarator_list($1);
 	   $$->set_location(yylloc);
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| fully_specified_type IDENTIFIER '=' initializer
 	{
@@ -843,8 +828,7 @@ single_declaration:
 
 	   $$ = new ast_declarator_list($1);
 	   $$->set_location(yylloc);
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	| INVARIANT IDENTIFIER // Vertex only.
 	{
@@ -854,8 +838,7 @@ single_declaration:
 	   $$->set_location(yylloc);
 	   $$->invariant = true;
 
-	   insert_at_tail(& $$->declarations,
-			  (struct simple_node *) decl);
+	   $$->declarations.push_tail(&decl->link);
 	}
 	;
 
@@ -1033,12 +1016,12 @@ struct_declaration_list:
 	struct_declaration
 	{
 	   $$ = (struct ast_node *) $1;
+	   $1->link.self_link();
 	}
 	| struct_declaration_list struct_declaration
 	{
 	   $$ = (struct ast_node *) $1;
-	   insert_at_tail((struct simple_node *) $$,
-			  (struct simple_node *) $2);
+	   $$->link.insert_before(& $2->link);
 	}
 	;
 
@@ -1052,18 +1035,20 @@ struct_declaration:
 	   $$ = new ast_declarator_list(type);
 	   $$->set_location(yylloc);
 
-	   insert_at_tail((struct simple_node *) $2,
-			  & $$->declarations);
+	   $$->declarations.push_degenerate_list_at_head(& $2->link);
 	}
 	;
 
 struct_declarator_list:
 	struct_declarator
+	{
+	   $$ = $1;
+	   $1->link.self_link();
+	}
 	| struct_declarator_list ',' struct_declarator
 	{
 	   $$ = $1;
-	   insert_at_tail((struct simple_node *) $$,
-			  (struct simple_node *) $3);
+	   $$->link.insert_before(& $3->link);
 	}
 	;
 
@@ -1154,7 +1139,7 @@ statement_list:
 	   }
 
 	   $$ = $1;
-	   make_empty_list((struct simple_node *) $$);
+	   $$->link.self_link();
 	}
 	| statement_list statement
 	{
@@ -1163,8 +1148,7 @@ statement_list:
 	      assert($2 != NULL);
 	   }
 	   $$ = $1;
-	   insert_at_tail((struct simple_node *) $$,
-			  (struct simple_node *) $2);
+	   $$->link.insert_before(& $2->link);
 	}
 	;
 
@@ -1219,9 +1203,7 @@ condition:
 	   decl->set_location(yylloc);
 	   declarator->set_location(yylloc);
 
-	   insert_at_tail(& declarator->declarations,
-			  (struct simple_node *) decl);
-
+	   declarator->declarations.push_tail(&decl->link);
 	   $$ = declarator;
 	}
 	;

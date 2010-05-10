@@ -26,7 +26,6 @@
 #ifndef AST_H
 #define AST_H
 
-#include "main/simple_list.h"
 #include "list.h"
 #include "glsl_parser_extras.h"
 
@@ -35,7 +34,7 @@ struct _mesa_glsl_parse_state;
 
 struct YYLTYPE;
 
-class ast_node : public simple_node {
+class ast_node {
 public:
    virtual ~ast_node();
    virtual void print(void) const;
@@ -80,6 +79,8 @@ public:
       unsigned line;
       unsigned column;
    } location;
+
+   exec_node link;
 
 protected:
    ast_node(void);
@@ -181,7 +182,7 @@ public:
     * List of expressions for an \c ast_sequence or parameters for an
     * \c ast_function_call
     */
-   struct simple_node expressions;
+   exec_list expressions;
 };
 
 class ast_expression_bin : public ast_expression {
@@ -247,7 +248,7 @@ public:
 			  struct _mesa_glsl_parse_state *state);
 
    int new_scope;
-   struct simple_node statements;
+   exec_list statements;
 };
 
 class ast_declaration : public ast_node {
@@ -294,7 +295,7 @@ public:
 			  struct _mesa_glsl_parse_state *state);
 
    char *name;
-   struct simple_node declarations;
+   exec_list declarations;
 };
 
 
@@ -414,7 +415,7 @@ public:
 			  struct _mesa_glsl_parse_state *state);
 
    ast_fully_specified_type *type;
-   struct simple_node declarations;
+   exec_list declarations;
 
    /**
     * Special flag for vertex shader "invariant" declarations.
@@ -439,7 +440,7 @@ public:
    int is_array;
    ast_expression *array_size;
 
-   static void parameters_to_hir(simple_node *ast_parameters,
+   static void parameters_to_hir(exec_list *ast_parameters,
 				 bool formal, exec_list *ir_parameters,
 				 struct _mesa_glsl_parse_state *state);
 
@@ -468,7 +469,7 @@ public:
    ast_fully_specified_type *return_type;
    char *identifier;
 
-   struct simple_node parameters;
+   exec_list parameters;
 
 private:
    /**
@@ -554,7 +555,7 @@ public:
 class ast_switch_statement : public ast_node {
 public:
    ast_expression *expression;
-   struct simple_node statements;
+   exec_list statements;
 };
 
 class ast_iteration_statement : public ast_node {
