@@ -22,7 +22,6 @@
  */
 #include <string.h>
 #include "main/imports.h"
-#include "main/simple_list.h"
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
