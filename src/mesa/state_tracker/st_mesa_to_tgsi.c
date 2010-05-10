@@ -154,7 +154,7 @@ dst_register( struct st_translate *t,
       return t->temps[index];
 
    case PROGRAM_OUTPUT:
-      if (index == VERT_RESULT_PSIZ)
+      if (t->procType == TGSI_PROCESSOR_VERTEX && index == VERT_RESULT_PSIZ)
          t->prevInstWrotePsiz = GL_TRUE;
 
       if (t->procType == TGSI_PROCESSOR_VERTEX)
