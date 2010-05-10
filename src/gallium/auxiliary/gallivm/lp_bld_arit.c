@@ -1231,18 +1231,28 @@ lp_build_sincos(struct lp_build_context *bld,
    return res;
 }
 
+static float c_cosf( float f )
+{
+   return (float) cos( (double) f );
+}
+
+static float c_sinf( float f )
+{
+   return (float) sin( (double) f );
+}
+
 LLVMValueRef
 lp_build_cos(struct lp_build_context *bld,
              LLVMValueRef a)
 {
-   return lp_build_sincos(bld, "cosf", &cosf, a);
+   return lp_build_sincos(bld, "cosf", &c_cosf, a);
 }
 
 LLVMValueRef
 lp_build_sin(struct lp_build_context *bld,
              LLVMValueRef a)
 {
-   return lp_build_sincos(bld, "sinf", &sinf, a);
+   return lp_build_sincos(bld, "sinf", &c_sinf, a);
 }
 
 #else /* !PIPE_OS_WINDOWS */
