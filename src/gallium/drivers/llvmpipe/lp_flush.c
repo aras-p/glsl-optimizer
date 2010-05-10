@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_defines.h"
+#include "util/u_string.h"
 #include "draw/draw_context.h"
 #include "lp_flush.h"
 #include "lp_context.h"
@@ -71,25 +72,25 @@ llvmpipe_flush( struct pipe_context *pipe,
    }
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
-#if 0
-   if (flags & PIPE_FLUSH_FRAME) {
-      static unsigned frame_no = 1;
-      char filename[256];
-      unsigned i;
+   if (0) {
+      if (flags & PIPE_FLUSH_FRAME) {
+         static unsigned frame_no = 1;
+         char filename[256];
+         unsigned i;
 
-      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
-	 util_snprintf(filename, sizeof(filename), "cbuf%u_%u", i, frame_no);
-         debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.cbufs[0]);
+         for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
+            util_snprintf(filename, sizeof(filename), "cbuf%u_%u", i, frame_no);
+            debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.cbufs[0]);
+         }
+
+         if (0) {
+            util_snprintf(filename, sizeof(filename), "zsbuf_%u", frame_no);
+            debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.zsbuf);
+         }
+
+         ++frame_no;
       }
-
-      if (0) {
-         util_snprintf(filename, sizeof(filename), "zsbuf_%u", frame_no);
-         debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.zsbuf);
-      }
-
-      ++frame_no;
    }
-#endif
 }
 
 
