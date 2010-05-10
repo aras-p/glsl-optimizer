@@ -4,3 +4,6 @@ glcpp-parse.c
 glcpp-parse.h
 *.o
 *~
+tests/*.expected
+tests/*.gcc
+tests/*.out

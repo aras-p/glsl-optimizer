@@ -10,5 +10,9 @@ glcpp: glcpp.o glcpp-lex.o glcpp-parse.o hash_table.o
 
 glcpp-lex.c: glcpp-parse.h
 
+test:
+	@(cd tests; ./glcpp-test)
+
 clean:
 	rm -f glcpp-lex.c glcpp-parse.c *.o *~
+	rm -f tests/*.out tests/*.gcc tests/*.expected
