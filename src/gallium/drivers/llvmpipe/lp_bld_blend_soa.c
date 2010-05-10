@@ -197,6 +197,7 @@ lp_build_blend_soa_factor(struct lp_build_blend_soa_context *bld,
 
 /**
  * Generate blend code in SOA mode.
+ * \param rt  render target index (to index the blend / colormask state)
  * \param src  src/fragment color
  * \param dst  dst/framebuffer color
  * \param con  constant blend color
@@ -206,6 +207,7 @@ void
 lp_build_blend_soa(LLVMBuilderRef builder,
                    const struct pipe_blend_state *blend,
                    struct lp_type type,
+                   unsigned rt,
                    LLVMValueRef src[4],
                    LLVMValueRef dst[4],
                    LLVMValueRef con[4],
@@ -213,6 +215,8 @@ lp_build_blend_soa(LLVMBuilderRef builder,
 {
    struct lp_build_blend_soa_context bld;
    unsigned i, j, k;
+
+   assert(rt < PIPE_MAX_COLOR_BUFS);
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
@@ -225,7 +229,7 @@ lp_build_blend_soa(LLVMBuilderRef builder,
 
    for (i = 0; i < 4; ++i) {
       /* only compute blending for the color channels enabled for writing */
-      if (blend->rt[0].colormask & (1 << i)) {
+      if (blend->rt[rt].colormask & (1 << i)) {
          if (blend->logicop_enable) {
             if(!type.floating) {
                res[i] = lp_build_logicop(builder, blend->logicop_func, src[i], dst[i]);
@@ -233,10 +237,10 @@ lp_build_blend_soa(LLVMBuilderRef builder,
             else
                res[i] = dst[i];
          }
-         else if (blend->rt[0].blend_enable) {
-            unsigned src_factor = i < 3 ? blend->rt[0].rgb_src_factor : blend->rt[0].alpha_src_factor;
-            unsigned dst_factor = i < 3 ? blend->rt[0].rgb_dst_factor : blend->rt[0].alpha_dst_factor;
-            unsigned func = i < 3 ? blend->rt[0].rgb_func : blend->rt[0].alpha_func;
+         else if (blend->rt[rt].blend_enable) {
+            unsigned src_factor = i < 3 ? blend->rt[rt].rgb_src_factor : blend->rt[rt].alpha_src_factor;
+            unsigned dst_factor = i < 3 ? blend->rt[rt].rgb_dst_factor : blend->rt[rt].alpha_dst_factor;
+            unsigned func = i < 3 ? blend->rt[rt].rgb_func : blend->rt[rt].alpha_func;
             boolean func_commutative = lp_build_blend_func_commutative(func);
 
             /* It makes no sense to blend unless values are normalized */
@@ -294,7 +298,7 @@ lp_build_blend_soa(LLVMBuilderRef builder,
 
             /* See if this function has been previously applied */
             for(j = 0; j < i; ++j) {
-               unsigned prev_func = j < 3 ? blend->rt[0].rgb_func : blend->rt[0].alpha_func;
+               unsigned prev_func = j < 3 ? blend->rt[rt].rgb_func : blend->rt[rt].alpha_func;
                unsigned func_reverse = lp_build_blend_func_reverse(func, prev_func);
 
                if((!func_reverse &&

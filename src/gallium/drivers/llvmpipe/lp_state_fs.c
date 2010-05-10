@@ -475,6 +475,7 @@ generate_fs(struct llvmpipe_context *lp,
                      consts_ptr, interp->pos, interp->inputs,
                      outputs, sampler, &shader->info);
 
+   /* loop over fragment shader outputs/results */
    for (attrib = 0; attrib < shader->info.num_outputs; ++attrib) {
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
          if(outputs[attrib][chan]) {
@@ -531,9 +532,16 @@ generate_fs(struct llvmpipe_context *lp,
 
 /**
  * Generate color blending and color output.
+ * \param rt  the render target index (to index blend, colormask state)
+ * \param type  the pixel color type
+ * \param context_ptr  pointer to the runtime JIT context
+ * \param mask  execution mask (active fragment/pixel mask)
+ * \param src  colors from the fragment shader
+ * \param dst_ptr  the destination color buffer pointer
  */
 static void
 generate_blend(const struct pipe_blend_state *blend,
+               unsigned rt,
                LLVMBuilderRef builder,
                struct lp_type type,
                LLVMValueRef context_ptr,
@@ -564,6 +572,7 @@ generate_blend(const struct pipe_blend_state *blend,
    const_ptr = LLVMBuildBitCast(builder, const_ptr,
                                 LLVMPointerType(vec_type, 0), "");
 
+   /* load constant blend color and colors from the dest color buffer */
    for(chan = 0; chan < 4; ++chan) {
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
       con[chan] = LLVMBuildLoad(builder, LLVMBuildGEP(builder, const_ptr, &index, 1, ""), "");
@@ -574,10 +583,12 @@ generate_blend(const struct pipe_blend_state *blend,
       lp_build_name(dst[chan], "dst.%c", "rgba"[chan]);
    }
 
-   lp_build_blend_soa(builder, blend, type, src, dst, con, res);
+   /* do blend */
+   lp_build_blend_soa(builder, blend, type, rt, src, dst, con, res);
 
+   /* store results to color buffer */
    for(chan = 0; chan < 4; ++chan) {
-      if(blend->rt[0].colormask & (1 << chan)) {
+      if(blend->rt[rt].colormask & (1 << chan)) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), chan, 0);
          lp_build_name(res[chan], "res.%c", "rgba"[chan]);
          res[chan] = lp_build_select(&bld, mask, res[chan], dst[chan]);
@@ -644,7 +655,6 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef fs_mask[LP_MAX_VECTOR_LENGTH];
    LLVMValueRef fs_out_color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][LP_MAX_VECTOR_LENGTH];
    LLVMValueRef blend_mask;
-   LLVMValueRef blend_in_color[NUM_CHANNELS];
    LLVMValueRef function;
    LLVMValueRef facing;
    unsigned num_fs;
@@ -738,7 +748,7 @@ generate_fragment(struct llvmpipe_context *lp,
    lp_build_name(a0_ptr, "a0");
    lp_build_name(dadx_ptr, "dadx");
    lp_build_name(dady_ptr, "dady");
-   lp_build_name(color_ptr_ptr, "color_ptr");
+   lp_build_name(color_ptr_ptr, "color_ptr_ptr");
    lp_build_name(depth_ptr, "depth");
    lp_build_name(c0, "c0");
    lp_build_name(c1, "c1");
@@ -810,6 +820,8 @@ generate_fragment(struct llvmpipe_context *lp,
    for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++) {
       LLVMValueRef color_ptr;
       LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), cbuf, 0);
+      LLVMValueRef blend_in_color[NUM_CHANNELS];
+      unsigned rt;
 
       /* 
        * Convert the fs's output color and mask to fit to the blending type. 
@@ -830,10 +842,14 @@ generate_fragment(struct llvmpipe_context *lp,
 				"");
       lp_build_name(color_ptr, "color_ptr%d", cbuf);
 
+      /* which blend/colormask state to use */
+      rt = key->blend.independent_blend_enable ? cbuf : 0;
+
       /*
        * Blending.
        */
       generate_blend(&key->blend,
+                     rt,
 		     builder,
 		     blend_type,
 		     context_ptr,
