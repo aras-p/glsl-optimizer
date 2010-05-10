@@ -294,6 +294,12 @@ postfix_expression:
 	}
 	| function_call
 	{
+	   /* Function call parameters used to be stored as a circular list in
+	    * subexpressions[1].  They are now stored as a regular list in
+	    * expressions.  This assertion validates that the old code was
+	    * correctly converted.  It can eventually be removed.
+	    */
+	   assert($1->subexpressions[1] == NULL);
 	   $$ = $1;
 	}
 	| postfix_expression '.' IDENTIFIER
@@ -346,14 +352,13 @@ function_call_header_with_parameters:
 	{
 	   $$ = $1;
 	   $$->set_location(yylloc);
-	   $$->subexpressions[1] = $2;
+	   insert_at_tail(& $$->expressions, (struct simple_node *) $2);
 	}
 	| function_call_header_with_parameters ',' assignment_expression
 	{
 	   $$ = $1;
 	   $$->set_location(yylloc);
-	   insert_at_tail((struct simple_node *) $$->subexpressions[1],
-			  (struct simple_node *) $3);
+	   insert_at_tail(& $$->expressions, (struct simple_node *) $3);
 	}
 	;
 

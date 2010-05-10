@@ -178,7 +178,8 @@ public:
 
 
    /**
-    * List of expressions for an \c ast_sequence.
+    * List of expressions for an \c ast_sequence or parameters for an
+    * \c ast_function_call
     */
    struct simple_node expressions;
 };

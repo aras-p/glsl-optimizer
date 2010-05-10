@@ -330,19 +330,13 @@ ast_expression::print(void) const
       break;
 
    case ast_function_call: {
-      ast_expression *parameters = subexpressions[1];
-
       subexpressions[0]->print();
       printf("( ");
 
-      if (parameters != NULL) {
-	 struct simple_node *ptr;
-
-	 parameters->print();
-	 foreach (ptr, (struct simple_node *) parameters) {
-	    printf(", ");
-	    ((ast_node *)ptr)->print();
-	 }
+      struct simple_node *ptr;
+      foreach (ptr, &this->expressions) {
+	 printf(", ");
+	 ((ast_node *)ptr)->print();
       }
 
       printf(") ");

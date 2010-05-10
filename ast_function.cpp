@@ -32,19 +32,15 @@ process_parameters(exec_list *instructions, exec_list *actual_parameters,
 		   simple_node *parameters,
 		   struct _mesa_glsl_parse_state *state)
 {
-   simple_node *const first = parameters;
+   simple_node *ptr;
    unsigned count = 0;
 
-   if (first != NULL) {
-      simple_node *ptr = first;
-      do {
-	 ir_rvalue *const result =
-	    ((ast_node *) ptr)->hir(instructions, state);
-	 ptr = ptr->next;
+   foreach (ptr, parameters) {
+      ir_rvalue *const result =
+	 ((ast_node *) ptr)->hir(instructions, state);
 
-	 actual_parameters->push_tail(result);
-	 count++;
-      } while (ptr != first);
+      actual_parameters->push_tail(result);
+      count++;
    }
 
    return count;
@@ -324,7 +320,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 }
 
 	 return process_array_constructor(instructions, constructor_type,
-					  & loc, subexpressions[1], state);
+					  & loc, &this->expressions, state);
       }
 
       /* There are two kinds of constructor call.  Constructors for built-in
@@ -361,73 +357,69 @@ ast_function_expression::hir(exec_list *instructions,
 	 unsigned matrix_parameters = 0;
 	 unsigned nonmatrix_parameters = 0;
 	 exec_list actual_parameters;
-	 simple_node *const first = subexpressions[1];
 
-	 assert(first != NULL);
+	 assert(!is_empty_list(&this->expressions));
 
-	 if (first != NULL) {
-	    simple_node *ptr = first;
-	    do {
-	       ir_rvalue *const result =
-		  ((ast_node *) ptr)->hir(instructions, state)->as_rvalue();
-	       ptr = ptr->next;
+	 simple_node *ptr;
+	 foreach (ptr, &this->expressions) {
+	    ir_rvalue *const result =
+	       ((ast_node *) ptr)->hir(instructions, state)->as_rvalue();
 
-	       /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
-		*
-		*    "It is an error to provide extra arguments beyond this
-		*    last used argument."
+	    /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
+	     *
+	     *    "It is an error to provide extra arguments beyond this
+	     *    last used argument."
+	     */
+	    if (components_used >= type_components) {
+	       _mesa_glsl_error(& loc, state, "too many parameters to `%s' "
+				"constructor",
+				constructor_type->name);
+	       return ir_call::get_error_instruction();
+	    }
+
+	    if (!result->type->is_numeric() && !result->type->is_boolean()) {
+	       _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
+				"non-numeric data type",
+				constructor_type->name);
+	       return ir_call::get_error_instruction();
+	    }
+
+	    /* Count the number of matrix and nonmatrix parameters.  This
+	     * is used below to enforce some of the constructor rules.
+	     */
+	    if (result->type->is_matrix())
+	       matrix_parameters++;
+	    else
+	       nonmatrix_parameters++;
+
+
+	    /* Process each of the components of the parameter.  Dereference
+	     * each component individually, perform any type conversions, and
+	     * add it to the parameter list for the constructor.
+	     */
+	    for (unsigned i = 0; i < result->type->components(); i++) {
+	       if (components_used >= type_components)
+		  break;
+
+	       ir_rvalue *const component =
+		  convert_component(dereference_component(result, i),
+				    base_type);
+
+	       /* All cases that could result in component->type being the
+		* error type should have already been caught above.
 		*/
-	       if (components_used >= type_components) {
-		  _mesa_glsl_error(& loc, state, "too many parameters to `%s' "
-				   "constructor",
-				   constructor_type->name);
-		  return ir_call::get_error_instruction();
-	       }
+	       assert(component->type == base_type);
 
-	       if (!result->type->is_numeric() && !result->type->is_boolean()) {
-		  _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
-				   "non-numeric data type",
-				   constructor_type->name);
-		  return ir_call::get_error_instruction();
-	       }
-
-	       /* Count the number of matrix and nonmatrix parameters.  This
-		* is used below to enforce some of the constructor rules.
+	       /* Don't actually generate constructor calls for scalars.
+		* Instead, do the usual component selection and conversion,
+		* and return the single component.
 		*/
-	       if (result->type->is_matrix())
-		  matrix_parameters++;
-	       else
-		  nonmatrix_parameters++;
+	       if (constructor_type->is_scalar())
+		  return component;
 
-
-	       /* Process each of the components of the parameter.  Dereference
-		* each component individually, perform any type conversions, and
-		* add it to the parameter list for the constructor.
-		*/
-	       for (unsigned i = 0; i < result->type->components(); i++) {
-		  if (components_used >= type_components)
-		     break;
-
-		  ir_rvalue *const component =
-		     convert_component(dereference_component(result, i),
-				       base_type);
-
-		  /* All cases that could result in component->type being the
-		   * error type should have already been caught above.
-		   */
-		  assert(component->type == base_type);
-
-		  /* Don't actually generate constructor calls for scalars.
-		   * Instead, do the usual component selection and conversion,
-		   * and return the single component.
-		   */
-		  if (constructor_type->is_scalar())
-		     return component;
-
-		  actual_parameters.push_tail(component);
-		  components_used++;
-	       }
-	    } while (ptr != first);
+	       actual_parameters.push_tail(component);
+	       components_used++;
+	    }
 	 }
 
 	 /* From page 28 (page 34 of the PDF) of the GLSL 1.10 spec:
@@ -500,7 +492,7 @@ ast_function_expression::hir(exec_list *instructions,
 
       return match_function_by_name(instructions, 
 				    id->primary_expression.identifier, & loc,
-				    subexpressions[1], state);
+				    &this->expressions, state);
    }
 
    return ir_call::get_error_instruction();
