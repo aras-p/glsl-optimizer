@@ -177,6 +177,30 @@ intelGetString(GLcontext * ctx, GLenum name)
    }
 }
 
+static void
+intel_flush_front(GLcontext *ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+    __DRIcontext *driContext = intel->driContext;
+    __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
+
+   if ((ctx->DrawBuffer->Name == 0) && intel->front_buffer_dirty) {
+      if (screen->dri2.loader &&
+          (screen->dri2.loader->base.version >= 2)
+	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
+          driContext->driDrawablePriv &&
+	  driContext->driDrawablePriv->loaderPrivate) {
+	 (*screen->dri2.loader->flushFrontBuffer)(driContext->driDrawablePriv,
+						  driContext->driDrawablePriv->loaderPrivate);
+
+	 /* We set the dirty bit in intel_prepare_render() if we're
+	  * front buffer rendering once we get there.
+	  */
+	 intel->front_buffer_dirty = GL_FALSE;
+      }
+   }
+}
+
 static unsigned
 intel_bits_per_pixel(const struct intel_renderbuffer *rb)
 {
@@ -203,8 +227,10 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
     * real front buffer contents will get copied to the new fake front
     * buffer.
     */
-   if (intel->is_front_buffer_rendering)
+   if (intel->is_front_buffer_rendering) {
       intel_flush(&intel->ctx, GL_FALSE);
+      intel_flush_front(&intel->ctx);
+   }
 
    /* Set this up front, so that in case our buffers get invalidated
     * while we're getting new buffers, we don't clobber the stamp and
@@ -479,7 +505,6 @@ void
 intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 {
    struct intel_context *intel = intel_context(ctx);
-    __DRIcontext *driContext = intel->driContext;
 
    if (intel->Fallback)
       _swrast_flush(ctx);
@@ -489,21 +514,6 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
 
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);
-
-   if ((ctx->DrawBuffer->Name == 0) && intel->front_buffer_dirty) {
-      __DRIscreen *const screen = intel->intelScreen->driScrnPriv;
-
-      if (screen->dri2.loader &&
-          (screen->dri2.loader->base.version >= 2)
-	  && (screen->dri2.loader->flushFrontBuffer != NULL) &&
-          driContext->driDrawablePriv &&
-	  driContext->driDrawablePriv->loaderPrivate) {
-	 (*screen->dri2.loader->flushFrontBuffer)(driContext->driDrawablePriv,
-						  driContext->driDrawablePriv->loaderPrivate);
-
-	 intel->front_buffer_dirty = GL_FALSE;
-      }
-   }
 }
 
 void
@@ -518,6 +528,8 @@ intel_glFlush(GLcontext *ctx)
    struct intel_context *intel = intel_context(ctx);
 
    intel_flush(ctx, GL_TRUE);
+
+   intel_flush_front(ctx);
 
    /* We're using glFlush as an indicator that a frame is done, which is
     * what DRI2 does before calling SwapBuffers (and means we should catch
