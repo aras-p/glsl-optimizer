@@ -64,6 +64,9 @@
 #ifndef LIST_CONTAINER_H
 #define LIST_CONTAINER_H
 
+#ifndef __cplusplus
+#include <stddef.h>
+#endif
 #include <assert.h>
 
 struct exec_node {
@@ -139,6 +142,30 @@ struct exec_node {
    }
 #endif
 };
+
+
+#ifdef __cplusplus
+/* This macro will not work correctly if `t' uses virtual inheritance.  If you
+ * are using virtual inheritance, you deserve a slow and painful death.  Enjoy!
+ */
+#define exec_list_offsetof(t, f, p) \
+   (((char *) &((t *) p)->f) - ((char *) p))
+#else
+#define exec_list_offsetof(t, f, p) offsetof(t, f)
+#endif
+
+/**
+ * Get a pointer to the structure containing an exec_node
+ *
+ * Given a pointer to an \c exec_node embedded in a structure, get a pointer to
+ * the containing structure.
+ *
+ * \param type  Base type of the structure containing the node
+ * \param node  Pointer to the \c exec_node
+ * \param field Name of the field in \c type that is the embedded \c exec_node
+ */
+#define exec_node_data(type, node, field) \
+   ((type *) (((char *) node) - exec_list_offsetof(type, field, node)))
 
 #ifdef __cplusplus
 struct exec_node;
