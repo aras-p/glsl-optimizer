@@ -176,7 +176,7 @@ intelReadPixels(GLcontext * ctx,
    if (INTEL_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   intelFlush(ctx);
+   intel_flush(ctx);
 
    /* glReadPixels() wont dirty the front buffer, so reset the dirty
     * flag after calling intel_prepare_render(). */

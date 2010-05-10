@@ -228,7 +228,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
     * buffer.
     */
    if (intel->is_front_buffer_rendering) {
-      intel_flush(&intel->ctx, GL_FALSE);
+      intel_flush(&intel->ctx);
       intel_flush_front(&intel->ctx);
    }
 
@@ -502,7 +502,7 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
 }
 
 void
-intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
+intel_flush(GLcontext *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
@@ -516,18 +516,12 @@ intel_flush(GLcontext *ctx, GLboolean needs_mi_flush)
       intel_batchbuffer_flush(intel->batch);
 }
 
-void
-intelFlush(GLcontext * ctx)
-{
-   intel_flush(ctx, GL_FALSE);
-}
-
 static void
 intel_glFlush(GLcontext *ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
-   intel_flush(ctx, GL_TRUE);
+   intel_flush(ctx);
 
    intel_flush_front(ctx);
 
@@ -557,7 +551,7 @@ intelFinish(GLcontext * ctx)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    int i;
 
-   intelFlush(ctx);
+   intel_flush(ctx);
 
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
        struct intel_renderbuffer *irb;

@@ -244,7 +244,7 @@ intelSpanRenderStart(GLcontext * ctx)
    struct intel_context *intel = intel_context(ctx);
    GLuint i;
 
-   intelFlush(&intel->ctx);
+   intel_flush(&intel->ctx);
    intel_prepare_render(intel);
 
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {

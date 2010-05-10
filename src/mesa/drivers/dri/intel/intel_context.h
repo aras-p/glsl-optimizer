@@ -371,8 +371,7 @@ extern GLboolean intelInitContext(struct intel_context *intel,
                                   struct dd_function_table *functions);
 
 extern void intelFinish(GLcontext * ctx);
-extern void intelFlush(GLcontext * ctx);
-extern void intel_flush(GLcontext * ctx, GLboolean needs_mi_flush);
+extern void intel_flush(GLcontext * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
 

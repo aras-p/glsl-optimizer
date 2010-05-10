@@ -59,7 +59,7 @@ intelTexSubimage(GLcontext * ctx,
        _mesa_lookup_enum_by_nr(target),
        level, xoffset, yoffset, width, height);
 
-   intelFlush(ctx);
+   intel_flush(ctx);
 
    if (compressed)
       pixels = _mesa_validate_pbo_compressed_teximage(ctx, imageSize,

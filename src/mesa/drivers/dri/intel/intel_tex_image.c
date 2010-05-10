@@ -239,7 +239,7 @@ try_pbo_upload(struct intel_context *intel,
    dst_stride = intelImage->mt->region->pitch;
 
    if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
-      intelFlush(&intel->ctx);
+      intel_flush(&intel->ctx);
    intel_prepare_render(intel);
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
@@ -480,7 +480,7 @@ intelTexImage(GLcontext * ctx,
 	 /* Flush any queued rendering with the texture before mapping. */
 	 if (drm_intel_bo_references(intel->batch->buf,
 				     intelImage->mt->region->buffer)) {
-	    intelFlush(ctx);
+	    intel_flush(ctx);
 	 }
          texImage->Data = intel_miptree_image_map(intel,
                                                   intelImage->mt,
@@ -638,7 +638,7 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
     * make sure rendering is complete.
     * We could probably predicate this on texObj->_RenderToTexture
     */
-   intelFlush(ctx);
+   intel_flush(ctx);
 
    /* Map */
    if (intelImage->mt) {

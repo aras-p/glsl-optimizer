@@ -168,7 +168,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    cpp = _mesa_get_format_bytes(rb->Format);
 
-   intelFlush(ctx);
+   intel_flush(ctx);
 
    /* free old region */
    if (irb->region) {
@@ -420,7 +420,7 @@ intel_framebuffer_renderbuffer(GLcontext * ctx,
 {
    DBG("Intel FramebufferRenderbuffer %u %u\n", fb->Name, rb ? rb->Name : 0);
 
-   intelFlush(ctx);
+   intel_flush(ctx);
 
    _mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
    intel_draw_buffer(ctx, fb);

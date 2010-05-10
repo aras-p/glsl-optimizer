@@ -277,7 +277,7 @@ intel_bufferobj_map(GLcontext * ctx,
 
    /* Flush any existing batchbuffer that might reference this data. */
    if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
-      intelFlush(ctx);
+      intel_flush(ctx);
 
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
@@ -349,7 +349,7 @@ intel_bufferobj_map_range(GLcontext * ctx,
     */
    if (!(access & GL_MAP_UNSYNCHRONIZED_BIT) &&
        drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
-      intelFlush(ctx);
+      intel_flush(ctx);
 
    if (intel_obj->buffer == NULL) {
       obj->Pointer = NULL;
