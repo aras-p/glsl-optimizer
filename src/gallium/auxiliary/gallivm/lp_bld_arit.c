@@ -240,7 +240,7 @@ lp_build_sum_vector(struct lp_build_context *bld,
 {
    const struct lp_type type = bld->type;
    LLVMValueRef index, res;
-   int i;
+   unsigned i;
 
    if (a == bld->zero)
       return bld->zero;
