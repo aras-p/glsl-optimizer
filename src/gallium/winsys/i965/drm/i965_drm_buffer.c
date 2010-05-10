@@ -463,7 +463,7 @@ i965_libdrm_bo_flush_range(struct brw_winsys_buffer *buffer,
       brw_dump_data( idws->id,
 		     buf->data_type,
 		     buf->bo->offset + offset, 
-		     buf->bo->virtual + offset, 
+		     (char*)buf->bo->virtual + offset, 
 		     length );
 }
 
