@@ -62,10 +62,12 @@ struct st_translate {
    struct ureg_src inputs[PIPE_MAX_SHADER_INPUTS];
    struct ureg_dst address[1];
    struct ureg_src samplers[PIPE_MAX_SAMPLERS];
-   struct ureg_dst psizregreal;
-   struct ureg_src pointSizeConst;
-   GLint psizoutindex;
-   GLboolean prevInstWrotePsiz;
+
+   /* Extra info for handling point size clamping in vertex shader */
+   struct ureg_dst pointSizeResult; /**< Actual point size output register */
+   struct ureg_src pointSizeConst;  /**< Point size range constant register */
+   GLint pointSizeOutIndex;         /**< Temp point size output register */
+   GLboolean prevInstWrotePointSize;
 
    const GLuint *inputMapping;
    const GLuint *outputMapping;
@@ -92,6 +94,12 @@ struct st_translate {
 };
 
 
+/**
+ * Make note of a branch to a label in the TGSI code.
+ * After we've emitted all instructions, we'll go over the list
+ * of labels built here and patch the TGSI code with the actual
+ * location of each label.
+ */
 static unsigned *get_label( struct st_translate *t,
                             unsigned branch_target )
 {
@@ -116,6 +124,12 @@ static unsigned *get_label( struct st_translate *t,
 }
 
 
+/**
+ * Called prior to emitting the TGSI code for each Mesa instruction.
+ * Allocate additional space for instructions if needed.
+ * Update the insn[] array so the next Mesa instruction points to
+ * the next TGSI instruction.
+ */
 static void set_insn_start( struct st_translate *t,
                             unsigned start )
 {
@@ -135,8 +149,8 @@ static void set_insn_start( struct st_translate *t,
 }
 
 
-/*
- * Map mesa register file to TGSI register file.
+/**
+ * Map a Mesa dst register to a TGSI ureg_dst register.
  */
 static struct ureg_dst
 dst_register( struct st_translate *t,
@@ -155,7 +169,7 @@ dst_register( struct st_translate *t,
 
    case PROGRAM_OUTPUT:
       if (t->procType == TGSI_PROCESSOR_VERTEX && index == VERT_RESULT_PSIZ)
-         t->prevInstWrotePsiz = GL_TRUE;
+         t->prevInstWrotePointSize = GL_TRUE;
 
       if (t->procType == TGSI_PROCESSOR_VERTEX)
          assert(index < VERT_RESULT_MAX);
@@ -178,6 +192,9 @@ dst_register( struct st_translate *t,
 }
 
 
+/**
+ * Map a Mesa src register to a TGSI ureg_src register.
+ */
 static struct ureg_src
 src_register( struct st_translate *t,
               gl_register_file file,
@@ -254,6 +271,9 @@ translate_texture_target( GLuint textarget,
 }
 
 
+/**
+ * Create a TGSI ureg_dst register from a Mesa dest register.
+ */
 static struct ureg_dst
 translate_dst( struct st_translate *t,
                const struct prog_dst_register *DstReg,
@@ -276,6 +296,9 @@ translate_dst( struct st_translate *t,
 }
 
 
+/**
+ * Create a TGSI ureg_src register from a Mesa src register.
+ */
 static struct ureg_src
 translate_src( struct st_translate *t,
                const struct prog_src_register *SrcReg )
@@ -685,6 +708,7 @@ compile_instruction(
    }
 }
 
+
 /**
  * Emit the TGSI instructions to adjust the WPOS pixel center convention
  */
@@ -696,11 +720,13 @@ emit_adjusted_wpos( struct st_translate *t,
    struct ureg_dst wpos_temp = ureg_DECL_temporary(ureg);
    struct ureg_src wpos_input = t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]];
 
-   ureg_ADD(ureg, ureg_writemask(wpos_temp, TGSI_WRITEMASK_X | TGSI_WRITEMASK_Y),
-		   wpos_input, ureg_imm1f(ureg, value));
+   ureg_ADD(ureg,
+            ureg_writemask(wpos_temp, TGSI_WRITEMASK_X | TGSI_WRITEMASK_Y),
+            wpos_input, ureg_imm1f(ureg, value));
 
    t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]] = ureg_src(wpos_temp);
 }
+
 
 /**
  * Emit the TGSI instructions for inverting the WPOS y coordinate.
@@ -894,8 +920,8 @@ st_translate_mesa_program(
    t->inputMapping = inputMapping;
    t->outputMapping = outputMapping;
    t->ureg = ureg;
-   t->psizoutindex = -1;
-   t->prevInstWrotePsiz = GL_FALSE;
+   t->pointSizeOutIndex = -1;
+   t->prevInstWrotePointSize = GL_FALSE;
 
    /*_mesa_print_program(program);*/
 
@@ -964,6 +990,9 @@ st_translate_mesa_program(
                                            outputSemanticName[i],
                                            outputSemanticIndex[i] );
          if ((outputSemanticName[i] == TGSI_SEMANTIC_PSIZE) && program->Id) {
+            /* Writing to the point size result register requires special
+             * handling to implement clamping.
+             */
             static const gl_state_index pointSizeClampState[STATE_LENGTH]
                = { STATE_INTERNAL, STATE_POINT_SIZE_IMPL_CLAMP, 0, 0, 0 };
                /* XXX: note we are modifying the incoming shader here!  Need to
@@ -975,8 +1004,8 @@ st_translate_mesa_program(
                                          pointSizeClampState);
             struct ureg_dst psizregtemp = ureg_DECL_temporary( ureg );
             t->pointSizeConst = ureg_DECL_constant( ureg, pointSizeClampConst );
-            t->psizregreal = t->outputs[i];
-            t->psizoutindex = i;
+            t->pointSizeResult = t->outputs[i];
+            t->pointSizeOutIndex = i;
             t->outputs[i] = psizregtemp;
          }
       }
@@ -1045,19 +1074,24 @@ st_translate_mesa_program(
       set_insn_start( t, ureg_get_instruction_number( ureg ));
       compile_instruction( t, &program->Instructions[i] );
 
-      /* note can't do that easily at the end of prog due to
-         possible early return */
-      if (t->prevInstWrotePsiz && program->Id) {
+      if (t->prevInstWrotePointSize && program->Id) {
+         /* The previous instruction wrote to the (fake) vertex point size
+          * result register.  Now we need to clamp that value to the min/max
+          * point size range, putting the result into the real point size
+          * register.
+          * Note that we can't do this easily at the end of program due to
+          * possible early return.
+          */
          set_insn_start( t, ureg_get_instruction_number( ureg ));
          ureg_MAX( t->ureg,
-                   ureg_writemask(t->outputs[t->psizoutindex], WRITEMASK_X),
-                   ureg_src(t->outputs[t->psizoutindex]),
+                   ureg_writemask(t->outputs[t->pointSizeOutIndex], WRITEMASK_X),
+                   ureg_src(t->outputs[t->pointSizeOutIndex]),
                    ureg_swizzle(t->pointSizeConst, 1,1,1,1));
-         ureg_MIN( t->ureg, ureg_writemask(t->psizregreal, WRITEMASK_X),
-                   ureg_src(t->outputs[t->psizoutindex]),
+         ureg_MIN( t->ureg, ureg_writemask(t->pointSizeResult, WRITEMASK_X),
+                   ureg_src(t->outputs[t->pointSizeOutIndex]),
                    ureg_swizzle(t->pointSizeConst, 2,2,2,2));
       }
-      t->prevInstWrotePsiz = GL_FALSE;
+      t->prevInstWrotePointSize = GL_FALSE;
    }
 
    /* Fix up all emitted labels:
