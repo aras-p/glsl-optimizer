@@ -17,6 +17,7 @@ if 'gdi' in env['winsys']:
 
 if env['dri']:
 	SConscript([
+		'sw/drm/SConscript',
 		'sw/dri/SConscript',
 	])
 
