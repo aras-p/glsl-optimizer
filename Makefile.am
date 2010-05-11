@@ -47,7 +47,8 @@ glsl_SOURCES = \
 	ir_reader.cpp s_expression.cpp \
 	ir_hv_accept.cpp \
 	ir_hierarchical_visitor.h \
-	ir_hierarchical_visitor.cpp
+	ir_hierarchical_visitor.cpp \
+	ir_vec_index_to_swizzle.cpp
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)

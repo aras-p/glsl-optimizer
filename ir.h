@@ -56,6 +56,7 @@ public:
    virtual class ir_variable *          as_variable()         { return NULL; }
    virtual class ir_function *          as_function()         { return NULL; }
    virtual class ir_dereference *       as_dereference()      { return NULL; }
+   virtual class ir_dereference_array *	as_dereference_array() { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
    virtual class ir_label *             as_label()            { return NULL; }
    virtual class ir_loop *              as_loop()             { return NULL; }
@@ -685,7 +686,6 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-private:
    ir_rvalue *value;
 };
 
@@ -859,6 +859,11 @@ public:
    ir_dereference_array(ir_rvalue *value, ir_rvalue *array_index);
 
    ir_dereference_array(ir_variable *var, ir_rvalue *array_index);
+
+   virtual ir_dereference_array *as_dereference_array()
+   {
+      return this;
+   }
 
    /**
     * Get the variable that is ultimately referenced by an r-value
