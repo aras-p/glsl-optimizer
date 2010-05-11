@@ -720,7 +720,7 @@ _mesa_IsTransformFeedback(GLuint name)
  * Part of GL_ARB_transform_feedback2.
  */
 void GLAPIENTRY
-_mesa_BindTransformFeedback(GLenum target, uint name)
+_mesa_BindTransformFeedback(GLenum target, GLuint name)
 {
    struct gl_transform_feedback_object *obj;
    GET_CURRENT_CONTEXT(ctx);
