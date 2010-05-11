@@ -760,6 +760,7 @@ main(int argc, char **argv)
 	 progress = do_dead_code_unlinked(&instructions) || progress;
 	 progress = do_constant_folding(&instructions) || progress;
 	 progress = do_vec_index_to_swizzle(&instructions) || progress;
+	 progress = do_swizzle_swizzle(&instructions) || progress;
       } while (progress);
    }
 

@@ -35,4 +35,5 @@ bool do_dead_code_local(exec_list *instructions);
 bool do_dead_code_unlinked(exec_list *instructions);
 bool do_function_inlining(exec_list *instructions);
 bool do_if_simplification(exec_list *instructions);
+bool do_swizzle_swizzle(exec_list *instructions);
 bool do_vec_index_to_swizzle(exec_list *instructions);
