@@ -32,6 +32,9 @@
 void
 yyerror (void *scanner, const char *error);
 
+const char *
+_resolve_token (glcpp_parser_t *parser, const char *token);
+
 %}
 
 %parse-param {glcpp_parser_t *parser}
@@ -59,14 +62,7 @@ directive:	DEFINE IDENTIFIER DEFVAL {
 }
 ;
 
-token:		TOKEN {
-	char *value = hash_table_find (parser->defines, $1);
-	if (value)
-		printf ("%s", value);
-	else
-		printf ("%s", $1);
-	free ($1);
-}
+token:		TOKEN { printf ("%s", _resolve_token (parser, $1)); free ($1); }
 ;
 
 %%
@@ -97,3 +93,22 @@ glcpp_parser_fini (glcpp_parser_t *parser)
 	yylex_destroy (parser->scanner);
 	hash_table_dtor (parser->defines);
 }
+
+const char *
+_resolve_token (glcpp_parser_t *parser, const char *token)
+{
+	const char *orig = token;
+	const char *replacement;
+
+	while (1) {
+		replacement = hash_table_find (parser->defines, token);
+		if (replacement == NULL)
+			break;
+		token = replacement;
+		if (strcmp (token, orig) == 0)
+			break;
+	}
+
+	return token;
+}
+
