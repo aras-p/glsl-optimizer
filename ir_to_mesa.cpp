@@ -253,8 +253,16 @@ ir_to_mesa_visitor::get_temp_for_var(ir_variable *var, struct mbtree *tree)
       }
    }
 
-   entry = new temp_entry(var, PROGRAM_TEMPORARY, this->next_temp++);
+   entry = new temp_entry(var, PROGRAM_TEMPORARY, this->next_temp);
    this->variable_storage.push_tail(entry);
+
+   /* Store each array element in a temp.  This is poor packing for
+    * things like floats, but we can't do better in the Mesa IR.
+    */
+   if (var->type->length > 1)
+      next_temp += var->type->length;
+   else
+      next_temp++;
 
    ir_to_mesa_set_tree_reg(tree, entry->file, entry->index);
 }
@@ -579,6 +587,7 @@ static const struct {
    {"gl_MultiTexCoord5", PROGRAM_INPUT, VERT_ATTRIB_TEX5},
    {"gl_MultiTexCoord6", PROGRAM_INPUT, VERT_ATTRIB_TEX6},
    {"gl_MultiTexCoord7", PROGRAM_INPUT, VERT_ATTRIB_TEX7},
+   {"gl_TexCoord", PROGRAM_OUTPUT, VERT_RESULT_TEX0}, /* array */
    {"gl_FogCoord", PROGRAM_INPUT, VERT_RESULT_FOGC},
    /*{"gl_ClipVertex", PROGRAM_OUTPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
    {"gl_FrontColor", PROGRAM_OUTPUT, VERT_RESULT_COL0},
@@ -589,6 +598,8 @@ static const struct {
 
    /* 130_vs */
    /*{"gl_VertexID", PROGRAM_INPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
+
+   {"gl_FragData", PROGRAM_OUTPUT, FRAG_RESULT_DATA0}, /* array */
 };
 
 void
@@ -601,8 +612,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
    };
-
-   ir_variable *var = ir->var->as_variable();
+   ir_variable *var = ir->var;
 
    /* By the time we make it to this stage, matrices should be broken down
     * to vectors.
@@ -643,21 +653,36 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    };
    ir_variable *var = ir->variable_referenced();
    ir_constant *index = ir->array_index->constant_expression_value();
-   int file = PROGRAM_UNDEFINED;
-   int base_index = 0;
 
-   assert(var);
-   assert(index);
-   if (strcmp(var->name, "gl_TexCoord") == 0) {
-      file = PROGRAM_INPUT;
-      base_index = FRAG_ATTRIB_TEX0;
-   } else if (strcmp(var->name, "gl_FragData") == 0) {
-      file = PROGRAM_OUTPUT;
-      base_index = FRAG_RESULT_DATA0;
-   }
+   /* By the time we make it to this stage, matrices should be broken down
+    * to vectors.
+    */
+   assert(!var->type->is_matrix());
 
    tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
-   ir_to_mesa_set_tree_reg(tree, file, base_index + index->value.i[0]);
+
+   if (strncmp(var->name, "gl_", 3) == 0) {
+      unsigned int i;
+      unsigned int offset = 0;
+
+      assert(index); /* FINISHME: Handle variable indexing of builtins. */
+
+      offset = index->value.i[0];
+
+      for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
+	 if (strcmp(var->name, builtin_var_to_mesa_reg[i].name) == 0)
+	    break;
+      }
+      assert(i != ARRAY_SIZE(builtin_var_to_mesa_reg));
+      ir_to_mesa_set_tree_reg(tree, builtin_var_to_mesa_reg[i].file,
+			      builtin_var_to_mesa_reg[i].index + offset);
+   } else {
+      this->get_temp_for_var(var, tree);
+      assert(index); /* FINISHME: Handle variable indexing. */
+
+      tree->src_reg.index += index->value.i[0];
+      tree->dst_reg.index += index->value.i[0];
+   }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
    tree->src_reg.swizzle = size_swizzles[ir->type->vector_elements - 1];
