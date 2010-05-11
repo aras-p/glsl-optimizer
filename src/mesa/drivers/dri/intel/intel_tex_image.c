@@ -728,7 +728,9 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (!intelObj)
       return;
 
-   intel_update_renderbuffers(pDRICtx, dPriv);
+   if (dPriv->lastStamp != dPriv->dri2.stamp ||
+       !pDRICtx->driScreenPriv->dri2.useInvalidate)
+      intel_update_renderbuffers(pDRICtx, dPriv);
 
    rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
    /* If the region isn't set, then intel_update_renderbuffers was unable
