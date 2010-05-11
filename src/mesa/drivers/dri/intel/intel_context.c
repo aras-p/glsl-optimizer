@@ -552,6 +552,7 @@ intelFinish(GLcontext * ctx)
    int i;
 
    intel_flush(ctx);
+   intel_flush_front(ctx);
 
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
        struct intel_renderbuffer *irb;
