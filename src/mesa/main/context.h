@@ -153,6 +153,8 @@ _mesa_get_current_context(void);
 
 /*@}*/
 
+extern void
+_mesa_init_get_hash(GLcontext *ctx);
 
 extern void
 _mesa_notifySwapBuffers(__GLcontext *gc);

@@ -3,9 +3,7 @@
 # this is part of MAIN_SOURCES
 MAIN_ES_SOURCES = \
 	main/api_exec_es1.c \
-	main/api_exec_es2.c \
-	main/get_es1.c \
-	main/get_es2.c
+	main/api_exec_es2.c
 
 MAIN_SOURCES = \
 	main/api_arrayelt.c \

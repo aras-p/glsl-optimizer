@@ -415,6 +415,7 @@ one_time_init( GLcontext *ctx )
       }
 
       _mesa_init_sqrt_table();
+      _mesa_init_get_hash(ctx);
 
       for (i = 0; i < 256; i++) {
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;

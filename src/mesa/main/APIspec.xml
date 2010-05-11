@@ -3939,15 +3939,15 @@
 	<function name="PixelStorei" template="PixelStore" gltype="GLint"/>
 	<function name="ReadPixels" template="ReadPixels"/>
 
-	<function name="GetBooleanv" default_prefix="_es1_" template="GetState" gltype="GLboolean"/>
+	<function name="GetBooleanv" template="GetState" gltype="GLboolean"/>
 
 	<function name="GetClipPlanef" template="GetClipPlane" gltype="GLfloat"/>
 	<function name="GetClipPlanex" template="GetClipPlane" gltype="GLfixed"/>
 
 	<function name="GetError" template="GetError"/>
-	<function name="GetFloatv" default_prefix="_es1_" template="GetState" gltype="GLfloat"/>
-	<function name="GetFixedv" default_prefix="_es1_" template="GetState" gltype="GLfixed"/>
-	<function name="GetIntegerv" default_prefix="_es1_" template="GetState" gltype="GLint"/>
+	<function name="GetFloatv" template="GetState" gltype="GLfloat"/>
+	<function name="GetFixedv" template="GetState" gltype="GLfixed"/>
+	<function name="GetIntegerv" template="GetState" gltype="GLint"/>
 
 	<function name="GetLightfv" template="GetLight" gltype="GLfloat"/>
 	<function name="GetLightxv" template="GetLight" gltype="GLfixed"/>
@@ -4173,10 +4173,10 @@
 	<function name="PixelStorei" template="PixelStore" gltype="GLint"/>
 	<function name="ReadPixels" template="ReadPixels"/>
 
-	<function name="GetBooleanv" default_prefix="_es2_" template="GetState" gltype="GLboolean"/>
+	<function name="GetBooleanv" template="GetState" gltype="GLboolean"/>
 	<function name="GetError" template="GetError"/>
-	<function name="GetFloatv" default_prefix="_es2_" template="GetState" gltype="GLfloat"/>
-	<function name="GetIntegerv" default_prefix="_es2_" template="GetState" gltype="GLint"/>
+	<function name="GetFloatv" template="GetState" gltype="GLfloat"/>
+	<function name="GetIntegerv" template="GetState" gltype="GLint"/>
 
 	<function name="GetString" template="GetString"/>
 

@@ -51,6 +51,9 @@ extern void GLAPIENTRY
 _mesa_GetInteger64v( GLenum pname, GLint64 *params );
 
 extern void GLAPIENTRY
+_mesa_GetFixedv(GLenum pname, GLfixed *params);
+
+extern void GLAPIENTRY
 _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params );
 
 extern void GLAPIENTRY
@@ -70,28 +73,5 @@ _mesa_GetStringi(GLenum name, GLuint index);
 
 extern GLenum GLAPIENTRY
 _mesa_GetError( void );
-
-
-extern void GLAPIENTRY
-_es1_GetBooleanv( GLenum pname, GLboolean *params );
-
-extern void GLAPIENTRY
-_es1_GetFloatv( GLenum pname, GLfloat *params );
-
-extern void GLAPIENTRY
-_es1_GetIntegerv( GLenum pname, GLint *params );
-
-extern void GLAPIENTRY
-_es1_GetFixedv( GLenum pname, GLfixed *params );
-
-
-extern void GLAPIENTRY
-_es2_GetBooleanv( GLenum pname, GLboolean *params );
-
-extern void GLAPIENTRY
-_es2_GetFloatv( GLenum pname, GLfloat *params );
-
-extern void GLAPIENTRY
-_es2_GetIntegerv( GLenum pname, GLint *params );
 
 #endif
