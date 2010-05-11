@@ -243,6 +243,8 @@ struct intel_context
 
    __DRIcontext *driContext;
    struct intel_screen *intelScreen;
+   void (*saved_viewport)(GLcontext * ctx,
+			  GLint x, GLint y, GLsizei width, GLsizei height);
 
    /**
     * Configuration cache
@@ -445,9 +447,6 @@ extern int intel_translate_compare_func(GLenum func);
 extern int intel_translate_stencil_op(GLenum op);
 extern int intel_translate_blend_factor(GLenum factor);
 extern int intel_translate_logic_op(GLenum opcode);
-
-void intel_viewport(GLcontext * ctx, GLint x, GLint y,
-		    GLsizei width, GLsizei height);
 
 void intel_update_renderbuffers(__DRIcontext *context,
 				__DRIdrawable *drawable);

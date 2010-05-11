@@ -64,8 +64,6 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
    brwInitFragProgFuncs( functions );
    brwInitProgFuncs( functions );
    brw_init_queryobj_functions(functions);
-
-   functions->Viewport = intel_viewport;
 }
 
 GLboolean brwCreateContext( int api,

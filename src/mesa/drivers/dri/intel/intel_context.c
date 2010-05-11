@@ -438,11 +438,14 @@ intel_prepare_render(struct intel_context *intel)
       intel->front_buffer_dirty = GL_TRUE;
 }
 
-void
+static void
 intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
     struct intel_context *intel = intel_context(ctx);
     __DRIcontext *driContext = intel->driContext;
+
+    if (intel->saved_viewport)
+	intel->saved_viewport(ctx, x, y, w, h);
 
     if (!intel->using_dri2_swapbuffers &&
 	!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
@@ -607,6 +610,12 @@ intelInitContext(struct intel_context *intel,
    /* we can't do anything without a connection to the device */
    if (intelScreen->bufmgr == NULL)
       return GL_FALSE;
+
+   /* Can't rely on invalidate events, fall back to glViewport hack */
+   if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
+      intel->saved_viewport = functions->Viewport;
+      functions->Viewport = intel_viewport;
+   }
 
    if (!_mesa_initialize_context_for_api(&intel->ctx, api, mesaVis, shareCtx,
 					 functions, (void *) intel)) {

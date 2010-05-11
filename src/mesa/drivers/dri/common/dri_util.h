@@ -527,6 +527,7 @@ struct __DRIscreenRec {
 	int enabled;
 	__DRIdri2LoaderExtension *loader;
 	__DRIimageLookupExtension *image;
+	__DRIuseInvalidateExtension *useInvalidate;
     } dri2;
 
     /* The lock actually in use, old sarea or DRI2 */
