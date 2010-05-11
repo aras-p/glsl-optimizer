@@ -25,8 +25,10 @@
 #ifndef TRANSFORM_FEEDBACK_H
 #define TRANSFORM_FEEDBACK_H
 
-#include "glheader.h"
+#include "main/mtypes.h"
 
+
+#if FEATURE_EXT_transform_feedback
 
 extern GLboolean
 _mesa_validate_primitive_mode(GLcontext *ctx, GLenum mode);
@@ -43,6 +45,9 @@ _mesa_free_transform_feedback(GLcontext *ctx);
 
 extern void
 _mesa_init_transform_feedback_functions(struct dd_function_table *driver);
+
+extern void
+_mesa_init_transform_feedback_dispatch(struct _glapi_table *disp);
 
 
 /*** GL_EXT_transform_feedback ***/
@@ -98,5 +103,40 @@ _mesa_ResumeTransformFeedback(void);
 extern void GLAPIENTRY
 _mesa_DrawTransformFeedback(GLenum mode, GLuint name);
 
+#else /* FEATURE_EXT_transform_feedback */
+
+static INLINE GLboolean
+_mesa_validate_primitive_mode(GLcontext *ctx, GLenum mode)
+{
+   return GL_TRUE;
+}
+
+static INLINE GLboolean
+_mesa_validate_transform_feedback_buffers(GLcontext *ctx)
+{
+   return GL_TRUE;
+}
+
+static INLINE void
+_mesa_init_transform_feedback(GLcontext *ctx)
+{
+}
+
+static INLINE void
+_mesa_free_transform_feedback(GLcontext *ctx)
+{
+}
+
+static INLINE void
+_mesa_init_transform_feedback_functions(struct dd_function_table *driver)
+{
+}
+
+static INLINE void
+_mesa_init_transform_feedback_dispatch(struct _glapi_table *disp)
+{
+}
+
+#endif /* FEATURE_EXT_transform_feedback */
 
 #endif /* TRANSFORM_FEEDBACK_H */

@@ -523,15 +523,7 @@ _mesa_create_exec_table(void)
    SET_DepthBoundsEXT(exec, _mesa_DepthBoundsEXT);
 
    /* 352. GL_EXT_transform_feedback */
-#if _HAVE_FULL_GL
-   SET_BeginTransformFeedbackEXT(exec, _mesa_BeginTransformFeedback);
-   SET_EndTransformFeedbackEXT(exec, _mesa_EndTransformFeedback);
-   SET_BindBufferRangeEXT(exec, _mesa_BindBufferRange);
-   SET_BindBufferBaseEXT(exec, _mesa_BindBufferBase);
-   SET_BindBufferOffsetEXT(exec, _mesa_BindBufferOffsetEXT);
-   SET_TransformFeedbackVaryingsEXT(exec, _mesa_TransformFeedbackVaryings);
-   SET_GetTransformFeedbackVaryingEXT(exec, _mesa_GetTransformFeedbackVarying);
-#endif
+   _mesa_init_transform_feedback_dispatch(exec);
 
    /* 364. GL_EXT_provoking_vertex */
    SET_ProvokingVertexEXT(exec, _mesa_ProvokingVertexEXT);

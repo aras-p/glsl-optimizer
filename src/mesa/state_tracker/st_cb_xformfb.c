@@ -40,6 +40,8 @@
 #include "st_cb_xformfb.h"
 
 
+#if FEATURE_EXT_transform_feedback
+
 #if 0
 static struct gl_transform_feedback_object *
 st_new_transform_feedback(GLcontext *ctx, GLuint name)
@@ -127,3 +129,5 @@ st_init_xformfb_functions(struct dd_function_table *functions)
    functions->ResumeTransformFeedback = st_resume_transform_feedback;
    functions->DrawTransformFeedback = st_draw_transform_feedback;
 }
+
+#endif /* FEATURE_EXT_transform_feedback */

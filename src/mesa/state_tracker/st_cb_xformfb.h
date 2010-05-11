@@ -29,8 +29,18 @@
 #define ST_CB_XFORMFB_H
 
 
+#if FEATURE_EXT_transform_feedback
+
 extern void
 st_init_xformfb_functions(struct dd_function_table *functions);
 
+#else
+
+static INLINE void
+st_init_xformfb_functions(struct dd_function_table *functions)
+{
+}
+
+#endif /* FEATURE_EXT_transform_feedback */
 
 #endif /* ST_CB_XFORMFB_H */

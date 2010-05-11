@@ -35,9 +35,13 @@
 #include "context.h"
 #include "hash.h"
 #include "transformfeedback.h"
+#include "main/dispatch.h"
 
 #include "shader/prog_parameter.h"
 #include "shader/shader_api.h"
+
+
+#if FEATURE_EXT_transform_feedback
 
 
 /**
@@ -280,6 +284,18 @@ _mesa_init_transform_feedback_functions(struct dd_function_table *driver)
    driver->DrawTransformFeedback = draw_transform_feedback;
 }
 
+
+void
+_mesa_init_transform_feedback_dispatch(struct _glapi_table *disp)
+{
+   SET_BeginTransformFeedbackEXT(disp, _mesa_BeginTransformFeedback);
+   SET_EndTransformFeedbackEXT(disp, _mesa_EndTransformFeedback);
+   SET_BindBufferRangeEXT(disp, _mesa_BindBufferRange);
+   SET_BindBufferBaseEXT(disp, _mesa_BindBufferBase);
+   SET_BindBufferOffsetEXT(disp, _mesa_BindBufferOffsetEXT);
+   SET_TransformFeedbackVaryingsEXT(disp, _mesa_TransformFeedbackVaryings);
+   SET_GetTransformFeedbackVaryingEXT(disp, _mesa_GetTransformFeedbackVarying);
+}
 
 
 /**
@@ -879,3 +895,6 @@ GL_TRANSFORM_FEEDBACK_BUFFER_PAUSED
 GL_TRANSFORM_FEEDBACK_BUFFER_ACTIVE
 GL_TRANSFORM_FEEDBACK_BINDING
 */
+
+
+#endif /* FEATURE_EXT_transform_feedback */
