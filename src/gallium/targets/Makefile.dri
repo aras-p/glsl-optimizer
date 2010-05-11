@@ -1,7 +1,6 @@
 # -*-makefile-*-
 
 ifeq ($(MESA_LLVM),1)
-DRIVER_DEFINES += -DGALLIUM_LLVMPIPE
 PIPE_DRIVERS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
 LDFLAGS += $(LLVM_LDFLAGS)
 LD = g++

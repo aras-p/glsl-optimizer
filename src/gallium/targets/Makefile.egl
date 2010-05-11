@@ -23,6 +23,12 @@ x11_ST = $(TOP)/src/gallium/state_trackers/egl/libeglx11.a \
 
 x11_LIBS = $(common_LIBS) -lX11 -lXext -lXfixes
 
+ifeq ($(MESA_LLVM),1)
+x11_ST += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+x11_LIBS += $(LLVM_LIBS)
+LDFLAGS += $(LLVM_LDFLAGS)
+endif
+
 kms_ST = $(TOP)/src/gallium/state_trackers/egl/libeglkms.a
 kms_LIBS = $(common_LIBS)
 
