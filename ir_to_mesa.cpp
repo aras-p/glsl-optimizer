@@ -26,10 +26,6 @@
  *
  * Translates the IR to ARB_fragment_program text if possible,
  * printing the result
- *
- * The code generation is performed using monoburg.  Because monoburg
- * produces a single C file with the definitions of the node types in
- * it, this file is included from the monoburg output.
  */
 
 /* Quiet compiler warnings due to monoburg not marking functions defined
