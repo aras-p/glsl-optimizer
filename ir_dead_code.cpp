@@ -100,15 +100,6 @@ ir_dead_code_visitor::get_variable_entry(ir_variable *var)
    return entry;
 }
 
-void
-find_dead_code(exec_list *instructions, ir_dead_code_visitor *v)
-{
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-
-      ir->accept(v);
-   }
-}
 
 void
 ir_dead_code_visitor::visit(ir_variable *ir)
@@ -123,7 +114,7 @@ ir_dead_code_visitor::visit(ir_variable *ir)
 void
 ir_dead_code_visitor::visit(ir_loop *ir)
 {
-   find_dead_code(&ir->body_instructions, this);
+   visit_exec_list(&ir->body_instructions, this);
    if (ir->from)
       ir->from->accept(this);
    if (ir->to)
@@ -142,7 +133,7 @@ ir_dead_code_visitor::visit(ir_loop_jump *ir)
 void
 ir_dead_code_visitor::visit(ir_function_signature *ir)
 {
-   find_dead_code(&ir->body, this);
+   visit_exec_list(&ir->body, this);
 }
 
 void
@@ -263,8 +254,8 @@ ir_dead_code_visitor::visit(ir_if *ir)
 {
    ir->condition->accept(this);
 
-   find_dead_code(&ir->then_instructions, this);
-   find_dead_code(&ir->else_instructions, this);
+   visit_exec_list(&ir->then_instructions, this);
+   visit_exec_list(&ir->else_instructions, this);
 }
 
 /**
@@ -280,7 +271,7 @@ do_dead_code(exec_list *instructions)
    ir_dead_code_visitor v;
    bool progress = false;
 
-   find_dead_code(instructions, &v);
+   visit_exec_list(instructions, &v);
 
    foreach_iter(exec_list_iterator, iter, v.variable_list) {
       variable_entry *entry = (variable_entry *)iter.get();
