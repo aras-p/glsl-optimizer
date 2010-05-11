@@ -34,6 +34,9 @@
 #include "cso_cache/cso_context.h"
 
 
+#if FEATURE_OES_draw_texture
+
+
 struct cached_shader
 {
    void *handle;
@@ -51,9 +54,6 @@ struct cached_shader
  */
 static struct cached_shader CachedShaders[MAX_SHADERS];
 static GLuint NumCachedShaders = 0;
-
-
-#if FEATURE_OES_draw_texture
 
 
 static void *
@@ -281,13 +281,10 @@ st_DrawTex(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z,
 }
 
 
-#endif /* FEATURE_OES_draw_texture */
-
-
 void
 st_init_drawtex_functions(struct dd_function_table *functions)
 {
-   _MESA_INIT_DRAWTEX_FUNCTIONS(functions, st_);
+   functions->DrawTex = st_DrawTex;
 }
 
 
@@ -303,3 +300,6 @@ st_destroy_drawtex(struct st_context *st)
    }
    NumCachedShaders = 0;
 }
+
+
+#endif /* FEATURE_OES_draw_texture */

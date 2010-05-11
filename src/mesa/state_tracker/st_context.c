@@ -40,9 +40,7 @@
 #include "st_cb_condrender.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_rasterpos.h"
-#if FEATURE_OES_draw_texture
 #include "st_cb_drawtex.h"
-#endif
 #include "st_cb_eglimage.h"
 #include "st_cb_fbo.h"
 #include "st_cb_feedback.h"
@@ -216,9 +214,7 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_clear(st);
    st_destroy_bitmap(st);
    st_destroy_drawpix(st);
-#if FEATURE_OES_draw_texture
    st_destroy_drawtex(st);
-#endif
 
    for (i = 0; i < Elements(st->state.sampler_views); i++) {
       pipe_sampler_view_reference(&st->state.sampler_views[i], NULL);
@@ -286,9 +282,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_drawpixels_functions(functions);
    st_init_rasterpos_functions(functions);
 
-#if FEATURE_OES_draw_texture
    st_init_drawtex_functions(functions);
-#endif
 
    st_init_eglimage_functions(functions);
 
