@@ -134,7 +134,7 @@ llvmpipe_texture_layout(struct llvmpipe_screen *screen,
 
          lpr->row_stride[level] = align(nblocksx * block_size, 16);
 
-         lpr->img_stride[level] = lpr->row_stride[level] * nblocksy * block_size;
+         lpr->img_stride[level] = lpr->row_stride[level] * nblocksy;
       }
 
       /* Size of the image in tiles (for tiled layout) */
