@@ -4,7 +4,7 @@ AC_PREREQ([2.59])
 
 dnl Versioning - scrape the version from configs/default
 m4_define([mesa_version],
-    [m4_esyscmd([${MAKE-make} -s -f bin/version.mk version | tr -d '\n'])])
+    [m4_esyscmd([${MAKE-make} -s -f bin/version.mk version | tr -d '\n' | tr -d '\r'])])
 m4_ifval(mesa_version,,
     [m4_fatal([Failed to get the Mesa version from `make -f bin/version.mk version`])])
 
