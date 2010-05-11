@@ -39,6 +39,7 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
 #include "util/u_transfer.h"
 
 #include "lp_context.h"
@@ -49,6 +50,11 @@
 #include "lp_setup.h"
 
 #include "state_tracker/sw_winsys.h"
+
+
+#ifdef DEBUG
+static struct llvmpipe_resource resource_list;
+#endif
 
 
 static INLINE boolean
@@ -245,6 +251,10 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
 
    lpr->id = id_counter++;
 
+#ifdef DEBUG
+   insert_at_tail(&resource_list, lpr);
+#endif
+
    return &lpr->base;
 
  fail:
@@ -302,6 +312,11 @@ llvmpipe_resource_destroy(struct pipe_screen *pscreen,
       assert(lpr->data);
       align_free(lpr->data);
    }
+
+#ifdef DEBUG
+   if (lpr->next)
+      remove_from_list(lpr);
+#endif
 
    FREE(lpr);
 }
@@ -1208,9 +1223,43 @@ llvmpipe_resource_size(const struct pipe_resource *resource)
 }
 
 
+#ifdef DEBUG
+void
+llvmpipe_print_resources(void)
+{
+   struct llvmpipe_resource *lpr;
+   unsigned n = 0, total = 0;
+
+   debug_printf("LLVMPIPE: current resources:\n");
+   foreach(lpr, &resource_list) {
+      unsigned size = llvmpipe_resource_size(&lpr->base);
+      debug_printf("resource %u at %p, size %ux%ux%u: %u bytes, refcount %u\n",
+                   lpr->id, (void *) lpr,
+                   lpr->base.width0, lpr->base.height0, lpr->base.depth0,
+                   size, lpr->base.reference.count);
+      total += size;
+      n++;
+   }
+   debug_printf("LLVMPIPE: total size of %u resources: %u\n", n, total);
+}
+#endif
+
+
 void
 llvmpipe_init_screen_resource_funcs(struct pipe_screen *screen)
 {
+#ifdef DEBUG
+   /* init linked list for tracking resources */
+   {
+      static boolean first_call = TRUE;
+      if (first_call) {
+         memset(&resource_list, 0, sizeof(resource_list));
+         make_empty_list(&resource_list);
+         first_call = FALSE;
+      }
+   }
+#endif
+
    screen->resource_create = llvmpipe_resource_create;
    screen->resource_destroy = llvmpipe_resource_destroy;
    screen->resource_from_handle = llvmpipe_resource_from_handle;

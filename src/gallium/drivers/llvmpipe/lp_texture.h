@@ -119,6 +119,11 @@ struct llvmpipe_resource
    unsigned timestamp;
 
    unsigned id;  /**< temporary, for debugging */
+
+#ifdef DEBUG
+   /** for linked list */
+   struct llvmpipe_resource *prev, *next;
+#endif
 };
 
 
@@ -217,6 +222,10 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
                            enum lp_texture_usage usage,
                            unsigned x, unsigned y);
 
+
+
+extern void
+llvmpipe_print_resources(void);
 
 
 extern void
