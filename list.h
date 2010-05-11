@@ -347,4 +347,16 @@ struct exec_list {
 	; (__node)->next != NULL 			\
 	; (__node) = (__node)->next)
 
+#define foreach_list_typed(__type, __node, __field, __list)		\
+   for (__type * __node =						\
+	   exec_node_data(__type, (__list)->head, __field);		\
+	(__node)->__field.next != NULL; 				\
+	(__node) = exec_node_data(__type, (__node)->__field.next, __field))
+
+#define foreach_list_typed_const(__type, __node, __field, __list)	\
+   for (const __type * __node =						\
+	   exec_node_data(__type, (__list)->head, __field);		\
+	(__node)->__field.next != NULL; 				\
+	(__node) = exec_node_data(__type, (__node)->__field.next, __field))
+
 #endif /* LIST_CONTAINER_H */
