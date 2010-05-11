@@ -149,7 +149,7 @@ brw_get_name(struct pipe_screen *screen)
 }
 
 static int
-brw_get_param(struct pipe_screen *screen, int param)
+brw_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -192,7 +192,7 @@ brw_get_param(struct pipe_screen *screen, int param)
 }
 
 static float
-brw_get_paramf(struct pipe_screen *screen, int param)
+brw_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_LINE_WIDTH:

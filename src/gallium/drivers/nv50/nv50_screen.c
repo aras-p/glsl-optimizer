@@ -102,7 +102,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 }
 
 static int
-nv50_screen_get_param(struct pipe_screen *pscreen, int param)
+nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -157,7 +157,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 }
 
 static float
-nv50_screen_get_paramf(struct pipe_screen *pscreen, int param)
+nv50_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_cap param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_LINE_WIDTH:

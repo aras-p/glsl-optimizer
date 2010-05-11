@@ -79,13 +79,13 @@ struct pipe_screen {
     * Query an integer-valued capability/parameter/limit
     * \param param  one of PIPE_CAP_x
     */
-   int (*get_param)( struct pipe_screen *, int param );
+   int (*get_param)( struct pipe_screen *, enum pipe_cap param );
 
    /**
     * Query a float-valued capability/parameter/limit
     * \param param  one of PIPE_CAP_x
     */
-   float (*get_paramf)( struct pipe_screen *, int param );
+   float (*get_paramf)( struct pipe_screen *, enum pipe_cap param );
 
    struct pipe_context * (*context_create)( struct pipe_screen *,
 					    void *priv );

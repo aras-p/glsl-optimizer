@@ -84,7 +84,7 @@ svga_get_name( struct pipe_screen *pscreen )
 
 
 static float
-svga_get_paramf(struct pipe_screen *screen, int param)
+svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 {
    struct svga_screen *svgascreen = svga_screen(screen);
    struct svga_winsys_screen *sws = svgascreen->sws;
@@ -186,7 +186,7 @@ svga_get_paramf(struct pipe_screen *screen, int param)
 /* This is a fairly pointless interface
  */
 static int
-svga_get_param(struct pipe_screen *screen, int param)
+svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
    return (int) svga_get_paramf( screen, param );
 }

@@ -76,7 +76,7 @@ static const char* r300_get_name(struct pipe_screen* pscreen)
     return chip_families[r300screen->caps.family];
 }
 
-static int r300_get_param(struct pipe_screen* pscreen, int param)
+static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
 
@@ -166,7 +166,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
     }
 }
 
-static float r300_get_paramf(struct pipe_screen* pscreen, int param)
+static float r300_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
 

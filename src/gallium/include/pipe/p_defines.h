@@ -413,46 +413,51 @@ enum pipe_transfer_usage {
  * Implementation capabilities/limits which are queried through
  * pipe_screen::get_param() and pipe_screen::get_paramf().
  */
-#define PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS 1
-#define PIPE_CAP_NPOT_TEXTURES           2
-#define PIPE_CAP_TWO_SIDED_STENCIL       3
-#define PIPE_CAP_GLSL                    4  /* XXX need something better */
-#define PIPE_CAP_DUAL_SOURCE_BLEND       5  
-#define PIPE_CAP_ANISOTROPIC_FILTER      6
-#define PIPE_CAP_POINT_SPRITE            7
-#define PIPE_CAP_MAX_RENDER_TARGETS      8
-#define PIPE_CAP_OCCLUSION_QUERY         9
-#define PIPE_CAP_TEXTURE_SHADOW_MAP      10
-#define PIPE_CAP_MAX_TEXTURE_2D_LEVELS   11
-#define PIPE_CAP_MAX_TEXTURE_3D_LEVELS   12
-#define PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS 13
-#define PIPE_CAP_MAX_LINE_WIDTH          14
-#define PIPE_CAP_MAX_LINE_WIDTH_AA       15
-#define PIPE_CAP_MAX_POINT_WIDTH         16
-#define PIPE_CAP_MAX_POINT_WIDTH_AA      17
-#define PIPE_CAP_MAX_TEXTURE_ANISOTROPY  18
-#define PIPE_CAP_MAX_TEXTURE_LOD_BIAS    19
-#define PIPE_CAP_GUARD_BAND_LEFT         20  /*< float */
-#define PIPE_CAP_GUARD_BAND_TOP          21  /*< float */
-#define PIPE_CAP_GUARD_BAND_RIGHT        22  /*< float */
-#define PIPE_CAP_GUARD_BAND_BOTTOM       23  /*< float */
-#define PIPE_CAP_TEXTURE_MIRROR_CLAMP    24
-#define PIPE_CAP_TEXTURE_MIRROR_REPEAT   25
-#define PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS 26
-#define PIPE_CAP_TGSI_CONT_SUPPORTED     27
-#define PIPE_CAP_BLEND_EQUATION_SEPARATE 28
-#define PIPE_CAP_SM3                     29  /*< Shader Model 3 supported */
-#define PIPE_CAP_MAX_PREDICATE_REGISTERS 30
-#define PIPE_CAP_MAX_COMBINED_SAMPLERS   31  /*< Maximum texture image units accessible from vertex
-                                                 and fragment shaders combined */
-#define PIPE_CAP_MAX_CONST_BUFFERS       32
-#define PIPE_CAP_MAX_CONST_BUFFER_SIZE   33  /*< In bytes */
-#define PIPE_CAP_INDEP_BLEND_ENABLE      34  /*< blend enables and write masks per rendertarget */
-#define PIPE_CAP_INDEP_BLEND_FUNC        35  /*< different blend funcs per rendertarget */
-#define PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT 36
-#define PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT 37
-#define PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER 38
-#define PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER 39
+enum pipe_cap {
+   PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS,
+   PIPE_CAP_NPOT_TEXTURES,
+   PIPE_CAP_TWO_SIDED_STENCIL,
+   PIPE_CAP_GLSL,  /* XXX need something better */
+   PIPE_CAP_DUAL_SOURCE_BLEND,
+   PIPE_CAP_ANISOTROPIC_FILTER,
+   PIPE_CAP_POINT_SPRITE,
+   PIPE_CAP_MAX_RENDER_TARGETS,
+   PIPE_CAP_OCCLUSION_QUERY,
+   PIPE_CAP_TEXTURE_SHADOW_MAP,
+   PIPE_CAP_MAX_TEXTURE_2D_LEVELS,
+   PIPE_CAP_MAX_TEXTURE_3D_LEVELS,
+   PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS,
+   PIPE_CAP_MAX_LINE_WIDTH,
+   PIPE_CAP_MAX_LINE_WIDTH_AA,
+   PIPE_CAP_MAX_POINT_WIDTH,
+   PIPE_CAP_MAX_POINT_WIDTH_AA,
+   PIPE_CAP_MAX_TEXTURE_ANISOTROPY,
+   PIPE_CAP_MAX_TEXTURE_LOD_BIAS,
+   PIPE_CAP_GUARD_BAND_LEFT,  /*< float */
+   PIPE_CAP_GUARD_BAND_TOP,  /*< float */
+   PIPE_CAP_GUARD_BAND_RIGHT,  /*< float */
+   PIPE_CAP_GUARD_BAND_BOTTOM,  /*< float */
+   PIPE_CAP_TEXTURE_MIRROR_CLAMP,
+   PIPE_CAP_TEXTURE_MIRROR_REPEAT,
+   PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS,
+   PIPE_CAP_TGSI_CONT_SUPPORTED,
+   PIPE_CAP_BLEND_EQUATION_SEPARATE,
+   PIPE_CAP_SM3,  /*< Shader Model, supported */
+   PIPE_CAP_MAX_PREDICATE_REGISTERS,
+   /** Maximum texture image units accessible from vertex and fragment shaders
+    * combined */
+   PIPE_CAP_MAX_COMBINED_SAMPLERS,
+   PIPE_CAP_MAX_CONST_BUFFERS,
+   PIPE_CAP_MAX_CONST_BUFFER_SIZE,  /*< In bytes */
+   /** blend enables and write masks per rendertarget */
+   PIPE_CAP_INDEP_BLEND_ENABLE,
+   /** different blend funcs per rendertarget */
+   PIPE_CAP_INDEP_BLEND_FUNC,
+   PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT,
+   PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT,
+   PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER,
+   PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER,
+};
 
 
 /**

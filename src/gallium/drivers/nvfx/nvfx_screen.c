@@ -30,7 +30,7 @@ struct nouveau_winsys {
 #define NV6X_GRCLASS4497_CHIPSETS 0x00000088
 
 static int
-nvfx_screen_get_param(struct pipe_screen *pscreen, int param)
+nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 
@@ -91,7 +91,7 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, int param)
 }
 
 static float
-nvfx_screen_get_paramf(struct pipe_screen *pscreen, int param)
+nvfx_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_cap param)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 

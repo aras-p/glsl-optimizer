@@ -82,7 +82,7 @@ llvmpipe_get_name(struct pipe_screen *screen)
 
 
 static int
-llvmpipe_get_param(struct pipe_screen *screen, int param)
+llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -140,7 +140,7 @@ llvmpipe_get_param(struct pipe_screen *screen, int param)
 
 
 static float
-llvmpipe_get_paramf(struct pipe_screen *screen, int param)
+llvmpipe_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 {
    switch (param) {
    case PIPE_CAP_MAX_LINE_WIDTH:
