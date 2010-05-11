@@ -60,10 +60,9 @@ struct llvmpipe_screen
 
    unsigned num_threads;
 
-   /* Increments whenever textures are modified.  Contexts can track
-    * this.
+   /* Increments whenever textures are modified.  Contexts can track this.
     */
-   unsigned timestamp;          
+   unsigned timestamp;
 };
 
 
