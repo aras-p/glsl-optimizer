@@ -49,7 +49,6 @@
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
 #include "st_texture.h"
-#include "st_inlines.h"
 
 /**
  * Special case for reading stencil buffer.
@@ -75,7 +74,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    /* Create a read transfer from the renderbuffer's texture */
 
-   pt = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
+   pt = pipe_get_transfer(st_context(ctx)->pipe, strb->texture,
 				       0, 0, 0,
 				       PIPE_TRANSFER_READ, x, y,
 				       width, height);
@@ -231,7 +230,7 @@ st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
          y = strb->texture->height0 - y - height;
       }
 
-      trans = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
+      trans = pipe_get_transfer(st_context(ctx)->pipe, strb->texture,
 					     0, 0, 0,
 					     PIPE_TRANSFER_READ, x, y,
 					     width, height);
@@ -350,8 +349,6 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (!dest)
       return;
 
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
-
    if (format == GL_STENCIL_INDEX ||
        format == GL_DEPTH_STENCIL) {
       st_read_stencil_pixels(ctx, x, y, width, height,
@@ -395,7 +392,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    /* Create a read transfer from the renderbuffer's texture */
-   trans = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture,
+   trans = pipe_get_transfer(st_context(ctx)->pipe, strb->texture,
 					  0, 0, 0,
 					  PIPE_TRANSFER_READ, x, y,
 					  width, height);

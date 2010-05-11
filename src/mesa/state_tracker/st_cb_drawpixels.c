@@ -49,7 +49,6 @@
 #include "st_cb_fbo.h"
 #include "st_format.h"
 #include "st_texture.h"
-#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -384,7 +383,7 @@ make_texture(struct st_context *st,
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
 
-      transfer = st_no_flush_get_tex_transfer(st, pt, 0, 0, 0,
+      transfer = pipe_get_transfer(st->pipe, pt, 0, 0, 0,
 					      PIPE_TRANSFER_WRITE, 0, 0,
 					      width, height);
 
@@ -508,7 +507,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       buf = pipe_buffer_create(pipe->screen,
 			       PIPE_BIND_VERTEX_BUFFER,
                                sizeof(verts));
-      st_no_flush_pipe_buffer_write(st, buf, 0, sizeof(verts), verts);
+      pipe_buffer_write(st->pipe, buf, 0, sizeof(verts), verts);
 
       util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,
@@ -685,7 +684,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    else
       usage = PIPE_TRANSFER_WRITE;
 
-   pt = st_cond_flush_get_tex_transfer(st_context(ctx), strb->texture, 0, 0, 0,
+   pt = pipe_get_transfer(st_context(ctx)->pipe, strb->texture, 0, 0, 0,
 				       usage, x, y,
 				       width, height);
 
@@ -885,7 +884,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       dsty = rbDraw->Base.Height - dsty - height;
    }
 
-   ptDraw = st_cond_flush_get_tex_transfer(st_context(ctx),
+   ptDraw = pipe_get_transfer(st_context(ctx)->pipe,
 					   rbDraw->texture, 0, 0, 0,
 					   usage, dstx, dsty,
 					   width, height);
@@ -969,8 +968,6 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLboolean invertTex = GL_FALSE;
    GLint readX, readY, readW, readH;
    struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
-
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    st_validate_state(st);
 
@@ -1075,7 +1072,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    else {
       /* CPU-based fallback/conversion */
       struct pipe_transfer *ptRead =
-         st_cond_flush_get_tex_transfer(st, rbRead->texture, 0, 0, 0,
+         pipe_get_transfer(st->pipe, rbRead->texture, 0, 0, 0,
                                         PIPE_TRANSFER_READ,
                                         readX, readY, readW, readH);
       struct pipe_transfer *ptTex;
@@ -1089,7 +1086,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
 
-      ptTex = st_cond_flush_get_tex_transfer(st, pt, 0, 0, 0, transfer_usage,
+      ptTex = pipe_get_transfer(st->pipe, pt, 0, 0, 0, transfer_usage,
                                              0, 0, width, height);
 
       /* copy image from ptRead surface to ptTex surface */

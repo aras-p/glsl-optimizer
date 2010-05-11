@@ -44,7 +44,6 @@
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
 #include "st_program.h"
-#include "st_inlines.h"
 
 
 /**
@@ -84,7 +83,7 @@ void st_upload_constants( struct st_context *st,
       }
 
       /* load Mesa constants into the constant buffer */
-      st_no_flush_pipe_buffer_write(st, *cbuf,
+      pipe_buffer_write(st->pipe, *cbuf,
 				    0, paramBytes,
 				    params->ParameterValues);
 

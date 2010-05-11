@@ -208,10 +208,4 @@ st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *src, GLuint srcLevel,
                       GLuint face);
 
-extern void
-st_teximage_flush_before_map(struct st_context *st,
-			     struct pipe_resource *pt,
-			     unsigned int face,
-			     unsigned int level,
-			     enum pipe_transfer_usage usage);
 #endif

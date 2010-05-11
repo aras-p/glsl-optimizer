@@ -44,11 +44,11 @@
 #include "state_tracker/st_debug.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
+#include "state_tracker/st_cb_flush.h"
 #include "state_tracker/st_cb_texture.h"
 #include "state_tracker/st_format.h"
 #include "state_tracker/st_texture.h"
 #include "state_tracker/st_gen_mipmap.h"
-#include "state_tracker/st_inlines.h"
 #include "state_tracker/st_atom.h"
 
 #include "pipe/p_context.h"
@@ -464,7 +464,7 @@ compress_with_blit(GLcontext * ctx,
 
    /* Put user's tex data into the temporary texture
     */
-   tex_xfer = st_cond_flush_get_tex_transfer(st_context(ctx), src_tex,
+   tex_xfer = pipe_get_transfer(st_context(ctx)->pipe, src_tex,
 					     0, 0, 0, /* face, level are zero */
 					     PIPE_TRANSFER_WRITE,
 					     0, 0, width, height); /* x, y, w, h */
@@ -875,7 +875,7 @@ decompress_with_blit(GLcontext * ctx, GLenum target, GLint level,
                         PIPE_TEX_MIPFILTER_NEAREST);
 
    /* map the dst_surface so we can read from it */
-   tex_xfer = st_cond_flush_get_tex_transfer(st_context(ctx),
+   tex_xfer = pipe_get_transfer(st_context(ctx)->pipe,
 					     dst_texture, 0, 0, 0,
 					     PIPE_TRANSFER_READ,
 					     0, 0, width, height);
@@ -961,11 +961,6 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
       /* Image is stored in hardware format in a buffer managed by the
        * kernel.  Need to explicitly map and unmap it.
        */
-      unsigned face = _mesa_tex_target_to_face(target);
-
-      st_teximage_flush_before_map(st, stImage->pt, face, level,
-				   PIPE_TRANSFER_READ);
-
       texImage->Data = st_texture_image_map(st, stImage, 0,
                                             PIPE_TRANSFER_READ, 0, 0,
                                             stImage->base.Width,
@@ -1097,16 +1092,12 @@ st_TexSubimage(GLcontext *ctx, GLint dims, GLenum target, GLint level,
     * from uploading the buffer under us.
     */
    if (stImage->pt) {
-      unsigned face = _mesa_tex_target_to_face(target);
-
       if (format == GL_DEPTH_COMPONENT &&
           util_format_is_depth_and_stencil(stImage->pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
 
-      st_teximage_flush_before_map(st, stImage->pt, face, level,
-				   transfer_usage);
       texImage->Data = st_texture_image_map(st, stImage, zoffset, 
                                             transfer_usage,
                                             xoffset, yoffset,
@@ -1229,11 +1220,8 @@ st_CompressedTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
    enum pipe_format pformat;
 
    if (stImage->pt) {
-      unsigned face = _mesa_tex_target_to_face(target);
       pformat = stImage->pt->format;
 
-      st_teximage_flush_before_map(st, stImage->pt, face, level,
-				   PIPE_TRANSFER_WRITE);
       texImage->Data = st_texture_image_map(st, stImage, 0, 
                                             PIPE_TRANSFER_WRITE,
                                             xoffset, yoffset,
@@ -1317,7 +1305,7 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
       srcY = strb->Base.Height - srcY - height;
    }
 
-   src_trans = st_cond_flush_get_tex_transfer( st_context(ctx),
+   src_trans = pipe_get_transfer(st_context(ctx)->pipe,
 					       strb->texture,
 					       0, 0, 0,
 					       PIPE_TRANSFER_READ,
@@ -1330,9 +1318,6 @@ fallback_copy_texsubimage(GLcontext *ctx, GLenum target, GLint level,
       transfer_usage = PIPE_TRANSFER_READ_WRITE;
    else
       transfer_usage = PIPE_TRANSFER_WRITE;
-
-   st_teximage_flush_before_map(st, stImage->pt, 0, 0,
-				transfer_usage);
 
    texDest = st_texture_image_map(st, stImage, 0, transfer_usage,
                                   destX, destY, width, height);
@@ -1514,9 +1499,6 @@ st_copy_texsubimage(GLcontext *ctx,
    GLuint format_writemask;
    struct pipe_surface *dest_surface = NULL;
    GLboolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
-
-   /* any rendering in progress must flushed before we grab the fb image */
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    /* make sure finalize_textures has been called? 
     */
@@ -1784,11 +1766,6 @@ copy_image_data_to_texture(struct st_context *st,
       pipe_resource_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
-      /* More straightforward upload.  
-       */
-      st_teximage_flush_before_map(st, stObj->pt, stImage->face, dstLevel,
-				   PIPE_TRANSFER_WRITE);
-
       st_texture_image_data(st,
                             stObj->pt,
                             stImage->face,

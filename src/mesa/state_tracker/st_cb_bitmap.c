@@ -43,7 +43,6 @@
 #include "st_program.h"
 #include "st_cb_bitmap.h"
 #include "st_texture.h"
-#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -282,7 +281,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       return NULL;
    }
 
-   transfer = st_no_flush_get_tex_transfer(st, pt, 0, 0, 0,
+   transfer = pipe_get_transfer(st->pipe, pt, 0, 0, 0,
 					   PIPE_TRANSFER_WRITE,
 					   0, 0, width, height);
 
@@ -382,7 +381,7 @@ setup_bitmap_vertex_data(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   st_no_flush_pipe_buffer_write_nooverlap(st,
+   pipe_buffer_write_nooverlap(st->pipe,
                                            st->bitmap.vbuf,
                                            st->bitmap.vbuf_slot * sizeof st->bitmap.vertices,
                                            sizeof st->bitmap.vertices,
@@ -579,7 +578,7 @@ create_cache_trans(struct st_context *st)
    /* Map the texture transfer.
     * Subsequent glBitmap calls will write into the texture image.
     */
-   cache->trans = st_no_flush_get_tex_transfer(st, cache->texture, 0, 0, 0,
+   cache->trans = pipe_get_transfer(st->pipe, cache->texture, 0, 0, 0,
 					       PIPE_TRANSFER_WRITE, 0, 0,
 					       BITMAP_CACHE_WIDTH,
 					       BITMAP_CACHE_HEIGHT);

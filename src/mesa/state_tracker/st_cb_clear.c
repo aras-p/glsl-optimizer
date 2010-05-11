@@ -43,7 +43,6 @@
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
 #include "st_program.h"
-#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
@@ -163,7 +162,7 @@ draw_quad(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   st_no_flush_pipe_buffer_write_nooverlap(st, st->clear.vbuf,
+   pipe_buffer_write_nooverlap(st->pipe, st->clear.vbuf,
                                            st->clear.vbuf_slot
                                              * sizeof(st->clear.vertices),
                                            sizeof(st->clear.vertices),

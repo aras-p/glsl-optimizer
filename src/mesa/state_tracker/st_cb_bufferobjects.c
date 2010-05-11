@@ -36,7 +36,6 @@
 #include "main/arrayobj.h"
 #include "main/bufferobj.h"
 
-#include "st_inlines.h"
 #include "st_context.h"
 #include "st_cb_bufferobjects.h"
 
@@ -204,7 +203,7 @@ st_bufferobj_data(GLcontext *ctx,
       }
 
       if (data)
-         st_no_flush_pipe_buffer_write(st_context(ctx), st_obj->buffer, 0,
+         pipe_buffer_write(st_context(ctx)->pipe, st_obj->buffer, 0,
 				       size, data);
       return GL_TRUE;
    }

@@ -44,10 +44,10 @@
 #include "st_context.h"
 #include "st_format.h"
 #include "st_texture.h"
-#include "st_inlines.h"
 
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
+#include "util/u_inlines.h"
 #include "util/u_pack_color.h"
 
 
@@ -149,7 +149,7 @@ load_color_map_texture(GLcontext *ctx, struct pipe_resource *pt)
    uint *dest;
    uint i, j;
 
-   transfer = st_cond_flush_get_tex_transfer(st_context(ctx),
+   transfer = pipe_get_transfer(st_context(ctx)->pipe,
 					     pt, 0, 0, 0, PIPE_TRANSFER_WRITE,
 					     0, 0, texSize, texSize);
    dest = (uint *) pipe_transfer_map(pipe, transfer);

@@ -29,7 +29,6 @@
 #include "st_format.h"
 #include "st_texture.h"
 #include "st_cb_fbo.h"
-#include "st_inlines.h"
 #include "main/enums.h"
 
 #undef Elements  /* fix re-defined macro warning */
@@ -145,7 +144,7 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 
    DBG("%s \n", __FUNCTION__);
 
-   stImage->transfer = st_no_flush_get_tex_transfer(st, pt, stImage->face,
+   stImage->transfer = pipe_get_transfer(st->pipe, pt, stImage->face,
 						    stImage->level, zoffset,
 						    usage, x, y, w, h);
 
@@ -220,7 +219,7 @@ st_texture_image_data(struct st_context *st,
    DBG("%s\n", __FUNCTION__);
 
    for (i = 0; i < depth; i++) {
-      dst_transfer = st_no_flush_get_tex_transfer(st, dst, face, level, i,
+      dst_transfer = pipe_get_transfer(st->pipe, dst, face, level, i,
 						  PIPE_TRANSFER_WRITE, 0, 0,
 						  u_minify(dst->width0, level),
                                                   u_minify(dst->height0, level));
@@ -320,19 +319,3 @@ st_texture_image_copy(struct pipe_context *pipe,
    }
 }
 
-
-void
-st_teximage_flush_before_map(struct st_context *st,
-			     struct pipe_resource *pt,
-			     unsigned int face,
-			     unsigned int level,
-			     enum pipe_transfer_usage usage)
-{
-   struct pipe_context *pipe = st->pipe;
-   unsigned referenced =
-      pipe->is_resource_referenced(pipe, pt, face, level);
-
-   if (referenced && ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-		      (usage & PIPE_TRANSFER_WRITE)))
-      st->pipe->flush(st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-}

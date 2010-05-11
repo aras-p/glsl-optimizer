@@ -39,9 +39,9 @@
 
 #include "st_debug.h"
 #include "st_context.h"
+#include "st_texture.h"
 #include "st_gen_mipmap.h"
 #include "st_cb_texture.h"
-#include "st_inlines.h"
 
 
 /**
@@ -199,13 +199,13 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       ubyte *dstData;
       int srcStride, dstStride;
 
-      srcTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
+      srcTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, face,
 						srcLevel, zslice,
 						PIPE_TRANSFER_READ, 0, 0,
                                                 srcWidth, srcHeight);
 						
 
-      dstTrans = st_cond_flush_get_tex_transfer(st_context(ctx), pt, face,
+      dstTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, face,
 						dstLevel, zslice,
 						PIPE_TRANSFER_WRITE, 0, 0,
 						dstWidth, dstHeight);
