@@ -65,10 +65,8 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 
    state->current_function = NULL;
 
-   foreach_list (n, & state->translation_unit) {
-      ast_node *ast = exec_node_data(ast_node, n, link);
+   foreach_list_typed (ast_node, ast, link, & state->translation_unit)
       ast->hir(instructions, state);
-   }
 }
 
 
@@ -1264,10 +1262,8 @@ ast_expression::hir(exec_list *instructions,
        * therefore add instructions to the instruction list), they get dropped
        * on the floor.
        */
-      foreach_list (n, &this->expressions) {
-	 ast_node *ast = exec_node_data(ast_node, n, link);
+      foreach_list_typed (ast_node, ast, link, &this->expressions)
 	 result = ast->hir(instructions, state);
-      }
 
       type = result->type;
 
@@ -1314,10 +1310,8 @@ ast_compound_statement::hir(exec_list *instructions,
    if (new_scope)
       state->symbols->push_scope();
 
-   foreach_list (n, &this->statements) {
-      ast_node *ast = exec_node_data(ast_node, n, link);
+   foreach_list_typed (ast_node, ast, link, &this->statements)
       ast->hir(instructions, state);
-   }
 
    if (new_scope)
       state->symbols->pop_scope();
@@ -1501,8 +1495,7 @@ ast_declarator_list::hir(exec_list *instructions,
       }
    }
 
-   foreach_list (n, &this->declarations) {
-      ast_declaration *const decl = exec_node_data(ast_declaration, n, link);
+   foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
       const struct glsl_type *var_type;
       struct ir_variable *var;
 
@@ -1878,9 +1871,7 @@ ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
    ast_parameter_declarator *void_param = NULL;
    unsigned count = 0;
 
-   foreach_list (n, ast_parameters) {
-      ast_parameter_declarator *param =
-	 exec_node_data(ast_parameter_declarator, n, link);
+   foreach_list_typed (ast_parameter_declarator, param, link, ast_parameters) {
       param->formal_parameter = formal;
       param->hir(ir_parameters, state);
 
@@ -2281,10 +2272,8 @@ ast_struct_specifier::hir(exec_list *instructions,
     * This means that we actually need to count the number of elements in the
     * 'declarations' list in each of the elements.
     */
-   foreach_list (n, & this->declarations) {
-      ast_declarator_list *decl_list =
-	 exec_node_data(ast_declarator_list, n, link);
-
+   foreach_list_typed (ast_declarator_list, decl_list, link,
+		       &this->declarations) {
       foreach_list_const (decl_ptr, & decl_list->declarations) {
 	 decl_count++;
       }
@@ -2300,9 +2289,8 @@ ast_struct_specifier::hir(exec_list *instructions,
       malloc(sizeof(*fields) * decl_count);
 
    unsigned i = 0;
-   foreach_list (n, & this->declarations) {
-      ast_declarator_list *decl_list =
-	 exec_node_data(ast_declarator_list, n, link);
+   foreach_list_typed (ast_declarator_list, decl_list, link,
+		       &this->declarations) {
       const char *type_name;
 
       decl_list->type->specifier->hir(instructions, state);
@@ -2310,9 +2298,8 @@ ast_struct_specifier::hir(exec_list *instructions,
       const glsl_type *decl_type =
 	 decl_list->type->specifier->glsl_type(& type_name, state);
 
-      foreach_list (decl_node, & decl_list->declarations) {
-	 ast_declaration *const decl =
-	    exec_node_data(ast_declaration, decl_node, link);
+      foreach_list_typed (ast_declaration, decl, link,
+			  &decl_list->declarations) {
 	 const struct glsl_type *const field_type =
 	    (decl->is_array)
 	    ? process_array_type(decl_type, decl->array_size, state)
