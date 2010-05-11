@@ -48,7 +48,6 @@
 #include "st_atom.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
-#include "st_texture.h"
 
 /**
  * Special case for reading stencil buffer.
