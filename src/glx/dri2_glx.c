@@ -73,6 +73,8 @@ struct __GLXDRIdisplayPrivateRec
    int driPatch;
    int swapAvailable;
    int invalidateAvailable;
+
+   const __DRIextension *loader_extensions[4];
 };
 
 struct __GLXDRIcontextPrivateRec
@@ -536,17 +538,11 @@ static const __DRIdri2LoaderExtension dri2LoaderExtension_old = {
    NULL,
 };
 
-static const __DRIextension *loader_extensions[] = {
-   &dri2LoaderExtension.base,
-   &systemTimeExtension.base,
-   NULL
+#ifdef __DRI_USE_INVALIDATE
+static const __DRIuseInvalidateExtension dri2UseInvalidate = {
+   { __DRI_USE_INVALIDATE, __DRI_USE_INVALIDATE_VERSION }
 };
-
-static const __DRIextension *loader_extensions_old[] = {
-   &dri2LoaderExtension_old.base,
-   &systemTimeExtension.base,
-   NULL
-};
+#endif
 
 _X_HIDDEN void
 dri2InvalidateBuffers(Display *dpy, XID drawable)
@@ -622,13 +618,14 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
       goto handle_error;
    }
 
+   
    /* If the server does not support the protocol for
     * DRI2GetBuffersWithFormat, don't supply that interface to the driver.
     */
    psc->__driScreen =
-      psc->dri2->createNewScreen(screen, psc->fd, ((pdp->driMinor < 1)
-						   ? loader_extensions_old
-						   : loader_extensions),
+      psc->dri2->createNewScreen(screen, psc->fd,
+				 (const __DRIextension **)
+				 &pdp->loader_extensions[0],
 				 &driver_configs, psc);
 
    if (psc->__driScreen == NULL) {
@@ -710,7 +707,7 @@ _X_HIDDEN __GLXDRIdisplay *
 dri2CreateDisplay(Display * dpy)
 {
    __GLXDRIdisplayPrivate *pdp;
-   int eventBase, errorBase;
+   int eventBase, errorBase, i;
 
    if (!DRI2QueryExtension(dpy, &eventBase, &errorBase))
       return NULL;
@@ -730,6 +727,20 @@ dri2CreateDisplay(Display * dpy)
 
    pdp->base.destroyDisplay = dri2DestroyDisplay;
    pdp->base.createScreen = dri2CreateScreen;
+
+   i = 0;
+   if (pdp->driMinor < 1)
+      pdp->loader_extensions[i++] = &dri2LoaderExtension_old.base;
+   else
+      pdp->loader_extensions[i++] = &dri2LoaderExtension.base;
+   
+   pdp->loader_extensions[i++] = &systemTimeExtension.base;
+
+#ifdef __DRI_USE_INVALIDATE
+   if (pdp->invalidateAvailable)
+      pdp->loader_extensions[i++] = &dri2UseInvalidate.base;
+   pdp->loader_extensions[i++] = NULL;
+#endif
 
    return &pdp->base;
 }
