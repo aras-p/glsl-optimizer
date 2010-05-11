@@ -428,6 +428,26 @@ struct __DRIswrastLoaderExtensionRec {
 };
 
 /**
+ * Invalidate loader extension.  The presence of this extension
+ * indicates to the DRI driver that the loader will call invalidate in
+ * the __DRI2_FLUSH extension, whenever the needs to query for new
+ * buffers.  This means that the DRI driver can drop the polling in
+ * glViewport().
+ *
+ * The extension doesn't provide any functionality, it's only use to
+ * indicate to the driver that it can use the new semantics.  A DRI
+ * driver can use this to switch between the different semantics or
+ * just refuse to initialize if this extension isn't present.
+ */
+#define __DRI_USE_INVALIDATE "DRI_UseInvalidate"
+#define __DRI_USE_INVALIDATE_VERSION 1
+
+typedef struct __DRIuseInvalidateExtensionRec __DRIuseInvalidateExtension;
+struct __DRIuseInvalidateExtensionRec {
+   __DRIextension base;
+};
+
+/**
  * The remaining extensions describe driver extensions, immediately
  * available interfaces provided by the driver.  To start using the
  * driver, dlsym() for the __DRI_DRIVER_EXTENSIONS symbol and look for
