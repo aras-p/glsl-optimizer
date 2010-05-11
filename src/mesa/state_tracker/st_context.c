@@ -54,6 +54,9 @@
 #include "st_cb_queryobj.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_texture.h"
+#if FEATURE_EXT_transform_feedback
+#include "st_cb_xformfb.h"
+#endif
 #include "st_cb_flush.h"
 #include "st_cb_strings.h"
 #include "st_atom.h"
@@ -334,6 +337,10 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);
    st_init_string_functions(functions);
+
+#if FEATURE_EXT_transform_feedback
+   st_init_xformfb_functions(functions);
+#endif
 
    functions->UpdateState = st_invalidate_state;
 }

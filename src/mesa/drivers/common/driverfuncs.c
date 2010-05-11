@@ -47,6 +47,9 @@
 #if FEATURE_ARB_sync
 #include "main/syncobj.h"
 #endif
+#if FEATURE_EXT_transform_feedback
+#include "main/transformfeedback.h"
+#endif
 
 #include "shader/program.h"
 #include "shader/shader_api.h"
@@ -204,6 +207,10 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->NewArrayObject = _mesa_new_array_object;
    driver->DeleteArrayObject = _mesa_delete_array_object;
    driver->BindArrayObject = NULL;
+
+#if FEATURE_EXT_transform_feedback
+   _mesa_init_transform_feedback_functions(driver);
+#endif
 
    /* T&L stuff */
    driver->NeedValidate = GL_FALSE;

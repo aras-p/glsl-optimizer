@@ -1178,15 +1178,15 @@ IndexedStateVars = [
 
 	# GL_EXT_transform_feedback
 	( "GL_TRANSFORM_FEEDBACK_BUFFER_START", GLint64,
-	  ["ctx->TransformFeedback.Offset[index]"],
+	  ["ctx->TransformFeedback.CurrentObject->Offset[index]"],
 	  "ctx->Const.MaxTransformFeedbackSeparateAttribs",
 	  NoState, ["EXT_transform_feedback"] ),
 	( "GL_TRANSFORM_FEEDBACK_BUFFER_SIZE", GLint64,
-	  ["ctx->TransformFeedback.Size[index]"],
+	  ["ctx->TransformFeedback.CurrentObject->Size[index]"],
 	  "ctx->Const.MaxTransformFeedbackSeparateAttribs",
 	  NoState, ["EXT_transform_feedback"] ),
 	( "GL_TRANSFORM_FEEDBACK_BUFFER_BINDING", GLint,
-	  ["ctx->TransformFeedback.Buffers[index]->Name"],
+	  ["ctx->TransformFeedback.CurrentObject->Buffers[index]->Name"],
 	  "ctx->Const.MaxTransformFeedbackSeparateAttribs",
 	  NoState, ["EXT_transform_feedback"] ),
 

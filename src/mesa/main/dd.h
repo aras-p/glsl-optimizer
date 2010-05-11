@@ -1038,6 +1038,22 @@ struct dd_function_table {
 					     void *image_handle);
 #endif
 
+#if FEATURE_EXT_transform_feedback
+   struct gl_transform_feedback_object *
+        (*NewTransformFeedback)(GLcontext *ctx, GLuint name);
+   void (*DeleteTransformFeedback)(GLcontext *ctx,
+                                   struct gl_transform_feedback_object *obj);
+   void (*BeginTransformFeedback)(GLcontext *ctx, GLenum mode,
+                                  struct gl_transform_feedback_object *obj);
+   void (*EndTransformFeedback)(GLcontext *ctx,
+                                struct gl_transform_feedback_object *obj);
+   void (*PauseTransformFeedback)(GLcontext *ctx,
+                                  struct gl_transform_feedback_object *obj);
+   void (*ResumeTransformFeedback)(GLcontext *ctx,
+                                   struct gl_transform_feedback_object *obj);
+   void (*DrawTransformFeedback)(GLcontext *ctx, GLenum mode,
+                                 struct gl_transform_feedback_object *obj);
+#endif
 };
 
 

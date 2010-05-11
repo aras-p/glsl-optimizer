@@ -2034,24 +2034,46 @@ struct gl_shader_state
 
 
 /**
- * Context state for transform feedback.
+ * Transform feedback object state
  */
-struct gl_transform_feedback
+struct gl_transform_feedback_object
 {
+   GLuint Name;  /**< AKA the object ID */
+   GLint RefCount;
    GLboolean Active;  /**< Is transform feedback enabled? */
-   GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
+   GLboolean Paused;  /**< Is transform feedback paused? */
+
+   /** The feedback buffers */
+   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
+   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
+
    /** Start of feedback data in dest buffer */
    GLintptr Offset[MAX_FEEDBACK_ATTRIBS];
    /** Max data to put into dest buffer (in bytes) */
    GLsizeiptr Size[MAX_FEEDBACK_ATTRIBS];
+};
+
+
+/**
+ * Context state for transform feedback.
+ */
+struct gl_transform_feedback
+{
+   GLenum Mode;       /**< GL_POINTS, GL_LINES or GL_TRIANGLES */
+
    GLboolean RasterDiscard;  /**< GL_RASTERIZER_DISCARD */
 
    /** The general binding point (GL_TRANSFORM_FEEDBACK_BUFFER) */
    struct gl_buffer_object *CurrentBuffer;
 
-   /** The feedback buffers */
-   GLuint BufferNames[MAX_FEEDBACK_ATTRIBS];
-   struct gl_buffer_object *Buffers[MAX_FEEDBACK_ATTRIBS];
+   /** The table of all transform feedback objects */
+   struct _mesa_HashTable *Objects;
+
+   /** The current xform-fb object (GL_TRANSFORM_FEEDBACK_BINDING) */
+   struct gl_transform_feedback_object *CurrentObject;
+
+   /** The default xform-fb object (Name==0) */
+   struct gl_transform_feedback_object *DefaultObject;
 };
 
 
@@ -2480,6 +2502,7 @@ struct gl_extensions
    GLboolean ARB_texture_float;
    GLboolean ARB_texture_mirrored_repeat;
    GLboolean ARB_texture_non_power_of_two;
+   GLboolean ARB_transform_feedback2;
    GLboolean ARB_transpose_matrix;
    GLboolean ARB_vertex_array_object;
    GLboolean ARB_vertex_buffer_object;

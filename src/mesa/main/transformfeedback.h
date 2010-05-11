@@ -41,6 +41,12 @@ extern void
 _mesa_free_transform_feedback(GLcontext *ctx);
 
 
+extern void
+_mesa_init_transform_feedback_functions(struct dd_function_table *driver);
+
+
+/*** GL_EXT_transform_feedback ***/
+
 extern void GLAPIENTRY
 _mesa_BeginTransformFeedback(GLenum mode);
 
@@ -66,6 +72,31 @@ extern void GLAPIENTRY
 _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
                                   GLsizei bufSize, GLsizei *length,
                                   GLsizei *size, GLenum *type, GLchar *name);
+
+
+
+/*** GL_ARB_transform_feedback2 ***/
+
+extern void GLAPIENTRY
+_mesa_GenTransformFeedbacks(GLsizei n, GLuint *names);
+
+extern GLboolean GLAPIENTRY
+_mesa_IsTransformFeedback(GLuint name);
+
+extern void GLAPIENTRY
+_mesa_BindTransformFeedback(GLenum target, uint name);
+
+extern void GLAPIENTRY
+_mesa_DeleteTransformFeedbacks(GLsizei n, const GLuint *names);
+
+extern void GLAPIENTRY
+_mesa_PauseTransformFeedback(void);
+
+extern void GLAPIENTRY
+_mesa_ResumeTransformFeedback(void);
+
+extern void GLAPIENTRY
+_mesa_DrawTransformFeedback(GLenum mode, GLuint name);
 
 
 #endif /* TRANSFORM_FEEDBACK_H */

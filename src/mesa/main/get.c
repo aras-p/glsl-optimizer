@@ -7786,7 +7786,7 @@ _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
             return;
          }
-         params[0] = INT64_TO_BOOLEAN(ctx->TransformFeedback.Offset[index]);
+         params[0] = INT64_TO_BOOLEAN(ctx->TransformFeedback.CurrentObject->Offset[index]);
          break;
       case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
          CHECK_EXT1(EXT_transform_feedback);
@@ -7794,7 +7794,7 @@ _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
             return;
          }
-         params[0] = INT64_TO_BOOLEAN(ctx->TransformFeedback.Size[index]);
+         params[0] = INT64_TO_BOOLEAN(ctx->TransformFeedback.CurrentObject->Size[index]);
          break;
       case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
          CHECK_EXT1(EXT_transform_feedback);
@@ -7802,7 +7802,7 @@ _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetBooleanIndexedv(index=%u), index", pname);
             return;
          }
-         params[0] = INT_TO_BOOLEAN(ctx->TransformFeedback.Buffers[index]->Name);
+         params[0] = INT_TO_BOOLEAN(ctx->TransformFeedback.CurrentObject->Buffers[index]->Name);
          break;
       default:
          goto invalid_enum_error;
@@ -7850,7 +7850,7 @@ _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
             return;
          }
-         params[0] = INT64_TO_INT(ctx->TransformFeedback.Offset[index]);
+         params[0] = INT64_TO_INT(ctx->TransformFeedback.CurrentObject->Offset[index]);
          break;
       case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
          CHECK_EXT1(EXT_transform_feedback);
@@ -7858,7 +7858,7 @@ _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
             return;
          }
-         params[0] = INT64_TO_INT(ctx->TransformFeedback.Size[index]);
+         params[0] = INT64_TO_INT(ctx->TransformFeedback.CurrentObject->Size[index]);
          break;
       case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
          CHECK_EXT1(EXT_transform_feedback);
@@ -7866,7 +7866,7 @@ _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetIntegerIndexedv(index=%u), index", pname);
             return;
          }
-         params[0] = ctx->TransformFeedback.Buffers[index]->Name;
+         params[0] = ctx->TransformFeedback.CurrentObject->Buffers[index]->Name;
          break;
       default:
          goto invalid_enum_error;
@@ -7915,7 +7915,7 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
             return;
          }
-         params[0] = ctx->TransformFeedback.Offset[index];
+         params[0] = ctx->TransformFeedback.CurrentObject->Offset[index];
          break;
       case GL_TRANSFORM_FEEDBACK_BUFFER_SIZE:
          CHECK_EXT1(EXT_transform_feedback);
@@ -7923,7 +7923,7 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
             return;
          }
-         params[0] = ctx->TransformFeedback.Size[index];
+         params[0] = ctx->TransformFeedback.CurrentObject->Size[index];
          break;
       case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
          CHECK_EXT1(EXT_transform_feedback);
@@ -7931,7 +7931,7 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
             _mesa_error(ctx, GL_INVALID_VALUE, "glGetInteger64Indexedv(index=%u), index", pname);
             return;
          }
-         params[0] = (GLint64)(ctx->TransformFeedback.Buffers[index]->Name);
+         params[0] = (GLint64)(ctx->TransformFeedback.CurrentObject->Buffers[index]->Name);
          break;
       default:
          goto invalid_enum_error;

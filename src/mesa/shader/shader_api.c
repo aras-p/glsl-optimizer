@@ -1517,12 +1517,14 @@ static void
 _mesa_link_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
+   struct gl_transform_feedback_object *obj =
+      ctx->TransformFeedback.CurrentObject;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glLinkProgram");
    if (!shProg)
       return;
 
-   if (ctx->TransformFeedback.Active && shProg == ctx->Shader.CurrentProgram) {
+   if (obj->Active && shProg == ctx->Shader.CurrentProgram) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glLinkProgram(transform feedback active");
       return;
@@ -1591,8 +1593,10 @@ void
 _mesa_use_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
+   struct gl_transform_feedback_object *obj =
+      ctx->TransformFeedback.CurrentObject;
 
-   if (ctx->TransformFeedback.Active) {
+   if (obj->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glUseProgram(transform feedback active)");
       return;
