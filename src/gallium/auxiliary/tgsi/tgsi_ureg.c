@@ -1467,6 +1467,12 @@ const struct tgsi_token *ureg_get_tokens( struct ureg_program *ureg,
 }
 
 
+void ureg_free_tokens( const struct tgsi_token *tokens )
+{
+   FREE((struct tgsi_token *)tokens);
+}
+
+
 struct ureg_program *ureg_create( unsigned processor )
 {
    struct ureg_program *ureg = CALLOC_STRUCT( ureg_program );
