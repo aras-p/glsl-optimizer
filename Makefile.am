@@ -34,6 +34,7 @@ glsl_SOURCES = \
 	ir_basic_block.h \
 	ir_constant_expression.cpp \
 	ir_constant_folding.cpp \
+	ir_constant_variable.cpp \
 	ir_copy_propagation.cpp \
 	ir_copy_propagation.h \
 	ir_dead_code.cpp \
