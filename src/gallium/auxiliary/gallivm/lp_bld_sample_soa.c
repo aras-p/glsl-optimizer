@@ -222,7 +222,7 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                           LLVMValueRef y_stride,
                           LLVMValueRef z_stride,
                           LLVMValueRef data_ptr,
-                          LLVMValueRef *texel)
+                          LLVMValueRef texel_out[4])
 {
    const int dims = texture_dims(bld->static_state->target);
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
@@ -311,9 +311,9 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                            bld->texel_type,
                            data_ptr, offset,
                            i, j,
-                           texel);
+                           texel_out);
 
-   apply_sampler_swizzle(bld, texel);
+   apply_sampler_swizzle(bld, texel_out);
 
    /*
     * Note: if we find an app which frequently samples the texture border
@@ -337,8 +337,8 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
          LLVMValueRef border_chan =
             lp_build_const_vec(bld->texel_type,
                                   bld->static_state->border_color[chan]);
-         texel[chan] = lp_build_select(&bld->texel_bld, use_border,
-                                       border_chan, texel[chan]);
+         texel_out[chan] = lp_build_select(&bld->texel_bld, use_border,
+                                           border_chan, texel_out[chan]);
       }
    }
 }
@@ -1800,7 +1800,7 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
                               LLVMValueRef height,
                               LLVMValueRef stride_array,
                               LLVMValueRef data_array,
-                              LLVMValueRef *texel)
+                              LLVMValueRef texel_out[4])
 {
    LLVMBuilderRef builder = bld->builder;
    struct lp_build_context i32, h16, u8n;
@@ -1994,16 +1994,16 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
 
    lp_build_format_swizzle_soa(bld->format_desc,
                                &bld->texel_bld,
-                               unswizzled, texel);
+                               unswizzled, texel_out);
 
-   apply_sampler_swizzle(bld, texel);
+   apply_sampler_swizzle(bld, texel_out);
 }
 
 
 static void
 lp_build_sample_compare(struct lp_build_sample_context *bld,
                         LLVMValueRef p,
-                        LLVMValueRef *texel)
+                        LLVMValueRef texel[4])
 {
    struct lp_build_context *texel_bld = &bld->texel_bld;
    LLVMValueRef res;
@@ -2041,14 +2041,14 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
  */
 static void
 lp_build_sample_nop(struct lp_build_sample_context *bld,
-                    LLVMValueRef *texel)
+                    LLVMValueRef texel_out[4])
 {
    struct lp_build_context *texel_bld = &bld->texel_bld;
    unsigned chan;
 
    for (chan = 0; chan < 4; chan++) {
       /*lp_bld_mov(texel_bld, texel, texel_bld->one);*/
-      texel[chan] = texel_bld->one;
+      texel_out[chan] = texel_bld->one;
    }  
 }
 
@@ -2071,7 +2071,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     const LLVMValueRef *ddy,
                     LLVMValueRef lod_bias, /* optional */
                     LLVMValueRef explicit_lod, /* optional */
-                    LLVMValueRef *texel)
+                    LLVMValueRef texel_out[4])
 {
    struct lp_build_sample_context bld;
    LLVMValueRef width, width_vec;
@@ -2082,6 +2082,11 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    LLVMValueRef s;
    LLVMValueRef t;
    LLVMValueRef r;
+
+   if (0) {
+      enum pipe_format fmt = static_state->format;
+      debug_printf("Sample from %s\n", util_format_name(fmt));
+   }
 
    /* Setup our build context */
    memset(&bld, 0, sizeof bld);
@@ -2123,7 +2128,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
 
    if (0) {
       /* For debug: no-op texture sampling */
-      lp_build_sample_nop(&bld, texel);
+      lp_build_sample_nop(&bld, texel_out);
    }
    else if (util_format_is_rgba8_variant(bld.format_desc) &&
             static_state->target == PIPE_TEXTURE_2D &&
@@ -2134,7 +2139,7 @@ lp_build_sample_soa(LLVMBuilderRef builder,
             is_simple_wrap_mode(static_state->wrap_t)) {
       /* special case */
       lp_build_sample_2d_linear_aos(&bld, s, t, width_vec, height_vec,
-                                    row_stride_array, data_array, texel);
+                                    row_stride_array, data_array, texel_out);
    }
    else {
       lp_build_sample_general(&bld, unit, s, t, r, ddx, ddy,
@@ -2143,8 +2148,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                               width_vec, height_vec, depth_vec,
                               row_stride_array, img_stride_array,
                               data_array,
-                              texel);
+                              texel_out);
    }
 
-   lp_build_sample_compare(&bld, r, texel);
+   lp_build_sample_compare(&bld, r, texel_out);
 }
