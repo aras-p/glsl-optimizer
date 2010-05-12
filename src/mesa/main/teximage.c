@@ -1281,7 +1281,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
           type != GL_UNSIGNED_SHORT_8_8_REV_MESA) {
          char message[100];
          _mesa_snprintf(message, sizeof(message),
-                        "glTexImage%d(format/type YCBCR mismatch", dimensions);
+                        "glTexImage%dD(format/type YCBCR mismatch", dimensions);
          _mesa_error(ctx, GL_INVALID_ENUM, message);
          return GL_TRUE; /* error */
       }
@@ -1297,7 +1297,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
          if (!isProxy) {
             char message[100];
             _mesa_snprintf(message, sizeof(message),
-                           "glTexImage%d(format=GL_YCBCR_MESA and border=%d)",
+                           "glTexImage%dD(format=GL_YCBCR_MESA and border=%d)",
                            dimensions, border);
             _mesa_error(ctx, GL_INVALID_VALUE, message);
          }
@@ -1325,7 +1325,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
       if (!target_can_be_compressed(ctx, target) && !isProxy) {
          _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexImage%d(target)", dimensions);
+                     "glTexImage%dD(target)", dimensions);
          return GL_TRUE;
       }
       if (border != 0) {
@@ -1691,7 +1691,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
       if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glCopyTexImage%d(target)", dimensions);
+                     "glCopyTexImage%dD(target)", dimensions);
          return GL_TRUE;
       }
       if (border != 0) {
@@ -1877,7 +1877,7 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
    if (_mesa_is_format_compressed(teximage->TexFormat)) {
       if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glCopyTexSubImage%d(target)", dimensions);
+                     "glCopyTexSubImage%dD(target)", dimensions);
          return GL_TRUE;
       }
       /* offset must be multiple of 4 */
