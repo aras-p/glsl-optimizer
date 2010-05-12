@@ -147,7 +147,7 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
 boolean
 test_all(unsigned verbose, FILE *fp)
 {
-   bool success = TRUE;
+   boolean success = TRUE;
 
    test_printf(verbose, fp, NULL);
 

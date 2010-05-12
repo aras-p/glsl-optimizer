@@ -201,8 +201,8 @@ test_one(unsigned verbose, FILE *fp,
          const struct util_format_description *format_desc)
 {
    unsigned i;
-   bool first = TRUE;
-   bool success = TRUE;
+   boolean first = TRUE;
+   boolean success = TRUE;
 
    for (i = 0; i < util_format_nr_test_cases; ++i) {
       const struct util_format_test_case *test = &util_format_test_cases[i];
@@ -229,7 +229,7 @@ boolean
 test_all(unsigned verbose, FILE *fp)
 {
    enum pipe_format format;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for (format = 1; format < PIPE_FORMAT_COUNT; ++format) {
       const struct util_format_description *format_desc;

@@ -384,7 +384,7 @@ test_all(unsigned verbose, FILE *fp)
 {
    const struct lp_type *src_type;
    const struct lp_type *dst_type;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for(src_type = conv_types; src_type < &conv_types[num_types]; ++src_type) {
       for(dst_type = conv_types; dst_type < &conv_types[num_types]; ++dst_type) {
@@ -411,7 +411,7 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    const struct lp_type *src_type;
    const struct lp_type *dst_type;
    unsigned long i;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for(i = 0; i < n; ++i) {
       src_type = &conv_types[rand() % num_types];
