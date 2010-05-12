@@ -291,6 +291,7 @@ EXTRA_EXT(EXT_compiled_vertex_array);
 EXTRA_EXT(ARB_sync);
 EXTRA_EXT(ARB_vertex_shader);
 EXTRA_EXT(EXT_transform_feedback);
+EXTRA_EXT(ARB_transform_feedback2);
 EXTRA_EXT(EXT_pixel_buffer_object);
 EXTRA_EXT(ARB_vertex_program);
 EXTRA_EXT2(NV_point_sprite, ARB_point_sprite);
@@ -1207,6 +1208,14 @@ static const struct value_desc values[] = {
      CONTEXT_INT(Const.MaxTransformFeedbackSeparateComponents),
      extra_EXT_transform_feedback },
 
+   /* GL_ARB_transform_feedback2 */
+   { GL_TRANSFORM_FEEDBACK_BUFFER_PAUSED, LOC_CUSTOM, TYPE_BOOLEAN, 0,
+     extra_ARB_transform_feedback2 },
+   { GL_TRANSFORM_FEEDBACK_BUFFER_ACTIVE, LOC_CUSTOM, TYPE_BOOLEAN, 0,
+     extra_ARB_transform_feedback2 },
+   { GL_TRANSFORM_FEEDBACK_BINDING, LOC_CUSTOM, TYPE_INT, 0,
+     extra_ARB_transform_feedback2 },
+
    /* GL 3.0 */
    { GL_NUM_EXTENSIONS, LOC_CUSTOM, TYPE_INT, 0, extra_version_30 },
    { GL_MAJOR_VERSION, CONTEXT_INT(VersionMajor), extra_version_30 },
@@ -1573,6 +1582,15 @@ find_custom_value(GLcontext *ctx, const struct value_desc *d, union value *v)
       break;
    case GL_TRANSFORM_FEEDBACK_BUFFER_BINDING:
       v->value_int = ctx->TransformFeedback.CurrentBuffer->Name;
+      break;
+   case GL_TRANSFORM_FEEDBACK_BUFFER_PAUSED:
+      v->value_int = ctx->TransformFeedback.CurrentObject->Paused;
+      break;
+   case GL_TRANSFORM_FEEDBACK_BUFFER_ACTIVE:
+      v->value_int = ctx->TransformFeedback.CurrentObject->Active;
+      break;
+   case GL_TRANSFORM_FEEDBACK_BINDING:
+      v->value_int = ctx->TransformFeedback.CurrentObject->Name;
       break;
    case GL_CURRENT_PROGRAM:
       v->value_int =
