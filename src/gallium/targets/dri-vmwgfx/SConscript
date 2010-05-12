@@ -11,6 +11,7 @@ env.Prepend(LIBS = [
     svgadrm,
     svga,
     trace,
+    rbug,
     mesa,
     glsl,
     gallium,

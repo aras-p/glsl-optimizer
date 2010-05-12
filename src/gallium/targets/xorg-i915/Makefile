@@ -20,6 +20,7 @@ LIBS = \
 	$(TOP)/src/gallium/winsys/i915/drm/libi915drm.a \
 	$(TOP)/src/gallium/drivers/i915/libi915.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
+	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(GALLIUM_AUXILIARIES)
 

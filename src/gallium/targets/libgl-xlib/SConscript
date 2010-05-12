@@ -29,6 +29,7 @@ env.Prepend(LIBS = [
     st_xlib,
     ws_xlib,
     trace,
+    rbug,
     identity,
     glapi,
     mesa,

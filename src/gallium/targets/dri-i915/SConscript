@@ -13,6 +13,7 @@ env.Prepend(LIBS = [
     i915drm,
     i915,
     trace,
+    rbug,
     mesa,
     glsl,
     gallium,

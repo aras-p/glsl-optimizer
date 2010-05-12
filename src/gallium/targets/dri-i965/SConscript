@@ -15,6 +15,7 @@ env.Prepend(LIBS = [
     ws_wrapper,
     i965,
     trace,
+    rbug,
     mesa,
     glsl,
     gallium,

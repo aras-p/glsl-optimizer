@@ -13,6 +13,7 @@ env.Tool('x11')
 env.Prepend(LIBS = [
     ws_xlib,
     trace,
+    rbug,
     identity,
 #    gallium,
 ])

@@ -13,6 +13,7 @@ env.Prepend(LIBS = [
     radeonwinsys,
     r300,
     trace,
+    rbug,
     mesa,
     glsl,
     gallium,

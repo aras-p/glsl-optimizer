@@ -285,6 +285,12 @@ rbug_screen_fence_finish(struct pipe_screen *_screen,
                                flags);
 }
 
+boolean
+rbug_enabled()
+{
+   return debug_get_option_rbug();
+}
+
 struct pipe_screen *
 rbug_screen_create(struct pipe_screen *screen)
 {

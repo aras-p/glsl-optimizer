@@ -39,6 +39,7 @@ if env['platform'] == 'linux':
 
 	env.Prepend(LIBS = [
 		trace,
+		rbug,
 		st_xorg,
 		svgadrm,
 		svga,

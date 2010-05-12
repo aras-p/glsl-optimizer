@@ -42,6 +42,7 @@ LIBS = \
 	$(TOP)/src/gallium/state_trackers/glx/xlib/libxlib.a \
 	$(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
+	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(TOP)/src/gallium/drivers/identity/libidentity.a \
 	$(TOP)/src/mapi/glapi/libglapi.a \
 	$(TOP)/src/mesa/libmesagallium.a \

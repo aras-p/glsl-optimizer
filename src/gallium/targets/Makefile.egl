@@ -19,7 +19,8 @@ x11_ST = $(TOP)/src/gallium/state_trackers/egl/libeglx11.a \
 	 $(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a \
 	 $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	 $(TOP)/src/gallium/drivers/identity/libidentity.a \
-	 $(TOP)/src/gallium/drivers/trace/libtrace.a
+	 $(TOP)/src/gallium/drivers/trace/libtrace.a \
+	 $(TOP)/src/gallium/drivers/rbug/librbug.a
 
 x11_LIBS = $(common_LIBS) -lX11 -lXext -lXfixes
 

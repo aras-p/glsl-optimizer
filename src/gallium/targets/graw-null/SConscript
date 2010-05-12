@@ -8,6 +8,7 @@ env = env.Clone()
 env.Prepend(LIBS = [
     ws_null,
     trace,
+    rbug,
     identity,
 #    gallium,
 ])

@@ -34,4 +34,7 @@ struct pipe_context;
 struct pipe_screen *
 rbug_screen_create(struct pipe_screen *screen);
 
+boolean
+rbug_enabled(void);
+
 #endif /* RBUG_PUBLIC_H */
