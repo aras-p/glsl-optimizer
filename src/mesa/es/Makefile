@@ -4,7 +4,6 @@ TOP := ../../..
 MESA := ..
 
 include $(TOP)/configs/current
-include sources.mak
 
 ES1_LIBS := libes1gallium.a
 ES2_LIBS := libes2gallium.a
@@ -23,12 +22,35 @@ ES2_CPPFLAGS := -DFEATURE_ES2=1 -D__GL_EXPORTS
 ES1_OBJ_DIR := objs-es1
 ES2_OBJ_DIR := objs-es2
 
-# adjust output dirs
-ES1_OBJECTS := $(addprefix $(ES1_OBJ_DIR)/, $(ES1_OBJECTS))
-ES1_GALLIUM_OBJECTS := $(addprefix $(ES1_OBJ_DIR)/, $(ES1_GALLIUM_OBJECTS))
+include $(MESA)/sources.mak
 
-ES2_OBJECTS := $(addprefix $(ES2_OBJ_DIR)/, $(ES2_OBJECTS))
-ES2_GALLIUM_OBJECTS := $(addprefix $(ES2_OBJ_DIR)/, $(ES2_GALLIUM_OBJECTS))
+# TODO Make core mesa more feature-aware and remove the omit list
+VBO_OMITTED :=				\
+	vbo/vbo_save.c			\
+	vbo/vbo_save_api.c		\
+	vbo/vbo_save_draw.c		\
+	vbo/vbo_save_loopback.c
+VBO_SOURCES := $(filter-out $(VBO_OMITTED), $(VBO_SOURCES))
+
+SHADER_OMITTED :=			\
+	shader/atifragshader.c
+SHADER_SOURCES := $(filter-out $(SHADER_OMITTED), $(SHADER_SOURCES))
+
+# adjust source dir
+ES_SOURCES := $(addprefix $(MESA)/, $(MESA_SOURCES))
+ES_GALLIUM_SOURCES := $(addprefix $(MESA)/, $(MESA_GALLIUM_SOURCES))
+
+# adjust object dirs
+ES1_OBJECTS := $(addprefix $(ES1_OBJ_DIR)/, $(MESA_OBJECTS))
+ES1_GALLIUM_OBJECTS := $(addprefix $(ES1_OBJ_DIR)/, $(MESA_GALLIUM_OBJECTS))
+
+ES2_OBJECTS := $(addprefix $(ES2_OBJ_DIR)/, $(MESA_OBJECTS))
+ES2_GALLIUM_OBJECTS := $(addprefix $(ES2_OBJ_DIR)/, $(MESA_GALLIUM_OBJECTS))
+
+# adjust include dirs
+ES1_INCLUDES := -I$(TOP)/src/mapi/es1api $(INCLUDE_DIRS)
+ES2_INCLUDES := -I$(TOP)/src/mapi/es2api $(INCLUDE_DIRS)
+
 
 # compile either ES1 or ES2 sources
 define es-compile
@@ -36,23 +58,11 @@ define es-compile
 	$(CC) -c $(CFLAGS) $(ES$(1)_CPPFLAGS) $(ES$(1)_INCLUDES) -o $@ $<
 endef
 
-$(ES1_OBJ_DIR)/%.o: %.c
-	$(call es-compile,1)
-
-$(ES1_OBJ_DIR)/%.o: %.S
-	$(call es-compile,1)
-
 $(ES1_OBJ_DIR)/%.o: $(MESA)/%.c
 	$(call es-compile,1)
 
 $(ES1_OBJ_DIR)/%.o: $(MESA)/%.S
 	$(call es-compile,1)
-
-$(ES2_OBJ_DIR)/%.o: %.c
-	$(call es-compile,2)
-
-$(ES2_OBJ_DIR)/%.o: %.S
-	$(call es-compile,2)
 
 $(ES2_OBJ_DIR)/%.o: $(MESA)/%.c
 	$(call es-compile,2)
@@ -64,7 +74,7 @@ libes1.a: $(ES1_OBJECTS) $(GLSL_LIBS)
 	@$(MKLIB) -o es1 -static $(ES1_OBJECTS) $(GLSL_LIBS)
 
 libes2.a: $(ES2_OBJECTS) $(GLSL_LIBS)
-	@$(MKLIB) -o es2 -static $(ES1_OBJECTS) $(GLSL_LIBS)
+	@$(MKLIB) -o es2 -static $(ES2_OBJECTS) $(GLSL_LIBS)
 
 libes1gallium.a: $(ES1_GALLIUM_OBJECTS) $(GLSL_LIBS)
 	@$(MKLIB) -o es1gallium -static $(ES1_GALLIUM_OBJECTS) $(GLSL_LIBS)
@@ -86,17 +96,17 @@ subdirs:
 	@$(MAKE) -C $(MESA) glsl_builtin
 
 # sort to avoid duplicates
-ALL_SOURCES := $(sort $(ES1_ALL_SOURCES) $(ES2_ALL_SOURCES))
+ES_ALL_SOURCES := $(sort $(ES_SOURCES) $(ES_GALLIUM_SOURCES))
 
-depend: $(ALL_SOURCES)
+depend: $(ES_ALL_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
 	@# MESA is "..", but luckily, directories are longer than 2 characters
 	@$(MKDEP) -f- -p$(ES1_OBJ_DIR)/ $(DEFINES) $(ES1_CFLAGS) \
-		$(ES1_INCLUDES) $(ES1_ALL_SOURCES) 2>/dev/null | \
+		$(ES1_INCLUDES) $(ES_ALL_SOURCES) 2>/dev/null | \
 		sed -e 's,^$(ES1_OBJ_DIR)/$(MESA)/,$(ES1_OBJ_DIR)/,' > depend
 	@$(MKDEP) -f- -p$(ES2_OBJ_DIR)/ $(DEFINES) $(ES2_CFLAGS) \
-		$(ES2_INCLUDES) $(ES2_ALL_SOURCES) 2>/dev/null | \
+		$(ES2_INCLUDES) $(ES_ALL_SOURCES) 2>/dev/null | \
 		sed -e 's,^$(ES2_OBJ_DIR)/$(MESA)/,$(ES2_OBJ_DIR)/,' >> depend
 
 ifneq ($(MAKECMDGOALS),clean)
