@@ -33,6 +33,7 @@
 #include "gallivm/lp_bld_debug.h"
 #include "lp_rast.h"
 #include "lp_scene.h"
+#include "lp_state.h"
 #include "lp_texture.h"
 #include "lp_tile_soa.h"
 #include "lp_limits.h"

@@ -63,6 +63,11 @@ struct llvmpipe_context;
 struct lp_fragment_shader;
 
 
+/** Indexes into jit_function[] array */
+#define RAST_WHOLE 0
+#define RAST_EDGE_TEST 1
+
+
 struct lp_fragment_shader_variant_key
 {
    struct pipe_depth_state depth;

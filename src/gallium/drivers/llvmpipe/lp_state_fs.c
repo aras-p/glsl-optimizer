@@ -962,8 +962,8 @@ generate_variant(struct llvmpipe_context *lp,
 
    memcpy(&variant->key, key, sizeof *key);
 
-   generate_fragment(lp, shader, variant, 0);
-   generate_fragment(lp, shader, variant, 1);
+   generate_fragment(lp, shader, variant, RAST_WHOLE);
+   generate_fragment(lp, shader, variant, RAST_EDGE_TEST);
 
    /* TODO: most of these can be relaxed, in particular the colormask */
    variant->opaque =
