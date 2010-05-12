@@ -1003,16 +1003,16 @@ void r300_emit_viewport_state(struct r300_context* r300,
     struct r300_viewport_state* viewport = (struct r300_viewport_state*)state;
     CS_LOCALS(r300);
 
-     BEGIN_CS(size);
-     OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
-     OUT_CS_32F(viewport->xscale);
-     OUT_CS_32F(viewport->xoffset);
-     OUT_CS_32F(viewport->yscale);
-     OUT_CS_32F(viewport->yoffset);
-     OUT_CS_32F(viewport->zscale);
-     OUT_CS_32F(viewport->zoffset);
-     OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
-     END_CS;
+    BEGIN_CS(size);
+    OUT_CS_REG_SEQ(R300_SE_VPORT_XSCALE, 6);
+    OUT_CS_32F(viewport->xscale);
+    OUT_CS_32F(viewport->xoffset);
+    OUT_CS_32F(viewport->yscale);
+    OUT_CS_32F(viewport->yoffset);
+    OUT_CS_32F(viewport->zscale);
+    OUT_CS_32F(viewport->zoffset);
+    OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
+    END_CS;
 }
 
 void r300_emit_ztop_state(struct r300_context* r300,
