@@ -15,7 +15,7 @@ To build, build a normal gallium build and from this directory do the following.
 = Usage =
 
 Make sure that you driver has trace integration, see
-src/gallium/driver/trace/README for more information about that. Then from on
+src/gallium/driver/rbug/README for more information about that. Then from on
 the computer that you want to debug do:
 
  export GALLIUM_RBUG=true
@@ -24,7 +24,10 @@ the computer that you want to debug do:
 
 From the debugging computer launch apps form this directory. Currently ip
 addresses are hardcoded and you need to edit the application, but that will
-change in the future.
+change in the future. For a more advanced gui application see:
+
+   http://cgit.freedesktop.org/mesa/rbug-gui
+
 
 = Testing =
 
