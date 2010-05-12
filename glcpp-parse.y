@@ -57,7 +57,7 @@ _list_append (list_t *list, const char *str);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {void *scanner}
 
-%token DEFINE IDENTIFIER NEWLINE TOKEN
+%token DEFINE IDENTIFIER NEWLINE TOKEN UNDEF
 %type <str> token IDENTIFIER TOKEN
 %type <list> replacement_list
 
@@ -73,19 +73,35 @@ content:
 		_print_resolved_token (parser, $1);
 		talloc_free ($1);
 	}
-|	directive
+|	directive_with_newline
 |	content token {
 		_print_resolved_token (parser, $2);
 		talloc_free ($2);
 	}
-|	content directive
+|	content directive_with_newline
+;
+
+directive_with_newline:
+	directive NEWLINE {
+		printf ("\n");
+	}
 ;
 
 directive:
-	DEFINE IDENTIFIER replacement_list NEWLINE {
+	DEFINE IDENTIFIER replacement_list {
 		talloc_steal ($3, $2);
 		hash_table_insert (parser->defines, $3, $2);
-		printf ("\n");
+	}
+|	UNDEF IDENTIFIER {
+		list_t *replacement = hash_table_find (parser->defines, $2);
+		if (replacement) {
+			/* XXX: Need hash table to support a real way
+			 * to remove an element rather than prefixing
+			 * a new node with data of NULL like this. */
+			hash_table_insert (parser->defines, NULL, $2);
+			talloc_free (replacement);
+		}
+		talloc_free ($2);
 	}
 ;
 

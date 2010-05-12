@@ -33,7 +33,7 @@
 %option extra-type="glcpp_parser_t *"
 
 %x ST_DEFINE
-%x ST_DEFVAL
+%x ST_UNDEF
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -66,6 +66,23 @@ TOKEN		{NONSPACE}+
 }
 
 <ST_DEFINE>{SPACE}+
+
+{HASH}undef{HSPACE}*	{
+	BEGIN ST_UNDEF;
+	return UNDEF;
+}
+
+<ST_UNDEF>{IDENTIFIER}	{
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return IDENTIFIER;
+}
+
+<ST_UNDEF>\n {
+	BEGIN INITIAL;
+	return NEWLINE;
+}
+
+<ST_UNDEF>{SPACE}+
 
 	/* Anything we don't specifically recognize is a stream of tokens */
 {NONSPACE}+ {
