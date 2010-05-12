@@ -38,6 +38,9 @@
 #include "vbo_context.h"
 
 
+#if FEATURE_dlist
+
+
 /*
  * After playback, copy everything but the position from the
  * last vertex to the saved state
@@ -288,3 +291,6 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data )
     */
    _playback_copy_to_current( ctx, node );
 }
+
+
+#endif /* FEATURE_dlist */

@@ -1,5 +1,7 @@
 # src/mesa/es/Makefile
 #
+# TODO Merge back to core mesa
+#
 TOP := ../../..
 MESA := ..
 
@@ -23,14 +25,6 @@ ES1_OBJ_DIR := objs-es1
 ES2_OBJ_DIR := objs-es2
 
 include $(MESA)/sources.mak
-
-# TODO Make core mesa more feature-aware and remove the omit list
-VBO_OMITTED :=				\
-	vbo/vbo_save.c			\
-	vbo/vbo_save_api.c		\
-	vbo/vbo_save_draw.c		\
-	vbo/vbo_save_loopback.c
-VBO_SOURCES := $(filter-out $(VBO_OMITTED), $(VBO_SOURCES))
 
 # adjust source dir
 ES_SOURCES := $(addprefix $(MESA)/, $(MESA_SOURCES))

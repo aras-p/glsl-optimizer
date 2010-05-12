@@ -83,6 +83,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbo_context.h"
 
 
+#if FEATURE_dlist
+
+
 #ifdef ERROR
 #undef ERROR
 #endif
@@ -1263,3 +1266,5 @@ void vbo_save_api_init( struct vbo_save_context *save )
    _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
 }
 
+
+#endif /* FEATURE_dlist */

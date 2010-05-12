@@ -153,6 +153,7 @@ struct vbo_save_context {
    GLubyte *currentsz[VBO_ATTRIB_MAX];
 };
 
+#if FEATURE_dlist
 
 void vbo_save_init( GLcontext *ctx );
 void vbo_save_destroy( GLcontext *ctx );
@@ -181,4 +182,18 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data );
 
 void vbo_save_api_init( struct vbo_save_context *save );
 
-#endif
+#else /* FEATURE_dlist */
+
+static INLINE void
+vbo_save_init( GLcontext *ctx )
+{
+}
+
+static INLINE void
+vbo_save_destroy( GLcontext *ctx )
+{
+}
+
+#endif /* FEATURE_dlist */
+
+#endif /* VBO_SAVE_H */
