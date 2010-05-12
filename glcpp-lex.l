@@ -30,6 +30,7 @@
 %}
 
 %option reentrant noyywrap
+%option extra-type="glcpp_parser_t *"
 
 %x ST_DEFINE
 %x ST_DEFVAL
@@ -50,12 +51,12 @@ TOKEN		{NONSPACE}+
 }
 
 <ST_DEFINE>{IDENTIFIER}	{
-	yylval.str = strdup (yytext);
+	yylval.str = xtalloc_strdup (yyextra, yytext);
 	return IDENTIFIER;
 }
 
 <ST_DEFINE>{TOKEN} {
-	yylval.str = strdup (yytext);
+	yylval.str = xtalloc_strdup (yyextra, yytext);
 	return TOKEN;
 }
 
@@ -68,7 +69,7 @@ TOKEN		{NONSPACE}+
 
 	/* Anything we don't specifically recognize is a stream of tokens */
 {NONSPACE}+ {
-	yylval.str = strdup (yytext);
+	yylval.str = xtalloc_strdup (yyextra, yytext);
 	return TOKEN;
 }
 

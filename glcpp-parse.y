@@ -71,21 +71,20 @@ input:
 content:
 	token {
 		_print_resolved_token (parser, $1);
-		free ($1);
+		talloc_free ($1);
 	}
 |	directive
 |	content token {
 		_print_resolved_token (parser, $2);
-		free ($2);
+		talloc_free ($2);
 	}
 |	content directive
 ;
 
 directive:
 	DEFINE IDENTIFIER replacement_list NEWLINE {
-		char *key = talloc_strdup ($3, $2);
-		free ($2);
-		hash_table_insert (parser->defines, $3, key);
+		talloc_steal ($3, $2);
+		hash_table_insert (parser->defines, $3, $2);
 		printf ("\n");
 	}
 ;
@@ -97,7 +96,7 @@ replacement_list:
 
 |	replacement_list token {
 		_list_append ($1, $2);
-		free ($2);
+		talloc_free ($2);
 		$$ = $1;
 	}
 ;
@@ -114,12 +113,7 @@ _list_create (void *ctx)
 {
 	list_t *list;
 
-	list = talloc (ctx, list_t);
-	if (list == NULL) {
-		fprintf (stderr, "Out of memory.\n");
-		exit (1);
-	}
-
+	list = xtalloc (ctx, list_t);
 	list->head = NULL;
 	list->tail = NULL;
 
@@ -131,17 +125,8 @@ _list_append (list_t *list, const char *str)
 {
 	node_t *node;
 
-	node = talloc (list, node_t);
-	if (node == NULL) {
-		fprintf (stderr, "Out of memory.\n");
-		exit (1);
-	}
-
-	node->str = talloc_strdup (node, str);
-	if (node->str == NULL) {
-		fprintf (stderr, "Out of memory.\n");
-		exit (1);
-	}
+	node = xtalloc (list, node_t);
+	node->str = xtalloc_strdup (node, str);
 		
 	node->next = NULL;
 
@@ -165,13 +150,9 @@ glcpp_parser_create (void)
 {
 	glcpp_parser_t *parser;
 
-	parser = talloc (NULL, glcpp_parser_t);
-	if (parser == NULL) {
-		fprintf (stderr, "Out of memory.\n");
-		exit (1);
-	}
+	parser = xtalloc (NULL, glcpp_parser_t);
 
-	yylex_init (&parser->scanner);
+	yylex_init_extra (parser, &parser->scanner);
 	parser->defines = hash_table_ctor (32, hash_table_string_hash,
 					   hash_table_string_compare);
 

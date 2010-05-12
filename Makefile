@@ -6,7 +6,7 @@ CFLAGS = -g
 # all the warnings enabled.
 override CFLAGS += -Wall -Wextra -Wwrite-strings -Wswitch-enum -Wno-unused
 
-glcpp: glcpp.o glcpp-lex.o glcpp-parse.o hash_table.o
+glcpp: glcpp.o glcpp-lex.o glcpp-parse.o hash_table.o xtalloc.o
 	gcc -o $@ -ltalloc $^
 
 %.c %.h: %.y
