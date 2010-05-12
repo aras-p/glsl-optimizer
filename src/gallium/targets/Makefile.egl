@@ -56,7 +56,7 @@ $(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 	$(MKLIB_OPTIONS) $(EGL_DRIVER_OBJECTS) \
 	-Wl,--start-group $($(1)_ST) $(EGL_DRIVER_PIPES) \
 	$(GALLIUM_AUXILIARIES) -Wl,--end-group \
-	$($(1)_LIBS) $(EGL_DRIVER_LIBS)
+	$($(1)_LIBS) $(EGL_DRIVER_LIBS) -L$(TOP)/$(LIB_DIR) -l$(EGL_LIB)
 endef
 
 egl_x11_$(EGL_DRIVER_NAME).so: $(EGL_DRIVER_OBJECTS) $(x11_ST) $(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) Makefile
