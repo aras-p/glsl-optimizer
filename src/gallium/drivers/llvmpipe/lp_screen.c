@@ -186,6 +186,11 @@ llvmpipe_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
       return 16.0; /* not actually signficant at this time */
    case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
       return 16.0; /* arbitrary */
+   case PIPE_CAP_GUARD_BAND_LEFT:
+   case PIPE_CAP_GUARD_BAND_TOP:
+   case PIPE_CAP_GUARD_BAND_RIGHT:
+   case PIPE_CAP_GUARD_BAND_BOTTOM:
+      return 0.0;
    default:
       assert(0);
       return 0;
