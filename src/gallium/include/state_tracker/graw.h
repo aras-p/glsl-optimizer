@@ -18,19 +18,19 @@
 
 struct pipe_screen;
 
-struct pipe_screen *graw_init( void );
+PUBLIC struct pipe_screen *graw_init( void );
 
 /* Returns a handle to be used with flush_frontbuffer()/present().
  *
  * Query format support with screen::is_format_supported and usage
  * XXX.
  */
-void *graw_create_window( int x,
-                          int y,
-                          unsigned width,
-                          unsigned height,
-                          enum pipe_format format );
+PUBLIC void *graw_create_window( int x,
+                                 int y,
+                                 unsigned width,
+                                 unsigned height,
+                                 enum pipe_format format );
 
-void graw_destroy_window( void *handle );
+PUBLIC void graw_destroy_window( void *handle );
 
 #endif
