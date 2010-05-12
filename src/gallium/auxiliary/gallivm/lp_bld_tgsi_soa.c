@@ -391,15 +391,16 @@ emit_ddy(struct lp_build_tgsi_soa_context *bld,
 static LLVMValueRef
 get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
              unsigned index,
-             unsigned swizzle,
+             unsigned chan,
              boolean is_indirect,
              LLVMValueRef addr)
 {
+   assert(chan < 4);
    if (!bld->has_indirect_addressing) {
-      return bld->temps[index][swizzle];
+      return bld->temps[index][chan];
    } else {
       LLVMValueRef lindex =
-         LLVMConstInt(LLVMInt32Type(), index*4 + swizzle, 0);
+         LLVMConstInt(LLVMInt32Type(), index * 4 + chan, 0);
       if (is_indirect)
          lindex = lp_build_add(&bld->base, lindex, addr);
       return LLVMBuildGEP(bld->base.builder, bld->temps_array, &lindex, 1, "");
