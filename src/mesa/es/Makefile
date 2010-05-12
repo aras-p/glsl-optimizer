@@ -32,10 +32,6 @@ VBO_OMITTED :=				\
 	vbo/vbo_save_loopback.c
 VBO_SOURCES := $(filter-out $(VBO_OMITTED), $(VBO_SOURCES))
 
-SHADER_OMITTED :=			\
-	shader/atifragshader.c
-SHADER_SOURCES := $(filter-out $(SHADER_OMITTED), $(SHADER_SOURCES))
-
 # adjust source dir
 ES_SOURCES := $(addprefix $(MESA)/, $(MESA_SOURCES))
 ES_GALLIUM_SOURCES := $(addprefix $(MESA)/, $(MESA_GALLIUM_SOURCES))

@@ -36,9 +36,7 @@
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "shader/arbprogram.h"
 #endif
-#if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
-#endif
 #include "attrib.h"
 #include "blend.h"
 #if FEATURE_ARB_vertex_buffer_object
@@ -715,22 +713,7 @@ _mesa_create_exec_table(void)
 #endif
 
   /* GL_ATI_fragment_shader */
-#if FEATURE_ATI_fragment_shader
-   SET_GenFragmentShadersATI(exec, _mesa_GenFragmentShadersATI);
-   SET_BindFragmentShaderATI(exec, _mesa_BindFragmentShaderATI);
-   SET_DeleteFragmentShaderATI(exec, _mesa_DeleteFragmentShaderATI);
-   SET_BeginFragmentShaderATI(exec, _mesa_BeginFragmentShaderATI);
-   SET_EndFragmentShaderATI(exec, _mesa_EndFragmentShaderATI);
-   SET_PassTexCoordATI(exec, _mesa_PassTexCoordATI);
-   SET_SampleMapATI(exec, _mesa_SampleMapATI);
-   SET_ColorFragmentOp1ATI(exec, _mesa_ColorFragmentOp1ATI);
-   SET_ColorFragmentOp2ATI(exec, _mesa_ColorFragmentOp2ATI);
-   SET_ColorFragmentOp3ATI(exec, _mesa_ColorFragmentOp3ATI);
-   SET_AlphaFragmentOp1ATI(exec, _mesa_AlphaFragmentOp1ATI);
-   SET_AlphaFragmentOp2ATI(exec, _mesa_AlphaFragmentOp2ATI);
-   SET_AlphaFragmentOp3ATI(exec, _mesa_AlphaFragmentOp3ATI);
-   SET_SetFragmentShaderConstantATI(exec, _mesa_SetFragmentShaderConstantATI);
-#endif
+   _mesa_init_ati_fragment_shader_dispatch(exec);
 
   /* GL_ATI_envmap_bumpmap */
    SET_GetTexBumpParameterivATI(exec, _mesa_GetTexBumpParameterivATI);
