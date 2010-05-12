@@ -79,6 +79,11 @@ static const char* r300_get_name(struct pipe_screen* pscreen)
 static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
+    boolean is_r400 = r300screen->caps.is_r400;
+    boolean is_r500 = r300screen->caps.is_r500;
+
+    /* XXX extended shader capabilities of r400 unimplemented */
+    is_r400 = FALSE;
 
     switch (param) {
         case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -122,7 +127,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-            if (r300screen->caps.is_r500) {
+            if (is_r500) {
                 /* 13 == 4096 */
                 return 13;
             } else {
@@ -140,7 +145,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
             return 1;
         case PIPE_CAP_SM3:
-            if (r300screen->caps.is_r500) {
+            if (is_r500) {
                 return 1;
             } else {
                 return 0;
@@ -159,6 +164,55 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
             return 0;
+
+        /* Fragment shader limits. */
+        case PIPE_CAP_MAX_FS_INSTRUCTIONS:
+            return is_r500 || is_r400 ? 512 : 96;
+        case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
+            return is_r500 || is_r400 ? 512 : 64;
+        case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
+            return is_r500 || is_r400 ? 512 : 32;
+        case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
+            return is_r500 ? 512 : 4;
+        case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
+            return is_r500 ? 64 : 0; /* Actually unlimited on r500. */
+        case PIPE_CAP_MAX_FS_INPUTS:
+            /* 2 colors + 8 texcoords are always supported
+             * (minus fog and wpos).
+             *
+             * R500 has the ability to turn 3rd and 4th color into
+             * additional texcoords but there is no two-sided color
+             * selection then. However the facing bit can be used instead. */
+            return 10;
+        case PIPE_CAP_MAX_FS_CONSTS:
+            return is_r500 ? 256 : 32;
+        case PIPE_CAP_MAX_FS_TEMPS:
+            return is_r500 ? 128 : is_r400 ? 64 : 32;
+        case PIPE_CAP_MAX_FS_ADDRS:
+            return 0;
+        case PIPE_CAP_MAX_FS_PREDS:
+            return is_r500 ? 1 : 0;
+
+        /* Vertex shader limits. */
+        case PIPE_CAP_MAX_VS_INSTRUCTIONS:
+        case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
+            return is_r500 ? 1024 : 256;
+        case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
+        case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
+            return 0;
+        case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
+            return is_r500 ? 4 : 0; /* For loops; not sure about conditionals. */
+        case PIPE_CAP_MAX_VS_INPUTS:
+            return 16;
+        case PIPE_CAP_MAX_VS_CONSTS:
+            return 256;
+        case PIPE_CAP_MAX_VS_TEMPS:
+            return 32;
+        case PIPE_CAP_MAX_VS_ADDRS:
+            return 1; /* XXX guessed */
+        case PIPE_CAP_MAX_VS_PREDS:
+            return is_r500 ? 4 : 0; /* XXX guessed. */
+
         default:
             fprintf(stderr, "r300: Implementation error: Bad param %d\n",
                 param);
