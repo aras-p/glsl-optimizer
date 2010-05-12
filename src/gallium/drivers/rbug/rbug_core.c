@@ -47,6 +47,9 @@
 #define U642VOID(x) ((void *)(unsigned long)(x))
 #define VOID2U64(x) ((uint64_t)(unsigned long)(x))
 
+#define container_of(ptr, type, field) \
+   (type*)((char*)ptr - offsetof(type, field))
+
 struct rbug_rbug
 {
    struct rbug_screen *rb_screen;
@@ -70,7 +73,7 @@ rbug_get_context_locked(struct rbug_screen *rb_screen, rbug_context_t ctx)
    struct rbug_list *ptr;
 
    foreach(ptr, &rb_screen->contexts) {
-      rb_context = (struct rbug_context *)((char*)ptr - offsetof(struct rbug_context, list));
+      rb_context = container_of(ptr, struct rbug_context, list);
       if (ctx == VOID2U64(rb_context))
          break;
       rb_context = NULL;
@@ -86,7 +89,7 @@ rbug_get_shader_locked(struct rbug_context *rb_context, rbug_shader_t shdr)
    struct rbug_list *ptr;
 
    foreach(ptr, &rb_context->shaders) {
-      tr_shdr = (struct rbug_shader *)((char*)ptr - offsetof(struct rbug_shader, list));
+      tr_shdr = container_of(ptr, struct rbug_shader, list);
       if (shdr == VOID2U64(tr_shdr))
          break;
       tr_shdr = NULL;
@@ -181,7 +184,7 @@ rbug_texture_list(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
    pipe_mutex_lock(rb_screen->list_mutex);
    texs = MALLOC(rb_screen->num_resources * sizeof(rbug_texture_t));
    foreach(ptr, &rb_screen->resources) {
-      tr_tex = (struct rbug_resource *)((char*)ptr - offsetof(struct rbug_resource, list));
+      tr_tex = container_of(ptr, struct rbug_resource, list);
       texs[i++] = VOID2U64(tr_tex);
    }
    pipe_mutex_unlock(rb_screen->list_mutex);
@@ -203,7 +206,7 @@ rbug_texture_info(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
 
    pipe_mutex_lock(rb_screen->list_mutex);
    foreach(ptr, &rb_screen->resources) {
-      tr_tex = (struct rbug_resource *)((char*)ptr - offsetof(struct rbug_resource, list));
+      tr_tex = container_of(ptr, struct rbug_resource, list);
       if (gpti->texture == VOID2U64(tr_tex))
          break;
       tr_tex = NULL;
@@ -250,7 +253,7 @@ rbug_texture_read(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
 
    pipe_mutex_lock(rb_screen->list_mutex);
    foreach(ptr, &rb_screen->resources) {
-      tr_tex = (struct rbug_resource *)((char*)ptr - offsetof(struct rbug_resource, list));
+      tr_tex = container_of(ptr, struct rbug_resource, list);
       if (gptr->texture == VOID2U64(tr_tex))
          break;
       tr_tex = NULL;
@@ -300,7 +303,7 @@ rbug_context_list(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
    pipe_mutex_lock(rb_screen->list_mutex);
    ctxs = MALLOC(rb_screen->num_contexts * sizeof(rbug_context_t));
    foreach(ptr, &rb_screen->contexts) {
-      rb_context = (struct rbug_context *)((char*)ptr - offsetof(struct rbug_context, list));
+      rb_context = container_of(ptr, struct rbug_context, list);
       ctxs[i++] = VOID2U64(rb_context);
    }
    pipe_mutex_unlock(rb_screen->list_mutex);
@@ -532,7 +535,7 @@ rbug_shader_list(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_t
    pipe_mutex_lock(rb_context->list_mutex);
    shdrs = MALLOC(rb_context->num_shaders * sizeof(rbug_shader_t));
    foreach(ptr, &rb_context->shaders) {
-      tr_shdr = (struct rbug_shader *)((char*)ptr - offsetof(struct rbug_shader, list));
+      tr_shdr = container_of(ptr, struct rbug_shader, list);
       shdrs[i++] = VOID2U64(tr_shdr);
    }
 
