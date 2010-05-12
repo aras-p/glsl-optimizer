@@ -1189,6 +1189,7 @@ exercise_buffer_objects(enum Map_Buffer_Usage usage)
    GLint bufferMapped;
    static GLubyte data[BUFFER_DATA_SIZE] = {0};
    float *dataPtr = NULL;
+   const char *extensions = (const char *) glGetString(GL_EXTENSIONS);
 
    /* Get the function pointers we need.  These are from
     * GL_ARB_vertex_buffer_object and are required in all
@@ -1216,6 +1217,9 @@ exercise_buffer_objects(enum Map_Buffer_Usage usage)
     * we're given Use_Map_Buffer_Range.  Test it before using it.
     */
    DECLARE_GLFUNC_PTR(BufferParameteriAPPLE, PFNGLBUFFERPARAMETERIAPPLEPROC);
+   if (!strstr("GL_APPLE_flush_buffer_range", extensions)) {
+      BufferParameteriAPPLE = NULL;
+   }
 
    /* Make sure we have all the function pointers we need. */
    if (GenBuffersARB == NULL ||
@@ -1286,7 +1290,7 @@ exercise_buffer_objects(enum Map_Buffer_Usage usage)
     * using MapBufferRange, we first have to flush the range we modified.
     */
    if (usage == Use_Map_Buffer_Range) {
-      (*FlushMappedBufferRange)(GL_ARRAY_BUFFER_ARB, 4, 16);
+      (*FlushMappedBufferRange)(GL_ARRAY_BUFFER_ARB, 0, 16);
    }
    if (!(*UnmapBufferARB)(GL_ARRAY_BUFFER_ARB)) {
       fprintf(stderr, "%s: UnmapBuffer failed\n", __FUNCTION__);
