@@ -235,6 +235,37 @@ ir_to_mesa_visitor::get_temp(struct mbtree *tree, int size)
    tree->dst_reg.writemask = (1 << size) - 1;
 }
 
+static int
+type_size(const struct glsl_type *type)
+{
+   unsigned int i;
+   int size;
+
+   switch (type->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      assert(!type->is_matrix());
+      /* Regardless of size of vector, it gets a vec4. This is bad
+       * packing for things like floats, but otherwise arrays become a
+       * mess.  Hopefully a later pass over the code can pack scalars
+       * down if appropriate.
+       */
+      return 1;
+   case GLSL_TYPE_ARRAY:
+      return type_size(type->fields.array) * type->length;
+   case GLSL_TYPE_STRUCT:
+      size = 0;
+      for (i = 0; i < type->length; i++) {
+	 size += type_size(type->fields.structure[i].type);
+      }
+      return size;
+   default:
+      assert(0);
+   }
+}
+
 void
 ir_to_mesa_visitor::get_temp_for_var(ir_variable *var, struct mbtree *tree)
 {
@@ -252,13 +283,7 @@ ir_to_mesa_visitor::get_temp_for_var(ir_variable *var, struct mbtree *tree)
    entry = new temp_entry(var, PROGRAM_TEMPORARY, this->next_temp);
    this->variable_storage.push_tail(entry);
 
-   /* Store each array element in a temp.  This is poor packing for
-    * things like floats, but we can't do better in the Mesa IR.
-    */
-   if (var->type->length > 1)
-      next_temp += var->type->length;
-   else
-      next_temp++;
+   next_temp += type_size(var->type);
 
    ir_to_mesa_set_tree_reg(tree, entry->file, entry->index);
 }
@@ -697,6 +722,39 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    this->result = tree;
 }
 
+void
+ir_to_mesa_visitor::visit(ir_dereference_record *ir)
+{
+   ir_variable *var = ir->variable_referenced();
+   const char *field = ir->field;
+   struct mbtree *tree;
+   unsigned int i;
+
+   const glsl_type *struct_type = var->type;
+   int offset = 0;
+
+   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
+   this->get_temp_for_var(var, tree);
+
+   for (i = 0; i < struct_type->length; i++) {
+      if (strcmp(struct_type->fields.structure[i].name, field) == 0)
+	 break;
+      offset += type_size(struct_type->fields.structure[i].type);
+   }
+   tree->src_reg.index += offset;
+   tree->dst_reg.index += offset;
+}
+
+/**
+ * We want to be careful in assignment setup to hit the actual storage
+ * instead of potentially using a temporary like we might with the
+ * ir_dereference handler.
+ *
+ * Thanks to ir_swizzle_swizzle, and ir_vec_index_to_swizzle, we
+ * should only see potentially one variable array index of a vector,
+ * and one swizzle, before getting to actual vec4 storage.  So handle
+ * those, then go use ir_dereference to handle the rest.
+ */
 static struct mbtree *
 get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
 {
@@ -704,11 +762,16 @@ get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
    ir_dereference *deref;
    ir_swizzle *swiz;
 
+   ir->accept(v);
+   tree = v->result;
+
    if ((deref = ir->as_dereference())) {
+      ir_dereference_array *deref_array = ir->as_dereference_array();
+      assert(!deref_array || deref_array->array->type->is_array());
+
       ir->accept(v);
       tree = v->result;
    } else if ((swiz = ir->as_swizzle())) {
-      tree = get_assignment_lhs(swiz->val, v);
       tree->dst_reg.writemask = 0;
       if (swiz->mask.num_components >= 1)
 	 tree->dst_reg.writemask |= (1 << swiz->mask.x);
@@ -726,16 +789,13 @@ get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
 }
 
 void
-ir_to_mesa_visitor::visit(ir_dereference_record *ir)
-{
-   (void)ir;
-   assert(0);
-}
-
-void
 ir_to_mesa_visitor::visit(ir_assignment *ir)
 {
    struct mbtree *l, *r, *t;
+
+   assert(!ir->lhs->type->is_matrix());
+   assert(!ir->lhs->type->is_array());
+   assert(ir->lhs->type->base_type != GLSL_TYPE_STRUCT);
 
    l = get_assignment_lhs(ir->lhs, this);
 
