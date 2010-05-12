@@ -14,7 +14,7 @@ GL 3.0:
 
 GLSL changes (GL_EXT_gpu_shader4, etc)                not started
 Conditional rendering (GL_NV_conditional_render)      DONE (swrast & softpipe)
-Map buffer subranges (GL_APPLE_flush_buffer_range)    not started
+Map buffer subranges (GL_ARB_map_buffer_range)        DONE
 Float textures, renderbuffers                         some infrastructure done
  (incl. GL_EXT_packed_float, GL_EXT_shared_exponent)
 Framebuffer objects (GL_EXT_framebuffer_object)       DONE
@@ -27,14 +27,14 @@ Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
 GL_EXT_texture_compression_rgtc                       not started
 Red and red/green texture formats                     Ian?
 Transform feedback (GL_EXT_transform_feedback)        ~50% done
+   glBindFragDataLocation, glGetFragDataLocation,
+   glBindBufferRange, glBindBufferBase commands
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE
 sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     not started
 glClearBuffer commands                                DONE, except for dispatch
 glGetStringi command                                  DONE, except for dispatch
 glTexParameterI, glGetTexParameterI commands          DONE, except for dispatch
 glVertexAttribI commands                              not started
-glBindFragDataLocation, glGetFragDataLocation cmds    not started
-glBindBufferRange, glBindBufferBase commands          DONE
 
 
 GL 3.1:
@@ -63,6 +63,37 @@ Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE, mostly?
 Multisample textures (GL_ARB_texture_multisample)     not started
 Frag depth clamp (GL_ARB_depth_clamp)                 DONE
 Fence objects (GL_ARB_sync)                           DONE
+
+
+GL 3.3:
+
+GLSL 3.30                                             not started
+GL_ARB_blend_func_extended                            not started
+GL_ARB_explicit_attrib_location                       not started
+GL_ARB_occlusion_query2                               not started
+GL_ARB_sampler_objects                                not started
+GL_ARB_texture_rgb10_a2ui                             not started
+GL_ARB_texture_swizzle                                DONE (same as EXT version)
+GL_ARB_timer_query                                    DONE (only Xlib sw driver)
+GL_ARB_instanced_arrays                               not started
+GL_ARB_vertex_type_2_10_10_10_rev                     not started
+
+
+GL 4.0:
+
+GLSL 4.0                                             not started
+GL_ARB_texture_query_lod                             not started
+GL_ARB_draw_buffers_blend                            not started
+GL_ARB_draw_indirect                                 not started
+GL_ARB_gpu_shader_fp64                               not started
+GL_ARB_sample_shading                                not started
+GL_ARB_shader_subroutine                             not started
+GL_ARB_tessellation_shader                           not started
+GL_ARB_texture_buffer_object_rgb32                   not started
+GL_ARB_texture_cube_map_array                        not started
+GL_ARB_texture_gather                                not started
+GL_ARB_transform_feedback2                           not started
+
 
 
 
