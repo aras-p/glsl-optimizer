@@ -926,12 +926,31 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
 {
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
+    uint8_t* ptr;
+    unsigned i;
 
     CS_LOCALS(r300);
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, 2, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
+
+    /* Uncomment to dump all VBOs rendered through this interface.
+     * Slow and noisy!
+    ptr = pipe_buffer_map(&r300render->r300->context,
+                          r300render->vbo, PIPE_TRANSFER_READ,
+                          &r300render->vbo_transfer);
+
+    for (i = 0; i < count; i++) {
+        printf("r300: Vertex %d\n", i);
+        draw_dump_emitted_vertex(&r300->vertex_info, ptr);
+        ptr += r300->vertex_info.size * 4;
+        printf("\n");
+    }
+
+    pipe_buffer_unmap(&r300render->r300->context, r300render->vbo,
+        r300render->vbo_transfer);
+    */
 
     BEGIN_CS(2);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
