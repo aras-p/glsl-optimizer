@@ -250,7 +250,15 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
  * Fetch a pixel into a SoA.
  *
  * \param type  the desired return type for 'rgba'
- * \param i, j  the sub-block pixel coordinates.
+ *
+ * \param base_ptr  points to start of the texture image block.  For non-
+ *                  compressed formats, this simply points to the texel.
+ *                  For compressed formats, it points to the start of the
+ *                  compressed data block.
+ *
+ * \param i, j  the sub-block pixel coordinates.  For non-compressed formats
+ *              these will always be (0,0).  For compressed formats, i will
+ *              be in [0, block_width-1] and j will be in [0, block_height-1].
  */
 void
 lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
@@ -315,6 +323,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
          rgba_out[chan] = lp_build_undef(type);
       }
 
+      /* loop over number of pixels */
       for(k = 0; k < type.length; ++k) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), k, 0);
          LLVMValueRef offset_elem;
@@ -328,11 +337,13 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
          i_elem = LLVMBuildExtractElement(builder, i, index, "");
          j_elem = LLVMBuildExtractElement(builder, j, index, "");
 
+         /* Get a single float[4]={R,G,B,A} pixel */
          tmp = lp_build_fetch_rgba_aos(builder, format_desc, ptr,
                                        i_elem, j_elem);
 
          /*
-          * AoS to SoA
+          * Insert the AoS tmp value channels into the SoA result vectors at
+          * position = 'index'.
           */
          for (chan = 0; chan < 4; ++chan) {
             LLVMValueRef chan_val = LLVMConstInt(LLVMInt32Type(), chan, 0),

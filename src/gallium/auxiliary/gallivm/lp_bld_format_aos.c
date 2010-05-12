@@ -47,7 +47,8 @@
 /**
  * Unpack a single pixel into its RGBA components.
  *
- * @param packed integer.
+ * @param desc  the pixel format for the packed pixel value
+ * @param packed integer pixel in a format such as PIPE_FORMAT_B8G8R8A8_UNORM
  *
  * @return RGBA in a 4 floats vector.
  */
@@ -79,7 +80,10 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
    if (desc->block.bits < 32)
       packed = LLVMBuildZExt(builder, packed, LLVMInt32Type(), "");
 
-   /* Broadcast the packed value to all four channels */
+   /* Broadcast the packed value to all four channels
+    * before: packed = BGRA
+    * after: packed = {BGRA, BGRA, BGRA, BGRA}
+    */
    packed = LLVMBuildInsertElement(builder,
                                    LLVMGetUndef(LLVMVectorType(LLVMInt32Type(), 4)),
                                    packed,
@@ -96,6 +100,8 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
    needs_uitofp = FALSE;
    empty_channel = -1;
    shift = 0;
+
+   /* Loop over 4 color components */
    for (i = 0; i < 4; ++i) {
       unsigned bits = desc->channel[i].size;
 
@@ -128,14 +134,24 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
       shift += bits;
    }
 
+   /* Ex: convert packed = {BGRA, BGRA, BGRA, BGRA}
+    * into masked = {B, G, R, A}
+    */
    shifted = LLVMBuildLShr(builder, packed, LLVMConstVector(shifts, 4), "");
    masked = LLVMBuildAnd(builder, shifted, LLVMConstVector(masks, 4), "");
+
+
    if (!needs_uitofp) {
       /* UIToFP can't be expressed in SSE2 */
       casted = LLVMBuildSIToFP(builder, masked, LLVMVectorType(LLVMFloatType(), 4), "");
    } else {
       casted = LLVMBuildUIToFP(builder, masked, LLVMVectorType(LLVMFloatType(), 4), "");
    }
+
+   /* At this point 'casted' may be a vector of floats such as
+    * {255.0, 255.0, 255.0, 255.0}.  Next, if the pixel values are normalized
+    * we'll scale this to {1.0, 1.0, 1.0, 1.0}.
+    */
 
    if (normalized)
       scaled = LLVMBuildMul(builder, casted, LLVMConstVector(scales, 4), "");
@@ -145,6 +161,7 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
    for (i = 0; i < 4; ++i)
       aux[i] = LLVMGetUndef(LLVMFloatType());
 
+   /* Build swizzles vector to put components into R,G,B,A order */
    for (i = 0; i < 4; ++i) {
       enum util_format_swizzle swizzle;
 
@@ -185,7 +202,8 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
       }
    }
 
-   return LLVMBuildShuffleVector(builder, scaled, LLVMConstVector(aux, 4), LLVMConstVector(swizzles, 4), "");
+   return LLVMBuildShuffleVector(builder, scaled, LLVMConstVector(aux, 4),
+                                 LLVMConstVector(swizzles, 4), "");
 }
 
 
@@ -295,7 +313,11 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 /**
  * Fetch a pixel into a 4 float AoS.
  *
- * i and j are the sub-block pixel coordinates.
+ * \param format_desc  describes format of the image we're fetching from
+ * \param ptr  address of the pixel block (or the texel if uncompressed)
+ * \param i, j  the sub-block pixel coordinates.  For non-compressed formats
+ *              these will always be (0,).
+ * \return  valueRef with the float[4] RGBA pixel
  */
 LLVMValueRef
 lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
