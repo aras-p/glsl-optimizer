@@ -97,53 +97,71 @@ rbug_get_shader_locked(struct rbug_context *rb_context, rbug_shader_t shdr)
 
 static void *
 rbug_shader_create_locked(struct pipe_context *pipe,
-                          struct rbug_shader *tr_shdr,
+                          struct rbug_shader *rb_shader,
                           struct tgsi_token *tokens)
 {
    void *state = NULL;
    struct pipe_shader_state pss = { 0 };
    pss.tokens = tokens;
 
-#if 0
-   if (tr_shdr->type == TRACE_SHADER_FRAGMENT) {
+   switch(rb_shader->type) {
+   case RBUG_SHADER_FRAGMENT:
       state = pipe->create_fs_state(pipe, &pss);
-   } else if (tr_shdr->type == TRACE_SHADER_VERTEX) {
+      break;
+   case RBUG_SHADER_VERTEX:
       state = pipe->create_vs_state(pipe, &pss);
-   } else
+      break;
+   case RBUG_SHADER_GEOM:
+      state = pipe->create_gs_state(pipe, &pss);
+      break;
+   default:
       assert(0);
-#endif
+      break;
+   }
 
    return state;
 }
 
 static void
 rbug_shader_bind_locked(struct pipe_context *pipe,
-                        struct rbug_shader *tr_shdr,
+                        struct rbug_shader *rb_shader,
                         void *state)
 {
-#if 0
-   if (tr_shdr->type == TRACE_SHADER_FRAGMENT) {
+   switch(rb_shader->type) {
+   case RBUG_SHADER_FRAGMENT:
       pipe->bind_fs_state(pipe, state);
-   } else if (tr_shdr->type == TRACE_SHADER_VERTEX) {
+      break;
+   case RBUG_SHADER_VERTEX:
       pipe->bind_vs_state(pipe, state);
-   } else
+      break;
+   case RBUG_SHADER_GEOM:
+      pipe->bind_gs_state(pipe, state);
+      break;
+   default:
       assert(0);
-#endif
+      break;
+   }
 }
 
 static void
 rbug_shader_delete_locked(struct pipe_context *pipe,
-                          struct rbug_shader *tr_shdr,
+                          struct rbug_shader *rb_shader,
                           void *state)
 {
-#if 0
-   if (tr_shdr->type == TRACE_SHADER_FRAGMENT) {
+   switch(rb_shader->type) {
+   case RBUG_SHADER_FRAGMENT:
       pipe->delete_fs_state(pipe, state);
-   } else if (tr_shdr->type == TRACE_SHADER_VERTEX) {
+      break;
+   case RBUG_SHADER_VERTEX:
       pipe->delete_vs_state(pipe, state);
-   } else
+      break;
+   case RBUG_SHADER_GEOM:
+      pipe->delete_gs_state(pipe, state);
+      break;
+   default:
       assert(0);
-#endif
+      break;
+   }
 }
 
 /************************************************

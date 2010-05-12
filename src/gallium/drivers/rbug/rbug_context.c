@@ -29,6 +29,7 @@
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_simple_list.h"
 
 #include "rbug_context.h"
 #include "rbug_objects.h"
@@ -318,70 +319,120 @@ rbug_delete_depth_stencil_alpha_state(struct pipe_context *_pipe,
 
 static void *
 rbug_create_fs_state(struct pipe_context *_pipe,
-                     const struct pipe_shader_state *fs)
+                     const struct pipe_shader_state *state)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
+   void *result;
 
-   return pipe->create_fs_state(pipe,
-                                fs);
+   result = pipe->create_fs_state(pipe, state);
+   if (!result)
+      return NULL;
+
+   return rbug_shader_create(rb_pipe, state, result, RBUG_SHADER_FRAGMENT);
 }
 
 static void
 rbug_bind_fs_state(struct pipe_context *_pipe,
-                   void *fs)
+                   void *_fs)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
+   void *fs;
 
+   fs = rbug_shader_unwrap(_fs);
+   rb_pipe->curr.fs = rbug_shader(_fs);
    pipe->bind_fs_state(pipe,
                        fs);
 }
 
 static void
 rbug_delete_fs_state(struct pipe_context *_pipe,
-                     void *fs)
+                     void *_fs)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct pipe_context *pipe = rb_pipe->pipe;
+   struct rbug_shader *rb_shader = rbug_shader(_fs);
 
-   pipe->delete_fs_state(pipe,
-                         fs);
+   rbug_shader_destroy(rb_pipe, rb_shader);
 }
 
 static void *
 rbug_create_vs_state(struct pipe_context *_pipe,
-                     const struct pipe_shader_state *vs)
+                     const struct pipe_shader_state *state)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
+   void *result;
 
-   return pipe->create_vs_state(pipe,
-                                vs);
+   result = pipe->create_vs_state(pipe, state);
+   if (!result)
+      return NULL;
+
+   return rbug_shader_create(rb_pipe, state, result, RBUG_SHADER_VERTEX);
 }
 
 static void
 rbug_bind_vs_state(struct pipe_context *_pipe,
-                   void *vs)
+                   void *_vs)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
+   void *vs;
 
+   vs = rbug_shader_unwrap(_vs);
+   rb_pipe->curr.vs = rbug_shader(_vs);
    pipe->bind_vs_state(pipe,
                        vs);
 }
 
 static void
 rbug_delete_vs_state(struct pipe_context *_pipe,
-                     void *vs)
+                     void *_vs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_shader *rb_shader = rbug_shader(_vs);
+
+   rbug_shader_destroy(rb_pipe, rb_shader);
+}
+
+static void *
+rbug_create_gs_state(struct pipe_context *_pipe,
+                     const struct pipe_shader_state *state)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
+   void *result;
 
-   pipe->delete_vs_state(pipe,
-                         vs);
+   result = pipe->create_gs_state(pipe, state);
+   if (!result)
+      return NULL;
+
+   return rbug_shader_create(rb_pipe, state, result, RBUG_SHADER_GEOM);
 }
 
+static void
+rbug_bind_gs_state(struct pipe_context *_pipe,
+                   void *_gs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   void *gs;
+
+   gs = rbug_shader_unwrap(_gs);
+   rb_pipe->curr.gs = rbug_shader(_gs);
+   pipe->bind_gs_state(pipe,
+                       gs);
+}
+
+static void
+rbug_delete_gs_state(struct pipe_context *_pipe,
+                     void *_gs)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_shader *rb_shader = rbug_shader(_gs);
+
+   rbug_shader_destroy(rb_pipe, rb_shader);
+}
 
 static void *
 rbug_create_vertex_elements_state(struct pipe_context *_pipe,
@@ -834,12 +885,20 @@ struct pipe_context *
 rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 {
    struct rbug_context *rb_pipe;
-   (void)rbug_screen(_screen);
+   struct rbug_screen *rb_screen = rbug_screen(_screen);
+
+   if (!rb_screen)
+      return NULL;
 
    rb_pipe = CALLOC_STRUCT(rbug_context);
-   if (!rb_pipe) {
+   if (!rb_pipe)
       return NULL;
-   }
+
+   pipe_mutex_init(rb_pipe->draw_mutex);
+   pipe_condvar_init(rb_pipe->draw_cond);
+   pipe_mutex_init(rb_pipe->call_mutex);
+   pipe_mutex_init(rb_pipe->list_mutex);
+   make_empty_list(&rb_pipe->shaders);
 
    rb_pipe->base.winsys = NULL;
    rb_pipe->base.screen = _screen;
@@ -874,6 +933,9 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.create_vs_state = rbug_create_vs_state;
    rb_pipe->base.bind_vs_state = rbug_bind_vs_state;
    rb_pipe->base.delete_vs_state = rbug_delete_vs_state;
+   rb_pipe->base.create_gs_state = rbug_create_gs_state;
+   rb_pipe->base.bind_gs_state = rbug_bind_gs_state;
+   rb_pipe->base.delete_gs_state = rbug_delete_gs_state;
    rb_pipe->base.create_vertex_elements_state = rbug_create_vertex_elements_state;
    rb_pipe->base.bind_vertex_elements_state = rbug_bind_vertex_elements_state;
    rb_pipe->base.delete_vertex_elements_state = rbug_delete_vertex_elements_state;
@@ -903,6 +965,8 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.transfer_inline_write = rbug_context_transfer_inline_write;
 
    rb_pipe->pipe = pipe;
+
+   rbug_screen_add_to_list(rb_screen, contexts, rb_pipe);
 
    return &rb_pipe->base;
 }

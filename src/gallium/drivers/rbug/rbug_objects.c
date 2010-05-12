@@ -29,6 +29,8 @@
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
+#include "tgsi/tgsi_parse.h"
+
 #include "rbug_screen.h"
 #include "rbug_objects.h"
 #include "rbug_context.h"
@@ -193,3 +195,53 @@ rbug_transfer_destroy(struct rbug_context *rb_context,
    FREE(rb_transfer);
 }
 
+void *
+rbug_shader_create(struct rbug_context *rb_context,
+                   const struct pipe_shader_state *state,
+                   void *result, enum rbug_shader_type type)
+{
+   struct rbug_shader *rb_shader = CALLOC_STRUCT(rbug_shader);
+
+   rb_shader->type = type;
+   rb_shader->shader = result;
+   rb_shader->tokens = tgsi_dup_tokens(state->tokens);
+
+   /* works on context as well since its just a macro */
+   rbug_screen_add_to_list(rb_context, shaders, rb_shader);
+
+   return rb_shader;
+}
+
+void
+rbug_shader_destroy(struct rbug_context *rb_context,
+                    struct rbug_shader *rb_shader)
+{
+   struct pipe_context *pipe = rb_context->pipe;
+
+   /* works on context as well since its just a macro */
+   rbug_screen_remove_from_list(rb_context, shaders, rb_shader);
+
+   switch(rb_shader->type) {
+   case RBUG_SHADER_FRAGMENT:
+      if (rb_shader->replaced_shader)
+         pipe->delete_fs_state(pipe, rb_shader->replaced_shader);
+      pipe->delete_fs_state(pipe, rb_shader->shader);
+      break;
+   case RBUG_SHADER_VERTEX:
+      if (rb_shader->replaced_shader)
+         pipe->delete_vs_state(pipe, rb_shader->replaced_shader);
+      pipe->delete_vs_state(pipe, rb_shader->shader);
+      break;
+   case RBUG_SHADER_GEOM:
+      if (rb_shader->replaced_shader)
+         pipe->delete_gs_state(pipe, rb_shader->replaced_shader);
+      pipe->delete_gs_state(pipe, rb_shader->shader);
+      break;
+   default:
+      assert(0);
+   }
+
+   FREE(rb_shader->replaced_tokens);
+   FREE(rb_shader->tokens);
+   FREE(rb_shader);
+}

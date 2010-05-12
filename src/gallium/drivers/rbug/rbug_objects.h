@@ -47,6 +47,13 @@ struct rbug_resource
 };
 
 
+enum rbug_shader_type
+{
+   RBUG_SHADER_GEOM,
+   RBUG_SHADER_VERTEX,
+   RBUG_SHADER_FRAGMENT,
+};
+
 struct rbug_shader
 {
    struct rbug_list list;
@@ -56,6 +63,7 @@ struct rbug_shader
    void *replaced_shader;
    void *replaced_tokens;
 
+   enum rbug_shader_type type;
    boolean disabled;
 };
 
@@ -204,6 +212,15 @@ rbug_transfer_create(struct rbug_context *rb_context,
 void
 rbug_transfer_destroy(struct rbug_context *rb_context,
                       struct rbug_transfer *rb_transfer);
+
+void *
+rbug_shader_create(struct rbug_context *rb_context,
+                   const struct pipe_shader_state *state,
+                   void *result, enum rbug_shader_type type);
+
+void
+rbug_shader_destroy(struct rbug_context *rb_context,
+                    struct rbug_shader *rb_shader);
 
 
 #endif /* RBUG_OBJECTS_H */

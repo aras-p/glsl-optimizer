@@ -48,6 +48,7 @@ struct rbug_context {
    struct {
       struct rbug_shader *fs;
       struct rbug_shader *vs;
+      struct rbug_shader *gs;
 
       struct rbug_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
       unsigned num_sampler_views;
