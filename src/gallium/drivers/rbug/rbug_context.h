@@ -74,7 +74,7 @@ struct rbug_context {
       struct rbug_shader *fs;
       struct rbug_shader *vs;
 
-      struct rbug_sampler_view *sampler_view;
+      struct rbug_resource *texture;
       struct rbug_resource *surf;
 
       int blocker;

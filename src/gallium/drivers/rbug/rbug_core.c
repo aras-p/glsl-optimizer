@@ -467,7 +467,7 @@ rbug_context_draw_rule(struct rbug_rbug *tr_rbug, struct rbug_header *header, ui
    pipe_mutex_lock(rb_context->draw_mutex);
    rb_context->draw_rule.vs = U642VOID(rule->vertex);
    rb_context->draw_rule.fs = U642VOID(rule->fragment);
-   rb_context->draw_rule.sampler_view = U642VOID(rule->texture);
+   rb_context->draw_rule.texture = U642VOID(rule->texture);
    rb_context->draw_rule.surf = U642VOID(rule->surface);
    rb_context->draw_rule.blocker = rule->block;
    rb_context->draw_blocker |= RBUG_BLOCK_RULE;

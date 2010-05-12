@@ -31,6 +31,8 @@
 #include "util/u_inlines.h"
 #include "util/u_simple_list.h"
 
+#include "rbug/rbug_context.h"
+
 #include "rbug_context.h"
 #include "rbug_objects.h"
 
@@ -47,6 +49,68 @@ rbug_destroy(struct pipe_context *_pipe)
 }
 
 static void
+rbug_draw_block_locked(struct rbug_context *rb_pipe, int flag)
+{
+
+   if (rb_pipe->draw_blocker & flag) {
+      rb_pipe->draw_blocked |= flag;
+   } else if ((rb_pipe->draw_rule.blocker & flag) &&
+              (rb_pipe->draw_blocker & RBUG_BLOCK_RULE)) {
+      int k;
+      boolean block = FALSE;
+      debug_printf("%s (%p %p) (%p %p) (%p %u) (%p %u)\n", __FUNCTION__,
+                   (void *) rb_pipe->draw_rule.fs, (void *) rb_pipe->curr.fs,
+                   (void *) rb_pipe->draw_rule.vs, (void *) rb_pipe->curr.vs,
+                   (void *) rb_pipe->draw_rule.surf, 0,
+                   (void *) rb_pipe->draw_rule.texture, 0);
+      if (rb_pipe->draw_rule.fs &&
+          rb_pipe->draw_rule.fs == rb_pipe->curr.fs)
+         block = TRUE;
+      if (rb_pipe->draw_rule.vs &&
+          rb_pipe->draw_rule.vs == rb_pipe->curr.vs)
+         block = TRUE;
+      if (rb_pipe->draw_rule.surf &&
+          rb_pipe->draw_rule.surf == rb_pipe->curr.zsbuf)
+            block = TRUE;
+      if (rb_pipe->draw_rule.surf)
+         for (k = 0; k < rb_pipe->curr.nr_cbufs; k++)
+            if (rb_pipe->draw_rule.surf == rb_pipe->curr.cbufs[k])
+               block = TRUE;
+      if (rb_pipe->draw_rule.texture) {
+         for (k = 0; k < rb_pipe->curr.num_fs_views; k++)
+            if (rb_pipe->draw_rule.texture == rb_pipe->curr.fs_texs[k])
+               block = TRUE;
+         for (k = 0; k < rb_pipe->curr.num_vs_views; k++) {
+            if (rb_pipe->draw_rule.texture == rb_pipe->curr.vs_texs[k]) {
+               block = TRUE;
+            }
+         }
+      }
+
+      if (block)
+         rb_pipe->draw_blocked |= (flag | RBUG_BLOCK_RULE);
+   }
+
+   if (rb_pipe->draw_blocked)
+      rbug_notify_draw_blocked(rb_pipe);
+
+   /* wait for rbug to clear the blocked flag */
+   while (rb_pipe->draw_blocked & flag) {
+      rb_pipe->draw_blocked |= flag;
+#ifdef PIPE_THREAD_HAVE_CONDVAR
+      pipe_condvar_wait(rb_pipe->draw_cond, rb_pipe->draw_mutex);
+#else
+      pipe_mutex_unlock(rb_pipe->draw_mutex);
+#ifdef PIPE_SUBSYSTEM_WINDOWS_USER
+      Sleep(1);
+#endif
+      pipe_mutex_lock(rb_pipe->draw_mutex);
+#endif
+   }
+
+}
+
+static void
 rbug_draw_arrays(struct pipe_context *_pipe,
                  unsigned prim,
                  unsigned start,
@@ -55,10 +119,16 @@ rbug_draw_arrays(struct pipe_context *_pipe,
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
 
+   pipe_mutex_lock(rb_pipe->draw_mutex);
+   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
+
    pipe->draw_arrays(pipe,
                      prim,
                      start,
                      count);
+
+   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_AFTER);
+   pipe_mutex_unlock(rb_pipe->draw_mutex);
 }
 
 static void
@@ -75,6 +145,9 @@ rbug_draw_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = rb_pipe->pipe;
    struct pipe_resource *indexResource = rb_resource->resource;
 
+   pipe_mutex_lock(rb_pipe->draw_mutex);
+   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
+
    pipe->draw_elements(pipe,
                        indexResource,
                        indexSize,
@@ -82,6 +155,9 @@ rbug_draw_elements(struct pipe_context *_pipe,
                        prim,
                        start,
                        count);
+
+   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_AFTER);
+   pipe_mutex_unlock(rb_pipe->draw_mutex);
 }
 
 static void
@@ -100,6 +176,9 @@ rbug_draw_range_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = rb_pipe->pipe;
    struct pipe_resource *indexResource = rb_resource->resource;
 
+   pipe_mutex_lock(rb_pipe->draw_mutex);
+   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
+
    pipe->draw_range_elements(pipe,
                              indexResource,
                              indexSize,
@@ -109,6 +188,9 @@ rbug_draw_range_elements(struct pipe_context *_pipe,
                              mode,
                              start,
                              count);
+
+   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_AFTER);
+   pipe_mutex_unlock(rb_pipe->draw_mutex);
 }
 
 static struct pipe_query *
