@@ -74,11 +74,17 @@ content:
 		talloc_free ($1);
 	}
 |	directive_with_newline
+|	NEWLINE {
+		printf ("\n");
+	}
 |	content token {
 		_print_resolved_token (parser, $2);
 		talloc_free ($2);
 	}
 |	content directive_with_newline
+|	content NEWLINE {
+		printf ("\n");
+	}
 ;
 
 directive_with_newline:
