@@ -40,7 +40,6 @@
 
 
 static boolean trace = FALSE;
-static boolean rbug = FALSE;
 
 static const char *
 trace_screen_get_name(struct pipe_screen *_screen)
@@ -491,9 +490,6 @@ trace_screen_destroy(struct pipe_screen *_screen)
    trace_dump_call_end();
    trace_dump_trace_end();
 
-   if (tr_scr->rbug)
-      trace_rbug_stop(tr_scr->rbug);
-
    screen->destroy(screen);
 
    FREE(tr_scr);
@@ -513,11 +509,6 @@ trace_enabled(void)
    if(trace_dump_trace_begin()) {
       trace_dumping_start();
       trace = TRUE;
-   }
-
-   if (debug_get_bool_option("GALLIUM_RBUG", FALSE)) {
-      trace = TRUE;
-      rbug = TRUE;
    }
 
    return trace;
@@ -548,13 +539,6 @@ trace_screen_create(struct pipe_screen *screen)
 #else
    winsys = screen->winsys;
 #endif
-   pipe_mutex_init(tr_scr->list_mutex);
-   make_empty_list(&tr_scr->buffers);
-   make_empty_list(&tr_scr->contexts);
-   make_empty_list(&tr_scr->textures);
-   make_empty_list(&tr_scr->surfaces);
-   make_empty_list(&tr_scr->transfers);
-
    tr_scr->base.winsys = winsys;
    tr_scr->base.destroy = trace_screen_destroy;
    tr_scr->base.get_name = trace_screen_get_name;
@@ -577,20 +561,12 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.flush_frontbuffer = trace_screen_flush_frontbuffer;
 
    tr_scr->screen = screen;
-   tr_scr->private_context = screen->context_create(screen, NULL);
-   if (tr_scr->private_context == NULL)
-      goto error3;
 
    trace_dump_ret(ptr, screen);
    trace_dump_call_end();
 
-   if (rbug)
-      tr_scr->rbug = trace_rbug_start(tr_scr);
-
    return &tr_scr->base;
 
-error3:
-   FREE(tr_scr);
 error2:
    trace_dump_ret(ptr, screen);
    trace_dump_call_end();

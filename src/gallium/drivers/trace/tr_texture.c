@@ -56,8 +56,6 @@ trace_resource_create(struct trace_screen *tr_scr,
    tr_tex->base.screen = &tr_scr->base;
    tr_tex->resource = texture;
 
-   trace_screen_add_to_list(tr_scr, textures, tr_tex);
-
    return &tr_tex->base;
 
 error:
@@ -70,8 +68,6 @@ void
 trace_resource_destroy(struct trace_screen *tr_scr,
 		       struct trace_resource *tr_tex)
 {
-   trace_screen_remove_from_list(tr_scr, textures, tr_tex);
-
    pipe_resource_reference(&tr_tex->resource, NULL);
    FREE(tr_tex);
 }
@@ -81,7 +77,6 @@ struct pipe_surface *
 trace_surface_create(struct trace_resource *tr_tex,
                      struct pipe_surface *surface)
 {
-   struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
    struct trace_surface *tr_surf;
 
    if(!surface)
@@ -100,8 +95,6 @@ trace_surface_create(struct trace_resource *tr_tex,
    pipe_resource_reference(&tr_surf->base.texture, &tr_tex->base);
    tr_surf->surface = surface;
 
-   trace_screen_add_to_list(tr_scr, surfaces, tr_surf);
-
    return &tr_surf->base;
 
 error:
@@ -113,10 +106,6 @@ error:
 void
 trace_surface_destroy(struct trace_surface *tr_surf)
 {
-   struct trace_screen *tr_scr = trace_screen(tr_surf->base.texture->screen);
-
-   trace_screen_remove_from_list(tr_scr, surfaces, tr_surf);
-
    pipe_resource_reference(&tr_surf->base.texture, NULL);
    pipe_surface_reference(&tr_surf->surface, NULL);
    FREE(tr_surf);
@@ -128,7 +117,6 @@ trace_transfer_create(struct trace_context *tr_ctx,
 		      struct trace_resource *tr_tex,
 		      struct pipe_transfer *transfer)
 {
-   struct trace_screen *tr_scr = trace_screen(tr_tex->base.screen);
    struct trace_transfer *tr_trans;
 
    if(!transfer)
@@ -148,8 +136,6 @@ trace_transfer_create(struct trace_context *tr_ctx,
    pipe_resource_reference(&tr_trans->base.resource, &tr_tex->base);
    assert(tr_trans->base.resource == &tr_tex->base);
 
-   trace_screen_add_to_list(tr_scr, transfers, tr_trans);
-
    return &tr_trans->base;
 
 error:
@@ -162,11 +148,8 @@ void
 trace_transfer_destroy(struct trace_context *tr_context,
                        struct trace_transfer *tr_trans)
 {
-   struct trace_screen *tr_scr = trace_screen(tr_context->base.screen);
    struct pipe_context *context = tr_context->pipe;
    struct pipe_transfer *transfer = tr_trans->transfer;
-
-   trace_screen_remove_from_list(tr_scr, transfers, tr_trans);
 
    pipe_resource_reference(&tr_trans->base.resource, NULL);
    context->transfer_destroy(context, transfer);

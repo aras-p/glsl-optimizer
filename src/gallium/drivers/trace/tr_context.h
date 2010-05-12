@@ -47,45 +47,6 @@ struct trace_context
    struct pipe_context base;
 
    struct pipe_context *pipe;
-
-   /* current state */
-   struct {
-      struct trace_shader *fs;
-      struct trace_shader *vs;
-
-      struct trace_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
-      unsigned num_sampler_views;
-
-      struct trace_sampler_view *vert_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
-      unsigned num_vert_sampler_views;
-
-      unsigned nr_cbufs;
-      struct trace_resource *cbufs[PIPE_MAX_COLOR_BUFS];
-      struct trace_resource *zsbuf;
-   } curr;
-
-   struct {
-      struct trace_shader *fs;
-      struct trace_shader *vs;
-
-      struct trace_sampler_view *sampler_view;
-      struct trace_resource *surf;
-
-      int blocker;
-   } draw_rule;
-   unsigned draw_num_rules;
-   pipe_condvar draw_cond;
-   pipe_mutex draw_mutex;
-   int draw_blocker;
-   int draw_blocked;
-
-   /* for list on screen */
-   struct tr_list list;
-
-   /* list of state objects */
-   pipe_mutex list_mutex;
-   unsigned num_shaders;
-   struct tr_list shaders;
 };
 
 
@@ -100,9 +61,6 @@ trace_context(struct pipe_context *pipe)
 struct pipe_context *
 trace_context_create(struct trace_screen *tr_scr,
                      struct pipe_context *pipe);
-
-void
-trace_rbug_notify_draw_blocked(struct trace_context *tr_ctx);
 
 
 #ifdef __cplusplus
