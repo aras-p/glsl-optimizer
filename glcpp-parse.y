@@ -65,7 +65,7 @@ _list_append (list_t *list, const char *str);
 
 input:
 	/* empty */
-|	content
+|	input content
 ;
 
 content:
@@ -75,14 +75,6 @@ content:
 	}
 |	directive_with_newline
 |	NEWLINE {
-		printf ("\n");
-	}
-|	content token {
-		_print_resolved_token (parser, $2);
-		talloc_free ($2);
-	}
-|	content directive_with_newline
-|	content NEWLINE {
 		printf ("\n");
 	}
 ;
