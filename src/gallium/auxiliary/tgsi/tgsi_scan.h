@@ -54,6 +54,7 @@ struct tgsi_shader_info
    int file_max[TGSI_FILE_COUNT];  /**< highest index of declared registers */
 
    uint immediate_count; /**< number of immediates declared */
+   uint num_instructions;
 
    uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 

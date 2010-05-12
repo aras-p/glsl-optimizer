@@ -88,10 +88,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             assert(fullinst->Instruction.Opcode < TGSI_OPCODE_LAST);
             info->opcode_count[fullinst->Instruction.Opcode]++;
 
-            /* special case: scan fragment shaders for use of the fog
-             * input/attribute.  The X component is fog, the Y component
-             * is the front/back-face flag.
-             */
+            /* check if we read the frag shader FOG or FACE inputs */
             if (procType == TGSI_PROCESSOR_FRAGMENT) {
                uint i;
                for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
@@ -109,6 +106,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   }
                }
             }
+
+            info->num_instructions++;
          }
          break;
 
