@@ -33,10 +33,10 @@ import common
 default_statetrackers = 'mesa'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_drivers = 'softpipe,failover,svga,i915,i965,trace,rbug,identity,llvmpipe'
+	default_drivers = 'softpipe,failover,svga,i915,i965,trace,identity,llvmpipe'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
-	default_drivers = 'softpipe,svga,i915,i965,trace,rbug,identity'
+	default_drivers = 'softpipe,svga,i915,i965,trace,identity'
 	default_winsys = 'all'
 elif common.default_platform in ('embedded',):
 	default_drivers = 'softpipe,llvmpipe'
@@ -50,7 +50,7 @@ common.AddOptions(opts)
 opts.Add(ListVariable('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa', 'python', 'xorg']))
 opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
-                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'rbug', 'r300', 'identity', 'llvmpipe', 'nouveau', 'nv50', 'nvfx']))
+                     ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe', 'nouveau', 'nv50', 'nvfx']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
                      ['xlib', 'vmware', 'i915', 'i965', 'gdi', 'radeon', 'graw-xlib']))
 
