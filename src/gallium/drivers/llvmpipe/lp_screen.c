@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
+#include "gallivm/lp_bld_limits.h"
 #include "lp_texture.h"
 #include "lp_fence.h"
 #include "lp_jit.h"
@@ -133,7 +134,37 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
       return 0;
+   case PIPE_CAP_MAX_VS_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_INSTRUCTIONS:
+   case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
+   case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
+   case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
+   case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
+      /* There is no limit in number of instructions beyond available memory */
+      return 32768;
+   case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
+   case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
+      return LP_MAX_TGSI_NESTING;
+   case PIPE_CAP_MAX_VS_INPUTS:
+   case PIPE_CAP_MAX_FS_INPUTS:
+      return PIPE_MAX_ATTRIBS;
+   case PIPE_CAP_MAX_FS_CONSTS:
+   case PIPE_CAP_MAX_VS_CONSTS:
+      /* There is no limit in number of constants beyond available memory */
+      return 32768;
+   case PIPE_CAP_MAX_VS_TEMPS:
+   case PIPE_CAP_MAX_FS_TEMPS:
+      return LP_MAX_TGSI_TEMPS;
+   case PIPE_CAP_MAX_VS_ADDRS:
+   case PIPE_CAP_MAX_FS_ADDRS:
+      return LP_MAX_TGSI_ADDRS;
+   case PIPE_CAP_MAX_VS_PREDS:
+   case PIPE_CAP_MAX_FS_PREDS:
+      return LP_MAX_TGSI_PREDS;
    default:
+      assert(0);
       return 0;
    }
 }
@@ -156,6 +187,7 @@ llvmpipe_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
       return 16.0; /* arbitrary */
    default:
+      assert(0);
       return 0;
    }
 }
