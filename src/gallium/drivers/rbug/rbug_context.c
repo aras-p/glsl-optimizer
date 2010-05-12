@@ -535,13 +535,19 @@ rbug_set_framebuffer_state(struct pipe_context *_pipe,
    struct pipe_framebuffer_state *state = NULL;
    unsigned i;
 
+   rb_pipe->curr.nr_cbufs = 0;
+   memset(rb_pipe->curr.cbufs, 0, sizeof(rb_pipe->curr.cbufs));
+
    /* unwrap the input state */
    if (_state) {
       memcpy(&unwrapped_state, _state, sizeof(unwrapped_state));
-      for(i = 0; i < _state->nr_cbufs; i++)
+
+      rb_pipe->curr.nr_cbufs = _state->nr_cbufs;
+      for(i = 0; i < _state->nr_cbufs; i++) {
          unwrapped_state.cbufs[i] = rbug_surface_unwrap(_state->cbufs[i]);
-      for (; i < PIPE_MAX_COLOR_BUFS; i++)
-         unwrapped_state.cbufs[i] = NULL;
+         if (_state->cbufs[i])
+            rb_pipe->curr.cbufs[i] = rbug_resource(_state->cbufs[i]->texture);
+      }
       unwrapped_state.zsbuf = rbug_surface_unwrap(_state->zsbuf);
       state = &unwrapped_state;
    }
@@ -594,12 +600,18 @@ rbug_set_fragment_sampler_views(struct pipe_context *_pipe,
    struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   if (_views) {
-      for (i = 0; i < num; i++)
-         unwrapped_views[i] = rbug_sampler_view_unwrap(_views[i]);
-      for (; i < PIPE_MAX_SAMPLERS; i++)
-         unwrapped_views[i] = NULL;
+   rb_pipe->curr.num_fs_views = 0;
+   memset(rb_pipe->curr.fs_views, 0, sizeof(rb_pipe->curr.fs_views));
+   memset(rb_pipe->curr.fs_texs, 0, sizeof(rb_pipe->curr.fs_texs));
+   memset(unwrapped_views, 0, sizeof(unwrapped_views));
 
+   if (_views) {
+      rb_pipe->curr.num_fs_views = num;
+      for (i = 0; i < num; i++) {
+         rb_pipe->curr.fs_views[i] = rbug_sampler_view(_views[i]);
+         rb_pipe->curr.fs_texs[i] = rbug_resource(_views[i] ? _views[i]->texture : NULL);
+         unwrapped_views[i] = rbug_sampler_view_unwrap(_views[i]);
+      }
       views = unwrapped_views;
    }
 
@@ -617,12 +629,18 @@ rbug_set_vertex_sampler_views(struct pipe_context *_pipe,
    struct pipe_sampler_view **views = NULL;
    unsigned i;
 
-   if (_views) {
-      for (i = 0; i < num; i++)
-         unwrapped_views[i] = rbug_sampler_view_unwrap(_views[i]);
-      for (; i < PIPE_MAX_VERTEX_SAMPLERS; i++)
-         unwrapped_views[i] = NULL;
+   rb_pipe->curr.num_vs_views = 0;
+   memset(rb_pipe->curr.vs_views, 0, sizeof(rb_pipe->curr.vs_views));
+   memset(rb_pipe->curr.vs_texs, 0, sizeof(rb_pipe->curr.vs_texs));
+   memset(unwrapped_views, 0, sizeof(unwrapped_views));
 
+   if (_views) {
+      rb_pipe->curr.num_vs_views = num;
+      for (i = 0; i < num; i++) {
+         rb_pipe->curr.vs_views[i] = rbug_sampler_view(_views[i]);
+         rb_pipe->curr.vs_texs[i] = rbug_resource(_views[i]->texture);
+         unwrapped_views[i] = rbug_sampler_view_unwrap(_views[i]);
+      }
       views = unwrapped_views;
    }
 

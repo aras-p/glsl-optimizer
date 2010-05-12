@@ -337,12 +337,12 @@ rbug_context_info(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
    for (i = 0; i < rb_context->curr.nr_cbufs; i++)
       cbufs[i] = VOID2U64(rb_context->curr.cbufs[i]);
 
-   for (i = 0; i < rb_context->curr.num_sampler_views; i++)
-      texs[i] = VOID2U64(rb_context->curr.sampler_views[i]);
+   for (i = 0; i < rb_context->curr.num_fs_views; i++)
+      texs[i] = VOID2U64(rb_context->curr.fs_texs[i]);
 
    rbug_send_context_info_reply(tr_rbug->con, serial,
                                 VOID2U64(rb_context->curr.vs), VOID2U64(rb_context->curr.fs),
-                                texs, rb_context->curr.num_sampler_views,
+                                texs, rb_context->curr.num_fs_views,
                                 cbufs, rb_context->curr.nr_cbufs,
                                 VOID2U64(rb_context->curr.zsbuf),
                                 rb_context->draw_blocker, rb_context->draw_blocked, NULL);
