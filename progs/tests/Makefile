@@ -134,6 +134,9 @@ INCLUDES = -I. -I$(TOP)/include
 UTIL_FILES = readtex.h readtex.c
 
 
+GL_API_XML = $(TOP)/src/mapi/glapi/gen/gl_API.xml
+
+
 ##### TARGETS #####
 
 default: $(UTIL_FILES) $(PROGS)
@@ -160,7 +163,7 @@ clean:
 # auto code generation
 getprocaddress: getprocaddress.c getproclist.h
 
-getproclist.h: $(TOP)/src/mesa/glapi/gen/gl_API.xml getprocaddress.c getprocaddress.py
+getproclist.h: $(GL_API_XML) getprocaddress.c getprocaddress.py
 	python getprocaddress.py > getproclist.h
 
 arraytexture: arraytexture.o readtex.o

@@ -3,8 +3,10 @@
 
 # Helper for the getprocaddress.c test.
 
+glapi_xml_path = "../../src/mapi/glapi/gen/"
+
 import sys, getopt, re
-sys.path.append("../../src/mesa/glapi/gen" )
+sys.path.append(glapi_xml_path)
 import gl_XML
 import license
 
@@ -74,7 +76,7 @@ static struct name_test_pair functions[] = {"""
 
 
 if __name__ == '__main__':
-	file_name = "../../src/mesa/glapi/gen/gl_API.xml"
+	file_name = glapi_xml_path + "gl_API.xml"
     
 	try:
 		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
