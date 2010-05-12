@@ -238,6 +238,51 @@ lp_wider_type(struct lp_type type)
 }
 
 
+/**
+ * Return string name for a LLVMTypeKind.  Useful for debugging.
+ */
+const char *
+lp_typekind_name(LLVMTypeKind t)
+{
+   switch (t) {
+   case LLVMVoidTypeKind:
+      return "LLVMVoidTypeKind";
+   case LLVMFloatTypeKind:
+      return "LLVMFloatTypeKind";
+   case LLVMDoubleTypeKind:
+      return "LLVMDoubleTypeKind";
+   case LLVMX86_FP80TypeKind:
+      return "LLVMX86_FP80TypeKind";
+   case LLVMFP128TypeKind:
+      return "LLVMFP128TypeKind";
+   case LLVMPPC_FP128TypeKind:
+      return "LLVMPPC_FP128TypeKind";
+   case LLVMLabelTypeKind:
+      return "LLVMLabelTypeKind";
+   case LLVMIntegerTypeKind:
+      return "LLVMIntegerTypeKind";
+   case LLVMFunctionTypeKind:
+      return "LLVMFunctionTypeKind";
+   case LLVMStructTypeKind:
+      return "LLVMStructTypeKind";
+   case LLVMArrayTypeKind:
+      return "LLVMArrayTypeKind";
+   case LLVMPointerTypeKind:
+      return "LLVMPointerTypeKind";
+   case LLVMOpaqueTypeKind:
+      return "LLVMOpaqueTypeKind";
+   case LLVMVectorTypeKind:
+      return "LLVMVectorTypeKind";
+   case LLVMMetadataTypeKind:
+      return "LLVMMetadataTypeKind";
+   case LLVMUnionTypeKind:
+      return "LLVMUnionTypeKind";
+   default:
+      return "unknown LLVMTypeKind";
+   }
+}
+
+
 void
 lp_build_context_init(struct lp_build_context *bld,
                       LLVMBuilderRef builder,
