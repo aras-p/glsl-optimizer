@@ -965,6 +965,18 @@ generate_variant(struct llvmpipe_context *lp,
    generate_fragment(lp, shader, variant, 0);
    generate_fragment(lp, shader, variant, 1);
 
+   /* TODO: most of these can be relaxed, in particular the colormask */
+   variant->opaque =
+         !key->blend.logicop_enable &&
+         !key->blend.rt[0].blend_enable &&
+         key->blend.rt[0].colormask == 0xf &&
+         !key->stencil[0].enabled &&
+         !key->alpha.enabled &&
+         !key->depth.enabled &&
+         !key->scissor &&
+         !shader->info.uses_kill
+         ? TRUE : FALSE;
+
    /* insert new variant into linked list */
    variant->next = shader->variants;
    shader->variants = variant;
@@ -1215,7 +1227,6 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
    struct lp_fragment_shader *shader = lp->fs;
    struct lp_fragment_shader_variant_key key;
    struct lp_fragment_shader_variant *variant;
-   boolean opaque;
 
    make_variant_key(lp, shader, &key);
 
@@ -1240,22 +1251,10 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       LP_COUNT_ADD(nr_llvm_compiles, 2);  /* emit vs. omit in/out test */
    }
 
-   /* TODO: put this in the variant */
-   /* TODO: most of these can be relaxed, in particular the colormask */
-   opaque = !key.blend.logicop_enable &&
-            !key.blend.rt[0].blend_enable &&
-            key.blend.rt[0].colormask == 0xf &&
-            !key.stencil[0].enabled &&
-            !key.alpha.enabled &&
-            !key.depth.enabled &&
-            !key.scissor &&
-            !shader->info.uses_kill
-            ? TRUE : FALSE;
-
    lp_setup_set_fs_functions(lp->setup, 
                              variant->jit_function[RAST_WHOLE],
                              variant->jit_function[RAST_EDGE_TEST],
-                             opaque);
+                             variant->opaque);
 }
 
 
