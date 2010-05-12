@@ -177,6 +177,57 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 0;
 
+   /*
+    * Fragment shader limits
+    */
+
+   case PIPE_CAP_MAX_FS_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
+      return svgascreen->use_ps30 ? 512 : 96;
+   case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
+      return SVGA3D_MAX_NESTING_LEVEL;
+   case PIPE_CAP_MAX_FS_INPUTS:
+      return 10;
+   case PIPE_CAP_MAX_FS_CONSTS:
+      return svgascreen->use_vs30 ? 224 : 16;
+   case PIPE_CAP_MAX_FS_TEMPS:
+      if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_FRAGMENT_SHADER_TEMPS, &result))
+         return svgascreen->use_ps30 ? 32 : 12;
+      return result.u;
+   case PIPE_CAP_MAX_FS_ADDRS:
+      return svgascreen->use_ps30 ? 1 : 0;
+   case PIPE_CAP_MAX_FS_PREDS:
+      return svgascreen->use_ps30 ? 1 : 0;
+
+   /*
+    * Vertex shader limits
+    */
+   case PIPE_CAP_MAX_VS_INSTRUCTIONS:
+   case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
+      if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_VERTEX_SHADER_INSTRUCTIONS, &result))
+         return svgascreen->use_vs30 ? 512 : 256;
+      return result.u;
+   case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
+   case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
+      /* XXX: until we have vertex texture support */
+      return 0;
+   case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
+      return SVGA3D_MAX_NESTING_LEVEL;
+   case PIPE_CAP_MAX_VS_INPUTS:
+      return 16;
+   case PIPE_CAP_MAX_VS_CONSTS:
+      return 256;
+   case PIPE_CAP_MAX_VS_TEMPS:
+      if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_VERTEX_SHADER_TEMPS, &result))
+         return svgascreen->use_vs30 ? 32 : 12;
+      return result.u;
+   case PIPE_CAP_MAX_VS_ADDRS:
+      return svgascreen->use_vs30 ? 1 : 0;
+   case PIPE_CAP_MAX_VS_PREDS:
+      return svgascreen->use_vs30 ? 1 : 0;
+
    default:
       return 0;
    }
