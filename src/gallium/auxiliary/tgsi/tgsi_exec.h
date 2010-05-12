@@ -174,10 +174,11 @@ struct tgsi_sampler
 
 
 
-#define TGSI_EXEC_MAX_COND_NESTING  32
-#define TGSI_EXEC_MAX_LOOP_NESTING  32
-#define TGSI_EXEC_MAX_SWITCH_NESTING 32
-#define TGSI_EXEC_MAX_CALL_NESTING  32
+#define TGSI_EXEC_MAX_NESTING  32
+#define TGSI_EXEC_MAX_COND_NESTING  TGSI_EXEC_MAX_NESTING
+#define TGSI_EXEC_MAX_LOOP_NESTING  TGSI_EXEC_MAX_NESTING
+#define TGSI_EXEC_MAX_SWITCH_NESTING TGSI_EXEC_MAX_NESTING
+#define TGSI_EXEC_MAX_CALL_NESTING  TGSI_EXEC_MAX_NESTING
 
 /* The maximum number of input attributes per vertex. For 2D
  * input register files, this is the stride between two 1D

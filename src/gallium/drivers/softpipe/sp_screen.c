@@ -33,6 +33,7 @@
 #include "pipe/p_screen.h"
 
 #include "state_tracker/sw_winsys.h"
+#include "tgsi/tgsi_exec.h"
 
 #include "sp_texture.h"
 #include "sp_screen.h"
@@ -110,6 +111,36 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 1;
+
+   case PIPE_CAP_MAX_VS_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_INSTRUCTIONS:
+   case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
+   case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
+   case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
+   case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
+   case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
+      /* There is no limit in number of instructions beyond available memory */
+      return 32768;
+   case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
+   case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
+      return TGSI_EXEC_MAX_NESTING;
+   case PIPE_CAP_MAX_VS_INPUTS:
+   case PIPE_CAP_MAX_FS_INPUTS:
+      return TGSI_EXEC_MAX_INPUT_ATTRIBS;
+   case PIPE_CAP_MAX_FS_CONSTS:
+   case PIPE_CAP_MAX_VS_CONSTS:
+      return TGSI_EXEC_MAX_CONST_BUFFER;
+   case PIPE_CAP_MAX_VS_TEMPS:
+   case PIPE_CAP_MAX_FS_TEMPS:
+      return TGSI_EXEC_NUM_TEMPS;
+   case PIPE_CAP_MAX_VS_ADDRS:
+   case PIPE_CAP_MAX_FS_ADDRS:
+      return TGSI_EXEC_NUM_ADDRS;
+   case PIPE_CAP_MAX_VS_PREDS:
+   case PIPE_CAP_MAX_FS_PREDS:
+      return TGSI_EXEC_NUM_PREDS;
+
    default:
       return 0;
    }
