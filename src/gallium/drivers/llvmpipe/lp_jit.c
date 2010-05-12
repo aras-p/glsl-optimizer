@@ -195,6 +195,11 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
          LLVMAddInstructionCombiningPass(screen->pass);
       }
       LLVMAddGVNPass(screen->pass);
+   } else {
+      /* We need at least this pass to prevent the backends to fail in
+       * unexpected ways.
+       */
+      LLVMAddPromoteMemoryToRegisterPass(screen->pass);
    }
 
    lp_jit_init_globals(screen);
