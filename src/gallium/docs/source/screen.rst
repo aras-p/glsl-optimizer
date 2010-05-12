@@ -101,6 +101,22 @@ The floating-point capabilities:
 * ``GUARD_BAND_LEFT``, ``GUARD_BAND_TOP``, ``GUARD_BAND_RIGHT``,
   ``GUARD_BAND_BOTTOM``: XXX
 
+Fragment shader limits:
+
+* ``PIPE_CAP_MAX_FS_INSTRUCTIONS``: The maximum number of instructions.
+* ``PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS``: The maximum number of arithmetic instructions.
+* ``PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS``: The maximum number of texture instructions.
+* ``PIPE_CAP_MAX_FS_TEX_INDIRECTIONS``: The maximum number of texture indirections.
+* ``PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH``: The maximum nested control flow depth.
+* ``PIPE_CAP_MAX_FS_INPUTS``: The maximum number of input registers.
+* ``PIPE_CAP_MAX_FS_CONSTS``: The maximum number of constants.
+* ``PIPE_CAP_MAX_FS_TEMPS``: The maximum number of temporary registers.
+* ``PIPE_CAP_MAX_FS_ADDRS``: The maximum number of address registers.
+* ``PIPE_CAP_MAX_FS_PREDS``: The maximum number of predicate registers.
+
+Vertex shader limits:
+
+* ``PIPE_CAP_MAX_VS_*``: Identical to ``PIPE_CAP_MAX_FS_*``.
 
 
 .. _pipe_bind:
