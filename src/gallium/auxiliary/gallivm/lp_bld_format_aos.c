@@ -62,9 +62,9 @@ lp_build_unpack_rgba_aos(LLVMBuilderRef builder,
    LLVMValueRef scales[4];
    LLVMValueRef swizzles[4];
    LLVMValueRef aux[4];
-   bool normalized;
+   boolean normalized;
    int empty_channel;
-   bool needs_uitofp;
+   boolean needs_uitofp;
    unsigned shift;
    unsigned i;
 
@@ -208,7 +208,7 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
    LLVMValueRef shifted, casted, scaled, unswizzled;
    LLVMValueRef shifts[4];
    LLVMValueRef scales[4];
-   bool normalized;
+   boolean normalized;
    unsigned shift;
    unsigned i, j;
 
