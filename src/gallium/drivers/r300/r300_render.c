@@ -198,7 +198,15 @@ static boolean immd_is_good_idea(struct r300_context *r300,
     unsigned vertex_element_count = r300->velems->count;
     unsigned i, vbi;
 
-    if (count > 10 || DBG_ON(r300, DBG_NO_IMMD)) {
+    if (DBG_ON(r300, DBG_NO_IMMD)) {
+        return FALSE;
+    }
+
+    if (r300->draw) {
+        return FALSE;
+    }
+
+    if (count > 10) {
         return FALSE;
     }
 
