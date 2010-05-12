@@ -44,7 +44,7 @@ void
 lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
                             struct lp_build_context *bld,
                             const LLVMValueRef *unswizzled,
-                            LLVMValueRef *swizzled)
+                            LLVMValueRef swizzled_out[4])
 {
    assert(UTIL_FORMAT_SWIZZLE_0 == PIPE_SWIZZLE_ZERO);
    assert(UTIL_FORMAT_SWIZZLE_1 == PIPE_SWIZZLE_ONE);
@@ -59,14 +59,14 @@ lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
        */
       enum util_format_swizzle swizzle = format_desc->swizzle[0];
       LLVMValueRef depth = lp_build_swizzle_soa_channel(bld, unswizzled, swizzle);
-      swizzled[2] = swizzled[1] = swizzled[0] = depth;
-      swizzled[3] = bld->one;
+      swizzled_out[2] = swizzled_out[1] = swizzled_out[0] = depth;
+      swizzled_out[3] = bld->one;
    }
    else {
       unsigned chan;
       for (chan = 0; chan < 4; ++chan) {
          enum util_format_swizzle swizzle = format_desc->swizzle[chan];
-         swizzled[chan] = lp_build_swizzle_soa_channel(bld, unswizzled, swizzle);
+         swizzled_out[chan] = lp_build_swizzle_soa_channel(bld, unswizzled, swizzle);
       }
    }
 }
@@ -95,7 +95,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          const struct util_format_description *format_desc,
                          struct lp_type type,
                          LLVMValueRef packed,
-                         LLVMValueRef *rgba)
+                         LLVMValueRef rgba_out[4])
 {
    struct lp_build_context bld;
    LLVMValueRef inputs[4];
@@ -242,14 +242,15 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
       start = stop;
    }
 
-   lp_build_format_swizzle_soa(format_desc, &bld, inputs, rgba);
+   lp_build_format_swizzle_soa(format_desc, &bld, inputs, rgba_out);
 }
 
 
 /**
  * Fetch a pixel into a SoA.
  *
- * i and j are the sub-block pixel coordinates.
+ * \param type  the desired return type for 'rgba'
+ * \param i, j  the sub-block pixel coordinates.
  */
 void
 lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
@@ -259,7 +260,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
                         LLVMValueRef offset,
                         LLVMValueRef i,
                         LLVMValueRef j,
-                        LLVMValueRef *rgba)
+                        LLVMValueRef rgba_out[4])
 {
 
    if (format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
@@ -273,7 +274,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
    {
       /*
        * The packed pixel fits into an element of the destination format. Put
-       * the packed pixels into a vector and estract each component for all
+       * the packed pixels into a vector and extract each component for all
        * vector elements in parallel.
        */
 
@@ -294,16 +295,16 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
       lp_build_unpack_rgba_soa(builder,
                                format_desc,
                                type,
-                               packed, rgba);
+                               packed, rgba_out);
    }
    else {
       /*
        * Fallback to calling lp_build_fetch_rgba_aos for each pixel.
        *
-       * This is not the most efficient way of fetching pixels, as
-       * we miss some opportunities to do vectorization, but this it is a
-       * convenient for formats or scenarios for which there was no opportunity
-       * or incentive to optimize.
+       * This is not the most efficient way of fetching pixels, as we
+       * miss some opportunities to do vectorization, but this is
+       * convenient for formats or scenarios for which there was no
+       * opportunity or incentive to optimize.
        */
 
       unsigned k, chan;
@@ -311,7 +312,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
       assert(type.floating);
 
       for (chan = 0; chan < 4; ++chan) {
-         rgba[chan] = lp_build_undef(type);
+         rgba_out[chan] = lp_build_undef(type);
       }
 
       for(k = 0; k < type.length; ++k) {
@@ -327,16 +328,17 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
          i_elem = LLVMBuildExtractElement(builder, i, index, "");
          j_elem = LLVMBuildExtractElement(builder, j, index, "");
 
-         tmp = lp_build_fetch_rgba_aos(builder, format_desc, ptr, i_elem, j_elem);
+         tmp = lp_build_fetch_rgba_aos(builder, format_desc, ptr,
+                                       i_elem, j_elem);
 
          /*
           * AoS to SoA
           */
-
          for (chan = 0; chan < 4; ++chan) {
             LLVMValueRef chan_val = LLVMConstInt(LLVMInt32Type(), chan, 0),
             tmp_chan = LLVMBuildExtractElement(builder, tmp, chan_val, "");
-            rgba[chan] = LLVMBuildInsertElement(builder, rgba[chan], tmp_chan, index, "");
+            rgba_out[chan] = LLVMBuildInsertElement(builder, rgba_out[chan],
+                                                    tmp_chan, index, "");
          }
       }
    }

@@ -73,14 +73,14 @@ void
 lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
                             struct lp_build_context *bld,
                             const LLVMValueRef *unswizzled,
-                            LLVMValueRef *swizzled);
+                            LLVMValueRef swizzled_out[4]);
 
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          const struct util_format_description *format_desc,
                          struct lp_type type,
                          LLVMValueRef packed,
-                         LLVMValueRef *rgba);
+                         LLVMValueRef rgba_out[4]);
 
 
 void
@@ -91,7 +91,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
                         LLVMValueRef offsets,
                         LLVMValueRef i,
                         LLVMValueRef j,
-                        LLVMValueRef *rgba);
+                        LLVMValueRef rgba_out[4]);
 
 
 #endif /* !LP_BLD_FORMAT_H */
