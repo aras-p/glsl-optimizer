@@ -59,7 +59,7 @@ struct lp_build_sampler_soa
    (*destroy)( struct lp_build_sampler_soa *sampler );
 
    void
-   (*emit_fetch_texel)( struct lp_build_sampler_soa *sampler,
+   (*emit_fetch_texel)( const struct lp_build_sampler_soa *sampler,
                         LLVMBuilderRef builder,
                         struct lp_type type,
                         unsigned unit,
@@ -83,7 +83,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
                   struct lp_build_sampler_soa *sampler,
-                  struct tgsi_shader_info *info);
+                  const struct tgsi_shader_info *info);
 
 
 #endif /* LP_BLD_TGSI_H */

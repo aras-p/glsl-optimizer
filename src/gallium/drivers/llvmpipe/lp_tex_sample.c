@@ -87,7 +87,7 @@ struct lp_llvm_sampler_soa
  * @sa http://llvm.org/docs/GetElementPtr.html
  */
 static LLVMValueRef
-lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
+lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
                        LLVMBuilderRef builder,
                        unsigned unit,
                        unsigned member_index,
@@ -135,7 +135,7 @@ lp_llvm_texture_member(struct lp_sampler_dynamic_state *base,
  */
 #define LP_LLVM_TEXTURE_MEMBER(_name, _index, _emit_load)  \
    static LLVMValueRef \
-   lp_llvm_texture_##_name( struct lp_sampler_dynamic_state *base, \
+   lp_llvm_texture_##_name( const struct lp_sampler_dynamic_state *base, \
                             LLVMBuilderRef builder, \
                             unsigned unit) \
    { \
@@ -164,7 +164,7 @@ lp_llvm_sampler_soa_destroy(struct lp_build_sampler_soa *sampler)
  * The 'texel' parameter returns four vectors corresponding to R, G, B, A.
  */
 static void
-lp_llvm_sampler_soa_emit_fetch_texel(struct lp_build_sampler_soa *base,
+lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
                                      LLVMBuilderRef builder,
                                      struct lp_type type,
                                      unsigned unit,

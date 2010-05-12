@@ -97,40 +97,40 @@ struct lp_sampler_dynamic_state
 
    /** Obtain the base texture width. */
    LLVMValueRef
-   (*width)( struct lp_sampler_dynamic_state *state,
+   (*width)( const struct lp_sampler_dynamic_state *state,
              LLVMBuilderRef builder,
              unsigned unit);
 
    /** Obtain the base texture height. */
    LLVMValueRef
-   (*height)( struct lp_sampler_dynamic_state *state,
+   (*height)( const struct lp_sampler_dynamic_state *state,
               LLVMBuilderRef builder,
               unsigned unit);
 
    /** Obtain the base texture depth. */
    LLVMValueRef
-   (*depth)( struct lp_sampler_dynamic_state *state,
+   (*depth)( const struct lp_sampler_dynamic_state *state,
              LLVMBuilderRef builder,
              unsigned unit);
 
    /** Obtain the number of mipmap levels (minus one). */
    LLVMValueRef
-   (*last_level)( struct lp_sampler_dynamic_state *state,
+   (*last_level)( const struct lp_sampler_dynamic_state *state,
                   LLVMBuilderRef builder,
                   unsigned unit);
 
    LLVMValueRef
-   (*row_stride)( struct lp_sampler_dynamic_state *state,
+   (*row_stride)( const struct lp_sampler_dynamic_state *state,
                   LLVMBuilderRef builder,
                   unsigned unit);
 
    LLVMValueRef
-   (*img_stride)( struct lp_sampler_dynamic_state *state,
+   (*img_stride)( const struct lp_sampler_dynamic_state *state,
                   LLVMBuilderRef builder,
                   unsigned unit);
 
    LLVMValueRef
-   (*data_ptr)( struct lp_sampler_dynamic_state *state,
+   (*data_ptr)( const struct lp_sampler_dynamic_state *state,
                 LLVMBuilderRef builder,
                 unsigned unit);
 

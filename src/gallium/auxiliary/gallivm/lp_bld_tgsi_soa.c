@@ -120,7 +120,7 @@ struct lp_build_tgsi_soa_context
    const LLVMValueRef (*inputs)[NUM_CHANNELS];
    LLVMValueRef (*outputs)[NUM_CHANNELS];
 
-   struct lp_build_sampler_soa *sampler;
+   const struct lp_build_sampler_soa *sampler;
 
    LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES][NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_TGSI_TEMPS][NUM_CHANNELS];
@@ -1882,7 +1882,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   const LLVMValueRef (*inputs)[NUM_CHANNELS],
                   LLVMValueRef (*outputs)[NUM_CHANNELS],
                   struct lp_build_sampler_soa *sampler,
-                  struct tgsi_shader_info *info)
+                  const struct tgsi_shader_info *info)
 {
    struct lp_build_tgsi_soa_context bld;
    struct tgsi_parse_context parse;
