@@ -120,4 +120,44 @@
 </category>
 
 
+<category name="GL_ARB_transform_feedback2" number="93">
+
+  <enum name="TRANSFORM_FEEDBACK"                  value="0x8E22"/>
+  <enum name="TRANSFORM_FEEDBACK_BUFFER_PAUSED"    value="0x8E23"/>
+  <enum name="TRANSFORM_FEEDBACK_BUFFER_ACTIVE"    value="0x8E24"/>
+  <enum name="TRANSFORM_FEEDBACK_BINDING"          value="0x8E25"/>
+
+  <function name="BindTransformFeedback" offset="assign">
+    <param name="target" type="GLenum"/>
+    <param name="id" type="GLuint"/>
+  </function>
+
+  <function name="DeleteTransformFeedbacks" offset="assign">
+    <param name="n" type="GLsizei"/>
+    <param name="ids" type="const GLuint *"/>
+  </function>
+
+  <function name="GenTransformFeedbacks" offset="assign">
+    <param name="n" type="GLsizei"/>
+    <param name="ids" type="GLuint *"/>
+  </function>
+
+  <function name="IsTransformFeedback" offset="assign">
+    <param name="id" type="GLuint"/>
+    <return type="GLboolean"/>
+  </function>
+
+  <function name="PauseTransformFeedback" offset="assign">
+  </function>
+
+  <function name="ResumeTransformFeedback" offset="assign">
+  </function>
+
+  <function name="DrawTransformFeedback" offset="assign">
+    <param name="mode" type="GLenum"/>
+    <param name="id" type="GLuint"/>
+  </function>
+
+</category>
+ 
 </OpenGLAPI>
