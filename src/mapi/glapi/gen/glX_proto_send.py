@@ -373,7 +373,7 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 				print '{'
 				print '    __GLXcontext * const gc = __glXGetCurrentContext();'
 				print ''
-				print '#ifdef GLX_DIRECT_RENDERING'
+				print '#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)'
 				print '    if (gc->driContext) {'
 				print '    %sCALL_%s(GET_DISPATCH(), (%s));' % (ret_string, func.name, func.get_called_parameter_string())
 				print '    } else'
