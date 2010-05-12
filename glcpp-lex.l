@@ -36,22 +36,40 @@
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
-NOTNEWLINE	[^\n]
+NEWLINE		[\n]
 HSPACE		[ \t]
 HASH		^{HSPACE}*#
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
-DEFVAL		{NONSPACE}{NOTNEWLINE}*
+TOKEN		{NONSPACE}+
+
 %%
 
-{HASH}define		{ BEGIN ST_DEFINE; return DEFINE; }
+{HASH}define{HSPACE}*	{
+	BEGIN ST_DEFINE;
+	return DEFINE;
+}
 
-<ST_DEFINE>{HSPACE}+
-<ST_DEFINE>{IDENTIFIER}	{ BEGIN ST_DEFVAL; yylval = strdup (yytext); return IDENTIFIER; }
+<ST_DEFINE>{IDENTIFIER}	{
+	yylval.str = strdup (yytext);
+	return IDENTIFIER;
+}
 
-<ST_DEFVAL>{SPACE}+
-<ST_DEFVAL>{DEFVAL}	{ BEGIN INITIAL; yylval = strdup (yytext); return DEFVAL; }
+<ST_DEFINE>{TOKEN} {
+	yylval.str = strdup (yytext);
+	return TOKEN;
+}
+
+<ST_DEFINE>\n {
+	BEGIN INITIAL;
+	return NEWLINE;
+}
+
+<ST_DEFINE>{SPACE}+
 
 	/* Anything we don't specifically recognize is a stream of tokens */
-{NONSPACE}+		{ yylval = strdup (yytext); return TOKEN; }
+{NONSPACE}+ {
+	yylval.str = strdup (yytext);
+	return TOKEN;
+}
 
 %%

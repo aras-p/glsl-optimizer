@@ -23,17 +23,19 @@
 
 #include "glcpp.h"
 
+extern int yydebug;
+
 int
 main (void)
 {
-	glcpp_parser_t parser;
+	glcpp_parser_t *parser;
 	int ret;
 
-	glcpp_parser_init (&parser);
+	parser = glcpp_parser_create ();
 
-	ret = glcpp_parser_parse (&parser);
+	ret = glcpp_parser_parse (parser);
 
-	glcpp_parser_fini (&parser);
+	glcpp_parser_destroy (parser);
 
 	return ret;
 }
