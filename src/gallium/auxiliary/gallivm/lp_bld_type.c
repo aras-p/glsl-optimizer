@@ -275,8 +275,10 @@ lp_typekind_name(LLVMTypeKind t)
       return "LLVMVectorTypeKind";
    case LLVMMetadataTypeKind:
       return "LLVMMetadataTypeKind";
+   /* Only in LLVM 2.7 and later???
    case LLVMUnionTypeKind:
       return "LLVMUnionTypeKind";
+   */
    default:
       return "unknown LLVMTypeKind";
    }
