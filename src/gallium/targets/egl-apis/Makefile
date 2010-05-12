@@ -21,6 +21,16 @@ GLESv1_CM_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GLESv1_CM_LIB)
 GLESv2_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GLESv2_LIB)
 OpenVG_SYS := -lm -L$(TOP)/$(LIB_DIR) -l$(VG_LIB)
 
+# $(LLVM_LIBS) will be discarded except for OpenGL, which creates a private
+# draw context for selection/feedback mode.
+ifeq ($(MESA_LLVM),1)
+GL_SYS += $(LLVM_LIBS)
+GLESv1_CM_SYS += $(LLVM_LIBS)
+GLESv2_SYS += $(LLVM_LIBS)
+OpenVG_SYS += $(LLVM_LIBS)
+LDFLAGS += $(LLVM_LDFLAGS)
+endif
+
 # project libs
 GL_LIBS := $(TOP)/src/mesa/libmesagallium.a
 GLESv1_CM_LIBS := $(TOP)/src/mesa/libes1gallium.a
