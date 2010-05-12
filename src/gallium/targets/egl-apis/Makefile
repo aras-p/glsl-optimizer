@@ -23,8 +23,8 @@ OpenVG_SYS := -lm -L$(TOP)/$(LIB_DIR) -l$(VG_LIB)
 
 # project libs
 GL_LIBS := $(TOP)/src/mesa/libmesagallium.a
-GLESv1_CM_LIBS := $(TOP)/src/mesa/es/libes1gallium.a
-GLESv2_LIBS := $(TOP)/src/mesa/es/libes2gallium.a
+GLESv1_CM_LIBS := $(TOP)/src/mesa/libes1gallium.a
+GLESv2_LIBS := $(TOP)/src/mesa/libes2gallium.a
 OpenVG_LIBS := $(TOP)/src/gallium/state_trackers/vega/libvega.a
 
 # objects

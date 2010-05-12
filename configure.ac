@@ -757,6 +757,7 @@ AC_ARG_ENABLE([gles-overlay],
 
 API_DEFINES=""
 APIS=""
+GLES_OVERLAY=0
 if test "x$enable_opengl" = xno; then
     API_DEFINES="$API_DEFINES -DFEATURE_GL=0"
 else
@@ -775,11 +776,12 @@ if test "x$enable_gles_overlay" = xyes -o \
     "x$enable_gles1" = xyes -o "x$enable_gles2" = xyes; then
     CORE_DIRS="mapi/es1api mapi/es2api $CORE_DIRS"
     if test "x$enable_gles_overlay" = xyes; then
-        CORE_DIRS="$CORE_DIRS mesa/es"
+        GLES_OVERLAY=1
     fi
 fi
 AC_SUBST([API_DEFINES])
 AC_SUBST([APIS])
+AC_SUBST([GLES_OVERLAY])
 
 dnl If $with_dri_drivers is yes, directories will be added through
 dnl platform checks
@@ -1331,7 +1333,7 @@ yes)
                 if test "x$enable_gles1" != xyes -a "x$enable_gles2" != xyes; then
                     CORE_DIRS="mapi/es1api mapi/es2api $CORE_DIRS"
                 fi
-                CORE_DIRS="$CORE_DIRS mesa/es"
+                GLES_OVERLAY=1
                 EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GLESv1_CM_LIB) $(GLESv2_LIB)'
             fi
 	    tracker=""

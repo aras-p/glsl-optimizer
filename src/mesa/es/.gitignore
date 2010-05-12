@@ -1,5 +1,0 @@
-glapi/glapi-es*
-glapi/glapi-stamp
-main/get_es*.c
-main/api_exec_es*.c
-objs-es*
