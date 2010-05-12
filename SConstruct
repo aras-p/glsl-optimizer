@@ -153,10 +153,11 @@ if platform in ('posix', 'linux', 'freebsd', 'darwin'):
 		'_SVID_SOURCE',
 		'_BSD_SOURCE', 
 		'_GNU_SOURCE',
-		
 		'PTHREADS',
 		'HAVE_POSIX_MEMALIGN',
 	])
+	if gcc:
+		env.Append(CFLAGS = ['-fvisibility=hidden'])
 	if platform == 'darwin':
 		env.Append(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	env.Append(LIBS = [
