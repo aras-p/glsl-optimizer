@@ -27,11 +27,6 @@
 #include "r300_screen.h"
 #include "r300_state_invariant.h"
 
-struct pipe_viewport_state r300_viewport_identity = {
-    .scale = {1.0, 1.0, 1.0, 1.0},
-    .translate = {0.0, 0.0, 0.0, 0.0},
-};
-
 /* Calculate and emit invariant state. This is data that the 3D engine
  * will probably want at the beginning of every CS, but it's not currently
  * handled by any CSO setup, and in addition it doesn't really change much.

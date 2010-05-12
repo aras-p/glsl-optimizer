@@ -395,13 +395,13 @@ static void r300_set_clip_state(struct pipe_context* pipe,
     if (r300->screen->caps.has_tcl) {
         memcpy(r300->clip_state.state, state, sizeof(struct pipe_clip_state));
         r300->clip_state.size = 29;
+
+        r300->clip_state.dirty = TRUE;
     } else {
         draw_flush(r300->draw);
         draw_set_clip_state(r300->draw, state);
         r300->clip_state.size = 2;
     }
-
-    r300->clip_state.dirty = TRUE;
 }
 
 /* Create a new depth, stencil, and alpha state based on the CSO dsa state.
@@ -1097,6 +1097,13 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
         (struct r300_viewport_state*)r300->viewport_state.state;
 
     r300->viewport = *state;
+
+    if (r300->draw) {
+        draw_flush(r300->draw);
+        draw_set_viewport_state(r300->draw, state);
+        viewport->vte_control = R300_VTX_XY_FMT | R300_VTX_Z_FMT;
+        return;
+    }
 
     /* Do the transform in HW. */
     viewport->vte_control = R300_VTX_W0_FMT;

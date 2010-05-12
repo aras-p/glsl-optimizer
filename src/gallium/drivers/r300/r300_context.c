@@ -201,9 +201,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
         /* Enable Draw's clipping. */
         draw_set_driver_clipping(r300->draw, FALSE);
-        /* Force Draw to never do viewport transform, since we can do
-         * transform in hardware, always. */
-        draw_set_viewport_state(r300->draw, &r300_viewport_identity);
     }
 
     r300_setup_atoms(r300);

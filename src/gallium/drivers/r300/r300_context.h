@@ -321,8 +321,6 @@ struct r300_vertex_element_state {
     struct r300_vertex_stream_state vertex_stream;
 };
 
-extern struct pipe_viewport_state r300_viewport_identity;
-
 struct r300_context {
     /* Parent class */
     struct pipe_context context;
