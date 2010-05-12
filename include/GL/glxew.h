@@ -83,13 +83,16 @@
 #ifdef __glxext_h_
 #error glxext.h included before glxew.h
 #endif
-#ifdef GLX_H
+
+#if defined(GLX_H) || defined(__GLX_glx_h__) || defined(__glx_h__)
 #error glx.h included before glxew.h
 #endif
 
 #define __glxext_h_
-#define __GLX_glx_h__
+
 #define GLX_H
+#define __GLX_glx_h__
+#define __glx_h__
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -421,6 +424,17 @@ extern void ( * glXGetProcAddressARB (const GLubyte *procName)) (void);
 
 #endif /* GLX_ARB_multisample */
 
+/* ---------------------- GLX_ARB_vertex_buffer_object --------------------- */
+
+#ifndef GLX_ARB_vertex_buffer_object
+#define GLX_ARB_vertex_buffer_object 1
+
+#define GLX_CONTEXT_ALLOW_BUFFER_BYTE_ORDER_MISMATCH_ARB 0x2095
+
+#define GLXEW_ARB_vertex_buffer_object GLXEW_GET_VAR(__GLXEW_ARB_vertex_buffer_object)
+
+#endif /* GLX_ARB_vertex_buffer_object */
+
 /* ----------------------- GLX_ATI_pixel_format_float ---------------------- */
 
 #ifndef GLX_ATI_pixel_format_float
@@ -643,6 +657,20 @@ typedef void ( * PFNGLXRELEASETEXIMAGEEXTPROC) (Display* display, GLXDrawable dr
 #define GLXEW_EXT_visual_rating GLXEW_GET_VAR(__GLXEW_EXT_visual_rating)
 
 #endif /* GLX_EXT_visual_rating */
+
+/* -------------------------- GLX_INTEL_swap_event ------------------------- */
+
+#ifndef GLX_INTEL_swap_event
+#define GLX_INTEL_swap_event 1
+
+#define GLX_EXCHANGE_COMPLETE_INTEL 0x8180
+#define GLX_COPY_COMPLETE_INTEL 0x8181
+#define GLX_FLIP_COMPLETE_INTEL 0x8182
+#define GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK 0x04000000
+
+#define GLXEW_INTEL_swap_event GLXEW_GET_VAR(__GLXEW_INTEL_swap_event)
+
+#endif /* GLX_INTEL_swap_event */
 
 /* -------------------------- GLX_MESA_agp_offset -------------------------- */
 
@@ -1369,6 +1397,7 @@ GLXEW_EXPORT GLboolean __GLXEW_ARB_fbconfig_float;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_framebuffer_sRGB;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_get_proc_address;
 GLXEW_EXPORT GLboolean __GLXEW_ARB_multisample;
+GLXEW_EXPORT GLboolean __GLXEW_ARB_vertex_buffer_object;
 GLXEW_EXPORT GLboolean __GLXEW_ATI_pixel_format_float;
 GLXEW_EXPORT GLboolean __GLXEW_ATI_render_texture;
 GLXEW_EXPORT GLboolean __GLXEW_EXT_fbconfig_packed_float;
@@ -1379,6 +1408,7 @@ GLXEW_EXPORT GLboolean __GLXEW_EXT_swap_control;
 GLXEW_EXPORT GLboolean __GLXEW_EXT_texture_from_pixmap;
 GLXEW_EXPORT GLboolean __GLXEW_EXT_visual_info;
 GLXEW_EXPORT GLboolean __GLXEW_EXT_visual_rating;
+GLXEW_EXPORT GLboolean __GLXEW_INTEL_swap_event;
 GLXEW_EXPORT GLboolean __GLXEW_MESA_agp_offset;
 GLXEW_EXPORT GLboolean __GLXEW_MESA_copy_sub_buffer;
 GLXEW_EXPORT GLboolean __GLXEW_MESA_pixmap_colormap;
