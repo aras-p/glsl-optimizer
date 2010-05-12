@@ -36,6 +36,7 @@ struct st_query_object
 {
    struct gl_query_object base;
    struct pipe_query *pq;
+   unsigned type;  /**< PIPE_QUERY_x */
 };
 
 

@@ -51,6 +51,7 @@ st_NewQueryObject(GLcontext *ctx, GLuint id)
       stq->base.Id = id;
       stq->base.Ready = GL_TRUE;
       stq->pq = NULL;
+      stq->type = PIPE_QUERY_TYPES; /* an invalid value */
       return &stq->base;
    }
    return NULL;
@@ -78,16 +79,37 @@ st_BeginQuery(GLcontext *ctx, struct gl_query_object *q)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_query_object *stq = st_query_object(q);
+   unsigned type;
 
+   /* convert GL query type to Gallium query type */
    switch (q->Target) {
    case GL_SAMPLES_PASSED_ARB:
-      if (!stq->pq)
-	 stq->pq = pipe->create_query( pipe, PIPE_QUERY_OCCLUSION_COUNTER );
+      type = PIPE_QUERY_OCCLUSION_COUNTER;
+      break;
+   case GL_PRIMITIVES_GENERATED:
+      type = PIPE_QUERY_PRIMITIVES_GENERATED;
+      break;
+   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
+      type = PIPE_QUERY_PRIMITIVES_EMITTED;
       break;
    default:
-      assert(0);
+      assert(0 && "unexpected query target in st_BeginQuery()");
       return;
    }
+
+   if (stq->pq && stq->type != type) {
+      /* free old query of different type */
+      pipe->destroy_query(pipe, stq->pq);
+      stq->pq = NULL;
+      stq->type = PIPE_QUERY_TYPES; /* an invalid value */
+   }
+
+   if (!stq->pq) {
+      stq->pq = pipe->create_query(pipe, type);
+      stq->type = type;
+   }
+
+   assert(stq->type == type);
 
    pipe->begin_query(pipe, stq->pq);
 }
