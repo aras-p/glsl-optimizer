@@ -34,6 +34,7 @@
  */
 
 #define NULL 0
+#include <math.h>
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
@@ -165,6 +166,102 @@ ir_constant_visitor::visit(ir_expression *ir)
 	    f[c] = op[0]->value.i[c];
 	 else
 	    f[c] = op[0]->value.u[c];
+      }
+      break;
+
+   case ir_unop_neg:
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 switch (type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    u[c] = -op[0]->value.u[c];
+	    break;
+	 case GLSL_TYPE_INT:
+	    i[c] = -op[0]->value.i[c];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    f[c] = -op[0]->value.f[c];
+	    break;
+	 default:
+	    assert(0);
+	 }
+      }
+      break;
+
+   case ir_unop_abs:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 switch (type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    u[c] = op[0]->value.u[c];
+	    break;
+	 case GLSL_TYPE_INT:
+	    i[c] = op[0]->value.i[c];
+	    if (i[c] < 0)
+	       i[c] = -i[c];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    f[c] = fabs(op[0]->value.f[c]);
+	    break;
+	 default:
+	    assert(0);
+	 }
+      }
+      break;
+
+   case ir_unop_rcp:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 switch (type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    if (op[0]->value.u[c] != 0.0)
+	       u[c] = 1 / op[0]->value.u[c];
+	    break;
+	 case GLSL_TYPE_INT:
+	    if (op[0]->value.i[c] != 0.0)
+	       i[c] = 1 / op[0]->value.i[c];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    if (op[0]->value.f[c] != 0.0)
+	       f[c] = 1.0 / op[0]->value.f[c];
+	    break;
+	 default:
+	    assert(0);
+	 }
+      }
+      break;
+
+   case ir_unop_rsq:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 f[c] = 1.0 / sqrtf(op[0]->value.f[c]);
+      }
+      break;
+
+   case ir_unop_sqrt:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 f[c] = sqrtf(op[0]->value.f[c]);
+      }
+      break;
+
+   case ir_unop_exp:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 f[c] = expf(op[0]->value.f[c]);
+      }
+      break;
+
+   case ir_unop_log:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 f[c] = logf(op[0]->value.f[c]);
       }
       break;
 
