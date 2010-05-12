@@ -65,8 +65,10 @@ st_vp_release_varients( struct st_context *st,
       if (vpv->driver_shader) 
          cso_delete_vertex_shader(st->cso_context, vpv->driver_shader);
       
+#if FEATURE_feedback || FEATURE_rastpos
       if (vpv->draw_shader)
          draw_delete_vertex_shader( st->draw, vpv->draw_shader );
+#endif
       
       if (vpv->tgsi.tokens)
          st_free_tokens(vpv->tgsi.tokens);
