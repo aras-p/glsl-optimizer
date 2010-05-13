@@ -1753,7 +1753,8 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          /* check that the sampler (tex unit index) is legal */
          if (texUnit >= ctx->Const.MaxTextureImageUnits) {
             _mesa_error(ctx, GL_INVALID_VALUE,
-                        "glUniform1(invalid sampler/tex unit index)");
+                        "glUniform1(invalid sampler/tex unit index for '%s')",
+                        param->Name);
             return;
          }
 
@@ -1801,7 +1802,8 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          /* non-array: count must be at most one; count == 0 is handled by the loop below */
          if (count > 1) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glUniform(uniform is not an array)");
+                        "glUniform(uniform '%s' is not an array)",
+                        param->Name);
             return;
          }
       }
@@ -1864,14 +1866,15 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;   /* The standard specifies this as a no-op */
 
    if (location < -1) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(location)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(location=%d)",
+                  location);
       return;
    }
 
    split_location_offset(&location, &offset);
 
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location=%d)", location);
       return;
    }
 
