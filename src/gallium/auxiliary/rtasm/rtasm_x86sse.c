@@ -1743,19 +1743,34 @@ void x86_release_func( struct x86_function *p )
 }
 
 
-void (*x86_get_func( struct x86_function *p ))(void)
+static INLINE x86_func
+voidptr_to_x86_func(void *v)
+{
+   union {
+      void *v;
+      x86_func f;
+   } u;
+   assert(sizeof(u.v) == sizeof(u.f));
+   u.v = v;
+   return u.f;
+}
+
+
+x86_func x86_get_func( struct x86_function *p )
 {
    DUMP_END();
    if (DISASSEM && p->store)
       debug_printf("disassemble %p %p\n", p->store, p->csr);
 
    if (p->store == p->error_overflow)
-      return (void (*)(void)) NULL;
+      return voidptr_to_x86_func(NULL);
    else
-      return (void (*)(void)) p->store;
+      return voidptr_to_x86_func(p->store);
 }
 
 #else
+
+void x86sse_dummy( void );
 
 void x86sse_dummy( void )
 {

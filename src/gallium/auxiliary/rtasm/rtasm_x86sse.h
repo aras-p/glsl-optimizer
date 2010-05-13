@@ -102,6 +102,11 @@ enum sse_cc {
 #define cc_Z  cc_E
 #define cc_NZ cc_NE
 
+
+/** generic pointer to function */
+typedef void (*x86_func)(void);
+
+
 /* Begin/end/retrieve function creation:
  */
 
@@ -109,7 +114,7 @@ enum sse_cc {
 void x86_init_func( struct x86_function *p );
 void x86_init_func_size( struct x86_function *p, unsigned code_size );
 void x86_release_func( struct x86_function *p );
-void (*x86_get_func( struct x86_function *p ))( void );
+x86_func x86_get_func( struct x86_function *p );
 
 /* Debugging:
  */
