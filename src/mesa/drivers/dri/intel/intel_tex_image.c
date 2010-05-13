@@ -240,7 +240,7 @@ try_pbo_upload(struct intel_context *intel,
 
    if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
       intel_flush(&intel->ctx);
-   intel_prepare_render(intel);
+
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
 
@@ -472,8 +472,6 @@ intelTexImage(GLcontext * ctx,
 					   format, type,
 					   pixels, unpack, "glTexImage");
    }
-
-   intel_prepare_render(intel);
 
    if (intelImage->mt) {
       if (pixels != NULL) {

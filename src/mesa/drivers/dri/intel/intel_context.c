@@ -409,6 +409,10 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    driUpdateFramebufferSize(&intel->ctx, drawable);
 }
 
+/**
+ * intel_prepare_render should be called anywhere that curent read/drawbuffer
+ * state is required.
+ */
 void
 intel_prepare_render(struct intel_context *intel)
 {
