@@ -21,6 +21,34 @@
 #define DEBUG_STORE 0
 
 
+/** cast wrapper */
+static INLINE draw_jit_vert_func_elts
+voidptr_to_draw_vert_func_elts(void *v)
+{
+   union {
+      void *v;
+      draw_jit_vert_func_elts f;
+   } u;
+   assert(sizeof(u.v) == sizeof(u.f));
+   u.v = v;
+   return u.f;
+}
+
+
+/** cast wrapper */
+static INLINE draw_jit_vert_func
+voidptr_to_draw_jit_vert_func(void *v)
+{
+   union {
+      void *v;
+      draw_jit_vert_func f;
+   } u;
+   assert(sizeof(u.v) == sizeof(u.f));
+   u.v = v;
+   return u.f;
+}
+
+
 /* generates the draw jit function */
 static void
 draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *var);
@@ -586,6 +614,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    struct lp_type vs_type = lp_type_float_vec(32);
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
+   void *code;
 
    arg_types[0] = llvm->context_ptr_type;           /* context */
    arg_types[1] = llvm->vertex_header_ptr_type;     /* vertex_header */
@@ -702,10 +731,12 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
       lp_debug_dump_value(variant->function);
       debug_printf("\n");
    }
-   variant->jit_func = (draw_jit_vert_func)LLVMGetPointerToGlobal(llvm->draw->engine, variant->function);
+
+   code = LLVMGetPointerToGlobal(llvm->draw->engine, variant->function);
+   variant->jit_func = voidptr_to_draw_jit_vert_func(code);
 
    if (0)
-      lp_disassemble(variant->jit_func);
+      lp_disassemble(code);
 }
 
 
@@ -728,6 +759,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef fetch_max;
+   void *code;
 
    arg_types[0] = llvm->context_ptr_type;               /* context */
    arg_types[1] = llvm->vertex_header_ptr_type;         /* vertex_header */
@@ -853,11 +885,12 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
       lp_debug_dump_value(variant->function_elts);
       debug_printf("\n");
    }
-   variant->jit_func_elts = (draw_jit_vert_func_elts)LLVMGetPointerToGlobal(
-      llvm->draw->engine, variant->function_elts);
+
+   code = LLVMGetPointerToGlobal(llvm->draw->engine, variant->function_elts);
+   variant->jit_func_elts = voidptr_to_draw_vert_func_elts(code);
 
    if (0)
-      lp_disassemble(variant->jit_func_elts);
+      lp_disassemble(code);
 }
 
 void
