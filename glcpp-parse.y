@@ -109,6 +109,7 @@ content:
 |	'('	{ printf ("("); }
 |	')'	{ printf (")"); }
 |	','	{ printf (","); }
+|	SPACE	{ printf (" "); }
 ;
 
 macro:
@@ -157,8 +158,12 @@ directive:
 |	DEFINE IDENTIFIER SPACE replacement_list {
 		_define_object_macro (parser, $2, $4);
 	}
-|	DEFINE IDENTIFIER '(' parameter_list ')' replacement_list {
-		_define_function_macro (parser, $2, $4, $6);
+|	DEFINE IDENTIFIER '(' parameter_list ')' {
+		list_t *list = _list_create (parser);
+		_define_function_macro (parser, $2, $4, list);
+	}
+|	DEFINE IDENTIFIER '(' parameter_list ')' SPACE replacement_list {
+		_define_function_macro (parser, $2, $4, $7);
 	}
 |	UNDEF FUNC_MACRO {
 		list_t *replacement = hash_table_find (parser->defines, $2);
@@ -185,8 +190,10 @@ directive:
 ;
 
 replacement_list:
-	/* empty */ {
+	word_or_symbol {
 		$$ = _list_create (parser);
+		_list_append_item ($$, $1);
+		talloc_free ($1);
 	}
 |	replacement_list word_or_symbol {
 		_list_append_item ($1, $2);
@@ -216,6 +223,7 @@ word_or_symbol:
 |	'('	{ $$ = xtalloc_strdup (parser, "("); }
 |	')'	{ $$ = xtalloc_strdup (parser, ")"); }
 |	','	{ $$ = xtalloc_strdup (parser, ","); }
+|	SPACE	{ $$ = xtalloc_strdup (parser, " "); }
 ;
 
 word:
@@ -323,29 +331,24 @@ glcpp_parser_macro_type (glcpp_parser_t *parser, const char *identifier)
 static void
 _print_expanded_macro_recursive (glcpp_parser_t *parser,
 				 const char *token,
-				 const char *orig,
-				 int *first)
+				 const char *orig)
 {
 	macro_t *macro;
 	node_t *node;
 
 	macro = hash_table_find (parser->defines, token);
 	if (macro == NULL) {
-		printf ("%s%s", *first ? "" : " ", token);
-		*first = 0;
+		printf ("%s", token);
 	} else {
 		list_t *replacement_list = macro->replacement_list;
 
 		for (node = replacement_list->head ; node ; node = node->next) {
 			token = node->str;
-			if (strcmp (token, orig) == 0) {
-				printf ("%s%s", *first ? "" : " ", token);
-				*first = 0;
-			} else {
+			if (strcmp (token, orig) == 0)
+				printf ("%s", token);
+			else
 				_print_expanded_macro_recursive (parser,
-								 token, orig,
-								 first);
-			}
+								 token, orig);
 		}
 	}
 }
@@ -386,13 +389,12 @@ _define_function_macro (glcpp_parser_t *parser,
 void
 _print_expanded_object_macro (glcpp_parser_t *parser, const char *identifier)
 {
-	int first = 1;
 	macro_t *macro;
 
 	macro = hash_table_find (parser->defines, identifier);
 	assert (! macro->is_function);
 
-	_print_expanded_macro_recursive (parser, identifier, identifier, &first);
+	_print_expanded_macro_recursive (parser, identifier, identifier);
 }
 
 void
@@ -400,7 +402,6 @@ _print_expanded_function_macro (glcpp_parser_t *parser,
 				const char *identifier,
 				list_t *arguments)
 {
-	int first = 1;
 	macro_t *macro;
 
 	macro = hash_table_find (parser->defines, identifier);
@@ -408,5 +409,5 @@ _print_expanded_function_macro (glcpp_parser_t *parser,
 
 	/* XXX: Need to use argument list here in the expansion. */
 
-	_print_expanded_macro_recursive (parser, identifier, identifier, &first);
+	_print_expanded_macro_recursive (parser, identifier, identifier);
 }
