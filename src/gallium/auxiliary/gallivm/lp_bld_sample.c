@@ -120,10 +120,12 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
 /**
  * Gather elements from scatter positions in memory into a single vector.
+ * Use for fetching texels from a texture.
+ * For SSE, typical values are length=4, src_width=32, dst_width=32.
  *
- * @param src_width src element width
- * @param dst_width result element width (source will be expanded to fit)
- * @param length length of the offsets,
+ * @param length length of the offsets
+ * @param src_width src element width in bits
+ * @param dst_width result element width in bits (src will be expanded to fit)
  * @param base_ptr base pointer, should be a i8 pointer type.
  * @param offsets vector with offsets
  */
