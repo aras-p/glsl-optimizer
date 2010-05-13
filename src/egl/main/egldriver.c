@@ -293,9 +293,9 @@ _eglLoaderFile(const char *dir, size_t len, void *loader_data)
    len += flen;
    path[len] = '\0';
 
-   drv = _eglLoadDriver(path, NULL);
-   /* fix the path and load again */
-   if (!drv && library_suffix()) {
+   if (library_suffix() == NULL || strstr(path, library_suffix()))
+      drv = _eglLoadDriver(path, NULL);
+   else {
       const char *suffix = library_suffix();
       size_t slen = strlen(suffix);
       const char *p;
@@ -306,6 +306,8 @@ _eglLoaderFile(const char *dir, size_t len, void *loader_data)
       if (need_suffix && len + slen + 1 <= sizeof(path)) {
          strcpy(path + len, suffix);
          drv = _eglLoadDriver(path, NULL);
+      } else {
+         drv = NULL;
       }
    }
    if (!drv)
