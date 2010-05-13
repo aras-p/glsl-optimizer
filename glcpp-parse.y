@@ -83,8 +83,8 @@ _list_append_list (list_t *list, list_t *tail);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {void *scanner}
 
-%token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO TOKEN UNDEF
-%type <str> FUNC_MACRO IDENTIFIER OBJ_MACRO TOKEN string
+%token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO SPACE TOKEN UNDEF
+%type <str> FUNC_MACRO IDENTIFIER OBJ_MACRO TOKEN word word_or_symbol
 %type <list> argument argument_list parameter_list replacement_list
 
 %%
@@ -105,9 +105,10 @@ content:
 	}
 |	macro
 |	directive_with_newline
-|	NEWLINE {
-		printf ("\n");
-	}
+|	NEWLINE	{ printf ("\n"); }
+|	'('	{ printf ("("); }
+|	')'	{ printf (")"); }
+|	','	{ printf (","); }
 ;
 
 macro:
@@ -135,7 +136,7 @@ argument:
 	/* empty */ {
 		$$ = _list_create (parser);
 	}
-|	argument string {
+|	argument word {
 		_list_append_item ($1, $2);
 		talloc_free ($2);
 	}
@@ -149,8 +150,12 @@ directive_with_newline:
 ;
 
 directive:
-	DEFINE IDENTIFIER replacement_list {
-		_define_object_macro (parser, $2, $3);
+	DEFINE IDENTIFIER {
+		list_t *list = _list_create (parser);
+		_define_object_macro (parser, $2, list);
+	}
+|	DEFINE IDENTIFIER SPACE replacement_list {
+		_define_object_macro (parser, $2, $4);
 	}
 |	DEFINE IDENTIFIER '(' parameter_list ')' replacement_list {
 		_define_function_macro (parser, $2, $4, $6);
@@ -183,7 +188,7 @@ replacement_list:
 	/* empty */ {
 		$$ = _list_create (parser);
 	}
-|	replacement_list string {
+|	replacement_list word_or_symbol {
 		_list_append_item ($1, $2);
 		talloc_free ($2);
 		$$ = $1;
@@ -206,7 +211,14 @@ parameter_list:
 	}
 ;
 
-string:
+word_or_symbol:
+	word	{ $$ = $1; }
+|	'('	{ $$ = xtalloc_strdup (parser, "("); }
+|	')'	{ $$ = xtalloc_strdup (parser, ")"); }
+|	','	{ $$ = xtalloc_strdup (parser, ","); }
+;
+
+word:
 	IDENTIFIER { $$ = $1; }
 |	FUNC_MACRO { $$ = $1; }
 |	OBJ_MACRO { $$ = $1; }

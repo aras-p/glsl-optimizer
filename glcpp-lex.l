@@ -32,6 +32,9 @@
 %option reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 
+%x ST_DEFINE
+%x ST_DEFVAL
+
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
 NEWLINE		[\n]
@@ -42,16 +45,42 @@ TOKEN		[^[:space:](),]+
 
 %%
 
-{HASH}define{HSPACE}*	{
-	return DEFINE;
-}
-
-{HASH}undef{HSPACE}*	{
+{HASH}undef{HSPACE}* {
 	return UNDEF;
 }
 
+	/* We use the ST_DEFINE and ST_DEFVAL states so that we can
+	 * pass a space token, (yes, a token for whitespace!), since
+	 * the preprocessor specification requires distinguishing
+	 * "#define foo()" from "#define foo ()".
+	 */
+{HASH}define{HSPACE}* {
+	BEGIN ST_DEFINE;
+	return DEFINE;
+}
 
-{IDENTIFIER}	{
+<ST_DEFINE>{IDENTIFIER}	{
+	BEGIN ST_DEFVAL;
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return IDENTIFIER;
+}
+
+<ST_DEFVAL>\n {
+	BEGIN INITIAL;
+	return NEWLINE;
+}
+
+<ST_DEFVAL>{HSPACE}+ {
+	BEGIN INITIAL;
+	return SPACE;
+}
+
+<ST_DEFVAL>"("	{
+	BEGIN INITIAL;
+	return '(';
+}
+
+{IDENTIFIER} {
 	yylval.str = xtalloc_strdup (yyextra, yytext);
 	switch (glcpp_parser_macro_type (yyextra, yylval.str))
 	{
@@ -67,7 +96,9 @@ TOKEN		[^[:space:](),]+
 	}
 }
 
-[(),]	{ return yytext[0]; }
+[(),]	{
+	return yytext[0];
+}
 
 {TOKEN} {
 	yylval.str = xtalloc_strdup (yyextra, yytext);
