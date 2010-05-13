@@ -17,7 +17,7 @@ glcpp: glcpp.o glcpp-lex.o glcpp-parse.o hash_table.o xtalloc.o
 
 glcpp-lex.c: glcpp-parse.h
 
-test:
+test: glcpp
 	@(cd tests; ./glcpp-test)
 
 clean:
