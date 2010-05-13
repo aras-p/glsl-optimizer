@@ -86,7 +86,7 @@ static void *radeon_r300_winsys_buffer_map(struct r300_winsys_screen *ws,
 					   unsigned usage)
 {
     struct pb_buffer *_buf = radeon_pb_buffer(buf);
-    
+
     return pb_map(_buf, usage);
 }
 

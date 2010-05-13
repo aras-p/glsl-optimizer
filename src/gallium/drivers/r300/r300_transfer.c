@@ -127,6 +127,12 @@ r300_texture_get_transfer(struct pipe_context *ctx,
     struct r300_transfer *trans;
     struct pipe_resource base;
 
+    /* XXX Why aren't flushes taken care of by winsys automatically?
+     * Winsys seems to sometimes return a cached buffer instead of
+     * a mapped hardware buffer if this flush is commented out. */
+    if (ctx->is_resource_referenced(ctx, texture, sr.face, sr.level))
+        ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
         /* Initialize the transfer object. */

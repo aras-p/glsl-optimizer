@@ -960,7 +960,7 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
                util_format_short_name(base->format));
 
     tex->buffer = rws->buffer_create(rws, 2048,
-				     PIPE_BIND_SAMPLER_VIEW, /* XXX */
+                                     base->bind,
 				     tex->size);
     rws->buffer_set_tiling(rws, tex->buffer,
 			   tex->pitch[0],
