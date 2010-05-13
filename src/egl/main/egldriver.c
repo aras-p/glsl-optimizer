@@ -87,32 +87,6 @@ library_suffix(void)
 }
 
 
-#else /* _EGL_PLATFORM_NO_OS */
-
-
-static const char DefaultDriverName[] = "builtin";
-
-typedef void *lib_handle;
-
-static INLINE void *
-open_library(const char *filename)
-{
-   return (void *) filename;
-}
-
-static INLINE void
-close_library(void *lib)
-{
-}
-
-
-static const char *
-library_suffix(void)
-{
-   return NULL;
-}
-
-
 #endif
 
 
@@ -157,12 +131,6 @@ _eglOpenLibrary(const char *driverPath, lib_handle *handle)
    else {
       error = dlerror();
    }
-#else /* _EGL_PLATFORM_NO_OS */
-   /* must be the default driver name */
-   if (strcmp(driverPath, DefaultDriverName) == 0)
-      mainFunc = (_EGLMain_t) _eglMain;
-   else
-      error = "not builtin driver";
 #endif
 
    if (!lib) {
