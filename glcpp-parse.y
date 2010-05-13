@@ -73,6 +73,15 @@ _list_append_item (list_t *list, const char *str);
 void
 _list_append_list (list_t *list, list_t *tail);
 
+int
+_list_contains (list_t *list, const char *member, int *index);
+
+const char *
+_list_member_at (list_t *list, int index);
+
+int
+_list_length (list_t *list);
+
 %}
 
 %union {
@@ -277,6 +286,62 @@ _list_append_item (list_t *list, const char *str)
 
 	list->tail = node;
 }
+
+int
+_list_contains (list_t *list, const char *member, int *index)
+{
+	node_t *node;
+	int i;
+
+	if (list == NULL)
+		return 0;
+
+	for (i = 0, node = list->head; node; i++, node = node->next) {
+		if (strcmp (node->str, member) == 0) {
+			*index = i;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int
+_list_length (list_t *list)
+{
+	int length = 0;
+	node_t *node;
+
+	if (list == NULL)
+		return 0;
+
+	for (node = list->head; node; node = node->next)
+		length++;
+
+	return length;
+}
+
+const char *
+_list_member_at (list_t *list, int index)
+{
+	node_t *node;
+	int i;
+
+	if (list == NULL)
+		return NULL;
+
+	node = list->head;
+	for (i = 0; i < index; i++) {
+		node = node->next;
+		if (node == NULL)
+			break;
+	}
+
+	if (node)
+		return node->str;
+
+	return NULL;
+}
 		
 void
 yyerror (void *scanner, const char *error)
@@ -328,31 +393,6 @@ glcpp_parser_macro_type (glcpp_parser_t *parser, const char *identifier)
 		return MACRO_TYPE_OBJECT;
 }
 
-static void
-_print_expanded_macro_recursive (glcpp_parser_t *parser,
-				 const char *token,
-				 const char *orig)
-{
-	macro_t *macro;
-	node_t *node;
-
-	macro = hash_table_find (parser->defines, token);
-	if (macro == NULL) {
-		printf ("%s", token);
-	} else {
-		list_t *replacement_list = macro->replacement_list;
-
-		for (node = replacement_list->head ; node ; node = node->next) {
-			token = node->str;
-			if (strcmp (token, orig) == 0)
-				printf ("%s", token);
-			else
-				_print_expanded_macro_recursive (parser,
-								 token, orig);
-		}
-	}
-}
-
 void
 _define_object_macro (glcpp_parser_t *parser,
 		      const char *identifier,
@@ -386,6 +426,70 @@ _define_function_macro (glcpp_parser_t *parser,
 	hash_table_insert (parser->defines, macro, identifier);
 }
 
+static void
+_print_expanded_macro_recursive (glcpp_parser_t *parser,
+				 const char *token,
+				 const char *orig,
+				 list_t *parameters,
+				 list_t *arguments);
+
+static void
+_print_expanded_list_recursive (glcpp_parser_t *parser,
+				list_t *list,
+				const char *orig,
+				list_t *parameters,
+				list_t *arguments)
+{
+	const char *token;
+	node_t *node;
+	int index;
+
+	for (node = list->head ; node ; node = node->next) {
+		token = node->str;
+
+		if (strcmp (token, orig) == 0) {
+			printf ("%s", token);
+			continue;
+		}
+
+		if (_list_contains (parameters, token, &index)) {
+			const char *argument;
+
+			argument = _list_member_at (arguments, index);
+			_print_expanded_macro_recursive (parser, argument,
+							 orig, parameters,
+							 arguments);
+		} else {
+			_print_expanded_macro_recursive (parser, token,
+							 orig, parameters,
+							 arguments);
+		}
+	}
+}
+
+
+static void
+_print_expanded_macro_recursive (glcpp_parser_t *parser,
+				 const char *token,
+				 const char *orig,
+				 list_t *parameters,
+				 list_t *arguments)
+{
+	macro_t *macro;
+	list_t *replacement_list;
+
+	macro = hash_table_find (parser->defines, token);
+	if (macro == NULL) {
+		printf ("%s", token);
+		return;
+	}
+
+	replacement_list = macro->replacement_list;
+
+	_print_expanded_list_recursive (parser, replacement_list,
+					orig, parameters, arguments);
+}
+
 void
 _print_expanded_object_macro (glcpp_parser_t *parser, const char *identifier)
 {
@@ -394,7 +498,8 @@ _print_expanded_object_macro (glcpp_parser_t *parser, const char *identifier)
 	macro = hash_table_find (parser->defines, identifier);
 	assert (! macro->is_function);
 
-	_print_expanded_macro_recursive (parser, identifier, identifier);
+	_print_expanded_macro_recursive (parser, identifier, identifier,
+					 NULL, NULL);
 }
 
 void
@@ -407,7 +512,15 @@ _print_expanded_function_macro (glcpp_parser_t *parser,
 	macro = hash_table_find (parser->defines, identifier);
 	assert (macro->is_function);
 
-	/* XXX: Need to use argument list here in the expansion. */
+	if (_list_length (arguments) != _list_length (macro->parameter_list)) {
+		fprintf (stderr,
+			 "Error: macro %s invoked with %d arguments (expected %d)\n",
+			 identifier,
+			 _list_length (arguments),
+			 _list_length (macro->parameter_list));
+		return;
+	}
 
-	_print_expanded_macro_recursive (parser, identifier, identifier);
+	_print_expanded_macro_recursive (parser, identifier, identifier,
+					 macro->parameter_list, arguments);
 }
