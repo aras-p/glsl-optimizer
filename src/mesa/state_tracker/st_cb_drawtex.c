@@ -15,7 +15,6 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/bufferobj.h"
-#include "main/drawtex.h"
 #include "main/macros.h"
 #include "shader/program.h"
 #include "shader/prog_print.h"
