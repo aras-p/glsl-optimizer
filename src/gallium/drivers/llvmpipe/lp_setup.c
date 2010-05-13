@@ -420,7 +420,8 @@ lp_setup_set_fs_functions( struct lp_setup_context *setup,
                            lp_jit_frag_func jit_function1,
                            boolean opaque )
 {
-   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__, (void *) jit_function0);
+   LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__,
+          cast_lp_jit_frag_func_to_voidptr(jit_function0));
    /* FIXME: reference count */
 
    setup->fs.current.jit_function[0] = jit_function0;

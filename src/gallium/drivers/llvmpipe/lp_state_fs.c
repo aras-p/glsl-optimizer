@@ -601,20 +601,6 @@ generate_blend(const struct pipe_blend_state *blend,
 }
 
 
-/** casting function to avoid compiler warnings */
-static lp_jit_frag_func
-cast_voidptr_to_lp_jit_frag_func(void *p)
-{
-   union {
-      void *v;
-      lp_jit_frag_func f;
-   } tmp;
-   assert(sizeof(tmp.v) == sizeof(tmp.f));
-   tmp.v = p;
-   return tmp.f;
-}
-
-
 /**
  * Generate the runtime callable function for the whole fragment pipeline.
  * Note that the function which we generate operates on a block of 16
