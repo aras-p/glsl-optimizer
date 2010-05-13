@@ -77,32 +77,41 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
  * programs be immune to the active primitive (ie. cope with all
  * possibilities).  That may not be realistic however.
  */
-static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
+static GLuint brw_set_prim(struct brw_context *brw,
+			   const struct _mesa_prim *prim)
 {
    GLcontext *ctx = &brw->intel.ctx;
+   GLenum mode = prim->mode;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
-      printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim));
-   
+      printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim->mode));
+
    /* Slight optimization to avoid the GS program when not needed:
     */
-   if (prim == GL_QUAD_STRIP &&
+   if (mode == GL_QUAD_STRIP &&
        ctx->Light.ShadeModel != GL_FLAT &&
        ctx->Polygon.FrontMode == GL_FILL &&
        ctx->Polygon.BackMode == GL_FILL)
-      prim = GL_TRIANGLE_STRIP;
+      mode = GL_TRIANGLE_STRIP;
 
-   if (prim != brw->primitive) {
-      brw->primitive = prim;
+   if (prim->mode == GL_QUADS && prim->count == 4 &&
+       ctx->Light.ShadeModel != GL_FLAT &&
+       ctx->Polygon.FrontMode == GL_FILL &&
+       ctx->Polygon.BackMode == GL_FILL) {
+      mode = GL_TRIANGLE_FAN;
+   }
+
+   if (mode != brw->primitive) {
+      brw->primitive = mode;
       brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
 
-      if (reduced_prim[prim] != brw->intel.reduced_primitive) {
-	 brw->intel.reduced_primitive = reduced_prim[prim];
+      if (reduced_prim[mode] != brw->intel.reduced_primitive) {
+	 brw->intel.reduced_primitive = reduced_prim[mode];
 	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
       }
    }
 
-   return prim_to_hw_prim[prim];
+   return prim_to_hw_prim[mode];
 }
 
 
@@ -351,7 +360,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
        */
       intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4);
 
-      hw_prim = brw_set_prim(brw, prim[i].mode);
+      hw_prim = brw_set_prim(brw, &prim[i]);
 
       if (first_time || (brw->state.dirty.brw & BRW_NEW_PRIMITIVE)) {
 	 first_time = GL_FALSE;
