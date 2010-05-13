@@ -420,7 +420,7 @@ emit_fetch(
    const struct tgsi_full_src_register *reg = &inst->Src[index];
    unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
    LLVMValueRef res;
-   LLVMValueRef addr;
+   LLVMValueRef addr = NULL;
 
    switch (swizzle) {
    case TGSI_SWIZZLE_X:
