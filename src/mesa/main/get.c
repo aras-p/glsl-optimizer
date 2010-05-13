@@ -1757,8 +1757,10 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
    default:
       assert(0);
       break;
-
    }
+
+   /* silence warning */
+   return &error_value;
 }
 
 static const int transpose[] = {
