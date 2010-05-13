@@ -625,7 +625,7 @@ emit_store(
    LLVMValueRef value)
 {
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
-   LLVMValueRef addr;
+   LLVMValueRef addr = NULL;
 
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
