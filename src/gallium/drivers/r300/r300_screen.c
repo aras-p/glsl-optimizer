@@ -161,7 +161,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
             return is_r500 || is_r400 ? 512 : 32;
         case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
-            return is_r500 ? 512 : 4;
+            return is_r500 ? 511 : 4;
         case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
             return is_r500 ? 64 : 0; /* Actually unlimited on r500. */
         case PIPE_CAP_MAX_FS_INPUTS:
