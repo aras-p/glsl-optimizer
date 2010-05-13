@@ -310,6 +310,21 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 }
 
 
+typedef void (*fetch_func)(float *, const uint8_t *, unsigned, unsigned);
+
+/** cast wrapper */
+static void *
+fetch_func_ptr_to_voidptr(fetch_func f)
+{
+   union {
+      void *v;
+      fetch_func f;
+   } u;
+   u.f = f;
+   return u.v;
+}
+
+
 /**
  * Fetch a pixel into a 4 float AoS.
  *
@@ -390,7 +405,8 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
 
          assert(LLVMIsDeclaration(function));
 
-         LLVMAddGlobalMapping(lp_build_engine, function, format_desc->fetch_rgba_float);
+         LLVMAddGlobalMapping(lp_build_engine, function,
+                    fetch_func_ptr_to_voidptr(format_desc->fetch_rgba_float));
       }
 
       tmp = lp_build_alloca(builder, LLVMVectorType(LLVMFloatType(), 4), "");
