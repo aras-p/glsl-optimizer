@@ -39,7 +39,7 @@ void
 yyerror (void *scanner, const char *error);
 
 void
-_print_resolved_token (glcpp_parser_t *parser, const char *token);
+_print_expanded_macro (glcpp_parser_t *parser, const char *macro);
 
 list_t *
 _list_create (void *ctx);
@@ -57,8 +57,8 @@ _list_append (list_t *list, const char *str);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {void *scanner}
 
-%token DEFINE IDENTIFIER NEWLINE TOKEN UNDEF
-%type <str> token IDENTIFIER TOKEN
+%token DEFINE IDENTIFIER MACRO NEWLINE TOKEN UNDEF
+%type <str> IDENTIFIER MACRO TOKEN string
 %type <list> replacement_list
 
 %%
@@ -69,8 +69,16 @@ input:
 ;
 
 content:
-	token {
-		_print_resolved_token (parser, $1);
+	IDENTIFIER {
+		printf ("%s", $1);
+		talloc_free ($1);
+	}
+|	TOKEN {
+		printf ("%s", $1);
+		talloc_free ($1);
+	}
+|	MACRO {
+		_print_expanded_macro (parser, $1);
 		talloc_free ($1);
 	}
 |	directive_with_newline
@@ -90,7 +98,7 @@ directive:
 		talloc_steal ($3, $2);
 		hash_table_insert (parser->defines, $3, $2);
 	}
-|	UNDEF IDENTIFIER {
+|	UNDEF MACRO {
 		list_t *replacement = hash_table_find (parser->defines, $2);
 		if (replacement) {
 			/* XXX: Need hash table to support a real way
@@ -108,16 +116,17 @@ replacement_list:
 		$$ = _list_create (parser);
 	}
 
-|	replacement_list token {
+|	replacement_list string {
 		_list_append ($1, $2);
 		talloc_free ($2);
 		$$ = $1;
 	}
 ;
 
-token:
-	TOKEN { $$ = $1; }
-|	IDENTIFIER { $$ = $1; }
+string:
+	IDENTIFIER { $$ = $1; }
+|	MACRO { $$ = $1; }
+|	TOKEN { $$ = $1; }
 ;
 
 %%
@@ -187,11 +196,17 @@ glcpp_parser_destroy (glcpp_parser_t *parser)
 	talloc_free (parser);
 }
 
+int
+glcpp_parser_macro_defined (glcpp_parser_t *parser, const char *identifier)
+{
+	return (hash_table_find (parser->defines, identifier) != NULL);
+}
+
 static void
-_print_resolved_recursive (glcpp_parser_t *parser,
-			   const char *token,
-			   const char *orig,
-			   int *first)
+_print_expanded_macro_recursive (glcpp_parser_t *parser,
+				 const char *token,
+				 const char *orig,
+				 int *first)
 {
 	list_t *replacement;
 	node_t *node;
@@ -207,16 +222,18 @@ _print_resolved_recursive (glcpp_parser_t *parser,
 				printf ("%s%s", *first ? "" : " ", token);
 				*first = 0;
 			} else {
-				_print_resolved_recursive (parser, token, orig, first);
+				_print_expanded_macro_recursive (parser,
+								 token, orig,
+								 first);
 			}
 		}
 	}
 }
 
 void
-_print_resolved_token (glcpp_parser_t *parser, const char *token)
+_print_expanded_macro (glcpp_parser_t *parser, const char *macro)
 {
 	int first = 1;
 
-	_print_resolved_recursive (parser, token, token, &first);
+	_print_expanded_macro_recursive (parser, macro, macro, &first);
 }

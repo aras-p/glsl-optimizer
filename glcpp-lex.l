@@ -53,7 +53,10 @@ TOKEN		{NONSPACE}+
 
 {IDENTIFIER}	{
 	yylval.str = xtalloc_strdup (yyextra, yytext);
-	return IDENTIFIER;
+	if (glcpp_parser_macro_defined (yyextra, yylval.str))
+		return MACRO;
+	else
+		return IDENTIFIER;
 }
 
 {TOKEN} {
