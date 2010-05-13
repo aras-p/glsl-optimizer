@@ -1366,4 +1366,12 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
    return ok;
 }
 
+#else
+
+void ppc_dummy_func(void);
+
+void ppc_dummy_func(void)
+{
+}
+
 #endif /* PIPE_ARCH_PPC */
