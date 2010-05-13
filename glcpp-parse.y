@@ -24,11 +24,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <talloc.h>
 
 #include "glcpp.h"
 
 #define YYLEX_PARAM parser->scanner
+
+typedef struct {
+	int is_function;
+	list_t *parameter_list;
+	list_t *replacement_list;
+} macro_t;
 
 struct glcpp_parser {
 	yyscan_t scanner;
@@ -39,13 +46,32 @@ void
 yyerror (void *scanner, const char *error);
 
 void
-_print_expanded_macro (glcpp_parser_t *parser, const char *macro);
+_define_object_macro (glcpp_parser_t *parser,
+		      const char *macro,
+		      list_t *replacement_list);
+
+void
+_define_function_macro (glcpp_parser_t *parser,
+			const char *macro,
+			list_t *parameter_list,
+			list_t *replacement_list);
+
+void
+_print_expanded_object_macro (glcpp_parser_t *parser, const char *macro);
+
+void
+_print_expanded_function_macro (glcpp_parser_t *parser,
+				const char *macro,
+				list_t *arguments);
 
 list_t *
 _list_create (void *ctx);
 
 void
-_list_append (list_t *list, const char *str);
+_list_append_item (list_t *list, const char *str);
+
+void
+_list_append_list (list_t *list, list_t *tail);
 
 %}
 
@@ -57,9 +83,9 @@ _list_append (list_t *list, const char *str);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {void *scanner}
 
-%token DEFINE IDENTIFIER MACRO NEWLINE TOKEN UNDEF
-%type <str> IDENTIFIER MACRO TOKEN string
-%type <list> replacement_list
+%token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO TOKEN UNDEF
+%type <str> FUNC_MACRO IDENTIFIER OBJ_MACRO TOKEN string
+%type <list> argument argument_list parameter_list replacement_list
 
 %%
 
@@ -77,14 +103,46 @@ content:
 		printf ("%s", $1);
 		talloc_free ($1);
 	}
-|	MACRO {
-		_print_expanded_macro (parser, $1);
-		talloc_free ($1);
-	}
+|	macro
 |	directive_with_newline
 |	NEWLINE {
 		printf ("\n");
 	}
+;
+
+macro:
+	FUNC_MACRO '(' argument_list ')' {
+		_print_expanded_function_macro (parser, $1, $3);
+	}
+|	OBJ_MACRO {
+		_print_expanded_object_macro (parser, $1);
+		talloc_free ($1);
+	}
+;
+
+argument_list:
+	/* empty */ {
+		$$ = _list_create (parser);
+	}
+|	argument {
+		$$ = _list_create (parser);
+		_list_append_list ($$, $1);
+	}
+|	argument_list ',' argument {
+		_list_append_list ($1, $3);
+		$$ = $1;
+	}
+;
+
+argument:
+	/* empty */ {
+		$$ = _list_create (parser);
+	}
+|	argument string {
+		_list_append_item ($1, $2);
+		talloc_free ($2);
+	}
+|	argument '(' argument ')'
 ;
 
 directive_with_newline:
@@ -95,10 +153,23 @@ directive_with_newline:
 
 directive:
 	DEFINE IDENTIFIER replacement_list {
-		talloc_steal ($3, $2);
-		hash_table_insert (parser->defines, $3, $2);
+		_define_object_macro (parser, $2, $3);
 	}
-|	UNDEF MACRO {
+|	DEFINE IDENTIFIER '(' parameter_list ')' replacement_list {
+		_define_function_macro (parser, $2, $4, $6);
+	}
+|	UNDEF FUNC_MACRO {
+		list_t *replacement = hash_table_find (parser->defines, $2);
+		if (replacement) {
+			/* XXX: Need hash table to support a real way
+			 * to remove an element rather than prefixing
+			 * a new node with data of NULL like this. */
+			hash_table_insert (parser->defines, NULL, $2);
+			talloc_free (replacement);
+		}
+		talloc_free ($2);
+	}
+|	UNDEF OBJ_MACRO {
 		list_t *replacement = hash_table_find (parser->defines, $2);
 		if (replacement) {
 			/* XXX: Need hash table to support a real way
@@ -115,17 +186,33 @@ replacement_list:
 	/* empty */ {
 		$$ = _list_create (parser);
 	}
-
 |	replacement_list string {
-		_list_append ($1, $2);
+		_list_append_item ($1, $2);
 		talloc_free ($2);
+		$$ = $1;
+	}
+;
+
+parameter_list:
+	/* empty */ {
+		$$ = _list_create (parser);
+	}
+|	IDENTIFIER {
+		$$ = _list_create (parser);
+		_list_append_item ($$, $1);
+		talloc_free ($1);
+	}
+|	parameter_list ',' IDENTIFIER {
+		_list_append_item ($1, $3);
+		talloc_free ($3);
 		$$ = $1;
 	}
 ;
 
 string:
 	IDENTIFIER { $$ = $1; }
-|	MACRO { $$ = $1; }
+|	FUNC_MACRO { $$ = $1; }
+|	OBJ_MACRO { $$ = $1; }
 |	TOKEN { $$ = $1; }
 ;
 
@@ -144,7 +231,19 @@ _list_create (void *ctx)
 }
 
 void
-_list_append (list_t *list, const char *str)
+_list_append_list (list_t *list, list_t *tail)
+{
+	if (list->head == NULL) {
+		list->head = tail->head;
+	} else {
+		list->tail->next = tail->head;
+	}
+
+	list->tail = tail->tail;
+}
+
+void
+_list_append_item (list_t *list, const char *str)
 {
 	node_t *node;
 
@@ -196,10 +295,20 @@ glcpp_parser_destroy (glcpp_parser_t *parser)
 	talloc_free (parser);
 }
 
-int
-glcpp_parser_macro_defined (glcpp_parser_t *parser, const char *identifier)
+macro_type_t
+glcpp_parser_macro_type (glcpp_parser_t *parser, const char *identifier)
 {
-	return (hash_table_find (parser->defines, identifier) != NULL);
+	macro_t *macro;
+
+	macro = hash_table_find (parser->defines, identifier);
+
+	if (macro == NULL)
+		return MACRO_TYPE_UNDEFINED;
+
+	if (macro->is_function)
+		return MACRO_TYPE_FUNCTION;
+	else
+		return MACRO_TYPE_OBJECT;
 }
 
 static void
@@ -208,15 +317,17 @@ _print_expanded_macro_recursive (glcpp_parser_t *parser,
 				 const char *orig,
 				 int *first)
 {
-	list_t *replacement;
+	macro_t *macro;
 	node_t *node;
 
-	replacement = hash_table_find (parser->defines, token);
-	if (replacement == NULL) {
+	macro = hash_table_find (parser->defines, token);
+	if (macro == NULL) {
 		printf ("%s%s", *first ? "" : " ", token);
 		*first = 0;
 	} else {
-		for (node = replacement->head ; node ; node = node->next) {
+		list_t *replacement_list = macro->replacement_list;
+
+		for (node = replacement_list->head ; node ; node = node->next) {
 			token = node->str;
 			if (strcmp (token, orig) == 0) {
 				printf ("%s%s", *first ? "" : " ", token);
@@ -231,9 +342,62 @@ _print_expanded_macro_recursive (glcpp_parser_t *parser,
 }
 
 void
-_print_expanded_macro (glcpp_parser_t *parser, const char *macro)
+_define_object_macro (glcpp_parser_t *parser,
+		      const char *identifier,
+		      list_t *replacement_list)
+{
+	macro_t *macro;
+
+	macro = xtalloc (parser, macro_t);
+
+	macro->is_function = 0;
+	macro->parameter_list = NULL;
+	macro->replacement_list = talloc_steal (macro, replacement_list);
+
+	hash_table_insert (parser->defines, macro, identifier);
+}
+
+void
+_define_function_macro (glcpp_parser_t *parser,
+			const char *identifier,
+			list_t *parameter_list,
+			list_t *replacement_list)
+{
+	macro_t *macro;
+
+	macro = xtalloc (parser, macro_t);
+
+	macro->is_function = 1;
+	macro->parameter_list = talloc_steal (macro, parameter_list);
+	macro->replacement_list = talloc_steal (macro, replacement_list);
+
+	hash_table_insert (parser->defines, macro, identifier);
+}
+
+void
+_print_expanded_object_macro (glcpp_parser_t *parser, const char *identifier)
 {
 	int first = 1;
+	macro_t *macro;
 
-	_print_expanded_macro_recursive (parser, macro, macro, &first);
+	macro = hash_table_find (parser->defines, identifier);
+	assert (! macro->is_function);
+
+	_print_expanded_macro_recursive (parser, identifier, identifier, &first);
+}
+
+void
+_print_expanded_function_macro (glcpp_parser_t *parser,
+				const char *identifier,
+				list_t *arguments)
+{
+	int first = 1;
+	macro_t *macro;
+
+	macro = hash_table_find (parser->defines, identifier);
+	assert (macro->is_function);
+
+	/* XXX: Need to use argument list here in the expansion. */
+
+	_print_expanded_macro_recursive (parser, identifier, identifier, &first);
 }

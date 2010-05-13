@@ -38,7 +38,7 @@ NEWLINE		[\n]
 HSPACE		[ \t]
 HASH		^{HSPACE}*#
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
-TOKEN		{NONSPACE}+
+TOKEN		[^[:space:](),]+
 
 %%
 
@@ -53,11 +53,21 @@ TOKEN		{NONSPACE}+
 
 {IDENTIFIER}	{
 	yylval.str = xtalloc_strdup (yyextra, yytext);
-	if (glcpp_parser_macro_defined (yyextra, yylval.str))
-		return MACRO;
-	else
-		return IDENTIFIER;
+	switch (glcpp_parser_macro_type (yyextra, yylval.str))
+	{
+		case MACRO_TYPE_UNDEFINED:
+			return IDENTIFIER;
+		break;
+		case MACRO_TYPE_OBJECT:
+			return OBJ_MACRO;
+		break;
+		case MACRO_TYPE_FUNCTION:
+			return FUNC_MACRO;
+		break;
+	}
 }
+
+[(),]	{ return yytext[0]; }
 
 {TOKEN} {
 	yylval.str = xtalloc_strdup (yyextra, yytext);
