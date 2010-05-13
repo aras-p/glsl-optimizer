@@ -86,15 +86,9 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
     is_r400 = FALSE;
 
     switch (param) {
-        case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-        case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-            return r300screen->caps.num_tex_units;
+        /* Supported features (boolean caps). */
         case PIPE_CAP_NPOT_TEXTURES:
-            /* XXX enable now to get GL2.1 API,
-             * figure out later how to emulate this */
-            return 1;
         case PIPE_CAP_TWO_SIDED_STENCIL:
-            return 1;
         case PIPE_CAP_GLSL:
             /* I'll be frank. This is a lie.
              *
@@ -111,53 +105,47 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
              *
              * ~ C.
              */
-            return 1;
-        case PIPE_CAP_DUAL_SOURCE_BLEND:
-            return 0;
         case PIPE_CAP_ANISOTROPIC_FILTER:
-            return 1;
         case PIPE_CAP_POINT_SPRITE:
-            return 1;
-        case PIPE_CAP_MAX_RENDER_TARGETS:
-            return 4;
         case PIPE_CAP_OCCLUSION_QUERY:
-            return 1;
         case PIPE_CAP_TEXTURE_SHADOW_MAP:
+        case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
+        case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
+        case PIPE_CAP_BLEND_EQUATION_SEPARATE:
             return 1;
+
+        /* Unsupported features (boolean caps). */
+        case PIPE_CAP_DUAL_SOURCE_BLEND:
+        case PIPE_CAP_TGSI_CONT_SUPPORTED:
+        case PIPE_CAP_INDEP_BLEND_ENABLE:
+        case PIPE_CAP_INDEP_BLEND_FUNC:
+            return 0;
+
+        /* Texturing. */
+        case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
+        case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+            return r300screen->caps.num_tex_units;
+        case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+            return 0;
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-            if (is_r500) {
-                /* 13 == 4096 */
-                return 13;
-            } else {
-                /* 12 == 2048 */
-                return 12;
-            }
-        case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-            return 1;
-        case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
-            return 1;
-        case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-            return 0;
-        case PIPE_CAP_TGSI_CONT_SUPPORTED:
-            return 0;
-        case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-            return 1;
+            /* 13 == 4096, 12 == 2048 */
+            return is_r500 ? 13 : 12;
+
+        /* Render targets. */
+        case PIPE_CAP_MAX_RENDER_TARGETS:
+            return 4;
+
+        /* General shader limits and features. */
         case PIPE_CAP_SM3:
-            if (is_r500) {
-                return 1;
-            } else {
-                return 0;
-            }
+            return is_r500 ? 1 : 0;
         case PIPE_CAP_MAX_CONST_BUFFERS:
             return 1;
         case PIPE_CAP_MAX_CONST_BUFFER_SIZE:
             return 256;
-        case PIPE_CAP_INDEP_BLEND_ENABLE:
-            return 0;
-        case PIPE_CAP_INDEP_BLEND_FUNC:
-            return 0;
+
+        /* Fragment coordinate conventions. */
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 	    return 1;
