@@ -76,10 +76,20 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
    }
    else {
       LLVMValueRef res;
+#if HAVE_LLVM >= 0x207
       res = LLVMBuildInsertElement(bld->builder, bld->undef, scalar,
                                    LLVMConstInt(LLVMInt32Type(), 0, 0), "");
       res = LLVMBuildShuffleVector(bld->builder, res, bld->undef,
                                    lp_build_const_int_vec(type, 0), "");
+#else
+      /* XXX: The above path provokes a bug in LLVM 2.6 */
+      unsigned i;
+      res = bld->undef;
+      for(i = 0; i < type.length; ++i) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         res = LLVMBuildInsertElement(bld->builder, res, scalar, index, "");
+      }
+#endif
       return res;
    }
 }
