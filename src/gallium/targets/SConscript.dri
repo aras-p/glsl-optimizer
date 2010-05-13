@@ -99,3 +99,8 @@ if 'radeon' in env['winsys']:
 	SConscript([
 		'dri-radeong/SConscript',
 	])
+
+if 'r600' in env['winsys']:
+	SConscript([
+		'dri-r600/SConscript',
+	])

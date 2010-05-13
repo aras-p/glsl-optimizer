@@ -1510,6 +1510,19 @@ elif test "x$enable_gallium_radeon" = xauto; then
 fi
 
 dnl
+dnl Gallium Radeon r600g configuration
+dnl
+AC_ARG_ENABLE([gallium-r600],
+    [AS_HELP_STRING([--enable-gallium-r600],
+        [build gallium radeon @<:@default=disabled@:>@])],
+    [enable_gallium_r600="$enableval"],
+    [enable_gallium_r600=auto])
+if test "x$enable_gallium_r600" = xyes; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
+    gallium_check_st "r600/drm" "dri-r600"
+fi
+
+dnl
 dnl Gallium Nouveau configuration
 dnl
 AC_ARG_ENABLE([gallium-nouveau],

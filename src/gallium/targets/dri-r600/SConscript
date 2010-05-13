@@ -10,7 +10,7 @@ env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
 
 env.Prepend(LIBS = [
     st_dri,
-    r600winsys,
+    r600drm,
     r600,
     trace,
     mesa,

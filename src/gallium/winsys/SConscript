@@ -40,3 +40,8 @@ if env['dri']:
 		SConscript([
 			'radeon/drm/SConscript',
 		])
+
+	if 'r600' in env['winsys']:
+		SConscript([
+			'r600/drm/SConscript',
+		])
