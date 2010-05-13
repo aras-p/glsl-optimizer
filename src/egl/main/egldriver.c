@@ -36,7 +36,9 @@
 
 
 /* XXX Need to decide how to do dynamic name lookup on Windows */
-static const char DefaultDriverName[] = "TBD";
+static const char DefaultDriverNames[] = {
+   "TBD",
+};
 
 typedef HMODULE lib_handle;
 
@@ -63,7 +65,10 @@ library_suffix(void)
 #elif defined(_EGL_PLATFORM_POSIX)
 
 
-static const char DefaultDriverName[] = "egl_glx";
+static const char *DefaultDriverNames[] = {
+   "egl_dri2",
+   "egl_glx"
+};
 
 typedef void * lib_handle;
 
@@ -488,17 +493,6 @@ _eglPreloadDisplayDrivers(void)
 
 
 /**
- * Preload the default driver.
- */
-static EGLBoolean
-_eglPreloadDefaultDriver(void)
-{
-   return (_eglPreloadForEach(_eglGetSearchPath(),
-            _eglLoaderFile, (void *) DefaultDriverName) > 0);
-}
-
-
-/**
  * Preload drivers.
  *
  * This function loads the driver modules and creates the corresponding
@@ -519,14 +513,12 @@ _eglPreloadDrivers(void)
    }
 
    loaded = (_eglPreloadUserDriver() ||
-             _eglPreloadDisplayDrivers() ||
-             _eglPreloadDefaultDriver());
+             _eglPreloadDisplayDrivers());
 
    _eglUnlockMutex(_eglGlobal.Mutex);
 
    return loaded;
 }
-
 
 /**
  * Unload preloaded drivers.
@@ -556,6 +548,30 @@ _eglUnloadDrivers(void)
    }
 
    _eglGlobal.NumDrivers = 0;
+}
+
+_EGLDriver *
+_eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor)
+{
+   _EGLDriver *drv = NULL;
+   int i;
+
+   _eglLockMutex(_eglGlobal.Mutex);
+
+   for (i = 0; i < ARRAY_SIZE(DefaultDriverNames); i++) {
+      _eglPreloadForEach(_eglGetSearchPath(),
+			 _eglLoaderFile, (void *) DefaultDriverNames[i]);
+      if (_eglGlobal.NumDrivers == 0)
+	 continue;
+      drv = _eglGlobal.Drivers[0];
+      if (drv->API.Initialize(drv, dpy, major, minor))
+	 break;
+      _eglUnloadDrivers();
+   }      
+
+   _eglUnlockMutex(_eglGlobal.Mutex);
+
+   return drv;
 }
 
 

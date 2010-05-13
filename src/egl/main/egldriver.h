@@ -84,6 +84,10 @@ extern void
 _eglUnloadDrivers(void);
 
 
+extern _EGLDriver *
+_eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor);
+
+
 PUBLIC void
 _eglInitDriverFallbacks(_EGLDriver *drv);
 

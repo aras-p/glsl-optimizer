@@ -6,9 +6,6 @@
 #include "eglmutex.h"
 
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-
-
 static _EGL_DECLARE_MUTEX(_eglGlobalMutex);
 struct _egl_global _eglGlobal =
 {

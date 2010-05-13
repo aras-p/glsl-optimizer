@@ -272,13 +272,15 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       if (!drv) {
          _eglPreloadDrivers();
          drv = _eglMatchDriver(disp);
-         if (!drv)
-            RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
+	 /* Initialize the particular display now */
+	 if (drv && !drv->API.Initialize(drv, disp, &major_int, &minor_int))
+	    RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
       }
-
-      /* Initialize the particular display now */
-      if (!drv->API.Initialize(drv, disp, &major_int, &minor_int))
-         RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
+      if (!drv)
+	 /* Load and initialize the first default driver that works */
+	 drv = _eglLoadDefaultDriver(disp, &major_int, &minor_int);
+      if (!drv)
+	 RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
 
       disp->APImajor = major_int;
       disp->APIminor = minor_int;

@@ -13,7 +13,6 @@
 
 
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 
 /**
