@@ -29,7 +29,6 @@
 
 #include "util/u_memory.h"
 #include "rbug/rbug_public.h"
-#include "tr_screen.h"
 #include "tr_drm.h"
 #include "tr_screen.h"
 #include "tr_public.h"

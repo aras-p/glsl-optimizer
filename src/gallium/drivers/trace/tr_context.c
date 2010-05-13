@@ -28,7 +28,6 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
-#include "util/u_format.h"
 
 #include "pipe/p_format.h"
 #include "pipe/p_screen.h"
