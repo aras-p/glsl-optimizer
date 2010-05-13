@@ -41,6 +41,7 @@
 
 
 struct printf_test_case {
+   int foo;
 };
 
 void
@@ -56,6 +57,19 @@ write_tsv_header(FILE *fp)
 
 
 typedef void (*test_printf_t)(int i);
+
+/** cast wrapper */
+static test_printf_t
+voidptr_to_test_printf_t(void *p)
+{
+   union {
+      void *v;
+      test_printf_t f;
+   } u;
+   u.v = p;
+   return u.f;
+}
+
 
 static LLVMValueRef
 add_printf_test(LLVMModuleRef module)
@@ -91,6 +105,7 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
    float unpacked[4];
    unsigned packed;
    boolean success = TRUE;
+   void *code;
 
    module = LLVMModuleCreateWithName("test");
 
@@ -124,7 +139,8 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
    (void)pass;
 #endif
 
-   test_printf = (test_printf_t)LLVMGetPointerToGlobal(engine, test);
+   code = LLVMGetPointerToGlobal(engine, test);
+   test_printf = voidptr_to_test_printf_t(code);
 
    memset(unpacked, 0, sizeof unpacked);
    packed = 0;

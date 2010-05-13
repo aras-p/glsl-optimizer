@@ -43,6 +43,17 @@
 
 typedef void (*conv_test_ptr_t)(const void *src, const void *dst);
 
+/** cast wrapper */
+static conv_test_ptr_t
+voidptr_to_conv_test_ptr_t(void *p)
+{
+   union {
+      void *v;
+      conv_test_ptr_t f;
+   } u;
+   u.v = p;
+   return u.f;
+}
 
 void
 write_tsv_header(FILE *fp)
@@ -164,6 +175,7 @@ test_one(unsigned verbose,
    unsigned num_dsts;
    double eps;
    unsigned i, j;
+   void *code;
 
    if(verbose >= 1)
       dump_conv_types(stdout, src_type, dst_type);
@@ -221,10 +233,11 @@ test_one(unsigned verbose,
    if(verbose >= 2)
       LLVMDumpModule(module);
 
-   conv_test_ptr = (conv_test_ptr_t)LLVMGetPointerToGlobal(engine, func);
+   code = LLVMGetPointerToGlobal(engine, func);
+   conv_test_ptr = voidptr_to_conv_test_ptr_t(code);
 
    if(verbose >= 2)
-      lp_disassemble(conv_test_ptr);
+      lp_disassemble(code);
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {

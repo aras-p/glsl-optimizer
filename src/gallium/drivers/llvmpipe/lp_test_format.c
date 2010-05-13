@@ -73,6 +73,19 @@ typedef void
 (*fetch_ptr_t)(float *, const void *packed,
                unsigned i, unsigned j);
 
+/** cast wrapper to avoid warnings */
+static fetch_ptr_t
+void_to_fetch_ptr_t(void *p)
+{
+   union {
+      void *v;
+      fetch_ptr_t f;
+   } u;
+   u.v = p;
+   return u.f;
+}
+
+
 
 static LLVMValueRef
 add_fetch_rgba_test(LLVMModuleRef lp_build_module,
@@ -149,7 +162,7 @@ test_format(unsigned verbose, FILE *fp,
    (void)pass;
 #endif
 
-   fetch_ptr = (fetch_ptr_t) LLVMGetPointerToGlobal(lp_build_engine, fetch);
+   fetch_ptr = void_to_fetch_ptr_t(LLVMGetPointerToGlobal(lp_build_engine, fetch));
 
    for (i = 0; i < desc->block.height; ++i) {
       for (j = 0; j < desc->block.width; ++j) {

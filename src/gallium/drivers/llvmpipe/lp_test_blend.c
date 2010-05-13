@@ -52,6 +52,19 @@ enum vector_mode
 
 typedef void (*blend_test_ptr_t)(const void *src, const void *dst, const void *con, void *res);
 
+/** cast wrapper */
+static blend_test_ptr_t
+voidptr_to_blend_test_ptr_t(void *p)
+{
+   union {
+      void *v;
+      blend_test_ptr_t f;
+   } u;
+   u.v = p;
+   return u.f;
+}
+
+
 
 void
 write_tsv_header(FILE *fp)
@@ -482,6 +495,7 @@ test_one(unsigned verbose,
    int64_t cycles[LP_TEST_NUM_SAMPLES];
    double cycles_avg = 0.0;
    unsigned i, j;
+   void *code;
 
    if(verbose >= 1)
       dump_blend_type(stdout, blend, mode, type);
@@ -523,10 +537,11 @@ test_one(unsigned verbose,
    if(verbose >= 2)
       LLVMDumpModule(module);
 
-   blend_test_ptr = (blend_test_ptr_t)LLVMGetPointerToGlobal(engine, func);
+   code = LLVMGetPointerToGlobal(engine, func);
+   blend_test_ptr = voidptr_to_blend_test_ptr_t(code);
 
    if(verbose >= 2)
-      lp_disassemble(blend_test_ptr);
+      lp_disassemble(code);
 
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
