@@ -136,8 +136,8 @@ enum value_extra {
 
 struct value_desc {
    GLenum pname;
-   enum value_location location : 8;
-   enum value_type type : 8;
+   GLubyte location;  /**< enum value_location */
+   GLubyte type;      /**< enum value_type */
    int offset;
    const int *extra;
 };
