@@ -418,34 +418,36 @@ emit_fetch(
    const unsigned chan_index )
 {
    const struct tgsi_full_src_register *reg = &inst->Src[index];
-   unsigned swizzle = tgsi_util_get_full_src_register_swizzle( reg, chan_index );
+   const unsigned swizzle =
+      tgsi_util_get_full_src_register_swizzle(reg, chan_index);
    LLVMValueRef res;
    LLVMValueRef addr = NULL;
 
-   switch (swizzle) {
-   case TGSI_SWIZZLE_X:
-   case TGSI_SWIZZLE_Y:
-   case TGSI_SWIZZLE_Z:
-   case TGSI_SWIZZLE_W:
+   if (swizzle > 3) {
+      assert(0 && "invalid swizzle in emit_fetch()");
+      return bld->base.undef;
+   }
 
-      if (reg->Register.Indirect) {
-         LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
-         unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
-         addr = LLVMBuildLoad(bld->base.builder,
-                              bld->addr[reg->Indirect.Index][swizzle],
-                              "");
-         /* for indexing we want integers */
-         addr = LLVMBuildFPToSI(bld->base.builder, addr,
-                                int_vec_type, "");
-         addr = LLVMBuildExtractElement(bld->base.builder,
-                                        addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
-                                        "");
-         addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
-      }
+   if (reg->Register.Indirect) {
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
+      unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
+      addr = LLVMBuildLoad(bld->base.builder,
+                           bld->addr[reg->Indirect.Index][swizzle],
+                           "");
+      /* for indexing we want integers */
+      addr = LLVMBuildFPToSI(bld->base.builder, addr,
+                             int_vec_type, "");
+      addr = LLVMBuildExtractElement(bld->base.builder,
+                                     addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
+                                     "");
+      addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
+   }
 
-      switch (reg->Register.File) {
-      case TGSI_FILE_CONSTANT: {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), reg->Register.Index*4 + swizzle, 0);
+   switch (reg->Register.File) {
+   case TGSI_FILE_CONSTANT:
+      {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(),
+                                           reg->Register.Index*4 + swizzle, 0);
          LLVMValueRef scalar, scalar_ptr;
 
          if (reg->Register.Indirect) {
@@ -453,24 +455,26 @@ emit_fetch(
               "\taddr = %d\n", addr);*/
             index = lp_build_add(&bld->base, index, addr);
          }
-         scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr, &index, 1, "");
+         scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr,
+                                   &index, 1, "");
          scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
 
          res = lp_build_broadcast_scalar(&bld->base, scalar);
-         break;
       }
+      break;
 
-      case TGSI_FILE_IMMEDIATE:
-         res = bld->immediates[reg->Register.Index][swizzle];
-         assert(res);
-         break;
+   case TGSI_FILE_IMMEDIATE:
+      res = bld->immediates[reg->Register.Index][swizzle];
+      assert(res);
+      break;
 
-      case TGSI_FILE_INPUT:
-         res = bld->inputs[reg->Register.Index][swizzle];
-         assert(res);
-         break;
+   case TGSI_FILE_INPUT:
+      res = bld->inputs[reg->Register.Index][swizzle];
+      assert(res);
+      break;
 
-      case TGSI_FILE_TEMPORARY: {
+   case TGSI_FILE_TEMPORARY:
+      {
          LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
                                               swizzle,
                                               reg->Register.Indirect,
@@ -478,17 +482,11 @@ emit_fetch(
          res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
          if(!res)
             return bld->base.undef;
-         break;
-      }
-
-      default:
-         assert( 0 );
-         return bld->base.undef;
       }
       break;
 
    default:
-      assert( 0 );
+      assert(0 && "invalid src register in emit_fetch()");
       return bld->base.undef;
    }
 
