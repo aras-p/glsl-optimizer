@@ -67,22 +67,27 @@ _mesa_dlopen(const char *libname, int flags)
 GenericFunc
 _mesa_dlsym(void *handle, const char *fname)
 {
+   union {
+      void *v;
+      GenericFunc f;
+   } u;
 #if defined(__blrts)
-   return (GenericFunc) NULL;
+   u.v = NULL;
 #elif defined(__DJGPP__)
    /* need '_' prefix on symbol names */
    char fname2[1000];
    fname2[0] = '_';
    strncpy(fname2 + 1, fname, 998);
    fname2[999] = 0;
-   return (GenericFunc) dlsym(handle, fname2);
+   u.v = dlsym(handle, fname2);
 #elif defined(_GNU_SOURCE)
-   return (GenericFunc) dlsym(handle, fname);
+   u.v = dlsym(handle, fname);
 #elif defined(__MINGW32__)
-   return (GenericFunc) GetProcAddress(handle, fname);
+   u.v = (void *) GetProcAddress(handle, fname);
 #else
-   return (GenericFunc) NULL;
+   u.v = NULL;
 #endif
+   return u.f;
 }
 
 
