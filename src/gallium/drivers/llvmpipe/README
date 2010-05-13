@@ -69,7 +69,15 @@ Requirements
    http://people.freedesktop.org/~jrfonseca/llvm/ and set the LLVM environment
    variable to the extracted path.
 
-   The version of LLVM from SVN ("2.7svn") from mid-March 2010 seems pretty
+   For MSVC there are two set of binaries: llvm-x.x-msvc32mt.7z and
+   llvm-x.x-msvc32mtd.7z .
+
+   You have to set the LLVM=/path/to/llvm-x.x-msvc32mtd env var when passing
+   debug=yes to scons, and LLVM=/path/to/llvm-x.x-msvc32mt when building with
+   debug=no. This is necessary as LLVM builds as static library so the chosen
+   MS CRT must match.
+
+   The version of LLVM from SVN ("2.7svn") from mid-March 2010 is pretty
    stable and has some features not in version 2.6.
 
  - scons (optional)
