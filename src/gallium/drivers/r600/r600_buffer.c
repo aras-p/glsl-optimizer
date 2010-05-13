@@ -151,7 +151,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	int write = 0;
 
 	if (rbuffer->pb) {
-		return pb_map(rbuffer->pb, transfer->usage) + transfer->box.x;
+		return (uint8_t*)pb_map(rbuffer->pb, transfer->usage) + transfer->box.x;
 	}
 	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
 		/* FIXME */
@@ -162,7 +162,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	if (radeon_bo_map(rscreen->rw, rbuffer->bo)) {
 		return NULL;
 	}
-	return rbuffer->bo->data + transfer->box.x;
+	return (uint8_t*)rbuffer->bo->data + transfer->box.x;
 }
 
 static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
