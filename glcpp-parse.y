@@ -93,7 +93,7 @@ _list_length (list_t *list);
 %lex-param {void *scanner}
 
 %token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO SPACE TOKEN UNDEF
-%type <str> FUNC_MACRO IDENTIFIER OBJ_MACRO TOKEN word word_or_symbol
+%type <str> FUNC_MACRO IDENTIFIER identifier_perhaps_macro OBJ_MACRO TOKEN word word_or_symbol
 %type <list> argument argument_list parameter_list replacement_list
 
 %%
@@ -215,16 +215,22 @@ parameter_list:
 	/* empty */ {
 		$$ = _list_create (parser);
 	}
-|	IDENTIFIER {
+|	identifier_perhaps_macro {
 		$$ = _list_create (parser);
 		_list_append_item ($$, $1);
 		talloc_free ($1);
 	}
-|	parameter_list ',' IDENTIFIER {
+|	parameter_list ',' identifier_perhaps_macro {
 		_list_append_item ($1, $3);
 		talloc_free ($3);
 		$$ = $1;
 	}
+;
+
+identifier_perhaps_macro:
+	IDENTIFIER { $$ = $1; }
+|	FUNC_MACRO { $$ = $1; }
+|	OBJ_MACRO { $$ = $1; }
 ;
 
 word_or_symbol:
