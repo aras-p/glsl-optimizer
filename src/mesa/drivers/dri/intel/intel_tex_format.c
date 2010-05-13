@@ -1,7 +1,7 @@
 #include "intel_context.h"
 #include "intel_tex.h"
 #include "main/enums.h"
-
+#include "main/formats.h"
 
 /**
  * Choose hardware texture format given the user's glTexImage parameters.
@@ -208,22 +208,11 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
 
 int intel_compressed_num_bytes(GLuint mesaFormat)
 {
-   int bytes = 0;
-   switch(mesaFormat) {
-     
-   case MESA_FORMAT_RGB_FXT1:
-   case MESA_FORMAT_RGBA_FXT1:
-   case MESA_FORMAT_RGB_DXT1:
-   case MESA_FORMAT_RGBA_DXT1:
-     bytes = 2;
-     break;
-     
-   case MESA_FORMAT_RGBA_DXT3:
-   case MESA_FORMAT_RGBA_DXT5:
-     bytes = 4;
-   default:
-     break;
-   }
-   
-   return bytes;
+   GLuint bw, bh;
+   GLuint block_size;
+
+   block_size = _mesa_get_format_bytes(mesaFormat);
+   _mesa_get_format_block_size(mesaFormat, &bw, &bh);
+
+   return block_size / bh;
 }
