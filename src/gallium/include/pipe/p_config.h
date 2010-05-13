@@ -165,6 +165,11 @@
 #define PIPE_OS_UNIX
 #endif
 
+#if defined(__CYGWIN__)
+#define PIPE_OS_CYGWIN
+#define PIPE_OS_UNIX
+#endif
+
 /*
  * Try to auto-detect the subsystem.
  * 

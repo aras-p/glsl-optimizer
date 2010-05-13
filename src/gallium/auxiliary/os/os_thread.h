@@ -40,7 +40,7 @@
 #include "util/u_debug.h" /* for assert */
 
 
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
 
 #include <pthread.h> /* POSIX threads headers */
 #include <stdio.h> /* for perror() */
@@ -405,7 +405,7 @@ pipe_semaphore_wait(pipe_semaphore *sema)
  */
 
 typedef struct {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
    pthread_key_t key;
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    DWORD key;
@@ -420,7 +420,7 @@ typedef struct {
 static INLINE void
 pipe_tsd_init(pipe_tsd *tsd)
 {
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
    if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
       perror("pthread_key_create(): failed to allocate key for thread specific data");
       exit(-1);
@@ -437,7 +437,7 @@ pipe_tsd_get(pipe_tsd *tsd)
    if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
       pipe_tsd_init(tsd);
    }
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
    return pthread_getspecific(tsd->key);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    assert(0);
@@ -454,7 +454,7 @@ pipe_tsd_set(pipe_tsd *tsd, void *value)
    if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
       pipe_tsd_init(tsd);
    }
-#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_APPLE) || defined(PIPE_OS_HAIKU) || defined(PIPE_OS_EMBEDDED) || defined(PIPE_OS_CYGWIN)
    if (pthread_setspecific(tsd->key, value) != 0) {
       perror("pthread_set_specific() failed");
       exit(-1);
