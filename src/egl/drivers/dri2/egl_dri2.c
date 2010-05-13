@@ -690,7 +690,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    if (dri2_dpy->driver == NULL) {
-      _eglLog(_EGL_FATAL,
+      _eglLog(_EGL_WARNING,
 	      "DRI2: failed to open any driver (search paths %s)",
 	      search_paths);
       goto cleanup_conn;
@@ -699,7 +699,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    _eglLog(_EGL_DEBUG, "DRI2: dlopen(%s)", path);
    extensions = dlsym(dri2_dpy->driver, __DRI_DRIVER_EXTENSIONS);
    if (extensions == NULL) {
-      _eglLog(_EGL_FATAL,
+      _eglLog(_EGL_WARNING,
 	      "DRI2: driver exports no extensions (%s)", dlerror());
       goto cleanup_driver;
    }
@@ -709,7 +709,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 
    dri2_dpy->fd = open(dri2_dpy->device_name, O_RDWR);
    if (dri2_dpy->fd == -1) {
-      _eglLog(_EGL_FATAL,
+      _eglLog(_EGL_WARNING,
 	      "DRI2: could not open %s (%s)", dri2_dpy->device_name,
               strerror(errno));
       goto cleanup_driver;
@@ -748,7 +748,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 				      &dri2_dpy->driver_configs, dri2_dpy);
 
    if (dri2_dpy->dri_screen == NULL) {
-      _eglLog(_EGL_FATAL, "DRI2: failed to create dri screen");
+      _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");
       goto cleanup_fd;
    }
 
