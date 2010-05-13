@@ -285,6 +285,42 @@ lp_typekind_name(LLVMTypeKind t)
 }
 
 
+/**
+ * Print an LLVMTypeRef.  Like LLVMDumpValue().  For debugging.
+ */
+void
+lp_dump_llvmtype(LLVMTypeRef t)
+{
+   LLVMTypeKind k = LLVMGetTypeKind(t);
+
+   if (k == LLVMVectorTypeKind) {
+      LLVMTypeRef te = LLVMGetElementType(t);
+      LLVMTypeKind ke = LLVMGetTypeKind(te);
+      unsigned len = LLVMGetVectorSize(t);
+      if (ke == LLVMIntegerTypeKind) {
+         unsigned b = LLVMGetIntTypeWidth(te);
+         debug_printf("Vector [%u] of %u-bit Integer\n", len, b);
+      }
+      else {
+         debug_printf("Vector [%u] of %s\n", len, lp_typekind_name(ke));
+      }
+   }
+   else if (k == LLVMArrayTypeKind) {
+      LLVMTypeRef te = LLVMGetElementType(t);
+      LLVMTypeKind ke = LLVMGetTypeKind(te);
+      unsigned len = LLVMGetArrayLength(t);
+      debug_printf("Array [%u] of %s\n", len, lp_typekind_name(ke));
+   }
+   else if (k == LLVMIntegerTypeKind) {
+      unsigned b = LLVMGetIntTypeWidth(t);
+      debug_printf("%u-bit Integer\n", b);
+   }
+   else {
+      debug_printf("%s\n", lp_typekind_name(k));
+   }
+}
+
+
 void
 lp_build_context_init(struct lp_build_context *bld,
                       LLVMBuilderRef builder,

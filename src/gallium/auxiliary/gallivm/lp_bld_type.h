@@ -321,6 +321,10 @@ lp_typekind_name(LLVMTypeKind t);
 
 
 void
+lp_dump_llvmtype(LLVMTypeRef t);
+
+
+void
 lp_build_context_init(struct lp_build_context *bld,
                       LLVMBuilderRef builder,
                       struct lp_type type);
