@@ -28,7 +28,7 @@ util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, str
    {	/* or 2D array */
       if(!us->u.table)
 	 us->u.table = util_hash_table_create(hash, compare);
-      key = (void *)(((zslice + face) << 8) | level);
+      key = (void *)(uintptr_t)(((zslice + face) << 8) | level);
       /* TODO: ouch, should have a get-reference function...
        * also, shouldn't allocate a two-pointer structure for each item... */
       ps = util_hash_table_get(us->u.table, key);
