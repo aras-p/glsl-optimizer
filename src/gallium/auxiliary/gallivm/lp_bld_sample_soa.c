@@ -918,7 +918,8 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       }
       else {
          const int dims = texture_dims(bld->static_state->target);
-         LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
+         LLVMValueRef dsdx, dsdy;
+         LLVMValueRef dtdx = NULL, dtdy = NULL, drdx = NULL, drdy = NULL;
          LLVMValueRef rho;
 
          /*
