@@ -3136,7 +3136,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_DIV:
-      assert( 0 );
+      exec_vector_binary(mach, inst, micro_div, TGSI_EXEC_DATA_FLOAT, TGSI_EXEC_DATA_FLOAT);
       break;
 
    case TGSI_OPCODE_DP2:
