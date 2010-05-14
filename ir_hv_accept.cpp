@@ -31,11 +31,20 @@
 
 /**
  * Process a list of nodes using a hierarchical vistor
+ *
+ * \warning
+ * This function will operate correctly if a node being processed is removed
+ * from list.  However, if nodes are added to the list after the node being
+ * processed, some of the added noded may not be processed.
  */
 static ir_visitor_status
 visit_list_elements(ir_hierarchical_visitor *v, exec_list *l)
 {
-   foreach_list (n, l) {
+   exec_node *next;
+
+   for (exec_node *n = l->head; n->next != NULL; n = next) {
+      next = n->next;
+
       ir_instruction *const ir = (ir_instruction *) n;
       ir_visitor_status s = ir->accept(v);
 
@@ -112,9 +121,12 @@ ir_function_signature::accept(ir_hierarchical_visitor *v)
 ir_visitor_status
 ir_function::accept(ir_hierarchical_visitor *v)
 {
-   /* FINISHME: Do we want to walk into functions? */
-   (void) v;
-   return visit_continue;
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = visit_list_elements(v, &this->signatures);
+   return (s == visit_stop) ? s : v->visit_leave(this);
 }
 
 
