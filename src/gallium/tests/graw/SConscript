@@ -13,7 +13,8 @@ env.Prepend(LIBS = ['graw'])
 
 progs = [
     'clear',
-    'tri'
+    'tri',
+    'quad-tex',
 ]
 
 for prog in progs:
