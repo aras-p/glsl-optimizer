@@ -31,15 +31,15 @@
 /* Some data types used for parser value. */
 
 
-typedef struct node {
+typedef struct string_node {
 	const char *str;
-	struct node *next;
-} node_t;
+	struct string_node *next;
+} string_node_t;
 
-typedef struct list {
-	node_t *head;
-	node_t *tail;
-} list_t;
+typedef struct string_list {
+	string_node_t *head;
+	string_node_t *tail;
+} string_list_t;
 
 typedef struct glcpp_parser glcpp_parser_t;
 
