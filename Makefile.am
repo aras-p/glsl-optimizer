@@ -45,8 +45,6 @@ glsl_SOURCES = \
 	ir_if_simplification.cpp \
 	ir_optimization.h \
 	ir_reader.cpp s_expression.cpp \
-	ir_visit_tree.cpp \
-	ir_visit_tree.h \
 	ir_hv_accept.cpp \
 	ir_hierarchical_visitor.h \
 	ir_hierarchical_visitor.cpp
