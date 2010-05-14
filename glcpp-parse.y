@@ -103,6 +103,7 @@ input:
 |	input content
 ;
 
+	/* We do all printing at the content level */
 content:
 	IDENTIFIER {
 		printf ("%s", $1);
@@ -113,7 +114,7 @@ content:
 		talloc_free ($1);
 	}
 |	macro
-|	directive_with_newline
+|	directive_with_newline { printf ("\n"); }
 |	NEWLINE	{ printf ("\n"); }
 |	'('	{ printf ("("); }
 |	')'	{ printf (")"); }
@@ -154,9 +155,7 @@ argument:
 ;
 
 directive_with_newline:
-	directive NEWLINE {
-		printf ("\n");
-	}
+	directive NEWLINE
 ;
 
 directive:
