@@ -53,13 +53,20 @@ static void init( void )
    struct pipe_resource *tex, templat;
    int i;
 
+   /* It's hard to say whether window or screen should be created
+    * first.  Different environments would prefer one or the other.
+    *
+    * Also, no easy way of querying supported formats if the screen
+    * cannot be created first.
+    */
    for (i = 0; 
         window == NULL && formats[i] != PIPE_FORMAT_NONE;
         i++) {
       
-      window = graw_create_window(0,0,300,300, formats[i]);
+      screen = graw_create_window_and_screen(0,0,300,300,
+                                             formats[i],
+                                             &window);
    }
-   
    if (window == NULL)
       exit(2);
    
@@ -98,14 +105,10 @@ static void init( void )
 }
 
 
+
 int main( int argc, char *argv[] )
 {
-   screen = graw_init();
-   if (screen == NULL)
-      exit(1);
-
    init();
-
 
    graw_set_display_func( draw );
    graw_main_loop();
