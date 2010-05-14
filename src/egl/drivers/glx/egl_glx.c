@@ -41,6 +41,7 @@
 #include "eglconfigutil.h"
 #include "eglconfig.h"
 #include "eglcontext.h"
+#include "egldefines.h"
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglcurrent.h"
@@ -48,7 +49,6 @@
 #include "eglsurface.h"
 
 #define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
-#define ARRAY_SIZE(a)      (sizeof(a) / sizeof(a[0]))
 
 #ifndef GLX_VERSION_1_4
 #error "GL/glx.h must be equal to or greater than GLX 1.4"
