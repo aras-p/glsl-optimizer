@@ -106,7 +106,7 @@ _argument_list_member_at (argument_list_t *list, int index);
 %lex-param {void *scanner}
 
 %token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO SPACE TOKEN UNDEF
-%type <str> FUNC_MACRO IDENTIFIER identifier_perhaps_macro OBJ_MACRO TOKEN word word_or_symbol
+%type <str> FUNC_MACRO IDENTIFIER identifier_perhaps_macro OBJ_MACRO replacement_word TOKEN word
 %type <string_list> argument macro parameter_list replacement_list
 %type <argument_list> argument_list
 
@@ -171,6 +171,9 @@ argument:
 		$$ = _string_list_create (parser);
 		_string_list_append_item ($$, $1);
 	}
+|	macro {
+		$$ = $1;
+	}
 |	argument word {
 		_string_list_append_item ($1, $2);
 		talloc_free ($2);
@@ -227,16 +230,26 @@ directive:
 ;
 
 replacement_list:
-	word_or_symbol {
+	replacement_word {
 		$$ = _string_list_create (parser);
 		_string_list_append_item ($$, $1);
 		talloc_free ($1);
 	}
-|	replacement_list word_or_symbol {
+|	replacement_list replacement_word {
 		_string_list_append_item ($1, $2);
 		talloc_free ($2);
 		$$ = $1;
 	}
+;
+
+replacement_word:
+	word		{ $$ = $1; }
+|	FUNC_MACRO	{ $$ = $1; }
+|	OBJ_MACRO	{ $$ = $1; }
+|	'('		{ $$ = xtalloc_strdup (parser, "("); }
+|	')'		{ $$ = xtalloc_strdup (parser, ")"); }
+|	','		{ $$ = xtalloc_strdup (parser, ","); }
+|	SPACE		{ $$ = xtalloc_strdup (parser, " "); }
 ;
 
 parameter_list:
@@ -261,18 +274,8 @@ identifier_perhaps_macro:
 |	OBJ_MACRO { $$ = $1; }
 ;
 
-word_or_symbol:
-	word	{ $$ = $1; }
-|	'('	{ $$ = xtalloc_strdup (parser, "("); }
-|	')'	{ $$ = xtalloc_strdup (parser, ")"); }
-|	','	{ $$ = xtalloc_strdup (parser, ","); }
-|	SPACE	{ $$ = xtalloc_strdup (parser, " "); }
-;
-
 word:
 	IDENTIFIER { $$ = $1; }
-|	FUNC_MACRO { $$ = $1; }
-|	OBJ_MACRO { $$ = $1; }
 |	TOKEN { $$ = $1; }
 ;
 
