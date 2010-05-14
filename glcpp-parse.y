@@ -56,13 +56,16 @@ _define_function_macro (glcpp_parser_t *parser,
 			string_list_t *parameters,
 			string_list_t *replacements);
 
-void
-_print_expanded_object_macro (glcpp_parser_t *parser, const char *macro);
+string_list_t *
+_expand_object_macro (glcpp_parser_t *parser, const char *identifier);
+
+string_list_t *
+_expand_function_macro (glcpp_parser_t *parser,
+			const char *identifier,
+			string_list_t *arguments);
 
 void
-_print_expanded_function_macro (glcpp_parser_t *parser,
-				const char *macro,
-				string_list_t *arguments);
+_print_string_list (string_list_t *list);
 
 string_list_t *
 _string_list_create (void *ctx);
@@ -94,7 +97,7 @@ _string_list_length (string_list_t *list);
 
 %token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO SPACE TOKEN UNDEF
 %type <str> FUNC_MACRO IDENTIFIER identifier_perhaps_macro OBJ_MACRO TOKEN word word_or_symbol
-%type <list> argument argument_list parameter_list replacement_list
+%type <list> argument argument_list macro parameter_list replacement_list
 
 %%
 
@@ -113,7 +116,9 @@ content:
 		printf ("%s", $1);
 		talloc_free ($1);
 	}
-|	macro
+|	macro {
+		_print_string_list ($1);
+	}
 |	directive_with_newline { printf ("\n"); }
 |	NEWLINE	{ printf ("\n"); }
 |	'('	{ printf ("("); }
@@ -124,10 +129,10 @@ content:
 
 macro:
 	FUNC_MACRO '(' argument_list ')' {
-		_print_expanded_function_macro (parser, $1, $3);
+		$$ = _expand_function_macro (parser, $1, $3);
 	}
 |	OBJ_MACRO {
-		_print_expanded_object_macro (parser, $1);
+		$$ = _expand_object_macro (parser, $1);
 		talloc_free ($1);
 	}
 ;
@@ -326,6 +331,18 @@ _string_list_length (string_list_t *list)
 	return length;
 }
 
+void
+_print_string_list (string_list_t *list)
+{
+	string_node_t *node;
+
+	if (list == NULL)
+		return;
+
+	for (node = list->head; node; node = node->next)
+		printf ("%s", node->str);
+}
+
 const char *
 _string_list_member_at (string_list_t *list, int index)
 {
@@ -431,29 +448,33 @@ _define_function_macro (glcpp_parser_t *parser,
 	hash_table_insert (parser->defines, macro, identifier);
 }
 
-static void
-_print_expanded_macro_recursive (glcpp_parser_t *parser,
-				 const char *token,
-				 const char *orig,
-				 string_list_t *parameters,
-				 string_list_t *arguments);
+static string_list_t *
+_expand_macro_recursive (glcpp_parser_t *parser,
+			 const char *token,
+			 const char *orig,
+			 string_list_t *parameters,
+			 string_list_t *arguments);
 
-static void
-_print_expanded_string_list_recursive (glcpp_parser_t *parser,
-				string_list_t *list,
-				const char *orig,
-				string_list_t *parameters,
-				string_list_t *arguments)
+static string_list_t *
+_expand_string_list_recursive (glcpp_parser_t *parser,
+			       string_list_t *list,
+			       const char *orig,
+			       string_list_t *parameters,
+			       string_list_t *arguments)
 {
+	string_list_t *result;
+	string_list_t *child;
 	const char *token;
 	string_node_t *node;
 	int index;
+
+	result = _string_list_create (parser);
 
 	for (node = list->head ; node ; node = node->next) {
 		token = node->str;
 
 		if (strcmp (token, orig) == 0) {
-			printf ("%s", token);
+			_string_list_append_item (result, token);
 			continue;
 		}
 
@@ -461,71 +482,82 @@ _print_expanded_string_list_recursive (glcpp_parser_t *parser,
 			const char *argument;
 
 			argument = _string_list_member_at (arguments, index);
-			_print_expanded_macro_recursive (parser, argument,
-							 orig, parameters,
-							 arguments);
+			child = _expand_macro_recursive (parser, argument,
+							 orig, NULL, NULL);
+			_string_list_append_list (result, child);
 		} else {
-			_print_expanded_macro_recursive (parser, token,
+			child = _expand_macro_recursive (parser, token,
 							 orig, parameters,
 							 arguments);
+			_string_list_append_list (result, child);
 		}
 	}
+
+	return result;
 }
 
 
-static void
-_print_expanded_macro_recursive (glcpp_parser_t *parser,
-				 const char *token,
-				 const char *orig,
-				 string_list_t *parameters,
-				 string_list_t *arguments)
+static string_list_t *
+_expand_macro_recursive (glcpp_parser_t *parser,
+			 const char *token,
+			 const char *orig,
+			 string_list_t *parameters,
+			 string_list_t *arguments)
 {
 	macro_t *macro;
 	string_list_t *replacements;
 
 	macro = hash_table_find (parser->defines, token);
 	if (macro == NULL) {
-		printf ("%s", token);
-		return;
+		string_list_t *result;
+
+		result = _string_list_create (parser);
+		_string_list_append_item (result, token);
+		return result;
 	}
 
 	replacements = macro->replacements;
 
-	_print_expanded_string_list_recursive (parser, replacements,
-					       orig, parameters, arguments);
+	return _expand_string_list_recursive (parser, replacements,
+					      orig, parameters, arguments);
 }
 
-void
-_print_expanded_object_macro (glcpp_parser_t *parser, const char *identifier)
+string_list_t *
+_expand_object_macro (glcpp_parser_t *parser, const char *identifier)
 {
 	macro_t *macro;
 
 	macro = hash_table_find (parser->defines, identifier);
 	assert (! macro->is_function);
 
-	_print_expanded_macro_recursive (parser, identifier, identifier,
-					 NULL, NULL);
+	return _expand_macro_recursive (parser, identifier, identifier,
+					NULL, NULL);
 }
 
-void
-_print_expanded_function_macro (glcpp_parser_t *parser,
-				const char *identifier,
-				string_list_t *arguments)
+string_list_t *
+_expand_function_macro (glcpp_parser_t *parser,
+			const char *identifier,
+			string_list_t *arguments)
 {
+	string_list_t *result;
 	macro_t *macro;
+
+	result = _string_list_create (parser);
 
 	macro = hash_table_find (parser->defines, identifier);
 	assert (macro->is_function);
 
-	if (_string_list_length (arguments) != _string_list_length (macro->parameters)) {
+	if (_string_list_length (arguments) !=
+	    _string_list_length (macro->parameters))
+	{
 		fprintf (stderr,
 			 "Error: macro %s invoked with %d arguments (expected %d)\n",
 			 identifier,
 			 _string_list_length (arguments),
 			 _string_list_length (macro->parameters));
-		return;
+		return NULL;
 	}
 
-	_print_expanded_macro_recursive (parser, identifier, identifier,
-					 macro->parameters, arguments);
+	return _expand_macro_recursive (parser, identifier, identifier,
+					macro->parameters, arguments);
 }
