@@ -478,6 +478,26 @@ _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria)
    return matched;
 }
 
+static INLINE EGLBoolean
+_eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
+{
+   if (_eglIndexConfig(conf, attr) < 0)
+      return EGL_FALSE;
+
+   /* there are some holes in the range */
+   switch (attr) {
+   case 0x3030 /* a gap before EGL_SAMPLES */:
+   case EGL_NONE:
+#ifdef EGL_VERSION_1_4
+   case EGL_MATCH_NATIVE_PIXMAP:
+#endif
+      return EGL_FALSE;
+   default:
+      break;
+   }
+
+   return EGL_TRUE;
+}
 
 /**
  * Initialize a criteria config from the given attribute list.
@@ -500,15 +520,13 @@ _eglParseConfigAttribList(_EGLConfig *conf, const EGLint *attrib_list)
 
    /* parse the list */
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i += 2) {
-      EGLint idx;
-
       attr = attrib_list[i];
       val = attrib_list[i + 1];
 
-      idx = _eglIndexConfig(conf, attr);
-      if (idx < 0)
-         return EGL_FALSE;
-      conf->Storage[idx] = val;
+      if (!_eglIsConfigAttribValid(conf, attr))
+	 return EGL_FALSE;
+	      
+      SET_CONFIG_ATTRIB(conf, attr, val);
 
       /* rememeber some attributes for post-processing */
       switch (attr) {
@@ -776,28 +794,6 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    free(configList);
 
    *num_configs = count;
-
-   return EGL_TRUE;
-}
-
-
-static INLINE EGLBoolean
-_eglIsConfigAttribValid(_EGLConfig *conf, EGLint attr)
-{
-   if (_eglIndexConfig(conf, attr) < 0)
-      return EGL_FALSE;
-
-   /* there are some holes in the range */
-   switch (attr) {
-   case 0x3030 /* a gap before EGL_SAMPLES */:
-   case EGL_NONE:
-#ifdef EGL_VERSION_1_4
-   case EGL_MATCH_NATIVE_PIXMAP:
-#endif
-      return EGL_FALSE;
-   default:
-      break;
-   }
 
    return EGL_TRUE;
 }
